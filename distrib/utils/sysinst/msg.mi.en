@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.58 2000/01/21 11:23:01 shin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.59 2000/03/14 22:42:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -198,7 +198,7 @@ will allow you to more accurately specify the sizes.  On modern ZBR disks,
 actual cylinder size varies across the disk and there is little real
 gain from cylinder alignment. On older disks, it is most efficient to
 choose partition sizes that are exact multiples of your actual
-cylinder size, which is %d sectors.
+cylinder size.
 }
 
 message defaultunit

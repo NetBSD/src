@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.32 2000/01/15 15:55:20 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.33 2000/03/14 22:42:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -202,7 +202,7 @@ secteur, vous pourrez plus précisément choisir les tailles. Sur les disques
 modernes, la taille réelle des cylindres est variable et il y a peu d'intéret
 à aligner les partitions sur les cylindres. Pour les disques plus ancien, il
 est plus efficace de choisir des tailles de partitions multiples de la
-taille d'un cylindre, qui est %d secteurs.
+taille d'un cylindre.
 }
 
 message defaultunit

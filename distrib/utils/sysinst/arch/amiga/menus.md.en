@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.1 2000/02/20 20:34:58 is Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.2 2000/03/14 22:42:50 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@ menu dlgeom, title "Choose an option";
 
 menu editfsparts, y=13, exit;
 	display action  {
-			ask_sizemult();
+			ask_sizemult(dlcylsize);
 			msg_display(MSG_fspart, multname);
 			disp_cur_fspart(-1, 1);
 		};
@@ -85,7 +85,7 @@ menu editfsparts, y=13, exit;
 	option "Change f", action { editpart = F;}, sub menu edfspart;
 	option "Change g", action { editpart = G;}, sub menu edfspart;
 	option "Change h", action { editpart = H;}, sub menu edfspart;
-	option "Set new allocation size", action { reask_sizemult(); };
+	option "Set new allocation size", action { reask_sizemult(dlcylsize); };
  
 
 menu md_distcustom, y=3, exit, title "Selection toggles inclusion";

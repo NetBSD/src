@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.26 2000/01/15 15:55:20 bouyer Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.27 2000/03/14 22:42:49 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -111,7 +111,7 @@ menu sizechoice, title  "Choisissez votre unité d'espace disque";
 		  multname = msg_string(MSG_megname);
 		};
 	option "Cylindres", exit, action 
-		{ sizemult = dlcylsize; 
+		{ sizemult = current_cylsize; 
 		  multname = msg_string(MSG_cylname);
 		};
 	option "Secteurs", exit, action 

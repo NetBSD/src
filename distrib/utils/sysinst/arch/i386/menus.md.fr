@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.23 1999/07/04 22:31:38 cgd Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.24 2000/03/14 22:42:51 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -90,7 +90,7 @@ menu editparttable, title  "Choisissez votre partition", exit;
 	option "Edition de la partition 3",  sub menu editpart,
 		action  { editpart = 3; };
 	option "Changer d'untité",
-		action  { reask_sizemult(); };
+		action  { reask_sizemult(bcylsize); };
 
 menu editpart, title  "Changement";
 	display action { msg_display (MSG_editpart, editpart);
@@ -165,7 +165,7 @@ menu cyl1024;
 
 menu editfsparts, y=13, exit;
 	display action  {
-			ask_sizemult();
+			ask_sizemult(dlcylsize);
 			msg_display(MSG_fspart, multname);
 			disp_cur_fspart(-1, 1);
 		};
@@ -177,7 +177,7 @@ menu editfsparts, y=13, exit;
 	option "Changer f", action { editpart = F;}, sub menu edfspart;
 	option "Changer g", action { editpart = G;}, sub menu edfspart;
 	option "Changer h", action { editpart = H;}, sub menu edfspart;
-	option "Changer d'unité", action { reask_sizemult(); };
+	option "Changer d'unité", action { reask_sizemult(dlcylsize); };
  
 
 menu md_distcustom, x=26, y=5, exit, title "Sélection des composants";

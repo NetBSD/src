@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.50 2000/01/13 18:52:21 mycroft Exp $	*/
+/*	$NetBSD: defs.h,v 1.51 2000/03/14 22:42:48 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -161,6 +161,7 @@ EXTERN int partsize;
 
 /* set by md_get_info() */
 EXTERN int dlcyl, dlhead, dlsec, dlsize, dlcylsize;
+EXTERN int current_cylsize;
 /* Information for the NetBSD disklabel */
 enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
 #define partition_name(x)	('a' + (x))
@@ -296,8 +297,8 @@ int	dir_exists_p(const char *path);
 int	file_exists_p(const char *path);
 int	distribution_sets_exist_p __P((const char *path));
 void	get_ramsize __P((void));
-void	ask_sizemult __P((void));
-void	reask_sizemult __P((void));
+void	ask_sizemult __P((int));
+void	reask_sizemult __P((int));
 void	run_makedev __P((void));
 int	get_via_floppy __P((void));
 int	get_via_cdrom __P((void));

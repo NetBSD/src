@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 1999/08/16 08:29:05 abs Exp $	*/
+/*	$NetBSD: md.c,v 1.23 2000/03/14 22:42:50 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -326,7 +326,7 @@ int md_make_bsd_partitions (void)
 	process_menu(MENU_layout);
 
 	if (layoutkind == 3) {
-		ask_sizemult();
+		ask_sizemult(dlcylsize);
 	} else {
 		sizemult = MEG / sectorsize;
 		multname = msg_string(MSG_megname);
@@ -393,7 +393,7 @@ int md_make_bsd_partitions (void)
 		break;
 
 	case 3: /* custom: ask user for all sizes */
-		ask_sizemult();
+		ask_sizemult(dlcylsize);
 		partstart = ptstart;
 		remain = fsptsize;
 
