@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.414 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.415 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -194,3 +194,8 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	kernel: Save kernel memory by switching IPC domain initialization to
 		use link sets, see <sys/cdefs.h>.  Bump kernel version to
 		2.99.15 [matt 20050123]
+	kernel: Dirhash imported from FreeBSD. Maintains in-core
+		hashes for large directories, improving
+		ufs_lookup performance. Disabled by default, but
+		can be enabled with 'options UFS_DIRHASH'.
+		[rumble 20050123]
