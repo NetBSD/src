@@ -1,4 +1,4 @@
-#	$NetBSD: services,v 1.44 2000/09/10 14:43:28 joda Exp $
+#	$NetBSD: services,v 1.45 2000/09/25 12:42:57 simonb Exp $
 #
 # Network services, Internet style
 #
@@ -115,6 +115,8 @@ ipx		213/tcp				# IPX
 ipx		213/udp
 imap3		220/tcp				# Interactive Mail Access
 imap3		220/udp				# Protocol v3
+rsh-spx		222/tcp				# Berkeley rshd with SPX auth
+rsh-spx		222/udp
 ulistserv	372/tcp				# UNIX Listserv
 ulistserv	372/udp
 nip		376/tcp				# Amiga Envoy Net Inquiry Prot.
@@ -237,6 +239,8 @@ nfs		2049/udp	nfsd	# Sun NFS
 nfs		2049/tcp	nfsd	# Sun NFS
 X11		6000/tcp		# X Window System
 ircd		6667/tcp		# Often used IRC port (also see 194)
+amanda		10080/tcp		# Amanda
+amanda		10080/udp
 hunt		26740/udp		# multi-player/multi-host maze-wars
 
 #
