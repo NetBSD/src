@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.33 2002/01/31 00:33:10 augustss Exp $	*/
+/*	$NetBSD: play.c,v 1.34 2002/02/02 20:20:24 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -68,7 +68,7 @@ int	channels;
 
 char	const *play_errstring = NULL;
 size_t	bufsize;
-int	audiofd, ctlfd;
+int	audiofd;
 int	exitstatus = EXIT_SUCCESS;
 
 int
@@ -80,7 +80,6 @@ main(argc, argv)
 	int	ch;
 	int	iflag = 0;
 	const char *device = NULL;
-	const char *ctldev = NULL;
 
 	while ((ch = getopt(argc, argv, "b:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
 		switch (ch) {
@@ -95,7 +94,7 @@ main(argc, argv)
 				errx(1, "channels must be positive");
 			break;
 		case 'C':
-			ctldev = optarg;
+			/* Ignore, compatibility */
 			break;
 		case 'd':
 			device = optarg;
@@ -163,23 +162,17 @@ main(argc, argv)
 	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
 	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
 		device = _PATH_SOUND;
-	if (ctldev == NULL && (ctldev = getenv("AUDIOCTLDEVICE")) == NULL)
-		ctldev = _PATH_AUDIOCTL;
 
 	audiofd = open(device, O_WRONLY);
 	if (audiofd < 0 && device == _PATH_SOUND) {
 		device = _PATH_SOUND0;
-		ctldev = _PATH_AUDIOCTL0;
 		audiofd = open(device, O_WRONLY);
 	}
 
 	if (audiofd < 0)
 		err(1, "failed to open %s", device);
-	ctlfd = open(ctldev, O_RDWR);
-	if (ctlfd < 0)
-		err(1, "failed to open %s", ctldev);
 
-	if (ioctl(ctlfd, AUDIO_GETINFO, &info) < 0)
+	if (ioctl(audiofd, AUDIO_GETINFO, &info) < 0)
 		err(1, "failed to get audio info");
 	bufsize = info.play.buffer_size;
 	if (bufsize < 32 * 1024)
@@ -206,7 +199,7 @@ cleanup(signo)
 
 	close(audiofd);
 	(void)ioctl(audiofd, AUDIO_FLUSH, NULL);
-	(void)ioctl(ctlfd, AUDIO_SETINFO, &info);
+	(void)ioctl(audiofd, AUDIO_SETINFO, &info);
 	exit(exitstatus);
 }
 
@@ -264,7 +257,7 @@ play(file)
 	 * get the header length and set up the audio device
 	 */
 	if ((hdrlen = audioctl_write_fromhdr(addr,
-	    (size_t)filesize, ctlfd, &datasize)) < 0) {
+	    (size_t)filesize, audiofd, &datasize)) < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);
 		else
@@ -320,7 +313,7 @@ play_fd(file, fd)
 			return;
 		err(1, "unexpected EOF");
 	}
-	hdrlen = audioctl_write_fromhdr(buffer, nr, ctlfd, &datasize);
+	hdrlen = audioctl_write_fromhdr(buffer, nr, audiofd, &datasize);
 	if (hdrlen < 0) {
 		if (play_errstring)
 			errx(1, "%s: %s", play_errstring, file);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiorecord.1,v 1.22 2002/01/25 15:35:32 mrg Exp $
+.\"	$NetBSD: audiorecord.1,v 1.23 2002/02/02 20:20:25 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998-1999 Matthew R. Green
 .\" All rights reserved.
@@ -36,7 +36,6 @@
 .Nm
 .Op Fl afhV
 .Op Fl b Ar balance
-.Op Fl C Ar ctl
 .Op Fl F Ar format
 .Op Fl c Ar channels
 .Op Fl d Ar device
@@ -69,11 +68,6 @@ Append to the specified file, rather than overwriting.
 Set the balance to
 .Ar balance .
 This value must be between 0 and 63.
-.It Fl C
-Set the audio control device to be
-.Ar ctl .
-The default is
-.Pa /dev/audioctl0 .
 .It Fl F
 Set the output header format to
 .Ar format .

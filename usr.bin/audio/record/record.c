@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.22 2002/01/31 00:03:24 augustss Exp $	*/
+/*	$NetBSD: record.c,v 1.23 2002/02/02 20:20:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -53,11 +53,10 @@
 audio_info_t info, oinfo;
 ssize_t	total_size = -1;
 const char *device;
-const char *ctldev;
 int	format = AUDIO_FORMAT_SUN;
 char	*header_info;
 char	default_info[8] = { '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0' };
-int	audiofd, ctlfd, outfd;
+int	audiofd, outfd;
 int	qflag, aflag, fflag;
 int	verbose;
 int	monitor_gain, omonitor_gain;
@@ -103,7 +102,7 @@ main(argc, argv)
 				errx(1, "balance must be between 0 and 63\n");
 			break;
 		case 'C':
-			ctldev = optarg;
+			/* Ignore, compatibility */
 			break;
 		case 'F':
 			format = audio_format_from_str(optarg);
@@ -189,26 +188,20 @@ main(argc, argv)
 	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
 	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
 		device = _PATH_SOUND;
-	if (ctldev == NULL && (ctldev = getenv("AUDIOCTLDEVICE")) == NULL)
-		ctldev = _PATH_AUDIOCTL;
 
 	audiofd = open(device, O_RDONLY);
 	if (audiofd < 0 && device == _PATH_SOUND) {
 		device = _PATH_SOUND0;
-		ctldev = _PATH_AUDIOCTL0;
 		audiofd = open(device, O_WRONLY);
 	}
 	if (audiofd < 0)
 		err(1, "failed to open %s", device);
-	ctlfd = open(ctldev, O_RDWR);
-	if (ctlfd < 0)
-		err(1, "failed to open %s", ctldev);
 
 	/*
 	 * work out the buffer size to use, and allocate it.  also work out
 	 * what the old monitor gain value is, so that we can reset it later.
 	 */
-	if (ioctl(ctlfd, AUDIO_GETINFO, &oinfo) < 0)
+	if (ioctl(audiofd, AUDIO_GETINFO, &oinfo) < 0)
 		err(1, "failed to get audio info");
 	bufsize = oinfo.record.buffer_size;
 	if (bufsize < 32 * 1024)
@@ -266,7 +259,7 @@ main(argc, argv)
 		monitor_gain = oinfo.monitor_gain;
 
 	info.mode = AUMODE_RECORD;
-	if (ioctl(ctlfd, AUDIO_SETINFO, &info) < 0)
+	if (ioctl(audiofd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to reset audio info");
 
 	signal(SIGINT, cleanup);
@@ -305,16 +298,15 @@ cleanup(signo)
 	int signo;
 {
 
-	close(audiofd);
 	rewrite_header();
 	close(outfd);
 	if (omonitor_gain) {
 		AUDIO_INITINFO(&info);
 		info.monitor_gain = omonitor_gain;
-		if (ioctl(ctlfd, AUDIO_SETINFO, &info) < 0)
+		if (ioctl(audiofd, AUDIO_SETINFO, &info) < 0)
 			err(1, "failed to reset audio info");
 	}
-	close(ctlfd);
+	close(audiofd);
 	exit(0);
 }
 
@@ -655,7 +647,6 @@ usage()
 	fprintf(stderr, "Usage: %s [-afhqV] [options] {files ...|-}\n",
 	    getprogname());
 	fprintf(stderr, "Options:\n\t"
-	    "-C audio control device\n\t"
 	    "-F format\n\t"
 	    "-b balance (0-63)\n\t"
 	    "-c channels\n\t"
