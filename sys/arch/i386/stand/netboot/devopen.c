@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1997/03/22 09:18:10 thorpej Exp $	 */
+/*	$NetBSD: devopen.c,v 1.3 1997/07/15 12:45:22 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -36,7 +36,7 @@
  * bootfile from tftp overrides! TODO: pass (net) device to net_open
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 

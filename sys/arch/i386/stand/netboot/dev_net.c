@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.4 1997/06/13 13:28:19 drochner Exp $	 */
+/*	$NetBSD: dev_net.c,v 1.5 1997/07/15 12:45:23 drochner Exp $	 */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  * supports BOOTP, RARP and BOOTPARAM
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/in.h>

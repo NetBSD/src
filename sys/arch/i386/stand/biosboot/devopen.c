@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.3 1997/07/04 10:52:44 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.4 1997/07/15 12:45:26 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -32,7 +32,7 @@
  */
 
 
-#include <sys/param.h>
+#include <sys/types.h>
 #ifdef COMPAT_OLDBOOT
 #include <sys/disklabel.h>
 #endif
