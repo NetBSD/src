@@ -1,4 +1,4 @@
-/*	$NetBSD: umount.c,v 1.34 2004/04/21 15:20:40 christos Exp $	*/
+/*	$NetBSD: umount.c,v 1.35 2004/09/01 01:47:09 chs Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)umount.c	8.8 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: umount.c,v 1.34 2004/04/21 15:20:40 christos Exp $");
+__RCSID("$NetBSD: umount.c,v 1.35 2004/09/01 01:47:09 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,9 +78,9 @@ static int	 sacmp(const struct sockaddr *, const struct sockaddr *);
 static int	 xdr_dir(XDR *, char *);
 #endif /* !SMALL */
 
-static int	 fflag, raw;
+static int	 fflag;
 static char	*getmntname(const char *, mntwhat, char **);
-static int	 umountfs(const char *, const char **);
+static int	 umountfs(const char *, const char **, int);
 static void	 usage(void) __attribute__((__noreturn__));
 
 int	 main(int, char *[]);
@@ -88,7 +88,7 @@ int	 main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	int ch, errs, all = 0;
+	int ch, errs, all = 0, raw = 0;
 #ifndef SMALL
 	int mnts;
 	struct statvfs *mntbuf;
@@ -162,19 +162,20 @@ main(int argc, char *argv[])
 		for (errs = 0, mnts--; mnts > 0; mnts--) {
 			if (checkvfsname(mntbuf[mnts].f_fstypename, typelist))
 				continue;
-			if (umountfs(mntbuf[mnts].f_mntonname, typelist) != 0)
+			if (umountfs(mntbuf[mnts].f_mntonname, typelist,
+				     raw) != 0)
 				errs = 1;
 		}
 	} else 
 #endif /* !SMALL */
 		for (errs = 0; *argv != NULL; ++argv)
-			if (umountfs(*argv, typelist) != 0)
+			if (umountfs(*argv, typelist, raw) != 0)
 				errs = 1;
 	return errs;
 }
 
 static int
-umountfs(const char *name, const char **typelist)
+umountfs(const char *name, const char **typelist, int raw)
 {
 #ifndef SMALL
 	enum clnt_stat clnt_stat;
