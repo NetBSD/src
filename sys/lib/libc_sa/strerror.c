@@ -1,12 +1,15 @@
-/*	$NetBSD: strerror.c,v 1.2 1994/10/26 05:36:55 cgd Exp $	*/
+/*	$NetBSD: strerror.c,v 1.3 1995/04/22 14:01:50 cgd Exp $	*/
 
+#include <sys/types.h>
 #include <sys/errno.h>
+
+size_t	strlen __P((const char *));				/* XXX */
 
 char *
 strerror(err)
 	int err;
 {
-	char ebuf[1024] = "Unknown error: code ";
+	static char ebuf[1024] = "Unknown error: code ";
 	char *p;
 	int length;
 
