@@ -121,7 +121,8 @@ stacktop(regs, sp)
 
 #define HIWORD	0xffff0000
 #define LOWORD	0x0000ffff
-#define LINKA6	0x4e560000	/* link a6,#x    */
+#define LINKLA6	0x480e0000	/* linkl a6,#x    */
+#define LINKWA6	0x4e560000	/* linkw a6,#x    */
 #define ADDLSP	0xdffc0000	/* addl #x,sp    */
 #define ADDWSP	0xdefc0000	/* addw #x,sp    */
 #define LEASP	0x4fef0000	/* lea	sp@(x),sp*/
@@ -367,7 +368,11 @@ findregs(sp, addr)
 	int  regp;
 
 	instruc = get(addr, ISP);
-	if ((instruc & HIWORD) == LINKA6) {
+	if ((instruc & HIWORD) == LINKLA6) {
+		instruc = get(addr + 2, ISP);
+		addr += 6;
+		regp = sp->k_fp + instruc;
+	} else if ((instruc & HIWORD) == LINKWA6) {
 		addr += 4;
 		if ((instruc &= LOWORD) == 0) {
 			/* look for addl */
