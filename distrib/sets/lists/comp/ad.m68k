@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.18 2001/04/14 12:40:09 kleink Exp $
+# $NetBSD: ad.m68k,v 1.19 2001/04/14 22:53:34 kleink Exp $
 ./usr/include/m68k	comp-c-include
 ./usr/include/m68k/ansi.h	comp-c-include
 ./usr/include/m68k/aout_machdep.h	comp-c-include
@@ -21,6 +21,7 @@
 ./usr/include/m68k/frame.h	comp-c-include
 ./usr/include/m68k/ieee.h	comp-c-include
 ./usr/include/m68k/ieeefp.h	comp-c-include
+./usr/include/m68k/int_const.h	comp-c-include
 ./usr/include/m68k/int_mwgwtypes.h	comp-c-include
 ./usr/include/m68k/int_types.h	comp-c-include
 ./usr/include/m68k/kcore.h	comp-c-include
