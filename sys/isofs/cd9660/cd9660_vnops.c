@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.64.2.3 2002/01/10 19:59:36 thorpej Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.64.2.4 2002/09/23 11:17:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.64.2.3 2002/01/10 19:59:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.64.2.4 2002/09/23 11:17:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1026,6 +1026,7 @@ const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
+	{ &vop_kqfilter_desc, fifo_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
 	{ &vop_fsync_desc, fifo_fsync },		/* fsync */
