@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.115 1998/03/27 13:02:21 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.116 1998/06/05 20:04:15 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -2009,7 +2009,7 @@ sys_fsync(p, v, retval)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
+	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT, p);
 	VOP_UNLOCK(vp, 0);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.15 1998/03/01 02:23:25 fvdl Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.16 1998/06/05 19:53:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993, 1995
@@ -241,7 +241,7 @@ lfs_fsync(v)
 
 	TIMEVAL_TO_TIMESPEC(&time, &ts);
 	return (VOP_UPDATE(ap->a_vp, &ts, &ts,
-	    ap->a_waitfor == MNT_WAIT ? LFS_SYNC : 0));
+	    (ap->a_flags & FSYNC_WAIT) != 0 ? LFS_SYNC : 0));	/* XXX */
 }
 
 /*
