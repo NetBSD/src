@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.50 2001/09/28 18:02:45 jdolecek Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.51 2002/05/02 17:55:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -122,6 +122,7 @@ struct socket {
 					struct uio *uio, struct mbuf **mp0,
 					struct mbuf **controlp, int *flagsp));
 	uid_t		so_uid;		/* who opened the socket */
+	struct mbuf	*so_pendfree;	/* loaned-page mbufs w/ frees pending */
 };
 
 /*

@@ -1,4 +1,40 @@
-/*	$NetBSD: uipc_socket.c,v 1.63 2002/04/06 08:04:17 matt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.64 2002/05/02 17:55:51 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +72,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.63 2002/04/06 08:04:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.64 2002/05/02 17:55:51 thorpej Exp $");
+
+#include "opt_sock_counters.h"
+#include "opt_sosend_loan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +92,32 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.63 2002/04/06 08:04:17 matt Exp $"
 #include <sys/resourcevar.h>
 #include <sys/pool.h>
 
+#include <uvm/uvm.h>
+
 struct pool	socket_pool;
 
 extern int	somaxconn;			/* patchable (XXX sysctl) */
 int		somaxconn = SOMAXCONN;
+
+#ifdef SOSEND_COUNTERS
+#include <sys/device.h>
+
+struct evcnt sosend_loan_big = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "sosend", "loan big");
+struct evcnt sosend_copy_big = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "sosend", "copy big");
+struct evcnt sosend_copy_small = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "sosend", "copy small");
+struct evcnt sosend_kvalimit = EVCNT_INITIALIZER(EVCNT_TYPE_MISC,
+    NULL, "sosend", "kva limit");
+
+#define	SOSEND_COUNTER_INCR(ev)		(ev)->ev_count++
+
+#else
+
+#define	SOSEND_COUNTER_INCR(ev)		/* nothing */
+
+#endif /* SOSEND_COUNTERS */
 
 void
 soinit(void)
@@ -64,7 +125,185 @@ soinit(void)
 
 	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0,
 	    "sockpl", NULL);
+
+#ifdef SOSEND_COUNTERS
+	evcnt_attach_static(&sosend_loan_big);
+	evcnt_attach_static(&sosend_copy_big);
+	evcnt_attach_static(&sosend_copy_small);
+	evcnt_attach_static(&sosend_kvalimit);
+#endif /* SOSEND_COUNTERS */
 }
+
+#ifdef SOSEND_LOAN
+
+struct mbuf *so_pendfree;
+
+int somaxkva = 16 * 1024 * 1024;
+int socurkva;
+int sokvawaiters;
+
+#define	SOCK_LOAN_THRESH	4096
+#define	SOCK_LOAN_CHUNK		65536
+
+static void
+sodoloanfree(caddr_t buf, u_int size)
+{
+	struct vm_page **pgs;
+	vaddr_t va, sva, eva;
+	vsize_t len;
+	paddr_t pa;
+	int i, npgs;
+
+	eva = round_page((vaddr_t) buf + size);
+	sva = trunc_page((vaddr_t) buf);
+	len = eva - sva;
+	npgs = len >> PAGE_SHIFT;
+
+	pgs = alloca(npgs * sizeof(*pgs));
+
+	for (i = 0, va = sva; va < eva; i++, va += PAGE_SIZE) {
+		if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+			panic("sodoloanfree: va 0x%lx not mapped", va);
+		pgs[i] = PHYS_TO_VM_PAGE(pa);
+	}
+
+	pmap_kremove(sva, len);
+	pmap_update(pmap_kernel());
+	uvm_unloan(pgs, npgs, UVM_LOAN_TOPAGE);
+	uvm_km_free(kernel_map, sva, len);
+	socurkva -= len;
+	if (sokvawaiters)
+		wakeup(&socurkva);
+}
+
+static size_t
+sodopendfree(struct socket *so)
+{
+	struct mbuf *m;
+	size_t rv = 0;
+	int s;
+
+	s = splvm();
+
+	for (;;) {
+		m = so_pendfree;
+		if (m == NULL)
+			break;
+		so_pendfree = m->m_next;
+		splx(s);
+
+		rv += m->m_ext.ext_size;
+		sodoloanfree(m->m_ext.ext_buf, m->m_ext.ext_size);
+		s = splvm();
+		pool_cache_put(&mbpool_cache, m);
+	}
+
+	for (;;) {
+		m = so->so_pendfree;
+		if (m == NULL)
+			break;
+		so->so_pendfree = m->m_next;
+		splx(s);
+
+		rv += m->m_ext.ext_size;
+		sodoloanfree(m->m_ext.ext_buf, m->m_ext.ext_size);
+		s = splvm();
+		pool_cache_put(&mbpool_cache, m);
+	}
+
+	splx(s);
+	return (rv);
+}
+
+static void
+soloanfree(struct mbuf *m, caddr_t buf, u_int size, void *arg)
+{
+	struct socket *so = arg;
+	int s;
+
+	if (m == NULL) {
+		sodoloanfree(buf, size);
+		return;
+	}
+
+	s = splvm();
+	m->m_next = so->so_pendfree;
+	so->so_pendfree = m;
+	splx(s);
+	if (sokvawaiters)
+		wakeup(&socurkva);
+}
+
+static long
+sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
+{
+	struct iovec *iov = uio->uio_iov;
+	vaddr_t sva, eva;
+	vsize_t len;
+	struct vm_page **pgs;
+	vaddr_t lva, va;
+	int npgs, s, i, error;
+
+	if (uio->uio_segflg != UIO_USERSPACE)
+		return (0);
+
+	if (iov->iov_len < (size_t) space)
+		space = iov->iov_len;
+	if (space > SOCK_LOAN_CHUNK)
+		space = SOCK_LOAN_CHUNK;
+
+	eva = round_page((vaddr_t) iov->iov_base + space);
+	sva = trunc_page((vaddr_t) iov->iov_base);
+	len = eva - sva;
+	npgs = len >> PAGE_SHIFT;
+
+	while (socurkva + len > somaxkva) {
+		if (sodopendfree(so))
+			continue;
+		SOSEND_COUNTER_INCR(&sosend_kvalimit);
+		s = splvm();
+		sokvawaiters++;
+		(void) tsleep(&socurkva, PVM, "sokva", 0);
+		sokvawaiters--;
+		splx(s);
+	}
+
+	lva = uvm_km_valloc_wait(kernel_map, len);
+	if (lva == 0)
+		return (0);
+	socurkva += len;
+
+	pgs = alloca(npgs * sizeof(*pgs));
+
+	error = uvm_loan(&uio->uio_procp->p_vmspace->vm_map, sva, len,
+	    pgs, UVM_LOAN_TOPAGE);
+	if (error) {
+		uvm_km_free(kernel_map, lva, len);
+		socurkva -= len;
+		return (0);
+	}
+
+	for (i = 0, va = lva; i < npgs; i++, va += PAGE_SIZE)
+		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(pgs[i]), VM_PROT_READ);
+	pmap_update(pmap_kernel());
+
+	lva += (vaddr_t) iov->iov_base & PAGE_MASK;
+
+	MEXTADD(m, (caddr_t) lva, space, M_MBUF, soloanfree, so);
+
+	uio->uio_resid -= space;
+	/* uio_offset not updated, not set/used for write(2) */
+	uio->uio_iov->iov_base = (caddr_t) uio->uio_iov->iov_base + space;
+	uio->uio_iov->iov_len -= space;
+	if (uio->uio_iov->iov_len == 0) {
+		uio->uio_iov++;
+		uio->uio_iovcnt--;
+	}
+
+	return (space);
+}
+
+#endif /* SOSEND_LOAN */
 
 /*
  * Socket operation routines.
@@ -151,6 +390,9 @@ solisten(struct socket *so, int backlog)
 void
 sofree(struct socket *so)
 {
+#ifdef SOSEND_LOAN
+	struct mbuf *m;
+#endif
 
 	if (so->so_pcb || (so->so_state & SS_NOFDREF) == 0)
 		return;
@@ -165,6 +407,13 @@ sofree(struct socket *so)
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
+#ifdef SOSEND_LOAN
+	while ((m = so->so_pendfree) != NULL) {
+		so->so_pendfree = m->m_next;
+		m->m_next = so_pendfree;
+		so_pendfree = m;
+	}
+#endif
 	pool_put(&socket_pool, so);
 }
 
@@ -320,6 +569,9 @@ sodisconnect(struct socket *so)
 	    (struct proc *)0);
  bad:
 	splx(s);
+#ifdef SOSEND_LOAN
+	sodopendfree(so);
+#endif
 	return (error);
 }
 
@@ -349,6 +601,10 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 	struct mbuf	**mp, *m;
 	long		space, len, resid, clen, mlen;
 	int		error, s, dontroute, atomic;
+
+#ifdef SOSEND_LOAN
+	sodopendfree(so);
+#endif
 
 	p = curproc;		/* XXX */
 	clen = 0;
@@ -435,24 +691,32 @@ sosend(struct socket *so, struct mbuf *addr, struct uio *uio, struct mbuf *top,
 					MGET(m, M_WAIT, MT_DATA);
 					mlen = MLEN;
 				}
+#ifdef SOSEND_LOAN
+				if (uio->uio_iov->iov_len >= SOCK_LOAN_THRESH &&
+				    space >= SOCK_LOAN_THRESH &&
+				    (len = sosend_loan(so, uio, m,
+						       space)) != 0) {
+					SOSEND_COUNTER_INCR(&sosend_loan_big);
+					space -= len;
+					goto have_data;
+				}
+#endif /* SOSEND_LOAN */
 				if (resid >= MINCLSIZE && space >= MCLBYTES) {
+					SOSEND_COUNTER_INCR(&sosend_copy_big);
 					MCLGET(m, M_WAIT);
 					if ((m->m_flags & M_EXT) == 0)
 						goto nopages;
 					mlen = MCLBYTES;
-#ifdef	MAPPED_MBUFS
-					len = lmin(MCLBYTES, resid);
-#else
 					if (atomic && top == 0) {
 						len = lmin(MCLBYTES - max_hdr,
 						    resid);
 						m->m_data += max_hdr;
 					} else
 						len = lmin(MCLBYTES, resid);
-#endif
 					space -= len;
 				} else {
-nopages:
+ nopages:
+					SOSEND_COUNTER_INCR(&sosend_copy_small);
 					len = lmin(lmin(mlen, resid), space);
 					space -= len;
 					/*
@@ -464,6 +728,9 @@ nopages:
 				}
 				error = uiomove(mtod(m, caddr_t), (int)len,
 				    uio);
+#ifdef SOSEND_LOAN
+ have_data:
+#endif
 				resid = uio->uio_resid;
 				m->m_len = len;
 				*mp = m;
@@ -539,6 +806,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 	int		flags, len, error, s, offset, moff, type, orig_resid;
 	struct protosw	*pr;
 	struct mbuf	*nextrecord;
+
+#ifdef SOSEND_LOAN
+	sodopendfree(so);
+#endif
 
 	pr = so->so_proto;
 	mp = mp0;
