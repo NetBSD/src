@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.25 2002/06/14 19:05:19 wiz Exp $	*/
+/*	$NetBSD: print.c,v 1.26 2002/07/09 14:59:54 pooka Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -41,9 +41,9 @@
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
-FILE_RCSID("@(#)Id: print.c,v 1.35 2002/05/16 18:45:56 christos Exp ")
+FILE_RCSID("@(#)Id: print.c,v 1.38 2002/07/03 18:37:44 christos Exp ")
 #else
-__RCSID("$NetBSD: print.c,v 1.25 2002/06/14 19:05:19 wiz Exp $");
+__RCSID("$NetBSD: print.c,v 1.26 2002/07/09 14:59:54 pooka Exp $");
 #endif
 #endif  /* lint */
 
@@ -200,7 +200,7 @@ magwarn(const char *f, ...)
 
 #ifndef COMPILE_ONLY
 char *
-fmttime(long int v, int local)
+fmttime(long v, int local)
 {
 	char *pp, *rt;
 	time_t t = (time_t)v;

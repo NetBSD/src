@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.27 2002/06/14 19:05:18 wiz Exp $	*/
+/*	$NetBSD: file.c,v 1.28 2002/07/09 14:59:54 pooka Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -26,15 +26,12 @@
  *
  * 4. This notice may not be removed or altered.
  */
-#include "file.h"
 
-#include <stdio.h>
+#include "file.h"
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/types.h>
 #include <sys/param.h>	/* for MAXPATHLEN */
-#include <sys/stat.h>
 #include <fcntl.h>	/* for open() */
 #ifdef RESTORE_TIME
 # if (__COHERENT__ >= 0x420)
@@ -64,9 +61,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.62 2002/05/16 18:45:56 christos Exp ")
+FILE_RCSID("@(#)Id: file.c,v 1.66 2002/07/03 19:00:41 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.27 2002/06/14 19:05:18 wiz Exp $");
+__RCSID("$NetBSD: file.c,v 1.28 2002/07/09 14:59:54 pooka Exp $");
 #endif
 #endif	/* lint */
 

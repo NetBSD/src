@@ -111,7 +111,7 @@
 #define PACKAGE "file"
 
 /* Version number of package */
-#define VERSION "3.38"
+#define VERSION "3.39"
 
 /* HAVE_TM_ZONE */
 #define HAVE_TM_ZONE 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.16 2002/06/14 19:05:19 wiz Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.17 2002/07/09 14:59:54 pooka Exp $	*/
 
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
@@ -28,10 +28,7 @@
  */
 
 #include "file.h"
-#include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -58,9 +55,9 @@
 #include <sys/cdefs.h>
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: fsmagic.c,v 1.31 2000/04/11 02:32:35 christos Exp ")
+FILE_RCSID("@(#)Id: fsmagic.c,v 1.36 2002/07/03 19:00:41 christos Exp ")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.16 2002/06/14 19:05:19 wiz Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.17 2002/07/09 14:59:54 pooka Exp $");
 #endif
 #endif	/* lint */
 
