@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.38.6.9 2003/01/03 17:25:07 thorpej Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.38.6.10 2003/01/04 18:56:44 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ extern struct simplelock xpmsg_lock;
  * The cpuinfo structure. This structure maintains information about one
  * currently installed CPU (there may be several of these if the machine
  * supports multiple CPUs, as on some Sun4m architectures). The information
- * in this structure supercedes the old "cpumod", "mmumod", and similar
+ * in this structure supersedes the old "cpumod", "mmumod", and similar
  * fields.
  */
 
@@ -170,55 +170,17 @@ struct cpu_info {
 	 */
 	struct cpu_info * __volatile ci_self;
 
-	int		node;		/* PROM node for this CPU */
-
-	/* CPU information */
-	char		*cpu_name;	/* CPU model */
-	int		cpu_impl;	/* CPU implementation code */
-	int		cpu_vers;	/* CPU version code */
-	int		mmu_impl;	/* MMU implementation code */
-	int		mmu_vers;	/* MMU version code */
-	int		master;		/* 1 if this is bootup CPU */
+	/* Inter-processor message area */
+	struct xpmsg msg;
 
 	int		ci_cpuid;	/* CPU index (see cpus[] array) */
-	int		mid;		/* Module ID for MP systems */
-	int		mbus;		/* 1 if CPU is on MBus */
-	int		mxcc;		/* 1 if a MBus-level MXCC is present */
-
-	vaddr_t		mailbox;	/* VA of CPU's mailbox */
-
-	int		mmu_ncontext;	/* Number of contexts supported */
-	int		mmu_nregion; 	/* Number of regions supported */
-	int		mmu_nsegment;	/* [4/4c] Segments */
-	int		mmu_npmeg;	/* [4/4c] Pmegs */
-	int		sun4_mmu3l;	/* [4]: 3-level MMU present */
-#if defined(SUN4_MMU3L)
-#define HASSUN4_MMU3L	(cpuinfo.sun4_mmu3l)
-#else
-#define HASSUN4_MMU3L	(0)
-#endif
 
 	/* Context administration */
 	int		*ctx_tbl;	/* [4m] SRMMU-edible context table */
 	paddr_t		ctx_tbl_pa;	/* [4m] ctx table physical address */
 
-/* XXX - of these, we currently use only cpu_type */
-	int		arch;		/* Architecture: CPU_SUN4x */
-	int		class;		/* Class: SuperSPARC, microSPARC... */
-	int		classlvl;	/* Iteration in class: 1, 2, etc. */
-	int		classsublvl;	/* stepping in class (version) */
-	int		cpu_type;	/* Type: see CPUTYP_xxx below */
-
-	int		hz;		/* Clock speed */
-
 	/* Cache information */
 	struct cacheinfo	cacheinfo;	/* see cache.h */
-
-	/* FPU information */
-	int		fpupresent;	/* true if FPU is present */
-	int		fpuvers;	/* FPU revision */
-	char		*fpu_name;	/* FPU model */
-	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
 
 	/* various flags to workaround anomalies in chips */
 	__volatile int	flags;		/* see CPUFLG_xxx, below */
@@ -232,16 +194,20 @@ struct cpu_info {
 	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
 } while (0)
 
+	int		sun4_mmu3l;	/* [4]: 3-level MMU present */
+#if defined(SUN4_MMU3L)
+#define HASSUN4_MMU3L	(cpuinfo.sun4_mmu3l)
+#else
+#define HASSUN4_MMU3L	(0)
+#endif
+
 	/*
 	 * The following pointers point to processes that are somehow
 	 * associated with this CPU--running on it, using its FPU,
 	 * etc.
 	 */
-
 	struct	lwp	*ci_curlwp;		/* CPU owner */
 	struct	lwp 	*fplwp;			/* FPU owner */
-	/* XXX */
-	__volatile void	*ci_ddb_regs;		/* DDB regs */
 
 	/*
 	 * Idle PCB and Interrupt stack;
@@ -253,18 +219,6 @@ struct cpu_info {
 #define REDSIZE		(8*96)			/* some room for bouncing */
 
 	struct	pcb	*curpcb;		/* CPU's PCB & kernel stack */
-
-	/*
-	 * The following are function pointers to do interesting CPU-dependent
-	 * things without having to do type-tests all the time
-	 */
-
-	/* bootup things: access to physical memory */
-	u_int	(*read_physmem)(u_int addr, int space);
-	void	(*write_physmem)(u_int addr, u_int data);
-	void	(*cache_tablewalks)(void);
-	void	(*mmu_enable)(void);
-	void	(*hotfix)(struct cpu_info *);
 
 	/* locore defined: */
 	void	(*get_syncflt)(void);		/* Not C-callable */
@@ -283,7 +237,6 @@ struct cpu_info {
 	 * uses inter-processor signals to flush the cache on
 	 * all processor modules.
 	 */
-	void	(*cache_enable)(void);
 	void	(*cache_flush)(caddr_t, u_int, int);
 	void	(*sp_cache_flush)(caddr_t, u_int, int);
 	void	(*vcache_flush_page)(int, int);
@@ -303,6 +256,59 @@ struct cpu_info {
 	void	(*zero_page)(paddr_t);
 	void	(*copy_page)(paddr_t, paddr_t);
 
+	void	(*cache_enable)(void);
+
+	int	cpu_type;	/* Type: see CPUTYP_xxx below */
+
+	/* CPU information */
+	int		node;		/* PROM node for this CPU */
+	int		mid;		/* Module ID for MP systems */
+	int		mbus;		/* 1 if CPU is on MBus */
+	int		mxcc;		/* 1 if a MBus-level MXCC is present */
+	char		*cpu_name;	/* CPU model */
+	int		cpu_impl;	/* CPU implementation code */
+	int		cpu_vers;	/* CPU version code */
+	int		mmu_impl;	/* MMU implementation code */
+	int		mmu_vers;	/* MMU version code */
+	int		master;		/* 1 if this is bootup CPU */
+
+	vaddr_t		mailbox;	/* VA of CPU's mailbox */
+
+	int		mmu_ncontext;	/* Number of contexts supported */
+	int		mmu_nregion; 	/* Number of regions supported */
+	int		mmu_nsegment;	/* [4/4c] Segments */
+	int		mmu_npmeg;	/* [4/4c] Pmegs */
+
+/* XXX - we currently don't actually use the following */
+	int		arch;		/* Architecture: CPU_SUN4x */
+	int		class;		/* Class: SuperSPARC, microSPARC... */
+	int		classlvl;	/* Iteration in class: 1, 2, etc. */
+	int		classsublvl;	/* stepping in class (version) */
+
+	int		hz;		/* Clock speed */
+
+	/* FPU information */
+	int		fpupresent;	/* true if FPU is present */
+	int		fpuvers;	/* FPU revision */
+	char		*fpu_name;	/* FPU model */
+	char		fpu_namebuf[32];/* Buffer for FPU name, if necessary */
+
+	/* XXX */
+	__volatile void	*ci_ddb_regs;		/* DDB regs */
+
+	/*
+	 * The following are function pointers to do interesting CPU-dependent
+	 * things without having to do type-tests all the time
+	 */
+
+	/* bootup things: access to physical memory */
+	u_int	(*read_physmem)(u_int addr, int space);
+	void	(*write_physmem)(u_int addr, u_int data);
+	void	(*cache_tablewalks)(void);
+	void	(*mmu_enable)(void);
+	void	(*hotfix)(struct cpu_info *);
+
+
 #if 0
 	/* hardware-assisted block operation routines */
 	void		(*hwbcopy)(const void *from, void *to, size_t len);
@@ -317,9 +323,6 @@ struct cpu_info {
 	 * unrecoverable faults end up here.
 	 */
 	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
-
-	/* Inter-processor message area */
-	struct xpmsg msg;
 
 	/* Module Control Registers */
 	/*bus_space_handle_t*/ long ci_mbusport;
