@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.57 2001/06/28 05:45:49 atatat Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.58 2001/10/30 13:37:21 itohy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -255,8 +255,8 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 			error = 0;
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO))
-		if (error == 0) {
+	if (ktriov != NULL) {
+		if (error == 0)
 			ktrgenio(p, fd, UIO_READ, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
