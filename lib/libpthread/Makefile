@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2003/01/19 19:55:13 thorpej Exp $
+#	$NetBSD: Makefile,v 1.11 2003/01/20 20:10:19 christos Exp $
 #
 
 WARNS=	2
@@ -22,7 +22,7 @@ INCSDIR=/usr/include
 ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 .PATH:	${ARCHDIR}
 
-CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR}
+CPPFLAGS+=	-I${ARCHDIR} -I${.CURDIR} -I${.OBJDIR} -D_LIBC
 
 DPSRCS+=	assym.h
 
@@ -53,6 +53,7 @@ SRCS+=	pthread_specific.c
 SRCS+=  pthread_stack.c
 SRCS+=  pthread_debug.c
 SRCS+=	sched.c
+SRCS+=	sem.c
 # Architecture-dependent files
 SRCS+=	pthread_switch.S _context_u.S
 .if exists(${ARCHDIR}/pthread_md.c)
