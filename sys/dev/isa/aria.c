@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.18 2003/05/03 18:11:26 wiz Exp $	*/
+/*	$NetBSD: aria.c,v 1.19 2004/04/22 00:17:11 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.18 2003/05/03 18:11:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.19 2004/04/22 00:17:11 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -475,7 +475,7 @@ ariaattach(parent, self, aux)
 		printf(", SC18075 mixer");
 	printf("\n");
 
-	sprintf(aria_device.version, "%s", 
+	snprintf(aria_device.version, sizeof(aria_device.version), "%s", 
 		ARIA_MODEL & sc->sc_hardware ? "SC18026" : "SC18025");
 
 	audio_attach_mi(&aria_hw_if, (void *)sc, &sc->sc_dev);

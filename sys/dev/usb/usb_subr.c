@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.111 2004/03/15 10:35:04 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.112 2004/04/22 00:17:14 itojun Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.111 2004/03/15 10:35:04 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.112 2004/04/22 00:17:14 itojun Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -81,7 +81,8 @@ extern int usbdebug;
 #endif
 
 Static usbd_status usbd_set_config(usbd_device_handle, int);
-Static void usbd_devinfo_vp(usbd_device_handle, char *, char *, int);
+Static void usbd_devinfo_vp(usbd_device_handle, char *, size_t, char *,
+	size_t, int);
 Static char *usbd_get_string(usbd_device_handle, int, char *);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
@@ -237,7 +238,8 @@ usbd_trim_spaces(char *p)
 }
 
 void
-usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
+usbd_devinfo_vp(usbd_device_handle dev, char *v, size_t lv, char *p, size_t lp,
+	int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = NULL, *product = NULL;
@@ -283,13 +285,13 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 	}
 #endif
 	if (vendor != NULL && *vendor)
-		strcpy(v, vendor);
+		strlcpy(v, vendor, lv);
 	else
-		sprintf(v, "vendor 0x%04x", UGETW(udd->idVendor));
+		snprintf(v, lv, "vendor 0x%04x", UGETW(udd->idVendor));
 	if (product != NULL && *product)
-		strcpy(p, product);
+		strlcpy(p, product, lp);
 	else
-		sprintf(p, "product 0x%04x", UGETW(udd->idProduct));
+		snprintf(p, lp, "product 0x%04x", UGETW(udd->idProduct));
 }
 
 int
@@ -298,6 +300,7 @@ usbd_printBCD(char *cp, int bcd)
 	return (sprintf(cp, "%x.%02x", bcd >> 8, bcd & 0xff));
 }
 
+/* XXX cp not bounded */
 void
 usbd_devinfo(usbd_device_handle dev, int showclass, char *cp)
 {
@@ -306,7 +309,8 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp)
 	char product[USB_MAX_STRING_LEN];
 	int bcdDevice, bcdUSB;
 
-	usbd_devinfo_vp(dev, vendor, product, 1);
+	usbd_devinfo_vp(dev, vendor, sizeof(vendor), product,
+	    sizeof(product), 1);
 	cp += sprintf(cp, "%s %s", vendor, product);
 	if (showclass)
 		cp += sprintf(cp, ", class %d/%d",
@@ -1265,7 +1269,8 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
 	di->udi_bus = USBDEVUNIT(dev->bus->bdev);
 	di->udi_addr = dev->address;
 	di->udi_cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->udi_vendor, di->udi_product, usedev);
+	usbd_devinfo_vp(dev, di->udi_vendor, sizeof(di->udi_vendor),
+	    di->udi_product, sizeof(di->udi_product), usedev);
 	usbd_printBCD(di->udi_release, UGETW(dev->ddesc.bcdDevice));
 	di->udi_vendorNo = UGETW(dev->ddesc.idVendor);
 	di->udi_productNo = UGETW(dev->ddesc.idProduct);

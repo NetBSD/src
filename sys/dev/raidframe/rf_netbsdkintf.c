@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.178 2004/03/07 22:15:19 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.179 2004/04/22 00:17:13 itojun Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.178 2004/03/07 22:15:19 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.179 2004/04/22 00:17:13 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -403,7 +403,8 @@ raidattach(int num)
 		raidrootdev[raidID].dv_unit   = raidID;
 		raidrootdev[raidID].dv_parent = NULL;
 		raidrootdev[raidID].dv_flags  = 0;
-		sprintf(raidrootdev[raidID].dv_xname,"raid%d",raidID);
+		snprintf(raidrootdev[raidID].dv_xname,
+		    sizeof(raidrootdev[raidID].dv_xname), "raid%d", raidID);
 
 		RF_Malloc(raidPtrs[raidID], sizeof(RF_Raid_t),
 			  (RF_Raid_t *));
@@ -1602,7 +1603,8 @@ raidinit(RF_Raid_t *raidPtr)
 	/* XXX should check return code first... */
 	rs->sc_flags |= RAIDF_INITED;
 
-	sprintf(rs->sc_xname, "raid%d", unit);	/* XXX doesn't check bounds. */
+	/* XXX doesn't check bounds. */
+	snprintf(rs->sc_xname, sizeof(rs->sc_xname), "raid%d", unit);
 
 	rs->sc_dkdev.dk_name = rs->sc_xname;
 
@@ -2722,8 +2724,9 @@ rf_find_raid_components()
 						return(NULL);
 					}
 					
-					sprintf(ac->devname, "%s%c",
-						dv->dv_xname, 'a'+i);
+					snprintf(ac->devname,
+					    sizeof(ac->devname), "%s%c",
+					    dv->dv_xname, 'a'+i);
 					ac->dev = dev;
 					ac->vp = vp;
 					ac->clabel = clabel;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.51 2004/03/21 06:32:03 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.52 2004/04/22 00:17:12 itojun Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.51 2004/03/21 06:32:03 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.52 2004/04/22 00:17:12 itojun Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -465,9 +465,9 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 			raidPtr->raid_cinfo[c].ci_dev = ac->dev;
 			
 			memcpy(&raidPtr->raid_cinfo[c].ci_label,
-			       ac->clabel, sizeof(*ac->clabel));
-			sprintf(diskPtr->devname, "/dev/%s", 
-				ac->devname);
+			    ac->clabel, sizeof(*ac->clabel));
+			snprintf(diskPtr->devname, sizeof(diskPtr->devname),
+			    "/dev/%s", ac->devname);
 				
 			/* note the fact that this component was
 			   autoconfigured.  You'll need this info
@@ -517,7 +517,8 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 			/* Didn't find it at all!!  Component must
 			   really be dead */
 			disks[c].status = rf_ds_failed;
-			sprintf(disks[c].devname, "component%d", c);
+			snprintf(disks[c].devname, sizeof(disks[c].devname),
+			    "component%d", c);
 			numFailuresThisRow++;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.17 2003/01/01 00:10:22 thorpej Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.18 2004/04/22 00:17:12 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.17 2003/01/01 00:10:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofbus.c,v 1.18 2004/04/22 00:17:12 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,10 +110,12 @@ ofbus_attach(parent, dev, aux)
 		for (oba2.oba_unit = 0; oba2.oba_unit < units;
 		     oba2.oba_unit++) {
 			if (units > 1) {
-				sprintf(oba2.oba_ofname, "%s@%d", name,
-					oba2.oba_unit);
+				snprintf(oba2.oba_ofname,
+				    sizeof(oba2.oba_ofname), "%s@%d", name,
+				    oba2.oba_unit);
 			} else {
-				strcpy(oba2.oba_ofname, name);
+				strlcpy(oba2.oba_ofname, name,
+				    sizeof(oba2.oba_ofname));
 			}
 			config_found(dev, &oba2, ofbus_print);
 		}
