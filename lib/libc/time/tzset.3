@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.3 1995/03/10 00:05:56 jtc Exp $
+.\"	$NetBSD: tzset.3,v 1.4 1995/03/10 18:21:31 jtc Exp $
 .TH TZSET 3
 .SH NAME
 tzset \- initialize time conversion information
@@ -6,7 +6,6 @@ tzset \- initialize time conversion information
 .nf
 .B void tzset()
 .PP
-.B cc ... -lz
 .fi
 .SH DESCRIPTION
 .I Tzset
@@ -231,7 +230,7 @@ UTC leap seconds are loaded from
 .BR /usr/local/etc/zoneinfo/posixrules .
 .SH SEE ALSO
 getenv(3),
-newctime(3),
+ctime(3),
 time(2),
 tzfile(5)
 .\" @(#)newtzset.3	7.3
