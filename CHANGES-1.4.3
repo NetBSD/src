@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.14 2000/05/13 09:22:47 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.15 2000/05/13 17:22:20 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -270,14 +270,14 @@ sys/netinet/ip_input.c				1.112
 
   Handle large offsets inside very small options correctly.
 
-usr.sbin/wiconfig/Makefile			1.1-1.2
-usr.sbin/wiconfig/wiconfig.8			1.1-1.5
-usr.sbin/wiconfig/wiconfig.c			1.1-1.4
+usr.sbin/wiconfig/Makefile			1.1-1.2 (new)
+usr.sbin/wiconfig/wiconfig.8			1.1-1.5 (new)
+usr.sbin/wiconfig/wiconfig.c			1.1-1.4 (new)
 usr.sbin/Makefile				1.121 via patch
 sys/dev/pcmcia/Makefile				1.3
-sys/dev/pcmcia/if_wi_ieee.h			1.1-1.4
-sys/dev/pcmcia/if_wireg.h			1.1-1.5
-sys/dev/pcmcia/if_wivar.h			1.1-1.7
+sys/dev/pcmcia/if_wi_ieee.h			1.1-1.4 (new)
+sys/dev/pcmcia/if_wireg.h			1.1-1.5 (new)
+sys/dev/pcmcia/if_wivar.h			1.1-1.7 (new)
 sys/dev/pcmcia/if_wi.c				1.1-1.13,1.15-1.17 via patch
 sys/dev/pcmcia/files.pcmcia			1.15
 sys/dev/pcmcia/pcmciadevs			1.39
@@ -286,6 +286,7 @@ sys/dev/pcmcia/pcmciadevs_data.h		regenerate
 sys/net/if_media.h				1.16-1.17,1.19,1.21-1.23
 sys/net/if_media.c				1.9
 sys/net/if.h					1.46 (partial) via patch
+sys/net/if_ieee80211.h				1.1-1.2 (new)
 share/man/man4/wi.4				1.1-1.10 via patch
 share/man/man4/Makefile				patch
 share/man/man4/pcmcia.4				patch
@@ -327,3 +328,31 @@ usr.sbin/chown/chown.c				1.21
 sys/netinet/fil.c				1.32
 
   Fix bug in dealing with large offsets inside very small options.
+
+sys/dev/pci/isp_pci.c				patch
+sys/dev/ic/isp.c				patch
+sys/dev/ic/isp_inline.h				patch
+sys/dev/ic/isp_netbsd.c				patch
+sys/dev/ic/isp_netbsd.h				patch
+sys/dev/ic/ispmbox.h				patch
+sys/dev/ic/ispreg.h				patch
+sys/dev/ic/ispvar.h				patch
+sys/dev/microcode/isp/asm_pci.h			patch
+
+  Correctly account for F-port vs. F-port (no FLOGI_ACC) topologies.
+  Make sure we get a port database entry for the fabric name server.
+  Preserve fabric logins if the device didn't change across fabric
+  or port database changes, or the device has already logged into
+  us (e.g., for target/initiator dual role devices like Veritas
+  SANbox). Propagate class 3 service parameter changes where devices
+  can change roles.
+
+  Fix all occurrences of setting a sendmarker so that setting it
+  for one bus on dual bus cards doesn't wipe a pending sendmarker
+  for other busses on the same card.
+
+  Comments added and clarifications made in some of the target mode code.
+
+  Add support for > 12 byte CDBs.  Split out nvram reading into
+  per-card functions.  Add proper Ultra2/Ultra3 support.  Upgrade
+  firmware.
