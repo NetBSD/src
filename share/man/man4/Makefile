@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.235 2001/12/02 19:46:04 augustss Exp $
+#	$NetBSD: Makefile,v 1.236 2001/12/02 19:52:37 augustss Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	acphy.4 adv.4 adw.4 agp.4 ahb.4 ahc.4 amhphy.4 an.4 aria.4 \
@@ -98,6 +98,7 @@ MLINKS+=pss.4 sp.4
 MLINKS+=viaenv.4 viapm.4
 MLINKS+=tty.4 dty.4
 MLINKS+=rcons.4 rasterconsole.4
+MLINKS+=irframe.4 irda.4
 
 # This is a hack
 MLINKS+=edc.4 i386/ed.4
