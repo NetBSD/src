@@ -8,15 +8,24 @@
 #define CPP_PREDEFINES "-D__vax__ -D__NetBSD__ -Asystem(unix) -Asystem(NetBSD) -Acpu(vax) -Amachine(vax)"
 
 #undef CC1_SPEC
-#define CC1_SPEC "\
-	%{!fno-pic: \
-		%{!mno-pic: %{!fpic: %{!fPIC:-fPIC}}} \
-		%{!mindirect: %{!mno-indirect:-mno-indirect}}} \
-	%{mno-pic: -fno-pic -mindirect} \
-	%{fno-pic: \
-		%{!mindirect: %{!mno-indirect:-mindirect}}}"
+#define CC1_SPEC \
+  "%{!fno-pic: \
+     %{!fpic: \
+       %{!fPIC:-fPIC}} \
+     %{!mindirect: \
+       %{!mno-indirect:-mno-indirect}}} \
+   %{fno-pic: \
+     %{!mno-indirect: \
+       %{!mindirect:-mindirect}}}"
 
 #define	CC1PLUS_SPEC CC1_SPEC
+
+/* Pass -k to the assembler by default, since we generate PIC code by
+   default (-fPIC above), unless -fno-pic or -mno-asm-pic is passed.  */
+#undef ASM_SPEC
+#define ASM_SPEC \
+  "%{!fno-pic: \
+     %{!mno-asm-pic:-k}}"
 
 /* Make gcc agree with <machine/ansi.h> */
 
