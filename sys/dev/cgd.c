@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.9 2003/03/21 23:11:22 dsl Exp $ */
+/* $NetBSD: cgd.c,v 1.10 2003/05/17 14:26:30 agc Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.9 2003/03/21 23:11:22 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.10 2003/05/17 14:26:30 agc Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -188,7 +188,6 @@ cgdsoftc_init(struct cgd_softc *cs, int num)
 void
 cgdattach(int num)
 {
-	struct	cgd_softc *cs;
 	int	i;
 
 	DPRINTF_FOLLOW(("cgdattach(%d)\n", num));
@@ -197,8 +196,8 @@ cgdattach(int num)
 		return;
 	}
 
-	cgd_softc = (void *)malloc(num * sizeof(*cs), M_DEVBUF, M_NOWAIT);
-	if (!cs) {
+	cgd_softc = (void *)malloc(num * sizeof(*cgd_softc), M_DEVBUF, M_NOWAIT);
+	if (!cgd_softc) {
 		printf("WARNING: unable to malloc(9) memory for crypt disks\n");
 		DIAGPANIC(("cgdattach: cannot malloc(9) enough memory"));
 		return;
