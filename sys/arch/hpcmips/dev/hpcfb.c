@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.12 2000/09/11 13:44:49 sato Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.13 2000/09/12 08:25:44 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: hpcfb.c,v 1.12 2000/09/11 13:44:49 sato Exp $";
+    "$Id: hpcfb.c,v 1.13 2000/09/12 08:25:44 sato Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,6 +447,7 @@ hpcfb_init(fbconf, dc)
 	callout_init(dc->dc_scroll_ch);
 #endif /* HPCFB_JUMP */
 	dc->dc_tvram = hpcfb_console_tvram;
+	bzero(hpcfb_console_tvram, sizeof(hpcfb_console_tvram));
 #if defined(HPCFB_BSTORE) || defined(HPCFB_MULTI)
 	dc->dc_memsize = ri->ri_stride * ri->ri_height;
 #endif /* defined(HPCFB_BSTORE) || defined(HPCFB_MULTI) */
@@ -454,6 +455,7 @@ hpcfb_init(fbconf, dc)
 	if (dc->dc_bstore == NULL) {
 		dc->dc_bstore =
 			malloc(dc->dc_memsize, M_DEVBUF, M_WAITOK);
+		bzero(dc->dc_bsrore, dc->dc_memsize);
 	}
 #endif /* HPCFB_BSTORE */
 #ifdef HPCFB_MULTI
@@ -613,9 +615,11 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 		return (ENOMEM);
 
 
-	if (sc->screens[sc->nscreens] == NULL)
+	if (sc->screens[sc->nscreens] == NULL){
 		sc->screens[sc->nscreens] =
 			malloc(sizeof(struct hpcfb_devconfig), M_DEVBUF, M_WAITOK);
+		bzero(sc->screens[sc->nscreens], sizeof(struct hpcfb_devconfig));
+	}
 	dc = sc->screens[sc->nscreens];
 	dc->dc_sc = sc;
 	dc->dc_rinfo = sc->sc_dc->dc_rinfo;
@@ -629,14 +633,21 @@ hpcfb_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (dc->dc_bstore == NULL) {
 		dc->dc_bstore = 
 			malloc(dc->dc_memsize, M_DEVBUF, M_WAITOK);
+		bzero(dc->dc_bstore, dc->dc_memsize);
 	}
 #endif /* HPCFB_BSTORE */
 	dc->dc_rinfo.ri_bits  = dc->dc_bstore;
-	if (dc->dc_tvram == NULL)
+	if (dc->dc_tvram == NULL){
 		dc->dc_tvram = 
 			malloc(sizeof(struct hpcfb_vchar)
 				* dc->dc_rows
-				* dc->dc_cols , M_DEVBUF, M_WAITOK);
+				* dc->dc_cols , M_DEVBUF, M_WAITOK);	
+		bzero(dc->dc_tvram, 
+				sizeof(struct hpcfb_vchar)
+				* dc->dc_rows
+				* dc->dc_cols);
+	}
+				
 	*curxp = 0;
 	*curyp = 0;
 	sc->nscreens++;
