@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.7 2000/10/05 19:04:59 tsutsui Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.1 2001/07/07 15:27:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,7 +47,6 @@
 #include <machine/bus.h>
 
 #include <dev/clock_subr.h>
-#include <dev/ic/mk48txxreg.h>
 
 #include <news68k/news68k/isr.h>
 #include <news68k/news68k/clockvar.h>
@@ -58,91 +57,81 @@
  * interrupt level for clock
  */
 
-#define CLOCK_LEVEL 6
+#define TIMER_LEVEL 6
+#define TIMER_SIZE 8	/* XXX */
 
-int	clock_hb_match __P((struct device *, struct cfdata  *, void *));
-void	clock_hb_attach __P((struct device *, struct device *, void *));
-void	clock_hb_initclocks __P((int, int));
-void	clock_intr __P((struct clockframe *));
+int timer_hb_match(struct device *, struct cfdata  *, void *);
+void timer_hb_attach(struct device *, struct device *, void *);
+void timer_hb_initclocks(int, int);
+void clock_intr(struct clockframe *);
 
 static __inline void leds_intr __P((void));
 
 extern void _isr_clock __P((void));	/* locore.s */
 
-struct cfattach clock_hb_ca = {
-	sizeof(struct device), clock_hb_match, clock_hb_attach
+struct cfattach timer_hb_ca = {
+	sizeof(struct device), timer_hb_match, timer_hb_attach
 };
 
-extern volatile u_char *ctrl_timer, *ctrl_led;
-extern struct cfdriver clock_cd;
+static volatile u_int8_t *ctrl_timer; /* XXX */
+
+extern volatile u_char *ctrl_led; /* XXX */
+extern struct cfdriver timer_cd;
 
 int
-clock_hb_match(parent, cf, aux)
+timer_hb_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
 	struct hb_attach_args *ha = aux;
-	static int clock_hb_matched;
+	static int timer_hb_matched;
 
-	/* Only one clock, please. */
-	if (clock_hb_matched)
+	/* Only one timer, please. */
+	if (timer_hb_matched)
 		return (0);
 
-	if (strcmp(ha->ha_name, clock_cd.cd_name))
+	if (strcmp(ha->ha_name, timer_cd.cd_name))
 		return (0);
 
 	if (ha->ha_ipl == -1)
-		ha->ha_ipl = CLOCK_LEVEL;
+		ha->ha_ipl = TIMER_LEVEL;
 
-	ha->ha_size = MK48T02_CLKSZ;
+	ha->ha_size = TIMER_SIZE;
 
-	clock_hb_matched = 1;
+	timer_hb_matched = 1;
 
 	return 1;
 }
 
 void
-clock_hb_attach(parent, self, aux)
+timer_hb_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
 	struct hb_attach_args *ha = aux;
-	bus_space_tag_t bst = ha->ha_bust;
-	bus_space_handle_t bsh;
-	todr_chip_handle_t handle;
 
-	extern int delay_divisor;	/* from machdep.c */
-
-	if (ha->ha_ipl != CLOCK_LEVEL)
+	if (ha->ha_ipl != TIMER_LEVEL)
 		panic("clock_hb_attach: wrong interrupt level");
 
-	if (bus_space_map(bst, (bus_addr_t)ha->ha_address, ha->ha_size,
-	    0, &bsh) != 0)
-		printf("can't map device space\n");
+	ctrl_timer = (u_int8_t *)IIOV(ha->ha_address); /* XXX needs bus_space */
 
-	if ((handle = mk48txx_attach(bst, bsh, "mk48t02", 1900)) == NULL)
-		panic("can't attach tod clock");
+	printf("\n");
 
-	printf("\n%s: delay_divisor %d\n", self->dv_xname, delay_divisor);
+        timer_config(timer_hb_initclocks);
 
-	handle->bus_cookie = NULL;
-	handle->todr_setwen = NULL;
-
-        clock_config(handle, clock_hb_initclocks);
-
-#if 0 /* XXX this will be done in clock_hb_initclocks() */
+#if 0 /* XXX this will be done in timer_hb_initclocks() */
 	isrlink_custom(ha->ha_ipl, (void *)_isr_clock);
 #endif
 }
 
 /*
- * Set up the real-time clock (enable clock interrupts).
+ * Set up the interval timer (enable clock interrupts).
  * Leave stathz 0 since there is no secondary clock available.
  * Note that clock interrupts MUST STAY DISABLED until here.
  */
 void
-clock_hb_initclocks(tick, statint)
+timer_hb_initclocks(tick, statint)
 	int tick, statint;
 {
 	int s;
@@ -150,7 +139,7 @@ clock_hb_initclocks(tick, statint)
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
-	isrlink_custom(CLOCK_LEVEL, (void *)_isr_clock);
+	isrlink_custom(TIMER_LEVEL, (void *)_isr_clock);
 
 	/* enable the clock */
 	*ctrl_timer = 1;
@@ -158,7 +147,7 @@ clock_hb_initclocks(tick, statint)
 }
 
 /*
- * Clock interrupt handler for Mostek.
+ * Clock interrupt handler.
  * This is is called by the "custom" interrupt handler.
  *
  * from sun3/sun3x/clock.c -tsutsui
@@ -174,7 +163,7 @@ clock_intr(cf)
 	/* Pulse the clock intr. enable low. */
 	*ctrl_timer = 0;
 	*ctrl_timer = 1;
-	intrcnt[CLOCK_LEVEL]++;
+	intrcnt[TIMER_LEVEL]++;
 
 	/* Entertainment! */
 #ifdef	LED_IDLE_CHECK
