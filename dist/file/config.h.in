@@ -1,4 +1,6 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
+/*	$NetBSD: config.h.in,v 1.2 2003/03/27 03:47:25 lukem Exp $	*/
+
 /* Autoheader needs me */
 #undef PACKAGE
 
