@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 1996/06/07 10:48:26 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.109 1996/06/11 03:11:06 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1743,21 +1743,21 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x4083b2e4,	/* FixMul */
 	},
 	/*
-	 * PB 540 (but ADBBase + 130 intr and PMgrOp is unknown)
+	 * PB 540, PB 550
 	 * (PB 520?  Duo 280?)
 	 */
 	{			/* 8 */
 		"68040 PowerBook ROMs",
 		(caddr_t) 0x400b2efc,	/* ADB int */
 		(caddr_t) 0x400d8e66,	/* PM int */
-		(caddr_t) 0x0,		/* ADBBase + 130 */
+		(caddr_t) 0x400b2e86,	/* ADBBase + 130 */
 		(caddr_t) 0x4000a360,	/* CountADBs */
 		(caddr_t) 0x4000a37a,	/* GetIndADB */
 		(caddr_t) 0x4000a3a6,	/* GetADBInfo */
 		(caddr_t) 0x4000a3ac,	/* SetADBInfo */
 		(caddr_t) 0x4000a752,	/* ADBReInit */
 		(caddr_t) 0x4000a3dc,	/* ADBOp */
-		(caddr_t) 0x0,		/* PmgrOp */
+		(caddr_t) 0x400d9302,	/* PmgrOp */
 		(caddr_t) 0x4000c05c,	/* WriteParam */
 		(caddr_t) 0x4000c086,	/* SetDateTime */
 		(caddr_t) 0x4000c5cc,	/* InitUtil */
@@ -1933,6 +1933,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACPB170, "PowerBook", " 170 ", MACH_CLASSPB, &romvecs[1]},
 	{MACH_MACPB180, "PowerBook", " 180 ", MACH_CLASSPB, &romvecs[5]},
 	{MACH_MACPB180C, "PowerBook", " 180c ", MACH_CLASSPB, &romvecs[5]},
+	{MACH_MACPB500, "PowerBook", " 500 ", MACH_CLASSPB, &romvecs[8]},
 
 /* The Duos */
 	{MACH_MACPB210, "PowerBook Duo", " 210 ", MACH_CLASSDUO, &romvecs[5]},
