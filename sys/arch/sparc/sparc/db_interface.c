@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.26 1998/09/26 20:14:48 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.27 1999/02/14 12:48:02 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -56,6 +56,7 @@
 
 #include <machine/instr.h>
 #include <machine/bsd_openprom.h>
+#include <machine/promlib.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 
@@ -235,7 +236,7 @@ db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	promvec->pv_abort();
+	prom_abort();
 }
 
 struct db_command sparc_db_command_table[] = {

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 1998/10/19 11:56:44 pk Exp $
+#	$NetBSD: genassym.cf,v 1.19 1999/02/14 12:48:02 pk Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -230,6 +230,8 @@ define	AMD_BBTB	offsetof(struct am7930, bbtb)
 
 define	PROM_BASE	PROM_BASE
 
+define	PV_MAGIC	offsetof(struct promvec, pv_magic)
+define	OBP_MAGIC	OBP_MAGIC
 define	PV_NODEOPS	offsetof(struct promvec, pv_nodeops)
 define	PV_HALT		offsetof(struct promvec, pv_halt)
 define	PV_EVAL		offsetof(struct promvec, pv_fortheval.v0_eval)

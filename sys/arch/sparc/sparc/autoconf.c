@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.112 1999/02/08 00:13:42 fvdl Exp $ */
+/*	$NetBSD: autoconf.c,v 1.113 1999/02/14 12:48:01 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -73,14 +73,13 @@
 #include <vm/vm.h>
 
 #include <machine/bus.h>
+#include <machine/promlib.h>
+#include <machine/openfirm.h>
 #include <machine/autoconf.h>
-#include <machine/bsd_openprom.h>
 
-#ifdef SUN4
 #include <machine/oldmon.h>
 #include <machine/idprom.h>
 #include <sparc/sparc/memreg.h>
-#endif
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
@@ -109,7 +108,6 @@ int	mmu_3l;		/* SUN4_400 models have a 3-level MMU */
 extern	int kgdb_debug_panic;
 #endif
 
-static	int rootnode;
 static	char *str2hex __P((char *, int *));
 static	int mbprint __P((void *, const char *));
 static	void crazymap __P((char *, int *));
@@ -123,7 +121,6 @@ int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
-int	search_prom __P((int, char *));
 int	find_cpus __P((void));
 
 /*
@@ -187,12 +184,6 @@ str2hex(str, vp)
 	return (str);
 }
 
-#ifdef SUN4
-struct promvec promvecdat;
-void *promvec_synchookdat;
-struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
-#endif
-
 /*
  * locore.s code calls bootstrap() just before calling main(), after double
  * mapping the kernel to high memory and setting up the trap base register.
@@ -203,40 +194,7 @@ bootstrap()
 {
 	extern struct user *proc0paddr;
 
-#if defined(SUN4)
-	if (CPU_ISSUN4) {
-		extern void oldmon_w_cmd __P((u_long, char *));
-
-		/*
-		 * XXX:
-		 * The promvec is bogus. We need to build a
-		 * fake one from scratch as soon as possible.
-		 */
-		bzero(&promvecdat, sizeof promvecdat);
-		promvec = &promvecdat;
-
-		promvec->pv_stdin = oldpvec->inSource;
-		promvec->pv_stdout = oldpvec->outSink;
-		promvec->pv_putchar = oldpvec->putChar;
-		promvec->pv_putstr = oldpvec->fbWriteStr;
-		promvec->pv_nbgetchar = oldpvec->mayGet;
-		promvec->pv_getchar = oldpvec->getChar;
-		promvec->pv_romvec_vers = 0;		/* eek! */
-		promvec->pv_reboot = oldpvec->reBoot;
-		promvec->pv_abort = oldpvec->abortEntry;
-		promvec->pv_setctxt = oldpvec->setcxsegmap;
-		promvec->pv_v0bootargs = (struct v0bootargs **)(oldpvec->bootParam);
-		promvec->pv_halt = oldpvec->exitToMon;
-		promvec->pv_synchook = promvec_synchookdat;
-
-		/*
-		 * Discover parts of the machine memory organization
-		 * that we need this early.
-		 */
-		if (oldpvec->romvecVersion >= 2)
-			*oldpvec->vector_cmd = oldmon_w_cmd;
-	}
-#endif /* SUN4 */
+	prom_init();
 
 	/* Attach user structure to proc0 */
 	proc0.p_addr = proc0paddr;
@@ -282,8 +240,8 @@ bootstrap()
 		int i;
 		extern void setpte4m __P((u_int, u_int));
 
-		if ((node = opennode("/obio/interrupt")) == 0)
-		    if ((node=search_prom(findroot(),"interrupt"))==0)
+		if ((node = prom_opennode("/obio/interrupt")) == 0 ||
+		    (node = prom_finddevice("/obio/interrupt")) == 0)
 			panic("bootstrap: could not get interrupt "
 			      "node from prom");
 
@@ -292,12 +250,12 @@ bootstrap()
 		if (getprop(node, "address", sizeof(int),
 			    &nvaddrs, (void **)&vaddrs) != 0) {
 			printf("bootstrap: could not get interrupt properties");
-			romhalt();
+			prom_halt();
 		}
 		if (nvaddrs < 2 || nvaddrs > 5) {
 			printf("bootstrap: cannot handle %d interrupt regs\n",
 				nvaddrs);
-			romhalt();
+			prom_halt();
 		}
 
 		for (i = 0; i < nvaddrs - 1; i++) {
@@ -306,7 +264,7 @@ bootstrap()
 			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE) {
 			    panic("bootstrap: PROM has invalid mapping for "
 				  "processor interrupt register %d",i);
-			    romhalt();
+			    prom_halt();
 			}
 			pte |= PPROT_S;
 
@@ -376,34 +334,22 @@ bootpath_build()
 	struct bootpath *bp;
 
 	/*
-	 * On SS1s, promvec->pv_v0bootargs->ba_argv[1] contains the flags
-	 * that were given after the boot command.  On SS2s, pv_v0bootargs
-	 * is NULL but *promvec->pv_v2bootargs.v2_bootargs points to
-	 * "vmunix -s" or whatever.
-	 * XXX	DO THIS BEFORE pmap_boostrap?
+	 * Grab boot path from PROM and split into `bootpath' components.
 	 */
 	bzero(bootpath, sizeof(bootpath));
 	bp = bootpath;
-	if (promvec->pv_romvec_vers < 2) {
+	cp = prom_getbootpath();
+	switch (prom_version()) {
+	case PROM_OLDMON:
+	case PROM_OBP_V0:
 		/*
-		 * Grab boot device name and values.  build fake bootpath.
+		 * Build fake bootpath.
 		 */
-		cp = (*promvec->pv_v0bootargs)->ba_argv[0];
-
 		if (cp != NULL)
 			bootpath_fake(bp, cp);
-
-		bootpath_print(bootpath);
-
-		/* Setup pointer to boot flags */
-		cp = (*promvec->pv_v0bootargs)->ba_argv[1];
-		if (cp == NULL || *cp != '-')
-			return;
-	} else {
-		/*
-		 * Grab boot path from PROM
-		 */
-		cp = *promvec->pv_v2bootargs.v2_bootpath;
+		break;
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
 		while (cp != NULL && *cp == '/') {
 			/* Step over '/' */
 			++cp;
@@ -427,17 +373,21 @@ bootpath_build()
 			++nbootpath;
 		}
 		bp->name[0] = 0;
-
-		bootpath_print(bootpath);
-
-		/* Setup pointer to boot flags */
-		cp = *promvec->pv_v2bootargs.v2_bootargs;
-		if (cp == NULL)
-			return;
-		while (*cp != '-')
-			if (*cp++ == '\0')
-				return;
+		break;
 	}
+
+	bootpath_print(bootpath);
+
+	/* Setup pointer to boot flags */
+	cp = prom_getbootargs();
+	if (cp == NULL)
+		return;
+
+	/* Skip any whitespace */
+	while (*cp != '-')
+		if (*cp++ == '\0')
+			return;
+
 	for (;;) {
 		switch (*++cp) {
 
@@ -467,6 +417,9 @@ bootpath_build()
 		case 's':
 			boothowto |= RB_SINGLE;
 			break;
+
+		default:
+			printf("unknown option `%c'\n", *cp);
 		}
 	}
 }
@@ -572,8 +525,11 @@ bootpath_fake(bp, cp)
 			/*
 			 * Deal with target/lun encodings.
 			 * Note: more special casing in dk_establish().
+			 *
+			 * We happen to know how `prom_revision' is
+			 * constructed from `monID[]' on sun4 proms...
 			 */
-			if (oldpvec->monId[0] > '1') {
+			if (prom_revision() > '1') {
 				target = v0val[1] >> 3; /* new format */
 				lun    = v0val[1] & 0x7;
 			} else {
@@ -725,13 +681,13 @@ crazymap(prop, map)
 	char *propval;
 	char buf[32];
 
-	if (!CPU_ISSUN4 && promvec->pv_romvec_vers < 2) {
+	if (!CPU_ISSUN4 && prom_version() < 2) {
 		/*
 		 * Machines with real v0 proms have an `s[dt]-targets' property
-		 * which contains the mapping for us to use. v2 proms donot
+		 * which contains the mapping for us to use. v2 proms do not
 		 * require remapping.
 		 */
-		propval = getpropstringA(optionsnode, prop, buf);
+		propval = getpropstringA(optionsnode, prop, buf, sizeof(buf));
 		if (propval == NULL || strlen(propval) != 8) {
  build_default_map:
 			printf("WARNING: %s map is bogus, using default\n",
@@ -831,7 +787,7 @@ configure()
 
 	ncpu = find_cpus();
 
-	*promvec->pv_synchook = sync_crash;
+	prom_setcallback(sync_crash);
 
 	/* Enable device interrupts */
 #if defined(SUN4M)
@@ -935,36 +891,6 @@ mbprint(aux, name)
 }
 
 int
-findroot()
-{
-	int node;
-
-	if ((node = rootnode) == 0 && (node = nextsibling(0)) == 0)
-		panic("no PROM root device");
-	rootnode = node;
-	return (node);
-}
-
-/*
- * Given a `first child' node number, locate the node with the given name.
- * Return the node number, or 0 if not found.
- */
-int
-findnode(first, name)
-	int first;
-	const char *name;
-{
-	int node;
-	char buf[32];
-
-	for (node = first; node; node = nextsibling(node))
-		if (strcmp(getpropstringA(node, "name", buf), name) == 0)
-			return (node);
-	return (0);
-}
-
-
-int
 mainbus_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
@@ -1060,7 +986,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	if (CPU_ISSUN4)
 		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
 	else
-		printf(": %s\n", getpropstringA(findroot(), "name", namebuf));
+		printf(": %s\n", getpropstringA(findroot(), "name",
+						namebuf, sizeof(namebuf)));
 
 	/* Establish the first component of the boot path */
 	altbootpath_store(1, bootpath);
@@ -1115,7 +1042,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		const char *cp;
 
 		for (node = firstchild(node); node; node = nextsibling(node)) {
-			cp = getpropstringA(node, "device_type", namebuf);
+			cp = getpropstringA(node, "device_type",
+					    namebuf, sizeof namebuf);
 			if (strcmp(cp, "cpu") == 0) {
 				bzero(&ma, sizeof(ma));
 				ma.ma_bustag = &mainbus_space_tag;
@@ -1137,7 +1065,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	node = findroot();	/* re-init root node */
 
-	if (promvec->pv_romvec_vers <= 2)
+	if (prom_version() <= 2)
 		/* remember which frame buffer, if any, is to be `/dev/fb' */
 		fbnode = getpropint(node, "fb", 0);
 
@@ -1158,7 +1086,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		bzero(&ma, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
-		ma.ma_name = getpropstringA(node, "name", namebuf);
+		ma.ma_name = getpropstringA(node, "name",
+					    namebuf, sizeof namebuf);
 		ma.ma_node = node;
 		if (getprop_reg1(node, &romreg) != 0)
 			continue;
@@ -1188,13 +1117,14 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		struct openprom_addr romreg;
 
 #if defined(SUN4M)
-		if (CPU_ISSUN4M) /* skip the CPUs */
-			if (node_has_property(node, "device_type") &&
-			    strcmp(getpropstringA(node, "device_type", namebuf),
+		if (CPU_ISSUN4M) {	/* skip the CPUs */
+			if (strcmp(getpropstringA(node, "device_type",
+						  namebuf, sizeof namebuf),
 				   "cpu") == 0)
 				continue;
+		}
 #endif
-		cp = getpropstringA(node, "name", namebuf);
+		cp = getpropstringA(node, "name", namebuf, sizeof namebuf);
 		for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
 			if (strcmp(cp, sp) == 0)
 				break;
@@ -1204,7 +1134,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		bzero(&ma, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
-		ma.ma_name = getpropstringA(node, "name", namebuf);
+		ma.ma_name = getpropstringA(node, "name",
+					    namebuf, sizeof namebuf);
 		ma.ma_node = node;
 		if (getprop_reg1(node, &romreg) != 0)
 			continue;
@@ -1284,8 +1215,8 @@ findzs(zs)
 		node = firstchild(findroot());
 		if (CPU_ISSUN4M) { /* zs is in "obio" tree on Sun4M */
 			node = findnode(node, "obio");
-			if (!node)
-			    panic("findzs: no obio node");
+			if (node == 0)
+				panic("findzs: no obio node");
 			node = firstchild(node);
 		}
 		while ((node = findnode(node, "zs")) != 0) {
@@ -1319,7 +1250,6 @@ makememarr(ap, max, which)
 	struct memarr *ap;
 	int max, which;
 {
-#if defined(SUN4C) || defined(SUN4M)
 	struct v2rmi {
 		int	zero;
 		int	addr;
@@ -1331,10 +1261,12 @@ makememarr(ap, max, which)
 	struct v0mlist *mp;
 	int i, node, len;
 	char *prop;
-#endif
 
-#if defined(SUN4)
-	if (CPU_ISSUN4) {
+	switch (prom_version()) {
+		struct promvec *promvec;
+		struct om_vector *oldpvec;
+	case PROM_OLDMON:
+		oldpvec = (struct om_vector *)PROM_BASE;
 		switch (which) {
 		case MEMARR_AVAILPHYS:
 			ap[0].addr = 0;
@@ -1348,19 +1280,16 @@ makememarr(ap, max, which)
 			printf("pre_panic: makememarr");
 			break;
 		}
-		return (1);
-	}
-#endif
-#if defined(SUN4C) || defined(SUN4M)
-	switch (i = promvec->pv_romvec_vers) {
+		i = (1);
+		break;
 
-	case 0:
+	case PROM_OBP_V0:
 		/*
 		 * Version 0 PROMs use a linked list to describe these
 		 * guys.
 		 */
+		promvec = romp;
 		switch (which) {
-
 		case MEMARR_AVAILPHYS:
 			mp = *promvec->pv_v0mem.v0_physavail;
 			break;
@@ -1383,20 +1312,30 @@ makememarr(ap, max, which)
 
 	default:
 		printf("makememarr: hope version %d PROM is like version 2\n",
-		    i);
+			prom_version());
 		/* FALLTHROUGH */
 
-        case 3:
-	case 2:
+        case PROM_OBP_V3:
+	case PROM_OBP_V2:
 		/*
 		 * Version 2 PROMs use a property array to describe them.
 		 */
+
+		/* Consider emulating `OF_finddevice' */
+		node = findnode(firstchild(findroot()), "memory");
+		goto case_common;
+
+	case PROM_OPENFIRM:
+		node = OF_finddevice("/memory");
+
+	case_common:
+		if (node == 0)
+			panic("makememarr: cannot find \"memory\" node");
+
 		if (max > MAXMEMINFO) {
 			printf("makememarr: limited to %d\n", MAXMEMINFO);
 			max = MAXMEMINFO;
 		}
-		if ((node = findnode(firstchild(findroot()), "memory")) == 0)
-			panic("makememarr: cannot find \"memory\" node");
 
 		switch (which) {
 		case MEMARR_AVAILPHYS:
@@ -1440,7 +1379,6 @@ overflow:
 	 */
 	printf("makememarr: WARNING: lost some memory\n");
 	return (i);
-#endif
 }
 
 #if defined(SUN4C) || defined(SUN4M)
@@ -1457,8 +1395,7 @@ getprop_reg1(node, rrp)
 			&n, (void **)&rrp0);
 	if (error != 0) {
 		if (error == ENOENT &&
-		    node_has_property(node, "device_type") &&
-		    strcmp(getpropstringA(node, "device_type", buf),
+		    strcmp(getpropstringA(node, "device_type", buf, sizeof buf),
 			   "hierarchical") == 0) {
 			bzero(rrp, sizeof(struct openprom_addr));
 			error = 0;
@@ -1533,7 +1470,7 @@ romgetcursoraddr(rowp, colp)
 	 * and in some newer proms.  They are local in version 2.9.  The
 	 * correct cutoff point is unknown, as yet; we use 2.9 here.
 	 */
-	if (promvec->pv_romvec_vers < 2 || promvec->pv_printrev < 0x00020009)
+	if (prom_version() < 2 || prom_revision() < 0x00020009)
 		sprintf(buf,
 		    "' line# >body >user %lx ! ' column# >body >user %lx !",
 		    (u_long)rowp, (u_long)colp);
@@ -1542,7 +1479,7 @@ romgetcursoraddr(rowp, colp)
 		    "stdout @ is my-self addr line# %lx ! addr column# %lx !",
 		    (u_long)rowp, (u_long)colp);
 	*rowp = *colp = NULL;
-	rominterpret(buf);
+	prom_interpret(buf);
 	return (*rowp == NULL || *colp == NULL);
 }
 #endif
