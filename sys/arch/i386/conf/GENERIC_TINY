@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.44 2002/08/06 12:09:43 grant Exp $
+#	$NetBSD: GENERIC_TINY,v 1.45 2002/08/22 14:36:49 abs Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -61,6 +61,7 @@ options 	NMBCLUSTERS=256
 
 #options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE	# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
