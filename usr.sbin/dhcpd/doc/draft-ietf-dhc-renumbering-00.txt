@@ -1,0 +1,390 @@
+
+
+INTERNET-DRAFT                                            Lowell Gilbert
+DHC Working Group                        Epilogue Technology Corporation
+Network Area                                                  April 1996
+                                                    Expires October 1996
+
+
+               Graceful renumbering of networks with DHCP
+                  <draft-ietf-dhc-renumbering-00.txt>
+
+Status of this memo
+
+   This document is an Internet-Draft. Internet-Drafts are working
+   documents of the Internet Engineering Task Force (IETF), its areas,
+   and its working groups. Note that other groups may also distribute
+   working documents as Internet-Drafts.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time. It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as ``work in progress.''
+
+   To learn the current status of any Internet-Draft, please check the
+   ``1id-abstracts.txt'' listing contained in the Internet-Drafts Shadow
+   Directories on ftp.is.co.za (Africa), nic.nordu.net (Europe),
+   munnari.oz.au (Pacific Rim), ds.internic.net (US East Coast), or
+   ftp.isi.edu (US West Coast).
+
+
+Abstract
+
+   This document proposes a method for improving the ability of the
+   Dynamic Host Configuration Protocol (DHCP) to assist in renumbering
+   an internet.  DHCP is already capable of supporting host renumbering
+   by assigning a new address when a client attempts to renegotiate an
+   existing lease, but this proposal makes host renumbering more
+   graceful by providing for a transition period in which the client can
+   use both addresses.
+
+
+
+
+
+
+
+Gilbert                                                         [Page 1]
+
+DRAFT          Graceful renumbering of networks with DHCP     April 1996
+
+
+Introduction
+
+   This document proposes a method for improving the ability of the
+   Dynamic Host Configuration Protocol (DHCP) to assist in renumbering an
+   internet.  DHCP is already capable of supporting host renumbering by
+   assigning a new address when a client attempts to renegotiate an
+   existing lease, but this proposal makes host renumbering more graceful
+   by providing for a transition period in which the client can use both
+   addresses.  This enables the client to avoid disruption of existing
+   communications that may have already bound themselves to the original
+   address. This also enables the client to avoid disruption of new
+   communications (when the existing address would no longer be valid) by
+   ensuring they are bound to the new address.
+
+   This proposal adds to the core DHC protocol a mechanism by which a
+   DHCP client may acquire an additional IP address to eventually replace
+   one already in use.  A new option is defined for the server to start
+   this process in the client.  Significant modifications to the
+   protocol's state machine are avoided by starting up a whole new state
+   machine for handling the new address.
+
+
+Motivations
+
+   Host addresses may need to change for a number of reasons. For
+   example, if the address assignment scheme is based on CIDR
+   guidelines, when a site changes its provider hosts within the site
+   may need to change their addresses.
+
+   The intention of the mechanism described here is to allow system
+   administrators to specify a graceful transition period during
+   renumbering to minimize disruption caused by address changes,
+   particularly for hosts for which continuous availability is an
+   important factor.
+
+
+
+
+
+
+
+
+
+
+Gilbert                                                         [Page 2]
+
+DRAFT          Graceful renumbering of networks with DHCP     April 1996
+
+
+Document Independence
+
+   The most important point to note about this proposal is that it can
+   be issued as a separate document from the protocol specification.
+   There are three factors that make this practical:
+
+     * the graceful renumbering support is optional,
+
+     * the graceful renumbering support will be completely impossible
+       for some existing platforms (i.e. those which aren't capable of
+       having multiple addresses at one time anyway),
+
+     * the graceful renumbering support doesn't in any way affect the
+       operation of hosts or servers that don't implement it.
+       Therefore, there's no good reason that it can't be split out on
+       its own, to progress on its own (separate) merits.
+
+
+Design Goals
+
+     * full backward compatibility with DHCP implementations compliant
+       with RFC1541.  This is essential for acceptance of new
+       implementations with the new functionality.
+
+     * no changes to relay agents.  This is the key to the general DHCP
+       migration strategy.  The simpler a relay agent is, the more
+       likely it is to be included in other network devices.
+
+     * minimal impact upon the standards status (and advancement) of the
+       base DHCP protocol.  Acceptance of the core protocol is a
+       prerequisite for acceptance of this one.
+
+
+Terminology:
+
+
+   Use of the terms MUST, SHOULD, or SHOULD NOT in this document implies
+   the usual meanings with respect to implementing this specification.
+   However, none of this specification need be implemented for an
+   implementation to be considered compliant with DHCP (for which
+   compliance with RFC 1541 is necessary and sufficient).
+
+
+
+Gilbert                                                         [Page 3]
+
+DRAFT          Graceful renumbering of networks with DHCP     April 1996
+
+
+Requirements
+
+   This proposal requires that any client be capable of binding more
+   than one address to an interface at a time, and also that the client
+   be able to distinguish among these addresses for the purpose of
+   binding existing and new transport connections.  It also requires
+   that any server be able to track multiple bindings per client.  If
+   these requirements cannot be met, then the host in question can still
+   implement DHCP, but won't be able to implement graceful renumbering
+   support.
+
+   A new option (the "renumbering" option) is defined for use in DHCPACK
+   and DHCPDISCOVER messages.  The length of this option is 4 octets.
+   The presence of this option in a DHCPACK indicates that the client
+   should initialize a new DHCP state machine for a new address.  The
+   option shall contain a "magic cookie" value which the server can use
+   in tracking requests for new addresses; the client MUST NOT attempt
+   to interpret the value.
+
+   This proposal assumes that a DHCP Server would have to be configured
+   with the new (post-renumbering) addresses, prior to the
+   reconfiguration of any of the Relay Agents that point to that Server.
+   Once the Server is configured with the new addresses, the Relay
+   Agents that point to that server could be reconfigured on their own,
+   without requiring any coordination with the Server. Under those
+   conditions, this proposal can accommodate a situation where a client
+   would receive a DHCPACK with the "renumbering" option, but the Relay
+   Agent that serves the client would not be configured (yet) with a new
+   (post-renumbering) address.
+
+
+Protocol Summary
+
+
+   A renumbering option in a DHCPACK packet requests the client to begin
+   trying to get a post-renumbering address.  The post-renumbering
+   address has its own DHCP state machine, which runs in parallel with
+   the one for the pre-renumbering address (with both addresses active
+   on the interface) until the lease runs out on the pre-renumbering
+   address.  Then the original state machine dies a quiet death.
+
+
+
+
+Gilbert                                                         [Page 4]
+
+DRAFT          Graceful renumbering of networks with DHCP     April 1996
+
+
+Client behaviour
+
+
+   When a client receives the renumbering option in a DHCPACK packet, it
+   MUST immediately initialize a new state machine for handling the new
+   address.  The old state machine SHOULD NOT attempt to renegotiate the
+   lease after this point, and may terminate at any time thereafter, up
+   to and including the termination of the lease.  When the lease
+   expires, the client MUST stop using that address and SHOULD release
+   all resources related to that address.
+
+   When the new state machine is initialized, it starts in the INIT
+   state.  Once it starts, it is responsible for acquiring a post-
+   renumbering address and keeping this address on the interface; the
+   responsibilities of the old state machine are now limited to deciding
+   when to terminate.
+
+   The renumbering option MUST be returned in the client's DHCPINIT
+   message exactly as it was included in the DHCPACK message.  The state
+   machine then proceeds as normal, completely separate from the
+   original state machine.  When it receives a DHCPACK (for the *new*
+   address), it SHOULD, if possible, arrange that the new address will
+   be the address used by default on that particular interface.  This
+   means that any new transport connections should be bound to the new
+   address, and that datagram protocols should switch to the new address
+   as soon as practical.
+
+
+   When a client receives the renumbering option in a DHCPACK packet,
+   the client does the following:
+
+      (1) If the received DHCPACK packet causes the DHCP state machine
+      transition from Requesting to Bound state, then the client checks
+      whether it has another DHCP state machine. If such a machine
+      exists, then the client sends a DHCPRELEASE on the new machine,
+      and terminates the new machine. The old machine continues to
+      operate according to the normal DHCP operations.  If no such (old)
+      machine exists, then the new machine starts to operate according
+      to the normal DHCP operations.
+
+      (2) If the DHCPACK packet is received when the state machine is
+
+
+
+Gilbert                                                         [Page 5]
+
+DRAFT          Graceful renumbering of networks with DHCP     April 1996
+
+
+      already in Bound, or Renewing, or Rebinding state, then the client
+      marks the state machine as "deprecated" and immediately initiates
+      another state machine. When the new state machine is initialized,
+      it starts in the INIT state.  The renumbering option MUST be
+      returned in the client's DHCPINIT message exactly as it was
+      included in the DHCPACK message.  The state machine then proceeds
+      as normal, completely separate from the original state machine.
+      Once the new state machine starts, it attempts to acquire a post-
+      renumbering address. If the attempt is successful, the client
+      assigns this address on the interface; the responsibilities of the
+      old state machine at that point would become limited to deciding
+      when to terminate.
+
+   When a client receives a DHCPACK packet without the renumbering
+   option the client does the following:
+
+      (1) If the received DHCPACK causes the DHCP state machine to
+      transition into the Bound state, the client checks if it has
+      another state machine which is marked as "deprecated". If yes,
+      then the client SHOULD start using the newly acquired address for
+      all the new transport connections, and that datagram protocols
+      SHOULD switch to the new address as soon as practical.  The
+      existing connections are still bound to the old address (the
+      address associated with the "deprecated" state machine). The
+      "deprecated" machine SHOULD NOT attempt to renegotiate the lease
+      after this point, and may terminate at any time thereafter, up to
+      and including the termination of the lease. When the lease on the
+      address associated with the "deprecated" state machine expires,
+      the client MUST stop using that address and SHOULD release all
+      resources related to that address.
+
+      (2) In all other cases the client follows the standard DHCP
+      procedures.
+
+
+
+Server behaviour
+
+
+   As part of its database of addresses, a DHCP server MUST maintain
+   state information for every address (or block of addresses)
+
+
+
+Gilbert                                                         [Page 6]
+
+DRAFT          Graceful renumbering of networks with DHCP     April 1996
+
+
+   indicating whether that address is deprecated.  When a DHCPREQUEST
+   arrives, the server MUST check this state information.
+
+   If the address being requested is not deprecated, the server
+   continues as provided in RFC 1541.  If, however, the address has been
+   deprecated the server prepares a DHCPACK using the remainder of the
+   available lease time, and in addition adds a renumbering option.  The
+   method of choosing a value for the renumbering option is an
+   implentation decision.  The server should be prepared to handle
+   further negotiations on the deprecated address, even though the
+   client is expected to stop such negotiations once it attempts to
+   acquire a replacement address.
+
+   If the server has no post-renumbering addresses available to offer to
+   the client, it SHOULD offer the previous, deprecated address, in
+   order to signal the problem to the client.
+
+
+
+Relay Agent behaviour
+
+
+   The only requirement that this proposal places on relay agents is
+   that they MUST place a "new" (i.e., post-renumbering) address for
+   itself in the 'giaddr' field when passing on a DHCP message.  Since
+   this can, in the worst case, be accomplished by hand-configuration,
+   modifications to relay agent software are not absolutely necessary.
+
+
+
+Discussion
+
+
+   The option's cookie can be used for anything that the server wants.
+   Two obvious possibilities are that it could be common across the
+   whole renumbering, and that it could represent a binding to a
+   particular client.  Because the client's new state machine starts in
+   INIT, the server will be able to gather subnet information from the
+   broadcast DHCPDISCOVER.
+
+   The idea behind using a new option to tell the client to initiate
+
+
+
+Gilbert                                                         [Page 7]
+
+DRAFT          Graceful renumbering of networks with DHCP     April 1996
+
+
+   this process is that it avoids all of the problems that I saw in
+   (Yakov Rekhter's) original version of this proposal.  Those had to do
+   with figuring out when to shut down a new state machine, and with the
+   extra traffic from sending an extra DHCPDISCOVER every time you went
+   back into the BOUND state.
+
+
+Acknowledgements
+
+
+   This document owes a great deal to Yakov Rekhter's initial
+   suggestions on the same subject.  Input from both him and Ralph Droms
+   had significant further effect on the document.
+
+
+References
+
+
+     [1]  Droms, R., "Dynamic Host Configuration Protocol", RFC 1531,
+          Bucknell University, October 1993.
+
+Security Considerations
+
+
+   Security issues are not discussed in this document.
+
+Author's Address
+
+   Lowell Gilbert
+   Lowell@Epilogue.Com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Gilbert                                                         [Page 8]
