@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.95 1997/01/31 02:25:47 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.96 1997/01/31 05:25:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -112,6 +112,7 @@ int	boothowto;
 struct	timeval boottime;
 struct	timeval runtime;
 
+static void check_console __P((struct proc *p));
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
 void main __P((void *));
@@ -390,20 +391,19 @@ main(framep)
 
 static void
 check_console(p)
-	struct proc    *p
+	struct proc *p;
 {
 	struct nameidata nd;
 	int error;
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
 	error = namei(&nd);
-	if (error)
-		if (error == ENOENT)
-			printf("warning: no /dev/console\n");
-		else
-			printf("warning: lookup /dev/console: error %d\n", error);
-	else
+	if (error == 0)
 		vrele(nd.ni_vp);
+	else if (error == ENOENT)
+		printf("warning: no /dev/console\n");
+	else
+		printf("warning: lookup /dev/console: error %d\n", error);
 }
 
 /*
