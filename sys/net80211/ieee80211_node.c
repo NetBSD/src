@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.28 2004/07/26 16:31:47 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.29 2004/07/28 08:11:03 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.22 2004/04/05 04:15:55 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.28 2004/07/26 16:31:47 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.29 2004/07/28 08:11:03 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -639,15 +639,17 @@ ieee80211_find_txnode(struct ieee80211com *ic, u_int8_t *macaddr)
 }
 
 /*
- * For some types of packet and for some operating modes, it is
- * desirable to process a Rx packet using its sender's node-record
- * instead of the BSS record, when that is possible.
+ * It is usually desirable to process a Rx packet using its sender's
+ * node-record instead of the BSS record.
  *
  *  - AP mode: keep a node-record for every authenticated/associated
  *    station *in the BSS*. For future use, we also track neighboring
- *    APs, since they might belong to the same ESSID.
+ *    APs, since they might belong to the same ESS.  APs in the same
+ *    ESS may bridge packets to each other, forming a Wireless
+ *    Distribution System (WDS).
  *
  * - IBSS mode: keep a node-record for every station *in the BSS*.
+ *   Also track neighboring stations by their beacons/probe responses.
  *
  * - monitor mode: keep a node-record for every sender, regardless
  *   of BSS.
@@ -680,7 +682,15 @@ ieee80211_needs_rxnode(struct ieee80211com *ic, struct ieee80211_frame *wh,
 		    IEEE80211_FC0_SUBTYPE_RTS;
 	case IEEE80211_FC0_TYPE_MGT:
 		*bssid = wh->i_addr3;
-		rc = IEEE80211_ADDR_EQ(*bssid, bss->ni_bssid);
+		switch (wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK) {
+		case IEEE80211_FC0_SUBTYPE_BEACON:
+		case IEEE80211_FC0_SUBTYPE_PROBE_RESP:
+			rc = 1;
+			break;
+		default:
+			rc = IEEE80211_ADDR_EQ(*bssid, bss->ni_bssid);
+			break;
+		}
 		break;
 	case IEEE80211_FC0_TYPE_DATA:
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
