@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.335 2004/07/14 12:46:08 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.336 2004/07/14 14:26:51 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5468,4 +5468,9 @@ crypto/dist/heimdal/lib/krb5/krb5_set_password.3	1.4
 	Remove superfluous comma; grammar fixes; split sentence
 	in two for better understanding.
 	[wiz, ticket #653]
+
+sys/arch/amd64/conf/INSTALL			1.16
+
+	Add re; Realtek GbE.
+	[fvdl, ticket #655]
 
