@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.9 1994/02/17 09:09:23 chopps Exp $
+ *	$Id: conf.c,v 1.10 1994/02/20 03:55:52 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -96,19 +96,10 @@ bdev_decl(no);	/* dummy declarations */
 
 #ifdef LKM
 int lkmenodev();
-
 #define	LKM_BDEV() { \
-	lkmenodev, lkmenodev, \
-	lkmenodev, lkmenodev, \
-	lkmenodev, 0, 0 }
-
-#define	LKM_CDEV() { \
-	lkmenodev, lkmenodev, \
-	lkmenodev, lkmenodev, \
-	lkmenodev, lkmenodev, \
-	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
-	lkmenodev, 0 }
-
+	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) lkmenodev, \
+	(dev_type_strategy((*))) lkmenodev, (dev_type_ioctl((*))) lkmenodev, \
+	(dev_type_dump((*))) lkmenodev, 0, 0 }
 #endif
 
 bdev_decl(sd);
@@ -331,10 +322,17 @@ dev_type_close(lkmclose);
 dev_type_ioctl(lkmioctl);
 
 #define	cdev_lkm_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	(dev_type_reset((*))) enodev, 0, (dev_type_select((*))) enodev, \
-	(dev_type_map((*))) enodev, 0 }
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev,\
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, (dev_type_reset((*))) enodev, 0, \
+	(dev_type_select((*))) enodev, (dev_type_map((*))) enodev, 0 }
+
+#define	LKM_CDEV() { \
+	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) lkmenodev, \
+	(dev_type_read((*))) lkmenodev, (dev_type_write((*))) lkmenodev, \
+	(dev_type_ioctl((*))) lkmenodev, (dev_type_stop((*))) lkmenodev, \
+	(dev_type_reset((*))) nullop, 0, (dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) lkmenodev, 0 }
 
 #endif
 
