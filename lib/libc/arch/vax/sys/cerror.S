@@ -33,14 +33,16 @@
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)cerror.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: cerror.S,v 1.2 1995/12/04 21:52:44 ragge Exp $"
+	.asciz "$NetBSD: cerror.S,v 1.3 1998/10/20 06:46:20 matt Exp $"
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
 	.globl	_errno
 cerror:
+	nop
+	nop
 	movl	r0,_errno
 	mnegl	$1,r0
-	mnegl	$1,r1
+	movl	r0,r1
 	ret
