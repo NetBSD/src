@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1993/10/07 07:26:39 cgd Exp $
+#	$Id: Makefile,v 1.9 1994/06/19 00:03:41 cgd Exp $
 
 PROG=	tar
 SRCS=	buffer.c create.c diffarch.c extract.c fnmatch.c getdate.y \
@@ -11,6 +11,7 @@ CFLAGS+= -DHAVE_MKNOD=1 -DHAVE_RENAME=1 -DHAVE_FTRUNCATE=1 -DHAVE_GETCWD=1
 CFLAGS+= -DHAVE_VPRINTF=1 -DNEEDPAD -I${.CURDIR}
 CFLAGS+= -DDEF_AR_FILE=\"/dev/rst0\" -DDEFBLOCKING=20
 
+LDSTATIC= -static
 LDADD+=	-lgnumalloc
 DPADD+=	/usr/lib/libgnumalloc.a
 
