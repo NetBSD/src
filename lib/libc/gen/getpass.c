@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)getpass.c	5.9 (Berkeley) 5/6/91";*/
-static char *rcsid = "$Id: getpass.c,v 1.3 1993/08/26 00:44:41 jtc Exp $";
+static char *rcsid = "$Id: getpass.c,v 1.4 1994/01/04 18:27:08 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/termios.h>
@@ -41,6 +41,7 @@ static char *rcsid = "$Id: getpass.c,v 1.3 1993/08/26 00:44:41 jtc Exp $";
 #include <stdio.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <paths.h>
 
 char *
 getpass(prompt)
@@ -58,7 +59,7 @@ getpass(prompt)
 	 * read and write to /dev/tty if possible; else read from
 	 * stdin and write to stderr.
 	 */
-	if ((outfp = fp = fopen("/dev/tty", "w+")) == NULL) {
+	if ((outfp = fp = fopen(_PATH_TTY, "w+")) == NULL) {
 		outfp = stderr;
 		fp = stdin;
 	}
