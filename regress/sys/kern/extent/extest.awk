@@ -1,4 +1,4 @@
-# $NetBSD: extest.awk,v 1.3 2000/06/06 17:30:41 thorpej Exp $
+# $NetBSD: extest.awk,v 1.4 2000/06/16 18:50:45 drochner Exp $
 
 BEGIN {
 	first = 1;
@@ -35,6 +35,14 @@ $1 == "extent" {
 	       $2, $3, $4, flags)
 
 	first = 0;
+}
+
+$1 == "align" {
+	align = $2;
+}
+
+$1 == "boundary" {
+	boundary = $2;
 }
 
 $1 == "alloc_region" {
