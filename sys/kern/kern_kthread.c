@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.2 1998/11/14 00:08:49 thorpej Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  * The VM space and limits, etc. will be shared with proc0.
  */
 int
-#ifdef __STDC__
+#if __STDC__
 kthread_create(void (*func)(void *), void *arg,
     struct proc **newpp, const char *fmt, ...)
 #else
