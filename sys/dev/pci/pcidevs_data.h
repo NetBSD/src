@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.26 1997/03/20 20:18:43 chuck Exp 
+ *	NetBSD: pcidevs,v 1.27 1997/04/04 00:22:00 augustss Exp 
  */
 
 /*
@@ -384,6 +384,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Chips and Technologies",
 	    "65548",
+	},
+	{
+	    PCI_VENDOR_CHIPS, PCI_PRODUCT_CHIPS_65550,
+	    0,
+	    "Chips and Technologies",
+	    "65550",
 	},
 	{
 	    PCI_VENDOR_CIRRUS, PCI_PRODUCT_CIRRUS_CL_GD7548,
@@ -1368,6 +1374,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Tekram Technology (2nd PCI Vendor ID)",
 	    "DC-690C",
+	},
+	{
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_CT1130,
+	    0,
+	    "Texas Instruments",
+	    "CT1130",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
