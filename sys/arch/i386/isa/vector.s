@@ -26,7 +26,7 @@
 	FASTER_NOP ; \
 	outb	%al,$IO_ICU1	/* then first icu */
 #else /* AUTO_EOI_2 */
-#define	ENABLE_ICU1_AND_2	/* data sheet says no auto-EOI on slave ... /
+#define	ENABLE_ICU1_AND_2	/* data sheet says no auto-EOI on slave ... */
 				/* ... but it sometimes works */
 #endif
 
