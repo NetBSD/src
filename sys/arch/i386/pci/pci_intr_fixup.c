@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.6 2000/07/09 00:42:47 mycroft Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.7 2000/07/18 11:22:36 soda Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,19 +92,18 @@ struct pciintr_link_map {
 	int irq;
 	u_int16_t bitmap;
 	int fixup_stage;
-	int old_irq;
 	SIMPLEQ_ENTRY(pciintr_link_map) list;
 };
 
 pciintr_icu_tag_t pciintr_icu_tag;
 pciintr_icu_handle_t pciintr_icu_handle;
 
-struct pciintr_link_map *pciintr_link_lookup_pin
-	__P((struct pcibios_intr_routing *, int));
-struct pciintr_link_map *pciintr_link_lookup_link __P((int));
+struct pciintr_link_map *pciintr_link_lookup __P((int));
 struct pciintr_link_map *pciintr_link_alloc __P((struct pcibios_intr_routing *,
 	int));
 struct pcibios_intr_routing *pciintr_pir_lookup __P((int, int));
+static int pciintr_bitmap_count_irq __P((int, int *));
+static int pciintr_bitmap_find_lowest_irq __P((int, int *));
 int	pciintr_link_init __P((void));
 int	pciintr_link_fixup __P((void));
 int	pciintr_link_route __P((u_int16_t *));
@@ -165,16 +164,7 @@ pciintr_icu_lookup(id)
 }
 
 struct pciintr_link_map *
-pciintr_link_lookup_pin(pir, pin)
-	struct pcibios_intr_routing *pir;
-	int pin;
-{
-
-	return (pciintr_link_lookup_link(pir->linkmap[pin].link));
-}
-
-struct pciintr_link_map *
-pciintr_link_lookup_link(link)
+pciintr_link_lookup(link)
 	int link;
 {
 	struct pciintr_link_map *l;
@@ -193,7 +183,43 @@ pciintr_link_alloc(pir, pin)
 	struct pcibios_intr_routing *pir;
 	int pin;
 {
+	int link = pir->linkmap[pin].link, clink, irq;
 	struct pciintr_link_map *l, *lstart;
+
+	/*
+	 * Get the canonical link value for this entry.
+	 */
+	if (pciintr_icu_getclink(pciintr_icu_tag, pciintr_icu_handle, link,
+	    &clink) != 0) {
+		/*
+		 * ICU doesn't understand the link value.
+		 * Just ignore this PIR entry.
+		 */
+#ifdef DIAGNOSTIC
+		printf("pciintr_link_alloc: bus %d device %d: "
+		    "link 0x%02x invalid\n",
+		    pir->bus, PIR_DEVFUNC_DEVICE(pir->device), link);
+#endif
+		return (NULL);
+	}
+
+	/*
+	 * Check the link value by asking the ICU for the canonical link value.
+	 * Also, determine if this PIRQ is mapped to an IRQ.
+	 */
+	if (pciintr_icu_get_intr(pciintr_icu_tag, pciintr_icu_handle, clink,
+	    &irq) != 0) {
+		/*
+		 * ICU doesn't understand the canonical link value.
+		 * Just ignore this PIR entry.
+		 */
+#ifdef DIAGNOSTIC
+		printf("pciintr_link_alloc: bus %d device %d link 0x%02x: "
+		    "PIRQ 0x%02x invalid\n",
+		    pir->bus, PIR_DEVFUNC_DEVICE(pir->device), link, clink);
+#endif
+		return (NULL);
+	}
 
 	l = malloc(sizeof(*l), M_DEVBUF, M_NOWAIT);
 	if (l == NULL)
@@ -201,8 +227,10 @@ pciintr_link_alloc(pir, pin)
 
 	memset(l, 0, sizeof(*l));
 
-	l->link = pir->linkmap[pin].link;
+	l->link = link;
 	l->bitmap = pir->linkmap[pin].bitmap;
+	l->clink = clink;
+	l->irq = irq; /* may be I386_PCI_INTERRUPT_LINE_NO_CONNECTION */
 
 	lstart = SIMPLEQ_FIRST(&pciintr_link_map_list);
 	if (lstart == NULL || lstart->link < l->link)
@@ -225,17 +253,53 @@ pciintr_pir_lookup(bus, device)
 
 	for (entry = 0; entry < pcibios_pir_table_nentries; entry++) {
 		pir = &pcibios_pir_table[entry];
-		if (pir->bus == bus && ((pir->device >> 3) & 0x1f) == device)
+		if (pir->bus == bus &&
+		    PIR_DEVFUNC_DEVICE(pir->device) == device)
 			return (pir);
 	}
 
 	return (NULL);
 }
 
+static int
+pciintr_bitmap_count_irq(irq_bitmap, irqp)
+	int irq_bitmap, *irqp;
+{
+	int i, bit, count = 0, irq = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
+
+	if (irq_bitmap != 0) {
+		for (i = 0, bit = 1; i < 16; i++, bit <<= 1) {
+			if (irq_bitmap & bit) {
+				irq = i;
+				count++;
+			}
+		}
+	}
+	*irqp = irq;
+	return (count);
+}
+
+static int
+pciintr_bitmap_find_lowest_irq(irq_bitmap, irqp)
+	int irq_bitmap, *irqp;
+{
+	int i, bit;
+
+	if (irq_bitmap != 0) {
+		for (i = 0, bit = 1; i < 16; i++, bit <<= 1) {
+			if (irq_bitmap & bit) {
+				*irqp = i;
+				return (1); /* found */
+			}
+		}
+	}
+	return (0); /* not found */
+}
+
 int
 pciintr_link_init()
 {
-	int entry, pin, error, link, clink;
+	int entry, pin, error, link;
 	struct pcibios_intr_routing *pir;
 	struct pciintr_link_map *l;
 
@@ -250,39 +314,37 @@ pciintr_link_init()
 
 	for (entry = 0; entry < pcibios_pir_table_nentries; entry++) {
 		pir = &pcibios_pir_table[entry];
-		for (pin = 0; pin < 4; pin++) {
+		for (pin = 0; pin < PCI_INTERRUPT_PIN_MAX; pin++) {
 			link = pir->linkmap[pin].link;
 			if (link == 0) {
 				/* No connection for this pin. */
 				continue;
 			}
-
-			/*
-			 * Check the link value by asking the ICU for
-			 * the canonical link value.
-			 */
-			if (pciintr_icu_getclink(pciintr_icu_tag,
-			    pciintr_icu_handle, link, &clink) != 0) {
-				/*
-				 * Table entry is bogus.  Just ignore it.
-				 */
-#ifdef PCIINTR_DEBUG
-				printf("pciintr_link_init: bad table entry: "
-				    "bus %d device %d link 0x%02x\n",
-				    pir->bus, (pir->device >> 3 & 0x1f), link);
-#endif
-				continue;
-			}
-
 			/*
 			 * Multiple devices may be wired to the same
 			 * interrupt; check to see if we've seen this
 			 * one already.  If not, allocate a new link
 			 * map entry and stuff it in the map.
 			 */
-			l = pciintr_link_lookup_pin(pir, pin);
-			if (l == NULL)
+			l = pciintr_link_lookup(link);
+			if (l == NULL) {
 				(void) pciintr_link_alloc(pir, pin);
+			} else if (pir->linkmap[pin].bitmap != l->bitmap) {
+				/*
+				 * violates PCI IRQ Routing Table Specification
+				 */
+#ifdef DIAGNOSTIC
+				printf("pciintr_link_init: "
+				    "bus %d device %d link 0x%02x: "
+				    "bad irq bitmap 0x%04x, "
+				    "should be 0x%04x\n",
+				    pir->bus, PIR_DEVFUNC_DEVICE(pir->device),
+				    link, pir->linkmap[pin].bitmap, l->bitmap);
+#endif
+				/* safer value. */  
+				l->bitmap &= pir->linkmap[pin].bitmap;
+				/* XXX - or, should ignore this entry? */
+			}
 		}
 	}
 
@@ -293,90 +355,50 @@ int
 pciintr_link_fixup()
 {
 	struct pciintr_link_map *l;
-	u_int16_t pciirq, bitmap;
-	int i, j, cnt, irq;
+	int irq;
+	u_int16_t pciirq = 0;
 
 	/*
 	 * First stage: Attempt to connect PIRQs which aren't
 	 * yet connected.
 	 */
-	pciirq = 0;
-
 	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
 	     l = SIMPLEQ_NEXT(l, list)) {
-		/*
-		 * Get the canonical link value for this entry.
-		 */
-		if (pciintr_icu_getclink(pciintr_icu_tag, pciintr_icu_handle,
-		    l->link, &l->clink) != 0) {
-			/*
-			 * ICU doesn't understand this link value.
-			 */
-#ifdef PCIINTR_DEBUG
-			printf("pciintr_link_fixup: link 0x%02x invalid\n",
-			    l->link);
-#endif
-			l->clink = -1;
-			continue;
-		}
-
-		/*
-		 * Determine if this PIRQ is mapped to an IRQ.
-		 */
-		if (pciintr_icu_get_intr(pciintr_icu_tag, pciintr_icu_handle,
-		    l->clink, &irq) != 0) {
-			/*
-			 * ICU doesn't understand this PIRQ value.
-			 */
-			l->clink = -1;
-#ifdef PCIINTR_DEBUG
-			printf("pciintr_link_fixup: PIRQ %d invalid\n",
-			    l->clink);
-#endif
-			continue;
-		}
-
-		if (irq == 0xff) {
-			/*
-			 * Interrupt isn't connected.  Attempt to assign
-			 * it to an IRQ.
-			 */
-#ifdef PCIINTR_DEBUG
-			printf("pciintr_link_fixup: PIRQ %d not connected",
-			    l->clink);
-#endif
-			bitmap = l->bitmap;
-			for (i = 0, j = 0xff, cnt = 0; i < 16; i++)
-				if (bitmap & (1 << i))
-					j = i, cnt++;
-			/*
-			 * Just do the easy case now; we'll defer the
-			 * harder ones to Stage 2.
-			 */
-			if (cnt == 1) {
-				l->irq = j;
-				l->old_irq = irq;
-				l->fixup_stage = 1;
-				pciirq |= 1 << j;
-#ifdef PCIINTR_DEBUG
-				printf(", assigning IRQ %d", l->irq);
-#endif
-			}
-#ifdef PCIINTR_DEBUG
-			printf("\n");
-#endif
-		} else {
+		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 			/*
 			 * Interrupt is already connected.  Don't do
 			 * anything to it.
+			 * In this case, l->fixup_stage == 0.
 			 */
+			pciirq |= 1 << l->irq;
+#ifdef PCIINTR_DEBUG
+			printf("pciintr_link_fixup: PIRQ 0x%02x already "
+			    "connected to IRQ %d\n", l->clink, l->irq);
+#endif
+			continue;
+		}
+		/*
+		 * Interrupt isn't connected.  Attempt to assign it to an IRQ.
+		 */
+#ifdef PCIINTR_DEBUG
+		printf("pciintr_link_fixup: PIRQ 0x%02x not connected",
+		    l->clink);
+#endif
+		/*
+		 * Just do the easy case now; we'll defer the harder ones
+		 * to Stage 2.
+		 */
+		if (pciintr_bitmap_count_irq(l->bitmap, &irq) == 1) {
 			l->irq = irq;
+			l->fixup_stage = 1;
 			pciirq |= 1 << irq;
 #ifdef PCIINTR_DEBUG
-			printf("pciintr_link_fixup: PIRQ %d already connected "
-			    "to IRQ %d\n", l->clink, l->irq);
+			printf(", assigning IRQ %d", l->irq);
 #endif
 		}
+#ifdef PCIINTR_DEBUG
+		printf("\n");
+#endif
 	}
 
 	/*
@@ -385,27 +407,21 @@ pciintr_link_fixup()
 	 */
 	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
 	     l = SIMPLEQ_NEXT(l, list)) {
-		if (l->irq != 0)
+		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
-		bitmap = l->bitmap;
-		for (i = 0; i < 16; i++) {
-			if ((pciirq & (1 << i)) != 0 &&
-			    (bitmap & (1 << i)) != 0) {
-				/*
-				 * This IRQ is a valid PCI IRQ already 
-				 * connected to another PIRQ, and also an
-				 * IRQ our PIRQ can use; connect it up!
-				 */
-				l->irq = i;
-				l->old_irq = 0xff;
-				l->fixup_stage = 2;
+		if (pciintr_bitmap_find_lowest_irq(l->bitmap & pciirq,
+		    &l->irq)) {
+			/*
+			 * This IRQ is a valid PCI IRQ already 
+			 * connected to another PIRQ, and also an
+			 * IRQ our PIRQ can use; connect it up!
+			 */
+			l->fixup_stage = 2;
 #ifdef PCIINTR_DEBUG
-				printf("pciintr_link_fixup: assigning "
-				       "IRQ %d to PIRQ %d\n", l->irq,
-				       l->clink);
+			printf("pciintr_link_fixup (stage 2): "
+			       "assigning IRQ %d to PIRQ 0x%02x\n",
+			       l->irq, l->clink);
 #endif
-				break;
-			}
 		}
 	}
 
@@ -414,24 +430,18 @@ pciintr_link_fixup()
 	 * Stage 3: The worst case. I need configuration hint that
 	 * user supplied a mask for the PCI irqs
 	 */
-	pciirq = PCIBIOS_IRQS_HINT;
 	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
 	     l = SIMPLEQ_NEXT(l, list)) {
-		if (l->irq != 0)
+		if (l->irq != I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
 			continue;
-		for (i = 0; i < 16; i++) {
-			if ((pciirq & (1 << i)) != 0 &&
-			    (bitmap & (1 << i)) != 0) {
-				l->irq = i;
-				l->old_irq = 0xff;
-				l->fixup_stage = 3;
+		if (pciintr_bitmap_find_lowest_irq(
+		    l->bitmap & PCIBIOS_IRQS_HINT, &l->irq)) {
+			l->fixup_stage = 3;
 #ifdef PCIINTR_DEBUG
-				printf("pciintr_link_fixup (stage 3): "
-				       "assigning IRQ %d to PIRQ %d\n",
-				       l->irq, l->clink);
+			printf("pciintr_link_fixup (stage 3): "
+			       "assigning IRQ %d to PIRQ 0x%02x\n",
+			       l->irq, l->clink);
 #endif
-				break;
-			}
 		}
 	}
 #endif /* PCIBIOS_IRQS_HINT */
@@ -450,12 +460,38 @@ pciintr_link_route(pciirq)
 
 	for (l = SIMPLEQ_FIRST(&pciintr_link_map_list); l != NULL;
 	     l = SIMPLEQ_NEXT(l, list)) {
+		if (l->fixup_stage == 0) {
+			if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+				/* Appropriate interrupt was not found. */
+#ifdef DIAGNOSTIC
+				printf("pciintr_link_route: "
+				    "PIRQ 0x%02x: no IRQ, try "
+				    "\"options PCIBIOS_IRQS_HINT=0x%04x\"\n",
+				    l->clink,
+				    /* suggest irq 9/10/11, if possible */
+				    (l->bitmap & 0x0e00) ? (l->bitmap & 0x0e00)
+				    : l->bitmap);
+#endif
+			} else {
+				/* BIOS setting has no problem */
+#ifdef PCIINTR_DEBUG
+				printf("pciintr_link_route: "
+				    "route of PIRQ 0x%02x -> "
+				    "IRQ %d preserved BIOS setting\n",
+				    l->clink, l->irq);
+#endif
+				*pciirq |= (1 << l->irq);
+			}
+			continue; /* nothing to do. */
+		}
+
 		if (pciintr_icu_set_intr(pciintr_icu_tag, pciintr_icu_handle,
 					 l->clink, l->irq) != 0 ||
-		    pciintr_icu_set_trigger(pciintr_icu_tag, pciintr_icu_handle,
+		    pciintr_icu_set_trigger(pciintr_icu_tag,
+					    pciintr_icu_handle,
 					    l->irq, IST_LEVEL) != 0) {
-			printf("pciintr_link_route: route of PIRQ %d -> IRQ %d"
-			    " failed\n", l->clink, l->irq);
+			printf("pciintr_link_route: route of PIRQ 0x%02x -> "
+			    "IRQ %d failed\n", l->clink, l->irq);
 			rv = 1;
 		} else {
 			/*
@@ -473,10 +509,10 @@ int
 pciintr_irq_release(pciirq)
 	u_int16_t *pciirq;
 {
-	int i;
+	int i, bit;
 
-	for (i = 0; i < 16; i++) {
-		if ((*pciirq & (1 << i)) == 0)
+	for (i = 0, bit = 1; i < 16; i++, bit <<= 1) {
+		if ((*pciirq & bit) == 0)
 			(void) pciintr_icu_set_trigger(pciintr_icu_tag,
 			    pciintr_icu_handle, i, IST_EDGE);
 	}
@@ -488,15 +524,11 @@ int
 pciintr_header_fixup(pc)
 	pci_chipset_tag_t pc;
 {
-#ifdef PCIBIOSVERBOSE
-	printf("--------------------------------------------\n");
-	printf("  device vendor product pin PIRQ   IRQ stage\n");
-	printf("--------------------------------------------\n");
-#endif
+	PCIBIOS_PRINTV(("------------------------------------------\n"));
+	PCIBIOS_PRINTV(("  device vendor product pin PIRQ IRQ stage\n"));
+	PCIBIOS_PRINTV(("------------------------------------------\n"));
 	pci_device_foreach(pc, pcibios_max_bus, pciintr_do_header_fixup);
-#ifdef PCIBIOSVERBOSE
-	printf("--------------------------------------------\n");
-#endif
+	PCIBIOS_PRINTV(("------------------------------------------\n"));
 
 	return (0);
 }
@@ -535,29 +567,68 @@ pciintr_do_header_fixup(pc, tag)
 		return;
 	}
 
-	l = pciintr_link_lookup_link(link);
+	l = pciintr_link_lookup(link);
 	if (l == NULL) {
+#ifdef PCIINTR_DEBUG
 		/*
-		 * No link map entry?!
+		 * No link map entry.
+		 * Probably pciintr_icu_getclink() or pciintr_icu_get_intr()
+		 * was failed.
 		 */
 		printf("pciintr_header_fixup: no entry for link 0x%02x "
 		       "(%d:%d:%d:%c)\n", link, bus, device, function,
 		       '@' + pin);
+#endif
 		return;
 	}
+
+#ifdef PCIBIOSVERBOSE
+	if (pcibiosverbose) {
+		printf("%03d:%02d:%d 0x%04x 0x%04x   %c  0x%02x",
+		    bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id),
+		    '@' + pin, l->clink);
+		if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION)
+			printf("   -");
+		else
+			printf(" %3d", l->irq);
+		printf("  %d   ", l->fixup_stage);
+	}
+#endif
 	
 	/*
 	 * IRQs 14 and 15 are reserved for PCI IDE interrupts; don't muck
 	 * with them.
 	 */
-	if (irq == 14 || irq == 15)
+	if (irq == 14 || irq == 15) {
+		PCIBIOS_PRINTV((" WARNING: ignored\n"));
 		return;
+	}
 
-#ifdef PCIBIOSVERBOSE
-	printf("%03d:%02d:%d 0x%04x 0x%04x  %c   0x%02x   %02d  %d\n",
-	       bus, device, function, PCI_VENDOR(id), PCI_PRODUCT(id),
-	       '@' + pin, l->clink, l->irq, l->fixup_stage);
+	if (l->irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+		/* Appropriate interrupt was not found. */
+		PCIBIOS_PRINTV((" WARNING: missing IRQ\n"));
+		return;
+	}
+
+	if (l->irq == irq) {
+		/* don't have to reconfigure */
+		PCIBIOS_PRINTV((" already assigned\n"));
+		return;
+	}
+
+	if (irq == 0 || irq == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+		PCIBIOS_PRINTV((" fixed up\n"));
+	} else {
+		/* routed by BIOS, but inconsistent */
+#ifdef PCIBIOS_INTR_FIXUP_FORCE
+		/* believe PCI IRQ Routing table */
+		PCIBIOS_PRINTV((" WARNING: override irq %d\n", irq));
+#else
+		/* believe PCI Interrupt Configuration Register (default)  */
+		PCIBIOS_PRINTV((" WARNING: leave irq %d\n", irq));
+		return;
 #endif
+	}
 
 	intr &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
 	intr |= (l->irq << PCI_INTERRUPT_LINE_SHIFT);
@@ -583,8 +654,8 @@ pci_intr_fixup(pc, iot, pciirq)
 	 */
 	if (pcibios_pir_header.signature != 0) {
 		icutag = pci_make_tag(pc, pcibios_pir_header.router_bus,
-		    (pcibios_pir_header.router_devfunc >> 3) & 0x1f,
-		    pcibios_pir_header.router_devfunc & 7);
+		    PIR_DEVFUNC_DEVICE(pcibios_pir_header.router_devfunc),
+		    PIR_DEVFUNC_FUNCTION(pcibios_pir_header.router_devfunc));
 		icuid = pcibios_pir_header.compat_router;
 		if (icuid == 0 ||
 		    (piit = pciintr_icu_lookup(icuid)) == NULL) {
