@@ -1,4 +1,5 @@
-/*	$NetBSD: ip6_var.h,v 1.9 2000/02/03 18:13:02 itojun Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.10 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$KAME: ip6_var.h,v 1.27 2000/02/22 14:04:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -170,9 +171,43 @@ struct	ip6stat {
 	u_quad_t ip6s_nogif;		/* no match gif found */
 	u_quad_t ip6s_toomanyhdr;	/* discarded due to too many headers */
 	/* XXX the following two items are not really AF_INET6 thing */
+	u_quad_t ip6s_exthdrget;	/* # of calls to IP6_EXTHDR_GET */
+	u_quad_t ip6s_exthdrget0;	/* # of calls to IP6_EXTHDR_GET0 */
 	u_quad_t ip6s_pulldown;		/* # of calls to m_pulldown */
 	u_quad_t ip6s_pulldown_copy;	/* # of mbuf copies in m_pulldown */
 	u_quad_t ip6s_pulldown_alloc;	/* # of mbuf allocs in m_pulldown */
+	u_quad_t ip6s_pullup;		/* # of calls to m_pullup */
+	u_quad_t ip6s_pullup_copy;	/* # of possible m_pullup copies */
+	u_quad_t ip6s_pullup_alloc;	/* # of possible m_pullup mallocs */
+	u_quad_t ip6s_pullup_fail;	/* # of possible m_pullup failures */
+	u_quad_t ip6s_pullup2;		/* # of calls to m_pullup2 */
+	u_quad_t ip6s_pullup2_copy;	/* # of possible m_pullup2 copies */
+	u_quad_t ip6s_pullup2_alloc;	/* # of possible m_pullup2 mallocs */
+	u_quad_t ip6s_pullup2_fail;	/* # of possible m_pullup2 failures */
+
+	/*
+	 * statistics for improvement of the source address selection
+	 * algorithm:
+	 * XXX: hardcoded 16 = # of ip6 multicast scope types + 1
+	 */
+	/* number of times that address selection fails */
+	u_quad_t ip6s_sources_none;
+	/* number of times that an address on the outgoing I/F is chosen */
+	u_quad_t ip6s_sources_sameif[16];
+	/* number of times that an address on a non-outgoing I/F is chosen */
+	u_quad_t ip6s_sources_otherif[16];
+	/*
+	 * number of times that an address that has the same scope
+	 * from the destination is chosen.
+	 */
+	u_quad_t ip6s_sources_samescope[16];
+	/*
+	 * number of times that an address that has a different scope
+	 * from the destination is chosen.
+	 */
+	u_quad_t ip6s_sources_otherscope[16];
+	/* number of times that an deprecated address is chosen */
+	u_quad_t ip6s_sources_deprecated[16];
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,5 @@
-/*	$NetBSD: nd6.c,v 1.17 2000/02/06 12:49:47 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.18 2000/02/26 08:39:20 itojun Exp $	*/
+/*	$KAME: nd6.c,v 1.41 2000/02/24 16:34:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,6 +46,7 @@
 #include <sys/sockio.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/protosw.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
@@ -84,7 +86,6 @@ int	nd6_delay	= 5;	/* delay first probe time 5 second */
 int	nd6_umaxtries	= 3;	/* maximum unicast query */
 int	nd6_mmaxtries	= 3;	/* maximum multicast query */
 int	nd6_useloopback = 1;	/* use loopback interface for local traffic */
-int	nd6_proxyall	= 0;	/* enable Proxy Neighbor Advertisement */
 
 /* preventing too many loops in ND option parsing */
 int nd6_maxndopt = 10;	/* max # of ND options allowed */
@@ -431,9 +432,8 @@ nd6_timer(ignored_arg)
 			}
 			break;
 		case ND6_LLINFO_REACHABLE:
-			if (ln->ln_expire) {
+			if (ln->ln_expire)
 				ln->ln_state = ND6_LLINFO_STALE;
-			}
 			break;
 		/* 
 		 * ND6_LLINFO_STALE state requires nothing for timer
@@ -578,7 +578,7 @@ nd6_purge(ifp)
 	 * Nuke neighbor cache entries for the ifp.
 	 * Note that rt->rt_ifp may not be the same as ifp,
 	 * due to KAME goto ours hack.  See RTM_RESOLVE case in
-	 * nd6_rtrequest(), and ip6_input()).
+	 * nd6_rtrequest(), and ip6_input().
 	 */
 	ln = llinfo_nd6.ln_next;
 	while (ln && ln != &llinfo_nd6) {
@@ -597,7 +597,8 @@ nd6_purge(ifp)
 	}
 
 	/*
-	 * Interface route will be retained by nd6_free().  Nuke it.
+	 * Neighbor cache entry for interface route will be retained
+	 * with ND6_LLINFO_WAITDELETE state, by nd6_free().  Nuke it.
 	 */
 	ln = llinfo_nd6.ln_next;
 	while (ln && ln != &llinfo_nd6) {
@@ -768,9 +769,19 @@ nd6_free(rt)
 	struct in6_addr in6 = ((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 	struct nd_defrouter *dr;
 
+	/*
+	 * Clear all destination cache entries for the neighbor.
+	 * XXX: is it better to restrict this to hosts?
+	 */
+	pfctlinput(PRC_HOSTDEAD, rt_key(rt));
+
 	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
 		int s;
+#ifdef __NetBSD__
 		s = splsoftnet();
+#else
+		s = splnet();
+#endif
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->sin6_addr,
 				      rt->rt_ifp);
 		if (ln->ln_router || dr) {
@@ -993,7 +1004,7 @@ nd6_rtrequest(req, rt, sa)
 		 *     SIN(rt_mask(rt))->sin_addr.s_addr != 0xffffffff)
 		 *	   rt->rt_flags |= RTF_CLONING;
 		 */
-		if (rt->rt_flags & RTF_CLONING || rt->rt_flags & RTF_LLINFO) {
+		if (rt->rt_flags & (RTF_CLONING | RTF_LLINFO)) {
 			/*
 			 * Case 1: This route should come from
 			 * a route to interface. RTF_LLINFO flag is set
@@ -1020,17 +1031,37 @@ nd6_rtrequest(req, rt, sa)
 			if (rt->rt_flags & RTF_CLONING)
 				break;
 		}
-		/* Announce a new entry if requested. */
+		/*
+		 * In IPv4 code, we try to annonuce new RTF_ANNOUNCE entry here.
+		 * We don't do that here since llinfo is not ready yet.
+		 *
+		 * There are also couple of other things to be discussed:
+		 * - unsolicited NA code needs improvement beforehand
+		 * - RFC2461 says we MAY send multicast unsolicited NA
+		 *   (7.2.6 paragraph 4), however, it also says that we
+		 *   SHOULD provide a mechanism to prevent multicast NA storm.
+		 *   we don't have anything like it right now.
+		 *   note that the mechanism need a mutual agreement
+		 *   between proxies, which means that we need to implement
+		 *   a new protocol, or new kludge.
+		 * - from RFC2461 6.2.4, host MUST NOT send unsolicited NA.
+		 *   we need to check ip6forwarding before sending it.
+		 *   (or should we allow proxy ND configuration only for
+		 *   routers?  there's no mention about proxy ND from hosts)
+		 */
+#if 0
+		/* XXX it does not work */
 		if (rt->rt_flags & RTF_ANNOUNCE)
 			nd6_na_output(ifp,
-				      &SIN6(rt_key(rt))->sin6_addr,
-				      &SIN6(rt_key(rt))->sin6_addr,
-				      ip6_forwarding ? ND_NA_FLAG_ROUTER : 0,
-				      1);
+			      &SIN6(rt_key(rt))->sin6_addr,
+			      &SIN6(rt_key(rt))->sin6_addr,
+			      ip6_forwarding ? ND_NA_FLAG_ROUTER : 0,
+			      1, NULL);
+#endif
 		/* FALLTHROUGH */
 	case RTM_RESOLVE:
 		if (gate->sa_family != AF_LINK ||
-		   gate->sa_len < sizeof(null_sdl)) {
+		    gate->sa_len < sizeof(null_sdl)) {
 			log(LOG_DEBUG, "nd6_rtrequest: bad gateway value\n");
 			break;
 		}
@@ -1104,12 +1135,50 @@ nd6_rtrequest(req, rt, sa)
 					rt->rt_ifa = ifa;
 				}
 			}
+		} else if (rt->rt_flags & RTF_ANNOUNCE) {
+			ln->ln_expire = 0;
+			ln->ln_state = ND6_LLINFO_REACHABLE;
+
+			/* join solicited node multicast for proxy ND */
+			if (ifp->if_flags & IFF_MULTICAST) {
+				struct in6_addr llsol;
+				int error;
+
+				llsol = SIN6(rt_key(rt))->sin6_addr;
+				llsol.s6_addr16[0] = htons(0xff02);
+				llsol.s6_addr16[1] = htons(ifp->if_index);
+				llsol.s6_addr32[1] = 0;
+				llsol.s6_addr32[2] = htonl(1);
+				llsol.s6_addr8[12] = 0xff;
+
+				(void)in6_addmulti(&llsol, ifp, &error);
+				if (error)
+					printf(
+"nd6_rtrequest: could not join solicited node multicast (errno=%d)\n", error);
+			}
 		}
 		break;
 
 	case RTM_DELETE:
 		if (!ln)
 			break;
+		/* leave from solicited node multicast for proxy ND */
+		if ((rt->rt_flags & RTF_ANNOUNCE) != 0 &&
+		    (ifp->if_flags & IFF_MULTICAST) != 0) {
+			struct in6_addr llsol;
+			struct in6_multi *in6m;
+
+			llsol = SIN6(rt_key(rt))->sin6_addr;
+			llsol.s6_addr16[0] = htons(0xff02);
+			llsol.s6_addr16[1] = htons(ifp->if_index);
+			llsol.s6_addr32[1] = 0;
+			llsol.s6_addr32[2] = htonl(1);
+			llsol.s6_addr8[12] = 0xff;
+
+			IN6_LOOKUP_MULTI(llsol, ifp, in6m);
+			if (in6m)
+				in6_delmulti(in6m);
+		}
 		nd6_inuse--;
 		ln->ln_next->ln_prev = ln->ln_prev;
 		ln->ln_prev->ln_next = ln->ln_next;
@@ -1163,7 +1232,7 @@ nd6_p2p_rtrequest(req, rt, sa)
 				      &SIN6(rt_key(rt))->sin6_addr,
 				      &SIN6(rt_key(rt))->sin6_addr,
 				      ip6_forwarding ? ND_NA_FLAG_ROUTER : 0,
-				      1);
+				      1, NULL);
 		/* FALLTHROUGH */
 	case RTM_RESOLVE:
 		/*
@@ -1225,6 +1294,11 @@ nd6_ioctl(cmd, data, ifp)
 		splx(s);
 		break;
 	case SIOCGPRLST_IN6:
+		/*
+		 * XXX meaning of fields, especialy "raflags", is very
+		 * differnet between RA prefix list and RR/static prefix list.
+		 * how about separating ioctls into two?
+		 */
 		bzero(prl, sizeof(*prl));
 		s = splsoftnet();
 		pr = nd_prefix.lh_first;
@@ -1262,11 +1336,11 @@ nd6_ioctl(cmd, data, ifp)
 				pfr = pfr->pfr_next;
 			}
 			prl->prefix[i].advrtrs = j;
+			prl->prefix[i].origin = PR_ORIG_RA;
 
 			i++;
 			pr = pr->ndpr_next;
 		}
-		splx(s);
 	      {
 		struct rr_prefix *rpp;
 
@@ -1282,9 +1356,11 @@ nd6_ioctl(cmd, data, ifp)
 			prl->prefix[i].if_index = rpp->rp_ifp->if_index;
 			prl->prefix[i].expire = rpp->rp_expire;
 			prl->prefix[i].advrtrs = 0;
+			prl->prefix[i].origin = rpp->rp_origin;
 			i++;
 		}
 	      }
+		splx(s);
 
 		break;
 	case SIOCGIFINFO_IN6:
