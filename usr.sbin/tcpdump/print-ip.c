@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.7 1999/07/02 11:31:32 itojun Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.8 1999/07/25 04:23:21 explorer Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ip.c,v 1.66 97/05/28 12:51:43 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.7 1999/07/02 11:31:32 itojun Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.8 1999/07/25 04:23:21 explorer Exp $");
 #endif
 #endif
 
@@ -484,6 +484,10 @@ again:
 #endif
 		case IPPROTO_IGMP:
 			igmp_print(cp, len, (const u_char *)ip);
+			break;
+
+		case IPPROTO_PIM:
+			pim_print(cp, len);
 			break;
 
 		case 4:
