@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 1997/05/08 13:44:13 matthias Exp $	*/
+/*	$NetBSD: locore.s,v 1.47.8.1 1997/11/11 01:27:25 mellon Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -576,7 +576,7 @@ ENTRY(setrunqueue)
 	movd    r2,P_BACK(r0)		/* set p->p_back */
 	ret	0
 #ifdef DIAGNOSTIC
-1:	PANIC("setrunqueue)		/* Was on the list! */
+1:	PANIC("setrunqueue")		/* Was on the list! */
 #endif
 
 /*
