@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.4 2001/11/06 03:17:36 augustss Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.5 2001/11/10 17:07:21 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -56,6 +56,13 @@
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+#ifdef EHCI_DEBUG
+#define DPRINTF(x)	if (ehcidebug) printf x
+extern int ehcidebug;
+#else
+#define DPRINTF(x)
+#endif
+
 int	ehci_pci_match(struct device *, struct cfdata *, void *);
 void	ehci_pci_attach(struct device *, struct device *, void *);
 int	ehci_pci_detach(device_ptr_t, int);
@@ -102,6 +109,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
 	usbd_status r;
+	int ncomp;
+	struct usb_pci *up;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -122,9 +131,9 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG,
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
-	sc->sc.sc_offs = bus_space_read_1(sc->sc.iot, sc->sc.ioh, EHCI_CAPLENGTH);
-
 	/* Disable interrupts, so we don't get any spurious ones. */
+	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
+	DPRINTF(("%s: offs=%d\n", devname, sc->sc.sc_offs));
 	EOWRITE2(&sc->sc, EHCI_USBINTR, 0);
 
 	/* Map and establish the interrupt. */
@@ -168,6 +177,22 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		sprintf(sc->sc.sc_vendor, "vendor 0x%04x",
 			PCI_VENDOR(pa->pa_id));
 	
+	/*
+	 * Find companion controllers.  According to the spec they always
+	 * have lower function numbers so they should be enumerated already.
+	 */
+	ncomp = 0;
+	TAILQ_FOREACH(up, &ehci_pci_alldevs, next) {
+		if (up->bus == pa->pa_bus && up->device == pa->pa_device) {
+			DPRINTF(("ehci_pci_attach: companion %s\n",
+				 USBDEVNAME(up->usb->bdev)));
+			sc->sc.sc_comps[ncomp++] = up->usb;
+			if (ncomp >= EHCI_COMPANION_MAX)
+				break;
+		}
+	}
+	sc->sc.sc_ncomp = ncomp;
+
 	r = ehci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n", devname, r);
