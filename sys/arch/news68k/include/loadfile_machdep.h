@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.1 1999/12/09 14:53:12 tsutsui Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.2 2000/12/03 02:56:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,8 +40,8 @@
 #define BOOT_ELF
 #define ELFSIZE 32
 
-#define LOAD_KERNEL	(LOAD_ALL & ~LOAD_HDR)
-#define COUNT_KERNEL	(COUNT_ALL & ~COUNT_HDR)
+#define LOAD_KERNEL		LOAD_ALL
+#define COUNT_KERNEL		COUNT_ALL
 
 #define LOADADDR(a)		(((u_long)(a)) + offset)
 #define ALIGNENTRY(a)		((u_long)(a))
