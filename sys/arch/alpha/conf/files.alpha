@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.109 2000/03/14 15:56:51 oster Exp $
+# $NetBSD: files.alpha,v 1.110 2000/03/23 01:04:11 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -173,7 +173,7 @@ file	arch/alpha/tc/scc.c		scc		needs-count
 # 8530 UARTs using the MI 8530 driver   
 device	zsc { channel = -1 }
 attach	zsc at ioasic with zsc_ioasic
-file	arch/alpha/tc/zs_ioasic.c	zsc_ioasic
+file	arch/alpha/tc/zs_ioasic.c	zsc_ioasic	needs-flag
 file	dev/ic/z8530sc.c		zsc
 
 device	zstty: tty
