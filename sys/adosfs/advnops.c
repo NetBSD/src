@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.45 1998/08/19 13:12:40 kleink Exp $	*/
+/*	$NetBSD: advnops.c,v 1.46 1998/09/01 03:33:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -45,6 +45,7 @@
 #include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/proc.h>
@@ -926,7 +927,7 @@ adosfs_reclaim(v)
 		free(ap->tab, M_ANODE);
 	else if (vp->v_type == VLNK && ap->slinkto)
 		free(ap->slinkto, M_ANODE);
-	free(ap, M_ANODE);
+	pool_put(&adosfs_node_pool, ap);
 	vp->v_data = NULL;
 	return(0);
 }
