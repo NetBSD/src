@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_invop.c,v 1.1 1996/04/04 06:36:25 phil Exp $	*/
+/*	$NetBSD: ieee_invop.c,v 1.2 1996/05/03 23:19:28 phil Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -23,6 +23,22 @@
  *	Handle operations which generated reserved operand traps.
  *
  * HISTORY
+ * 23-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Don't change sign of NaN operands of NEGF and SUBF.
+ *
+ * 23-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Operations on signaling NaN's always produce a quiet NaN.
+ *
+ * 08-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Generate correct return value so flags get set properly.
+ *
+ * 05-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Get subnormal number divided by subnormal number right.
+ *	Get infinty multiplied by zero right.
+ *
+ * 02-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Make 0/0 produce NaN.
+ *
  * 14-Dec-95  Ian Dall (Ian.Dall@dsto.defence.gov.au)
  *	First release.
  *
@@ -50,6 +66,7 @@ static int nan_2(union t_conv data1, union t_conv *data2)
     }
     break;
   }
+  data2->d_bits.mantissa |= 0x80000; /* Make sure it is a quiet NaN */
   return 1;
 }
 
@@ -70,8 +87,10 @@ static int add_iv (struct operand *op1, struct operand *op2)
   case 2:
     return ret;
   case 3:
-    if(op1->data.d_bits.sign != op2->data.d_bits.sign)
+    if(op1->data.d_bits.sign != op2->data.d_bits.sign) {
       op2->data = qnan;
+      return FPC_TT_INVOP;
+    }
     return ret;
   }
   /* Must be subnormals */
@@ -102,9 +121,22 @@ static int div_iv (struct operand *op1, struct operand *op2)
     return ret;
   case 3:
     op2->data = qnan;
-    return ret;
+    return FPC_TT_INVOP;
   }
-  /* Must be subnormals */
+  if(ISZERO(op1->data)) {
+    if (ISZERO(op2->data)) {
+      /* Must be 0/0 */
+      op2->data = qnan;
+      return FPC_TT_INVOP;
+    }
+    else {
+      /* Must be subnorm/0 */
+      op2->data = infty;
+      op2->data.d_bits.sign = sign1 ^ sign2;
+      return FPC_TT_DIV0;
+    }
+  }
+  /* Must be subnorm/subnorm */
   return ieee_div(op1->data.d, &op2->data.d);
 }
 
@@ -122,12 +154,21 @@ static int mul_iv (struct operand *op1, struct operand *op2)
   case 0:
     break;
   case 1:			/* oo * n */
-    {
-      op2->data = ISZERO(op1->data)? qnan: op1->data;
+    if (ISZERO(op2->data)) {
+      op2->data = qnan;
+      return FPC_TT_INVOP;
+    }
+    else {
+      op2->data = op1->data;
       op2->data.d_bits.sign = sign1 ^ sign2;
       return ret;
     }
   case 2:			/* n * oo */
+    if (ISZERO(op1->data)) {
+      op2->data = qnan;
+      return FPC_TT_INVOP;
+    }
+    /* Fall through */
   case 3:			/* oo * oo */
     op2->data.d_bits.sign = sign1 ^ sign2;
     return ret;
@@ -235,60 +276,56 @@ int ieee_invop(struct operand *op1, struct operand *op2,
   int user_trap = FPC_TT_NONE;
   unsigned int fsr = state->FSR;
 
-
-  /* Source is Infty, NaN or Subnormal (or 0 if dividing 0 by 0) */
-  fsr |= FPC_IVF;
-  if (fsr & FPC_IVE) {
-    /* Users trap handler will fix it */
-    user_trap = FPC_TT_INVOP;
-  }
-  else {
-    /*
-     * Figure out right thing to do.
-     */
-    switch(xopcode) {
-    case NEGF:
+  /* Don't fiddle with fsr. The FPC_TT_INVOP bit should only be set
+   * if we attempt to *generate* a NaN. This is achieved by returning
+   * FPC_TT_INVOP when we generate a NaN.
+   */
+  /*
+   * Figure out right thing to do.
+   */
+  switch(xopcode) {
+  case NEGF:
+    if(! ISNAN(op1->data))
       op1->data.d_bits.sign ^= 1;
-      /* Fall through */
-    case MOVF:
-    case MOVLF:
-    case MOVFL:
-      op2->data = op1->data;
-      break;
-    case CMPF:
-      cmp_iv(op1, op2, state);
-      break;
-    case SUBF:
+    /* Fall through */
+  case MOVF:
+  case MOVLF:
+  case MOVFL:
+    op2->data = op1->data;
+    break;
+  case CMPF:
+    cmp_iv(op1, op2, state);
+    break;
+  case SUBF:
+    if(! ISNAN(op1->data))
       op1->data.d_bits.sign ^= 1;
-      /* Fall through */
-    case ADDF:
-      user_trap = add_iv(op1, op2);
-      break;
-    case MULF:
-      user_trap = mul_iv(op1, op2);
-      break;
-    case DIVF:
-      user_trap = div_iv(op1, op2);
-      break;
-    case ROUNDFI:
-    case TRUNCFI:
-    case FLOORFI:
-      user_trap = round_iv(op1, op2, xopcode);
-      break;
-    case SCALBF:
-      user_trap = scalb_iv(op1, op2);
-      break;
-    case LOGBF:
-      user_trap = logb_iv(op1, op2);
-      break;
-    case DOTF:
-      user_trap = dot_iv(op1, op2, f0_op);
-      break;
-    case POLYF:
-      user_trap = poly_iv(op1, op2, f0_op);
-      break;
-    }
+    /* Fall through */
+  case ADDF:
+    user_trap = add_iv(op1, op2);
+    break;
+  case MULF:
+    user_trap = mul_iv(op1, op2);
+    break;
+  case DIVF:
+    user_trap = div_iv(op1, op2);
+    break;
+  case ROUNDFI:
+  case TRUNCFI:
+  case FLOORFI:
+    user_trap = round_iv(op1, op2, xopcode);
+    break;
+  case SCALBF:
+    user_trap = scalb_iv(op1, op2);
+    break;
+  case LOGBF:
+    user_trap = logb_iv(op1, op2);
+    break;
+  case DOTF:
+    user_trap = dot_iv(op1, op2, f0_op);
+    break;
+  case POLYF:
+    user_trap = poly_iv(op1, op2, f0_op);
+    break;
   }
-  state->FSR = fsr;
   return user_trap;
 }

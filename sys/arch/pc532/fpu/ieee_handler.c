@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee_handler.c,v 1.1 1996/04/04 06:36:18 phil Exp $	*/
+/*	$NetBSD: ieee_handler.c,v 1.2 1996/05/03 23:19:26 phil Exp $	*/
 
 /* 
  * IEEE floating point support for NS32081 and NS32381 fpus.
@@ -24,31 +24,55 @@
  *      decodes floating point instructions.
  *
  * HISTORY
+ * 23-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Advance pc past trapping instruction always.
+ *
+ * 13-Apr-96  Matthias Pfaller <leo@dachau.marco.de>
+ *	Fix up test for denormalized result in canonical_to_size().
+ *
+ * 13-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Clean up types in get_operand().
+ *
+ * 13-Apr-96 Matthias Pfaller <leo@dachau.marco.de>
+ *      Remove redundant status test code from fetch_data(). Fix
+ *      register relative and PC relative address decoding.
+ *
+ * 02-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Make zero floats get canonicalized to doubles properly.
+ *
+ * 02-Apr-96  Ian Dall (Ian.Dall@dsto.defence.gov.au)
+ *	Notice that default_trap_handle() has a side effect of changing
+ *	state->FSR.
+ *
+ * 02-Apr-96  Matthias Pfaller <leo@dachau.marco.de>
+ *	Add NetBSD kernel support.
+ *
  * 14-Dec-95  Ian Dall (Ian.Dall@dsto.defence.gov.au)
  *	First release.
- *
- */
+ * */
 
 #include <sys/types.h>
 #include <stddef.h>
 #include "ieee_internal.h"
-#include <machine/param.h>
 
 #if defined(KERNEL) || defined(_KERNEL)
-# ifdef __NetBSD__
-#  include <sys/systm.h>
-#  define longjmp(x, y) longjmp(&x)
-#  define setjmp(x) setjmp(&x)
-#  define AT	void *
-# else
+# ifdef MACH
 #  include <setjmp.h>
 #  define setjmp _setjmp
 #  define longjmp _longjmp
 #  define AT	vm_offset_t
+# elif defined(__NetBSD__)	/* MACH */
+#  include <machine/param.h>
+#  include <sys/systm.h>
+#  define longjmp(x, y) longjmp(&x)
+#  define setjmp(x) setjmp(&x)
+#  define AT	void *
 # endif
 # define get_dword(addr) ({long _t; COPYIN((addr), (vm_offset_t) &_t, sizeof(long)); _t;})
 #else /* KERNEL */
+# include <machine/param.h>
 # include <setjmp.h>
+# define AT	vm_offset_t
 # ifdef DEBUG
 # include <stdio.h>
 # endif
@@ -242,7 +266,7 @@ static int canonical_to_size(struct operand *op) {
       else {
 	mantissa = t.d_bits.mantissa << 3;
 	mantissa |= (t.d_bits.mantissa2 >> 29) & 7;
-	if(exp <= 0) {
+	if(exp <= 0 && (mantissa != 0 || t.d_bits.exp != 0)) {
 	  /* Denormalize */
 	  mantissa |= 0x800000;
 	  mantissa >>= -exp;
@@ -276,14 +300,20 @@ static void canonicalise_op(struct operand *op) {
       op->data.d_bits.exp = (t.f_bits.exp == 0xff)? 0x7ff: t.f_bits.exp + EXP_DBIAS - EXP_FBIAS;
       op->data.d_bits.mantissa = t.f_bits.mantissa >> 3;
       op->data.d_bits.mantissa2 = (t.f_bits.mantissa & 7) << 29;
-      if (t.f_bits.exp == 0 && t.f_bits.mantissa != 0) {
-	/* Was a subnormal float. Subnormal floats can always be converted
-	 * to normal doubles.
-	 */
-	int norm;
-	op->data.d_bits.exp = 0;
-	norm = ieee_normalize(&(op->data));
-	op->data.d_bits.exp = EXP_DBIAS - EXP_FBIAS + norm;
+      if (t.f_bits.exp == 0) {
+	if (t.f_bits.mantissa == 0) {
+	  /* Float is zero */
+	  op->data.d_bits.exp = 0;
+	}
+	else {
+	  /* Was a subnormal float. Subnormal floats can always be converted
+	   * to normal doubles.
+	   */
+	  int norm;
+	  op->data.d_bits.exp = 0;
+	  norm = ieee_normalize(&(op->data));
+	  op->data.d_bits.exp = EXP_DBIAS - EXP_FBIAS + norm;
+	}
       }
     }
   }
@@ -305,7 +335,7 @@ static struct {
   vm_offset_t base;
   char *max;
   char buf[MAX_LEN];
-#if defined(_KERNEL) && defined(__NetBSD__)
+#if defined(_KERNEL) && defined(__NetBSD__) && !defined(MACH)
   label_t copyfail;
 #else
   jmp_buf copyfail;
@@ -345,18 +375,13 @@ static int fetch_data (char *addr) {
   vm_offset_t u_end_addr = copyin_buffer.base + addr - copyin_buffer.buf;
   vm_offset_t k_addr = (vm_offset_t) copyin_buffer.max;
   int n;
-  int status;
   int n_page = ns532_round_page(u_end_addr) - copyin_buffer.base + copyin_buffer.buf - copyin_buffer.max;
   int n_max = MAX_LEN + copyin_buffer.buf - copyin_buffer.max;
   int n_min = addr - copyin_buffer.max + 1;
   n = MIN(n_max, MAX(n_min, MIN(FETCH_CHUNK, n_page)));
-  status = COPYIN(u_addr, k_addr, n);
+  COPYIN(u_addr, k_addr, n);
   DP(2, "fetch_data: addr = 0x%x, from 0x%x, to 0x%x, n = %d\n", addr, u_addr, k_addr, n);
-  if (status != 0) {
-    longjmp (copyin_buffer.copyfail, 1);
-  }
-  else
-    copyin_buffer.max += n;
+  copyin_buffer.max += n;
   return 1;
 }
 
@@ -418,7 +443,7 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
     /* Register relative disp(R0 -- R7) */
     /* rn out of state, then get data out of res_addr */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + reg_addr(gen & 7, state));
+    addr =  (disp1 + *(unsigned int *)reg_addr(gen & 7, state));
     break;
   case 0x10:
   case 0x11:
@@ -474,25 +499,22 @@ static int get_operand(char **buf, unsigned char gen, unsigned char index, struc
   case 0x18:
     /* Memory space disp(FP) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (unsigned int) state->FP);
+    addr =  (disp1 + (vm_offset_t) state->FP);
     break;
   case 0x19:
     /* Memory space disp(SP) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (unsigned int) state->SP);
+    addr =  (disp1 + (vm_offset_t) state->SP);
     break;
   case 0x1a:
     /* Memory space disp(SB) */
     disp1 = get_displacement (buf);
-    addr =  (disp1 + (unsigned int) state->SB);
+    addr =  (disp1 + (vm_offset_t) state->SB);
     break;
   case 0x1b:
     /* Memory space disp(PC) */
-    {
-      vm_offset_t disp_addr = BUF_TO_UADDR(*buf);
-      disp1 = get_displacement (buf);
-      addr = disp1 + disp_addr;
-    }
+    disp1 = get_displacement (buf);
+    addr = disp1 + (vm_offset_t) state->PC;
     break;
   case 0x1c:
   case 0x1d:
@@ -680,6 +702,7 @@ int ieee_handle_exception(state *state)
 
   if(user_trap == FPC_TT_NONE) {
     user_trap = default_trap_handle(&op1, &op2, &f0_op, xopcode, state);
+    fsr = state->FSR;		/* May have been side effected */
 
     /* user_trap now has traps generated during emulation. Correct ieee
      * results already calculated, but must see whether we need to
@@ -728,9 +751,6 @@ int ieee_handle_exception(state *state)
   }
 
   if(user_trap == FPC_TT_NONE) {
-    /* Otherwise the user trap must step over the instruction if it wants
-     * to resume
-     */
     if(res) {
 #ifdef DEBUG
       if (ieee_handler_debug > 1) {
@@ -739,8 +759,8 @@ int ieee_handle_exception(state *state)
 #endif
       store_result(res);
     }
-    state->PC = BUF_TO_UADDR(buf);
   }
+  state->PC = BUF_TO_UADDR(buf);
   SET_FSR(ofsr);
   state->FSR = fsr;
   return user_trap;
