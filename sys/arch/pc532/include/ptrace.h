@@ -14,7 +14,7 @@
  *    must display the following acknowledgement:
  *      This product includes software developed by Christopher G. Demetriou.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *    derived from this software withough specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -27,16 +27,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ptrace.h,v 1.3 1994/01/28 23:45:41 jtc Exp $
+ *	$Id: ptrace.h,v 1.4 1994/02/02 08:02:45 phil Exp $
  */
 
 /*
- * i386-dependent ptrace definitions
+ * pc532-dependent ptrace definitions
  */
 #define	PT_STEP		(PT_FIRSTMACH + 0)
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
+#ifdef notyet
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
-
+#endif
 
