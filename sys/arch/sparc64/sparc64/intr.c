@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.42 2002/05/06 19:19:48 eeh Exp $ */
+/*	$NetBSD: intr.c,v 1.43 2002/06/07 19:31:04 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -276,9 +276,9 @@ intr_establish(level, ih)
 						M_DEVBUF, M_NOWAIT);
 				/* Point the old IH at the new handler */
 				*nih = *q;
-				q->ih_fun = intr_list_handler;
-				q->ih_arg = (void *)nih;
 				nih->ih_next = NULL;
+				q->ih_arg = (void *)nih;
+				q->ih_fun = intr_list_handler;
 			}
 			/* Add the ih to the head of the list */
 			ih->ih_next = (struct intrhand *)q->ih_arg;
@@ -298,7 +298,7 @@ intr_establish(level, ih)
 		panic("intr_establish: bad intr number %x", ih->ih_number);
 
 	/* If it's not shared, stick it in the intrhand list for that level. */
-	if (q != NULL) {
+	if (q == NULL) {
 		for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
 			;
 		*p = ih;
