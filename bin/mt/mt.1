@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.21 1999/07/21 17:10:08 tron Exp $
+.\"	$NetBSD: mt.1,v 1.22 1999/09/30 12:08:12 soren Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -139,8 +139,10 @@ of zero sets variable blocksize.
 Set the tape density code to
 .Ar count
 as specified in the
-.Tn SCSI-2
-specification.
+.Tn SCSI-3
+specification.  See the
+.Sx DENSITY CODES
+section for a list of codes for commonly used media types.
 .It Cm rdspos
 Read the logical block position of the tape (not all tape
 drives support this feature, count is ignored).
@@ -172,6 +174,36 @@ uses the device
 .Nm
 returns a 0 exit status when the operation(s) were successful,
 1 if the command was unrecognized, and 2 if an operation failed.
+.Sh DENSITY CODES
+The SCSI-3 specification defines a number of density codes for
+various tape media, some of which are listed here.  Note that
+many tape drive vendors also define model-specific codes.
+.Pp
+.Bl -column "Code" "Format" -compact
+.It Em "Code	Format"
+.It Li 0 Ta Device default
+.It Li 1 Ta 1/2" 800 bpi
+.It Li 2 Ta 1/2" 1600 bpi
+.It Li 3 Ta 1/2" 6250 bpi
+.It Li 4 Ta QIC-11
+.It Li 5 Ta QIC-24
+.It Li 15 Ta QIC-120
+.It Li 16 Ta QIC-150
+.It Li 17 Ta QIC-320/525
+.It Li 18 Ta QIC-1320/1350
+.It Li 19 Ta DDS
+.It Li 28 Ta QIC-385M
+.It Li 29 Ta QIC-410M
+.It Li 30 Ta QIC-1000C
+.It Li 31 Ta QIC-2100C
+.It Li 32 Ta QIC-6GB
+.It Li 33 Ta QIC-20GB
+.It Li 34 Ta QIC-2GB
+.It Li 35 Ta QIC-875M
+.It Li 36 Ta DDS-2
+.It Li 37 Ta DDS-3
+.It Li 38 Ta DDS-4
+.El
 .Sh ENVIRONMENT
 If the following environment variables exist, they are utilized by
 .Nm "" .
@@ -195,25 +227,20 @@ on a remote machine.
 The full path name must be specified.
 .El
 .Sh FILES
-.Bl -tag -width src/sys/dev/scsipi/scsi_tape.h -compact
+.Bl -tag -width /dev/rst* -compact
 .It Pa /dev/rst*
 Raw
 .Tn SCSI
-tape interface
+tape device
 .It Pa /dev/rmt*
-Raw magnetic tape interface
-.It Pa src/sys/dev/scsipi/scsi_tape.h
-List of
-.Tn SCSI-2
-density codes
+Raw magnetic tape device
 .El
 .Sh SEE ALSO
 .Xr dd 1 ,
 .Xr ioctl 2 ,
 .Xr mtio 4 ,
+.Xr st 4 ,
 .Xr environ 7
-.Sh BUGS
-The remote tape function is not implemented yet.
 .Sh HISTORY
 The
 .Nm
