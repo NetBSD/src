@@ -1,4 +1,4 @@
-/*	$NetBSD: fingerd.c,v 1.21 2004/03/26 01:26:59 fair Exp $	*/
+/*	$NetBSD: fingerd.c,v 1.22 2005/02/06 05:11:52 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fingerd.c,v 1.21 2004/03/26 01:26:59 fair Exp $");
+__RCSID("$NetBSD: fingerd.c,v 1.22 2005/02/06 05:11:52 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,17 +59,15 @@ __RCSID("$NetBSD: fingerd.c,v 1.21 2004/03/26 01:26:59 fair Exp $");
 #include <string.h>
 #include "pathnames.h"
 
-void err __P((const char *, ...));
-int main __P((int, char *[]));
+void err(const char *, ...);
+int main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
-	register FILE *fp;
-	register int ch, ac = 2;
-	register char *lp = NULL /* XXX gcc */;
+	FILE *fp;
+	int ch, ac = 2;
+	char *lp = NULL /* XXX gcc */;
 	struct sockaddr_storage ss;
 	int p[2], logging, no_forward, user_required, short_list, sval;
 #define	ENTRIES	50
