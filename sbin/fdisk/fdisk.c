@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.47 2001/11/01 07:04:18 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.48 2001/11/07 14:50:32 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.47 2001/11/01 07:04:18 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.48 2001/11/07 14:50:32 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.47 2001/11/01 07:04:18 lukem Exp $");
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -51,9 +52,7 @@ __RCSID("$NetBSD: fdisk.c,v 1.47 2001/11/01 07:04:18 lukem Exp $");
 #include <util.h>
 
 #ifdef __i386__
-#include <ctype.h>
 #include <machine/cpu.h>
-#include <sys/sysctl.h>
 #endif
 
 #define LBUF 100
@@ -302,10 +301,17 @@ int	main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	int ch;
-	int part;
+	int ch, part, mib[2], len;
+	char *root_device;
 
 	int csysid, cstart, csize;	/* For the b_flag. */
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_ROOT_DEVICE;
+	if (sysctl(mib, 2, NULL, &len, NULL, 0) != -1 &&
+	    (root_device = malloc(len)) != NULL &&
+	    sysctl(mib, 2, root_device, &len, NULL, 0) != -1)
+		disk = root_device;
 
 	a_flag = i_flag = u_flag = sh_flag = f_flag = s_flag = b_flag = 0;
 	csysid = cstart = csize = 0;
@@ -1131,6 +1137,7 @@ print_params(void)
 	}
 
 	/* Not sh_flag */
+	printf("Disk: %s\n", disk);
 	printf("NetBSD disklabel disk geometry:\n");
 	printf("cylinders: %d heads: %d sectors/track: %d (%d sectors/cylinder)\n\n",
 	    cylinders, heads, sectors, cylindersectors);
