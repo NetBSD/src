@@ -1,3 +1,4 @@
+/*	$NetBSD: ossaudio.c,v 1.2 1996/10/17 19:46:39 fvdl Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
