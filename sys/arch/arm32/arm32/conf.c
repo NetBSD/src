@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.1 1996/01/31 23:15:30 mark Exp $ */
+/* $NetBSD: conf.c,v 1.2 1996/03/13 20:55:21 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -44,9 +44,6 @@
  * Defines the structures cdevsw and constab
  *
  * Created      : 17/09/94
- * Last updated : 28/06/95
- *
- *    $Id: conf.c,v 1.1 1996/01/31 23:15:30 mark Exp $
  */
  
 #include <sys/param.h>
@@ -177,21 +174,28 @@ int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
-	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, write, ioctl */
 #define cdev_vidcvid_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
-	0, (dev_type_select((*))) enodev, dev_init(c,n,mmap), 0 }
+	0, seltrue, dev_init(c,n,mmap), 0 }
 
 /* open, close, write, ioctl */
 #define cdev_uk_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
-	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev, 0 }
+	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
+
+/* open, close, read, ioctl */
+#define cdev_ss_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -229,6 +233,8 @@ cdev_decl(cd);
 cdev_decl(ch);
 #include "uk.h"
 cdev_decl(uk);
+#include "ss.h"
+cdev_decl(ss);
 #ifdef LKM
 #define	NLKM	1
 #else
@@ -286,7 +292,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NCD,cd),	    	/* 26: SCSI CD-ROM */
 	cdev_ch_init(NCH,ch),	 	/* 27: SCSI autochanger */
 	cdev_ch_init(NUK,uk),	 	/* 28: SCSI unknown */
-	cdev_lkm_dummy(),		/* 29 */
+	cdev_ss_init(NSS,ss),	 	/* 29: SCSI scanner */
 	cdev_lkm_dummy(),		/* 30 */
 	cdev_lkm_dummy(),		/* 31 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 32: Berkeley packet filter */
