@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.66 2000/07/04 13:25:39 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.67 2000/07/05 12:43:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.66 2000/07/04 13:25:39 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.67 2000/07/05 12:43:06 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -885,7 +885,7 @@ config(signo)
 				port = sep->se_service;
 			error = getaddrinfo(host, port, &hints, &res);
 			if (error) {
-				if (error == EAI_FAMILY && host == NULL) {
+				if (error == EAI_NODATA && host == NULL) {
 					syslog(LOG_WARNING, "%s/%s: %s: "
 					    "the address family is not "
 					    "supported by the kernel",
