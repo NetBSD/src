@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.74 2001/10/31 03:59:42 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.75 2001/11/02 03:52:21 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,7 +39,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.74 2001/10/31 03:59:42 tv Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.75 2001/11/02 03:52:21 tv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.74 2001/10/31 03:59:42 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.75 2001/11/02 03:52:21 tv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -516,8 +516,8 @@ main(argc, argv)
 {
 	Lst targs;	/* target nodes to create -- passed to Make_Init */
 	Boolean outOfDate = TRUE; 	/* FALSE if all targets up to date */
-	struct stat sb, sa;
-	char *p1, *path, *pwd;
+	struct stat sb;
+	char *p1, *path;
 	char mdpath[MAXPATHLEN];
     	char *machine = getenv("MACHINE");
 	char *machine_arch = getenv("MACHINE_ARCH");
@@ -554,26 +554,10 @@ main(argc, argv)
 		exit(2);
 	}
 
-	if (stat(curdir, &sa) == -1) {
+	if (stat(curdir, &sb) == -1) {
 	    (void)fprintf(stderr, "%s: %s: %s.\n",
 		 progname, curdir, strerror(errno));
 	    exit(2);
-	}
-
-	/*
-	 * Overriding getcwd() with $PWD totally breaks MAKEOBJDIRPREFIX
-	 * since the value of curdir can very depending on how we got
-	 * here.  Ie sitting at a shell prompt (shell that provides $PWD)
-	 * or via subdir.mk in which case its likely a shell which does
-	 * not provide it.
-	 * So, to stop it breaking this case only, we ignore PWD if
-	 * MAKEOBJDIRPREFIX is set.
-	 */
-	if ((pwd = getenv("PWD")) != NULL &&
-	    getenv("MAKEOBJDIRPREFIX") == NULL) {
-	    if (stat(pwd, &sb) == 0 && sa.st_ino == sb.st_ino &&
-		sa.st_dev == sb.st_dev)
-		(void) strncpy(curdir, pwd, MAXPATHLEN);
 	}
 
 	/*
