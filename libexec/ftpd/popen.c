@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $	*/
+/*	$NetBSD: popen.c,v 1.6 1997/04/27 03:21:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$NetBSD: popen.c,v 1.5 1995/04/11 02:45:00 cgd Exp $";
+static char rcsid[] = "$NetBSD: popen.c,v 1.6 1997/04/27 03:21:43 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,7 +75,7 @@ ftpd_popen(program, type)
 	int argc, gargc, pdes[2], pid;
 	char **pop, *argv[100], *gargv[1000];
 
-	if (*type != 'r' && *type != 'w' || type[1])
+	if ((*type != 'r' && *type != 'w') || type[1])
 		return (NULL);
 
 	if (!pids) {
@@ -154,7 +154,7 @@ int
 ftpd_pclose(iop)
 	FILE *iop;
 {
-	int fdes, omask, status;
+	int fdes, status;
 	pid_t pid;
 	sigset_t sigset, osigset;
 
