@@ -1,5 +1,5 @@
-dnl $Heimdal: proto-compat.m4,v 1.3 1999/03/01 13:03:48 joda Exp $
-dnl $NetBSD: proto-compat.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: proto-compat.m4,v 1.3.34.1 2004/04/01 07:27:35 joda Exp $
+dnl $NetBSD: proto-compat.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
 dnl
 dnl
 dnl Check if the prototype of a function is compatible with another one
@@ -7,7 +7,7 @@ dnl
 
 dnl AC_PROTO_COMPAT(includes, function, prototype)
 
-AC_DEFUN(AC_PROTO_COMPAT, [
+AC_DEFUN([AC_PROTO_COMPAT], [
 AC_CACHE_CHECK([if $2 is compatible with system prototype],
 ac_cv_func_$2_proto_compat,
 AC_TRY_COMPILE([$1],
