@@ -1,7 +1,7 @@
 #
 # GENERICAHBBT -- Generic machine w/ahb and bt drivers -- distribution floppy
 #
-#	$Id: GENERICAHBBT,v 1.16.2.2 1993/07/27 19:17:33 cgd Exp $
+#	$Id: GENERICAHBBT,v 1.16.2.3 1993/08/05 02:45:05 cgd Exp $
 #
 
 machine		"i386"
@@ -14,7 +14,8 @@ options		INET,ISOFS,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		XSERVER,UCONSOLE
-options		PCFS,KERNFS
+options		MSDOSFS
+options		KERNFS
 options		SCSI
 options		"MATH_EMULATE"
 options		"COMPAT_NOMID"
