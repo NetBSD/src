@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1995/05/18 20:33:22 mycroft Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1995/05/21 13:38:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -51,6 +51,8 @@ void	 command __P((KINFO *, VARENT *));
 void	 cputime __P((KINFO *, VARENT *));
 int	 donlist __P((void));
 void	 evar __P((KINFO *, VARENT *));
+void	 fmt_puts __P((char *, int *));
+void	 fmt_putc __P((int, int *));
 double	 getpcpu __P((KINFO *));
 double	 getpmem __P((KINFO *));
 void	 logname __P((KINFO *, VARENT *));
