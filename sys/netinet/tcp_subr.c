@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.127.4.2 2003/09/05 13:42:31 tron Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.127.4.3 2003/09/09 19:23:19 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.4.2 2003/09/05 13:42:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.127.4.3 2003/09/09 19:23:19 tron Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -438,6 +438,7 @@ tcp_template(tp)
 	    {
 		struct ipovly *ipov;
 		mtod(m, struct ip *)->ip_v = 4;
+		mtod(m, struct ip *)->ip_hl = hlen >> 2;
 		ipov = mtod(m, struct ipovly *);
 		ipov->ih_pr = IPPROTO_TCP;
 		ipov->ih_len = htons(sizeof(struct tcphdr));
