@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 1999/12/09 14:53:11 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1999/12/29 05:01:14 tsutsui Exp $	*/
 
 /*
  *
@@ -66,22 +66,23 @@
 /*
  * simulated software interrupt register
  */
-extern u_long ssir;
+extern u_char ssir;
 extern volatile u_char *ctrl_int2;
 
 #define	NSIR		(sizeof(ssir) * 8)
-#define	SIR_NET		0x1
-#define	SIR_CLOCK	0x2
+#define	SIR_NET		0
+#define	SIR_CLOCK	1
+#define	NEXT_SIR	2
 
 #define	siroff(x)	ssir &= ~(x)
-#define	setsoftint(x)	do{ \
-				ssir |= (x); \
-				*ctrl_int2 = 0xff; \
-			}while(0)
-#define	setsoftnet()	setsoftint(SIR_NET)
-#define	setsoftclock()	setsoftint(SIR_CLOCK)
+#define	setsoftint(x)	do {				\
+				ssir |= (x);		\
+				*ctrl_int2 = 0xff;	\
+			} while (0)
+#define	setsoftnet()	setsoftint(1 << SIR_NET)
+#define	setsoftclock()	setsoftint(1 << SIR_CLOCK)
 
-u_long allocate_sir __P((void (*) __P((void *)), void *));
+u_char allocate_sir __P((void (*) __P((void *)), void *));
 void init_sir __P((void));
 #endif /* _KERNEL */
 
