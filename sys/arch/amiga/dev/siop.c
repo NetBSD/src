@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.31 1996/04/23 22:53:31 veego Exp $	*/
+/*	$NetBSD: siop.c,v 1.32 1996/04/28 06:28:24 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -359,19 +359,20 @@ siop_scsidone(acb, stat)
 	struct siop_acb *acb;
 	int stat;
 {
-	struct scsi_xfer *xs = acb->xs;
+	struct scsi_xfer *xs;
 	struct scsi_link *slp;
 	struct siop_softc *sc;
 	int dosched = 0;
 
+	if (acb == NULL || (xs = acb->xs) == NULL) {
 #ifdef DIAGNOSTIC
-	if (acb == NULL || xs == NULL) {
-/*		panic("siop_scsidone"); */
-		printf("siop_scsidone: sc_nexus NULL\n");
+		printf("siop_scsidone: NULL acb or scsi_xfer\n");
+#if defined(DEBUG) && defined(DDB)
 		Debugger();
+#endif
+#endif
 		return;
 	}
-#endif
 	slp = xs->sc_link;
 	sc = slp->adapter_softc;
 	/*
@@ -904,7 +905,9 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		    sc->sc_scriptspa + sizeof(scripts));
 		printf(" istat %x dstat %x sstat0 %x\n",
 		    istat, dstat, sstat0);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #endif
 	SIOP_TRACE('i',dstat,istat,(istat&SIOP_ISTAT_DIP)?rp->siop_dsps&0xff:sstat0);
@@ -1027,7 +1030,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		if ((rp->siop_sbcl & SIOP_REQ) == 0) {
 			printf ("Phase mismatch: REQ not asserted! %02x dsp %lx\n",
 			    rp->siop_sbcl, rp->siop_dsp);
-#ifdef DEBUG
+#if defined(DEBUG) && defined(DDB)
 			Debugger();
 #endif
 		}
@@ -1290,12 +1293,14 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 #endif
 		/* XXX assumes it was not select */
 		if (sc->sc_nexus == NULL) {
+#ifdef DEBUG
 			printf("%s: reselect interrupted, sc_nexus == NULL\n",
 			    sc->sc_dev.dv_xname);
 #if 0
 			siop_dump(sc);
 #ifdef DDB
 			Debugger();
+#endif
 #endif
 #endif
 			rp->siop_dcntl |= SIOP_DCNTL_STD;
