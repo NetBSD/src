@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.25 2000/02/02 07:23:28 augustss Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.26 2000/02/02 07:47:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -419,7 +419,9 @@ ep_pcmcia_detach(self, flags)
 	/* Free our i/o space. */
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 
+#if NBPFILTER > 0
 	bpfdetach(ifp);
+#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 
