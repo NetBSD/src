@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.32 2002/10/01 12:57:08 fvdl Exp $	*/
+/*	$NetBSD: pcb.h,v 1.33 2002/10/08 20:24:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -107,8 +107,6 @@ struct pcb {
 /*
  * Software pcb (extension)
  */
-	int	pcb_flags;
-#define	PCB_USER_LDT	0x01		/* has user-set LDT */
 	caddr_t	pcb_onfault;		/* copyin/out fault recovery */
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
