@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.6 1998/10/03 19:43:27 eeh Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.7 1998/10/19 22:43:00 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "opt_sysv.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
