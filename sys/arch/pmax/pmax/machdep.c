@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.102 1998/02/19 00:34:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.103 1998/02/19 23:17:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 1998/02/19 00:34:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.103 1998/02/19 23:17:53 thorpej Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.102 1998/02/19 00:34:16 thorpej Exp $"
 #include <sys/sysctl.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/kcore.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -149,7 +150,6 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 caddr_t	msgbufaddr;
-int	msgbufmapped = 0;	/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	physmem_boardmax;	/* {model,simm}-specific bound on physmem */
@@ -160,6 +160,9 @@ u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
 #endif
 u_long	ioasic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
+
+phys_ram_seg_t mem_clusters[1];	/* XXX VM_PHYSSEG_MAX */
+int mem_cluster_cnt;
 
 extern void	(*tc_enable_interrupt)  __P ((u_int slotno,
 					      int (*handler) __P((void *sc)),
@@ -207,8 +210,6 @@ int	(*Mach_splstatclock)__P((void)) = splhigh;
 volatile struct chiptime *mcclock_addr;
 u_long	kmin_tc3_imask, xine_tc3_imask;
 
-int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
-
 
 tc_option_t tc_slot_info[TC_MAX_LOGICAL_SLOTS];
 
@@ -224,7 +225,6 @@ int	initcpu __P((void));
 #if defined(DS5000_240) || defined(DS5000_25)
 static	u_long	clkread __P((void));	/* get usec-resolution clock */
 #endif
-void	dumpsys __P((void));		/* do a dump */
 
 /* initialize bss, etc. from kernel start, before main() is called. */
 extern	void
@@ -756,6 +756,14 @@ mach_init(argc, argv, code, cv)
 
 	maxmem = physmem;
 
+	/*
+	 * Now that we know how much memory we have, initialize the
+	 * mem cluster array.
+	 */
+	mem_clusters[0].start = 0;		/* XXX is this correct? */
+	mem_clusters[0].size  = ctob(physmem);
+	mem_cluster_cnt = 1;
+
 #if NLE_IOASIC > 0
 	/*
 	 * Grab 128K at the top of physical memory for the lance chip
@@ -989,103 +997,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-int	waittime = -1;
-struct user dumppcb;	/* Actually, struct pcb would do. */
-
-
-/*
- * These variables are needed by /sbin/savecore
- */
-int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
-int	dumpsize = 0;		/* also for savecore */
-long	dumplo = 0;
-
-void
-cpu_dumpconf()
-{
-	int nblks;
-
-	dumpsize = physmem;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
-		if (dumpsize > btoc(dbtob(nblks - dumplo)))
-			dumpsize = btoc(dbtob(nblks - dumplo));
-		else if (dumplo == 0)
-			dumplo = nblks - btodb(ctob(physmem));
-	}
-	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?)
-	 * in case the dump device includes a disk label.
-	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-void
-dumpsys()
-{
-	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
-
-	msgbufmapped = 0;
-	if (dumpdev == NODEV)
-		return;
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
-		cpu_dumpconf();
-	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n", major(dumpdev),
-		    minor(dumpdev));
-		return;
-	}
-	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
-	    minor(dumpdev), dumplo);
-	printf("dump ");
-
-	/*
-	 * XXX
-	 * All but first arguments to  dump() bogus.
-	 * What should blkno, va, size be?
-	 */
-	error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, 0, 0, 0);
-	switch (error) {
-
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
-
-	case 0:
-		printf("succeeded\n");
-	}
-}
-
-
 /*
  * call PROM to halt or reboot.
  */
@@ -1143,11 +1054,10 @@ cpu_reboot(howto, bootstr)
 		howto |= RB_HALT;
 
 	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
+	if ((howto & RB_NOSYNC) == 0) {
 		/*
 		 * Synchronize the disks....
 		 */
-		waittime = 0;
 		vfs_shutdown();
 
 		/*
