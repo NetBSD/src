@@ -1,4 +1,4 @@
-/*	$NetBSD: memset.c,v 1.14 1999/09/20 04:39:45 lukem Exp $	*/
+/*	$NetBSD: memset.c,v 1.15 2001/02/08 18:10:02 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memset.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memset.c,v 1.14 1999/09/20 04:39:45 lukem Exp $");
+__RCSID("$NetBSD: memset.c,v 1.15 2001/02/08 18:10:02 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,7 +123,7 @@ memset(dst0, c0, length)
 	}
 #endif
 	/* Align destination by filling in bytes. */
-	if ((t = (u_long)dst & wmask) != 0) {
+	if ((t = (size_t)((u_long)dst & wmask)) != 0) {
 		t = wsize - t;
 		length -= t;
 		do {
@@ -134,7 +134,7 @@ memset(dst0, c0, length)
 	/* Fill words.  Length was >= 2*words so we know t >= 1 here. */
 	t = length / wsize;
 	do {
-		*(u_int *)dst = WIDEVAL;
+		*(u_int *)(void *)dst = WIDEVAL;
 		dst += wsize;
 	} while (--t != 0);
 
