@@ -1860,7 +1860,7 @@ append_insn (place, ip, address_expr, reloc_type, unmatched_hi)
 	      break;
 
 	    case BFD_RELOC_MIPS_HIGHEST:
-	      tmp = (address_expr->X_add_number + 0x800080008000) >> 16;
+	      tmp = ((address_expr->X_add_number + 0x8000) >> 16) + 0x80008000;
 	      tmp >>= 16;
 	      ip->insn_opcode |= (tmp >> 16) & 0xffff;
 	      break;
