@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcireg.h,v 1.4 1998/08/06 12:26:51 augustss Exp $	*/
+/*	$NetBSD: ohcireg.h,v 1.5 1998/11/22 20:21:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,6 +154,7 @@ typedef struct {
 #define OHCI_ED_FORMAT_ISO	0x00008000
 #define OHCI_ED_GET_MAXP(s)	(((s) >> 16) & 0x07ff)
 #define OHCI_ED_SET_MAXP(s)	((s) << 16)
+#define OHCI_ED_MAXPMASK	(0x7ff << 16)
 	ohci_physaddr_t	ed_tailp;
 #define OHCI_HALTED		0x00000002
 #define OHCI_TOGGLECARRY	0x00000001
