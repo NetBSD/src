@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 1999/07/04 04:38:54 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 1999/12/24 16:51:25 minoura Exp $
 
 BOOT=		mboot
 VERSION=	0.1
@@ -10,8 +10,6 @@ TEXTSZ=		1024
 PROG=		${BOOT}
 BINDIR=		/usr/mdec
 BINMODE=	444
-SCRIPTSMODE=	555
-SCRIPTS=	newdisk.sh
 MKMAN=		no
 STRIPFLAG=
 
