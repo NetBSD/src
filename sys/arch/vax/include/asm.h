@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.8 1998/12/02 21:16:46 thorpej Exp $ */
+/*	$NetBSD: asm.h,v 1.9 1999/01/15 13:31:28 bouyer Exp $ */
 /*
  * Copyright (c) 1982, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -65,6 +65,7 @@
 #define	ASENTRY(x, regs) \
 	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
+#define ALTENTRY(x) .globl _ ## x; _ ## x:
 # else
 #ifdef GPROF
 #define ENTRY(x, regs) \
@@ -79,6 +80,7 @@
 #define ASENTRY(x, regs) \
 	.globl x; .type x,@function; .align 2; x: .word regs
 #endif
+#define ALTENTRY(x) .globl _/**/x; _/**/x:
 #endif
 
 #ifdef __STDC__

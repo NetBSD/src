@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.24 1998/12/16 11:11:02 kleink Exp $	*/
+/*	$NetBSD: endian.h,v 1.25 1999/01/15 13:31:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,64 +102,12 @@ in_addr_t htonl __P((in_addr_t));
 in_port_t htons __P((in_port_t));
 in_addr_t ntohl __P((in_addr_t));
 in_port_t ntohs __P((in_port_t));
-u_int16_t bswap16 __P((u_int16_t));
-u_int32_t bswap32 __P((u_int32_t));
-u_int64_t bswap64 __P((u_int64_t));
 __END_DECLS
 
 
 #ifdef __GNUC__
 
-#if defined(_KERNEL) && !defined(_LKM)
-#include "opt_cputype.h"
-#endif
-
-#if defined(_KERNEL) && !defined(_LKM) && !defined(I386_CPU)
-#define	__byte_swap_long_variable(x) __extension__ \
-({ register in_addr_t __x = (x); \
-   __asm ("bswap %1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
-#else
-#define	__byte_swap_long_variable(x) __extension__ \
-({ register in_addr_t __x = (x); \
-   __asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
-#endif	/* _KERNEL && ... */
-
-#define	__byte_swap_word_variable(x) __extension__ \
-({ register in_port_t __x = (x); \
-   __asm ("rorw $8, %w1" \
-	: "=r" (__x) \
-	: "0" (__x)); \
-   __x; })
-
-#ifdef __OPTIMIZE__
-
-#define	__byte_swap_long_constant(x) \
-	((((x) & 0xff000000) >> 24) | \
-	 (((x) & 0x00ff0000) >>  8) | \
-	 (((x) & 0x0000ff00) <<  8) | \
-	 (((x) & 0x000000ff) << 24))
-#define	__byte_swap_word_constant(x) \
-	((((x) & 0xff00) >> 8) | \
-	 (((x) & 0x00ff) << 8))
-#define	__byte_swap_long(x) \
-	(__builtin_constant_p((x)) ? \
-	 __byte_swap_long_constant(x) : __byte_swap_long_variable(x))
-#define	__byte_swap_word(x) \
-	(__builtin_constant_p((x)) ? \
-	 __byte_swap_word_constant(x) : __byte_swap_word_variable(x))
-
-#else /* __OPTIMIZE__ */
-
-#define	__byte_swap_long(x)	__byte_swap_long_variable(x)
-#define	__byte_swap_word(x)	__byte_swap_word_variable(x)
-
-#endif /* __OPTIMIZE__ */
+#include <machine/byte_swap.h>
 
 #define	ntohl(x)	((in_addr_t)__byte_swap_long((in_addr_t)(x)))
 #define	ntohs(x)	((in_port_t)__byte_swap_word((in_port_t)(x)))

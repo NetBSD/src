@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.94 1998/11/30 20:41:21 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.95 1999/01/15 13:31:22 bouyer Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -31,12 +31,12 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 
 # machine-dependent gen sources
 # m-d Makefile.inc must include sources for:
-#	_setjmp() fabs() frexp() infinity isinf() ldexp() modf()
-#	setjmp() sigsetjmp()
+#	_setjmp() bswap16() bswap32() bswap64() fabs() frexp() infinity
+#	isinf() ldexp() modf() setjmp() sigsetjmp()
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/gen/Makefile.inc"
 
-MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 \
+MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 \
 	fnmatch.3 frexp.3 ftok.3 fts.3 getbsize.3 getcap.3 \
 	getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
@@ -53,6 +53,9 @@ MAN+=	alarm.3 basename.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	timezone.3 toascii.3 tolower.3 toupper.3 ttyname.3 \
 	ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
+MLINKS+=bswap.3 bswap16.3
+MLINKS+=bswap.3 bswap32.3
+MLINKS+=bswap.3 bswap64.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
 	directory.3 telldir.3

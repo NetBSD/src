@@ -1,7 +1,6 @@
-# $NetBSD: Makefile.inc,v 1.5 1997/10/22 23:21:46 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.6 1999/01/15 13:31:16 bouyer Exp $
 
 KMINCLUDES=
-KMSRCS=
 CPPFLAGS+=-DSOFTFLOAT
 
 .include <fplib/Makefile.inc>

@@ -1,13 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.17 1998/08/04 03:17:39 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.18 1999/01/15 13:31:29 bouyer Exp $
 
 SRCS+=	__main.c __assert.c \
 	imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
-	bswap16.S bswap32.S bswap64.c \
+	byte_swap_2.S byte_swap_4.S bswap64.c \
 	bcmp.c bzero.S ffs.S \
 	memchr.c memcmp.c memcpy.S memmove.S memset.c \
 	strcat.c strcmp.c strcpy.c strlen.c strncasecmp.c strncmp.c strncpy.c \
 	scanc.c skpc.c \
-	htonl.S htons.S ntohl.S ntohs.S \
 	random.c
 
 # `source' files built from m4 source

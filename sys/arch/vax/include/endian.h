@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.12 1998/12/16 11:11:02 kleink Exp $	*/
+/*	$NetBSD: endian.h,v 1.13 1999/01/15 13:31:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -63,40 +63,16 @@ in_addr_t	htonl __P((in_addr_t));
 in_port_t	htons __P((in_port_t));
 in_addr_t	ntohl __P((in_addr_t));
 in_port_t	ntohs __P((in_port_t));
-u_int16_t	bswap16 __P((u_int16_t));
-u_int32_t	bswap32 __P((u_int32_t));
-u_int64_t	bswap64 __P((u_int64_t));
 __END_DECLS
 
 #ifdef	__GNUC__
 
-#define	__byte_swap_long_variable(x) __extension__	\
-({ register u_int32_t __y, __x = (x);			\
-							\
-	__asm ("rotl	$-8, %1, %0;   			\
-		insv	%0, $16, $8, %0;		\
-		rotl	$8, %1, r1; 			\
-		movb	r1, %0"				\
-		: "&=r" (__y)				\
-		: "r" (__x)				\
-		: "r1", "cc" );				\
-	__y; })
-
-#define __byte_swap_word_variable(x) __extension__	\
-({ register u_int16_t __x = (x);			\
-							\
-	(u_int16_t)(__x << 8 | __x >> 8);		\
-})
-
-#define __byte_swap_long(x)     __byte_swap_long_variable(x)
-#define __byte_swap_word(x)     __byte_swap_word_variable(x)
+#include <vax/byte_swap.h>
 
 #define	ntohl(x)        __byte_swap_long(x)
 #define ntohs(x)        __byte_swap_word(x)
 #define htonl(x)        __byte_swap_long(x)
 #define htons(x)        __byte_swap_word(x)
-#define bswap16(x)      __byte_swap_word(x)
-#define bswap32(x)      __byte_swap_long(x)
 
 #endif /* __GNUC__ */
 

@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 1997/12/07 00:19:30 matthias Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1999/01/15 13:31:19 bouyer Exp $
 
 # objects built from assembler sources (need lint stubs)
-ASSRCS+=htonl.S htons.S ntohl.S ntohs.S
+# hton* and nto* functions provided by ../gen/byte_swap_*.S
+ASSRCS+=
 
