@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.43 2000/12/27 09:17:04 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.44 2001/01/04 06:07:18 enami Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -537,7 +537,8 @@ sys_swapctl(p, v, retval)
 				 * with NetBSD 1.3.
 				 */
 				sdp->swd_ose.ose_inuse = 
-				    btodb(sdp->swd_npginuse << PAGE_SHIFT);
+				    btodb((u_int64_t)sdp->swd_npginuse <<
+				    PAGE_SHIFT);
 				error = copyout(&sdp->swd_ose, sep,
 						sizeof(struct oswapent));
 
@@ -1115,7 +1116,7 @@ swstrategy(bp)
 	 */
 
 	pageno -= sdp->swd_drumoffset;	/* page # on swapdev */
-	bn = btodb(pageno << PAGE_SHIFT);	/* convert to diskblock */
+	bn = btodb((u_int64_t)pageno << PAGE_SHIFT); /* convert to diskblock */
 
 	UVMHIST_LOG(pdhist, "  %s: mapoff=%x bn=%x bcount=%ld",
 		((bp->b_flags & B_READ) == 0) ? "write" : "read",
@@ -1188,8 +1189,9 @@ sw_reg_strategy(sdp, bp, bn)
 {
 	struct vnode	*vp;
 	struct vndxfer	*vnx;
-	daddr_t		nbn, byteoff;
+	daddr_t		nbn;
 	caddr_t		addr;
+	off_t		byteoff;
 	int		s, off, nra, error, sz, resid;
 	UVMHIST_FUNC("sw_reg_strategy"); UVMHIST_CALLED(pdhist);
 
@@ -1211,7 +1213,7 @@ sw_reg_strategy(sdp, bp, bn)
 	error = 0;
 	bp->b_resid = bp->b_bcount;	/* nothing transfered yet! */
 	addr = bp->b_data;		/* current position in buffer */
-	byteoff = dbtob(bn);
+	byteoff = dbtob((u_int64_t)bn);
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		struct vndbuf	*nbp;
@@ -1696,7 +1698,7 @@ uvm_swap_io(pps, startslot, npages, flags)
 	/*
 	 * convert starting drum slot to block number
 	 */
-	startblk = btodb(startslot << PAGE_SHIFT);
+	startblk = btodb((u_int64_t)startslot << PAGE_SHIFT);
 
 	/*
 	 * first, map the pages into the kernel (XXX: currently required
