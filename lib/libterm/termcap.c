@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.12 1997/10/09 12:01:30 lukem Exp $	*/
+/*	$NetBSD: termcap.c,v 1.13 1997/10/13 16:11:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.12 1997/10/09 12:01:30 lukem Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.13 1997/10/13 16:11:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: termcap.c,v 1.12 1997/10/09 12:01:30 lukem Exp $");
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <curses.h>
+#include <termcap.h>
 #include "pathnames.h"
 
 /*
@@ -75,8 +75,8 @@ int
 tgetent(bp, name)
 	char *bp, *name;
 {
-	register char *p;
-	register char *cp;
+	char  *p;
+	char  *cp;
 	char  *dummy;
 	char **fname;
 	char  *home;
