@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.13 1998/03/01 02:25:17 fvdl Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.14 1998/08/09 17:54:50 kleink Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,9 +37,9 @@
 struct adosfs_args {
 	char	*fspec;		/* blocks special holding the fs to mount */
 	struct	export_args export;	/* network export information */
-	uid_t	uid;		/* uid that owns msdosfs files */
-	gid_t	gid;		/* gid that owns msdosfs files */
-	mode_t	mask;		/* mask to be applied for msdosfs perms */
+	uid_t	uid;		/* uid that owns adosfs files */
+	gid_t	gid;		/* gid that owns adosfs files */
+	mode_t	mask;		/* mask to be applied for adosfs perms */
 };
 
 #ifdef _KERNEL
