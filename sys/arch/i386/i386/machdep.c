@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 1995/05/06 20:30:14 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160 1995/05/16 14:30:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -838,6 +838,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_es = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ds = LSEL(LUDATA_SEL, SEL_UPL);
 	tf->tf_ebp = 0;
+	tf->tf_ebx = (int)PS_STRINGS;
 	tf->tf_eip = pack->ep_entry;
 	tf->tf_cs = LSEL(LUCODE_SEL, SEL_UPL);
 	tf->tf_eflags = PSL_USERSET;
