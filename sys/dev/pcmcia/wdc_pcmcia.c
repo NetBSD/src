@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.42 2001/04/25 17:53:37 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.43 2001/10/14 19:21:45 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -108,6 +108,16 @@ const struct wdc_pcmcia_product {
 	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII,
 	  PCMCIA_STR_TEAC_IDECARDII },
+
+	/*
+	 * A fujitsu rebranded panasonic drive that reports 
+	 * itself as function "scsi", disk interface 0
+	 */
+	{ PCMCIA_VENDOR_PANASONIC,
+	  PCMCIA_PRODUCT_PANASONIC_KXLC005,
+	  0,
+	  PCMCIA_CIS_PANASONIC_KXLC005,
+	  PCMCIA_STR_PANASONIC_KXLC005 },
 
 	/*
 	 * EXP IDE/ATAPI DVD Card use with some DVD players.
