@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2001/07/19 15:32:20 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2001/10/18 22:25:31 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,6 +113,8 @@ typedef u_int32_t bus_space_handle_t;
 
 static __inline int bus_space_map(bus_space_tag_t, bus_addr_t,
     bus_size_t, int, bus_space_handle_t *);
+static __inline paddr_t bus_space_mmap(bus_space_tag_t, bus_addr_t,
+    off_t, int, int);
 static __inline void bus_space_read_region_1(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, u_int8_t *, size_t);
 static __inline void bus_space_read_region_2(bus_space_tag_t,
@@ -160,7 +162,6 @@ static __inline void bus_space_copy_region_2(bus_space_tag_t,
 static __inline void bus_space_copy_region_4(bus_space_tag_t,
     bus_space_handle_t, bus_size_t, bus_space_handle_t, bus_size_t, size_t);
 
-#if 1
 void *mapiodev(paddr_t, psize_t);
 
 static __inline int
@@ -177,11 +178,19 @@ bus_space_map(t, addr, size, flags, bshp)
 		mapiodev(base + addr, size << stride);
 	return 0;
 }
-#else
-/* addr is a real offset relative to tag's base. It's not affected by stride */
-#define bus_space_map(t, addr, size, flags, bshp)                             \
-    ((*(bshp) = (t & GALAXY_BUS_ADDR_MASK) + (addr)), 0)
-#endif
+
+static __inline paddr_t
+bus_space_mmap(t, addr, offset, prot, flags)
+	bus_space_tag_t t;
+	bus_addr_t addr;
+	off_t offset;
+	int prot;
+	int flags;
+{
+	paddr_t base = t & GALAXY_BUS_ADDR_MASK;
+
+	return (base+addr+offset);
+}
 
 /*
  *	int bus_space_unmap(bus_space_tag_t t,
@@ -419,11 +428,11 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 	} while (0)
 
 #define bus_space_write_multi_2(t, h, o, a, c) do {			\
-		outs16rb(__BA(t, h, o), (a), (c));				\
+		outs16rb(__BA(t, h, o), (a), (c));			\
 	} while (0)
 
 #define bus_space_write_multi_4(t, h, o, a, c) do {			\
-		outs32rb(__BA(t, h, o), (a), (c));				\
+		outs32rb(__BA(t, h, o), (a), (c));			\
 	} while (0)
 
 #if 0
@@ -435,11 +444,11 @@ bus_space_read_region_stream_4(tag, bsh, offset, addr, count)
 	} while (0)
 
 #define bus_space_write_multi_stream_2(t, h, o, a, c) do {		\
-		outs16(__BA(t, h, o), (a), (c));				\
+		outs16(__BA(t, h, o), (a), (c));			\
 	} while (0)
 
 #define bus_space_write_multi_stream_4(t, h, o, a, c) do {		\
-		outs32(__BA(t, h, o), (a), (c));				\
+		outs32(__BA(t, h, o), (a), (c));			\
 	} while (0)
 
 #if 0
