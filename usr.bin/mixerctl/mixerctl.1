@@ -1,4 +1,4 @@
-.\" $NetBSD: mixerctl.1,v 1.10 1999/03/10 05:23:58 erh Exp $
+.\" $NetBSD: mixerctl.1,v 1.11 2000/12/29 13:30:26 augustss Exp $
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
@@ -54,6 +54,16 @@
 .Op Fl n
 .Fl w
 .Ar name=value ...
+.Nm ""
+.Op Fl f Ar file
+.Op Fl n
+.Fl w
+.Ar name++ ...
+.Nm ""
+.Op Fl f Ar file
+.Op Fl n
+.Fl w
+.Ar name-- ...
 .Sh DESCRIPTION
 The 
 .Nm
@@ -106,6 +116,11 @@ in the range 0-255.  If value can be set for each channel independently
 the values are printed separated by commas.  Discrete mixer values, e.g.,
 the recording source, have symbolic names.  Depending on the mixer it
 may either be an enumeration or a set.
+.Pp
+The suffixes ++ and -- can be used to step through the values of a
+mixer control.  For numeric controls these operators may increase
+(resp. decrease) the value by an amount (the delta) suitable to make
+the control assume the next possible value.
 .Sh EXAMPLES
 The commmand
 .Dl "mixerctl -a -v"
