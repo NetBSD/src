@@ -1,4 +1,4 @@
-/*	$NetBSD: com6.c,v 1.8 1997/10/11 02:07:08 lukem Exp $	*/
+/*	$NetBSD: com6.c,v 1.9 1997/10/13 21:05:36 cjs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com6.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com6.c,v 1.8 1997/10/11 02:07:08 lukem Exp $");
+__RCSID("$NetBSD: com6.c,v 1.9 1997/10/13 21:05:36 cjs Exp $");
 #endif
 #endif				/* not lint */
 
@@ -111,6 +111,7 @@ post(ch)
 {
 	FILE   *fp;
 	struct timeval tv;
+	time_t tvsec;
 	char   *date;
 	sigset_t sigset, osigset;
 
@@ -118,7 +119,8 @@ post(ch)
 	sigaddset(&sigset, SIGINT);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 	gettimeofday(&tv, (struct timezone *) 0);	/* can't call time */
-	date = ctime(&tv.tv_sec);
+	tvsec = (time_t) tv.tv_sec;
+	date = ctime(&tvsec);
 	date[24] = '\0';
 	if ((fp = fopen(_PATH_SCORE, "a")) != NULL) {
 		fprintf(fp, "%s  %8s  %c%20s", date, uname, ch, rate());
