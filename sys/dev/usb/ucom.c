@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.34 2001/01/23 21:22:57 augustss Exp $	*/
+/*	$NetBSD: ucom.c,v 1.35 2001/01/23 21:56:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -163,6 +163,8 @@ USB_ATTACH(ucom)
 
 	if (uca->portno != UCOM_UNK_PORTNO)
 		printf(": portno %d", uca->portno);
+	if (uca->info != NULL)
+		printf(", %s", uca->info);
 	printf("\n");
 
 	sc->sc_udev = uca->device;
@@ -211,7 +213,9 @@ USB_DETACH(ucom)
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0) {
-		/* The abort above should wake sleepers. */
+		/* Wake up anyone waiting */
+		if (sc->sc_tty != NULL)
+			ttyflush(sc->sc_tty, FREAD|FWRITE);
 		/* Wait for processes to go away. */
 		usb_detach_wait(USBDEV(sc->sc_dev));
 	}

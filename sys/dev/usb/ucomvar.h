@@ -1,4 +1,4 @@
-/*	$NetBSD: ucomvar.h,v 1.8 2000/09/03 19:15:45 augustss Exp $	*/
+/*	$NetBSD: ucomvar.h,v 1.9 2001/01/23 21:56:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -99,6 +99,7 @@ struct ucom_attach_args {
 	u_int ibufsizepad;
 	u_int obufsize;
 	u_int opkthdrlen;
+	const char *info;	/* attach message */
 	usbd_device_handle device;
 	usbd_interface_handle iface;
 	struct ucom_methods *methods;
