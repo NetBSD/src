@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55 2001/04/25 17:53:25 bouyer Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56 2001/09/05 13:21:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -363,10 +363,10 @@ bus_peek(bustype, pa, sz)
 /* from hp300: badbaddr() */
 int
 peek_byte(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	label_t 	faultbuf;
-	register int x;
+	label_t faultbuf;
+	int x;
 
 	nofault = &faultbuf;
 	if (setjmp(&faultbuf))
@@ -380,10 +380,10 @@ peek_byte(addr)
 
 int
 peek_word(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	label_t		faultbuf;
-	register int x;
+	label_t faultbuf;
+	int x;
 
 	nofault = &faultbuf;
 	if (setjmp(&faultbuf))
@@ -397,10 +397,10 @@ peek_word(addr)
 
 int
 peek_long(addr)
-	register caddr_t addr;
+	caddr_t addr;
 {
-	label_t		faultbuf;
-	register int x;
+	label_t faultbuf;
+	int x;
 
 	nofault = &faultbuf;
 	if (setjmp(&faultbuf))

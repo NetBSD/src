@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.13 2001/02/22 07:11:11 chs Exp $	*/
+/*	$NetBSD: cache.c,v 1.14 2001/09/05 13:21:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,11 +68,11 @@ static void cache_clear_tags __P((void));
 
 void
 cache_flush_page(pgva)
-	vm_offset_t pgva;
+	vaddr_t pgva;
 {
-	register char *va, *endva;
-	register int old_dfc, ctl_dfc;
-	register int data;
+	char *va, *endva;
+	int old_dfc, ctl_dfc;
+	int data;
 
 	pgva &= (VADDR_MASK & ~PGOFSET);
 	pgva |= VAC_FLUSH_BASE;
@@ -98,11 +98,11 @@ cache_flush_page(pgva)
 
 void
 cache_flush_segment(sgva)
-	vm_offset_t sgva;
+	vaddr_t sgva;
 {
-	register char *va, *endva;
-	register int old_dfc, ctl_dfc;
-	register int data;
+	char *va, *endva;
+	int old_dfc, ctl_dfc;
+	int data;
 
 	sgva &= (VADDR_MASK & ~SEGOFSET);
 	sgva |= VAC_FLUSH_BASE;
@@ -129,9 +129,9 @@ cache_flush_segment(sgva)
 void
 cache_flush_context()
 {
-	register char *va, *endva;
-	register int old_dfc, ctl_dfc;
-	register int data;
+	char *va, *endva;
+	int old_dfc, ctl_dfc;
+	int data;
 
 	/* Set up for writes to control space. */
 	__asm __volatile ("movc %%dfc, %0" : "=d" (old_dfc));
@@ -155,9 +155,9 @@ cache_flush_context()
 static void
 cache_clear_tags()
 {
-	register char *va, *endva;
-	register int old_dfc, ctl_dfc;
-	register int data;
+	char *va, *endva;
+	int old_dfc, ctl_dfc;
+	int data;
 
 	/* Set up for writes to control space. */
 	__asm __volatile ("movc %%dfc, %0" : "=d" (old_dfc));

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 2001/06/03 03:12:31 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.103 2001/09/05 13:21:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -168,8 +168,8 @@ int mmupid = -1;
  */
 static void
 userret(p, tf, oticks)
-	register struct proc *p;
-	register struct trapframe *tf;
+	struct proc *p;
+	struct trapframe *tf;
 	u_quad_t oticks;
 {
 	int sig;
@@ -465,9 +465,9 @@ trap(type, code, v, tf)
 		/*FALLTHROUGH*/
 
 	case T_MMUFLT|T_USER: { 	/* page fault */
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register struct vm_map *map;
+		vaddr_t va;
+		struct vmspace *vm = p->p_vmspace;
+		struct vm_map *map;
 		int rv;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
@@ -497,7 +497,7 @@ trap(type, code, v, tf)
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
-		va = m68k_trunc_page((vm_offset_t)v);
+		va = m68k_trunc_page((vaddr_t)v);
 
 		/*
 		 * Need to resolve the fault.
