@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1999/02/11 15:28:05 mycroft Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 1999/02/28 00:29:24 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -930,7 +930,16 @@ static int
 prom_cngetc(dev)
 	dev_t dev;
 {
-	return (0);
+	int s;
+	char c0;
+
+	if (!stdin) {
+		int node = OF_finddevice("/chosen");
+		OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
+	}
+	if (OF_read(stdin, &c0, 1) == 1)
+		return (c0 & 0x7f);
+	return -1;
 }
 
 /*
@@ -963,6 +972,12 @@ static char *prom_inSrc_name[] = {
 	"ttya", "ttyb",
 	"ttyc", "ttyd" };
 
+#ifdef	DEBUG
+#define	DBPRINT(x)	printf x
+#else
+#define	DBPRINT(x)
+#endif
+
 /*
  * This function replaces sys/dev/cninit.c
  * Determine which device is the console using
@@ -980,18 +995,18 @@ consinit()
 	register char *cp;
 	extern int fbnode;
 
-prom_printf("consinit()\r\n");	
+	DBPRINT(("consinit()\r\n"));
 	if (cn_tab != &consdev_prom) return;
 
 	inSource = outSink = -1;
 	
-	prom_printf("setting up stdin\r\n");
+	DBPRINT(("setting up stdin\r\n"));
 	node = OF_finddevice("/chosen");
 	OF_getprop(node, "stdin",  &stdin, sizeof(stdin));
-	prom_printf("stdin instance = %x\r\n", stdin);
+	DBPRINT(("stdin instance = %x\r\n", stdin));
 
 	node = OF_instance_to_package(stdin);
-	prom_printf("stdin package = %x\r\n", node);
+	DBPRINT(("stdin package = %x\r\n", node));
 	if (OF_getproplen(node,"keyboard") >= 0) {
 		inSource = PROMDEV_KBD;
 		goto setup_output;
@@ -1023,14 +1038,14 @@ prom_printf("consinit()\r\n");
 		inSource = PROMDEV_TTYA + (cp[1] - 'a');
 	/* else use rom */
 setup_output:
-	prom_printf("setting up stdout\r\n");
+	DBPRINT(("setting up stdout\r\n"));
 	node = OF_finddevice("/chosen");
 	OF_getprop(node, "stdout", &stdout, sizeof(stdout));
 	
-	prom_printf("stdout instance = %x\r\n", stdout);
+	DBPRINT(("stdout instance = %x\r\n", stdout));
 
 	node = OF_instance_to_package(stdout);
-	prom_printf("stdout package = %x\r\n", node);
+	DBPRINT(("stdout package = %x\r\n", node));
 	if (strcmp(getpropstring(node,"device_type"),"display") == 0) {
 		/* frame buffer output */
 		outSink = PROMDEV_SCREEN;
@@ -1063,10 +1078,6 @@ setup_output:
 			outSink = PROMDEV_TTYA + (cp[1] - 'a');
 		else outSink = -1;
 	}	
-#if 0
-setup_console:
-#endif
-
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");
 	}
