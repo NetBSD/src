@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.2 1995/07/08 04:25:16 briggs Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.3 1995/08/02 11:53:07 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -104,7 +104,7 @@
 
 	.text
 	.even
-	.global _Debugger
+	.global	_panic
 	.global	_printf
 
 /*
@@ -536,10 +536,9 @@ LPCiszero:
 	movl	sp@+, d0		| restore d0
 		movml	#0xc0c0, sp@-
 		pea	LtracePCzero
-		jbsr	_printf		| printf("PC is zero!", pc);
+		jbsr	_panic		| printf("PC is zero!", pc);
 		addql	#4, sp
 		movml	sp@+,#0x0303
-	jra	_Debugger		| go to debugger!
 
 Ltraceprint:
 	.asciz	"tracing, pc at 0x%08x\n"

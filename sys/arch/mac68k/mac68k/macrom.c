@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.7 1995/07/04 03:34:09 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.8 1995/08/02 11:53:02 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -39,10 +39,10 @@
  * As a (fascinating) side effect, this glue allows ROM code (or any other
  * MacOS code) to call MacBSD kernel routines, like NewPtr.
  *
- * Uncleaned-up weirdness, 10/6/94
- * 	Check mrg_setvectors for IIsi stuff, and generalize the Egret
- *	(a092) trap.  Right now, I'm hardcoding it to try and make the
- *	IIsi work.	-BG
+ * Uncleaned-up weirdness,
+ *	This doesn't work on a lot of machines.  Perhaps the IIsi stuff
+ * can be generalized somewhat for others.  It looks like most machines
+ * are similar to the IIsi ("Universal ROMs"?).
  */
 
 #include <sys/types.h>
@@ -89,19 +89,27 @@ mrg_lvl1dtpanic()		/* Lvl1DT stopper */
 
 void
 mrg_lvl2dtpanic()		/* Lvl2DT stopper */
-{ printf("Agh!  I was called from Lvl2DT!!!\n"); Debugger(); }
+{
+	panic("Agh!  I was called from Lvl2DT!!!\n");
+}
 
 void
 mrg_jadbprocpanic()	/* JADBProc stopper */
-{printf("Agh!  Called JADBProc!\n"); Debugger(); }
+{
+	panic("Agh!  Called JADBProc!\n");
+}
 
 void
 mrg_jswapmmupanic()	/* jSwapMMU stopper */
-{printf("Agh!  Called jSwapMMU!\n"); Debugger(); }
+{
+	panic("Agh!  Called jSwapMMU!\n");
+}
 
 void
 mrg_jkybdtaskpanic()	/* JKybdTask stopper */
-{printf("Agh!  Called JKybdTask!\n"); Debugger(); }
+{
+	panic("Agh!  Called JKybdTask!\n");
+}
 
 long
 mrg_adbintr()	/* Call ROM ADB Interrupt */
@@ -479,12 +487,12 @@ mrg_setvectors(rom)
 		*((u_int32_t *)(0x174 + 4*i)) = 0;
 	    *((unsigned short *)(0x216)) = 0;
 	    *((unsigned short *)(mrg_adbstore + 0x184)) = 0xff01;
-        }
 
 		/* IIsi crap */
-	*((u_int32_t *)(mrg_adbstore + 0x180)) = 0x4081517c;
-	*((u_int32_t *)(mrg_adbstore + 0x194)) = 0x408151ea;
-	jEgret = (void (*))0x40814800;
+	    *((u_int32_t *)(mrg_adbstore + 0x180)) = 0x4081517c;
+	    *((u_int32_t *)(mrg_adbstore + 0x194)) = 0x408151ea;
+	    jEgret = (void (*))0x40814800;
+        }
 
 	mrg_OStraps[0x77] = rom->CountADBs;
 	mrg_OStraps[0x78] = rom->GetIndADB;
