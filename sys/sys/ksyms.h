@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.5 2003/05/11 08:23:22 jdolecek Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.6 2003/05/11 12:37:20 ragge Exp $	*/
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -33,7 +33,7 @@
  * Do a lookup of a symbol using the in-kernel lookup algorithm.
  */
 struct ksyms_gsymbol {
-	char *kg_name;
+	const char *kg_name;
 	union {
 		void *ku_sym;		 /* Normally Elf_Sym */
 		unsigned long *ku_value;
