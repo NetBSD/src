@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.58 2003/06/03 06:48:12 petrov Exp $ */
+/* $NetBSD: wsconsio.h,v 1.59 2004/01/24 09:53:54 sekiya Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -260,6 +260,7 @@ struct wsmouse_id {
 #define		WSDISPLAY_TYPE_HYPERION	31	/* HP Hyperion */
 #define		WSDISPLAY_TYPE_AMIGACC	32	/* Amiga custom chips */
 #define		WSDISPLAY_TYPE_SUN24	33	/* Sun 24 bit framebuffers */
+#define		WSDISPLAY_TYPE_NEWPORT	34	/* SGI Newport */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
