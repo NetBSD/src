@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.12.2.12 2004/04/07 22:07:34 jmc Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.12.2.13 2004/04/07 22:33:37 jmc Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.56 2000/09/22 04:01:37 itojun Exp $	*/
 
 /*
@@ -362,7 +362,11 @@ ip6_forward(m, srcrt)
 	 * [draft-ietf-ipngwg-icmp-v3-00.txt, Section 3.1]
 	 */
 	if (in6_addr2scopeid(m->m_pkthdr.rcvif, &ip6->ip6_src) !=
-	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)) {
+	    in6_addr2scopeid(rt->rt_ifp, &ip6->ip6_src)
+#ifdef IPSEC
+	    && !ipsecrt
+#endif
+	    ) {
 		ip6stat.ip6s_cantforward++;
 		ip6stat.ip6s_badscope++;
 		in6_ifstat_inc(rt->rt_ifp, ifs6_in_discard);
