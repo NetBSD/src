@@ -1,4 +1,4 @@
-/*	$NetBSD: ruserpass.c,v 1.22 1999/06/24 14:54:29 christos Exp $	*/
+/*	$NetBSD: ruserpass.c,v 1.23 1999/09/22 03:01:54 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ruserpass.c	8.4 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: ruserpass.c,v 1.22 1999/06/24 14:54:29 christos Exp $");
+__RCSID("$NetBSD: ruserpass.c,v 1.23 1999/09/22 03:01:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,9 +97,8 @@ ruserpass(host, aname, apass, aacct)
 	hdir = getenv("HOME");
 	if (hdir == NULL)
 		hdir = ".";
-	if (strlen(hdir) + sizeof(".netrc") < sizeof(buf)) {
-		(void)snprintf(buf, sizeof(buf), "%s/.netrc", hdir);
-	} else {
+	if (strlcpy(buf, hdir,      sizeof(buf)) >= sizeof(buf) ||
+	    strlcat(buf, "/.netrc", sizeof(buf)) >= sizeof(buf)) {
 		warnx("%s/.netrc: %s", hdir, strerror(ENAMETOOLONG));
 		return (0);
 	}

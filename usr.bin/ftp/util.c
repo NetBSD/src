@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.56 1999/09/21 11:18:27 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.57 1999/09/22 03:01:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.56 1999/09/21 11:18:27 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.57 1999/09/22 03:01:54 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -284,7 +284,8 @@ ftp_login(host, user, pass)
 			 */
 			len = strlen(pass) + 2;
 			anonpass = xmalloc(len);
-			snprintf(anonpass, len, "%s@", pass);
+			strlcpy(anonpass, pass, len);
+			strlcat(anonpass, "@",  len);
 			pass = anonpass;
 			freepass = 1;
 		}
@@ -330,7 +331,9 @@ ftp_login(host, user, pass)
 
 		len = strlen(user) + 1 + strlen(host) + 1;
 		nuser = xmalloc(len);
-		snprintf(nuser, len, "%s@%s", user, host);
+		strlcpy(nuser, user, len);
+		strlcat(nuser, "@",  len);
+		strlcat(nuser, host, len);
 		freeuser = 1;
 		user = nuser;
 	}
@@ -452,7 +455,9 @@ remglob(argv, doswitch, errbuf)
                 return (cp);
         }
         if (ftemp == NULL) {
-                (void)snprintf(temp, sizeof(temp), "%s/%s", tmpdir, TMPFILE);
+		strlcpy(temp, tmpdir,	sizeof(temp));
+		strlcat(temp, "/",	sizeof(temp));
+		strlcat(temp, TMPFILE,	sizeof(temp));
                 if ((fd = mkstemp(temp)) < 0) {
                         warn("unable to create temporary file %s", temp);
                         return (NULL);
@@ -674,7 +679,7 @@ sub_mkgmt(tm)
 	};
 
 	/*
-	 * XXX This code assumes the given time to be normalized.
+	 * XXX: This code assumes the given time to be normalized.
 	 * Normalizing here is impossible in case the given time is a leap
 	 * second but the local time library is ignorant of leap seconds.
 	 */

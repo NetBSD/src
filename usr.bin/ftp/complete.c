@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.26 1999/07/10 19:40:36 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.27 1999/09/22 03:01:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.26 1999/07/10 19:40:36 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.27 1999/09/22 03:01:53 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -241,7 +241,10 @@ complete_local(word, list)
 		struct stat sb;
 		char path[MAXPATHLEN];
 
-		snprintf(path, sizeof(path), "%s/%s", dir, words->sl_str[0]);
+		strlcpy(path, dir,		sizeof(path));
+		strlcat(path, "/",		sizeof(path));
+		strlcat(path, words->sl_str[0],	sizeof(path));
+
 		if (stat(path, &sb) >= 0) {
 			char suffix[2] = " ";
 
