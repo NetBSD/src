@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 1998/07/28 18:34:53 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 1998/08/27 04:00:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -74,11 +74,6 @@
 #include <machine/cpus.h>
 #include <arm32/fpe-arm/armfpe.h>
 #endif
-
-typedef struct {
-	vm_offset_t physical;
-	vm_offset_t virtual;
-} pv_addr_t;
 
 extern pv_addr_t systempage;
 

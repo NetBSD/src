@@ -1,4 +1,4 @@
-/*	$NetBSD: postmortem.c,v 1.14 1998/06/17 19:29:28 mark Exp $	*/
+/*	$NetBSD: postmortem.c,v 1.15 1998/08/27 04:00:53 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -50,11 +50,6 @@
 #include <machine/katelib.h>
 
 #ifdef POSTMORTEM
-
-typedef struct {
-	vm_offset_t physical;
-	vm_offset_t virtual;
-} pv_addr_t;
 
 #ifdef ROTTEN_INARDS
 #ifndef	OFWGENCFG

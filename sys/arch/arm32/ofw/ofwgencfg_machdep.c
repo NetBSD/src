@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.7 1998/07/07 00:48:13 mark Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.8 1998/08/27 04:00:55 mark Exp $	*/
 
 /*
  * Copyright 1997
@@ -67,16 +67,6 @@
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>
-
-
-/*
- *  Imported types
- */
-typedef	struct {
-        vm_offset_t physical;
-        vm_offset_t virtual;
-} pv_addr_t;
-
 
 /*
  *  Imported variables
