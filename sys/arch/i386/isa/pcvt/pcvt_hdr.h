@@ -145,7 +145,8 @@
 #include <machine/clock.h>
 #include <machine/md_var.h>
 #endif
-#include <vm/vm_kern.h>
+
+#include <vm/vm.h>
 
 #if PCVT_FREEBSD > 205
 #include <sys/devconf.h>
