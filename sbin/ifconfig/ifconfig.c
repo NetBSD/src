@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.154 2005/03/18 14:30:08 yamt Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.155 2005/03/19 03:53:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.154 2005/03/18 14:30:08 yamt Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.155 2005/03/19 03:53:55 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,6 @@ __RCSID("$NetBSD: ifconfig.c,v 1.154 2005/03/18 14:30:08 yamt Exp $");
 #include <net/if_ether.h>
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_ioctl.h>
-#include <net/if_vlanvar.h>
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #ifdef INET6
@@ -122,6 +121,7 @@ __RCSID("$NetBSD: ifconfig.c,v 1.154 2005/03/18 14:30:08 yamt Exp $");
 #include <util.h>
 
 #include "agr.h"
+#include "vlan.h"
 
 struct	ifreq		ifr, ridreq;
 struct	ifaliasreq	addreq __attribute__((aligned(4)));
@@ -150,7 +150,6 @@ int	aflag, bflag, Cflag, dflag, lflag, mflag, sflag, uflag, vflag, zflag;
 int	Lflag;
 #endif
 int	explicit_prefix = 0;
-u_int	vlan_tag = (u_int)-1;
 
 struct ifcapreq g_ifcr;
 int	g_ifcr_updated;
@@ -195,9 +194,6 @@ void	setmediainst(const char *, int);
 void	clone_create(const char *, int);
 void	clone_destroy(const char *, int);
 void	fixnsel(struct sockaddr_iso *);
-void	setvlan(const char *, int);
-void	setvlanif(const char *, int);
-void	unsetvlanif(const char *, int);
 int	main(int, char *[]);
 
 /*
@@ -367,7 +363,6 @@ void 	iso_getaddr(const char *, int);
 void	ieee80211_statistics(void);
 void	ieee80211_status(void);
 void	tunnel_status(void);
-void	vlan_status(void);
 
 /* Known address families */
 struct afswtch {
@@ -974,80 +969,6 @@ deletetunnel(const char *vname, int param)
 
 	if (ioctl(s, SIOCDIFPHYADDR, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCDIFPHYADDR");
-}
-
-void
-setvlan(const char *val, int d)
-{
-	struct vlanreq vlr;
-
-	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit((unsigned char)ifr.ifr_name[4]))
-		errx(EXIT_FAILURE,
-		    "``vlan'' valid only with vlan(4) interfaces");
-
-	vlan_tag = atoi(val);
-
-	memset(&vlr, 0, sizeof(vlr));
-	ifr.ifr_data = (void *)&vlr;
-
-	if (ioctl(s, SIOCGETVLAN, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCGETVLAN");
-
-	vlr.vlr_tag = vlan_tag;
-
-	if (ioctl(s, SIOCSETVLAN, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCSETVLAN");
-}
-
-void
-setvlanif(const char *val, int d)
-{
-	struct vlanreq vlr;
-
-	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit((unsigned char)ifr.ifr_name[4]))
-		errx(EXIT_FAILURE,
-		    "``vlanif'' valid only with vlan(4) interfaces");
-
-	if (vlan_tag == (u_int)-1)
-		errx(EXIT_FAILURE,
-		    "must specify both ``vlan'' and ``vlanif''");
-
-	memset(&vlr, 0, sizeof(vlr));
-	ifr.ifr_data = (void *)&vlr;
-
-	if (ioctl(s, SIOCGETVLAN, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCGETVLAN");
-
-	strlcpy(vlr.vlr_parent, val, sizeof(vlr.vlr_parent));
-	vlr.vlr_tag = vlan_tag;
-
-	if (ioctl(s, SIOCSETVLAN, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCSETVLAN");
-}
-
-void
-unsetvlanif(const char *val, int d)
-{
-	struct vlanreq vlr;
-
-	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit((unsigned char)ifr.ifr_name[4]))
-		errx(EXIT_FAILURE,
-		    "``vlanif'' valid only with vlan(4) interfaces");
-
-	memset(&vlr, 0, sizeof(vlr));
-	ifr.ifr_data = (void *)&vlr;
-
-	if (ioctl(s, SIOCGETVLAN, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCGETVLAN");
-
-	vlr.vlr_parent[0] = '\0';
-	vlr.vlr_tag = 0;
-
-	if (ioctl(s, SIOCSETVLAN, &ifr) == -1)
-		err(EXIT_FAILURE, "SIOCSETVLAN");
 }
 
 void
@@ -2136,27 +2057,6 @@ tunnel_status(void)
 	    pdstaddr, sizeof(pdstaddr), 0, 0, niflag);
 
 	printf("\ttunnel inet%s %s --> %s\n", ver, psrcaddr, pdstaddr);
-}
-
-void
-vlan_status(void)
-{
-	struct vlanreq vlr;
-
-	if (strncmp(ifr.ifr_name, "vlan", 4) != 0 ||
-	    !isdigit((unsigned char)ifr.ifr_name[4]))
-		return;
-
-	memset(&vlr, 0, sizeof(vlr));
-	ifr.ifr_data = (void *)&vlr;
-
-	if (ioctl(s, SIOCGETVLAN, &ifr) == -1)
-		return;
-
-	if (vlr.vlr_tag || vlr.vlr_parent[0] != '\0')
-		printf("\tvlan: %d parent: %s\n",
-		    vlr.vlr_tag, vlr.vlr_parent[0] == '\0' ?
-		    "<none>" : vlr.vlr_parent);
 }
 
 void
