@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205 1998/12/13 19:31:26 christos Exp $	*/
+/*	$NetBSD: locore.s,v 1.206 1999/01/26 14:21:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1383,7 +1383,7 @@ ENTRY(copyoutstr)
 ENTRY(copyinstr)
 	pushl	%esi
 	pushl	%edi
-	movl	_curpcb,%ecx
+	movl	_C_LABEL(curpcb),%ecx
 	movl	$_C_LABEL(copystr_fault),PCB_ONFAULT(%ecx)
 
 	movl	12(%esp),%esi		# %esi = from
@@ -2460,6 +2460,42 @@ IDTVEC(svr4_fasttrap)
 	jmp	2b
 1:	INTRFASTEXIT
 #endif /* COMPAT_SVR4 */
+
+/*
+ * Special interrupt handlers.  Someday intr0-intr15 will be used to count
+ * interrupts.  We'll still need a special exception 16 handler.  The busy
+ * latch stuff in probintr() can be moved to npxprobe().
+ */
+
+NENTRY(probeintr)
+	ss
+	incl	_C_LABEL(npx_intrs_while_probing)
+	pushl	%eax
+	movb	$0x20,%al	# EOI (asm in strings loses cpp features)
+	outb	%al,$0xa0	# IO_ICU2
+	outb	%al,$0x20	# IO_ICU1
+	movb	$0,%al
+	outb	%al,$0xf0	# clear BUSY# latch
+	popl	%eax
+	iret
+
+NENTRY(probetrap)
+	ss
+	incl	_C_LABEL(npx_traps_while_probing)
+	fnclex
+	iret
+
+NENTRY(npx586bug1)
+	fildl	4(%esp)		# x
+	fildl	8(%esp)		# y
+	fld	%st(1)
+	fdiv	%st(1),%st	# x/y
+	fmulp	%st,%st(1)	# (x/y)*y
+	fsubrp	%st,%st(1)	# x-(x/y)*y
+	pushl	$0
+	fistpl	(%esp)
+	popl	%eax
+	ret
 
 #include <i386/isa/vector.s>
 #include <i386/isa/icu.s>
