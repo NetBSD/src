@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.98 2002/06/05 10:20:46 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.99 2002/07/12 03:05:13 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996-2002 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.98 2002/06/05 10:20:46 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.99 2002/07/12 03:05:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1033,7 +1033,7 @@ setgate(int argc, char *argv[])
 			gatemode = 0;
 		else {
 			if (argc == 3)
-				gateport = strdup(argv[2]);
+				gateport = xstrdup(argv[2]);
 			(void)strlcpy(gsbuf, argv[1], sizeof(gsbuf));
 			gateserver = gsbuf;
 			gatemode = 1;
