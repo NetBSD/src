@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.16 1999/03/26 04:04:13 sommerfe Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.17 1999/03/26 22:23:57 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.16 1999/03/26 04:04:13 sommerfe Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.17 1999/03/26 22:23:57 sommerfe Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,6 +56,8 @@ __RCSID("$NetBSD: getcwd.c,v 1.16 1999/03/26 04:04:13 sommerfe Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#include "extern.h"
 
 #ifdef __weak_alias
 __weak_alias(getcwd,_getcwd);
