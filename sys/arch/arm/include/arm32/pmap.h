@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.55 2002/07/31 17:34:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.56 2002/08/09 23:08:39 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -159,7 +159,8 @@ typedef struct pv_addr {
 #define	PVF_REF		0x02		/* page is referenced */
 #define	PVF_WIRED	0x04		/* mapping is wired */
 #define	PVF_WRITE	0x08		/* mapping is writable */
-#define	PVF_NC		0x10		/* mapping is non-cacheable */
+#define	PVF_EXEC	0x10		/* mapping is executable */
+#define	PVF_NC		0x20		/* mapping is non-cacheable */
 
 /*
  * Commonly referenced structures
