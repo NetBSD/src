@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.129 2004/01/03 13:09:44 wiz Exp $
+.\"	$NetBSD: sysctl.3,v 1.130 2004/01/07 21:25:14 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1714,7 +1714,7 @@ tree itself, or support alternate means of accessing the data
 instrumented by the
 .Nm
 tree.
-.Bl -column CTLXCREATESUMXXX -offset indent
+.Bl -column CTLXCREATESYMXXX
 .It Sy Name	Description
 .It CTL\_QUERY	Retrieve a mapping of names to numbers below a given node
 .It CTL\_CREATE	Create a new node
@@ -1922,6 +1922,41 @@ mib[0] = CTL_DESTROY;
 node.sysctl_num = 3214;		/* now deleting "local" */
 sysctl(\*[Am]mib[0], 1, NULL, NULL, \*[Am]node, len);
 .Ed
+.Pp
+The
+.Fa sysctl_flags
+field in the struct sysctlnode contains the node type information as
+well as a number of flags.
+The macros
+.Fn SYSCTL_TYPE
+and
+.Fn SYSCTL_FLAGS
+can be used to access the different fields.
+Valid flags are:
+.Bl -column SYSCTLXPERMANENTXXX
+.It Sy Name	Description
+.It SYSCTL\_READONLY	Node is read-only
+.It SYSCTL\_READONLY1	Node becomes read-only at securelevel 1
+.It SYSCTL\_READONLY2	Node becomes read-only at securelevel 2
+.It SYSCTL\_READWRITE	Node is writeable by the superuser
+.It SYSCTL\_ANYWRITE	Node is writeable by anyone
+.It SYSCTL\_PRIVATE	Node is readable only by the superuser
+.It SYSCTL\_PERMANENT	Node cannot be removed (cannot be set by
+processes)
+.It SYSCTL\_OWNDATA	Node owns data and does not instrument
+existing data
+.It SYSCTL\_IMMEDIATE	Node contains instrumented data and does not
+instrument existing data
+.It SYSCTL\_HEX	Node's contents should be displayed in a hexadecimal
+form
+.It SYSCTL\_ROOT	Node is the root of a tree (cannot be set at
+any time)
+.It SYSCTL\_ANYNUMBER	Node matches any MIB number (cannot be set by
+processes)
+.It SYSCTL\_HIDDEN	Node not displayed by default
+.It SYSCTL\_ALIAS	Node refers to a sibling node (cannot be set
+by processes)
+.El
 .Sh RETURN VALUES
 If the call to
 .Nm
