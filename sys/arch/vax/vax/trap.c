@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 2003/07/15 02:15:06 lukem Exp $     */
+/*	$NetBSD: trap.c,v 1.82 2003/09/18 22:38:36 cl Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2003/07/15 02:15:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2003/09/18 22:38:36 cl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -261,9 +261,14 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		else
 			ftype = VM_PROT_READ;
 
-		if (umode)
+		if (umode) {
 			KERNEL_PROC_LOCK(l);
-		else
+			if (l->l_flag & L_SA) {
+				KDASSERT(p != NULL && p->p_sa != NULL);
+				p->p_sa->sa_vp_faultaddr = (vaddr_t)frame->code;
+				l->l_flag |= L_SA_PAGEFAULT;
+			}
+		} else
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
 		nss = 0;
@@ -303,9 +308,10 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			if (nss != 0 && nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 		}
-		if (umode) 
+		if (umode) {
+			l->l_flag &= ~L_SA_PAGEFAULT;
 			KERNEL_PROC_UNLOCK(l);
-		else
+		} else
 			KERNEL_UNLOCK();
 		break;
 
