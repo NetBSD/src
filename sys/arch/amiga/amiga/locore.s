@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.94 1998/01/05 23:16:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.95 1998/04/11 16:13:57 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -940,6 +940,8 @@ Lunshadow:
 /* set kernel stack, user SP, and initial pcb */
 	movl	_proc0paddr,a1		| proc0 kernel stack
 	lea	a1@(USPACE),sp	| set kernel stack to end of area
+	lea	_proc0,a2		| initialize proc0.p_addr so that
+	movl	a1,a2@(P_ADDR)		|   we don't dref NULL in trap()
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	a2,a1@(PCB_USP)		| and save it
