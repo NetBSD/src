@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2004/06/26 22:11:49 dsl Exp $
+#	$NetBSD: Makefile,v 1.7 2004/06/27 10:31:06 dsl Exp $
 
 NOMAN=  	# defined
 
@@ -8,5 +8,6 @@ regress:
 	sh ${.CURDIR}/exitstatus.sh
 	sh ${.CURDIR}/varquote.sh
 	sh ${.CURDIR}/fsplit.sh
+	sh ${.CURDIR}/here.sh
 
 .include <bsd.prog.mk>
