@@ -1,4 +1,3 @@
-/*	$NetBSD: pmap.c,v 1.82 2003/05/08 18:13:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -283,6 +282,8 @@ struct vm_map	pt_map_store;
 
 vsize_t		mem_size;	/* memory size in bytes */
 paddr_t		avail_end;	/* PA of last available physical page */
+vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
+vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by the VM system */
 boolean_t	pmap_initialized = FALSE;	/* Has pmap_init completed? */
 char		*pmap_attributes;	/* reference and modify bits */
@@ -504,6 +505,55 @@ pmap_init()
 #endif
 
 	/*
+	 * Allocate memory for random pmap data structures.  Includes the
+	 * initial segment table, pv_head_table and pmap_attributes.
+	 */
+	for (page_cnt = 0, bank = 0; bank < vm_nphysseg; bank++) {
+		page_cnt += vm_physmem[bank].end - vm_physmem[bank].start;
+#ifdef DEBUG
+		printf("pmap_init: %2d: %08lx - %08lx (%10d)\n", bank,
+		    vm_physmem[bank].start << PGSHIFT,
+		    vm_physmem[bank].end << PGSHIFT, page_cnt << PGSHIFT);
+#endif
+	}
+	s = ATARI_STSIZE;				/* Segtabzero	   */
+	s += page_cnt * sizeof(struct pv_entry);	/* pv table	   */
+	s += page_cnt * sizeof(char);			/* attribute table */
+	s = round_page(s);
+
+	addr = uvm_km_zalloc(kernel_map, s);
+	if (addr == 0)
+		panic("pmap_init: can't allocate data structures");
+	Segtabzero   = (u_int *) addr;
+	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
+	addr += ATARI_STSIZE;
+	pv_table = (pv_entry_t) addr;
+	addr += page_cnt * sizeof(struct pv_entry);
+
+	pmap_attributes = (char *) addr;
+#ifdef DEBUG
+	if (pmapdebug & PDB_INIT)
+		printf("pmap_init: %lx bytes: page_cnt %x s0 %p(%p) "
+			"tbl %p atr %p\n",
+			s, page_cnt, Segtabzero, Segtabzeropa,
+			pv_table, pmap_attributes);
+#endif
+
+	/*
+	 * Now that the pv and attribute tables have been allocated,
+	 * assign them to the memory segments.
+	 */
+	pv = pv_table;
+	attr = pmap_attributes;
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		npg = vm_physmem[bank].end - vm_physmem[bank].start;
+		vm_physmem[bank].pmseg.pvent = pv;
+		vm_physmem[bank].pmseg.attrs = attr;
+		pv += npg;
+		attr += npg;
+	}
+
+	/*
 	 * Allocate physical memory for kernel PT pages and their management.
 	 * we need enough pages to map the page tables for each process 
 	 * plus some slop.
@@ -524,8 +574,7 @@ pmap_init()
 	 * Verify that space will be allocated in region for which
 	 * we already have kernel PT pages.
 	 */
-	addr = vm_map_min(kernel_map);
-	kernel_map->first_free = &kernel_map->header;	/* XXX */
+	addr = 0;
 	rv = uvm_map(kernel_map, &addr, s, NULL, UVM_UNKNOWN_OFFSET, 0,
 		     UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				 UVM_ADV_RANDOM, UVM_FLAG_NOMERGE));
@@ -561,56 +610,6 @@ pmap_init()
 #endif
 
 	/*
-	 * Allocate memory for random pmap data structures.  Includes the
-	 * initial segment table, pv_head_table and pmap_attributes.
-	 */
-	for (page_cnt = 0, bank = 0; bank < vm_nphysseg; bank++) {
-		page_cnt += vm_physmem[bank].end - vm_physmem[bank].start;
-#ifdef DEBUG
-		printf("pmap_init: %2d: %08lx - %08lx (%10d)\n", bank,
-		    vm_physmem[bank].start << PGSHIFT,
-		    vm_physmem[bank].end << PGSHIFT, page_cnt << PGSHIFT);
-#endif
-	}
-	s = ATARI_STSIZE;				/* Segtabzero	   */
-	s += page_cnt * sizeof(struct pv_entry);	/* pv table	   */
-	s += page_cnt * sizeof(char);			/* attribute table */
-	s = round_page(s);
-
-	kernel_map->first_free = &kernel_map->header;
-	addr = uvm_km_zalloc(kernel_map, s);
-	if (addr == 0)
-		panic("pmap_init: can't allocate data structures");
-	Segtabzero   = (u_int *) addr;
-	(void) pmap_extract(pmap_kernel(), addr, (paddr_t *)&Segtabzeropa);
-	addr += ATARI_STSIZE;
-	pv_table = (pv_entry_t) addr;
-	addr += page_cnt * sizeof(struct pv_entry);
-
-	pmap_attributes = (char *) addr;
-#ifdef DEBUG
-	if (pmapdebug & PDB_INIT)
-		printf("pmap_init: %lx bytes: page_cnt %x s0 %p(%p) "
-			"tbl %p atr %p\n",
-			s, page_cnt, Segtabzero, Segtabzeropa,
-			pv_table, pmap_attributes);
-#endif
-
-	/*
-	 * Now that the pv and attribute tables have been allocated,
-	 * assign them to the memory segments.
-	 */
-	pv = pv_table;
-	attr = pmap_attributes;
-	for (bank = 0; bank < vm_nphysseg; bank++) {
-		npg = vm_physmem[bank].end - vm_physmem[bank].start;
-		vm_physmem[bank].pmseg.pvent = pv;
-		vm_physmem[bank].pmseg.attrs = attr;
-		pv += npg;
-		attr += npg;
-	}
-
-	/*
 	 * Slightly modified version of kmem_suballoc() to get page table
 	 * map where we want it.
 	 */
@@ -628,7 +627,6 @@ pmap_init()
 	}
 	else s = maxproc * ATARI_UPTSIZE;
 
-	kernel_map->first_free = &kernel_map->header;
 	pt_map = uvm_km_suballoc(kernel_map, &addr, &addr2, s, 0,
 	    TRUE, &pt_map_store);
 
@@ -2635,6 +2633,23 @@ pmap_enter_ptpage(pmap, va)
 		TBIAU();
 	pmap->pm_ptpages++;
 	splx(s);
+}
+
+/*
+ *	Routine:	pmap_virtual_space
+ *
+ *	Function:
+ *		Report the range of available kernel virtual address
+ *		space to the VM system during bootstrap.  Called by
+ *		vm_bootstrap_steal_memory().
+ */
+void
+pmap_virtual_space(vstartp, vendp)
+	vaddr_t     *vstartp, *vendp;
+{
+
+	*vstartp = virtual_avail;
+	*vendp = virtual_end;
 }
 
 /*

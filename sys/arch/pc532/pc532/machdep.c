@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2003/05/08 18:13:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 2003/05/10 21:10:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -148,6 +148,7 @@ static void	map __P((pd_entry_t *, vaddr_t, paddr_t, int, int));
 void
 cpu_startup()
 {
+	extern char kernel_text[];
 	caddr_t v;
 	int sz;
 	u_int i, base, residual;
@@ -246,6 +247,16 @@ cpu_startup()
 	 */
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, FALSE, NULL);
+
+	/*
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 */
+	if (uvm_map_protect(kernel_map,
+			   ns532_round_page(&kernel_text),
+			   ns532_round_page(&etext),
+			   UVM_PROT_READ|UVM_PROT_EXEC, TRUE) != 0)
+		panic("can't protect kernel text");
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.252 2003/05/08 18:13:24 thorpej Exp $ */
+/*	$NetBSD: pmap.c,v 1.253 2003/05/10 21:10:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -405,6 +405,8 @@ static paddr_t	avail_start;	/* first available physical page, other
 				   than the `etext gap' defined below */
 static vaddr_t	etext_gap_start;/* start of gap between text & data */
 static vaddr_t	etext_gap_end;	/* end of gap between text & data */
+static vaddr_t	virtual_avail;	/* first free kernel virtual address */
+static vaddr_t	virtual_end;	/* last free kernel virtual address */
 
 static void pmap_page_upload(void);
 
@@ -1007,6 +1009,19 @@ get_phys_mem(caddr_t *top)
 /*
  * Support functions for vm_page_bootstrap().
  */
+
+/*
+ * How much virtual space does this kernel have?
+ * (After mapping kernel text, data, etc.)
+ */
+void
+pmap_virtual_space(v_start, v_end)
+        vaddr_t *v_start;
+        vaddr_t *v_end;
+{
+        *v_start = virtual_avail;
+        *v_end   = virtual_end;
+}
 
 /*
  * Helper routine that hands off available physical pages to the VM system.
@@ -3120,9 +3135,6 @@ pmap_bootstrap4_4c(top, nctx, nregion, nsegment)
 	vmmap = p, p += NBPG;
 	p = reserve_dumppages(p);
 
-	/*
-	 * Define the bounds of the managed kernel virtual address space.
-	 */
 	virtual_avail = (vaddr_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
@@ -3578,9 +3590,6 @@ pmap_bootstrap4m(top)
 			&sp->sg_pte[VA_SUN4M_VPG(cpuinfo.vpage[i])];
 	}
 
-	/*
-	 * Define the bounds of the managed kernel virtual address space.
-	 */
 	virtual_avail = (vaddr_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
 
