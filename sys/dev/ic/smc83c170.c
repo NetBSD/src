@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.43 2001/05/17 17:32:47 drochner Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.44 2001/05/17 19:00:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -935,7 +935,7 @@ epic_init(ifp)
 	bus_space_write_4(st, sh, EPIC_GENCTL, genctl | GENCTL_RESET_PHY);
 	delay(100);
 	bus_space_write_4(st, sh, EPIC_GENCTL, genctl);
-	delay(100);
+	delay(1000);
 	bus_space_write_4(st, sh, EPIC_NVCTL, reg0);
 
 	/*
