@@ -1,4 +1,4 @@
-/*	$NetBSD: sigpending.S,v 1.2 2001/01/09 19:47:28 bjh21 Exp $	*/
+/*	$NetBSD: sigpending.S,v 1.3 2001/07/16 05:50:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@ WARN_REFERENCES(sigpending, \
 ENTRY(sigpending)
 	mov	r2, r0
 	SYSTRAP(compat_13_sigpending13)
-	bcs	cerror
+	bcs	PIC_SYM(CERROR, PLT)
 	str	r0, [r2]
 	mov	r0, #0x00000000
 #ifdef __APCS_26__

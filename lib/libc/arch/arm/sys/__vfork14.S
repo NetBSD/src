@@ -1,4 +1,4 @@
-/*	$NetBSD: __vfork14.S,v 1.3 2001/01/09 19:47:27 bjh21 Exp $	*/
+/*	$NetBSD: __vfork14.S,v 1.4 2001/07/16 05:50:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,7 +50,7 @@
 ENTRY(__vfork14)
 	mov	r2, r14
 	SYSTRAP(__vfork14)
-	bcs	cerror
+	bcs	PIC_SYM(CERROR, PLT)
 	sub	r1, r1, #1	/* r1 == 0xffffffff if parent, 0 if child */
 	and	r0, r0, r1	/* r0 == 0 if child, else unchanged */
 #ifdef __APCS_26__
