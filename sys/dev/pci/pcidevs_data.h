@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.245 2000/07/08 04:39:50 mrg Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.246 2000/07/09 00:45:56 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.241 2000/07/08 04:38:55 mrg Exp 
+ *	NetBSD: pcidevs,v 1.242 2000/07/09 00:45:14 mycroft Exp 
  */
 
 /*
@@ -1958,6 +1958,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "InBusiness Fast Ethernet LAN Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82559ER,
+	    0,
+	    "Intel",
+	    "82559ER Fast Ethernet LAN Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82092AA,
