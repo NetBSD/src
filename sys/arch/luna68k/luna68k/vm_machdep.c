@@ -1,5 +1,5 @@
-/* $NetBSD: vm_machdep.c,v 1.2 2000/01/20 22:18:56 sommerfeld Exp $ */
-/*	$NetBSD: vm_machdep.c,v 1.2 2000/01/20 22:18:56 sommerfeld Exp $	*/
+/* $NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:02 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2000/01/20 22:18:56 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:02 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -79,17 +79,20 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2000/01/20 22:18:56 sommerfeld Ex
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct pcb *pcb = &p2->p_addr->u_pcb;
 	struct trapframe *tf;
@@ -110,8 +113,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	*pcb = p1->p_addr->u_pcb;
 
 	/*
-	 * Copy the trap frame, and arrange for the child to return directly
-	 * through child_return().  Note the in-line cpu_set_kpc().
+	 * Copy the trap frame.
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -125,28 +127,9 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)proc_trampoline;
-	pcb->pcb_regs[6] = (int)child_return;	/* A2 */
-	pcb->pcb_regs[7] = (int)p2;		/* A3 */
+	pcb->pcb_regs[6] = (int)func;		/* A2 */
+	pcb->pcb_regs[7] = (int)arg;		/* A3 */
 	pcb->pcb_regs[11] = (int)sf;		/* SSP */
-}
-
-/*
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with the supplied argument.
- *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-
-	p->p_addr->u_pcb.pcb_regs[6] = (u_long) pc;	/* A2 */
-	p->p_addr->u_pcb.pcb_regs[7] = (u_long) arg;	/* A3 */
 }
 
 /*

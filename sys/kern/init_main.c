@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.168 2000/05/26 21:20:29 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.169 2000/05/28 05:49:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -396,9 +396,8 @@ main()
 	 * wait for us to inform it that the root file system has been
 	 * mounted.
 	 */
-	if (fork1(p, 0, SIGCHLD, NULL, 0, NULL, &initproc))
+	if (fork1(p, 0, SIGCHLD, NULL, 0, start_init, NULL, NULL, &initproc))
 		panic("fork init");
-	cpu_set_kpc(initproc, start_init, initproc);
 
 	/*
 	 * Create any kernel threads who's creation was deferred because

@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.56 2000/05/27 06:29:35 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.57 2000/05/28 05:48:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2000/05/27 06:29:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2000/05/28 05:48:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,17 +140,20 @@ cpu_exit(p)
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	struct user *up = p2->p_addr;
 
@@ -223,52 +226,16 @@ cpu_fork(p1, p2, stack, stacksize)
 		if (stack != NULL)
 			p2tf->tf_regs[FRAME_SP] = (u_long)stack + stacksize;
 
-		/*
-		 * Arrange for continuation at child_return(), which
-		 * will return to exception_return().  Note that the child
-		 * process doesn't stay in the kernel for long!
-		 * 
-		 * This is an inlined version of cpu_set_kpc.
-		 */
 		up->u_pcb.pcb_hw.apcb_ksp = (u_int64_t)p2tf;	
 		up->u_pcb.pcb_context[0] =
-		    (u_int64_t)child_return;		/* s0: pc */
+		    (u_int64_t)func;			/* s0: pc */
 		up->u_pcb.pcb_context[1] =
 		    (u_int64_t)exception_return;	/* s1: ra */
 		up->u_pcb.pcb_context[2] =
-		    (u_int64_t)p2;			/* s2: arg */
+		    (u_int64_t)arg;			/* s2: arg */
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 	}
-}
-
-/*
- * cpu_set_kpc:
- *
- * Arrange for in-kernel execution of a process to continue at the
- * named pc, as if the code at that address were called as a function
- * with argument, the current process's process pointer.
- *
- * Note that it's assumed that when the named process returns,
- * exception_return() should be invoked, to return to user mode.
- *
- * (Note that cpu_fork(), above, uses an open-coded version of this.)
- */
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct pcb *pcbp;
-
-	pcbp = &p->p_addr->u_pcb;
-	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */
-	pcbp->pcb_context[1] =
-	    (u_int64_t)exception_return;	/* s1 - return address */
-	pcbp->pcb_context[2] = (u_int64_t)arg;	/* s2 - arg */
-	pcbp->pcb_context[7] =
-	    (u_int64_t)switch_trampoline;	/* ra - assembly magic */
 }
 
 /*

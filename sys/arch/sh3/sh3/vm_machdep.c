@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.8 2000/03/26 20:42:36 kleink Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.9 2000/05/28 05:49:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -75,17 +75,20 @@ void	setredzone __P((u_short *, caddr_t));
  * fork(), while the parent process returns normally.
  *
  * p1 is the process being forked; if p1 == &proc0, we are creating
- * a kernel thread, and the return path will later be changed in cpu_set_kpc.
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
  *
  * If an alternate user-level stack is requested (with non-zero values
  * in both the stack and stacksize args), set up the user stack pointer
  * accordingly.
  */
 void
-cpu_fork(p1, p2, stack, stacksize)
+cpu_fork(p1, p2, stack, stacksize, func, arg)
 	register struct proc *p1, *p2;
 	void *stack;
 	size_t stacksize;
+	void (*func) __P((void *));
+	void *arg;
 {
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -113,8 +116,7 @@ cpu_fork(p1, p2, stack, stacksize)
 	pcb->kr15 = (int)p2->p_addr + USPACE - sizeof(struct trapframe);
 
 	/*
-	 * Copy the trapframe, and arrange for the child to return directly
-	 * through rei().
+	 * Copy the trapframe.
 	 */
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->kr15 - 1;
 	*tf = *p1->p_md.md_regs;
@@ -127,8 +129,8 @@ cpu_fork(p1, p2, stack, stacksize)
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_ppl = 0;
-	sf->sf_r12 = (int)child_return;
-	sf->sf_r11 = (int)p2;
+	sf->sf_r12 = (int)func;
+	sf->sf_r11 = (int)arg;
 	sf->sf_pr = (int)proc_trampoline;
 	pcb->r15 = (int)sf;
 
@@ -136,23 +138,6 @@ cpu_fork(p1, p2, stack, stacksize)
 	   be occured when accessing kernel stack */
 	pcb->r15 = vtophys(pcb->r15);
 	pcb->kr15 = vtophys(pcb->kr15);
-}
-
-void
-cpu_set_kpc(p, pc, arg)
-	struct proc *p;
-	void (*pc) __P((void *));
-	void *arg;
-{
-	struct switchframe *sf = (struct switchframe *)p->p_addr->u_pcb.r15;
-	struct trapframe *tf;
-
-	sf->sf_r12 = (int) pc;
-	sf->sf_r11 = (int) arg;
-	sf->sf_pr  = (int) proc_trampoline;
-
-	tf = (struct trapframe *)(sf+1);
-	tf->tf_ssr |= PSL_IMASK; /* disable external interrupt */
 }
 
 void
