@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.61 2001/12/17 15:39:43 atatat Exp $	*/
+/*	$NetBSD: main.c,v 1.62 2001/12/21 19:09:43 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1005,7 +1005,7 @@ void
 logconfig_start(void)
 {
 	extern FILE *yyin;
-	char line[1024];
+	char line[1024], *tmpdir;
 	struct stat st;
 	int fd;
 
@@ -1013,7 +1013,10 @@ logconfig_start(void)
 		return;
 	cfgtime = st.st_mtimespec;
 
-	snprintf(line, sizeof(line), "config.tmp.XXXXXX");
+	tmpdir = getenv("TMPDIR");
+	if (tmpdir == NULL)
+		tmpdir = "/tmp";
+	snprintf(line, sizeof(line), "%s/config.tmp.XXXXXX", tmpdir);
 	if ((fd = mkstemp(line)) == -1 ||
 	    (cfg = fdopen(fd, "r+")) == NULL) {
 		if (fd != -1) {
