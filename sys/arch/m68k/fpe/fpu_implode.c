@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_implode.c,v 1.7 2003/08/07 16:28:11 agc Exp $ */
+/*	$NetBSD: fpu_implode.c,v 1.8 2003/10/23 15:07:30 kleink Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,12 +46,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.7 2003/08/07 16:28:11 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_implode.c,v 1.8 2003/10/23 15:07:30 kleink Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
 
-#include "ieee.h"
+#include <machine/ieee.h>
 #include <machine/reg.h>
 
 #include "fpu_emulate.h"
