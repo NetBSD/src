@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphy.c,v 1.28 2000/07/27 22:14:48 martin Exp $	*/
+/*	$NetBSD: nsphy.c,v 1.29 2001/03/28 14:16:49 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ nsphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_NATSEMI &&
-	    MII_MODEL(ma->mii_id2) == MII_MODEL_NATSEMI_DP83840)
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_xxNATSEMI &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_xxNATSEMI_DP83840)
 		return (10);
 
 	return (0);
@@ -127,7 +127,7 @@ nsphyattach(parent, self, aux)
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 
-	printf(": %s, rev. %d\n", MII_STR_NATSEMI_DP83840,
+	printf(": %s, rev. %d\n", MII_STR_xxNATSEMI_DP83840,
 	    MII_REV(ma->mii_id2));
 
 	sc->mii_inst = mii->mii_instance;
