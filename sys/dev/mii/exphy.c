@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.8 1998/11/02 22:31:36 thorpej Exp $	*/
+/*	$NetBSD: exphy.c,v 1.9 1998/11/03 00:18:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -162,8 +162,10 @@ exphyattach(parent, self, aux)
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
+#if 0 /* See above. */
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_NONE, 0, sc->sc_mii.mii_inst),
 	    BMCR_ISO);
+#endif
 
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->sc_mii.mii_inst),
 	    BMCR_LOOP|BMCR_S100);
