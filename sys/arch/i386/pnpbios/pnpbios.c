@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.28 2002/09/27 20:33:09 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.29 2002/10/01 12:57:18 fvdl Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.28 2002/09/27 20:33:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.29 2002/10/01 12:57:18 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,9 +181,8 @@ static struct{
 };
 
 
-const struct cfattach pnpbios_ca = {
-	sizeof(struct pnpbios_softc), pnpbios_match, pnpbios_attach
-};
+CFATTACH_DECL(pnpbios, sizeof(struct pnpbios_softc), pnpbios_match,
+    pnpbios_attach, NULL, NULL)
 
 /*
  * Private stack and return value buffer. Spec (1.0a, ch. 4.3) says that

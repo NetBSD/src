@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.89 2002/09/18 02:44:00 lukem Exp $
+#	$NetBSD: DISKLESS,v 1.90 2002/10/01 12:56:38 fvdl Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -109,7 +109,7 @@ options 	SCSIVERBOSE	# verbose SCSI error messages
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 mainbus0 at root
-
+cpu0	at mainbus0
 pci0	at mainbus0 bus ?
 eisa0	at mainbus0
 

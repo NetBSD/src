@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.6 2002/06/26 12:20:29 drochner Exp $	*/
+/*	$NetBSD: bios32.c,v 1.7 2002/10/01 12:56:48 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.6 2002/06/26 12:20:29 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.7 2002/10/01 12:56:48 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

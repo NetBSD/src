@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.35 2002/09/27 20:33:04 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.36 2002/10/01 12:57:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.35 2002/09/27 20:33:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.36 2002/10/01 12:57:16 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,9 +84,8 @@ void	pchbattach __P((struct device *, struct device *, void *));
 int	pchb_print __P((void *, const char *));
 int	agp_print __P((void *, const char *));
 
-const struct cfattach pchb_ca = {
-	sizeof(struct pchb_softc), pchbmatch, pchbattach
-};
+CFATTACH_DECL(pchb, sizeof(struct pchb_softc), pchbmatch, pchbattach,
+    NULL, NULL)
 
 int
 pchbmatch(struct device *parent, struct cfdata *match, void *aux)
@@ -310,10 +309,14 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		pba.pba_iot = pa->pa_iot;
 		pba.pba_memt = pa->pa_memt;
 		pba.pba_dmat = pa->pa_dmat;
+		pba.pba_pc = pa->pa_pc;
+		pba.pba_flags = attachflags;
 		pba.pba_bus = pbnum;
 		pba.pba_bridgetag = NULL;
 		pba.pba_flags = attachflags;
 		pba.pba_pc = pa->pa_pc;
+		pba.pba_intrswiz = 0;
+		memset(&pba.pba_intrtag, 0, sizeof(pba.pba_intrtag));
 		config_found(self, &pba, pchb_print);
 	}
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.36 2002/09/18 02:44:01 lukem Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.37 2002/10/01 12:56:43 fvdl Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -186,6 +186,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+cpu* at mainbus?
 
 #apm0	at mainbus0			# Advanced power management
 

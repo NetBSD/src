@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.17 2002/06/23 22:18:54 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.18 2002/10/01 12:57:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,6 @@ struct intrframe {
  * Stack frame inside cpu_switch()
  */
 struct switchframe {
-	int	sf_ppl;
 	int	sf_edi;
 	int	sf_esi;
 	int	sf_ebx;

@@ -1,7 +1,7 @@
-/*	$NetBSD: agp_machdep.c,v 1.2 2001/11/15 07:03:33 lukem Exp $	*/
+/*	$NetBSD: agp_machdep.c,v 1.3 2002/10/01 12:57:15 fvdl Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.2 2001/11/15 07:03:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.3 2002/10/01 12:57:15 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -13,6 +13,7 @@ __KERNEL_RCSID(0, "$NetBSD: agp_machdep.c,v 1.2 2001/11/15 07:03:33 lukem Exp $"
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
 
+#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:16 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.64 2002/10/01 12:56:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,14 +41,14 @@
 /*
  * Setup the system to run on the current machine.
  *
- * Configure() is called at boot time and initializes the vba 
+ * Configure() is called at boot time and initializes the vba
  * device tables and the memory controller monitoring.  Available
  * devices are determined (from possibilities mentioned in ioconf.c),
  * and the drivers are initialized.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2002/10/01 12:56:47 fvdl Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -71,8 +71,15 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.63 2002/09/27 02:24:16 thorpej Exp $"
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/gdt.h>
 #include <machine/pcb.h>
 #include <machine/bootinfo.h>
+
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#endif
 
 static int match_harddisk __P((struct device *, struct btinfo_bootdisk *));
 static void matchbiosdisks __P((void));
@@ -128,11 +135,18 @@ cpu_configure()
 		panic("configure: mainbus not configured");
 
 	printf("biomask %x netmask %x ttymask %x\n",
-	    (u_short)imask[IPL_BIO], (u_short)imask[IPL_NET],
-	    (u_short)imask[IPL_TTY]);
+	    (u_short)IMASK(IPL_BIO), (u_short)IMASK(IPL_NET),
+	    (u_short)IMASK(IPL_TTY));
 
-	/* resync after FPU configuration */
+#if NIOAPIC > 0
+	ioapic_enable();
+#endif
+	/* resync cr0 after FPU configuration */
 	proc0.p_addr->u_pcb.pcb_cr0 = rcr0();
+#ifdef MULTIPROCESSOR
+	/* propagate this to the idle pcb's. */
+	cpu_init_idle_pcbs();
+#endif
 
 	spl0();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.8 2002/06/17 16:33:07 christos Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.9 2002/10/01 12:56:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.8 2002/06/17 16:33:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_syscall.c,v 1.9 2002/10/01 12:56:51 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -148,7 +148,11 @@ freebsd_syscall_plain(frame)
 
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
+
+	KERNEL_PROC_LOCK(p);
 	error = (*callp->sy_call)(p, args, rval);
+	KERNEL_PROC_UNLOCK(p);
+
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -226,12 +230,14 @@ freebsd_syscall_fancy(frame)
 			goto bad;
 	}
 
+	KERNEL_PROC_LOCK(p);
 	if ((error = trace_enter(p, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = frame.tf_edx;	/* need to keep edx for shared FreeBSD bins */
 	error = (*callp->sy_call)(p, args, rval);
+	KERNEL_PROC_UNLOCK(p);	
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];

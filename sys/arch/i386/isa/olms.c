@@ -1,4 +1,4 @@
-/*	$NetBSD: olms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $	*/
+/*	$NetBSD: olms.c,v 1.7 2002/10/01 12:57:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.6 2002/09/27 20:33:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: olms.c,v 1.7 2002/10/01 12:57:13 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,9 +78,8 @@ int olmsprobe __P((struct device *, struct cfdata *, void *));
 void olmsattach __P((struct device *, struct device *, void *));
 int olmsintr __P((void *));
 
-const struct cfattach olms_ca = {
-	sizeof(struct olms_softc), olmsprobe, olmsattach
-};
+CFATTACH_DECL(olms, sizeof(struct olms_softc), olmsprobe, olmsattach,
+    NULL, NULL)
 
 extern struct cfdriver olms_cd;
 
@@ -89,7 +88,7 @@ dev_type_close(lmsclose);
 dev_type_read(lmsread);
 dev_type_ioctl(lmsioctl);
 dev_type_poll(lmspoll);
-
+ 
 const struct cdevsw olms_cdevsw = {
 	lmsopen, lmsclose, lmsread, nowrite, lmsioctl,
 	nostop, notty, lmspoll, nommap,

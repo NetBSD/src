@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.155 2002/09/27 20:33:01 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.156 2002/10/01 12:57:13 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.155 2002/09/27 20:33:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.156 2002/10/01 12:57:13 fvdl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -210,9 +210,7 @@ void pcattach __P((struct device *, struct device *, void *));
 int pcintr __P((void *));
 void pcinit __P((void));
 
-const struct cfattach pc_ca = {
-	sizeof(struct pc_softc), pcprobe, pcattach
-};
+CFATTACH_DECL(pc, sizeof(struct pc_softc), pcprobe, pcattach, NULL, NULL)
 
 extern struct cfdriver pc_cd;
 
@@ -225,9 +223,8 @@ int pcconskbdprobe __P((struct device *, struct cfdata *, void *));
 void pcconskbdattach __P((struct device *, struct device *, void *));
 void pcinput __P((void *, int));
 
-const struct cfattach pcconskbd_ca = {
-	sizeof(struct pcconskbd_softc), pcconskbdprobe, pcconskbdattach
-};
+CFATTACH_DECL(pcconskbd, sizeof(struct pcconskbd_softc), pcconskbdprobe,
+    pcconskbdattach, NULL, NULL)
 
 extern struct cfdriver pcconskbd_cd;
 #endif
@@ -241,7 +238,7 @@ dev_type_stop(pcstop);
 dev_type_tty(pctty);
 dev_type_poll(pcpoll);
 dev_type_mmap(pcmmap);
-
+ 
 const struct cdevsw pc_cdevsw = {
 	pcopen, pcclose, pcread, pcwrite, pcioctl,
 	pcstop, pctty, pcpoll, pcmmap, D_TTY
