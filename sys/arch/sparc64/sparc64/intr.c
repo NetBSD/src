@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29 2000/07/02 13:35:35 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.30 2000/07/02 16:13:22 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@ int	intr_list_handler __P((void *, void *));
  * Stray interrupt handler.  Clear it if possible.
  * If not, and if we get 10 interrupts in 10 seconds, panic.
  */
-int ignore_stray = 0;
+int ignore_stray = 1;
 int straycnt[16];
 
 void
@@ -257,7 +257,6 @@ intr_establish(level, ih)
 	 */
 	ih->ih_pil = level; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
-	ih->ih_pending = NULL;
 	for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
 		;
 	*p = ih;
@@ -320,7 +319,6 @@ softintr_establish(level, fun, arg)
 	ih->ih_arg = arg;
 	ih->ih_pil = level;
 	ih->ih_clr = NULL;
-	ih->ih_pending = NULL;
 	return (void *)ih;
 }
 
