@@ -1,11 +1,11 @@
-/*	$NetBSD: conf.h,v 1.17 1999/12/15 08:01:00 garbled Exp $	*/
+/*	$NetBSD*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Tim Rightnour.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,85 +35,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _MACHINE_TCTRL_H
+#define	_MACHINE_TCTRL_H
 
-#define mmread mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
+struct tctrl_req {
+	u_int8_t        cmdbuf[16];
+	u_int8_t        cmdlen;
+	u_int8_t        cmdoff;
+	struct proc     *p;
+	u_int8_t        rspbuf[16];
+	u_int8_t        rspoff;
+	u_int8_t        rsplen;
+};
+typedef struct tctrl_req tctrl_req_t;
 
-/* open, close, ioctl */
-#define	cdev_openprom_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
-	(dev_type_mmap((*))) enodev }
+#define TCTRL_CMD_REQ   _IOWR('C', 0, struct tctrl_req)
 
-cdev_decl(openprom);
-
-#define	cdev_tctrl_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, dev_init(c,n,poll), \
-	(dev_type_mmap((*))) enodev }
-
-cdev_decl(tctrl);
-
-cdev_decl(cn);
-
-cdev_decl(zs);
-cdev_decl(com);
-
-bdev_decl(fd);
-cdev_decl(fd);
-
-cdev_decl(fb);
-
-/* open, close, read, write, ioctl, poll */
-#define	cdev_gen_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
-
-cdev_decl(ms);
-
-cdev_decl(kbd);
-cdev_decl(kd);
-
-cdev_decl(bwtwo);
-
-cdev_decl(cgtwo);
-
-cdev_decl(cgthree);
-
-cdev_decl(cgfour);
-
-cdev_decl(cgsix);
-
-cdev_decl(cgeight);
-
-cdev_decl(tcx);
-
-cdev_decl(cgfourteen);
-
-cdev_decl(p9100);	/* pnozz */
-
-bdev_decl(xd);
-cdev_decl(xd);
-
-bdev_decl(xy);
-cdev_decl(xy);
-
-bdev_decl(sw);
-cdev_decl(sw);
-
-bdev_decl(md);
-cdev_decl(md);
-
-bdev_decl(raid);
-cdev_decl(raid);
-
-cdev_decl(mtty);
-cdev_decl(mbpp);
-
-cdev_decl(bpp);
-
-cdev_decl(scsibus);
+#endif /* _MACHINE_TCTRL_H */
