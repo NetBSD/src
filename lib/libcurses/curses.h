@@ -233,6 +233,7 @@ extern char	*ttytype;		/* Full name of current terminal. */
 	((w)->lines[(w)->cury]->line[(w)->curx].ch & 0177)
 
 /* Public function prototypes. */
+__BEGIN_DECLS
 int	 box __P((WINDOW *, int, int));
 int	 cbreak __P((void));
 int	 delwin __P((WINDOW *));
@@ -296,6 +297,7 @@ int	 vwprintw __P((WINDOW *, const char *, _BSD_VA_LIST_));
 /* Private functions that are needed for user programs prototypes. */
 void	 __cputchar __P((int));
 int	 __waddbytes __P((WINDOW *, const char *, int, int));
+__END_DECLS
 
 /* Private functions. */
 #ifdef _CURSES_PRIVATE
@@ -327,11 +329,13 @@ extern int	 __noqch;
 #endif
 
 /* Termcap functions. */
+__BEGIN_DECLS
 int	 tgetent __P((char *, char *));
 int	 tgetnum __P((char *));
 int	 tgetflag __P((char *));
 char	*tgetstr __P((char *, char **));
 char	*tgoto __P((char *, int, int));
 int	 tputs __P((char *, int, void (*)(int)));
+__END_DECLS
 
 #endif /* !_CURSES_H_ */
