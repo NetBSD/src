@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.20 1999/05/10 21:41:07 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.21 1999/06/26 01:21:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -70,6 +70,7 @@ typedef u_int64_t	osf1_rlim_t;
 typedef void		*osf1_data_ptr;	/* XXX hard to fix size */
 typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
 typedef	osf1_int	osf1_key_t;
+typedef	osf1_int	osf1_pid_t;
 
 struct osf1_timeval {				/* time.h */
 	osf1_time_t	tv_sec;
@@ -156,7 +157,18 @@ struct osf1_auxv {
 #define	OSF1_FASYNC		0x00000040
 
 /* struct osf1_flock, for GETLK/SETLK/SETLKW */
-/* XXX */
+struct osf1_flock {
+	osf1_short	l_type;
+	osf1_short	l_whence;
+	osf1_off_t	l_start;
+	osf1_off_t	l_len;
+	osf1_pid_t	l_pid;
+};
+
+/* GETLK/SETLK/SETLKW locking types */
+#define	OSF1_F_RDLCK	1
+#define	OSF1_F_WRLCK	2
+#define	OSF1_F_UNLCK	8
 
 /* open flags */
 #define OSF1_O_RDONLY		0x00000000
@@ -385,6 +397,13 @@ struct osf1_rlimit {
 	rlim_t	rlim_cur;
 	rlim_t	rlim_max;
 };
+
+
+/* seek.h */
+
+#define	OSF1_SEEK_SET		0
+#define	OSF1_SEEK_CUR		1
+#define	OSF1_SEEK_END		2
 
 
 /* signal.h (some in machine/signal.h) */
