@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.139 1999/01/16 21:06:44 chuck Exp $	*/
+/*	$NetBSD: init_main.c,v 1.140 1999/01/21 14:50:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -270,8 +270,15 @@ main()
 	for (i = 0; i < sizeof(p->p_rlimit)/sizeof(p->p_rlimit[0]); i++)
 		limit0.pl_rlimit[i].rlim_cur =
 		    limit0.pl_rlimit[i].rlim_max = RLIM_INFINITY;
-	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = NOFILE;
-	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur = MAXUPRC;
+
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_max = maxfiles;
+	limit0.pl_rlimit[RLIMIT_NOFILE].rlim_cur = 
+	    maxfiles < NOFILE ? maxfiles : NOFILE;
+
+	limit0.pl_rlimit[RLIMIT_NPROC].rlim_max = maxproc;
+	limit0.pl_rlimit[RLIMIT_NPROC].rlim_cur =
+	    maxproc < MAXUPRC ? maxproc : MAXUPRC;
+
 #if defined(UVM)
 	i = ptoa(uvmexp.free);
 #else
