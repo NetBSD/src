@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/10/14 17:46:27 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.9 1999/11/08 23:51:30 mycroft Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,7 +23,7 @@ DISKTYPE=	floppyinstfs
 all: ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	disklabel -f ${DESTDIR}/etc/disktab -rw ${VND} ${DISKTYPE}
+	disklabel -f ${.CURDIR}/disktab -rw ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 6144 -c 128 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${.CURDIR}/${MTREE} -p ${MOUNT_POINT}/ -u

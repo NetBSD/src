@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1999/10/14 17:46:26 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.5 1999/11/08 23:51:29 mycroft Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,7 +63,7 @@ unconfig:
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
-	gzip netbsd.tmp
+	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 clean cleandir distclean:
