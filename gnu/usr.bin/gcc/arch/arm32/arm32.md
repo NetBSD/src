@@ -2602,20 +2602,21 @@
     FAIL;
 
   operands[3]
-            = arm_gen_load_multiple (REGNO (operands[0]), INTVAL (operands[2]),
-                                     force_reg (SImode, XEXP (operands[1], 0)),
-                                     TRUE, FALSE);
+    = arm_gen_load_multiple (REGNO (operands[0]), INTVAL (operands[2]),
+			     force_reg (SImode, XEXP (operands[1], 0)),
+			     TRUE, FALSE, RTX_UNCHANGING_P (operands[1]),
+			     MEM_IN_STRUCT_P (operands[1]));
 ")
 
 ;; Load multiple with write-back
 
 (define_insn ""
   [(match_parallel 0 "load_multiple_operation"
-    	             [(set (match_operand:SI 1 "s_register_operand" "+r")
-                         (plus:SI (match_dup 1)
-                                  (match_operand:SI 2 "immediate_operand" "n")))
-                    (set (match_operand:SI 3 "s_register_operand" "=r")
-                         (mem:SI (match_dup 1)))])]
+    [(set (match_operand:SI 1 "s_register_operand" "+r")
+	  (plus:SI (match_dup 1)
+		   (match_operand:SI 2 "const_int_operand" "n")))
+     (set (match_operand:SI 3 "s_register_operand" "=r")
+	  (mem:SI (match_dup 1)))])]
   "(INTVAL (operands[2])  == 4 * (XVECLEN (operands[0], 0) - 2))"
   "*
 {
@@ -2636,8 +2637,8 @@
 
 (define_insn ""
   [(match_parallel 0 "load_multiple_operation"
-                   [(set (match_operand:SI 1 "s_register_operand" "=r")
-                         (match_operand:SI 2 "indirect_operand" "Q"))])]
+    [(set (match_operand:SI 1 "s_register_operand" "=r")
+	  (mem:SI (match_operand:SI 2 "s_register_operand" "r")))])]
   ""
   "*
 {
@@ -2671,20 +2672,21 @@
     FAIL;
 
   operands[3]
-           = arm_gen_store_multiple (REGNO (operands[1]), INTVAL (operands[2]),
-                                     force_reg (SImode, XEXP (operands[0], 0)),
-                                     TRUE, FALSE);
+    = arm_gen_store_multiple (REGNO (operands[1]), INTVAL (operands[2]),
+			      force_reg (SImode, XEXP (operands[0], 0)),
+			      TRUE, FALSE, RTX_UNCHANGING_P (operands[0]),
+			      MEM_IN_STRUCT_P (operands[0]));
 ")
 
 ;; Store multiple with write-back
 
 (define_insn ""
   [(match_parallel 0 "store_multiple_operation"
-                   [(set (match_operand:SI 1 "s_register_operand" "+r")
-                         (plus:SI (match_dup 1)
-                                  (match_operand:SI 2 "immediate_operand" "n")))
-                    (set (mem:SI (match_dup 1))
-                         (match_operand:SI 3 "s_register_operand" "r"))])]
+    [(set (match_operand:SI 1 "s_register_operand" "+r")
+	  (plus:SI (match_dup 1)
+		   (match_operand:SI 2 "const_int_operand" "n")))
+     (set (mem:SI (match_dup 1))
+	  (match_operand:SI 3 "s_register_operand" "r"))])]
   "(INTVAL (operands[2]) == 4 * (XVECLEN (operands[0], 0) - 2))"
   "*
 {
@@ -2710,8 +2712,8 @@
 
 (define_insn ""
   [(match_parallel 0 "store_multiple_operation"
-                   [(set (match_operand:SI 2 "indirect_operand" "=Q")
-                         (match_operand:SI 1 "s_register_operand" "r"))])]
+    [(set (mem:SI (match_operand:SI 2 "s_register_operand" "r"))
+	  (match_operand:SI 1 "s_register_operand" "r"))])]
   ""
   "*
 {
@@ -5209,115 +5211,79 @@
   "sub%?s\\t%0, %1, #0"
 [(set_attr "conds" "set")])
 
-; Peepholes to spot possible load- and store-multiples, if the ordering is
-; reversed, check that the memory references aren't volatile.
+; Peepholes to spot possible load- and store-multiples.
 
 (define_peephole
   [(set (match_operand:SI 0 "s_register_operand" "=r")
-        (mem:SI (plus:SI (match_operand:SI 1 "s_register_operand" "r")
-                         (const_int 12))))
+        (match_operand:SI 4 "memory_operand" "m"))
+   (set (match_operand:SI 1 "s_register_operand" "=r")
+        (match_operand:SI 5 "memory_operand" "m"))
    (set (match_operand:SI 2 "s_register_operand" "=r")
-        (mem:SI (plus:SI (match_dup 1) (const_int 8))))
+        (match_operand:SI 6 "memory_operand" "m"))
    (set (match_operand:SI 3 "s_register_operand" "=r")
-        (mem:SI (plus:SI (match_dup 1) (const_int 4))))
-   (set (match_operand:SI 4 "s_register_operand" "=r")
-        (mem:SI (match_dup 1)))]
-  "REGNO (operands[0]) > REGNO (operands[2])
-   && REGNO (operands[2]) > REGNO (operands[3])
-   && REGNO (operands[3]) > REGNO (operands[4])
-   && !(REGNO (operands[1]) == REGNO (operands[0])
-       || REGNO (operands[1]) == REGNO (operands[2])
-       || REGNO (operands[1]) == REGNO (operands[3])
-       || REGNO (operands[1]) == REGNO (operands[4]))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (insn)))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (prev_nonnote_insn (insn))))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (prev_nonnote_insn
-					 (prev_nonnote_insn (insn)))))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (prev_nonnote_insn
-					 (prev_nonnote_insn
-					  (prev_nonnote_insn (insn))))))"
-  "ldm%?ia\\t%1, {%4, %3, %2, %0}\\t%@ phole ldm")
+        (match_operand:SI 7 "memory_operand" "m"))]
+  "load_multiple_sequence (operands, 4, NULL, NULL, NULL)"
+  "*
+  return emit_ldm_seq (operands, 4);
+")
 
 (define_peephole
   [(set (match_operand:SI 0 "s_register_operand" "=r")
-        (mem:SI (plus:SI (match_operand:SI 1 "s_register_operand" "r")
-                         (const_int 8))))
+        (match_operand:SI 3 "memory_operand" "m"))
+   (set (match_operand:SI 1 "s_register_operand" "=r")
+        (match_operand:SI 4 "memory_operand" "m"))
    (set (match_operand:SI 2 "s_register_operand" "=r")
-        (mem:SI (plus:SI (match_dup 1) (const_int 4))))
-   (set (match_operand:SI 3 "s_register_operand" "=r")
-        (mem:SI (match_dup 1)))]
-  "REGNO (operands[0]) >  REGNO (operands[2])
-   && REGNO (operands[2]) > REGNO (operands[3])
-   && !(REGNO (operands[1]) == REGNO (operands[0])
-       || REGNO (operands[1]) == REGNO (operands[2])
-       || REGNO (operands[1]) == REGNO (operands[3]))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (insn)))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (prev_nonnote_insn (insn))))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (prev_nonnote_insn
-					 (prev_nonnote_insn (insn)))))"
-  "ldm%?ia\\t%1, {%3, %2, %0}\\t%@ phole ldm")
+        (match_operand:SI 5 "memory_operand" "m"))]
+  "load_multiple_sequence (operands, 3, NULL, NULL, NULL)"
+  "*
+  return emit_ldm_seq (operands, 3);
+")
 
 (define_peephole
   [(set (match_operand:SI 0 "s_register_operand" "=r")
-        (mem:SI (plus:SI (match_operand:SI 1 "s_register_operand" "r")
-                         (const_int 4))))
-   (set (match_operand:SI 2 "s_register_operand" "=r")
-        (mem:SI (match_dup 1)))]
-  "REGNO (operands[0]) > REGNO (operands[2])
-   && !(REGNO (operands[1]) == REGNO (operands[0])
-       || REGNO (operands[1]) == REGNO (operands[2]))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (insn)))
-   && !MEM_VOLATILE_P (SET_SRC (PATTERN (prev_nonnote_insn (insn))))"
-  "ldm%?ia\\t%1, {%2, %0}\\t%@ phole ldm")
+        (match_operand:SI 2 "memory_operand" "m"))
+   (set (match_operand:SI 1 "s_register_operand" "=r")
+        (match_operand:SI 3 "memory_operand" "m"))]
+  "load_multiple_sequence (operands, 2, NULL, NULL, NULL)"
+  "*
+  return emit_ldm_seq (operands, 2);
+")
 
 (define_peephole
-  [(set (mem:SI (plus:SI (match_operand:SI 1 "s_register_operand" "r")
-                         (const_int 12)))
+  [(set (match_operand:SI 4 "memory_operand" "=m")
         (match_operand:SI 0 "s_register_operand" "r"))
-   (set (mem:SI (plus:SI (match_dup 1) (const_int 8)))
+   (set (match_operand:SI 5 "memory_operand" "=m")
+        (match_operand:SI 1 "s_register_operand" "r"))
+   (set (match_operand:SI 6 "memory_operand" "=m")
         (match_operand:SI 2 "s_register_operand" "r"))
-   (set (mem:SI (plus:SI (match_dup 1) (const_int 4)))
-        (match_operand:SI 3 "s_register_operand" "r"))
-   (set (mem:SI (match_dup 1))
-        (match_operand:SI 4 "s_register_operand" "r"))]
-  "REGNO (operands[0]) >  REGNO (operands[2])
-   && REGNO (operands[2]) > REGNO (operands[3])
-   && REGNO (operands[3]) > REGNO (operands[4])
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (insn)))
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (prev_nonnote_insn (insn))))
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (prev_nonnote_insn
-					  (prev_nonnote_insn (insn)))))
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (prev_nonnote_insn
-					  (prev_nonnote_insn
-					   (prev_nonnote_insn (insn))))))"
-  "stm%?ia\\t%1, {%4, %3, %2, %0}\\t%@ phole stm")
-
-(define_peephole
-  [(set (mem:SI (plus:SI (match_operand:SI 1 "s_register_operand" "r")
-                         (const_int 8)))
-        (match_operand:SI 0 "s_register_operand" "r"))
-   (set (mem:SI (plus:SI (match_dup 1) (const_int 4)))
-        (match_operand:SI 2 "s_register_operand" "r"))
-   (set (mem:SI (match_dup 1))
+   (set (match_operand:SI 7 "memory_operand" "=m")
         (match_operand:SI 3 "s_register_operand" "r"))]
-  "REGNO (operands[0]) >  REGNO (operands[2])
-   && REGNO (operands[2]) > REGNO (operands[3])
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (insn)))
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (prev_nonnote_insn (insn))))
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (prev_nonnote_insn
-					  (prev_nonnote_insn (insn)))))"
-  "stm%?ia\\t%1, {%3, %2, %0}\\t%@ phole stm")
+  "store_multiple_sequence (operands, 4, NULL, NULL, NULL)"
+  "*
+  return emit_stm_seq (operands, 4);
+")
 
 (define_peephole
-  [(set (mem:SI (plus:SI (match_operand:SI 1 "s_register_operand" "r")
-                         (const_int 4)))
+  [(set (match_operand:SI 3 "memory_operand" "=m")
         (match_operand:SI 0 "s_register_operand" "r"))
-   (set (mem:SI (match_dup 1))
+   (set (match_operand:SI 4 "memory_operand" "=m")
+        (match_operand:SI 1 "s_register_operand" "r"))
+   (set (match_operand:SI 5 "memory_operand" "=m")
         (match_operand:SI 2 "s_register_operand" "r"))]
-  "REGNO (operands[0]) >  REGNO (operands[2])
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (insn)))
-   && !MEM_VOLATILE_P (SET_DEST (PATTERN (prev_nonnote_insn (insn))))"
-  "stm%?ia\\t%1, {%2, %0}\\t%@ phole stm")
+  "store_multiple_sequence (operands, 3, NULL, NULL, NULL)"
+  "*
+  return emit_stm_seq (operands, 3);
+")
+
+(define_peephole
+  [(set (match_operand:SI 2 "memory_operand" "=m")
+        (match_operand:SI 0 "s_register_operand" "r"))
+   (set (match_operand:SI 3 "memory_operand" "=m")
+        (match_operand:SI 1 "s_register_operand" "r"))]
+  "store_multiple_sequence (operands, 2, NULL, NULL, NULL)"
+  "*
+  return emit_stm_seq (operands, 2);
+")
 
 ;; A call followed by return can be replaced by restoring the regs and
 ;; jumping to the subroutine, provided we aren't passing the address of
