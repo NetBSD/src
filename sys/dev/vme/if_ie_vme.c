@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.4 1998/02/06 00:22:41 pk Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.5 1998/02/28 01:15:51 pk Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -162,7 +162,6 @@
 #include <machine/bus.h>
 #include <dev/vme/vmevar.h>
 
-#define _NEW_I82586	/* remove after all old drivers are converted */
 #include <dev/ic/i82586reg.h>
 #include <dev/ic/i82586var.h>
 
