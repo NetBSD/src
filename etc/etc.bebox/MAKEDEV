@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.6 1999/09/18 00:23:36 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.7 1999/09/20 00:22:17 hubertf Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -74,8 +74,6 @@
 # Printers:
 #	lpt*	stock lp
 #	lpa*	interruptless lp
-#
-# Call units:
 #
 # Special purpose devices:
 #	fd	file descriptors
