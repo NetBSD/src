@@ -79,6 +79,7 @@
 ./usr/include/dev/ic/am7990var.h
 ./usr/include/dev/ic/bhareg.h
 ./usr/include/dev/ic/bhavar.h
+./usr/include/dev/ic/bt485reg.h
 ./usr/include/dev/ic/cd1400reg.h
 ./usr/include/dev/ic/comreg.h
 ./usr/include/dev/ic/comvar.h
@@ -167,12 +168,15 @@
 ./usr/include/dev/isa/mcdreg.h
 ./usr/include/dev/isa/pasreg.h
 ./usr/include/dev/isa/pckbcvar.h
+./usr/include/dev/isa/pcppireg.h
+./usr/include/dev/isa/pcppivar.h
 ./usr/include/dev/isa/pssreg.h
 ./usr/include/dev/isa/satlinkio.h
 ./usr/include/dev/isa/satlinkreg.h
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
 ./usr/include/dev/isa/sbvar.h
+./usr/include/dev/isa/spkrio.h
 ./usr/include/dev/isa/vga_isavar.h
 ./usr/include/dev/isa/wdsreg.h
 ./usr/include/dev/isa/wssreg.h
@@ -212,6 +216,8 @@
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
 ./usr/include/dev/pci/ppbreg.h
+./usr/include/dev/pci/tgareg.h
+./usr/include/dev/pci/tgavar.h
 ./usr/include/dev/pci/vga_pcivar.h
 ./usr/include/dev/pckbc
 ./usr/include/dev/pckbc/pckbdreg.h

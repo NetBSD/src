@@ -41,7 +41,6 @@
 ./usr/include/machine/sfbreg.h
 ./usr/include/machine/signal.h
 ./usr/include/machine/stdarg.h
-./usr/include/machine/tgareg.h
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
 ./usr/include/machine/vmparam.h
