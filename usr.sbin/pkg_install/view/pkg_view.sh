@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.32 2003/08/26 22:13:04 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.33 2003/08/27 08:09:26 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -62,9 +62,7 @@ version() {
 }
 
 checkpkg() {
-	if [ -d "$2/$1" ]; then
-		:
-	else
+	if [ ! -d "$2/$1" ]; then
 		echo "pkg_view: \`$1' doesn't exist in \`$2'" 1>&2
 		exit 1
 	fi
@@ -228,9 +226,7 @@ while [ $# -gt 0 ]; do
 		;;
 	delete)
 		checkpkg $1 ${depot_pkg_dbdir}
-		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
-			:
-		else
+		if [ ! -f ${pkg_dbdir}/$1/+DEPOT ]; then
 			echo "pkg_view: \`$1' doesn't exist in $viewstr" 1>&2
 			exit 1
 		fi
