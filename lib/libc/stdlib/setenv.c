@@ -110,6 +110,7 @@ unsetenv(name)
 	extern char **environ;
 	register char **P;
 	int offset;
+	char *_findenv();
 
 	while (_findenv(name, &offset))		/* if set multiple times */
 		for (P = &environ[offset];; ++P)
