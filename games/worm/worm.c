@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)worm.c	5.8 (Berkeley) 2/28/91";
+static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #endif /* not lint */
 
 /*
@@ -49,14 +49,13 @@ static char sccsid[] = "@(#)worm.c	5.8 (Berkeley) 2/28/91";
 #include <ctype.h>
 #include <curses.h>
 #include <signal.h>
+#include <termios.h>
 
 #define newlink() (struct body *) malloc(sizeof (struct body));
 #define HEAD '@'
 #define BODY 'o'
 #define LENGTH 7
 #define RUNLEN 8
-#define when break;case
-#define otherwise break;default
 #define CNTRL(p) (p-'A'+1)
 #ifndef baudrate
 # define	baudrate()	_tty.sg_ospeed
@@ -210,19 +209,19 @@ char ch;
 	y = head->y;
 	switch(ch)
 	{
-		when 'h': x--;
-		when 'j': y++;
-		when 'k': y--;
-		when 'l': x++;
-		when 'H': x--; running = RUNLEN; ch = tolower(ch);
-		when 'J': y++; running = RUNLEN/2; ch = tolower(ch);
-		when 'K': y--; running = RUNLEN/2; ch = tolower(ch);
-		when 'L': x++; running = RUNLEN; ch = tolower(ch);
-		when '\f': setup(); return;
-		when CNTRL('Z'): suspend(); return;
-		when CNTRL('C'): crash(); return;
-		when CNTRL('D'): crash(); return;
-		otherwise: if (! running) alarm(1);
+		case 'h': x--; break;
+		case 'j': y++; break;
+		case 'k': y--; break;
+		case 'l': x++; break;
+		case 'H': x--; running = RUNLEN; ch = tolower(ch); break;
+		case 'J': y++; running = RUNLEN/2; ch = tolower(ch); break;
+		case 'K': y--; running = RUNLEN/2; ch = tolower(ch); break;
+		case 'L': x++; running = RUNLEN; ch = tolower(ch); break;
+		case '\f': setup(); return;
+		case CNTRL('Z'): suspend(); return;
+		case CNTRL('C'): crash(); return;
+		case CNTRL('D'): crash(); return;
+		default: if (! running) alarm(1);
 			   return;
 	}
 	lastch = ch;
