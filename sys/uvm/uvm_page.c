@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.60 2001/05/02 01:22:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.61 2001/05/22 00:44:44 ross Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -248,8 +248,7 @@ uvm_page_init(kvm_startp, kvm_endp)
 	 */
 
 	TAILQ_INIT(&uvm.page_active);
-	TAILQ_INIT(&uvm.page_inactive_swp);
-	TAILQ_INIT(&uvm.page_inactive_obj);
+	TAILQ_INIT(&uvm.page_inactive);
 	simple_lock_init(&uvm.pageqlock);
 	simple_lock_init(&uvm.fpageqlock);
 
@@ -1319,10 +1318,7 @@ uvm_pagefree(pg)
 		uvmexp.active--;
 	}
 	if (pg->pqflags & PQ_INACTIVE) {
-		if (pg->pqflags & PQ_SWAPBACKED)
-			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		pg->pqflags &= ~PQ_INACTIVE;
 		uvmexp.inactive--;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.32 2001/05/07 22:01:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.33 2001/05/22 00:44:45 ross Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -873,12 +873,7 @@ uvmpd_scan()
 
 	got_it = FALSE;
 	pages_freed = uvmexp.pdfreed;
-	if ((uvmexp.pdrevs & 1) != 0 && uvmexp.nswapdev != 0)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_swp);
-	if (!got_it)
-		got_it = uvmpd_scan_inactive(&uvm.page_inactive_obj);
-	if (!got_it && (uvmexp.pdrevs & 1) == 0 && uvmexp.nswapdev != 0)
-		(void) uvmpd_scan_inactive(&uvm.page_inactive_swp);
+	(void) uvmpd_scan_inactive(&uvm.page_inactive);
 	pages_freed = uvmexp.pdfreed - pages_freed;
 
 	/*

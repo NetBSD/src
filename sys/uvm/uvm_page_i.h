@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.16 2001/01/28 23:30:45 thorpej Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.17 2001/05/22 00:44:45 ross Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -160,10 +160,7 @@ uvm_pagewire(pg)
 			uvmexp.active--;
 		}
 		if (pg->pqflags & PQ_INACTIVE) {
-			if (pg->pqflags & PQ_SWAPBACKED)
-				TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-			else
-				TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+			TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 			pg->pqflags &= ~PQ_INACTIVE;
 			uvmexp.inactive--;
 		}
@@ -212,10 +209,7 @@ uvm_pagedeactivate(pg)
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
-		if (pg->pqflags & PQ_SWAPBACKED)
-			TAILQ_INSERT_TAIL(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_INSERT_TAIL(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_INSERT_TAIL(&uvm.page_inactive, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		uvmexp.inactive++;
 
@@ -242,10 +236,7 @@ uvm_pageactivate(pg)
 	struct vm_page *pg;
 {
 	if (pg->pqflags & PQ_INACTIVE) {
-		if (pg->pqflags & PQ_SWAPBACKED)
-			TAILQ_REMOVE(&uvm.page_inactive_swp, pg, pageq);
-		else
-			TAILQ_REMOVE(&uvm.page_inactive_obj, pg, pageq);
+		TAILQ_REMOVE(&uvm.page_inactive, pg, pageq);
 		pg->pqflags &= ~PQ_INACTIVE;
 		uvmexp.inactive--;
 	}
