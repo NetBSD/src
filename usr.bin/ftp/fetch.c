@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.43 1998/12/31 02:10:34 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.44 1999/01/01 10:00:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.43 1998/12/31 02:10:34 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.44 1999/01/01 10:00:46 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -78,9 +78,12 @@ typedef enum {
 	FILE_URL_T
 } url_t;
 
+static int	auth_url __P((const char *, char **));
+static void	base64_enc __P((const char *, size_t, char *));
 static int	go_fetch __P((const char *, const char *));
 static int	fetch_ftp __P((const char *, const char *));
-static int	fetch_url __P((const char *, const char *, const char *));
+static int	fetch_url __P((const char *, const char *, const char *,
+				char *, char *));
 static int	parse_url __P((const char *, const char *, url_t *, char **,
 				char **, char **, in_port_t *, char **));
 void    	aborthttp __P((int));
@@ -96,6 +99,115 @@ static int	redirect_loop;
 
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
 #define FREEPTR(x)	if ((x) != NULL) { free(x); (x) = NULL; }
+
+/*
+ * Generate authorization response based on given authentication challenge.
+ * Returns -1 if an error occurred, otherwise 0.
+ * Sets response to a malloc(3)ed string; caller should free.
+ */
+static int
+auth_url(challenge, response)
+	const char	 *challenge;
+	char		**response;
+{
+	char		*cp, *ep, *clear, *line, *realm, *scheme;
+	char		user[BUFSIZ], *pass;
+	int		rval;
+	size_t		len;
+
+	*response = NULL;
+	clear = realm = scheme = NULL;
+	rval = -1;
+	line = xstrdup(challenge);
+	cp = line;
+
+	if (debug)
+		fprintf(ttyout, "auth_url: challenge `%s'\n", challenge);
+
+	scheme = strsep(&cp, " ");
+#define SCHEME_BASIC "Basic"
+	if (strncasecmp(scheme, SCHEME_BASIC, sizeof(SCHEME_BASIC) - 1) != 0) {
+		warnx("Unsupported WWW Authentication challenge - `%s'",
+		    challenge);
+		goto cleanup_auth_url;
+	}
+	cp += strspn(cp, " ");
+
+#define REALM "realm=\""
+	if (strncasecmp(cp, REALM, sizeof(REALM) - 1) == 0)
+		cp += sizeof(REALM) - 1;
+	else {
+		warnx("Unsupported WWW Authentication challenge - `%s'",
+		    challenge);
+		goto cleanup_auth_url;
+	}
+	if ((ep = strchr(cp, '\"')) != NULL) {
+		size_t len = ep - cp;
+
+		realm = (char *)xmalloc(len + 1);
+		strncpy(realm, cp, len);
+		realm[len] = '\0';
+	} else {
+		warnx("Unsupported WWW Authentication challenge - `%s'",
+		    challenge);
+		goto cleanup_auth_url;
+	}
+
+	fprintf(ttyout, "Username for `%s': ", realm);
+	(void)fflush(ttyout);
+	if (fgets(user, sizeof(user) - 1, stdin) == NULL)
+		goto cleanup_auth_url;
+	user[strlen(user) - 1] = '\0';
+	pass = getpass("Password: ");
+
+	len = strlen(user) + strlen(pass) + 1;		/* user + ":" + pass */
+	clear = (char *)xmalloc(len + 1);
+	sprintf(clear, "%s:%s", user, pass);
+	memset(pass, '\0', strlen(pass));
+
+						/* scheme + " " + enc */
+	len = strlen(scheme) + 1 + (len + 2) * 4 / 3;
+	*response = (char *)xmalloc(len + 1);
+	len = sprintf(*response, "%s ", scheme);
+	base64_enc(clear, strlen(clear), *response + len);
+	rval = 0;
+
+cleanup_auth_url:
+	FREEPTR(clear);
+	FREEPTR(line);
+	FREEPTR(realm);
+	return (rval);
+}
+
+/*
+ * Encode len bytes starting at clear using base64 encoding into encoded,
+ * which should be at least ((len + 2) * 4 / 3 + 1) in size.
+ */
+void
+base64_enc(clear, len, encoded)
+	const char	*clear;
+	size_t		 len;
+	char		*encoded;
+{
+	static const char enc[] =
+	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+	char *cp;
+	int i;
+
+	cp = encoded;
+	for (i = 0; i < len; i += 3) {
+		*(cp++) = enc[((clear[i + 0] >> 2))];
+		*(cp++) = enc[((clear[i + 0] << 4) & 0x30)
+			    | ((clear[i + 1] >> 4) & 0x0f)];
+		*(cp++) = enc[((clear[i + 1] << 2) & 0x3c)
+			    | ((clear[i + 2] >> 6) & 0x03)];
+		*(cp++) = enc[((clear[i + 2]     ) & 0x3f)];
+	}
+	*cp = '\0';
+	while (i-- > len)
+		*(--cp) = '=';
+}
+
 
 /*
  * Parse URL of form:
@@ -209,10 +321,12 @@ jmp_buf	httpabort;
  * is still open (e.g, ftp xfer with trailing /)
  */
 static int
-fetch_url(url, outfile, proxyenv)
-	const char *url;
-	const char *outfile;
-	const char *proxyenv;
+fetch_url(url, outfile, proxyenv, proxyauth, wwwauth)
+	const char	*url;
+	const char	*outfile;
+	const char	*proxyenv;
+	char		*proxyauth;
+	char		*wwwauth;
 {
 	struct sockaddr_in	sin;
 	struct hostent		*hp;
@@ -220,7 +334,8 @@ fetch_url(url, outfile, proxyenv)
 	volatile int		s;
 	int 			isproxy, rval, hcode;
 	size_t			len;
-	char			*cp, *ep, *buf, *location, *message, *savefile;
+	char			*cp, *ep, *buf, *savefile;
+	char			*auth, *location, *message;
 	char			*user, *pass, *host, *path;
 	off_t			hashbytes;
 	int			 (*closefunc) __P((FILE *));
@@ -232,7 +347,8 @@ fetch_url(url, outfile, proxyenv)
 	closefunc = NULL;
 	fin = fout = NULL;
 	s = -1;
-	buf = location = message = savefile = NULL;
+	buf = savefile = NULL;
+	auth = location = message = NULL;
 	isproxy = 0;
 	rval = 1;
 	hp = NULL;
@@ -449,7 +565,7 @@ fetch_url(url, outfile, proxyenv)
 		if (isproxy) {
 			fprintf(ttyout, "Requesting %s\n  (via %s)\n",
 			    url, proxyenv);
-			fprintf(fin, "GET %s HTTP/1.0\r\n\r\n", path);
+			fprintf(fin, "GET %s HTTP/1.0\r\n", path);
 		} else {
 			struct utsname unam;
 
@@ -462,8 +578,15 @@ fetch_url(url, outfile, proxyenv)
 				    unam.sysname, unam.release);
 			}
 			fprintf(fin, "Connection: close\r\n");
-			fprintf(fin, "\r\n");
 		}
+		if (wwwauth) {
+			fprintf(ttyout, "  (with authorization)\n");
+			fprintf(fin, "Authorization: %s\r\n", wwwauth);
+		}
+		if (proxyauth)
+			fprintf(ttyout, "  (with proxy authorization)\n");
+			fprintf(fin, "Proxy-Authorization: %s\r\n", proxyauth);
+		fprintf(fin, "\r\n");
 		if (fflush(fin) == EOF) {
 			warn("Writing HTTP request");
 			goto cleanup_fetch_url;
@@ -511,7 +634,7 @@ fetch_url(url, outfile, proxyenv)
 
 #define CONTENTLEN "Content-Length: "
 			if (strncasecmp(cp, CONTENTLEN,
-			    sizeof(CONTENTLEN) - 1) == 0) {
+					sizeof(CONTENTLEN) - 1) == 0) {
 				cp += sizeof(CONTENTLEN) - 1;
 				filesize = strtol(cp, &ep, 10);
 				if (filesize < 1 || *ep != '\0')
@@ -528,7 +651,7 @@ fetch_url(url, outfile, proxyenv)
 
 #define LASTMOD "Last-Modified: "
 			} else if (strncasecmp(cp, LASTMOD,
-			    sizeof(LASTMOD) - 1) == 0) {
+						sizeof(LASTMOD) - 1) == 0) {
 				struct tm parsed;
 				char *t;
 
@@ -557,13 +680,35 @@ fetch_url(url, outfile, proxyenv)
 
 #define LOCATION "Location: "
 			} else if (strncasecmp(cp, LOCATION,
-			    sizeof(LOCATION) - 1) == 0) {
+						sizeof(LOCATION) - 1) == 0) {
 				cp += sizeof(LOCATION) - 1;
 				location = xstrdup(cp);
 				if (debug)
 					fprintf(ttyout,
 					    "parsed location as: %s\n", cp);
+
+#define PROXYAUTH "Proxy-Authenticate: "
+			} else if (strncasecmp(cp, PROXYAUTH,
+						sizeof(PROXYAUTH) - 1) == 0) {
+				cp += sizeof(PROXYAUTH) - 1;
+				FREEPTR(auth);
+				auth = xstrdup(cp);
+				if (debug)
+					fprintf(ttyout,
+					    "parsed proxy-auth as: %s\n", cp);
+
+#define WWWAUTH	"WWW-Authenticate: "
+			} else if (strncasecmp(cp, WWWAUTH,
+			    sizeof(WWWAUTH) - 1) == 0) {
+				cp += sizeof(WWWAUTH) - 1;
+				FREEPTR(auth);
+				auth = xstrdup(cp);
+				if (debug)
+					fprintf(ttyout,
+					    "parsed www-auth as: %s\n", cp);
+
 			}
+
 		}
 		FREEPTR(buf);
 	}
@@ -588,13 +733,41 @@ fetch_url(url, outfile, proxyenv)
 			if (verbose)
 				fprintf(ttyout, "Redirected via %s\n",
 				    location);
-			rval = fetch_url(url, outfile, location);
+			rval = fetch_url(url, outfile, location, proxyauth,
+			    wwwauth);
 		} else {
 			if (verbose)
 				fprintf(ttyout, "Redirected to %s\n", location);
 			rval = go_fetch(location, outfile);
 		}
 		goto cleanup_fetch_url;
+	case 401:
+	case 407:
+	    {
+		char **authp;
+
+		fprintf(ttyout, "%s\n", message);
+		if (EMPTYSTRING(auth)) {
+			warnx("No authentication challenge provided by server");
+			goto cleanup_fetch_url;
+		}
+		authp = (hcode == 401) ? &wwwauth : &proxyauth;
+		if (*authp != NULL) {
+			char reply[10];
+
+			fprintf(ttyout, "Authorization failed. Retry (y/n)? ");
+			if (fgets(reply, sizeof(reply), stdin) != NULL &&
+			    tolower(reply[0]) != 'y')
+				goto cleanup_fetch_url;
+		}
+		if (auth_url(auth, authp) == 0) {
+			rval = fetch_url(url, outfile, proxyenv, proxyauth,
+			    wwwauth);
+			memset(*authp, '\0', strlen(*authp));
+			FREEPTR(*authp);
+		}
+		goto cleanup_fetch_url;
+	    }
 	default:
 		warnx("Error retrieving file - `%s'", message);
 		goto cleanup_fetch_url;
@@ -705,6 +878,7 @@ cleanup_fetch_url:
 	FREEPTR(host);
 	FREEPTR(path);
 	FREEPTR(buf);
+	FREEPTR(auth);
 	FREEPTR(location);
 	FREEPTR(message);
 	return (rval);
@@ -946,7 +1120,7 @@ go_fetch(url, outfile)
 	 */
 	if (strncasecmp(url, HTTP_URL, sizeof(HTTP_URL) - 1) == 0 ||
 	    strncasecmp(url, FILE_URL, sizeof(FILE_URL) - 1) == 0)
-		return (fetch_url(url, outfile, NULL));
+		return (fetch_url(url, outfile, NULL, NULL, NULL));
 
 	/*
 	 * Try FTP URL-style and host:file arguments next.
@@ -954,7 +1128,7 @@ go_fetch(url, outfile)
 	 * Othewise, use fetch_ftp().
 	 */
 	if (ftpproxy && strncasecmp(url, FTP_URL, sizeof(FTP_URL) - 1) == 0)
-		return (fetch_url(url, outfile, NULL));
+		return (fetch_url(url, outfile, NULL, NULL, NULL));
 
 	return (fetch_ftp(url, outfile));
 }
