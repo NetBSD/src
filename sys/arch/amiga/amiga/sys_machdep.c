@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.29 2000/12/13 18:13:05 jdolecek Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.30 2002/01/26 13:24:55 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -122,7 +122,7 @@ cachectl1(req, addr, len, p)
 					ICPP(pa);
 				}
 				break;
-			
+
 			case CC_EXTPURGE|CC_PURGE:
 			case CC_PURGE:
 				if (doall)
@@ -142,7 +142,7 @@ cachectl1(req, addr, len, p)
 				else if (inc == NBPG)
 					DCFP(pa);
 				break;
-				
+
 			default:
 				error = EINVAL;
 				break;

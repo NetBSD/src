@@ -1,4 +1,4 @@
-/*	$NetBSD: memlist.h,v 1.4 1994/10/26 02:02:02 cgd Exp $	*/
+/*	$NetBSD: memlist.h,v 1.5 2002/01/26 13:24:54 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 /*
- * memory list passed by loadbsd 
+ * memory list passed by loadbsd
  */
 
 struct boot_memlist {

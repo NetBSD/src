@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_4.c,v 1.2 2000/02/01 05:21:24 mhitch Exp $ */
+/* $NetBSD: amiga_bus_simple_4.c,v 1.3 2002/01/26 13:24:53 aymeric Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,16 +52,13 @@ bsrm(oabs(bsrm2_swap_), u_int16_t);
 bswm(oabs(bswm2_swap_), u_int16_t);
 
 void
-oabs(bsrm2_swap_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	u_int16_t *pointer;
-	bus_size_t count;
+oabs(bsrm2_swap_)(bus_space_handle_t handle, bus_size_t offset,
+	 	  u_int16_t *pointer, bus_size_t count)
 {
 	volatile u_int16_t *p;
 
 	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*pointer++ = bswap16(*p);
 		--count;
@@ -69,16 +66,13 @@ oabs(bsrm2_swap_)(handle, offset, pointer, count)
 }
 
 void
-oabs(bswm2_swap_)(handle, offset, pointer, count)
-	bus_space_handle_t handle;
-	bus_size_t offset;
-	const u_int16_t *pointer;
-	bus_size_t count;
+oabs(bswm2_swap_)(bus_space_handle_t handle, bus_size_t offset,
+		  const u_int16_t *pointer, bus_size_t count)
 {
 	volatile u_int16_t *p;
 
 	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
-	
+
 	while (count > 0) {
 		*p = bswap16(*pointer);
 		++pointer;
@@ -93,7 +87,7 @@ const struct amiga_bus_space_methods amiga_bus_stride_4swap = {
         oabs(bsu_),
         0,
         0,
- 
+
         oabs(bsr1_),
         oabs(bsw1_),
         oabs(bsrm1_),
