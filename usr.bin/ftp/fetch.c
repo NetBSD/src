@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.34 1998/08/08 11:23:46 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.35 1998/09/01 04:42:49 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.34 1998/08/08 11:23:46 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.35 1998/09/01 04:42:49 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -848,7 +848,7 @@ auto_fetch(argc, argv, outfile)
 			xargc = 2;
 			if (port) {
 				snprintf(portnum, sizeof(portnum),
-				    "%d", (int)port);
+				    "%d", ntohs(port));
 				xargv[2] = portnum;
 				xargv[3] = NULL;
 				xargc = 3;
