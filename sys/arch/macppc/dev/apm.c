@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.12 2005/02/01 02:05:10 briggs Exp $	*/
+/*	$NetBSD: apm.c,v 1.13 2005/02/01 02:23:26 briggs Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12 2005/02/01 02:05:10 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.13 2005/02/01 02:23:26 briggs Exp $");
 
 #include "apm.h"
 
@@ -351,13 +351,10 @@ apmioctl(dev, cmd, data, flag, p)
 			power->battery_life = 0;
 		} else if ((power->ac_state == APM_AC_ON) &&
 			   (batt.draw > 0)) {
-			power->minutes_left =
-			    (((batt.max_charge - batt.cur_charge) * 3600) /
-			    batt.draw) / 60;
+			power->minutes_left = batt.secs_remaining / 60;
 			power->battery_state = APM_BATT_CHARGING;
 		} else {
-			power->minutes_left = 
-			    ((batt.cur_charge * 3600) / (-batt.draw)) / 60;
+			power->minutes_left = batt.secs_remaining / 60;
 
 			/* XXX - Arbitrary */
 			if (power->battery_life > 60) {
