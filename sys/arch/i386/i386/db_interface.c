@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.10 1994/10/09 12:57:11 mycroft Exp $
+ *	$Id: db_interface.c,v 1.11 1994/10/09 13:09:11 mycroft Exp $
  */
 
 /*
@@ -197,7 +197,7 @@ db_write_bytes(addr, size, data)
 			oldmap1 = *ptep1;
 			*(int *)ptep1 |= /* INTEL_PTE_WRITE */ PG_RW;
 		}
-		tlbflush();
+		pmap_update();
 	}
 
 	dst = (char *)addr;
@@ -209,7 +209,7 @@ db_write_bytes(addr, size, data)
 		*ptep0 = oldmap0;
 		if (ptep1)
 			*ptep1 = oldmap1;
-		tlbflush();
+		pmap_update();
 	}
 }
 

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.33 1994/08/15 22:24:24 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.34 1994/10/09 13:09:12 mycroft Exp $
  */
 
 /*
@@ -155,6 +155,23 @@ cpu_exit(p)
 }
 
 /*
+ * cpu_cleanup is called to free per-process resources after exit.
+ */
+void
+cpu_cleanup(p)
+	register struct proc *p;
+{
+#ifdef USER_LDT
+	struct pcb *pcb = &p->p_addr->u_pcb;
+
+	if (pcb->pcb_ldt) {
+		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
+		    (pcb->pcb_ldt_len * sizeof(union descriptor)));
+	}
+#endif
+}
+
+/*
  * Dump the machine specific segment at the start of a core dump.
  */     
 int
@@ -244,7 +261,7 @@ pagemove(from, to, size)
 		to += NBPG;
 		size -= NBPG;
 	}
-	tlbflush();
+	pmap_update();
 }
 
 /*
@@ -424,10 +441,10 @@ vunmapbuf(bp, len)
 cpu_reset() {
 
 	/* force a shutdown by unmapping entire address space ! */
-	bzero((caddr_t) PTD, NBPG);
+	bzero((caddr_t)PTD, NBPG);
 
 	/* "good night, sweet prince .... <THUNK!>" */
-	tlbflush(); 
+	pmap_update(); 
 	/* just in case */
 	for (;;);
 }
