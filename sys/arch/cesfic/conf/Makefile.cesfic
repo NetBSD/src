@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.1 2001/05/14 18:23:06 drochner Exp $
+#	$NetBSD: Makefile.cesfic,v 1.2 2001/05/29 02:20:22 mrg Exp $
 
 # Makefile for NetBSD
 #
@@ -34,7 +34,7 @@ CESFIC=	$S/arch/cesfic
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-format
 .if (${HAVE_GCC28} != "")
 CWARNFLAGS+=	-Wno-main
