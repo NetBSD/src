@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14 2001/09/10 21:19:35 chris Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 2001/09/13 23:56:01 chris Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -161,8 +161,6 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 /*
  * Functions that we need to export
  */
-extern boolean_t pmap_testbit __P((paddr_t, int));
-extern void pmap_changebit __P((paddr_t, int, int));
 extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
 extern void pmap_procwr __P((struct proc *, vaddr_t, int));
 #define	PMAP_NEED_PROCWR
