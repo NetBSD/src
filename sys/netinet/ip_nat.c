@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.11 1997/07/16 11:06:07 kleink Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.12 1997/07/21 16:53:47 kleink Exp $	*/
 
 /*
  * (C)opyright 1995-1996 by Darren Reed.
@@ -97,7 +97,8 @@ extern	kmutex_t	ipf_nat;
 extern	kmutex_t	ipf_natfrag;
 #endif
 
-static	int	flush_nattable __P((void)), clear_natlist __P((void));
+static	int	flush_nattable __P((void));
+static	int	clear_natlist __P((void));
 static	void	nat_delete __P((struct nat *));
 
 void fix_outcksum(sp, n)
@@ -107,11 +108,7 @@ u_long n;
 	register u_short sumshort;
 	register u_long sum1;
 
-#ifdef sparc
-	sum1 = (~(*sp)) & 0xffff;
-#else
 	sum1 = (~ntohs(*sp)) & 0xffff;
-#endif
 	sum1 += (n);
 	sum1 = (sum1 >> 16) + (sum1 & 0xffff);
 	/* Again */
@@ -128,11 +125,7 @@ u_long n;
 	register u_short sumshort;
 	register u_long sum1;
 
-#ifdef sparc
-	sum1 = (~(*sp)) & 0xffff;
-#else
 	sum1 = (~ntohs(*sp)) & 0xffff;
-#endif
 	sum1 += ~(n) & 0xffff;
 	sum1 = (sum1 >> 16) + (sum1 & 0xffff);
 	/* Again */
