@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.14 2003/02/18 13:36:52 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.15 2003/02/26 14:25:20 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -795,42 +795,39 @@ opf_nextprop(node, prop)
 	return (buf);
 }
 
+/*
+ * Retrieve physical memory information from the PROM.
+ * If ap is NULL, return the required length of the array.
+ */
 int
 prom_makememarr(ap, max, which)
 	struct memarr *ap;
 	int max, which;
 {
-	struct v2rmi {
-		int	zero;
-		int	addr;
-		int	len;
-	} v2rmi[200];		/* version 2 rom meminfo layout */
-#define	MAXMEMINFO ((int)sizeof(v2rmi) / (int)sizeof(*v2rmi))
-	void *p;
-
 	struct v0mlist *mp;
-	int i, node, len;
+	int node, n;
 	char *prop;
 
+	if (which != MEMARR_AVAILPHYS && which != MEMARR_TOTALPHYS)
+		panic("makememarr");
+
+	/*
+	 * `struct memarr' is in V2 memory property format.
+	 * On previous ROM versions we must convert.
+	 */
 	switch (prom_version()) {
 		struct promvec *promvec;
 		struct om_vector *oldpvec;
 	case PROM_OLDMON:
 		oldpvec = (struct om_vector *)PROM_BASE;
-		switch (which) {
-		case MEMARR_AVAILPHYS:
+		n = 1;
+		if (ap != NULL) {
+			ap[0].zero = 0;
 			ap[0].addr = 0;
-			ap[0].len = *oldpvec->memoryAvail;
-			break;
-		case MEMARR_TOTALPHYS:
-			ap[0].addr = 0;
-			ap[0].len = *oldpvec->memorySize;
-			break;
-		default:
-			printf("pre_panic: makememarr");
-			break;
+			ap[0].len = (which == MEMARR_AVAILPHYS)
+				? *oldpvec->memoryAvail
+				: *oldpvec->memorySize;
 		}
-		i = (1);
 		break;
 
 	case PROM_OBP_V0:
@@ -839,21 +836,17 @@ prom_makememarr(ap, max, which)
 		 * guys.
 		 */
 		promvec = romp;
-		switch (which) {
-		case MEMARR_AVAILPHYS:
-			mp = *promvec->pv_v0mem.v0_physavail;
-			break;
-
-		case MEMARR_TOTALPHYS:
-			mp = *promvec->pv_v0mem.v0_phystot;
-			break;
-
-		default:
-			panic("makememarr");
-		}
-		for (i = 0; mp != NULL; mp = mp->next, i++) {
-			if (i >= max)
-				goto overflow;
+		mp = (which == MEMARR_AVAILPHYS)
+			? *promvec->pv_v0mem.v0_physavail
+			: *promvec->pv_v0mem.v0_phystot;
+		for (n = 0; mp != NULL; mp = mp->next, n++) {
+			if (ap == NULL)
+				continue;
+			if (n >= max) {
+				printf("makememarr: WARNING: lost some memory\n");
+				break;
+			}
+			ap->zero = 0;
 			ap->addr = (u_int)mp->addr;
 			ap->len = mp->nbytes;
 			ap++;
@@ -878,59 +871,30 @@ prom_makememarr(ap, max, which)
 	case PROM_OPENFIRM:
 		node = OF_finddevice("/memory");
 		if (node == -1)
-		    node = 0;
+			node = 0;
 
 	case_common:
 		if (node == 0)
 			panic("makememarr: cannot find \"memory\" node");
 
-		if (max > MAXMEMINFO) {
-			printf("makememarr: limited to %d\n", MAXMEMINFO);
-			max = MAXMEMINFO;
-		}
-
-		switch (which) {
-		case MEMARR_AVAILPHYS:
-			prop = "available";
-			break;
-
-		case MEMARR_TOTALPHYS:
-			prop = "reg";
-			break;
-
-		default:
-			panic("makememarr");
-		}
-
-		len = MAXMEMINFO;
-		p = v2rmi;
-		if (PROM_getprop(node, prop, sizeof(struct v2rmi), &len, &p) != 0)
-			panic("makememarr: cannot get property");
-
-		for (i = 0; i < len; i++) {
-			if (i >= max)
-				goto overflow;
-			ap->addr = v2rmi[i].addr;
-			ap->len = v2rmi[i].len;
-			ap++;
+		prop = (which == MEMARR_AVAILPHYS) ? "available" : "reg";
+		if (ap == NULL) {
+			n = PROM_getproplen(node, prop);
+		} else {
+			n = max;
+			if (PROM_getprop(node, prop, sizeof(struct memarr),
+					&n, (void **)&ap) != 0)
+				panic("makememarr: cannot get property");
 		}
 		break;
 	}
 
+	if (n <= 0)
+		panic("makememarr: no memory found");
 	/*
 	 * Success!  (Hooray)
 	 */
-	if (i == 0)
-		panic("makememarr: no memory found");
-	return (i);
-
-overflow:
-	/*
-	 * Oops, there are more things in the PROM than our caller
-	 * provided space for.  Truncate any extras.
-	 */
-	printf("makememarr: WARNING: lost some memory\n");
-	return (i);
+	return (n);
 }
 
 static void prom_init_oldmon __P((void));
