@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.66 2001/06/02 16:17:08 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.67 2001/06/02 18:04:44 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.66 2001/06/02 16:17:08 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.67 2001/06/02 18:04:44 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.66 2001/06/02 16:17:08 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.67 2001/06/02 18:04:44 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -892,7 +892,7 @@ ParseDoDependency (line)
 		(strncmp(line, "======", 6) == 0) ||
 		(strncmp(line, ">>>>>>", 6) == 0))
 		Parse_Error (PARSE_FATAL,
-		    "Makefile contains unresolved cvs merge conflicts");
+		    "Makefile appears to contain unresolved cvs/rcs/??? merge conflicts");
 	    else
 		Parse_Error (PARSE_FATAL, "Need an operator");
 	    return;
