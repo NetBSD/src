@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2001/11/09 20:52:18 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16 2002/01/17 13:36:00 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -21,11 +21,11 @@ MTREECONF=	mtree.conf
 CRUNCHGEN?=	crunchgen
 MTREE?=		mtree
 
-SIZE=		1440k
+RAMDISKSIZE=	1440k
 DISKTYPE=	floppyinstfs
 
 all: ${CBIN} 
-	dd if=/dev/zero of=${IMAGE} bs=${SIZE} count=1
+	dd if=/dev/zero of=${IMAGE} bs=${RAMDISKSIZE} count=1
 	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
 	disklabel -rw ${VND} ${DISKTYPE}
 	newfs -B be -m 0 -o space -i 4096 -c 80 ${VND_RDEV}
