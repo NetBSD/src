@@ -21,6 +21,7 @@
 
 #include "defs.h"
 #include "gdbcore.h"
+#include "gdbarch.h"
 #include "regcache.h"
 #include "target.h"
 #include "breakpoint.h"
@@ -196,11 +197,134 @@ static struct core_fns ppcnbsd_elfcore_fns =
   NULL					/* next */
 };
 
+static const unsigned int sigtramp_sigcontext1[] = {
+	0x3821fff0,	/* addi r1, r1, -16 */
+	0x4e800021,	/* blrl */
+	0x38610010,	/* addi r1, r1, 16 */
+	0x38000127,	/* li r0, 295 */
+	0x44000002,	/* sc */
+	0x38000001,	/* li r0, 1 */
+	0x44000002	/* sc */
+};
+
+static const unsigned int sigtramp_siginfo2[] = {
+	0x7fc3f378,	/* mr r3, r30 */
+	0x38000134,	/* li r0, 308 */
+	0x44000002,	/* sc */
+	0x38000001,	/* li r0, 1 */
+	0x44000002	/* sc */
+};
+
+static int
+ppcnbsd_where_in_sigtramp (CORE_ADDR pc, const int sigtramp[], size_t len)
+{
+  int insn, insn2;
+  int i, j;
+
+  /* Get the current opcode.  */
+  if (read_memory_nobpt (pc, (char *) &insn, sizeof(insn)) != 0)
+    return -1;
+
+  for (i = 0; i < len; i += sizeof(int))
+    {
+      /* Does it match the current location?  If not, skip to the next one  */
+      if (insn != sigtramp[i/sizeof(int)])
+	continue;
+
+      /* Now see if the entire sigtramp matches.  */
+      for (j = 0; j < len; j += sizeof(int))
+	{
+	   if (j == i)
+		continue;
+	   if (read_memory_nobpt (pc-i+j, (char *) &insn2, sizeof(insn2)) != 0)
+	     break;
+	   if (insn2 != sigtramp[j/sizeof(int)])
+	     break;
+	}
+	if (j == len)
+	  return i;
+    }
+  return -1;
+}
+
 static int
 ppcnbsd_pc_in_sigtramp (CORE_ADDR pc, char *func_name)
 {
-  /* FIXME: Need to add support for kernel-provided signal trampolines.  */
-  return (nbsd_pc_in_sigtramp (pc, func_name));
+  int rv;
+
+  rv = nbsd_pc_in_sigtramp (pc, func_name);
+  if (rv)
+    return rv;
+
+  rv = ppcnbsd_where_in_sigtramp (pc, sigtramp_sigcontext1,
+				  sizeof(sigtramp_sigcontext1));
+  if (rv >= 0)
+    return 1;
+
+  rv = ppcnbsd_where_in_sigtramp (pc, sigtramp_siginfo2,
+				  sizeof(sigtramp_siginfo2));
+  return rv != -1;
+}
+
+#define PPCNBSD_SIGCONTEXT_PC_OFFSET (16 + 152)
+#define PPCNBSD_SIGCONTEXT_LR_OFFSET (16 + 136)
+#define PPCNBSD_SIGCONTEXT_FP_OFFSET (16 + 12)
+#define PPCNBSD_SIGINFO_PC_OFFSET (16 + 128 + 48 + 34*4)
+#define PPCNBSD_SIGINFO_LR_OFFSET (16 + 128 + 48 + 33*4)
+#define PPCNBSD_SIGINFO_FP_OFFSET (16 + 128 + 48 +  1*4)
+
+static CORE_ADDR
+ppcnbsd_frame_saved_pc (struct frame_info *fi)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+  int wordsize = tdep->wordsize;
+  CORE_ADDR addr;
+
+  if (!fi->signal_handler_caller
+      && (fi->next == NULL || !fi->next->signal_handler_caller))
+    return rs6000_frame_saved_pc (fi);
+
+  if (ppcnbsd_where_in_sigtramp (fi->pc, sigtramp_siginfo2,
+				 sizeof(sigtramp_siginfo2)) >= 0)
+    {
+      if (fi->next != NULL && fi->next->signal_handler_caller)
+	addr = fi->next->frame + PPCNBSD_SIGINFO_LR_OFFSET;
+      else
+	addr = fi->frame + PPCNBSD_SIGINFO_PC_OFFSET;
+    }
+  else if (ppcnbsd_where_in_sigtramp (fi->pc, sigtramp_sigcontext1,
+				      sizeof(sigtramp_sigcontext1)) >= 0)
+    {
+      if (fi->next != NULL && fi->next->signal_handler_caller)
+	addr = fi->next->frame + PPCNBSD_SIGCONTEXT_LR_OFFSET;
+      else
+	addr = fi->frame + PPCNBSD_SIGCONTEXT_PC_OFFSET;
+    }
+  else
+    return 0;
+
+  return read_memory_unsigned_integer (addr, wordsize);
+}
+
+static CORE_ADDR
+ppcnbsd_frame_chain (struct frame_info *fi)
+{
+  struct gdbarch_tdep *tdep = gdbarch_tdep (current_gdbarch);
+  int wordsize = tdep->wordsize;
+  CORE_ADDR addr;
+
+  if (!fi->signal_handler_caller)
+    return rs6000_frame_chain (fi);
+
+  if (ppcnbsd_where_in_sigtramp (fi->pc, sigtramp_siginfo2,
+				 sizeof(sigtramp_siginfo2)) >= 0)
+    addr = fi->frame + PPCNBSD_SIGINFO_FP_OFFSET;
+  else if (ppcnbsd_where_in_sigtramp (fi->pc, sigtramp_sigcontext1,
+				      sizeof(sigtramp_sigcontext1)) >= 0)
+    addr = fi->frame + PPCNBSD_SIGCONTEXT_FP_OFFSET;
+  else
+    return 0;
+  return read_memory_unsigned_integer (addr, wordsize);
 }
 
 static void
@@ -211,6 +335,8 @@ ppcnbsd_init_abi (struct gdbarch_info info,
   set_gdbarch_frame_chain_valid (gdbarch, generic_func_frame_chain_valid);
 
   set_gdbarch_pc_in_sigtramp (gdbarch, ppcnbsd_pc_in_sigtramp);
+  set_gdbarch_frame_chain (gdbarch, ppcnbsd_frame_chain);
+  set_gdbarch_frame_saved_pc (gdbarch, ppcnbsd_frame_saved_pc);
 
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
                                 nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
