@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.12 1997/06/12 15:46:40 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13 1997/06/23 02:56:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,13 +76,16 @@
 #endif
 
 #include <vm/vm_kern.h>
+#include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pio.h>
-#include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
+#include <mips/locore.h>		/* wbflush() callback */
+#include <mips/cpuregs.h>
+#include <mips/psl.h>
 
 #include <sys/exec_ecoff.h>
 
@@ -130,17 +133,43 @@ int	ncpu = 1;		/* At least one cpu in the system */
 int	isa_io_base;		/* Base address of ISA io port space */
 int	isa_mem_base;		/* Base address of ISA memory space */
 
-extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3();
-extern	int Mach_spl4(), Mach_spl5(), splhigh();
-int	(*Mach_splnet)() = splhigh;
-int	(*Mach_splbio)() = splhigh;
-int	(*Mach_splimp)() = splhigh;
-int	(*Mach_spltty)() = splhigh;
-int	(*Mach_splclock)() = splhigh;
-int	(*Mach_splstatclock)() = splhigh;
+/*
+ * Interrupt-blocking functions defined in locore. These names aren't used
+ * directly except here and in interrupt handlers.
+ */
+
+/* Block out one hardware interrupt-enable bit. */
+extern int	Mach_spl0 __P((void)), Mach_spl1 __P((void));
+extern int	Mach_spl2 __P((void)), Mach_spl3 __P((void));
+
+/* Block out nested interrupt-enable bits. */
+extern int	cpu_spl0 __P((void)), cpu_spl1 __P((void));
+extern int	cpu_spl2 __P((void)), cpu_spl3 __P((void));
+extern int	splhigh __P((void));
+
+/*
+ * Instead, we declare the standard splXXX names as function pointers,
+ * and initialie them to point to the above functions to match
+ * the way a specific motherboard is  wired up.
+ */
+int	(*Mach_splbio) __P((void)) = splhigh;
+int	(*Mach_splnet)__P((void)) = splhigh;
+int	(*Mach_spltty)__P((void)) = splhigh;
+int	(*Mach_splimp)__P((void)) = splhigh;
+int	(*Mach_splclock)__P((void)) = splhigh;
+int	(*Mach_splstatclock)__P((void)) = splhigh;
+
+void	dumpsys __P((void));			/* do a dump */
+int	savectx __P((struct user *up));		/* XXX save state b4 crash*/
 
 void vid_print_string(const char *str);
 void vid_putchar(dev_t dev, char c);
+
+#ifdef DEBUG
+/* stacktrace code violates prototypes to get callee's registers */
+extern void stacktrace __P((void)); /*XXX*/
+#endif
+
 
 
 /*
@@ -152,13 +181,18 @@ int	safepri = PSL_LOWIPL;
 struct	user *proc0paddr;
 struct	proc nullproc;		/* for use by swtch_exit() */
 
+extern void mips_vector_init  __P((void));
+
+extern void savefpregs __P((struct proc *));
+
 /*
  * Do all the stuff that locore normally does before calling main().
  * Process arguments passed to us by the BIOS.
  * Reset mapping and set up mapping to hardware and init "wired" reg.
  * Return the first page address following the system.
  */
-mips_init(argc, argv, code)
+void
+mach_init(argc, argv, code)
 	int argc;
 	char *argv[];
 	u_int code;
@@ -170,13 +204,20 @@ mips_init(argc, argv, code)
 	caddr_t start;
 	struct tlb tlb;
 	extern char edata[], end[];
-	extern char MachTLBMiss[], MachTLBMissEnd[];
-	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
-	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
 
 	/* clear the BSS segment in NetBSD code */
 	v = (caddr_t)pica_round_page(end);
 	bzero(edata, v - edata);
+
+
+	/*
+	 * Copy exception-dispatch code down to exception vector.
+	 * Initialize locore-function vector.
+	 * Clear out the I and D caches.
+	 *
+	 * XXX this may clobber PTEs needed by the BIOS.
+	 */
+	mips_vector_init();
 
 	/* check what model platform we are running on */
 	cputype = ACER_PICA_61; /* FIXME find systemtype */
@@ -255,64 +296,71 @@ mips_init(argc, argv, code)
 	 * Now its time to abandon the BIOS and be self supplying.
 	 * Start with cleaning out the TLB. Bye bye Microsoft....
 	 */
-	MachSetWIRED(0);
-	MachTLBFlush();
-	MachSetWIRED(VMMACH_WIRED_ENTRIES);
+#ifdef	PREDATES_LOCORE_VECTOR_INIT
+	cpu_arch = 3;
+	mips3_SetWIRED(0);
+	mips3_TLBFlush();
+	mips3_SetWIRED(MIPS3_TLB_WIRED_ENTRIES);
+	mips3_vector_init();
+#endif
+
 
 	/*
 	 * Set up mapping for hardware the way we want it!
 	 */
 
-	tlb.tlb_mask = PG_SIZE_256K;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_IO_BASE);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_IO_BASE) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | PG_IOPAGE;
-	MachTLBWriteIndexed(1, &tlb);
+	tlb.tlb_mask = MIPS3_PG_SIZE_256K;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_IO_BASE);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_IO_BASE) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(1, &tlb);
 
-	tlb.tlb_mask = PG_SIZE_1M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | PG_IOPAGE;
-	MachTLBWriteIndexed(2, &tlb);
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(2, &tlb);
 	
-	tlb.tlb_mask = PG_SIZE_1M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | PG_IOPAGE;
-	MachTLBWriteIndexed(3, &tlb);
+	tlb.tlb_mask = MIPS3_PG_SIZE_1M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(3, &tlb);
 	
-	tlb.tlb_mask = PG_SIZE_4M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | PG_IOPAGE;
-	MachTLBWriteIndexed(4, &tlb);
+	tlb.tlb_mask = MIPS3_PG_SIZE_4M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_LOCAL_VIDEO);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(4, &tlb);
 	
-	tlb.tlb_mask = PG_SIZE_16M;
-	tlb.tlb_hi = vad_to_vpn(PICA_V_ISA_IO);
-	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | PG_IOPAGE;
-	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | PG_IOPAGE;
-	MachTLBWriteIndexed(5, &tlb);
+	tlb.tlb_mask = MIPS3_PG_SIZE_16M;
+	tlb.tlb_hi = mips3_vad_to_vpn(PICA_V_ISA_IO);
+	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | MIPS3_PG_IOPAGE;
+	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | MIPS3_PG_IOPAGE;
+	mips3_TLBWriteIndexedVPS(5, &tlb);
 	
 	/*
 	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
 	 */
-	v = (caddr_t)((int)v+3 & -4);
+	v = (caddr_t) (((int)v+3) & -4);
 	start = v;
 	curproc->p_addr = proc0paddr = (struct user *)v;
 	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
-	firstaddr = MACH_CACHED_TO_PHYS(v);
+	firstaddr = MIPS_KSEG0_TO_PHYS(v);
 	for (i = 0; i < UPAGES; i+=2) {
-		tlb.tlb_mask = PG_SIZE_4K;
-		tlb.tlb_hi = vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
-		tlb.tlb_lo0 = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
-		tlb.tlb_lo1 = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
+		tlb.tlb_mask = MIPS3_PG_SIZE_4K;
+		tlb.tlb_hi = mips3_vad_to_vpn((UADDR + (i << PGSHIFT))) | 1;
+		tlb.tlb_lo0 = vad_to_pfn(firstaddr) |
+			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
+		tlb.tlb_lo1 = vad_to_pfn(firstaddr + NBPG) |
+			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
 		curproc->p_md.md_upte[i] = tlb.tlb_lo0;
 		curproc->p_md.md_upte[i+1] = tlb.tlb_lo1;
-		MachTLBWriteIndexed(i,&tlb);
+		mips3_TLBWriteIndexedVPS(i,&tlb);
 		firstaddr += NBPG * 2;
 	}
 	v += UPAGES * NBPG;
-	v = (caddr_t)((int)v+3 & -4);
+	v = (caddr_t) (((int)v+3) & -4);
 	MachSetPID(1);
 
 	/*
@@ -323,32 +371,18 @@ mips_init(argc, argv, code)
 	nullproc.p_addr = (struct user *)v;
 	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
 	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
-	firstaddr = MACH_CACHED_TO_PHYS(v);
+	firstaddr = MIPS_KSEG0_TO_PHYS(v);
 	for (i = 0; i < UPAGES; i+=2) {
-		nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) | PG_V | PG_M | PG_CACHED;
-		nullproc.p_md.md_upte[i+1] = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
+		nullproc.p_md.md_upte[i] = vad_to_pfn(firstaddr) |
+			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
+		nullproc.p_md.md_upte[i+1] = vad_to_pfn(firstaddr + NBPG) |
+			(MIPS3_PG_V | MIPS3_PG_M | MIPS3_PG_CACHED);
 		firstaddr += NBPG * 2;
 	}
 	v += UPAGES * NBPG;
 
 	/* clear pages for u areas */
 	bzero(start, v - start);
-
-	/*
-	 * Copy down exception vector code.
-	 */
-	if (MachTLBMissEnd - MachTLBMiss > 0x80)
-		panic("startup: TLB code too large");
-	bcopy(MachTLBMiss, (char *)MACH_TLB_MISS_EXC_VEC,
-		MachTLBMissEnd - MachTLBMiss);
-	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
-		mips_R2000_exceptionEnd - mips_R2000_exception);
-
-	/*
-	 * Clear out the I and D caches.
-	 */
-	cpucfg = MachConfigCache();
-	MachFlushCache();
 
 	/* check what model platform we are running on */
 	switch (cputype) {
@@ -396,8 +430,8 @@ mips_init(argc, argv, code)
 
 	default:
 		physmem = btoc((u_int)v - KERNBASE);
-		cp = (char *)MACH_PHYS_TO_UNCACHED(physmem << PGSHIFT);
-		while (cp < (char *)MACH_MAX_MEM_ADDR) {
+		cp = (char *)MIPS_PHYS_TO_KSEG0(physmem << PGSHIFT);
+		while (cp < (char *)MIPS_MAX_MEM_ADDR) {
 			if (badaddr(cp, 4))
 				break;
 			i = *(int *)cp;
@@ -407,7 +441,7 @@ mips_init(argc, argv, code)
 			 * Have to be tricky here.
 			 */
 			((int *)cp)[4] = 0x5a5a5a5a;
-			MachEmptyWriteBuffer();
+			wbflush();
 			if (*(int *)cp != 0xa5a5a5a5)
 				break;
 			*(int *)cp = i;
@@ -423,7 +457,7 @@ mips_init(argc, argv, code)
 	 * Initialize error message buffer (at end of core).
 	 */
 	maxmem -= btoc(sizeof (struct msgbuf));
-	msgbufp = (struct msgbuf *)(MACH_PHYS_TO_CACHED(maxmem << PGSHIFT));
+	msgbufp = (struct msgbuf *)(MIPS_PHYS_TO_KSEG0(maxmem << PGSHIFT));
 	msgbufmapped = 1;
 
 	/*
@@ -514,10 +548,10 @@ consinit()
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
+void
 cpu_startup()
 {
 	register unsigned i;
-	register caddr_t v;
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
 	vm_size_t size;
@@ -592,7 +626,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
@@ -611,9 +645,11 @@ cpu_startup()
 	configure();
 }
 
+
 /*
  * machine dependent system variables.
  */
+int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
 	u_int namelen;
@@ -654,15 +690,17 @@ setregs(p, pack, stack, retval)
 	u_long stack;
 	register_t *retval;
 {
-	extern struct proc *machFPCurProcPtr;
+	extern struct proc *fpcurproc;
 
-	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
+	bzero((caddr_t)p->p_md.md_regs, sizeof(struct frame));
+	bzero((caddr_t)&p->p_addr->u_pcb.pcb_fpregs, sizeof(struct fpreg));
 	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
+        p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
 	p->p_md.md_regs[PS] = PSL_USERSET;
-	p->p_md.md_flags & ~MDP_FPUSED;
-	if (machFPCurProcPtr == p)
-		machFPCurProcPtr = (struct proc *)0;
+	p->p_md.md_flags &= ~MDP_FPUSED;
+	if (fpcurproc == p)
+		fpcurproc = (struct proc *)0;
 	p->p_md.md_ss_addr = 0;
 }
 
@@ -704,7 +742,7 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in data space, the
@@ -714,19 +752,19 @@ sendsig(catcher, sig, mask, code)
 	 */
 	fsize = sizeof(struct sigframe);
 	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
+	    (psp->ps_sigstk.ss_flags & SS_ONSTACK) == 0 &&
 	    (psp->ps_sigonstack & sigmask(sig))) {
 		fp = (struct sigframe *)(psp->ps_sigstk.ss_sp +
 					 psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
-	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x\n",
+	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
+		printf("sendsig(%d): sig %d ssp %p usp %p scp %p\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc);
 #endif
 	/*
@@ -742,13 +780,12 @@ sendsig(catcher, sig, mask, code)
 		sizeof(ksc.sc_regs) - sizeof(int));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
-		extern struct proc *machFPCurProcPtr;
+		extern struct proc *fpcurproc;
 
 		/* if FPU has current state, save it first */
-		if (p == machFPCurProcPtr)
-			MachSaveCurFPState(p);
-		bcopy((caddr_t)&p->p_md.md_regs[F0], (caddr_t)ksc.sc_fpregs,
-			sizeof(ksc.sc_fpregs));
+		if (p == fpcurproc)
+			savefpregs(p);
+		*(struct fpreg *)ksc.sc_fpregs = p->p_addr->u_pcb.pcb_fpregs;
 	}
 	if (copyout((caddr_t)&ksc, (caddr_t)&fp->sf_sc, sizeof(ksc))) {
 		/*
@@ -772,6 +809,7 @@ sendsig(catcher, sig, mask, code)
 	regs[A3] = (int)catcher;
 
 	regs[PC] = (int)catcher;
+	regs[T9] = (int)catcher;
 	regs[SP] = (int)fp;
 	/*
 	 * Signal trampoline code is at base of user stack.
@@ -779,7 +817,7 @@ sendsig(catcher, sig, mask, code)
 	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
-	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
+	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
 		printf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
@@ -796,6 +834,7 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 /* ARGSUSED */
+int
 sys_sigreturn(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -812,7 +851,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 	regs = p->p_md.md_regs;
 	/*
@@ -823,7 +862,7 @@ sys_sigreturn(p, v, retval)
 	if (error || ksc.sc_regs[ZERO] != 0xACEDBADE) {
 #ifdef DEBUG
 		if (!(sigdebug & SDB_FOLLOW))
-			printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+			printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 		printf("  old sp %x ra %x pc %x\n",
 			regs[SP], regs[RA], regs[PC]);
 		printf("  new sp %x ra %x pc %x err %d z %x\n",
@@ -837,23 +876,24 @@ sys_sigreturn(p, v, retval)
 	 * Restore the user supplied information
 	 */
 	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
 	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	regs[PC] = scp->sc_pc;
 	regs[MULLO] = scp->mullo;
 	regs[MULHI] = scp->mulhi;
 	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
-		sizeof(scp->sc_regs) - sizeof(int));
+		sizeof(scp->sc_regs) - sizeof(scp->sc_regs[0]));
 	if (scp->sc_fpused)
-		bcopy((caddr_t)scp->sc_fpregs, (caddr_t)&p->p_md.md_regs[F0],
-			sizeof(scp->sc_fpregs));
+		p->p_addr->u_pcb.pcb_fpregs = *(struct fpreg *)scp->sc_fpregs;
 	return (EJUSTRETURN);
 }
 
 int	waittime = -1;
+struct user dumppcb;	/* Actually, struct pcb would do. */
 
+void
 cpu_reboot(howto, bootstr)
 	register int howto;
 	char *bootstr;
@@ -861,7 +901,7 @@ cpu_reboot(howto, bootstr)
 
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
-		savectx(curproc->p_addr, 0);
+		savectx((struct user *)curpcb);
 
 #ifdef DEBUG
 	if (panicstr)
@@ -894,10 +934,15 @@ cpu_reboot(howto, bootstr)
 	/*NOTREACHED*/
 }
 
+
+/*
+ * These variables are needed by /sbin/savecore
+ */
 int	dumpmag = (int)0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
+void
 cpu_dumpconf()
 {
 	int nblks;
@@ -923,9 +968,13 @@ cpu_dumpconf()
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
+void
 dumpsys()
 {
 	int error;
+
+	/* Save registers. */
+	savectx(&dumppcb);
 
 	msgbufmapped = 0;
 	if (dumpdev == NODEV)
@@ -938,9 +987,16 @@ dumpsys()
 		cpu_dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 	printf("dump ");
-	switch (error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev)) {
+
+	/*
+	 * XXX
+	 * All but first arguments to  dump() bogus.
+	 * What should blkno, va, size be?
+	 */
+	error = (*bdevsw[major(dumpdev)].d_dump)(dumpdev, 0, 0, 0);
+	switch (error) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -998,6 +1054,7 @@ microtime(tvp)
 	splx(s);
 }
 
+int
 initcpu()
 {
 
@@ -1009,6 +1066,7 @@ initcpu()
 	out32(PICA_SYS_EXT_IMASK, 0x00);
 
 	spl0();		/* safe to turn interrupts on now */
+	return 0;
 }
 
 /*
@@ -1016,7 +1074,7 @@ initcpu()
  */
 int
 atoi(s)
-	char *s;
+	const char *s;
 {
 	int c;
 	unsigned base = 10, d;
@@ -1096,12 +1154,12 @@ vid_scroll()
 	int i;
 
 	video = (unsigned short *)(0xe08b8000);
-	for(i = 0; i < 80 * 24; i++) {
+	for (i = 0; i < 80 * 24; i++) {
 		*video = *(video + 80);
 		video++;
 	}
-	for(i = 0; i < 80; i++) {
-		*video = *video & 0xff00 | ' ';
+	for (i = 0; i < 80; i++) {
+		*video = (*video & 0xff00) | ' ';
 		video++;
 	}
 }
@@ -1110,7 +1168,7 @@ vid_print_string(const char *str)
 {
 	unsigned char c;
 
-	while(c = *str++) {
+	while ((c = *str++) != 0) {
 		vid_putchar((dev_t)0, c);
 	}
 }
