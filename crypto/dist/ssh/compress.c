@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.1.1.8 2002/04/22 07:37:25 itojun Exp $	*/
+/*	$NetBSD: compress.c,v 1.1.1.9 2005/02/13 00:52:58 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: compress.c,v 1.19 2002/03/18 17:31:54 provos Exp $");
+RCSID("$OpenBSD: compress.c,v 1.21 2004/01/13 19:45:15 markus Exp $");
 
 #include "log.h"
 #include "buffer.h"
@@ -57,12 +57,14 @@ buffer_compress_init_recv(void)
 void
 buffer_compress_uninit(void)
 {
-	debug("compress outgoing: raw data %lu, compressed %lu, factor %.2f",
-	    outgoing_stream.total_in, outgoing_stream.total_out,
+	debug("compress outgoing: raw data %llu, compressed %llu, factor %.2f",
+	    (unsigned long long)outgoing_stream.total_in,
+	    (unsigned long long)outgoing_stream.total_out,
 	    outgoing_stream.total_in == 0 ? 0.0 :
 	    (double) outgoing_stream.total_out / outgoing_stream.total_in);
-	debug("compress incoming: raw data %lu, compressed %lu, factor %.2f",
-	    incoming_stream.total_out, incoming_stream.total_in,
+	debug("compress incoming: raw data %llu, compressed %llu, factor %.2f",
+	    (unsigned long long)incoming_stream.total_out,
+	    (unsigned long long)incoming_stream.total_in,
 	    incoming_stream.total_out == 0 ? 0.0 :
 	    (double) incoming_stream.total_in / incoming_stream.total_out);
 	if (compress_init_recv_called == 1 && inflate_failed == 0)

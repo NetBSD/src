@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.h,v 1.1.1.13 2003/04/03 05:57:27 itojun Exp $	*/
-/*	$OpenBSD: packet.h,v 1.38 2003/04/02 09:48:07 markus Exp $	*/
+/*	$NetBSD: packet.h,v 1.1.1.14 2005/02/13 00:53:06 christos Exp $	*/
+/*	$OpenBSD: packet.h,v 1.41 2004/05/11 19:01:43 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -82,8 +82,8 @@ void	 packet_add_padding(u_char);
 void	 tty_make_modes(int, struct termios *);
 void	 tty_parse_modes(int, int *);
 
-extern int max_packet_size;
-int      packet_set_maxsize(int);
+extern u_int max_packet_size;
+int	 packet_set_maxsize(u_int);
 #define  packet_get_maxsize() max_packet_size
 
 /* don't allow remaining bytes after the end of the message */
@@ -91,7 +91,7 @@ int      packet_set_maxsize(int);
 do { \
 	int _len = packet_remaining(); \
 	if (_len > 0) { \
-		log("Packet integrity error (%d bytes remaining) at %s:%d", \
+		logit("Packet integrity error (%d bytes remaining) at %s:%d", \
 		    _len ,__FILE__, __LINE__); \
 		packet_disconnect("Packet integrity error."); \
 	} \

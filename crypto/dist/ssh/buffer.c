@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.7 2002/06/26 14:02:54 itojun Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.8 2005/02/13 00:52:54 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: buffer.c,v 1.16 2002/06/26 08:54:18 markus Exp $");
+RCSID("$OpenBSD: buffer.c,v 1.21 2003/11/21 11:57:03 djm Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -24,8 +24,11 @@ RCSID("$OpenBSD: buffer.c,v 1.16 2002/06/26 08:54:18 markus Exp $");
 void
 buffer_init(Buffer *buffer)
 {
-	buffer->alloc = 4096;
-	buffer->buf = xmalloc(buffer->alloc);
+	const u_int len = 4096;
+
+	buffer->alloc = 0;
+	buffer->buf = xmalloc(len);
+	buffer->alloc = len;
 	buffer->offset = 0;
 	buffer->end = 0;
 }
@@ -35,8 +38,11 @@ buffer_init(Buffer *buffer)
 void
 buffer_free(Buffer *buffer)
 {
-	memset(buffer->buf, 0, buffer->alloc);
-	xfree(buffer->buf);
+	if (buffer->alloc > 0) {
+		memset(buffer->buf, 0, buffer->alloc);
+		buffer->alloc = 0;
+		xfree(buffer->buf);
+	}
 }
 
 /*
@@ -70,6 +76,7 @@ buffer_append(Buffer *buffer, const void *data, u_int len)
 void *
 buffer_append_space(Buffer *buffer, u_int len)
 {
+	u_int newlen;
 	void *p;
 
 	if (len > 0x100000)
@@ -99,11 +106,13 @@ restart:
 		goto restart;
 	}
 	/* Increase the size of the buffer and retry. */
-	buffer->alloc += len + 32768;
-	if (buffer->alloc > 0xa00000)
+
+	newlen = buffer->alloc + len + 32768;
+	if (newlen > 0xa00000)
 		fatal("buffer_append_space: alloc %u not supported",
-		    buffer->alloc);
-	buffer->buf = xrealloc(buffer->buf, buffer->alloc);
+		    newlen);
+	buffer->buf = xrealloc(buffer->buf, newlen);
+	buffer->alloc = newlen;
 	goto restart;
 	/* NOTREACHED */
 }
@@ -161,7 +170,7 @@ buffer_ptr(Buffer *buffer)
 void
 buffer_dump(Buffer *buffer)
 {
-	int i;
+	u_int i;
 	u_char *ucp = buffer->buf;
 
 	for (i = buffer->offset; i < buffer->end; i++) {

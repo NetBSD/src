@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-options.c,v 1.1.1.12 2002/10/01 13:39:55 itojun Exp $	*/
+/*	$NetBSD: auth-options.c,v 1.1.1.13 2005/02/13 00:52:44 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-options.c,v 1.26 2002/07/30 17:03:55 markus Exp $");
+RCSID("$OpenBSD: auth-options.c,v 1.28 2003/06/02 09:17:34 markus Exp $");
 
 #include "xmalloc.h"
 #include "match.h"
@@ -174,7 +174,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 		if (strncasecmp(opts, cp, strlen(cp)) == 0) {
 			const char *remote_ip = get_remote_ipaddr();
 			const char *remote_host = get_canonical_hostname(
-			    options.verify_reverse_mapping);
+			    options.use_dns);
 			char *patterns = xmalloc(strlen(opts) + 1);
 
 			opts += strlen(cp);
@@ -202,7 +202,7 @@ auth_parse_options(struct passwd *pw, char *opts, char *file, u_long linenum)
 			if (match_host_and_ip(remote_host, remote_ip,
 			    patterns) != 1) {
 				xfree(patterns);
-				log("Authentication tried for %.100s with "
+				logit("Authentication tried for %.100s with "
 				    "correct key but not from a permitted "
 				    "host (host=%.200s, ip=%.200s).",
 				    pw->pw_name, remote_host, remote_ip);
@@ -288,7 +288,7 @@ next_option:
 	return 1;
 
 bad_option:
-	log("Bad options in %.100s file, line %lu: %.50s",
+	logit("Bad options in %.100s file, line %lu: %.50s",
 	    file, linenum, opts);
 	auth_debug_add("Bad options in %.100s file, line %lu: %.50s",
 	    file, linenum, opts);

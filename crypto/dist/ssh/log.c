@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.1.1.9 2003/04/03 05:57:23 itojun Exp $	*/
+/*	$NetBSD: log.c,v 1.1.1.10 2005/02/13 00:53:01 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,12 +35,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: log.c,v 1.25 2003/01/11 18:29:43 markus Exp $");
+RCSID("$OpenBSD: log.c,v 1.29 2003/09/23 20:17:11 markus Exp $");
 
 #include "log.h"
 #include "xmalloc.h"
 
 #include <syslog.h>
+#include <vis.h>
 
 static LogLevel log_level = SYSLOG_LEVEL_INFO;
 static int log_on_stderr = 1;
@@ -125,7 +126,7 @@ error(const char *fmt,...)
 /* Log this message (information that usually should go to the log). */
 
 void
-log(const char *fmt,...)
+logit(const char *fmt,...)
 {
 	va_list args;
 
@@ -177,83 +178,6 @@ debug3(const char *fmt,...)
 	do_log(SYSLOG_LEVEL_DEBUG3, fmt, args);
 	va_end(args);
 }
-
-/* Fatal cleanup */
-
-struct fatal_cleanup {
-	struct fatal_cleanup *next;
-	void (*proc) (void *);
-	void *context;
-};
-
-static struct fatal_cleanup *fatal_cleanups = NULL;
-
-/* Registers a cleanup function to be called by fatal() before exiting. */
-
-void
-fatal_add_cleanup(void (*proc) (void *), void *context)
-{
-	struct fatal_cleanup *cu;
-
-	cu = xmalloc(sizeof(*cu));
-	cu->proc = proc;
-	cu->context = context;
-	cu->next = fatal_cleanups;
-	fatal_cleanups = cu;
-}
-
-/* Removes a cleanup frunction to be called at fatal(). */
-
-void
-fatal_remove_cleanup(void (*proc) (void *context), void *context)
-{
-	struct fatal_cleanup **cup, *cu;
-
-	for (cup = &fatal_cleanups; *cup; cup = &cu->next) {
-		cu = *cup;
-		if (cu->proc == proc && cu->context == context) {
-			*cup = cu->next;
-			xfree(cu);
-			return;
-		}
-	}
-	fatal("fatal_remove_cleanup: no such cleanup function: 0x%lx 0x%lx",
-	    (u_long) proc, (u_long) context);
-}
-
-/* Remove all cleanups, to be called after fork() */
-void
-fatal_remove_all_cleanups(void)
-{
-	struct fatal_cleanup *cu, *next_cu;
-
-	for (cu = fatal_cleanups; cu; cu = next_cu) {
-		next_cu = cu->next;
-		xfree(cu);
-	}
-	fatal_cleanups = NULL;
-}
-
-/* Cleanup and exit */
-void
-fatal_cleanup(void)
-{
-	struct fatal_cleanup *cu, *next_cu;
-	static int called = 0;
-
-	if (called)
-		exit(255);
-	called = 1;
-	/* Call cleanup functions. */
-	for (cu = fatal_cleanups; cu; cu = next_cu) {
-		next_cu = cu->next;
-		debug("Calling cleanup 0x%lx(0x%lx)",
-		    (u_long) cu->proc, (u_long) cu->context);
-		(*cu->proc) (cu->context);
-	}
-	exit(255);
-}
-
 
 /*
  * Initialize the log.
@@ -332,6 +256,7 @@ log_init(char *av0, LogLevel level, SyslogFacility facility, int on_stderr)
 void
 do_log(LogLevel level, const char *fmt, va_list args)
 {
+	struct syslog_data sdata = SYSLOG_DATA_INIT;
 	char msgbuf[MSGBUFSIZ];
 	char fmtbuf[MSGBUFSIZ];
 	char *txt = NULL;
@@ -380,11 +305,13 @@ do_log(LogLevel level, const char *fmt, va_list args)
 	} else {
 		vsnprintf(msgbuf, sizeof(msgbuf), fmt, args);
 	}
+	strnvis(fmtbuf, msgbuf, sizeof(fmtbuf), VIS_SAFE|VIS_OCTAL);
 	if (log_on_stderr) {
-		fprintf(stderr, "%s\r\n", msgbuf);
+		snprintf(msgbuf, sizeof msgbuf, "%s\r\n", fmtbuf);
+		write(STDERR_FILENO, msgbuf, strlen(msgbuf));
 	} else {
-		openlog(argv0 ? argv0 : __progname, LOG_PID, log_facility);
-		syslog(pri, "%.500s", msgbuf);
-		closelog();
+		openlog_r(argv0 ? argv0 : __progname, LOG_PID, log_facility, &sdata);
+		syslog_r(pri, &sdata, "%.500s", fmtbuf);
+		closelog_r(&sdata);
 	}
 }

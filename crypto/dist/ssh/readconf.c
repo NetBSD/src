@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.1.1.15 2003/04/03 05:57:27 itojun Exp $	*/
+/*	$NetBSD: readconf.c,v 1.1.1.16 2005/02/13 00:53:06 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.134 2004/07/11 17:48:47 deraadt Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -58,7 +58,6 @@ RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
    Host fascist.blob.com
      Port 23123
      User tylonen
-     RhostsAuthentication no
      PasswordAuthentication no
 
    Host puukko.hut.fi
@@ -76,12 +75,11 @@ RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
    Host *
      ForwardAgent no
      ForwardX11 no
-     RhostsAuthentication yes
      PasswordAuthentication yes
      RSAAuthentication yes
      RhostsRSAAuthentication yes
      StrictHostKeyChecking yes
-     KeepAlives no
+     TcpKeepAlive no
      IdentityFile ~/.ssh/identity
      Port 22
      EscapeChar ~
@@ -92,31 +90,25 @@ RCSID("$OpenBSD: readconf.c,v 1.105 2003/04/02 09:48:07 markus Exp $");
 
 typedef enum {
 	oBadOption,
-	oForwardAgent, oForwardX11, oGatewayPorts, oRhostsAuthentication,
+	oForwardAgent, oForwardX11, oForwardX11Trusted, oGatewayPorts,
 	oPasswordAuthentication, oRSAAuthentication,
 	oChallengeResponseAuthentication, oXAuthLocation,
-#if defined(KRB4) || defined(KRB5)
-	oKerberosAuthentication,
-#endif
-#if defined(AFS) || defined(KRB5)
-	oKerberosTgtPassing,
-#endif
-#ifdef AFS
-	oAFSTokenPassing,
-#endif
 	oIdentityFile, oHostName, oPort, oCipher, oRemoteForward, oLocalForward,
 	oUser, oHost, oEscapeChar, oRhostsRSAAuthentication, oProxyCommand,
 	oGlobalKnownHostsFile, oUserKnownHostsFile, oConnectionAttempts,
 	oBatchMode, oCheckHostIP, oStrictHostKeyChecking, oCompression,
-	oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts,
+	oCompressionLevel, oTCPKeepAlive, oNumberOfPasswordPrompts,
 	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol, oMacs,
 	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
 	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias,
 	oDynamicForward, oPreferredAuthentications, oHostbasedAuthentication,
 	oHostKeyAlgorithms, oBindAddress, oSmartcardDevice,
 	oClearAllForwardings, oNoHostAuthenticationForLocalhost,
-	oEnableSSHKeysign, oRekeyLimit,
-	oDeprecated
+	oEnableSSHKeysign, oRekeyLimit, oVerifyHostKeyDNS, oConnectTimeout,
+	oAddressFamily, oGssAuthentication, oGssDelegateCreds,
+	oServerAliveInterval, oServerAliveCountMax, oIdentitiesOnly,
+	oSendEnv, oControlPath, oControlMaster,
+	oDeprecated, oUnsupported
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -127,10 +119,11 @@ static struct {
 } keywords[] = {
 	{ "forwardagent", oForwardAgent },
 	{ "forwardx11", oForwardX11 },
+	{ "forwardx11trusted", oForwardX11Trusted },
 	{ "xauthlocation", oXAuthLocation },
 	{ "gatewayports", oGatewayPorts },
 	{ "useprivilegedport", oUsePrivilegedPort },
-	{ "rhostsauthentication", oRhostsAuthentication },
+	{ "rhostsauthentication", oDeprecated },
 	{ "passwordauthentication", oPasswordAuthentication },
 	{ "kbdinteractiveauthentication", oKbdInteractiveAuthentication },
 	{ "kbdinteractivedevices", oKbdInteractiveDevices },
@@ -142,19 +135,21 @@ static struct {
 	{ "challengeresponseauthentication", oChallengeResponseAuthentication },
 	{ "skeyauthentication", oChallengeResponseAuthentication }, /* alias */
 	{ "tisauthentication", oChallengeResponseAuthentication },  /* alias */
-#if defined(KRB4) || defined(KRB5)
-	{ "kerberosauthentication", oKerberosAuthentication },
-#endif
-#if defined(AFS) || defined(KRB5)
-	{ "kerberostgtpassing", oKerberosTgtPassing },
-#endif
-#ifdef AFS
-	{ "afstokenpassing", oAFSTokenPassing },
+	{ "kerberosauthentication", oUnsupported },
+	{ "kerberostgtpassing", oUnsupported },
+	{ "afstokenpassing", oUnsupported },
+#if defined(GSSAPI)
+	{ "gssapiauthentication", oGssAuthentication },
+	{ "gssapidelegatecredentials", oGssDelegateCreds },
+#else
+	{ "gssapiauthentication", oUnsupported },
+	{ "gssapidelegatecredentials", oUnsupported },
 #endif
 	{ "fallbacktorsh", oDeprecated },
 	{ "usersh", oDeprecated },
 	{ "identityfile", oIdentityFile },
 	{ "identityfile2", oIdentityFile },			/* alias */
+	{ "identitiesonly", oIdentitiesOnly },
 	{ "hostname", oHostName },
 	{ "hostkeyalias", oHostKeyAlias },
 	{ "proxycommand", oProxyCommand },
@@ -178,18 +173,31 @@ static struct {
 	{ "stricthostkeychecking", oStrictHostKeyChecking },
 	{ "compression", oCompression },
 	{ "compressionlevel", oCompressionLevel },
-	{ "keepalive", oKeepAlives },
+	{ "tcpkeepalive", oTCPKeepAlive },
+	{ "keepalive", oTCPKeepAlive },				/* obsolete */
 	{ "numberofpasswordprompts", oNumberOfPasswordPrompts },
 	{ "loglevel", oLogLevel },
 	{ "dynamicforward", oDynamicForward },
 	{ "preferredauthentications", oPreferredAuthentications },
 	{ "hostkeyalgorithms", oHostKeyAlgorithms },
 	{ "bindaddress", oBindAddress },
+#ifdef SMARTCARD
 	{ "smartcarddevice", oSmartcardDevice },
+#else
+	{ "smartcarddevice", oUnsupported },
+#endif
 	{ "clearallforwardings", oClearAllForwardings },
 	{ "enablesshkeysign", oEnableSSHKeysign },
+	{ "verifyhostkeydns", oVerifyHostKeyDNS },
 	{ "nohostauthenticationforlocalhost", oNoHostAuthenticationForLocalhost },
 	{ "rekeylimit", oRekeyLimit },
+	{ "connecttimeout", oConnectTimeout },
+	{ "addressfamily", oAddressFamily },
+	{ "serveraliveinterval", oServerAliveInterval },
+	{ "serveralivecountmax", oServerAliveCountMax },
+	{ "sendenv", oSendEnv },
+	{ "controlpath", oControlPath },
+	{ "controlmaster", oControlMaster },
 	{ NULL, oBadOption }
 };
 
@@ -281,6 +289,13 @@ process_config_line(Options *options, const char *host,
 	u_short fwd_port, fwd_host_port;
 	char sfwd_host_port[6];
 
+	/* Strip trailing whitespace */
+	for(len = strlen(line) - 1; len > 0; len--) {
+		if (strchr(WHITESPACE, line[len]) == NULL)
+			break;
+		line[len] = '\0';
+	}
+
 	s = line;
 	/* Get the keyword. (Each line is supposed to begin with a keyword). */
 	keyword = strdelim(&s);
@@ -297,6 +312,20 @@ process_config_line(Options *options, const char *host,
 		/* don't panic, but count bad options */
 		return -1;
 		/* NOTREACHED */
+	case oConnectTimeout:
+		intptr = &options->connection_timeout;
+parse_time:
+		arg = strdelim(&s);
+		if (!arg || *arg == '\0')
+			fatal("%s line %d: missing time value.",
+			    filename, linenum);
+		if ((value = convtime(arg)) == -1)
+			fatal("%s line %d: invalid time value.",
+			    filename, linenum);
+		if (*intptr == -1)
+			*intptr = value;
+		break;
+
 	case oForwardAgent:
 		intptr = &options->forward_agent;
 parse_flag:
@@ -318,16 +347,16 @@ parse_flag:
 		intptr = &options->forward_x11;
 		goto parse_flag;
 
+	case oForwardX11Trusted:
+		intptr = &options->forward_x11_trusted;
+		goto parse_flag;
+
 	case oGatewayPorts:
 		intptr = &options->gateway_ports;
 		goto parse_flag;
 
 	case oUsePrivilegedPort:
 		intptr = &options->use_privileged_port;
-		goto parse_flag;
-
-	case oRhostsAuthentication:
-		intptr = &options->rhosts_authentication;
 		goto parse_flag;
 
 	case oPasswordAuthentication:
@@ -361,21 +390,15 @@ parse_flag:
 	case oChallengeResponseAuthentication:
 		intptr = &options->challenge_response_authentication;
 		goto parse_flag;
-#if defined(KRB4) || defined(KRB5)
-	case oKerberosAuthentication:
-		intptr = &options->kerberos_authentication;
+
+	case oGssAuthentication:
+		intptr = &options->gss_authentication;
 		goto parse_flag;
-#endif
-#if defined(AFS) || defined(KRB5)
-	case oKerberosTgtPassing:
-		intptr = &options->kerberos_tgt_passing;
+
+	case oGssDelegateCreds:
+		intptr = &options->gss_deleg_creds;
 		goto parse_flag;
-#endif
-#ifdef AFS
-	case oAFSTokenPassing:
-		intptr = &options->afs_token_passing;
-		goto parse_flag;
-#endif
+
 	case oBatchMode:
 		intptr = &options->batch_mode;
 		goto parse_flag;
@@ -384,8 +407,13 @@ parse_flag:
 		intptr = &options->check_host_ip;
 		goto parse_flag;
 
+	case oVerifyHostKeyDNS:
+		intptr = &options->verify_host_key_dns;
+		goto parse_yesnoask;
+
 	case oStrictHostKeyChecking:
 		intptr = &options->strict_host_key_checking;
+parse_yesnoask:
 		arg = strdelim(&s);
 		if (!arg || *arg == '\0')
 			fatal("%.200s line %d: Missing yes/no/ask argument.",
@@ -407,8 +435,8 @@ parse_flag:
 		intptr = &options->compression;
 		goto parse_flag;
 
-	case oKeepAlives:
-		intptr = &options->keepalives;
+	case oTCPKeepAlive:
+		intptr = &options->tcp_keep_alive;
 		goto parse_flag;
 
 	case oNoHostAuthenticationForLocalhost:
@@ -514,6 +542,8 @@ parse_string:
 		goto parse_string;
 
 	case oProxyCommand:
+		if (s == NULL)
+			fatal("%.200s line %d: Missing argument.", filename, linenum);
 		charptr = &options->proxy_command;
 		len = strspn(s, WHITESPACE "=");
 		if (*activep && *charptr == NULL)
@@ -651,7 +681,7 @@ parse_int:
 			fatal("%.200s line %d: Badly formatted port number.",
 			    filename, linenum);
 		if (*activep)
-			add_local_forward(options, fwd_port, "socks4", 0);
+			add_local_forward(options, fwd_port, "socks", 0);
 		break;
 
 	case oClearAllForwardings:
@@ -691,12 +721,65 @@ parse_int:
 			*intptr = value;
 		break;
 
+	case oAddressFamily:
+		arg = strdelim(&s);
+		intptr = &options->address_family;
+		if (strcasecmp(arg, "inet") == 0)
+			value = AF_INET;
+		else if (strcasecmp(arg, "inet6") == 0)
+			value = AF_INET6;
+		else if (strcasecmp(arg, "any") == 0)
+			value = AF_UNSPEC;
+		else
+			fatal("Unsupported AddressFamily \"%s\"", arg);
+		if (*activep && *intptr == -1)
+			*intptr = value;
+		break;
+
 	case oEnableSSHKeysign:
 		intptr = &options->enable_ssh_keysign;
 		goto parse_flag;
 
+	case oIdentitiesOnly:
+		intptr = &options->identities_only;
+		goto parse_flag;
+
+	case oServerAliveInterval:
+		intptr = &options->server_alive_interval;
+		goto parse_time;
+
+	case oServerAliveCountMax:
+		intptr = &options->server_alive_count_max;
+		goto parse_int;
+
+	case oSendEnv:
+		while ((arg = strdelim(&s)) != NULL && *arg != '\0') {
+			if (strchr(arg, '=') != NULL)
+				fatal("%s line %d: Invalid environment name.",
+				    filename, linenum);
+			if (options->num_send_env >= MAX_SEND_ENV)
+				fatal("%s line %d: too many send env.",
+				    filename, linenum);
+			options->send_env[options->num_send_env++] =
+			    xstrdup(arg);
+		}
+		break;
+
+	case oControlPath:
+		charptr = &options->control_path;
+		goto parse_string;
+
+	case oControlMaster:
+		intptr = &options->control_master;
+		goto parse_yesnoask;
+
 	case oDeprecated:
 		debug("%s line %d: Deprecated option \"%s\"",
+		    filename, linenum, keyword);
+		return 0;
+
+	case oUnsupported:
+		error("%s line %d: Unsupported option \"%s\"",
 		    filename, linenum, keyword);
 		return 0;
 
@@ -720,7 +803,8 @@ parse_int:
  */
 
 int
-read_config_file(const char *filename, const char *host, Options *options)
+read_config_file(const char *filename, const char *host, Options *options,
+    int checkperm)
 {
 	FILE *f;
 	char line[1024];
@@ -728,9 +812,18 @@ read_config_file(const char *filename, const char *host, Options *options)
 	int bad_options = 0;
 
 	/* Open the file. */
-	f = fopen(filename, "r");
-	if (!f)
+	if ((f = fopen(filename, "r")) == NULL)
 		return 0;
+
+	if (checkperm) {
+		struct stat sb;
+
+		if (fstat(fileno(f), &sb) == -1)
+			fatal("fstat %s: %s", filename, strerror(errno));
+		if (((sb.st_uid != 0 && sb.st_uid != getuid()) ||
+		    (sb.st_mode & 022) != 0))
+			fatal("Bad owner or permissions on %s", filename);
+	}
 
 	debug("Reading configuration data %.200s", filename);
 
@@ -766,22 +859,15 @@ initialize_options(Options * options)
 	memset(options, 'X', sizeof(*options));
 	options->forward_agent = -1;
 	options->forward_x11 = -1;
+	options->forward_x11_trusted = -1;
 	options->xauth_location = NULL;
 	options->gateway_ports = -1;
 	options->use_privileged_port = -1;
-	options->rhosts_authentication = -1;
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
 	options->challenge_response_authentication = -1;
-#if defined(KRB4) || defined(KRB5)
-	options->kerberos_authentication = -1;
-#endif
-#if defined(AFS) || defined(KRB5)
-	options->kerberos_tgt_passing = -1;
-#endif
-#ifdef AFS
-	options->afs_token_passing = -1;
-#endif
+	options->gss_authentication = -1;
+	options->gss_deleg_creds = -1;
 	options->password_authentication = -1;
 	options->kbd_interactive_authentication = -1;
 	options->kbd_interactive_devices = NULL;
@@ -791,10 +877,12 @@ initialize_options(Options * options)
 	options->check_host_ip = -1;
 	options->strict_host_key_checking = -1;
 	options->compression = -1;
-	options->keepalives = -1;
+	options->tcp_keep_alive = -1;
 	options->compression_level = -1;
 	options->port = -1;
+	options->address_family = -1;
 	options->connection_attempts = -1;
+	options->connection_timeout = -1;
 	options->number_of_password_prompts = -1;
 	options->cipher = -1;
 	options->ciphers = NULL;
@@ -820,7 +908,14 @@ initialize_options(Options * options)
 	options->smartcard_device = NULL;
 	options->enable_ssh_keysign = - 1;
 	options->no_host_authentication_for_localhost = - 1;
+	options->identities_only = - 1;
 	options->rekey_limit = - 1;
+	options->verify_host_key_dns = -1;
+	options->server_alive_interval = -1;
+	options->server_alive_count_max = -1;
+	options->num_send_env = 0;
+	options->control_path = NULL;
+	options->control_master = -1;
 }
 
 /*
@@ -837,32 +932,24 @@ fill_default_options(Options * options)
 		options->forward_agent = 0;
 	if (options->forward_x11 == -1)
 		options->forward_x11 = 0;
+	if (options->forward_x11_trusted == -1)
+		options->forward_x11_trusted = 0;
 	if (options->xauth_location == NULL)
 		options->xauth_location = _PATH_XAUTH;
 	if (options->gateway_ports == -1)
 		options->gateway_ports = 0;
 	if (options->use_privileged_port == -1)
 		options->use_privileged_port = 0;
-	if (options->rhosts_authentication == -1)
-		options->rhosts_authentication = 0;
 	if (options->rsa_authentication == -1)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = 1;
 	if (options->challenge_response_authentication == -1)
 		options->challenge_response_authentication = 1;
-#if defined(KRB4) || defined(KRB5)
-	if (options->kerberos_authentication == -1)
-		options->kerberos_authentication = 1;
-#endif
-#if defined(AFS) || defined(KRB5)
-	if (options->kerberos_tgt_passing == -1)
-		options->kerberos_tgt_passing = 1;
-#endif
-#ifdef AFS
-	if (options->afs_token_passing == -1)
-		options->afs_token_passing = 1;
-#endif
+	if (options->gss_authentication == -1)
+		options->gss_authentication = 0;
+	if (options->gss_deleg_creds == -1)
+		options->gss_deleg_creds = 0;
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;
 	if (options->kbd_interactive_authentication == -1)
@@ -879,12 +966,14 @@ fill_default_options(Options * options)
 		options->strict_host_key_checking = 2;	/* 2 is default */
 	if (options->compression == -1)
 		options->compression = 0;
-	if (options->keepalives == -1)
-		options->keepalives = 1;
+	if (options->tcp_keep_alive == -1)
+		options->tcp_keep_alive = 1;
 	if (options->compression_level == -1)
 		options->compression_level = 6;
 	if (options->port == -1)
 		options->port = 0;	/* Filled in ssh_connect. */
+	if (options->address_family == -1)
+		options->address_family = AF_UNSPEC;
 	if (options->connection_attempts == -1)
 		options->connection_attempts = 1;
 	if (options->number_of_password_prompts == -1)
@@ -935,10 +1024,20 @@ fill_default_options(Options * options)
 		clear_forwardings(options);
 	if (options->no_host_authentication_for_localhost == - 1)
 		options->no_host_authentication_for_localhost = 0;
+	if (options->identities_only == -1)
+		options->identities_only = 0;
 	if (options->enable_ssh_keysign == -1)
 		options->enable_ssh_keysign = 0;
 	if (options->rekey_limit == -1)
 		options->rekey_limit = 0;
+	if (options->verify_host_key_dns == -1)
+		options->verify_host_key_dns = 0;
+	if (options->server_alive_interval == -1)
+		options->server_alive_interval = 0;
+	if (options->server_alive_count_max == -1)
+		options->server_alive_count_max = 3;
+	if (options->control_master == -1)
+		options->control_master = 0;
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */

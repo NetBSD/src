@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.1.1.9 2002/06/24 05:25:41 itojun Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.1.1.10 2005/02/13 00:52:44 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,15 +37,24 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-passwd.c,v 1.27 2002/05/24 16:45:16 stevesk Exp $");
+RCSID("$OpenBSD: auth-passwd.c,v 1.31 2004/01/30 09:48:57 markus Exp $");
 
 #include "packet.h"
 #include "log.h"
 #include "servconf.h"
 #include "auth.h"
-
+#include "auth-options.h"
 
 extern ServerOptions options;
+int sys_auth_passwd(Authctxt *, const char *);
+
+static void
+disable_forwarding(void)
+{
+	no_port_forwarding_flag = 1;
+	no_agent_forwarding_flag = 1;
+	no_x11_forwarding_flag = 1;
+}
 
 /*
  * Tries to authenticate the user using password.  Returns true if
@@ -55,50 +64,61 @@ int
 auth_password(Authctxt *authctxt, const char *password)
 {
 	struct passwd * pw = authctxt->pw;
+	int ok = authctxt->valid;
 
-	/* deny if no user. */
-	if (pw == NULL)
-		return 0;
 	if (pw->pw_uid == 0 && options.permit_root_login != PERMIT_YES)
-		return 0;
+		ok = 0;
 	if (*password == '\0' && options.permit_empty_passwd == 0)
 		return 0;
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
 		if (ret == 1 || ret == 0)
-			return ret;
+			return ret && ok;
 		/* Fall back to ordinary passwd authentication. */
 	}
 #endif
-#ifdef KRB4
-	if (options.kerberos_authentication == 1) {
-		int ret = auth_krb4_password(authctxt, password);
-		if (ret == 1 || ret == 0)
-			return ret;
-		/* Fall back to ordinary passwd authentication. */
-	}
-#endif
+	return (sys_auth_passwd(authctxt, password) && ok);
+}
+
 #ifdef BSD_AUTH
-	if (auth_userokay(pw->pw_name, authctxt->style, "auth-ssh",
-	    (char *)password) == 0)
-		return 0;
-	else
-		return 1;
+int
+sys_auth_passwd(Authctxt *authctxt, const char *password)
+{
+	struct passwd *pw = authctxt->pw;
+	auth_session_t *as;
+
+	as = auth_usercheck(pw->pw_name, authctxt->style, "auth-ssh",
+	    (char *)password);
+	if (auth_getstate(as) & AUTH_PWEXPIRED) {
+		auth_close(as);
+		disable_forwarding();
+		authctxt->force_pwchange = 1;
+		return (1);
+	} else {
+		return (auth_close(as));
+	}
+}
 #else
+int
+sys_auth_passwd(Authctxt *authctxt, const char *password)
+{
+	struct passwd *pw = authctxt->pw;
+	char *encrypted_password;
+
 	/* Check for users with no password. */
 	if (strcmp(password, "") == 0 && strcmp(pw->pw_passwd, "") == 0)
-		return 1;
-	else {
-		/* Encrypt the candidate password using the proper salt. */
-		char *encrypted_password = crypt(password,
-		    (pw->pw_passwd[0] && pw->pw_passwd[1]) ?
-		    pw->pw_passwd : "xx");
-		/*
-		 * Authentication is accepted if the encrypted passwords
-		 * are identical.
-		 */
-		return (strcmp(encrypted_password, pw->pw_passwd) == 0);
-	}
-#endif
+		return (1);
+
+	/* Encrypt the candidate password using the proper salt. */
+	encrypted_password = crypt(password,
+	    (pw->pw_passwd[0] && pw->pw_passwd[1]) ?
+	    pw->pw_passwd : "xx");
+
+	/*
+	 * Authentication is accepted if the encrypted passwords
+	 * are identical.
+	 */
+	return (strcmp(encrypted_password, pw->pw_passwd) == 0);
 }
+#endif

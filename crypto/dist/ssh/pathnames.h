@@ -1,5 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.1.1.11 2002/06/24 05:25:52 itojun Exp $	*/
-/*	$OpenBSD: pathnames.h,v 1.13 2002/05/23 19:24:30 markus Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.1.1.12 2005/02/13 00:53:06 christos Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.15 2004/07/11 17:48:47 deraadt Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -112,7 +112,7 @@
 #define _PATH_SSH_ASKPASS_DEFAULT	"/usr/X11R6/bin/ssh-askpass"
 
 /* Location of ssh-keysign for hostbased authentication */
-#define _PATH_SSH_KEY_SIGN	 	"/usr/libexec/ssh-keysign"
+#define _PATH_SSH_KEY_SIGN		"/usr/libexec/ssh-keysign"
 
 /* xauth for X11 forwarding */
 #define _PATH_XAUTH			"/usr/X11R6/bin/xauth"
@@ -129,3 +129,6 @@
 
 /* chroot directory for unprivileged user when UsePrivilegeSeparation=yes */
 #define _PATH_PRIVSEP_CHROOT_DIR	"/var/empty"
+
+/* for passwd change */
+#define _PATH_PASSWD_PROG		"/usr/bin/passwd"
