@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.16 2002/10/01 14:07:47 itojun Exp $
+#	$NetBSD: sshd_config,v 1.17 2003/07/23 03:52:23 itojun Exp $
 #	$OpenBSD: sshd_config,v 1.59 2002/09/25 11:17:16 markus Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -63,8 +63,6 @@
 #KerberosAuthentication no
 #KerberosOrLocalPasswd yes
 #KerberosTicketCleanup yes
-
-#AFSTokenPassing no
 
 # Kerberos TGT Passing only works with the AFS kaserver
 #KerberosTgtPassing no
