@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)archive.h	5.8 (Berkeley) 4/12/91
- *	$Id: archive.h,v 1.3 1994/03/27 09:33:54 cgd Exp $
+ *	from: @(#)archive.h	8.3 (Berkeley) 4/2/94
+ *	$Id: archive.h,v 1.4 1994/09/19 03:34:11 mycroft Exp $
  */
 
 /* Ar(1) options. */
@@ -96,13 +96,11 @@ typedef struct {
 
 #include <sys/cdefs.h>
 
-__BEGIN_DECLS
+struct stat;
+
 void	close_archive __P((int));
-void	skip_arobj __P((int));
-int	copy_ar __P((CF *, off_t));
+void	copy_ar __P((CF *, off_t));
 int	get_arobj __P((int));
 int	open_archive __P((int));
-struct stat;
-int	put_arobj __P((CF *, struct stat *));
-__END_DECLS
-
+void	put_arobj __P((CF *, struct stat *));
+void	skip_arobj __P((int));
