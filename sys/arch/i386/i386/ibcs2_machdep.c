@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.9 2000/01/10 03:05:35 matt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.10 2000/01/10 19:28:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 
 #include <compat/ibcs2/ibcs2_types.h>
 #include <compat/ibcs2/ibcs2_signal.h>
+#include <compat/ibcs2/ibcs2_sysi86.h>
+#include <compat/ibcs2/ibcs2_syscallargs.h>
 
 void
 ibcs2_setregs(p, epp, stack)
