@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ping.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: ping.c,v 1.10 1994/09/23 23:49:18 mycroft Exp $";
+static char *rcsid = "$Id: ping.c,v 1.11 1994/10/31 04:34:56 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -64,6 +64,7 @@ static char *rcsid = "$Id: ping.c,v 1.10 1994/09/23 23:49:18 mycroft Exp $";
  */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/file.h>
 #include <sys/time.h>
