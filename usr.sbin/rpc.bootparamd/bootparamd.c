@@ -6,7 +6,7 @@
  * Various small changes by Theo de Raadt <deraadt@fsa.ca>
  * Parser rewritten (adding YP support) by Roland McGrath <roland@frob.com>
  *
- * $Id: bootparamd.c,v 1.4 1994/11/29 15:03:13 glass Exp $
+ * $Id: bootparamd.c,v 1.5 1995/06/24 15:03:53 pk Exp $
  */
 
 #include <sys/types.h>
@@ -31,8 +31,10 @@ static char askname[MAX_MACHINE_NAME];
 static char path[MAX_PATH_LEN];
 static char domain_name[MAX_MACHINE_NAME];
 
-extern void bootparamprog_1();
+extern void bootparamprog_1 __P((struct svc_req *, SVCXPRT *));
 
+int	_rpcsvcdirty = 0;
+int	_rpcpmstart = 0;
 int     debug = 0;
 int     dolog = 0;
 unsigned long route_addr, inet_addr();
@@ -141,8 +143,9 @@ main(argc, argv)
 }
 
 bp_whoami_res *
-bootparamproc_whoami_1(whoami)
+bootparamproc_whoami_1_svc(whoami, rqstp)
 	bp_whoami_arg *whoami;
+	struct svc_req *rqstp;
 {
 	long    haddr;
 	static bp_whoami_res res;
@@ -208,8 +211,9 @@ failed:
 
 
 bp_getfile_res *
-bootparamproc_getfile_1(getfile)
+bootparamproc_getfile_1_svc(getfile, rqstp)
 	bp_getfile_arg *getfile;
+	struct svc_req *rqstp;
 {
 	char   *where, *index();
 	static bp_getfile_res res;
