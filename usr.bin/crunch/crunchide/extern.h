@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.12 2000/12/18 08:51:39 scw Exp $ */
+/* $NetBSD: extern.h,v 1.13 2003/07/26 20:34:12 salo Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *          This product includes software developed for the
- *          NetBSD Project.  See http://www.netbsd.org/ for
+ *          NetBSD Project.  See http://www.NetBSD.org/ for
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
