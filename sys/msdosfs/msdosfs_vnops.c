@@ -1064,7 +1064,7 @@ struct {
 	"..      ", "   ",	/* the .. entry */
 	ATTR_DIRECTORY,		/* file attribute */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* resevered */
-	4, 210, 4, 210,		/* time and date */
+	210, 4, 210, 4,		/* time and date */
 	0, 0,			/* startcluster */
 	0, 0, 0, 0,		/* filesize */
 };
