@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.177 2004/10/10 09:53:59 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.178 2004/10/10 09:54:46 yamt Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.177 2004/10/10 09:53:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.178 2004/10/10 09:54:46 yamt Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -2300,7 +2300,7 @@ pmap_pageidlezero(pa)
 
 #ifdef DIAGNOSTIC
 	if (*zpte)
-		panic("pmap_zero_page_uncached: lock botch");
+		panic("pmap_pageidlezero: lock botch");
 #endif
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW | PG_M | PG_U; /* map in */
 	pmap_update_pg((vaddr_t)zerova);		/* flush TLB */
