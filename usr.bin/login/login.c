@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.68 2002/07/30 14:37:38 itojun Exp $       */
+/*     $NetBSD: login.c,v 1.69 2002/09/20 21:01:31 itojun Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.68 2002/07/30 14:37:38 itojun Exp $");
+__RCSID("$NetBSD: login.c,v 1.69 2002/09/20 21:01:31 itojun Exp $");
 #endif /* not lint */
 
 /*
@@ -705,7 +705,7 @@ main(argc, argv)
 			motd(fname);
 		else
 #endif
-			(void)printf(copyrightstr);
+			(void)printf("%s", copyrightstr);
 
 #ifdef LOGIN_CAP
                 fname = login_getcapstr(lc, "welcome", NULL, NULL);
