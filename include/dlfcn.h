@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.1 1995/06/05 00:08:07 pk Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.2 1995/06/05 19:38:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -38,11 +38,13 @@
 /*
  * User interface to the run-time linker.
  */
+__BEGIN_DECLS
 extern void	*dlopen __P((char *, int));
 extern int	dlclose __P((void *));
 extern void	*dlsym __P((void *, char *));
 extern int	dlctl __P((void *, int, void *));
 extern char	*dlerror __P((void));
+__END_DECLS
 
 /* Values for dlopen `mode'. */
 #define DL_LAZY		1
