@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.24 1996/05/21 17:15:40 is Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.25 1996/10/10 23:55:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -117,23 +117,23 @@ getgenconf(bp)
 	struct genericconf *gc;
 
 	for (;;) {
-		printf("root device> ");
+		kprintf("root device> ");
 		gets(bp);
 		for (gc = genericconf; gc->gc_driver; gc++)
 			if (gc->gc_driver->cd_name[0] == bp[0] &&
 			    gc->gc_driver->cd_name[1] == bp[1])
 				break;
 		if (gc->gc_driver == NULL) {
-			printf("use one of:");
+			kprintf("use one of:");
 			for (gc = genericconf; gc->gc_driver; gc++)
-				printf(" %s%%d", gc->gc_driver->cd_name);
-			printf("\n");
+				kprintf(" %s%%d", gc->gc_driver->cd_name);
+			kprintf("\n");
 			continue;
 		}
 		cp = bp + 2;
 		if (*cp >= '0' && *cp <= '9')
 			break;
-		printf("bad/missing unit number\n");
+		kprintf("bad/missing unit number\n");
 	}
 	return(gc);
 }
@@ -199,7 +199,7 @@ setconf()
 			goto found;
 		}
 	}
-	printf("no suitable root\n");
+	kprintf("no suitable root\n");
 	asm("stop #0x2700");
 	/*NOTREACHED*/
 found:

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.20 1996/08/27 21:54:57 cgd Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.21 1996/10/10 23:55:53 christos Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -273,10 +273,10 @@ ul_load_code(gp)
 
 	ba->ctrl = LBL | INCW | NMI | NMIM | HLT | CF;
 
-	printf("\ndownloading TMS code");
+	kprintf("\ndownloading TMS code");
 	i=0;
 	while ((j = tmscode[i++])) {
-		printf(".");
+		kprintf(".");
 		ba->hstadrh = tmscode[i++];
 		ba->hstadrl = tmscode[i++];
 		while (j-- > 0) {
@@ -561,7 +561,7 @@ grfulattach(pdp, dp, auxp)
 		grful_iteinit(gp);
 	}
 	if (dp != NULL)
-		printf("\n");
+		kprintf("\n");
 	/*
 	 * attach grf
 	 */
@@ -574,7 +574,7 @@ grfulprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		kprintf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
 			pnp);
 	return(UNCONF);
 }

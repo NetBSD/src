@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.11 1996/09/15 17:16:24 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.12 1996/10/10 23:51:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -115,7 +115,7 @@ tcds_dma_intr(sc)
 
 	if (!sc->sc_iswrite &&
 	    (resid = (ESP_READ_REG(sc->sc_esp, ESP_FFLAG) & ESPFIFO_FF)) != 0) {
-		printf("empty FIFO of %d ", resid);
+		kprintf("empty FIFO of %d ", resid);
 		ESPCMD(sc->sc_esp, ESPCMD_FLUSH);
 		DELAY(1);
 	}
@@ -133,7 +133,7 @@ tcds_dma_intr(sc)
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-		printf("tcds_dma %d: xfer (%d) > req (%d)\n",
+		kprintf("tcds_dma %d: xfer (%d) > req (%d)\n",
 		    sc->sc_slot, trans, sc->sc_dmasize);
 		trans = sc->sc_dmasize;
 	}

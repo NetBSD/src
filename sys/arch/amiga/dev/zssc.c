@@ -1,4 +1,4 @@
-/*	$NetBSD: zssc.c,v 1.18 1996/08/28 18:59:48 cgd Exp $	*/
+/*	$NetBSD: zssc.c,v 1.19 1996/10/10 23:56:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -108,7 +108,7 @@ zsscattach(pdp, dp, auxp)
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 
-	printf("\n");
+	kprintf("\n");
 
 	zap = auxp;
 

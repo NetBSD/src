@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.9 1996/05/25 16:30:16 is Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.10 1996/10/10 23:56:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Bernd Ernesti and Klaus Burkert. All rights reserved.
@@ -201,7 +201,7 @@ aeattach(parent, self, aux)
 	/*
 	 * Make config msgs look nicer.
 	 */
-	printf("\n");
+	kprintf("\n");
 
 	sc->sc_base = zap->va;
 	sc->sc_r1 = (struct aereg1 *)(aestd[1] + (int)zap->va);
@@ -224,7 +224,7 @@ aeattach(parent, self, aux)
 	sc->sc_arpcom.ac_enaddr[4] = (ser >> 8) & 0xff;
 	sc->sc_arpcom.ac_enaddr[5] = ser & 0xff;
 
-	printf("%s: hardware address %s 32K", sc->sc_dev.dv_xname,
+	kprintf("%s: hardware address %s 32K", sc->sc_dev.dv_xname,
 		ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	aestop(sc);
@@ -233,7 +233,7 @@ aeattach(parent, self, aux)
 	/* get the chip version of the lance chip */
 	sc->sc_r1->aer1_rap = 0x5900;
 	revision = ((sc->sc_r1->aer1_rdp >> 4) -2);
-	printf("  chip-revision: B%x\n", revision);
+	kprintf("  chip-revision: B%x\n", revision);
 
 	splx (s);
 
@@ -424,7 +424,7 @@ aeinit(sc)
 	/* Wait for initialization to finish. */
 	do {
 		if (++timo == 10000) {
-			printf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
+			kprintf("%s: card failed to initialize\n", sc->sc_dev.dv_xname);
 			break;
 		}
 	} while ((aer1->aer1_rdp & AE_IDON) == 0);
@@ -484,7 +484,7 @@ aestart(ifp)
 
 #ifdef AEDEBUG
 		if (len > ETHER_MAX_LEN)
-			printf("packet length %d\n", len);
+			kprintf("packet length %d\n", len);
 #endif
 
 		ifp->if_timer = 5;
@@ -524,34 +524,34 @@ aeintr(arg)
 				AE_RINT | AE_TINT | AE_IDON));
 	if (stat & AE_SERR) {
 			if (stat & AE_MERR) {
-				printf("%s: memory error\n", sc->sc_dev.dv_xname);
+				kprintf("%s: memory error\n", sc->sc_dev.dv_xname);
 				aereset(sc);
 				return (1);
 			}
 			if (stat & AE_BABL) {
-				printf("%s: babble\n", sc->sc_dev.dv_xname);
+				kprintf("%s: babble\n", sc->sc_dev.dv_xname);
 				ifp->if_oerrors++;
 			}
 #if 0
 			if (stat & AE_CERR) {
-				printf("%s: collision error\n", sc->sc_dev.dv_xname);
+				kprintf("%s: collision error\n", sc->sc_dev.dv_xname);
 				ifp->if_collisions++;
 			}
 #endif
 			if (stat & AE_MISS) {
-				printf("%s: missed packet\n", sc->sc_dev.dv_xname);
+				kprintf("%s: missed packet\n", sc->sc_dev.dv_xname);
 				ifp->if_ierrors++;
 			}
 			aer1->aer1_rdp =  AE_BABL | AE_CERR | AE_MISS | AE_INEA;
 		}
 		if ((stat & AE_RXON) == 0) {
-			printf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
+			kprintf("%s: receiver disabled\n", sc->sc_dev.dv_xname);
 			ifp->if_ierrors++;
 			aereset(sc);
 			return (1);
 		}
 		if ((stat & AE_TXON) == 0) {
-			printf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
+			kprintf("%s: transmitter disabled\n", sc->sc_dev.dv_xname);
 			ifp->if_oerrors++;
 			aereset(sc);
 			return (1);
@@ -584,7 +584,7 @@ aetint(sc)
 
 	if (tmd->tmd1 & AE_OWN) {
 #ifdef AEDEBUG
-		printf("%s: extra tint\n", sc->sc_dev.dv_xname);
+		kprintf("%s: extra tint\n", sc->sc_dev.dv_xname);
 #endif
 		return;
 	}
@@ -598,21 +598,21 @@ aetint(sc)
 
 		if (tmd->tmd1 & AE_ERR) {
 			if (tmd->tmd3 & AE_TBUFF)
-				printf("%s: transmit buffer error\n", sc->sc_dev.dv_xname);
+				kprintf("%s: transmit buffer error\n", sc->sc_dev.dv_xname);
 			if (tmd->tmd3 & AE_UFLO)
-				printf("%s: underflow\n", sc->sc_dev.dv_xname);
+				kprintf("%s: underflow\n", sc->sc_dev.dv_xname);
 			if (tmd->tmd3 & (AE_TBUFF | AE_UFLO)) {
 				aereset(sc);
 				return;
 			}
 			if (tmd->tmd3 & AE_LCAR)
-				printf("%s: lost carrier\n", sc->sc_dev.dv_xname);
+				kprintf("%s: lost carrier\n", sc->sc_dev.dv_xname);
 			if (tmd->tmd3 & AE_LCOL) {
-				printf("%s: late collision\n", sc->sc_dev.dv_xname);
+				kprintf("%s: late collision\n", sc->sc_dev.dv_xname);
 				ifp->if_collisions++;
 			}
 			if (tmd->tmd3 & AE_RTRY) {
-				printf("%s: excessive collisions, tdr %d\n",
+				kprintf("%s: excessive collisions, tdr %d\n",
 					sc->sc_dev.dv_xname, tmd->tmd3 & AE_TDR_MASK);
 				ifp->if_collisions += 16;
 			}
@@ -653,7 +653,7 @@ aerint(sc)
 	 */
 	if (rmd->rmd1 & AE_OWN) {
 #ifdef AEDEBUG
-		printf("%s: extra rint\n", sc->sc_dev.dv_xname);
+		kprintf("%s: extra rint\n", sc->sc_dev.dv_xname);
 #endif
 		return;
 	}
@@ -666,13 +666,13 @@ aerint(sc)
 		if (rmd->rmd1 & (AE_FRAM | AE_OFLO | AE_CRC | AE_RBUFF)) {
 			ifp->if_ierrors++;
 			if ((rmd->rmd1 & (AE_FRAM | AE_OFLO | AE_ENP)) == (AE_FRAM | AE_ENP))
-				printf("%s: framing error\n", sc->sc_dev.dv_xname);
+				kprintf("%s: framing error\n", sc->sc_dev.dv_xname);
 			if ((rmd->rmd1 & (AE_OFLO | AE_ENP)) == AE_OFLO)
-				printf("%s: overflow\n", sc->sc_dev.dv_xname);
+				kprintf("%s: overflow\n", sc->sc_dev.dv_xname);
 			if ((rmd->rmd1 & (AE_CRC | AE_OFLO | AE_ENP)) == (AE_CRC | AE_ENP))
-				printf("%s: crc mismatch\n", sc->sc_dev.dv_xname);
+				kprintf("%s: crc mismatch\n", sc->sc_dev.dv_xname);
 			if (rmd->rmd1 & AE_RBUFF)
-				printf("%s: receive buffer error\n", sc->sc_dev.dv_xname);
+				kprintf("%s: receive buffer error\n", sc->sc_dev.dv_xname);
 		} else if ((rmd->rmd1 & (AE_STP | AE_ENP)) != (AE_STP | AE_ENP)) {
 			do {
 				rmd->rmd3 = 0;
@@ -681,7 +681,7 @@ aerint(sc)
 			} while ((rmd->rmd1 & (AE_OWN | AE_ERR | AE_STP | AE_ENP)) == 0);
 
 			sc->sc_rmd = bix;
-			printf("%s: chained buffer\n", sc->sc_dev.dv_xname);
+			kprintf("%s: chained buffer\n", sc->sc_dev.dv_xname);
 			if ((rmd->rmd1 & (AE_OWN | AE_ERR | AE_STP | AE_ENP)) != AE_ENP) {
 				aereset(sc);
 				return;
@@ -710,7 +710,7 @@ aeread(sc, buf, len)
 	struct ether_header *eh;
 
 	if (len <= sizeof(struct ether_header) || len > ETHER_MAX_LEN) {
-		printf("%s: invalid packet size %d; dropping\n",
+		kprintf("%s: invalid packet size %d; dropping\n",
 			sc->sc_dev.dv_xname, len);
 		ifp->if_ierrors++;
 		return;

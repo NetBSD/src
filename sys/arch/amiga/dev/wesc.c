@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.15 1996/08/28 18:59:45 cgd Exp $	*/
+/*	$NetBSD: wesc.c,v 1.16 1996/10/10 23:56:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -108,7 +108,7 @@ wescattach(pdp, dp, auxp)
 	struct zbus_args *zap;
 	siop_regmap_p rp;
 
-	printf("\n");
+	kprintf("\n");
 
 	zap = auxp;
 

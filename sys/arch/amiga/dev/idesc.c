@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.25 1996/08/28 18:59:34 cgd Exp $	*/
+/*	$NetBSD: idesc.c,v 1.26 1996/10/10 23:56:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -308,9 +308,9 @@ void ide_dump_regs __P((ide_regmap_p));
 
 int ide_debug = 0;
 
-#define TRACE0(arg) if (ide_debug > 1) printf(arg)
-#define TRACE1(arg1,arg2) if (ide_debug > 1) printf(arg1,arg2)
-#define QPRINTF(a) if (ide_debug > 1) printf a
+#define TRACE0(arg) if (ide_debug > 1) kprintf(arg)
+#define TRACE1(arg1,arg2) if (ide_debug > 1) kprintf(arg1,arg2)
+#define QPRINTF(a) if (ide_debug > 1) kprintf a
 
 #else	/* !DEBUG */
 
@@ -354,7 +354,7 @@ idescattach(pdp, dp, auxp)
 		sc->sc_cregs = rp = (ide_regmap_p) ztwomap(0xda0000);
 		sc->sc_a1200 = ztwomap(0xda8000 + 0x1000);
 		sc->sc_flags |= IDECF_A1200;
-		printf(" A1200 @ %p:%p", rp, sc->sc_a1200);
+		kprintf(" A1200 @ %p:%p", rp, sc->sc_a1200);
 	}
 
 #ifdef DEBUG
@@ -364,14 +364,14 @@ idescattach(pdp, dp, auxp)
 	rp->ide_error = 0x5a;
 	rp->ide_cyl_lo = 0xa5;
 	if (rp->ide_error == 0x5a || rp->ide_cyl_lo != 0xa5) {
-		printf ("\n");
+		kprintf ("\n");
 		return;
 	}
 	/* test if controller will reset */
 	if (idereset(sc) != 0) {
 		delay (500000);
 		if (idereset(sc) != 0) {
-			printf (" IDE controller did not reset\n");
+			kprintf (" IDE controller did not reset\n");
 			return;
 		}
 	}
@@ -382,7 +382,7 @@ idescattach(pdp, dp, auxp)
 	/* Execute a controller only command. */
 	if (idecommand(&sc->sc_ide[0], 0, 0, 0, 0, IDEC_DIAGNOSE) != 0 ||
 	    wait_for_unbusy(sc) != 0) {
-		printf (" ide attach failed\n");
+		kprintf (" ide attach failed\n");
 		return;
 	}
 #endif
@@ -402,7 +402,7 @@ idescattach(pdp, dp, auxp)
 		rp->ide_ctlr = 0;
 	}
 
-	printf ("\n");
+	kprintf ("\n");
 
 	sc->sc_link.channel = SCSI_CHANNEL_ONLY_ONE;
 	sc->sc_link.adapter_softc = sc;
@@ -600,7 +600,7 @@ void
 ide_dump_regs(regs)
 	ide_regmap_p regs;
 {
-	printf ("ide regs: %04x %02x %02x %02x %02x %02x %02x %02x\n",
+	kprintf ("ide regs: %04x %02x %02x %02x %02x %02x %02x %02x\n",
 	    regs->ide_data, regs->ide_error, regs->ide_seccnt,
 	    regs->ide_sector, regs->ide_cyl_lo, regs->ide_cyl_hi,
 	    regs->ide_sdh, regs->ide_command);
@@ -627,7 +627,7 @@ idewait (sc, mask)
 		return (0);
 #ifdef DEBUG
 	if (ide_debug)
-		printf ("idewait busy: %02x\n", regs->ide_status);
+		kprintf ("idewait busy: %02x\n", regs->ide_status);
 #endif
 	for (;;) {
 		if ((regs->ide_status & IDES_BUSY) == 0 &&
@@ -636,17 +636,17 @@ idewait (sc, mask)
 		if (regs->ide_status & IDES_ERR)
 			break;
 		if (++timeout > 10000) {
-			printf ("idewait timeout %02x\n", regs->ide_status);
+			kprintf ("idewait timeout %02x\n", regs->ide_status);
 			return (-1);
 		}
 		delay (1000);
 	}
 	if (regs->ide_status & IDES_ERR)
-		printf ("idewait: error %02x %02x\n", regs->ide_error,
+		kprintf ("idewait: error %02x %02x\n", regs->ide_error,
 		    regs->ide_status);
 #ifdef DEBUG
 	else if (ide_debug)
-		printf ("idewait delay %d %02x\n", timeout, regs->ide_status);
+		kprintf ("idewait delay %d %02x\n", timeout, regs->ide_status);
 #endif
 	return (regs->ide_status & IDES_ERR);
 }
@@ -663,7 +663,7 @@ idecommand (ide, cylin, head, sector, count, cmd)
 
 #ifdef DEBUG
 	if (ide_debug)
-		printf ("idecommand: cmd = %02x\n", cmd);
+		kprintf ("idecommand: cmd = %02x\n", cmd);
 #endif
 	if (wait_for_unbusy(idec) < 0)
 		return (-1);
@@ -672,7 +672,7 @@ idecommand (ide, cylin, head, sector, count, cmd)
 		stat = wait_for_unbusy(idec);
 	else
 		stat = idewait(idec, IDES_READY);
-	if (stat < 0) printf ("idecommand:%d stat %d\n", ide->sc_drive, stat);
+	if (stat < 0) kprintf ("idecommand:%d stat %d\n", ide->sc_drive, stat);
 	if (stat < 0)
 		return (-1);
 	regs->ide_precomp = 0;
@@ -802,7 +802,7 @@ ideiwrite(ide, block, buf, nblks)
 			regs->ide_data = *bufp++;
 		}
 		if (wait_for_unbusy(idec) != 0)
-			printf ("ideiwrite: timeout waiting for unbusy\n");
+			kprintf ("ideiwrite: timeout waiting for unbusy\n");
 	}
 	idec->sc_stat[0] = 0;
 	return (0);
@@ -830,7 +830,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 
 #ifdef DEBUG
 	if (ide_debug > 1)
-		printf ("ideicmd: target %d cmd %02x\n", target,
+		kprintf ("ideicmd: target %d cmd %02x\n", target,
 		    *((u_char *)cbuf));
 #endif
 	if (target > 1)
@@ -920,7 +920,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 			dev->sc_stat[0] = 0;
 			return (0);
 		default:
-			printf ("ide: mode sense page %x not simulated\n",
+			kprintf ("ide: mode sense page %x not simulated\n",
 			   *((u_char *)cbuf + 2) & 0x3f);
 			return (-1);
 		}
@@ -939,7 +939,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 		*((u_char *) buf + 2) = sense_convert[i].scsi_sense_key;
 		*((u_char *) buf + 12) = sense_convert[i].scsi_sense_qual;
 		dev->sc_stat[0] = 0;
-printf("ide: request sense %02x -> %02x %02x\n", ide->sc_error,
+kprintf("ide: request sense %02x -> %02x %02x\n", ide->sc_error,
     sense_convert[i].scsi_sense_key, sense_convert[i].scsi_sense_qual);
 		return (0);
 
@@ -951,7 +951,7 @@ printf("ide: request sense %02x -> %02x %02x\n", ide->sc_error,
 	case 0x11 /*SPACE*/:
 	case MODE_SELECT:
 	default:
-		printf ("ide: unhandled SCSI command %02x\n", *((u_char *)cbuf));
+		kprintf ("ide: unhandled SCSI command %02x\n", *((u_char *)cbuf));
 		ide->sc_error = 0x04;
 		dev->sc_stat[0] = SCSI_CHECK;
 		return (SCSI_CHECK);
@@ -975,7 +975,7 @@ idego(dev, xs)
 	ide->sc_bcount = xs->datalen;
 #ifdef DEBUG
 	if (ide_debug > 1)
-		printf ("ide_go: %02x\n", xs->cmd->opcode);
+		kprintf ("ide_go: %02x\n", xs->cmd->opcode);
 #endif
 	if (xs->cmd->opcode != READ_COMMAND && xs->cmd->opcode != READ_BIG &&
 	    xs->cmd->opcode != WRITE_COMMAND && xs->cmd->opcode != WRITE_BIG) {
@@ -1034,7 +1034,7 @@ idestart(dev)
 		command = (dev->sc_flags & IDECF_READ) ?
 		    IDEC_READ : IDEC_WRITE;
 		if (idecommand(ide, cylin, head, sector, count, command) != 0) {
-			printf ("idestart: timeout waiting for unbusy\n");
+			kprintf ("idestart: timeout waiting for unbusy\n");
 #if 0
 			bp->b_error = EINVAL;
 			bp->b_flags |= B_ERROR;
@@ -1048,7 +1048,7 @@ idestart(dev)
 	if (dev->sc_flags & IDECF_READ)
 		return (0);
 	if (wait_for_drq(dev) < 0) {
-		printf ("idestart: timeout waiting for drq\n");
+		kprintf ("idestart: timeout waiting for drq\n");
 	}
 #define W1	(regs->ide_data = *bf++)
 	for (i = 0, bf = (short *) (ide->sc_buf + ide->sc_skip * DEV_BSIZE);
@@ -1079,7 +1079,7 @@ idesc_intr(arg)
 	if (dev->sc_flags & IDECF_A1200) {
 		if (*dev->sc_a1200 & 0x80) {
 #if 0
-			printf ("idesc_intr: A1200 interrupt %x\n", *dev->sc_a1200);
+			kprintf ("idesc_intr: A1200 interrupt %x\n", *dev->sc_a1200);
 #endif
 			dummy = regs->ide_status;	/* XXX */
 			*dev->sc_a1200 = 0x7c | (*dev->sc_a1200 & 0x03);
@@ -1093,25 +1093,25 @@ idesc_intr(arg)
 	}
 #ifdef DEBUG
 	if (ide_debug)
-		printf ("idesc_intr: %02x\n", dummy);
+		kprintf ("idesc_intr: %02x\n", dummy);
 #endif
 	if ((dev->sc_flags & IDECF_ACTIVE) == 0)
 		return (1);
 	dev->sc_flags &= ~IDECF_ACTIVE;
 	if (wait_for_unbusy(dev) < 0)
-		printf ("idesc_intr: timeout waiting for unbusy\n");
+		kprintf ("idesc_intr: timeout waiting for unbusy\n");
 	ide = dev->sc_cur;
 	if (dummy & IDES_ERR) {
 		dev->sc_stat[0] = SCSI_CHECK;
 		ide->sc_error = regs->ide_error;
-printf("idesc_intr: error %02x, %02x\n", dev->sc_stat[1], dummy);
+kprintf("idesc_intr: error %02x, %02x\n", dev->sc_stat[1], dummy);
 		ide_scsidone(dev, dev->sc_stat[0]);
 	}
 	if (dev->sc_flags & IDECF_READ) {
 #define R2 (*bf++ = regs->ide_data)
 		bf = (short *) (ide->sc_buf + ide->sc_skip * DEV_BSIZE);
 		if (wait_for_drq(dev) != 0)
-			printf ("idesc_intr: read error detected late\n");
+			kprintf ("idesc_intr: read error detected late\n");
 		for (i = 0; i < DEV_BSIZE / 2 / 16; ++i) {
 			R2; R2; R2; R2; R2; R2; R2; R2;
 			R2; R2; R2; R2; R2; R2; R2; R2;
@@ -1123,7 +1123,7 @@ printf("idesc_intr: error %02x, %02x\n", dev->sc_stat[1], dummy);
 	ide->sc_mbcount -= DEV_BSIZE;
 #ifdef DEBUG
 	if (ide_debug)
-		printf ("idesc_intr: sc_bcount %ld\n", ide->sc_bcount);
+		kprintf ("idesc_intr: sc_bcount %ld\n", ide->sc_bcount);
 #endif
 	if (ide->sc_bcount == 0)
 		ide_scsidone(dev, dev->sc_stat[0]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasic.c,v 1.7 1996/08/27 21:54:17 cgd Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.8 1996/10/10 23:51:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -147,10 +147,10 @@ ioasicattach(parent, self, aux)
 		*(volatile u_int *)IOASIC_REG_CSR(sc->sc_base) |=
 		    IOASIC_CSR_FASTMODE;
 		tc_mb();
-		printf(": slow mode\n");
+		kprintf(": slow mode\n");
 	} else
 #endif
-		printf(": fast mode\n");
+		kprintf(": fast mode\n");
 
 	/*
 	 * Turn off all device interrupt bits.
@@ -194,8 +194,8 @@ ioasicprint(aux, pnp)
 	struct ioasicdev_attach_args *d = aux;
 
         if (pnp)
-                printf("%s at %s", d->iada_modname, pnp);
-        printf(" offset 0x%lx", (long)d->iada_offset);
+                kprintf("%s at %s", d->iada_modname, pnp);
+        kprintf(" offset 0x%lx", (long)d->iada_offset);
         return (UNCONF);
 }
 

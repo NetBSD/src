@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.17 1996/05/12 02:26:19 mhitch Exp $	*/
+/*	$NetBSD: sci.c,v 1.18 1996/10/10 23:56:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -91,7 +91,7 @@ int sci_init_wait = SCI_INIT_WAIT;
 int sci_no_dma = 0;
 
 #ifdef DEBUG
-#define QPRINTF(a) if (sci_debug > 1) printf a
+#define QPRINTF(a) if (sci_debug > 1) kprintf a
 int	sci_debug = 0;
 #else
 #define QPRINTF(a)
@@ -295,7 +295,7 @@ sciabort(dev, where)
 	struct sci_softc *dev;
 	char *where;
 {
-	printf ("%s: abort %s: csr = 0x%02x, bus = 0x%02x\n",
+	kprintf ("%s: abort %s: csr = 0x%02x, bus = 0x%02x\n",
 	  dev->sc_dev.dv_xname, where, *dev->sci_csr, *dev->sci_bus_csr);
 
 	if (dev->sc_flags & SCI_SELECTED) {
@@ -347,7 +347,7 @@ scireset(dev)
 	if (dev->sc_flags & SCI_ALIVE)
 		sciabort(dev, "reset");
 
-	printf("%s: ", dev->sc_dev.dv_xname);
+	kprintf("%s: ", dev->sc_dev.dv_xname);
 
 	s = splbio();
 	/* preserve our ID for now */
@@ -372,7 +372,7 @@ scireset(dev)
 
 	splx (s);
 
-	printf("sci id %d\n", my_id);
+	kprintf("sci id %d\n", my_id);
 	dev->sc_flags |= SCI_ALIVE;
 }
 
@@ -392,8 +392,8 @@ scierror(dev, csr)
 	if (xs->flags & SCSI_SILENT)
 		return;
 
-	printf("%s: ", dev->sc_dev.dv_xname);
-	printf("csr == 0x%02i\n", csr);	/* XXX */
+	kprintf("%s: ", dev->sc_dev.dv_xname);
+	kprintf("csr == 0x%02i\n", csr);	/* XXX */
 }
 
 /*
@@ -458,7 +458,7 @@ sci_ixfer_out(dev, len, buf, phase)
 			if ((csr & SCI_BUS_BSY) == 0 || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("sci_ixfer_out fail: l%d i%x w%d\n",
+					kprintf("sci_ixfer_out fail: l%d i%x w%d\n",
 					  len, csr, wait);
 #endif
 				return (len);
@@ -508,7 +508,7 @@ sci_ixfer_in(dev, len, buf, phase)
 			if (!(csr & SCI_BUS_BSY) || --wait < 0) {
 #ifdef DEBUG
 				if (sci_debug)
-					printf("sci_ixfer_in fail: l%d i%x w%d\n",
+					kprintf("sci_ixfer_in fail: l%d i%x w%d\n",
 					len, csr, wait);
 #endif
 				return;
@@ -619,7 +619,7 @@ sciicmd(dev, target, cbuf, clen, buf, len, xferphase)
 			goto out;
 
 		default:
-		printf("sci: unexpected phase %d in icmd from %d\n",
+		kprintf("sci: unexpected phase %d in icmd from %d\n",
 		  phase, target);
 		goto abort;
 		}
@@ -727,7 +727,7 @@ scigo(dev, xs)
 			goto out;
 
 		default:
-		printf("sci: unexpected phase %d in icmd from %d\n",
+		kprintf("sci: unexpected phase %d in icmd from %d\n",
 		  phase, target);
 		goto abort;
 		}

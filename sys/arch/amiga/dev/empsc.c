@@ -1,4 +1,4 @@
-/*	$NetBSD: empsc.c,v 1.9 1996/08/28 18:59:30 cgd Exp $	*/
+/*	$NetBSD: empsc.c,v 1.10 1996/10/10 23:55:34 christos Exp $	*/
 
 /*
 
@@ -111,7 +111,7 @@ empscattach(pdp, dp, auxp)
 	struct sci_softc *sc;
 	struct zbus_args *zap;
 
-	printf("\n");
+	kprintf("\n");
 
 	zap = auxp;
 	

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.28 1996/08/27 21:54:43 cgd Exp $	*/
+/*	$NetBSD: grf.c,v 1.29 1996/10/10 23:55:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,12 +156,12 @@ grfattach(pdp, dp, auxp)
 
 	gp->g_grfdev = makedev(maj, gp->g_unit);
 	if (dp != NULL) {
-		printf(": width %d height %d", gp->g_display.gd_dwidth,
+		kprintf(": width %d height %d", gp->g_display.gd_dwidth,
 		    gp->g_display.gd_dheight);
 		if (gp->g_display.gd_colors == 2)
-			printf(" monochrome\n");
+			kprintf(" monochrome\n");
 		else
-			printf(" colors %d\n", gp->g_display.gd_colors);
+			kprintf(" colors %d\n", gp->g_display.gd_colors);
 	}
 	
 	/*
@@ -176,7 +176,7 @@ grfprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("ite at %s", pnp);
+		kprintf("ite at %s", pnp);
 	return(UNCONF);
 }
 

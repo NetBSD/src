@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.33 1996/08/27 21:54:37 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.34 1996/10/10 23:55:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -317,7 +317,7 @@ fdcmatch(pdp, match, auxp)
 	if (matchname("fdc", auxp) == 0 || cfp->cf_unit != 0)
 		return(0);
 	if ((fdc_dmap = alloc_chipmem(DMABUFSZ)) == NULL) {
-		printf("fdc: unable to allocate dma buffer\n");
+		kprintf("fdc: unable to allocate dma buffer\n");
 		return(0);
 	}
 	return(1);
@@ -330,8 +330,8 @@ fdcattach(pdp, dp, auxp)
 {
 	struct fdcargs args;
 
-	printf(": dmabuf pa 0x%x", kvtop(fdc_dmap));
-	printf(": dmabuf ka %p\n", fdc_dmap);
+	kprintf(": dmabuf pa 0x%x", kvtop(fdc_dmap));
+	kprintf(": dmabuf ka %p\n", fdc_dmap);
 	args.unit = 0;
 	args.type = fdcgetfdtype(args.unit);
 
@@ -353,7 +353,7 @@ fdcprint(auxp, pnp)
 
 	fcp = auxp;
 	if (pnp)
-		printf("fd%d at %s unit %d:", fcp->unit, pnp,
+		kprintf("fd%d at %s unit %d:", fcp->unit, pnp,
 			fcp->type->driveid);
 	return(UNCONF);
 }
@@ -396,7 +396,7 @@ fdattach(pdp, dp, auxp)
 	sc->retries = FDRETRIES;
 	sc->stepdelay = FDSTEPDELAY;
 	sc->bytespersec = 512;
-	printf(" unit %d: %s %d cyl, %d head, %d sec [%d sec], 512 bytes/sec\n",
+	kprintf(" unit %d: %s %d cyl, %d head, %d sec [%d sec], 512 bytes/sec\n",
 	    sc->hwunit, sc->type->desc, sc->type->ncylinders, FDNHEADS,
 	    sc->type->amiga_nsectors, sc->type->msdos_nsectors);
 
@@ -494,7 +494,7 @@ fdopen(dev, flags, devtype, p)
 	if ((error = fdgetdisklabel(sc, dev)) != 0)
 		goto done;
 #ifdef FDDEBUG
-	printf("  open successful\n");
+	kprintf("  open successful\n");
 #endif
 done:
 	/*
@@ -524,7 +524,7 @@ fdclose(dev, flags, devtype, p)
 	int s;
 
 #ifdef FDDEBUG
-	printf("fdclose()\n");
+	kprintf("fdclose()\n");
 #endif
 	sc = getsoftc(fd_cd, FDUNIT(dev));
 	s = splbio();
@@ -668,7 +668,7 @@ fdstrategy(bp)
 	sc = getsoftc(fd_cd, unit);
 
 #ifdef FDDEBUG
-	printf("fdstrategy: 0x%x\n", bp);
+	kprintf("fdstrategy: 0x%x\n", bp);
 #endif
 	/*
 	 * check for valid partition and bounds
@@ -757,7 +757,7 @@ fdgetdisklabel(sc, dev)
 	    sc->dkdev.dk_label->d_npartitions == (FDPART(dev) + 1))
 		return(0);
 #ifdef FDDEBUG
-	printf("fdgetdisklabel()\n");
+	kprintf("fdgetdisklabel()\n");
 #endif
 	part = FDPART(dev);
 	lp = sc->dkdev.dk_label;
@@ -849,7 +849,7 @@ fdsetdisklabel(sc, lp)
 	 * partition
 	 */
 #ifdef FDDEBUG
-	printf("fdsetdisklabel\n");
+	kprintf("fdsetdisklabel\n");
 #endif
 	if (lp->d_secsize != FDSECSIZE ||
 	    lp->d_nsectors != clp->d_nsectors ||
@@ -904,7 +904,7 @@ fdputdisklabel(sc, dev)
 	if ((sc->flags & FDF_HAVELABEL) == 0)
 		return(EBADF);
 #ifdef FDDEBUG
-	printf("fdputdisklabel\n");
+	kprintf("fdputdisklabel\n");
 #endif
 	/*
 	 * get buf and read in sector 0
@@ -971,7 +971,7 @@ fdcgetfdtype(unit)
 		delay(1);
 	}
 #ifdef FDDEBUG
-	printf("fdcgettype unit %d id 0x%lx\n", unit, id);
+	kprintf("fdcgettype unit %d id 0x%lx\n", unit, id);
 #endif
 
 	for (cnt = 0, ftp = fdtype; cnt < nfdtype; ftp++, cnt++)
@@ -1000,7 +1000,7 @@ fdmotoroff(arg)
 	s = splbio();
 
 #ifdef FDDEBUG
-	printf("fdmotoroff: unit %d\n", sc->hwunit);
+	kprintf("fdmotoroff: unit %d\n", sc->hwunit);
 #endif
 	if ((sc->flags & FDF_MOTORON) == 0)
 		goto done;
@@ -1013,7 +1013,7 @@ fdmotoroff(arg)
 		goto done;
 	}
 #ifdef FDDEBUG
-	printf(" motor was on, turning off\n");
+	kprintf(" motor was on, turning off\n");
 #endif
 
 	/*
@@ -1022,7 +1022,7 @@ fdmotoroff(arg)
 	if (sc->flags & FDF_DIRTY) {
 		sc->flags |= FDF_JUSTFLUSH | FDF_MOTOROFF;
 #ifdef FDDEBUG
-		printf("  flushing dirty buffer first\n");
+		kprintf("  flushing dirty buffer first\n");
 #endif
 		/*
 		 * if dma'ing done for now, fddone() will call us again
@@ -1046,7 +1046,7 @@ fdmotoroff(arg)
 	}
 
 #ifdef FDDEBUG
-	printf("  hw turning unit off\n");
+	kprintf("  hw turning unit off\n");
 #endif
 
 	sc->flags &= ~(FDF_MOTORON | FDF_MOTOROFF);
@@ -1099,7 +1099,7 @@ fdsetpos(sc, trk, towrite)
 		sc->flags |= FDF_WRITEWAIT;
 
 #ifdef FDDEBUG
-	printf("fdsetpos: cyl %d head %d towrite %d\n", trk / FDNHEADS,
+	kprintf("fdsetpos: cyl %d head %d towrite %d\n", trk / FDNHEADS,
 	    trk % FDNHEADS, towrite);
 #endif
 	nstep = ncyl - sc->curcyl;
@@ -1185,7 +1185,7 @@ fdstart(sc)
 	int changed;
 
 #ifdef FDDEBUG
-	printf("fdstart: unit %d\n", sc->hwunit);
+	kprintf("fdstart: unit %d\n", sc->hwunit);
 #endif
 
 	/*
@@ -1200,7 +1200,7 @@ fdstart(sc)
 	dp = &sc->bufq;
 	if ((bp = dp->b_actf) == NULL) {
 #ifdef FDDEBUG
-		printf("  nothing to do\n");
+		kprintf("  nothing to do\n");
 #endif
 		return;
 	}
@@ -1223,9 +1223,9 @@ fdstart(sc)
 		 * this unit until re-open()'ed also invalidate
 		 * all current io
 		 */
-printf("fdstart: disk changed\n");
+kprintf("fdstart: disk changed\n");
 #ifdef FDDEBUG
-		printf("  disk was removed invalidating all io\n");
+		kprintf("  disk was removed invalidating all io\n");
 #endif
 		sc->flags &= ~FDF_HAVELABEL;
 		for (;;) {
@@ -1361,7 +1361,7 @@ fddmastart(sc, trk)
 	int adkmask, ndmaw, write, dmatrk;
 
 #ifdef FDDEBUG
-	printf("fddmastart: unit %d cyl %d head %d", sc->hwunit,
+	kprintf("fddmastart: unit %d cyl %d head %d", sc->hwunit,
 	    trk / FDNHEADS, trk % FDNHEADS);
 #endif
 	/*
@@ -1379,7 +1379,7 @@ fddmastart(sc, trk)
 	}
 
 #ifdef FDDEBUG
-	printf(" %s", write ? " flushing cache\n" : " loading cache\n");
+	kprintf(" %s", write ? " flushing cache\n" : " loading cache\n");
 #endif
 	sc->cachetrk = trk;
 	fdc_indma = sc;
@@ -1419,7 +1419,7 @@ fddmastart(sc, trk)
 	}
 
 #ifdef FDDEBUG
-	printf("  dma started\n");
+	kprintf("  dma started\n");
 #endif
 }
 
@@ -1468,7 +1468,7 @@ fddmadone(sc, timeo)
 	int timeo;
 {
 #ifdef FDDEBUG
-	printf("fddmadone: unit %d, timeo %d\n", sc->hwunit, timeo);
+	kprintf("fddmadone: unit %d, timeo %d\n", sc->hwunit, timeo);
 #endif
 	fdc_indma = NULL;
 	untimeout(fdmotoroff, sc);
@@ -1495,7 +1495,7 @@ fddmadone(sc, timeo)
 		 */
 		sc->flags &= ~FDF_DIRTY;
 		if (timeo)
-			printf("%s: write of track cache timed out.\n",
+			kprintf("%s: write of track cache timed out.\n",
 			    sc->sc_dv.dv_xname);
 		if (sc->flags & FDF_JUSTFLUSH) {
 			sc->flags &= ~FDF_JUSTFLUSH;
@@ -1524,7 +1524,7 @@ fddmadone(sc, timeo)
 	else {
 #ifdef FDDEBUG
 		if (timeo)
-			printf("%s: fddmadone: cache load timed out.\n",
+			kprintf("%s: fddmadone: cache load timed out.\n",
 			    sc->sc_dv.dv_xname);
 #endif
 		if (sc->retried >= sc->retries) {
@@ -1552,7 +1552,7 @@ fddone(sc)
 	int sz;
 
 #ifdef FDDEBUG
-	printf("fddone: unit %d\n", sc->hwunit);
+	kprintf("fddone: unit %d\n", sc->hwunit);
 #endif
 	/*
 	 * check to see if unit is just flushing the cache,
@@ -1694,11 +1694,11 @@ fdminphys(bp)
 	toff = sec * FDSECSIZE;
 	tsz = sc->nsectors * FDSECSIZE;
 #ifdef FDDEBUG
-	printf("fdminphys: before %d", bp->b_bcount);
+	kprintf("fdminphys: before %d", bp->b_bcount);
 #endif
 	bp->b_bcount = min(bp->b_bcount, tsz - toff);
 #ifdef FDDEBUG
-	printf(" after %d\n", bp->b_bcount);
+	kprintf(" after %d\n", bp->b_bcount);
 #endif
 	minphys(bp);
 }
@@ -1825,7 +1825,7 @@ amrawtocache(sc)
 again:
 	if (doagain == 0 || (rp = srp = fdfindsync(srp, erp)) == NULL) {
 #ifdef DIAGNOSTIC
-		printf("%s: corrupted track (%d) data.\n",
+		kprintf("%s: corrupted track (%d) data.\n",
 		    sc->sc_dv.dv_xname, sc->cachetrk);
 #endif
 		return(-1);
@@ -1841,20 +1841,20 @@ again:
 		rp = mfmblkdecode(rp, &cktmp, NULL, 1);
 		if (cktmp != hcksum) {
 #ifdef FDDEBUG
-			printf("  info 0x%x hchksum 0x%x trkhcksum 0x%x\n",
+			kprintf("  info 0x%x hchksum 0x%x trkhcksum 0x%x\n",
 			    info, hcksum, cktmp);
 #endif
 			goto again;
 		}
 		if (((info >> 16) & 0xff) != sc->cachetrk) {
 #ifdef DEBUG
-			printf("%s: incorrect track found: 0x%lx %d\n",
+			kprintf("%s: incorrect track found: 0x%lx %d\n",
 			    sc->sc_dv.dv_xname, info, sc->cachetrk);
 #endif
 			goto again;
 		}
 #ifdef FDDEBUG
-		printf("  info 0x%x\n", info);
+		kprintf("  info 0x%x\n", info);
 #endif
 
 		rp = mfmblkdecode(rp, &cktmp, NULL, 1);
@@ -1863,7 +1863,7 @@ again:
 		crp = mfmblkdecode(rp, dp, &dcksum, FDSECLWORDS);
 		if (cktmp != dcksum) {
 #ifdef FDDEBUG
-			printf("  info 0x%x dchksum 0x%x trkdcksum 0x%x\n",
+			kprintf("  info 0x%x dchksum 0x%x trkdcksum 0x%x\n",
 			    info, dcksum, cktmp);
 #endif
 			goto again;
@@ -1990,7 +1990,7 @@ msrawtocache(sc)
 			 */
 			if ((rp = (u_short *)fdfindsync((u_long *)rp, (u_long *)erp)) == NULL) {
 #ifdef DIAGNOSTIC
-				printf("%s: corrupted track (%d) data.\n",
+				kprintf("%s: corrupted track (%d) data.\n",
 				sc->sc_dv.dv_xname, sc->cachetrk);
 #endif
 				return(-1);
@@ -2003,7 +2003,7 @@ msrawtocache(sc)
 				continue;
 			rp = msblkdecode(rp, tb, 4);
 #ifdef FDDEBUG
-			printf("sector id: sector %d, track %d, side %d,"
+			kprintf("sector id: sector %d, track %d, side %d,"
 			    "bps %d\n", tb[2], tb[0], tb[1], 128 << tb[3]);
 #endif
 			if ((tb[0] * FDNHEADS + tb[1]) != sc->cachetrk ||

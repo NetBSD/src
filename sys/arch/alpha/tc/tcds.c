@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds.c,v 1.13 1996/08/27 21:54:22 cgd Exp $	*/
+/*	$NetBSD: tcds.c,v 1.14 1996/10/10 23:51:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -103,7 +103,7 @@ tcdsattach(parent, self, aux)
 	int i;
 	extern int cputype;
 
-	printf("\n");
+	kprintf("\n");
 
 	sc->sc_base = ta->ta_addr;
 	sc->sc_cookie = ta->ta_cookie;
@@ -208,8 +208,8 @@ tcdsprint(aux, pnp)
 	struct tc_attach_args *ta = aux;
 
 	if (pnp)
-		printf("%s at %s", ta->ta_modname, pnp);
-	printf(" slot %d", ta->ta_slot);
+		kprintf("%s at %s", ta->ta_modname, pnp);
+	kprintf(" slot %d", ta->ta_slot);
 	return (UNCONF);
 }
 
@@ -386,7 +386,7 @@ tcds_intr(val)
 	 */
 #define	PRINTINTR(msg, bits)						\
 	if (ir & bits)							\
-		printf(msg);
+		kprintf(msg);
 	PRINTINTR("SCSI0 DREQ interrupt.\n", TCDS_CIR_SCSI0_DREQ);
 	PRINTINTR("SCSI1 DREQ interrupt.\n", TCDS_CIR_SCSI1_DREQ);
 	PRINTINTR("SCSI0 prefetch interrupt.\n", TCDS_CIR_SCSI0_PREFETCH);

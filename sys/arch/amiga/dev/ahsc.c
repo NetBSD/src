@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.14 1996/08/28 18:59:24 cgd Exp $	*/
+/*	$NetBSD: ahsc.c,v 1.15 1996/10/10 23:55:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -115,7 +115,7 @@ ahscattach(pdp, dp, auxp)
 	volatile struct sdmac *rp;
 	struct sbic_softc *sc;
 	
-	printf("\n");
+	kprintf("\n");
 
 	sc = (struct sbic_softc *)dp;
 	sc->sc_cregs = rp = ztwomap(0xdd0000);
@@ -186,7 +186,7 @@ ahsc_dmago(dev, addr, count, flags)
 		dev->sc_dmacmd |= CNTR_DDIR;
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_IO)
-		printf("ahsc_dmago: cmd %x\n", dev->sc_dmacmd);
+		kprintf("ahsc_dmago: cmd %x\n", dev->sc_dmacmd);
 #endif
 
 	dev->sc_flags |= SBICF_INTR;
@@ -208,7 +208,7 @@ ahsc_dmastop(dev)
 
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_FOLLOW)
-		printf("ahsc_dmastop()\n");
+		kprintf("ahsc_dmastop()\n");
 #endif
 	if (dev->sc_dmacmd) {
 		s = splbio();
@@ -247,7 +247,7 @@ ahsc_dmaintr(arg)
 
 #ifdef DEBUG
 	if (ahsc_dmadebug & DDB_FOLLOW)
-		printf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
+		kprintf("%s: dmaintr 0x%x\n", dev->sc_dev.dv_xname, stat);
 #endif
 
 	/*
@@ -283,7 +283,7 @@ ahsc_dmanext(dev)
 
 	if (dev->sc_cur > dev->sc_last) {
 		/* shouldn't happen !! */
-		printf("ahsc_dmanext at end !!!\n");
+		kprintf("ahsc_dmanext at end !!!\n");
 		ahsc_dmastop(dev);
 		return(0);
 	}

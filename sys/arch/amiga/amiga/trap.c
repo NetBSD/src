@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 1996/09/08 11:21:11 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 1996/10/10 23:55:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -238,7 +238,7 @@ panictrap(type, code, v, fp)
 {
 	static int panicing = 0;
 	if (panicing++ == 0) {
-		printf("trap type %d, code = %x, v = %x\n", type, code, v);
+		kprintf("trap type %d, code = %x, v = %x\n", type, code, v);
 		regdump(fp, 128);
 	}
 	type &= ~T_USER;
@@ -312,7 +312,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 #ifdef M68060
 		if (machineid & AMIGA_68060) {
 			if (--donomore == 0 || mmudebug & 1)
-				printf ("68060 access error: pc %x, code %b,"
+				kprintf ("68060 access error: pc %x, code %b,"
 				     " ea %x\n", fp->f_pc, 
 				     code, FSLW_STRING, v);
 			if (p == oldp && v == oldv && code == oldcode)
@@ -324,10 +324,10 @@ trapmmufault(type, code, v, fp, p, sticks)
 			oldcode = code;
 		} else
 #endif
-		printf("68040 access error: pc %x, code %x,"
+		kprintf("68040 access error: pc %x, code %x,"
 		    " ea %x, fa %x\n", fp->f_pc, code, fp->f_fmt7.f_ea, v);
 		if (curpcb)
-			printf(" curpcb %p ->pcb_ustp %x / %x\n",
+			kprintf(" curpcb %p ->pcb_ustp %x / %x\n",
 			    curpcb, curpcb->pcb_ustp, 
 			    curpcb->pcb_ustp << PG_SHIFT);
 				
@@ -369,7 +369,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	va = trunc_page((vm_offset_t)v);
 #ifdef DEBUG
 	if (map == kernel_map && va == 0) {
-		printf("trap: bad kernel access at %x pc %x\n", v, fp->f_pc);
+		kprintf("trap: bad kernel access at %x pc %x\n", v, fp->f_pc);
 		panictrap(type, code, v, fp);
 	}
 #endif
@@ -389,14 +389,14 @@ trapmmufault(type, code, v, fp, p, sticks)
 
 #ifdef DEBUG
 	if (mmudebug)
-		printf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
+		kprintf("vm_fault(%p,%lx,%d,0)\n", map, va, ftype);
 #endif
 
 	rv = vm_fault(map, va, ftype, FALSE);
 
 #ifdef DEBUG
 	if (mmudebug)
-		printf("vmfault %s %lx returned %d\n",
+		kprintf("vmfault %s %lx returned %d\n",
 		    map == kernel_map ? "kernel" : "user", va, rv);
 #endif
 #ifdef M68060
@@ -425,7 +425,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 
 		/* Check WB1 */
 		if (fp->f_fmt7.f_wb1s & WBS_VALID) {
-			printf ("trap: wb1 was valid, not handled yet\n");
+			kprintf ("trap: wb1 was valid, not handled yet\n");
 			panictrap(type, code, v, fp);
 		}
 
@@ -501,9 +501,9 @@ nogo:
 			trapcpfault(p, fp);
 			return;
 		}
-		printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
+		kprintf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 		       map, va, ftype, rv);
-		printf("  type %x, code [mmu,,ssw]: %x\n",
+		kprintf("  type %x, code [mmu,,ssw]: %x\n",
 		       type, code);
 		panictrap(type, code, v, fp);
 	}
@@ -550,7 +550,7 @@ trap(type, code, v, frame)
 #endif
 #ifdef DEBUG
 	if (mmudebug & 2)
-	printf("trap: t %x c %x v %x pad %x adj %x sr %x pc %x fmt %x vc %x\n",
+	kprintf("trap: t %x c %x v %x pad %x adj %x sr %x pc %x fmt %x vc %x\n",
 	    type, code, v, frame.f_pad, frame.f_stackadj, frame.f_sr,
 	    frame.f_pc, frame.f_format, frame.f_vector);
 #endif
@@ -630,7 +630,7 @@ trap(type, code, v, frame)
 		 */
 		type |= T_USER;
 #ifdef DEBUG
-		printf("pid %d: kernel %s exception\n", p->p_pid,
+		kprintf("pid %d: kernel %s exception\n", p->p_pid,
 		    type==T_COPERR ? "coprocessor" : "format");
 #endif
 		p->p_sigacts->ps_sigact[SIGILL] = SIG_DFL;
@@ -709,7 +709,7 @@ trap(type, code, v, frame)
 
 #ifdef DEBUG
 	if (i != SIGTRAP)
-		printf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i,
+		kprintf("trapsignal(%d, %d, %d, %x, %x)\n", p->p_pid, i,
 		    ucode, v, frame.f_pc);
 #endif
 	trapsignal(p, i, ucode);
@@ -906,7 +906,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 
 #ifdef DEBUG
 	if (mmudebug)
-		printf("wb%d valid: %x %x %x\n",wb,wb_sts,wb_addr,wb_data);
+		kprintf("wb%d valid: %x %x %x\n",wb,wb_sts,wb_addr,wb_data);
 #endif
 
 	/* See if we're going to span two pages (for word or long transfers) */
@@ -928,14 +928,14 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		mmusr = probeva(wb_addr, wb_sts & WBS_TMMASK);
 #ifdef DEBUG
 	if (mmudebug)
-		printf("wb3: probeva(%x,%x) = %x\n",
+		kprintf("wb3: probeva(%x,%x) = %x\n",
 		    wb_addr + wb_extra_page, wb_sts & WBS_TMMASK, mmusr);
 #endif
 
 		if((mmusr & (MMUSR_R | MMUSR_W)) != MMUSR_R) {
 #ifdef DEBUG
 			if (mmudebug)
-				printf("wb3: need to bring in first page\n");
+				kprintf("wb3: need to bring in first page\n");
 #endif
 			wb_rc = vm_fault(wb_map, 
 			    trunc_page((vm_offset_t)wb_addr), 
@@ -945,7 +945,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 				return (wb_rc);
 #ifdef DEBUG
 			if (mmudebug)
-				printf("wb3: first page brought in.\n");
+				kprintf("wb3: first page brought in.\n");
 #endif
 		}
 	}
@@ -958,7 +958,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		mmusr = probeva(wb_addr+wb_extra_page, wb_sts & WBS_TMMASK);
 #ifdef DEBUG
 		if (mmudebug)
-			printf("wb%d: probeva %x %x = %x\n",
+			kprintf("wb%d: probeva %x %x = %x\n",
 			    wb, wb_addr + wb_extra_page, 
 			    wb_sts & WBS_TMMASK,mmusr);
 #endif
@@ -966,7 +966,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		if((mmusr & (MMUSR_R | MMUSR_W)) != MMUSR_R) {
 #ifdef DEBUG
 			if (mmudebug)
-				printf("wb%d: page boundary crossed."
+				kprintf("wb%d: page boundary crossed."
 				    "  Bringing in extra page.\n",wb);
 #endif
 
@@ -979,7 +979,7 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 		}
 #ifdef DEBUG
 		if (mmudebug)
-			printf("wb%d: extra page brought in okay.\n", wb);
+			kprintf("wb%d: extra page brought in okay.\n", wb);
 #endif
 	}
 
@@ -1025,7 +1025,7 @@ void
 _wb_fault()
 {
 #ifdef DEBUG
-	printf ("trap: writeback fault\n");
+	kprintf ("trap: writeback fault\n");
 #endif
 	return;
 }
