@@ -3,7 +3,8 @@
 #	   tree: distribution tree: /, /usr, /var
 #	   date: Wed Jul 15 13:40:13 1992
 #
-#	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
+#	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
+#	$Id: NetBSD.dist,v 1.2 1994/06/19 04:34:21 cgd Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -83,6 +84,11 @@ sliphome
 # ./etc/sliphome
 ..
 
+# ./etc/uucp
+uucp
+# ./etc/uucp
+..
+
 # ./etc
 ..
 
@@ -119,150 +125,9 @@ tmp             mode=01777
 # ./usr
 usr
 
-# ./usr/X11R5
-X11R5
-# ./usr/X11R5
-..
-
 # ./usr/bin
 bin
 # ./usr/bin
-..
-
-# ./usr/contrib
-contrib
-
-# ./usr/contrib/bin
-bin
-# ./usr/contrib/bin
-..
-
-# ./usr/contrib/lib
-lib
-
-# ./usr/contrib/lib/emacs
-emacs
-
-# ./usr/contrib/lib/emacs/etc
-etc
-..
-
-# ./usr/contrib/lib/emacs/info
-info
-# ./usr/contrib/lib/emacs/info
-..
-
-# ./usr/contrib/lib/emacs/lisp
-lisp
-
-# ./usr/contrib/lib/emacs/lisp/term
-term
-# ./usr/contrib/lib/emacs/lisp/term
-..
-
-# ./usr/contrib/lib/emacs/lisp
-..
-
-# ./usr/contrib/lib/emacs
-..
-
-# ./usr/contrib/lib/jove
-jove
-# ./usr/contrib/lib/jove
-..
-
-# ./usr/contrib/lib/perl
-perl
-# ./usr/contrib/lib/perl
-..
-
-# ./usr/contrib/lib
-..
-
-# ./usr/contrib/man
-man
-
-# ./usr/contrib/man/cat1
-cat1
-# ./usr/contrib/man/cat1
-..
-
-# ./usr/contrib/man/cat2
-cat2
-# ./usr/contrib/man/cat2
-..
-
-# ./usr/contrib/man/cat3
-cat3
-# ./usr/contrib/man/cat3
-..
-
-# ./usr/contrib/man/cat3f
-cat3f
-# ./usr/contrib/man/cat3f
-..
-
-# ./usr/contrib/man/cat4
-cat4
-# ./usr/contrib/man/cat4
-..
-
-# ./usr/contrib/man/cat5
-cat5
-# ./usr/contrib/man/cat5
-..
-
-# ./usr/contrib/man/cat6
-cat6
-# ./usr/contrib/man/cat6
-..
-
-# ./usr/contrib/man/cat7
-cat7
-# ./usr/contrib/man/cat7
-..
-
-# ./usr/contrib/man/cat8
-cat8
-# ./usr/contrib/man/cat8
-..
-
-# ./usr/contrib/man
-..
-
-# ./usr/contrib/mh-6.8
-mh-6.8
-
-# ./usr/contrib/mh-6.8/bin
-bin
-# ./usr/contrib/mh-6.8/bin
-..
-
-# ./usr/contrib/mh-6.8/lib
-lib
-# ./usr/contrib/mh-6.8/lib
-..
-
-# ./usr/contrib/mh-6.8
-..
-
-# ./usr/contrib/news
-news
-
-# ./usr/contrib/news/bin
-bin
-# ./usr/contrib/news/bin
-..
-
-# ./usr/contrib/news
-..
-
-# ./usr/contrib/rnews
-rnews
-# ./usr/contrib/rnews
-..
-
-# ./usr/contrib
 ..
 
 # ./usr/games
@@ -287,9 +152,9 @@ arpa
 # ./usr/include/g++
 g++
 
-# ./usr/include/g++/sys
-sys
-# ./usr/include/g++/sys
+# ./usr/include/g++/gen
+gen
+# ./usr/include/g++/gen
 ..
 
 # ./usr/include/g++
@@ -298,11 +163,6 @@ sys
 # ./usr/include/kerberosIV
 kerberosIV
 # ./usr/include/kerberosIV
-..
-
-# ./usr/include/pascal
-pascal
-# ./usr/include/pascal
 ..
 
 # ./usr/include/protocols
@@ -315,9 +175,9 @@ rpc
 # ./usr/include/rpc
 ..
 
-# ./usr/include/xnscourier
-xnscourier
-# ./usr/include/xnscourier
+# ./usr/include/rpcsvc
+rpcsvc
+# ./usr/include/rpcsvc
 ..
 
 # ./usr/include
@@ -325,112 +185,25 @@ xnscourier
 
 # ./usr/lib
 lib
-
-# ./usr/lib/uucp
-uucp             gname=daemon uname=uucp
-# ./usr/lib/uucp
-..
-
 # ./usr/lib
 ..
 
 # ./usr/libdata
 libdata
-
-# ./usr/libdata/learn
-learn
-
-# ./usr/libdata/learn/C
-C
-# ./usr/libdata/learn/C
-..
-
-# ./usr/libdata/learn/bin
-bin
-# ./usr/libdata/learn/bin
-..
-
-# ./usr/libdata/learn/editor
-editor
-# ./usr/libdata/learn/editor
-..
-
-# ./usr/libdata/learn/eqn
-eqn
-# ./usr/libdata/learn/eqn
-..
-
-# ./usr/libdata/learn/files
-files
-# ./usr/libdata/learn/files
-..
-
-# ./usr/libdata/learn/macros
-macros
-# ./usr/libdata/learn/macros
-..
-
-# ./usr/libdata/learn/morefiles
-morefiles
-# ./usr/libdata/learn/morefiles
-..
-
-# ./usr/libdata/learn
-..
-
 # ./usr/libdata
 ..
 
 # ./usr/libexec
 libexec
 
-# ./usr/libexec/gcc2
-gcc2
-
-# ./usr/libexec/gcc2/gcc-lib
-gcc-lib
-
-# ./usr/libexec/gcc2/gcc-lib/include
-include
-# ./usr/libexec/gcc2/gcc-lib/include
-..
-
-# ./usr/libexec/gcc2/gcc-lib/m68k-hp-bsd
-m68k-hp-bsd
-
-# ./usr/libexec/gcc2/gcc-lib/m68k-hp-bsd/2.3.3
-2.3.3
-
-# ./usr/libexec/gcc2/gcc-lib/m68k-hp-bsd/2.3.3/include
-include
-# ./usr/libexec/gcc2/gcc-lib/m68k-hp-bsd/2.3.3/include
-..
-
-# ./usr/libexec/gcc2/gcc-lib/m68k-hp-bsd/2.3.3
-..
-
-# ./usr/libexec/gcc2/gcc-lib/m68k-hp-bsd
-..
-
-# ./usr/libexec/gcc2/gcc-lib
-..
-
-# ./usr/libexec/gcc2
-..
-
 # ./usr/libexec/lpr
 lpr
 # ./usr/libexec/lpr
 ..
 
-# ./usr/libexec/pascal
-pascal
-# ./usr/libexec/pascal
-..
-
-# ./usr/libexec/plot
-plot
-# ./usr/libexec/plot
+# ./usr/libexec/uucp
+uucp
+# ./usr/libexec/uucp
 ..
 
 # ./usr/libexec
@@ -502,6 +275,46 @@ cat8
 # ./usr/local/man/cat8
 ..
 
+# ./usr/local/man/man1
+man1
+# ./usr/local/man/man1
+..
+
+# ./usr/local/man/man2
+man2
+# ./usr/local/man/man2
+..
+
+# ./usr/local/man/man3
+man3
+# ./usr/local/man/man3
+..
+
+# ./usr/local/man/man4
+man4
+# ./usr/local/man/man4
+..
+
+# ./usr/local/man/man5
+man5
+# ./usr/local/man/man5
+..
+
+# ./usr/local/man/man6
+man6
+# ./usr/local/man/man6
+..
+
+# ./usr/local/man/man7
+man7
+# ./usr/local/man/man7
+..
+
+# ./usr/local/man/man8
+man8
+# ./usr/local/man/man8
+..
+
 # ./usr/local/man
 ..
 
@@ -518,73 +331,9 @@ mdec
 # ./usr/mdec
 ..
 
-# ./usr/old
-old
-
-# ./usr/old/bin
-bin
-# ./usr/old/bin
-..
-
-# ./usr/old/dict
-dict
-
-# ./usr/old/dict/papers
-papers
-# ./usr/old/dict/papers
-..
-
-# ./usr/old/dict
-..
-
-# ./usr/old/lib
-lib
-
-# ./usr/old/lib/ms
-ms
-# ./usr/old/lib/ms
-..
-
-# ./usr/old/lib/tmac
-tmac
-# ./usr/old/lib/tmac
-..
-
-# ./usr/old/lib
-..
-
-# ./usr/old/libdata
-libdata
-
-# ./usr/old/libdata/adb
-adb
-# ./usr/old/libdata/adb
-..
-
-# ./usr/old/libdata/term
-term
-# ./usr/old/libdata/term
-..
-
-# ./usr/old/libdata/troff_font
-troff_font
-# ./usr/old/libdata/troff_font
-..
-
-# ./usr/old/libdata
-..
-
-# ./usr/old/libexec
-libexec
-# ./usr/old/libexec
-..
-
-# ./usr/old
-..
-
-# ./usr/public
-public
-# ./usr/public
+# ./usr/obj		XXX
+obj
+# ./usr/obj		XXX
 ..
 
 # ./usr/sbin
@@ -618,17 +367,6 @@ special
 
 # ./usr/share/doc
 doc
-
-# ./usr/share/doc/misc
-misc
-
-# ./usr/share/doc/misc/ctour
-ctour
-# ./usr/share/doc/misc/ctour
-..
-
-# ./usr/share/doc/misc
-..
 
 # ./usr/share/doc/psd
 psd
@@ -1048,6 +786,11 @@ quiz.db
 # ./usr/share/games
 ..
 
+# ./usr/share/gnats
+gnats
+# ./usr/share/gnats
+..
+
 # ./usr/share/groff_font
 groff_font
 
@@ -1106,6 +849,27 @@ generate
 # ./usr/share/groff_font
 ..
 
+# ./usr/share/lkm
+lkm
+
+# ./usr/share/lkm/misc
+misc
+# ./usr/share/lkm/misc
+..
+
+# ./usr/share/lkm/syscall
+syscall
+# ./usr/share/lkm/syscall
+..
+
+# ./usr/share/lkm/vfs
+vfs
+# ./usr/share/lkm/vfs
+..
+
+# ./usr/share/lkm
+..
+
 # ./usr/share/locale
 locale
 # ./usr/share/locale
@@ -1137,6 +901,11 @@ cat3f
 # ./usr/share/man/cat4
 cat4
 
+# ./usr/share/man/cat4/amiga
+amiga
+# ./usr/share/man/cat4/amiga
+..
+
 # ./usr/share/man/cat4/hp300
 hp300
 # ./usr/share/man/cat4/hp300
@@ -1145,6 +914,11 @@ hp300
 # ./usr/share/man/cat4/i386
 i386
 # ./usr/share/man/cat4/i386
+..
+
+# ./usr/share/man/cat4/mac68k
+mac68k
+# ./usr/share/man/cat4/mac68k
 ..
 
 # ./usr/share/man/cat4/sparc
@@ -1183,6 +957,11 @@ cat7
 # ./usr/share/man/cat8
 cat8
 
+# ./usr/share/man/cat8/amiga
+amiga
+# ./usr/share/man/cat8/amiga
+..
+
 # ./usr/share/man/cat8/hp300
 hp300
 # ./usr/share/man/cat8/hp300
@@ -1191,6 +970,11 @@ hp300
 # ./usr/share/man/cat8/i386
 i386
 # ./usr/share/man/cat8/i386
+..
+
+# ./usr/share/man/cat8/mac68k
+mac68k
+# ./usr/share/man/cat8/mac68k
 ..
 
 # ./usr/share/man/cat8/sparc
@@ -1211,50 +995,121 @@ vax
 # ./usr/share/man/cat8
 ..
 
-# ./usr/share/man/old
-old              uname=bin gname=bin
-
-# ./usr/share/man/old/cat1
-cat1
-# ./usr/share/man/old/cat1
+# ./usr/share/man/man1
+man1
+# ./usr/share/man/man1
 ..
 
-# ./usr/share/man/old/cat2
-cat2
-# ./usr/share/man/old/cat2
+# ./usr/share/man/man2
+man2
+# ./usr/share/man/man2
 ..
 
-# ./usr/share/man/old/cat3
-cat3
-# ./usr/share/man/old/cat3
+# ./usr/share/man/man3
+man3
+# ./usr/share/man/man3
 ..
 
-# ./usr/share/man/old/cat4
-cat4
-# ./usr/share/man/old/cat4
+# ./usr/share/man/man3f
+man3f
+# ./usr/share/man/man3f
 ..
 
-# ./usr/share/man/old/cat5
-cat5
-# ./usr/share/man/old/cat5
+# ./usr/share/man/man4
+man4
+
+# ./usr/share/man/man4/amiga
+amiga
+# ./usr/share/man/man4/amiga
 ..
 
-# ./usr/share/man/old/cat6
-cat6
-# ./usr/share/man/old/cat6
+# ./usr/share/man/man4/hp300
+hp300
+# ./usr/share/man/man4/hp300
 ..
 
-# ./usr/share/man/old/cat7
-cat7
-# ./usr/share/man/old/cat7
+# ./usr/share/man/man4/i386
+i386
+# ./usr/share/man/man4/i386
 ..
 
-# ./usr/share/man/old/cat8
-cat8
-# ./usr/share/man/old/cat8
+# ./usr/share/man/man4/mac68k
+mac68k
+# ./usr/share/man/man4/mac68k
 ..
 
-# ./usr/share/man/old
+# ./usr/share/man/man4/sparc
+sparc
+# ./usr/share/man/man4/sparc
+..
+
+# ./usr/share/man/man4/tahoe
+tahoe
+# ./usr/share/man/man4/tahoe
+..
+
+# ./usr/share/man/man4/vax
+vax
+# ./usr/share/man/man4/vax
+..
+
+# ./usr/share/man/man4
+..
+
+# ./usr/share/man/man5
+man5
+# ./usr/share/man/man5
+..
+
+# ./usr/share/man/man6
+man6
+# ./usr/share/man/man6
+..
+
+# ./usr/share/man/man7
+man7
+# ./usr/share/man/man7
+..
+
+# ./usr/share/man/man8
+man8
+
+# ./usr/share/man/man8/amiga
+amiga
+# ./usr/share/man/man8/amiga
+..
+
+# ./usr/share/man/man8/hp300
+hp300
+# ./usr/share/man/man8/hp300
+..
+
+# ./usr/share/man/man8/i386
+i386
+# ./usr/share/man/man8/i386
+..
+
+# ./usr/share/man/man8/mac68k
+mac68k
+# ./usr/share/man/man8/mac68k
+..
+
+# ./usr/share/man/man8/sparc
+sparc
+# ./usr/share/man/man8/sparc
+..
+
+# ./usr/share/man/man8/tahoe
+tahoe
+# ./usr/share/man/man8/tahoe
+..
+
+# ./usr/share/man/man8/vax
+vax
+# ./usr/share/man/man8/vax
+..
+
+# ./usr/share/man/man8
 ..
 
 # ./usr/share/man
@@ -1275,6 +1130,16 @@ mk
 # ./usr/share/mk
 ..
 
+# ./usr/share/ms
+ms
+# ./usr/share/ms
+..
+
+# ./usr/share/nls		XXX
+nls
+# ./usr/share/nls		XXX
+..
+
 # ./usr/share/skel
 skel
 # ./usr/share/skel
@@ -1287,6 +1152,12 @@ tabset
 
 # ./usr/share/tmac
 tmac
+
+# ./usr/share/tmac/mm
+mm
+# ./usr/share/tmac/mm
+..
+
 # ./usr/share/tmac
 ..
 
@@ -1339,11 +1210,6 @@ src
 # ./usr/src
 ..
 
-# ./usr/ucb
-ucb              uname=bin
-# ./usr/ucb
-..
-
 # ./usr
 ..
 
@@ -1358,9 +1224,14 @@ account
 # ./var/at
 at
 
-# ./var/at/past
-past
-# ./var/at/past
+# ./var/at/jobs
+jobs		mode=0700
+# ./var/at/jobs
+..
+
+# ./var/at/spool
+spool		mode=0700
+# ./var/at/spool
 ..
 
 # ./var/at
@@ -1376,6 +1247,17 @@ crash		mode=775
 # ./var/crash
 ..
 
+# ./var/cron
+cron
+
+# ./var/cron/tabs
+tabs		mode=0700
+# ./var/cron/tabs
+..
+
+# ./var/cron
+..
+
 # ./var/db
 db
 
@@ -1387,23 +1269,23 @@ ns
 # ./var/db
 ..
 
-# ./var/emacs
-emacs
-
-# ./var/emacs/lock
-lock              mode=0777
-# ./var/emacs/lock
-..
-
-# ./var/emacs
-..
-
 # ./var/games
 games            uname=games gname=games mode=0775
 
 # ./var/games/hackdir
 hackdir          uname=games gname=games mode=0775
+
+# ./var/games/hackdir/save
+save		 uname=games gname=games mode=0770
+# ./var/games/hackdir/save
+..
+
 # ./var/games/hackdir
+..
+
+# ./var/games/hackdir/save		XXX
+save		uname=games gname=games mode=0775
+# ./var/games/hackdir/save		XXX
 ..
 
 # ./var/games/larn
@@ -1440,10 +1322,10 @@ msgs
 # ./var/msgs
 ..
 
-# ./var/obj
-obj
-# ./var/obj
-..
+# ./var/obj				XXX
+#obj
+# ./var/obj				XXX
+#..
 
 # ./var/preserve
 preserve
@@ -1486,81 +1368,27 @@ hidden           mode=0111
 # ./var/spool/ftp/hidden
 ..
 
-# ./var/spool/ftp/pub
-pub               mode=0777
-# ./var/spool/ftp/pub
-..
+# ./var/spool/ftp/pub			XXX
+#pub               mode=0777
+# ./var/spool/ftp/pub			XXX
+#..
 
 # ./var/spool/ftp
+..
+
+# ./var/spool/lock
+lock		uname=uucp gname=daemon
+# ./var/spool/lock
+..
+
+# ./var/spool/lpd
+lpd
+# ./var/spool/lpd
 ..
 
 # ./var/spool/mqueue
 mqueue
 # ./var/spool/mqueue
-..
-
-# ./var/spool/news
-news
-
-# var/spool/news/data
-data
-
-# var/spool/news/data/OLD
-OLD
-# var/spool/news/data/OLD
-..
-
-# var/spool/news/data/ctlbin
-ctlbin
-# var/spool/news/data/ctlbin
-..
-
-# var/spool/news/data/innd
-innd
-# var/spool/news/data/innd
-..
-
-# var/spool/news/data/trn
-trn
-# var/spool/news/data/trn
-..
-
-# var/spool/news/data
-..
-
-# var/spool/news/news.archive
-news.archive
-# var/spool/news/news.archive
-..
-
-# var/spool/news/out.going
-out.going
-# var/spool/news/out.going
-..
-
-# var/spool/news/spool
-spool
-
-# var/spool/news/spool/in.coming
-in.coming
-
-# var/spool/news/spool/in.coming/bad
-bad
-# var/spool/news/spool/in.coming/bad
-..
-
-# var/spool/news/spool/in.coming/tmp
-tmp
-# var/spool/news/spool/in.coming/tmp
-..
-
-# var/spool/news/spool/in.coming
-..
-
-# var/spool/news/spool
-..
-
-# ./var/spool/news
 ..
 
 # ./var/spool/output
@@ -1575,100 +1403,17 @@ secretmail
 
 # ./var/spool/sockets
 sockets	mode=777
-
-# ./var/spool/sockets/X11
-X11	mode=777
-# ./var/spool/sockets/X11
-..
-
 # ./var/spool/sockets
 ..
 
 /set uname=uucp gname=daemon
 # ./var/spool/uucp
 uucp
-
-# ./var/spool/uucp/AUDIT
-AUDIT
-# ./var/spool/uucp/AUDIT
-..
-
-# ./var/spool/uucp/C.
-C.
-# ./var/spool/uucp/C.
-..
-
-# ./var/spool/uucp/CORRUPT
-CORRUPT
-# ./var/spool/uucp/CORRUPT
-..
-
-# ./var/spool/uucp/D.
-D.
-# ./var/spool/uucp/D.
-..
-
-# ./var/spool/uucp/LCK
-LCK              mode=0777
-# ./var/spool/uucp/LCK
-..
-
-# ./var/spool/uucp/LOG
-LOG
-
-# ./var/spool/uucp/LOG/uucico
-uucico
-# ./var/spool/uucp/LOG/uucico
-..
-
-# ./var/spool/uucp/LOG/uucp
-uucp
-# ./var/spool/uucp/LOG/uucp
-..
-
-# ./var/spool/uucp/LOG/uux
-uux
-# ./var/spool/uucp/LOG/uux
-..
-
-# ./var/spool/uucp/LOG/uuxqt
-uuxqt
-# ./var/spool/uucp/LOG/uuxqt
-..
-
-# ./var/spool/uucp/LOG/xferstats
-xferstats
-# ./var/spool/uucp/LOG/xferstats
-..
-
-# ./var/spool/uucp/LOG
-..
-
-# ./var/spool/uucp/STST
-STST
-# ./var/spool/uucp/STST
-..
-
-# ./var/spool/uucp/TM.
-TM.
-# ./var/spool/uucp/TM.
-..
-
-# ./var/spool/uucp/X.
-X.
-# ./var/spool/uucp/X.
-..
-
-# ./var/spool/uucp/XTMP
-XTMP
-# ./var/spool/uucp/XTMP
-..
-
 # ./var/spool/uucp
 ..
 
 # ./var/spool/uucppublic
-uucppublic       mode=0777
+uucppublic       mode=01777
 # ./var/spool/uucppublic
 ..
 
