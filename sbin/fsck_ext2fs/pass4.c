@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.5 2004/03/22 19:46:53 bouyer Exp $	*/
+/*	$NetBSD: pass4.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.5 2004/03/22 19:46:53 bouyer Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.6 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ __RCSID("$NetBSD: pass4.c,v 1.5 2004/03/22 19:46:53 bouyer Exp $");
 #include "extern.h"
 
 void
-pass4()
+pass4(void)
 {
 	ino_t inumber;
 	struct zlncnt *zlnp;
@@ -140,8 +140,7 @@ pass4()
 }
 
 int
-pass4check(idesc)
-	struct inodesc *idesc;
+pass4check(struct inodesc *idesc)
 {
 	struct dups *dlp;
 	int nfrags, res = KEEPON;

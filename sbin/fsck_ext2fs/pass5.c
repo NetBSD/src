@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.10 2004/03/22 19:46:53 bouyer Exp $	*/
+/*	$NetBSD: pass5.c,v 1.11 2005/01/19 19:31:28 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.10 2004/03/22 19:46:53 bouyer Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.11 2005/01/19 19:31:28 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,10 +82,10 @@ __RCSID("$NetBSD: pass5.c,v 1.10 2004/03/22 19:46:53 bouyer Exp $");
 #include "extern.h"
 
 
-void print_bmap __P((u_char *,u_int32_t));
+void print_bmap(u_char *,u_int32_t);
 
 void
-pass5()
+pass5(void)
 {
 	int c;
 	struct m_ext2fs *fs = &sblock;
@@ -266,9 +266,7 @@ pass5()
 }
 
 void 
-print_bmap(map, size)
-	u_char *map;
-	u_int32_t size;
+print_bmap(u_char *map, u_int32_t size)
 {
 	int i, j;
 
