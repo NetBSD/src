@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.61 2000/11/27 08:39:42 chs Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.62 2001/01/22 13:18:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -932,7 +932,7 @@ cd9660_setattr(v)
  * Global vfs data structures for cd9660
  */
 int (**cd9660_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
+const struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, cd9660_lookup },		/* lookup */
 	{ &vop_create_desc, cd9660_create },		/* create */
@@ -981,14 +981,14 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_size_desc, genfs_size },			/* size */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc cd9660_vnodeop_opv_desc =
+const struct vnodeopv_desc cd9660_vnodeop_opv_desc =
 	{ &cd9660_vnodeop_p, cd9660_vnodeop_entries };
 
 /*
  * Special device vnode ops
  */
 int (**cd9660_specop_p) __P((void *));
-struct vnodeopv_entry_desc cd9660_specop_entries[] = {
+const struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, spec_lookup },		/* lookup */
 	{ &vop_create_desc, spec_create },		/* create */
@@ -1035,11 +1035,11 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc cd9660_specop_opv_desc =
+const struct vnodeopv_desc cd9660_specop_opv_desc =
 	{ &cd9660_specop_p, cd9660_specop_entries };
 
 int (**cd9660_fifoop_p) __P((void *));
-struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
+const struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
 	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
 	{ &vop_create_desc, fifo_create },		/* create */
@@ -1086,5 +1086,5 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ NULL, NULL }
 };
-struct vnodeopv_desc cd9660_fifoop_opv_desc =
+const struct vnodeopv_desc cd9660_fifoop_opv_desc =
 	{ &cd9660_fifoop_p, cd9660_fifoop_entries };

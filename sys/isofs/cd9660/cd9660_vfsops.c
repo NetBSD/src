@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.51 2000/12/21 03:42:43 enami Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.52 2001/01/22 13:18:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -69,11 +69,11 @@
 #include <isofs/cd9660/cd9660_node.h>
 #include <isofs/cd9660/cd9660_mount.h>
 
-extern struct vnodeopv_desc cd9660_vnodeop_opv_desc;
-extern struct vnodeopv_desc cd9660_specop_opv_desc;
-extern struct vnodeopv_desc cd9660_fifoop_opv_desc;
+extern const struct vnodeopv_desc cd9660_vnodeop_opv_desc;
+extern const struct vnodeopv_desc cd9660_specop_opv_desc;
+extern const struct vnodeopv_desc cd9660_fifoop_opv_desc;
 
-struct vnodeopv_desc *cd9660_vnodeopv_descs[] = {
+const struct vnodeopv_desc * const cd9660_vnodeopv_descs[] = {
 	&cd9660_vnodeop_opv_desc,
 	&cd9660_specop_opv_desc,
 	&cd9660_fifoop_opv_desc,
