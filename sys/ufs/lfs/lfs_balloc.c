@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.16 2000/05/05 20:59:21 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.17 2000/05/30 04:08:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -362,9 +362,11 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	 * but the overcount only lasts until the block in question
 	 * is written, so the on-disk live bytes count is always correct.
 	 */
-	LFS_SEGENTRY(sup, fs, datosn(fs,(*bpp)->b_blkno), ibp);
-	sup->su_nbytes += (nsize-osize);
-	VOP_BWRITE(ibp);
+	if ((*bpp)->b_blkno > 0) {
+		LFS_SEGENTRY(sup, fs, datosn(fs,(*bpp)->b_blkno), ibp);
+		sup->su_nbytes += (nsize-osize);
+		VOP_BWRITE(ibp);
+	}
 
 #ifdef QUOTA
 	if ((error = chkdq(ip, bb, curproc->p_ucred, 0))) {
