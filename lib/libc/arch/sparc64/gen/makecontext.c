@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1.2.3 2002/02/08 02:59:48 petrov Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.1.2.4 2002/09/10 01:13:11 petrov Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1.2.3 2002/02/08 02:59:48 petrov Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.1.2.4 2002/09/10 01:13:11 petrov Exp $");
 #endif
 
 #include <inttypes.h>
@@ -75,8 +75,8 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 		sp[i + 16] = va_arg(ap, unsigned long);
 	va_end(ap);
 
-	sp[14] = (ulong)((caddr_t)sp - 2047);
-	sp[15] = (ulong)(_resumecontext - 8);
+	sp[14] = (ulong)sp - 2047;
+	sp[15] = (ulong)_resumecontext - 8;
 
 	sp = (ulong *)((caddr_t)sp - 2047);
 
