@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.81 1999/03/27 05:13:55 mrg Exp $
+#	$NetBSD: NetBSD.dist,v 1.82 1999/04/03 09:36:04 fair Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1902,7 +1902,7 @@ mail		mode=1777
 ..
 
 # ./var/msgs
-msgs
+msgs		uname=daemon
 # ./var/msgs
 ..
 
