@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.133 2002/12/31 23:53:09 thorpej Exp $
+#       $NetBSD: Makefile,v 1.134 2003/01/11 22:45:41 lha Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -314,7 +314,7 @@ MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_remove_hook.9 \
 	pfil.9 pfil_head_register.9 \
 	pfil.9 pfil_head_unregister.9 \
-	pfil.9 pfil_get_head.9 \
+	pfil.9 pfil_head_get.9 \
 	pfil.9 pfil_run_hooks.9
 MLINKS+=pmc.9 pmc_get_num_counters.9 \
 	pmc.9 pmc_get_counter_type.9 \
