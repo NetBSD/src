@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.46.2.9 2002/06/20 03:50:47 nathanw Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.46.2.10 2002/06/24 22:13:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.46.2.9 2002/06/20 03:50:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.46.2.10 2002/06/24 22:13:01 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -167,7 +167,7 @@ uvn_attach(arg, accessprot)
 
 	vp->v_flag |= VXLOCK;
 	simple_unlock(&uobj->vmobjlock); /* drop lock in case we sleep */
-		/* XXX: curproc? */
+		/* XXX: curlwp? */
 	if (vp->v_type == VBLK) {
 		/*
 		 * We could implement this as a specfs getattr call, but:
@@ -178,15 +178,15 @@ uvn_attach(arg, accessprot)
 		 *	(2) All we want is the size, anyhow.
 		 */
 		result = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
-		    DIOCGPART, (caddr_t)&pi, FREAD, curproc->l_proc);
+		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (result == 0) {
 			/* XXX should remember blocksize */
 			used_vnode_size = (voff_t)pi.disklab->d_secsize *
 			    (voff_t)pi.part->p_size;
 		}
 	} else {
-		result = VOP_GETATTR(vp, &vattr, curproc->l_proc->p_ucred, 
-		    curproc->l_proc);
+		result = VOP_GETATTR(vp, &vattr, curproc->p_ucred, 
+		    curproc);
 		if (result == 0)
 			used_vnode_size = vattr.va_size;
 	}
