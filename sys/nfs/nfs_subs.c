@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.47 1997/10/10 13:21:51 fvdl Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.48 1997/10/11 02:09:48 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1530,6 +1530,76 @@ nfs_getattrcache(vp, vaper)
 	}
 	return (0);
 }
+
+/*
+ * Heuristic to see if the server XDR encodes directory cookies or not.
+ * it is not supposed to, but a lot of servers may do this. Also, since
+ * most/all servers will implement V2 as well, it is expected that they
+ * may return just 32 bits worth of cookie information, so we need to
+ * find out in which 32 bits this information is available. We do this
+ * to avoid trouble with emulated binaries that can't handle 64 bit
+ * directory offsets.
+ */
+
+void
+nfs_cookieheuristic(vp, flagp, p, cred)
+	struct vnode *vp;
+	int *flagp;
+	struct proc *p;
+	struct ucred *cred;
+{
+	struct uio auio;
+	struct iovec aiov;
+	caddr_t buf, cp;
+	struct dirent *dp;
+	off_t *cookies, *cop;
+	int error, eof, nc, len;
+
+	nc = NFS_DIRFRAGSIZ / 16;
+	MALLOC(buf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
+	MALLOC(cookies, off_t *, nc * sizeof (off_t), M_TEMP, M_WAITOK);
+
+	aiov.iov_base = buf;
+	aiov.iov_len = NFS_DIRFRAGSIZ;
+	auio.uio_iov = &aiov;
+	auio.uio_iovcnt = 1;
+	auio.uio_rw = UIO_READ;
+	auio.uio_segflg = UIO_SYSSPACE;
+	auio.uio_procp = p;
+	auio.uio_resid = NFS_DIRFRAGSIZ;
+	auio.uio_offset = 0;
+
+	error = VOP_READDIR(vp, &auio, cred, &eof, cookies, nc);
+
+	len = NFS_DIRFRAGSIZ - auio.uio_resid;
+	if (error || len == 0) {
+		FREE(buf, M_TEMP);
+		FREE(cookies, M_TEMP);
+		return;
+	}
+
+	/*
+	 * Find the first valid entry and look at its offset cookie.
+	 */
+
+	cp = buf;
+	for (cop = cookies; len > 0; len -= dp->d_reclen) {
+		dp = (struct dirent *)cp;
+		if (dp->d_fileno != 0 && len >= dp->d_reclen) {
+			if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
+				*flagp |= NFSMNT_SWAPCOOKIE;
+				nfs_invaldircache(vp);
+				nfs_vinvalbuf(vp, 0, cred, p, 1);
+			}
+			break;
+		}
+		cop++;
+		cp += dp->d_reclen;
+	}
+
+	FREE(buf, M_TEMP);
+	FREE(cookies, M_TEMP);
+}
 #endif /* NFS */
 
 /*
@@ -2181,74 +2251,4 @@ nfsrv_setcred(incred, outcred)
 	for (i = 0; i < incred->cr_ngroups; i++)
 		outcred->cr_groups[i] = incred->cr_groups[i];
 	nfsrvw_sort(outcred->cr_groups, outcred->cr_ngroups);
-}
-
-/*
- * Heuristic to see if the server XDR encodes directory cookies or not.
- * it is not supposed to, but a lot of servers may do this. Also, since
- * most/all servers will implement V2 as well, it is expected that they
- * may return just 32 bits worth of cookie information, so we need to
- * find out in which 32 bits this information is available. We do this
- * to avoid trouble with emulated binaries that can't handle 64 bit
- * directory offsets.
- */
-
-void
-nfs_cookieheuristic(vp, flagp, p, cred)
-	struct vnode *vp;
-	int *flagp;
-	struct proc *p;
-	struct ucred *cred;
-{
-	struct uio auio;
-	struct iovec aiov;
-	caddr_t buf, cp;
-	struct dirent *dp;
-	off_t *cookies, *cop;
-	int error, eof, nc, len;
-
-	nc = NFS_DIRFRAGSIZ / 16;
-	MALLOC(buf, caddr_t, NFS_DIRFRAGSIZ, M_TEMP, M_WAITOK);
-	MALLOC(cookies, off_t *, nc * sizeof (off_t), M_TEMP, M_WAITOK);
-
-	aiov.iov_base = buf;
-	aiov.iov_len = NFS_DIRFRAGSIZ;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = p;
-	auio.uio_resid = NFS_DIRFRAGSIZ;
-	auio.uio_offset = 0;
-
-	error = VOP_READDIR(vp, &auio, cred, &eof, cookies, nc);
-
-	len = NFS_DIRFRAGSIZ - auio.uio_resid;
-	if (error || len == 0) {
-		FREE(buf, M_TEMP);
-		FREE(cookies, M_TEMP);
-		return;
-	}
-
-	/*
-	 * Find the first valid entry and look at its offset cookie.
-	 */
-
-	cp = buf;
-	for (cop = cookies; len > 0; len -= dp->d_reclen) {
-		dp = (struct dirent *)cp;
-		if (dp->d_fileno != 0 && len >= dp->d_reclen) {
-			if ((*cop >> 32) != 0 && (*cop & 0xffffffffLL) == 0) {
-				*flagp |= NFSMNT_SWAPCOOKIE;
-				nfs_invaldircache(vp);
-				nfs_vinvalbuf(vp, 0, cred, p, 1);
-			}
-			break;
-		}
-		cop++;
-		cp += dp->d_reclen;
-	}
-
-	FREE(buf, M_TEMP);
-	FREE(cookies, M_TEMP);
 }
