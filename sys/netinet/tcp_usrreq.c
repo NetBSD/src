@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.46 2000/02/02 23:28:09 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.47 2000/02/04 14:34:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -204,6 +204,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		in_purgeif((struct ifnet *)control);
 		in_pcbpurgeif(&tcbtable, (struct ifnet *)control);
 #ifdef INET6
+		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&tcb6, (struct ifnet *)control);
 #endif
 		return (0);
