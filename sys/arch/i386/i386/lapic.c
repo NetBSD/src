@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1.2.13 2001/04/30 20:36:38 sommerfeld Exp $ */
+/* $NetBSD: lapic.c,v 1.1.2.14 2001/05/26 22:13:09 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -189,6 +189,29 @@ lapic_clockintr (arg)
 	void *arg;
 {
 	struct clockframe *frame = arg;
+#if defined(I586_CPU) || defined(I686_CPU)
+	static int microset_iter; /* call tsc_microset once/sec */
+	struct cpu_info *ci = curcpu();
+	extern struct timeval tsc_time;
+	
+	/*
+	 * If we have a cycle counter, do the microset thing.
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		if (
+#if defined(MULTIPROCESSOR)
+		    CPU_IS_PRIMARY(ci) &&
+#endif
+		    (microset_iter--) == 0) {
+			microset_iter = hz-1;
+			tsc_time = time;
+#if defined(MULTIPROCESSOR)
+			i386_broadcast_ipi(I386_IPI_MICROSET);
+#endif
+			tsc_microset(ci);
+		}
+	}
+#endif
 	
 	hardclock(frame);
 }
@@ -317,7 +340,6 @@ lapic_calibrate_timer(ci)
 		 * for all our timing needs..
 		 */
 		delay_func = lapic_delay;
-		microtime_func = lapic_microtime;
 		initclock_func = lapic_initclocks;
 	}
 }
@@ -349,37 +371,6 @@ void lapic_delay(usec)
 			deltat -= otick - tick;
 		otick = tick;
 	}
-}
-
-#define LAPIC_TICK_THRESH 200
-
-/*
- * XXX need to make work correctly on other than cpu 0.
- */
-
-void lapic_microtime (tv)
-	struct timeval *tv;
-{
-	struct timeval now;
-	u_int32_t tick;
-	u_int32_t usec;
-	u_int32_t tmp;
-	
-	disable_intr();
-	tick = lapic_gettick();
-	now = time;
-	enable_intr();
-
-	tmp = lapic_tval - tick;
-	usec = ((u_int64_t)tmp * lapic_frac_usec_per_cycle) >> 32;
-	
-	now.tv_usec += usec;
-	while (now.tv_usec >= 1000000) {
-		now.tv_sec += 1;
-		now.tv_usec -= 1000000;
-	}
-	
-	*tv = now;
 }
 
 /*

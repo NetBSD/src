@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.63.2.4 2001/04/30 16:23:14 sommerfeld Exp $	*/
+/*	$NetBSD: clock.c,v 1.63.2.5 2001/05/26 22:13:11 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -108,6 +108,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <i386/isa/nvram.h>
 #include <i386/isa/timerreg.h>
 #include <dev/clock_subr.h>
+#include <machine/specialreg.h> 
 
 #include "mca.h"
 #if NMCA > 0
@@ -385,6 +386,29 @@ clockintr(arg)
 	void *arg;
 {
 	struct clockframe *frame = arg;		/* not strictly necessary */
+#if defined(I586_CPU) || defined(I686_CPU)
+	static int microset_iter; /* call tsc_microset once/sec */
+	struct cpu_info *ci = curcpu();
+	extern struct timeval tsc_time;
+	
+	/*
+	 * If we have a cycle counter, do the microset thing.
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		if (
+#if defined(MULTIPROCESSOR)
+		    CPU_IS_PRIMARY(ci) &&
+#endif
+		    (microset_iter--) == 0) {
+			tsc_time = time;
+			microset_iter = hz-1;
+#if defined(MULTIPROCESSOR)
+			i386_broadcast_ipi(I386_IPI_MICROSET);
+#endif
+			tsc_microset(ci);
+		}
+	}
+#endif
 
 	hardclock(frame);
 

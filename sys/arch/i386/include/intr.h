@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.10.14 2001/05/23 03:13:39 sommerfeld Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.10.15 2001/05/26 22:13:10 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -184,12 +184,13 @@ softintr(register int sir)
 /* XXX does ipi goo belong here, or elsewhere? */
 
 #define I386_IPI_HALT			0x00000001
-#define I386_IPI_FLUSH_FPU		0x00000002
-#define I386_IPI_SYNCH_FPU		0x00000004
-#define I386_IPI_TLB			0x00000008
-#define I386_IPI_MTRR			0x00000010
+#define I386_IPI_MICROSET		0x00000002
+#define I386_IPI_FLUSH_FPU		0x00000004
+#define I386_IPI_SYNCH_FPU		0x00000008
+#define I386_IPI_TLB			0x00000010
+#define I386_IPI_MTRR			0x00000020
 
-#define I386_NIPI		5
+#define I386_NIPI		6
 
 #ifdef MULTIPROCESSOR
 struct cpu_info;
