@@ -1,32 +1,32 @@
-# $NetBSD: md.vax,v 1.12 2000/11/30 16:06:25 jdolecek Exp $
-./boot
-./pcs750.bin
-./sbin/ldconfig
-./usr/lib/libg2c.so.0.0
-./usr/lib/libobjc.so.0.0
-./usr/lib/libstdc++.so.2.0
-./usr/libexec/ld.so
-./usr/lkm/adosfs.o
-./usr/lkm/cd9660.o
-./usr/lkm/coda.o
-./usr/lkm/ext2fs.o
-./usr/lkm/fdesc.o
-./usr/lkm/if_ipl.o
-./usr/lkm/lfs.o
-./usr/lkm/kernfs.o
-./usr/lkm/mfs.o
-./usr/lkm/msdosfs.o
-./usr/lkm/ntfs.o
-./usr/lkm/nullfs.o
-./usr/lkm/overlay.o
-./usr/lkm/portal.o
-./usr/lkm/procfs.o
-./usr/lkm/umapfs.o
-./usr/mdec/boot
-./usr/mdec/boot.mop
-./usr/mdec/hpboot
-./usr/mdec/installboot
-./usr/mdec/raboot
-./usr/mdec/rdboot
-./usr/mdec/sdboot
-./usr/mdec/xxboot
+# $NetBSD: md.vax,v 1.13 2001/01/26 01:37:19 jwise Exp $
+./boot				base-sys-root
+./pcs750.bin			base-sys-root
+./sbin/ldconfig			base-sysutil-root
+./usr/lib/libg2c.so.0.0		base-sys-shlib
+./usr/lib/libobjc.so.0.0	base-sys-shlib
+./usr/lib/libstdc++.so.2.0	base-sys-shlib
+./usr/libexec/ld.so		base-sys-shlib
+./usr/lkm/adosfs.o		base-adosfs-lkm
+./usr/lkm/cd9660.o		base-sys-lkm
+./usr/lkm/coda.o		base-coda-lkm
+./usr/lkm/ext2fs.o		base-ext2fs-lkm
+./usr/lkm/fdesc.o		base-miscfs-lkm
+./usr/lkm/if_ipl.o		base-ipf-lkm
+./usr/lkm/lfs.o			base-sys-lkm
+./usr/lkm/kernfs.o		base-sys-lkm
+./usr/lkm/mfs.o			base-sys-lkm
+./usr/lkm/msdosfs.o		base-sys-lkm
+./usr/lkm/ntfs.o		base-ntfs-lkm
+./usr/lkm/nullfs.o		base-miscfs-lkm
+./usr/lkm/overlay.o		base-miscfs-lkm
+./usr/lkm/portal.o		base-miscfs-lkm
+./usr/lkm/procfs.o		base-sys-lkm
+./usr/lkm/umapfs.o		base-miscfs-lkm
+./usr/mdec/boot			base-sysutil-bin
+./usr/mdec/boot.mop		base-sysutil-bin
+./usr/mdec/hpboot		base-sysutil-bin
+./usr/mdec/installboot		base-sysutil-bin
+./usr/mdec/raboot		base-sysutil-bin
+./usr/mdec/rdboot		base-sysutil-bin
+./usr/mdec/sdboot		base-sysutil-bin
+./usr/mdec/xxboot		base-sysutil-bin

@@ -1,8 +1,8 @@
-# $NetBSD: md.sun3,v 1.36 1999/04/19 03:11:32 simonb Exp $
-./sbin/edlabel
-./usr/mdec/bootxx
-./usr/mdec/installboot
-./usr/mdec/netboot
-./usr/mdec/tapeboot
-./usr/mdec/ufsboot
-./usr/sbin/eeprom
+# $NetBSD: md.sun3,v 1.37 2001/01/26 01:37:19 jwise Exp $
+./sbin/edlabel			base-sysutil-bin
+./usr/mdec/bootxx		base-sysutil-bin
+./usr/mdec/installboot		base-sysutil-bin
+./usr/mdec/netboot		base-sysutil-bin
+./usr/mdec/tapeboot		base-sysutil-bin
+./usr/mdec/ufsboot		base-sysutil-bin
+./usr/sbin/eeprom		base-sysutil-bin

@@ -1,19 +1,19 @@
-# $NetBSD: md.x68k,v 1.33 1999/07/04 04:43:53 minoura Exp $
-./dev/mouse
-./dev/pow
-./usr/bin/bellctrl
-./usr/bin/loadfont
-./usr/bin/loadkmap
-./usr/bin/palette
-./usr/bin/rtcalarm
-./usr/bin/tvctrl
-./usr/mdec/fdboot
-./usr/mdec/installboot
-./usr/mdec/loadbsd.x
-./usr/mdec/mboot
-./usr/mdec/newdisk
-./usr/mdec/sdboot
-./usr/sbin/memswitch
-./usr/sbin/poffd
-./usr/share/keymaps/x68k/ascii_kmap
-./usr/share/keymaps/x68k/jis_kmap
+# $NetBSD: md.x68k,v 1.34 2001/01/26 01:37:19 jwise Exp $
+./dev/mouse					base-sys-devlinks
+./dev/pow					base-sys-devlinks
+./usr/bin/bellctrl				base-util-bin
+./usr/bin/loadfont				base-util-bin
+./usr/bin/loadkmap				base-util-bin
+./usr/bin/palette				base-util-bin
+./usr/bin/rtcalarm				base-util-bin
+./usr/bin/tvctrl				base-util-bin
+./usr/mdec/fdboot				base-sysutil-bin
+./usr/mdec/installboot				base-sysutil-bin
+./usr/mdec/loadbsd.x				base-sysutil-bin
+./usr/mdec/mboot				base-sysutil-bin
+./usr/mdec/newdisk				base-sysutil-bin
+./usr/mdec/sdboot				base-sysutil-bin
+./usr/sbin/memswitch				base-sysutil-bin
+./usr/sbin/poffd				base-sysutil-bin
+./usr/share/keymaps/x68k/ascii_kmap		base-sys-share
+./usr/share/keymaps/x68k/jis_kmap		base-sys-share
