@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.671 2004/12/07 04:30:59 jdarrow Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.672 2004/12/11 01:56:03 reinoud Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.672 2004/12/07 04:28:07 jdarrow Exp 
+ *	NetBSD: pcidevs,v 1.673 2004/12/11 01:55:01 reinoud Exp 
  */
 
 /*
@@ -3362,6 +3362,18 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6_U2,
 	    "Radeon Mobility M6",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_200,
+	    "IXP AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_300,
+	    "IXP AC'97 Audio Controller",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_AUDIO_400,
+	    "IXP AC'97 Audio Controller",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_IXP_IDE,
@@ -9856,4 +9868,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1885;
+const int pci_nproducts = 1888;
