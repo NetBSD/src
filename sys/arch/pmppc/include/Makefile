@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/11/26 23:30:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/01/18 18:17:23 augustss Exp $
 
 INCSDIR= /usr/include/pmppc
 
@@ -13,7 +13,7 @@ INCS=   ansi.h aout_machdep.h asm.h \
 	intr.h ipkdb.h \
 	kcore.h kgdb.h \
 	limits.h lock.h \
-	math.h \
+	math.h mcontext.h \
 	param.h pcb.h pio.h pmap.h pmc.h powerpc.h proc.h profile.h psl.h \
 	ptrace.h \
 	reg.h reloc.h \
