@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.5 1996/10/21 22:34:23 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.6 1996/11/17 23:58:30 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -205,6 +205,16 @@
 #define STATS_ENABLE		(u_short) (0x15<<11)
 #define STATS_DISABLE		(u_short) (0x16<<11)
 #define STOP_TRANSCEIVER	(u_short) (0x17<<11)
+
+/*
+ * Command parameter that disables threshold interrupts
+ *   PIO (3c509) cards use 2044.  The fifo word-oriented and 2044--2047 work.
+ *  "busmastering" cards need 8188.
+ * The implicit two-bit upshift done by busmastering cards means
+ * a value of 2047 disables threshold interrupts on both.
+ */
+#define EP_THRESH_DISABLE	2047
+
 
 /*
  * Status register. All windows.
