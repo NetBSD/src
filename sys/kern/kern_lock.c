@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.32 2000/06/10 18:44:43 sommerfeld Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.32.2.1 2000/08/11 23:07:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -952,6 +952,29 @@ simple_lock_freecheck(start, end)
 	     alp = TAILQ_NEXT(alp, list)) {
 		if ((void *)alp >= start && (void *)alp < end) {
 			lock_printf("freeing simple_lock %p CPU %lu %s:%d\n",
+			    alp, alp->lock_holder, alp->lock_file,
+			    alp->lock_line);
+			SLOCK_DEBUGGER();
+		}
+	}
+	SLOCK_LIST_UNLOCK();
+	splx(s);
+}
+
+void
+simple_lock_switchcheck(void)
+{
+	struct simplelock *alp;
+	cpuid_t cpu_id = cpu_number();
+	int s;
+
+	s = splhigh();
+	SLOCK_LIST_LOCK();
+	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
+	     alp = TAILQ_NEXT(alp, list)) {
+		if (alp->lock_holder == cpu_id) {
+			lock_printf("switching with held simple_lock %p "
+			    "CPU %lu %s:%s\n",
 			    alp, alp->lock_holder, alp->lock_file,
 			    alp->lock_line);
 			SLOCK_DEBUGGER();
