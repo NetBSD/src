@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.7 1998/08/04 12:19:15 kleink Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.8 1998/12/14 13:03:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -84,7 +84,6 @@ compat_43_sys_accept(p, v, retval)
 	return 0;
 }
 
-
 int
 compat_43_sys_getpeername(p, v, retval)
 	struct proc *p;
@@ -114,7 +113,6 @@ compat_43_sys_getpeername(p, v, retval)
 	return 0;
 }
 
-
 int
 compat_43_sys_getsockname(p, v, retval)
 	struct proc *p;
@@ -143,7 +141,6 @@ compat_43_sys_getsockname(p, v, retval)
 	return 0;
 }
 
-
 int
 compat_43_sys_recv(p, v, retval)
 	struct proc *p;
@@ -170,8 +167,6 @@ compat_43_sys_recv(p, v, retval)
 	return (recvit(p, SCARG(uap, s), &msg, (caddr_t)0, retval));
 }
 
-
-#ifdef MSG_COMPAT
 int
 compat_43_sys_recvfrom(p, v, retval)
 	struct proc *p;
@@ -190,10 +185,7 @@ compat_43_sys_recvfrom(p, v, retval)
 	SCARG(uap, flags) |= MSG_COMPAT;
 	return (sys_recvfrom(p, uap, retval));
 }
-#endif
 
-
-#ifdef MSG_COMPAT
 /*
  * Old recvmsg.  This code takes advantage of the fact that the old msghdr
  * overlays the new one, missing only the flags, and with the (old) access
@@ -243,7 +235,6 @@ done:
 		FREE(iov, M_IOV);
 	return (error);
 }
-#endif
 
 int
 compat_43_sys_send(p, v, retval)
@@ -271,7 +262,6 @@ compat_43_sys_send(p, v, retval)
 	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }
 
-#ifdef MSG_COMPAT
 int
 compat_43_sys_sendmsg(p, v, retval)
 	struct proc *p;
@@ -311,4 +301,3 @@ done:
 		FREE(iov, M_IOV);
 	return (error);
 }
-#endif
