@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.62 2003/06/29 22:31:32 fvdl Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.63 2003/07/23 19:24:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.62 2003/06/29 22:31:32 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.63 2003/07/23 19:24:48 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -926,7 +926,14 @@ unp_internalize(control, p)
 	u_int neededspace;
 
 	/* Sanity check the control message header */
-	if (cm->cmsg_type != SCM_RIGHTS || cm->cmsg_level != SOL_SOCKET ||
+	/*
+	 * NetBSD uses only SOL_SOCKET as the level, but linux uses 1.
+	 * We accept both here, because it is too much of a pain to
+	 * massage the messages in the compat code, since it involves
+	 * allocating stuff on the stack, copying in and out etc.
+	 */
+	if (cm->cmsg_type != SCM_RIGHTS ||
+	    (cm->cmsg_level != SOL_SOCKET && cm->cmsg_level != 1) ||
 	    cm->cmsg_len != control->m_len)
 		return (EINVAL);
 
