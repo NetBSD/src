@@ -1,3 +1,5 @@
+/*	$NetBSD: ping6.c,v 1.6 1999/07/04 02:46:28 itojun Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -65,17 +67,21 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #if 0
 #ifndef lint
-__RCSID(
+static char copyright[] =
 "@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
-#endif
 
-#if 0
-__RCSID("@(#)ping.c	8.1 (Berkeley) 6/5/93");
+#ifndef lint
+static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
+#endif /* not lint */
+#else
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD");
+#endif
 #endif
 
 /*
