@@ -1,4 +1,4 @@
-/* $NetBSD: vgareg.h,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
+/* $NetBSD: pcdisplayvar.h,v 1.1 1998/05/28 16:48:40 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,25 +32,53 @@
  *
  */
 
-struct reg_vgaattr { /* indexed via port 0x3c0 */
-	char palette[16];
-	char mode, overscan, colplen, horpixpan;
-	char colreset, misc;
-};
-#define VGA_ATC_INDEX 0
-#define VGA_ATC_DATAW 0
-#define VGA_ATC_DATAR 1
+struct pcdisplayscreen {
+	struct pcdisplay_handle *hdl;
 
-struct reg_vgats { /* indexed via port 0x3c4 */
-	char syncreset, mode, wrplmask, fontsel, memmode;
-};
-#define VGA_TS_INDEX 4
-#define VGA_TS_DATA 5
+	const struct wsscreen_descr *type;
 
-struct reg_vgagdc { /* indexed via port 0x3ce */
-	char setres, ensetres, colorcomp, rotfunc;
-	char rdplanesel, mode, misc, colorcare;
-	char bitmask;
+	int active;	/* currently displayed */
+	u_int16_t *mem; /* backing store for contents */
+
+	int cursoron;		/* cursor displayed? */
+	int vc_ccol, vc_crow;	/* current cursor position */
 };
-#define VGA_GDC_INDEX 0xe
-#define VGA_GDC_DATA 0xf
+
+struct pcdisplay_handle {
+	bus_space_tag_t	ph_iot, ph_memt;
+	bus_space_handle_t ph_ioh_6845, ph_memh;
+};
+
+static inline u_int8_t _pcdisplay_6845_read __P((struct pcdisplay_handle *,
+						 int));
+static inline void _pcdisplay_6845_write __P((struct pcdisplay_handle *,
+					      int, u_int8_t));
+
+static inline u_int8_t _pcdisplay_6845_read(ph, reg)
+	struct pcdisplay_handle *ph;
+	int reg;
+{
+	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_INDEX, reg);
+	return (bus_space_read_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_DATA));
+}
+
+static inline void _pcdisplay_6845_write(ph, reg, val)
+	struct pcdisplay_handle *ph;
+	int reg;
+	u_int8_t val;
+{
+	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_INDEX, reg);
+	bus_space_write_1(ph->ph_iot, ph->ph_ioh_6845, MC6845_DATA, val);
+}
+
+#define pcdisplay_6845_read(ph, reg) \
+	_pcdisplay_6845_read(ph, offsetof(struct reg_mc6845, reg))
+#define pcdisplay_6845_write(ph, reg, val) \
+	_pcdisplay_6845_write(ph, offsetof(struct reg_mc6845, reg), val)
+
+void	pcdisplay_cursor __P((void *, int, int, int));
+void	pcdisplay_putstr __P((void *, int, int, char *, int, long));
+void	pcdisplay_copycols __P((void *, int, int, int,int));
+void	pcdisplay_erasecols __P((void *, int, int, int, long));
+void	pcdisplay_copyrows __P((void *, int, int, int));
+void	pcdisplay_eraserows __P((void *, int, int, long));

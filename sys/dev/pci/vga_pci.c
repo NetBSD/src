@@ -1,4 +1,4 @@
-/* $NetBSD: vga_pci.c,v 1.1 1998/03/22 15:16:18 drochner Exp $ */
+/* $NetBSD: vga_pci.c,v 1.2 1998/05/28 16:48:41 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -37,6 +37,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
+#include <dev/ic/mc6845reg.h>
+#include <dev/ic/pcdisplayvar.h>
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
 #include <dev/pci/vga_pcivar.h>
