@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.108 1998/03/28 19:44:08 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.109 1998/03/29 05:10:44 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -933,8 +933,8 @@ dumpsys()
 	blkno += pmap_dumpsize();
 
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
-		register unsigned i = 0, n;
-		register maddr = mp->addr;
+		unsigned i = 0, n;
+		int maddr = mp->addr;
 
 		if (maddr == 0) {
 			/* Skip first page at physical address 0 */
