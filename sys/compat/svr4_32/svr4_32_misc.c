@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.6 2001/05/11 19:19:44 kleink Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.7 2001/07/01 16:55:19 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1671,25 +1671,4 @@ bad:
 	vrele(nd.ni_vp);
 	PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	return error;
-}
-
-/*
- * Close a file descriptor.
- */
-/* ARGSUSED */
-int
-svr4_32_close(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct svr4_32_close_args /* {
-		syscallarg(int) fd;
-	} */ *uap = v;
-	int fd = SCARG(uap, fd);
-	struct filedesc *fdp = p->p_fd;
-
-	if ((u_int)fd >= fdp->fd_nfiles)
-		return (EBADF);
-	return (fdrelease(p, fd));
 }
