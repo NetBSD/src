@@ -1,7 +1,7 @@
-/*	$NetBSD: unistd.h,v 1.76 1999/07/03 13:22:06 kleink Exp $	*/
+/*	$NetBSD: unistd.h,v 1.77 1999/07/12 21:55:19 kleink Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,6 +74,7 @@
 #ifndef _UNISTD_H_
 #define	_UNISTD_H_
 
+#include <machine/ansi.h>
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/types.h>
@@ -216,6 +217,11 @@ pid_t	 getsid __P((pid_t));
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500
+#ifdef  _BSD_INTPTR_T_
+typedef _BSD_INTPTR_T_	intptr_t;
+#undef  _BSD_INTPTR_T_
+#endif
+
 #define F_ULOCK		0
 #define F_LOCK		1
 #define F_TLOCK		2
@@ -241,7 +247,7 @@ int	 lchown __P((const char *, uid_t, gid_t));
 #endif
 int	 lockf __P((int, int, off_t));
 int	 readlink __P((const char *, char *, size_t));
-char	*sbrk __P((int));
+void	*sbrk __P((intptr_t));
 /* XXX prototype wrong! */
 int	 setpgrp __P((pid_t pid, pid_t pgrp));	/* obsoleted by setpgid() */
 int	 setregid __P((gid_t, gid_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.7 1999/03/25 17:57:21 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.8 1999/07/12 21:55:20 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -53,6 +53,8 @@ typedef int32_t netbsd32_ssize_t;
 typedef int32_t netbsd32_clockid_t;
 typedef u_int32_t netbsd32_caddr_t;
 typedef int32_t netbsd32_key_t;
+typedef int32_t netbsd32_intptr_t;
+typedef u_int32_t netbsd32_uintptr_t;
 
 /* all pointers are u_int32_t */
 
