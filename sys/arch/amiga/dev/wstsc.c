@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.6 1994/12/28 09:26:05 chopps Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.7 1995/01/05 07:22:53 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -64,8 +64,6 @@ struct scsi_adapter wstsc_scsiswitch = {
 	sci_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	sci_adinfo,
-	"wstsc",
 };
 
 struct scsi_device wstsc_scsidev = {
@@ -73,8 +71,6 @@ struct scsi_device wstsc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"wstsc",
-	0,
 };
 
 #define QPRINTF
@@ -159,9 +155,10 @@ wstscattach(pdp, dp, auxp)
 	scireset(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &wstsc_scsiswitch;
 	sc->sc_link.device = &wstsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	/*

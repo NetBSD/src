@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.7 1994/12/28 09:25:39 chopps Exp $	*/
+/*	$NetBSD: ivsc.c,v 1.8 1995/01/05 07:22:38 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -65,8 +65,6 @@ struct scsi_adapter ivsc_scsiswitch = {
 	sci_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	sci_adinfo,
-	"ivsc",
 };
 
 struct scsi_device ivsc_scsidev = {
@@ -74,8 +72,6 @@ struct scsi_device ivsc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"ivsc",
-	0,
 };
 
 #define QPRINTF
@@ -173,9 +169,10 @@ ivscattach(pdp, dp, auxp)
 	scireset(sc);
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &ivsc_scsiswitch;
 	sc->sc_link.device = &ivsc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;

@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.9 1994/12/28 09:25:25 chopps Exp $	*/
+/*	$NetBSD: idesc.c,v 1.10 1995/01/05 07:22:36 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -231,7 +231,6 @@ struct idec_softc
 };
 
 void ide_minphys __P((struct buf *bp));
-u_int ide_adinfo __P((void));
 int ide_scsicmd __P((struct scsi_xfer *));
 
 int idescprint __P((void *auxp, char *));
@@ -255,8 +254,6 @@ struct scsi_adapter idesc_scsiswitch = {
 	ide_minphys,
 	0,			/* no lun support */
 	0,			/* no lun support */
-	ide_adinfo,
-	"idesc",
 };
 
 struct scsi_device idesc_scsidev = {
@@ -264,8 +261,6 @@ struct scsi_device idesc_scsidev = {
 	NULL,		/* do not have a start functio */
 	NULL,		/* have no async handler */
 	NULL,		/* Use default done routine */
-	"idesc",
-	0,
 };
 
 struct cfdriver idesccd = {
@@ -398,9 +393,10 @@ idescattach(pdp, dp, auxp)
 	printf ("\n");
 
 	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter_targ = 7;
+	sc->sc_link.adapter_target = 7;
 	sc->sc_link.adapter = &idesc_scsiswitch;
 	sc->sc_link.device = &idesc_scsidev;
+	sc->sc_link.openings = 1;
 	TAILQ_INIT(&sc->sc_xslist);
 
 	custom.intreq = INTF_PORTS;
@@ -438,18 +434,6 @@ ide_minphys(bp)
 }
 
 /*
- * must be used
- */
-u_int
-ide_adinfo()
-{
-	/* 
-	 * one request at a time please
-	 */
-	return(1);
-}
-
-/*
  * used by specific ide controller
  *
  */
@@ -469,7 +453,7 @@ ide_scsicmd(xs)
 	if (flags & SCSI_DATA_UIO)
 		panic("ide: scsi data uio requested");
 	
-	if (dev->sc_xs && flags & SCSI_NOMASK)
+	if (dev->sc_xs && flags & SCSI_POLL)
 		panic("ide_scsicmd: busy");
 
 	s = splbio();
@@ -494,7 +478,7 @@ ide_scsicmd(xs)
 	 */
 	ide_donextcmd(dev);
 
-	if (flags & SCSI_NOMASK)
+	if (flags & SCSI_POLL)
 		return(COMPLETE);
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -523,7 +507,7 @@ ide_donextcmd(dev)
 		ide_scsidone(dev, -1);
 		return;
 	}
-	if (flags & SCSI_NOMASK || ide_no_int)
+	if (flags & SCSI_POLL || ide_no_int)
 		stat = ideicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
 		    xs->data, xs->datalen/*, phase*/);
 	else if (idego(dev, xs) == 0)
@@ -553,7 +537,7 @@ ide_scsidone(dev, stat)
 	 */
 	xs->status = stat;
 
-	if (stat == 0 || xs->flags & SCSI_ERR_OK)
+	if (stat == 0)
 		xs->resid = 0;
 	else {
 		switch(stat) {
@@ -607,7 +591,7 @@ idegetsense(dev, xs)
 
 	slp = xs->sc_link;
 	
-	rqs.op_code = REQUEST_SENSE;
+	rqs.opcode = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
@@ -850,7 +834,7 @@ ideicmd(dev, target, cbuf, clen, buf, len)
 	struct scsi_inquiry_data *inqbuf;
 	struct {
 		struct scsi_mode_header header;
-		struct blk_desc blk_desc;
+		struct scsi_blk_desc blk_desc;
 		union disk_pages pages;
 	} *mdsnbuf;
 

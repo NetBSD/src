@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.18 1994/12/28 09:25:55 chopps Exp $	*/
+/*	$NetBSD: siop.c,v 1.19 1995/01/05 07:22:48 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -164,18 +164,6 @@ siop_minphys(bp)
 }
 
 /*
- * must be used
- */
-u_int
-siop_adinfo()
-{
-	/* 
-	 * one request at a time please
-	 */
-	return(1);
-}
-
-/*
  * used by specific siop controller
  *
  */
@@ -195,7 +183,7 @@ siop_scsicmd(xs)
 	if (flags & SCSI_DATA_UIO)
 		panic("siop: scsi data uio requested");
 	
-	if (dev->sc_xs && flags & SCSI_NOMASK)
+	if (dev->sc_xs && flags & SCSI_POLL)
 		panic("siop_scsicmd: busy");
 
 	s = splbio();
@@ -220,7 +208,7 @@ siop_scsicmd(xs)
 	 */
 	siop_donextcmd(dev);
 
-	if (flags & SCSI_NOMASK)
+	if (flags & SCSI_POLL)
 		return(COMPLETE);
 	return(SUCCESSFULLY_QUEUED);
 }
@@ -260,7 +248,7 @@ if (dev->sc_active > 1) {
   printf ("active count %d\n", dev->sc_active);
 }
 #endif
-	if (flags & SCSI_NOMASK || siop_no_dma) 
+	if (flags & SCSI_POLL || siop_no_dma) 
 		stat = siopicmd(dev, slp->target, slp->lun, xs->cmd,
 		    xs->cmdlen, xs->data, xs->datalen);
 	else if (siopgo(dev, xs) == 0)
@@ -290,7 +278,7 @@ siop_scsidone(dev, stat)
 	 */
 	xs->status = stat;
 
-	if (stat == 0 || xs->flags & SCSI_ERR_OK)
+	if (stat == 0)
 		xs->resid = 0;
 	else {
 		switch(stat) {
@@ -357,7 +345,7 @@ siopgetsense(dev, xs)
 
 	slp = xs->sc_link;
 	
-	rqs.op_code = REQUEST_SENSE;
+	rqs.opcode = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
 #ifdef not_yet
 	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
