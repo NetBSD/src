@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.34 1998/10/01 04:20:18 erh Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.35 1998/10/01 18:23:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,12 +39,12 @@
 #ifndef _LINUX_SYSCALL_H
 #define _LINUX_SYSCALL_H
 
-#if defined(i386)
+#if defined(__i386__)
 #include <compat/linux/i386/linux_syscall.h>
 #elif defined(__alpha__)
 #include <compat/linux/alpha/linux_syscall.h>
 #else
-#error Undefined linux_syscall.h machine type.
+#define	LINUX_SYS_MAXSYSCALL	0
 #endif
 
 #endif /* !_LINUX_SYSCALL_H */
