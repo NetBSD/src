@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: locore.s 1.58 91/04/22
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.9 1994/01/30 19:15:48 mycroft Exp $
+ *	$Id: locore.s,v 1.10 1994/01/30 19:50:21 mycroft Exp $
  */
 
 #include "assym.s"
@@ -745,7 +745,11 @@ start:
 	RELOC(tmpstk, a0)
 	movl	a0,sp			| give ourselves a temporary stack
 	RELOC(_esym, a0)
+#if 0
 	movl	a4,a0@			| store end of symbol table
+#else
+	clrl	a0@			| no symbol table, yet
+#endif
 	RELOC(_lowram, a0)
 	movl	a5,a0@			| store start of physical memory
 	movl	#CACHE_OFF,d0
