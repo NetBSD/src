@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.18 2001/03/21 18:40:31 soren Exp $ */
+/* $NetBSD: bus_dma.c,v 1.19 2001/04/01 01:42:51 dbj Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.18 2001/03/21 18:40:31 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.19 2001/04/01 01:42:51 dbj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,7 +481,7 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 		}
 	}
 
-	if (ops & BUS_DMASYNC_POSTREAD) {
+	if (ops & BUS_DMASYNC_PREREAD) {
 		int i;
 		for(i=0;i<map->dm_nsegs;i++) {
 			bus_addr_t p = map->dm_segs[i].ds_addr;
