@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.24 2002/12/26 20:55:30 matt Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.25 2003/01/17 00:02:56 jonathan Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -42,6 +42,7 @@
  *
  *	Frank van der Linden <fvdl@wasabisystems.com>
  *	Jason Thorpe <thorpej@wasabisystems.com>
+ *	jonathan Stone <joanthan@dsg.stanford.edu>
  *
  * Originally written for FreeBSD by Bill Paul <wpaul@windriver.com>
  * Senior Engineer, Wind River Systems
@@ -64,7 +65,7 @@
  * function in a 32-bit/64-bit 33/66Mhz bus, or a 64-bit/133Mhz bus.
  *
  * The BCM5701 is a single-chip solution incorporating both the BCM5700
- * MAC and a BCM5401 10/100/1000 PHY. Unlike the BCM5700, the BCM5700
+ * MAC and a BCM5401 10/100/1000 PHY. Unlike the BCM5700, the BCM5701
  * does not support external SSRAM.
  *
  * Broadcom also produces a variation of the BCM5700 under the "Altima"
@@ -160,6 +161,7 @@ int bge_init_tx_ring(struct bge_softc *);
 
 int bge_chipinit(struct bge_softc *);
 int bge_blockinit(struct bge_softc *);
+int bge_setpowerstate(struct bge_softc *, int);
 
 #ifdef notdef
 u_int8_t bge_vpd_readbyte(struct bge_softc *, int);
@@ -197,6 +199,13 @@ int	bgedebug = 0;
 #define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
 #define	BGE_QUIRK_CSUM_BROKEN		0x00000002
 #define	BGE_QUIRK_ONLY_PHY_1		0x00000004
+#define	BGE_QUIRK_5700_SMALLDMA		0x00000008
+#define	BGE_QUIRK_5700_PCIX_REG_BUG	0x00000010
+#define	BGE_QUIRK_5700_PRODUCER_BUG	0x00000011
+
+/* following bugs are common to bcm5700 rev B, all flavours */
+#define BGE_QUIRK_5700_COMMON \
+	(BGE_QUIRK_5700_SMALLDMA|BGE_QUIRK_PRODUCER_BUG)
 
 CFATTACH_DECL(bge, sizeof(struct bge_softc),
     bge_probe, bge_attach, NULL, NULL);
@@ -419,12 +428,25 @@ bge_miibus_readreg(dev, phy, reg)
 	struct bge_softc *sc = (struct bge_softc *)dev;
 	struct ifnet *ifp;
 	u_int32_t val;
+	u_int32_t saved_autopoll;
 	int i;
 
 	ifp = &sc->ethercom.ec_if;
 
+	/*
+	 * Several chips with builtin PHYs will incorrectly answer to
+	 * other PHY instances than the builtin PHY at id 1.
+	 */
 	if (phy != 1 && (sc->bge_quirks & BGE_QUIRK_ONLY_PHY_1))
 		return(0);
+
+	/* Reading with autopolling on may trigger PCI errors */
+	saved_autopoll = CSR_READ_4(sc, BGE_MI_MODE);
+	if (saved_autopoll & BGE_MIMODE_AUTOPOLL) {
+		CSR_WRITE_4(sc, BGE_MI_MODE,
+            saved_autopoll &~ BGE_MIMODE_AUTOPOLL);
+		DELAY(40);
+	}
 
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_READ|BGE_MICOMM_BUSY|
 	    BGE_MIPHY(phy)|BGE_MIREG(reg));
@@ -438,11 +460,18 @@ bge_miibus_readreg(dev, phy, reg)
 
 	if (i == BGE_TIMEOUT) {
 		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
-		return(0);
+        val = 0;
+		goto done;
 	}
 
 	val = CSR_READ_4(sc, BGE_MI_COMM);
 
+done:
+	if (saved_autopoll & BGE_MIMODE_AUTOPOLL) {
+		CSR_WRITE_4(sc, BGE_MI_MODE, saved_autopoll);
+		DELAY(40);
+	}
+    
 	if (val & BGE_MICOMM_READFAIL)
 		return(0);
 
@@ -455,8 +484,18 @@ bge_miibus_writereg(dev, phy, reg, val)
 	int phy, reg, val;
 {
 	struct bge_softc *sc = (struct bge_softc *)dev;
-	int i;
+    u_int32_t saved_autopoll;
+    int i;
 
+    /* Touching the PHY while autopolling is on may trigger PCI errors */
+	saved_autopoll = CSR_READ_4(sc, BGE_MI_MODE);
+	if (saved_autopoll & BGE_MIMODE_AUTOPOLL) {
+		delay(40);
+		CSR_WRITE_4(sc, BGE_MI_MODE,
+		    saved_autopoll & (~BGE_MIMODE_AUTOPOLL));
+		delay(10); /* 40 usec is supposed to be adequate */
+	}
+    
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_WRITE|BGE_MICOMM_BUSY|
 	    BGE_MIPHY(phy)|BGE_MIREG(reg)|val);
 
@@ -466,6 +505,11 @@ bge_miibus_writereg(dev, phy, reg, val)
 		delay(10);
 	}
 
+	if (saved_autopoll & BGE_MIMODE_AUTOPOLL) {
+		CSR_WRITE_4(sc, BGE_MI_MODE, saved_autopoll);
+		delay(40);
+	}
+    
 	if (i == BGE_TIMEOUT) {
 		printf("%s: PHY read timed out\n", sc->bge_dev.dv_xname);
 	}
@@ -930,7 +974,12 @@ bge_init_tx_ring(sc)
 	sc->bge_txcnt = 0;
 	sc->bge_tx_saved_considx = 0;
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
+	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
+		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
+
 	CSR_WRITE_4(sc, BGE_MBX_TX_NIC_PROD0_LO, 0);
+	if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
+		CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, 0);
 
 	SLIST_INIT(&sc->txdma_list);
 	for (i = 0; i < BGE_RSLOTS; i++) {
@@ -1048,6 +1097,7 @@ bge_chipinit(sc)
 {
 	u_int32_t		cachesize;
 	int			i;
+	u_int32_t		dma_rw_ctl;
 	struct pci_attach_args	*pa = &(sc->bge_pa);
 
 
@@ -1055,6 +1105,9 @@ bge_chipinit(sc)
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
 	    BGE_INIT);
 
+	/* Set power state to D0. */
+	bge_setpowerstate(sc, 0);
+	
 	/*
 	 * Check the 'ROM failed' bit on the RX CPU to see if
 	 * self-tests passed.
@@ -1081,8 +1134,42 @@ bge_chipinit(sc)
 		BGE_MEMWIN_WRITE(pa->pa_pc, pa->pa_tag, i, 0);
 
 	/* Set up the PCI DMA control register. */
-	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
-	    BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD|0x0F);
+	if (pci_conf_read(pa->pa_pc, pa->pa_tag,BGE_PCI_PCISTATE) &
+	    BGE_PCISTATE_PCI_BUSMODE) {
+		/* Conventional PCI bus */
+	  	DPRINTFN(4, ("(%s: PCI 2.2 dma setting)\n", sc->bge_dev.dv_xname));
+		dma_rw_ctl = (BGE_PCI_READ_CMD | BGE_PCI_WRITE_CMD |
+		   (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		   (0x7 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
+		   (0x0F));
+	} else {
+	  	DPRINTFN(4, ("(:%s: PCI-X dma setting)\n", sc->bge_dev.dv_xname));
+		/* PCI-X bus */
+		dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
+		    (0x3 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+		    (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT) |
+		    (0x0F);
+		/*
+		 * 5703 and 5704 need ONEDMA_AT_ONCE as a workaround
+		 * for hardware bugs, which means we should also clear
+		 * the low-order MINDMA bits.  In addition, the 5704
+		 * uses a different encoding of read/write watermarks.
+		 */
+		if (sc->bge_asicrev == BGE_ASICREV_BCM5704_A0) {
+			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
+			  /* should be 0x1f0000 */
+			  (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
+			  (0x3 << BGE_PCIDMARWCTL_WR_WAT_SHIFT);
+			dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
+		}
+		else if ((sc->bge_asicrev >> 28) ==
+			 (BGE_ASICREV_BCM5703_A0 >> 28)) {
+			dma_rw_ctl &=  0xfffffff0;
+			dma_rw_ctl |= BGE_PCIDMARWCTL_ONEDMA_ATONCE;
+		}
+	}
+
+	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL, dma_rw_ctl);
 
 	/*
 	 * Set up general mode register.
@@ -1143,6 +1230,13 @@ bge_chipinit(sc)
 		}
 	}
 
+	/*
+	 * Disable memory write invalidate.  Apparently it is not supported
+	 * properly by these devices.
+	 */
+	PCI_CLRBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD, PCIM_CMD_MWIEN);
+
+
 #ifdef __brokenalpha__
 	/*
 	 * Must insure that we do not cross an 8K (bytes) boundary
@@ -1194,9 +1288,16 @@ bge_blockinit(sc)
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LEN, 0x2000);
 
 	/* Configure mbuf pool watermarks */
+#ifdef ORIG_WPAUL_VALUES
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 24);
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 24);
 	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 48);
+#else
+	/* new broadcom docs strongly recommend these: */
+	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_READDMA_LOWAT, 0x50);
+	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_MACRX_LOWAT, 0x20);
+	CSR_WRITE_4(sc, BGE_BMAN_MBUFPOOL_HIWAT, 0x60);
+#endif
 
 	/* Configure DMA resource watermarks */
 	CSR_WRITE_4(sc, BGE_BMAN_DMA_DESCPOOL_LOWAT, 5);
@@ -1438,7 +1539,7 @@ bge_blockinit(sc)
 	    (sc->bge_tbi ? BGE_PORTMODE_TBI : BGE_PORTMODE_MII));
 
 	/* Set misc. local control, enable interrupts on attentions */
-	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_INTR_ONATTN);
+	sc->bge_local_ctrl_reg = BGE_MLC_INTR_ONATTN | BGE_MLC_AUTO_EEPROM;
 
 #ifdef notdef
 	/* Assert GPIO pins for PHY reset */
@@ -1447,6 +1548,15 @@ bge_blockinit(sc)
 	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_MISCIO_OUTEN0|
 	    BGE_MLC_MISCIO_OUTEN1|BGE_MLC_MISCIO_OUTEN2);
 #endif
+
+#if defined(not_quite_yet)
+	/* Linux driver enables enable gpio pin #1 on 5700s */
+	if (sc->bge_asicrev == BGE_ASICREV_BCM5700) {
+		sc->bge_local_ctrl_reg |= 
+		  (BGE_MLC_MISCIO_OUT1|BGE_MLC_MISCIO_OUTEN1);
+	}
+#endif	
+	CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL, sc->bge_local_ctrl_reg);
 
 	/* Turn on DMA completion state machine */
 	CSR_WRITE_4(sc, BGE_DMAC_MODE, BGE_DMACMODE_ENABLE);
@@ -1576,6 +1686,10 @@ static const struct bge_revision {
 	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5703 A2" },
 
+	{ BGE_ASICREV_BCM5704_A0,
+  	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5704 A0" },
+
 	{ 0, 0, NULL }
 };
 
@@ -1638,6 +1752,13 @@ static const struct bge_product {
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5703X,
 	  "Broadcom BCM5703X Gigabit Ethernet" },
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5704C,
+	  "Broadcom BCM5704C Dual Gigabit Ethernet" },
+   	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5704S,
+	  "Broadcom BCM5704S Dual Gigabit Ethernet" },
+
 
 	{ PCI_VENDOR_SCHNEIDERKOCH,
 	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
@@ -1665,6 +1786,56 @@ bge_lookup(const struct pci_attach_args *pa)
 
 	return (NULL);
 }
+
+int
+bge_setpowerstate(sc, powerlevel)
+	struct bge_softc *sc;
+	int powerlevel;
+{
+#ifdef NOTYET
+	u_int32_t pm_ctl = 0;
+
+	/* XXX FIXME: make sure indirect accesses enabled? */
+	pm_ctl = pci_conf_read(sc->bge_dev, BGE_PCI_MISC_CTL, 4);
+	pm_ctl |= BGE_PCIMISCCTL_INDIRECT_ACCESS;
+	pci_write_config(sc->bge_dev, BGE_PCI_MISC_CTL, pm_ctl, 4);
+
+	/* clear the PME_assert bit and power state bits, enable PME */
+	pm_ctl = pci_conf_read(sc->bge_dev, BGE_PCI_PWRMGMT_CMD, 2);
+	pm_ctl &= ~PCIM_PSTAT_DMASK;
+	pm_ctl |= (1 << 8);
+
+	if (powerlevel == 0) {
+		pm_ctl |= PCIM_PSTAT_D0;
+		pci_write_config(sc->bge_dev, BGE_PCI_PWRMGMT_CMD,
+		    pm_ctl, 2);
+		DELAY(10000);
+		CSR_WRITE_4(sc, BGE_MISC_LOCAL_CTL,
+		    sc->bge_local_ctrl_reg);
+		DELAY(10000);
+
+#ifdef NOTYET
+		/* XXX FIXME: write 0x02 to phy aux_Ctrl reg */
+		bge_miibus_writereg(sc->bge_dev, 1, 0x18, 0x02);
+#endif
+		DELAY(40); DELAY(40); DELAY(40);
+		DELAY(10000);	/* above not quite adequate on 5700 */
+		return 0;
+	}
+
+
+	/*
+	 * Entering ACPI power states D1-D3 is achieved by wiggling
+	 * GMII gpio pins. Example code assumes all hardware vendors
+	 * followed Broadom's sample pcb layout. Until we verify that
+	 * for all supported OEM cards, states D1-D3 are  unsupported.
+	 */
+	printf("%s: power state %d unimplemented; check GPIO pins\n",
+	       sc->bge_dev.dv_xname, powerlevel);
+#endif
+	return EOPNOTSUPP;
+}
+
 
 /*
  * Probe for a Broadcom chip. Check the PCI vendor and device IDs
@@ -1711,7 +1882,8 @@ bge_attach(parent, self, aux)
 	pcireg_t		memtype;
 	bus_addr_t		memaddr;
 	bus_size_t		memsize;
-
+	u_int32_t		pm_ctl;
+	
 	bp = bge_lookup(pa);
 	KASSERT(bp != NULL);
 
@@ -1772,12 +1944,25 @@ bge_attach(parent, self, aux)
 	}
 	printf("%s: interrupting at %s\n", sc->bge_dev.dv_xname, intrstr);
 
+	/*
+	 * Kludge for 5700 Bx bug: a hardware bug (PCIX byte enable?)
+	 * can clobber the chip's PCI config-space power control registers,
+	 * leaving the card in D3 powersave state.
+	 * We do not have memory-mapped registers in this state,
+	 * so force device into D0 state before starting initialization.
+	 */
+	pm_ctl = pci_conf_read(pc, pa->pa_tag, BGE_PCI_PWRMGMT_CMD);
+	pm_ctl &= ~(PCI_PWR_D0|PCI_PWR_D1|PCI_PWR_D2|PCI_PWR_D3);
+	pm_ctl |= (1 << 8) | PCI_PWR_D0 ; /* D0 state */
+	pci_conf_write(pc, pa->pa_tag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
+	DELAY(1000);	/* 27 usec is allegedly sufficent */
+
 	/* Try to reset the chip. */
 	DPRINTFN(5, ("bge_reset\n"));
 	bge_reset(sc);
 
 	if (bge_chipinit(sc)) {
-		printf("%s: chip initializatino failed\n",
+		printf("%s: chip initialization failed\n",
 		    sc->bge_dev.dv_xname);
 		bge_release_resources(sc);
 		return;
@@ -1875,9 +2060,14 @@ bge_attach(parent, self, aux)
 	/* Set default tuneable values. */
 	sc->bge_stat_ticks = BGE_TICKS_PER_SEC;
 	sc->bge_rx_coal_ticks = 150;
-	sc->bge_tx_coal_ticks = 150;
 	sc->bge_rx_max_coal_bds = 64;
+#ifdef ORIG_WPAUL_VALUES
+	sc->bge_tx_coal_ticks = 150;
 	sc->bge_tx_max_coal_bds = 128;
+#else
+	sc->bge_tx_coal_ticks = 300;
+	sc->bge_tx_max_coal_bds = 400;
+#endif
 
 	/* Set up ifnet structure */
 	ifp = &sc->ethercom.ec_if;
@@ -2455,6 +2645,8 @@ bge_encap(sc, m_head, txidx)
 	bus_dmamap_t dmamap;
 	int			i = 0;
 	struct mbuf		*n;
+    struct mbuf *prev, *m;
+    int			totlen, prevlen;
 
 	cur = frag = *txidx;
 
@@ -2465,6 +2657,57 @@ bge_encap(sc, m_head, txidx)
 			csum_flags |= BGE_TXBDFLAG_TCP_UDP_CSUM;
 	}
 
+	if (!(sc->bge_quirks & BGE_QUIRK_5700_SMALLDMA))
+        goto doit;
+	/*
+	 * bcm5700 Revision B silicon cannot handle DMA descriptors with
+	 * less than eight bytes.  If we encounter a teeny mbuf 
+	 * at the end of a chain, we can pad.  Otherwise, copy.
+	 */
+	prev = NULL;
+	totlen = 0;
+	for (m = m_head; m != NULL; prev = m,m = m->m_next) {
+		int mlen = m->m_len;
+
+		totlen += mlen;
+		if (mlen == 0) {
+			/* print a warning? */
+			continue;
+		}
+		if (mlen >= 8)
+			continue;
+
+		/* If we get here, mbuf data is too small for DMA engine. */
+		if (m->m_next != 0) {
+			  /* Internal frag. If fits in prev, copy it there. */
+			  if (prev && M_TRAILINGSPACE(prev) >= m->m_len &&
+                  !M_READONLY(prev)) {
+			  	bcopy(m->m_data,
+				      prev->m_data+prev->m_len,
+				      mlen);
+				prev->m_len += mlen;
+				m->m_len = 0;
+				MFREE(m, prev->m_next); /* XXX stitch chain */
+				m = prev;
+				continue;
+			  } else {
+				struct mbuf *n;
+				/* slow copy */
+slowcopy:
+			  	n = m_dup(m_head, 0, M_COPYALL, M_DONTWAIT);
+				m_freem(m_head);
+				if (n == 0)
+					return 0;
+				m_head  = n;
+				goto doit;
+			  }
+		} else if ((totlen -mlen +8) >= 1500) {
+			goto slowcopy;
+		}
+		prevlen = m->m_len;
+	}
+
+doit:
 	dma = SLIST_FIRST(&sc->txdma_list);
 	if (dma == NULL)
 		return ENOBUFS;
@@ -2599,6 +2842,8 @@ bge_start(ifp)
 
 	/* Transmit */
 	CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
+    if (sc->bge_quirks & BGE_QUIRK_PRODUCER_BUG)	/* 5700 b2 errata */
+	    CSR_WRITE_4(sc, BGE_MBX_TX_HOST_PROD0_LO, prodidx);
 
 	/*
 	 * Set a timeout in case the chip goes out to lunch.
