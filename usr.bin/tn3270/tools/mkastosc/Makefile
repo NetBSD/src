@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/08 21:11:55 gwr Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/24 07:52:23 lukem Exp $
 
-CFLAGS += -I${.CURDIR}/../mkhits -I${.CURDIR}/.. -I.
+PROG=	mkastosc
+SRCS=	mkastosc.c dohits.c asc_ebc.c ebc_disp.c
 
-NOMAN = I mean it!
-
-SRCS = mkastosc.c dohits.c asc_ebc.c ebc_disp.c
-PROG = mkastosc
+CPPFLAGS+=-I${.CURDIR}/../mkhits
+.PATH: ${.CURDIR}/../mkhits
 
 .include <bsd.prog.mk>
 
-.PATH: ${.CURDIR}/../mkhits ${.CURDIR}/../../api
