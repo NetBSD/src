@@ -1,5 +1,5 @@
 LIB	=	keycap
-CAPDIR	=	/usr/share/misc
+CAPDIR	=	/usr/share/pcvt
 CAPPATH	=	$(CAPDIR)/keycap.pcvt
 KEYCAPSRC=	keycap.src
 CPPFLAGS+=	-DKEYCAP_PATH=\"$(CAPPATH)\"
