@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.3 2001/06/21 18:46:22 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.4 2001/06/21 18:59:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -56,10 +56,6 @@
  * its time context switching.  PIPE_SIZE is constrained by the
  * amount of kernel virtual memory.
  */
-
-#ifdef __NetBSD__
-#include "opt_new_pipe.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
