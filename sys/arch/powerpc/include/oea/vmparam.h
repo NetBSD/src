@@ -49,6 +49,10 @@
 #define	USRSTACK		VM_MAXUSER_ADDRESS
 #endif
 
+#ifndef	USRSTACK32
+#define	USRSTACK32		((uint32_t)VM_MAXUSER_ADDRESS)
+#endif
+
 #ifndef	MAXTSIZ
 #define	MAXTSIZ			(64*1024*1024)		/* maximum text size */
 #endif
@@ -94,8 +98,8 @@
 /*
  * Segment handling stuff
  */
-#define	SEGMENT_LENGTH	0x10000000
-#define	SEGMENT_MASK	0xf0000000
+#define	SEGMENT_LENGTH	( 0x10000000L)
+#define	SEGMENT_MASK	(~0x0fffffffL)
 
 /*
  * Macros to manipulate VSIDs
@@ -138,7 +142,7 @@
 #endif
 
 #define	VM_MIN_ADDRESS		((vaddr_t) 0)
-#define	VM_MAXUSER_ADDRESS	((vaddr_t) 0xfffff000)
+#define	VM_MAXUSER_ADDRESS	((vaddr_t) ~0xfffL)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t) (KERNEL_SR << ADDR_SR_SHFT))
 #define	VM_MAX_KERNEL_ADDRESS	(VM_MIN_KERNEL_ADDRESS + 2*SEGMENT_LENGTH)
