@@ -4,3 +4,7 @@
 machine pmax mips
 mainbus0 at root
 cpu* at mainbus0
+
+# Standard exec-package options
+options		EXCE_ELF32		# native exec format
+options		EXEC_SCRIPT		# may be unsafe
