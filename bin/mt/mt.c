@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.19 1997/04/15 06:53:51 lukem Exp $	*/
+/*	$NetBSD: mt.c,v 1.20 1997/07/01 20:15:51 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mt.c,v 1.19 1997/04/15 06:53:51 lukem Exp $";
+static char rcsid[] = "$NetBSD: mt.c,v 1.20 1997/07/01 20:15:51 hannken Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,28 +70,29 @@ static char rcsid[] = "$NetBSD: mt.c,v 1.19 1997/04/15 06:53:51 lukem Exp $";
 #define MTASF	100
 
 struct commands {
-	const char *c_name;
-	int c_code;
-	int c_ronly;
+	const char *c_name;		/* command */
+	int c_code;			/* ioctl code for this command */
+	int c_ronly;			/* open tape read-only */
+	int c_mincount;			/* min allowed count value */
 };
 
 const struct commands com[] = {
-	{ "asf",	MTASF,  1 },
-	{ "blocksize",	MTSETBSIZ, 1 },
-	{ "bsf",	MTBSF,	1 },
-	{ "bsr",	MTBSR,	1 },
-	{ "density",	MTSETDNSTY, 1 },
-	{ "eof",	MTWEOF,	0 },
-	{ "eom",	MTEOM,	1 },
-	{ "erase",	MTERASE, 0 },
-	{ "fsf",	MTFSF,	1 },
-	{ "fsr",	MTFSR,	1 },
-	{ "offline",	MTOFFL,	1 },
-	{ "rewind",	MTREW,	1 },
-	{ "rewoffl",	MTOFFL,	1 },
-	{ "status",	MTNOP,	1 },
-	{ "retension",	MTRETEN, 1 },
-	{ "weof",	MTWEOF,	0 },
+	{ "asf",	MTASF,      1,  1 },
+	{ "blocksize",	MTSETBSIZ,  1,  0 },
+	{ "bsf",	MTBSF,      1,  1 },
+	{ "bsr",	MTBSR,      1,  1 },
+	{ "density",	MTSETDNSTY, 1,  0 },
+	{ "eof",	MTWEOF,     0,  1 },
+	{ "eom",	MTEOM,      1,  0 },
+	{ "erase",	MTERASE,    0,  0 },
+	{ "fsf",	MTFSF,      1,  1 },
+	{ "fsr",	MTFSR,      1,  1 },
+	{ "offline",	MTOFFL,     1,  0 },
+	{ "rewind",	MTREW,      1,  0 },
+	{ "rewoffl",	MTOFFL,     1,  0 },
+	{ "status",	MTNOP,      1,  0 },
+	{ "retension",	MTRETEN,    1,  0 },
+	{ "weof",	MTWEOF,     0,  1 },
 	{ NULL }
 };
 
@@ -138,6 +139,14 @@ main(argc, argv)
 			break;
 	}
 
+	if (*argv) {
+		count = strtol(*argv, &p, 10);
+		if (count < comp->c_mincount || *p)
+			errx(2, "%s: illegal count", *argv);
+	}
+	else
+		count = 1;
+
 	flags = comp->c_ronly ? O_RDONLY : O_WRONLY;
 	if ((mtfd = open(tape, flags)) < 0)
 		err(2, "%s", tape);
@@ -147,15 +156,6 @@ main(argc, argv)
 		   compute the minimal seek needed to position
 		   the tape.  Until then, rewind and seek from
 		   begining-of-tape */
-
-		/* zero is a valid count */
-		if (*argv) {
-			count = strtol(*argv, &p, 10);
-			if (count < 0 || *p)
-				errx(2, "%s: illegal count", *argv);
-		}
-		else
-			count = 1;
 
 		mt_com.mt_op = MTREW;
 		mt_com.mt_count = 1;
@@ -168,16 +168,6 @@ main(argc, argv)
 			err(2, "%s", tape);
 
 	} else if (comp->c_code != MTNOP) {
-
-		/* zero is *not* a valid count */
-		if (*argv) {
-			count = strtol(*argv, &p, 10);
-			if (count <= 0 || *p)
-				errx(2, "%s: illegal count", *argv);
-		}
-		else
-			count = 1;
-
 		mt_com.mt_op = comp->c_code;
 		mt_com.mt_count = count;
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.9 1996/08/08 09:16:06 jtc Exp $
+.\"	$NetBSD: mt.1,v 1.10 1997/07/01 20:15:54 hannken Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -101,17 +101,24 @@ Rewind the tape
 Rewind the tape and place the tape unit off-line
 (Count is ignored).
 .It Cm status
-Print status information about the tape unit.
+Print status information about the tape unit
+(Count is ignored).
 .It Cm retension
-Retensions the tape (if this operation is supported by the tape unit).
+Retensions the tape (if this operation is supported by the tape unit,
+count is ignored).
 .It Cm erase
-Erases the tape (if this operation is supported by the tape unit).
+Erases the tape (if this operation is supported by the tape unit,
+count is ignored).
 .It Cm eom
-Forward space to the end of the media.
+Forward space to the end of the media
+(Count is ignored).
 .It Cm blocksize
 Set the tape blocksize to
 .Ar count
 bytes.
+A
+.Ar count
+of zero sets variable blocksize.
 .It Cm density
 Set the tape density code to
 .Ar count
