@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.143.2.1 2002/05/16 12:44:42 gehenna Exp $	*/
+/*	$NetBSD: systm.h,v 1.143.2.2 2002/05/16 12:45:34 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -165,10 +165,6 @@ int	enosys __P((void));
 int	enoioctl __P((void));
 int	enxio __P((void));
 int	eopnotsupp __P((void));
-
-#if defined(LKM) || defined(_LKM)
-int	lkmenodev __P((void));
-#endif
 
 enum hashtype {
 	HASH_LIST,
