@@ -1,4 +1,4 @@
-.\" $NetBSD: eh.4,v 1.1 2000/12/20 21:12:14 bjh21 Exp $
+.\" $NetBSD: eh.4,v 1.2 2000/12/20 23:11:26 bjh21 Exp $
 .\"
 .\" Copyright (c) 2000 Ben Harris
 .\" All rights reserved.
@@ -51,6 +51,9 @@ either using
 or using links on the card.  The links override the software and make the
 card behave as if only one medium is available.  The media available are:
 .Bl -tag -width 10baseFL
+.It auto
+Automatically select 10baseT or 10base2.  10baseT will be used if a link
+beat appears to be present on that interface.  Otherwise, 10base2 will be used.
 .It 10baseT
 10baseT, 10Mb/s over unshielded twisted pair, RJ45 connector.
 .It 10base2
@@ -66,9 +69,6 @@ card behave as if only one medium is available.  The media available are:
 EtherLan 500-series support is untested.
 .Pp
 The 10baseFL port on the EtherLan 513 will probably be identified as 10base2.
-.Pp
-Automatic media selection doesn't currently work.  At startup, the driver tries
-to carry on using the same medium as RISC OS, but it isn't always successful.
 .Pp
 The driver can't detect the type of MAU plugged into an EtherLan 200-series
 card.
