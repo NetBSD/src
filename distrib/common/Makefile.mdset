@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.mdset,v 1.9 2002/04/24 21:03:42 thorpej Exp $
+#	$NetBSD: Makefile.mdset,v 1.10 2002/04/26 15:50:27 lukem Exp $
 #
 # Makefile snippet to ${MDSETIMAGE} file system images into kernels
 #
 
 #
 # Required variables:
-#	_SRC_TOP_	Top level of src tree (set by <bsd.own.mk>)
+#	NETBSDSRCDIR	Top level of src tree (set by <bsd.own.mk>)
 #	MDSETTARGETS	List of images to ${MDSETIMAGE} into kernels,
 #			containing one or more tuples of the form:
 #				KERNEL	IMAGE	FILENAME

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2002/03/06 12:04:55 lukem Exp $
+#	$NetBSD: list,v 1.5 2002/04/26 15:50:50 lukem Exp $
 
 # Vax extras
 PROG	sbin/disklabel
@@ -28,7 +28,7 @@ COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
-COPY	${_SRC_TOP_}/share/termcap/termcap.src usr/share/misc/termcap
+COPY	${NETBSDSRCDIR}/share/termcap/termcap.src usr/share/misc/termcap
 
 # copy the kernel
 COPY	${KERNOBJDIR}/GENERIC/netbsd	netbsd

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.24 2002/04/11 06:33:57 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2002/04/26 15:50:42 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
 
 .include <bsd.own.mk>	# So we get /etc/mk.conf vars.
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 # Whether or not to regenerate tables of contents
 MKTOCS?=yes

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.13 2002/04/26 15:04:30 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/04/26 15:50:50 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 ITARGET=	${RELEASEDIR}/installation
 

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.24 2002/04/13 04:14:21 tv Exp $
+#	$NetBSD: Makefile,v 1.25 2002/04/26 15:50:34 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 IMAGE=		ramdisk.fs
 IMAGESIZE=	2048k
@@ -18,9 +18,9 @@ MAKEDEVTARGETS=	raminst
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.hdprofile dot.profile \
 		${DISTRIBDIR}/mac68k/miniroot/termcap \
-		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
-		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
-		${_SRC_TOP_}/etc/services
+		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/services
 
 .ifndef NOTESOBJDIR
 NOTESOBJDIR!=	cd ${DISTRIBDIR}/notes/mac68k && ${PRINTOBJDIR}

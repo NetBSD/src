@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2002/04/14 02:36:05 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2002/04/26 15:50:42 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs

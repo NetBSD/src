@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2002/04/12 03:21:12 lukem Exp $
+# $NetBSD: Makefile.inc,v 1.11 2002/04/26 15:50:50 lukem Exp $
 
 IMAGESIZE=	7m
 MAKEFS_FLAGS=	-o density=5k
@@ -11,6 +11,6 @@ IMAGEDEPENDS+=	${ARCHDIR}/../install.md \
 		${DESTDIR}/etc/spwd.db \
 		${DESTDIR}/usr/mdec/boot \
 		${KERNOBJDIR}/GENERIC/netbsd \
-		${_SRC_TOP_}/share/termcap/termcap.src
+		${NETBSDSRCDIR}/share/termcap/termcap.src
 
 IMAGE_MD_POST=	${INSTALLBOOT} -m ${MACHINE} ${IMAGE} ${DESTDIR}/usr/mdec/xxboot

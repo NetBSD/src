@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.12 2002/04/12 14:03:59 lukem Exp $
+# $NetBSD: Makefile,v 1.13 2002/04/26 15:50:23 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 ITARGET=	${RELEASEDIR}/installation
 KERNELS=	INSTALL
@@ -20,7 +20,7 @@ release: check_RELEASEDIR
 .for kern in ${KERNELS}
 	${RELINSTALL} ${KERNELOBJ}/netbsd.${kern}.gz ${ITARGET}/kernel/
 .endfor
-	cd ${_SRC_TOP_}/sys/arch/acorn32/stand && \
+	cd ${NETBSDSRCDIR}/sys/arch/acorn32/stand && \
 		./export-BtNetBSD && \
 		rm -f ${ITARGET}/misc/BtNetBSD.tgz && \
 		gzip -9 -c BtNetBSD.tar > ${ITARGET}/misc/BtNetBSD.tgz && \

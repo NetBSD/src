@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2002/04/11 18:14:18 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2002/04/26 15:50:49 lukem Exp $
 #
 # Makefile for install
 
@@ -11,7 +11,7 @@ DPADD=		${LIBCURSES} ${LIBTERMCAP} ${LIBUTIL}
 LDADD=		-lcurses -ltermcap -lutil
 LDSTATIC?=	-static
 
-VERDEP=		${_SRC_TOP_}/sys/conf/osrelease.sh
+VERDEP=		${NETBSDSRCDIR}/sys/conf/osrelease.sh
 VER!=		sh ${VERDEP}
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \

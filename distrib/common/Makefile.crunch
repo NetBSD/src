@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.crunch,v 1.7 2002/04/12 01:59:45 lukem Exp $
+#	$NetBSD: Makefile.crunch,v 1.8 2002/04/26 15:50:27 lukem Exp $
 #
 # Makefile snippet to build a crunchgen(1)ed binary from the provided lists
 #
 
 #
 # Required variables:
-#	_SRC_TOP_	top level of src tree (set by <bsd.own.mk>)
+#	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
 #	CRUNCHBIN	name of crunchgen(1)ed binary
 #	LISTS		list file(s) to use
 #
@@ -22,7 +22,7 @@ ${CRUNCHBIN}: ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c
 
 ${CRUNCHBIN}.mk ${CRUNCHBIN}.cache ${CRUNCHBIN}.c: ${CRUNCHBIN}.conf
 	env SMALLPROG=1 \
-	    ${CRUNCHGEN} -f -D ${_SRC_TOP_} -L ${DESTDIR}/usr/lib \
+	    ${CRUNCHGEN} -f -D ${NETBSDSRCDIR} -L ${DESTDIR}/usr/lib \
 			${CRUNCHGEN_FLAGS} ${.ALLSRC}
 
 ${CRUNCHBIN}.conf: ${LISTS} ${PARSELISTDEP}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2002/04/06 18:16:12 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.17 2002/04/26 15:50:50 lukem Exp $
 
 .include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
@@ -19,9 +19,9 @@ MAKEDEVTARGETS=	std mt0 st0 rd0 rd1 dz0 dl0 dhu0 rx0 ra0 ra1 ra2 ra3 hp0 hp1 \
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		disktab.preinstall dot.profile termcap.vt100 \
 		${DESTDIR}/boot ${DESTDIR}/usr/mdec/xxboot \
-		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
-		${_SRC_TOP_}/etc/netconfig ${_SRC_TOP_}/etc/protocols \
-		${_SRC_TOP_}/etc/services
+		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/etc/services
 
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack

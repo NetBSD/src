@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.makedev,v 1.1 2002/02/08 02:18:53 lukem Exp $
+#	$NetBSD: Makefile.makedev,v 1.2 2002/04/26 15:50:27 lukem Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy etc.${MACHINE}/MAKEDEV to ./dev
@@ -6,7 +6,7 @@
 
 #
 # Required variables:
-#	_SRC_TOP_	top level of src tree (set by <bsd.own.mk>)
+#	NETBSDSRCDIR	top level of src tree (set by <bsd.own.mk>)
 #	MACHINE		machine name (set externally by build framework)
 #
 # Optional variables:
@@ -27,7 +27,7 @@ CLEANFILES+=	${MAKEDEVSPEC} ${MAKEDEVSPEC}.tmp
 #	MAKEDEVTARGETS is set; add those devices to the mtree spec that's
 #	used to build the file system
 #
-_MAKEDEVSCRIPT=	${_SRC_TOP_}/etc/etc.${MACHINE}/MAKEDEV
+_MAKEDEVSCRIPT=	${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV
 _MAKEDEVWRAP=	${DISTRIBDIR}/common/MAKEDEV.wrapper
 _MAKEDEV2SPEC=	${DISTRIBDIR}/common/makedev2spec.awk
 
@@ -47,7 +47,7 @@ ${MAKEDEVSPEC}:	${_MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
 #	init(8) to mount an mfs /dev and recreated the devices
 #
 LISTS+=		${DISTRIBDIR}/common/list.makedev
-IMAGEDEPENDS+=	${_SRC_TOP_}/etc/etc.${MACHINE}/MAKEDEV
+IMAGEDEPENDS+=	${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV
 
 ${MAKEDEVSPEC}:	.PHONY
 

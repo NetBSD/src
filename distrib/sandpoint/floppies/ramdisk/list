@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.3 2002/04/13 13:42:59 lukem Exp $
+#	$NetBSD: list,v 1.4 2002/04/26 15:50:46 lukem Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin
 
@@ -69,11 +69,11 @@ SPECIAL	umount		srcdir	distrib/utils/x_umount
 LIBS	libhack.o -ledit -lutil -lcurses -ltermcap -lrmt -ll -lm -lz
 
 # various files that we need in /etc for the install
-COPY	${_SRC_TOP_}/etc/group		etc/group
-COPY	${_SRC_TOP_}/etc/master.passwd	etc/master.passwd
-COPY	${_SRC_TOP_}/etc/netconfig	etc/netconfig
-COPY	${_SRC_TOP_}/etc/protocols	etc/protocols
-COPY	${_SRC_TOP_}/etc/services	etc/services
+COPY	${NETBSDSRCDIR}/etc/group		etc/group
+COPY	${NETBSDSRCDIR}/etc/master.passwd	etc/master.passwd
+COPY	${NETBSDSRCDIR}/etc/netconfig		etc/netconfig
+COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
+COPY	${NETBSDSRCDIR}/etc/services		etc/services
 
 # and the common installation tools
 COPY	${CURDIR}/termcap.src		usr/share/misc/termcap
