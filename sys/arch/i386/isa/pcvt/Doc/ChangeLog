@@ -1,0 +1,426 @@
+ChangeLog                             last edit-date: [Tue Mar  1 20:42:09 1994]
+================================================================================
+
+Changes 2.20 -> 3.00                                                  March 1994
+--------------------------------------------------------------------------------
+
+- Release 3.00
+
+- last minute patch from Joerg (pcvt_hdr.h, BugList, NotesAndHints)
+
+- included speedup patch from Michael Havemester as Etc/LAST-MINUTE
+
+- updated Doc/pcvt.4
+
+- removed bug in Util/ispcvt/Makefile which caused ispcvt to be installed
+	into /usr/sbin and /usr/local/bin
+
+- split ioctl VGAPCVTID into two: intro of ioctl VGAPCVTINFO for compile
+	time options only.
+	VGAPCVTID is now frozen for identification purposes (XFree86 3.0)
+	updated Util/ispcvt for the above mentioned changes
+
+- issued patch to upgrade beta14 to beta16
+
+- bugfix: when scrolling up (bcopy) is interrupted by a keystroke requesting
+	a change of the current screen, the "new" screen is scrolled up. Fixed
+	in pcvt_kbd.c and pcvt_out.c (check_scroll)
+
+- fixed bug "Jumping through vt's with ALT-F12 does jump over vt0"
+
+- PCVT_PCBURST intro, update of ioctl and Util/ispcvt
+
+- NetBSD speedup patch from Michael Havemester (factor 6-10)
+
+- issued patch to upgrade beta14 to beta15 (never officially announced)
+
+- added patch for ttioctl parameters NetBSD-current 12 Feb 94 from Michael
+	Havemester in pcvt_drv.c
+
+- INSTALLATION.xxx(x)BSD upgraded to reflect changes in Util and NetBSD-current
+
+- struct pcvtid changed to hold the value of PCVT_xxx(x)BSD, ispcvt upgraded
+
+- applied patch from Szabolcs Szigeti for 132 column operation  for Trident
+	TVGA 8900B and TVGA8900C based boards
+
+- PCVT_NETBSD can/must now be 1 or 09 for Release 0.9 and > 09 for current
+
+- applied patches from John Brezak and Szabolcs Szigeti for recent 
+	NetBSD-current changes (syscframe -> trapframe)
+
+- in Util, removed Makefile.inc. Make Makefile.inc.FreeBSD and
+	Makefile.inc.NetBSD and added a check to the toplevel and every
+	other Makefile in this part of the tree. sigh ...
+
+- patch from Joerg for pcvt.4 Makefile and Debugger in FreeBSD
+
+- issued pcvt-beta14, code freeze for 3.00 release, just bugfixes now
+
+- INSTALLATION.FreeBSD and a small cleanup patch from Joerg
+
+- large patch from Joerg to get pcvt FreeBSD-current compliant
+
+- permisssion/owner cleanup, files:664, dirs:775, user:root, group:wheel
+
+- got rid of the verbose error message when installing in Util/fonts
+
+- new make-method in Util/kcon to workaround make portability problems
+
+- NetBSD-current detection workaroundaroundaround for NEW_AVERRUNNABLE in
+	pcvt_header.h
+
+- MONO_BUF and COLOR_BUF now ifndef'ed
+
+- fixed typo in pcvt_kbd.h in cfkey11() and cfkey12()
+
+- machine/pio.h must be included in pcvt_hdr.h for recent NetBSD-current 
+
+- protected every tsleep call with an "if(curproc)" otherwise there is
+	chance to panic the system (Joerg has an idea why ...)
+
+- more fixes from Joerg: keyboard scansets fixed, X server is now aware
+	of redefined keys (ioctl implemented)
+
+- patch from Heiko Rupp, configuration with XSERVER not defined didn't	compile
+
+- new version of vgaio from Joerg installed
+
+- large keyboard cleanup patch from Joerg merged in
+
+- bugfixes from Joerg: fix crash on not-open vt, remove pcxint, add option
+  PCVT_INHIBIT_NUMLOCK (for notebook owners :-), support for EGA/VGA
+  fonts with up to 32 scanlines.
+
+- included vgaio, a program to read/write vga register values from Joerg.
+
+- included mcon, the keyboard mouse emulator control program from Joerg.
+
+- applied averunnable patch to satisfy the most recent NetBSD-current.
+
+- fixing cursor not updated bug if usl/vt server is running on vt0
+
+- polished some chars in Util/fonts/vt220l.810, fixed all permissions in
+	the uuencoded fontfiles.
+
+- debugged the EGA/VGA curses based font editor 'fed' in Util/fed. It seems
+	it's working ok now now.
+
+- updated copyright header files
+
+- synchronize asynchronous cursor position update with having a valid
+	(new) cursor (row) position from sputc(). (Otherwise a cursor
+	would appear temporarily in the first position of the first
+	function key label in the HP mode)
+
+- updated screeninfo ioctl and scon to report the monitor type
+
+- added file Doc/Notes for random notes and hints for pcvt-users.
+
+- enhanced the pcvtid-ioctl and the ispcvt(8) utility to print out the
+	values of all "PCVT_XXXXXX" compile time options.
+
+- included work from Joerg to convert all ifdef's to if's, to be able
+	to compile various configurations of pcvt without changing
+	options in the header file.
+
+- included (currently untested !) patch for a keyboard mouse emulator
+	from Joerg. (he got problems after he bought a notebook with
+	just one serial port, which he wanted to use for slip ...)
+
+- screensaver reset is now also done asyncronously to get more speed. the
+	function average() was renamed to async_update().
+
+- cursor position update and cursor position display in HP mode is now done
+	asynchronously in function average() in pcvt_sup.c. the function
+	update_cursor does no longer exist. this gave about 10..30% increase
+	in speed depending on the data cat'ed (termcap, kernel, 1Mb nulls)
+
+- HP function key emulation processing debugged, this has to be rewritten
+	to use a stack and a new parser. elm -K now works a bit more, the
+	display is not garbled anymore, but fkey strings do not work.
+
+- pcvt_vtf.c split off from pcvt_out.c, file got > 100k. Checked all
+	forward declarations in header and source files
+
+- 132 column support for Cirrus Logic CL-GD542X chipsets written by
+	Onno van der Linden, c/o vdlinden@fwi.uva.nl
+
+- keyboard scancode display	(#define PCVT_SHOWKEYS)
+
+- printscreen keycode fix form Onno van der Linden
+
+- Util/Makefile.inc added .depend dependency for make depend
+
+- pcvt_ioctl.h is now installed into /usr/include/machine.
+
+- keyboard scancode 1 is now used by default, perhaps it cures some problems
+
+- support for keyboard scancodes sets 1 and 2 (compile time selectable via
+	PCVT_SCANSET), patch from Onno van der Linden, c/o vdlinden@fwi.uva.nl
+
+- Util/fontedit.c updated to "#if defined (__386BSD__) || defined (__NetBSD__)"
+	(suggested by Mark Weaver, Mark_Weaver@brown.edu)
+
+- 132 column support for S3 86c928 chipsets
+
+- split off pcvt_ext.c from pcvt_sup.c, it was more than 100k ....
+
+- intro of Doc/Manifest and Doc/TestedHardware, removed README.X-PATCH because
+	it was now really outdated
+
+- superprobe compatibility patches from Joerg
+
+- intro of file Doc/BugList
+
+- another powerpatch from Joerg:
+	- some vgaioctl's are now available if in X mode (i.e. to scon to 
+		another screen from within an xterm)
+	- removed bug in keyboardhandling, numlock'ed numkeys did send an
+		additional null (0x00) char, this has been fixed now.
+	- SysRq key made functional
+
+- made force 24 lines (see below) the default configuration to have a well
+	behaving vt220 emulator at startup.
+
+- every vt now has a separate caps-lock, num-lock and scroll-lock flag and
+	a separate handling of these lock-keys.
+
+- made sleeping in case of scroll lock working from an earlier patch from Joerg.
+
+- large patch from Joerg:
+	- Doc/pcvt.4 updated to reflect recent changes
+	- struct winsize set ok when switching between HP/VT
+	- struct winsize pixels reflect real values now
+	- ioctl for switching between 80 and 132 cols
+	- 132 columns for generic VGA's	
+	- updated scon to provide access to ioctl 80/132 col switching 
+
+- removed pcconcoftc and kbdsoftc structures from header files, removed
+	pcconsintr variable and introduced kbd polling synchronization
+	varaible kbd_polling.
+
+- merging Joerg's patch to support 132 columns on Tseng Labs ET3000
+
+- moved  Util/uemacs/* --> Etc/uemacs.tar.Z.uu
+
+- added patches from Joerg for new Makefiles in Util
+
+- added keyboard security define's to the new X server code
+
+- adding bugfixes from Joerg Wunsch for "old" (= non vt switching) X server
+
+- Control-Alt-Functionkey(1...12) switches now virtual screens/terminals to
+	behave consistently with xfree 2.0, also the pages are now checked
+	against the real no. of terminals available ALL the time ...
+
+- pcvt_hdr.h: changed "int pcstart();" to "void pcstart();" to avoid warning
+	message when compiling under NetBSD-current
+
+- Doc dir split into Doc and Etc, Support renamed to Util
+
+- adding NetBSD-current support for new X server support (syscframe changed 
+	to trapframe in NetBSD-current as of 11/11/93)
+
+- adding Joergs changes for XFree86 2.0 multiple X server and/or terminal
+	session support
+
+- adding entries from patchkit 0.2.4 codrv keymap to Support/keycap/keycap.src
+
+- Keyboard security introduced into the XSERVER dependent part in pcvt_drv.c
+
+- renamed device files from /dev/ttycXX to /dev/ttyvXX
+
+- added file Doc/pcvt.el from Joerg Wunsch to distribution
+
+- added HP-mode function key map from Gordon L. Burditt to description
+	in Doc/Keyboard.HP
+
+- fixed bug in scon which prevents it from showing the correct status of
+	132 column support of chipset
+
+- 132 column mode for Trident TVGA9000 works now, after 2 1/5 months of 
+	calling everybody i eventually got a tech ref manual from Trident .... 
+
+- it is now possible to "force" pcvt into a 24 line mode when operating
+	in pure VT mode with 25 lines or in HP mode with 28 lines. This
+	is sometimes necessary when running software which assumes it runs
+	on a "real" VT220 which has just 24 lines.
+
+- updated scon to support the 24 lines force mode (scon -f [ on | off ])
+
+- soft reset fkey now positions cursor into left upper corner, update_cursor()
+	made global function
+
+- updated scon (-l) to print out additional info about the vga chipset,
+	family and 132 column support if VGA detected.
+
+- added additional fields to screeninfo structure in pcvt_ioctl.h to be
+	able to return information about current vga chipset.
+
+- moved VGA type/family definitions from pcvt_hdr.h to pcvt_ioctl.h
+
+- Terminfo and Termcap updated to support 132 columns
+
+- fixed bug in kcon which outputs garbage for remapped keys in kcon -l.
+	(reported by Gordon L. Burditt, gordon@sneaky.lonestar.org)
+
+- modified Makefile for Support/ispcvt to copy it for installation instead
+	of moving it ..
+
+- renamed /usr/share/misc/keycap -> /usr/share/misc/keycap.pcvt to
+	avoid nameclash with same file for codrv (Gordon Burditt)
+
+- security bit no longer ignored when initializing keyboard (see #define
+	PCVT_USEKBDSEC in pcvt_hdr.h, suggested by Terry Lambert)
+
+- cpufunc.h include made only for NetBSD (Gordon Burditt)
+
+- switch statement in pcvt_drv.c removed for 386BSD (Gordon Burditt)
+
+- Trident cursor size bug removed
+
+- keyboard initialization for ddb
+
+- added support for cursor on/of switching, screensaver and DECTCEM
+
+- removed explicit Hercules support, MDA = Hercules in this context now
+
+- patchkit from Joerg Wunsch (kbd-overlay malloc, scroll_sleep, clip fix)
+
+- ispcvt now installed into /usr/sbin
+
+- removed PCVT_NETBSD08 and PCVT_NETBSDCU, intro of PCVT_NETBSD
+
+- implemented 132 column operation for wd90c11 chipsets
+
+- PCVT_PREPATCH022 renamed to PCVT_NEEDPG
+
+- INSTALLATION.NetBSD written
+
+- DEVICE in kcon makefile changed from /dev/console to /dev/ttyc0
+
+- new keyboard code in pcvt_kbd.c from NetBSD current
+
+- new /etc/rc.local script in INSTALLATION
+
+- implemented 132 column operation for et4000 chipsets
+
+- detection of super vga chipsets as a prerequisite for 132 col mode
+
+- switched to memory mapped virtual screen operation, configurable no. of
+  virtual screens, virtual screens now also on MDA and Hercules boards
+
+
+Changes 2.10 -> 2.20                                                   June 1993
+--------------------------------------------------------------------------------
+
+- added new option -a to scon to get the video adaptor in scripts
+
+- support for NetBSD-current, define PCVT_NETBSDCU to enable it
+
+- Support for NetBSD 0.8, define PCVT_NETBSD08 in pcvt_hdr.h to enable it.
+
+- Change Support/Makefile to use <bsd.subdir.mk> instead of <bsd.prog.mk>
+
+- Font editor for the EGA/VGA font-files added to support the design of new
+  fonts. One will need Zeyd M. Ben-Halim's ncurses library to compile it, see
+  file README.FIRST for information where to get it
+
+- Doc/INSTALLATION upgraded
+
+- Terminfo entry added to support Zeyd M. Ben-Halim's ncurses port
+
+- ispcvt is now installed in /sbin to have it at boottime if /usr is not
+	yet mounted.
+
+- applied a patch which prevents CAPS LOCK, SHIFT LOCK, and SCROLL LOCK
+	from being repeated (causing i.e a flashing CAPS LOCK led while
+	holding CAPS LOCK key down).
+	(diff from Gordon L. Burditt, gordon@sneaky.lonestar.org)
+
+- merging patches to support the pccons-model of X11 server support
+	(diff from Joerg Wunsch, joerg_wunsch@uriah.sax.de)
+
+- file pcvt_drv.c routine pg() enclosed in "#ifdef PCVT_PREPATCH022" to solve
+	multiple defined symbols beginning with patchkit 0.2.2
+	(reported by Marko Karppinen, dreamer@purkki.apu.fi)
+
+- added british keycap entry into keycap source file
+	(from Andy Duplain, duplain@rtf.bt.co.uk)
+
+
+Changes 2.00 -> 2.10                                                  March 1993
+--------------------------------------------------------------------------------
+
+- detecting the presence of video boards has been changed to ask the 
+  BIOS "equipment byte" in the RTC-CMOS ram what's installed. this caused
+  many discussions but solved also many problems ....
+
+- driver name changed from "pc" to "vt" for multiple driver coexistence
+	(diff from Joerg Wunsch, joerg_wunsch@uriah.sax.de)
+
+- new devicenames recommended for showup in utils like "ps"
+	(many people suggested that ..)
+
+- new location for manual pcvt.0
+	(diff from Joerg Wunsch, joerg_wunsch@uriah.sax.de)
+
+- new demo file "sgr.vt" to show available graphic renditions
+
+- intro of Doc/ChangeLog (this file)
+
+- fixed bug in Support/keycap/Makefile
+	(diff from Gordon L. Burditt, gordon@sneaky.lonestar.org)
+
+- make vttest (main.c) compile after applying patchkit-beta2
+
+- screensaver fixed by Joerg Wunsch
+
+- screensaver now compiled in by default
+
+- made recognition of CONTROL-ALT-DELETE an optional #ifdef'ed feature
+
+- added sgr-conversion table for MDA adaptors
+
+- fixed sgr-conversion table for VGA monochrome environments
+
+- added support for using the kernel debugger
+	(diff from Bruce Evans, bde@runx.oz.au)
+
+- fixed several bugs regarding monochrome environments in pcvt_sup.c
+
+- fixed bug in scon preventing one from piping output though more
+	(reported by Gordon L. Burditt, gordon@sneaky.lonestar.org)
+
+- display current screen number in HP-mode in the bottom right of screen
+
+- changed names of all #define-able compile time options to start with
+  "PCVT_" for easy identification and installation into the kernel config file
+
+- applied another pcvt_kbd.c patchkit from Bruce Evans, bde@runx.oz.au. he
+  writes:
+
+	These fixes are mainly related to ddb.  sgetc has a weird interface that
+	has caused some bugs, and it was too easy for ddb to reenter itself.
+	
+	1. Don't use char for keypad2num, char might be unsigned.  Space is not
+	   important since the array is small.
+	
+	2. Don't use u_short for n.
+	
+	3. Change some 0's to NULLs.
+	
+	4. sgetc must not return NULL for the !noblock case.  Only callers with
+	   noblock set check for the null pointer.  When the kernel follows a
+	   null pointer, I think page 0 is sometimes mapped in so nothing bad
+	   happens.  The kernel panics if the page is not mapped in.
+	
+	5. Reentrancy fix. The debugger really ought to check for reentrancy
+	   itself, but the driver still needs to return early after the 
+	   debugger returns, so that it doesn't return a junk ESC from
+	   ctrl-alt-ESC.
+	
+	6. xlatkey2ascii may return NULL too.
+
+--------------------------------------------------------------------------------

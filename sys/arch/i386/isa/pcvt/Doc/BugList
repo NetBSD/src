@@ -1,0 +1,69 @@
+List of known Bugs, ToDo's etc.
+--------------------------------------------------------------------------------
+                                      Last Edit-Date: [Tue Mar  1 20:17:37 1994]
+
+
+Description:                                    Fixed/done by/date
+-------------------------------------------	--------------------------------
+Numlock repeats, so by keeping numlock
+pressed, the LED will blink. The other lock
+keys don't do this. This has shown up on
+several keyboards, including a Cherry.
+-------------------------------------------	--------------------------------
+When switching back and forth between
+80 and 132 column mode while an X server
+is running on another vty, the status
+line is being displayed mid of a 132-
+column screen.
+-------------------------------------------	--------------------------------
+Altgr+Shift+key is not separately		They way the keyboard mapping
+mappable.					is done is subject to a sub-
+						stantial rewrite in a future
+						release
+-------------------------------------------	--------------------------------
+force 24 lines in HP-mode is not set ok
+if done from the rc.local script.
+-------------------------------------------	--------------------------------
+132 column mode not working with #9 GXE
+(S3-based) (sorry, i don't have one -hm)
+-------------------------------------------	--------------------------------
+no cursor update while in DDB  and
+kernel printf's
+-------------------------------------------	--------------------------------
+WD90Cxx chip detection fails to detect
+chips other than C00,C10 and C11. C30
+chips are detected as C11s ....
+-------------------------------------------	--------------------------------
+Xfree86 2.0 locks the console when started
+under NetBSD 0.9. SuperProbe and X both
+show process status "DE+" in ps. Work-
+around is to disable PCVT_USL_VT_COMPAT.
+-------------------------------------------	--------------------------------
+On one keyboard, if a "Lock" key is pressed
+the leds do not get updated and the key-
+board hangs.
+-------------------------------------------	--------------------------------
+HP function key labels code needs to set
+the user defined fkey string somehow!
+-------------------------------------------	--------------------------------
+I've found something weird in 132 column
+mode: (printf with 9 x tab)
+printf "\n\t\t\t\t\t\t\t\t\tGotcha"
+works ok, while one tab more
+printf "\n\t\t\t\t\t\t\t\t\t\tGotcha"
+doesn't work (it doesn't print Gotcha
+at column 80, but at column 131).
+-------------------------------------------	--------------------------------
+Video 7 1024i not fully supported yet, has
+sometimes problems with some chars to displ
+-------------------------------------------	--------------------------------
+When entering/leaving X from/to a 132 col
+screen, it results in garbage. Does the
+X server save ALL vga registers ??????
+-------------------------------------------	--------------------------------
+pcvt was not tested in REAL (just emulated)
+CGA and EGA (mono | color) environments ..
+-------------------------------------------	--------------------------------
+The HP-Escape sequences need to be FULLY	28.12.93, -hm did a bit to supp-
+implemented					port elm. Needs MORE work !
+-------------------------------------------	--------------------------------
