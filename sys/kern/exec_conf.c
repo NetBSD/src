@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.9 1994/09/05 01:09:22 mycroft Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.10 1995/02/28 23:06:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -60,6 +60,10 @@
 #include <compat/ibcs2/ibcs2_exec.h>
 #endif
 
+#ifdef COMPAT_LINUX
+#include <compat/linux/linux_exec.h>
+#endif
+
 struct execsw execsw[] = {
 #ifdef LKM
 	{ 0, NULL, },					/* entries for LKMs */
@@ -79,6 +83,10 @@ struct execsw execsw[] = {
 #endif
 #ifdef COMPAT_SVR4
 	{ ELF_HDR_SIZE, exec_svr4_elf_makecmds, },	/* elf binaries */
+#endif
+#ifdef COMPAT_LINUX
+	{ LINUX_AOUT_HDR_SIZE, exec_linux_aout_makecmds, }, /* linux a.out */
+	/* linux elf should be inserted here */
 #endif
 #ifdef COMPAT_IBCS2
 	{ COFF_HDR_SIZE, exec_ibcs2_coff_makecmds, },	/* coff binaries */
