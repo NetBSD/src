@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)mtree.h	5.9 (Berkeley) 2/19/92
- *	$Id: mtree.h,v 1.4 1994/04/25 18:21:23 cgd Exp $
+ *	@(#)mtree.h	8.1 (Berkeley) 6/6/93
  */
 
 #include <string.h>
@@ -46,7 +45,7 @@ typedef struct _node {
 	struct _node	*parent, *child;	/* up, down */
 	struct _node	*prev, *next;		/* left, right */
 	off_t	st_size;			/* size */
-	struct timespec st_mtimespec;		/* last modification time */
+	struct timespec	st_mtimespec;		/* last modification time */
 	u_long	cksum;				/* check sum */
 	char	*slink;				/* symbolic link reference */
 	uid_t	st_uid;				/* uid */
