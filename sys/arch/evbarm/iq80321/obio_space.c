@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.3 2002/09/27 15:36:01 provos Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.4 2003/01/02 23:04:08 briggs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -46,9 +46,12 @@
 
 #include <machine/bus.h>
 
+#include "iq80321reg.h"
+
 /* Prototypes for all the bus_space structure functions */
 bs_protos(obio);
 bs_protos(generic);
+bs_protos(generic_armv4);
 bs_protos(bs_notimpl);
 
 /*
@@ -79,7 +82,7 @@ struct bus_space obio_bs_tag = {
 
 	/* read (single) */
 	generic_bs_r_1,
-	bs_notimpl_bs_r_2,
+	generic_armv4_bs_r_2,
 	generic_bs_r_4,
 	bs_notimpl_bs_r_8,
 
@@ -90,14 +93,14 @@ struct bus_space obio_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	bs_notimpl_bs_rr_1,
+	generic_bs_rr_1,
 	bs_notimpl_bs_rr_2,
 	bs_notimpl_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
 	generic_bs_w_1,
-	bs_notimpl_bs_w_2,
+	generic_armv4_bs_w_2,
 	generic_bs_w_4,
 	bs_notimpl_bs_w_8,
 
@@ -136,12 +139,41 @@ int
 obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
+	uint32_t startpa, endpa, pa;
+	vaddr_t va;
+	pt_entry_t *pte;
 
-	/*
-	 * IQ80321 on-board devices are mapped VA==PA.  All addresses
-	 * we're provided, therefore, don't need any additional mapping.
-	 */
-	*bshp = bpa;
+	if (bpa > IQ80321_IOPXS_VBASE) {
+		/*
+		 * IQ80321 on-board devices are mapped VA==PA.  All
+		 * addresses we're provided, therefore, don't need
+		 * any additional mapping.
+		 */
+		*bshp = bpa;
+	} else {
+		/*
+		 * Some devices, however, may lie outside the
+		 * already-mapped space (notably flash).
+		 */
+		startpa = trunc_page(bpa);
+		endpa = round_page(bpa + size);
+		
+		/* XXX use some extent to check for duplicate mappings? */
+
+		va = uvm_km_valloc(kernel_map, endpa - startpa);
+		if (! va)
+			return ENOMEM;
+
+		*bshp = (bus_space_handle_t) (va + (bpa - startpa));
+
+		for (pa=startpa; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+			pte = vtopte(va);
+			*pte &= ~L2_S_CACHE_MASK;
+			PTE_SYNC(pte);
+		}
+		pmap_update(pmap_kernel());
+	}
 
 	return 0;
 }
@@ -161,6 +193,9 @@ obio_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
 	/* Nothing to do. */
+	/* XXX -- technically, if we alloc and map above, we should
+	 * unmap and free here, but we bail on this for now.
+	 */
 }
 
 void    
