@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.5 1997/06/16 22:10:27 thorpej Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.6 1997/07/06 23:57:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -44,6 +44,7 @@
 #include <stdio.h>
 #include <sys/exec_ecoff.h>
 #include <sys/errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 
@@ -55,36 +56,57 @@
 #define PF_R            (1 << 2)        /* Segment is readable */
 #define PF_MASKPROC     0xF0000000      /* Processor-specific reserved bits */
 
+
+#define	ISLAST(p)	(p->n_un.n_name == 0 || p->n_un.n_name[0] == 0)
+
 struct sect {
   unsigned long vaddr;
   unsigned long len;
 };
 
-int phcmp ();
+int debug = 1;
+
+int phcmp (Elf32_Phdr *h1, Elf32_Phdr *h2);
+
 char *saveRead (int file, off_t offset, off_t len, char *name);
-int copy (int, int, off_t, off_t);
-int translate_syms (int, int, off_t, off_t, off_t, off_t);
+void copy (int, int, off_t, off_t);
+void combine (struct sect *base, struct sect *new, int paddable);
+void translate_syms (int, int, off_t, off_t, off_t, off_t);
+int make_ecoff_section_hdrs(struct ecoff_exechdr *ep, 
+				 struct ecoff_scnhdr *esecs);
+
+void write_ecoff_symhdr(int outfile, struct ecoff_exechdr *ep,
+			struct ecoff_symhdr *symhdrp,
+			long nesyms, long extstroff);
+
 extern int errno;
 int *symTypeTable;
 
+int
 main (int argc, char **argv, char **envp)
 {
   Elf32_Ehdr ex;
   Elf32_Phdr *ph;
   Elf32_Shdr *sh;
-  Elf32_Sym *symtab;
   char *shstrtab;
   int strtabix, symtabix;
   int i, pad;
-  struct sect text, data, bss;
+  struct sect text, data, bss;		/* a.out-compatible sections */
+  struct sect rdata, sdata, sbss; 	/* ECOFF-only sections */
+
   struct ecoff_exechdr ep;
-  struct ecoff_scnhdr esecs [3];
+  struct ecoff_scnhdr esecs [6];
+
   int infile, outfile;
   unsigned long cur_vma = ULONG_MAX;
   int symflag = 0;
+  int nsecs = 0;
 
   text.len = data.len = bss.len = 0;
   text.vaddr = data.vaddr = bss.vaddr = 0;
+
+  rdata.len = sdata.len = sbss.len = 0;
+  rdata.vaddr = sdata.vaddr = sbss.vaddr = 0;
 
   /* Check args... */
   if (argc < 3 || argc > 4)
@@ -127,6 +149,24 @@ main (int argc, char **argv, char **envp)
   /* Read in the section string table. */
   shstrtab = saveRead (infile, sh [ex.e_shstrndx].sh_offset,
 		       sh [ex.e_shstrndx].sh_size, "shstrtab");
+  /* Read in the section string table. */
+  shstrtab = saveRead (infile, sh [ex.e_shstrndx].sh_offset,
+		       sh [ex.e_shstrndx].sh_size, "shstrtab");
+
+
+  /* Look for the symbol table and string table...
+     Also map section indices to symbol types for a.out */
+  symtabix = 0;
+  strtabix = 0;
+  for (i = 0; i < ex.e_shnum; i++)
+    {
+      char *name = shstrtab + sh [i].sh_name;
+      if (!strcmp (name, ".symtab"))
+	symtabix = i;
+      else if (!strcmp (name, ".strtab"))
+	strtabix = i;
+
+    }
 
   /* Figure out if we can cram the program header into an ECOFF
      header...  Basically, we can't handle anything but loadable
@@ -134,18 +174,28 @@ main (int argc, char **argv, char **envp)
      handle holes in the address space.  Segments may be out of order,
      so we sort them first. */
 
-  qsort (ph, ex.e_phnum, sizeof (Elf32_Phdr), phcmp);
+  qsort (ph, ex.e_phnum, sizeof (Elf32_Phdr),
+	( int (*)(const void *, const void *))phcmp);
 
   for (i = 0; i < ex.e_phnum; i++)
     {
       /* Section types we can ignore... */
       if (ph [i].p_type == Elf_pt_null || ph [i].p_type == Elf_pt_note ||
-	  ph [i].p_type == Elf_pt_phdr || ph [i].p_type == Elf_pt_mips_reginfo)
-	continue;
+	  ph [i].p_type == Elf_pt_phdr ||
+	  ph [i].p_type == Elf_pt_mips_reginfo) {
+
+	  if (debug) {
+	    fprintf(stderr,"  skipping PH %d type %d flags 0x%x\n",
+                    i, ph[i].p_type, ph[i].p_flags);
+	   }
+	   continue;
+	}
+
       /* Section types we can't handle... */
       else if (ph [i].p_type != Elf_pt_load)
         {
-	  fprintf (stderr, "Program header %d type %d can't be converted.\n");
+	  fprintf (stderr, "Program header %d type %d can't be converted.\n",
+		   i, ph[i].p_type);
 	  exit (1);
 	}
       /* Writable (data) segment? */
@@ -158,6 +208,10 @@ main (int argc, char **argv, char **envp)
 	  nbss.vaddr = ph [i].p_vaddr + ph [i].p_filesz;
 	  nbss.len = ph [i].p_memsz - ph [i].p_filesz;
 
+	  if (debug) {
+	    printf("  combinining PH %d type %d flags 0x%x with data, ndata = %ld, nbss =%ld\n", i, ph[i].p_type, ph[i].p_flags, ndata.len, nbss.len);
+	  }
+
 	  combine (&data, &ndata, 0);
 	  combine (&bss, &nbss, 1);
 	}
@@ -167,8 +221,14 @@ main (int argc, char **argv, char **envp)
 
 	  ntxt.vaddr = ph [i].p_vaddr;
 	  ntxt.len = ph [i].p_filesz;
+	  if (debug) {
 
-	  combine (&text, &ntxt);
+	    printf("  combinining PH %d type %d flags 0x%x with text, len = %ld\n",
+		 i, ph[i].p_type, ph[i].p_flags, ntxt.len);
+	  }
+
+
+	  combine (&text, &ntxt, 0);
 	}
       /* Remember the lowest segment start address. */
       if (ph [i].p_vaddr < cur_vma)
@@ -203,7 +263,7 @@ main (int argc, char **argv, char **envp)
 
   /* We now have enough information to cons up an a.out header... */
   ep.a.magic = ECOFF_OMAGIC;
-  ep.a.vstamp = 200;
+  ep.a.vstamp =  2 * 256 + 10;	/* compatible with version 2.10 */
   ep.a.tsize = text.len;
   ep.a.dsize = data.len;
   ep.a.bsize = bss.len;
@@ -216,36 +276,19 @@ main (int argc, char **argv, char **envp)
   ep.a.gp_value = 0; /* unused. */
 
   ep.f.f_magic = ECOFF_MAGIC_MIPSEL;
-  ep.f.f_nscns = 3;
+  ep.f.f_nscns = 6;
   ep.f.f_timdat = 0;	/* bogus */
   ep.f.f_symptr = 0;
-  ep.f.f_nsyms = 0;
+  ep.f.f_nsyms = sizeof(struct ecoff_symhdr); 
   ep.f.f_opthdr = sizeof ep.a;
   ep.f.f_flags = 0x100f; /* Stripped, not sharable. */
 
-  strcpy (esecs [0].s_name, ".text");
-  strcpy (esecs [1].s_name, ".data");
-  strcpy (esecs [2].s_name, ".bss");
-  esecs [0].s_paddr = esecs [0].s_vaddr = ep.a.text_start;
-  esecs [1].s_paddr = esecs [1].s_vaddr = ep.a.data_start;
-  esecs [2].s_paddr = esecs [2].s_vaddr = ep.a.bss_start;
-  esecs [0].s_size = ep.a.tsize;
-  esecs [1].s_size = ep.a.dsize;
-  esecs [2].s_size = ep.a.bsize;
+  bzero(esecs, sizeof(esecs));
 
-  esecs [0].s_scnptr = ECOFF_TXTOFF (&ep);
-  esecs [1].s_scnptr = ECOFF_DATOFF (&ep);
-  esecs [2].s_scnptr = esecs [1].s_scnptr +
-	  ECOFF_ROUND (esecs [1].s_size, ECOFF_SEGMENT_ALIGNMENT (&ep));
-  esecs [0].s_relptr = esecs [1].s_relptr
-	  = esecs [2].s_relptr = 0;
-  esecs [0].s_lnnoptr = esecs [1].s_lnnoptr
-	  = esecs [2].s_lnnoptr = 0;
-  esecs [0].s_nreloc = esecs [1].s_nreloc = esecs [2].s_nreloc = 0;
-  esecs [0].s_nlnno = esecs [1].s_nlnno = esecs [2].s_nlnno = 0;
-  esecs [0].s_flags = 0x20;
-  esecs [1].s_flags = 0x40;
-  esecs [2].s_flags = 0x82;
+  /* Make  ECOFF section headers, with empty stubs for .rdata/.sdata/.sbss. */
+  make_ecoff_section_hdrs(&ep, esecs);
+
+  nsecs = ep.f.f_nscns;
 
   /* Make the output file... */
   if ((outfile = open (argv [2], O_WRONLY | O_CREAT, 0777)) < 0)
@@ -261,12 +304,12 @@ main (int argc, char **argv, char **envp)
       perror ("ep.f: write");
       exit (1);
 
-  for (i = 0; i < 6; i++)
-    {
-      printf ("Section %d: %s phys %x  size %x  file offset %x\n",
-	      i, esecs [i].s_name, esecs [i].s_paddr,
-	      esecs [i].s_size, esecs [i].s_scnptr);
-    }
+    for (i = 0; i < nsecs; i++)
+      {
+        printf ("Section %d: %s phys %lx  size %lx  file offset %lx\n",
+	        i, esecs [i].s_name, esecs [i].s_paddr,
+	        esecs [i].s_size, esecs [i].s_scnptr);
+      }
     }
   fprintf (stderr, "wrote %d byte file header.\n", i);
 
@@ -278,15 +321,17 @@ main (int argc, char **argv, char **envp)
     }
   fprintf (stderr, "wrote %d byte a.out header.\n", i);
 
-  i = write (outfile, &esecs, sizeof esecs);
-  if (i != sizeof esecs)
+  i = write (outfile, &esecs, sizeof (esecs[0]) * nsecs);
+  if (i != sizeof (esecs[0]) * nsecs)
     {
       perror ("esecs: write");
       exit (1);
     }
   fprintf (stderr, "wrote %d bytes of section headers.\n", i);
 
-  if (pad = ((sizeof ep.f + sizeof ep.a + sizeof esecs) & 15))
+
+  pad = ((sizeof ep.f + sizeof ep.a + sizeof esecs) & 15);
+  if (pad)
     {
       pad = 16 - pad;
       i = write (outfile, "\0\0\0\0\0\0\0\0\0\0\0\0\0\0", pad);
@@ -313,11 +358,11 @@ main (int argc, char **argv, char **envp)
 	      char obuf [1024];
 	      if (gap > 65536)
 		{
-		  fprintf (stderr, "Intersegment gap (%d bytes) too large.\n",
+		  fprintf (stderr, "Intersegment gap (%ld bytes) too large.\n",
 			   gap);
 		  exit (1);
 		}
-	      fprintf (stderr, "Warning: %d byte intersegment gap.\n", gap);
+	      fprintf (stderr, "Warning: %ld byte intersegment gap.\n", gap);
 	      memset (obuf, 0, sizeof obuf);
 	      while (gap)
 		{
@@ -338,10 +383,27 @@ fprintf (stderr, "writing %d bytes...\n", ph [i].p_filesz);
 	}
     }
 
+
+  /*
+   * Write a page of padding for boot PROMS that read entire pages.
+   * Without this, they may attempt to read past the end of the
+   * data section, incur an error, and refuse to boot.
+   */
+   {
+     char obuf [4096];
+     memset (obuf, 0, sizeof obuf);
+     if (write(outfile, obuf, sizeof(obuf)) != sizeof(obuf)) {
+	fprintf(stderr, "Error writing PROM padding: %s\n",
+		strerror(errno));
+	exit(1);
+     }
+   }
+
   /* Looks like we won... */
   exit (0);
 }
 
+void
 copy (out, in, offset, size)
      int out, in;
      off_t offset, size;
@@ -379,6 +441,7 @@ copy (out, in, offset, size)
 
 /* Combine two segments, which must be contiguous.   If pad is true, it's
    okay for there to be padding between. */
+void
 combine (base, new, pad)
      struct sect *base, *new;
      int pad;
@@ -426,7 +489,7 @@ char *saveRead (int file, off_t offset, off_t len, char *name)
     }
   if (!(tmp = (char *)malloc (len)))
     {
-      fprintf (stderr, "%s: Can't allocate %d bytes.\n", name, len);
+      fprintf (stderr, "%s: Can't allocate %ld bytes.\n", name, (long)len);
       exit (1);
     }
   count = read (file, tmp, len);
@@ -437,4 +500,64 @@ char *saveRead (int file, off_t offset, off_t len, char *name)
       exit (1);
     }
   return tmp;
+}
+
+
+/* 
+ * Construct  ECOFF section headers for .text, .data, and .bss,
+ *  with empty stubs for .rdata/.sdata/.sbss.  Follow the section ordering
+ * guaranteed by the mipsco toolchain:
+ *  .text, .rdata, .data.,  .sdata, .sbss, .bss.
+ * 
+ * The ELF kernel we are translating has no sections corresponding 
+ * to .rdata, .sdata and  .sbss.  Output zero-length sections for each,
+ * with no file contents and the correct ELF section flags.
+ * Some DECstation proms will not boot without this.
+ *
+ * XXX scan the ELF sectoin headers and map ELF .rodata to ECOFF .rdata
+ */
+int
+make_ecoff_section_hdrs(ep, esecs)
+	struct ecoff_exechdr *ep;
+	struct ecoff_scnhdr *esecs;
+
+{
+  ep->f.f_nscns = 6;	/* XXX */
+
+  strcpy (esecs [0].s_name, ".text");
+  strcpy (esecs [1].s_name, ".data");
+  strcpy (esecs [2].s_name, ".bss");
+
+  esecs [0].s_paddr = esecs [0].s_vaddr = ep->a.text_start;
+  esecs [1].s_paddr = esecs [1].s_vaddr = ep->a.data_start;
+  esecs [2].s_paddr = esecs [2].s_vaddr = ep->a.bss_start;
+  esecs [0].s_size = ep->a.tsize;
+  esecs [1].s_size = ep->a.dsize;
+  esecs [2].s_size = ep->a.bsize;
+
+  esecs [0].s_scnptr = ECOFF_TXTOFF (ep);
+  esecs [1].s_scnptr = ECOFF_DATOFF (ep);
+#if 0
+  esecs [2].s_scnptr = esecs [1].s_scnptr +
+	  ECOFF_ROUND (esecs [1].s_size, ECOFF_SEGMENT_ALIGNMENT (ep));
+#endif
+
+  esecs [0].s_relptr = esecs [1].s_relptr
+	  = esecs [2].s_relptr = 0;
+  esecs [0].s_lnnoptr = esecs [1].s_lnnoptr
+	  = esecs [2].s_lnnoptr = 0;
+  esecs [0].s_nreloc = esecs [1].s_nreloc = esecs [2].s_nreloc = 0;
+  esecs [0].s_nlnno = esecs [1].s_nlnno = esecs [2].s_nlnno = 0;
+
+  esecs[1].s_flags = 0x100;	/* ECOFF rdata */
+  esecs[3].s_flags = 0x200;	/* ECOFF sdata */
+  esecs[4].s_flags = 0x400;	/* ECOFF sbss */
+
+  /*
+   * Set the symbol-table offset  to point at the end of any sections
+   * we loaded above, so later code can use it to write symbol table info..
+   */
+  ep->f.f_symptr = esecs[1].s_scnptr + esecs[1].s_size;
+
+  return(ep->f.f_nscns);
 }
