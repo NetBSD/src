@@ -1,4 +1,4 @@
-/* $Id: main.h,v 1.2 1993/05/20 05:28:26 cgd Exp $ */
+/* $Id: main.h,v 1.3 1994/05/13 06:10:25 mycroft Exp $ */
 
 #define TRUE 1
 #define FALSE 0

@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)ns_pcb.c	7.11 (Berkeley) 6/27/91
- *	$Id: ns_pcb.c,v 1.3 1993/12/18 00:44:34 mycroft Exp $
+ *	from: @(#)ns_pcb.c	8.1 (Berkeley) 6/10/93
+ *	$Id: ns_pcb.c,v 1.4 1994/05/13 06:11:24 mycroft Exp $
  */
 
 #include <sys/param.h>

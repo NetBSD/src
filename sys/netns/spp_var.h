@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1984, 1985, 1986, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1984, 1985, 1986, 1987, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)spp_var.h	7.7 (Berkeley) 6/28/90
- *	$Id: spp_var.h,v 1.2 1993/05/21 07:44:05 cgd Exp $
+ *	from: @(#)spp_var.h	8.1 (Berkeley) 6/10/93
+ *	$Id: spp_var.h,v 1.3 1994/05/13 06:11:39 mycroft Exp $
  */
-
-#ifndef _NETNS_SPP_VAR_H_
-#define _NETNS_SPP_VAR_H_
 
 /*
  * Sp control block, one per connection
@@ -217,5 +214,3 @@ short xnsCbug;
 #define	SSEQ_GT(a,b)	(((short)((a)-(b))) > 0)
 #define	SSEQ_GEQ(a,b)	(((short)((a)-(b))) >= 0)
 #endif
-
-#endif /* !_NETNS_SPP_VAR_H_ */

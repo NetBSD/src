@@ -1,3 +1,5 @@
+/* $Id: llscan.c,v 1.4 1994/05/13 06:10:21 mycroft Exp $ */
+
 /*
  * ************************* NOTICE *******************************
  * This code is in the public domain.  It cannot be copyrighted.
@@ -6,8 +8,6 @@
  * It was subsequently modified significantly by Nancy Hall at the 
  * University of Wisconsin for the ARGO project.
  * ****************************************************************
- *
- *	$Id: llscan.c,v 1.3 1994/03/29 04:30:26 glass Exp $
  */
 #include "xebec.h"
 #include "llparse.h"

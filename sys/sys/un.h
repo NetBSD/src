@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)un.h	7.7 (Berkeley) 6/28/90
- *	$Id: un.h,v 1.5 1994/05/04 09:08:33 mycroft Exp $
+ *	from: @(#)un.h	8.1 (Berkeley) 6/2/93
+ *	$Id: un.h,v 1.6 1994/05/13 06:12:14 mycroft Exp $
  */
-
-#ifndef _SYS_UN_H_
-#define _SYS_UN_H_
 
 /*
  * Definitions for UNIX IPC domain.
@@ -47,8 +44,7 @@ struct	sockaddr_un {
 };
 
 #ifdef KERNEL
-
-#include <sys/unpcb.h>
+struct unpcb;
 
 int	uipc_usrreq __P((struct socket *so, int req, struct mbuf *m,
 		struct mbuf *nam, struct mbuf *control));
@@ -69,6 +65,4 @@ void	unp_shutdown __P((struct unpcb *unp));
 /* actual length of an initialized sockaddr_un */
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
-#endif
-
-#endif /* !_SYS_UN_H_ */
+#endif /* KERNEL */

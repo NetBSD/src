@@ -1,4 +1,4 @@
-/* $Id: debug.h,v 1.2 1993/05/20 05:28:20 cgd Exp $ */
+/* $Id: debug.h,v 1.3 1994/05/13 06:10:17 mycroft Exp $ */
 
 #define OUT stdout
 
