@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.29 2003/05/14 07:50:50 wiz Exp $
+.\"	$NetBSD: compat_linux.8,v 1.30 2003/09/01 17:54:41 manu Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -42,13 +42,8 @@ This applies to arm, alpha, i386, m68k and powerpc systems for now.
 Both the a.out and ELF binary formats are supported.
 Most programs should work, including the ones that use the Linux SVGAlib (only
 on i386).
-Programs that will not work include some that use the Linux
-.Pa /proc
-filesystem (which is different from the optional
-.Nx
-.Pa /proc
-filesystem), and i386-specific calls, such as
-enabling virtual 8086 mode.
+Programs that will not work include some that use 
+i386-specific calls, such as enabling virtual 8086 mode.
 Currently, sound is only partially supported for Linux binaries (they will
 probably run, depending on what Linux sound support features are used).
 .Pp
