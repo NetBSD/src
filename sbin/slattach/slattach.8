@@ -1,4 +1,4 @@
-.\"	$NetBSD: slattach.8,v 1.23 2001/06/05 11:22:53 wiz Exp $
+.\"	$NetBSD: slattach.8,v 1.24 2001/12/05 15:03:27 wiz Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,9 +42,9 @@
 .Nd attach serial lines as network interfaces
 .Sh SYNOPSIS
 .Nm
-.Op Fl t Ar ldisc
-.Op Fl hHlmn
+.Op Fl Hhlmn
 .Op Fl s Ar baudrate
+.Op Fl t Ar ldisc
 .Ar ttyname
 .Sh DESCRIPTION
 .Nm
@@ -53,10 +53,10 @@ and to define the network source and destination addresses.
 The following operands are supported by
 .Nm "" :
 .Bl -tag -width Ar
-.It Fl h
-Turn on RTS/CTS flow control.  By default, no flow control is done.
 .It Fl H
 Turn on DTR/CTS flow control.  By default, no flow control is done.
+.It Fl h
+Turn on RTS/CTS flow control.  By default, no flow control is done.
 .It Fl l
 Turn on the CLOCAL flag, making it possible to run SLIP on a cable
 without modem control signals (e.g. DTR, DSR, DCD).
@@ -83,7 +83,7 @@ If this option is not specified, the default is
 .Dq slip .
 .It Ar ttyname
 Specifies the name of the tty device.
-.Ar Ttyname
+.Ar ttyname
 should be a string of the form
 .Ql ttyXX ,
 or
@@ -125,8 +125,8 @@ slattach ttyh8
 slattach \-s 4800 /dev/tty01
 .Ed
 .Sh DIAGNOSTICS
-Messages indicating the specified interface does not exit, the
-requested address is unknown, the user is not privileged and
+Messages indicating that the specified interface does not exist, the
+requested address is unknown, or that the user is not privileged but
 tried to alter an interface's configuration.
 .Sh SEE ALSO
 .Xr netstat 1 ,
