@@ -1,4 +1,4 @@
-/*	$NetBSD: debuglog.c,v 1.4 2003/06/25 23:26:00 nathanw Exp $	*/
+/*	$NetBSD: debuglog.c,v 1.5 2003/08/20 09:50:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <err.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/shm.h>
