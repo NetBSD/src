@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.29 1995/12/23 17:21:27 perry Exp $	*/
+/*	$NetBSD: boot.c,v 1.30 1996/06/18 06:06:38 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -254,10 +254,12 @@ nosyms:
          *  arg7 = conventional memory size (640)
          *  arg8 = extended memory size (8196)
 	 */
+#ifndef ONEDISK
 	if (maj == 2) {
 		printf("\n\nInsert file system floppy\n");
 		getc();
 	}
+#endif
 
 	startaddr &= 0xffffff;
 	argv[1] = howto;
