@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.13 2003/10/06 09:43:27 itojun Exp $ 
+ *	$Id: isdnd.h,v 1.14 2004/03/28 20:49:22 pooka Exp $ 
  *
  * $FreeBSD$
  *
@@ -525,15 +525,16 @@ struct isdn_ctrl_state {
 
 	char device_name[80];		/* device name, e.g. "isic0"	*/
 	char controller[80];		/* manufacturer/name	 	*/
-	int bri;
+	int isdnif;
 	int protocol;			/* ISDN D-channel protocol 	*/	
 	char *firmware;			/* loadable firmware file name	*/
 
 	int state;			/* controller state		*/
 #define  CTRL_DOWN 	0		/* controller inoparable	*/
 #define  CTRL_UP	1		/* controller may be used	*/
-	int stateb1;			/* B-channel 1 			*/
-	int stateb2;			/* B-channel 2			*/
+#define  MAX_BCHAN	30		/* support PRI-type adapters	*/
+	int stateb[MAX_BCHAN];		/* B channels			*/
+	int nbch;			/* number of B channels on ctrl */
 #define  CHAN_IDLE	0		/* channel is free for usage	*/
 #define  CHAN_RUN	1		/* channel is occupied		*/
 	int freechans;			/* number of unused channels	*/
@@ -786,7 +787,7 @@ void handle_scrprs(int cdid, int scr, int prs, char *caller);
 void if_up(struct cfg_entry *cep);
 void if_down(struct cfg_entry *cep);
 void init_controller ( void );
-void init_new_controller(int bri);
+void init_new_controller(int isdnif);
 void init_controller_protocol ( void );
 void init_single_controller_protocol ( struct isdn_ctrl_state *ctrl );
 void init_log ( void );
