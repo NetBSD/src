@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.22 1998/03/25 21:32:22 fair Exp $
+.\"	$NetBSD: ddb.4,v 1.23 1998/03/25 21:58:08 fair Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,14 +112,36 @@ from the keyboard:
 .It mvme68k
 Abort switch on CPU card.
 .It pmax
-<Break> on serial console, or <Do> on LK-201 rcons console.
+<Do> on
+.Tn LK-201
+rcons console.
+.br
+<Break> on serial console.
 .It sparc
-<L1>-A, or <Stop>-A
+<L1>-A, or <Stop>-A on a
+.Tn Sun
+keyboard.
+.br
+<Break> on serial console.
 .It sun3
-<L1>-A, or <Stop>-A
+<L1>-A, or <Stop>-A on a
+.Tn Sun
+keyboard.
+.br
+<Break> on serial console.
 .It sun3x
-<L1>-A, or <Stop>-A
+<L1>-A, or <Stop>-A on a
+.Tn Sun
+keyboard.
+.br
+<Break> on serial console.
 .El
+.Pp
+.Em NOTE:
+on the Sun platforms, <Break> from the serial console may be
+disabled by the EEPROM configuration. See
+.Xr eeprom 8
+for details.
 .Pp
 In addition,
 .Nm
@@ -643,58 +665,62 @@ command parser.
 All of these commands are preceded by the command word
 .Em machine
 to indicate that they are part of the machine-specific command
-set (e.g. "machine reboot").
+set (e.g.
+.Ic "machine reboot"
+).
 Some of these commands are:
-.Ss alpha
+.Ss ALPHA
 .Bl -tag -width "intrchain"
-.It halt
+.It Ic halt
 Call the PROM monitor to halt the CPU.
-.It reboot
+.It Ic reboot
 Call the PROM monitor to reboot the CPU.
 .El
-.Ss arm32
+.Ss ARM32
 .Bl -tag -width "intrchain"
-.It vmstat
+.It Ic vmstat
 Equivalent to
 .Xr vmstat 8
 output with "-s" option (statistics).
-.It vnode
+.It Ic vnode
 Print out a description of a vnode.
-.It intrchain
+.It Ic intrchain
 Print the list of IRQ handlers.
-.It panic
+.It Ic panic
 Print the current "panic" string.
-.It frame
+.It Ic frame
 Given a trap frame address, print out the trap frame.
 .El
-.Ss mips
+.Ss MIPS
 .Bl -tag -width "intrchain"
-.It halt
+.It Ic halt
 Call the PROM monitor to halt the CPU.
-.It tlb
+.It Ic tlb
 Print out the Translation Lookaside Buffer (TLB).
-.It trapdump
+.It Ic trapdump
 Print out the Trap Log.
 Only works in
 .Nx
-kernels compiled with DEBUG option.
+kernels compiled with
+.Dv DEBUG
+option.
 .El
-.Ss sparc
+.Ss SPARC
 .Bl -tag -width "intrchain"
-.It prom
+.It Ic prom
 Exit to the Sun PROM monitor.
 .El
-.Ss sun3 and sun3x
+.Ss SUN3 and SUN3X
 .Bl -tag -width "intrchain"
-.It abort
+.It Ic abort
 Drop into monitor via abort (allows continue).
-.It halt
+.It Ic halt
 Exit to Sun PROM monitor as in
 .Xr halt 8 .
-.It reboot
+.It Ic reboot
 Reboot the machine as in
 .Xr reboot 8 .
-.It pgmap
+.It Ic pgmap
 Given an address, print the address, segment map, page map, and
 Page Table Entry (PTE).
 .El
