@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.16 2000/06/22 06:47:48 thorpej Exp $	*/
+/*	$NetBSD: telnet.c,v 1.17 2001/03/04 01:51:05 assar Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.16 2000/06/22 06:47:48 thorpej Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.17 2001/03/04 01:51:05 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -427,10 +427,10 @@ willoption(option)
 	    }
 	}
 	set_my_state_do(option);
-#ifdef	ENCRYPT
+#ifdef	ENCRYPTION
 	if (option == TELOPT_ENCRYPT)
 		encrypt_send_support();
-#endif	/* ENCRYPT */
+#endif	/* ENCRYPTION */
 }
 
 	void
