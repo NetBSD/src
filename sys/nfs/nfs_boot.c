@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nfs_boot.c,v 1.3 1994/06/13 15:28:59 gwr Exp $
+ * $Id: nfs_boot.c,v 1.4 1994/06/21 08:30:20 pk Exp $
  */
 
 #include <sys/param.h>
@@ -225,6 +225,7 @@ get_path_and_handle(bpsin, key, ndmntp)
 	struct nfs_dlmount *ndmntp; /* output */
 {
 	char pathname[MAXPATHLEN];
+	char *sp, *dp, *endp;
 	int error;
 
 	/*
@@ -248,6 +249,16 @@ get_path_and_handle(bpsin, key, ndmntp)
 					 ndmntp->ndm_fh);
 	if (error)
 		panic("nfs_boot: mountd %s, error=%d", key, error);
+
+	/* Construct remote path (for getmntinfo(3)) */
+	dp = ndmntp->ndm_host;
+	endp = dp + MNAMELEN - 1;
+	dp += strlen(dp);
+	*dp++ = ':';
+	for (sp = pathname; *sp && dp < endp;)
+		*dp++ = *sp++;
+	*dp = '\0';
+		
 }
 
 
