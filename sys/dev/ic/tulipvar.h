@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.22 1999/12/11 00:33:02 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.23 1999/12/12 02:41:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -447,11 +447,14 @@ do {									\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
 									\
 	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->td_bufaddr1 = __rxs->rxs_dmamap->dm_segs[0].ds_addr;	\
-	__rxd->td_bufaddr2 = TULIP_CDRXADDR((sc), TULIP_NEXTRX((x)));	\
+	__rxd->td_bufaddr1 =						\
+	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr);		\
+	__rxd->td_bufaddr2 =						\
+	    htole32(TULIP_CDRXADDR((sc), TULIP_NEXTRX((x))));		\
 	__rxd->td_ctl =							\
-	    ((__m->m_ext.ext_size - 1) << TDCTL_SIZE1_SHIFT) | TDCTL_CH; \
-	__rxd->td_status = TDSTAT_OWN|TDSTAT_Rx_FS|TDSTAT_Rx_LS;	\
+	    htole32(((__m->m_ext.ext_size - 1) << TDCTL_SIZE1_SHIFT) |	\
+	    TDCTL_CH);							\
+	__rxd->td_status = htole32(TDSTAT_OWN|TDSTAT_Rx_FS|TDSTAT_Rx_LS); \
 	TULIP_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
 } while (0)
 
