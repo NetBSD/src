@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.41 2002/09/19 20:35:56 mycroft Exp $	*/
+/*	$NetBSD: lpd.c,v 1.42 2002/09/20 04:12:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.41 2002/09/19 20:35:56 mycroft Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.42 2002/09/20 04:12:42 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -308,7 +308,7 @@ main(int argc, char **argv)
 		while (child_max < child_count) {
 			syslog(LOG_WARNING,
 			    "too many children, sleeping for %ld seconds",
-				sleeptime.tv_sec);
+				(long)sleeptime.tv_sec);
 			nanosleep(&sleeptime, NULL);
 			sleeptime.tv_sec <<= 1;
 			if (sleeptime.tv_sec <= 0) {
