@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.60 2000/06/28 17:12:56 mrg Exp $	*/
+/*	$NetBSD: i82365.c,v 1.61 2000/07/09 01:55:18 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1371,7 +1371,7 @@ pcic_chip_socket_enable(pch)
 
 #ifdef DIAGNOSTIC
 	if (h->flags & PCIC_FLAG_ENABLED)
-		printf("pcic_chip_socket_enable: enabling twice");
+		printf("pcic_chip_socket_enable: enabling twice\n");
 #endif
 
 	/* disable interrupts */
@@ -1399,7 +1399,7 @@ pcic_chip_socket_enable(pch)
 	printf("cvsr = %02x\n", pcic_read(h, 0x2f));
 #endif
 	/* power up the socket */
-	pwr |= PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_PWR_ENABLE;
+	pwr |= PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_VPP1_VCC;
 	pcic_write(h, PCIC_PWRCTL, pwr);
 
 	/*
@@ -1418,7 +1418,7 @@ pcic_chip_socket_enable(pch)
 	pcic_write(h, PCIC_INTR, intr);
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV |
-	    PCIC_PWRCTL_OE | PCIC_PWRCTL_PWR_ENABLE);
+	    PCIC_PWRCTL_OE | PCIC_PWRCTL_PWR_ENABLE | PCIC_PWRCTL_VPP1_VCC);
 	/*
 	 * hold RESET at least 10us, this is a min allow for slop in
 	 * delay routine.
@@ -1435,7 +1435,7 @@ pcic_chip_socket_enable(pch)
 #ifdef DIAGNOSTIC
 	reg = pcic_read(h, PCIC_IF_STATUS);
 	if (!(reg & PCIC_IF_STATUS_POWERACTIVE)) {
-		printf("pcic_chip_socket_enable: status %x", reg);
+		printf("pcic_chip_socket_enable: status %x\n", reg);
 	}
 #endif
 	/* wait for the chip to finish initializing */
