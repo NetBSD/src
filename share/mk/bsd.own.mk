@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.186 2001/10/09 05:19:04 enami Exp $
+#	$NetBSD: bsd.own.mk,v 1.187 2001/10/13 06:11:23 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -40,6 +40,7 @@ CC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-gcc
 COMPILE_ET=	${TOOLDIR}/bin/compile_et
 CONFIG=		${TOOLDIR}/bin/config
 CPP=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
+CRUNCHGEN=	${TOOLDIR}/bin/crunchgen
 CXX=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-c++
 #EQN=		${TOOLDIR}/bin/eqn
 FC=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-g77
@@ -55,8 +56,10 @@ LINT=		CC="${CC}" ${TOOLDIR}/bin/lint
 LORDER=		NM="${NM}" ${TOOLDIR}/bin/lorder
 #MAKE=		${TOOLDIR}/bin/bmake
 MAKEINFO=	${TOOLDIR}/bin/makeinfo
-MKDEP=		CC="${CC}" ${TOOLDIR}/bin/mkdep
+MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/menuc
+MKDEP=		CC=${CC} ${TOOLDIR}/bin/mkdep
 #MKLOCALE=	${TOOLDIR}/bin/mklocale
+MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/msgc
 MTREE=		${TOOLDIR}/bin/mtree
 NM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-nm
 #NROFF=		${TOOLDIR}/bin/nroff -Tascii
