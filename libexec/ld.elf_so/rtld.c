@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.34.2.1 2000/07/26 23:45:22 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.34.2.2 2000/08/29 01:47:42 scottb Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -437,7 +437,10 @@ _rtld(sp)
 		_rtld_objmain = _rtld_digest_phdr(phdr, phnum, entry);
 	}
 
-	_rtld_objmain->path = xstrdup("main program");
+	if (argv[0] != NULL)
+		_rtld_objmain->path = xstrdup(argv[0]);
+	else
+		_rtld_objmain->path = xstrdup("main program");
 	_rtld_objmain->mainprog = true;
 	
 	/*
