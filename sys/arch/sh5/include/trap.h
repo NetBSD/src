@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.8 2003/01/19 19:49:51 scw Exp $	*/
+/*	$NetBSD: trap.h,v 1.9 2003/03/13 13:44:18 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -115,7 +115,7 @@ extern void	userret(struct lwp *);
 extern void	trap(struct lwp *, struct trapframe *);
 extern void	trapa(struct lwp *, struct trapframe *);
 extern void	panic_trap(struct trapframe *, register_t, register_t,
-		    register_t, int);
+		    register_t);
 extern const char *trap_type(int);
 #if defined(DIAGNOSTIC) || defined(DDB)
 extern void	dump_trapframe(void (*)(const char *, ...), const char *,

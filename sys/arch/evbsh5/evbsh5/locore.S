@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.12 2003/01/20 22:25:09 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.13 2003/03/13 13:44:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,14 +43,23 @@
 /*
  * The main entry point.
  *
- * The bootloader (to be written) will have stashed the boot parameters
- * in r56 - r62
+ *   void start(long		    kseg0_phys,		r2
+ *		void		   *symtab,		r3
+ *		vaddr_t		    end_kernel);	r4
+ *
+ * To support the simulator, or when the kernel is loaded directly into
+ * memory via JTAG by the debugger, we check for end_kernel = 0 and use
+ * a default kseg0_phys value if necessary. C code will assume ddb
+ * symbols are in SYMTAB_SPACE in this case.
+ *
+ * If we were booted by the bootloader, our boot_params structure will
+ * be located at 'end_kernel'.
  */
 	.globl	_C_LABEL(kernel_text)
 _C_LABEL(kernel_text):
-
-ASENTRY_NOPROFILE(text)
 ASENTRY_NOPROFILE(start)
+ASENTRY_NOPROFILE(text)
+
 	getcon	sr, r1
 	LDC32(SH5_CONREG_SR_IMASK_ALL|SH5_CONREG_SR_BL|SH5_CONREG_SR_MD, r0)
 	or	r0, r1, r0
@@ -74,10 +83,26 @@ ASENTRY_NOPROFILE(start)
 	nop
 
 /*
- * The SR is sane. Go initialise the TLB, Cache and MMU.
+ * Now initialise the TLB, Cache and MMU.
+ *
+ * If we were loaded by a real bootloader, the physical address of KSEG0
+ * will be in r2. However, we might have been loaded over jtag, in which
+ * case the registers will be zero. Or, we might be running in the
+ * simulator, in which case the registers will be == 0xdeadbeefdeadbeef.
  */
-1:	LEAF(Lmapped_start, r18)
-	LDUC32(0x80000000, r2)
+1:	LDSC32(0x80000000, r0)
+	cmveq	r4, r0, r2
+	LDSC64(0xdeadbeefdeadbeef, r1)
+	cmpeq	r1, r2, r1
+	cmvne	r1, r0, r2
+	cmvne	r1, r63, r3
+	LEA(_C_LABEL(end), r0)
+	cmvne	r1, r0, r4
+
+	LEAF(Lmapped_start, r18)
+	add.l	r2, r63, r60		/* Save physical load address */
+	add.l	r3, r63, r61		/* Save symbol table start */
+	add.l	r4, r63, r62		/* Save end kernel */
 	pta/l	Lsh5_stb1_init, tr0
 	blink	tr0, r63
 
@@ -85,26 +110,13 @@ ASENTRY_NOPROFILE(start)
  * We are now running mapped in KSEG0, with the MMU enabled.
  */
 Lmapped_start:
-#ifndef SH5_SIM
-	LDC32(0x08000000, r56)		/* RAM size. XXX: Can we probe this? */
-#else
-	LDC32(0x01000000, r56)		/* Fake 16MB for the simulator */
-#endif
 	LEA(_C_LABEL(edata), r0)
 	LEA(_C_LABEL(end), r1)
+	cmveq	r62, r1, r62		/* Fix up end_kernel, if necessary */
 	pta/u	1f, tr0
 1:	st.q	r0, 0, r63		/* Clear BSS */
 	addi	r0, 8, r0
 	bgtu/l	r1, r0, tr0
-
-	LEA(_C_LABEL(evbsh5_bootparams), r0)
-	st.q	r0, 0, r56		/* Save boot parameters */
-	st.q	r0, 8, r57
-	st.q	r0, 16, r58
-	st.q	r0, 24, r59
-	st.q	r0, 32, r60
-	st.q	r0, 40, r61
-	st.q	r0, 48, r62
 
 	/*
 	 * Do generic runtime environment initialisation
@@ -112,25 +124,18 @@ Lmapped_start:
 
 	LEAF(Lsh5_init_env, r0)
 	ptabs/l	r0, tr0
+	add	r60, r63, r2
 	blink	tr0, r18
-
-	/*
-	 * Arrange to catch panic traps with the mmu off.
-	 */
-	LEA(_C_LABEL(sh5_resvec_vector_table), r0)
-	LEA(0x40000000, r1)
-	sub	r0, r1, r0
-	ori	r0, 1, r0
-	putcon  r0, resvec
 
 	/* Now safe to call C code */
 
 	/*
 	 * Do basic initialisation, including setting up the pmap.
 	 *
-	 * void evbsh5_init(vaddr_t endkernel)
+	 * void evbsh5_init(void *symtab, vaddr_t endkernel)
 	 */
-	LEA(_C_LABEL(end), r2)
+	or	r61, r63, r2
+	or	r62, r63, r3
 	LEAF(_C_LABEL(evbsh5_init), r0)
 	ptabs/l	r0, tr0
 	blink	tr0, r18
@@ -154,9 +159,6 @@ Lmapped_start:
 	blink	tr0, r63
 
 
-	.comm	Lmem_regions,SIZEOF_MEM_REGION*2,8
-
-
 /*
  * Pull in the common SH5 locore code
  */
@@ -167,174 +169,6 @@ Lmapped_start:
 #include <sh5/sh5/stb1_locore.S>
 #include <sh5/sh5/sigcode.S>
 #include <sh5/sh5/bus_subr.S>
-
-
-/*===================== Start of RESVEC Vector Table =========================*/
-
-	_TEXT_SECTION
-	.balign	0x10
-
-GLOBAL(sh5_resvec_vector_table)
-
-/******************************************************************************
- * Reset/Panic Exception Vector.
- *
- * RESVEC Offset: 0x0
- *        Length: 0x100
- */
-Lsh5_resvec_vector_panic:
-	getcon	usr, r24
-	putcon	r15, kcr1
-	LEA(_C_LABEL(sh5_panic_stack) - (0x40000000-(USPACE-SZ_TRAPFRAME)), r15)
-	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r24	/* Save USR */
-	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
-	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
-	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
-	getcon	kcr1, r0
-	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
-	gettr	tr0, r0
-	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
-	getcon	pssr, r0
-	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save PSSR */
-	getcon	pspc, r0
-	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save PSPC */
-	getcon	pexpevt, r0
-	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save PEXPEVT */
-	getcon	intevt, r0
-	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
-	getcon	tea, r0
-	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
-	getcon	tra, r0
-	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
-	movi	0, r2
-	pta/l	Lsh5_event_panic, tr0
-	blink	tr0, r63
-
-	.space	(0x100 - (. - Lsh5_resvec_vector_panic))
-
-
-/******************************************************************************
- * Debug Synchronous Exception Handler
- *
- * RESVEC Offset: 0x100
- *        Length: 0x100
- *
- * We have to handle these as regular synchronous exceptions since a BRK
- * instruction from userland results one of these.
- *
- * Trouble is, we're now running with the MMU disabled, so we do the minimum
- * necessary to re-enable the MMU before jumping to the regular synchronous
- * exception handler.
- */
-Lsh5_resvec_vector_dbg_general:
-	getcon	usr, r24		/* Stash USR somewhere safe for now */
-	putcon	r0, kcr1		/* Save r0 */
-	getcon	spc, r0			/* Fetch PC at point of exception */
-	putcon	r0, pspc		/* Make it available to real handler */
-	getcon	ssr, r0			/* Fetch SR at point of exception */
-	putcon	r0, pssr		/* Make it available to real handler */
-	getcon	vbr, r0
-	addi	r0, 0x101, r0		/* The real Synchronous Exc. handler */
-	putcon	r0, spc
-	getcon	sr, r0			/* Arrange to set SR.MMU */
-	shlli	r0, 32, r0
-	byterev	r0, r0			/* This trick avoids the need to have */
-	ori	r0, 0x80, r0		/* another register available to load */
-	byterev	r0, r0			/* a 32-bit constant into. */
-	shlri	r0, 32, r0
-	putcon	r0, ssr
-	getcon	kcr1, r0		/* Restore r0 */
-	putcon	r24, usr		/* Restore USR */
-	synco
-	rte				/* Enable the MMU and jump to handler */
-	nop
-	nop
-	nop
-	nop
-	nop
-
-	.space	(0x100 - (. - Lsh5_resvec_vector_dbg_general))
-
-
-/******************************************************************************
- * Debug Interrupt Handler.
- *
- * RESVEC Offset: 0x200
- *        Length: 0x200
- *
- * Deal with these the same way as above.
- */
-Lsh5_resvec_vector_debugint:
-	getcon	usr, r24		/* Stash USR somewhere safe for now */
-	putcon	r0, kcr1		/* Save r0 */
-	getcon	spc, r0			/* Fetch PC at point of exception */
-	putcon	r0, pspc		/* Make it available to real handler */
-	getcon	ssr, r0			/* Fetch SR at point of exception */
-	putcon	r0, pssr		/* Make it available to real handler */
-	getcon	vbr, r0
-	addi	r0, 0x1ff, r0
-	addi	r0, 0x1ff, r0
-	addi	r0, 0x1ff, r0
-	addi	r0, 0x004, r0		/* The real Asynchronous Exc. handler */
-	putcon	r0, spc
-	getcon	sr, r0			/* Arrange to set SR.MMU */
-	shlli	r0, 32, r0
-	byterev	r0, r0			/* This trick avoids the need to have */
-	ori	r0, 0x80, r0		/* another register available to load */
-	byterev	r0, r0			/* a 32-bit constant into. */
-	shlri	r0, 32, r0
-	putcon	r0, ssr
-	getcon	kcr1, r0		/* Restore r0 */
-	putcon	r24, usr		/* Restore USR */
-	synco
-	rte				/* Enable the MMU and jump to handler */
-	nop
-	nop
-	nop
-	nop
-	nop
-
-
-
-/******************************************************************************
- * Continuation of Panic Event.
- *
- * Save the remainder of the machine state, re-enable the MMU and head off
- * into C code to report the problem on the console (if possible), never
- * to return.
- */
-Lsh5_event_panic:
-	_INTR_FRAME_SAVE(SZ_TRAPFRAME)
-	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
-	getcon	ssr, r3		/* Parameters for panic_trap() */
-	getcon	spc, r4
-	getcon	expevt, r5
-	or	r2, r63, r6
-	LDC32(0x01600000, r0)	/* Disable (freeze) the caches */
-	putcfg	r0, 0, r63
-	LDC32(0x01e00000, r0)
-	putcfg	r0, 0, r63
-	LEAF(1f, r0)
-	putcon	r0, spc
-	LDUC32(SH5_CONREG_SR_MD|SH5_CONREG_SR_MMU|SH5_CONREG_SR_IMASK_ALL, r0)
-	putcon	r0, ssr
-	LEA(_C_LABEL(sh5_panic_stack), r15)
-	movi	(USPACE - SZ_TRAPFRAME), r0
-	add	r15, r0, r15
-	synco
-	rte			/* Re-enable the MMU */
-	nop
-	nop
-	nop
-	nop
-	nop
-1:	LEAF(_C_LABEL(panic_trap), r0)
-	ptabs/l	r0, tr0
-	or	r15, r63, r2
-	blink	tr0, r63
-	/*NOTREACHED*/
-
-	.comm	_C_LABEL(sh5_panic_stack),USPACE,16
 
 
 #include "dtfcons.h"

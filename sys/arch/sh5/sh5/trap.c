@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 2003/01/20 22:32:26 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 2003/03/13 13:44:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -487,15 +487,11 @@ trapa_panic:
 
 void
 panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
-    register_t expevt, int extype)
+    register_t expevt)
 {
 	struct exc_scratch_frame excf;
 	struct cpu_info *ci = curcpu();
 	register_t tlbregs[9];
-	register_t kcr0, kcr1;
-
-	asm volatile("getcon kcr0, %0" : "=r"(kcr0));
-	asm volatile("getcon kcr1, %0" : "=r"(kcr1));
 
 	excf = ci->ci_escratch;
 	tlbregs[0] = ci->ci_tscratch.ts_r[0];
@@ -513,46 +509,21 @@ panic_trap(struct trapframe *tf, register_t ssr, register_t spc,
 	 */
 	ci->ci_escratch.es_critical = 0;
 
-	switch (extype) {
-	case 0:
-		printf("\n\nPANIC trap: %s in %s mode\n\n",
-		    trap_type((int)expevt),
-		    ((ssr & SH5_CONREG_SR_MD) == 0) ? "user" : "kernel");
-		break;
-
-	case 1:
-		printf("\n\nDEBUG Synchronous Exception: %s in %s mode\n\n",
-		    trap_type((int)tf->tf_state.sf_expevt),
-		    USERMODE(tf) ? "user" : "kernel");
-		break;
-
-	case 2:
-		printf("\n\nDEBUG Interrupt Exception: 0x%x from %s mode\n\n",
-		    (u_int)tf->tf_state.sf_intevt,
-		    USERMODE(tf) ? "user" : "kernel");
-		break;
-
-	default:
-		printf("\n\nUnknown DEBUG exception %d from %s mode\n\n",
-		    extype, USERMODE(tf) ? "user" : "kernel");
-		break;
-	}
+	printf("\n\nPANIC trap: %s in %s mode\n", trap_type((int)expevt),
+	    USERMODE(tf) ? "user" : "kernel");
 
 	printf(
-	    " SSR=0x%x,  SPC=0x%lx,  EXPEVT=0x%04x, TEA=0x%08lx, TRA=0x%x\n",
+	    " SSR=0x%x,  SPC=0x%lx,  EXPEVT=0x%04x, TEA=0x%lx, TRA=0x%x\n",
 	    (u_int)ssr, (uintptr_t)spc, (u_int)expevt,
 	    (uintptr_t)tf->tf_state.sf_tea, (u_int)tf->tf_state.sf_tra);
 
-	if (extype == 0) {
-		printf("PSSR=0x%08x, PSPC=0x%lx, PEXPEVT=0x%04x\n",
-		    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
-		    (u_int)tf->tf_state.sf_expevt);
-		tf->tf_state.sf_ssr = ssr;
-		tf->tf_state.sf_spc = spc;
-		tf->tf_state.sf_expevt = expevt;
-	}
+	printf("PSSR=0x%08x, PSPC=0x%lx, PEXPEVT=0x%04x\n",
+	    (u_int)tf->tf_state.sf_ssr, (uintptr_t)tf->tf_state.sf_spc,
+	    (u_int)tf->tf_state.sf_expevt);
 
-	printf("KCR0=0x%lx, KCR1=0x%lx\n\n", (intptr_t)kcr0, (intptr_t)kcr1);
+	tf->tf_state.sf_ssr = ssr;
+	tf->tf_state.sf_spc = spc;
+	tf->tf_state.sf_expevt = expevt;
 
 	printf("Exc Scratch Area:\n");
 	printf("  CRIT: 0x%x\n", (u_int)excf.es_critical);

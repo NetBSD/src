@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_machdep.c,v 1.5 2002/10/07 14:48:14 scw Exp $	*/
+/*	$NetBSD: sh5_machdep.c,v 1.6 2003/03/13 13:44:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -67,14 +67,6 @@ u_int _sh5_ctc_ticks_per_us;
  * This is used to calibrate the delay() loop in locore_subr.S
  */
 u_int _sh5_delay_constant;
-
-void (*__cpu_cache_dpurge)(vaddr_t, paddr_t, vsize_t);
-void (*__cpu_cache_dpurge_iinv)(vaddr_t, paddr_t, vsize_t);
-void (*__cpu_cache_dinv)(vaddr_t, paddr_t, vsize_t);
-void (*__cpu_cache_dinv_iinv)(vaddr_t, paddr_t, vsize_t);
-void (*__cpu_cache_iinv)(vaddr_t, paddr_t, vsize_t);
-void (*__cpu_cache_iinv_all)(void);
-void (*__cpu_cache_purge_all)(void);
 
 /*
  * These variables are needed by /sbin/savecore

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.27 2003/01/19 19:49:55 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.28 2003/03/13 13:44:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -262,15 +262,6 @@ u_int pmap_pteg_bits;		/* Number of bits set in pmap_pteg_mask */
  * number.
  */
 kpte_t pmap_kernel_ipt[KERNEL_IPT_SIZE];
-
-/*
- * These are initialised, at boot time by cpu-specific code, to point
- * to cpu-specific functions.
- */
-void	(*__cpu_tlbinv_cookie)(pteh_t, tlbcookie_t);
-void	(*__cpu_tlbinv_all)(void);
-void	(*__cpu_tlbload)(void);		/* Not callable from C */
-
 
 /*
  * This structure serves a double purpose as over-flow table entry
@@ -663,7 +654,7 @@ pmap_cache_sync_raise(vaddr_t va, ptel_t ptel, ptel_t clrbits)
 		 * The page is being made no-exec, rd-only.
 		 * Purge the data cache and invalidate insn cache.
 		 */
-		__cpu_cache_dpurge_iinv(va, pa, NBPG);
+		cpu_cache_dpurge_iinv(va, pa, NBPG);
 		break;
 
 	case SH5_PTEL_PR_W:
@@ -671,7 +662,7 @@ pmap_cache_sync_raise(vaddr_t va, ptel_t ptel, ptel_t clrbits)
 		 * The page is being made read-only.
 		 * Purge the data-cache.
 		 */
-		__cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, NBPG);
 		break;
 
 	case SH5_PTEL_PR_X:
@@ -679,7 +670,7 @@ pmap_cache_sync_raise(vaddr_t va, ptel_t ptel, ptel_t clrbits)
 		 * The page is being made no-exec.
 		 * Invalidate the instruction cache.
 		 */
-		__cpu_cache_iinv(va, pa, NBPG);
+		cpu_cache_iinv(va, pa, NBPG);
 		break;
 
 	case 0:
@@ -721,7 +712,7 @@ pmap_cache_sync_unmap(vaddr_t va, ptel_t ptel)
 		 * The page was executable, and possibly writable.
 		 * Purge the data cache and invalidate insn cache.
 		 */
-		__cpu_cache_dpurge_iinv(va, pa, NBPG);
+		cpu_cache_dpurge_iinv(va, pa, NBPG);
 		break;
 
 	case SH5_PTEL_PR_W:
@@ -729,7 +720,7 @@ pmap_cache_sync_unmap(vaddr_t va, ptel_t ptel)
 		 * The page was writable.
 		 * Purge the data-cache.
 		 */
-		__cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, NBPG);
 		break;
 
 	case 0:
@@ -737,13 +728,13 @@ pmap_cache_sync_unmap(vaddr_t va, ptel_t ptel)
 		 * The page was read-only.
 		 * Just invalidate the data cache.
 		 *
-		 * Note: We'd like to use __cpu_cache_dinv() here, but
+		 * Note: We'd like to use cpu_cache_dinv() here, but
 		 * since the mapping may still be in the TLB, the cache
 		 * tag will contain the original protection bits.
 		 * The invalidate operation will actually cause a write-
 		 * protection fault (!!!!) in this case.
 		 */
-		__cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, NBPG);
 		break;
 	}
 }
@@ -788,7 +779,7 @@ pmap_pteg_clear_bit(volatile pte_t *pt, struct pvo_entry *pvo, u_int ptebit)
 		 * The mapping may be cached in the TLB. Call cpu-specific
 		 * code to check and invalidate if necessary.
 		 */
-		__cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
+		cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
 		    (pm->pm_asid << SH5_PTEH_ASID_SHIFT),
 		    pt->tlbcookie);
 	}
@@ -807,7 +798,7 @@ pmap_kpte_clear_bit(int idx, struct pvo_entry *pvo, ptel_t ptebit)
 	ptel = pmap_kernel_ipt_get_ptel(kpte);
 
 	if ((ptel & SH5_PTEL_R) != 0)
-		__cpu_tlbinv_cookie((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
+		cpu_tlbinv_cookie((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
 		    pmap_kernel_ipt_get_tlbcookie(kpte));
 
 	pmap_kernel_ipt_set_tlbcookie(kpte, 0);
@@ -881,7 +872,7 @@ pmap_pteg_unset(volatile pte_t *pt, struct pvo_entry *pvo)
 		 * The mapping may be in the TLB. Call cpu-specific
 		 * code to check and invalidate if necessary.
 		 */
-		__cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
+		cpu_tlbinv_cookie((pteh & SH5_PTEH_EPN_MASK) |
 		    (pm->pm_asid << SH5_PTEH_ASID_SHIFT),
 		    pt->tlbcookie);
 	}
@@ -1128,6 +1119,11 @@ pmap_bootstrap(vaddr_t avail, paddr_t kseg0base, struct mem_region *mr)
 	 */
 
 	avail_start = mr[0].mr_start;
+
+	/*
+	 * It should now be safe to take TLB miss exceptions.
+	 */
+	__asm __volatile("putcon %0, sr" :: "r"(SH5_CONREG_SR_IMASK_ALL));
 
 	/*
 	 * Tell UVM about physical memory
@@ -1531,7 +1527,7 @@ pmap_copyzero_page_dpurge(paddr_t pa, struct evcnt *ev)
 		if (PVO_VADDR(pvo) < SH5_KSEG0_BASE && !PVO_PTEGIDX_ISSET(pvo))
 			continue;
 
-		__cpu_cache_dpurge_iinv(PVO_VADDR(pvo), pa, NBPG);
+		cpu_cache_dpurge_iinv(PVO_VADDR(pvo), pa, NBPG);
 
 		ev->ev_count++;
 
@@ -1658,7 +1654,7 @@ pmap_pa_unmap_kva(vaddr_t kva, kpte_t *kpte)
 	pmap_cache_sync_unmap(kva, oldptel);
 
 	if ((oldptel & SH5_PTEL_R) != 0) {
-		__cpu_tlbinv_cookie(
+		cpu_tlbinv_cookie(
 		    ((pteh_t)kva & SH5_PTEH_EPN_MASK) | SH5_PTEH_SH,
 		    pmap_kernel_ipt_get_tlbcookie(kpte));
 	}
@@ -2597,8 +2593,8 @@ pmap_activate(struct lwp *l)
 		 * on a context switch, do it now. But only if we're
 		 * not resuming in the same pmap context.
 		 */
-		if (__cpu_cache_iinv_all && old_vsid != pm->pm_vsid)
-			__cpu_cache_iinv_all();
+		if (cpu_cache_iinv_all && old_vsid != pm->pm_vsid)
+			cpu_cache_iinv_all();
 	}
 }
 
@@ -2788,9 +2784,9 @@ pmap_asid_alloc(pmap_t pm)
 			 * We do need to invalidate the TLB, however.
 			 */
 #if 0
-			__cpu_cache_purge_all();
+			cpu_cache_purge_all();
 #endif
-			__cpu_tlbinv_all();
+			cpu_tlbinv_all();
 
 			pmap_asid_generation++;
 			pmap_asid_next = PMAP_ASID_USER_START;
@@ -2870,11 +2866,11 @@ pmap_write_trap(struct proc *p, int usermode, vaddr_t va)
 		 * other TLB miss in the meantime).
 		 */
 		if (SH5_PTEL_CACHEABLE(pvo->pvo_ptel)) {
-			__cpu_cache_dpurge(PVO_VADDR(pvo),
+			cpu_cache_dpurge(PVO_VADDR(pvo),
 			    (paddr_t)(pvo->pvo_ptel & SH5_PTEL_PPN_MASK), NBPG);
 		}
 
-		__cpu_tlbinv_cookie((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
+		cpu_tlbinv_cookie((pteh_t)PVO_VADDR(pvo) | SH5_PTEH_SH,
 		    pmap_kernel_ipt_get_tlbcookie(kpte));
 
 		pmap_kernel_ipt_set_tlbcookie(kpte, 0);
@@ -2926,7 +2922,7 @@ pmap_unmap_poolpage(vaddr_t va)
 
 	if (mp->mr_size && mp->mr_kvastart < SH5_KSEG1_BASE) {
 		pa = mp->mr_start + (paddr_t)(va - mp->mr_kvastart);
-		__cpu_cache_dpurge(va, pa, NBPG);
+		cpu_cache_dpurge(va, pa, NBPG);
 		return (pa);
 	}
 

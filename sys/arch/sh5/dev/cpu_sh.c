@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_sh.c,v 1.4 2002/10/02 15:52:36 thorpej Exp $	*/
+/*	$NetBSD: cpu_sh.c,v 1.5 2003/03/13 13:44:17 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,10 +44,13 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/bootparams.h>
+#include <machine/cacheops.h>
 #include <machine/cpu.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <sh5/sh5/stb1var.h>
 #include <sh5/dev/superhywayvar.h>
 
 #include "locators.h"
@@ -59,28 +62,18 @@ CFATTACH_DECL(cpu_sh, sizeof(struct device),
     cpu_shmatch, cpu_shattach, NULL, NULL);
 extern struct cfdriver cpu_cd;
 
-#define	CPU_SH_MODULE_ID	0x51e2
+static void cpu_prcache(struct device *, struct sh5_cache_info *, const char *);
 
 /*ARGSUSED*/
 static int
 cpu_shmatch(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct superhyway_attach_args *sa = args;
-	bus_space_handle_t bh;
-	u_int64_t vcr;
 
 	if (strcmp(sa->sa_name, cpu_cd.cd_name))
 		return (0);
 
-	sa->sa_pport = 0;
-
-	bus_space_map(sa->sa_bust,
-	    SUPERHYWAY_PPORT_TO_BUSADDR(cf->cf_loc[SUPERHYWAYCF_PPORT]),
-	    SUPERHYWAY_REG_SZ, 0, &bh);
-	vcr = bus_space_read_8(sa->sa_bust, bh, SUPERHYWAY_REG_VCR);
-	bus_space_unmap(sa->sa_bust, bh, SUPERHYWAY_REG_SZ);
-
-	if (SUPERHYWAY_VCR_MOD_ID(vcr) != CPU_SH_MODULE_ID)
+	if (cf->cf_loc[SUPERHYWAYCF_PPORT] != bootparams.bp_cpu[0].pport)
 		return (0);
 
 	sa->sa_pport = cf->cf_loc[SUPERHYWAYCF_PPORT];
@@ -95,12 +88,79 @@ cpu_shattach(struct device *parent, struct device *self, void *args)
 	struct superhyway_attach_args *sa = args;
 	bus_space_handle_t bh;
 	u_int64_t vcr;
+	u_int cpuid, version;
+	const char *cpustr;
+	char str[64];
 
 	bus_space_map(sa->sa_bust, SUPERHYWAY_PPORT_TO_BUSADDR(sa->sa_pport),
 	    SUPERHYWAY_REG_SZ, 0, &bh);
 	vcr = bus_space_read_8(sa->sa_bust, bh, SUPERHYWAY_REG_VCR);
 	bus_space_unmap(sa->sa_bust, bh, SUPERHYWAY_REG_SZ);
 
-	printf(": SH-5 CPU, Version 0x%x\n",
-	    (int) SUPERHYWAY_VCR_MOD_VERS(vcr));
+	/*
+	 * There seems to be a hardware bug which causes reads of CPU.VCR
+	 * to return zero under certain circumstances.
+	 */
+	if (vcr == 0) {
+		cpuid = bootparams.bp_cpu[0].cpuid;
+		version = bootparams.bp_cpu[0].version;
+	} else {
+		cpuid = SUPERHYWAY_VCR_MOD_ID(vcr);
+		version = SUPERHYWAY_VCR_MOD_VERS(vcr);
+	}
+
+	switch (cpuid) {
+	case SH5_CPUID_STB1:
+		cpustr = "SH5 STB1 Evaluation Silicon";
+		break;
+
+	default:
+		sprintf(str, "Unknown CPU ID: 0x%x", cpuid);
+		cpustr = str;
+		break;
+	}
+
+	printf("\n%s: %s, Version %d, %d.%02d MHz\n", self->dv_xname, cpustr,
+	    version, bootparams.bp_cpu[0].speed / 1000000,
+	    (bootparams.bp_cpu[0].speed % 1000000) / 10000);
+
+	if (sh5_cache_ops.iinfo.type == SH5_CACHE_INFO_TYPE_NONE) {
+		/* Unified cache. */
+		cpu_prcache(self, &sh5_cache_ops.dinfo, "Unified");
+	} else {
+		/* Separate I/D caches */
+		cpu_prcache(self, &sh5_cache_ops.dinfo, "D");
+		cpu_prcache(self, &sh5_cache_ops.iinfo, "I");
+	}
+}
+
+static void
+cpu_prcache(struct device *dv, struct sh5_cache_info *ci, const char *name)
+{
+	static const char *ctype[] = {NULL, "VIVT", "VIPT", "PIPT"};
+	static const char *wtype[] = {NULL, "thru", "back"};
+	int i;
+
+	i = (strcmp(name, "I") == 0);
+
+	if (ci->type == 0 || ci->type >= (sizeof(ctype)/sizeof(char *))) {
+		printf("%s: WARNING: Invalid %s-cache type: %d\n",
+		    dv->dv_xname, name, ci->type);
+		ci->type = SH5_CACHE_INFO_TYPE_VIVT;	/* XXX: Safe default */
+	}
+
+	if (i == 0 &&
+	    (ci->write == 0 || ci->write >= (sizeof(wtype)/sizeof(char *)))) {
+		printf("%s: WARNING: Invalid %s-cache write type: %d\n",
+		    dv->dv_xname, name, ci->write);
+		ci->write = SH5_CACHE_INFO_WRITE_BACK;	/* XXX: Safe default */
+	}
+
+	printf("%s: %s-cache %d KB %db/line %d-way %d-sets %s", dv->dv_xname,
+	    name, ci->size / 1024, ci->line_size, ci->nways,
+	    ci->nsets, ctype[ci->type]);
+ 
+	if (i == 0)
+		printf(" write-%s", wtype[ci->write]);
+	printf("\n");
 }

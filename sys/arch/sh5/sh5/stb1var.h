@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1var.h,v 1.4 2002/11/23 09:25:55 scw Exp $	*/
+/*	$NetBSD: stb1var.h,v 1.5 2003/03/13 13:44:20 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,6 +38,7 @@
 #ifndef _STB1VAR_H
 #define _STB1VAR_H
 
+#ifndef _LOCORE
 #include <sh5/pte.h>
 
 extern	void	_sh5_stb1_tlbinv_cookie(pteh_t, tlbcookie_t);
@@ -50,5 +51,15 @@ extern	void	_sh5_stb1_cache_dinv_iinv(vaddr_t, paddr_t, vsize_t);
 extern	void	_sh5_stb1_cache_iinv(vaddr_t, paddr_t, vsize_t);
 extern	void	_sh5_stb1_cache_iinv_all(void);
 extern	void	_sh5_stb1_cache_purge_all(void);
+#endif	/* _LOCORE */
+
+#define	SH5_CPUID_STB1	0x51e2
+
+#define	STB1_TLB_NSLOTS		64
+
+#define	STB1_CACHE_SIZE		0x8000
+#define	STB1_CACHE_LINE_SIZE	32
+#define	STB1_CACHE_NWAYS	4
+#define	STB1_CACHE_NSETS	256
 
 #endif /* _STB1VAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.20 2003/01/19 19:49:53 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.21 2003/03/13 13:44:18 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -481,16 +481,66 @@
 	.balign 0x100
 
 GLOBAL(sh5_vector_table)
-	.space	(0x100 - (. - _C_LABEL(sh5_vector_table)))
+
+/******************************************************************************
+ * Panic Exception Handler (bounced here by RESVEC panic handler)
+ *
+ * VBR Offset: 0x0
+ *     Length: 0x100
+ *
+ * This vector is always entered via the first-stage handler in the
+ * RESVEC vector table. At this point, the MMU is enabled, r0 and r1
+ * contain the saved values for PSPC and PSSR respectively, r24 contains
+ * the EXPEVT which caused tha panic. (The real PEXPEVT just before the
+ * panic is in EXPEVT as a result of the 'rte' instruction in the first-
+ * stage handler.)
+ *
+ * The values originally in r0/r1 are saved in kcr1/dcr respectively.
+ *
+ * Note that USR was unavoidably tainted by stores to r0, r1, and r24 in
+ * the first-stage handler.
+ */
+Lsh5_vector_panic:
+	putcon	r0, pspc		/* Recover PSPC */
+	putcon	r1, pssr		/* and PSSR */
+	getcon	usr, r1			/* Don't taint USR any further */
+	putcon	r15, kcr1
+	LEA(_C_LABEL(sh5_panic_stack), r15)
+	movi	(USPACE - SZ_TRAPFRAME), r0
+	add	r15, r0, r15
+	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r1	/* Save USR */
+	getcon	kcr1, r0
+	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
+	getcon	dcr, r0
+	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r0	/* Save r1 */
+	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
+	getcon	kcr1, r0
+	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
+	gettr	tr0, r0
+	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
+	getcon	pssr, r0
+	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save PSSR */
+	getcon	pspc, r0
+	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save PSPC */
+	getcon	expevt, r0
+	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save (P)EXPEVT */
+	getcon	intevt, r0
+	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
+	getcon	tea, r0
+	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
+	getcon	tra, r0
+	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
+	pta/l	Lsh5_event_panic, tr0
+	blink	tr0, r63
+
+	.space	(0x100 - (. - Lsh5_vector_panic))
 
 
 /******************************************************************************
  * Non-TLB Miss Synchronous Exception Handler
  *
  * VBR Offset: 0x100
- *     Length: 0x100
- *
- * XXX: This handler very nearly fills the 0x100 byte exception slot :XXX
+ *     Length: 0x300
  */
 Lsh5_vector_general:
 	_EXCEPTION_ENTRY(SZ_TRAPFRAME, CRIT_SYNC_EXCEPTION)
@@ -627,8 +677,8 @@ Lsh5_vector_tlbmiss:
 	 * of returning.
 	 */
 Ltlbmiss_updatetlb:
-	LEA(_C_LABEL(__cpu_tlbload), r2)
-	LDPTR	r2, 0, r2
+	LEA(_C_LABEL(sh5_tlb_ops), r2)
+	LDPTR	r2, CPU_TLBLOAD, r2
 	ptabs/l	r2, tr0
 	blink	tr0, r2
 
@@ -1241,6 +1291,177 @@ Lsh5_critical_fault:
 	/*NOTREACHED*/
 
 #endif	/* PORTMASTER */
+
+
+/*===================== Start of RESVEC Vector Table =========================*/
+
+	_TEXT_SECTION
+	.balign	0x10
+
+GLOBAL(sh5_resvec_vector_table)
+
+/******************************************************************************
+ * Reset/Panic Exception Vector.
+ *
+ * RESVEC Offset: 0x0
+ *        Length: 0x100
+ *
+ * Come here when a gross error occurs. This is generally when the cpu wants
+ * to take a synchronous exception, but they're blocked by SR.BL being set.
+ *
+ * By now, the MMU is off, and the program counter/status register values
+ * at the instant of the panic are saved in PSPC/PSSR. Since we'd like to
+ * use these registers to arrange for the MMU to be re-enabled, we have to
+ * free up two GPRs to save them. Unfortunately, we cannot then spare a GPR
+ * to save USR. Fortunately, there's no point in going out of our way to
+ * preserve USR since we're about to die anyway and USR provides little useful
+ * state in this case.
+ *
+ * Note: We should consider ensuring KCR0 is sane ...
+ */
+Lsh5_resvec_vector_panic:
+	putcon	r0, kcr1
+	putcon	r1, dcr
+	getcon	pspc, r0		/* Preserve PSPC in r0 */
+	getcon	pssr, r1		/* Preserve PSSR in r1 */
+	getcon	spc, r24		/* Fetch PC at point of exception */
+	putcon	r24, pspc		/* Make it available to real handler */
+	getcon	ssr, r24		/* Fetch SR at point of exception */
+	putcon	r24, pssr		/* Make it available to real handler */
+	getcon	vbr, r24
+	addi	r24, 0x1, r24		/* The real Panic Exception handler */
+	putcon	r24, spc
+	getcon	sr, r24			/* Arrange to set SR.MMU */
+	shlli	r24, 32, r24
+	byterev	r24, r24		/* This trick avoids the need to have */
+	ori	r24, 0x80, r24		/* another register available to load */
+	byterev	r24, r24		/* a 32-bit constant into. */
+	shlri	r24, 32, r24
+	putcon	r24, ssr
+	getcon	expevt, r24		/* Preserve panic event code */
+	synco
+	rte				/* Enable the MMU and jump to handler */
+	nop
+	nop
+	nop
+	nop
+	nop
+
+	.space	(0x100 - (. - Lsh5_resvec_vector_panic))
+
+
+/******************************************************************************
+ * Debug Synchronous Exception Handler
+ *
+ * RESVEC Offset: 0x100
+ *        Length: 0x100
+ *
+ * We have to handle these as regular synchronous exceptions since a BRK
+ * instruction from userland results one of these.
+ *
+ * Trouble is, we're now running with the MMU disabled, so we do the minimum
+ * necessary to re-enable the MMU before jumping to the regular synchronous
+ * exception handler.
+ */
+Lsh5_resvec_vector_dbg_general:
+	getcon	usr, r24		/* Stash USR somewhere safe for now */
+	putcon	r0, dcr			/* Save r0 */
+	getcon	spc, r0			/* Fetch PC at point of exception */
+	putcon	r0, pspc		/* Make it available to real handler */
+	getcon	ssr, r0			/* Fetch SR at point of exception */
+	putcon	r0, pssr		/* Make it available to real handler */
+	getcon	expevt, r0		/* Fetch EXPEVT at point of exception */
+	putcon	r0, pexpevt		/* Make it available to real handler */
+	getcon	vbr, r0
+	addi	r0, 0x101, r0		/* The real Synchronous Exc. handler */
+	putcon	r0, spc
+	getcon	sr, r0			/* Arrange to set SR.MMU */
+	shlli	r0, 32, r0
+	byterev	r0, r0			/* This trick avoids the need to have */
+	ori	r0, 0x80, r0		/* another register available to load */
+	byterev	r0, r0			/* a 32-bit constant into. */
+	shlri	r0, 32, r0
+	putcon	r0, ssr
+	getcon	dcr, r0			/* Restore r0 */
+	putcon	r24, usr		/* Restore USR */
+	synco
+	rte				/* Enable the MMU and jump to handler */
+	nop
+	nop
+	nop
+	nop
+	nop
+
+	.space	(0x100 - (. - Lsh5_resvec_vector_dbg_general))
+
+
+/******************************************************************************
+ * Debug Interrupt Handler.
+ *
+ * RESVEC Offset: 0x200
+ *        Length: 0x200
+ *
+ * Deal with these the same way as above.
+ */
+Lsh5_resvec_vector_debugint:
+	getcon	usr, r24		/* Stash USR somewhere safe for now */
+	putcon	r0, dcr			/* Save r0 */
+	getcon	spc, r0			/* Fetch PC at point of exception */
+	putcon	r0, pspc		/* Make it available to real handler */
+	getcon	ssr, r0			/* Fetch SR at point of exception */
+	putcon	r0, pssr		/* Make it available to real handler */
+	getcon	expevt, r0		/* Fetch EXPEVT at point of exception */
+	putcon	r0, pexpevt		/* Make it available to real handler */
+	getcon	vbr, r0
+	addi	r0, 0x1ff, r0
+	addi	r0, 0x1ff, r0
+	addi	r0, 0x1ff, r0
+	addi	r0, 0x004, r0		/* The real Asynchronous Exc. handler */
+	putcon	r0, spc
+	getcon	sr, r0			/* Arrange to set SR.MMU */
+	shlli	r0, 32, r0
+	byterev	r0, r0			/* This trick avoids the need to have */
+	ori	r0, 0x80, r0		/* another register available to load */
+	byterev	r0, r0			/* a 32-bit constant into. */
+	shlri	r0, 32, r0
+	putcon	r0, ssr
+	getcon	dcr, r0			/* Restore r0 */
+	putcon	r24, usr		/* Restore USR */
+	synco
+	rte				/* Enable the MMU and jump to handler */
+	nop
+	nop
+	nop
+	nop
+	nop
+
+
+/******************************************************************************
+ * Continuation of Panic Event.
+ *
+ * Save the remainder of the machine state and head off into C code to
+ * report the problem on the console (if possible), never to return.
+ */
+Lsh5_event_panic:
+	_INTR_FRAME_SAVE(SZ_TRAPFRAME)
+	_TRAP_FRAME_SAVE(SZ_TRAPFRAME)
+	getcon	ssr, r3			/* Parameters for panic_trap() */
+	getcon	spc, r4
+	or	r24, r63, r5
+	getcon	sr, r1			/* Fetch current status register */
+	ori	r1, SH5_CONREG_SR_IMASK_ALL, r0
+	putcon	r0, sr			/* Block async exceptions */
+	LDC32(SH5_CONREG_SR_BL, r2)	/* Unblock exceptions. This allows */
+	andc	r0, r2, r0		/* us to take a TLB miss exception */
+	andc	r1, r2, r1
+	putcon	r0, sr			/* Now safe to cause TLB miss */
+	LEAF(_C_LABEL(panic_trap), r0)
+	ptabs/l	r0, tr0
+	or	r15, r63, r2
+	blink	tr0, r63
+	/*NOTREACHED*/
+
+	.comm	_C_LABEL(sh5_panic_stack),USPACE,16
 
 
 /******************************************************************************

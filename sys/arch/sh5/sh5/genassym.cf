@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2003/01/19 19:49:54 scw Exp $
+#	$NetBSD: genassym.cf,v 1.15 2003/03/13 13:44:19 scw Exp $
 
 # Copyright 2002 Wasabi Systems, Inc.
 # All rights reserved.
@@ -50,6 +50,7 @@ include <netinet/ip_var.h>
 include <uvm/uvm_extern.h>
 
 include <machine/cpu.h>
+include <machine/cacheops.h>
 include <machine/frame.h>
 include <machine/pcb.h>
 include <machine/trap.h>
@@ -79,7 +80,6 @@ define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURVSID		offsetof(struct cpu_info, ci_curvsid)
 define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
-define	CI_PANICSTKPHYS		offsetof(struct cpu_info, ci_panicstkphys)
 define	CI_ESCRATCH		offsetof(struct cpu_info, ci_escratch)
 define	CI_TSCRATCH		offsetof(struct cpu_info, ci_tscratch)
 
@@ -381,3 +381,15 @@ define	IP_SRC				offsetof(struct ip, ip_src)
 define	IP_DST				offsetof(struct ip, ip_dst)
 define	IP6_SRC				offsetof(struct ip6_hdr, ip6_src)
 define	IP6_DST				offsetof(struct ip6_hdr, ip6_dst)
+
+# Cache/TLB constants
+define	CPU_CACHE_DPURGE	offsetof(struct sh5_cache_ops, dpurge)
+define	CPU_CACHE_DPURGE_IINV	offsetof(struct sh5_cache_ops, dpurge_iinv)
+define	CPU_CACHE_DINV		offsetof(struct sh5_cache_ops, dinv)
+define	CPU_CACHE_DINV_IINV	offsetof(struct sh5_cache_ops, dinv_iinv)
+define	CPU_CACHE_IINV		offsetof(struct sh5_cache_ops, iinv)
+define	CPU_CACHE_IINV_ALL	offsetof(struct sh5_cache_ops, iinv_all)
+define	CPU_CACHE_PURGE_ALL	offsetof(struct sh5_cache_ops, purge_all)
+define	CPU_TLBINV_COOKIE	offsetof(struct sh5_tlb_ops, tlbinv_cookie)
+define	CPU_TLBINV_ALL		offsetof(struct sh5_tlb_ops, tlbinv_all)
+define	CPU_TLBLOAD		offsetof(struct sh5_tlb_ops, tlbload)

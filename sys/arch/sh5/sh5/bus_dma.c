@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.6 2002/10/08 15:56:13 scw Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.7 2003/03/13 13:44:18 scw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2002/10/08 15:56:13 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.7 2003/03/13 13:44:18 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 	if (len == 0)
 		return;
 
-	op = inv ? __cpu_cache_dinv : __cpu_cache_dpurge;
+	op = inv ? cpu_cache_dinv : cpu_cache_dpurge;
 
 	/*
 	 * Align the region to a cache-line boundary by always purging
@@ -550,7 +550,7 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 	if ((va & (SH5_CACHELINE_SIZE - 1)) != 0) {
 		bytes = (vsize_t)va & (SH5_CACHELINE_SIZE - 1);
 		bytes = min(SH5_CACHELINE_SIZE - bytes, len);
-		__cpu_cache_dpurge(va & ~(SH5_CACHELINE_SIZE - 1),
+		cpu_cache_dpurge(va & ~(SH5_CACHELINE_SIZE - 1),
 		    pa & ~(SH5_CACHELINE_SIZE - 1), SH5_CACHELINE_SIZE);
 		if ((len -= bytes) == 0)
 			return;
@@ -564,7 +564,7 @@ _bus_dmamap_sync_helper(vaddr_t va, paddr_t pa, vsize_t len, int inv)
 	 */
 	if ((len & (SH5_CACHELINE_SIZE - 1)) != 0) {
 		bytes = min((vsize_t)len & (SH5_CACHELINE_SIZE - 1), len);
-		__cpu_cache_dpurge(va + (len - bytes), pa + (len - bytes),
+		cpu_cache_dpurge(va + (len - bytes), pa + (len - bytes),
 		    SH5_CACHELINE_SIZE);
 		if ((len -= bytes) == 0)
 			return;
