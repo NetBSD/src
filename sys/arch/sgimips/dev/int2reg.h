@@ -1,4 +1,4 @@
-/*	$NetBSD: int2reg.h,v 1.1 2004/01/10 05:16:57 sekiya Exp $	*/
+/*	$NetBSD: int2reg.h,v 1.2 2004/01/18 00:54:55 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -29,6 +29,12 @@
 
 #if !defined(_ARCH_SGIMIPS_DEV_INT2_H_)
 #define	_ARCH_SGIMIPS_DEV_INT2_H_
+
+/* The INT has known locations on all SGI machines */
+#define	INT_IP12		0x1fb801c0
+#define	INT_IP20		0x1fb801c0
+#define	INT_IP22		0x1fbd9000
+#define	INT_IP24		0x1fbd9880
 
 #define INT2_LOCAL0_STATUS	0x00
 #define INT2_LOCAL0_MASK	0x04
