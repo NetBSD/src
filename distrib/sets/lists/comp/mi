@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.699 2004/05/07 12:41:08 wiz Exp $
+#	$NetBSD: mi,v 1.700 2004/05/10 02:08:01 kleink Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -3775,6 +3775,7 @@
 ./usr/share/man/cat3/ntoa.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ntohl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ntohs.0			comp-c-catman		.cat
+./usr/share/man/cat3/offtime.0			comp-c-catman		.cat
 ./usr/share/man/cat3/opendir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/opendisk.0			comp-c-catman		.cat
 ./usr/share/man/cat3/openlog.0			comp-c-catman		.cat
@@ -4348,6 +4349,9 @@
 ./usr/share/man/cat3/threads.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/time.0			comp-c-catman		.cat
 ./usr/share/man/cat3/time2posix.0		comp-c-catman		.cat
+./usr/share/man/cat3/timegm.0			comp-c-catman		.cat
+./usr/share/man/cat3/timelocal.0		comp-c-catman		.cat
+./usr/share/man/cat3/timeoff.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timeout.0			comp-c-catman		.cat
 ./usr/share/man/cat3/times.0			comp-c-catman		.cat
 ./usr/share/man/cat3/timezone.0			comp-c-catman		.cat
@@ -7492,6 +7496,7 @@
 ./usr/share/man/man3/ntoa.3			comp-c-man		.man
 ./usr/share/man/man3/ntohl.3			comp-c-man		.man
 ./usr/share/man/man3/ntohs.3			comp-c-man		.man
+./usr/share/man/man3/offtime.3			comp-c-man		.man
 ./usr/share/man/man3/opendir.3			comp-c-man		.man
 ./usr/share/man/man3/opendisk.3			comp-c-man		.man
 ./usr/share/man/man3/openlog.3			comp-c-man		.man
@@ -8061,6 +8066,9 @@
 ./usr/share/man/man3/threads.3			comp-obsolete		obsolete
 ./usr/share/man/man3/time.3			comp-c-man		.man
 ./usr/share/man/man3/time2posix.3		comp-c-man		.man
+./usr/share/man/man3/timegm.3			comp-c-man		.man
+./usr/share/man/man3/timelocal.3		comp-c-man		.man
+./usr/share/man/man3/timeoff.3			comp-c-man		.man
 ./usr/share/man/man3/timeout.3			comp-c-man		.man
 ./usr/share/man/man3/times.3			comp-c-man		.man
 ./usr/share/man/man3/timezone.3			comp-c-man		.man
