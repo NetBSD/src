@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.35 2005/02/20 06:11:51 christos Exp $	*/
+/*	$NetBSD: rshd.c,v 1.36 2005/03/08 04:35:19 christos Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.35 2005/02/20 06:11:51 christos Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.36 2005/03/08 04:35:19 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,9 @@ __RCSID("$NetBSD: rshd.c,v 1.35 2005/02/20 06:11:51 christos Exp $");
 #include <sys/time.h>
 #include <sys/socket.h>
 
+#include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -278,11 +280,12 @@ doit(struct sockaddr *fromp)
 	(void) signal(SIGQUIT, SIG_DFL);
 	(void) signal(SIGTERM, SIG_DFL);
 #ifdef DEBUG
-	{ int t = open(_PATH_TTY, 2);
-	  if (t >= 0) {
-		ioctl(t, TIOCNOTTY, (char *)0);
-		(void) close(t);
-	  }
+	{ 
+		int t = open(_PATH_TTY, 2);
+		if (t >= 0) {
+			ioctl(t, TIOCNOTTY, (char *)0);
+			(void)close(t);
+		}
 	}
 #endif
 	switch (af) {
@@ -304,11 +307,10 @@ doit(struct sockaddr *fromp)
 		exit(1);
 	}
 #ifdef IP_OPTIONS
-	if (af == AF_INET)
-      {
-	u_char optbuf[BUFSIZ/3], *cp;
-	char lbuf[BUFSIZ], *lp, *ep;
-	int optsize = sizeof(optbuf), ipproto;
+	if (af == AF_INET) {
+
+	u_char optbuf[BUFSIZ/3];
+	int optsize = sizeof(optbuf), ipproto, i;
 	struct protoent *ip;
 
 	if ((ip = getprotobyname("ip")) != NULL)
@@ -317,24 +319,26 @@ doit(struct sockaddr *fromp)
 		ipproto = IPPROTO_IP;
 	if (!getsockopt(0, ipproto, IP_OPTIONS, (char *)optbuf, &optsize) &&
 	    optsize != 0) {
-		lp = lbuf;
-		ep = lbuf + sizeof(lbuf);
-		for (cp = optbuf; optsize > 0; cp++, optsize--, lp += 3)
-			snprintf(lp, ep - lp, " %2.2x", *cp);
-		syslog(LOG_NOTICE,
-		    "Connection received from %s using IP options (ignored):%s",
-		    naddr, lbuf);
-		if (setsockopt(0, ipproto, IP_OPTIONS,
-		    (char *)NULL, optsize) != 0) {
-			syslog(LOG_ERR, "setsockopt IP_OPTIONS NULL: %m");
-			exit(1);
+	    	for (i = 0; i < optsize;) {
+			u_char c = optbuf[i];
+			if (c == IPOPT_LSRR || c == IPOPT_SSRR) {
+				syslog(LOG_NOTICE,
+				    "Connection refused from %s "
+				    "with IP option %s",
+				    inet_ntoa((
+				    (struct sockaddr_in *)fromp)->sin_addr),
+				    c == IPOPT_LSRR ? "LSRR" : "SSRR");
+				exit(1);
+			}
+			if (c == IPOPT_EOL)
+				break;
+			i += (c == IPOPT_NOP) ? 1 : optbuf[i + 1];
 		}
 	}
-      }
+	}
 #endif
-
 	if (ntohs(*portp) >= IPPORT_RESERVED
-	 || ntohs(*portp) < IPPORT_RESERVED/2) {
+	    || ntohs(*portp) < IPPORT_RESERVED/2) {
 		syslog(LOG_NOTICE|LOG_AUTH,
 		    "Connection from %s on illegal port %u",
 		    naddr, ntohs(*portp));
