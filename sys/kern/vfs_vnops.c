@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.72.2.1 2003/07/02 15:26:47 darrenr Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.72.2.2 2003/07/03 01:32:56 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.1 2003/07/02 15:26:47 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.2 2003/07/03 01:32:56 wrstuden Exp $");
 
 #include "fs_union.h"
 
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.72.2.1 2003/07/02 15:26:47 darrenr E
 #endif
 
 #if defined(LKM) || defined(UNION)
-int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct proc *);
+int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct lwp *);
 #endif
 
 #ifdef VERIFIED_EXEC
@@ -448,7 +448,7 @@ unionread:
 	if (count == auio.uio_resid && vn_union_readdir_hook) {
 		struct vnode *ovp = vp;
 
-		error = (*vn_union_readdir_hook)(&vp, fp, l->l_proc);
+		error = (*vn_union_readdir_hook)(&vp, fp, l);
 		if (error)
 			return (error);
 		if (vp != ovp)
