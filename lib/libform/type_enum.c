@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.1 2000/12/17 12:04:31 blymn Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.2 2001/01/18 05:42:23 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -44,12 +44,6 @@ typedef struct
 	unsigned num_choices;
 	bool ignore_case;
 	bool no_blanks;
-	unsigned cur_choice;  /* XXX this is per instance state for the
-				 type.  In ncurses extraordinary lengths
-				 are taken in the next choice & previous
-				 choice to infer the state from the buffer
-				 contents.  I am not sure if that is
-				 really necessary or not.... */
 } enum_args;
 
 /*
@@ -60,15 +54,40 @@ static char *
 create_enum_args(va_list *args)
 {
 	enum_args *new;
+	char **choices;
 
 	new = (enum_args *) malloc(sizeof(enum_args));
 
 	if (new != NULL) {
 		new->choices = va_arg(*args, char **);
-		new->num_choices = va_arg(*args, unsigned);
 		new->ignore_case = (va_arg(*args, int)) ? TRUE : FALSE;
 		new->no_blanks = (va_arg(*args, int)) ? TRUE : FALSE;
-		new->cur_choice = 0;
+
+#ifdef DEBUG
+		if (_formi_create_dbg_file() != E_OK)
+			return NULL;
+		fprintf(dbg,
+			"create_enum_args: ignore_case %d, no_blanks %d\n",
+			new->ignore_case, new->no_blanks);
+#endif
+		
+		  /* count the choices we have */
+		choices = new->choices;
+		new->num_choices = 0;
+		while (*choices != NULL) {
+#ifdef DEBUG
+			fprintf(dbg, "create_enum_args: choice[%d] = \'%s\'\n",
+				new->num_choices,
+				new->choices[new->num_choices]);
+#endif
+			new->num_choices++;
+			choices++;
+		}
+#ifdef DEBUG
+		fprintf(dbg, "create_enum_args: have %d choices\n",
+			new->num_choices);
+#endif
+		
 	}
 
 	return (void *) new;
@@ -87,7 +106,6 @@ copy_enum_args(char *args)
 	if (new != NULL)
 		bcopy(args, new, sizeof(enum_args));
 
-	new->cur_choice = 0;
 	return (void *) new;
 }
 
@@ -102,52 +120,64 @@ free_enum_args(char *args)
 }
 
 /*
- * Check the contents of the field buffer match one of the enum strings only.
+ * Attempt to match the string in this to the choices given.  Returns
+ * TRUE if match found otherwise FALSE.
+ * 
  */
-static int
-enum_check_field(FIELD *field, char *args)
+static bool
+match_enum(char **choices, unsigned num_choices, bool ignore_case,
+	   bool no_blanks, char *this, unsigned *match_num)
 {
-	char **choices, *cur;
-	unsigned num_choices, i, start, enum_start, blen, elen, match_num;
-	unsigned trailing;
-	bool ignore_case, no_blanks, matched, cur_match;
+	unsigned i, start, enum_start, blen, elen, trailing;
+	bool cur_match;
 
-	choices = ((enum_args *) (void *) args)->choices;
-	num_choices = ((enum_args *) (void *) args)->num_choices;
-	ignore_case = ((enum_args *) (void *) args)->ignore_case;
-	no_blanks = ((enum_args *) (void *) args)->no_blanks;
-	cur = field->buffers[0].string;
+	start = skip_blanks(this, 0);
+	blen = strlen(&this[start]);
 
-	start = skip_blanks(cur, 0);
-	blen = strlen(&cur[start]);
-	matched = FALSE;
-	
+#ifdef DEBUG
+	fprintf(dbg, "match_enum: start %d, blen %d\n", start, blen);
+#endif
 	for (i = 0; i < num_choices; i++) {
 		enum_start = skip_blanks(choices[i], 0);
 		elen = strlen(&choices[i][enum_start]);
-
+#ifdef DEBUG
+		fprintf(dbg, "match_enum: checking choice \'%s\'\n",
+			choices[i]);
+		fprintf(dbg, "match_enum: enum_start %d, elen %d\n",
+			enum_start, elen);
+#endif
+		
 		  /* don't bother if blanks are significant and the
 		   * lengths don't match - no chance of a hit.
 		   */
-		if (no_blanks && (blen > elen))
+		if ((no_blanks == TRUE) && (blen > elen))
 			continue;
 
 		if (ignore_case)
 			cur_match = (strncasecmp(&choices[i][enum_start],
-						 &cur[start], elen) == 0) ?
+						 &this[start], elen) == 0) ?
 				TRUE : FALSE;
 		else
 			cur_match = (strncmp(&choices[i][enum_start],
-					     &cur[start], elen)) ? TRUE : FALSE;
+					     &this[start], elen) == 0) ?
+				TRUE : FALSE;
 
+#ifdef DEBUG
+		fprintf(dbg, "match_enum: curmatch is %s\n",
+			(cur_match == TRUE)? "TRUE" : "FALSE");
+#endif
+		
 		  /* if trailing blanks not allowed and we matched
 		   * and the buffer & enum element are the same size
 		   * then we have a match
 		   */
 		if (no_blanks && cur_match && (elen == blen)) {
-			match_num = i;
-			matched = TRUE;
-			break;
+#ifdef DEBUG
+			fprintf(dbg,
+		"match_enum: no_blanks set and no trailing stuff\n");
+#endif
+			*match_num = i;
+			return TRUE;
 		}
 
 		  /*
@@ -157,18 +187,44 @@ enum_check_field(FIELD *field, char *args)
 		   * better match....
 		   */
 		if (!no_blanks && cur_match) {
-			trailing = skip_blanks(cur, start + blen);
-			if (cur[trailing] == '\0') {
-				matched = TRUE;
-				match_num = i;
-				break;
+			trailing = skip_blanks(this, start + blen);
+			if (this[trailing] == '\0') {
+#ifdef DEBUG
+				fprintf(dbg,
+	"match_enum: no_blanks false and only trailing blanks found\n");
+#endif
+				*match_num = i;
+				return TRUE;
 			}
 		}
 	}
 
-	if (matched) {
-		((enum_args *) (void *) args)->cur_choice = match_num;
-		set_field_buffer(field, 0, &cur[start]);
+#ifdef DEBUG
+	fprintf(dbg, "match_enum: no match found\n");
+#endif
+	return FALSE;
+}
+
+/*
+ * Check the contents of the field buffer match one of the enum strings only.
+ */
+static int
+enum_check_field(FIELD *field, char *args)
+{
+	enum_args *ta;
+	unsigned match_num;
+	
+	ta = (enum_args *) (void *) field->type->args;
+	
+	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
+		       ta->no_blanks, args, &match_num) == TRUE) {
+#ifdef DEBUG
+		fprintf(dbg, "enum_check_field: We matched, match_num %d\n",
+			match_num);
+		fprintf(dbg, "enum_check_field: buffer is \'%s\'\n",
+			ta->choices[match_num]);
+#endif
+		set_field_buffer(field, 0, ta->choices[match_num]);
 		return TRUE;
 	}
 
@@ -179,14 +235,40 @@ enum_check_field(FIELD *field, char *args)
  * Get the next enum in the list of choices.
  */
 static int
-next_enum(/* ARGSUSED */ FIELD *field, char *args)
+next_enum(FIELD *field, char *args)
 {
-	((enum_args *) (void *) args)->cur_choice++;
+	enum_args *ta;
+	unsigned cur_choice;
 	
-	if (((enum_args *) (void *) args)->cur_choice
-	    >= ((enum_args *) (void *) args)->num_choices)
-		((enum_args *) (void *) args)->cur_choice = 0;
+	ta = (enum_args *) (void *) field->type->args;
 
+#ifdef DEBUG
+	fprintf(dbg, "next_enum: attempt to match \'%s\'\n", args);
+#endif
+
+	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
+		       ta->no_blanks, args, &cur_choice) == FALSE) {
+#ifdef DEBUG
+		fprintf(dbg, "next_enum: match failed\n");
+#endif
+		return FALSE;
+	}
+	
+#ifdef DEBUG
+	fprintf(dbg, "next_enum: cur_choice is %d\n", cur_choice);
+#endif
+	
+	cur_choice++;
+	
+	if (cur_choice >= ta->num_choices)
+		cur_choice = 0;
+
+#ifdef DEBUG
+	fprintf(dbg, "next_enum: cur_choice is %d on exit\n",
+		cur_choice);
+#endif
+	
+	set_field_buffer(field, 0, ta->choices[cur_choice]);
 	return TRUE;
 }
 
@@ -194,14 +276,38 @@ next_enum(/* ARGSUSED */ FIELD *field, char *args)
  * Get the previous enum in the list of choices.
  */
 static int
-prev_enum(/* ARGSUSED */ FIELD *field, char *args)
+prev_enum(FIELD *field, char *args)
 {
-	if (((enum_args *) (void *) args)->cur_choice == 0)
-		((enum_args *) (void *) args)->cur_choice =
-			((enum_args *) (void *) args)->num_choices;
-	else
-		((enum_args *) (void *) args)->cur_choice--;
+	enum_args *ta;
+	unsigned cur_choice;
+
+	ta = (enum_args *) (void *) field->type->args;
 	
+#ifdef DEBUG
+	fprintf(dbg, "prev_enum: attempt to match \'%s\'\n", args);
+#endif
+
+	if (match_enum(ta->choices, ta->num_choices, ta->ignore_case,
+		       ta->no_blanks, args, &cur_choice) == FALSE) {
+#ifdef DEBUG
+		fprintf(dbg, "prev_enum: match failed\n");
+#endif
+		return FALSE;
+	}
+
+#ifdef DEBUG
+	fprintf(dbg, "prev_enum: cur_choice is %d\n", cur_choice);
+#endif
+	if (cur_choice == 0)
+		cur_choice = ta->num_choices - 1;
+	else
+		cur_choice--;
+	
+#ifdef DEBUG
+	fprintf(dbg, "prev_enum: cur_choice is %d on exit\n", cur_choice);
+#endif
+
+	set_field_buffer(field, 0, ta->choices[cur_choice]);
 	return TRUE;
 }
 
