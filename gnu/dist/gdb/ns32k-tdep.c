@@ -26,23 +26,7 @@ _initialize_ns32k_tdep ()
   tm_print_insn = print_insn_ns32k;
 }
 
-
-/*
- * Things needed by  gdb/config/ns32k/tm-umax.h
- * (These used to be in opcodes/ns32k-dis.c)
- *
- *  sign_extend, flip_bytes
- *  ns32k_localcount, ns32k_get_enter_addr
- */
-
-sign_extend (value, bits)
-{
-  value = value & ((1 << bits) - 1);
-  return (value & (1 << (bits-1))
-	  ? value | (~((1 << bits) - 1))
-	  : value);
-}
-
+void
 flip_bytes (ptr, count)
      char *ptr;
      int count;
@@ -63,6 +47,7 @@ flip_bytes (ptr, count)
    pointing to the enter instruction.  This is used in the macro
    FRAME_FIND_SAVED_REGS.  */
 
+int
 ns32k_localcount (enter_pc)
      CORE_ADDR enter_pc;
 {
@@ -97,6 +82,9 @@ ns32k_get_enter_addr (pc)
 {
   CORE_ADDR enter_addr;
   unsigned char op;
+
+  if (pc == 0)
+    return 0;
 
   if (ABOUT_TO_RETURN (pc))
     return 1;		/* after exit */
