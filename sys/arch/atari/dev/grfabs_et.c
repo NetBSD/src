@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.17 2000/06/26 14:20:40 mrg Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.18 2000/06/29 08:28:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -50,7 +50,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 /*
  * For PCI probing...
