@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94"; */
-static char *rcsid = "$NetBSD: chown.c,v 1.10 1997/06/26 23:18:05 kleink Exp $";
+static char *rcsid = "$NetBSD: chown.c,v 1.11 1997/10/06 13:28:00 enami Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,6 +78,7 @@ main(argc, argv)
 	FTSENT *p;
 	int Hflag, Lflag, Pflag, ch, fts_options, hflag, rval;
 	char *cp;
+	int (*change_owner) __P((const char *, uid_t, gid_t));
 	
 	setlocale(LC_ALL, "");
 
@@ -109,9 +110,9 @@ main(argc, argv)
 			/*
 			 * In System V (and probably POSIX.2) the -h option
 			 * causes chown/chgrp to change the owner/group of
-			 * the symbolic link.  4.4BSD's symbolic links don't
-			 * have owners/groups, so it's an undocumented noop.
-			 * Do syntax checking, though.
+			 * the symbolic link.  4.4BSD's symbolic links didn't
+			 * have owners/groups, so it was an undocumented noop.
+			 * In NetBSD 1.3, lchown(2) is introduced.
 			 */
 			hflag = 1;
 			break;
@@ -137,6 +138,10 @@ main(argc, argv)
 			fts_options |= FTS_LOGICAL;
 		}
 	}
+	if (hflag)
+		change_owner = lchown;
+	else
+		change_owner = chown;
 
 	uid = gid = -1;
 	if (ischown) {
@@ -179,12 +184,15 @@ main(argc, argv)
 			 * don't point to anything and ones that we found
 			 * doing a physical walk.
 			 */
-			continue;
+			if (!hflag)
+				continue;
+			/* else */
+			/* FALLTHROUGH */
 		default:
 			break;
 		}
 
-		if (chown(p->fts_accpath, uid, gid) && !fflag) {
+		if ((*change_owner)(p->fts_accpath, uid, gid) && !fflag) {
 			warn("%s", p->fts_path);
 			rval = 1;
 		}
