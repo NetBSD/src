@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	7.7 (Berkeley)	5/12/91
- *	$Id: pmap.c,v 1.18 1994/08/15 14:46:48 mycroft Exp $
+ *	$Id: pmap.c,v 1.19 1994/09/02 05:12:12 mycroft Exp $
  */
 
 /*
@@ -577,11 +577,10 @@ pmap_remove(pmap, sva, eva)
 			int n, m;
 
 			n = min(eva - sva, NBPD - (sva & PT_MASK)) >> PGSHIFT;
-			__asm __volatile("xorl %%eax,%%eax\n\tcld\n\t"
-			    "repe\n\tscasl\n\tje 1f\n\tincl %1\n\t1:"
+			__asm __volatile(
+			    "cld\n\trepe\n\tscasl\n\tje 1f\n\tincl %1\n\t1:"
 			    : "=D" (pte), "=c" (m)
-			    : "0" (pte), "1" (n)
-			    : "%eax");
+			    : "0" (pte), "1" (n), "a" (0));
 			sva += (n - m) << PGSHIFT;
 			if (!m)
 				continue;
@@ -771,11 +770,10 @@ pmap_protect(pmap, sva, eva, prot)
 			int n, m;
 
 			n = min(eva - sva, NBPD - (sva & PT_MASK)) >> PGSHIFT;
-			__asm __volatile("xorl %%eax,%%eax\n\tcld\n\t"
-			    "repe\n\tscasl\n\tje 1f\n\tincl %1\n\t1:"
+			__asm __volatile(
+			    "cld\n\trepe\n\tscasl\n\tje 1f\n\tincl %1\n\t1:"
 			    : "=D" (pte), "=c" (m)
-			    : "0" (pte), "1" (n)
-			    : "%eax");
+			    : "0" (pte), "1" (n), "a" (0));
 			sva += (n - m) << PGSHIFT;
 			if (!m)
 				continue;
