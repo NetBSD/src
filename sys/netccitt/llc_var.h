@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.5 1996/02/13 22:05:01 christos Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.6 1997/05/02 21:10:15 christos Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -330,8 +330,8 @@ struct llc_linkcb {
 	 */
 	struct frmrinfo		llcl_frmrinfo;		/* last FRMR info field */
 };
-#define llcl_frmr_pdu0		llcl_frmrinfo.rej_pdu_0
-#define llcl_frmr_pdu1		llcl_frmrinfo.rej_pdu_1
+#define llcl_frmr_pdu0		llcl_frmrinfo.frmr_rej_pdu0
+#define llcl_frmr_pdu1		llcl_frmrinfo.frmr_rej_pdu1
 #define llcl_frmr_control	llcl_frmrinfo.frmr_control
 #define llcl_frmr_control_ext	llcl_frmrinfo.frmr_control_ext
 #define llcl_frmr_cause		llcl_frmrinfo.frmr_cause
