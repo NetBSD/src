@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 1997/10/07 01:27:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.14 1997/11/13 17:09:04 thorpej Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 
@@ -66,7 +66,7 @@ NETBSD_MAN8		= /usr/local/man/man8
 CFLAGS			= ${DEFS} -O -I.
 
 SUPCL			= supcmain.o supcvers.o supcparse.o supcname.o \
-			  supcmisc.o supcmeat.o
+			  supcmisc.o supcmeat.o read_line.o
 SUPS			= scm.o scmio.o stree.o log.o supmsg.o netcrypt.o
 EXTRA			= atoo.o errmsg.o expand.o ffilecopy.o filecopy.o \
 			  nxtarg.o path.o quit.o run.o salloc.o skipto.o \
@@ -123,6 +123,7 @@ netcrypt.c:
 	@echo "[ Using netcryptvoid.c ]"
 	cp netcryptvoid.c netcrypt.c
 
+read_line.o: supextern.h
 scan.o:	sup.h
 scm.o:	sup.h
 scmio.o: sup.h supmsg.h
