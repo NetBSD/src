@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.53 2003/10/21 16:17:18 tsutsui Exp $ */
+/* $NetBSD: tga.c,v 1.54 2003/10/27 07:07:34 chs Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.53 2003/10/21 16:17:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.54 2003/10/27 07:07:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1049,7 +1049,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	int x, y, wb;
 	int xstart, xend, xdir;
 	int ystart, yend, ydir, yinc;
-	int xleft, lastx, lastleft;
+	int xleft, lastx = 0, lastleft = 0;
 	int offset = 1 * dc->dc_tgaconf->tgac_vvbr_units;
 
 	/*

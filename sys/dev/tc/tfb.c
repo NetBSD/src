@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.40 2003/06/29 22:30:55 fvdl Exp $ */
+/* $NetBSD: tfb.c,v 1.41 2003/10/27 07:07:35 chs Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.40 2003/06/29 22:30:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.41 2003/10/27 07:07:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -796,7 +796,7 @@ set_cursor(sc, p)
 	struct wsdisplay_cursor *p;
 {
 #define	cc (&sc->sc_cursor)
-	u_int v, index, count, icount;
+	u_int v, index = 0, count = 0, icount = 0;
 
 	v = p->which;
 	if (v & WSDISPLAY_CURSOR_DOCMAP) {
