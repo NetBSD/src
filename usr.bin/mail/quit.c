@@ -1,4 +1,4 @@
-/*	$NetBSD: quit.c,v 1.7 1997/10/19 05:03:49 lukem Exp $	*/
+/*	$NetBSD: quit.c,v 1.8 1997/11/25 17:58:19 bad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quit.c,v 1.7 1997/10/19 05:03:49 lukem Exp $");
+__RCSID("$NetBSD: quit.c,v 1.8 1997/11/25 17:58:19 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -138,6 +138,14 @@ nolock:
 			(void) putc(c, rbuf);
 		}
 #endif
+		(void) fflush(rbuf);
+		if (ferror(rbuf)) {
+			perror(tempResid);
+			Fclose(rbuf);
+			Fclose(fbuf);
+			dot_unlock(mailname);
+			return;
+		}
 		Fclose(rbuf);
 		if ((rbuf = Fopen(tempResid, "r")) == NULL)
 			goto newmail;
@@ -290,7 +298,8 @@ nolock:
 		Fclose(ibuf);
 	}
 	fflush(obuf);
-	trunc(obuf);
+	if (!ferror(obuf))
+		trunc(obuf);	/* XXX or should we truncate? */
 	if (ferror(obuf)) {
 		perror(mbox);
 		Fclose(obuf);
@@ -328,6 +337,14 @@ cream:
 			goto newmail;
 		while ((c = getc(rbuf)) != EOF)
 			(void) putc(c, abuf);
+		(void) fflush(abuf);
+		if (ferror(obuf)) {
+			perror(mailname);
+			Fclose(abuf);
+			Fclose(fbuf);
+			dot_unlock(mailname);
+			return;
+		}
 		Fclose(rbuf);
 		trunc(abuf);
 		Fclose(abuf);
@@ -369,9 +386,16 @@ writeback(res)
 		return(-1);
 	}
 #ifndef APPEND
-	if (res != NULL)
+	if (res != NULL) {
 		while ((c = getc(res)) != EOF)
 			(void) putc(c, obuf);
+		(void) fflush(obuf);
+		if (ferror(obuf)) {
+			perror(mailname);
+			Fclose(obuf);
+			return(-1);
+		}
+	}
 #endif
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag&MPRESERVE)||(mp->m_flag&MTOUCH)==0) {
@@ -388,7 +412,8 @@ writeback(res)
 			(void) putc(c, obuf);
 #endif
 	fflush(obuf);
-	trunc(obuf);
+	if (!ferror(obuf))
+		trunc(obuf);	/* XXX or show we truncate? */
 	if (ferror(obuf)) {
 		perror(mailname);
 		Fclose(obuf);
@@ -463,6 +488,15 @@ edstop()
 		fseek(ibuf, (long)mailsize, 0);
 		while ((c = getc(ibuf)) != EOF)
 			(void) putc(c, obuf);
+		(void) fflush(obuf);
+		if (ferror(obuf)) {
+			perror(tempname);
+			Fclose(obuf);
+			Fclose(ibuf);
+			rm(tempname);
+			relsesigs();
+			reset(0);
+		}
 		Fclose(ibuf);
 		Fclose(obuf);
 		if ((ibuf = Fopen(tempname, "r")) == NULL) {
