@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 1997/04/16 22:18:55 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,31 +41,51 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <machine/asm.h>
+
+/*
+ * Some instructions gas doesn't understand (yet?)
+ */
+#define	bdneq	bdnzf 2,
 
 /*
  * Globals
  */
-	.globl	_esym,_proc0paddr
-	.data
-_esym:	.long	0			/* end of symbol table */
-_proc0paddr:	.long	0		/* proc0 p_addr */
-idle_u:	.long	0			/* fake uarea during idle after exit */
-openfirmware:	.long	0		/* openfirmware entry point */
+GLOBAL(esym)
+	.long	0			/* end of symbol table */
+GLOBAL(proc0paddr)
+	.long	0			/* proc0 p_addr */
 
 /*
- * Startup entry
+ * File-scope for locore.S
+ */
+	.data
+idle_u:
+	.long	0			/* fake uarea during idle after exit */
+openfirmware_entry:
+	.long	0			/* openfirmware entry point */
+
+/*
+ * This symbol is here for the benefit of kvm_mkdb, and is supposed to
+ * mark the start of kernel text.
  */
 	.text
-	.globl	_kernel_text
-_kernel_text:
-	.globl	start
-start:
-#ifdef	FIREPOWERBUGS
+	.globl	_C_LABEL(kernel_text)
+_C_LABEL(kernel_text):
+
+/*
+ * Startup entry.  Note, this must be the first thing in the text
+ * segment!
+ */
+	.text
+	.globl	__start
+__start:
+#ifdef	FIRMWORKSBUGS
 	mfmsr	0
 	andi.	0,0,PSL_IR|PSL_DR
 	beq	1f
 
-	bl	_ofwr_init
+	bl	_C_LABEL(ofwr_init)
 1:
 #endif
 	li	0,0
@@ -73,46 +93,42 @@ start:
 	isync
 
 /* compute end of kernel memory */
-	lis	8,_end@ha
-	addi	8,8,_end@l
-#if defined(DDB) || defined(KERNFS)
-	lwz	9,0(8)			/* number of symbols */
-	add	8,8,9
-	lwzu	9,4(8)			/* length of string table */
-	add	8,8,9
-	lis	9,_esym@ha
-	stw	8,_esym@l(9)		/* save for symbol handling */
+	lis	8,_C_LABEL(end)@ha
+	addi	8,8,_C_LABEL(end)@l
+#ifdef DDB
+	/*
+	 * XXX Account for symbols.
+	 */
 #endif
 	li	9,PGOFSET
 	add	8,8,9
 	andc	8,8,9
-	lis	9,_OF_buf@ha
-	stw	8,_OF_buf@l(9)
+	lis	9,_C_LABEL(OF_buf)@ha
+	stw	8,_C_LABEL(OF_buf)@l(9)
 	addi	8,8,NBPG
 	lis	9,idle_u@ha
 	stw	8,idle_u@l(9)
 	addi	8,8,USPACE		/* space for idle_u */
-	lis	9,_proc0paddr@ha
-	stw	8,_proc0paddr@l(9)
+	lis	9,_C_LABEL(proc0paddr)@ha
+	stw	8,_C_LABEL(proc0paddr)@l(9)
 	addi	1,8,USPACE-FRAMELEN	/* stackpointer for proc0 */
 	mr	4,1			/* end of mem reserved for kernel */
 	xor	0,0,0
 	stwu	0,-16(1)		/* end of stack chain */
 	
-	lis	8,openfirmware@ha
-	stw	5,openfirmware@l(8)	/* save client interface handler */
-	lis	3,start@ha
-	addi	3,3,start@l
+	lis	8,openfirmware_entry@ha
+	stw	5,openfirmware_entry@l(8) /* save client interface handler */
+	lis	3,__start@ha
+	addi	3,3,__start@l
 	mr	5,6			/* args string */
-	bl	_initppc
-	bl	_main
-	b	_OF_exit
+	bl	_C_LABEL(initppc)
+	bl	_C_LABEL(main)
+	b	_C_LABEL(OF_exit)
 
 /*
  * OpenFirmware entry point
  */
-	.globl	_openfirmware
-_openfirmware:
+ENTRY(openfirmware)
 	mflr	0			/* save return address */
 	stw	0,4(1)
 	stwu	1,-16(1)		/* setup stack frame */
@@ -120,8 +136,8 @@ _openfirmware:
 	mfmsr	4			/* save msr */
 	stw	4,8(1)
 
-	lis	4,openfirmware@ha	/* get firmware entry point */
-	lwz	4,openfirmware@l(4)
+	lis	4,openfirmware_entry@ha	/* get firmware entry point */
+	lwz	4,openfirmware_entry@l(4)
 	mtlr	4
 
 	li	0,0			/* turn off any ints/mmu/etc. */
@@ -142,7 +158,8 @@ _openfirmware:
 /*
  * Switch to/from OpenFirmware real mode stack
  *
- * Note: has to be called as the very first thing in OpenFirmware interface routines.
+ * Note: has to be called as the very first thing in OpenFirmware interface
+ * routines.
  * E.g.:
  * int
  * OF_xxx(arg1, arg2)
@@ -170,10 +187,11 @@ _openfirmware:
  *	return args.ret;
  * }
  */
-.lcomm	firmstk,NBPG
 
-	.globl	_ofw_stack
-_ofw_stack:
+	.local	firmstk
+	.comm	firmstk,NBPG,8
+
+ENTRY(ofw_stack)
 	mfmsr	8			/* turn off interrupts */
 	andi.	0,8,~(PSL_EE|PSL_RI)@l
 	mtmsr	0
@@ -186,7 +204,8 @@ _ofw_stack:
 	addi	7,7,firmstk+NBPG-8@l
 	lis	6,ofw_back@ha
 	addi	6,6,ofw_back@l
-	subf	4,5,7			/* make room for stack frame on new stack */
+	subf	4,5,7			/* make room for stack frame on
+					   new stack */
 	stw	6,-4(7)			/* setup return pointer */
 	stwu	1,-8(7)
 	
@@ -196,7 +215,7 @@ _ofw_stack:
 	addi	1,4,-8
 	subi	5,5,8
 
-	b	_ofbcopy		/* and copy it */
+	b	_C_LABEL(ofbcopy)	/* and copy it */
 
 ofw_back:
 	lwz	1,0(1)			/* get callers original stack pointer */
@@ -214,47 +233,48 @@ ofw_back:
  * No processes are runnable, so loop waiting for one.
  * Separate label here for accounting purposes.
  */
-_idle:
+ASENTRY(Idle)
 	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while manipulating runque */
+	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+					   manipulating runque */
 	mtmsr	3
 
-	lis	8,_whichqs@ha
-	lwz	9,_whichqs@l(8)
+	lis	8,_C_LABEL(whichqs)@ha
+	lwz	9,_C_LABEL(whichqs)@l(8)
 
 	or.	9,9,9
-	bne-	_sw1			/* at least one queue non-empty */
+	bne-	.Lsw1			/* at least one queue non-empty */
 	
-	ori	3,3,PSL_EE		/* reenable ints again */
+	ori	3,3,PSL_EE@l		/* reenable ints again */
 	mtmsr	3
 	isync
 	
 /* May do some power saving here? */
 
-	b	_idle
+	b	_ASM_LABEL(Idle)
 
 /*
  * switchexit gets called from cpu_exit to free the user structure
  * and kernel stack of the current process.
  */
-	.globl	_switchexit
-_switchexit:
+ENTRY(switchexit)
 /* First switch to the idle pcb/kernel stack */
 	lis	6,idle_u@ha
 	lwz	6,idle_u@l(6)
-	lis	7,_curpcb@ha
-	stw	6,_curpcb@l(7)
+	lis	7,_C_LABEL(curpcb)@ha
+	stw	6,_C_LABEL(curpcb)@l(7)
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 /* Now free the old user structure (args are already in r3, r4, r5) */
-	bl	_kmem_free
+	bl	_C_LABEL(kmem_free)
 /* Fall through to cpu_switch to actually select another proc */
+	li	3,0			/* indicate exited process */
 
 /*
  * void cpu_switch(struct proc *p)
  * Find a runnable process and switch to it.
  */
-	.globl	_cpu_switch
-_cpu_switch:
+/* XXX noprofile?  --thorpej@netbsd.org */
+ENTRY(cpu_switch)
 	mflr	0			/* save lr */
 	stw	0,4(1)
 	stwu	1,-16(1)
@@ -262,31 +282,35 @@ _cpu_switch:
 	stw	30,8(1)
 
 	mr	30,3
-	lis	3,_curproc@ha
+	lis	3,_C_LABEL(curproc)@ha
 	xor	31,31,31
-	stw	31,_curproc@l(3)	/* Zero to not accumulate cpu time */
-	lis	3,_curpcb@ha
-	lwz	31,_curpcb@l(3)
+	stw	31,_C_LABEL(curproc)@l(3) /* Zero to not accumulate cpu time */
+	lis	3,_C_LABEL(curpcb)@ha
+	lwz	31,_C_LABEL(curpcb)@l(3)
 
 	xor	3,3,3
-	bl	_splx
+	lis	4,_C_LABEL(machine_interface)+SPLX@ha
+	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
+	mtlr	0
+	blrl
 	stw	3,PCB_SPL(31)		/* save spl */
 
 /* Find a new process */
 	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while manipulating runque */
+	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+					   manipulating runque */
 	mtmsr	3
 	isync
 
-	lis	8,_whichqs@ha
-	lwz	9,_whichqs@l(8)
+	lis	8,_C_LABEL(whichqs)@ha
+	lwz	9,_C_LABEL(whichqs)@l(8)
 
 	or.	9,9,9
-	beq-	_idle			/* all queues empty */
-_sw1:
+	beq-	_ASM_LABEL(Idle)	/* all queues empty */
+.Lsw1:
 	cntlzw	10,9
-	lis	4,_qs@ha
-	addi	4,4,_qs@l
+	lis	4,_C_LABEL(qs)@ha
+	addi	4,4,_C_LABEL(qs)@l
 	slwi	3,10,3
 	add	3,3,4			/* select queue */
 	
@@ -298,23 +322,25 @@ _sw1:
 	cmpl	0,3,4			/* queue empty? */
 	bne	1f
 
-	lis	3,0x80000000@ha
+	lis	3,0x80000000@h
 	srw	3,3,10
 	andc	9,9,3
-	stw	9,_whichqs@l(8)		/* mark it empty */
+	stw	9,_C_LABEL(whichqs)@l(8) /* mark it empty */
 
 1:
+	/* just did this resched thing */
 	xor	3,3,3
-	lis	4,_want_resched@ha
-	stw	3,_want_resched@l(4)	/* just did this resched thing */
+	lis	4,_C_LABEL(want_resched)@ha
+	stw	3,_C_LABEL(want_resched)@l(4)
 
 	stw	3,P_BACK(31)		/* probably superfluous */
 
-	lis	4,_curproc@ha
-	stw	31,_curproc@l(4)	/* record new process */
+	/* record new process */
+	lis	4,_C_LABEL(curproc)@ha
+	stw	31,_C_LABEL(curproc)@l(4)
 
 	mfmsr	3
-	ori	3,3,PSL_EE		/* Now we can interrupt again */
+	ori	3,3,PSL_EE@l		/* Now we can interrupt again */
 	mtmsr	3
 
 	cmpl	0,31,30			/* is it the same process? */
@@ -333,16 +359,19 @@ _sw1:
 
 switch_exited:
 	mfmsr	3
-	andi.	3,3,~PSL_EE@l		/* disable interrupts while actually switching */
+	andi.	3,3,~PSL_EE@l		/* disable interrupts while
+					   actually switching */
 	mtmsr	3
 
+	/* indicate new pcb */
 	lwz	4,P_ADDR(31)
-	lis	5,_curpcb@ha
-	stw	4,_curpcb@l(5)		/* indicate new pcb */
+	lis	5,_C_LABEL(curpcb)@ha
+	stw	4,_C_LABEL(curpcb)@l(5)
 
+	/* save real pmap pointer for spill fill */
 	lwz	5,PCB_PMR(4)
-	lis	6,_curpm@ha
-	stwu	5,_curpm@l(6)		/* save real pmap pointer for spill fill */
+	lis	6,_C_LABEL(curpm)@ha
+	stwu	5,_C_LABEL(curpm)@l(6)
 	stwcx.	5,0,6			/* clear possible reservation */
 
 	addic.	5,5,64
@@ -350,7 +379,8 @@ switch_exited:
 	mfsr	8,KERNEL_SR		/* save kernel SR */
 1:
 	addis	6,6,-0x10000000@ha	/* set new procs segment registers */
-	or.	6,6,6			/* This is done from the real address pmap */
+	or.	6,6,6			/* This is done from the real
+					   address pmap */
 	lwzu	7,-4(5)			/* so we don't have to worry */
 	mtsrin	7,6			/* about accessibility */
 	bne	1b
@@ -359,7 +389,7 @@ switch_exited:
 
 	lwz	1,PCB_SP(4)		/* get new procs SP */
 
-	ori	3,3,PSL_EE		/* interrupts are okay again */
+	ori	3,3,PSL_EE@l		/* interrupts are okay again */
 	mtmsr	3
 
 	lmw	10,8(1)			/* get other regs */
@@ -373,9 +403,13 @@ switch_exited:
 switch_return:
 	mr	30,7			/* save proc pointer */
 	lwz	3,PCB_SPL(4)
-	bl	_splx
+	lis	4,_C_LABEL(machine_interface)+SPLX@ha
+	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
+	mtlr	0
+	blrl
 
-	mr	3,30			/* get curproc for special fork returns */
+	mr	3,30			/* get curproc for special fork
+					   returns */
 
 	lwz	31,12(1)
 	lwz	30,8(1)
@@ -388,24 +422,30 @@ switch_return:
 /*
  * Data used during primary/secondary traps/interrupts
  */
-#define	tempsave	0x2e0		/* primary save area for trap handling */
-#define	disisave	0x3e0		/* primary save area for dsi/isi traps */
-#define	INTSTK	(8*1024)		/* 8K interrupt stack */
+#define	tempsave	0x2e0	/* primary save area for trap handling */
+#define	disisave	0x3e0	/* primary save area for dsi/isi traps */
+
+#define	INTSTK	(8*1024)	/* 8K interrupt stack */
 	.data
-intstk:	.space	INTSTK			/* interrupt stack */
-	.globl	_intr_depth
-_intr_depth:
-	.long	-1			/* in-use marker */
-#define	SPILLSTK 1024			/* 1K spill stack */
-.lcomm	spillstk,SPILLSTK
+	.align	4
+intstk:
+	.space	INTSTK		/* interrupt stack */
+
+GLOBAL(intr_depth)
+	.long	-1		/* in-use marker */
+
+#define	SPILLSTK 1024		/* 1K spill stack */
+
+	.comm	spillstk,SPILLSTK,8
 
 /*
  * This code gets copied to all the trap vectors
- * (except ISI/DSI, the interrupts, and possibly the debugging traps when using IPKDB).
+ * (except ISI/DSI, the interrupts, and possibly the debugging traps when
+ * using IPKDB).
  */
 	.text
-	.globl	_trapcode,_trapsize
-_trapcode:
+	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
+_C_LABEL(trapcode):
 	mtsprg	1,1			/* save SP */
 	stmw	28,tempsave(0)		/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -414,20 +454,20 @@ _trapcode:
 	mfsrr1	31
 	mtcr	31
 	bc	4,17,1f			/* branch if PSL_PR is clear */
-	lis	1,_curpcb@ha
-	lwz	1,_curpcb@l(1)
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
 1:
-	bla	trap
-_trapsize =	.-_trapcode
+	bla	s_trap
+_C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 
 /*
  * Similar to the above for DSI
  * Has to handle BAT spills
  * and standard pagetable spills
  */
-	.globl	_dsitrap,_dsisize
-_dsitrap:
+	.globl	_C_LABEL(dsitrap),_C_LABEL(dsisize)
+_C_LABEL(dsitrap):
 	stmw	28,disisave(0)		/* free r28-r31 */
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
@@ -437,11 +477,15 @@ _dsitrap:
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfdar	31			/* get fault address */
 	rlwinm	31,31,7,25,28		/* get segment * 8 */
-	addis	31,31,_battable@ha
-	lwz	30,_battable@l(31)	/* get batu */
+
+	/* get batu */
+	addis	31,31,_C_LABEL(battable)@ha
+	lwz	30,_C_LABEL(battable)@l(31)
 	mtcr	30
-	bc	4,30,1f			/* branch if supervisor valid is false */
-	lwz	31,_battable+4@l(31)	/* get batl */
+	bc	4,30,1f			/* branch if supervisor valid is
+					   false */
+	/* get batl */
+	lwz	31,_C_LABEL(battable)+4@l(31)
 /* We randomly use the highest two bat registers here */
 	mftb	28
 	andi.	28,28,1
@@ -460,14 +504,14 @@ _dsitrap:
 	rfi				/* return to trapped code */
 1:
 	mflr	28			/* save LR */
-	bla	dsitrap
-_dsisize =	.-_dsitrap
+	bla	s_dsitrap
+_C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 
 /*
  * Similar to the above for ISI
  */
-	.globl	_isitrap,_isisize
-_isitrap:
+	.globl	_C_LABEL(isitrap),_C_LABEL(isisize)
+_C_LABEL(isitrap):
 	stmw	28,disisave(0)		/* free r28-r31 */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
@@ -476,25 +520,31 @@ _isitrap:
 	bc	12,17,1f		/* branch if PSL_PR is set */
 	mfsrr0	31			/* get fault address */
 	rlwinm	31,31,7,25,28		/* get segment * 8 */
-	addis	31,31,_battable@ha
-	lwz	30,_battable@l(31)	/* get batu */
+
+	/* get batu */
+	addis	31,31,_C_LABEL(battable)@ha
+	lwz	30,_C_LABEL(battable)@l(31)
 	mtcr	30
-	bc	4,30,1f			/* branch if supervisor valid is false */
+	bc	4,30,1f			/* branch if supervisor valid is
+					   false */
 	mtibatu	3,30
-	lwz	30,_battable+4@l(31)	/* get batl */
+
+	/* get batl */
+	lwz	30,_C_LABEL(battable)+4@l(31)
 	mtibatl	3,30
+
 	mtcr	29			/* restore CR */
 	lmw	28,disisave(0)		/* restore r28-r31 */
 	rfi				/* return to trapped code */
 1:
-	bla	isitrap
-_isisize =	.-_isitrap
+	bla	s_isitrap
+_C_LABEL(isisize)= .-_C_LABEL(isitrap)
 
 /*
  * This one for the external interrupt handler.
  */
-	.globl	_extint,_extsize
-_extint:
+	.globl	_C_LABEL(extint),_C_LABEL(extsize)
+_C_LABEL(extint):
 	mtsprg	1,1			/* save SP */
 	stmw	28,tempsave(0)		/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -509,13 +559,13 @@ _extint:
 	mfsprg	1,1			/* yes, get old SP */
 1:
 	ba	extintr
-_extsize =	.-_extint
+_C_LABEL(extsize) = .-_C_LABEL(extint)
 
 /*
  * And this one for the decrementer interrupt handler.
  */
-	.globl	_decrint,_decrsize
-_decrint:
+	.globl	_C_LABEL(decrint),_C_LABEL(decrsize)
+_C_LABEL(decrint):
 	mtsprg	1,1			/* save SP */
 	stmw	28,tempsave(0)		/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -530,11 +580,12 @@ _decrint:
 	mfsprg	1,1			/* yes, get old SP */
 1:
 	ba	decrintr
-_decrsize =	.-_decrint
+_C_LABEL(decrsize) = .-_C_LABEL(decrint)
 
 /*
  * Now the tlb software load for 603 processors:
- * (Code essentially from the 603e User Manual, Chapter 5)
+ * (Code essentially from the 603e User Manual, Chapter 5, but
+ * corrected a lot.)
  */
 #define	DMISS	976
 #define	DCMP	977
@@ -544,12 +595,8 @@ _decrsize =	.-_decrint
 #define	ICMP	981
 #define	RPA	982
 
-#define	bdneq	bdnzf 2,
-#define	tlbli	.long	0x7c0007e4+0x800*
-#define	tlbld	.long	0x7c0007a4+0x800*
-
-	.globl	_tlbimiss,_tlbimsize
-_tlbimiss:
+	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
+_C_LABEL(tlbimiss):
 	mfspr	2,HASH1			/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */
@@ -587,25 +634,25 @@ _tlbimiss:
 4:	/* guarded */
 	mfsrr1	3
 	andi.	2,3,0xffff		/* clean upper srr1 */
-	addis	2,2,0x800		/* set srr<4> to flag prot violation */
+	oris	2,2,0x8000000@h		/* set srr<4> to flag prot violation */
 	b	6f
 5:	/* not found anywhere */
 	mfsrr1	3
 	andi.	2,3,0xffff		/* clean upper srr1 */
-	addis	2,2,0x4000		/* set srr1<1> to flag pte not found */
+	oris	2,2,0x40000000@h	/* set srr1<1> to flag pte not found */
 6:
 	mtctr	0			/* restore counter */
 	mtsrr1	2
 	mfmsr	0
-	xoris	0,0,2			/* flip the msr<tgpr> bit */
+	xoris	0,0,0x20000@h		/* flip the msr<tgpr> bit */
 	mtcrf	0x80,3			/* restore cr0 */
 	mtmsr	0			/* now with native gprs */
 	isync
 	ba	EXC_ISI
-_tlbimsize =	.-_tlbimiss
+_C_LABEL(tlbimsize) = .-_C_LABEL(tlbimiss)
 
-	.globl	_tlbdlmiss,_tlbdlmsize
-_tlbdlmiss:
+	.globl	_C_LABEL(tlbdlmiss),_C_LABEL(tlbdlmsize)
+_C_LABEL(tlbdlmiss):
 	mfspr	2,HASH1			/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */
@@ -640,7 +687,7 @@ _tlbdlmiss:
 	b	1b
 5:	/* not found anywhere */
 	mfsrr1	3
-	lis	1,0x4000		/* set dsisr<1> to flag pte not found */
+	lis	1,0x42000000@h		/* set dsisr<1> to flag pte not found */
 	mtctr	0			/* restore counter */
 	andi.	2,3,0xffff		/* clean upper srr1 */
 	mtsrr1	2
@@ -648,15 +695,15 @@ _tlbdlmiss:
 	mfspr	1,DMISS			/* get the miss address */
 	mtdar	1			/* put in dar */
 	mfmsr	0
-	xoris	0,0,2			/* flip the msr<tgpr> bit */
+	xoris	0,0,0x20000@h		/* flip the msr<tgpr> bit */
 	mtcrf	0x80,3			/* restore cr0 */
 	mtmsr	0			/* now with native gprs */
 	isync
 	ba	EXC_DSI
-_tlbdlmsize =	.-_tlbdlmiss
+_C_LABEL(tlbdlmsize) = .-_C_LABEL(tlbdlmiss)
 
-	.globl	_tlbdsmiss,_tlbdsmsize
-_tlbdsmiss:
+	.globl	_C_LABEL(tlbdsmiss),_C_LABEL(tlbdsmsize)
+_C_LABEL(tlbdsmiss):
 	mfspr	2,HASH1			/* get first pointer */
 	li	1,8
 	mfctr	0			/* save counter */
@@ -696,7 +743,8 @@ _tlbdsmiss:
 	beq+	8f
 9:	/* found, but protection violation (PP==00)*/
 	mfsrr1	3
-	lis	1,0xa00			/* indicate protection violation on store */
+	lis	1,0xa000000@h		/* indicate protection violation
+					   on store */
 	b	1f
 7:	/* found, PP=1x */
 	mfspr	3,DMISS			/* get the miss address */
@@ -712,7 +760,7 @@ _tlbdsmiss:
 	b	5b
 5:	/* not found anywhere */
 	mfsrr1	3
-	lis	1,0x4200		/* set dsisr<1> to flag pte not found */
+	lis	1,0x42000000@h		/* set dsisr<1> to flag pte not found */
 					/* dsisr<6> to flag store */
 1:
 	mtctr	0			/* restore counter */
@@ -722,30 +770,32 @@ _tlbdsmiss:
 	mfspr	1,DMISS			/* get the miss address */
 	mtdar	1			/* put in dar */
 	mfmsr	0
-	xoris	0,0,2			/* flip the msr<tgpr> bit */
+	xoris	0,0,0x20000@h		/* flip the msr<tgpr> bit */
 	mtcrf	0x80,3			/* restore cr0 */
 	mtmsr	0			/* now with native gprs */
 	isync
 	ba	EXC_DSI
-_tlbdsmsize =	.-_tlbdsmiss
+_C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 
 #if NIPKDB > 0
 #define	ipkdbsave	0xde0		/* primary save area for IPKDB */
 /*
  * In case of IPKDB we want a separate trap catcher for it
  */
-.lcomm	ipkdbstk,INTSTK			/* ipkdb stack */
 
-	.globl	_ipkdblow,_ipkdbsize
-_ipkdblow:
+	.local	ipkdbstk
+	.comm	ipkdbstk,INTSTK,8		/* ipkdb stack */
+
+	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
+_C_LABEL(ipkdblow):
 	mtsprg	1,1			/* save SP */
 	stmw	28,ipkdbsave(0)		/* free r28-r31 */
+	mflr	28			/* save LR */
+	mfcr	29			/* save CR */
 	lis	1,ipkdbstk+INTSTK@ha	/* get new SP */
 	addi	1,1,ipkdbstk+INTSTK@l
-	mflr	28
-	mfcr	29
 	bla	ipkdbtrap
-_ipkdbsize =	.-_ipkdblow
+_C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 #endif	/* NIPKDB > 0 */
 
 /*
@@ -809,7 +859,7 @@ _ipkdbsize =	.-_ipkdblow
 	mtsprg	3,3;							\
 /* Disable translation, machine check and recoverability: */		\
 	mfmsr	2;							\
-	andi.	2,2,~(PSL_DR|PSL_IR|PSL_ME|PSL_RI);			\
+	andi.	2,2,~(PSL_DR|PSL_IR|PSL_ME|PSL_RI)@l;			\
 	mtmsr	2;							\
 	isync;								\
 /* Decide whether we return to user mode: */				\
@@ -817,8 +867,8 @@ _ipkdbsize =	.-_ipkdblow
 	mtcr	3;							\
 	bc	4,17,1f;		/* branch if PSL_PR is false */	\
 /* Restore user & kernel access SR: */					\
-	lis	2,_curpm@ha;		/* get real address of pmap */	\
-	lwz	2,_curpm@l(2);						\
+	lis	2,_C_LABEL(curpm)@ha;	/* get real address of pmap */	\
+	lwz	2,_C_LABEL(curpm)@l(2);					\
 	lwz	3,PM_USRSR(2);						\
 	mtsr	USER_SR,3;						\
 	lwz	3,PM_KERNELSR(2);					\
@@ -847,29 +897,31 @@ realtrap:
 /* Test whether we already had PR set */
 	mfsrr1	1
 	mtcr	1
-	mfsprg	1,1			/* restore SP (might have been overwritten) */
-	bc	4,17,trap		/* branch if PSL_PR is false */
-	lis	1,_curpcb@ha
-	lwz	1,_curpcb@l(1)
+	mfsprg	1,1			/* restore SP (might have been
+					   overwritten) */
+	bc	4,17,s_trap		/* branch if PSL_PR is false */
+	lis	1,_C_LABEL(curpcb)@ha
+	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
+
 /*
  * Now the common trap catching code.
  */
-trap:
+s_trap:
 /* First have to enable KERNEL mapping */
-	lis	31,KERNEL_SEGMENT@ha
-	addi	31,31,KERNEL_SEGMENT@l
+	lis	31,KERNEL_SEGMENT@h
+	ori	31,31,KERNEL_SEGMENT@l
 	mtsr	KERNEL_SR,31
 	FRAME_SETUP(tempsave)
 /* Now we can recover interrupts again: */
 	mfmsr	7
-	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)
+	ori	7,7,(PSL_EE|PSL_ME|PSL_RI)@l
 	mtmsr	7
 	isync
 /* Call C trap code: */
 trapagain:
 	addi	3,1,8
-	bl	_trap
+	bl	_C_LABEL(trap)
 trapexit:
 /* Disable interrupts: */
 	mfmsr	3
@@ -879,8 +931,8 @@ trapexit:
 	lwz	5,FRAME_SRR1+8(1)
 	mtcr	5
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_astpending@ha
-	lwz	4,_astpending@l(3)
+	lis	3,_C_LABEL(astpending)@ha
+	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1
 	beq	1f
 	li	6,EXC_AST
@@ -894,10 +946,13 @@ trapexit:
  * Child comes here at the end of a fork.
  * Mostly similar to the above.
  */
-	.globl	_fork_trampoline
-_fork_trampoline:
+	.globl	_C_LABEL(fork_trampoline)
+_C_LABEL(fork_trampoline):
 	xor	3,3,3
-	bl	_splx
+	lis	4,_C_LABEL(machine_interface)+SPLX@ha
+	lwz	0,_C_LABEL(machine_interface)+SPLX@l(4)
+	mtlr	0
+	blrl
 	mtlr	31
 	mr	3,30
 	blrl				/* jump indirect to r31 */
@@ -906,8 +961,9 @@ _fork_trampoline:
 /*
  * DSI second stage fault handler
  */
-dsitrap:
-	mfdsisr	31			/* test whether this may be a spill fault */
+s_dsitrap:
+	mfdsisr	31			/* test whether this may be a
+					   spill fault */
 	mtcr	31
 	mtsprg	1,1			/* save SP */
 	bc	4,1,disitrap		/* branch if table miss is false */
@@ -928,8 +984,8 @@ dsitrap:
 	mflr	30			/* save trap type */
 	mfctr	31			/* & CTR */
 	mfdar	3
-pte_spill:
-	bl	_pte_spill		/* try a spill */
+s_pte_spill:
+	bl	_C_LABEL(pte_spill)	/* try a spill */
 	or.	3,3,3
 	mtctr	31			/* restore CTR */
 	mtlr	30			/* and trap type */
@@ -956,8 +1012,9 @@ pte_spill:
 /*
  * ISI second stage fault handler
  */
-isitrap:
-	mfsrr1	31			/* test whether this may be a spill fault */
+s_isitrap:
+	mfsrr1	31			/* test whether this may be a
+					   spill fault */
 	mtcr	31
 	mtsprg	1,1			/* save SP */
 	bc	4,1,disitrap		/* branch if table miss is false */
@@ -980,7 +1037,7 @@ isitrap:
 	mflr	30			/* save trap type */
 	mfctr	31			/* & ctr */
 	mfsrr0	3
-	b	pte_spill		/* above */
+	b	s_pte_spill		/* above */
 
 /*
  * External interrupt second level handler
@@ -1006,8 +1063,8 @@ isitrap:
 	stw	30,32(1);		/* saved XER */			\
 	lmw	28,tempsave(0);		/* restore r28-r31 */		\
 	mfctr	6;							\
-	li	5,_intr_depth@ha;					\
-	lwz	5,_intr_depth@l(5);					\
+	lis	5,_C_LABEL(intr_depth)@ha;				\
+	lwz	5,_C_LABEL(intr_depth)@l(5);				\
 	mfsrr0	4;							\
 	mfsrr1	3;							\
 	stw	6,28(1);						\
@@ -1015,19 +1072,20 @@ isitrap:
 	stw	4,12(1);						\
 	stw	3,8(1);							\
 /* interrupts are recoverable here, and enable translation */		\
-	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@ha;		\
-	addi	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
+	lis	3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@h;			\
+	ori	3,3,(KERNEL_SEGMENT|SR_SUKEY|SR_PRKEY)@l;		\
 	mtsr	KERNEL_SR,3;						\
 	mfmsr	5;							\
 	ori	5,5,(PSL_IR|PSL_DR|PSL_RI);				\
 	mtmsr	5;							\
 	isync
 
-	.globl	_extint_call
+	.globl	_C_LABEL(extint_call)
 extintr:
 	INTRENTER
-_extint_call:
-	bl	_extint_call		/* to be filled in later */
+_C_LABEL(extint_call):
+	bl	_C_LABEL(extint_call)	/* to be filled in later */
+
 intr_exit:
 /* Disable interrupts (should already be disabled) and MMU here: */
 	mfmsr	3
@@ -1052,12 +1110,12 @@ intr_exit:
 /* Returning to user mode? */
 	mtcr	6			/* saved SRR1 */
 	bc	4,17,1f			/* branch if PSL_PR is false */
-	lis	3,_curpm@ha		/* get current pmap real address */
-	lwz	3,_curpm@l(3)
+	lis	3,_C_LABEL(curpm)@ha	/* get current pmap real addess */
+	lwz	3,_C_LABEL(curpm)@l(3)
 	lwz	3,PM_KERNELSR(3)
 	mtsr	KERNEL_SR,3		/* Restore kernel SR */
-	lis	3,_astpending@ha	/* Test AST pending */
-	lwz	4,_astpending@l(3)
+	lis	3,_C_LABEL(astpending)@ha /* Test AST pending */
+	lwz	4,_C_LABEL(astpending)@l(3)
 	andi.	4,4,1
 	beq	1f
 /* Setup for entry to realtrap: */
@@ -1073,10 +1131,10 @@ intr_exit:
 	lwz	4,76(1)
 	lwz	3,80(1)
 	lwz	0,84(1)
-	lis	30,_intr_depth@ha	/* adjust reentrancy count */
-	lwz	31,_intr_depth@l(30)
+	lis	30,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
+	lwz	31,_C_LABEL(intr_depth)@l(30)
 	addi	31,31,-1
-	stw	31,_intr_depth@l(30)
+	stw	31,_C_LABEL(intr_depth)@l(30)
 	b	realtrap
 1:
 /* Here is the normal exit of extintr: */
@@ -1086,10 +1144,10 @@ intr_exit:
 	mtlr	6
 	lwz	6,68(1)
 	lwz	5,72(1)
-	lis	3,_intr_depth@ha	/* adjust reentrancy count */
-	lwz	4,_intr_depth@l(3)
+	lis	3,_C_LABEL(intr_depth)@ha /* adjust reentrancy count */
+	lwz	4,_C_LABEL(intr_depth)@l(3)
 	addi	4,4,-1
-	stw	4,_intr_depth@l(3)
+	stw	4,_C_LABEL(intr_depth)@l(3)
 	lwz	4,76(1)
 	lwz	3,80(1)
 	lwz	0,84(1)
@@ -1102,17 +1160,16 @@ intr_exit:
 decrintr:
 	INTRENTER
 	addi	3,1,8			/* intr frame */
-	bl	_decr_intr
+	bl	_C_LABEL(decr_intr)
 	b	intr_exit
 
 #if NIPKDB > 0
 /*
  * Deliberate entry to ipkdbtrap
  */
-	.globl	_ipkdb_trap
-_ipkdb_trap:
+	.globl	_C_LABEL(ipkdb_trap)
+_C_LABEL(ipkdb_trap):
 	mtsprg	1,1
-	mtsprg	2,2
 	mfmsr	3
 	mtsrr1	3
 	andi.	3,3,~(PSL_EE|PSL_ME)@l
@@ -1132,7 +1189,7 @@ ipkdbtrap:
 	FRAME_SETUP(ipkdbsave)
 /* Call C trap code: */
 	addi	3,1,8
-	bl	_ipkdb_trap_glue
+	bl	_C_LABEL(ipkdb_trap_glue)
 	or.	3,3,3
 	bne	ipkdbleave
 /* This wasn't for IPKDB, so switch to real trap: */
@@ -1162,16 +1219,16 @@ _ipkdbfault:
 /*
  * int ipkdbfbyte(unsigned char *p)
  */
-	.globl	_ipkdbfbyte
-_ipkdbfbyte:
+	.globl	_C_LABEL(ipkdbfbyte)
+_C_LABEL(ipkdbfbyte):
 	li	9,EXC_DSI		/* establish new fault routine */
 	lwz	5,0(9)
 	lis	6,ipkdbfault@ha
 	lwz	6,ipkdbfault@l(6)
 	stw	6,0(9)
 #ifdef	IPKDBUSERHACK
-	lis	8,_ipkdbsr@ha
-	lwz	8,_ipkdbsr@l(8)
+	lis	8,_C_LABEL(ipkdbsr)@ha
+	lwz	8,_C_LABEL(ipkdbsr)@l(8)
 	mtsr	USER_SR,8
 	isync
 #endif
@@ -1188,16 +1245,16 @@ _ipkdbfbyte:
 /*
  * int ipkdbsbyte(unsigned char *p, int c)
  */
-	.globl	_ipkdbsbyte
-_ipkdbsbyte:
+	.globl	_C_LABEL(ipkdbsbyte)
+_C_LABEL(ipkdbsbyte):
 	li	9,EXC_DSI		/* establish new fault routine */
 	lwz	5,0(9)
 	lis	6,ipkdbfault@ha
 	lwz	6,ipkdbfault@l(6)
 	stw	6,0(9)
 #ifdef	IPKDBUSERHACK
-	lis	8,_ipkdbsr@ha
-	lwz	8,_ipkdbsr@l(8)
+	lis	8,_C_LABEL(ipkdbsr)@ha
+	lwz	8,_C_LABEL(ipkdbsr)@l(8)
 	mtsr	USER_SR,8
 	isync
 #endif
@@ -1207,7 +1264,8 @@ _ipkdbsbyte:
 	mr	6,3
 	xor	3,3,3
 	stb	4,0(6)
-	dcbst	0,6			/* Now do appropriate flushes to data... */
+	dcbst	0,6			/* Now do appropriate flushes
+					   to data... */
 	sync
 	icbi	0,6			/* and instruction caches */
 	stw	5,0(9)			/* restore previous fault handler */
@@ -1225,12 +1283,12 @@ _ipkdbsbyte:
  * or the (currently used) C code optimized, so it doesn't use any non-volatile
  * registers.
  */
-	.globl	_setfault
-_setfault:
+	.globl	_C_LABEL(setfault)
+_C_LABEL(setfault):
 	mflr	0
 	mfcr	12
-	lis	4,_curpcb@ha
-	lwz	4,_curpcb@l(4)
+	lis	4,_C_LABEL(curpcb)@ha
+	lwz	4,_C_LABEL(curpcb)@l(4)
 	stw	3,PCB_FAULT(4)
 	stw	0,0(3)
 	stw	1,4(3)
@@ -1246,8 +1304,8 @@ _setfault:
  * On entry r1 points to a struct sigframe at bottom of current stack.
  * All other registers are unchanged.
  */
-	.globl	_sigcode,_esigcode
-_sigcode:
+	.globl	_C_LABEL(sigcode),_C_LABEL(esigcode)
+_C_LABEL(sigcode):
 	addi	1,1,-16			/* reserved space for callee */
 	blrl
 	addi	3,1,16+8		/* compute &sf_sc */
@@ -1255,4 +1313,4 @@ _sigcode:
 	sc				/* sigreturn(scp) */
 	li	0,SYS_exit
 	sc				/* exit(errno) */
-_esigcode:
+_C_LABEL(esigcode):
