@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.264 2004/02/09 12:59:46 he Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.265 2004/02/09 13:18:34 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3416,3 +3416,12 @@ usr.sbin/racoon/Makefile.inc			patch
 	[itojun, #1608]
 
 	(Moved tags on last 2 files + doc/CHANGES-1.6.2)
+
+sys/kern/sysv_shm.c				1.75
+
+	include <uvm/uvm_object.h> for the benefit of ports that don't include
+	it in <machine/pmap.h>
+	[he, ticket #1609]
+
+	(Moved tags on last file + doc/CHANGES-1.6.2)
+
