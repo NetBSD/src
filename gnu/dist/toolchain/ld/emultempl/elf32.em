@@ -1005,6 +1005,7 @@ gld${EMULATION_NAME}_place_orphan (file, s)
   lang_statement_list_type *old;
   lang_statement_list_type add;
   etree_type *address;
+  etree_type *load_base;
   const char *secname;
   const char *outsecname;
   const char *ps = NULL;
@@ -1073,9 +1074,13 @@ gld${EMULATION_NAME}_place_orphan (file, s)
 	   && (hold_rel.os != NULL
 	       || (hold_rel.os = output_rel_find ()) != NULL))
     place = &hold_rel;
-  else if ((s->flags & (SEC_CODE | SEC_READONLY)) == SEC_READONLY
-	   && HAVE_SECTION (hold_rodata, ".rodata"))
-    place = &hold_rodata;
+  else if ((s->flags & (SEC_CODE | SEC_READONLY)) == SEC_READONLY)
+    {
+      /* If we have .rodata, fine.  If not, assume we can put
+	 read-only data into .text.  */
+      place = HAVE_SECTION (hold_rodata, ".rodata") ? &hold_rodata
+      						    : &hold_text;
+    }
   else if ((s->flags & (SEC_CODE | SEC_READONLY)) == (SEC_CODE | SEC_READONLY)
 	   && hold_text.os != NULL)
     place = &hold_text;
@@ -1133,11 +1138,27 @@ gld${EMULATION_NAME}_place_orphan (file, s)
   else
     address = NULL;
 
+  /* If the output section (or the last orphan that sorted with it)
+     we're sorting with has an AT expression, then we need to copy
+     that AT expression, adjusting it for the size of the previous
+     section.  */
+  if (place != NULL && place->os->load_base != NULL)
+    {
+      lang_output_section_statement_type *sort_os;
+
+      sort_os = place->os->last_orphan ? place->os->last_orphan
+				       : place->os;
+      load_base = exp_binop ('+', sort_os->load_base,
+			     exp_nameop (SIZEOF_UNADJ, sort_os->name));
+    }
+  else
+    load_base = NULL;
+
   os = lang_enter_output_section_statement (outsecname, address, 0,
 					    (bfd_vma) 0,
 					    (etree_type *) NULL,
 					    (etree_type *) NULL,
-					    (etree_type *) NULL);
+					    load_base);
 
   wild_doit (&os->children, s, os, file);
 
@@ -1158,6 +1179,22 @@ gld${EMULATION_NAME}_place_orphan (file, s)
       sprintf (symname, "__stop_%s", outsecname);
       lang_add_assignment (exp_assop ('=', symname,
 				      exp_nameop (NAME, ".")));
+    }
+
+  if (place != NULL)
+    {
+      /* By sorting the orphan after place->os, we effectively changed
+	 the size of that section.  Adjust the size of the section to
+	 reflect the additional output.  */
+      if (place->os->size_adj == NULL)
+	place->os->size_adj = exp_nameop (SIZEOF, os->name);
+      else
+	place->os->size_adj = exp_binop ('+', place->os->size_adj,
+					 exp_nameop (SIZEOF, os->name));
+
+      /* Record this orphan in case there are any more that are
+	 sorted with this parent.  */
+      place->os->last_orphan = os;
     }
 
   /* Restore the global list pointer.  */
