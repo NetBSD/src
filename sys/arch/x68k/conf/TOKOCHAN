@@ -1,4 +1,4 @@
-#	$NetBSD: TOKOCHAN,v 1.16 2000/12/29 15:18:38 minoura Exp $
+#	$NetBSD: TOKOCHAN,v 1.17 2001/05/02 13:15:24 minoura Exp $
 
 #
 #	TOKOCHAN -- Believe in the BSD power; Toko to issyo-ni make all!
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"TOKOCHAN-$Revision: 1.16 $"
+#ident 		"TOKOCHAN-$Revision: 1.17 $"
 
 maxusers	10
 
@@ -152,7 +152,7 @@ file-system	LFS		# Log-structured filesystem (experimental)
 #file-system	PORTAL		# portal filesystem (experimental)
 file-system	PROCFS		# /proc
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
-#file-system	UNION		# union file system
+#file-system	UNION		# union file system (a little buggy)
 file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 #file-system 	ADOSFS		# AmigaDOS filesystem
 
@@ -246,9 +246,9 @@ pseudo-device	bell			# OPM bell
 #xcom0	at mainbus0			# NS16550 fast serial
 #xcom1	at mainbus0
 
-## Audio device; broken
-#okiadpcm0 at intio0 addr 0xe92000 intr 106 errintr 107 dma 3
-#audio*	at okiadpcm*
+## Audio device
+vs0 at intio0 addr 0xe92000 dma 3 dmaintr 106
+audio*	at vs?
 
 ## Network interfaces
 neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
@@ -306,12 +306,14 @@ pseudo-device	ipfilter
 ## for IPv6
 #pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
+#pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation
+#pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 #### Other device configuration
 
 ## Pseudo ttys, required for network logins and programs like screen.
 
-pseudo-device	pty			# pseudo-ttys (for network, etc.)
+pseudo-device	pty			# pseudo-terminals
 
 ## Random device, used to implement /dev/random (a source of random noise),
 ## and generate randomness for some kernel formulae.
