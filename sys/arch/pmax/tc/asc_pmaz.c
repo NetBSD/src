@@ -1,7 +1,7 @@
-/* $NetBSD: asc_pmaz.c,v 1.1.2.3 1999/03/02 01:57:05 nisimura Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.1.2.4 1999/03/05 04:42:12 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.3 1999/03/02 01:57:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.1.2.4 1999/03/05 04:42:12 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -28,8 +28,10 @@ struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
-	bus_dma_tag_t sc_dma;
 	void	*sc_cookie;			/* intr. handling cookie */
+
+	bus_dma_tag_t sc_dmat;
+	bus_dmamap_t sc_dmamap;
 	int	sc_active;			/* DMA active ? */
 	int	sc_iswrite;			/* DMA into main memory? */
 	int	sc_datain;
@@ -37,7 +39,8 @@ struct asc_softc {
 	caddr_t *sc_dmaaddr;
 	size_t	*sc_dmalen;
 
-	caddr_t sc_base, sc_bounce, sc_target;	/* XXX XXX XXX */
+	/* XXX XXX XXX */
+	caddr_t sc_base, sc_bounce, sc_target;
 };
 
 struct cfattach asc_pmaz_ca = {
@@ -127,7 +130,7 @@ asc_pmaz_attach(parent, self, aux)
 	 */
 	sc->sc_glue = &asc_pmaz_glue;
 	asc->sc_bst = ta->ta_memt;
-	asc->sc_dma = ta->ta_dmat;
+	asc->sc_dmat = ta->ta_dmat;
 	if (bus_space_map(asc->sc_bst, ta->ta_addr,
 		PMAZ_OFFSET_RAM + PMAZ_RAM_SIZE, 0, &asc->sc_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
@@ -300,7 +303,7 @@ asc_pmaz_stop(sc)
 /*
  * Glue functions.
  */
-u_char
+static u_char
 asc_read_reg(sc, reg)
 	struct ncr53c9x_softc *sc;
 	int reg;
@@ -314,7 +317,7 @@ asc_read_reg(sc, reg)
 	return (v);
 }
 
-void
+static void
 asc_write_reg(sc, reg, val)
 	struct ncr53c9x_softc *sc;
 	int reg;
