@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.3 2003/11/10 10:48:30 dsl Exp $ */
+/* $NetBSD: hp300.c,v 1.4 2003/11/13 08:19:43 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.3 2003/11/10 10:48:30 dsl Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.4 2003/11/13 08:19:43 dsl Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -69,7 +69,6 @@ __RCSID("$NetBSD: hp300.c,v 1.3 2003/11/10 10:48:30 dsl Exp $");
 #include <unistd.h>
 
 #include "installboot.h"
-#include "hp300_volhdr.h"
 
 int
 hp300_setboot(ib_params *params)
@@ -189,7 +188,7 @@ hp300_setboot(ib_params *params)
 
 	/* Write files to BOOT partition */
 	offset = boot_offset <= HP300_SECTSIZE * 16 ? HP300_SECTSIZE * 16 : 0;
-	i = params->s1stat.st_size - offset;
+	i = roundup(params->s1stat.st_size, secsize) - offset;
 	rv = pwrite(params->fsfd, bootstrap + offset, i, boot_offset + offset);
 	if (rv != i) {
 		if (rv == -1)

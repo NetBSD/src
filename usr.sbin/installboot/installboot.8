@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.36 2003/11/10 09:19:03 fvdl Exp $
+.\"	$NetBSD: installboot.8,v 1.37 2003/11/13 08:19:43 dsl Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -196,7 +196,7 @@ The following machines are currently supported by
 .Sy alpha ,
 .Sy amd64 ,
 .Sy amiga ,
-.\" Sy hp300 ,
+.Sy hp300 ,
 .Sy i386 ,
 .Sy macppc ,
 .Sy news68k ,
@@ -617,10 +617,10 @@ The size of primary bootstrap programs is restricted to 7.5KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
 ones.
 .
-.\" .Ss NetBSD/hp300
-.\" The disk must have a boot partition large enough to hold the bootstrap code.
-.\" Currently the primary bootstrap must be a LIF format file.
-.\" .
+.Ss NetBSD/hp300
+The disk must have a boot partition large enough to hold the bootstrap code.
+Currently the primary bootstrap must be a LIF format file.
+.
 .Ss NetBSD/i386 and NetBSD/amd64
 The size of primary bootstrap programs is restricted to 8KB, even
 though some file systems (e.g., ISO 9660) are able to accommodate larger
