@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34 2002/04/14 21:50:50 manu Exp $
+	$NetBSD: syscalls.master,v 1.35 2002/04/16 20:15:48 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -260,8 +260,8 @@
 140	UNIMPL		getpagesize
 141	UNIMPL		quotactl
 142	UNIMPL
-143	UNIMPL		getpgrp
-144	UNIMPL		setpgrp
+143	NOARGS		{ int sys_getpgrp(void); }
+144	STD		{ int irix_sys_setpgrp(int pid, int pgid); } 
 145	UNIMPL		vhangup
 146	NOARGS		{ int sys_fsync(int fd); }
 147	UNIMPL		fchdir
