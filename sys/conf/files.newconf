@@ -153,7 +153,7 @@ file netccitt/pk_usrreq.c	ccitt
 file netimp/if_imp.c		imp needs-count
 file netimp/if_imphost.c	imp needs-count
 file netimp/raw_imp.c	 	imp needs-count
-file netinet/if_ether.c	 	ether inet
+file netinet/if_ether.c	 	ether
 file netinet/in.c		inet
 file netinet/in_pcb.c	 	inet
 file netinet/in_proto.c	 	inet
