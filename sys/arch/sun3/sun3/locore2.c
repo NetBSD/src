@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.33 1995/02/11 21:08:49 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.34 1995/02/13 22:24:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -464,7 +464,7 @@ void sun3_vm_init()
 	bzero((caddr_t)UADDR, UPAGES*NBPG);
 
 	curpcb = &proc0paddr->u_pcb;
-	
+
 	/*
 	 * unmap user virtual segments
 	 */
@@ -736,37 +736,6 @@ void sun3_monitor_hooks()
 #ifdef	DEBUG
 	mon_printf("boothowto=0x%x\n", boothowto);
 #endif
-}
-
-void pte_print(pte)
-	vm_offset_t pte;
-{
-	mon_printf("pte: ");
-	if (pte & PG_VALID) {
-		mon_printf("Valid ");
-		if (pte & PG_WRITE)
-			mon_printf("Write ");
-		if (pte & PG_SYSTEM)
-			mon_printf("System ");
-		if (pte & PG_NC)
-			mon_printf("Nocache ");
-		if (pte & PG_REF)
-			mon_printf("Accessed ");
-		if (pte & PG_MOD)
-			mon_printf("Modified ");
-		if (pte & PG_TYPE) {
-			vm_offset_t tmp;
-			tmp = pte & PG_TYPE;
-			if (tmp == PGT_OBIO)
-				mon_printf("OBIO ");
-			if (tmp == PGT_VME_D16)
-				mon_printf("VME16D ");
-			if (tmp == PGT_VME_D32)
-				mon_printf("VME32D ");
-		}
-		mon_printf(" PA=0x%x\n", PG_PA(pte));
-	}
-	else mon_printf("INVALID\n");
 }
 
 void set_interrupt_reg(value)
