@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2003/08/12 18:34:50 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 2003/08/27 20:20:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.55 2003/08/12 18:34:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.56 2003/08/27 20:20:08 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -155,7 +155,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/*
 	 * Below that, we allocate the switch frame:
 	 */
-	stktop2 -= roundup(sizeof *sf, CALLFRAMELEN);	/* must match SFRAMELEN in genassym */
+	stktop2 -= SFRAMELEN;		/* must match SFRAMELEN in genassym */
 	sf = (struct switchframe *)stktop2;
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
 	sf->sp = (register_t)cf;
@@ -178,17 +178,15 @@ cpu_setfunc(l, func, arg)
 	struct trapframe *tf;
 	struct callframe *cf;
 	struct switchframe *sf;
-	caddr_t vaddr;
 
 	tf = trapframe(l);
 	cf = (struct callframe *) ((uintptr_t)tf & ~(CALLFRAMELEN-1));
 	cf->lr = (register_t) fork_trampoline;
 	cf--;
+	cf->sp = (register_t) (cf+1);
 	cf->r31 = (register_t) func;
 	cf->r30 = (register_t) arg;
-	vaddr = (unsigned char *) cf;
-	vaddr -= roundup(sizeof *sf, CALLFRAMELEN);
-	sf = (struct switchframe *) vaddr;
+	sf = (struct switchframe *) ((uintptr_t) cf - SFRAMELEN);
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
 	sf->sp = (register_t) cf;
 #ifdef PPC_OEA

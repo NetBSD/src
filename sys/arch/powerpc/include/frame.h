@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.16 2003/08/12 18:34:48 matt Exp $	*/
+/*	$NetBSD: frame.h,v 1.17 2003/08/27 20:20:08 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -99,14 +99,15 @@ struct utrapframe32 {
 /*
  * This is to ensure alignment of the stackpointer
  */
-#define	FRAMELEN	roundup(sizeof(struct trapframe) + 8, CALLFRAMELEN)
-#define	trapframe(l)	((struct trapframe *)((char *)(l)->l_addr + USPACE - FRAMELEN + 8))
+#define	FRAMELEN	roundup(sizeof(struct trapframe) + 2*sizeof(register_t), CALLFRAMELEN)
+#define	trapframe(l)	((struct trapframe *)((char *)(l)->l_addr + USPACE - FRAMELEN + 2*sizeof(register_t)))
 
+#define	SFRAMELEN	roundup(sizeof(struct switchframe), CALLFRAMELEN)
 struct switchframe {
 	register_t sp;
 	register_t lr;
-	register_t user_sr;	/* VSID on IBM4XX */
-	register_t cr;
+	register_t user_sr;		/* VSID on IBM4XX */
+	register_t cr;			/* why?  CR is volatile. */
 	register_t fixreg2;
 	register_t fixreg[19];		/* R13-R31 */
 };
@@ -162,23 +163,6 @@ struct intrframe {
 	register_t r4;			/* 76 */
 	register_t r3;			/* 80 */
 	register_t r0;			/* 84 */
-};
-
-#define	SPFRAMELEN	sizeof(struct spillframe)
-struct spillframe {
-	register_t	r1;		/*  0 */
-	register_t	_pad4;		/*  4 */
-	register_t	r12;		/*  8 */
-	register_t	r11;		/* 12 */
-	register_t	r10;		/* 16 */
-	register_t	r9;		/* 20 */
-	register_t	r8;		/* 24 */
-	register_t	r7;		/* 28 */
-	register_t	r6;		/* 32 */
-	register_t	r5;		/* 36 */
-	register_t	r4;		/* 40 */
-	register_t	r3;		/* 44 */
-	register_t	r0;		/* 48 */
 };
 
 #endif	/* _POWERPC_FRAME_H_ */
