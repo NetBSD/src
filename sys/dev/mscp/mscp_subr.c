@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.12 1999/06/06 19:16:18 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.13 2000/01/21 23:39:59 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -160,7 +160,7 @@ mscp_attach(parent, self, aux)
 	mi->mi_rsp.mri_size = NRSP;
 	mi->mi_rsp.mri_desc = mi->mi_uda->mp_ca.ca_rspdsc;
 	mi->mi_rsp.mri_ring = mi->mi_uda->mp_rsp;
-	SIMPLEQ_INIT(&mi->mi_resq);
+	BUFQ_INIT(&mi->mi_resq);
 
 	if (mscp_init(mi)) {
 		printf("%s: can't init, controller hung\n",
@@ -451,7 +451,7 @@ mscp_intr(mi)
 	/*
 	 * If there are any not-yet-handled request, try them now.
 	 */
-	if (SIMPLEQ_FIRST(&mi->mi_resq))
+	if (BUFQ_FIRST(&mi->mi_resq))
 		mscp_kickaway(mi);
 }
 
@@ -485,10 +485,7 @@ mscp_strategy(bp, usc)
 	struct	mscp_softc *mi = (void *)usc;
 	int s = splimp();
 
-/*	SIMPLEQ_INSERT_TAIL(&mi->mi_resq, bp, xxx) */
-	bp->b_actf = NULL;
-	*mi->mi_resq.sqh_last = bp;
-	mi->mi_resq.sqh_last = &bp->b_actf;
+	BUFQ_INSERT_TAIL(&mi->mi_resq, bp);
 	mscp_kickaway(mi);
 	splx(s);
 }
@@ -502,7 +499,7 @@ mscp_kickaway(mi)
 	struct	mscp *mp;
 	int next;
 
-	while ((bp = SIMPLEQ_FIRST(&mi->mi_resq))) {
+	while ((bp = BUFQ_FIRST(&mi->mi_resq)) != NULL) {
 		/*
 		 * Ok; we are ready to try to start a xfer. Get a MSCP packet
 		 * and try to start...
@@ -535,11 +532,7 @@ mscp_kickaway(mi)
 		bp->b_resid = next;
 		(*mi->mi_me->me_fillin)(bp, mp);
 		(*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent, &mi->mi_xi[next]);
-		if ((mi->mi_resq.sqh_first = bp->b_actf) == NULL)
-			mi->mi_resq.sqh_last = &mi->mi_resq.sqh_first;
-#if 0
-		mi->mi_w = bp->b_actf;
-#endif
+		BUFQ_REMOVE(&mi->mi_resq, bp);
 	}
 }
 

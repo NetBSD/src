@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.62 1999/11/17 09:34:03 fvdl Exp $	*/
+/*	$NetBSD: vnd.c,v 1.63 2000/01/21 23:39:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -134,8 +134,6 @@ int dovndcluster = 1;
 int vnddebug = 0x00;
 #endif
 
-#define b_cylin	b_resid
-
 #define	vndunit(x)	DISKUNIT(x)
 
 struct vndxfer {
@@ -183,20 +181,23 @@ void
 vndattach(num)
 	int num;
 {
+	int i;
 	char *mem;
-	register u_long size;
 
 	if (num <= 0)
 		return;
-	size = num * sizeof(struct vnd_softc);
-	mem = malloc(size, M_DEVBUF, M_NOWAIT);
+	i = num * sizeof(struct vnd_softc);
+	mem = malloc(i, M_DEVBUF, M_NOWAIT);
 	if (mem == NULL) {
 		printf("WARNING: no memory for vnode disks\n");
 		return;
 	}
-	bzero(mem, size);
+	bzero(mem, i);
 	vnd_softc = (struct vnd_softc *)mem;
 	numvnd = num;
+
+	for (i = 0; i < numvnd; i++)
+		BUFQ_INIT(&vnd_softc[i].sc_tab);
 }
 
 int
@@ -472,7 +473,6 @@ vndstrategy(bp)
 		/*
 		 * Just sort by block number
 		 */
-		nbp->vb_buf.b_cylin = nbp->vb_buf.b_blkno;
 		s = splbio();
 		if (vnx->vx_error != 0) {
 			VND_PUTBUF(vnd, nbp);
@@ -480,7 +480,7 @@ vndstrategy(bp)
 		}
 		vnx->vx_pending++;
 		bgetvp(vp, &nbp->vb_buf);
-		disksort(&vnd->sc_tab, &nbp->vb_buf);
+		disksort_blkno(&vnd->sc_tab, &nbp->vb_buf);
 		vndstart(vnd);
 		splx(s);
 		bn += sz;
@@ -528,12 +528,12 @@ vndstart(vnd)
 
 	vnd->sc_flags |= VNF_BUSY;
 
-	while (vnd->sc_tab.b_active < vnd->sc_maxactive) {
-		bp = vnd->sc_tab.b_actf;
+	while (vnd->sc_active < vnd->sc_maxactive) {
+		bp = BUFQ_FIRST(&vnd->sc_tab);
 		if (bp == NULL)
 			break;
-		vnd->sc_tab.b_actf = bp->b_actf;
-		vnd->sc_tab.b_active++;
+		BUFQ_REMOVE(&vnd->sc_tab, bp);
+		vnd->sc_active++;
 #ifdef DEBUG
 		if (vnddebug & VDB_IO)
 			printf("vndstart(%ld): bp %p vp %p blkno 0x%x addr %p cnt 0x%lx\n",
@@ -623,7 +623,7 @@ vndiodone(bp)
 		}
 	}
 
-	vnd->sc_tab.b_active--;
+	vnd->sc_active--;
 	vndstart(vnd);
 	splx(s);
 }

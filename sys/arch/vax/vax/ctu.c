@@ -1,4 +1,4 @@
-/*	$NetBSD: ctu.c,v 1.5 1996/10/13 03:35:36 christos Exp $ */
+/*	$NetBSD: ctu.c,v 1.6 2000/01/21 23:39:57 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -80,7 +80,7 @@ volatile struct tu_softc {
 	int	sc_bbytes;	/* Number of xfer'd bytes this block */
 	int	sc_op;		/* Read/write */
 	int	sc_xmtok;	/* set if OK to xmit */
-	struct	buf sc_q;	/* Current buffer */
+	struct	buf_queue sc_q;	/* pending I/O requests */
 } tu_sc;
 
 struct	ivec_dsp tu_recv, tu_xmit;
@@ -103,6 +103,8 @@ void
 ctuattach()
 {
 	extern	struct ivec_dsp idsptch;
+
+	BUFQ_INIT(&tu_sc.sc_q);
 
 	bcopy(&idsptch, &tu_recv, sizeof(struct ivec_dsp));
 	bcopy(&idsptch, &tu_xmit, sizeof(struct ivec_dsp));
@@ -177,12 +179,11 @@ ctustrategy(bp)
 #endif
 
 	if (bp->b_blkno >= 512) {
-		iodone(bp);
+		biodone(bp);
 		return;
 	}
-	bp->b_cylinder = bp->b_blkno;
 	s = splimp();
-	disksort((struct buf *)&tu_sc.sc_q, bp); /* Why not use disksort? */
+	disksort_blkno(&tu_sc.sc_q, bp); /* Why not use disksort? */
 	if (tu_sc.sc_state == SC_READY)
 		ctustart(bp);
 	splx(s);
@@ -248,7 +249,7 @@ cturintr(arg)
 	int	status = mfpr(PR_CSRD);
 	struct	buf *bp;
 
-	bp = tu_sc.sc_q.b_actf;
+	bp = BUFQ_FIRST(&tu_sc.sc_q);
 	switch (tu_sc.sc_state) {
 
 	case SC_UNUSED:
@@ -268,12 +269,12 @@ cturintr(arg)
 #ifdef TUDEBUG
 				printf("Xfer ok\n");
 #endif
-				tu_sc.sc_q.b_actf = bp->b_actf;
-				iodone(bp);
+				BUFQ_REMOVE(&tu_sc.sc_q, bp);
+				biodone(bp);
 				tu_sc.sc_xmtok = 1;
 				tu_sc.sc_state = SC_READY;
-				if (tu_sc.sc_q.b_actf)
-					ctustart(tu_sc.sc_q.b_actf);
+				if (BUFQ_FIRST(&tu_sc.sc_q) != NULL)
+					ctustart(BUFQ_FIRST(&tu_sc.sc_q));
 			}
 			break;
 		}
@@ -298,7 +299,7 @@ cturintr(arg)
 		break;
 
 	case SC_RESTART:
-		ctustart(tu_sc.sc_q.b_actf);
+		ctustart(BUFQ_FIRST(&tu_sc.sc_q));
 		break;
 
 	default:
@@ -402,7 +403,7 @@ ctuwatch(arg)
 	if (tu_sc.sc_state == SC_GET_RESP && tu_sc.sc_tpblk != 0 &&
 	    tu_sc.sc_tpblk == oldtp && (tu_sc.sc_tpblk % 128 != 0)) {
 		printf("tu0: lost recv interrupt\n");
-		ctustart(tu_sc.sc_q.b_actf);
+		ctustart(BUFQ_FIRST(&tu_sc.sc_q));
 		return;
 	}
 	if (tu_sc.sc_state == SC_RESTART)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.30 1999/06/06 19:14:49 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.31 2000/01/21 23:39:59 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -61,26 +61,12 @@
 #include "ioconf.h"
 
 /*
- * Variants of SIMPLEQ macros for use with buf structs.
- */
-#define BUFQ_INSERT_TAIL(head, elm) {					\
-	(elm)->b_actf = NULL;						\
-	*(head)->sqh_last = (elm);					\
-	(head)->sqh_last = &(elm)->b_actf;				\
-}
-
-#define BUFQ_REMOVE_HEAD(head, elm) {					\
-	if (((head)->sqh_first = (elm)->b_actf) == NULL)		\
-		(head)->sqh_last = &(head)->sqh_first;			\
-}
-
-/*
  * Software status, per controller.
  */
 struct	uda_softc {
 	struct	device sc_dev;	/* Autoconfig info */
 	struct	uba_unit sc_unit; /* Struct common for UBA to communicate */
-	SIMPLEQ_HEAD(, buf) sc_bufq;	/* bufs awaiting for resources */
+	struct	buf_queue sc_bufq;	/* bufs awaiting for resources */
 	struct	mscp_pack *sc_uuda;	/* Unibus address of uda struct */
 	struct	mscp_pack sc_uda;	/* Struct for uda communication */
 	bus_dma_tag_t		sc_dmat;
@@ -224,7 +210,7 @@ udaattach(parent, self, aux)
 	sc->sc_sah = ua->ua_ioh + 2;
 	sc->sc_dmat = ua->ua_dmat;
 	ctlr = sc->sc_dev.dv_unit;
-	SIMPLEQ_INIT(&sc->sc_bufq);
+	BUFQ_INIT(&sc->sc_bufq);
 
 	/*
 	 * Fill in the uba_unit struct, so we can communicate with the uba.

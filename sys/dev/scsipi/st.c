@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.116 2000/01/13 00:18:27 nisimura Exp $ */
+/*	$NetBSD: st.c,v 1.117 2000/01/21 23:40:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -335,7 +335,7 @@ struct st_softc {
 						 * additional sense data needed
 						 * for mode sense/select.
 						 */
-	struct buf buf_queue;		/* the queue of pending IO */
+	struct buf_queue buf_queue;	/* the queue of pending IO */
 					/* operations */
 #if NRND > 0
 	rndsource_element_t	rnd_source;
@@ -493,9 +493,7 @@ stattach(parent, self, aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	st->buf_queue.b_active = 0;
-	st->buf_queue.b_actf = 0;
-	st->buf_queue.b_actb = &st->buf_queue.b_actf;
+	BUFQ_INIT(&st->buf_queue);
 
 #if NRND > 0
 	rnd_attach_source(&st->rnd_source, st->sc_dev.dv_xname,
@@ -1076,7 +1074,6 @@ ststrategy(bp)
 	struct buf *bp;
 {
 	struct st_softc *st = st_cd.cd_devs[STUNIT(bp->b_dev)];
-	struct buf *dp;
 	int s;
 
 	SC_DEBUG(st->sc_link, SDEV_DB1,
@@ -1121,11 +1118,7 @@ ststrategy(bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	dp = &st->buf_queue;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
+	BUFQ_INSERT_TAIL(&st->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -1167,7 +1160,7 @@ ststart(v)
 {
 	struct st_softc *st = v;
 	struct scsipi_link *sc_link = st->sc_link;
-	register struct buf *bp, *dp;
+	register struct buf *bp;
 	struct scsi_rw_tape cmd;
 	int flags, error;
 
@@ -1184,14 +1177,9 @@ ststart(v)
 			return;
 		}
 
-		dp = &st->buf_queue;
-		if ((bp = dp->b_actf) == NULL)
+		if ((bp = BUFQ_FIRST(&st->buf_queue)) == NULL)
 			return;
-		if ((dp = bp->b_actf) != NULL)
-			dp->b_actb = bp->b_actb;
-		else
-			st->buf_queue.b_actb = bp->b_actb;
-		*bp->b_actb = dp;
+		BUFQ_REMOVE(&st->buf_queue, bp);
 
 		/*
 		 * if the device has been unmounted bye the user

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.134 1999/11/03 20:50:18 matt Exp $	*/
+/*	$NetBSD: cd.c,v 1.135 2000/01/21 23:40:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,6 +159,8 @@ cdattach(parent, cd, sc_link, ops)
 {
 	SC_DEBUG(sc_link, SDEV_DB2, ("cdattach: "));
 
+	BUFQ_INIT(&cd->buf_queue);
+
 	/*
 	 * Store information needed to contact our base driver
 	 */
@@ -229,8 +231,8 @@ cddetach(self, flags)
 	s = splbio();
 
 	/* Kill off any queued buffers. */
-	while ((bp = cd->buf_queue.b_actf) != NULL) {
-		cd->buf_queue.b_actf = bp->b_actf;
+	while ((bp = BUFQ_FIRST(&cd->buf_queue)) != NULL) {
+		BUFQ_REMOVE(&cd->buf_queue, bp);
 		bp->b_error = EIO;
 		bp->b_flags |= B_ERROR;
 		bp->b_resid = bp->b_bcount;
@@ -544,7 +546,7 @@ cdstrategy(bp)
 	/*
 	 * Place it in the queue of disk activities for this disk
 	 */
-	disksort(&cd->buf_queue, bp);
+	disksort_blkno(&cd->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -589,7 +591,6 @@ cdstart(v)
 	register struct scsipi_link *sc_link = cd->sc_link;
 	struct disklabel *lp = cd->sc_dk.dk_label;
 	struct buf *bp = 0;
-	struct buf *dp;
 	struct scsipi_rw_big cmd_big;
 #if NCD_SCSIBUS > 0 
 	struct scsi_rw cmd_small;
@@ -617,10 +618,9 @@ cdstart(v)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		dp = &cd->buf_queue;
-		if ((bp = dp->b_actf) == NULL)	/* yes, an assign */
+		if ((bp = BUFQ_FIRST(&cd->buf_queue)) == NULL)
 			return;
-		dp->b_actf = bp->b_actf;
+		BUFQ_REMOVE(&cd->buf_queue, bp);
 
 		/*
 		 * If the device has become invalid, abort all the
