@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.38 2002/01/28 09:56:53 aymeric Exp $ */
+/*	$NetBSD: clock.c,v 1.39 2002/05/14 00:08:21 matt Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2002/01/28 09:56:53 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2002/05/14 00:08:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -72,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.38 2002/01/28 09:56:53 aymeric Exp $");
 int amiga_clk_interval;
 int eclockfreq;
 struct CIA *clockcia;
+int (*usettod)(struct timeval *);
+int (*ugettod)(struct timeval *);
 
 /*
  * Machine-dependent clock routines.

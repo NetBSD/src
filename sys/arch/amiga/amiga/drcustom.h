@@ -1,5 +1,5 @@
 /*
- * $NetBSD: drcustom.h,v 1.6 2002/04/25 09:20:28 aymeric Exp $
+ * $NetBSD: drcustom.h,v 1.7 2002/05/14 00:08:21 matt Exp $
  *
  * Motherboard addresses for the DraCo.
  *
@@ -53,11 +53,11 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-vaddr_t DRCCADDR;
+extern vaddr_t DRCCADDR;
 
-volatile u_int8_t *draco_intena, *draco_intpen, *draco_intfrc;
-volatile u_int8_t *draco_misc;
-volatile struct drioct *draco_ioct;
+extern volatile u_int8_t *draco_intena, *draco_intpen, *draco_intfrc;
+extern volatile u_int8_t *draco_misc;
+extern volatile struct drioct *draco_ioct;
 
 struct drioct {
 	u_int8_t dum0;
