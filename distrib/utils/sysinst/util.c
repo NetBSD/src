@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.78 2003/01/10 20:00:28 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.79 2003/01/11 19:44:05 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1155,41 +1155,6 @@ add_rc_conf(const char *fmt, ...)
 	}
 	va_end(ap);
 }
-
-#ifdef notdef
-/*
- * check that there is at least a / somewhere.
- */
-int
-check_partitions()
-{
-	int i;
-
-	for (i = 0; i < getmaxpartitions(); i++)
-		if (PI_ISBSDFS(&bsdlabel[i]) &&
-		    fsmount[i][0] == '/' && fsmount[i][1] == '\0')
-			return 1;
-	msg_display(MSG_no_root_fs);
-	getchar();
-	return 0;
-}
-
-void
-set_sizemultname_cyl()
-{
-
-	sizemult = dlcylsize; 
-	multname = msg_string(MSG_cylname);
-}
-
-void
-set_sizemultname_meg()
-{
-
-	sizemult = MEG / sectorsize;
-	multname = msg_string(MSG_megname);
-}
-#endif
 
 int
 check_lfs_progs()

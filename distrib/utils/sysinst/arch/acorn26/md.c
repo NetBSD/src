@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.4 2002/12/05 01:17:19 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.5 2003/01/11 19:44:07 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,7 @@
 #include <util.h>
 #include <sys/types.h>
 #include <sys/disklabel.h>
+#include <sys/disklabel_acorn.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include "defs.h"
