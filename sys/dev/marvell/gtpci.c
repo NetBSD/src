@@ -1,4 +1,4 @@
-/*	$NetBSD: gtpci.c,v 1.6 2003/04/01 19:11:44 matt Exp $	*/
+/*	$NetBSD: gtpci.c,v 1.7 2003/04/04 20:09:07 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -58,8 +58,6 @@
 #include <dev/marvell/gtpcireg.h>
 #include <dev/marvell/gtpcivar.h>
 #include <dev/marvell/gtvar.h>
-
-#define DEBUG
 
 static int	gtpci_error_intr(void *);
 
@@ -357,7 +355,7 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 	    GT_LowAddr_GET(gtpci_read(gtpc, GT_Internal_Decode)) | pcidata);
 	data = PCI_BARE_IntMemEn;
 
-	for (pi = pci_initinfo[gtpc->gtpc_busno], i = 0; i < 4; i++, pi++)
+	for (i = 0, pi = pci_initinfo[gtpc->gtpc_busno]; i < 4; i++, pi++)
 		gtpci_write(gtpc, pi->barsize, 0);
 
 	/*
@@ -372,7 +370,7 @@ gtpci_bus_init(struct gtpci_chipset *gtpc)
 	/*
 	 * Map each SCS BAR to correspond to each SDRAM decode register.
 	 */
-	for (pi = pci_initinfo[gtpc->gtpc_busno], i = 0; i < 4; i++, pi++) {
+	for (i = 0, pi = pci_initinfo[gtpc->gtpc_busno]; i < 4; i++, pi++) {
 		datal = gtpci_read(gtpc, pi->low_decode);
 		datah = gtpci_read(gtpc, pi->high_decode);
 		pcidata = gtpci_conf_read(&gtpc->gtpc_pc, gtpc->gtpc_self,
