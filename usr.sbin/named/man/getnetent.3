@@ -1,7 +1,5 @@
-.\"	$NetBSD: getnetent.3,v 1.1 1996/02/02 15:27:26 mrg Exp $
-.\"
-.\" $Id: getnetent.3,v 8.1 1994/12/15 06:24:10 vixie Exp 
-.TH getnetent 3
+.\" $Id: getnetent.3,v 1.1.1.1 1997/04/13 09:07:26 mrg Exp $
+.TH getnetent @LIB_NETWORK_EXT_U@
 .SH NAME
 getnetent, getnetbyaddr, getnetbyname, setnetent, endnetent \- get networks
 entry
@@ -15,7 +13,7 @@ entry
 .B char *\fIname\fP;
 .PP
 .B struct netent *getnetbyaddr(\fInet\fP, \fItype\fP)
-.B long \fInet\fP; int \fItype\fP;
+.B unsigned long \fInet\fP; int \fItype\fP;
 .PP
 .B void setnetent(\fIstayopen\fP)
 .B int \fIstayopen\fP;
@@ -123,7 +121,7 @@ and
 Null pointer (0) returned on EOF or error.
 .SH SEE ALSO
 .nf
-networks(5)
+networks(@FORMAT_EXT@)
 RFC 1101
 .SH HISTORY
 The getnetent(), getnetbyaddr(), getnetbyname(), setnetent(), and

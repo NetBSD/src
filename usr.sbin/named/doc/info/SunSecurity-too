@@ -1,0 +1,58 @@
+Received: by gw.home.vix.com id AA13091; Fri, 5 Aug 94 12:57:18 -0700
+Received: by gw.home.vix.com id AA13087; Fri, 5 Aug 94 12:57:16 -0700
+Message-Id: <9408051957.AA13087@gw.home.vix.com>
+Received: from duke.CS.UNLV.EDU by JIMI.CS.UNLV.EDU id aa14838;
+          5 Aug 94 12:42 PDT
+To: bind-workers@vix.com
+Subject: SUNSECURITY
+Date: Fri, 05 Aug 1994 12:42:40 -0700
+From: Greg Wohletz <greg@duke.CS.UNLV.EDU>
+
+[ Steve Bellovin's comment on this:
+	the advice in conf/Info.SunSecurity-too is wrong and dangerous.  Sun
+	systems have at least one daemon (rpc.mountd) that can't be protected
+	by Wietse's code but rely on SUNSECURITY for protection.  
+  --vix, 08dec94 ]
+
+We don't use SUNSECURITY on our suns, we use a package called log_tcp,
+which consists of a program called tcpd  which is invoked by inetd and
+does  some checking (one  of   the things it  checks  (if  you  define
+PARANOID) is the very thing that the SUNSECURITY code checks.  It will
+also log your connections if you want it to.
+
+Anyway  I was thinking that the  SUNSECURITY code could potentially be
+ripped out of the  resolver library and just  include the tcpd code in
+the contrib section and direct the sun folks to use it.
+
+Certainly this would be a less messy solution.
+
+We've been using this code for a couple of years  and have not had any
+problems   with  it.   I've  included  a   blurb below    if anyone is
+interested.
+						
+					--Greg
+@(#) BLURB 1.4 91/10/02 23:02:02
+
+This package provides a couple of tiny programs that log requests for
+internet services (examples: TFTP, EXEC, FTP, RSH, TELNET, RLOGIN,
+FINGER, SYSTAT). Optional features are: access control based on pattern
+matching, and protection against rsh and rlogin attacks from hosts that
+pretend to have someone elses host name.
+
+The programs are nothing but small network daemon front ends. By
+default, they just log the remote host name and then invoke the real
+network daemon daemon, without requiring any changes to existing
+software or configuration files.
+
+Connections are reported through the syslog(3) facility. Each record
+contains a time stamp, the remote host name and the name of the service
+requested. The information can be useful to detect unwanted activities,
+especially when logfile information from several hosts is merged.
+
+Enhancements over the previous release are: support for datagram (UDP
+and RPC) services, and execution of shell commands when a (remote host,
+requested service) pair matches a pattern in the access control tables.
+
+	Wietse Venema (wietse@wzv.win.tue.nl),
+	Eindhoven University of Technology,
+	The Netherlands.

@@ -1,6 +1,4 @@
 #!/bin/sh
-#
-#	$NetBSD: ndc.sh,v 1.1 1996/02/02 15:29:52 mrg Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -51,7 +49,7 @@ do
 			continue
 		}
 		rm -f $PIDFILE
-		named && {
+		%INDOT%named && {
 			sleep 5
 			echo Name Server Started
 		}
@@ -72,7 +70,7 @@ do
 			kill $PID && sleep 5
 		}
 		rm -f $PIDFILE
-		named && {
+		%INDOT%named && {
 			sleep 5
 			echo Name Server Restarted
 		}
