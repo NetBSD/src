@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.12 1997/10/01 01:19:00 enami Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.13 1997/10/03 01:56:52 thorpej Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -66,6 +66,17 @@ struct scsi_reassign_blocks {
 	u_int8_t opcode;
 	u_int8_t byte2;
 	u_int8_t unused[3];
+	u_int8_t control;
+};
+
+/*
+ * XXX Is this also used by ATAPI?
+ */
+#define	SCSI_REZERO_UNIT		0x01
+struct scsi_rezero_unit {
+	u_int8_t opcode;
+	u_int8_t byte2;
+	u_int8_t reserved[3];
 	u_int8_t control;
 };
 
