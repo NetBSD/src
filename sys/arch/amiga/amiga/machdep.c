@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 1998/10/19 22:09:15 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.126 1998/10/24 10:48:34 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1136,7 +1136,6 @@ initcpu()
 		vectab[24+6] = DraCoIntr;
 	}
 #endif
-	DCIS();
 }
 
 void
