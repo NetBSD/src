@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.3 2003/01/27 21:01:01 nathanw Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.4 2003/01/31 04:26:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -267,21 +267,23 @@ pthread_cond_signal(pthread_cond_t *cond)
 #endif
 	PTHREADD_ADD(PTHREADD_COND_SIGNAL);
 
-	self = pthread__self();
 	SDPRINTF(("(cond signal %p) Signaling %p\n",
-	    self, cond));
+	    pthread__self(), cond));
 
-	pthread_spinlock(self, &cond->ptc_lock);
-	signaled = PTQ_FIRST(&cond->ptc_waiters);
-	if (signaled != NULL)
-		PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
+	if (!PTQ_EMPTY(&cond->ptc_waiters)) {
+		self = pthread__self();
+		pthread_spinlock(self, &cond->ptc_lock);
+		signaled = PTQ_FIRST(&cond->ptc_waiters);
+		if (signaled != NULL)
+			PTQ_REMOVE(&cond->ptc_waiters, signaled, pt_sleep);
 #ifdef ERRORCHECK
-	if (PTQ_EMPTY(&cond->ptc_waiters))
-		cond->ptc_mutex = NULL;
+		if (PTQ_EMPTY(&cond->ptc_waiters))
+			cond->ptc_mutex = NULL;
 #endif
-	if (signaled != NULL)
-		pthread__sched(self, signaled);
-	pthread_spinunlock(self, &cond->ptc_lock);
+		if (signaled != NULL)
+			pthread__sched(self, signaled);
+		pthread_spinunlock(self, &cond->ptc_lock);
+	}
 
 	return 0;
 }
@@ -298,19 +300,21 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 #endif
 
 	PTHREADD_ADD(PTHREADD_COND_BROADCAST);
-	self = pthread__self();
 	SDPRINTF(("(cond signal %p) Broadcasting %p\n",
-	    self, cond));
+	    pthread__self(), cond));
 
-	pthread_spinlock(self, &cond->ptc_lock);
-	blockedq = cond->ptc_waiters;
-	PTQ_INIT(&cond->ptc_waiters);
+	if (!PTQ_EMPTY(&cond->ptc_waiters)) {
+		self = pthread__self();
+		pthread_spinlock(self, &cond->ptc_lock);
+		blockedq = cond->ptc_waiters;
+		PTQ_INIT(&cond->ptc_waiters);
 #ifdef ERRORCHECK
-	cond->ptc_mutex = NULL;
+		cond->ptc_mutex = NULL;
 #endif
-	PTQ_FOREACH(signaled, &blockedq, pt_sleep)
-	    pthread__sched(self, signaled);
-	pthread_spinunlock(self, &cond->ptc_lock);
+		PTQ_FOREACH(signaled, &blockedq, pt_sleep)
+		    pthread__sched(self, signaled);
+		pthread_spinunlock(self, &cond->ptc_lock);
+	}
 
 	return 0;
 
