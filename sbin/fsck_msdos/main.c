@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1996/09/24 13:17:20 ws Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1996/09/27 23:22:54 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/09/24 13:17:20 ws Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1996/09/27 23:22:54 christos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -49,7 +49,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/09/24 13:17:20 ws Exp $";
 #include <varargs.h>
 #endif
 
-#include "util.h"
+#include "fsutil.h"
 #include "ext.h"
 
 int alwaysno;		/* assume "no" for all questions */

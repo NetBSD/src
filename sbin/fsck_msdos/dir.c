@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.7 1996/09/24 13:17:18 ws Exp $	*/
+/*	$NetBSD: dir.c,v 1.8 1996/09/27 23:22:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -36,7 +36,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: dir.c,v 1.7 1996/09/24 13:17:18 ws Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.8 1996/09/27 23:22:52 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ static char rcsid[] = "$NetBSD: dir.c,v 1.7 1996/09/24 13:17:18 ws Exp $";
 #include <sys/param.h>
 
 #include "ext.h"
-#include "util.h"
+#include "fsutil.h"
 
 #define	SLOT_EMPTY	0x00		/* slot has never been used */
 #define	SLOT_E5		0x05		/* the real value is 0xe5 */
