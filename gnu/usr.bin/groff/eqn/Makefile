@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.17 2002/01/01 00:27:33 thorpej Exp $
+#	$NetBSD: Makefile,v 1.18 2002/01/01 01:38:26 thorpej Exp $
 
 .include "../Makefile.lib"
 
 DIST=		${IDIST}/src/preproc/eqn
 .PATH:		${DIST}
 
-PROG=		eqn
-PROG_CXX=
+PROG_CXX=	eqn
 SRCS=		main.cc lex.cc  box.cc limit.cc list.cc over.cc text.cc\
 		script.cc mark.cc other.cc delim.cc sqrt.cc pile.cc special.cc\
 		eqn.cc
