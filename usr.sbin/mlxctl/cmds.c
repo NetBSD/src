@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.5 2002/04/07 20:20:31 ad Exp $	*/
+/*	$NetBSD: cmds.c,v 1.5.2.1 2003/07/28 18:13:29 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cmds.c,v 1.5 2002/04/07 20:20:31 ad Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.5.2.1 2003/07/28 18:13:29 he Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -99,6 +99,7 @@ struct {
 	int	hwid;
 	const char	*name;
 } static const mlx_ctlr_names[] = {
+	{ 0x00, "960E/960M" },
 	{ 0x01,	"960P/PD" },
 	{ 0x02,	"960PL" },
 	{ 0x10,	"960PG" },
@@ -194,27 +195,29 @@ cmd_cstatus(char **argv)
 	const char *model;
 	int i, channel, target;
 
-	mlx_enquiry(&enq);
-
 	for (i = 0; i < sizeof(mlx_ctlr_names) / sizeof(mlx_ctlr_names[0]); i++)
-		if (enq.me_hardware_id[0] == mlx_ctlr_names[i].hwid) {
+		if (ci.ci_hardware_id == mlx_ctlr_names[i].hwid) {
 			model = mlx_ctlr_names[i].name;
 			break;
 		}
 
 	if (i == sizeof(mlx_ctlr_names) / sizeof(mlx_ctlr_names[0])) {
-		sprintf(buf, " model 0x%x", enq.me_hardware_id[0]);
+		sprintf(buf, " model 0x%x", ci.ci_hardware_id);
 		model = buf;
 	}
 
-	printf("DAC%s, %d channel%s, firmware %d.%02d-%c-%02d, %dMB RAM\n",
-	    model, enq.me_actual_channels,
-	    enq.me_actual_channels > 1 ? "s" : "",
-	    enq.me_firmware_id[0], enq.me_firmware_id[1],
-	    enq.me_firmware_id[3], enq.me_firmware_id[2],
-	    le32toh(enq.me_mem_size) / (1024 * 1024));
+	printf("DAC%s, %d channel%s, firmware %d.%02d-%c-%02d",
+	    model, ci.ci_nchan,
+	    ci.ci_nchan > 1 ? "s" : "",
+	    ci.ci_firmware_id[0], ci.ci_firmware_id[1],
+	    ci.ci_firmware_id[3], ci.ci_firmware_id[2]);
+	if (ci.ci_mem_size != 0)
+		printf(", %dMB RAM", ci.ci_mem_size >> 20);
+	printf("\n");
 
-	if (verbosity > 0) {
+	if (verbosity > 0 && ci.ci_iftype > 1) {
+		mlx_enquiry(&enq);
+
 		printf("  Hardware ID\t\t\t0x%08x\n",
 		    le32toh(*(u_int32_t *)enq.me_hardware_id));
 		printf("  Firmware ID\t\t\t0x%08x\n",
@@ -262,9 +265,15 @@ cmd_cstatus(char **argv)
 		printf("  Features\t\t\t%b\n", enq.me_firmware_features,
 		      "\20\4Background Init\3Read Ahead\2MORE\1Cluster\n");
 #endif
-	}
+	} else if (verbosity > 0 && ci.ci_iftype == 1)
+		warnx("can't be verbose for this firmware level");
 
 	fflush(stdout);
+
+	if (ci.ci_firmware_id[0] < 3) {
+		warnx("can't display physical drives for this firmware level");
+		return (0);
+	}
 
 	/*
 	 * Fetch and print physical drive data.
@@ -347,6 +356,11 @@ int
 cmd_check(char **argv)
 {
 
+	if (ci.ci_firmware_id[0] < 3) {
+		warnx("action not supported by this firmware version");
+		return (1);
+	}
+
 	mlx_disk_iterate(cmd_check0);
 	return (0);
 }
@@ -359,6 +373,11 @@ cmd_rebuild(char **argv)
 {
 	struct mlx_rebuild_request rb;
 	char *p;
+
+	if (ci.ci_firmware_id[0] < 3) {
+		warnx("action not supported by this firmware version");
+		return (1);
+	}
 
 	if (argv[0] == NULL || argv[1] != NULL)
 		usage();
