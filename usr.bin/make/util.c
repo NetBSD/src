@@ -1,11 +1,12 @@
-/*	$NetBSD: util.c,v 1.11 1997/06/07 16:42:31 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.12 1997/07/01 21:17:44 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: util.c,v 1.11 1997/06/07 16:42:31 christos Exp $";
+__RCSID("$NetBSD: util.c,v 1.12 1997/07/01 21:17:44 christos Exp $");
 #endif
 
 #include <stdio.h>

@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 1997/05/08 21:11:43 gwr Exp $
+#	$NetBSD: Makefile,v 1.15 1997/07/01 21:17:00 christos Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
+WARNS=1
+CFLAGS+= -I${.CURDIR}
 PROG=	make
-CFLAGS+= -g -I${.CURDIR} -Wall -Wno-unused #-Wmissing-prototypes -Wstrict-prototypes
 SRCS=	arch.c buf.c compat.c cond.c dir.c for.c hash.c job.c main.c \
 	make.c parse.c str.c suff.c targ.c var.c util.c
 SRCS+=	lstAppend.c lstAtEnd.c lstAtFront.c lstClose.c lstConcat.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.19 1997/07/01 21:17:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $";
+__RCSID("$NetBSD: var.c,v 1.19 1997/07/01 21:17:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1153,7 +1154,6 @@ VarRESubstitute(word, addSpace, buf, patternp)
 	    else if ((*rp == '&') || ((*rp == '\\') && isdigit(rp[1]))) {
 		int n;
 		char *subbuf;
-		char zsub;
 		int sublen;
 		char errstr[3];
 

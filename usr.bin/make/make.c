@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.17 1997/06/07 16:41:09 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.18 1997/07/01 21:17:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -38,11 +38,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: make.c,v 1.17 1997/06/07 16:41:09 christos Exp $";
+__RCSID("$NetBSD: make.c,v 1.18 1997/07/01 21:17:31 christos Exp $");
 #endif
 #endif /* not lint */
 

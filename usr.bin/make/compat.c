@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.20 1997/05/07 07:31:37 mycroft Exp $	*/
+/*	$NetBSD: compat.c,v 1.21 1997/07/01 21:17:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,11 +38,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: compat.c,v 1.20 1997/05/07 07:31:37 mycroft Exp $";
+__RCSID("$NetBSD: compat.c,v 1.21 1997/07/01 21:17:11 christos Exp $");
 #endif
 #endif /* not lint */
 
