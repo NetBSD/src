@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.113 2004/11/14 18:59:50 christos Exp $
+#	$NetBSD: files.mac68k,v 1.114 2005/01/19 02:04:49 chs Exp $
 
 # mac68k-specific configuration info
 
@@ -19,14 +19,12 @@ attach mainbus at root
 
 include "dev/wscons/files.wscons"
 
-define obio_norm { [addr = -1], ["no drq" = -1], ["no hsk" = -1] }
-define obio_scsi5380 { [addr = -1], [drq = -1], [hsk = -1] }
-device	obio: obio_norm, obio_scsi5380
+device	obio { [addr = -1] }
 attach	obio at mainbus
 file	arch/mac68k/obio/obio.c		obio
 
 device	adb { }
-attach	adb at obio_norm
+attach	adb at obio
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsysasm.s
 file	arch/mac68k/dev/adb_direct.c
@@ -45,7 +43,7 @@ attach	ams at adb
 file	arch/mac68k/dev/ams.c		ams needs-flag
 
 device	asc
-attach	asc at obio_norm
+attach	asc at obio
 file	arch/mac68k/obio/asc.c		asc needs-flag
 
 device	nubus { }
@@ -56,7 +54,7 @@ define grfbus { }
 file	arch/mac68k/dev/grf_subr.c	grfbus
 
 device	intvid: grfbus
-attach	intvid at obio_norm
+attach	intvid at obio
 file	arch/mac68k/obio/grf_obio.c	intvid
 
 device	macvid: grfbus
@@ -79,12 +77,12 @@ file	arch/mac68k/nubus/if_ae_nubus.c	ae_nubus
 file	arch/mac68k/dev/if_ae.c		ae
 
 device	mc: ifnet, ether, arp
-attach	mc at obio_norm with mc_obio
+attach	mc at obio with mc_obio
 file	arch/mac68k/dev/if_mc.c		mc
 file	arch/mac68k/obio/if_mc_obio.c	mc_obio
 
 device	sn: ifnet, ether, arp
-attach	sn at obio_norm with sn_obio
+attach	sn at obio with sn_obio
 attach	sn at nubus with sn_nubus
 file	arch/mac68k/dev/if_sn.c		sn
 file	arch/mac68k/obio/if_sn_obio.c	sn_obio
@@ -99,7 +97,7 @@ file	arch/mac68k/nubus/if_netdock_nubus.c	netdock_nubus
 
 # Sony floppy disk controller
 device	iwm { drive = -1 }
-attach	iwm at obio_norm
+attach	iwm at obio
 
 device	fd: disk
 attach	fd at iwm
@@ -110,16 +108,16 @@ include "dev/scsipi/files.scsipi"
 
 # Option 1 for ncr5380 support
 device	ncrscsi: scsi
-attach	ncrscsi at obio_scsi5380
+attach	ncrscsi at obio
 file	arch/mac68k/dev/mac68k5380.c	ncrscsi needs-flag
 
 # Option 2 for ncr5380 support
 device	sbc: scsi, ncr5380sbc
-attach	sbc at obio_scsi5380 with sbc_obio
+attach	sbc at obio with sbc_obio
 file	arch/mac68k/dev/sbc.c		sbc
 file	arch/mac68k/obio/sbc_obio.c	sbc_obio
 
-attach	esp at obio_norm
+attach	esp at obio
 file	arch/mac68k/obio/esp.c		esp
 
 #device	qsc: scsi, ncr53c9x
@@ -131,11 +129,11 @@ file	arch/mac68k/obio/esp.c		esp
 #
 include	"dev/ata/files.ata"
 
-attach	wdc at obio_norm with wdc_obio
+attach	wdc at obio with wdc_obio
 file	arch/mac68k/obio/wdc_obio.c	wdc_obio
 
 device	zsc { channel = -1 }
-attach	zsc at obio_norm
+attach	zsc at obio
 file	arch/mac68k/dev/zs.c		zsc needs-flag
 #file	arch/mac68k/dev/z8530sc.c	zsc
 file	dev/ic/z8530sc.c		zsc
