@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.11 2000/07/03 03:57:43 matt Exp $	*/
+/*	$NetBSD: init.c,v 1.12 2001/12/06 12:19:44 blymn Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.11 2000/07/03 03:57:43 matt Exp $");
+__RCSID("$NetBSD: init.c,v 1.12 2001/12/06 12:19:44 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,7 @@ clean_up(estr)
 void
 start_window()
 {
-	crmode();
+	cbreak();
 	noecho();
 #ifndef BAD_NONL
 	nonl();
