@@ -1,0 +1,14 @@
+#	$NetBSD: files.agp,v 1.1 2001/09/15 01:10:09 thorpej Exp $
+
+define	agpbus { }
+
+device	agp
+attach	agp at agpbus
+file	dev/pci/agp.c			agp	needs-flag
+
+file	dev/pci/agp_ali.c		agp
+file	dev/pci/agp_amd.c		agp
+file	dev/pci/agp_i810.c		agp
+file	dev/pci/agp_intel.c		agp
+file	dev/pci/agp_sis.c		agp
+file	dev/pci/agp_via.c		agp
