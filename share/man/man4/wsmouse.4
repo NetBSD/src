@@ -1,12 +1,10 @@
-.\" $NetBSD: wsmouse.4,v 1.3 1999/12/06 14:52:08 augustss Exp $
-
+.\" $NetBSD: wsmouse.4,v 1.4 2000/05/13 15:22:20 mycroft Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSMOUSE 4
 .Sh NAME
 .Nm wsmouse
 .Nd generic mouse support in wscons
-
 .Sh SYNOPSIS
 .Cd "wsmouse*   at pms? mux 0"
 (PS/2 mouse)
@@ -22,7 +20,6 @@
 (Microsoft InPort mouse, i386 only)
 .Cd "wsmouse0   at ams? mux 0"
 (Apple ADB mouse)
-
 .Sh DESCRIPTION
 The
 .Nm
@@ -41,7 +38,6 @@ various parameters. A complete list is in
 The
 .Xr wsconsctl 8
 utility gives access to these variables.
-
 .Sh FILES
 .Bl -item
 .It
@@ -49,7 +45,6 @@ utility gives access to these variables.
 .It
 .Pa /usr/include/dev/wscons/wsconsio.h .
 .El
-
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsconsctl 8 ,
