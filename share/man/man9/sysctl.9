@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.9,v 1.2 2004/01/21 23:18:52 wiz Exp $
+.\"	$NetBSD: sysctl.9,v 1.3 2004/03/24 18:22:32 atatat Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,13 +52,16 @@ Primary external interfaces:
 .Ft void
 .Fn sysctl_unlock "struct lwp *l"
 .Ft int
-.Fn sysctl_createv "int flags" "int type" "const char *namep" \
-"struct sysctlnode **rnode" "sysctlfn func" "u_quad_t qv" "void *newp" \
-"size_t newlen" ...
+.Fn sysctl_createv "struct sysctllog **log" "int cflags" \
+"struct sysctlnode **rnode" "struct sysctlnode **cnode" "int flags" \
+"int type" "const char *namep" "const char *desc" \
+"sysctlfn func" "u_quad_t qv" "void *newp" "size_t newlen" ...
 .Ft int
 .Fn sysctl_destroyv "struct sysctlnode *rnode" ...
 .Ft void
 .Fn sysctl_free "struct sysctlnode *rnode"
+.Ft void
+.Fn sysctl_teardown "struct sysctllog **"
 .Ft int
 .Fn old_sysctl "int *name" "u_int namelen" "void *oldp" \
 "size_t *oldlenp" "void *newp" "size_t newlen" "struct lwp *l"
@@ -308,15 +311,54 @@ appropriate parent node, etc.
 The arguments to
 .Fn sysctl_createv
 are used to construct the new node.
+If the
+.Fa log
+argument is not
+.Dv NULL ,
+a sysctllog structure will be allocated and the pointer referenced
+will be changed to address it.
+The same log may be used for any number of nodes, provided they are
+all inserted into the same tree.
+This allows for a series of nodes to be created and later removed from
+the tree in a single transaction (via
+.Fn sysctl_teardown )
+without the need for any record
+keeping on the caller's part.
+The
+.Fa cflags
+argument is currently unused and must be zero.
+The
+.Fa rnode
+argument must either be 
+.Dv NULL
+or a valid pointer to a a reference the root of the tree into which
+the new node must be placed.
+If it is
+.Dv NULL ,
+the main tree will be used.
+It is an illegal for
+.Fa rnode
+to refer to an
+.Dv NULL
+pointer.
+If
+.Fa cnode
+argument
+is not
+.Dv NULL ,
+on return it will be adjusted to point to the address of the new node.
+.Pp
 The
 .Fa flags
 and
 .Fa type
 arguments are combined into the
 .Fa sysctl_flags
-field.
+field, and the current value for
+.Dv SYSCTL_VERSION
+is added in.
 Note: the
-.Dv SYSCTL_PERMANENT
+.Dv CTLFLAG_PERMANENT
 flag can only be set from SYSCTL setup routines (see
 .Sx SETUP FUNCTIONS )
 as called by
@@ -328,18 +370,21 @@ argument is copied into the
 field and must be less than
 .Dv SYSCTL_NAMELEN
 characters in length.
-If the pointer referenced by the
-.Fa rnode
-argument is not
-.Dv NULL ,
-it is taken to be the root of the tree into
-which the new node must be placed, otherwise the main tree will be
-used.
-If
-.Fa rnode
-is not
-.Dv NULL ,
-on return it will be adjusted to point to the new node.
+The string indicated by
+.Fa desc
+will be copied if the
+.Dv CTLFLAG_OWNDESC
+flag is set, and will be used as the node's description.
+Note: if
+.Fn sysctl_destroyv
+attempts to delete a node that does not own its own description (and
+is not marked as permanent), but the deletion fails, the description
+will be copied and
+.Fn sysctl_destroyv
+will set the
+.Dv CTLFLAG_OWNDESC
+flag.
+.Pp
 The
 .Fa func
 argument is the name of a
@@ -347,7 +392,7 @@ argument is the name of a
 function (see
 .Sx HELPER FUNCTIONS AND MACROS ) .
 If the
-.Dv SYSCTL_IMMEDIATE
+.Dv CTLFLAG_IMMEDIATE
 flag is set, the
 .Fa qv
 argument will be interpreted as the initial value for the new
@@ -366,7 +411,7 @@ One of
 .Fa func ,
 .Fa qv
 and the
-.Dv SYSCTL_IMMEDIATE
+.Dv CTLFLAG_IMMEDIATE
 flag, or
 .Fa newp
 and
@@ -405,7 +450,7 @@ through the MIB to the node being destroyed.
 If the node being destroyed does not exist, a successful return code
 is given.
 Nodes marked with the
-.Dv SYSCTL_PERMANENT
+.Dv CTLFLAG_PERMANENT
 flag cannot be destroyed.
 .Sh HELPER FUNCTIONS AND MACROS
 Helper functions are invoked with the same common argument set as
@@ -522,6 +567,10 @@ should be used to ensure that nodes not owned by the sub-system being
 deactivated are not mistakenly destroyed.
 The SYSCTL lock must be held when calling this function.
 .Pp
+.Fn sysctl_teardown
+unwinds a sysctllog and deletes the nodes in the opposite order in
+which they were created.
+.Pp
 .Fn old_sysctl
 provides an interface similar to the old SYSCTL implementation, with
 the exception that access checks on a per-node basis are performed if
@@ -560,16 +609,16 @@ interface
 .El
 .Pp
 Nodes marked with
-.Dv SYSCTL_PERMANENT
+.Dv CTLFLAG_PERMANENT
 can only be added to a tree during the first or initialization phase,
 and can never be removed.
 The initialization phase terminates when the main tree's root is
 marked with the
-.Dv SYSCTL_PERMANENT
+.Dv CTLFLAG_PERMANENT
 flag.
 Once the main tree is marked in this manner, no nodes can be added to
 any tree that is marked with
-.Dv SYSCTL_READONLY
+.Dv CTLFLAG_READONLY
 at its root, and no nodes can be added at all if the main tree's root
 is so marked.
 .Pp

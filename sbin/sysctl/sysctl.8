@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.8,v 1.108 2004/01/22 07:31:53 wiz Exp $
+.\"	$NetBSD: sysctl.8,v 1.109 2004/03/24 18:22:31 atatat Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .Nd get or set kernel state
 .Sh SYNOPSIS
 .Nm sysctl
-.Op Fl AeMn
+.Op Fl AdeMn
 .Oo
 .Fl r |
 .Fl x
@@ -110,6 +110,9 @@ itself has the same effect.
 Any given
 .Ar name
 arguments are ignored if this option is specified.
+.It Fl d
+Descriptions of each of the nodes selected will be printed instead of
+their values.
 .It Fl e
 Separate the name and the value of the variable(s) with
 .Ql = .
@@ -678,6 +681,16 @@ If any of the given parameters describes an invalid configuration,
 .Nm
 will emit a diagnostic message to the standard error and exit.
 .Pp
+Descriptions can be added by the super-user to any node that does not
+have one, provided that the node is not marked with with the
+.Dq PERMANENT
+flag.
+The syntax is similar to the syntax for creating new nodes with the
+exception of the keyword that follows the double separator at the
+start of the command:
+.Dq //describe=new.node.path=new node description .
+Once a description has been added, it cannot be changed or removed.
+.Pp
 When destroying nodes, only the path to the node is necessary, i.e.,
 .Dq //destroy=old.node.path .
 No other parameters are expected or permitted.
@@ -686,6 +699,17 @@ writable.
 Nodes that are marked with the
 .Dq Dv PERMANENT
 flag (as assigned by the kernel) may not be deleted.
+.Pp
+In all cases, the initial
+.Sq =
+that follows the command (eg,
+.Dq create ,
+.Dq destroy ,
+or
+.Dq describe )
+may be replaced with another instance of the separator character,
+provided that the same separator character is used for the length of
+the name specification.
 .Sh FILES
 .Bl -tag -width xnetinet6/udp6Xvar.hx -compact
 .It Pa /etc/sysctl.conf
@@ -764,11 +788,14 @@ effect.
 .Pp
 To create the root of a new sub-tree called
 .Dq local
-and then some children of that new node:
+add some children of to the new node, and some descriptions:
 .Bd -literal -offset indent -compact
 sysctl -w //create=local
+sysctl -w //describe=local=my local sysctl tree
 sysctl -w //create=local.esm_debug,type=int,symbol=esm_debug,flags=w
+sysctl -w //describe=local.esm_debug=esm driver debug knob
 sysctl -w //create=local.audiodebug,type=int,symbol=audiodebug,flags=w
+sysctl -w //describe=local.audiodebug=generic audio debug knob
 .Ed
 Note that the children are made writable so that the two debug
 settings in question can be tuned arbitrarily.
