@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930.c,v 1.2 1999/11/05 05:13:36 sommerfeld Exp $ */
+/* $NetBSD: am79c930.c,v 1.3 2000/02/17 17:37:23 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -123,7 +123,6 @@ static void io_write_1 (sc, off, val)
 	u_int32_t off;
 	u_int8_t val;
 {
-	/* XXX bank-switching? */
 	AM930_DELAY(1);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
 	    ((off>>8)& 0x7f));
@@ -139,8 +138,16 @@ static void io_write_2 (sc, off, val)
 	u_int32_t off;
 	u_int16_t val;
 {
-	io_write_1(sc, off,    val       & 0xff);
-	io_write_1(sc, off+1, (val >> 8) & 0xff);
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
+	    ((off>>8)& 0x7f));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_LMA_LO, (off&0xff));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_IODPA, val & 0xff);
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_IODPA, (val>>8)&0xff);
+	AM930_DELAY(1);
 }
 
 static void io_write_4 (sc, off, val)
@@ -148,11 +155,20 @@ static void io_write_4 (sc, off, val)
 	u_int32_t off;
 	u_int32_t val;
 {
-	/* XXX higher offset values needed for bank-switching! */
-	io_write_1(sc, off,    val        & 0xff);
-	io_write_1(sc, off+1, (val >>  8) & 0xff);
-	io_write_1(sc, off+2, (val >> 16) & 0xff);
-	io_write_1(sc, off+3, (val >> 24) & 0xff);
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
+	    ((off>>8)& 0x7f));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_LMA_LO, (off&0xff));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_IODPA,val & 0xff);
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_IODPA,(val>>8)&0xff);
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_IODPA,(val>>16)&0xff);
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_IODPA,(val>>24)&0xff);
+	AM930_DELAY(1);
 }
 
 static void io_write_bytes (sc, off, ptr, len)
@@ -162,10 +178,15 @@ static void io_write_bytes (sc, off, ptr, len)
 	size_t len;
 {
 	int i;
-	/* XXX higher offset values needed for bank-switching! */
-	
+
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
+	    ((off>>8)& 0x7f));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_LMA_LO, (off&0xff));
+	AM930_DELAY(1);
 	for (i=0; i<len; i++)
-		io_write_1 (sc, off+i, ptr[i]);
+		bus_space_write_1(sc->sc_iot,sc->sc_ioh,AM79C930_IODPA,ptr[i]);
 }
 
 static u_int8_t io_read_1 (sc, off)
@@ -188,19 +209,40 @@ static u_int16_t io_read_2 (sc, off)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 {
-	return io_read_1 (sc, off) |
-	    (io_read_1 (sc, off+1) << 8);
+	u_int16_t val;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
+	    ((off>>8)& 0x7f));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_LO, (off&0xff));
+	AM930_DELAY(1);
+	val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA);
+	AM930_DELAY(1);
+	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 8;
+	AM930_DELAY(1);	
+	return val;
 }
 
 static u_int32_t io_read_4 (sc, off)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 {
-	/* XXX bank-switching? */
-	return io_read_1 (sc, off) |
-	    (io_read_1 (sc, off+1) << 8) |
-	    (io_read_1 (sc, off+2) << 16) |
-	    (io_read_1 (sc, off+3) << 24);
+	u_int32_t val;
+
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
+	    ((off>>8)& 0x7f));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_LO, (off&0xff));
+	AM930_DELAY(1);
+	val = bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA);
+	AM930_DELAY(1);
+	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 8;
+	AM930_DELAY(1);	
+	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 16;
+	AM930_DELAY(1);	
+	val |= bus_space_read_1(sc->sc_iot, sc->sc_ioh, AM79C930_IODPA) << 24;
+	AM930_DELAY(1);	
+	return val;
 }
 
 static void io_read_bytes (sc, off, ptr, len)
@@ -211,18 +253,21 @@ static void io_read_bytes (sc, off, ptr, len)
 {
 	int i;
 	
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_HI,
+	    ((off>>8)& 0x7f));
+	AM930_DELAY(1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, AM79C930_LMA_LO, (off&0xff));
+	AM930_DELAY(1);
 	for (i=0; i<len; i++) 
-		ptr[i] = io_read_1(sc, off+i);
+		ptr[i] = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
+		    AM79C930_IODPA);
 }
-
-
 
 static void mem_write_1 (sc, off, val)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 	u_int8_t val;
 {
-	/* XXX higher offset values needed for bank-switching! */
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, off, val);
 }
 
@@ -231,9 +276,7 @@ static void mem_write_2 (sc, off, val)
 	u_int32_t off;
 	u_int16_t val;
 {
-	/* XXX higher offset values needed for bank-switching! */
-	bus_space_write_1(sc->sc_memt, sc->sc_memh, off,    val       & 0xff);
-	bus_space_write_1(sc->sc_memt, sc->sc_memh, off+1, (val >> 8) & 0xff);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, off,    val);
 }
 
 static void mem_write_4 (sc, off, val)
@@ -241,11 +284,7 @@ static void mem_write_4 (sc, off, val)
 	u_int32_t off;
 	u_int32_t val;
 {
-	/* XXX higher offset values needed for bank-switching! */
-	bus_space_write_1(sc->sc_memt, sc->sc_memh, off,    val        & 0xff);
-	bus_space_write_1(sc->sc_memt, sc->sc_memh, off+1, (val >>  8) & 0xff);
-	bus_space_write_1(sc->sc_memt, sc->sc_memh, off+2, (val >> 16) & 0xff);
-	bus_space_write_1(sc->sc_memt, sc->sc_memh, off+3, (val >> 24) & 0xff);
+	bus_space_write_4(sc->sc_memt, sc->sc_memh, off, val);
 }
 
 static void mem_write_bytes (sc, off, ptr, len)
@@ -254,11 +293,7 @@ static void mem_write_bytes (sc, off, ptr, len)
 	u_int8_t *ptr;
 	size_t len;
 {
-	int i;
-	/* XXX higher offset values needed for bank-switching! */
-	
-	for (i=0; i<len; i++)
-		bus_space_write_1 (sc->sc_memt, sc->sc_memh, off+i, ptr[i]);
+	bus_space_write_region_1 (sc->sc_memt, sc->sc_memh, off, ptr, len);
 }
 
 
@@ -266,7 +301,6 @@ static u_int8_t mem_read_1 (sc, off)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 {
-	/* XXX higher offset values needed for bank-switching! */
 	return bus_space_read_1(sc->sc_memt, sc->sc_memh, off);
 }
 
@@ -274,22 +308,14 @@ static u_int16_t mem_read_2 (sc, off)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 {
-	/* XXX higher offset values needed for bank-switching! */
-	return
-	    bus_space_read_1(sc->sc_memt, sc->sc_memh, off) |
-	    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+1) <<8);
+	return bus_space_read_2(sc->sc_memt, sc->sc_memh, off);
 }
 
 static u_int32_t mem_read_4 (sc, off)
 	struct am79c930_softc *sc;
 	u_int32_t off;
 {
-	/* XXX higher offset values needed for bank-switching! */
-	return
-	    bus_space_read_1(sc->sc_memt, sc->sc_memh, off) |
-	    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+1) <<8)|
-	    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+2) <<16) |
-	    (bus_space_read_1(sc->sc_memt, sc->sc_memh, off+3) <<24);
+	return bus_space_read_4(sc->sc_memt, sc->sc_memh, off);
 }
 
 
@@ -300,12 +326,7 @@ static void mem_read_bytes (sc, off, ptr, len)
 	u_int8_t *ptr;
 	size_t len;
 {
-	int i;
-	
-	/* XXX higher offset values needed for bank-switching! */
-
-	for (i=0; i<len; i++) 
-		ptr[i] = bus_space_read_1(sc->sc_memt, sc->sc_memh, off+i);
+	bus_space_read_region_1 (sc->sc_memt, sc->sc_memh, off, ptr, len);
 }
 
 
