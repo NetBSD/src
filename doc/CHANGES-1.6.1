@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.104 2003/02/09 22:22:50 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.105 2003/02/10 06:12:23 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2850,87 +2850,47 @@ sys/ufs/ffs/ffs_softdep.c			1.38 (via patch)
 	[chs, ticket #1053]
 
 include/rpc/rpc_com.h				0-1.1
-
-	Moved here from libc/rpc. Install this in /usr/include/rpc,
-	just like on Solaris. This wasn't done before, since it
-	only contained internal libc interfaces. These have been
-	moved to rpc_internal.h, and this file now contains some
-	actual exported definitions.
-	[fvdl, ticket #1037]
-
-include/rpc/Makefile				1.9-1.10
-
-	Install rpc_com.h
-	[fvdl, ticket #1037]
-
-include/rpc/svc.h				1.19-1.20
-
-	include rpc_com.h, and define SVC{GET,SET}_CONNMAXREC
-	[fvdl, ticket #1037]
-
-include/rpc/clnt.h				1.16-1.17
-	Include rpc_com.h.
-	[fvdl, ticket #1037]        
-
-lib/libc/rpc/clnt_bcast.c			1.8-1.9
-lib/libc/rpc/clnt_dg.c				1.7-1.8
-lib/libc/rpc/clnt_generic.c			1.19-1.20
-lib/libc/rpc/clnt_vc.c				1.7-1.8
-lib/libc/rpc/getnetconfig.c			1.7-1.8
-lib/libc/rpc/pmap_clnt.c			1.16-1.17
-lib/libc/rpc/rpc_generic.c			1.9-1.10
-lib/libc/rpc/rpc_soc.c				1.8-1.9
-lib/libc/rpc/rpcb_clnt.c			1.11-1.12
-lib/libc/rpc/svc.c				1.22-1.23
-lib/libc/rpc/svc_dg.c				1.6-1.7
-lib/libc/rpc/svc_generic.c			1.3-1.4
-lib/libc/rpc/svc_run.c				1.17-1.18
-lib/libc/rpc/svc_simple.c			1.21-1.22
-lib/libc/rpc/svc_vc.c				1.9-1.10
-lib/libc/rpc/xdr_rec.c				1.18-1.19
+include/rpc/Makefile				1.10
+include/rpc/svc.h				1.20
+include/rpc/clnt.h				1.17
+lib/libc/rpc/clnt_bcast.c			1.9
+lib/libc/rpc/clnt_dg.c				1.8
+lib/libc/rpc/clnt_generic.c			1.20
+lib/libc/rpc/clnt_vc.c				1.8
+lib/libc/rpc/getnetconfig.c			1.8
+lib/libc/rpc/pmap_clnt.c			1.17
+lib/libc/rpc/rpc_generic.c			1.10
+lib/libc/rpc/rpc_soc.c				1.9
+lib/libc/rpc/rpcb_clnt.c			1.12
+lib/libc/rpc/svc.c				1.23
+lib/libc/rpc/svc_dg.c				1.7
+lib/libc/rpc/svc_generic.c			1.4
+lib/libc/rpc/svc_run.c				1.18
+lib/libc/rpc/svc_simple.c			1.22
+lib/libc/rpc/svc_vc.c				1.10
+lib/libc/rpc/xdr_rec.c				1.19
 lib/libc/rpc/rpc_internal.h			0-1.1
 lib/libc/rpc/rpc_com.h				1.3-0
+lib/libc/include/namespace.h			1.72
+lib/libc/shlib_version				1.122 (via hand patch)
+dist/am-utils/conf/transp/transp_sockets.c	1.2
+usr.sbin/mountd/mountd.c			1.81 (required hand patch)
+usr.sbin/rpc.lockd/lockd.c			1.8
+usr.sbin/rpc.statd/statd.c			1.21
+usr.sbin/rpc.yppasswdd/rpc.yppasswdd.c		1.11
+usr.sbin/rpcbind/rpcb_svc_com.c			1.9
+usr.sbin/rpcbind/rpcbind.c			1.3
+usr.bin/rpcinfo/rpcinfo.c			1.16
+distrib/sets/lists/base/shl.mi			(hand patch)
+distrib/sets/lists/comp/mi			(hand patch)
 
-	* Adapt include files for rpc_com.h/rpc_internal.h split.
-	* Add rpc_control to svc.c
-	* Implement non-blocking connections.
+	- Moved rpc_com.h to include from libc/rpc. Move internal
+	   interfaces to rpc_internal.h and leave that in libc/rpc.
+	- Change programs to use rpc_com.h for public definitions.
+	- Implement non-blocking connections and use a non-blocking SVC 
+	   for TCP connections.
+	- Bump libc to 12.83.1 to reflect new teeny version
 	[fvdl, ticket #1037]
-
-lib/libc/include/namespace.h			1.71-1.72
-
-	Add rpc_control.
-	[fvdl, ticket #1037]
-
-lib/libc/shlib_version				1.121-1.122 (via hand patch)
-
-	Bump teeny version to account for minor bump on trunk
-	[fvdl, ticket #1037]
-
-dist/am-utils/conf/transp/transp_sockets.c	1.1.1.4-1.2
-usr.sbin/mountd/mountd.c			1.80-1.81 (required hand patch)
-usr.sbin/rpc.lockd/lockd.c			1.7-1.8
-usr.sbin/rpc.statd/statd.c			1.20-1.21
-usr.sbin/rpc.yppasswdd/rpc.yppasswdd.c		1.10-1.11
-usr.sbin/rpcbind/rpcb_svc_com.c			1.8-1.9
-usr.sbin/rpcbind/rpcbind.c			1.2-1.3
-
-	Use a non-blocking SVC for TCP connections.
-	[fvdl, ticket #1037]
-
-usr.bin/rpcinfo/rpcinfo.c			1.15-1.16
-
-	Don't include obsolete include file "rpc_com.h" any more.
-	[fvdl, ticket #1037]
-
-distrib/sets/lists/base/shl.mi			1.161.2.2-1.161.2.3 (hand patch)
-
-	Bump libc to 12.83.1 to reflect new teeny version
-	[fvdl, ticket #1037]
-
-distrib/sets/lists/comp/mi			1.440.2.4-1.440.2.5 (hand patch)
-	
-	Add rpc_com.h
-	[fvdl, ticket #1037] 
 
 usr.sbin/pppd/pppd/main.c			1.41-1.42
 
@@ -3611,3 +3571,34 @@ usr.sbin/pkg_install/lib/version.h		1.20-1.21
 
 	Catchup to -current as of version 20030202.
 	[abs, ticket #1141]
+
+usr.bin/ftp/Makefile				1.26
+usr.bin/ftp/extern.h				1.61
+usr.bin/ftp/ftp_var.h				1.64
+usr.bin/ftp/progressbar.c			0-1.1
+usr.bin/ftp/progressbar.h			0-1.1
+usr.bin/ftp/util.c				1.110 (resolved conflicts)
+distrib/common/list.sysinst			1.6
+distrib/utils/sysinst/menus.mi.en		1.63 (resolved conflicts)
+distrib/utils/sysinst/menus.mi.fr		1.43
+distrib/utils/sysinst/msg.mi.en			1.95
+distrib/utils/sysinst/msg.mi.fr			1.46
+distrib/utils/sysinst/util.c			1.81
+usr.bin/Makefile				1.130 (hand patch)
+usr.bin/progress/Makefile			0-1.2
+usr.bin/progress/progress.1			0-1.3
+usr.bin/progress/progress.c			0-1.5
+distrib/sets/lists/base/mi			1.377
+distrib/sets/lists/man/mi			1.541
+distrib/utils/x_ftp/Makefile			hand patch
+
+	Separate progress reporting into a utility set of routines. Use 
+	these to provide a standalone progress binary and integrate support
+	for this into sysinst.
+	[grant, ticket #1115]
+
+sys/arch/arm/arm/bcopyinout.S			1.2-1.6
+
+	Provide better stability for arm ports by reducing instances of
+	unaligned copying.
+	[chris, ticket #1157]
