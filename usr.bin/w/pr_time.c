@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_time.c,v 1.3 1996/06/07 01:39:21 thorpej Exp $	*/
+/*	$NetBSD: pr_time.c,v 1.4 1996/09/27 03:32:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pr_time.c	8.2 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$NetBSD: pr_time.c,v 1.3 1996/06/07 01:39:21 thorpej Exp $";
+static char rcsid[] = "$NetBSD: pr_time.c,v 1.4 1996/09/27 03:32:07 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,12 @@ pr_attime(started, now)
 	time_t *started, *now;
 {
 	static char buf[256];
-	struct tm *tp;
+	struct tm *tp, *tpnow;
 	time_t diff;
 	char fmt[20];
 
 	tp = localtime(started);
+	tpnow = localtime(now);
 	diff = *now - *started;
 
 	/* If more than a week, use day-month-year. */
@@ -74,7 +75,7 @@ pr_attime(started, now)
 		(void)strcpy(fmt, "%d%b%y");
 
 	/* If not today, use day-hour-am/pm. */
-	else if (*now / SECSPERDAY != *started / SECSPERDAY) {
+	else if (tp->tm_yday != tpnow->tm_yday) {
 		(void)strcpy(fmt, __CONCAT("%a%", "I%p"));
 	}
 
