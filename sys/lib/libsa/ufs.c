@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.16 1996/09/30 16:01:22 ws Exp $	*/
+/*	$NetBSD: ufs.c,v 1.17 1997/01/17 20:17:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -555,6 +555,8 @@ out:
 	if (buf)
 		free(buf, fs->fs_bsize);
 	if (rc) {
+		if (fp->f_buf)
+			free(fp->f_buf, fp->f_fs->fs_bsize);
 		free(fp->f_fs, SBSIZE);
 		free(fp, sizeof(struct file));
 	}
