@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.43 2003/01/24 21:55:08 fvdl Exp $	*/
+/*	$NetBSD: main.c,v 1.44 2003/01/28 05:17:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.43 2003/01/24 21:55:08 fvdl Exp $");
+__RCSID("$NetBSD: main.c,v 1.44 2003/01/28 05:17:12 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,12 +291,12 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	n_bfree = sblock->fs_cstotal.cs_nbfree;
 	pwarn("%d files, %lld used, %lld free ",
 	    n_files, (long long)n_blks,
-	    (long long)n_ffree + sblock->fs_frag * n_bfree);
+	    (long long)(n_ffree + sblock->fs_frag * n_bfree));
 	printf("(%lld frags, %lld blocks, %lld.%lld%% fragmentation)\n",
 	    (long long)n_ffree, (long long)n_bfree,
-	    (long long)(n_ffree * 100) / (daddr_t)sblock->fs_dsize,
-	    (long long)((n_ffree * 1000 + (daddr_t)sblock->fs_dsize / 2)
-		/ (daddr_t)sblock->fs_dsize) % 10);
+	    (long long)(n_ffree * 100 / (daddr_t)sblock->fs_dsize),
+	    (long long)(((n_ffree * 1000 + (daddr_t)sblock->fs_dsize / 2)
+		/ (daddr_t)sblock->fs_dsize) % 10));
 	if (debug &&
 	    (n_files -= maxino - ROOTINO - sblock->fs_cstotal.cs_nifree))
 		printf("%d files missing\n", n_files);
