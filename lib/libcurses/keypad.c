@@ -1,4 +1,4 @@
-/*      $NetBSD: keypad.c,v 1.4 2000/04/24 14:09:43 blymn Exp $  */
+/*	$NetBSD: keypad.c,v 1.5 2000/05/17 16:23:49 jdc Exp $  */
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com)
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: keypad.c,v 1.4 2000/04/24 14:09:43 blymn Exp $");
+__RCSID("$NetBSD: keypad.c,v 1.5 2000/05/17 16:23:49 jdc Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -42,8 +42,22 @@ __RCSID("$NetBSD: keypad.c,v 1.4 2000/04/24 14:09:43 blymn Exp $");
 void
 keypad(WINDOW *win, bool bf)
 {
-	if (bf)
+#ifdef DEBUG
+	__CTRACE("keypad: win %0.2o, %s\n", win, bf ? "TRUE" : "FALSE");
+#endif
+	if (bf) {
 		win->flags |= __KEYPAD;
-	else
+		/* Be compatible with SysV curses. */
+		if (!(curscr->flags & __KEYPAD)) {
+			tputs (KS, 0, __cputchar);
+			curscr->flags |= __KEYPAD;
+		}
+	} else {
 		win->flags &= ~__KEYPAD;
+		/* Be compatible with SysV curses. */
+		if (curscr->flags & __KEYPAD) {
+			tputs (KE, 0, __cputchar);
+			curscr->flags &= ~__KEYPAD;
+		}
+	}
 }
