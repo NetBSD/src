@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.10 1997/05/16 21:16:47 mycroft Exp $
+#	$NetBSD: Makefile,v 1.11 1997/05/30 13:43:12 cjs Exp $
 
 LIB=	cc1
 
 NOMAN=
 NOPIC=
 NOPROFILE=
+
+# this library is used only for the build
+NOINSTALL=1
 
 COMMON!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
@@ -179,8 +182,5 @@ c-parse.c: c-parse.y
 	$(YACC) -b c -d $(.IMPSRC)
 	mv -f c.tab.c c-parse.c
 	mv -f c.tab.h c-parse.h
-
-# only needed during build
-libinstall::
 
 .include <bsd.lib.mk>

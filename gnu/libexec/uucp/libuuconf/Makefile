@@ -1,5 +1,5 @@
 # This is the Makefile for the Taylor UUCP uuconf library
-# $Id: Makefile,v 1.6 1997/05/07 16:20:28 mycroft Exp $
+# $Id: Makefile,v 1.7 1997/05/30 13:43:08 cjs Exp $
 
 LIB=		uuconf
 SRCS=		addblk.c addstr.c allblk.c alloc.c base.c bool.c callin.c \
@@ -23,7 +23,7 @@ NOMAN=		noman
 NOPROFILE=	noprofile
 NOPIC=		nopic
 
-# only needed during build
-libinstall::
+# this library is used only for the build
+NOINSTALL=1
 
 .include <bsd.lib.mk>
