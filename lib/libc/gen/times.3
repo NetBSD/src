@@ -1,4 +1,4 @@
-.\"	$NetBSD: times.3,v 1.7 1998/04/28 04:07:06 fair Exp $
+.\"	$NetBSD: times.3,v 1.8 1998/04/28 20:11:35 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
 This interface is obsoleted by
 .Xr getrusage 2
 and
-.Xr gettimeofday 3 .
+.Xr gettimeofday 2 .
 .Ef
 .Pp
 The
@@ -59,7 +59,7 @@ function returns the value of time in
 .Dv CLK_TCK Ns 's
 of a second since
 0 hours, 0 minutes, 0 seconds, January 1, 1970, Coordinated Universal
-Time.
+Time (UTC).
 .Pp
 It also fills in the structure pointed to by
 .Fa tp

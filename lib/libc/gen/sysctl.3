@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.24 1998/04/13 21:24:49 kml Exp $
+.\"	$NetBSD: sysctl.3,v 1.25 1998/04/28 20:11:35 fair Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,24 +48,24 @@
 .Fn sysctl "int *name" "u_int namelen" "void *oldp" "size_t *oldlenp" "void *newp" "size_t newlen"
 .Sh DESCRIPTION
 The
-.Nm sysctl
+.Nm
 function retrieves system information and allows processes with
 appropriate privileges to set system information.
 The information available from
-.Nm sysctl
+.Nm
 consists of integers, strings, and tables.
 Information may be retrieved and set from the command interface
-using the 
+using the
 .Xr sysctl 8
 utility.
 .Pp
 Unless explicitly noted below,
-.Nm sysctl
+.Nm
 returns a consistent snapshot of the data requested.
 Consistency is obtained by locking the destination
 buffer into memory so that the data may be copied out without blocking.
 Calls to
-.Nm sysctl
+.Nm
 are serialized to avoid deadlock.
 .Pp
 The state is described using a ``Management Information Base'' (MIB)
@@ -91,8 +91,8 @@ and
 .Fa oldlenp
 should be set to NULL.
 .Pp
-The size of the available data can be determined by calling 
-.Nm sysctl
+The size of the available data can be determined by calling
+.Nm
 with a NULL parameter for
 .Fa oldp .
 The size of the available data will be returned in the location pointed to by
@@ -158,24 +158,24 @@ sysctl(mib, 2, p, &len, NULL, 0);
 .Sh CTL_DEBUG
 The debugging variables vary from system to system.
 A debugging variable may be added or deleted without need to recompile
-.Nm sysctl
+.Nm
 to know about it.
 Each time it runs,
-.Nm sysctl
+.Nm
 gets the list of debugging variables from the kernel and
 displays their current values.
-The system defines twenty 
+The system defines twenty
 .Ns ( Va struct ctldebug )
-variables named 
-.Nm debug0
+variables named
+.Dv debug0
 through
-.Nm debug19 .
+.Dv debug19 .
 They are declared as separate variables so that they can be
 individually initialized at the location of their associated variable.
 The loader prevents multiple use of the same variable by issuing errors
 if a variable is initialized in more than one place.
 For example, to export the variable
-.Nm dospecialcheck
+.Dv dospecialcheck
 as a debugging variable, the following declaration would be used:
 .Bd -literal -offset indent -compact
 int dospecialcheck = 1;
@@ -291,7 +291,7 @@ information.
 .Bl -tag -width "123456"
 .It Li KERN_ARGMAX
 The maximum bytes of argument to
-.Xr exec 2 .
+.Xr execve 2 .
 .It Li KERN_AUTONICETIME
 The number of seconds of cpu-time a non-root process may accumulate before
 having its priority lowered from the default to the value of KERN_AUTONICEVAL.
@@ -387,7 +387,7 @@ Return profiling information about the kernel.
 If the kernel is not compiled for profiling,
 attempts to retrieve any of the KERN_PROF values will
 fail with EOPNOTSUPP.
-The third level names for the string and integer profiling information 
+The third level names for the string and integer profiling information
 is detailed below.
 The changeable column shows whether a process with appropriate
 privilege may change the value.
@@ -719,7 +719,7 @@ DDB.  See
 for more details.
 .Sh RETURN VALUES
 If the call to
-.Nm sysctl
+.Nm
 is successful, the number of bytes copied out is returned.
 Otherwise \-1 is returned and
 .Va errno
@@ -790,6 +790,6 @@ definitions for fourth level UDP identifiers
 .Xr sysctl 8
 .Sh HISTORY
 The
-.Nm sysctl
+.Nm
 function first appeared in
 .Bx 4.4 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: getcap.3,v 1.8 1998/02/05 18:46:27 perry Exp $
+.\"	$NetBSD: getcap.3,v 1.9 1998/04/28 20:11:34 fair Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,14 +84,14 @@ from the database specified by the
 terminated file array
 .Fa db_array
 and returns a pointer to a
-.Xr malloc Ns \&'d
+.Xr malloc 3 Ns \&'d
 copy of it in
 .Fa buf .  
 .Nm Cgetent
 will first look for files ending in 
 .Nm .db 
 (see
-.Xr cap_mkdb 1) 
+.Xr cap_mkdb 1 )
 before accessing the ASCII file.
 .Fa Buf
 must be retained through all subsequent calls to
@@ -102,7 +102,7 @@ must be retained through all subsequent calls to
 and
 .Fn cgetustr ,
 but may then be
-.Xr free Ns \&'d.
+.Xr free 3 Ns \&'d.
 On success 0 is returned, 1 if the returned
 record contains an unresolved 
 .Nm tc 
@@ -193,7 +193,7 @@ from the capability record pointed to by
 A pointer to a decoded,
 .Dv NUL
 terminated,
-.Xr malloc Ns \&'d
+.Xr malloc 3 Ns \&'d
 copy of the string is returned in the
 .Ft char *
 pointed to by
@@ -229,7 +229,7 @@ or
 call.  If there is no such previous call, the first record in the database is
 returned.
 Each record is returned in a
-.Xr malloc Ns \&'d 
+.Xr malloc 3 Ns \&'d 
 copy pointed to by 
 .Fa buf .  
 .Ic Tc

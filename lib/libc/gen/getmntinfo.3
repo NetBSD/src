@@ -1,4 +1,4 @@
-.\"	$NetBSD: getmntinfo.3,v 1.7 1998/02/05 18:46:47 perry Exp $
+.\"	$NetBSD: getmntinfo.3,v 1.8 1998/04/28 20:11:34 fair Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,9 +50,8 @@
 .Sh DESCRIPTION
 The
 .Fn getmntinfo
-function
-returns an array of
-.Xr statfs
+function returns an array of
+.Em statfs
 structures describing each currently mounted file system (see
 .Xr statfs 2 ) .
 .Pp
@@ -73,20 +72,20 @@ The pointer to the array is stored into
 If an error occurs, zero is returned and the external variable
 .Va errno
 is set to indicate the error.
-Although the pointer 
+Although the pointer
 .Fa mntbufp
-will be unmodified, any information previously returned by 
+will be unmodified, any information previously returned by
 .Fn getmntinfo
 will be lost.
 .Sh ERRORS
 The
 .Fn getmntinfo
 function
-may fail and set 
-.Va errno 
+may fail and set
+.Va errno
 for any of the errors specified for the library routines
 .Xr getfsstat 2
-or 
+or
 .Xr malloc 3 .
 .Sh SEE ALSO
 .Xr getfsstat 2 ,
@@ -103,7 +102,8 @@ The
 .Fn getmntinfo
 function writes the array of structures to an internal static object
 and returns
-a pointer to that object. Subsequent calls to
+a pointer to that object.
+Subsequent calls to
 .Fn getmntinfo
 will modify the same object.
 .Pp

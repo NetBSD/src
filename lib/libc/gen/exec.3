@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.9 1998/02/05 18:46:15 perry Exp $
+.\"	$NetBSD: exec.3,v 1.10 1998/04/28 20:11:33 fair Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -69,7 +69,7 @@ new process image.
 The functions described in this manual page are front-ends for the function
 .Xr execve 2 .
 (See the manual page for
-.Xr execve
+.Xr execve 2
 for detailed information about the replacement of the current process.)
 .Pp
 The initial argument for these functions is the pathname of a file which
@@ -152,7 +152,7 @@ used.
 In addition, certain errors are treated specially.
 .Pp
 If permission is denied for a file (the attempted
-.Xr execve
+.Xr execve 2
 returned
 .Er EACCES ) ,
 these functions will continue searching the rest of
@@ -163,7 +163,7 @@ set to
 .Er EACCES .
 .Pp
 If the header of a file isn't recognized (the attempted
-.Xr execve
+.Xr execve 2
 returned
 .Er ENOEXEC ) ,
 these functions will execute the shell with the path of
@@ -171,7 +171,7 @@ the file as its first argument.
 (If this attempt fails, no further searching is done.)
 .Pp
 If the file is currently busy (the attempted
-.Xr execve
+.Xr execve 2
 returned
 .Er ETXTBUSY ) ,
 these functions will sleep for several seconds,
@@ -183,7 +183,7 @@ executes a file with the program tracing facilities enabled (see
 .Xr ptrace 2 ) .
 .Sh RETURN VALUES
 If any of the
-.Xr exec
+.Xr exec 3
 functions returns, an error will have occurred.
 The return value is \-1, and the global variable
 .Va errno

@@ -1,4 +1,4 @@
-.\"	$NetBSD: setjmp.3,v 1.6 1998/02/05 18:47:47 perry Exp $
+.\"	$NetBSD: setjmp.3,v 1.7 1998/04/28 20:11:35 fair Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -149,7 +149,7 @@ routine calls the routine
 If
 .Fn longjmperror
 returns the program is aborted (see
-.Xr abort 2 ) .
+.Xr abort 3 ) .
 The default version of
 .Fn longjmperror
 prints the message
@@ -169,7 +169,7 @@ and
 .Fn longjmp
 functions conform to
 .St -ansiC .
-The 
+The
 .Fn sigsetjmp
 and
 .Fn siglongjmp
