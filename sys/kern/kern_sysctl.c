@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.80 2000/09/23 11:33:05 bjh21 Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.81 2000/09/26 23:59:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -1679,7 +1679,6 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	/* XXXCDC: how should locking work here? */
 	if ((p->p_flag & P_WEXIT) || (p->p_vmspace->vm_refcnt < 1))
 		return (EFAULT);
-	PHOLD(p);
 	p->p_vmspace->vm_refcnt++;	/* XXX */
 
 	/*
@@ -1782,7 +1781,6 @@ sysctl_procargs(name, namelen, where, sizep, up)
 	*sizep = len;
 
 done:
-	PRELE(p);
 	uvmspace_free(p->p_vmspace);
 
 	free(arg, M_TEMP);
