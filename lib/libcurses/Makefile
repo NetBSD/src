@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2003/03/30 07:38:41 jdc Exp $
+#	$NetBSD: Makefile,v 1.42 2003/04/08 06:02:17 jdc Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
@@ -90,29 +90,29 @@ MLINKS+= curses_addch.3 addch.3 curses_addstr.3 addstr.3 \
 	 curses_line.3 mvhline.3 curses_line.3 mvvline.3 \
 	 curses_input.3 mvwgetnstr.3 curses_input.3 mvwgetstr.3 \
 	 curses_line.3 mvwhline.3 curses_line.3 mvwvline.3 \
-	 curses_tty.3 napms.3 curses_pad.3 newpad.3 \
-	 curses_screen.3 newterm.3 curses_window.3 newwin.3 \
-	 curses_tty.3 nl.3 curses_tty.3 nocbreak.3 \
-	 curses_input.3 nodelay.3 curses_tty.3 noecho.3 \
-	 curses_tty.3 nonl.3 curses_tty.3 noraw.3 \
-	 curses_input.3 notimeout.3 curses_window.3 overlay.3 \
-	 curses_window.3 overwrite.3 curses_color.3 pair_content.3 \
-	 curses_pad.3 pnoutrefresh.3 curses_pad.3 prefresh.3 \
-	 curses_print.3 printw.3 curses_tty.3 raw.3 \
-	 curses_refresh.3 refresh.3 curses_tty.3 reset_prog_mode.3 \
-	 curses_tty.3 reset_shell_mode.3 curses_tty.3 resetty.3 \
-	 curses_screen.3 resizeterm.3 curses_tty.3 savetty.3 \
-	 curses_scanw.3 scanw.3 curses_scroll.3 scrl.3 \
-	 curses_scroll.3 scroll.3 curses_scroll.3 scrollok.3 \
-	 curses_scroll.3 setscrreg.3 curses_screen.3 set_term.3 \
-	 curses_screen.3 setterm.3 curses_standout.3 standend.3 \
-	 curses_standout.3 standout.3 curses_color.3 start_color.3 \
-	 curses_pad.3 subpad.3 curses_window.3 subwin.3 \
-	 curses_input.3 timeout.3 curses_touch.3 touchline.3 \
-	 curses_touch.3 touchoverlap.3 curses_touch.3 touchwin.3 \
-	 curses_print.3 unctrl.3 curses_underscore.3 underend.3 \
-	 curses_underscore.3 underscore.3 curses_input.3 ungetch.3 \
-	 curses_touch.3 untouchwin.3 \
+	 curses_window.3 mvwin.3 curses_tty.3 napms.3 \
+	 curses_pad.3 newpad.3 curses_screen.3 newterm.3 \
+	 curses_window.3 newwin.3 curses_tty.3 nl.3 \
+	 curses_tty.3 nocbreak.3 curses_input.3 nodelay.3 \
+	 curses_tty.3 noecho.3 curses_tty.3 nonl.3 \
+	 curses_tty.3 noraw.3 curses_input.3 notimeout.3 \
+	 curses_window.3 overlay.3 curses_window.3 overwrite.3 \
+	 curses_color.3 pair_content.3 curses_pad.3 pnoutrefresh.3 \
+	 curses_pad.3 prefresh.3 curses_print.3 printw.3 \
+	 curses_tty.3 raw.3 curses_refresh.3 refresh.3 \
+	 curses_tty.3 reset_prog_mode.3 curses_tty.3 reset_shell_mode.3 \
+	 curses_tty.3 resetty.3 curses_screen.3 resizeterm.3 \
+	 curses_tty.3 savetty.3 curses_scanw.3 scanw.3 \
+	 curses_scroll.3 scrl.3 curses_scroll.3 scroll.3 \
+	 curses_scroll.3 scrollok.3 curses_scroll.3 setscrreg.3 \
+	 curses_screen.3 set_term.3 curses_screen.3 setterm.3 \
+	 curses_standout.3 standend.3 curses_standout.3 standout.3 \
+	 curses_color.3 start_color.3 curses_pad.3 subpad.3 \
+	 curses_window.3 subwin.3 curses_input.3 timeout.3 \
+	 curses_touch.3 touchline.3 curses_touch.3 touchoverlap.3 \
+	 curses_touch.3 touchwin.3 curses_print.3 unctrl.3 \
+	 curses_underscore.3 underend.3 curses_underscore.3 underscore.3 \
+	 curses_input.3 ungetch.3 curses_touch.3 untouchwin.3 \
 	 curses_default_colors.3 use_default_colors.3 curses_line.3 vline.3 \
 	 curses_addch.3 waddch.3 curses_addstr.3 waddstr.3 \
 	 curses_attributes.3 wattr_get.3 curses_attributes.3 wattr_off.3 \
