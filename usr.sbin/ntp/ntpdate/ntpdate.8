@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntpdate.8,v 1.6 2002/02/02 01:25:25 wiz Exp $
+.\"	$NetBSD: ntpdate.8,v 1.7 2002/10/06 17:13:24 heinz Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
 .Dd March 29, 2000
@@ -173,7 +173,7 @@ The default is 1 second, a value suitable for polling across a LAN.
 .It Fl u
 Direct
 .Nm
-to use an unprivileged port or outgoing packets.
+to use an unprivileged port for outgoing packets.
 This is most useful when behind a firewall that blocks incoming traffic
 to privileged ports, and you want to synchronise with hosts beyond the
 firewall. Note that the
