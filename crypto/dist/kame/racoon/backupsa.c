@@ -1,4 +1,4 @@
-/*	$KAME: backupsa.c,v 1.7 2001/02/01 15:51:16 sakane Exp $	*/
+/*	$KAME: backupsa.c,v 1.8 2001/02/26 04:18:34 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -202,7 +202,7 @@ backupsa_from_file()
         struct sockaddr *src, *dst;
         u_int32_t spi, reqid;
         caddr_t keymat;
-	int keymatlen;
+	size_t keymatlen;
         u_int wsize, e_type, e_keylen, a_type, a_keylen, flags;
         u_int32_t l_alloc;
         u_int64_t l_bytes, l_addtime, l_usetime;

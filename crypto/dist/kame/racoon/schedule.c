@@ -1,4 +1,4 @@
-/*	$KAME: schedule.c,v 1.13 2000/12/15 13:43:57 sakane Exp $	*/
+/*	$KAME: schedule.c,v 1.14 2001/03/06 20:41:01 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -188,6 +188,18 @@ sched_kill(sc)
 	sc->dead = 1;
 
 	return;
+}
+
+void
+sched_scrub_param(param)
+	void *param;
+{
+	struct sched *sc;
+
+	TAILQ_FOREACH(sc, &sctree, chain) {
+		if (sc->param == param)
+			sched_kill(sc);
+	}
 }
 
 /*
