@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.55 2003/06/06 14:31:22 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.56 2003/06/06 21:37:13 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -361,12 +361,13 @@ make_fstab(void)
 			scripting_fprintf(f, "/dev/%s%c none swap sw 0 0\n",
 				diskdev, 'a' + i);
 		}
-	if (layout_tmp) {
+	if (tmp_mfs_size != 0) {
 		if (swap_dev != -1)
-			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw\n",
-				diskdev, 'a' + swap_dev);
+			scripting_fprintf(f, "/dev/%s%c /tmp mfs rw,-s=%d\n",
+				diskdev, 'a' + swap_dev, tmp_mfs_size);
 		else
-			scripting_fprintf(f, "swap /tmp mfs rw\n");
+			scripting_fprintf(f, "swap /tmp mfs rw,-s=%d\n,
+				tmp_mfs_size");
 	}
 	scripting_fprintf(script, "/kern /kern kernfs rw\n");
 	scripting_fprintf(NULL, "EOF\n");
@@ -611,5 +612,3 @@ set_swap(dev, pp, enable)
 
 	return 0;
 }
-
-int	layout_tmp;

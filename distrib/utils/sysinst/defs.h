@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.82 2003/06/06 17:05:02 dsl Exp $	*/
+/*	$NetBSD: defs.h,v 1.83 2003/06/06 21:37:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,7 +61,7 @@ extern const char * const fstypenames[];
 #endif
 
 /* constants */
-#define MEG 1048576
+#define MEG (1024 * 1024)
 #define STRSIZE 255
 #define SSTRSIZE 30
 
@@ -178,6 +178,7 @@ EXTERN int current_cylsize;
 enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
 #define partition_name(x)	('a' + (x))
 EXTERN partinfo bsdlabel[MAXPARTITIONS];
+EXTERN int tmp_mfs_size INIT(0);
 
 #define DISKNAME_SIZE 80
 EXTERN char bsddiskname[DISKNAME_SIZE];
@@ -391,7 +392,6 @@ int	target_symlink_exists_p(const char *);
 void	unwind_mounts(void);
 
 /* from bsddisklabel.c */
-extern int layout_tmp;
 int	make_bsd_partitions(void);
 
 /* from aout2elf.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.13 2003/06/06 19:04:55 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.14 2003/06/06 21:37:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,6 +59,10 @@
 /* For the current state of this file blame abs@netbsd.org */
 /* Even though he wasn't the last to hack it, but he did admit doing so :-) */
 
+#define	PART_ANY	-1
+#define	PART_EXTRA	-2
+#define	PART_TMP_MFS	-3
+
 /* Defaults for things that might be defined in md.h */
 #ifndef PART_ROOT
 #define PART_ROOT	A
@@ -67,7 +71,7 @@
 #define PART_SWAP	B
 #endif
 #ifndef PART_USR
-#define PART_USR	-1
+#define PART_USR	PART_ANY
 #endif
 
 #ifndef DEFSWAPRAM
@@ -84,7 +88,26 @@
 #define DEFUSRSIZE	128
 #endif
 
-int	make_bsd_partitions (void);
+static int set_ptn_size(menudesc *, menu_ent *, void *);
+
+#define NUM_PTN_MENU	(MAXPARTITIONS + 4)
+
+struct ptn_info {
+	struct ptn_size {
+		int	ptn_id;
+		char	mount[20];
+		int	dflt_size;
+		int	size;
+	}		ptn_sizes[NUM_PTN_MENU];
+	int		free_parts;
+	int		free_space;
+	struct ptn_size *pool_part;
+	int		menu_no;
+	WINDOW		*msg_win;
+	menu_ent	ptn_menus[NUM_PTN_MENU];
+	char		ptn_titles[NUM_PTN_MENU][70];
+	char		exit_msg[70];
+};
 
 static int
 save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
@@ -134,25 +157,6 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 	return ptn;
 }
 
-struct ptn_info {
-	struct ptn_size {
-		int	ptn_id;
-		char	mount[20];
-		int	dflt_size;
-		int	size;
-	}		ptn_sizes[MAXPARTITIONS];
-	int		free_parts;
-	int		free_space;
-	struct ptn_size *pool_part;
-	int		menu_no;
-	WINDOW		*msg_win;
-	menu_ent	ptn_menus[MAXPARTITIONS + 1];
-	char		ptn_titles[MAXPARTITIONS + 1][70];
-	char		exit_msg[70];
-};
-
-static int set_ptn_size(menudesc *, menu_ent *, void *);
-
 static void
 set_ptn_menu_texts(struct ptn_info *pi)
 {
@@ -162,7 +166,7 @@ set_ptn_menu_texts(struct ptn_info *pi)
 	int sm = MEG / sectorsize;
 	int size;
 
-	for (i = 0; i < MAXPARTITIONS; i++) {
+	for (i = 0; i < NUM_PTN_MENU; i++) {
 		p = &pi->ptn_sizes[i];
 		m = &pi->ptn_menus[i];
 		m->opt_menu = OPT_NOMENU;
@@ -178,13 +182,13 @@ set_ptn_menu_texts(struct ptn_info *pi)
 			p->mount);
 	}
 
-	if (pi->free_parts > 0) {
+	if (pi->free_parts > 0 && i < NUM_PTN_MENU) {
 		snprintf(pi->ptn_titles[i], sizeof pi->ptn_titles[0], "%s",
 			msg_string(MSG_add_another_ptn));
 		i++;
 	}
 
-	if (i < MAXPARTITIONS) {	/* it always is... */
+	if (i < NUM_PTN_MENU) {	/* it always is... */
 		m = &pi->ptn_menus[i];
 		current_cylsize = dlcylsize;
 		m->opt_menu = MENU_sizechoice;
@@ -219,6 +223,10 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 
 	p = pi->ptn_sizes + (opt - m->opts);
 
+	if (pi->free_parts == 0 && p->size == 0)
+		/* Don't allow 'free_parts' to go negative */
+		return 0;
+
 	if (p->mount[0] == 0) {
 		msg_prompt_win(MSG_askfsmount, pi->msg_win,
 			NULL, p->mount, sizeof p->mount);
@@ -248,7 +256,12 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 			mult = dlcylsize;
 			break;
 		case 'm':
+		case 'M':
 			mult = MEG / sectorsize;
+			break;
+		case 'g':
+		case 'G':
+			mult = 1024 * MEG / sectorsize;
 			break;
 		case '+':
 			cp--;
@@ -266,9 +279,6 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 	}
 
 	size = NUMSEC(size, mult, dlcylsize);
-	if (pi->free_parts == 0 && size != 0 && p->size == 0)
-		/* Don't allow 'free_parts' to go negative */
-		return 0;
 	if (p == pi->pool_part)
 		pi->pool_part = NULL;
 	if (size != 0 && *cp == '+')
@@ -277,15 +287,15 @@ set_ptn_size(menudesc *m, menu_ent *opt, void *arg)
 	if (size == 0) {
 		if (p->size != 0)
 			pi->free_parts++;
-		if (p->ptn_id == -2)
+		if (p->ptn_id == PART_EXTRA)
 			memmove(p, p + 1,
-				(char *)&pi->ptn_sizes[MAXPARTITIONS - 1]
+				(char *)&pi->ptn_sizes[NUM_PTN_MENU - 1]
 				- (char *)p);
 	} else {
 		if (p->size == 0)
 			pi->free_parts--;
-		if (pi->free_space < mult && -pi->free_space < mult
-		    && mult > 1) {
+		if (pi->free_space < mult && -pi->free_space < mult) {
+			/* Round size to end of available space */
 			size += pi->free_space;
 			pi->free_space = 0;
 		}
@@ -307,90 +317,101 @@ get_ptn_sizes(int layoutkind, int part_start, int sectors)
 	int size;
 
 #define ROOT_SIZE (DEFROOTSIZE + DEFUSRSIZE)
-	struct ptn_info pi = { {
+	static struct ptn_info pi = { {
 		{ PART_ROOT,	"/",	ROOT_SIZE,	ROOT_SIZE },
 		{ PART_SWAP,	"swap",	128,		128 },
+		{ PART_TMP_MFS,	"tmp (mfs)",	64 },
 		{ PART_USR,	"/usr",	DEFUSRSIZE },
-		{ -1,		"/var",	DEFVARSIZE },
-		{ -1,		"/home",	0 },
+		{ PART_ANY,	"/var",	DEFVARSIZE },
+		{ PART_ANY,	"/home",	0 },
 	} };
 	menu_ent *m;
 
 	if (maxpart > MAXPARTITIONS)
 		maxpart = MAXPARTITIONS;	/* sanity */
 
-	/* If installing X increase default size of /usr */
-	if (layoutkind == 2) {
-		pi.ptn_sizes[0].dflt_size += XNEEDMB;
-		pi.ptn_sizes[2].dflt_size += XNEEDMB;
+	if (pi.msg_win == NULL) {
+		pi.msg_win = newwin(3, getmaxx(stdscr) - 30,
+				    getmaxy(stdscr) - 4,  15);
+		if (pi.msg_win == NULL)
+			return;
+		if (has_colors()) {
+			/*
+			 * XXX This color trick should be done so much better,
+			 * but is it worth it?
+			 */
+			wbkgd(pi.msg_win, COLOR_PAIR(1));
+			wattrset(pi.msg_win, COLOR_PAIR(1));
+		}
+
+		/* If installing X increase default size of /usr */
+		if (layoutkind == 2) {
+			pi.ptn_sizes[0].dflt_size += XNEEDMB;
+			pi.ptn_sizes[3].dflt_size += XNEEDMB;
+		}
+
+		/* Change preset size from MB to sectors */
+		sm = MEG / sectorsize;
+		pi.free_space = sectors;
+		for (p = pi.ptn_sizes; p->mount[0]; p++) {
+			p->size = NUMSEC(p->size, sm, dlcylsize);
+			p->dflt_size = NUMSEC(p->dflt_size, sm, dlcylsize);
+			pi.free_space -= p->size;
+		}
+
+		/* Count free partition slots */
+		pi.free_parts = -2;		/* allow for root and swap */
+		for (i = 0; i < maxpart; i++) {
+			if (bsdlabel[i].pi_size == 0)
+				pi.free_parts++;
+		}
+
+		/* Give free space to one of the partitions */
+		pi.pool_part = &pi.ptn_sizes[0];
+
+		/* Link data areas together for menu */
+		for (i = 0; i < NUM_PTN_MENU; i++) {
+			m = &pi.ptn_menus[i];
+			m->opt_name = pi.ptn_titles[i];
+			p = &pi.ptn_sizes[i];
+			if (i != 0 && p->ptn_id == 0)
+				p->ptn_id = PART_EXTRA;
+		}
+
+		pi.menu_no = new_menu(0, pi.ptn_menus, NUM_PTN_MENU,
+			0, 9, 12, sizeof pi.ptn_titles[0],
+			MC_SCROLL | MC_NOBOX | MC_NOCLEAR, NULL, NULL,
+			"help", pi.exit_msg);
 	}
 
-	/* Change preset size from MB to sectors */
-	sm = MEG / sectorsize;
-	pi.free_space = sectors;
-	for (p = pi.ptn_sizes; p->mount[0]; p++) {
-		p->size = NUMSEC(p->size, sm, dlcylsize);
-		p->dflt_size = NUMSEC(p->dflt_size, sm, dlcylsize);
-		pi.free_space -= p->size;
-	}
-
-	/* Count free partition slots */
-	pi.free_parts = -2;		/* allow for root and swap */
-	for (i = 0; i < maxpart; i++) {
-		if (bsdlabel[i].pi_size == 0)
-			pi.free_parts++;
-	}
-
-	/* Give free space to one of the partitions */
-	pi.pool_part = &pi.ptn_sizes[0];
-
-	pi.msg_win = newwin(3, getmaxx(stdscr) - 30, getmaxy(stdscr) - 4,  15);
-	if (pi.msg_win == NULL)
-		return;
-	if (has_colors()) {
-		/*
-		 * XXX This color trick should be done so much better,
-		 * but is it worth it?
-		 */
-		wbkgd(pi.msg_win, COLOR_PAIR(1));
-		wattrset(pi.msg_win, COLOR_PAIR(1));
-	}
-
-	/* Link data areas together for menu */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		m = &pi.ptn_menus[i];
-		m->opt_name = pi.ptn_titles[i];
-		p = &pi.ptn_sizes[i];
-		if (i != 0 && p->ptn_id == 0)
-			p->ptn_id = -2;
-	}
-	msg_display(MSG_ptnsizes);
-	msg_table_add(MSG_ptnheaders);
-
-	pi.menu_no = new_menu(0, pi.ptn_menus, MAXPARTITIONS,
-		0, 9, 12, sizeof pi.ptn_titles[0],
-		MC_SCROLL | MC_NOBOX | MC_NOCLEAR, NULL, NULL,
-		"help", pi.exit_msg);
 	if (pi.menu_no < 0)
 		return;
+
+	msg_display(MSG_ptnsizes);
+	msg_table_add(MSG_ptnheaders);
 
 	do {
 		set_ptn_menu_texts(&pi);
 		process_menu(pi.menu_no, &pi);
 	} while (pi.free_space < 0 || pi.free_parts < 0);
-	free_menu(pi.menu_no);
 
 	for (p = pi.ptn_sizes; p->mount[0]; p++, part_start += size) {
 		size = p->size;
 		if (p == pi.pool_part)
 			size += pi.free_space;
-		if (size == 0)
-			continue;
-		if (p->ptn_id == PART_SWAP) {
-			save_ptn(p->ptn_id, part_start, size, FS_SWAP, NULL);
+		i = p->ptn_id;
+		if (i == PART_TMP_MFS) {
+			tmp_mfs_size = size;
+			size = 0;
 			continue;
 		}
-		save_ptn(p->ptn_id, part_start, size, FS_BSDFFS, p->mount);
+		if (size == 0)
+			continue;
+		if (i == PART_SWAP) {
+			save_ptn(i, part_start, size, FS_SWAP, NULL);
+			continue;
+		}
+		save_ptn(i, part_start, size, FS_BSDFFS, p->mount);
 	}
 }
 
@@ -420,6 +441,19 @@ make_bsd_partitions(void)
 
 	partstart = ptstart;
 	ptend = ptstart + ptsize;
+
+	/* Ask for layout type -- standard or special */
+	msg_display(MSG_layout,
+		    (1.0*ptsize*sectorsize)/MEG,
+		    (1.0*minfsdmb*sectorsize)/MEG,
+		    (1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
+
+	process_menu(MENU_layout, NULL);
+
+	if (layoutkind == 3)
+		reask_sizemult(dlcylsize);
+	else
+		md_set_sizemultname();
 
 	/* Build standard partitions */
 	emptylabel(bsdlabel);
@@ -467,19 +501,6 @@ make_bsd_partitions(void)
 	bsdlabel[PART_REST].pi_size = ptstart;
 #endif
 
-	/* Ask for layout type -- standard or special */
-	msg_display(MSG_layout,
-		    (1.0*ptsize*sectorsize)/MEG,
-		    (1.0*minfsdmb*sectorsize)/MEG,
-		    (1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
-
-	process_menu(MENU_layout, NULL);
-
-	if (layoutkind == 3)
-		reask_sizemult(dlcylsize);
-	else
-		md_set_sizemultname();
-
 	if (get_real_geom(diskdev, &l) == 0) {
 		if (layoutkind == 4) {
 			/* Must have an old label to do 'existing' */
@@ -516,7 +537,6 @@ make_bsd_partitions(void)
 
 	if (layoutkind != 4)
 		get_ptn_sizes(layoutkind, partstart, ptend - partstart);
-
 
 	/*
 	 * OK, we have a partition table. Give the user the chance to
