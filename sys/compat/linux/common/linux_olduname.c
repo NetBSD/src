@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.50 1998/10/04 00:02:39 fvdl Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.51 1998/10/07 22:58:19 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_olduname.h>
 
 #include <compat/linux/linux_syscallargs.h>
 
