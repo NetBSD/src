@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.24.2.1 1999/10/19 17:47:31 thorpej Exp $	*/
+/*	$NetBSD: aha.c,v 1.24.2.2 1999/10/19 22:53:43 thorpej Exp $	*/
 
 #include "opt_ddb.h"
 
@@ -99,7 +99,7 @@ integrate void aha_finish_ccbs __P((struct aha_softc *));
 integrate void aha_reset_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_free_ccb __P((struct aha_softc *, struct aha_ccb *));
 integrate int aha_init_ccb __P((struct aha_softc *, struct aha_ccb *));
-struct aha_ccb *aha_get_ccb __P((struct aha_softc *, int));
+struct aha_ccb *aha_get_ccb __P((struct aha_softc *));
 struct aha_ccb *aha_ccb_phys_kv __P((struct aha_softc *, u_long));
 void aha_queue_ccb __P((struct aha_softc *, struct aha_ccb *));
 void aha_collect_mbo __P((struct aha_softc *));
@@ -466,17 +466,8 @@ aha_free_ccb(sc, ccb)
 	int s;
 
 	s = splbio();
-
 	aha_reset_ccb(sc, ccb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (ccb->chain.tqe_next == 0)
-		wakeup(&sc->sc_free_ccb);
-
 	splx(s);
 }
 
@@ -546,33 +537,18 @@ aha_create_ccbs(sc, ccbstore, count)
  * the hash table too otherwise either return an error or sleep.
  */
 struct aha_ccb *
-aha_get_ccb(sc, flags)
+aha_get_ccb(sc)
 	struct aha_softc *sc;
-	int flags;
 {
 	struct aha_ccb *ccb;
 	int s;
 
 	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_ccb, PRIBIO, "ahaccb", 0);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
+		ccb->flags |= CCB_ALLOC;
 	}
-
-	ccb->flags |= CCB_ALLOC;
-
-out:
 	splx(s);
 	return (ccb);
 }
@@ -1182,7 +1158,7 @@ aha_scsipi_request(chan, req, arg)
 		flags = xs->xs_control;
 
 		/* Get a CCB to use. */
-		ccb = aha_get_ccb(sc, flags);
+		ccb = aha_get_ccb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources

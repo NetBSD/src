@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.37.2.1 1999/10/19 17:47:34 thorpej Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.37.2.2 1999/10/19 23:15:30 thorpej Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -265,8 +265,7 @@ static u_char	ahc_abort_wscb __P((struct ahc_data *ahc, struct scb *scbp,
 static void	ahc_add_waiting_scb __P((struct ahc_data *ahc,
 					 struct scb *scb));
 static void	ahc_done __P((struct ahc_data *ahc, struct scb *scbp));
-static void	ahc_free_scb __P((struct ahc_data *ahc, struct scb *scb,
-				  int flags));
+static void	ahc_free_scb __P((struct ahc_data *ahc, struct scb *scb));
 static inline void ahc_send_scb __P((struct ahc_data *ahc, struct scb *scb));
 static inline void ahc_fetch_scb __P((struct ahc_data *ahc, struct scb *scb));
 static inline void ahc_page_scb __P((struct ahc_data *ahc, struct scb *out_scb,
@@ -274,7 +273,7 @@ static inline void ahc_page_scb __P((struct ahc_data *ahc, struct scb *out_scb,
 static inline void ahc_run_waiting_queues __P((struct ahc_data *ahc));
 static void	ahc_handle_seqint __P((struct ahc_data *ahc, u_int8_t intstat));
 static struct scb *
-		ahc_get_scb __P((struct ahc_data *ahc, int flags));
+		ahc_get_scb __P((struct ahc_data *ahc));
 static void	ahc_loadseq __P((struct ahc_data *ahc));
 static struct scb *
 		ahc_new_scb __P((struct ahc_data *ahc, struct scb *scb));
@@ -1996,7 +1995,7 @@ ahc_done(ahc, scb)
 	}
 #endif
 #endif
-	ahc_free_scb(ahc, scb, xs->xs_control);
+	ahc_free_scb(ahc, scb);
 	scsipi_done(xs);
 }
 
@@ -2432,7 +2431,7 @@ ahc_scsipi_request(chan, req, arg)
 		 * then we can't allow it to sleep
 		 */
 		flags = xs->xs_control;
-		scb = ahc_get_scb(ahc, flags);
+		scb = ahc_get_scb(ahc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources
@@ -2505,7 +2504,7 @@ ahc_scsipi_request(chan, req, arg)
 					    ahc_name(ahc), error);
 				}
 				SC_DEBUGN(xs->sc_link, SDEV_DB4, ("\n"));
-				ahc_free_scb(ahc, scb, flags);
+				ahc_free_scb(ahc, scb);
 				xs->error = XS_DRIVER_STUFFUP;
 				scsipi_done(xs);
 				return;
@@ -2684,9 +2683,8 @@ ahc_scsipi_request(chan, req, arg)
  * free list.
  */
 static void
-ahc_free_scb(ahc, scb, flags)
+ahc_free_scb(ahc, scb)
         struct	ahc_data *ahc;
-        int     flags;
         struct  scb *scb;
 {
 	struct scb *wscb;
@@ -2701,12 +2699,6 @@ ahc_free_scb(ahc, scb, flags)
 
 	if(scb->position == SCB_LIST_NULL) {
 		STAILQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
-		if(!scb->links.stqe_next && !ahc->free_scbs.stqh_first)
-			/*
-			 * If there were no SCBs available, wake anybody waiting
-			 * for one to come free.
-			 */
-			wakeup((caddr_t)&ahc->free_scbs);
 	}
 	/*
 	 * If there are any SCBS on the waiting queue,
@@ -2728,21 +2720,9 @@ ahc_free_scb(ahc, scb, flags)
 		 */
 		scb->position = SCB_LIST_NULL;
 		STAILQ_INSERT_HEAD(&ahc->page_scbs, scb, links);
-		if(!scb->links.stqe_next && !ahc->free_scbs.stqh_first)
-			/*
-			 * If there were no SCBs available, wake anybody waiting
-			 * for one to come free.
-			 */
-			wakeup((caddr_t)&ahc->free_scbs);
 	}
 	else {
 		STAILQ_INSERT_HEAD(&ahc->free_scbs, scb, links);
-		if(!scb->links.stqe_next && !ahc->page_scbs.stqh_first)
-			/*
-			 * If there were no SCBs available, wake anybody waiting
-			 * for one to come free.
-			 */
-			wakeup((caddr_t)&ahc->free_scbs);
 	}
 #ifdef AHC_DEBUG
 	ahc->activescbs--;
@@ -2804,40 +2784,19 @@ ahc_new_scb(ahc, scbp)
  * either return an error or sleep.
  */
 static struct scb *
-ahc_get_scb(ahc, flags)
+ahc_get_scb(ahc)
         struct	ahc_data *ahc;
-        int	flags;
 {
 	unsigned opri;
 	struct scb *scbp;
 
 	opri = splbio();
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one.
-	 */
-	while (1) {
-		if((scbp = ahc->free_scbs.stqh_first)) {
-			STAILQ_REMOVE_HEAD(&ahc->free_scbs, links);
-		}
-		else if((scbp = ahc->page_scbs.stqh_first)) {
-			STAILQ_REMOVE_HEAD(&ahc->page_scbs, links);
-		}
-#if defined(__FreeBSD__)
-		else if(ahc->numscbs < ahc->maxscbs) {
-			scbp = ahc_new_scb(ahc);
-		}
-#endif
-		else {
-			if (!(flags & XS_CTL_NOSLEEP)) {
-				tsleep((caddr_t)&ahc->free_scbs, PRIBIO,
-					"ahcscb", 0);
-				continue;
-			}
-		}
-		break;
+	if((scbp = ahc->free_scbs.stqh_first)) {
+		STAILQ_REMOVE_HEAD(&ahc->free_scbs, links);
 	}
-
+	else if((scbp = ahc->page_scbs.stqh_first)) {
+		STAILQ_REMOVE_HEAD(&ahc->page_scbs, links);
+	}
 #ifdef AHC_DEBUG
 	if (scbp) {
 		ahc->activescbs++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.14.2.1 1999/10/19 17:47:28 thorpej Exp $	*/
+/*	$NetBSD: adv.c,v 1.14.2.2 1999/10/19 22:53:43 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -78,7 +78,7 @@ static int adv_create_ccbs __P((ASC_SOFTC *, ADV_CCB *, int));
 static void adv_free_ccb __P((ASC_SOFTC *, ADV_CCB *));
 static void adv_reset_ccb __P((ADV_CCB *));
 static int adv_init_ccb __P((ASC_SOFTC *, ADV_CCB *));
-static ADV_CCB *adv_get_ccb __P((ASC_SOFTC *, int));
+static ADV_CCB *adv_get_ccb __P((ASC_SOFTC *));
 static void adv_queue_ccb __P((ASC_SOFTC *, ADV_CCB *));
 static void adv_start_ccbs __P((ASC_SOFTC *));
 
@@ -193,17 +193,8 @@ adv_free_ccb(sc, ccb)
 	int             s;
 
 	s = splbio();
-
 	adv_reset_ccb(ccb);
 	TAILQ_INSERT_HEAD(&sc->sc_free_ccb, ccb, chain);
-
-	/*
-         * If there were none, wake anybody waiting for one to come free,
-         * starting with queued entries.
-         */
-	if (ccb->chain.tqe_next == 0)
-		wakeup(&sc->sc_free_ccb);
-
 	splx(s);
 }
 
@@ -258,34 +249,18 @@ adv_init_ccb(sc, ccb)
  * If there are none, see if we can allocate a new one
  */
 static ADV_CCB *
-adv_get_ccb(sc, flags)
+adv_get_ccb(sc)
 	ASC_SOFTC      *sc;
-	int             flags;
 {
 	ADV_CCB        *ccb = 0;
 	int             s;
 
 	s = splbio();
-
-	/*
-         * If we can and have to, sleep waiting for one to come free
-         * but only if we can't allocate a new one.
-         */
-	for (;;) {
-		ccb = sc->sc_free_ccb.tqh_first;
-		if (ccb) {
-			TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-
-		tsleep(&sc->sc_free_ccb, PRIBIO, "advccb", 0);
+	ccb = TAILQ_FIRST(&sc->sc_free_ccb);
+	if (ccb != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_ccb, ccb, chain);
+		ccb->flags |= CCB_ALLOC;
 	}
-
-	ccb->flags |= CCB_ALLOC;
-
-out:
 	splx(s);
 	return (ccb);
 }
@@ -559,7 +534,7 @@ adv_scsipi_request(chan, req, arg)
 		/*
 		 * Get a CCB to use.
 		 */
-		ccb = adv_get_ccb(sc, flags);
+		ccb = adv_get_ccb(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources

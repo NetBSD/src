@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.22.2.1 1999/10/19 17:47:41 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.22.2.2 1999/10/19 23:20:54 thorpej Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -97,7 +97,7 @@
 integrate void uha_reset_mscp __P((struct uha_softc *, struct uha_mscp *));
 void uha_free_mscp __P((struct uha_softc *, struct uha_mscp *));
 integrate int uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
-struct uha_mscp *uha_get_mscp __P((struct uha_softc *, int));
+struct uha_mscp *uha_get_mscp __P((struct uha_softc *));
 void uhaminphys __P((struct buf *));
 void uha_scsipi_request __P((struct scsipi_channel *,
 	scsipi_adapter_req_t, void *));
@@ -224,17 +224,8 @@ uha_free_mscp(sc, mscp)
 	int s;
 
 	s = splbio();
-
 	uha_reset_mscp(sc, mscp);
 	TAILQ_INSERT_HEAD(&sc->sc_free_mscp, mscp, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (mscp->chain.tqe_next == 0)
-		wakeup(&sc->sc_free_mscp);
-
 	splx(s);
 }
 
@@ -304,33 +295,18 @@ uha_create_mscps(sc, mscpstore, count)
  * hash table too otherwise either return an error or sleep.
  */
 struct uha_mscp *
-uha_get_mscp(sc, flags)
+uha_get_mscp(sc)
 	struct uha_softc *sc;
-	int flags;
 {
 	struct uha_mscp *mscp;
 	int s;
 
 	s = splbio();
-
-	/*
-	 * If we can and have to, sleep waiting for one to come free
-	 * but only if we can't allocate a new one
-	 */
-	for (;;) {
-		mscp = sc->sc_free_mscp.tqh_first;
-		if (mscp) {
-			TAILQ_REMOVE(&sc->sc_free_mscp, mscp, chain);
-			break;
-		}
-		if ((flags & XS_CTL_NOSLEEP) != 0)
-			goto out;
-		tsleep(&sc->sc_free_mscp, PRIBIO, "uhamsc", 0);
+	mscp = TAILQ_FIRST(&sc->sc_free_mscp);
+	if (mscp != NULL) {
+		TAILQ_REMOVE(&sc->sc_free_mscp, mscp, chain);
+		mscp->flags |= MSCP_ALLOC;
 	}
-
-	mscp->flags |= MSCP_ALLOC;
-
-out:
 	splx(s);
 	return (mscp);
 }
@@ -465,7 +441,7 @@ uha_scsipi_request(chan, req, arg)
 		flags = xs->xs_control;
 
 		/* Get an MSCP to use. */
-		mscp = uha_get_mscp(sc, flags);
+		mscp = uha_get_mscp(sc);
 #ifdef DIAGNOSTIC
 		/*
 		 * This should never happen as we track the resources

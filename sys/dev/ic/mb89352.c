@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352.c,v 1.4 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.4.2.1 1999/10/19 23:20:53 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 #ifdef DDB
@@ -170,7 +170,7 @@ void	spc_timeout	__P((void *));
 void	spc_scsi_reset	__P((struct spc_softc *));
 void	spc_reset	__P((struct spc_softc *));
 void	spc_free_acb	__P((struct spc_softc *, struct spc_acb *, int));
-struct spc_acb* spc_get_acb __P((struct spc_softc *, int));
+struct spc_acb* spc_get_acb __P((struct spc_softc *));
 int	spc_reselect	__P((struct spc_softc *, int));
 void	spc_sense	__P((struct spc_softc *, struct spc_acb *));
 void	spc_msgin	__P((struct spc_softc *));
@@ -423,36 +423,23 @@ spc_free_acb(sc, acb, flags)
 
 	acb->flags = 0;
 	TAILQ_INSERT_HEAD(&sc->free_list, acb, chain);
-
-	/*
-	 * If there were none, wake anybody waiting for one to come free,
-	 * starting with queued entries.
-	 */
-	if (acb->chain.tqe_next == 0)
-		wakeup(&sc->free_list);
-
 	splx(s);
 }
 
 struct spc_acb *
-spc_get_acb(sc, flags)
+spc_get_acb(sc)
 	struct spc_softc *sc;
-	int flags;
 {
 	struct spc_acb *acb;
 	int s;
 
 	SPC_TRACE(("spc_get_acb  "));
 	s = splbio();
-
-	while ((acb = sc->free_list.tqh_first) == NULL &&
-	       (flags & XS_CTL_NOSLEEP) == 0)
-		tsleep(&sc->free_list, PRIBIO, "spcacb", 0);
-	if (acb) {
+	acb = TAILQ_FIRST(&sc->free_list);
+	if (acb != NULL) {
 		TAILQ_REMOVE(&sc->free_list, acb, chain);
 		acb->flags |= ACB_ALLOC;
 	}
-
 	splx(s);
 	return acb;
 }
@@ -497,7 +484,7 @@ spc_scsi_cmd(xs)
 	    sc_link->scsipi_scsi.target));
 
 	flags = xs->xs_control;
-	if ((acb = spc_get_acb(sc, flags)) == NULL) {
+	if ((acb = spc_get_acb(sc)) == NULL) {
 		xs->error = XS_DRIVER_STUFFUP;
 		return TRY_AGAIN_LATER;
 	}
