@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.5 1999/04/06 20:09:18 pk Exp $ */
+/* $NetBSD: db_interface.c,v 1.6 1999/04/20 21:19:48 thorpej Exp $ */
 
 /* 
  * Mach Operating System
@@ -51,7 +51,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.5 1999/04/06 20:09:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 1999/04/20 21:19:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -85,9 +85,6 @@ extern int trap_types;
 #endif
 
 int	db_active = 0;
-
-void	ddbprinttrap __P((unsigned long, unsigned long, unsigned long,
-	    unsigned long));
 
 void	db_mach_halt __P((db_expr_t, int, db_expr_t, char *));
 void	db_mach_reboot __P((db_expr_t, int, db_expr_t, char *));
@@ -138,21 +135,7 @@ struct db_variable db_regs[] = {
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 /*
- * Print trap reason.
- */
-void
-ddbprinttrap(a0, a1, a2, entry)
-	unsigned long a0, a1, a2, entry;
-{
-
-	/* XXX Implement. */
-
-	printf("ddbprinttrap(0x%lx, 0x%lx, 0x%lx, 0x%lx)\n", a0, a1, a2,
-	    entry);
-}
-
-/*
- *  ddb_trap - field a kernel trap
+ * ddb_trap - field a kernel trap
  */
 int
 ddb_trap(a0, a1, a2, entry, regs)
@@ -161,25 +144,11 @@ ddb_trap(a0, a1, a2, entry, regs)
 {
 	int s;
 
-	/*
-	 * Don't bother checking for usermode, since a benign entry
-	 * by the kernel (call to Debugger() or a breakpoint) has
-	 * already checked for usermode.  If neither of those
-	 * conditions exist, something Bad has happened.
-	 */
-
 	if (entry != ALPHA_KENTRY_IF ||
-	    (a0 != ALPHA_IF_CODE_BUGCHK && a0 != ALPHA_IF_CODE_BPT)) {
-		db_printf("ddbprinttrap from 0x%lx\n",	/* XXX */
-		    regs->tf_regs[FRAME_PC]);
-		ddbprinttrap(a0, a1, a2, entry);
+	    (a0 != ALPHA_IF_CODE_BPT && a0 != ALPHA_IF_CODE_BUGCHK)) {
 		if (db_recover != 0) {
-			/*
-			 * XXX Sould longjump back into command loop!
-			 */
-			db_printf("Faulted in DDB; continuing...\n");
-			alpha_pal_halt();		/* XXX */
-			db_error("Faulted in DDB; continuing...\n");
+			/* This will longjmp back into db_command_loop() */
+			db_error("Caught exception in ddb.\n");
 			/* NOTREACHED */
 		}
 
@@ -191,7 +160,7 @@ ddb_trap(a0, a1, a2, entry, regs)
 	}
 
 	/*
-	 * XXX Should switch to DDB's own stack, here.
+	 * alpha_debug() switches us to the debugger stack.
 	 */
 
 	ddb_regs = *regs;
@@ -252,7 +221,8 @@ db_write_bytes(addr, size, data)
 void
 Debugger()
 {
-	asm("call_pal 0x81");		/* XXX bugchk */
+
+	__asm __volatile("call_pal 0x81");		/* bugchk */
 }
 
 /*
@@ -524,6 +494,7 @@ db_branch_taken(ins, pc, regs)
 	db_addr_t pc;
 	db_regs_t *regs;
 {
+	long signed_immediate;
 	alpha_instruction insn;
 	db_addr_t newpc;
 
@@ -556,7 +527,8 @@ db_branch_taken(ins, pc, regs)
 	case op_bne:
 	case op_bge:
 	case op_bgt:
-		newpc = (insn.branch_format.displacement << 2) + (pc + 4);
+		signed_immediate = insn.branch_format.displacement;
+		newpc = (pc + 4) + (signed_immediate << 2);
 		break;
 
 	default:
