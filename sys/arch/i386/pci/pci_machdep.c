@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.41 2001/05/15 14:48:57 lukem Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.42 2001/07/06 18:04:22 mcr Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -498,7 +498,8 @@ pci_intr_map(pa, ihp)
 	 * the BIOS has not configured the device.
 	 */
 	if (line == 0 || line == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
-		printf("pci_intr_map: no mapping for pin %c\n", '@' + pin);
+		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
+		       '@' + pin, line);
 		goto bad;
 	} else {
 		if (line >= ICU_LEN) {
