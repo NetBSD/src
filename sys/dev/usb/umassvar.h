@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.1 2001/04/13 12:24:10 augustss Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.2 2001/04/13 12:51:43 augustss Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -44,7 +44,7 @@
 #define UDMASS_XFER	0x40000000	/* all transfers */
 #define UDMASS_CMD	0x80000000
 
-int umassdebug = 0;
+extern int umassdebug;
 #else
 #define DIF(m, x)	/* nop */
 #define DPRINTF(m, x)	/* nop */
