@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.13.4.1 1999/11/29 21:36:28 he Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.13.4.2 1999/12/16 23:06:15 he Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -215,8 +215,9 @@ cachectl1(req, addr, len, p)
 			 */
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
-				if (pmap_extract(p->p_vmspace->vm_map.pmap,
-				    addr, &pa) == FALSE)
+				pa = pmap_extract(p->p_vmspace->vm_map.pmap,
+						  addr);
+				if (pa == 0)
 					doall = 1;
 			}
 			switch (req) {
