@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.4 2000/10/10 19:23:58 is Exp $
+# $NetBSD: usb_hid_usages,v 1.5 2000/12/28 01:22:40 augustss Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -454,11 +454,11 @@
 
 9	Button
 	0x00	No Button Pressed
-	*	Button
+	*	Button %d
 
 10	Ordinal
 	0x00	Unused
-	*	Instance
+	*	Instance %d
 
 11	Telephony
 	0x00	Unassigned
@@ -854,7 +854,7 @@
 
 129	Monitor Enumerated Values
 	0x00	unassigned
-	*	ENUM
+	*	ENUM %d
 
 130	VESA Virtual Controls
 	0x10	Brightness
