@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_var.h,v 1.1 2002/11/20 17:52:53 bsh Exp $ */
+/* $NetBSD: sscom_var.h,v 1.2 2003/05/13 06:26:57 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -32,6 +32,7 @@
  * SUCH DAMAGE.
  */
 /* derived from sys/dev/ic/comvar.h */
+
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -73,7 +74,6 @@
 #include <machine/bus.h>
 
 /* Hardware flag masks */
-#define	SSCOM_HW_FIFO		0x01
 #define	SSCOM_HW_FLOW		0x02
 #define	SSCOM_HW_DEV_OK		0x04
 #define	SSCOM_HW_CONSOLE	0x08
@@ -103,7 +103,6 @@ struct sscom_softc {
 
 	int sc_hwflags,
 	    sc_swflags;
-	u_int sc_fifolen;
 
 	u_int sc_r_hiwat,
 	      sc_r_lowat;
