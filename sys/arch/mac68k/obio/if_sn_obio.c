@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_obio.c,v 1.13 1997/11/05 03:27:29 briggs Exp $	*/
+/*	$NetBSD: if_sn_obio.c,v 1.14 1998/01/13 19:24:55 scottr Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -85,7 +85,7 @@ sn_obio_match(parent, cf, aux)
 	    		  SONIC_REG_BASE, SN_REGSIZE, 0, &bsh))
 		return 0;
 
-	if (bus_probe(oa->oa_tag, bsh, 0, 4))
+	if (mac68k_bus_space_probe(oa->oa_tag, bsh, 0, 4))
 		found = 1;
 
 	bus_space_unmap(oa->oa_tag, bsh, SN_REGSIZE);
@@ -198,7 +198,7 @@ sn_obio_getaddr(sc, lladdr)
 		return (-1);
 	}
 
-	if (!bus_probe(sc->sc_regt, bsh, 0, 1)) {
+	if (!mac68k_bus_space_probe(sc->sc_regt, bsh, 0, 1)) {
 		bus_space_unmap(sc->sc_regt, bsh, NBPG);
 		return (-1);
 	}
