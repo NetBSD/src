@@ -990,6 +990,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     int     prev_rec_type;
     int     first = 1;
     VSTRING *why = 0;
+    int     saved_err;
 
     /*
      * Sanity checks. With ESMTP command pipelining the client can send DATA
@@ -1150,12 +1151,13 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     /*
      * Cleanup. The client may send another MAIL command.
      */
+    saved_err = state->err;
     chat_reset(state, var_smtpd_hist_thrsh);
     mail_reset(state);
     rcpt_reset(state);
     if (why)
 	vstring_free(why);
-    return (state->err);
+    return (saved_err);
 }
 
 /* rset_cmd - process RSET */
@@ -1469,7 +1471,7 @@ static void smtpd_proto(SMTPD_STATE *state)
 	}
 
 	for (;;) {
-	    if (state->error_count > var_smtpd_hard_erlim) {
+	    if (state->error_count >= var_smtpd_hard_erlim) {
 		state->reason = "too many errors";
 		state->error_mask |= MAIL_ERROR_PROTOCOL;
 		smtpd_chat_reply(state, "421 Error: too many errors");
@@ -1529,7 +1531,9 @@ static void smtpd_proto(SMTPD_STATE *state)
      * things went wrong. Don't complain about clients that go away without
      * sending QUIT.
      */
-    if (state->reason && state->where && strcmp(state->where, SMTPD_AFTER_DOT))
+    if (state->reason && state->where
+	&& (strcmp(state->where, SMTPD_AFTER_DOT)
+	    || strcmp(state->reason, "lost connection")))
 	msg_info("%s after %s from %s[%s]",
 		 state->reason, state->where, state->name, state->addr);
 
@@ -1611,7 +1615,8 @@ static void pre_jail_init(char *unused_name, char **unused_argv)
      */
     smtpd_noop_cmds = string_list_init(MATCH_FLAG_NONE, var_smtpd_noop_cmds);
     verp_clients = namadr_list_init(MATCH_FLAG_NONE, var_verp_clients);
-    smtpd_check_init();
+    if (getuid() == 0 || getuid() == var_owner_uid)
+	smtpd_check_init();
     debug_peer_init();
 
     if (var_smtpd_sasl_enable)

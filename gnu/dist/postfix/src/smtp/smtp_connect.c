@@ -371,8 +371,7 @@ SMTP_SESSION *smtp_connect(char *destination, VSTRING *why)
 
     /*
      * First try to deliver to the indicated destination, then try to deliver
-     * to the optional fall-back relays. Each can be a list of destinations
-     * by itself, with domain, host, [], numerical address, and port.
+     * to the optional fall-back relays.
      */
     sites = argv_alloc(1);
     argv_add(sites, destination, (char *) 0);
