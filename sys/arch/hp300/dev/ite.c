@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.20 1994/05/05 10:10:28 mycroft Exp $
+ *	$Id: ite.c,v 1.21 1994/05/24 11:26:05 mycroft Exp $
  */
 
 /*
@@ -452,7 +452,7 @@ doesc:
 			switch (c) {
 
 			case 'Y':			/* Only y coord. */
-				ip->cury = MIN(ip->pos, ip->rows-1);
+				ip->cury = min(ip->pos, ip->rows-1);
 				ip->pos = 0;
 				ip->escape = 0;
 				(*sp->ite_cursor)(ip, MOVE_CURSOR);
@@ -460,13 +460,13 @@ doesc:
 				break;
 
 			case 'y':			/* y coord first */
-				ip->cury = MIN(ip->pos, ip->rows-1);
+				ip->cury = min(ip->pos, ip->rows-1);
 				ip->pos = 0;
 				ip->fpd = 0;
 				break;
 
 			case 'C':			/* x coord */
-				ip->curx = MIN(ip->pos, ip->cols-1);
+				ip->curx = min(ip->pos, ip->cols-1);
 				ip->pos = 0;
 				ip->escape = 0;
 				(*sp->ite_cursor)(ip, MOVE_CURSOR);
