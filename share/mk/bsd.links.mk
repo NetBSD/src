@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.links.mk,v 1.3 1997/05/06 20:54:36 mycroft Exp $
+#	$NetBSD: bsd.links.mk,v 1.4 1997/05/06 21:29:40 mycroft Exp $
 
 .PHONY:		linksinstall
 
@@ -18,6 +18,7 @@ linksinstall::
 		echo ".if !defined(UPDATE)"; \
 		echo ".PHONY: $$t"; \
 		echo ".endif"; \
+		echo ".PRECIOUS: $$t"; \
 		echo "$$t:"; \
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t"; \
@@ -40,6 +41,7 @@ linksinstall::
 		echo ".if !defined(UPDATE)"; \
 		echo ".PHONY: $$t"; \
 		echo ".endif"; \
+		echo ".PRECIOUS: $$t"; \
 		echo "$$t: $$l"; \
 		echo "	@echo \"$$t -> $$l\""; \
 		echo "	@rm -f $$t"; \

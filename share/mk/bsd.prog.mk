@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.71 1997/05/06 20:54:40 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.72 1997/05/06 21:29:44 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -143,6 +143,7 @@ proginstall:: ${DESTDIR}${BINDIR}/${PROGNAME}
 ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${BINDIR}/${PROGNAME}
 ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
 	${INSTALL} ${COPY} ${STRIPFLAG} -o ${BINOWN} -g ${BINGRP} \
 	    -m ${BINMODE} ${.ALLSRC} ${.TARGET}
@@ -172,6 +173,7 @@ proginstall:: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}
 ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
 	${INSTALL} ${COPY} -o ${SCRIPTSOWN_${S}} -g ${SCRIPTSGRP_${S}} \
 		-m ${SCRIPTSMODE_${S}} ${.ALLSRC} ${.TARGET}

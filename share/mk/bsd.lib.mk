@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.94 1997/05/06 20:54:35 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.95 1997/05/06 21:29:38 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -235,6 +235,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.a
 ${DESTDIR}${LIBDIR}/lib${LIB}.a: lib${LIB}.a __archiveinstall
 
 .if !defined(NOPROFILE)
@@ -246,6 +247,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 
@@ -258,6 +260,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
 .endif
 
@@ -270,6 +273,7 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: .MADE
 .endif
 
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} \
 		${.TARGET}
@@ -292,7 +296,8 @@ libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .endif
 
-${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln llib-l${LIB}.ln
+.PRECIOUS: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
+${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 	${INSTALL} ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    llib-l${LIB}.ln ${DESTDIR}${LINTLIBDIR}
 .endif
