@@ -39,7 +39,7 @@
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.18 1994/05/09 00:47:22 gwr Exp $
+ *	$Id: trap.c,v 1.19 1994/05/10 05:26:18 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -140,7 +140,7 @@ void userret(p, pc, oticks)
         int sig;
     
 	while ((sig = CURSIG(p)) !=0)
-		psig(sig);
+		postsig(sig);
 	p->p_priority = p->p_usrpri;
 	if (want_resched) {
 		/*
@@ -155,9 +155,9 @@ void userret(p, pc, oticks)
 		setrq(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
-		spl0();
+		spl0();	/* XXX - Is this right? -gwr */
 		while ((sig = CURSIG(p)) != 0)
-			psig(sig);
+			postsig(sig);
 	}
 
 	/*
@@ -389,7 +389,7 @@ copyfault:
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
 			cnt.v_soft++;
-			softclock( /* XXX? (caddr_t)frame.f_pc, (int)frame.f_sr */ );
+			softclock();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
