@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.6 2002/03/01 22:58:33 manu Exp $ */
+/*      $NetBSD: clockctl.c,v 1.6.6.1 2002/05/16 04:49:35 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.6 2002/03/01 22:58:33 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.6.6.1 2002/05/16 04:49:35 gehenna Exp $");
 
 #include "opt_ntp.h"
 
@@ -52,6 +52,12 @@ struct clockctl_softc {
 	struct device   clockctl_dev;
 };
 
+dev_type_ioctl(clockctlioctl);
+
+const struct cdevsw clockctl_cdevsw = {
+	nullopen, nullclose, noread, nowrite, clockctlioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void
 clockctlattach(parent, self, aux)
@@ -61,24 +67,6 @@ clockctlattach(parent, self, aux)
 {
 	/* Nothing to set up before open is called */
 	return;
-}
-
-int
-clockctlopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
-{
-	return 0; 
-}
-
-int
-clockctlclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
-{
-	return 0;
 }
 
 int
