@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.15 2003/08/07 10:04:24 agc Exp $	 */
+/* $NetBSD: utilities.c,v 1.16 2003/10/20 12:04:38 dsl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -92,7 +92,7 @@ reply(char *question)
 	if (preen)
 		err(1, "INTERNAL ERROR: GOT TO reply()");
 	persevere = !strcmp(question, "CONTINUE");
-	printf("\n");
+	pwarn("\n");
 	if (!persevere && nflag) {
 		printf("%s? no\n\n", question);
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.35 2003/08/07 10:04:19 agc Exp $	*/
+/*	$NetBSD: fsck.h,v 1.36 2003/10/20 12:04:38 dsl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -240,6 +240,7 @@ int	doinglevel2;		/* converting to new inode format */
 int	newinofmt;		/* filesystem has new inode format */
 char	usedsoftdep;		/* just fix soft dependency inconsistencies */
 int	preen;			/* just fix normal inconsistencies */
+int	quiet;			/* Don't print anything if clean */
 int	forceimage;		/* file system is an image file */
 int	doswap;			/* convert byte order */
 int	needswap;		/* need to convert byte order in memory */
@@ -255,7 +256,7 @@ int	fsreadfd;		/* file descriptor for reading file system */
 int	fswritefd;		/* file descriptor for writing file system */
 int	rerun;			/* rerun fsck.  Only used in non-preen mode */
 char	resolved;		/* cleared if unresolved changes => not clean */
-int isappleufs;		/* filesystem is Apple UFS */
+int	isappleufs;		/* filesystem is Apple UFS */
 
 daddr_t maxfsblock;		/* number of blocks in the file system */
 char	*blockmap;		/* ptr to primary blk allocation map */
