@@ -1,9 +1,11 @@
-#	$NetBSD: bsd.lib.mk,v 1.52 1994/07/06 04:09:55 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.52.2.1 1994/08/24 19:11:18 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
+
+.include <bsd.own.mk>				# for 'NOPIC' definition
 
 .if exists(${.CURDIR}/shlib_version)
 SHLIB_MAJOR != . ${.CURDIR}/shlib_version ; echo $$major
@@ -109,7 +111,7 @@ lib${LIB}_pic.a:: ${SOBJS}
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
-	$(LD) -Bshareable -Bforcearchive \
+	$(LD) -x -Bshareable -Bforcearchive \
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
 
 llib-l${LIB}.ln: ${SRCS}
