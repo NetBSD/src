@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/09/25 00:34:37 ross Exp $
+#	$NetBSD: Makefile,v 1.3 1998/10/05 04:33:12 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -63,12 +63,19 @@ unconfig:
 ${CRUNCHFILES}:	${CRUNCHCONF}
 	if ${CRUNCHCMD}; then exit 0; else rm -f ${CRUNCHFILES}; exit 1; fi
 
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
+${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c yplib.o
 	make -f ${CBIN}.mk all
 
 clean cleandir distclean:
 	/bin/rm -f ${AUXCLEAN} *.core ${IMAGE} ${CBIN} ${CBIN}.mk	\
 		${CBIN}.cache *.o *.lo *.c .tmp_md_install*
+
+# We don't build the real libhack, since we don't actually want to kill the
+# resolver. But we do want to kill all the yp_ and xdr_ stuff, so extract
+# yplib.o from libhack.
+
+HACKSRC=${TOP}/../../utils/libhack
+.include "${HACKSRC}/Makefile.inc"
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
