@@ -1,0 +1,73 @@
+#
+# DISKLESS -- Generic machine setup for diskless boot.
+# This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
+# and will use NFS for root and swap.  (No local disk space needed.)
+#
+#	$Id: DISKLESS,v 1.1 1994/08/14 22:38:54 gwr Exp $
+#
+
+machine		"i386"
+cpu		"I386_CPU"
+cpu		"I486_CPU"
+cpu		"I586_CPU"
+ident		DISKLESS
+timezone	5 dst
+maxusers	10
+
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
+options		FFS
+options		INET,"CD9660",NFSCLIENT
+options		"COMPAT_43"
+options		"TCP_COMPAT_42"
+options		XSERVER,UCONSOLE
+options		MSDOSFS
+options		KERNFS
+options		"MATH_EMULATE"
+options		"COMPAT_NOMID"
+options		"COMPAT_09"
+options		"MACHINE_NONCONTIG"
+options		DDB
+# This is for Ethernet cards that can't receive long UDP messages.
+options 	"NFS_BOOT_RWSIZE=1024"
+
+# This would be the config line for config.new(8).
+#config		netbsd	root on nfs swap on nfs
+config		netbsd	swap nfs
+
+controller	isa0
+
+device		pc0	at isa? port "IO_KBD" irq 1
+device		com0	at isa? port "IO_COM1" irq 4
+device		com1	at isa? port "IO_COM2" irq 3
+#device		com2	at isa? port "IO_COM3" irq 5
+
+device		lpt0	at isa? port "IO_LPT1" irq 7
+device		lpt1	at isa? port "IO_LPT2"
+device		lpt2	at isa? port "IO_LPT3"
+
+controller	wdc0	at isa? port "IO_WD1" irq 14
+disk		wd0	at wdc0 drive ?
+disk		wd1	at wdc0 drive ?
+
+controller	fdc0	at isa? port "IO_FD1" irq 6 drq 2
+disk		fd0	at fdc0 drive ?
+disk		fd1	at fdc0 drive ?
+
+#device		wt0	at isa? port 0x300 irq 5 drq 1
+
+device ed0 at isa? port 0x280 irq 9 iomem 0xd0000
+device ed1 at isa? port 0x250 irq 9 iomem 0xd8000
+device ed2 at isa? port 0x300 irq 10 iomem 0xcc000
+#device el0 at isa? port 0x300 irq 9
+device ep0 at isa? port ? irq ?
+device ie0 at isa? port 0x360 irq 7 iomem 0xd0000
+device le0 at isa? port 0x320 irq 10 drq 7
+
+device		npx0	at isa? port "IO_NPX" irq 13
+
+pseudo-device	ether
+pseudo-device	log
+pseudo-device	loop
+pseudo-device	pty	32
+pseudo-device	sl	1
+pseudo-device	speaker
