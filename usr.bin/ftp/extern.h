@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.36 1999/09/26 02:00:12 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.37 1999/09/27 23:32:31 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -108,7 +108,7 @@ int	globulize __P((char **));
 char   *gunique __P((const char *));
 void	help __P((int, char **));
 char   *hookup __P((char *, char *));
-void	idle __P((int, char **));
+void	idlecmd __P((int, char **));
 int     initconn __P((void));
 void	intr __P((void));
 int	isipv6addr __P((const char *));
