@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.93 2000/05/26 21:31:00 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.94 2000/06/04 19:17:29 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,7 +55,7 @@
  *
  *	M = major version
  *	m = minor version
- *	r = release ["",A-Z but numeric]
+ *	r = release ["",A-Z,Z[A-Z] but numeric]
  *	p = patchlevel
  *
  *	So:
@@ -65,7 +65,7 @@
  *
  */
 
-#define __NetBSD_Version__  104260000	/* NetBSD 1.4Z */
+#define __NetBSD_Version__  104270000	/* NetBSD 1.4ZA */
 
 /*
  * Historical NetBSD #define
