@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.42 2002/12/01 00:12:10 matt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.43 2003/01/24 21:55:25 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -175,7 +175,7 @@ struct lfs_log_entry {
 	char *op;
 	char *file;
 	int line;
-	ufs_daddr_t block;
+	daddr_t block;
 	unsigned long flags;
 };
 extern int lfs_lognum;
@@ -281,7 +281,7 @@ struct finfo {
 	u_int32_t fi_version;		/* version number */
 	u_int32_t fi_ino;		/* inode number */
 	u_int32_t fi_lastlength;	/* length of last block in array */
-	ufs_daddr_t fi_blocks[1];	/* array of logical block numbers */
+	int32_t   fi_blocks[1];		/* array of logical block numbers */
 };
 
 
@@ -307,13 +307,13 @@ struct dlfs {
         u_int32_t dlfs_nfiles;    /* 40: number of allocated inodes */
         int32_t   dlfs_avail;     /* 44: blocks available for writing */
         int32_t   dlfs_uinodes;   /* 48: inodes in cache not yet on disk */
-        ufs_daddr_t  dlfs_idaddr; /* 52: inode file disk address */
+        int32_t   dlfs_idaddr;    /* 52: inode file disk address */
         u_int32_t dlfs_ifile;     /* 56: inode file inode number */
-        ufs_daddr_t  dlfs_lastseg; /* 60: address of last segment written */
-        ufs_daddr_t  dlfs_nextseg; /* 64: address of next segment to write */
-        ufs_daddr_t  dlfs_curseg; /* 68: current segment being written */
-        ufs_daddr_t  dlfs_offset; /* 72: offset in curseg for next partial */
-        ufs_daddr_t  dlfs_lastpseg; /* 76: address of last partial written */
+        int32_t   dlfs_lastseg; /* 60: address of last segment written */
+        int32_t   dlfs_nextseg; /* 64: address of next segment to write */
+        int32_t   dlfs_curseg; /* 68: current segment being written */
+        int32_t   dlfs_offset; /* 72: offset in curseg for next partial */
+        int32_t   dlfs_lastpseg; /* 76: address of last partial written */
 	u_int32_t dlfs_inopf;     /* 80: v1: time stamp; v2: inodes per frag */
 #define dlfs_otstamp dlfs_inopf
 
@@ -345,7 +345,7 @@ struct dlfs {
         int32_t   dlfs_maxsymlinklen; /* 184: max length of an internal symlink */
 #define LFS_MIN_SBINTERVAL      5  /* minimum superblock segment spacing */
 #define LFS_MAXNUMSB            10 /* 188: superblock disk offsets */
-        ufs_daddr_t       dlfs_sboffs[LFS_MAXNUMSB];
+        int32_t    dlfs_sboffs[LFS_MAXNUMSB];
 
 	u_int32_t dlfs_nclean;    /* 228: Number of clean segments */
 	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 232: name mounted on */
@@ -356,7 +356,7 @@ struct dlfs {
 	u_int32_t dlfs_sumsize;   /* 332: size of summary blocks */
 	u_int64_t dlfs_serial;    /* 336: serial number */
 	u_int32_t dlfs_ibsize;    /* 344: size of inode blocks */
-	ufs_daddr_t dlfs_start;   /* 348: start of segment 0 */
+	int32_t   dlfs_start;   /* 348: start of segment 0 */
 	u_int64_t dlfs_tstamp;    /* 352: time stamp */
 #define LFS_44INODEFMT 0
 #define LFS_MAXINODEFMT 0
@@ -496,7 +496,7 @@ typedef struct ifile IFILE;
 struct ifile {
 	u_int32_t if_version;		/* inode version number */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
-	ufs_daddr_t if_daddr;		/* inode disk address */
+	int32_t   if_daddr;		/* inode disk address */
 	ino_t	  if_nextfree;		/* next-unallocated inode */
 	/* XXX - when inode format changes, this changes too */
 	u_int32_t if_atime_sec;		/* Last access time, seconds */
@@ -506,7 +506,7 @@ struct ifile {
 typedef struct ifile_v1 IFILE_V1;
 struct ifile_v1 {
 	u_int32_t if_version;		/* inode version number */
-	ufs_daddr_t if_daddr;		/* inode disk address */
+	int32_t   if_daddr;		/* inode disk address */
 	ino_t	  if_nextfree;		/* next-unallocated inode */
 #if LFS_ATIME_IFILE
 	struct timespec if_atime;	/* Last access time */
@@ -543,7 +543,7 @@ struct segsum_v1 {
 	u_int32_t ss_datasum;		/* 4: check sum of data */
 	u_int32_t ss_magic;		/* 8: segment summary magic number */
 #define SS_MAGIC	0x061561
-	ufs_daddr_t ss_next;		/* 12: next segment */
+	int32_t   ss_next;		/* 12: next segment */
 	u_int32_t ss_create;		/* 16: creation time stamp */
 	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
 	u_int16_t ss_ninos;		/* 22: number of inodes in summary */
@@ -560,7 +560,7 @@ struct segsum {
 	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
 	u_int32_t ss_datasum;		/* 4: check sum of data */
 	u_int32_t ss_magic;		/* 8: segment summary magic number */
-	ufs_daddr_t ss_next;		/* 12: next segment */
+	int32_t   ss_next;		/* 12: next segment */
 	u_int32_t ss_ident;		/* 16: roll-forward fsid */
 #define ss_ocreate ss_ident /* ident is where create was in v1 */
 	u_int16_t ss_nfinfo;		/* 20: number of file info structures */
@@ -630,13 +630,13 @@ struct segsum {
 #define	dtosn(fs, daddr)	/* block address to segment number */	\
 	(((daddr) - (fs)->lfs_start) / segtod((fs), 1))
 #define sntod(fs, sn) 		/* segment number to disk address */	\
-	((ufs_daddr_t)(segtod((fs), (sn)) + (fs)->lfs_start))
+	((daddr_t)(segtod((fs), (sn)) + (fs)->lfs_start))
 
 /* Read in the block with the cleaner info from the ifile. */
 #define LFS_CLEANERINFO(CP, F, BP) do {					\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
 	if (bread((F)->lfs_ivnode,					\
-	    (ufs_daddr_t)0, (F)->lfs_bsize, NOCRED, &(BP)))		\
+	    (daddr_t)0, (F)->lfs_bsize, NOCRED, &(BP)))		\
 		panic("lfs: ifile read");				\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
 } while(0)
@@ -728,8 +728,9 @@ struct segsum {
  */
 typedef struct block_info {
 	ino_t	bi_inode;		/* inode # */
-	ufs_daddr_t bi_lbn;		/* logical block w/in file */
-	ufs_daddr_t bi_daddr;		/* disk address of block */
+	/* XXX ondisk32 */
+	int32_t bi_lbn;		/* logical block w/in file */
+	int32_t bi_daddr;		/* disk address of block */
 	u_int64_t   bi_segcreate;	/* origin segment create time */
 	int	bi_version;		/* file version number */
 	void	*bi_bp;			/* data buffer */
@@ -739,8 +740,9 @@ typedef struct block_info {
 /* Compatibility for 1.5 binaries */
 typedef struct block_info_15 {
 	ino_t	bi_inode;		/* inode # */
-	ufs_daddr_t bi_lbn;		/* logical block w/in file */
-	ufs_daddr_t bi_daddr;		/* disk address of block */
+	/* XXX ondisk32 */
+	int32_t bi_lbn;		/* logical block w/in file */
+	int32_t bi_daddr;		/* disk address of block */
 	u_int32_t   bi_segcreate;	/* origin segment create time */
 	int	bi_version;		/* file version number */
 	void	*bi_bp;			/* data buffer */
@@ -762,7 +764,8 @@ struct segment {
 	u_int32_t seg_bytes_left;	/* bytes left in segment */
 	u_int32_t sum_bytes_left;	/* bytes left in summary block */
 	u_int32_t seg_number;		/* number of this segment */
-	ufs_daddr_t *start_lbp;		/* beginning lbn for this set */
+	/* XXX ondisk32 */
+	int32_t *start_lbp;		/* beginning lbn for this set */
 
 #define	SEGM_CKP	0x01		/* doing a checkpoint */
 #define	SEGM_CLEAN	0x02		/* cleaner call; don't sort */

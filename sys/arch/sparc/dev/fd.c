@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.100 2003/01/01 02:20:47 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.101 2003/01/24 21:55:14 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -843,8 +843,9 @@ fdstrategy(bp)
 
 #ifdef FD_DEBUG
 	if (fdc_debug > 1)
-	    printf("fdstrategy: b_blkno %d b_bcount %ld blkno %d cylin %ld\n",
-		    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylinder);
+	    printf("fdstrategy: b_blkno %lld b_bcount %ld blkno %lld cylin %ld\n",
+		    (long long)bp->b_blkno, bp->b_bcount,
+		    (long long)fd->sc_blkno, bp->b_cylinder);
 #endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
@@ -1650,8 +1651,8 @@ loop:
 				fdcstatus(fdc,
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
-				printf("blkno %d nblks %d nstat %d tc %d\n",
-				       fd->sc_blkno, fd->sc_nblks,
+				printf("blkno %lld nblks %d nstat %d tc %d\n",
+				       (long long)fd->sc_blkno, fd->sc_nblks,
 				       fdc->sc_nstat, fdc->sc_tc);
 			}
 #endif
@@ -2133,8 +2134,8 @@ fdformat(dev, finfo, p)
 	if (fdc_debug) {
 		int i;
 
-		printf("fdformat: blkno 0x%x count %ld\n",
-			bp->b_blkno, bp->b_bcount);
+		printf("fdformat: blkno 0x%llx count %ld\n",
+			(unsigned long long)bp->b_blkno, bp->b_bcount);
 
 		printf("\tcyl:\t%d\n", finfo->cyl);
 		printf("\thead:\t%d\n", finfo->head);

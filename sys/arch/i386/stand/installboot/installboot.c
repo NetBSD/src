@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.16 2002/07/20 08:36:18 grant Exp $	 */
+/* $NetBSD: installboot.c,v 1.17 2003/01/24 21:55:13 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -187,7 +187,8 @@ add_fsblk(fs, blk, blcnt)
 		nblk = blcnt;
 
 	if (verbose)
-		(void) fprintf(stderr, "dblk: %d, num: %d\n", blk, nblk);
+		(void) fprintf(stderr, "dblk: %lld, num: %lld\n",
+		    (long long)blk, (long long)nblk);
 
 	/* start new entry or append to previous? */
 	if (!fraglist->numentries ||
@@ -221,7 +222,9 @@ setup_ffs_blks(diskdev, inode)
 	int devfd = -1;
 	struct fs *fs;
 	char *buf = 0;
-	daddr_t blk, *ap;
+	daddr_t blk;
+	/* XXX ondisk32 */
+	int32_t *ap;
 	struct dinode *ip;
 	int i, ndb;
 	int allok = 0;
@@ -274,7 +277,8 @@ setup_ffs_blks(diskdev, inode)
 		if (devread(devfd, buf, blk, (size_t)fs->fs_bsize,
 			    "indirect block"))
 			goto out;
-		ap = (daddr_t *) buf;
+		/* XXX ondisk32 */
+		ap = (int32_t *) buf;
 		for (; i < NINDIR(fs) && *ap && ndb > 0; i++, ap++) {
 			ndb = add_fsblk(fs, *ap, ndb);
 		}

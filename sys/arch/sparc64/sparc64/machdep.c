@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2003/01/18 06:55:24 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.138 2003/01/24 21:55:15 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1046,7 +1046,7 @@ dumpsys()
 
 	error = pmap_dumpmmu(dump, blkno);
 	blkno += pmap_dumpsize();
-printf("starting dump, blkno %d\n", blkno);
+printf("starting dump, blkno %lld\n", (long long)blkno);
 	for (mp = mem; mp->size; mp++) {
 		unsigned i = 0, n;
 		paddr_t maddr = mp->start;

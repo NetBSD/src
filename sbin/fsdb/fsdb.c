@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.21 2002/07/20 08:36:26 grant Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.22 2003/01/24 21:55:11 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.21 2002/07/20 08:36:26 grant Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.22 2003/01/24 21:55:11 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,8 @@ static int dolookup __P((char *));
 static int chinumfunc __P((struct inodesc *));
 static int chnamefunc __P((struct inodesc *));
 static int dotime __P((char *, int32_t *, int32_t *));
-static void print_blks __P((ufs_daddr_t *buf, int size, int *blknum));
+/* XXX ondisk32 */
+static void print_blks __P((int32_t *buf, int size, int *blknum));
 static void print_indirblks __P((daddr_t blk, int ind_level, int *blknum));
 
 int     returntosingle = 0;
@@ -465,7 +466,8 @@ CMDFUNCSTART(blks)
 
 static void
 print_blks(buf, size, blknum)
-	ufs_daddr_t *buf;
+	/* XXX ondisk32 */
+	int32_t *buf;
 	int size;
 	int *blknum;
 {
@@ -498,18 +500,22 @@ print_indirblks(blk,ind_level, blknum)
 	int ind_level;
 	int *blknum;
 {
-#define MAXNINDIR	(MAXBSIZE / sizeof(daddr_t))
-	daddr_t idblk[MAXNINDIR];
+/* XXX ondisk32 */
+#define MAXNINDIR	(MAXBSIZE / sizeof(int32_t))
+	int32_t idblk[MAXNINDIR];
 	int i;
  
-	printf("Indirect block %d (level %d):\n", blk, ind_level+1);
+	printf("Indirect block %lld (level %d):\n", (long long)blk,
+	    ind_level+1);
 	bread(fsreadfd, (char *)idblk, fsbtodb(sblock, blk),
 	    (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
-		print_blks(idblk, sblock->fs_bsize / sizeof(daddr_t), blknum);
+		/* XXX ondisk32 */
+		print_blks(idblk, sblock->fs_bsize / sizeof(int32_t), blknum);
 	} else {
 		ind_level--;
-		for (i = 0; i < sblock->fs_bsize / sizeof(daddr_t); i++) {
+		/* XXX ondisk32 */
+		for (i = 0; i < sblock->fs_bsize / sizeof(int32_t); i++) {
 			if(idblk[i] != 0)
 				print_indirblks(iswap32(idblk[i]),
 				    ind_level, blknum);

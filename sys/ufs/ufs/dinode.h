@@ -1,4 +1,4 @@
-/*	$NetBSD: dinode.h,v 1.15 2003/01/06 20:30:39 wiz Exp $	*/
+/*	$NetBSD: dinode.h,v 1.16 2003/01/24 21:55:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -66,9 +66,6 @@
  * are defined by types with precise widths.
  */
 
-typedef int32_t ufs_daddr_t;
-typedef long ufs_lbn_t;
-
 #define	NDADDR	12			/* Direct addresses in inode. */
 #define	NIADDR	3			/* Indirect addresses in inode. */
 
@@ -86,8 +83,8 @@ struct dinode {
 	int32_t		di_mtimensec;	/*  28: Last modified time. */
 	int32_t		di_ctime;	/*  32: Last inode change time. */
 	int32_t		di_ctimensec;	/*  36: Last inode change time. */
-	ufs_daddr_t	di_db[NDADDR];	/*  40: Direct disk blocks. */
-	ufs_daddr_t	di_ib[NIADDR];	/*  88: Indirect disk blocks. */
+	int32_t		di_db[NDADDR];	/*  40: Direct disk blocks. */
+	int32_t		di_ib[NIADDR];	/*  88: Indirect disk blocks. */
 	u_int32_t	di_flags;	/* 100: Status flags (chflags). */
 	u_int32_t	di_blocks;	/* 104: Blocks actually held. */
 	int32_t		di_gen;		/* 108: Generation number. */
@@ -108,7 +105,7 @@ struct dinode {
 #define	di_ouid		di_u.oldids[0]
 #define	di_rdev		di_db[0]
 #define	di_shortlink	di_db
-#define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(ufs_daddr_t))
+#define	MAXSYMLINKLEN	((NDADDR + NIADDR) * sizeof(int32_t))
 
 /* NeXT used to keep short symlinks in the inode even when using
  * FS_42INODEFMT.  In that case fs->fs_maxsymlinklen is probably -1,

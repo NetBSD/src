@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.29 2002/12/01 00:12:12 matt Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.30 2003/01/24 21:55:30 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -102,9 +102,9 @@ int	ufsfifo_write	__P((void *));
 int	ufsfifo_close	__P((void *));
 
 /* ufs_bmap.c */
-int ufs_bmaparray __P((struct vnode *, ufs_daddr_t, ufs_daddr_t *,
+int ufs_bmaparray __P((struct vnode *, daddr_t, daddr_t *,
 		       struct indir *, int *, int *));
-int ufs_getlbns __P((struct vnode *, ufs_daddr_t, struct indir *, int *));
+int ufs_getlbns __P((struct vnode *, daddr_t, struct indir *, int *));
 
 /* ufs_ihash.c */
 void ufs_ihashinit __P((void));

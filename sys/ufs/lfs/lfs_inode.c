@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.61 2002/12/28 14:39:09 yamt Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.62 2003/01/24 21:55:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.61 2002/12/28 14:39:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.62 2003/01/24 21:55:27 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -101,8 +101,8 @@ extern int locked_queue_count;
 extern long locked_queue_bytes;
 
 static int lfs_update_seguse(struct lfs *, long, size_t);
-static int lfs_indirtrunc (struct inode *, ufs_daddr_t, ufs_daddr_t,
-			   ufs_daddr_t, int, long *, long *, long *, size_t *,
+static int lfs_indirtrunc (struct inode *, daddr_t, daddr_t,
+			   daddr_t, int, long *, long *, long *, size_t *,
 			   struct proc *);
 static int lfs_blkfree (struct lfs *, daddr_t, size_t, long *, size_t *);
 static int lfs_vtruncbuf(struct vnode *, daddr_t, int, int);
@@ -135,8 +135,9 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 	printf("searched %d entries\n", (int)(fin - dip));
 	printf("offset is 0x%x (seg %d)\n", fs->lfs_offset,
 	       dtosn(fs, fs->lfs_offset));
-	printf("block is 0x%x (seg %d)\n", dbtofsb(fs, bp->b_blkno),
-	       dtosn(fs, dbtofsb(fs, bp->b_blkno)));
+	printf("block is 0x%llx (seg %lld)\n",
+	       (unsigned long long)dbtofsb(fs, bp->b_blkno),
+	       (long long)dtosn(fs, dbtofsb(fs, bp->b_blkno)));
 
 	return NULL;
 }
@@ -230,10 +231,10 @@ lfs_truncate(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
-	ufs_daddr_t lastblock;
+	daddr_t lastblock;
 	struct inode *oip;
-	ufs_daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	ufs_daddr_t newblks[NDADDR + NIADDR];
+	daddr_t bn, lbn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	daddr_t newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct lfs *fs;
 	struct buf *bp;
@@ -575,16 +576,17 @@ lfs_update_seguse(struct lfs *fs, long lastseg, size_t num)
  * NB: triple indirect blocks are untested.
  */
 static int
-lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
-	       ufs_daddr_t lastbn, int level, long *countp,
+lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
+	       daddr_t lastbn, int level, long *countp,
 	       long *rcountp, long *lastsegp, size_t *bcp, struct proc *p)
 {
 	int i;
 	struct buf *bp;
 	struct lfs *fs = ip->i_lfs;
-	ufs_daddr_t *bap;
+	int32_t *bap;	/* XXX ondisk32 */
 	struct vnode *vp;
-	ufs_daddr_t *copy = NULL, nb, nlbn, last;
+	daddr_t nb, nlbn, last;
+	int32_t *copy = NULL;	/* XXX ondisk32 */
 	long blkcount, rblkcount, factor;
 	int nblocks, blocksreleased = 0, real_released = 0;
 	int error = 0, allerror = 0;
@@ -630,12 +632,13 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 		return (error);
 	}
 
-	bap = (ufs_daddr_t *)bp->b_data;
+	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		MALLOC(copy, ufs_daddr_t *, fs->lfs_bsize, M_TEMP, M_WAITOK);
+		MALLOC(copy, int32_t *, fs->lfs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->lfs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
-		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (ufs_daddr_t));
+		/* XXX ondisk32 */
+		  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (int32_t));
 		error = VOP_BWRITE(bp);
 		if (error)
 			allerror = error;
@@ -652,7 +655,7 @@ lfs_indirtrunc(struct inode *ip, ufs_daddr_t lbn, daddr_t dbn,
 			continue;
 		if (level > SINGLE) {
 			error = lfs_indirtrunc(ip, nlbn, nb,
-					       (ufs_daddr_t)-1, level - 1,
+					       (daddr_t)-1, level - 1,
 					       &blkcount, &rblkcount,
 					       lastsegp, bcp, p);
 			if (error)

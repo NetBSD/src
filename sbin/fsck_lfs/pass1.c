@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.12 2001/09/25 00:03:25 wiz Exp $	 */
+/* $NetBSD: pass1.c,v 1.13 2003/01/24 21:55:10 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -197,8 +197,9 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 
 	/* XXX - LFS doesn't have this particular problem (?) */
 	if (mode == 0) {
-		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(daddr_t)) ||
-		  memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(daddr_t)) ||
+		/* XXX ondisk32 */
+		if (memcmp(dp->di_db, zino.di_db, NDADDR * sizeof(int32_t)) ||
+		  memcmp(dp->di_ib, zino.di_ib, NIADDR * sizeof(int32_t)) ||
 		    dp->di_mode || dp->di_size) {
 			pwarn("mode=o%o, ifmt=o%o\n", dp->di_mode, mode);
 			pfatal("PARTIALLY ALLOCATED INODE I=%u", inumber);
@@ -266,7 +267,8 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		 */
 		if (dp->di_size < sblock.lfs_maxsymlinklen ||
 		    (sblock.lfs_maxsymlinklen == 0 && dp->di_blocks == 0)) {
-			ndb = howmany(dp->di_size, sizeof(daddr_t));
+			/* XXX ondisk32 */
+			ndb = howmany(dp->di_size, sizeof(int32_t));
 			if (ndb > NDADDR) {
 				j = ndb - NDADDR;
 				for (ndb = 1; j > 1; j--)

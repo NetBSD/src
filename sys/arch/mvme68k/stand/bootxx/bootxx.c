@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8 2002/05/05 20:11:37 jdolecek Exp $ */
+/*	$NetBSD: bootxx.c,v 1.9 2003/01/24 21:55:13 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,8 @@ int copyboot __P((struct open_file *, u_long *));
 
 extern int     	block_size;
 extern int     	block_count;	/* length of table */
-extern daddr_t 	block_table[];
+/* XXX ondisk32 */
+extern int32_t 	block_table[];
 
 extern		char bootprog_name[], bootprog_rev[];
 

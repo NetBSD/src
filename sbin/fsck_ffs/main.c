@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2002/09/28 20:11:06 dbj Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2003/01/24 21:55:08 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.42 2002/09/28 20:11:06 dbj Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2003/01/24 21:55:08 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -208,7 +208,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	long auxdata;
 	int child;
 {
-	ufs_daddr_t n_ffree, n_bfree;
+	daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
 #ifdef LITE2BORKEN
@@ -289,11 +289,14 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 */
 	n_ffree = sblock->fs_cstotal.cs_nffree;
 	n_bfree = sblock->fs_cstotal.cs_nbfree;
-	pwarn("%d files, %d used, %d free ",
-	    n_files, n_blks, n_ffree + sblock->fs_frag * n_bfree);
-	printf("(%d frags, %d blocks, %d.%d%% fragmentation)\n",
-	    n_ffree, n_bfree, (n_ffree * 100) / sblock->fs_dsize,
-	    ((n_ffree * 1000 + sblock->fs_dsize / 2) / sblock->fs_dsize) % 10);
+	pwarn("%d files, %lld used, %lld free ",
+	    n_files, (long long)n_blks,
+	    (long long)n_ffree + sblock->fs_frag * n_bfree);
+	printf("(%lld frags, %lld blocks, %lld.%lld%% fragmentation)\n",
+	    (long long)n_ffree, (long long)n_bfree,
+	    (long long)(n_ffree * 100) / (daddr_t)sblock->fs_dsize,
+	    (long long)((n_ffree * 1000 + (daddr_t)sblock->fs_dsize / 2)
+		/ (daddr_t)sblock->fs_dsize) % 10);
 	if (debug &&
 	    (n_files -= maxino - ROOTINO - sblock->fs_cstotal.cs_nifree))
 		printf("%d files missing\n", n_files);
@@ -303,11 +306,11 @@ checkfilesys(filesys, mntpt, auxdata, child)
 		n_blks += cgsblock(sblock, 0) - cgbase(sblock, 0);
 		n_blks += howmany(sblock->fs_cssize, sblock->fs_fsize);
 		if (n_blks -= maxfsblock - (n_ffree + sblock->fs_frag * n_bfree))
-			printf("%d blocks missing\n", n_blks);
+			printf("%lld blocks missing\n", (long long)n_blks);
 		if (duplist != NULL) {
 			printf("The following duplicate blocks remain:");
 			for (dp = duplist; dp; dp = dp->next)
-				printf(" %d,", dp->dup);
+				printf(" %lld,", (long long)dp->dup);
 			printf("\n");
 		}
 		if (zlnhead != NULL) {

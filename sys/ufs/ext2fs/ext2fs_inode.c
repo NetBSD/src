@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.28 2002/09/26 11:06:36 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.29 2003/01/24 21:55:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.28 2002/09/26 11:06:36 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.29 2003/01/24 21:55:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.28 2002/09/26 11:06:36 jdolecek E
 
 extern int prtactive;
 
-static int ext2fs_indirtrunc __P((struct inode *, ufs_daddr_t, ufs_daddr_t,
-				  ufs_daddr_t, int, long *));
+static int ext2fs_indirtrunc __P((struct inode *, daddr_t, daddr_t,
+				  daddr_t, int, long *));
 
 /*
  * Last reference to an inode.  If necessary, write or delete it.
@@ -190,10 +190,10 @@ ext2fs_truncate(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *ovp = ap->a_vp;
-	ufs_daddr_t lastblock;
+	daddr_t lastblock;
 	struct inode *oip;
-	ufs_daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
-	ufs_daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
+	daddr_t bn, lastiblock[NIADDR], indir_lbn[NIADDR];
+	daddr_t oldblks[NDADDR + NIADDR], newblks[NDADDR + NIADDR];
 	off_t length = ap->a_length;
 	struct m_ext2fs *fs;
 	int offset, size, level;
@@ -309,6 +309,7 @@ ext2fs_truncate(v)
 	indir_lbn[DOUBLE] = indir_lbn[SINGLE] - NINDIR(fs) -1;
 	indir_lbn[TRIPLE] = indir_lbn[DOUBLE] - NINDIR(fs) * NINDIR(fs) - 1;
 	for (level = TRIPLE; level >= SINGLE; level--) {
+		/* XXX ondisk32 */
 		bn = fs2h32(oip->i_e2fs_blocks[NDADDR + level]);
 		if (bn != 0) {
 			error = ext2fs_indirtrunc(oip, indir_lbn[level],
@@ -330,6 +331,7 @@ ext2fs_truncate(v)
 	 * All whole direct blocks or frags.
 	 */
 	for (i = NDADDR - 1; i > lastblock; i--) {
+		/* XXX ondisk32 */
 		bn = fs2h32(oip->i_e2fs_blocks[i]);
 		if (bn == 0)
 			continue;
@@ -373,17 +375,18 @@ done:
 static int
 ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	struct inode *ip;
-	ufs_daddr_t lbn, lastbn;
-	ufs_daddr_t dbn;
+	daddr_t lbn, lastbn;
+	daddr_t dbn;
 	int level;
 	long *countp;
 {
 	int i;
 	struct buf *bp;
 	struct m_ext2fs *fs = ip->i_e2fs;
-	ufs_daddr_t *bap;
+	int32_t *bap;	/* XXX ondisk32 */
 	struct vnode *vp;
-	ufs_daddr_t *copy = NULL, nb, nlbn, last;
+	daddr_t nb, nlbn, last;
+	int32_t *copy = NULL;	/* XXX ondisk32 */
 	long blkcount, factor;
 	int nblocks, blocksreleased = 0;
 	int error = 0, allerror = 0;
@@ -429,9 +432,10 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		return (error);
 	}
 
-	bap = (ufs_daddr_t *)bp->b_data;
+	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		MALLOC(copy, ufs_daddr_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
+		/* XXX ondisk32 */
+		MALLOC(copy, int32_t *, fs->e2fs_bsize, M_TEMP, M_WAITOK);
 		memcpy((caddr_t)copy, (caddr_t)bap, (u_int)fs->e2fs_bsize);
 		memset((caddr_t)&bap[last + 1], 0,
 			(u_int)(NINDIR(fs) - (last + 1)) * sizeof (u_int32_t));
@@ -447,12 +451,13 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	for (i = NINDIR(fs) - 1,
 		nlbn = lbn + 1 - i * factor; i > last;
 		i--, nlbn += factor) {
+		/* XXX ondisk32 */
 		nb = fs2h32(bap[i]);
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
 			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
-						   (ufs_daddr_t)-1, level - 1,
+						   (daddr_t)-1, level - 1,
 						   &blkcount);
 			if (error)
 				allerror = error;
@@ -467,6 +472,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
+		/* XXX ondisk32 */
 		nb = fs2h32(bap[i]);
 		if (nb != 0) {
 			error = ext2fs_indirtrunc(ip, nlbn, fsbtodb(fs, nb),

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.9 2001/11/10 17:46:23 chs Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.10 2003/01/24 21:55:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.9 2001/11/10 17:46:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.10 2003/01/24 21:55:20 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_bmap.c,v 1.9 2001/11/10 17:46:23 chs Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 #include <ufs/ext2fs/ext2fs_extern.h>
 
-static int ext2fs_bmaparray __P((struct vnode *, ufs_daddr_t, ufs_daddr_t *,
+static int ext2fs_bmaparray __P((struct vnode *, daddr_t, daddr_t *,
 								struct indir *, int *, int *));
 
 /*
@@ -111,8 +111,8 @@ ext2fs_bmap(v)
 int
 ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct vnode *vp;
-	ufs_daddr_t bn;
-	ufs_daddr_t *bnp;
+	daddr_t bn;
+	daddr_t *bnp;
 	struct indir *ap;
 	int *nump;
 	int *runp;
@@ -122,8 +122,8 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct ufsmount *ump;
 	struct mount *mp;
 	struct indir a[NIADDR+1], *xap;
-	ufs_daddr_t daddr;
-	long metalbn;
+	daddr_t daddr;
+	daddr_t metalbn;
 	int error, maxrun = 0, num;
 
 	ip = VTOI(vp);
@@ -146,13 +146,15 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	}
 
 	if (bn >= 0 && bn < NDADDR) {
-		*bnp = blkptrtodb(ump, fs2h32(ip->i_e2fs_blocks[bn]));
+		/* XXX ondisk32 */
+		*bnp = blkptrtodb(ump, (daddr_t)fs2h32(ip->i_e2fs_blocks[bn]));
 		if (*bnp == 0)
 			*bnp = -1;
 		else if (runp)
+			/* XXX ondisk32 */
 			for (++bn; bn < NDADDR && *runp < maxrun &&
-				is_sequential(ump, fs2h32(ip->i_e2fs_blocks[bn - 1]),
-							  fs2h32(ip->i_e2fs_blocks[bn]));
+				is_sequential(ump, (daddr_t)fs2h32(ip->i_e2fs_blocks[bn - 1]),
+							  (daddr_t)fs2h32(ip->i_e2fs_blocks[bn]));
 				++bn, ++*runp);
 		return (0);
 	}
@@ -166,6 +168,7 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	num = *nump;
 
 	/* Get disk address out of indirect block array */
+	/* XXX ondisk32 */
 	daddr = fs2h32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
 
 #ifdef DIAGNOSTIC
@@ -212,12 +215,14 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 			}
 		}
 
-		daddr = fs2h32(((ufs_daddr_t *)bp->b_data)[xap->in_off]);
+		/* XXX ondisk32 */
+		daddr = fs2h32(((int32_t *)bp->b_data)[xap->in_off]);
 		if (num == 1 && daddr && runp)
+			/* XXX ondisk32 */
 			for (bn = xap->in_off + 1;
 				bn < MNINDIR(ump) && *runp < maxrun &&
-				is_sequential(ump, ((ufs_daddr_t *)bp->b_data)[bn - 1],
-				((ufs_daddr_t *)bp->b_data)[bn]);
+				is_sequential(ump, ((int32_t *)bp->b_data)[bn - 1],
+				((int32_t *)bp->b_data)[bn]);
 				++bn, ++*runp);
 	}
 	if (bp)
