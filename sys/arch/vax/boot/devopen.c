@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.2 1995/04/25 14:14:26 ragge Exp $ */
+/*	$NetBSD: devopen.c,v 1.3 1995/09/16 13:18:29 ragge Exp $ */
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
@@ -176,8 +176,8 @@ bad:
 extern int bootdev;
 
 devopen(f, fname, file)
-	struct open_file *f;
-	char *fname;
+        struct open_file *f;
+        const char *fname;
 	char **file;
 {
 	int n, error;
