@@ -15,6 +15,7 @@ struct td_proc_st {
 struct td_thread_st {
 	td_proc_t *proc;
 	caddr_t addr;
+	lwpid_t lwp;
 	PTQ_ENTRY(td_thread_st)	list;
 };
 
