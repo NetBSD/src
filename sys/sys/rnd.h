@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.10 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: rnd.h,v 1.11 1999/02/28 17:18:42 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -89,7 +89,9 @@ typedef struct {
 	u_int32_t	last_delta;	/* last delta value */
 	u_int32_t	last_delta2;	/* last delta2 value */
 	u_int32_t	total;		/* entropy from this source */
-	u_int32_t	tyfl;		/* type and flags */
+	u_int32_t	type;		/* type */
+	u_int32_t	flags;		/* flags */
+	void	       *state;		/* state informaiton */
 } rndsource_t;
 
 /*
@@ -135,11 +137,9 @@ int		rndpool_extract_data __P((rndpool_t *, void *, u_int32_t,
 
 void		rnd_init __P((void));
 void		rnd_add_uint32 __P((rndsource_element_t *, u_int32_t));
-void		rnd_add_data __P((rndsource_element_t *, void *, u_int32_t,
-				  u_int32_t));
 int		rnd_extract_data __P((void *, u_int32_t, u_int32_t));
 void		rnd_attach_source __P((rndsource_element_t *, char *,
-				       u_int32_t));
+				       u_int32_t, u_int32_t));
 void		rnd_detach_source __P((rndsource_element_t *));
 
 #endif /* _KERNEL */
@@ -182,12 +182,9 @@ typedef struct {
 } rnddata_t;
 
 #define RNDGETENTCNT	_IOR('R',  101, u_int32_t) /* get entropy count */
-#define RNDSETENTCNT	_IOW('R',  102, u_int32_t) /* set the entropy count */
-#define RNDGETPOOL      _IOR('R',  103, u_char *)  /* get whole pool */
-#define RNDADDTOENTCNT	_IOW('R',  104, u_int32_t) /* add to entropy count */
-#define RNDGETSRCNUM	_IOWR('R', 105, rndstat_t) /* get rnd source info */
-#define RNDGETSRCNAME	_IOWR('R', 106, rndstat_name_t) /* get src by name */
-#define RNDCTL		_IOW('R',  107, rndctl_t)  /* set/clear source flags */
-#define RNDADDDATA	_IOW('R',  108, rnddata_t) /* add data to the pool */
+#define RNDGETSRCNUM	_IOWR('R', 102, rndstat_t) /* get rnd source info */
+#define RNDGETSRCNAME	_IOWR('R', 103, rndstat_name_t) /* get src by name */
+#define RNDCTL		_IOW('R',  104, rndctl_t)  /* set/clear source flags */
+#define RNDADDDATA	_IOW('R',  105, rnddata_t) /* add data to the pool */
 
 #endif /* !_SYS_RND_H_ */
