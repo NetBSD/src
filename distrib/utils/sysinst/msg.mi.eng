@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.38 1999/04/11 22:40:21 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.39 1999/04/13 14:49:56 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -197,6 +197,11 @@ acutal cylinder size varies across the disk and there is little real
 gain from cylinder alignment. On older disks, it is most efficient to
 choose partition sizes that are exact multiples of your actual
 cylinder size, which is %d sectors.
+}
+
+message defaultunit
+{Unless specified with 'M' (megabytes), 'c' (cylinders) or 's' sector
+at the end of input, sizes and offsets are in %s.
 }
 
 message startoutsidedisk
