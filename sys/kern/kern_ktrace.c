@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.90 2004/06/23 23:05:48 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.91 2004/06/24 15:06:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.90 2004/06/23 23:05:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.91 2004/06/24 15:06:35 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -94,7 +94,9 @@ ktrderef(struct proc *p)
 
 	/*
 	 * ktrace file descriptor can't be watched (are not visible to
-	 * userspace), so no kqueue stuff here
+	 * userspace), so no kqueue stuff here.
+	 * XXX: The above comment is wrong, because the fktrace file
+	 * descriptor is available in userland.
 	 */
 	closef(fp, NULL);
 }
