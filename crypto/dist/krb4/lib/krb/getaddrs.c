@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "krb_locl.h"
 
-RCSID("$Id: getaddrs.c,v 1.1.1.1 2000/06/16 18:45:53 thorpej Exp $");
+RCSID("$Id: getaddrs.c,v 1.1.1.2 2000/12/29 01:43:13 assar Exp $");
 
 #if defined(HAVE_SYS_IOCTL_H) && SunOS != 40
 #include <sys/ioctl.h>
@@ -100,7 +100,11 @@ k_get_all_addrs (struct in_addr **l)
 	 ifconf.ifc_len = in_len;
 	 ifconf.ifc_buf = inbuf;
 
-	 if(ioctl(fd, SIOCGIFCONF, &ifconf) < 0)
+	 /*
+	  * Solaris returns EINVAL when the buffer is too small.
+	  */
+
+	 if(ioctl(fd, SIOCGIFCONF, &ifconf) < 0 && errno != EINVAL)
 	     goto fail;
 	 if(ifconf.ifc_len + sizeof(ifreq) < in_len)
 	     break;

@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rcp_util.c,v 1.1.1.1 2000/06/16 18:46:16 thorpej Exp $");
+RCSID("$Id: rcp_util.c,v 1.1.1.2 2000/12/29 01:42:22 assar Exp $");
 
 char *
 colon(char *cp)

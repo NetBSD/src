@@ -33,7 +33,7 @@
 
 #include "kadm_locl.h"
 
-RCSID("$Id: new_pwd.c,v 1.1.1.1 2000/06/16 18:46:06 thorpej Exp $");
+RCSID("$Id: new_pwd.c,v 1.1.1.2 2000/12/29 01:43:07 assar Exp $");
 
 #ifdef NOENCRYPTION
 #define read_long_pw_string placebo_read_pw_string

@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.1.1.1 2000/06/16 18:46:00 thorpej Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.1.1.2 2000/12/29 01:43:23 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: fnmatch.c,v 1.1.1.1 2000/06/16 18:46:00 thorpej Exp $";
+static char rcsid[] = "$NetBSD: fnmatch.c,v 1.1.1.2 2000/12/29 01:43:23 assar Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

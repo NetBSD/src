@@ -31,7 +31,7 @@ or implied warranty.
 #include "getarg.h"
 #include "parse_time.h"
 
-RCSID("$Id: kadmin.c,v 1.1.1.1 2000/06/16 18:46:06 thorpej Exp $");
+RCSID("$Id: kadmin.c,v 1.1.1.2 2000/12/29 01:43:07 assar Exp $");
 
 static int change_password(int argc, char **argv);
 static int change_key(int argc, char **argv);

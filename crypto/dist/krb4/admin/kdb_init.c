@@ -10,7 +10,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$Id: kdb_init.c,v 1.1.1.1 2000/06/16 18:46:05 thorpej Exp $");
+RCSID("$Id: kdb_init.c,v 1.1.1.2 2000/12/29 01:42:18 assar Exp $");
 
 enum ap_op {
     NULL_KEY,			/* setup null keys */
