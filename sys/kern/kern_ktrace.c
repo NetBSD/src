@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.91 2004/06/24 15:06:35 christos Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.92 2004/09/04 07:09:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.91 2004/06/24 15:06:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.92 2004/09/04 07:09:35 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h"
@@ -714,7 +714,7 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
 	aiov[0].iov_len = sizeof(struct ktr_header);
 	auio.uio_resid = sizeof(struct ktr_header);
 	auio.uio_iovcnt = 1;
-	auio.uio_procp = (struct proc *)0;
+	auio.uio_procp = NULL;
 	if (kth->ktr_len > 0) {
 		auio.uio_iovcnt++;
 		aiov[1].iov_base = (void *)kth->ktr_buf;
