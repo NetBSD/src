@@ -1,4 +1,4 @@
-/* $NetBSD: common.c,v 1.13 2003/08/12 09:18:42 skrll Exp $ */
+/* $NetBSD: common.c,v 1.14 2003/11/28 23:25:54 fvdl Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -55,6 +55,9 @@ char *p, ch;
 
 #ifdef MCRT0
 asm ("  .text");
+#ifdef EPROL_EXPORT
+EPROL_EXPORT;
+#endif
 asm ("_eprol:");
 #endif
 
