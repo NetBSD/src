@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.60 2003/10/16 23:39:40 mycroft Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.61 2003/10/17 00:12:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.60 2003/10/16 23:39:40 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.61 2003/10/17 00:12:58 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,14 +74,6 @@ Static const struct umass_quirk umass_quirks[] = {
 	  0,
 	  UMATCH_VENDOR_PRODUCT,
 	  umass_init_shuttle, NULL
-	},
-
-	{ { USB_VENDOR_YANO, USB_PRODUCT_YANO_U640MO },
-	  UMASS_WPROTO_CBI_I, UMASS_CPROTO_ATAPI,
-	  0,
-	  0,
-	  UMATCH_VENDOR_PRODUCT,
-	  NULL, NULL
 	},
 
 	/*
