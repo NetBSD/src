@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848_isa.c,v 1.25 2004/07/09 02:42:45 mycroft Exp $	*/
+/*	$NetBSD: ad1848_isa.c,v 1.26 2004/07/09 03:15:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.25 2004/07/09 02:42:45 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848_isa.c,v 1.26 2004/07/09 03:15:01 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,11 +547,6 @@ ad1848_isa_close(addr)
 	struct ad1848_isa_softc *isc = addr;
 	struct ad1848_softc *sc = &isc->sc_ad1848;
 
-	if (isc->sc_playdrq != -1)
-		isa_drq_free(isc->sc_ic, isc->sc_playdrq);
-	if (isc->sc_recdrq != -1 && isc->sc_recdrq != isc->sc_playdrq)
-		isa_drq_free(isc->sc_ic, isc->sc_recdrq);
-
 	DPRINTF(("ad1848_isa_close: stop DMA\n"));
 	ad1848_close(sc);
 
@@ -560,6 +555,11 @@ ad1848_isa_close(addr)
 	if (isc->powerctl)
 		isc->powerctl(isc->powerarg, 0);
 #endif
+
+	if (isc->sc_playdrq != -1)
+		isa_drq_free(isc->sc_ic, isc->sc_playdrq);
+	if (isc->sc_recdrq != -1 && isc->sc_recdrq != isc->sc_playdrq)
+		isa_drq_free(isc->sc_ic, isc->sc_recdrq);
 }
 
 int
