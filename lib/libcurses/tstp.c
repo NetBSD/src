@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.16 2000/04/15 13:17:05 blymn Exp $	*/
+/*	$NetBSD: tstp.c,v 1.17 2000/04/24 14:09:44 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.16 2000/04/15 13:17:05 blymn Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.17 2000/04/24 14:09:44 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -172,6 +172,9 @@ __stopwin(void)
 		__mvcur((int) curscr->cury, (int) curscr->curx, (int) curscr->maxy - 1, 0, 0);
 	}
 
+	if (MO != NULL)
+		(void) tputs(MO, 0, __cputchar);
+	
 	(void) tputs(KE, 0, __cputchar);
 	(void) tputs(VE, 0, __cputchar);
 	(void) tputs(TE, 0, __cputchar);
@@ -199,6 +202,12 @@ __restartwin(void)
 	/* Restore colours */
 	__restore_colors();
 
+	/* Reset meta */
+	__restore_meta_state();
+
+	/* Reset cursor visibility */
+	__restore_cursor_vis();
+	
 	/* Restart the screen. */
 	__startwin();
 

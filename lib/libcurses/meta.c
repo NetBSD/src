@@ -1,4 +1,4 @@
-/*	$NetBSD: meta.c,v 1.1 2000/04/22 13:29:02 blymn Exp $	*/
+/*	$NetBSD: meta.c,v 1.2 2000/04/24 14:09:44 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -29,8 +29,15 @@
  *
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: meta.c,v 1.2 2000/04/24 14:09:44 blymn Exp $");
+#endif				/* not lint */
+
 #include "curses.h"
 #include "curses_private.h"
+
+static int meta_state = FALSE;
 
 /*
  * meta --
@@ -45,6 +52,7 @@ meta(/*ARGSUSED*/ WINDOW *win, bool bf)
 			__CTRACE("meta: TRUE\n");
 #endif
 			tputs(MM, 0, __cputchar);
+			meta_state = TRUE;
 		}
 	} else {
 		if (MO != NULL) {
@@ -52,10 +60,20 @@ meta(/*ARGSUSED*/ WINDOW *win, bool bf)
 			__CTRACE("meta: FALSE\n");
 #endif
 			tputs(MO, 0, __cputchar);
+			meta_state = FALSE;
 		}
 	}
 
 	return OK;
 }
 
-	
+/*
+ * __restore_meta_state --
+ *    Restore old meta state.
+ */
+void
+__restore_meta_state(void)
+{
+	meta(NULL, meta_state);
+}
+

@@ -483,6 +483,16 @@ and
 .De
 Check if terminal has colors.
 .Ds
+.Fn hline "chtype ch" "int count"
+.De
+Draw a horizontal line of the character ch starting at the current
+cursor position and moving towards the rightmost column.  At most
+.Vn count
+characters will be written, less if the edge of the screen is reached
+before 
+.Vn count
+is reached.
+.Ds
 .Fn idlok "WINDOW *win" "int boolf"
 .De
 Reserved for future use.
@@ -659,6 +669,14 @@ and
 should be used to move the cursor position,
 so that the routines know what's going on.
 .Ds
+.Fn mvhline "int y" "int x" "chtype ch" "int count"
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+and then draws a horizontal line in the same manner as
+.Fn hline .
+.Ds
 .Fn mvprintw "int y" "int x" "const char *fmt" "..."
 .De
 Equivalent to:
@@ -674,6 +692,34 @@ Equivalent to:
 move(y, x);
 scanw(fmt, ...);
 .)l
+.Ds
+.Fn mvvline "int y" "int x" "chtype ch" "int count"
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+and then draws a vertical line in the same manner as
+.Fn vline .
+.Ds
+.Fn mvwhline "WINDOW *win" "int y" "int x" "chtype ch" "int count"
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+on window 
+.Vn win
+and then draws a horizontal line in the same manner as
+.Fn whline .
+.Ds
+.Fn mvwvline "WINDOW *win" "int y" "int x" "chtype ch" "int count"
+.De
+Moves the cursor to the position
+.Vn (y ,
+.Vn x )
+on window 
+.Vn win
+and then draws a horizontal line in the same manner as
+.Fn wvline .
 .Ds
 .Fn mvwin "WINDOW *win" "int y" "int x"
 .De
@@ -1122,6 +1168,18 @@ or
 is guaranteed to function correctly.  The results of attempting more
 than one character of push back is undefined.
 .Ds
+.Fn vline "chtype ch" "int count"
+.De
+Draws a vertical line of character
+.Vn ch
+starting at the current cursor location and moving towards the bottom
+of the screen.  At most
+.Vn count
+characters are drawn, less if the bottom of the screen is reached
+before
+.Vn count
+expires.
+.Ds
 .Fn vwprintw "WINDOW *win" "const char *fmt" "va_list ap"
 .De
 Identical to
@@ -1167,6 +1225,7 @@ specification of a window, rather than the use of the default
 .Fn werase "WINDOW *win"
 .Fn wgetch "WINDOW *win"
 .Fn wgetstr "WINDOW *win" "char *str"
+.Fn whline "WINDOW *win" "chtype ch" "int count"
 .Fn winch "WINDOW *win" \(dg
 .Fn winsch "WINDOW *win" "char c"
 .Fn winsdelln "WINDOW *win" "int n"
@@ -1181,4 +1240,5 @@ specification of a window, rather than the use of the default
 .Fn wtimeout "WINDOW *win" "int delay"
 .Fn wunderend "WINDOW *win"
 .Fn wunderscore "WINDOW *win"
+.Fn wvline "WINDOW *win" "chtype ch" "int count"
 .Dg
