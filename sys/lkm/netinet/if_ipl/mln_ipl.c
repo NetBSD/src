@@ -1,4 +1,4 @@
-/*	$NetBSD: mln_ipl.c,v 1.30 2003/06/28 14:22:00 darrenr Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.31 2003/06/29 17:18:48 chris Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.30 2003/06/28 14:22:00 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.31 2003/06/29 17:18:48 chris Exp $");
 
 #include <sys/param.h>
 
@@ -213,13 +213,13 @@ static int ipl_remove()
 		NDINIT(&nd, DELETE, LOCKPARENT, UIO_SYSSPACE, name, curlwp);
 		if ((error = namei(&nd)))
 			return (error);
-		VOP_LEASE(nd.ni_vp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_vp, curlwp, curproc->p_ucred, LEASE_WRITE);
 #ifdef OpenBSD
 		VOP_LOCK(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY, curproc);
 #else
 		vn_lock(nd.ni_vp, LK_EXCLUSIVE | LK_RETRY);
 #endif
-		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_dvp, curlwp, curproc->p_ucred, LEASE_WRITE);
 		(void) VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
 	}
 	return 0;
@@ -277,7 +277,7 @@ static int ipl_load()
 		vattr.va_type = VCHR;
 		vattr.va_mode = (fmode & 07777);
 		vattr.va_rdev = (ipl_major << 8) | i;
-		VOP_LEASE(nd.ni_dvp, curproc, curproc->p_ucred, LEASE_WRITE);
+		VOP_LEASE(nd.ni_dvp, curlwp, curproc->p_ucred, LEASE_WRITE);
 		error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 		if (error)
 			return error;
