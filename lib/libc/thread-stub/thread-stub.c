@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.1.2.1 2003/01/08 19:34:21 thorpej Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.1.2.2 2003/01/09 02:54:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,11 +72,11 @@ do {					\
 int	__libc_mutex_init_stub(mutex_t *, const mutexattr_t *);
 int	__libc_mutex_catchall_stub(mutex_t *);
 
-__weak_alias(__libc_mutex_init,__libc_mutex_init_stub);
-__weak_alias(__libc_mutex_lock,__libc_mutex_catchall_stub);
-__weak_alias(__libc_mutex_trylock,__libc_mutex_catchall_stub);
-__weak_alias(__libc_mutex_unlock,__libc_mutex_catchall_stub);
-__weak_alias(__libc_mutex_destroy,__libc_mutex_catchall_stub);
+__weak_alias(__libc_mutex_init,__libc_mutex_init_stub)
+__weak_alias(__libc_mutex_lock,__libc_mutex_catchall_stub)
+__weak_alias(__libc_mutex_trylock,__libc_mutex_catchall_stub)
+__weak_alias(__libc_mutex_unlock,__libc_mutex_catchall_stub)
+__weak_alias(__libc_mutex_destroy,__libc_mutex_catchall_stub)
 
 int
 __libc_mutex_init_stub(mutex_t *m, const mutexattr_t *a)
@@ -111,12 +111,12 @@ int	__libc_cond_timedwait_stub(cond_t *, mutex_t *,
 				   const struct timespec *);
 int	__libc_cond_catchall_stub(cond_t *);
 
-__weak_alias(__libc_cond_init,__libc_cond_init_stub);
-__weak_alias(__libc_cond_signal,__libc_cond_catchall_stub);
-__weak_alias(__libc_cond_broadcast,__libc_cond_catchall_stub);
-__weak_alias(__libc_cond_wait,__libc_cond_wait_stub);
-__weak_alias(__libc_cond_timedwait,__libc_cond_timedwait_stub);
-__weak_alias(__libc_cond_destroy,__libc_cond_catchall_stub);
+__weak_alias(__libc_cond_init,__libc_cond_init_stub)
+__weak_alias(__libc_cond_signal,__libc_cond_catchall_stub)
+__weak_alias(__libc_cond_broadcast,__libc_cond_catchall_stub)
+__weak_alias(__libc_cond_wait,__libc_cond_wait_stub)
+__weak_alias(__libc_cond_timedwait,__libc_cond_timedwait_stub)
+__weak_alias(__libc_cond_destroy,__libc_cond_catchall_stub)
 
 int
 __libc_cond_init_stub(cond_t *c, const condattr_t *a)
@@ -176,13 +176,13 @@ __libc_cond_catchall_stub(cond_t *c)
 int	__libc_rwlock_init_stub(rwlock_t *, rwlockattr_t *);
 int	__libc_rwlock_catchall_stub(rwlock_t *);
 
-__weak_alias(__libc_rwlock_init,__libc_rwlock_init_stub);
-__weak_alias(__libc_rwlock_rdlock,__libc_rwlock_catchall_stub);
-__weak_alias(__libc_rwlock_wrlock,__libc_rwlock_catchall_stub);
-__weak_alias(__libc_rwlock_tryrdlock,__libc_rwlock_catchall_stub);
-__weak_alias(__libc_rwlock_trywrlock,__libc_rwlock_catchall_stub);
-__weak_alias(__libc_rwlock_unlock,__libc_rwlock_catchall_stub);
-__weak_alias(__libc_rwlock_destroy,__libc_rwlock_catchall_stub);
+__weak_alias(__libc_rwlock_init,__libc_rwlock_init_stub)
+__weak_alias(__libc_rwlock_rdlock,__libc_rwlock_catchall_stub)
+__weak_alias(__libc_rwlock_wrlock,__libc_rwlock_catchall_stub)
+__weak_alias(__libc_rwlock_tryrdlock,__libc_rwlock_catchall_stub)
+__weak_alias(__libc_rwlock_trywrlock,__libc_rwlock_catchall_stub)
+__weak_alias(__libc_rwlock_unlock,__libc_rwlock_catchall_stub)
+__weak_alias(__libc_rwlock_destroy,__libc_rwlock_catchall_stub)
 
 int
 __libc_rwlock_init_stub(rwlock_t *l, rwlockattr_t *a)
@@ -216,10 +216,10 @@ int	__libc_thr_setspecific_stub(thread_key_t, const void *);
 void	*__libc_thr_getspecific_stub(thread_key_t);
 int	__libc_thr_keydelete_stub(thread_key_t);
 
-__weak_alias(__libc_thr_keycreate,__libc_thr_keycreate_stub);
-__weak_alias(__libc_thr_setspecific,__libc_thr_setspecific_stub);
-__weak_alias(__libc_thr_getspecific,__libc_thr_getspecific_stub);
-__weak_alias(__libc_thr_keydelete,__libc_thr_keydelete_stub);
+__weak_alias(__libc_thr_keycreate,__libc_thr_keycreate_stub)
+__weak_alias(__libc_thr_setspecific,__libc_thr_setspecific_stub)
+__weak_alias(__libc_thr_getspecific,__libc_thr_getspecific_stub)
+__weak_alias(__libc_thr_keydelete,__libc_thr_keydelete_stub)
 
 int
 __libc_thr_keycreate_stub(thread_key_t *k, void (*d)(void *))
@@ -277,10 +277,10 @@ int	__libc_thr_sigsetmask_stub(int, const sigset_t *, sigset_t *);
 thr_t	__libc_thr_self_stub(void);
 int	*__libc_thr_errno_stub(void);
 
-__weak_alias(__libc_thr_once,__libc_thr_once_stub);
-__weak_alias(__libc_thr_sigsetmask,__libc_thr_sigsetmask_stub);
-__weak_alias(__libc_thr_self,__libc_thr_self_stub);
-__weak_alias(__libc_thr_errno,__libc_thr_errno_stub);
+__weak_alias(__libc_thr_once,__libc_thr_once_stub)
+__weak_alias(__libc_thr_sigsetmask,__libc_thr_sigsetmask_stub)
+__weak_alias(__libc_thr_self,__libc_thr_self_stub)
+__weak_alias(__libc_thr_errno,__libc_thr_errno_stub)
 
 int
 __libc_thr_once_stub(once_t *o, void (*r)(void))
