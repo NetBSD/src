@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2000/07/06 17:17:15 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2000/07/06 17:17:54 thorpej Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -11,7 +11,7 @@ BASENAME?=	boot
 IMAGE1?=	${BASENAME}1.fs
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
-BOOTCODE=	${MDEC}/biosboot.sym
+BOOTCODE?=	${MDEC}/biosboot.sym
 #BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
 
