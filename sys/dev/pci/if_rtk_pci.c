@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.11 2002/02/04 16:33:15 tsutsui Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.12 2002/02/06 12:43:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.11 2002/02/04 16:33:15 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.12 2002/02/06 12:43:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.11 2002/02/04 16:33:15 tsutsui Exp 
 
 struct rtk_pci_softc {
 	struct rtk_softc sc_rtk;	/* real rtk softc */
-	
+
 	/* PCI-specific goo.*/
 	void *sc_ih;
 	pci_chipset_tag_t sc_pc; 	/* PCI chipset */
@@ -138,7 +138,7 @@ rtk_pci_lookup(pa)
 {
 	const struct rtk_type *t;
 
-	for (t = rtk_pci_devs; t->rtk_name != NULL; t++){ 	
+	for (t = rtk_pci_devs; t->rtk_name != NULL; t++) {
 		if (PCI_VENDOR(pa->pa_id) == t->rtk_vid &&
 		    PCI_PRODUCT(pa->pa_id) == t->rtk_did) {
 			return (t);
@@ -203,12 +203,12 @@ rtk_pci_attach(parent, self, aux)
 			iobase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOIO);
 			membase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOMEM);
 			irq = pci_conf_read(pc, pa->pa_tag,
-					    PCI_PRODUCT_DELTA_8139);
+			    PCI_PRODUCT_DELTA_8139);
 
 			/* Reset the power state. */
 			printf("%s: chip is is in D%d power mode "
-			"-- setting to D0\n", sc->sc_dev.dv_xname,
-			       command & RTK_PSTATE_MASK);
+			    "-- setting to D0\n", sc->sc_dev.dv_xname,
+			    command & RTK_PSTATE_MASK);
 			command &= 0xFFFFFFFC;
 			pci_conf_write(pc, pa->pa_tag, pmreg + 4, command);
 
@@ -216,7 +216,7 @@ rtk_pci_attach(parent, self, aux)
 			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
 			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOMEM, membase);
 			pci_conf_write(pc, pa->pa_tag,
-				       PCI_PRODUCT_DELTA_8139, irq);
+			    PCI_PRODUCT_DELTA_8139, irq);
 		}
 	}
 
@@ -258,6 +258,6 @@ rtk_pci_attach(parent, self, aux)
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
-	
+
 	rtk_attach(sc);
 }
