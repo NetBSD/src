@@ -25,6 +25,7 @@
 
 #include "defs.h"
 #include "inferior.h"
+#include "gdbcore.h"
 
 void
 fetch_inferior_registers (regno)
