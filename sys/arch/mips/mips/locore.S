@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.124.2.1 2001/10/24 17:38:08 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.124.2.2 2001/11/11 03:31:48 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1537,33 +1537,6 @@ _C_LABEL(cpu_id):
 _C_LABEL(fpu_id):
 	.word	0
 
-	.globl	_C_LABEL(mips_L1DCacheSize)
-	.globl	_C_LABEL(mips_L1ICacheSize)
-	.globl	_C_LABEL(mips_L1DCacheLSize)
-	.globl	_C_LABEL(mips_L1ICacheLSize)
-	.globl	_C_LABEL(mips_CacheAliasMask)
-	.globl	_C_LABEL(mips_CachePreferMask)
-	.globl	_C_LABEL(mips_L2CacheSize)
-	.globl	_C_LABEL(mips_L2CacheLSize)
-	.globl	_C_LABEL(mips_L2CachePresent)
-_C_LABEL(mips_L1DCacheSize):
-	.word	0
-_C_LABEL(mips_L1ICacheSize):
-	.word	0
-_C_LABEL(mips_L1DCacheLSize):
-	.word	0
-_C_LABEL(mips_L1ICacheLSize):
-	.word	0
-_C_LABEL(mips_CacheAliasMask):
-	.word 0
-_C_LABEL(mips_CachePreferMask):
-	.word 0
-_C_LABEL(mips_L2CacheSize):
-	.word	0
-_C_LABEL(mips_L2CacheLSize):
-	.word	0
-_C_LABEL(mips_L2CachePresent):
-	.word	0
 #ifdef MIPS_DYNAMIC_STATUS_MASK
 	.globl	_C_LABEL(mips_dynamic_status_mask)
 _C_LABEL(mips_dynamic_status_mask):
