@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.4 1996/03/27 10:20:48 leo Exp $	*/
+/*	$NetBSD: vectors.s,v 1.5 1996/11/09 22:24:52 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -35,7 +35,7 @@
  *
  *	@(#)vectors.s	7.2 (Berkeley) 5/7/91
  */
-	.text
+	.data
 	.globl	_buserr,_addrerr
 	.globl	_illinst,_zerodiv,_chkinst,_trapvinst,_privinst,_trace
 	.globl	_badtrap
@@ -44,6 +44,7 @@
 	.globl	_trap0,_trap1,_trap2,_trap15
 	.globl	_fpfline, _fpunsupp, _fpfault
 	.globl	_trap12, _badmfpint
+	.globl	_autovects, _uservects
 
 Lvectab:
 	.long	0x4ef80400	| 0: jmp 0x400:w (unused reset SSP)
@@ -71,6 +72,7 @@ Lvectab:
 	.long	_badtrap	| 22: unassigned, reserved
 	.long	_badtrap	| 23: unassigned, reserved
 	.long	_spurintr	| 24: spurious interrupt
+_autovects:
 	.long	_lev1intr	| 25: level 1 interrupt autovector
 	.long	_lev2intr	| 26: level 2 interrupt autovector
 	.long	_lev3intr	| 27: level 3 interrupt autovector
@@ -125,6 +127,7 @@ Lvectab:
 	.long	_badtrap	| 62: unassigned, reserved
 	.long	_badtrap	| 63: unassigned, reserved
 
+_uservects:
 	/*
 	 * MFP 1 auto vectors (ipl 6)
 	 */
