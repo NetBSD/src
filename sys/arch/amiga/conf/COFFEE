@@ -1,4 +1,4 @@
-#	$NetBSD: COFFEE,v 1.6 1995/08/19 23:57:19 chopps Exp $
+#	$NetBSD: COFFEE,v 1.7 1995/08/20 15:08:19 chopps Exp $
 
 #
 # COFFEE - GENERIC but with GATEWAY and DEBUG
@@ -191,6 +191,7 @@ sd*	at scsibus? target ? lun ?	# scsi disks
 st*	at scsibus? target ? lun ?	# scsi tapes
 cd*	at scsibus? target ? lun ?	# scsi cd's
 
+pseudo-device	ccd 4			# concat disks
 pseudo-device	sl			# slip
 pseudo-device	ppp			# ppp
 pseudo-device	view 10			# views
