@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2000/09/13 15:00:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2000/11/27 08:53:55 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -629,7 +629,7 @@ consinit()
 	if (!strcmp(consinfo->devname, "fb")) {
 		pfb_cnattach(consinfo->addr);
 #if (NPCKBC > 0)
-		pckbc_cnattach(PREP_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		pckbc_cnattach(&prep_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -639,7 +639,7 @@ consinit()
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(PREP_BUS_SPACE_IO, PREP_BUS_SPACE_MEM,
+		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag,
 				-1, 1))
 			goto dokbd;
 #endif
@@ -648,7 +648,7 @@ consinit()
 #endif
 dokbd:
 #if (NPCKBC > 0)
-		pckbc_cnattach(PREP_BUS_SPACE_IO, IO_KBD, KBCMDP,
+		pckbc_cnattach(&prep_isa_io_space_tag, IO_KBD, KBCMDP,
 		    PCKBC_KBD_SLOT);
 #endif
 		return;
@@ -657,7 +657,7 @@ dokbd:
 
 #if (NCOM > 0)
 	if (!strcmp(consinfo->devname, "com")) {
-		bus_space_tag_t tag = PREP_BUS_SPACE_IO;
+		bus_space_tag_t tag = &prep_isa_io_space_tag;
 
 		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
 		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
