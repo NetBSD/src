@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_add.1,v 1.19.4.3 2001/05/01 10:54:09 he Exp $
+.\" $NetBSD: pkg_add.1,v 1.19.4.4 2002/02/23 18:02:15 he Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -18,7 +18,7 @@
 .\"     @(#)pkg_add.1
 .\"
 .Dd March 12, 2001
-.Dt pkg_add 1
+.Dt PKG_ADD 1
 .Os
 .Sh NAME
 .Nm pkg_add
@@ -26,6 +26,9 @@
 .Sh SYNOPSIS
 .Nm ""
 .Op Fl fIMnRSuVv
+.Bk -words
+.Op Fl s Ar verification-type
+.Ek
 .Bk -words
 .Op Fl t Ar template
 .Ek
@@ -55,6 +58,9 @@ attacks from miscreants who create dangerous package files.
 .Pp
 You are advised to verify the competence and identity of those who
 provide installable package files.  For extra protection, use the
+digital signatures provided where possible (see the
+.Fl s
+option), or, failing that, use the
 .Fl M
 flag to extract the package file, and inspect its contents and scripts
 to ensure it poses no danger to your system's integrity.  Pay particular
@@ -71,7 +77,6 @@ directives, and/or use the
 .Xr pkg_info 1
 command to examine the package file.
 .Ef
-
 .Sh OPTIONS
 The following command line arguments are supported:
 .Bl -tag -width indent
@@ -160,6 +165,27 @@ expects the release contents to be already extracted and waiting
 in the staging area, the location of which is read as a string
 from stdin.  The complete packing list is also read from stdin,
 and the contents then acted on as normal.
+.It Fl s Ar verification-type
+Use a callout to an external program to verify the binary package
+being installed against an existing detached signature file.
+The signature file must reside in the same directory
+as the binary package.
+At the present time, the following verification types
+are defined: none, gpg and pgp5.
+The signature will be verified at install time, and the results
+will be displayed. If the signature type is anything other than
+none, the user will be asked if
+.Nm
+should proceed to install the binary package. The user must then
+take the decision whether to proceed or not, depending upon the
+amount of trust that is placed in the signatory of the binary
+package.
+Please note that, at the current time, it is not possible to use
+the verification feature when using
+.Nm
+to add a binary package via a URL - the package, and the related
+detached signature file, must be local
+for the verification to work.
 .It Fl t Ar template
 Use
 .Ar template
@@ -219,7 +245,7 @@ extracts each package's "packing list"
 into a special staging directory in /tmp (or $PKG_TMPDIR if set)
 and then runs through the following sequence to fully extract the contents
 of the package:
-.Bl -enum -indent indent
+.Bl -enum -offset indent
 .It
 A check is made to determine if the package or another version of it
 is already recorded as installed.
@@ -347,11 +373,11 @@ after the package has been installed.
 After installation is complete, a copy of the packing list,
 .Ar deinstall
 script, description, and display files are copied into
-.Pa /var/db/pkg/<pkg-name>
+.Pa /var/db/pkg/\*[Lt]pkg-name\*[Gt]
 for subsequent possible use by
 .Xr pkg_delete 1 .
 Any package dependencies are recorded in the other packages'
-.Pa /var/db/pkg/<other-pkg>/+REQUIRED_BY
+.Pa /var/db/pkg/\*[Lt]other-pkg\*[Gt]/+REQUIRED_BY
 file
 (if the environment variable PKG_DBDIR is set, this overrides the
 .Pa /var/db/pkg/
@@ -386,7 +412,7 @@ The value of the
 is used if a given package can't be found, it's usually set to
 .Pa /usr/pkgsrc/packages/All .
 The environment variable
-should be a series of entries seperated by semicolons.  Each entry
+should be a series of entries separated by semicolons.  Each entry
 consists of a directory name or URL. The current directory may be indicated
 implicitly by an empty directory name, or explicitly by a single
 period. FTP URLs may not end with a slash.
@@ -419,7 +445,7 @@ emits more messages to terminal.
 .Ed
 .Pp
 You can grab a compiled binary package from remote location, by specifying
-an URL.
+a URL.
 The URL can be put into an environment variable,
 .Ev PKG_PATH .
 .Bd -literal
