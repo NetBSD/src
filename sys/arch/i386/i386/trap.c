@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.78 1995/04/13 20:48:14 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.79 1995/04/14 23:30:54 mycroft Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -665,7 +665,6 @@ syscall(frame)
 			break;
 #endif
 #ifdef COMPAT_IBCS2
-		case EMUL_IBCS2:
 		case EMUL_IBCS2:
 			error = bsd2ibcs_errno[error];
 			break;
