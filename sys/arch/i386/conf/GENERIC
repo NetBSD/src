@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.114.2.1 1997/10/21 08:20:52 mrg Exp $
+#	$NetBSD: GENERIC,v 1.114.2.2 1997/10/23 06:40:35 mellon Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -61,7 +61,7 @@ options 	DDB		# in-kernel debugger
 #options 	"KGDB_DEVNAME=\"com\"",KGDBADDR=0x3f8,KGDBRATE=9600
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
-# Compatbility options
+# Compatibility options
 options 	COMPAT_NOMID	# compatibility with 386BSD, BSDI, NetBSD 0.8,
 options 	COMPAT_09	# NetBSD 0.9,
 options 	COMPAT_10	# NetBSD 1.0,
@@ -99,6 +99,7 @@ options 	NFSSERVER	# Network File System server
 options 	FIFO		# FIFOs; RECOMMENDED
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -114,7 +115,7 @@ options 	NETATALK	# AppleTalk networking protocols
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
+# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42
 
 # These options enable verbose messages for several subsystems.
@@ -237,7 +238,7 @@ aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha1	at isa? port 0x334 irq ? drq ?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
-bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI
+bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
@@ -273,7 +274,7 @@ wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
 
 # IDE drives
-wd*	at wdc? drive ?			# the drives themsevles
+wd*	at wdc? drive ?			# the drives themselves
 
 # ATAPI bus support
 atapibus* at wdc?
@@ -296,7 +297,7 @@ fd*	at fdc? drive ?			# the drives themselves
 
 # ISA tape devices
 # note: the wt driver conflicts unpleasantly with ed devices at the
-# same I/O address. The probe reprograms their eeproms. Don't
+# same I/O address. The probe reprograms their EEPROMs. Don't
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
@@ -425,6 +426,6 @@ pseudo-device	tun		2	# network tunneling over tty
 pseudo-device	pty		64	# pseudo-terminals
 pseudo-device	tb		1	# tablet line discipline
 
-# rnd is EXTERIMENTAL at this point.
+# rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
