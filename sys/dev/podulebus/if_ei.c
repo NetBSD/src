@@ -1,4 +1,4 @@
-/* $NetBSD: if_ei.c,v 1.3 2001/11/13 13:32:35 lukem Exp $ */
+/* $NetBSD: if_ei.c,v 1.4 2001/12/21 22:33:28 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 Ben Harris
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.3 2001/11/13 13:32:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ei.c,v 1.4 2001/12/21 22:33:28 bjh21 Exp $");
 
 #include <sys/param.h>
 
@@ -206,8 +206,7 @@ ei_hwreset(struct ie_softc *sc_ie, int why)
 {
 	struct ei_softc *sc = (struct ei_softc *)sc_ie;
 
-	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h,
-			  EI_CONTROL, EI_CTL_RESET);
+	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, EI_CTL_RST);
 	DELAY(1000);
 	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, 0);
 	DELAY(1000);
@@ -233,7 +232,7 @@ ei_attn(struct ie_softc *sc_ie, int why)
 {
 	struct ei_softc *sc = (void *)sc_ie;
 
-	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, EI_CTL_ATTN);
+	bus_space_write_1(sc->sc_ctl_t, sc->sc_ctl_h, EI_CONTROL, EI_CTL_CA);
 }
 
 /*
