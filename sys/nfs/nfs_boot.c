@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.24 1996/02/16 15:18:19 gwr Exp $ */
+/*	$NetBSD: nfs_boot.c,v 1.25 1996/02/18 11:53:41 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -46,7 +46,7 @@
 #include <netinet/if_ether.h>
 
 #include <nfs/rpcv2.h>
-#include <nfs/nfsv2.h>
+#include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
 #include <nfs/nfsdiskless.h>
 #include <nfs/krpc.h>
@@ -103,10 +103,6 @@ static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
 	u_char *fh));
-
-/* other helpers */
-static void get_path_and_handle __P((struct sockaddr_in *bpsin,
-	char *key, struct nfs_dlmount *ndmntp));
 
 char	*nfsbootdevname;
 
@@ -172,7 +168,7 @@ nfs_boot_init(nd, procp)
 	 */
 	if ((error = revarpwhoami(&my_ip, ifp)) != 0)
 		panic("revarp failed, error=%d", error);
-	printf("nfs_boot: client_addr=0x%x\n", ntohl(my_ip.s_addr));
+	printf("nfs_boot: client_addr=0x%x\n", (u_int32_t)ntohl(my_ip.s_addr));
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
@@ -208,7 +204,7 @@ nfs_boot_init(nd, procp)
 	if (error)
 		panic("nfs_boot: bootparam whoami, error=%d", error);
 	printf("nfs_boot: server_addr=0x%x\n",
-		   ntohl(bp_sin.sin_addr.s_addr));
+		   (u_int32_t)ntohl(bp_sin.sin_addr.s_addr));
 	printf("nfs_boot: hostname=%s\n", hostname);
 
 #ifdef	NFS_BOOT_GATEWAY
@@ -271,8 +267,7 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 	 * Get server:pathname for "key" (root or swap)
 	 * using RPC to bootparam/getfile
 	 */
-	error = bp_getfile(bpsin, key, sin,
-	    ndmntp->ndm_host, pathname);
+	error = bp_getfile(bpsin, key, sin, ndmntp->ndm_host, pathname);
 	if (error)
 		panic("nfs_boot: bootparam get %s: %d", key, error);
 
@@ -513,7 +508,7 @@ md_mount(mdsin, path, fhp)
 	/* The RPC structures */
 	struct rdata {
 		u_int32_t errno;
-		u_int8_t  fh[NFS_FHSIZE];
+		u_int8_t  fh[NFSX_V2FH];
 	} *rdata;
 	struct mbuf *m;
 	int error;
@@ -525,7 +520,7 @@ md_mount(mdsin, path, fhp)
 
 	m = xdr_string_encode(path, strlen(path));
 	if (m == NULL)
-		return (ENOMEM);
+		return ENOMEM;
 
 	/* Do RPC to mountd. */
 	error = krpc_call(mdsin, RPCPROG_MNT, RPCMNT_VER1,
@@ -542,14 +537,14 @@ md_mount(mdsin, path, fhp)
 	if (error)
 		goto out;
 
-	/* Have errno==0, so the fh must be there. */
+	 /* Have errno==0, so the fh must be there. */
 	if (m->m_len < sizeof(*rdata)) {
 		m = m_pullup(m, sizeof(*rdata));
 		if (m == NULL)
 			goto bad;
 		rdata = mtod(m, struct rdata *);
 	}
-	bcopy(rdata->fh, fhp, NFS_FHSIZE);
+	bcopy(rdata->fh, fhp, NFSX_V2FH);
 	goto out;
 
 bad:

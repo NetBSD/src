@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.11 1995/12/19 23:07:19 cgd Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.12 1996/02/18 11:53:36 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -97,8 +97,8 @@ struct rpc_call {
 
 struct rpc_reply {
 	u_int32_t rp_xid;		/* request transaction id */
-	int32_t   rp_direction;		/* call direction (1) */
-	int32_t   rp_astatus;		/* accept status (0: accepted) */
+	int32_t  rp_direction;		/* call direction (1) */
+	int32_t  rp_astatus;		/* accept status (0: accepted) */
 	union {
 		u_int32_t rpu_errno;
 		struct {
