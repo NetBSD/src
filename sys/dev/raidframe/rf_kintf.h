@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_kintf.h,v 1.11 2000/03/07 02:28:05 oster Exp $	*/
+/*	$NetBSD: rf_kintf.h,v 1.12 2000/03/07 02:59:50 oster Exp $	*/
 /*
  * rf_kintf.h
  *
@@ -51,5 +51,5 @@ int raidmarkdirty(dev_t dev, struct vnode *b_vp, int);
 void raid_init_component_label __P((RF_Raid_t *, RF_ComponentLabel_t *));
 void rf_print_component_label __P((RF_ComponentLabel_t *));
 void rf_UnconfigureVnodes( RF_Raid_t * );
-
+void rf_close_component( RF_Raid_t *, struct vnode *, int);
 #endif				/* _RF__RF_KINTF_H_ */

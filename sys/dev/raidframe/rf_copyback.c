@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.13 2000/02/23 02:03:03 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.14 2000/03/07 02:59:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -98,6 +98,8 @@ rf_CopybackReconstructedData(raidPtr)
 	struct vattr va;
 	struct proc *proc;
 
+	int ac;
+
 	done = 0;
 	fcol = 0;
 	for (frow = 0; frow < raidPtr->numRow; frow++) {
@@ -126,15 +128,9 @@ rf_CopybackReconstructedData(raidPtr)
 	if (raidPtr->raid_cinfo[frow][fcol].ci_vp != NULL) {
 		printf("Closed the open device: %s\n",
 		    raidPtr->Disks[frow][fcol].devname);
-		if (raidPtr->Disks[frow][fcol].auto_configured == 1) {
-			VOP_CLOSE(raidPtr->raid_cinfo[frow][fcol].ci_vp, 
-				  FREAD, NOCRED, 0);
-			vput(raidPtr->raid_cinfo[frow][fcol].ci_vp);
-		} else {
-			VOP_UNLOCK(raidPtr->raid_cinfo[frow][fcol].ci_vp, 0);
-			(void) vn_close(raidPtr->raid_cinfo[frow][fcol].ci_vp,
-					FREAD | FWRITE, proc->p_ucred, proc);
-		}
+		vp = raidPtr->raid_cinfo[frow][fcol].ci_vp;
+		ac = raidPtr->Disks[frow][fcol].auto_configured;
+		rf_close_component(raidPtr, vp, ac);
 		raidPtr->raid_cinfo[frow][fcol].ci_vp = NULL;
 
 	}

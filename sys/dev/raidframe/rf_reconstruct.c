@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.20 2000/02/25 17:14:18 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.21 2000/03/07 02:59:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -400,6 +400,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	struct vattr va;
 	struct proc *proc;
 	int retcode;
+	int ac;
 
 	lp = raidPtr->Layout.map;
 	if (lp->SubmitReconBuffer) {
@@ -477,16 +478,9 @@ rf_ReconstructInPlace(raidPtr, row, col)
 		if (raidPtr->raid_cinfo[row][col].ci_vp != NULL) {
 			printf("Closed the open device: %s\n",
 			       raidPtr->Disks[row][col].devname);
-			if (raidPtr->Disks[row][col].auto_configured == 1) {
-				VOP_CLOSE(raidPtr->raid_cinfo[row][col].ci_vp, 
-					  FREAD, NOCRED, 0);
-				vput(raidPtr->raid_cinfo[row][col].ci_vp);
-
-			} else {
-				VOP_UNLOCK(raidPtr->raid_cinfo[row][col].ci_vp, 0);
-				(void) vn_close(raidPtr->raid_cinfo[row][col].ci_vp,
-					FREAD | FWRITE, proc->p_ucred, proc);
-			}
+			vp = raidPtr->raid_cinfo[row][col].ci_vp;
+			ac = raidPtr->Disks[row][col].auto_configured;
+			rf_close_component(raidPtr, vp, ac);
 			raidPtr->raid_cinfo[row][col].ci_vp = NULL;
 		}
 		/* note that this disk was *not* auto_configured (any longer)*/
