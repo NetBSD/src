@@ -1,4 +1,4 @@
-/*	$NetBSD: cz.c,v 1.2 2000/05/18 17:55:17 thorpej Exp $	*/
+/*	$NetBSD: cz.c,v 1.3 2000/05/19 06:01:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -1218,7 +1218,7 @@ tiocm_to_cztty(struct cztty_softc *sc, u_long how, int ttybits)
 		break;
 
 	case TIOCMBIS:
-		CLR(sc->sc_chanctl_rs_control, czttybits);
+		SET(sc->sc_chanctl_rs_control, czttybits);
 		break;
 
 	case TIOCMSET:
