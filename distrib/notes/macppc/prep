@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1 1999/04/12 13:46:25 tsubai Exp $
+.\"	$NetBSD: prep,v 1.2 1999/09/15 04:06:00 ross Exp $
 .
 .(Note
 Currently
@@ -8,37 +8,35 @@ requires a dedicated drive when you install it for the first time.  In other
 words,
 .Nx
 \*V
-cannot be installed on the hard drive on which MacOS and/or any other oparating
-systems reside.  This is because of
+cannot be installed on the hard drive on which MacOS and/or any other operating
+system resides.  This is because
 .Nx
 \*V
 currently does not support Apple's Disk Partition Map.
 .Note)
 .Pp
 Before you start, you must choose an installation method.  If your machine has
-an on-borad Ethernet and you have the connection to an NFS server that can
+an on-board Ethernet and you have the connection to an NFS server that can
 provide even ~30M for a diskless-root filesystem, then installation via the net
-is best.  Next best, if you have another machine that is running unix-like
-operating system and has two disk drives (or one, if you live dangerously), is
+is best.  Next best, if you have another machine that is a running unix-like
+operating system and has two disk drives (or one, if you live dangerously) is
 to copy a diskimage onto one drive.  Finally, you can install by using a second
 machine as a helper to prepare a bootable
 .Nx
 \*V
-disk.  If you have only one machine, you can still use floppy to install
+disk.  If you have only one machine, you can still use a floppy to install
 .Nx
 onto your machine.
 .Pp
 If your target is going to run diskless, then installation proceeds as for
 method 1.
 .(Note
-Unfortunately, since iMac lacks to support to boot an operating system other
-than MacOS from its local hard drive, you must choose the method when your
-target is iMac.
+Unfortunately, since the
+iMac lacks support for booting an operating system other
+than MacOS from its local hard drive, you must choose this method when your
+target is the iMac.
 .Note)
 .Pp
-The
 .Nx
-uses the standard sysinst installation utility.  You should examine the guide
-on the
-.Nx
-/
+\*V/macppc
+uses the standard sysinst installation utility.
