@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.51 2002/05/13 21:01:15 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.51.4.1 2002/06/13 02:47:21 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -537,7 +537,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			map->dm_segs[seg].ds_len));
 		map->dm_segs[seg].ds_len =
 		    boundary - (sgstart & (boundary - 1));
-		if (++seg > map->_dm_segcnt) {
+		if (++seg >= map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			DPRINTF(IDB_INFO, ("iommu_dvmamap_load: "
 				"too many segments %d\n", seg));
@@ -789,6 +789,10 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 					(long)map->dm_segs[j].ds_addr, 
 					map->dm_segs[j].ds_len));
 			} else {
+				if (j >= map->_dm_segcnt) {
+					iommu_dvmamap_unload(t, is, map);
+					return (E2BIG);
+				}
 				map->dm_segs[j].ds_addr = sgstart;
 				map->dm_segs[j].ds_len = left;
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
@@ -803,12 +807,12 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 				(sgend & ~(boundary - 1))) {
 				/* Need a new segment. */
 				map->dm_segs[j].ds_len =
-					sgstart & (boundary - 1);
+					boundary - (sgstart & (boundary - 1));
 				DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 					"seg %d start %lx size %lx\n", j,
 					(long)map->dm_segs[j].ds_addr, 
 					map->dm_segs[j].ds_len));
-				if (++j > map->_dm_segcnt) {
+				if (++j >= map->_dm_segcnt) {
 					iommu_dvmamap_unload(t, is, map);
 					return (E2BIG);
 				}
@@ -874,12 +878,12 @@ printf("appending: offset %x pa %lx prev %lx dva %lx prev %lx\n",
 	map->dm_segs[i].ds_addr = sgstart;
 	while ((sgstart & ~(boundary - 1)) != (sgend & ~(boundary - 1))) {
 		/* Oops.  We crossed a boundary.  Split the xfer. */
-		map->dm_segs[i].ds_len = sgstart & (boundary - 1);
+		map->dm_segs[i].ds_len = boundary - (sgstart & (boundary - 1));
 		DPRINTF(IDB_INFO, ("iommu_dvmamap_load_raw: "
 			"seg %d start %lx size %lx\n", i,
 			(long)map->dm_segs[i].ds_addr,
 			map->dm_segs[i].ds_len));
-		if (++i > map->_dm_segcnt) {
+		if (++i >= map->_dm_segcnt) {
 			/* Too many segments.  Fail the operation. */
 			s = splhigh();
 			/* How can this fail?  And if it does what can we do? */
