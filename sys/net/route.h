@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.12 1998/04/29 03:41:49 kml Exp $	*/
+/*	$NetBSD: route.h,v 1.13 1998/04/29 17:49:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -37,6 +37,9 @@
 
 #ifndef _NET_ROUTE_H_
 #define _NET_ROUTE_H_
+
+#include <sys/queue.h>
+
 /*
  * Kernel resident routing tables.
  * 
