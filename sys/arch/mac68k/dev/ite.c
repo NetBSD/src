@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.43 1998/05/02 16:45:29 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.44 1998/07/01 14:49:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,8 @@
  *   -- Brad and Lawrence, June 26th, 1994
  *
  */
+
+#include "opt_grf.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

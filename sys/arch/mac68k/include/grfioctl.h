@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.5 1995/07/02 05:26:45 briggs Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.6 1998/07/01 14:49:08 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,11 +66,13 @@ struct grfmodes {
  * BSD ioctls (first few match HP/UX ioctl()s.  In case we want
  * compatibility later, start our own at 16).
  */
-#define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
 #define	GRFIOCON	_IO('G', 1)		/* turn graphics on */
 #define	GRFIOCOFF	_IO('G', 2)		/* turn graphics off */
+#ifdef GRF_COMPAT
+#define	GRFIOCGINFO	_IOR('G', 0, struct grfinfo) /* get info on device */
 #define GRFIOCMAP	_IOWR('G', 5, int)	/* map in regs+framebuffer */
 #define GRFIOCUNMAP	_IOW('G', 6, int)	/* unmap regs+framebuffer */
+#endif /* GRF_COMPAT */
 
 #define GRFIOCLISTMODES	_IOWR('G', 16, struct grfmodes) /* Get list of modes */
 #define GRFIOCGETMODE	_IOR('G', 17, int)	/* Get list of modes */
