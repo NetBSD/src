@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.15 2002/03/05 21:29:30 wiz Exp $	*/
+/*	$NetBSD: names.c,v 1.16 2002/03/06 13:45:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: names.c,v 1.15 2002/03/05 21:29:30 wiz Exp $");
+__RCSID("$NetBSD: names.c,v 1.16 2002/03/06 13:45:51 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: names.c,v 1.15 2002/03/05 21:29:30 wiz Exp $");
 #include "rcv.h"
 #include "extern.h"
 
-extern char *tempEdit;
+extern char *tmpdir;
 
 /*
  * Allocate a single element of a name list,
@@ -214,12 +214,13 @@ yankword(char *ap, char wbuf[])
 struct name *
 outof(struct name *names, FILE *fo, struct header *hp)
 {
-	int c;
+	int c, fd;
 	struct name *np, *begin;
 	time_t now;
 	char *date, *fname;
 	FILE *fout, *fin;
 	int ispipe;
+	char tempname[PATHSIZE];
 
 	begin = names;
 	np = names;
@@ -242,15 +243,20 @@ outof(struct name *names, FILE *fo, struct header *hp)
 		 */
 
 		if (image < 0) {
-			if ((fout = Fopen(tempEdit, "a")) == NULL) {
-				warn("%s", tempEdit);
+			(void)snprintf(tempname, sizeof(tempname),
+			    "%s/mail.ReXXXXXXXXXXXX", tmpdir);
+			if ((fd = mkstemp(tempname)) == -1 ||
+			    (fout = Fdopen(fd, "a")) == NULL) {
+				if (fd != -1)
+					close(fd);
+				warn("%s", tempname);
 				senderr++;
 				goto cant;
 			}
-			image = open(tempEdit, 2);
-			(void)unlink(tempEdit);
+			image = open(tempname, 2);
+			(void)unlink(tempname);
 			if (image < 0) {
-				warn("%s", tempEdit);
+				warn("%s", tempname);
 				senderr++;
 				(void)Fclose(fout);
 				goto cant;
@@ -264,7 +270,7 @@ outof(struct name *names, FILE *fo, struct header *hp)
 			(void)putc('\n', fout);
 			(void)fflush(fout);
 			if (ferror(fout)) {
-				warn("%s", tempEdit);
+				warn("%s", tempname);
 				senderr++;
 				(void)Fclose(fout);
 				goto cant;
