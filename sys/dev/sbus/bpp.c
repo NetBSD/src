@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.1 1998/09/21 21:20:47 pk Exp $ */
+/*	$NetBSD: bpp.c,v 1.2 1999/02/28 17:01:49 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -337,8 +337,8 @@ bppwrite(dev, uio, flags)
 			tcr = bus_space_read_1(lsi->sc_bustag, lsi->sc_regs,
 						L64854_REG_TCR);
 			tcr &= ~BPP_TCR_DIR;
-			bus_space_write_2(lsi->sc_bustag, lsi->sc_regs,
-					L64854_REG_ICR, tcr);
+			bus_space_write_1(lsi->sc_bustag, lsi->sc_regs,
+					  L64854_REG_TCR, tcr);
 
 			/* Enable DMA */
 			DMA_GO(lsi);
