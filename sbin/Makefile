@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.4.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.15 1994/03/30 09:30:37 cgd Exp $
+#	$Id: Makefile,v 1.16 1994/04/22 00:09:02 cgd Exp $
 
 # Not ported: XNSrouted enpload
 # Missing: icheck ncheck
@@ -12,9 +12,11 @@ SUBDIR=	badsect clri disklabel dmesg dump dumpfs fastboot fsck \
 	shutdown slattach swapon ttyflags tunefs umount
 
 .if   make(clean) || make(cleandir)
-SUBDIR+= fdisk
+SUBDIR+= bim fdisk
 .elif ${MACHINE} == "i386"
 SUBDIR+= fdisk
+.elif ${MACHINE} == "pc532"
+SUBDIR+= bim
 .endif
 
 .include <bsd.subdir.mk>
