@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.10 2001/12/28 06:12:20 nathanw Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.11 2002/03/25 21:48:57 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -186,7 +186,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	/*
 	 * Build context to run handler in.
 	 */
-	tf->fixreg[1] = (int)sp;
+	tf->fixreg[1] = (int)((struct saframe *)sp - 1);
 	tf->lr = (int)upcall;
 	tf->fixreg[3] = (int)type;
 	tf->fixreg[4] = (int)sas;
