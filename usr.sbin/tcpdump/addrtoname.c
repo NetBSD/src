@@ -21,7 +21,7 @@
  *  Internet, ethernet, port, and protocol string to address
  *  and address to string conversion routines
  * 
- * $Id: addrtoname.c,v 1.1 1993/11/14 21:19:55 deraadt Exp $
+ * $Id: addrtoname.c,v 1.2 1994/12/23 17:05:58 cgd Exp $
  */
 #ifndef lint
 static char rcsid[] =
@@ -29,6 +29,7 @@ static char rcsid[] =
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <strings.h>
 #include <ctype.h>
 #include <sys/types.h>
