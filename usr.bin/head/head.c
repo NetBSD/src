@@ -1,4 +1,4 @@
-/*	$NetBSD: head.c,v 1.8 1997/10/19 02:23:45 lukem Exp $	*/
+/*	$NetBSD: head.c,v 1.9 1998/01/27 17:00:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: head.c,v 1.8 1997/10/19 02:23:45 lukem Exp $");
+__RCSID("$NetBSD: head.c,v 1.9 1998/01/27 17:00:19 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,8 @@ __RCSID("$NetBSD: head.c,v 1.8 1997/10/19 02:23:45 lukem Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,12 +65,12 @@ __RCSID("$NetBSD: head.c,v 1.8 1997/10/19 02:23:45 lukem Exp $");
  * Bill Joy UCB August 24, 1977
  */
 
-void head __P((FILE *, int));
+void head __P((FILE *, long));
 void obsolete __P((char *[]));
 void usage __P((void));
 int main __P((int, char *[]));
 
-int eval;
+int eval = 0;
 
 int
 main(argc, argv)
@@ -77,17 +79,22 @@ main(argc, argv)
 {
 	int ch;
 	FILE *fp;
-	int first, linecnt;
+	int first;
+	long linecnt;
 	char *ep;
 
+	(void)setlocale(LC_ALL, "");
 	obsolete(argv);
 	linecnt = 10;
 	while ((ch = getopt(argc, argv, "n:")) != -1)
 		switch(ch) {
 		case 'n':
 			linecnt = strtol(optarg, &ep, 10);
-			if (*ep || linecnt <= 0)
+			if ((linecnt == LONG_MIN || linecnt == LONG_MAX) &&
+			    errno == ERANGE)
 				err(1, "illegal line count -- %s", optarg);
+			else if (*ep || linecnt <= 0)
+				errx(1, "illegal line count -- %s", optarg);
 			break;
 
 		case '?':
@@ -100,7 +107,8 @@ main(argc, argv)
 	if (*argv)
 		for (first = 1; *argv; ++argv) {
 			if ((fp = fopen(*argv, "r")) == NULL) {
-				err(0, "%s: %s", *argv, strerror(errno));
+				warn("%s", *argv);
+				eval = 1;
 				continue;
 			}
 			if (argc > 1) {
@@ -119,14 +127,14 @@ main(argc, argv)
 void
 head(fp, cnt)
 	FILE *fp;
-	int cnt;
+	long cnt;
 {
 	int ch;
 
 	while (cnt--)
 		while ((ch = getc(fp)) != EOF) {
 			if (putchar(ch) == EOF)
-				err(1, "stdout: %s", strerror(errno));
+				err(1, "stdout");
 			if (ch == '\n')
 				break;
 		}
@@ -143,7 +151,11 @@ obsolete(argv)
 		if (ap[0] != '-' || ap[1] == '-' || !isdigit(ap[1]))
 			return;
 		if ((ap = malloc(strlen(*argv) + 2)) == NULL)
-			err(1, "%s", strerror(errno));
+#ifdef __GNUC__			
+			err(1, "%s", "");
+#else
+			err(1, NULL);
+#endif		
 		ap[0] = '-';
 		ap[1] = 'n';
 		(void)strcpy(ap + 2, *argv + 1);
