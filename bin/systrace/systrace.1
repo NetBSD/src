@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.15 2002/10/11 23:31:00 provos Exp $
+.\"	$NetBSD: systrace.1,v 1.16 2002/10/16 14:58:33 itojun Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -243,7 +243,8 @@ The effective
 and
 .Va gid
 are elevated only for the duration of the system call, and are restored
-to the old values afterwards.  The only exception are the
+to the old values afterwards.
+The only exception are the
 .Va seteuid
 or
 .Va setegid
