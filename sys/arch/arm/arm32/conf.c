@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 2002/07/20 00:26:51 simonb Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 2002/07/22 01:12:24 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -481,7 +481,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lpt_init(NULPT,ulpt),		/* 66: USB printer */
 	cdev_lkm_dummy(),			/* 67: reserved */
 	cdev_lkm_dummy(),			/* 68: reserved */
-	cdev_tty_init(NIXPCOM,ixpcom),		/* 69: IXP1200 serial port */
+	cdev_lkm_dummy(),			/* 69: reserved */
 	cdev_scsibus_init(NSCSIBUS,scsibus),	/* 70: SCSI bus */
 	cdev_disk_init(NRAID,raid),    		/* 71: RAIDframe disk driver */
 	cdev_ugen_init(NUGEN,ugen),		/* 72: USB generic driver */
@@ -516,6 +516,7 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),				/* 98: system call tracing */
 #endif
 	cdev__oci_init(NKTTCP,kttcp),		/* 99: kernel ttcp helper */
+	cdev_tty_init(NIXPCOM,ixpcom),		/* 100: IXP1200 serial port */
 };
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
