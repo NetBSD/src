@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.55 2003/01/31 23:28:30 thomas Exp $ */
+/* $NetBSD: wsconsio.h,v 1.56 2003/02/09 10:29:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -331,7 +331,7 @@ struct wsdisplay_cursor {
  * XXX to be changed without care about backwards compatibility!
  */
 struct wsdisplay_font {
-	char *name;
+	const char *name;
 	int firstchar, numchars;
 	int encoding;
 #define WSDISPLAY_FONTENC_ISO 0
@@ -345,7 +345,7 @@ struct wsdisplay_font {
 #define	WSDISPLAY_FONTORDER_KNOWN 0		/* i.e, no need to convert */
 #define	WSDISPLAY_FONTORDER_L2R 1
 #define	WSDISPLAY_FONTORDER_R2L 2
-	void *data;
+	const void *data;
 };
 #define WSDISPLAYIO_LDFONT	_IOW('W', 77, struct wsdisplay_font)
 

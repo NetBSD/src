@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.30 2003/01/12 13:12:42 tsutsui Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.31 2003/02/09 10:29:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.30 2003/01/12 13:12:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.31 2003/02/09 10:29:38 jdolecek Exp $");
 
 #include "opt_wsfont.h"
 
@@ -271,7 +271,7 @@ wsfont_revbyte(struct wsdisplay_font *font)
 }
 
 void
-wsfont_enum(void (*cb)(char *, int, int, int))
+wsfont_enum(void (*cb)(const char *, int, int, int))
 {
 	struct wsdisplay_font *f;
 	struct font *ent;
@@ -318,7 +318,7 @@ wsfont_find0(int cookie, int mask)
 }
 
 int
-wsfont_matches(struct wsdisplay_font *font, char *name,
+wsfont_matches(struct wsdisplay_font *font, const char *name,
 	       int width, int height, int stride)
 {
 
@@ -338,7 +338,7 @@ wsfont_matches(struct wsdisplay_font *font, char *name,
 }
 
 int
-wsfont_find(char *name, int width, int height, int stride, int bito, int byteo)
+wsfont_find(const char *name, int width, int height, int stride, int bito, int byteo)
 {
 	struct font *ent;
 
@@ -363,17 +363,21 @@ wsfont_add0(struct wsdisplay_font *font, int copy)
 		ent->font = font;
 		ent->flags = WSFONT_STATIC;
 	} else {
+		void *data;
+		char *name;
+
 		ent->font = malloc(sizeof(struct wsdisplay_font), M_DEVBUF,
 		    M_WAITOK);
 		memcpy(ent->font, font, sizeof(*ent->font));
 
 		size = font->fontheight * font->numchars * font->stride;
-		ent->font->data = malloc(size, M_DEVBUF, M_WAITOK);
-		memcpy(ent->font->data, font->data, size);
+		data = malloc(size, M_DEVBUF, M_WAITOK);
+		memcpy(data, font->data, size);
+		ent->font->data = data;
 
-		ent->font->name = malloc(strlen(font->name) + 1, M_DEVBUF,
-		    M_WAITOK);
-		strcpy(ent->font->name, font->name);
+		name = malloc(strlen(font->name) + 1, M_DEVBUF, M_WAITOK);
+		strcpy(name, font->name);
+		ent->font->name = name;
 	}
 
 	TAILQ_INSERT_TAIL(&list, ent, chain);
@@ -411,8 +415,8 @@ wsfont_remove(int cookie)
 		return (EBUSY);
 
 	if ((ent->flags & WSFONT_STATIC) == 0) {
-		free(ent->font->data, M_DEVBUF);
-		free(ent->font->name, M_DEVBUF);
+		free((void *)ent->font->data, M_DEVBUF);
+		free((void *)ent->font->name, M_DEVBUF);
 		free(ent->font, M_DEVBUF);
 	}
 
