@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.15 1997/05/01 03:34:08 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.16 1997/05/11 19:11:32 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@ struct grfbus_softc {
 	nubus_slot	sc_slot;
 
 	bus_space_tag_t		sc_tag;
+	bus_space_handle_t	sc_handle;
 	bus_space_handle_t	sc_regh;
 	bus_space_handle_t	sc_fbh;
 
@@ -69,7 +70,11 @@ struct grfbus_softc {
 struct grf_softc {
 	struct	device sc_dev;		/* device glue */
 
-	int	sc_flags;		/* software flags */
+	bus_space_tag_t		sc_tag;
+	bus_space_handle_t	sc_handle;
+
+	int	sc_flags;		/* driver flags */
+
 	struct	grfmode *sc_grfmode;	/* forwarded ... */
 	nubus_slot	*sc_slot;
 					/* mode-change on/off/mode function */
@@ -83,7 +88,9 @@ struct grf_softc {
  */
 struct grfbus_attach_args {
 	char	*ga_name;		/* name of semantics to attach */
-	struct	grfmode *ga_grfmode;	/* forwarded ... */
+	bus_space_tag_t ga_tag;		/* forwarded ... */
+	bus_space_handle_t ga_handle;
+	struct grfmode	*ga_grfmode;
 	nubus_slot	*ga_slot;
 	int	(*ga_mode) __P((struct grf_softc *, int, void *));
 	caddr_t	(*ga_phys) __P((struct grf_softc *, vm_offset_t));
