@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.8 1999/09/14 22:25:49 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.9 1999/09/14 23:33:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -101,8 +101,6 @@ struct tulip_pci_softc {
 
 	pci_chipset_tag_t sc_pc;	/* our PCI chipset */
 	pcitag_t sc_pcitag;		/* our PCI tag */
-
-	int	sc_pcidev;		/* PCI device number */
 
 	int	sc_flags;		/* flags; see below */
 
@@ -277,7 +275,8 @@ tlp_pci_check_slaved(psc, shared, slaved)
 			continue;
 		if ((cur->sc_flags & shared) == 0)
 			continue;
-		if (best == NULL || best->sc_pcidev > cur->sc_pcidev)
+		if (best == NULL ||
+		    best->sc_tulip.sc_devno > cur->sc_tulip.sc_devno)
 			best = cur;
 	}
 
@@ -319,7 +318,7 @@ tlp_pci_attach(parent, self, aux)
 	u_int8_t enaddr[ETHER_ADDR_LEN];
 	u_int32_t val;
 
-	psc->sc_pcidev = pa->pa_device;
+	sc->sc_devno = pa->pa_device;
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
@@ -503,7 +502,7 @@ tlp_pci_attach(parent, self, aux)
 		 */
 		if (psc->sc_flags & TULIP_PCI_SLAVEROM)
 			enaddr[5] +=
-			    psc->sc_pcidev - psc->sc_master->sc_pcidev;
+			    sc->sc_devno - psc->sc_master->sc_tulip.sc_devno;
 
 		/*
 		 * All 21040 boards start out with the same
