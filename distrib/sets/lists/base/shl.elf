@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.94 2005/01/11 20:15:21 tron Exp $
+# $NetBSD: shl.elf,v 1.95 2005/01/11 22:26:44 tron Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so					base-sys-shlib
 ./lib/libc.so.12				base-sys-shlib
@@ -122,7 +122,7 @@
 ./usr/lib/libossaudio.so.0			base-sys-shlib
 ./usr/lib/libpam.so				base-sys-shlib		pam
 ./usr/lib/libpam.so.0				base-sys-shlib		pam
-./usr/lib/libpcap.so				base-net-shlib		pam
+./usr/lib/libpcap.so				base-net-shlib
 ./usr/lib/libpcap.so.1				base-net-shlib
 ./usr/lib/libpci.so				base-sys-shlib
 ./usr/lib/libpci.so.1				base-sys-shlib
