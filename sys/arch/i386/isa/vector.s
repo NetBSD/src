@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.19 1994/10/09 14:43:00 mycroft Exp $
+ *	$Id: vector.s,v 1.20 1994/10/09 14:45:40 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -238,7 +238,6 @@ _Xresume/**/irq_num/**/:						;\
 	jnz	7b							;\
 	STRAY_TEST							;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
-	DESTROY_FRAME							;\
 	INTREXIT			/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
 	pushl	$irq_num						;\
@@ -247,7 +246,6 @@ IDTVEC(stray/**/irq_num)						;\
 	jmp	5b							;\
 IDTVEC(hold/**/irq_num)							;\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
-	DESTROY_FRAME							;\
 	INTRFASTEXIT
 
 #if defined(DEBUG) && defined(notdef)
@@ -266,13 +264,10 @@ IDTVEC(hold/**/irq_num)							;\
 
 #ifdef DDB
 #define	MAKE_FRAME \
-	subl	$8,%esp							;\
-	movl	%esp,%ebp
-#define	DESTROY_FRAME \
-	addl	$8,%esp
+	movl	%esp,%ebp						;\
+	subl	$8,%ebp
 #else /* !DDB */
 #define	MAKE_FRAME
-#define	DESTROY_FRAME
 #endif /* DDB */
 
 INTR(0, IO_ICU1, ENABLE_ICU1)
