@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.22 2003/08/07 10:04:13 agc Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.23 2005/01/20 15:55:01 xtraeme Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.22 2003/08/07 10:04:13 agc Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.23 2005/01/20 15:55:01 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,6 @@ struct nlist nl[] = {
 };
 #endif
 
-int	main(int, char *[]);
 void	usage(void);
 
 #define	KREAD(addr, var) \
