@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.26 2002/01/10 03:25:12 lukem Exp $	*/
+/*	$NetBSD: dd.c,v 1.27 2002/09/01 11:33:22 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.26 2002/01/10 03:25:12 lukem Exp $");
+__RCSID("$NetBSD: dd.c,v 1.27 2002/09/01 11:33:22 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,6 +360,10 @@ dd_close(void)
 	}
 	if (out.dbcnt)
 		dd_out(1);
+	if (out.fd == STDOUT_FILENO && fsync(out.fd) == -1)
+		err(1, "fsync stdout");
+	if (close(out.fd) == -1)
+		err(1, "close");
 }
 
 void
