@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.7 2002/08/20 13:56:50 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.8 2002/09/19 14:39:51 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)process.c	8.2 (Berkeley) 11/16/93";
 #else
-__RCSID("$NetBSD: process.c,v 1.7 2002/08/20 13:56:50 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.8 2002/09/19 14:39:51 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,27 +79,27 @@ process_request(mp, rp)
 	rp->vers = TALK_VERSION;
 	rp->type = mp->type;
 	rp->id_num = htonl(0);
+	mp->id_num = ntohl(mp->id_num);
+	mp->addr.sa_family = ntohs(mp->addr.sa_family);
+	mp->ctl_addr.sa_family = ntohs(mp->ctl_addr.sa_family);
+	mp->pid = ntohl(mp->pid);
 	if (mp->vers != TALK_VERSION) {
 		syslog(LOG_WARNING, "Bad protocol version %d", mp->vers);
 		rp->answer = BADVERSION;
 		return;
 	}
-	mp->id_num = ntohl(mp->id_num);
-	mp->addr.sa_family = ntohs(mp->addr.sa_family);
 	if (mp->addr.sa_family != AF_INET) {
 		syslog(LOG_WARNING, "Bad address, family %d",
 		    mp->addr.sa_family);
 		rp->answer = BADADDR;
 		return;
 	}
-	mp->ctl_addr.sa_family = ntohs(mp->ctl_addr.sa_family);
 	if (mp->ctl_addr.sa_family != AF_INET) {
 		syslog(LOG_WARNING, "Bad control address, family %d",
 		    mp->ctl_addr.sa_family);
 		rp->answer = BADCTLADDR;
 		return;
 	}
-	mp->pid = ntohl(mp->pid);
 	if (debug || logging)
 		print_request("request", mp);
 	switch (mp->type) {
@@ -150,7 +150,7 @@ do_announce(mp, rp)
 	int result;
 
 	/* see if the user is logged */
-	result = find_user(mp->r_name, mp->r_tty);
+	result = find_user(mp->r_name, mp->r_tty, sizeof(mp->r_tty));
 	if (result != SUCCESS) {
 		rp->answer = result;
 		return;
@@ -187,8 +187,9 @@ do_announce(mp, rp)
  * Search utmp for the local user
  */
 int
-find_user(name, tty)
+find_user(name, tty, ttysize)
 	char *name, *tty;
+	size_t ttysize;
 {
 	int status;
 	struct stat statb;
@@ -200,7 +201,7 @@ find_user(name, tty)
 	(void)getutentries(NULL, &ep);
 
 	status = NOT_HERE;
-	(void) strcpy(ftty, _PATH_DEV);
+	(void) strlcpy(ftty, _PATH_DEV, sizeof(ftty));
 
 	if (*tty == '\0')
 		anytty = 1;
@@ -212,17 +213,18 @@ find_user(name, tty)
 			/* no particular tty was requested */
 			/* XXX strcpy is safe */
 			(void)strcpy(ftty + sizeof(_PATH_DEV) - 1, ep->line);
-			if (stat(ftty, &statb) == 0) {
-				if (!(statb.st_mode & S_IWGRP)) {
-					if (status != SUCCESS)
-						status = PERMISSION_DENIED;
-					continue;
-				}
-				if (statb.st_atime > atime) {
-					atime = statb.st_atime;
-					(void)strcpy(tty, ep->line);
-					status = SUCCESS;
-				}
+			if (stat(ftty, &statb) != 0)
+				continue;
+
+			if (!(statb.st_mode & S_IWGRP)) {
+				if (status != SUCCESS)
+					status = PERMISSION_DENIED;
+				continue;
+			}
+			if (statb.st_atime > atime &&
+			    strlcpy(tty, ep->line, ttysize) < ttysize) {
+				atime = statb.st_atime;
+				status = SUCCESS;
 			}
 		} else if (strcmp(ep->line, tty) == 0) {
 			status = SUCCESS;
