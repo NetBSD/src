@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2002/06/26 01:10:20 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2002/07/03 20:41:20 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2688,9 +2688,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	kernelstart = trunc_page(kernelstart);
 	kernelend = round_page(kernelend);
 	for (mp = avail, i = 0; i < avail_cnt; i++, mp++) {
-		mp->start = round_page(mp->start);
+		s = round_page(mp->start);
+		mp->size -= (s - mp->start);
 		mp->size = trunc_page(mp->size);
-		s = mp->start;
+		mp->start = s;
 		e = mp->start + mp->size;
 
 		DPRINTFN(BOOT,
