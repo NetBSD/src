@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.60 2005/02/14 16:16:24 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.61 2005/02/16 08:35:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.60 2005/02/14 16:16:24 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.61 2005/02/16 08:35:26 agc Exp $");
 #endif
 #endif
 
@@ -168,7 +168,7 @@ pkg_do(char *pkg)
 		char    tmp[MaxPathSize];
 
 		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
-		show_index(tmp, COMMENT_FNAME);
+		show_index(pkg, tmp, COMMENT_FNAME);
 	} else if (Flags & SHOW_BI_VAR) {
 		show_var(BUILD_INFO_FNAME, BuildInfoVariable);
 	} else {
