@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.23 1996/05/27 01:13:02 pk Exp $ */
+/*	$NetBSD: pmap.h,v 1.24 1996/05/27 20:29:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -265,6 +265,9 @@ void		kvm_uncache __P((caddr_t, int));
 struct user;
 void		switchexit __P((vm_map_t, struct user *, int));
 int		mmu_pagein __P((struct pmap *pm, int, int));
+#ifdef DEBUG
+int		mmu_pagein4m __P((struct pmap *pm, int, int));
+#endif
 
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
