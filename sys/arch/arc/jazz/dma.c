@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.6 2001/05/31 20:56:29 soda Exp $	*/
+/*	$NetBSD: dma.c,v 1.7 2001/06/13 15:11:38 soda Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
 
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
-#include <arc/arc/arctype.h>
+#include <arc/jazz/jazziovar.h>
 #include <arc/jazz/jazzdmatlbreg.h>
 #include <arc/jazz/jazzdmatlbvar.h>
 #include <arc/jazz/dma.h>
@@ -71,27 +71,13 @@ void picaDmaReset __P((dma_softc_t *sc));
 void picaDmaEnd __P((dma_softc_t *sc));
 void picaDmaNull __P((dma_softc_t *sc));
 
-extern struct arc_bus_space pica_bus;	/* XXX */
-
 /*
  *  Initialize the dma mapping register area and pool.
  */
 void
 picaDmaInit()
 {
-	switch (cputype) {
-	case ACER_PICA_61:
-	case MAGNUM:
-		jazz_dmatlb_init(&pica_bus, R4030_SYS_TL_BASE);
-		break;
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		jazz_dmatlb_init(&pica_bus, RD94_SYS_TL_BASE);
-		break;
-	}
+	jazz_dmatlb_init(&jazzio_bus, jazzio_conf->jc_dmatlbreg);
 }
 
 /*
@@ -271,18 +257,7 @@ fdc_dma_init(dma_softc_t *sc)
 	sc->intr = (int(*)(struct dma_softc *))picaDmaNull;
 	sc->end = picaDmaEnd;
 
-	switch (cputype) {
-	case NEC_R94:
-	case NEC_RAx94:
-	case NEC_RD94:
-	case NEC_R96:
-	case NEC_JC94:
-		sc->dma_reg = (pDmaReg)RD94_SYS_DMA0_REGS;
-		break;
-	default:
-		sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
-		break;
-	}
+	sc->dma_reg = (pDmaReg)jazzio_conf->jc_fdcdmareg;
 	sc->pte_size = (MAXPHYS / JAZZ_DMA_PAGE_SIZE) + 1;
 	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
 	picaDmaTLBAlloc(sc);
