@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.20 1996/12/23 09:10:05 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.21 1997/05/25 22:46:21 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -15,7 +15,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *      This product includes software developed by Ezra Story, by Kari
- *      Mettinen and by Bernd Ernesti.
+ *      Mettinen, Michael Teske and by Bernd Ernesti.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
@@ -38,18 +38,12 @@
  *
  * Modified for CV64 from
  * Kari Mettinen's Cirrus driver by Michael Teske 10/95
- * For questions mail me at teske@mail.desy.de
  *
  * Thanks to Tekelec Airtronic for providing me with a S3 Trio64 documentation.
  * Thanks to Bernd 'the fabulous bug-finder' Ernesti for bringing my messy
  * source to NetBSD style :)
- *
- * TODO:
- *    Bugfree Hardware Cursor support.
- *    The HWC routines provided here are buggy in 16/24 bit
- *    and may cause a Vertical Bar Crash of the Trio64.
- *    On the other hand it's better to put the routines in the Xserver,
- *    so please _don't_ put CV_HARDWARE_CURSOR in your config file.
+ * Thanks to Harald Koenig for providing information about undocumented
+ * Trio64 Bugs.
  */
 
 #include <sys/param.h>
@@ -58,10 +52,12 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/syslog.h>
 #include <machine/cpu.h>
 #include <dev/cons.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/amiga/device.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
@@ -71,6 +67,7 @@ int	grfcvmatch  __P((struct device *, struct cfdata *, void *));
 void	grfcvattach __P((struct device *, struct device *, void *));
 int	grfcvprint  __P((void *, const char *));
 
+int	cvintr __P((void *));
 static int cv_has_4mb __P((volatile caddr_t));
 static unsigned short cv_compute_clock __P((unsigned long));
 void	cv_boardinit __P((struct grf_softc *));
@@ -90,16 +87,23 @@ static	inline void cv_write_port __P((unsigned short, volatile caddr_t));
 static	inline void cvscreen __P((int, volatile caddr_t));
 static	inline void gfx_on_off __P((int, volatile caddr_t));
 
-#ifdef CV_HARDWARE_CURSOR
+#ifndef CV_NO_HARDWARE_CURSOR
 int	cv_getspritepos __P((struct grf_softc *, struct grf_position *));
 int	cv_setspritepos __P((struct grf_softc *, struct grf_position *));
 int	cv_getspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
-void	cv_setup_hwc __P((struct grf_softc *,
-	unsigned char, unsigned char, unsigned char, unsigned char,
-	const unsigned long *));
+void	cv_setup_hwc __P((struct grf_softc *));
 int	cv_setspriteinfo __P((struct grf_softc *,struct grf_spriteinfo *));
 int	cv_getspritemax  __P((struct grf_softc *,struct grf_position *));
-#endif	/* CV_HARDWARE_CURSOR */
+#endif	/* !CV_NO_HARDWARE_CURSOR */
+
+/*
+ * Extension to grf_softc for interrupt support
+ */
+
+struct grf_cv_softc {
+	struct grf_softc	gcs_sc;
+	struct isr		gcs_isr;
+};
 
 /* Graphics display definitions.
  * These are filled by 'grfconfig' using GRFIOCSETMON.
@@ -249,7 +253,7 @@ long cv_memclk = 50000000;
 
 /* standard driver stuff */
 struct cfattach grfcv_ca = {
-	sizeof(struct grf_softc), grfcvmatch, grfcvattach
+	sizeof(struct grf_cv_softc), grfcvmatch, grfcvattach
 };
 
 struct cfdriver grfcv_cd = {
@@ -257,6 +261,82 @@ struct cfdriver grfcv_cd = {
 };
 static struct cfdata *cfdata;
 
+#define CV_INT_NUM 2	/* CV interrupt Level */
+#define CV_ULCURSOR 1	/* Underlined Cursor in textmode */
+
+#ifndef CV_NO_HARDWARE_CURSOR
+
+#define HWC_OFF (cv_fbsize - 1024*2)
+#define HWC_SIZE 1024
+
+static unsigned short cv_cursor_storage[HWC_SIZE/2];
+static short curs_update_flag = 0;
+
+#endif	/* !CV_NO_HARDWARE_CURSOR */
+
+/*
+ * Interrupt handler
+ * This is used for updating the cursor shape (because it _must not_
+ * be changed while cursor is displayed)
+ * and maybe later to avoid busy waiting
+ * for Vertical Blank and/or gfx engine busy
+ */
+
+int
+cvintr(arg)
+	void * arg;
+{
+#ifndef CV_NO_HARDWARE_CURSOR
+	register unsigned long *csrc, *cdest;
+	int i;
+#endif
+	struct grf_softc *gp = arg;
+	volatile caddr_t ba = gp->g_regkva;
+	unsigned char test;
+	unsigned char cridx; /* Save the cr Register index */
+
+	if (gp == NULL)
+		return 0;
+
+	test = vgar(ba, GREG_INPUT_STATUS0_R);
+
+	if (test & 0x80) { /* VR int pending */
+		/* Save old CR index */
+		cridx = vgar (ba, CRT_ADDRESS);
+#if 0
+		test = RCrt(ba, CRT_ID_END_VER_RETR);
+		/* Clear int (bit 4) */
+		test &= 0xef;
+		WCrt(ba, CRT_ID_END_VER_RETR, test);
+#else
+		vgaw(ba, CRT_ADDRESS, CRT_ID_END_VER_RETR);
+		asm volatile("bclr #4,%0@(0x3d5);nop" : : "a" (ba));
+#endif
+#ifndef CV_NO_HARDWARE_CURSOR
+		/* update the hardware cursor, if necessary */
+		if (curs_update_flag) {
+			csrc = (unsigned long *)cv_cursor_storage;
+			cdest = (unsigned long *)((volatile char *)gp->g_fbkva
+				 + HWC_OFF);
+			for (i = 0; i < HWC_SIZE / sizeof(long); i++)
+				*cdest++ = *csrc++;
+			curs_update_flag = 0;
+		}
+		/* Reenable int */
+#if 0
+		test |= 0x10;
+		WCrt(ba, CRT_ID_END_VER_RETR, test);
+#else
+		/* I don't trust the optimizer here... */
+		asm volatile("bset #4,%0@(0x3d5);nop" : : "a" (ba));
+#endif
+		cv_setspritepos (gp, NULL);
+		vgaw(ba, CRT_ADDRESS, cridx);
+#endif  /* !CV_NO_HARDWARE_CURSOR */
+		return 1;
+	}
+	return 0;
+}
 
 /*
  * Get frambuffer memory size.
@@ -332,9 +412,10 @@ grfcvattach(pdp, dp, auxp)
 	struct device *pdp, *dp;
 	void *auxp;
 {
-	static struct grf_softc congrf;
+	static struct grf_cv_softc congrf;
 	struct zbus_args *zap;
 	struct grf_softc *gp;
+	struct grf_cv_softc *gcp;
 	static char attachflag = 0;
 
 	zap = auxp;
@@ -345,28 +426,29 @@ grfcvattach(pdp, dp, auxp)
 	 */
 
 	if (dp == NULL) /* console init */
-		gp = &congrf;
+		gcp = &congrf;
 	else
-		gp = (struct grf_softc *)dp;
+		gcp = (struct grf_cv_softc *)dp;
 
-	if (dp != NULL && congrf.g_regkva != 0) {
+	gp = &gcp->gcs_sc;
+
+	if (dp != NULL && congrf.gcs_sc.g_regkva != 0) {
 		/*
 		 * inited earlier, just copy (not device struct)
 		 */
 
 		printf("\n");
-#ifdef CV64CONSOLE
-		bcopy(&congrf.g_display, &gp->g_display,
-			(char *) &gp[1] - (char *) &gp->g_display);
-#else
-		gp->g_regkva = (volatile caddr_t)cv_boardaddr + 0x02000000;
-		gp->g_fbkva = (volatile caddr_t)cv_boardaddr + 0x01400000;
+		bcopy(&congrf.gcs_sc.g_display, &gp->g_display,
+			(char *) &gcp->gcs_isr - (char *) &gp->g_display);
 
-		gp->g_unit = GRF_CV64_UNIT;
-		gp->g_mode = cv_mode;
-		gp->g_conpri = grfcv_cnprobe();
-		gp->g_flags = GF_ALIVE;
-#endif
+		/* ... and transfer the isr */
+		gcp->gcs_isr.isr_ipl = CV_INT_NUM;
+		gcp->gcs_isr.isr_intr = cvintr;
+		gcp->gcs_isr.isr_arg = (void *)gp;
+
+		/* First add new isr */
+		add_isr(&gcp->gcs_isr);
+		remove_isr(&congrf.gcs_isr);
 	} else {
 		gp->g_regkva = (volatile caddr_t)cv_boardaddr + 0x02000000;
 		gp->g_fbkva = (volatile caddr_t)cv_boardaddr + 0x01400000;
@@ -375,6 +457,12 @@ grfcvattach(pdp, dp, auxp)
 		gp->g_mode = cv_mode;
 		gp->g_conpri = grfcv_cnprobe();
 		gp->g_flags = GF_ALIVE;
+
+		/* add Interrupt Handler */
+		gcp->gcs_isr.isr_ipl = CV_INT_NUM;
+		gcp->gcs_isr.isr_intr = cvintr;
+		gcp->gcs_isr.isr_arg = (void *)gp;
+		add_isr(&gcp->gcs_isr);
 
 		/* wakeup the board */
 		cv_boardinit(gp);
@@ -390,7 +478,8 @@ grfcvattach(pdp, dp, auxp)
 	 */
 	if (amiga_config_found(cfdata, &gp->g_device, gp, grfcvprint)) {
 		if (dp != NULL)
-			printf("grfcv: CyberVision64 with %dMB being used\n", cv_fbsize/0x100000);
+			printf("grfcv: CyberVision64 with %dMB being used\n",
+			    cv_fbsize/0x100000);
 		attachflag = 1;
 	} else {
 		if (!attachflag)
@@ -490,6 +579,11 @@ cv_boardinit(gp)
 
 	WCrt(ba, CRT_ID_REGISTER_LOCK_1, 0x48);	/* unlock S3 VGA regs */
 	WCrt(ba, CRT_ID_REGISTER_LOCK_2, 0xA5);	/* unlock syscontrol */
+
+	/* Enable board interrupts */
+	cv_write_port(0x8008, ba - 0x02000000);
+	/* Use interrupt #2, not #6! */
+	cv_write_port(0x8080, ba - 0x02000000);
 
 	test = RCrt(ba, CRT_ID_SYSTEM_CONFIG);
 	test = test | 0x01;	/* enable enhaced register access */
@@ -853,7 +947,7 @@ cv_ioctl (gp, cmd, data)
 	void *data;
 {
 	switch (cmd) {
-#ifdef CV_HARDWARE_CURSOR
+#ifndef CV_NO_HARDWARE_CURSOR
 	    case GRFIOCGSPRITEPOS:
 		return(cv_getspritepos (gp, (struct grf_position *) data));
 
@@ -868,14 +962,14 @@ cv_ioctl (gp, cmd, data)
 
 	    case GRFIOCGSPRITEMAX:
 		return(cv_getspritemax (gp, (struct grf_position *) data));
-#else	/* CV_HARDWARE_CURSOR */
+#else	/* !CV_NO_HARDWARE_CURSOR */
 	    case GRFIOCGSPRITEPOS:
 	    case GRFIOCSSPRITEPOS:
 	    case GRFIOCSSPRITEINF:
 	    case GRFIOCGSPRITEINF:
 	    case GRFIOCGSPRITEMAX:
 		break;
-#endif	/* CV_HARDWARE_CURSOR */
+#endif	/* !CV_NO_HARDWARE_CURSOR */
 
 	    case GRFIOCGETCMAP:
 		return (cv_getcmap (gp, (struct grf_colormap *) data));
@@ -1146,6 +1240,11 @@ cv_load_mon(gp, md)
 	ba = gp->g_regkva;
 	fb = gp->g_fbkva;
 
+	/* Disable Interrupts */
+	test = RCrt(ba, CRT_ID_BACKWAD_COMP_1);
+	test &= ~0x10;
+	WCrt(ba, CRT_ID_BACKWAD_COMP_1, test);
+
 	/* turn gfx off, don't mess up the display */
 	gfx_on_off(1, ba);
 
@@ -1277,7 +1376,7 @@ cv_load_mon(gp, md)
 	/* text cursor */
 
 	if (TEXT) {
-#if 1
+#if CV_ULCURSOR
 		WCrt(ba, CRT_ID_CURSOR_START, (md->fy & 0x1f) - 2);
 		WCrt(ba, CRT_ID_CURSOR_END, (md->fy & 0x1f) - 1);
 #else
@@ -1470,11 +1569,27 @@ cv_load_mon(gp, md)
 		}
 	}
 
-	/* Some kind of Magic */
+	/* Set display enable flag */
 	WAttr(ba, 0x33, 0);
 
 	/* turn gfx on again */
 	gfx_on_off(0, ba);
+
+	/* enable interrupts */
+	test = RCrt(ba, CRT_ID_BACKWAD_COMP_1);
+	test |= 0x10;
+	WCrt(ba, CRT_ID_BACKWAD_COMP_1, test);
+
+	test = RCrt(ba, CRT_ID_END_VER_RETR);
+	test &= ~0x20;
+	WCrt(ba, CRT_ID_END_VER_RETR, test);
+	test &= ~0x10;
+	WCrt(ba, CRT_ID_END_VER_RETR, test);
+	test |= 0x10;
+	WCrt(ba, CRT_ID_END_VER_RETR, test);
+#ifndef CV_NO_HARDWARE_CURSOR
+	cv_setup_hwc(gp);
+#endif
 
 	/* Pass-through */
 	cvscreen(0, ba - 0x02000000);
@@ -1597,40 +1712,51 @@ gfx_on_off(toggle, ba)
 }
 
 
-#ifdef CV_HARDWARE_CURSOR
+#ifndef CV_NO_HARDWARE_CURSOR
 
 static unsigned char cv_hotx = 0, cv_hoty = 0;
+static char cv_cursor_on = 0;
 
 /* Hardware Cursor handling routines */
 
 int
-cv_getspritepos (gp, pos)
+cv_getspritepos(gp, pos)
 	struct grf_softc *gp;
 	struct grf_position *pos;
 {
 	int hi,lo;
 	volatile caddr_t ba = gp->g_regkva;
 
-	hi = RCrt (ba, CRT_ID_HWGC_ORIGIN_Y_HI);
-	lo = RCrt (ba, CRT_ID_HWGC_ORIGIN_Y_LO);
+	hi = RCrt(ba, CRT_ID_HWGC_ORIGIN_Y_HI);
+	lo = RCrt(ba, CRT_ID_HWGC_ORIGIN_Y_LO);
 
 	pos->y = (hi << 8) + lo;
-	hi = RCrt (ba, CRT_ID_HWGC_ORIGIN_X_HI);
-	lo = RCrt (ba, CRT_ID_HWGC_ORIGIN_X_LO);
+	hi = RCrt(ba, CRT_ID_HWGC_ORIGIN_X_HI);
+	lo = RCrt(ba, CRT_ID_HWGC_ORIGIN_X_LO);
 	pos->x = (hi << 8) + lo;
 	return (0);
 }
 
 
 int
-cv_setspritepos (gp, pos)
+cv_setspritepos(gp, pos)
 	struct grf_softc *gp;
 	struct grf_position *pos;
 {
 	volatile caddr_t ba = gp->g_regkva;
-	short x = pos->x, y = pos->y;
+	short x, y;
+	static short savex, savey;
 	short xoff, yoff;
 
+	if (pos) {
+		x = pos->x;
+		y = pos->y;
+		savex = x;
+		savey= y;
+	} else { /* restore cursor */
+		x = savex;
+		y = savey;
+	}
 	x -= cv_hotx;
 	y -= cv_hoty;
 	if (x < 0) {
@@ -1647,17 +1773,18 @@ cv_setspritepos (gp, pos)
 		yoff = 0;
 	}
 
-	WCrt (ba, CRT_ID_HWGC_ORIGIN_X_HI, (x >> 8));
-	WCrt (ba, CRT_ID_HWGC_ORIGIN_X_LO, (x & 0xff));
+	WCrt(ba, CRT_ID_HWGC_ORIGIN_X_HI, (x >> 8));
+	WCrt(ba, CRT_ID_HWGC_ORIGIN_X_LO, (x & 0xff));
 
-	WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_LO, (y & 0xff));
-	WCrt (ba, CRT_ID_HWGC_DSTART_X, xoff);
-	WCrt (ba, CRT_ID_HWGC_DSTART_Y, yoff);
-	WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_HI, (y >> 8));
+	WCrt(ba, CRT_ID_HWGC_ORIGIN_Y_LO, (y & 0xff));
+	WCrt(ba, CRT_ID_HWGC_DSTART_X, xoff);
+	WCrt(ba, CRT_ID_HWGC_DSTART_Y, yoff);
+	WCrt(ba, CRT_ID_HWGC_ORIGIN_Y_HI, (y >> 8));
 
 	return(0);
 }
 
+#if 0
 static inline short
 M2I(short val) {
 	asm volatile (" rorw #8,%0   ;                               \
@@ -1665,6 +1792,13 @@ M2I(short val) {
 			rorw #8,%0   ; " : "=d" (val) : "0" (val));
 	return (val);
 }
+#else
+static inline short
+M2I(short val) {
+	return ( ((val & 0xff00) >> 8) | ((val & 0xff) << 8));
+}
+#endif
+
 
 #define M2INS(val)                                                   \
 	asm volatile (" rorw #8,%0   ;                               \
@@ -1672,12 +1806,9 @@ M2I(short val) {
 			rorw #8,%0   ;                               \
 			swap %0      ; " : "=d" (val) : "0" (val));
 
-#define HWC_OFF (cv_fbsize - 1024*2)
-#define HWC_SIZE 1024
-
 
 int
-cv_getspriteinfo (gp, info)
+cv_getspriteinfo(gp, info)
 	struct grf_softc *gp;
 	struct grf_spriteinfo *info;
 {
@@ -1727,40 +1858,48 @@ cv_getspriteinfo (gp, info)
 
 
 void
-cv_setup_hwc (gp, col1, col2, hsx, hsy, data)
+cv_setup_hwc(gp)
 	struct grf_softc *gp;
-	unsigned char col1;
-	unsigned char col2;
-	unsigned char hsx;
-	unsigned char hsy;
-	const unsigned long *data;
 {
 	volatile caddr_t ba = gp->g_regkva;
-	unsigned long *c = (unsigned long *)(gp->g_fbkva + HWC_OFF);
-	const unsigned long *s = data;
+	volatile caddr_t hwc;
 	int test;
 
-	short x = (HWC_SIZE / (4*4)) - 1;
-	/* copy only, if there is a data pointer. */
-	if (data) do {
-		*c++ = *s++;
-		*c++ = *s++;
-		*c++ = *s++;
-		*c++ = *s++;
-	} while (x-- > 0);
+	if (gp->g_display.gd_planes <= 4)
+		cv_cursor_on = 0;	/* don't enable hwc in text modes */
+	if (cv_cursor_on == 0)
+		return;
 
 	/* reset colour stack */
+#if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	asm volatile("nop");
-	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
-	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+#else
+	/* do it in assembler, the above does't seem to work */
+	asm volatile ("moveb #0x45, %1@(0x3d4); \
+		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
+#endif
 	WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
 
+	hwc = ba + CRT_ADDRESS_W;
+	*hwc = 0;
+	*hwc = 0;
+#if 0
 	test = RCrt(ba, CRT_ID_HWGC_MODE);
-	asm volatile("nop");
-	WCrt (ba, CRT_ID_HWGC_BG_STACK, 0x1);
-	WCrt (ba, CRT_ID_HWGC_BG_STACK, 0x1);
-	WCrt (ba, CRT_ID_HWGC_BG_STACK, 0x1);
+#else
+	/* do it in assembler, the above does't seem to work */
+	asm volatile ("moveb #0x45, %1@(0x3d4); \
+		moveb %1@(0x3d5),%0" : "=r" (test) : "a" (ba));
+#endif
+	switch (gp->g_display.gd_planes) {
+	    case 8:
+		WCrt (ba, CRT_ID_HWGC_BG_STACK, 0x1);
+		*hwc = 1;
+		break;
+	    default:
+		WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
+		*hwc = 0xff;
+		*hwc = 0xff;
+	}
 
 	test = HWC_OFF / HWC_SIZE;
 	WCrt (ba, CRT_ID_HWGC_START_AD_HI, (test >> 8));
@@ -1769,13 +1908,22 @@ cv_setup_hwc (gp, col1, col2, hsx, hsy, data)
 	WCrt (ba, CRT_ID_HWGC_DSTART_X , 0);
 	WCrt (ba, CRT_ID_HWGC_DSTART_Y , 0);
 
-	WCrt (ba, CRT_ID_EXT_DAC_CNTL, 0x10); /* Cursor X11 Mode */
+	WCrt (ba, CRT_ID_EXT_DAC_CNTL, 0x10);	/* Cursor X11 Mode */
+	/*
+	 * Put it into Windoze Mode or you'll see sometimes a white stripe
+	 * on the right side (in double clocking modes with a screen bigger
+	 * > 1023 pixels).
+	 */
+	WCrt (ba, CRT_ID_EXT_DAC_CNTL, 0x00);	/* Cursor Windoze Mode */
 
 	WCrt (ba, CRT_ID_HWGC_MODE, 0x01);
 }
 
 
-/* This is the reason why you shouldn't use the HGC in the Kernel:( */
+/*
+ * This was the reason why you shouldn't use the HWC in the Kernel:(
+ * Obsoleted now by use of interrupts :-)
+ */
 
 #define VerticalRetraceWait(ba) \
 { \
@@ -1808,6 +1956,7 @@ cv_setspriteinfo (gp, info)
 		u_char *imp, *mp;
 		unsigned short row;
 
+#ifdef CV_NO_INT
 		/* Cursor off */
 		WCrt (ba, CRT_ID_HWGC_MODE, 0x00);
 
@@ -1826,6 +1975,11 @@ cv_setspriteinfo (gp, info)
 		 * (thanks to Harald Koenig for this tip!)
 		 */
 
+		/*
+		 * Remark 06/06/96: Update in interrupt obsoletes this,
+		 * but the warning should stay there!
+		 */
+
 		VerticalRetraceWait(ba);
 
 		WCrt (ba, CRT_ID_HWGC_ORIGIN_X_HI, 0x7);
@@ -1834,6 +1988,7 @@ cv_setspriteinfo (gp, info)
 		WCrt (ba, CRT_ID_HWGC_DSTART_X, 0x3f);
 		WCrt (ba, CRT_ID_HWGC_DSTART_Y, 0x3f);
 		WCrt (ba, CRT_ID_HWGC_ORIGIN_Y_HI, 0x7);
+#endif	/* CV_NO_INT */
 
 		if (info->size.y > 64)
 			info->size.y = 64;
@@ -1848,11 +2003,14 @@ cv_setspriteinfo (gp, info)
 		copyin(info->image, image, info->size.y * info->size.x / 8);
 		copyin(info->mask, mask, info->size.y * info->size.x / 8);
 
+#ifdef CV_NO_INT
 		hwp = (u_short *)(fb  +HWC_OFF);
 
 		/* This is necessary in order not to crash the board */
-
 		VerticalRetraceWait(ba);
+#else	/* CV_NO_INT */
+		hwp = (u_short *) cv_cursor_storage;
+#endif	/* CV_NO_INT */
 
 		/*
 		 * setting it is slightly more difficult, because we can't
@@ -1864,28 +2022,31 @@ cv_setspriteinfo (gp, info)
 		    row < info->size.y; row++) {
 			u_short im1, im2, im3, im4, m1, m2, m3, m4;
 
-			im1 = *(unsigned short *)imp;
-			imp += 2;
-			m1  = *(unsigned short *)mp;
+			m1  = ~(*(unsigned short *)mp);
+			im1 = *(unsigned short *)imp & *(unsigned short *)mp;
 			mp  += 2;
+			imp += 2;
 
-			im2 = *(unsigned short *)imp;
-			imp += 2;
-			m2  = *(unsigned short *)mp;
+			m2  = ~(*(unsigned short *)mp);
+			im2 = *(unsigned short *)imp & *(unsigned short *)mp;
 			mp  += 2;
+			imp += 2;
 
 			if (info->size.x > 32) {
-				im3 = *(unsigned long *)imp;
-				imp += 4;
-				m3  = *(unsigned long *)mp;
-				mp  += 4;
-				im4 = *(unsigned long *)imp;
-				imp += 4;
-				m4  = *(unsigned long *)mp;
-				mp  += 4;
+				m3  = ~(*(unsigned short *)mp);
+				im3 = *(unsigned short *)imp & *(unsigned short *)mp;
+				mp  += 2;
+				imp += 2;
+				m4  = ~(*(unsigned short *)mp);
+				im4 = *(unsigned short *)imp & *(unsigned short *)mp;
+				mp  += 2;
+				imp += 2;
+			} else {
+				m3  = 0xffff;
+				im3 = 0;
+				m4  = 0xffff;
+				im4 = 0;
 			}
-			else
-				im3 = m3 = im4 = m4 = 0;
 
 			switch (depth) {
 			    case 8:
@@ -1922,43 +2083,66 @@ cv_setspriteinfo (gp, info)
 				break;
 			}
 		}
-		for (; row < 64; row++) {
-			*hwp++ = 0x0000;
-			*hwp++ = 0x0000;
-			*hwp++ = 0x0000;
-			*hwp++ = 0x0000;
-			*hwp++ = 0x0000;
-			*hwp++ = 0x0000;
-			*hwp++ = 0x0000;
-			*hwp++ = 0x0000;
+
+		if (depth < 24) {
+			for (; row < 64; row++) {
+				*hwp++ = 0xffff;
+				*hwp++ = 0x0000;
+				*hwp++ = 0xffff;
+				*hwp++ = 0x0000;
+				*hwp++ = 0xffff;
+				*hwp++ = 0x0000;
+				*hwp++ = 0xffff;
+				*hwp++ = 0x0000;
+			}
+		} else {
+			for (; row < 64; row++) {
+				*hwp++ = 0x0000;
+				*hwp++ = 0xffff;
+				*hwp++ = 0x0000;
+				*hwp++ = 0xffff;
+				*hwp++ = 0x0000;
+				*hwp++ = 0xffff;
+				*hwp++ = 0x0000;
+				*hwp++ = 0xffff;
+			}
 		}
+
 		free(image, M_TEMP);
-		cv_setup_hwc(gp, 1, 0, 0, 0, NULL);
+		/* cv_setup_hwc(gp); */
 		cv_hotx = info->hot.x;
 		cv_hoty = info->hot.y;
 
+#ifdef CV_NO_INT
 		/* One must not write twice per vertical blank :-( */
-		/* VerticalRetraceWait(ba); */
-
+		VerticalRetraceWait(ba);
 		cv_setspritepos (gp, &info->pos);
+#else	/* CV_NO_INT */
+		cv_setspritepos (gp, &info->pos);
+		curs_update_flag = 1;
+#endif	/* CV_NO_INT */
 	}
 	if (info->set & GRFSPRSET_CMAP) {
+		volatile caddr_t hwc;
 		int test;
-
-		VerticalRetraceWait(ba);
 
 		/* reset colour stack */
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
-		asm volatile("nop");
 		switch (depth) {
+		    case 8:
+		    case 15:
+		    case 16:
+			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+			hwc = ba + CRT_ADDRESS_W;
+			*hwc = 0;
+			break;
 		    case 32:
 		    case 24:
 			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
-		    case 16:
-		    case 8:
-			/* info->cmap.green[1] */
-			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
-			WCrt (ba, CRT_ID_HWGC_FG_STACK, 0);
+			hwc = ba + CRT_ADDRESS_W;
+			*hwc = 0;
+			*hwc = 0;
+			break;
 		}
 
 		test = RCrt(ba, CRT_ID_HWGC_MODE);
@@ -1966,24 +2150,32 @@ cv_setspriteinfo (gp, info)
 		switch (depth) {
 		    case 8:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);
-			WCrt (ba, CRT_ID_HWGC_BG_STACK, 1);
+			hwc = ba + CRT_ADDRESS_W;
+			*hwc = 1;
 			break;
-		    case 32: case 24:
-			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
+		    case 15:
 		    case 16:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
+			hwc = ba + CRT_ADDRESS_W;
+			*hwc = 0xff;
+			break;
+		    case 32:
+		    case 24:
 			WCrt (ba, CRT_ID_HWGC_BG_STACK, 0xff);
+			hwc = ba + CRT_ADDRESS_W;
+			*hwc = 0xff;
+			*hwc = 0xff;
+			break;
 		}
 	}
 
 	if (info->set & GRFSPRSET_ENABLE) {
-#if 0
-	if (info->enable)
-		control = 0x85;
-	else
-		control = 0;
-	WSeq(ba, SEQ_ID_CURSOR_CONTROL, control);
-#endif
+		if (info->enable) {
+			cv_cursor_on = 1;
+			cv_setup_hwc(gp);
+			/* WCrt(ba, CRT_ID_HWGC_MODE, 0x01); */
+		} else
+			WCrt(ba, CRT_ID_HWGC_MODE, 0x00);
 	}
 	if (info->set & GRFSPRSET_POS)
 		cv_setspritepos(gp, &info->pos);
@@ -2008,6 +2200,6 @@ cv_getspritemax (gp, pos)
 	return(0);
 }
 
-#endif /* CV_HARDWARE_CURSOR */
+#endif /* !CV_NO_HARDWARE_CURSOR */
 
 #endif  /* NGRFCV */
