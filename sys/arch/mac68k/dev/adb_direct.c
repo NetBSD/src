@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.12 1998/02/23 03:09:40 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.13 1998/03/26 06:25:49 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2385,6 +2385,7 @@ adb_setup_hw_type(void)
 	case 92:	/* LC 575, Performa 575/577/578 */
 	case 94:	/* Quadra 605 */
 	case 98:	/* LC 630, Performa 630, Quadra 630 */
+	case 99:	/* Performa 580(?)/588 */
 		adbHardware = ADB_HW_CUDA;
 		printf_intr("adb: using Cuda series hardware support\n");
 		break;
