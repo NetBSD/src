@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal,v 1.11 2002/05/20 23:48:46 itojun Exp $
+.\"	$NetBSD: legal,v 1.12 2002/06/19 01:54:26 itojun Exp $
 .
 .It
 This product includes software developed by the Alice Group.
@@ -14,3 +14,5 @@ This product includes software developed by Scott Reynolds.
 This product includes software developed by John P. Wittkoski.
 .It
 This product includes software developed by Colin Wood.
+.It
+This product includes software developed by Daishi Kato.

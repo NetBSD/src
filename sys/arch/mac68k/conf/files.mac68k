@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.105 2002/04/27 19:29:08 shiba Exp $
+#	$NetBSD: files.mac68k,v 1.106 2002/06/19 01:54:28 itojun Exp $
 
 # mac68k-specific configuration info
 
@@ -92,6 +92,10 @@ file	arch/mac68k/nubus/if_sn_nubus.c	sn_nubus
 
 attach	sm at nubus with sm_nubus
 file	arch/mac68k/nubus/if_sm_nubus.c sm_nubus
+
+device	netdock: ifnet, ether, arp
+attach	netdock at nubus with netdock_nubus
+file	arch/mac68k/nubus/if_netdock_nubus.c	netdock_nubus
 
 # Sony floppy disk controller
 device	iwm { drive = -1 }
