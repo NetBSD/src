@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.6 1994/12/14 19:03:13 mycroft Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.7 1995/03/08 01:51:38 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -660,7 +660,7 @@ again:
  * Code pertaining to management of the in-core dquot data structures.
  */
 #define DQHASH(dqvp, id) \
-	(&dqhashtbl[((((int)(dqvp)) >> 8) + id) & dqhash])
+	(&dqhashtbl[((((long)(dqvp)) >> 8) + id) & dqhash])
 LIST_HEAD(dqhash, dquot) *dqhashtbl;
 u_long dqhash;
 
