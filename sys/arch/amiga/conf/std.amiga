@@ -1,4 +1,4 @@
-#	$NetBSD: std.amiga,v 1.8 1996/05/09 20:31:03 is Exp $
+#	$NetBSD: std.amiga,v 1.9 1996/10/11 19:34:54 mhitch Exp $
 
 # standard amiga information
 
@@ -14,3 +14,6 @@ ms*	at mainbus0
 fdc0	at mainbus0
 fd*	at fdc0 unit ?
 zbus0	at mainbus0
+
+options	EXEC_AOUT
+options	EXEC_SCRIPT
