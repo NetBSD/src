@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.79 2000/07/07 13:54:25 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.80 2000/07/20 12:19:41 bouyer Exp $	*/
 
 
 /*
@@ -1777,8 +1777,10 @@ amd756_setup_channel(chp)
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+#ifndef PCIIDE_AMD756_ENABLEDMA
 	int rev = PCI_REVISION(
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CLASS_REG));
+#endif
 
 	idedma_ctl = 0;
 	datatim_reg = pci_conf_read(sc->sc_pc, sc->sc_tag, AMD756_DATATIM);
