@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.145 2004/01/02 18:53:47 cl Exp $ */
+/* $NetBSD: syscall.h,v 1.146 2004/01/29 02:00:03 tsarna Exp $ */
 
 /*
  * System call numbers.
@@ -973,5 +973,8 @@
 /* syscall: "fsync_range" ret: "int" args: "int" "int" "off_t" "off_t" */
 #define	SYS_fsync_range	354
 
-#define	SYS_MAXSYSCALL	355
+/* syscall: "uuidgen" ret: "int" args: "struct uuid *" "int" */
+#define	SYS_uuidgen	355
+
+#define	SYS_MAXSYSCALL	356
 #define	SYS_NSYSENT	512

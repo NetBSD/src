@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.667 2004/01/28 17:44:25 jdolecek Exp $
+#	$NetBSD: mi,v 1.668 2004/01/29 02:00:02 tsarna Exp $
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
 ./usr/bin/as					comp-util-bin		bfd
@@ -1387,6 +1387,7 @@
 ./usr/include/sys/unpcb.h			comp-c-include
 ./usr/include/sys/user.h			comp-c-include
 ./usr/include/sys/utsname.h			comp-c-include
+./usr/include/sys/uuid.h			comp-c-include
 ./usr/include/sys/vadvise.h			comp-c-include
 ./usr/include/sys/vcmd.h			comp-obsolete		obsolete
 ./usr/include/sys/verified_exec.h		comp-c-include
@@ -2100,6 +2101,7 @@
 ./usr/share/man/cat2/unmount.0			comp-c-catman		.cat
 ./usr/share/man/cat2/utimes.0			comp-c-catman		.cat
 ./usr/share/man/cat2/utrace.0			comp-c-catman		.cat
+./usr/share/man/cat2/uuidgen.0			comp-c-catman
 ./usr/share/man/cat2/vfork.0			comp-c-catman		.cat
 ./usr/share/man/cat2/wait.0			comp-c-catman		.cat
 ./usr/share/man/cat2/wait3.0			comp-c-catman		.cat
@@ -5711,6 +5713,7 @@
 ./usr/share/man/man2/unmount.2			comp-c-man		.man
 ./usr/share/man/man2/utimes.2			comp-c-man		.man
 ./usr/share/man/man2/utrace.2			comp-c-man		.man
+./usr/share/man/man2/uuidgen.2			comp-c-man
 ./usr/share/man/man2/vfork.2			comp-c-man		.man
 ./usr/share/man/man2/wait.2			comp-c-man		.man
 ./usr/share/man/man2/wait3.2			comp-c-man		.man
