@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.3 2003/08/07 16:29:31 agc Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 2003/12/07 20:00:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,7 +44,7 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__builtin_classify_type(t)	(0)
 #define	__builtin_next_arg(t)		((t) ? 0 : 0)
 #define	__builtin_stdarg_start(a, l)	((a) = ((l) ? 0 : 0))
-#define	__builtin_va_arg(a, t)		((a) ? 0 : 0)
+#define	__builtin_va_arg(a, t)		((t)((a) ? 0 : 0))
 #define	__builtin_va_end		/* nothing */
 #define	__builtin_va_copy(d, s)		((d) = (s))
 #endif

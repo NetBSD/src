@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.6 2003/08/07 16:29:30 agc Exp $	*/
+/*	$NetBSD: ansi.h,v 1.7 2003/12/07 20:00:38 scw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,11 @@
 #define	_BSD_SIZE_T_		unsigned long	/* sizeof() */
 #define	_BSD_SSIZE_T_		long		/* byte count or error */
 #define	_BSD_TIME_T_		int		/* time() */
-#define	_BSD_VA_LIST_		__builtin_va_list	/* va_list */
+#ifndef __lint__
+#define	_BSD_VA_LIST_		__builtin_va_list /* GCC built-in type */
+#else
+#define	_BSD_VA_LIST_		char *		/* va_list */
+#endif
 #define	_BSD_CLOCKID_T_		int		/* clockid_t */
 #define	_BSD_TIMER_T_		int		/* timer_t */
 #define	_BSD_SUSECONDS_T_	int		/* suseconds_t */
