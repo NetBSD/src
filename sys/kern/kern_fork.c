@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.18 2002/11/11 22:13:42 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.19 2002/11/12 09:24:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.18 2002/11/11 22:13:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.19 2002/11/12 09:24:30 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -452,7 +452,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	p2->p_stat = SIDL;			/* protect against others */
 	p2->p_pid = nextpid;
 	p2->p_exitsig = exitsig;		/* signal for parent on exit */
-	p2->p_forw = p2->p_back = NULL;		/* shouldn't be necessary */
 
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
 
