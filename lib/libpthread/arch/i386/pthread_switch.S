@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.3 2001/07/13 02:42:40 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.4 2001/07/16 20:21:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,6 +57,10 @@ ENTRY(pthread__switch)
 	PIC_PROLOGUE
 	movl	8(%ebp), %eax  /* eax holds the current thread */
 	movl	12(%ebp), %ecx /* ecx holds the thread to switch to  */
+	movl	$0, %edx       /* edx indicates whether eax's lockcount
+				* should be decremented once its stack
+				* isn't current.
+				*/
 pthread__switch_no_save:
 	subl	$CONTEXTSIZE, %esp
 	movl	%esp, PT_UC(%eax)
@@ -64,6 +68,17 @@ pthread__switch_no_save:
 
 	STACK_SWITCH
 
+	/* If we're invoked from the switch-to-next provisions of
+	 * pthread__locked_switch or pthread__upcall_switch, there
+	 * may be a fake spinlock present. If so, they will set %edx
+	 * to let us know, and we decrement it once we're no longer using
+	 * the old stack.
+	 */ 
+	cmpl	$0, %edx
+	je pthread__switch_no_decrement
+	decl	PT_SPINLOCKS(%eax)
+
+pthread__switch_no_decrement:	
 	pushl	%esi
 	pushl	%edi
 	call	PIC_PLT(_C_LABEL(_swapcontext_u))
