@@ -1,4 +1,4 @@
-.\" $NetBSD: mbtowc.3,v 1.1 2002/03/18 06:00:27 tshiozak Exp $
+.\" $NetBSD: mbtowc.3,v 1.2 2002/03/18 07:56:29 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd Feb 3, 2002
+.Dd February 3, 2002
 .Dt MBTOWC 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -36,7 +36,7 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
+.Fd #include \*[Lt]stdlib.h\*[Gt]
 .Ft int
 .Fn mbtowc "wchar_t * restrict pwc" "const char * restrict s" "size_t n"
 .Sh DESCRIPTION
@@ -160,9 +160,9 @@ points an invalid or incomplete multibyte character.
 .El
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
-.Xr setlocale 3 ,
 .Xr mblen 3 ,
-.Xr mbrtowc 3 .
+.Xr mbrtowc 3 ,
+.Xr setlocale 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The

@@ -1,4 +1,4 @@
-.\" $NetBSD: wcsrtombs.3,v 1.1 2002/03/18 06:00:27 tshiozak Exp $
+.\" $NetBSD: wcsrtombs.3,v 1.2 2002/03/18 07:56:29 wiz Exp $
 .\"
 .\" Copyright (c)2002 Citrus Project,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd Feb 4, 2002
+.Dd February 4, 2002
 .Dt WCSRTOMBS 3
 .Os
 .\" ----------------------------------------------------------------------
@@ -37,7 +37,7 @@
 .Lb libc
 .\" ----------------------------------------------------------------------
 .Sh SYNOPSIS
-.Fd #include <stdlib.h>
+.Fd #include \*[Lt]stdlib.h\*[Gt]
 .Ft size_t
 .Fn wcsrtombs "const char * restrict s" "const wchar_t ** restrict pwcs" \
 "size_t n" "mbstate_t * restrict ps"
@@ -50,7 +50,7 @@ converts the null-terminated wide character string indirectly pointed by
 to the corresponding multibyte character string,
 and store it to the array pointed by
 .Fa s .
-The conversion stops due to the follwing reasons:
+The conversion stops due to the following reasons:
 .Bl -bullet
 .It
 The conversion reaches a null wide character.
@@ -166,8 +166,8 @@ points the string containing invalid wide character.
 .\" ----------------------------------------------------------------------
 .Sh SEE ALSO
 .Xr setlocale 3 ,
-.Xr wcrtomb 3 .
-.Xr wcstombs 3 .
+.Xr wcrtomb 3 ,
+.Xr wcstombs 3
 .\" ----------------------------------------------------------------------
 .Sh STANDARDS
 The
