@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.29 1999/11/08 03:00:32 mhitch Exp $ */
+/* $NetBSD: tcds.c,v 1.30 2000/06/05 21:47:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,18 +66,16 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.29 1999/11/08 03:00:32 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.30 2000/06/05 21:47:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/malloc.h>
 
 #ifdef __alpha__
 #include <machine/rpb.h>
-#ifndef EVCNT_COUNTERS
-#include <machine/intrcnt.h>
-#endif
 #endif /* __alpha__ */
 
 #include <machine/bus.h>
@@ -179,6 +177,8 @@ tcdsattach(parent, self, aux)
 	struct tcds_device *td;
 	bus_space_handle_t sbsh[2];
 	int i, error, gpi2;
+	const struct evcnt *pevcnt;
+	char *cp;
 
 	td = tcds_lookup(ta->ta_modname);
 	if (td == NULL)
@@ -217,6 +217,7 @@ tcdsattach(parent, self, aux)
 
 	sc->sc_cookie = ta->ta_cookie;
 
+	pevcnt = tc_intr_evcnt(parent, sc->sc_cookie);
 	tc_intr_establish(parent, sc->sc_cookie, TC_IPL_BIO, tcds_intr, sc);
 
 	/*
@@ -243,6 +244,13 @@ tcdsattach(parent, self, aux)
 		slotc = &sc->sc_slots[i];
 
 		bzero(slotc, sizeof *slotc);	/* clear everything */
+
+		cp = malloc(12, M_DEVBUF, M_NOWAIT);
+		if (cp == NULL)
+			panic("tcdsattach");
+		sprintf(cp, "chip %d", i);
+		evcnt_attach_dynamic(&slotc->sc_evcnt, EVCNT_TYPE_INTR,
+		    pevcnt, sc->sc_dv.dv_xname, cp);
 
 		slotc->sc_slot = i;
 		slotc->sc_bst = sc->sc_bst;
@@ -505,16 +513,7 @@ tcds_intr(arg)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TCDS_CIR, ir0);
 	tc_syncbus();
 
-#ifdef __alpha__		/* XXX XXX XXX */
-#ifdef EVCNT_COUNTERS
-	/* No interrupt counting via evcnt counters */ 
-	XXX BREAK HERE XXX
-#else
-#define	INCRINTRCNT(slot)	intrcnt[INTRCNT_TCDS + slot]++
-#endif
-#else
-#define	INCRINTRCNT(slot)	/* nothing */
-#endif /* __alpha__ */
+#define	INCRINTRCNT(slot)	sc->sc_slots[slot].sc_evcnt.ev_count++
 
 #define	CHECKINTR(slot)							\
 	if (ir & sc->sc_slots[slot].sc_intrbits) {			\
