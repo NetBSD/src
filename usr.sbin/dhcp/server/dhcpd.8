@@ -74,6 +74,13 @@ Protocol (BOOTP).  DHCP allows hosts on a TCP/IP network to request
 and be assigned IP addresses, and also to discover information about
 the network to which they are attached.  BOOTP provides similar
 functionality, with certain restrictions.
+.SH SYSTEM REQUIREMENTS
+There \fPmust\fR be a /etc/dhcpd.conf file.   There \fBmust\fR
+be a /var/db/dhcpd.leases file.   This file can initially be created by
+typing \fItouch /var/db/dhcpd.leases\fR.   You must have the Berkeley
+Packet Filter (bpf) configured in your NetBSD kernel.   You must have
+at least one /dev/bpf* file for each broadcast network interface that
+is attached to your system.
 .SH OPERATION
 .PP
 The DHCP protocol allows a host which is unknown to the network
@@ -313,10 +320,10 @@ use a different name server might be declared as follows:
 A more complete description of the dhcpd.conf file syntax is provided
 in dhcpd.conf(5).
 .SH FILES
-.B ETCDIR/dhcpd.conf, DBDIR/dhcpd.leases, RUNDIR/dhcpd.pid,
-.B DBDIR/dhcpd.leases~.
+.B /etc/dhcpd.conf, /var/db/dhcpd.leases, /var/run/dhcpd.pid,
+.B /var/db/dhcpd.leases~.
 .SH SEE ALSO
-dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5)
+dhclient(8), dhcrelay(8), dhcpd.conf(5), dhcpd.leases(5), bpf(4)
 .SH AUTHOR
 .B dhcpd(8)
 was written by Ted Lemon <mellon@vix.com>
