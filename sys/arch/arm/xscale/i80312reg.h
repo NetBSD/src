@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.7 2001/11/09 03:27:52 thorpej Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.8 2001/11/09 17:44:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -244,6 +244,16 @@
 #define	ATU_ACR_PATUDRCA	(1U << 19)
 #define	ATU_ACR_SATUDRCA	(1U << 20)
 #define	ATU_ACR_BFN		(1U << 21)
+
+#define	ATU_AIM_AETAE		(1U << 0)
+#define	ATU_AIM_AIESE		(1U << 1)
+#define	ATU_AIM_MPEIM		(1U << 2)
+#define	ATU_AIM_TATIM		(1U << 3)
+#define	ATU_AIM_TAMIM		(1U << 4)
+#define	ATU_AIM_MAIM		(1U << 5)
+#define	ATU_AIM_SAIM		(1U << 6)
+#define	ATU_AIM_DPEIM		(1U << 7)
+#define	ATU_AIM_PSTIM		(1U << 8)
 
 /*
  * Messaging Unit
