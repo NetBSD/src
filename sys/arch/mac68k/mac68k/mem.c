@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 1996/05/05 06:18:41 briggs Exp $	*/
+/*	$NetBSD: mem.c,v 1.12 1997/02/02 08:18:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,7 +56,7 @@
 
 #include <vm/vm.h>
 
-caddr_t zeropage;
+static caddr_t devzeropage;
 
 #define mmread	mmrw
 #define mmwrite	mmrw
@@ -154,13 +154,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+			if (devzeropage == NULL) {
+				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				bzero(devzeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(devzeropage, c, uio);
 			continue;
 
 		default:
