@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2000/06/30 17:55:12 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2000/08/22 21:27:22 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -36,10 +36,9 @@
 #define	_ARM26_PARAM_H_
 
 #ifdef _KERNEL
-#  include <machine/cpu.h>
+#include <machine/cpu.h>  /* XXX why? */
+#include <machine/intr.h> /* XXX for spl(9) */
 #endif
-
-#include <machine/spl.h>
 
 #define	_MACHINE	arm26
 #define	MACHINE		"arm26"
