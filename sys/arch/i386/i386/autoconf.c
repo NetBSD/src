@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45.2.1 2000/02/20 17:50:27 sommerfeld Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.2 2000/04/17 01:43:22 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -170,7 +170,8 @@ matchbiosdisks()
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next)
 		if (dv->dv_class == DV_DISK &&
 		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")))
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ca")))
 			i386_ndisks++;
 
 	if (i386_ndisks == 0)
@@ -206,7 +207,8 @@ matchbiosdisks()
 		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
 #endif
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ca")) {
 			n++;
 			sprintf(i386_alldisks->dl_nativedisks[n].ni_devname,
 			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
@@ -415,7 +417,8 @@ findroot(devpp, partp)
 			}
 
 			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd")) {
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
+			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ca")) {
 				/*
 				 * Don't trust BIOS device numbers, try
 				 * to match the information passed by the
@@ -428,7 +431,7 @@ findroot(devpp, partp)
 				goto found;
 			}
 
-			/* no "fd", "wd" or "sd" */
+			/* no "fd", "wd", "sd" or "ca" */
 			continue;
 
 found:

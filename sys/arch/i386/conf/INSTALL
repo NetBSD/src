@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.135.2.1 2000/02/21 19:33:36 sommerfeld Exp $
+#	$NetBSD: INSTALL,v 1.135.2.2 2000/04/17 01:43:20 sommerfeld Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -15,7 +15,7 @@ include "arch/i386/conf/std.i386"
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=3174	# size of memory disk, in blocks
+options 	MINIROOTSIZE=3072	# size of memory disk, in blocks
 #options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
@@ -143,6 +143,7 @@ options 	INET6		# IPv6
 # Warning, these may compile large string tables into the kernel!
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 #options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 
@@ -322,7 +323,8 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
-# The "nca" probe might give false hits or hang your machine.
+# The "nca" and "dpt" probes might give false hits or hang your machine.
+#dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
 #nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
 #nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
@@ -356,6 +358,9 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# RAID controllers and devices
+cac*	at pci? dev ? function ?	# Compaq array controller
+ca*	at cac? unit ?			# Compaq array disk device
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
@@ -541,6 +546,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
+#atapibus* at umass? channel ?
 #scsibus* at umass? channel ?
 
 # USB Generic driver

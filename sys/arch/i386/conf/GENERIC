@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.300.2.2 2000/02/21 19:33:00 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.300.2.3 2000/04/17 01:43:19 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.2 $"
+#ident 		"GENERIC-$Revision: 1.300.2.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -34,7 +34,7 @@ options 	XSERVER		# X server support in console drivers
 #options 	"CONSDEVNAME=\"com\"",CONADDR=0x2f8,CONSPEED=57600
 #	you don't want the option below ON iff you are using the
 #	serial console option of the new boot strap code.
-#options	CONS_OVERRIDE	# Always use above! independent of boot info
+#options 	CONS_OVERRIDE	# Always use above! independent of boot info
 
 # The following options override the memory sizes passed in from the boot
 # block.  Use them *only* if the boot block is unable to determine the correct
@@ -156,6 +156,7 @@ options 	IPFILTER_LOG	# ipmon(8) log support
 # Warning, these may compile large string tables into the kernel!
 options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
@@ -203,8 +204,8 @@ cpu* at mainbus? apid ?
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
-#options 	APM_NO_POWER_PRINT	# Don't print stats on the console
-#options	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
+#options 	APM_POWER_PRINT		# Don't print stats on the console
+#options 	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
 # Basic Bus Support
@@ -213,6 +214,13 @@ cpu* at mainbus? apid ?
 pci*	at mainbus? bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
+
+# Configure PCI using BIOS information
+#options 	PCIBIOS			# PCI BIOS support
+#options 	PCIBIOSVERBOSE		# PCI BIOS verbose info
+#options 	PCIBIOS_INTR_FIXUP	# fixup PCI interrupt routing
+#options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
+#options 	PCIBIOS_BUS_FIXUP	# fixup PCI bus numbering
 
 # PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
@@ -282,7 +290,7 @@ pms*		at pckbc?		# PS/2 mouse for wsmouse
 pmsi*		at pckbc?		# PS/2 "Intelli"mouse for wsmouse
 #opms*		at pckbc?		# backwards compatible PS/2 mouse
 vga0		at isa?
-vga*		at pci?
+vga*		at pci? dev ? function ?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 wsdisplay*	at pcdisplay? console ?
@@ -290,7 +298,7 @@ wskbd* 		at pckbd? console ?
 wsmouse*	at pms? mux 0
 wsmouse*	at pmsi? mux 0
 
-pcppi0	at isa?
+pcppi0		at isa?
 sysbeep0	at pcppi?
 
 # Serial Devices
@@ -307,6 +315,9 @@ com*	at pcmcia? function ?		# Modems and serial cards
 
 pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
+
+# CardBus serial interfaces
+#com*	at cardbus? function ?		# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
@@ -337,6 +348,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc
 
+# LM7[89] and compatible hardware monitors
+#lm0	at isa?	port 0x290		# other common ports: 0x280, 0x310
 
 # SCSI Controllers and Devices
 
@@ -359,6 +372,7 @@ uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # PCMCIA SCSI controllers
 aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 
 # ISA Plug-and-Play SCSI controllers
 aha*	at isapnp? 			# Adaptec AHA-154[02
@@ -372,7 +386,8 @@ ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
 aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
-# The "nca" probe might give false hits or hang your machine.
+# The "nca" and "dpt" probes might give false hits or hang your machine.
+#dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
 #nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
 #nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
@@ -393,6 +408,7 @@ scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
+scsibus* at esp?
 scsibus* at isp?
 #scsibus* at nca?
 scsibus* at ncr?
@@ -409,13 +425,16 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+# RAID controllers and devices
+cac*	at pci? dev ? function ?	# Compaq array controller
+ca*	at cac? unit ?			# Compaq array disk device
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
 # how to set up DMA modes for this chip. This may work, or may cause
 # a machine hang with some controllers.
-pciide* at pci ? dev ? function ? flags 0x0000
+pciide* at pci? dev ? function ? flags 0x0000
 
 # ISA Plug-and-Play IDE controllers
 wdc*	at isapnp? 
@@ -510,7 +529,7 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
-awi*	at pcmcia? function ?		# BayStack 650 (802.11FH)
+awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
 cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 mbe*	at pcmcia? function ?		# MB8696x based Ethernet
@@ -557,6 +576,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
+#rl*	at cardbus? dev ? function ?	# Realtek 8129/8139
 
 # MII/PHY support
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -609,6 +629,7 @@ ucom*	at umodem?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
 scsibus* at umass? channel ?
 
 # USB audio
@@ -618,6 +639,21 @@ uaudio*	at uhub? port ? configuration ?
 aue*	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 cue*	at uhub? port ?		# CATC USB-EL1201A based adapters
 kue*	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
+
+# Prolofic PL2301/PL2302 host-to-host adapter
+upl*	at uhub? port ?
+
+# Serial adapters
+# FTDI FT8U100AX serial adapter
+#uftdi*	at uhub? port ?
+#ucom*	at uftdi? portno ?
+
+# Diamond Multimedia Rio 500
+urio*	at uhub? port ?
+
+# USB Handspring Visor
+uvisor*	at uhub? port ?
+ucom*	at uvisor?
 
 # USB Generic driver
 ugen*	at uhub? port ?
@@ -646,6 +682,7 @@ ugen*	at uhub? port ?
 # Audio Devices
 
 # PCI audio devices
+auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
@@ -683,6 +720,7 @@ opl*	at ym?
 
 # Audio support
 #audio*	at aria?
+audio*	at auvia?
 audio*	at clcs?
 audio*	at eap?
 audio*	at eso?
@@ -740,6 +778,9 @@ wsmouse*	at mms? mux 0
 # ISA Plug-and-Play joysticks
 joy*	at isapnp?			# Game ports (usually on audio cards)
 
+# PCI joysticks
+joy*	at pci?				# Game ports (usually on audio cards)
+
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
@@ -759,6 +800,7 @@ include	"arch/i386/conf/GENERIC.local"
 # disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
+#options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
 
