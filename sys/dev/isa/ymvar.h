@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.4 1999/10/05 03:46:08 itohy Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.5 1999/12/27 03:21:56 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
 
 #ifndef AUDIO_NO_POWER_CTL
 #define AudioCpower		"power"
-#define AudioNpower		"power"
+#define AudioNsave		"save"
 #define AudioNtimeout		"timeout"
 #define AudioNpowerdown		"powerdown"
 #define AudioNpowersave		"powersave"
@@ -158,6 +158,8 @@ struct ym_softc {
 	int  master_mute, mic_mute;
 	struct ad1848_volume master_gain;
 	u_int8_t mic_gain;
+
+	u_int8_t sc_external_sources;	/* non-zero value prevents power down */
 
 	u_int8_t sc_version;		/* hardware version */
 
@@ -207,12 +209,24 @@ struct ym_softc {
 #define YM_POWER_CODEC_AD	(SA3_APWRDWN_AD << 8)
 #define YM_POWER_OPL3_DA	(SA3_APWRDWN_FMDAC << 8)
 /* pseudo */
-#define YM_POWER_CODEC_CTL	0x8000
+#define YM_POWER_CODEC_CTL	0x4000
+#define YM_POWER_EXT_SRC	0x8000
+#define YM_POWER_CODEC_PSEUDO	(YM_POWER_CODEC_CTL | YM_POWER_EXT_SRC)
 
 #define YM_POWER_CODEC_DIGITAL	\
 		(YM_POWER_CODEC_P | YM_POWER_CODEC_R | YM_POWER_CODEC_CTL)
 /* 3D enhance is passive */
 #define YM_POWER_ACTIVE		(0xffff & ~YM_POWER_3D)
+
+/* external input sources */
+#define YM_XS_CD	1
+#define YM_XS_LINE	2
+#define YM_XS_SPEAKER	4
+
+#if YM_CD_MUTE + 1 != YM_LINE_MUTE || YM_CD_MUTE + 2 != YM_SPEAKER_MUTE
+ #error YM_CD_MUTE, YM_LINE_MUTE and YM_SPEAKER_MUTE should be contiguous
+#endif
+#define YM_MIXER_TO_XS(m)	(1 << ((m) - YM_CD_MUTE))
 
 #ifdef _KERNEL
 void	ym_power_ctl __P((struct ym_softc *, int, int));
