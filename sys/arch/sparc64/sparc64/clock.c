@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.65 2003/10/21 08:27:20 petrov Exp $ */
+/*	$NetBSD: clock.c,v 1.66 2003/11/01 23:04:32 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65 2003/10/21 08:27:20 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.66 2003/11/01 23:04:32 tsutsui Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -88,7 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65 2003/10/21 08:27:20 petrov Exp $");
 
 #include <dev/clock_subr.h>
 #include <dev/ic/mk48txxreg.h>
+#include <dev/ic/mk48txxvar.h>
 #include <dev/ic/mc146818reg.h>
+#include <dev/ic/mc146818var.h>
 
 #include <sparc64/sparc64/intreg.h>
 #include <sparc64/sparc64/timerreg.h>
@@ -98,12 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.65 2003/10/21 08:27:20 petrov Exp $");
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 
-struct rtc_info {
-	bus_space_tag_t	rtc_bt;		/* bus tag & handle */
-	bus_space_handle_t rtc_bh;	/* */
-	u_int		rtc_year0;	/* What year is represented on the system
-					   by the chip's year counter at 0 */
-};
 
 /*
  * Statistics clock interval and variance, in usec.  Variance must be a
@@ -135,16 +131,16 @@ static int	clockmatch_ebus __P((struct device *, struct cfdata *, void *));
 static void	clockattach_ebus __P((struct device *, struct device *, void *));
 static int	clockmatch_rtc __P((struct device *, struct cfdata *, void *));
 static void	clockattach_rtc __P((struct device *, struct device *, void *));
-static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
+static void	clockattach __P((struct mk48txx_softc *, int));
 
 
-CFATTACH_DECL(clock_sbus, sizeof(struct device),
+CFATTACH_DECL(clock_sbus, sizeof(struct mk48txx_softc),
     clockmatch_sbus, clockattach_sbus, NULL, NULL);
 
-CFATTACH_DECL(clock_ebus, sizeof(struct device),
+CFATTACH_DECL(clock_ebus, sizeof(struct mk48txx_softc),
     clockmatch_ebus, clockattach_ebus, NULL, NULL);
 
-CFATTACH_DECL(rtc_ebus, sizeof(struct device),
+CFATTACH_DECL(rtc_ebus, sizeof(struct mc146818_softc),
     clockmatch_rtc, clockattach_rtc, NULL, NULL);
 
 extern struct cfdriver clock_cd;
@@ -170,14 +166,10 @@ void stopcounter __P((struct timer_4u *));
 
 int timerblurb = 10; /* Guess a value; used before clock is attached */
 
-u_int8_t rtc_read_reg(bus_space_tag_t, bus_space_handle_t, int);
-void rtc_write_reg(bus_space_tag_t, bus_space_handle_t, int, u_int8_t);
-int rtc_gettime(todr_chip_handle_t, struct timeval *);
-int rtc_settime(todr_chip_handle_t, struct timeval *);
-int rtc_getcal(todr_chip_handle_t, int *);
-int rtc_setcal(todr_chip_handle_t, int);
-
-int rtc_auto_century_adjust = 1;
+u_int rtc_read_reg(struct mc146818_softc *, u_int);
+void rtc_write_reg(struct mc146818_softc *, u_int, u_int);
+u_int rtc_getcent(struct mc146818_softc *);
+void rtc_setcent(struct mc146818_softc *, u_int);
 
 /*
  * The OPENPROM calls the clock the "eeprom", so we have to have our
@@ -239,39 +231,33 @@ clockmatch_rtc(parent, cf, aux)
  * a non-trivial operation.  
  */
 
-/* Somewhere to keep info that clock_wenable() needs */
-static struct clock_info {
-	bus_space_tag_t		ci_bt;
-	bus_space_handle_t	ci_bh;
-} ci;
-
 /* ARGSUSED */
 static void
 clockattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct mk48txx_softc *sc = (void *)self;
 	struct sbus_attach_args *sa = aux;
-	bus_space_tag_t bt = sa->sa_bustag;
 	int sz;
+
+	sc->sc_bst = sa->sa_bustag;
 
 	/* use sa->sa_regs[0].size? */
 	sz = 8192;
 
-	if (sbus_bus_map(bt,
+	if (sbus_bus_map(sc->sc_bst,
 			 sa->sa_slot,
 			 (sa->sa_offset & ~(PAGE_SIZE - 1)),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_READONLY,
-			 &ci.ci_bh) != 0) {
+			 &sc->sc_bsh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(sa->sa_node, bt, ci.ci_bh);
+	clockattach(sc, sa->sa_node);
 
 	/* Save info for the clock wenable call. */
-	ci.ci_bt = bt;
-	todr_handle->bus_cookie = &ci;
 	todr_handle->todr_setwen = clock_wenable;
 }
 
@@ -284,7 +270,7 @@ clock_wenable(handle, onoff)
 	struct todr_chip_handle *handle;
 	int onoff;
 {
-	struct clock_info *ci;
+	struct mk48txx_softc *sc;
 	vm_prot_t prot;
 	vaddr_t va;
 	int s, err = 0;
@@ -299,8 +285,8 @@ clock_wenable(handle, onoff)
 	if (prot == VM_PROT_NONE) {
 		return 0;
 	}
-	ci = (struct clock_info *)handle->bus_cookie;
-	va = (vaddr_t)bus_space_vaddr(ci->ci_bt, ci->ci_bh);
+	sc = handle->cookie;
+	va = (vaddr_t)bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
 	if (va == 0UL) {
 		printf("clock_wenable: WARNING -- cannot get va\n");
 		return EIO;
@@ -316,55 +302,52 @@ clockattach_ebus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct mk48txx_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
-	bus_space_tag_t bt = ea->ea_bustag;
 	int sz;
+
+	sc->sc_bst = ea->ea_bustag;
 
 	/* hard code to 8K? */
 	sz = ea->ea_reg[0].size;
 
-	if (bus_space_map(bt,
+	if (bus_space_map(sc->sc_bst,
 			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
-			 &ci.ci_bh) != 0) {
+			 &sc->sc_bsh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
-	clockattach(ea->ea_node, bt, ci.ci_bh);
+	clockattach(sc, ea->ea_node);
 
 	/* Save info for the clock wenable call. */
-	ci.ci_bt = bt;
-	todr_handle->bus_cookie = &ci;
 	todr_handle->todr_setwen = clock_wenable;
 }
 
 
 static void
-clockattach(node, bt, bh)
+clockattach(sc, node)
+	struct mk48txx_softc *sc;
 	int node;
-	bus_space_tag_t bt;
-	bus_space_handle_t bh;
 {
-	char *model;
 	struct idprom *idp;
 	int h;
 
-	model = PROM_getpropstring(node, "model");
+	sc->sc_model = PROM_getpropstring(node, "model");
 
 #ifdef DIAGNOSTIC
-	if (model == NULL)
+	if (sc->sc_model == NULL)
 		panic("clockattach: no model property");
 #endif
 
 	/* Our TOD clock year 0 is 1968 */
-	todr_handle = mk48txx_attach(bt, bh, model, 1968, NULL, NULL);
-	if (todr_handle == NULL)
-		panic("Can't attach %s tod clock", model);
+	sc->sc_year0 = 1968;
+	mk48txx_attach(sc);
 
 #define IDPROM_OFFSET (8*1024 - 40)	/* XXX - get nvram sz from driver */
-	idp = (struct idprom *)((vaddr_t)bus_space_vaddr(bt, bh) + 
-		IDPROM_OFFSET);
+	idp = (struct idprom *)((vaddr_t)bus_space_vaddr(sc->sc_bst,
+	    sc->sc_bsh) + IDPROM_OFFSET);
 
 	h = idp->id_machine << 24;
 	h |= idp->id_hostid[0] << 16;
@@ -374,6 +357,9 @@ clockattach(node, bt, bh)
 	printf(": hostid %x\n", (u_int)hostid);
 
 	idprom = idp;
+
+	/* XXX should be done by todr_attach() */
+	todr_handle = &sc->sc_handle;
 }
 
 /*
@@ -392,17 +378,19 @@ clockattach(node, bt, bh)
  */
 #define	RTC_ADDR	0
 #define	RTC_DATA	1
-u_int8_t 
-rtc_read_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg)
+u_int
+rtc_read_reg(struct mc146818_softc *sc, u_int reg)
 {
-	bus_space_write_1(bt, bh, RTC_ADDR, reg);
-	return (bus_space_read_1(bt, bh, RTC_DATA));
+
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, RTC_ADDR, reg);
+	return (bus_space_read_1(sc->sc_bst, sc->sc_bsh, RTC_DATA));
 }
 void 
-rtc_write_reg(bus_space_tag_t bt, bus_space_handle_t bh, int reg, u_int8_t val)
+rtc_write_reg(struct mc146818_softc *sc, u_int reg, u_int val)
 {
-	bus_space_write_1(bt, bh, RTC_ADDR, reg);
-	bus_space_write_1(bt, bh, RTC_DATA, val);
+
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, RTC_ADDR, reg);
+	bus_space_write_1(sc->sc_bst, sc->sc_bsh, RTC_DATA, val);
 }
 
 /* ARGSUSED */
@@ -411,22 +399,21 @@ clockattach_rtc(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	struct mc146818_softc *sc = (void *)self;
 	struct ebus_attach_args *ea = aux;
-	bus_space_tag_t bt = ea->ea_bustag;
-	todr_chip_handle_t handle;
-	struct rtc_info *rtc;
 	char *model;
 	int sz;
-	static struct clock_info ci;
+
+	sc->sc_bst = ea->ea_bustag;
 
 	/* hard code to 8K? */
 	sz = ea->ea_reg[0].size;
 
-	if (bus_space_map(bt,
+	if (bus_space_map(sc->sc_bst,
 			 EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 			 sz,
 			 BUS_SPACE_MAP_LINEAR,
-			 &ci.ci_bh) != 0) {
+			 &sc->sc_bsh) != 0) {
 		printf("%s: can't map register\n", self->dv_xname);
 		return;
 	}
@@ -436,35 +423,32 @@ clockattach_rtc(parent, self, aux)
 	if (model == NULL)
 		panic("clockattach_rtc: no model property");
 #endif
+
+	/* Our TOD clock year 0 is 0 */
+	sc->sc_year0 = 0;
+	sc->sc_flag = MC146818_NO_CENT_ADJUST;
+	sc->sc_mcread = rtc_read_reg;
+	sc->sc_mcwrite = rtc_write_reg;
+	sc->sc_getcent = rtc_getcent;
+	sc->sc_setcent = rtc_setcent;
+	mc146818_attach(sc);
+
 	printf(": %s\n", model);
 
 	/*
 	 * Turn interrupts off, just in case. (Although they shouldn't
 	 * be wired to an interrupt controller on sparcs).
 	 */
-	rtc_write_reg(bt, ci.ci_bh, 
-		MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
+	rtc_write_reg(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
-	/* Setup our todr_handle */
-	sz = ALIGN(sizeof(struct todr_chip_handle)) + sizeof(struct rtc_info);
-	handle = malloc(sz, M_DEVBUF, M_NOWAIT);
-	rtc = (struct rtc_info*)((u_long)handle +
-				 ALIGN(sizeof(struct todr_chip_handle)));
-	handle->cookie = rtc;
-	handle->todr_gettime = rtc_gettime;
-	handle->todr_settime = rtc_settime;
-	handle->todr_getcal = rtc_getcal;
-	handle->todr_setcal = rtc_setcal;
 	/*
 	 * Apparently on some machines the TOD registers are on the same
 	 * physical page as the COM registers.  So we won't protect them.
 	 */
-	handle->todr_setwen = NULL;
-	rtc->rtc_bt = bt;
-	rtc->rtc_bh = ci.ci_bh;
-	/* Our TOD clock year 0 is 0 */
-	rtc->rtc_year0 = 0;
-	todr_handle = handle;
+	/*sc->sc_handle.todr_setwen = NULL;*/
+
+	/* XXX should be done by todr_attach() */
+	todr_handle = &sc->sc_handle;
 }
 
 /*
@@ -1004,129 +988,25 @@ eeprom_uio(uio)
 
 
 /*
- * RTC todr routines.
+ * MD mc146818 RTC todr routines.
  */
 
 /* Loooks like Sun stores the century info somewhere in CMOS RAM */
 #define MC_CENT 0x32
 
-/*
- * Get time-of-day and convert to a `struct timeval'
- * Return 0 on success; an error number otherwise.
- */
-int
-rtc_gettime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
+u_int
+rtc_getcent(sc)
+	struct mc146818_softc *sc;
 {
-	struct rtc_info *rtc = handle->cookie;
-	bus_space_tag_t bt = rtc->rtc_bt;
-	bus_space_handle_t bh = rtc->rtc_bh;
-	struct clock_ymdhms dt;
-	int year, cent;
-	u_int8_t csr;
 
-	todr_wenable(handle, 1);
-
-	/* Stop updates. */
-	csr = rtc_read_reg(bt, bh, MC_REGB);
-	csr |= MC_REGB_SET;
-	rtc_write_reg(bt, bh, MC_REGB, csr);
-
-	/* Read time */
-	dt.dt_sec = rtc_read_reg(bt, bh, MC_SEC);
-	dt.dt_min = rtc_read_reg(bt, bh, MC_MIN);
-	dt.dt_hour = rtc_read_reg(bt, bh, MC_HOUR);
-	dt.dt_day = rtc_read_reg(bt, bh, MC_DOM);
-	dt.dt_wday = rtc_read_reg(bt, bh, MC_DOW);
-	dt.dt_mon = rtc_read_reg(bt, bh, MC_MONTH);
-	year = rtc_read_reg(bt, bh, MC_YEAR);
-	cent = rtc_read_reg(bt, bh, MC_CENT);
-#ifdef DIAGNOSTIC
-	printf("rtc_gettime: read c %x/%d y %x/%d m %x/%d wd %d d %x/%d "
-	       "h %x/%d m %x/%d s %x/%d\n",
-	       cent, cent, year, year, dt.dt_mon, dt.dt_mon, dt.dt_wday,
-	       dt.dt_day, dt.dt_day, dt.dt_hour, dt.dt_hour,
-	       dt.dt_min, dt.dt_min, dt.dt_sec, dt.dt_sec);
-#endif
-
-	year += cent * 100;
-	dt.dt_year = year;
-
-	/* time wears on */
-	csr = rtc_read_reg(bt, bh, MC_REGB);
-	csr &= ~MC_REGB_SET;
-	rtc_write_reg(bt, bh, MC_REGB, csr);
-	todr_wenable(handle, 0);
-
-	/* simple sanity checks */
-	if (dt.dt_year < 1970 || dt.dt_mon > 12 || dt.dt_day > 31 ||
-	    dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return (1);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
-	return (0);
+	return rtc_read_reg(sc, MC_CENT);
 }
 
-/*
- * Set the time-of-day clock based on the value of the `struct timeval' arg.
- * Return 0 on success; an error number otherwise.
- */
-int
-rtc_settime(handle, tv)
-	todr_chip_handle_t handle;
-	struct timeval *tv;
+void 
+rtc_setcent(sc, cent)
+	struct mc146818_softc *sc;
+	u_int cent;
 {
-	struct rtc_info *rtc = handle->cookie;
-	bus_space_tag_t bt = rtc->rtc_bt;
-	bus_space_handle_t bh = rtc->rtc_bh;
-	struct clock_ymdhms dt;
-	u_int8_t csr;
-	int year, cent;
 
-	/* Note: we ignore `tv_usec' */
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	year = dt.dt_year % 100;
-	cent = dt.dt_year / 100;
-
-	todr_wenable(handle, 1);
-	/* enable write */
-	csr = rtc_read_reg(bt, bh, MC_REGB);
-	csr |= MC_REGB_SET;
-	rtc_write_reg(bt, bh, MC_REGB, csr);
-
-	rtc_write_reg(bt, bh, MC_SEC, dt.dt_sec);
-	rtc_write_reg(bt, bh, MC_MIN, dt.dt_min);
-	rtc_write_reg(bt, bh, MC_HOUR, dt.dt_hour);
-	rtc_write_reg(bt, bh, MC_DOW, dt.dt_wday);
-	rtc_write_reg(bt, bh, MC_DOM, dt.dt_day);
-	rtc_write_reg(bt, bh, MC_MONTH, dt.dt_mon);
-	rtc_write_reg(bt, bh, MC_YEAR, year);
-	rtc_write_reg(bt, bh, MC_CENT, cent);
-
-	/* load them up */
-	csr = rtc_read_reg(bt, bh, MC_REGB);
-	csr &= ~MC_REGB_SET;
-	rtc_write_reg(bt, bh, MC_REGB, csr);
-	todr_wenable(handle, 0);
-	return (0);
+	rtc_write_reg(sc, MC_CENT, cent);
 }
-
-int
-rtc_getcal(handle, vp)
-	todr_chip_handle_t handle;
-	int *vp;
-{
-	return (EOPNOTSUPP);
-}
-
-int
-rtc_setcal(handle, v)
-	todr_chip_handle_t handle;
-	int v;
-{
-	return (EOPNOTSUPP);
-}
-

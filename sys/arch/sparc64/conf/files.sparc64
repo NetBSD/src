@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.84 2003/10/31 20:10:06 petrov Exp $
+#	$NetBSD: files.sparc64,v 1.85 2003/11/01 23:04:32 tsutsui Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -44,7 +44,7 @@ device clock: mk48txx
 attach clock at mainbus, sbus with clock_sbus
 attach clock at ebus with clock_ebus
 
-device rtc
+device rtc: mc146818
 attach rtc at ebus with rtc_ebus
 
 device timer
