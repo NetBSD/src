@@ -1,4 +1,4 @@
-/*	$NetBSD: ipft_tx.c,v 1.1.1.6.2.1 1997/10/30 07:16:34 mrg Exp $	*/
+/*	$NetBSD: ipft_tx.c,v 1.1.1.6.2.2 1998/07/23 00:38:20 mellon Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
@@ -33,24 +33,19 @@
 #include <netinet/udp.h>
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
-#ifndef	linux
-#include <netinet/tcpip.h>
-#endif
 #include <arpa/inet.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include <netinet/ip_compat.h>
+#include <netinet/tcpip.h>
 #include "ipf.h"
 #include "ipt.h"
-#ifdef	linux
-#include "tcpip.h"
-#endif
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11 1997/10/19 15:39:24 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipft_tx.c,v 2.0.2.11.2.3 1998/05/23 19:20:32 darrenr Exp ";
 #endif
 
 extern	int	opts;
@@ -69,7 +64,7 @@ struct	ipread	iptext = { text_open, text_close, text_readip };
 static	FILE	*tfp = NULL;
 static	int	tfd = -1;
 
-static	u_long	tx_hostnum __P((char *, int *));
+static	u_32_t	tx_hostnum __P((char *, int *));
 static	u_short	tx_portnum __P((char *));
 
 
@@ -77,7 +72,7 @@ static	u_short	tx_portnum __P((char *));
  * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-static	u_long	tx_hostnum(host, resolved)
+static	u_32_t	tx_hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
@@ -96,7 +91,7 @@ int	*resolved;
 			fprintf(stderr, "can't resolve hostname: %s\n", host);
 			return 0;
 		}
-		return np->n_net;
+		return htonl(np->n_net);
 	}
 	return *(u_32_t *)hp->h_addr;
 }
