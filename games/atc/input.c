@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.9 1998/07/28 03:00:09 briggs Exp $	*/
+/*	$NetBSD: input.c,v 1.10 1998/09/13 15:20:31 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -50,7 +50,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: input.c,v 1.9 1998/07/28 03:00:09 briggs Exp $");
+__RCSID("$NetBSD: input.c,v 1.10 1998/09/13 15:20:31 hubertf Exp $");
 #endif
 #endif not lint
 
@@ -61,9 +61,6 @@ __RCSID("$NetBSD: input.c,v 1.9 1998/07/28 03:00:09 briggs Exp $");
 #define MAXDEPTH	15
 
 #define RETTOKEN	'\n'
-#ifdef SYSV
-#define CRTOKEN		'\r'
-#endif
 #define REDRAWTOKEN	'\014'	/* CTRL(L) */
 #define	SHELLTOKEN	'!'
 #define HELPTOKEN	'?'
@@ -103,9 +100,6 @@ typedef struct {
 
 RULE	state0[] = {	{ ALPHATOKEN,	1,	"%c:",		setplane},
 			{ RETTOKEN,	-1,	"",		NULL	},
-#ifdef SYSV
-			{ CRTOKEN,	-1,	"",		NULL	},
-#endif
 			{ HELPTOKEN,	12,	" [a-z]<ret>",	NULL	}},
 	state1[] = {	{ 't',		2,	" turn",	turn	},	
 			{ 'a',		3,	" altitude:",	NULL	},	
@@ -137,9 +131,6 @@ RULE	state0[] = {	{ ALPHATOKEN,	1,	"%c:",		setplane},
 	state4[] = {	{ '@',		9,	" at",		NULL	},	
 			{ 'a',		9,	" at",		NULL	},	
 			{ RETTOKEN,	-1,	"",		NULL	},
-#ifdef SYSV
-			{ CRTOKEN,	-1,	"",		NULL	},
-#endif
 			{ HELPTOKEN,	12,	" @a<ret>",	NULL	}},
 	state5[] = {	{ NUMTOKEN,	7,	"%c",		delayb	},
 			{ HELPTOKEN,	12,	" [0-9]",	NULL	}},
@@ -154,14 +145,8 @@ RULE	state0[] = {	{ ALPHATOKEN,	1,	"%c:",		setplane},
 			{ 'a',		4,	" 270",		rel_dir	},
 			{ 'q',		4,	" 315",		rel_dir	},
 			{ RETTOKEN,	-1,	"",		NULL	},	
-#ifdef SYSV
-			{ CRTOKEN,	-1,	"",		NULL	},	
-#endif
 			{ HELPTOKEN,	12,	" @a<dir><ret>",NULL	}},
 	state7[] = {	{ RETTOKEN,	-1,	"",		NULL	},
-#ifdef SYSV
-	            	{ CRTOKEN,	-1,	"",		NULL	},
-#endif
 			{ HELPTOKEN,	12,	" <ret>",	NULL	}},
 	state8[] = {	{ NUMTOKEN,	4,	"%c",		benum	},
 			{ HELPTOKEN,	12,	" [0-9]",	NULL	}},
