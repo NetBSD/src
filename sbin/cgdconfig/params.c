@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.11 2005/01/04 04:50:26 elric Exp $ */
+/* $NetBSD: params.c,v 1.12 2005/01/04 04:52:50 elric Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.11 2005/01/04 04:50:26 elric Exp $");
+__RCSID("$NetBSD: params.c,v 1.12 2005/01/04 04:52:50 elric Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,7 +68,7 @@ static void	spaces(FILE *, int);
 
 /* keygen defaults */
 #define DEFAULT_SALTLEN		128
-#define DEFAULT_ITERATION_TIME	2000000		/* 1 second in milliseconds */
+#define DEFAULT_ITERATION_TIME	2000000		/* 1 second in microseconds */
 
 /* crypto defaults functions */
 struct crypto_defaults {
