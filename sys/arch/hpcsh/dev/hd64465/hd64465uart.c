@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.4.2.1 2002/05/19 07:56:38 gehenna Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.4.2.2 2002/06/06 02:58:47 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@ struct hd64465uart_softc {
 };
 
 /* boot console */
-cdev_decl(com);
 void hd64465uartcnprobe(struct consdev *);
 void hd64465uartcninit(struct consdev *);
 
