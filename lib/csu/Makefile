@@ -1,5 +1,5 @@
-#	$Id: Makefile,v 1.4 1994/01/05 21:05:11 pk Exp $
+#	$Id: Makefile,v 1.5 1994/01/10 14:09:16 deraadt Exp $
 
-SUBDIR=	${MACHINE_ARCH} g++
+SUBDIR=	${MACHINE_ARCH} c++
 
 .include <bsd.subdir.mk>
