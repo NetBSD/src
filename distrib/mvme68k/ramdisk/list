@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1997/12/17 22:13:33 scw Exp $
+#	$NetBSD: list,v 1.2 1999/05/23 07:31:20 tron Exp $
 
 # copy the crunched binary, link to it, and kill it
 
@@ -59,13 +59,13 @@ SPECIAL ln -s . usr
 
 # various files that we need in /etc for the install
 
-COPY	rd.disktab	etc/disktab
-COPY	rd.fstab	etc/fstab
-COPY	rd.protocols	etc/protocols
-COPY	rd.services	etc/services
-COPY	rd.passwd	etc/passwd
+COPY	${CURDIR}/rd.disktab	etc/disktab
+COPY	${CURDIR}/rd.fstab	etc/fstab
+COPY	${CURDIR}/rd.protocols	etc/protocols
+COPY	${CURDIR}/rd.services	etc/services
+COPY	${CURDIR}/rd.passwd	etc/passwd
 
 # and the RC file
-COPY	rd.sshrc	.sshrc
-COPY	rd.welcome	.welcome
+COPY	${CURDIR}/rd.sshrc	.sshrc
+COPY	${CURDIR}/rd.welcome	.welcome
 

@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.2 1998/09/29 03:08:47 mark Exp $
+#	$NetBSD: list,v 1.3 1999/05/23 07:31:19 tron Exp $
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/ramdiskbin		ramdiskbin
@@ -71,21 +71,21 @@ COPY	${CURDIR}/../../../etc/services		etc/services
 SPECIAL	pwd_mkdb -p -d ./ etc/master.passwd
 
 # and the common installation tools
-#COPY	dot.commonutils			.commonutils
-COPY	termcap.pc3			usr/share/misc/termcap
+#COPY	${CURDIR}/dot.commonutils		.commonutils
+COPY	${CURDIR}/termcap.pc3			usr/share/misc/termcap
 
 # the disktab explanation file
-COPY	disktab.preinstall		etc/disktab.preinstall
+COPY	${CURDIR}/disktab.preinstall		etc/disktab.preinstall
 
-#COPY	inst.sh				usr/local/sbin/inst
+#COPY	${CURDIR}/inst.sh			usr/local/sbin/inst
 
 # and the installation tools
-COPY	dot.profile			.profile
-#COPY	dot.instutils			.instutils
+COPY	${CURDIR}/dot.profile		.profile
+#COPY	${CURDIR}/dot.instutils		.instutils
 #COPY	${OBJDIR}/install.sh		install
 #COPY	${OBJDIR}/upgrade.sh		upgrade
 #COPY	${OBJDIR}/start.sh		start
-COPY	dot.hdprofile			tmp/.hdprofile
+COPY	${CURDIR}/dot.hdprofile		tmp/.hdprofile
 #SPECIAL	chmod 755 install
 #SPECIAL	chmod 755 upgrade
 #SPECIAL	chmod 755 start
