@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.12 1998/08/21 14:12:18 pk Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.13 1999/04/30 13:28:36 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -111,9 +111,11 @@ void db_machine_init __P((void));
 int kdb_trap __P((int, struct trapframe *));
 
 /*
- * We use a.out symbols in DDB.
+ * We use both a.out and elf symbols in DDB.
  */
 #define	DB_AOUT_SYMBOLS
+#define	DB_ELF_SYMBOLS
+#define DB_ELFSIZE 32
 
 
 /*
