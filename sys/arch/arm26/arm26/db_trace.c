@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.1 2000/05/09 21:55:56 bjh21 Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.2 2000/05/13 14:43:11 bjh21 Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -41,6 +41,39 @@
  
 #define INKERNEL(va)	(((vm_offset_t)(va)) >= VM_MIN_KERNEL_ADDRESS)
 
+/*
+ * APCS stack frames are awkward beasts, so I don't think even trying to use
+ * a structure to represent them is a good idea.
+ *
+ * Here's the diagram from the APCS.  Incresing address is _up_ the page.
+ * 
+ *          save code pointer       [fp]        <- fp points to here
+ *          return link value       [fp, #-4]
+ *          return sp value         [fp, #-8]
+ *          return fp value         [fp, #-12]
+ *          [saved v7 value]
+ *          [saved v6 value]
+ *          [saved v5 value}
+ *          [saved v4 value]
+ *          [saved v3 value]
+ *          [saved v2 value]
+ *          [saved v1 value]
+ *          [saved a4 value]
+ *          [saved a3 value}
+ *          [saved a2 value]
+ *          [saved a1 value]
+ *
+ * The save code pointer points twelve bytes beyond the start of the 
+ * code sequence (usually a single STM) that created the stack frame.  
+ * We have to disassemble it if we want to know which of the optional 
+ * fields are actually present.
+ */
+
+#define FR_SCP	(0)
+#define FR_RLV	(-1)
+#define FR_RSP	(-2)
+#define FR_RFP	(-3)
+
 void
 db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t       addr;
@@ -48,7 +81,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t       count;
 	char            *modif;
 {
-	struct frame	*frame, *lastframe;
+	u_int32_t	*frame, *lastframe;
 	char c, *cp = modif;
 	boolean_t	kernel_only = TRUE;
 	boolean_t	trace_thread = FALSE;
@@ -63,15 +96,8 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	if (count == -1)
 		count = 65535;
 
-	/*
-	 * The frame pointer points to the top word of the stack frame so we
-	 * need to adjust it by sizeof(struct frame) - sizeof(u_int))
-	 * to get the address of the start of the frame structure.
-	 */
-
 	if (!have_addr)
-		frame = (struct frame *)(DDB_TF->tf_r11
-		    - (sizeof(struct frame) - sizeof(u_int)));
+		frame = (u_int32_t *)(DDB_TF->tf_r11);
 	else {
 		if (trace_thread) {
 			struct proc *p;
@@ -87,46 +113,60 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				return;
 			}
 			u = p->p_addr;
-			frame = (struct frame *) (u->u_pcb.pcb_sf->sf_r11
-			    - (sizeof(struct frame) - sizeof(u_int)));
+			frame = (u_int32_t *)(u->u_pcb.pcb_sf->sf_r11);
 			db_printf("at %p\n", frame);
 		} else
-			frame = (struct frame *)(addr - (sizeof(struct frame)
-			    - sizeof(u_int)));
+			frame = (u_int32_t *)(addr);
 	}
 	lastframe = NULL;
 
-	while (count--) {
+	while (count-- && frame != NULL) {
 		db_expr_t	offset;
 		char		*name;
-		db_addr_t	pc;
+		db_addr_t	scp;
+		u_int32_t	savecode;
+		int		r;
+		u_int32_t	*rp;
 
-/*		db_printf("fp=%08x: fp=%08x sp=%08x lr=%08x pc=%08x\n",
-		    (u_int)frame, frame->fr_fp, frame->fr_sp, frame->fr_lr,
-		    frame->fr_r15);*/
+		/*
+		 * In theory, the SCP isn't guaranteed to be in the function
+		 * that generated the stack frame.  We hope for the best.
+		 */
+		scp = frame[FR_SCP] & R15_PC;
 
-		pc = frame->fr_r15 & R15_PC;
-		if (!INKERNEL(pc))
-			break;
-
-		db_find_sym_and_offset(pc, &name, &offset);
+		db_find_sym_and_offset(scp, &name, &offset);
 		if (name == NULL)
 			name = "?";
 
-		db_printf("%s(", name);
-		db_printsym(pc, DB_STGY_PROC);
-		db_printf(")");
-		db_printf("\n");
+		db_printf("%s", name);
+		db_printf("(scp=0x%x(", frame[FR_SCP]);
+		db_printsym(scp, DB_STGY_PROC);
+		db_printf("), rlv=0x%x(", frame[FR_RLV]);
+		db_printsym(frame[FR_RLV] & R15_PC, DB_STGY_PROC);
+		db_printf("),\n\trsp=0x%x", frame[FR_RSP]);
+		db_printf(", rfp=0x%x", frame[FR_RFP]);
+
+		savecode = ((u_int32_t *)scp)[-3];
+		if ((savecode & 0x0e100000) == 0x08000000) {
+			/* Looks like an STM */
+			rp = frame - 4;
+			for (r = 10; r >= 0; r--)
+				if (savecode & (1 << r))
+					db_printf(",%sr%d=0x%x",
+						  (frame - rp) % 4 == 2 ?
+						  "\n\t" : " ", r, *rp--);
+		}
+
+		db_printf(")\n");
 
 		/*
 		 * Switch to next frame up
 		 */
-		if (frame->fr_fp == 0)
+		if (frame[FR_RFP] == 0)
 			break; /* Top of stack */
 
 		lastframe = frame;
-		frame = (struct frame *)(frame->fr_fp - (sizeof(struct frame)
-		    - sizeof(u_int)));
+		frame = (u_int32_t *)(frame[FR_RFP]);
 
 		if (INKERNEL((int)frame)) {
 			/* staying in kernel */
