@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.22 2002/01/27 13:36:59 is Exp $
+# $NetBSD: INSTALL,v 1.23 2002/02/13 12:09:25 is Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.174 2002/02/13 12:08:57 is Exp $
 
 #GENERIC machine description file
 
@@ -24,7 +24,7 @@
 #device.
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.22 $"
+#ident  		"GENERIC-$Revision: 1.23 $"
 
 makeoptions	COPTS="-Os"
 
@@ -89,6 +89,8 @@ file-system 	KERNFS		# kernel data-structure filesystem
 				# immutable) behave as system flags.
 
 #Compatibility options for various existing systems
+
+options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 
 #Support for various kernel options
 

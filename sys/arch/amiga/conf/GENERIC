@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173 2002/01/27 13:27:51 is Exp $
+# $NetBSD: GENERIC,v 1.174 2002/02/13 12:08:57 is Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.173 $"
+#ident 		"GENERIC-$Revision: 1.174 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -155,8 +155,9 @@ options 	COMPAT_SUNOS	# Support to run Sun (m68k) executables
 options 	COMPAT_SVR4	# Support to run SVR4 (m68k) executables
 options 	COMPAT_NOMID	# allow nonvalid machine id executables
 #options 	COMPAT_LINUX	# Support to run Linux/m68k executables
-options 	EXEC_ELF32	# 32-bit ELF executables (Linux, SVR4)
 #endif
+
+options 	EXEC_AOUT	# 32-bit aout executables (NetBSD-1.5.x)
 
 #ifndef INSTALL_CONFIGURATION
 #
