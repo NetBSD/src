@@ -1,4 +1,4 @@
-#	$NetBSD: files.eisa,v 1.18 1999/09/14 05:58:00 thorpej Exp $
+#	$NetBSD: files.eisa,v 1.19 1999/09/29 20:38:51 ad Exp $
 #
 # Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -24,6 +24,11 @@ file	dev/eisa/ahc_eisa.c		ahc_eisa
 # device declaration in sys/conf/files
 attach	bha at eisa with bha_eisa
 file	dev/eisa/bha_eisa.c		bha_eisa
+
+# DPT EATA SCSI controllers
+# device declaration in sys/conf/files
+attach	dpt at eisa with dpt_eisa
+file	dev/eisa/dpt_eisa.c		dpt_eisa
 
 # UltraStor UHA-24f boards
 # device declaration in sys/conf/files
