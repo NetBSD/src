@@ -32,10 +32,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)vis.c	5.4 (Berkeley) 2/23/91";
+/* from: static char sccsid[] = "@(#)vis.c	5.4 (Berkeley) 2/23/91"; */
+static char rcsid[] = "$Id: vis.c,v 1.2 1993/07/15 17:54:43 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
+#include <limits.h>
 #include <ctype.h>
 #include <vis.h>
 
@@ -54,7 +56,7 @@ vis(dst, c, flag, nextc)
 	register int flag;
 #endif
 {
-	if (isascii(c) && isgraph(c) ||
+	if ((u_int)c <= UCHAR_MAX && isgraph(c) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
 	   ((flag & VIS_TAB) == 0 && c == '\t') ||
 	   ((flag & VIS_NL) == 0 && c == '\n') ||
@@ -159,11 +161,11 @@ strvis(dst, src, flag)
 	int flag;
 {
 	register char c;
-	char *start = dst;
+	char *start;
 
-	for (;c = *src; src++)
-		dst = vis(dst, c, flag, *(src+1));
-
+	for (start = dst; c = *src;)
+		dst = vis(dst, c, flag, *++src);
+	*dst = '\0';
 	return (dst - start);
 }
 
@@ -174,14 +176,16 @@ strvisx(dst, src, len, flag)
 	register size_t len;
 	int flag;
 {
-	char *start = dst;
+	register char c;
+	char *start;
 
-	while (len > 1) {
-		dst = vis(dst, *src, flag, *(src+1));
-		len--;
+	for (start = dst; len > 1; len--) {
+		c = *src;
+		dst = vis(dst, c, flag, *++src);
 	}
 	if (len)
 		dst = vis(dst, *src, flag, '\0');
+	*dst = '\0';
 
 	return (dst - start);
 }
