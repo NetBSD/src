@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.108 2004/09/14 15:19:35 simonb Exp $
+#	$NetBSD: osrelease.sh,v 1.109 2005/03/27 23:27:31 christos Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,17 +38,10 @@
 #
 
 # We use the number specified in <sys/param.h>
-
-AWK=${AWK:-awk}
-GREP=${GREP:-grep}
-PARAMH="`dirname $0`"/../sys/param.h
-release=`$AWK '/^#define[ 	]*__NetBSD_Version__/ { print $6 }' $PARAMH`
-
-case $1 in
--s)
-	echo $release | sed -e 's,\.,,g'
-	;;
-*)
-	echo $release
-	;;
-esac
+${AWK:-awk} -v FLAG="$1" '
+/^#define[ 	]*__NetBSD_Version__/ {
+	major = ($3 / 100000000);
+	minor = ($3 / 1000000) % 100;
+	patch = ($3 / 100) % 100;
+	printf((FLAG == "-s") ? "%d%d%d\n" : "%d.%d.%d\n", major, minor, patch);
+}' "$(dirname $0)"/../sys/param.h
