@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 1998/01/02 20:37:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 1998/01/06 08:27:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -129,8 +129,6 @@
 /*
  * Local convenience macros
  */
-
-#define TAILQ_FIRST(headp)	((headp)->tqh_first)
 
 /* User segments from 0 to KERNBASE */
 #define	NUSEG	(KERNBASE / NBSG)
@@ -2007,8 +2005,7 @@ pmap_create(size)
 		return NULL;
 
 	pmap = (pmap_t) malloc(sizeof(struct pmap), M_VMPMAP, M_WAITOK);
-	pmap_common_init(pmap);
-	pmap_user_init(pmap);
+	pmap_pinit(pmap);
 	return pmap;
 }
 
@@ -2975,7 +2972,6 @@ pmap_phys_address(x)
 }
 #endif
 
-#ifdef	__VM_PMAP_HACK
 /*
  * Initialize a preallocated and zeroed pmap structure,
  * such as one in a vmspace structure.
@@ -2987,8 +2983,6 @@ pmap_pinit(pmap)
 	pmap_common_init(pmap);
 	pmap_user_init(pmap);
 }
-#endif	/* __VM_PMAP_HACK */
-
 
 /*
  *	Reduce the permissions on the specified
