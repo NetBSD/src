@@ -1,4 +1,4 @@
-.\"	$NetBSD: daily.conf.5,v 1.15 2003/12/07 22:29:36 wiz Exp $
+.\"	$NetBSD: daily.conf.5,v 1.16 2003/12/08 01:16:22 perry Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -84,6 +84,9 @@ and
 to give disk status, and also reports failed
 .Xr raid 4
 components.
+.It Sy show_remote_fs
+In check_disks, show remote file systems, which are not reported on by
+default.
 .It Sy check_mailq
 This runs
 .Xr mailq 1 .
