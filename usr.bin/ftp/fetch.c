@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.115 2000/06/05 09:22:52 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.116 2000/06/15 13:08:25 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.115 2000/06/05 09:22:52 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.116 2000/06/15 13:08:25 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1508,12 +1508,12 @@ fetch_ftp(const char *url)
 		xargc = 3;
 	}
 	oautologin = autologin;
-	if (user != NULL)
-		autologin = 0;
+		/* don't autologin in setpeer(), use ftp_login() below */
+	autologin = 0;
 	setpeer(xargc, xargv);
 	autologin = oautologin;
-	if ((connected == 0) || ((connected == 1)
-	    && !ftp_login(host, user, pass))) {
+	if ((connected == 0) ||
+	    (connected == 1 && !ftp_login(host, user, pass))) {
 		warnx("Can't connect or login to host `%s'", host);
 		goto cleanup_fetch_ftp;
 	}
