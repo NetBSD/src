@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.10 2000/01/08 22:57:31 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.11 2000/01/09 01:12:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -84,11 +84,6 @@
 #define DDprintf6(s,a,b,c,d,e,f) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),NULL,NULL)
 #define DDprintf7(s,a,b,c,d,e,f,g) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),NULL)
 #define DDprintf8(s,a,b,c,d,e,f,g,h) if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),(void *)((unsigned long)f),(void *)((unsigned long)g),(void *)((unsigned long)h))
-
-#if 0
-static RF_Thread_t recon_thr_handle;
-static int recon_thread_initialized = 0;
-#endif
 
 static RF_FreeList_t *rf_recond_freelist;
 #define RF_MAX_FREE_RECOND  4
@@ -219,12 +214,6 @@ rf_ConfigureReconstruction(listp)
 		rf_ShutdownReconstruction(NULL);
 		return (rc);
 	}
-#if 0
-	if (!recon_thread_initialized) {
-		RF_CREATE_THREAD(recon_thr_handle, rf_ReconKernelThread, NULL, "raid_recon");
-		recon_thread_initialized = 1;
-	}
-#endif
 	return (0);
 }
 
