@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.17 2003/02/14 10:19:15 dsl Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.18 2003/04/01 01:55:38 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.17 2003/02/14 10:19:15 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.18 2003/04/01 01:55:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,7 +679,7 @@ svr4_32_sys_sysconfig(l, v, retval)
 		*retval = 198808;
 		break;
 	case SVR4_CONFIG_PAGESIZE:
-		*retval = NBPG;
+		*retval = PAGE_SIZE;
 		break;
 	case SVR4_CONFIG_CLK_TCK:
 		*retval = 60;	/* should this be `hz', ie. 100? */
