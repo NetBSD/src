@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.16 1999/11/28 04:29:37 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.17 1999/11/29 02:20:11 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -161,10 +161,17 @@ pcic0	at isa1 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00170003
 
 options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 #
+# Fujitsu INTERTOP CX300
+#
+gpbus2 at vrgiu? platform FUJITSU_INTERTOP comctrl 15
+vrisab2 at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
+isa2    at vrisab2
+pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
+#
 # Unknown machines
 #
-vrisab2 at vrgiu?
-isa2	at vrisab2
+vrisab3 at vrgiu?
+isa3	at vrisab3
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
