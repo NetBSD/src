@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.6 1999/02/02 00:05:02 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.7 1999/02/02 00:29:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -112,7 +112,11 @@
 /*
  * Various supported device vendors/types and their names.
  */
-static struct vr_type vr_devs[] = {
+static struct vr_type {
+	pci_vendor_id_t		vr_vid;
+	pci_product_id_t	vr_did;
+	const char		*vr_name;
+} vr_devs[] = {
 	{ VIA_VENDORID, VIA_DEVICEID_RHINE,
 		"VIA VT3043 Rhine I 10/100BaseTX" },
 	{ VIA_VENDORID, VIA_DEVICEID_RHINE_II,
@@ -135,6 +139,99 @@ static struct vr_type vr_phys[] = {
 	{ SEEQ_PHY_VENDORID, SEEQ_PHY_80220, "<SEEQ 80220>" },
 	{ 0, 0, "<MII-compliant physical interface>" }
 };
+
+struct vr_mii_frame {
+	u_int8_t		mii_stdelim;
+	u_int8_t		mii_opcode;
+	u_int8_t		mii_phyaddr;
+	u_int8_t		mii_regaddr;
+	u_int8_t		mii_turnaround;
+	u_int16_t		mii_data;
+};
+
+/*
+ * MII constants
+ */
+#define	VR_MII_STARTDELIM	0x01
+#define	VR_MII_READOP		0x02
+#define	VR_MII_WRITEOP		0x01
+#define	VR_MII_TURNAROUND	0x02
+
+#define	VR_FLAG_FORCEDELAY	1
+#define	VR_FLAG_SCHEDDELAY	2
+#define	VR_FLAG_DELAYTIMEO	3
+
+struct vr_list_data {
+	struct vr_desc		vr_rx_list[VR_RX_LIST_CNT];
+	struct vr_desc		vr_tx_list[VR_TX_LIST_CNT];
+};
+
+struct vr_chain {
+	struct vr_desc		*vr_ptr;
+	struct mbuf		*vr_mbuf;
+	struct vr_chain		*vr_nextdesc;
+};
+
+struct vr_chain_onefrag {
+	struct vr_desc		*vr_ptr;
+	struct mbuf		*vr_mbuf;
+	struct vr_chain_onefrag	*vr_nextdesc;
+};
+
+struct vr_chain_data {
+	struct vr_chain_onefrag	vr_rx_chain[VR_RX_LIST_CNT];
+	struct vr_chain		vr_tx_chain[VR_TX_LIST_CNT];
+
+	struct vr_chain_onefrag	*vr_rx_head;
+
+	struct vr_chain		*vr_tx_head;
+	struct vr_chain		*vr_tx_tail;
+	struct vr_chain		*vr_tx_free;
+};
+
+struct vr_softc {
+	struct device		vr_dev;
+	void			*vr_ih;
+	void			*vr_ats;
+	bus_space_tag_t		vr_bustag;
+	bus_space_handle_t	vr_bushandle;
+	pci_chipset_tag_t	vr_pc;
+	struct ethercom		vr_ec;
+	u_int8_t 		vr_enaddr[ETHER_ADDR_LEN];
+	struct ifmedia		ifmedia;	/* media info */
+	bus_space_handle_t	vr_bhandle;	/* bus space handle */
+	bus_space_tag_t		vr_btag;	/* bus space tag */
+	struct vr_type		*vr_info;	/* Rhine adapter info */
+	struct vr_type		*vr_pinfo;	/* phy info */
+	u_int8_t		vr_unit;	/* interface number */
+	u_int8_t		vr_type;
+	u_int8_t		vr_phy_addr;	/* PHY address */
+	u_int8_t		vr_tx_pend;	/* TX pending */
+	u_int8_t		vr_want_auto;
+	u_int8_t		vr_autoneg;
+	caddr_t			vr_ldata_ptr;
+	struct vr_list_data	*vr_ldata;
+	struct vr_chain_data	vr_cdata;
+};
+
+/*
+ * register space access macros
+ */
+#define	CSR_WRITE_4(sc, reg, val)	\
+	bus_space_write_4(sc->vr_btag, sc->vr_bhandle, reg, val)
+#define	CSR_WRITE_2(sc, reg, val)	\
+	bus_space_write_2(sc->vr_btag, sc->vr_bhandle, reg, val)
+#define	CSR_WRITE_1(sc, reg, val)	\
+	bus_space_write_1(sc->vr_btag, sc->vr_bhandle, reg, val)
+
+#define	CSR_READ_4(sc, reg)		\
+	bus_space_read_4(sc->vr_btag, sc->vr_bhandle, reg)
+#define	CSR_READ_2(sc, reg)		\
+	bus_space_read_2(sc->vr_btag, sc->vr_bhandle, reg)
+#define	CSR_READ_1(sc, reg)		\
+	bus_space_read_1(sc->vr_btag, sc->vr_bhandle, reg)
+
+#define	VR_TIMEOUT		1000
 
 static int vr_newbuf		__P((struct vr_softc *,
 						struct vr_chain_onefrag *));
