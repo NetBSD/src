@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.56 1998/04/16 19:46:03 drochner Exp $
+$NetBSD: pcidevs,v 1.57 1998/04/30 06:18:11 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -565,6 +565,9 @@ product ALLIANCE AT24	0x6424	AT24
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
 product AMD PCSCSI_PCI	0x2020	53c974 PCscsi-PCI SCSI
 product AMD PCNETS_PCI	0x2040	79C974 PCnet-PCI Ethernet & SCSI
+
+/* Apple products */
+product APPLE BANDIT	0x0001 PCI Controller
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
