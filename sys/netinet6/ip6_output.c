@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.44 2002/03/28 01:33:50 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.44.4.1 2002/06/05 03:50:25 lukem Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.44 2002/03/28 01:33:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.44.4.1 2002/06/05 03:50:25 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -734,7 +734,9 @@ skip_ipsec2:;
 		u_int32_t ifmtu = nd_ifinfo[ifp->if_index].linkmtu;
 
 		mtu = ro_pmtu->ro_rt->rt_rmx.rmx_mtu;
-		if (mtu > ifmtu || mtu == 0) {
+		if (mtu == 0)
+			mtu = ifmtu;
+		else if (mtu > ifmtu) {
 			/*
 			 * The MTU on the route is larger than the MTU on
 			 * the interface!  This shouldn't happen, unless the
@@ -747,7 +749,7 @@ skip_ipsec2:;
 			 * this case happens with path MTU discovery timeouts.
 			 */
 			 mtu = ifmtu;
-			 if ((ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU) == 0)
+			 if (!(ro_pmtu->ro_rt->rt_rmx.rmx_locks & RTV_MTU))
 				 ro_pmtu->ro_rt->rt_rmx.rmx_mtu = mtu; /* XXX */
 		}
 	} else {
