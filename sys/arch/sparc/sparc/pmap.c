@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 1996/03/31 22:42:59 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.56 1996/04/01 21:09:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -3496,7 +3496,9 @@ pmap_bootstrap4m(void)
 	 * page tables.
 	 * XXX: this needs to be cleaned up with the cpu_softc stuff...
 	 */
-	if (mmumod == SUN4M_MMU_SS && cacheinfo.ec_totalsize == 0) {
+	if (mmumod == SUN4M_MMU_SS &&
+	    (lda(SRMMU_PCR, ASI_SRMMU) & SRMMU_PCR_MB)) {
+
 		int bytes, numpages;
 
 #define DO_THE_MATH(math)						\
