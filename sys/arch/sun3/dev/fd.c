@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 2003/05/21 22:28:01 kristerw Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 2003/06/18 08:58:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -49,7 +49,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/disk.h>
 #include <sys/fdio.h>
 #include <sys/buf.h>

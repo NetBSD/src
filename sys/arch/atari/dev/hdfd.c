@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.38 2003/05/03 18:10:46 wiz Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.39 2003/06/18 08:58:37 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -68,7 +68,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
