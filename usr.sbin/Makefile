@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.172.2.1 2002/12/07 00:43:52 he Exp $
+#	$NetBSD: Makefile,v 1.172.2.2 2002/12/26 07:50:55 tron Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -15,7 +15,7 @@ SUBDIR=	ac accton altq amd apm apmd arp bad144 bind bootp catman \
 	pwd_mkdb quot quotacheck quotaon rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
 	rpc.statd rpcbind rwhod sa screenblank sesd \
-	sliplogin slstats spray sup sushi syslogd tadpolectl tcpdchk \
+	sliplogin slstats spray sunlabel sup sushi syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump timed traceroute trpt trsp unlink \
 	usbdevs user videomode vipw vnconfig wiconfig wsconscfg \
 	wsfontload wsmuxctl zdump zic
