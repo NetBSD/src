@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2003/10/05 09:57:47 scw Exp $	*/
+/*	$NetBSD: signal.h,v 1.10 2003/10/18 18:29:53 briggs Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,6 +78,13 @@ struct sigcontext {
 
 #ifdef _KERNEL
 void sendsig_context(int, const sigset_t *, u_long);
+
+#ifdef COMPAT_16
+#define SIGTRAMP_VALID(vers)	((unsigned)(vers) <= 2)
+#else
+#define SIGTRAMP_VALID(vers)	((vers) == 2)
+#endif
+
 #endif
 
 #endif /* _NETBSD_SOURCE */
