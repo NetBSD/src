@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.60 2000/08/15 22:16:18 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.61 2000/08/26 03:27:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60 2000/08/15 22:16:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2000/08/26 03:27:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,10 +290,8 @@ pagemove(from, to, size)
 		ALPHA_TBIS((vaddr_t)from);
 		ALPHA_TBIS((vaddr_t)to);
 
-#if defined(MULTIPROCESSOR) && 0
-		pmap_tlb_shootdown(pmap_kernel(), (vaddr_t)from, PG_ASM);
-		pmap_tlb_shootdown(pmap_kernel(), (vaddr_t)to, PG_ASM);
-#endif
+		PMAP_TLB_SHOOTDOWN(pmap_kernel(), (vaddr_t)from, PG_ASM);
+		PMAP_TLB_SHOOTDOWN(pmap_kernel(), (vaddr_t)to, PG_ASM);
 
 		todo -= NBPG;
 		from += NBPG;
