@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2000/07/06 18:16:35 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2000/07/09 12:09:02 fvdl Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -18,10 +18,13 @@ DISKTYPE?=	floppy3
 DISKSIZE?=	2880
 BLOCK8K?=	179
 
-CLEANFILES+=	netbsd boot ustar.tmp
+CLEANFILES+=	netbsd boot ustar.tmp ${METAFILE}
 
 realall:	netbsd boot
-	tar cvf ${FSTMP} boot netbsd
+	if test "${METAFILE}" != ""; then \
+		touch ${METAFILE}; \
+	fi
+	tar cvf ${FSTMP} boot ${METAFILE} netbsd
 	@echo
 	@echo Making disk number one
 	rm -f ${IMAGE}.tmp
@@ -46,8 +49,17 @@ realall:	netbsd boot
 		fi; \
 		echo; \
                 bytes=$$(($$dksize * $$disks - $$size));    \
-                echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
-                        on disk $$disks."; \
+		if test "${PAD}" = "yes"; then \
+			bytes=$$(($$bytes + 8 * 1024)); \
+			echo "Padding image with $$bytes bytes"; \
+			sectors=$$(($$bytes / 512)); \
+			ssize=$$(($$size / 512)); \
+			dd if=/dev/zero bs=512 seek=$${ssize} of=${IMAGE}.tmp \
+				count=$${sectors}; \
+                else \
+			echo "There are $$bytes ($$(($$bytes / 1024))K) bytes\
+				free on disk $$disks."; \
+		fi; \
 	)
 	mv -f ${IMAGE}.tmp ${IMAGE}
 
