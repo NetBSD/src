@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.17 2001/11/20 12:56:41 lukem Exp $
+#	$NetBSD: INSTALL,v 1.18 2001/12/11 15:14:25 ragge Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -156,8 +156,8 @@ mt*		at mscpbus? drive?	# MSCP tape
 #ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 
 # VS2000 builtin MFM controller (HDC9224)
-#hdc0		at vsbus0		# The strange builtin MFM controller
-#rd*		at hdc0 drive?		# The RD disk subsystem on VS2000
+hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
+rd*		at hdc0 drive?		# RD5x disks
 
 # SCSI controllers.
 asc0		at vsbus0 csr 0x200c0080 # VS4000/{60,VLC} SCSI-controller
