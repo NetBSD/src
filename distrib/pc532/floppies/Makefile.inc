@@ -1,4 +1,5 @@
-#	$Id: Makefile.inc,v 1.4 1996/10/09 00:13:36 jtc Exp $
+#	$Id: Makefile.inc,v 1.5 1997/03/16 11:26:26 veego Exp $
 
-# Revision is 1.2
-REV=	12
+# Revision is 1.2D
+# all these private copies of the version number really lose.
+REV=	12D
