@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.57 1998/06/30 19:46:41 thorpej Exp $	*/
+/*	$NetBSD: unistd.h,v 1.58 1998/07/02 21:20:54 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -131,10 +131,6 @@ off_t	 lseek __P((int, off_t, int));
 long	 pathconf __P((const char *, int));
 int	 pause __P((void));
 int	 pipe __P((int *));
-#if !defined(_POSIX_C_SOURCE)
-ssize_t	 pread __P((int, void *, size_t, off_t));
-ssize_t	 pwrite __P((int, const void *, size_t, off_t));
-#endif /* ! _POSIX_C_SOURCE */
 ssize_t	 read __P((int, void *, size_t));
 int	 rmdir __P((const char *));
 int	 setgid __P((gid_t));
@@ -270,6 +266,16 @@ struct timeval;				/* select(2) XXX */
 #endif
 int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
 #endif /* (!defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)) || ... */
+
+
+/*
+ * X/Open CAE Specification Issue 5 Version 2
+ */
+#if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
+    (_XOPEN_SOURCE - 0) >= 500
+ssize_t	 pread __P((int, void *, size_t, off_t));
+ssize_t	 pwrite __P((int, const void *, size_t, off_t));
+#endif
 
 
 /*
