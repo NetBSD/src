@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1.1.1 1998/06/20 04:58:52 eeh Exp $ */
+/*	$NetBSD: vmparam.h,v 1.2 1998/06/20 12:35:08 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,7 +134,7 @@
 
 #define MACHINE_NEW_NONCONTIG
 
-#define VM_PHYSSEG_MAX          32       /* we only have one "hole" */
+#define VM_PHYSSEG_MAX          32       /* up to 32 segments */
 #define VM_PHYSSEG_STRAT        VM_PSTRAT_BSEARCH
 #define VM_PHYSSEG_NOADD                /* can't add RAM after vm_mem_init */
 
