@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/obio.c,v 1.7 1994/03/16 04:35:37 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/obio.c,v 1.8 1994/05/04 05:29:25 gwr Exp $
  * Added stub for obio_probe_byte() -gwr
  */
 #include <sys/systm.h>
@@ -46,6 +46,8 @@
 unsigned char *interrupt_reg = NULL;
 vm_offset_t eeprom_va = NULL;
 vm_offset_t memerr_va = NULL;
+vm_offset_t zs0_va = NULL;	/* ttya, ttyb */
+vm_offset_t zs1_va = NULL;	/* kbd, mouse */
 
 static struct obio_internal {
     vm_offset_t *obio_internal_va;
@@ -56,6 +58,8 @@ static struct obio_internal {
 } obio_internal_dev[] = {
     {&eeprom_va,                     OBIO_EEPROM,   ALL, OBIO_EEPROM_SIZE  ,1},
     {&memerr_va,                     OBIO_MEMERR,   ALL, OBIO_MEMERR_SIZE  ,1},
+    {&zs0_va,                        OBIO_ZS,       ALL, OBIO_ZS_SIZE  ,1},
+    {&zs1_va,                        OBIO_KEYBD_MS, ALL, OBIO_ZS_SIZE  ,1},
     {NULL,                           0,               0, 0                 ,0}
 /*  {&ecc_va, OBIO_MEMERR,  ALL, OBIO_MEMERR_SIZE },        */
 };
@@ -101,6 +105,8 @@ void obioattach(parent, self, args)
  *
  * In reality this maps in a few control registers.  VA space is allocated
  * out of the high_segment...
+ * XXX - Is it worth the trouble to go find and re-use the mappings
+ * created by the PROM monitor? -gwr
  *
  */
 void obio_internal_configure()
