@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.13 2000/03/28 02:58:46 simonb Exp $	*/
+/*	$NetBSD: profile.h,v 1.14 2000/05/25 03:07:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,28 +42,13 @@
 #define _MIPS_PROFILE_H_
 
 #ifdef _KERNEL
- /*
-  *  Declare non-profiled _splhigh() /_splx() entrypoints for _mcount.
-  *  see MCOUNT_ENTER and MCOUNT_EXIT.
-  */
-#define	_KERNEL_MCOUNT_DECL 		\
-	int _splhigh __P((void));	\
-	int _splx __P((int));
-#else   /* !_KERNEL */
-/* Make __mcount static. */
-#define	_KERNEL_MCOUNT_DECL	static
-#endif	/* !_KERNEL */
-
-#ifdef _KERNEL
 # define _PROF_CPLOAD	""
 #else
 # define _PROF_CPLOAD	".cpload $25;"
 #endif
 
-
 #define	_MCOUNT_DECL \
-    _KERNEL_MCOUNT_DECL \
-    void __attribute__((unused)) __mcount
+    static void __attribute__((unused)) __mcount
 
 #define	MCOUNT \
 	__asm__(".globl _mcount;" \
@@ -72,6 +57,7 @@
 	".set noreorder;" \
 	".set noat;" \
 	_PROF_CPLOAD \
+	"subu $29,$29,16;" \
 	"sw $4,8($29);" \
 	"sw $5,12($29);" \
 	"sw $6,16($29);" \
@@ -87,7 +73,7 @@
 	"lw $7,20($29);" \
 	"lw $31,4($29);" \
 	"lw $1,0($29);" \
-	"addu $29,$29,8;" \
+	"addu $29,$29,24;" \
 	"j $31;" \
 	"move $31,$1;" \
 	".set reorder;" \
@@ -95,14 +81,38 @@
 
 #ifdef _KERNEL
 /*
- * The following two macros do splhigh and splx respectively.
- * They have to be defined this way because these are real
- * functions on the MIPS, and we do not want to invoke mcount
- * recursively.
+ * Block interrupts during mcount so that those interrupts can also be
+ * counted (as soon as we get done with the current counting).
  */
-#define	MCOUNT_ENTER	s = _splhigh()
 
-#define	MCOUNT_EXIT	_splx(s)
+/* $1 is at, $8 is t0, $12 is MIPS_COP_0_STATUS */
+#define	MCOUNT_ENTER	__asm__( \
+	".set	noat;" \
+	".set	noreorder;" \
+	"mfc0	$1,$12;" \
+	"nop;" \
+	"andi	%0,$1,1;" \
+	"beq	$1,$0,1f;" \
+	"li	$8,-2;" \
+	"and	$1,$1,$8;" \
+	"mtc0	$1,$12;" \
+	"nop;" \
+	"1:;" \
+	".set	at;" \
+	".set	reorder" : "=g" (s) :: "t0", "at");
+
+#define	MCOUNT_EXIT	__asm__( \
+	".set	noat;" \
+	".set	noreorder;" \
+	"beq	%0,$0,1f;" \
+	"mfc0	$1,$12;" \
+	"nop;" \
+	"ori	$1,$1,1;" \
+	"mtc0	$1,$12;" \
+	"nop;" \
+	"1:;" \
+	".set	at;" \
+	".set	reorder" :: "g" (s) : "at");
+
 #endif /* _KERNEL */
-
 #endif /* _MIPS_PROFILE_H_ */
