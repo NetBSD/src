@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.38 2004/07/24 09:14:52 yamt Exp $	*/
+/*	$NetBSD: keysock.c,v 1.39 2004/07/24 09:15:56 yamt Exp $	*/
 /*	$KAME: keysock.c,v 1.32 2003/08/22 05:45:08 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.38 2004/07/24 09:14:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.39 2004/07/24 09:15:56 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -246,6 +246,28 @@ key_sendup0(rp, m, promisc, canwait)
 	struct mbuf *n;
 	int error = 0;
 
+	if (promisc) {
+		struct sadb_msg *pmsg;
+
+		M_PREPEND(m, sizeof(struct sadb_msg), M_NOWAIT);
+		if (m && m->m_len < sizeof(struct sadb_msg))
+			m = m_pullup(m, sizeof(struct sadb_msg));
+		if (!m) {
+			pfkeystat.in_nomem++;
+			return ENOBUFS;
+		}
+		m->m_pkthdr.len += sizeof(*pmsg);
+
+		pmsg = mtod(m, struct sadb_msg *);
+		bzero(pmsg, sizeof(*pmsg));
+		pmsg->sadb_msg_version = PF_KEY_V2;
+		pmsg->sadb_msg_type = SADB_X_PROMISC;
+		pmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
+		/* pid and seq? */
+
+		pfkeystat.in_msgtype[pmsg->sadb_msg_type]++;
+	}
+
 	if (canwait) {
 		if (kp->kp_queue) {
 			for (n = kp->kp_queue; n && n->m_nextpkt;
@@ -261,29 +283,6 @@ key_sendup0(rp, m, promisc, canwait)
 
 	for (; m && error == 0; m = n) {
 		n = m->m_nextpkt;
-
-		if (promisc) {
-			struct sadb_msg *pmsg;
-
-			M_PREPEND(m, sizeof(struct sadb_msg), M_NOWAIT);
-			if (m && m->m_len < sizeof(struct sadb_msg))
-				m = m_pullup(m, sizeof(struct sadb_msg));
-			if (!m) {
-				pfkeystat.in_nomem++;
-				error = ENOBUFS;
-				goto recovery;
-			}
-			m->m_pkthdr.len += sizeof(*pmsg);
-
-			pmsg = mtod(m, struct sadb_msg *);
-			bzero(pmsg, sizeof(*pmsg));
-			pmsg->sadb_msg_version = PF_KEY_V2;
-			pmsg->sadb_msg_type = SADB_X_PROMISC;
-			pmsg->sadb_msg_len = PFKEY_UNIT64(m->m_pkthdr.len);
-			/* pid and seq? */
-
-			pfkeystat.in_msgtype[pmsg->sadb_msg_type]++;
-		}
 
 		if (canwait &&
 		    sbspace(&rp->rcb_socket->so_rcv) < m->m_pkthdr.len) {
@@ -307,6 +306,11 @@ key_sendup0(rp, m, promisc, canwait)
 
 recovery:
 	if (kp->kp_queue) {
+		/*
+		 * kp_queue != NULL implies !canwait.
+		 */
+		KASSERT(!canwait);
+		KASSERT(m->m_nextpkt == NULL);
 		/*
 		 * insert m to the head of queue, as normally mbuf on the queue
 		 * is less important than others.
