@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/04/10 12:33:09 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2001/04/18 03:45:10 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -1022,6 +1022,12 @@ _bus_dmamap_destroy(t, map)
 	bus_dmamap_t map;
 {
 
+	/*
+	 * If the handle contains a valid mapping, unload it.
+	 */
+	if (map->dm_mapsize != 0)
+		bus_dmamap_unload(t, map);
+
 	free(map, M_DMAMAP);
 }
 
@@ -1052,7 +1058,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 		return (ENOMEM);
 
 	/*
-	 * Allocate pages from the VM system.
+	 * Allocate physical pages from the VM system.
 	 */
 	TAILQ_INIT(mlist);
 	error = uvm_pglistalloc(size, low, high, 0, 0,
@@ -1097,7 +1103,7 @@ _bus_dmamem_free(t, segs, nsegs)
 		panic("bus_dmamem_free: nsegs = %d", nsegs);
 
 	/*
-	 * Return the list of pages back to the VM system.
+	 * Return the list of physical pages back to the VM system.
 	 */
 	uvm_pglistfree(segs[0]._ds_mlist);
 	free(segs[0]._ds_mlist, M_DEVBUF);
@@ -1208,11 +1214,30 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	int pagesz = PAGE_SIZE;
 	int error;
 
+	/*
+	 * Make sure that on error condition we return "no valid mappings".
+	 */
 	map->dm_nsegs = 0;
-	sgsize = (size + pagesz - 1) & -pagesz;
+	map->dm_mapsize = 0;
 
 	/* Allocate DVMA addresses */
-	if ((map->_dm_flags & BUS_DMA_24BIT) == 0) {
+	sgsize = (size + pagesz - 1) & -pagesz;
+
+	/* 
+	 * If the device can see our entire 24-bit address space,
+	 * we can use any properly aligned virtual addresses.
+	 */
+	if ((map->_dm_flags & BUS_DMA_24BIT) != 0) {
+		dva = _bus_dma_valloc_skewed(sgsize, map->_dm_boundary,
+					     pagesz, 0);
+		if (dva == 0)
+			return (ENOMEM);
+	} 
+
+	/*
+	 * Otherwise, we need virtual addresses in DVMA space.
+	 */
+	else {
 		error = extent_alloc(dvmamap, sgsize, pagesz,
 					map->_dm_boundary,
 					(flags & BUS_DMA_NOWAIT) == 0
@@ -1220,16 +1245,12 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 					(u_long *)&dva);
 		if (error)
 			return (error);
-	} else {
-		/* Any properly aligned virtual address will do */
-		dva = _bus_dma_valloc_skewed(sgsize, map->_dm_boundary,
-					     pagesz, 0);
-		if (dva == 0)
-			return (ENOMEM);
 	}
 
+	/* Fill in the segment. */
 	map->dm_segs[0].ds_addr = dva;
 	map->dm_segs[0].ds_len = size;
+	map->dm_segs[0]._ds_va = dva;
 	map->dm_segs[0]._ds_sgsize = sgsize;
 
 	/* Map physical pages into MMU */
@@ -1246,6 +1267,7 @@ _bus_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 		sgsize -= pagesz;
 	}
 
+	/* Make the map truly valid. */
 	map->dm_nsegs = 1;
 	map->dm_mapsize = size;
 
@@ -1336,13 +1358,12 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int pagesz = PAGE_SIZE;
 	bus_addr_t dva;
 	pmap_t pmap;
-	vm_offset_t seg_va, eva, seg_len, seg_off;
-	int saved_ctx, sme;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
 	 */
 	map->dm_nsegs = 0;
+	map->dm_mapsize = 0;
 
 	if (buflen > map->_dm_size)
 		return (EINVAL);
@@ -1367,62 +1388,58 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	}
 
 	/*
-	 * Allocate a MMU-segment-aligned region in DVMA space.
+	 * Allocate a region in DVMA space.
 	 */
-	seg_va = va;
-	seg_len = buflen;
-	seg_off = (seg_va & SEGOFSET);
-	seg_va -= seg_off;
-	seg_len = m68k_round_seg(seg_len + seg_off);
+	sgsize = m68k_round_page(buflen + (va & (pagesz - 1)));
 
-	if (extent_alloc(dvmamap, seg_len, NBSG, map->_dm_boundary,
+	if (extent_alloc(dvmamap, sgsize, pagesz, map->_dm_boundary,
 			 (flags & BUS_DMA_NOWAIT) == 0 ? EX_WAITOK : EX_NOWAIT,
 			 (u_long *)&dva) != 0) {
 		return (ENOMEM);
 	}
 
-	/*
-	 * We always use just one segment.
-	 */
-	map->dm_mapsize = buflen;
-	map->dm_segs[0].ds_addr = dva + seg_off;
+	/* Fill in the segment. */
+	map->dm_segs[0].ds_addr = dva + (va & (pagesz - 1));
 	map->dm_segs[0].ds_len = buflen;
+	map->dm_segs[0]._ds_va = dva;
 	map->dm_segs[0]._ds_sgsize = sgsize;
-	map->_dm_flags |= _BUS_DMA_NOPMAP;
 
 	/*
 	 * Now map the DVMA addresses we allocated to point to the
-	 * caller's buffer.  To preserve PMEGs, we bypass the pmap and
-	 * manually double-map in DVMA space the physical pages that
-	 * the kernel VAs point to.
+	 * pages of the caller's buffer.
 	 */
 	if (p != NULL)
 		pmap = p->p_vmspace->vm_map.pmap;
 	else
 		pmap = pmap_kernel();
 
-	saved_ctx = get_context();
-	set_context(0);
-	buflen = round_page(buflen);
-	for (; seg_len > 0; ) {
-		sme = _pmap_extract_pmeg(pmap, seg_va);
-		if (sme == SEGINV)
-			panic("_bus_dmamap_load: invalid segment");
-		set_segmap(dva, sme);
-		for(eva = dva + NBSG; dva < eva; ) {
-			if (buflen > 0) {
-				if ((get_pte(dva) & PG_VALID) == 0)
-					panic("_bus_dmamap_load: invalid page");
-				buflen -= pagesz;
-			}
-			dva += pagesz;
-		}
-		seg_va += NBSG;
-		seg_len -= NBSG;
-	}
-	set_context(saved_ctx);
+	for (; buflen > 0; ) {
+		paddr_t pa;
+		/*
+		 * Get the physical address for this page.
+		 */
+		(void) pmap_extract(pmap, va, &pa);
 
+		/*
+		 * Compute the segment size, and adjust counts.
+		 */
+		sgsize = pagesz - (va & (pagesz - 1));
+		if (buflen < sgsize)
+			sgsize = buflen;
+
+		pmap_enter(pmap_kernel(), dva,
+			   (pa & -pagesz) | PMAP_NC,
+			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+
+		dva += pagesz;
+		va += sgsize;
+		buflen -= sgsize;
+	}
+
+	/* Make the map truly valid. */
 	map->dm_nsegs = 1;
+	map->dm_mapsize = buflen;
+
 	return (0);
 }
 
@@ -1482,54 +1499,51 @@ _bus_dmamap_unload(t, map)
 	bus_addr_t dva;
 	bus_size_t len;
 	int s, error;
-	vm_offset_t seg_off;
-	int saved_ctx;
 
 	if (nsegs != 1)
 		panic("_bus_dmamem_unload: nsegs = %d", nsegs);
 
+	/*
+	 * _BUS_DMA_DIRECTMAP is set iff this map was loaded using
+	 * _bus_dmamap_load for a 24-bit device.
+	 */
 	if ((flags & _BUS_DMA_DIRECTMAP) != 0) {
 		/* Nothing to release */
 		map->_dm_flags &= ~_BUS_DMA_DIRECTMAP;
 	}
 
-	else if ((flags & _BUS_DMA_NOPMAP) != 0) {
-		dva = segs[0].ds_addr;
-		len = segs[0]._ds_sgsize;
-		seg_off = dva & SEGOFSET;
-		dva -= seg_off;
-		len = m68k_round_seg(len + seg_off);
-
-		saved_ctx = get_context();
-		set_context(0);
-		for(; len > 0; ) {
-#ifdef	DIAGNOSTIC
-			if (get_segmap(dva) != SEGINV)
-				panic("_bus_dmamap_unload: segment not mapped");
-#endif
-			set_segmap(dva, SEGINV);
-			dva += NBSG;
-			len -= NBSG;
-		}
-		set_context(saved_ctx);
-
-		map->_dm_flags &= ~_BUS_DMA_NOPMAP;
-	}
-
+	/*
+	 * Otherwise, this map was loaded using _bus_dmamap_load for a
+	 * non-24-bit device, or using _bus_dmamap_load_raw.
+	 */
 	else {
-		dva = segs[0].ds_addr & -PAGE_SIZE;
+		dva = segs[0]._ds_va & -PAGE_SIZE;
 		len = segs[0]._ds_sgsize;
 
+		/*
+		 * Unmap the DVMA addresses.
+		 */
 		pmap_remove(pmap_kernel(), dva, dva + len);
 
+		/*
+		 * Free the DVMA addresses.
+		 */
 		if ((flags & BUS_DMA_24BIT) != 0) {
+			/*
+			 * This map was loaded using _bus_dmamap_load_raw
+			 * for a 24-bit device.
+			 */
+			uvm_unmap(kernel_map, dva, dva + len);
+		} else {
+			/*
+			 * This map was loaded using _bus_dmamap_load or
+			 * _bus_dmamap_load_raw for a non-24-bit device.
+			 */
 			s = splhigh();
 			error = extent_free(dvmamap, dva, len, EX_NOWAIT);
 			splx(s);
 			if (error != 0)
 				printf("warning: %ld of DVMA space lost\n", len);
-		} else {
-			uvm_unmap(kernel_map, dva, dva + len);
 		}
 	}
 
@@ -1592,6 +1606,7 @@ sun2_find_prom_map(pa, iospace, len, hp)
 	u_long	va, eva;
 	int	sme;
 	u_long	pte;
+	int	saved_ctx;
 
 	/*
 	 * The mapping must fit entirely within one page.
@@ -1601,6 +1616,8 @@ sun2_find_prom_map(pa, iospace, len, hp)
 
 	pf = PA_PGNUM(pa);
 	pgtype = iospace << PG_MOD_SHIFT;
+	saved_ctx = get_context();
+	set_context(0);
 
 	/*
 	 * Walk the PROM address space, looking for a page with the
@@ -1632,10 +1649,12 @@ sun2_find_prom_map(pa, iospace, len, hp)
 				 * note: preserve page offset
 				 */
 				*hp = (bus_space_handle_t)(va | ((u_long)pa & PGOFSET));
+				set_context(saved_ctx);
 				return (0);
 			}
 		}
 	}
+	set_context(saved_ctx);
 	return (ENOENT);
 }
 
@@ -1651,6 +1670,7 @@ sun2_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 	bus_size_t	offset;
 	vaddr_t v;
 	int pte;
+	int saved_ctx;
 
 	/*
 	 * If we suspect there might be one, try to find
@@ -1691,7 +1711,10 @@ sun2_bus_map(t, iospace, addr, size, flags, vaddr, hp)
 		pte = PA_PGNUM(addr);
 		pte |= (iospace << PG_MOD_SHIFT);
 		pte |= (PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC);
+		saved_ctx = get_context();
+		set_context(0);
 		set_pte(v, pte);
+		set_context(saved_ctx);
 	} else {
 		addr |= iospace | PMAP_NC;
 		pmap_map(v, addr, addr + size, VM_PROT_ALL);
@@ -1779,6 +1802,7 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	caddr_t tmp;
 	int rv;
 	int result;
+	int saved_ctx;
 
 	/*
 	 * Map the device into a temporary page.
@@ -1820,7 +1844,10 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 	/*
 	 * Unmap the temporary page.
 	 */
+	saved_ctx = get_context();
+	set_context(0);
 	set_pte(tmp_vpages[1], PG_INVAL);
+	set_context(saved_ctx);
 	--tmp_vpages_inuse;
 
 	return (result);
