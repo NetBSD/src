@@ -1,4 +1,4 @@
-/*	$Id: getdents.c,v 1.3 2004/10/07 10:29:46 yamt Exp $	*/
+/*	$Id: getdents.c,v 1.4 2004/10/25 20:34:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -138,6 +138,7 @@ main(int argc, char *argv[])
 	for (count = nblks * 4 + 10; count; count--) {
 		char buf[DIRBLKSIZ];
 		struct ent *p;
+		int differ = 0;
 
 		i = rand() % nblks;
 		p = &blks[i];
@@ -154,16 +155,32 @@ main(int argc, char *argv[])
 			fprintf(stderr, "off=%" PRIx64
 			    ": different sz %d != %d\n",
 			    (uint64_t)off, p->sz, ret);
-			exit(EXIT_FAILURE);
-		}
-		if (memcmp(p->buf, buf, (size_t)ret)) {
+			differ = 1;
+		} else if (memcmp(p->buf, buf, (size_t)ret)) {
 			fprintf(stderr, "off=%" PRIx64 ": different data\n",
 			    (uint64_t)off);
 			fprintf(stderr, "previous:\n");
 			print_dents(stderr, p->buf, p->sz);
 			fprintf(stderr, "now:\n");
 			print_dents(stderr, buf, ret);
-			exit(EXIT_FAILURE);
+			differ = 1;
+		}
+		if (differ) {
+			const struct dirent *d1 = (void *)p->buf;
+			const struct dirent *d2 = (void *)buf;
+
+			if (p->sz == 0 || ret == 0 ||
+			    d1->d_fileno != d2->d_fileno ||
+#if defined(DT_UNKNOWN)
+			    (d1->d_type != DT_UNKNOWN &&
+			     d2->d_type != DT_UNKNOWN &&
+			     d1->d_type != d2->d_type) ||
+#endif /* defined(DT_UNKNOWN) */
+			    d1->d_namlen != d2->d_namlen ||
+			    memcmp(d1->d_name, d2->d_name, d1->d_namlen)) {
+				fprintf(stderr, "fatal difference\n");
+				exit(EXIT_FAILURE);
+			}
 		}
 	}
 
