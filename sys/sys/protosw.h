@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.20 2000/02/02 23:28:11 thorpej Exp $	*/
+/*	$NetBSD: protosw.h,v 1.21 2000/02/06 02:54:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -257,6 +257,7 @@ extern	u_int pffasttimo_now;
 struct sockaddr;
 struct protosw *pffindproto __P((int, int, int));
 struct protosw *pffindtype __P((int, int));
+struct domain *pffinddomain __P((int));
 void pfctlinput __P((int, struct sockaddr *));
 #endif /* _KERNEL */
 
