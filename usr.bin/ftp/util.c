@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.91 2000/01/31 22:01:05 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.92 2000/04/13 08:13:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.91 2000/01/31 22:01:05 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.92 2000/04/13 08:13:31 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -611,7 +611,7 @@ remotesize(file, noisy)
 		if (cp != NULL) {
 			cp++;
 #ifndef NO_QUAD
-			size = strtoq(cp, &ep, 10);
+			size = strtoll(cp, &ep, 10);
 #else
 			size = strtol(cp, &ep, 10);
 #endif

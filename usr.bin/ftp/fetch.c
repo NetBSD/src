@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.107 2000/03/09 22:07:59 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.108 2000/04/13 08:13:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.107 2000/03/09 22:07:59 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.108 2000/04/13 08:13:31 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -892,7 +892,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					sizeof(CONTENTLEN) - 1) == 0) {
 				cp += sizeof(CONTENTLEN) - 1;
 #ifndef NO_QUAD
-				filesize = strtoq(cp, &ep, 10);
+				filesize = strtoll(cp, &ep, 10);
 #else
 				filesize = strtol(cp, &ep, 10);
 #endif
@@ -912,7 +912,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 					sizeof(CONTENTRANGE) - 1) == 0) {
 				cp += sizeof(CONTENTRANGE) - 1;
 #ifndef NO_QUAD
-				rangestart = strtoq(cp, &ep, 10);
+				rangestart = strtoll(cp, &ep, 10);
 #else
 				rangestart = strtol(cp, &ep, 10);
 #endif
@@ -921,7 +921,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				cp = ep + 1;
 
 #ifndef NO_QUAD
-				rangeend = strtoq(cp, &ep, 10);
+				rangeend = strtoll(cp, &ep, 10);
 #else
 				rangeend = strtol(cp, &ep, 10);
 #endif
@@ -931,7 +931,7 @@ fetch_url(url, proxyenv, proxyauth, wwwauth)
 				cp = ep + 1;
 
 #ifndef NO_QUAD
-				entitylen = strtoq(cp, &ep, 10);
+				entitylen = strtoll(cp, &ep, 10);
 #else
 				entitylen = strtol(cp, &ep, 10);
 #endif
