@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.7 1995/03/21 09:09:20 cgd Exp $	*/
+/*	$NetBSD: machdep.h,v 1.8 1995/05/11 21:29:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)machdep.h	8.1 (Berkeley) 5/31/93
+ *	@(#)machdep.h	8.2 (Berkeley) 5/4/95
  */
 
 /*
@@ -49,5 +49,5 @@ union align {
 	char *cp;
 };
 
-#define ALIGN(nbytes)	((nbytes) + sizeof(union align) - 1 &~ (sizeof(union align) - 1))
+#define ALIGN(nbytes)	(((nbytes) + sizeof(union align) - 1) & ~(sizeof(union align) - 1))
 #endif

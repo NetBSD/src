@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1995/03/21 09:09:26 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1995/05/11 21:29:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.17 1995/03/21 09:09:26 cgd Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.18 1995/05/11 21:29:25 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,8 @@ static char rcsid[] = "$NetBSD: main.c,v 1.17 1995/03/21 09:09:26 cgd Exp $";
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+
+
 #include "shell.h"
 #include "main.h"
 #include "mail.h"
@@ -67,12 +69,12 @@ static char rcsid[] = "$NetBSD: main.c,v 1.17 1995/03/21 09:09:26 cgd Exp $";
 #include "input.h"
 #include "trap.h"
 #include "var.h"
+#include "show.h"
 #include "memalloc.h"
 #include "error.h"
 #include "init.h"
 #include "mystring.h"
 #include "exec.h"
-#include "extern.h"
 
 #define PROFILE 0
 
@@ -86,14 +88,8 @@ short profile_buf[16384];
 extern int etext();
 #endif
 
-#ifdef __STDC__
-STATIC void read_profile(char *);
-char *getenv(char *);
-#else
-STATIC void read_profile();
-char *getenv();
-#endif
-
+STATIC void read_profile __P((char *));
+STATIC char *find_dot_file __P((char *));
 
 /*
  * Main routine.  We initialize things, parse the arguments, execute
@@ -188,6 +184,8 @@ state4:	/* XXX ??? - why isn't this before the "if" statement */
 	monitor(0);
 #endif
 	exitshell(exitstatus);
+	/*NOTREACHED*/
+	return 0;
 }
 
 
@@ -290,8 +288,10 @@ readcmdfile(name)
  */
 
 
-static char *
-find_dot_file(basename) char *basename; {
+STATIC char *
+find_dot_file(basename)
+	char *basename;
+{
 	static char localname[FILENAME_MAX+1];
 	char *fullname;
 	char *path = pathval();
@@ -333,10 +333,12 @@ exitcmd(argc, argv)
 	char **argv; 
 {
 	if (stoppedjobs())
-		return;
+		return 0;
 	if (argc > 1)
 		exitstatus = number(argv[1]);
 	exitshell(exitstatus);
+	/*NOTREACHED*/
+	return 0;
 }
 
 

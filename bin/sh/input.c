@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.13 1995/03/21 09:09:13 cgd Exp $	*/
+/*	$NetBSD: input.c,v 1.14 1995/05/11 21:29:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,22 +38,24 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)input.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.13 1995/03/21 09:09:13 cgd Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.14 1995/05/11 21:29:15 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <stdio.h>	/* defines BUFSIZ */
+#include <fcntl.h>
+#include <errno.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 /*
  * This file implements the input routines used by the parser.
  */
 
-#include <stdio.h>	/* defines BUFSIZ */
-#include <string.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <unistd.h>
 #include "shell.h"
+#include "redir.h"
 #include "syntax.h"
 #include "input.h"
 #include "output.h"
@@ -62,10 +64,7 @@ static char rcsid[] = "$NetBSD: input.c,v 1.13 1995/03/21 09:09:13 cgd Exp $";
 #include "error.h"
 #include "alias.h"
 #include "parser.h"
-#include "extern.h"
-#ifndef NO_HISTORY
 #include "myhistedit.h"
-#endif
 
 #define EOF_NLEFT -99		/* value of parsenleft when EOF pushed back */
 
@@ -106,19 +105,9 @@ int pushednleft;		/* copy of parsenleft when text pushed back */
 int init_editline = 0;		/* editline library initialized? */
 int whichprompt;		/* 1 == PS1, 2 == PS2 */
 
-#ifndef NO_HISTORY
 EditLine *el;			/* cookie for editline package */
-#endif
 
-#ifdef __STDC__
-STATIC void pushfile(void);
-#else
-STATIC void pushfile();
-#endif
-
-void popstring();
-
-
+STATIC void pushfile __P((void));
 
 #ifdef mkinit
 INCLUDE "input.h"
@@ -198,9 +187,7 @@ preadbuffer() {
 	register char *p, *q;
 	register int i;
 	register int something;
-#ifndef NO_HISTORY
 	extern EditLine *el;
-#endif
 
 	if (parsefile->strpush) {
 		popstring();
@@ -213,7 +200,6 @@ preadbuffer() {
 	flushout(&errout);
 retry:
 	p = parsenextc = parsefile->buf;
-#ifndef NO_HISTORY
 	if (parsefile->fd == 0 && el) {
 		const char *rl_cp;
 		int len;
@@ -227,12 +213,8 @@ retry:
 		i = len;
 
 	} else {
-#endif
-regular_read:
 		i = read(parsefile->fd, p, BUFSIZ - 1);
-#ifndef NO_HISTORY
 	}
-#endif
 eof:
 	if (i <= 0) {
                 if (i < 0) {
@@ -282,14 +264,12 @@ eof:
 	parsenleft = q - parsefile->buf - 1;
 
 done:
-#ifndef NO_HISTORY
 	if (parsefile->fd == 0 && hist && something) {
 		INTOFF;
 		history(hist, whichprompt == 1 ? H_ENTER : H_ADD, 
 			   parsefile->buf);
 		INTON;
 	}
-#endif
 	if (vflag) {
 		/*
 		 * This isn't right.  Most shells coordinate it with
@@ -398,8 +378,7 @@ setinputfile(fname, push)
 
 void
 setinputfd(fd, push)
-	int fd;
-	int push;
+	int fd, push;
 {
 	if (push) {
 		pushfile();
@@ -423,7 +402,7 @@ void
 setinputstring(string, push)
 	char *string;
 	int push;
-{
+	{
 	INTOFF;
 	if (push)
 		pushfile();

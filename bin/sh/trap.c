@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1995/03/21 09:10:25 cgd Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 1995/05/11 21:30:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,17 +38,22 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)trap.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: trap.c,v 1.12 1995/03/21 09:10:25 cgd Exp $";
+static char rcsid[] = "$NetBSD: trap.c,v 1.13 1995/05/11 21:30:28 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <signal.h>
+#include <unistd.h>
+#include <stdlib.h>
 
 #include "shell.h"
 #include "main.h"
 #include "nodes.h"	/* for other headers */
 #include "eval.h"
 #include "jobs.h"
+#include "show.h"
 #include "options.h"
 #include "syntax.h"
 #include "output.h"
@@ -56,8 +61,6 @@ static char rcsid[] = "$NetBSD: trap.c,v 1.12 1995/03/21 09:10:25 cgd Exp $";
 #include "error.h"
 #include "trap.h"
 #include "mystring.h"
-#include <signal.h>
-#include <unistd.h>
 
 
 /*
@@ -156,7 +159,7 @@ setsignal(signo)
 	int signo;
 {
 	int action;
-	sig_t sigact;
+	sig_t sigact = SIG_DFL;
 	char *t;
 	extern void onsig();
 	extern sig_t getsigaction();
@@ -235,7 +238,7 @@ getsigaction(signo)
 	if (sigaction(signo, (struct sigaction *)0, &sa) == -1)
 		error("Sigaction system call failed");
 
-	return sa.sa_handler;
+	return (sig_t) sa.sa_handler;
 }
 
 /*

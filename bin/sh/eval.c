@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.20 1995/03/31 21:58:09 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.21 1995/05/11 21:28:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,11 +38,14 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)eval.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)eval.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.20 1995/03/31 21:58:09 christos Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.21 1995/05/11 21:28:56 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <signal.h>
+#include <unistd.h>
 
 /*
  * Evaluate a command.
@@ -65,13 +68,11 @@ static char rcsid[] = "$NetBSD: eval.c,v 1.20 1995/03/31 21:58:09 christos Exp $
 #include "var.h"
 #include "memalloc.h"
 #include "error.h"
+#include "show.h"
 #include "mystring.h"
 #ifndef NO_HISTORY
 #include "myhistedit.h"
 #endif
-#include "extern.h"
-#include <signal.h>
-#include <unistd.h>
 
 
 /* flags in argument to evaltree */
@@ -96,26 +97,14 @@ struct strlist *cmdenviron;
 int exitstatus;			/* exit status of last command */
 
 
-#ifdef __STDC__
-STATIC void evalloop(union node *);
-STATIC void evalfor(union node *);
-STATIC void evalcase(union node *, int);
-STATIC void evalsubshell(union node *, int);
-STATIC void expredir(union node *);
-STATIC void evalpipe(union node *);
-STATIC void evalcommand(union node *, int, struct backcmd *);
-STATIC void prehash(union node *);
-#else
-STATIC void evalloop();
-STATIC void evalfor();
-STATIC void evalcase();
-STATIC void evalsubshell();
-STATIC void expredir();
-STATIC void evalpipe();
-STATIC void evalcommand();
-STATIC void prehash();
-#endif
-
+STATIC void evalloop __P((union node *));
+STATIC void evalfor __P((union node *));
+STATIC void evalcase __P((union node *, int));
+STATIC void evalsubshell __P((union node *, int));
+STATIC void expredir __P((union node *));
+STATIC void evalpipe __P((union node *));
+STATIC void evalcommand __P((union node *, int, struct backcmd *));
+STATIC void prehash __P((union node *));
 
 
 /*
@@ -615,6 +604,13 @@ evalcommand(cmd, flags, backcmd)
 	struct localvar *volatile savelocalvars;
 	volatile int e;
 	char *lastarg;
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &argv;
+	(void) &argc;
+	(void) &lastarg;
+	(void) &flags;
+#endif
 
 	/* First expand the arguments. */
 	TRACE(("evalcommand(0x%lx, %d) called\n", (long)cmd, flags));
@@ -700,11 +696,11 @@ evalcommand(cmd, flags, backcmd)
 
 	/* Fork off a child process if necessary. */
 	if (cmd->ncmd.backgnd
-	 || cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0
-	 || (flags & EV_BACKCMD) != 0
+	 || (cmdentry.cmdtype == CMDNORMAL && (flags & EV_EXIT) == 0)
+	 || ((flags & EV_BACKCMD) != 0
 	    && (cmdentry.cmdtype != CMDBUILTIN
 		 || cmdentry.u.index == DOTCMD
-		 || cmdentry.u.index == EVALCMD)) {
+		 || cmdentry.u.index == EVALCMD))) {
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
 		if (flags & EV_BACKCMD) {
@@ -894,7 +890,8 @@ bltincmd(argc, argv)
 	char **argv; 
 {
 	listsetvar(cmdenviron);
-	return 0;
+	/* Preserve the exitstatus as POSIX.2 mandates */
+	return exitstatus;
 }
 
 
