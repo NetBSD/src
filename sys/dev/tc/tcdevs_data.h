@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.4 1996/05/09 21:35:27 cgd Exp 
+ *	NetBSD: tcdevs,v 1.5 1996/05/20 01:33:45 cgd Exp 
  */
 
 /*
@@ -51,6 +51,11 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAF-AA ",
 	    TC_DEVICE_PMAF_AA,
 	    TC_DESCRIPTION_PMAF_AA,
+	},
+	{
+	    "PMAF-F  ",
+	    TC_DEVICE_PMAF_F,
+	    TC_DESCRIPTION_PMAF_F,
 	},
 	{
 	    "PMAG-AA ",
