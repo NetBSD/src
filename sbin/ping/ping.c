@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.55.4.1 2000/10/18 00:39:47 tv Exp $	*/
+/*	$NetBSD: ping.c,v 1.55.4.2 2000/10/18 02:04:49 tv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.55.4.1 2000/10/18 00:39:47 tv Exp $");
+__RCSID("$NetBSD: ping.c,v 1.55.4.2 2000/10/18 02:04:49 tv Exp $");
 #endif
 
 #include <stdio.h>
@@ -666,8 +666,8 @@ doit(void)
 	int fromlen;
 	double sec, last, d_last;
 	struct timeval timeout;
-	fd_set fdmask;
-
+	fd_set *fdmaskp;
+	size_t nfdmask;
 
 	(void)gettimeofday(&clear_cache,0);
 	if (maxwait != 0) {
@@ -678,7 +678,10 @@ doit(void)
 		d_last = 365*24*60*60;
 	}
 
-	FD_ZERO(&fdmask);
+	nfdmask = howmany(s + 1, NFDBITS);
+	if ((fdmaskp = malloc(nfdmask)) == NULL)
+		err(1, "malloc");
+	memset(fdmaskp, 0, nfdmask);
 	do {
 		(void)gettimeofday(&now,0);
 
@@ -713,8 +716,8 @@ doit(void)
 
 		sec_to_timeval(sec, &timeout);
 
-		FD_SET(s, &fdmask);
-		cc = select(s+1, &fdmask, 0, 0, &timeout);
+		FD_SET(s, fdmaskp);
+		cc = select(s+1, fdmaskp, 0, 0, &timeout);
 		if (cc <= 0) {
 			if (cc < 0) {
 				if (errno == EINTR)
@@ -742,6 +745,7 @@ doit(void)
 
 	} while (nreceived < npackets
 		 && (nreceived == 0 || !(pingflags & F_ONCE)));
+	free(fdmaskp);
 
 	finish(0);
 }
