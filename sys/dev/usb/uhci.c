@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.32 1999/07/12 05:22:50 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.33 1999/08/02 19:30:34 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,9 @@ usbd_status	uhci_alloc_std_chain __P((struct uhci_pipe *, uhci_softc_t *,
 void		uhci_timo __P((void *));
 void		uhci_waitintr __P((uhci_softc_t *, usbd_request_handle));
 void		uhci_check_intr __P((uhci_softc_t *, uhci_intr_info_t *));
-void		uhci_ii_done __P((uhci_intr_info_t *, int));
+void		uhci_ii_done __P((uhci_intr_info_t *));
+void		uhci_ii_finish __P((uhci_intr_info_t *));
+void		uhci_abort_req __P((usbd_request_handle, usbd_status status));
 void		uhci_timeout __P((void *));
 void		uhci_wakeup_ctrl __P((void *, int, int, void *, int));
 void		uhci_lock_frames __P((uhci_softc_t *));
@@ -813,27 +815,36 @@ uhci_check_intr(sc, ii)
 	usb_untimeout(uhci_timeout, ii, ii->timeout_handle);
 	upipe = (struct uhci_pipe *)ii->reqh->pipe;
 	upipe->pipe.endpoint->toggle = upipe->nexttoggle;
-	uhci_ii_done(ii, 0);
+	uhci_ii_done(ii);
 }
 
 void
-uhci_ii_done(ii, timo)
+uhci_ii_done(ii)
 	uhci_intr_info_t *ii;
-	int timo;
 {
 	usbd_request_handle reqh = ii->reqh;
 	uhci_soft_td_t *std;
 	u_int32_t status;
 	int actlen;
 
-	DPRINTFN(10, ("uhci_ii_done: ii=%p ready %d\n", ii, timo));
+#ifdef USB_DEBUG
+	DPRINTFN(10, ("uhci_ii_done: ii=%p ready\n", ii));
+	if (uhcidebug > 10)
+		uhci_dump_tds(ii->stdstart);
+#endif
+
+	if (reqh->status == USBD_CANCELLED ||
+	    reqh->status == USBD_TIMEOUT) {
+		DPRINTF(("uhci_ii_done: aborted reqh=%p\n", reqh));
+		return;
+	}
 
 #ifdef DIAGNOSTIC
 	{
 		int s = splhigh();
 		if (ii->isdone) {
 			splx(s);
-			printf("uhci_ii_done: is done!\n");
+			printf("uhci_ii_done: ii=%p is done!\n", ii);
 			return;
 		}
 		ii->isdone = 1;
@@ -842,7 +853,6 @@ uhci_ii_done(ii, timo)
 #endif
 
 	/* The transfer is done, compute actual length and status. */
-	/* XXX Should stop at first inactive to get toggle right. */
 	/* XXX Is this correct for control xfers? */
 	actlen = 0;
 	for (std = ii->stdstart; std; std = std->td->link.std) {
@@ -872,14 +882,16 @@ uhci_ii_done(ii, timo)
 	} else {
 		reqh->status = USBD_NORMAL_COMPLETION;
 	}
-	if (timo) {
-		/* We got a timeout.  Make sure transaction is not active. */
-		reqh->status = USBD_TIMEOUT;
-		for (std = ii->stdstart; std != 0; std = std->td->link.std)
-			std->td->td_status &= ~UHCI_TD_ACTIVE;
-		/* XXX should we wait 1 ms */
-	}
-	DPRINTFN(5, ("uhci_ii_done: calling handler ii=%p\n", ii));
+	uhci_ii_finish(ii);
+}
+
+void
+uhci_ii_finish(ii)
+	uhci_intr_info_t *ii;
+{
+	usbd_request_handle reqh = ii->reqh;
+
+	DPRINTFN(5, ("uhci_ii_finish: calling handler ii=%p\n", ii));
 
 	switch (reqh->pipe->endpoint->edesc->bmAttributes & UE_XFERTYPE) {
 	case UE_CONTROL:
@@ -911,12 +923,9 @@ uhci_timeout(addr)
 	void *addr;
 {
 	uhci_intr_info_t *ii = addr;
-	int s;
 
 	DPRINTF(("uhci_timeout: ii=%p\n", ii));
-	s = splusb();
-	uhci_ii_done(ii, 1);
-	splx(s);
+	uhci_abort_req(ii->reqh, USBD_TIMEOUT);
 }
 
 /*
@@ -953,7 +962,7 @@ uhci_waitintr(sc, reqh)
 	     ii = LIST_NEXT(ii, list))
 		;
 	if (ii)
-		uhci_ii_done(ii, 1);
+		uhci_ii_done(ii);
 	else
 		panic("uhci_waitintr: lost intr_info\n");
 }
@@ -1153,10 +1162,10 @@ uhci_free_std_chain(sc, std, stdend)
 }
 
 usbd_status
-uhci_alloc_std_chain(upipe, sc, len, rd, spd, dma, sp, ep)
+uhci_alloc_std_chain(upipe, sc, len, rd, shortok, dma, sp, ep)
 	struct uhci_pipe *upipe;
 	uhci_softc_t *sc;
-	int len, rd, spd;
+	int len, rd, shortok;
 	usb_dma_t *dma;
 	uhci_soft_td_t **sp, **ep;
 {
@@ -1167,9 +1176,9 @@ uhci_alloc_std_chain(upipe, sc, len, rd, spd, dma, sp, ep)
 	int addr = upipe->pipe.device->address;
 	int endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
 
-	DPRINTFN(15, ("uhci_alloc_std_chain: addr=%d endpt=%d len=%d ls=%d "
-		      "spd=%d\n", addr, UE_GET_ADDR(endpt), len, 
-		      upipe->pipe.device->lowspeed, spd));
+	DPRINTFN(8, ("uhci_alloc_std_chain: addr=%d endpt=%d len=%d ls=%d "
+		      "shortok=%d\n", addr, UE_GET_ADDR(endpt), len, 
+		      upipe->pipe.device->lowspeed, shortok));
 	if (len == 0) {
 		*sp = *ep = 0;
 		DPRINTFN(-1,("uhci_alloc_std_chain: len=0\n"));
@@ -1188,10 +1197,10 @@ uhci_alloc_std_chain(upipe, sc, len, rd, spd, dma, sp, ep)
 	lastp = 0;
 	lastlink = UHCI_PTR_T;
 	ntd--;
-	status = UHCI_TD_SET_ERRCNT(3) | UHCI_TD_ACTIVE;
+	status = UHCI_TD_ZERO_ACTLEN(UHCI_TD_SET_ERRCNT(3) | UHCI_TD_ACTIVE);
 	if (upipe->pipe.device->lowspeed)
 		status |= UHCI_TD_LS;
-	if (spd)
+	if (shortok)
 		status |= UHCI_TD_SPD;
 	for (i = ntd; i >= 0; i--) {
 		p = uhci_alloc_std(sc);
@@ -1219,7 +1228,7 @@ uhci_alloc_std_chain(upipe, sc, len, rd, spd, dma, sp, ep)
 	}
 	*sp = lastp;
 	/*upipe->pipe.endpoint->toggle = tog;*/
-	DPRINTFN(10, ("uhci_alloc_std_chain: oldtog=%d newtog=%d\n", 
+	DPRINTFN(10, ("uhci_alloc_std_chain: oldtog=%d nexttog=%d\n", 
 		      upipe->pipe.endpoint->toggle, upipe->nexttoggle));
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -1284,7 +1293,7 @@ uhci_device_bulk_start(reqh)
 		memcpy(KERNADDR(dmap), reqh->buffer, len);
 
 #ifdef USB_DEBUG
-	if (uhcidebug > 10) {
+	if (uhcidebug > 8) {
 		printf("uhci_device_bulk_transfer: xfer(1)\n");
 		uhci_dump_tds(xfer);
 	}
@@ -1336,9 +1345,33 @@ void
 uhci_device_bulk_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* XXX inactivate */
-	usb_delay_ms(reqh->pipe->device->bus, 1);/* make sure it is done */
-	/* XXX call done */
+	DPRINTF(("uhci_device_bulk_abort:\n"));
+	uhci_abort_req(reqh, USBD_CANCELLED);
+}
+
+void
+uhci_abort_req(reqh, status)
+	usbd_request_handle reqh;
+	usbd_status status;
+{
+	struct uhci_pipe *upipe = (struct uhci_pipe *)reqh->pipe;
+	uhci_intr_info_t *ii = upipe->iinfo;
+	uhci_soft_td_t *std;
+	int s;
+
+	/* Make interrupt routine ignore it, */
+	reqh->status = USBD_CANCELLED;
+
+	/* make hardware ignore it, */
+	for (std = ii->stdstart; std != 0; std = std->td->link.std)
+		std->td->td_status &= ~UHCI_TD_ACTIVE;
+	/* make sure hardware has completed, */
+	usb_delay_ms(reqh->pipe->device->bus, 1);
+
+	/* and call final part of interrupt handler. */
+	s = splusb();
+	uhci_ii_finish(ii);
+	splx(s);
 }
 
 /* Close a device bulk pipe. */
@@ -1491,9 +1524,8 @@ void
 uhci_device_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* XXX inactivate */
-	usb_delay_ms(reqh->pipe->device->bus, 1); /* make sure it is done */
-	/* XXX call done */
+	DPRINTF(("uhci_device_ctrl_abort:\n"));
+	uhci_abort_req(reqh, USBD_CANCELLED);
 }
 
 /* Close a device control pipe. */
@@ -1729,7 +1761,7 @@ void
 uhci_device_isoc_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* XXX Can't abort a single request. */
+	/* XXX Can't abort this. */
 }
 
 void
