@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.27 1999/02/07 13:14:06 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.28 1999/03/22 07:36:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -46,7 +46,7 @@ void    abortsend __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
-int	auto_fetch __P((int, char **, char *));
+int	auto_fetch __P((int, char **));
 void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));

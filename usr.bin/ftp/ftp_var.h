@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.30 1999/03/08 04:36:13 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.31 1999/03/22 07:36:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -151,6 +151,9 @@ in_port_t	gateport;	/* port number to use for gateftp connections */
 const char	*ftpproxy;	/* ftp:// proxy server */
 const char	*httpproxy;	/* http:// proxy server */
 const char	*no_proxy;	/* list of domains not to proxy */
+
+char   *outfile;		/* filename to output URLs to */
+int	restartautofetch;	/* restart auto-fetch */
 
 jmp_buf	toplevel;		/* non-local goto stuff for cmd scanner */
 
