@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.39 2001/06/18 02:00:51 christos Exp $
+#	$NetBSD: files.x68k,v 1.40 2001/11/11 01:39:02 isaki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -175,6 +175,10 @@ defpseudo sram
 file	arch/x68k/dev/sram.c		sram needs-flag
 defpseudo pow
 file	arch/x68k/dev/pow.c		pow needs-count
+
+# Nereid Ethernet
+attach	ne at intio with ne_intio: rtl80x9
+file	arch/x68k/dev/if_ne_intio.c	ne_intio
 
 # memory disk
 file	dev/md_root.c			memory_disk_hooks
