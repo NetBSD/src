@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.32 2003/02/27 16:04:16 yamt Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.33 2003/06/20 03:54:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.32 2003/02/27 16:04:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.33 2003/06/20 03:54:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -139,6 +139,8 @@ linux_sys_ioctl(l, v, retval)
 		return linux_ioctl_termios(p, uap, retval);
 #endif
 	}
+	case 'r': /* VFAT ioctls; not yet supported */
+		return (EINVAL);
 	case 0x89:
 		return linux_ioctl_socket(p, uap, retval);
 	case 0x03:
