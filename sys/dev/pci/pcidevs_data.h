@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.498 2003/01/16 00:45:58 gendalia Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.499 2003/01/17 00:19:16 jonathan Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.496 2003/01/16 00:32:46 gendalia Exp 
+ *	NetBSD: pcidevs,v 1.497 2003/01/17 00:17:35 jonathan Exp 
  */
 
 /*
@@ -1876,22 +1876,46 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "BCM5702 10/100/1000 Ethernet",
 	},
 	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703,
-	    0,
-	    "Broadcom Corporation",
-	    "BCM5703 10/100/1000 Ethernet",
-	},
-	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702X,
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5702X 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702FE,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5702FE 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5703 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5703X,
 	    0,
 	    "Broadcom Corporation",
 	    "BCM5703X 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704C,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5704C Gigabit Ethernet (1000BASE-T)",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5704S,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5704S Gigabit Ethernet (1000BASE-X)",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705,
+	    0,
+	    "Broadcom Corporation",
+	    "BCM5705 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM4401,
