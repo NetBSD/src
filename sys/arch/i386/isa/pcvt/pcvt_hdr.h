@@ -906,8 +906,12 @@ struct vt_softc {
 };
 #endif /* PCVT_NETBSD > 101 */
 
-int pcprobe ();
-void pcattach ();
+#if PCVT_NETBSD > 100
+int pcprobe(struct device *, void *, void *);
+#endif
+#if PCVT_NETBSD > 9
+void pcattach(struct device *, struct device *, void *);
+#endif
 
 #if PCVT_NETBSD > 110
 struct cfattach vt_ca = {
@@ -1402,12 +1406,12 @@ static __inline void vt_selattr(struct video_state *svsp)
 				/* 0x84 to produce keyboard controller    */
 				/* access delays                          */
 #define PCVT_KBD_DELAY()          \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); } \
-	{ u_char x = inb(0x84); }
+	{ volatile u_char x = inb(0x84); (void) &x;} \
+	{ volatile u_char x = inb(0x84); (void) &x;} \
+	{ volatile u_char x = inb(0x84); (void) &x;} \
+	{ volatile u_char x = inb(0x84); (void) &x;} \
+	{ volatile u_char x = inb(0x84); (void) &x;} \
+	{ volatile u_char x = inb(0x84); (void) &x;}
 
 #else /* PCVT_PORTIO_DELAY */
 				/* use system supplied delay function for */
