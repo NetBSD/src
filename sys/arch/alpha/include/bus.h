@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.28 1999/03/23 21:29:03 drochner Exp $ */
+/* $NetBSD: bus.h,v 1.28.2.1 2000/02/06 17:27:25 he Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -447,6 +447,8 @@ do {									\
 /*
  * Private flags stored in the DMA map.
  */
+#define	DMAMAP_NO_COALESCE	0x40000000	/* don't coalesce adjacent
+						   segments */
 #define	DMAMAP_HAS_SGMAP	0x80000000	/* sgva/len are valid */
 
 /* Forwards needed by prototypes below. */
