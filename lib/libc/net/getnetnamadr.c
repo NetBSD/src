@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.28 2004/01/29 01:39:15 lukem Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.29 2004/05/08 18:52:15 kleink Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.28 2004/01/29 01:39:15 lukem Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.29 2004/05/08 18:52:15 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -237,6 +237,12 @@ getnetanswer(answer, anslen, net_i)
 		if (strcasecmp(in, "IN-ADDR.ARPA") != 0)
 			goto next_alias;
 		net_entry.n_aliases++;
+#if (defined(__sparc__) && defined(_LP64)) ||		\
+    defined(__alpha__) ||				\
+    (defined(__i386__) && defined(_LP64)) ||		\
+    (defined(__sh__) && defined(_LP64))
+		net_entry.__n_pad0 = 0;
+#endif
 		return (&net_entry);
 	}
 	h_errno = TRY_AGAIN;
@@ -354,7 +360,7 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 
 struct netent *
 getnetbyaddr(net, net_type)
-	u_long net;
+	uint32_t net;
 	int net_type;
 {
 	struct netent *np;
@@ -600,6 +606,12 @@ _ypnetent(line)
 	if (p != NULL)
 		*p++ = '\0';
 	net_entry.n_net = inet_network(cp);
+#if (defined(__sparc__) && defined(_LP64)) ||		\
+    defined(__alpha__) ||				\
+    (defined(__i386__) && defined(_LP64)) ||		\
+    (defined(__sh__) && defined(_LP64))
+	net_entry.__n_pad0 = 0;
+#endif
 	net_entry.n_addrtype = AF_INET;
 	q = net_entry.n_aliases = net_aliases;
 	if (p != NULL)  {
