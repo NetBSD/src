@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.6 1994/06/29 06:34:39 cgd Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.6.2.1 1994/09/16 18:00:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -120,7 +120,7 @@ portal_mount(mp, path, data, ndp, p)
 	fmp->pm_server = fp; fp->f_count++;
 
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_data = (qaddr_t) fmp;
+	mp->mnt_data = (qaddr_t)fmp;
 	getnewfsid(mp, makefstype(MOUNT_PORTAL));
 
 	(void)copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
@@ -128,12 +128,7 @@ portal_mount(mp, path, data, ndp, p)
 	(void)copyinstr(args.pa_config,
 	    mp->mnt_stat.f_mntfromname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
-
-#ifdef notdef
-	bzero(mp->mnt_stat.f_mntfromname, MNAMELEN);
-	bcopy("portal", mp->mnt_stat.f_mntfromname, sizeof("portal"));
-#endif
-
+	(void)portal_statfs(mp, &mp->mnt_stat, p);
 	return (0);
 }
 
@@ -247,7 +242,6 @@ portal_statfs(mp, sbp, p)
 #else
 	sbp->f_type = 0;
 #endif
-	sbp->f_flags = 0;
 	sbp->f_bsize = DEV_BSIZE;
 	sbp->f_iosize = DEV_BSIZE;
 	sbp->f_blocks = 2;		/* 1K to keep df happy */
