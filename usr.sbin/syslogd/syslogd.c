@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.56 2002/09/24 13:53:54 itojun Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.57 2002/11/16 03:59:36 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.56 2002/09/24 13:53:54 itojun Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.57 2002/11/16 03:59:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 	char *endp;
 	struct group   *gr;
 	struct passwd  *pw;
-	
+	unsigned long l;
 
 	(void)setlocale(LC_ALL, "");
 
@@ -295,9 +295,17 @@ main(int argc, char *argv[])
 
 	if (user != NULL) {
 		if (isdigit((unsigned char)*user)) {
-			uid = (uid_t)strtoul(user, &endp, 0);
-			if (*endp != '\0')
+			errno = 0;
+			endp = NULL;
+			l = strtoul(user, &endp, 0);
+			if (errno || *endp != '\0')
 	    			goto getuser;
+			uid = (uid_t)l;
+			if (uid != l) {
+				errno = 0;
+				logerror("UID out of range");
+				die(0);
+			}
 		} else {
 getuser:
 			if ((pw = getpwnam(user)) != NULL) {
@@ -312,9 +320,17 @@ getuser:
 
 	if (group != NULL) {
 		if (isdigit((unsigned char)*group)) {
-			gid = (gid_t)strtoul(group, &endp, 0);
-			if (*endp != '\0')
+			errno = 0;
+			endp = NULL;
+			l = strtoul(group, &endp, 0);
+			if (errno || *endp != '\0')
 	    			goto getgroup;
+			gid = (gid_t)l;
+			if (gid != l) {
+				errno = 0;
+				logerror("GID out of range");
+				die(0);
+			}
 		} else {
 getgroup:
 			if ((gr = getgrnam(group)) != NULL) {
