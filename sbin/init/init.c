@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.20 1995/05/28 05:26:32 jtc Exp $	*/
+/*	$NetBSD: init.c,v 1.21 1995/10/05 06:11:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 7/15/93";
 #else
-static char rcsid[] = "$NetBSD: init.c,v 1.20 1995/05/28 05:26:32 jtc Exp $";
+static char rcsid[] = "$NetBSD: init.c,v 1.21 1995/10/05 06:11:24 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -136,6 +136,7 @@ typedef struct init_session {
 	time_t	se_started;		/* used to avoid thrashing */
 	int	se_flags;		/* status of session */
 #define	SE_SHUTDOWN	0x1		/* session won't be restarted */
+#define	SE_PRESENT	0x2		/* session is in /etc/ttys */
 	char	*se_device;		/* filename of port */
 	char	*se_getty;		/* what to run on that port */
 	char	**se_getty_argv;	/* pre-parsed argument array */
@@ -920,6 +921,7 @@ new_session(sprev, session_index, typ)
 	sp = (session_t *) malloc(sizeof (session_t));
 	memset(sp, 0, sizeof *sp);
 
+	sp->se_flags = SE_PRESENT;
 	sp->se_index = session_index;
 
 	sp->se_device = malloc(sizeof(_PATH_DEV) + strlen(typ->ty_name));
@@ -1219,6 +1221,9 @@ clean_ttys()
 	register int session_index = 0;
 	register int devlen;
 
+	for (sp = sessions; sp; sp = sp->se_next)
+		sp->se_flags &= ~SE_PRESENT;
+
 	devlen = sizeof(_PATH_DEV) - 1;
 	while (typ = getttyent()) {
 		++session_index;
@@ -1228,6 +1233,7 @@ clean_ttys()
 				break;
 
 		if (sp) {
+			sp->se_flags |= SE_PRESENT;
 			if (sp->se_index != session_index) {
 				warning("port %s changed utmp index from %d to %d",
 				       sp->se_device, sp->se_index,
@@ -1254,6 +1260,12 @@ clean_ttys()
 	}
 
 	endttyent();
+
+	for (sp = sessions; sp; sp = sp->se_next)
+		if ((sp->se_flags & SE_PRESENT) == 0) {
+			sp->se_flags |= SE_SHUTDOWN;
+			kill(sp->se_process, SIGHUP);
+		}
 
 	return (state_func_t) multi_user;
 }
