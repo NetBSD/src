@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.53 2002/11/11 16:50:34 thorpej Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.54 2003/05/17 01:36:03 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.53 2002/11/11 16:50:34 thorpej Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.54 2003/05/17 01:36:03 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -340,7 +340,7 @@ getanswer(answer, anslen, qname, qtype)
 				had_error++;
 				continue;
 			}
-			strcpy(bp, tbuf);
+			strlcpy(bp, tbuf, (size_t)(ep - bp));
 			host.h_name = bp;
 			bp += n;
 			continue;
@@ -362,7 +362,7 @@ getanswer(answer, anslen, qname, qtype)
 				had_error++;
 				continue;
 			}
-			strcpy(bp, tbuf);
+			strlcpy(bp, tbuf, (size_t)(ep - bp));
 			tname = bp;
 			bp += n;
 			continue;
@@ -497,7 +497,7 @@ getanswer(answer, anslen, qname, qtype)
 			n = strlen(qname) + 1;	/* for the \0 */
 			if (n > ep - bp || n >= MAXHOSTNAMELEN)
 				goto no_recovery;
-			strcpy(bp, qname);
+			strlcpy(bp, qname, (size_t)(ep - bp));
 			host.h_name = bp;
 			bp += n;
 		}
