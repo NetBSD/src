@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.24 2002/07/05 18:45:22 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.25 2002/07/25 23:46:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,10 +40,6 @@
 #include "opt_altivec.h"
 
 #ifdef ALTIVEC
-#define DSSALL			/* assumes PSL is in cr registers */ \
-	bc+	4,6,86f;	/* branch is PSL_VEC is false */	\
-	dssall;			/* stop datastreams */			\
-86:
 #define	SAVE_VRSAVE(tf,b) \
 	mfspr	b,SPR_VRSAVE;						\
 	stw	b,FRAME_VRSAVE+8(tf);
@@ -52,7 +48,6 @@
 	lwz	b,FRAME_VRSAVE+8(tf);					\
 	mtspr	SPR_VRSAVE,b;
 #else
-#define DSSALL			86:
 #define SAVE_VRSAVE(tf,b)
 #define RESTORE_VRSAVE(tf,b)
 #endif
@@ -726,7 +721,6 @@ realtrap:
 					   overwritten) */
 s_trap:
 	bc	4,17,k_trap		/* branch if PSL_PR is false */
-	DSSALL				/* stop AltiVec data streams */
 	lis	1,_C_LABEL(curpcb)@ha
 	lwz	1,_C_LABEL(curpcb)@l(1)
 	addi	1,1,USPACE		/* stack is top of user struct */
@@ -885,7 +879,6 @@ s_isitrap:
 	stw	3,IFRAME_SRR1(1);					\
 	mtcr	3;							\
 	bc	4,17,99f;	/* branch if PSL_PR is false */		\
-	DSSALL;			/* stop AltiVec datastreams */		\
 /* interrupts are recoverable here, and enable translation */		\
 	RESTORE_KERN_SRS(3,4);						\
 	CPU601_KERN_ENTRY(3,4);						\

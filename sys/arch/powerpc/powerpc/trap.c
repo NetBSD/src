@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2002/07/24 04:59:33 chs Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2002/07/25 23:46:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,6 +75,7 @@ void
 trap(struct trapframe *frame)
 {
 	struct proc *p = curproc;
+	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct cpu_info * const ci = curcpu();
 	int type = frame->exc;
 	int ftype, rv;
@@ -85,9 +86,9 @@ trap(struct trapframe *frame)
 		type |= EXC_USER;
 
 #ifdef DIAGNOSTIC
-	if (curpcb->pcb_pmreal != curpm)
-		panic("trap: curpm (%p) != curpcb->pcb_pmreal (%p)",
-		    curpm, curpcb->pcb_pmreal);
+	if (pcb->pcb_pmreal != curpm)
+		panic("trap: curpm (%p) != pcb->pcb_pmreal (%p)",
+		    curpm, pcb->pcb_pmreal);
 #endif
 
 	uvmexp.traps++;
@@ -146,7 +147,7 @@ trap(struct trapframe *frame)
 		} else {
 			rv = EFAULT;
 		}
-		if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
+		if ((fb = pcb->pcb_onfault) != NULL) {
 			frame->srr0 = (*fb)[0];
 			frame->fixreg[1] = (*fb)[1];
 			frame->fixreg[2] = (*fb)[2];
@@ -232,11 +233,11 @@ trap(struct trapframe *frame)
 			save_fpu(ci->ci_fpuproc);
 		}
 #if defined(MULTIPROCESSOR)
-		if (p->p_addr->u_pcb.pcb_fpcpu)
+		if (pcb->pcb_fpcpu)
 			save_fpu_proc(p);
 #endif
 		ci->ci_fpuproc = p;
-		p->p_addr->u_pcb.pcb_fpcpu = ci;
+		pcb->pcb_fpcpu = ci;
 		enable_fpu(p);
 		break;
 
@@ -281,12 +282,12 @@ trap(struct trapframe *frame)
 			save_vec(ci->ci_vecproc);
 		}
 #if defined(MULTIPROCESSOR)
-		if (p->p_addr->u_pcb.pcb_veccpu)
+		if (pcb->pcb_veccpu)
 			save_vec_proc(p);
 #endif
 		ci->ci_vecproc = p;
 		enable_vec(p);
-		p->p_addr->u_pcb.pcb_veccpu = ci;
+		pcb->pcb_veccpu = ci;
 		break;
 #else
 		KERNEL_PROC_LOCK(p);
@@ -328,7 +329,7 @@ trap(struct trapframe *frame)
 	case EXC_MCHK: {
 		faultbuf *fb;
 
-		if ((fb = p->p_addr->u_pcb.pcb_onfault) != NULL) {
+		if ((fb = pcb->pcb_onfault) != NULL) {
 			frame->srr0 = (*fb)[0];
 			frame->fixreg[1] = (*fb)[1];
 			frame->fixreg[2] = (*fb)[2];
@@ -370,11 +371,23 @@ brain_damage2:
 	 * If someone stole the fp or vector unit while we were away,
 	 * disable it
 	 */
-	if (p != ci->ci_fpuproc || p->p_addr->u_pcb.pcb_fpcpu != ci)
+	if ((pcb->pcb_flags & PCB_FPU) &&
+	    (p != ci->ci_fpuproc || pcb->pcb_fpcpu != ci)) {
 		frame->srr1 &= ~PSL_FP;
+	}
 #ifdef ALTIVEC
-	if (p != ci->ci_vecproc || p->p_addr->u_pcb.pcb_veccpu != ci)
+	if ((pcb->pcb_flags & PCB_ALTIVEC) &&
+	    (p != ci->ci_vecproc || pcb->pcb_veccpu != ci)) {
 		frame->srr1 &= ~PSL_VEC;
+	}
+	/*
+	 * If the new process isn't the current AltiVec process on this
+	 * cpu, we need to stop any data streams that are active (since
+	 * it will be a different address space).
+	 */
+	if (ci->ci_vecproc != NULL && ci->ci_vecproc != p) {
+		__asm __volatile("dssall;sync");
+	}
 #endif
 
 	ci->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
