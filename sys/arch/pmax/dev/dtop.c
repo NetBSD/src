@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.47 2000/02/03 08:13:44 nisimura Exp $	*/
+/*	$NetBSD: dtop.c,v 1.48 2000/02/09 08:29:40 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,8 +94,9 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.47 2000/02/03 08:13:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.48 2000/02/09 08:29:40 nisimura Exp $");
 
+#include "opt_ddb.h"
 #include "rasterconsole.h"
 
 #include <sys/param.h>
