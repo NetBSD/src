@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.15 2001/06/28 23:15:24 itojun Exp $
+.\"	$NetBSD: mbuf.9,v 1.16 2001/07/28 16:19:12 itojun Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -566,11 +566,15 @@ Implemented as a macro.
 Returns the amount of space available before the current start of valid
 data in mbuf
 .Fa m .
+Returns 0 if the mbuf data part is shared across multiple mbufs
+.Pq i.e. not writable .
 Implemented as a macro.
 .It Fn M_TRAILINGSPACE "struct mbuf *m"
 Returns the amount of space available after the current end of valid
 data in mbuf
 .Fa m .
+Returns 0 if the mbuf data part is shared across multiple mbufs
+.Pq i.e. not writable .
 Implemented as a macro.
 .It Fn M_PREPEND "struct mbuf *m" "int plen" "int how"
 Prepends space of size
