@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.24 2002/04/12 08:10:54 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.25 2002/04/15 12:52:28 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -399,10 +399,8 @@ isapnp0	at isa?
 pckbc0	at isa?			# pc keyboard controller
 pckbd*	at pckbc?		# PC keyboard
 pms*		at pckbc?		# PS/2 mouse for wsmouse
-pmsi*		at pckbc?	# PS/2 "Intelli"mouse for wsmouse
 wskbd*		at pckbd? console ?
 wsmouse*	at pms?
-wsmouse*	at pmsi?
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
