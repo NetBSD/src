@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm.h,v 1.1.2.1 2005/02/16 13:46:29 bouyer Exp $      */
+/*      $NetBSD: xen_shm.h,v 1.1.2.2 2005/03/08 22:24:10 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -36,6 +36,10 @@
  * space, do I/O to it, and unmap it.
  */
 
-vaddr_t xen_shm_map(paddr_t *, int, int);
+int  xen_shm_map(paddr_t *, int, int, vaddr_t *, int);
 void xen_shm_unmap(vaddr_t, paddr_t *, int, int);
+int xen_shm_callback(int (*)(void *), void *);
 int  xen_shm_vaddr2ma(vaddr_t, paddr_t *);
+
+/* flags for xen_shm_map() */
+#define XSHM_CALLBACK 0x01	/* called from a callback */
