@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.44 1998/03/01 02:22:27 fvdl Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.45 1998/07/28 18:13:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -219,7 +219,7 @@ acct_process(p)
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)&acct, sizeof (acct),
 	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred,
-	    (int *)0, p));
+	    NULL, p));
 }
 
 /*
