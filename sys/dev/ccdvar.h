@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.21 2003/05/17 16:11:52 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.22 2003/05/17 21:42:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
  *	@(#)cdvar.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/buf.h>
 #include <sys/lock.h>
 #include <sys/queue.h>
 
@@ -174,6 +175,7 @@ struct ccd_softc {
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
 	struct lock	 sc_lock;		/* lock on this structure */
+	struct bufq_state sc_bufq;		/* buffer queue */
 };
 
 /* sc_flags */

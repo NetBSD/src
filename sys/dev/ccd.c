@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.87 2003/05/17 16:11:52 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.88 2003/05/17 21:42:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.87 2003/05/17 16:11:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.88 2003/05/17 21:42:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ void	ccdattach __P((int));
 /* called by biodone() at interrupt time */
 void	ccdiodone __P((struct buf *));
 
-static	void ccdstart __P((struct ccd_softc *, struct buf *));
+static	void ccdstart __P((struct ccd_softc *));
 static	void ccdinterleave __P((struct ccd_softc *));
 static	void ccdintr __P((struct ccd_softc *, struct buf *));
 static	int ccdinit __P((struct ccd_softc *, char **, struct vnode **,
@@ -626,6 +626,7 @@ ccdstrategy(bp)
 {
 	int unit = ccdunit(bp->b_dev);
 	struct ccd_softc *cs = &ccd_softc[unit];
+	daddr_t blkno;
 	int s;
 	int wlabel;
 	struct disklabel *lp;
@@ -652,36 +653,39 @@ ccdstrategy(bp)
 
 	/*
 	 * Do bounds checking and adjust transfer.  If there's an
-	 * error, the bounds check will flag that for us.
+	 * error, the bounds check will flag that for us.  Convert
+	 * the partition relative block number to an absolute.
 	 */
+	blkno = bp->b_blkno;
 	wlabel = cs->sc_flags & (CCDF_WLABEL|CCDF_LABELLING);
-	if (DISKPART(bp->b_dev) != RAW_PART)
+	if (DISKPART(bp->b_dev) != RAW_PART) {
 		if (bounds_check_with_label(&cs->sc_dkdev, bp, wlabel) <= 0)
 			goto done;
+		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
+	}
+	bp->b_rawblkno = blkno;
 
-	bp->b_resid = bp->b_bcount;
-
-	/*
-	 * "Start" the unit.
-	 */
+	/* Place it in the queue and start I/O on the unit. */
 	s = splbio();
-	ccdstart(cs, bp);
+	BUFQ_PUT(&cs->sc_bufq, bp);
+	ccdstart(cs);
 	splx(s);
 	return;
-done:
+
+ done:
+	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
 
 static void
-ccdstart(cs, bp)
+ccdstart(cs)
 	struct ccd_softc *cs;
-	struct buf *bp;
 {
 	long bcount, rcount;
+	struct buf *bp;
 	struct ccdbuf *cbp;
 	caddr_t addr;
 	daddr_t bn;
-	struct partition *pp;
 	SIMPLEQ_HEAD(, ccdbuf) cbufq;
 
 #ifdef DEBUG
@@ -689,51 +693,52 @@ ccdstart(cs, bp)
 		printf("ccdstart(%p, %p)\n", cs, bp);
 #endif
 
-	/* Instrumentation. */
-	disk_busy(&cs->sc_dkdev);
+	/* See if there is work for us to do. */
+	while ((bp = BUFQ_PEEK(&cs->sc_bufq)) != NULL) {
+		/* Instrumentation. */
+		disk_busy(&cs->sc_dkdev);
 
-	/*
-	 * Translate the partition-relative block number to an absolute.
-	 */
-	bn = bp->b_blkno;
-	if (DISKPART(bp->b_dev) != RAW_PART) {
-		pp = &cs->sc_dkdev.dk_label->d_partitions[DISKPART(bp->b_dev)];
-		bn += pp->p_offset;
-	}
+		bp->b_resid = bp->b_bcount;
+		bn = bp->b_rawblkno;
 
-	/*
-	 * Allocate the component buffers.
-	 */
-	SIMPLEQ_INIT(&cbufq);
-	addr = bp->b_data;
-	for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
-		cbp = ccdbuffer(cs, bp, bn, addr, bcount);
-		if (cbp == NULL) {
-			/* Free the already allocated component buffers. */
-			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-				CCD_PUTBUF(cbp);
+		/* Allocate the component buffers. */
+		SIMPLEQ_INIT(&cbufq);
+		addr = bp->b_data;
+		for (bcount = bp->b_bcount; bcount > 0; bcount -= rcount) {
+			cbp = ccdbuffer(cs, bp, bn, addr, bcount);
+			if (cbp == NULL) {
+				/*
+				 * Can't allocate a component buffer; just
+				 * defer the job until later.
+				 *
+				 * XXX We might consider a watchdog timer
+				 * XXX to make sure we are kicked into action,
+				 * XXX or consider a low-water mark for our
+				 * XXX component buffer pool.
+				 */
+				while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
+					SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
+					CCD_PUTBUF(cbp);
+				}
+				disk_unbusy(&cs->sc_dkdev, 0, 0);
+				return;
 			}
-
-			/* Notify the upper layer we are out of memory. */
-			bp->b_error = ENOMEM;
-			bp->b_flags |= B_ERROR;
-			biodone(bp);
-			disk_unbusy(&cs->sc_dkdev, 0, 0);
-			return;
+			SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
+			rcount = cbp->cb_buf.b_bcount;
+			bn += btodb(rcount);
+			addr += rcount;
 		}
-		SIMPLEQ_INSERT_TAIL(&cbufq, cbp, cb_q);
-		rcount = cbp->cb_buf.b_bcount;
-		bn += btodb(rcount);
-		addr += rcount;
-	}
 
-	/* Now fire off the requests. */
-	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-		if ((cbp->cb_buf.b_flags & B_READ) == 0)
-			cbp->cb_buf.b_vp->v_numoutput++;
-		VOP_STRATEGY(&cbp->cb_buf);
+		/* Transfer all set up, remove job from the queue. */
+		(void) BUFQ_GET(&cs->sc_bufq);
+
+		/* Now fire off the requests. */
+		while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
+			SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
+			if ((cbp->cb_buf.b_flags & B_READ) == 0)
+				cbp->cb_buf.b_vp->v_numoutput++;
+			VOP_STRATEGY(&cbp->cb_buf);
+		}
 	}
 }
 
@@ -980,8 +985,9 @@ ccdioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = ccdunit(dev);
-	int i, j, lookedup = 0, error;
+	int s, i, j, lookedup = 0, error;
 	int part, pmask;
+	struct buf *bp;
 	struct ccd_softc *cs;
 	struct ccd_ioctl *ccio = (struct ccd_ioctl *)data;
 	char **cpp;
@@ -1124,6 +1130,8 @@ ccdioctl(dev, cmd, data, flag, p)
 		ccio->ccio_unit = unit;
 		ccio->ccio_size = cs->sc_size;
 
+		bufq_alloc(&cs->sc_bufq, BUFQ_FCFS);
+
 		/* Attach the disk. */
 		disk_attach(&cs->sc_dkdev);
 
@@ -1145,6 +1153,18 @@ ccdioctl(dev, cmd, data, flag, p)
 			error = EBUSY;
 			goto out;
 		}
+
+		/* Kill off any queued buffers. */
+		s = splbio();
+		while ((bp = BUFQ_GET(&cs->sc_bufq)) != NULL) {
+			bp->b_error = EIO;
+			bp->b_flags |= B_ERROR;
+			bp->b_resid = bp->b_bcount;
+			biodone(bp);
+		}
+		splx(s);
+
+		bufq_free(&cs->sc_bufq);
 
 		/*
 		 * Free ccd_softc information and clear entry.
