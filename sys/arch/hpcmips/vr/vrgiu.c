@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.13 2000/09/25 01:56:57 sato Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.14 2000/09/25 03:47:37 sato Exp $	*/
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -37,8 +37,9 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/boot_flag.h>
 #include <sys/queue.h>
+#include <sys/boot_flag.h>
+
 #define	TAILQ_EMPTY(head) ((head)->tqh_first == NULL)
 
 #include <mips/cpuregs.h>
@@ -87,9 +88,11 @@ int vrgiu_intr __P((void*));
 int vrgiu_print __P((void*, const char*));
 void vrgiu_callback __P((struct device*));
 
-void	vrgiu_dump_regs(struct vrgiu_softc *sc);
-void	vrgiu_dump_io(struct vrgiu_softc *sc);
-void	vrgiu_dump_iosetting(struct vrgiu_softc *sc);
+void	vrgiu_dump_regs __P((struct vrgiu_softc *sc));
+void	vrgiu_dump_io __P((struct vrgiu_softc *sc));
+void	vrgiu_diff_io __P((void));
+void	vrgiu_dump_iosetting __P((struct vrgiu_softc *sc));
+void	vrgiu_diff_iosetting __P((void));
 u_int32_t vrgiu_regread_4 __P((vrgiu_chipset_tag_t, bus_addr_t));
 u_int16_t vrgiu_regread __P((vrgiu_chipset_tag_t, bus_addr_t));
 void	vrgiu_regwrite_4 __P((vrgiu_chipset_tag_t, bus_addr_t, u_int32_t));
@@ -114,6 +117,8 @@ struct cfattach vrgiu_ca = {
 	sizeof(struct vrgiu_softc), vrgiu_match, vrgiu_attach
 };
 
+struct vrgiu_softc *this_giu;
+
 int
 vrgiu_match(parent, cf, aux)
 	struct device *parent;
@@ -134,6 +139,7 @@ vrgiu_attach(parent, self, aux)
 	struct gpbus_attach_args gpa;
 	int i;
 
+	this_giu = sc;
 	sc->sc_vc = va->va_vc;
 	sc->sc_iot = va->va_iot;
 	bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
@@ -230,6 +236,31 @@ vrgiu_dump_iosetting(sc)
 }
 
 void
+vrgiu_diff_iosetting()
+{
+	struct vrgiu_softc *sc = this_giu;
+	static long oiosel = 0, ointen = 0, ouseupdn = 0, otermupdn = 0;
+	long iosel, inten, useupdn, termupdn;
+	u_int32_t m;
+
+	iosel= vrgiu_regread_4(sc, GIUIOSEL_REG);
+	inten= vrgiu_regread_4(sc, GIUINTEN_REG);
+	useupdn = vrgiu_regread(sc, GIUUSEUPDN_REG_W);
+	termupdn = vrgiu_regread(sc, GIUTERMUPDN_REG_W);
+	if (oiosel != iosel || ointen != inten ||
+	    ouseupdn != useupdn || otermupdn != termupdn) {
+		for (m = 0x80000000; m; m >>=1)
+			printf ("%c" , (useupdn&m) ?
+				((termupdn&m) ? 'U' : 'D') :
+				((iosel&m) ? 'o' : ((inten&m)?'I':'i')));
+	}
+	oiosel = iosel;
+	ointen = inten;
+	ouseupdn = useupdn;
+	otermupdn = termupdn;
+}
+
+void
 vrgiu_dump_io(sc)
 	struct vrgiu_softc *sc;
 {
@@ -239,6 +270,24 @@ vrgiu_dump_io(sc)
 	preg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
 
 	bitdisp64(preg);
+}
+
+void
+vrgiu_diff_io()
+{
+	struct vrgiu_softc *sc  = this_giu;
+	static u_int32_t opreg[2] = {0, 0};
+	u_int32_t preg[2];
+
+	preg[0] = vrgiu_regread_4(sc, GIUPIOD_REG);
+	preg[1] = vrgiu_regread_4(sc, GIUPODAT_REG);
+
+	if (opreg[0] != preg[0] || opreg[1] != preg[1]) {
+		printf("giu data: ");
+		bitdisp64(preg);
+	}
+	opreg[0] = preg[0];
+	opreg[1] = preg[1];
 }
 
 void
