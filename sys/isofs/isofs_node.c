@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_inode.c (unknown version)
- *	$Id: isofs_node.c,v 1.10 1994/01/12 23:20:15 cgd Exp $
+ *	$Id: isofs_node.c,v 1.11 1994/03/10 17:03:40 ws Exp $
  */
 
 #include <sys/param.h>
@@ -579,7 +579,7 @@ struct timeval *pu;
 		
 		/* timezone offset is unreliable on some disks */
 		if (-48 <= tz && tz <= 52)
-			crtime += tz * 15 * 60;
+			crtime -= tz * 15 * 60;
 	}
 	pu->tv_sec  = crtime;
 	pu->tv_usec = 0;
