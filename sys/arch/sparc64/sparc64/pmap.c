@@ -1,5 +1,5 @@
-/*	$NetBSD: pmap.c,v 1.19 1998/11/22 23:56:49 mrg Exp $	*/
-/* #define NO_VCACHE /* Don't forget the locked TLB in dostart */
+/*	$NetBSD: pmap.c,v 1.20 1998/11/24 12:55:06 mrg Exp $	*/
+/* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 
 /* #define BOOT_DEBUG */
 /* #define BOOT1_DEBUG */
@@ -228,7 +228,9 @@ static int ptelookup_va __P((vaddr_t va)); /* sun4u */
 static void tsb_enter __P((int ctx, int64_t va, int64_t data));
 static void pmap_pinit __P((struct pmap *));
 static void pmap_release __P((pmap_t));
+#if 0
 static int pv_syncflags __P((pv_entry_t));
+#endif
 
 struct pmap_stats {
 	int	ps_unlink_pvfirst;	/* # of pv_unlinks on head */
@@ -2483,9 +2485,9 @@ ptelookup_va(va)
 }
 
 void tsb_enter(ctx, va, data)
-int ctx;
-int64_t va;
-int64_t data;
+	int ctx;
+	int64_t va;
+	int64_t data;
 {
 	int i, s;
 	int64_t pa;
@@ -2508,6 +2510,7 @@ int64_t data;
 /*
  * Do whatever is needed to sync the MOD/REF flags
  */
+#if 0
 int
 pv_syncflags(pv)
 	pv_entry_t pv;
@@ -2557,6 +2560,7 @@ pv_syncflags(pv)
 	splx(s);
 	return (flags);
 }
+#endif
 
 #if defined(PMAP_NEW)
 boolean_t
