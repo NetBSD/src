@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.76 1999/10/24 12:31:36 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.77 1999/11/03 07:42:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.76 1999/10/24 12:31:36 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.77 1999/11/03 07:42:01 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -827,6 +827,7 @@ status(argc, argv)
 	    onoff(editing)
 #endif	/* !def NO_EDITCOMPLETE */
 	    );
+	fprintf(ttyout, "%s version: %s\n", __progname, FTP_VERSION);
 	if (macnum > 0) {
 		fputs("Macros:\n", ttyout);
 		for (i=0; i<macnum; i++) {
