@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.56 1998/09/13 10:29:04 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.57 1998/10/02 18:44:32 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,9 +92,13 @@
 #include "opt_ns.h"
 #include "opt_ddb.h"
 #include "opt_uvm.h"
+#include "opt_compat_ultrix.h"
 
 #include <sys/errno.h>
 #include <sys/syscall.h>
+#ifdef COMPAT_ULTRIX
+#include <compat/ultrix/ultrix_syscall.h>
+#endif
 
 #include <machine/endian.h>	/* byteorder for bcopy(), bzero(), byteswap */
 #include <mips/cpuregs.h>	/* XXX - misnomer ? */
@@ -254,6 +258,16 @@ NLEAF(sigcode)
 	break	0			# just in case sigreturn fails
 ALEAF(esigcode)
 END(sigcode)
+
+#ifdef COMPAT_ULTRIX
+NLEAF(ultrix_sigcode)
+	addu	a0, sp, 16		# address of sigcontext
+	li	v0, ULTRIX_SYS_sigreturn	# sigreturn(scp)
+	syscall
+	break	0			# just in case sigreturn fails
+ALEAF(ultrix_esigcode)
+END(ultrix_sigcode)
+#endif
 
 /*
  * GCC2 seems to want to call __main in main() for some reason.
