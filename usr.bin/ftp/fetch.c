@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.146 2003/12/10 12:34:28 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.147 2004/06/06 01:37:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.146 2003/12/10 12:34:28 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.147 2004/06/06 01:37:41 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -82,8 +82,10 @@ typedef enum {
 } url_t;
 
 void		aborthttp(int);
+#ifndef NO_AUTH
 static int	auth_url(const char *, char **, const char *, const char *);
 static void	base64_encode(const u_char *, size_t, u_char *);
+#endif
 static int	go_fetch(const char *);
 static int	fetch_ftp(const char *);
 static int	fetch_url(const char *, const char *, char *, char *);
@@ -100,6 +102,7 @@ static int	redirect_loop;
 #define	HTTP_URL	"http://"	/* http URL prefix */
 
 
+#ifndef NO_AUTH
 /*
  * Generate authorization response based on given authentication challenge.
  * Returns -1 if an error occurred, otherwise 0.
@@ -216,6 +219,7 @@ base64_encode(const u_char *clear, size_t len, u_char *encoded)
 	while (i-- > len)
 		*(--cp) = '=';
 }
+#endif
 
 /*
  * Decode %xx escapes in given string, `in-place'.
@@ -1001,6 +1005,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 				rval = go_fetch(location);
 			}
 			goto cleanup_fetch_url;
+#ifndef NO_AUTH
 		case 401:
 		case 407:
 		    {
@@ -1046,6 +1051,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			}
 			goto cleanup_fetch_url;
 		    }
+#endif
 		default:
 			if (message)
 				warnx("Error retrieving file - `%s'", message);
@@ -1617,6 +1623,7 @@ go_fetch(const char *url)
 {
 	char *proxy;
 
+#ifndef NO_ABOUT
 	/*
 	 * Check for about:*
 	 */
@@ -1650,6 +1657,7 @@ go_fetch(const char *url)
 		fputs("\n", ttyout);
 		return (0);
 	}
+#endif
 
 	/*
 	 * Check for file:// and http:// URLs.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.65 2003/08/07 11:13:56 agc Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.66 2004/06/06 01:37:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -126,15 +126,15 @@
  * Format of command table.
  */
 struct cmd {
-	char	*c_name;	/* name of command */
-	char	*c_help;	/* help string */
-	char	 c_bell;	/* give bell when command completes */
-	char	 c_conn;	/* must be connected to use command */
-	char	 c_proxy;	/* proxy server may execute */
+	char		*c_name;	/* name of command */
+	const char	*c_help;	/* help string */
+	char	 	c_bell;		/* give bell when command completes */
+	char	 	c_conn;		/* must be connected to use command */
+	char	 	c_proxy;	/* proxy server may execute */
 #ifndef NO_EDITCOMPLETE
-	char	*c_complete;	/* context sensitive completion list */
+	const char	*c_complete;	/* context sensitive completion list */
 #endif /* !NO_EDITCOMPLETE */
-	void	(*c_handler)(int, char **); /* function to call */
+	void		(*c_handler)(int, char **); /* function to call */
 };
 
 /*
