@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.66.4.5 2001/05/09 19:37:41 he Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.66.4.6 2004/04/12 04:58:25 jmc Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -379,9 +379,11 @@ udp6_input(mp, offp, proto)
 	/*
 	 * Checksum extended UDP header and data.
 	 */
-	if (uh->uh_sum == 0)
+	if (uh->uh_sum == 0) {
 		udp6stat.udp6s_nosum++;
-	else if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
+		goto bad;
+	}
+	if (in6_cksum(m, IPPROTO_UDP, off, ulen) != 0) {
 		udp6stat.udp6s_badsum++;
 		goto bad;
 	}
