@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.4 2001/11/02 03:12:48 lukem Exp $	*/
+/*	$NetBSD: makefs.c,v 1.5 2001/11/08 12:24:12 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,13 +37,14 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint
-__RCSID("$NetBSD: makefs.c,v 1.4 2001/11/02 03:12:48 lukem Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.5 2001/11/08 12:24:12 simonb Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
