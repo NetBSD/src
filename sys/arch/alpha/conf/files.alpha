@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.46.2.3 1997/06/03 23:39:58 thorpej Exp $
+# $NetBSD: files.alpha,v 1.46.2.4 1997/06/05 18:45:48 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -329,6 +329,7 @@ file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
 file	arch/alpha/alpha/disksubr.c
+file	arch/alpha/common/bus_dma.c
 file	dev/cons.c
 
 # Network protocol checksum routines
