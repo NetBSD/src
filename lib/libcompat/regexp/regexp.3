@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)regexp.3	8.1 (Berkeley) 6/4/93
-.\"	$NetBSD: regexp.3,v 1.7 1998/02/05 18:51:31 perry Exp $
+.\"	$NetBSD: regexp.3,v 1.8 1998/04/28 23:03:57 fair Exp $
 .\"
 .Dd June 4, 1993
 .Dt REGEXP 3
@@ -64,8 +64,7 @@ The
 .Fn regsub ,
 and
 .Fn regerror
-functions
-implement
+functions implement
 .Xr egrep 1 Ns -style
 regular expressions and supporting facilities.
 .Pp
@@ -73,12 +72,12 @@ The
 .Fn regcomp
 function
 compiles a regular expression into a structure of type
-.Xr regexp ,
+.Em regexp ,
 and returns a pointer to it.
 The space has been allocated using
 .Xr malloc 3
 and may be released by
-.Xr free .
+.Xr free 3 .
 .Pp
 The
 .Fn regexec
@@ -97,7 +96,7 @@ and
 (see below) accordingly.
 .Pp
 The members of a
-.Xr regexp
+.Em regexp
 structure include at least the following (not necessarily in order):
 .Bd -literal -offset indent
 char *startp[NSUBEXP];
