@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.1 1996/01/31 23:26:20 mark Exp $ */
+/* $NetBSD: podulebus.c,v 1.2 1996/03/06 23:33:14 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,9 +39,6 @@
  * Podule probe and configuration routines
  *
  * Created      : 07/11/94
- * Last updated : 26/04/95
- *
- *    $Id: podulebus.c,v 1.1 1996/01/31 23:26:20 mark Exp $
  */
 
 #include <sys/param.h>
@@ -535,8 +532,8 @@ podulebusattach(parent, self, aux)
 	poduleirq.ih_func = poduleirqhandler;
 	poduleirq.ih_arg = NULL;
 	poduleirq.ih_level = IPL_NONE;
-	if (irq_claim(IRQ_PODULE, &poduleirq) == -1)
-		panic("IRQ: Cannot install podule IRQ handler\n");
+	if (irq_claim(IRQ_PODULE, &poduleirq))
+		panic("Cannot claim IRQ for podulebus%d\n", IRQ_PODULE, parent->dv_unit);
 
 /* Find out what hardware is bolted on */
 
