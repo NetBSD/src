@@ -1,4 +1,4 @@
-/*	$NetBSD: README,v 1.1.1.1 1997/03/13 16:27:27 gwr Exp $ */
+/*	$NetBSD: README,v 1.2 1997/03/15 03:41:01 jeremy Exp $ */
 
 The sun bootblocks are split into two parts: a small 1st-level program that
 gets written right after the superblock in a partition (and is hence limited
@@ -28,7 +28,9 @@ The above only works with securelevel <= 0 (see init.8 manual).
 
 Status:
 
-netboot works.
+netboot works. (3/13/1997)
+ufsboot works. (3/13/1997)
+tapeboot has not been tested. (3/13/1997)
 
 bootxx, installboot are tested and working.  It would be nice if
 installboot would find the inumber for the 2nd stage boot program
