@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpxreg.h,v 1.7 1997/06/08 07:57:40 thorpej Exp $ */
+/* $NetBSD: dwlpxreg.h,v 1.8 1997/08/16 01:14:32 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -132,6 +132,29 @@
 #define	PCIA_TBIT	0x380A00000LL	/* PCI TBIT */
 #define	PCIA_MCTL	0x380C00000LL	/* PCI Module Control */
 #define	PCIA_IBR	0x380E00000LL	/* PCI Information Base Repair */
+
+/*
+ * Bits in PCIA_CTL register
+ */
+#define	PCIA_CTL_SG32K	(0<<25)		/* 32K SGMAP entries */
+#define PCIA_CTL_SG64K	(1<<25)		/* 64K SGMAP entries */
+#define	PCIA_CTL_SG128K	(3<<25)		/* 128K SGMAP entries */
+#define	PCIA_CTL_SG0K	(2<<25)		/* disable SGMAP in HPC */
+#define	PCIA_CTL_4UP	(0<<23)		/* 4 Up Hose buffers */
+#define	PCIA_CTL_1UP	(1<<23)		/* 1 "" */
+#define	PCIA_CTL_2UP	(2<<23)		/* 2 "" */
+#define	PCIA_CTL_3UP	(3<<23)		/* 3 "" (normal) */
+#define	PCIA_CTL_RMM4X	(1<<22)		/* Read Multiple 2X -> 4X */
+#define	PCIA_CTL_RMMENA	(1<<21)		/* Read Multiple Enable */
+#define	PCIA_CTL_RMMARB	(1<<20)		/* RMM Multiple Arb */
+#define	PCIA_CTL_HAEDIS	(1<<19)		/* Hardware Address Ext. Disable */
+#define	PCIA_CTL_MHAE(x) ((x&0x1f)<<14)	/* Memory Hardware Address Extension */
+#define	PCIA_CTL_IHAE(x) ((x&0x1f)<<9)	/* I/O Hardware Address Extension */
+#define	PCIA_CTL_CUTENA	(1<<8)		/* PCI Cut Through */
+#define	PCIA_CTL_CUT(x)	((x&0x7)<<4)	/* PCI Cut Through Size */
+#define	PCIA_CTL_PRESET	(1<<3)		/* PCI Reset */
+#define	PCIA_CTL_DTHROT	(1<<2)		/* DMA downthrottle */
+#define	PCIA_CTL_T1CYC	(1<<0)		/* Type 1 Configuration Cycle */
 
 /*
  * Bits in PCIA_PRESENT.
