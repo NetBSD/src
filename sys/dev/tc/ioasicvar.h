@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.2 1996/03/17 21:37:45 jonathan Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.3 1997/07/17 01:12:41 jtk Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -40,9 +40,10 @@ struct ioasicdev_attach_args {
 };
 
 /* Device locators. */
-#define	ioasiccf_offset	cf_loc[0]		/* offset */
+#include "locators.h"
+#define	ioasiccf_offset	cf_loc[IOASICCF_OFFSET]		/* offset */
 
-#define	IOASIC_OFFSET_UNKNOWN	-1
+#define	IOASIC_OFFSET_UNKNOWN	IOASICCF_OFFSET_DEFAULT
 
 /*
  * The IOASIC (bus) cfdriver, so that subdevices can more
