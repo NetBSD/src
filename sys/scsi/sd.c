@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: sd.c,v 1.16 1993/07/04 07:09:59 andrew Exp $
+ *	$Id: sd.c,v 1.17 1993/07/19 11:30:52 cgd Exp $
  */
 
 #include "sd.h"
@@ -85,7 +85,7 @@ sdattach(int masunit, struct scsi_switch *sw, int physid, int *unit)
 
 	if(*unit == -1) {
 		for(i=0; i<NSD && *unit==-1; i++)
-			if(sd_data[*unit]==NULL)
+			if(sd_data[i]==NULL)
 				*unit = i;
 	}
 	if(*unit > NSD || *unit==-1)
