@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2002/11/22 12:21:01 wiz Exp $
+# $NetBSD: GENERIC,v 1.89 2002/12/22 00:17:13 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.89 $"
 
 maxusers	32		# estimated number of users
 
@@ -164,6 +164,7 @@ intio0		at mainbus0		# internal i/o space
 dio0		at mainbus0		# DIO/DIO-II bus
 
 rtc*		at intio?		# real-time clock (not optional)
+dma* 		at intio?		# DMA controller
 hil*		at intio?		# Human Interface Loop
 options 	UK_KEYBOARD		# include United Kingdom HIL keymap
 options 	SE_KEYBOARD		# include Swedish HIL keymap

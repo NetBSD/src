@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.27 2002/10/20 02:37:25 chs Exp $	*/
+/*	$NetBSD: dma.c,v 1.28 2002/12/22 00:17:15 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,23 +76,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.27 2002/10/20 02:37:25 chs Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.28 2002/12/22 00:17:15 gmcgarry Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>
-#include <sys/time.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/device.h>
 
-#include <machine/frame.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
+#include <machine/bus.h>
+
 #include <m68k/cacheops.h>
 
+#include <hp300/dev/intiovar.h>
 #include <hp300/dev/dmareg.h>
 #include <hp300/dev/dmavar.h>
 
@@ -121,6 +120,10 @@ struct dma_channel {
 };
 
 struct dma_softc {
+	struct  device sc_dev;
+	bus_space_tag_t sc_bst;
+	bus_space_handle_t sc_bsh;
+
 	struct	dmareg *sc_dmareg;		/* pointer to our hardware */
 	struct	dma_channel sc_chan[NDMACHAN];	/* 2 channels */
 	TAILQ_HEAD(, dmaqueue) sc_queue;	/* job queue */
@@ -128,7 +131,7 @@ struct dma_softc {
 	char	sc_type;			/* A, B, or C */
 	int	sc_ipl;				/* our interrupt level */
 	void	*sc_ih;				/* interrupt cookie */
-} dma_softc;
+};
 
 /* types */
 #define	DMA_B	0
@@ -138,6 +141,12 @@ struct dma_softc {
 #define DMAF_PCFLUSH	0x01
 #define DMAF_VCFLUSH	0x02
 #define DMAF_NOINTR	0x04
+
+int	dmamatch(struct device *, struct cfdata *, void *);
+void	dmaattach(struct device *, struct device *, void *);
+
+CFATTACH_DECL(dma, sizeof(struct dma_softc),
+    dmamatch, dmaattach, NULL, NULL);
 
 int	dmaintr __P((void *));
 
@@ -158,21 +167,50 @@ long	dmaword[NDMACHAN];
 long	dmalword[NDMACHAN];
 #endif
 
-/*
- * Initialize the DMA engine, called by dioattach()
- */
-void
-dmainit()
+static struct dma_softc *dma_softc;
+
+int
+dmamatch(parent, match, aux)
+	struct device *parent;
+	struct cfdata *match;
+	void *aux;
 {
-	struct dma_softc *sc = &dma_softc;
-	struct dmareg *dma;
+	struct intio_attach_args *ia = aux;
+	static int dmafound = 0;                /* can only have one */
+
+	if (strcmp("dma", ia->ia_modname) != 0 || dmafound)
+		return (0);
+
+	dmafound = 1;
+	return (1);
+}
+
+
+
+void
+dmaattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct dma_softc *sc = (struct dma_softc *)self;
+	struct intio_attach_args *ia = aux;
 	struct dma_channel *dc;
+	struct dmareg *dma;
 	int i;
 	char rev;
 
 	/* There's just one. */
-	sc->sc_dmareg = (struct dmareg *)DMA_BASE;
-	dma = sc->sc_dmareg;
+	dma_softc = sc;
+
+	sc->sc_bst = ia->ia_bst;
+	if (bus_space_map(sc->sc_bst, ia->ia_iobase, INTIO_DEVSIZE, 0,
+	     &sc->sc_bsh)) {
+		printf("%s: can't map registers\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	dma = (struct dmareg *)bus_space_vaddr(sc->sc_bst, sc->sc_bsh);
+	sc->sc_dmareg = dma;
 
 	/*
 	 * Determine the DMA type.  A DMA_A or DMA_B will fail the
@@ -220,7 +258,7 @@ dmainit()
 	callout_reset(&sc->sc_debug_ch, 30 * hz, dmatimeout, sc);
 #endif
 
-	printf("98620%c, 2 channels, %d bit DMA\n",
+	printf(": 98620%c, 2 channels, %d-bit DMA\n",
 	    rev, (rev == 'B') ? 16 : 32);
 
 	/*
@@ -237,7 +275,7 @@ dmainit()
 void
 dmacomputeipl()
 {
-	struct dma_softc *sc = &dma_softc;
+	struct dma_softc *sc = dma_softc;
 
 	if (sc->sc_ih != NULL)
 		intr_disestablish(sc->sc_ih);
@@ -254,7 +292,7 @@ int
 dmareq(dq)
 	struct dmaqueue *dq;
 {
-	struct dma_softc *sc = &dma_softc;
+	struct dma_softc *sc = dma_softc;
 	int i, chan, s;
 
 #if 1
@@ -299,7 +337,7 @@ dmafree(dq)
 	struct dmaqueue *dq;
 {
 	int unit = dq->dq_chan;
-	struct dma_softc *sc = &dma_softc;
+	struct dma_softc *sc = dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
 	struct dmaqueue *dn;
 	int chan, s;
@@ -372,7 +410,7 @@ dmago(unit, addr, count, flags)
 	int count;
 	int flags;
 {
-	struct dma_softc *sc = &dma_softc;
+	struct dma_softc *sc = dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
 	char *dmaend = NULL;
 	int seg, tcount;
@@ -516,7 +554,7 @@ void
 dmastop(unit)
 	int unit;
 {
-	struct dma_softc *sc = &dma_softc;
+	struct dma_softc *sc = dma_softc;
 	struct dma_channel *dc = &sc->sc_chan[unit];
 
 #ifdef DEBUG
