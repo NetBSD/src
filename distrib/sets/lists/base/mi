@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.267 2001/07/14 06:53:23 garbled Exp $
+# $NetBSD: mi,v 1.268 2001/07/15 14:46:02 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1634,6 +1634,7 @@
 ./usr/share/wscons/fonts/vt220l.814			base-util-share
 ./usr/share/wscons/fonts/vt220l.816			base-util-share
 ./usr/share/wscons/keymaps			base-util-share
+./usr/share/wscons/keymaps/pckbd.be.azerty	base-util-share
 ./usr/share/wscons/keymaps/pckbd.hu.iso8859-2	base-util-share
 ./usr/share/wscons/keymaps/pckbd.ru.koi8-r	base-util-share
 ./usr/share/wscons/keymaps/pckbd.sv.svascii	base-util-share
