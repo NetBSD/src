@@ -47,7 +47,7 @@
 #include "lib.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fexec.c,v 1.5 2003/09/23 09:36:06 wiz Exp $");
+__RCSID("$NetBSD: fexec.c,v 1.6 2003/09/23 09:47:21 wiz Exp $");
 #endif
 
 static int	vfcexec(const char *, int, const char *, va_list);
@@ -81,6 +81,7 @@ vfcexec(const char *path, int skipempty, const char *arg, va_list ap)
 			ptr = realloc(argv, new * sizeof(const char *));
 			if (ptr == NULL) {
 				warnx("vfcexec can't alloc arg space");
+				free(argv);
 				return -1;
 			}
 			argv = ptr;
