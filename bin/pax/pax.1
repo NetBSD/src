@@ -1,4 +1,4 @@
-.\"	$NetBSD: pax.1,v 1.9 1998/03/02 04:50:57 mrg Exp $
+.\"	$NetBSD: pax.1,v 1.10 1999/03/07 01:07:57 mycroft Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -47,19 +47,22 @@
 .Nm
 .Op Fl cdnvz
 .Bk -words
+.Op Fl E Ar limit
+.Ek
+.Bk -words
 .Op Fl f Ar archive
 .Ek
 .Bk -words
 .Op Fl s Ar replstr
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl U Ar user
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl G Ar group
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Oo
@@ -67,35 +70,37 @@
 .Op Ar from_date
 .Op Ar ,to_date
 .Oc
-.Ar ...
+.Ar ...\&
 .Ek
-.Op Ar pattern ...
+.Op Ar pattern ...\&
 .Nm ""
 .Fl r
 .Op Fl cdiknuvzDYZ
+.Bk -words
+.Op Fl E Ar limit
+.Ek
 .Bk -words
 .Op Fl f Ar archive
 .Ek
 .Bk -words
 .Op Fl o Ar options
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl p Ar string
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl s Ar replstr
-.Ar ...
+.Ar ...\&
 .Ek
-.Op Fl E Ar limit
 .Bk -words
 .Op Fl U Ar user
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl G Ar group
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Oo
@@ -103,9 +108,9 @@
 .Op Ar from_date
 .Op Ar ,to_date
 .Oc
-.Ar ...
+.Ar ...\&
 .Ek
-.Op Ar pattern ...
+.Op Ar pattern ...\&
 .Nm ""
 .Fl w
 .Op Fl dituvzHLPX
@@ -120,64 +125,64 @@
 .Op Fl x Ar format
 .Ek
 .Bk -words
-.Op Fl s Ar replstr
-.Ar ...
+.Op Fl B Ar bytes
 .Ek
 .Bk -words
 .Op Fl o Ar options
-.Ar ...
+.Ar ...\&
+.Ek
+.Bk -words
+.Op Fl s Ar replstr
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl U Ar user
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl G Ar group
-.Ar ...
-.Ek
-.Bk -words
-.Op Fl B Ar bytes
+.Ar ...\&
 .Ek
 .Bk -words
 .Oo
 .Fl T
 .Op Ar from_date
 .Op Ar ,to_date
-.Op Ar /[c][m]
+.Op /[c][m]
 .Oc
-.Ar ...
+.Ar ...\&
 .Ek
-.Op Ar file ...
+.Op Ar file ...\&
 .Nm ""
 .Fl r
 .Fl w
 .Op Fl diklntuvzDHLPXYZ
 .Bk -words
 .Op Fl p Ar string
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl s Ar replstr
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl U Ar user
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Op Fl G Ar group
-.Ar ...
+.Ar ...\&
 .Ek
 .Bk -words
 .Oo
 .Fl T
 .Op Ar from_date
 .Op Ar ,to_date
-.Op Ar /[c][m]
+.Op /[c][m]
 .Oc
-.Ar ...
+.Ar ...\&
 .Ek
-.Op Ar file ...
+.Op Ar file ...\&
 .Ar directory
 .Sh DESCRIPTION
 .Nm
