@@ -1,2 +1,2 @@
-# $NetBSD: rescue.mac68k,v 1.1 2002/10/09 01:22:40 thorpej Exp $
-./rescue/pdisk		base-rescue-root
+# $NetBSD: rescue.mac68k,v 1.2 2004/01/11 10:24:59 lukem Exp $
+./rescue/pdisk					base-rescue-root
