@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.60 2002/10/22 03:11:03 simonb Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.61 2002/11/24 10:55:03 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.60 2002/10/22 03:11:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_timer.c,v 1.61 2002/11/24 10:55:03 scw Exp $");
 
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
@@ -473,7 +473,7 @@ void
 tcp_timer_keep(void *arg)
 {
 	struct tcpcb *tp = arg;
-	struct socket *so;
+	struct socket *so = NULL;	/* Quell compiler warning */
 	int s;
 #ifdef TCP_DEBUG
 	short ostate;
