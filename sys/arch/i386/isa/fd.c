@@ -35,14 +35,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.15 1993/06/20 08:42:05 deraadt Exp $
+ *	$Id: fd.c,v 1.16 1993/06/21 09:39:52 deraadt Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
  */
 /*
  * $Log: fd.c,v $
- * Revision 1.15  1993/06/20 08:42:05  deraadt
+ * Revision 1.16  1993/06/21 09:39:52  deraadt
+ * I don't know what I did that was so critical, but now the floppy driver
+ * works on my machine (it did not before). Big voodoo.
+ *
+ * Revision 1.15  1993/06/20  08:42:05  deraadt
  * if the floppy does not exist, say nothing.
  *
  * Revision 1.14  1993/06/18  06:19:16  cgd
@@ -114,7 +118,6 @@ struct fd_type {
 
 struct fd_type fd_types[] =
 {
-	{ 0,0,0,0, 0,0,0,0},		/* non-existant */
  	{ 18,2,0xFF,0x1B,80,2880,1,0,2 }, /* 1.44 meg HD 3.5in floppy    */
 	{ 15,2,0xFF,0x1B,80,2400,1,0,2 }, /* 1.2 meg HD floppy           */
 	{ 9,2,0xFF,0x23,40,720,2,1,2 },	/* 360k floppy in 1.2meg drive */
@@ -310,40 +313,39 @@ struct isa_device *dev;
 	case RTCFDT_NONE:
 		/*printf("fd%d at fdc%d targ %d: nonexistant device\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);*/
-		fd->type = 0;
+		return 0;
 		break;
 	case RTCFDT_12M:
 		printf("fd%d at fdc%d targ %d: 1.2MB 80 cyl, 2 head, 15 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
-		fd->type = 2;
+		fd->type = 1;
 		break;
 	case RTCFDT_144M:
 		printf("fd%d at fdc%d targ %d: 1.44MB 80 cyl, 2 head, 18 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
-		fd->type = 1;
+		fd->type = 0;
 		break;
 	case RTCFDT_360K:
 		printf("fd%d at fdc%d targ %d: 360KB 40 cyl, 2 head, 9 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
-		fd->type = 4;
+		fd->type = 3;
 		break;
 	case RTCFDT_720K:
 		printf("fd%d at fdc%d targ %d: 720KB 80 cyl, 2 head, 9 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
-		fd->type = 5;
+		fd->type = 4;
 		break;
 	default:
 		printf("fd%d at fdc%d targ %d: unknown device type 0x%x\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid,
 			fdt & 0xf0);
-		fd->type = 0;
+		return 0;
 		break;
 	}
-	fd->ft = &fd_types[fd->type];
-	if(fd->type)
-		fd_turnoff(fdu);
 
-	return fd->type;
+	fd->ft = &fd_types[fd->type];
+	fd_turnoff(fdu);
+	return 1;
 }
 
 int
