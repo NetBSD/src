@@ -1,4 +1,4 @@
-/*      $NetBSD: functions.c,v 1.6 2003/05/14 14:31:01 wiz Exp $       */
+/*      $NetBSD: functions.c,v 1.7 2003/06/13 07:26:41 itojun Exp $       */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ ftp_pkglist(char *subdir)
 	/*
 	 * Generate tmp file
 	 */
-	strcpy(tmpname, TMPFILE_NAME);
+	strlcpy(tmpname, TMPFILE_NAME, sizeof(tmpname));
 	tfd=mkstemp(tmpname);
 	if (tfd == -1)
 		bailout("mkstemp: %s", strerror(errno));
@@ -270,7 +270,7 @@ ftp_pkgcats(char *subdir)
 	/*
 	 * Generate tmp file
 	 */
-	strcpy(tmpname, TMPFILE_NAME);
+	strlcpy(tmpname, TMPFILE_NAME, sizeof(tmpname));
 	tfd=mkstemp(tmpname);
 	if (tfd == -1)
 		bailout("mkstemp: %s", strerror(errno));
@@ -352,13 +352,13 @@ ftp_base(int truename)
 	if (pkg_path)
 		return strdup(pkg_path);
 
-	strncpy(buf, NETBSD_PKG_BASE, sizeof(buf));
+	strlcpy(buf, NETBSD_PKG_BASE, sizeof(buf));
 
 	rc = uname(&un);
 	if (rc == -1)
 		bailout("uname: %s", strerror(errno));
 
-	strcat(buf, "/");
+	strlcat(buf, "/", sizeof(buf));
 	if (!truename)
 		for (i = 0; i < _SYS_NMLN; i++) {
 			if ((un.release[i] == '_') ||
@@ -373,9 +373,9 @@ ftp_base(int truename)
 			if (un.release[i] == '\0')
 				break;
 		}
-	strcat(buf, un.release);
-	strcat(buf, "/");
-	strcat(buf, un.machine);	/* sysctl hw.machine_arch? */
+	strlcat(buf, un.release, sizeof(buf));
+	strlcat(buf, "/", sizeof(buf));
+	strlcat(buf, un.machine, sizeof(buf));	/* sysctl hw.machine_arch? */
 
 	return buf;
 }
