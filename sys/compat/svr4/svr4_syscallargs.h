@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscallargs.h,v 1.47 1998/09/12 00:10:33 mycroft Exp $	*/
+/*	$NetBSD: svr4_syscallargs.h,v 1.48 1998/10/03 19:43:27 eeh Exp $	*/
 
 /*
  * System call argument lists.
@@ -7,7 +7,17 @@
  * created from	NetBSD: syscalls.master,v 1.35 1998/09/12 00:10:06 mycroft Exp 
  */
 
-#define	syscallarg(x)	union { x datum; register_t pad; }
+#define	syscallarg(x)								\
+		union {								\
+			register_t pad;						\
+			struct { x datum; } le;					\
+			struct {						\
+				int8_t pad[ (sizeof (register_t) < sizeof (x))	\
+					? 0					\
+					: sizeof (register_t) - sizeof (x)];	\
+				x datum;					\
+			} be;							\
+		}
 
 struct svr4_sys_open_args {
 	syscallarg(char *) path;
