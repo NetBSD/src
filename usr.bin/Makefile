@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 1997/04/09 06:23:43 mikel Exp $
+#	$NetBSD: Makefile,v 1.70 1997/04/19 05:17:45 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -36,7 +36,8 @@ SUBDIR+=telnet
 
 # Don't use the standard a.out tool chain on non-aout (ELF) platforms.
 # On ELF platforms, build the  ELF ldd.
-.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips" && \
+     ${MACHINE_ARCH} != "powerpc")
 SUBDIR+= ar gprof nm ranlib size strip
 .else
 SUBDIR+= ldd
