@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.583 2003/10/22 11:31:18 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.584 2003/10/23 00:47:45 briggs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.587 2003/10/22 11:30:52 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.588 2003/10/23 00:46:56 briggs Exp 
  */
 
 /*
@@ -3292,10 +3292,40 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "\"Light Pulse\" FibreChannel adapter",
 	},
 	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
+	    0,
+	    "ENE Technology, Inc.",
+	    "CB710 Cardbus Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB720,
+	    0,
+	    "ENE Technology, Inc.",
+	    "CB720 Cardbus Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1211,
+	    0,
+	    "ENE Technology, Inc.",
+	    "CB1211 Cardbus Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1225,
+	    0,
+	    "ENE Technology, Inc.",
+	    "CB1225 Cardbus Controller",
+	},
+	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1410,
 	    0,
 	    "ENE Technology, Inc.",
 	    "CB1410 Cardbus Controller",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB1420,
+	    0,
+	    "ENE Technology, Inc.",
+	    "CB1420 Cardbus Controller",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,
