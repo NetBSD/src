@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: execute.c,v 1.1.1.2 2000/06/10 18:04:47 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: execute.c,v 1.1.1.2.2.1 2000/07/10 19:58:47 mellon Exp $ Copyright (c) 1998-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -58,7 +58,7 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 	struct binding_scope *scope;
 	struct executable_statement *statements;
 {
-	struct executable_statement *r, *e;
+	struct executable_statement *r, *e, *next;
 	int result;
 	int status;
 	unsigned long num;
@@ -70,7 +70,13 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 	if (!statements)
 		return 1;
 
-	for (r = statements; r; r = r -> next) {
+	r = (struct executable_statement *)0;
+	next = (struct executable_statement *)0;
+	e = (struct executable_statement *)0;
+	executable_statement_reference (&r, statements, MDL);
+	while (r) {
+		if (r -> next)
+			executable_statement_reference (&next, r -> next, MDL);
 		switch (r -> op) {
 		      case statements_statement:
 #if defined (DEBUG_EXPRESSIONS)
@@ -131,17 +137,24 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: switch");
 #endif
-			e = find_matching_case (packet, lease,
-						in_options, out_options, scope,
-						r -> data.s_switch.expr,
-						r -> data.s_switch.statements);
+			status = (find_matching_case
+				  (&e, packet, lease,
+				   in_options, out_options, scope,
+				   r -> data.s_switch.expr,
+				   r -> data.s_switch.statements));
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: switch: case %lx", (unsigned long)e);
 #endif
-			if (e && !execute_statements (packet, lease,
-						      in_options, out_options,
-						      scope, e))
-				return 0;
+			if (status) {
+				if (!(execute_statements
+				      (packet, lease,
+				       in_options, out_options, scope, e))) {
+					executable_statement_dereference
+						(&e, MDL);
+					return 0;
+				}
+				executable_statement_dereference (&e, MDL);
+			}
 			break;
 
 			/* These have no effect when executed. */
@@ -235,9 +248,10 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 #if defined (DEBUG_EXPRESSIONS)
 			log_debug ("exec: set %s", r -> data.set.name);
 #endif
-			if (!binding && status) {
+			if (!binding) {
 				binding = dmalloc (sizeof *binding, MDL);
 				if (binding) {
+				    memset (binding, 0, sizeof *binding);
 				    binding -> name =
 					    dmalloc (strlen
 						     (r -> data.set.name) + 1,
@@ -305,6 +319,7 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 		      next_let:
 			if (ns) {
 				binding = dmalloc (sizeof *binding, MDL);
+				memset (binding, 0, sizeof *binding);
 				if (!binding) {
 				   blb:
 				    binding_scope_dereference (&ns, MDL);
@@ -353,6 +368,11 @@ int execute_statements (packet, lease, in_options, out_options, scope,
 
 		      default:
 			log_fatal ("bogus statement type %d", r -> op);
+		}
+		executable_statement_dereference (&r, MDL);
+		if (next) {
+			executable_statement_reference (&r, next, MDL);
+			executable_statement_dereference (&next, MDL);
 		}
 	}
 
@@ -747,16 +767,13 @@ void write_statements (file, statements, indent)
    return that (the default statement can precede all the case statements).
    Otherwise, return the null statement. */
 
-struct executable_statement *find_matching_case (packet, lease, in_options,
-						 out_options, scope,
-						 expr, stmt)
-	struct packet *packet;
-	struct lease *lease;
-	struct option_state *in_options;
-	struct option_state *out_options;
-	struct binding_scope *scope;
-	struct expression *expr;
-	struct executable_statement *stmt;
+int find_matching_case (struct executable_statement **ep,
+			struct packet *packet, struct lease *lease,
+			struct option_state *in_options,
+			struct option_state *out_options,
+			struct binding_scope *scope,
+			struct expression *expr,
+			struct executable_statement *stmt)
 {
 	int status, sub;
 	struct executable_statement *s;
@@ -782,7 +799,9 @@ struct executable_statement *find_matching_case (packet, lease, in_options,
 				{
 					data_string_forget (&cd, MDL);
 					data_string_forget (&ds, MDL);
-					return s -> next;
+					executable_statement_reference
+						(ep, s -> next, MDL);
+					return 1;
 				}
 				data_string_forget (&cd, MDL);
 			}
@@ -801,8 +820,11 @@ struct executable_statement *find_matching_case (packet, lease, in_options,
 				sub = (evaluate_numeric_expression
 				       (&c, packet, lease, in_options,
 					out_options, scope, s -> data.c_case));
-				if (sub && n == c)
-					return s -> next;
+				if (sub && n == c) {
+					executable_statement_reference
+						(ep, s -> next, MDL);
+					return 1;
+				}
 			}
 		    }
 		}
@@ -813,7 +835,9 @@ struct executable_statement *find_matching_case (packet, lease, in_options,
 	for (s = stmt; s; s = s -> next)
 		if (s -> op == default_statement)
 			break;
-	if (s)
-		return s -> next;
-	return (struct executable_statement *)0;
+	if (s) {
+		executable_statement_reference (ep, s -> next, MDL);
+		return 1;
+	}
+	return 0;
 }

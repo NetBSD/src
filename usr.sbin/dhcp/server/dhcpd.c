@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.17 2000/06/10 18:31:11 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.17.2.1 2000/07/10 19:58:53 mellon Exp $ Copyright 1995-2000 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -72,7 +72,9 @@ int server_identifier_matched;
 #if defined (NSUPDATE)
 char std_nsupdate [] = "						    \n\
 on commit {								    \n\
-  if (not defined (ddns-fwd-name)) {					    \n\
+  if (((config-option server.ddns-updates = null) or			    \n\
+       (config-option server.ddns-updates != 0)) and			    \n\
+      (not defined (ddns-fwd-name))) {					    \n\
     set ddns-fwd-name = concat (pick (config-option server.ddns-hostname,   \n\
 				      option host-name), \".\",		    \n\
 			        pick (config-option server.ddns-domainname, \n\
@@ -163,7 +165,21 @@ int main (argc, argv, envp)
 	struct option_state *options = (struct option_state *)0;
 	struct parse *parse;
 	int lose;
-	u_int16_t omapi_port;
+	int omapi_port;
+
+	/* Set up the client classification system. */
+	classification_setup ();
+
+	/* Initialize the omapi system. */
+	result = omapi_init ();
+	if (result != ISC_R_SUCCESS)
+		log_fatal ("Can't initialize OMAPI: %s",
+			   isc_result_totext (result));
+
+	/* Set up the OMAPI wrappers for various server database internal
+	   objects. */
+	dhcp_db_objects_setup ();
+	dhcp_common_objects_setup ();
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 #ifdef SYSLOG_4_2
@@ -235,16 +251,20 @@ int main (argc, argv, envp)
 			usage ();
 		} else {
 			struct interface_info *tmp =
-				((struct interface_info *)
-				 dmalloc (sizeof *tmp, MDL));
-			if (!tmp)
-				log_fatal ("Insufficient memory to %s %s",
-				       "record interface", argv [i]);
-			memset (tmp, 0, sizeof *tmp);
+				(struct interface_info *)0;
+			result = interface_allocate (&tmp, MDL);
+			if (result != ISC_R_SUCCESS)
+				log_fatal ("Insufficient memory to %s %s: %s",
+					   "record interface", argv [i],
+					   isc_result_totext (result));
 			strcpy (tmp -> name, argv [i]);
-			tmp -> next = interfaces;
+			if (interfaces) {
+				interface_reference (&tmp -> next,
+						     interfaces, MDL);
+				interface_dereference (&interfaces, MDL);
+			}
+			interface_reference (&interfaces, tmp, MDL);
 			tmp -> flags = INTERFACE_REQUESTED;
-			interfaces = tmp;
 		}
 	}
 
@@ -292,20 +312,6 @@ int main (argc, argv, envp)
 	/* Get the current time... */
 	GET_TIME (&cur_time);
 
-	/* Set up the client classification system. */
-	classification_setup ();
-
-	/* Initialize the omapi system. */
-	result = omapi_init ();
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't initialize OMAPI: %s",
-			   isc_result_totext (result));
-
-	/* Set up the OMAPI wrappers for various server database internal
-	   objects. */
-	dhcp_db_objects_setup ();
-	dhcp_common_objects_setup ();
-
 	/* Set up the initial dhcp option universe. */
 	initialize_common_option_spaces ();
 	initialize_server_option_spaces ();
@@ -321,8 +327,9 @@ int main (argc, argv, envp)
 			    std_nsupdate, (sizeof std_nsupdate) - 1,
 			    "standard name service update routine");
 	if (status != ISC_R_SUCCESS)
-		log_fatal ("can't parse standard name service updater!");
+		log_fatal ("can't begin parsing name service updater!");
 
+	lose = 0;
 	if (!(parse_executable_statements
 	      (&root_group -> statements, parse, &lose, context_any))) {
 		end_parse (&parse);
@@ -379,7 +386,7 @@ int main (argc, argv, envp)
 		path_dhcpd_pid = s;
 	}
 
-	omapi_port = OMAPI_PROTOCOL_PORT;
+	omapi_port = -1;
 	oc = lookup_option (&server_universe, options, SV_OMAPI_PORT);
 	if (oc &&
 	    evaluate_option_cache (&db, (struct packet *)0,
@@ -482,15 +489,18 @@ int main (argc, argv, envp)
 	icmp_startup (1, lease_pinged);
 
 	/* Start up a listener for the object management API protocol. */
-	listener = (omapi_object_t *)0;
-	result = omapi_generic_new (&listener, MDL);
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't allocate new generic object: %s",
-			   isc_result_totext (result));
-	result = omapi_protocol_listen (listener, omapi_port, 1);
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't start OMAPI protocol: %s",
-			   isc_result_totext (result));
+	if (omapi_port != -1) {
+		listener = (omapi_object_t *)0;
+		result = omapi_generic_new (&listener, MDL);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Can't allocate new generic object: %s",
+				   isc_result_totext (result));
+		result = omapi_protocol_listen (listener,
+						(unsigned)omapi_port, 1);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Can't start OMAPI protocol: %s",
+				   isc_result_totext (result));
+	}
 
 #if defined (FAILOVER_PROTOCOL)
 	/* Start the failover protocol. */

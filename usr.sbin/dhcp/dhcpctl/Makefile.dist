@@ -22,15 +22,16 @@ SEDMANPAGES = dhcpctl.man3
 SRC    = dhcpctl.c callback.c remote.c
 OBJ    = dhcpctl.o callback.o remote.o
 MAN    = dhcpctl.3
+HDRS   = dhcpctl.h
 
 DEBUG  = -g
-INCLUDES = $(BINDINC) -I../includes
+INCLUDES = $(BINDINC) -I$(TOP)/includes
 CFLAGS = $(DEBUG) $(PREDEFINES) $(INCLUDES) $(COPTS)
 
-all:	libdhcpctl.a test cltest $(CATMANPAGES)
+all:	libdhcpctl.a svtest cltest $(CATMANPAGES)
 
-test:	test.o libdhcpctl.a ../omapip/libomapi.a
-	$(CC) $(DEBUG) $(LFLAGS) -o test test.o libdhcpctl.a \
+svtest:	test.o libdhcpctl.a ../omapip/libomapi.a
+	$(CC) $(DEBUG) $(LFLAGS) -o svtest test.o libdhcpctl.a \
 			../omapip/libomapi.a $(LIBS)
 
 cltest:	cltest.o libdhcpctl.a ../omapip/libomapi.a
@@ -65,16 +66,24 @@ install: all
 	done
 
 depend:
-	makedepend $(INCLUDES) $(PREDEFINES) $(SRC)
+	$(MKDEP) $(INCLUDES) $(PREDEFINES) $(SRC)
 
 clean:
-	-rm -f $(OBJ) test.o test cltest.o cltest
+	-rm -f $(OBJ) test.o svtest cltest.o cltest
 
 realclean: clean
 	-rm -f libdhcpctl.a *~ $(CATMANPAGES) $(SEDMANPAGES)
 
 distclean: realclean
 	-rm -f Makefile
+
+links:
+	@for foo in $(SRC) $(MAN) test.c cltest.c $(HDRS); do \
+	  if [ ! -b $$foo ]; then \
+	    rm -f $$foo; \
+	  fi; \
+	  ln -s $(TOP)/dhcpctl/$$foo $$foo; \
+	done
 
 dhcpctl.cat3:	dhcpctl.man3
 	nroff -man dhcpctl.man3 >dhcpctl.cat3

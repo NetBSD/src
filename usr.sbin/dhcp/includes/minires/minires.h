@@ -117,9 +117,9 @@ const char *res_protocolname(int);
 const char *res_servicename(u_int16_t, const char *);
 u_int32_t ns_datetosecs (const char *cp, int *errp);
 int b64_pton (char const *, unsigned char *, size_t);
-unsigned int res_randomid (void);
-int res_findzonecut (res_state, const char *, ns_class, int,
-		     char *, size_t, struct in_addr *, int, void *);
+u_int res_randomid (void);
+ns_rcode res_findzonecut (res_state, const char *, ns_class, int, char *,
+			  size_t, struct in_addr *, int, int *, void *);
 int res_nsend (res_state,
 	       unsigned char *, unsigned, unsigned char *, unsigned);
 int res_nsendsigned (res_state, unsigned char *,
@@ -192,8 +192,8 @@ int ns_verify_tcp_init (void *,
 int ns_verify_tcp (unsigned char *, unsigned *, ns_tcp_tsig_state *, int);
 int b64_ntop (unsigned char const *, size_t, char *, size_t);
 
-int find_cached_zone (const char *, ns_class,
-		      char *, size_t, struct in_addr *, int, void *);
+ns_rcode find_cached_zone (const char *, ns_class, char *,
+			   size_t, struct in_addr *, int, int *, void *);
 int find_tsig_key (ns_tsig_key **, const char *, void *);
 int forget_zone (void *);
 int repudiate_zone (void *);

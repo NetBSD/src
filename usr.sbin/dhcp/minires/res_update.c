@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(SABER)
-static const char rcsid[] = "$Id: res_update.c,v 1.1.1.2 2000/06/10 18:05:19 mellon Exp $";
+static const char rcsid[] = "$Id: res_update.c,v 1.1.1.2.2.1 2000/07/10 19:58:51 mellon Exp $";
 #endif /* not lint */
 
 /*
@@ -98,12 +98,14 @@ res_nupdate(res_state statp, ns_updrec *rrecp_in) {
 	for (rrecp = rrecp_in; rrecp; rrecp = ISC_LIST_NEXT(rrecp, r_link)) {
 		/* Find the origin for it if there is one. */
 		tgrp.z_class = rrecp->r_class;
-		tgrp.z_nscount =
-			res_findzonecut(statp, rrecp->r_dname, tgrp.z_class,
+		rcode = res_findzonecut(statp, rrecp->r_dname, tgrp.z_class,
 					RES_EXHAUSTIVE,
 					tgrp.z_origin,
 					sizeof tgrp.z_origin,
-					tgrp.z_nsaddrs, MAXNS, zcookp);
+					tgrp.z_nsaddrs, MAXNS, &tgrp.z_nscount,
+					zcookp);
+		if (rcode != ns_r_noerror)
+			goto done;
 		if (tgrp.z_nscount <= 0) {
 			rcode = ns_r_notzone;
 			goto done;

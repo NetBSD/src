@@ -41,7 +41,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.26 2000/06/10 18:17:19 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.26.2.1 2000/07/10 19:58:45 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -103,6 +103,7 @@ int main (argc, argv, envp)
 	omapi_object_t *listener;
 	isc_result_t result;
 	int persist = 0;
+	int omapi_port;
 
 #ifdef SYSLOG_4_2
 	openlog ("dhclient", LOG_NDELAY);
@@ -370,16 +371,20 @@ int main (argc, argv, envp)
 		return 0;
 
 	/* Start up a listener for the object management API protocol. */
-	listener = (omapi_object_t *)0;
-	result = omapi_generic_new (&listener, MDL);
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't allocate new generic object: %s\n",
-			   isc_result_totext (result));
-	result = omapi_protocol_listen (listener,
-					OMAPI_PROTOCOL_PORT + 1, 1);
-	if (result != ISC_R_SUCCESS)
-		log_fatal ("Can't start OMAPI protocol: %s",
-			   isc_result_totext (result));
+	if (top_level_config.omapi_port != -1) {
+		listener = (omapi_object_t *)0;
+		result = omapi_generic_new (&listener, MDL);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Can't allocate new generic object: %s\n",
+				   isc_result_totext (result));
+		result = omapi_protocol_listen (listener,
+						(unsigned)
+						top_level_config.omapi_port,
+						1);
+		if (result != ISC_R_SUCCESS)
+			log_fatal ("Can't start OMAPI protocol: %s",
+				   isc_result_totext (result));
+	}
 
 	/* Set up the bootp packet handler... */
 	bootp_packet_handler = do_packet;
