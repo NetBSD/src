@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcmips,v 1.1 1999/10/07 13:00:10 shin Exp $
+# $NetBSD: md.hpcmips,v 1.2 1999/11/09 21:56:54 kleink Exp $
 ./usr/include/hpcmips
 ./usr/include/hpcmips/_G_config.h
 ./usr/include/hpcmips/ansi.h
@@ -15,7 +15,6 @@
 ./usr/include/hpcmips/db_machdep.h
 ./usr/include/hpcmips/disklabel.h
 ./usr/include/hpcmips/ecoff_machdep.h
-./usr/include/hpcmips/elf.h
 ./usr/include/hpcmips/elf_machdep.h
 ./usr/include/hpcmips/endian.h
 ./usr/include/hpcmips/float.h
