@@ -311,8 +311,7 @@ sys/dev/isa/if_we.c				1.12
 
 sys/kern/vfs_bio.c				1.57
 
-  Fix potential file corruption problems with clustering
-  (PR#6332).  (mycroft)
+  Fix some potential file corruption problems with clustering.  (mycroft)
 
 usr.bin/Makefile				1.89 (patch)
 usr.bin/fdformat/Makefile			1.2
@@ -384,13 +383,18 @@ sys/dev/tc/asc.c				1.46
   into the pmax driver.  Partial workaround for "Illegal Command"
   error status (partial fix for PR#5510).  (mhitch)
 
+distrib/utils/sysinst/disks.c			1.18
 
-NOT YET PULLED UP (expecting patches or further information):
+  When scanning for disks, find disks numbered up to MAX_DISKS
+  (currently 15) rather than stopping at 5.  (jonathan)
 
-sys/arch/i386/i386/trap.c			1.125 (patch)
+sys/arch/i386/i386/trap.c			patch
 
   Don't corrupt 'edx' register when running under linux emulation
   (PR#6356).  (mycroft)
+
+
+NOT YET PULLED UP (expecting patches or further information):
 
 distrib/sets/lists/base/md.i386			patch
 sys/arch/i386/isa/pcvt/Makefile			??? (1.1-1.3 (new)?)
