@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.75 1997/05/08 17:17:29 mycroft Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.76 1997/05/12 23:42:11 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -3035,7 +3035,7 @@ nfs_writebp(bp, force)
 	    bp, bp->b_vp, bp->b_validoff, bp->b_validend, bp->b_dirtyoff,
 	    bp->b_dirtyend);
 #endif
-	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI);
+	bp->b_flags &= ~(B_READ|B_DONE|B_ERROR|B_DELWRI|B_AGE);
 
 	if (oldflags & B_ASYNC) {
 		if (oldflags & B_DELWRI) {
