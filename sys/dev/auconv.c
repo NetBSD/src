@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.3 2004/12/30 15:22:17 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.4 2004/12/30 15:25:12 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.3 2004/12/30 15:22:17 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.4 2004/12/30 15:25:12 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -779,7 +779,7 @@ auconv_rateconv_check_rates(const struct audio_format *formats, int nformats,
 		goto found;
 
 	/* determine min/max of specified encoding/precision/channels */
-	minrate = ULONG_MAX;
+	minrate = UINT_MAX;
 	maxrate = 0;
 	enc = auconv_normalize_encoding(param->encoding,
 					param->precision);
