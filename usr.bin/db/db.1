@@ -1,4 +1,4 @@
-.\" 	$NetBSD: db.1,v 1.12 2003/05/19 00:28:37 seb Exp $
+.\" 	$NetBSD: db.1,v 1.13 2003/05/20 08:27:39 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,17 +50,7 @@ databases
 .
 .Sh SYNOPSIS
 .Nm
-.Op Fl KV
-.Op Fl Niq
-.Bk -words
-.Op Fl S Ar chr
-.Ek
-.Bk -words
-.Op Fl T Ar str
-.Ek
-.Bk -words
-.Op Fl X Ar str
-.Ek
+.Op Fl KiNqV
 .Bk -words
 .Op Fl E Ar endian
 .Ek
@@ -69,6 +59,15 @@ databases
 .Ek
 .Bk -words
 .Op Fl O Ar str
+.Ek
+.Bk -words
+.Op Fl S Ar chr
+.Ek
+.Bk -words
+.Op Fl T Ar str
+.Ek
+.Bk -words
+.Op Fl X Ar str
 .Ek
 .Ar type
 .Ar database
@@ -80,13 +79,13 @@ databases
 .Fl d
 .Op Fl Niq
 .Bk -words
-.Op Fl U Ar chr
-.Ek
-.Bk -words
 .Op Fl E Ar endian
 .Ek
 .Bk -words
 .Op Fl f Ar infile
+.Ek
+.Bk -words
+.Op Fl U Ar chr
 .Ek
 .Ar type
 .Ar database
@@ -97,9 +96,6 @@ databases
 .Nm
 .Fl w
 .Op Fl Niq
-.Bk -words
-.Op Fl U Ar chr
-.Ek
 .Bk -words
 .Op Fl E Ar endian
 .Ek
@@ -112,6 +108,9 @@ databases
 .Ek
 .Bk -words
 .Op Fl m Ar mode
+.Ek
+.Bk -words
+.Op Fl U Ar chr
 .Ek
 .Ar type
 .Ar database
@@ -173,22 +172,6 @@ is the database file to manipulate.
 Options valid for all modes are:
 .Bl -tag -width Fl -offset indent
 .
-.It Fl N
-Do not include the NUL byte at the end of the key or value.
-.
-.It Fl i
-Keys are converted to lower case before manipulation.
-.
-.It Fl q
-Quiet operation.
-In read mode, missing keys are not considered to be an error.
-In delete
-.Pq Fl d
-and write
-.Pq Fl w
-modes,
-the result of various operations is suppressed.
-.
 .It Fl E Ar endian
 Set the endianness of the database.
 .Ar endian
@@ -218,17 +201,41 @@ is
 .Dv stdin
 is used.
 .
+.It Fl i
+Keys are converted to lower case before manipulation.
+.
+.It Fl N
+Do not include the NUL byte at the end of the key or value.
+.
+.It Fl q
+Quiet operation.
+In read mode, missing keys are not considered to be an error.
+In delete
+.Pq Fl d
+and write
+.Pq Fl w
+modes,
+the result of various operations is suppressed.
+.
 .El
 .
 .Pp
 Read mode specific options are:
+.
 .Bl -tag -width Fl -offset indent
 .It Fl K
 Display key.
+.
+.It Fl O Ar str
+Field separator string between key and value.
+Defaults to a single tab
+.Pq Sq \et .
+.
 .It Fl S Ar chr
 Specify items to
 .Xr strvis 3
-encode. The
+encode.
+The
 .Ar chr
 option-argument is a character specifying if the key
 .Pq Ar k ,
@@ -237,14 +244,17 @@ the value
 or both
 .Pq Ar b
 should be encoded.
+.
 .It Fl T Ar str
 Control how the items specified by the
 .Fl S
-option are encoded. The
+option are encoded.
+The
 .Ar str
 option-argument is a string specifying
 .Xr strvis 3
-options. The string consists of the specification characters
+options.
+The string consists of the specification characters
 .Cm b , c , o ,
 .Cm s , t ,
 and
@@ -252,6 +262,10 @@ and
 See
 .Xr vis 1 's
 corresponding options for the meaning of these characters.
+.
+.It Fl V
+Display value.
+.
 .It Fl X Ar str
 When encoding items with
 .Fl S
@@ -259,12 +273,6 @@ option also encode characters in
 .Ar str ,
 per
 .Xr svis 3 .
-.It Fl V
-Display value.
-.It Fl O Ar str
-Field separator string between key and value. Defaults to a single
-tab
-.Pq Sq \et .
 .
 .El
 .Pp
@@ -289,10 +297,6 @@ Allow duplicate entries.
 .Fl R
 to be useful.)
 .
-.It Fl R
-Overwrite existing entries.
-If not specified, writing to an existing entry raises an error.
-.
 .It Fl F Ar fieldsep
 Field separator between key and value used when parsing
 .Ar infile .
@@ -304,6 +308,10 @@ Octal mode of created database.
 Defaults to
 .Sq 0644 .
 .
+.It Fl R
+Overwrite existing entries.
+If not specified, writing to an existing entry raises an error.
+.
 .El
 .Pp
 Write and delete mode specific options are:
@@ -312,7 +320,8 @@ Write and delete mode specific options are:
 .It Fl U Ar chr
 Specify items to
 .Xr strunvis 3
-decode. The
+decode.
+The
 .Ar chr
 option-argument is a character specifying if the key
 .Pq Ar k ,
