@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.87 2004/04/21 01:05:48 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.88 2004/10/30 08:49:45 dsl Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.87 2004/04/21 01:05:48 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.88 2004/10/30 08:49:45 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2172,7 +2172,7 @@ get_net(cp, net, maskflg)
 		sin.sin_len = sizeof sin;
 		sin.sin_addr = inet_makeaddr(np->n_net, 0);
 		sa = (struct sockaddr *)&sin;
-	} else if (isdigit(*cp)) {
+	} else if (isdigit((unsigned char)*cp)) {
 		memset(&hints, 0, sizeof hints);
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_flags = AI_NUMERICHOST;
@@ -2190,7 +2190,7 @@ get_net(cp, net, maskflg)
 			sa = (struct sockaddr *)&sin;
 		} else
 			sa = ai->ai_addr;
-	} else if (isxdigit(*cp) || *cp == ':') {
+	} else if (isxdigit((unsigned char)*cp) || *cp == ':') {
 		memset(&hints, 0, sizeof hints);
 		hints.ai_family = AF_UNSPEC;
 		hints.ai_flags = AI_NUMERICHOST;
@@ -2308,7 +2308,7 @@ parsecred(namelist, cr)
 	 */
 	names = strsep(&namelist, " \t\n");
 	name = strsep(&names, ":");
-	if (isdigit(*name) || *name == '-')
+	if (isdigit((unsigned char)*name) || *name == '-')
 		pw = getpwuid(atoi(name));
 	else
 		pw = getpwnam(name);
@@ -2339,7 +2339,7 @@ parsecred(namelist, cr)
 	 */
 	if (pw != NULL)
 		cr->cr_uid = pw->pw_uid;
-	else if (isdigit(*name) || *name == '-')
+	else if (isdigit((unsigned char)*name) || *name == '-')
 		cr->cr_uid = atoi(name);
 	else {
 		syslog(LOG_ERR, "Unknown user: %s", name);
@@ -2348,7 +2348,7 @@ parsecred(namelist, cr)
 	cr->cr_ngroups = 0;
 	while (names != NULL && *names != '\0' && cr->cr_ngroups < NGROUPS) {
 		name = strsep(&names, ":");
-		if (isdigit(*name) || *name == '-') {
+		if (isdigit((unsigned char)*name) || *name == '-') {
 			cr->cr_groups[cr->cr_ngroups++] = atoi(name);
 		} else {
 			if ((gr = getgrnam(name)) == NULL) {

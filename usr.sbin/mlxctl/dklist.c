@@ -1,4 +1,4 @@
-/*	$NetBSD: dklist.c,v 1.4 2002/06/01 23:51:06 lukem Exp $	*/
+/*	$NetBSD: dklist.c,v 1.5 2004/10/30 08:47:58 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dklist.c,v 1.4 2002/06/01 23:51:06 lukem Exp $");
+__RCSID("$NetBSD: dklist.c,v 1.5 2004/10/30 08:47:58 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,7 +146,7 @@ mlx_disk_add0(const char *name)
 	struct mlx_disk *md;
 	int unit;
 
-	if (name[0] != 'l' || name[1] != 'd' || !isdigit(name[2]))
+	if (name[0] != 'l' || name[1] != 'd' || !isdigit((unsigned char)name[2]))
 		return (-1);
 
 	SIMPLEQ_FOREACH(md, &mlx_disks, chain)
