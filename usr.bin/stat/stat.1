@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.11 2003/05/08 13:07:10 wiz Exp $
+.\"	$NetBSD: stat.1,v 1.12 2004/09/01 22:18:20 yamt Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -375,6 +375,13 @@ which default to
 .Nm
 exits 0 on success, and \*[Gt]0 if an error occurred.
 .Sh EXAMPLES
+If no options are specified, default format is
+"%d %i %Sp %l %Su %Sg %r %z \\"%Sa\\" \\"%Sm\\" \\"%Sc\\" \\"%SB\\" %k %b %#Xf %N".
+.Bd -literal -offset indent
+\*[Gt] stat /tmp/bar
+0 78852 -rw-r--r-- 1 root wheel 0 0 "Jul  8 10:26:03 2004" "Jul  8 10:26:03 2004" "Jul  8 10:28:13 2004" "Jan  1 09:00:00 1970" 16384 0 0 /tmp/bar
+.Ed
+.Pp
 Given a symbolic link ``foo'' that points from /tmp/foo to /, you would use
 .Nm
 as follows:
