@@ -1,8 +1,8 @@
-/*	$NetBSD: iommu.c,v 1.2 1996/04/04 23:05:22 abrown Exp $ */
+/*	$NetBSD: iommu.c,v 1.3 1996/05/16 15:57:16 abrown Exp $ */
 
 /*
  * Copyright (c) 1996
- * 	The President and Fellows of Harvard University. All rights reserved.
+ * 	The President and Fellows of Harvard College. All rights reserved.
  * Copyright (c) 1995 	Paul Kranenburg
  *
  * Redistribution and use in source and binary forms, with or without
