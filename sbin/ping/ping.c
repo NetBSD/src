@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.59 2001/02/19 22:56:21 cgd Exp $	*/
+/*	$NetBSD: ping.c,v 1.60 2001/10/09 19:17:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,10 +62,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.59 2001/02/19 22:56:21 cgd Exp $");
+__RCSID("$NetBSD: ping.c,v 1.60 2001/10/09 19:17:02 yamt Exp $");
 #endif
 
 #include <stdio.h>
+#include <stddef.h>
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -177,7 +178,7 @@ static struct {
 	struct ip	o_ip;
 	char		o_opt[MAX_IPOPTLEN];
 	union {
-		u_char	    u_buf[MAXPACKET];
+		u_char	    u_buf[MAXPACKET+offsetof(struct icmp, icmp_data)];
 		struct icmp u_icmp;
 	} o_u;
 } out_pack;
@@ -207,7 +208,7 @@ double maxwait = 0.0;
 int reset_kerninfo;
 #endif
 
-int bufspace = 60*1024;
+int bufspace = 65535;
 
 struct timeval now, clear_cache, last_tx, next_tx, first_tx;
 struct timeval last_rx, first_rx;
@@ -618,7 +619,7 @@ main(int argc, char *argv[])
 	 */
 	while (0 > setsockopt(s, SOL_SOCKET, SO_RCVBUF,
 			      (char*)&bufspace, sizeof(bufspace))) {
-		if ((bufspace -= 4096) == 0)
+		if ((bufspace -= 4096) <= 0)
 			err(1, "Cannot set the receive buffer size");
 	}
 
