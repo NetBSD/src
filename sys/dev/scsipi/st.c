@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.105 1998/11/17 14:38:43 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.106 1998/11/20 00:35:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -557,7 +557,7 @@ stopen(dev, flags, mode, p)
 {
 	int unit;
 	u_int stmode, dsty;
-	int error = 0;
+	int error;
 	struct st_softc *st;
 	struct scsipi_link *sc_link;
 
@@ -583,6 +583,9 @@ stopen(dev, flags, mode, p)
 		printf("%s: already open\n", st->sc_dev.dv_xname);
 		return (EBUSY);
 	}
+
+	if ((error = scsipi_adapter_addref(sc_link)) != 0)
+		return (error);
 
 	/*
 	 * clear any latched errors.
@@ -634,6 +637,7 @@ stopen(dev, flags, mode, p)
 
 bad:
 	st_unmount(st, NOEJECT);
+	scsipi_adapter_delref(sc_link);
 	sc_link->flags &= ~SDEV_OPEN;
 	return (error);
 }
@@ -719,6 +723,8 @@ stclose(dev, flags, mode, p)
 		st_unmount(st, EJECT);
 		break;
 	}
+
+	scsipi_adapter_delref(st->sc_link);
 	st->sc_link->flags &= ~SDEV_OPEN;
 
 	return (error);
