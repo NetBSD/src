@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.177 2002/09/21 18:07:52 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.178 2002/10/30 22:36:46 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.177 2002/09/21 18:07:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.178 2002/10/30 22:36:46 kleink Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1459,7 +1459,7 @@ sys_link(p, v, retval)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	vp = nd.ni_vp;
