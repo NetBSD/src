@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.5 2000/05/19 13:42:29 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.6 2000/11/30 15:52:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -35,6 +35,7 @@
  */
 
 #define RTK_ETHER_ALIGN	2
+#define RTK_RXSTAT_LEN	4
 
 struct rtk_chain_data {
 	u_int16_t		cur_rx;

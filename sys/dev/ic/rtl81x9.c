@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.20 2000/11/30 15:33:04 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.21 2000/11/30 15:51:57 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1009,10 +1009,10 @@ STATIC void rtk_rxeof(sc)
 	while((CSR_READ_1(sc, RTK_COMMAND) & RTK_CMD_EMPTY_RXBUF) == 0) {
 		rxbufpos = sc->rtk_cdata.rtk_rx_buf + cur_rx;
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
-		    sizeof(u_int32_t *), BUS_DMASYNC_POSTREAD);
+		    RTK_RXSTAT_LEN, BUS_DMASYNC_POSTREAD);
 		rxstat = le32toh(*(u_int32_t *)rxbufpos);
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap, cur_rx,
-		    sizeof(u_int32_t *), BUS_DMASYNC_PREREAD);
+		    RTK_RXSTAT_LEN, BUS_DMASYNC_PREREAD);
 
 		/*
 		 * Here's a totally undocumented fact for you. When the
@@ -1037,14 +1037,14 @@ STATIC void rtk_rxeof(sc)
 			 */
 #if 0
 			if (rxstat & (RTK_RXSTAT_BADSYM|RTK_RXSTAT_RUNT|
-					RTK_RXSTAT_GIANT|RTK_RXSTAT_CRCERR|
-					RTK_RXSTAT_ALIGNERR)) {
+			    RTK_RXSTAT_GIANT|RTK_RXSTAT_CRCERR|
+			    RTK_RXSTAT_ALIGNERR)) {
 				CSR_WRITE_2(sc, RTK_COMMAND, RTK_CMD_TX_ENB);
-				CSR_WRITE_2(sc, RTK_COMMAND, RTK_CMD_TX_ENB|
-							RTK_CMD_RX_ENB);
+				CSR_WRITE_2(sc, RTK_COMMAND,
+				    RTK_CMD_TX_ENB|RTK_CMD_RX_ENB);
 				CSR_WRITE_4(sc, RTK_RXCFG, RTK_RXCFG_CONFIG);
 				CSR_WRITE_4(sc, RTK_RXADDR,
-					    sc->recv_dmamap->dm_segs[0].ds_addr);
+				    sc->recv_dmamap->dm_segs[0].ds_addr);
 				CSR_WRITE_2(sc, RTK_CURRXADDR, cur_rx - 16);
 				cur_rx = 0;
 			}
@@ -1057,7 +1057,7 @@ STATIC void rtk_rxeof(sc)
 
 		/* No errors; receive the packet. */	
 		total_len = rxstat >> 16;
-		rx_bytes += total_len + 4;
+		rx_bytes += total_len + RTK_RXSTAT_LEN;
 
 		/*
 		 * Avoid trying to read more bytes than we know
@@ -1067,11 +1067,10 @@ STATIC void rtk_rxeof(sc)
 			break;
 
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
-		    cur_rx + sizeof(u_int32_t), total_len,
-		    BUS_DMASYNC_POSTREAD);
+		    cur_rx + RTK_RXSTAT_LEN, total_len, BUS_DMASYNC_POSTREAD);
 
 		rxbufpos = sc->rtk_cdata.rtk_rx_buf +
-			((cur_rx + sizeof(u_int32_t)) % RTK_RXBUFLEN);
+			((cur_rx + RTK_RXSTAT_LEN) % RTK_RXBUFLEN);
 
 		if (rxbufpos == (sc->rtk_cdata.rtk_rx_buf + RTK_RXBUFLEN))
 			rxbufpos = sc->rtk_cdata.rtk_rx_buf;
@@ -1102,7 +1101,7 @@ STATIC void rtk_rxeof(sc)
 				    total_len);
 			} else
 				m_adj(m, RTK_ETHER_ALIGN);
-			cur_rx += total_len + 4;
+			cur_rx += total_len + RTK_RXSTAT_LEN;
 		}
 
 		/*
@@ -1136,8 +1135,7 @@ STATIC void rtk_rxeof(sc)
 		(*ifp->if_input)(ifp, m);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->recv_dmamap,
-		    cur_rx + sizeof(u_int32_t),
-		    total_len, BUS_DMASYNC_PREREAD);
+		    cur_rx + RTK_RXSTAT_LEN, total_len, BUS_DMASYNC_PREREAD);
 	}
 
 	return;
