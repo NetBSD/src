@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.39 1999/09/15 14:21:01 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.40 1999/09/20 15:07:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -225,6 +225,10 @@
 #define hesiod_init		_hesiod_init
 #define hesiod_resolve		_hesiod_resolve
 #define hesiod_to_bind		_hesiod_to_bind
+#define in6addr_any		_in6addr_any
+#define in6addr_loopback	_in6addr_loopback
+#define in6addr_nodelocal_allnodes	_in6addr_nodelocal_allnodes
+#define in6addr_linklocal_allnodes	_in6addr_linklocal_allnodes
 #define inet_lnaof		_inet_lnaof
 #define inet_makeaddr		_inet_makeaddr
 #define inet_net_ntop		_inet_net_ntop
