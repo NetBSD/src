@@ -1,5 +1,3 @@
-/* $NetBSD: cdefs.h,v 1.1 2002/03/06 02:13:40 simonb Exp $ */
+/* $NetBSD: cdefs.h,v 1.1.8.1 2002/09/10 23:23:51 lukem Exp $ */
 
 #include <mips/cdefs.h>
-
-#define	_MIPS_BSD_API	_MIPS_BSD_API_LP32_64CLEAN
