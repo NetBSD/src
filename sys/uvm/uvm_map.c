@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.36.2.2 1999/06/18 17:01:53 perry Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.36.2.3 1999/06/18 17:17:04 perry Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1981,14 +1981,9 @@ uvm_map_pageable(map, start, end, new_pageable)
 			 */
 			
 			if (!UVM_ET_ISSUBMAP(entry)) {  /* not submap */
-				/*
-				 * XXXCDC: protection vs. max_protection??
-				 * (wirefault uses max?)
-				 * XXXCDC: used to do it always if
-				 * uvm_obj == NULL (wrong?)
-				 */
-				if ( UVM_ET_ISNEEDSCOPY(entry) && 
-				    (entry->protection & VM_PROT_WRITE) != 0) {
+				if (UVM_ET_ISNEEDSCOPY(entry) &&
+				    ((entry->protection & VM_PROT_WRITE) ||
+				     (entry->object.uvm_obj == NULL))) {
 					amap_copy(map, entry, M_WAITOK, TRUE,
 					    start, end); 
 					/* XXXCDC: wait OK? */
