@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2000/04/14 17:58:40 nathanw Exp $
+#	$NetBSD: Makefile,v 1.40 2000/07/08 19:18:19 eeh Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -56,9 +56,7 @@ NATDEPFILES= infptrace.c inftarg.c fork-child.c corelow.c \
 	&& (${MACHINE_ARCH} != "sh3")
 NATDEPFILES+= kcore-nbsd.c
 .endif
-.if ${MKPIC} != "no"
 NATDEPFILES+= solib.c
-.endif
 
 NATDEPFILES.alpha=	alphanbsd-nat.c
 TDEPFILES.alpha=	alpha-tdep.c
