@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.34 2003/06/30 03:30:50 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.35 2003/07/03 05:03:55 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.34 2003/06/30 03:30:50 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.35 2003/07/03 05:03:55 itojun Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -165,8 +165,8 @@ ip6_forward(m, srcrt)
 
 #ifdef IPSEC
 	/* get a security policy for this packet */
-	sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND, IP_FORWARDING,
-	    &error);
+	sp = ipsec6_getpolicybyaddr(m, IPSEC_DIR_OUTBOUND,
+	    IP_FORWARDING, &error);
 	if (sp == NULL) {
 		ipsec6stat.out_inval++;
 		ip6stat.ip6s_cantforward++;
