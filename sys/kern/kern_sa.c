@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.10 2001/12/17 20:46:21 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.11 2001/12/28 05:52:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -297,6 +297,8 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	struct proc *p = l->l_proc;
 	struct sadata *sd = p->p_sa;
 
+	KDASSERT(event != interrupted);
+
 	s->sau_type = type;
 	s->sau_argsize = argsize;
 	s->sau_arg = arg;
@@ -311,12 +313,16 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	s->sau_stack = sd->sa_stacks[--sd->sa_nstacks];
 
 	if (event) {
-		s->sau_event.sa_context = cpu_stashcontext(event);
+		getucontext(event, &s->sau_e_ctx);
+		s->sau_event.sa_context = (ucontext_t *)
+		    (_UC_MACHINE_SP(&s->sau_e_ctx) - sizeof(ucontext_t));
 		s->sau_event.sa_id = event->l_lid;
 		s->sau_event.sa_cpu = 0; /* XXX extract from l_cpu */
 	}
 	if (interrupted) {
-		s->sau_interrupted.sa_context = cpu_stashcontext(interrupted);
+		getucontext(interrupted, &s->sau_i_ctx);
+		s->sau_interrupted.sa_context = (ucontext_t *)
+		    (_UC_MACHINE_SP(&s->sau_i_ctx) - sizeof(ucontext_t));
 		s->sau_interrupted.sa_id = interrupted->l_lid;
 		s->sau_interrupted.sa_cpu = 0; /* XXX extract from l_cpu */
 	}
@@ -555,11 +561,11 @@ sa_upcall_userret(struct lwp *l)
 			 * upcall, but don't have resources to do so.
 			 */
 #ifdef DIAGNOSTIC
-		printf("sa_upcall_userret: out of upcall resources"
-		    " for %d.%d\n", p->p_pid, l->l_lid);
+			printf("sa_upcall_userret: out of upcall resources"
+			    " for %d.%d\n", p->p_pid, l->l_lid);
 #endif
-		sigexit(l, SIGILL);
-		/* NOTREACHED */
+			sigexit(l, SIGILL);
+			/* NOTREACHED */
 		}	
 		l->l_flag &= ~L_SA_BLOCKING;
 	}
@@ -571,7 +577,9 @@ sa_upcall_userret(struct lwp *l)
 	if (SIMPLEQ_EMPTY(&sa->sa_upcalls))
 		l->l_flag &= ~L_SA_UPCALL;
 
-	stack = (char *)sau->sau_stack.ss_sp + sau->sau_stack.ss_size;
+	stack = (void *) 
+	    (((uintptr_t)sau->sau_stack.ss_sp + sau->sau_stack.ss_size) 
+		& ~ALIGNBYTES);
 
 	self_sa.sa_id = l->l_lid;
 	self_sa.sa_cpu = 0; /* XXX l->l_cpu; */
@@ -580,11 +588,31 @@ sa_upcall_userret(struct lwp *l)
 	nevents = 0;
 	nint = 0;
 	if (sau->sau_event.sa_context != NULL) {
+		if (copyout(&sau->sau_e_ctx, sau->sau_event.sa_context, 
+		    sizeof(ucontext_t)) != 0) {
+#ifdef DIAGNOSTIC
+		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
+		    p->p_pid, sau->sau_event.sa_id);
+#endif
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+		}
 		sas[nsas] = &sau->sau_event;
 		nsas++;
 		nevents = 1;
 	}
 	if (sau->sau_interrupted.sa_context != NULL) {
+		KDASSERT(sau->sau_interrupted.sa_context !=
+		    sau->sau_event.sa_context);
+		if (copyout(&sau->sau_i_ctx, sau->sau_interrupted.sa_context, 
+		    sizeof(ucontext_t)) != 0) {
+#ifdef DIAGNOSTIC
+		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
+		    p->p_pid, sau->sau_interrupted.sa_id);
+#endif
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+		}
 		sas[nsas] = &sau->sau_interrupted;
 		nsas++;
 		nint = 1;
@@ -618,7 +646,7 @@ sa_upcall_userret(struct lwp *l)
 			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
 		printf("sa_upcall_userret: couldn't copyout sa_t "
-		    "%d for %d.%d\n", i, l->l_proc->p_pid, l->l_lid);
+		    "%d for %d.%d\n", i, p->p_pid, l->l_lid);
 #endif
 			sigexit(l, SIGILL);
 			/* NOTREACHED */
