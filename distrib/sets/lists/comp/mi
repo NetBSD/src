@@ -1,5 +1,4 @@
-#	$NetBSD: mi,v 1.505 2002/12/12 09:45:34 scw Exp $
-./sys				comp-sysutil-root
+#	$NetBSD: mi,v 1.506 2002/12/19 23:04:27 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
