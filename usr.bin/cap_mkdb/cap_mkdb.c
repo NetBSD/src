@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.14 2001/01/28 19:42:17 jdolecek Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.15 2001/01/28 20:01:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.14 2001/01/28 19:42:17 jdolecek Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.15 2001/01/28 20:01:42 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,10 +56,12 @@ __RCSID("$NetBSD: cap_mkdb.c,v 1.14 2001/01/28 19:42:17 jdolecek Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <ctype.h>
 
 static void	db_build (char **);
 static void	dounlink (void);
 static void	usage (void);
+static int	count_records(char **);
 
 DB *capdbp;
 int verbose;
@@ -115,6 +117,11 @@ main(int argc, char *argv[])
 
 	/* Set byte order */
 	openinfo.lorder = byteorder;
+
+	/*
+	 * Set nelem to twice the value returned by count_record().
+	 */
+	openinfo.nelem = count_records(argv) << 1;
 
 	/*
 	 * The database file is the first argument if no name is specified.
@@ -266,4 +273,44 @@ usage(void)
 	(void)fprintf(stderr,
 	    "usage: cap_mkdb [-b|-l] [-v] [-f outfile] file1 [file2 ...]\n");
 	exit(1);
+}
+
+/*
+ * Count number of records in input files. This does not need
+ * to be really accurate (the result is used only as a hint).
+ * It seems to match number of records should a cgetnext() be used, though.
+ */
+static int
+count_records(char **list)
+{
+	FILE *fp;
+	char *line;
+	size_t len;
+	int nelem, slash;
+
+	/* scan input files and count individual records */
+	for(nelem = 0, slash = 0; *list && (fp = fopen(*list++, "r")); ) {
+		while((line = fgetln(fp, &len))) {
+			if (len < 2)
+				continue;
+			if (!isspace((unsigned char) *line) && *line != ':'
+				&& *line != '#' && !slash)
+				nelem++;
+
+			slash = (line[len - 2] == '\\');
+		}
+		fclose(fp);
+	} 
+
+	if (nelem == 0) {
+		/* no records found; pass default size hint */
+		nelem = 1;
+	} else if (!powerof2(nelem)) {
+		/* set nelem to nearest bigger power-of-two number */
+		int bt = 1;
+		while(bt < nelem) bt <<= 1;
+		nelem = bt;
+	}
+
+	return nelem;
 }
