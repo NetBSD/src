@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.40 1997/11/12 23:11:50 thorpej Exp $
+# $NetBSD: Makefile.alpha,v 1.41 1998/03/25 02:16:42 ross Exp $
 
 # Makefile for NetBSD
 #
@@ -48,7 +48,7 @@ CWARNFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-format
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -mno-fp-regs
 AFLAGS=		-traditional -D_LOCORE
-LOADADDRESS?=	fffffc0000230000
+LOADADDRESS?=	fffffc0000300000
 LINKFLAGS=	-N -Ttext ${LOADADDRESS} -e __transfer -G 4
 STRIPFLAGS=	-g -X -x
 
