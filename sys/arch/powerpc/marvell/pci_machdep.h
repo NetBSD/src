@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.5 2003/05/19 08:10:03 scw Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6 2004/08/02 18:07:41 tacha Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -98,8 +98,6 @@ struct pci_chipset {
 	((*(pba)->pba_pc->pc_funcs->pcf_bus_attach_hook)((parent), (self), (pba)))
 #define	pci_bus_maxdevs(pc, busno) \
 	((*(pc)->pc_funcs->pcf_bus_maxdevs)((pc), (busno)))
-#define	pci_enumerate_bus(sc, match, pa) \
-	(pci_enumerate_bus_generic((sc), (match), (pa)))
 #define	pci_make_tag(pc, bus, dev, func) \
 	((*(pc)->pc_funcs->pcf_make_tag)((pc), (bus), (dev), (func)))
 #define	pci_decompose_tag(pc, tag, bp, dp, fp) \
