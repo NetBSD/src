@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.367 2001/09/09 03:07:09 wiz Exp $
+#	$NetBSD: mi,v 1.368 2001/09/09 17:42:47 assar Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -446,6 +446,8 @@
 ./usr/include/miscfs/procfs/procfs.h	comp-c-include
 ./usr/include/miscfs/specfs		comp-c-include
 ./usr/include/miscfs/specfs/specdev.h	comp-c-include
+./usr/include/miscfs/syncfs		comp-c-include
+./usr/include/miscfs/specfs/syncfs.h	comp-c-include
 ./usr/include/miscfs/umapfs		comp-c-include
 ./usr/include/miscfs/umapfs/umap.h	comp-c-include
 ./usr/include/miscfs/union		comp-c-include

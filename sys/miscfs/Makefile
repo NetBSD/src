@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2000/01/20 19:06:14 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.3 2001/09/09 17:42:47 assar Exp $
 
 SUBDIR=	fdesc fifofs genfs kernfs nullfs overlay portal
-SUBDIR+= procfs specfs umapfs union
+SUBDIR+= procfs specfs syncfs umapfs union
 
 KDIR=	/sys/miscfs
 INCSDIR= /usr/include/miscfs
