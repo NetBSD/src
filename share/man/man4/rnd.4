@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.4,v 1.8 2001/09/11 00:08:29 wiz Exp $
+.\"	$NetBSD: rnd.4,v 1.9 2001/09/22 16:03:58 wiz Exp $
 .\"
 .\" Copyright (c) 1997 Michael Graff
 .\" All rights reserved.
@@ -224,6 +224,9 @@ Returns ``good'' values only
 .It Pa /dev/urandom
 Always returns data, degenerates to a pseudo-random generator
 .El
+.Sh SEE ALSO
+.Xr rndctl 8 ,
+.Xr rnd 9
 .Sh HISTORY
 The random device was first made available in
 .Nx 1.3 .
@@ -231,6 +234,3 @@ The random device was first made available in
 This implementation was written by Michael Graff <explorer@flame.org>
 using ideas and algorithms gathered from many sources, including
 the driver written by Ted Ts'o.
-.Sh SEE ALSO
-.Xr rndctl 8 ,
-.Xr rnd 9
