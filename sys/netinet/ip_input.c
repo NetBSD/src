@@ -141,7 +141,13 @@ ipintr()
 	register struct ipq *fp;
 	register struct in_ifaddr *ia;
 	int hlen, s;
+#ifdef PARANOID
+	static int busy = 0;
 
+	if (busy)
+		panic("ipintr: called recursively\n");
+	++busy;
+#endif
 next:
 	/*
 	 * Get next datagram off input queue and get IP header
@@ -150,8 +156,12 @@ next:
 	s = splimp();
 	IF_DEQUEUE(&ipintrq, m);
 	splx(s);
-	if (m == 0)
+	if (m == 0) {
+#ifdef PARANOID
+		--busy;
+#endif
 		return;
+	}
 #ifdef	DIAGNOSTIC
 	if ((m->m_flags & M_PKTHDR) == 0)
 		panic("ipintr no HDR");
