@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.494 2002/10/14 15:59:46 dent Exp $
+#	$NetBSD: mi,v 1.495 2002/10/14 21:03:19 gmcgarry Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3707,6 +3707,7 @@
 ./usr/share/man/cat9/vn_marktext.0		comp-sys-catman
 ./usr/share/man/cat9/vn_open.0		comp-sys-catman
 ./usr/share/man/cat9/vn_poll.0		comp-sys-catman
+./usr/share/man/cat9/vn_rdwr.0		comp-sys-catman
 ./usr/share/man/cat9/vn_read.0		comp-sys-catman
 ./usr/share/man/cat9/vn_restorerecurse.0		comp-sys-catman
 ./usr/share/man/cat9/vn_setrecurse.0		comp-sys-catman
@@ -6446,6 +6447,7 @@
 ./usr/share/man/man9/vn_marktext.9		comp-sys-man
 ./usr/share/man/man9/vn_open.9		comp-sys-man
 ./usr/share/man/man9/vn_poll.9		comp-sys-man
+./usr/share/man/man9/vn_rdwr.9		comp-sys-man
 ./usr/share/man/man9/vn_read.9		comp-sys-man
 ./usr/share/man/man9/vn_restorerecurse.9		comp-sys-man
 ./usr/share/man/man9/vn_setrecurse.9		comp-sys-man
