@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.6 1997/07/21 05:39:20 jonathan Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.7 1998/04/19 10:47:06 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -21,6 +21,7 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <machine/autoconf.h>
+#include <pmax/ibus/ibusvar.h>
 
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/cons.h>
@@ -100,11 +101,11 @@ pm_ds_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
-	caddr_t pmaddr = (caddr_t)ca->ca_addr;
+	struct ibus_attach_args *ia = aux;
+	caddr_t pmaddr = (caddr_t)ia->ia_addr;
 
 	/* make sure that we're looking for this type of device. */
-	if (strcmp(ca->ca_name, "pm") != 0)
+	if (strcmp(ia->ia_name, "pm") != 0)
 		return (0);
 
 	if (badaddr(pmaddr, 4))
@@ -119,8 +120,8 @@ pm_ds_attach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	/*struct confargs *ca = aux;*/
-	/*caddr_t pmaddr = (caddr_t)ca->ca_addr;*/
+	/*struct ibus_attach_args *ia = aux;*/
+	/*caddr_t pmaddr = (caddr_t)ia->ia_addr;*/
 
 	if (!pminit(&pmfi, 0, 0))
 		return;
