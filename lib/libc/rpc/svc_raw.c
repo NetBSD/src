@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.9 1998/07/26 11:47:38 mycroft Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.10 1998/11/15 17:32:45 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_raw.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_raw.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.9 1998/07/26 11:47:38 mycroft Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.10 1998/11/15 17:32:45 christos Exp $");
 #endif
 #endif
 
@@ -111,6 +111,7 @@ svcraw_stat(xprt)
 	return (XPRT_IDLE);
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_recv(xprt, msg)
 	SVCXPRT *xprt;
@@ -129,6 +130,7 @@ svcraw_recv(xprt, msg)
 	return (TRUE);
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_reply(xprt, msg)
 	SVCXPRT *xprt;
@@ -148,6 +150,7 @@ svcraw_reply(xprt, msg)
 	return (TRUE);
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_getargs(xprt, xdr_args, args_ptr)
 	SVCXPRT *xprt;
@@ -161,6 +164,7 @@ svcraw_getargs(xprt, xdr_args, args_ptr)
 	return ((*xdr_args)(&srp->xdr_stream, args_ptr));
 }
 
+/* ARGSUSED */
 static bool_t
 svcraw_freeargs(xprt, xdr_args, args_ptr)
 	SVCXPRT *xprt;

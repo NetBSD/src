@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.11 1998/07/09 18:15:18 msaitoh Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.12 1998/11/15 17:32:46 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_simple.c,v 1.11 1998/07/09 18:15:18 msaitoh Exp $");
+__RCSID("$NetBSD: svc_simple.c,v 1.12 1998/11/15 17:32:46 christos Exp $");
 #endif
 #endif
 
@@ -124,7 +124,7 @@ universal(rqstp, transp)
 	int prog, proc;
 	char *outdata;
 	char xdrbuf[UDPMSGSIZE];
-	struct proglst *pl;
+	struct proglst *plist;
 
 	/* 
 	 * enforce "procnum 0 is echo" convention
@@ -138,24 +138,24 @@ universal(rqstp, transp)
 	}
 	prog = rqstp->rq_prog;
 	proc = rqstp->rq_proc;
-	for (pl = proglst; pl != NULL; pl = pl->p_nxt)
-		if (pl->p_prognum == prog && pl->p_procnum == proc) {
+	for (plist = proglst; plist != NULL; plist = plist->p_nxt)
+		if (plist->p_prognum == prog && plist->p_procnum == proc) {
 			/* decode arguments into a CLEAN buffer */
 			memset(xdrbuf, 0, sizeof(xdrbuf)); /* required ! */
-			if (!svc_getargs(transp, pl->p_inproc, xdrbuf)) {
+			if (!svc_getargs(transp, plist->p_inproc, xdrbuf)) {
 				svcerr_decode(transp);
 				return;
 			}
-			outdata = (*(pl->p_progname))(xdrbuf);
+			outdata = (*(plist->p_progname))(xdrbuf);
 			if (outdata == NULL &&
-			    pl->p_outproc != xdr_void)
+			    plist->p_outproc != xdr_void)
 				/* there was an error */
 				return;
-			if (!svc_sendreply(transp, pl->p_outproc, outdata))
+			if (!svc_sendreply(transp, plist->p_outproc, outdata))
 				errx(1, "trouble replying to prog %d",
-				    pl->p_prognum);
+				    plist->p_prognum);
 			/* free the decoded arguments */
-			(void)svc_freeargs(transp, pl->p_inproc, xdrbuf);
+			(void)svc_freeargs(transp, plist->p_inproc, xdrbuf);
 			return;
 		}
 	errx(1, "never registered prog %d", prog);

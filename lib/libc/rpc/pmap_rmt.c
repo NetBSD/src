@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.16 1998/07/26 14:17:56 mycroft Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.17 1998/11/15 17:32:43 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.16 1998/07/26 14:17:56 mycroft Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.17 1998/11/15 17:32:43 christos Exp $");
 #endif
 #endif
 
@@ -98,14 +98,14 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 	struct timeval tout;
 	u_long *port_ptr;
 {
-	int socket = -1;
+	int sock = -1;
 	CLIENT *client;
 	struct rmtcallargs a;
 	struct rmtcallres r;
 	enum clnt_stat stat;
 
 	addr->sin_port = htons(PMAPPORT);
-	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &socket);
+	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &sock);
 	if (client != (CLIENT *)NULL) {
 		a.prog = prog;
 		a.vers = vers;
@@ -121,7 +121,7 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout, port_pt
 	} else {
 		stat = RPC_FAILED;
 	}
-	(void)close(socket);
+	(void)close(sock);
 	addr->sin_port = 0;
 	return (stat);
 }
@@ -169,10 +169,10 @@ xdr_rmtcallres(xdrs, crp)
 {
 	caddr_t port_ptr;
 
-	port_ptr = (caddr_t)crp->port_ptr;
+	port_ptr = (caddr_t)(void *)crp->port_ptr;
 	if (xdr_reference(xdrs, &port_ptr, sizeof (u_long),
 	    xdr_u_long) && xdr_u_long(xdrs, &crp->resultslen)) {
-		crp->port_ptr = (u_long *)port_ptr;
+		crp->port_ptr = (u_long *)(void *)port_ptr;
 		return ((*(crp->xdr_results))(xdrs, crp->results_ptr));
 	}
 	return (FALSE);
@@ -199,7 +199,7 @@ getbroadcastnets(addrs, sock, buf)
 
         ifc.ifc_len = UDPMSGSIZE;
         ifc.ifc_buf = buf;
-        if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
+        if (ioctl(sock, SIOCGIFCONF, &ifc) < 0) {
                 warnx("getbroadcastnets: ioctl (get interface configuration)");
                 return (0);
         }
@@ -208,24 +208,24 @@ getbroadcastnets(addrs, sock, buf)
 	cplim = buf + ifc.ifc_len; /*skip over if's with big ifr_addr's */
 	for (cp = buf; cp < cplim;
 			cp += sizeof (ifr->ifr_name) + size(ifr->ifr_addr)) {
-		ifr = (struct ifreq *)cp;
+		ifr = (struct ifreq *)(void *)cp;
 		if (ifr->ifr_addr.sa_family != AF_INET)
 			continue;
 		ifreq = *ifr;
-                if (ioctl(sock, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
+                if (ioctl(sock, SIOCGIFFLAGS, &ifreq) < 0) {
                         warnx("getbroadcastnets: ioctl (get interface flags)");
                         continue;
                 }
                 if ((ifreq.ifr_flags & IFF_BROADCAST) &&
 		    (ifreq.ifr_flags & IFF_UP)) {
-			sin = (struct sockaddr_in *)&ifr->ifr_addr;
+			sin = (struct sockaddr_in *)(void *)&ifr->ifr_addr;
 #ifdef SIOCGIFBRDADDR   /* 4.3BSD */
-			if (ioctl(sock, SIOCGIFBRDADDR, (char *)&ifreq) < 0) {
+			if (ioctl(sock, SIOCGIFBRDADDR, &ifreq) < 0) {
 				addrs[i++] =
 				    inet_makeaddr(inet_netof(sin->sin_addr),
-				    INADDR_ANY);
+				    (unsigned long)INADDR_ANY);
 			} else {
-				addrs[i++] = ((struct sockaddr_in*)
+				addrs[i++] = ((struct sockaddr_in *)(void *)
 				  &ifreq.ifr_addr)->sin_addr;
 			}
 #else /* 4.2 BSD */
@@ -254,13 +254,14 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	AUTH *unix_auth = authunix_create_default();
 	XDR xdr_stream;
 	XDR *xdrs = &xdr_stream;
-	int outlen, inlen, fromlen, nets;
+	int inlen, fromlen, nets;
+	size_t outlen;
 	int sock;
 	int on = 1;
 	struct pollfd fd;
 	int i;
 	bool_t done = FALSE;
-	u_long xid;
+	u_int32_t xid;
 	u_long port;
 	struct in_addr addrs[20];
 	struct sockaddr_in baddr, raddr; /* broadcast and response addresses */
@@ -295,9 +296,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	baddr.sin_family = AF_INET;
 	baddr.sin_port = htons(PMAPPORT);
 	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
-/*	baddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY); */
 	(void)gettimeofday(&t, (struct timezone *)0);
-	msg.rm_xid = xid = getpid() ^ t.tv_sec ^ t.tv_usec;
+	msg.rm_xid = xid = (u_int32_t)(getpid() ^ t.tv_sec ^ t.tv_usec);
 	t.tv_usec = 0;
 	msg.rm_direction = CALL;
 	msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
@@ -319,7 +319,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		stat = RPC_CANTENCODEARGS;
 		goto done_broad;
 	}
-	outlen = (int)xdr_getpos(xdrs);
+	outlen = xdr_getpos(xdrs);
 	xdr_destroy(xdrs);
 	/*
 	 * Basic loop: broadcast a packet and wait a while for response(s).
@@ -329,7 +329,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		for (i = 0; i < nets; i++) {
 			baddr.sin_addr = addrs[i];
 			if (sendto(sock, outbuf, outlen, 0,
-				(struct sockaddr *)&baddr,
+				(struct sockaddr *)(void *)&baddr,
 				sizeof (struct sockaddr)) != outlen) {
 				warnx("Cannot send broadcast packet");
 				stat = RPC_CANTSEND;
@@ -341,9 +341,9 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 			goto done_broad;
 		}
 	recv_again:
-		milliseconds = t.tv_sec * 1000 + t.tv_usec / 1000;
+		milliseconds = (int)(t.tv_sec * 1000 + t.tv_usec / 1000);
 		msg.acpted_rply.ar_verf = _null_auth;
-		msg.acpted_rply.ar_results.where = (caddr_t)&r;
+		msg.acpted_rply.ar_results.where = (caddr_t)(void *)&r;
                 msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
 		switch (poll(&fd, 1, milliseconds)) {
 
@@ -362,7 +362,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	try_again:
 		fromlen = sizeof(struct sockaddr);
 		inlen = recvfrom(sock, inbuf, UDPMSGSIZE, 0,
-			(struct sockaddr *)&raddr, &fromlen);
+			(struct sockaddr *)(void *)&raddr, &fromlen);
 		if (inlen < 0) {
 			if (errno == EINTR)
 				goto try_again;
