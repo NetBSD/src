@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.1.2.4 1998/05/09 05:11:20 mycroft Exp $	
+
 The alpha-specific portion of the NetBSD _VER release is found in the
 "alpha" subdirectory of the distribution.  That subdirectory is laid
 out as follows:
@@ -13,8 +15,6 @@ out as follows:
                                 see below.
 
                 kernel/         alpha kernels; see below.
-
-                toolchain/      alpha toolchain; see below.
 
         installation/
 
@@ -55,19 +55,14 @@ The alpha toolchain:
 
         The toolchain (compiler, assembler, linker, etc.) for the
         alpha port is not yet integrated into the main NetBSD source
-        tree, so the binaries for it are still distributed separately.
-        A tar file with the toolchain can be found under
-        binaries/toolchain, and the source can be found under
-        source/toolchain. 
+        tree, so the sources for it are distributed separately. This
+	source code should be unpacked into /usr/local/toolchain.
 
-        The toolchain installs under usr/local; to install it,
-        just cd to the root directory and type
-
-            tar -x -z --unlink -f /path/to/toolchain.tar.gz
-
-        Note that the "official" toolchain we use with 1.3 is actually
-        the snapshot build of it from 97.11.05; this is based on the
-        sources tagged WORKING-alpha in the NetBSD source tree.
+	Unlink some previous distributions, in this release the toolchain
+	binaries are not distributed in a toolchain set intended to be
+	installed into /usr/local, but this time are installed into /usr/bin
+	and are distributed in the standard comp.tgz binary distribution set
+	as with other NetBSD platforms.
 
 The NetBSD/alpha binary distribution sets contain the binaries which
 comprise the NetBSD _VER release for the alpha.  There are eight binary
@@ -84,16 +79,15 @@ of the NetBSD _VER distribution tree, and are as follows:
                 everything described below.
                 [ 13M gzipped, 41M uncompressed ]
 
-        comp    Things needed for compiling programs, other than the
-                actual compiler programs themselves. (These are in
-                the toolchain snapshot file described above.) This
-                set includes the system include files (/usr/include)
-                and the various system libraries (except the shared
-                libraries, which are included as part of the base
-                set).  This set also includes the manual pages for
-                all of the utilities it contains, as well as the system
-                call and library manual pages.
-                [ 6M gzipped, 31M uncompressed ]
+        comp    
+		Things needed for compiling programs.  This set
+		includes the system include files (/usr/include)
+		and the various system libraries (except the shared
+		libraries, which are included as part of the base
+		set).  This set also includes the manual pages for
+		all of the utilities it contains, as well as the
+		system call and library manual pages. 
+		[ 6M gzipped, 31M uncompressed ]
 
         etc     This distribution set contains the system
                 configuration files that reside in /etc and in several

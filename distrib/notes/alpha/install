@@ -1,13 +1,15 @@
+	$NetBSD: install,v 1.1.2.4 1998/05/09 05:12:23 mycroft Exp $	
+
 0. Introduction
 
     This is the first release of NetBSD/alpha with regular packaging
     and install tools, and the installation program is still rather
     primitive. It also hasn't been tested very well, so there may
     be bugs in both it and this document. However, if you have
-    problems, don't despair; most problems you might encounter are
-    very easy to fix. We strongly suggest you join the port-alpha
-    list (see the section on mailing lists on www.netbsd.org) and
-    ask questions there if you run into any problems. Also report
+    problems, don't despair; most complications you might encounter
+    are very easy to fix. We strongly suggest you join the port-alpha
+    list (see the section on mailing lists on http://www.netbsd.org)
+    and ask questions there if you run into any problems. Also report
     problem you've gotten around there or by using send-pr so that
     they can be fixed for the next release.
         
@@ -37,7 +39,7 @@
     If you have a Unix system handy, you can do this with a command
     like the following:
 
-        dd if=floppy-144 of=/dev/rfd0a
+        dd if=floppy-144 of=/dev/rfd0a bs=18k
 
     If the Unix system you are using is not a NetBSD system, you will
     probably need to replace `/dev/rfd0a' with the name of the floppy
@@ -87,9 +89,12 @@
     from the network, untar the NetBSD snapshot or distribution
     into a directory on your server and NFS export that directory
     to the client. (Make sure you put a kernel there as well, and
-    create the device nodes in /dev with `sh ./MAKEDEV all'. In
-    fact, see the full instructions available off the alpha port
-    page at www.netbsd.org.)
+    create the device nodes in /dev with `sh ./MAKEDEV all'. Detailed
+    instructions on netbooting can be found by visiting the
+    Alpha platform page of www.NetBSD.org. At the time of this
+    release, the URL for the netbooting instructions is:
+
+	http://www.netbsd.org/Ports/alpha/netboot.html
 
     You'll want to map root to `root' (rather than the default
     `nobody') when you export your root filesystem. A typical
