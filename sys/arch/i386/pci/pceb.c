@@ -1,4 +1,4 @@
-/*	$NetBSD: pceb.c,v 1.12.2.1 2004/08/03 10:36:13 skrll Exp $	*/
+/*	$NetBSD: pceb.c,v 1.12.2.2 2004/09/03 12:44:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.12.2.1 2004/08/03 10:36:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pceb.c,v 1.12.2.2 2004/09/03 12:44:48 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,6 @@ CFATTACH_DECL(pceb, sizeof(struct device),
     pcebmatch, pcebattach, NULL, NULL);
 
 void	pceb_callback __P((struct device *));
-int	pceb_print __P((void *, const char *));
 
 union pceb_attach_args {
 	const char *ea_name;			/* XXX should be common */
@@ -135,35 +134,21 @@ pceb_callback(self)
 	 * Attach the EISA bus behind this bridge.
 	 */
 	memset(&ea, 0, sizeof(ea));
-	ea.ea_eba.eba_busname = "eisa";
 	ea.ea_eba.eba_iot = X86_BUS_SPACE_IO;
 	ea.ea_eba.eba_memt = X86_BUS_SPACE_MEM;
 #if NEISA > 0
 	ea.ea_eba.eba_dmat = &eisa_bus_dma_tag;
 #endif
-	config_found(self, &ea.ea_eba, pceb_print);
+	config_found_ia(self, "eisabus", &ea.ea_eba, eisabusprint);
 
 	/*
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&ea, 0, sizeof(ea));
-	ea.ea_iba.iba_busname = "isa";
 	ea.ea_iba.iba_iot = X86_BUS_SPACE_IO;
 	ea.ea_iba.iba_memt = X86_BUS_SPACE_MEM;
 #if NISA > 0
 	ea.ea_iba.iba_dmat = &isa_bus_dma_tag;
 #endif
-	config_found(self, &ea.ea_iba, pceb_print);
-}
-
-int
-pceb_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	union pceb_attach_args *ea = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", ea->ea_name, pnp);
-	return (UNCONF);
+	config_found_ia(self, "isabus", &ea.ea_iba, isabusprint);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4.2.1 2004/08/03 10:38:16 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4.2.2 2004/09/03 12:44:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.2.1 2004/08/03 10:38:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.2.2 2004/09/03 12:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,10 +59,7 @@ extern struct cfdriver cpu_cd;
 int
 cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
-	struct confargs *ca = aux;
 
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
-		return (0);
 	if (cpu_info[0].ci_dev != NULL)
 		return (0);
 	return (1);

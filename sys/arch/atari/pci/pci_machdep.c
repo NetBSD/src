@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.39.6.1 2004/08/03 10:33:26 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.39.6.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39.6.1 2004/08/03 10:33:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.39.6.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include "opt_mbtype.h"
 
@@ -120,7 +120,7 @@ struct atari_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamap_sync,
 };
 
-int	pcibusprint __P((void *auxp, const char *));
+int	ataripcibusprint __P((void *auxp, const char *));
 int	pcibusmatch __P((struct device *, struct cfdata *, void *));
 void	pcibusattach __P((struct device *, struct device *, void *));
 
@@ -171,7 +171,6 @@ void		*auxp;
 {
 	struct pcibus_attach_args	pba;
 
-	pba.pba_busname = "pci";
 	pba.pba_pc      = NULL;
 	pba.pba_bus     = 0;
 	pba.pba_bridgetag = NULL;
@@ -204,11 +203,11 @@ void		*auxp;
 
 	printf("\n");
 
-	config_found(dp, &pba, pcibusprint);
+	config_found_ia(dp, "pcibus", &pba, ataripcibusprint);
 }
 
 int
-pcibusprint(auxp, name)
+ataripcibusprint(auxp, name)
 void		*auxp;
 const char	*name;
 {

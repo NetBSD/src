@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.82.2.3 2004/08/12 16:17:15 skrll Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.82.2.4 2004/09/03 12:45:08 skrll Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82.2.3 2004/08/12 16:17:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82.2.4 2004/09/03 12:45:08 skrll Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -64,25 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.82.2.3 2004/08/12 16:17:15 skrll Ex
 #include <sys/syscallargs.h>
 
 #include "opt_cputype.h"
-
-/*
- * pagemove - moves pages at virtual address from to virtual address to,
- * block moved of size size. Using fast insn bcopy for pte move.
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	pt_entry_t *fpte, *tpte;
-	int	stor;
-
-	fpte = kvtopte(from);
-	tpte = kvtopte(to);
-
-	stor = (size >> VAX_PGSHIFT) * sizeof(struct pte);
-	bcopy(fpte, tpte, stor);
-	bzero(fpte, stor);
-	mtpr(0, PR_TBIA);
-}
 
 #ifdef MULTIPROCESSOR
 static void

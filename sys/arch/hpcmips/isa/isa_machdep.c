@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.27.6.1 2004/08/03 10:35:18 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.27.6.2 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27.6.1 2004/08/03 10:35:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.27.6.2 2004/09/03 12:44:39 skrll Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -151,7 +151,6 @@ vrisabattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_hc = (*haa->haa_getchip)(haa->haa_sc, VRIP_IOCHIP_VRGIU);
 	sc->sc_isa_ic.ic_sc = sc;
 
-	iba.iba_busname = "isa";
 	iba.iba_ic	= &sc->sc_isa_ic;
 	iba.iba_dmat    = 0; /* XXX not yet */
 
@@ -181,7 +180,7 @@ vrisabattach(struct device *parent, struct device *self, void *aux)
 	printf(": ISA port %#x-%#x mem %#x-%#x\n",
 	    iot->base, iot->base + iot->size,
 	    memt->base, memt->base + memt->size);
-	config_found(self, &iba, vrisabprint);
+	config_found_ia(self, "isabus", &iba, vrisabprint);
 #endif
 
 #ifdef DEBUG_FIND_COMPORT

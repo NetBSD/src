@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.14.2.1 2004/08/03 10:32:58 skrll Exp $	*/
+/*	$NetBSD: i80312.c,v 1.14.2.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.14.2.1 2004/08/03 10:32:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312.c,v 1.14.2.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ static void i80312_pci_dma_init(struct i80312_softc *);
 static void i80312_local_dma_init(struct i80312_softc *);
 
 static int i80312_iopxs_print(void *, const char *);
-static int i80312_pcibus_print(void *, const char *);
 
 /* Built-in devices. */
 static const struct iopxs_device {
@@ -297,7 +296,7 @@ i80312_attach(struct i80312_softc *sc)
 		ia.ia_offset = id->id_offset;
 		ia.ia_size = id->id_size;
 
-		(void) config_found(&sc->sc_dev, &ia, i80312_iopxs_print);
+		(void) config_found_ia(&sc->sc_dev, "iopxs", &ia, i80312_iopxs_print);
 	}
 
 	/*
@@ -308,7 +307,6 @@ i80312_attach(struct i80312_softc *sc)
 	 * space.
 	 */
 	preg = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
-	pba.pba_busname = "pci";
 	pba.pba_iot = &sc->sc_pci_iot;
 	pba.pba_memt = &sc->sc_pci_memt;
 	pba.pba_dmat = &sc->sc_pci_dmat;
@@ -321,7 +319,7 @@ i80312_attach(struct i80312_softc *sc)
 	/* XXX MRL/MRM/MWI seem to have problems, at the moment. */
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED /* |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | PCI_FLAGS_MWI_OKAY */;
-	(void) config_found(&sc->sc_dev, &pba, i80312_pcibus_print);
+	(void) config_found_ia(&sc->sc_dev, "pcibus", &pba, pcibusprint);
 }
 
 /*
@@ -335,25 +333,6 @@ i80312_iopxs_print(void *aux, const char *pnp)
 {
 
 	return (QUIET);
-}
-
-/*
- * i80312_pcibus_print:
- *
- *	Autoconfiguration cfprint routine when attaching
- *	to the "pcibus" attribute.
- */
-static int
-i80312_pcibus_print(void *aux, const char *pnp)
-{
-	struct pcibus_attach_args *pba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
-
-	aprint_normal(" bus %d", pba->pba_bus);
-
-	return (UNCONF);
 }
 
 /*

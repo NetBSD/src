@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.1.2.2 2004/09/03 12:44:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.1 2004/08/03 10:31:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1.2.2 2004/09/03 12:44:28 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -340,48 +340,6 @@ setredzone(struct lwp *l)
 	pmap_remove(pmap_kernel(), (vaddr_t)l->l_addr + PAGE_SIZE,
 	    (vaddr_t)l->l_addr + 2 * PAGE_SIZE);
 	pmap_update(pmap_kernel());
-}
-
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap.
- */
-void
-pagemove(from, to, size)
-	register caddr_t from, to;
-	size_t size;
-{
-	register pt_entry_t *fpte, *tpte, ofpte, otpte;
-	int32_t cpumask = 0;
-
-	if (size & PAGE_MASK)
-		panic("pagemove");
-	fpte = kvtopte((vaddr_t)from);
-	tpte = kvtopte((vaddr_t)to);
-#ifdef LARGEPAGES
-	/* XXX For now... */
-	if (*fpte & PG_PS)
-		panic("pagemove: fpte PG_PS");
-	if (*tpte & PG_PS)
-		panic("pagemove: tpte PG_PS");
-#endif
-	while (size > 0) {
-		otpte = *tpte;
-		ofpte = *fpte;
-		*tpte++ = *fpte;
-		*fpte++ = 0;
-		if (otpte & PG_V)
-			pmap_tlb_shootdown(pmap_kernel(),
-			    (vaddr_t)to, otpte, &cpumask);
-		if (ofpte & PG_V)
-			pmap_tlb_shootdown(pmap_kernel(),
-			    (vaddr_t)from, ofpte, &cpumask);
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
-	pmap_tlb_shootnow(cpumask);
 }
 
 /*

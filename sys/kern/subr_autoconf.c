@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.85.2.2 2004/08/25 06:58:58 skrll Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.85.2.3 2004/09/03 12:45:39 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.85.2.2 2004/08/25 06:58:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.85.2.3 2004/09/03 12:45:39 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -466,6 +466,26 @@ mapply(struct matchinfo *m, struct cfdata *cf)
 }
 
 /*
+ * Helper function: check whether the driver supports the interface attribute.
+ */
+static int
+cfdriver_has_iattr(const struct cfdriver *cd, const char *ia)
+{
+	const char * const *cpp;
+
+	if (cd->cd_attrs == NULL)
+		return (0);
+
+	for (cpp = cd->cd_attrs; *cpp; cpp++) {
+		if (STREQ(*cpp, ia)) {
+			/* Match. */
+			return (1);
+		}
+	}
+	return (0);
+}
+
+/*
  * Determine if `parent' is a potential parent for a device spec based
  * on `cfp'.
  */
@@ -473,8 +493,6 @@ static int
 cfparent_match(const struct device *parent, const struct cfparent *cfp)
 {
 	struct cfdriver *pcd;
-	const char * const *cpp;
-	const char *cp;
 
 	/* We don't match root nodes here. */
 	if (cfp == NULL)
@@ -487,16 +505,8 @@ cfparent_match(const struct device *parent, const struct cfparent *cfp)
 	 * First, ensure this parent has the correct interface
 	 * attribute.
 	 */
-	if (pcd->cd_attrs == NULL)
-		return (0);	/* no interface attributes -> no children */
-	for (cpp = pcd->cd_attrs; (cp = *cpp) != NULL; cpp++) {
-		if (STREQ(cp, cfp->cfp_iattr)) {
-			/* Match. */
-			break;
-		}
-	}
-	if (cp == NULL)
-		return (0);	/* doesn't carry the req'd attribute */
+	if (!cfdriver_has_iattr(pcd, cfp->cfp_iattr))
+		return (0);
 
 	/*
 	 * If no specific parent device instance was specified (i.e.
@@ -697,6 +707,7 @@ config_search_loc(cfmatch_loc_t fn, struct device *parent,
 	struct matchinfo m;
 
 	KASSERT(config_initialized);
+	KASSERT(!ifattr || cfdriver_has_iattr(parent->dv_cfdriver, ifattr));
 
 	m.fn = NULL;
 	m.fn_loc = fn;

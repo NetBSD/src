@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.11.2.1 2004/08/03 10:37:00 skrll Exp $	*/
+/*	$NetBSD: svr4_machdep.c,v 1.11.2.2 2004/09/03 12:44:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.11.2.1 2004/08/03 10:37:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.11.2.2 2004/09/03 12:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,16 +68,13 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.11.2.1 2004/08/03 10:37:00 skrll 
 #include <machine/vmparam.h>
 
 extern short exframesize[];
-extern void	m68881_restore __P((struct fpframe *));
-extern void	m68881_save __P((struct fpframe *));
-static void	svr4_getsiginfo __P((union svr4_siginfo *, int, unsigned long,
-		    caddr_t));
+extern void	m68881_restore(struct fpframe *);
+extern void	m68881_save(struct fpframe *);
+static void	svr4_getsiginfo(union svr4_siginfo *, int, unsigned long,
+		    caddr_t);
 
 void
-svr4_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	unsigned long stack;
+svr4_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 
@@ -86,10 +83,7 @@ svr4_setregs(l, epp, stack)
 }
 
 void *
-svr4_getmcontext(l, mc, flags)
-	struct lwp *l;
-	svr4_mcontext_t *mc;
-	unsigned long *flags;
+svr4_getmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long *flags)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = frame->f_format;
@@ -147,10 +141,7 @@ svr4_getmcontext(l, mc, flags)
 }
 
 int
-svr4_setmcontext(l, mc, flags)
-	struct lwp *l;
-	svr4_mcontext_t *mc;
-	unsigned long flags;
+svr4_setmcontext(struct lwp *l, svr4_mcontext_t *mc, u_long flags)
 {
 	struct frame *frame = (struct frame *)l->l_md.md_regs;
 	unsigned int format = mc->mc_pad.frame.format;
@@ -223,11 +214,7 @@ svr4_setmcontext(l, mc, flags)
 }
 
 static void
-svr4_getsiginfo(sip, sig, code, addr)
-	union svr4_siginfo *	sip;
-	int			sig;
-	unsigned long		code;
-	caddr_t			addr;
+svr4_getsiginfo(union svr4_siginfo *sip, int sig, u_long code, caddr_t addr)
 {
 
 	/*
@@ -295,10 +282,7 @@ svr4_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * sysm68k()
  */
 int
-svr4_sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	struct svr4_sys_sysarch_args /* {
 		syscallarg(int) op;

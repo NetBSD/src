@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.44.2.2 2004/08/03 10:50:43 skrll Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.44.2.3 2004/09/03 12:45:38 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.44.2.2 2004/08/03 10:50:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.44.2.3 2004/09/03 12:45:38 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -903,16 +903,19 @@ rf_CheckLabels(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr)
 		   Bail -- make things fail so that the user must force
 		   the issue... */
 		hosed_column = -1;
+		fatal_error = 1;
 	}
 
 	if (num_ser > 2) {
 		printf("raid%d: Too many different serial numbers!\n", 
 		       raidPtr->raidid);
+		fatal_error = 1;
 	}
 
 	if (num_mod > 2) {
 		printf("raid%d: Too many different mod counters!\n", 
 		       raidPtr->raidid);
+		fatal_error = 1;
 	}
 
 	/* we start by assuming the parity will be good, and flee from

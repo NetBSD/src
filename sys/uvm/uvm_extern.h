@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.82.2.2 2004/08/03 10:57:04 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.82.2.3 2004/09/03 12:45:55 skrll Exp $	*/
 
 /*
  *
@@ -531,7 +531,6 @@ MALLOC_DECLARE(M_VMPMAP);
 /* vm_machdep.c */
 void		vmapbuf(struct buf *, vsize_t);
 void		vunmapbuf(struct buf *, vsize_t);
-void		pagemove(caddr_t, caddr_t, size_t);
 #ifndef	cpu_swapin
 void		cpu_swapin(struct lwp *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.36.2.1 2004/08/03 10:40:18 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36.2.2 2004/09/03 12:45:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36.2.1 2004/08/03 10:40:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.36.2.2 2004/09/03 12:45:05 skrll Exp $");
 
 #include "opt_kstack_debug.h"
 
@@ -353,34 +353,6 @@ cpu_coredump(struct lwp *l, struct vnode *vp, struct ucred *cred,
 
 	chdr->c_nseg++;
 	return 0;
-}
-
-/*
- * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the pmap_kernel().
- */
-void
-pagemove(caddr_t from, caddr_t to, size_t size)
-{
-	pt_entry_t *fpte, *tpte;
-
-	if ((size & PGOFSET) != 0)
-		panic("pagemove");
-	fpte = __pmap_kpte_lookup((vaddr_t)from);
-	tpte = __pmap_kpte_lookup((vaddr_t)to);
-
-	if (SH_HAS_VIRTUAL_ALIAS)
-		sh_dcache_wbinv_range((vaddr_t)from, size);
-
-	while (size > 0) {
-		*tpte++ = *fpte;
-		*fpte++ = 0;
-		sh_tlb_invalidate_addr(0, (vaddr_t)from);
-		sh_tlb_invalidate_addr(0, (vaddr_t)to);
-		from += PAGE_SIZE;
-		to += PAGE_SIZE;
-		size -= PAGE_SIZE;
-	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.82.2.1 2004/08/03 10:56:26 skrll Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.82.2.2 2004/09/03 12:45:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -495,17 +495,17 @@ struct partinfo {
 
 struct disk;
 
-void	 diskerr __P((const struct buf *, const char *, const char *, int,
-	    int, const struct disklabel *));
-u_int	 dkcksum __P((struct disklabel *));
-int	 setdisklabel __P((struct disklabel *, struct disklabel *, u_long,
-	    struct cpu_disklabel *));
-const char *readdisklabel __P((dev_t, void (*)(struct buf *),
-	    struct disklabel *, struct cpu_disklabel *));
-int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
-	    struct cpu_disklabel *));
-int	 bounds_check_with_label __P((struct disk *, struct buf *, int));
-int	 bounds_check_with_mediasize __P((struct buf *, int, u_int64_t));
+void	 diskerr(const struct buf *, const char *, const char *, int,
+	    int, const struct disklabel *);
+u_int	 dkcksum(struct disklabel *);
+int	 setdisklabel(struct disklabel *, struct disklabel *, u_long,
+	    struct cpu_disklabel *);
+const char *readdisklabel(dev_t, void (*)(struct buf *),
+	    struct disklabel *, struct cpu_disklabel *);
+int	 writedisklabel(dev_t, void (*)(struct buf *), struct disklabel *,
+	    struct cpu_disklabel *);
+int	 bounds_check_with_label(struct disk *, struct buf *, int);
+int	 bounds_check_with_mediasize(struct buf *, int, u_int64_t);
 #endif
 #endif /* _LOCORE */
 

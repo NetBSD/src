@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.13.2.1 2004/08/03 10:31:03 skrll Exp $	*/
+/*	$NetBSD: pcib.c,v 1.13.2.2 2004/09/03 12:44:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.2.1 2004/08/03 10:31:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.13.2.2 2004/09/03 12:44:27 skrll Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -124,7 +124,6 @@ void	pcib_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
     pcib_match, pcib_attach, NULL, NULL);
 
-int	pcib_print(void *, const char *pnp);
 void	pcib_isa_attach_hook(struct device *, struct device *,
 	    struct isabus_attach_args *);
 
@@ -305,7 +304,6 @@ pcib_bridge_callback(self)
 
 	memset(&iba, 0, sizeof(iba));
 
-	iba.iba_busname = "isa";
 #if defined(ALGOR_P5064)
 	    {
 		struct p5064_config *acp = &p5064_configuration;
@@ -327,17 +325,7 @@ pcib_bridge_callback(self)
 	iba.iba_ic = &sc->sc_ic;
 	iba.iba_ic->ic_attach_hook = pcib_isa_attach_hook;
 
-	(void) config_found(&sc->sc_dev, &iba, pcib_print);
-}
-
-int
-pcib_print(void *aux, const char *pnp)
-{
-	struct isabus_attach_args *iba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", iba->iba_busname, pnp);
-	return (UNCONF);
+	(void) config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
 }
 
 void

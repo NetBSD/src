@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.21 2003/03/06 00:38:28 matt Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.21.2.1 2004/09/03 12:45:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.21 2003/03/06 00:38:28 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.21.2.1 2004/09/03 12:45:39 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -220,14 +220,6 @@ zs_ioasic_match(parent, cf, aux)
 	 */
 	if (strncmp(d->iada_modname, "z8530   ", TC_ROM_LLEN) != 0 &&
 	    strncmp(d->iada_modname, "scc", TC_ROM_LLEN) != 0)
-		return (0);
-
-	/*
-	 * Check user-specified offset against the ioasic offset.
-	 * Allow it to be wildcarded.
-	 */
-	if (cf->cf_loc[IOASICCF_OFFSET] != IOASICCF_OFFSET_DEFAULT &&
-	    cf->cf_loc[IOASICCF_OFFSET] != d->iada_offset)
 		return (0);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.257.2.4 2004/08/25 06:57:34 skrll Exp $ */
+/*	$NetBSD: wd.c,v 1.257.2.5 2004/09/03 12:45:17 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.4 2004/08/25 06:57:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.257.2.5 2004/09/03 12:45:17 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -279,8 +279,9 @@ wdattach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&wd->sc_restart_ch);
 	bufq_alloc(&wd->sc_q, BUFQ_DISK_DEFAULT_STRAT()|BUFQ_SORT_RAWBLOCK);
+#ifdef WD_SOFTBADSECT
 	SLIST_INIT(&wd->sc_bslist);
-
+#endif
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
 	wd->drvp = adev->adev_drv_data;
@@ -445,6 +446,7 @@ wddetach(struct device *self, int flags)
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
 
+#ifdef WD_SOFTBADSECT
 	/* Clean out the bad sector list */
 	while (!SLIST_EMPTY(&sc->sc_bslist)) {
 		void *head = SLIST_FIRST(&sc->sc_bslist);
@@ -452,6 +454,7 @@ wddetach(struct device *self, int flags)
 		free(head, M_TEMP);
 	}
 	sc->sc_bscount = 0;
+#endif
 
 	/* Get rid of the shutdown hook. */
 	if (sc->sc_sdhook != NULL)
@@ -529,6 +532,7 @@ wdstrategy(struct buf *bp)
 
 	bp->b_rawblkno = blkno;
 
+#ifdef WD_SOFTBADSECT
 	/*
 	 * If the transfer about to be attempted contains only a block that
 	 * is known to be bad then return an error for the transfer without
@@ -548,6 +552,7 @@ wdstrategy(struct buf *bp)
 				goto bad;
 			}
 	}
+#endif
 
 	/* Queue transfer on drive, activate drive and controller if idle. */
 	s = splbio();
@@ -772,6 +777,7 @@ retry2:
 		}
 		printf("\n");
 
+#ifdef WD_SOFTBADSECT
 		/*
 		 * Not all errors indicate a failed block but those that do,
 		 * put the block on the bad-block list for the device.  Only
@@ -790,7 +796,7 @@ retry2:
 			SLIST_INSERT_HEAD(&wd->sc_bslist, dbs, dbs_next);
 			wd->sc_bscount++;
 		}
-
+#endif
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		break;
@@ -1128,7 +1134,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 		bad144intern(wd);
 		return 0;
 #endif
-
+#ifdef WD_SOFTBADSECT
 	case DIOCBSLIST :
 	{
 		u_int32_t count, missing, skip;
@@ -1182,7 +1188,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct lwp *l)
 		}
 		wd->sc_bscount = 0;
 		return 0;
-
+#endif
 	case DIOCGDINFO:
 		*(struct disklabel *)addr = *(wd->sc_dk.dk_label);
 		return 0;

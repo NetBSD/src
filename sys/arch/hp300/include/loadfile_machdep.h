@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile_machdep.h,v 1.3 2001/10/31 17:20:46 thorpej Exp $	*/
+/*	$NetBSD: loadfile_machdep.h,v 1.3.18.1 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,9 +78,9 @@
 #define	FREE(a, b)		free(a)
 #define	OKMAGIC(a)		((a) == OMAGIC)
 
-ssize_t vread __P((int, u_long, u_long *, size_t));
-void vcopy __P((u_long, u_long, u_long *, size_t));
-void vzero __P((u_long, u_long *, size_t));
+ssize_t	vread(int, u_long, u_long *, size_t);
+void	vcopy(u_long, u_long, u_long *, size_t);
+void	vzero(u_long, u_long *, size_t);
 
 #endif
 #endif /* ! _HP300_LOADFILE_MACHDEP_H_ */

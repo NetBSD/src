@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_pci.c,v 1.9.2.1 2004/08/03 10:40:24 skrll Exp $	*/
+/*	$NetBSD: sh5_pci.c,v 1.9.2.2 2004/09/03 12:45:06 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.9.2.1 2004/08/03 10:40:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh5_pci.c,v 1.9.2.2 2004/09/03 12:45:06 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -358,7 +358,6 @@ sh5pciattach(struct device *parent, struct device *self, void *args)
 	(void) sh5pci_check_master_abort(sc);
 #endif
 
-	pba.pba_busname   = "pci";
 	pba.pba_pc        = &sh5pci_chipset_tag;
 	pba.pba_bus       = 0;
 	pba.pba_bridgetag = NULL;
@@ -367,7 +366,7 @@ sh5pciattach(struct device *parent, struct device *self, void *args)
 	pba.pba_dmat      = &sh5pci_dma_tag;
 	pba.pba_iot       = &sh5pci_io_tag;
 	pba.pba_memt      = &sh5pci_mem_tag;
-	config_found(self, &pba, sh5pciprint);
+	config_found_ia(self, "pcibus", &pba, sh5pciprint);
 }
 
 /*ARGSUSED*/

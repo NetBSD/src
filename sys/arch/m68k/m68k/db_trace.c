@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.38.2.1 2004/08/03 10:36:59 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.38.2.2 2004/09/03 12:44:56 skrll Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38.2.1 2004/08/03 10:36:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38.2.2 2004/09/03 12:44:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.38.2.1 2004/08/03 10:36:59 skrll Exp 
 /*
  * Register list
  */
-static int db_var_short __P((const struct db_variable *, db_expr_t *, int));
+static int db_var_short(const struct db_variable *, db_expr_t *, int);
 
 const struct db_variable db_regs[] = {
 	/* D0-D7 */
@@ -74,10 +74,7 @@ const struct db_variable db_regs[] = {
 const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
 static int
-db_var_short(varp, valp, op)
-    const struct db_variable *varp;
-    db_expr_t *valp;
-    int op;
+db_var_short(const struct db_variable *varp, db_expr_t *valp, int op)
 {
     if (op == DB_VAR_GET)
 	*valp = (db_expr_t) *((short*)varp->valuep);
@@ -109,22 +106,19 @@ struct stackpos {
 	 int	k_regloc[NREGISTERS];
 };
 
-static void findentry __P((struct stackpos *, void (*)(const char *, ...)));
-static void findregs __P((struct stackpos *, db_addr_t));
-static int  nextframe __P((struct stackpos *, struct pcb *, int,
-    void (*)(const char *, ...)));
-static void stacktop __P((db_regs_t *, struct stackpos *,
-    void (*)(const char *, ...)));
+static void	findentry(struct stackpos *, void (*)(const char *, ...));
+static void	findregs(struct stackpos *, db_addr_t);
+static int	nextframe(struct stackpos *, struct pcb *, int,
+		    void (*)(const char *, ...));
+static void	stacktop(db_regs_t *, struct stackpos *,
+		    void (*)(const char *, ...));
 
 
 #define FR_SAVFP	0
 #define FR_SAVPC	4
 
 static void
-stacktop(regs, sp, pr)
-	db_regs_t *regs;
-	struct stackpos *sp;
-	void (*pr) __P((const char *, ...));
+stacktop(db_regs_t *regs, struct stackpos *sp, void (*pr)(const char *, ...))
 {
 	int i;
 
@@ -175,15 +169,14 @@ stacktop(regs, sp, pr)
 #define ADDQSP	0x508f0000	/* addql #x,sp   */
 #define ADDQWSP	0x504f0000	/* addqw #x,sp   */
 
-struct nlist *	trampsym = 0;
-struct nlist *	funcsym = 0;
+#if 0
+static struct nlist *	trampsym = 0;
+static struct nlist *	funcsym = 0;
+#endif
 
 static int
-nextframe(sp, pcb, kerneltrace, pr)
-	struct stackpos *sp;
-	struct pcb *pcb;
-	int kerneltrace;
-	void (*pr) __P((const char *, ...));
+nextframe(struct stackpos *sp, struct pcb *pcb, int kerneltrace,
+    void (*pr)(const char *, ...))
 {
 	int		i;
 	db_addr_t	addr;
@@ -235,9 +228,7 @@ nextframe(sp, pcb, kerneltrace, pr)
 }
 
 static void
-findentry(sp, pr)
-	struct stackpos *sp;
-	void (*pr) __P((const char *, ...));
+findentry(struct stackpos *sp, void (*pr)(const char *, ...))
 { 
 	/* 
 	 * Set the k_nargs and k_entry fields in the stackpos structure.  This
@@ -342,9 +333,7 @@ findentry(sp, pr)
  * Figure out which registers we saved, and where they are
  */
 static void
-findregs(sp, addr)
-	struct stackpos *sp;
-	db_addr_t addr;
+findregs(struct stackpos *sp, db_addr_t addr)
 {
 	long instruc, val, i;
 	int  regp;
@@ -406,12 +395,8 @@ findregs(sp, addr)
  *	Frame tracing.
  */
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;
-	int		have_addr;
-	db_expr_t	count;
-	char		*modif;
-	void		(*pr) __P((const char *, ...));
+db_stack_trace_print(db_expr_t addr, int have_addr, db_expr_t count,
+    char *modif, void (*pr)(const char *, ...))
 {
 	int i, nargs;
 	long val;
@@ -570,4 +555,3 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			break;
 	}
 }
-

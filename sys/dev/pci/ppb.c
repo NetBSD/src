@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.26.2.1 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: ppb.c,v 1.26.2.2 2004/09/03 12:45:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.26.2.1 2004/08/03 10:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.26.2.2 2004/09/03 12:45:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,8 +53,6 @@ void	ppbattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ppb, sizeof(struct ppb_softc),
     ppbmatch, ppbattach, NULL, NULL);
-
-int	ppbprint __P((void *, const char *pnp));
 
 int
 ppbmatch(parent, match, aux)
@@ -122,7 +120,6 @@ ppbattach(parent, self, aux)
 	 * XXX Don't pass-through Memory Read Multiple.  Should we?
 	 * XXX Consult the spec...
 	 */
-	pba.pba_busname = "pci";	/* XXX should be pci_ppb attachment */
 	pba.pba_iot = pa->pa_iot;
 	pba.pba_memt = pa->pa_memt;
 	pba.pba_dmat = pa->pa_dmat;
@@ -134,19 +131,5 @@ ppbattach(parent, self, aux)
 	pba.pba_intrswiz = pa->pa_intrswiz;
 	pba.pba_intrtag = pa->pa_intrtag;
 
-	config_found(self, &pba, ppbprint);
-}
-
-int
-ppbprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pcibus_attach_args *pba = aux;
-
-	/* only PCIs can attach to PPBs; easy. */
-	if (pnp)
-		aprint_normal("pci at %s", pnp);
-	aprint_normal(" bus %d", pba->pba_bus);
-	return (UNCONF);
+	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }

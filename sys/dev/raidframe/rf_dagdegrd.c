@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagdegrd.c,v 1.13.2.1 2004/08/03 10:50:41 skrll Exp $	*/
+/*	$NetBSD: rf_dagdegrd.c,v 1.13.2.2 2004/09/03 12:45:38 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13.2.1 2004/08/03 10:50:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagdegrd.c,v 1.13.2.2 2004/09/03 12:45:38 skrll Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -525,7 +525,7 @@ rf_CreateDegradedReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	xorNode->antType[0] = rf_trueData;
 	tmprrdNode = rrdNodes;
 	for (i = 0; i < nRrdNodes; i++) {
-		RF_ASSERT(rrdNode->numSuccedents == 1);
+		RF_ASSERT(tmprrdNode->numSuccedents == 1);
 		tmprrdNode->succedents[0] = xorNode;
 		xorNode->antecedents[1 + i] = tmprrdNode;
 		xorNode->antType[1 + i] = rf_trueData;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12.2.1 2004/08/03 10:37:31 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12.2.2 2004/09/03 12:44:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.2.1 2004/08/03 10:37:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.2.2 2004/09/03 12:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.2.1 2004/08/03 10:37:31 skrll Exp $
 
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
-int	mainbus_print __P((void *, const char *));
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
@@ -102,17 +101,4 @@ mainbus_attach(parent, self, aux)
 		ca.ca_reg  = reg;
 		config_found(self, &ca, NULL);
 	}
-}
-
-int
-mainbus_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct pcibus_attach_args *pa= aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", pa->pba_busname, pnp);
-	aprint_normal(" bus %d", pa->pba_bus);
-	return UNCONF;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.14.2.1 2004/08/03 10:33:40 skrll Exp $	*/
+/*	$NetBSD: pcib.c,v 1.14.2.2 2004/09/03 12:44:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14.2.1 2004/08/03 10:33:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14.2.2 2004/09/03 12:44:29 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,7 +67,6 @@ CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
     pcibmatch, pcibattach, NULL, NULL);
 
 void	pcib_callback __P((struct device *));
-int	pcib_print __P((void *, const char *));
 
 int
 pcibmatch(parent, match, aux)
@@ -119,7 +118,6 @@ pcib_callback(self)
 	 * Attach the ISA bus behind this bridge.
 	 */
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_busname = "isa";
 	iba.iba_ic = &sc->sc_chipset;
 	iba.iba_iot = &bebox_isa_io_bs_tag;
 	iba.iba_memt = &bebox_isa_mem_bs_tag;
@@ -137,17 +135,5 @@ pcib_callback(self)
 		panic("pcib_callback: can't map DMA high page registers");
 #endif
 #endif
-	config_found(&sc->sc_dev, &iba, pcib_print);
-}
-
-int
-pcib_print(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-
-	/* Only ISAs can attach to pcib's; easy. */
-	if (pnp)
-		aprint_normal("isa at %s", pnp);
-	return (UNCONF);
+	config_found_ia(&sc->sc_dev, "isabus", &iba, isabusprint);
 }

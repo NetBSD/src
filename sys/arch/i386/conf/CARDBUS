@@ -1,4 +1,4 @@
-# $NetBSD: CARDBUS,v 1.70.6.1 2004/08/03 10:35:46 skrll Exp $
+# $NetBSD: CARDBUS,v 1.70.6.2 2004/09/03 12:44:47 skrll Exp $
 #
 #	CARDBUS: GENERIC + CardBus support
 
@@ -36,6 +36,7 @@ com*	at cardbus? dev ? function ?	# Modems and serial cards
 # CardBus SCSI cards
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
+njs*	at cardbus? dev ? function ?	# Workbit NinjaSCSI-32
  
 # CardBus network cards
 ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11

@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga.c,v 1.7 2003/06/15 23:08:55 fvdl Exp $ */
+/* $NetBSD: ttwoga.c,v 1.7.2.1 2004/09/03 12:44:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.7 2003/06/15 23:08:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga.c,v 1.7.2.1 2004/09/03 12:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,7 @@ void	ttwopciattach(struct device *, struct device *, void *);
 CFATTACH_DECL(ttwopci, sizeof(struct device),
     ttwopcimatch, ttwopciattach, NULL, NULL);
 
-int	ttwopciprint(void *, const char *);
+int	ttwosableioprint(void *, const char *);
 
 /*
  * There can be only one, but it might have 2 primary PCI busses.
@@ -148,10 +148,9 @@ ttwogaattach(struct device *parent, struct device *self, void *aux)
 			continue;
 #endif
 		memset(&pba, 0, sizeof(pba));
-		pba.pba_busname = "ttwopci";
 		pba.pba_bus = hose;
 
-		(void) config_found(self, &pba, ttwogaprint);
+		(void) config_found_ia(self, "ttwoga", &pba, ttwogaprint);
 	}
 }
 
@@ -161,7 +160,7 @@ ttwogaprint(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("ttwopci at %s", pnp);
 	aprint_normal(" hose %d", pba->pba_bus);
 	return (UNCONF);
 }
@@ -214,9 +213,6 @@ int
 ttwopcimatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
-
-	if (strcmp(pba->pba_busname, match->cf_name) != 0)
-		return (0);
 
 	if (match->cf_loc[PCIBUSCF_BUS] != PCIBUSCF_BUS_DEFAULT &&
 	    match->cf_loc[PCIBUSCF_BUS] != pba->pba_bus)
@@ -274,21 +270,20 @@ ttwopciattach(struct device *parent, struct device *self, void *aux)
 	 * Hose 0 has the STDIO module.
 	 */
 	if (pba->pba_bus == 0) {
-		npba.pba_busname = "sableio";
-		(void) config_found(self, &npba, ttwopciprint);
+		(void) config_found_ia(self, "sableiobus", &npba,
+				       ttwosableioprint);
 	}
 
-	npba.pba_busname = "pci";
-	(void) config_found(self, &npba, ttwopciprint);
+	(void) config_found_ia(self, "pcibus", &npba, pcibusprint);
 }
 
 int
-ttwopciprint(void *aux, const char *pnp)
+ttwosableioprint(void *aux, const char *pnp)
 {
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		aprint_normal("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("sableio at %s", pnp);
 	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }

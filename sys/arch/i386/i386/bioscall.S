@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.2 2003/04/02 07:35:58 thorpej Exp $ */
+/*	$NetBSD: bioscall.S,v 1.2.2.1 2004/09/03 12:44:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@
 /* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <machine/bioscall.h> */
 
-	.globl	_C_LABEL(PTDpaddr)	/* from locore.s */
-	
+	.globl	_C_LABEL(PDPpaddr)	/* from locore.S */
+
 _C_LABEL(biostramp_image):
 	.globl	_C_LABEL(biostramp_image)
 
@@ -74,10 +74,10 @@ NENTRY(bioscall)
 	pushl	%ebp
 	movl	%esp,%ebp		/* set up frame ptr */
 
-	movl	%cr3,%eax		/* save PTDB register */
+	movl	%cr3,%eax		/* save PDP base register */
 	pushl	%eax
 
-	movl	_C_LABEL(PTDpaddr),%eax	/* install proc0 PTD */
+	movl	_C_LABEL(PDPpaddr),%eax	/* install proc0 PDP */
 	movl	%eax,%cr3
 
 	movl	$(BIOSTRAMP_BASE),%eax	/* address of trampoline area */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.2.2.2 2004/08/25 06:57:19 skrll Exp $	*/
+/*	$NetBSD: mbr.S,v 1.2.2.3 2004/09/03 12:44:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -215,20 +215,13 @@ next_ptn:
 #endif
 
 /*
- * If we haven't output any menu entries, then the system sits waiting
- * for a keypress with the user looking at a blank screen wondering
- * why nothing is happening.
- * To stop this we generate <ENTER> - to boot the active partition
- * if we haven't output any menu texts.
- * The non-bootsel code also traverses this code path.
+ * The non-bootsel code traverses this code path, it needs the
+ * correct keycode to select the active partition.
  */
 
 #ifndef BOOTSEL
-	movb	$SCAN_ENTER - SCAN_F1, %al
+	mov	$SCAN_ENTER - SCAN_F1, %ax
 #else
-	movb	$SCAN_ENTER, %al	/* default to active partition */
-	cmpb	$'0', prefix		/* did we output a menu ? */
-	je	check_key		/* Nope - process SCAN_ENTER */
 /*
  * Get the initial time value for the timeout comparison. It is returned
  * by int 1a in cx:dx. We do sums modulo 2^16 so it doesn't matter if
@@ -252,12 +245,12 @@ wait_key:
 	cmpw	timeout, %dx		/* always wait for 1 tick... */
 	jbe	3b			/* 0xffff means never timeout */
 def_key:
-	movb	defkey, %al		/* timedout - pick default key */
-	jmp	check_key
+	mov	defkey - 1, %ax		/* timedout - get default key to %ah */
+	jmp	4f
 get_key:
 	xorb	%ah, %ah
 	int	$0x16			/* 'read key', code ah, ascii al */
-	shr	$8, %ax			/* code in %al, %ah zero */
+4:	shr	$8, %ax			/* code in %al, %ah zero */
 
 /*
  * We have a keycode, see what it means.

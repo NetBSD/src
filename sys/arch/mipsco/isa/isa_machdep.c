@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.4.6.1 2004/08/03 10:37:53 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.4.6.2 2004/09/03 12:44:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4.6.1 2004/08/03 10:37:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4.6.2 2004/09/03 12:44:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.4.6.1 2004/08/03 10:37:53 skrll Ex
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
-static int	isabusprint __P((void *auxp, const char *));
+static int	mipscoisabusprint __P((void *auxp, const char *));
 static int	isabusmatch __P((struct device *, struct cfdata *, void *));
 static void	isabusattach __P((struct device *, struct device *, void *));
 
@@ -127,7 +127,6 @@ void		*aux;
 
 	printf(":");
 
-	iba.iba_busname = "isa";
 	iba.iba_iot	= &isa_io_bst;
 	iba.iba_memt	= &isa_mem_bst;
 	iba.iba_dmat	= &isa_dmatag;
@@ -162,11 +161,11 @@ void		*aux;
 	(*platform.intr_establish)(SYS_INTR_ATBUS, isa_intr, ic);
 
 	printf("\n");
-	config_found(dp, &iba, isabusprint);
+	config_found_ia(dp, "isabus", &iba, mipscoisabusprint);
 }
 
 int
-isabusprint(auxp, name)
+mipscoisabusprint(auxp, name)
 void		*auxp;
 const char	*name;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdvar.h,v 1.17.2.1 2004/08/03 10:51:13 skrll Exp $	*/
+/*	$NetBSD: cdvar.h,v 1.17.2.2 2004/09/03 12:45:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -51,6 +51,7 @@ struct cd_softc {
 	} params;
 
 	struct bufq_state buf_queue;
+	struct callout sc_callout;
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;

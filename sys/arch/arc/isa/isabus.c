@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.23.2.1 2004/08/03 10:32:21 skrll Exp $	*/
+/*	$NetBSD: isabus.c,v 1.23.2.2 2004/09/03 12:44:28 skrll Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.23.2.1 2004/08/03 10:32:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.23.2.2 2004/09/03 12:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -201,12 +201,11 @@ isabrattach(sc)
 	arc_bus_space_init_extent(&arc_bus_io, (caddr_t)isa_io_ex_storage,
 	    sizeof(isa_io_ex_storage));
 
-	iba.iba_busname = "isa";
 	iba.iba_iot = &arc_bus_io;
 	iba.iba_memt = &arc_bus_mem;
 	iba.iba_dmat = &sc->sc_dmat;
 	iba.iba_ic = &sc->arc_isa_cs;
-	config_found(&sc->sc_dev, &iba, isabrprint);
+	config_found_ia(&sc->sc_dev, "isabus", &iba, isabrprint);
 }
 
 int
@@ -214,10 +213,9 @@ isabrprint(aux, pnp)
 	void *aux;
 	const char *pnp;
 {
-	struct confargs *ca = aux;
 
         if (pnp)
-                aprint_normal("%s at %s", ca->ca_name, pnp);
+                aprint_normal("isa at %s", pnp);
         aprint_verbose(" isa_io_base 0x%lx isa_mem_base 0x%lx",
 		arc_bus_io.bs_vbase, arc_bus_mem.bs_vbase);
         return (UNCONF);

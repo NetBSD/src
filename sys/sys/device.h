@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.64.6.2 2004/08/25 06:59:14 skrll Exp $ */
+/* $NetBSD: device.h,v 1.64.6.3 2004/09/03 12:45:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -358,15 +358,22 @@ struct cfattach *config_cfattach_lookup(const char *, const char *);
 struct cfdata *config_search(cfmatch_t, struct device *, void *);
 struct cfdata *config_search_loc(cfmatch_loc_t, struct device *,
 				 const char *, const locdesc_t *, void *);
+#define config_search_ia(sm, d, ia, a) \
+	config_search_loc((sm), (d), (ia), NULL, (a))
 struct cfdata *config_rootsearch(cfmatch_t, const char *, void *);
 struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
 struct device *config_found_sm_loc(struct device *,
 				   const char *, const locdesc_t *, void *,
 				   cfprint_t, cfmatch_loc_t);
+#define config_found_ia(d, ia, a, p) \
+	config_found_sm_loc((d), (ia), NULL, (a), (p), NULL)
+#define config_found(d, a, p) \
+	config_found_sm_loc((d), NULL, NULL, (a), (p), NULL)
 struct device *config_rootfound(const char *, void *);
 struct device *config_attach_loc(struct device *, struct cfdata *,
     const locdesc_t *, void *, cfprint_t);
-#define config_attach(p, cf, aux, pr) config_attach_loc(p, cf, 0, aux, pr)
+#define config_attach(p, cf, aux, pr) \
+	config_attach_loc((p), (cf), 0, (aux), (pr))
 int config_match(struct device *, struct cfdata *, void *);
 
 struct device *config_attach_pseudo(const char *, int);
@@ -394,7 +401,7 @@ void	evcnt_attach_dynamic(struct evcnt *, int, const struct evcnt *,
 void	evcnt_detach(struct evcnt *);
 
 /* compatibility definitions */
-#define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+struct device *config_found_sm(struct device *, void *, cfprint_t, cfmatch_t);
 
 /* convenience definitions */
 #define	device_lookup(cfd, unit)					\

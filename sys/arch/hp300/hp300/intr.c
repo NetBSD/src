@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23.6.1 2004/08/03 10:34:37 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.23.6.2 2004/09/03 12:44:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.6.1 2004/08/03 10:34:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.6.2 2004/09/03 12:44:39 skrll Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -78,11 +78,11 @@ static const char *hp300_intr_names[NISR] = {
 
 u_short hp300_ipls[HP300_NIPLS];
 
-void	intr_computeipl __P((void));
-void	netintr __P((void));
+void	intr_computeipl(void);
+void	netintr(void);
 
 void
-intr_init()
+intr_init(void)
 {
 	struct hp300_intr *hi;
 	int i;
@@ -110,7 +110,7 @@ intr_init()
  * calls.  This doesn't have to be fast.
  */
 void
-intr_computeipl()
+intr_computeipl(void)
 {
 	struct hp300_intrhand *ih;
 	int ipl;
@@ -170,7 +170,7 @@ intr_computeipl()
 }
 
 void
-intr_printlevels()
+intr_printlevels(void)
 {
 
 #ifdef DEBUG
@@ -190,11 +190,7 @@ intr_printlevels()
  * Called by driver attach functions.
  */
 void *
-intr_establish(func, arg, ipl, priority)
-	int (*func) __P((void *));
-	void *arg;
-	int ipl;
-	int priority;
+intr_establish(int (*func)(void *), void *arg, int ipl, int priority)
 {
 	struct hp300_intrhand *newih, *curih;
 
@@ -263,8 +259,7 @@ intr_establish(func, arg, ipl, priority)
  * Disestablish an interrupt handler.
  */
 void
-intr_disestablish(arg)
-	void *arg;
+intr_disestablish(void *arg)
 {
 	struct hp300_intrhand *ih = arg;
 
@@ -278,8 +273,7 @@ intr_disestablish(arg)
  * assembly language interrupt routine.
  */
 void
-intr_dispatch(evec)
-	int evec;		/* format | vector offset */
+intr_dispatch(int evec /* format | vector offset */)
 {
 	struct hp300_intrhand *ih;
 	struct hp300_intr *list;
@@ -317,7 +311,7 @@ intr_dispatch(evec)
 }
 
 void
-netintr()
+netintr(void)
 {
 	int s, isr;
 

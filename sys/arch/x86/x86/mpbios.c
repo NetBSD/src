@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.9.2.1 2004/08/03 10:43:05 skrll Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.9.2.2 2004/09/03 12:45:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.9.2.1 2004/08/03 10:43:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.9.2.2 2004/09/03 12:45:09 skrll Exp $");
 
 #include "opt_mpacpi.h"
 #include "opt_mpbios.h"
@@ -172,7 +172,8 @@ struct mp_map
 };
 
 int mp_print __P((void *, const char *));
-int mp_match __P((struct device *,struct cfdata *,void *));
+int mp_submatch __P((struct device *, struct cfdata *,
+	const locdesc_t *, void *));
 static const void *mpbios_search __P((struct device *, paddr_t, int,
     struct mp_map *));
 static inline int mpbios_cksum __P((const void *,int));
@@ -223,9 +224,10 @@ mp_print(aux, pnp)
 }
 
 int
-mp_match(parent, cf, aux)
+mp_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 	struct cpu_attach_args * caa = (struct cpu_attach_args *) aux;
@@ -713,7 +715,7 @@ mpbios_cpu(ent, self)
 	caa.cpu_number = entry->apic_id;
 	caa.cpu_func = &mp_cpu_funcs;
 
-	config_found_sm(self, &caa, mp_print, mp_match);
+	config_found_sm_loc(self, "cpubus", NULL, &caa, mp_print, mp_submatch);
 }
 
 static void
@@ -1021,7 +1023,7 @@ mpbios_ioapic(ent, self)
 	aaa.apic_vecbase = -1;
 	aaa.flags =  (mp_fps->mpfb2 & 0x80) ? IOAPIC_PICMODE : IOAPIC_VWIRE;
 
-	config_found_sm(self, &aaa, mp_print, mp_match);
+	config_found_sm_loc(self, "cpubus", NULL, &aaa, mp_print, mp_submatch);
 }
 
 static const char inttype_fmt[] = "\177\020"
@@ -1197,7 +1199,7 @@ mpbios_scan_pci(struct device *self, struct pcibus_attach_args *pba,
 			continue;
 		if (!strcmp(mpb->mb_name, "pci") && mpb->mb_configured == 0) {
 			pba->pba_bus = i;
-			config_found(self, pba, print);
+			config_found_ia(self, "pcibus", pba, print);
 		}
 	}
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.83.2.3 2004/08/25 06:58:58 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.83.2.4 2004/09/03 12:45:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.3 2004/08/25 06:58:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.83.2.4 2004/09/03 12:45:39 skrll Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1105,6 +1105,13 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 				m->m_next = 0;
 				m = so->so_rcv.sb_mb;
 			} else {
+				/*
+				 * Dispose of any SCM_RIGHTS message that went
+				 * through the read path rather than recv.
+				 */
+				if (pr->pr_domain->dom_dispose &&
+				    mtod(m, struct cmsghdr *)->cmsg_type == SCM_RIGHTS)
+					(*pr->pr_domain->dom_dispose)(m);
 				MFREE(m, so->so_rcv.sb_mb);
 				m = so->so_rcv.sb_mb;
 			}
