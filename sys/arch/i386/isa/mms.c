@@ -39,9 +39,9 @@
 /* define this if you're using 386BSD rather than NetBSD */
 /* #define 386BSD_KERNEL */
 
-#include "bms.h"
+#include "mms.h"
 
-#if NBMS > 0
+#if NMMS > 0
 
 #include "param.h"
 #include "kernel.h"
@@ -65,16 +65,16 @@
 #define DATA	1	/* Offset for InPort data */
 #define IDENT	2	/* Offset for identification register */
 
-#define BMSUNIT(dev)	(minor(dev) >> 1)
+#define MMSUNIT(dev)	(minor(dev) >> 1)
 
 #ifndef min
 #define min(x,y) (x < y ? x : y)
 #endif  min
 
-int bmsprobe (struct isa_device *);
-int bmsattach (struct isa_device *);
+int mmsprobe (struct isa_device *);
+int mmsattach (struct isa_device *);
 
-static int bmsaddr[NBMS];	/* Base I/O port addresses per unit */
+static int mmsaddr[NMMS];	/* Base I/O port addresses per unit */
 
 #define MSBSZ	1024		/* Output queue size (pwr of 2 is best) */
 
@@ -83,7 +83,7 @@ struct ringbuf {
 	char queue[MSBSZ];
 };
 
-static struct bms_softc {	/* Driver status information */
+static struct mms_softc {	/* Driver status information */
 	struct ringbuf inq;	/* Input queue */
 #ifdef 386BSD_KERNEL
 	pid_t	rsel;		/* Process selecting for Input */
@@ -93,14 +93,14 @@ static struct bms_softc {	/* Driver status information */
 	unsigned char state;	/* Mouse driver state */
 	unsigned char status;	/* Mouse button status */
 	int x, y;		/* accumulated motion in the X,Y axis */
-} bms_softc[NBMS];
+} mms_softc[NMMS];
 
 #define OPEN	1		/* Device is open */
 #define ASLP	2		/* Waiting for mouse data */
 
-struct isa_driver bmsdriver = { bmsprobe, bmsattach, "bms" };
+struct isa_driver mmsdriver = { mmsprobe, mmsattach, "mms" };
 
-int bmsprobe(struct isa_device *dvp)
+int mmsprobe(struct isa_device *dvp)
 {
 	int ioport = dvp->id_iobase;
 
@@ -115,15 +115,15 @@ int bmsprobe(struct isa_device *dvp)
 	return(1);
 }
 
-int bmsattach(struct isa_device *dvp)
+int mmsattach(struct isa_device *dvp)
 {
 	int unit = dvp->id_unit;
 	int ioport = dvp->id_iobase;
-	struct bms_softc *sc = &bms_softc[unit];
+	struct mms_softc *sc = &mms_softc[unit];
 
 	/* Save I/O base address */
 
-	bmsaddr[unit] = ioport;
+	mmsaddr[unit] = ioport;
 
 	/* Setup initial state */
 
@@ -134,21 +134,21 @@ int bmsattach(struct isa_device *dvp)
 	return(0);
 }
 
-int bmsopen(dev_t dev, int flag, int fmt, struct proc *p)
+int mmsopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
-	int unit = BMSUNIT(dev);
-	struct bms_softc *sc;
+	int unit = MMSUNIT(dev);
+	struct mms_softc *sc;
 	int ioport;
 
 	/* Validate unit number */
 
-	if (unit >= NBMS)
+	if (unit >= NMMS)
 		return(ENXIO);
 
 	/* Get device data */
 
-	sc = &bms_softc[unit];
-	ioport = bmsaddr[unit];
+	sc = &mms_softc[unit];
+	ioport = mmsaddr[unit];
 
 	/* If device does not exist */
 
@@ -187,16 +187,16 @@ int bmsopen(dev_t dev, int flag, int fmt, struct proc *p)
 	return(0);
 }
 
-int bmsclose(dev_t dev, int flag, int fmt, struct proc *p)
+int mmsclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit, ioport;
-	struct bms_softc *sc;
+	struct mms_softc *sc;
 
 	/* Get unit and associated info */
 
-	unit = BMSUNIT(dev);
-	sc = &bms_softc[unit];
-	ioport = bmsaddr[unit];
+	unit = MMSUNIT(dev);
+	sc = &mms_softc[unit];
+	ioport = mmsaddr[unit];
 
 	/* Reset Bus Mouse */
 
@@ -211,16 +211,16 @@ int bmsclose(dev_t dev, int flag, int fmt, struct proc *p)
 	return(0);
 }
 
-int bmsread(dev_t dev, struct uio *uio, int flag)
+int mmsread(dev_t dev, struct uio *uio, int flag)
 {
 	int s, error = 0;
 	unsigned length;
-	struct bms_softc *sc;
+	struct mms_softc *sc;
 	unsigned char buffer[100];
 
 	/* Get device information */
 
-	sc = &bms_softc[BMSUNIT(dev)];
+	sc = &mms_softc[MMSUNIT(dev)];
 
 	/* Block until mouse activity occured */
 
@@ -231,7 +231,7 @@ int bmsread(dev_t dev, struct uio *uio, int flag)
 			return(EWOULDBLOCK);
 		}
 		sc->state |= ASLP;
-		error = tsleep(sc, PZERO | PCATCH, "bmsrea", 0);
+		error = tsleep(sc, PZERO | PCATCH, "mmsrea", 0);
 		if (error != 0) {
 			splx(s);
 			return(error);
@@ -274,15 +274,15 @@ int bmsread(dev_t dev, struct uio *uio, int flag)
 	return(error);
 }
 
-int bmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
+int mmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
 {
-	struct bms_softc *sc;
+	struct mms_softc *sc;
 	struct mouseinfo info;
 	int s, error;
 
 	/* Get device information */
 
-	sc = &bms_softc[BMSUNIT(dev)];
+	sc = &mms_softc[MMSUNIT(dev)];
 
 	/* Perform IOCTL command */
 
@@ -338,11 +338,11 @@ int bmsioctl(dev_t dev, caddr_t addr, int cmd, int flag, struct proc *p)
 	return(error);
 }
 
-void bmsintr(unit)
+void mmsintr(unit)
 	int unit;
 {
-	struct bms_softc *sc = &bms_softc[unit];
-	int ioport = bmsaddr[unit];
+	struct mms_softc *sc = &mms_softc[unit];
+	int ioport = mmsaddr[unit];
 	char dx, dy, status;
 
 	/* Freeze InPort registers (disabling interrupts) */
@@ -409,10 +409,10 @@ void bmsintr(unit)
 		}
 }
 
-int bmsselect(dev_t dev, int rw, struct proc *p)
+int mmsselect(dev_t dev, int rw, struct proc *p)
 {
 	int s, ret;
-	struct bms_softc *sc = &bms_softc[BMSUNIT(dev)];
+	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
 
 	/* Silly to select for output */
 
