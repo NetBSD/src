@@ -1,4 +1,4 @@
-/*	$NetBSD: ka46.c,v 1.5 1999/02/02 18:37:21 ragge Exp $ */
+/*	$NetBSD: ka46.c,v 1.6 1999/03/13 15:16:48 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -148,16 +148,13 @@ ka46_mchk(addr)
 	return 0;
 }
 
+extern caddr_t le_iomem;
+
 void
 ka46_steal_pages()
 {
 	extern	vm_offset_t avail_start, virtual_avail, avail_end;
 	int	i;
-
-        /* Interrupt vector number in interrupt mask table */
-        inr_ni = VS4000_NI;
-        inr_sr = VS4000_SR;
-        inr_st = VS4000_ST;
 
 	MAPPHYS(le_iomem, (NI_IOSIZE/VAX_NBPG), VM_PROT_READ|VM_PROT_WRITE);
 

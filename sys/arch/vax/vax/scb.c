@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.c,v 1.2 1999/01/20 07:32:52 ragge Exp $ */
+/*	$NetBSD: scb.c,v 1.3 1999/03/13 15:16:48 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -97,11 +97,11 @@ scb_stray(arg)
 	gotintr = 1;
 	vector = ((cf->ca_pc - (u_int)scb_vec)/4) & ~3;
 	ipl = mfpr(PR_IPL);
-	if (cold == 0)
-		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
+//	if (cold == 0)
+//		printf("stray interrupt: vector 0x%x, ipl %d\n", vector, ipl);
 #ifdef DEBUG
-	else
-		printf("config interrupt: vector 0x%x, ipl %d\n", vector, ipl);
+//	else
+//		printf("config interrupt: vector 0x%x, ipl %d\n", vector, ipl);
 #endif
 }
 

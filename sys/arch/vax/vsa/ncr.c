@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.17 1999/02/02 18:37:21 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.18 1999/03/13 15:16:48 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ struct si_dma_handle {
 
 struct si_softc {
 	struct ncr5380_softc	ncr_sc;
+	caddr_t sca_regs;
 };
 
 /* This is copied from julian's bt driver */
@@ -97,8 +98,6 @@ static struct scsipi_device si_dev = {
 	NULL,	/* Use default async handler. */
 	NULL,	/* Use default "done" routine. */
 };
-
-static	caddr_t sca_regs;
 
 static int si_match(struct device *, struct cfdata *, void *);
 static void si_attach(struct device *, struct device *, void *);
@@ -125,26 +124,25 @@ si_match(parent, cf, aux)
 	void *aux;
 {
 	struct vsbus_attach_args *va = aux;
+	volatile char *si_csr = (char *) va->va_addr;
 
-	if (sca_regs == 0)
-		sca_regs = (caddr_t)vax_map_physmem(SCA_REGS, 1);
-	if (va->va_type == 0x200C0080)
-		return 1;
-	return 0;
+	si_csr[4] = 0xcf;
+	DELAY(100000);
+	va->va_ivec = si_intr;
+	return 1;
 }
 
 static void
-si_attach(parent, self, args)
+si_attach(parent, self, aux)
 	struct device	*parent, *self;
-	void		*args;
+	void		*aux;
 {
+	struct vsbus_attach_args *va = aux;
 	struct si_softc *sc = (struct si_softc *) self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
-#ifdef notyet
-	struct confargs *ca = args;
-#endif
 
 	printf("\n");
+	sc->sca_regs = (caddr_t)vax_map_physmem(va->va_paddr, 1);
 	/*
 	 * MD function pointers used by the MI code.
 	 */
@@ -185,14 +183,14 @@ si_attach(parent, self, args)
 	/*
 	 * Initialize fields used by the MI code.
 	 */
-	ncr_sc->sci_r0 = sca_regs + 0x80; /* CUR_DATA/OUT_DATA (rw) */
-	ncr_sc->sci_r1 = sca_regs + 0x84; /* INI_CMD           (rw) */
-	ncr_sc->sci_r2 = sca_regs + 0x88; /* MODE              (rw) */
-	ncr_sc->sci_r3 = sca_regs + 0x8c; /* TAR_CMD           (rw) */
-	ncr_sc->sci_r4 = sca_regs + 0x90; /* CUR_STAT/SEL_ENA  (rw) */
-	ncr_sc->sci_r5 = sca_regs + 0x94; /* STATUS/DMA_SEND   (rw) */
-	ncr_sc->sci_r6 = sca_regs + 0x98; /* IN_DATA/DMA_TRCV  (rw) */
-	ncr_sc->sci_r7 = sca_regs + 0x9c; /* RESET/DMA_IRCV    (rw) */
+	ncr_sc->sci_r0 = sc->sca_regs; /* CUR_DATA/OUT_DATA (rw) */
+	ncr_sc->sci_r1 = sc->sca_regs + 4; /* INI_CMD           (rw) */
+	ncr_sc->sci_r2 = sc->sca_regs + 8; /* MODE              (rw) */
+	ncr_sc->sci_r3 = sc->sca_regs + 12; /* TAR_CMD           (rw) */
+	ncr_sc->sci_r4 = sc->sca_regs + 16; /* CUR_STAT/SEL_ENA  (rw) */
+	ncr_sc->sci_r5 = sc->sca_regs + 20; /* STATUS/DMA_SEND   (rw) */
+	ncr_sc->sci_r6 = sc->sca_regs + 24; /* IN_DATA/DMA_TRCV  (rw) */
+	ncr_sc->sci_r7 = sc->sca_regs + 28; /* RESET/DMA_IRCV    (rw) */
 
 	/*
 	 * Initialize si board itself.
@@ -200,9 +198,6 @@ si_attach(parent, self, args)
 	ncr5380_init(ncr_sc);
 	ncr5380_reset_scsibus(ncr_sc);
 
-	vsbus_intr_attach(1, si_intr, 0); /* 0 is arg for si_intr */
-	vsbus_intr_enable(1);
-	
 	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
 }
 
@@ -219,9 +214,6 @@ si_minphys(struct buf *bp)
 static void
 si_intr(int arg)
 {
-#if 0
-	printf("si_intr: arg=%d\n", arg);
-#endif
 	ncr5380_intr(ncr_cd.cd_devs[arg]);
 }
 
