@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.10 1999/02/07 17:22:25 christos Exp $	*/
+/*	$NetBSD: cerror.S,v 1.11 2000/01/23 23:38:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.10 1999/02/07 17:22:25 christos Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.11 2000/01/23 23:38:32 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -51,6 +51,15 @@
 	.globl	_C_LABEL(errno)
 #endif
 _ENTRY(CERROR)
+#ifdef PIC
+	/* This is PIC_PROLOGUE without the pushl at the beginning.  The stub
+	   already did that. */
+	call	1f
+1:
+	popl	%ebx
+	addl	$_GLOBAL_OFFSET_TABLE_+[.-1b], %ebx
+#endif
+
 #ifdef _REENTRANT
 	pushl	%eax
 # ifdef PIC
@@ -58,8 +67,7 @@ _ENTRY(CERROR)
 # else
 	call	_C_LABEL(__errno)
 # endif /* PIC */
-	popl	%ecx
-	movl	%ecx,(%eax)
+	popl	(%eax)
 #else
 # ifdef PIC
 	movl	PIC_GOT(_C_LABEL(errno)),%ecx
