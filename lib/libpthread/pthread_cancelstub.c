@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.3 2003/01/27 20:57:41 nathanw Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.4 2003/02/15 22:15:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,6 @@ int	_sys_fsync(int);
 ssize_t	_sys_msgrcv(int, void *, size_t, long, int);
 int	_sys_msgsnd(int, const void *, size_t, int);
 int	_sys___msync13(void *, size_t, int);
-int	_sys_nanosleep(const struct timespec *, struct timespec *);
 int	_sys_open(const char *, int, ...);
 int	_sys_poll(struct pollfd *, nfds_t, int);
 ssize_t	_sys_pread(int, void *, size_t, off_t);
@@ -192,20 +191,6 @@ __msync13(void *addr, size_t len, int flags)
 	self = pthread__self();
 	pthread__testcancel(self);
 	retval = _sys___msync13(addr, len, flags);
-	pthread__testcancel(self);
-
-	return retval;
-}
-
-int
-nanosleep(const struct timespec *rqtp, struct timespec *rmtp)
-{
-	int retval;
-	pthread_t self;
-
-	self = pthread__self();
-	pthread__testcancel(self);
-	retval = _sys_nanosleep(rqtp, rmtp);
 	pthread__testcancel(self);
 
 	return retval;
@@ -362,7 +347,6 @@ __strong_alias(_fsync, fsync)
 __strong_alias(_msgrcv, msgrcv)
 __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)
-__strong_alias(_nanosleep, nanosleep)
 __strong_alias(_open, open)
 __strong_alias(_poll, poll)
 __strong_alias(_pread, pread)
