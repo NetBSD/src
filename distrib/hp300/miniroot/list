@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.8 2002/04/26 15:50:31 lukem Exp $
+#	$NetBSD: list,v 1.9 2002/06/12 22:59:31 lukem Exp $
 
 # hp300 extra's
 PROG	sbin/disklabel
@@ -24,6 +24,8 @@ SYMLINK	/tmp	var/tmp
 
 # we need the contents of /usr/mdec
 COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
+# ensure installboot is executable
+MTREE	./usr/mdec/installboot	mode=0555
 
 # the zoneinfo
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
