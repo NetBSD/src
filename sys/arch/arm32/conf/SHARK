@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.16 1998/10/04 19:03:37 mark Exp $
+#	$NetBSD: SHARK,v 1.17 1998/10/08 01:50:28 mark Exp $
 #
 #	SHARK
 #
@@ -157,7 +157,7 @@ ofisapc*	at ofbus?
 pc*		at ofisapc?
 
 # PS/2 Mouse
-pms0		at pckbd? irq 12
+pms0		at spckbd? irq 12
 
 # CS8900 Ethernet@OFW
 cs*		at ofisa?
