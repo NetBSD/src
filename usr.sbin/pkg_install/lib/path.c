@@ -1,4 +1,4 @@
-/*	$NetBSD: path.c,v 1.2 2002/08/08 00:17:39 yamt Exp $	*/
+/*	$NetBSD: path.c,v 1.3 2002/08/27 17:27:30 abs Exp $	*/
 
 /*-
  * Copyright (c)2002 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: path.c,v 1.2 2002/08/08 00:17:39 yamt Exp $");
+__RCSID("$NetBSD: path.c,v 1.3 2002/08/27 17:27:30 abs Exp $");
 #endif
 
 #include <err.h>
@@ -36,6 +36,8 @@ __RCSID("$NetBSD: path.c,v 1.2 2002/08/08 00:17:39 yamt Exp $");
 #include "lib.h"
 
 struct pathhead PkgPath = TAILQ_HEAD_INITIALIZER(PkgPath);
+
+static struct path *path_new_entry(const char *cp, size_t len);
 
 /*
  * path_create: make PkgPath from a given string.
@@ -48,8 +50,6 @@ path_create(const char *path)
 {
 	const char *cp;
 	size_t len;
-	char cwd[MAXPATHLEN];
-	size_t cwdlen;
 
 	path_free();
 
@@ -60,10 +60,6 @@ path_create(const char *path)
 	if (Verbose)
 		printf("parsing: %s\n", path);
 
-	if (getcwd(cwd, sizeof(cwd)) == NULL)
-		err(1, "getcwd");
-	cwdlen = strlen(cwd);
-
 	cp = path;
 	while (*cp) {
 		len = strcspn(cp, ";");
@@ -71,28 +67,7 @@ path_create(const char *path)
 			/* add a new path */
 			struct path *new;
 
-			new = malloc(sizeof(*new));
-			if (new == NULL)
-				err(1, "path_create");
-
-			if (!IS_FULLPATH(cp) && !IS_URL(cp)) {
-				/* this is a relative path */
-				size_t total;
-
-				total = cwdlen + 1 + len + 1;
-				new->pl_path = malloc(total);
-				if (new->pl_path == NULL)
-					err(1, "path_create");
-				snprintf(new->pl_path, total, "%s/%*.*s", cwd, (int)len, (int)len, cp);
-			}
-			else {
-				new->pl_path = malloc(len + 1);
-				if (new->pl_path == NULL)
-					err(1, "path_create");
-				memcpy(new->pl_path, cp, len);
-				new->pl_path[len] = '\0';
-			}
-
+			new = path_new_entry(cp, len);
 			if (Verbose)
 				printf("path: %s\n", new->pl_path);
 			TAILQ_INSERT_TAIL(&PkgPath, new, pl_entry);
@@ -118,6 +93,69 @@ path_free()
 		free(p->pl_path);
 		free(p);
 	}
+}
+
+/*
+ * path_new_entry: Generate a new 'struct path' entry to be included in
+ * 'PkgPath' using the first 'len' characters of 'cp'.
+ */
+static struct path *
+path_new_entry(const char *cp, size_t len)
+{
+	struct path *new;
+
+	new = malloc(sizeof(*new));
+	if (new == NULL)
+		err(1, "path_create");
+
+	if (!IS_FULLPATH(cp) && !IS_URL(cp)) {
+		/* this is a relative path */
+		size_t total;
+		char cwd[MAXPATHLEN];
+		size_t cwdlen;
+
+		if (getcwd(cwd, sizeof(cwd)) == NULL)
+			err(1, "getcwd");
+		cwdlen = strlen(cwd);
+		total = cwdlen + 1 + len + 1;
+		new->pl_path = malloc(total);
+		if (new->pl_path == NULL)
+			err(1, "path_create");
+		snprintf(new->pl_path, total, "%s/%*.*s", cwd, (int)len, (int)len, cp);
+	}
+	else {
+		new->pl_path = malloc(len + 1);
+		if (new->pl_path == NULL)
+			err(1, "path_create");
+		memcpy(new->pl_path, cp, len);
+		new->pl_path[len] = '\0';
+	}
+	return new;
+}
+
+/*
+ * Given a package name, push its path onto the start of 'PkgPath'
+ */
+void
+path_prepend_from_pkgname(const char *pkgname)
+{
+	struct path *new;
+	char *ptr;
+	if ((ptr = strrchr(pkgname , '/')))
+		new = path_new_entry(pkgname, ptr - pkgname);
+	else
+		new = path_new_entry(".", 1);
+
+	TAILQ_INSERT_HEAD(&PkgPath, new, pl_entry);
+}
+
+/*
+ * Remove the first entry of 'PkgPath' - used after path_prepend_from_pkgname()
+ */
+void
+path_remove_first()
+{
+	TAILQ_REMOVE(&PkgPath, TAILQ_FIRST(&PkgPath), pl_entry);
 }
 
 /*
