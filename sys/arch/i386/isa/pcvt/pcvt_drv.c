@@ -677,7 +677,7 @@ pcstart(register struct tty *tp)
 	if (rbp->c_cc)
 	{
 		tp->t_state |= TS_TIMEOUT;
-		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
+		timeout(ttrstrt, tp, 1);
 	}
 
 	if (rbp->c_cc <= tp->t_lowat)
