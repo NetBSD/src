@@ -1,4 +1,4 @@
-/*	$NetBSD: _setjmp.S,v 1.6 1996/09/17 01:32:23 jonathan Exp $	*/
+/*	$NetBSD: _setjmp.S,v 1.7 1997/06/18 22:23:13 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	ASMSTR("from: @(#)_setjmp.s	8.1 (Berkeley) 6/4/93")
-	ASMSTR("$NetBSD: _setjmp.S,v 1.6 1996/09/17 01:32:23 jonathan Exp $")
+	ASMSTR("$NetBSD: _setjmp.S,v 1.7 1997/06/18 22:23:13 jonathan Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef ABICALLS
@@ -63,8 +63,11 @@
 
 LEAF(_setjmp)
 #ifdef ABICALLS 
+	.set noreorder
 	.cpload t9
-#endif  
+	.set reorder
+#endif
+
 	li	v0, 0xACEDBADE			# sigcontext magic number
 	sw	ra, (2 * 4)(a0)			# sc_pc = return address
 	sw	v0, (3 * 4)(a0)			#   saved in sc_regs[0]
