@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 1995/06/18 14:46:27 cgd Exp $ */
+/*	$NetBSD: installboot.c,v 1.3 1995/09/23 03:40:28 gwr Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -46,7 +46,7 @@
 #include <string.h>
 #include <unistd.h>
 
-int	verbose, nowrite;
+int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
 struct nlist nl[] = {
 #define X_BLOCK_SIZE	0
@@ -64,15 +64,18 @@ daddr_t	*block_table;	/* block number array in prototype image */
 int	maxblocknum;		/* size of this array */
 
 
-char	*loadprotoblocks __P((char *, long *));
-int	loadblocknums __P((char *, int));
+char		*loadprotoblocks __P((char *, long *));
+int		loadblocknums __P((char *, int));
+static void	devread __P((int, void *, daddr_t, size_t, char *));
+static void	usage __P((void));
+int 		main __P((int, char *[]));
 
 
-void
+static void
 usage()
 {
 	fprintf(stderr,
-		"usage: installboot [-n] [-v] <boot> <proto> <device>\n");
+		"usage: installboot [-n] [-v] [-h] <boot> <proto> <device>\n");
 	exit(1);
 }
 
@@ -86,12 +89,18 @@ main(argc, argv)
 	char	*protostore;
 	long	protosize;
 
-	while ((c = getopt(argc, argv, "vn")) != EOF) {
+	while ((c = getopt(argc, argv, "vnh")) != EOF) {
 		switch (c) {
+		case 'h':
+			/* Don't strip a.out header */
+			hflag = 1;
+			break;
 		case 'n':
+			/* Do not actually write the bootblock to disk */
 			nowrite = 1;
 			break;
 		case 'v':
+			/* Chat */
 			verbose = 1;
 			break;
 		default:
@@ -117,6 +126,10 @@ main(argc, argv)
 	if ((protostore = loadprotoblocks(proto, &protosize)) == NULL)
 		exit(1);
 
+	/* XXX - Paranoia: Make sure size is aligned! */
+	if (protosize & (DEV_BSIZE - 1))
+		err(1, "proto bootblock bad size=%d", protosize);
+
 	/* Open and check raw disk device */
 	if ((devfd = open(dev, O_RDONLY, 0)) < 0)
 		err(1, "open: %s", dev);
@@ -130,10 +143,6 @@ main(argc, argv)
 	if (nowrite)
 		return 0;
 
-#ifndef	sparc	/* XXX */
-	protostore += sizeof(struct exec);
-#endif
-
 	/* Write patched proto bootblocks into the superblock */
 	if (protosize > SBSIZE - DEV_BSIZE)
 		errx(1, "proto bootblocks too big");
@@ -143,6 +152,9 @@ main(argc, argv)
 
 	if (lseek(devfd, DEV_BSIZE, SEEK_SET) != DEV_BSIZE)
 		err(1, "lseek bootstrap");
+
+	/* Sync filesystems (to clean in-memory superblock?) */
+	sync();
 
 	if (write(devfd, protostore, protosize) != protosize)
 		err(1, "write bootstrap");
@@ -156,7 +168,8 @@ loadprotoblocks(fname, size)
 	long *size;
 {
 	int	fd;
-	size_t	dsize, fsize;
+	size_t	tdsize;		/* text+data size */
+	size_t	bbsize;		/* boot block size (block aligned) */
 	char	*bp;
 	struct	nlist *nlp;
 	struct	exec eh;
@@ -191,25 +204,31 @@ loadprotoblocks(fname, size)
 		goto bad;
 	}
 	/*
-	 * We have to include the exec header in the beginning
-	 * of the buffer, as well as a blank one at the end.
-	 * Later, we will decide where to start copying from.
+	 * We have to include the exec header in the beginning of
+	 * the buffer, and leave extra space at the end in case
+	 * the actual write to disk wants to skip the header.
 	 */
-	dsize = eh.a_text + eh.a_data;
-	fsize = dsize + (2 * sizeof(eh));
-	fsize = roundup(fsize, DEV_BSIZE);
+	tdsize = eh.a_text + eh.a_data;
+	bbsize = tdsize + sizeof(eh);
+	bbsize = roundup(bbsize, DEV_BSIZE);
 
-	if ((bp = calloc(fsize, 1)) == NULL) {
+	/*
+	 * Allocate extra space here because the caller may copy
+	 * the boot block starting at the end of the exec header.
+	 * This prevents reading beyond the end of the buffer.
+	 */
+	if ((bp = calloc(bbsize + sizeof(eh), 1)) == NULL) {
 		warnx("malloc: %s: no memory", fname);
 		goto bad;
 	}
+	/* Copy the exec header and read the rest of the file. */
 	memcpy(bp, &eh, sizeof(eh));
-	if (read(fd, bp+sizeof(eh), dsize) != dsize) {
+	if (read(fd, bp+sizeof(eh), tdsize) != tdsize) {
 		warn("read: %s", fname);
 		goto bad;
 	}
 
-	*size = fsize;
+	*size = bbsize;	/* aligned to DEV_BSIZE */
 
 	/* Calculate the symbols' locations within the proto file */
 	off = N_DATOFF(eh) - N_DATADDR(eh) - (eh.a_entry - N_TXTADDR(eh));
@@ -226,6 +245,8 @@ loadprotoblocks(fname, size)
 	}
 
 	close(fd);
+	if (!hflag)
+		bp += sizeof(struct exec);
 	return bp;
 
  bad:
@@ -239,9 +260,9 @@ loadprotoblocks(fname, size)
 static void
 devread(fd, buf, blk, size, msg)
 	int	fd;
-	char	*buf;
+	void	*buf;
 	daddr_t	blk;
-	int	size;
+	size_t	size;
 	char	*msg;
 {
 	if (lseek(fd, dbtob(blk), SEEK_SET) != dbtob(blk))
