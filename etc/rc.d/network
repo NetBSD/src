@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.19 2000/08/21 23:35:20 lukem Exp $
+# $NetBSD: network,v 1.20 2000/10/09 05:02:14 nisimura Exp $
 #
 
 # PROVIDE: network
@@ -21,7 +21,7 @@ network_start()
 	# If $hostname is set, use it for my Internet name,
 	# otherwise use /etc/myname
 	#
-	if [ -z "$hostname" -a -f /etc/myname ]; then
+	if [ -z "$hostname" ] && [ -f /etc/myname ]; then
 		hostname=`cat /etc/myname`
 	fi
 	if [ -n "$hostname" ]; then
@@ -40,7 +40,7 @@ network_start()
 	# Check $domainname first, then /etc/defaultdomain,
 	# for NIS/YP domain name
 	#
-	if [ -z "$domainname" -a -f /etc/defaultdomain ]; then
+	if [ -z "$domainname" ] && [ -f /etc/defaultdomain ]; then
 		domainname=`cat /etc/defaultdomain`
 	fi
 	if [ -n "$domainname" ]; then
@@ -103,17 +103,17 @@ network_start()
 		fi
 		echo -n 'Configuring network interfaces:'
 		for int in $tmp; do
-			eval `echo 'args=$ifconfig_'$int`
+			eval args=\$ifconfig_$int
 			if [ -n "$args" ]; then
 				echo -n " $int"
 				ifconfig $int $args
 			elif [ -f /etc/ifconfig.$int ]; then
 				echo -n " $int"
-				(while read args; do
+				while read args; do
 					if [ -n "`eval echo '$args'`" ] ; then
 						ifconfig $int $args
 					fi
-				done) < /etc/ifconfig.$int
+				done < /etc/ifconfig.$int
 			else
 				if ! checkyesno auto_ifconfig; then
 					echo
@@ -131,7 +131,7 @@ network_start()
 	# Check $defaultroute, then /etc/mygate, for the name of my gateway
 	# host. That name must be in /etc/hosts.
 	#
-	if [ -z "$defaultroute" -a -f /etc/mygate ]; then
+	if [ -z "$defaultroute" ] && [ -f /etc/mygate ]; then
 		defaultroute=`cat /etc/mygate`
 	fi
 	if [ -n "$defaultroute" ]; then
@@ -152,7 +152,7 @@ network_start()
 		done_aliases_message=yes
 	fi
 	for int in $configured_interfaces; do
-		eval `echo 'args=$ifaliases_'$int`
+		eval args=\$ifaliases_$int
 		if [ -n "$args" ]; then
 			set -- $args
 			while [ $# -ge 2 ]; do
@@ -180,7 +180,6 @@ network_start()
 	#
 	#
 	if [ -f /etc/ifaliases ]; then
-	(
 		if [ "$done_aliases_message" != yes ]; then
 			echo "Adding interface aliases:"
 		fi
@@ -193,8 +192,7 @@ network_start()
 			fi
 			# use loopback, not the wire
 			route add $addr 127.0.0.1
-		done
-	) < /etc/ifaliases
+		done < /etc/ifaliases
 	fi
 
 	# IPv6
@@ -256,17 +254,15 @@ network_start()
 
 		# backward compatibility
 		#
-		if [ -z "$ip6mode" -a -n "$ip6forwarding" ]; then
+		if [ -z "$ip6mode" ] && [ -n "$ip6forwarding" ]; then
 			warn 'Please migrate to newer rc.conf' \
 			    '(use ip6mode, not ip6forwarding)'
 			if checkyesno ip6forwarding; then
 				ip6mode=router
+			elif checkyesno rtsol; then
+				ip6mode=autohost
 			else
-				if checkyesno rtsol; then
-					ip6mode=autohost
-				else
-					ip6mode=host
-				fi
+				ip6mode=host
 			fi
 		fi
 
@@ -332,15 +328,13 @@ network_stop()
 
 	echo "Deleting aliases."
 	if [ -f /etc/ifaliases ]; then
-	(
 		while read addr int net; do
 			ifconfig $int inet delete $addr
-		done
-	) < /etc/ifaliases
+		done < /etc/ifaliases
 	fi
 
 	for int in $configured_interfaces; do
-		eval `echo 'args=$ifaliases_'$int`
+		eval args=\$ifaliases_$int
 		if [ -n "$args" ]; then
 			set -- $args
 			while [ $# -ge 2 ]; do
@@ -360,7 +354,7 @@ network_stop()
 			tmp="$net_interfaces"
 		fi
 		for int in $tmp; do
-			eval `echo 'args=$ifconfig_'$int`
+			eval args=\$ifconfig_$int
 			if [ -n "$args" ] || [ -f /etc/ifconfig.$int ]; then
 				echo -n " $int"
 				ifconfig $int down
