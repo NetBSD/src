@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/08/10 13:29:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2000/08/16 08:24:01 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,8 +19,9 @@ LDSTATIC?=	-static
 .if !make(obj)
 .BEGIN:
 	@([ -h machine ] || ln -s ${.CURDIR}/../../../${MACHINE}/include machine)
-.NOPATH: machine
-CLEANFILES+= machine
+	@([ -h sparc ] || ln -s ${.CURDIR}/../../../sparc/include sparc)
+.NOPATH: machine sparc
+CLEANFILES+= machine sparc
 .endif
 
 .include <bsd.prog.mk>
