@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/10/05 18:01:57 tron Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2004/05/18 00:06:57 christos Exp $
 
-SUBDIR=	lib dig dnsquery host named named-xfer ndc nslookup nsupdate \
-	reload restart
-
-VER= 8.1.2
+SUBDIR= libbind9 libdns libisc libisccc libisccfg liblwres .WAIT \
+	dig host named nslookup nsupdate rndc
 
 .include <bsd.subdir.mk>

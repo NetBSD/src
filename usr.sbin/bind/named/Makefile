@@ -1,28 +1,27 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1998/10/05 18:01:59 tron Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2004/05/18 00:06:57 christos Exp $
 
-.PATH:		${.CURDIR}/../man
+.include <bsd.own.mk>
 
-WARNS=		0
-PROG=		named
-HDRS=		db_defs.h db_glob.h ns_defs.h ns_glob.h named.h pathnames.h
-SRCS=		db_dump.c db_load.c db_lookup.c db_save.c db_update.c \
-		db_glue.c ns_parser.y ns_lexer.c ns_parseutil.c \
-		ns_forw.c ns_init.c ns_main.c ns_maint.c ns_req.c \
-		ns_resp.c ns_stats.c ns_ncache.c ns_xfr.c ns_glue.c \
-		ns_udp.c ns_config.c ns_update.c tmp_version.c
-CPPFLAGS+=	${INCLUDE}
-LDADD=		${LIBRARY}
-CLEANFILES+=	y.tab.h tmp_version.c
-MAN=		${PROG}.8
-SCRIPTS=	named-bootconf.sh
 
-HOSTNAMECMD=	hostname
+PROG=	named
+MAN=	named.8 lwresd.8 named.conf.5
+BINDIR=	/usr/sbin
+LINKS=	${BINDIR}/named ${BINDIR}/lwresd
 
-tmp_version.c: version.c Makefile ../Makefile
-	(u=$${USER-root} d=`pwd` h=`${HOSTNAMECMD}` t=`date`; \
-	sed -e "s|%WHEN%|$${t}|" -e "s|%VERSION%|"${VER}"|" \
-	    -e "s|%WHOANDWHERE%|$${u}@$${h}:$${d}|" \
-	    < version.c > tmp_version.c)
+.include "${.CURDIR}/../Makefile.inc"
 
-.include "../../Makefile.inc"
+
+DIST=${IDIST}/bin/named
+CPPFLAGS+=-I${DIST}/include -I${DIST}/unix/include
+
+.PATH: ${DIST}/unix ${DIST}
+
+SRCS_UNIX=	os.c
+SRCS=	aclconf.c builtin.c client.c config.c control.c controlconf.c \
+	interfacemgr.c listenlist.c log.c logconf.c \
+	lwaddr.c lwdclient.c lwderror.c \
+	lwdgabn.c lwdgnba.c lwdgrbn.c lwdnoop.c lwresd.c lwsearch.c \
+	main.c notify.c query.c server.c sortlist.c tkeyconf.c tsigconf.c \
+	update.c xfrout.c zoneconf.c ${SRCS_UNIX}
+
 .include <bsd.prog.mk>
