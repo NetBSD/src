@@ -1,0 +1,79 @@
+.\"	$NetBSD: boot.8,v 1.1 2003/05/07 13:14:51 takemura Exp $
+.Dd May 5, 2003
+.Dt BOOT 8 hpcmips
+.Os
+.Sh NAME
+.Nm boot
+.Nd
+system bootstrapping procedures
+.Sh DESCRIPTION
+.\"
+.Ss Power fail and crash recovery
+.\"
+Unfortunately, on most machines, the system can't reboot itself
+at power-up or after crashes.
+You might have to restart the system manually.
+Once the system starts, an automatic consistency check of the file systems
+will be performed,
+and unless this fails, the system will resume multi-user operations.
+.\"
+.Ss Cold starts
+.\"
+Typical MIPS based Windows CE Handheld machines
+attempt to boot Windows CE operating system in its own boot ROM.
+You can't boot the
+.Nx
+directly skipping Windows CE.
+The
+.Nx 
+bootloaders are provided as application programs on Windows CE instead.
+You can choose
+.Xr pbsdboot 8
+or hpcboot.
+Though the bootloaders are application programs,
+they blow away entire Windows CE OS and it's settings 
+when kernel boots successfully.
+.\"
+.Ss Normal Operation
+.\"
+Once running, a familiar window will appear. You can choose machine type,
+kernel file locaion and kernel boot options with GUI and push the button
+named
+.Dq Li [boot]
+to boot the
+.Nx .
+.\"
+.Ss Automatic mode
+.\"
+The bootloaders have
+.Dq Li auto boot
+option. If you enable this option,
+specified kernel will be loaded automatically
+after a countdown.
+.\"
+.Sh FILES
+.\"
+.Bl -tag -width pbsdboot1.exe -compact
+.It Pa /netbsd
+system code
+.It Pa /netbsd.gz
+gzip-compressed system code
+.It Pa pbsdboot1.exe
+bootloader executable file for Windows CE version 1.01
+.It Pa pbsdboot.exe
+bootloader executable file for Windows CE
+.It Pa hpcboot.exe
+new bootloader executable file for Windows CE
+.El
+.\"
+.Sh SEE ALSO
+.\"
+.Xr pbsdboot 8 ,
+hpcboot
+.\"
+.Sh BUGS
+.\"
+You don't have a general way to launch a bootloader automatically
+while a few Windows CE machine provides
+.Dq auto run
+mechanism.

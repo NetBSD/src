@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.578 2003/05/03 08:27:51 he Exp $
+# $NetBSD: mi,v 1.579 2003/05/07 13:14:50 takemura Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1452,6 +1452,7 @@
 ./usr/share/man/cat8/hpcarm/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcarm/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcmips/MAKEDEV.0		man-sysutil-catman
+./usr/share/man/cat8/hpcmips/boot.0		man-sys-catman
 ./usr/share/man/cat8/hpcmips/makedev.0		man-sysutil-catman
 ./usr/share/man/cat8/hpcmips/pbsdboot.0		man-sys-catman
 ./usr/share/man/cat8/hpcsh/MAKEDEV.0		man-sysutil-catman
@@ -3263,6 +3264,7 @@
 ./usr/share/man/man8/hpcarm/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/hpcarm/makedev.8		man-sysutil-man
 ./usr/share/man/man8/hpcmips/MAKEDEV.8		man-sysutil-man
+./usr/share/man/man8/hpcmips/boot.8		man-sys-man
 ./usr/share/man/man8/hpcmips/makedev.8		man-sysutil-man
 ./usr/share/man/man8/hpcmips/pbsdboot.8		man-sys-man
 ./usr/share/man/man8/hpcsh/MAKEDEV.8		man-sysutil-man
