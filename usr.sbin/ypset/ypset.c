@@ -64,7 +64,6 @@ char *dom, *server;
 	CLIENT *client;
 	int sock, port;
 	int r;
-	unsigned long server_addr;
 	
 	if( (port=htons(getrpcport(server, YPPROG, YPPROC_NULL, IPPROTO_UDP))) == 0) {
 		fprintf(stderr, "%s not running ypserv.\n", server);
@@ -73,16 +72,14 @@ char *dom, *server;
 
 	bzero(&ypsd, sizeof ypsd);
 
-	if( (hp = gethostbyname (server)) != NULL ) {
-		/* is this the most compatible way?? */
-		bcopy (hp->h_addr_list[0], &ypsd.ypsetdom_addr,
-		       sizeof (ypsd.ypsetdom_addr));
-	} else if( (long)(server_addr = inet_addr (server)) == -1) {
-		fprintf(stderr, "can't find address for %s\n", server);
-		exit(1);
-	} else
-		bcopy (&server_addr, &ypsd.ypsetdom_addr,
-		       sizeof (server_addr));
+	if (inet_aton(server, &ypsd.ypsetdom_addr) == 0) {
+		hp = gethostbyname(server);
+		if (hp == NULL) {
+			fprintf(stderr, "ypset: can't find address for %s\n", server);
+			exit(1);
+		}
+		bcopy(&hp->h_addr, &ypsd.ypsetdom_addr, sizeof(ypsd.ypsetdom_addr));
+	}
 
 	strncpy(ypsd.ypsetdom_domain, dom, sizeof ypsd.ypsetdom_domain);
 	ypsd.ypsetdom_port = port;
@@ -133,15 +130,15 @@ char **argv;
 			domainname = optarg;
 			break;
 		case 'h':
-			if( (sin.sin_addr.s_addr=inet_addr(optarg)) == -1) {
+			if (inet_aton(optarg, &sin.sin_addr) == 0) {
 				hent = gethostbyname(optarg);
-				if(hent==NULL) {
+				if (hent == NULL) {
 					fprintf(stderr, "ypset: host %s unknown\n",
-						optarg);
+					    optarg);
 					exit(1);
 				}
-				bcopy(&hent->h_addr_list[0], &sin.sin_addr,
-					sizeof sin.sin_addr);
+				bcopy(&hent->h_addr, &sin.sin_addr,
+				    sizeof(sin.sin_addr));
 			}
 			break;
 		default:
