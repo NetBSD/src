@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: BSDI Id: isavar.h,v 1.5 1992/12/01 18:06:00 karels Exp 
- *	$Id: isavar.h,v 1.9 1994/04/07 06:50:58 mycroft Exp $
+ *	$Id: isavar.h,v 1.10 1994/07/27 01:50:15 mycroft Exp $
  */
 
 /*
@@ -48,6 +48,7 @@ struct isa_attach_args {
 };
 
 #define	IOBASEUNK	0xffff		/* i/o address is unknown */
+#define	IRQUNK		0xffff		/* interrupt request line is unknown */
 #define	DRQUNK		0xffff		/* DMA request line is unknown */
 #define	MADDRUNK	(caddr_t)-1	/* shared memory address is unknown */
 
