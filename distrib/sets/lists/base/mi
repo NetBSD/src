@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.474 2004/04/28 14:17:55 lukem Exp $
+# $NetBSD: mi,v 1.475 2004/05/07 12:40:26 wiz Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -744,6 +744,7 @@
 ./usr/include/netccitt				base-c-usr
 ./usr/include/netinet				base-c-usr
 ./usr/include/netinet6				base-c-usr
+./usr/include/netipsec				base-c-usr
 ./usr/include/netisdn				base-c-usr
 ./usr/include/netiso				base-c-usr
 ./usr/include/netkey				base-c-usr
