@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.113 2000/05/29 14:57:27 itojun Exp $	*/
+/*	$NetBSD: fetch.c,v 1.114 2000/05/31 14:23:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -6,6 +6,9 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Luke Mewburn.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Scott Aaron Bamford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.113 2000/05/29 14:57:27 itojun Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.114 2000/05/31 14:23:58 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1795,5 +1798,82 @@ auto_fetch(int argc, char *argv[])
 
 	if (connected && rval != -1)
 		disconnect(0, NULL);
+	return (rval);
+}
+
+
+int
+auto_put(int argc, char **argv, const char *uploadserver)
+{
+	char	*uargv[4], *path, *pathsep;
+	int	 uargc, rval, len;
+
+	uargc = 0;
+	uargv[uargc++] = "mput";
+	uargv[uargc++] = argv[0];
+	uargv[2] = uargv[3] = NULL;
+	pathsep = NULL;
+	rval = 1;
+
+	if (debug)
+		fprintf(ttyout, "auto_put: target `%s'\n", uploadserver);
+
+	path = xstrdup(uploadserver);
+	len = strlen(path);
+	if (path[len - 1] != '/' && path[len - 1] != ':') {
+			/*
+			 * make sure we always pass a directory to auto_fetch
+			 */
+		if (argc > 1) {		/* more than one file to upload */
+			int len;
+
+			len = strlen(uploadserver) + 2;	/* path + "/" + "\0" */
+			free(path);
+			path = (char *)xmalloc(len);
+			(void)strlcpy(path, uploadserver, len);
+			(void)strlcat(path, "/", len);
+		} else {		/* single file to upload */
+			uargv[0] = "put";
+			pathsep = strrchr(path, '/');
+			if (pathsep == NULL) {
+				pathsep = strrchr(path, ':');
+				if (pathsep == NULL) {
+					warnx("Invalid URL `%s'", path);
+					goto cleanup_auto_put;
+				}
+				pathsep++;
+				uargv[2] = xstrdup(pathsep);
+				pathsep[0] = '/';
+			} else 
+				uargv[2] = xstrdup(pathsep + 1);
+			pathsep[1] = '\0';
+			uargc++;
+		}
+	}
+	if (debug)
+		fprintf(ttyout, "autoput: url `%s' argv[2] `%s'\n",
+		    path, uargv[2] ? uargv[2] : "<null>");
+		
+			/* connect and cwd */		 
+	rval = auto_fetch(1, &path);
+	free(path);
+	if(rval >= 0)
+		goto cleanup_auto_put;
+
+			/* XXX : is this the best way? */
+	if (uargc == 3) {
+		uargv[1] = argv[0];
+		put(uargc, uargv);
+		goto cleanup_auto_put;
+	}
+
+	for(; argv[0] != NULL; argv++) {
+		uargv[1] = argv[0];	
+		mput(uargc, uargv);
+	}
+	rval = 0;
+
+cleanup_auto_put:
+	FREEPTR(uargv[2]);
 	return (rval);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.55 2000/05/29 14:57:27 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.56 2000/05/31 14:23:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -113,6 +113,7 @@ void	ai_unmapped(struct addrinfo *);
 void	alarmtimer(int);
 int	another(int *, char ***, const char *);
 int	auto_fetch(int, char **);
+int	auto_put(int, char **, const char *);
 void	blkfree(char **);
 void	cd(int, char **);
 void	cdup(int, char **);
