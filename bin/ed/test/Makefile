@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.11 1995/03/21 09:05:14 cgd Exp $
+#	$NetBSD: Makefile,v 1.12 2003/10/26 03:50:07 lukem Exp $
 
-SHELL=	/bin/sh
-ED=	../obj/ed
+.include <bsd.own.mk>
+
+ED?=	../obj/ed
 
 all: check
 	@:
@@ -14,12 +15,14 @@ check: build test
 build: mkscripts.sh
 	@if [ -f errs.o ]; then :; else \
 		echo "building test scripts for $(ED) ..."; \
-		$(SHELL) mkscripts.sh $(ED); \
+		${HOST_SH} ${.CURDIR}/mkscripts.sh $(ED); \
 	fi
 
 test: build ckscripts.sh
 	@echo testing $(ED) ...
-	@$(SHELL) ckscripts.sh $(ED)
+	@${HOST_SH} ckscripts.sh $(ED)
 
 clean:
 	rm -f *.ed *.red *.[oz] *~
+
+.include <bsd.prog.mk>
