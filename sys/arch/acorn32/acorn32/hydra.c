@@ -1,4 +1,4 @@
-/*	$NetBSD: hydra.c,v 1.7 2002/10/05 23:30:03 bjh21 Exp $	*/
+/*	$NetBSD: hydra.c,v 1.8 2002/10/06 10:21:50 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.7 2002/10/05 23:30:03 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hydra.c,v 1.8 2002/10/06 10:21:50 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -355,11 +355,10 @@ cpu_hydra_hatch(void)
 	struct hydra_softc *sc = the_hydra;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int slave;
+	cpuid_t cpunum = cpu_number();
 
-	slave = bus_space_read_1(iot, ioh, HYDRA_ID_STATUS) & 0x3;
-	printf(": Number %d is alive!", slave);
-	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << slave);
+	printf(": Number %ld is alive!", cpunum);
+	bus_space_write_1(iot, ioh, HYDRA_HALT_SET, 1 << (cpunum & 3));
 	/* We only get here if someone resumes us. */
 	for (;;)
 		continue;
@@ -376,7 +375,18 @@ cpu_boot_secondary_processors(void)
 cpuid_t
 cpu_number(void)
 {
+	struct hydra_softc *sc = the_hydra;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int id;
 
+	if (sc != NULL) {
+		iot = sc->sc_iot;
+		ioh = sc->sc_ioh;
+		id = bus_space_read_1(iot, ioh, HYDRA_ID_STATUS);
+		if (id & HYDRA_ID_ISSLAVE)
+			return id & (HYDRA_ID_ISSLAVE | HYDRA_ID_SLAVE_MASK);
+	}
 	return 0;
 }
 
