@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.387 2000/12/20 10:44:29 augustss Exp $
+#	$NetBSD: GENERIC,v 1.388 2000/12/22 16:35:51 tv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.387 $"
+#ident 		"GENERIC-$Revision: 1.388 $"
 
 maxusers	32		# estimated number of users
 
@@ -743,7 +743,7 @@ pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
 pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
 sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
 sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
-#wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
+wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 #cms0	at isa? port 0x220			# Creative Music System
 
