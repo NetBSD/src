@@ -1,7 +1,7 @@
-/*	$NetBSD: if_we_mca.c,v 1.2 2001/03/29 08:56:27 jdolecek Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.3 2001/03/31 09:50:14 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
