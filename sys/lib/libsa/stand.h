@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.29 1999/02/12 10:51:28 drochner Exp $	*/
+/*	$NetBSD: stand.h,v 1.30 1999/02/22 10:08:42 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,6 +43,13 @@
 
 #ifndef NULL
 #define	NULL	0
+#endif
+
+#ifdef LIBSA_USE_MEMSET
+#define	bzero(s, l)	memset(s, 0, l)
+#endif
+#ifdef LIBSA_USE_MEMCPY
+#define	bcopy(s, d, l)	memcpy(d, s, l)	/* For non-overlapping copies only */
 #endif
 
 struct open_file;
