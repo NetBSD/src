@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.19 1994/11/18 22:03:21 mycroft Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.20 1995/01/02 20:06:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -367,7 +367,7 @@ sl_probe(sc, ia)
 	u_char c;
 
 	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_maddr = ia->ia_maddr;
+	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 
 	/* Need this for part of the probe. */
 	sc->reset_586 = sl_reset_586;
@@ -407,7 +407,7 @@ sl_probe(sc, ia)
 	if (!ia->ia_msize)
 		ia->ia_msize = sc->sc_msize;
 	else if (ia->ia_msize != sc->sc_msize) {
-		printf("%s: kernel configured msize %d doesn't match board configured msize %d\n",
+		printf("%s: msize mismatch; kernel configured %d != board configured %d\n",
 		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
 		return 0;
 	}
@@ -428,7 +428,7 @@ el_probe(sc, ia)
 	u_char signature[] = "*3COM*";
 
 	sc->sc_iobase = ia->ia_iobase;
-	sc->sc_maddr = ia->ia_maddr;
+	sc->sc_maddr = ISA_HOLE_VADDR(ia->ia_maddr);
 
 	/* Need this for part of the probe. */
 	sc->reset_586 = el_reset_586;
@@ -464,17 +464,16 @@ el_probe(sc, ia)
 	c = inb(PORT + IE507_IRQ) & 0x0f;
 
 	if (ia->ia_irq != c) {
-		printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
+		printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 		    sc->sc_dev.dv_xname, ia->ia_irq, c);
 		return 0;
 	}
 
 	c = (inb(PORT + IE507_MADDR) & 0x1c) + 0xc0;
 
-	if (kvtop(ia->ia_maddr) != ((int)c << 12)) {
-		printf("%s: kernel configured maddr %x doesn't match board configured maddr %x\n",
-		    sc->sc_dev.dv_xname, kvtop(ia->ia_maddr),
-		    (int)c << 12);
+	if (ia->ia_maddr != ((int)c << 12)) {
+		printf("%s: maddr mismatch; kernel configured %x != board configured %x\n",
+		    sc->sc_dev.dv_xname, ia->ia_maddr, (int)c << 12);
 		return 0;
 	}
 
@@ -497,7 +496,7 @@ el_probe(sc, ia)
 	if (!ia->ia_msize)
 		ia->ia_msize = sc->sc_msize;
 	else if (ia->ia_msize != sc->sc_msize) {
-		printf("%s: kernel configured msize %d doesn't match board configured msize %d\n",
+		printf("%s: msize mismatch; kernel configured %d != board configured %d\n",
 		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
 		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
 		return 0;
