@@ -1,4 +1,4 @@
-/*	$NetBSD: ctl.c,v 1.31 2002/01/31 00:03:23 augustss Exp $	*/
+/*	$NetBSD: ctl.c,v 1.32 2002/02/05 00:17:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -341,12 +341,13 @@ main(argc, argv)
 {
 	int fd, i, ch;
 	int aflag = 0, wflag = 0;
+	const char *deffile = _PATH_AUDIOCTL;
 	const char *file;
 	const char *sep = "=";
 
 	file = getenv("AUDIOCTLDEVICE");
 	if (file == NULL)
-		file = _PATH_AUDIOCTL;
+		file = deffile;
 
 	while ((ch = getopt(argc, argv, "ad:f:nw")) != -1) {
 		switch(ch) {
@@ -374,7 +375,7 @@ main(argc, argv)
 	fd = open(file, O_WRONLY);
 	if (fd < 0)
 		fd = open(file, O_RDONLY);
-        if (fd < 0 && file == _PATH_AUDIOCTL) {
+        if (fd < 0 && file == deffile) {
         	file = _PATH_AUDIOCTL0;
                 fd = open(file, O_WRONLY);
 		if (fd < 0)

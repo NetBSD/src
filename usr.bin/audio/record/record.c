@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.23 2002/02/02 20:20:26 jdolecek Exp $	*/
+/*	$NetBSD: record.c,v 1.24 2002/02/05 00:17:27 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -90,6 +90,7 @@ main(argc, argv)
 	char	*buffer;
 	size_t	len, bufsize;
 	int	ch, no_time_limit = 1;
+	const char *defdevice = _PATH_SOUND;
 
 	while ((ch = getopt(argc, argv, "ab:C:F:c:d:e:fhi:m:P:p:qt:s:Vv:")) != -1) {
 		switch (ch) {
@@ -187,10 +188,10 @@ main(argc, argv)
 	 */
 	if (device == NULL && (device = getenv("AUDIODEVICE")) == NULL &&
 	    (device = getenv("AUDIODEV")) == NULL) /* Sun compatibility */
-		device = _PATH_SOUND;
+		device = defdevice;
 
 	audiofd = open(device, O_RDONLY);
-	if (audiofd < 0 && device == _PATH_SOUND) {
+	if (audiofd < 0 && device == defdevice) {
 		device = _PATH_SOUND0;
 		audiofd = open(device, O_WRONLY);
 	}
