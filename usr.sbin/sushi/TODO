@@ -20,3 +20,6 @@ multiselection popup causes chaos and destruction when you hit enter without
 picking one.
 fastpaths leave the terminal unusable after exiting.
 required fields, aren't.
+All of the /etc/*.conf menus need to be updated prior to release.
+The ypinit stuff is all garbage.  It's an interactive command, meaning sushi
+can't cope with it.
