@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.16 2003/06/03 11:54:49 dsl Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.17 2003/06/04 20:05:13 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -172,18 +172,18 @@ menu edfspart, title "Co zmienic?", exit, y=14;
 		{	if (PI_ISBSDFS(&bsdlabel[editpart]) ||
 			    bsdlabel[editpart].pi_fstype == FS_MSDOS) {
 				msg_prompt_add (MSG_mountpoint,
-					fsmount[editpart],
-					fsmount[editpart], 20);
-				if (strcmp(fsmount[editpart], "none") == 0)
-					fsmount[editpart][0] = '\0';
+					bsdlabel[editpart].pi_mount,
+					bsdlabel[editpart].pi_mount,
+					sizeof bsdlabel[editpart].pi_mount);
+				if (strcmp(bsdlabel[editpart].pi_mount, "none") == 0)
+					bsdlabel[editpart].pi_mount[0] = '\0';
 			} else {
 				msg_display (MSG_nomount, 'a'+editpart);
 				process_menu (MENU_ok, NULL);
 			}
 		};
 	option "Ochrona", action 
-		{	preservemount[editpart] = 1 - preservemount[editpart];
-		};
+		{	bsdlabel[editpart].pi_newfs ^= 1; };
 
 menu selfskind, title "Wybierz rodzaj", y=15;
 	option "4.2BSD", exit, action 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.97 2003/05/21 10:05:21 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.98 2003/06/04 20:05:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,6 +209,38 @@ message defaultunit
 {Unless specified with 'M' (megabytes), 'c' (cylinders) or 's' sector
 at the end of input, sizes and offsets are in %s.
 }
+
+message ptnsizes
+{You can now change the sizes for the system partitions.  The default is
+to allocate all the space to the root filesystem, however you may wish
+to have separate /usr (additional system files), /var (log files etc)
+or /home (users' home directories).
+
+Free space will be added to the partition marked with a '+'.
+}
+
+message ptnheaders
+{
+       MB Cylinders   Sectors    Filesystem
+}
+
+message askfsmount
+{Mount pount?}
+
+message askfssize
+{Size for %s in %s?}
+
+message askunits
+{Change input units (sectors/cylinders/MB)}
+
+message add_another_ptn
+{Add a user defined partition}
+
+message fssizesok
+{Accept partition sizes.  Free space %d %s, %d free partitions.}
+
+message fssizesbad
+{Reduce partition sizes by %d %s (%d sectors).}
 
 .if 0
 message askfsroot
