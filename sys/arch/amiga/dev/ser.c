@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.39.10.1 1997/09/22 06:30:37 thorpej Exp $	*/
+/*	$NetBSD: ser.c,v 1.39.10.2 1997/10/14 08:26:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -152,6 +152,8 @@ u_char	even_parity[] = {
 u_char	last_ciab_pra;
 
 extern struct tty *constty;
+
+extern int ser_open_speed;	/* current speed of open serial device */
 
 #ifdef KGDB
 #include <machine/remote-sl.h>
@@ -328,6 +330,7 @@ done:
 	 * use of the tty with a dialin open waiting.
 	 */
 	tp->t_dev = dev;
+	ser_open_speed = tp->t_ispeed;
 	return((*linesw[tp->t_line].l_open)(dev, tp));
 }
 
@@ -380,6 +383,7 @@ serclose(dev, flag, mode, p)
 		ser_tty[unit] = (struct tty *) NULL;
 	}
 #endif
+	ser_open_speed = tp->t_ispeed;
 	return (0);
 }
 
@@ -726,6 +730,7 @@ serparam(tp, t)
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
+	ser_open_speed = tp->t_ispeed;
 
 	/*
 	 * enable interrupts
