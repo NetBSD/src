@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.7 2002/05/11 00:36:03 matt Exp $ */
+/*	$NetBSD: gemvar.h,v 1.8 2002/05/15 02:36:12 matt Exp $ */
 
 /*
  * 
@@ -64,6 +64,7 @@
  */
 #define	GEM_NRXDESC		128
 #define	GEM_NRXDESC_MASK	(GEM_NRXDESC - 1)
+#define	GEM_PREVRX(x)		((x - 1) & GEM_NRXDESC_MASK)
 #define	GEM_NEXTRX(x)		((x + 1) & GEM_NRXDESC_MASK)
 
 /*
@@ -184,6 +185,13 @@ struct gem_softc {
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
+
+	struct evcnt sc_ev_intr;
+	struct evcnt sc_ev_txint;
+	struct evcnt sc_ev_rxint;
+	struct evcnt sc_ev_rxnobuf;
+	struct evcnt sc_ev_rxfull;
+	struct evcnt sc_ev_rxhist[9];
 };
 
 
