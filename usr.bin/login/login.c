@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.83 2005/03/20 13:20:07 tron Exp $       */
+/*     $NetBSD: login.c,v 1.84 2005/03/29 17:00:21 jmmv Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.83 2005/03/20 13:20:07 tron Exp $");
+__RCSID("$NetBSD: login.c,v 1.84 2005/03/29 17:00:21 jmmv Exp $");
 #endif /* not lint */
 
 /*
@@ -979,10 +979,10 @@ doutmpx(void)
 	    (void)strncpy(utmpx.ut_id, tty, sizeof(utmpx.ut_id));
 	}
 	if (pututxline(&utmpx) == NULL)
-		syslog(LOG_NOTICE, "Cannot update utmpx %m");
+		syslog(LOG_NOTICE, "Cannot update utmpx: %m");
 	endutxent();
 	if (updwtmpx(_PATH_WTMPX, &utmpx) != 0)
-		syslog(LOG_NOTICE, "Cannot update wtmpx %m");
+		syslog(LOG_NOTICE, "Cannot update wtmpx: %m");
 }
 
 static void
@@ -1007,7 +1007,7 @@ dolastlogx(int quiet)
 		ll.ll_ss = ss;
 	}
 	if (updlastlogx(_PATH_LASTLOGX, pwd->pw_uid, &ll) != 0)
-		syslog(LOG_NOTICE, "Cannot update lastlogx %m");
+		syslog(LOG_NOTICE, "Cannot update lastlogx: %m");
 }
 #endif
 
