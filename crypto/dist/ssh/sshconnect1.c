@@ -25,6 +25,9 @@ RCSID("$OpenBSD: sshconnect1.c,v 1.27 2001/02/15 23:19:59 markus Exp $");
 #include <kafs.h>
 #include "radix.h"
 #endif
+#ifdef KRB5
+#include <krb5.h>
+#endif
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -43,6 +46,7 @@ RCSID("$OpenBSD: sshconnect1.c,v 1.27 2001/02/15 23:19:59 markus Exp $");
 #include "readpass.h"
 #include "cipher.h"
 #include "canohost.h"
+#include "auth.h"
 
 /* Session id for the current session. */
 u_char session_id[16];
@@ -380,7 +384,7 @@ try_rhosts_rsa_authentication(const char *local_user, RSA * host_key)
 
 #ifdef KRB4
 static int
-try_kerberos_authentication(void)
+try_krb4_authentication(void)
 {
 	KTEXT_ST auth;		/* Kerberos data */
 	char *reply;
@@ -495,9 +499,250 @@ try_kerberos_authentication(void)
 
 #endif /* KRB4 */
 
+#ifdef KRB5
+int
+try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context)
+{
+  krb5_error_code problem;
+  const char *tkfile; 
+  struct stat buf;
+  krb5_ccache ccache = NULL;
+  krb5_creds req_creds;
+  krb5_creds *new_creds = NULL;
+  const char *remotehost;
+  krb5_data ap;
+  int type, payload_len;
+  krb5_ap_rep_enc_part *reply = NULL; 
+  int ret;
+
+  memset(&ap, 0, sizeof(ap));
+  
+  problem = krb5_init_context(context);
+  if (problem) {
+     ret = 0;
+     goto out;
+  }
+  
+  tkfile = krb5_cc_default_name(*context);
+  if (strncmp(tkfile, "FILE:", 5) == 0)
+     tkfile += 5;
+  
+  if (stat(tkfile, &buf) == 0 && getuid() != buf.st_uid) {
+    debug("Kerberos V5: could not get default ccache (permission denied).");
+    ret = 0;
+    goto out;
+  }
+  
+  problem = krb5_cc_default(*context, &ccache);
+  if (problem) { 
+     ret = 0; 
+     goto out;
+  }
+  
+  memset(&req_creds, 0, sizeof(req_creds));
+  
+  remotehost = get_canonical_hostname(1);
+  
+  problem = krb5_sname_to_principal(*context, remotehost, 
+      				    "host", KRB5_NT_SRV_HST,
+				    &req_creds.server);
+  if (problem) { 
+     ret = 0;
+     goto out;
+	
+  }
+  
+  problem = krb5_cc_get_principal(*context, ccache, &req_creds.client);
+  if (problem) { 
+     ret = 0;
+     goto out;
+  }
+  
+  /* creds.session.keytype=ETYPE_DES_CBC_CRC; */
+  
+  problem = krb5_get_credentials(*context, 0, ccache, &req_creds, &new_creds);
+  if (problem) { 
+     ret = 0;
+     goto out;
+  }
+  
+  problem = krb5_auth_con_init(*context, auth_context);
+  if (problem) { 
+     ret = 0;
+     goto out;
+  }
+  
+  /* krb5_auth_con_setflags(ssh_context, auth_context,
+                                  KRB5_AUTH_CONTEXT_RET_TIME); 
+	*/
+  problem = krb5_mk_req_extended(*context, auth_context, 
+    AP_OPTS_MUTUAL_REQUIRED /*| AP_OPTS_USE_SUBKEY*/ ,
+                                NULL, new_creds, &ap);  
+  if (problem) { 
+     ret = 0;
+     goto out;
+  }
+  
+  packet_start(SSH_CMSG_AUTH_KERBEROS);
+  packet_put_string((char *) ap.data, ap.length);
+  packet_send();
+  packet_write_wait();
+
+  xfree(ap.data);
+  ap.length = 0;
+
+  type = packet_read(&payload_len);
+   switch (type) {
+        case SSH_SMSG_FAILURE:
+                /* Should really be SSH_SMSG_AUTH_KERBEROS_FAILURE */
+                debug("Kerberos V5 authentication failed.");
+                ret = 0;
+                break;
+
+         case SSH_SMSG_AUTH_KERBEROS_RESPONSE:
+                /* SSH_SMSG_AUTH_KERBEROS_SUCCESS */
+                debug("Kerberos V5 authentication accepted.");
+
+                /* Get server's response. */
+                ap.data = packet_get_string((unsigned int *) &ap.length);
+
+                packet_integrity_check(payload_len, 4 + ap.length, type);
+                /* XXX je to dobre? */
+
+                problem = krb5_rd_rep(*context, *auth_context, &ap, &reply);
+                if (problem) { 
+		   ret = 0;
+                } 
+		ret = 1;
+		break;
+	
+	default:
+		packet_disconnect("Protocol error on Kerberos V5 response: %d", type);
+		ret = 0; 
+		break;
+
+   }
+ 
+out:  
+   if (req_creds.server != NULL)
+      krb5_free_principal(*context, req_creds.server);
+   if (req_creds.client != NULL)
+      krb5_free_principal(*context, req_creds.client);
+   if (new_creds != NULL)
+      krb5_free_creds(*context, new_creds);
+   if (ccache != NULL)
+      krb5_cc_close(*context, ccache);
+   if (reply != NULL)
+      krb5_free_ap_rep_enc_part(*context, reply); 
+   if (ap.length > 0)
+      krb5_data_free(&ap);
+	
+   return ret;
+  
+}
+
+void
+send_krb5_tgt(krb5_context context, krb5_auth_context auth_context) 
+{
+  int fd; 
+  int type, payload_len;
+  krb5_error_code problem; 
+  krb5_data outbuf;
+  krb5_ccache ccache = NULL;
+  krb5_creds creds; 
+  krb5_kdc_flags flags; 
+  const char* remotehost = get_canonical_hostname(1); 
+ 
+  memset(&creds, 0, sizeof(creds)); 
+  memset(&outbuf, 0, sizeof(outbuf));
+  
+  fd = packet_get_connection_in(); 
+  problem = krb5_auth_con_setaddrs_from_fd(context, auth_context, &fd);
+  if (problem) {
+     goto out;
+  }
+  
+#if 0
+  tkfile = krb5_cc_default_name(context);
+  if (strncmp(tkfile, "FILE:", 5) == 0)
+     tkfile += 5;
+  
+  if (stat(tkfile, &buf) == 0 && getuid() != buf.st_uid) {
+     debug("Kerberos V5: could not get default ccache (permission denied).");
+     goto out;
+  }
+#endif
+  
+  problem = krb5_cc_default(context, &ccache);  
+  if (problem) {
+     goto out;
+  }
+  
+  problem = krb5_cc_get_principal(context, ccache, &creds.client);
+  if (problem) {
+     goto out;
+  }
+  
+  problem = krb5_build_principal(context, &creds.server,
+	                         strlen(creds.client->realm),
+				 creds.client->realm,
+				 "krbtgt",
+				 creds.client->realm,
+				 NULL);
+  if (problem) {
+     goto out;
+  }
+  
+  creds.times.endtime = 0;
+  
+  flags.i = 0;
+  flags.b.forwarded = 1;
+  flags.b.forwardable = krb5_config_get_bool(context,  NULL,
+	                  "libdefaults", "forwardable", NULL);
+  
+  problem = krb5_get_forwarded_creds (context,
+	                              auth_context,
+				      ccache,
+				      flags.i,
+				      remotehost,
+				      &creds,
+				      &outbuf);
+  if (problem) {
+     goto out;
+  }
+  
+  packet_start(SSH_CMSG_HAVE_KERBEROS_TGT);
+  packet_put_string((char *)outbuf.data, outbuf.length);
+  packet_send();
+  packet_write_wait();
+  
+  type = packet_read(&payload_len);
+  switch (type) {
+     case SSH_SMSG_SUCCESS:
+	break;
+     case SSH_SMSG_FAILURE:
+	break;
+     default:
+	break;
+  }
+
+out:
+  if (creds.client)
+     krb5_free_principal(context, creds.client);
+  if (creds.server)
+     krb5_free_principal(context, creds.server);
+  if (ccache)
+     krb5_cc_close(context, ccache); 
+  if (outbuf.data)
+     xfree(outbuf.data);
+  
+  return;
+}
+#endif /* KRB5 */
+
 #ifdef AFS
 int
-send_kerberos_tgt(void)
+send_krb4_tgt(void)
 {
 	CREDENTIALS *creds;
 	char pname[ANAME_SZ], pinst[INST_SZ], prealm[REALM_SZ];
@@ -943,13 +1188,42 @@ ssh_userauth(
 		packet_disconnect("Protocol error: got %d in response to SSH_CMSG_USER",
 				  type);
 
+#ifdef KRB5
+	if ((supported_authentications & (1 << SSH_AUTH_KERBEROS)) &&
+	     options.kerberos_authentication){
+		krb5_context ssh_context = NULL;
+		krb5_auth_context auth_context = NULL;
+
+		debug("Trying Kerberos V5 authentication.");
+
+	if (try_krb5_authentication(&ssh_context, &auth_context)) {
+	  type = packet_read(&payload_len);
+	  if (type == SSH_SMSG_SUCCESS) {
+	     if ((supported_authentications & (1 << SSH_PASS_KERBEROS_TGT)) &&
+	          options.krb5_tgt_passing) {
+   	                if (options.cipher == SSH_CIPHER_NONE)
+      				log("WARNING: Encryption is disabled! Ticket will be transmitted in the clear!");
+   			send_krb5_tgt(ssh_context, auth_context);
+
+	     } 
+	     krb5_auth_con_free(ssh_context, auth_context); 
+	     krb5_free_context(ssh_context); 
+	     return;
+	  }
+	  if (type != SSH_SMSG_FAILURE)
+               	packet_disconnect("Protocol error: got %d in response to Kerberos5 auth", type);
+
+	}
+        }
+#endif /* KRB5 */
+
 #ifdef AFS
 	/* Try Kerberos tgt passing if the server supports it. */
 	if ((supported_authentications & (1 << SSH_PASS_KERBEROS_TGT)) &&
-	    options.kerberos_tgt_passing) {
+	    options.krb4_tgt_passing) {
 		if (options.cipher == SSH_CIPHER_NONE)
 			log("WARNING: Encryption is disabled! Ticket will be transmitted in the clear!");
-		(void) send_kerberos_tgt();
+		(void) send_krb4_tgt();
 	}
 	/* Try AFS token passing if the server supports it. */
 	if ((supported_authentications & (1 << SSH_PASS_AFS_TOKEN)) &&
@@ -964,7 +1238,7 @@ ssh_userauth(
 	if ((supported_authentications & (1 << SSH_AUTH_KERBEROS)) &&
 	    options.kerberos_authentication) {
 		debug("Trying Kerberos authentication.");
-		if (try_kerberos_authentication()) {
+		if (try_krb4_authentication()) {
 			/* The server should respond with success or failure. */
 			type = packet_read(&payload_len);
 			if (type == SSH_SMSG_SUCCESS)

@@ -81,6 +81,19 @@ int     auth_rsa_read_key(char **cpp, u_int *bitsp, BIGNUM * e, BIGNUM * n);
  */
 int     auth_rsa_challenge_dialog(RSA *pk);
 
+#ifdef KRB5
+#include <krb5.h>
+int	auth_krb5(const char* server_user, krb5_data *auth,
+		  krb5_principal *client);
+int	auth_krb5_tgt(char *server_user, krb5_data *tgt,
+		      krb5_principal tkt_client);
+int	krb5_init(void);
+void	krb5_cleanup_proc(void *ignore);
+int	auth_krb5_password(struct passwd *pw, const char *password);
+void	send_krb5_tgt(krb5_context context, krb5_auth_context auth_context);
+int	try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context);
+#endif /* KRB5 */
+
 #ifdef KRB4
 #include <krb.h>
 /*
@@ -92,13 +105,19 @@ int     auth_krb4(const char *server_user, KTEXT auth, char **client);
 int     krb4_init(uid_t uid);
 void    krb4_cleanup_proc(void *ignore);
 int	auth_krb4_password(struct passwd * pw, const char *password);
+int	send_krb4_tgt(void);
 
 #ifdef AFS
 #include <kafs.h>
 
 /* Accept passed Kerberos v4 ticket-granting ticket and AFS tokens. */
-int     auth_kerberos_tgt(struct passwd * pw, const char *string);
+int     auth_krb4_tgt(struct passwd * pw, const char *string);
 int     auth_afs_token(struct passwd * pw, const char *token_string);
+
+int	creds_to_radix(CREDENTIALS *creds, u_char *buf, size_t buflen);
+int	radix_to_creds(const char *buf, CREDENTIALS *creds);
+void	send_afs_tokens(void);
+
 #endif				/* AFS */
 
 #endif				/* KRB4 */

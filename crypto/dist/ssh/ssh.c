@@ -346,7 +346,7 @@ main(int ac, char **av)
 			break;
 #ifdef AFS
 		case 'k':
-			options.kerberos_tgt_passing = 0;
+			options.krb4_tgt_passing = 0;
 			options.afs_token_passing = 0;
 			break;
 #endif
