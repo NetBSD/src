@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs_data.h,v 1.11 2001/01/16 18:43:19 thorpej Exp $	*/
+/*	$NetBSD: cardbusdevs_data.h,v 1.12 2001/02/07 10:23:47 haya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.13 2001/01/16 18:42:56 thorpej Exp 
+ *	NetBSD: cardbusdevs,v 1.15 2001/02/07 09:56:21 haya Exp 
  */
 
 /*
@@ -38,7 +38,35 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+struct cardbus_knowndev {
+	u_int32_t vendorid;
+	u_int32_t deviceid;
+	int flags;
+	char *vendorname;
+	char *devicename;
+};
+
+#define CARDBUS_KNOWNDEV_NOPROD 0x01
+
 struct cardbus_knowndev cardbus_knowndevs[] = {
+	{
+	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
+	    0,
+	    "Digital Equipment",
+	    "DECchip 21142/3",
+	},
+	{
+	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
+	    0,
+	    "Opti",
+	    "82C861 USB Host Controller (OHCI)",
+	},
+	{
+	    CARDBUS_VENDOR_HITACHI, CARDBUS_PRODUCT_HITACHI_SWC,
+	    0,
+	    "Hitachi",
+	    "MSVCC01/02/03/04 Video Capture Cards",
+	},
 	{
 	    CARDBUS_VENDOR_3COM, CARDBUS_PRODUCT_3COM_3C575TX,
 	    0,
@@ -76,16 +104,16 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "3CXFEM656C 10/100 Ethernet",
 	},
 	{
-	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
+	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
 	    0,
-	    "AboCom Systems",
-	    "FE2500 10/100 Ethernet",
+	    "Realtek Semiconductor",
+	    "8138 Ethernet",
 	},
 	{
-	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
+	    CARDBUS_VENDOR_IODATA, CARDBUS_PRODUCT_IODATA_CBIDE2,
 	    0,
-	    "Adaptec",
-	    "APA-1480",
+	    "IO Data",
+	    "CBIDE2 IDE controller",
 	},
 	{
 	    CARDBUS_VENDOR_ACCTON, CARDBUS_PRODUCT_ACCTON_MPX5030,
@@ -98,30 +126,6 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    0,
 	    "Accton Technology",
 	    "EN2242 10/100 Ethernet",
-	},
-	{
-	    CARDBUS_VENDOR_DEC, CARDBUS_PRODUCT_DEC_21142,
-	    0,
-	    "Digital Equipment",
-	    "DECchip 21142/3",
-	},
-	{
-	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_82557,
-	    0,
-	    "Intel",
-	    "82557 Fast Ethernet LAN Controller",
-	},
-	{
-	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
-	    0,
-	    "Intel",
-	    "56k Modem",
-	},
-	{
-	    CARDBUS_VENDOR_OPTI, CARDBUS_PRODUCT_OPTI_82C861,
-	    0,
-	    "Opti",
-	    "82C861 USB Host Controller (OHCI)",
 	},
 	{
 	    CARDBUS_VENDOR_XIRCOM, CARDBUS_PRODUCT_XIRCOM_X3201_3,
@@ -142,10 +146,28 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    "56k Modem",
 	},
 	{
-	    CARDBUS_VENDOR_REALTEK, CARDBUS_PRODUCT_REALTEK_RT8138,
+	    CARDBUS_VENDOR_ABOCOM, CARDBUS_PRODUCT_ABOCOM_FE2500,
 	    0,
-	    "Realtek Semiconductor",
-	    "8138 Ethernet",
+	    "AboCom Systems",
+	    "FE2500 10/100 Ethernet",
+	},
+	{
+	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_82557,
+	    0,
+	    "Intel",
+	    "82557 Fast Ethernet LAN Controller",
+	},
+	{
+	    CARDBUS_VENDOR_INTEL, CARDBUS_PRODUCT_INTEL_MODEM56,
+	    0,
+	    "Intel",
+	    "56k Modem",
+	},
+	{
+	    CARDBUS_VENDOR_ADP, CARDBUS_PRODUCT_ADP_1480,
+	    0,
+	    "Adaptec",
+	    "APA-1480",
 	},
 	{
 	    CARDBUS_VENDOR_DEC, 0,
@@ -154,9 +176,57 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    CARDBUS_VENDOR_OPTI, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Opti",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_HITACHI, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Hitachi",
+	    NULL,
+	},
+	{
 	    CARDBUS_VENDOR_3COM, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "3Com",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_REALTEK, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Realtek Semiconductor",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_IODATA, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "IO Data",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ACCTON, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Accton Technology",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_XIRCOM, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Xircom",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_ABOCOM, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "AboCom Systems",
+	    NULL,
+	},
+	{
+	    CARDBUS_VENDOR_INTEL, 0,
+	    CARDBUS_KNOWNDEV_NOPROD,
+	    "Intel",
 	    NULL,
 	},
 	{
@@ -169,42 +239,6 @@ struct cardbus_knowndev cardbus_knowndevs[] = {
 	    CARDBUS_VENDOR_ADP2, 0,
 	    CARDBUS_KNOWNDEV_NOPROD,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_OPTI, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Opti",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_XIRCOM, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Xircom",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_ACCTON, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Accton Technology",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_ABOCOM, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "AboCom Systems",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_REALTEK, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Realtek Semiconductor",
-	    NULL,
-	},
-	{
-	    CARDBUS_VENDOR_INTEL, 0,
-	    CARDBUS_KNOWNDEV_NOPROD,
-	    "Intel",
 	    NULL,
 	},
 	{
