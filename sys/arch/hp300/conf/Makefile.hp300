@@ -32,7 +32,7 @@ GPROF.EX=/usr/src/usr.lib/libc/csu/hp300/gmon.ex
 S=	../../../..
 HP300=	../..
 
-INCLUDES= -I. -I$S -I$S/sys
+INCLUDES= -I. -I$S/arch -I$S -I$S/sys
 COPTS=	${INCLUDES} ${IDENT} -DKERNEL -Dmc68020 -Dhp300 -DFPCOPROC -DREFBIT
 CFLAGS=	-O ${COPTS}
 
