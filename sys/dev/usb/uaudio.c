@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.21 2000/03/27 12:33:55 augustss Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.22 2000/03/29 01:47:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ int	uaudiodebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-#define UAUDIO_NCHANBUFS 5	/* number of outstanding request */
+#define UAUDIO_NCHANBUFS 6	/* number of outstanding request */
 #define UAUDIO_NFRAMES   20	/* ms of sound in each request */
 
 
@@ -1793,7 +1793,7 @@ uaudio_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_chan.arg = arg;
 
 	s = splusb();
-	for (i = 0; i < UAUDIO_NCHANBUFS; i++)
+	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX -1 shouldn't be needed */
 		uaudio_chan_rtransfer(ch);
 	splx(s);
 
@@ -1839,7 +1839,7 @@ uaudio_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_chan.arg = arg;
 
 	s = splusb();
-	for (i = 0; i < UAUDIO_NCHANBUFS; i++)
+	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX */
 		uaudio_chan_ptransfer(ch);
 	splx(s);
 
