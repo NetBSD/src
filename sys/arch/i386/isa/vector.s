@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.17 1994/04/18 22:23:32 mycroft Exp $
+ *	$Id: vector.s,v 1.18 1994/05/23 02:25:09 cgd Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -247,7 +247,7 @@ IDTVEC(hold/**/irq_num)							;\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
 	INTRFASTEXIT
 
-#ifdef DEBUG
+#if defined(DEBUG) && defined(notdef)
 #define	STRAY_INITIALIZE \
 	xorl	%esi,%esi		/* nobody claimed it yet */
 #define	STRAY_INTEGRATE \
