@@ -57,9 +57,25 @@
  *		address if the responder to the broadcast.
  */
 
-extern bool_t		pmap_set();
-extern bool_t		pmap_unset();
-extern struct pmaplist	*pmap_getmaps();
-enum clnt_stat		pmap_rmtcall();
-enum clnt_stat		clnt_broadcast();
-extern u_short		pmap_getport();
+#ifndef _RPC_PMAPCLNT_H
+#define _RPC_PMAPCLNT_H
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+extern bool_t		pmap_set	__P((u_long, u_long, int, int));
+extern bool_t		pmap_unset	__P((u_long, u_long));
+extern struct pmaplist	*pmap_getmaps	__P((struct sockaddr_in *));
+extern enum clnt_stat	pmap_rmtcall	__P((struct sockaddr_in *,
+					     u_long, u_long, u_long,
+					     xdrproc_t, caddr_t,
+					     xdrproc_t, caddr_t,
+					     struct timeval, u_long *));
+extern enum clnt_stat	clnt_broadcast	__P((u_long, u_long, u_long,
+					     xdrproc_t, char *,
+					     xdrproc_t, char *,
+					     bool_t (*)()));
+extern u_short		pmap_getport	__P((struct sockaddr_in *,
+					     u_long, u_long, u_int));
+__END_DECLS
+
+#endif /* !_RPC_PMAPCLNT_H */

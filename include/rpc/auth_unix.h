@@ -42,6 +42,10 @@
  * for the credentials.
  */
 
+#ifndef _RPC_AUTH_UNIX_H
+#define _RPC_AUTH_UNIX_H
+#include <sys/cdefs.h>
+
 /* The machine name is part of a credential; it may not exceed 255 bytes */
 #define MAX_MACHINE_NAME 255
 
@@ -60,7 +64,9 @@ struct authunix_parms {
 	int	*aup_gids;
 };
 
-extern bool_t xdr_authunix_parms();
+__BEGIN_DECLS
+extern bool_t xdr_authunix_parms __P((XDR *, struct authunix_parms *));
+__END_DECLS
 
 /* 
  * If a response verifier has flavor AUTH_SHORT, 
@@ -70,3 +76,5 @@ extern bool_t xdr_authunix_parms();
 struct short_hand_verf {
 	struct opaque_auth new_cred;
 };
+
+#endif /* !_RPC_AUTH_UNIX_H */

@@ -32,16 +32,21 @@
 /*
  * Rpc additions to <sys/types.h>
  */
-#ifndef __TYPES_RPC_HEADER__
-#define __TYPES_RPC_HEADER__
+#ifndef _RPC_TYPES_H
+#define _RPC_TYPES_H
 
 #define	bool_t	int
 #define	enum_t	int
-#define	FALSE	(0)
-#define	TRUE	(1)
 #define __dontcare__	-1
+
+#ifndef FALSE
+#	define FALSE	(0)
+#endif
+#ifndef TRUE
+#	define TRUE	(1)
+#endif
 #ifndef NULL
-#	define NULL 0
+#	define NULL	0
 #endif
 
 void *malloc();
@@ -60,4 +65,4 @@ void *malloc();
 #define        MAXHOSTNAMELEN  64
 #endif
 
-#endif /* ndef __TYPES_RPC_HEADER__ */
+#endif /* !_RPC_TYPES_H */

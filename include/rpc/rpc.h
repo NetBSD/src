@@ -34,8 +34,8 @@
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
-#ifndef __RPC_HEADER__
-#define __RPC_HEADER__
+#ifndef _RPC_RPC_H
+#define _RPC_RPC_H
 
 #include <rpc/types.h>		/* some typedefs */
 #include <netinet/in.h>
@@ -75,6 +75,12 @@ struct rpcent {
       int     r_number;       /* rpc program number */
 };
 
-struct rpcent *getrpcbyname(), *getrpcbynumber(), *getrpcent();
+__BEGIN_DECLS
+extern struct rpcent *getrpcbyname	__P((char *));
+extern struct rpcent *getrpcbynumber	__P((int));
+extern struct rpcent *getrpcent		__P((void));
+extern void setrpcent __P((int));
+extern void endrpcent __P((void));
+__END_DECLS
 
-#endif /* ndef __RPC_HEADER__ */
+#endif /* !_RPC_RPC_H */
