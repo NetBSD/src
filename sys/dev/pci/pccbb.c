@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.9 1999/12/20 08:11:42 haya Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.10 2000/01/12 09:23:26 haya Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -333,6 +333,8 @@ struct yenta_chipinfo {
   {MAKEID(PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC95B), "ToPIC95B",
      CB_TOPIC95B, PCCBB_PCMCIA_MEM_32},
   {MAKEID(PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC97), "ToPIC97",
+     CB_TOPIC97, PCCBB_PCMCIA_MEM_32},
+  {MAKEID(PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_ToPIC100), "ToPIC100",
      CB_TOPIC97, PCCBB_PCMCIA_MEM_32},
 
   /* Cirrus Logic products */
@@ -812,6 +814,9 @@ pccbb_pcmcia_attach_setup(sc, paa)
      struct pcmciabus_attach_args *paa;
 {
   struct pcic_handle *ph = &sc->sc_pcmcia_h;
+#if rbus
+  rbus_tag_t rb;
+#endif
 
   /* initialise pcmcia part in pccbb_softc */
   ph->ph_parent = (struct device *)sc;
@@ -834,6 +839,11 @@ pccbb_pcmcia_attach_setup(sc, paa)
   paa->pch = ph;
   paa->iobase = 0;		/* I don't use them */
   paa->iosize = 0;
+#if rbus
+  rb = ((struct pccbb_softc *)(ph->ph_parent))->sc_rbus_iot;
+  paa->iobase = rb->rb_start + rb->rb_offset;
+  paa->iosize = rb->rb_end - rb->rb_start;
+#endif
 
   return;
 }
