@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.2 2000/12/16 18:24:36 bjh21 Exp $ */
+/* $NetBSD: if_eh.c,v 1.3 2000/12/17 22:29:26 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -53,7 +53,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2 2000/12/16 18:24:36 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.3 2000/12/17 22:29:26 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -91,15 +91,23 @@ __KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.2 2000/12/16 18:24:36 bjh21 Exp $");
 #include <machine/bswap.h>
 #endif
 
+#define EH_MEDIA_2	0
+#define EH_MEDIA_T	1
+#define EH_MEDIA_2_T	2
+#define EH_MEDIA_FL_T	3
+
 struct eh_softc {
 	struct	dp8390_softc sc_dp;
 	bus_space_tag_t		sc_datat;
 	bus_space_handle_t	sc_datah;
 	bus_space_tag_t		sc_ctlt;
 	bus_space_handle_t	sc_ctlh;
+	bus_space_tag_t		sc_ctl2t;
+	bus_space_handle_t	sc_ctl2h;
 	struct		irq_handler *sc_ih;
 	int			sc_flags;
 #define EHF_16BIT	0x01
+#define EHF_MAU		0x02
 	int			sc_type;
 	u_int8_t		sc_ctrl; /* Current control reg state */
 };
@@ -112,6 +120,7 @@ int	eh_test_mem(struct dp8390_softc *);
 void	eh_writemem(struct eh_softc *, u_int8_t *, int, size_t);
 void	eh_readmem(struct eh_softc *, int, u_int8_t *, size_t);
 static void eh_init_card(struct dp8390_softc *);
+static int eh_availmedia(struct eh_softc *);
 
 /* if_media glue */
 static int eh_mediachange(struct dp8390_softc *);
@@ -145,18 +154,28 @@ eh_match(struct device *parent, struct cfdata *cf, void *aux)
 static const u_int8_t demo_addr_100[] = { 0x00, 0xc0, 0x32, 0x00, 0x84, 0x57 };
 static const u_int8_t demo_addr_200[] = { 0x00, 0xc0, 0x32, 0x00, 0x17, 0xbf };
 
+/* XXX 10baseFL on E513 */
+static int media_only2[] = { IFM_ETHER | IFM_10_2 };
+static int media_onlyt[] = { IFM_ETHER | IFM_10_T };
+static int media_2andt[] =
+    { IFM_ETHER | IFM_10_2, IFM_ETHER | IFM_10_T, IFM_ETHER | IFM_AUTO };
+static const struct {
+	int nmedia;
+	int *media;
+} media_switch[] = {
+	{ 1, media_only2 },
+	{ 1, media_onlyt },
+	{ 3, media_2andt }
+};
+
 static void
 eh_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 	struct eh_softc *sc = (struct eh_softc *)self;
 	struct dp8390_softc *dsc = &sc->sc_dp;
-	/* XXX Not all cards really support all media */
-	/* XXX 10baseFL on E513 */
-	int media[] =
-	    { IFM_ETHER | IFM_AUTO,
-	      IFM_ETHER | IFM_10_2,
-	      IFM_ETHER | IFM_10_T};
+	int *media;
+	int mediaset, nmedia;
 	int i;
 
 	/* Canonicalise card type. */
@@ -178,13 +197,15 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	/* Memory size and width varies. */
 	dsc->mem_start = 0;
 	switch (sc->sc_type) {
-	case PODULE_ICUBED_ETHERLAN100:
 	case PODULE_ICUBED_ETHERLAN200:
-		printf(": 8-bit, 32 KB RAM\n");
+		sc->sc_flags |= EHF_MAU;
+		/* FALLTHROUGH */
+	case PODULE_ICUBED_ETHERLAN100:
+		printf(": 8-bit, 32 KB RAM");
 		dsc->mem_size  = 0x8000;
 		break;
 	case PODULE_ICUBED_ETHERLAN500:
-		printf(": 16-bit, 64 KB RAM\n");
+		printf(": 16-bit, 64 KB RAM");
 		sc->sc_flags |= EHF_16BIT;
 		dsc->mem_size = 0x10000;
 		break;
@@ -200,6 +221,9 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ctlt = pa->pa_fast_t;
 	bus_space_subregion(sc->sc_ctlt, pa->pa_fast_h, EH_CTRL, 1,
 	    &sc->sc_ctlh);
+	sc->sc_ctl2t = pa->pa_fast_t;
+	bus_space_subregion(sc->sc_ctl2t, pa->pa_fast_h, EH_CTRL2, 1,
+	    &sc->sc_ctl2h);
 
 	/* dsc->cr_proto? */
 	/* dsc->rcr_proto? */
@@ -226,6 +250,26 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_ctrl = 0x00;
 
+	if (!(sc->sc_flags & EHF_MAU))
+		mediaset = eh_availmedia(sc);
+	else
+		/* XXX get MAU type */
+		mediaset = EH_MEDIA_2_T;
+	switch (mediaset) {
+	case EH_MEDIA_2:
+		printf(", 10base2 only");
+		break;
+	case EH_MEDIA_T:
+		printf(", 10baseT only");
+		break;
+	case EH_MEDIA_2_T:
+		printf(", combo 10base2/T");
+		break;
+	}
+	media = media_switch[mediaset].media;
+	nmedia = media_switch[mediaset].nmedia;
+	printf("\n");
+
 	/* XXX XXX XXX Ethernet address */
 	switch (sc->sc_type) {
 	case PODULE_ICUBED_ETHERLAN100:
@@ -236,9 +280,8 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 	printf("%s: rigged demo mode\n", self->dv_xname);
-
-	dp8390_config(dsc, media, sizeof(media) / sizeof(media[0]),
-	    IFM_ETHER | IFM_10_2);
+	
+	dp8390_config(dsc, media, nmedia, media[0]);
 	dp8390_stop(dsc);
 
 #if 0
@@ -644,6 +687,45 @@ eh_writemem(struct eh_softc *sc, u_int8_t *src, int dst, size_t len)
 }
 
 /*
+ * Work out the media types available on the current card.
+ *
+ * We try to switch to each of 10base2 and 10baseT in turn.  If the card
+ * only supports one type, the media select line will be tied to select
+ * that, so it won't move when we push it.
+ *
+ * The media select jumpers (at least on the EtherLan 100) have the same
+ * effect.
+ */
+
+int
+eh_availmedia(struct eh_softc *sc)
+{
+
+	/* Set the card to use AUI (10b2 or 10bFL) */
+	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0,
+	    sc->sc_ctrl & ~EH_CTRL_MEDIA);
+	/* Check whether that worked */
+	if ((bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0) &
+	    EH_CTRL2_10B2) == 0) {
+		bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
+		return EH_MEDIA_T;
+	}
+
+	/* Try 10bT and see if that works */
+	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0,
+	    sc->sc_ctrl | EH_CTRL_MEDIA);
+	if ((bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0) &
+	    EH_CTRL2_10B2)) {
+		bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
+		return EH_MEDIA_2;
+	}
+
+	/* If both of them worked, this is a combo card. */
+	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
+	return EH_MEDIA_2_T;
+}
+
+/*
  * Medium selection has changed.
  */
 int
@@ -685,14 +767,18 @@ void
 eh_mediastatus(struct dp8390_softc *dsc, struct ifmediareq *ifmr)
 {
 	struct eh_softc *sc = (struct eh_softc *)dsc;
+	int ctrl2;
 
 	/* XXX 10baseFL on E513? */
-	if (sc->sc_ctrl & EH_CTRL_MEDIA) {
+	/* Read the actual medium currently in use. */
+	ctrl2 = bus_space_read_1(sc->sc_ctl2t, sc->sc_ctl2h, 0);
+	if (ctrl2 & EH_CTRL2_10B2) {
+		ifmr->ifm_active = IFM_ETHER | IFM_10_2;
+	} else {
 		ifmr->ifm_active = IFM_ETHER | IFM_10_T | IFM_AVALID;
 		if (bus_space_read_1(sc->sc_ctlt, sc->sc_ctlh, 0) &
 		    EH_CTRL_LINK)
 			ifmr->ifm_active |= IFM_ACTIVE;
-	} else
-		ifmr->ifm_active = IFM_ETHER | IFM_10_2;
+	}
 
 }
