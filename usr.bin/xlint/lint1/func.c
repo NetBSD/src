@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.10 1998/04/09 00:32:38 tv Exp $	*/
+/*	$NetBSD: func.c,v 1.11 1998/10/10 20:51:48 itohy Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: func.c,v 1.10 1998/04/09 00:32:38 tv Exp $");
+__RCSID("$NetBSD: func.c,v 1.11 1998/10/10 20:51:48 itohy Exp $");
 #endif
 
 #include <stdlib.h>
@@ -406,7 +406,8 @@ label(typ, sym, tn)
 {
 	cstk_t	*ci;
 	clst_t	*cl;
-	val_t	*v, *nv;
+	val_t	*v;
+	val_t	nv;
 	tspec_t	t;
 
 	switch (typ) {
@@ -463,28 +464,28 @@ label(typ, sym, tn)
 			 * to the type of the switch expression
 			 */
 			v = constant(tn);
-			nv = xcalloc(1, sizeof (val_t));
-			cvtcon(CASE, 0, ci->c_swtype, nv, v);
+			(void) memset(&nv, 0, sizeof nv);
+			cvtcon(CASE, 0, ci->c_swtype, &nv, v);
 			free(v);
 
 			/* look if we had this value already */
 			for (cl = ci->c_clst; cl != NULL; cl = cl->cl_nxt) {
-				if (cl->cl_val.v_quad == nv->v_quad)
+				if (cl->cl_val.v_quad == nv.v_quad)
 					break;
 			}
-			if (cl != NULL && isutyp(nv->v_tspec)) {
+			if (cl != NULL && isutyp(nv.v_tspec)) {
 				/* duplicate case in switch, %lu */
-				error(200, (u_long)nv->v_quad);
+				error(200, (u_long)nv.v_quad);
 			} else if (cl != NULL) {
 				/* duplicate case in switch, %ld */
-				error(199, (long)nv->v_quad);
+				error(199, (long)nv.v_quad);
 			} else {
 				/*
 				 * append the value to the list of
 				 * case values
 				 */
 				cl = xcalloc(1, sizeof (clst_t));
-				STRUCT_ASSIGN(cl->cl_val, *nv);
+				STRUCT_ASSIGN(cl->cl_val, nv);
 				cl->cl_nxt = ci->c_clst;
 				ci->c_clst = cl;
 			}
