@@ -32,13 +32,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00034
- * --------------------         -----   ----------------------
- *
- * 18 Sep 92	Gary A Browning		Fix expectation of active partition
  */
 
 #ifndef lint
@@ -50,6 +43,7 @@ char copyright[] =
 #ifndef lint
 static char sccsid[] = "@(#)disklabel.c	5.20 (Berkeley) 2/9/91";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
+static char rcsid[] = "$Id: disklabel.c,v 1.3 1993/03/22 08:04:00 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

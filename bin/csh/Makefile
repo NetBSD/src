@@ -1,5 +1,7 @@
 #	@(#)Makefile	5.24 (Berkeley) 7/1/91
 #
+#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
+#
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
 #

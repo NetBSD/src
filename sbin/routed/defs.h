@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)defs.h	5.10 (Berkeley) 2/28/91
+ *
+ *	$Id: defs.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 
 /*

@@ -1,4 +1,6 @@
 #	@(#)Makefile	5.16 (Berkeley) 4/26/91
+#
+#	$Id: Makefile,v 1.2 1993/03/22 08:04:00 cgd Exp $
 
 PROG=	routed
 SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \

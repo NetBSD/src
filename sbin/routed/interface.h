@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)interface.h	5.6 (Berkeley) 6/1/90
+ *
+ *	$Id: interface.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 
 /*

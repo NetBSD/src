@@ -31,6 +31,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)pathnames.h	6.4 (Berkeley) 6/1/90
+ *
+ *	$Id: pathnames.h,v 1.2 1993/03/22 08:04:00 cgd Exp $
  */
 
 #define _PATH_EXECDIR	"/sbin"
