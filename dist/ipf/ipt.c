@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.c,v 1.1.1.2 2000/02/01 20:11:23 veego Exp $	*/
+/*	$NetBSD: ipt.c,v 1.2 2000/02/01 20:31:11 veego Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
