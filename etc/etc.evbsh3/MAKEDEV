@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 2001/05/10 01:04:39 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.3 2001/05/10 01:29:57 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -45,7 +45,6 @@
 #	ccd*	contatenated disk devices
 #
 # Console ports:
-#	ttyv0	pccons console
 #
 # Terminal ports:
 #	com*	standard PC COM ports			(XXX)
@@ -83,7 +82,7 @@ all)
 	sh $0 std fd fd0
 	sh $0 tty0 tty1 pty0 pty1
 	sh $0 vnd0 vnd1
-	sh $0 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 random
 	sh $0 lkm audio local
 	;;
@@ -91,7 +90,7 @@ all)
 ramdisk)
 	sh $0 std md0
 	sh $0 tty0 tty1 pty0 pty1
-	sh $0 ttyv0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
+	sh $0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 ipl
 	;;
 
 std)
@@ -108,19 +107,6 @@ std)
 	mknod stdin		c 22 0	; chmod 666 stdin
 	mknod stdout		c 22 1	; chmod 666 stdout
 	mknod stderr		c 22 2	; chmod 666 stderr
-	;;
-
-ttyv*)
-	chr=12; unit=${i#ttyv}
-	rm -f ttyv$unit
-	mknod ttyv$unit	c $chr $unit
-	chown root.wheel ttyv$unit
-#	case $unit in
-#	0)
-#		rm -f vga
-#		ln -s ttyv0 vga
-#		;;
-#	esac
 	;;
 
 fd)
@@ -196,9 +182,7 @@ pty*)
 	3)      name=s;;
 	4)      name=t;;
 	5)      name=u;;
-	6)      name=v
-		echo "$0: $i: pty unit conflicts with console ttyv* devices."
-		continue;;
+	6)      name=v;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
