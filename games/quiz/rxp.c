@@ -1,3 +1,5 @@
+/*	$NetBSD: rxp.c,v 1.5 1995/04/22 10:17:00 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +38,11 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: rxp.c,v 1.5 1995/04/22 10:17:00 cgd Exp $";
+#endif
 #endif /* not lint */
 
 /*

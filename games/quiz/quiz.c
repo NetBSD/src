@@ -1,3 +1,5 @@
+/*	$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)quiz.c	8.2 (Berkeley) 1/3/94";
+#else
+static char rcsid[] = "$NetBSD: quiz.c,v 1.9 1995/04/22 10:16:58 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
