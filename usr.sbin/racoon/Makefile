@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2005/02/23 14:44:41 manu Exp $
+# $NetBSD: Makefile,v 1.9 2005/02/24 13:45:08 manu Exp $
 
 WARNS=	0	# Will be fixed later
 
@@ -28,6 +28,7 @@ CPPFLAGS+= -I${DIST}/src/racoon/missing
 CPPFLAGS+= -DIPSEC_DEBUG -DHAVE_CONFIG_H
 CPPFLAGS+= -DADMINPORTDIR=\"/var/run\"
 CPPFLAGS+= -DSYSCONFDIR=\"/etc/racoon\"
+CPPFLAGS+= -DSADB_X_EALG_AESCBC=SADB_X_EALG_AES
 
 LDADD+= -ll -ly -lipsec -lcrypto 
 DPADD+= ${LIBL} ${LIBY} ${LIBCRYPTO} ${LIBIPSEC}
