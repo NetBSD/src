@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.704 2004/05/27 03:43:31 christos Exp $
+#	$NetBSD: mi,v 1.705 2004/05/31 05:27:33 itojun Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2061,8 +2061,8 @@
 ./usr/share/man/cat2/revoke.0			comp-c-catman		.cat
 ./usr/share/man/cat2/rmdir.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sa_enable.0		comp-c-catman		.cat
-./usr/share/man/cat2/sa_setconcurrency.0	comp-c-catman		.cat
 ./usr/share/man/cat2/sa_register.0		comp-c-catman		.cat
+./usr/share/man/cat2/sa_setconcurrency.0	comp-c-catman		.cat
 ./usr/share/man/cat2/sa_stacks.0		comp-c-catman		.cat
 ./usr/share/man/cat2/sa_yield.0			comp-c-catman		.cat
 ./usr/share/man/cat2/sbrk.0			comp-c-catman		.cat
@@ -2272,9 +2272,9 @@
 ./usr/share/man/cat3/MD5_Init.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/OBJ_nid2obj.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0	comp-c-catman		crypto,.cat
-./usr/share/man/cat3/OpenSSL_add_all_algorithms.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_config.0		comp-c-man		crypto,.cat
 ./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		crypto,.cat
+./usr/share/man/cat3/OpenSSL_add_all_algorithms.0	comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_create.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS12_parse.0		comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/PKCS7_decrypt.0		comp-c-catman		crypto,.cat
@@ -2674,6 +2674,7 @@
 ./usr/share/man/cat3/clntudp_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/clock.0			comp-c-catman		.cat
 ./usr/share/man/cat3/closedir.0			comp-c-catman		.cat
+./usr/share/man/cat3/closefrom.0		comp-c-catman		.cat
 ./usr/share/man/cat3/closelog.0			comp-c-catman		.cat
 ./usr/share/man/cat3/clrtobot.0			comp-c-catman		.cat
 ./usr/share/man/cat3/clrtoeol.0			comp-c-catman		.cat
@@ -5045,8 +5046,8 @@
 ./usr/share/man/cat9/isapnp_unconfig.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/issignal.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman		.cat
-./usr/share/man/cat9/kcopy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kcont.0			comp-sys-catman		.cat
+./usr/share/man/cat9/kcopy.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kernacc.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/kfilter_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman		.cat
@@ -5498,8 +5499,8 @@
 ./usr/share/man/cat9/vn_bwrite.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_close.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_closefile.0		comp-sys-catman		.cat
-./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_cow_disestablish.0	comp-sys-catman		.cat
+./usr/share/man/cat9/vn_cow_establish.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_default_error.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_fcntl.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/vn_finished_write.0	comp-sys-catman		.cat
@@ -5789,8 +5790,8 @@
 ./usr/share/man/man2/revoke.2			comp-c-man		.man
 ./usr/share/man/man2/rmdir.2			comp-c-man		.man
 ./usr/share/man/man2/sa_enable.2		comp-c-man		.man
-./usr/share/man/man2/sa_setconcurrency.2	comp-c-man		.man
 ./usr/share/man/man2/sa_register.2		comp-c-man		.man
+./usr/share/man/man2/sa_setconcurrency.2	comp-c-man		.man
 ./usr/share/man/man2/sa_stacks.2		comp-c-man		.man
 ./usr/share/man/man2/sa_yield.2			comp-c-man		.man
 ./usr/share/man/man2/sbrk.2			comp-c-man		.man
@@ -5999,9 +6000,9 @@
 ./usr/share/man/man3/MD5_Init.3			comp-obsolete		obsolete
 ./usr/share/man/man3/OBJ_nid2obj.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3	comp-c-man		crypto,.man
-./usr/share/man/man3/OpenSSL_add_all_algorithms.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_config.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3	comp-c-man		crypto,.man
+./usr/share/man/man3/OpenSSL_add_all_algorithms.3	comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS12_create.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS12_parse.3		comp-c-man		crypto,.man
 ./usr/share/man/man3/PKCS7_decrypt.3		comp-c-man		crypto,.man
@@ -6401,6 +6402,7 @@
 ./usr/share/man/man3/clntudp_create.3		comp-c-man		.man
 ./usr/share/man/man3/clock.3			comp-c-man		.man
 ./usr/share/man/man3/closedir.3			comp-c-man		.man
+./usr/share/man/man3/closefrom.3		comp-c-man		.cat
 ./usr/share/man/man3/closelog.3			comp-c-man		.man
 ./usr/share/man/man3/clrtobot.3			comp-c-man		.man
 ./usr/share/man/man3/clrtoeol.3			comp-c-man		.man
@@ -8767,8 +8769,8 @@
 ./usr/share/man/man9/isapnp_unconfig.9		comp-sys-man		.man
 ./usr/share/man/man9/issignal.9			comp-sys-man		.man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man		.man
-./usr/share/man/man9/kcopy.9			comp-sys-man		.man
 ./usr/share/man/man9/kcont.9			comp-sys-man		.man
+./usr/share/man/man9/kcopy.9			comp-sys-man		.man
 ./usr/share/man/man9/kernacc.9			comp-obsolete		obsolete
 ./usr/share/man/man9/kfilter_register.9		comp-sys-man		.man
 ./usr/share/man/man9/kfilter_unregister.9	comp-sys-man		.man
@@ -9220,8 +9222,8 @@
 ./usr/share/man/man9/vn_bwrite.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_close.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_closefile.9		comp-sys-man		.man
-./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_cow_disestablish.9	comp-sys-man		.man
+./usr/share/man/man9/vn_cow_establish.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_default_error.9		comp-sys-man		.man
 ./usr/share/man/man9/vn_fcntl.9			comp-sys-man		.man
 ./usr/share/man/man9/vn_finished_write.9	comp-sys-man		.man
