@@ -1,4 +1,4 @@
-/* $NetBSD: beep.c,v 1.10 1997/07/28 18:07:03 mark Exp $ */
+/*	$NetBSD: beep.c,v 1.11 1997/10/14 12:03:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -59,14 +59,14 @@
 
 #include <machine/irqhandler.h>
 #include <machine/katelib.h>
-#include <machine/iomd.h>
 #include <machine/vidc.h>
 #include <machine/pmap.h>
 #include <machine/beep.h>
 #include <arm32/mainbus/mainbus.h>
-#include <arm32/mainbus/waveform.h>
+#include <arm32/vidc/waveform.h>
+#include <arm32/iomd/iomdreg.h>
 #ifdef RC7500
-#include <arm32/mainbus/lmc1982.h>
+#include <arm32/vidc/lmc1982.h>
 #endif
 
 #include "beep.h"
@@ -86,7 +86,7 @@ struct beep_softc {
 	vm_offset_t sc_buffer1;
 };
 
-int	beepprobe	__P((struct device *parent, void *match, void *aux));
+int	beepprobe	__P((struct device *parent, struct cfdata *cf, void *aux));
 void	beepattach	__P((struct device *parent, struct device *self, void *aux));
 int	beepopen	__P((dev_t, int, int, struct proc *));
 int	beepclose	__P((dev_t, int, int, struct proc *));
@@ -105,17 +105,13 @@ struct cfdriver	beep_cd = {
 
 
 int
-beepprobe(parent, match, aux)
+beepprobe(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *mb = aux;
+/*	struct mainbus_attach_args *mb = aux;*/
 	int id;
-
-	/* We need a base address */
-	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
-		return(0);
 
 /* Make sure we have an IOMD we understand */
 
@@ -126,6 +122,7 @@ beepprobe(parent, match, aux)
 	switch (id) {
 #ifdef CPU_ARM7500
 	case ARM7500_IOC_ID:
+	case ARM7500FE_IOC_ID:
 		sdma_channel = IRQ_SDMA;
 		return(1);
 #else
@@ -180,12 +177,12 @@ beepattach(parent, self, aux)
 
 /* Reset the sound DMA channel */
 
-	WriteWord(IOMD_SD0CURA, sc->sc_sound_cur0);
-	WriteWord(IOMD_SD0ENDA, sc->sc_sound_end0 | 0xc0000000);
-	WriteWord(IOMD_SD0CURB, sc->sc_sound_cur1);
-	WriteWord(IOMD_SD0ENDB, sc->sc_sound_end1 | 0xc0000000);
+	IOMD_WRITE_WORD(IOMD_SD0CURA, sc->sc_sound_cur0);
+	IOMD_WRITE_WORD(IOMD_SD0ENDA, sc->sc_sound_end0 | 0xc0000000);
+	IOMD_WRITE_WORD(IOMD_SD0CURB, sc->sc_sound_cur1);
+	IOMD_WRITE_WORD(IOMD_SD0ENDB, sc->sc_sound_end1 | 0xc0000000);
     
-	WriteByte(IOMD_SD0CR, 0x90);
+	IOMD_WRITE_BYTE(IOMD_SD0CR, 0x90);
 
 /* Install an IRQ handler */
 
@@ -240,7 +237,7 @@ beepattach(parent, self, aux)
 	/*
 	 * Video LCD and Serial Sound Mux control.  - Japanese format.
 	 */
-	outb(IOMD_VIDMUX, 0x02);
+	IOMD_WRITE_BYTE(IOMD_VIDMUX, 0x02);
 
 	volume_ctl(VINPUTSEL, VIN1);
 	volume_ctl(VLOUD, 0);
@@ -315,6 +312,8 @@ beep_generate(void)
 	struct beep_softc *sc = beep_cd.cd_devs[0];
 /*	int status;*/
 
+	if (sc == NULL) return;
+
 	if (sc->sc_count > 0) {
 /*		printf("beep: active\n");*/
 		return;
@@ -322,10 +321,10 @@ beep_generate(void)
 /*	printf("beep: generate ");*/
 	++sc->sc_count;
     
-/*	status = ReadByte(IOMD_SD0ST);
+/*	status = IOMD_READ_BYTE(IOMD_SD0ST);
 	printf("st=%02x\n", status);*/
-	WriteByte(IOMD_SD0CR, 0x90);
-	WriteByte(IOMD_SD0CR, 0x30);
+	IOMD_WRITE_BYTE(IOMD_SD0CR, 0x90);
+	IOMD_WRITE_BYTE(IOMD_SD0CR, 0x30);
 	beepdma(sc, 0);
 }
 
@@ -380,13 +379,13 @@ beepintr(arg)
 	void *arg;
 {
 	struct beep_softc *sc = arg;
-/*	WriteByte(IOMD_DMARQ, 0x10);*/
+/*	IOMD_WRITE_BYTE(IOMD_DMARQ, 0x10);*/
 	--sc->sc_count;
 	if (sc->sc_count <= 0) {
-		WriteWord(IOMD_SD0CURB, sc->sc_sound_cur1);
-		WriteWord(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
+		IOMD_WRITE_WORD(IOMD_SD0CURB, sc->sc_sound_cur1);
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
 		disable_irq(sdma_channel);
-/*		printf("stop:st=%02x\n", ReadByte(IOMD_SD0ST));*/
+/*		printf("stop:st=%02x\n", IOMD_READ_BYTE(IOMD_SD0ST));*/
 		return(1);
 	}
 
@@ -402,22 +401,22 @@ beepdma(sc, buf)
 {
 	int status;
 /*	printf("beep:dma %d", buf);    */
-	status = ReadByte(IOMD_SD0ST);
+	status = IOMD_READ_BYTE(IOMD_SD0ST);
 /*	printf("st=%02x\n", status);*/
 
 	if (buf == 0) {
-		WriteWord(IOMD_SD0CURA, sc->sc_sound_cur0);
-		WriteWord(IOMD_SD0ENDA, sc->sc_sound_end0);
-		WriteWord(IOMD_SD0CURB, sc->sc_sound_cur1);
-		WriteWord(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
+		IOMD_WRITE_WORD(IOMD_SD0CURA, sc->sc_sound_cur0);
+		IOMD_WRITE_WORD(IOMD_SD0ENDA, sc->sc_sound_end0);
+		IOMD_WRITE_WORD(IOMD_SD0CURB, sc->sc_sound_cur1);
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
 	}
 
 	if (buf == 1) {
-		WriteWord(IOMD_SD0CURB, sc->sc_sound_cur1);
-		WriteWord(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
+		IOMD_WRITE_WORD(IOMD_SD0CURB, sc->sc_sound_cur1);
+		IOMD_WRITE_WORD(IOMD_SD0ENDB, sc->sc_sound_end1 | (1 << 30));
 	}
 
-/*	status = ReadByte(IOMD_SD0ST);
+/*	status = IOMD_READ_BYTE(IOMD_SD0ST);
 	printf("st=%02x\n", status);*/
 
 	enable_irq(sdma_channel);

@@ -1,4 +1,4 @@
-/* $NetBSD: lmc1982.h,v 1.1 1996/10/15 21:10:25 mark Exp $ */
+/*	$NetBSD: lmc1982.h,v 1.2 1997/10/14 12:03:16 mark Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
