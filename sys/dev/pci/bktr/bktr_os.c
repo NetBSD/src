@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_os.c,v 1.8 2000/06/27 05:14:31 simonb Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.9 2000/06/30 08:12:11 veego Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.7 2000/04/16 07:50:09 roger Exp */
 
@@ -71,8 +71,8 @@
 #include <sys/select.h>
 #include <sys/vnode.h>
 
-#include <vm/vm.h>
 #ifndef __NetBSD__
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>

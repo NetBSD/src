@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_core.c,v 1.6 2000/06/26 14:21:10 mrg Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.7 2000/06/30 08:12:10 veego Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.106 2000/04/16 07:50:08 roger Exp */
 
@@ -117,10 +117,10 @@
 #include <sys/signalvar.h>
 #include <sys/vnode.h>
 
-#include <vm/vm.h>
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
 #else
+#include <vm/vm.h>
 #include <vm/vm_kern.h>
 #include <vm/pmap.h>
 #include <vm/vm_extern.h>
