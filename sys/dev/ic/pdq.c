@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.24 1998/09/28 20:37:12 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.25 1999/09/19 22:02:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -1244,7 +1244,11 @@ pdq_stop(
     pdq_do_port_control(csrs, PDQ_PCTL_CONSUMER_BLOCK);
 
     PDQ_CSR_WRITE(csrs, csr_port_data_b, 0);
+#if !defined(BYTE_ORDER) || BYTE_ORDER == LITTLE_ENDIAN
     PDQ_CSR_WRITE(csrs, csr_port_data_a, pdq->pdq_pa_descriptor_block | PDQ_DMA_INIT_LW_BSWAP_DATA);
+#else
+    PDQ_CSR_WRITE(csrs, csr_port_data_a, pdq->pdq_pa_descriptor_block | PDQ_DMA_INIT_LW_BSWAP_LITERAL);
+#endif
     pdq_do_port_control(csrs, PDQ_PCTL_DMA_INIT);
 
     for (cnt = 0; cnt < 1000; cnt++) {
