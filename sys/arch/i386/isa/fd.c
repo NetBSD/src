@@ -158,7 +158,7 @@ fdattach(struct isa_device *dev)
 	
 	/* is there a unit? */
 	if ((fdt & 0xf0) == RTCFDT_NONE) {
-		/*printf("fd%d at fdc%d slave %d: <no drive>\n",
+		/*printf("fd%d at fdc%d targ %d: <no drive>\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);*/
 		return 0;
 	}
@@ -176,32 +176,32 @@ fdattach(struct isa_device *dev)
 
 	switch(fdt & 0xf0) {
 	case RTCFDT_NONE:
-		printf("fd%d at fdc%d slave %d: CMOS nonexistant device\n",
+		printf("fd%d at fdc%d targ %d: CMOS nonexistant device\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
 		fd_unit[dev->id_unit].type = 0;
 		break;
 	case RTCFDT_12M:
-		printf("fd%d at fdc%d slave %d: 1.2MB 80 cyl, 2 head, 15 sec\n",
+		printf("fd%d at fdc%d targ %d: 1.2MB 80 cyl, 2 head, 15 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
 		fd_unit[dev->id_unit].type = 2;
 		break;
 	case RTCFDT_144M:
-		printf("fd%d at fdc%d slave %d: 1.44MB 80 cyl, 2 head, 18 sec\n",
+		printf("fd%d at fdc%d targ %d: 1.44MB 80 cyl, 2 head, 18 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
 		fd_unit[dev->id_unit].type = 1;
 		break;
 	case RTCFDT_360K:
-		printf("fd%d at fdc%d slave %d: 360KB 40 cyl, 2 head, 9 sec\n",
+		printf("fd%d at fdc%d targ %d: 360KB 40 cyl, 2 head, 9 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
 		fd_unit[dev->id_unit].type = 4;
 		break;
 	case RTCFDT_720K:
-		printf("fd%d at fdc%d slave %d: 720KB 80 cyl, 2 head, 9 sec\n",
+		printf("fd%d at fdc%d targ %d: 720KB 80 cyl, 2 head, 9 sec\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid);
 		fd_unit[dev->id_unit].type = 5;
 		break;
 	default:
-		printf("fd%d at fdc%d slave %d: CMOS unknown device 0x%x\n",
+		printf("fd%d at fdc%d targ %d: CMOS unknown device 0x%x\n",
 			dev->id_unit, dev->id_masunit, dev->id_physid,
 			fdt & 0xf0);
 		fd_unit[dev->id_unit].type = 0;
