@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb_rnd.c,v 1.1 2000/10/27 22:49:21 thorpej Exp $	*/
+/*	$NetBSD: pchb_rnd.c,v 1.2 2000/10/28 04:58:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff
@@ -164,7 +164,7 @@ pchb_rnd_callout(void *v)
 	s = splhigh();
 	while ((bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_RNGST) &
 	    I82802_RNG_RNGST_DATAV) == 0)
-		/* spin */
+		; /* spin */
 	reg8 = bus_space_read_1(sc->sc_st, sc->sc_sh, I82802_RNG_DATA);
 
 	if (sc->sc_rnd_i--) {
