@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.110.2.1 2001/07/10 13:45:49 lukem Exp $
+	$NetBSD: syscalls.master,v 1.110.2.2 2002/06/07 08:22:36 jdolecek Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -652,6 +652,6 @@
 ;
 340	STD		{ int sys_kqueue(void); }
 341	STD		{ int sys_kevent(int fd, \
-			    const struct kevent *changelist, int nchanges, \
-			    struct kevent *eventlist, int nevents, \
+			    const struct kevent *changelist, size_t nchanges, \
+			    struct kevent *eventlist, size_t nevents, \
 			    const struct timespec *timeout); }

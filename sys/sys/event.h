@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.1.1.1.2.5 2002/04/09 06:19:51 jdolecek Exp $	*/
+/*	$NetBSD: event.h,v 1.1.1.1.2.6 2002/06/07 08:22:37 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -209,8 +209,8 @@ struct timespec;
 __BEGIN_DECLS
 #if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	kqueue __P((void));
-int	kevent __P((int kq, const struct kevent *changelist, int nchanges,
-		    struct kevent *eventlist, int nevents,
+int	kevent __P((int kq, const struct kevent *changelist, size_t nchanges,
+		    struct kevent *eventlist, size_t nevents,
 		    const struct timespec *timeout));
 #endif /* !_POSIX_C_SOURCE */
 __END_DECLS
