@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.12 1999/11/12 18:13:00 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.13 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -190,12 +190,18 @@ void	mii_tick __P((struct mii_data *));
 void	mii_pollstat __P((struct mii_data *));
 void	mii_down __P((struct mii_data *));
 void	mii_phy_probe __P((struct device *, struct mii_data *, int, int, int));
+void	mii_phy_activate __P((struct mii_data *, enum devact, int, int));
+void	mii_phy_detach __P((struct mii_data *, int, int));
 void	mii_add_media __P((struct mii_softc *));
+void	mii_delete_media __P((struct mii_softc *));
 
 void	mii_phy_setmedia __P((struct mii_softc *));
 int	mii_phy_auto __P((struct mii_softc *, int));
 void	mii_phy_reset __P((struct mii_softc *));
 void	mii_phy_down __P((struct mii_softc *));
+
+int	mii_activate __P((struct device *, enum devact));
+int	mii_detach __P((struct device *, int));
 
 void	ukphy_status __P((struct mii_softc *));
 #endif /* _KERNEL */

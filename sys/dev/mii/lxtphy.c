@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.14 1999/12/21 10:47:00 pk Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.15 2000/01/27 16:44:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -92,7 +92,8 @@ int	lxtphymatch __P((struct device *, struct cfdata *, void *));
 void	lxtphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach lxtphy_ca = {
-	sizeof(struct mii_softc), lxtphymatch, lxtphyattach
+	sizeof(struct mii_softc), lxtphymatch, lxtphyattach, mii_detach,
+	    mii_activate
 };
 
 int	lxtphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -150,6 +151,9 @@ lxtphy_service(sc, mii, cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
+
+	if ((sc->mii_dev.dv_flags & DVF_ACTIVE) == 0)
+		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:
