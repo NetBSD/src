@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.1 1995/07/08 21:30:44 pk Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.2 1995/09/03 22:26:04 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -109,9 +109,9 @@ static int	ncr5380_data_transfer __P((volatile sci_regmap_t *, int,
 static int	ncr5380_dorequest __P((struct ncr5380_softc *, int, int,
 				       u_char *, int, char *, int, int *));
 
-static int	ncr5380_generic __P((int, int, int, struct scsi_generic *,
+static int	ncr5380_generic __P((void *, int, int, struct scsi_generic *,
 				     int, void *, int));
-static int	ncr5380_group0 __P((int, int, int, int, int, int,
+static int	ncr5380_group0 __P((void *, int, int, int, int, int,
 				    int, caddr_t, int));
 
 
