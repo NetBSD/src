@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.68 2002/08/26 07:38:34 itojun Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.69 2002/08/26 22:52:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.68 2002/08/26 07:38:34 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.69 2002/08/26 22:52:02 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -588,6 +588,9 @@ SIP_DECL(check_64bit)(const struct pci_attach_args *pa)
 		/* Accton EN1407-T, Planex GN-1000TE */
 		{ 0x1113,	0x1407 },
 
+		/* Netgear GA-621 */
+		{ 0x1385,	0x621a },
+
 		{ 0, 0}
 	};
 	pcireg_t subsys;
@@ -860,6 +863,8 @@ SIP_DECL(attach)(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 		return;
 	}
+
+	sc->sc_gpior = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_GPIOR);
 
 	reg = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG);
 	if (reg & CFG_PCI64_DET) {
@@ -2912,7 +2917,7 @@ SIP_DECL(dp83820_mii_readreg)(struct device *self, int phy, int reg)
 			 * negotiation, so hard-code this bit in the
 			 * result.
 			 */
-			rv |= BMSR_ANEG | BMSR_EXTCAP;
+			rv |= BMSR_ANEG | BMSR_EXTSTAT;
 		}
 
 		return (rv);
@@ -3251,9 +3256,6 @@ SIP_DECL(dp83820_read_macaddr)(struct sip_softc *sc,
 	enaddr[3] = eeprom_data[SIP_DP83820_EEPROM_PMATCH1 / 2] >> 8;
 	enaddr[4] = eeprom_data[SIP_DP83820_EEPROM_PMATCH0 / 2] & 0xff;
 	enaddr[5] = eeprom_data[SIP_DP83820_EEPROM_PMATCH0 / 2] >> 8;
-
-	/* Get the GPIOR bits. */
-	sc->sc_gpior = eeprom_data[0x04];
 }
 #else /* ! DP83820 */
 void
