@@ -1,4 +1,4 @@
-/*	$NetBSD: apbusvar.h,v 1.3 2000/10/12 03:12:01 onoe Exp $	*/
+/*	$NetBSD: apbusvar.h,v 1.4 2003/05/10 10:20:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -43,7 +43,7 @@ void *apbus_device_to_hwaddr __P((struct apbus_dev *));
 struct apbus_dev *apbus_lookupdev __P((char *));
 void apdevice_dump __P((struct apbus_dev *));
 void apbus_intr_init __P((void));
-int apbus_intr_call __P((int, int));
+int apbus_intr_dispatch __P((int, int));
 void *apbus_intr_establish __P((int, int, int, int (*)(void *), void *,
 				char *, int));
 struct newsmips_bus_dma_tag *apbus_dmatag_init

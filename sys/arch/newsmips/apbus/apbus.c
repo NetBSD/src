@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.15 2003/05/10 09:46:24 tsutsui Exp $	*/
+/*	$NetBSD: apbus.c,v 1.16 2003/05/10 10:19:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -193,7 +193,7 @@ apbus_wbflush()
  * called by hardware interrupt routine
  */
 int
-apbus_intr_call(level, stat)
+apbus_intr_dispatch(level, stat)
 	int level;
 	int stat;
 {
