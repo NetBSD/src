@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.129.4.4 2002/10/24 09:34:29 lukem Exp $
+# $NetBSD: GENERIC,v 1.129.4.5 2003/06/19 11:16:05 grant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.129.4.4 $"
+#ident 		"GENERIC-$Revision: 1.129.4.5 $"
 
 maxusers	32
 
@@ -177,6 +177,7 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 #options 	OFB_ENABLE_CACHE	# Speed up console
 pciide*	at pci? dev ? function ?
+wdc*	at pci? dev ? function ?	# Kauai ATA
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 #gm*	at pci? dev ? function ?	# gmac ethernet (old)
 gem*	at pci? dev ? function ?	# gmac ethernet
