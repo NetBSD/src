@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.81 1996/04/29 20:03:24 christos Exp $	*/
+/*	$NetBSD: isa.c,v 1.82 1996/05/05 01:14:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -84,6 +84,13 @@ isaattach(parent, self, aux)
 	sc->sc_bc = iba->iba_bc;
 	sc->sc_ic = iba->iba_ic;
 
+	/*
+	 * Map port 0x84, which causes a 2.5us delay when read.
+	 * We do this now, since several drivers need it.
+	 */
+	if (bus_io_map(sc->sc_bc, 0x84, 1, &sc->sc_delayioh))
+		panic("isaattach: can't map `delay port'");	/* XXX */
+
 	TAILQ_INIT(&sc->sc_subdevs);
 	config_scan(isascan, self);
 }
@@ -131,6 +138,7 @@ isascan(parent, match)
 	ia.ia_msize = cf->cf_loc[3];
 	ia.ia_irq = cf->cf_loc[4] == 2 ? 9 : cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
+	ia.ia_delayioh = sc->sc_delayioh;
 
 	if ((*cf->cf_attach->ca_match)(parent, dev, &ia) > 0)
 		config_attach(parent, dev, &ia, isaprint);
