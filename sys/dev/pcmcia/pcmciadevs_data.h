@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.68 2000/01/23 23:56:58 chopps Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.69 2000/01/25 01:17:41 sommerfeld Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.67 2000/01/23 23:55:45 chopps Exp 
+ *	NetBSD: pcmciadevs,v 1.68 2000/01/25 01:15:06 sommerfeld Exp 
  */
 
 /*-
@@ -477,6 +477,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Bay Networks",
 	    "BayStack 650 Wireless LAN"	},
+	},
+	{
+	    PCMCIA_VENDOR_BAY, PCMCIA_PRODUCT_BAY_STACK_660,
+	    PCMCIA_CIS_BAY_STACK_660,
+	    0,
+	    "Bay Networks",
+	    "BayStack 660 Wireless LAN"	},
 	},
 	{
 	    PCMCIA_VENDOR_RAYTHEON, PCMCIA_PRODUCT_RAYTHEON_WLAN,
