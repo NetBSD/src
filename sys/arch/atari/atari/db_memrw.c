@@ -1,7 +1,8 @@
-/*	$NetBSD: db_memrw.c,v 1.6 1996/10/13 04:10:38 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.7 1996/10/25 19:58:42 leo Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
+ * Copyright (c) 1996 Gordon W. Ross
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,52 +30,41 @@
 
 /*
  * Interface to the debugger for virtual memory read/write.
+ * This file is shared by DDB and KGDB, and must work even
+ * when only KGDB is included (thus no db_printf calls).
+ *
  * To write in the text segment, we have to first make
  * the page writable, do the write, then restore the PTE.
- * For reads, validate address first to avoid MMU trap.
+ * For writes outside the text segment, and all reads,
+ * just do the access -- if it causes a fault, the debugger
+ * will recover with a longjmp to an appropriate place.
  *
- * Note the special handling for 2/4 byte sizes. This is done to make
- * it work sensibly for device registers.
+ * ALERT!  If you want to access device registers with a
+ * specific size, then the read/write functions have to
+ * make sure to do the correct sized pointer access.
+ *
+ * Modified from sun3 version for hp300 (and probably other m68ks, too)
+ * by Jason R. Thorpe <thorpej@NetBSD.ORG>.
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
 
-#include <machine/db_machdep.h>
-#include <ddb/db_access.h>
-#include <ddb/db_output.h>
-
 #include <machine/pte.h>
+#include <machine/db_machdep.h>
 #include <machine/cpu.h>
 
-static int	db_check __P((char *, u_int));
-static void	db_write_text __P((u_int8_t *, u_int8_t));
+#include <ddb/db_access.h>
 
-/*
- * Check if access is allowed to 'addr'. Mask should contain
- * PG_V for read access, PV_V|PG_RO for write access.
- */
-static int
-db_check(addr, mask)
-	char	*addr;
-	u_int	mask;
-{
-	u_int	*pte;
+static void	db_write_text __P((vm_offset_t, size_t, char *));
 
-	pte  = kvtopte((vm_offset_t)addr);
-
-	if ((*pte & mask) != PG_V) {
-		db_printf(" address 0x%p not a valid page\n", addr);
-		return 0;
-	}
-	return 1;
-}
-	
 /*
  * Read bytes from kernel address space for debugger.
- * It does not matter if this is slow. -gwr
+ * This used to check for valid PTEs, but now that
+ * traps in DDB work correctly, "Just Do It!"
  */
 void
 db_read_bytes(addr, size, data)
@@ -82,87 +72,145 @@ db_read_bytes(addr, size, data)
 	register size_t	size;
 	register char	*data;
 {
-	u_int8_t	*src, *dst, *limit;
+	register char	*src = (char*)addr;
 
-	src   = (u_int8_t *)addr;
-	dst   = (u_int8_t *)data;
-	limit = src + size;
-
-	if (size == 2 || size == 4) {
-		if(db_check(src, PG_V) && db_check(limit, PG_V)) {
-			if (size == 2)
-				*(u_int16_t*)data = *(u_int16_t*)addr;
-			else *(u_int32_t*)data = *(u_int32_t*)addr;
-			return;
-		}
+	if (size == 4) {
+		*((int*)data) = *((int*)src);
+		return;
 	}
 
-	while (src < limit) {
-		*dst = db_check(src, PG_V) ? *src : 0;
-		dst++;
-		src++;
+	if (size == 2) {
+		*((short*)data) = *((short*)src);
+		return;
+	}
+
+	while (size > 0) {
+		--size;
+		*data++ = *src++;
 	}
 }
 
 /*
- * Write one byte somewhere in kernel text.
- * It does not matter if this is slow. -gwr
+ * Write bytes somewhere in kernel text.
+ * Makes text page writable temporarily.
+ * We're probably a little to cache-paranoid.
  */
 static void
-db_write_text(dst, ch)
-	u_int8_t *dst;
-	u_int8_t ch;
+db_write_text(addr, size, data)
+	vm_offset_t addr;
+	register size_t size;
+	register char *data;
 {
-	u_int *pte, oldpte;
+	register char *dst, *odst;
+	pt_entry_t *pte, oldpte, tmppte;
+	vm_offset_t pgva;
+	int limit;
 
-	pte = kvtopte((vm_offset_t)dst);
-	oldpte = *pte;
-	if ((oldpte & PG_V) == 0) {
-		db_printf(" address 0x%p not a valid page\n", dst);
+	if (size == 0)
 		return;
-	}
 
-/*printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);*/
-	*pte &= ~PG_RO;
-	TBIS((vm_offset_t)dst);
+	dst = (char *)addr;
 
-	*dst = ch;
+	do {
+		/*
+		 * Get the VA for the page.
+		 */
+		pgva = atari_trunc_page((u_long)dst);
 
-	*pte = oldpte;
-	TBIS((vm_offset_t)dst);
-	cachectl (4, dst, 1);
+		/*
+		 * Save this destination address, for TLB
+		 * flush.
+		 */
+		odst = dst;
+
+		/*
+		 * Compute number of bytes that can be written
+		 * with this mapping and subtract it from the
+		 * total size.
+		 */
+		limit = NBPG - ((u_long)dst & PGOFSET);
+		if (limit > size)
+			limit = size;
+		size -= limit;
+
+#ifdef M68K_MMU_HP
+		/*
+		 * Flush the supervisor side of the VAC to
+		 * prevent a cache hit on the old, read-only PTE.
+		 * XXX Is this really necessary, or am I just
+		 * paranoid?
+		 */
+		if (ectype == EC_VIRT)
+			DCIS();
+#endif
+
+		/*
+		 * Make the page writable.  Note the mapping is
+		 * cache-inhibited to save hair.
+		 */
+		pte = kvtopte(pgva);
+		oldpte = *pte;
+
+		if ((oldpte & PG_V) == 0) {
+			printf(" address %p not a valid page\n", dst);
+			return;
+		}
+
+		tmppte = (oldpte & ~PG_RO) | PG_RW | PG_CI;
+		*pte = tmppte;
+		TBIS((vm_offset_t)odst);
+
+		/*
+		 * Page is now writable.  Do as much access as we
+		 * can in this page.
+		 */
+		for (; limit > 0; limit--)
+			*dst++ = *data++;
+
+		/*
+		 * Restore the old PTE.
+		 */
+		*pte = oldpte;
+		TBIS((vm_offset_t)odst);
+	} while (size != 0);
+
+	/*
+	 * Invalidate the instruction cache so our changes
+	 * take effect.
+	 */
+	ICIA();
 }
 
 /*
  * Write bytes to kernel address space for debugger.
  */
+extern char	kernel_text[], etext[];
 void
 db_write_bytes(addr, size, data)
 	vm_offset_t	addr;
-	size_t		size;
-	char		*data;
+	register size_t	size;
+	register char	*data;
 {
-	extern char	etext[] ;
-	u_int8_t	*dst, *src, *limit;
+	register char	*dst = (char *)addr;
 
-	dst   = (u_int8_t *)addr;
-	src   = (u_int8_t *)data;
-	limit = dst + size;
-
-	if ((char*)dst >= etext && (size == 2 || size == 4)) {
-		if(db_check(dst, PG_V|PG_RO) && db_check(limit, PG_V|PG_RO)) {
-			if (size == 2)
-				*(u_int16_t*)addr = *(u_int16_t*)data;
-			else *(u_int32_t*)addr = *(u_int32_t*)data;
-			return;
-		}
+	/* If any part is in kernel text, use db_write_text() */
+	if ((dst < etext) && ((dst + size) > kernel_text)) {
+		db_write_text(addr, size, data);
+		return;
 	}
-	while (dst < limit) {
-		if ((char*)dst < etext)	/* kernel text starts at 0 */
-			db_write_text(dst, *src);
-		else if (db_check(dst, PG_V|PG_RO))
-				*dst = *src;
-		dst++;
-		src++;
+
+	if (size == 4) {
+		*((int*)dst) = *((int*)data);
+		return;
+	}
+
+	if (size == 2) {
+		*((short*)dst) = *((short*)data);
+		return;
+	}
+
+	while (size > 0) {
+		--size;
+		*dst++ = *data++;
 	}
 }
