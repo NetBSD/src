@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_i386.c,v 1.11 1997/08/15 02:21:59 mikel Exp $	*/
+/*	$NetBSD: kvm_i386.c,v 1.12 1998/02/18 01:13:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,19 +42,20 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_i386.c,v 1.11 1997/08/15 02:21:59 mikel Exp $");
+__RCSID("$NetBSD: kvm_i386.c,v 1.12 1998/02/18 01:13:08 thorpej Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
- * i386 machine dependent routines for kvm.  Hopefully, the forthcoming 
- * vm code will one day obsolete this module.
+ * i386 machine dependent routines for kvm.
  */
 
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/kcore.h>
+#include <machine/kcore.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <nlist.h>
@@ -75,72 +76,22 @@ __RCSID("$NetBSD: kvm_i386.c,v 1.11 1997/08/15 02:21:59 mikel Exp $");
 #define	ptob(x)		((caddr_t)((x) << PGSHIFT))	/* XXX */
 #endif
 
-struct vmstate {
-	pd_entry_t *PTD;
-};
-
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
 {
-	if (kd->vmst != 0) {
-		if (kd->vmst->PTD != 0)
-			free(kd->vmst->PTD);
 
+	/* Not actually used for anything right now, but safe. */
+	if (kd->vmst != 0)
 		free(kd->vmst);
-	}
 }
 
 int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	struct vmstate *vm;
-	struct nlist nlist[2];
-	u_long pa;
-
-	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
-	if (vm == 0)
-		return (-1);
-	kd->vmst = vm;
-
-	nlist[0].n_name = "_PTDpaddr";
-	nlist[1].n_name = 0;
-
-	if (kvm_nlist(kd, nlist) != 0) {
-		_kvm_err(kd, kd->program, "bad namelist");
-		return (-1);
-	}
-
-	vm->PTD = 0;
-
-	if (lseek(kd->pmfd, (off_t)(nlist[0].n_value - KERNBASE), 0) == -1 &&
-	    errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, &pa, sizeof pa) != sizeof pa) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
-		goto invalid;
-	}
-
-	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
-
-	if (lseek(kd->pmfd, (off_t)pa, 0) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, vm->PTD, NBPG) != NBPG) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
-		goto invalid;
-	}
 
 	return (0);
-
-invalid:
-	if (vm->PTD != 0)
-		free(vm->PTD);
-	return (-1);
 }
 
 /*
@@ -152,50 +103,86 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	struct vmstate *vm;
-	u_long offset;
-	u_long pte_pa;
+	cpu_kcore_hdr_t *cpu_kh;
+	int page_off;
+	pd_entry_t pde;
 	pt_entry_t pte;
+	u_long pde_pa, pte_pa;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return(0);
+		return (0);
 	}
 
-	vm = kd->vmst;
-	offset = va & PGOFSET;
+	cpu_kh = kd->cpu_data;
+	page_off = va & PGOFSET;
 
-        /*
-         * If we are initializing (kernel page table descriptor pointer
-	 * not yet set) * then return pa == va to avoid infinite recursion.
-         */
-        if (vm->PTD == 0) {
-                *pa = va;
-                return (NBPG - offset);
-        }
-	if ((vm->PTD[pdei(va)] & PG_V) == 0)
-		goto invalid;
-
-	pte_pa = (vm->PTD[pdei(va)] & PG_FRAME) +
-	    (ptei(va) * sizeof(pt_entry_t));
-	/* XXX READ PHYSICAL XXX */
-	{
-		if (lseek(kd->pmfd, (off_t)pte_pa, 0) == -1 && errno != 0) {
-			_kvm_syserr(kd, kd->program, "kvm_lseek");
-			goto invalid;
-		}
-		if (read(kd->pmfd, &pte, sizeof pte) != sizeof pte) {
-			_kvm_syserr(kd, kd->program, "kvm_read");
-			goto invalid;
-		}
+	/*
+	 * Find and read the page directory entry.
+	 */
+	pde_pa = cpu_kh->ptdpaddr + (pdei(va) * sizeof(pd_entry_t));
+	if (lseek(kd->pmfd, _kvm_pa2off(kd, pde_pa), SEEK_SET) == -1 ||
+	    read(kd->pmfd, (char *)&pde, sizeof(pde)) != sizeof(pde)) {
+		_kvm_syserr(kd, 0, "could not read PDE");
+		goto lose;
 	}
 
-	*pa = (pte & PG_FRAME) + offset;
-	return (NBPG - offset);
+	/*
+	 * Find and read the page table entry.
+	 */
+	if ((pde & PG_V) == 0) {
+		_kvm_err(kd, 0, "invalid translation (invalid PDE)");
+		goto lose;
+	}
+	pte_pa = (pde & PG_FRAME) + (ptei(va) * sizeof(pt_entry_t));
+	if (lseek(kd->pmfd, _kvm_pa2off(kd, pte_pa), SEEK_SET) == -1 ||
+	    read(kd->pmfd, (char *)&pte, sizeof(pte)) != sizeof(pte)) {
+		_kvm_syserr(kd, 0, "could not read PTE");
+		goto lose;
+	}
 
-invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
+	/*
+	 * Validate the PTE and return the physical address.
+	 */
+	if ((pte & PG_V) == 0) {
+		_kvm_err(kd, 0, "invalid translation (invalid PTE)");
+		goto lose;
+	}
+	*pa = (pte & PG_FRAME) + page_off;
+	return (NBPG - page_off);
+
+ lose:
+	*pa = -1;
 	return (0);
+}
+
+/*
+ * Translate a physical address to a file-offset in the crash dump.
+ */
+off_t
+_kvm_pa2off(kd, pa)
+	kvm_t *kd;
+	u_long pa;
+{
+	cpu_kcore_hdr_t *cpu_kh;
+	phys_ram_seg_t *ramsegs;  
+	off_t off;
+	int i;
+
+	cpu_kh = kd->cpu_data;
+	ramsegs = (phys_ram_seg_t *)((char *)cpu_kh + ALIGN(sizeof *cpu_kh));
+
+	off = 0;
+	for (i = 0; i < cpu_kh->nmemsegs; i++) {
+		if (pa >= ramsegs[i].start &&
+		    (pa - ramsegs[i].start) < ramsegs[i].size) {
+			off += (pa - ramsegs[i].start);
+			break;
+		}
+		off += ramsegs[i].size;
+	}
+
+	return (kd->dump_off + off);
 }
 
 /*
