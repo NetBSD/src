@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC.MPACPI,v 1.2 2004/07/24 15:30:34 tron Exp $
+#	$NetBSD: GENERIC.MPACPI,v 1.3 2004/07/31 17:35:19 mrg Exp $
 #
 #	GENERIC.MPACPI -- Generic, plus ACPI Multiprocessor support
 #
@@ -8,7 +8,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2 $"
+#ident 		"GENERIC-$Revision: 1.3 $"
 
 maxusers	32		# estimated number of users
 
@@ -361,7 +361,8 @@ pci*	at ppb? bus ?
 elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 
 # PCI bridges
-#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog support
+#ichlpcib* at pci? dev ? function ?	# Intel ICH PCI-ISA w/ watchdog and
+					# SpeedStep support
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 #pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
