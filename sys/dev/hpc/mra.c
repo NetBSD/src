@@ -1,4 +1,4 @@
-/*	$NetBSD: mra.c,v 1.2 2001/06/04 18:59:32 uch Exp $	*/
+/*	$NetBSD: mra.c,v 1.3 2001/11/13 12:47:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -26,6 +26,9 @@
  * SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mra.c,v 1.3 2001/11/13 12:47:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
