@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.329 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.330 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -34,7 +34,7 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	share/mk: Deprecate AINC in favour of AFLAGS.  [lukem 20040418]
 	sysinst: use /etc/postinstall to update /etc (etc) instead of just
 		saving /etc to /etc/old [dsl 20040418]
-	sysctl(8): Add "vfs.generic.fstypes" node to display the currently 
+	sysctl(8): Add "vfs.generic.fstypes" node to display the currently
 		available file system types.  [lukem 20040419]
 	locate.conf(5): "ignorefs type" appends to the default list of
 		types rather than overriding it.  [lukem 20040419]
@@ -74,3 +74,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	prep: Add IBM RS/6000 40P 7020-001 platform support. [kleink 20040626]
 	libcrypt: Add support for SHA1 hashed (hmac_sha1 actually) passwords.
 		[sjg 20040701]
+	libc: Add strcasestr(3), case insensitive version of strstr(3).
+		[junyoung 20040703]
