@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.119 2004/04/22 07:54:48 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.120 2004/04/24 17:58:34 jdc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -653,6 +653,24 @@ sys/arch/sparc/sparc/cache.c			1.83
 	For now, disable Hypersparc instruction cache on MP machines.
 	[pk, ticket #97]
 
+src/sys/net/if_spppsubr.c			1.76
+
+	Be more paranoid about data a non-root user may query.
+	Fixes PR#25099 by Christian Biere.
+	[martin, ticket #98]
+
+src/usr.bin/vi/common/options.c			1.10
+
+	Fix copying and freeing of options.  Patch from yamt@ in PR#25050.
+	[aymeric, ticket #99]
+
+src/usr.bin/vi/common/exf.c			1.12
+src/usr.bin/vi/ex/version.h			1.14
+
+	Don't fail if asked to recover a file for which there is no recovery
+	file.  Just continue.
+	Bump version: failed recovery doesn't prevent editing anymore.
+	[aymeric, ticket #100]
 
 games/mille/move.c				1.14
 
@@ -1204,4 +1222,25 @@ sbin/sysctl/sysctl.c				1.92
 	processing a -f argument.
 	Addresses PR bin/25115.
 	[atatat, ticket #174]
+
+src/etc/MAKEDEV.awk				1.15
+
+	The character position passed to substr() should have an origin of
+	1.  This fixes a bug that prevented MAKEDEV working with some awk
+	implementations (e.g., mawk 1.3.3).
+	[enami, ticket #175]
+
+src/x11/Xserver/xinput/Makefile			1.9
+
+	XINPUT is also needed by vax.  This fixes the vax build failure in
+	src/x11/Xserver/xinput.
+	[mhitch, ticket #176]
+
+src/x11/Xserver/Makefile.common			1.17
+
+	The Xprt build needs cfb, and the vax Xserver will soon need the cfb
+	stuff, so enable building cfb.  Fixes the Xprt build failure on vax
+	when building from src/x11.
+
+	[mhitch, ticket #177]
 
