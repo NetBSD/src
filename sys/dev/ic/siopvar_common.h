@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar_common.h,v 1.3 2000/06/12 20:13:41 bouyer Exp $	*/
+/*	$NetBSD: siopvar_common.h,v 1.3.2.1 2000/07/24 16:51:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -140,3 +140,4 @@ int	siop_ioctl __P((struct scsipi_link *, u_long,
 		caddr_t, int, struct proc *));
 void 	siop_sdp __P((struct siop_cmd *));
 void	siop_clearfifo __P((struct siop_softc *));
+void	siop_resetbus __P((struct siop_softc *));
