@@ -1,4 +1,4 @@
-/*	$NetBSD: getoldopt.c,v 1.14 2002/01/31 22:43:35 tv Exp $	*/
+/*	$NetBSD: getoldopt.c,v 1.14.2.1 2004/04/07 06:57:54 jmc Exp $	*/
 
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
@@ -9,14 +9,19 @@
  * in the Public Domain for your edification and enjoyment.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: getoldopt.c,v 1.14 2002/01/31 22:43:35 tv Exp $");
+#if !defined(lint)
+__RCSID("$NetBSD: getoldopt.c,v 1.14.2.1 2004/04/07 06:57:54 jmc Exp $");
 #endif /* not lint */
 
 #include <getopt.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include "pax.h"
@@ -42,16 +47,22 @@ getoldopt(int argc, char **argv, const char *optstring,
 			optind = 2;
 	}
 
-	if (use_getopt)
-		return ((longopts != NULL) ?
-			getopt_long(argc, argv, optstring, longopts, idx) :
-			getopt(argc, argv, optstring));
-
-	c = *key++;
-	if (c == '\0') {
-		key--;
-		return -1;
+	if (!use_getopt) {
+		c = *key++;
+		if (c == '\0') {
+			key--;
+			use_getopt = 1;
+		}
 	}
+	if (use_getopt) {
+		if (longopts != NULL) {
+			return getopt_long(argc, argv, optstring,
+			    longopts, idx);
+		} else {
+			return getopt(argc, argv, optstring);
+		}
+	}
+
 	place = strchr(optstring, c);
 
 	if (place == NULL || c == ':') {
