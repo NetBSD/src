@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.5 1998/07/21 07:01:55 hubertf Exp $	*/
+/*	$NetBSD: monster.c,v 1.6 1998/09/11 14:07:51 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.5 1998/07/21 07:01:55 hubertf Exp $");
+__RCSID("$NetBSD: monster.c,v 1.6 1998/09/11 14:07:51 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -868,6 +868,7 @@ aggravate()
 boolean
 mon_sees(monster, row, col)
 	object *monster;
+	int row, col;
 {
 	short rn, rdif, cdif, retval;
 
