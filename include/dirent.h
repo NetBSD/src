@@ -1,4 +1,4 @@
-/*	$NetBSD: dirent.h,v 1.18 2003/04/28 23:16:12 bjh21 Exp $	*/
+/*	$NetBSD: dirent.h,v 1.19 2003/04/29 23:08:13 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -51,15 +51,15 @@
 #define	d_ino		d_fileno	/* backward compatibility */
 #endif
 
-#if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-typedef void *	DIR;
-#else
+typedef struct _dirdesc DIR;
+
+#if defined(_NETBSD_SOURCE)
 
 /* definitions for library routines operating on directories. */
 #define	DIRBLKSIZ	1024
 
 /* structure describing an open directory. */
-typedef struct _dirdesc {
+struct _dirdesc {
 	int	dd_fd;		/* file descriptor associated with directory */
 	long	dd_loc;		/* offset in current buffer */
 	long	dd_size;	/* amount of data returned by getdents */
@@ -68,7 +68,7 @@ typedef struct _dirdesc {
 	off_t	dd_seek;	/* magic cookie returned by getdents */
 	long	dd_rewind;	/* magic cookie for rewinding */
 	int	dd_flags;	/* flags for readdir */
-} DIR;
+};
 
 #define	dirfd(dirp)	((dirp)->dd_fd)
 
@@ -80,7 +80,7 @@ typedef struct _dirdesc {
 
 #include <sys/null.h>
 
-#endif /* _POSIX_C_SOURCE || _XOPEN_SOURCE */
+#endif
 
 #ifndef _KERNEL
 
