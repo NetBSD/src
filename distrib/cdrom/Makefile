@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2002/10/03 05:26:49 lukem Exp $
+# $NetBSD: Makefile,v 1.12 2002/10/03 07:28:33 lukem Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -73,7 +73,7 @@ MKISOFS?=	/usr/pkg/bin/mkisofs
 MKSUNBOOTCDDIR!=cd ${NETBSDSRCDIR}/distrib/utils/mksunbootcd && ${PRINTOBJDIR}
 MKSUNBOOTCD?=	${MKSUNBOOTCDDIR}/mksunbootcd
 RSYNC?=		/usr/pkg/bin/rsync
-ALPHA_IBOOT?=	${INSTALLBOOT} -m alpha -o sunsum
+ALPHA_IBOOT?=	${INSTALLBOOT} -m alpha -o sunsum,append
 PMAX_IBOOT?=	${INSTALLBOOT} -m pmax -o sunsum,append
 VAX_IBOOT?=	${INSTALLBOOT} -m vax -o sunsum,append
 .if !empty(ALL_PORTS:Mmacppc)
