@@ -1,13 +1,14 @@
 #
 # SMALL 532 Distribution - 
 #
-#	$Id: SMALL_NS,v 1.1.1.1 1993/09/09 23:53:45 phil Exp $
+#	$Id: SMALL_NS,v 1.2 1993/09/13 07:23:46 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"
 ident		SMALL_NS
 timezone	8 dst
 maxusers	10
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -36,7 +37,3 @@ pseudo-device	loop
 pseudo-device	ether
 pseudo-device	sl	1
 pseudo-device	pty	4
-
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager

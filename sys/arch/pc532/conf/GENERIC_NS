@@ -1,13 +1,14 @@
 #
 # GENERIC_NS -- Generic 532 machine -- distribution
 #
-#	$Id: GENERIC_NS,v 1.1.1.1 1993/09/09 23:53:45 phil Exp $
+#	$Id: GENERIC_NS,v 1.2 1993/09/13 07:23:45 phil Exp $
 #
 machine		"pc532"
 cpu		"ns532"
 ident		GENERIC_NS
 timezone	8 dst
 maxusers	20
+options		SWAPPAGER,VNODEPAGER,DEVPAGER
 options		INET,NFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
@@ -37,6 +38,3 @@ pseudo-device	sl	2
 pseudo-device	log
 pseudo-device	pty	8
 
-pseudo-device	swappager
-pseudo-device	vnodepager
-pseudo-device	devpager
