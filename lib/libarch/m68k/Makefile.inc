@@ -1,7 +1,8 @@
-# $NetBSD: Makefile.inc,v 1.4 1999/06/09 05:43:48 simonb Exp $
+# $NetBSD: Makefile.inc,v 1.5 1999/06/10 00:49:52 simonb Exp $
 
+.if (${MACHINE_ARCH} == "m68k")
 SRCS=	m68k_sync_icache.S
-MAN=	m68k_sync_icache.2
 MKLINT=no
+.endif
 
-.include <bsd.lib.mk>
+MAN+=	m68k_sync_icache.2
