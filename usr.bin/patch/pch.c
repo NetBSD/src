@@ -1,7 +1,7 @@
-/*	$NetBSD: pch.c,v 1.9 2002/03/11 18:47:51 kristerw Exp $	*/
+/*	$NetBSD: pch.c,v 1.10 2002/03/15 19:44:54 kristerw Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.9 2002/03/11 18:47:51 kristerw Exp $");
+__RCSID("$NetBSD: pch.c,v 1.10 2002/03/15 19:44:54 kristerw Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -43,368 +43,396 @@ static void malformed(void);
 void
 re_patch(void)
 {
-    p_first = Nulline;
-    p_newfirst = Nulline;
-    p_ptrn_lines = Nulline;
-    p_repl_lines = Nulline;
-    p_end = -1;
-    p_max = Nulline;
-    p_indent = 0;
+	p_first = Nulline;
+	p_newfirst = Nulline;
+	p_ptrn_lines = Nulline;
+	p_repl_lines = Nulline;
+	p_end = -1;
+	p_max = Nulline;
+	p_indent = 0;
 }
 
-/* Open the patch file at the beginning of time. */
-
+/* 
+ * Open the patch file at the beginning of time.
+ */
 void
 open_patch_file(char *filename)
 {
-    if (filename == NULL || !*filename || strEQ(filename, "-")) {
-	pfp = fopen(TMPPATNAME, "w");
+	if (filename == NULL || !*filename || strEQ(filename, "-")) {
+		pfp = fopen(TMPPATNAME, "w");
+		if (pfp == NULL)
+			pfatal("can't create %s", TMPPATNAME);
+		while (fgets(buf, sizeof buf, stdin) != NULL)
+			fputs(buf, pfp);
+		Fclose(pfp);
+		filename = TMPPATNAME;
+	}
+	pfp = fopen(filename, "r");
 	if (pfp == NULL)
-	    pfatal("can't create %s", TMPPATNAME);
-	while (fgets(buf, sizeof buf, stdin) != NULL)
-	    fputs(buf, pfp);
-	Fclose(pfp);
-	filename = TMPPATNAME;
-    }
-    pfp = fopen(filename, "r");
-    if (pfp == NULL)
-	pfatal("patch file %s not found", filename);
-    Fstat(fileno(pfp), &filestat);
-    p_filesize = filestat.st_size;
-    next_intuit_at(0L,1L);			/* start at the beginning */
-    set_hunkmax();
+		pfatal("patch file %s not found", filename);
+	Fstat(fileno(pfp), &filestat);
+	p_filesize = filestat.st_size;
+	next_intuit_at(0L,1L);			/* start at the beginning */
+	set_hunkmax();
 }
 
-/* Make sure our dynamically realloced tables are malloced to begin with. */
-
+/*
+ * Make sure our dynamically realloced tables are malloced to begin with.
+ */
 void
 set_hunkmax(void)
 {
-    if (p_line == NULL)
-	p_line = malloc(hunkmax * sizeof(char *));
-    if (p_len == NULL)
-	p_len  = malloc(hunkmax * sizeof(short));
-    if (p_char == NULL)
-	p_char = malloc(hunkmax * sizeof(char));
+	if (p_line == NULL)
+		p_line = malloc(hunkmax * sizeof(char *));
+	if (p_len == NULL)
+		p_len  = malloc(hunkmax * sizeof(short));
+	if (p_char == NULL)
+		p_char = malloc(hunkmax * sizeof(char));
 }
 
-/* Enlarge the arrays containing the current hunk of patch. */
-
+/*
+ * Enlarge the arrays containing the current hunk of patch.
+ */
 void
 grow_hunkmax(void)
 {
-    hunkmax *= 2;
-    /* 
-     * Note that on most systems, only the p_line array ever gets fresh memory
-     * since p_len can move into p_line's old space, and p_char can move into
-     * p_len's old space.  Not on PDP-11's however.  But it doesn't matter.
-     */
-    assert(p_line != NULL && p_len != NULL && p_char != NULL);
-    p_line = realloc(p_line, hunkmax * sizeof(char *));
-    p_len  = realloc(p_len,  hunkmax * sizeof(short));
-    p_char = realloc(p_char, hunkmax * sizeof(char));
-    if (p_line != NULL && p_len != NULL && p_char != NULL)
-	return;
-    if (!using_plan_a)
-	fatal("out of memory\n");
-    out_of_mem = TRUE;		/* whatever is null will be allocated again */
+	hunkmax *= 2;
+	/* 
+	 * Note that on most systems, only the p_line array ever gets fresh
+	 * memory since p_len can move into p_line's old space, and p_char
+	 * can move into p_len's old space.  Not on PDP-11's however.  But
+	 * it doesn't matter.
+	 */
+	assert(p_line != NULL && p_len != NULL && p_char != NULL);
+	p_line = realloc(p_line, hunkmax * sizeof(char *));
+	p_len  = realloc(p_len,  hunkmax * sizeof(short));
+	p_char = realloc(p_char, hunkmax * sizeof(char));
+	if (p_line != NULL && p_len != NULL && p_char != NULL)
+		return;
+	if (!using_plan_a)
+		fatal("out of memory\n");
+	out_of_mem = TRUE;	/* whatever is null will be allocated again */
 				/* from within plan_a(), of all places */
 }
 
-/* True if the remainder of the patch file contains a diff of some sort. */
-
+/*
+ * True if the remainder of the patch file contains a diff of some sort.
+ */
 bool
 there_is_another_patch(void)
 {
-    if (p_base != 0L && p_base >= p_filesize) {
+	if (p_base != 0L && p_base >= p_filesize) {
+		if (verbose)
+			say("done\n");
+		return FALSE;
+	}
 	if (verbose)
-	    say("done\n");
-	return FALSE;
-    }
-    if (verbose)
-	say("Hmm...");
-    diff_type = intuit_diff_type();
-    if (!diff_type) {
-	if (p_base != 0L) {
-	    if (verbose)
-		say("  Ignoring the trailing garbage.\ndone\n");
+		say("Hmm...");
+	diff_type = intuit_diff_type();
+	if (!diff_type) {
+		if (p_base != 0L) {
+			if (verbose)
+				say("  Ignoring the trailing garbage.\ndone\n");
+		}
+		else
+			say("  I can't seem to find a patch in there anywhere.\n");
+		return FALSE;
 	}
-	else
-	    say("  I can't seem to find a patch in there anywhere.\n");
-	return FALSE;
-    }
-    if (verbose)
-	say("  %sooks like %s to me...\n",
-	    (p_base == 0L ? "L" : "The next patch l"),
-	    diff_type == UNI_DIFF ? "a unified diff" :
-	    diff_type == CONTEXT_DIFF ? "a context diff" :
-	    diff_type == NEW_CONTEXT_DIFF ? "a new-style context diff" :
-	    diff_type == NORMAL_DIFF ? "a normal diff" :
-	    "an ed script" );
-    if (p_indent && verbose)
-	say("(Patch is indented %d space%s.)\n", p_indent, p_indent==1?"":"s");
-    skip_to(p_start,p_sline);
-    while (filearg[0] == NULL) {
-	if (force || batch) {
-	    say("No file to patch.  Skipping...\n");
-	    filearg[0] = savestr(bestguess);
-	    skip_rest_of_patch = TRUE;
-	    return TRUE;
+	if (verbose)
+		say("  %sooks like %s to me...\n",
+		    (p_base == 0L ? "L" : "The next patch l"),
+		    diff_type == UNI_DIFF ? "a unified diff" :
+		    diff_type == CONTEXT_DIFF ? "a context diff" :
+		    diff_type == NEW_CONTEXT_DIFF ?
+		    "a new-style context diff" :
+		    diff_type == NORMAL_DIFF ? "a normal diff" :
+		    "an ed script" );
+	if (p_indent && verbose)
+		say("(Patch is indented %d space%s.)\n",
+		    p_indent, p_indent==1?"":"s");
+	skip_to(p_start,p_sline);
+	while (filearg[0] == NULL) {
+		if (force || batch) {
+			say("No file to patch.  Skipping...\n");
+			filearg[0] = savestr(bestguess);
+			skip_rest_of_patch = TRUE;
+			return TRUE;
+		}
+		ask("File to patch: ");
+		if (*buf != '\n') {
+			if (bestguess)
+				free(bestguess);
+			bestguess = savestr(buf);
+			filearg[0] = fetchname(buf, 0, FALSE);
+		}
+		if (filearg[0] == NULL) {
+			ask("No file found--skip this patch? [n] ");
+			if (*buf != 'y') {
+				continue;
+			}
+			if (verbose)
+				say("Skipping patch...\n");
+			filearg[0] = fetchname(bestguess, 0, TRUE);
+			skip_rest_of_patch = TRUE;
+			return TRUE;
+		}
 	}
-	ask("File to patch: ");
-	if (*buf != '\n') {
-	    if (bestguess)
-		free(bestguess);
-	    bestguess = savestr(buf);
-	    filearg[0] = fetchname(buf, 0, FALSE);
-	}
-	if (filearg[0] == NULL) {
-	    ask("No file found--skip this patch? [n] ");
-	    if (*buf != 'y') {
-		continue;
-	    }
-	    if (verbose)
-		say("Skipping patch...\n");
-	    filearg[0] = fetchname(bestguess, 0, TRUE);
-	    skip_rest_of_patch = TRUE;
-	    return TRUE;
-	}
-    }
-    return TRUE;
+	return TRUE;
 }
 
-/* Determine what kind of diff is in the remaining part of the patch file. */
-
+/*
+ * Determine what kind of diff is in the remaining part of the patch file.
+ */
 int
 intuit_diff_type(void)
 {
-    long this_line = 0;
-    long previous_line;
-    long first_command_line = -1;
-    long fcl_line = -1;
-    bool last_line_was_command = FALSE;
-    bool this_is_a_command = FALSE;
-    bool stars_last_line = FALSE;
-    bool stars_this_line = FALSE;
-    int indent;
-    char *s;
-    char *t;
-    char *indtmp = NULL;
-    char *oldtmp = NULL;
-    char *newtmp = NULL;
-    char *indname = NULL;
-    char *oldname = NULL;
-    char *newname = NULL;
-    int retval;
-    bool no_filearg = (filearg[0] == NULL);
+	long this_line = 0;
+	long previous_line;
+	long first_command_line = -1;
+	long fcl_line = -1;
+	bool last_line_was_command = FALSE;
+	bool this_is_a_command = FALSE;
+	bool stars_last_line = FALSE;
+	bool stars_this_line = FALSE;
+	int indent;
+	char *s;
+	char *t;
+	char *indtmp = NULL;
+	char *oldtmp = NULL;
+	char *newtmp = NULL;
+	char *indname = NULL;
+	char *oldname = NULL;
+	char *newname = NULL;
+	int retval;
+	bool no_filearg = (filearg[0] == NULL);
 
-    ok_to_create_file = FALSE;
-    old_file_is_dev_null = FALSE;
-    Fseek(pfp, p_base, 0);
-    p_input_line = p_bline - 1;
-    for (;;) {
-	previous_line = this_line;
-	last_line_was_command = this_is_a_command;
-	stars_last_line = stars_this_line;
-	this_line = ftell(pfp);
-	indent = 0;
-	p_input_line++;
-	if (fgets(buf, sizeof buf, pfp) == NULL) {
-	    if (first_command_line >= 0L) {
-					/* nothing but deletes!? */
-		p_start = first_command_line;
-		p_sline = fcl_line;
-		retval = ED_DIFF;
-		goto scan_exit;
-	    }
-	    else {
-		p_start = this_line;
-		p_sline = p_input_line;
-		retval = 0;
-		goto scan_exit;
-	    }
+	ok_to_create_file = FALSE;
+	old_file_is_dev_null = FALSE;
+	Fseek(pfp, p_base, 0);
+	p_input_line = p_bline - 1;
+	for (;;) {
+		previous_line = this_line;
+		last_line_was_command = this_is_a_command;
+		stars_last_line = stars_this_line;
+		this_line = ftell(pfp);
+		indent = 0;
+		p_input_line++;
+		if (fgets(buf, sizeof buf, pfp) == NULL) {
+			if (first_command_line >= 0L) {
+				/* nothing but deletes!? */
+				p_start = first_command_line;
+				p_sline = fcl_line;
+				retval = ED_DIFF;
+				goto scan_exit;
+			}
+			else {
+				p_start = this_line;
+				p_sline = p_input_line;
+				retval = 0;
+				goto scan_exit;
+			}
+		}
+		for (s = buf; *s == ' ' || *s == '\t' || *s == 'X'; s++) {
+			if (*s == '\t')
+				indent += 8 - (indent % 8);
+			else
+				indent++;
+		}
+		for (t=s; isdigit((unsigned char)*t) || *t == ','; t++) ; 
+		this_is_a_command = (isdigit((unsigned char)*s) &&
+				     (*t == 'd' || *t == 'c' || *t == 'a') );
+		if (first_command_line < 0L && this_is_a_command) { 
+			first_command_line = this_line;
+			fcl_line = p_input_line;
+			p_indent = indent;	/* assume this for now */
+		}
+		if (!stars_last_line && strnEQ(s, "*** ", 4))
+			oldtmp = savestr(s+4);
+		else if (strnEQ(s, "--- ", 4))
+			newtmp = savestr(s+4);
+		else if (strnEQ(s, "+++ ", 4))
+			oldtmp = savestr(s+4);	/* pretend it is the old name */
+		else if (strnEQ(s, "Index:", 6))
+			indtmp = savestr(s+6);
+		else if (strnEQ(s, "Prereq:", 7)) {
+			for (t = s + 7; isspace((unsigned char)*t); t++)
+				;
+			revision = savestr(t);
+			for (t = revision;
+			     *t && !isspace((unsigned char)*t);
+			     t++)
+				;
+			*t = '\0';
+			if (!*revision) {
+				free(revision);
+				revision = NULL;
+			}
+		}
+		if ((!diff_type || diff_type == ED_DIFF) &&
+		    first_command_line >= 0L &&
+		    strEQ(s, ".\n") ) {
+			p_indent = indent;
+			p_start = first_command_line;
+			p_sline = fcl_line;
+			retval = ED_DIFF;
+			goto scan_exit;
+		}
+		if ((!diff_type || diff_type == UNI_DIFF) &&
+		    strnEQ(s, "@@ -", 4)) {
+			if (!atol(s+3))
+				ok_to_create_file = TRUE;
+			p_indent = indent;
+			p_start = this_line;
+			p_sline = p_input_line;
+			retval = UNI_DIFF;
+			goto scan_exit;
+		}
+		stars_this_line = strnEQ(s, "********", 8);
+		if ((!diff_type || diff_type == CONTEXT_DIFF) &&
+		    stars_last_line &&
+		    strnEQ(s, "*** ", 4)) {
+			if (!atol(s+4))
+				ok_to_create_file = TRUE;
+			/*
+			 * If this is a new context diff the character just
+			 * before the newline is a '*'.
+			 */
+			while (*s != '\n')
+				s++;
+			p_indent = indent;
+			p_start = previous_line;
+			p_sline = p_input_line - 1;
+			retval = (*(s-1) == '*' ?
+				  NEW_CONTEXT_DIFF : CONTEXT_DIFF);
+			goto scan_exit;
+		}
+		if ((!diff_type || diff_type == NORMAL_DIFF) && 
+		    last_line_was_command &&
+		    (strnEQ(s, "< ", 2) || strnEQ(s, "> ", 2)) ) {
+			p_start = previous_line;
+			p_sline = p_input_line - 1;
+			p_indent = indent;
+			retval = NORMAL_DIFF;
+			goto scan_exit;
+		}
 	}
-	for (s = buf; *s == ' ' || *s == '\t' || *s == 'X'; s++) {
-	    if (*s == '\t')
-		indent += 8 - (indent % 8);
-	    else
-		indent++;
+ scan_exit:
+	if (no_filearg) {
+		if (indtmp != NULL)
+			indname = fetchname(indtmp,
+					    strippath,
+					    ok_to_create_file);
+		if (oldtmp != NULL) {
+			oldname = fetchname(oldtmp,
+					    strippath,
+					    ok_to_create_file);
+			old_file_is_dev_null = filename_is_dev_null;
+		}
+		if (newtmp != NULL)
+			newname = fetchname(newtmp,
+					    strippath,
+					    ok_to_create_file);
+		if (oldname && newname) {
+			if (strlen(oldname) < strlen(newname))
+				filearg[0] = savestr(oldname);
+			else
+				filearg[0] = savestr(newname);
+		}
+		else if (oldname)
+			filearg[0] = savestr(oldname);
+		else if (newname)
+			filearg[0] = savestr(newname);
+		else if (indname)
+			filearg[0] = savestr(indname);
 	}
-	for (t=s; isdigit((unsigned char)*t) || *t == ','; t++) ; 
-	this_is_a_command = (isdigit((unsigned char)*s) &&
-	  (*t == 'd' || *t == 'c' || *t == 'a') );
-	if (first_command_line < 0L && this_is_a_command) { 
-	    first_command_line = this_line;
-	    fcl_line = p_input_line;
-	    p_indent = indent;		/* assume this for now */
+	if (bestguess) {
+		free(bestguess);
+		bestguess = NULL;
 	}
-	if (!stars_last_line && strnEQ(s, "*** ", 4))
-	    oldtmp = savestr(s+4);
-	else if (strnEQ(s, "--- ", 4))
-	    newtmp = savestr(s+4);
-	else if (strnEQ(s, "+++ ", 4))
-	    oldtmp = savestr(s+4);	/* pretend it is the old name */
-	else if (strnEQ(s, "Index:", 6))
-	    indtmp = savestr(s+6);
-	else if (strnEQ(s, "Prereq:", 7)) {
-	    for (t=s+7; isspace((unsigned char)*t); t++) ;
-	    revision = savestr(t);
-	    for (t=revision; *t && !isspace((unsigned char)*t); t++) ;
-	    *t = '\0';
-	    if (!*revision) {
-		free(revision);
-		revision = NULL;
-	    }
+	if (filearg[0] != NULL)
+		bestguess = savestr(filearg[0]);
+	else if (indtmp != NULL)
+		bestguess = fetchname(indtmp, strippath, TRUE);
+	else {
+		if (oldtmp != NULL) {
+			oldname = fetchname(oldtmp, strippath, TRUE);
+			old_file_is_dev_null = filename_is_dev_null;
+		}
+		if (newtmp != NULL)
+			newname = fetchname(newtmp, strippath, TRUE);
+		if (oldname && newname) {
+			if (strlen(oldname) < strlen(newname))
+				bestguess = savestr(oldname);
+			else
+				bestguess = savestr(newname);
+		}
+		else if (oldname)
+			bestguess = savestr(oldname);
+		else if (newname)
+			bestguess = savestr(newname);
 	}
-	if ((!diff_type || diff_type == ED_DIFF) &&
-	  first_command_line >= 0L &&
-	  strEQ(s, ".\n") ) {
-	    p_indent = indent;
-	    p_start = first_command_line;
-	    p_sline = fcl_line;
-	    retval = ED_DIFF;
-	    goto scan_exit;
-	}
-	if ((!diff_type || diff_type == UNI_DIFF) && strnEQ(s, "@@ -", 4)) {
-	    if (!atol(s+3))
-		ok_to_create_file = TRUE;
-	    p_indent = indent;
-	    p_start = this_line;
-	    p_sline = p_input_line;
-	    retval = UNI_DIFF;
-	    goto scan_exit;
-	}
-	stars_this_line = strnEQ(s, "********", 8);
-	if ((!diff_type || diff_type == CONTEXT_DIFF) && stars_last_line &&
-		 strnEQ(s, "*** ", 4)) {
-	    if (!atol(s+4))
-		ok_to_create_file = TRUE;
-	    /* if this is a new context diff the character just before */
-	    /* the newline is a '*'. */
-	    while (*s != '\n')
-		s++;
-	    p_indent = indent;
-	    p_start = previous_line;
-	    p_sline = p_input_line - 1;
-	    retval = (*(s-1) == '*' ? NEW_CONTEXT_DIFF : CONTEXT_DIFF);
-	    goto scan_exit;
-	}
-	if ((!diff_type || diff_type == NORMAL_DIFF) && 
-	  last_line_was_command &&
-	  (strnEQ(s, "< ", 2) || strnEQ(s, "> ", 2)) ) {
-	    p_start = previous_line;
-	    p_sline = p_input_line - 1;
-	    p_indent = indent;
-	    retval = NORMAL_DIFF;
-	    goto scan_exit;
-	}
-    }
-  scan_exit:
-    if (no_filearg) {
 	if (indtmp != NULL)
-	    indname = fetchname(indtmp, strippath, ok_to_create_file);
-	if (oldtmp != NULL) {
-	    oldname = fetchname(oldtmp, strippath, ok_to_create_file);
-	    old_file_is_dev_null = filename_is_dev_null;
-	}
+		free(indtmp);
+	if (oldtmp != NULL)
+		free(oldtmp);
 	if (newtmp != NULL)
-	    newname = fetchname(newtmp, strippath, ok_to_create_file);
-	if (oldname && newname) {
-	    if (strlen(oldname) < strlen(newname))
-		filearg[0] = savestr(oldname);
-	    else
-		filearg[0] = savestr(newname);
-	}
-	else if (oldname)
-	    filearg[0] = savestr(oldname);
-	else if (newname)
-	    filearg[0] = savestr(newname);
-	else if (indname)
-	    filearg[0] = savestr(indname);
-    }
-    if (bestguess) {
-	free(bestguess);
-	bestguess = NULL;
-    }
-    if (filearg[0] != NULL)
-	bestguess = savestr(filearg[0]);
-    else if (indtmp != NULL)
-	bestguess = fetchname(indtmp, strippath, TRUE);
-    else {
-        if (oldtmp != NULL) {
-	    oldname = fetchname(oldtmp, strippath, TRUE);
-	    old_file_is_dev_null = filename_is_dev_null;
-	}
-	if (newtmp != NULL)
-	    newname = fetchname(newtmp, strippath, TRUE);
-	if (oldname && newname) {
-	    if (strlen(oldname) < strlen(newname))
-		bestguess = savestr(oldname);
-	    else
-		bestguess = savestr(newname);
-	}
-	else if (oldname)
-	    bestguess = savestr(oldname);
-	else if (newname)
-	    bestguess = savestr(newname);
-    }
-    if (indtmp != NULL)
-	free(indtmp);
-    if (oldtmp != NULL)
-	free(oldtmp);
-    if (newtmp != NULL)
-	free(newtmp);
-    if (indname != NULL)
-	free(indname);
-    if (oldname != NULL)
-	free(oldname);
-    if (newname != NULL)
-	free(newname);
-    return retval;
+		free(newtmp);
+	if (indname != NULL)
+		free(indname);
+	if (oldname != NULL)
+		free(oldname);
+	if (newname != NULL)
+		free(newname);
+	return retval;
 }
 
-/* Remember where this patch ends so we know where to start up again. */
-
+/*
+ * Remember where this patch ends so we know where to start up again.
+ */
 void
 next_intuit_at(long file_pos, long file_line)
 {
-    p_base = file_pos;
-    p_bline = file_line;
+	p_base = file_pos;
+	p_bline = file_line;
 }
 
-/* Basically a verbose fseek() to the actual diff listing. */
-
+/*
+ * Basically a verbose fseek() to the actual diff listing.
+ */
 void
 skip_to(long file_pos, long file_line)
 {
-    char *ret;
+	char *ret;
 
-    assert(p_base <= file_pos);
-    if (verbose && p_base < file_pos) {
-	Fseek(pfp, p_base, 0);
-	say("The text leading up to this was:\n--------------------------\n");
-	while (ftell(pfp) < file_pos) {
-	    ret = fgets(buf, sizeof buf, pfp);
-	    assert(ret != NULL);
-	    say("|%s", buf);
+	assert(p_base <= file_pos);
+	if (verbose && p_base < file_pos) {
+		Fseek(pfp, p_base, 0);
+		say("The text leading up to this was:\n--------------------------\n");
+		while (ftell(pfp) < file_pos) {
+			ret = fgets(buf, sizeof buf, pfp);
+			assert(ret != NULL);
+			say("|%s", buf);
+		}
+		say("--------------------------\n");
 	}
-	say("--------------------------\n");
-    }
-    else
-	Fseek(pfp, file_pos, 0);
-    p_input_line = file_line - 1;
+	else
+		Fseek(pfp, file_pos, 0);
+	p_input_line = file_line - 1;
 }
 
-/* Make this a function for better debugging.  */
+/*
+ * Make this a function for better debugging.
+ */
 static void
 malformed(void)
 {
-    fatal("malformed patch at line %ld: %s", p_input_line, buf);
+	fatal("malformed patch at line %ld: %s", p_input_line, buf);
 		/* about as informative as "Syntax error" in C */
 }
 
-/* True if there is more of the current diff listing to process. */
-
+/*
+ * True if there is more of the current diff listing to process.
+ */
 bool
 another_hunk(void)
 {
@@ -995,269 +1023,284 @@ another_hunk(void)
     return TRUE;
 }
 
-/* Input a line from the patch file, worrying about indentation. */
-
+/*
+ * Input a line from the patch file, worrying about indentation.
+ */
 char *
 pgets(char *bf, int sz, FILE *fp)
 {
-    char *ret = fgets(bf, sz, fp);
-    char *s;
-    int indent = 0;
+	char *ret = fgets(bf, sz, fp);
+	char *s;
+	int indent = 0;
 
-    if (p_indent && ret != NULL) {
-	for (s=buf;
-	  indent < p_indent && (*s == ' ' || *s == '\t' || *s == 'X'); s++) {
-	    if (*s == '\t')
-		indent += 8 - (indent % 7);
-	    else
-		indent++;
+	if (p_indent && ret != NULL) {
+		for (s=buf;
+		     indent < p_indent &&
+			     (*s == ' ' || *s == '\t' || *s == 'X');
+		     s++) {
+			if (*s == '\t')
+				indent += 8 - (indent % 7);
+			else
+				indent++;
+		}
+		if (buf != s)
+			Strcpy(buf, s);
 	}
-	if (buf != s)
-	    Strcpy(buf, s);
-    }
-    return ret;
+	return ret;
 }
 
-/* Reverse the old and new portions of the current hunk. */
-
+/*
+ * Reverse the old and new portions of the current hunk.
+ */
 bool
 pch_swap(void)
 {
-    char **tp_line;		/* the text of the hunk */
-    short *tp_len;		/* length of each line */
-    char *tp_char;		/* +, -, and ! */
-    LINENUM i;
-    LINENUM n;
-    bool blankline = FALSE;
-    char *s;
+	char **tp_line;		/* the text of the hunk */
+	short *tp_len;		/* length of each line */
+	char *tp_char;		/* +, -, and ! */
+	LINENUM i;
+	LINENUM n;
+	bool blankline = FALSE;
+	char *s;
 
-    i = p_first;
-    p_first = p_newfirst;
-    p_newfirst = i;
+	i = p_first;
+	p_first = p_newfirst;
+	p_newfirst = i;
     
-    /* make a scratch copy */
+	/* make a scratch copy */
 
-    tp_line = p_line;
-    tp_len = p_len;
-    tp_char = p_char;
-    p_line = NULL;		/* force set_hunkmax to allocate again */
-    p_len = NULL;
-    p_char = NULL;
-    set_hunkmax();
-    if (p_line == NULL || p_len == NULL || p_char == NULL) {
-	if (p_line == NULL)
-	    free(p_line);
-	p_line = tp_line;
-	if (p_len == NULL)
-	    free(p_len);
-	p_len = tp_len;
-	if (p_char == NULL)
-	    free(p_char);
-	p_char = tp_char;
-	return FALSE;		/* not enough memory to swap hunk! */
-    }
+	tp_line = p_line;
+	tp_len = p_len;
+	tp_char = p_char;
+	p_line = NULL;		/* force set_hunkmax to allocate again */
+	p_len = NULL;
+	p_char = NULL;
+	set_hunkmax();
+	if (p_line == NULL || p_len == NULL || p_char == NULL) {
+		if (p_line == NULL)
+			free(p_line);
+		p_line = tp_line;
+		if (p_len == NULL)
+			free(p_len);
+		p_len = tp_len;
+		if (p_char == NULL)
+			free(p_char);
+		p_char = tp_char;
+		return FALSE;		/* not enough memory to swap hunk! */
+	}
 
-    /* now turn the new into the old */
+	/* now turn the new into the old */
 
-    i = p_ptrn_lines + 1;
-    if (tp_char[i] == '\n') {		/* account for possible blank line */
-	blankline = TRUE;
-	i++;
-    }
-    if (p_efake >= 0) {			/* fix non-freeable ptr range */
-	if (p_efake <= i)
-	    n = p_end - i + 1;
-	else
-	    n = -i;
-	p_efake += n;
-	p_bfake += n;
-    }
-    for (n=0; i <= p_end; i++,n++) {
-	p_line[n] = tp_line[i];
-	p_char[n] = tp_char[i];
-	if (p_char[n] == '+')
-	    p_char[n] = '-';
-	p_len[n] = tp_len[i];
-    }
-    if (blankline) {
 	i = p_ptrn_lines + 1;
-	p_line[n] = tp_line[i];
-	p_char[n] = tp_char[i];
-	p_len[n] = tp_len[i];
-	n++;
-    }
-    assert(p_char[0] == '=');
-    p_char[0] = '*';
-    for (s=p_line[0]; *s; s++)
-	if (*s == '-')
-	    *s = '*';
+	if (tp_char[i] == '\n') {	/* account for possible blank line */
+		blankline = TRUE;
+		i++;
+	}
+	if (p_efake >= 0) {		/* fix non-freeable ptr range */
+		if (p_efake <= i)
+			n = p_end - i + 1;
+		else
+			n = -i;
+		p_efake += n;
+		p_bfake += n;
+	}
+	for (n=0; i <= p_end; i++,n++) {
+		p_line[n] = tp_line[i];
+		p_char[n] = tp_char[i];
+		if (p_char[n] == '+')
+			p_char[n] = '-';
+		p_len[n] = tp_len[i];
+	}
+	if (blankline) {
+		i = p_ptrn_lines + 1;
+		p_line[n] = tp_line[i];
+		p_char[n] = tp_char[i];
+		p_len[n] = tp_len[i];
+		n++;
+	}
+	assert(p_char[0] == '=');
+	p_char[0] = '*';
+	for (s=p_line[0]; *s; s++)
+		if (*s == '-')
+			*s = '*';
 
-    /* now turn the old into the new */
+	/* now turn the old into the new */
 
-    assert(tp_char[0] == '*');
-    tp_char[0] = '=';
-    for (s=tp_line[0]; *s; s++)
-	if (*s == '*')
-	    *s = '-';
-    for (i=0; n <= p_end; i++,n++) {
-	p_line[n] = tp_line[i];
-	p_char[n] = tp_char[i];
-	if (p_char[n] == '-')
-	    p_char[n] = '+';
-	p_len[n] = tp_len[i];
-    }
-    assert(i == p_ptrn_lines + 1);
-    i = p_ptrn_lines;
-    p_ptrn_lines = p_repl_lines;
-    p_repl_lines = i;
-    if (tp_line == NULL)
-	free(tp_line);
-    if (tp_len == NULL)
-	free(tp_len);
-    if (tp_char == NULL)
-	free(tp_char);
-    return TRUE;
+	assert(tp_char[0] == '*');
+	tp_char[0] = '=';
+	for (s=tp_line[0]; *s; s++)
+		if (*s == '*')
+			*s = '-';
+	for (i=0; n <= p_end; i++,n++) {
+		p_line[n] = tp_line[i];
+		p_char[n] = tp_char[i];
+		if (p_char[n] == '-')
+			p_char[n] = '+';
+		p_len[n] = tp_len[i];
+	}
+	assert(i == p_ptrn_lines + 1);
+	i = p_ptrn_lines;
+	p_ptrn_lines = p_repl_lines;
+	p_repl_lines = i;
+	if (tp_line == NULL)
+		free(tp_line);
+	if (tp_len == NULL)
+		free(tp_len);
+	if (tp_char == NULL)
+		free(tp_char);
+	return TRUE;
 }
 
-/* Return the specified line position in the old file of the old context. */
-
+/*
+ * Return the specified line position in the old file of the old context.
+ */
 LINENUM
 pch_first(void)
 {
-    return p_first;
+	return p_first;
 }
 
-/* Return the number of lines of old context. */
-
+/*
+ * Return the number of lines of old context.
+ */
 LINENUM
 pch_ptrn_lines(void)
 {
-    return p_ptrn_lines;
+	return p_ptrn_lines;
 }
 
-/* Return the probable line position in the new file of the first line. */
-
+/*
+ * Return the probable line position in the new file of the first line.
+ */
 LINENUM
 pch_newfirst(void)
 {
-    return p_newfirst;
+	return p_newfirst;
 }
 
-/* Return the number of lines in the replacement text including context. */
-
+/*
+ * Return the number of lines in the replacement text including context.
+ */
 LINENUM
 pch_repl_lines(void)
 {
-    return p_repl_lines;
+	return p_repl_lines;
 }
 
-/* Return the number of lines in the whole hunk. */
-
+/*
+ * Return the number of lines in the whole hunk.
+ */
 LINENUM
 pch_end(void)
 {
-    return p_end;
+	return p_end;
 }
 
-/* Return the number of context lines before the first changed line. */
-
+/*
+ * Return the number of context lines before the first changed line.
+ */
 LINENUM
 pch_context(void)
 {
-    return p_context;
+	return p_context;
 }
 
-/* Return the length of a particular patch line. */
-
+/*
+ * Return the length of a particular patch line.
+ */
 short
 pch_line_len(LINENUM line)
 {
-    return p_len[line];
+	return p_len[line];
 }
 
-/* Return the control character (+, -, *, !, etc) for a patch line. */
-
+/*
+ * Return the control character (+, -, *, !, etc) for a patch line.
+ */
 char
 pch_char(LINENUM line)
 {
-    return p_char[line];
+	return p_char[line];
 }
 
-/* Return a pointer to a particular patch line. */
-
+/*
+ * Return a pointer to a particular patch line.
+ */
 char *
 pfetch(LINENUM line)
 {
-    return p_line[line];
+	return p_line[line];
 }
 
-/* Return where in the patch file this hunk began, for error messages. */
-
+/*
+ * Return where in the patch file this hunk began, for error messages.
+ */
 LINENUM
 pch_hunk_beg(void)
 {
-    return p_hunk_beg;
+	return p_hunk_beg;
 }
 
-/* Apply an ed script by feeding ed itself. */
-
+/*
+ * Apply an ed script by feeding ed itself.
+ */
 void
 do_ed_script(void)
 {
-    char *t;
-    long beginning_of_this_line;
-    bool this_line_is_command = FALSE;
-    FILE *pipefp = NULL;
+	char *t;
+	long beginning_of_this_line;
+	bool this_line_is_command = FALSE;
+	FILE *pipefp = NULL;
 
-    if (!skip_rest_of_patch) {
-	Unlink(TMPOUTNAME);
-	copy_file(filearg[0], TMPOUTNAME);
-	if (verbose)
-	    Sprintf(buf, "/bin/ed %s", TMPOUTNAME);
-	else
-	    Sprintf(buf, "/bin/ed - %s", TMPOUTNAME);
-	pipefp = popen(buf, "w");
-    }
-    for (;;) {
-	beginning_of_this_line = ftell(pfp);
-	if (pgets(buf, sizeof buf, pfp) == NULL) {
-	    next_intuit_at(beginning_of_this_line,p_input_line);
-	    break;
+	if (!skip_rest_of_patch) {
+		Unlink(TMPOUTNAME);
+		copy_file(filearg[0], TMPOUTNAME);
+		if (verbose)
+			Sprintf(buf, "/bin/ed %s", TMPOUTNAME);
+		else
+			Sprintf(buf, "/bin/ed - %s", TMPOUTNAME);
+		pipefp = popen(buf, "w");
 	}
-	p_input_line++;
-	for (t=buf; isdigit((unsigned char)*t) || *t == ','; t++) ;
-	this_line_is_command = (isdigit((unsigned char)*buf) &&
-	  (*t == 'd' || *t == 'c' || *t == 'a') );
-	if (this_line_is_command) {
-	    if (!skip_rest_of_patch)
-		fputs(buf, pipefp);
-	    if (*t != 'd') {
-		while (pgets(buf, sizeof buf, pfp) != NULL) {
-		    p_input_line++;
-		    if (!skip_rest_of_patch)
-			fputs(buf, pipefp);
-		    if (strEQ(buf, ".\n"))
+	for (;;) {
+		beginning_of_this_line = ftell(pfp);
+		if (pgets(buf, sizeof buf, pfp) == NULL) {
+			next_intuit_at(beginning_of_this_line,p_input_line);
 			break;
 		}
-	    }
+		p_input_line++;
+		for (t=buf; isdigit((unsigned char)*t) || *t == ','; t++) ;
+		this_line_is_command = (isdigit((unsigned char)*buf) &&
+					(*t == 'd' || *t == 'c' || *t == 'a'));
+		if (this_line_is_command) {
+			if (!skip_rest_of_patch)
+				fputs(buf, pipefp);
+			if (*t != 'd') {
+				while (pgets(buf, sizeof buf, pfp) != NULL) {
+					p_input_line++;
+					if (!skip_rest_of_patch)
+						fputs(buf, pipefp);
+					if (strEQ(buf, ".\n"))
+						break;
+				}
+			}
+		}
+		else {
+			next_intuit_at(beginning_of_this_line,p_input_line);
+			break;
+		}
 	}
-	else {
-	    next_intuit_at(beginning_of_this_line,p_input_line);
-	    break;
+	if (skip_rest_of_patch)
+		return;
+	fprintf(pipefp, "w\n");
+	fprintf(pipefp, "q\n");
+	Fflush(pipefp);
+	Pclose(pipefp);
+	ignore_signals();
+	if (move_file(TMPOUTNAME, outname) < 0) {
+		toutkeep = TRUE;
+		chmod(TMPOUTNAME, filemode);
 	}
-    }
-    if (skip_rest_of_patch)
-	return;
-    fprintf(pipefp, "w\n");
-    fprintf(pipefp, "q\n");
-    Fflush(pipefp);
-    Pclose(pipefp);
-    ignore_signals();
-    if (move_file(TMPOUTNAME, outname) < 0) {
-	toutkeep = TRUE;
-	chmod(TMPOUTNAME, filemode);
-    }
-    else
-	chmod(outname, filemode);
-    set_signals(1);
+	else
+		chmod(outname, filemode);
+	set_signals(1);
 }
