@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2002/01/31 22:44:02 tv Exp $
+#	$NetBSD: Makefile,v 1.9 2002/09/18 03:54:33 lukem Exp $
 #
+
+.include <bsd.own.mk>
 
 PROG=	makefs
 SRCS=	makefs.c walk.c \
@@ -8,11 +10,11 @@ SRCS=	makefs.c walk.c \
 	ffs_alloc.c ffs_balloc.c ffs_bswap.c ffs_subr.c ffs_tables.c ufs_bmap.c 
 MAN=	makefs.8
 
-DDSRC=		${.CURDIR}/../../bin/dd
-LSSRC=		${.CURDIR}/../../bin/ls
-MKNODSRC=	${.CURDIR}/../../sbin/mknod
-MTREESRC=	${.CURDIR}/../../usr.sbin/mtree
-UFSSRC=		${.CURDIR}/../../sys/ufs
+DDSRC=		${NETBSDSRCDIR}/bin/dd
+LSSRC=		${NETBSDSRCDIR}/bin/ls
+MKNODSRC=	${NETBSDSRCDIR}/sbin/mknod
+MTREESRC=	${NETBSDSRCDIR}/usr.sbin/mtree
+UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 
 CPPFLAGS+=	-I${.CURDIR} \
 		-I${LSSRC} -I${MKNODSRC} -I${MTREESRC} -I${DDSRC} 

@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.19 2002/03/28 09:58:10 jmc Exp $
+#	$NetBSD: Makefile,v 1.20 2002/09/18 03:54:30 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+
+.include <bsd.own.mk>
 
 PROG=	iostat
 MAN=	iostat.8
 
-.PATH:	${.CURDIR}/../../usr.bin/vmstat
+.PATH:	${NETBSDSRCDIR}/usr.bin/vmstat
 
-CPPFLAGS+=-I${.CURDIR}/../../usr.bin/vmstat
+CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/vmstat
 
 # dkstats.c pulled in from ../../usr.bin/vmstat
 SRCS=	dkstats.c iostat.c

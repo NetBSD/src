@@ -1,7 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:19 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/09/18 04:16:02 lukem Exp $
 
 NOMAN=  	# defined
-DIST=		${.CURDIR}/../../../dist/bzip2
+
+.include <bsd.own.mk>
+
+DIST=		${NETBSDSRCDIR}/dist/bzip2
 
 regress:
 	bzip2 -1  < ${DIST}/sample1.ref > sample1.rb2

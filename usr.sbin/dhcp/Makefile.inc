@@ -1,10 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.17 2002/06/16 21:40:03 augustss Exp $
+# $NetBSD: Makefile.inc,v 1.18 2002/09/18 03:54:28 lukem Exp $
 
 WARNS?=	1
 
 .include <bsd.own.mk>
 
-DIST=	${.CURDIR}/../../../dist/dhcp
+DIST=	${NETBSDSRCDIR}/dist/dhcp
 .PATH:	${DIST}/${DHCPSRCDIR}
 
 COBJDIR!=cd $(.CURDIR)/../common && ${PRINTOBJDIR}

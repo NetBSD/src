@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.17 2002/03/22 18:10:25 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2002/09/18 03:54:26 lukem Exp $
 
 WARNS?=	1
 WFORMAT=2
 
 .include <bsd.own.mk>
 
-IDIST=	${.CURDIR}/../../../dist/am-utils
+IDIST=	${NETBSDSRCDIR}/dist/am-utils
 
 LIBAMUOBJDIR!=cd ${.CURDIR}/../libamu && ${PRINTOBJDIR}
 

@@ -1,13 +1,16 @@
-# $NetBSD: Makefile,v 1.4 2001/12/12 01:24:16 tv Exp $
+# $NetBSD: Makefile,v 1.5 2002/09/18 04:16:02 lukem Exp $
+
+NOMAN=		# defined
+
+.include <bsd.own.mk>
 
 PROG=		extest
-NOMAN=		# defined
 SRCS=		extest.c subr_extent.c
 CPPFLAGS+=	-D_EXTENT_TESTING -D__POOL_EXPOSE
 CLEANFILES+=	extest.c extest.out
 WARNS?=		1
 
-.PATH:		${.CURDIR}/../../../../sys/kern
+.PATH:		${NETBSDSRCDIR}/sys/kern
 
 regress: ${PROG}
 	./${PROG} >extest.out

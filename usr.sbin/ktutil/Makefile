@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.13 2001/12/31 20:04:47 thorpej Exp $
+# $NetBSD: Makefile,v 1.14 2002/09/18 03:54:33 lukem Exp $
 
 NOLINT= # defined
 
 .include <bsd.own.mk>
 
-DIST=		${.CURDIR}/../../crypto/dist
+DIST=		${NETBSDSRCDIR}/crypto/dist
 .PATH: ${DIST}/heimdal/admin
 
 WARNS?=  1
@@ -23,12 +23,12 @@ SRCS=		 add.c				\
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/admin			\
-	-I${.CURDIR}/../../include/heimdal	\
+	-I${NETBSDSRCDIR}/include/heimdal	\
 	-I${DESTDIR}/usr/include/kadm5		\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
 
 LDADD=	-lkadm5clnt \
 	-lkrb5 \

@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.11 1999/09/12 01:19:26 chs Exp $
+#	$NetBSD: Makefile,v 1.12 2002/09/18 03:54:35 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
+
+.include <bsd.own.mk>
 
 SRCS=	pstat.c swaplist.c
 PROG=	pstat
@@ -9,8 +11,8 @@ BINMODE=2555
 DPADD=	${LIBKVM}
 LDADD=	-lkvm
 
-CPPFLAGS+=-I${.CURDIR}/../../sbin/swapctl
+CPPFLAGS+=-I${NETBSDSRCDIR}/sbin/swapctl
 
-.PATH: ${.CURDIR}/../../sbin/swapctl
+.PATH: ${NETBSDSRCDIR}/sbin/swapctl
 
 .include <bsd.prog.mk>
