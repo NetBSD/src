@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 1998/10/16 05:05:09 mycroft Exp $
+#	$NetBSD: Makefile,v 1.72 1998/10/18 20:41:39 thorpej Exp $
 
 .include <bsd.own.mk>			# for configuration variables.
 
@@ -99,7 +99,9 @@ build: beforeinstall
 	    ${MAKE} depend && NOMAN= ${MAKE} && NOMAN= ${MAKE} install)
 .endif
 .if !defined(DESTDIR)
-	ldconfig -m /usr/lib
+	if [ -f /sbin/ldconfig ]; then \
+		/sbin/ldconfig -m /usr/lib; \
+	fi
 .endif
 	${MAKE} depend && ${MAKE} && ${MAKE} install
 	@echo -n "Build finished at: "
