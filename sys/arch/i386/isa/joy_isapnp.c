@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isapnp.c,v 1.15 1999/03/22 09:44:12 mycroft Exp $	*/
+/*	$NetBSD: joy_isapnp.c,v 1.16 1999/03/22 10:00:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,9 +63,12 @@ joy_isapnp_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	int variant;
+	int pri, variant;
 
-	return (isapnp_devmatch(aux, &isapnp_joy_devinfo, &variant));
+	pri = isapnp_devmatch(aux, &isapnp_joy_devinfo, &variant);
+	if (pri && variant > 0)
+		pri = 0;
+	return (pri);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.2 1999/03/22 09:44:13 mycroft Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.3 1999/03/22 10:00:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,9 +70,12 @@ aha_isapnp_probe(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	int variant;
+	int pri, variant;
 
-	return (isapnp_devmatch(aux, &isapnp_aha_devinfo, &variant));
+	pri = isapnp_devmatch(aux, &isapnp_aha_devinfo, &variant);
+	if (pri && variant > 0)
+		pri = 0;
+	return (pri);
 }
 
 void
