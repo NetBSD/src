@@ -1,4 +1,41 @@
-/* $NetBSD: loadfile.c,v 1.4 1997/06/20 07:06:43 cjs Exp $ */
+/* $NetBSD: loadfile.c,v 1.5 1997/07/25 00:09:01 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +99,7 @@ static int elf_exec __P((int, Elf_Ehdr *, u_int64_t *));
 int loadfile __P((char *, u_int64_t *));
 
 vm_offset_t ffp_save, ptbr_save;
+vm_offset_t ssym, esym;
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
@@ -173,6 +211,10 @@ elf_exec(fd, elf, entryp)
 	Elf_Ehdr *elf;
 	u_int64_t *entryp;
 {
+	Elf_Shdr *shp;
+	Elf_Off off;
+	void *addr;
+	size_t size;
 	int i;
 	int first = 1;
 
@@ -207,11 +249,64 @@ elf_exec(fd, elf, entryp)
 		first = 0;
 	}
 
-	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET)) >> PGSHIFT;
+	/*
+	 * Copy the ELF and section headers.
+	 */
+	ssym = ffp_save;
+	bcopy(elf, (void *)ffp_save, sizeof(Elf_Ehdr));
+	ffp_save += sizeof(Elf_Ehdr);
+	(void)lseek(fd, elf->e_shoff, SEEK_SET);
+	if (read(fd, (void *)ffp_save, elf->e_shnum * sizeof(Elf_Shdr)) !=
+	    elf->e_shnum * sizeof(Elf_Shdr)) {
+		printf("read section headers: %s\n", strerror(errno));
+		return (1);
+	}
+	shp = (Elf_Shdr *)ffp_save;
+	ffp_save += elf->e_shnum * sizeof(Elf_Shdr);
+
+	/*
+	 * Now load the symbol sections themselves.
+	 */
+	off = sizeof(Elf_Ehdr) + (elf->e_shnum * sizeof(Elf_Shdr));
+	for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		if (shp[i].sh_type == Elf_sht_symtab ||
+		    shp[i].sh_type == Elf_sht_strtab) {
+			printf("%s%d", first ? " [" : "+", shp[i].sh_size);
+			(void)lseek(fd, shp[i].sh_offset, SEEK_SET);
+			if (read(fd, (void *)ffp_save, shp[i].sh_size) !=
+			    shp[i].sh_size) {
+				printf("\nread symbols: %s\n",
+				    strerror(errno));
+				return (1);
+			}
+			ffp_save += shp[i].sh_size;
+			shp[i].sh_offset = off;
+			off += shp[i].sh_size;
+			first = 0;
+		}
+	}
+	esym = ffp_save;
+
+	if (first == 0)
+		printf("]");
+
+	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET))
+	    >> PGSHIFT;
 	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
 
 	(void)printf("\n");
 	*entryp = elf->e_entry;
+
+	/*
+	 * Frob the copied ELF header to give information relative
+	 * to ssym.
+	 */
+	elf = (Elf_Ehdr *)ssym;
+	elf->e_phoff = 0;
+	elf->e_shoff = sizeof(Elf_Ehdr);
+	elf->e_phentsize = 0;
+	elf->e_phnum = 0;
+
 	return (0);
 }
 #endif /* ALPHA_BOOT_ELF */
