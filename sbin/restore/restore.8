@@ -1,4 +1,4 @@
-.\"	$NetBSD: restore.8,v 1.42 2004/07/27 02:17:06 enami Exp $
+.\"	$NetBSD: restore.8,v 1.43 2004/07/27 14:20:11 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,35 +40,35 @@
 .Nm
 .Fl i
 .Op Fl cdhmuvyN
-.Op Fl b Ar blocksize
+.Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm
 .Fl R
 .Op Fl cduvyN
-.Op Fl b Ar blocksize
+.Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm
 .Fl r
 .Op Fl cduvyN
-.Op Fl b Ar blocksize
+.Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Nm
 .Fl t
 .Op Fl cdhuvy
-.Op Fl b Ar blocksize
+.Op Fl b Ar bsize
 .Op Fl f Ar file
 .Op Fl s Ar fileno
 .Op Ar
 .Nm
 .Fl x
 .Op Fl cdhmuvyN
-.Op Fl b Ar blocksize
+.Op Fl b Ar bsize
 .Op Fl D Ar algorithm
 .Op Fl f Ar file
 .Op Fl s Ar fileno
@@ -265,7 +265,7 @@ flag has been specified.
 .Pp
 The following additional options may be specified:
 .Bl -tag -width Ds
-.It Fl b Ar blocksize
+.It Fl b Ar bsize
 The number of kilobytes per dump record.
 If the
 .Fl b
@@ -288,13 +288,12 @@ and output to standard output.
 The
 .Ar algorithm
 is one of
-.Cm md5 ,
-.Cm rmd160 
+.Ar md5 ,
+.Ar rmd160 ,
 or
-.Cm sha1 .
+.Ar sha1 .
 This option doesn't imply
-.Fl N
-flag.
+.Fl N .
 .It Fl d
 Enable debugging.
 .It Fl f Ar file
