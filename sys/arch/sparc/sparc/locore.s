@@ -4624,7 +4624,7 @@ Lsw_sameproc:
  * Only used just before a crash dump.
  */
 ENTRY(snapshot)
-	st	%o6, [%o0 + PCB_SP]	! save sp
+	std	%o6, [%o0 + PCB_SP]	! save sp
 	rd	%psr, %o1		! save psr
 	st	%o1, [%o0 + PCB_PSR]
 
