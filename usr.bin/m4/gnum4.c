@@ -1,4 +1,4 @@
-/*	$NetBSD: gnum4.c,v 1.1 2001/11/14 06:16:08 tv Exp $	*/
+/*	$NetBSD: gnum4.c,v 1.2 2002/01/21 21:49:57 tv Exp $	*/
 /* $OpenBSD: gnum4.c,v 1.15 2001/10/13 20:18:48 espie Exp $ */
 
 /*
@@ -34,7 +34,6 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
 #include <paths.h>
 #include <regex.h>
