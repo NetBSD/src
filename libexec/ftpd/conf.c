@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1997/06/14 08:43:27 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 1997/06/18 19:05:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,8 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: conf.c,v 1.1 1997/06/14 08:43:27 lukem Exp $";
+__RCSID("$NetBSD: conf.c,v 1.2 1997/06/18 19:05:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +48,8 @@ static char rcsid[] = "$NetBSD: conf.c,v 1.1 1997/06/14 08:43:27 lukem Exp $";
 #include <errno.h>
 #include <glob.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include <stringlist.h>
 #include <syslog.h>
@@ -55,6 +58,8 @@ static char rcsid[] = "$NetBSD: conf.c,v 1.1 1997/06/14 08:43:27 lukem Exp $";
 #include "pathnames.h"
 
 struct ftpclass curclass;
+static char *strend __P((const char *, char *));
+static int filetypematch __P((char *, int));
 
 /*
  * Parse the configuration file, looking for the named class, and
@@ -62,12 +67,12 @@ struct ftpclass curclass;
  */
 void
 parse_conf(findclass)
-	const char *findclass;
+	char *findclass;
 {
 	FILE		*f;
 	char		*buf, *p;
 	size_t		 len;
-	int		 none, match, cnum;
+	int		 none, match;
 	char		*endp;
 	char		*class, *word, *arg;
 	char		*types, *disable, *convcmd;
@@ -200,7 +205,7 @@ parse_conf(findclass)
 			curclass.maxtimeout = timeout;
 		} else if (strcasecmp(word, "modify") == 0) {
 			if (none ||
-			    !EMPTYSTR(arg) && strcasecmp(arg, "off") == 0)
+			    (!EMPTYSTR(arg) && strcasecmp(arg, "off") == 0))
 				curclass.modify = 0;
 			else
 				curclass.modify = 1;
@@ -340,7 +345,8 @@ show_chdir_messages(code)
  */
 static char *
 strend(s1, s2)
-	char	*s1, *s2;
+	const char *s1;
+	char *s2;
 {
 	static	char buf[MAXPATHLEN + 1];
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.24 1997/06/14 08:43:31 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.25 1997/06/18 19:05:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
+__COPYRIGHT(
 "@(#) Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: ftpd.c,v 1.24 1997/06/14 08:43:31 lukem Exp $";
+__RCSID("$NetBSD: ftpd.c,v 1.25 1997/06/18 19:05:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +84,9 @@ static char rcsid[] = "$NetBSD: ftpd.c,v 1.24 1997/06/14 08:43:31 lukem Exp $";
 #include <syslog.h>
 #include <time.h>
 #include <unistd.h>
+#ifdef SKEY
+#include <skey.h>
+#endif
 
 #include "extern.h"
 #include "pathnames.h"
@@ -97,6 +101,7 @@ static char version[] = "Version 7.00";
 
 extern	off_t restart_point;
 extern	char cbuf[];
+extern  int yyparse __P((void));
 
 struct	sockaddr_in ctrl_addr;
 struct	sockaddr_in data_source;
@@ -127,7 +132,6 @@ char	remotehost[MAXHOSTNAMELEN];
 static char ttyline[20];
 char	*tty = ttyline;		/* for klogin */
 static char *anondir = NULL;
-static struct timeval lastt;
 
 extern struct ftpclass curclass;
 
@@ -186,6 +190,8 @@ static void	 send_data __P((FILE *, FILE *, off_t));
 static struct passwd *
 		 sgetpwnam __P((char *));
 static char	*sgetsave __P((char *));
+
+int main __P((int, char *[], char **));
 
 static char *
 curdir()
@@ -705,8 +711,8 @@ skip:
 #ifdef HASSETPROCTITLE
 		snprintf(proctitle, sizeof(proctitle),
 		    "%s: anonymous/%.*s", remotehost,
-		    sizeof(proctitle) - sizeof(remotehost) -
-		    sizeof(": anonymous/"), passwd);
+		    (int) (sizeof(proctitle) - sizeof(remotehost) -
+		    sizeof(": anonymous/")), passwd);
 		setproctitle(proctitle);
 #endif /* HASSETPROCTITLE */
 		if (logging)
@@ -1077,6 +1083,9 @@ receive_data(instr, outstr)
 {
 	int	c, cnt, bare_lfs;
 	char	buf[BUFSIZ];
+#ifdef __GNUC__
+	(void) &bare_lfs;
+#endif
 
 	bare_lfs = 0;
 	transflag++;
@@ -1640,6 +1649,12 @@ send_file_list(whichf)
 	int simple = 0;
 	int freeglob = 0;
 	glob_t gl;
+#ifdef __GNUC__
+	(void) &dout;
+	(void) &dirlist;
+	(void) &simple;
+	(void) &freeglob;
+#endif
 
 	if (strpbrk(whichf, "~{[*?") != NULL) {
 		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
