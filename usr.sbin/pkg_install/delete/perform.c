@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.52 2004/11/02 00:38:23 erh Exp $	*/
+/*	$NetBSD: perform.c,v 1.53 2004/12/29 11:35:00 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.52 2004/11/02 00:38:23 erh Exp $");
+__RCSID("$NetBSD: perform.c,v 1.53 2004/12/29 11:35:00 agc Exp $");
 #endif
 #endif
 
@@ -75,9 +75,9 @@ static int require_delete(char *, int);
 static void require_print(void);
 static int undepend(const char *, void *);
 
-static char LogDir[FILENAME_MAX];
-static char linebuf[FILENAME_MAX];
-static char pkgdir[FILENAME_MAX];
+static char LogDir[MaxPathSize];
+static char linebuf[MaxPathSize];
+static char pkgdir[MaxPathSize];
 
 static package_t Plist;
 
@@ -111,8 +111,8 @@ static int
 undepend(const char *deppkgname, void *vp)
 {
 	char   *pkg2delname = vp;
-	char    fname[FILENAME_MAX], ftmp[FILENAME_MAX];
-	char    fbuf[FILENAME_MAX];
+	char    fname[MaxPathSize], ftmp[MaxPathSize];
+	char    fbuf[MaxPathSize];
 	FILE   *fp, *fpwr;
 	int     s;
 
@@ -170,9 +170,9 @@ undepend(const char *deppkgname, void *vp)
 static int
 unview(const char *pkgname)
 {
-	char  fname[FILENAME_MAX], ftmp[FILENAME_MAX];
-	char  fbuf[FILENAME_MAX];
-	char  dbdir[FILENAME_MAX];
+	char  fname[MaxPathSize], ftmp[MaxPathSize];
+	char  fbuf[MaxPathSize];
+	char  dbdir[MaxPathSize];
 	FILE *fp, *fpwr;
 	int  s;
 	int  cc;
@@ -272,7 +272,7 @@ require_delete(char *home, int tryall)
 	lpp = TAILQ_FIRST(&lpdelq);
 	for (; lpp; lpp = TAILQ_NEXT(lpp, lp_link)) {
 		int rm_installed;                /* delete expanded pkg, not @pkgdep value */
-		char installed[FILENAME_MAX];
+		char installed[MaxPathSize];
 		
 		/* go to the db dir */
 		if (chdir(pkgdir) == FAIL) {
@@ -484,7 +484,7 @@ require_find_recursive_down(lpkg_t *thislpp, package_t *plist)
 		/* prepare for recursion */
 		chdir(_pkgdb_getPKGDB_DIR());
 		if (ispkgpattern(lpp->lp_name)) {
-			char installed[FILENAME_MAX];
+			char installed[MaxPathSize];
 			if (findmatchingname(".", lpp->lp_name, note_whats_installed, installed) != 1) {
 				warnx("cannot remove dependency for pkg-pattern %s", lpp->lp_name);
 				fail = 1;
@@ -597,8 +597,8 @@ pkg_do(char *pkg)
 	plist_t	       *p;
 	FILE	       *cfile;
 	FILE	       *fp;
-	char    	home[FILENAME_MAX];
-	char    	view[FILENAME_MAX];
+	char    	home[MaxPathSize];
+	char    	view[MaxPathSize];
 	int		cc;
 	Boolean		is_depoted_pkg = FALSE;
 
@@ -611,13 +611,13 @@ pkg_do(char *pkg)
 	if (!fexists(LogDir) || !(isdir(LogDir) || islinktodir(LogDir))) {
 		/* Check if the given package name matches something
 		 * with 'pkg-[0-9]*' */
-		char	        try[FILENAME_MAX];
+		char	        try[MaxPathSize];
 		lpkg_head_t     trypkgs;
 		lpkg_t	       *lpp;
 		int		qlen = 0;
 
 		TAILQ_INIT(&trypkgs);
-		snprintf(try, FILENAME_MAX, "%s-[0-9]*", pkg);
+		snprintf(try, MaxPathSize, "%s-[0-9]*", pkg);
 		if (findmatchingname(_pkgdb_getPKGDB_DIR(), try,
 			add_to_list_fn, &trypkgs) == 0) {
 			warnx("package '%s' not installed", pkg);
@@ -647,7 +647,7 @@ pkg_do(char *pkg)
 
 		return 0;
 	}
-	if (!getcwd(home, FILENAME_MAX)) {
+	if (!getcwd(home, MaxPathSize)) {
 		cleanup(0);
 		errx(2, "unable to get current working directory!");
 	}
