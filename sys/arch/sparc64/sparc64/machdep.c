@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2001/07/19 23:35:42 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.108 2001/07/24 19:30:14 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -834,14 +834,15 @@ haltsys:
 
 	if (howto & RB_HALT) {
 		printf("halted\n\n");
-		romhalt();
+		OF_exit();
+		panic("PROM exit failed");
 	}
 
 	printf("rebooting\n\n");
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
 		if (i > sizeof(str))
-			romboot(user_boot_string);	/* XXX */
+			OF_boot(user_boot_string);	/* XXX */
 		bcopy(user_boot_string, str, i);
 	} else {
 		i = 1;
@@ -858,7 +859,7 @@ haltsys:
 		str[i] = 0;
 	} else
 		str[0] = 0;
-	romboot(str);
+	OF_boot(str);
 	panic("cpu_reboot -- failed");
 	/*NOTREACHED*/
 }
