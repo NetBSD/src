@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.29 2002/02/08 01:30:45 ross Exp $
+.\"     $NetBSD: raidctl.8,v 1.29.2.1 2004/04/09 18:24:49 jmc Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1187,6 +1187,20 @@ options    RAID_AUTOCONFIG
 must be in the kernel configuration file.  See
 .Xr raid 4
 for more details.
+.Ss Swapping on RAID
+A RAID device can be used as a swap device.
+In order to ensure that a RAID device used as a swap device
+is correctly unconfigured when the system is shutdown or rebooted,
+it is recommended that the line
+.Bd -literal -offset indent
+swapoff=YES
+.Ed
+.Pp
+be added to
+.Pa /etc/rc.conf .
+.Pp
+Note: Swapping to a RAID 5 device is known to have problems, and is
+currently unsupported.
 .Ss Unconfiguration
 The final operation performed by
 .Nm
@@ -1416,3 +1430,7 @@ is to use parity, but not keep the parity correct.  At least with RAID
 0 there is no perception of increased data security.
 .Sh BUGS
 Hot-spare removal is currently not available.
+.Pp
+Swapping to a RAID 5 device is a good way to lockup your system, and
+use of a RAID 5 set as a swap device (or using a swap file in a
+filesystem on a RAID 5 set) is currently not supported.
