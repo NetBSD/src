@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.68 2002/11/14 03:04:20 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.69 2002/11/16 16:59:58 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.68 2002/11/14 03:04:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.69 2002/11/16 16:59:58 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -972,30 +972,42 @@ rf_PrintUserStats(RF_Raid_t * raidPtr)
 	long    elapsed_us, mbs, mbs_frac;
 	struct timeval diff;
 
-	RF_TIMEVAL_DIFF(&raidPtr->userstats.start, &raidPtr->userstats.stop, &diff);
+	RF_TIMEVAL_DIFF(&raidPtr->userstats.start, 
+			&raidPtr->userstats.stop, &diff);
 	elapsed_us = TIMEVAL_TO_US(diff);
 
 	/* 2000 sectors per megabyte, 10000000 microseconds per second */
 	if (elapsed_us)
-		mbs = (raidPtr->userstats.num_sect_moved / 2000) / (elapsed_us / 1000000);
+		mbs = (raidPtr->userstats.num_sect_moved / 2000) / 
+			(elapsed_us / 1000000);
 	else
 		mbs = 0;
 
 	/* this computes only the first digit of the fractional mb/s moved */
 	if (elapsed_us) {
-		mbs_frac = ((raidPtr->userstats.num_sect_moved / 200) / (elapsed_us / 1000000))
-		    - (mbs * 10);
+		mbs_frac = ((raidPtr->userstats.num_sect_moved / 200) / 
+			    (elapsed_us / 1000000)) - (mbs * 10);
 	} else {
 		mbs_frac = 0;
 	}
 
-	printf("Number of I/Os:             %ld\n", raidPtr->userstats.num_ios);
-	printf("Elapsed time (us):          %ld\n", elapsed_us);
-	printf("User I/Os per second:       %ld\n", RF_DB0_CHECK(raidPtr->userstats.num_ios, (elapsed_us / 1000000)));
-	printf("Average user response time: %ld us\n", RF_DB0_CHECK(raidPtr->userstats.sum_io_us, raidPtr->userstats.num_ios));
-	printf("Total sectors moved:        %ld\n", raidPtr->userstats.num_sect_moved);
-	printf("Average access size (sect): %ld\n", RF_DB0_CHECK(raidPtr->userstats.num_sect_moved, raidPtr->userstats.num_ios));
-	printf("Achieved data rate:         %ld.%ld MB/sec\n", mbs, mbs_frac);
+	printf("raid%d: Number of I/Os:             %ld\n", 
+	       raidPtr->raidid, raidPtr->userstats.num_ios);
+	printf("raid%d: Elapsed time (us):          %ld\n", 
+	       raidPtr->raidid, elapsed_us);
+	printf("raid%d: User I/Os per second:       %ld\n", 
+	       raidPtr->raidid, RF_DB0_CHECK(raidPtr->userstats.num_ios, 
+					     (elapsed_us / 1000000)));
+	printf("raid%d: Average user response time: %ld us\n", 
+	       raidPtr->raidid, RF_DB0_CHECK(raidPtr->userstats.sum_io_us, 
+					     raidPtr->userstats.num_ios));
+	printf("raid%d: Total sectors moved:        %ld\n", 
+	       raidPtr->raidid, raidPtr->userstats.num_sect_moved);
+	printf("raid%d: Average access size (sect): %ld\n", 
+	       raidPtr->raidid, RF_DB0_CHECK(raidPtr->userstats.num_sect_moved,
+					     raidPtr->userstats.num_ios));
+	printf("raid%d: Achieved data rate:         %ld.%ld MB/sec\n", 
+	       raidPtr->raidid, mbs, mbs_frac);
 }
 
 
