@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.51 2003/01/01 02:31:13 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.52 2003/01/25 14:13:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1385,7 +1385,7 @@ loop:
 #endif
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 				  "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			printf("blkno %lld nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 			fdcretry(fdc);
 			goto loop;
@@ -1424,7 +1424,7 @@ loop:
 #endif
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 				  "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			printf("blkno %lld nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 			fdcretry(fdc);
 			goto loop;
