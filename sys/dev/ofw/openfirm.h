@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.12 1999/03/10 02:19:04 mrg Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.13 2000/11/14 06:42:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,34 +76,34 @@ struct ofb_softc {
  */
 extern char *OF_buf;
 
-int	OF_peer __P((int phandle));
-int	OF_child __P((int phandle));
-int	OF_parent __P((int phandle));
-int	OF_instance_to_package __P((int ihandle));
-int	OF_getproplen __P((int handle, char *prop));
-int	OF_getprop __P((int handle, char *prop, void *buf, int buflen));
-int	OF_finddevice __P((char *name));
-int	OF_instance_to_path __P((int ihandle, char *buf, int buflen));
-int	OF_package_to_path __P((int phandle, char *buf, int buflen));
-int	OF_call_method_1 __P((char *method, int ihandle, int nargs, ...));
-int	OF_call_method __P((char *method, int ihandle, int nargs,
-	    int nreturns, ...));
-int	OF_open __P((char *dname));
-void	OF_close __P((int handle));
-int	OF_read __P((int handle, void *addr, int len));
-int	OF_write __P((int handle, void *addr, int len));
-int	OF_seek __P((int handle, u_quad_t pos));
-void	OF_boot __P((char *bootspec)) __attribute__((__noreturn__));
-void	OF_enter __P((void));
-void	OF_exit __P((void)) __attribute__((__noreturn__));
-void	(*OF_set_callback __P((void (*newfunc)(void *)))) __P((void *));
-int	openfirmware __P((void *));
+int	OF_peer (int phandle);
+int	OF_child (int phandle);
+int	OF_parent (int phandle);
+int	OF_instance_to_package (int ihandle);
+int	OF_getproplen (int handle, char *prop);
+int	OF_getprop (int handle, char *prop, void *buf, int buflen);
+int	OF_finddevice (char *name);
+int	OF_instance_to_path (int ihandle, char *buf, int buflen);
+int	OF_package_to_path (int phandle, char *buf, int buflen);
+int	OF_call_method_1 (char *method, int ihandle, int nargs, ...);
+int	OF_call_method (char *method, int ihandle, int nargs,
+	    int nreturns, ...);
+int	OF_open (char *dname);
+void	OF_close (int handle);
+int	OF_read (int handle, void *addr, int len);
+int	OF_write (int handle, void *addr, int len);
+int	OF_seek (int handle, u_quad_t pos);
+void	OF_boot (char *bootspec) __attribute__((__noreturn__));
+void	OF_enter (void);
+void	OF_exit (void) __attribute__((__noreturn__));
+void	(*OF_set_callback (void (*newfunc)(void *))) (void *);
+int	openfirmware (void *);
 
 /*
  * Functions and variables provided by machine-independent code.
  */
-int	of_compatible __P((int, const char * const *));
-int	of_decode_int __P((const unsigned char *buf));
-int	of_packagename __P((int, char *, int));
+int	of_compatible (int, const char * const *);
+int	of_decode_int (const unsigned char *buf);
+int	of_packagename (int, char *, int);
 
-int	*of_network_decode_media __P((int, int *, int *));
+int	*of_network_decode_media (int, int *, int *);
