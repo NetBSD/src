@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* $NetBSD: gen.c,v 1.12 1998/01/05 05:15:49 perry Exp $ */
+/* $NetBSD: gen.c,v 1.13 1998/10/10 20:48:04 itohy Exp $ */
 
 #include "flexdef.h"
 
@@ -1023,6 +1023,7 @@ void gentabs()
 		}
 
 	dataend();
+	free(acc_array);
 	}
 
 
