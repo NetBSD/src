@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.50 2001/09/18 08:38:28 lukem Exp $	*/
+/*	$NetBSD: setup.c,v 1.51 2001/11/16 05:35:40 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.50 2001/09/18 08:38:28 lukem Exp $");
+__RCSID("$NetBSD: setup.c,v 1.51 2001/11/16 05:35:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,13 +99,7 @@ setup(dev)
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	if (forceimage) {
-		if (!S_ISREG(statb.st_mode)) {
-			pfatal("%s is not a regular file", dev);
-			if (reply("CONTINUE") == 0)
-				return (0);
-		}
-	} else if (!S_ISCHR(statb.st_mode)) {
+	if (!forceimage && !S_ISCHR(statb.st_mode)) {
 		pfatal("%s is not a character device", dev);
 		if (reply("CONTINUE") == 0)
 			return (0);
@@ -135,7 +129,7 @@ setup(dev)
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL ||
 		sblock == NULL || altsblock == NULL)
 		errx(EEXIT, "cannot allocate space for superblock");
-	if ((lp = getdisklabel(NULL, fsreadfd)) != NULL)
+	if (!forceimage && (lp = getdisklabel(NULL, fsreadfd)) != NULL)
 		dev_bsize = secsize = lp->d_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
@@ -143,7 +137,8 @@ setup(dev)
 	 * Read in the superblock, looking for alternates if necessary
 	 */
 	if (readsb(1) == 0) {
-		if (bflag || preen || calcsb(dev, fsreadfd, &proto) == 0)
+		if (bflag || preen || forceimage ||
+		    calcsb(dev, fsreadfd, &proto) == 0)
 			return(0);
 		if (reply("LOOK FOR ALTERNATE SUPERBLOCKS") == 0)
 			return (0);
@@ -659,7 +654,7 @@ calcsb(dev, devfd, fs)
 	int i;
 
 	cp = strchr(dev, '\0') - 1;
-	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'h')) && !isdigit(*cp)) {
+	if ((cp == (char *)-1 || (*cp < 'a' || *cp > 'p')) && !isdigit(*cp)) {
 		pfatal("%s: CANNOT FIGURE OUT FILE SYSTEM PARTITION\n", dev);
 		return (0);
 	}

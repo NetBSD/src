@@ -1,4 +1,4 @@
-.\"	$NetBSD: fsck_ffs.8,v 1.25 2001/08/15 03:54:53 lukem Exp $
+.\"	$NetBSD: fsck_ffs.8,v 1.26 2001/11/16 05:35:40 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)fsck.8	8.3 (Berkeley) 11/29/94
 .\"
-.Dd August 15, 2001
+.Dd November 16, 2001
 .Dt FSCK_FFS 8
 .Os
 .Sh NAME
@@ -183,7 +183,11 @@ Print debugging output.
 .It Fl F
 Indicates that
 .Ar filesystem
-is a file system image in a regular file.
+is a file system image, rather than a raw character device.
+.Ar filesystem
+will be accessed
+.Sq as-is ,
+and no attempts will be made to read a disklabel.
 .It Fl f
 Force checking of file systems.  Normally, if a file system is cleanly
 unmounted, the kernel will set a
