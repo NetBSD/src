@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2002/12/10 05:14:26 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 2003/04/02 07:35:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,7 +67,7 @@
 
 /* Sun settings. Still hope, that I might get sun3 binaries to work... */
 #define	USRSTACK	0x0E000000
-#define KUSER_AREA	(-UPAGES*NBPG)
+#define KUSER_AREA	(-UPAGES*PAGE_SIZE)
 /*
  * Virtual memory related constants, all in bytes
  */
@@ -118,12 +118,12 @@
 #define VM_MAX_ADDRESS		((vaddr_t)(USRSTACK))
 #define VM_MAXUSER_ADDRESS	((vaddr_t)(VM_MAX_ADDRESS))
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-NBPG))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE))
 
 /*
  * virtual sizes (bytes) for various kernel submaps
  */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /*
  * Our bootloader currently passes up to 2 segments (ST and TT ram).

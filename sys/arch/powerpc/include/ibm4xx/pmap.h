@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2002/09/22 07:53:47 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 2003/04/02 07:36:02 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -114,14 +114,14 @@
  * Definitions for sizes of 1st and 2nd level page tables.
  *
  */
-#define	PTSZ		(NBPG / 4)
-#define	PTMAP		(PTSZ * NBPG)
+#define	PTSZ		(PAGE_SIZE / 4)
+#define	PTMAP		(PTSZ * PAGE_SIZE)
 #define	PTMSK		((PTMAP - 1) & ~(PGOFSET))
 
 #define	PTIDX(v)	(((v) & PTMSK) >> PGSHIFT)
 
 /* 2nd level tables map in any bits not mapped by 1st level tables. */
-#define	STSZ		((0xffffffffU / (NBPG * PTSZ)) + 1)
+#define	STSZ		((0xffffffffU / (PAGE_SIZE * PTSZ)) + 1)
 #define	STMAP		(0xffffffffU)
 #define	STMSK		(~(PTMAP - 1))
 

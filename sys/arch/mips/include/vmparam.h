@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2002/12/10 05:14:30 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2003/04/02 07:36:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,7 +93,7 @@
  * The default PTE number is enough to cover 8 disks * MAXBSIZE.
  */
 #ifndef USRIOSIZE
-#define USRIOSIZE	(MAXBSIZE/NBPG * 8)
+#define USRIOSIZE	(MAXBSIZE/PAGE_SIZE * 8)
 #endif
 
 /*
@@ -120,7 +120,7 @@
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* VM_PHYSSEG_MAX defined by platform-dependent code. */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH

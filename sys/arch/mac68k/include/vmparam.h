@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2002/12/10 05:14:29 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.33 2003/04/02 07:36:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,10 +94,10 @@
 /*
  * USRSTACK is the top (end) of the user stack.
  *
- * NOTE: HP300 uses HIGHPAGES == (0x100000/NBPG) for HP/UX compatibility.
+ * NOTE: HP300 uses HIGHPAGES == (0x100000/PAGE_SIZE) for HP/UX compatibility.
  * Do we care?  Obviously not at the moment.
  */
-#define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
+#define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define P1PAGES		0x100000
 #define HIGHPAGES	3			/* UPAGES */
@@ -151,12 +151,12 @@
 /* user/kernel map constants */
 #define VM_MIN_ADDRESS		((vaddr_t)0)
 #define VM_MAXUSER_ADDRESS	((vaddr_t)(USRSTACK))
-#define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*NBPG)))
+#define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*PAGE_SIZE)))
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-NBPG))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE))
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)		/* XXX: SYSPTSIZE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.4 2002/12/06 10:10:48 scw Exp $	*/
+/*	$NetBSD: pte.h,v 1.5 2003/04/02 07:36:03 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -152,7 +152,7 @@ typedef struct kpte {
 /*
  * The pmap_pteg_table consists of an array of Hash Buckets, called PTE Groups,
  * where each group is 8 PTEs in size. The number of groups is calculated
- * at boot time such that there is one group for every two NBPG-sized pages
+ * at boot time such that there is one group for every two PAGE_SIZE-sized pages
  * of physical RAM.
  */
 #define	SH5_PTEG_SIZE		8

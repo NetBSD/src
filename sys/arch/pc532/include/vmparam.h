@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 2002/12/10 05:14:31 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28 2003/04/02 07:36:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,7 +68,7 @@
 /*
  * INTSTACK is a temporary stack for the idle process and cpu_exit.
  */
-#define INTSTACK	(0xffc00000 + NBPG - 4)
+#define INTSTACK	(0xffc00000 + PAGE_SIZE - 4)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -124,7 +124,7 @@
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_MAX		1	/* we have contiguous memory */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM

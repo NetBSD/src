@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.h,v 1.7 2001/05/02 13:12:46 jdolecek Exp $ */
+/*	$NetBSD: bioscall.h,v 1.8 2003/04/02 07:35:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  * virtual & physical address of the trampoline
  * that we use: page 1.
  */
-#define BIOSTRAMP_BASE	NBPG
+#define BIOSTRAMP_BASE	PAGE_SIZE
 
 #ifndef _LOCORE
 #define	BIOSREG_LO	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2003/01/31 19:05:55 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2003/04/02 07:36:04 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,7 +73,7 @@
 
 #define HOLESHIFT	(43)
 
-#define PTSZ	(NBPG/8)
+#define PTSZ	(PAGE_SIZE/8)
 #define PDSZ	(PTSZ)
 #define STSZ	(PTSZ)
 

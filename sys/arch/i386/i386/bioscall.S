@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.1 2002/11/22 15:01:16 fvdl Exp $ */
+/*	$NetBSD: bioscall.S,v 1.2 2003/04/02 07:35:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,10 +35,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <machine/param.h>
 #include <machine/bioscall.h>
 
 #include <machine/asm.h>
+
+#include "assym.h"
 
 /* LINTSTUB: include <sys/types.h> */
 /* LINTSTUB: include <machine/bioscall.h> */

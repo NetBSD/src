@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.11 2002/04/15 17:05:14 bjh21 Exp $	*/
+/*	$NetBSD: iomap.h,v 1.12 2003/04/02 07:35:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -48,7 +48,7 @@ vaddr_t	stio_addr;		/* Where the st io-area is mapped	*/
  * PCI KVA addresses. These are determined in atari_init.c. Except for
  * the config-space, they should be used for a PCI-console only. Other
  * cards should use the bus-functions to map io & mem spaces.
- * Each card gets an config area of NBPG  bytes.
+ * Each card gets an config area of PAGE_SIZE  bytes.
  * 'pci_mem_uncached' is used by the Milan interrupt handler that frobs
  * with the PLX. Also, the Milan uses the first page of 'pci_io_addr' for
  * access to some of it's ISA I/O devices (RTC, Interrupt controller, etc.)
@@ -83,9 +83,9 @@ vaddr_t	pci_mem_uncached;	/* KVA base of an uncached PCI mem-page	*/
  * boot-stages.
  * XXX: Can probably be reduced to only PCI_CONF_SIZE (Leo).
  */
-#define PCI_CONF_SIZE	(4 * NBPG)
-#define PCI_IO_SIZE	(NBPG)
-#define PCI_MEM_SIZE	(NBPG)
+#define PCI_CONF_SIZE	(4 * PAGE_SIZE)
+#define PCI_IO_SIZE	(PAGE_SIZE)
+#define PCI_MEM_SIZE	(PAGE_SIZE)
 
 #define	PCI_VGA_SIZE	(32 * 1024) /* XXX Leo: Only used by grfabs_et now. */
 

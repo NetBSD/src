@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.2 2002/11/05 07:41:24 chs Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.3 2003/04/02 07:36:00 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -116,7 +116,7 @@ struct pv_page_info {
 
 /*
  * This is basically:
- * ((NBPG - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
+ * ((PAGE_SIZE - sizeof(struct pv_page_info)) / sizeof(struct pv_entry))
  */
 #define	NPVPPG	170
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2002/09/14 15:54:01 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2003/04/02 07:35:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -93,7 +93,7 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /*
  * max number of non-contig chunks of physical RAM you can have

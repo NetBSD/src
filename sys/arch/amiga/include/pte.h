@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.15 1998/08/12 19:46:13 is Exp $	*/
+/*	$NetBSD: pte.h,v 1.16 2003/04/02 07:35:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,14 +125,14 @@ typedef u_int st_entry_t;		/* segment table entry */
  * AMIGA_MAX_PTSIZE	the number of bytes to map everything
  */
 #define AMIGA_MAX_COREUPT	1024
-#define AMIGA_UPTSIZE		roundup(VM_MAXUSER_ADDRESS / NPTEPG, NBPG)
+#define AMIGA_UPTSIZE		roundup(VM_MAXUSER_ADDRESS / NPTEPG, PAGE_SIZE)
 #define AMIGA_UPTMAXSIZE \
-    roundup((AMIGA_MAX_COREUPT * AMIGA_UPTSIZE), NBPG)
+    roundup((AMIGA_MAX_COREUPT * AMIGA_UPTSIZE), PAGE_SIZE)
 #define AMIGA_MAX_KPTSIZE \
     (AMIGA_MAX_COREUPT * AMIGA_UPTSIZE / NPTEPG)
 #define AMIGA_KPTSIZE \
-    roundup((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NPTEPG, NBPG)
-#define AMIGA_MAX_PTSIZE	roundup(0xffffffff / NPTEPG, NBPG)
+    roundup((VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NPTEPG, PAGE_SIZE)
+#define AMIGA_MAX_PTSIZE	roundup(0xffffffff / NPTEPG, PAGE_SIZE)
 
 /*
  * Kernel virtual address to page table entry and to physical address.

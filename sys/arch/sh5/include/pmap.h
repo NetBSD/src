@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16 2003/04/01 10:25:09 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.17 2003/04/02 07:36:03 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -53,7 +53,7 @@
  * if necessary.
  */
 #ifndef	KERNEL_IPT_SIZE
-#define	KERNEL_IPT_SIZE	(SH5_KSEG1_SIZE / NBPG)
+#define	KERNEL_IPT_SIZE	(SH5_KSEG1_SIZE / PAGE_SIZE)
 #endif
 
 struct pmap {

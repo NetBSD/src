@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2002/12/10 05:14:25 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2003/04/02 07:35:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,7 @@
 #ifndef USRSTACK
 #define	USRSTACK	0x0E000000
 #endif
-#define KUSER_AREA	(-UPAGES*NBPG)
+#define KUSER_AREA	(-UPAGES*PAGE_SIZE)
 /*
  * Virtual memory related constants, all in bytes
  */
@@ -119,12 +119,12 @@
 #define VM_MAX_ADDRESS		((vaddr_t)(USRSTACK))	/* user max */
 #define VM_MAXUSER_ADDRESS	((vaddr_t)(VM_MAX_ADDRESS))	/* same */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-NBPG))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE))
 
 /*
  * virtual sizes (bytes) for various kernel submaps
  */
-#define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
+#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /*
  * Our bootloader currently passes up to 16 segments (but this is variable)
