@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_acct.c	8.1 (Berkeley) 6/14/93
- *	$Id: kern_acct.c,v 1.25 1994/05/21 01:10:26 cgd Exp $
+ *	$Id: kern_acct.c,v 1.26 1994/05/21 09:00:22 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -91,7 +91,7 @@ int	acctchkfreq = 15;	/* frequency (in seconds) to check space */
  * previous implementation done by Mark Tinguely.
  */
 struct acct_args {
-	char	*fname;
+	char	*path;
 };
 acct(p, uap, retval)
 	struct proc *p;
@@ -109,9 +109,9 @@ acct(p, uap, retval)
 	 * If accounting is to be started to a file, open that file for
 	 * writing and make sure it's a 'normal'.
 	 */
-	if (uap->fname != NULL) {
+	if (uap->path != NULL) {
 		nd.ni_segflg = UIO_USERSPACE;
-		nd.ni_dirp = uap->fname;
+		nd.ni_dirp = uap->path;
 		if (error = vn_open(&nd, p, FWRITE, 0))
 			return (error);
 		VOP_UNLOCK(nd.ni_vp);
@@ -132,7 +132,7 @@ acct(p, uap, retval)
 		    p->p_ucred, p);
 		acctp = savacctp = NULLVP;
 	}
-	if (uap->fname == NULL)
+	if (uap->path == NULL)
 		return (error);
 
 	/*
@@ -157,9 +157,11 @@ acct_process(p)
 	struct rusage *r;
 	struct timeval ut, st, tmp;
 	int s, t;
+	struct vnode *vp;
 
 	/* If accounting isn't enabled, don't bother */
-	if (acctp == NULLVP)
+	vp = acctp;
+	if (vp == NULLVP)
 		return (0);
 
 	/*
@@ -212,7 +214,7 @@ acct_process(p)
 	 * Now, just write the accounting information to the file.
 	 */
 	LEASE_CHECK(vp, p, p->p_ucred, LEASE_WRITE);
-	return (vn_rdwr(UIO_WRITE, acctp, (caddr_t)&acct, sizeof (acct),
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t)&acct, sizeof (acct),
 	    (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT, p->p_ucred,
 	    (int *)0, p));
 }
@@ -267,22 +269,21 @@ acctwatch(a)
 {
 	struct statfs sb;
 
-	if (savacctp) {
+	if (savacctp != NULLVP) {
 		(void)VFS_STATFS(savacctp->v_mount, &sb, (struct proc *)0);
 		if (sb.f_bavail > acctresume * sb.f_blocks / 100) {
 			acctp = savacctp;
-			savacctp = NULL;
+			savacctp = NULLVP;
 			log(LOG_NOTICE, "Accounting resumed\n");
 		}
-	} else {
-		if (acctp == NULL)
-			return;
+	} else if (acctp != NULLVP) {
 		(void)VFS_STATFS(acctp->v_mount, &sb, (struct proc *)0);
 		if (sb.f_bavail <= acctsuspend * sb.f_blocks / 100) {
 			savacctp = acctp;
-			acctp = NULL;
+			acctp = NULLVP;
 			log(LOG_NOTICE, "Accounting suspended\n");
 		}
-	}
+	} else
+		return;
 	timeout(acctwatch, NULL, acctchkfreq * hz);
 }
