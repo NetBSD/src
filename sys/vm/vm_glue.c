@@ -309,7 +309,7 @@ loop:
 #endif
 	pp = NULL;
 	ppri = INT_MIN;
-	for (p = allproc; p != NULL; p = p->p_nxt)
+	for (p = (struct proc *)allproc; p != NULL; p = p->p_nxt)
 		if (p->p_stat == SRUN && (p->p_flag & SLOAD) == 0) {
 			pri = p->p_time + p->p_slptime - p->p_nice * 8;
 			if (pri > ppri) {
@@ -397,7 +397,7 @@ swapout_threads()
 #endif
 	outp = outp2 = NULL;
 	outpri = outpri2 = 0;
-	for (p = allproc; p != NULL; p = p->p_nxt) {
+	for (p = (struct proc *)allproc; p != NULL; p = p->p_nxt) {
 		if (!swappable(p))
 			continue;
 		switch (p->p_stat) {
