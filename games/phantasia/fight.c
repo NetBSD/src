@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.7 2000/04/27 00:30:53 jdc Exp $	*/
+/*	$NetBSD: fight.c,v 1.8 2004/02/08 00:32:07 jsm Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -10,17 +10,13 @@ void
 encounter(particular)
 	int     particular;
 {
-	bool    firsthit = Player.p_blessing;	/* set if player gets the
-						 * first hit */
-	int     flockcnt = 1;	/* how many time flocked */
+	volatile bool    firsthit = Player.p_blessing;	/* set if player gets
+							 * the first hit */
+	volatile int     flockcnt = 1;	/* how many time flocked */
 
 	/* let others know what we are doing */
 	Player.p_status = S_MONSTER;
 	writerecord(&Player, Fileloc);
-
-#if __GNUC__
-	(void)&firsthit;	/* XXX shut up gcc */
-#endif
 
 #ifdef SYS5
 	flushinp();
