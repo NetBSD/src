@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.707 2004/06/13 22:28:42 jmc Exp $
+#	$NetBSD: mi,v 1.708 2004/06/22 15:41:55 itojun Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -886,6 +886,7 @@
 ./usr/include/net/netisr.h			comp-c-include
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
+./usr/include/net/pfvar.h			comp-c-include
 ./usr/include/net/ppp-comp.h			comp-c-include
 ./usr/include/net/ppp_defs.h			comp-c-include
 ./usr/include/net/radix.h			comp-c-include
