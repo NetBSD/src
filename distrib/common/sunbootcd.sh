@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: sunbootcd.sh,v 1.3 2003/07/10 10:36:03 lukem Exp $
+# $NetBSD: sunbootcd.sh,v 1.4 2004/09/22 21:24:07 snj Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,7 +49,7 @@ usage()
 	cat 1>&2 << _USAGE_
 Usage: ${PROGNAME} fsimage sun4 [sun4c [sun4m [sun3|sun4d [sun3x|sun4u]]]]
 	Combine file system partitions for Sun Microsystems, Inc. computers
-	into a CD-ROM file sytem image suitable for booting on the
+	into a CD-ROM file system image suitable for booting on the
 	following platforms:
 		NetBSD/sun3:	sun3, sun3x
 		NetBSD/sparc:	sun4, sun4c, sun4d, sun4m
