@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.19 1997/09/12 21:08:22 phil Exp $	*/
+/*	$NetBSD: curses.h,v 1.20 1997/10/13 16:10:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -42,6 +42,7 @@
 #include <sys/cdefs.h>
 
 #include <stdio.h>
+#include <termcap.h>
 
 /*
  * The following #defines and #includes are present for backward
@@ -340,15 +341,5 @@ extern int	 __pfast;
 extern int	 __rawmode;
 extern int	 __noqch;
 #endif
-
-/* Termcap functions. */
-__BEGIN_DECLS
-int	 tgetent __P((char *, char *));
-int	 tgetnum __P((char *));
-int	 tgetflag __P((char *));
-char	*tgetstr __P((char *, char **));
-char	*tgoto __P((char *, int, int));
-void	 tputs __P((char *, int, void (*)(int)));
-__END_DECLS
 
 #endif /* !_CURSES_H_ */
