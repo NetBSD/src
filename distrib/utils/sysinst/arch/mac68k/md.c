@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.2 1999/03/26 08:52:44 ender Exp $ */
+/*	$NetBSD: md.c,v 1.3 1999/04/09 10:24:41 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -624,7 +624,7 @@ md_get_info()
 	return edit_diskmap();
 }
 
-void
+int
 md_pre_disklabel()
 {
     int fd;
@@ -685,32 +685,37 @@ md_pre_disklabel()
      * Well, if we get here the dirty deed has been done.
      */
     close (fd);
+    return 0;
 }
 
-void
+int
 md_post_disklabel(void)
 {
+	return 0;
 }
 
-void
+int
 md_post_newfs(void)
 {
+	return 0;
 }
 
-void
+int
 md_copy_filesystem(void)
 {
 	if (target_already_root()) {
-		return;
+		return 1;
 	}
 
 	/* Copy the instbin(s) to the disk */
 	msg_display(MSG_dotar);
-	run_prog (0, 0, "pax -X -r -w -pe / /mnt");
+	if (run_prog (0, 0, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
-	cp_to_target ("/usr/share/misc/termcap", "/.termcap");
+	if (cp_to_target ("/tmp/.hdprofile", "/.profile") != 0)
+		return 1;
+	return cp_to_target ("/usr/share/misc/termcap", "/.termcap");
 }
 
 

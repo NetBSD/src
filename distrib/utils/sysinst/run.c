@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.11 1999/03/22 09:02:47 ross Exp $	*/
+/*	$NetBSD: run.c,v 1.12 1999/04/09 10:24:39 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -410,7 +410,7 @@ launch_subwin(actionwin, args, win, display)
  */
 
 int
-run_prog(int fatal, int display, char *cmd, ...)
+run_prog(int fatal, int display, char *errmsg, char *cmd, ...)
 {
 	va_list ap;
 	struct winsize win;
@@ -499,8 +499,11 @@ run_prog(int fatal, int display, char *cmd, ...)
 		ret = launch_subwin(NULL, args, win, 0);
 	}
 	va_end(ap);
-	if (fatal)
+	if (fatal && ret != 0)
 		exit(ret);
-	else
-		return(ret);
+	if (ret && errmsg) {
+		msg_printf(errmsg, command);
+		process_menu(MENU_ok);
+	}
+	return(ret);
 }

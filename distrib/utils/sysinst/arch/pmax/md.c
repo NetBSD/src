@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.25 1999/04/05 06:24:17 simonb Exp $	*/
+/*	$NetBSD: md.c,v 1.26 1999/04/09 10:24:42 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -120,16 +120,18 @@ md_get_info (void)
 /* 
  * hook called before editing new disklabel.
  */
-void	md_pre_disklabel (void)
+int	md_pre_disklabel (void)
 {
+	return 1;
 }
 
 
 /* 
  * hook called after writing  disklabel to new target disk.
  */
-void	md_post_disklabel (void)
+int	md_post_disklabel (void)
 {
+	return 0;
 }
 
 /*
@@ -152,6 +154,7 @@ void	md_post_newfs (void)
 	printf (msg_string(MSG_dobootblks), diskdev);
 	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
 			"-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
+	return 0;
 }
 
 
@@ -393,7 +396,7 @@ int	md_make_bsd_partitions (void)
  * already  the current root: we'd clobber the files we're trying to copy.
  */
 
-void	md_copy_filesystem (void)
+int	md_copy_filesystem (void)
 {
 	/*
 	 * Make sure any binaries in a diskimage /usr.install get copied 
@@ -416,8 +419,9 @@ void	md_copy_filesystem (void)
 	/* test returns 0  on success */
 	dir_exists = (run_prog(0, 0, "test -d %s", diskimage_usr) == 0);
 	if (dir_exists) {
-		run_prog ( 0, 1, "pax -Xrwpe -s /%s// %s /usr",
-			diskimage_usr, diskimage_usr);
+		if (run_prog ( 0, 1, "pax -Xrwpe -s /%s// %s /usr",
+			diskimage_usr, diskimage_usr) != 0)
+				return 1;
 	}
 
 	if (target_already_root()) {
@@ -427,18 +431,19 @@ void	md_copy_filesystem (void)
 #if 0
 		run_prog(0, 0, "rm -fr %s", diskimage_usr);
 #endif
-		return;
+		return 0;
 	}
 
 	/* Copy all the diskimage/ramdisk binaries to the target disk. */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog (0, 1, "pax -X -r -w -pe / /mnt");
+	if (run_prog (0, 1, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Make sure target has a copy of install kernel. */
 	dup_file_into_target("/netbsd");
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
+	return cp_to_target ("/tmp/.hdprofile", "/.profile");
 }
 
 
