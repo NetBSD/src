@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993, 1994 Christopher G. Demetriou
+ * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,22 +27,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.h,v 1.2 1994/01/16 03:05:02 cgd Exp $
+ *	$Id: exec_script.h,v 1.1 1994/01/16 03:05:04 cgd Exp $
  */
 
-#ifndef	_SYS_EXEC_AOUT_H_
-#define	_SYS_EXEC_AOUT_H_
+#ifndef	_SYS_EXEC_SCRIPT_H_
+#define	_SYS_EXEC_SCRIPT_H_
+
+#define	EXEC_SCRIPT_MAGIC	"#!"
+#define	EXEC_SCRIPT_MAGICLEN	2
 
 #ifdef KERNEL
 
-/* the "a.out" format's entry in the exec switch */
-int	exec_aout_makecmds __P((struct proc *, struct exec_package *));
-
-/* functions which prepare various a.out executable types */
-int	exec_aout_prep_zmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_nmagic __P((struct proc *, struct exec_package *));
-int	exec_aout_prep_omagic __P((struct proc *, struct exec_package *));
-int	exec_aout_setup_stack __P((struct proc *, struct exec_package *));
+/* the shell script handler's entry in the exec switch */
+int	exec_script_makecmds __P((struct proc *, struct exec_package *));
 
 #endif /* KERNEL */
 #endif /* !_SYS_EXEC_AOUT_H_ */
