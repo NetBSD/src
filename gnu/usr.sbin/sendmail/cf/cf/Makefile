@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/02/08 16:13:26 tron Exp $
+#	$NetBSD: Makefile,v 1.3 2000/04/19 21:48:41 tron Exp $
 #	install these sources in /usr/share/sendmail/cf
 
 DIST=		${.CURDIR}/../../../../dist
@@ -28,7 +28,7 @@ OTHERS=		boat-anchor.cf chimera.cf sun-lamp.cf ihack.net.cf \
 
 .mc.cf:
 	${RM} $@
-	(cd ${CFDIR}/cf && ${M4} ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
+	(cd ${CFDIR}/cf && ${M4} ${CFDIR}/m4/cf.m4 ${.CURDIR}/${@:R}.mc > ${.OBJDIR}/$@)
 	${CHMOD} ${ROMODE} $@
 
 realall: ${ALL}
