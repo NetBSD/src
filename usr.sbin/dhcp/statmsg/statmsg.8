@@ -48,6 +48,7 @@ only by the DHCP client.   Two message types are supported:
 .I network-location-changed
 and
 .I release-current-dhcp-leases .
+In order to use statmsg, sysconfd must be running.
 .PP
 The \fInetwork-location-changed\fR message instructs the DHCP client to
 recheck all leases it has acquired.   This can be useful when a laptop
