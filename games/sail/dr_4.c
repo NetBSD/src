@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_4.c,v 1.5 1997/10/13 19:43:39 christos Exp $	*/
+/*	$NetBSD: dr_4.c,v 1.6 1997/10/13 21:03:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_4.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dr_4.c,v 1.5 1997/10/13 19:43:39 christos Exp $");
+__RCSID("$NetBSD: dr_4.c,v 1.6 1997/10/13 21:03:37 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,7 +58,7 @@ struct ship *from, *to;
 	while (--k >= 0) {
 		if (friend || die() < 3) {
 			cleangrapple(from, to, 0);
-			makesignal(from, "ungrappling %s (%c%c)", to);
+			makesignal(from, "ungrappling $$", to);
 		}
 	}
 }
@@ -71,5 +71,5 @@ struct ship *from, *to;
 		return;
 	Write(W_GRAP, from, 0, to->file->index, 0, 0, 0);
 	Write(W_GRAP, to, 0, from->file->index, 0, 0, 0);
-	makesignal(from, "grappled with %s (%c%c)", to);
+	makesignal(from, "grappled with $$", to);
 }

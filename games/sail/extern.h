@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1997/10/13 19:44:01 christos Exp $ */
+/*	$NetBSD: extern.h,v 1.5 1997/10/13 21:03:49 christos Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -400,8 +400,10 @@ void loadplayer __P((void));
 void initscreen __P((void));
 void cleanupscreen __P((void));
 void newturn __P((int));
-void Signal __P((const char *, struct ship *, ...));
-void Msg __P((const char *, ...));
+void Signal __P((const char *, struct ship *, ...))
+	 __attribute__((__format__(__printf__,1,3)));
+void Msg __P((const char *, ...))
+	 __attribute__((__format__(__printf__,1,2)));
 void Scroll __P((void));
 void prompt __P((char *, struct ship *));
 void endprompt __P((int));
@@ -426,7 +428,10 @@ void initialize __P((void));
 
 /* sync.c */
 void fmtship __P((char *, size_t, const char *, struct ship *));
-void makesignal __P((struct ship *, const char *, struct ship *, ...));
+void makesignal __P((struct ship *, const char *, struct ship *, ...))
+	 __attribute__((__format__(__printf__,2,4)));
+void makemsg __P((struct ship *, const char *, ...))
+	 __attribute__((__format__(__printf__,2,3)));
 int sync_exists __P((int));
 int sync_open __P((void));
 void sync_close __P((int));

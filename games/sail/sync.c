@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.6 1997/10/13 19:45:54 christos Exp $	*/
+/*	$NetBSD: sync.c,v 1.7 1997/10/13 21:04:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.6 1997/10/13 19:45:54 christos Exp $");
+__RCSID("$NetBSD: sync.c,v 1.7 1997/10/13 21:04:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,7 @@ fmtship(buf, len, fmt, ship)
 			*buf = '\0';
 			return;
 		}
-		if (*fmt == '%' && fmt[1] == '$') {
+		if (*fmt == '$' && fmt[1] == '$') {
 			size_t l = snprintf(buf, len, "%s (%c%c)",
 			    ship->shipname, colours(ship), sterncolour(ship));
 			buf += l;
@@ -124,6 +124,30 @@ makesignal(va_alias)
 	Write(W_SIGNAL, from, 1, (long)message, 0, 0, 0);
 }
 
+void
+#ifdef __STDC__
+makemsg(struct ship *from, const char *fmt, ...)
+#else
+makemsg(va_alias)
+	va_dcl
+#endif
+{
+	char message[BUFSIZ];
+	va_list ap;
+#ifndef __STDC__
+	struct ship *from;
+	const char *fmt;
+
+	va_start(ap);
+	from = va_arg(ap, struct ship *);
+	fmt = va_arg(ap, const char *);
+#else
+	va_start(ap, fmt);
+#endif
+	(void) vsprintf(message, fmt, ap);
+	va_end(ap);
+	Write(W_SIGNAL, from, 1, (long)message, 0, 0, 0);
+}
 int
 sync_exists(game)
 {
@@ -351,9 +375,9 @@ sync_update(type, ship, a, b, c, d)
 	case W_SIGNAL:
 		if (mode == MODE_PLAYER)
 			if (nobells)
-				Signal("%$: %s", ship, a);
+				Signal("$$: %s", ship, (char *) a);
 			else
-				Signal("\7%$: %s", ship, a);
+				Signal("\7$$: %s", ship, (char *) a);
 		break;
 	case W_CREW: {
 		struct shipspecs *s = ship->specs;

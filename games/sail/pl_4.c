@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_4.c,v 1.5 1997/10/13 19:45:20 christos Exp $	*/
+/*	$NetBSD: pl_4.c,v 1.6 1997/10/13 21:04:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_4.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_4.c,v 1.5 1997/10/13 19:45:20 christos Exp $");
+__RCSID("$NetBSD: pl_4.c,v 1.6 1997/10/13 21:04:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ struct ship *ship;
 		i = portside(ms, ship, 1) - mf->dir;
 		if (i <= 0)
 			i += 8;
-		Signal("%$ %s %s %s.",
+		Signal("$$ %s %s %s.",
 			ship, countryname[ship->nationality],
 			classname[ship->specs->class], directionname[i]);
 	}
