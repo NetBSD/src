@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.7 2003/08/07 16:31:24 agc Exp $ */
+/*	$NetBSD: fbvar.h,v 1.8 2005/02/25 16:03:09 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,11 +47,9 @@
 
 #include <sys/event.h>
 
-#ifdef RASTERCONSOLE
 #include <dev/rcons/rcons.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
-#endif
 
 struct fbdriver {
 	/* device unblank function (force kernel output to display) */
@@ -92,8 +90,9 @@ struct fbdevice {
 #ifdef RASTERCONSOLE
 	/* Raster console emulator state */
 	struct	rconsole fb_rcons;
-	struct	rasops_info fb_rinfo;
 #endif
+	/* for wsdisplay we always need rasops_info */
+	struct	rasops_info fb_rinfo;
 };
 
 void	fb_attach(struct fbdevice *, int);
