@@ -1,4 +1,4 @@
-/*	$NetBSD: dmavar.h,v 1.3 1994/11/20 20:52:07 deraadt Exp $ */
+/*	$NetBSD: dmavar.h,v 1.4 1994/11/27 00:08:34 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -50,9 +50,21 @@ struct dma_softc {
  * We are not allowed to touch the DMA "flush" and "drain" bits
  * while it is still thinking about a request (DMA_RP).
  */
-#define DMAWAIT(sc)	while (sc->sc_regs->csr & D_R_PEND) DELAY(1)
-#define DMAWAIT1(sc)	while (sc->sc_regs->csr & D_DRAINING) DELAY(1)
-#define DMAREADY(sc)	while (!(sc->sc_regs->csr & D_DMA_ON)) DELAY(1)
+
+/*
+ * TIME WAIT (to debug hanging machine problem)
+ */
+
+#define TIME_WAIT(COND, MSG, SC) { int count = 500000; \
+				while (--count > 0 && (COND)) DELAY(1); \
+				if (count == 0) { \
+					printf("CSR = %x\n", SC->sc_regs->csr);\
+					panic(MSG); } \
+			     }
+
+#define DMAWAIT(sc)  TIME_WAIT((sc->sc_regs->csr & D_R_PEND), "DMAWAIT", sc)
+#define DMAWAIT1(sc) TIME_WAIT((sc->sc_regs->csr & D_DRAINING), "DMAWAIT1", sc)
+#define DMAREADY(sc) TIME_WAIT((!(sc->sc_regs->csr & D_DMA_ON)), "DMAREADY", sc)
 
 #define DMACSR(sc)	(sc->sc_regs->csr)
 #define DMADDR(sc)	(sc->sc_regs->addr)
