@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.8 2000/09/10 19:36:43 joda Exp $
+# $NetBSD: Makefile,v 1.9 2000/12/30 17:21:45 sommerfeld Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/krb5
 .PATH: ${DIST}/heimdal/doc
@@ -8,7 +11,7 @@ MKLINT= no
 
 LIB=	krb5
 
-COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${MAKE} print-objdir
+COMPILEET!=	cd ${.CURDIR}/../libcom_err/compile_et && ${PRINTOBJDIR}
 
 krb5_err.c krb5_err.h: krb5_err.et
 	${COMPILEET}/compile_et ${DIST}/heimdal/lib/krb5/krb5_err.et
@@ -141,7 +144,7 @@ krb5-types.h:
 
 INCSDIR= /usr/include/krb5
 
-ASN1!=	cd ${.CURDIR}/../libasn1 && ${MAKE} print-objdir
+ASN1!=	cd ${.CURDIR}/../libasn1 && ${PRINTOBJDIR}
 
 CPPFLAGS+= -I.					\
 	 -I${DIST}/heimdal/lib/krb5		\
