@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.46 1997/10/17 04:44:10 jonathan Exp $	*/
+/*	$NetBSD: locore.S,v 1.47 1998/03/02 23:40:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -439,14 +439,8 @@ nomatch:
 END(bcmp)
 
 /*
- * memcpy(to, from, len)
  * {ov}bcopy(from, to, len)
  */
-ALEAF(memcpy)
-	move	v0, a0			# swap from and to
-	move	a0, a1
-	move	a1, v0
-
 LEAF(bcopy)
 ALEAF(ovbcopy)
 	.set	noat
