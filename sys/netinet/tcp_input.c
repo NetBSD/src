@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.211 2004/12/18 07:30:17 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.212 2004/12/21 05:51:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.211 2004/12/18 07:30:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.212 2004/12/21 05:51:31 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -779,6 +779,87 @@ tcp6_log_refused(ip6, th)
 #endif
 
 /*
+ * Checksum extended TCP header and data.
+ */
+int
+tcp_input_checksum(int af, struct mbuf *m, const struct tcphdr *th, int toff,
+    int off, int tlen)
+{
+
+	/*
+	 * XXX it's better to record and check if this mbuf is
+	 * already checked.
+	 */
+
+	switch (af) {
+#ifdef INET
+	case AF_INET:
+		switch (m->m_pkthdr.csum_flags &
+			((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_TCPv4) |
+			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
+		case M_CSUM_TCPv4|M_CSUM_TCP_UDP_BAD:
+			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_bad);
+			goto badcsum;
+
+		case M_CSUM_TCPv4|M_CSUM_DATA: {
+			u_int32_t hw_csum = m->m_pkthdr.csum_data;
+
+			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_data);
+			if (m->m_pkthdr.csum_flags & M_CSUM_NO_PSEUDOHDR) {
+				const struct ip *ip =
+				    mtod(m, const struct ip *);
+
+				hw_csum = in_cksum_phdr(ip->ip_src.s_addr,
+				    ip->ip_dst.s_addr,
+				    htons(hw_csum + tlen + off + IPPROTO_TCP));
+			}
+			if ((hw_csum ^ 0xffff) != 0)
+				goto badcsum;
+			break;
+		}
+
+		case M_CSUM_TCPv4:
+			/* Checksum was okay. */
+			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_ok);
+			break;
+
+		default:
+			/*
+			 * Must compute it ourselves.  Maybe skip checksum
+			 * on loopback interfaces.
+			 */
+			if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
+					     IFF_LOOPBACK) ||
+					   tcp_do_loopback_cksum)) {
+				TCP_CSUM_COUNTER_INCR(&tcp_swcsum);
+				if (in4_cksum(m, IPPROTO_TCP, toff,
+					      tlen + off) != 0)
+					goto badcsum;
+			}
+			break;
+		}
+		break;
+#endif /* INET4 */
+
+#ifdef INET6
+	case AF_INET6:
+		if (__predict_true((m->m_flags & M_LOOP) == 0 ||
+		    tcp_do_loopback_cksum)) {
+			if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
+				goto badcsum;
+		}
+		break;
+#endif /* INET6 */
+	}
+
+	return 0;
+
+badcsum:
+	tcpstat.tcps_rcvbadsum++;
+	return -1;
+}
+
+/*
  * TCP input routine, follows pages 65-76 of the
  * protocol specification dated September, 1981 very closely.
  */
@@ -1106,62 +1187,8 @@ findpcb:
 	/*
 	 * Checksum extended TCP header and data.
 	 */
-	switch (af) {
-#ifdef INET
-	case AF_INET:
-		switch (m->m_pkthdr.csum_flags &
-			((m->m_pkthdr.rcvif->if_csum_flags_rx & M_CSUM_TCPv4) |
-			 M_CSUM_TCP_UDP_BAD | M_CSUM_DATA)) {
-		case M_CSUM_TCPv4|M_CSUM_TCP_UDP_BAD:
-			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_bad);
-			goto badcsum;
-
-		case M_CSUM_TCPv4|M_CSUM_DATA: {
-			u_int32_t hw_csum = m->m_pkthdr.csum_data;
-			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_data);
-			if (m->m_pkthdr.csum_flags & M_CSUM_NO_PSEUDOHDR) {
-				hw_csum = in_cksum_phdr(ip->ip_src.s_addr,
-				    ip->ip_dst.s_addr,
-				    htons(hw_csum + tlen + off + IPPROTO_TCP));
-			}
-			if ((hw_csum ^ 0xffff) != 0)
-				goto badcsum;
-			break;
-		}
-
-		case M_CSUM_TCPv4:
-			/* Checksum was okay. */
-			TCP_CSUM_COUNTER_INCR(&tcp_hwcsum_ok);
-			break;
-
-		default:
-			/*
-			 * Must compute it ourselves.  Maybe skip checksum
-			 * on loopback interfaces.
-			 */
-			if (__predict_true(!(m->m_pkthdr.rcvif->if_flags &
-					     IFF_LOOPBACK) ||
-					   tcp_do_loopback_cksum)) {
-				TCP_CSUM_COUNTER_INCR(&tcp_swcsum);
-				if (in4_cksum(m, IPPROTO_TCP, toff,
-					      tlen + off) != 0)
-					goto badcsum;
-			}
-			break;
-		}
-		break;
-#endif /* INET4 */
-
-#ifdef INET6
-	case AF_INET6:
-		if (__predict_true((m->m_flags & M_LOOP) == 0 ||
-		    tcp_do_loopback_cksum)) {
-			if (in6_cksum(m, IPPROTO_TCP, toff, tlen + off) != 0)
-				goto badcsum;
-		}
-		break;
-#endif /* INET6 */
-	}
+	if (tcp_input_checksum(af, m, th, toff, off, tlen))
+		goto badcsum;
 
 	TCP_FIELDS_TO_HOST(th);
 
@@ -2549,7 +2576,6 @@ dropwithreset:
 	return;
 
 badcsum:
-	tcpstat.tcps_rcvbadsum++;
 drop:
 	/*
 	 * Drop space held by incoming segment and return.
