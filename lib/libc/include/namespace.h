@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.64 2001/04/28 15:41:29 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.65 2001/05/07 17:25:58 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@
 #define sys_nerr	_sys_nerr
 #define sys_siglist	_sys_siglist
 #define	sys_nsig	_sys_nsig
+#define sysconf		__sysconf
 #define verr		_verr
 #define verrx		_verrx
 #define vwarn		_vwarn
@@ -458,7 +459,6 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define svis			_svis
-#define sysconf			_sysconf
 #define sysctl			_sysctl
 #define syslog			_syslog
 #define tcdrain			_tcdrain
