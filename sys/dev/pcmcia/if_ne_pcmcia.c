@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.37 1999/09/09 18:12:05 is Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.38 1999/09/25 09:47:13 enami Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -207,9 +207,14 @@ struct ne2000dev {
       PCMCIA_CIS_DAYNA_COMMUNICARD_E_2,
       0, -1, { 0x00, 0x80, 0x19 } },
 
-    { PCMCIA_STR_COREGA_PCC_2,
-      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_PCC_2,
-      PCMCIA_CIS_COREGA_PCC_2,
+    { PCMCIA_STR_COREGA_ETHER_PCC_T,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_PCC_T,
+      PCMCIA_CIS_COREGA_ETHER_PCC_T,
+      0, -1, { 0x00, 0x00, 0xf4 } },
+
+    { PCMCIA_STR_COREGA_ETHER_II_PCC_T,
+      PCMCIA_VENDOR_COREGA, PCMCIA_PRODUCT_COREGA_ETHER_II_PCC_T,
+      PCMCIA_CIS_COREGA_ETHER_II_PCC_T,
       0, -1, { 0x00, 0x00, 0xf4 } },
 
     { PCMCIA_STR_COMPEX_LINKPORT_ENET_B,
