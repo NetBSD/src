@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.7 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.8 1999/09/19 21:31:35 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -441,12 +441,14 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	if (!dad && (mac = nd6_ifptomac(ifp))) {
 		int optlen = sizeof(struct nd_opt_hdr) + ifp->if_addrlen;
 		struct nd_opt_hdr *nd_opt = (struct nd_opt_hdr *)(nd_ns + 1);
+		/* 8 byte alignments... */
+		optlen = (optlen + 7) & ~7;
 		
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
+		bzero((caddr_t)nd_opt, optlen);
 		nd_opt->nd_opt_type = ND_OPT_SOURCE_LINKADDR;
-		/* xxx 8 byte alignments? */
 		nd_opt->nd_opt_len = optlen >> 3;
 		bcopy(mac, (caddr_t)(nd_opt + 1), ifp->if_addrlen);
 	}
@@ -790,11 +792,14 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr)
 		int optlen = sizeof(struct nd_opt_hdr) + ifp->if_addrlen;
 		struct nd_opt_hdr *nd_opt = (struct nd_opt_hdr *)(nd_na + 1);
 		
+		/* roundup to 8 bytes alignment! */
+		optlen = (optlen + 7) & ~7;
+
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
+		bzero((caddr_t)nd_opt, optlen);
 		nd_opt->nd_opt_type = ND_OPT_TARGET_LINKADDR;
-		/* xxx 8 bytes alignment? */
 		nd_opt->nd_opt_len = optlen >> 3;
 		bcopy(mac, (caddr_t)(nd_opt + 1), ifp->if_addrlen);
 	} else
@@ -818,6 +823,7 @@ nd6_ifptomac(ifp)
 	struct ifnet *ifp;
 {
 	switch (ifp->if_type) {
+	case IFT_ARCNET:
 	case IFT_ETHER:
 	case IFT_FDDI:
 #ifdef __NetBSD__

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.8 1999/07/31 18:41:17 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.9 1999/09/19 21:31:35 is Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -184,6 +184,9 @@ nd6_setmtu(ifp)
 	u_long oldlinkmtu = ndi->linkmtu;
 
 	switch(ifp->if_type) {
+	 case IFT_ARCNET:	/* XXX MTU handling needs more work */
+		 ndi->maxmtu = MIN(60480, ifp->if_mtu);
+		 break;
 	 case IFT_ETHER:
 		 ndi->maxmtu = MIN(ETHERMTU, ifp->if_mtu);
 		 break;
@@ -788,6 +791,9 @@ nd6_resolve(ifp, rt, m, dst, desten)
 						 desten);
 			return(1);
 			break;
+		case IFT_ARCNET:
+			*desten = 0;
+			return(1);
 		default:
 			return(0);
 		}
@@ -1484,9 +1490,10 @@ nd6_output(ifp, m0, dst, rt0)
 
 	/*
 	 * XXX: we currently do not make neighbor cache on any interface
-	 * other than Ethernet and FDDI.
+	 * other than ARCnet, Ethernet and FDDI.
 	 */
-	if (ifp->if_type != IFT_ETHER && ifp->if_type != IFT_FDDI)
+	if (ifp->if_type != IFT_ARCNET &&
+	    ifp->if_type != IFT_ETHER && ifp->if_type != IFT_FDDI)
 		goto sendpkt;
 
 	/*
@@ -1629,6 +1636,10 @@ nd6_storelladdr(ifp, rt, m, dst, desten)
 		case IFT_FDDI:			
 			ETHER_MAP_IPV6_MULTICAST(&SIN6(dst)->sin6_addr,
 						 desten);
+			return(1);
+			break;
+		case IFT_ARCNET:
+			*desten = 0;
 			return(1);
 			break;
 		default:
