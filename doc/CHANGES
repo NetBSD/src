@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.455 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.456 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -16,3 +16,5 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	gre(4): add support for IPv6 as inner protocol, contributed by
 		Gert Doering [is 20050330]
 	/rescue: Add tetris.  [lukem 20050401]
+	uvm(9): Simplify kernel memory allocation API and its implementation.
+		[yamt 20050401]
