@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.13 2002/01/31 22:43:41 tv Exp $	*/
+/*	$NetBSD: strmode.c,v 1.14 2003/07/25 03:21:18 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.13 2002/01/31 22:43:41 tv Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.14 2003/07/25 03:21:18 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -95,6 +95,11 @@ strmode(mode, p)
 #ifdef S_IFWHT
 	case S_IFWHT:			/* whiteout */
 		*p++ = 'w';
+		break;
+#endif
+#ifdef S_IFDOOR
+	case S_IFDOOR:			/* door */
+		*p++ = 'D';
 		break;
 #endif
 	default:			/* unknown */
