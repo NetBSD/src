@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.15 1999/04/27 17:52:44 cgd Exp $
+	$NetBSD: syscalls.master,v 1.16 1999/04/27 18:40:53 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -132,8 +132,8 @@
 72	UNIMPL		ovadvise
 73	NOARGS		{ int sys_munmap(caddr_t addr, size_t len); }
 74	UNIMPL		mprotect
-; XXX
-75	STD		{ int osf1_sys_madvise(void); }
+75	STD		{ int osf1_sys_madvise(void *addr, size_t len, \
+			    int behav); }
 76	UNIMPL		old vhangup
 77	UNIMPL		kmodcall
 78	UNIMPL		mincore
