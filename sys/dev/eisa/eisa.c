@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.5 1996/03/02 02:44:25 cgd Exp $	*/
+/*	$NetBSD: eisa.c,v 1.6 1996/03/08 20:39:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -42,14 +42,16 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/bus.h>
+
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-#include <machine/pio.h>		/* XXX shouldn't use inb directly */
-
 struct eisa_softc {
-	struct	device sc_dev;			/* this is it, for now */
+	struct	device sc_dev;
+
+	bus_chipset_tag_t sc_bc;
 };
 
 int	eisamatch __P((struct device *, void *, void *));
@@ -115,9 +117,13 @@ eisaattach(parent, self, aux)
         void *aux;
 {
 	struct eisa_softc *sc = (struct eisa_softc *)self;
+	struct eisabus_attach_args *eba = aux;
+	bus_chipset_tag_t bc;
 	int slot;
 
 	printf("\n");
+
+	sc->sc_bc = bc = eba->eba_bc;
 
 	/*
 	 * Search for and attach subdevices.
@@ -129,14 +135,27 @@ eisaattach(parent, self, aux)
 		struct eisa_attach_args ea;
 		struct cfdata *cf;
 		u_int slotaddr;
+		bus_io_handle_t slotioh;
 		int i;
 
+		ea.ea_bc = bc;
 		ea.ea_slot = slot;
 		slotaddr = EISA_SLOT_ADDR(slot);
 
+		/*
+		 * Get a mapping for the whole slot-specific address
+		 * space.  If we can't, assume nothing's there but warn
+		 * about it.
+		 */
+		if (bus_io_map(bc, slotaddr, EISA_SLOT_SIZE, &slotioh)) {
+			printf("%s: can't map I/O space for slot %d\n", slot);
+			continue;
+		}
+
 		/* Get the vendor ID bytes */
 		for (i = 0; i < EISA_NVIDREGS; i++)
-			ea.ea_vid[i] = inb(slotaddr + EISA_SLOTOFF_VID + i);
+			ea.ea_vid[i] = bus_io_read_1(bc, slotioh,
+			    EISA_SLOTOFF_VID + i);
 
 		/* Check for device existence */
 		if (EISA_VENDID_NODEV(ea.ea_vid)) {
@@ -146,6 +165,7 @@ eisaattach(parent, self, aux)
 			printf("\t(0x%x, 0x%x)\n", ea.ea_vid[0],
 			    ea.ea_vid[1]);
 #endif
+			bus_io_unmap(bc, slotioh, EISA_SLOT_SIZE);
 			continue;
 		}
 
@@ -153,12 +173,14 @@ eisaattach(parent, self, aux)
 		if (EISA_VENDID_IDDELAY(ea.ea_vid)) {
 			printf("%s slot %d not configured by BIOS?\n",
 			    self->dv_xname, slot);
+			bus_io_unmap(bc, slotioh, EISA_SLOT_SIZE);
 			continue;
 		}
 
 		/* Get the product ID bytes */
 		for (i = 0; i < EISA_NPIDREGS; i++)
-			ea.ea_pid[i] = inb(slotaddr + EISA_SLOTOFF_PID + i);
+			ea.ea_pid[i] = bus_io_read_1(bc, slotioh,
+			    EISA_SLOTOFF_PID + i);
 
 		/* Create the ID string from the vendor and product IDs */
 		ea.ea_idstring[0] = EISA_VENDID_0(ea.ea_vid);
@@ -169,6 +191,9 @@ eisaattach(parent, self, aux)
 		ea.ea_idstring[5] = EISA_PRODID_2(ea.ea_pid);
 		ea.ea_idstring[6] = EISA_PRODID_3(ea.ea_pid);
 		ea.ea_idstring[7] = '\0';		/* sanity */
+
+		/* We no longer need the I/O handle; free it. */
+		bus_io_unmap(bc, slotioh, EISA_SLOT_SIZE);
 
 		/* Attach matching device. */
 		config_found_sm(self, &ea, eisaprint, eisasubmatch);
