@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.41 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.42 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -173,3 +173,10 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	etc/postinstall: Add support for examining the obsolete sets for
 		obsolete entries to check or remove.  [lukem 20021117]
 	named(8): Upgrade to BIND 8.3.4. [itojun 20021117]
+	gcc/gas: Fixed bug in how NetBSD ARM ELF binaries were marked.
+		They now properly reflect ATPCS + Soft-VFP.
+		[thorpej 20021121]
+	lib/csu: Split crtbegin/crtend into crti/crtbegin/crtend/crtn.
+		This is inline with what other ELF systems do, and paves
+		the way to using GCC-supplied crtbegin/crtend.
+		[thorpej 20021121]
