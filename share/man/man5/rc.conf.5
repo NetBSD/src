@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.12.2.1 1997/11/13 00:06:14 mellon Exp $
+.\"	$NetBSD: rc.conf.5,v 1.12.2.2 1997/11/18 01:43:08 mellon Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -164,6 +164,20 @@ If
 .Sy ntpdate_hosts
 is empty, it will attempt to find a list of hosts in
 .Pa /etc/ntp.conf .
+.It Sy ppp_peers
+If
+.Sy ppp_peers
+is not empty, then
+.Pa /etc/netstart
+will check each word in
+.Sy ppp_peers
+for a coresponding ppp configuration file in
+.Pa /etc/ppp/peers
+and will call
+.Xr pppd 8
+with the
+.Dq call Sy peer
+option.
 .El
 .Pp 
 Daemons required by other daemons:
