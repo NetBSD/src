@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: syslogd.8,v 1.10 1999/03/07 12:03:35 mycroft Exp $
+.\"	$NetBSD: syslogd.8,v 1.11 1999/03/15 17:01:00 is Exp $
 .\"
 .Dd February 18, 1999
 .Dt SYSLOGD 8
@@ -86,7 +86,7 @@ Specify the pathname of an log socket.  Multiple
 .Fl p
 options create multiple log sockets.  If no -p arguments are created,
 the default socket of
-.Pa /dev/log
+.Pa /var/run/syslog.socket
 is used.
 .It Fl P
 Specify the pathname of a file containing a list of sockets to be
@@ -104,7 +104,7 @@ see
 reads messages from the
 .Ux
 domain socket
-.Pa /dev/log ,
+.Pa /var/run/syslog.socket ,
 from an Internet domain socket specified in
 .Pa /etc/services ,
 and from the special device
@@ -123,9 +123,9 @@ By using multiple
 .Fl p
 options, one can setup many chroot environments by passing the pathname
 to the log socket
-.Pa ( /dev/log )
+.Pa ( /var/run/syslog.socket )
 in each chroot area to syslogd.  For example:
-.Dl syslogd -p /dev/log -p /web/dev/log -p /ftp/dev/log
+.Dl syslogd -p /var/run/syslog.socket -p /web/var/run/syslog.socket -p /ftp/var/run/syslog.socket
 .Pp
 note: the normal log socket must now also be passed to syslogd.
 .Sh SYSLOG PROTOCOL NOTES
@@ -146,7 +146,7 @@ The configuration file.
 .It Pa /var/run/syslog.pid
 The process id of current
 .Nm "" .
-.It Pa /dev/log
+.It Pa /var/run/syslog.socket
 Name of the
 .Ux
 domain datagram log socket.
