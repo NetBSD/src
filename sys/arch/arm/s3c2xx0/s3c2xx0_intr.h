@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.5 2003/09/21 19:32:38 matt Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.6 2003/12/17 13:20:04 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -215,5 +215,9 @@ struct s3c2xx0_intr_dispatch {
 
 /* used by s3c2{80,40,41}0 interrupt handler */
 void s3c2xx0_intr_init(struct s3c2xx0_intr_dispatch *, int );
+
+/* initialize some variable so that splfoo() doesn't touch ileegal
+   address during bootstrap */
+void s3c2xx0_intr_bootstrap(vaddr_t);
 
 #endif /* _S3C2XX0_INTR_H_ */
