@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vnd.c,v 1.1 2002/11/16 08:10:51 mrg Exp $	*/
+/*	$NetBSD: lkminit_vnd.c,v 1.2 2004/03/21 10:51:16 mrg Exp $	*/
 
 /*
  * Copyright (c) 2002 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.1 2002/11/16 08:10:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vnd.c,v 1.2 2004/03/21 10:51:16 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -55,6 +55,7 @@ MOD_DEV("vnd", "vnd", &vnd_bdevsw, -1, &vnd_cdevsw, -1);
  * Randomly choose 4; should have vnconfig (un)create each vnd ala "gif"..
  */
 #define NVNDLKM 4
+int num_vnd_lkm = NVNDLKM;
 
 static int
 vnd_lkm(struct lkm_table *lkmtp, int cmd)
@@ -62,7 +63,7 @@ vnd_lkm(struct lkm_table *lkmtp, int cmd)
 	int error = 0;
 
 	if (cmd == LKM_E_LOAD)
-		vndattach(NVNDLKM);
+		vndattach(num_vnd_lkm);
 	else if (cmd == LKM_E_UNLOAD)
 		error = vnddetach();
 	return (error);
