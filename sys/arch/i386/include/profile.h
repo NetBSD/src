@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.11 1998/11/13 13:50:52 christos Exp $	*/
+/*	$NetBSD: profile.h,v 1.12 1999/09/27 09:47:45 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -37,8 +37,17 @@
 
 #define	_MCOUNT_DECL static __inline void _mcount
 
+#ifdef __ELF__
+#define MCOUNT_ENTRY	"__mcount"
+#define MCOUNT_COMPAT	__weak_alias(mcount, __mcount);
+#else
+#define MCOUNT_ENTRY	"mcount"
+#define MCOUNT_COMPAT	/* nothing */
+#endif
+
 #define	MCOUNT \
-extern void mcount __P((void)) __asm__("mcount");			\
+MCOUNT_COMPAT
+extern void mcount __P((void)) __asm__(MCOUNT_ENTRY);			\
 void									\
 mcount()								\
 {									\
