@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_tty.c,v 1.21 2003/01/18 07:36:58 thorpej Exp $	*/
+/*	$NetBSD: hpux_tty.c,v 1.22 2003/03/27 15:54:02 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.21 2003/01/18 07:36:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_tty.c,v 1.22 2003/03/27 15:54:02 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -88,7 +88,7 @@ hpux_termio(fd, com, data, l)
 	int line, error;
 	int newi = 0;
 	int (*ioctlrout) __P((struct file *fp, u_long com,
-	    caddr_t data, struct proc *p));
+	    void *data, struct proc *p));
 
 
 	fp = p->p_fd->fd_ofiles[fd];
