@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.1 2000/02/29 15:21:47 nonaka Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.2 2000/05/02 18:19:01 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -71,7 +71,7 @@ mbr_findslice(dp, bp)
 
 	/* Note: Magic number is little-endian. */
 	mbrmagicp = (u_int16_t *)(bp->b_data + MBR_MAGICOFF);
-	if (*mbrmagicp != MBR_MAGIC)
+	if (*mbrmagicp != le16toh(MBR_MAGIC))
 		return (NO_MBR_SIGNATURE);
 
 	/* XXX how do we check veracity/bounds of this? */
@@ -193,8 +193,8 @@ readdisklabel(dev, strat, lp, osdep)
 		for (i = 0; i < NMBRPART; i++, dp++) {
 			/* Install in partition e, f, g, or h. */
 			pp = &lp->d_partitions[RAW_PART + 1 + i];
-			pp->p_offset = dp->mbrp_start;
-			pp->p_size = dp->mbrp_size;
+			pp->p_offset = le32toh(dp->mbrp_start);
+			pp->p_size = le32toh(dp->mbrp_size);
 			for (ip = fat_types; *ip != -1; ip++) {
 				if (dp->mbrp_typ == *ip)
 					pp->p_fstype = FS_MSDOS;
@@ -209,14 +209,14 @@ readdisklabel(dev, strat, lp, osdep)
 			if (dp == ourdp) {
 				/* need sector address for SCSI/IDE,
 				 cylinder for ESDI/ST506/RLL */
-				dospartoff = dp->mbrp_start;
+				dospartoff = le32toh(dp->mbrp_start);
 				cyl = MBR_PCYL(dp->mbrp_scyl, dp->mbrp_ssect);
 
 				/* update disklabel with details */
 				lp->d_partitions[2].p_size =
-				    dp->mbrp_size;
+				    le32toh(dp->mbrp_size);
 				lp->d_partitions[2].p_offset = 
-				    dp->mbrp_start;
+				    le32toh(dp->mbrp_start);
 #if 0
 				if (lp->d_ntracks != dp->mbrp_ehd + 1 ||
 				    lp->d_nsectors != DPSECT(dp->mbrp_esect)) {
@@ -413,7 +413,7 @@ writedisklabel(dev, strat, lp, osdep)
 		if (ourdp) {
 			/* need sector address for SCSI/IDE,
 			 cylinder for ESDI/ST506/RLL */
-			dospartoff = ourdp->mbrp_start;
+			dospartoff = le32toh(ourdp->mbrp_start);
 			cyl = MBR_PCYL(ourdp->mbrp_scyl, ourdp->mbrp_ssect);
 		}
 	}
