@@ -1,4 +1,4 @@
-/*	$NetBSD: lancevar.h,v 1.2 1998/08/15 10:51:18 mycroft Exp $	*/
+/*	$NetBSD: lancevar.h,v 1.3 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ struct lance_softc {
 #ifdef LEDEBUG
 	int	sc_debug;
 #endif
-	u_int8_t sc_enaddr[6];
+	u_int8_t sc_enaddr[ETHER_ADDR_LEN];
 	u_int8_t sc_pad[2];
 #if NRND > 0
 	rndsource_element_t	rnd_source;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.19 2000/05/29 17:37:12 jhawk Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.20 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -60,7 +60,7 @@ struct dp8390_softc {
 	u_short	rec_page_stop;	/* last page of RX ring-buffer */
 	u_short	next_packet;	/* pointer to next unread RX packet */
 
-	u_int8_t sc_enaddr[6];	/* storage for MAC address */
+	u_int8_t sc_enaddr[ETHER_ADDR_LEN];	/* storage for MAC address */
 
 	int	sc_enabled;	/* boolean; power enabled on interface */
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.3 1998/05/14 18:24:00 matt Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.4 2000/09/28 10:56:57 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -76,7 +76,7 @@ typedef struct {
     /*
      * We rely on sc_enaddr being aligned on (at least) a 16 bit boundary
      */
-    unsigned char sc_enaddr[6];		/* current Ethernet address */
+    unsigned char sc_enaddr[ETHER_ADDR_LEN];	/* current Ethernet address */
     char sc_prodname[LEMAC_EEP_PRDNMSZ+1]; /* product name DE20x-xx */
     u_int8_t sc_eeprom[LEMAC_EEP_SIZE];	/* local copy eeprom */
 #if NRND > 0
