@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.1.1.1.2.4 2001/12/11 00:03:16 he Exp $	*/
+/*	$NetBSD: channels.c,v 1.1.1.1.2.5 2002/03/07 18:09:06 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -147,7 +147,7 @@ channel_lookup(int id)
 {
 	Channel *c;
 
-	if (id < 0 || id > channels_alloc) {
+	if (id < 0 || id >= channels_alloc) {
 		log("channel_lookup: %d: bad id", id);
 		return NULL;
 	}
