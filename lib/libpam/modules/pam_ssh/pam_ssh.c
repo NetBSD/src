@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.8 2005/03/14 23:39:26 christos Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.8.2.1 2005/03/19 17:56:29 tron Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.8 2005/03/14 23:39:26 christos Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.8.2.1 2005/03/19 17:56:29 tron Exp $");
 #endif
 
 #include <sys/param.h>
@@ -179,12 +179,10 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 
 	pass = (pam_get_item(pamh, PAM_AUTHTOK,
 	    (const void **)__UNCONST(&passphrase)) == PAM_SUCCESS);
-	printf("pass = %d %s\n", pass, passphrase);
  load_keys:
 	/* get passphrase */
 	pam_err = pam_get_authtok(pamh, PAM_AUTHTOK,
 	    &passphrase, pam_ssh_prompt);
-	printf("passphrase %s\n", passphrase);
 	if (pam_err != PAM_SUCCESS) {
 		openpam_restore_cred(pamh);
 		return (pam_err);
@@ -209,7 +207,6 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	    openpam_get_option(pamh, "try_first_pass") != NULL) {
 		pam_set_item(pamh, PAM_AUTHTOK, NULL);
 		pass = 0;
-		printf("goto again\n");
 		goto load_keys;
 	}
 
