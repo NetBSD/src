@@ -31,12 +31,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stand.h	8.1 (Berkeley) 6/11/93
- * 	     $Id: stand.h,v 1.2 1994/05/08 16:11:37 brezak Exp $
+ * 	     $Id: stand.h,v 1.3 1994/08/04 19:39:40 brezak Exp $
  */
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
-#include <sys/errno.h>
 #include <sys/stat.h>
 #include "saioctl.h"
 #include "saerrno.h"

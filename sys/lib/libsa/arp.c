@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  * from @(#) Header: arp.c,v 1.5 93/07/15 05:52:26 leres Exp  (LBL)
- *     $Id: arp.c,v 1.1 1994/05/08 16:11:16 brezak Exp $
+ *     $Id: arp.c,v 1.2 1994/08/04 19:39:34 brezak Exp $
  */
 
 #include <sys/types.h>
@@ -46,7 +46,6 @@
 #include <netinet/if_ether.h>
 #include <netinet/in_systm.h>
 
-#include <errno.h>
 #include <string.h>
 
 #include "stand.h"
