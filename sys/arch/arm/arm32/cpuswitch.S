@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.30 2003/04/18 11:08:25 scw Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.31 2003/04/22 00:24:49 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -662,7 +662,7 @@ ENTRY(cpu_switch)
 	ldrne	r0, [r9, #(PCB_L1VEC)]	/* Fetch new vector_page value */
 	mcr	p15, 0, r1, c3, c0, 0	/* Update DACR for new context */
 	cmpne	r2, r0			/* Stuffing the same value? */
-#ifndef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifndef PMAP_INCLUDE_PTE_SYNC
 	strne	r0, [r7]		/* Nope, update it */
 #else
 	beq	.Lcs_same_vector
@@ -1010,7 +1010,7 @@ ENTRY(switch_exit)
 	cmpne	r3, r2			/* Stuffing the same value? */
 	strne	r2, [r0]		/* Store if not. */
 
-#ifdef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifdef PMAP_INCLUDE_PTE_SYNC
 	/*
 	 * Need to sync the cache to make sure that last store is
 	 * visible to the MMU.

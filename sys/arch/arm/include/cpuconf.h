@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.5 2003/04/09 02:34:31 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.6 2003/04/22 00:24:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -41,6 +41,12 @@
 #if defined(_KERNEL_OPT)
 #include "opt_cputypes.h"
 #endif /* _KERNEL_OPT */
+
+/*
+ * IF YOU CHANGE THIS FILE, MAKE SURE TO UPDATE THE DEFINITION OF
+ * "PMAP_NEEDS_PTE_SYNC" IN <arm/arm32/pmap.h> FOR THE CPU TYPE
+ * YOU ARE ADDING SUPPORT FOR.
+ */
 
 /*
  * Step 1: Count the number of CPU types configured into the kernel.
@@ -108,6 +114,9 @@
  *
  *	ARM_MMU_GENERIC		Generic ARM MMU, compatible with ARM6.
  *
+ *	ARM_MMU_SA1		StrongARM SA-1 MMU.  Compatible with generic
+ *				ARM MMU, but has no write-through cache mode.
+ *
  *	ARM_MMU_XSCALE		XScale MMU.  Compatible with generic ARM
  *				MMU, but also has several extensions which
  *				require different PTE layout to use.
@@ -121,11 +130,18 @@
 
 #if !defined(_KERNEL_OPT) ||						\
     (defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) ||	\
-     defined(CPU_ARM8) || defined(CPU_ARM9) || defined(CPU_SA110) ||	\
-     defined(CPU_SA1100) || defined(CPU_SA1110) || defined(CPU_IXP12X0))
+     defined(CPU_ARM8) || defined(CPU_ARM9))
 #define	ARM_MMU_GENERIC		1
 #else
 #define	ARM_MMU_GENERIC		0
+#endif
+
+#if !defined(_KERNEL_OPT) ||						\
+    (defined(CPU_SA110) || defined(CPU_SA1100) || defined(CPU_SA1110) ||\
+     defined(CPU_IXP12X0))
+#define	ARM_MMU_SA1		1
+#else
+#define	ARM_MMU_SA1		0
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
@@ -137,7 +153,7 @@
 #endif
 
 #define	ARM_NMMUS		(ARM_MMU_MEMC + ARM_MMU_GENERIC +	\
-				 ARM_MMU_XSCALE)
+				 ARM_MMU_SA1 + ARM_MMU_XSCALE)
 #if ARM_NMMUS == 0
 #error ARM_NMMUS is 0
 #endif

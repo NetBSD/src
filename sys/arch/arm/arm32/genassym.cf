@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2003/04/18 11:08:25 scw Exp $
+#	$NetBSD: genassym.cf,v 1.23 2003/04/22 00:24:49 thorpej Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,6 +65,10 @@ define	PTE_BASE		PTE_BASE
 else
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
+endif
+
+ifdef PMAP_INCLUDE_PTE_SYNC
+define	PMAP_INCLUDE_PTE_SYNC	1
 endif
 
 define	PAGE_SIZE		PAGE_SIZE

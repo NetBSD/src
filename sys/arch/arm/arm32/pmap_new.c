@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_new.c,v 1.3 2003/04/18 23:46:12 thorpej Exp $	*/
+/*	$NetBSD: pmap_new.c,v 1.4 2003/04/22 00:24:49 thorpej Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -210,7 +210,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.3 2003/04/18 23:46:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_new.c,v 1.4 2003/04/22 00:24:49 thorpej Exp $");
 
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
@@ -442,11 +442,21 @@ struct l2_dtable {
 	    pool_cache_put(&pmap_l2dtable_cache, (l2))
 
 static pt_entry_t *pmap_alloc_l2_ptp(paddr_t *);
-#ifndef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifndef PMAP_INCLUDE_PTE_SYNC
 static void pmap_free_l2_ptp(pt_entry_t *, paddr_t);
 #else
 static void pmap_free_l2_ptp(boolean_t, pt_entry_t *, paddr_t);
 #endif
+
+/*
+ * We try to map the page tables write-through, if possible.  However, not
+ * all CPUs have a write-through cache mode, so on those we have to sync
+ * the cache when we frob page tables.
+ *
+ * We try to evaluate this at compile time, if possible.  However, it's
+ * not always possible to do that, hence this run-time var.
+ */
+int	pmap_needs_pte_sync;
 
 /*
  * Real definition of pv_entry.
@@ -702,7 +712,7 @@ pmap_alloc_l2_ptp(paddr_t *pap)
  * Free an L2 descriptor table.
  */
 static __inline void
-#ifndef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifndef PMAP_INCLUDE_PTE_SYNC
 pmap_free_l2_ptp(pt_entry_t *l2, paddr_t pa)
 #else
 pmap_free_l2_ptp(boolean_t need_sync, pt_entry_t *l2, paddr_t pa)
@@ -710,7 +720,7 @@ pmap_free_l2_ptp(boolean_t need_sync, pt_entry_t *l2, paddr_t pa)
 {
 
 	if (__predict_true(uvm.page_init_done)) {
-#ifdef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifdef PMAP_INCLUDE_PTE_SYNC
 		/*
 		 * Note: With a write-back cache, we may need to sync this
 		 * L2 table before re-using it.
@@ -763,10 +773,11 @@ pmap_is_cached(pmap_t pm)
  *       - There is no pmap active in the cache/tlb.
  *       - The specified pmap is 'active' in the cache/tlb.
  */
-#ifdef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifdef PMAP_INCLUDE_PTE_SYNC
 #define	PTE_SYNC_CURRENT(pm, ptep)	\
 do {					\
-	if (pmap_is_cached(pm))		\
+	if (PMAP_NEEDS_PTE_SYNC && 	\
+	    pmap_is_cached(pm))		\
 		PTE_SYNC(ptep);		\
 } while (/*CONSTCOND*/0)
 #else
@@ -1241,7 +1252,7 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 	/*
 	 * Release the L2 descriptor table back to the pool cache.
 	 */
-#ifndef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifndef PMAP_INCLUDE_PTE_SYNC
 	pmap_free_l2_ptp(ptep, l2b->l2b_phys);
 #else
 	pmap_free_l2_ptp(!pmap_is_cached(pm), ptep, l2b->l2b_phys);
@@ -1270,7 +1281,7 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 static int
 pmap_l2ptp_ctor(void *arg, void *v, int flags)
 {
-#ifndef ARM32_PMAP_NEEDS_PTE_SYNC
+#ifndef PMAP_INCLUDE_PTE_SYNC
 	struct l2_bucket *l2b;
 	pt_entry_t *ptep, pte;
 	vaddr_t va = (vaddr_t)v & ~PGOFSET;
@@ -3298,7 +3309,7 @@ pmap_reference(pmap_t pm)
  * StrongARM accesses to non-cached pages are non-burst making writing
  * _any_ bulk data very slow.
  */
-#if ARM_MMU_GENERIC == 1
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 void
 pmap_zero_page_generic(paddr_t phys)
 {
@@ -3323,7 +3334,7 @@ pmap_zero_page_generic(paddr_t phys)
 	bzero_page(cdstp);
 	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
-#endif /* ARM_MMU_GENERIC == 1 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_XSCALE == 1
 void
@@ -3417,7 +3428,7 @@ pmap_pageidlezero(paddr_t phys)
  * hook points. The same comment regarding cachability as in
  * pmap_zero_page also applies here.
  */
-#if ARM_MMU_GENERIC == 1
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 void
 pmap_copy_page_generic(paddr_t src, paddr_t dst)
 {
@@ -3459,7 +3470,7 @@ pmap_copy_page_generic(paddr_t src, paddr_t dst)
 	simple_unlock(&src_pg->mdpage.pvh_slock); /* cache is safe again */
 	cpu_dcache_wbinv_range(cdstp, PAGE_SIZE);
 }
-#endif /* ARM_MMU_GENERIC == 1 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
 
 #if ARM_MMU_XSCALE == 1
 void
@@ -4483,7 +4494,7 @@ pt_entry_t	pte_l2_s_proto;
 void		(*pmap_copy_page_func)(paddr_t, paddr_t);
 void		(*pmap_zero_page_func)(paddr_t);
 
-#if ARM_MMU_GENERIC == 1
+#if (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0
 void
 pmap_pte_init_generic(void)
 {
@@ -4497,15 +4508,20 @@ pmap_pte_init_generic(void)
 	pte_l2_s_cache_mode = L2_B|L2_C;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_generic;
 
-#ifdef ARM32_PMAP_NEEDS_PTE_SYNC
-	pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
-	pte_l2_l_cache_mode_pt = L2_B|L2_C;
-	pte_l2_s_cache_mode_pt = L2_B|L2_C;
-#else
-	pte_l1_s_cache_mode_pt = L1_S_C;
-	pte_l2_l_cache_mode_pt = L2_C;
-	pte_l2_s_cache_mode_pt = L2_C;
-#endif
+	/*
+	 * If we have a write-through cache, set B and C.  If
+	 * we have a write-back cache, then we assume setting
+	 * only C will make those pages write-through.
+	 */
+	if (cpufuncs.cf_dcache_wb_range == (void *) cpufunc_nullop) {
+		pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
+		pte_l2_l_cache_mode_pt = L2_B|L2_C;
+		pte_l2_s_cache_mode_pt = L2_B|L2_C;
+	} else {
+		pte_l1_s_cache_mode_pt = L1_S_C;
+		pte_l2_l_cache_mode_pt = L2_C;
+		pte_l2_s_cache_mode_pt = L2_C;
+	}
 
 	pte_l2_s_prot_u = L2_S_PROT_U_generic;
 	pte_l2_s_prot_w = L2_S_PROT_W_generic;
@@ -4518,6 +4534,23 @@ pmap_pte_init_generic(void)
 	pmap_copy_page_func = pmap_copy_page_generic;
 	pmap_zero_page_func = pmap_zero_page_generic;
 }
+
+#if defined(CPU_ARM8)
+void
+pmap_pte_init_arm8(void)
+{
+
+	/*
+	 * ARM8 is compatible with generic, but we need to use
+	 * the page tables uncached.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mode_pt = 0;
+	pte_l2_l_cache_mode_pt = 0;
+	pte_l2_s_cache_mode_pt = 0;
+}
+#endif /* CPU_ARM8 */
 
 #if defined(CPU_ARM9)
 void
@@ -4533,9 +4566,34 @@ pmap_pte_init_arm9(void)
 	pte_l1_s_cache_mode = L1_S_C;
 	pte_l2_l_cache_mode = L2_C;
 	pte_l2_s_cache_mode = L2_C;
+
+	pte_l1_s_cache_mode_pt = L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_C;
+	pte_l2_s_cache_mode_pt = L2_C;
 }
 #endif /* CPU_ARM9 */
-#endif /* ARM_MMU_GENERIC == 1 */
+#endif /* (ARM_MMU_GENERIC + ARM_MMU_SA1) != 0 */
+
+#if ARM_MMU_SA1 == 1
+void
+pmap_pte_init_sa1(void)
+{
+
+	/*
+	 * The StrongARM SA-1 cache does not have a write-through
+	 * mode.  So, do the generic initialization, then reset
+	 * the page table cache mode to B=1,C=1, and note that
+	 * the PTEs need to be sync'd.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
+	pte_l2_l_cache_mode_pt = L2_B|L2_C;
+	pte_l2_s_cache_mode_pt = L2_B|L2_C;
+
+	pmap_needs_pte_sync = 1;
+}
+#endif /* ARM_MMU_SA1 == 1*/
 
 #if ARM_MMU_XSCALE == 1
 void
@@ -4553,15 +4611,9 @@ pmap_pte_init_xscale(void)
 	pte_l2_s_cache_mode = L2_B|L2_C;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_xscale;
 
-#ifdef ARM32_PMAP_NEEDS_PTE_SYNC
-	pte_l1_s_cache_mode_pt = L1_S_B|L1_S_C;
-	pte_l2_l_cache_mode_pt = L2_B|L2_C;
-	pte_l2_s_cache_mode_pt = L2_B|L2_C;
-#else
 	pte_l1_s_cache_mode_pt = L1_S_C;
 	pte_l2_l_cache_mode_pt = L2_C;
 	pte_l2_s_cache_mode_pt = L2_C;
-#endif
 
 #ifdef XSCALE_CACHE_READ_WRITE_ALLOCATE
 	/*

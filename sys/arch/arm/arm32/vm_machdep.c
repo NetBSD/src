@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26 2003/04/18 11:08:26 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.27 2003/04/22 00:24:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -344,9 +344,6 @@ pagemove(from, to, size)
 		*fpte++ = 0;
 		size -= PAGE_SIZE;
 	}
-#ifndef ARM32_PMAP_NEEDS_PTE_SYNC
-	(void)ptecnt;
-#endif
 	PTE_SYNC_RANGE(vtopte((vaddr_t)from), ptecnt);
 	PTE_SYNC_RANGE(vtopte((vaddr_t)to), ptecnt);
 	//cpu_tlb_flushD();
