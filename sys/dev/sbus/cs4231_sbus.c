@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_sbus.c,v 1.2 1998/08/28 08:58:24 pk Exp $	*/
+/*	$NetBSD: cs4231_sbus.c,v 1.3 1998/08/29 19:52:09 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -261,8 +261,10 @@ int	cs4231_trigger_input __P((void *, void *, void *, int,
 int	cs4231_intr __P((void *));
 void	cs4231_init __P((struct cs4231_softc *));
 
-
+#ifdef AUDIO_DEBUG
 static void	cs4231_regdump __P((char *, struct cs4231_softc *));
+#endif
+
 static int	cs_read __P((struct ad1848_softc *, int));
 static void	cs_write __P((struct ad1848_softc *, int, int));
 
@@ -390,6 +392,7 @@ cs4231attach(parent, self, aux)
 }
 
 
+#ifdef AUDIO_DEBUG
 static void
 cs4231_regdump(label, sc)
 	char *label;
@@ -413,6 +416,7 @@ cs4231_regdump(label, sc)
 
 	ad1848_dump_regs(&sc->sc_ad1848);
 }
+#endif
 
 void
 cs4231_init(sc)
@@ -954,7 +958,9 @@ cs4231_intr(arg)
 	int ret = 0;
 	int csr;
 	int reg, status;
+#ifdef AUDIO_DEBUG
 	char bits[128];
+#endif
 
 #ifdef AUDIO_DEBUG
 	if (cs4231debug > 1)
