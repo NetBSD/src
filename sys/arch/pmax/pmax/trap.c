@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.18 1995/05/05 06:48:54 mellon Exp $	*/
+/*	$NetBSD: trap.c,v 1.19 1995/05/12 23:27:23 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1206,13 +1206,7 @@ kn03_intr(mask, pc, statusReg, causeReg)
 	static int user_warned = 0;
 
 	old_mask = *imaskp & kn03_tc3_imask;
-	/*
-	 * Enable all the `useful' interrupts, but only enable
-	 * interrupts from turbochannel slots that have been explicitly
-	 * enabled via kn03_enable_intr.
-	 */
-	*imaskp = kn03_tc3_imask |
-		 (KN03_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
+	*imaskp = kn03_tc3_imask;
 
 	if (mask & MACH_INT_MASK_4)
 		(*callv->_halt)((int *)0, 0);
