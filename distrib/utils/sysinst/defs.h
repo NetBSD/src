@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.59 2000/09/26 23:12:44 fvdl Exp $	*/
+/*	$NetBSD: defs.h,v 1.60 2000/09/27 12:42:04 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -144,6 +144,7 @@ EXTERN char diskdev[SSTRSIZE] INIT("");
 EXTERN char disknames[STRSIZE];
 EXTERN int  numdisks;
 EXTERN char *disktype;		/* ST506, SCSI, ... */
+EXTERN char swapdev[SSTRSIZE] INIT("");
 
 /* Used in editing partitions ... BSD disklabel and others */
 EXTERN int editpart;
@@ -269,6 +270,7 @@ int	write_disklabel __P((void));
 int	make_filesystems __P((void));
 int	make_fstab __P((void));
 int	fsck_disks __P((void));
+int	set_swap __P((const char *, partinfo *, int));
 
 /* from label.c */
 
