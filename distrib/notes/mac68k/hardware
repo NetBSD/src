@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 1999/05/07 03:30:44 ender Exp $	
+.\"	$NetBSD: hardware,v 1.16 2000/07/31 00:10:03 briggs Exp $	
 NetBSD/mac68k \*V runs on several of the older Macintosh computers.
 About 4MB of RAM might be sufficient to boot, and the system can probably
 be squeezed onto a 40MB hard disk by leaving off an unnecessary set or two.
@@ -51,6 +51,9 @@ Ethernet cards based on the National Semiconductor 8390 and the
 SONIC (DP83932) chips
 (Asante, Apple, and a few others--problems still
 with Ethernet and many NuBus video cards)
+.It
+Ethernet cards based on the SMC 91c92 and 91c100 (FEAST) chips.
+This includes the AsanteFAST 10/100 cards
 .It
 Onboard Ethernet based on the SONIC chip for Quadra-series Macs
 .It
