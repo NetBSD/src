@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1999/07/12 22:11:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16 1999/07/20 09:35:21 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 7/19/93
 
 SRCTOP=	../..
@@ -16,7 +16,7 @@ INSTALLFLAGS=-fschg
 #CPPFLAGS+=-DSUGROUP=\"sugroup\"
 
 .if defined(CRYPTOPATH)
-.include "${CRYPTOPATH}/usr.bin/su/Makefile.frag"
+.sinclude "${CRYPTOPATH}/usr.bin/su/Makefile.frag"
 .endif
 
 .include <bsd.prog.mk>
