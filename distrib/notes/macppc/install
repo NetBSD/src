@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.19 2002/05/09 09:45:29 mbw Exp $
+.\"	$NetBSD: install,v 1.20 2002/05/10 05:29:59 mbw Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -350,14 +350,14 @@ Firmware 2.4)
 You can try the simple form (i.e. that you are booting from ethernet):
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:,\eofwboot.xcf"
+.No 0 \*> Ic "boot enet:,ofwboot.xcf"
 .disp)
 .Pp
 Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:,\eofwboot.xcf enet:,/netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot enet:,ofwboot.xcf enet:,/netbsd.GENERIC_MD.gz"
 .disp)
 .(Note
 Some Open Firmware 1.0.5 machines have their MAC address stored
@@ -386,7 +386,7 @@ Or you may be more specific,
 specifying the bootloader filename and the kernel name:
 .Pp
 .(disp
-.No 0 \*> Ic "boot enet:0,\eofwboot.xcf enet:0,/netbsd.GENERIC_MD.gz"
+.No 0 \*> Ic "boot enet:0,ofwboot.xcf enet:0,/netbsd.GENERIC_MD.gz"
 .disp)
 .It
 .To 2 "Booting off the NetBSD/macppc install CD-R"
@@ -560,7 +560,7 @@ get an idea of what to expect (user-typed commands are in
  To continue booting, type "mac-boot" and press return.
  To shut down, type "shut-down" and press return.
   ok
-.No  0 \*> Ic "boot enet:,\eofwboot.xcf netbsd.GENERIC_MD.gz"
+.No  0 \*> Ic "boot enet:,ofwboot.xcf netbsd.GENERIC_MD.gz"
  loading XCOFF
  tsize=C280 dsize=14AC bsize=2620 entry=600000
  SECTIONS:
@@ -746,7 +746,7 @@ gets confused and doesn't work right unless you load it explicitly from the
 even if the bootp or DHCP server provides the correct information. You
 need to boot with a command like: 
 .(disp
-.No 0 \*> Ic "boot enet:,\eofwboot.xcf"
+.No 0 \*> Ic "boot enet:,ofwboot.xcf"
 .disp)
 .It
 .To 2 "Bootloader hangs before the copyright notice"
