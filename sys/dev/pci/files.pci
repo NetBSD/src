@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.100 2000/07/25 23:18:44 jeffs Exp $
+#	$NetBSD: files.pci,v 1.101 2000/08/02 21:49:10 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -10,6 +10,9 @@ defopt	opt_bktr.h	BKTR_OVERRIDE_CARD BKTR_OVERRIDE_TUNER BKTR_OVERRIDE_DBX
 			BKTR_OVERRIDE_MSP BKTR_SYSTEM_DEFAULT
 			BKTR_USE_PLL BKTR_GPIO_ACCESS BKTR_NO_MSP_RESET
 			BKTR_430_FX_MODE BKTR_SIS_VIA_MODE
+
+defopt	opt_pciide.h	PCIIDE_CMD064x_DISABLE PCIIDE_AMD756_ENABLEDMA
+			PCIIDE_CMD0646U_ENABLEUDMA
 
 device	pci {[dev = -1], [function = -1]}
 attach	pci at pcibus
