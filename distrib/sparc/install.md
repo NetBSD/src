@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.3.2.2 1996/06/26 21:36:53 pk Exp $
+#	$NetBSD: install.md,v 1.3.2.3 1996/08/22 03:23:49 mrg Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -226,4 +226,8 @@ To boot the installed system, enter halt at the command prompt. Once the
 system has halted, reset the machine and boot from the disk.
 
 __congratulations_1
+}
+
+md_install_sets() {
+MDSETS='xbin xman xinc xcon'
 }

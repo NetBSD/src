@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.1.2.2 1996/06/26 21:14:17 thorpej Exp $
+#	$NetBSD: install.md,v 1.1.2.3 1996/08/22 03:23:43 mrg Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -487,3 +487,4 @@ __congratulations_1
 
 md_native_fstype() {}
 md_native_fsopts() {}
+md_install_sets() {}
