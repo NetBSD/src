@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.7 2000/02/24 22:54:39 tron Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.8 2000/03/23 08:18:11 enami Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -69,6 +69,7 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/callout.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mount.h>
@@ -428,6 +429,7 @@ static int softdep_worklist_busy;
 static int max_softdeps;	/* maximum number of structs before slowdown */
 static int tickdelay = 2;	/* number of ticks to pause during slowdown */
 static int proc_waiting;	/* tracks whether we have a timeout posted */
+static struct callout pause_timer_ch = CALLOUT_INITIALIZER;
 static struct proc *filesys_syncer; /* proc of filesystem syncer process */
 static int req_clear_inodedeps;	/* syncer process flush some inodedeps */
 #define FLUSH_INODES	1
@@ -4409,17 +4411,17 @@ request_cleanup(resource, islocked)
 	 */
 	if (islocked == 0)
 		ACQUIRE_LOCK(&lk);
-	if (proc_waiting++ == 0) {
-		proc_waiting = 1;
-		timeout(pause_timer, NULL,
-			tickdelay > 2 ? tickdelay : 2);
-	}
+	if (proc_waiting++ == 0)
+		callout_reset(&pause_timer_ch,
+		    tickdelay > 2 ? tickdelay : 2, pause_timer, NULL);
 	s = FREE_LOCK_INTERLOCKED(&lk);
 	(void) tsleep((caddr_t)&proc_waiting, PPAUSE, "softupdate", 0);
 	ACQUIRE_LOCK_INTERLOCKED(&lk, s);
-	untimeout(pause_timer, NULL);
 	if (--proc_waiting)
-		timeout(pause_timer, NULL, tickdelay > 2 ? tickdelay : 2);
+		callout_reset(&pause_timer_ch,
+		    tickdelay > 2 ? tickdelay : 2, pause_timer, NULL);
+	else
+		callout_stop(&pause_timer_ch);
 #if 0
 	else {
 		switch (resource) {
