@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.8 2000/12/03 01:54:49 minoura Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.9 2003/06/06 14:31:30 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,28 +54,3 @@ message dobootblks
 {Installing boot blocks on %s....
 }
 
-message askfsroot
-{I will be asking for partition sizes and on some, mount points.
-
-First the root partition.  You have %d %s left on your disk.
-Root partition size? }
-
-message askfsswap
-{
-Next the swap partition.  You have %d %s left on your disk.
-Swap partition size? }
-
-message askfsusr
-{
-Next the /usr partition.  You have %d %s left on your disk.
-/usr partition size? }
-
-message otherparts
-{You still have some space remaining unallocated on your disk.  Please
-give sizes and mount points for the following partitions.
-
-}
-
-message askfspart
-{The next partition is /dev/%s%c.  You have %d %s left on your disk.
-Partition size? }

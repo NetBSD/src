@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2003/06/03 11:54:53 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2003/06/06 14:31:28 dsl Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.4 2002/03/16 17:25:56 tsutsui Exp */
 
@@ -56,32 +56,6 @@ Ktora instalacje chcesz zrobic?
 message dobootblks
 {Instalowanie bootblokow na %s....
 }
-
-message askfsroot
-{Bede pytal o rozmiary partcyji, a na niektorych o punkty montazu.
-
-Najpierw partcyja glowna. Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji glownej? }
-
-message askfsswap
-{
-Nastepnie partycja wymiany. Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji wymiany? }
-
-message askfsusr
-{
-Nastepnie partycja /usr.  Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji /usr? }
-
-message otherparts
-{Nadal masz wolna przestrzen na dysku. Podaj rozmiary i punkty montazu
-dla ponizszych partycji.
-
-}
-
-message askfspart
-{Nastepna partycja jest /dev/%s%c.  Masz %d %s wolnego miejsca na dysku.
-Rozmiar partycji? }
 
 message emulbackup 
 {Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
