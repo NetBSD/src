@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.12 1993/08/01 18:31:57 mycroft Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.13 1993/08/14 02:20:27 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ static char rcsid[] = "$Id: kvm.c,v 1.12 1993/08/01 18:31:57 mycroft Exp $";
 #include <vm/swap_pager.h>
 #include <sys/kinfo_proc.h>
 #ifdef hp300
-#include <hp300/hp300/pte.h>
+#include <machine/pte.h>
 #endif
 #else /* NEWVM */
 #include <machine/pte.h>
@@ -831,7 +831,7 @@ kvm_procread(p, addr, buf, len)
 	 * XXX DANGER WILL ROBINSON -- i have *no* idea to what extent this
 	 * works... -- cgd
 	 */
-	BREAK HERE!!!
+	err("kvm_procread: not implemented");
 #endif
 #if defined(i386)
         if (kp->kp_eproc.e_vm.vm_pmap.pm_pdir) {
