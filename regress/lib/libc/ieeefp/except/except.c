@@ -1,4 +1,4 @@
-/*	$NetBSD: except.c,v 1.8 2004/03/25 15:01:22 drochner Exp $	*/
+/*	$NetBSD: except.c,v 1.9 2004/03/25 15:12:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -44,11 +44,30 @@ void sigfpe(int, siginfo_t *, void *);
 volatile sig_atomic_t signal_caught;
 volatile int sicode;
 
-static volatile const double one  = 1.0;
-static volatile const double zero = 0.0;
+#ifdef USE_FLOAT
+#define FPTYPE float
+#else
+#ifdef USE_LONGDOUBLE
+#define FPTYPE long double
+#else
+#define FPTYPE double
+#endif
+#endif
+static volatile const FPTYPE one  = 1.0;
+static volatile const FPTYPE zero = 0.0;
+#ifdef USE_FLOAT
+static volatile const float huge = FLT_MAX;
+static volatile const float tiny = FLT_MIN;
+#else
+#ifdef USE_LONGDOUBLE
+static volatile const long double huge = LDBL_MAX;
+static volatile const long double tiny = LDBL_MIN;
+#else
 static volatile const double huge = DBL_MAX;
 static volatile const double tiny = DBL_MIN;
-static volatile double x;
+#endif
+#endif
+static volatile FPTYPE x;
 
 /* trip divide by zero */
 static void
