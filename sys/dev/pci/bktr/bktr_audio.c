@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_audio.c,v 1.2 2000/05/07 00:24:33 wiz Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.3 2000/05/07 13:50:10 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.2 1999/10/28 13:58:14 roger Exp */
 /*
@@ -452,7 +452,6 @@ void msp_autodetect( bktr_ptr_t bktr ) {
   /* FAST sound scheme */
   if ( (strncmp("3430G", bktr->msp_version_string, 5) != 0)
     && (bktr->slow_msp_audio == 0) ){
-    if(bootverbose)printf("inside fast MSP autodetect code\n");
     msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0000,0x7300);/* Set volume to 0db gain */
     msp_dpl_write(bktr, bktr->msp_addr, 0x10, 0x0020,0x0001);/* Enable Auto format detection */
     msp_dpl_write(bktr, bktr->msp_addr, 0x10, 0x0021,0x0001);/* Auto selection of NICAM/MONO mode */
@@ -463,7 +462,6 @@ void msp_autodetect( bktr_ptr_t bktr ) {
   /* SLOW sound scheme */
   if ( (strncmp("3430G", bktr->msp_version_string, 5) != 0)
     && (bktr->slow_msp_audio == 1) ){
-    if (bootverbose)printf("inside slow MSP autodetect code\n");
     msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0000,0x7300);/* Set volume to 0db gain */
     msp_dpl_write(bktr, bktr->msp_addr, 0x10, 0x0020,0x0001);/* Enable Auto format detection */
     
