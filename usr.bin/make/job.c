@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.37 2000/12/05 15:20:10 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.38 2000/12/05 15:28:55 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.37 2000/12/05 15:20:10 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.38 2000/12/05 15:28:55 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.37 2000/12/05 15:20:10 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.38 2000/12/05 15:28:55 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3288,11 +3288,13 @@ clearfd(job)
 	Punt("Unwatching unwatched job");
     i = job->inPollfd - fds;
     nfds--;
+    /*
+     * Move last job in table into hole made by dead job.
+     */
     if (nfds != i) {
-	(void)memcpy(&fds[i], &fds[i + 1], (nfds - i) * sizeof(struct pollfd));
-	(void)memcpy(&jobfds[i], &jobfds[i + 1], (nfds - i) * sizeof(Job *));
-	while (i < nfds)
-	     jobfds[i++]->inPollfd--;
+	fds[i] = fds[nfds];
+	jobfds[i] = jobfds[nfds];
+	jobfds[i]->inPollfd = &fds[i];
     }
     job->inPollfd = NULL;
 }
