@@ -1,6 +1,6 @@
 #undef DEBUG_DARWIN
 #undef DEBUG_MACH
-/*	$NetBSD: darwin_mman.c,v 1.11 2003/12/04 21:48:15 manu Exp $ */
+/*	$NetBSD: darwin_mman.c,v 1.12 2004/07/27 20:41:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.11 2003/12/04 21:48:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_mman.c,v 1.12 2004/07/27 20:41:13 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,7 +152,7 @@ darwin_sys_load_shared_file(l, v, retval)
 	for (i = 0; i < SCARG(uap, count); i++) {
 		DPRINTF(("mapp[%d].mapping_offset = 0x%08lx\n", 
 		    i, mapp[i].mapping_offset));
-		DPRINTF(("mapp[%d].size = 0x%08x\n", i, mapp[i].size));
+		DPRINTF(("mapp[%d].size = 0x%08lx\n", i, (long)mapp[i].size));
 		DPRINTF(("mapp[%d].file_offset = 0x%08lx\n", 
 		    i, mapp[i].file_offset));
 		DPRINTF(("mapp[%d].protection = %d\n", 
