@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 1997/06/12 15:46:44 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 1997/09/11 23:02:17 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -523,11 +523,10 @@ consinit()
  * Set set up registers on exec.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;

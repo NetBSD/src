@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.64 1997/05/17 16:13:24 mycroft Exp $	*/
+/*	$NetBSD: exec.h,v 1.65 1997/09/11 23:02:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -170,7 +170,7 @@ int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
 void	*copyargs		__P((struct exec_package *, struct ps_strings *,
 				     void *, void *));
 void	setregs			__P((struct proc *, struct exec_package *,
-				     u_long, register_t *));
+				     u_long));
 int	check_exec		__P((struct proc *, struct exec_package *));
 
 #ifdef DEBUG

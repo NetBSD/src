@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.250 1997/09/05 01:44:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.251 1997/09/11 23:02:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1282,11 +1282,10 @@ dumpsys()
  * Clear registers on exec
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	register struct pcb *pcb = &p->p_addr->u_pcb;
 	register struct trapframe *tf;
@@ -1317,8 +1316,6 @@ setregs(p, pack, stack, retval)
 	tf->tf_eflags = PSL_USERSET;
 	tf->tf_esp = stack;
 	tf->tf_ss = LSEL(LUDATA_SEL, SEL_UPL);
-
-	retval[1] = 0;
 }
 
 /*

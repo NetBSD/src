@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 1997/08/27 18:31:17 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 1997/09/11 23:01:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -468,11 +468,10 @@ again:
  * but would break init; should be fixed soon.
  */
 void
-setregs(p, pack, stack, retval)
+setregs(p, pack, stack)
 	register struct proc *p;
 	struct exec_package *pack;
 	u_long stack;
-	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 	
