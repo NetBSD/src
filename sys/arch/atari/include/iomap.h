@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.2 1995/03/26 07:24:36 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.3 1996/08/23 11:17:00 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -34,30 +34,60 @@
 #define _MACHINE_IOMAP_H
 /*
  * Atari TT hardware:
- * I/O Address map
+ * I/O Address maps
  */
+#ifdef _KERNEL
+vm_offset_t	stio_addr;	/* Where the st io-area is mapped	*/
+#define	AD_STIO	(stio_addr)	/* .. see atari_init.c			*/
+
+/*
+ * PCI KVA addresses. These are determined in atari_init.c. Exept for
+ * the config-space, they should be used for a PCI-console only. Other
+ * cards should use the bus-functions to map io & mem spaces.
+ * Each card gets an config area of NBPG  bytes.
+ */
+vm_offset_t	pci_conf_addr;	/* KVA base of PCI config space		*/
+vm_offset_t	pci_io_addr;	/* KVA base of PCI io-space		*/
+vm_offset_t	pci_mem_addr;	/* KVA base of PCI mem-space		*/
+#endif /* _KERNEL */
+
+#define	PCI_CONFB_PHYS	(0xA0000000L)
+#define	PCI_CONFM_PHYS	(0x00080000L)
+#define	PCI_IO_PHYS	(0xB0000000L)
+#define	PCI_MEM_PHYS	(0x80000000L)
+
+#define PCI_CONF_SIZE	(4 * NBPG)
+#define PCI_IO_SIZE	(NBPG)
+#define PCI_MEM_SIZE	(32 * 1024)
 
 #define	AD_RAM		(0x000000L)	/* main memory			*/
 #define	AD_CART		(0xFA0000L)	/* expansion cartridge		*/
 #define	AD_ROM		(0xFC0000L)	/* system ROM			*/
-#define	AD_IO		(0xFF8000L)	/* I/O devices			*/
-#define	AD_EIO		(0xFFFFFFL)	/* End of I/O devices		*/
+#define	STIO_SIZE	(0x8000L)	/* Size of mapped I/O devices	*/
 
 /*
- * I/O address parts
+ * Physical address of I/O area. Use only for pte initialisation!
  */
-#define	AD_RAMCFG	(0xFF8000L)	/* ram configuration		*/
-#define	AD_VIDEO	(0xFF8200L)	/* video controller		*/
-#define AD_RESERVED	(0xFF8400L)	/* reserved			*/
-#define	AD_DMA		(0xFF8600L)	/* DMA device access		*/
-#define	AD_SCSI_DMA	(0xFF8700L)	/* SCSI DMA registers		*/
-#define	AD_NCR5380	(0xFF8780L)	/* SCSI controller		*/
-#define	AD_SOUND	(0xFF8800L)	/* YM-2149			*/
-#define	AD_RTC		(0xFF8960L)	/* TT realtime clock		*/
-#define	AD_SCC		(0xFF8C80L)	/* SCC 8530			*/
-#define	AD_SCU		(0xFF8E00L)	/* System Control Unit		*/
+#define	STIO_PHYS	((machineid & ATARI_HADES)	\
+				? 0xffff8000L		\
+				: 0x00ff8000L)
 
-#define	AD_MFP		(0xFFFA00L)	/* 68901			*/
-#define	AD_MFP2		(0xFFFA80L)	/* 68901-TT			*/
-#define	AD_ACIA		(0xFFFC00L)	/* 2 * 6850			*/
+/*
+ * I/O addresses in the STIO area:
+ */
+#define	AD_RAMCFG	(AD_STIO + 0x0000)	/* ram configuration	*/
+#define AD_FAL_MON_TYPE	(AD_STIO + 0x0006)	/* Falcon monitor type	*/
+#define	AD_VIDEO	(AD_STIO + 0x0200)	/* video controller	*/
+#define AD_RESERVED	(AD_STIO + 0x0400)	/* reserved		*/
+#define	AD_DMA		(AD_STIO + 0x0600)	/* DMA device access	*/
+#define	AD_SCSI_DMA	(AD_STIO + 0x0700)	/* SCSI DMA registers	*/
+#define	AD_NCR5380	(AD_STIO + 0x0780)	/* SCSI controller	*/
+#define	AD_SOUND	(AD_STIO + 0x0800)	/* YM-2149		*/
+#define	AD_RTC		(AD_STIO + 0x0960)	/* TT realtime clock	*/
+#define	AD_SCC		(AD_STIO + 0x0C80)	/* SCC 8530		*/
+#define	AD_SCU		(AD_STIO + 0x0E00)	/* System Control Unit	*/
+
+#define	AD_MFP		(AD_STIO + 0x7A00)	/* 68901		*/
+#define	AD_MFP2		(AD_STIO + 0x7A80)	/* 68901-TT		*/
+#define	AD_ACIA		(AD_STIO + 0x7C00)	/* 2 * 6850		*/
 #endif /* _MACHINE_IOMAP_H */
