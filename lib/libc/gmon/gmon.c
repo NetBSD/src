@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.12 1998/07/04 20:22:05 kleink Exp $	*/
+/*	$NetBSD: gmon.c,v 1.13 1998/08/10 02:43:10 perry Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.12 1998/07/04 20:22:05 kleink Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.13 1998/08/10 02:43:10 perry Exp $");
 #endif
 #endif
 
@@ -102,7 +102,7 @@ monstartup(lowpc, highpc)
 		return;
 	}
 #ifdef notdef
-	bzero(cp, p->kcountsize + p->fromssize + p->tossize);
+	memset(cp, 0, p->kcountsize + p->fromssize + p->tossize);
 #endif
 	p->tos = (struct tostruct *)cp;
 	cp += p->tossize;

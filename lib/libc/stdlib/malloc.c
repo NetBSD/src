@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.12 1998/02/03 18:44:17 perry Exp $	*/
+/*	$NetBSD: malloc.c,v 1.13 1998/08/10 02:43:10 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.12 1998/02/03 18:44:17 perry Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.13 1998/08/10 02:43:10 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -379,7 +379,7 @@ realloc(cp, nbytes)
   	if ((res = malloc(nbytes)) == NULL)
   		return (NULL);
   	if (cp != res)		/* common optimization if "compacting" */
-		bcopy(cp, res, (nbytes < onb) ? nbytes : onb);
+		memcpy(res, cp, (nbytes < onb) ? nbytes : onb);
   	return (res);
 }
 
