@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.18.4.2 2001/12/09 19:58:30 he Exp $	*/
+/*	$NetBSD: pchb.c,v 1.18.4.3 2002/01/16 10:07:02 he Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ pchbattach(parent, self, aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_PEQUR_XX5:
 		case PCI_PRODUCT_PEQUR_CNB20HE:
+		case PCI_PRODUCT_PEQUR_CNB20LE:
 		case PCI_PRODUCT_PEQUR_CIOB20:
 			if ((attachflags &
 			    (PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED)) ==
