@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2000/06/14 15:39:58 soren Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2000/06/29 15:36:48 soren Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -75,10 +75,10 @@ extern void		_clrsoftintr(int);
 #define clearsoftclock() _clrsoftintr(MIPS_SOFT_INT_MASK_0)
 #define clearsoftnet()	_clrsoftintr(MIPS_SOFT_INT_MASK_1)  
 
-extern u_int32_t biomask;
-extern u_int32_t netmask;
-extern u_int32_t ttymask;
-extern u_int32_t clockmask;
+extern u_int32_t 	biomask;
+extern u_int32_t 	netmask;
+extern u_int32_t 	ttymask;
+extern u_int32_t 	clockmask;
 
 #define splhigh()       _splraise(MIPS_INT_MASK)
 #define spl0()          (void)_spllower(0)
@@ -86,12 +86,14 @@ extern u_int32_t clockmask;
 #define splbio()        _splraise(biomask)
 #define splnet()        _splraise(netmask)
 #define spltty()        _splraise(ttymask)
+#define splimp()        spltty()
 #define splclock()      _splraise(clockmask)
-#define splimp()        splclock()
 #define splstatclock()  splclock()
 #define spllowersoftclock() _spllower(MIPS_SOFT_INT_MASK_0)
 #define splsoftclock()  _splraise(MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1)
 #define splsoftnet()    _splraise(MIPS_SOFT_INT_MASK_1)
+
+#define spllpt()	spltty()
 
 extern unsigned int	intrcnt[];
 #define SOFTCLOCK_INTR	0
