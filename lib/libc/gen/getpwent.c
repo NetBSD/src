@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.30 1998/11/12 16:38:49 christos Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.31 1998/11/13 08:25:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.30 1998/11/12 16:38:49 christos Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.31 1998/11/13 08:25:17 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,7 +152,7 @@ static int
 __ypexclude_is(name)
 	const char *name;
 {
-	const DBT key;
+	DBT key;
 	DBT data;
 
 	if(__ypexclude == (DB *)NULL)
