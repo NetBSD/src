@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/09/19 11:31:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 2003/02/11 10:43:29 drochner Exp $
 
 NOMAN=		# defined
 
@@ -22,7 +22,7 @@ misc.h: ${DESTDIR}/usr/include/sys/errno.h \
 	    ${DESTDIR}/usr/include/sys/errno.h \
 	    ${DESTDIR}/usr/include/sys/signal.h misc
 
-# XXX It looks like .NOTPARALLEL doesn't works.
+# XXX It looks like .NOTPARALLEL doesn't work.
 .NOTPARALLEL:
 
 .include "${NETBSDSRCDIR}/usr.bin/kdump/Makefile.ioctl-c"
