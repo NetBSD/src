@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.2 1999/06/05 14:19:44 mrg Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.3 2000/04/05 14:30:44 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -79,6 +79,11 @@ lpt_ebus_attach(parent, self, aux)
 
 	sc->sc_iot = ea->ea_bustag;
 	/*
+	 * Addresses that shoud be supplied by the prom:
+	 *	- normal lpt registers
+	 *	- ns873xx configuration registers
+	 *	- DMA space
+	 *
 	 * Use the prom address if there.
 	 */
 	if (ea->ea_naddrs)
@@ -91,13 +96,10 @@ lpt_ebus_attach(parent, self, aux)
 		printf(": can't map register space\n");
                 return;
 	}
-	printf(" addr %p");
 
-	for (i = 0; i < ea->ea_nintrs; i++) {
+	for (i = 0; i < ea->ea_nintrs; i++)
 		bus_intr_establish(ea->ea_bustag, ea->ea_intrs[i], 0,
 		    lptintr, sc);
-		printf(" vector %d", ea->ea_intrs[i]);
-	}
 	printf("\n");
 
 	lpt_attach_subr(sc);
