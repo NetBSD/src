@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.55 2004/08/20 23:26:53 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.56 2004/08/20 23:36:52 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.55 2004/08/20 23:26:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.56 2004/08/20 23:36:52 thorpej Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -706,7 +706,7 @@ atastart(struct ata_channel *chp)
 	struct atac_softc *atac = chp->ch_atac;
 	struct ata_xfer *xfer;
 
-#ifdef WDC_DIAGNOSTIC
+#ifdef ATA_DEBUG
 	int spl1, spl2;
 
 	spl1 = splbio();
@@ -717,7 +717,7 @@ atastart(struct ata_channel *chp)
 	}
 	splx(spl2);
 	splx(spl1);
-#endif /* WDC_DIAGNOSTIC */
+#endif /* ATA_DEBUG */
 
 	/* is there a xfer ? */
 	if ((xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer)) == NULL)
