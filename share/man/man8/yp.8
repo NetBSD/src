@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.12 1998/01/23 13:45:21 lukem Exp $
+.\"	$NetBSD: yp.8,v 1.13 1999/01/16 14:16:46 lukem Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -28,12 +28,13 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 5, 1993
+.Dd January 16, 1999
 .Dt YP 8
 .Os
 .Sh NAME
+.Nm nis ,
 .Nm yp
-.Nd description of the YP subsystem
+.Nd description of the NIS (formerly YP) subsystem
 .Sh SYNOPSIS
 .Nm ypbind
 .Op Fl ypset
@@ -111,23 +112,23 @@
 .Op Fl m Ar arg1 arg2 ...
 .Sh DESCRIPTION
 The
-.Tn YP
+.Tn NIS
 subsystem allows network management of passwd and group file
 entries through the functions
 .Xr getpwent 3
 and
 .Xr getgrent 3 .
-.Tn YP
+.Tn NIS
 also provides hooks for other client programs, such as
 .Xr amd 8
 and
 .Xr bootparamd 8 ,
 that can use
-.Tn YP
+.Tn NIS
 maps.
 .Pp
 The
-.Tn YP 
+.Tn NIS 
 subsystem is conditionally started in
 .Pa /etc/rc .
 See the
@@ -140,11 +141,12 @@ cannot find a server, the system behaves the same way as Sun's code:
 it hangs.
 .Sh SEE ALSO
 .Xr domainname 1 ,
-.Xr group 5 ,
-.Xr passwd 5 ,
-.Xr ypbind 8 ,
 .Xr ypcat 1 ,
 .Xr ypmatch 1 ,
+.Xr group 5 ,
+.Xr nsswitch.conf 5 ,
+.Xr passwd 5 ,
+.Xr ypbind 8 ,
 .Xr yppoll 8 , 
 .Xr ypset 8 ,
 .Xr ypwhich 1 ,
@@ -156,8 +158,8 @@ it hangs.
 .Xr ypclnt 3
 .Sh HISTORY
 The
-.Tn YP
+.Tn NIS
 client subsystem was originally written by Theo de Raadt
 to be compatible with Sun's implementation.  The
-.Tn YP
+.Tn NIS
 server suite was originally written by Mats O Jansson.
