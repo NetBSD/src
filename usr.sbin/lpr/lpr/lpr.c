@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.9 1995/11/15 22:49:16 pk Exp $	*/
+/*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -113,7 +113,7 @@ static int	 test __P((char *));
 
 uid_t	uid, euid;
 
-void
+int
 main(argc, argv)
 	int argc;
 	char *argv[];

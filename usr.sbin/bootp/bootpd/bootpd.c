@@ -21,7 +21,7 @@ SOFTWARE.
 ************************************************************************/
 
 #ifndef lint
-static char rcsid[] = "$Id: bootpd.c,v 1.5 1994/12/23 16:52:31 cgd Exp $";
+static char rcsid[] = "$Id: bootpd.c,v 1.6 1996/03/21 18:10:30 jtc Exp $";
 #endif
 
 /*
@@ -185,7 +185,7 @@ char *bootpd_dump = DUMPTAB_FILE;
  * main server loop is started.
  */
 
-void
+int
 main(argc, argv)
 	int argc;
 	char **argv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lptest.c,v 1.4 1995/11/15 22:50:45 pk Exp $	*/
+/*	$NetBSD: lptest.c,v 1.5 1996/03/21 18:13:20 jtc Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -49,7 +49,7 @@ static char sccsid[] = "@(#)lptest.c	8.1 (Berkeley) 6/6/93";
 /*
  * lptest -- line printer test program (and other devices).
  */
-void
+int
 main(argc, argv)
 	int argc;
 	char **argv;
