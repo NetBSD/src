@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.26 2001/02/04 20:34:38 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.27 2001/02/26 23:13:18 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -622,14 +622,14 @@ sys/dev/ic/tulip.c				1.85
 
   Ignore receive errors if VLAN_MTU is enabled.
 
-sys/netinet6/icmp6.c				1.50,1.51
+sys/netinet6/icmp6.c				1.50-1.51
 
   Only printf() IPv6 ICMP checksum errors under ND6_DEBUG.  Fixes
   PR#11911.
 
 sbin/ifconfig/ifconfig.c			1.94
 
-  Initialize an uninitialized pointer. PR#11702.
+  Initialize an uninitialized pointer.  Fixes PR#11702.
 
 lib/libcrypto_idea/Makefile			1.2
 lib/libcrypto_rc5/Makefile			1.2
@@ -1136,3 +1136,399 @@ sys/arch/macppc/conf/GENERIC			1.79-1.80
 sys/arch/macppc/conf/files.macppc		1.32
 
   Add new driver for Apple sound chip.
+
+usr.sbin/user/user.c				1.36
+usr.sbin/user/usermod.8				1.9
+
+  Improve handling of ``-l'' with ``-m'', and update documentation.
+  Fixes PR#11707.
+
+share/man/man4/wscons.4				1.16
+
+  Add WSCOMPAT_USL_SYNCTIMEOUT, WS_KERNEL_MONOATTR, and WS_KERNEL_COLATTR
+  to synopsis.
+
+sys/netinet6/in6_ifattach.c			1.33
+
+  Do not remove default route by mistake on interface removal.
+
+sys/netinet6/in6.c				1.39
+
+  Workaround to avoid EMSGSIZE when ND6 table for outgoing interface
+  is not initialized (should result in "interface down").
+
+lib/libc/arch/m68k/string/Makefile.inc		1.3
+lib/libc/arch/m68k/string/memccpy.S		1.1
+
+  Implement a significantly improved version of memccpy().
+
+usr.sbin/rbootd/bpf.c				1.11
+
+  Prevent core dump if no interfaces are up.
+
+sys/arch/arm32/conf/RISCPC			1.29
+
+  Add commented-out StrongARM-specific optimization flags.
+
+sys/sys/disklabel.h				1.61
+sbin/mount/mount.8				1.30
+sbin/mount/mount.c				1.48-1.49,1.51,1.54 via patch
+
+  If both special and node are given (but no type), the disklabel
+  is checked for the file system type before falling back to ffs.
+
+include/arpa/tftp.h				1.6
+libexec/tftpd/tftpd.8				1.13
+libexec/tftpd/tftpd.c				1.19
+usr.bin/tftp/tftp.c				1.12-1.14
+
+  Use unsigned variables for block number, thus allowing transfer 
+  of up to 32M files instead of 16M.
+
+sys/netinet6/ip6_output.c			1.30
+
+  Remove a misplaced semicolon after ``if'' conditional.
+
+sys/dev/pci/if_sip.c				1.24
+
+  Fix a bug in the DP83815 multicast setup code.
+
+usr.sbin/config/mkmakefile.c			1.48 via patch
+
+  Put both .S and .s files in SFILES so ``make depends'' works
+  properly.  Fixes PR#12051.
+
+games/fortune/datfiles/fortunes			1.20
+
+  Fix a simple typo.  Fixes PR#12150.
+
+distrib/notes/amiga/install			1.28
+distrib/notes/amiga/prep			1.25
+
+  Add a few minor clarifications.
+
+sys/dev/ic/siop.c				1.39
+sys/dev/ic/siop_common.c			1.12
+
+  Don't queue new commands to a device which has sense pending.
+
+sys/dev/ic/adw.c				1.27
+
+  Fix for ``Advansys DMA errors''.  Fixes PR#12114 and PR#12158.
+
+sys/dev/pci/cs4280.c				1.15 via patch
+
+  Fix problem when warm booting from Windows.
+
+usr.sbin/user/user.c				1.37
+
+  Make sure that a modified group has a trailing newline.
+
+crypto/dist/ssh/LICENCE				1.1.1.2
+crypto/dist/ssh/RFC.nroff			1.1.1.2
+crypto/dist/ssh/atomicio.c			1.2
+crypto/dist/ssh/auth-krb4.c			1.1.1.2-1.1.1.3
+crypto/dist/ssh/auth-options.c			1.1.1.2-1.1.1.4
+crypto/dist/ssh/auth-options.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/auth-passwd.c			1.1.1.2-1.1.1.4
+crypto/dist/ssh/auth-rh-rsa.c			1.1.1.2-1.1.1.3
+crypto/dist/ssh/auth-rhosts.c			1.3-1.5
+crypto/dist/ssh/auth-rsa.c			1.1.1.2-1.1.1.3
+crypto/dist/ssh/auth.c				1.2-1.3
+crypto/dist/ssh/auth.h				1.1.1.2-1.1.1.4
+crypto/dist/ssh/auth1.c				1.2-1.6
+crypto/dist/ssh/auth2.c				1.2-1.4
+crypto/dist/ssh/authfd.c			1.2
+crypto/dist/ssh/authfd.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/authfile.c			1.2-1.3
+crypto/dist/ssh/authfile.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/bufaux.c			1.1.1.2-1.1.1.3
+crypto/dist/ssh/bufaux.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/buffer.c			1.1.1.2-1.1.1.3
+crypto/dist/ssh/buffer.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/canohost.c			1.3-1.5
+crypto/dist/ssh/channels.c			1.2-1.6
+crypto/dist/ssh/channels.h			1.1.1.2-1.1.1.4
+crypto/dist/ssh/cipher.c			1.3-1.4
+crypto/dist/ssh/cipher.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/clientloop.c			1.3-1.5
+crypto/dist/ssh/compat.c			1.1.1.2-1.1.1.4
+crypto/dist/ssh/compat.h			1.1.1.2-1.1.1.4
+crypto/dist/ssh/compress.c			1.2-1.3
+crypto/dist/ssh/compress.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/crc32.c				1.1.1.2-1.1.1.3
+crypto/dist/ssh/crc32.h				1.1.1.2-1.1.1.3
+crypto/dist/ssh/deattack.c			1.3-1.4
+crypto/dist/ssh/deattack.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/dispatch.c			1.1.1.2-1.1.1.3
+crypto/dist/ssh/dispatch.h			1.1.1.2
+crypto/dist/ssh/getput.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/hostfile.c			1.2
+crypto/dist/ssh/hostfile.h			1.2-1.3
+crypto/dist/ssh/includes.h			1.2-1.3
+crypto/dist/ssh/kex.c				1.3-1.5
+crypto/dist/ssh/kex.h				1.1.1.2-1.1.1.4
+crypto/dist/ssh/key.c				1.2
+crypto/dist/ssh/key.h				1.1.1.2-1.1.1.3
+crypto/dist/ssh/log-client.c			1.1.1.2
+crypto/dist/ssh/log-server.c			1.2-1.3
+crypto/dist/ssh/log.c				1.1.1.2-1.1.1.3
+crypto/dist/ssh/login.c				1.1.1.2-1.1.1.3
+crypto/dist/ssh/match.c				1.1.1.2-1.1.1.3
+crypto/dist/ssh/match.h				1.1.1.2-1.1.1.3
+crypto/dist/ssh/mpaux.c				1.2-1.3
+crypto/dist/ssh/mpaux.h				1.1.1.2-1.1.1.3
+crypto/dist/ssh/myproposal.h			1.1.1.2-1.1.1.4
+crypto/dist/ssh/nchan.c				1.1.1.2-1.1.1.3
+crypto/dist/ssh/nchan.h				1.1.1.2
+crypto/dist/ssh/nchan.ms			1.1.1.2
+crypto/dist/ssh/nchan2.ms			1.1.1.2
+crypto/dist/ssh/packet.c			1.2-1.6
+crypto/dist/ssh/packet.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/pathnames.h			1.2-1.4
+crypto/dist/ssh/pty.c				1.2-1.3
+crypto/dist/ssh/pty.h				1.1.1.2
+crypto/dist/ssh/radix.c				1.1.1.2-1.1.1.3
+crypto/dist/ssh/random.c			1.2-1.4
+crypto/dist/ssh/readconf.c			1.2-1.5
+crypto/dist/ssh/readconf.h			1.1.1.2-1.1.1.4
+crypto/dist/ssh/readpass.c			1.2-1.3
+crypto/dist/ssh/rsa.c				1.1.1.2-1.1.1.3
+crypto/dist/ssh/rsa.h				1.1.1.2-1.1.1.3
+crypto/dist/ssh/scp.1				1.1.1.2-1.1.1.3
+crypto/dist/ssh/scp.c				1.2-1.8
+crypto/dist/ssh/servconf.c			1.3-1.5
+crypto/dist/ssh/servconf.h			1.3-1.5
+crypto/dist/ssh/serverloop.c			1.2-1.5
+crypto/dist/ssh/session.c			1.2-1.5
+crypto/dist/ssh/session.h			1.1.1.2
+crypto/dist/ssh/sftp-server.8			1.1.1.2-1.1.1.3
+crypto/dist/ssh/sftp-server.c			1.2-1.7
+crypto/dist/ssh/ssh-add.1			1.2-1.3
+crypto/dist/ssh/ssh-add.c			1.3-1.6
+crypto/dist/ssh/ssh-agent.1			1.2-1.3
+crypto/dist/ssh/ssh-agent.c			1.3-1.6
+crypto/dist/ssh/ssh-keygen.1			1.2-1.3
+crypto/dist/ssh/ssh-keygen.c			1.3-1.5
+crypto/dist/ssh/ssh.1				1.2-1.8
+crypto/dist/ssh/ssh.c				1.3-1.7
+crypto/dist/ssh/ssh.h				1.2-1.4
+crypto/dist/ssh/ssh2.h				1.1.1.2-1.1.1.3
+crypto/dist/ssh/sshconnect.c			1.2-1.6
+crypto/dist/ssh/sshconnect.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/sshconnect1.c			1.2-1.6
+crypto/dist/ssh/sshconnect2.c			1.2-1.6
+crypto/dist/ssh/sshd.8				1.3-1.7
+crypto/dist/ssh/sshd.c				1.2-1.6
+crypto/dist/ssh/tildexpand.c			1.2-1.3
+crypto/dist/ssh/ttymodes.c			1.1.1.2
+crypto/dist/ssh/ttymodes.h			1.1.1.2
+crypto/dist/ssh/uidswap.c			1.1.1.2-1.1.1.3
+crypto/dist/ssh/uidswap.h			1.1.1.2
+crypto/dist/ssh/uuencode.c			1.2-1.3
+crypto/dist/ssh/uuencode.h			1.1.1.2-1.1.1.3
+crypto/dist/ssh/version.h			1.4-1.10
+crypto/dist/ssh/xmalloc.c			1.2-1.3
+crypto/dist/ssh/xmalloc.h			1.1.1.2
+crypto/dist/ssh/auth-skey.c			deleted
+crypto/dist/ssh/client.h			deleted
+crypto/dist/ssh/dsa.c				deleted
+crypto/dist/ssh/dsa.h				deleted
+crypto/dist/ssh/hmac.c				deleted
+crypto/dist/ssh/hmac.h				deleted
+crypto/dist/ssh/ssh.conf			deleted
+crypto/dist/ssh/sshd.conf			deleted
+crypto/dist/ssh/util.c				deleted
+crypto/dist/ssh/atomicio.h			1.1-1.2 (new)
+crypto/dist/ssh/auth-chall.c			1.1-1.2 (new)
+crypto/dist/ssh/auth2-chall.c			1.1 (new)
+crypto/dist/ssh/canohost.h			1.1 (new)
+crypto/dist/ssh/cli.c				1.1-1.3 (new)
+crypto/dist/ssh/cli.h				1.1-1.1.1.2 (new)
+crypto/dist/ssh/clientloop.h			1.1 (new)
+crypto/dist/ssh/dh.c				1.1-1.2 (new)
+crypto/dist/ssh/dh.h				1.1-1.1.1.2 (new)
+crypto/dist/ssh/groupaccess.c			1.1 (new)
+crypto/dist/ssh/groupaccess.h			1.1 (new)
+crypto/dist/ssh/log.h				1.1 (new)
+crypto/dist/ssh/login.h				1.1 (new)
+crypto/dist/ssh/mac.c				1.1 (new)
+crypto/dist/ssh/mac.h				1.1 (new)
+crypto/dist/ssh/misc.c				1.1 (new)
+crypto/dist/ssh/misc.h				1.1 (new)
+crypto/dist/ssh/openssh2netbsd			1.1 (new)
+crypto/dist/ssh/radix.h				1.1 (new)
+crypto/dist/ssh/random.h			1.1-1.2 (new)
+crypto/dist/ssh/readpass.h			1.1 (new)
+crypto/dist/ssh/rijndael.c			1.1-1.1.1.2 (new)
+crypto/dist/ssh/rijndael.h			1.1-1.1.1.2 (new)
+crypto/dist/ssh/serverloop.h			1.1 (new)
+crypto/dist/ssh/sftp-client.c			1.1-1.6 (new)
+crypto/dist/ssh/sftp-client.h			1.1 (new)
+crypto/dist/ssh/sftp-common.c			1.1 (new)
+crypto/dist/ssh/sftp-common.h			1.1 (new)
+crypto/dist/ssh/sftp-int.c			1.1-1.5 (new)
+crypto/dist/ssh/sftp-int.h			1.1 (new)
+crypto/dist/ssh/sftp.1				1.1-1.1.1.5 (new)
+crypto/dist/ssh/sftp.c				1.1-1.3 (new)
+crypto/dist/ssh/sftp.h				1.1 (new)
+crypto/dist/ssh/ssh-dss.c			1.1-1.3 (new)
+crypto/dist/ssh/ssh-dss.h			1.1-1.1.1.2 (new)
+crypto/dist/ssh/ssh-keyscan.1			1.1-1.3 (new)
+crypto/dist/ssh/ssh-keyscan.c			1.1-1.6 (new)
+crypto/dist/ssh/ssh-rsa.c			1.1-1.3 (new)
+crypto/dist/ssh/ssh-rsa.h			1.1-1.1.1.2 (new)
+crypto/dist/ssh/ssh1.h				1.1 (new)
+crypto/dist/ssh/ssh_config			1.1-1.2 (new)
+crypto/dist/ssh/sshd_config			1.1-1.2 (new)
+crypto/dist/ssh/tildexpand.h			1.1 (new)
+usr.bin/ssh/Makefile				1.11 via patch
+usr.bin/ssh/Makefile.inc			1.3-1.5
+usr.bin/ssh/libssh/Makefile			1.5 via patch
+usr.bin/ssh/scp/Makefile			1.2
+usr.bin/ssh/sftp-server/Makefile		1.1-1.2
+usr.bin/ssh/sftp/Makefile			1.1
+usr.bin/ssh/ssh/Makefile			1.2,1.4-1.5 via patch
+usr.bin/ssh/ssh-keyscan/Makefile		1.1
+usr.bin/ssh/sshd/Makefile			1.2-1.3
+distrib/sets/lists/man/mi			patch
+distrib/sets/lists/base/mi			patch
+
+  Update SSH to version found on trunk as of 26 Feb 2001.
+  Note that /dev/random is now mandatory for ssh.
+  Added sftp, sftp-server, and ssh-keyscan.
+
+share/man/man4/an.4				1.1-1.6 (new, via patch)
+share/man/man4/Makefile				patch
+
+  Add manual page for Aironet/Cisco wireless cards.
+
+sys/arch/macppc/dev/mesh.c			1.6-1.7
+
+  Match "chrp,mesh0", and fix Conner CFP1080 problem (PR#7612),
+  and add debugging messages.
+
+sys/dev/ic/rtl81x9.c				1.27
+
+  Don't copy Rx packet to mbuf if it has invalid length; just
+  discard.  Fixes PR#11877.
+
+etc/etc.arc/MAKEDEV				1.3
+etc/etc.bebox/MAKEDEV				1.13
+etc/etc.hpcmips/MAKEDEV				1.14
+etc/etc.mmeye/MAKEDEV				1.5
+
+  Fix memory disk entries (md?c -> md?d) since RAW_PART == 3 on
+  these ports.
+
+etc/etc.sgimips/MAKEDEV				1.3
+
+  RAW_PART == 10 on sgimips; adapt memory disk entry for it.
+
+distrib/utils/Makefile				1.11
+
+  Add x_umount to SUBDIR.
+
+sys/dev/pci/pcidevs				1.302
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pciide.c				1.106
+
+  Add support for the Intel 82801BAM IDE controller.
+
+sys/dev/pci/pciide.c				1.107
+
+  Disable Ultra-DMA on Ali controllers which don't support it.
+
+sys/netinet6/ah_core.c				1.22-1.23 via patch
+sys/netinet6/ah_output.c			1.13-1.14 via patch
+
+  Correct IPv4 option header chasing.  The old code may overrun
+  the buffer if the option header is truncated.  Also correct
+  option parsing during AH checksum computation.
+
+sys/arch/alpha/conf/ALPHA			1.134 via patch
+
+  The ``rnd'' device is now required for ssh to work, so enable it.
+  Also add various other newer entries.
+
+usr.bin/file/file.1				patch
+
+  Replace __CSECTION__ with ``1'' (manual section).  Fixes PR#12250.
+
+sys/dev/isa/ad1848_isa.c			1.18
+
+  Make this compile with AUDIO_DEBUG turned on.
+
+crypto/dist/heimdal/kuser/kinit.c		1.2
+
+  Fix a bug with KerberosIV fallback lifetime calculation.
+
+sys/sys/disklabel_mbr.h				1.6
+
+  Add MBR_IS_EXTENDED() to detect the extended MBR partition types.
+
+sbin/disklabel/Makefile				1.39
+sbin/disklabel/printlabel.c			1.1 (new)
+sbin/disklabel/disklabel.5			1.13
+sbin/disklabel/disklabel.8			1.34
+sbin/disklabel/disklabel.c			1.90-1.95
+sbin/disklabel/dkcksum.c			1.9
+sbin/disklabel/dkcksum.h			1.3
+sbin/disklabel/extern.h				1.5-1.6
+sbin/disklabel/interact.c			1.16-1.17
+
+  Several fixes and enhancements:
+   o with ``-I'', initialize the label if it's not there, it's
+     corrupt, or there's no ``fake'' label.
+   o correct partition table header
+   o move some functions into a separate file for other programs
+     to use
+   o fix examples and cross references
+   o various cleanups
+
+sbin/mbrlabel/Makefile				1.3
+sbin/mbrlabel/mbrlabel.8			1.5-1.8
+sbin/mbrlabel/mbrlabel.c			1.8-1.15
+
+  Several fixes and enhancements:
+   o only update in-core (and on-disk) disklabels if requested
+   o be saner about adding MBR partitions to free disklabel slots
+   o NTFS recognition
+   o various cleanups
+
+sys/arch/macppc/dev/awacs.c			patch
+
+  Make this compile on this release branch.
+
+share/man/man5/ipsec.conf.5			1.1 (new)
+share/man/man5/Makefile				patch
+
+  Add this manual page; /etc/rc.d/ipsec reads the described file.
+
+share/man/man5/rc.conf.5			1.43
+
+  Sshd is now integrated on NetBSD, so don't say otherwise.
+
+distrib/utils/sysinst/msg.mi.en			1.81
+
+  Update the pleasemountroot message to indicate which root needs
+  to be mounted, and what needs to be done.
+
+sys/netinet/raw_ip.c				1.55
+sys/netinet6/raw_ip6.c				1.30
+
+  Make sure to validate packet against ipsec policy.
+
+sys/arch/atari/dev/clock.c			1.24
+
+  Fix y2k+1 problem.
+
+usr.bin/ssh/Makefile.inc			patch
+
+  Correct minor error in previous pull-up.
+
+sys/netinet6/dest6.c				1.9-1.10 via patch
+sys/netinet6/nd6.c				1.40 via patch
+
+  Tighten IPv6 ND6/dest6 option chasing bounds check.
