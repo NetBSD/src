@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1996/05/21 15:33:01 oki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 1996/06/16 09:07:59 oki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -105,7 +105,7 @@ readdisklabel(dev, strat, lp, osdep)
 			goto done;
 		}
 		if (bcmp(bp->b_data, "X68SCSI1", 8) != 0) {
-			msg = "bad Human68k disk error";
+			msg = "no disk label";
 			goto done;
 		}
 
@@ -304,6 +304,7 @@ writedisklabel(dev, strat, lp, osdep)
 	struct buf *bp;
 	struct disklabel *dlp;
 	int error, dospartoff, cyl, i;
+	char *np;
 
 	/* get a buffer and initialize it */
 	bp = geteblk((int)lp->d_secsize);
@@ -319,21 +320,74 @@ writedisklabel(dev, strat, lp, osdep)
 		bp->b_flags = B_BUSY | B_READ;
 		bp->b_cylin = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
+		if (biowait(bp))
+			goto done;
+
+#ifdef maybe
+		if (bcmp(bp->b_data, "X68SCSI1", 8) != 0) {
+			goto done;
+		}
+#endif
+
+		/* read partition record */
+		bp->b_blkno = DOSPARTOFF;
+		bp->b_bcount = lp->d_secsize;
+		bp->b_flags = B_BUSY | B_READ;
+		bp->b_cylin = DOSPARTOFF / lp->d_secpercyl;
+		(*strat)(bp);
 
 		if ((error = biowait(bp)) == 0) {
 			/* XXX how do we check veracity/bounds of this? */
-			bcopy(bp->b_data + DOSPARTOFF, dp,
-			      NDOSPART * sizeof(*dp));
-			for (i = 0; i < NDOSPART; i++, dp++)
-				/* is this ours? */
-				if (dp->dp_size &&
-					strncmp(dp->dp_typname, "BSD ", 4)
-					&& dospartoff == 0) {
-					/* need sector address for SCSI */
-					dospartoff = dp->dp_start * 2; /* XXX */
-					cyl = 64; /* XXX */
+			dp = (void *)bp->b_data + sizeof(*dp);
+			for (i = 0; i < NDOSPART; i++, dp++) {
+				int part = i + (i < RAW_PART ? 0 : 1);
+				int start, size;
+
+				start = lp->d_partitions[part].p_offset >> 1;
+				size = lp->d_partitions[part].p_size >> 1;
+
+				switch (lp->d_partitions[part].p_fstype) {
+				case FS_MSDOS:
+					np = "Human68k";
+					dp->dp_flag = 0; /* XXX 自動起動 */
+					break;
+
+				case FS_SWAP:
+					np = "BSD swap";
+					dp->dp_flag = 2; /* 使用可能 */
+					break;
+
+				case FS_BSDFFS:
+					np = "BSD ffs ";
+					if (part == 0)
+						dp->dp_flag = 0; /* 自動起動 */
+					else
+						dp->dp_flag = 2; /* 使用可能 */
+					break;
+
+				case FS_UNUSED:
+					np = "\0\0\0\0\0\0\0\0";
+					start = size = 0;
+					if (part < lp->d_npartitions) {
+						dp->dp_flag = 1;
+					} else {
+						dp->dp_flag = 0;
+					}
+					break;
+
+				default:
+					/* XXX OS-9, MINIX etc. */
+					continue;
 				}
+				bcopy(np, dp->dp_typname, 8);
+				dp->dp_start = start;
+				dp->dp_size = size;
+			}
+			bp->b_flags = B_BUSY | B_WRITE;
+			(*strat)(bp);
+			error = biowait(bp);
 		}
+		goto done;
 	}
 
 #ifdef maybe
