@@ -35,8 +35,15 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sys_machdep.c	5.5 (Berkeley) 1/19/91
- *	$Id: sys_machdep.c,v 1.3 1993/10/13 08:26:00 cgd Exp $
+ *	$Id: sys_machdep.c,v 1.4 1993/10/15 13:47:22 cgd Exp $
  */
+
+#include "npx.h"
+
+#include "sys/signal.h"
+#include "machine/cpu.h"
+#include "machine/psl.h"
+#include "machine/reg.h"
 
 #include "param.h"
 #include "systm.h"
@@ -44,12 +51,27 @@
 #include "file.h"
 #include "time.h"
 #include "proc.h"
+#include "user.h"
 #include "uio.h"
 #include "kernel.h"
 #include "mtio.h"
 #include "buf.h"
 #include "trace.h"
+#include "vm/vm_param.h"
+#include "vm/pmap.h"
+#include "vm/vm_map.h"
 #include "machine/sysarch.h"
+
+#define       LUDATA_SEL      	4
+#define       NLDT              LUDATA_SEL+1
+#define       GUSERLDT_SEL	7       /* User LDT */
+#define       NGDT		GUSERLDT_SEL+1
+
+extern vm_map_t kernel_map;
+extern int currentldt;
+extern union descriptor gdt[NGDT];
+extern union descriptor ldt[NLDT];
+extern struct soft_segment_descriptor gdt_segs[];
 
 #ifdef TRACE
 int	nvualarm;
