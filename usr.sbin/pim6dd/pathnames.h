@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.1 1999/07/17 14:06:25 itojun Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.2 1999/07/17 14:12:21 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -49,7 +49,7 @@
  */
 
 
-#define _PATH_PIM6D_CONF		"/usr/local/v6/etc/pim6dd.conf"
+#define _PATH_PIM6D_CONF		"/etc/pim6dd.conf"
 
 #if (defined(BSD) && (BSD >= 199103))
 #define _PATH_PIM6D_PID		"/var/run/pim6dd.pid"
