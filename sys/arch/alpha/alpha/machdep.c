@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.173 1999/05/20 08:21:42 lukem Exp $ */
+/* $NetBSD: machdep.c,v 1.174 1999/05/21 00:09:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.173 1999/05/20 08:21:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 1999/05/21 00:09:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -732,9 +732,9 @@ nobootinfo:
 	 * memory is directly addressable.  We don't have to map these into
 	 * virtual address space.
 	 */
-	size = (vsize_t)allocsys(0);
+	size = (vsize_t)allocsys(NULL, mdallocsys);
 	v = (caddr_t)pmap_steal_memory(size, NULL, NULL);
-	if ((allocsys(v) - v) != size)
+	if ((allocsys(v, mdallocsys) - v) != size)
 		panic("alpha_init: table size inconsistency");
 
 	/*
