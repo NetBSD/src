@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.9 2000/08/09 11:37:34 mrg Exp $
+# $NetBSD: Makefile,v 1.10 2001/06/13 18:09:15 fredette Exp $
 # edlabel (Edit Disk LABEL)
 
 .if (${MACHINE} == "sun3") || (${MACHINE} == "sun3x") || \
     (${MACHINE} == "atari") || (${MACHINE} == "sparc") || \
-    (${MACHINE} == "sparc64") || (${MACHINE} == "mvme68k")
+    (${MACHINE} == "sparc64") || (${MACHINE} == "mvme68k") || \
+    (${MACHINE} == "sun2")
 PROG=	edlabel
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
