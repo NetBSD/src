@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.17 1996/04/23 05:14:40 veego Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 1997/02/02 07:17:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,7 +58,7 @@
 
 extern int kernel_reload_write(struct uio *uio);
 extern u_int lowram;
-caddr_t zeropage;
+static caddr_t devzeropage;
 
 int mmopen __P((dev_t, int, int, struct proc *));
 int mmclose __P((dev_t, int, int, struct proc *));
@@ -157,14 +157,14 @@ mmrw(dev, uio, flags)
 				 * and EFAULT for writes.
 				 */
 				if (uio->uio_rw == UIO_READ) {
-					if (zeropage == NULL) {
-						zeropage = (caddr_t)
+					if (devzeropage == NULL) {
+						devzeropage = (caddr_t)
 						    malloc(CLBYTES, M_TEMP,
 						    M_WAITOK);
-						bzero(zeropage, CLBYTES);
+						bzero(devzeropage, CLBYTES);
 					}
 					c = min(c, NBPG - (int)v);
-					v = (vm_offset_t) zeropage;
+					v = (vm_offset_t) devzeropage;
 				} else
 #endif
 					return (EFAULT);
@@ -187,13 +187,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+			if (devzeropage == NULL) {
+				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				bzero(devzeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(devzeropage, c, uio);
 			continue;
 
 		/*
