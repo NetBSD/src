@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.33 2000/03/23 06:48:37 thorpej Exp $	*/
+/*	$NetBSD: param.c,v 1.34 2000/03/28 05:14:03 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -141,6 +141,7 @@ struct	shminfo shminfo = {
 	SHMSEG,
 	SHMALL
 };
+struct shmid_ds *shmsegs;
 #endif
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.24 1999/12/04 12:33:03 ragge Exp $	*/
+/*	$NetBSD: shm.h,v 1.25 2000/03/28 05:14:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -135,8 +135,8 @@ struct shminfo {
 	int	shmseg;		/* max shared memory segments per process */
 	int	shmall;		/* max amount of shared memory (pages) */
 };
-struct shminfo shminfo;
-struct shmid_ds *shmsegs;
+extern struct shminfo shminfo;
+extern struct shmid_ds *shmsegs;
 
 struct vmspace;
 

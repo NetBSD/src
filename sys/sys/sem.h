@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.h,v 1.10 1999/08/25 05:05:49 thorpej Exp $	*/
+/*	$NetBSD: sem.h,v 1.11 2000/03/28 05:14:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ struct seminfo {
 		semvmx,		/* semaphore maximum value */
 		semaem;		/* adjust on exit max value */
 };
-struct seminfo	seminfo;
+extern struct seminfo seminfo;
 
 /* internal "mode" bits */
 #define	SEM_ALLOC	01000	/* semaphore is allocated */
