@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.35 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: gram.y,v 1.36 2002/09/11 06:20:09 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,7 +263,7 @@ dev_def:
 one_def:
 	file |
 	object |
-	device_major |
+	device_major			{ do_devsw = 1; } |
 	include |
 	prefix |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, 1); } |
