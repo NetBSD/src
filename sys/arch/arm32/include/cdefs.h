@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.3 1997/10/14 09:20:05 mark Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.3.2.1 1997/10/22 06:16:21 thorpej Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -12,6 +12,10 @@
 #define _C_LABEL(x)	_STRING(_ ## x)
 #else
 #define _C_LABEL(x)	_STRING(_/**/x)
+#endif
+
+#ifdef __GNUC__
+#define	__RENAME(x)	__asm__(__CONCAT("_",x))
 #endif
 
 #ifdef __GNUC__

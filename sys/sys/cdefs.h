@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.18 1997/06/18 19:09:50 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.18.8.1 1997/10/22 06:16:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -138,6 +138,11 @@
 
 #ifndef __COPYRIGHT
 #define __COPYRIGHT(s) __IDSTRING(copyright,s)
+#endif
+
+/* This is defined in <machine/cdefs.h> */
+#ifndef __RENAME
+#error "No function renaming possible"
 #endif
 
 #endif /* !_SYS_CDEFS_H_ */
