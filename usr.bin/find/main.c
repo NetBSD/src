@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 1997/01/09 20:19:14 tls Exp $	*/
+/*	$NetBSD: main.c,v 1.7 1997/10/18 14:49:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$NetBSD: main.c,v 1.6 1997/01/09 20:19:14 tls Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.7 1997/10/18 14:49:45 lukem Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ main(argc, argv)
 
 	p = start = argv;
 	ftsoptions = FTS_NOSTAT|FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "Hdf:hXx")) != EOF)
+	while ((ch = getopt(argc, argv, "Hdf:hXx")) != -1)
 		switch(ch) {
 		case 'H':
 			ftsoptions |= FTS_COMFOLLOW;
