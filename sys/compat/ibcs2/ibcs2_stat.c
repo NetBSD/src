@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.14.4.2 2002/09/04 04:09:08 itojun Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.14.4.3 2003/08/27 05:31:56 msaitoh Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -111,6 +111,11 @@ cvt_statvfs(sp, buf, len)
 	int len;
 {
 	struct ibcs2_statvfs ssvfs;
+
+	if (len < 0)
+		return (EINVAL);
+	if (len > sizeof(ssvfs))
+		len = sizeof(ssvfs);
 
 	if (len < 0)
 		return (EINVAL);
