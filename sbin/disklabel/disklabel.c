@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.64 1999/04/05 02:50:52 cgd Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.65 1999/04/09 10:06:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.64 1999/04/05 02:50:52 cgd Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.65 1999/04/09 10:06:18 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -353,6 +353,8 @@ main(argc, argv)
 		*lp = lab;
 		if (checklabel(lp) == 0)
 			error = writelabel(f, bootarea, lp);
+		else
+			error = 1;
 		break;
 
 	case WRITEBOOT:
@@ -368,13 +370,15 @@ main(argc, argv)
 		*lp = tlab;
 		if (checklabel(lp) == 0)
 			error = writelabel(f, bootarea, lp);
+		else
+			error = 1;
 		break;
 	}
 #endif
 	case UNSPEC:
 		usage();
 	}
-	return error;
+	exit(error);
 }
 
 /*
