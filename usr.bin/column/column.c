@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.8 1998/07/28 19:26:09 mycroft Exp $	*/
+/*	$NetBSD: column.c,v 1.9 1998/11/06 22:59:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.8 1998/07/28 19:26:09 mycroft Exp $");
+__RCSID("$NetBSD: column.c,v 1.9 1998/11/06 22:59:12 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: column.c,v 1.8 1998/07/28 19:26:09 mycroft Exp $");
 
 #include <ctype.h>
 #include <err.h>
+#include <termios.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -268,7 +269,7 @@ input(fp)
 	if (!list)
 		list = emalloc((maxentry = DEFNUM) * sizeof(char *));
 	while (fgets(buf, MAXLINELEN, fp)) {
-		for (p = buf; *p && isspace(*p); ++p);
+		for (p = buf; *p && isspace((unsigned char)*p); ++p);
 		if (!*p)
 			continue;
 		if (!(p = strchr(p, '\n'))) {
