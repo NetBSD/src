@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.5 1996/10/10 20:25:36 christos Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.6 1996/10/13 01:38:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -93,7 +93,7 @@ pdq_tc_attach(
 
     if (bus_mem_map(sc->sc_bc, ta->ta_addr + PDQ_TC_CSR_OFFSET,
 		    PDQ_TC_CSR_SPACE, 0, &sc->sc_membase)) {
-        kprintf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
+        printf("\n%s: can't map card memory!\n", sc->sc_dev.dv_xname);
 	return;
     }
 
@@ -101,7 +101,7 @@ pdq_tc_attach(
 				sc->sc_if.if_xname, 0,
 				(void *) sc, PDQ_DEFTA);
     if (sc->sc_pdq == NULL) {
-	kprintf("%s: initialization failed\n", sc->sc_dev.dv_xname);
+	printf("%s: initialization failed\n", sc->sc_dev.dv_xname);
 	return;
     }
     bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
@@ -112,7 +112,7 @@ pdq_tc_attach(
 
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
-	kprintf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
+	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
 }
 
 struct cfattach fta_ca = { sizeof(pdq_softc_t), pdq_tc_match, pdq_tc_attach };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.22 1996/10/10 19:58:25 christos Exp $	*/
+/*	$NetBSD: pci.c,v 1.23 1996/10/13 01:38:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou.  All rights reserved.
@@ -93,7 +93,7 @@ pciattach(parent, self, aux)
 	int bus, device, maxndevs, function, nfunctions;
 
 	pci_attach_hook(parent, self, pba);
-	kprintf("\n");
+	printf("\n");
 
 	bc = pba->pba_bc;
 	pc = pba->pba_pc;
@@ -167,9 +167,9 @@ pciprint(aux, pnp)
 
 	if (pnp) {
 		pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
-		kprintf("%s at %s", devinfo, pnp);
+		printf("%s at %s", devinfo, pnp);
 	}
-	kprintf(" dev %d function %d", pa->pa_device, pa->pa_function);
+	printf(" dev %d function %d", pa->pa_device, pa->pa_function);
 	return (UNCONF);
 }
 
@@ -274,10 +274,10 @@ pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
 	case PCI_MAPREG_MEM_TYPE_32BIT_1M:
 		break;
 	case PCI_MAPREG_MEM_TYPE_64BIT:
-/* XXX */	kprintf("pci_find_mem: 64-bit region\n");
+/* XXX */	printf("pci_find_mem: 64-bit region\n");
 /* XXX */	return (1);
 	default:
-		kprintf("pci_find_mem: reserved region type\n");
+		printf("pci_find_mem: reserved region type\n");
 		return (1);
 	}
 

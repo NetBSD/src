@@ -528,7 +528,7 @@ fe_probe_fmv(sc, ia)
 
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != irq) {
-			kprintf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq, irq);
 			return (0);
 		}
@@ -744,7 +744,7 @@ fe_probe_ati(sc, ia)
 
 	if (ia->ia_irq != IRQUNK) {
 		if (ia->ia_irq != irq) {
-			kprintf("%s: irq mismatch; kernel configured %d != board configured %d\n",
+			printf("%s: irq mismatch; kernel configured %d != board configured %d\n",
 			    sc->sc_dev.dv_xname, ia->ia_irq, irq);
 			return (0);
 		}
@@ -1063,7 +1063,7 @@ feattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	kprintf(": address %s, type %s\n",
+	printf(": address %s, type %s\n",
 	    ether_sprintf(sc->sc_arpcom.ac_enaddr), sc->typestr);
 #if FE_DEBUG >= 3
 	{
@@ -1119,7 +1119,7 @@ feattach(parent, self, aux)
 			ram = 150;
 			break;
 		}
-		kprintf("%s: SRAM %dKB %dbit %dns, TXB %dKBx2, %dbit I/O\n",
+		printf("%s: SRAM %dKB %dbit %dns, TXB %dKBx2, %dbit I/O\n",
 		    sc->sc_dev.dv_xname, buf, bbw, ram, txb, sbw);
 	}
 #endif

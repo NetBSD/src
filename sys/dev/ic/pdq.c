@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.8 1996/10/10 22:08:05 christos Exp $	*/
+/*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -48,7 +48,7 @@
 #define	PDQ_CMD_RX_ALIGNMENT	16
 
 #if (defined(PDQTEST) && !defined(PDQ_NOPRINTF)) || defined(PDQVERBOSE)
-#define	PDQ_PRINTF(x)	kprintf x
+#define	PDQ_PRINTF(x)	printf x
 #else
 #define	PDQ_PRINTF(x)	do { } while (0)
 #endif
@@ -168,7 +168,7 @@ pdq_print_fddi_chars(
 {
     const char hexchars[] = "0123456789abcdef";
 
-    kprintf(
+    printf(
 #if !defined(__bsdi__) && !defined(__NetBSD__)
 	   PDQ_OS_PREFIX
 #else
@@ -181,7 +181,7 @@ pdq_print_fddi_chars(
 	   pdq_descriptions[pdq->pdq_type],
 	   pdq_station_types[rsp->status_chars_get.station_type]);
 
-    kprintf(PDQ_OS_PREFIX "FDDI address %c%c:%c%c:%c%c:%c%c:%c%c:%c%c, FW=%c%c%c%c, HW=%c",
+    printf(PDQ_OS_PREFIX "FDDI address %c%c:%c%c:%c%c:%c%c:%c%c:%c%c, FW=%c%c%c%c, HW=%c",
 	   PDQ_OS_PREFIX_ARGS,
 	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[0] >> 4],
 	   hexchars[pdq->pdq_hwaddr.lanaddr_bytes[0] & 0x0F],
@@ -200,21 +200,21 @@ pdq_print_fddi_chars(
 	   rsp->status_chars_get.module_rev.fwrev_bytes[0]);
 
     if (rsp->status_chars_get.smt_version_id < PDQ_ARRAY_SIZE(pdq_smt_versions)) {
-	kprintf(", SMT %s\n", pdq_smt_versions[rsp->status_chars_get.smt_version_id]);
+	printf(", SMT %s\n", pdq_smt_versions[rsp->status_chars_get.smt_version_id]);
     }
 
-    kprintf(PDQ_OS_PREFIX "FDDI Port%s = %c (PMD = %s)",
+    printf(PDQ_OS_PREFIX "FDDI Port%s = %c (PMD = %s)",
 	   PDQ_OS_PREFIX_ARGS,
 	   rsp->status_chars_get.station_type == PDQ_STATION_TYPE_DAS ? "[A]" : "",
 	   pdq_phy_types[rsp->status_chars_get.phy_type[0]],
 	   pdq_pmd_types[rsp->status_chars_get.pmd_type[0] / 100][rsp->status_chars_get.pmd_type[0] % 100]);
 
     if (rsp->status_chars_get.station_type == PDQ_STATION_TYPE_DAS)
-	kprintf(", FDDI Port[B] = %c (PMD = %s)",
+	printf(", FDDI Port[B] = %c (PMD = %s)",
 	       pdq_phy_types[rsp->status_chars_get.phy_type[1]],
 	       pdq_pmd_types[rsp->status_chars_get.pmd_type[1] / 100][rsp->status_chars_get.pmd_type[1] % 100]);
 
-    kprintf("\n");
+    printf("\n");
 }
 
 static void
@@ -625,13 +625,13 @@ pdq_process_unsolicited_events(
 
 	switch (event->event_type) {
 	    case PDQ_UNSOLICITED_EVENT: {
-		kprintf(PDQ_OS_PREFIX "Unsolicited Event: %s: %s",
+		printf(PDQ_OS_PREFIX "Unsolicited Event: %s: %s",
 		       PDQ_OS_PREFIX_ARGS,
 		       pdq_entities[event->event_entity],
 		       pdq_event_codes[event->event_entity][event->event_code.value]);
 		if (event->event_entity == PDQ_ENTITY_PHY_PORT)
-		    kprintf("[%d]", event->event_index);
-		kprintf("\n");
+		    printf("[%d]", event->event_index);
+		printf("\n");
 		break;
 	    }
 	    case PDQ_UNSOLICITED_COUNTERS: {
@@ -750,7 +750,7 @@ pdq_process_received_data(
 	    if (status.rxs_rcc_reason != 0)
 		/* hardware fault */
 	    if (status.rxs_rcc_badcrc) {
-		kprintf(PDQ_OS_PREFIX " MAC CRC error (source=%x-%x-%x-%x-%x-%x)\n",
+		printf(PDQ_OS_PREFIX " MAC CRC error (source=%x-%x-%x-%x-%x-%x)\n",
 		       PDQ_OS_PREFIX_ARGS,
 		       dataptr[PDQ_RX_FC_OFFSET+1],
 		       dataptr[PDQ_RX_FC_OFFSET+2],
@@ -1286,7 +1286,7 @@ pdq_interrupt(
 	    data = PDQ_CSR_READ(csrs, csr_host_int_type_0);
 	    if (data & PDQ_HOST_INT_STATE_CHANGE) {
 		pdq_state_t state = PDQ_PSTS_ADAPTER_STATE(PDQ_CSR_READ(csrs, csr_port_status));
-		kprintf(PDQ_OS_PREFIX "%s", PDQ_OS_PREFIX_ARGS, pdq_adapter_states[state]);
+		printf(PDQ_OS_PREFIX "%s", PDQ_OS_PREFIX_ARGS, pdq_adapter_states[state]);
 		if (state == PDQS_LINK_UNAVAILABLE) {
 		    pdq->pdq_flags &= ~PDQ_TXOK;
 		} else if (state == PDQS_LINK_AVAILABLE) {
@@ -1295,7 +1295,7 @@ pdq_interrupt(
 		} else if (state == PDQS_HALTED) {
 		    pdq_response_error_log_get_t log_entry;
 		    pdq_halt_code_t halt_code = PDQ_PSTS_HALT_ID(PDQ_CSR_READ(csrs, csr_port_status));
-		    kprintf(": halt code = %d (%s)\n",
+		    printf(": halt code = %d (%s)\n",
 			   halt_code, pdq_halt_codes[halt_code]);
 		    if (halt_code == PDQH_DMA_ERROR && pdq->pdq_type == PDQ_DEFPA) {
 			PDQ_PRINTF(("\tPFI status = 0x%x, Host 0 Fatal Interrupt = 0x%x\n",
@@ -1308,7 +1308,7 @@ pdq_interrupt(
 			pdq_run(pdq);
 		    return 1;
 		}
-		kprintf("\n");
+		printf("\n");
 		PDQ_CSR_WRITE(csrs, csr_host_int_type_0, PDQ_HOST_INT_STATE_CHANGE);
 	    }
 	    if (data & PDQ_HOST_INT_FATAL_ERROR) {
@@ -1318,7 +1318,7 @@ pdq_interrupt(
 		return 1;
 	    }
 	    if (data & PDQ_HOST_INT_XMT_DATA_FLUSH) {
-		kprintf(PDQ_OS_PREFIX "Flushing transmit queue\n", PDQ_OS_PREFIX_ARGS);
+		printf(PDQ_OS_PREFIX "Flushing transmit queue\n", PDQ_OS_PREFIX_ARGS);
 		pdq->pdq_flags &= ~PDQ_TXOK;
 		pdq_flush_transmitter(pdq);
 		pdq_do_port_control(csrs, PDQ_PCTL_XMT_DATA_FLUSH_DONE);
@@ -1552,7 +1552,7 @@ pdq_initialize(
 #if defined(PDQVERBOSE)
     if (state == PDQS_HALTED) {
 	pdq_halt_code_t halt_code = PDQ_PSTS_HALT_ID(PDQ_CSR_READ(&pdq->pdq_csrs, csr_port_status));
-	kprintf("Halt code = %d (%s)\n", halt_code, pdq_halt_codes[halt_code]);
+	printf("Halt code = %d (%s)\n", halt_code, pdq_halt_codes[halt_code]);
 	if (halt_code == PDQH_DMA_ERROR && pdq->pdq_type == PDQ_DEFPA)
 	    PDQ_PRINTF(("PFI status = 0x%x, Host 0 Fatal Interrupt = 0x%x\n",
 		       PDQ_CSR_READ(&pdq->pdq_pci_csrs, csr_pfi_status),

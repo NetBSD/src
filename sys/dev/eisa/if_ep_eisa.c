@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.7 1996/10/10 19:54:13 christos Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.8 1996/10/13 01:37:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -153,10 +153,10 @@ ep_eisa_attach(parent, self, aux)
 		model = EISA_PRODUCT_TCM5093;
 	else
 		model = "unknown model!";
-	kprintf(": %s\n", model);
+	printf(": %s\n", model);
 
 	if (eisa_intr_map(ec, irq, &ih)) {
-		kprintf("%s: couldn't map interrupt (%u)\n",
+		printf("%s: couldn't map interrupt (%u)\n",
 		    sc->sc_dev.dv_xname, irq);
 		return;
 	}
@@ -164,15 +164,15 @@ ep_eisa_attach(parent, self, aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_EDGE, IPL_NET,
 	    epintr, sc);
 	if (sc->sc_ih == NULL) {
-		kprintf("%s: couldn't establish interrupt",
+		printf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			kprintf(" at %s", intrstr);
-		kprintf("\n");
+			printf(" at %s", intrstr);
+		printf("\n");
 		return;
 	}
 	if (intrstr != NULL)
-		kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
+		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
 		    intrstr);
 
 	epconfig(sc, conn);

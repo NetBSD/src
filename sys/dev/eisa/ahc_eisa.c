@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.8 1996/10/10 19:54:11 christos Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.9 1996/10/13 01:37:10 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -170,7 +170,7 @@ aic7770probe(void)
 				irq = 15;
 				break;
 			default:
-				kprintf("aic7770 at slot %d: illegal "
+				printf("aic7770 at slot %d: illegal "
 				    "irq setting %d\n", e_dev->ioconf.slot,
 				    intdef);
 				continue;
@@ -230,7 +230,7 @@ ahc_eisa_irq(bc, ioh)
 	case 15:
 		break;
 	default:
-		kprintf("ahc_eisa_irq: illegal irq setting %d\n", intdef);
+		printf("ahc_eisa_irq: illegal irq setting %d\n", intdef);
 		return -1;
 	}
 
@@ -312,7 +312,7 @@ ahc_eisa_attach(parent, self, aux)
 			type = AHC_284;
 			break;
 		default: 
-			kprintf("aic7770_attach: Unknown device type!\n");
+			printf("aic7770_attach: Unknown device type!\n");
 			return -1;
 			break;
 	}
@@ -372,11 +372,11 @@ ahc_eisa_attach(parent, self, aux)
 		panic("ahc_eisa_attach: Unknown device type %s\n",
 		      ea->ea_idstring);
 	}
-	kprintf(": %s\n", model);
+	printf(": %s\n", model);
 
 	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
 	if (eisa_intr_map(ec, irq, &ih)) {
-		kprintf("%s: couldn't map interrupt (%d)\n",
+		printf("%s: couldn't map interrupt (%d)\n",
 		    ahc->sc_dev.dv_xname, irq);
 		return;
 	}
@@ -387,7 +387,7 @@ ahc_eisa_attach(parent, self, aux)
 	 * usefull for debugging irq problems
 	 */
 	if(bootverbose) {
-		kprintf("%s: Using %s Interrupts\n",
+		printf("%s: Using %s Interrupts\n",
 		    ahc_name(ahc),
 		    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
 	}
@@ -460,7 +460,7 @@ ahc_eisa_attach(parent, self, aux)
 		else
 			id_string = "aic7770 <= Rev C, ";
 
-		kprintf("%s: %s", ahc_name(ahc), id_string);
+		printf("%s: %s", ahc_name(ahc), id_string);
 	}
 
 	/* Setup the FIFO threshold and the bus off time */
@@ -517,16 +517,16 @@ ahc_eisa_attach(parent, self, aux)
 #endif
 	    );
 	if (ahc->sc_ih == NULL) {
-		kprintf("%s: couldn't establish interrupt",
+		printf("%s: couldn't establish interrupt",
 		    ahc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			kprintf(" at %s", intrstr);
-		kprintf("\n");
+			printf(" at %s", intrstr);
+		printf("\n");
 		ahc_free(ahc);
 		return;
 	}
 	if (intrstr != NULL)
-		kprintf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
+		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
 		       intrstr);
 #endif /* defined(__NetBSD__) */
 
