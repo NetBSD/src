@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.96 2000/08/23 13:41:58 pk Exp $
+#	$NetBSD: files.sparc,v 1.97 2000/10/12 21:27:13 christos Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -120,12 +120,14 @@ attach kbd at zs with kbd_zs
 file dev/sun/kbd_zs.c			kbd_zs
 file dev/sun/kbd.c			kbd needs-flag
 file dev/sun/kbd_tables.c 		kbd
+file dev/sun/sunkbd.c			kbd
 file arch/sparc/dev/kd.c
 
 device ms: zsevent
 attach ms at zs with ms_zs
 file dev/sun/ms_zs.c			ms_zs
 file dev/sun/ms.c			ms needs-flag
+file dev/sun/sunms.c			ms
 
 #
 # Machine-independent SCSI drivers
