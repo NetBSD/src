@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 1999/11/05 11:31:40 mycroft Exp $
+#	$NetBSD: Makefile,v 1.129 1999/12/13 10:19:32 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -88,6 +88,8 @@ BIN1+=	bootptab changelist csh.cshrc csh.login \
 	(${MACHINE_ARCH} == "ns32k") || \
 	(${MACHINE_ARCH} == "vax") || \
 	(${MACHINE_ARCH} == "arm32")
+BIN1+=	ld.so.conf
+.elif exists(etc.${MACHINE_ARCH}/ld.so.conf)
 BIN1+=	ld.so.conf
 .endif
 
