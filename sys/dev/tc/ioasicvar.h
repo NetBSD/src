@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.13 2000/06/04 19:15:14 cgd Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.14 2000/10/17 09:45:49 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -57,7 +57,6 @@ struct ioasic_softc {
 	bus_dma_tag_t sc_dmat;
 
 	tc_addr_t sc_base;		/* XXX offset XXX */
-	bus_dmamap_t sc_lance_dmam;	/* XXX LANCE XXX */
 };
 
 extern struct cfdriver ioasic_cd;
