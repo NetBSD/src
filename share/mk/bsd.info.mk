@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.29 2003/07/10 10:34:35 lukem Exp $
+#	$NetBSD: bsd.info.mk,v 1.30 2003/07/14 00:50:04 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -84,5 +84,6 @@ cleaninfo:
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
+.include <bsd.sys.mk>
 
 ${TARGETS}:	# ensure existence
