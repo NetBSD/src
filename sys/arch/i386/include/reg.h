@@ -54,17 +54,16 @@
 #define	tEDI	(2)
 #define	tESI	(3)
 #define	tEBP	(4)
-#define	tISP	(5)
-#define	tEBX	(6)
-#define	tEDX	(7)
-#define	tECX	(8)
-#define	tEAX	(9)
+#define	tEBX	(5)
+#define	tEDX	(6)
+#define	tECX	(7)
+#define	tEAX	(8)
 
-#define	tEIP	(12)
-#define	tCS	(13)
-#define	tEFLAGS	(14)
-#define	tESP	(15)
-#define	tSS	(16)
+#define	tEIP	(11)
+#define	tCS	(12)
+#define	tEFLAGS	(13)
+#define	tESP	(14)
+#define	tSS	(15)
 
 /*
  * Registers accessible to ptrace(2) syscall for debugger
