@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.10 2001/12/26 22:18:25 manu Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11 2001/12/27 09:31:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.10 2001/12/26 22:18:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11 2001/12/27 09:31:09 manu Exp $");
 
 #include "opt_ddb.h"
 
@@ -105,11 +105,28 @@ irix_sys_syssgi(p, v, retval)
 		*retval = (register_t)hostid;
 		break;
 
+	case IRIX_SGI_GETPGID: {	/* Get parent process GID */
+		struct proc *tp;
+
+		arg1 = SCARG(uap, arg1); /* Process group GID */ 
+		if (arg1 == 0)
+			tp = p;
+		else
+			tp = pfind((pid_t)arg1);
+
+		if (tp == NULL || tp->p_pgrp == NULL)
+			return 0;
+
+		*retval = (register_t)tp->p_pgid;
+
+		return 0;
+	}
+
 	case IRIX_SGI_RDNAME: {	/* Read Processes' name */
 		struct proc *tp;
 
 		arg1 = SCARG(uap, arg1); /* PID of the process */
-		arg2 = SCARG(uap, arg2); /* Adress of user buffer */
+		arg2 = SCARG(uap, arg2); /* Address of user buffer */
 		arg3 = SCARG(uap, arg3); /* Length of user buffer */
 		if (!uvm_useracc((caddr_t)arg2, (size_t)arg2, B_WRITE))
 			return EACCES;
