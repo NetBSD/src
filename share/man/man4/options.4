@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.126 2000/12/05 18:05:49 drochner Exp $
+.\"	$NetBSD: options.4,v 1.127 2001/01/19 01:58:06 manu Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -186,7 +186,8 @@ On those architectures that support it, this enables binary
 compatibility with Linux ELF and
 .Xr a.out 5
 applications built for the same architecture.
-This currently includes the alpha, i386, and m68k port.
+This currently includes the alpha, i386, powerpc, and m68k 
+port. COMPAT_LINUX for powerpc is still experimental.
 .It Cd options COMPAT_SUNOS
 On those architectures that support it, this enables binary
 compatibility with
