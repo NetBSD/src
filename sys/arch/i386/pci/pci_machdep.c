@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.33 1998/08/15 03:02:40 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.34 1999/01/28 12:43:14 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -99,6 +99,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#include "opt_pci_conf_mode.h"
 
 int pci_mode = -1;
 

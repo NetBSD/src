@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.128 1999/01/23 15:09:55 drochner Exp $
+#	$NetBSD: files.i386,v 1.129 1999/01/28 12:43:13 drochner Exp $
 #
 # new style config file for i386 architecture
 #
@@ -102,6 +102,7 @@ file	arch/i386/i386/bioscall.s	bioscall needs-flag
 
 include "dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
+defopt PCI_CONF_MODE
 file	arch/i386/pci/pciide_machdep.c	pciide
 file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 
