@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.86 2003/05/18 08:09:25 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.87 2003/05/30 18:43:24 thorpej Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -49,6 +49,8 @@ FFLAGS+=	-mieee
 .if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"
 CFLAGS+=	-Wa,-Av8plus
 .endif
+
+CFLAGS+=	${CPUFLAGS}
 
 # Helpers for cross-compiling
 HOST_CC?=	cc

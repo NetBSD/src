@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.33 2003/03/07 01:26:12 thorpej Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.34 2003/05/30 18:43:23 thorpej Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -59,8 +59,8 @@ CWARNFLAGS+=	-Wno-sign-compare
 # XXX always get it right.  --thorpej
 CWARNFLAGS+=	-Wno-uninitialized
 .endif
-CFLAGS+=	-ffreestanding ${DEBUG} ${COPTS} ${CWARNFLAGS}
-AFLAGS+=	-D_LOCORE
+CFLAGS+=	${CPUFLAGS} -ffreestanding ${DEBUG} ${COPTS} ${CWARNFLAGS}
+AFLAGS+=	${CPUFLAGS} -D_LOCORE
 
 # Define a set of xxx_G variables that will add -g to just those
 # files that match the shell patterns given in ${DEBUGLIST}
