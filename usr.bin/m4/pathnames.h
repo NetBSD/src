@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.8 1998/08/30 23:22:30 enami Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.9 1998/08/30 23:50:28 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@
 #define	UNIQUE		3			/* unique char location */
 #endif
 
-#if /* defined(unix) || */ defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(unix)
 #define _PATH_DIVNAME	"/tmp/m4.0XXXXXX"	/* unix diversion files */
 #define UNIQUE		8			/* unique char location */
 #endif
