@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.17 1999/07/04 22:55:48 cgd Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.18 2003/01/10 20:01:12 christos Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@ static int last_o_was_punct, last_o_was_space;
 static void	_msg_beep(void);
 static int	_msg_vprintf(int auto_fill, const char *fmt, va_list ap);
 static void	_msg_vprompt(const char *msg, int do_echo, const char *def,
-		    char *val, int max_chars, va_list ap);
+		    char *val, size_t max_chars, va_list ap);
 
 /* Routines */
 
@@ -78,7 +78,7 @@ int msg_window(WINDOW *window)
 
 const char *msg_string (msg msg_no)
 {
-	return msg_list[(long)msg_no];
+	return msg_list[(size_t)(intptr_t)msg_no];
 }
 
 void msg_clear(void)
@@ -248,7 +248,7 @@ void msg_display_add(msg msg_no, ...)
 
 static void
 _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
-    int max_chars, va_list ap)
+    size_t max_chars, va_list ap)
 {
 	int ch;
 	int count = 0;
@@ -336,7 +336,7 @@ _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
 }
 
 void
-msg_prompt(msg msg_no, const char *def, char *val, int max_chars, ...)
+msg_prompt(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 {
 	va_list ap;
 
@@ -348,7 +348,7 @@ msg_prompt(msg msg_no, const char *def, char *val, int max_chars, ...)
 }
 
 void
-msg_prompt_add(msg msg_no, const char *def, char *val, int max_chars, ...)
+msg_prompt_add(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 {
 	va_list ap;
 
@@ -358,7 +358,7 @@ msg_prompt_add(msg msg_no, const char *def, char *val, int max_chars, ...)
 }
 
 void
-msg_prompt_noecho(msg msg_no, const char *def, char *val, int max_chars, ...)
+msg_prompt_noecho(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 {
 	va_list ap;
 
