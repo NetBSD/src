@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 2001/12/04 00:53:19 darrenr Exp $ */
+/*	$NetBSD: pte.h,v 1.10 2002/03/20 18:41:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -192,6 +192,9 @@ extern void tlb_flush_ctx __P((int ctx));
 #define TLB_P			0x0000000000000004LL
 #define TLB_W			0x0000000000000002LL
 #define TLB_G			0x0000000000000001LL
+
+/* Use a bit in the SOFT2 area to indicate a locked mapping. */
+#define	TLB_WIRED		0x0010000000000000LL
 
 /* 
  * The following bits are used by locore so they should
