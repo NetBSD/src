@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.16 2000/06/26 15:48:20 kleink Exp $	*/
+/*	$NetBSD: in6.h,v 1.17 2000/07/06 17:42:55 christos Exp $	*/
 /*	$KAME: in6.h,v 1.44 2000/05/24 08:50:17 itojun Exp $	*/
 
 /*
@@ -242,37 +242,37 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
  * Unspecified
  */
 #define IN6_IS_ADDR_UNSPECIFIED(a)	\
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) == 0))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) == 0))
 
 /*
  * Loopback
  */
 #define IN6_IS_ADDR_LOOPBACK(a)		\
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) == ntohl(1)))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) == ntohl(1)))
 
 /*
  * IPv4 compatible
  */
 #define IN6_IS_ADDR_V4COMPAT(a)		\
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) != 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[12]) != ntohl(1)))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) != 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[12]) != ntohl(1)))
 
 /*
  * Mapped
  */
 #define IN6_IS_ADDR_V4MAPPED(a)		      \
-	((*(u_int32_t *)(&(a)->s6_addr[0]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[4]) == 0) &&	\
-	 (*(u_int32_t *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
+	((*(u_int32_t *)(void *)(&(a)->s6_addr[0]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[4]) == 0) &&	\
+	 (*(u_int32_t *)(void *)(&(a)->s6_addr[8]) == ntohl(0x0000ffff)))
 
 /*
  * KAME Scope Values
