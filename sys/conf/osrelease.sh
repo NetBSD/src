@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.99.2.2 2004/09/18 14:44:18 skrll Exp $
+#	$NetBSD: osrelease.sh,v 1.99.2.3 2004/09/21 13:26:15 skrll Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.

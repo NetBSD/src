@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc.S,v 1.1.24.2 2004/09/18 14:44:26 skrll Exp $	*/
+/*	$NetBSD: bf_enc.S,v 1.1.24.3 2004/09/21 13:26:15 skrll Exp $	*/
 
 /*
  * Written by Jason R. Thorpe <thorpej@zembu.com> and Thor Lancelot Simon

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_sysctl.h,v 1.1.8.2 2004/09/18 14:43:26 skrll Exp $ */
+/*	$NetBSD: irix_sysctl.h,v 1.1.8.3 2004/09/21 13:25:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

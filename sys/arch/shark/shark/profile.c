@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.6.2.2 2004/09/18 14:40:17 skrll Exp $	*/
+/*	$NetBSD: profile.c,v 1.6.2.3 2004/09/21 13:21:49 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.6.2.2 2004/09/18 14:40:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: profile.c,v 1.6.2.3 2004/09/21 13:21:49 skrll Exp $");
 
 #include "profiler.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oplreg.h,v 1.3.44.2 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: oplreg.h,v 1.3.44.3 2004/09/21 13:28:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

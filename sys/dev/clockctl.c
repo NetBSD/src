@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.12.2.2 2004/09/18 14:44:28 skrll Exp $ */
+/*      $NetBSD: clockctl.c,v 1.12.2.3 2004/09/21 13:26:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.12.2.2 2004/09/18 14:44:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.12.2.3 2004/09/21 13:26:24 skrll Exp $");
 
 #include "opt_ntp.h"
 
@@ -69,12 +69,12 @@ clockctlattach(int num)
 }
 
 int
-clockctlioctl(dev, cmd, data, flags, p)
+clockctlioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error = 0;
 	
@@ -84,7 +84,7 @@ clockctlioctl(dev, cmd, data, flags, p)
 			    (struct sys_settimeofday_args *)data;
 
 			error = settimeofday1(SCARG(args, tv), 
-			    SCARG(args, tzp), p);
+			    SCARG(args, tzp), l->l_proc);
 			if (error)
 				return (error);
 			break;
@@ -94,7 +94,7 @@ clockctlioctl(dev, cmd, data, flags, p)
 			    (struct sys_adjtime_args *)data;
 
 			error = adjtime1(SCARG(args, delta), 
-			    SCARG(args, olddelta), p);
+			    SCARG(args, olddelta), l->l_proc);
 			if (error)
 				return (error);	
 			break;

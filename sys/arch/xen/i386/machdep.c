@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8.2.3 2004/09/18 14:42:43 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8.2.4 2004/09/21 13:24:36 skrll Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.3 2004/09/18 14:42:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8.2.4 2004/09/21 13:24:36 skrll Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"

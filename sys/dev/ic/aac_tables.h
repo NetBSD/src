@@ -1,4 +1,4 @@
-/*	$NetBSD: aac_tables.h,v 1.1.14.2 2004/09/18 14:45:55 skrll Exp $	*/
+/*	$NetBSD: aac_tables.h,v 1.1.14.3 2004/09/21 13:27:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith

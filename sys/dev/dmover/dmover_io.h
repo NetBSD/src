@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.h,v 1.1.12.2 2004/09/18 14:45:39 skrll Exp $	*/
+/*	$NetBSD: dmover_io.h,v 1.1.12.3 2004/09/21 13:27:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.

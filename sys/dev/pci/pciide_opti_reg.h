@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_opti_reg.h,v 1.3.18.3 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: pciide_opti_reg.h,v 1.3.18.4 2004/09/21 13:31:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.

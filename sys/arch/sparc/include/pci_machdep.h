@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.3.10.2 2004/09/18 14:40:39 skrll Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.3.10.3 2004/09/21 13:22:15 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Matthew R. Green

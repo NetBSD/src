@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.78.2.4 2004/09/18 14:45:56 skrll Exp $	*/
+/*	$NetBSD: atw.c,v 1.78.2.5 2004/09/21 13:27:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.78.2.4 2004/09/18 14:45:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.78.2.5 2004/09/21 13:27:53 skrll Exp $");
 
 #include "bpfilter.h"
 

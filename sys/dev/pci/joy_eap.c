@@ -1,4 +1,4 @@
-/* $NetBSD: joy_eap.c,v 1.1.2.4 2004/09/18 14:49:04 skrll Exp $ */
+/* $NetBSD: joy_eap.c,v 1.1.2.5 2004/09/21 13:31:04 skrll Exp $ */
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.16.22.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.16.22.3 2004/09/21 13:27:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

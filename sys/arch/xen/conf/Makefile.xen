@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.5.2.3 2004/09/18 14:42:43 skrll Exp $
+#	$NetBSD: Makefile.xen,v 1.5.2.4 2004/09/21 13:24:36 skrll Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD

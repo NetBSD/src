@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.42.2.3 2004/09/18 14:45:59 skrll Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.42.2.4 2004/09/21 13:28:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.

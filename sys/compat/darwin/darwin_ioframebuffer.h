@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.h,v 1.9.2.2 2004/09/18 14:43:05 skrll Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.h,v 1.9.2.3 2004/09/21 13:24:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

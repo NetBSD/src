@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.12.2.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.12.2.3 2004/09/21 13:27:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.2 2004/09/18 14:41:04 skrll Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.19.2.3 2004/09/21 13:22:40 skrll Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.84.2.3 2004/09/18 14:47:46 skrll Exp $	*/
+/*	$NetBSD: mcd.c,v 1.84.2.4 2004/09/21 13:29:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.84.2.3 2004/09/18 14:47:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.84.2.4 2004/09/21 13:29:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,10 +289,10 @@ mcdattach(parent, self, aux)
 }
 
 int
-mcdopen(dev, flag, fmt, p)
+mcdopen(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error, part;
 	struct mcd_softc *sc;
@@ -391,10 +391,10 @@ bad3:
 }
 
 int
-mcdclose(dev, flag, fmt, p)
+mcdclose(dev, flag, fmt, l)
 	dev_t dev;
 	int flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int part = MCDPART(dev);
@@ -442,7 +442,7 @@ mcdstrategy(bp)
 	    bp->b_blkno, bp->b_bcount, 0);
 	if (bp->b_blkno < 0 ||
 	    (bp->b_bcount % sc->blksize) != 0) {
-		printf("%s: strategy: blkno = %d bcount = %ld\n",
+		printf("%s: strategy: blkno = %qd bcount = %ld\n",
 		    sc->sc_dev.dv_xname, bp->b_blkno, bp->b_bcount);
 		bp->b_error = EINVAL;
 		goto bad;
@@ -565,12 +565,12 @@ mcdwrite(dev, uio, flags)
 }
 
 int
-mcdioctl(dev, cmd, addr, flag, p)
+mcdioctl(dev, cmd, addr, flag, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct mcd_softc *sc = device_lookup(&mcd_cd, MCDUNIT(dev));
 	int error;

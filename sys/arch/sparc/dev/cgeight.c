@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.34.2.2 2004/09/18 14:40:27 skrll Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.34.2.3 2004/09/21 13:22:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.34.2.2 2004/09/18 14:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgeight.c,v 1.34.2.3 2004/09/21 13:22:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

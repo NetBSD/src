@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.4 2004/09/18 14:49:05 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.5 2004/09/21 13:31:05 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

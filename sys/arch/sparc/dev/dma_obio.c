@@ -1,4 +1,4 @@
-/*	$NetBSD: dma_obio.c,v 1.7.6.2 2004/09/18 14:40:27 skrll Exp $ */
+/*	$NetBSD: dma_obio.c,v 1.7.6.3 2004/09/21 13:22:01 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.7.6.2 2004/09/18 14:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma_obio.c,v 1.7.6.3 2004/09/21 13:22:01 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

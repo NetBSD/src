@@ -1,4 +1,4 @@
-/* $NetBSD: ifpci2.c,v 1.1.8.2 2004/09/18 14:49:04 skrll Exp $	*/
+/* $NetBSD: ifpci2.c,v 1.1.8.3 2004/09/21 13:31:04 skrll Exp $	*/
 /*
  *   Copyright (c) 1999 Gary Jennejohn. All rights reserved.
  *
@@ -36,14 +36,14 @@
  *	Fritz!Card PCI driver
  *	------------------------------------------------
  *
- *	$Id: ifpci2.c,v 1.1.8.2 2004/09/18 14:49:04 skrll Exp $
+ *	$Id: ifpci2.c,v 1.1.8.3 2004/09/21 13:31:04 skrll Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.1.8.2 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpci2.c,v 1.1.8.3 2004/09/21 13:31:04 skrll Exp $");
 
 
 #include <sys/param.h>

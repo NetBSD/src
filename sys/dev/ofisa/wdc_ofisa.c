@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.12.2.4 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.12.2.5 2004/09/21 13:31:00 skrll Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12.2.4 2004/09/18 14:49:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.12.2.5 2004/09/21 13:31:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.1.4.3 2004/09/18 14:42:53 skrll Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.1.4.4 2004/09/21 13:24:37 skrll Exp $	*/
 /*	NetBSD: frameasm.h,v 1.4 2004/02/20 17:35:01 yamt Exp 	*/
 
 #ifndef _I386_FRAMEASM_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: amrvar.h,v 1.3.2.1 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: amrvar.h,v 1.3.2.2 2004/09/21 13:31:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.

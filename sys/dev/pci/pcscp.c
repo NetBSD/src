@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.24.2.2 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.24.2.3 2004/09/21 13:31:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24.2.2 2004/09/18 14:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24.2.3 2004/09/21 13:31:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

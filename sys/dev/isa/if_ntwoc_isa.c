@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.7.2.1 2004/09/18 14:47:46 skrll Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.7.2.2 2004/09/21 13:29:45 skrll Exp $	*/
 /* 
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.7.2.1 2004/09/18 14:47:46 skrll Exp $
+ * $Id: if_ntwoc_isa.c,v 1.7.2.2 2004/09/21 13:29:45 skrll Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.7.2.1 2004/09/18 14:47:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.7.2.2 2004/09/21 13:29:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

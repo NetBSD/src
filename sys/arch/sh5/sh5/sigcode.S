@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.3.6.2 2004/09/18 14:40:08 skrll Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.3.6.3 2004/09/21 13:21:38 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.

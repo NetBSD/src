@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.33.6.2 2004/09/18 14:42:37 skrll Exp $	*/
+/*	$NetBSD: conf.c,v 1.33.6.3 2004/09/21 13:24:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.33.6.2 2004/09/18 14:42:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.33.6.3 2004/09/21 13:24:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>

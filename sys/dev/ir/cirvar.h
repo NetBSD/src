@@ -1,4 +1,4 @@
-/*	$NetBSD: cirvar.h,v 1.4.2.4 2004/09/18 14:47:45 skrll Exp $	*/
+/*	$NetBSD: cirvar.h,v 1.4.2.5 2004/09/21 13:29:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.9.6.3 2004/09/18 14:45:39 skrll Exp $	*/
+/*	$NetBSD: dz.c,v 1.9.6.4 2004/09/21 13:27:36 skrll Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9.6.3 2004/09/18 14:45:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.9.6.4 2004/09/21 13:27:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,8 +319,9 @@ dzxint(void *arg)
 }
 
 int
-dzopen(dev_t dev, int flag, int mode, struct proc *p)
+dzopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
+	struct proc *p = l->l_proc;
 	struct tty *tp;
 	int unit, line;
 	struct	dz_softc *sc;
@@ -380,7 +381,7 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 
 /*ARGSUSED*/
 int
-dzclose(dev_t dev, int flag, int mode, struct proc *p)
+dzclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct	dz_softc *sc;
 	struct tty *tp;
@@ -430,10 +431,10 @@ dzwrite(dev_t dev, struct uio *uio, int flag)
 }
 
 int
-dzpoll(dev, events, p)
+dzpoll(dev, events, l)
 	dev_t dev;
 	int events;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct tty *tp;
 	struct	dz_softc *sc;
@@ -441,12 +442,12 @@ dzpoll(dev, events, p)
 	sc = dz_cd.cd_devs[DZ_I2C(minor(dev))];
 
 	tp = sc->sc_dz[DZ_PORT(minor(dev))].dz_tty;
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
 /*ARGSUSED*/
 int
-dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
+dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 {
 	struct	dz_softc *sc;
 	struct tty *tp;
@@ -458,11 +459,11 @@ dzioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	sc = dz_cd.cd_devs[unit];
 	tp = sc->sc_dz[line].dz_tty;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, p);
+	error = ttioctl(tp, cmd, data, flag, l);
 	if (error >= 0)
 		return (error);
 

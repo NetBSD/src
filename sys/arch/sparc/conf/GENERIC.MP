@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.MP,v 1.1.46.2 2004/09/18 14:40:27 skrll Exp $
+# $NetBSD: GENERIC.MP,v 1.1.46.3 2004/09/21 13:22:00 skrll Exp $
 #
 # Generic Sparc kernel configuration with multiprocessor support.
 

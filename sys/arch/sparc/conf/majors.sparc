@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.8.2.2 2004/09/18 14:40:27 skrll Exp $
+#	$NetBSD: majors.sparc,v 1.8.2.3 2004/09/21 13:22:01 skrll Exp $
 #
 # Device majors for sparc
 #

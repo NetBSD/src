@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.37.2.4 2004/09/18 14:49:04 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.37.2.5 2004/09/21 13:31:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.4 2004/09/18 14:49:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.5 2004/09/21 13:31:04 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

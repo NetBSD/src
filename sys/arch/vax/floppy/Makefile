@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.64.2 2004/09/18 14:42:05 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.64.3 2004/09/21 13:23:42 skrll Exp $
 #	@(#)Makefile	7.2 (Berkeley) 5/9/91
 
 # Make a 780 rx01 floppy

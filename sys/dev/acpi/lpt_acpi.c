@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_acpi.c,v 1.2.2.2 2004/09/18 14:44:42 skrll Exp $ */
+/* $NetBSD: lpt_acpi.c,v 1.2.2.3 2004/09/21 13:26:40 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.2.2.2 2004/09/18 14:44:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_acpi.c,v 1.2.2.3 2004/09/21 13:26:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

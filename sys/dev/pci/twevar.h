@@ -1,4 +1,4 @@
-/*	$NetBSD: twevar.h,v 1.13.6.2 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: twevar.h,v 1.13.6.3 2004/09/21 13:31:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.

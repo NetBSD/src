@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.9.2.2 2004/09/18 14:45:47 skrll Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.9.2.3 2004/09/21 13:27:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.9.2.2 2004/09/18 14:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.9.2.3 2004/09/21 13:27:37 skrll Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>

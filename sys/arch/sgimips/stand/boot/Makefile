@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2004/09/18 14:39:54 skrll Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 2004/09/21 13:21:25 skrll Exp $
 
 PROG=	aoutboot
 

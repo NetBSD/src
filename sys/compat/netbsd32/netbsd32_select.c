@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_select.c,v 1.4.2.2 2004/09/18 14:43:58 skrll Exp $	*/
+/*	$NetBSD: netbsd32_select.c,v 1.4.2.3 2004/09/21 13:25:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4.2.2 2004/09/18 14:43:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_select.c,v 1.4.2.3 2004/09/21 13:25:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

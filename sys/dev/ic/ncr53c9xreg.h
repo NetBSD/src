@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xreg.h,v 1.12.2.2 2004/09/18 14:45:59 skrll Exp $	*/
+/*	$NetBSD: ncr53c9xreg.h,v 1.12.2.3 2004/09/21 13:28:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.

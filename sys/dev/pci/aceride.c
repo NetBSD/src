@@ -1,4 +1,4 @@
-/*	$NetBSD: aceride.c,v 1.7.2.4 2004/09/18 14:49:02 skrll Exp $	*/
+/*	$NetBSD: aceride.c,v 1.7.2.5 2004/09/21 13:31:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.

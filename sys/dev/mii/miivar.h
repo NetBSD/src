@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.37.2.4 2004/09/18 14:48:44 skrll Exp $	*/
+/*	$NetBSD: miivar.h,v 1.37.2.5 2004/09/21 13:30:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.

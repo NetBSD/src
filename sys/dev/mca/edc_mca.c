@@ -1,4 +1,4 @@
-/*	$NetBSD: edc_mca.c,v 1.21.6.3 2004/09/18 14:48:19 skrll Exp $	*/
+/*	$NetBSD: edc_mca.c,v 1.21.6.4 2004/09/21 13:30:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.3 2004/09/18 14:48:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edc_mca.c,v 1.21.6.4 2004/09/21 13:30:17 skrll Exp $");
 
 #include "rnd.h"
 

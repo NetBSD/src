@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.6.2.4 2004/09/18 14:45:25 skrll Exp $
+#	$NetBSD: files.ata,v 1.6.2.5 2004/09/21 13:27:24 skrll Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports

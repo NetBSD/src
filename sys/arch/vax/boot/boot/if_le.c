@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6.28.2 2004/09/18 14:41:58 skrll Exp $ */
+/*	$NetBSD: if_le.c,v 1.6.28.3 2004/09/21 13:23:40 skrll Exp $ */
 /*
  * Copyright (c) 1997, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.

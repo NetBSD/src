@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidereg.h,v 1.6.24.2 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: pciidereg.h,v 1.6.24.3 2004/09/21 13:31:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.

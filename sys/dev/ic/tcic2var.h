@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.2.16.2 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.2.16.3 2004/09/21 13:28:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.

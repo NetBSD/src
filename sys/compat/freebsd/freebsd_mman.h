@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_mman.h,v 1.1.4.3 2004/09/18 14:43:15 skrll Exp $	*/
+/*	$NetBSD: freebsd_mman.h,v 1.1.4.4 2004/09/21 13:25:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

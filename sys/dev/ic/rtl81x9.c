@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.45.2.2 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.45.2.3 2004/09/21 13:28:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.2 2004/09/18 14:46:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.45.2.3 2004/09/21 13:28:07 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.mach,v 1.12.2.2 2004/09/18 14:43:44 skrll Exp $
+#	$NetBSD: files.mach,v 1.12.2.3 2004/09/21 13:25:42 skrll Exp $
 #
 # Config file description for machine-independent Mach compat code.
 # Included by ports that need it.

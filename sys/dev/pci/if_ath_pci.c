@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.7.2.3 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.7.2.4 2004/09/21 13:31:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.8 2004/04/02 23:57:10 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.7.2.3 2004/09/18 14:49:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.7.2.4 2004/09/21 13:31:02 skrll Exp $");
 #endif
 
 /*

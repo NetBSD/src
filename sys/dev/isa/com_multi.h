@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.h,v 1.1.56.1 2004/09/18 14:47:46 skrll Exp $	*/
+/*	$NetBSD: com_multi.h,v 1.1.56.2 2004/09/21 13:29:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

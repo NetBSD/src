@@ -1,4 +1,4 @@
-/*	$NetBSD: cd1190reg.h,v 1.2.48.2 2004/09/18 14:45:57 skrll Exp $	*/
+/*	$NetBSD: cd1190reg.h,v 1.2.48.3 2004/09/21 13:27:54 skrll Exp $	*/
 /*
  * Copyright (c) 1998 Iain Hibbert.
  * All rights reserved.

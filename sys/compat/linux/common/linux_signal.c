@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.40.2.2 2004/09/18 14:43:43 skrll Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.40.2.3 2004/09/21 13:25:40 skrll Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.40.2.2 2004/09/18 14:43:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.40.2.3 2004/09/21 13:25:40 skrll Exp $");
 
 #define COMPAT_LINUX 1
 

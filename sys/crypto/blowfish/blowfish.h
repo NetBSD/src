@@ -1,4 +1,4 @@
-/*	$NetBSD: blowfish.h,v 1.5.16.2 2004/09/18 14:44:25 skrll Exp $	*/
+/*	$NetBSD: blowfish.h,v 1.5.16.3 2004/09/21 13:26:15 skrll Exp $	*/
 /*	$KAME: blowfish.h,v 1.10 2000/09/18 21:21:20 itojun Exp $	*/
 
 /* crypto/bf/blowfish.h */

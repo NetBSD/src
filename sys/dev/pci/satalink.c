@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.17.2.4 2004/09/18 14:49:06 skrll Exp $	*/
+/*	$NetBSD: satalink.c,v 1.17.2.5 2004/09/21 13:31:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.106.2.3 2004/09/18 14:44:05 skrll Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.106.2.4 2004/09/21 13:26:01 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.106.2.3 2004/09/18 14:44:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.106.2.4 2004/09/21 13:26:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,11 +186,10 @@ svr4_sys_execv(l, v, retval)
 		syscallarg(char **) argv;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	struct proc *p = l->l_proc;
 	caddr_t sg;
 
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	sg = stackgap_init(l->l_proc, 0);
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -212,11 +211,10 @@ svr4_sys_execve(l, v, retval)
 		syscallarg(char **) envp;
 	} */ *uap = v;
 	struct sys_execve_args ap;
-	struct proc *p = l->l_proc;
 	caddr_t sg;
 
-	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	sg = stackgap_init(l->l_proc, 0);
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -302,7 +300,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -368,7 +366,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -422,7 +420,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_procp = NULL;
+	auio.uio_lwp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -492,7 +490,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -583,10 +581,9 @@ svr4_mknod(l, retval, path, mode, dev)
 	svr4_mode_t mode;
 	svr4_dev_t dev;
 {
-	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p, 0);
+	caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_CREAT(p, &sg, path);
+	CHECK_ALT_CREAT(l, &sg, path);
 
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
@@ -1289,7 +1286,7 @@ svr4_sys_statvfs(l, v, retval)
 	struct svr4_statvfs sfs;
 	int error;
 
-	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
@@ -1352,7 +1349,7 @@ svr4_sys_statvfs64(l, v, retval)
 	struct svr4_statvfs64 sfs;
 	int error;
 
-	CHECK_ALT_EXIST(l->l_proc, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 	SCARG(&fs_args, flags) = ST_WAIT;
@@ -1587,7 +1584,7 @@ svr4_sys_resolvepath(l, v, retval)
 	size_t len;
 
 	NDINIT(&nd, LOOKUP, NOFOLLOW | SAVENAME, UIO_USERSPACE,
-	    SCARG(uap, path), l->l_proc);
+	    SCARG(uap, path), l);
 
 	if ((error = namei(&nd)) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2.c,v 1.12.2.3 2004/09/18 14:46:00 skrll Exp $	*/
+/*	$NetBSD: tcic2.c,v 1.12.2.4 2004/09/21 13:28:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12.2.3 2004/09/18 14:46:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2.c,v 1.12.2.4 2004/09/21 13:28:08 skrll Exp $");
 
 #undef	TCICDEBUG
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.7.6.1 2004/09/18 14:45:59 skrll Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.7.6.2 2004/09/21 13:28:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

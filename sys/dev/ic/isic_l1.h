@@ -1,4 +1,4 @@
-/* $NetBSD: isic_l1.h,v 1.13.6.2 2004/09/18 14:45:58 skrll Exp $ */
+/* $NetBSD: isic_l1.h,v 1.13.6.3 2004/09/21 13:27:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 Hellmuth Michaelis. All rights reserved.

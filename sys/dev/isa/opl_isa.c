@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.9.6.1 2004/09/18 14:47:46 skrll Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.9.6.2 2004/09/21 13:29:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.9.6.1 2004/09/18 14:47:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.9.6.2 2004/09/21 13:29:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

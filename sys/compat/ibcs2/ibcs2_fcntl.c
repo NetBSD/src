@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_fcntl.c,v 1.16.2.3 2004/09/18 14:43:16 skrll Exp $	*/
+/*	$NetBSD: ibcs2_fcntl.c,v 1.16.2.4 2004/09/21 13:25:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.16.2.3 2004/09/18 14:43:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_fcntl.c,v 1.16.2.4 2004/09/21 13:25:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,9 +180,9 @@ ibcs2_sys_open(l, v, retval)
 
 	SCARG(uap, flags) = cvt_o_flags(SCARG(uap, flags));
 	if (SCARG(uap, flags) & O_CREAT)
-		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+		CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	else
-		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+		CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 	ret = sys_open(l, uap, retval);
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
@@ -193,7 +193,7 @@ ibcs2_sys_open(l, v, retval)
 
 		/* ignore any error, just give it a try */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE)
-			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, p);
+			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t) 0, l);
 	}
 	return ret;
 }
@@ -208,11 +208,10 @@ ibcs2_sys_creat(l, v, retval)
 		syscallarg(char *) path;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_open_args cup;   
-	caddr_t sg = stackgap_init(p, 0);
+	caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);
 	SCARG(&cup, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -230,10 +229,9 @@ ibcs2_sys_access(l, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
         struct sys_access_args cup;
-	struct proc *p = l->l_proc;
-        caddr_t sg = stackgap_init(p, 0);
+        caddr_t sg = stackgap_init(l->l_proc, 0);
 
-        CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+        CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
         SCARG(&cup, path) = SCARG(uap, path);
         SCARG(&cup, flags) = SCARG(uap, flags);
         return sys_access(l, &cup, retval);
@@ -256,10 +254,10 @@ ibcs2_sys_eaccess(l, v, retval)
         struct nameidata nd;
         caddr_t sg = stackgap_init(p, 0);
 
-        CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+        CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
 
         NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-            SCARG(uap, path), p);
+            SCARG(uap, path), l);
         if ((error = namei(&nd)) != 0)
                 return error;
         vp = nd.ni_vp;
@@ -274,7 +272,7 @@ ibcs2_sys_eaccess(l, v, retval)
                 if (SCARG(uap, flags) & IBCS2_X_OK)
 			flags |= VEXEC;
                 if ((flags & VWRITE) == 0 || (error = vn_writechk(vp)) == 0)
-                        error = VOP_ACCESS(vp, flags, cred, p);
+                        error = VOP_ACCESS(vp, flags, cred, l);
         }
         vput(vp);
         return error;

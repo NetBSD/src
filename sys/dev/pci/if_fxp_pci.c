@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.34.2.3 2004/09/18 14:49:03 skrll Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.34.2.4 2004/09/21 13:31:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.34.2.3 2004/09/18 14:49:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.34.2.4 2004/09/21 13:31:03 skrll Exp $");
 
 #include "rnd.h"
 

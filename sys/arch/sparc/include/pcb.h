@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5.24.2 2004/09/18 14:40:38 skrll Exp $ */
+/*	$NetBSD: pcb.h,v 1.5.24.3 2004/09/21 13:22:15 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993

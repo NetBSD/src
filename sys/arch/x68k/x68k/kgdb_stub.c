@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7.16.2 2004/09/18 14:42:37 skrll Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.7.16.3 2004/09/21 13:24:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.16.2 2004/09/18 14:42:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.7.16.3 2004/09/21 13:24:21 skrll Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.7.16.2 2004/09/18 14:42:37 skrll Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.7.16.3 2004/09/21 13:24:21 skrll Exp $";
 #endif
 
 #include <sys/param.h>

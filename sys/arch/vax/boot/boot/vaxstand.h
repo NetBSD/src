@@ -1,4 +1,4 @@
-/*	$NetBSD: vaxstand.h,v 1.5.26.2 2004/09/18 14:41:58 skrll Exp $ */
+/*	$NetBSD: vaxstand.h,v 1.5.26.3 2004/09/21 13:23:40 skrll Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.

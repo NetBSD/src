@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.h,v 1.14.2.2 2004/09/18 14:43:47 skrll Exp $ */
+/*	$NetBSD: mach_vm.h,v 1.14.2.3 2004/09/21 13:25:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.

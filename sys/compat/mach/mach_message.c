@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.27.2.4 2004/09/18 14:43:46 skrll Exp $ */
+/*	$NetBSD: mach_message.c,v 1.27.2.5 2004/09/21 13:25:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.4 2004/09/18 14:43:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.5 2004/09/21 13:25:42 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -191,7 +191,7 @@ mach_msg_send(l, msg, option, send_size)
 #ifdef KTRACE
 	/* Dump the Mach message */
 	if (KTRPOINT(p, KTR_MMSG))
-		ktrmmsg(p, (char *)sm, send_size); 
+		ktrmmsg(l, (char *)sm, send_size); 
 #endif
 	/*
 	 * Handle rights in the message
@@ -595,7 +595,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 #ifdef KTRACE
 		/* Dump the Mach message */
 		if (KTRPOINT(p, KTR_MMSG))
-			ktrmmsg(p, (char *)&sr, sizeof(sr)); 
+			ktrmmsg(l, (char *)&sr, sizeof(sr)); 
 #endif
 		goto unlock;
 	}
@@ -654,7 +654,7 @@ mach_msg_recv(l, urm, option, recv_size, timeout, mn)
 #ifdef KTRACE
 	/* Dump the Mach message */
 	if (KTRPOINT(p, KTR_MMSG))
-		ktrmmsg(p, (char *)mm->mm_msg, mm->mm_size); 
+		ktrmmsg(l, (char *)mm->mm_msg, mm->mm_size); 
 #endif
 
 	free(mm->mm_msg, M_EMULDATA);

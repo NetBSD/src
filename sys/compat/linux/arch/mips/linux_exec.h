@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.8.6.2 2004/09/18 14:43:33 skrll Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.8.6.3 2004/09/21 13:25:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.

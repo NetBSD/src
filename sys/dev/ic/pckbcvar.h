@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.6.20.2 2004/09/18 14:46:00 skrll Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.6.20.3 2004/09/21 13:28:07 skrll Exp $ */
 
 /*
  * Copyright (c) 1998

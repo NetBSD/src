@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.h,v 1.6.2.3 2004/09/18 14:43:05 skrll Exp $ */
+/*	$NetBSD: darwin_exec.h,v 1.6.2.4 2004/09/21 13:24:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ struct darwin_emuldata {
 
 #define DARWIN_DED_SIGEXC	1	/* Mach exceptions instead of signals */
 
-int exec_darwin_copyargs(struct proc *, struct exec_package *, 
+int exec_darwin_copyargs(struct lwp *, struct exec_package *, 
     struct ps_strings *, char **, void *);
 int exec_darwin_probe(char **);
 int darwin_exec_setup_stack(struct proc *, struct exec_package *);
