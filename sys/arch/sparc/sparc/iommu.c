@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.18 1998/07/30 22:28:44 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.19 1998/07/31 22:23:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -67,6 +67,7 @@ struct iommu_softc {
 };
 struct	iommu_softc *iommu_sc;/*XXX*/
 int	has_iocache;
+u_long	dvma_cachealign;
 
 struct extent *iommu_dvmamap;
 
