@@ -1,4 +1,4 @@
-/*	$NetBSD: psychovar.h,v 1.8 2002/06/20 18:26:24 eeh Exp $	*/
+/*	$NetBSD: psychovar.h,v 1.9 2003/03/22 06:33:10 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -51,6 +51,10 @@ struct psycho_pbm {
 	int				pp_nrange;
 	int				pp_nintmap;
 
+	/* extents for free bus space */
+	struct extent			*pp_exmem;
+	struct extent			*pp_exio;
+
 	/* chipset tag for this instance */
 	pci_chipset_tag_t		pp_pc;
 
@@ -59,6 +63,12 @@ struct psycho_pbm {
 	bus_space_tag_t			pp_iot;
 	bus_dma_tag_t			pp_dmat;
 	int				pp_bus;
+	int				pp_busmax;
+	struct pp_busnode {
+		int	node;
+		int	(*valid) __P((void *));
+		void	*arg;
+	}				(*pp_busnode)[256];
 	int				pp_flags;
 
 	/* and pointers into the psycho regs for our bits */
@@ -112,6 +122,9 @@ struct psycho_softc {
 
 	struct iommu_state		*sc_is;
 };
+
+/* get a PCI offset address from bus_space_handle_t */
+bus_addr_t psycho_bus_offset __P((bus_space_tag_t, bus_space_handle_t *));
 
 /* config space is per-psycho.  mem/io/dma are per-pci bus */
 bus_dma_tag_t psycho_alloc_dma_tag __P((struct psycho_pbm *));
