@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.6 2001/11/09 19:29:13 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.7 2001/11/28 23:48:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -110,7 +110,7 @@ mainbus_attach(parent, self, aux)
 	memext = extent_create("pcimem", 0x80000000, 0x8fffffff, M_DEVBUF,
 	    NULL, 0, EX_NOWAIT);
 
-	pci_configure_bus(0, ioext, memext, NULL, 0);
+	pci_configure_bus(0, ioext, memext, NULL, 0, 32);
 
 	extent_destroy(ioext);
 	extent_destroy(memext);

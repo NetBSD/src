@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.2 2001/11/09 19:29:12 thorpej Exp $ */
+/*	$NetBSD: ifpga.c,v 1.3 2001/11/28 23:48:35 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -319,7 +319,11 @@ ifpga_attach(struct device *parent, struct device *self, void *aux)
 	    IFPGA_PCI_APP1_BASE + IFPGA_PCI_APP1_SIZE,
 	    M_DEVBUF, NULL, 0, EX_NOWAIT);
 	ifpga_pci_chipset.pc_conf_v = (void *)pci_sc;
-	pci_configure_bus(&ifpga_pci_chipset, ioext, memext, pmemext, 0);
+	/*
+	 * XXX ARM920T has a 32-byte cache line; should probably fetch
+	 * XXX this info from the cache type register.
+	 */
+	pci_configure_bus(&ifpga_pci_chipset, ioext, memext, pmemext, 0, 32);
 	extent_destroy(pmemext);
 	extent_destroy(memext);
 	extent_destroy(ioext);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.13 2001/11/13 07:48:48 lukem Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.14 2001/11/28 23:48:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.13 2001/11/13 07:48:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.14 2001/11/28 23:48:34 thorpej Exp $");
 
 #include "opt_pci.h"
 
@@ -122,6 +122,7 @@ typedef struct _s_pciconf_bus_t {
 	int		busno_spacing;
 	int		max_mingnt;
 	int		min_maxlat;
+	int		cacheline_size;
 	int		prefetch;
 	int		fast_b2b;
 	int		freq_66;
@@ -316,6 +317,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	if (!pb)
 		panic("Unable to allocate memory for PCI configuration.");
 
+	pb->cacheline_size = parent->cacheline_size;
 	pb->parent_bus = parent;
 	alloc_busno(parent, pb);
 	if (pci_conf_debug)
@@ -978,8 +980,11 @@ configure_bus(pciconf_bus_t *pb)
 		}
 		pci_conf_write(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG, cmd);
 
-		misc = (misc & ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT))
-		    | ((ltim & 0xff) << PCI_LATTIMER_SHIFT);
+		misc &= ~((PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT) |
+		    (PCI_CACHELINE_MASK << PCI_CACHELINE_SHIFT));
+		misc |= (ltim & PCI_LATTIMER_MASK) << PCI_LATTIMER_SHIFT;
+		misc |= (pb->cacheline_size & PCI_CACHELINE_MASK) <<
+		    PCI_CACHELINE_SHIFT;
 		pci_conf_write(pd->pc, pd->tag, PCI_BHLC_REG, misc);
 
 		if (pd->ppb) {
@@ -1025,7 +1030,8 @@ configure_bus(pciconf_bus_t *pb)
  */
 int
 pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
-    struct extent *memext, struct extent *pmemext, int firstbus)
+    struct extent *memext, struct extent *pmemext, int firstbus,
+    int cacheline_size)
 {
 	pciconf_bus_t	*pb;
 	int		rv;
@@ -1035,6 +1041,7 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 	pb->busno_spacing = PCI_BUSNO_SPACING;
 	pb->next_busno = pb->busno + 1;
 	pb->last_busno = 255;
+	pb->cacheline_size = cacheline_size;
 	pb->parent_bus = NULL;
 	pb->swiz = 0;
 	pb->io_32bit = 1;
