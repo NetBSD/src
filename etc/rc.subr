@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.33 2001/04/18 01:31:40 lukem Exp $
+# $NetBSD: rc.subr,v 1.34 2001/05/07 07:07:11 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -437,11 +437,12 @@ chroot ${_user:+-u $_user }${_group:+-g $_group }${_groups:+-G $_groups }\
 $_chroot $command $_flags $command_args"
 			else
 				_doit="\
-${_user:+su -m $_user -c 'sh -c \"}\
 ${_chdir:+cd $_chdir; }\
 ${_nice:+nice -n $_nice }\
-$command $_flags $command_args\
-${_user:+\"'}"
+$command $_flags $command_args"
+				if [ -n "$_user" ]; then
+				    _doit="su -m $_user -c 'sh -c \"$_doit\"'"
+				fi
 			fi
 			eval $_doit
 			;;
@@ -461,8 +462,10 @@ ${_user:+\"'}"
 				return 1
 			fi
 			echo "Stopping ${name}."
-			_doit=\
-"${_user:+su -m $_user -c '}kill -${sig_stop:-TERM} $_pid${_user:+'}"
+			_doit="kill -${sig_stop:-TERM} $_pid"
+			if [ -n "$_user" ]; then
+				_doit="su -m $_user -c 'sh -c \"$_doit\"'"
+			fi
 			eval $_doit
 			;;
 
@@ -480,8 +483,10 @@ ${_user:+\"'}"
 			if ! eval $_precmd && [ -z "$_rc_force_run" ]; then
 				return 1
 			fi
-			_doit=\
-"${_user:+su -m $_user -c '}kill -${sig_reload:-HUP} $_pid${_user:+'}"
+			_doit="kill -${sig_reload:-HUP} $_pid"
+			if [ -n "$_user" ]; then
+				_doit="su -m $_user -c 'sh -c \"$_doit\"'"
+			fi
 			eval $_doit
 			;;
 
