@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.8 2001/01/13 10:33:30 jdolecek Exp $	*/
+/*	$NetBSD: msort.c,v 1.9 2001/01/19 10:50:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.8 2001/01/13 10:33:30 jdolecek Exp $");
+__RCSID("$NetBSD: msort.c,v 1.9 2001/01/19 10:50:31 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -50,24 +50,14 @@ __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 
 /* Subroutines using comparisons: merge sort and check order */
 #define DELETE (1)
-#define LALIGN(n) ((n+3) & ~3)
-
-/* Number of files merge() can merge in one pass. This should be power of two */
-#define MERGE_FNUM	16
 
 typedef struct mfile {
 	u_char *end;
 	short flno;
 	struct recheader rec[1];
 } MFILE;
-typedef struct tmfile {
-	u_char *end;
-	short flno;
-	struct trecheader rec[1];
-} TMFILE;
 
-static u_char *wts, *wts1 = 0;
-static struct mfile *cfilebuf;
+static u_char *wts, *wts1 = NULL;
 
 static int cmp __P((struct recheader *, struct recheader *));
 static int insert __P((struct mfile **, struct mfile **, int, int));
@@ -90,14 +80,12 @@ fmerge(binno, top, filelist, nfiles, get, outfp, fput, ftbl)
 	wts = ftbl->weights;
 	if (!UNIQUE && SINGL_FLD && ftbl->flags & F)
 		wts1 = (ftbl->flags & R) ? Rascii : ascii;
-	if (!cfilebuf)
-		cfilebuf = malloc(DEFLLEN + sizeof(TMFILE));
 
-	i = min(MERGE_FNUM, nfiles) * LALIGN(DEFLLEN+sizeof(TMFILE));
-	if (!buffer || i > bufsize) {
-		buffer = buffer ? realloc(buffer, i) : malloc(i);
+	if (!buffer) {
+		buffer = malloc(bufsize);
 		if (!buffer)
-			err(2, NULL);
+			err(2, "fmerge(): realloc");
+
 		if (!linebuf && !SINGL_FLD) {
 			linebuf_size = DEFLLEN;
 			linebuf = malloc(linebuf_size);
@@ -157,21 +145,53 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 	FILE *outfp;
 	struct field *ftbl;
 {
-	int c, i, j;
+	int c, i, j, nf = nfiles;
 	struct mfile *flist[MERGE_FNUM], *cfile;
+	size_t availsz = bufsize;
+	static void *bufs[MERGE_FNUM+1];
+	static size_t bufs_sz[MERGE_FNUM+1];
+
+	/*
+	 * We need nfiles + 1 buffers. One is 'buffer', the
+	 * rest needs to be allocated.
+	 */
+	bufs[0] = buffer;
+	bufs_sz[0] = bufsize;
+	for(i=1; i < nfiles+1; i++) {
+		if (bufs[i])
+			continue;
+
+		bufs[i] = malloc(DEFLLEN);
+		if (!bufs[i])
+			err(2, "merge(): realloc");
+		bufs_sz[i] = DEFLLEN;
+	}
 
 	for (i = j = 0; i < nfiles; i++) {
-		cfile = (MFILE *) (buffer +
-		    i * LALIGN(DEFLLEN + sizeof(TMFILE)));
-		cfile->flno = j;
-		cfile->end = cfile->rec->data + DEFLLEN;
+		cfile = (struct mfile *) bufs[j];
+		cfile->flno = infl0 + j;
+		cfile->end = (u_char *) bufs[j] + bufs_sz[j];
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(infl0+j, 0, NULL, nfiles,
+			if (EOF == (c = get(cfile->flno, 0, NULL, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
 				--i;
 				--nfiles;
 				break;
 			}
+
+			if (c == BUFFEND) {
+				cfile = realloc(bufs[j], bufs_sz[j] *= 2);
+				bufs[j] = (void *) cfile;
+
+				if (!cfile)
+					err(2, "merge(): realloc");
+
+				cfile->end = (u_char *)cfile + bufs_sz[j];
+
+				c = 1;
+				continue;
+			}
+
 			if (i)
 				c = insert(flist, &cfile, i, !DELETE);
 			else
@@ -179,12 +199,13 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 		}
 		j++;
 	}
-	cfile = cfilebuf;
+
+	cfile = (struct mfile *) bufs[nf];
 	cfile->flno = flist[0]->flno;
-	cfile->end = cfile->rec->data + DEFLLEN;
+	cfile->end = (u_char *) cfile + bufs_sz[nf];
 	while (nfiles) {
 		for (c = 1; c == 1;) {
-			if (EOF == (c = get(infl0+cfile->flno, 0, NULL, nfiles,
+			if (EOF == (c = get(cfile->flno, 0, NULL, nfiles,
 			   cfile->rec, cfile->end, ftbl))) {
 				put(flist[0]->rec, outfp);
 				memmove(flist, flist + 1,
@@ -192,10 +213,36 @@ merge(infl0, nfiles, get, outfp, put, ftbl)
 				cfile->flno = flist[0]->flno;
 				break;
 			}
+			if (c == BUFFEND) {
+				char *oldbuf = (char *) cfile;
+				availsz = (char *) cfile->end - oldbuf;
+				availsz *= 2;
+				cfile = realloc(oldbuf, availsz);
+				for(i=0; i < nf+1; i++) {
+					if (bufs[i] == oldbuf) {
+						bufs[i] = (char *)cfile;
+						bufs_sz[i] = availsz;
+						break;
+					}
+				}
+
+				if (!cfile)
+					err(2, "merge: realloc");
+
+				cfile->end = (u_char *)cfile + availsz;
+				c = 1;
+				continue;
+			}
+				
 			if (!(c = insert(flist, &cfile, nfiles, DELETE)))
 				put(cfile->rec, outfp);
 		}
 	}	
+
+	if (bufs_sz[0] > bufsize) {
+		buffer = bufs[0];
+		bufsize = bufs_sz[0];
+	}
 }
 
 /*
@@ -296,7 +343,7 @@ order(filelist, get, ftbl)
 	if (SINGL_FLD && (ftbl->flags & F))
 		wts1 = (ftbl->flags & R) ? Rascii : ascii;
 	else
-		wts1 = 0;
+		wts1 = NULL;
 	if (0 == get(-1, 0, filelist, 1, prec, prec_end, ftbl))
 	while (0 == get(-1, 0, filelist, 1, crec, crec_end, ftbl)) {
 		if (0 < (c = cmp(prec, crec))) {
@@ -330,7 +377,7 @@ cmp(rec1, rec2)
 	int r;
 	u_char *pos1, *pos2, *end;
 	u_char *cwts;
-	for (cwts = wts; cwts; cwts = (cwts == wts1 ? 0 : wts1)) {
+	for (cwts = wts; cwts; cwts = (cwts == wts1 ? NULL : wts1)) {
 		pos1 = rec1->data;
 		pos2 = rec2->data;
 		if (!SINGL_FLD && (UNIQUE || stable_sort))
