@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.10 2000/11/08 14:28:15 ad Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.11 2001/02/13 19:53:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -240,6 +240,10 @@ struct bootfile {
 	u_int32_t       bf_volsn;	/* volume ser. num. */
 };
 
+typedef wchar (ntfs_wget_func_t) __P((const char **));
+typedef int (ntfs_wput_func_t) __P((char *, size_t, wchar));
+typedef int (ntfs_wcmp_func_t) __P((wchar, wchar));
+
 #define	NTFS_SYSNODESNUM	0x0B
 struct ntfsmount {
 	struct mount   *ntm_mountp;	/* filesystem vfs structure */
@@ -256,6 +260,9 @@ struct ntfsmount {
 	struct ntvattrdef *ntm_ad;
 	int		ntm_adnum;
 	struct netexport ntm_export;	/* export information */
+	ntfs_wget_func_t *ntm_wget;	/* decode string to Unicode string */
+	ntfs_wput_func_t *ntm_wput;	/* encode Unicode string to string */
+	ntfs_wcmp_func_t *ntm_wcmp;	/* compare to wide characters */
 };
 
 #define ntm_mftcn	ntm_bootfile.bf_mftcn
