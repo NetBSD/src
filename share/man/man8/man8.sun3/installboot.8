@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.3 1997/10/13 11:24:31 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.4 1998/06/08 11:29:13 lukem Exp $
 .\"
 .Dd 31 May 1995
 .Dt INSTALLBOOT 8
@@ -7,13 +7,13 @@
 .Nm installboot
 .Nd install a bootstrap on a UFS disk
 .Sh SYNOPSIS
-.Nm installboot
+.Nm
 .Fl n | Fl v
 .Ar ufsboot
 .Ar bootxx
 .Ar rawdev
 .Sh DESCRIPTION
-.Nm installboot
+.Nm
 is used to install a "first-stage" boot program into the boot area
 of a UFS disk partition, and initialize the table of block numbers the
 .Ar bootxx
@@ -45,12 +45,12 @@ on which the file system containing
 is mounted.
 .El
 .Sh BUGS
-.Nm installboot
+.Nm
 requires simultaneous access to the mounted file system and
 the raw device, but that is not allowed with the kernel
-.Nm securelevel
+.Dv securelevel
 variable set to a value greater than zero (the default), so
-.Nm installboot
+.Nm
 only works in single-user mode (or insecure mode - see 
 .Xr init 8 ).
 .Sh "SEE ALSO"
