@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.32 2000/03/05 06:24:33 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.33 2000/03/08 14:53:33 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.32 $"
+#ident 		"GENERIC-$Revision: 1.33 $"
 
 maxusers	8
 
@@ -121,8 +121,20 @@ vrpiu*	at vrip? addr 0x0b000120 size 0x1a0 intr 5
 # Workstation Console attachments
 fb*		at	mainbus0
 wsdisplay*	at	fb?
+#bivideo0	at	mainbus0
+#hpcfb*		at	bivideo0
+#wsdisplay*	at	hpcfb?
 wskbd*		at	vrkiu? mux 1
 wsmouse*	at	vrpiu? mux 0
+
+#
+# hpcmips isa? bus irq locator means:
+#
+# 0x0000000f ISA IRQ#
+# 0x00ff0000 GPIO port#
+# 0x01000000 interrupt signal hold/through	(1:hold/0:though)
+# 0x02000000 interrupt detection level		(1:low /0:high	)
+# 0x04000000 interrupt detection trigger	(1:edge/0:level	)
 
 #
 # MC-R300, MC-R500
@@ -215,20 +227,6 @@ pcic0	at isa1 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00170003
 
 options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 
-# CASIO CASSIOPEIA E55 and for DoCoMo
-# BUTTON_PRESS -> LOW
-#button0 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_OK active 0 port 6
-#button1 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_CANCEL active 0 port 7
-#button2 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP0 active 0 port 8
-#button3 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP1 active 0 port 9
-#button4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP2 active 0 port 10
-#button5 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP3 active 0 port 11
-#button6 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_DOWN active 0 port 12
-#button7 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_UP active 0 port 13
-vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 isaportoffset 0xc000
-isa4    at vrisab4
-wdc0    at isa4 port 0x170 irq 0x00090003 flags 0x0010  # AT_POLL
-
 #
 # Fujitsu INTERTOP CX300
 #
@@ -236,12 +234,29 @@ pwctl0 at vrgiu? platform FUJITSU_INTERTOP id PWCTL_COM0 port 15
 vrisab2 at vrgiu? platform FUJITSU_INTERTOP isaportoffset 0x1000000
 isa2    at vrisab2
 pcic0   at isa2 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00060003
+
 #
 # Vadem Clio and Sharp Tripad
 #
 vrisab3 at vrgiu? platform SHARP_TRIPAD isaportoffset 0x1000000
 isa3    at vrisab3
 pcic0   at isa3 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x000d0003
+
+#
+# CASIO CASSIOPEIA E55 and for DoCoMo
+#
+button0 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_OK active 0 port 6
+button1 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_CANCEL active 0 port 7
+button2 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP0 active 0 port 8
+button3 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP1 active 0 port 9
+button4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP2 active 0 port 10
+button5 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_APP3 active 0 port 11
+button6 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_DOWN active 0 port 12
+button7 at vrgiu? platform CASIO_CASSIOPEIAE_E55 id BTN_UP active 0 port 13
+vrisab4 at vrgiu? platform CASIO_CASSIOPEIAE_E55 isaportoffset 0xc000
+isa4    at vrisab4
+wdc0    at isa4 port 0x170 irq 0x02000003 flags 0x0010  # AT_POLL
+
 #
 # Unknown machines
 #
