@@ -1,4 +1,4 @@
-/*	$NetBSD: fb_usrreq.c,v 1.12 1998/11/19 15:38:23 mrg Exp $	*/
+/*	$NetBSD: fb_usrreq.c,v 1.13 1999/01/16 07:05:05 nisimura Exp $	*/
 
 /*ARGSUSED*/
 int
@@ -251,7 +251,7 @@ fbmmap(dev, off, prot)
 	    (fi = fbcd.cd_devs[minor(dev)]) == NULL)
 	    return(-1);
 
-	len = mips_round_page(((vm_offset_t)fi->fi_fbu & PGOFSET)
+	len = mips_round_page(((vaddr_t)fi->fi_fbu & PGOFSET)
 			      + sizeof(*fi->fi_fbu));
 	if (off < len)
 		return (int)mips_btop(MIPS_KSEG0_TO_PHYS(fi->fi_fbu) + off);
