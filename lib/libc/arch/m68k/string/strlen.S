@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.5 1995/11/28 23:41:03 thorpej Exp $	*/
+/*	$NetBSD: strlen.S,v 1.6 1997/01/03 22:57:06 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)strlen.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: strlen.S,v 1.5 1995/11/28 23:41:03 thorpej Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.6 1997/01/03 22:57:06 jtc Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,8 @@ ENTRY(strlen)
 	movl	sp@(4),a0		| string
 	movl	a0,d0
 	notl	d0
-slloop:
+Lslloop:
 	tstb	a0@+			| null?
-	bne	slloop			| no, keep going
+	bne	Lslloop			| no, keep going
 	addl	a0,d0
 	rts
