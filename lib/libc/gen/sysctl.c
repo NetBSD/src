@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.7 1998/11/13 12:31:53 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.8 1998/11/18 20:51:51 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.7 1998/11/13 12:31:53 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.8 1998/11/18 20:51:51 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,7 +61,7 @@ __weak_alias(sysctl,_sysctl);
 int
 sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	int *name;
-	size_t namelen;
+	unsigned int namelen;
 	void *oldp;
 	const void *newp;
 	size_t *oldlenp, newlen;
