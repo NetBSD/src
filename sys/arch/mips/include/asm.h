@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.31 2002/05/13 01:39:17 simonb Exp $	*/
+/*	$NetBSD: asm.h,v 1.32 2002/05/13 06:11:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -111,7 +111,6 @@
 #define	WEAK_ALIAS(alias,sym)						\
 	.weak alias;							\
 	alias = sym
-#endif
 
 /*
  * WARN_REFERENCES: create a warning if the specified symbol is referenced
