@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.20 2000/05/28 22:22:11 oster Exp $   */
+/*      $NetBSD: raidctl.c,v 1.21 2000/05/28 23:12:01 oster Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -435,6 +435,23 @@ rf_get_device_status(fd)
 			       device_status(device_config.devs[i].status));
 		}
 	}
+#if 0
+	if (device_config.nspares > 0) {
+		for(i=0; i < device_config.nspares; i++) {
+			if ((device_config.spares[i].status == 
+			     rf_ds_optimal) ||
+			    (device_config.spares[i].status == 
+			     rf_ds_used_spare)) {
+				get_component_label(fd, 
+					    device_config.spares[i].devname);
+			} else {
+				printf("%s status is: %s.  Skipping label.\n",
+				       device_config.spares[i].devname,
+				       device_status(device_config.spares[i].status));
+			}		
+		}
+	}
+#endif
 	do_ioctl(fd, RAIDFRAME_CHECK_PARITY, &is_clean,
 		 "RAIDFRAME_CHECK_PARITY");
 	if (is_clean) {
@@ -474,6 +491,17 @@ get_component_number(fd, component_name, component_number, num_columns)
 			*component_number = i;
 		}
 	}
+	if (!found) { /* maybe it's a spare? */
+		for(i=0; i < device_config.nspares; i++) {
+			if (strncmp(component_name, 
+				    device_config.spares[i].devname,
+				    PATH_MAX)==0) {
+				found = 1;
+				*component_number = i + device_config.ndevs;
+			}
+		}
+	}
+
 	if (!found) {
 		fprintf(stderr,"%s: %s is not a component %s", __progname, 
 			component_name, "of this device\n");
