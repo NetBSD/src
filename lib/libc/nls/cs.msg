@@ -12,37 +12,37 @@ $ EIO
 $ ENXIO
 6 Zaøízení není nakonfigurováno
 $ E2BIG
-7 Seznam argumentù pøíli¹ dlouhý
+7 Seznam argumentù je pøíli¹ dlouhý
 $ ENOEXEC
-8 Chyba ve formátu spou¹tìného souboru
+8 Chyba formátu spu¹tìného souboru
 $ EBADF
 9 ©patný souborový deskriptor
 $ ECHILD
-10 Neexistující proces potomka
+10 Neexistuje ¾ádný potomek procesu
 $ EDEADLK
-11 Poøizování prostøedku by vedlo k deadlocku
+11 Zabránìno uváznutí (deadlock) prostøedku
 $ ENOMEM
-12 Není mo¾no alokovat pamì»
+12 Nedostatek pamìti
 $ EACCES
-13 Permission denied
+13 Pøístup odmítnut
 $ EFAULT
-14 ©patná adresa
+14 Chybná adresa
 $ ENOTBLK
 15 Vy¾adováno blokové zaøízení
 $ EBUSY
-16 Zaøízení zamìstnáno
+16 Zdroj nebo zaøízení je zaneprázdnìno
 $ EEXIST
 17 Soubor existuje
 $ EXDEV
-18 Tvrdý link vede na jiný filesystém ne¾ soubor
+18 Odkaz vede na jiné zaøízení
 $ ENODEV
 19 Operace není zaøízením podporována
 $ ENOTDIR
-20 Nejedná se o adresáø
+20 Toto není adresáø
 $ EISDIR
-21 Jedná se o adresáø
+21 Toto je adresáø
 $ EINVAL
-22 ©patný argument
+22 Chybný argument
 $ ENFILE
 23 Pøíli¹ mnoho otevøených souborù v systému
 $ EMFILE
@@ -50,35 +50,35 @@ $ EMFILE
 $ ENOTTY
 25 Pro dané zaøízení nevhodné ioctl
 $ ETXTBSY
-26 Soubor momentálnì pou¾íván
+26 S textovým souborem se pracuje
 $ EFBIG
-27 Soubor pøíli¹ velký
+27 Soubor je pøíli¹ velký
 $ ENOSPC
-28 Na zaøízení nezbývá místo
+28 Na zaøízení není volné místo
 $ ESPIPE
-29 ©patný seek
+29 Neplatný lseek(2)
 $ EROFS
-30 Souborový systém pouze pro ètení
+30 Souborový systém je pouze pro ètení
 $ EMLINK
-31 Pøíli¹ mnoho linkù
+31 Pøíli¹ mnoho odkazù
 $ EPIPE
-32 Broken pipe
+32 Pøeru¹ená roura
 $ EDOM
-33 Parametr mimo èíselný obor
+33 Èíselný argument mimo definièní obor
 $ ERANGE
-34 Výsledek pøíli¹ velký
+34 Èíselný výsledek je pøíli¹ velký
 $ EAGAIN, EWOULDBLOCK
-35 Prosøedek je doèasnì nedostupný
+35 Prostøedek je doèasnì nedostupný
 $ EINPROGRESS
-36 Operace teï probíhá
+36 Operace nyní probíhá
 $ EALREADY
-37 Operace u¾ probíhá
+37 Operace ji¾ probíhá
 $ ENOTSOCK
-38 Socketová operace na ne-socketu
+38 Socketová operace na neèem, co není socket
 $ EDESTADDRREQ
-39 Po¾adována cílová adresa
+39 Vy¾adována adresa cíle
 $ EMSGSIZE
-40 Zpráva pøíli¹ dlouhá
+40 Zpráva je pøíli¹ dlouhá
 $ EPROTOTYPE
 41 Protokol nepodporuje daný typ socketu
 $ ENOPROTOOPT
@@ -90,45 +90,45 @@ $ ESOCKTNOSUPPORT
 $ EOPNOTSUPP
 45 Operace není podporována
 $ EPFNOSUPPORT
-46 Protokolová rodina není podporována
+46 Rodina protokolù není podporována
 $ EAFNOSUPPORT
-47 Pou¾ita adresa nekompatibilní s po¾adovaným protokolem
+47 Rodina adres není protokolem podporována
 $ EADDRINUSE
-48 Adresa se u¾ pou¾ívá
+48 Adresa je ji¾ pou¾ívána
 $ EADDRNOTAVAIL
 49 Není mo¾no pøidìlit po¾adovanou adresu
 $ ENETDOWN
-50 Sí» vypnutá
+50 Sí» je odpojena
 $ ENETUNREACH
-51 Sí» nedostupná
+51 Sí» je nedosa¾itelná
 $ ENETRESET
-52 Sí» ukonèila spojení po resetu
+52 Sí» zru¹ila spojení po resetu
 $ ECONNABORTED
-53 Software zpùsobilo zru¹ení spojení
+53 Program zpùsobil ukonèení spojení
 $ ECONNRESET
 54 Spojení zru¹eno partnerem
 $ ENOBUFS
-55 Není k dispozici buffer
+55 Vyrovnávací pamì» není k dispozici
 $ EISCONN
-56 Socket u¾ pøipojen
+56 Socket je ji¾ u¾ pøipojen
 $ ENOTCONN
 57 Socket není pøipojen
 $ ESHUTDOWN
 58 Není mo¾no posílat po shutdownu socketu
 $ ETOOMANYREFS
-59 Pøíli¹ mnoho odkazù: nelze propojit
+59 Pøíli¹ mnoho referencí: nelze spojit
 $ ETIMEDOUT
-60 Pøekroèen èasový limit pøi pokusu o spojení
+60 Pøekroèen èasový limit pokusu o spojení
 $ ECONNREFUSED
 61 Spojení odmítnuto
 $ ELOOP
-62 Pøíli¹ mnoho úrovní symbolických linkù
+62 Pøíli¹ mnoho úrovní symbolických odkazù
 $ ENAMETOOLONG
 63 Jméno souboru pøíli¹ dlouhé
 $ EHOSTDOWN
-64 Host vypnut
+64 Vzdálený uzel je odpojen
 $ EHOSTUNREACH
-65 Neexistuje cesta k hostovi
+65 Neexistuje cesta ke vzdálenému uzlu
 $ ENOTEMPTY
 66 Adresáø není prázdný
 $ EPROCLIM
@@ -138,7 +138,7 @@ $ EUSERS
 $ EDQUOT
 69 Disková kvóta pøekroèena
 $ ESTALE
-70 NFS handler propadl
+70 Propadnutý souborový ukazatel pro NFS
 $ EREMOTE
 71 Pøíli¹ mnoho úrovní vzdáleného v cestì
 $ EBADRPC
@@ -152,7 +152,7 @@ $ EPROGMISMATCH
 $ EPROCUNAVAIL
 76 ©patná procedura pro program
 $ ENOLCK
-77 Zámky nejsou k dispozici
+77 Zámky souborových záznamù nejsou dostupné
 $ ENOSYS
 78 Funkce není implementována
 $ EFTYPE
@@ -162,26 +162,26 @@ $ EAUTH
 $ ENEEDAUTH
 81 Je tøeba se autentifikovat
 $ EIDRM
-82 Identifikátor odstranìn
+82 Identifikátor zru¹en
 $ ENOMSG
-83 ®ádná zpráva po¾adovaného typu
+83 Neexistuje zpráva ¾ádaného typu
 $ EOVERFLOW
-84 Hodnota pøíli¹ velká pro ulo¾ení v datovém typu
+84 Hodnota je pro daný datový typ pøíli¹ velká
 $set 2
 $ SIGHUP
-1 Hangup
+1 Terminál odpojen
 $ SIGINT
 2 Pøeru¹ení
 $ SIGQUIT
-3 Quit
+3 Konec
 $ SIGILL
-4 Neplatná instrukce
+4 Chybná instrukce
 $ SIGTRAP
-5 Trace/BPT trap
+5 Ladící instrukce
 $ SIGABRT
-6 Abort trap
+6 Násilné ukonèení
 $ SIGEMT
-7 EMT trap
+7 Emulovaná instrukce
 $ SIGFPE
 8 Výjimka pohyblivé èárky
 $ SIGKILL
@@ -201,21 +201,21 @@ $ SIGTERM
 $ SIGURG
 16 Naléhavý I/O po¾adavek
 $ SIGSTOP
-17 Pozastaveno (signal)
+17 Pozastaveno (signál)
 $ SIGTSTP
 18 Pozastaveno
 $ SIGCONT
-19 Pokraèuje
+19 Pokraèování
 $ SIGCHLD
-20 Potomek skonèil
+20 Potomek procesu ukonèen
 $ SIGTTIN
-21 Pozastaveno (tty vstup)
+21 Pozastaveno (terminálový vstup)
 $ SIGTTOU
-22 Pozastaveno (tty výstup)
+22 Pozastaveno (terminálový výstup)
 $ SIGIO
-23 I/O mo¾né
+23 Vstup/výstup mo¾ný
 $ SIGXCPU
-24 Pøekroèen limit procesorového èasu
+24 Pøekroèen èasový limit pro CPU
 $ SIGXFSZ
 25 Pøekroèen limit velikosti souboru
 $ SIGVTALRM
@@ -223,10 +223,12 @@ $ SIGVTALRM
 $ SIGPROF
 27 Vypr¹el profilovací èasovaè
 $ SIGWINCH
-28 Zmìna velikosti okna
+28 Velikost okna zmìnìna
 $ SIGINFO
 29 Informaèní po¾adavek
 $ SIGUSR1
 30 U¾ivatelský signál 1
 $ SIGUSR2
 31 U¾ivatelský signál 2
+$ SIGPWR
+32 Selhání/nastartování napájení
