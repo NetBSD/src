@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.45 2001/01/01 15:47:38 sommerfeld Exp $	*/
+/*	$NetBSD: job.c,v 1.46 2001/01/10 15:54:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.45 2001/01/01 15:47:38 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.46 2001/01/10 15:54:00 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.45 2001/01/01 15:47:38 sommerfeld Exp $");
+__RCSID("$NetBSD: job.c,v 1.46 2001/01/10 15:54:00 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1186,17 +1186,19 @@ Job_CheckCommands(gn, abortProc)
 	     * given, we stop in our tracks, otherwise we just don't update
 	     * this node's parents so they never get examined.
 	     */
-	    static const char msg[] = "make: don't know how to make";
+	    static const char msg[] = ": don't know how to make";
 
 	    if (gn->type & OP_OPTIONAL) {
-		(void) fprintf(stdout, "%s %s(ignored)\n", msg, gn->name);
+		(void) fprintf(stdout, "%s%s %s(ignored)\n", progname,
+		    msg, gn->name);
 		(void) fflush(stdout);
 	    } else if (keepgoing) {
-		(void) fprintf(stdout, "%s %s(continuing)\n", msg, gn->name);
+		(void) fprintf(stdout, "%s%s %s(continuing)\n", progname,
+		    msg, gn->name);
 		(void) fflush(stdout);
   		return FALSE;
 	    } else {
-		(*abortProc)("%s %s. Stop", msg, gn->name);
+		(*abortProc)("%s%s %s. Stop", progname, msg, gn->name);
 		return FALSE;
 	    }
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.31 2001/01/01 15:50:23 sommerfeld Exp $	*/
+/*	$NetBSD: make.h,v 1.32 2001/01/10 15:54:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -341,6 +341,9 @@ extern Boolean	checkEnvFirst;	/* TRUE if environment should be searched for
 				 * variables before the global context */
 extern Boolean	jobServer;	/* a jobServer already exists */
 
+extern Boolean	parseWarnFatal;	/* TRUE if makefile parsing warnings are
+				 * treated as errors */
+
 extern GNode    *DEFAULT;    	/* .DEFAULT rule */
 
 extern GNode    *VAR_GLOBAL;   	/* Variables defined in a global context, e.g
@@ -358,6 +361,8 @@ extern time_t 	now;	    	/* The time at the start of this whole
 extern Boolean	oldVars;    	/* Do old-style variable substitution */
 
 extern Lst	sysIncPath;	/* The system include path. */
+
+extern char	*progname;	/* The program name */
 
 #define	MAKEFLAGS	".MAKEFLAGS"
 
