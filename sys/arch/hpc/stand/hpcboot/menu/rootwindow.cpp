@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.13 2004/02/23 05:20:48 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.14 2004/02/27 03:23:12 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -116,6 +116,18 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 	case WM_PAINT:
 		WMPaint(w, aux);
 		break;
+	case WM_ENTERMENULOOP:
+		SaveFocus();
+		break;
+	case WM_EXITMENULOOP:
+		RestoreFocus();
+		break;
+	case WM_ACTIVATE:
+		if ((UINT)LOWORD(wparam) == WA_INACTIVE)
+			SaveFocus();
+		else
+			RestoreFocus();
+		break;
 	case WM_NOTIFY:
 	{
 		NMHDR *notify = reinterpret_cast <NMHDR *>(lparam);
@@ -188,6 +200,17 @@ RootWindow::proc(HWND w, UINT msg, WPARAM wparam, LPARAM lparam)
 }
 
 void
+RootWindow::SaveFocus() {
+	_saved_focus = GetFocus();
+}
+
+void
+RootWindow::RestoreFocus() {
+	SetFocus(IsWindowEnabled(_saved_focus) ?
+		 _saved_focus : _boot_button->_window);
+}
+
+void
 RootWindow::WMPaint(HWND w, LPCREATESTRUCT aux)
 {
 	PAINTSTRUCT ps;
@@ -234,6 +257,7 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 	_console = _base->boot(IDC_BASE_CONSOLE);
 
 	_main->show();
+	SetFocus(_boot_button->_window);
 
 	return;
 }
