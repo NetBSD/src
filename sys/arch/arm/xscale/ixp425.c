@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425.c,v 1.2 2003/05/23 09:41:02 ichiro Exp $ */
+/*	$NetBSD: ixp425.c,v 1.3 2003/05/24 01:59:32 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.2 2003/05/23 09:41:02 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.3 2003/05/24 01:59:32 ichiro Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425.c,v 1.2 2003/05/23 09:41:02 ichiro Exp $");
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
+
+#include <evbarm/ixdp425/ixdp425reg.h>
 
 static struct ixp425_softc *ixp425_softc;
 

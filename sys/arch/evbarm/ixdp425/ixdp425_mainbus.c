@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_mainbus.c,v 1.1 2003/05/23 00:57:27 ichiro Exp $ */
+/*	$NetBSD: ixdp425_mainbus.c,v 1.2 2003/05/24 01:59:32 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.1 2003/05/23 00:57:27 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.2 2003/05/24 01:59:32 ichiro Exp $");
 
 /*
  * front-end for the ixp425 NetworkProcessor.
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixdp425_mainbus.c,v 1.1 2003/05/23 00:57:27 ichiro E
 
 #include <arm/xscale/ixp425reg.h>
 #include <arm/xscale/ixp425var.h>
+
+#include <evbarm/ixdp425/ixdp425var.h>
 
 #include "locators.h"
 
@@ -74,11 +76,11 @@ ixp425_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	ixp425_bs_init(&ixp425_bs_tag, sc);
 	sc->sc_iot = &ixp425_bs_tag;
 	sc->sc_ioh = IXP425_IO_VBASE;
-#if 0
+
 	/*
 	 * Initialize the interrupt part of our PCI chipset tag
 	 */
-	ixm1200_pci_init(&sc->ia_pci_chipset, sc);
-#endif
+	ixdp425_pci_init(&sc->ia_pci_chipset, sc);
+
 	ixp425_attach(sc);
 }
