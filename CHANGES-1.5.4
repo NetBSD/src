@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.56 2002/09/23 13:48:36 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.57 2002/09/24 13:44:20 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1528,3 +1528,8 @@ lib/libdes/shlib_version			1.4
 sys/netinet6/ip6_output.c			1.58
   
   Correct length field on PADN option, before jumbo payload option.
+
+usr.sbin/lpr/lpd/lpd.c				1.43 via patch
+
+  Set IPV6_BINDV6ONLY socket option for AF_INET6 socket, to avoid
+  complicated access control issue due to IPv4 mapped address.
