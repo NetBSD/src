@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.8 2002/02/02 00:04:33 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.9 2002/02/04 23:51:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.8 2002/02/02 00:04:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.9 2002/02/04 23:51:00 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -755,8 +755,9 @@ realtimerexpire(void *arg)
 		if (p->p_nrlwps == 0) {
 			struct sadata_upcall *sd;
 			struct lwp *l2;
-			int ret;
+			int s, ret;
 
+			SCHED_LOCK(s);
 			l2 = sa_getcachelwp(p);
 			if (l2 != NULL) {
 				sd = sadata_upcall_alloc(0);
@@ -773,6 +774,7 @@ realtimerexpire(void *arg)
 				} else 
 					sa_putcachelwp(p, l2);
 			}
+			SCHED_UNLOCK(s);
 		} else if (p->p_userret == NULL) {
 			pt->pt_overruns = 0;
 			p->p_userret = realtimerupcall;
