@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.4 1995/04/22 20:25:21 christos Exp $
+#	$NetBSD: files.atari,v 1.5 1995/04/22 23:39:02 christos Exp $
 #
 
 maxpartitions 16
@@ -103,4 +103,4 @@ file	compat/sunos/sun_misc.c			compat_sunos
 file	compat/sunos/sun_sysent.c		compat_sunos
 file	compat/sunos/sun_ioctl.c		compat_sunos
 file	compat/sunos/sun_exec.c			compat_sunos
-file	arch/atari/atari/sunos_machdep.c	compat_sunos
+file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
