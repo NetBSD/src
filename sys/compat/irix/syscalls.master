@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.17 2001/12/27 11:07:24 manu Exp $
+	$NetBSD: syscalls.master,v 1.18 2002/02/03 01:21:48 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -34,6 +34,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
 #include "opt_sysv.h"
+#include "opt_compat_43.h"
 #endif
 
 #include <sys/param.h>
@@ -82,7 +83,7 @@
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL		stime
 26	UNIMPL		ptrace
-27	OBSOL		alarm
+27	STD		{ int svr4_sys_alarm(unsigned sec); }
 28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
 29	STD		{ int svr4_sys_pause(void); }
 30	STD		{ int svr4_sys_utime(const char *path, \
@@ -207,10 +208,14 @@
 106	NOARGS		{ int sys_shutdown(int s, int how); }
 107	STD		{ int svr4_sys_socket(int domain, int type, \
 			    int protocol); }
-108	UNIMPL		sys_gethostname
-109	UNIMPL		sethostname
-110	UNIMPL		sys_getdomainname
-111	UNIMPL		setdomainname
+108	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
+			    u_int len); }
+109	NOARGS		{ int compat_43_sys_sethostname(const char *hostname, \
+			    u_int len); }
+110	NOARGS		{ int compat_09_sys_getdomainname(char *domainname, \
+			    int len); }
+111	NOARGS		{ int compat_09_sys_setdomainname(char *domainname, \
+			    int len); }
 112	UNIMPL		truncate
 113	UNIMPL		ftruncate
 114	NOARGS		{ int sys_rename(const char *from, const char *to); }
