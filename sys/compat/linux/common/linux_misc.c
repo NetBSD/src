@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.52 1998/12/16 10:21:50 christos Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.53 1999/02/09 20:37:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@ linux_sys_statfs(p, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_statfs_args /* {
-		syscallarg(char *) path;
+		syscallarg(const char *) path;
 		syscallarg(struct linux_statfs *) sp;
 	} */ *uap = v;
 	struct statfs btmp, *bsp;
