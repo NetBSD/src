@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_capi_msgs.c,v 1.4 2003/10/03 16:46:32 pooka Exp $	*/
+/*	$NetBSD: i4b_capi_msgs.c,v 1.5 2003/10/28 17:02:54 pooka Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Cubical Solutions Ltd. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.4 2003/10/03 16:46:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_capi_msgs.c,v 1.5 2003/10/28 17:02:54 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,7 +73,7 @@ void capi_listen_req(capi_softc_t *sc, u_int32_t CIP)
     msg = capimsg_setu16(msg, CAPI_LISTEN_REQ);
     msg = capimsg_setu16(msg, msgid);
 
-    msg = capimsg_setu32(msg, 1); /* Controller */
+    msg = capimsg_setu32(msg, sc->sc_unit + 1); /* Controller */
     msg = capimsg_setu32(msg, 0); /* Info mask */
     msg = capimsg_setu32(msg, CIP);
     msg = capimsg_setu32(msg, 0);
@@ -219,7 +219,7 @@ void capi_connect_req(capi_softc_t *sc, call_desc_t *cd)
     msg = capimsg_setu16(msg, CAPI_CONNECT_REQ);
     msg = capimsg_setu16(msg, msgid);
 
-    msg = capimsg_setu32(msg, 1); /* Controller */
+    msg = capimsg_setu32(msg, sc->sc_unit + 1); /* Controller */
 
     switch (cd->bprot) {
     case BPROT_NONE:
