@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.103 2000/05/31 05:09:18 thorpej Exp $	*/
+/*	$NetBSD: locore.S,v 1.104 2000/06/10 02:43:49 soren Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -1149,7 +1149,7 @@ XNESTED(MachFPTrap)
 #endif
 
 /*
- * Send a illegal instruction signal to the current process.
+ * Send a floating point exception signal to the current process.
  */
 3:
 	li	t0, 0xFFFFFF00
@@ -1162,7 +1162,7 @@ XNESTED(MachFPTrap)
 	move	a2, a0				# code = instruction
 	lw	a0, _C_LABEL(curproc)		# get current process
 	jal	_C_LABEL(trapsignal)
-	li	a1, SIGILL
+	li	a1, SIGFPE
 
 	b	FPReturn
 	nop
