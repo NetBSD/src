@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.10 2002/02/15 07:33:48 simonb Exp $
+$NetBSD: TODO,v 1.11 2002/08/26 11:35:22 scw Exp $
 
 In rough order.
 
@@ -109,3 +109,9 @@ done	Numbers starting with [a-f] should work, but symbols
 
 30.	Write ddb(9) to document how ports should implement the debugger,
 	and the canonical solution to some niggling annoying issues.
+
+31.	Add support for cpus where sizeof(register_t) is not necessarily
+	the same as sizeof(void *). This is the case on SH5 using the
+	ILP32 ABI. On this cpu db_expr_t is, necessarily, 64-bits.
+	Unfortunately, in ILP32 mode, ddb will only display the low 32-bits
+	of any expression, including registers...
