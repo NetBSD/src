@@ -1,30 +1,33 @@
-dnl Process this file with autoconf to produce a configure script.
-dnl Id: configure.ac,v 1.30 2003/06/10 20:50:03 karl Exp
-dnl
-dnl This file is free software; as a special exception the author gives
-dnl unlimited permission to copy and/or distribute it, with or without
-dnl modifications, as long as this notice is preserved.
-dnl
-dnl This program is distributed in the hope that it will be useful, but
-dnl WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
-dnl implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-dnl
-AC_PREREQ(2.57)dnl Minimum Autoconf version required.
-dnl
-AC_INIT([GNU Texinfo], [4.6])
+# Process this file with autoconf to produce a configure script.
+# Id: configure.ac,v 1.12 2004/04/07 20:18:21 karl Exp
+#
+# This file is free software; as a special exception the author gives
+# unlimited permission to copy and/or distribute it, with or without
+# modifications, as long as this notice is preserved.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+AC_PREREQ(2.59)# Minimum Autoconf version required.
+#
+AC_INIT([GNU Texinfo], [4.7])
+AC_CONFIG_HEADERS(config.h:config.in)# Keep filename to 8.3 for MS-DOS.
 AC_CONFIG_SRCDIR([makeinfo/makeinfo.c])
-AM_CONFIG_HEADER(config.h:config.in)dnl Keep filename to 8.3 for MS-DOS.
 AM_INIT_AUTOMAKE([dist-bzip2])
-dnl
-AM_MAINTAINER_MODE
-AM_CONDITIONAL(TEXINFO_MAINT, test -n "$TEXINFO_MAINT")
 
-dnl Checks for programs.
+# When the Texinfo source is imported into other repositories
+# (NetBSD and TeX Live), timestamps are generally not preserved.  This
+# causes lots of annoyance, so --enable-maintainer-mode.  Sorry.
+AM_MAINTAINER_MODE
+
+# Checks for programs.
 AC_PROG_CC
 AC_PROG_GCC_TRADITIONAL
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 AC_PROG_RANLIB
+AM_MISSING_PROG(HELP2MAN, help2man)
 
 AC_ISC_POSIX
 AC_MINIX
@@ -32,14 +35,14 @@ AC_MINIX
 # Needed on sysV68 for sigblock, sigsetmask.  But check for it in libc first.
 AC_CHECK_FUNC(sigblock, , AC_CHECK_LIB(bsd, sigblock))
 
-dnl Checks for header files.
+# Checks for header files.
 AC_HEADER_STAT
 AC_HEADER_STDC
 AC_CHECK_HEADERS(fcntl.h io.h limits.h pwd.h string.h strings.h \
   termcap.h termio.h termios.h unistd.h \
   sys/fcntl.h sys/file.h sys/stream.h sys/time.h sys/ttold.h sys/wait.h)
 
-dnl sys/ptem.h requires sys/stream.h for mblk_t on Solaris.
+# sys/ptem.h requires sys/stream.h for mblk_t on Solaris.
 AC_CHECK_HEADERS([sys/ptem.h],,,
 [#if HAVE_SYS_STREAM_H
 #include <sys/stream.h>
@@ -49,29 +52,31 @@ AC_CHECK_HEADERS([sys/ptem.h],,,
 AC_SYS_POSIX_TERMIOS
 AC_HEADER_TIOCGWINSZ
 
-dnl Checks for typedefs, structures, and compiler characteristics.
+# Checks for typedefs, structures, and compiler characteristics.
 AC_TYPE_OFF_T
 AC_TYPE_SIGNAL
 AC_C_CONST
 AC_STRUCT_TM
 
-dnl Checks for function declarations.
-txi_CHECK_DECLS
+# Checks for function declarations.
+AC_CHECK_DECLS([memchr, strcoll, strerror])
 
-dnl Checks for library functions.
+# Checks for library functions.
 AC_FUNC_ALLOCA
 AC_FUNC_STRCOLL
 AC_FUNC_VPRINTF
-dnl in theory only pre-sysvr3 systems needed this and it's not likely
-dnl that anyone compiling new texinfo still has such a thing? we'll see.
-dnl AC_FUNC_SETVBUF_REVERSED
+# in theory only pre-sysvr3 systems needed this and it's not likely
+# that anyone compiling new texinfo still has such a thing? we'll see.
+# AC_FUNC_SETVBUF_REVERSED
 AC_CHECK_FUNCS(bzero getcwd memset setvbuf sigaction sigprocmask \
                sigsetmask strchr)
-dnl strerror, xmalloc, xrealloc, probably others should be added.
-AC_REPLACE_FUNCS(memcpy memmove strdup strcasecmp strerror strncasecmp)
+AC_REPLACE_FUNCS(memcpy memmove strdup strerror)
 
-dnl We want to recognize djgpp to avoid the useless warning about no
-dnl term library.
+# strcasecmp and strncasecmp, gnulib-style.
+gl_STRCASE
+
+# We want to recognize djgpp to avoid the useless warning about no
+# term library.
 AC_CANONICAL_BUILD
 
 # Some GNU/Linux systems (e.g., SuSE 4.3, 1996) don't have curses, but
@@ -89,7 +94,7 @@ if test -z "$TERMLIBS" && echo "$build" | grep -v djgpp >/dev/null; then
   AC_MSG_WARN([probably need a terminal library, one of: ${TERMLIB_VARIANTS}])
 fi
 
-dnl Checks for variables.
+# Checks for variables.
 # HP-UX 9 (at least) needs -lncurses which defines termcap variables PC etc.
 AC_MSG_CHECKING(for library with termcap variables)
 AC_CACHE_VAL(ac_cv_var_ospeed,
@@ -129,16 +134,16 @@ if test -n "$ac_cv_var_ospeed" \
    && test "x$termlib" != "x$ac_cv_var_ospeed"; then
   TERMLIBS="${TERMLIBS} -l${ac_cv_var_ospeed}"
 fi
-AC_SUBST(TERMLIBS)dnl
+AC_SUBST(TERMLIBS)#
 
-dnl Do not use <ncurses/termcap.h> unless we're linking with ncurses.
-dnl Must come after the termlib tests.
+# Do not use <ncurses/termcap.h> unless we're linking with ncurses.
+# Must come after the termlib tests.
 if test "x$termlib" = xncurses; then
-  dnl Use AC_CHECK_HEADERS so the HAVE_*_H symbol gets defined.
+  # Use AC_CHECK_HEADERS so the HAVE_*_H symbol gets defined.
   AC_CHECK_HEADERS(ncurses/termcap.h)
 fi
 
-dnl gnulib.
+# gnulib.
 UTILS_FUNC_MKSTEMP
 
 # For teTeX and TeX Live.
@@ -149,21 +154,21 @@ test "x$enable_multiplatform" = xyes \
 && test "x$bindir" = 'x${exec_prefix}/bin' \
 && bindir="$bindir/$host"
 
-dnl i18n support.  To update to a new version of gettext, run:
-dnl  gettextize -f -c --intl
-AM_GNU_GETTEXT_VERSION(0.12.1)
+# i18n support.  To update to a new version of gettext, run:
+# gettextize -f -c --intl
+AM_GNU_GETTEXT_VERSION(0.14.1)
 AM_GNU_GETTEXT()
 
 AC_CONFIG_FILES([
-  Makefile			\
-  doc/Makefile			\
-  info/Makefile			\
-  intl/Makefile			\
-  lib/Makefile			\
-  m4/Makefile			\
-  makeinfo/Makefile		\
-  makeinfo/tests/Makefile	\
-  po/Makefile.in		\
-  util/Makefile			\
+  Makefile
+  doc/Makefile
+  info/Makefile
+  intl/Makefile
+  lib/Makefile
+  m4/Makefile
+  makeinfo/Makefile
+  makeinfo/tests/Makefile
+  po/Makefile.in
+  util/Makefile
 ])
 AC_OUTPUT
