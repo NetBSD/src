@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.108 2003/08/15 14:46:46 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.109 2003/08/15 19:12:22 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1224,4 +1224,12 @@ sys/dev/pci/pcidevs_data.h			regenerate
 
 	Add National Semiconductors SC1100 (GEODE) PCI devices.
 	[itojun, ticket #1414]
+
+sys/dev/microcode/siop/esiop.ss			1.15
+sys/dev/microcode/siop/esiop.out		regenerate
+
+	Properly handle messages that we get at reconnect time (other than
+	SIMPLE_Q_TAG). Some drives start sync/wide negotiation at reconnect
+	time. Problem reported and fix tested by Andreas Wrede.
+	[bouyer, ticket #1399]
 
