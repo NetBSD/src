@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.50 1999/04/19 21:23:00 kleink Exp $	*/
+/*	$NetBSD: locore.s,v 1.51 1999/04/27 18:12:44 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,22 +63,6 @@ ASLOCAL(tmpstk)
 
 ASLOCAL(bug_vbr)
 	.long	0
-
-#ifndef MVME147
-/*
- * Convert MEMC040 'msiz' bits into the
- * corresponding RAM size.
- */
-ASLOCAL(memc_msiz)
-	.long	0x00400000
-	.long	0x00800000
-	.long	0x01000000
-	.long	0x02000000
-	.long	0x04000000
-	.long	0x08000000
-	.long	0x00400000
-	.long	0x00400000
-#endif
 
 #include <mvme68k/mvme68k/vectors.s>
 
@@ -339,8 +323,8 @@ Lis167:
 	 */
 	movql	#0x07,d0
 	andb	0xfff43008,d0		| MEMC040/MEMECC Controller #1
-	ASRELOC(memc_msiz, a0)
-	movl	a0@(d0:w:4),d1		| Compute how many bytes of RAM
+	movl	#0x00400000,d1
+	lsll	d0,d1
 
 #if 0
 	lea	0xfff43008,a0		| MEMC040/MEMECC Controller #1
