@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mount.h	7.22 (Berkeley) 6/3/91
- *	$Id: mount.h,v 1.14 1993/08/13 11:35:58 cgd Exp $
+ *	$Id: mount.h,v 1.15 1993/08/15 21:24:05 deraadt Exp $
  */
 
 #ifndef _SYS_MOUNT_H_
@@ -115,9 +115,8 @@ struct mount {
 #define	MNT_NOSUID	0x00000008	/* don't honor setuid bits on fs */
 #define	MNT_NODEV	0x00000010	/* don't interpret special files */
 #define	MNT_UNION	0x00000020	/* union with underlying filesysem */
-#ifdef ISOFS
+
 #define ISOFSMNT_NORRIP	0x00000040	/* disable Rock Ridge Ext.*/
-#endif
 
 /*
  * exported mount flags.
@@ -219,7 +218,6 @@ struct ufs_args {
 	uid_t	exroot;		/* mapping for root uid */
 };
 
-#ifdef MFS
 /*
  * Arguments to mount MFS
  */
@@ -228,9 +226,7 @@ struct mfs_args {
 	caddr_t	base;		/* base address of file system in memory */
 	u_long size;		/* size of file system */
 };
-#endif /* MFS */
 
-#if defined(NFSSERVER) || defined(NFSCLIENT)
 /*
  * File Handle (32 bytes for version 2), variable up to 1024 for version 3
  */
@@ -271,9 +267,7 @@ struct nfs_args {
 #define	NFSMNT_SPONGY	0x0400	/* spongy mount (soft for stat and lookup) */
 #define	NFSMNT_COMPRESS	0x0800	/* Compress nfs rpc xdr */
 #define	NFSMNT_LOCKBITS	(NFSMNT_SCKLOCK | NFSMNT_WANTSCK)
-#endif /* defined(NFSSERVER || defined(NFSCLIENT) */
 
-#ifdef MSDOSFS
 /*
  *  Arguments to mount MSDOS filesystems.
  */
@@ -282,7 +276,6 @@ struct msdosfs_args {
 	int exflags;		/* mount flags				*/
 	uid_t exroot;		/* mapping for root uid			*/
 };
-#endif /* MSDOSFS */
 
 #ifdef KERNEL
 /*
