@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.17 2003/09/05 23:20:49 itojun Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.17.2.1 2004/06/14 18:00:48 tron Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.17 2003/09/05 23:20:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.17.2.1 2004/06/14 18:00:48 tron Exp $");
 
 #include "opt_inet.h"
 
@@ -335,10 +335,8 @@ udp6_output(in6p, m, addr6, control, p)
 			udp6->uh_sum = 0xffff;
 		}
 
-#ifdef IN6P_MINMTU
 		if (in6p->in6p_flags & IN6P_MINMTU)
 			flags |= IPV6_MINMTU;
-#endif
 
 		udp6stat.udp6s_opackets++;
 		error = ip6_output(m, in6p->in6p_outputopts, &in6p->in6p_route,
