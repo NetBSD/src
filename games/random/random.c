@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.4 1997/01/07 12:30:26 tls Exp $	*/
+/*	$NetBSD: random.c,v 1.5 1997/10/12 01:14:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -36,17 +36,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)random.c	8.6 (Berkeley) 6/1/94";
 #else
-static char rcsid[] = "$NetBSD: random.c,v 1.4 1997/01/07 12:30:26 tls Exp $";
+__RCSID("$NetBSD: random.c,v 1.5 1997/10/12 01:14:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ static char rcsid[] = "$NetBSD: random.c,v 1.4 1997/01/07 12:30:26 tls Exp $";
 #include <unistd.h>
 #include <limits.h>
 
+int  main __P((int, char **));
 void usage __P((void));
 
 int
@@ -68,14 +69,14 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	struct timeval tp;
 	double denom;
 	int ch, random_exit, selected, unbuffer_output;
 	char *ep;
 
+	denom = 0;
 	random_exit = unbuffer_output = 0;
-	while ((ch = getopt(argc, argv, "er")) != EOF)
+	while ((ch = getopt(argc, argv, "er")) != -1)
 		switch (ch) {
 		case 'e':
 			random_exit = 1;
