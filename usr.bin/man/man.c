@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.26 2001/02/19 23:03:49 cgd Exp $	*/
+/*	$NetBSD: man.c,v 1.27 2002/03/14 05:24:14 groo Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.26 2001/02/19 23:03:49 cgd Exp $");
+__RCSID("$NetBSD: man.c,v 1.27 2002/03/14 05:24:14 groo Exp $");
 #endif
 #endif /* not lint */
 
@@ -397,15 +397,39 @@ manual(page, tag, pg, pathsearch)
 	ENTRY *ep, *e_sufp, *e_tag;
 	TAG *missp, *sufp;
 	int anyfound, cnt, error, found;
-	char *p, buf[MAXPATHLEN];
+	char *p, buf[MAXPATHLEN], *escpage, *eptr;
+	static const char escglob[] = "\\~?*{}[]";
 
 	anyfound = 0;
 	buf[0] = '*';
 
+	/*
+	 * Fixup page which may contain glob(3) special characters, e.g.
+	 * the famous "No man page for [" FAQ.
+	 */
+	if ((escpage = malloc((2 * strlen(page)) + 1)) == NULL) {
+		warn("malloc");
+		(void)cleanup();
+		exit(1);
+	}
+
+	p = page;
+	eptr = escpage;
+
+	while (*p) {
+		if (strchr(escglob, *p) != NULL) {
+			*eptr++ = '\\';
+			*eptr++ = *p++;
+		} else
+			*eptr++ = *p++;
+	}
+
+	*eptr = '\0';
+
 	/* For each element in the list... */
 	e_tag = tag == NULL ? NULL : tag->list.tqh_first;
 	for (; e_tag != NULL; e_tag = e_tag->q.tqe_next) {
-		(void)snprintf(buf, sizeof(buf), "%s/%s.*", e_tag->s, page);
+		(void)snprintf(buf, sizeof(buf), "%s/%s.*", e_tag->s, escpage);
 		if ((error = glob(buf,
 		    GLOB_APPEND | GLOB_BRACE | GLOB_NOSORT, NULL, pg)) != 0) {
 			if (error == GLOB_NOMATCH)
@@ -440,7 +464,7 @@ manual(page, tag, pg, pathsearch)
 			 * We just test for .0 first, it's fast and probably
 			 * going to hit.
 			 */
-			(void)snprintf(buf, sizeof(buf), "*/%s.0", page);
+			(void)snprintf(buf, sizeof(buf), "*/%s.0", escpage);
 			if (!fnmatch(buf, pg->gl_pathv[cnt], 0))
 				goto next;
 
@@ -449,7 +473,8 @@ manual(page, tag, pg, pathsearch)
 			for (found = 0;
 			    e_sufp != NULL; e_sufp = e_sufp->q.tqe_next) {
 				(void)snprintf(buf,
-				     sizeof(buf), "*/%s%s", page, e_sufp->s);
+				     sizeof(buf), "*/%s%s", escpage,
+				     e_sufp->s);
 				if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
 					found = 1;
 					break;
@@ -469,7 +494,8 @@ manual(page, tag, pg, pathsearch)
 					continue;
 				*p = '\0';
 				(void)snprintf(buf,
-				     sizeof(buf), "*/%s%s", page, e_sufp->s);
+				     sizeof(buf), "*/%s%s", escpage,
+				     e_sufp->s);
 				if (!fnmatch(buf, pg->gl_pathv[cnt], 0)) {
 					if (!f_where)
 						build_page(p + 1,
@@ -511,6 +537,8 @@ next:				anyfound = 1;
 		}
 		TAILQ_INSERT_TAIL(&missp->list, ep, q);
 	}
+
+	free(escpage);
 	return (anyfound);
 }
 
