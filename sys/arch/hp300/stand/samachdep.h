@@ -1,4 +1,4 @@
-/*	$NetBSD: samachdep.h,v 1.6 1996/06/26 17:44:37 thorpej Exp $	*/
+/*	$NetBSD: samachdep.h,v 1.7 1996/10/14 07:34:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -70,12 +70,10 @@
 
 extern	int cpuspeed, machineid;
 extern	int howto;
-extern	unsigned int bootdev;
+extern	int cons_scode;
+extern	u_int opendev;
+extern	u_int bootdev;
 extern	char *getmachineid();
-
-void	machdep_start_net __P((char *, int, char *, char *, char *));
-void	machdep_start_disk_tape __P((char *, int, char *, char *, char *));
-void	(*__machdep_start) __P((char *, int, char *, char *, char *));
 
 #define DELAY(n)	{ register int N = cpuspeed * (n); while (--N > 0); }
 
@@ -83,6 +81,15 @@ void	(*__machdep_start) __P((char *, int, char *, char *, char *));
 struct grfinfo {
 	int	grf_foo;
 };
+
+/*
+ * Switch we use to set punit in devopen.
+ */
+struct punitsw {
+	int	(*p_punit) __P((int, int, int *));
+};
+extern	struct punitsw punitsw[];
+extern	int npunit;
 
 extern	struct devsw devsw_net[];
 extern	int ndevs_net;
