@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/04/04 13:45:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/04 23:01:38 lukem Exp $
 #
 
 PROG=	installboot
@@ -10,11 +10,24 @@ WARNS?=	3
 CPPFLAGS+=	-I${.CURDIR}
 .PATH:		${.CURDIR}/arch
 
-# list of MACHINEs to build this version of installboot for.
+# list of MACHINEs to enable MD back-ends for
 #
 IB_MACHINES?=	alpha pmax sparc64 vax
 
 SRCS+=		${IB_MACHINES:S/$/.c/}
+
+
+# list of MACHINEs to enable the compat symlink /usr/mdec/installboot
+# XXX: eventually this should be done for all machines in ${IB_MACHINES}
+#
+COMPATLINKS?=	pmax
+afterinstall:
+.for l in ${COMPATLINKS}
+.if (${MACHINE} == ${l})
+	${INSTALL_SYMLINK} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
+	    ${BINDIR}/${PROG} /usr/mdec/${PROG}
+.endif
+.endfor
 
 
 regenmachines: mkmachines.awk Makefile
