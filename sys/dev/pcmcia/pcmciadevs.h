@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.138 2001/09/18 11:08:05 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.139 2001/09/29 13:59:37 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.138 2001/09/18 11:07:33 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.139 2001/09/29 13:59:16 augustss Exp 
  */
 /*$FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.8 2001/01/20 01:48:55 imp Exp $*/
 
@@ -547,6 +547,7 @@
 #define	PCMCIA_VENDOR_INTERSIL	-1	/* Intersil */
 #define	PCMCIA_VENDOR_SYNERGY21	-1	/* Synergy 21 */
 #define	PCMCIA_VENDOR_CNET	-1	/* CNet */
+#define	PCMCIA_VENDOR_EIGERLABS	-1	/* Eiger labs,Inc. */
 
 #define	PCMCIA_CIS_MEGAHERTZ_XJ2288	{ "MEGAHERTZ", "MODEM XJ2288", NULL, NULL }
 #define	PCMCIA_PRODUCT_MEGAHERTZ_XJ2288	-1
@@ -691,3 +692,10 @@
 #define	PCMCIA_CIS_GEMTEK_WLAN	{ "Intersil", "PRISM 2_5 PCMCIA ADAPTER", "ISL37300P", "Eval-RevA" }
 #define	PCMCIA_PRODUCT_GEMTEK_WLAN	-1
 #define	PCMCIA_STR_GEMTEK_WLAN	"GEMTEK Prism2_5 WaveLAN Card"
+/*
+ * vendor ID of EPX_AA2000 is Fujitsu (0x0004) and product ID is 0x2000, but
+ * it conflicts with Fujitsu Towa LA501 Ethernet.
+ */
+#define	PCMCIA_CIS_EIGERLABS_EPX_AA2000	{ "Eiger labs,Inc.", "EPX-AA2000 PC Sound Card", NULL, NULL }
+#define	PCMCIA_PRODUCT_EIGERLABS_EPX_AA2000	-1
+#define	PCMCIA_STR_EIGERLABS_EPX_AA2000	"EPX-AA2000 PC Sound Card"
