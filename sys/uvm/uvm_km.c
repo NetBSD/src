@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.76.4.4 2005/02/16 23:13:58 yamt Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.76.4.5 2005/02/18 10:09:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -105,10 +105,6 @@
  * object is equal to the size of kernel virtual address space (i.e. the
  * value "VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS").
  *
- * most kernel private memory lives in kernel_object.   the only exception
- * to this is for memory that belongs to submaps that must be protected
- * by splvm().  pages in these submaps are not assigned to an object.
- *
  * note that just because a kernel object spans the entire kernel virutal
  * address space doesn't mean that it has to be mapped into the entire space.
  * large chunks of a kernel object's space go unused either because
@@ -134,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76.4.4 2005/02/16 23:13:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.76.4.5 2005/02/18 10:09:40 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -327,6 +323,7 @@ uvm_km_init(start, end)
  * => if submap is non NULL we use that as the submap, otherwise we
  *	alloc a new map
  */
+
 struct vm_map *
 uvm_km_suballoc(map, min, max, size, flags, fixed, submap)
 	struct vm_map *map;
@@ -445,8 +442,8 @@ uvm_km_pgremove(startva, endva)
 
 
 /*
- * uvm_km_pgremove_intrsafe: like uvm_km_pgremove(), but for "intrsafe"
- *    maps
+ * uvm_km_pgremove_intrsafe: like uvm_km_pgremove(), but for non object backed
+ *    regions.
  *
  * => when you unmap a part of anonymous kernel memory you want to toss
  *    the pages right away.    (this is called from uvm_unmap_...).
@@ -489,7 +486,7 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
 
 	for (va = start; va < end; va += PAGE_SIZE) {
 		if (pmap_extract(pmap_kernel(), va, NULL)) {
-			panic("uvm_map_km_check_empty: has page mapped at %p",
+			panic("uvm_km_check_empty: has page mapped at %p",
 			    (const void *)va);
 		}
 		if (!intrsafe) {
@@ -500,7 +497,7 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
 			    va - vm_map_min(kernel_map));
 			simple_unlock(&uvm.kernel_object->vmobjlock);
 			if (pg) {
-				panic("uvm_map_km_check_empty: "
+				panic("uvm_km_check_empty: "
 				    "has page hashed at %p", (const void *)va);
 			}
 		}
@@ -511,7 +508,7 @@ uvm_km_check_empty(vaddr_t start, vaddr_t end, boolean_t intrsafe)
 /*
  * uvm_km_alloc: allocate an area of kernel memory.
  *
- * => NOTE: we can return NULL even if we can wait if there is not enough
+ * => NOTE: we can return 0 even if we can wait if there is not enough
  *	free VM space in the map... caller should be prepared to handle
  *	this case.
  * => we return KVA of memory allocated
