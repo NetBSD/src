@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: adisasm - Application-level disassembler routines
- *              $Revision: 51 $
+ *              $Revision: 55 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2003, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -134,11 +134,7 @@
 
 
 ACPI_PARSE_OBJECT       *AcpiGbl_ParsedNamespaceRoot;
-ACPI_PARSE_OBJECT       *root;
-UINT8                   *AmlStart;
-UINT32                  AmlLength;
-UINT8                   *DsdtPtr;
-UINT32                  DsdtLength;
+
 
 #ifndef _ACPI_ASL_COMPILER
 BOOLEAN
@@ -206,8 +202,8 @@ AdGenerateFilename (
     char                    *Prefix,
     char                    *TableId)
 {
-    NATIVE_UINT              i;
-    NATIVE_UINT              j;
+    ACPI_NATIVE_UINT         i;
+    ACPI_NATIVE_UINT         j;
 
 
     for (i = 0; Prefix[i]; i++)
@@ -241,14 +237,14 @@ AdGenerateFilename (
  *
  ******************************************************************************/
 
-NATIVE_INT
+ACPI_NATIVE_INT
 AdWriteBuffer (
     char                *Filename,
     char                *Buffer,
     UINT32              Length)
 {
     FILE                *fp;
-    NATIVE_INT          Actual;
+    ACPI_NATIVE_INT     Actual;
 
 
     fp = fopen (Filename, "wb");
@@ -286,10 +282,8 @@ AdWriteTable (
     char                    *Filename;
 
 
-
     Filename = AdGenerateFilename (TableName, OemTableId);
-    AdWriteBuffer (Filename,
-            (char *) Table, Length);
+    AdWriteBuffer (Filename, (char *) Table, Length);
 
     AcpiOsPrintf ("Table [%s] written to \"%s\"\n", TableName, Filename);
 }
@@ -454,7 +448,6 @@ FlSplitInputPathname (
 }
 
 
-
 /******************************************************************************
  *
  * FUNCTION:    AdAmlDisassemble
@@ -479,15 +472,16 @@ AdAmlDisassemble (
     ACPI_STATUS             Status;
     char                    *DisasmFilename = NULL;
     FILE                    *File = NULL;
+    ACPI_TABLE_HEADER       *Table;
 
 
     /*
-     * AML Input:
-     * Either from a file, or via GetTables (memory or registry)
+     * Input:  AML Code from either a file,
+     *         or via GetTables (memory or registry)
      */
     if (Filename)
     {
-        Status = AcpiDbLoadAcpiTable (Filename);
+        Status = AcpiDbGetTableFromFile (Filename, &Table);
         if (ACPI_FAILURE (Status))
         {
             return Status;
@@ -495,7 +489,7 @@ AdAmlDisassemble (
     }
     else
     {
-        Status = AdGetTables (Filename, GetAllTables);
+        Status = AdGetLocalTables (Filename, GetAllTables);
         if (ACPI_FAILURE (Status))
         {
             AcpiOsPrintf ("Could not get ACPI tables, %s\n",
@@ -508,13 +502,16 @@ AdAmlDisassemble (
             return AE_OK;
         }
 
+        /* Obtained the local tables, just disassmeble the DSDT */
+
+        Table = AcpiGbl_DSDT;
         AcpiOsPrintf ("\nDisassembly of DSDT\n");
         Prefix = AdGenerateFilename ("dsdt", AcpiGbl_DSDT->OemTableId);
     }
 
     /*
-     * ASL Output:
-     * Redirect to a file if requested
+     * Output:  ASL code.
+     *          Redirect to a file if requested
      */
     if (OutToFile)
     {
@@ -539,7 +536,7 @@ AdAmlDisassemble (
 
     /* Always parse the tables, only option is what to display */
 
-    Status = AdParseTables ();
+    Status = AdParseTable (Table);
     if (ACPI_FAILURE (Status))
     {
         AcpiOsPrintf ("Could not parse ACPI tables, %s\n",
@@ -551,7 +548,7 @@ AdAmlDisassemble (
 
     if (AcpiGbl_DbOpt_disasm)
     {
-        AdDisplayTables (Filename);
+        AdDisplayTables (Filename, Table);
         fprintf (stderr, "Disassembly completed, written to \"%s\"\n", DisasmFilename);
     }
 
@@ -588,6 +585,7 @@ AdCreateTableHeader (
 {
     time_t                  Timer;
 
+
     time (&Timer);
 
     AcpiOsPrintf ("/*\n * Intel ACPI Component Architecture\n");
@@ -595,8 +593,8 @@ AdCreateTableHeader (
     AcpiOsPrintf (" *\n * Disassembly of %s, %s */\n", Filename, ctime (&Timer));
 
     AcpiOsPrintf (
-        "DefinitionBlock (\"DSDT.aml\", \"%4.4s\", %hd, \"%.6s\", \"%.8s\", %d)\n",
-        Table->Signature, Table->Revision,
+        "DefinitionBlock (\"%4.4s.aml\", \"%4.4s\", %hd, \"%.6s\", \"%.8s\", %d)\n",
+        Table->Signature, Table->Signature, Table->Revision,
         Table->OemId, Table->OemTableId, Table->OemRevision);
 }
 
@@ -615,94 +613,37 @@ AdCreateTableHeader (
 
 ACPI_STATUS
 AdDisplayTables (
-    char                    *Filename)
+    char                    *Filename,
+    ACPI_TABLE_HEADER       *Table)
 {
 
 
-    if (!AcpiGbl_DSDT || !AcpiGbl_ParsedNamespaceRoot)
+    if (!AcpiGbl_ParsedNamespaceRoot)
     {
         return AE_NOT_EXIST;
     }
 
-
     if (!AcpiGbl_DbOpt_verbose)
     {
-        AdCreateTableHeader (Filename, AcpiGbl_DSDT);
+        AdCreateTableHeader (Filename, Table);
     }
 
     AcpiDmDisassemble (NULL, AcpiGbl_ParsedNamespaceRoot, ACPI_UINT32_MAX);
 
     if (AcpiGbl_DbOpt_verbose)
     {
-        AcpiOsPrintf ("\n\nDSDT Header:\n");
-        AcpiUtDumpBuffer ((UINT8 *) AcpiGbl_DSDT, sizeof (ACPI_TABLE_HEADER),
+        AcpiOsPrintf ("\n\nTable Header:\n");
+        AcpiUtDumpBuffer ((UINT8 *) Table, sizeof (ACPI_TABLE_HEADER),
             DB_BYTE_DISPLAY, ACPI_UINT32_MAX);
 
-        AcpiOsPrintf ("DSDT Body (Length 0x%X)\n", AmlLength);
-        AcpiUtDumpBuffer ((UINT8 *) AmlStart, AmlLength,
+        AcpiOsPrintf ("Table Body (Length 0x%X)\n", Table->Length);
+        AcpiUtDumpBuffer (((UINT8 *) Table + sizeof (ACPI_TABLE_HEADER)), Table->Length,
             DB_BYTE_DISPLAY, ACPI_UINT32_MAX);
     }
 
     return AE_OK;
 }
 
-
-/******************************************************************************
- *
- * FUNCTION:    AdLoadDsdt
- *
- * PARAMETERS:  fp                  - Input file
- *              seekable            - can seek on the input file?
- *              DsdtPtr             - Where pointer to the dsdt is returned
- *              DsdtLength          - Where dsdt length is returned
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Load the DSDT from the file pointer
- *
- *****************************************************************************/
-
-ACPI_STATUS
-AdLoadDsdt (
-    FILE                    *fp,
-    int                     seekable,
-    UINT8                   **DsdtPtr,
-    UINT32                  *DsdtLength)
-{
-    ACPI_TABLE_HEADER       dsdt_hdr;
-    UINT8                   *AmlStart;
-    UINT32                   AmlLength;
-
-
-    if (fread(&dsdt_hdr, 1, sizeof (dsdt_hdr), fp) == sizeof (dsdt_hdr))
-    {
-        *DsdtLength = dsdt_hdr.Length;
-
-        if (*DsdtLength)
-        {
-            *DsdtPtr = (UINT8*) malloc ((size_t) *DsdtLength);
-
-            if (*DsdtPtr)
-            {
-                AmlStart = *DsdtPtr + sizeof (dsdt_hdr);
-                AmlLength = *DsdtLength - sizeof (dsdt_hdr);
-
-                memcpy (*DsdtPtr, &dsdt_hdr, sizeof (dsdt_hdr));
-                if ((UINT32) fread (AmlStart, 1, (size_t) AmlLength, fp) == AmlLength)
-                {
-                    return AE_OK;
-                }
-
-                free(*DsdtPtr);
-            }
-        }
-    }
-
-    *DsdtPtr = NULL;
-    *DsdtLength = 0;
-
-    return AE_NO_ACPI_TABLES;
-}
 
 
 /******************************************************************************
@@ -759,7 +700,6 @@ AdDeferredParse (
     {
         return_ACPI_STATUS (Status);
     }
-
 
     /* Parse the method */
 
@@ -906,9 +846,9 @@ AdParseDeferredOps (
 
 /******************************************************************************
  *
- * FUNCTION:    AdGetTables
+ * FUNCTION:    AdGetLocalTables
  *
- * PARAMETERS:  Filename        - Optional filename
+ * PARAMETERS:  
  *
  * RETURN:      None
  *
@@ -917,11 +857,10 @@ AdParseDeferredOps (
  *****************************************************************************/
 
 ACPI_STATUS
-AdGetTables (
+AdGetLocalTables (
     char                    *Filename,
     BOOLEAN                 GetAllTables)
 {
-    FILE                    *fp;
     ACPI_STATUS             Status;
     ACPI_TABLE_HEADER       TableHeader;
     ACPI_TABLE_HEADER       *NewTable;
@@ -929,93 +868,87 @@ AdGetTables (
     UINT32                  PointerSize;
 
 
-    if (Filename)
-    {
-        fprintf (stderr, "Loading DSDT from file %s\n", Filename);
-        fp = fopen (Filename, "rb");
-        if (!fp)
-        {
-            printf ("Couldn't open %s\n", Filename);
-            return AE_ERROR;
-        }
 
-        Status = AdLoadDsdt (fp, (fp != stdin), &DsdtPtr, &DsdtLength);
-        if (fp != stdin)
-        {
-            fclose(fp);
-        }
-    }
-    else
+    if (GetAllTables)
     {
-        if (GetAllTables)
-        {
-            ACPI_STRNCPY (TableHeader.Signature, "RSDT", 4);
-            AcpiOsTableOverride (&TableHeader, &NewTable);
+        ACPI_STRNCPY (TableHeader.Signature, "RSDT", 4);
+        AcpiOsTableOverride (&TableHeader, &NewTable);
 
 #if ACPI_MACHINE_WIDTH != 64
 
-            if (!ACPI_STRNCMP (NewTable->Signature, "RSDT", 4))
-            {
-                PointerSize = sizeof (UINT32);
-            }
-            else
+        if (!ACPI_STRNCMP (NewTable->Signature, "RSDT", 4))
+        {
+            PointerSize = sizeof (UINT32);
+        }
+        else
 #endif
-            {
-                PointerSize = sizeof (UINT64);
-            }
-
-            /*
-             * Determine the number of tables pointed to by the RSDT/XSDT.
-             * This is defined by the ACPI Specification to be the number of
-             * pointers contained within the RSDT/XSDT.  The size of the pointers
-             * is architecture-dependent.
-             */
-            NumTables = (NewTable->Length - sizeof (ACPI_TABLE_HEADER)) / PointerSize;
-            AcpiOsPrintf ("There are %d tables defined in the %4.4s\n\n",
-                NumTables, NewTable->Signature);
-
-            /* Get the FADT */
-
-            ACPI_STRNCPY (TableHeader.Signature, "FADT", 4);
-            AcpiOsTableOverride (&TableHeader, &NewTable);
-            if (NewTable)
-            {
-                AcpiGbl_FADT = (void *) NewTable;
-                AdWriteTable (NewTable, NewTable->Length, 
-                    "FADT", NewTable->OemTableId);
-            }
-            AcpiOsPrintf ("\n");
-
-            /* Get the FACS */
-
-            ACPI_STRNCPY (TableHeader.Signature, "FACS", 4);
-            AcpiOsTableOverride (&TableHeader, &NewTable);
-            if (NewTable)
-            {
-                AcpiGbl_FACS = (void *) NewTable;
-                AdWriteTable (NewTable, AcpiGbl_FACS->Length, 
-                    "FACS", AcpiGbl_FADT->Header.OemTableId);
-            }
-            AcpiOsPrintf ("\n");
+        {
+            PointerSize = sizeof (UINT64);
         }
 
-        /* Always get the DSDT */
+        /*
+         * Determine the number of tables pointed to by the RSDT/XSDT.
+         * This is defined by the ACPI Specification to be the number of
+         * pointers contained within the RSDT/XSDT.  The size of the pointers
+         * is architecture-dependent.
+         */
+        NumTables = (NewTable->Length - sizeof (ACPI_TABLE_HEADER)) / PointerSize;
+        AcpiOsPrintf ("There are %d tables defined in the %4.4s\n\n",
+            NumTables, NewTable->Signature);
 
-        ACPI_STRNCPY (TableHeader.Signature, DSDT_SIG, 4);
+        /* Get the FADT */
+
+        ACPI_STRNCPY (TableHeader.Signature, "FADT", 4);
         AcpiOsTableOverride (&TableHeader, &NewTable);
         if (NewTable)
         {
-            Status = AE_OK;
-            AcpiGbl_DSDT = NewTable;
-            DsdtPtr = (UINT8 *) AcpiGbl_DSDT;
-            DsdtLength = AcpiGbl_DSDT->Length;
-            AdWriteTable (AcpiGbl_DSDT, AcpiGbl_DSDT->Length, 
-                "DSDT", AcpiGbl_DSDT->OemTableId);
+            AcpiGbl_FADT = (void *) NewTable;
+            AdWriteTable (NewTable, NewTable->Length,
+                "FADT", NewTable->OemTableId);
         }
-        else
+        AcpiOsPrintf ("\n");
+
+        /* Get the FACS */
+
+        ACPI_STRNCPY (TableHeader.Signature, "FACS", 4);
+        AcpiOsTableOverride (&TableHeader, &NewTable);
+        if (NewTable)
         {
-            fprintf (stderr, "Could not obtain DSDT\n");
-            Status = AE_NO_ACPI_TABLES;
+            AcpiGbl_FACS = (void *) NewTable;
+            AdWriteTable (NewTable, AcpiGbl_FACS->Length,
+                "FACS", AcpiGbl_FADT->Header.OemTableId);
+        }
+        AcpiOsPrintf ("\n");
+    }
+
+    /* Always get the DSDT */
+
+    ACPI_STRNCPY (TableHeader.Signature, DSDT_SIG, 4);
+    AcpiOsTableOverride (&TableHeader, &NewTable);
+    if (NewTable)
+    {
+        Status = AE_OK;
+        AcpiGbl_DSDT = NewTable;
+        AdWriteTable (AcpiGbl_DSDT, AcpiGbl_DSDT->Length,
+            "DSDT", AcpiGbl_DSDT->OemTableId);
+    }
+    else
+    {
+        fprintf (stderr, "Could not obtain DSDT\n");
+        Status = AE_NO_ACPI_TABLES;
+    }
+
+    AcpiOsPrintf ("\n");
+
+    /* Get all SSDTs */
+
+    ACPI_STRNCPY (TableHeader.Signature, SSDT_SIG, 4);
+    Status = AcpiOsTableOverride (&TableHeader, &NewTable);
+    if (NewTable)
+    {
+        while (NewTable)
+        {
+            Status = AcpiOsTableOverride (&TableHeader, &NewTable);
         }
     }
 
@@ -1024,7 +957,7 @@ AdGetTables (
 
 /******************************************************************************
  *
- * FUNCTION:    AdParseTables
+ * FUNCTION:    AdParseTable
  *
  * PARAMETERS:  None
  *
@@ -1035,26 +968,27 @@ AdGetTables (
  *****************************************************************************/
 
 ACPI_STATUS
-AdParseTables (
-    void)
+AdParseTable (
+    ACPI_TABLE_HEADER       *Table)
 {
     ACPI_STATUS             Status = AE_OK;
     ACPI_WALK_STATE         *WalkState;
     ACPI_TABLE_DESC         TableDesc;
+    UINT8                   *AmlStart;
+    UINT32                  AmlLength;
 
 
-    if (!AcpiGbl_DSDT)
+    if (!Table)
     {
         return AE_NOT_EXIST;
     }
 
     /* Pass 1:  Parse everything except control method bodies */
 
-    fprintf (stderr, "Pass 1 parse\n");
+    fprintf (stderr, "Pass 1 parse of [%4.4s]\n", (char *) Table->Signature);
 
-    DsdtLength = AcpiGbl_DSDT->Length;
-    AmlLength  = DsdtLength  - sizeof (ACPI_TABLE_HEADER);
-    AmlStart   = ((UINT8 *) AcpiGbl_DSDT + sizeof (ACPI_TABLE_HEADER));
+    AmlLength  = Table->Length  - sizeof (ACPI_TABLE_HEADER);
+    AmlStart   = ((UINT8 *) Table + sizeof (ACPI_TABLE_HEADER));
 
     /* Create the root object */
 
@@ -1067,14 +1001,14 @@ AdParseTables (
     /* Create and initialize a new walk state */
 
     WalkState = AcpiDsCreateWalkState (TABLE_ID_DSDT,
-                                    AcpiGbl_ParsedNamespaceRoot, NULL, NULL);
+                        AcpiGbl_ParsedNamespaceRoot, NULL, NULL);
     if (!WalkState)
     {
         return (AE_NO_MEMORY);
     }
 
-    Status = AcpiDsInitAmlWalk (WalkState, AcpiGbl_ParsedNamespaceRoot, NULL, AmlStart,
-                    AmlLength, NULL, NULL, 1);
+    Status = AcpiDsInitAmlWalk (WalkState, AcpiGbl_ParsedNamespaceRoot, 
+                NULL, AmlStart, AmlLength, NULL, NULL, 1);
     if (ACPI_FAILURE (Status))
     {
         return (Status);
@@ -1092,7 +1026,7 @@ AdParseTables (
 
     TableDesc.AmlStart = AmlStart;
     TableDesc.AmlLength = AmlLength;
-    fprintf (stderr, "Pass 2 parse\n");
+    fprintf (stderr, "Pass 2 parse of [%4.4s]\n", (char *) Table->Signature);
 
     Status = AcpiNsOneCompleteParse (2, &TableDesc);
     if (ACPI_FAILURE (Status))
