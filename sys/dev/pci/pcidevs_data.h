@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.298 2001/01/26 08:04:41 rh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.299 2001/01/26 10:04:13 rh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.294 2001/01/26 08:02:46 rh Exp 
+ *	NetBSD: pcidevs,v 1.295 2001/01/26 10:03:47 rh Exp 
  */
 
 /*
@@ -4754,6 +4754,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Toshiba America",
 	    "TC35856F ATM (\"Meteor\")",
+	},
+	{
+	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_PROTEGE,
+	    0,
+	    "Toshiba",
+	    "Protege Notebook",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA2, PCI_PRODUCT_TOSHIBA2_HOST,
