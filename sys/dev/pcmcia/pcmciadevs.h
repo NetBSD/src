@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.173 2002/06/17 07:40:31 martin Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.174 2002/07/23 10:35:28 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.173 2002/06/17 07:38:42 martin Exp 
+ *	NetBSD: pcmciadevs,v 1.174 2002/07/23 10:35:06 mjl Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -667,6 +667,7 @@
 #define	PCMCIA_VENDOR_CNET	-1	/* CNet */
 #define	PCMCIA_VENDOR_DIGITAL	-1	/* Digital Equipment Corporation */
 #define	PCMCIA_VENDOR_DLINK	-1	/* D-Link */
+#define	PCMCIA_VENDOR_DYNALINK	-1	/* DynaLink */
 #define	PCMCIA_VENDOR_EIGERLABS	-1	/* Eiger labs,Inc. */
 #define	PCMCIA_VENDOR_EPSON	-1	/* Seiko Epson Corporation */
 #define	PCMCIA_VENDOR_EXP	-1	/* EXP Computer Inc */
@@ -746,6 +747,10 @@
 #define	PCMCIA_CIS_DLINK_DFE670TXD	{ "D-Link", "DFE-670TXD", NULL, NULL }
 #define	PCMCIA_PRODUCT_DLINK_DFE670TXD	-1
 #define	PCMCIA_STR_DLINK_DFE670TXD	"D-Link DFE-670TXD"
+#define	PCMCIA_CIS_DYNALINK_L10C	{ "DYNALINK", "L10C", NULL, NULL }
+#define	PCMCIA_PRODUCT_DYNALINK_L10C	-1
+#define	PCMCIA_STR_DYNALINK_L10C	"Dynalink L10C"
+
 /*
  * vendor ID of EPX_AA2000 is Fujitsu (0x0004) and product ID is 0x2000, but
  * it conflicts with Fujitsu Towa LA501 Ethernet.
