@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.11 1997/06/29 18:57:45 christos Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.12 1997/07/18 22:48:31 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -551,7 +551,7 @@ logmsg(pri, msg, from, flags)
 			(void)strncpy(f->f_lasttime, timestamp, 15);
 			f->f_prevcount++;
 			dprintf("msg repeated %d times, %ld sec of %d\n",
-			    f->f_prevcount, now - f->f_time,
+			    f->f_prevcount, (long)(now - f->f_time),
 			    repeatinterval[f->f_repeatcount]);
 			/*
 			 * If domark would have logged this by now,
