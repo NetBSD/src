@@ -1,7 +1,7 @@
-/*	$NetBSD: pchb.c,v 1.18 2000/05/11 16:44:14 drochner Exp $	*/
+/*	$NetBSD: pchb.c,v 1.19 2000/10/27 17:47:44 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -55,6 +55,9 @@
 #define PCISET_BUSCONFIG_REG	0x48
 #define PCISET_BRIDGE_NUMBER(reg)	(((reg) >> 8) & 0xff)
 #define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
+
+/* XXX should be in dev/ic/i82443reg.h */
+#define	I82443BX_SDRAMC_REG	0x76
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
@@ -115,6 +118,28 @@ pchbattach(parent, self, aux)
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_INTEL:
 		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_INTEL_82443BX_AGP:
+		case PCI_PRODUCT_INTEL_82443BX_NOAGP:
+			/*
+			 * BIOS BUG WORKAROUND!  The 82443BX
+			 * datasheet indicates that the only
+			 * legal setting for the "Idle/Pipeline
+			 * DRAM Leadoff Timing (IPLDT)" parameter
+			 * (bits 9:8) is 01.  Unfortunately, some
+			 * BIOSs do not set these bits properly.
+			 */
+			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+			    I82443BX_SDRAMC_REG);
+			if ((bcreg & 0x0300) != 0x0100) {
+				printf("%s: fixing Idle/Pipeline DRAM "
+				    "Leadoff Timing\n", self->dv_xname);
+				bcreg &= ~0x0300;
+				bcreg |=  0x0100;
+				pci_conf_write(pa->pa_pc, pa->pa_tag,
+				    I82443BX_SDRAMC_REG, bcreg);
+			}
+			break;
+
 		case PCI_PRODUCT_INTEL_PCI450_PB:
 			bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					      PCISET_BUSCONFIG_REG);
