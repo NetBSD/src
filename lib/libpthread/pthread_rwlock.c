@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.7 2004/01/09 18:08:28 cl Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.8 2004/08/03 11:40:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.7 2004/01/09 18:08:28 cl Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.8 2004/08/03 11:40:24 yamt Exp $");
 
 #include <errno.h>
 
@@ -353,7 +353,7 @@ pthread_rwlock_timedwrlock(pthread_rwlock_t *rwlock,
 		rwlock->ptr_writer = self;
 	pthread_spinunlock(self, &rwlock->ptr_interlock);
 
-	return 0;
+	return retval;
 }
 
 
