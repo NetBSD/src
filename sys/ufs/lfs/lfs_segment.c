@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.145 2003/12/17 07:14:03 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.146 2003/12/17 10:38:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.145 2003/12/17 07:14:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.146 2003/12/17 10:38:39 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -397,6 +397,7 @@ lfs_vflush(struct vnode *vp)
 	s = splbio();
 	simple_lock(&global_v_numoutput_slock);
 	while (vp->v_numoutput > 0) {
+		vp->v_flag |= VBWAIT;
 		ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf2", 0,
 			&global_v_numoutput_slock);
 	}
