@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.11 1998/06/08 03:05:14 lukem Exp $	*/
+/*	$NetBSD: util.h,v 1.12 1998/07/26 22:01:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -77,7 +77,7 @@ int	opendisk __P((const char *, int, char *, size_t, int));
 int	pidlock __P((const char *, int, pid_t *, const char *));
 int	ttylock __P((const char *, int, pid_t *));
 int	ttyunlock __P((const char *));
-int	ttyaction __P((char *tty, char *act, char *user));
+int	ttyaction __P((const char *, const char *, const char *));
 struct iovec;
 char   *ttymsg __P((struct iovec *, int, const char *, int));
 __END_DECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.c,v 1.14 1998/07/26 15:23:39 mycroft Exp $	*/
+/*	$NetBSD: lock.c,v 1.15 1998/07/26 22:00:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lock.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: lock.c,v 1.14 1998/07/26 15:23:39 mycroft Exp $");
+__RCSID("$NetBSD: lock.c,v 1.15 1998/07/26 22:00:24 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -82,7 +82,7 @@ void	hi __P((int));
 int	main __P((int, char **));
 void	quit __P((int));
 #ifdef SKEY
-int	skey_auth __P((char *));
+int	skey_auth __P((const char *));
 #endif
 
 struct timeval	timeout;
@@ -224,9 +224,9 @@ main(argc, argv)
  */
 int
 skey_auth(user)
-	char *user;
+	const char *user;
 {
-	char s[128], *ask, *skey_keyinfo __P((char *name));
+	char s[128], *ask;
 	int ret = 0;
 
 	if (!skey_haskey(user) && (ask = skey_keyinfo(user))) {

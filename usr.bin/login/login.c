@@ -1,4 +1,4 @@
-/*     $NetBSD: login.c,v 1.38 1998/07/11 08:12:51 mrg Exp $       */
+/*     $NetBSD: login.c,v 1.39 1998/07/26 22:04:37 mycroft Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login.c,v 1.38 1998/07/11 08:12:51 mrg Exp $");
+__RCSID("$NetBSD: login.c,v 1.39 1998/07/26 22:04:37 mycroft Exp $");
 #endif /* not lint */
 
 /*
@@ -94,7 +94,7 @@ void	 motd __P((void));
 int	 rootterm __P((char *));
 void	 sigint __P((int));
 void	 sleepexit __P((int));
-char	*stypeof __P((char *));
+const	 char *stypeof __P((const char *));
 void	 timedout __P((int));
 #if defined(KERBEROS) || defined(KERBEROS5)
 int	 klogin __P((struct passwd *, char *, char *, char *));
@@ -145,7 +145,8 @@ main(argc, argv)
 	uid_t uid, saved_uid;
 	gid_t saved_gid, saved_gids[NGROUPS_MAX];
 	int nsaved_gids;
-	char *domain, *p, *salt, *ttyn, *pwprompt;
+	char *domain, *p, *ttyn, *pwprompt;
+	const char *salt;
 	char tbuf[MAXPATHLEN + 2], tname[sizeof(_PATH_TTY) + 10];
 	char localhost[MAXHOSTNAMELEN + 1];
 	int need_chpass, require_chpass;
@@ -754,9 +755,9 @@ badlogin(name)
 #undef	UNKNOWN
 #define	UNKNOWN	"su"
 
-char *
+const char *
 stypeof(ttyid)
-	char *ttyid;
+	const char *ttyid;
 {
 	struct ttyent *t;
 

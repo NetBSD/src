@@ -1,4 +1,4 @@
-/*	$NetBSD: aux.c,v 1.8 1997/10/19 19:27:40 mycroft Exp $	*/
+/*	$NetBSD: aux.c,v 1.9 1998/07/26 22:07:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: aux.c,v 1.8 1997/10/19 19:27:40 mycroft Exp $");
+__RCSID("$NetBSD: aux.c,v 1.9 1998/07/26 22:07:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ static char *save2str __P((char *, char *));
  */
 char *
 savestr(str)
-	char *str;
+	const char *str;
 {
 	char *new;
 	int size = strlen(str) + 1;
