@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.6 2004/08/07 12:02:36 rearnsha Exp $	*/
+/*	$NetBSD: undefined.h,v 1.7 2004/08/07 12:05:54 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -54,6 +54,7 @@ typedef int (*undef_handler_t) __P((unsigned int, unsigned int, trapframe_t *, i
 
 #define FPA_COPROC	1
 #define FPA_COPROC2	2
+#define SYSTEM_COPROC	15
 #define MAX_COPROCS	16
 
 /* 
