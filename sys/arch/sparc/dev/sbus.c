@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.27 1998/08/21 14:07:37 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.28 1998/08/30 21:26:46 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -374,8 +374,8 @@ sbus_attach(sc, busname, busnode, bp, specials)
 	/*
 	 * Collect address translations from the OBP.
 	 */
-	error = getpropA(busnode, "ranges", sizeof(struct rom_range),
-			 &sc->sc_nrange, (void **)&sc->sc_range);
+	error = getprop(busnode, "ranges", sizeof(struct rom_range),
+			&sc->sc_nrange, (void **)&sc->sc_range);
 	switch (error) {
 	case 0:
 		break;
@@ -447,7 +447,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	int n;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	error = getpropA(node, "name", 1, &n, (void **)&sa->sa_name);
+	error = getprop(node, "name", 1, &n, (void **)&sa->sa_name);
 	if (error != 0)
 		return (error);
 	sa->sa_name[n] = '\0';
@@ -457,8 +457,8 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	sa->sa_node = node;
 	sa->sa_bp = bp;
 
-	error = getpropA(node, "reg", sizeof(struct sbus_reg),
-			 &sa->sa_nreg, (void **)&sa->sa_reg);
+	error = getprop(node, "reg", sizeof(struct sbus_reg),
+			&sa->sa_nreg, (void **)&sa->sa_reg);
 	if (error != 0) {
 		char buf[32];
 		if (error != ENOENT ||
@@ -479,7 +479,7 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
-	error = getpropA(node, "address", sizeof(u_int32_t),
+	error = getprop(node, "address", sizeof(u_int32_t),
 			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
 	if (error != 0 && error != ENOENT)
 		return (error);
@@ -641,7 +641,7 @@ sbus_get_intr(sc, node, ipp, np)
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
-	if (getpropA(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
+	if (getprop(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
 		/* Change format to an `struct sbus_intr' array */
 		struct sbus_intr *ip;
 		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
@@ -660,8 +660,8 @@ sbus_get_intr(sc, node, ipp, np)
 	 * Fall back on `intr' property.
 	 */
 	*ipp = NULL;
-	error = getpropA(node, "intr", sizeof(struct sbus_intr),
-			 np, (void **)ipp);
+	error = getprop(node, "intr", sizeof(struct sbus_intr),
+			np, (void **)ipp);
 	switch (error) {
 	case 0:
 		for (n = *np; n-- > 0;) {
