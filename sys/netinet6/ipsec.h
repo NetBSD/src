@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.28 2002/06/12 01:47:35 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.29 2002/06/12 17:56:45 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -69,7 +69,8 @@ struct secpolicyindex {
 
 /* Security Policy Data Base */
 struct secpolicy {
-	LIST_ENTRY(secpolicy) chain;
+	TAILQ_ENTRY(secpolicy) tailq;	/* all SPD entries, both pcb/table */
+	LIST_ENTRY(secpolicy) chain;	/* SPD entries on table */
 
 	u_int8_t dir;			/* direction of packet flow */
 	int readonly;			/* write prohibited */
@@ -303,7 +304,7 @@ extern int ipsec_debug;
 
 #ifdef INET
 extern struct ipsecstat ipsecstat;
-extern struct secpolicy ip4_def_policy;
+extern struct secpolicy *ip4_def_policy;
 extern int ip4_esp_trans_deflev;
 extern int ip4_esp_net_deflev;
 extern int ip4_ah_trans_deflev;
@@ -316,7 +317,7 @@ extern int ip4_ipsec_ecn;
 
 #ifdef INET6
 extern struct ipsecstat ipsec6stat;
-extern struct secpolicy ip6_def_policy;
+extern struct secpolicy *ip6_def_policy;
 extern int ip6_esp_trans_deflev;
 extern int ip6_esp_net_deflev;
 extern int ip6_ah_trans_deflev;
