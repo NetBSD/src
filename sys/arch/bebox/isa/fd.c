@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1998/02/02 05:54:21 sakamoto Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1998/06/09 00:09:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -123,6 +123,7 @@ struct fdc_softc {
 
 	bus_space_tag_t sc_iot;		/* ISA i/o space identifier */
 	bus_space_handle_t   sc_ioh;	/* ISA io handle */
+	isa_chipset_tag_t sc_ic;	/* ISA chipset info */
 
 	int sc_drq;
 
@@ -364,6 +365,7 @@ fdcattach(parent, self, aux)
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
+	fdc->sc_ic = ia->ia_ic;
 
 	fdc->sc_drq = ia->ia_drq;
 	fdc->sc_state = DEVIDLE;
@@ -376,7 +378,7 @@ fdcattach(parent, self, aux)
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
 #endif
 
-	if (isa_dmamap_create(parent, fdc->sc_drq, FDC_MAXIOSIZE,
+	if (isa_dmamap_create(fdc->sc_ic, fdc->sc_drq, FDC_MAXIOSIZE,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't set up ISA DMA map\n",
 		    fdc->sc_dev.dv_xname);
@@ -1053,7 +1055,7 @@ loop:
 		at_dma(read, bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		       fdc->sc_drq);
 #else
-		isa_dmastart(fdc->sc_dev.dv_parent, fdc->sc_drq,
+		isa_dmastart(fdc->sc_ic, fdc->sc_drq,
 		    bp->b_data + fd->sc_skip, fd->sc_nbytes,
 		    NULL, read, BUS_DMA_NOWAIT);
 #endif
@@ -1124,7 +1126,7 @@ loop:
 #ifdef NEWCONFIG
 		at_dma_abort(fdc->sc_drq);
 #else
-		isa_dmaabort(fdc->sc_dev.dv_parent, fdc->sc_drq);
+		isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
 #endif
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
@@ -1141,7 +1143,7 @@ loop:
 #ifdef NEWCONFIG
 			at_dma_abort(fdc->sc_drq);
 #else
-			isa_dmaabort(fdc->sc_dev.dv_parent, fdc->sc_drq);
+			isa_dmaabort(fdc->sc_ic, fdc->sc_drq);
 #endif
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
@@ -1155,7 +1157,7 @@ loop:
 #ifdef NEWCONFIG
 		at_dma_terminate(fdc->sc_drq);
 #else
-		isa_dmadone(fdc->sc_dev.dv_parent, fdc->sc_drq);
+		isa_dmadone(fdc->sc_ic, fdc->sc_drq);
 #endif
 		if (fdc->sc_errors) {
 			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
