@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.25 2004/03/23 21:53:36 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.26 2004/03/23 21:55:23 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.25 2004/03/23 21:53:36 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.26 2004/03/23 21:55:23 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -661,7 +661,6 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 	}
 #endif
-	RF_ASSERT(i == totalNumNodes);
 
 	/*
          * Step 3. initialize the nodes
