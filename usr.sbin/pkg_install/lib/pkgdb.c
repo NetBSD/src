@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.3.2.1 1999/09/13 22:35:32 he Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.3.2.2 1999/12/20 23:46:46 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.3.2.1 1999/09/13 22:35:32 he Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.3.2.2 1999/12/20 23:46:46 he Exp $");
 #endif
 
 /*
@@ -131,6 +131,8 @@ pkgdb_retrieve(const char *key)
 	keyd.size = strlen(key) + 1;
 	errno = 0;		/* to be sure it's 0 if the key doesn't match anything */
 
+	vald.data = (void *)NULL;
+	vald.size = 0;
 	status = (pkgdbp->get) (pkgdbp, &keyd, &vald, 0);
 	if (status) {
 		vald.data = NULL;
