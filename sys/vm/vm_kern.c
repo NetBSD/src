@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_kern.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_kern.c,v 1.4 1993/05/20 03:59:25 cgd Exp $
+ *	$Id: vm_kern.c,v 1.5 1993/05/27 14:34:29 deraadt Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -363,8 +363,8 @@ kmem_malloc(map, size, canwait)
 	vm_page_t		m;
 	extern vm_object_t	kmem_object;
 
-	if (map != kmem_map && map != mb_map)
-		panic("kern_malloc_alloc: map != {kmem,mb}_map");
+	if (map != kmem_map && map != mb_map && map != buffer_map)
+		panic("kern_malloc_alloc: map != {kmem,mb,buffer}_map");
 
 	size = round_page(size);
 	addr = vm_map_min(map);
@@ -372,9 +372,7 @@ kmem_malloc(map, size, canwait)
 	if (vm_map_find(map, NULL, (vm_offset_t)0,
 			&addr, size, TRUE) != KERN_SUCCESS) {
 		if (canwait) { /* XXX -- then we should wait */
-			if (map == kmem_map)
-				panic("kmem_malloc: kmem_map too small (should wait)");
-			else if (map == mb_map)
+			if (map == mb_map)
 				panic("kmem_malloc: mb_map too small (should wait)");
 		}
 		return 0;
