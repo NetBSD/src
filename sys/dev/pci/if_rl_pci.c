@@ -1,4 +1,4 @@
-/* $NetBSD: if_rl_pci.c,v 1.3 2000/04/24 15:25:00 tsutsui Exp $ */
+/* $NetBSD: if_rl_pci.c,v 1.4 2000/04/25 14:16:47 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -325,7 +325,7 @@ rl_pci_attach(parent, self, aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	rl_read_eeprom(sc, (caddr_t)&eaddr, RL_EE_EADDR, 3, 0);
+	rl_read_eeprom(sc, (caddr_t)&eaddr, RL_EE_EADDR, 3, 1);
 
 	/*
 	 * A RealTek chip was detected. Inform the world.

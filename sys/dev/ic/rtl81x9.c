@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.2 2000/04/24 15:25:00 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.3 2000/04/25 14:16:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -122,6 +122,7 @@
 #endif
 
 #include <machine/bus.h>
+#include <machine/endian.h>
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
@@ -272,7 +273,13 @@ void rl_read_eeprom(sc, dest, off, cnt, swap)
 		rl_eeprom_getword(sc, off + i, &word);
 		ptr = (u_int16_t *)(dest + (i * 2));
 		if (swap)
-			*ptr = ntohs(word);
+		/*
+		 * EEPROM stores data in little endian and
+		 * rl_eeprom_getword() returns them in host's endian.
+		 * If caller requires byte-stream data, we should
+		 * revert them little endian.
+		 */
+			*ptr = htole16(word);
 		else
 			*ptr = word;
 	}
@@ -866,7 +873,7 @@ STATIC void rl_rxeof(sc)
 
 	while((CSR_READ_1(sc, RL_COMMAND) & RL_CMD_EMPTY_RXBUF) == 0) {
 		rxbufpos = sc->rl_cdata.rl_rx_buf + cur_rx;
-		rxstat = *(u_int32_t *)rxbufpos;
+		rxstat = le32toh(*(u_int32_t *)rxbufpos);
 
 		/*
 		 * Here's a totally undocumented fact for you. When the
