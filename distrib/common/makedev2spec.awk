@@ -1,4 +1,4 @@
-#	$NetBSD: makedev2spec.awk,v 1.2 2002/02/07 11:35:56 lukem Exp $
+#	$NetBSD: makedev2spec.awk,v 1.3 2002/03/31 01:09:44 bjh21 Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -183,8 +183,8 @@ function glob(g,  l, result) \
 		return g;
 	result = "";
 	gsub(/\./, "\\.", g);
-	gsub(/?/, ".", g);
-	gsub(/*/, ".*", g);
+	gsub(/\?/, ".", g);
+	gsub(/\*/, ".*", g);
 	g = "^" g "$";
 #print "glob() got a glob " g  >"/dev/stderr";
 	for (l in type) {
