@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.92 2000/11/15 00:10:59 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.93 2000/12/15 02:22:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.92 2000/11/15 00:10:59 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.93 2000/12/15 02:22:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1838,6 +1838,7 @@ doproxy(int argc, char *argv[])
 	cmdpos = strcspn(line, " \t");
 	if (cmdpos > 0)		/* remove leading "proxy " from input buffer */
 		memmove(line, line + cmdpos + 1, strlen(line) - cmdpos + 1);
+	argv[1] = c->c_name;
 	(*c->c_handler)(argc-1, argv+1);
 	if (connected) {
 		proxflag = 1;
