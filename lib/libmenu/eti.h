@@ -1,4 +1,4 @@
-/*	$NetBSD: eti.h,v 1.6 2000/11/07 10:59:27 blymn Exp $	*/
+/*	$NetBSD: eti.h,v 1.7 2001/02/26 01:21:06 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -45,5 +45,6 @@
 #define E_NOT_CONNECTED   (-11)
 #define E_REQUEST_DENIED  (-12)
 #define E_INVALID_FIELD   (-13)
+#define E_CURRENT         (-14)
 
 #endif /* !_ETI_H_ */
