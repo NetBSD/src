@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.3 2004/01/21 00:33:37 bjh21 Exp $ */
+/* $NetBSD: lpt.c,v 1.4 2004/01/22 01:18:54 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -576,8 +576,8 @@ lptclose(dev_t dev_id, int flags, int fmt, struct proc *p)
 int
 lptread(dev_t dev_id, struct uio *uio, int ioflag)
 {
+	size_t len = 0;
 	int error = 0;
-	int len = 0;
 	struct device * dev = device_lookup(&lpt_cd, LPTUNIT(dev_id));
 	struct lpt_softc * sc = (struct lpt_softc *) dev;
 
