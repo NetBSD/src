@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.9 1997/09/19 13:53:28 leo Exp $ */
+/*	$NetBSD: param.h,v 1.10 1997/10/14 09:20:25 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.

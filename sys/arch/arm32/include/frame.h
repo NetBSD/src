@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.4 1997/02/10 03:26:28 mark Exp $ */
+/*	$NetBSD: frame.h,v 1.5 1997/10/14 09:20:15 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.

@@ -1,4 +1,4 @@
-/* $NetBSD: endian.h,v 1.4 1997/10/09 15:42:21 bouyer Exp $ */
+/*	$NetBSD: endian.h,v 1.5 1997/10/14 09:20:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
