@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.9 1997/11/16 10:17:53 jonathan Exp $	*/
+/*	$NetBSD: bt459.c,v 1.10 1997/11/18 20:16:28 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.9 1997/11/16 10:17:53 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.10 1997/11/18 20:16:28 mhitch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -530,7 +530,7 @@ bt459_video_on(fi)
 
 	/* enable normal display */
 	bt459_write_reg(regs, BT459_REG_PRM, 0xff);
-	bt459_cursor_off(regs);
+	bt459_cursor_on(regs);
 
 	fi -> fi_blanked = 0;
 	return 0;
