@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.16 1997/03/15 18:37:38 is Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.17 1997/03/23 00:48:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -27,7 +27,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: rarpd.c,v 1.16 1997/03/15 18:37:38 is Exp $";
+static char rcsid[] = "$NetBSD: rarpd.c,v 1.17 1997/03/23 00:48:15 cgd Exp $";
 #endif
 
 
@@ -544,11 +544,11 @@ rarp_bootable(addr)
  * is on network 'net'; 'netmask' is a mask indicating the network portion
  * of the address.
  */
-u_long
+u_int32_t
 choose_ipaddr(alist, net, netmask)
-	u_long **alist;
-	u_long  net;
-	u_long  netmask;
+	u_int32_t **alist;
+	u_int32_t net;
+	u_int32_t netmask;
 {
 	for (; *alist; ++alist) {
 		if ((**alist & netmask) == net)
@@ -582,7 +582,7 @@ rarp_process(ii, pkt)
 		err(FATAL, "cannot handle non IP addresses");
 		/* NOTREACHED */
 	}
-	target_ipaddr = choose_ipaddr((u_long **) hp->h_addr_list,
+	target_ipaddr = choose_ipaddr((u_int32_t **) hp->h_addr_list,
 	    ii->ii_ipaddr & ii->ii_netmask, ii->ii_netmask);
 
 	if (target_ipaddr == 0) {
