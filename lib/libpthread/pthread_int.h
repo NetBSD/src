@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.13 2001/08/01 23:35:46 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.14 2001/08/08 16:33:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -105,6 +105,9 @@ struct	pthread_st {
 	 */
 	pt_spin_t*	pt_heldlock;
 
+	/* Thread-specific data */
+	void*		pt_specific[PTHREAD_KEYS_MAX];
+
 #ifdef PTHREAD__DEBUG
 	int	blocks;
 	int	preempts;
@@ -144,6 +147,8 @@ struct	pthread_st {
 
 #define NIDLETHREADS	4
 #define IDLESPINS	1000
+
+void	pthread_init(void)  __attribute__ ((__constructor__));
 
 /* Utility functions */
 
@@ -191,13 +196,10 @@ void	pthread__switch(pthread_t self, pthread_t next);
 void	pthread__locked_switch(pthread_t self, pthread_t next, 
     pt_spin_t *lock);
 
-void	pthread_lockinit(pt_spin_t *lock);
-void	pthread_spinlock(pthread_t thread, pt_spin_t *lock);
-int	pthread_spintrylock(pthread_t thread, pt_spin_t *lock);
-void	pthread_spinunlock(pthread_t thread, pt_spin_t *lock);
 
 void	pthread__signal(pthread_t t, int sig, int code);
 
+void	pthread__destroy_tsd(pthread_t self);
 
 
 #define PTHREADD_CREATE		0
