@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.21 1996/05/19 16:43:02 ragge Exp $	*/
+/*	$NetBSD: if_de.c,v 1.22 1996/08/20 14:07:33 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -206,7 +206,7 @@ deattach(parent, self, aux)
 	addr->pcsr0 = PCSR0_RSET;
 	(void)dewait(ds, "reset");
 
-	ds->ds_ubaddr = uballoc(ds->ds_dev.dv_parent->dv_unit,
+	ds->ds_ubaddr = uballoc((void *)ds->ds_dev.dv_parent,
 	    (char *)&ds->ds_pcbb, sizeof (struct de_pcbb), 0);
 	addr->pcsr2 = ds->ds_ubaddr & 0xffff;
 	addr->pcsr3 = (ds->ds_ubaddr >> 16) & 0x3;
@@ -217,7 +217,7 @@ deattach(parent, self, aux)
 	addr->pclow = CMD_GETCMD;
 	(void)dewait(ds, "read addr ");
 
-	ubarelse(ds->ds_dev.dv_parent->dv_unit, &ds->ds_ubaddr);
+	ubarelse((void *)ds->ds_dev.dv_parent, &ds->ds_ubaddr);
  	bcopy((caddr_t)&ds->ds_pcbb.pcbb2, (caddr_t)ds->ds_addr,
 	    sizeof (ds->ds_addr));
 	printf("%s: hardware address %s\n", ds->ds_dev.dv_xname,
@@ -273,14 +273,14 @@ deinit(ds)
 	if (ds->ds_flags & DSF_RUNNING)
 		return;
 	if ((ifp->if_flags & IFF_RUNNING) == 0) {
-		if (if_ubaminit(&ds->ds_deuba, ds->ds_dev.dv_parent->dv_unit,
+		if (if_ubaminit(&ds->ds_deuba, (void *)ds->ds_dev.dv_parent,
 		    sizeof (struct ether_header), (int)btoc(ETHERMTU),
 		    ds->ds_ifr, NRCV, ds->ds_ifw, NXMT) == 0) { 
 			printf("%s: can't initialize\n", ds->ds_dev.dv_xname);
 			ds->ds_if.if_flags &= ~IFF_UP;
 			return;
 		}
-		ds->ds_ubaddr = uballoc(ds->ds_dev.dv_parent->dv_unit,
+		ds->ds_ubaddr = uballoc((void *)ds->ds_dev.dv_parent,
 		    INCORE_BASE(ds), INCORE_SIZE(ds), 0);
 	}
 	addr = ds->ds_vaddr;
@@ -383,9 +383,13 @@ destart(ifp)
 		if (rp->r_flags & XFLG_OWN)
 			panic("deuna xmit in progress");
 		len = if_ubaput(&ds->ds_deuba, &ds->ds_ifw[ds->ds_xfree], m);
-		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP)
-			UBAPURGE(ds->ds_deuba.iff_uba,
-			ds->ds_ifw[ds->ds_xfree].ifw_bdp);
+		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP) {
+			struct uba_softc *uh = (void *)ds->ds_dev.dv_parent;
+
+			if (uh->uh_ubapurge)
+				(*uh->uh_ubapurge)
+					(uh, ds->ds_ifw[ds->ds_xfree].ifw_bdp);
+		}
 		rp->r_slen = len;
 		rp->r_tdrerr = 0;
 		rp->r_flags = XFLG_STP|XFLG_ENP|XFLG_OWN;
@@ -503,9 +507,13 @@ derecv(unit)
 	rp = &ds->ds_rrent[ds->ds_rindex];
 	while ((rp->r_flags & RFLG_OWN) == 0) {
 		ds->ds_if.if_ipackets++;
-		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP)
-			UBAPURGE(ds->ds_deuba.iff_uba,
-			ds->ds_ifr[ds->ds_rindex].ifrw_bdp);
+		if (ds->ds_deuba.iff_flags & UBA_NEEDBDP) {
+			struct uba_softc *uh = (void *)ds->ds_dev.dv_parent;
+
+			if (uh->uh_ubapurge)
+				(*uh->uh_ubapurge)
+					(uh,ds->ds_ifr[ds->ds_rindex].ifrw_bdp);
+		}
 		len = (rp->r_lenerr&RERR_MLEN) - sizeof (struct ether_header)
 			- 4;	/* don't forget checksum! */
 		/* check for errors */
