@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.5 2003/02/08 00:28:25 cgd Exp $	*/
+/*	$NetBSD: __clone.S,v 1.6 2003/02/08 04:01:53 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ LEAF(__clone)
 	 * and create a frame so that the child can be safely called.
 	 *
 	 * There are already register slots on the stack from above.
-	 * We take 4 register slots more.  The lower 4 acommodate o32
+	 * We take 4 register slots more.  The lower 4 accommodate o32
 	 * argument save area.  The next higher is used to save GP (if
 	 * ABICALLS).  The highest is unused.
 	 */
