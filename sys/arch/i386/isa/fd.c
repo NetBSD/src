@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.23 1994/01/27 07:10:09 cgd Exp $
+ *	$Id: fd.c,v 1.24 1994/02/06 10:04:40 mycroft Exp $
  *
  * Largely rewritten to handle multiple controllers and drives
  * By Julian Elischer, Sun Apr  4 16:34:33 WST 1993
@@ -759,7 +759,7 @@ int fdstate(fdcu_t fdcu, fdc_p fdc)
 			/* ALL DONE */
 			fd->skip = 0;
 			bp->b_resid = 0;
-			dp->b_actf = bp->av_forw;
+			dp->b_actf = bp->b_actf;
 			biodone(bp);
 			fdc->fd = (fd_p) 0;
 			fdc->fdu = -1;
@@ -868,7 +868,7 @@ retrier(fdcu_t fdcu)
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount - fdc->fd->skip;
-		dp->b_actf = bp->av_forw;
+		dp->b_actf = bp->b_actf;
 		fdc->fd->skip = 0;
 		biodone(bp);
 		fdc->state = FINDWORK;
