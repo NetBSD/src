@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.1 2004/01/10 02:26:44 sekiya Exp $
+#	$NetBSD: devlist2h.awk,v 1.2 2004/01/11 01:48:46 sekiya Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -92,12 +92,19 @@ function collectline(_f, _line) {
 }
 BEGIN {
 	nproducts = nvendors = blanklines = 0
-	dfile="giodevs.h"
+	dfile="giodevs_data.h"
+	hfile="giodevs.h"
 	line=""
 }
 NR == 1 {
 	VERSION = $0
 	gsub("\\$", "", VERSION)
+
+	printf("/*\t$NetBSD" "$\t*/\n\n") > hfile
+	printf("/*\n") > hfile
+	printf(" * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.\n") \
+	    > hfile
+	printf(" */\n") > hfile
 
 	printf("/*\t$NetBSD" "$\t*/\n\n") > dfile
 	printf("/*\n") > dfile
@@ -111,7 +118,8 @@ NF > 0 && $1 == "product" {
 	nproducts++
 
 	products[nproducts, 1] = $2;
-	products[nproducts, 2] = collectline(3, line)
+	products[nproducts, 2] = $3
+	products[nproducts, 3] = collectline(4, line)
 
 	next
 }
@@ -131,11 +139,16 @@ END {
 	printf("\tchar *product;\n") > dfile
 	printf("};\n") > dfile
 	printf("\nstruct gio_knowndev gio_knowndevs[] = {\n") > dfile
+
+	printf("\n") > hfile
 	for (i = 1; i <= nproducts; i++) {
+		printf("#define %s\t%s\t/* %s */\n", products[i, 1], products[i,2], products[i, 3]) > hfile
+
 		printf("\t{ %s, \"%s\" },\n",
-		    products[i, 1], products[i, 2]) > dfile
+		    products[i, 2], products[i, 3]) > dfile
 	}
 	printf("\t{ 0, NULL }\n") > dfile
 	printf("};\n") > dfile
 	close(dfile)
+	close(hfile)
 }
