@@ -1,4 +1,4 @@
-/*	$NetBSD: esiop.c,v 1.27 2004/03/16 19:10:43 bouyer Exp $	*/
+/*	$NetBSD: esiop.c,v 1.28 2004/05/17 11:10:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.27 2004/03/16 19:10:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esiop.c,v 1.28 2004/05/17 11:10:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -627,7 +627,13 @@ none:
 				 * and the command should terminate.
 				 */
 					INCSTAT(esiop_stat_intr_shortxfer);
-					if ((dstat & DSTAT_DFE) == 0)
+					/*
+					 * sdp not needed here, but this
+					 * will cause xs->resid to be adjusted
+					 */
+					if (scratchc0 & A_f_c_data)
+						siop_sdp(&esiop_cmd->cmd_c);
+					else if ((dstat & DSTAT_DFE) == 0)
 						siop_clearfifo(&sc->sc_c);
 					/* no table to flush here */
 					CALL_SCRIPT(Ent_status);
@@ -709,7 +715,7 @@ none:
 				esiop_cmd->cmd_c.status = CMDST_DONE;
 				xs->error = XS_SELTIMEOUT;
 				freetarget = 1;
-				goto end;
+				goto end_nodata;
 			} else {
 				printf("%s: selection timeout without "
 				    "command, target %d (sdid 0x%x), "
@@ -728,7 +734,7 @@ none:
 			 if (esiop_cmd) {
 				esiop_cmd->cmd_tables->status =
 				    htole32(SCSI_CHECK);
-				goto end;
+				goto end_nodata;
 			}
 			printf("%s: unexpected disconnect without "
 			    "command\n", sc->sc_c.sc_dev.dv_xname);
@@ -766,7 +772,7 @@ none:
 		if (esiop_cmd) {
 			esiop_cmd->cmd_c.status = CMDST_DONE;
 			xs->error = XS_SELTIMEOUT;
-			goto end;
+			goto end_nodata;
 		}
 		need_reset = 1;
 	}
@@ -811,7 +817,7 @@ scintr:
 			    sc->sc_c.sc_rh, SIOP_DSP) - sc->sc_c.sc_scriptaddr));
 			if (xs) {
 				xs->error = XS_SELTIMEOUT;
-				goto end;
+				goto end_nodata;
 			} else {
 				goto reset;
 			}
@@ -1050,6 +1056,15 @@ scintr:
 			 * Don't call memmove in this case.
 			 */
 			if (offset < SIOP_NSG) {
+				int i;
+				/*
+				 * adjust xs->resid for already-transfered
+				 * data
+				 */
+				for (i = 0; i < offset; i++)
+					xs->resid -= le32toh(
+					    esiop_cmd->cmd_tables->data[i].count
+					    );
 				memmove(&esiop_cmd->cmd_tables->data[0],
 				    &esiop_cmd->cmd_tables->data[offset],
 				    (SIOP_NSG - offset) * sizeof(scr_table_t));
@@ -1083,7 +1098,7 @@ scintr:
 			printf("unknown irqcode %x\n", irqcode);
 			if (xs) {
 				xs->error = XS_SELTIMEOUT;
-				goto end;
+				goto end_nodata;
 			}
 			goto reset;
 		}
@@ -1092,6 +1107,12 @@ scintr:
 	/* We just should't get there */
 	panic("siop_intr: I shouldn't be there !");
 
+end_nodata:
+	/*
+	 * no data was transfered, and the script didn't update tlp with the
+	 * current offset (which is still 0) 
+	 */
+	((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq = 0;
 end:
 	/*
 	 * restart the script now if command completed properly
@@ -1119,6 +1140,21 @@ esiop_scsicmd_end(esiop_cmd)
 {
 	struct scsipi_xfer *xs = esiop_cmd->cmd_c.xs;
 	struct esiop_softc *sc = (struct esiop_softc *)esiop_cmd->cmd_c.siop_sc;
+	int offset, i;
+
+	/* scratcha was saved in tlq by script. fetch offset from it */
+	offset =
+	    (le32toh(((struct esiop_xfer *)esiop_cmd->cmd_tables)->tlq) >> 8)
+	    & 0xff;
+	/*
+	 * update resid. If we completed a xfer with
+	 * some data transfers, offset will be at last 1.
+	 * If it's 0 then either no data was transfered at
+	 * all, or resid was already adjusted by a save
+	 * data pointer, or a phase mismatch.
+	 */
+	for (i = 0; i < offset; i++)
+		xs->resid -= le32toh(esiop_cmd->cmd_tables->data[i].count);
 
 	switch(xs->status) {
 	case SCSI_OK:
@@ -1173,7 +1209,6 @@ esiop_scsicmd_end(esiop_cmd)
 	callout_stop(&esiop_cmd->cmd_c.xs->xs_callout);
 	esiop_cmd->cmd_c.status = CMDST_FREE;
 	TAILQ_INSERT_TAIL(&sc->free_list, esiop_cmd, next);
-	xs->resid = 0;
 	scsipi_done (xs);
 }
 
