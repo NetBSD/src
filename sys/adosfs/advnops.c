@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.28 1996/04/23 05:18:32 veego Exp $	*/
+/*	$NetBSD: advnops.c,v 1.29 1996/09/01 23:47:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -43,21 +43,23 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/proc.h>
+
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 #include <adosfs/adosfs.h>
 
 extern struct vnodeops adosfs_vnodeops;
 
-int	adosfs_open	__P((void *));
+#define	adosfs_open	genfs_nullop
 int	adosfs_getattr	__P((void *));
 int	adosfs_read	__P((void *));
 int	adosfs_write	__P((void *));
 int	adosfs_ioctl	__P((void *));
-int	adosfs_select	__P((void *));
+#define	adosfs_select	genfs_select
 int	adosfs_strategy	__P((void *));
 int	adosfs_link	__P((void *));
 int	adosfs_symlink	__P((void *));
-int	adosfs_abortop	__P((void *));
+#define	adosfs_abortop	genfs_abortop
 int	adosfs_lock	__P((void *));
 int	adosfs_unlock	__P((void *));
 int	adosfs_bmap	__P((void *));
@@ -69,100 +71,81 @@ int	adosfs_inactive	__P((void *));
 int	adosfs_islocked	__P((void *));
 int	adosfs_reclaim	__P((void *));
 int	adosfs_pathconf	__P((void *));
-int	adnullop	__P((void *));
-int	adenotsup	__P((void *));
 
-#define adosfs_close 		adnullop
-#define adosfs_fsync 		adnullop
+#define adosfs_close 	genfs_nullop
+#define adosfs_fsync 	genfs_nullop
 #ifdef NFSSERVER
 int	lease_check __P((void *));
-#define	adosfs_lease_check lease_check
+#define	adosfs_lease_check	lease_check
 #else
-#define adosfs_lease_check 	adnullop
+#define adosfs_lease_check 	genfs_nullop
 #endif
-#define adosfs_seek 		adnullop
-#define adosfs_vfree 		adnullop
+#define adosfs_seek 	genfs_nullop
+#define adosfs_vfree 	genfs_nullop
 
-#define adosfs_advlock 		adenotsup
-#define adosfs_blkatoff 	adenotsup
-#define adosfs_bwrite 		adenotsup
-#define adosfs_create 		adenotsup
-#define adosfs_mkdir 		adenotsup
-#define adosfs_mknod 		adenotsup
-#define adosfs_mmap 		adenotsup
-#define adosfs_remove 		adenotsup
-#define adosfs_rename 		adenotsup
-#define adosfs_rmdir 		adenotsup
-#define adosfs_setattr 		adenotsup
-#define adosfs_truncate 	adenotsup
-#define adosfs_update 		adenotsup
-#define adosfs_valloc 		adenotsup
+#define adosfs_advlock 	genfs_eopnotsupp
+#define adosfs_blkatoff	genfs_eopnotsupp
+#define adosfs_bwrite 	genfs_eopnotsupp
+#define adosfs_create 	genfs_eopnotsupp
+#define adosfs_mkdir 	genfs_eopnotsupp
+#define adosfs_mknod 	genfs_eopnotsupp
+#define adosfs_mmap 	genfs_eopnotsupp
+#define adosfs_remove 	genfs_eopnotsupp
+#define adosfs_rename 	genfs_eopnotsupp
+#define adosfs_rmdir 	genfs_eopnotsupp
+#define adosfs_setattr 	genfs_eopnotsupp
+#define adosfs_truncate	genfs_eopnotsupp
+#define adosfs_update 	genfs_nullop
+#define adosfs_valloc 	genfs_eopnotsupp
 
 struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
-	{ &vop_default_desc,	vn_default_error },
-	{ &vop_lookup_desc,	adosfs_lookup },	/* lookup */
-	{ &vop_create_desc,	adosfs_create },	/* create */
-	{ &vop_mknod_desc,	adosfs_mknod },		/* mknod */
-	{ &vop_open_desc,	adosfs_open },		/* open */
-	{ &vop_close_desc,	adosfs_close },		/* close */
-	{ &vop_access_desc,	adosfs_access },	/* access */
-	{ &vop_getattr_desc,	adosfs_getattr },	/* getattr */
-	{ &vop_setattr_desc,	adosfs_setattr },	/* setattr */
-	{ &vop_read_desc,	adosfs_read },		/* read */
-	{ &vop_write_desc,	adosfs_write },		/* write */
-	{ &vop_lease_desc,	adosfs_lease_check },	/* lease */
-	{ &vop_ioctl_desc,	adosfs_ioctl },		/* ioctl */
-	{ &vop_select_desc,	adosfs_select },	/* select */
-	{ &vop_mmap_desc,	adosfs_mmap },		/* mmap */
-	{ &vop_fsync_desc,	adosfs_fsync },		/* fsync */
-	{ &vop_seek_desc,	adosfs_seek },		/* seek */
-	{ &vop_remove_desc,	adosfs_remove },	/* remove */
-	{ &vop_link_desc,	adosfs_link },		/* link */
-	{ &vop_rename_desc,	adosfs_rename },	/* rename */
-	{ &vop_mkdir_desc,	adosfs_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc,	adosfs_rmdir },		/* rmdir */
-	{ &vop_symlink_desc,	adosfs_symlink },	/* symlink */
-	{ &vop_readdir_desc,	adosfs_readdir },	/* readdir */
-	{ &vop_readlink_desc,	adosfs_readlink },	/* readlink */
-	{ &vop_abortop_desc,	adosfs_abortop },	/* abortop */
-	{ &vop_inactive_desc,	adosfs_inactive },	/* inactive */
-	{ &vop_reclaim_desc,	adosfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc,	adosfs_lock },		/* lock */
-	{ &vop_unlock_desc,	adosfs_unlock },	/* unlock */
-	{ &vop_bmap_desc,	adosfs_bmap },		/* bmap */
-	{ &vop_strategy_desc,	adosfs_strategy },	/* strategy */
-	{ &vop_print_desc,	adosfs_print },		/* print */
-	{ &vop_islocked_desc,	adosfs_islocked },	/* islocked */
-	{ &vop_pathconf_desc,	adosfs_pathconf },	/* pathconf */
-	{ &vop_advlock_desc,	adosfs_advlock },	/* advlock */
-	{ &vop_blkatoff_desc,	adosfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc,	adosfs_valloc },	/* valloc */
-	{ &vop_vfree_desc,	adosfs_vfree },		/* vfree */
-	{ &vop_truncate_desc,	adosfs_truncate },	/* truncate */
-	{ &vop_update_desc,	adosfs_update },	/* update */
-	{ &vop_bwrite_desc,	adosfs_bwrite },	/* bwrite */
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, adosfs_lookup },		/* lookup */
+	{ &vop_create_desc, adosfs_create },		/* create */
+	{ &vop_mknod_desc, adosfs_mknod },		/* mknod */
+	{ &vop_open_desc, adosfs_open },		/* open */
+	{ &vop_close_desc, adosfs_close },		/* close */
+	{ &vop_access_desc, adosfs_access },		/* access */
+	{ &vop_getattr_desc, adosfs_getattr },		/* getattr */
+	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
+	{ &vop_read_desc, adosfs_read },		/* read */
+	{ &vop_write_desc, adosfs_write },		/* write */
+	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
+	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
+	{ &vop_select_desc, adosfs_select },		/* select */
+	{ &vop_mmap_desc, adosfs_mmap },		/* mmap */
+	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */
+	{ &vop_seek_desc, adosfs_seek },		/* seek */
+	{ &vop_remove_desc, adosfs_remove },		/* remove */
+	{ &vop_link_desc, adosfs_link },		/* link */
+	{ &vop_rename_desc, adosfs_rename },		/* rename */
+	{ &vop_mkdir_desc, adosfs_mkdir },		/* mkdir */
+	{ &vop_rmdir_desc, adosfs_rmdir },		/* rmdir */
+	{ &vop_symlink_desc, adosfs_symlink },		/* symlink */
+	{ &vop_readdir_desc, adosfs_readdir },		/* readdir */
+	{ &vop_readlink_desc, adosfs_readlink },	/* readlink */
+	{ &vop_abortop_desc, adosfs_abortop },		/* abortop */
+	{ &vop_inactive_desc, adosfs_inactive },	/* inactive */
+	{ &vop_reclaim_desc, adosfs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, adosfs_lock },		/* lock */
+	{ &vop_unlock_desc, adosfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, adosfs_bmap },		/* bmap */
+	{ &vop_strategy_desc, adosfs_strategy },	/* strategy */
+	{ &vop_print_desc, adosfs_print },		/* print */
+	{ &vop_islocked_desc, adosfs_islocked },	/* islocked */
+	{ &vop_pathconf_desc, adosfs_pathconf },	/* pathconf */
+	{ &vop_advlock_desc, adosfs_advlock },		/* advlock */
+	{ &vop_blkatoff_desc, adosfs_blkatoff },	/* blkatoff */
+	{ &vop_valloc_desc, adosfs_valloc },		/* valloc */
+	{ &vop_vfree_desc, adosfs_vfree },		/* vfree */
+	{ &vop_truncate_desc, adosfs_truncate },	/* truncate */
+	{ &vop_update_desc, adosfs_update },		/* update */
+	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 
 struct vnodeopv_desc adosfs_vnodeop_opv_desc =
 	{ &adosfs_vnodeop_p, adosfs_vnodeop_entries };
-
-int
-adosfs_open(v)
-	void *v;
-{
-#ifdef ADOSFS_DIAGNOSTIC
-	struct vop_open_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *sp = v;
-	advopprint(sp);
-	printf(" 0)");
-#endif
-	return(0);
-}
 
 int
 adosfs_getattr(v)
@@ -384,28 +367,6 @@ adosfs_ioctl(v)
 	return(ENOTTY);
 }
 
-/* ARGSUSED */
-int
-adosfs_select(v)
-	void *v;
-{
-#ifdef ADOSFS_DIAGNOSTIC
-	struct vop_select_args /* {
-		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *sp = v;
-	/*
-	 * sure there's something to read...
-	 */
-	advopprint(sp);
-	printf(" 1)");
-#endif
-	return(1);
-}
-
 /*
  * Just call the device strategy routine
  */
@@ -487,20 +448,6 @@ adosfs_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-int
-adosfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
- 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
 }
 
 /*
@@ -1054,26 +1001,4 @@ adosfs_pathconf(v)
 		return (EINVAL);
 	}
 	/* NOTREACHED */
-}
-
-int
-adenotsup(sp)
-	void *sp;
-{
-#ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
-	printf(" EOPNOTSUPP)");
-#endif
-	return(EOPNOTSUPP);
-}
-
-int
-adnullop(sp)
-	void *sp;
-{
-#ifdef ADOSFS_DIAGNOSTIC
-	advopprint(sp);
-	printf(" NULL)");
-#endif
-	return(0);
 }

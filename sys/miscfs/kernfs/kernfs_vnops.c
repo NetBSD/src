@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.44 1996/09/01 23:48:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,8 @@
 #include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/msgbuf.h>
+
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/kernfs/kernfs.h>
 
 #define KSTRING	256		/* Largest I/O available via this filesystem */
@@ -108,49 +110,46 @@ struct kern_target {
 };
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 
-int	kernfs_badop	__P((void *));
-int	kernfs_enotsupp __P((void *));
-
 int	kernfs_lookup	__P((void *));
-#define	kernfs_create	kernfs_enotsupp
-#define	kernfs_mknod	kernfs_enotsupp
-int	kernfs_open	__P((void *));
-#define	kernfs_close	nullop
+#define	kernfs_create	genfs_eopnotsupp
+#define	kernfs_mknod	genfs_eopnotsupp
+#define	kernfs_open	genfs_nullop
+#define	kernfs_close	genfs_nullop
 int	kernfs_access	__P((void *));
 int	kernfs_getattr	__P((void *));
 int	kernfs_setattr	__P((void *));
 int	kernfs_read	__P((void *));
 int	kernfs_write	__P((void *));
-#define	kernfs_ioctl	kernfs_enotsupp
-#define	kernfs_select	kernfs_enotsupp
-#define	kernfs_mmap	kernfs_enotsupp
-#define	kernfs_fsync	nullop
-#define	kernfs_seek	nullop
-#define	kernfs_remove	kernfs_enotsupp
+#define	kernfs_ioctl	genfs_eopnotsupp
+#define	kernfs_select	genfs_select
+#define	kernfs_mmap	genfs_eopnotsupp
+#define	kernfs_fsync	genfs_nullop
+#define	kernfs_seek	genfs_nullop
+#define	kernfs_remove	genfs_eopnotsupp
 int	kernfs_link	__P((void *));
-#define	kernfs_rename	kernfs_enotsupp
-#define	kernfs_mkdir	kernfs_enotsupp
-#define	kernfs_rmdir	kernfs_enotsupp
+#define	kernfs_rename	genfs_eopnotsupp
+#define	kernfs_mkdir	genfs_eopnotsupp
+#define	kernfs_rmdir	genfs_eopnotsupp
 int	kernfs_symlink	__P((void *));
 int	kernfs_readdir	__P((void *));
-#define	kernfs_readlink	kernfs_enotsupp
-int	kernfs_abortop	__P((void *));
+#define	kernfs_readlink	genfs_eopnotsupp
+#define	kernfs_abortop	genfs_abortop
 int	kernfs_inactive	__P((void *));
 int	kernfs_reclaim	__P((void *));
-#define	kernfs_lock	nullop
-#define	kernfs_unlock	nullop
-#define	kernfs_bmap	kernfs_badop
-#define	kernfs_strategy	kernfs_badop
+#define	kernfs_lock	genfs_nullop
+#define	kernfs_unlock	genfs_nullop
+#define	kernfs_bmap	genfs_badop
+#define	kernfs_strategy	genfs_badop
 int	kernfs_print	__P((void *));
-#define	kernfs_islocked	nullop
+#define	kernfs_islocked	genfs_nullop
 int	kernfs_pathconf	__P((void *));
-#define	kernfs_advlock	kernfs_enotsupp
-#define	kernfs_blkatoff	kernfs_enotsupp
-#define	kernfs_valloc	kernfs_enotsupp
-int	kernfs_vfree	__P((void *));
-#define	kernfs_truncate	kernfs_enotsupp
-#define	kernfs_update	kernfs_enotsupp
-#define	kernfs_bwrite	kernfs_enotsupp
+#define	kernfs_advlock	genfs_eopnotsupp
+#define	kernfs_blkatoff	genfs_eopnotsupp
+#define	kernfs_valloc	genfs_eopnotsupp
+#define	kernfs_vfree	genfs_nullop
+#define	kernfs_truncate	genfs_eopnotsupp
+#define	kernfs_update	genfs_nullop
+#define	kernfs_bwrite	genfs_eopnotsupp
 
 int	kernfs_xread __P((struct kern_target *, int, char **, int));
 int	kernfs_xwrite __P((struct kern_target *, char *, int));
@@ -158,46 +157,46 @@ int	kernfs_xwrite __P((struct kern_target *, char *, int));
 int (**kernfs_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, kernfs_lookup },	/* lookup */
-	{ &vop_create_desc, kernfs_create },	/* create */
-	{ &vop_mknod_desc, kernfs_mknod },	/* mknod */
-	{ &vop_open_desc, kernfs_open },	/* open */
-	{ &vop_close_desc, kernfs_close },	/* close */
-	{ &vop_access_desc, kernfs_access },	/* access */
-	{ &vop_getattr_desc, kernfs_getattr },	/* getattr */
-	{ &vop_setattr_desc, kernfs_setattr },	/* setattr */
-	{ &vop_read_desc, kernfs_read },	/* read */
-	{ &vop_write_desc, kernfs_write },	/* write */
-	{ &vop_ioctl_desc, kernfs_ioctl },	/* ioctl */
-	{ &vop_select_desc, kernfs_select },	/* select */
-	{ &vop_mmap_desc, kernfs_mmap },	/* mmap */
-	{ &vop_fsync_desc, kernfs_fsync },	/* fsync */
-	{ &vop_seek_desc, kernfs_seek },	/* seek */
-	{ &vop_remove_desc, kernfs_remove },	/* remove */
-	{ &vop_link_desc, kernfs_link },	/* link */
-	{ &vop_rename_desc, kernfs_rename },	/* rename */
-	{ &vop_mkdir_desc, kernfs_mkdir },	/* mkdir */
-	{ &vop_rmdir_desc, kernfs_rmdir },	/* rmdir */
-	{ &vop_symlink_desc, kernfs_symlink },	/* symlink */
-	{ &vop_readdir_desc, kernfs_readdir },	/* readdir */
-	{ &vop_readlink_desc, kernfs_readlink },/* readlink */
-	{ &vop_abortop_desc, kernfs_abortop },	/* abortop */
-	{ &vop_inactive_desc, kernfs_inactive },/* inactive */
-	{ &vop_reclaim_desc, kernfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc, kernfs_lock },	/* lock */
-	{ &vop_unlock_desc, kernfs_unlock },	/* unlock */
-	{ &vop_bmap_desc, kernfs_bmap },	/* bmap */
-	{ &vop_strategy_desc, kernfs_strategy },/* strategy */
-	{ &vop_print_desc, kernfs_print },	/* print */
-	{ &vop_islocked_desc, kernfs_islocked },/* islocked */
-	{ &vop_pathconf_desc, kernfs_pathconf },/* pathconf */
-	{ &vop_advlock_desc, kernfs_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, kernfs_blkatoff },/* blkatoff */
-	{ &vop_valloc_desc, kernfs_valloc },	/* valloc */
-	{ &vop_vfree_desc, kernfs_vfree },	/* vfree */
-	{ &vop_truncate_desc, kernfs_truncate },/* truncate */
-	{ &vop_update_desc, kernfs_update },	/* update */
-	{ &vop_bwrite_desc, kernfs_bwrite },	/* bwrite */
+	{ &vop_lookup_desc, kernfs_lookup },		/* lookup */
+	{ &vop_create_desc, kernfs_create },		/* create */
+	{ &vop_mknod_desc, kernfs_mknod },		/* mknod */
+	{ &vop_open_desc, kernfs_open },		/* open */
+	{ &vop_close_desc, kernfs_close },		/* close */
+	{ &vop_access_desc, kernfs_access },		/* access */
+	{ &vop_getattr_desc, kernfs_getattr },		/* getattr */
+	{ &vop_setattr_desc, kernfs_setattr },		/* setattr */
+	{ &vop_read_desc, kernfs_read },		/* read */
+	{ &vop_write_desc, kernfs_write },		/* write */
+	{ &vop_ioctl_desc, kernfs_ioctl },		/* ioctl */
+	{ &vop_select_desc, kernfs_select },		/* select */
+	{ &vop_mmap_desc, kernfs_mmap },		/* mmap */
+	{ &vop_fsync_desc, kernfs_fsync },		/* fsync */
+	{ &vop_seek_desc, kernfs_seek },		/* seek */
+	{ &vop_remove_desc, kernfs_remove },		/* remove */
+	{ &vop_link_desc, kernfs_link },		/* link */
+	{ &vop_rename_desc, kernfs_rename },		/* rename */
+	{ &vop_mkdir_desc, kernfs_mkdir },		/* mkdir */
+	{ &vop_rmdir_desc, kernfs_rmdir },		/* rmdir */
+	{ &vop_symlink_desc, kernfs_symlink },		/* symlink */
+	{ &vop_readdir_desc, kernfs_readdir },		/* readdir */
+	{ &vop_readlink_desc, kernfs_readlink },	/* readlink */
+	{ &vop_abortop_desc, kernfs_abortop },		/* abortop */
+	{ &vop_inactive_desc, kernfs_inactive },	/* inactive */
+	{ &vop_reclaim_desc, kernfs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, kernfs_lock },		/* lock */
+	{ &vop_unlock_desc, kernfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, kernfs_bmap },		/* bmap */
+	{ &vop_strategy_desc, kernfs_strategy },	/* strategy */
+	{ &vop_print_desc, kernfs_print },		/* print */
+	{ &vop_islocked_desc, kernfs_islocked },	/* islocked */
+	{ &vop_pathconf_desc, kernfs_pathconf },	/* pathconf */
+	{ &vop_advlock_desc, kernfs_advlock },		/* advlock */
+	{ &vop_blkatoff_desc, kernfs_blkatoff },	/* blkatoff */
+	{ &vop_valloc_desc, kernfs_valloc },		/* valloc */
+	{ &vop_vfree_desc, kernfs_vfree },		/* vfree */
+	{ &vop_truncate_desc, kernfs_truncate },	/* truncate */
+	{ &vop_update_desc, kernfs_update },		/* update */
+	{ &vop_bwrite_desc, kernfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc kernfs_vnodeop_opv_desc =
@@ -389,15 +388,6 @@ found:
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_lookup: newvp = %x\n", fvp);
 #endif
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-kernfs_open(v)
-	void *v;
-{
-	/* Only need to check access permissions. */
 	return (0);
 }
 
@@ -724,15 +714,6 @@ kernfs_print(v)
 	return (0);
 }
 
-/*ARGSUSED*/
-int
-kernfs_vfree(v)
-	void *v;
-{
-
-	return (0);
-}
-
 int
 kernfs_link(v) 
 	void *v;
@@ -763,43 +744,4 @@ kernfs_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-int
-kernfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
- 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}
-
-/*
- * /dev/fd vnode unsupported operation
- */
-/*ARGSUSED*/
-int
-kernfs_enotsupp(v)
-	void *v;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * /dev/fd "should never get here" operation
- */
-/*ARGSUSED*/
-int
-kernfs_badop(v)
-	void *v;
-{
-
-	panic("kernfs: bad op");
-	return 0;
 }

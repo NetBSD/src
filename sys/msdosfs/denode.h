@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.20 1996/02/09 19:13:39 christos Exp $	*/
+/*	$NetBSD: denode.h,v 1.21 1996/09/01 23:48:43 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -217,21 +217,18 @@ struct denode {
 #define	VTODE(vp)	((struct denode *)(vp)->v_data)
 #define	DETOV(de)	((de)->de_vnode)
 
-#define	DE_TIMES(dep) \
+#define	DETIMES(dep, acc, mod, cre) \
 	if ((dep)->de_flag & (DE_UPDATE | DE_CREATE | DE_ACCESS)) { \
-		if (((dep)->de_Attributes & ATTR_DIRECTORY) == 0) { \
-			if ((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95 \
-			    || (dep)->de_flag & DE_UPDATE) { \
-				unix2dostime(NULL, &(dep)->de_MDate, &(dep)->de_MTime); \
-				(dep)->de_Attributes |= ATTR_ARCHIVE; \
-			} \
-			if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
-				if ((dep)->de_flag & DE_ACCESS) \
-					unix2dostime(NULL, &(dep)->de_ADate, &(dep)->de_ATime); \
-				if ((dep)->de_flag & DE_CREATE) \
-					unix2dostime(NULL, &(dep)->de_CDate, &(dep)->de_CTime); \
-			} \
-			(dep)->de_flag |= DE_MODIFIED; \
+		(dep)->de_flag |= DE_MODIFIED; \
+		if ((dep)->de_flag & DE_UPDATE) { \
+			unix2dostime((mod), &(dep)->de_MDate, &(dep)->de_MTime); \
+			(dep)->de_Attributes |= ATTR_ARCHIVE; \
+		} \
+		if (!((dep)->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95)) { \
+			if ((dep)->de_flag & DE_ACCESS) \
+				unix2dostime((acc), &(dep)->de_ADate, &(dep)->de_ATime); \
+			if ((dep)->de_flag & DE_CREATE) \
+				unix2dostime((cre), &(dep)->de_CDate, &(dep)->de_CTime); \
 		} \
 		(dep)->de_flag &= ~(DE_UPDATE | DE_CREATE | DE_ACCESS); \
 	}
@@ -267,13 +264,13 @@ int	msdosfs_write		__P((void *));
 int	lease_check		__P((void *));
 #define	msdosfs_lease_check lease_check
 #else
-#define	msdosfs_lease_check nullop
+#define	msdosfs_lease_check genfs_nullop
 #endif
 int	msdosfs_ioctl		__P((void *));
-int	msdosfs_select		__P((void *));
+#define	msdosfs_select		genfs_select
 int	msdosfs_mmap		__P((void *));
-int	msdosfs_fsync		__P((void *));
-int	msdosfs_seek		__P((void *));
+#define	msdosfs_fsync		genfs_fsync
+#define	msdosfs_seek		genfs_nullop
 int	msdosfs_remove		__P((void *));
 int	msdosfs_link		__P((void *));
 int	msdosfs_rename		__P((void *));
@@ -282,7 +279,7 @@ int	msdosfs_rmdir		__P((void *));
 int	msdosfs_symlink		__P((void *));
 int	msdosfs_readdir		__P((void *));
 int	msdosfs_readlink	__P((void *));
-int	msdosfs_abortop		__P((void *));
+#define	msdosfs_abortop		genfs_abortop
 int	msdosfs_inactive	__P((void *));
 int	msdosfs_reclaim		__P((void *));
 int	msdosfs_lock		__P((void *));
@@ -294,6 +291,7 @@ int	msdosfs_islocked	__P((void *));
 int	msdosfs_advlock		__P((void *));
 int	msdosfs_reallocblks	__P((void *));
 int	msdosfs_pathconf	__P((void *));
+int	msdosfs_update		__P((void *));
 
 /*
  * Internal service routine prototypes.

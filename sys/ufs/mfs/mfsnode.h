@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.3 1996/02/09 22:31:31 christos Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.4 1996/09/01 23:49:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,34 +55,34 @@ struct mfsnode {
 #define MFSTOV(mfsp)	((mfsp)->mfs_vnode)
 
 /* Prototypes for MFS operations on vnodes. */
-#define	mfs_lookup	mfs_badop
-#define	mfs_create	mfs_badop
-#define	mfs_mknod	mfs_badop
-#define	mfs_access	mfs_badop
-#define	mfs_getattr	mfs_badop
-#define	mfs_setattr	mfs_badop
-#define	mfs_read	mfs_badop
-#define	mfs_write	mfs_badop
-#define	mfs_select	mfs_badop
-#define	mfs_mmap	mfs_badop
-#define	mfs_seek	mfs_badop
-#define	mfs_remove	mfs_badop
-#define	mfs_link	mfs_badop
-#define	mfs_rename	mfs_badop
-#define	mfs_mkdir	mfs_badop
-#define	mfs_rmdir	mfs_badop
-#define	mfs_symlink	mfs_badop
-#define	mfs_readdir	mfs_badop
-#define	mfs_readlink	mfs_badop
-#define	mfs_abortop	mfs_badop
-#define	mfs_lock	nullop
-#define	mfs_unlock	nullop
-#define	mfs_islocked	nullop
-#define	mfs_pathconf	mfs_badop
-#define	mfs_advlock	mfs_badop
-#define	mfs_blkatoff	mfs_badop
-#define	mfs_valloc	mfs_badop
-#define	mfs_vfree	mfs_badop
-#define	mfs_truncate	mfs_badop
-#define	mfs_update	mfs_badop
+#define	mfs_lookup	genfs_badop
+#define	mfs_create	genfs_badop
+#define	mfs_mknod	genfs_badop
+#define	mfs_access	genfs_badop
+#define	mfs_getattr	genfs_badop
+#define	mfs_setattr	genfs_badop
+#define	mfs_read	genfs_badop
+#define	mfs_write	genfs_badop
+#define	mfs_select	genfs_badop
+#define	mfs_mmap	genfs_badop
+#define	mfs_seek	genfs_badop
+#define	mfs_remove	genfs_badop
+#define	mfs_link	genfs_badop
+#define	mfs_rename	genfs_badop
+#define	mfs_mkdir	genfs_badop
+#define	mfs_rmdir	genfs_badop
+#define	mfs_symlink	genfs_badop
+#define	mfs_readdir	genfs_badop
+#define	mfs_readlink	genfs_badop
+#define	mfs_abortop	genfs_badop
+#define	mfs_lock	genfs_nullop
+#define	mfs_unlock	genfs_nullop
+#define	mfs_islocked	genfs_nullop
+#define	mfs_pathconf	genfs_badop
+#define	mfs_advlock	genfs_badop
+#define	mfs_blkatoff	genfs_badop
+#define	mfs_valloc	genfs_badop
+#define	mfs_vfree	genfs_badop
+#define	mfs_truncate	genfs_badop
+#define	mfs_update	genfs_badop
 #define	mfs_bwrite	vn_bwrite

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.8 1995/06/15 23:22:50 cgd Exp $	*/
+/*	$NetBSD: inode.h,v 1.9 1996/09/01 23:49:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -134,17 +134,22 @@ struct indir {
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
 #define	ITOV(ip)	((ip)->i_vnode)
 
-#define	ITIMES(ip, t1, t2) {						\
+#define	ITIMES(ip, acc, mod, cre) {					\
 	if ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE)) {	\
 		(ip)->i_flag |= IN_MODIFIED;				\
-		if ((ip)->i_flag & IN_ACCESS)				\
-			(ip)->i_atime = (t1)->tv_sec;			\
+		if ((ip)->i_flag & IN_ACCESS) {				\
+			(ip)->i_atime = (acc)->tv_sec;			\
+			(ip)->i_atimensec = (acc)->tv_nsec;		\
+		}							\
 		if ((ip)->i_flag & IN_UPDATE) {				\
-			(ip)->i_mtime = (t2)->tv_sec;			\
+			(ip)->i_mtime = (mod)->tv_sec;			\
+			(ip)->i_mtimensec = (mod)->tv_nsec;		\
 			(ip)->i_modrev++;				\
 		}							\
-		if ((ip)->i_flag & IN_CHANGE)				\
-			(ip)->i_ctime = time.tv_sec;			\
+		if ((ip)->i_flag & IN_CHANGE) {				\
+			(ip)->i_ctime = (cre)->tv_sec;			\
+			(ip)->i_ctimensec = (cre)->tv_nsec;		\
+		}							\
 		(ip)->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);	\
 	}								\
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
+/*	$NetBSD: nfsnode.h,v 1.17 1996/09/01 23:49:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -154,73 +154,66 @@ TAILQ_HEAD(, buf) nfs_bufq;
 /*
  * Prototypes for NFS vnode operations
  */
-int	nfs_lookup __P((void *));
-int	nfs_create __P((void *));
-int	nfs_mknod __P((void *));
-int	nfs_open __P((void *));
-int	nfs_close __P((void *));
-int	nfsspec_close __P((void *));
-int	nfsfifo_close __P((void *));
-int	nfs_access __P((void *));
-int	nfsspec_access __P((void *));
-int	nfs_getattr __P((void *));
-int	nfs_setattr __P((void *));
-int	nfs_read __P((void *));
-int	nfs_write __P((void *));
-#define	nfs_lease_check ((int (*) __P((void *)))nullop)
-#define nqnfs_vop_lease_check	lease_check
-int	nfsspec_read __P((void *));
-int	nfsspec_write __P((void *));
-int	nfsfifo_read __P((void *));
-int	nfsfifo_write __P((void *));
-#define nfs_ioctl ((int (*) __P((void *)))enoioctl)
-#define nfs_select ((int (*) __P((void *)))seltrue)
-#define nfs_revoke vop_revoke
-int	nfs_mmap __P((void *));
-int	nfs_fsync __P((void *));
-#define nfs_seek ((int (*) __P((void *)))nullop)
-int	nfs_remove __P((void *));
-int	nfs_link __P((void *));
-int	nfs_rename __P((void *));
-int	nfs_mkdir __P((void *));
-int	nfs_rmdir __P((void *));
-int	nfs_symlink __P((void *));
-int	nfs_readdir __P((void *));
-int	nfs_readlink __P((void *));
-int	nfs_abortop __P((void *));
-int	nfs_inactive __P((void *));
-int	nfs_reclaim __P((void *));
+int	nfs_lookup	__P((void *));
+int	nfs_create	__P((void *));
+int	nfs_mknod	__P((void *));
+int	nfs_open	__P((void *));
+int	nfs_close	__P((void *));
+int	nfsspec_close	__P((void *));
+int	nfsfifo_close	__P((void *));
+int	nfs_access	__P((void *));
+int	nfsspec_access	__P((void *));
+int	nfs_getattr	__P((void *));
+int	nfs_setattr	__P((void *));
+int	nfs_read	__P((void *));
+int	nfs_write	__P((void *));
+#define	nfs_lease_check	genfs_nullop
+#define	nqnfs_vop_lease_check	lease_check
+int	nfsspec_read	__P((void *));
+int	nfsspec_write	__P((void *));
+int	nfsfifo_read	__P((void *));
+int	nfsfifo_write	__P((void *));
+#define nfs_ioctl	((int (*)	__P((void *)))enoioctl)
+#define	nfs_select	genfs_select
 #ifdef Lite2_integrated
-#define nfs_lock ((int (*) __P((void *)))vop_nolock)
-#define nfs_unlock ((int (*) __P((void *)))vop_nounlock)
-#define nfs_islocked ((int (*) __P((void *)))vop_noislocked)
+#define nfs_revoke	vop_revoke
+#endif
+int	nfs_mmap	__P((void *));
+int	nfs_fsync	__P((void *));
+#define nfs_seek	genfs_nullop
+int	nfs_remove	__P((void *));
+int	nfs_link	__P((void *));
+int	nfs_rename	__P((void *));
+int	nfs_mkdir	__P((void *));
+int	nfs_rmdir	__P((void *));
+int	nfs_symlink	__P((void *));
+int	nfs_readdir	__P((void *));
+int	nfs_readlink	__P((void *));
+#define	nfs_abortop	genfs_abortop
+int	nfs_inactive	__P((void *));
+int	nfs_reclaim	__P((void *));
+#ifdef Lite2_integrated
+#define nfs_lock	((int (*) __P((void *)))vop_nolock)
+#define nfs_unlock	((int (*) __P((void *)))vop_nounlock)
+#define nfs_islocked	((int (*) __P((void *)))vop_noislocked)
 #else
-int	nfs_lock __P((void *));
-int	nfs_unlock __P((void *));
-int	nfs_islocked __P((void *));
+int	nfs_lock	__P((void *));
+int	nfs_unlock	__P((void *));
+int	nfs_islocked	__P((void *));
 #endif /* Lite2_integrated */
-int	nfs_bmap __P((void *));
-int	nfs_strategy __P((void *));
-int	nfs_print __P((void *));
-int	nfs_pathconf __P((void *));
-int	nfs_advlock __P((void *));
-int	nfs_blkatoff __P((void *));
-int	nfs_bwrite __P((void *));
-int	nfs_vget __P((struct mount *, ino_t, struct vnode **));
-int	nfs_valloc __P((void *));
-#define nfs_reallocblks \
-	((int (*) __P((void *)))eopnotsupp)
-int	nfs_vfree __P((void *));
-int	nfs_truncate __P((void *));
-int	nfs_update __P((void *));
-
-/* other stuff */
-int	nfs_removeit __P((struct sillyrename *));
-int	nfs_nget __P((struct mount *,nfsfh_t *,int,struct nfsnode **));
-int	nfs_lookitup __P((struct vnode *,char *,int,struct ucred *,struct proc *,struct nfsnode **));
-int	nfs_sillyrename __P((struct vnode *,struct vnode *,struct componentname *));
-nfsuint64 *nfs_getcookie __P((struct nfsnode *, off_t, int));
-void nfs_invaldir __P((struct vnode *));
+int	nfs_bmap	__P((void *));
+int	nfs_strategy	__P((void *));
+int	nfs_print	__P((void *));
+int	nfs_pathconf	__P((void *));
+int	nfs_advlock	__P((void *));
+#define	nfs_blkatoff	genfs_eopnotsupp
+int	nfs_bwrite	__P((void *));
+int	nfs_vget	__P((struct mount *, ino_t, struct vnode **));
+#define	nfs_valloc	genfs_eopnotsupp
+#define nfs_reallocblks	genfs_eopnotsupp
+#define	nfs_vfree	genfs_nullop
+int	nfs_truncate	__P((void *));
+int	nfs_update	__P((void *));
 
 extern int (**nfsv2_vnodeop_p) __P((void *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.18 1996/03/16 23:52:42 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.19 1996/09/01 23:48:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -49,7 +49,9 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/un.h>
+
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/genfs/genfs.h>
 
 /*
  * This structure is associated with the FIFO vnode and stores
@@ -342,27 +344,23 @@ fifo_select(v)
 {
 	struct vop_select_args /* {
 		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
+		int a_which;
+		int a_fflags;
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct file filetmp;
-	int ready;
+	int ready = 0;
 
 	if (ap->a_fflags & FREAD) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_readsock;
-		ready = soo_select(&filetmp, ap->a_which, ap->a_p);
-		if (ready)
-			return (ready);
+		ready |= soo_select(&filetmp, ap->a_which, ap->a_p);
 	}
 	if (ap->a_fflags & FWRITE) {
 		filetmp.f_data = (caddr_t)ap->a_vp->v_fifoinfo->fi_writesock;
-		ready = soo_select(&filetmp, ap->a_which, ap->a_p);
-		if (ready)
-			return (ready);
+		ready |= soo_select(&filetmp, ap->a_which, ap->a_p);
 	}
-	return (0);
+	return (ready);
 }
 
 /*
@@ -499,41 +497,5 @@ fifo_pathconf(v)
 	default:
 		return (EINVAL);
 	}
-	/* NOTREACHED */
-}
-
-/*
- * Fifo failed operation
- */
-/*ARGSUSED*/
-int
-fifo_ebadf(v)
-	void *v;
-{
-
-	return (EBADF);
-}
-
-/*
- * Fifo advisory byte-level locks.
- */
-/* ARGSUSED */
-int
-fifo_advlock(v)
-	void *v;
-{
-	return (EOPNOTSUPP);
-}
-
-/*
- * Fifo bad operation
- */
-/*ARGSUSED*/
-int
-fifo_badop(v)
-	void *v;
-{
-
-	panic("fifo_badop called");
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.30 1996/09/01 23:48:28 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -50,6 +50,7 @@
 #include <sys/file.h>
 #include <sys/disklabel.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 /* symbolic sleep message strings for devices */
@@ -437,8 +438,8 @@ spec_select(v)
 {
 	struct vop_select_args /* {
 		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
+		int a_which;
+		int a_fflags;
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
@@ -446,12 +447,12 @@ spec_select(v)
 
 	switch (ap->a_vp->v_type) {
 
-	default:
-		return (1);		/* XXX */
-
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
 		return (*cdevsw[major(dev)].d_select)(dev, ap->a_which, ap->a_p);
+
+	default:
+		return (genfs_select(v));
 	}
 }
 /*
@@ -473,39 +474,8 @@ spec_fsync(v)
 	struct buf *nbp;
 	int s;
 
-	if (vp->v_type == VCHR)
-		return (0);
-	/*
-	 * Flush all dirty buffers associated with a block device.
-	 */
-loop:
-	s = splbio();
-	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
-		nbp = bp->b_vnbufs.le_next;
-		if ((bp->b_flags & B_BUSY))
-			continue;
-		if ((bp->b_flags & B_DELWRI) == 0)
-			panic("spec_fsync: not dirty");
-		bremfree(bp);
-		bp->b_flags |= B_BUSY;
-		splx(s);
-		bawrite(bp);
-		goto loop;
-	}
-	if (ap->a_waitfor == MNT_WAIT) {
-		while (vp->v_numoutput) {
-			vp->v_flag |= VBWAIT;
-			sleep((caddr_t)&vp->v_numoutput, PRIBIO + 1);
-		}
-#ifdef DIAGNOSTIC
-		if (vp->v_dirtyblkhd.lh_first) {
-			splx(s);
-			vprint("spec_fsync: dirty", vp);
-			goto loop;
-		}
-#endif
-	}
-	splx(s);
+	if (vp->v_type == VBLK)
+		vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
 	return (0);
 }
 
@@ -695,42 +665,5 @@ spec_pathconf(v)
 	default:
 		return (EINVAL);
 	}
-	/* NOTREACHED */
-}
-
-/*
- * Special device advisory byte-level locks.
- */
-/* ARGSUSED */
-int
-spec_advlock(v)
-	void *v;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * Special device failed operation
- */
-/*ARGSUSED*/
-int
-spec_ebadf(v)
-	void *v;
-{
-
-	return (EBADF);
-}
-
-/*
- * Special device bad operation
- */
-/*ARGSUSED*/
-int
-spec_badop(v)
-	void *v;
-{
-
-	panic("spec_badop called");
 	/* NOTREACHED */
 }

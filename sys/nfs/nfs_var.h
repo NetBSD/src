@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.4 1996/09/01 23:49:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -62,7 +62,6 @@ struct nfs_fattr;
 
 /* nfs_bio.c */
 int nfs_bioread __P((struct vnode *, struct uio *, int, struct ucred *));
-int nfs_write __P((void *));
 struct buf *nfs_getcacheblk __P((struct vnode *, daddr_t, int, struct proc *));
 int nfs_vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *,
 		       int));
@@ -77,47 +76,24 @@ int nfs_boot_init __P((struct nfs_diskless *, struct proc *));
 void nfs_nhinit __P((void));
 u_long nfs_hash __P((nfsfh_t *, int));
 int nfs_nget __P((struct mount *, nfsfh_t *, int, struct nfsnode **));
-int nfs_inactive __P((void *));
-int nfs_reclaim __P((void *));
-int nfs_lock __P((void *));
-int nfs_unlock __P((void *));
-int nfs_islocked __P((void *));
-int nfs_abortop __P((void *));
 
 /* nfs_vnops.c */
 int nfs_null __P((struct vnode *, struct ucred *, struct proc *));
-int nfs_access __P((void *));
-int nfs_open __P((void *));
-int nfs_close __P((void *));
-int nfs_getattr __P((void *));
-int nfs_setattr __P((void *));
 int nfs_setattrrpc __P((struct vnode *, struct vattr *, struct ucred *,
 			struct proc *));
-int nfs_lookup __P((void *));
-int nfs_read __P((void *));
-int nfs_readlink __P((void *));
 int nfs_readlinkrpc __P((struct vnode *, struct uio *, struct ucred *));
 int nfs_readrpc __P((struct vnode *, struct uio *, struct ucred *));
 int nfs_writerpc __P((struct vnode *, struct uio *, struct ucred *, int *,
 		      int *));
 int nfs_mknodrpc __P((struct vnode *, struct vnode **, struct componentname *,
 		      struct vattr *));
-int nfs_mknod __P((void *));
-int nfs_create __P((void *));
-int nfs_remove __P((void *));
 int nfs_removeit __P((struct sillyrename *));
 int nfs_removerpc __P((struct vnode *, char *, int, struct ucred *,
 		       struct proc *));
-int nfs_rename __P((void *));
 int nfs_renameit __P((struct vnode *, struct componentname *,
 		      struct sillyrename *));
 int nfs_renamerpc __P((struct vnode *, char *, int, struct vnode *, char *, int,
 		       struct ucred *, struct proc *));
-int nfs_link __P((void *));
-int nfs_symlink __P((void *));
-int nfs_mkdir __P((void *));
-int nfs_rmdir __P((void *));
-int nfs_readdir __P((void *));
 int nfs_readdirrpc __P((struct vnode *, struct uio *, struct ucred *));
 int nfs_readdirplusrpc __P((struct vnode *, struct uio *, struct ucred *));
 int nfs_sillyrename __P((struct vnode *, struct vnode *,
@@ -126,28 +102,8 @@ int nfs_lookitup __P((struct vnode *, char *, int, struct ucred *,
 		      struct proc *, struct nfsnode **));
 int nfs_commit __P((struct vnode *, u_quad_t, int, struct ucred *,
 		    struct proc *));
-int nfs_bmap __P((void *));
-int nfs_strategy __P((void *));
-int nfs_mmap __P((void *));
-int nfs_fsync __P((void *));
 int nfs_flush __P((struct vnode *, struct ucred *, int, struct proc *, int));
-int nfs_pathconf __P((void *));
-int nfs_advlock __P((void *));
-int nfs_print __P((void *));
-int nfs_blkatoff __P((void *));
-int nfs_valloc __P((void *));
-int nfs_vfree __P((void *));
-int nfs_truncate __P((void *));
-int nfs_update __P((void *));
-int nfs_bwrite __P((void *));
 int nfs_writebp __P((struct buf *, int));
-int nfsspec_access __P((void *));
-int nfsspec_read __P((void *));
-int nfsspec_write __P((void *));
-int nfsspec_close __P((void *));
-int nfsfifo_read __P((void *));
-int nfsfifo_write __P((void *));
-int nfsfifo_close __P((void *));
 
 /* nfs_nqlease.c */
 void nqnfs_lease_updatetime __P((int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.19 1996/09/01 23:49:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -194,9 +194,12 @@ ufs_close(v)
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
+	struct timespec ts;
 
-	if (vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED))
-		ITIMES(ip, &time, &time);
+	if (vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED)) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		ITIMES(ip, &ts, &ts, &ts);
+	}
 	return (0);
 }
 
@@ -261,8 +264,10 @@ ufs_getattr(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	register struct vattr *vap = ap->a_vap;
+	struct timespec ts;
 
-	ITIMES(ip, &time, &time);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	ITIMES(ip, &ts, &ts, &ts);
 	/*
 	 * Copy from inode table
 	 */
@@ -537,27 +542,6 @@ ufs_ioctl(v)
 	return (ENOTTY);
 }
 
-/* ARGSUSED */
-int
-ufs_select(v)
-	void *v;
-{
-#if 0
-	struct vop_select_args /* {
-		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-#endif
-
-	/*
-	 * We should really check to see if I/O is possible.
-	 */
-	return (1);
-}
-
 /*
  * Mmap a file
  *
@@ -578,28 +562,6 @@ ufs_mmap(v)
 #endif
 
 	return (EINVAL);
-}
-
-/*
- * Seek on a file
- *
- * Nothing to do, so just return.
- */
-/* ARGSUSED */
-int
-ufs_seek(v)
-	void *v;
-{
-#if 0
-	struct vop_seek_args /* {
-		struct vnode *a_vp;
-		off_t  a_oldoff;
-		off_t  a_newoff;
-		struct ucred *a_cred;
-	} */ *ap = v;
-#endif
-
-	return (0);
 }
 
 int
@@ -1538,24 +1500,6 @@ ufs_readlink(v)
 }
 
 /*
- * Ufs abort op, called after namei() when a CREATE/DELETE isn't actually
- * done. If a buffer has been saved in anticipation of a CREATE, delete it.
- */
-/* ARGSUSED */
-int
-ufs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}
-
-/*
  * Lock an inode. If its already locked, set the WANT bit and sleep.
  */
 int
@@ -1786,9 +1730,12 @@ ufsspec_close(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct inode *ip = VTOI(ap->a_vp);
+	struct timespec ts;
 
-	if (ap->a_vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED))
-		ITIMES(ip, &time, &time);
+	if (ap->a_vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED)) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		ITIMES(ip, &ts, &ts, &ts);
+	}
 	return (VOCALL (spec_vnodeop_p, VOFFSET(vop_close), ap));
 }
 
@@ -1854,9 +1801,12 @@ ufsfifo_close(v)
 	} */ *ap = v;
 	extern int (**fifo_vnodeop_p) __P((void *));
 	register struct inode *ip = VTOI(ap->a_vp);
+	struct timespec ts;
 
-	if (ap->a_vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED))
-		ITIMES(ip, &time, &time);
+	if (ap->a_vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED)) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		ITIMES(ip, &ts, &ts, &ts);
+	}
 	return (VOCALL (fifo_vnodeop_p, VOFFSET(vop_close), ap));
 }
 #endif /* FIFO */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.5 1996/05/11 18:27:35 mycroft Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.6 1996/09/01 23:49:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -89,36 +89,23 @@ lfs_update(v)
 		struct timespec *a_modify;
 		int a_waitfor;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 	struct inode *ip;
+	int mod;
+	struct timespec ts;
 
-	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
 		return (0);
-	ip = VTOI(vp);
-	if ((ip->i_flag &
-	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0)
+	ip = VTOI(ap->a_vp);
+	mod = ip->i_flag & IN_MODIFIED;
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	ITIMES(ip, ap->a_access, ap->a_modify, &ts);
+	if (!mod && ip->i_flag & IN_MODIFIED)
+		ip->i_lfs->lfs_uinodes++;
+	if ((ip->i_flag & IN_MODIFIED) == 0)
 		return (0);
-	if (ip->i_flag & IN_ACCESS) {
-		ip->i_atime = ap->a_access->tv_sec;
-		ip->i_atimensec = ap->a_access->tv_nsec;
-	}
-	if (ip->i_flag & IN_UPDATE) {
-		ip->i_mtime = ap->a_modify->tv_sec;
-		ip->i_mtimensec = ap->a_modify->tv_nsec;
-		(ip)->i_modrev++;
-	}
-	if (ip->i_flag & IN_CHANGE) {
-		ip->i_ctime = time.tv_sec;
-		ip->i_ctimensec = time.tv_usec * 1000;
-	}
-	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_UPDATE);
-
-	if (!(ip->i_flag & IN_MODIFIED))
-		++(VFSTOUFS(vp->v_mount)->um_lfs->lfs_uinodes);
-	ip->i_flag |= IN_MODIFIED;
 
 	/* If sync, push back the vnode and any dirty blocks it may have. */
-	return (ap->a_waitfor & LFS_SYNC ? lfs_vflush(vp) : 0);
+	return (ap->a_waitfor & LFS_SYNC ? lfs_vflush(ap->a_vp) : 0);
 }
 
 /* Update segment usage information when removing a block. */

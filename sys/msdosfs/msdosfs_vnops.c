@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.50 1996/08/10 08:48:24 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.51 1996/09/01 23:48:54 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -59,10 +59,12 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
-#include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/lockf.h>
+
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 
 #include <vm/vm.h>
 
@@ -111,6 +113,7 @@ msdosfs_create(v)
 	struct denode *dep;
 	struct denode *pdep = VTODE(ap->a_dvp);
 	int error;
+	struct timespec ts;
 
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_create(cnp %08x, vap %08x\n", cnp, ap->a_vap);
@@ -149,7 +152,8 @@ msdosfs_create(v)
 	ndirent.de_devvp = pdep->de_devvp;
 	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
-	DE_TIMES(&ndirent);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	DETIMES(&ndirent, &ts, &ts, &ts);
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
@@ -220,9 +224,12 @@ msdosfs_close(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
+	struct timespec ts;
 
-	if (vp->v_usecount > 1 && !(dep->de_flag & DE_LOCKED))
-		DE_TIMES(dep);
+	if (vp->v_usecount > 1 && !(dep->de_flag & DE_LOCKED)) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		DETIMES(dep, &ts, &ts, &ts);
+	}
 	return (0);
 }
 
@@ -262,8 +269,10 @@ msdosfs_getattr(v)
 	u_int cn;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
+	struct timespec ts;
 
-	DE_TIMES(dep);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	DETIMES(dep, &ts, &ts, &ts);
 	vap->va_fsid = dep->de_dev;
 	/*
 	 * The following computation of the fileid must be the same as that
@@ -695,23 +704,6 @@ msdosfs_ioctl(v)
 }
 
 int
-msdosfs_select(v)
-	void *v;
-{
-#if 0
-	struct vop_select_args /* {
-		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap;
-#endif
-
-	return (1);		/* DOS filesystems never block? */
-}
-
-int
 msdosfs_mmap(v)
 	void *v;
 {
@@ -727,48 +719,52 @@ msdosfs_mmap(v)
 	return (EINVAL);
 }
 
+int
+msdosfs_update(v)
+	void *v;
+{
+	struct vop_update_args /* {
+		struct vnode *a_vp;
+		struct timespec *a_access;
+		struct timespec *a_modify;
+		int a_waitfor;
+	} */ *ap = v;
+	struct buf *bp;
+	struct direntry *dirp;
+	struct denode *dep;
+	int error;
+	struct timespec ts;
+
+	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
+		return (0);
+	dep = VTODE(ap->a_vp);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	DETIMES(dep, ap->a_access, ap->a_modify, &ts);
+	if ((dep->de_flag & DE_MODIFIED) == 0)
+		return (0);
+	dep->de_flag &= ~DE_MODIFIED;
+	if (dep->de_Attributes & ATTR_DIRECTORY)
+		return (0);
+	if (dep->de_refcnt <= 0)
+		return (0);
+	error = readde(dep, &bp, &dirp);
+	if (error)
+		return (error);
+	DE_EXTERNALIZE(dirp, dep);
+	if (ap->a_waitfor)
+		return (bwrite(bp));
+	else {
+		bdwrite(bp);
+		return (0);
+	}
+}
+
 /*
  * Flush the blocks of a file to disk.
  * 
  * This function is worthless for vnodes that represent directories. Maybe we
  * could just do a sync if they try an fsync on a directory file.
  */
-int
-msdosfs_fsync(v)
-	void *v;
-{
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int a_waitfor;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
-	return (deupdat(VTODE(vp), ap->a_waitfor == MNT_WAIT));
-}
-
-/*
- * Now the whole work of extending a file is done in the write function.
- * So nothing to do here.
- */
-int
-msdosfs_seek(v)
-	void *v;
-{
-#if 0
-	struct vop_seek_args /* {
-		struct vnode *a_vp;
-		off_t a_oldoff;
-		off_t a_newoff;
-		struct ucred *a_cred;
-	} */ *ap = v;
-#endif
-
-	return (0);
-}
-
 int
 msdosfs_remove(v)
 	void *v;
@@ -1211,6 +1207,7 @@ msdosfs_mkdir(v)
 	struct direntry *denp;
 	struct msdosfsmount *pmp = pdep->de_pmp;
 	struct buf *bp;
+	struct timespec ts;
 
 	/*
 	 * If this is the root directory and there is no space left we
@@ -1231,12 +1228,10 @@ msdosfs_mkdir(v)
 		goto bad2;
 
 	bzero(&ndirent, sizeof(ndirent));
-	if (!(pmp->pm_flags & MSDOSFSMNT_NOWIN95)) {
-		unix2dostime(NULL, &ndirent.de_CDate, &ndirent.de_CTime);
-		unix2dostime(NULL, &ndirent.de_ADate, &ndirent.de_ATime);
-	}
-	unix2dostime(NULL, &ndirent.de_MDate, &ndirent.de_MTime);
-
+	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	DETIMES(&ndirent, &ts, &ts, &ts);
+	
 	/*
 	 * Now fill the cluster with the "." and ".." entries. And write
 	 * the cluster to disk.  This way it is there for the parent
@@ -1640,20 +1635,6 @@ msdosfs_readlink(v)
 }
 
 int
-msdosfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}
-
-int
 msdosfs_lock(v)
 	void *v;
 {
@@ -1955,7 +1936,8 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc, msdosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, msdosfs_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, msdosfs_reallocblks },	/* reallocblks */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_update_desc, msdosfs_update },		/* update */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc *)NULL, (int (*) __P((void *)))NULL }
 };
 struct vnodeopv_desc msdosfs_vnodeop_opv_desc =

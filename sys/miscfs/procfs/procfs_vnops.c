@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.41 1996/09/01 23:48:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -57,6 +57,8 @@
 #include <sys/ptrace.h>
 #include <vm/vm.h>	/* for PAGE_SIZE */
 #include <machine/reg.h>
+
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/procfs/procfs.h>
 
 /*
@@ -94,14 +96,9 @@ static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
 
 static pid_t atopid __P((const char *, u_int));
 
-/*
- * Prototypes for procfs vnode ops
- */
-int	procfs_badop	__P((void *));
-
 int	procfs_lookup	__P((void *));
-#define	procfs_create	procfs_badop
-#define	procfs_mknod	procfs_badop
+#define	procfs_create	genfs_eopnotsupp
+#define	procfs_mknod	genfs_eopnotsupp
 int	procfs_open	__P((void *));
 int	procfs_close	__P((void *));
 int	procfs_access	__P((void *));
@@ -109,35 +106,36 @@ int	procfs_getattr	__P((void *));
 int	procfs_setattr	__P((void *));
 #define	procfs_read	procfs_rw
 #define	procfs_write	procfs_rw
-int	procfs_ioctl	__P((void *));
-#define	procfs_select	procfs_badop
-#define	procfs_mmap	procfs_badop
-#define	procfs_fsync	procfs_badop
-#define	procfs_seek	procfs_badop
-#define	procfs_remove	procfs_badop
+#define	procfs_ioctl	genfs_eopnotsupp
+#define	procfs_select	genfs_select
+#define	procfs_mmap	genfs_eopnotsupp
+#define	procfs_fsync	genfs_nullop
+#define	procfs_seek	genfs_nullop
+#define	procfs_remove	genfs_eopnotsupp
 int	procfs_link	__P((void *));
-#define	procfs_rename	procfs_badop
-#define	procfs_mkdir	procfs_badop
-#define	procfs_rmdir	procfs_badop
+#define	procfs_rename	genfs_eopnotsupp
+#define	procfs_mkdir	genfs_eopnotsupp
+#define	procfs_rmdir	genfs_eopnotsupp
 int	procfs_symlink	__P((void *));
 int	procfs_readdir	__P((void *));
 int	procfs_readlink	__P((void *));
-int	procfs_abortop	__P((void *));
+#define	procfs_abortop	genfs_abortop
 int	procfs_inactive	__P((void *));
 int	procfs_reclaim	__P((void *));
-#define	procfs_lock	nullop
-#define	procfs_unlock	nullop
+#define	procfs_lock	genfs_nullop
+#define	procfs_unlock	genfs_nullop
 int	procfs_bmap	__P((void *));
-#define	procfs_strategy	procfs_badop
+#define	procfs_strategy	genfs_badop
 int	procfs_print	__P((void *));
 int	procfs_pathconf	__P((void *));
-#define	procfs_islocked	nullop
-#define	procfs_advlock	procfs_badop
-#define	procfs_blkatoff	procfs_badop
-#define	procfs_valloc	procfs_badop
-#define	procfs_vfree	nullop
-#define	procfs_truncate	procfs_badop
-#define	procfs_update	nullop
+#define	procfs_islocked	genfs_nullop
+#define	procfs_advlock	genfs_eopnotsupp
+#define	procfs_blkatoff	genfs_eopnotsupp
+#define	procfs_valloc	genfs_eopnotsupp
+#define	procfs_vfree	genfs_nullop
+#define	procfs_truncate	genfs_eopnotsupp
+#define	procfs_update	genfs_nullop
+#define	procfs_bwrite	genfs_eopnotsupp
 
 static pid_t atopid __P((const char *, u_int));
 
@@ -272,19 +270,6 @@ procfs_close(v)
 	}
 
 	return (0);
-}
-
-/*
- * do an ioctl operation on pfsnode (vp).
- * (vp) is not locked on entry or exit.
- */
-/*ARGSUSED*/
-int
-procfs_ioctl(v)
-	void *v;
-{
-
-	return (ENOTTY);
 }
 
 /*
@@ -451,38 +436,6 @@ procfs_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-/*
- * _abortop is called when operations such as
- * rename and create fail.  this entry is responsible
- * for undoing any side-effects caused by the lookup.
- * this will always include freeing the pathname buffer.
- */
-int
-procfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}
-
-/*
- * generic entry point for unsupported operations
- */
-/*ARGSUSED*/
-int
-procfs_badop(v)
-	void *v;
-{
-
-	return (EIO);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.63 1996/07/07 12:25:47 fvdl Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.64 1996/09/01 23:49:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,8 +62,9 @@
 
 #include <vm/vm.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -89,51 +90,51 @@
 int (**nfsv2_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, nfs_lookup },	/* lookup */
-	{ &vop_create_desc, nfs_create },	/* create */
-	{ &vop_mknod_desc, nfs_mknod },		/* mknod */
-	{ &vop_open_desc, nfs_open },		/* open */
-	{ &vop_close_desc, nfs_close },		/* close */
-	{ &vop_access_desc, nfs_access },	/* access */
-	{ &vop_getattr_desc, nfs_getattr },	/* getattr */
-	{ &vop_setattr_desc, nfs_setattr },	/* setattr */
-	{ &vop_read_desc, nfs_read },		/* read */
-	{ &vop_write_desc, nfs_write },		/* write */
-	{ &vop_lease_desc, nfs_lease_check },	/* lease */
-	{ &vop_ioctl_desc, nfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, nfs_select },	/* select */
+	{ &vop_lookup_desc, nfs_lookup },		/* lookup */
+	{ &vop_create_desc, nfs_create },		/* create */
+	{ &vop_mknod_desc, nfs_mknod },			/* mknod */
+	{ &vop_open_desc, nfs_open },			/* open */
+	{ &vop_close_desc, nfs_close },			/* close */
+	{ &vop_access_desc, nfs_access },		/* access */
+	{ &vop_getattr_desc, nfs_getattr },		/* getattr */
+	{ &vop_setattr_desc, nfs_setattr },		/* setattr */
+	{ &vop_read_desc, nfs_read },			/* read */
+	{ &vop_write_desc, nfs_write },			/* write */
+	{ &vop_lease_desc, nfs_lease_check },		/* lease */
+	{ &vop_ioctl_desc, nfs_ioctl },			/* ioctl */
+	{ &vop_select_desc, nfs_select },		/* select */
 #ifdef Lite2_integrated
-	{ &vop_revoke_desc, nfs_revoke },	/* revoke */
+	{ &vop_revoke_desc, nfs_revoke },		/* revoke */
 #endif
-	{ &vop_mmap_desc, nfs_mmap },		/* mmap */
-	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
-	{ &vop_seek_desc, nfs_seek },		/* seek */
-	{ &vop_remove_desc, nfs_remove },	/* remove */
-	{ &vop_link_desc, nfs_link },		/* link */
-	{ &vop_rename_desc, nfs_rename },	/* rename */
-	{ &vop_mkdir_desc, nfs_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc, nfs_rmdir },		/* rmdir */
-	{ &vop_symlink_desc, nfs_symlink },	/* symlink */
-	{ &vop_readdir_desc, nfs_readdir },	/* readdir */
-	{ &vop_readlink_desc, nfs_readlink },	/* readlink */
-	{ &vop_abortop_desc, nfs_abortop },	/* abortop */
-	{ &vop_inactive_desc, nfs_inactive },	/* inactive */
-	{ &vop_reclaim_desc, nfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc, nfs_lock },		/* lock */
-	{ &vop_unlock_desc, nfs_unlock },	/* unlock */
-	{ &vop_bmap_desc, nfs_bmap },		/* bmap */
-	{ &vop_strategy_desc, nfs_strategy },	/* strategy */
-	{ &vop_print_desc, nfs_print },		/* print */
-	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
-	{ &vop_pathconf_desc, nfs_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, nfs_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, nfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, nfs_valloc },	/* valloc */
+	{ &vop_mmap_desc, nfs_mmap },			/* mmap */
+	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
+	{ &vop_seek_desc, nfs_seek },			/* seek */
+	{ &vop_remove_desc, nfs_remove },		/* remove */
+	{ &vop_link_desc, nfs_link },			/* link */
+	{ &vop_rename_desc, nfs_rename },		/* rename */
+	{ &vop_mkdir_desc, nfs_mkdir },			/* mkdir */
+	{ &vop_rmdir_desc, nfs_rmdir },			/* rmdir */
+	{ &vop_symlink_desc, nfs_symlink },		/* symlink */
+	{ &vop_readdir_desc, nfs_readdir },		/* readdir */
+	{ &vop_readlink_desc, nfs_readlink },		/* readlink */
+	{ &vop_abortop_desc, nfs_abortop },		/* abortop */
+	{ &vop_inactive_desc, nfs_inactive },		/* inactive */
+	{ &vop_reclaim_desc, nfs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, nfs_lock },			/* lock */
+	{ &vop_unlock_desc, nfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, nfs_bmap },			/* bmap */
+	{ &vop_strategy_desc, nfs_strategy },		/* strategy */
+	{ &vop_print_desc, nfs_print },			/* print */
+	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, nfs_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, nfs_advlock },		/* advlock */
+	{ &vop_blkatoff_desc, nfs_blkatoff },		/* blkatoff */
+	{ &vop_valloc_desc, nfs_valloc },		/* valloc */
 	{ &vop_reallocblks_desc, nfs_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, nfs_vfree },		/* vfree */
-	{ &vop_truncate_desc, nfs_truncate },	/* truncate */
-	{ &vop_update_desc, nfs_update },	/* update */
-	{ &vop_bwrite_desc, nfs_bwrite },
+	{ &vop_vfree_desc, nfs_vfree },			/* vfree */
+	{ &vop_truncate_desc, nfs_truncate },		/* truncate */
+	{ &vop_update_desc, nfs_update },		/* update */
+	{ &vop_bwrite_desc, nfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
@@ -145,51 +146,51 @@ struct vnodeopv_desc nfsv2_vnodeop_opv_desc =
 int (**spec_nfsv2nodeop_p) __P((void *));
 struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, spec_lookup },	/* lookup */
-	{ &vop_create_desc, spec_create },	/* create */
-	{ &vop_mknod_desc, spec_mknod },	/* mknod */
-	{ &vop_open_desc, spec_open },		/* open */
-	{ &vop_close_desc, nfsspec_close },	/* close */
-	{ &vop_access_desc, nfsspec_access },	/* access */
-	{ &vop_getattr_desc, nfs_getattr },	/* getattr */
-	{ &vop_setattr_desc, nfs_setattr },	/* setattr */
-	{ &vop_read_desc, nfsspec_read },	/* read */
-	{ &vop_write_desc, nfsspec_write },	/* write */
-	{ &vop_lease_desc, spec_lease_check },	/* lease */
-	{ &vop_ioctl_desc, spec_ioctl },	/* ioctl */
-	{ &vop_select_desc, spec_select },	/* select */
+	{ &vop_lookup_desc, spec_lookup },		/* lookup */
+	{ &vop_create_desc, spec_create },		/* create */
+	{ &vop_mknod_desc, spec_mknod },		/* mknod */
+	{ &vop_open_desc, spec_open },			/* open */
+	{ &vop_close_desc, nfsspec_close },		/* close */
+	{ &vop_access_desc, nfsspec_access },		/* access */
+	{ &vop_getattr_desc, nfs_getattr },		/* getattr */
+	{ &vop_setattr_desc, nfs_setattr },		/* setattr */
+	{ &vop_read_desc, nfsspec_read },		/* read */
+	{ &vop_write_desc, nfsspec_write },		/* write */
+	{ &vop_lease_desc, spec_lease_check },		/* lease */
+	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
+	{ &vop_select_desc, spec_select },		/* select */
 #ifdef Lite2_integrated
-	{ &vop_revoke_desc, spec_revoke },	/* revoke */
+	{ &vop_revoke_desc, spec_revoke },		/* revoke */
 #endif
-	{ &vop_mmap_desc, spec_mmap },		/* mmap */
-	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
-	{ &vop_seek_desc, spec_seek },		/* seek */
-	{ &vop_remove_desc, spec_remove },	/* remove */
-	{ &vop_link_desc, spec_link },		/* link */
-	{ &vop_rename_desc, spec_rename },	/* rename */
-	{ &vop_mkdir_desc, spec_mkdir },	/* mkdir */
-	{ &vop_rmdir_desc, spec_rmdir },	/* rmdir */
-	{ &vop_symlink_desc, spec_symlink },	/* symlink */
-	{ &vop_readdir_desc, spec_readdir },	/* readdir */
-	{ &vop_readlink_desc, spec_readlink },	/* readlink */
-	{ &vop_abortop_desc, spec_abortop },	/* abortop */
-	{ &vop_inactive_desc, nfs_inactive },	/* inactive */
-	{ &vop_reclaim_desc, nfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc, nfs_lock },		/* lock */
-	{ &vop_unlock_desc, nfs_unlock },	/* unlock */
-	{ &vop_bmap_desc, spec_bmap },		/* bmap */
-	{ &vop_strategy_desc, spec_strategy },	/* strategy */
-	{ &vop_print_desc, nfs_print },		/* print */
-	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
-	{ &vop_pathconf_desc, spec_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, spec_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, spec_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, spec_valloc },	/* valloc */
+	{ &vop_mmap_desc, spec_mmap },			/* mmap */
+	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
+	{ &vop_seek_desc, spec_seek },			/* seek */
+	{ &vop_remove_desc, spec_remove },		/* remove */
+	{ &vop_link_desc, spec_link },			/* link */
+	{ &vop_rename_desc, spec_rename },		/* rename */
+	{ &vop_mkdir_desc, spec_mkdir },		/* mkdir */
+	{ &vop_rmdir_desc, spec_rmdir },		/* rmdir */
+	{ &vop_symlink_desc, spec_symlink },		/* symlink */
+	{ &vop_readdir_desc, spec_readdir },		/* readdir */
+	{ &vop_readlink_desc, spec_readlink },		/* readlink */
+	{ &vop_abortop_desc, spec_abortop },		/* abortop */
+	{ &vop_inactive_desc, nfs_inactive },		/* inactive */
+	{ &vop_reclaim_desc, nfs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, nfs_lock },			/* lock */
+	{ &vop_unlock_desc, nfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, spec_bmap },			/* bmap */
+	{ &vop_strategy_desc, spec_strategy },		/* strategy */
+	{ &vop_print_desc, nfs_print },			/* print */
+	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, spec_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, spec_advlock },		/* advlock */
+	{ &vop_blkatoff_desc, spec_blkatoff },		/* blkatoff */
+	{ &vop_valloc_desc, spec_valloc },		/* valloc */
 	{ &vop_reallocblks_desc, spec_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, spec_vfree },	/* vfree */
-	{ &vop_truncate_desc, spec_truncate },	/* truncate */
-	{ &vop_update_desc, nfs_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_vfree_desc, spec_vfree },		/* vfree */
+	{ &vop_truncate_desc, spec_truncate },		/* truncate */
+	{ &vop_update_desc, nfs_update },		/* update */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -199,51 +200,51 @@ struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
 int (**fifo_nfsv2nodeop_p) __P((void *));
 struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_default_desc, vn_default_error },
-	{ &vop_lookup_desc, fifo_lookup },	/* lookup */
-	{ &vop_create_desc, fifo_create },	/* create */
-	{ &vop_mknod_desc, fifo_mknod },	/* mknod */
-	{ &vop_open_desc, fifo_open },		/* open */
-	{ &vop_close_desc, nfsfifo_close },	/* close */
-	{ &vop_access_desc, nfsspec_access },	/* access */
-	{ &vop_getattr_desc, nfs_getattr },	/* getattr */
-	{ &vop_setattr_desc, nfs_setattr },	/* setattr */
-	{ &vop_read_desc, nfsfifo_read },	/* read */
-	{ &vop_write_desc, nfsfifo_write },	/* write */
-	{ &vop_lease_desc, fifo_lease_check },	/* lease */
-	{ &vop_ioctl_desc, fifo_ioctl },	/* ioctl */
-	{ &vop_select_desc, fifo_select },	/* select */
+	{ &vop_lookup_desc, fifo_lookup },		/* lookup */
+	{ &vop_create_desc, fifo_create },		/* create */
+	{ &vop_mknod_desc, fifo_mknod },		/* mknod */
+	{ &vop_open_desc, fifo_open },			/* open */
+	{ &vop_close_desc, nfsfifo_close },		/* close */
+	{ &vop_access_desc, nfsspec_access },		/* access */
+	{ &vop_getattr_desc, nfs_getattr },		/* getattr */
+	{ &vop_setattr_desc, nfs_setattr },		/* setattr */
+	{ &vop_read_desc, nfsfifo_read },		/* read */
+	{ &vop_write_desc, nfsfifo_write },		/* write */
+	{ &vop_lease_desc, fifo_lease_check },		/* lease */
+	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
+	{ &vop_select_desc, fifo_select },		/* select */
 #ifdef Lite2_integrated
-	{ &vop_revoke_desc, fifo_revoke },	/* revoke */
+	{ &vop_revoke_desc, fifo_revoke },		/* revoke */
 #endif
-	{ &vop_mmap_desc, fifo_mmap },		/* mmap */
-	{ &vop_fsync_desc, nfs_fsync },		/* fsync */
-	{ &vop_seek_desc, fifo_seek },		/* seek */
-	{ &vop_remove_desc, fifo_remove },	/* remove */
-	{ &vop_link_desc, fifo_link },		/* link */
-	{ &vop_rename_desc, fifo_rename },	/* rename */
-	{ &vop_mkdir_desc, fifo_mkdir },	/* mkdir */
-	{ &vop_rmdir_desc, fifo_rmdir },	/* rmdir */
-	{ &vop_symlink_desc, fifo_symlink },	/* symlink */
-	{ &vop_readdir_desc, fifo_readdir },	/* readdir */
-	{ &vop_readlink_desc, fifo_readlink },	/* readlink */
-	{ &vop_abortop_desc, fifo_abortop },	/* abortop */
-	{ &vop_inactive_desc, nfs_inactive },	/* inactive */
-	{ &vop_reclaim_desc, nfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc, nfs_lock },		/* lock */
-	{ &vop_unlock_desc, nfs_unlock },	/* unlock */
-	{ &vop_bmap_desc, fifo_bmap },		/* bmap */
-	{ &vop_strategy_desc, fifo_badop },	/* strategy */
-	{ &vop_print_desc, nfs_print },		/* print */
-	{ &vop_islocked_desc, nfs_islocked },	/* islocked */
-	{ &vop_pathconf_desc, fifo_pathconf },	/* pathconf */
-	{ &vop_advlock_desc, fifo_advlock },	/* advlock */
-	{ &vop_blkatoff_desc, fifo_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc, fifo_valloc },	/* valloc */
+	{ &vop_mmap_desc, fifo_mmap },			/* mmap */
+	{ &vop_fsync_desc, nfs_fsync },			/* fsync */
+	{ &vop_seek_desc, fifo_seek },			/* seek */
+	{ &vop_remove_desc, fifo_remove },		/* remove */
+	{ &vop_link_desc, fifo_link },			/* link */
+	{ &vop_rename_desc, fifo_rename },		/* rename */
+	{ &vop_mkdir_desc, fifo_mkdir },		/* mkdir */
+	{ &vop_rmdir_desc, fifo_rmdir },		/* rmdir */
+	{ &vop_symlink_desc, fifo_symlink },		/* symlink */
+	{ &vop_readdir_desc, fifo_readdir },		/* readdir */
+	{ &vop_readlink_desc, fifo_readlink },		/* readlink */
+	{ &vop_abortop_desc, fifo_abortop },		/* abortop */
+	{ &vop_inactive_desc, nfs_inactive },		/* inactive */
+	{ &vop_reclaim_desc, nfs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, nfs_lock },			/* lock */
+	{ &vop_unlock_desc, nfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, fifo_bmap },			/* bmap */
+	{ &vop_strategy_desc, genfs_badop },		/* strategy */
+	{ &vop_print_desc, nfs_print },			/* print */
+	{ &vop_islocked_desc, nfs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, fifo_pathconf },		/* pathconf */
+	{ &vop_advlock_desc, fifo_advlock },		/* advlock */
+	{ &vop_blkatoff_desc, fifo_blkatoff },		/* blkatoff */
+	{ &vop_valloc_desc, fifo_valloc },		/* valloc */
 	{ &vop_reallocblks_desc, fifo_reallocblks },	/* reallocblks */
-	{ &vop_vfree_desc, fifo_vfree },	/* vfree */
-	{ &vop_truncate_desc, fifo_truncate },	/* truncate */
-	{ &vop_update_desc, nfs_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_vfree_desc, fifo_vfree },		/* vfree */
+	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
+	{ &vop_update_desc, nfs_update },		/* update */
+	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
@@ -2660,7 +2661,7 @@ nfs_mmap(v)
 #if 0
 	struct vop_mmap_args /* {
 		struct vnode *a_vp;
-		int  a_fflags;
+		int a_fflags;
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
@@ -2946,65 +2947,6 @@ nfs_print(v)
 #endif
 	printf("\n");
 	return (0);
-}
-
-/*
- * NFS directory offset lookup.
- * Currently unsupported.
- */
-int
-nfs_blkatoff(v)
-	void *v;
-{
-#if 0
-	struct vop_blkatoff_args /* {
-		struct vnode *a_vp;
-		off_t a_offset;
-		char **a_res;
-		struct buf **a_bpp;
-	} */ *ap = v;
-#endif
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * NFS flat namespace allocation.
- * Currently unsupported.
- */
-int
-nfs_valloc(v)
-	void *v;
-{
-#if 0
-	struct vop_valloc_args /* {
-		struct vnode *a_pvp;
-		int a_mode;
-		struct ucred *a_cred;
-		struct vnode **a_vpp;
-	} */ *ap = v;
-#endif
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * NFS flat namespace free.
- * Currently unsupported.
- */
-int
-nfs_vfree(v)
-	void *v;
-{
-#if 0
-	struct vop_vfree_args /* {
-		struct vnode *a_pvp;
-		ino_t a_ino;
-		int a_mode;
-	} */ *ap = v;
-#endif
-
-	return (EOPNOTSUPP);
 }
 
 /*

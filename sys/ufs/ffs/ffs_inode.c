@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.11 1996/09/01 23:49:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,30 +89,16 @@ ffs_update(v)
 	struct buf *bp;
 	struct inode *ip;
 	int error;
+	struct timespec ts;
 
+	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
+		return (0);
 	ip = VTOI(ap->a_vp);
-	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY) {
-		ip->i_flag &=
-		    ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+	TIMEVAL_TO_TIMESPEC(&time, &ts);
+	ITIMES(ip, ap->a_access, ap->a_modify, &ts);
+	if ((ip->i_flag & IN_MODIFIED) == 0)
 		return (0);
-	}
-	if ((ip->i_flag &
-	    (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) == 0)
-		return (0);
-	if (ip->i_flag & IN_ACCESS) {
-		ip->i_atime = ap->a_access->tv_sec;
-		ip->i_atimensec = ap->a_access->tv_nsec;
-	}
-	if (ip->i_flag & IN_UPDATE) {
-		ip->i_mtime = ap->a_modify->tv_sec;
-		ip->i_mtimensec = ap->a_modify->tv_nsec;
-		ip->i_modrev++;
-	}
-	if (ip->i_flag & IN_CHANGE) {
-		ip->i_ctime = time.tv_sec;
-		ip->i_ctimensec = time.tv_usec * 1000;
-	}
-	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
+	ip->i_flag &= ~IN_MODIFIED;
 	fs = ip->i_fs;
 	/*
 	 * Ensure that uid and gid are correct. This is a temporary
