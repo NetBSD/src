@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.makedev,v 1.2 2002/04/26 15:50:27 lukem Exp $
+#	$NetBSD: Makefile.makedev,v 1.2.2.1 2002/06/02 01:21:59 tv Exp $
 #
 # Makefile snippet to add ${MAKEDEVTARGETS} devices to the mtree list
 # (if set), otherwise copy etc.${MACHINE}/MAKEDEV to ./dev
@@ -44,7 +44,8 @@ ${MAKEDEVSPEC}:	${_MAKEDEVSCRIPT} ${_MAKEDEVWRAP} ${_MAKEDEV2SPEC}
 
 #
 #	MAKEDEVTARGETS isn't set; copy in /dev/MAKEDEV and rely upon
-#	init(8) to mount an mfs /dev and recreated the devices
+#	init(8) to mount an mfs /dev and recreate the devices by
+#	(effectively) running "cd /dev ; ./MAKEDEV all"
 #
 LISTS+=		${DISTRIBDIR}/common/list.makedev
 IMAGEDEPENDS+=	${NETBSDSRCDIR}/etc/etc.${MACHINE}/MAKEDEV
