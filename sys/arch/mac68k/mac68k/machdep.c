@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208 1998/08/12 02:36:38 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.209 1998/08/12 05:42:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,10 +78,6 @@
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
-#include "opt_inet.h"
-#include "opt_atalk.h"
-#include "opt_iso.h"
-#include "opt_ns.h"
 #include "opt_uvm.h"
 #include "opt_compat_netbsd.h"
 #include "zsc.h"
@@ -1094,56 +1090,6 @@ straytrap(pc, evec)
 	    (int)(evec & 0xfff), pc);
 #ifdef DDB
 	Debugger();
-#endif
-}
-
-void arpintr __P((void));
-void ipintr __P((void));
-void atintr __P((void));
-void nsintr __P((void));
-void clnlintr __P((void));
-void pppintr __P((void));
-void netintr __P((void));
-
-void
-netintr()
-{
-#ifdef INET
-#if NARP > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
-#endif
-#ifdef NETATALK
-	if (netisr & (1 << NETISR_ATALK)) {
-		netisr &= ~(1 << NETISR_ATALK);
-		atintr();
-	}
-#endif
-#ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
-#endif
-#ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
-#endif
-#include "ppp.h"
-#if NPPP > 0
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
 #endif
 }
 

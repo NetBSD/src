@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.23 1998/07/04 22:18:27 jonathan Exp $	*/
+/*	$NetBSD: zs.c,v 1.24 1998/08/12 05:42:45 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -69,6 +69,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/psc.h>
 #include <machine/viareg.h>
 
 #include <dev/cons.h>
@@ -395,6 +396,13 @@ zsc_attach(parent, self, aux)
 		}
 	}
 
+	if (current_mac_model->class == MACH_CLASSAV) {
+		add_psc_lev4_intr(2, zshard, zsc);
+		add_psc_lev4_intr(3, zshard, zsc);
+	} else {
+		intr_establish(zshard, zsc, ZSHARD_PRI);
+	}
+
 	/* Now safe to enable interrupts. */
 
 	/*
@@ -458,38 +466,34 @@ zsmd_setclock(cs)
 static int zssoftpending;
 
 /*
- * Our ZS chips all share a common, autovectored interrupt,
- * so we have to look at all of them on each interrupt.
+ * Do the minimum work to pull data off of the chip and queue it up
+ * for later processing.
  */
 int
 zshard(arg)
 	void *arg;
 {
-	struct zsc_softc *zsc;
-	int unit, rval;
+	struct zsc_softc *zsc = (struct zsc_softc *)arg;
+	int rval;
+
+	if (zsc == NULL)
+		return 0;
 
 	rval = 0;
-	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
-		zsc = zsc_cd.cd_devs[unit];
-		if (zsc == NULL)
-			continue;
-		rval |= zsc_intr_hard(zsc);
-		if ((zsc->zsc_cs[0]->cs_softreq) ||
-			(zsc->zsc_cs[1]->cs_softreq))
-		{
-			/* zsc_req_softint(zsc); */
-			/* We are at splzs here, so no need to lock. */
-			if (zssoftpending == 0) {
-				zssoftpending = 1;
-				setsoftserial();
-			}
+	rval |= zsc_intr_hard(zsc);
+	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq)) {
+		/* zsc_req_softint(zsc); */
+		/* We are at splzs here, so no need to lock. */
+		if (zssoftpending == 0) {
+			zssoftpending = 1;
+			setsoftserial();
 		}
 	}
 	return (rval);
 }
 
 /*
- * Similar scheme as for zshard (look at all of them)
+ * Look at all of the zsc softint queues.
  */
 int
 zssoft(arg)
