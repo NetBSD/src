@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.31 1995/06/28 04:31:06 cgd Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.32 1995/07/30 02:44:27 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -733,7 +733,7 @@ ae_rint(sc)
 	u_short len;
 	u_char  nlen;
 	struct ae_ring packet_hdr;
-	caddr_t packet_ptr;
+	caddr_t packet_ptr, lenp;
 
 loop:
 	/* Set NIC to page 1 registers to get 'current' pointer. */
@@ -764,9 +764,8 @@ loop:
 		 * the NIC.
 		 */
 		packet_hdr = *(struct ae_ring *) packet_ptr;
-		packet_hdr.count =
-		    ((packet_hdr.count >> 8) & 0xff) |
-		    ((packet_hdr.count & 0xff) << 8);
+		lenp = (caddr_t) &((struct ae_ring *) packet_ptr)->count;
+		packet_hdr.count = lenp[0] | ((u_short)lenp[1] << 8);
 		len = packet_hdr.count;
 
 		/*
