@@ -831,7 +831,7 @@ struct client_lease *packet_to_lease PROTO ((struct packet *));
 void go_daemon PROTO ((void));
 void write_client_pid_file PROTO ((void));
 void status_message PROTO ((struct sysconf_header *, void *));
-void client_location_changed PROTO ((void));
+void client_reinit PROTO ((int));
 
 /* db.c */
 int write_lease PROTO ((struct lease *));
