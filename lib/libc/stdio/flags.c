@@ -1,4 +1,4 @@
-/*	$NetBSD: flags.c,v 1.5 1995/02/02 02:09:19 jtc Exp $	*/
+/*	$NetBSD: flags.c,v 1.6 1996/12/20 20:26:00 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,13 +40,14 @@
 #if 0
 static char sccsid[] = "@(#)flags.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: flags.c,v 1.5 1995/02/02 02:09:19 jtc Exp $";
+static char rcsid[] = "$NetBSD: flags.c,v 1.6 1996/12/20 20:26:00 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/file.h>
 #include <stdio.h>
 #include <errno.h>
+#include "local.h"
 
 /*
  * Return the (stdio) flags for a given mode.  Store the flags
@@ -55,7 +56,7 @@ static char rcsid[] = "$NetBSD: flags.c,v 1.5 1995/02/02 02:09:19 jtc Exp $";
  */
 int
 __sflags(mode, optr)
-	register char *mode;
+	register const char *mode;
 	int *optr;
 {
 	register int ret, m, o;
