@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.6 2001/02/22 15:34:28 msaitoh Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.7 2001/03/02 00:25:06 marcus Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -192,7 +192,7 @@ mkbd_ioctl(v, cmd, data, flag, p)
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
-		*(int *)data = 0;		/* XXX */
+		*(int *)data = WSKBD_TYPE_USB;		/* XXX */
 		return 0;
 	case WSKBDIO_SETLEDS:
 		return 0;
@@ -221,7 +221,7 @@ mkbd_cnattach()
 static int polledkey;
 extern int maple_polling;
 
-#define SHIFT_KEYCODE_BASE 0x100
+#define SHIFT_KEYCODE_BASE 0xe0
 #define UP_KEYCODE_FLAG 0x1000
 
 #define KEY_UP(n) \
