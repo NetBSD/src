@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.31 1995/06/09 21:53:32 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.32 1995/06/24 20:48:36 christos Exp $
 
 #
 # Makefile for NetBSD
@@ -45,6 +45,14 @@ LIBKERN=	${KERNLIB}
 LIBKERN=	${KERNLIB_PROF}
 .endif
 
+### find out what to use for libcompat
+.include "$S/compat/common/Makefile.inc"
+.ifndef PROF
+LIBCOMPAT=	${COMPATLIB}
+.else
+LIBCOMPAT=	${COMPATLIB_PROF}
+.endif
+
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
@@ -82,9 +90,9 @@ SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
 SYSTEM_LD=	-@echo ${LD} ${LDX} -n -N -e start -T 0E004000 -o $@ \
-		    '$${SYSTEM_OBJ}' vers.o ${LIBKERN}; \
+		    '$${SYSTEM_OBJ}' vers.o ${LIBKERN} ${LIBCOMPAT}; \
 		${LD} ${LDX} -n -N -e start -T 0E004000 -o $@ \
-		    ${SYSTEM_OBJ} vers.o ${LIBKERN}
+		    ${SYSTEM_OBJ} vers.o ${LIBKERN} ${LIBCOMPAT}
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; \
 		[ X${DEBUG} = X-g ] && { \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
@@ -96,9 +104,9 @@ newvers:
 	sh $S/conf/newvers.sh
 	${CC} $(CFLAGS) -c vers.c
 
-clean:
+clean::
 	rm -f eddep netbsd* tags *.o locore.i [a-z]*.s \
-		Errs errs linterrs makelinks vnode_if.[ch]
+		Errs errs linterrs makelinks vnode_if.[ch] genassym
 
 lint: /tmp param.c
 	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
