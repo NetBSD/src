@@ -1,4 +1,4 @@
-/*	$NetBSD: walnut.h,v 1.3 2001/10/29 01:31:11 simonb Exp $	*/
+/*	$NetBSD: walnut.h,v 1.4 2002/03/13 19:27:02 eeh Exp $	*/
 
 /* include/eval.h, openbios_walnut, walnut_bios 8/10/00 14:35:05 */
 /*-----------------------------------------------------------------------------+
@@ -151,21 +151,4 @@
 #define FPGA_SPARE2     0x0f    /* Spare outputs */
 #define	FPGA_SIZE	FPGA_SPARE2
 
-#ifndef _LOCORE
-/*
- * Board configuration structure from the OpenBIOS.
- */
-struct board_cfg_data {
-	unsigned char	usr_config_ver[4];
-	unsigned char	rom_sw_ver[30];
-	unsigned int	mem_size;
-	unsigned char	mac_address_local[6];
-	unsigned char	mac_address_pci[6];
-	unsigned int	processor_speed;
-	unsigned int	plb_speed;
-	unsigned int	pci_speed;
-} board_data;
-
-extern struct board_cfg_data board_data;
-#endif /* _LOCORE */
 #endif /* _WALNUT_H_ */
