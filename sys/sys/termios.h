@@ -1,4 +1,4 @@
-/*	$NetBSD: termios.h,v 1.22 1999/08/22 13:12:41 kleink Exp $	*/
+/*	$NetBSD: termios.h,v 1.23 2000/09/20 10:16:49 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993, 1994
@@ -38,6 +38,7 @@
 #ifndef _SYS_TERMIOS_H_
 #define _SYS_TERMIOS_H_
 
+#include <sys/ansi.h>
 #include <sys/featuretest.h>
 
 /*
@@ -254,8 +255,11 @@ struct termios {
 #define TCION		4
 
 #if !defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE)
-#include <sys/types.h>		/* XXX for pid_t */
+#ifndef	pid_t
+typedef	__pid_t		pid_t;
+#define	pid_t		__pid_t
 #endif
+#endif /* !_POSIX_C_SOURCE || _XOPEN_SOURCE */
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
