@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.5 2002/02/11 11:19:29 wiz Exp $	*/
+/*	$NetBSD: intr.h,v 1.6 2002/03/13 19:24:46 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,8 +98,8 @@ extern u_long imask[];
 extern u_long intrcnt[];
 
 /*
- *  Reorder protection in the following inline functions is
- * achieved with the "eieio" instruction which the assembler
+ * Reorder protection in the following inline functions is
+ * achived with the "eieio" instruction which the assembler
  * seems to detect and then doesn't move instructions past....
  */
 static __inline int
@@ -160,15 +160,16 @@ set_sint(pending)
 #define	IRQ_TO_MASK(x)	(0x80000000UL >> (x))
 
 /*
- * Interrupts 19-24 are not used by hardware and therefore useable
- * by us for softints.
+ * Interrupt bits 0-18 and 25-31 are used by hardware.  This 
+ * leaves us bits 19-24 for stoftware.  
  */
 #define	HWINT_MASK	~0x1fc0
 
+/* Assign these to unused (reserved) interrupt bits: */
 #define	CNT_SINT_NET	19
 #define	CNT_SINT_CLOCK	20
 #define	CNT_SINT_SERIAL	21
-#define	CNT_CLOCK	22
+#define	CNT_CLOCK       22
 #define	CNT_STATCLOCK	23
 
 #define	SINT_NET	IRQ_TO_MASK(CNT_SINT_NET)
