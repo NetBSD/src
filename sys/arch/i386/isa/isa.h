@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.9 1993/06/30 04:06:41 andrew Exp $
+ *	$Id: isa.h,v 1.10 1993/08/03 01:53:36 glass Exp $
  */
 
 /*
@@ -142,18 +142,18 @@ int isa_irq_pending __P((struct isa_device *dvp));
 #ifndef	IO_ISASIZES
 #define	IO_ISASIZES
 
-#define	IO_COMSIZE	8	/* 8250, 16X50 com controllers (
+#define	IO_COMSIZE	8	/* 8250, 16X50 com controllers (*/
 #define	IO_CGASIZE	16	/* CGA controllers */
 #define	IO_DMASIZE	16	/* 8237 DMA controllers */
 #define	IO_DPGSIZE	32	/* 74LS612 DMA page reisters */
 #define	IO_FDCSIZE	8	/* Nec765 floppy controllers */
-#define	IO_WDCSIZE	8	/* WD compatible disk controller
-#define	IO_GAMSIZE	16	/* AT compatible game controller
-#define	IO_ICUSIZE	16	/* 8259A interrupt controllers *
+#define	IO_WDCSIZE	8	/* WD compatible disk controller */
+#define	IO_GAMSIZE	16	/* AT compatible game controller */
+#define	IO_ICUSIZE	16	/* 8259A interrupt controllers */
 #define	IO_KBDSIZE	16	/* 8042 Keyboard controllers */
-#define	IO_LPTSIZE	8	/* LPT controllers, some use onl
-#define	IO_MDASIZE	16	/* Monochrome display controller
-#define	IO_RTCSIZE	16	/* CMOS real time clock, NMI con
+#define	IO_LPTSIZE	8	/* LPT controllers, some use onl */
+#define	IO_MDASIZE	16	/* Monochrome display controller */
+#define	IO_RTCSIZE	16	/* CMOS real time clock, NMI con */
 #define	IO_TMRSIZE	16	/* 8253 programmable timers */
 #define	IO_NPXSIZE	16	/* 80387/80487 NPX registers */
 #define	IO_VGASIZE	16	/* VGA controllers */
