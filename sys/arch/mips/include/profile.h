@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.15 2000/07/18 06:25:32 jeffs Exp $	*/
+/*	$NetBSD: profile.h,v 1.16 2002/02/05 07:12:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,8 +80,9 @@
 	"sw $1,0($29);" \
 	"sw $31,4($29);" \
 	"move $5,$31;" \
-	"jal __mcount;" \
 	"move $4,$1;" \
+	"jal __mcount;" \
+	"nop;" \
 	"lw $4,8($29);" \
 	"lw $5,12($29);" \
 	"lw $6,16($29);" \
