@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.11 1999/02/13 21:08:08 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.12 1999/02/17 09:11:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -880,7 +880,7 @@ epic_tick(arg)
 	struct epic_softc *sc = arg;
 	int s;
 
-	s = splimp();
+	s = splnet();
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
