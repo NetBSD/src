@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 2002/07/19 16:38:26 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 2002/08/11 13:21:07 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -174,6 +174,11 @@ cdev_decl(clockctl);
 #include "scsibus.h"
 cdev_decl(scsibus);
 
+#include "usb.h"
+cdev_decl(usb);
+#include "ugen.h"
+cdev_decl(ugen);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -238,6 +243,8 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 49: system call tracing */
 #endif
+	cdev_usb_init(NUSB, usb),	/* 50: USB controller */
+	cdev_ugen_init(NUGEN, ugen),	/* 51: USB generic driver */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -303,6 +310,7 @@ static int chrtoblktbl[] = {
 	/* 44 */	NODEV,		/* 45 */	NODEV,
 	/* 46 */	NODEV,		/* 47 */	NODEV,
 	/* 48 */	NODEV,		/* 49 */	NODEV,
+	/* 50 */	NODEV,		/* 51 */	NODEV,
 };
 
 /*
