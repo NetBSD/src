@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.c,v 1.2 2001/10/23 04:19:34 thorpej Exp $	*/
+/*	$NetBSD: platform.c,v 1.3 2001/10/29 22:28:38 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -78,23 +78,23 @@ extern void	ofwgen_init(void);
 
 #include "opt_firepower_es.h"
 #if defined(FIREPOWER_ES)
-extern void	firepower_es_init(void);
+extern void	firepower_init(void);
 #else
-#define		firepower_es_init	platform_not_configured
+#define		firepower_init		platform_not_configured
 #endif
 
 #include "opt_firepower_mx.h"
 #if defined(FIREPOWER_MX)
-extern void	firepower_mx_init(void);
+extern void	firepower_init(void);
 #else
-#define		firepower_mx_init	platform_not_configured
+#define		firepower_init		platform_not_configured
 #endif
 
 #include "opt_firepower_lx.h"
 #if defined(FIREPOWER_LX)
-extern void	firepower_lx_init(void);
+extern void	firepower_init(void);
 #else
-#define		firepower_lx_init	platform_not_configured
+#define		firepower_init		platform_not_configured
 #endif
 
 #include "opt_totalimpact_briq.h"
@@ -111,9 +111,9 @@ extern void	totalimpact_briq_init(void);
  */
 const struct platinit platinit[] = {
 	plat_init(NULL, ofwgen_init),
-	plat_init("FIREPOWER_ES", firepower_es_init),
-	plat_init("FIREPOWER_MX", firepower_mx_init),
-	plat_init("FIREPOWER_LX", firepower_lx_init),
+	plat_init("FIREPOWER_ES", firepower_init),
+	plat_init("FIREPOWER_MX", firepower_init),
+	plat_init("FIREPOWER_LX", firepower_init),
 	plat_init("TOTALIMPACT_BRIQ", totalimpact_briq_init),
 };
 
