@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machparam.h 1.11 89/08/14$
  *
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.6 1993/12/06 04:11:47 briggs Exp $
+ *	$Id: param.h,v 1.7 1993/12/15 03:22:58 briggs Exp $
  */
 
 #ifndef PSL_IPL
@@ -80,10 +80,10 @@
 #endif /* PSL_IPL */
 
 /*
- * Machine dependent constants for Macintosh II series.
+ * Machine dependent constants for Macintosh II-and-similar series.
    ALICE
       BG 05/24/92,17:46:53
-         Well, I've tried to make this as macII-specific as possible.
+         Well, I've tried to make this as mac68k-specific as possible.
          It's difficult without knowing exactly what these things do.
 	06/03/92,14:12:35 BG 
          I've done a little more messing around; I think we're basically
@@ -182,14 +182,14 @@
 /*
  * Mach derived conversion macros
  */
-#define macII_round_seg(x)	((((unsigned)(x)) + NBSEG - 1) & ~(NBSEG-1))
-#define macII_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
-#define macII_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
-#define macII_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
-#define macII_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define macII_stob(x)		((unsigned)(x) << SEGSHIFT)
-#define macII_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define macII_ptob(x)		((unsigned)(x) << PGSHIFT)
+#define mac68k_round_seg(x)	((((unsigned)(x)) + NBSEG - 1) & ~(NBSEG-1))
+#define mac68k_trunc_seg(x)	((unsigned)(x) & ~(NBSEG-1))
+#define mac68k_round_page(x)	((((unsigned)(x)) + NBPG - 1) & ~(NBPG-1))
+#define mac68k_trunc_page(x)	((unsigned)(x) & ~(NBPG-1))
+#define mac68k_btos(x)		((unsigned)(x) >> SEGSHIFT)
+#define mac68k_stob(x)		((unsigned)(x) << SEGSHIFT)
+#define mac68k_btop(x)		((unsigned)(x) >> PGSHIFT)
+#define mac68k_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /*
  * spl functions; all but spl0 are done in-line
