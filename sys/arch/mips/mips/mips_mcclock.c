@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.9 2000/03/28 02:58:49 simonb Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.10 2000/10/04 22:44:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.9 2000/03/28 02:58:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.10 2000/10/04 22:44:02 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,14 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.9 2000/03/28 02:58:49 simonb Exp 
 #include <dev/dec/mcclock_pad32.h>
 
 #include <mips/cpu.h>			/* CPUISMIPS3 */
+#include <mips/locore.h>		/* mips_cp0_cause_read() */
 #include <mips/mips/mips_mcclock.h>
 
 
 unsigned mips_mc_cpuspeed __P((void *, int, int (*)(void *, int)));
 int mips_mcclock_tickloop __P((void *, int));
 unsigned mips_mcclock_to_mhz __P((unsigned iters));
-
-u_int mips_read_causereg __P((void));
 
 
 /*
@@ -157,7 +156,7 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 	junk++;	junk++;	junk++;	junk++;
 
 	/* Poll clock interrupt, waiting for next tick to happen. */
-	while ((mips_read_causereg() & clockmask) == 0)
+	while ((mips_cp0_cause_read() & clockmask) == 0)
 		;
 
 	/* Ack the mc146818 interrupt caused by starting tick. */
@@ -167,12 +166,12 @@ mips_mcclock_tickloop(mcclock_addr, clockmask)
 
 	/* Count loops until next tick-interrupt request occurs (4ms). */
 	if (CPUISMIPS3) {
-		while ((mips_read_causereg() & clockmask) == 0) {
+		while ((mips_cp0_cause_read() & clockmask) == 0) {
 			__asm __volatile ("nop; nop; nop; nop");
 			iters++;
 		}
 	} else {
-		while ((mips_read_causereg() & clockmask) == 0) {
+		while ((mips_cp0_cause_read() & clockmask) == 0) {
 			__asm __volatile ("nop; nop;");
 			iters++;
 		}
