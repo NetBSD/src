@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2000/08/07 18:46:30 tv Exp $ */
+/*	$NetBSD: trap.c,v 1.53 2000/08/08 19:59:41 tv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -512,7 +512,7 @@ trap(type, tstate, pc, tf)
 
 #ifdef DEBUG
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_FOLLOW|TDB_TRAP)) {
-		char sbuf[sizeof(PSTATE_BITS) + 8];
+		char sbuf[sizeof(PSTATE_BITS) + 64];
 
 		printf("trap: type 0x%x: pc=%lx &tf=%lx\n",
 		       type, pc, tf);
@@ -533,7 +533,7 @@ trap(type, tstate, pc, tf)
 	uvmexp.traps++;
 #ifdef DEBUG
 	if ((trapdebug&(TDB_FOLLOW|TDB_TRAP)) || ((trapdebug & TDB_TL) && tl())) {
-		char sbuf[sizeof(PSTATE_BITS) + 8];
+		char sbuf[sizeof(PSTATE_BITS) + 64];
 
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
@@ -627,7 +627,7 @@ dopanic:
 			trap_trace_dis = 1;
 
 			{
-				char sbuf[sizeof(PSTATE_BITS) + 8];
+				char sbuf[sizeof(PSTATE_BITS) + 64];
 
 				printf("trap type 0x%x: pc=%lx",
 				       type, pc); 
