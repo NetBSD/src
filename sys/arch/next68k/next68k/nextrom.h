@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.2 1998/07/04 05:36:06 dbj Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.3 1998/11/10 22:45:45 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -214,6 +214,30 @@ struct mon_global {
 struct mon_global *restore_mg();
 caddr_t mon_alloc();
 
-#endif
+#endif /* if 0 */
+
+#define	N_SIMM		4		/* number of SIMMs in machine */
+
+/* SIMM types */
+#define SIMM_SIZE       0x03
+#define	SIMM_SIZE_EMPTY	0x00
+#define	SIMM_SIZE_16MB	0x01
+#define	SIMM_SIZE_4MB	0x02
+#define	SIMM_SIZE_1MB	0x03
+#define	SIMM_PAGE_MODE	0x04
+#define	SIMM_PARITY	0x08 /* ?? */
+
+/* Space for onboard RAM
+ */
+#define	MAX_PHYS_SEGS	N_SIMM+1
+
+/* Machine types, used in both assembler and C sources. */
+#define	NeXT_CUBE	0
+#define	NeXT_WARP9	1
+#define	NeXT_X15	2
+#define	NeXT_WARP9C	3
+
+#define NeXT_TURBO_COLOR 5			/* probed witnessed */
+
 
 #endif /* NEXTROM_H_INCLUDED */

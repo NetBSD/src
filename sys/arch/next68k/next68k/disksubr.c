@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1998/07/05 07:53:46 dbj Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 1998/11/10 22:45:45 dbj Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -45,6 +45,8 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+
+#include <sys/disk.h>
 
 #define	b_cylinder	b_resid
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.4 1998/07/21 06:17:35 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.5 1998/11/10 22:45:44 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -42,6 +42,8 @@
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
+
+#include <m68k/cacheops.h>
 
 #include <next68k/next68k/isr.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1998/08/31 21:21:10 dbj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1998/11/10 22:45:44 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -133,6 +133,9 @@ void	m68881_restore __P((struct fpframe *));
 u_long	getdfc __P((void));
 u_long	getsfc __P((void));
 #endif
+
+#if 0 /* {@@@ Use cacheops.h? */
+
 void	DCIA __P((void));
 void	DCIS __P((void));
 void	DCIU __P((void));
@@ -152,6 +155,8 @@ void	DCPP __P((vm_offset_t));
 void	ICPL __P((vm_offset_t));
 void	ICPP __P((vm_offset_t));
 #endif
+#endif /* }@@@ use m68k/cacheops.c */
+
 int	suline __P((caddr_t, caddr_t));
 void	savectx __P((struct pcb *));
 void	switch_exit __P((struct proc *));

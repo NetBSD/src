@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1998/11/10 22:45:44 dbj Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -146,6 +146,9 @@ extern volatile u_int8_t ssir;
 #define	setsoftserial()	siron(SIR_SERIAL)
 #define	setsoftdtmgr()	siron(SIR_DTMGR)
 #define	setsoftadb()	siron(SIR_ADB)
+
+extern u_long allocate_sir __P((void (*)(void),void *));
+extern void init_sir __P((void));
 
 /* locore.s */
 int	spl0 __P((void));

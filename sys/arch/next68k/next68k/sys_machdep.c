@@ -1,4 +1,11 @@
-/*	$NetBSD: sys_machdep.c,v 1.2 1998/06/25 23:58:48 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.3 1998/11/10 22:45:45 dbj Exp $ */
+
+/*
+ * This file was taken from from mvme68k/mvme68k/sys_machdep.c
+ * should probably be re-synced when needed.
+ * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
+ * original cvs id: NetBSD: sys_machdep.c,v 1.12 1998/08/22 10:55:36 scw Exp
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,15 +61,18 @@
 
 #include <sys/syscallargs.h>
 
+#include <machine/cpu.h>
+#include <m68k/cacheops.h>
+
 #ifdef TRACE
 int	nvualarm;
 
 vtrace(p, v, retval)
 	struct proc *p;
 	void *v;
-	register_t *retval;
+	int *retval;
 {
-	register struct vtrace_args /* {
+	struct vtrace_args /* {
 		syscallarg(int) request;
 		syscallarg(int) value;
 	} */ *uap = v;
@@ -102,8 +112,8 @@ vtrace(p, v, retval)
 vdoualarm(arg)
 	void *arg;
 {
-	register int pid = (int)arg;
-	register struct proc *p;
+	int pid = (int)arg;
+	struct proc *p;
 
 	p = pfind(pid);
 	if (p)
@@ -111,8 +121,6 @@ vdoualarm(arg)
 	nvualarm--;
 }
 #endif
-
-#include <machine/cpu.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1
@@ -141,7 +149,7 @@ cachectl(req, addr, len)
 
 #if defined(M68040)
 	if (mmutype == MMU_68040) {
-		register int inc = 0;
+		int inc = 0;
 		int pa = 0, doall = 0;
 		caddr_t end;
 #ifdef COMPAT_HPUX
@@ -175,7 +183,7 @@ cachectl(req, addr, len)
 			if (!doall &&
 			    (pa == 0 || ((int)addr & PGOFSET) == 0)) {
 				pa = pmap_extract(curproc->p_vmspace->vm_map.pmap,
-						  (vm_offset_t)addr);
+						  (vaddr_t)addr);
 				if (pa == 0)
 					doall = 1;
 			}
@@ -260,12 +268,12 @@ int
 sys_sysarch(p, v, retval)
 	struct proc *p;
 	void *v;
-	register_t *retval;
+	int *retval;
 {
 	struct sysarch_args /* {
 		syscallarg(int) op; 
-		syscallarg(char *) parms;
+		syscallarg(void *) parms;
 	} */ *uap = v;
 
-	return ENOSYS;
+	return (ENOSYS);
 }

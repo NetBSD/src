@@ -1,4 +1,11 @@
-/*	$NetBSD: isr.c,v 1.5 1998/07/05 06:49:07 jonathan Exp $	*/
+/*	$NetBSD: isr.c,v 1.6 1998/11/10 22:45:45 dbj Exp $ */
+
+/*
+ * This file was taken from from mvme68k/mvme68k/isr.c
+ * should probably be re-synced when needed.
+ * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
+ * original cvs id: NetBSD: isr.c,v 1.12 1998/07/05 06:49:07 jonathan Exp
+ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,18 +46,27 @@
 /*
  * Link and dispatch interrupts.
  */
+
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
 #include "opt_iso.h"
 #include "opt_ns.h"
+#include "opt_uvm.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
-#include <machine/cpu.h>
+
+#ifdef UVM
+#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
+#endif
+
 #include <net/netisr.h>
+
+#include <machine/cpu.h>
 
 #include <next68k/next68k/isr.h>
 
@@ -220,7 +236,11 @@ isrdispatch_autovec(pc, evec, frame)
 	ipl = vec - ISRAUTOVEC;
 
 	intrcnt[ipl]++;
+#ifdef UVM
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	list = &isr_autovec[ipl];
 	if (list->lh_first == NULL) {
@@ -231,7 +251,7 @@ isrdispatch_autovec(pc, evec, frame)
 	}
 
 	/* Give all the handlers a chance. */
-        handled = 0;
+	handled = 0;
 	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next)
 		handled |= (*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame);
 
@@ -239,10 +259,8 @@ isrdispatch_autovec(pc, evec, frame)
 		straycount = 0;
 	else if (++straycount > 50)
 		panic("isr_dispatch_autovec: too many stray interrupts");
-	else {
+	else
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
-		next68k_isr_printcounts();
-	}
 }
 
 /*
@@ -261,7 +279,11 @@ isrdispatch_vectored(pc, evec, frame)
 	ipl = (getsr() >> 8) & 7;
 
 	intrcnt[ipl]++;
+#ifdef UVM
+	uvmexp.intrs++;
+#else
 	cnt.v_intr++;
+#endif
 
 	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
 		panic("isrdispatch_vectored: bad vec 0x%x\n", vec);
@@ -283,6 +305,15 @@ isrdispatch_vectored(pc, evec, frame)
 /*
  * XXX Why on earth isn't this in a common file?!
  */
+void	netintr __P((void));
+void	arpintr __P((void));
+void	atintr __P((void));
+void	ipintr __P((void));
+void	nsintr __P((void));
+void	clnlintr __P((void));
+void	ccittintr __P((void));
+void	pppintr __P((void));
+
 void
 netintr()
 {
@@ -330,31 +361,4 @@ netintr()
 		pppintr();
 	}
 #endif
-}
-
-void
-next68k_isr_printcounts()
-{
-  long icounts[9];
-
-  {
-    int i;
-    int s = splhigh();
-    for (i=0;i<9;i++) {
-      icounts[i] = intrcnt[i];
-    }
-    splx(s);
-  }
-
-  printf("Interrupt counts:\n");
-  {
-    int i;
-    for (i=0;i<9;i++) {
-      printf("\tcnt[%d] = %ld\n",i,icounts[i]);
-    }
-  }
-  printf("  *intrstat = 0x%b\n",
-			(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
-	printf("  *intrmask = 0x%b\n",
-			(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
 }

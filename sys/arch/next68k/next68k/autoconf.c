@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.1.1 1998/06/09 07:53:05 dbj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 1998/11/10 22:45:44 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -163,8 +163,7 @@ configure()
 
 	booted_device = NULL;	/* set by device drivers (if found) */
 
-        INTR_SETMASK(0);
-        next68k_isr_printcounts();
+	INTR_SETMASK(0);
 
 	init_sir();
 
@@ -173,8 +172,8 @@ configure()
 
 	cold = 0;
 
-        /* Turn on interrupts */
-        spl0();
+	/* Turn on interrupts */
+	spl0();
 }
 
 void
@@ -187,6 +186,7 @@ cpu_rootconf()
 	setroot(booted_device, 0, next68k_nam2blk);
 }
 
+#if 0 /* @@@ Does anything use this? Is it a required interface? */
 /*
  * find a device matching "name" and unit number
  */
@@ -214,3 +214,5 @@ getdevunit(name, unit)
 	}
 	return dev;
 }
+
+#endif
