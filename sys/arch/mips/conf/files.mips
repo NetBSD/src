@@ -1,6 +1,8 @@
 file	arch/mips/mips/cpu_exec.c
 file	arch/mips/mips/mem.c
+file	arch/mips/mips/pmap.c
 file	arch/mips/mips/trap.c			# interrupt, trap hanlders
+file	arch/mips/mips/vm_machdep.c
 file	arch/mips/mips/minidebug.c	kdb # MIPS-III TLB prettyprinter
 file	arch/mips/mips/mips_machdep.c		# shared mips machdep.c
 file	arch/mips/mips/sys_machdep.c		# shared mips sys_machdep
