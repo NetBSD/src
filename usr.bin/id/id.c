@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.14 1998/12/19 16:55:21 christos Exp $");
+__RCSID("$NetBSD: id.c,v 1.14.2.1 1999/10/09 21:24:23 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,8 +239,8 @@ current()
 	}
 	if ((ngroups = getgroups(maxgroups, groups)) != NULL) {
 		for (fmt = " groups=%u", lastid = -1, cnt = 0; cnt < ngroups;
-		    fmt = ", %u", lastid = id) {
-			id = groups[cnt++];
+		    fmt = ",%u", lastid = id, cnt++) {
+			id = groups[cnt];
 			if (lastid == id)
 				continue;
 			(void)printf(fmt, id);
@@ -266,15 +266,14 @@ user(pw)
 		(void)printf("(%s)", gr->gr_name);
 	ngroups = maxgroups + 1;
 	(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
-	fmt = " groups=%u";
-	for (lastid = -1, cnt = 0; cnt < ngroups; ++cnt) {
-		if (lastid == (id = groups[cnt]))
+	for (fmt = " groups=%u", lastid = -1, cnt = 0; cnt < ngroups;
+	    fmt=",%u", lastid = id, cnt++) {
+		id = groups[cnt];
+		if (lastid == id)
 			continue;
 		(void)printf(fmt, id);
-		fmt = " %u";
 		if ((gr = getgrgid(id)) != NULL)
 			(void)printf("(%s)", gr->gr_name);
-		lastid = id;
 	}
 	(void)printf("\n");
 }
