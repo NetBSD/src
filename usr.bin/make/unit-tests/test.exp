@@ -23,8 +23,8 @@ FIVE
 SIX"
 make: Bad modifier `:tx' for LIST
 LIST:tx="}"
-make: Bad modifier `:ts\a' for LIST
-LIST:ts/a:tu="\a:tu}"
+make: Bad modifier `:ts\x' for LIST
+LIST:ts/x:tu="\x:tu}"
 FU_mod-ts="a/b/cool"
 FU_mod-ts:ts:T="cool" == cool?
 default FU=<v>fu</v> FOO=<v>foo</v> VAR=<v></v>
