@@ -1,4 +1,4 @@
-/*	$NetBSD: pty.c,v 1.18 2002/02/02 05:48:31 tls Exp $	*/
+/*	$NetBSD: pty.c,v 1.19 2002/03/09 20:09:28 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pty.c	8.3 (Berkeley) 5/16/94";
 #else
-__RCSID("$NetBSD: pty.c,v 1.18 2002/02/02 05:48:31 tls Exp $");
+__RCSID("$NetBSD: pty.c,v 1.19 2002/03/09 20:09:28 atatat Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,13 +60,15 @@ __RCSID("$NetBSD: pty.c,v 1.18 2002/02/02 05:48:31 tls Exp $");
  * XXX: `v' removed until no ports are using console devices which use ttyv0
  */
 #define TTY_LETTERS	"pqrstuwxyzPQRST"
+#define TTY_OLD_SUFFIX	"0123456789abcdef"
+#define TTY_NEW_SUFFIX	"ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 int
 openpty(int *amaster, int *aslave, char *name, struct termios *termp, 
 	struct winsize *winp)
 {
 	static char line[] = "/dev/XtyXX";
-	const char *cp1, *cp2;
+	const char *cp1, *cp2, *cp;
 	int master, slave, tries = 0;
 	gid_t ttygid;
 	struct group *gr;
@@ -84,16 +86,16 @@ openpty(int *amaster, int *aslave, char *name, struct termios *termp,
 
 	for (cp1 = TTY_LETTERS; *cp1; cp1++) {
 		tries = 0;
-try:
 		line[8] = *cp1;
-		for (cp2 = !tries ?
-		     "ghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" :
-		     "0123456789abcdef" ; *cp2; cp2++) {
+		for (cp = cp2 = TTY_OLD_SUFFIX TTY_NEW_SUFFIX; *cp2; cp2++) {
 			line[5] = 'p';
 			line[9] = *cp2;
 			if ((master = open(line, O_RDWR, 0)) == -1) {
-				if ((errno == ENOENT) && tries) {
-					return (-1); 	/* out of ptys */
+				if (errno == ENOENT) {
+					if (cp2 - cp + 1 < sizeof(TTY_OLD_SUFFIX))
+						return (-1); /* out of ptys */
+					else
+						break;
 				}
 			} else {
 				line[5] = 't';
@@ -114,10 +116,6 @@ try:
 					return (0);
 				}
 				(void) close(master);
-			}
-			if(!tries) {
-				tries++;
-				goto try;
 			}
 		}
 	}
