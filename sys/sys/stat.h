@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.26.2.1 1997/10/22 06:24:51 thorpej Exp $	*/
+/*	$NetBSD: stat.h,v 1.26.2.2 1997/11/04 23:34:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -223,8 +223,8 @@ int	fstat __P((int, struct stat12 *));
 int	__stat13 __P((const char *, struct stat *));
 int	__fstat13 __P((int, struct stat *));
 #else
-int	stat __P((const char *, struct stat *))	__RENAME("__stat13");
-int	fstat __P((int, struct stat *))		__RENAME("__fstat13");
+int	stat __P((const char *, struct stat *))	__RENAME(__stat13);
+int	fstat __P((int, struct stat *))		__RENAME(__fstat13);
 #endif
 mode_t	umask __P((mode_t));
 #ifndef _POSIX_SOURCE
@@ -236,7 +236,7 @@ int	lchmod __P((const char *, mode_t));
 int	lstat __P((const char *, struct stat12 *));
 int	__lstat13 __P((const char *, struct stat *));
 #else
-int	lstat __P((const char *, struct stat *))	__RENAME("__lstat13");
+int	lstat __P((const char *, struct stat *))	__RENAME(__lstat13);
 #endif
 #endif
 
