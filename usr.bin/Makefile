@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
+#	$NetBSD: Makefile,v 1.63 1996/06/14 17:22:07 cgd Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
+
+.include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \
