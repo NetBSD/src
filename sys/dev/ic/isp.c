@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.19 1998/02/13 21:58:40 thorpej Exp $	*/
+/*	$NetBSD: isp.c,v 1.20 1998/03/22 22:02:29 mjacob Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -116,10 +116,14 @@ isp_reset(isp)
 	 * See if we can't figure out more here.
 	 */
 	if (isp->isp_type & ISP_HA_FC) {
-		isp->isp_dblev = 2;
+		isp->isp_dblev = 3;
 		revname = "2100";
 	} else {
+#ifdef	SCSIDEBUG
+		isp->isp_dblev = 2;
+#else
 		isp->isp_dblev = 1;
+#endif
 		i = ISP_READ(isp, BIU_CONF0) & BIU_CONF0_HW_MASK;
 		switch (i) {
 		default:
@@ -302,7 +306,7 @@ isp_reset(isp)
 			}
 		}
 	} else {
-		IDPRINTF(2, ("%s: skipping f/w download\n", isp->isp_name));
+		IDPRINTF(3, ("%s: skipping f/w download\n", isp->isp_name));
 	}
 
 	/*
@@ -399,7 +403,7 @@ isp_init(isp)
 			return;
 		}
 	} else {
-		IDPRINTF(2, ("%s: leaving Initiator ID at %d\n", isp->isp_name,
+		IDPRINTF(3, ("%s: leaving Initiator ID at %d\n", isp->isp_name,
 			sdp->isp_initiator_id));
 	}
 
@@ -450,36 +454,30 @@ isp_init(isp)
 		return;
 	}
 
-#ifdef	0
-	printf("%s: device parameters, W=wide, S=sync, T=TagEnable\n",
-		isp->isp_name);
-#endif
-
+	IDPRINTF(2, ("%s: devparm, W=wide, S=sync, T=Tag\n", isp->isp_name));
 	for (i = 0; i < MAX_TARGETS; i++) {
-#ifdef	0
 		char bz[8];
+		u_int16_t cj = (sdp->isp_devparam[i].sync_offset << 8) |
+				(sdp->isp_devparam[i].sync_period);
 
 		if (sdp->isp_devparam[i].dev_flags & DPARM_SYNC) {
-			u_int16_t cj = (sdp->isp_devparam[i].sync_offset << 8) |
-					(sdp->isp_devparam[i].sync_period);
+			u_int16_t x;
 			if (cj == ISP_20M_SYNCPARMS) {
-				cj = 20;
-			} else if (ISP_10M_SYNCPARMS) {
-				cj = 20;
-			} else if (ISP_08M_SYNCPARMS) {
-				cj = 20;
-			} else if (ISP_05M_SYNCPARMS) {
-				cj = 20;
-			} else if (ISP_04M_SYNCPARMS) {
-				cj = 20;
+				x = 20;
+			} else if (cj == ISP_10M_SYNCPARMS) {
+				x = 10;
+			} else if (cj == ISP_08M_SYNCPARMS) {
+				x = 8;
+			} else if (cj == ISP_05M_SYNCPARMS) {
+				x = 5;
+			} else if (cj == ISP_04M_SYNCPARMS) {
+				x = 4;
 			} else {
-				cj = 0;
+				x = 0;
 			}
-			if (sdp->isp_devparam[i].dev_flags & DPARM_WIDE)
-				cj <<= 1;
-			sprintf(bz, "%02dMBs", cj);
+			sprintf(bz, "%02dMHz:", x);
 		} else {
-			sprintf(bz, "Async");
+			sprintf(bz, "Async:");
 		}
 		if (sdp->isp_devparam[i].dev_flags & DPARM_WIDE)
 			bz[5] = 'W';
@@ -490,13 +488,24 @@ isp_init(isp)
 		else
 			bz[6] = ' ';
 		bz[7] = 0;
-		printf(" Tgt%x:%s", i, bz);
+		IDPRINTF(2, (" id%X:%s", i, bz));
 		if (((i+1) & 0x3) == 0)
-			printf("\n");
-#endif
+			IDPRINTF(2, ("\n"));
 		if (sdp->isp_devparam[i].dev_enable == 0)
 			continue;
 
+		/*
+		 * It is not safe to run the 1020 in ultra mode.
+		 */
+		if (isp->isp_type == ISP_HA_SCSI_1020 &&
+		    cj == ISP_20M_SYNCPARMS) {
+			printf("%s: an ISP1020 set to Ultra Speed- derating.\n",
+				isp->isp_name);
+			sdp->isp_devparam[i].sync_offset =
+				ISP_10M_SYNCPARMS >> 8;
+			sdp->isp_devparam[i].sync_period =
+				ISP_10M_SYNCPARMS & 0xff;
+		}
 		mbs.param[0] = MBOX_SET_TARGET_PARAMS;
 		mbs.param[1] = i << 8;
 		mbs.param[2] = sdp->isp_devparam[i].dev_flags << 8;
@@ -504,7 +513,7 @@ isp_init(isp)
 			(sdp->isp_devparam[i].sync_offset << 8) |
 			(sdp->isp_devparam[i].sync_period);
 
-		IDPRINTF(5, ("%s: target %d flags %x offset %x period %x\n",
+		IDPRINTF(3, ("%s: target %d flags %x offset %x period %x\n",
 			     isp->isp_name, i, sdp->isp_devparam[i].dev_flags,
 			     sdp->isp_devparam[i].sync_offset,
 			     sdp->isp_devparam[i].sync_period));
@@ -804,7 +813,6 @@ ispscsicmd(xs)
 #define	reqp	_u._reqp
 #define	t2reqp	_u._t2reqp
 #define	UZSIZE	max(sizeof (ispreq_t), sizeof (ispreqt2_t))
-
 	int s, i;
 
 	isp = xs->sc_link->adapter_softc;
@@ -910,7 +918,7 @@ ispscsicmd(xs)
 	}
 	bcopy((void *)xs->cmd, reqp->req_cdb, xs->cmdlen);
 
-	IDPRINTF(5, ("%s(%d.%d): START%d cmd 0x%x datalen %d\n", isp->isp_name,
+	IDPRINTF(6, ("%s(%d.%d): START%d cmd 0x%x datalen %d\n", isp->isp_name,
 		xs->sc_link->scsipi_scsi.target, xs->sc_link->scsipi_scsi.lun,
 		reqp->req_header.rqs_seqno, *(u_char *) xs->cmd, xs->datalen));
 
@@ -994,7 +1002,7 @@ isp_intr(arg)
 	if (isp->isp_type & ISP_HA_FC) {
 		if (isr == 0 || (isr & BIU2100_ISR_RISC_INT) == 0) {
 			if (isr) {
-				IDPRINTF(3, ("%s: isp_intr isr=%x\n",
+				IDPRINTF(4, ("%s: isp_intr isr=%x\n",
 					     isp->isp_name, isr));
 			}
 			return (0);
@@ -1002,7 +1010,7 @@ isp_intr(arg)
 	} else {
 		if (isr == 0 || (isr & BIU_ISR_RISC_INT) == 0) {
 			if (isr) {
-				IDPRINTF(3, ("%s: isp_intr isr=%x\n",
+				IDPRINTF(4, ("%s: isp_intr isr=%x\n",
 					     isp->isp_name, isr));
 			}
 			return (0);
@@ -1040,7 +1048,7 @@ isp_intr(arg)
 	ISP_WRITE(isp, HCCR, HCCR_CMD_CLEAR_RISC_INT);
 	iptr = ISP_READ(isp, OUTMAILBOX5);
 	if (optr == iptr) {
-		IDPRINTF(3, ("why intr? isr %x iptr %x optr %x\n",
+		IDPRINTF(4, ("why intr? isr %x iptr %x optr %x\n",
 			isr, optr, iptr));
 	}
 	ENABLE_INTS(isp);
@@ -1122,7 +1130,7 @@ isp_intr(arg)
 			xs->resid = sp->req_resid;
 		} else if (sp->req_scsi_status & RQCS_RU) {
 			xs->resid = sp->req_resid;
-			IDPRINTF(3, ("%s: cnt %d rsd %d\n", isp->isp_name,
+			IDPRINTF(4, ("%s: cnt %d rsd %d\n", isp->isp_name,
 				xs->datalen, sp->req_resid));
 		}
 		xs->flags |= ITSDONE;
@@ -1494,7 +1502,7 @@ command_known:
 		 * GET_CLOCK_RATE can fail a lot
 		 * So can a couple of other commands.
 		 */
-		if (isp->isp_dblev > 1  && opcode != MBOX_GET_CLOCK_RATE) {
+		if (isp->isp_dblev > 2  && opcode != MBOX_GET_CLOCK_RATE) {
 			printf("%s: mbox cmd %x failed with INVALID_COMMAND\n",
 				isp->isp_name, opcode);
 		}
@@ -1693,7 +1701,7 @@ isp_setdparm(struct ispsoftc *isp)
 	mbs.param[0] = MBOX_ABOUT_FIRMWARE;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		IDPRINTF(2, ("1st ABOUT FIRMWARE command failed"));
+		IDPRINTF(3, ("1st ABOUT FIRMWARE command failed"));
 	} else {
 		isp->isp_fwrev =
 			(((u_int16_t) mbs.param[1]) << 10) + mbs.param[2];
@@ -1721,7 +1729,7 @@ isp_setdparm(struct ispsoftc *isp)
 	mbs.param[0] = MBOX_GET_ACT_NEG_STATE;
 	isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-		IDPRINTF(5, ("could not GET ACT NEG STATE"));
+		IDPRINTF(2, ("could not GET ACT NEG STATE"));
 		sdp->isp_req_ack_active_neg = 1;
 		sdp->isp_data_line_active_neg = 1;
 	} else {
@@ -1733,7 +1741,7 @@ isp_setdparm(struct ispsoftc *isp)
 		mbs.param[1] = i << 8;
 		isp_mboxcmd(isp, &mbs);
 		if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
-			IDPRINTF(5, ("cannot get params for target %d", i));
+			IDPRINTF(2, ("cannot get params for target %d", i));
 			sdp->isp_devparam[i].sync_period =
 				ISP_10M_SYNCPARMS & 0xff;
 			sdp->isp_devparam[i].sync_offset =
