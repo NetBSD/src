@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.7 2002/02/13 08:18:48 ross Exp $
+.\" $NetBSD: pci_intr.9,v 1.8 2002/05/18 23:03:19 sommerfeld Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -108,3 +108,44 @@ may be saved and passed to
 .Fn pci_intr_disestablish
 to disable the interrupt handler
 when the driver is no longer interested in interrupts from the device.
+.Sh PORTING
+A port's implementation of 
+.Fn pci_intr_map
+may use the following members of 
+.Ft struct pci_attach_args
+to determine how the device's interrupts are routed.  
+.Bd -literal
+	pci_chipset_tag_t pa_pc;
+	pcitag_t pa_tag;
+	pcitag_t pa_intrtag; /* intr. appears to come from here */
+	pci_intr_pin_t pa_intrpin; /* intr. appears on this pin */
+	pci_intr_line_t pa_intrline; /* intr. routing information */
+	pci_intr_pin_t pa_rawintrpin; /* unswizzled pin */
+.Ed
+.Pp
+PCI-PCI
+bridges swizzle (permute) interrupt wiring.  Depending on
+implementation details, it may be more convenient to use either
+original or the swizzled interrupt parameters.
+The original device tag and interrupt pin can be found in
+.Ft "pa_tag"
+and
+.Ft "pa_rawintrpin"
+respectively, while the swizzled tag and pin can be found in
+.Ft "pa_intrtag"
+and
+.Ft "pa_intrpin".
+.Pp
+When a device is attached to a primary bus, both pairs of fields
+contain the same values.
+When a device is found behind one or more pci-pci bridges, 
+.Ft "pa_intrpin"
+contains the "swizzled" interrupt pin number, while
+.Ft "pa_rawintrpin"
+contains the original interrupt pin, while
+.Ft "pa_tag" 
+contains the PCI tag of the device itself, and
+.Ft "pa_intrtag" 
+contains the PCI tag of the uppermost bridge device.
+
+
