@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.56 2002/09/06 15:17:53 mycroft Exp $	 */
+/*	$NetBSD: rtld.c,v 1.57 2002/09/11 20:48:21 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
