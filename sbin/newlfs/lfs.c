@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lfs.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: lfs.c,v 1.2 1994/09/23 14:27:43 mycroft Exp $";
+static char *rcsid = "$Id: lfs.c,v 1.3 1994/10/31 04:25:04 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,7 +128,9 @@ static struct lfs lfs_default =  {
 	/* lfs_fbshift */	0,
 	/* lfs_fsbtodb */	0,
 	/* lfs_sushift */	0,
+	/* lfs_maxsymlinklen */	MAXSYMLINKLEN,
 	/* lfs_sboffs */	{ 0 },
+	/* lfs_cksum */		0,
 	/* lfs_sp */		NULL,
 	/* lfs_ivnode */	NULL,
 	/* lfs_seglock */	0,
@@ -141,11 +143,7 @@ static struct lfs lfs_default =  {
 	/* lfs_fmod */		0,
 	/* lfs_clean */		0,
 	/* lfs_ronly */		0,
-	/* lfs_flags */		0,
 	/* lfs_fsmnt */		{ 0 },
-	/* lfs_pad */		{ 0 },
-	/* lfs_cksum */		0,
-	/* lfs_maxsymlinklen */	MAXSYMLINKLEN
 };
 
 
