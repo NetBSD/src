@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.7 2002/05/04 22:05:29 scw Exp $ */
+/*	$NetBSD: bootxx.c,v 1.8 2002/05/05 20:11:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,6 @@
 #include "bootxx.h"
 
 int copyboot __P((struct open_file *, u_long *));
-void main __P((void));
 
 /*
  * Boot device is derived from ROM provided information.
