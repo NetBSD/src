@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.66 2003/02/03 12:20:46 agc Exp $ */
+/* $NetBSD: user.c,v 1.67 2003/03/14 16:56:39 jrf Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.66 2003/02/03 12:20:46 agc Exp $");
+__RCSID("$NetBSD: user.c,v 1.67 2003/03/14 16:56:39 jrf Exp $");
 #endif
 
 #include <sys/types.h>
@@ -354,7 +354,7 @@ static int
 is_number(char *s)
 {
 	for ( ; *s ; s++) {
-		if (!isdigit(*s)) {
+		if (!isdigit((unsigned char) *s)) {
 			return 0;
 		}
 	}
@@ -636,7 +636,7 @@ append_group(char *user, int ngroups, const char **groups)
 static int
 valid_login(char *login_name)
 {
-	char	*cp;
+	unsigned char	*cp;
 
 	if (strlen(login_name) >= LOGIN_NAME_MAX) {
 		return 0;
@@ -653,7 +653,7 @@ valid_login(char *login_name)
 static int
 valid_group(char *group)
 {
-	char	*cp;
+	unsigned char	*cp;
 
 	for (cp = group ; *cp ; cp++) {
 		if (!isalnum(*cp)) {
@@ -768,8 +768,8 @@ read_defaults(user_t *up)
 	size_t		lineno;
 	size_t		len;
 	FILE		*fp;
-	char		*cp;
-	char		*s;
+	unsigned char	*cp;
+	unsigned char	*s;
 
 	memsave(&up->u_primgrp, DEF_GROUP, strlen(DEF_GROUP));
 	memsave(&up->u_basedir, DEF_BASEDIR, strlen(DEF_BASEDIR));
@@ -934,7 +934,7 @@ scantime(time_t *tp, char *s)
 			*tp = mktime(&tm);
 		} else if (strptime(s, "%B %d %Y", &tm) != NULL) {
 			*tp = mktime(&tm);
-		} else if (isdigit(s[0]) != NULL) {
+		} else if (isdigit((unsigned char) s[0]) != NULL) {
 			*tp = atoi(s);
 		} else {
 			return 0;
