@@ -1,4 +1,4 @@
-.\" $NetBSD: atrun.8,v 1.10 2000/11/07 06:43:25 lukem Exp $
+.\" $NetBSD: atrun.8,v 1.11 2002/01/15 02:19:26 wiz Exp $
 .\" $OpenBSD: atrun.8,v 1.4 1998/05/22 22:16:29 deraadt Exp $
 .\" $FreeBSD: atrun.man,v 1.3 1997/02/22 14:20:55 peter Exp $
 .Dd April 12, 1995
@@ -18,11 +18,10 @@ runs jobs queued by
 Root's
 .Xr crontab 5
 must contain the line:
-.nf
-
+.Bd -literal
 */10     *       *       *       *       root    /usr/libexec/atrun
-
-.fi
+.Ed
+.Pp
 so that
 .Xr atrun 8
 gets called every ten minutes.
@@ -56,15 +55,15 @@ Directory containing output spool files
 Directory containing job files
 .El
 .Sh SEE ALSO
-.Xr cron 8 ,
-.Xr crontab 1 ,
-.Xr crontab 5 ,
 .Xr at 1 ,
-.Xr syslog 3
+.Xr crontab 1 ,
+.Xr syslog 3 ,
+.Xr crontab 5 ,
+.Xr cron 8
+.Sh AUTHORS
+.An Thomas Koenig Aq ig25@rz.uni-karlsruhe.de
 .Sh BUGS
-The functionality of 
+The functionality of
 .Nm
 should be merged into
 .Xr cron 8 .
-.Sh AUTHOR
-Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
