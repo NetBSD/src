@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\" manual page [] for chat 1.8
-.\" Id: chat.8,v 1.7 1998/02/04 01:35:49 paulus Exp 
+.\" $Id: chat.8,v 1.1.1.5 1999/08/25 02:50:05 christos Exp $
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -151,6 +151,16 @@ character, you would have to write something like this:
 # Now wait for the prompt and send logout string
 .br
 \'# ' logout
+.LP
+
+.SH SENDING DATA FROM A FILE
+If the string to send starts with an at sign (@), the rest of the
+string is taken to be the name of a file to read to get the string to
+send.  If the last character of the data read is a newline, it is
+removed.  The file can be a named pipe (or fifo) instead of a regular
+file.  This provides a way for \fBchat\fR to communicate with another
+program, for example, a program to prompt the user and receive a
+password typed in.
 .LP
 
 .SH ABORT STRINGS
