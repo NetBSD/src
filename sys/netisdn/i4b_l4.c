@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.16 2002/03/27 07:39:35 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.17 2002/03/29 20:29:53 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.16 2002/03/27 07:39:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.17 2002/03/29 20:29:53 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -73,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.16 2002/03/27 07:39:35 martin Exp $");
 #include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l4.h>
-
-static void i4b_l4_contr_ev_ind(int controller, int attach);
 
 unsigned int i4b_l4_debug = L4_DEBUG_DEFAULT;
 
@@ -113,9 +111,6 @@ isdn_attach_bri(const char *devname, const char *cardname,
 	new_ctrl->dl_est = DL_DOWN;
 	new_ctrl->bch_state[0] = BCH_ST_FREE;
 	new_ctrl->bch_state[1] = BCH_ST_FREE;
-
-	printf("BRI %d at %s\n", bri, devname);
-	i4b_l4_contr_ev_ind(bri, 1);
 
 	splx(s);
 
@@ -787,7 +782,7 @@ i4b_l4_packet_ind(int driver, int driver_unit, int dir, struct mbuf *pkt)
 /*---------------------------------------------------------------------------*
  *    send MSG_CONTR_EV_IND message to userland
  *---------------------------------------------------------------------------*/
-static void
+void
 i4b_l4_contr_ev_ind(int controller, int attach)
 {
 	struct mbuf *m;
