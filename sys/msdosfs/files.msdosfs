@@ -1,0 +1,10 @@
+#	$NetBSD
+
+deffs	MSDOSFS
+
+file	msdosfs/msdosfs_conv.c		msdosfs
+file	msdosfs/msdosfs_denode.c	msdosfs
+file	msdosfs/msdosfs_fat.c		msdosfs
+file	msdosfs/msdosfs_lookup.c	msdosfs
+file	msdosfs/msdosfs_vfsops.c	msdosfs
+file	msdosfs/msdosfs_vnops.c		msdosfs
