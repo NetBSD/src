@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.47 2002/01/05 18:29:37 he Exp $
+.\"	$NetBSD: main,v 1.61.2.48 2002/01/14 15:25:43 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1569,7 +1569,6 @@ them, and would like to mentioned, tell us!)
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
 .It Ta Ted Lemon Ta Mt mellon@netbsd.org
-.It Ta John Hawkinson Ta Mt jhawk@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
 .It Ta Curt Sampson Ta Mt cjs@netbsd.org
 .It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
