@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lookup.c	7.33 (Berkeley) 5/19/91
- *	$Id: isofs_lookup.c,v 1.7.2.4 1993/11/14 22:40:43 mycroft Exp $
+ *	$Id: isofs_lookup.c,v 1.7.2.5 1993/11/20 09:23:14 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -338,6 +338,8 @@ notfound:
 	 */
 	if (ndp->ni_makeentry)
 		cache_enter(ndp);
+	if (flag == CREATE || flag == RENAME)
+		return EJUSTRETURN;
 	return (ENOENT);
 
 found:
