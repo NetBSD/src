@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.5 1993/11/10 15:07:07 deraadt Exp $
+ * $Id: conf.c,v 1.6 1993/11/11 23:17:47 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -242,6 +242,9 @@ cdev_decl(bwtwo);
 #include "cgthree.h"
 cdev_decl(cgthree);
 
+#include "cgsix.h"
+cdev_decl(cgsix);
+
 #include "bsdaudio.h"
 cdev_decl(audio);
 
@@ -329,7 +332,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 64 */
 	cdev_notdef(),			/* 65 */
 	cdev_notdef(),			/* 66 */
-	cdev_notdef(),			/* 67 */
+	cdev_fb_init(NCGSIX,cgsix),	/* 67: /dev/cgsix */
 	cdev_notdef(),			/* 68 */
 	cdev_gen_init(NBSDAUDIO,audio),	/* 69: /dev/audio */
 	cdev_openprom_init(1,openprom),	/* 70: /dev/openprom */
