@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.72 1995/08/05 23:48:53 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.73 1995/08/12 20:31:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -226,7 +226,7 @@ cdunlock(cd)
 /*
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
-int 
+int
 cdopen(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
@@ -339,7 +339,7 @@ bad3:
  * close the device.. only called if we are the LAST
  * occurence of an open device
  */
-int 
+int
 cdclose(dev, flag, fmt)
 	dev_t dev;
 	int flag, fmt;
@@ -453,7 +453,7 @@ done:
  * must be called at the correct (highish) spl level
  * cdstart() is called at splbio from cdstrategy and scsi_done
  */
-void 
+void
 cdstart(cd)
 	register struct cd_softc *cd;
 {
@@ -501,7 +501,7 @@ cdstart(cd)
 		}
 
 		/*
-		 * We have a buf, now we should make a command 
+		 * We have a buf, now we should make a command
 		 *
 		 * First, translate the block to absolute and put it in terms
 		 * of the logical blocksize of the device.
@@ -538,22 +538,14 @@ cdstart(cd)
 	}
 }
 
-u_int 
-cdminphys(bp)
-	struct buf *bp;
-{
-	register struct cd_softc *cd = cdcd.cd_devs[CDUNIT(bp->b_dev)];
-
-	return (cd->sc_link->adapter->scsi_minphys)(bp);
-}
-
 int
 cdread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
 
-	return (physio(cdstrategy, NULL, dev, B_READ, cdminphys, uio));
+	return (physio(cdstrategy, NULL, dev, B_READ,
+		       cd->sc_link->adapter->scsi_minphys, uio));
 }
 
 int
@@ -562,14 +554,15 @@ cdwrite(dev, uio)
 	struct uio *uio;
 {
 
-	return (physio(cdstrategy, NULL, dev, B_WRITE, cdminphys, uio));
+	return (physio(cdstrategy, NULL, dev, B_WRITE,
+		       cd->sc_link->adapter->scsi_minphys, uio));
 }
 
 /*
  * Perform special action on behalf of the user.
  * Knows about the internals of this device
  */
-int 
+int
 cdioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -833,11 +826,11 @@ cdioctl(dev, cmd, addr, flag, p)
 /*
  * Load the label information on the named device
  * Actually fabricate a disklabel
- * 
+ *
  * EVENTUALLY take information about different
  * data tracks from the TOC and put it in the disklabel
  */
-void 
+void
 cdgetdisklabel(cd)
 	struct cd_softc *cd;
 {
@@ -922,7 +915,7 @@ cd_size(cd, flags)
 /*
  * Get the requested page into the buffer given
  */
-int 
+int
 cd_get_mode(cd, data, page)
 	struct cd_softc *cd;
 	struct cd_mode_data *data;
@@ -944,7 +937,7 @@ cd_get_mode(cd, data, page)
 /*
  * Get the requested page into the buffer given
  */
-int 
+int
 cd_set_mode(cd, data)
 	struct cd_softc *cd;
 	struct cd_mode_data *data;
@@ -964,7 +957,7 @@ cd_set_mode(cd, data)
 /*
  * Get scsi driver to send a "start playing" command
  */
-int 
+int
 cd_play(cd, blkno, nblks)
 	struct cd_softc *cd;
 	int blkno, nblks;
@@ -986,7 +979,7 @@ cd_play(cd, blkno, nblks)
 /*
  * Get scsi driver to send a "start playing" command
  */
-int 
+int
 cd_play_big(cd, blkno, nblks)
 	struct cd_softc *cd;
 	int blkno, nblks;
@@ -1010,7 +1003,7 @@ cd_play_big(cd, blkno, nblks)
 /*
  * Get scsi driver to send a "start playing" command
  */
-int 
+int
 cd_play_tracks(cd, strack, sindex, etrack, eindex)
 	struct cd_softc *cd;
 	int strack, sindex, etrack, eindex;
@@ -1030,7 +1023,7 @@ cd_play_tracks(cd, strack, sindex, etrack, eindex)
 /*
  * Get scsi driver to send a "play msf" command
  */
-int 
+int
 cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 	struct cd_softc *cd;
 	int startm, starts, startf, endm, ends, endf;
@@ -1052,7 +1045,7 @@ cd_play_msf(cd, startm, starts, startf, endm, ends, endf)
 /*
  * Get scsi driver to send a "start up" command
  */
-int 
+int
 cd_pause(cd, go)
 	struct cd_softc *cd;
 	int go;
@@ -1069,7 +1062,7 @@ cd_pause(cd, go)
 /*
  * Get scsi driver to send a "RESET" command
  */
-int 
+int
 cd_reset(cd)
 	struct cd_softc *cd;
 {
@@ -1081,7 +1074,7 @@ cd_reset(cd)
 /*
  * Read subchannel
  */
-int 
+int
 cd_read_subchannel(cd, mode, format, track, data, len)
 	struct cd_softc *cd;
 	int mode, format, len;
@@ -1106,7 +1099,7 @@ cd_read_subchannel(cd, mode, format, track, data, len)
 /*
  * Read table of contents
  */
-int 
+int
 cd_read_toc(cd, mode, start, data, len)
 	struct cd_softc *cd;
 	int mode, start, len;
@@ -1135,7 +1128,7 @@ cd_read_toc(cd, mode, start, data, len)
  * Get the scsi driver to send a full inquiry to the device and use the
  * results to fill out the disk parameter structure.
  */
-int 
+int
 cd_get_parms(cd, flags)
 	struct cd_softc *cd;
 	int flags;
@@ -1143,7 +1136,7 @@ cd_get_parms(cd, flags)
 
 	/*
 	 * give a number of sectors so that sec * trks * cyls
-	 * is <= disk_size 
+	 * is <= disk_size
 	 */
 	if (cd_size(cd, flags) == 0)
 		return ENXIO;

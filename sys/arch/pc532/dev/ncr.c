@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.16 1995/07/24 07:36:55 cgd Exp $  */
+/*	$NetBSD: ncr.c,v 1.17 1995/08/12 20:31:13 mycroft Exp $  */
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -126,7 +126,7 @@ struct	ncr_softc {
 	struct	scsi_link	sc_link;
 };
 
-static u_int	ncr5380_minphys(struct buf *bp);
+static void	ncr5380_minphys(struct buf *bp);
 static int	ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static int	ncr5380_show_scsi_cmd(struct scsi_xfer *xs);
 
@@ -304,7 +304,7 @@ void	ncr_attach __P((struct device *, struct device *, void *));
 int	ncr_match __P((struct device *, struct cfdata *, void *));
 
 struct cfdriver ncrcd = {
-	NULL, "ncr", (cfmatch_t)ncr_match, ncr_attach, 
+	NULL, "ncr", (cfmatch_t)ncr_match, ncr_attach,
 	DV_DULL, sizeof(struct ncr_softc), NULL, 0 };
 
 int
@@ -480,7 +480,7 @@ ncr5380_minphys(struct buf *bp)
 	printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount=%x.\n",MIN_PHYS);
 	bp->b_bcount = MIN_PHYS;
     }
-    return (minphys(bp));
+    minphys(bp);
 }
 #undef MIN_PHYS
 
@@ -537,7 +537,7 @@ scsi_main()
 				/*
 				 * Found one, remove it from the issue queue
 				 */
-				if(prev == NULL) 
+				if(prev == NULL)
 					issue_q = req->next;
 				else prev->next = req->next;
 				req->next = NULL;
@@ -558,7 +558,7 @@ scsi_main()
 		if((SCSI_5380->scsi_idstat&(SC_S_SEL|SC_S_IO))
 						== (SC_S_SEL|SC_S_IO)){
 			if(req != NULL) {
-				req->next = issue_q; 
+				req->next = issue_q;
 				issue_q = req;
 			}
 			splx(sps);
@@ -592,7 +592,7 @@ scsi_main()
 		 */
 		if(scsi_select(req, 0)) {
 			sps = splbio();
-			req->next = issue_q; 
+			req->next = issue_q;
 			issue_q = req;
 			splx(sps);
 #ifdef DBG_REQ
@@ -746,7 +746,7 @@ SC_REQ	*reqp;
 	 */
 	SCSI_5380->scsi_data = SC_HOST_ID;
 	SCSI_5380->scsi_mode = SC_ARBIT;
- 
+
 	splx(sps);
 
 	cnt = 10000;
@@ -1084,7 +1084,7 @@ u_int	msg;
 #ifdef DBG_REQ
 			show_request(reqp, "DONE");
 #endif
-			connected = NULL;	
+			connected = NULL;
 			busy     &= ~(1 << reqp->targ_id);
 			if(!(reqp->dr_flag & DRIVER_AUTOSEN))
 				reqp->xs->resid = reqp->xdata_len;
@@ -1123,7 +1123,7 @@ u_int	msg;
 			 */
 			PID("B");
 			return(-1);
-		default: 
+		default:
 			printf("ncr0: unkown message %x on target %d\n", msg,
 								reqp->targ_id);
 			return(-1);
@@ -1159,9 +1159,9 @@ reselect()
 	SCSI_5380->scsi_icom = SC_A_BSY;
 	while(SCSI_5380->scsi_idstat & SC_S_SEL)
 		;
-	
+
 	SCSI_5380->scsi_icom = 0;
-	
+
 	/*
 	 * Get the expected identify message.
 	 */
@@ -1379,7 +1379,7 @@ again:
 		else dma_done = dma_ready(0, 0);
 		if(!dma_done)
 			goto again;
-		
+
 	}
 	PID("w");
 }

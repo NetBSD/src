@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.12 1995/07/24 07:28:23 cgd Exp $	*/
+/*	$NetBSD: sbic.c,v 1.13 1995/08/12 20:30:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -84,7 +84,7 @@ int  sbicgo __P((struct sbic_softc *, struct scsi_xfer *));
 int  sbicdmaok __P((struct sbic_softc *, struct scsi_xfer *));
 int  sbicgetsense __P((struct sbic_softc *, struct scsi_xfer *));
 int  sbicwait __P((sbic_regmap_p, char, int , int));
-int  sbiccheckdmap __P((void *, u_long, u_long)); 
+int  sbiccheckdmap __P((void *, u_long, u_long));
 int  sbicselectbus __P((struct sbic_softc *, sbic_regmap_p, u_char, u_char, u_char));
 int  sbicxfstart __P((sbic_regmap_p, int, u_char, int));
 int  sbicxfout __P((sbic_regmap_p regs, int, void *, int));
@@ -135,15 +135,15 @@ int	sbic_dma_debug = 0;
 /*
  * default minphys routine for sbic based controllers
  */
-u_int
+void
 sbic_minphys(bp)
 	struct buf *bp;
 {
-	/*
-	 * no max transfer at this level
-	 */
 
-	return (minphys(bp));
+	/*
+	 * No max transfer at this level.
+	 */
+	minphys(bp);
 }
 
 /*
@@ -168,7 +168,7 @@ sbic_scsicmd(xs)
 
 	if (flags & SCSI_DATA_UIO)
 		panic("sbic: scsi data uio requested");
-	
+
 	if (dev->sc_xs && flags & SCSI_POLL)
 		panic("sbic_scsicmd: busy");
 
@@ -220,21 +220,21 @@ sbic_donextcmd(dev)
 		phase = DATA_OUT_PHASE;
 	else
 		phase = STATUS_PHASE;
-	
+
 	if (flags & SCSI_RESET)
 		sbicreset(dev);
 
 	dev->sc_stat[0] = -1;
 	xs->cmd->bytes[0] |= slp->lun << 5;
 	if (phase == STATUS_PHASE || flags & SCSI_POLL ||
-	    sbicdmaok(dev, xs) == 0) 
+	    sbicdmaok(dev, xs) == 0)
 		stat = sbicicmd(dev, slp->target, slp->lun, xs->cmd,
 		    xs->cmdlen, xs->data, xs->datalen, phase);
 	else if (sbicgo(dev, xs) == 0)
 		return;
-	else 
+	else
 		stat = dev->sc_stat[0];
-	
+
 	sbic_scsidone(dev, stat);
 }
 
@@ -314,18 +314,18 @@ sbicgetsense(dev, xs)
 	int stat;
 
 	slp = xs->sc_link;
-	
+
 	rqs.opcode = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
 #ifdef not_yet
-	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
+	rqs.length = xs->req_sense_length ? xs->req_sense_length :
 	    sizeof(xs->sense);
 #else
 	rqs.length = sizeof(xs->sense);
 #endif
-	    
+
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-	
+
 	return(sbicicmd(dev, slp->target, slp->lun, &rqs, sizeof(rqs),
 	    &xs->sense, rqs.length, DATA_IN_PHASE));
 }
@@ -340,7 +340,7 @@ sbicdmaok(dev, xs)
 	/*
 	 * controller supports dma to any addresses?
 	 */
-	else if ((dev->sc_flags & SBICF_BADDMA) == 0) 
+	else if ((dev->sc_flags & SBICF_BADDMA) == 0)
 		return(1);
 	/*
 	 * this address is ok for dma?
@@ -390,11 +390,11 @@ sbicabort(dev, regs, where)
 	char *where;
 {
 	u_char csr, asr;
-  
+
 	GET_SBIC_csr(regs, csr);
 	GET_SBIC_asr(regs, asr);
 
-	printf ("%s: abort %s: csr = 0x%02x, asr = 0x%02x\n", 
+	printf ("%s: abort %s: csr = 0x%02x, asr = 0x%02x\n",
 	    dev->sc_dev.dv_xname, where, csr, asr);
 
 	if (dev->sc_flags & SBICF_SELECTED) {
@@ -404,7 +404,7 @@ sbicabort(dev, regs, where)
 		GET_SBIC_asr(regs, asr);
 		if (asr & (SBIC_ASR_BSY|SBIC_ASR_LCI)) {
 			/* ok, get more drastic.. */
-          
+
 			SET_SBIC_cmd (regs, SBIC_CMD_RESET);
 			DELAY(25);
 			SBIC_WAIT(regs, SBIC_ASR_INT, 0);
@@ -462,12 +462,12 @@ sbicreset(dev)
 	sbic_regmap_p regs;
 	u_int i, s;
 	u_char my_id, csr;
-	
+
 	regs = dev->sc_sbicp;
 
 	if (dev->sc_flags & SBICF_ALIVE)
 		sbicabort(dev, regs, "reset");
-		
+
 	s = splbio();
 	/* preserve our ID for now */
 	GET_SBIC_myid (regs, my_id);
@@ -495,7 +495,7 @@ sbicreset(dev)
 	/*
 	 * Set up various chip parameters
 	 */
-	SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI 
+	SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI
 	    | SBIC_MACHINE_DMA_MODE);
 	/*
 	 * don't allow (re)selection (SBIC_RID_ES)
@@ -547,7 +547,7 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 
 	QPRINTF(("sbicselectbus %d\n", target));
 
-	/* 
+	/*
 	 * if we're already selected, return (XXXX panic maybe?)
 	 */
 	if (dev->sc_flags & SBICF_SELECTED)
@@ -564,11 +564,11 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 	 * set sync or async
 	 */
 	if (dev->sc_sync[target].state == SYNC_DONE)
-		SET_SBIC_syn(regs, SBIC_SYN (dev->sc_sync[target].offset, 
+		SET_SBIC_syn(regs, SBIC_SYN (dev->sc_sync[target].offset,
 		    dev->sc_sync[target].period));
 	else
 		SET_SBIC_syn(regs, SBIC_SYN (0, sbic_min_period));
-	
+
 	SET_SBIC_cmd(regs, SBIC_CMD_SEL_ATN);
 
 	/*
@@ -592,8 +592,8 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 		 */
 		GET_SBIC_selid(regs, id);
 
-		/* 
-		 * handle drives that don't want to be asked 
+		/*
+		 * handle drives that don't want to be asked
 		 * whether to go sync at all.
 		 */
 		if (sbic_inhibit_sync && dev->sc_sync[id].state == SYNC_START) {
@@ -605,14 +605,14 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 			dev->sc_sync[id].period = sbic_min_period;
 			dev->sc_sync[id].state = SYNC_DONE;
 		}
-	
+
 
 		if (dev->sc_sync[id].state != SYNC_START)
 			SEND_BYTE (regs, MSG_IDENTIFY | lun);
 		else {
 			/*
 			 * try to initiate a sync transfer.
-			 * So compose the sync message we're going 
+			 * So compose the sync message we're going
 			 * to send to the target
 			 */
 
@@ -653,7 +653,7 @@ sbicselectbus(dev, regs, target, lun, our_addr)
 		if (csr != SBIC_CSR_SEL_TIMEO)
 			dev->sc_flags |= SBICF_SELECTED;
 	}
-  
+
 	QPRINTF(("\n"));
 
 	return(csr == SBIC_CSR_SEL_TIMEO);
@@ -672,7 +672,7 @@ sbicxfstart(regs, len, phase, wait)
 		id |= SBIC_SID_FROM_SCSI;
 		SET_SBIC_selid (regs, id);
 		SBIC_TC_PUT (regs, (unsigned)len);
-	} else if (phase == DATA_OUT_PHASE || phase == MESG_OUT_PHASE 
+	} else if (phase == DATA_OUT_PHASE || phase == MESG_OUT_PHASE
 	    || phase == CMD_PHASE)
 		SBIC_TC_PUT (regs, (unsigned)len);
 	else
@@ -691,17 +691,17 @@ sbicxfout(regs, len, bp, phase)
 {
 	u_char orig_csr, csr, asr, *buf;
 	int wait;
-	
+
 	buf = bp;
 	wait = sbic_data_wait;
 
 	QPRINTF(("sbicxfout {%d} %02x %02x %02x %02x %02x "
-	    "%02x %02x %02x %02x %02x\n", len, buf[0], buf[1], buf[2], 
+	    "%02x %02x %02x %02x %02x\n", len, buf[0], buf[1], buf[2],
 	    buf[3], buf[4], buf[5], buf[6], buf[7], buf[8], buf[9]));
 
 	GET_SBIC_csr (regs, orig_csr);
 
-	/* 
+	/*
 	 * sigh.. WD-PROTO strikes again.. sending the command in one go
 	 * causes the chip to lock up if talking to certain (misbehaving?)
 	 * targets. Anyway, this procedure should work for all targets, but
@@ -744,7 +744,7 @@ sbicxfin(regs, len, bp)
 	int wait;
 	u_char *obp, *buf;
 	u_char orig_csr, csr, asr;
-	
+
 	wait = sbic_data_wait;
 	obp = bp;
 	buf = bp;
@@ -776,7 +776,7 @@ sbicxfin(regs, len, bp)
 	}
 
 	QPRINTF(("sbicxfin {%d} %02x %02x %02x %02x %02x %02x "
-	    "%02x %02x %02x %02x\n", len, obp[0], obp[1], obp[2], 
+	    "%02x %02x %02x %02x\n", len, obp[0], obp[1], obp[2],
 	    obp[3], obp[4], obp[5], obp[6], obp[7], obp[8], obp[9]));
 
 	/* this leaves with one csr to be read */
@@ -807,7 +807,7 @@ sbicicmd(dev, target, lun, cbuf, clen, buf, len, xferphase)
 
 	regs = dev->sc_sbicp;
 
-	/* 
+	/*
 	 * set the sbic into non-DMA mode
 	 */
 	SET_SBIC_control(regs, SBIC_CTL_EDI | SBIC_CTL_IDI);
@@ -818,8 +818,8 @@ retry_selection:
 	 */
 	if (sbicselectbus(dev, regs, target, lun, dev->sc_scsiaddr))
 		return(-1);
-	/* 
-	 * Wait for a phase change (or error) then let the device sequence 
+	/*
+	 * Wait for a phase change (or error) then let the device sequence
 	 * us through the various SCSI phases.
 	 */
 	dev->sc_stat[0] = 0xff;
@@ -872,7 +872,7 @@ new_phase:
 		dev->sc_msg[0] = 0xff;
 		sbicxfin(regs, sizeof(dev->sc_msg), dev->sc_msg);
 		/*
-		 * get the command completion interrupt, or we 
+		 * get the command completion interrupt, or we
 		 * can't send a new command (LCI)
 		 */
 		SBIC_WAIT(regs, SBIC_ASR_INT, wait);
@@ -928,16 +928,16 @@ new_phase:
 			phase = CMD_PHASE;  /* or whatever */
 		} else if (dev->sc_msg[0] == MSG_CMD_COMPLETE
 		    || dev->sc_msg[0] == 0xff) {
-			/* !! KLUDGE ALERT !! quite a few drives don't seem to 
+			/* !! KLUDGE ALERT !! quite a few drives don't seem to
 			 * really like the current way of sending the
-			 * sync-handshake together with the ident-message, and 
+			 * sync-handshake together with the ident-message, and
 			 * they react by sending command-complete and
 			 * disconnecting right after returning the valid sync
 			 * handshake. So, all I can do is reselect the drive,
 			 * and hope it won't disconnect again. I don't think
 			 * this is valid behavior, but I can't help fixing a
 			 * problem that apparently exists.
-			 * 
+			 *
 			 * Note: we should not get here on `normal' command
 			 * completion, as that condition is handled by the
 			 * high-level sel&xfer resume command used to walk
@@ -954,7 +954,7 @@ new_phase:
 			WAIT_CIP(regs);
 
 			/* wait for disconnect */
-			while (csr != SBIC_CSR_DISC && 
+			while (csr != SBIC_CSR_DISC &&
 			    csr != SBIC_CSR_DISC_1) {
 				DELAY(1);
 				GET_SBIC_csr(regs, csr);
@@ -986,7 +986,7 @@ new_phase:
 			printf ("sending REJECT msg to last msg.\n");
 #endif
 		/*
-		 * should only get here on reject, 
+		 * should only get here on reject,
 		 * since it's always US that
 		 * initiate a sync transfer
 		 */
@@ -1003,7 +1003,7 @@ new_phase:
 		phase = STATUS_PHASE;
 		break;
 	case STATUS_PHASE:
-		/* 
+		/*
 		 * the sbic does the status/cmd-complete reading ok,
 		 * so do this with its hi-level commands.
 		 */
@@ -1021,7 +1021,7 @@ new_phase:
 	}
 
 	/*
-	 * make sure the last command was taken, 
+	 * make sure the last command was taken,
 	 * ie. we're not hunting after an ignored command..
 	 */
 	GET_SBIC_asr(regs, asr);
@@ -1034,7 +1034,7 @@ new_phase:
 		GET_SBIC_asr(regs, asr);
 	}
 
-	/* 
+	/*
 	 * wait for last command to complete
 	 */
 	SBIC_WAIT (regs, SBIC_ASR_INT, wait);
@@ -1157,7 +1157,7 @@ new_phase:
 
 		sbicxfin(regs, sizeof(dev->sc_msg), dev->sc_msg);
 		/*
-		 * prepare to reject any mesgin, 
+		 * prepare to reject any mesgin,
 		 * no matter what it might be..
 		 */
 		SET_SBIC_cmd(regs, SBIC_CMD_SET_ATN);
@@ -1174,8 +1174,8 @@ new_phase:
 		goto out;
 	/*
 	 * status phase can happen, if the issued read/write command
-	 * is illegal (for example, reading after EOT on tape) and the 
-	 * device doesn't even go to data in/out phase. So handle this 
+	 * is illegal (for example, reading after EOT on tape) and the
+	 * device doesn't even go to data in/out phase. So handle this
 	 * here normally, instead of going thru abort-handling.
 	 */
 	case STATUS_PHASE:
@@ -1191,14 +1191,14 @@ new_phase:
 	}
 
 	/*
-	 * make sure the last command was taken, 
+	 * make sure the last command was taken,
 	 * ie. we're not hunting after an ignored command..
 	 */
 	GET_SBIC_asr(regs, asr);
 	if (asr & SBIC_ASR_LCI)
 		goto abort;
 
-	/* 
+	/*
 	 * tapes may take a loooong time..
 	 */
 	while (asr & SBIC_ASR_BSY) {
@@ -1206,7 +1206,7 @@ new_phase:
 		GET_SBIC_asr(regs, asr);
 	}
 
-	if (wait <= 0)            
+	if (wait <= 0)
 		goto abort;
 
 	/*
@@ -1217,7 +1217,7 @@ new_phase:
 	GET_SBIC_csr(regs, csr);
 	QPRINTF((">CSR:%02x<", csr));
 
-	/* 
+	/*
 	 * requesting some new phase
 	 */
 	if ((csr != 0xff) && (csr & 0xf0) && (csr & 0x08))
@@ -1241,7 +1241,7 @@ out:
 #ifdef DEBUG
 	++sbicdma_ops;			/* count total DMA operations */
 #endif
-	if (dev->sc_flags & SBICF_BADDMA && 
+	if (dev->sc_flags & SBICF_BADDMA &&
 	    sbiccheckdmap(addr, count, dev->sc_dmamask)) {
 		/*
 		 * need to bounce the dma.
@@ -1277,7 +1277,7 @@ out:
 		dcp->dc_count = tcount >> 1;
 
 		/*
-		 * check if contigous, if not mark new end 
+		 * check if contigous, if not mark new end
 		 * else increment end and count on previous.
 		 */
 		if (dcp->dc_addr != dmaend) {
@@ -1403,7 +1403,7 @@ sbicintr(dev)
 	    || csr == (SBIC_CSR_MIS_2|DATA_OUT_PHASE)
 	    || csr == (SBIC_CSR_MIS_2|DATA_IN_PHASE)) {
 		/*
-		 * do scatter-gather dma 
+		 * do scatter-gather dma
 		 * hacking the controller chip, ouch..
 		 */
 		/*
@@ -1437,7 +1437,7 @@ sbicintr(dev)
 				DCFL(dl->dc_addr + (dl->dc_count >> 1));
 			}
 #endif
-			dev->sc_flags &= 
+			dev->sc_flags &=
 			    ~(SBICF_INDMA | SBICF_BBUF | SBICF_DCFLUSH);
 			dev->sc_dmafree(dev);
 			sbic_scsidone(dev, -1);
@@ -1476,20 +1476,20 @@ sbiccheckdmap(bp, len, mask)
 	return(0);
 }
 
-int 
+int
 sbictoscsiperiod(dev, regs, a)
 	struct sbic_softc *dev;
 	sbic_regmap_p regs;
 	int a;
 {
 	unsigned int fs;
-  
+
 	/*
 	 * cycle = DIV / (2*CLK)
 	 * DIV = FS+2
 	 * best we can do is 200ns at 20Mhz, 2 cycles
 	 */
-  
+
 	GET_SBIC_myid(regs,fs);
 	fs = (fs >>6) + 2;		/* DIV */
 	fs = (fs * 10000) / (dev->sc_clkfreq<<1);	/* Cycle, in ns */
@@ -1497,20 +1497,20 @@ sbictoscsiperiod(dev, regs, a)
 	return ((fs*a)>>2);		/* in 4 ns units */
 }
 
-int 
+int
 sbicfromscsiperiod(dev, regs, p)
 	struct sbic_softc *dev;
 	sbic_regmap_p regs;
 	int p;
 {
 	register unsigned int fs, ret;
-  
+
 	/* Just the inverse of the above */
-  
+
 	GET_SBIC_myid(regs,fs);
 	fs = (fs >>6) + 2;		/* DIV */
 	fs = (fs * 10000) / (dev->sc_clkfreq<<1);   /* Cycle, in ns */
-  
+
 	ret = p << 2;			/* in ns units */
 	ret = ret / fs;			/* in Cycles */
 	if (ret < sbic_min_period)

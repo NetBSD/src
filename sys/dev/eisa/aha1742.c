@@ -1,4 +1,4 @@
-/*	$NetBSD: aha1742.c,v 1.47 1995/07/24 07:16:44 cgd Exp $	*/
+/*	$NetBSD: aha1742.c,v 1.48 1995/08/12 20:31:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -287,7 +287,7 @@ struct ahb_ecb *ahb_get_ecb __P((struct ahb_softc *, int));
 struct ahb_ecb *ahb_ecb_phys_kv __P((struct ahb_softc *, physaddr));
 int ahb_find __P((struct ahb_softc *));
 void ahb_init __P((struct ahb_softc *));
-u_int ahbminphys __P((struct buf *));
+void ahbminphys __P((struct buf *));
 int ahb_scsi_cmd __P((struct scsi_xfer *));
 void ahb_timeout __P((void *));
 void ahb_print_ecb __P((struct ahb_ecb *));
@@ -572,7 +572,7 @@ ahbintr(arg)
 
 	for (;;) {
 		/*
-		 * First get all the information and then 
+		 * First get all the information and then
 		 * acknowlege the interrupt
 		 */
 		ahbstat = inb(iobase + G2INTST);
@@ -699,7 +699,7 @@ done:
 }
 
 /*
- * A ecb (and hence a mbx-out is put onto the 
+ * A ecb (and hence a mbx-out is put onto the
  * free list.
  */
 void
@@ -726,7 +726,7 @@ ahb_free_ecb(ahb, ecb, flags)
 }
 
 /*
- * Get a free ecb 
+ * Get a free ecb
  *
  * If there are none, see if we can allocate a new one. If so, put it in the
  * hash table too otherwise either return an error or sleep.
@@ -817,7 +817,7 @@ ahb_find(ahb)
 #define	NO_NO 1
 #ifdef NO_NO
 	/*
-	 * reset board, If it doesn't respond, assume 
+	 * reset board, If it doesn't respond, assume
 	 * that it's not there.. good for the probe
 	 */
 	outb(iobase + G2CNTRL, G2CNTRL_HARD_RESET);
@@ -895,21 +895,21 @@ ahb_init(ahb)
 
 }
 
-u_int
+void
 ahbminphys(bp)
 	struct buf *bp;
 {
 
 	if (bp->b_bcount > ((AHB_NSEG - 1) << PGSHIFT))
 		bp->b_bcount = ((AHB_NSEG - 1) << PGSHIFT);
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
  * start a scsi operation given the command and the data address.  Also needs
  * the unit, target and lu.
  */
-int 
+int
 ahb_scsi_cmd(xs)
 	struct scsi_xfer *xs;
 {
@@ -945,7 +945,7 @@ ahb_scsi_cmd(xs)
 	/*
 	 * If it's a reset, we need to do an 'immediate'
 	 * command, and store its ecb for later
-	 * if there is already an immediate waiting, 
+	 * if there is already an immediate waiting,
 	 * then WE must wait
 	 */
 	if (flags & SCSI_RESET) {
@@ -1053,7 +1053,7 @@ ahb_scsi_cmd(xs)
 						thisphys = KVTOPHYS(thiskv);
 				}
 				/*
-				 * next page isn't contiguous, finish the seg 
+				 * next page isn't contiguous, finish the seg
 				 */
 				SC_DEBUGN(sc_link, SDEV_DB4,
 				    ("(0x%x)", bytes_this_seg));

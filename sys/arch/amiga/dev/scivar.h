@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.7 1995/07/24 07:28:33 cgd Exp $	*/
+/*	$NetBSD: scivar.h,v 1.8 1995/08/12 20:30:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,7 +129,7 @@ struct	sci_softc {
 #define	STS_EXT		0x80	/* Extended status valid */
 
 /*
- * XXXX 
+ * XXXX
  */
 struct scsi_fmt_cdb {
 	int len;		/* cdb length (in bytes) */
@@ -139,7 +139,7 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsi_xfer;
 
-u_int sci_minphys __P((struct buf *bp));
+void sci_minphys __P((struct buf *bp));
 int sci_scsicmd __P((struct scsi_xfer *));
 
 #endif /* _SCIVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.9 1995/07/24 07:31:45 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.10 1995/08/12 20:30:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -141,7 +141,7 @@ struct fd_softc {
 	int		io_dir;		/* B_READ/B_WRITE		*/
 	int		errcnt;		/* current error count		*/
 	u_char		*bounceb;	/* Bounce buffer		*/
-	
+
 };
 
 /*
@@ -180,7 +180,7 @@ static void	fd_xfer __P((struct fd_softc *));
 static void	fdcint __P((struct fd_softc *));
 static int	fd_xfer_ok __P((struct fd_softc *));
 static void	fdmotoroff __P((struct fd_softc *));
-static u_int	fdminphys __P((struct buf *));
+static void	fdminphys __P((struct buf *));
 static void	fdtestdrv __P((struct fd_softc *));
 static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
 static int	fdselect __P((int, int, int));
@@ -314,7 +314,7 @@ struct proc	*p;
 	void		*data;
 
 	sc = getsoftc(fdcd, DISKUNIT(dev));
-	
+
 	if((sc->flags & FLPF_HAVELAB) == 0)
 		return(EBADF);
 
@@ -327,7 +327,7 @@ struct proc	*p;
 		case DIOCGPART:
 			((struct partinfo *)addr)->disklab =
 				&sc->dkdev.dk_label;
-			((struct partinfo *)addr)->part = 
+			((struct partinfo *)addr)->part =
 				&sc->dkdev.dk_label.d_partitions[DISKPART(dev)];
 			return(0);
 #ifdef notyet /* XXX LWP */
@@ -529,7 +529,7 @@ done:
 	biodone(bp);
 }
 
-/* 
+/*
  * no dumps to floppy disks thank you.
  */
 int
@@ -538,7 +538,7 @@ fddump(dev_t dev)
 	return(ENXIO);
 }
 
-/* 
+/*
  * no dumps to floppy disks thank you.
  */
 int
@@ -772,7 +772,7 @@ struct fd_softc	*sc;
 	hbit = fdselect(sc->unit, head, sc->density) ? HBIT : 0;
 
 	if(sc->curtrk == INV_TRK) {
-		/* 
+		/*
 		 * Recalibrate, since we lost track of head positioning.
 		 * The floppy disk controller has no way of determining its
 		 * absolute arm position (track).  Instead, it steps the
@@ -1102,7 +1102,7 @@ struct fd_softc	*sc;
 /*
  * min byte count to whats left of the track in question
  */
-static u_int
+static void
 fdminphys(bp)
 struct buf	*bp;
 {
@@ -1126,7 +1126,7 @@ struct buf	*bp;
 	printf(" after %d\n", bp->b_bcount);
 #endif
 
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
@@ -1189,7 +1189,7 @@ dev_t			dev;
 	part = DISKPART(dev);
 	lp   = &sc->dkdev.dk_label;
 	bzero(lp, sizeof(struct disklabel));
-	
+
 	lp->d_secsize     = SECTOR_SIZE;
 	lp->d_ntracks     = sc->nheads;
 	lp->d_nsectors    = sc->nsectors;
@@ -1203,7 +1203,7 @@ dev_t			dev;
 	lp->d_bbsize      = 0;
 	lp->d_sbsize      = 0;
 	lp->d_npartitions = part + 1;
-	lp->d_trkseek     = STEP_DELAY;	
+	lp->d_trkseek     = STEP_DELAY;
 	lp->d_magic       = DISKMAGIC;
 	lp->d_magic2      = DISKMAGIC;
 	lp->d_checksum    = dkcksum(lp);
@@ -1212,6 +1212,6 @@ dev_t			dev;
 	lp->d_partitions[part].p_fsize  = 1024;
 	lp->d_partitions[part].p_frag   = 8;
 	sc->flags        |= FLPF_HAVELAB;
-	
+
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.19 1995/08/08 20:53:16 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.20 1995/08/12 20:31:15 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -124,7 +124,7 @@ struct ncr5380_softc {
     struct scsi_link sc_link;
 };
 
-static u_int		ncr5380_minphys(struct buf *bp);
+static void		ncr5380_minphys(struct buf *bp);
 static int		ncr5380_scsi_cmd(struct scsi_xfer *xs);
 static int		ncr5380_reset_adapter(struct ncr5380_softc *);
 static int		ncr5380_reset_scsibus(struct ncr5380_softc *);
@@ -279,14 +279,14 @@ si_attach(parent, self, args)
 }
 
 #define MIN_PHYS	65536	/*BARF!!!!*/
-static u_int
+static void
 ncr5380_minphys(struct buf *bp)
 {
 	if (bp->b_bcount > MIN_PHYS) {
 		printf("Uh-oh...  ncr5380_minphys setting bp->b_bcount = %x.\n", MIN_PHYS);
 		bp->b_bcount = MIN_PHYS;
 	}
-	return (minphys(bp));
+	minphys(bp);
 }
 #undef MIN_PHYS
 
@@ -620,7 +620,7 @@ wait_for_bus_free:
 		goto lost;
 	}
 
-	/* Won arbitration, enter selection phase now */	
+	/* Won arbitration, enter selection phase now */
 	icmd = regs->sci_icmd & ~(SCI_ICMD_DIFF|SCI_ICMD_TEST);
 	icmd |= (with_atn ? (SCI_ICMD_SEL|SCI_ICMD_ATN) : SCI_ICMD_SEL);
 	regs->sci_icmd = icmd;
@@ -648,7 +648,7 @@ wait_for_bus_free:
 
 /*	regs->sci_mode &= ~SCI_MODE_ARB;	 2 deskew delays, too */
 	regs->sci_mode = 0;			/* 2 deskew delays, too */
-	
+
 	icmd &= ~SCI_ICMD_BSY;
 	regs->sci_icmd = icmd;
 

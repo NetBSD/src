@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.6 1995/07/24 07:28:26 cgd Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.7 1995/08/12 20:30:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,7 +149,7 @@ extern int sbic_clock_override;
 #define	STS_EXT		0x80	/* Extended status valid */
 
 /*
- * XXXX 
+ * XXXX
  */
 struct scsi_fmt_cdb {
 	int len;		/* cdb length (in bytes) */
@@ -159,7 +159,7 @@ struct scsi_fmt_cdb {
 struct buf;
 struct scsi_xfer;
 
-u_int sbic_minphys __P((struct buf *bp));
+void sbic_minphys __P((struct buf *bp));
 int sbic_scsicmd __P((struct scsi_xfer *));
 
 #endif /* _SBICVAR_H_ */

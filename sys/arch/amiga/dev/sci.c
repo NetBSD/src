@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.12 1995/07/24 07:28:29 cgd Exp $	*/
+/*	$NetBSD: sci.c,v 1.13 1995/08/12 20:30:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -99,15 +99,15 @@ int	sci_debug = 0;
 /*
  * default minphys routine for sci based controllers
  */
-u_int
+void
 sci_minphys(bp)
 	struct buf *bp;
 {
-	/*
-	 * no max transfer at this level
-	 */
 
-	return (minphys(bp));
+	/*
+	 * No max transfer at this level.
+	 */
+	minphys(bp);
 }
 
 /*
@@ -132,7 +132,7 @@ sci_scsicmd(xs)
 
 	if (flags & SCSI_DATA_UIO)
 		panic("sci: scsi data uio requested");
-	
+
 	if (dev->sc_xs && flags & SCSI_POLL)
 		panic("sci_scsicmd: busy");
 
@@ -184,20 +184,20 @@ sci_donextcmd(dev)
 		phase = DATA_OUT_PHASE;
 	else
 		phase = STATUS_PHASE;
-	
+
 	if (flags & SCSI_RESET)
 		scireset(dev);
 
 	dev->sc_stat[0] = -1;
 	xs->cmd->bytes[0] |= slp->lun << 5;
-	if (phase == STATUS_PHASE || flags & SCSI_POLL) 
-		stat = sciicmd(dev, slp->target, xs->cmd, xs->cmdlen, 
+	if (phase == STATUS_PHASE || flags & SCSI_POLL)
+		stat = sciicmd(dev, slp->target, xs->cmd, xs->cmdlen,
 		    xs->data, xs->datalen, phase);
 	else if (scigo(dev, xs) == 0)
 		return;
-	else 
+	else
 		stat = dev->sc_stat[0];
-	
+
 	sci_scsidone(dev, stat);
 }
 
@@ -277,18 +277,18 @@ scigetsense(dev, xs)
 	int stat;
 
 	slp = xs->sc_link;
-	
+
 	rqs.opcode = REQUEST_SENSE;
 	rqs.byte2 = slp->lun << 5;
 #ifdef not_yet
-	rqs.length = xs->req_sense_length ? xs->req_sense_length : 
+	rqs.length = xs->req_sense_length ? xs->req_sense_length :
 	    sizeof(xs->sense);
 #else
 	rqs.length = sizeof(xs->sense);
 #endif
-	    
+
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
-	
+
 	return(sciicmd(dev, slp->target, &rqs, sizeof(rqs), &xs->sense,
 	    rqs.length, DATA_IN_PHASE));
 }

@@ -1,20 +1,20 @@
-/*	$NetBSD: wd7000.c,v 1.21 1995/07/24 07:17:52 cgd Exp $	*/
+/*	$NetBSD: wd7000.c,v 1.22 1995/08/12 20:31:32 mycroft Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
 /*
  * UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED!
- * 
+ *
  * deraadt@fsa.ca 93/04/02
- * 
+ *
  * I was writing this driver for a wd7000-ASC. Yeah, the "-ASC" not the
  * "-FASST2". The difference is that the "-ASC" is missing scatter gather
  * support.
- * 
+ *
  * In any case, the real reason why I never finished it is because the
  * motherboard I have has broken DMA. This card wants 8MHz 1 wait state
  * operation, and my board munges about 30% of the words transferred.
- * 
+ *
  * Hopefully someone can finish this for the wd7000-FASST2. It should be
  * quite easy to do. Look at the Linux wd7000 device driver to see how
  * scatter gather is done by the board, then look at one of the Adaptec
@@ -166,7 +166,7 @@ int wds_debug = 0;
 void p2x(u_char *, u_long);
 u_char *x2p(u_char *);
 int wdsprobe(struct isa_device *);
-u_int wds_minphys(struct buf *);
+void wds_minphys(struct buf *);
 struct wds_req *wdsr_alloc(int);
 int wds_scsi_cmd(struct scsi_xfer *);
 long wds_adapter_info(int);
@@ -236,14 +236,14 @@ wdsprobe(struct isa_device *dev)
 	return 8;
 }
 
-u_int
+void
 wds_minphys(struct buf *bp)
 {
 	int base = (int)bp->b_data & (PAGESIZ-1);
 
 	if (base + bp->b_bcount > PAGESIZ)
 		bp->b_bcount = PAGESIZ - base;
-	return (minphys(bp));
+	minphys(bp);
 }
 
 struct wds_req *
@@ -324,7 +324,7 @@ wds_scsi_cmd(struct scsi_xfer *sxp)
 
 	p2x(&wds[unit].ombs[r->ombn].addr[0], KVTOPHYS(&r->cmd));
 	printf("%08x/%08x mbox@%08x: %02x %02x %02x %02x\n",
-		&r->cmd, KVTOPHYS(&r->cmd), &wds[unit].ombs[0], 
+		&r->cmd, KVTOPHYS(&r->cmd), &wds[unit].ombs[0],
 		wds[unit].ombs[r->ombn].stat, wds[unit].ombs[r->ombn].addr[0],
 		wds[unit].ombs[r->ombn].addr[1], wds[unit].ombs[r->ombn].addr[2]);
 
@@ -525,7 +525,7 @@ wds_getvers(int unit)
 
 	p2x(&wds[unit].ombs[r->ombn].addr[0], KVTOPHYS(&r->cmd));
 	printf("%08x/%08x mbox@%08x: %02x %02x %02x %02x\n",
-		&r->cmd, KVTOPHYS(&r->cmd), &wds[unit].ombs[0], 
+		&r->cmd, KVTOPHYS(&r->cmd), &wds[unit].ombs[0],
 		wds[unit].ombs[r->ombn].stat, wds[unit].ombs[r->ombn].addr[0],
 		wds[unit].ombs[r->ombn].addr[1], wds[unit].ombs[r->ombn].addr[2]);
 

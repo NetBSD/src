@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.20 1995/07/24 07:21:09 cgd Exp $	*/
+/*	$NetBSD: buf.h,v 1.21 1995/08/12 20:31:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -183,9 +183,9 @@ struct buf *geteblk __P((int));
 struct buf *getnewbuf __P((int slpflag, int slptimeo));
 struct buf *incore __P((struct vnode *, daddr_t));
 
-u_int	minphys __P((struct buf *bp));
+void	minphys __P((struct buf *bp));
 int	physio __P((void (*strategy)(struct buf *), struct buf *bp, dev_t dev,
-	    int flags, u_int (*minphys)(struct buf *), struct uio *uio));
+	    int flags, void (*minphys)(struct buf *), struct uio *uio));
 __END_DECLS
 #endif
 #endif /* !_SYS_BUF_H_ */

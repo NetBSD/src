@@ -188,7 +188,7 @@ struct	sfas_softc {
 #ifdef SFAS_NEED_VM_PATCH
 	u_char			*sc_vm_link;
 #endif
-	
+
 	u_char			*sc_bump_va;	/* Bumpbuf virtual adr */
 	vm_offset_t		 sc_bump_pa;	/* Bumpbuf physical adr */
 	int			 sc_bump_sz;	/* Bumpbuf size */
@@ -289,7 +289,7 @@ struct	sfas_softc {
 #define SFAS_SLOW_START	 0x10	/* There are slow starters on the bus */
 
 void	sfasinitialize __P((struct sfas_softc *sc));
-u_int	sfas_minphys   __P((struct buf *bp));
+void	sfas_minphys   __P((struct buf *bp));
 int	sfas_scsicmd   __P((struct scsi_xfer *));
 
 #endif /* _SFASVAR_H_ */

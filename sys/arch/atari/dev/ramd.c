@@ -1,4 +1,4 @@
-/*	$NetBSD: ramd.c,v 1.4 1995/07/24 07:33:41 cgd Exp $	*/
+/*	$NetBSD: ramd.c,v 1.5 1995/08/12 20:31:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -163,7 +163,7 @@ struct proc	*p;
 	ri = &rd_info[DISKUNIT(dev)];
 	if(ri->ramd_state & RAMD_OPEN)
 		return(0);
-	
+
 	/*
 	 * If someone is busy opening, wait for it to complete.
 	 */
@@ -271,7 +271,7 @@ rdread(dev, uio)
 dev_t		dev;
 struct uio	*uio;
 {
-   return (physio(rdstrategy, (struct buf *)NULL, dev, B_READ, minphys, uio));
+   return (physio(rdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
 int
@@ -279,7 +279,7 @@ rdwrite(dev, uio)
 dev_t		dev;
 struct uio	*uio;
 {
-   return(physio(rdstrategy, (struct buf *)NULL, dev, B_WRITE, minphys, uio));
+   return (physio(rdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 static int
@@ -359,7 +359,7 @@ struct read_info	*rsp;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = rsp->chunk;
 		bp->b_data   = rsp->bufp;
-		
+
 		/* Initiate read */
 		(*rsp->strat)(bp);
 
@@ -373,7 +373,7 @@ struct read_info	*rsp;
 
 		/* Dot counter */
 		printf(".");
-		if(!(++dotc % 40))	
+		if(!(++dotc % 40))
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;
@@ -443,7 +443,7 @@ int			nbyte;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = min(rsp->chunk, nbyte);
 		bp->b_data   = buf;
-		
+
 		/* Initiate read */
 		(*rsp->strat)(bp);
 
@@ -457,7 +457,7 @@ int			nbyte;
 
 		/* Dot counter */
 		printf(".");
-		if(!(++dotc % 40))	
+		if(!(++dotc % 40))
 			printf("\n");
 
 		done = bp->b_bcount - bp->b_resid;

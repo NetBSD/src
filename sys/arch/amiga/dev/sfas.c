@@ -63,7 +63,7 @@
 #include <amiga/dev/zbusvar.h>
 
 void sfasinitialize __P((struct sfas_softc *));
-u_int sfas_minphys   __P((struct buf *bp));
+void sfas_minphys   __P((struct buf *bp));
 int  sfas_scsicmd   __P((struct scsi_xfer *xs));
 int  sfas_donextcmd __P((struct sfas_softc *dev, struct sfas_pending *pendp));
 void sfas_scsidone  __P((struct sfas_softc *dev, struct scsi_xfer *xs,
@@ -72,7 +72,7 @@ void sfasintr	    __P((struct sfas_softc *dev));
 void sfasiwait	    __P((struct sfas_softc *dev));
 void sfasreset	    __P((struct sfas_softc *dev, int how));
 int  sfasselect	    __P((struct sfas_softc *dev, struct sfas_pending *pendp,
-			 unsigned char *cbuf, int clen, 
+			 unsigned char *cbuf, int clen,
 			 unsigned char *buf, int len, int mode));
 void sfasicmd	    __P((struct sfas_softc *dev, struct sfas_pending *pendp));
 
@@ -92,7 +92,7 @@ int	sfas_debug = 0;
 /*
  * default minphys routine for sfas based controllers
  */
-u_int
+void
 sfas_minphys(bp)
 	struct buf *bp;
 {
@@ -100,7 +100,7 @@ sfas_minphys(bp)
 	/*
 	 * No max transfer at this level.
 	 */
-	return (minphys(bp));
+	minphys(bp);
 }
 
 /*
@@ -226,7 +226,7 @@ sfasinitialize(dev)
 		panic("SFAS_SCSICMD: No VM space available.");
 	} else {
 		int	offset;
-      
+
 /*
  * Map space to virtual memory in kernel_map. This vm will always be available
  * to us during interrupt time.
@@ -279,7 +279,7 @@ sfas_link_vm_link(dev, vm_link_data)
 		for(i=0; i<vm_link_data->pages; i++)
 			physaccess(dev->sc_vm_link+i*NBPG, vm_link_data->pa[i],
 				   NBPG, PG_CI);
-      
+
 		dev->sc_flags |= SFAS_HAS_VM_LINK;
 	}
 }
@@ -344,14 +344,14 @@ sfas_scsicmd(struct scsi_xfer *xs)
 		pendp->vm_link_data.offset = (vm_offset_t)xs->data & PGOFSET;
 		pendp->vm_link_data.pages  = round_page(xs->data+xs->datalen-
 							sva)/NBPG;
-	    
+
 		for(n=0; n<pendp->vm_link_data.pages; n++)
 			pendp->vm_link_data.pa[n] = kvtop(sva + n*NBPG);
 	}
 #endif
 
 /* If the chip if busy OR the unit is busy, we have to wait for out turn. */
-	if ((dev->sc_flags & SFAS_ACTIVE) || 
+	if ((dev->sc_flags & SFAS_ACTIVE) ||
 	    (dev->sc_nexus[target].flags & SFAS_NF_UNIT_BUSY)) {
 		s = splbio();
 		TAILQ_INSERT_TAIL(&dev->sc_xs_pending, pendp, link);
@@ -469,7 +469,7 @@ sfas_scsidone(dev, xs, stat)
 	if (pendp != NULL) {
 		TAILQ_REMOVE(&dev->sc_xs_pending, pendp, link);
 	}
-	
+
 	splx(s);
 	scsi_done(xs);
 
@@ -506,7 +506,7 @@ sfasreset(dev, how)
 		*rp->sfas_config2 = dev->sc_config2;
 		*rp->sfas_config3 = dev->sc_config3;
 		*rp->sfas_timeout = dev->sc_timeout_val;
-		*rp->sfas_clkconv = dev->sc_clock_conv_fact & 
+		*rp->sfas_clkconv = dev->sc_clock_conv_fact &
 					SFAS_CLOCK_CONVERSION_MASK;
 	}
 
@@ -523,7 +523,7 @@ sfasreset(dev, how)
 		while(*rp->sfas_status & SFAS_STAT_INTERRUPT_PENDING) {
 			dev->sc_status = *rp->sfas_status;
 			dev->sc_interrupt = *rp->sfas_interrupt;
-			
+
 			delay(100);
 		}
 
@@ -588,7 +588,7 @@ sfas_restore_pointers(dev)
 	}
 }
 
-/* 
+/*
  * sfasiwait is used during interrupt and polled IO to wait for an event from
  * the FAS chip. This function MUST NOT BE CALLED without interrupt disabled.
  */
@@ -648,9 +648,9 @@ sfas_ixfer(dev)
 	while(len && ((dev->sc_status & SFAS_STAT_PHASE_MASK) == phase))
 		if (mode) {
 			*rp->sfas_command = SFAS_CMD_TRANSFER_INFO;
-	
+
 			sfasiwait(dev);
-	
+
 			*buf++ = *rp->sfas_fifo;
 			len--;
 		} else {
@@ -739,7 +739,7 @@ sfas_select_unit(dev, target)
 			}
 
 			dev->sc_sel_nexus = nexus;
-		  
+
 			*rp->sfas_command = cmd;
 			retcode = 1;
 		}
@@ -798,10 +798,10 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 
 /*
  * Adopt mode to reflect the config flags.
- * If we can't use DMA we can't use synch transfer. Also check the 
+ * If we can't use DMA we can't use synch transfer. Also check the
  * sfas_inhibit_xxx[target] flags.
  */
-	if ((dev->sc_config_flags & (SFAS_NO_SYNCH | SFAS_NO_DMA)) || 
+	if ((dev->sc_config_flags & (SFAS_NO_SYNCH | SFAS_NO_DMA)) ||
 	    sfas_inhibit_sync[target])
 		mode &= ~SFAS_SELECT_S;
 
@@ -909,7 +909,7 @@ sfasselect(dev, pendp, cbuf, clen, buf, len, mode)
 	struct sfas_softc	*dev;
 	struct sfas_pending	*pendp;
 	unsigned char		*cbuf;
-	int			 clen; 
+	int			 clen;
 	unsigned char		*buf;
 	int			 len;
 	int			 mode;
@@ -953,7 +953,7 @@ sfas_request_sense(dev, nexus)
 #else
 	rqs.length=sizeof(xs->sense);
 #endif
-  
+
 	rqs.unused[0] = rqs.unused[1] = rqs.control = 0;
 
 /*
@@ -1163,7 +1163,7 @@ sfas_midaction(dev, rp, nexus)
 			nexus->flags &= ~SFAS_NF_UNIT_BUSY;
 			nexus->state = SFAS_NS_FINISHED;
 			break;
-	  
+
 		case SFAS_NS_SENSE:
 			/*
 			 * Oops! We have to request sense data from this unit.
@@ -1173,7 +1173,7 @@ sfas_midaction(dev, rp, nexus)
 			nexus->flags |= SFAS_NF_REQUEST_SENSE;
 			sfas_request_sense(dev, nexus);
 			break;
-	  
+
 		case SFAS_NS_DONE:
 			/* All done. */
 			nexus->xs->resid = dev->sc_len;
@@ -1209,16 +1209,16 @@ sfas_midaction(dev, rp, nexus)
 			 */
 			printf("sfasintr: Unexpected disconnection\n");
 			printf("sfasintr: u %x s %d p %d f %x c %x\n",
-			       nexus->lun_unit, nexus->state, 
+			       nexus->lun_unit, nexus->state,
 			       dev->sc_status & SFAS_STAT_PHASE_MASK,
 			       nexus->flags, nexus->cbuf[0]);
-			
+
 			nexus->xs->resid = dev->sc_len;
 
 			nexus->flags &= ~SFAS_NF_UNIT_BUSY;
 			nexus->state = SFAS_NS_FINISHED;
 			nexus->status = -3;
-	      
+
 			dev->sc_led(dev, 0);
 			break;
 		}
@@ -1245,7 +1245,7 @@ sfas_midaction(dev, rp, nexus)
 				sfas_request_sense(dev, &dev->sc_nexus[i]);
 				break;
 			}
-      
+
 		/* We are done with this nexus! */
 		if (nexus->state == SFAS_NS_FINISHED)
 			sfas_scsidone(dev, nexus->xs, nexus->status);
@@ -1267,14 +1267,14 @@ sfas_midaction(dev, rp, nexus)
 		*rp->sfas_syncper = nexus->syncper;
 		*rp->sfas_syncoff = nexus->syncoff;
 		*rp->sfas_config3 = nexus->config3;
-		
+
 		sfas_restore_pointers(dev);
 
 		if (!(nexus->flags & SFAS_NF_SENSING))
 			nexus->status	= 0xFF;
 		dev->sc_msg_in[0] = 0xFF;
 		dev->sc_msg_in_len= 0;
-		
+
 		dev->sc_led(dev, 1);
 
 		break;
@@ -1303,7 +1303,7 @@ sfas_midaction(dev, rp, nexus)
 			      while((*rp->sfas_fifo_flags&SFAS_FIFO_COUNT_MASK)
 				    && left)
 				dev->sc_bump_va[len-(left--)] = *rp->sfas_fifo;
-		    
+
 			      bcopy(dev->sc_bump_va, dev->sc_buf, len-left);
 			    }
 			  } else {
@@ -1318,17 +1318,17 @@ sfas_midaction(dev, rp, nexus)
 			   */
 			  dev->sc_len -= len-left;
 			  dev->sc_buf += len-left;
-			  
+
 			  dev->sc_dma_buf += len-left;
 			  dev->sc_dma_len  = left;
-			  
+
 			  dev->sc_dma_blk_ptr += len-left;
 			  dev->sc_dma_blk_len -= len-left;
 
 			  /*
 			   * If it was the end of a dma block, we select the
 			   * next to begin with.
-			   */	    
+			   */
 			  if (!dev->sc_dma_blk_len)
 			    dev->sc_cur_link++;
 			}
@@ -1419,7 +1419,7 @@ sfas_postaction(dev, rp, nexus)
 		  if (len) {
 			dev->sc_dma_buf = dev->sc_bump_pa;
 			dev->sc_dma_len = len;
-	      
+
 			if (nexus->state == SFAS_NS_DATA_OUT)
 			  bcopy(dev->sc_buf, dev->sc_bump_va, dev->sc_dma_len);
 		  } else {
@@ -1475,7 +1475,7 @@ sfas_postaction(dev, rp, nexus)
 		nexus->state = SFAS_NS_MSG_OUT;
 
 		*rp->sfas_command = SFAS_CMD_FLUSH_FIFO;
-		
+
 		if (nexus->flags & SFAS_NF_DO_SDTR) {
 			/* Send a Synchronous Data Transfer Request. */
 
@@ -1572,7 +1572,7 @@ sfas_postaction(dev, rp, nexus)
 					nexus->config3 &= ~SFAS_CFG3_FASTSCSI;
 					nexus->syncper = 5;
 					nexus->syncoff = 0;
-					
+
 					*rp->sfas_syncper = nexus->syncper;
 					*rp->sfas_syncoff = nexus->syncoff;
 					*rp->sfas_config3 = nexus->config3;
@@ -1624,7 +1624,7 @@ sfas_postaction(dev, rp, nexus)
 					*rp->sfas_syncper = nexus->syncper;
 					*rp->sfas_syncoff = nexus->syncoff;
 					*rp->sfas_config3 = nexus->config3;
-					
+
 					/*
 					 * Hmmm, it seems that the scsi unit
 					 * initiated sync negotiation, so lets
