@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.13 2002/01/12 17:11:03 tsutsui Exp $	*/
+/*	$NetBSD: umidi.c,v 1.14 2002/03/08 17:24:06 kent Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.13 2002/01/12 17:11:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.14 2002/03/08 17:24:06 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,7 +423,8 @@ free_all_endpoints(struct umidi_softc *sc)
 	int i;
 	for (i=0; i<sc->sc_in_num_endpoints+sc->sc_out_num_endpoints; i++)
 	    free_pipe(&sc->sc_endpoints[i]);
-	free(sc->sc_endpoints, M_USBDEV);
+	if (sc->sc_endpoints != NULL)
+		free(sc->sc_endpoints, M_USBDEV);
 	sc->sc_endpoints = sc->sc_out_ep = sc->sc_in_ep = NULL;
 }
 
