@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 1999/12/04 21:20:50 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.20 2000/03/03 02:33:21 castor Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -126,8 +126,8 @@ mmrw(dev, uio, flags)
 			c = min(iov->iov_len, MAXPHYS);
 			if (v < MIPS_KSEG0_START)
 				return (EFAULT);
-			if (v + c > MIPS_PHYS_TO_KSEG0(avail_end +
-						mips_round_page(MSGBUFSIZE)) &&
+			if (v > MIPS_PHYS_TO_KSEG0(avail_end +
+					mips_round_page(MSGBUFSIZE) - c) &&
 			    (v < MIPS_KSEG2_START ||
 			    !uvm_kernacc((void *)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)))
