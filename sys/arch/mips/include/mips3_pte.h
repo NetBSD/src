@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_pte.h,v 1.2 1996/07/16 23:24:33 thorpej Exp $	*/
+/*	$NetBSD: mips3_pte.h,v 1.3 1996/08/11 23:30:22 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
  * R4000 hardware page table entry
  */
 
-#ifndef LOCORE
+#ifndef _LOCORE
 struct pte {
 #if BYTE_ORDER == BIG_ENDIAN
 unsigned int	pg_prot:2,		/* SW: access control */
@@ -81,7 +81,7 @@ typedef union pt_entry {
 	unsigned int	pt_entry;	/* for copying, etc. */
 	struct pte	pt_pte;		/* for getting to bits by name */
 } pt_entry_t;	/* Mach page table entry */
-#endif /* LOCORE */
+#endif /* _LOCORE */
 
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 
@@ -121,7 +121,7 @@ typedef union pt_entry {
 #define	PG_SIZE_4M	0x007fe000
 #define	PG_SIZE_16M	0x01ffe000
 
-#if defined(_KERNEL) && !defined(LOCORE)
+#if defined(_KERNEL) && !defined(_LOCORE)
 /*
  * Kernel virtual address to page table entry and visa versa.
  */
@@ -132,4 +132,4 @@ typedef union pt_entry {
 
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
-#endif
+#endif	/* defined(_KERNEL) && !defined(_LOCORE) */
