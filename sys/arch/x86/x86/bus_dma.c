@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 2003/10/28 22:49:51 mycroft Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.10 2004/05/11 11:31:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.9 2003/10/28 22:49:51 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.10 2004/05/11 11:31:34 yamt Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -371,6 +371,9 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 			map->dm_segs[seg].ds_addr = lastaddr;
 			map->dm_segs[seg].ds_len = m->m_len;
 			lastaddr += m->m_len;
+			if (map->_dm_bounce_thresh != 0 &&
+			    lastaddr > map->_dm_bounce_thresh)
+				error = EINVAL;
 			break;
 
 		case 0:
