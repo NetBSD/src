@@ -1,4 +1,4 @@
-.\"	$NetBSD: makedbm.8,v 1.3 1997/10/07 14:23:50 lukem Exp $
+.\"	$NetBSD: makedbm.8,v 1.4 1997/10/13 03:47:07 lukem Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -64,9 +64,7 @@ is a comment character and indicates that the rest of the line should
 be ignored.
 .Pp
 .Ar outfile
-is the pathname of the generated databases, sans the
-.Dq .db
-suffix.
+is the pathname of the generated databases.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -105,9 +103,7 @@ Dump the contents of
 to standard output, in a format suitable to be passed back into
 .Nm "" .
 .Ar dbfile
-is the pathname to the database, sans the
-.Dq .db
-suffix.
+is the pathname to the database.
 .El
 .Sh SEE ALSO
 .Xr db 3 ,
