@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_mainbus.c,v 1.5 2003/03/25 06:53:16 igy Exp $ */
+/*	$NetBSD: ixp12x0_mainbus.c,v 1.6 2003/07/13 07:15:23 igy Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.5 2003/03/25 06:53:16 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_mainbus.c,v 1.6 2003/07/13 07:15:23 igy Exp $");
 
 /*
  * front-end for the ixp12x0 I/O Processor.
@@ -72,10 +72,6 @@ void
 ixp12x0_mainbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ixp12x0_softc *sc = (void *) self;
-
-	ixp12x0_bs_init(&ixp12x0_bs_tag, sc);
-	sc->sc_iot = &ixp12x0_bs_tag;
-	sc->sc_ioh = IXP12X0_IO_VBASE;
 
 	/*
 	 * Initialize the interrupt part of our PCI chipset tag

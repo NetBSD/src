@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.10 2003/07/13 02:11:58 igy Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.11 2003/07/13 07:15:22 igy Exp $ */
 /*
  * Copyright (c) 2002, 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.10 2003/07/13 02:11:58 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0.c,v 1.11 2003/07/13 07:15:22 igy Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,26 +60,24 @@ ixp12x0_attach(sc)
 	ixp12x0_softc = sc;
 
 	printf("\n");
+
+	sc->sc_iot = &ixp12x0_bs_tag;
+
 	/*
-	 * Subregion for PCI Configuration Spase Registers
+	 * Mapping for PCI Configuration Spase Registers
 	 */
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-		IXP12X0_PCI_VBASE - IXP12X0_IO_VBASE,
-		IXP12X0_PCI_SIZE, &sc->sc_pci_ioh))
-			panic("%s: unable to subregion PCI registers",
-			       sc->sc_dev.dv_xname); 
+	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_HWBASE, IXP12X0_PCI_SIZE,
+			  0, &sc->sc_pci_ioh))
+		panic("%s: unable to map PCI registers", sc->sc_dev.dv_xname); 
+	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_TYPE0_HWBASE,
+			  IXP12X0_PCI_TYPE0_SIZE, 0, &sc->sc_conf0_ioh))
+		panic("%s: unable to map PCI Configutation 0\n",
+		      sc->sc_dev.dv_xname);
+	if (bus_space_map(sc->sc_iot, IXP12X0_PCI_TYPE1_HWBASE,
+			  IXP12X0_PCI_TYPE0_SIZE, 1, &sc->sc_conf1_ioh))
+		panic("%s: unable to map PCI Configutation 1\n",
+		      sc->sc_dev.dv_xname);
 
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-		IXP12X0_PCI_TYPE0_VBASE - IXP12X0_IO_VBASE,
-		IXP12X0_PCI_TYPE0_SIZE, &sc->sc_conf0_ioh))
-			panic("%s: unable to subregion PCI Configutation 0\n",
-			       sc->sc_dev.dv_xname);
-
-	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh,
-		IXP12X0_PCI_TYPE1_VBASE - IXP12X0_IO_VBASE,
-		IXP12X0_PCI_TYPE1_SIZE, &sc->sc_conf1_ioh))
-			panic("%s: unable to subregion PCI Configutation 1\n",
-			       sc->sc_dev.dv_xname);
 	/*
 	 * PCI bus reset
 	 */

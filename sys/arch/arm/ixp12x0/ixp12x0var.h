@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0var.h,v 1.4 2003/07/13 02:11:58 igy Exp $ */
+/*	$NetBSD: ixp12x0var.h,v 1.5 2003/07/13 07:15:23 igy Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -103,9 +103,6 @@ struct pmap_ent {
 
 extern struct bus_space	ixp12x0_bs_tag;
 
-void	ixp12x0_bs_init(bus_space_tag_t, void *);
-void	ixp12x0_io_bs_init(bus_space_tag_t, void *);
-void	ixp12x0_mem_bs_init(bus_space_tag_t, void *);
 void	ixp12x0_pci_init(pci_chipset_tag_t, void *);
 void	ixp12x0_pci_dma_init(struct ixp12x0_softc *);
 void	ixp12x0_attach(struct ixp12x0_softc *);
