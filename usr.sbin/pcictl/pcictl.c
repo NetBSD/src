@@ -1,4 +1,4 @@
-/*	$NetBSD: pcictl.c,v 1.5 2001/11/08 08:05:05 tron Exp $	*/
+/*	$NetBSD: pcictl.c,v 1.6 2002/07/20 08:40:18 grant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -134,7 +134,7 @@ main(int argc, char *argv[])
 
 	/* Make sure the device is a PCI bus. */
 	if (ioctl(pcifd, PCI_IOC_BUSINFO, &pci_businfo) != 0)
-		errx(1, "%s: not a PCI bus device\n", dvname);
+		errx(1, "%s: not a PCI bus device", dvname);
 
 	(*commands[i].cmd_func)(argc, argv);
 	exit(0);

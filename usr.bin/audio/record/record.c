@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.29 2002/07/20 07:45:08 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.30 2002/07/20 08:40:16 grant Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -100,7 +100,7 @@ main(argc, argv)
 		case 'b':
 			decode_int(optarg, &balance);
 			if (balance < 0 || balance > 63)
-				errx(1, "balance must be between 0 and 63\n");
+				errx(1, "balance must be between 0 and 63");
 			break;
 		case 'C':
 			/* Ignore, compatibility */
@@ -114,7 +114,7 @@ main(argc, argv)
 		case 'c':
 			decode_int(optarg, &channels);
 			if (channels < 0 || channels > 16)
-				errx(1, "channels must be between 0 and 16\n");
+				errx(1, "channels must be between 0 and 16");
 			break;
 		case 'd':
 			device = optarg;
@@ -131,7 +131,7 @@ main(argc, argv)
 		case 'm':
 			decode_int(optarg, &monitor_gain);
 			if (monitor_gain < 0 || monitor_gain > 255)
-				errx(1, "monitor volume must be between 0 and 255\n");
+				errx(1, "monitor volume must be between 0 and 255");
 			break;
 		case 'P':
 			decode_int(optarg, &precision);
@@ -160,7 +160,7 @@ main(argc, argv)
 		case 's':
 			decode_int(optarg, &sample_rate);
 			if (sample_rate < 0 || sample_rate > 48000 * 2)	/* XXX */
-				errx(1, "sample rate must be between 0 and 96000\n");
+				errx(1, "sample rate must be between 0 and 96000");
 			break;
 		case 't':
 			no_time_limit = 0;
@@ -172,7 +172,7 @@ main(argc, argv)
 		case 'v':
 			decode_int(optarg, &gain);
 			if (gain < 0 || gain > 255)
-				errx(1, "volume must be between 0 and 255\n");
+				errx(1, "volume must be between 0 and 255");
 			break;
 		/* case 'h': */
 		default:
@@ -512,7 +512,7 @@ write_header_wav(hdrp, lenp, leftp)
 			static int warned = 0;
 
 			if (warned == 0) {
-				warnx("can not support precision of %d\n", precision);
+				warnx("can not support precision of %d", precision);
 				warned = 1;
 			}
 		}
@@ -585,9 +585,9 @@ fmt_pcm:
 				const char *s = wav_enc_from_val(encoding);
 
 				if (s == NULL)
-					warnx("can not support encoding of %s\n", s);
+					warnx("can not support encoding of %s", s);
 				else
-					warnx("can not support encoding of %d\n", encoding);
+					warnx("can not support encoding of %d", encoding);
 				warned = 1;
 			}
 		}

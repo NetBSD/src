@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.4 2001/05/07 14:00:22 kleink Exp $	*/
+/*	$NetBSD: mld6.c,v 1.5 2002/07/20 08:40:18 grant Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -234,12 +234,12 @@ make_msg(int index, struct in6_addr *addr, u_int type)
 		errx(1, "inet6_opt_finish(buf) failed");
 #else  /* old advanced API */
 	if (inet6_option_init((void *)cmsgp, &cmsgp, IPV6_HOPOPTS))
-		errx(1, "inet6_option_init failed\n");
+		errx(1, "inet6_option_init failed");
 	raopt[0] = IP6OPT_RTALERT;
 	raopt[1] = IP6OPT_RTALERT_LEN - 2;
 	memcpy(&raopt[2], (caddr_t)&rtalert_code, sizeof(u_short));
 	if (inet6_option_append(cmsgp, raopt, 4, 0))
-		errx(1, "inet6_option_append failed\n");
+		errx(1, "inet6_option_append failed");
 #endif 
 }
 
