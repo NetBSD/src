@@ -236,7 +236,9 @@
       /* Make sure the reg hasn't been clobbered.  */
       && ! reg_set_between_p (operands[0], XEXP (link, 0), insn))
     return \"incl %0\";
-  if (GET_CODE (operands[1]) == SYMBOL_REF || GET_CODE (operands[1]) == CONST)
+  if (GET_CODE (operands[1]) == SYMBOL_REF
+      || GET_CODE (operands[1]) == LABEL_REF
+      || GET_CODE (operands[1]) == CONST)
     {
       if (push_operand (operands[0], SImode))
 	return \"pushab %a1\";

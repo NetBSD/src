@@ -42,6 +42,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #define	TARGET_MEM_FUNCTIONS		/* include mem* calls */
 
+#undef	PCC_STATIC_STRUCT_RETURN	/* let's be reentrant */
+
 #if 1
 #undef  PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DBX_DEBUG
