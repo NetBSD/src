@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.2 2001/09/04 02:51:16 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.3 2001/09/04 03:00:47 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -209,7 +209,7 @@ capability
 If
 .Fa offsetp
 is not NULL, the register offset in configuration space is returned in
-.Fa offsetp.
+.Fa offsetp .
 If
 .Fa valuep
 is not NULL, the value of the capability is returned in
@@ -275,7 +275,7 @@ The argument
 are bus-space flags passed to
 .Fn bus_space_map
 to perform the mapping (see
-.Xr bus_space 9 ).
+.Xr bus_space 9 ) .
 The bus-space tag and handle for the mapped register window are
 returned in
 .Fa tagp
@@ -406,7 +406,7 @@ virtual address space using
 .Fn pci_mapreg_map .
 Device registers can now be accessed using the standard bus-space API
 (see
-.Xr bus_space 9 ).
+.Xr bus_space 9 ) .
 .Pp
 Details of using PCI interrupts is described in
 .Xr pci_intr 9 .
@@ -420,14 +420,14 @@ for the device.
 .Pp
 During system shutdown, it is necessary to abort any DMA transfers in
 progress by registering a shutdown hook (see
-.Xr shutdownhook_establish 9 ).
+.Xr shutdownhook_establish 9 ) .
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
 machine-independent PCI subsystem can be found.  All pathnames are
 relative to
-.Pa /usr/src.
+.Pa /usr/src .
 .Pp
 The PCI subsystem itself is implemented within the files
 .Pa sys/dev/pci/pci.c ,
