@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.1.1.1 1998/04/24 20:10:19 matthias Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.2 1998/04/25 19:54:32 matthias Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
  */
 
 /*
- * pmap.c: i386 pmap module rewrite
+ * pmap.c: i386 pmap module rewrite and ported to the ns532
  * Chuck Cranor <chuck@ccrc.wustl.edu>
  * 11-Aug-97
  *
@@ -59,8 +59,6 @@
  *     (NetBSD/alpha).
  */
 
-#include "opt_cputype.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -74,15 +72,11 @@
 #include <uvm/uvm.h>
 
 #include <machine/cpu.h>
-#include <machine/specialreg.h>
-
-#include <dev/isa/isareg.h>
-#include <i386/isa/isa_machdep.h>
 
 /*
  * general info:
  *
- *  - for an explanation of how the i386 MMU hardware works see 
+ *  - for an explanation of how the ns532 MMU hardware works see 
  *    the comments in <machine/pte.h>.
  *
  *  - for an explanation of the general memory structure used by
@@ -298,28 +292,18 @@ int nkpde = NKPTP;
 #endif
 
 /*
- * pmap_pg_g: if our processor supports PG_G in the PTE then we 
- * set pmap_pg_g to PG_G (otherwise it is zero).
- */
-
-int pmap_pg_g = 0;
-
-/*
- * i386 physical memory comes in a big contig chunk with a small
- * hole toward the front of it...  the following 4 vm_offset_t's
- * (shared with machdep.c) describe the physical address space
- * of this machine.
+ * pc532 physical memory comes in a big contig chunk. The following 2
+ * vm_offset_t's (shared with machdep.c) describe the physical address
+ * space of this machine.
  */
 vm_offset_t avail_start;/* PA of first available physical page */
 vm_offset_t avail_end;	/* PA of last available physical page */
-vm_offset_t hole_start;	/* PA of start of "hole" */
-vm_offset_t hole_end;	/* PA of end of "hole" */
 
 /*
  * other data structures
  */
 
-static pt_entry_t protection_codes[8];     /* maps MI prot to i386 prot code */
+static pt_entry_t protection_codes[8];     /* maps MI prot to ns532 prot code */
 static boolean_t pmap_initialized = FALSE; /* pmap_init done yet? */
 
 /*
@@ -364,13 +348,6 @@ static caddr_t csrcp, cdstp, zerop, ptpp;
 caddr_t vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
 extern vm_offset_t msgbuf_vaddr, msgbuf_paddr;
-extern vm_offset_t idt_vaddr, idt_paddr;	/* we allocate IDE early */
-
-#if defined(I586_CPU)
-/* stuff to fix the pentium f00f bug */
-extern vm_offset_t pentium_idt_vaddr;
-#endif
-
 
 /*
  * local prototypes
@@ -432,7 +409,13 @@ __inline static boolean_t pmap_is_curpmap(pmap)
 struct pmap *pmap;
 
 {
-  return((pmap == pmap_kernel()) || (pmap->pm_pdirpa == (vm_offset_t) rcr3()));
+  vm_offset_t ptb;
+  if (pmap == pmap_kernel())
+    return(1);
+  smr(ptb0, ptb);
+  if (pmap->pm_pdirpa == ptb)
+    return(1);
+  return(0);
 }
 
 /*
@@ -632,17 +615,9 @@ vm_size_t len;
     }
 
     *pte = 0;		/* zap! */
-#if defined(I386_CPU)
-    if (cpu_class != CPUCLASS_386)
-#endif
-      pmap_update_pg(va);
+    pmap_update_pg(va);
     
   }
-
-#if defined(I386_CPU)
-  if (cpu_class == CPUCLASS_386)
-    pmap_update();
-#endif
 
 }
 
@@ -675,31 +650,16 @@ int npgs;
   pt_entry_t *pte, opte;
   int lcv;
   vm_offset_t tva;
-#if defined(I386_CPU)
-  boolean_t need_update = FALSE;
-#endif
 
   for (lcv = 0 ; lcv < npgs ; lcv++) {
     tva = va + lcv * NBPG;
     pte = vtopte(tva);
     opte = *pte;
-    *pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V | pmap_pg_g;  /* zap! */
-#if defined(I386_CPU)
-    if (cpu_class == CPUCLASS_386) {
-      if (pmap_valid_entry(opte))
-	need_update = TRUE;
-      continue;
-    }
-#endif
+    *pte = VM_PAGE_TO_PHYS(pgs[lcv]) | PG_RW | PG_V;  /* zap! */
     if (pmap_valid_entry(opte))
       pmap_update_pg(tva);
   }
 
-#if defined(I386_CPU)
-  if (need_update && cpu_class == CPUCLASS_386)
-    pmap_update();
-#endif
-  
 }
 
 /*
@@ -715,11 +675,11 @@ int npgs;
  *	properly enabled (called before main()).   the VM system is
  *      fully init'd later...
  *
- * => on i386, locore.s has already enabled the MMU by allocating
+ * => on ns532, machdep.c has already enabled the MMU by allocating
  *	a PDP for the kernel, and nkpde PTP's for the kernel.
  * => kva_start is the first free virtual address in kernel space
  * => we make use of the global vars from machdep.c:
- *	avail_start, avail_end, hole_start, hole_end
+ *	avail_start, avail_end
  */
 
 void pmap_bootstrap(kva_start)
@@ -728,7 +688,6 @@ vm_offset_t kva_start;
 
 {
   struct pmap *kpm;
-  vm_offset_t kva;
   pt_entry_t *pte;
 
   /*
@@ -748,7 +707,7 @@ vm_offset_t kva_start;
    * use the very last page of physical memory for the message buffer
    */
 
-  avail_end -= i386_round_page(MSGBUFSIZE);
+  avail_end -= ns532_round_page(MSGBUFSIZE);
   msgbuf_paddr = avail_end;
 
   /*
@@ -762,7 +721,7 @@ vm_offset_t kva_start;
   /*
    * set up protection_codes: we need to be able to convert from
    * a MI protection code (some combo of VM_PROT...) to something
-   * we can jam into a i386 PTE.
+   * we can jam into a ns532 PTE.
    */
 
   protection_codes[VM_PROT_NONE] = 0;  				/* --- */
@@ -792,30 +751,15 @@ vm_offset_t kva_start;
   kpm->pm_obj.uo_npages = 0;
   kpm->pm_obj.uo_refs = 1;
   bzero(&kpm->pm_list, sizeof(kpm->pm_list));  /* pm_list not used */
-  kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_cr3 + KERNBASE);
-  kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_cr3;
+  kpm->pm_pdir = (pd_entry_t *)(proc0.p_addr->u_pcb.pcb_ptb + KERNBASE);
+  kpm->pm_pdirpa = (u_int32_t) proc0.p_addr->u_pcb.pcb_ptb;
   kpm->pm_stats.wired_count = kpm->pm_stats.resident_count =
-    i386_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
+    ns532_btop(kva_start - VM_MIN_KERNEL_ADDRESS);
   /* 
    * the above is just a rough estimate and not critical to the proper
    * operation of the system.
    */
   curpcb->pcb_pmap = kpm;	/* proc0's pcb */
-
-  /*
-   * enable global TLB entries if they are supported
-   */
-
-  if (cpu_feature & CPUID_PGE) {
-
-    lcr4(rcr4() | CR4_PGE);	/* enable hardware (via %cr4) */
-    pmap_pg_g = PG_G;		/* enable software */
-
-    /* add PG_G attribute to already mapped kernel pages */
-    for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ; kva += NBPG) 
-      if (pmap_valid_entry(PTE_BASE[i386_btop(kva)]))
-	PTE_BASE[i386_btop(kva)] |= PG_G;
-  }
 
   /*
    * now we allocate the "special" VAs which are used for tmp mappings
@@ -824,7 +768,7 @@ vm_offset_t kva_start;
    * we find the PTE that maps the allocated VA via the linear PTE mapping.
    */
 
-  pte = PTE_BASE + i386_btop(virtual_avail);
+  pte = PTE_BASE + ns532_btop(virtual_avail);
   
   csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;  /* allocate */
   virtual_avail += NBPG; pte++;			     /* advance */
@@ -844,18 +788,6 @@ vm_offset_t kva_start;
 
   msgbuf_vaddr = virtual_avail;			/* don't need pte */
   virtual_avail += round_page(MSGBUFSIZE); pte++;
-
-  idt_vaddr = virtual_avail;			/* don't need pte */
-  virtual_avail += NBPG; pte++;
-  avail_end -= NBPG;
-  idt_paddr = avail_end;
-
-#if defined(I586_CPU)
-  /* pentium f00f bug stuff */
-  pentium_idt_vaddr = virtual_avail;		/* don't need pte */
-  virtual_avail += NBPG; pte++;
-#endif
-
 
   /*
    * now we reserve some VM for mapping pages when doing a crash dump
@@ -886,13 +818,9 @@ vm_offset_t kva_start;
    * controls.
    */
 
-  if (avail_start < hole_start)   /* any free memory before the hole? */
-    uvm_page_physload(atop(avail_start), atop(hole_start),
-		      atop(avail_start), atop(hole_start));
+  uvm_page_physload(atop(avail_start), atop(avail_end),
+			atop(avail_start), atop(avail_end));
 
-  uvm_page_physload(atop(hole_end), atop(avail_end), 
-		    atop(hole_end), atop(avail_end));
-  
   /*
    * ensure the TLB is sync'd with reality by flushing it...
    */
@@ -925,8 +853,8 @@ void pmap_init()
   npages = 0;
   for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) 
     npages += (vm_physmem[lcv].end - vm_physmem[lcv].start);
-  s = (vm_size_t) (sizeof(struct pv_head) * npages + 
-		   sizeof(char) * npages);
+  s = (vm_size_t) (sizeof(struct pv_head) * npages +
+                   sizeof(*(vm_physmem[0].pmseg.attrs)) * npages);
   s = round_page(s); /* round up */
   addr = (vm_offset_t) uvm_km_zalloc(kernel_map, s);
   if (addr == NULL)
@@ -945,7 +873,7 @@ void pmap_init()
 
   /* now allocate attrs */
   for (lcv = 0 ; lcv < vm_nphysseg ; lcv++) {
-    vm_physmem[lcv].pmseg.attrs = (char *) addr;
+    vm_physmem[lcv].pmseg.attrs = (short *) addr;
     addr = (vm_offset_t)(vm_physmem[lcv].pmseg.attrs +
 			 (vm_physmem[lcv].end - vm_physmem[lcv].start));
   }
@@ -1313,7 +1241,7 @@ struct pv_entry *pv;
 {
   struct pv_page *pvp;
 
-  pvp = (struct pv_page *) i386_trunc_page(pv);
+  pvp = (struct pv_page *) ns532_trunc_page(pv);
   pv_nfpvents++;
   pvp->pvinfo.pvpi_nfree++;
 
@@ -1732,6 +1660,7 @@ struct pmap *pmap;
   bzero(pmap->pm_pdir, PDSLOT_PTE * sizeof(pd_entry_t));
   /* put in recursive PDE to map the PTEs */
   pmap->pm_pdir[PDSLOT_PTE] = pmap->pm_pdirpa | PG_V | PG_KW;
+	
 
   /*
    * we need to lock pmaps_lock to prevent nkpde from changing on
@@ -1741,11 +1670,13 @@ struct pmap *pmap;
    */
   simple_lock(&pmaps_lock);
   /* put in kernel VM PDEs */
-  bcopy(&PDP_BASE[PDSLOT_KERN], &pmap->pm_pdir[PDSLOT_KERN],
-	nkpde * sizeof(pd_entry_t));
+  movsdnu(&PDP_BASE[PDSLOT_KERN], &pmap->pm_pdir[PDSLOT_KERN],
+	nkpde * sizeof(pd_entry_t) / 4);
   /* zero the rest */
   bzero(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 
 	NBPG - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+  /* wire in i/o page */
+  pmap->pm_pdir[PDSLOT_APTE + 1] = PDP_BASE[PDSLOT_APTE + 1];
   LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
   if (pmaps_hand == NULL)
     pmaps_hand = pmap;
@@ -1860,10 +1791,10 @@ struct proc *p;
   struct pcb *pcb = &p->p_addr->u_pcb;
   struct pmap *pmap = p->p_vmspace->vm_map.pmap;
 
-  pcb->pcb_cr3 = pmap->pm_pdirpa;
+  pcb->pcb_ptb = pmap->pm_pdirpa;
   pcb->pcb_pmap = pmap;
   if (p == curproc) {
-    lcr3(pcb->pcb_cr3);
+    load_ptb(pcb->pcb_ptb);
   }
 }
 
@@ -1906,7 +1837,7 @@ vm_offset_t va;
 
   if (pmap->pm_pdir[pdei(va)]) {
     ptes = pmap_map_ptes(pmap);
-    retval = (vm_offset_t) (ptes[i386_btop(va)] & PG_FRAME);
+    retval = (vm_offset_t) (ptes[ns532_btop(va)] & PG_FRAME);
     pmap_unmap_ptes(pmap);
     return(retval | (va & ~PG_FRAME));
   }
@@ -1989,7 +1920,7 @@ vm_offset_t srcpa, dstpa;
 
   *csrc_pte = (srcpa & PG_FRAME) | PG_V | PG_RW;
   *cdst_pte = (dstpa & PG_FRAME) | PG_V | PG_RW;
-  bcopy(csrcp, cdstp, NBPG);
+  movsdnu(csrcp, cdstp, NBPG / 4);
   *csrc_pte = *cdst_pte = 0;			/* zap! */
   pmap_update_2pg((vm_offset_t)csrcp, (vm_offset_t)cdstp);
   simple_unlock(&pmap_copy_page_lock);
@@ -2048,15 +1979,11 @@ vm_offset_t startva, endva;
 
     if (pmap_rr) {		/* worried about tlb flushing? */
       
-      if (opte & PG_G) {
-	pmap_update_pg(startva);	/* PG_G requires this */
+      if (pmap_rr->prr_npages < PMAP_RR_MAX) {
+        pmap_rr->prr_vas[pmap_rr->prr_npages++] = startva;
       } else {
-	if (pmap_rr->prr_npages < PMAP_RR_MAX) {
-	  pmap_rr->prr_vas[pmap_rr->prr_npages++] = startva;
-	} else {
-	  if (pmap_rr->prr_npages == PMAP_RR_MAX)
-	    pmap_rr->prr_npages++;		/* signal an overflow */
-	}
+	if (pmap_rr->prr_npages == PMAP_RR_MAX)
+	  pmap_rr->prr_npages++;		/* signal an overflow */
       }
 
     }
@@ -2070,7 +1997,7 @@ vm_offset_t startva, endva;
     if ((opte & PG_PVLIST) == 0)
       continue;
 
-    bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
+    bank = vm_physseg_find(ns532_btop(opte & PG_FRAME), &off);
     if (bank == -1)
       panic("pmap_remove_ptes: unmanaged page marked PG_PVLIST");
 
@@ -2144,7 +2071,7 @@ vm_offset_t va;
   if ((opte & PG_PVLIST) == 0)
     return(TRUE);
 
-  bank = vm_physseg_find(i386_btop(opte & PG_FRAME), &off);
+  bank = vm_physseg_find(ns532_btop(opte & PG_FRAME), &off);
   if (bank == -1)
     panic("pmap_remove_pte: unmanaged page marked PG_PVLIST");
 
@@ -2224,17 +2151,12 @@ vm_offset_t sva, eva;
       }
 
       /* do it! */
-      result = pmap_remove_pte(pmap, ptp, &ptes[i386_btop(sva)], sva);
+      result = pmap_remove_pte(pmap, ptp, &ptes[ns532_btop(sva)], sva);
 
       /* if mapping removed and the PTP is no longer being used, free it! */
       if (result && ptp && ptp->wire_count <= 1) {
 	pmap->pm_pdir[pdei(sva)] = 0;	/* zap! */
-#if defined(I386_CPU)
-	if (cpu_class != CPUCLASS_386) /* already dumped whole TLB on i386 */
-#endif
-        {
-	  pmap_update_pg( ((vm_offset_t) ptes) + ptp->offset );
-	}
+        pmap_update_pg( ((vm_offset_t) ptes) + ptp->offset );
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint == ptp)	/* update hint? */
 	  pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
@@ -2268,7 +2190,7 @@ vm_offset_t sva, eva;
   for (/* null */ ; sva < eva ; sva = blkendva) {
     
     /* determine range of block */
-    blkendva = i386_round_pdr(sva+1);
+    blkendva = ns532_round_pdr(sva+1);
     if (blkendva > eva)
       blkendva = eva;
 
@@ -2311,18 +2233,13 @@ vm_offset_t sva, eva;
 	}
     }
     
-    pmap_remove_ptes(pmap, prr, ptp, (vm_offset_t)&ptes[i386_btop(sva)], 
+    pmap_remove_ptes(pmap, prr, ptp, (vm_offset_t)&ptes[ns532_btop(sva)], 
 		     sva, blkendva);
     
       /* if PTP is no longer being used, free it! */
       if (ptp && ptp->wire_count <= 1) {
 	pmap->pm_pdir[pdei(sva)] = 0;	/* zap! */
 	pmap_update_pg( ((vm_offset_t) ptes) + ptp->offset);
-#if defined(I386_CPU)
-	/* cancel possible pending pmap update on i386 */
-	if (cpu_class == CPUCLASS_386 && prr)
-	  prr->prr_npages = 0;
-#endif
 	pmap->pm_stats.resident_count--;
 	if (pmap->pm_ptphint == ptp)	/* update hint? */
 	  pmap->pm_ptphint = pmap->pm_obj.memq.tqh_first;
@@ -2335,20 +2252,13 @@ vm_offset_t sva, eva;
    */
 
   if (prr && prr->prr_npages) {
-#if defined(I386_CPU)
-    if (cpu_class == CPUCLASS_386) {
+    if (prr->prr_npages > PMAP_RR_MAX) {
       pmap_update();
-    } else
-#endif 
-      { /* not I386 */
-	if (prr->prr_npages > PMAP_RR_MAX) {
-	  pmap_update();
-	} else {
-	  while (prr->prr_npages) {
-	    pmap_update_pg(prr->prr_vas[--prr->prr_npages]);
-	  }
-	}
-      } /* not I386 */
+    } else {
+      while (prr->prr_npages) {
+	pmap_update_pg(prr->prr_vas[--prr->prr_npages]);
+      }
+    }
   }
 
   /*
@@ -2376,9 +2286,6 @@ struct vm_page *pg;
   struct pv_head *pvh;
   struct pv_entry *pve;
   pt_entry_t *ptes, opte;
-#if defined(I386_CPU)
-  boolean_t needs_update = FALSE;
-#endif
 
   /* XXX: vm_page should either contain pv_head or have a pointer to it */
   bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2412,20 +2319,15 @@ struct vm_page *pg;
     }
 #endif
     
-    opte = ptes[i386_btop(pve->pv_va)];
-    ptes[i386_btop(pve->pv_va)] = 0;		/* zap! */
+    opte = ptes[ns532_btop(pve->pv_va)];
+    ptes[ns532_btop(pve->pv_va)] = 0;		/* zap! */
 
     if (opte & PG_W)
       pve->pv_pmap->pm_stats.wired_count--;
     pve->pv_pmap->pm_stats.resident_count--;
 
     if (pmap_is_curpmap(pve->pv_pmap)) {
-#if defined(I386_CPU)
-      if (cpu_class == CPUCLASS_386)
-	needs_update = TRUE;
-      else
-#endif
-	pmap_update_pg(pve->pv_va);
+      pmap_update_pg(pve->pv_va);
     }
 
     /* sync R/M bits */
@@ -2437,9 +2339,6 @@ struct vm_page *pg;
       if (pve->pv_ptp->wire_count <= 1) {
         pve->pv_pmap->pm_pdir[pdei(pve->pv_va)] = 0;   /* zap! */
 	pmap_update_pg( ((vm_offset_t) ptes) + pve->pv_ptp->offset);
-#if defined(I386_CPU)
-	needs_update = FALSE;
-#endif
         pve->pv_pmap->pm_stats.resident_count--;
 	if (pve->pv_pmap->pm_ptphint == pve->pv_ptp)	/* update hint? */
 	  pve->pv_pmap->pm_ptphint = pve->pv_pmap->pm_obj.memq.tqh_first;
@@ -2454,11 +2353,6 @@ struct vm_page *pg;
   pvh->pvh_list = NULL;
   simple_unlock(&pvh->pvh_lock);
   PMAP_HEAD_TO_MAP_UNLOCK();
-
-#if defined(I386_CPU)
-  if (needs_update)
-    pmap_update();
-#endif
 
   return;
 }
@@ -2483,7 +2377,7 @@ int testbits;
 
 {
   int bank, off;
-  char *myattrs;
+  short *myattrs;
   struct pv_head *pvh;
   struct pv_entry *pve;
   pt_entry_t *ptes, pte;
@@ -2514,7 +2408,7 @@ int testbits;
        pve = pve->pv_next) {
     
     ptes = pmap_map_ptes(pve->pv_pmap);
-    pte = ptes[i386_btop(pve->pv_va)];
+    pte = ptes[ns532_btop(pve->pv_va)];
     pmap_unmap_ptes(pve->pv_pmap);
     *myattrs |= pte;
 
@@ -2548,10 +2442,7 @@ int setbits, clearbits;
   struct pv_head *pvh;
   struct pv_entry *pve;
   pt_entry_t *ptes, npte;
-  char *myattrs;
-#if defined(I386_CPU)
-  boolean_t needs_update = FALSE;
-#endif
+  short *myattrs;
 
   /* XXX: vm_page should either contain pv_head or have a pointer to it */
   bank = vm_physseg_find(atop(VM_PAGE_TO_PHYS(pg)), &off);
@@ -2579,19 +2470,14 @@ int setbits, clearbits;
 #endif
 
     ptes = pmap_map_ptes(pve->pv_pmap);		/* locks pmap */
-    npte = ptes[i386_btop(pve->pv_va)];
+    npte = ptes[ns532_btop(pve->pv_va)];
     result |= (npte & clearbits);
     npte = (npte | setbits) & ~clearbits;
-    if (ptes[i386_btop(pve->pv_va)] != npte) {
-      ptes[i386_btop(pve->pv_va)] = npte;	/* zap! */
+    if (ptes[ns532_btop(pve->pv_va)] != npte) {
+      ptes[ns532_btop(pve->pv_va)] = npte;	/* zap! */
 
       if (pmap_is_curpmap(pve->pv_pmap)) {
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-	  needs_update = TRUE;
-	else
-#endif
-	  pmap_update_pg(pve->pv_va);
+	pmap_update_pg(pve->pv_va);
       }
     }
     pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
@@ -2600,11 +2486,6 @@ int setbits, clearbits;
 
   simple_unlock(&pvh->pvh_lock);
   PMAP_HEAD_TO_MAP_UNLOCK();
-
-#if defined(I386_CPU)
-  if (needs_update)
-    pmap_update();
-#endif
 
   return(result != 0);
 }
@@ -2686,8 +2567,8 @@ vm_prot_t prot;
     else if (sva < VM_MAX_ADDRESS)
       md_prot |= (PG_u | PG_RW);	/* XXX: write-prot our PTES? never! */
 	
-    spte = &ptes[i386_btop(sva)];
-    epte = &ptes[i386_btop(blockend)];
+    spte = &ptes[ns532_btop(sva)];
+    epte = &ptes[ns532_btop(blockend)];
 
     for (/*null */; spte < epte ; spte++) {
 
@@ -2701,16 +2582,12 @@ vm_prot_t prot;
 
 	if (prr) {		/* worried about tlb flushing? */
       
-	  va = i386_ptob(spte - ptes);
-	  if (npte & PG_G) {
-	    pmap_update_pg(va);/* PG_G requires this */
+	  va = ns532_ptob(spte - ptes);
+	  if (prr->prr_npages < PMAP_RR_MAX) {
+	    prr->prr_vas[prr->prr_npages++] = va;
 	  } else {
-	    if (prr->prr_npages < PMAP_RR_MAX) {
-	      prr->prr_vas[prr->prr_npages++] = va;
-	    } else {
-	      if (prr->prr_npages == PMAP_RR_MAX)
-		prr->prr_npages++;		/* signal an overflow */
-	    }
+	    if (prr->prr_npages == PMAP_RR_MAX)
+	      prr->prr_npages++;		/* signal an overflow */
 	  }
 	  
 	}	/* if (prr) */
@@ -2726,20 +2603,13 @@ vm_prot_t prot;
    */
 
   if (prr && prr->prr_npages) {
-#if defined(I386_CPU)
-    if (cpu_class == CPUCLASS_386) {
+    if (prr->prr_npages > PMAP_RR_MAX) {
       pmap_update();
-    } else
-#endif 
-      { /* not I386 */
-	if (prr->prr_npages > PMAP_RR_MAX) {
-	  pmap_update();
-	} else {
-	  while (prr->prr_npages) {
-	    pmap_update_pg(prr->prr_vas[--prr->prr_npages]);
-	  }
-	}
-      } /* not I386 */
+    } else {
+      while (prr->prr_npages) {
+	pmap_update_pg(prr->prr_vas[--prr->prr_npages]);
+      }
+    }
   }
 
   /*
@@ -2775,13 +2645,13 @@ boolean_t wired;
 
     ptes = pmap_map_ptes(pmap);		/* locks pmap */
 
-    if (!pmap_valid_entry(ptes[i386_btop(va)]))
+    if (!pmap_valid_entry(ptes[ns532_btop(va)]))
       panic("pmap_change_wiring: invalid (unmapped) va");
-    if (!wired && (ptes[i386_btop(va)] & PG_W) != 0) {
-      ptes[i386_btop(va)] &= ~PG_W;
+    if (!wired && (ptes[ns532_btop(va)] & PG_W) != 0) {
+      ptes[ns532_btop(va)] &= ~PG_W;
       pmap->pm_stats.wired_count--;
-    } else if (wired && (ptes[i386_btop(va)] & PG_W) == 0) {
-      ptes[i386_btop(va)] |= PG_W;
+    } else if (wired && (ptes[ns532_btop(va)] & PG_W) == 0) {
+      ptes[ns532_btop(va)] |= PG_W;
       pmap->pm_stats.wired_count++;
     }
 
@@ -2919,11 +2789,11 @@ boolean_t move;
    */
 
   srcl.addr = saddr;
-  srcl.pte = &srcptes[i386_btop(srcl.addr)];
+  srcl.pte = &srcptes[ns532_btop(srcl.addr)];
   srcl.ptp = NULL;
   dstl.addr = daddr;
   if (dstptes) 
-    dstl.pte = &dstptes[i386_btop(dstl.addr)];
+    dstl.pte = &dstptes[ns532_btop(dstl.addr)];
   else 
     dstl.pte  = NULL;		/* we map page at a time */
   dstl.ptp = NULL;
@@ -2935,10 +2805,10 @@ boolean_t move;
      * compute the size of this block.
      */
     
-    blklen = i386_round_pdr(srcl.addr+1) - srcl.addr; /* length in bytes */
+    blklen = ns532_round_pdr(srcl.addr+1) - srcl.addr; /* length in bytes */
     if (blklen > len)
       blklen = len;
-    blkpgs = i386_btop(blklen);
+    blkpgs = ns532_btop(blklen);
 
     /*
      * if the block is not valid in the src pmap, then we can skip it!
@@ -2982,7 +2852,7 @@ boolean_t move;
       } else {
 	dstl.ptp = NULL;
       }
-      dstvalid = i386_btop(i386_round_pdr(dstl.addr+1) - dstl.addr);
+      dstvalid = ns532_btop(ns532_round_pdr(dstl.addr+1) - dstl.addr);
       if (dstptes == NULL) {
 	dstl.pte = (pt_entry_t *) 
 	  pmap_tmpmap_pa(dstpmap->pm_pdir[pdei(dstl.addr)] & PG_FRAME);
@@ -3010,7 +2880,7 @@ boolean_t move;
 
       dstvalid -= toxfer;
       blkpgs -= toxfer;
-      len -= i386_ptob(toxfer);
+      len -= ns532_ptob(toxfer);
       if (blkpgs == 0)		/* ran out of src PTEs?   restart loop */
 	continue;
     }
@@ -3078,7 +2948,7 @@ boolean_t move;
 
     dstvalid -= toxfer;
     blkpgs -= toxfer;
-    len -= i386_ptob(toxfer);
+    len -= ns532_ptob(toxfer);
 
     /*
      * done src pte block 
@@ -3123,7 +2993,7 @@ boolean_t move;
   if (dstl->addr < VM_MAX_ADDRESS)
     dstproto = PG_u;		/* "user" page */
   else
-    dstproto = pmap_pg_g;	/* kernel page */
+    dstproto = 0;
 
   /*
    * ensure we have dst PTP for user addresses.
@@ -3242,7 +3112,7 @@ boolean_t move;
       if (opte & PG_W)
 	srcpmap->pm_stats.wired_count--;
     }
-    *dstl->pte = (opte & ~(PG_u|PG_U|PG_M|PG_G|PG_W)) | dstproto;/* install */
+    *dstl->pte = (opte & ~(PG_u|PG_U|PG_M|PG_W)) | dstproto;/* install */
     dstpmap->pm_stats.resident_count++;
     if (dstl->ptp)
       dstl->ptp->wire_count++;
@@ -3326,7 +3196,7 @@ boolean_t wired;
   else
     ptp = pmap_get_ptp(pmap, pdei(va), FALSE);
 
-  opte = ptes[i386_btop(va)];		/* old PTE */
+  opte = ptes[ns532_btop(va)];		/* old PTE */
 
 
   /*
@@ -3439,16 +3309,25 @@ enter_now:
     npte |= PG_u;
   else if (va < VM_MAX_ADDRESS)
     npte |= (PG_u | PG_RW);	/* XXXCDC: no longer needed? */
-  if (pmap == pmap_kernel())
-    npte |= pmap_pg_g;
 
-  ptes[i386_btop(va)] = npte;		/* zap! */
+  ptes[ns532_btop(va)] = npte;		/* zap! */
 
   if ((opte & ~(PG_M|PG_U)) != npte && pmap_is_curpmap(pmap))
     pmap_update_pg(va);
 
   pmap_unmap_ptes(pmap);
   PMAP_MAP_TO_HEAD_UNLOCK();
+
+  /*
+   * The only time we need to flush the cache is if we
+   * execute from a physical address and then change the data.
+   * This is the best place to do this.
+   * pmap_protect() and pmap_remove() are mostly used to switch
+   * between R/W and R/O pages.
+   * NOTE: we only support cache flush for read only text.
+   */
+  if (prot == (VM_PROT_READ | VM_PROT_EXECUTE))
+    cinv(ia, 0);
 }
 
 /*
@@ -3535,14 +3414,14 @@ vm_offset_t sva, eva;
   for (/* null */ ; sva < eva ; sva = blkendva) {
     
     /* determine range of block */
-    blkendva = i386_round_pdr(sva+1);
+    blkendva = ns532_round_pdr(sva+1);
     if (blkendva > eva)
       blkendva = eva;
 
     if (!pmap_valid_entry(pmap->pm_pdir[pdei(sva)]))	/* valid block? */
       continue;
 
-    pte = &ptes[i386_btop(sva)];
+    pte = &ptes[ns532_btop(sva)];
     for (/* null */; sva < blkendva ; sva += NBPG, pte++) {
       if (!pmap_valid_entry(*pte)) continue;
       printf("va %#lx -> pa %#x (pte=%#x)\n", sva, *pte, *pte & PG_FRAME);
