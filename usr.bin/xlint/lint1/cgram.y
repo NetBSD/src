@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: cgram.y,v 1.14 1998/11/13 16:48:01 christos Exp $	*/
+/*	$NetBSD: cgram.y,v 1.15 1998/11/23 14:37:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -58,10 +58,52 @@ int	blklev;
  */
 int	mblklev;
 
+/*
+ * Save the no-warns state and restore it to avoid the problem where
+ * if (expr) { stmt } / * NOLINT * / stmt;
+ */
+static int onowarn = -1;
+
 static	int	toicon __P((tnode_t *));
 static	void	idecl __P((sym_t *, int, sbuf_t *));
 static	void	ignuptorp __P((void));
 
+#ifdef DEBUG
+static __inline void CLRWFLGS __P((void));
+static __inline void CLRWFLGS()
+{
+	printf("%s, %d: clear flags %s %d\n", curr_pos.p_file,
+	    curr_pos.p_line, __FILE__, __LINE__);
+	clrwflgs();
+	onowarn = -1;
+}
+
+static __inline void SAVE __P((void));
+static __inline void SAVE()
+{
+	if (onowarn != -1)
+		abort();
+	printf("%s, %d: save flags %s %d = %d\n", curr_pos.p_file,
+	    curr_pos.p_line, __FILE__, __LINE__, nowarn);
+	onowarn = nowarn;
+}
+
+static __inline void RESTORE __P((void));
+static __inline void RESTORE()
+{
+	if (onowarn != -1) {
+		nowarn = onowarn;
+		printf("%s, %d: restore flags %s %d = %d\n", curr_pos.p_file,
+		    curr_pos.p_line, __FILE__, __LINE__, nowarn);
+		onowarn = -1;
+	} else
+		CLRWFLGS();
+}
+#else
+#define CLRWFLGS() clrwflgs(), onowarn = -1
+#define SAVE()	onowarn = nowarn
+#define RESTORE() (void)(onowarn == -1 ? (clrwflgs(), 0) : (nowarn = onowarn))
+#endif
 %}
 
 %union {
@@ -236,11 +278,11 @@ ext_decl:
 	  asm_stmnt
 	| func_def {
 		glclup(0);
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	| data_def {
 		glclup(0);
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	;
 
@@ -1226,11 +1268,9 @@ opt_stmnt_list:
 stmnt_list:
 	  stmnt
 	| stmnt_list stmnt {
-		clrwflgs();
+		RESTORE();
 	  }
-	| stmnt_list error T_SEMI {
-		clrwflgs();
-	  }
+	| stmnt_list error T_SEMI
 	;
 
 expr_stmnt:
@@ -1245,25 +1285,27 @@ expr_stmnt:
 
 selection_stmnt:
 	  if_without_else {
+		SAVE();
 		if2();
 		if3(0);
 	  }
 	| if_without_else T_ELSE {
+		SAVE();
 		if2();
 	  } stmnt {
-		clrwflgs();
+		CLRWFLGS();
 		if3(1);
 	  }
 	| if_without_else T_ELSE error {
-		clrwflgs();
+		CLRWFLGS();
 		if3(0);
 	  }
 	| switch_expr stmnt {
-		clrwflgs();
+		CLRWFLGS();
 		switch2();
 	  }
 	| switch_expr error {
-		clrwflgs();
+		CLRWFLGS();
 		switch2();
 	  }
 	;
@@ -1276,30 +1318,30 @@ if_without_else:
 if_expr:
 	  T_IF T_LPARN expr T_RPARN {
 		if1($3);
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	;
 
 switch_expr:
 	  T_SWITCH T_LPARN expr T_RPARN {
 		switch1($3);
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	;
 
 do_stmnt:
 	  do stmnt {
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	;
 
 iteration_stmnt:
 	  while_expr stmnt {
-		clrwflgs();
+		CLRWFLGS();
 		while2();
 	  }
 	| while_expr error {
-		clrwflgs();
+		CLRWFLGS();
 		while2();
 	  }
 	| do_stmnt do_while_expr {
@@ -1307,15 +1349,15 @@ iteration_stmnt:
 		ftflg = 0;
 	  }
 	| do error {
-		clrwflgs();
+		CLRWFLGS();
 		do2(NULL);
 	  }
 	| for_exprs stmnt {
-		clrwflgs();
+		CLRWFLGS();
 		for2();
 	  }
 	| for_exprs error {
-		clrwflgs();
+		CLRWFLGS();
 		for2();
 	  }
 	;
@@ -1323,7 +1365,7 @@ iteration_stmnt:
 while_expr:
 	  T_WHILE T_LPARN expr T_RPARN {
 		while1($3);
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	;
 
@@ -1342,7 +1384,7 @@ do_while_expr:
 for_exprs:
 	  T_FOR T_LPARN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPARN {
 		for1($3, $5, $7);
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	;
 
@@ -1400,10 +1442,10 @@ read_until_rparn:
 
 declaration_list:
 	  declaration {
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	| declaration_list declaration {
-		clrwflgs();
+		CLRWFLGS();
 	  }
 	;
 
