@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.31 1997/02/18 01:30:37 mrg Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.32 1997/06/19 20:54:15 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -247,27 +247,11 @@ again:
 	 */
 	PHOLD(p1);
 
-#ifdef __FORK_BRAINDAMAGE
-	/*
-	 * Set return values for child before vm_fork,
-	 * so they can be copied to child stack.
-	 * We return 0, rather than the traditional behaviour of modifying the
-	 * return value in the system call stub.
-	 * NOTE: the kernel stack may be at a different location in the child
-	 * process, and thus addresses of automatic variables (including retval)
-	 * may be invalid after vm_fork returns in the child process.
-	 */
-	retval[0] = 0;
-	retval[1] = 1;
-	if (vm_fork(p1, p2))
-		return (0);
-#else
 	/*
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
 	vm_fork(p1, p2);
-#endif
 
 	/*
 	 * Make child runnable, set start time, and add to run queue.
