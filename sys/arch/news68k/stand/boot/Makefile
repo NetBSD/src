@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/05/18 19:03:10 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16 2003/03/30 08:01:13 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -25,6 +25,7 @@ CFLAGS= -Os -Wall
 
 CPPFLAGS+= -D_STANDALONE # -DBOOT_DEBUG
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
+CPPFLAGS+= -D__daddr_t=int32_t
 AFLAGS= -D_LOCORE
 
 CLEANFILES+= ${PROG}.sym machine m68k
