@@ -7,7 +7,7 @@
 #   segment 1:  netbsd (RAMDISK)
 #   segment 3:  miniroot image
 #
-# $NetBSD: MakeBootTape,v 1.2 2001/12/17 20:27:39 fredette Exp $
+# $NetBSD: MakeBootTape,v 1.3 2002/05/08 15:32:58 fredette Exp $
 
 T=${1:-/dev/nrst0}
 
@@ -25,7 +25,7 @@ gzip -d -c ../../binary/kernel/netbsd.RAMDISK.gz |
   dd of=$T obs=8k conv=sync
 
 # Segment 3 is the miniroot image, unzipped!
-gzip -d -c ../miniroot/miniroot.gz |
+gzip -d -c ../miniroot/miniroot.fs.gz |
   dd of=$T obs=8k
 
 # Done!
