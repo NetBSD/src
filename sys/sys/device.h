@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.56 2002/09/30 18:46:44 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.57 2002/09/30 20:42:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -228,9 +228,9 @@ struct cfattach {
 	int	(*ca_activate)(struct device *, enum devact);
 };
 
-#define	CFATTACH_DECL(name, ddtype, matfn, attfn, detfn, actfn)		\
+#define	CFATTACH_DECL(name, ddsize, matfn, attfn, detfn, actfn)		\
 const struct cfattach __CONCAT(name,_ca) = {				\
-	sizeof(ddtype), matfn, attfn, detfn, actfn			\
+	ddsize, matfn, attfn, detfn, actfn				\
 };
 
 /* Flags given to config_detach(), and the ca_detach function. */
