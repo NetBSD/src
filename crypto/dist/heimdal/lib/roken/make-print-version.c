@@ -33,16 +33,16 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: make-print-version.c,v 1.1.1.1 2000/06/16 18:32:35 thorpej Exp $");
+RCSID("$Id: make-print-version.c,v 1.2 2000/06/19 20:51:53 thorpej Exp $");
 #endif
 
 #include <stdio.h>
 
 #ifdef KRB5
-extern char *heimdal_version;
+extern const char *heimdal_version;
 #endif
 #ifdef KRB4
-extern char *krb4_version;
+extern const char *krb4_version;
 #endif
 #include <version.h>
 
