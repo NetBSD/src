@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.3 2003/11/01 21:58:43 tsutsui Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.4 2003/11/24 06:20:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.3 2003/11/01 21:58:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.4 2003/11/24 06:20:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,17 +103,21 @@ mc146818_gettime(handle, tv)
 		}
 	}
 
-	dt.dt_sec  = (*sc->sc_mcread)(sc, MC_SEC);
-	dt.dt_min  = (*sc->sc_mcread)(sc, MC_MIN);
-	dt.dt_hour = (*sc->sc_mcread)(sc, MC_HOUR);
-	dt.dt_wday = (*sc->sc_mcread)(sc, MC_DOW);
-	dt.dt_day  = (*sc->sc_mcread)(sc, MC_DOM);
-	dt.dt_mon  = (*sc->sc_mcread)(sc, MC_MONTH);
-	year = (*sc->sc_mcread)(sc, MC_YEAR);
+#define	FROMREG(x)	((sc->sc_flag & MC146818_BCD) ? FROMBCD(x) : (x))
+
+	dt.dt_sec  = FROMREG((*sc->sc_mcread)(sc, MC_SEC));
+	dt.dt_min  = FROMREG((*sc->sc_mcread)(sc, MC_MIN));
+	dt.dt_hour = FROMREG((*sc->sc_mcread)(sc, MC_HOUR));
+	dt.dt_wday = FROMREG((*sc->sc_mcread)(sc, MC_DOW));
+	dt.dt_day  = FROMREG((*sc->sc_mcread)(sc, MC_DOM));
+	dt.dt_mon  = FROMREG((*sc->sc_mcread)(sc, MC_MONTH));
+	year       = FROMREG((*sc->sc_mcread)(sc, MC_YEAR));
 	if (sc->sc_getcent) {
 		cent = (*sc->sc_getcent)(sc);
 		year += cent * 100;
 	}
+
+#undef FROMREG
 
 	year += sc->sc_year0;
 	if (year < POSIX_BASE_YEAR &&
@@ -168,12 +172,14 @@ mc146818_settime(handle, tv)
 		}
 	}
 
-	(*sc->sc_mcwrite)(sc, MC_SEC, dt.dt_sec);
-	(*sc->sc_mcwrite)(sc, MC_MIN, dt.dt_min);
-	(*sc->sc_mcwrite)(sc, MC_HOUR, dt.dt_hour);
-	(*sc->sc_mcwrite)(sc, MC_DOW, dt.dt_wday);
-	(*sc->sc_mcwrite)(sc, MC_DOM, dt.dt_day);
-	(*sc->sc_mcwrite)(sc, MC_MONTH, dt.dt_mon);
+#define	TOREG(x)	((sc->sc_flag & MC146818_BCD) ? TOBCD(x) : (x))
+
+	(*sc->sc_mcwrite)(sc, MC_SEC, TOREG(dt.dt_sec));
+	(*sc->sc_mcwrite)(sc, MC_MIN, TOREG(dt.dt_min));
+	(*sc->sc_mcwrite)(sc, MC_HOUR, TOREG(dt.dt_hour));
+	(*sc->sc_mcwrite)(sc, MC_DOW, TOREG(dt.dt_wday));
+	(*sc->sc_mcwrite)(sc, MC_DOM, TOREG(dt.dt_day));
+	(*sc->sc_mcwrite)(sc, MC_MONTH, TOREG(dt.dt_mon));
 
 	year = dt.dt_year - sc->sc_year0;
 	if (sc->sc_setcent) {
@@ -184,7 +190,9 @@ mc146818_settime(handle, tv)
 	if (year > 99 &&
 	    (sc->sc_flag & MC146818_NO_CENT_ADJUST) == 0)
 		year -= 100;
-	(*sc->sc_mcwrite)(sc, MC_YEAR, year);
+	(*sc->sc_mcwrite)(sc, MC_YEAR, TOREG(year));
+
+#undef TOREG
 
 	todr_wenable(handle, 0);
 

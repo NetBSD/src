@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818var.h,v 1.2 2003/11/01 21:58:43 tsutsui Exp $	*/
+/*	$NetBSD: mc146818var.h,v 1.3 2003/11/24 06:20:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -36,6 +36,8 @@ struct mc146818_softc {
 	u_int sc_year0;				/* year counter offset */
 	u_int sc_flag;				/* MD flags */
 #define MC146818_NO_CENT_ADJUST	0x0001		/* don't adjust century */
+#define MC146818_BCD		0x0002		/* use BCD mode */
+#define MC146818_12HR		0x0004		/* use AM/PM mode */
 
 	/* MD chip register read/write functions */
 	u_int (*sc_mcread)(struct mc146818_softc *, u_int);
