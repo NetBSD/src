@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.2 2004/11/11 19:19:59 jdolecek Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.3 2004/11/25 05:15:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.2 2004/11/11 19:19:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.3 2004/11/25 05:15:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.2 2004/11/11 19:19:59 jdolecek Ex
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/stat.h>
 #include <sys/dirent.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
@@ -78,6 +79,7 @@ int	ptyfs_vptofh(struct vnode *, struct fid *);
 static int ptyfs__allocvp(struct ptm_pty *, struct proc *, struct vnode **,
     dev_t, char);
 static int ptyfs__makename(struct ptm_pty *, char *, size_t, dev_t, char);
+static void ptyfs__getvattr(struct ptm_pty *, struct proc *, struct vattr *);
 
 /*
  * ptm glue: When we mount, we make ptm point to us.
@@ -87,6 +89,7 @@ struct ptm_pty *ptyfs_save_ptm;
 struct ptm_pty ptm_ptyfspty = {
 	ptyfs__allocvp,
 	ptyfs__makename,
+	ptyfs__getvattr,
 	NULL
 };
 
@@ -113,6 +116,7 @@ ptyfs__makename(struct ptm_pty *pt, char *buf, size_t bufsiz, dev_t dev,
 	return len >= bufsiz ? ENOSPC : 0;
 }
 
+
 static int
 /*ARGSUSED*/
 ptyfs__allocvp(struct ptm_pty *pt, struct proc *p, struct vnode **vpp,
@@ -134,6 +138,20 @@ ptyfs__allocvp(struct ptm_pty *pt, struct proc *p, struct vnode **vpp,
 
 	return ptyfs_allocvp(mp, vpp, type, minor(dev), p);
 }
+
+
+static void
+ptyfs__getvattr(struct ptm_pty *pt, struct proc *p, struct vattr *vattr)
+{
+	struct mount *mp = pt->arg;
+	struct ptyfsmount *pmnt = VFSTOPTY(mp);
+	VATTR_NULL(vattr);
+	/* get real uid */
+	vattr->va_uid = p->p_cred->p_ruid;
+	vattr->va_gid = pmnt->pmnt_gid;
+	vattr->va_mode = pmnt->pmnt_mode;
+}
+
 
 void
 ptyfs_init(void)
@@ -167,21 +185,45 @@ ptyfs_mount(struct mount *mp, const char *path, void *data,
     struct nameidata *ndp, struct proc *p)
 {
 	int error = 0;
+	struct ptyfsmount *pmnt;
+	struct ptyfs_args args;
 
 	if (UIO_MX & (UIO_MX - 1)) {
 		log(LOG_ERR, "ptyfs: invalid directory entry size");
 		return EINVAL;
 	}
 
-	if (mp->mnt_flag & MNT_GETARGS)
-		return 0;
-	/*
-	 * Update is a no-op
-	 */
+	if (mp->mnt_flag & MNT_GETARGS) {
+		pmnt = VFSTOPTY(mp);
+		if (pmnt == NULL)
+			return EIO;
+		args.version = PTYFS_ARGSVERSION;
+		args.mode = pmnt->pmnt_mode;
+		args.gid = pmnt->pmnt_gid;
+		return copyout(&args, data, sizeof(args));
+	}
+
 	if (mp->mnt_flag & MNT_UPDATE)
 		return EOPNOTSUPP;
 
-	mp->mnt_data = NULL;
+	if (data != NULL) {
+		error = copyin(data, &args, sizeof args);
+		if (error != 0)
+			return error;
+
+		if (args.version != PTYFS_ARGSVERSION)
+			return EINVAL;
+	} else {
+		/* Compat code; remove and return an error */
+		args.gid = 4;	/* XXX tty gid */
+		args.mode = S_IRUSR|S_IWUSR|S_IWGRP;
+	}
+
+	pmnt = malloc(sizeof(struct ptyfsmount), M_UFSMNT, M_WAITOK); 
+
+	mp->mnt_data = pmnt;
+	pmnt->pmnt_gid = args.gid;
+	pmnt->pmnt_mode = args.mode;
 	mp->mnt_flag |= MNT_LOCAL;
 	vfs_getnewfsid(mp);
 
@@ -223,9 +265,13 @@ ptyfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	ptm_ptyfspty.arg = NULL;
 	(void)pty_sethandler(ptyfs_save_ptm);
 	ptyfs_save_ptm = NULL;
+
 	/*
-	 * Finally, throw away the ptyfs_mount structure
+	 * Finally, throw away the ptyfsmount structure
 	 */
+	free(mp->mnt_data, M_UFSMNT);
+	mp->mnt_data = 0; 
+
 	return 0;
 }
 
