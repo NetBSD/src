@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 1995/06/25 02:45:17 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.31 1995/07/30 19:18:28 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -322,7 +322,10 @@ copyfault:
 
 		if (nofault)	/* If we're probing. */
 			longjmp((label_t *) nofault);
-		printf("Kernel FPU trap.\n");
+		if (type == T_ILLINST)
+			printf("Kernel Illegal Instruction trap.\n");
+		else
+			printf("Kernel FPU trap.\n");
 		goto dopanic;
 	}
 
