@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.2 2002/03/17 11:09:16 martin Exp $ 
+ *	$Id: msghdl.c,v 1.3 2002/03/17 20:57:24 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -880,9 +880,9 @@ msg_drvrdisc_req(msg_drvrdisc_req_t *mp)
 {
 	cfg_entry_t *cep;
 	
-	DBGL(DL_DRVR, (log(LL_DBG, "msg_drvrdisc_req: req from %s, unit %d", bdrivername(mp->driver), mp->driver_unit)));
+	DBGL(DL_DRVR, (log(LL_DBG, "msg_drvrdisc_req for call %d", mp->header.cdid)));
 
-	if((cep = get_cep_by_driver(mp->driver, mp->driver_unit)) == NULL)
+	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
 		DBGL(DL_DRVR, (log(LL_DBG, "msg_drvrdisc_req: config entry not found")));
 		return;
