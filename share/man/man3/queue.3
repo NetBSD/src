@@ -1,4 +1,4 @@
-.\"	$NetBSD: queue.3,v 1.16 2000/07/20 03:19:18 deberg Exp $
+.\"	$NetBSD: queue.3,v 1.17 2001/02/11 03:22:46 enami Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1043,8 +1043,8 @@ CIRCLEQ_FOREACH(np, &head, entries)
 CIRCLEQ_FOREACH_REVERSE(np, &head, entries)
 	np-> ...
 					/* Delete. */
-while (CIRCLEQ_HEAD(&head) != (void *)&head)
-	CIRCLEQ_REMOVE(&head, CIRCLEQ_HEAD(&head), entries);
+while (CIRCLEQ_FIRST(&head) != (void *)&head)
+	CIRCLEQ_REMOVE(&head, CIRCLEQ_FIRST(&head), entries);
 if (CIRCLEQ_EMPTY(&head))		/* Test for emptiness. */
 	printf("nothing to do\\n");
 .Ed
