@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.27 1999/01/02 16:28:39 tron Exp $
+.\"	$NetBSD: dump.8,v 1.28 1999/01/03 02:17:46 lukem Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -34,7 +34,7 @@
 .\"
 .\"     @(#)dump.8	8.3 (Berkeley) 5/1/95
 .\"
-.Dd September 18, 1997
+.Dd January 3, 1998
 .Dt DUMP 8
 .Os BSD 4
 .Sh NAME
@@ -49,6 +49,7 @@
 .Op Fl d Ar density
 .Op Fl f Ar file
 .Op Fl h Ar level
+.Op Fl L Ar label
 .Op Fl s Ar feet
 .Op Fl T Ar date
 .Ar files-to-dump
@@ -169,6 +170,18 @@ only for dumps at or above the given
 The default honor level is 1,
 so that incremental backups omit such files
 but full backups retain them.
+.It Fl L Ar label
+The user-supplied text string
+.Ar label
+is placed into the dump header, where tools like
+.Xr restore 8
+and
+.Xr file 1
+can access it.
+Note that this label is limited
+to be at most LBLSIZE (currently 16) characters, which must include
+the terminating
+.Ql \e0 .
 .It Fl n
 Whenever
 .Nm
