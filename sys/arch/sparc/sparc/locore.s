@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.148.4.4 2001/11/29 14:23:31 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.148.4.5 2001/11/30 12:03:31 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3886,6 +3886,7 @@ Lgandul:	nop
 	MUNGE(NOP_ON_4M_12)
 	MUNGE(NOP_ON_4M_13)
 	MUNGE(NOP_ON_4M_14)
+	MUNGE(NOP_ON_4M_15)
 	b,a	2f
 
 1:
@@ -4751,20 +4752,18 @@ Lsw_load:
 	/* p does have a context: just switch to it */
 Lsw_havectx:
 	! context is in %o1
-	! pmap is in %o3
 #if (defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
-	sethi	%hi(_C_LABEL(cputyp)), %o2	! what cpu are we running on?
-	ld	[%o2 + %lo(_C_LABEL(cputyp))], %o2
-	cmp	%o2, CPU_SUN4M
-	be	1f
-	 nop
+NOP_ON_4M_15:
+	b,a	1f
+	b,a	2f
 #endif
+1:
 #if defined(SUN4) || defined(SUN4C)
 	set	AC_CONTEXT, %o2
 	retl
 	 stba	%o1, [%o2] ASI_CONTROL	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
-1:
+2:
 #if defined(SUN4M)
 	/*
 	 * Flush caches that need to be flushed on context switch.
