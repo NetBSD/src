@@ -9,15 +9,7 @@ Important things to make ACPI useful on more machines:
 * Fix problems with ACPI_PCI_FIXUP.  CardBus slots do not work in some
   machines currently.  (Affects many machines.)
 
-* Add support for attaching acpiec devices early using the ECDT.  Some
-  systems need this because otherwise their _INI methods try to access
-  regions in the EC space before it's initialized.  (Affects Steve
-  Rumble's Thinkpad T23.)
-  -> Done 2004/03/30, kochi
-
 * Deal with the "implicit return" problem for older laptops.  (Mostly
   affects older Toshiba laptops, like the Portege 7140.)
 
-* Support thermal levels and fan control in acpitz.
-
-- mycroft, 2003/11/03
+- mycroft, 2004/06/05
