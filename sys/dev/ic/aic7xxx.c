@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.110 2004/04/21 18:03:13 itojun Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.111 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.110 2004/04/21 18:03:13 itojun Exp $
+ * $Id: aic7xxx.c,v 1.111 2005/02/21 00:29:07 thorpej Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.110 2004/04/21 18:03:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.111 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -493,7 +493,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		case SCSI_STATUS_CHECK_COND:
 		{
 			struct ahc_dma_seg *sg;
-			struct scsipi_sense *sc;
+			struct scsi_request_sense *sc;
 			struct ahc_initiator_tinfo *targ_info;
 			struct ahc_tmode_tstate *tstate;
 			struct ahc_transinfo *tinfo;
@@ -515,7 +515,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 							&tstate);
 			tinfo = &targ_info->curr;
 			sg = scb->sg_list;
-			sc = (struct scsipi_sense *)(&hscb->shared_data.cdb); 
+			sc = (struct scsi_request_sense *)(&hscb->shared_data.cdb); 
 			/*
 			 * Save off the residual if there is one.
 			 */
@@ -534,15 +534,12 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 			sg->addr = ahc_htole32(sg->addr);
 			sg->len = ahc_htole32(sg->len);
 
-			sc->opcode = REQUEST_SENSE;
-			sc->byte2 = 0;
+			memset(sc, 0, sizeof(*sc));
+			sc->opcode = SCSI_REQUEST_SENSE;
 			if (tinfo->protocol_version <= SCSI_REV_2
 			    && SCB_GET_LUN(scb) < 8)
 				sc->byte2 = SCB_GET_LUN(scb) << 5;
-			sc->unused[0] = 0;
-			sc->unused[1] = 0;
 			sc->length = sg->len;
-			sc->control = 0;
 
 			/*
 			 * We can't allow the target to disconnect.
@@ -4227,7 +4224,7 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	scb_data->init_level++;
 
 	if (ahc_createdmamem(ahc->parent_dmat,
-	     AHC_SCB_MAX * sizeof(struct scsipi_sense_data), ahc->sc_dmaflags,
+	     AHC_SCB_MAX * sizeof(struct scsi_sense_data), ahc->sc_dmaflags,
 	     &scb_data->sense_dmamap, (caddr_t *)&scb_data->sense,
 	     &scb_data->sense_busaddr, &scb_data->sense_seg,
 	     &scb_data->sense_nseg, ahc_name(ahc), "sense buffers") < 0)
@@ -4290,7 +4287,7 @@ ahc_fini_scbdata(struct ahc_softc *ahc)
 	/*FALLTHROUGH*/
 	case 4:
 		ahc_freedmamem(ahc->parent_dmat,
-		    AHC_SCB_MAX * sizeof(struct scsipi_sense_data),
+		    AHC_SCB_MAX * sizeof(struct scsi_sense_data),
 		    scb_data->sense_dmamap, (caddr_t)scb_data->sense,
 		    &scb_data->sense_seg, scb_data->sense_nseg);
 	/*FALLTHROUGH*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: adv.c,v 1.34 2005/02/04 02:10:36 perry Exp $	*/
+/*	$NetBSD: adv.c,v 1.35 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*
  * Generic driver for the Advanced Systems Inc. Narrow SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.34 2005/02/04 02:10:36 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv.c,v 1.35 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,7 +607,7 @@ adv_scsipi_request(chan, req, arg)
  		ccb->scsiq.q1.sense_addr =
  		    sc->sc_dmamap_control->dm_segs[0].ds_addr +
  		    ADV_CCB_OFF(ccb) + offsetof(struct adv_ccb, scsi_sense);
- 		ccb->scsiq.q1.sense_len = sizeof(struct scsipi_sense_data);
+ 		ccb->scsiq.q1.sense_len = sizeof(struct scsi_sense_data);
  
  		/*
  		 * If there are any outstanding requests for the current
@@ -893,7 +893,7 @@ adv_narrow_isr_callback(sc, qdonep)
 	bus_dma_tag_t   dmat = sc->sc_dmat;
 	ADV_CCB        *ccb;
 	struct scsipi_xfer *xs;
-	struct scsipi_sense_data *s1, *s2;
+	struct scsi_sense_data *s1, *s2;
 
 
 	ccb = adv_ccb_phys_kv(sc, qdonep->d2.ccb_ptr);

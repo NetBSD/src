@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.21 2003/06/29 22:30:25 fvdl Exp $	*/
+/*	$NetBSD: mly.c,v 1.22 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.21 2003/06/29 22:30:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.22 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1131,11 +1131,11 @@ mly_complete_event(struct mly_softc *mly, struct mly_ccb *mc)
 static void
 mly_process_event(struct mly_softc *mly, struct mly_event *me)
 {
-	struct scsipi_sense_data *ssd;
+	struct scsi_sense_data *ssd;
 	int bus, target, event, class, action;
 	const char *fp, *tp;
 
-	ssd = (struct scsipi_sense_data *)&me->sense[0];
+	ssd = (struct scsi_sense_data *)&me->sense[0];
 
 	/* 
 	 * Errors can be reported using vendor-unique sense data.  In this
@@ -1146,10 +1146,10 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 	 * (low seven bits of the high byte).
 	 */
 	if (le32toh(me->code) == 0x1c &&
-	    (ssd->flags & SSD_KEY) == SKEY_VENDOR_UNIQUE &&
-	    (ssd->add_sense_code & 0x80) != 0) {
-		event = ((int)(ssd->add_sense_code & ~0x80) << 8) +
-		    ssd->add_sense_code_qual;
+	    SSD_SENSE_KEY(ssd->flags) == SKEY_VENDOR_SPECIFIC &&
+	    (ssd->asc & 0x80) != 0) {
+		event = ((int)(ssd->asc & ~0x80) << 8) +
+		    ssd->ascq;
 	} else
 		event = le32toh(me->code);
 
@@ -1202,11 +1202,11 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 		/*
 		 * Report of sense data.
 		 */
-		if (((ssd->flags & SSD_KEY) == SKEY_NO_SENSE ||
-		    (ssd->flags & SSD_KEY) == SKEY_NOT_READY) && 
-		    ssd->add_sense_code == 0x04 && 
-		    (ssd->add_sense_code_qual == 0x01 ||
-		    ssd->add_sense_code_qual == 0x02)) {
+		if ((SSD_SENSE_KEY(ssd->flags) == SKEY_NO_SENSE ||
+		     SSD_SENSE_KEY(ssd->flags) == SKEY_NOT_READY) && 
+		    ssd->asc == 0x04 && 
+		    (ssd->ascq == 0x01 ||
+		     ssd->ascq == 0x02)) {
 			/* Ignore NO_SENSE or NOT_READY in one case */
 			break;
 		}
@@ -1217,13 +1217,13 @@ mly_process_event(struct mly_softc *mly, struct mly_event *me)
 		printf("%s: physical device %d:%d %s\n", mly->mly_dv.dv_xname,
 		    me->channel, me->target, tp);
 		printf("%s:  sense key %d  asc %02x  ascq %02x\n",
-		    mly->mly_dv.dv_xname, ssd->flags & SSD_KEY,
-		    ssd->add_sense_code, ssd->add_sense_code_qual);
+		    mly->mly_dv.dv_xname, SSD_SENSE_KEY(ssd->flags),
+		    ssd->asc, ssd->ascq);
 		printf("%s:  info %x%x%x%x  csi %x%x%x%x\n",
 		    mly->mly_dv.dv_xname, ssd->info[0], ssd->info[1],
-		    ssd->info[2], ssd->info[3], ssd->cmd_spec_info[0],
-		    ssd->cmd_spec_info[1], ssd->cmd_spec_info[2],
-		    ssd->cmd_spec_info[3]);
+		    ssd->info[2], ssd->info[3], ssd->csi[0],
+		    ssd->csi[1], ssd->csi[2],
+		    ssd->csi[3]);
 		if (action == 'r')
 			mly->mly_btl[me->channel][me->target].mb_flags |=
 			    MLY_BTL_RESCAN;

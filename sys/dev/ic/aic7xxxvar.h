@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.45 2004/04/21 18:03:13 itojun Exp $
+ * $Id: aic7xxxvar.h,v 1.46 2005/02/21 00:29:07 thorpej Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -705,7 +705,7 @@ struct scb_data {
 					 */
 	struct	hardware_scb	*hscbs;	/* Array of hardware SCBs */
 	struct	scb *scbarray;		/* Array of kernel SCBs */
-	struct	scsipi_sense_data *sense; /* Per SCB sense data */
+	struct	scsi_sense_data *sense; /* Per SCB sense data */
 
 	/*
 	 * "Bus" addresses of our data structures.

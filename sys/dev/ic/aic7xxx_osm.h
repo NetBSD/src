@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.h,v 1.7 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic7xxx_osm.h,v 1.8 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -401,7 +401,7 @@ int ahc_perform_autosense(struct scb *scb)
 static __inline uint32_t
 ahc_get_sense_bufsize(struct ahc_softc *ahc, struct scb *scb)
 {
-	return (sizeof(struct scsipi_sense_data));
+	return (sizeof(struct scsi_sense_data));
 }
 
 static __inline void

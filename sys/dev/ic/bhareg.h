@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.17 2003/11/02 11:07:45 wiz Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.18 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ struct bha_ccb {
 	/*------------------------------------longword boundary */
 	physaddr	sense_ptr;
 /*-----end of HW fields-----------------------longword boundary */
-	struct scsipi_sense_data scsi_sense;
+	struct scsi_sense_data scsi_sense;
 	/*------------------------------------longword boundary */
 	struct bha_scat_gath scat_gath[BHA_NSEG];
 	/*------------------------------------longword boundary */

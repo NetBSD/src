@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.5 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.6 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.5 2003/11/02 11:07:44 wiz Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.6 2005/02/21 00:29:07 thorpej Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.5 2003/11/02 11:07:44 wiz Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.6 2005/02/21 00:29:07 thorpej Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */
@@ -408,7 +408,7 @@ int ahd_perform_autosense(struct scb *scb)
 static __inline uint32_t
 ahd_get_sense_bufsize(struct ahd_softc *ahd, struct scb *scb)
 {
-	return (sizeof(struct scsipi_sense_data));
+	return (sizeof(struct scsi_sense_data));
 }
 
 static __inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.7 2004/02/13 21:22:13 enami Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.8 2005/02/21 00:29:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.7 2004/02/13 21:22:13 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.8 2005/02/21 00:29:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -261,7 +261,7 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 	}
 	
 	if (status->datalen) {
-		xs->sense.scsi_sense.error_code =
+		xs->sense.scsi_sense.response_code =
 		    SBPSCSI_STATUS_GET_STATUS(status->data[0]);
 		vflag = SBPSCSI_STATUS_GET_VFLAG(status->data[0]);
 		mflag = SBPSCSI_STATUS_GET_MFLAG(status->data[0]);
@@ -287,25 +287,25 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 			xs->sense.scsi_sense.info[3] =
 			    status->data[1] & 0x000000ff;
 		}
-		xs->sense.scsi_sense.cmd_spec_info[0] =
+		xs->sense.scsi_sense.csi[0] =
 		    (status->data[2] & 0xff000000) >> 24;
-		xs->sense.scsi_sense.cmd_spec_info[1] =
+		xs->sense.scsi_sense.csi[1] =
 		    (status->data[2] & 0x00ff0000) >> 16;
-		xs->sense.scsi_sense.cmd_spec_info[2] =
+		xs->sense.scsi_sense.csi[2] =
 		    (status->data[2] & 0x0000ff00) >> 8;
-		xs->sense.scsi_sense.cmd_spec_info[3] =
+		xs->sense.scsi_sense.csi[3] =
 		    status->data[2] & 0x000000ff;
-		xs->sense.scsi_sense.add_sense_code =
+		xs->sense.scsi_sense.asc =
 		    SBPSCSI_STATUS_GET_SENSECODE(status->data[0]);
-		xs->sense.scsi_sense.add_sense_code_qual =
+		xs->sense.scsi_sense.ascq =
 		    SBPSCSI_STATUS_GET_SENSEQUAL(status->data[0]);
 		xs->sense.scsi_sense.fru =
 		    SBPSCSI_STATUS_GET_FRU(status->data[3]);
-		xs->sense.scsi_sense.sense_key_spec_1 =
+		xs->sense.scsi_sense.sks.sks_bytes[0] =
 		    SBPSCSI_STATUS_GET_SENSE1(status->data[3]);
-		xs->sense.scsi_sense.sense_key_spec_2 =
+		xs->sense.scsi_sense.sks.sks_bytes[1] =
 		    SBPSCSI_STATUS_GET_SENSE2(status->data[3]);
-		xs->sense.scsi_sense.sense_key_spec_3 =
+		xs->sense.scsi_sense.sks.sks_bytes[3] =
 		    SBPSCSI_STATUS_GET_SENSE3(status->data[3]);
 	}
 	scsipi_done(xs);

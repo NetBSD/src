@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.16 2005/02/04 02:10:36 perry Exp $        */
+/*      $NetBSD: adwlib.h,v 1.17 2005/02/21 00:29:07 thorpej Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -825,7 +825,7 @@ typedef struct adw_scsi_req_q {
 	 * End of microcode structure - 60 bytes. The rest of the structure
 	 * is used by the Adw Library and ignored by the microcode.
 	 */
-	struct scsipi_sense_data *vsense_addr;	/* Sense buffer virtual address. */
+	struct scsi_sense_data *vsense_addr;	/* Sense buffer virtual address. */
 	u_char		*vdata_addr;	/* Data buffer virtual address. */
 } ADW_SCSI_REQ_Q;
 

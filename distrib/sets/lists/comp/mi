@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.764 2005/02/20 06:49:01 christos Exp $
+#	$NetBSD: mi,v 1.765 2005/02/21 00:29:08 thorpej Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -413,6 +413,7 @@
 ./usr/include/dev/scsipi/scsi_disk.h		comp-c-include
 ./usr/include/dev/scsipi/scsi_message.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/scsi_scanner.h		comp-obsolete		obsolete
+./usr/include/dev/scsipi/scsi_spc.h		comp-c-include
 ./usr/include/dev/scsipi/scsi_tape.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/scsiconf.h		comp-c-include
 ./usr/include/dev/scsipi/scsipi_all.h		comp-c-include
