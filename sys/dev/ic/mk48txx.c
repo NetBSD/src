@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.10 2002/02/23 17:18:56 scw Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.11 2003/10/30 21:19:02 matt Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.10 2002/02/23 17:18:56 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.11 2003/10/30 21:19:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -104,16 +104,15 @@ mk48txx_attach(bt, bh, model, year0, nvread, nvwrite)
 
 	i = sizeof(mk48txx_models)/sizeof(mk48txx_models[0]);
 	while (--i >= 0) {
-		if (strcmp(model, mk48txx_models[i].name) == 0) {
-			nvramsz = mk48txx_models[i].nvramsz;
-			clkoff = mk48txx_models[i].clkoff;
+		if (strcmp(model, mk48txx_models[i].name) == 0)
 			break;
-		}
 	}
 	if (i < 0) {
 		printf(": unsupported model");
 		return (NULL);
 	}
+	nvramsz = mk48txx_models[i].nvramsz;
+	clkoff = mk48txx_models[i].clkoff;
 
 	sz = ALIGN(sizeof(struct todr_chip_handle)) + sizeof(struct mk48txx);
 	handle = malloc(sz, M_DEVBUF, M_NOWAIT);
