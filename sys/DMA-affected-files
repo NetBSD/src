@@ -16,6 +16,8 @@ arch/alpha/pci/lca.c
 arch/alpha/pci/lcareg.h
 arch/alpha/pci/lcavar.h
 arch/alpha/pci/sio.c
+arch/alpha/tc/tc_machdep.h
+arch/alpha/tc/tcasic.c
 arch/i386/eisa/eisa_machdep.c
 arch/i386/eisa/eisa_machdep.h
 arch/i386/i386/machdep.c
