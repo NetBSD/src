@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.66 1997/11/29 18:38:26 kleink Exp $
+	$NetBSD: syscalls.master,v 1.67 1998/01/04 03:45:21 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -143,6 +143,7 @@
 			    int arg); } ogetkerninfo
 64	COMPAT_43	{ int sys_getpagesize(void); } ogetpagesize
 65	COMPAT_12	{ int sys_msync(caddr_t addr, size_t len); }
+; XXX COMPAT_??? for 4.4BSD-compatible vfork(2)?
 66	STD		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
@@ -518,3 +519,4 @@
 280	STD		{ int sys___lstat13(const char *path, struct stat *ub); }
 281	STD		{ int sys___sigaltstack14(const struct sigaltstack \
 			    *nss, struct sigaltstack *oss); }
+282	STD		{ int sys___vfork14(void); }
