@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.16 2001/06/19 09:12:49 fvdl Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.17 2001/06/19 12:59:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #define	CR0_CD	0x40000000	/* Cache Disable */
 
 /*
- * Cyrix 486 DLC special registers, accessable as IO ports.
+ * Cyrix 486 DLC special registers, accessible as IO ports.
  */
 #define CCR0	0xc0		/* configuration control register 0 */
 #define CCR0_NC0	0x01	/* first 64K of each 1M memory region is non-cacheable */
