@@ -2,11 +2,11 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.25 2000/01/27 06:55:26 sato Exp $
+# 	$NetBSD: GENERIC,v 1.26 2000/01/31 11:44:01 shin Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.25 $"
+#ident 		"GENERIC-$Revision: 1.26 $"
 
 maxusers	8
 
@@ -139,6 +139,7 @@ button1 at vrgiu? platform NEC_MCR_500 id BTN_COVER port 6
 button0 at vrgiu? platform NEC_MCR_510 id BTN_COVER port 3
 button0 at vrgiu? platform NEC_MCR_530 id BTN_COVER port 3
 button1 at vrgiu? platform NEC_MCR_530 id BTN_APP0  port 2
+button0 at vrgiu? platform NEC_MCR_7XX id BTN_COVER port 3
 pwctl0 at vrgiu? platform NEC_MCR_3XX id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_5XX id PWCTL_COM0 port 14
 pwctl0 at vrgiu? platform NEC_MCR_7XX id PWCTL_COM0 port 46
