@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.8 1997/03/16 09:10:31 thorpej Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.9 1997/03/16 10:00:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -415,93 +415,6 @@ hpux_to_bsd_uoff(off, isps, p)
 
 	/* everything else */
 	return (-1);
-}
-
-/*
- * Kludge up a uarea dump so that HP-UX debuggers can find out
- * what they need.  IMPORTANT NOTE: we do not EVEN attempt to
- * convert the entire user struct.
- */
-int
-hpux_dumpu(vp, cred)
-	struct vnode *vp;
-	struct ucred *cred;
-{
-	int error = 0;
-	struct proc *p = curproc;
-	struct hpux_user *faku;
-	struct bsdfp *bp;
-	short *foop;
-
-	/*
-	 * Make sure there is no mistake about this being a real
-	 * user structure.
-	 */
-	faku = (struct hpux_user *)malloc((u_long)ctob(1), M_TEMP, M_WAITOK);
-	bzero((caddr_t)faku, ctob(1));
-
-	/* Fill in the process sizes. */
-	faku->hpuxu_tsize = p->p_vmspace->vm_tsize;
-	faku->hpuxu_dsize = p->p_vmspace->vm_dsize;
-	faku->hpuxu_ssize = p->p_vmspace->vm_ssize;
-
-	/*
-	 * Fill in the exec header for CDB.
-	 * This was saved back in exec().  As far as I can tell CDB
-	 * only uses this information to verify that a particular
-	 * core file goes with a particular binary.
-	 */
-	bcopy((caddr_t)p->p_addr->u_md.md_exec,
-	    (caddr_t)&faku->hpuxu_exdata, sizeof (struct hpux_exec));
-
-	/*
-	 * Adjust user's saved registers (on kernel stack) to reflect
-	 * HP-UX order.  Note that HP-UX saves the SR as 2 bytes not 4
-	 * so we have to move it up.
-	 */
-	faku->hpuxu_ar0 = p->p_md.md_regs;
-	foop = (short *) p->p_md.md_regs;
-	foop[32] = foop[33];
-	foop[33] = foop[34];
-	foop[34] = foop[35];
-
-	if (fputype) {
-		/*
-		 * Copy 68881 registers from our PCB format to HP-UX format
-		 */
-		bp = (struct bsdfp *) &p->p_addr->u_pcb.pcb_fpregs;
-		bcopy((caddr_t)bp->save, (caddr_t)faku->hpuxu_fp.hpfp_save,
-		    sizeof(bp->save));
-		bcopy((caddr_t)bp->ctrl, (caddr_t)faku->hpuxu_fp.hpfp_ctrl,
-		    sizeof(bp->ctrl));
-		bcopy((caddr_t)bp->reg, (caddr_t)faku->hpuxu_fp.hpfp_reg,
-		    sizeof(bp->reg));
-	}
-
-	/*
-	 * Slay the dragon
-	 */
-	faku->hpuxu_dragon = -1;
-
-	/*
-	 * Dump this artfully constructed page in place of the
-	 * user struct page.
-	 */
-	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)faku, ctob(1), (off_t)0,
-	    UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
-
-	/*
-	 * Dump the remaining UPAGES-1 pages normally
-	 * XXX Spot the wild guess.
-	 */
-	if (error == 0)
-		error = vn_rdwr(UIO_WRITE, vp, (caddr_t)p->p_addr + ctob(1),
-		    ctob(UPAGES-1), (off_t)ctob(1), UIO_SYSSPACE,
-		    IO_NODELOCKED|IO_UNIT, cred, (int *)NULL, p);
-
-	free((caddr_t)faku, M_TEMP);
-
-	return (error);
 }
 
 #define	HSS_RTEFRAME	0x01
