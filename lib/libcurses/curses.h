@@ -30,17 +30,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)curses.h	8.4 (Berkeley) 8/10/94
+ *	@(#)curses.h	8.5 (Berkeley) 4/29/95
  */
 
 #ifndef _CURSES_H_
 #define	_CURSES_H_
 
-#include <sys/types.h>
-#include <sys/cdefs.h>
-
 #include <stdio.h>
-#include <compat.h>
 
 /*
  * The following #defines and #includes are present for backward
@@ -49,7 +45,9 @@
  * START BACKWARD COMPATIBILITY ONLY.
  */
 #ifndef _CURSES_PRIVATE
+#ifndef __cplusplus
 #define	bool	char
+#endif
 #define	reg	register
 
 #ifndef TRUE
