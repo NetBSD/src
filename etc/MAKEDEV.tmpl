@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.12 2003/12/15 08:57:52 jdolecek Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.13 2003/12/21 15:32:59 lukem Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -573,6 +573,7 @@ md*)
 
 fss*)
 	name=fss; unit=${i#fss};	blk=%fss_blk%;	chr=%fss_chr%
+	rm -f $name$unit r$name$unit
 	mknod $name$unit	b $blk $unit
 	mknod r$name$unit	c $chr $unit
 	chgrp operator $name$unit r$name$unit
