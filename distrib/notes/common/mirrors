@@ -1,0 +1,274 @@
+.\"	$NetBSD: mirrors,v 1.1 1999/01/13 08:18:45 ross Exp $
+.\"
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Ss2 "NetBSD Mirror Site List"
+The following sites mirror NetBSD as of December 01, 1998.
+.Pp
+If you wish to become a distribution site for NetBSD, contact
+.Mt mirrors@netbsd.org .
+.Bl -tag -width 3n
+.It "FTP Mirrors"
+.de Country
+.It \\$1
+..
+.de mirror
+.Pp
+\&\\$1
+.br
+\&\\$2
+.br
+\&\\$3
+..
+.Bl -tag -width 3n
+.
+.Country Australia
+.mirror "ftp.au.netbsd.org" \
+"RMIT University, Melbourne" \
+"ftp://ftp.au.netbsd.org/pub/NetBSD"
+.mirror "ftp2.au.netbsd.org" \
+"University of Queensland, Brisbane" \
+"ftp://ftp2.au.netbsd.org/pub/NetBSD"
+.
+.Country "Austria"
+.mirror "ftp.at.netbsd.org" \
+"University of Technology, Vienna" \
+"ftp://ftp.at.netbsd.org/pub/NetBSD"
+.
+.Country "Brazil"
+.mirror "ftp.ravel.ufrj.br" \
+"Cidade Universitaria" \
+"ftp://ftp.ravel.ufrj.br/pub/NetBSD"
+.
+.Country "Denmark"
+.mirror "ftp.dk.netbsd.org" \
+"Aalborg University" \
+"ftp://ftp.dk.netbsd.org/pub/NetBSD"
+.
+.Country "Finland"
+.mirror "ftp.fi.netbsd.org" \
+"The Finnish University and Research Network, Espoo" \
+"ftp://ftp.fi.netbsd.org/pub/NetBSD"
+.
+.Country "France"
+.mirror "ftp.fr.netbsd.org" \
+"Paris University" \
+"ftp://ftp.fr.netbsd.org/pub/NetBSD"
+.
+.Country "Germany"
+.mirror "ftp.de.netbsd.org" \
+"University of Trier" \
+"ftp://ftp.de.netbsd.org/pub/NetBSD"
+.mirror "ftp2.de.netbsd.org" \
+"University of Erlangen-Nuremberg" \
+"ftp://ftp2.de.netbsd.org/pub/NetBSD"
+.mirror "ftp.uni-regensburg.de" \
+"University of Regensburg" \
+"ftp://ftp.uni-regensburg.de/pub/comp/os/NetBSD"
+.
+.Country "Japan"
+.mirror ftp.jp.netbsd.org "Internet Research Institute Inc., Tokyo" \
+ftp://ftp.jp.netbsd.org/pub/NetBSD
+.mirror "ftp.dti.ad.jp" \
+"ftp://ftp.dti.ad.jp/pub/NetBSD/"
+.mirror "mirror.nucba.ac.jp" \
+"Nagoya University of Commerce and Business" \
+"ftp://mirror.nucba.ac.jp/mirror/NetBSD"
+.mirror "netbsd.tohoku.ac.jp" \
+"Tohoku University" \
+"ftp://netbsd.tohoku.ac.jp/NetBSD"
+.
+.Country "Korea"
+.mirror "sunsite.kren.ne.kr" \
+"Seoul National University" \
+"ftp://sunsite.kren.ne.kr/pub/OS/NetBSD"
+.
+.Country "Netherlands"
+.mirror "ftp.nl.netbsd.org" \
+"University of Amsterdam" \
+"ftp://ftp.nl.netbsd.org/pub/NetBSD"
+.
+.Country "Norway"
+.mirror "ftp.no.netbsd.org" \
+"ftp://ftp.no.netbsd.org/pub/NetBSD"
+.mirror "ftp.ntnu.no" \
+"Norwegian University of Science and Technology" \
+"ftp://ftp.ntnu.no/pub/NetBSD"
+.mirror "skarven.itea.ntnu.no" \
+"Norwegian University of Science and Technology" \
+"ftp://skarven.itea.ntnu.no/pub/NetBSD"
+.
+.Country Russia
+.mirror ftp.ru.netbsd.org\
+ "Landau Institute for Theoretical Physics, Chernogolovka"\
+ ftp://ftp.ru.netbsd.org/pub/NetBSD
+.
+.Country "Sweden"
+.mirror "ftp.stacken.kth.se" \
+"Royal Institute of Technology, Stockholm" \
+"ftp://ftp.stacken.kth.se/pub/OS/NetBSD"
+.mirror "ftp.sunet.se" \
+"Swedish University NETwork, Uppsala" \
+"ftp://ftp.sunet.se/pub/os/NetBSD"
+.
+.Country "UK"
+.mirror "ftp.uk.netbsd.org" \
+"Domino, London" \
+"ftp://ftp.uk.netbsd.org/pub/NetBSD"
+.mirror "sunsite.org.uk" \
+"ftp://sunsite.org.uk/packages/netbsd"
+.
+.Country "USA"
+.mirror "ftp.netbsd.org" \
+"Silicon Valley, California" \
+"ftp://ftp.netbsd.org/pub/NetBSD"
+.mirror "ftp.cs.umn.edu" \
+"University of Minnesota" \
+"ftp://ftp.cs.umn.edu/pub/NetBSD"
+.mirror "ftp.eecs.umich.edu" \
+"University of Michigan, Ann Arbor" \
+"ftp://ftp.eecs.umich.edu/pub/NetBSD"
+.mirror "ftp.iastate.edu" \
+"Iowa State University" \
+"ftp://ftp.iastate.edu/pub/netbsd"
+.mirror "ftp.op.net" \
+"ftp://ftp.op.net/pub/NetBSD"
+.El
+.It "AFS Mirrors"
+.Bl -tag -width 3n
+.
+.Country "Sweden"
+.mirror "ftp.stacken.kth.se" \
+"Royal Institute of Technology, Stockholm" \
+"AFS path: /afs/stacken.kth.se/ftp/pub/OS/NetBSD"
+.
+.Country "USA"
+.mirror "ftp.iastate.edu" \
+"Iowa State University" \
+"AFS path: /afs/iastate.edu/public/ftp/pub/netbsd"
+.El
+.It "NFS Mirrors"
+.Bl -tag -width 3n
+.
+.Country "UK"
+.mirror "sunsite.org.uk" \
+"Instructions: mount -o ro sunsite.org.uk:/public/packages/netbsd /mnt" 
+.El
+.It "SUP Mirrors"
+.Bl -tag -width 3n
+.
+.Country "Australia"
+.mirror "sup.au.netbsd.org" \
+"RMIT University, Melbourne" \
+"Instructions: ftp://sup.au.netbsd.org/pub/NetBSD/sup/README.sup"
+.
+.Country "France"
+.mirror "sup.fr.netbsd.org" \
+"Paris University" \
+"Instructions: Similar to sup.netbsd.org"
+.
+.Country "Germany"
+.mirror "sup.de.netbsd.org" \
+"University of Trier" \
+"Instructions: ftp://sup.de.netbsd.org/pub/NetBSD/sup/supfile.example"
+.mirror "sup.owl.de" \
+"Instructions: ftp://sup.owl.de/pub/sup/supfile.example"
+.
+.Country Japan
+.mirror "Internet Research Institute Inc., Tokyo"\
+ "Instructions: ftp://sup.jp.netbsd.org/pub/NetBSD/sup/README.sup"
+.
+.Country "Norway"
+.mirror "skarven.itea.ntnu.no" \
+"Norwegian University of Science and Technology" \
+"Instructions: Use this line as your sup file to get /usr/README.supinfo-"
+"skarven:current release=supinfo host=skarven.itea.ntnu.no use-rel-suffix"
+"backup delete old base=/usr prefix=/usr hostbase=/supmirror"
+.
+.Country "UK"
+.mirror "sup.uk.netbsd.org" \
+"Domino, London" \
+"Instructions: See ftp://ftp.netbsd.org/pub/NetBSD/sup/README.sup"
+.
+.Country "USA"
+.mirror "sup.netbsd.org" \
+"Silicon Valley, California" \
+"Instructions: See ftp://ftp.netbsd.org/pub/NetBSD/sup/README.sup"
+.mirror "ftp.cs.umn.edu" \
+"University of Minnesota" \
+"Instructions: hostbase=/ftp/ftp/packages/NetBSD, collections are the same"
+"as on sup.NetBSD.ORG"
+.El
+.It "WWW Mirrors"
+.Bl -tag -width 3n
+.
+.Country "Australia"
+.mirror "www.au.netbsd.org" \
+"RMIT University, Melbourne" \
+"http://www.au.netbsd.org/"
+.
+.Country "Austria"
+.mirror "www.at.netbsd.org" \
+"University of Technology, Vienna" \
+"http://www.at.netbsd.org/"
+.
+.Country "Finland"
+.mirror "www.fi.netbsd.org" \
+"Global Wire Oy, Lappeenranta" \
+"http://www.fi.netbsd.org/"
+.
+.Country "France"
+.mirror "www.fr.netbsd.org" \
+"Paris University" \
+"http://www.fr.netbsd.org/"
+.
+.Country "Germany"
+.mirror "www.de.netbsd.org" \
+"http://www.de.netbsd.org/"
+.
+.Country Japan
+.mirror www.jp.netbsd.org\
+ "Internet Research Institute Inc., Tokyo" http://www.jp.netbsd.org/
+.
+.Country "Norway"
+.mirror "www.no.netbsd.org" \
+"http://www.no.netbsd.org/"
+.
+.Country "USA"
+.mirror "www.netbsd.org" \
+"Western Washington State University" \
+"http://www.netbsd.org/"
+.mirror "www2.us.netbsd.org" \
+"New York" \
+"http://www.us.netbsd.org/"
+.El
+.El
