@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.29 2003/01/24 21:55:28 fvdl Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.30 2003/01/29 13:14:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.29 2003/01/24 21:55:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.30 2003/01/29 13:14:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 
 	sp = fs->lfs_sp = malloc(sizeof(struct segment), M_SEGMENT, M_WAITOK);
 	sp->bpp = malloc(((fs->lfs_sumsize - SEGSUM_SIZE(fs)) /
-			  sizeof(daddr_t) + 1) * sizeof(struct buf *),
+			  sizeof(int32_t) + 1) * sizeof(struct buf *),
 			 M_SEGMENT, M_WAITOK);
 	sp->seg_flags = flags;
 	sp->vp = NULL;
