@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.20 1998/04/20 02:46:59 jonathan Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.21 1998/05/22 21:14:40 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,16 +14,21 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.20 1998/04/20 02:46:59 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_subr.c,v 1.21 1998/05/22 21:14:40 thorpej Exp $");
 
 
 #include <sys/types.h>
-#include <sys/systm.h>			/* printf() */
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <dev/cons.h>
-#include <dev/tc/tcvar.h>
+
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
+
+#define	_PMAX_BUS_DMA_PRIVATE
+#include <machine/bus.h>
+
+#include <dev/tc/tcvar.h>
 
 #include <pmax/pmax/pmaxtype.h>
 
@@ -134,15 +139,12 @@ void	tc_ds_intr_establish __P((struct device *, void *, tc_intrlevel_t,
 				intr_handler_t handler, intr_arg_t arg));
 void	tc_ds_intr_disestablish __P((struct device *dev, void *cookie));
 
-
-
-
+bus_dma_tag_t tc_ds_get_dma_tag __P((int));
 
 /* XXX*/
 typedef int (*tc_handler_t) __P((void *intr_arg));
 extern void (*tc_enable_interrupt)  __P ((u_int slotno, tc_handler_t,
 				     void *intr_arg, int on)); 
-
 
 /*
  * Map from  systype code to a  tcbus_attach_args struct.
@@ -216,8 +218,8 @@ config_tcbus(parent, systype, printfn)
 	/*
 	 * Set up important CPU/chipset information.
 	 */
-	/*XXX*/
 	tcb.tba_busname =  tcbus->tba_busname;
+	tcb.tba_memt = 0;			/* XXX ignored for now */
 
 	tcb.tba_speed = tcbus->tba_speed;
 	tcb.tba_nslots = tcbus->tba_nslots;
@@ -227,11 +229,10 @@ config_tcbus(parent, systype, printfn)
 	tcb.tba_builtins = tcbus->tba_builtins;
 	tcb.tba_intr_establish = tc_ds_intr_establish;
 	tcb.tba_intr_disestablish = tc_ds_intr_disestablish;
+	tcb.tba_get_dma_tag = tc_ds_get_dma_tag;
 
 	config_found(parent, (struct confargs*)&tcb, printfn);
 }
-
-
 
 /*
  * Establish an interrupt handler.
@@ -267,7 +268,6 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 	 (*tc_enable_interrupt) ((int)cookie, handler, val, 1);
 }
 
-
 void
 tc_ds_intr_disestablish(dev, arg)
     struct device *dev;
@@ -276,7 +276,20 @@ tc_ds_intr_disestablish(dev, arg)
 	/*(*tc_enable_interrupt) (ca->ca_slot, handler, 0);*/
     	printf("cannot dis-establish IOASIC interrupts\n");
 }
-
+
+/*
+ * Return the DMA tag for use by the specified TurboChannel slot.
+ */
+bus_dma_tag_t
+tc_ds_get_dma_tag(slot)
+	int slot;
+{
+
+	/*
+	 * All DECstations use the default DMA tag.
+	 */
+	return (&pmax_default_bus_dma_tag);
+}
 
 /*
  * Console initialization --
