@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.36 2001/09/25 02:26:13 tv Exp $
+$NetBSD: UPDATING,v 1.37 2001/09/29 21:22:49 kristerw Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -13,7 +13,7 @@ Recent changes:
 	is intended to make all the ugrade issues elsewhere in UPDATING
 	obsolete (stay tuned...).
 
-	i386 platform builds must now et TOOLDIR in mk.conf or the
+	i386 platform builds must now set TOOLDIR in mk.conf or the
 	environment in order to build the system.  This is a pathname
 	where host build tools will be installed, and must NOT be
 	the same as src/tools.
