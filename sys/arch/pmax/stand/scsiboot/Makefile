@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1999/03/31 04:30:11 simonb Exp $
+#	$NetBSD: Makefile,v 1.11 1999/03/31 07:23:28 simonb Exp $
 #	@(#)Makefile	8.3 (Berkeley) 2/16/94
 
 S=	${.CURDIR}/../../../..
@@ -12,7 +12,7 @@ SRCS=	start.S alloc.c bootxx.c clear_cache.S memcpy.c memset.c printf.S \
 	strcmp.S strcpy.S strlen.S
 
 # from sys/lib/libsa:
-SRCS+=	disklabel.c dkcksum.c lseek.c open.c read.c ufs.c
+SRCS+=	disklabel.c dkcksum.c errno.c lseek.c open.c read.c ufs.c
 # from sys/lib/libkern:
 SRCS+=	bcmp.c
 CLEANFILES+=${PROG}.aout ${PROG}.map mkboot ${ALL}
