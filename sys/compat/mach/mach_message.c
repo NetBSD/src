@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.16 2002/12/30 19:32:15 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.17 2002/12/31 13:09:38 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.16 2002/12/30 19:32:15 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.17 2002/12/31 13:09:38 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -258,12 +258,20 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 out3:			free(sm, M_EMULDATA);
 
 		} else {
-
 			/* 
 			 * The message is not to be handled by the kernel. 
+			 * First, swap local and remote ports.
+		 	 */
+			mach_port_t tmp;
+			
+			tmp = sm->msgh_local_port; 
+			sm->msgh_local_port = sm->msgh_remote_port;
+			sm->msgh_remote_port = tmp;
+
+			/*
 			 * Queue the message in the remote port, and wakeup 
 			 * any process that would be sleeping for it.
-		 	 */
+			 */
 			mp = rr->mr_port;
 			(void)mach_message_get(sm, send_size, mp);
 #ifdef DEBUG_MACH_MSG
@@ -619,15 +627,38 @@ mach_move_right(bits, msgh, mr, tr, p)
 	struct mach_right *tr;
 	struct proc *p;
 {
+	struct mach_right *nmr;
 	struct mach_port *mp;
 	struct proc *tp;
 	int rights;
 
 	if ((tr->mr_port == NULL) || 
 	    (tr->mr_port->mp_recv == NULL) ||
-	    (tr->mr_port->mp_recv->mr_p == NULL))
+	    (tr->mr_port->mp_recv->mr_p == NULL)) {
+#ifdef DEBUG_MACH_RIGHT
+		printf("mach_move_right: cannot find target proc, "
+		    "msg id %d, tr = %p, tr->mr_port = %p ", 
+		    msgh->msgh_id, tr, tr->mr_port);
+
+		if (tr->mr_port == NULL)
+			goto cr;
+		printf("tr->mr_port->mp_recv = %p ",
+		    tr->mr_port->mp_recv);
+
+		if (tr->mr_port->mp_recv == NULL)
+			goto cr;
+		printf("tr->mr_port->mp_recv->mr_p = %p ",
+		    tr->mr_port->mp_recv->mr_p);
+cr:
+		printf("\n");
+#endif
 		return 0;
+	}
 	tp = tr->mr_port->mp_recv->mr_p;
+#ifdef DEBUG_MACH_RIGHT
+	printf("mach_move_right: msg id %d, local pid = %d, target pid = %d\n",
+	    msgh->msgh_id, p->p_pid, tp->p_pid);
+#endif
 
 	switch (bits) {
 	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
@@ -653,40 +684,56 @@ mach_move_right(bits, msgh, mr, tr, p)
 		break;
 	}
 
-	if (mach_right_check(mr, p, rights) == 0)
+	if (mach_right_check(mr, p, rights) == 0) {
+#ifdef DEBUG_MACH_RIGHT
+		printf("mach_move_right: right %x missing for %p in pid %d\n", 
+		    rights, mr, p->p_pid);
+#endif
 		return 0;
+	}
 
 	mp = mr->mr_port;
 
 	switch (bits) {
 	case MACH_MSG_TYPE_MAKE_SEND:
 	case MACH_MSG_TYPE_COPY_SEND:
-		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND);
+		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND);
 		break;
 
 	case MACH_MSG_TYPE_MOVE_SEND:
-		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND);
+		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND);
 		/* mach_right_put(mr); */
 		break;
 
 	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
-		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE);
+		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE);
 		break;
 
 	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE);
+		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE);
 		/* mach_right_put(mr); */
 		break;
 
 	case MACH_MSG_TYPE_MOVE_RECEIVE:
-		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_RECEIVE);
+		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_RECEIVE);
 		mach_right_put(mr);
 		break;
 
 	default:
+#ifdef DEBUG_MACH_RIGHT
+		printf("mach_move_right, invalid bits = %d\n", bits);
+#endif
 		return MACH_SEND_INVALID_HEADER;
 		break;
 	}
+#ifdef DEBUG_MACH_RIGHT
+	printf("mach_move_right finished, nmr = %p(%x)", nmr, nmr->mr_type);
+	if (nmr->mr_port != NULL)
+		printf("=>%p", nmr->mr_port);
+	if (nmr->mr_port->mp_recv != NULL)
+		printf("[%p]", nmr->mr_port->mp_recv->mr_sethead);
+	printf("\n");
+#endif
 
 	return 0;
 }
