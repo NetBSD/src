@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.61 2002/10/02 05:15:56 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.61 2002/10/02 05:15:56 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.62 2003/04/01 20:41:38 thorpej Exp $");                                                  
 
 #include "hil.h"
 #include "dvbox.h"
@@ -906,14 +906,14 @@ dio_scode_probe(scode, func)
 	caddr_t pa, va;
 
 	pa = dio_scodetopa(scode);
-	va = iomap(pa, NBPG);
+	va = iomap(pa, PAGE_SIZE);
 	if (va == 0)
 		return (1);
 	if (badaddr(va)) {
-		iounmap(va, NBPG);
+		iounmap(va, PAGE_SIZE);
 		return (1);
 	}
-	iounmap(va, NBPG);
+	iounmap(va, PAGE_SIZE);
 
 	return ((*func)(HP300_BUS_SPACE_DIO, (bus_addr_t)pa, scode));
 }

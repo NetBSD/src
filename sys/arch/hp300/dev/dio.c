@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.21 2003/01/01 01:34:45 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.22 2003/04/01 20:41:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.21 2003/01/01 01:34:45 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.22 2003/04/01 20:41:36 thorpej Exp $");                                                  
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.21 2003/01/01 01:34:45 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -121,7 +123,7 @@ dioattach(parent, self, aux)
 		if ((scode == 7) && internalhpib)
 			va = internalhpib = (caddr_t)IIOV(pa);
 		else {
-			va = iomap(pa, NBPG);
+			va = iomap(pa, PAGE_SIZE);
 			if (va == NULL) {
 				printf("%s: can't map scode %d\n",
 				    self->dv_xname, scode);
@@ -134,7 +136,7 @@ dioattach(parent, self, aux)
 		/* Check for hardware. */
 		if (badaddr(va)) {
 			if (didmap)
-				iounmap(va, NBPG);
+				iounmap(va, PAGE_SIZE);
 			scode++;
 			continue;
 		}
@@ -162,7 +164,7 @@ dioattach(parent, self, aux)
 
 		/* No longer need the device to be mapped. */
 		if (didmap)
-			iounmap(va, NBPG);
+			iounmap(va, PAGE_SIZE);
 
 		/* Attach matching device. */
 		config_found_sm(self, &da, dioprint, diosubmatch);
