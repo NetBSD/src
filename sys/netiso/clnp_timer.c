@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clnp_timer.c	7.5 (Berkeley) 5/6/91
- *	$Id: clnp_timer.c,v 1.2 1993/05/20 05:26:59 cgd Exp $
+ *	$Id: clnp_timer.c,v 1.3 1993/12/18 00:42:54 mycroft Exp $
  */
 
 /***********************************************************
@@ -61,21 +61,21 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "iso.h"
-#include "clnp.h"
-#include "clnp_stat.h"
-#include "argo_debug.h"
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#include <netiso/clnp_stat.h>
+#include <netiso/argo_debug.h>
 
 extern struct clnp_fragl *clnp_frags;
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tp_timer.c	7.5 (Berkeley) 5/6/91
- *	$Id: tp_timer.c,v 1.2 1993/05/20 05:28:00 cgd Exp $
+ *	$Id: tp_timer.c,v 1.3 1993/12/18 00:44:00 mycroft Exp $
  */
 
 /***********************************************************
@@ -80,20 +80,20 @@ SOFTWARE.
  * Their "going off" is manifested by a function call w/ 3 arguments.
  */
 
-#include "param.h"
-#include "types.h"
-#include "time.h"
-#include "malloc.h"
-#include "socket.h"
+#include <sys/param.h>
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/malloc.h>
+#include <sys/socket.h>
 
-#include "tp_param.h"
-#include "tp_timer.h"
-#include "tp_stat.h"
-#include "tp_pcb.h"
-#include "tp_tpdu.h"
-#include "argo_debug.h"
-#include "tp_trace.h"
-#include "tp_seq.h"
+#include <netiso/tp_param.h>
+#include <netiso/tp_timer.h>
+#include <netiso/tp_stat.h>
+#include <netiso/tp_pcb.h>
+#include <netiso/tp_tpdu.h>
+#include <netiso/argo_debug.h>
+#include <netiso/tp_trace.h>
+#include <netiso/tp_seq.h>
 
 struct	Ecallout *TP_callfree;
 struct	Ecallout *TP_callout; 

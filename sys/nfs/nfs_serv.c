@@ -55,23 +55,23 @@
  *	a reply.
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "file.h"
-#include "namei.h"
-#include "vnode.h"
-#include "mount.h"
-#include "mbuf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/file.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/mbuf.h>
 
-#include "../ufs/quota.h"
-#include "../ufs/inode.h"
-#include "../ufs/dir.h"
+#include <ufs/quota.h>
+#include <ufs/inode.h>
+#include <ufs/dir.h>
 
-#include "nfsv2.h"
-#include "nfs.h"
-#include "xdr_subs.h"
-#include "nfsm_subs.h"
+#include <nfs/nfsv2.h>
+#include <nfs/nfs.h>
+#include <nfs/xdr_subs.h>
+#include <nfs/nfsm_subs.h>
 
 /* Defs */
 #define	TRUE	1

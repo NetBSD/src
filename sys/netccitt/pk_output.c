@@ -36,22 +36,22 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_output.c	7.10 (Berkeley) 5/29/91
- *	$Id: pk_output.c,v 1.2 1993/05/20 04:12:20 cgd Exp $
+ *	$Id: pk_output.c,v 1.3 1993/12/18 00:41:35 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
 
-#include "../net/if.h"
+#include <net/if.h>
 
-#include "x25.h"
-#include "pk.h"
-#include "pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
 struct mbuf_cache pk_output_cache = {0 };
 struct	mbuf *nextpk ();

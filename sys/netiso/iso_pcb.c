@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_pcb.c	7.10 (Berkeley) 6/27/91
- *	$Id: iso_pcb.c,v 1.2 1993/05/20 05:27:19 cgd Exp $
+ *	$Id: iso_pcb.c,v 1.3 1993/12/18 00:43:21 mycroft Exp $
  */
 
 /***********************************************************
@@ -66,27 +66,29 @@ SOFTWARE.
 
 #ifdef ISO
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
+#include <sys/protosw.h>
 
-#include "argo_debug.h"
-#include "iso.h"
-#include "clnp.h"
-#include "../netinet/in_systm.h"
-#include "../net/if.h"
-#include "../net/route.h"
-#include "iso_pcb.h"
-#include "iso_var.h"
-#include "protosw.h"
+#include <net/if.h>
+#include <net/route.h>
+
+#include <netinet/in_systm.h>
+
+#include <netiso/argo_debug.h>
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#include <netiso/iso_pcb.h>
+#include <netiso/iso_var.h>
 
 #ifdef TPCONS
-#include "../netccitt/x25.h"
-#include "../netccitt/pk.h"
-#include "../netccitt/pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 #endif
 
 #define PCBNULL (struct isopcb *)0

@@ -36,25 +36,25 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pk_usrreq.c	7.16 (Berkeley) 6/27/91
- *	$Id: pk_usrreq.c,v 1.4 1993/09/06 17:43:33 mycroft Exp $
+ *	$Id: pk_usrreq.c,v 1.5 1993/12/18 00:41:39 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "errno.h"
-#include "ioctl.h"
-#include "stat.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "x25.h"
-#include "pk.h"
-#include "pk_var.h"
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_var.h>
 
 static int old_to_new(), new_to_old();
 

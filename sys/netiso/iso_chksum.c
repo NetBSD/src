@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso_chksum.c	7.5 (Berkeley) 5/6/91
- *	$Id: iso_chksum.c,v 1.2 1993/05/20 05:27:15 cgd Exp $
+ *	$Id: iso_chksum.c,v 1.3 1993/12/18 00:43:17 mycroft Exp $
  */
 
 /***********************************************************
@@ -81,9 +81,10 @@ SOFTWARE.
  */
 
 #ifdef ISO
-#include "argo_debug.h"
-#include "param.h"
-#include "mbuf.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+
+#include <netiso/argo_debug.h>
 #endif ISO
 
 #ifndef MNULL
