@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.22 2000/04/02 19:01:11 nathanw Exp $ */
+/* $NetBSD: tga.c,v 1.23 2000/04/20 05:25:20 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -51,10 +51,10 @@
 #include <dev/ic/bt463reg.h>
 #include <dev/ic/bt463var.h>
 
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
-#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
 
 #ifdef __alpha__
 #include <machine/pte.h>
@@ -84,13 +84,14 @@ static int tga_alloc_screen __P((void *, const struct wsscreen_descr *,
 static void tga_free_screen __P((void *, void *));
 static int tga_show_screen __P((void *, void *, int,
 				void (*) (void *, int, int), void *));
-static int tga_rop __P((struct raster *, int, int, int, int, int,
-	struct raster *, int, int));
-static int tga_rop_nosrc __P((struct raster *, int, int, int, int, int));
-static int tga_rop_htov __P((struct raster *, int, int, int, int,
-	int, struct raster *, int, int ));
-static int tga_rop_vtov __P((struct raster *, int, int, int, int,
-	int, struct raster *, int, int ));
+static int tga_rop __P((struct rasops_info *, int, int, int, int, int,
+	struct rasops_info *, int, int));
+static int tga_rop_vtov __P((struct rasops_info *, int, int, int, int,
+	int, struct rasops_info *, int, int ));
+static void tga_putchar __P((void *c, int row, int col,
+				u_int uc, long attr));
+static void tga_eraserows __P((void *, int, int, long));
+static void	tga_erasecols __P((void *, int, int, int, long));
 void tga2_init __P((struct tga_devconfig *, int));
 
 static void tga_config_interrupts __P((struct device *));
@@ -107,15 +108,18 @@ static u_int8_t	tga2_ramdac_rd __P((void *, u_int));
 /* Interrupt handler */
 static int	tga_intr __P((void *));
 
+/* The NULL entries will get filled in by rasops_init().
+ * XXX and the non-NULL ones will be overwritten; reset after calling it.
+ */
 struct wsdisplay_emulops tga_emulops = {
-	rcons_cursor,			/* could use hardware cursor; punt */
-	rcons_mapchar,
-	rcons_putchar,
+	NULL,
+	NULL,
+	tga_putchar,
 	tga_copycols,
-	rcons_erasecols,
+	tga_erasecols,
 	tga_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
+	tga_eraserows,
+	NULL,
 };
 
 struct wsscreen_descr tga_stdscreen = {
@@ -176,8 +180,8 @@ tga_getdevconfig(memt, pc, tag, dc)
 	struct tga_devconfig *dc;
 {
 	const struct tga_conf *tgac;
-	struct raster *rap;
-	struct rcons *rcp;
+	struct rasops_info *rip;
+	int cookie;
 	bus_size_t pcisize;
 	int i, flags;
 
@@ -196,7 +200,7 @@ tga_getdevconfig(memt, pc, tag, dc)
 	if (bus_space_map(memt, dc->dc_pcipaddr, pcisize,
 	    BUS_SPACE_MAP_PREFETCHABLE | BUS_SPACE_MAP_LINEAR, &dc->dc_memh))
 		return;
-	dc->dc_vaddr = dc->dc_memh; /* XXX Cheat-o-matic */
+	dc->dc_vaddr = (vaddr_t) bus_space_vaddr(memt, dc->dc_memh);
 #ifdef __alpha__
 	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 #endif
@@ -254,19 +258,6 @@ tga_getdevconfig(memt, pc, tag, dc)
 	}
 
 	dc->dc_rowbytes = dc->dc_wid * (dc->dc_tgaconf->tgac_phys_depth / 8);
-
-	if ((TGARREG(dc, TGA_REG_VHCR) & 0x00000001) != 0 &&	/* XXX */
-	    (TGARREG(dc, TGA_REG_VHCR) & 0x80000000) != 0) {	/* XXX */
-		dc->dc_wid -= 4;
-		/*
-		 * XXX XXX turning off 'odd' shouldn't be necesssary,
-		 * XXX XXX but i can't make X work with the weird size.
-		 */
-		TGAWREG(dc, TGA_REG_VHCR, TGARREG(dc, TGA_REG_VHCR) & ~0x80000001);
-		dc->dc_rowbytes =
-		    dc->dc_wid * (dc->dc_tgaconf->tgac_phys_depth / 8);
-	}
-
 	dc->dc_ht = (TGARREG(dc, TGA_REG_VVCR) & 0x7ff);	/* XXX */
 
 	/* XXX this seems to be what DEC does */
@@ -288,25 +279,59 @@ tga_getdevconfig(memt, pc, tag, dc)
 	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
 		*(u_int32_t *)(dc->dc_videobase + i) = 0;
 
-	/* initialize the raster */
-	rap = &dc->dc_raster;
-	rap->width = dc->dc_wid;
-	rap->height = dc->dc_ht;
-	rap->depth = tgac->tgac_phys_depth;
-	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
-	rap->pixels = (u_int32_t *)dc->dc_videobase;
-	rap->data = (caddr_t)dc;
+	/* Initialize rasops descriptor */
+	rip = &dc->dc_rinfo;
+	rip->ri_flg = RI_CENTER;
+	rip->ri_depth = tgac->tgac_phys_depth;
+	rip->ri_bits = (void *)dc->dc_videobase;
+	rip->ri_width = dc->dc_wid;
+	rip->ri_height = dc->dc_ht;
+	rip->ri_stride = dc->dc_rowbytes;
+	rip->ri_hw = dc;
 
-	/* initialize the raster console blitter */
-	rcp = &dc->dc_rcons;
-	rcp->rc_sp = rap;
-	rcp->rc_crow = rcp->rc_ccol = -1;
-	rcp->rc_crowp = &rcp->rc_crow;
-	rcp->rc_ccolp = &rcp->rc_ccol;
-	rcons_init(rcp, 34, 80);
+	if (tgac->tgac_phys_depth == 32) {
+		rip->ri_rnum = 8;
+		rip->ri_gnum = 8;
+		rip->ri_bnum = 8;
+		rip->ri_rpos = 16;
+		rip->ri_gpos = 8;
+		rip->ri_bpos = 0;
+	}
 
-	tga_stdscreen.nrows = dc->dc_rcons.rc_maxrow;
-	tga_stdscreen.ncols = dc->dc_rcons.rc_maxcol;
+	wsfont_init();
+	/* prefer 8 pixel wide font */
+	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0);
+	if (cookie <= 0) {
+		printf("tga: no appropriate fonts.\n");
+		return;
+	}
+
+	/* the accelerated tga_putchar() needs LSbit left */
+	if (wsfont_lock(cookie, &dc->dc_rinfo.ri_font,
+	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0) {
+		printf("tga: couldn't lock font\n");
+		return;
+	}
+	dc->dc_rinfo.ri_wsfcookie = cookie;
+
+	rasops_init(rip, 34, 80);
+	
+	/* add our accelerated functions */
+	/* XXX shouldn't have to do this; rasops should leave non-NULL 
+	 * XXX entries alone.
+	 */
+	dc->dc_rinfo.ri_ops.copyrows = tga_copyrows;
+	dc->dc_rinfo.ri_ops.eraserows = tga_eraserows;
+	dc->dc_rinfo.ri_ops.erasecols = tga_erasecols;
+	dc->dc_rinfo.ri_ops.copycols = tga_copycols;
+	dc->dc_rinfo.ri_ops.putchar = tga_putchar;	
+
+	tga_stdscreen.nrows = dc->dc_rinfo.ri_rows;
+	tga_stdscreen.ncols = dc->dc_rinfo.ri_cols;
+	tga_stdscreen.textops = &dc->dc_rinfo.ri_ops;
+	tga_stdscreen.capabilities = dc->dc_rinfo.ri_caps;
+
 
 	dc->dc_intrenabled = 0;
 }
@@ -605,10 +630,11 @@ tga_alloc_screen(v, type, cookiep, curxp, curyp, attrp)
 	if (sc->nscreens > 0)
 		return (ENOMEM);
 
-	*cookiep = &sc->sc_dc->dc_rcons; /* one and only for now */
+	*cookiep = &sc->sc_dc->dc_rinfo; /* one and only for now */
 	*curxp = 0;
 	*curyp = 0;
-	rcons_alloc_attr(&sc->sc_dc->dc_rcons, 0, 0, 0, &defattr);
+	sc->sc_dc->dc_rinfo.ri_ops.alloc_attr(&sc->sc_dc->dc_rinfo, 
+		0, 0, 0, &defattr);
 	*attrp = defattr;
 	sc->nscreens++;
 	return (0);
@@ -664,22 +690,21 @@ tga_cnattach(iot, memt, pc, bus, device, function)
 	 * Initialization includes disabling cursor, setting a sane
 	 * colormap, etc.  It will be reinitialized in tgaattach().
 	 */
-
-	/* XXX -- this only works for bt485, but then we only support that,
-	 *  currently.
-	 */
 	if (dcp->dc_tga2)
 		bt485_cninit(dcp, tga_sched_update, tga2_ramdac_wr,
 		    tga2_ramdac_rd);
-	else
-		bt485_cninit(dcp, tga_sched_update, tga_ramdac_wr,
-		    tga_ramdac_rd);
-
-	rcons_alloc_attr(&dcp->dc_rcons, 0, 0, 0, &defattr);
-
-	wsdisplay_cnattach(&tga_stdscreen, &dcp->dc_rcons,
-			   0, 0, defattr);
-
+	else {
+		if (dcp->dc_tgaconf->ramdac_funcs == bt485_funcs)
+			bt485_cninit(dcp, tga_sched_update, tga_ramdac_wr,
+				tga_ramdac_rd);
+		else {
+			bt463_cninit(dcp, tga_sched_update, tga_bt463_wr,
+				tga_bt463_rd);
+		}
+	}
+	dcp->dc_rinfo.ri_ops.alloc_attr(&dcp->dc_rinfo, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&tga_stdscreen, &dcp->dc_rinfo, 0, 0, defattr);
+	
 	return(0);
 }
 
@@ -838,17 +863,17 @@ tga_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
 	int row, srccol, dstcol, ncols;
 {
-	struct rcons *rc = id;
+	struct rasops_info *ri = id;
 	int y, srcx, dstx, nx;
 
-	y = rc->rc_yorigin + rc->rc_font->height * row;
-	srcx = rc->rc_xorigin + rc->rc_font->width * srccol;
-	dstx = rc->rc_xorigin + rc->rc_font->width * dstcol;
-	nx = rc->rc_font->width * ncols;
+	y = ri->ri_font->fontheight * row;
+	srcx = ri->ri_font->fontwidth * srccol;
+	dstx = ri->ri_font->fontwidth * dstcol;
+	nx = ri->ri_font->fontwidth * ncols;
 
-	tga_rop(rc->rc_sp, dstx, y,
-	    nx, rc->rc_font->height, RAS_SRC,
-	    rc->rc_sp, srcx, y);
+	tga_rop(ri, dstx, y,
+	    nx, ri->ri_font->fontheight, RAS_SRC,
+	    ri, srcx, y);
 }
 
 /*
@@ -859,16 +884,16 @@ tga_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
 	int srcrow, dstrow, nrows;
 {
-	struct rcons *rc = id;
+	struct rasops_info *ri = id;
 	int srcy, dsty, ny;
 
-	srcy = rc->rc_yorigin + rc->rc_font->height * srcrow;
-	dsty = rc->rc_yorigin + rc->rc_font->height * dstrow;
-	ny = rc->rc_font->height * nrows;
+	srcy = ri->ri_font->fontheight * srcrow;
+	dsty = ri->ri_font->fontheight * dstrow;
+	ny = ri->ri_font->fontheight * nrows;
 
-	tga_rop(rc->rc_sp, rc->rc_xorigin, dsty,
-	    rc->rc_raswidth, ny, RAS_SRC,
-	    rc->rc_sp, rc->rc_xorigin, srcy);
+	tga_rop(ri, 0, dsty,
+	    ri->ri_emuwidth, ny, RAS_SRC,
+	    ri, 0, srcy);
 }
 
 /* Do we need the src? */
@@ -886,17 +911,15 @@ static int map_rop[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6,
  */
 static int
 tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
-	struct raster *dst;
+	struct rasops_info *dst;
 	int dx, dy, w, h, rop;
-	struct raster *src;
+	struct rasops_info *src;
 	int sx, sy;
 {
 	if (!dst)
 		return -1;
-	if (dst->data == NULL)
-		return -1;	/* we should be writing to a screen */
 	if (needsrc[RAS_GETOP(rop)]) {
-		if (src == (struct raster *) 0)
+		if (src == NULL)
 			return -1;	/* We want a src */
 		/* Clip against src */
 		if (sx < 0) {
@@ -907,12 +930,12 @@ tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
 			h += sy;
 			sy = 0;
 		}
-		if (sx + w > src->width)
-			w = src->width - sx;
-		if (sy + h > src->height)
-			h = src->height - sy;
+		if (sx + w > src->ri_emuwidth)
+			w = src->ri_emuwidth - sx;
+		if (sy + h > src->ri_emuheight)
+			h = src->ri_emuheight - sy;
 	} else {
-		if (src != (struct raster *) 0)
+		if (src != NULL)
 			return -1;	/* We need no src */
 	}
 	/* Clip against dst.  We modify src regardless of using it,
@@ -928,45 +951,20 @@ tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
 		sy -= dy;
 		dy = 0;
 	}
-	if (dx + w > dst->width)
-		w = dst->width - dx;
-	if (dy + h > dst->height)
-		h = dst->height - dy;
+	if (dx + w > dst->ri_emuwidth)
+		w = dst->ri_emuwidth - dx;
+	if (dy + h > dst->ri_emuheight)
+		h = dst->ri_emuheight - dy;
 	if (w <= 0 || h <= 0)
 		return 0;	/* Vacuously true; */
-	if (!src)
-		return tga_rop_nosrc(dst, dx, dy, w, h, rop);
-	if (src->data == NULL)
-		return tga_rop_htov(dst, dx, dy, w, h, rop, src, sx, sy);
-	else
-		return tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy);
+	if (!src) {
+		/* XXX Punt! */
+		return -1;
+	}
+	return tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy);
 }
 
-/*
- * No source raster ops.
- * This function deals with all raster ops that don't require a src.
- */
-static int
-tga_rop_nosrc(dst, dx, dy, w, h, rop)
-	struct raster *dst;
-	int dx, dy, w, h, rop;
-{
-	return raster_op(dst, dx, dy, w, h, rop, NULL, 0, 0);
-}
 
-/*
- * Host to Video raster ops.
- * This function deals with all raster ops that have a src that is host memory.
- */
-static int
-tga_rop_htov(dst, dx, dy, w, h, rop, src, sx, sy)
-	struct raster *dst;
-	int dx, dy, w, h, rop;
-	struct raster *src;
-	int sx, sy;
-{
-	return raster_op(dst, dx, dy, w, h, rop, src, sx, sy);
-}
 
 /*
  * Video to Video raster ops.
@@ -975,12 +973,12 @@ tga_rop_htov(dst, dx, dy, w, h, rop, src, sx, sy)
  */
 static int
 tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
-	struct raster *dst;
+	struct rasops_info *dst;
 	int dx, dy, w, h, rop;
-	struct raster *src;
+	struct rasops_info *src;
 	int sx, sy;
 {
-	struct tga_devconfig *dc = (struct tga_devconfig *)dst->data;
+	struct tga_devconfig *dc = (struct tga_devconfig *)dst->ri_hw;
 	int srcb, dstb;
 	int x, y;
 	int xstart, xend, xdir, xinc;
@@ -991,8 +989,13 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	 * I don't yet want to deal with unaligned guys, really.  And we don't
 	 * deal with copies from one card to another.
 	 */
-	if (dx % 8 != 0 || sx % 8 != 0 || src != dst)
-		return raster_op(dst, dx, dy, w, h, rop, src, sx, sy);
+	if (dx % 8 != 0 || sx % 8 != 0 || src != dst) {
+		/* XXX Punt! */
+		/* XXX should never happen, since it's only being used to
+		 * XXX copy 8-pixel-wide characters.
+		 */
+		return -1;
+	}
 
 	if (sy >= dy) {
 		ystart = 0;
@@ -1005,19 +1008,21 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	}
 	if (sx >= dx) {
 		xstart = 0;
-		xend = w * (dst->depth / 8);
+		xend = w * (dst->ri_depth / 8);
 		xdir = 1;
 	} else {
-		xstart = w * (dst->depth / 8);
+		xstart = w * (dst->ri_depth / 8);
 		xend = 0;
 		xdir = -1;
 	}
 	xinc = xdir * 4 * 64;
-	yinc = ydir * dst->linelongs * 4;
-	ystart *= dst->linelongs * 4;
-	yend *= dst->linelongs * 4;
-	srcb = offset + sy  * src->linelongs * 4 + sx;
-	dstb = offset + dy  * dst->linelongs * 4 + dx;
+	yinc = ydir * dst->ri_stride;
+	ystart *= dst->ri_stride;
+	yend *= dst->ri_stride;
+	srcb = offset + (sy + src->ri_yorigin) * src->ri_stride + 
+		            (sx + src->ri_xorigin) * (src->ri_depth/8);
+	dstb = offset + (dy + dst->ri_yorigin) * dst->ri_stride + 
+		            (dx + dst->ri_xorigin ) * (dst->ri_depth/8);
 	TGAWALREG(dc, TGA_REG_GMOR, 3, 0x0007); /* Copy mode */
 	TGAWALREG(dc, TGA_REG_GOPR, 3, map_rop[rop]);	/* Set up the op */
 	for (y = ystart; (ydir * y) < (ydir * yend); y += yinc) {
@@ -1042,6 +1047,179 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 	TGAWALREG(dc, TGA_REG_GMOR, 0, 0x0000); /* Simple mode */
 	return 0;
 }
+
+
+void tga_putchar (c, row, col, uc, attr)
+	void *c;
+	int row, col;
+	u_int uc;
+	long attr;
+{
+	struct rasops_info *ri = c;
+	struct tga_devconfig *dc = ri->ri_hw;
+	int fs, height, width;
+	u_char *fr;
+	int32_t *rp;
+
+	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+
+	height = ri->ri_font->fontheight;
+	width = ri->ri_font->fontwidth;
+
+	uc -= ri->ri_font->firstchar;
+	fr = (u_char *)ri->ri_font->data + uc * ri->ri_fontscale;
+	fs = ri->ri_font->stride;
+
+	/* Set foreground and background color. XXX memoize this somehow?
+	 * The rasops code has already expanded the color entry to 32 bits
+	 * for us, even for 8-bit displays, so we don't have to do anything.
+	 */
+	TGAWREG(dc, TGA_REG_GFGR, ri->ri_devcmap[(attr >> 24) & 15]);
+	TGAWREG(dc, TGA_REG_GBGR, ri->ri_devcmap[(attr >> 16) & 15]);
+	
+	/* Set raster operation to "copy"... */
+	if (ri->ri_depth == 8)
+		TGAWREG(dc, TGA_REG_GOPR, 0x3);
+	else /* ... and in 24-bit mode, set the destination bitmap to 24-bit. */
+		TGAWREG(dc, TGA_REG_GOPR, 0x3 | (0x3 << 8));
+
+	/* Set which pixels we're drawing (of a possible 32). */
+	TGAWREG(dc, TGA_REG_GPXR_P, (1 << width) - 1);
+
+	/* Set drawing mode to opaque stipple. */
+	TGAWREG(dc, TGA_REG_GMOR, 0x1);
+	
+	/* Insert write barrier before actually sending data */
+	/* XXX Abuses the fact that there is only one write barrier on Alphas */
+	TGAREGWB(dc, TGA_REG_GMOR, 1);
+
+	while(height--) {
+		/* The actual stipple write */
+		*rp = fr[0] | (fr[1] << 8) | (fr[2] << 16) | (fr[3] << 24); 
+						  
+		fr += fs;
+		rp = (int32_t *)((caddr_t)rp + ri->ri_stride);
+	}
+
+	/* Do underline */
+	if ((attr & 1) != 0) {
+		rp = (int32_t *)((caddr_t)rp - (ri->ri_stride << 1));
+		*rp = 0xffffffff;
+	}
+
+	/* Set grapics mode back to normal. */
+	TGAWREG(dc, TGA_REG_GMOR, 0);
+	TGAWREG(dc, TGA_REG_GPXR_P, 0xffffffff);
+
+}
+
+static void
+tga_eraserows(c, row, num, attr)
+	void *c;
+	int row, num;
+	long attr;
+{
+	struct rasops_info *ri = c;
+	struct tga_devconfig *dc = ri->ri_hw;
+	int32_t color, lines, pixels;
+	int32_t *rp;
+
+	color = ri->ri_devcmap[(attr >> 16) & 15];
+	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale);
+	lines = num * ri->ri_font->fontheight;
+	pixels = ri->ri_emuwidth - 1;
+
+	/* Set fill color in block-color registers */
+	TGAWREG(dc, TGA_REG_GBCR0, color);
+	TGAWREG(dc, TGA_REG_GBCR1, color);
+	if (ri->ri_depth != 8) {
+		TGAWREG(dc, TGA_REG_GBCR2, color);
+		TGAWREG(dc, TGA_REG_GBCR3, color);
+		TGAWREG(dc, TGA_REG_GBCR4, color);
+		TGAWREG(dc, TGA_REG_GBCR5, color);
+		TGAWREG(dc, TGA_REG_GBCR6, color);
+		TGAWREG(dc, TGA_REG_GBCR7, color);
+	}
+
+	/* Set raster operation to "copy"... */
+	if (ri->ri_depth == 8)
+		TGAWREG(dc, TGA_REG_GOPR, 0x3);
+	else /* ... and in 24-bit mode, set the destination bitmap to 24-bit. */
+		TGAWREG(dc, TGA_REG_GOPR, 0x3 | (0x3 << 8));
+
+	/* Set which pixels we're drawing (of a possible 32). */
+	TGAWREG(dc, TGA_REG_GDAR, 0xffffffff);
+
+	/* Set drawing mode to block fill. */
+	TGAWREG(dc, TGA_REG_GMOR, 0x2d);
+	
+	/* Insert write barrier before actually sending data */
+	/* XXX Abuses the fact that there is only one write barrier on Alphas */
+	TGAREGWB(dc, TGA_REG_GMOR, 1);
+
+	while (lines--) {
+		*rp = pixels;
+		rp = (int32_t *)((caddr_t)rp + ri->ri_stride);
+	}
+
+	/* Set grapics mode back to normal. */
+	TGAWREG(dc, TGA_REG_GMOR, 0);
+	
+}
+
+static void
+tga_erasecols (c, row, col, num, attr)
+void *c;
+int row, col, num;
+long attr;
+{
+	struct rasops_info *ri = c;
+	struct tga_devconfig *dc = ri->ri_hw;
+	int32_t color, lines, pixels;
+	int32_t *rp;
+
+	color = ri->ri_devcmap[(attr >> 16) & 15];
+	rp = (int32_t *)(ri->ri_bits + row*ri->ri_yscale + col*ri->ri_xscale);
+	lines = ri->ri_font->fontheight;
+	pixels = (num * ri->ri_font->fontwidth) - 1;
+
+	/* Set fill color in block-color registers */
+	TGAWREG(dc, TGA_REG_GBCR0, color);
+	TGAWREG(dc, TGA_REG_GBCR1, color);
+	if (ri->ri_depth != 8) {
+		TGAWREG(dc, TGA_REG_GBCR2, color);
+		TGAWREG(dc, TGA_REG_GBCR3, color);
+		TGAWREG(dc, TGA_REG_GBCR4, color);
+		TGAWREG(dc, TGA_REG_GBCR5, color);
+		TGAWREG(dc, TGA_REG_GBCR6, color);
+		TGAWREG(dc, TGA_REG_GBCR7, color);
+	}
+
+	/* Set raster operation to "copy"... */
+	if (ri->ri_depth == 8)
+		TGAWREG(dc, TGA_REG_GOPR, 0x3);
+	else /* ... and in 24-bit mode, set the destination bitmap to 24-bit. */
+		TGAWREG(dc, TGA_REG_GOPR, 0x3 | (0x3 << 8));
+
+	/* Set which pixels we're drawing (of a possible 32). */
+	TGAWREG(dc, TGA_REG_GDAR, 0xffffffff);
+
+	/* Set drawing mode to block fill. */
+	TGAWREG(dc, TGA_REG_GMOR, 0x2d);
+	
+	/* Insert write barrier before actually sending data */
+	/* XXX Abuses the fact that there is only one write barrier on Alphas */
+	TGAREGWB(dc, TGA_REG_GMOR, 1);
+
+	while (lines--) {
+		*rp = pixels;
+		rp = (int32_t *)((caddr_t)rp + ri->ri_stride);
+	}
+
+	/* Set grapics mode back to normal. */
+	TGAWREG(dc, TGA_REG_GMOR, 0);
+}
+
 
 static void
 tga_ramdac_wr(v, btreg, val)
