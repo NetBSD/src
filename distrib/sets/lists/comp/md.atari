@@ -7,13 +7,13 @@
 ./usr/include/m68k/cpu.h
 ./usr/include/m68k/db_machdep.h
 ./usr/include/m68k/endian.h
-./usr/include/m68k/exec.h
 ./usr/include/m68k/float.h
 ./usr/include/m68k/frame.h
 ./usr/include/m68k/ieeefp.h
 ./usr/include/m68k/kcore.h
 ./usr/include/m68k/limits.h
 ./usr/include/m68k/profile.h
+./usr/include/m68k/pcb.h
 ./usr/include/m68k/psl.h
 ./usr/include/m68k/ptrace.h
 ./usr/include/m68k/reg.h
