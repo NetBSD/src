@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.211 2003/10/22 04:40:14 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.212 2003/10/22 06:07:03 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2608,3 +2608,16 @@ share/man/man8/compat_linux.8			1.27-1.30
 
 	Replaced /proc with /emul/linux/proc. Some minor grammar fixes too.
 	[manu, ticket #1444]
+
+sys/kern/kern_clock.c				patch
+sys/sys/callout.h				patch
+share/man/man9/callout.9			patch
+sys/netinet/tcp_input.c				1.173
+sys/netinet/tcp_subr.c				1.144
+sys/netinet/tcp_timer.c				1.63
+sys/netinet/tcp_var.h				1.103
+usr.bin/netstat/inet.c				1.57
+ 
+	Introduce a new INVOKING status for callouts, and use it to close
+	a race condition in the TCP code.  Fixes PR#20390.
+	[he, ticket #1530]
