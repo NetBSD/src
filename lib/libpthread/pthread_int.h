@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.17 2003/07/21 22:21:07 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.18 2003/09/07 14:47:44 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002,2003 The NetBSD Foundation, Inc.
@@ -183,7 +183,6 @@ struct pthread_lock_ops {
 #define PT_STATE_BLOCKED_QUEUE	4
 #define PT_STATE_ZOMBIE		5
 #define PT_STATE_DEAD		6
-#define PT_STATE_RECYCLABLE	7
 
 /* Flag values */
 

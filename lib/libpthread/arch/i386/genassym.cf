@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2003/07/17 20:55:27 nathanw Exp $
+#	$NetBSD: genassym.cf,v 1.5 2003/09/07 14:47:48 cl Exp $
 
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,6 @@ include "pthread_int.h"
 include "pthread_md.h"
 
 define PT_NEXT		offsetof(struct __pthread_st, pt_next)
-define PT_STATE		offsetof(struct __pthread_st, pt_state)
 define PT_SWITCHTO	offsetof(struct __pthread_st, pt_switchto)
 define PT_SWITCHTOUC	offsetof(struct __pthread_st, pt_switchtouc)
 define PT_SPINLOCKS	offsetof(struct __pthread_st, pt_spinlocks)
@@ -57,7 +56,6 @@ define UC_EIP		offsetof(ucontext_t, uc_mcontext.__gregs[_REG_EIP])
 define UC_FPREGS	offsetof(ucontext_t, uc_mcontext.__fpregs.__fp_reg_set.__fpchip_state.__fp_state)
 define UC_FXSAVEREGS	offsetof(ucontext_t, uc_mcontext.__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm)
 
-define PT_STATE_RECYCLABLE	PT_STATE_RECYCLABLE
 define STACKSPACE		STACKSPACE
 
 define _UC_CPU		_UC_CPU
