@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.64 1999/12/24 18:03:05 augustss Exp $
+$NetBSD: usbdevs,v 1.65 1999/12/24 21:02:38 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ vendor COREGA		0x07aa	Corega
 vendor SIIG		0x07cc	SIIG
 vendor HANDSPRING	0x082d	Handspring Inc.
 vendor ACTIVEWIRE	0x0854	ActiveWire Inc.
-vendor BILLIONTON	0x08dd	Billionton
+vendor BILLIONTON	0x08dd	Billionton Systems Inc.
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor INSIDEOUT	0x1608	Inside Out Networks
@@ -131,7 +131,7 @@ product KODAK DC240		0x0120	Digital Science DC240
 product KODAK DC280		0x0130	Digital Science DC280
 
 /* Melco Inc products */
-product MELCO LUA_TX		0x0001	LUA-TX Ethernet
+product MELCO LUATX		0x0001	LUA-TX Ethernet
 
 /* CATC products */
 product CATC CHIEF		0x000d	USB Chief Bus & Protocol Analyzer
@@ -335,7 +335,7 @@ product ACTIVEWIRE IOBOARD	0x0100	I/O Board
 product ACTIVEWIRE IOBOARD_FW1	0x0101	I/O Board, rev. 1 firmware
 
 /* Billionton products */
-product BILLIONTON USB100N	0x0986	USB100N Ethernet
+product BILLIONTON USB100	0x0986	USB100N 10/100 FastEthernet Adapter
 
 /* Motorola products */
 product	MOTOROLA MC141555	0x1555	MC141555 hub controller
