@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.89 2003/01/17 22:17:05 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.90 2003/04/01 21:26:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 #include "opt_compat_sunos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.89 2003/01/17 22:17:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.90 2003/04/01 21:26:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,7 +322,7 @@ trapmmufault(type, code, v, fp, l, sticks)
 	 * Print out some data about the fault
 	 */
 #ifdef DEBUG_PAGE0
-	if (v < NBPG)					/* XXX PAGE0 */
+	if (v < PAGE_SIZE)				/* XXX PAGE0 */
 		mmudebug |= 0x100;			/* XXX PAGE0 */
 #endif
 	if (mmudebug && mmutype == MMU_68040) {
@@ -351,7 +351,7 @@ trapmmufault(type, code, v, fp, l, sticks)
 
 
 #ifdef DDB						/* XXX PAGE0 */
-		if (v < NBPG)				/* XXX PAGE0 */
+		if (v < PAGE_SIZE)			/* XXX PAGE0 */
 			Debugger();			/* XXX PAGE0 */
 #endif							/* XXX PAGE0 */
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.31 2002/10/02 04:55:49 thorpej Exp $ */
+/*	$NetBSD: flsc.c,v 1.32 2003/04/01 21:26:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -44,7 +44,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.31 2002/10/02 04:55:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.32 2003/04/01 21:26:31 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: flsc.c,v 1.31 2002/10/02 04:55:49 thorpej Exp $");
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/queue.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -517,7 +519,7 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 		fsc->sc_dmasize = flsc_max_dma;
 	ptr = *addr;			/* Kernel virtual address */
 	pa = kvtop(ptr);		/* Physical address of DMA */
-	xfer = min(fsc->sc_dmasize, NBPG - (pa & (NBPG - 1)));
+	xfer = min(fsc->sc_dmasize, PAGE_SIZE - (pa & (PAGE_SIZE - 1)));
 	fsc->sc_xfr_align = 0;
 	fsc->sc_piomode = 0;
 	fsc->sc_portbits &= ~FLSC_PB_DMA_BITS;
@@ -582,10 +584,10 @@ flsc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
 	while (xfer < fsc->sc_dmasize) {
 		if ((pa + xfer) != kvtop(*addr + xfer))
 			break;
-		if ((fsc->sc_dmasize - xfer) < NBPG)
+		if ((fsc->sc_dmasize - xfer) < PAGE_SIZE)
 			xfer = fsc->sc_dmasize;
 		else
-			xfer += NBPG;
+			xfer += PAGE_SIZE;
 	}
 
 	fsc->sc_dmasize = xfer;

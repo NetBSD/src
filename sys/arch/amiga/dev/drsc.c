@@ -1,4 +1,4 @@
-/*	$NetBSD: drsc.c,v 1.22 2002/10/02 04:55:49 thorpej Exp $ */
+/*	$NetBSD: drsc.c,v 1.23 2003/04/01 21:26:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -38,12 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.22 2002/10/02 04:55:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drsc.c,v 1.23 2003/04/01 21:26:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsiconf.h>
@@ -101,7 +104,7 @@ drscattach(struct device *pdp, struct device *dp, void *auxp)
 
 	zap = auxp;
 
-	sc->sc_siopp = rp = (siop_regmap_p)(DRCCADDR+NBPG*DRSCSIPG);
+	sc->sc_siopp = rp = (siop_regmap_p)(DRCCADDR+PAGE_SIZE*DRSCSIPG);
 
 	/*
 	 * CTEST7 = TT1

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbic.c,v 1.49 2002/09/27 15:35:40 provos Exp $ */
+/*	$NetBSD: sbic.c,v 1.50 2003/04/01 21:26:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,7 +46,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.49 2002/09/27 15:35:40 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.50 2003/04/01 21:26:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,10 +315,10 @@ sbic_load_ptrs(struct sbic_softc *dev, sbic_regmap_t regs, int target, int lun)
 
 		vaddr = acb->sc_kv.dc_addr;
 		count = acb->sc_kv.dc_count;
-		for(count = (NBPG - ((int)vaddr & PGOFSET));
+		for(count = (PAGE_SIZE - ((int)vaddr & PGOFSET));
 		    count < acb->sc_kv.dc_count
 		    && (char*)kvtop(vaddr + count + 4) == paddr + count + 4;
-		    count += NBPG);
+		    count += PAGE_SIZE);
 		/* If it's all contiguous... */
 		if(count > acb->sc_kv.dc_count ) {
 			count = acb->sc_kv.dc_count;
@@ -2520,7 +2520,7 @@ sbiccheckdmap(void *bp, u_long len, u_long mask)
 
 	while (len) {
 		phy_buf = kvtop(buffer);
-		if (len < (phy_len = NBPG - ((int) buffer & PGOFSET)))
+		if (len < (phy_len = PAGE_SIZE - ((int) buffer & PGOFSET)))
 			phy_len = len;
 		if (phy_buf & mask)
 			return(1);
