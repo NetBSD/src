@@ -39,10 +39,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)intr.c	8.1 (Berkeley) 6/11/93
+ *	@(#)intr.c	8.3 (Berkeley) 11/11/93
  *
- * from: Header: intr.c,v 1.20 92/11/26 03:04:53 torek Exp  (LBL)
- * $Id: intr.c,v 1.4 1994/04/20 12:45:37 deraadt Exp $
+ * from: Header: intr.c,v 1.22 93/09/26 19:48:06 torek Exp (LBL)
+ * $Id: intr.c,v 1.5 1994/05/19 07:12:52 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -54,9 +54,7 @@
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
-#ifdef DIAGNOSTIC
 #include <machine/instr.h>
-#endif
 #include <machine/trap.h>
 
 #include <sparc/sparc/clockreg.h>
