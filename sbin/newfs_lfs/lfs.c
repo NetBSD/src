@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.12.4.3 2000/10/16 21:53:27 tv Exp $	*/
+/*	$NetBSD: lfs.c,v 1.12.4.4 2001/02/03 21:47:12 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.12.4.3 2000/10/16 21:53:27 tv Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.12.4.4 2001/02/03 21:47:12 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -300,9 +300,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 		lfsp->lfs_dbpseg = ssize / DEV_BSIZE;
 	}
 	lfsp->lfs_ssize = ssize >> lfsp->lfs_bshift;
-
-	if (minfree)
-		lfsp->lfs_minfree = minfree;
+	lfsp->lfs_minfree = minfree;
 
 	/*
 	 * Fill in parts of superblock that can be computed from file system
@@ -775,6 +773,7 @@ make_dinode(ino, dip, nfrags, saddr, lfsp)
 	dip->di_atime = dip->di_mtime = dip->di_ctime = lfsp->lfs_tstamp;
 	dip->di_atimensec = dip->di_mtimensec = dip->di_ctimensec = 0;
 	dip->di_inumber = ino;
+	dip->di_gen = 1;
 
 	db_per_fb = 1 << lfsp->lfs_fsbtodb;
 #if 0
