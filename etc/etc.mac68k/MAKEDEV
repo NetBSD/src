@@ -20,7 +20,14 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.37.2.3 1999/11/01 07:46:12 scottr Exp $
+#	$NetBSD: MAKEDEV,v 1.37.2.4 1999/11/01 08:04:30 scottr Exp $
+#
+###########################################################################
+#
+#   PLEASE RUN "cd ../share/man/man8 ; perl5 MAKEDEV2manpage.pl"
+#   AFTER CHANGING THIS FILE, AND COMMIT THE UPDATED MANPAGE!
+#
+###########################################################################
 #
 # Device "make" file.  Valid arguments:
 #	all	a smattering -- at least one of each except ch*
@@ -65,13 +72,16 @@
 #	lkm	loadable kernel modules interface
 #	ipl	ip filter
 #	random	Random number generator
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsictl(8), scsi(4)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
 #	adb	Apple Desktop Bus
 #	asc*	Apple Sound Chip
 #
+
+dialin=0
+dialout=524288		# high bit of the minor number
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
@@ -248,9 +258,10 @@ sd*|fd*|vnd*|ccd*|raid*)
 
 tty*)
 	unit=${i#tty}
-	rm -f ser$unit tty$unit tty0$unit
-	mknod tty0$unit c 12 $unit
-	chown uucp.wheel tty0$unit
+	rm -f ser$unit tty$unit tty0$unit dty0$unit
+	mknod tty0$unit c 12 $(($unit + $dialin ))
+	mknod dty0$unit c 12 $(($unit + $dialout))
+	chown uucp.wheel tty0$unit dty0$unit
 	;;
 
 pty*)
