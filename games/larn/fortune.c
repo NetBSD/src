@@ -1,3 +1,5 @@
+/*	$NetBSD: fortune.c,v 1.4 1997/10/18 20:03:18 christos Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -31,21 +33,26 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)fortune.c	5.5 (Berkeley) 6/10/91";
+static char     sccsid[] = "@(#)fortune.c	5.5 (Berkeley) 6/10/91";
 #else
-static char rcsid[] = "$NetBSD: fortune.c,v 1.3 1995/03/23 08:33:23 cgd Exp $";
+__RCSID("$NetBSD: fortune.c,v 1.4 1997/10/18 20:03:18 christos Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
+#include <stdlib.h>
+
+#include "header.h"
+#include "extern.h"
 /* fortune.c		 Larn is copyrighted 1986 by Noah Morgan. */
 
 /*
  * function to return a random fortune from the fortune file
  */
 
-char *flines[] = {
+char           *flines[] = {
 	"gem value = gem * 2 ^ perfection",
 	"sitting down can have unexpected results",
 	"don't pry into the affairs of others",
