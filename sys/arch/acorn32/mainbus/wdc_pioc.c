@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.14 2004/01/03 01:50:52 thorpej Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.15 2004/01/03 22:56:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.14 2004/01/03 01:50:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.15 2004/01/03 22:56:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,9 +177,9 @@ wdc_pioc_attach(parent, self, aux)
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
-	sc->wdc_channel.wdc = &sc->sc_wdcdev;
+	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->sc_wdcdev.nchannels = 1;
-	sc->wdc_channel.channel = 0;
+	sc->wdc_channel.ch_channel = 0;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 
 	wdcattach(&sc->wdc_channel);

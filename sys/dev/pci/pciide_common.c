@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.8 2004/01/03 22:56:53 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.7 2004/01/03 01:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.8 2004/01/03 22:56:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -201,7 +201,7 @@ pciide_mapregs_compat(pa, cp, compatchan, cmdsizep, ctlsizep)
 	int compatchan;
 	bus_size_t *cmdsizep, *ctlsizep;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 	int i;
 
@@ -253,7 +253,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 	bus_size_t *cmdsizep, *ctlsizep;
 	int (*pci_intr) __P((void *));
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
@@ -285,7 +285,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 		}
 	}
 	cp->ih = sc->sc_pci_ih;
-	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->channel),
+	if (pci_mapreg_map(pa, PCIIDE_REG_CMD_BASE(wdc_cp->ch_channel),
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &wdc_cp->cmd_iot, &wdc_cp->cmd_baseioh, NULL, cmdsizep) != 0) {
 		aprint_error("%s: couldn't map %s channel cmd regs\n",
@@ -293,7 +293,7 @@ pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr)
 		goto bad;
 	}
 
-	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->channel),
+	if (pci_mapreg_map(pa, PCIIDE_REG_CTL_BASE(wdc_cp->ch_channel),
 	    PCI_MAPREG_TYPE_IO, 0,
 	    &wdc_cp->ctl_iot, &cp->ctl_baseioh, NULL, ctlsizep) != 0) {
 		aprint_error("%s: couldn't map %s channel ctl regs\n",
@@ -486,7 +486,7 @@ pciide_channel_dma_setup(cp)
 	struct pciide_channel *cp;
 {
 	int drive;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 	struct ata_drive_datas *drvp;
 
 	for (drive = 0; drive < 2; drive++) {
@@ -501,8 +501,8 @@ pciide_channel_dma_setup(cp)
 			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			continue;
 		}
-		if (pciide_dma_table_setup(sc, cp->wdc_channel.channel, drive)
-		    != 0) {
+		if (pciide_dma_table_setup(sc, cp->wdc_channel.ch_channel,
+					   drive) != 0) {
 			/* Abort DMA setup */
 			drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 			continue;
@@ -729,7 +729,7 @@ pciide_irqack(chp)
 	struct wdc_channel *chp;
 {
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 
 	/* clear status bits in IDE DMA registers */
 	bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
@@ -746,8 +746,8 @@ pciide_chansetup(sc, channel, interface)
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 	sc->wdc_chanarray[channel] = &cp->wdc_channel;
 	cp->name = PCIIDE_CHANNEL_NAME(channel);
-	cp->wdc_channel.channel = channel;
-	cp->wdc_channel.wdc = &sc->sc_wdcdev;
+	cp->wdc_channel.ch_channel = channel;
+	cp->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	cp->wdc_channel.ch_queue =
 	    malloc(sizeof(struct ata_queue), M_DEVBUF, M_NOWAIT);
 	if (cp->wdc_channel.ch_queue == NULL) {
@@ -776,10 +776,10 @@ pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
 {
 	struct wdc_channel *wdc_cp = &cp->wdc_channel;
 
-	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->channel))
+	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->ch_channel))
 		pciide_mapregs_native(pa, cp, cmdsizep, ctlsizep, pci_intr);
 	else
-		pciide_mapregs_compat(pa, cp, wdc_cp->channel, cmdsizep,
+		pciide_mapregs_compat(pa, cp, wdc_cp->ch_channel, cmdsizep,
 		    ctlsizep);
 	wdcattach(wdc_cp);
 }
@@ -793,7 +793,7 @@ pciide_map_compat_intr(pa, cp, compatchan)
 	struct pciide_channel *cp;
 	int compatchan;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.ch_wdc;
 
 #ifdef __HAVE_PCIIDE_MACHDEP_COMPAT_INTR_ESTABLISH
 	cp->ih = pciide_machdep_compat_intr_establish(&sc->sc_wdcdev.sc_dev,
@@ -952,7 +952,7 @@ sata_setup_channel(chp)
 	int drive;
 	u_int32_t idedma_ctl;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.wdc;
+	struct pciide_softc *sc = (struct pciide_softc*)cp->wdc_channel.ch_wdc;
 
 	/* setup DMA if needed */
 	pciide_channel_dma_setup(cp);
