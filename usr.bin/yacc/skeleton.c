@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.9 1996/03/19 03:21:46 jtc Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: skeleton.c,v 1.9 1996/03/19 03:21:46 jtc Exp $";
+static char rcsid[] = "$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ char *banner[] =
     "#if 0",
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
-    "static char yyrcsid[] = \"$NetBSD: skeleton.c,v 1.9 1996/03/19 03:21:46 jtc Exp $\";",
+    "static char yyrcsid[] = \"$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $\";",
     "#endif",
     "#endif",
     "#include <stdlib.h>",
@@ -145,11 +145,11 @@ char *body[] =
     "    else if ((newsize *= 2) > YYMAXDEPTH)",
     "        newsize = YYMAXDEPTH;",
     "    i = yyssp - yyss;",
-    "    if ((newss = realloc(yyss, newsize * sizeof *newss)) == NULL)",
+    "    if ((newss = (short *)realloc(yyss, newsize * sizeof *newss)) == NULL)",
     "        return -1;",
     "    yyss = newss;",
     "    yyssp = newss + i;",
-    "    if ((newvs = realloc(yyvs, newsize * sizeof *newvs)) == NULL)",
+    "    if ((newvs = (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs)) == NULL)",
     "        return -1;",
     "    yyvs = newvs;",
     "    yyvsp = newvs + i;",
