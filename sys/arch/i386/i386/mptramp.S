@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.2 2003/03/01 16:36:37 fvdl Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.3 2003/04/08 23:48:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ _TRMP_LABEL(mp_startup)
 	movw    %ax, %fs
 	movw    %ax, %gs
 	
-	movl    $ (MP_TRAMPOLINE+NBPG-16),%esp       # bootstrap stack end,
+	movl    $ (MP_TRAMPOLINE+PAGE_SIZE-16),%esp  # bootstrap stack end,
 						     # with scratch space..
 	
 #ifdef MPDEBUG

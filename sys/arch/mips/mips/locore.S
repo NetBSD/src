@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.151 2003/02/08 00:50:33 cgd Exp $	*/
+/*	$NetBSD: locore.S,v 1.152 2003/04/08 23:39:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -987,7 +987,7 @@ END(MachFPInterrupt)
 
 LEAF(mips_pagecopy)
 #if defined(__mips_n32) || defined(_LP64)
-	li	a2, NBPG >> 6
+	li	a2, PAGE_SIZE >> 6
 
 1:	ld	t0, 0(a1)
 	ld	ta0, 32(a1)
@@ -1012,7 +1012,7 @@ LEAF(mips_pagecopy)
 	addu	a0, 64
 #else
 	/* o32 */
-	li	a2, NBPG >> 5
+	li	a2, PAGE_SIZE >> 5
 
 1:	lw	t0, 0(a1)
 	lw	ta0, 16(a1)
@@ -1042,7 +1042,7 @@ END(mips_pagecopy)
 
 LEAF(mips_pagezero)
 #if defined(__mips_n32) || defined(_LP64)
-	li	a1, NBPG >> 6
+	li	a1, PAGE_SIZE >> 6
 
 1:	sd	zero, 0(a0)			# try to miss cache first
 	sd	zero, 32(a0)
@@ -1057,7 +1057,7 @@ LEAF(mips_pagezero)
 	addu	a0, 64
 #else
 	/* o32 */
-	li	a1, NBPG >> 5
+	li	a1, PAGE_SIZE >> 5
 
 1:	sw	zero, 0(a0)
 	sw	zero, 16(a0)			# try to miss cache first

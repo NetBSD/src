@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfevar.h,v 1.3 2003/03/17 16:41:16 matt Exp $	*/
+/*	$NetBSD: if_gfevar.h,v 1.4 2003/04/08 23:46:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -37,11 +37,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define	GE_RXDESC_MEMSIZE		(1 * NBPG)
+#define	GE_RXDESC_MEMSIZE		(1 * PAGE_SIZE)
 #define	GE_RXDESC_MAX			64
 #define	GE_RXBUF_SIZE			2048
 #define	GE_RXBUF_MEMSIZE		(GE_RXDESC_MAX*GE_RXBUF_SIZE)
-#define	GE_RXBUF_NSEGS			((GE_RXBUF_MEMSIZE/NBPG)+1)
+#define	GE_RXBUF_NSEGS			((GE_RXBUF_MEMSIZE/PAGE_SIZE)+1)
 #define	GE_DMSEG_MAX			(GE_RXBUF_NSEGS)
 
 struct gfe_dmamem {
@@ -55,9 +55,9 @@ struct gfe_dmamem {
 
 /* With a 4096 page size, we get 256 descriptors per page.
  */
-#define	GE_TXMEM_SIZE			(1 * NBPG)
+#define	GE_TXMEM_SIZE			(1 * PAGE_SIZE)
 #define	GE_TXDESC_MAX			(GE_TXMEM_SIZE / 16)
-#define	GE_TXBUF_SIZE			(4 * NBPG)
+#define	GE_TXBUF_SIZE			(4 * PAGE_SIZE)
 
 struct gfe_txqueue {
 	struct ifqueue txq_pendq;	/* these are ready to go to the GT */

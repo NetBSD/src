@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.11 2003/01/17 23:36:15 thorpej Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.12 2003/04/08 23:39:15 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -2203,7 +2203,7 @@ END(MIPSX(TBIA))
 
 #ifdef USE_64BIT_INSTRUCTIONS
 LEAF(MIPSX(pagezero))
-	li	a1, NBPG >> 6
+	li	a1, PAGE_SIZE >> 6
 
 1:	sd	zero, 0(a0)			# try to miss cache first
 	sd	zero, 32(a0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2003/02/09 15:49:34 drochner Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2003/04/08 23:48:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@
  * XXX 4 == sizeof pde
  */
 	.set	_C_LABEL(PTmap),(PDSLOT_PTE << PDSHIFT)
-	.set	_C_LABEL(PTD),(_C_LABEL(PTmap) + PDSLOT_PTE * NBPG)
+	.set	_C_LABEL(PTD),(_C_LABEL(PTmap) + PDSLOT_PTE * PAGE_SIZE)
 	.set	_C_LABEL(PTDpde),(_C_LABEL(PTD) + PDSLOT_PTE * 4)
 
 /*
@@ -173,7 +173,7 @@
  * XXX 4 == sizeof pde
  */
 	.set	_C_LABEL(APTmap),(PDSLOT_APTE << PDSHIFT)
-	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * NBPG)
+	.set	_C_LABEL(APTD),(_C_LABEL(APTmap) + PDSLOT_APTE * PAGE_SIZE)
 	.set	_C_LABEL(APTDpde),(_C_LABEL(PTD) + PDSLOT_APTE * 4)
 
 
@@ -199,7 +199,7 @@
 	
 #if NLAPIC > 0
 #ifdef __ELF__
-	.align	NBPG
+	.align	PAGE_SIZE
 #else
 	.align	12
 #endif
@@ -214,7 +214,7 @@ _C_LABEL(lapic_tpr):
 _C_LABEL(lapic_ppr):		
 	.space	LAPIC_ISR-LAPIC_PPRI
 _C_LABEL(lapic_isr):
-	.space	NBPG-LAPIC_ISR
+	.space	PAGE_SIZE-LAPIC_ISR
 #else
 _C_LABEL(lapic_tpr):	
 	.long 0
@@ -506,10 +506,10 @@ try586:	/* Use the `cpuid' instruction. */
  * text | data | bss | [syms] | page dir | proc0 kstack 
  *			      0          1       2      3
  */
-#define	PROC0PDIR	((0)              * NBPG)
-#define	PROC0STACK	((1)              * NBPG)
-#define	SYSMAP		((1+UPAGES)       * NBPG)
-#define	TABLESIZE	((1+UPAGES) * NBPG) /* + nkpde * NBPG */
+#define	PROC0PDIR	((0)              * PAGE_SIZE)
+#define	PROC0STACK	((1)              * PAGE_SIZE)
+#define	SYSMAP		((1+UPAGES)       * PAGE_SIZE)
+#define	TABLESIZE	((1+UPAGES) * PAGE_SIZE) /* + nkpde * PAGE_SIZE */
 
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
@@ -561,7 +561,7 @@ try586:	/* Use the `cpuid' instruction. */
  */
 #define	fillkpt		\
 1:	movl	%eax,(%ebx)	; \
-	addl	$NBPG,%eax	; /* increment physical address */ \
+	addl	$PAGE_SIZE,%eax	; /* increment physical address */ \
 	addl	$4,%ebx		; /* next pte */ \
 	loop	1b		;
 
@@ -1095,8 +1095,8 @@ ENTRY(copyoutstr)
 	/* Compute number of bytes in first page. */
 	movl	%edi,%eax
 	andl	$PGOFSET,%eax
-	movl	$NBPG,%ecx
-	subl	%eax,%ecx		# ecx = NBPG - (src % NBPG)
+	movl	$PAGE_SIZE,%ecx
+	subl	%eax,%ecx		# ecx = PAGE_SIZE - (src % PAGE_SIZE)
 
 	GET_CURPCB(%eax)
 	movl	$6f,PCB_ONFAULT(%eax)
@@ -1143,7 +1143,7 @@ ENTRY(copyoutstr)
 	jmp	copystr_return
 
 4:	/* Go to next page, if any. */
-	movl	$NBPG,%ecx
+	movl	$PAGE_SIZE,%ecx
 	testl	%edx,%edx
 	jnz	1b
 
