@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 1999/11/13 00:32:17 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.17 2000/03/14 00:04:19 soren Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -317,7 +317,7 @@ clockattach(node, bh)
 }
 
 /*
- * The the sun4u OPENPROMs call the timer the "counter-timer", except for
+ * The sun4u OPENPROMs call the timer the "counter-timer", except for
  * the lame UltraSPARC IIi PCI machines that don't have them.
  */
 static int
