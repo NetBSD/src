@@ -1,7 +1,7 @@
-/*	$NetBSD: timekeeper.c,v 1.2 2002/02/12 20:38:28 scw Exp $	*/
+/*	$NetBSD: memc_68k.c,v 1.1 2002/02/12 20:38:20 scw Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,84 +37,89 @@
  */
 
 /*
- * Attachment interface for the Time-Keeper RAMs on mvme boards.
- *
- * XXXSCW: Needs to be extended to allow read/write to NVRAM by
- * userland application.
+ * Support for the MEMECC and MEMC40 memory controllers on MVME68K
  */
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/conf.h>
+#include <sys/malloc.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include <dev/mvme/clockvar.h>
-
 #include <mvme68k/dev/mainbus.h>
 
-struct timekeeper_softc {
-	struct device		sc_dev;
-	bus_space_tag_t		sc_bust;
-	bus_space_handle_t	sc_bush;
-	bus_size_t		sc_size;
+#include <dev/mvme/memcvar.h>
+#include <dev/mvme/memcreg.h>
+#include <dev/mvme/pcctwovar.h>
+#include <dev/mvme/pcctworeg.h>
+
+
+int memc_match(struct device *, struct cfdata *, void *);
+void memc_attach(struct device *, struct device *, void *);
+
+struct cfattach memc_ca = {
+	sizeof(struct memc_softc), memc_match, memc_attach
 };
 
-int timekeeper_match(struct device *, struct cfdata *, void *);
-void timekeeper_attach(struct device *, struct device *, void *);
+extern struct cfdriver memc_cd;
 
-struct cfattach timekeeper_ca = {
-	sizeof(struct timekeeper_softc), timekeeper_match, timekeeper_attach
-};
 
-extern struct cfdriver timekeeper_cd;
-
+/* ARGSUSED */
 int
-timekeeper_match(parent, cf, aux)
+memc_match(parent, cf, aux)
 	struct device *parent;
 	struct cfdata *cf;
 	void *aux;
 {
 	struct mainbus_attach_args *ma = aux;
+	bus_space_handle_t bh;
+	u_int8_t chipid;
+	int rv;
 
-	if (strcmp(ma->ma_name, timekeeper_cd.cd_name))
+#ifdef MVME68K
+	if (machineid != MVME_167 && machineid != MVME_177 &&
+	    machineid != MVME_162 && machineid != MVME_172)
+		return (0);
+#endif
+
+	if (strcmp(ma->ma_name, memc_cd.cd_name))
+		return (0);
+
+	if (bus_space_map(ma->ma_bust, ma->ma_offset, MEMC_REGSIZE, 0, &bh))
+		return (0);
+
+	rv = bus_space_peek_1(ma->ma_bust, bh, MEMC_REG_CHIP_ID, &chipid);
+	bus_space_unmap(ma->ma_bust, bh, MEMC_REGSIZE);
+
+	if (rv)
+		return (0);
+
+	/* Verify the Chip Id register is sane */
+	if (chipid != MEMC_CHIP_ID_MEMC040 && chipid != MEMC_CHIP_ID_MEMECC)
 		return (0);
 
 	return (1);
 }
 
+/* ARGSUSED */
 void
-timekeeper_attach(parent, self, aux)
+memc_attach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
 	void *aux;
 {
-	struct timekeeper_softc *sc = (struct timekeeper_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	todr_chip_handle_t todr;
-	const char *model;
+	struct memc_softc *sc = (struct memc_softc *) self;
 
 	sc->sc_bust = ma->ma_bust;
 
-	if (machineid == MVME_147) {
-		sc->sc_size = MK48T02_CLKSZ;
-		model = "mk48t02";
-	} else {
-		sc->sc_size = MK48T08_CLKSZ;
-		model = "mk48t08";
-	}
+	/* Map the memory controller's registers */
+	bus_space_map(sc->sc_bust, ma->ma_offset, MEMC_REGSIZE, 0,
+	    &sc->sc_bush);
 
-	bus_space_map(ma->ma_bust, ma->ma_offset, sc->sc_size, 0, &sc->sc_bush);
-
-	todr = mk48txx_attach(sc->sc_bust, sc->sc_bush, model, YEAR0);
-	if (todr == NULL)
-		panic("\ntimekeeper_attach");
-
-	printf(" Time-Keeper RAM\n");
-	printf("%s: %ld bytes NVRAM plus Realtime Clock\n",
-	    sc->sc_dev.dv_xname, sc->sc_size);
-
-	clock_rtc_config(todr);
+	/* Finish initialisation in common code */
+	memc_init(sc);
 }

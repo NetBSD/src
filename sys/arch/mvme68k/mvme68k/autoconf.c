@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2001/05/31 18:46:09 scw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2002/02/12 20:38:35 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@
 #include <mvme68k/dev/pccreg.h>
 #endif
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
-#include <mvme68k/dev/pcctworeg.h>
+#include <dev/mvme/pcctworeg.h>
 #endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.7 2001/07/06 19:00:14 scw Exp $	*/
+/*	$NetBSD: isr.h,v 1.8 2002/02/12 20:38:39 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct isr_vectored {
 extern	struct evcnt mvme68k_irq_evcnt[];
 
 void	isrinit __P((void));
-#define isrlink_evcnt(ipl)	&mvme68k_irq_evcnt[(ipl)]
+struct evcnt *isrlink_evcnt __P((int));
 void	isrlink_autovec __P((int (*)(void *), void *, int, int,
 	    struct evcnt *));
 void	isrlink_vectored __P((int (*)(void *), void *, int, int,
