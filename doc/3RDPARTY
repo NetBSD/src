@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.286 2005/02/19 21:59:16 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.287 2005/02/20 14:30:04 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -151,7 +151,7 @@ gnu/dist/cvs/config.h.in.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.3.21
+Current Vers:	1.86/4.3.27
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
 Archive Site:	http://www.sleepycat.com/products.html
 Mailing List:
