@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.205 2000/05/27 16:11:16 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.206 2000/06/28 16:39:25 mrg Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -90,8 +90,6 @@
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fea.c,v 1.21 2000/06/26 14:21:09 mrg Exp $	*/
+/*	$NetBSD: if_fea.c,v 1.22 2000/06/28 16:39:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -70,8 +70,6 @@
 #else
 #include <net/if_fddi.h>
 #endif
-
-#include <vm/vm.h>
 
 #if defined(__FreeBSD__)
 #include <netinet/if_ether.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.32 2000/04/01 17:52:14 bouyer Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.33 2000/06/28 16:39:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

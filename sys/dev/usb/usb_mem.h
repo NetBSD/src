@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.h,v 1.14 2000/06/01 14:29:01 augustss Exp $	*/
+/*	$NetBSD: usb_mem.h,v 1.15 2000/06/28 16:39:27 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_mem.h,v 1.9 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -72,9 +72,6 @@ void		usb_freemem(usbd_bus_handle, usb_dma_t *);
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <vm/vm.h>
-#include <vm/pmap.h>
-
-#include <machine/pmap.h>       /* for vtophys */
 
 #define		usb_allocmem(t,s,a,p)	(*(p) = malloc(s, M_USB, M_NOWAIT), (*(p) == NULL? USBD_NOMEM: USBD_NORMAL_COMPLETION))
 #define		usb_freemem(t,p)	(free(*(p), M_USB))

@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.3 2000/01/11 12:59:44 pk Exp $ */
+/*	$NetBSD: xbox.c,v 1.4 2000/06/28 16:39:28 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <vm/vm.h>
 
 #include <machine/bus.h>
 #include <dev/sbus/sbusvar.h>
