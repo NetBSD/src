@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.14.2.6 1993/10/15 03:22:06 mycroft Exp $
+ *	$Id: trap.c,v 1.14.2.7 1993/10/18 08:28:11 mycroft Exp $
  */
 
 /*
@@ -75,7 +75,10 @@ int	nsysent;
  * trap, mem_access_fault, and syscall.
  */
 static inline void
-userret(struct proc *p, int pc, u_quad_t oticks)
+userret(p, pc, oticks)
+	struct proc *p;
+	int pc;
+	u_quad_t oticks;
 {
 	int sig;
 
@@ -200,6 +203,10 @@ copyfault:
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
 		cnt.v_soft++;
+		if (p->p_flag & SOWEUPC) {
+			p->p_flag &= ~SOWEUPC;
+			ADDUPROF(p);
+		}
 		goto out;
 
 	case T_DNA|T_USER:
