@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.16 1995/01/22 23:44:48 christos Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.17 1995/01/25 04:17:06 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -79,7 +79,7 @@
 /* XXX */ extern struct proc *pfind();
 
 static __inline clock_t timeval_to_clock_t __P((struct timeval *));
-static int svr4_setinfo	__P((int, int, struct svr4_siginfo *));
+static int svr4_setinfo	__P((struct proc *, int, svr4_siginfo_t *));
 
 struct svr4_hrtcntl_args;
 static int svr4_hrtcntl	__P((struct proc *, struct svr4_hrtcntl_args *,
@@ -838,49 +838,46 @@ svr4_hrtsys(p, uap, retval)
 }
 
 static int
-svr4_setinfo(pid, st, s)
-	int pid;
+svr4_setinfo(p, st, s)
+	struct proc *p;
 	int st;
-	struct svr4_siginfo *s;
+	svr4_siginfo_t *s;
 {
-	/*
-	 * Not a very good status translation 
-	 * We don't know the sending process id, so we always assume ourselves
-	 */
-	struct svr4_siginfo i;
+	svr4_siginfo_t i;
 
 	bzero(&i, sizeof(i));
 
+	i.si_signo = SVR4_SIGCHLD;
+	i.si_errno = 0;	/* XXX? */
+
+	if (p) {
+		i.si_pid = p->p_pid;
+		i.si_stime = p->p_ru->ru_stime.tv_sec;
+		i.si_utime = p->p_ru->ru_utime.tv_sec;
+	}
+
 	if (WIFEXITED(st)) {
-	    i.si_signo = 0;
-	    i.si_status = WEXITSTATUS(st);
-	    i.si_code = SVR4_CLD_EXITED;
+		i.si_status = WEXITSTATUS(st);
+		i.si_code = SVR4_CLD_EXITED;
 	}
 	else if (WIFSTOPPED(st)) {
-	    i.si_signo = WSTOPSIG(st);
-	    i.si_status = WSTOPSIG(st);
-	    if (i.si_signo == SIGCONT)
-		i.si_code = SVR4_CLD_CONTINUED;
-	    else
-		i.si_code = SVR4_CLD_STOPPED;
-	}
-	else {
-	    i.si_signo = WTERMSIG(st);
-	    i.si_status = WTERMSIG(st);
-	    i.si_code = SVR4_CLD_KILLED;
-	}
+		i.si_status = bsd_to_svr4_signum(WSTOPSIG(st));
 
-	if (WCOREDUMP(st)) {
-	    i.si_code = SVR4_CLD_DUMPED;
-	    i.si_addr = (svr4_caddr_t) 0xfeedbeef;
+		if (i.si_status == SVR4_SIGCONT)
+			i.si_code = SVR4_CLD_CONTINUED;
+		else
+			i.si_code = SVR4_CLD_STOPPED;
+	} else {
+		i.si_status = bsd_to_svr4_signum(WTERMSIG(st));
+
+		if (WCOREDUMP(st))
+			i.si_code = SVR4_CLD_DUMPED;
+		else
+			i.si_code = SVR4_CLD_KILLED;
 	}
 
-	i.si_pid = pid;
-	i.si_uid = 0; /* XXX: */
-
-	DPRINTF(("siginfo[pid %d uid %d signo %d code %d errno %d status %d]\n",
-		 i.si_pid, i.si_uid, i.si_signo, i.si_code, i.si_errno,
-		 i.si_status));
+	DPRINTF(("siginfo [pid %d signo %d code %d errno %d status %d]\n",
+		 i.si_pid, i.si_signo, i.si_code, i.si_errno, i.si_status));
 
 	return copyout(&i, s, sizeof(i));
 }
@@ -932,7 +929,7 @@ loop:
 		    ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)))) {
 			*retval = 0;
 			DPRINTF(("found %d\n", q->p_pid));
-			if ((error = svr4_setinfo(q->p_pid, (int) q->p_xstat,
+			if ((error = svr4_setinfo(q, q->p_xstat,
 						  SCARG(uap, info))) != 0)
 				return error;
 
@@ -1003,7 +1000,7 @@ loop:
 			else
 				DPRINTF(("Don't wait\n"));
 			*retval = 0;
-			return svr4_setinfo(q->p_pid, W_STOPCODE(q->p_xstat),
+			return svr4_setinfo(q, W_STOPCODE(q->p_xstat),
 					    SCARG(uap, info));
 		}
 	}
@@ -1013,7 +1010,7 @@ loop:
 
 	if (SCARG(uap, options) & SVR4_WNOHANG) {
 		*retval = 0;
-		if ((error = svr4_setinfo(0, 0, SCARG(uap, info))) != 0)
+		if ((error = svr4_setinfo(NULL, 0, SCARG(uap, info))) != 0)
 			return error;
 		return 0;
 	}
