@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.12 1998/12/24 04:50:43 marc Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.13 1998/12/24 04:51:59 marc Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -152,6 +152,8 @@ pcmcia_card_attach(dev)
 	pcmcia_read_cis(sc);
 
 	pcmcia_chip_socket_disable(sc->pct, sc->pch);
+
+	pcmcia_check_cis_quirks(sc);
 
 	/*
 	 * bail now if the card has no functions, or if there was an error in
