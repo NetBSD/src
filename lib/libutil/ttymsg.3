@@ -1,4 +1,4 @@
-.\" $NetBSD: ttymsg.3,v 1.8 2002/02/20 11:34:42 wiz Exp $
+.\" $NetBSD: ttymsg.3,v 1.9 2002/10/01 19:36:30 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,8 @@ seconds.
 .Sh RETURN VALUES
 .Fn ttymsg
 returns a pointer to an error string on unexpected
-error; the string is not newline-terminated.  Various "normal" errors are
+error; the string is not newline-terminated.
+Various "normal" errors are
 ignored (exclusive-use, lack of permission, etc.).
 .Sh SEE ALSO
 .Xr writev 2
