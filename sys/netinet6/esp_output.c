@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_output.c,v 1.4 2000/07/23 05:23:04 itojun Exp $	*/
-/*	$KAME: esp_output.c,v 1.24 2000/07/20 17:41:01 itojun Exp $	*/
+/*	$NetBSD: esp_output.c,v 1.5 2000/07/30 04:33:34 itojun Exp $	*/
+/*	$KAME: esp_output.c,v 1.25 2000/07/30 04:28:55 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -496,7 +496,8 @@ esp_output(m, nexthdrp, md, isr, af)
     }
 
 	/*
-	 * XXX pre-compute and cache intermediate key
+	 * pre-compute and cache intermediate key
+	 * XXX should improve code sharing
 	 */
 	if (!sav->sched && sav->schedlen == 0) {
 		if (algo->schedule && algo->schedlen) {
