@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_isapnp.c,v 1.3 1997/09/17 18:21:43 drochner Exp $	*/
+/*	$NetBSD: pcnet_isapnp.c,v 1.4 1997/09/20 12:13:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -79,7 +79,7 @@ char *myadr;
   am7990_stop();
 
   for(i=0; i<6; i++)
-	  bi_netif.hw_addr[i] = myadr[i] = eth_myaddr[i] = inb(iobase + i);
+	  myadr[i] = eth_myaddr[i] = inb(iobase + i);
 
   isa_dmacascade(dmachan);
 
@@ -87,7 +87,7 @@ char *myadr;
 
   strncpy(bi_netif.ifname, "le", sizeof(bi_netif.ifname));
   bi_netif.bus = BI_BUS_ISA;
-  bi_netif.addr = iobase;
+  bi_netif.addr.iobase = iobase;
 
   BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c590.c,v 1.6 1997/09/17 18:21:41 drochner Exp $	*/
+/*	$NetBSD: 3c590.c,v 1.7 1997/09/20 12:13:03 drochner Exp $	*/
 
 /* stripped down from freebsd:sys/i386/netboot/3c509.c */
 
@@ -137,14 +137,14 @@ ok:
 	  outw(BASE + EP_W2_ADDR_0 + (i * 2), help);
 	}
 	for(i = 0; i < 6; i++)
-		bi_netif.hw_addr[i] = myadr[i] = eth_myaddr[i];
+		myadr[i] = eth_myaddr[i];
 
 	epreset();
 
 
 	strncpy(bi_netif.ifname, "ep", sizeof(bi_netif.ifname));
 	bi_netif.bus = BI_BUS_PCI;
-	bi_netif.addr = eth_base;
+	bi_netif.addr.tag = hdl;
 
 	BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
 
