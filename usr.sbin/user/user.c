@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.4 1999/12/07 10:14:03 lukem Exp $ */
+/* $NetBSD: user.c,v 1.5 1999/12/07 10:42:12 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -34,19 +34,19 @@
 #include <sys/param.h>
 #include <sys/stat.h>
 
+#include <ctype.h>
+#include <dirent.h>
+#include <err.h>
+#include <fcntl.h>
+#include <grp.h>
+#include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <dirent.h>
 #include <string.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <fcntl.h>
 #include <time.h>
+#include <unistd.h>
 #include <util.h>
-#include <pwd.h>
-#include <grp.h>
-#include <err.h>
 
 #include "defs.h"
 #include "usermgmt.h"
@@ -90,17 +90,6 @@ asystem(char *fmt, ...)
 		warnx("[Warning] can't system `%s'", buf);
 	}
 	return ret;
-}
-
-/* bounds checking strncpy */
-static char *
-strnncpy(char *to, size_t tosize, char *from, size_t fromsize)
-{
-	size_t	n = MIN(tosize - 1, fromsize);
-
-	(void) memcpy(to, from, n);
-	to[n] = 0;
-	return to;
 }
 
 /* copy any dot files into the user's home directory */
@@ -235,7 +224,7 @@ modify_gid(char *group, char *newent)
 				continue;
 			} else {
 				cc = strlen(newent);
-				(void) strnncpy(buf, sizeof(buf), newent, (unsigned) cc);
+				(void) strlcpy(buf, newent, sizeof(buf));
 			}
 		}
 		if (fwrite(buf, sizeof(char), (unsigned) cc, to) != cc) {
@@ -786,6 +775,10 @@ usage(char *prog)
 		(void) fprintf(stderr, "%s [-v] group\n", prog);
 	} else if (strcmp(prog, "groupmod") == 0) {
 		(void) fprintf(stderr, "%s [-ggid] [-o] [-nnewname] [-v] group\n", prog);
+	} else if ((strcmp(prog, "user") == 0) || (strcmp(prog, "group") == 0)) {
+		(void) fprintf(stderr, "%s ( add | del | mod ) ...\n", prog);
+	} else {
+		warn("usage() called with unknown prog `%s'", prog);
 	}
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
@@ -943,7 +936,7 @@ usermod(int argc, char **argv)
 			break;
 		case 'l':
 			have_new_user = 1;
-			(void) strnncpy(newuser, sizeof(newuser), optarg, strlen(optarg));
+			(void) strlcpy(newuser, optarg, sizeof(newuser));
 			break;
 		case 'm':
 			u.u_mkdir = 1;
@@ -1231,9 +1224,12 @@ main(int argc, char **argv)
 	for (cmdp = cmds ; cmdp->c_progname ; cmdp++) {
 		if (strcmp(__progname, cmdp->c_progname) == 0) {
 			return (*cmdp->c_func)(argc, argv);
-		} else if (strcmp(__progname, cmdp->c_word1) == 0 &&
-			   strcmp(argv[1], cmdp->c_word2) == 0) {
-			return (*cmdp->c_func)(argc - 1, argv + 1);
+		} else if (strcmp(__progname, cmdp->c_word1) == 0) {
+			if (argc > 1 && strcmp(argv[1], cmdp->c_word2) == 0) {
+				return (*cmdp->c_func)(argc - 1, argv + 1);
+			} else {
+				usage(__progname);
+			}
 		}
 	}
 	errx(EXIT_FAILURE, "Program `%s' not recognised", __progname);
