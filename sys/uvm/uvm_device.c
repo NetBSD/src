@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.22.2.1 2000/06/24 23:47:49 thorpej Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.22.2.2 2000/06/24 23:49:43 thorpej Exp $	*/
 
 /*
  *
@@ -318,58 +318,50 @@ udv_detach(uobj)
 	struct uvm_device *udv = (struct uvm_device *) uobj;
 	UVMHIST_FUNC("udv_detach"); UVMHIST_CALLED(maphist);
 
+
 	/*
 	 * loop until done
 	 */
-
-	while (1) {
-		simple_lock(&uobj->vmobjlock);
-		
-		if (uobj->uo_refs > 1) {
-			uobj->uo_refs--;			/* drop ref! */
-			simple_unlock(&uobj->vmobjlock);
-			UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d", 
-				  uobj,uobj->uo_refs,0,0);
-			return;
-		}
+again:
+	simple_lock(&uobj->vmobjlock);
+	
+	if (uobj->uo_refs > 1) {
+		uobj->uo_refs--;			/* drop ref! */
+		simple_unlock(&uobj->vmobjlock);
+		UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d", 
+			  uobj,uobj->uo_refs,0,0);
+		return;
+	}
 
 #ifdef DIAGNOSTIC
-		if (uobj->uo_npages || uobj->memq.tqh_first)
-			panic("udv_detach: pages in a device object?");
+	if (uobj->uo_npages || !TAILQ_EMPTY(&uobj->memq))
+		panic("udv_detach: pages in a device object?");
 #endif
 
-		/*
-		 * now lock udv_lock
-		 */
-		simple_lock(&udv_lock);
+	/*
+	 * now lock udv_lock
+	 */
+	simple_lock(&udv_lock);
 
-		/*
-		 * is it being held?   if so, wait until others are done.
-		 */
-		if (udv->u_flags & UVM_DEVICE_HOLD) {
-
-			/*
-			 * want it
-			 */
-			udv->u_flags |= UVM_DEVICE_WANTED;
-			simple_unlock(&uobj->vmobjlock);
-			UVM_UNLOCK_AND_WAIT(udv, &udv_lock, FALSE, "udv_detach",0);
-			continue;
-		}
-
-		/*
-		 * got it!   nuke it now.
-		 */
-
-		LIST_REMOVE(udv, u_list);
-		simple_unlock(&udv_lock);
-		if (udv->u_flags & UVM_DEVICE_WANTED)
-			wakeup(udv);
+	/*
+	 * is it being held?   if so, wait until others are done.
+	 */
+	if (udv->u_flags & UVM_DEVICE_HOLD) {
+		udv->u_flags |= UVM_DEVICE_WANTED;
 		simple_unlock(&uobj->vmobjlock);
-		FREE(udv, M_TEMP);
-		break;	/* DONE! */
+		UVM_UNLOCK_AND_WAIT(udv, &udv_lock, FALSE, "udv_detach",0);
+		goto again;
+	}
 
-	}	/* while (1) loop */
+	/*
+	 * got it!   nuke it now.
+	 */
+	LIST_REMOVE(udv, u_list);
+	if (udv->u_flags & UVM_DEVICE_WANTED)
+		wakeup(udv);
+	simple_unlock(&udv_lock);
+	simple_unlock(&uobj->vmobjlock);
+	FREE(udv, M_TEMP);
 
 	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
 	return;
