@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.14 1999/09/27 19:03:59 thorpej Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.15 1999/09/28 15:10:20 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef _DEV_IC_TULIPVAR_H_
-#define _DEV_IC_TULIPVAR_H_
+#define	_DEV_IC_TULIPVAR_H_
 
 #include <sys/queue.h>
 
