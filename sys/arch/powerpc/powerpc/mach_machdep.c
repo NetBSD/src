@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_machdep.c,v 1.13 2003/02/03 17:10:11 matt Exp $ */
+/*	$NetBSD: mach_machdep.c,v 1.14 2003/09/27 04:44:42 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.13 2003/02/03 17:10:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.14 2003/09/27 04:44:42 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include <sys/param.h>
@@ -71,14 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: mach_machdep.c,v 1.13 2003/02/03 17:10:11 matt Exp $
 
 #include <uvm/uvm_extern.h>
 
-void mach_trap __P((struct trapframe *));
+void mach_trap(struct trapframe *);
 
 /*
  * Fast syscall gate trap...
  */
 void
-mach_trap(frame)
-	struct trapframe *frame;
+mach_trap(struct trapframe *frame)
 {
 	extern struct emul emul_mach;
 	struct lwp *l = curlwp;
@@ -103,8 +102,7 @@ mach_trap(frame)
 }
 
 void
-mach_host_basic_info(info)
-	struct mach_host_basic_info *info;
+mach_host_basic_info(struct mach_host_basic_info *info)
 {
 	/* XXX fill this  accurately */
 	info->max_cpus = 1; /* XXX */
@@ -115,8 +113,7 @@ mach_host_basic_info(info)
 }
 
 void
-mach_create_thread_child(arg)
-	void *arg;
+mach_create_thread_child(void *arg)
 {
 	struct mach_create_thread_child_args *mctc;
 	struct lwp *l;

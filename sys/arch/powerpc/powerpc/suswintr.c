@@ -1,4 +1,4 @@
-/*	$NetBSD: suswintr.c,v 1.3 2003/07/15 02:54:48 lukem Exp $	*/
+/*	$NetBSD: suswintr.c,v 1.4 2003/09/27 04:44:42 matt Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: suswintr.c,v 1.3 2003/07/15 02:54:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: suswintr.c,v 1.4 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/systm.h>
 
@@ -42,9 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: suswintr.c,v 1.3 2003/07/15 02:54:48 lukem Exp $");
  * Simply return fault for all cases
  */
 int
-suswintr(addr,s)
-	void *addr;
-	short s;
+suswintr(void *addr, short s)
 {
 	return -1;
 }

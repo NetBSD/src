@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.5 2003/07/15 02:54:49 lukem Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.6 2003/09/27 04:44:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2003/07/15 02:54:49 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.6 2003/09/27 04:44:42 matt Exp $");
 
 #include <sys/param.h>
 
@@ -41,10 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.5 2003/07/15 02:54:49 lukem Exp $"
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, void *v, register_t *retval)
 {
 	/*
 	 * Currently no special system calls

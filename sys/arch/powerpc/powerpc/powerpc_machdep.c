@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.21 2003/07/15 02:54:48 lukem Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.22 2003/09/27 04:44:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.21 2003/07/15 02:54:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.22 2003/09/27 04:44:42 matt Exp $");
 
 #include "opt_altivec.h"
 
@@ -61,10 +61,7 @@ extern struct pool siginfo_pool;
  * Set set up registers on exec.
  */
 void
-setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct proc *p = l->l_proc;
 	struct trapframe *tf = trapframe(l);
@@ -112,14 +109,8 @@ setregs(l, pack, stack)
  * Machine dependent system variables.
  */
 int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
+cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
+	void *newp, size_t newlen, struct proc *p)
 {
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -171,7 +162,7 @@ long dumplo = -1;			/* blocks */
  * This is called by main to set dumplo and dumpsize.
  */
 void
-cpu_dumpconf()
+cpu_dumpconf(void)
 {
 	const struct bdevsw *bdev;
 	int nblks;		/* size of dump device */
@@ -205,7 +196,8 @@ cpu_dumpconf()
 }
 
 void 
-cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, void *ap, void *sp, sa_upcall_t upcall)
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
 {
 	struct trapframe *tf;
 
@@ -222,6 +214,4 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted, void *sas, vo
 	tf->fixreg[6] = (register_t)ninterrupted;
 	tf->fixreg[7] = (register_t)ap;
 	tf->srr0 = (register_t)upcall;
-
 }
-

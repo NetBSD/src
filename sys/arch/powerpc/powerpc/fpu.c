@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.10 2003/07/15 02:54:47 lukem Exp $	*/
+/*	$NetBSD: fpu.c,v 1.11 2003/09/27 04:44:42 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.10 2003/07/15 02:54:47 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11 2003/09/27 04:44:42 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -174,8 +174,7 @@ save_fpu_cpu(void)
  * this function).
  */
 void
-save_fpu_lwp(l)
-	struct lwp *l;
+save_fpu_lwp(struct lwp *l)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct cpu_info *ci = curcpu();

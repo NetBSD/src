@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.7 2003/07/15 02:54:48 lukem Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.7 2003/07/15 02:54:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.8 2003/09/27 04:44:42 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -149,8 +149,7 @@ kgdb_acc(vaddr_t va, size_t len)
  * and should be reviewed.
  */
 int 
-kgdb_signal(type)
-	int type;
+kgdb_signal(int type)
 {
 	switch (type) {
 #ifdef PPC_IBM4XX
@@ -226,9 +225,7 @@ kgdb_signal(type)
  * understood by gdb.
  */
 void
-kgdb_getregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	memcpy(gdb_regs, regs, 32 * sizeof(unsigned long));
 	gdb_regs[KGDB_PPC_PC_REG]  = regs->iar;
@@ -243,9 +240,7 @@ kgdb_getregs(regs, gdb_regs)
  * Reverse the above.
  */
 void
-kgdb_setregs(regs, gdb_regs)
-	db_regs_t *regs;
-	kgdb_reg_t *gdb_regs;
+kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 	regs->xer = gdb_regs[KGDB_PPC_XER_REG];
 	regs->ctr = gdb_regs[KGDB_PPC_CTR_REG];
@@ -261,10 +256,8 @@ kgdb_setregs(regs, gdb_regs)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
-
 	if (kgdb_dev < 0)
 		return;
 
@@ -285,7 +278,7 @@ kgdb_connect(verbose)
  * (This is called by panic, like Debugger())
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");
