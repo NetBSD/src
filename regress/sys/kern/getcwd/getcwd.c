@@ -1,4 +1,4 @@
-/* $NetBSD: getcwd.c,v 1.3 1999/03/26 22:23:58 sommerfe Exp $ */
+/* $NetBSD: getcwd.c,v 1.3.2.1 1999/11/21 15:19:06 he Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -260,6 +260,19 @@ test___getcwd_perms()
 	chdir ("/");
 	rmdir ("/tmp/permdir/subdir");
 	rmdir ("/tmp/permdir");
+
+	mkdir ("/tmp/permdir", 0755);
+	mkdir ("/tmp/permdir/subdir", 0711);
+	chdir ("/tmp/permdir/subdir");
+	
+	seteuid(altid);
+
+	CHECK("/tmp/permdir/subdir", __getcwd(kbuf, sizeof(kbuf)), 20, 0);
+
+	seteuid(0);
+	chdir ("/");
+	rmdir ("/tmp/permdir/subdir");
+	rmdir ("/tmp/permdir");
 }
 
 void
@@ -335,8 +348,8 @@ test___getcwd()
 	CHECK("/", __getcwd(0, 0), -1, ERANGE);
 	CHECK("/", __getcwd(0, -1), -1, ERANGE);
 	CHECK("/", __getcwd(kbuf, 0xdeadbeef), -1, ERANGE); /* large negative */
-	CHECK("/", __getcwd(kbuf, 0x7000beef), -1, ERANGE); /* large positive */
-	CHECK("/", __getcwd(kbuf, 0x10000), -1, ERANGE); /* outside address space */
+	CHECK("/", __getcwd(kbuf, 0x7000beef), 2, 0); /* large positive, rounds down */
+	CHECK("/", __getcwd(kbuf, 0x10000), 2, 0); /* slightly less large positive, rounds down */
 	CHECK("/", __getcwd(kbuf+0x100000, sizeof(kbuf)), -1, EFAULT); /* outside address space */	
 	CHECK("/", __getcwd(0, 30), -1, EFAULT);
 	CHECK("/", __getcwd((void*)0xdeadbeef, 30), -1, EFAULT);
