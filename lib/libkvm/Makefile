@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2001/01/08 18:30:03 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.36 2001/05/21 14:56:29 fredette Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	kvm
@@ -23,8 +23,8 @@ SRCS+=	kvm_${MACHINE_CPU}.c
 .endif
 
 # Additional modules needed for m68k
-.if (${MACHINE_ARCH} == "m68k")
-SRCS+=	kvm_m68k_cmn.c kvm_sun3.c kvm_sun3x.c
+.if (${MACHINE_ARCH} == "m68k" || ${MACHINE_CPU} == "m68k")
+SRCS+=	kvm_m68k_cmn.c kvm_sun2.c kvm_sun3.c kvm_sun3x.c
 .endif
 
 MAN=	kvm.3 kvm_dump.3 kvm_geterr.3 kvm_getfiles.3 kvm_getloadavg.3 \
