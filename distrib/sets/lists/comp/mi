@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.616 2003/09/12 19:57:28 christos Exp $
+#	$NetBSD: mi,v 1.617 2003/09/13 22:29:50 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1357,6 +1357,11 @@
 ./usr/share/man/cat2/sync.0		comp-c-catman
 ./usr/share/man/cat2/sysarch.0		comp-c-catman
 ./usr/share/man/cat2/syscall.0		comp-c-catman
+./usr/share/man/cat2/timer_create.0	comp-c-catman
+./usr/share/man/cat2/timer_delete.0	comp-c-catman
+./usr/share/man/cat2/timer_gettime.0	comp-c-catman
+./usr/share/man/cat2/timer_getoverrun.0	comp-c-catman
+./usr/share/man/cat2/timer_settime.0	comp-c-catman
 ./usr/share/man/cat2/truncate.0		comp-c-catman
 ./usr/share/man/cat2/umask.0		comp-c-catman
 ./usr/share/man/cat2/undelete.0		comp-c-catman
@@ -4803,7 +4808,7 @@
 ./usr/share/man/man2/sigwait.2		comp-c-man
 ./usr/share/man/man2/sigwaitinfo.2	comp-c-man
 ./usr/share/man/man2/socket.2		comp-c-man
-./usr/share/man/man2/socketpair.2		comp-c-man
+./usr/share/man/man2/socketpair.2	comp-c-man
 ./usr/share/man/man2/stat.2		comp-c-man
 ./usr/share/man/man2/statfs.2		comp-c-man
 ./usr/share/man/man2/swapctl.2		comp-c-man
@@ -4811,6 +4816,11 @@
 ./usr/share/man/man2/sync.2		comp-c-man
 ./usr/share/man/man2/sysarch.2		comp-c-man
 ./usr/share/man/man2/syscall.2		comp-c-man
+./usr/share/man/man2/timer_create.2	comp-c-man
+./usr/share/man/man2/timer_delete.2	comp-c-man
+./usr/share/man/man2/timer_gettime.2	comp-c-man
+./usr/share/man/man2/timer_getoverrun.2	comp-c-man
+./usr/share/man/man2/timer_settime.2	comp-c-man
 ./usr/share/man/man2/truncate.2		comp-c-man
 ./usr/share/man/man2/umask.2		comp-c-man
 ./usr/share/man/man2/undelete.2		comp-c-man
