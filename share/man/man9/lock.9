@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.6 2001/05/06 05:16:15 gmcgarry Exp $
+.\"     $NetBSD: lock.9,v 1.7 2001/05/31 21:00:07 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,18 +80,31 @@
 .Pp
 The
 .Nm
-functions provide synchronisation capabilities in the kernel by preventing
-multiple threads from simultaneously executing critical section of code which
-access shared data.  A number of different locks are available:
+functions provide synchronisation in the kernel by preventing multiple
+threads from simultaneously executing critical sections of code
+accessing shared data.  A number of different locks are available:
 .Pp
 .Bl -tag -width compact
 .It struct simplelock
-Provides a simple spinning mutex.  The simplelock operations are implemented
-with machine-dependent locking primitives.
+Provides a simple spinning mutex.  A processor will busy-wait while
+trying to acquire a simplelock.  The simplelock operations are
+implemented with machine-dependent locking primitives.
+.Pp
+Simplelocks are usually used only by the high-level lock manager and
+to protect short, critical sections of code.  Simplelocks are the only
+locks that can be be used inside an interrupt handler.  For a
+simplelock to be used in an interrupt handler, care must be taken to
+disable the interrupt, acquire the lock, do any processing, release
+the simplelock and re-enable the interrupt.  This procedure is
+necessary to avoid deadlock between the interrupt handler and other
+threads executing on the same processor.
 .It struct lock
-A general lock structure for multiple shared locks, upgrading from
-shared to exclusive, and sleeping/spinning until the lock can be
-gained.
+Provides a high-level lock supporting sleeping/spinning until the lock
+can be acquired.  The lock manager supplies both exclusive-access and
+shared-access locks, with recursive exclusive-access locks within a
+single thread.  It also allows upgrading a shared-access lock to an
+exclusive-access lock, as well as downgrading an exclusive-access lock
+to a shared-access lock.
 .El
 .Pp
 If the kernel option LOCKDEBUG is enabled, additional facilities
@@ -157,65 +170,23 @@ follows:
 .It Fa lock
 The lock.
 .It Fa prio
-The priority at which to sleep.
+The thread priority when it is woken up after sleeping on the lock.
 .It Fa wmesg
-This is the sleep message for sleep locks or a simple name for spin locks.
+A sleep message used when a thread goes to sleep waiting for the lock, so
+that the exact reason it is sleeping can easily be identified.
 .It Fa timo
 The maximum sleep time.  Used by
 .Xr tsleep 9 .
 .It Fa flags
-Flags to specify the lock type.  Valid lock request types are:
-.Bl -tag -width compact
-.It LK_SHARED
-Get one of many possible shared locks. If a thread holding an
-exclusive lock requests a shared lock, the exclusive lock(s) will be
-downgraded to shared locks.
-.It LK_EXCLUSIVE
-Stop further shared locks, when they are cleared, grant a pending
-upgrade if it exists, then grant an exclusive lock. Only one exclusive
-lock may exist at a time, except that a thread holding an exclusive
-lock may get additional exclusive locks if it explicitly sets the
-LK_CANRECURSE flag in the lock request, or if the LK_CANRECUSE flag
-was set when the lock was initialized.
-.It LK_UPGRADE
-The thread must hold a shared lock that it wants to have upgraded to
-an exclusive lock. Other threads may get exclusive access to the
-resource between the time that the upgrade is requested and the time
-that it is granted.
-.It LK_EXCLUPGRADE
-The thread must hold a shared lock that it wants to have upgraded to
-an exclusive lock. If the request succeeds, no other threads will
-have gotten exclusive access to the resource between the time that the
-upgrade is requested and the time that it is granted. However, if
-another thread has already requested an upgrade, the request will
-fail (see error returns below).
-.It LK_DOWNGRADE
-The thread must hold an exclusive lock that it wants to have
-downgraded to a shared lock.  If the thread holds multiple (recursive)
-exclusive locks, they will all be downgraded to shared locks.
-.It LK_RELEASE
-Release one instance of a lock.
-.It LK_DRAIN
-Wait for all activity on the lock to end, then mark it
-decommissioned. This feature is used before freeing a lock that is
-part of a piece of memory that is about to be freed.
-.El
-.Pp
-Additional flags which may be used:
+Flags to specify the lock behaviour permanently over the lifetime of
+the lock.  Valid lock flags are:
 .Bl -tag -width compact
 .It LK_NOWAIT
-Do not sleep to await lock.
+Threads should not sleep when attempting to acquire the lock.
 .It LK_SLEEPFAIL
-Sleep, then return failure.
+Threads should sleep, then return failure when acquiring the lock.
 .It LK_CANRECURSE
-This may be recursive lock attempt.
-.It LK_REENABLE
-Lock is to be reenabled after drain.  The LK_REENABLE flag may be set
-only at the release of a lock obtained by drain.
-.It LK_SETRECURSE
-Other locks while we have it OK.
-.It LK_RECURSEFAIL
-Attempt at recursive lock fails.
+Threads can acquire the lock recursively.
 .El
 .El
 .It Fn lockmgr "lock" "flags" "slock"
@@ -224,21 +195,67 @@ Arguments are as follows:
 .Bl -tag -width compact
 .It Fa lock
 The lock.
-.It Fa flags
-Flags to specify the lock type.  Lock request types are the same as outlined
-above.
 .It Fa slock
 Simplelock interlock.  The simplelock
 .Fa slock
 is set by the caller.  When the lock
 .Fa lock
 is acquired, the simplelock is released.
+.It Fa flags
+Flags to specify the lock request type.  In addition to the flags
+specified above, the following flags are valid:
+.Bl -tag -width compact
+.It LK_SHARED
+Get one of many possible shared-access locks.  If a thread holding an
+exclusive-access lock requests a shared-access lock, the
+exclusive-access lock is downgraded to a shared-access lock.
+.It LK_EXCLUSIVE
+Stop further shared-access locks, when they are cleared, grant a
+pending upgrade if it exists, then grant an exclusive-access lock.
+Only one exclusive-access lock may exist at a time, except that a
+thread holding an exclusive-access lock may get additional
+exclusive-access locks if it explicitly sets the LK_CANRECURSE flag in
+the lock request, or if the LK_CANRECURSE flag was set when the lock
+was initialised.
+.It LK_UPGRADE
+The thread must hold a shared-access lock that it wants to have
+upgraded to an exclusive-access lock.  Other threads may get exclusive
+access to the protected resource between the time that the upgrade is
+requested and the time that it is granted.
+.It LK_EXCLUPGRADE
+The thread must hold a shared-access lock that it wants to have
+upgraded to an exclusive-access lock.  If the request succeeds, no
+other threads will have acquired exclusive access to the protected
+resource between the time that the upgrade is requested and the time
+that it is granted.  However, if another thread has already requested
+an upgrade, the request will fail.
+.It LK_DOWNGRADE
+The thread must hold an exclusive-access lock that it wants to have
+downgraded to a shared-access lock.  If the thread holds multiple
+(recursive) exclusive-access locks, they will all be downgraded to
+shared-access locks.
+.It LK_RELEASE
+Release one instance of a lock.
+.It LK_DRAIN
+Wait for all activity on the lock to end, then mark it decommissioned.
+This feature is used before freeing a lock that is part of a piece of
+memory that is about to be freed.
+.It LK_REENABLE
+Lock is to be re-enabled after drain.  The LK_REENABLE flag may be set
+only at the release of a lock obtained by a drain.
+.It LK_SETRECURSE
+Other locks while we have it OK.
+.It LK_RECURSEFAIL
+Attempt at recursive lock fails.
+.It LK_SPIN
+Lock spins instead of sleeping.
+.El
 .El
 .It Fn lockstatus "lock"
 Determine the status of lock
 .Fa lock .
-Returns LK_EXCLUSIVE or LK_SHARED for exclusive and shared locks
-respectively.
+Returns LK_EXCLUSIVE or LK_SHARED for exclusive-access and
+shared-access locks respectively.
 .It Fn lockmgr_printinfo "lock"
 Print out information about state of lock
 .Fa lock .
@@ -253,8 +270,8 @@ The lock.
 .It Fa wmesg
 This is a simple name for lock.
 .It Fa flags
-Flags to specify the lock type.  Lock request types are the same as outlined
-above.
+Flags to specify the lock behaviour.  Valid lock flags are the same as
+outlined above.
 .El
 .It Fn spinlockmgr "lock" "flags" "slock"
 Set, change or release a lock according to the parameters provided.
@@ -263,8 +280,8 @@ Arguments are as follows:
 .It Fa lock
 The spin lock.
 .It Fa flags
-Flags to specify the lock type.  Lock request types are the same as outlined
-above.
+Flags to specify the lock request type.  Valid lock flags are the same
+as outlined above.
 .It Fa slock
 Simplelock interlock.  The simplelock
 .Fa slock
@@ -274,29 +291,31 @@ is acquired, the simplelock is released.
 .El
 .El
 .Sh RETURN VALUES
-Successfully obtained locks return 0.  A failed lock attempt always
+Successfully acquired locks return 0.  A failed lock attempt always
 returns a non-zero error value.  No lock is held after an error
 return (in particular, a failed LK_UPGRADE or LK_FORCEUPGRADE will
-have released its shared access lock).  Locks will always succeed
+have released its shared-access lock).  Locks will always succeed
 unless one of the following is true:
-.Bl -tag -width compact
-.It EBUSY
+.Bl -tag -width Er
+.It Bq Er EBUSY
 LK_FORCEUPGRADE is requested and some other thread has already
 requested a lock upgrade or LK_NOWAIT is set and a sleep would
 be required.
-.It ENOLCK
+.It Bq Er ENOLCK
 LK_SLEEPFAIL is set and a sleep was done.
-.It EINTR
+.It Bq Er EINTR
 PCATCH is set in lock priority and a signal arrives to interrupt
 a system call.
-.It ERESTART
+.It Bq Er ERESTART
 PCATCH is set in lock priority and a signal arrives so that
 the system call is restarted.
-.It EWOULDBLOCK
+.It Bq Er EWOULDBLOCK
 Non-null lock timeout and timeout expires.
 .El
 .Sh HISTORY
-The current kernel locking API first appeared in 4.4BSD.
+The kernel locking API first appeared in 4.4BSD-Lite2.
 .Sh SEE ALSO
 .Xr pmap 9 ,
+.Xr spl 9 ,
+.Xr tsleep 9 ,
 .Xr uvm 9 .
