@@ -1,3 +1,5 @@
+/*	$NetBSD: wd.c,v 1.100 1994/10/27 04:18:26 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.99 1994/10/20 19:22:01 mycroft Exp $
+ *	@(#)wd.c	7.2 (Berkeley) 5/9/91
  */
 
 #define	INSTRUMENT	/* instrumentation stuff by Brad Parker */

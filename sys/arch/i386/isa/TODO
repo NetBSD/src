@@ -1,4 +1,4 @@
-#	$Id: TODO,v 1.2 1993/05/22 08:00:54 cgd Exp $
+#	$NetBSD: TODO,v 1.3 1994/10/27 04:16:41 cgd Exp $
 
 1. add support for "soft" configuration network devices
 2. split console driver into kbd/vga/other drivers

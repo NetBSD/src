@@ -1,3 +1,5 @@
+/*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
+
 /*
  * Copyright (c) 1993 Charles Hannum.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: cpufunc.h,v 1.7 1994/10/09 15:00:38 mycroft Exp $
  */
 
 #ifndef _I386_CPUFUNC_H_

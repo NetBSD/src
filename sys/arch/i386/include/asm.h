@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.h,v 1.7 1994/10/27 04:15:56 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
- *	$Id: asm.h,v 1.6 1994/09/02 05:02:47 jtc Exp $
+ *	@(#)asm.h	5.5 (Berkeley) 5/7/91
  */
 
 #ifndef _I386_ASM_H_

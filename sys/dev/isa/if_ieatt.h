@@ -1,5 +1,6 @@
+/*	$NetBSD: if_ieatt.h,v 1.2 1994/10/27 04:17:40 cgd Exp $	*/
+
 /*
- * $Id: if_ieatt.h,v 1.1 1993/11/08 20:15:59 mycroft Exp $
  * definitions for AT&T StarLAN 10 etc...
  */
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: cga.c,v 1.3 1994/10/27 04:21:10 cgd Exp $	*/
+
 /* netboot
  *
  * source in this file came from
@@ -38,7 +40,6 @@
  * SUCH DAMAGE.
  *
  *	@(#)cga.c	5.3 (Berkeley) 4/28/91
- *	$Id: cga.c,v 1.2 1994/02/15 15:10:20 mycroft Exp $
  */
 
 #include "proto.h"

@@ -1,7 +1,6 @@
+#	$NetBSD: CHIMERA,v 1.3 1994/10/27 04:14:48 cgd Exp $
 #
 #	CHIMERA -- Adam Glass's confused machine
-#
-#	$Id: CHIMERA,v 1.2 1994/10/25 21:31:34 cgd Exp $
 #
 
 machine		"i386"

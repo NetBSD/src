@@ -1,3 +1,5 @@
+/*	$NetBSD: fontedit.c,v 1.2 1994/10/27 04:19:55 cgd Exp $	*/
+
 /*
  * fontedit
  *	Fonteditor for VT220

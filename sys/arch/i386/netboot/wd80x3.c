@@ -1,3 +1,5 @@
+/*	$NetBSD: wd80x3.c,v 1.4 1994/10/27 04:21:28 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
@@ -5,8 +7,6 @@
  * A very simple network driver for WD80x3 boards that polls.
  *
  * Copyright (c) 1992 by Leendert van Doorn
- *
- *	$Id: wd80x3.c,v 1.3 1993/08/02 17:53:06 mycroft Exp $
  */
 
 #include "proto.h"

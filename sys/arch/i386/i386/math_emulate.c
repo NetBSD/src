@@ -1,7 +1,7 @@
+/*	$NetBSD: math_emulate.c,v 1.10 1994/10/27 04:15:32 cgd Exp $	*/
+
 /*
  * expediant "port" of linux 8087 emulator to 386BSD, with apologies -wfj
- *
- *	$Id: math_emulate.c,v 1.9 1994/05/05 05:35:51 cgd Exp $
  */
 
 /*

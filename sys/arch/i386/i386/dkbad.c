@@ -1,3 +1,5 @@
+/*	$NetBSD: dkbad.c,v 1.3 1994/10/27 04:15:19 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dkbad.c	5.4 (Berkeley) 1/19/91
- *	$Id: dkbad.c,v 1.2 1993/05/22 07:59:48 cgd Exp $
+ *	@(#)dkbad.c	5.4 (Berkeley) 1/19/91
  */
 
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: saio.h,v 1.3 1994/10/27 04:21:58 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1990, 1991, 1992 William F. Jolitz, TeleMuse
  * All rights reserved.
@@ -46,8 +48,6 @@
  * SUCH DAMAGE.
  *
  * I/O interface to driver.
- *
- *	$Id: saio.h,v 1.2 1993/05/22 08:02:22 cgd Exp $
  */
 
 /*

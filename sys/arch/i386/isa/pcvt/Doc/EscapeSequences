@@ -1,3 +1,4 @@
+$NetBSD: EscapeSequences,v 1.2 1994/10/27 04:19:13 cgd Exp $
 
   Control Codes and Escape Sequences supported by the pcvt-driver Release 2.20
 ===============================================================================

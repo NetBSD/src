@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.2 1994/10/27 04:19:17 cgd Exp $
+
 # 386BSD and NetBSD
 MAN4=		pcvt.0
 MLINKS=		pcvt.0 ../pcvt.0

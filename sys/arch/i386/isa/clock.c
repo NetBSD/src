@@ -1,3 +1,5 @@
+/*	$NetBSD: clock.c,v 1.26 1994/10/27 04:16:57 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.25 1994/07/25 00:19:47 mycroft Exp $
+ *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  */
 /* 
  * Mach Operating System

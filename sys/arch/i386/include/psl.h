@@ -1,3 +1,5 @@
+/*	$NetBSD: psl.h,v 1.13 1994/10/27 04:16:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)psl.h	5.2 (Berkeley) 1/18/91
- *	$Id: psl.h,v 1.12 1994/09/19 05:05:15 mycroft Exp $
+ *	@(#)psl.h	5.2 (Berkeley) 1/18/91
  */
 
 #ifndef _I386_PSL_H_

@@ -1,3 +1,5 @@
+/*	$NetBSD: boot2.S,v 1.10 1994/10/27 04:14:34 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *

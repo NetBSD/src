@@ -1,3 +1,5 @@
+/*	$NetBSD: mouse.h,v 1.4 1994/10/27 04:16:10 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
@@ -18,8 +20,6 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: mouse.h,v 1.3 1993/12/20 05:25:24 mycroft Exp $
  */
 
 #ifndef _I386_MOUSE_H_

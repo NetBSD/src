@@ -1,3 +1,5 @@
+/*	$NetBSD: isa.c,v 1.58 1994/10/27 04:17:45 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.57 1994/10/09 15:06:23 mycroft Exp $
+ *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: trap.h,v 1.4 1994/10/27 04:16:30 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)trap.h	5.4 (Berkeley) 5/9/91
- *	$Id: trap.h,v 1.3 1993/12/19 06:58:27 mycroft Exp $
+ *	@(#)trap.h	5.4 (Berkeley) 5/9/91
  */
 
 /*

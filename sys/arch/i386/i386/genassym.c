@@ -1,3 +1,5 @@
+/*	$NetBSD: genassym.c,v 1.31 1994/10/27 04:15:20 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1982, 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)genassym.c	5.11 (Berkeley) 5/10/91
- *	genassym.c,v 1.7 1993/08/03 06:33:55 mycroft Exp
+ *	@(#)genassym.c	5.11 (Berkeley) 5/10/91
  */
 
 #define KERNEL

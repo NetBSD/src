@@ -1,3 +1,5 @@
+/*	$NetBSD: fs.c,v 1.3 1994/10/27 04:21:54 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 William F. Jolitz, TeleMuse
  * All rights reserved.
@@ -46,8 +48,6 @@
  * SUCH DAMAGE.
  *
  * Routines to sift through a BSD fast filesystem. -wfj
- *
- *	$Id: fs.c,v 1.2 1993/05/22 08:02:17 cgd Exp $
  */
 
 #include "param.h"

@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.2 1994/10/27 04:20:51 cgd Exp $
 
 .if !exists(${.CURDIR}/../Makefile.inc)
 error:

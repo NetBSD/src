@@ -1,3 +1,5 @@
+/*	$NetBSD: isavar.h,v 1.11 1994/10/27 04:17:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 Berkeley Software Design, Inc.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: BSDI Id: isavar.h,v 1.5 1992/12/01 18:06:00 karels Exp 
- *	$Id: isavar.h,v 1.10 1994/07/27 01:50:15 mycroft Exp $
+ *	BSDI Id: isavar.h,v 1.5 1992/12/01 18:06:00 karels Exp 
  */
 
 /*

@@ -1,11 +1,11 @@
+/*	$NetBSD: rtfps.c,v 1.2 1994/10/27 04:18:11 cgd Exp $	*/
+
 /*
  * Multi-port serial card interrupt demuxing support.
  * Roland McGrath 3/20/94
  * The author disclaims copyright and places this file in the public domain.
  *
  * Modified by: Charles Hannum, 3/22/94
- *
- *	$Id: rtfps.c,v 1.1 1994/08/07 10:45:53 mycroft Exp $
  */
 
 #include <sys/param.h>

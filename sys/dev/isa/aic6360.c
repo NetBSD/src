@@ -1,3 +1,5 @@
+/*	$NetBSD: aic6360.c,v 1.9 1994/10/27 04:16:48 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Charles Hannum.
  * Copyright (c) 1994 Jarle Greipsland
@@ -28,8 +30,6 @@
  */
 
 /*
- * $Id: aic6360.c,v 1.8 1994/10/17 00:08:29 cgd Exp $
- *
  * Acknowledgements: Many of the algorithms used in this driver are
  * inspired by the work of Julian Elischer (julian@tfs.com) and
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!

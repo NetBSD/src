@@ -1,7 +1,7 @@
+/*	$NetBSD: kbdreg.h,v 1.5 1994/10/27 04:17:52 cgd Exp $	*/
+
 /*
  * Keyboard definitions
- *
- *	$Id: kbdreg.h,v 1.4 1994/03/02 04:38:28 mycroft Exp $
  */
 
 #include <i386/isa/ic/i8042.h>

@@ -1,4 +1,4 @@
-#	$Id: files.i386,v 1.53 1994/10/24 17:42:55 deraadt Exp $
+#	$NetBSD: files.i386,v 1.54 1994/10/27 04:15:04 cgd Exp $
 #
 arch/i386/i386/autoconf.c	standard
 arch/i386/i386/conf.c		standard

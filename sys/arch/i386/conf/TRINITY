@@ -1,7 +1,6 @@
+#	$NetBSD: TRINITY,v 1.41 1994/10/27 04:15:00 cgd Exp $
 #
 # TRINITY -- Mycroft's 386 box
-#
-#	$Id: TRINITY,v 1.40 1994/10/25 21:31:47 cgd Exp $
 #
 
 machine		"i386"

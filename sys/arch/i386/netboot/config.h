@@ -1,3 +1,5 @@
+/*	$NetBSD: config.h,v 1.3 1994/10/27 04:21:10 cgd Exp $	*/
+
 /* netboot
  *
  * source in this file came from
@@ -6,7 +8,7 @@
 #if !defined(__config_h_)
 #define __config_h_
 
-/* $Id: config.h,v 1.2 1994/02/15 15:10:21 mycroft Exp $
+/*
    configuration items shared between .c and .s files
  */
 

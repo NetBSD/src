@@ -1,7 +1,6 @@
+#	$NetBSD: ALL,v 1.56 1994/10/27 04:14:46 cgd Exp $
 #
 #	ALL -- everything that's currently supported
-#
-#	$Id: ALL,v 1.55 1994/10/25 21:31:32 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED

@@ -1,3 +1,5 @@
+/*	$NetBSD: pcvt_tbl.h,v 1.2 1994/10/27 04:19:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis
  *

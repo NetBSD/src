@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.h,v 1.5 1994/10/27 04:14:30 cgd Exp $	*/
+
 /* 
  * Ported to Boot 386BSD by Julian Elsicher (julian@tfs.com) Sept. 1992
  *
@@ -24,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: asm.h,v 1.4 1994/02/04 05:43:53 mycroft Exp $
  */
 
 #define FRAME	pushl %ebp; movl %esp, %ebp

@@ -1,3 +1,5 @@
+/*	$NetBSD: ispcvt.c,v 1.2 1994/10/27 04:20:16 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis
  *

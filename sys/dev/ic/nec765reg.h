@@ -1,3 +1,5 @@
+/*	$NetBSD: nec765reg.h,v 1.3 1994/10/27 04:18:41 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nec765.h	7.1 (Berkeley) 5/9/91
- *	$Id: nec765reg.h,v 1.2 1993/05/22 08:01:58 cgd Exp $
+ *	@(#)nec765.h	7.1 (Berkeley) 5/9/91
  */
 
 /*

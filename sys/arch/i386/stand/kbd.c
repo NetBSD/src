@@ -1,3 +1,5 @@
+/*	$NetBSD: kbd.c,v 1.3 1994/10/27 04:21:56 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)kbd.c	7.4 (Berkeley) 5/4/91
- *	$Id: kbd.c,v 1.2 1993/05/22 08:02:18 cgd Exp $
+ *	@(#)kbd.c	7.4 (Berkeley) 5/4/91
  */
 
 #define	L		0x01	/* locking function */

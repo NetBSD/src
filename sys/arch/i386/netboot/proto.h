@@ -1,6 +1,6 @@
+/*	$NetBSD: proto.h,v 1.3 1994/10/27 04:21:24 cgd Exp $	*/
+
 /*
- *	$Id: proto.h,v 1.2 1993/08/02 17:53:02 mycroft Exp $
- *
  * TBD - need for common typedefs - rethink?
  * TBD - move config include into the source files - this is just expedient
  */

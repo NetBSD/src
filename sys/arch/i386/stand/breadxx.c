@@ -1,3 +1,5 @@
+/*	$NetBSD: breadxx.c,v 1.3 1994/10/27 04:21:50 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1990, 1991, 1992 William F. Jolitz, TeleMuse
  * All rights reserved.
@@ -44,8 +46,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: breadxx.c,v 1.2 1993/05/22 08:02:11 cgd Exp $
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: scon.c,v 1.2 1994/10/27 04:20:40 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis and Joerg Wunsch
  *

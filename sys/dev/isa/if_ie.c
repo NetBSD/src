@@ -1,3 +1,5 @@
+/*	$NetBSD: if_ie.c,v 1.15 1994/10/27 04:17:37 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1992, 1993, University of Vermont and State
@@ -39,8 +41,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: if_ie.c,v 1.14 1994/10/18 13:40:30 mycroft Exp $
  */
 
 /*

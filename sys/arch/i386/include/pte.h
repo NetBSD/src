@@ -1,3 +1,5 @@
+/*	$NetBSD: pte.h,v 1.7 1994/10/27 04:16:21 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)pte.h	5.5 (Berkeley) 5/9/91
- *	$Id: pte.h,v 1.6 1994/10/09 13:23:21 mycroft Exp $
+ *	@(#)pte.h	5.5 (Berkeley) 5/9/91
  */
 
 /*

@@ -1,6 +1,4 @@
-/*
- *	$Id: i8042reg.h,v 1.4 1994/03/02 08:02:27 mycroft Exp $
- */
+/*	$NetBSD: i8042reg.h,v 1.5 1994/10/27 04:18:39 cgd Exp $	*/
 
 #define	KBSTATP		0x64	/* kbd controller status port (I) */
 #define	 KBS_DIB	0x01	/* kbd data in buffer */

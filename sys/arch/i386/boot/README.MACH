@@ -1,3 +1,5 @@
+/*	$NetBSD: README.MACH,v 1.5 1994/10/27 04:14:28 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer, September 1992
  *

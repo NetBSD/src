@@ -1,3 +1,5 @@
+/*	$NetBSD: reg.h,v 1.11 1994/10/27 04:16:23 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)reg.h	5.5 (Berkeley) 1/18/91
- *	reg.h,v 1.4 1993/09/05 03:54:15 sef Exp
+ *	@(#)reg.h	5.5 (Berkeley) 1/18/91
  */
 
 #ifndef _I386_REG_H_

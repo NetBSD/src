@@ -1,3 +1,5 @@
+/*	$NetBSD: fdbootblk.c,v 1.6 1994/10/27 04:21:53 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fdbootblk.c	7.2 (Berkeley) 5/4/91
- *	$Id: fdbootblk.c,v 1.5 1993/08/02 18:17:39 mycroft Exp $
+ *	@(#)fdbootblk.c	7.2 (Berkeley) 5/4/91
  */
 
 /*

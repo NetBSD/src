@@ -1,11 +1,11 @@
+/*	$NetBSD: as.c,v 1.4 1994/10/27 04:21:45 cgd Exp $	*/
+
 /*
  * sys/i386/stand/as.c
  *
  * Standalone driver for Adaptech 1542 SCSI
  * 
  * Pace Willisson        pace@blitz.com       April 8, 1992
- *
- *	$Id: as.c,v 1.3 1993/05/22 08:02:05 cgd Exp $
  */
 
 #include "param.h"

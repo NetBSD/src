@@ -1,7 +1,7 @@
+/*	$NetBSD: pccons.h,v 1.2 1994/10/27 04:16:14 cgd Exp $	*/
+
 /*
  * pccons.h -- pccons ioctl definitions
- *
- *	$Id: pccons.h,v 1.1 1993/09/28 03:26:17 andrew Exp $
  */
 
 #ifndef _PCCONS_H_

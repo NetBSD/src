@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.7 1994/08/29 23:10:58 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1994/10/27 04:14:23 cgd Exp $
+#	@(#)Makefile	7.3 (Berkeley) 6/9/91
 
 # Makefile for i386 tags file and boot blocks
 

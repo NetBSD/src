@@ -1,7 +1,6 @@
+#	$NetBSD: PAIN,v 1.40 1994/10/27 04:14:55 cgd Exp $
 #
 # PAIN
-#
-#	$Id: PAIN,v 1.39 1994/10/25 21:31:42 cgd Exp $
 #
 
 machine		"i386"

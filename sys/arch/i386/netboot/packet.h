@@ -1,10 +1,10 @@
+/*	$NetBSD: packet.h,v 1.3 1994/10/27 04:21:22 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * Packet layout definitions
- *
- *	$Id: packet.h,v 1.2 1993/08/02 17:53:01 mycroft Exp $
  */
 
 /* implementation constants */

@@ -1,7 +1,7 @@
+/*	$NetBSD: spkr.h,v 1.3 1994/10/27 04:16:27 cgd Exp $	*/
+
 /*
  * spkr.h -- interface definitions for speaker ioctl()
- *
- *	$Id: spkr.h,v 1.2 1994/01/11 13:30:40 mycroft Exp $
  */
 
 #ifndef _I386_SPKR_H_

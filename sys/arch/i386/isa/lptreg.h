@@ -1,3 +1,5 @@
+/*	$NetBSD: lptreg.h,v 1.4 1994/10/27 04:17:56 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *      from: @(#)lptreg.h	1.1 (Berkeley) 12/19/90
- *	$Id: lptreg.h,v 1.3 1994/02/18 19:51:04 mycroft Exp $
+ *      @(#)lptreg.h	1.1 (Berkeley) 12/19/90
  */
 
 /*

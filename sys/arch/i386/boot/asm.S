@@ -1,3 +1,5 @@
+/*	$NetBSD: asm.S,v 1.9 1994/10/27 04:14:29 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: disk.c,v 1.8 1994/10/27 04:14:37 cgd Exp $	*/
+
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  *
@@ -24,8 +26,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: disk.c,v 1.7 1994/10/20 22:44:37 mycroft Exp $
  */
 
 #include "boot.h"

@@ -1,3 +1,5 @@
+/*	$NetBSD: icu.s,v 1.36 1994/10/27 04:17:17 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1989, 1990 William F. Jolitz.
@@ -35,8 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)icu.s	7.2 (Berkeley) 5/21/91
- *	$Id: icu.s,v 1.35 1994/07/22 07:52:50 mycroft Exp $
+ *	@(#)icu.s	7.2 (Berkeley) 5/21/91
  */
 
 /*

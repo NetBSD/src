@@ -1,3 +1,5 @@
+/*	$NetBSD: mcon.c,v 1.2 1994/10/27 04:20:36 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Joerg Wunsch
  *

@@ -1,7 +1,7 @@
+/*	$NetBSD: param.h,v 1.3 1994/10/27 04:21:23 cgd Exp $	*/
+
 /*
  * Tunable parameters
- *
- *	$Id: param.h,v 1.2 1993/08/02 17:53:01 mycroft Exp $
  */
 
 /*

@@ -1,7 +1,6 @@
+#	$NetBSD: BOAT_ANCHOR,v 1.39 1994/10/27 04:14:47 cgd Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
-#
-#	$Id: BOAT_ANCHOR,v 1.38 1994/10/25 21:31:33 cgd Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"

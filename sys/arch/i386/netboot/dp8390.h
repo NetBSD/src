@@ -1,10 +1,10 @@
+/*	$NetBSD: dp8390.h,v 1.3 1994/10/27 04:21:11 cgd Exp $	*/
+
 /*
  * source in this file came from
  * the Mach ethernet boot written by Leendert van Doorn.
  *
  * National Semiconductor DP8390 Network Interface Controller
- *
- *	$Id: dp8390.h,v 1.2 1993/08/02 17:52:52 mycroft Exp $
  */
 
 /* page 0: for reading */

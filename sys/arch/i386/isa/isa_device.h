@@ -1,3 +1,5 @@
+/*	$NetBSD: isa_device.h,v 1.11 1994/10/27 04:17:48 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)isa_device.h	7.1 (Berkeley) 5/9/91
- *	$Id: isa_device.h,v 1.10 1994/04/07 06:50:57 mycroft Exp $
+ *	@(#)isa_device.h	7.1 (Berkeley) 5/9/91
  */
 
 /*

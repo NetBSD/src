@@ -1,3 +1,5 @@
+/*	$NetBSD: if_le.c,v 1.13 1994/10/27 04:17:41 cgd Exp $	*/
+
 /*
  * LANCE Ethernet driver
  *
@@ -9,8 +11,6 @@
  *   circumstances is the author responsible for the proper functioning
  *   of this software, nor does the author assume any responsibility
  *   for damages incurred with its use.
- *
- *	$Id: if_le.c,v 1.12 1994/10/09 21:19:04 mycroft Exp $
  */
 
 #include "bpfilter.h"

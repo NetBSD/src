@@ -1,4 +1,4 @@
-/*	$Id: debug.h,v 1.5 1994/04/02 08:04:31 mycroft Exp $ */
+/*	$NetBSD: debug.h,v 1.6 1994/10/27 04:17:06 cgd Exp $	*/
 
 #ifdef INTR_DEBUG
 #define INTRLOCAL(label) label

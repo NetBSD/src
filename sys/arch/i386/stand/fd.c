@@ -1,3 +1,5 @@
+/*	$NetBSD: fd.c,v 1.3 1994/10/27 04:21:52 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fd.c	7.3 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.2 1993/05/22 08:02:14 cgd Exp $
+ *	@(#)fd.c	7.3 (Berkeley) 5/25/91
  */
 
 /****************************************************************************/

@@ -1,4 +1,4 @@
-/*	$Id: misc.c,v 1.2 1993/08/02 17:52:57 mycroft Exp $ */
+/*	$NetBSD: misc.c,v 1.3 1994/10/27 04:21:18 cgd Exp $	*/
 
 #include "proto.h"
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: intr.c,v 1.23 1994/10/27 04:17:44 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: intr.c,v 1.22 1994/10/26 01:30:59 mycroft Exp $
+ *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: clock.h,v 1.3 1994/10/27 04:16:58 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
@@ -22,8 +24,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: clock.h,v 1.2 1993/08/04 00:42:52 mycroft Exp $
  */
 /*
   Copyright 1988, 1989 by Intel Corporation, Santa Clara, California.

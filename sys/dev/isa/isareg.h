@@ -1,3 +1,5 @@
+/*	$NetBSD: isareg.h,v 1.4 1994/10/27 04:17:49 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isareg.h,v 1.3 1994/10/01 03:52:46 mycroft Exp $
+ *	@(#)isa.h	5.7 (Berkeley) 5/9/91
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: rtc.h,v 1.7 1994/10/27 04:18:10 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -33,8 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)rtc.h	7.1 (Berkeley) 5/12/91
- *	$Id: rtc.h,v 1.6 1994/04/09 02:57:17 mycroft Exp $
+ *	@(#)rtc.h	7.1 (Berkeley) 5/12/91
  */
 /* 
  * Mach Operating System

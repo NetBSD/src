@@ -1,3 +1,5 @@
+/*	$NetBSD: fdreg.h,v 1.6 1994/10/27 04:17:15 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fdreg.h	7.1 (Berkeley) 5/9/91
- *	$Id: fdreg.h,v 1.5 1994/03/10 18:10:43 mycroft Exp $
+ *	@(#)fdreg.h	7.1 (Berkeley) 5/9/91
  */
 
 /*

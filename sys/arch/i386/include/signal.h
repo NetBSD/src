@@ -1,3 +1,5 @@
+/*	$NetBSD: signal.h,v 1.3 1994/10/27 04:16:25 cgd Exp $	*/
+
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
  * All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)signal.h	7.16 (Berkeley) 3/17/91
- *	$Id: signal.h,v 1.2 1994/10/09 12:39:06 mycroft Exp $
+ *	@(#)signal.h	7.16 (Berkeley) 3/17/91
  */
 
 #ifndef _I386_SIGNAL_H_

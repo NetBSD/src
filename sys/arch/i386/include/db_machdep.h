@@ -1,3 +1,5 @@
+/*	$NetBSD: db_machdep.h,v 1.8 1994/10/27 04:16:02 cgd Exp $	*/
+
 /* 
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -22,8 +24,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: db_machdep.h,v 1.7 1994/10/09 13:31:19 mycroft Exp $
  */
 
 #ifndef	_I386_DB_MACHDEP_H_

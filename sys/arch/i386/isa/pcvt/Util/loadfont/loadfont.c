@@ -1,3 +1,5 @@
+/*	$NetBSD: loadfont.c,v 1.2 1994/10/27 04:20:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis and Brian Dunford-Shore
  *

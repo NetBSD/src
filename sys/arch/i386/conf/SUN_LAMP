@@ -1,7 +1,6 @@
+#	$NetBSD: SUN_LAMP,v 1.51 1994/10/27 04:14:58 cgd Exp $
 #
 # SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
-#
-#	$Id: SUN_LAMP,v 1.50 1994/10/25 21:31:45 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"

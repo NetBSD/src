@@ -1,7 +1,6 @@
+#	$NetBSD: GENERICAHA,v 1.55 1994/10/27 04:14:50 cgd Exp $
 #
 # GENERICAHA -- Generic machine w/aha driver -- distribution floppy
-#
-#	$Id: GENERICAHA,v 1.54 1994/10/25 21:31:36 cgd Exp $
 #
 
 machine		"i386"

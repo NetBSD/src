@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.5 1994/10/27 04:21:17 cgd Exp $	*/
+
 /*
  * source code in this file is from:
  * 386BSD boot blocks by Julian Elischer (julian@tfs.com)
@@ -26,8 +28,6 @@
  * 
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
- *
- *	$Id: main.c,v 1.4 1993/10/26 15:52:57 brezak Exp $
  */
 
 /*

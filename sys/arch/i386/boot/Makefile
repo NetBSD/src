@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.15 1994/10/27 04:14:25 cgd Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -21,8 +22,6 @@
 #
 # any improvements or extensions that they make and grant Carnegie Mellon
 # the rights to redistribute these changes.
-#
-#	$Id: Makefile,v 1.14 1994/07/26 19:33:49 mycroft Exp $
 #
 
 S=	${.CURDIR}/../../..

@@ -1,3 +1,5 @@
+/*	$NetBSD: trimhd.c,v 1.3 1994/10/27 04:22:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1989, 1990, 1991, 1992 William F. Jolitz, TeleMuse
  * All rights reserved.
@@ -46,8 +48,6 @@
  * SUCH DAMAGE.
  *
  * Trim off the start of a file.
- *
- *	$Id: trimhd.c,v 1.2 1993/05/22 08:02:24 cgd Exp $
  */
 
 main(argc, argv) char *argv[]; {

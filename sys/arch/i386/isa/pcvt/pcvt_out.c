@@ -1,3 +1,5 @@
+/*	$NetBSD: pcvt_out.c,v 1.3 1994/10/27 04:18:56 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992,1993,1994 Hellmuth Michaelis, Brian Dunford-Shore
  *                              and Joerg Wunsch.

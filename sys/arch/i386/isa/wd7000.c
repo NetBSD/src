@@ -1,3 +1,5 @@
+/*	$NetBSD: wd7000.c,v 1.18 1994/10/27 04:18:29 cgd Exp $	*/
+
 /*
  * UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED! UNFINISHED!
  * 
@@ -15,8 +17,6 @@
  * quite easy to do. Look at the Linux wd7000 device driver to see how
  * scatter gather is done by the board, then look at one of the Adaptec
  * drivers to finish off the job..
- *
- *	$Id: wd7000.c,v 1.17 1994/06/16 01:08:35 mycroft Exp $
  */
 #include "wds.h"
 #if NWDS > 0
