@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.23 1999/05/14 16:01:11 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.24 1999/05/15 14:22:46 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.23 1999/05/14 16:01:11 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.24 1999/05/15 14:22:46 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -564,6 +564,9 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 {
 	int i = 0;
 
+	sc->sc_kbddv = NULL;
+	sc->sc_isconsole = console;
+
 	if (console) {
 		KASSERT(wsdisplay_console_initted);
 		KASSERT(wsdisplay_console_device == NULL);
@@ -575,26 +578,23 @@ wsdisplay_common_attach(sc, console, scrdata, accessops, accesscookie)
 		       wsdisplay_console_conf.scrdata->name,
 		       wsdisplay_console_conf.wsemul->name);
 
+		if ((sc->sc_kbddv = wskbd_set_console_display(&sc->sc_dv)))
+			printf(", using %s", sc->sc_kbddv->dv_xname);
+
 		sc->sc_focusidx = 0;
 		sc->sc_focus = sc->sc_scr[0];
 		i++;
 	}
-
 	printf("\n");
 
 	sc->sc_accessops = accessops;
 	sc->sc_accesscookie = accesscookie;
 	sc->sc_scrdata = scrdata;
 
-	sc->sc_isconsole = console;
-	sc->sc_kbddv = NULL;
-
-	wscons_glue_set_callback();
-
 	/*
-	 * Set up a number of virtual screens if possible. The
+	 * Set up a number of virtual screens if wanted. The
 	 * WSDISPLAYIO_ADDSCREEN ioctl is more flexible, so this code
-	 * should go away as soon as we have a userspace utility.
+	 * is for special cases like installation kernels.
 	 */
 #ifdef WSDISPLAY_DEFAULTSCREENS
 	for (; i < WSDISPLAY_DEFAULTSCREENS; i++)
@@ -968,6 +968,7 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 	int error;
 	char *type, typebuf[16], *emul, emulbuf[16];
 	void *buf;
+	struct device *kbddv;
 
 	switch (cmd) {
 	case WSDISPLAYIO_ADDSCREEN:
@@ -1019,6 +1020,37 @@ wsdisplay_cfg_ioctl(sc, cmd, data, flag, p)
 		free(buf, M_DEVBUF);
 #undef d
 		return (error);
+	case WSDISPLAYIO_SETKEYBOARD:
+#define d ((struct wsdisplay_kbddata *)data)
+		switch (d->op) {
+		case WSDISPLAY_KBD_ADD:
+			if (sc->sc_kbddv)
+				return (EBUSY);
+			if (d->idx == -1) {
+				d->idx = wskbd_pickfree();
+				if (d->idx == -1)
+					return (ENXIO);
+			}
+			error = wskbd_set_display(d->idx, &sc->sc_dv, &kbddv);
+			if (error)
+				return (error);
+			sc->sc_kbddv = kbddv;
+			return (0);
+		case WSDISPLAY_KBD_DEL:
+			if (sc->sc_kbddv == NULL)
+				return (ENXIO);
+			if (d->idx == -1)
+				d->idx = sc->sc_kbddv->dv_unit;
+			error = wskbd_set_display(d->idx, 0, 0);
+			if (error)
+				return (error);
+			sc->sc_kbddv = NULL;
+			return (0);
+		default:
+			return (EINVAL);
+		}
+#undef d
+		return (0);
 	}
 	return (EINVAL);
 }
@@ -1563,42 +1595,14 @@ wsdisplay_kbdholdscreen(dev, hold)
 /*
  * Calls from the glue code.
  */
-int
-wsdisplay_is_console(dv)
-	struct device *dv;
-{
-	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dv;
-
-	KASSERT(sc != NULL);
-	return (sc->sc_isconsole);
-}
-
 struct device *
-wsdisplay_kbd(dv)
-	struct device *dv;
+wsdisplay_set_console_kbd(kbddv)
+	struct device *kbddv;
 {
-	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dv;
-
-	KASSERT(sc != NULL);
-	return (sc->sc_kbddv);
-}
-
-void
-wsdisplay_set_kbd(dv, kbddv)
-	struct device *dv, *kbddv;
-{
-	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dv;
-
-	KASSERT(sc != NULL);
-	if (sc->sc_kbddv) {
-		/* disable old keyboard */
-		wskbd_enable(sc->sc_kbddv, 0);
-	}
-	if (kbddv) {
-		/* enable new keyboard */
-		wskbd_enable(kbddv, 1);
-	}
-	sc->sc_kbddv = kbddv;
+	if (!wsdisplay_console_device)
+		return (0);
+	wsdisplay_console_device->sc_kbddv = kbddv;
+	return (&wsdisplay_console_device->sc_dv);
 }
 
 /*
