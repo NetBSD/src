@@ -4,11 +4,6 @@
  */
 
 #include <sys/cdefs.h>
-
-#ifdef __weak_reference
-__weak_reference(_catclose,catclose);
-#else
-
 #include <nl_types.h>
 
 extern void _catclose __P((nl_catd));
@@ -19,5 +14,3 @@ catclose(catd)
 {
 	_catclose(catd);
 }
-
-#endif

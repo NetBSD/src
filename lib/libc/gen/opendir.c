@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)opendir.c	8.7 (Berkeley) 12/10/94";*/
-static char rcsid[] = "$Id: opendir.c,v 1.7.2.1 1995/04/26 01:01:12 jtc Exp $";
+static char rcsid[] = "$Id: opendir.c,v 1.7.2.2 1995/05/02 19:34:55 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -56,7 +56,7 @@ opendir(name)
 {
 	return (__opendir2(name, DTF_HIDEW|DTF_NODUP));
 }
-__weak_reference(_opendir,opendir);
+#pragma weak opendir=_opendir
 
 
 DIR *

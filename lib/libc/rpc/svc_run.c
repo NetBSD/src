@@ -30,13 +30,14 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$Id: svc_run.c,v 1.5 1995/01/04 02:58:47 mycroft Exp $";
+static char *rcsid = "$Id: svc_run.c,v 1.5.2.1 1995/05/02 19:36:16 jtc Exp $";
 #endif
 
 /*
  * This is the rpc server side idle loop
  * Wait for input, call server program.
  */
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <sys/errno.h>
 

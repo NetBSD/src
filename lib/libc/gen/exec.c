@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)exec.c	5.9 (Berkeley) 6/17/91";*/
-static char *rcsid = "$Id: exec.c,v 1.5.4.2 1995/04/26 00:59:40 jtc Exp $";
+static char *rcsid = "$Id: exec.c,v 1.5.4.3 1995/05/02 19:34:39 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -110,7 +110,7 @@ execl(name, arg, va_alist)
 	errno = sverrno;
 	return(-1);
 }
-__weak_reference(_execl,execl);
+#pragma weak execl=_execl
 
 int
 #if __STDC__
@@ -139,7 +139,7 @@ execle(name, arg, va_alist)
 	errno = sverrno;
 	return(-1);
 }
-__weak_reference(_execle,execle);
+#pragma weak execle=_execle
 
 int
 #if __STDC__
@@ -168,7 +168,7 @@ execlp(name, arg, va_alist)
 	errno = sverrno;
 	return(-1);
 }
-__weak_reference(_execlp,execlp);
+#pragma weak execlp=_execlp
 
 int
 execv(name, argv)
@@ -178,7 +178,7 @@ execv(name, argv)
 	(void)execve(name, argv, environ);
 	return(-1);
 }
-__weak_reference(_execv,execv);
+#pragma weak execv=_execv
 
 int
 execvp(name, argv)
@@ -268,4 +268,4 @@ done:	if (path)
 		free(path);
 	return(-1);
 }
-__weak_reference(_execvp,execvp);
+#pragma weak execvp=_execvp

@@ -46,6 +46,7 @@ static char sccsid[] = "@(#)bt_open.c	8.7 (Berkeley) 6/16/94";
  * is wholly independent of the Postgres code.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 

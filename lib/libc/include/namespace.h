@@ -180,3 +180,11 @@
 #define rewinddir	_rewinddir
 #define seekdir		_seekdir
 #define telldir		_telldir
+
+#define ftok		_ftok
+#define getgrent	_getgrent
+#define getgrgid	_getgrgid
+#define getgrnam	_getgrnam
+#define getpwent	_getpwent
+#define getpwnam	_getpwnam
+#define getpwuid	_getpwuid

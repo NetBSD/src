@@ -33,9 +33,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)killpg.c	5.3 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: killpg.c,v 1.4 1993/11/11 19:04:06 jtc Exp $";
+static char *rcsid = "$Id: killpg.c,v 1.4.4.1 1995/05/02 19:34:03 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <signal.h>
 #include <errno.h>

@@ -4,11 +4,6 @@
  */
 
 #include <sys/cdefs.h>
-
-#ifdef __weak_reference
-__weak_reference(_catopen,catopen);
-#else
-
 #include <nl_types.h>
 
 extern nl_catd _catopen __P((__const char *, int));
@@ -20,5 +15,3 @@ catopen(name, oflag)
 {
 	return _catopen(name, oflag);
 }
-
-#endif

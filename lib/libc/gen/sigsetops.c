@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)sigsetops.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: sigsetops.c,v 1.7.4.1 1995/04/26 00:15:36 jtc Exp $";
+static char *rcsid = "$Id: sigsetops.c,v 1.7.4.2 1995/05/02 19:35:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <signal.h>
@@ -52,7 +52,7 @@ sigemptyset(set)
 	*set = 0;
 	return (0);
 }
-__weak_reference(_sigemptyset,sigemptyset);
+#pragma weak sigemptyset=_sigemptyset
 
 int
 sigfillset(set)
@@ -61,7 +61,7 @@ sigfillset(set)
 	*set = ~(sigset_t)0;
 	return (0);
 }
-__weak_reference(_sigfillset,sigfillset);
+#pragma weak sigfillset=_sigfillset
 
 int
 sigaddset(set, signo)
@@ -75,7 +75,7 @@ sigaddset(set, signo)
 	*set |= sigmask(signo);
 	return (0);
 }
-__weak_reference(_sigaddset,sigaddset);
+#pragma weak sigaddset=_sigaddset
 
 int
 sigdelset(set, signo)
@@ -89,7 +89,7 @@ sigdelset(set, signo)
 	*set &= ~sigmask(signo);
 	return (0);
 }
-__weak_reference(_sigdelset,sigdelset);
+#pragma weak sigdelset=_sigdelset
 
 int
 sigismember(set, signo)
@@ -102,4 +102,4 @@ sigismember(set, signo)
 	}
 	return ((*set & sigmask(signo)) != 0);
 }
-__weak_reference(_sigismember,sigismember);
+#pragma weak sigismember=_sigismember

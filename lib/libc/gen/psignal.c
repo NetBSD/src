@@ -33,13 +33,14 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)psignal.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: psignal.c,v 1.7 1994/10/06 18:16:43 jtc Exp $";
+static char *rcsid = "$Id: psignal.c,v 1.7.2.1 1995/05/02 19:34:59 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
  * Print the name of the signal indicated
  * along with the supplied message.
  */
+#include "namespace.h"
 #include <signal.h>
 #include <string.h>
 #include <unistd.h>

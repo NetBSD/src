@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: err.c,v 1.10.2.1 1995/02/17 10:41:37 jtc Exp $";
+static char *rcsid = "$Id: err.c,v 1.10.2.2 1995/05/02 19:34:35 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -68,7 +68,7 @@ verr(eval, fmt, ap)
 	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 	exit(eval);
 }
-__weak_reference(_verr,verr);
+#pragma weak verr=_verr
 
 
 __dead void
@@ -93,7 +93,7 @@ err(va_alist)
 	verr(eval, fmt, ap);
 	va_end(ap);
 }
-__weak_reference(_err,err);
+#pragma weak err=_err
 
 
 __dead void
@@ -108,7 +108,7 @@ verrx(eval, fmt, ap)
 	(void)fprintf(stderr, "\n");
 	exit(eval);
 }
-__weak_reference(_verrx,verrx);
+#pragma weak verrx=_verrx
 
 
 __dead void
@@ -133,7 +133,7 @@ errx(va_alist)
 	verrx(eval, fmt, ap);
 	va_end(ap);
 }
-__weak_reference(_errx,errx);
+#pragma weak errx=_errx
 
 
 void
@@ -151,7 +151,7 @@ vwarn(fmt, ap)
 	}
 	(void)fprintf(stderr, "%s\n", strerror(sverrno));
 }
-__weak_reference(_vwarn,vwarn);
+#pragma weak vwarn=_vwarn
 
 
 void
@@ -174,7 +174,7 @@ warn(va_alist)
 	vwarn(fmt, ap);
 	va_end(ap);
 }
-__weak_reference(_warn,warn);
+#pragma weak warn=_warn
 
 
 void
@@ -187,7 +187,7 @@ vwarnx(fmt, ap)
 		(void)vfprintf(stderr, fmt, ap);
 	(void)fprintf(stderr, "\n");
 }
-__weak_reference(_vwarnx,vwarnx);
+#pragma weak vwarnx=_vwarnx
 
 
 void
@@ -210,4 +210,4 @@ warnx(va_alist)
 	vwarnx(fmt, ap);
 	va_end(ap);
 }
-__weak_reference(_warnx,warnx);
+#pragma weak warnx=_warnx

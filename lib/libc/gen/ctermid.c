@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)ctermid.c	5.2 (Berkeley) 2/20/91";*/
-static char *rcsid = "$Id: ctermid.c,v 1.3 1993/08/26 00:44:20 jtc Exp $";
+static char *rcsid = "$Id: ctermid.c,v 1.3.4.1 1995/05/02 19:34:31 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -47,7 +47,7 @@ ctermid(s)
 	static char def[] = _PATH_TTY;
 
 	if (s) {
-		bcopy(def, s, sizeof(_PATH_TTY));
+		memcpy(s, def, sizeof(_PATH_TTY));
 		return(s);
 	}
 	return(def);

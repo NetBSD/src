@@ -134,4 +134,4 @@ strtoq(nptr, endptr, base)
 		*endptr = (char *) (any ? s - 1 : nptr);
 	return (acc);
 }
-__weak_reference(_strtoq,strtoq);
+#pragma weak strtoq=_strtoq

@@ -30,9 +30,10 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib.c,v 1.13 1994/09/28 01:38:06 deraadt Exp $";
+static char *rcsid = "$Id: yplib.c,v 1.13.2.1 1995/05/02 19:36:57 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>

@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.10.2.2 1995/03/25 02:21:46 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.10.2.3 1995/05/02 19:35:55 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -141,7 +141,7 @@ int type;
 
     return(loadCat(catpath, type));
 }
-__weak_reference(_catopen,catopen);
+#pragma weak catopen=_catopen
 
 
 /*
@@ -253,7 +253,7 @@ char *dflt;
     else cptr = dflt;
     return(cptr);
 }
-__weak_reference(_catgets,catgets);
+#pragma weak catgets=_catgets
 
 
 int		catclose( catd)
@@ -279,7 +279,7 @@ nl_catd catd;
 
     return 0;
 }
-__weak_reference(_catclose,catclose);
+#pragma weak catclose=_catclose
 
 
 /*

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)siglist.c	5.6 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: siglist.c,v 1.6.2.1 1995/02/17 10:40:32 jtc Exp $";
+static char *rcsid = "$Id: siglist.c,v 1.6.2.2 1995/05/02 19:35:10 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -74,4 +74,4 @@ const char *const sys_siglist[NSIG] = {
 	"User defined signal 1",	/* SIGUSR1 */
 	"User defined signal 2"		/* SIGUSR2 */
 };
-__weak_reference(_sys_siglist,sys_siglist);
+#pragma weak sys_siglist=_sys_siglist

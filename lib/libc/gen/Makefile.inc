@@ -1,11 +1,11 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.63.2.1 1995/02/17 10:48:27 jtc Exp $
+#	$Id: Makefile.inc,v 1.63.2.2 1995/05/02 19:34:27 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
 
-SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c ctime.c \
-	ctype_.c daemon.c devname.c difftime.c \
+SRCS+=	alarm.c assert.c clock.c closedir.c confstr.c ctermid.c \
+	ctype_.c daemon.c devname.c \
 	disklabel.c err.c errlist.c errno.c exec.c fnmatch.c \
 	fstab.c ftok.c fts.c \
 	getbsize.c getcap.c getcwd.c getdomainname.c getgrent.c getgrouplist.c \
@@ -56,7 +56,7 @@ SRCS+=	_setjmp.S fabs.S frexp.c isinf.c ldexp.c modf.c setjmp.S
 SRCS+=	sigsetjmp.S
 .endif
 
-MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctime.3 ctype.3 \
+MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctype.3 \
 	daemon.3 devname.3 directory.3 err.3 exec.3 fnmatch.3 frexp.3 \
 	ftok.3 fts.3 \
 	getbsize.3 getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 \
@@ -75,8 +75,6 @@ MAN+=	alarm.3 clock.3 confstr.3 ctermid.3 ctime.3 ctype.3 \
 	tolower.3 toupper.3 ttyname.3 tzset.3 \
 	ualarm.3 uname.3 unvis.3 usleep.3 utime.3 valloc.3 vis.3
 
-MLINKS+=ctime.3 asctime.3 ctime.3 difftime.3 ctime.3 gmtime.3 \
-	ctime.3 localtime.3 ctime.3 mktime.3
 MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 readdir.3 directory.3 rewinddir.3 directory.3 seekdir.3 \
 	directory.3 telldir.3
