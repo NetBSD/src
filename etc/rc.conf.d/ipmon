@@ -1,6 +1,4 @@
-#!/bin/sh
-#
-# $NetBSD: ipmon,v 1.1 2002/04/17 11:04:16 darrenr Exp $
+# $NetBSD: ipmon,v 1.2 2002/04/17 11:11:43 darrenr Exp $
 
 #
 # To startup ipmon as a daemon
