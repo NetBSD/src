@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.2 2000/08/03 03:54:21 assar Exp $ */
+/* $Id: roken.h,v 1.3 2001/02/04 18:05:00 christos Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -122,7 +122,9 @@ const char *get_default_username (void);
 
 
 
+#ifndef BSD4_4
 int mkstemp(char *);
+#endif
 
 
 
@@ -173,8 +175,10 @@ getipnodebyname (const char *name, int af, int flags, int *error_num);
 struct hostent *
 getipnodebyaddr (const void *src, size_t len, int af, int *error_num);
 
+#ifndef BSD4_4
 void
 freehostent (struct hostent *h);
+#endif
 
 struct hostent *
 copyhostent (const struct hostent *h);
