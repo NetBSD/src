@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.6 2002/10/02 15:52:32 thorpej Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.7 2003/01/03 09:09:21 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -93,8 +93,6 @@ com_mace_attach(parent, self, aux)
 	struct com_mace_softc *msc = (void *)self;
 	struct com_softc *sc = &msc->sc_com;
 	struct mace_attach_args *maa = aux;
-	unsigned long rate;
-	char *dbaud;
 
 	sc->sc_iot = maa->maa_st;
 	sc->sc_ioh = maa->maa_sh;
@@ -102,37 +100,13 @@ com_mace_attach(parent, self, aux)
 
 	sc->sc_frequency = COM_FREQ;
 
-	/* XXX console check */
-	/* XXX map */
 
-#define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
-
-#if 0
-console = 1;
-#endif
-
-#if 0
-	console = GetEnvironmentVariable("console");
-
-	if console[0] = 'd'
-#endif
-	dbaud = ARCBIOS->GetEnvironmentVariable("dbaud");
-	if (dbaud != NULL)
-		rate = strtoul(dbaud, NULL, 10);
-	else
-		rate = 9600;
-
-	delay(10000);
-	/* if console & dbaud */
-	if (console == 0) {
-		comcnattach(sc->sc_iot, sc->sc_ioh, rate, COM_FREQ, CONMODE);
-		console = 1;
-	}
 	delay(10000);
 	com_attach_subr(sc);
 	delay(10000);
 
-	crime_intr_establish(0, 0, 0, comintr, sc);
+	mace_intr_establish(maa->maa_intr, 4, comintr, sc);
+	/*mace_intr_establish(maa->maa_intr, IPL_TTY, comintr, sc);*/
 
 	return;
 }
