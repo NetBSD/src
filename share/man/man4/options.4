@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.179 2002/08/02 19:21:57 soren Exp $
+.\"	$NetBSD: options.4,v 1.180 2002/09/29 00:36:43 wiz Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 20, 2001
+.Dd September 29, 2002
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1391,22 +1391,6 @@ enables logging of IP packets using ip-filter.
 .It Cd options IPFILTER_DEFAULT_BLOCK
 This option sets the default policy of ip-filter.
 If it is set, ip-filter will block packets by default.
-.It Cd options PPP_BSDCOMP
-Enable support for BSD-compress
-.Pq Sq bsdcomp
-compression in ppp.
-.It Cd options PPP_DEFLATE
-Enable support for deflate
-compression in ppp.
-.It Cd options PPP_FILTER
-This option turns on
-.Xr pcap 3
-based filtering for ppp connections.
-This option is used by
-.Xr pppd 8
-which needs to be compiled with
-.Em PPP_FILTER
-defined (the current default).
 .El
 .Ss System V IPC Options
 .Bl -ohang
@@ -1932,6 +1916,7 @@ bolded
 .Xr ns 4 ,
 .Xr pcibios 4 ,
 .Xr pcmcia 4 ,
+.Xr ppp 4 ,
 .Xr userconf 4 ,
 .Xr config 8 ,
 .Xr edquota 8 ,
