@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_debug.c,v 1.13 2003/08/07 16:33:47 agc Exp $	*/
+/*	$NetBSD: spp_debug.c,v 1.14 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.13 2003/08/07 16:33:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_debug.c,v 1.14 2004/04/19 00:10:48 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -74,12 +74,7 @@ int	spp_debx;
  * spp debug routines
  */
 void
-spp_trace(act, ostate, sp, si, req)
-	short act;
-	u_int ostate;
-	struct sppcb *sp;
-	struct spidp *si;
-	int req;
+spp_trace(int act, u_int ostate, struct sppcb *sp, struct spidp *si, int req)
 {
 #ifdef INET
 #ifdef SPPDEBUG
@@ -91,7 +86,7 @@ spp_trace(act, ostate, sp, si, req)
 	if (spp_debx == SPP_NDEBUG)
 		spp_debx = 0;
 	sd->sd_time = iptime();
-	sd->sd_act = act;
+	sd->sd_act = (short) act;
 	sd->sd_ostate = ostate;
 	sd->sd_cb = (caddr_t)sp;
 	if (sp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.20 2003/09/30 00:01:18 christos Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.21 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.20 2003/09/30 00:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.21 2004/04/19 00:10:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ int	idpcksum = 1;
 long	ns_pexseq;
 
 void
-ns_init()
+ns_init(void)
 {
 
 	ns_broadhost = * (union ns_host *) allones;
@@ -109,7 +109,7 @@ ns_init()
 int nsintr_getpck = 0;
 int nsintr_swtch = 0;
 void
-nsintr()
+nsintr(void)
 {
 	struct idp *idp;
 	struct mbuf *m;
@@ -244,7 +244,7 @@ bad:
 	goto next;
 }
 
-u_char nsctlerrmap[PRC_NCMDS] = {
+const u_char nsctlerrmap[PRC_NCMDS] = {
 	ECONNABORTED,	ECONNABORTED,	0,		0,
 	0,		0,		EHOSTDOWN,	EHOSTUNREACH,
 	ENETUNREACH,	EHOSTUNREACH,	ECONNREFUSED,	ECONNREFUSED,
@@ -255,10 +255,7 @@ u_char nsctlerrmap[PRC_NCMDS] = {
 int idp_donosocks = 1;
 
 void *
-idp_ctlinput(cmd, sa, arg)
-	int cmd;
-	struct sockaddr *sa;
-	void *arg;
+idp_ctlinput(int cmd, struct sockaddr *sa, void *arg)
 {
 	struct ns_addr *ns;
 	struct nspcb *nsp;
@@ -315,8 +312,7 @@ struct route idp_droute;
 struct route idp_sroute;
 
 void
-idp_forward(m)
-	struct mbuf *m;
+idp_forward(struct mbuf *m)
 {
 	struct idp *idp = mtod(m, struct idp *);
 	int error, type, code;
@@ -435,9 +431,7 @@ cleanup:
 }
 
 int
-idp_do_route(src, ro)
-	struct ns_addr *src;
-	struct route *ro;
+idp_do_route(struct ns_addr *src, struct route *ro)
 {
 	
 	struct sockaddr_ns *dst;
@@ -458,16 +452,13 @@ idp_do_route(src, ro)
 }
 
 void
-idp_undo_route(ro)
-	struct route *ro;
+idp_undo_route(struct route *ro)
 {
 	if (ro->ro_rt) {RTFREE(ro->ro_rt);}
 }
 
 void
-ns_watch_output(m, ifp)
-	struct mbuf *m;
-	struct ifnet *ifp;
+ns_watch_output(struct mbuf *m, struct ifnet *ifp)
 {
 	struct nspcb *nsp;
 	struct ifaddr *ifa;

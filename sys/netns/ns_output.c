@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_output.c,v 1.12 2003/08/07 16:33:46 agc Exp $	*/
+/*	$NetBSD: ns_output.c,v 1.13 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_output.c,v 1.12 2003/08/07 16:33:46 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_output.c,v 1.13 2004/04/19 00:10:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,13 +59,7 @@ int ns_output_cnt = 0;
 struct mbuf *ns_lastout;
 
 int
-#if __STDC__
 ns_output(struct mbuf *m0, ...)
-#else
-ns_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct route *ro;
 	int flags;

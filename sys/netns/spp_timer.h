@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_timer.h,v 1.8 2003/08/07 16:33:48 agc Exp $	*/
+/*	$NetBSD: spp_timer.h,v 1.9 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -116,5 +116,5 @@ const char * const spptimers[] =
 }
 
 #ifdef _KERNEL
-extern int spp_backoff[];
+extern const int spp_backoff[];
 #endif

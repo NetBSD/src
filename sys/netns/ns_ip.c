@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.37 2003/11/14 15:04:48 itojun Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.38 2004/04/19 00:10:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.37 2003/11/14 15:04:48 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.38 2004/04/19 00:10:48 matt Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -76,12 +76,12 @@ struct ifnet_en {
 	struct ifnet_en *ifen_next;
 };
 
-int	nsipoutput __P((struct ifnet *, struct mbuf *m, struct sockaddr *,
-    struct rtentry *));
-int	nsipioctl __P((struct ifnet *, u_long, caddr_t));
-void	nsipstart __P((struct ifnet *));
-int	nsip_route __P((struct mbuf *));
-void	nsip_rtchange __P((struct in_addr *));
+int	nsipoutput (struct ifnet *, struct mbuf *m, struct sockaddr *,
+    struct rtentry *);
+int	nsipioctl (struct ifnet *, u_long, caddr_t);
+void	nsipstart (struct ifnet *);
+int	nsip_route (struct mbuf *);
+void	nsip_rtchange (struct in_addr *);
 #define LOMTU	(1024+512);
 
 int	nsipif_unit;			/* XXX */
@@ -90,7 +90,7 @@ struct ifnet_en *nsip_list;		/* list of all hosts and gateways or
 					broadcast addrs */
 
 struct ifnet_en *
-nsipattach()
+nsipattach(void)
 {
 	struct ifnet_en *m;
 	struct ifnet *ifp;
@@ -136,10 +136,7 @@ nsipattach()
  */
 /* ARGSUSED */
 int
-nsipioctl(ifp, cmd, data)
-	struct ifnet *ifp;
-	u_long cmd;
-	caddr_t data;
+nsipioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	int error = 0;
 	struct ifreq *ifr;
@@ -150,6 +147,7 @@ nsipioctl(ifp, cmd, data)
 		ifp->if_flags |= IFF_UP;
 		/* fall into: */
 
+		/*FALLTHROUGH*/
 	case SIOCSIFDSTADDR:
 		/*
 		 * Everything else is done at a higher level.
@@ -173,12 +171,7 @@ struct mbuf *nsip_lastin;
 int nsip_hold_input;
 
 void
-#if __STDC__
 idpip_input(struct mbuf *m, ...)
-#else
-idpip_input(va_alist)
-	va_dcl
-#endif
 {
 	struct ifnet *ifp;
 	struct ip *ip;
@@ -186,14 +179,7 @@ idpip_input(va_alist)
 	struct ifqueue *ifq = &nsintrq;
 	int len, s;
 	va_list ap;
-#if __STDC__
 	va_start(ap, m);
-#else
-	struct mbuf *m;
-
-	va_start(ap);
-	m = va_arg(ap, struct mbuf *);
-#endif
 	ifp = va_arg(ap, struct ifnet *);
 	va_end(ap);
 
@@ -268,11 +254,8 @@ idpip_input(va_alist)
 
 /* ARGSUSED */
 int
-nsipoutput(ifp, m, dst, rt)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr *dst;
-	struct rtentry *rt;
+nsipoutput(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
+	struct rtentry *rt)
 {
 	struct ifnet_en *ifn = (struct ifnet_en *) ifp;
 
@@ -340,8 +323,7 @@ nsipoutput(ifp, m, dst, rt)
 }
 
 void
-nsipstart(ifp)
-	struct ifnet *ifp;
+nsipstart(struct ifnet *ifp)
 {
 	panic("nsip_start called");
 }
@@ -349,8 +331,7 @@ nsipstart(ifp)
 struct ifreq ifr = {"nsip0"};		/* XXX */
 
 int
-nsip_route(m)
-	struct mbuf *m;
+nsip_route(struct mbuf *m)
 {
 	struct nsip_req *rq = mtod(m, struct nsip_req *);
 	struct sockaddr_ns *ns_dst = satosns(&rq->rq_ns);
@@ -426,8 +407,7 @@ nsip_route(m)
 }
 
 int
-nsip_free(ifp)
-	struct ifnet *ifp;
+nsip_free(struct ifnet *ifp)
 {
 	struct ifnet_en *ifn = (struct ifnet_en *)ifp;
 	struct route *ro = & ifn->ifen_route;
@@ -441,10 +421,7 @@ nsip_free(ifp)
 }
 
 void *
-nsip_ctlinput(cmd, sa, v)
-	int cmd;
-	struct sockaddr *sa;
-	void *v;
+nsip_ctlinput(int cmd, struct sockaddr *sa, void *v)
 {
 	struct sockaddr_in *sin;
 
@@ -470,8 +447,7 @@ nsip_ctlinput(cmd, sa, v)
 }
 
 void
-nsip_rtchange(dst)
-	struct in_addr *dst;
+nsip_rtchange(struct in_addr *dst)
 {
 	struct ifnet_en *ifn;
 
