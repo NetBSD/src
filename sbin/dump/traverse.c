@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.19 1997/09/16 06:41:23 lukem Exp $	*/
+/*	$NetBSD: traverse.c,v 1.20 1998/03/18 16:54:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.19 1997/09/16 06:41:23 lukem Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.20 1998/03/18 16:54:57 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: traverse.c,v 1.19 1997/09/16 06:41:23 lukem Exp $");
 #include <ufs/ufs/dir.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 #endif
 
 #include <protocols/dumprestore.h>
@@ -130,10 +131,10 @@ blockest(dp)
 /* The WANTTODUMP macro decides whether a file should be dumped. */
 #ifdef UF_NODUMP
 #define	WANTTODUMP(dp) \
-	(CHANGEDSINCE(dp, spcl.c_ddate) && \
+	(CHANGEDSINCE(dp, iswap32(spcl.c_ddate)) && \
 	 (nonodump || ((dp)->di_flags & UF_NODUMP) != UF_NODUMP))
 #else
-#define	WANTTODUMP(dp) CHANGEDSINCE(dp, spcl.c_ddate)
+#define	WANTTODUMP(dp) CHANGEDSINCE(dp, iswap32(spcl.c_ddate))
 #endif
 
 /*
@@ -300,7 +301,7 @@ mapdirs(maxino, tapesize)
 		filesize = dp->di_size;
 		for (ret = 0, i = 0; filesize > 0 && i < NDADDR; i++) {
 			if (dp->di_db[i] != 0)
-				ret |= searchdir(ino, dp->di_db[i],
+				ret |= searchdir(ino, iswap32(dp->di_db[i]),
 					(long)dblksize(sblock, dp, i),
 					filesize);
 			if (ret & HASDUMPEDFILE)
@@ -345,12 +346,13 @@ dirindir(ino, blkno, ind_level, filesize)
 	int i;
 	daddr_t	idblk[MAXNINDIR];
 
-	bread(fsbtodb(sblock, blkno), (char *)idblk, (int)sblock->fs_bsize);
+	bread(fsbtodb(sblock, iswap32(blkno)), (char *)idblk,
+		(int)sblock->fs_bsize);
 	if (ind_level <= 0) {
 		for (i = 0; *filesize > 0 && i < NINDIR(sblock); i++) {
 			blkno = idblk[i];
 			if (blkno != 0)
-				ret |= searchdir(ino, blkno, sblock->fs_bsize,
+				ret |= searchdir(ino, iswap32(blkno), sblock->fs_bsize,
 					*filesize);
 			if (ret & HASDUMPEDFILE)
 				*filesize = 0;
@@ -393,7 +395,7 @@ searchdir(ino, blkno, size, filesize)
 			msg("corrupted directory, inumber %d\n", ino);
 			break;
 		}
-		loc += dp->d_reclen;
+		loc += iswap16(dp->d_reclen);
 		if (dp->d_ino == 0)
 			continue;
 		if (dp->d_name[0] == '.') {
@@ -402,12 +404,12 @@ searchdir(ino, blkno, size, filesize)
 			if (dp->d_name[1] == '.' && dp->d_name[2] == '\0')
 				continue;
 		}
-		if (TSTINO(dp->d_ino, dumpinomap)) {
+		if (TSTINO(iswap32(dp->d_ino), dumpinomap)) {
 			ret |= HASDUMPEDFILE;
 			if (ret & HASSUBDIRS)
 				break;
 		}
-		if (TSTINO(dp->d_ino, dumpdirmap)) {
+		if (TSTINO(iswap32(dp->d_ino), dumpdirmap)) {
 			ret |= HASSUBDIRS;
 			if (ret & HASDUMPEDFILE)
 				break;
@@ -435,8 +437,11 @@ dumpino(dp, ino)
 		dumpmap(dumpinomap, TS_BITS, ino);
 	}
 	CLRINO(ino, dumpinomap);
-	spcl.c_dinode = *dp;
-	spcl.c_type = TS_INODE;
+	if (needswap)
+		ffs_dinode_swap(dp, &spcl.c_dinode);
+	else
+		spcl.c_dinode = *dp;
+	spcl.c_type = iswap32(TS_INODE);
 	spcl.c_count = 0;
 	switch (dp->di_mode & IFMT) {
 
@@ -458,7 +463,7 @@ dumpino(dp, ino)
 		    dp->di_blocks == 0) {
 #endif
 			spcl.c_addr[0] = 1;
-			spcl.c_count = 1;
+			spcl.c_count = iswap32(1);
 			writeheader(ino);
 			memmove(buf, dp->di_shortlink, (u_long)dp->di_size);
 			buf[dp->di_size] = '\0';
@@ -512,7 +517,8 @@ dmpindir(ino, blk, ind_level, size)
 	daddr_t idblk[MAXNINDIR];
 
 	if (blk != 0)
-		bread(fsbtodb(sblock, blk), (char *)idblk, (int) sblock->fs_bsize);
+		bread(fsbtodb(sblock, iswap32(blk)), (char *)idblk,
+			(int) sblock->fs_bsize);
 	else
 		memset(idblk, 0, (int)sblock->fs_bsize);
 	if (ind_level <= 0) {
@@ -556,16 +562,16 @@ blksout(blkp, frags, ino)
 				spcl.c_addr[j - i] = 1;
 			else
 				spcl.c_addr[j - i] = 0;
-		spcl.c_count = count - i;
+		spcl.c_count = iswap32(count - i);
 		writeheader(ino);
 		bp = &blkp[i / tbperdb];
 		for (j = i; j < count; j += tbperdb, bp++)
 			if (*bp != 0)
 				if (j + tbperdb <= count)
-					dumpblock(*bp, (int)sblock->fs_bsize);
+					dumpblock(iswap32(*bp), (int)sblock->fs_bsize);
 				else
-					dumpblock(*bp, (count - j) * TP_BSIZE);
-		spcl.c_type = TS_ADDR;
+					dumpblock(iswap32(*bp), (count - j) * TP_BSIZE);
+		spcl.c_type = iswap32(TS_ADDR);
 	}
 }
 
@@ -581,10 +587,10 @@ dumpmap(map, type, ino)
 	int i;
 	char *cp;
 
-	spcl.c_type = type;
-	spcl.c_count = howmany(mapsize * sizeof(char), TP_BSIZE);
+	spcl.c_type = iswap32(type);
+	spcl.c_count = iswap32(howmany(mapsize * sizeof(char), TP_BSIZE));
 	writeheader(ino);
-	for (i = 0, cp = map; i < spcl.c_count; i++, cp += TP_BSIZE)
+	for (i = 0, cp = map; i < iswap32(spcl.c_count); i++, cp += TP_BSIZE)
 		writerec(cp, 0);
 }
 
@@ -597,19 +603,19 @@ writeheader(ino)
 {
 	int32_t sum, cnt, *lp;
 
-	spcl.c_inumber = ino;
-	spcl.c_magic = NFS_MAGIC;
+	spcl.c_inumber = iswap32(ino);
+	spcl.c_magic = iswap32(NFS_MAGIC);
 	spcl.c_checksum = 0;
 	lp = (int32_t *)&spcl;
 	sum = 0;
 	cnt = sizeof(union u_spcl) / (4 * sizeof(int32_t));
 	while (--cnt >= 0) {
-		sum += *lp++;
-		sum += *lp++;
-		sum += *lp++;
-		sum += *lp++;
+		sum += iswap32(*lp++);
+		sum += iswap32(*lp++);
+		sum += iswap32(*lp++);
+		sum += iswap32(*lp++);
 	}
-	spcl.c_checksum = CHECKSUM - sum;
+	spcl.c_checksum = iswap32(CHECKSUM - sum);
 	writerec((char *)&spcl, 1);
 }
 
@@ -619,12 +625,16 @@ getino(inum)
 {
 	static daddr_t minino, maxino;
 	static struct dinode inoblock[MAXINOPB];
+	int i;
 
 	curino = inum;
 	if (inum >= minino && inum < maxino)
 		return (&inoblock[inum - minino]);
 	bread(fsbtodb(sblock, ino_to_fsba(sblock, inum)), (char *)inoblock,
 	    (int)sblock->fs_bsize);
+	if (needswap)
+		for (i = 0; i < MAXINOPB; i++)
+			ffs_dinode_swap(&inoblock[i], &inoblock[i]);
 	minino = inum - (inum % INOPB(sblock));
 	maxino = minino + INOPB(sblock);
 	return (&inoblock[inum - minino]);

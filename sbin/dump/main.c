@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 1997/09/18 03:03:56 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.18 1998/03/18 16:54:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 1997/09/18 03:03:56 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 1998/03/18 16:54:56 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: main.c,v 1.17 1997/09/18 03:03:56 lukem Exp $");
 #else
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 #endif
 
 #include <protocols/dumprestore.h>
@@ -111,7 +112,7 @@ main(argc, argv)
 	int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
-	time_t tnow;
+	time_t tnow, date;
 	int dirlist;
 	char *toplevel;
 	int just_estimate = 0;
@@ -352,23 +353,6 @@ main(argc, argv)
 	}
 	(void)strncpy(spcl.c_label, "none", sizeof(spcl.c_label) - 1);
 	(void)gethostname(spcl.c_host, NAMELEN);
-	spcl.c_level = level - '0';
-	spcl.c_type = TS_TAPE;
-	if (!Tflag)
-	        getdumptime();		/* /etc/dumpdates snarfed */
-
-	msg("Date of this level %c dump: %s", level,
-		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
- 	msg("Date of last level %c dump: %s", lastlevel,
-		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&spcl.c_ddate));
-	msg("Dumping ");
-	if (dt != NULL && dirlist != 0)
-		msgtail("a subset of ");
-	msgtail("%s (%s) ", disk, spcl.c_filesys);
-	if (host)
-		msgtail("to %s on host %s\n", tape, host);
-	else
-		msgtail("to %s\n", tape);
 
 	if ((diskfd = open(disk, O_RDONLY)) < 0) {
 		msg("Cannot open %s\n", disk);
@@ -378,7 +362,34 @@ main(argc, argv)
 	sblock = (struct fs *)sblock_buf;
 	bread(SBOFF, (char *) sblock, SBSIZE);
 	if (sblock->fs_magic != FS_MAGIC)
-		quit("bad sblock magic number\n");
+		if (sblock->fs_magic == bswap32(FS_MAGIC)) {
+			ffs_sb_swap(sblock, sblock, 0);
+			needswap = 1;
+		} else
+			quit("bad sblock magic number\n");
+
+	spcl.c_level = iswap32(level - '0');
+	spcl.c_type = iswap32(TS_TAPE);
+	spcl.c_date = iswap32(spcl.c_date);
+	spcl.c_ddate = iswap32(spcl.c_ddate);
+	if (!Tflag)
+	        getdumptime();		/* /etc/dumpdates snarfed */
+
+	date = iswap32(spcl.c_date);
+	msg("Date of this level %c dump: %s", level,
+		spcl.c_date == 0 ? "the epoch\n" : ctime(&date));
+	date = iswap32(spcl.c_ddate);
+ 	msg("Date of last level %c dump: %s", lastlevel,
+		spcl.c_ddate == 0 ? "the epoch\n" : ctime(&date));
+	msg("Dumping ");
+	if (dt != NULL && dirlist != 0)
+		msgtail("a subset of ");
+	msgtail("%s (%s) ", disk, spcl.c_filesys);
+	if (host)
+		msgtail("to %s on host %s\n", tape, host);
+	else
+		msgtail("to %s\n", tape);
+
 	dev_bsize = sblock->fs_fsize / fsbtodb(sblock, 1);
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
@@ -388,7 +399,7 @@ main(argc, argv)
 		quit("TP_BSIZE (%d) is not a power of 2", TP_BSIZE);
 #ifdef FS_44INODEFMT
 	if (sblock->fs_inodefmt >= FS_44INODEFMT)
-		spcl.c_flags |= DR_NEWINODEFMT;
+		spcl.c_flags = iswap32(iswap32(spcl.c_flags) | DR_NEWINODEFMT);
 #endif
 	maxino = sblock->fs_ipg * sblock->fs_ncg;
 	mapsize = roundup(howmany(maxino, NBBY), TP_BSIZE);
@@ -397,7 +408,7 @@ main(argc, argv)
 	dumpinomap = (char *)calloc((unsigned) mapsize, sizeof(char));
 	tapesize = 3 * (howmany(mapsize * sizeof(char), TP_BSIZE) + 1);
 
-	nonodump = spcl.c_level < honorlevel;
+	nonodump = iswap32(spcl.c_level) < honorlevel;
 
 	(void)signal(SIGINFO, statussig);
 
@@ -511,18 +522,19 @@ main(argc, argv)
 		(void)dumpino(dp, ino);
 	}
 
-	spcl.c_type = TS_END;
+	spcl.c_type = iswap32(TS_END);
 	for (i = 0; i < ntrec; i++)
 		writeheader(maxino - 1);
 	if (pipeout)
-		msg("%ld tape blocks\n",spcl.c_tapea);
+		msg("%ld tape blocks\n",iswap32(spcl.c_tapea));
 	else
 		msg("%ld tape blocks on %d volume%s\n",
-		    spcl.c_tapea, spcl.c_volume,
-		    (spcl.c_volume == 1) ? "" : "s");
+		    iswap32(spcl.c_tapea), iswap32(spcl.c_volume),
+		    (iswap32(spcl.c_volume) == 1) ? "" : "s");
 	tnow = do_stats();
+	date = iswap32(spcl.c_date);
 	msg("Date of this level %c dump: %s", level,
-		spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
+		spcl.c_date == 0 ? "the epoch\n" : ctime(&date));
 	msg("Date this dump completed:  %s", ctime(&tnow));
 	msg("Average transfer rate: %ld KB/s\n", xferrate / tapeno);
 	putdumptime();

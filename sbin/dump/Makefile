@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1997/10/10 19:48:01 christos Exp $
+#	$NetBSD: Makefile,v 1.19 1998/03/18 16:54:56 bouyer Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -16,10 +16,15 @@
 PROG=	dump
 LINKS=	${BINDIR}/dump ${BINDIR}/rdump
 CPPFLAGS+=-DRDUMP
-SRCS=	itime.c main.c optr.c dumprmt.c tape.c traverse.c unctime.c
+SRCS=	itime.c main.c optr.c dumprmt.c tape.c traverse.c unctime.c \
+	ffs_bswap.c
+DPADD=	${LIBUTIL}
+LDADD+=	-lutil
 BINGRP=	tty
 BINMODE=2555
 MAN=	dump.8
 MLINKS+=dump.8 rdump.8
+
+.PATH:  ${.CURDIR}/../../sys/ufs/ffs 
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.13 1997/09/16 06:41:20 lukem Exp $	*/
+/*	$NetBSD: dump.h,v 1.14 1998/03/18 16:54:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -87,6 +87,35 @@ char	sblock_buf[MAXBSIZE];
 long	dev_bsize;	/* block size of underlying disk device */
 int	dev_bshift;	/* log2(dev_bsize) */
 int	tp_bshift;	/* log2(TP_BSIZE) */
+int needswap;	/* file system in swapped byte order */
+/* some inline functs to help the byte-swapping mess */
+static __inline u_int16_t iswap16 __P((u_int16_t));
+static __inline u_int32_t iswap32 __P((u_int32_t));
+static __inline u_int64_t iswap64 __P((u_int64_t));
+    
+static __inline u_int16_t iswap16(x)
+	u_int16_t x;
+{           
+	if (needswap)
+		return bswap16(x);
+	else return x;  
+}
+
+static __inline u_int32_t iswap32(x)
+    u_int32_t x;
+{
+	if (needswap)
+		return bswap32(x);
+	else return x;
+}
+
+static __inline u_int64_t iswap64(x)
+	u_int64_t x;
+{
+	if (needswap)
+		return bswap64(x);
+	else return x;
+}  
 
 #ifndef __P
 #include <sys/cdefs.h>
