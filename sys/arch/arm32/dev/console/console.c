@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.5 1996/03/17 01:24:14 thorpej Exp $ */
+/* $NetBSD: console.c,v 1.6 1996/04/19 20:03:37 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -39,7 +39,6 @@
  * Console functions
  *
  * Created      : 17/09/94
- * Last updated : 15/11/95
  */
 
 #include <sys/types.h>
@@ -67,7 +66,7 @@
 
 #include "vt.h"
 
-#define CONSOLE_VERSION "[V203B] "
+#define CONSOLE_VERSION "[V203C] "
 
 /*
  * Externals
@@ -139,7 +138,9 @@ find_tp(dev)
 	struct vconsole *vc;
 	struct vconsole *last=0;
 	int unit = minor (dev);
+	int s;
 
+	s = spltty();
 	for (vc=vconsole_head; vc != NULL; vc=vc->next) {
 		if (vc->number==unit) {
 			if (vc != vconsole_head) {
@@ -147,10 +148,12 @@ find_tp(dev)
 				vc->next = vconsole_head;
 				vconsole_head = vc;
 			}
+			(void)splx(s);
 			return vc->tp;
 		}
 		last = vc;
 	}
+	(void)splx(s);
 	return NULL;
 }
 
@@ -161,6 +164,9 @@ find_vc(dev)
 	struct vconsole *vc;
 	struct vconsole *last=NULL;
 	int unit = minor (dev);
+	int s;
+
+	s = spltty();
 
 	for (vc=vconsole_head; vc!=NULL; vc=vc->next) {
 		if (vc->number==unit) {
@@ -169,10 +175,12 @@ find_vc(dev)
 				vc->next = vconsole_head;
 				vconsole_head = vc;
 			}
+			(void)splx(s);
 			return vc;
 		}
 		last=vc;
 	}
+	(void)splx(s);
 	return NULL;
 }
 
@@ -191,7 +199,7 @@ vconsole_spawn_re(dev, vc)
 	register int num = minor(dev);
 
 	MALLOC(new, struct vconsole *, sizeof(struct vconsole),
-				M_DEVBUF,M_NOWAIT );
+	    M_DEVBUF,M_NOWAIT );
 
 	bzero ( (char *)new, sizeof(struct vconsole) );
 	*new = *vc;
@@ -266,13 +274,12 @@ void
 vconsole_addcharmap(vc)
 	struct vconsole *vc;
 {
-	MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)),
-						M_DEVBUF, M_NOWAIT );
-	{
 	int counter=0;
+
+	MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)),
+	    M_DEVBUF, M_NOWAIT );
 	for ( counter=0; counter<((vc->xchars)*(vc->ychars)); counter++ )
-		    (vc->charmap)[counter]=' ';
-	}
+		(vc->charmap)[counter]=' ';
 }
 
 int
@@ -1183,6 +1190,7 @@ rpcattach(parent, self, aux)
 	vconsole_master->R_ATTACH(vconsole_master, parent, self, aux);
 }
 
+/*
 struct cfattach rpc_ca = {
 	sizeof(struct device), rpcprobe, rpcattach
 };
@@ -1190,6 +1198,7 @@ struct cfattach rpc_ca = {
 struct cfdriver rpc_cd = {
 	NULL, "rpc", DV_TTY
 };
+*/
 
 struct cfattach vt_ca = {
 	sizeof(struct device), rpcprobe, rpcattach
@@ -1208,4 +1217,3 @@ struct render_engine *render_engine_tab[] = {
 struct terminal_emulator *terminal_emulator_tab[] = {
         &vt220,
 };
-
