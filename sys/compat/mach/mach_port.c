@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.23 2002/12/30 12:41:52 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.24 2002/12/30 12:46:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.23 2002/12/30 12:41:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.24 2002/12/30 12:46:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -471,7 +471,7 @@ mach_right_get(mp, p, type)
 		if (mr != NULL) {
 			mr->mr_type |= type;
 			mr->mr_refcount++;
-			goto out;
+			goto rcvck;
 		}
 	}
 
@@ -496,6 +496,7 @@ mach_right_get(mp, p, type)
 		lockmgr(&mach_right_list_lock, LK_RELEASE, NULL);
 	}
 		
+rcvck:
 	if (type & MACH_PORT_TYPE_RECEIVE) {
 		/* 
 		 * Destroy the former receive right on this port, and
@@ -505,7 +506,6 @@ mach_right_get(mp, p, type)
 			mach_right_put(mr->mr_port->mp_recv);
 		mr->mr_port->mp_recv = mr;
 	}
-out:
 	return mr;
 }
 
