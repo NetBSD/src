@@ -37,6 +37,7 @@
 #include <a.out.h>
 #else
 #include "elf/external.h"
+#include "elf/common.h"
 #endif
 
 #include <link.h>
@@ -137,6 +138,9 @@ static CORE_ADDR flag_addr;
 #define LM_ADDR(so) (SOLIB_EXTRACT_ADDRESS ((so) -> lm.l_addr))
 #define LM_NEXT(so) (SOLIB_EXTRACT_ADDRESS ((so) -> lm.l_next))
 #define LM_NAME(so) (SOLIB_EXTRACT_ADDRESS ((so) -> lm.l_name))
+#ifdef __mips__
+#define LM_OFFS(so) ((so) -> lm.l_offs)
+#endif
 /* Test for first link map entry; first entry is the exec-file. */
 #define IGNORE_FIRST_LINK_MAP_ENTRY(so) \
   (SOLIB_EXTRACT_ADDRESS ((so) -> lm.l_prev) == 0)
@@ -367,8 +371,13 @@ solib_map_sections (arg)
       /* Relocate the section binding addresses as recorded in the shared
          object's file by the base address to which the object was actually
          mapped. */
+#if defined(__mips__) && defined(__NetBSD__)
+      p->addr += LM_OFFS (so);
+      p->endaddr += LM_OFFS (so);
+#else
       p->addr += LM_ADDR (so);
       p->endaddr += LM_ADDR (so);
+#endif
       so->lmend = max (p->endaddr, so->lmend);
       if (STREQ (p->the_bfd_section->name, ".text"))
 	{
@@ -724,7 +733,7 @@ elf_locate_base ()
   if (target_read_memory (dyninfo_addr, buf, dyninfo_sect_size))
     return 0;
 
-  /* Find the DT_DEBUG entry in the the .dynamic section.
+  /* Find the DT_DEBUG entry in the .dynamic section.
      For mips elf we look for DT_MIPS_RLD_MAP, mips elf apparently has
      no DT_DEBUG entries.  */
 #ifndef TARGET_ELF64
