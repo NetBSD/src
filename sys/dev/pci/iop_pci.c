@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.1.2.2 2000/11/22 16:04:08 bouyer Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.1.2.3 2000/12/08 09:12:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@ static int
 iop_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
-	
-	pa = (struct pci_attach_args *)aux;
+
+	pa = aux;
 
 	/* 
 	 * Look for an "intelligent I/O processor" that adheres to the I2O
@@ -98,43 +98,40 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t reg;
-	int i;
-	
+	int i, flags, rv;
+
 	sc = (struct iop_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	printf(": ");
 
-	/* 
-	 * Record the first two regions that we find describing I/O space
-	 * and memory space.  These are needed when we fill the IOP system
-	 * table.  The kernel always uses the memory mapping to communicate
+	/*
+	 * The kernel always uses the first memory mapping to communicate
 	 * with the IOP.
 	 */
-	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
-		reg = pci_conf_read(pc, pa->pa_tag, i);
-		if (PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_IO)
-			break;
-	}
-	sc->sc_ioaddr = PCI_MAPREG_IO_ADDR(reg);
-	sc->sc_iosize = PCI_MAPREG_IO_SIZE(reg);
-
 	for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
 		reg = pci_conf_read(pc, pa->pa_tag, i);
 		if (PCI_MAPREG_TYPE(reg) == PCI_MAPREG_TYPE_MEM)
 			break;
 	}
-	sc->sc_memaddr = PCI_MAPREG_MEM_ADDR(reg);
-	sc->sc_memsize = PCI_MAPREG_MEM_SIZE(reg);
-
 	if (i == PCI_MAPREG_END) {
 		printf("can't find mapping\n");
 		return;
 	}
 
-	/* XXX We should limit the size of the mapping. */
-	if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_MEM, 0, &sc->sc_iot, 
-	    &sc->sc_ioh, NULL, NULL)) {
+	/*
+	 * Map the register window as uncacheable.
+	 */
+	rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, i,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+	    &sc->sc_memaddr, &sc->sc_memsize, &flags);
+	if (rv == 0) {
+		flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+		rv = bus_space_map(pa->pa_memt, sc->sc_memaddr, sc->sc_memsize,
+		    flags, &sc->sc_ioh);
+		sc->sc_iot = pa->pa_memt;
+	}
+	if (rv != 0) {
 		printf("can't map board\n");
 		return;
 	}

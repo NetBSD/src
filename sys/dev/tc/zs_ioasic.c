@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.5.2.2 2000/11/20 11:43:18 bouyer Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.5.2.3 2000/12/08 09:12:43 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.5.2.2 2000/11/20 11:43:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.5.2.3 2000/12/08 09:12:43 bouyer Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -222,7 +222,7 @@ zs_ioasic_match(parent, cf, aux)
 	void *aux;
 {
 	struct ioasicdev_attach_args *d = aux;
-	void *zs_addr;
+	tc_addr_t zs_addr;
 
 	if (parent->dv_cfdata->cf_driver != &ioasic_cd)
 		return (0);
@@ -245,7 +245,7 @@ zs_ioasic_match(parent, cf, aux)
 	/*
 	 * Find out the device address, and check it for validity.
 	 */
-	zs_addr = (void *) TC_DENSE_TO_SPARSE((tc_addr_t) zs_addr);
+	zs_addr = TC_DENSE_TO_SPARSE((tc_addr_t)d->iada_addr);
 	if (tc_badaddr(zs_addr))
 		return (0);
 
@@ -659,7 +659,7 @@ zs_write_data(cs, val)
 }
 
 /****************************************************************
- * Console support functions 
+ * Console support functions
  ****************************************************************/
 
 /*
@@ -740,8 +740,8 @@ zs_putc(cs, c)
 
 /*
  * zs_ioasic_cninit --
- *	Initialize the serial channel for console use--either the
- * primary keyboard or the serial console.
+ *	Initialize the serial channel for either a keyboard or
+ *	a serial console.
  */
 void
 zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
@@ -780,6 +780,10 @@ zs_ioasic_cninit(ioasic_addr, zs_offset, channel)
 	/* Setup temporary chanstate. */
 	cs->cs_reg_csr = (void *)&zc->zc_csr;
 
+	cs->cs_channel = channel;
+	cs->cs_ops = &zsops_null;
+	cs->cs_brg_clk = PCLK / 16;
+
 	/* Initialize the pending registers. */
 	bcopy(zs_ioasic_init_reg, cs->cs_preg, 16);
 	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
@@ -813,6 +817,7 @@ void
 zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 	tc_addr_t ioasic_addr;
 	tc_offset_t zs_offset;
+	int channel;
 {
 	struct zs_chanstate *cs = &zs_ioasic_conschanstate_store;
 
@@ -828,7 +833,7 @@ zs_ioasic_cnattach(ioasic_addr, zs_offset, channel)
 
 /*
  * zs_ioasic_lk201_cnattach --
- *	Initialize and attach the primary keyboard.
+ *	Initialize and attach a keyboard.
  */
 int
 zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
@@ -842,7 +847,6 @@ zs_ioasic_lk201_cnattach(ioasic_addr, zs_offset, channel)
 	zs_ioasic_cninit(ioasic_addr, zs_offset, channel);
 	cs->cs_defspeed = 4800;
 	cs->cs_defcflag = (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8;
-	cs->cs_brg_clk = PCLK / 16;
 	return (zskbd_cnattach(cs));
 #else
 	return (ENXIO);

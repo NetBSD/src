@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.103.2.2 2000/11/22 16:05:18 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.103.2.3 2000/12/08 09:13:53 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -69,6 +69,7 @@ extern const char * const syscallnames[];
 
 const struct emul emul_netbsd = {
 	"netbsd",
+	NULL,		/* emulation path */
 	NULL,
 	sendsig,
 	SYS_syscall,
@@ -81,6 +82,10 @@ const struct emul emul_netbsd = {
 #endif
 	sigcode,
 	esigcode,
+	NULL,
+	NULL,
+	NULL,
+	EMUL_HAS_SYS___syscall,
 };
 
 /*
@@ -152,6 +157,7 @@ check_exec(struct proc *p, struct exec_package *epp)
 	VOP_UNLOCK(vp, 0);
 
 	/* now we have the file, get the exec header */
+	uvn_attach(vp, VM_PROT_READ);
 	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
 			UIO_SYSSPACE, 0, p->p_ucred, &resid, p);
 	if (error)
@@ -264,8 +270,13 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 				exec_maxhdrsz = execsw[i].es_hdrsz;
 	}
 
-	/* init the namei data to point the file user's program name */
-	/* XXX cgd 960926: why do this here?  most will be clobbered. */
+	/*
+	 * Init the namei data to point the file user's program name.
+	 * This is done here rather than in check_exec(), so that it's
+	 * possible to override this settings if any of makecmd/probe
+	 * functions call check_exec() recursively - for example,
+	 * see exec_script_makecmds().
+	 */
 	NDINIT(&nid, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 
 	/*
@@ -362,17 +373,18 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 
 	dp = (char *) ALIGN(dp);
 
-	szsigcode = pack.ep_es->es_emul->e_esigcode - pack.ep_es->es_emul->e_sigcode;
+	szsigcode = pack.ep_es->es_emul->e_esigcode -
+	    pack.ep_es->es_emul->e_sigcode;
 
 	/* Now check if args & environ fit into new stack */
 	if (pack.ep_flags & EXEC_32)
-		len = ((argc + envc + 2 + pack.ep_es->es_arglen) * sizeof(int) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(int) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 	else
-		len = ((argc + envc + 2 + pack.ep_es->es_arglen) * sizeof(char *) +
-		       sizeof(int) + dp + STACKGAPLEN + szsigcode +
-		       sizeof(struct ps_strings)) - argp;
+		len = ((argc + envc + 2 + pack.ep_es->es_arglen) *
+		    sizeof(char *) + sizeof(int) + dp + STACKGAPLEN +
+		    szsigcode + sizeof(struct ps_strings)) - argp;
 
 	len = ALIGN(len);	/* make the stack "safely" aligned */
 

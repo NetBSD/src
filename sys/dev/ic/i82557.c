@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.8.2.2 2000/11/22 16:03:19 bouyer Exp $	*/
+/*	$NetBSD: i82557.c,v 1.8.2.3 2000/12/08 09:12:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -476,11 +476,19 @@ fxp_power(why, arg)
 	int s;
 
 	s = splnet();
-	if (why != PWR_RESUME)
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		fxp_stop(ifp, 0);
-	else {
+		break;
+	case PWR_RESUME:
 		if (ifp->if_flags & IFF_UP)
 			fxp_init(ifp);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }

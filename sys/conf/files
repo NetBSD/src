@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.324.2.2 2000/11/22 16:03:02 bouyer Exp $
+#	$NetBSD: files,v 1.324.2.3 2000/12/08 09:09:36 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -20,6 +20,7 @@ defopt	opt_sysvparam.h	SHMMAXPGS SEMMNI SEMMNS SEMUME SEMMNU
 defopt	opt_ntp.h	PPS_SYNC NTP 
 
 defopt	opt_nfs_boot.h	NFS_BOOT_BOOTP NFS_BOOT_BOOTPARAM NFS_BOOT_DHCP
+			NFS_BOOT_BOOTP_REQFILE
 			NFS_BOOT_GATEWAY
 			NFS_BOOT_TCP NFS_BOOT_OPTIONS NFS_BOOT_RWSIZE
 defopt	opt_nfs.h	NFS_V2_ONLY
@@ -43,6 +44,7 @@ defopt	COMPAT_SVR4
 defopt	COMPAT_ULTRIX
 defopt	COMPAT_NETBSD32
 defopt	COMPAT_AOUT
+defopt	COMPAT_AOUT_M68K
 defopt	COMPAT_M68K4K
 defopt	COMPAT_VAX1K
 defopt	COMPAT_43
@@ -194,9 +196,9 @@ file	ipkdb/ipkdb_if.c		ipkdb
 define	mii_bitbang
 file	dev/mii/mii_bitbang.c		mii_bitbang
 
-# Logical storage unit
-device	lsu: disk
-file	dev/lsu.c			lsu	needs-flag
+# Logical disk
+device	ld: disk
+file	dev/ld.c			ld	needs-flag
 
 # Central clearing house for system monitoring.
 define	sysmon_envsys
@@ -217,8 +219,7 @@ define	smc93cx6
 file	dev/ic/smc93cx6.c		smc93cx6
 
 # Adaptec 2[789]4X, 394X, aic7770 and aic78[5678]0 SCSI controllers
-defopt	opt_ahc.h	AHC_BROKEN_CACHE AHC_DEBUG AHC_TAGENABLE
-			AHC_SCBPAGING_ENABLE
+defopt	opt_ahc.h	AHC_DEBUG AHC_NO_TAGS
 device	ahc: scsi
 define	ahc_seeprom
 define	ahc_aic77xx
@@ -234,8 +235,8 @@ file	dev/ic/dpt.c			dpt
 device	cac {unit = -1}
 file	dev/ic/cac.c			cac
 
-attach	lsu at cac with lsu_cac
-file	dev/ic/lsu_cac.c		lsu_cac
+attach	ld at cac with ld_cac
+file	dev/ic/ld_cac.c			ld_cac
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi
@@ -1060,6 +1061,7 @@ file ufs/ufs/ufs_vnops.c		ffs | lfs | mfs | ext2fs
 file uvm/uvm_amap.c
 file uvm/uvm_anon.c
 file uvm/uvm_aobj.c
+file uvm/uvm_bio.c
 file uvm/uvm_device.c
 file uvm/uvm_fault.c
 file uvm/uvm_glue.c

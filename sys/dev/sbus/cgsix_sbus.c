@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_sbus.c,v 1.2.2.2 2000/11/20 22:35:48 bouyer Exp $ */
+/*	$NetBSD: cgsix_sbus.c,v 1.2.2.3 2000/12/08 09:12:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map brooktree registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_bt = (struct bt_regs *)bh;
+	sc->sc_bt = (struct bt_regs *)(u_long)bh;
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset + CGSIX_FHC_OFFSET,
@@ -150,7 +150,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map FHC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_fhc = (int *)bh;
+	sc->sc_fhc = (int *)(u_long)bh;
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset + CGSIX_THC_OFFSET,
@@ -160,7 +160,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map THC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_thc = (struct cg6_thc *)bh;
+	sc->sc_thc = (struct cg6_thc *)(u_long)bh;
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset + CGSIX_TEC_OFFSET,
@@ -170,7 +170,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map TEC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_tec = (struct cg6_tec_xxx *)bh;
+	sc->sc_tec = (struct cg6_tec_xxx *)(u_long)bh;
 
 	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset + CGSIX_FBC_OFFSET,
@@ -180,7 +180,7 @@ cgsixattach(parent, self, aux)
 		printf("%s: cannot map FBC registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_fbc = (struct cg6_fbc *)bh;
+	sc->sc_fbc = (struct cg6_fbc *)(u_long)bh;
 
 	sbus_establish(sd, &sc->sc_dev);
 	name = getpropstring(node, "model");
@@ -196,7 +196,7 @@ cgsixattach(parent, self, aux)
 			printf("%s: cannot map pixels\n", self->dv_xname);
 			return;
 		}
-		sc->sc_fb.fb_pixels = (caddr_t)bh;
+		sc->sc_fb.fb_pixels = (caddr_t)(u_long)bh;
 	}
 
 	cg6attach(sc, name, isconsole);

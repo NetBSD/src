@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.13.2.1 2000/11/20 11:42:53 bouyer Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.13.2.2 2000/12/08 09:12:38 bouyer Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -406,6 +406,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 
 	/* Check for mod_counters that are too low */
 	mod_counter_found = 0;
+	mod_counter = 0;
 	ac = auto_config;
 	while(ac!=NULL) {
 		if (mod_counter_found==0) {
@@ -420,6 +421,7 @@ rf_AutoConfigureDisks(raidPtr, cfgPtr, auto_config)
 		ac = ac->next;
 	}
 
+	bs = 0;
 	for (r = 0; r < raidPtr->numRow; r++) {
 		numFailuresThisRow = 0;
 		for (c = 0; c < raidPtr->numCol; c++) {

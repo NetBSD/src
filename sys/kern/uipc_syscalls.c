@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.45.2.1 2000/11/20 18:09:14 bouyer Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.45.2.2 2000/12/08 09:13:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -36,18 +36,13 @@
  */
 
 #include "opt_ktrace.h"
-#include "opt_compat_freebsd.h"
-#include "opt_compat_linux.h"
-#include "opt_compat_sunos.h"
-#include "opt_compat_hpux.h"
-#include "opt_compat_ultrix.h"
-#include "opt_compat_43.h"
-#include "opt_compat_osf1.h"
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
-    defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD) || \
-    defined(COMPAT_ULTRIX) || defined(COMPAT_OSF1)
+
+/*
+ * Though COMPAT_OLDSOCK is needed only for COMPAT_43, SunOS, Linux,
+ * HP-UX, FreeBSD, Ultrix, OSF1, we define it unconditionally so that
+ * this would be LKM-safe.
+ */
 #define COMPAT_OLDSOCK /* used by <sys/socket.h> */
-#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

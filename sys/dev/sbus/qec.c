@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.9.2.1 2000/11/20 11:43:07 bouyer Exp $ */
+/*	$NetBSD: qec.c,v 1.9.2.2 2000/12/08 09:12:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ qecattach(parent, self, aux)
 		printf("%s: attach: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->sc_buffer = (caddr_t)bh;
+	sc->sc_buffer = (caddr_t)(u_long)bh;
 	sc->sc_bufsiz = (bus_size_t)sa->sa_reg[1].sbr_size;
 
 	/* Get number of on-board channels */

@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.54.2.3 2000/11/22 16:05:07 bouyer Exp $
+$NetBSD: usbdevs,v 1.54.2.4 2000/12/08 09:12:46 bouyer Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -266,6 +266,7 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor MOTOROLA		0x1063	Motorola
 vendor PLX		0x10b5	PLX
 vendor BELKIN2		0x1293	Belkin Components (2nd)
+vendor SILICONPORTALS	0x1527	Silicon Portals Inc.
 vendor UMAX		0x1606	UMAX Data Systems, Inc.
 vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
@@ -348,6 +349,9 @@ product APPLE SPEAKERS		0x1101	Speakers
 product ATEN UC1284		0x2001	Parallel printer adapter
 product ATEN UC10T		0x2002	10Mbps ethernet adapter
 product ATEN UC232A		0x2008	Serial adapter
+
+/* Atmel Comp. products */
+product ATMEL UHB124		0x3301	UHB124 hub
 
 /* Avision products */
 product AVISION 1200U		0x0268	1200U scanner
@@ -445,6 +449,7 @@ product ENTREGA 2U4S		0x8004  2U4S serial connector/usb hub
 product EPSON PRINTER1		0x0001	USB Printer
 product EPSON PRINTER2		0x0002	ISD USB Smart Cable for Mac
 product EPSON PRINTER3		0x0003	ISD USB Smart Cable
+product EPSON PRINTER5		0x0005	USB Printer
 product EPSON 636		0x0101	Perfection 636U / 636Photo scanner
 product EPSON 610		0x0103	Perfection 610 scanner
 product EPSON 1200		0x0104	Perfection 1200U / 1200Photo scanner
@@ -503,9 +508,11 @@ product INSYSTEM ISD105		0x0202	IDE adapter ISD105
 product INSYSTEM USBCABLE	0x081a	USB cable
 
 /* Intel products */
+product INTEL EASYPC_CAMERA	0x0110	Easy PC Camera
 product INTEL TESTBOARD		0x9890	82930 test board
 
 /* I/O DATA products */
+product IODATA USBETT		0x0901	USB ETT
 product IODATA USBETTX		0x0904	USB ETTX
 
 /* Iomega products */
@@ -572,6 +579,7 @@ product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse
 product LOGITECH WMMOUSE	0xc004	WingMan Gaming Mouse
+product LOGITECH BD58		0xc00c	BD58 mouse
 product LOGITECH BB13		0xc401	USB-PS/2 Trackball
 product LOGITECH WMPAD		0xc208	WingMan GamePad Extreme
 product LOGITECH WMJOY		0xc281	WingMan Force joystick 
@@ -709,6 +717,9 @@ product SHUTTLE EUSB		0x0001	E-USB Bridge
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
+
+/* Silicon Portals Inc. */
+product SILICONPORTALS YAPPHONE	0x0200	YAP Phone
 
 /* Sirius Technologies products */
 product SIRIUS ROADSTER		0x0001	NetComm Roadster II 56 USB

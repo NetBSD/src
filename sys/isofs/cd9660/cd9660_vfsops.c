@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.2 2000/11/20 18:08:53 bouyer Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.40.2.3 2000/12/08 09:13:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -399,6 +399,8 @@ iso_mountfs(devvp, mp, p, argp)
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_CD9660);
 	mp->mnt_maxsymlinklen = 0;
 	mp->mnt_flag |= MNT_LOCAL;
+	mp->mnt_dev_bshift = iso_bsize;
+	mp->mnt_fs_bshift = isomp->im_bshift;
 	isomp->im_mountp = mp;
 	isomp->im_dev = dev;
 	isomp->im_devvp = devvp;

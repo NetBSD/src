@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ptrace.c,v 1.2 1996/05/03 17:03:12 christos Exp $	*/
+/*	$NetBSD: freebsd_ptrace.c,v 1.2.30.1 2000/12/08 09:08:12 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -55,7 +55,7 @@
 #include <machine/freebsd_machdep.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
-#include <compat/freebsd/freebsd_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/freebsd/freebsd_ptrace.h>
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.5.6.2 2000/11/20 11:40:53 bouyer Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.5.6.3 2000/12/08 09:12:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -35,15 +35,14 @@
  */
 
 #define RTK_ETHER_ALIGN	2
+#define RTK_RXSTAT_LEN	4
 
 struct rtk_chain_data {
-	u_int16_t		cur_rx;
 	caddr_t			rtk_rx_buf;
-	caddr_t			rtk_rx_buf_ptr;
 
 	struct mbuf		*rtk_tx_chain[RTK_TX_LIST_CNT];
-	u_int8_t		last_tx;
-	u_int8_t		cur_tx;
+	int			last_tx;
+	int			cur_tx;
 };
 
 #define RTK_INC(x)		(x = (x + 1) % RTK_TX_LIST_CNT)
@@ -88,7 +87,7 @@ struct rtk_softc {
 	struct callout		rtk_tick_ch;	/* tick callout */
 	bus_space_handle_t	rtk_bhandle;	/* bus space handle */
 	bus_space_tag_t		rtk_btag;	/* bus space tag */
-	u_int8_t		rtk_type;
+	int			rtk_type;
 	struct rtk_chain_data	rtk_cdata;
 	bus_dma_tag_t 		sc_dmat;
 	bus_dma_segment_t 	sc_dmaseg;

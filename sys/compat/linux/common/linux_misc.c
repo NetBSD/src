@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.61.2.2 2000/11/22 16:02:45 bouyer Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.61.2.3 2000/12/08 09:08:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,6 +90,8 @@
 #include <sys/wait.h>
 #include <sys/utsname.h>
 #include <sys/unistd.h>
+#include <sys/swap.h>		/* for SWAP_ON */
+#include <sys/sysctl.h>		/* for KERN_DOMAINNAME */
 
 #include <sys/ptrace.h>
 #include <machine/ptrace.h>
@@ -291,7 +293,7 @@ linux_sys_statfs(p, v, retval)
 	sg = stackgap_init(p->p_emul);
 	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
 
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;
@@ -1166,4 +1168,67 @@ linux_sys_reboot(struct proc *p, void *v, register_t *retval)
 	}
 
 	return(sys_reboot(p, &sra, retval));
+}
+
+/*
+ * Copy of compat_12_sys_swapon().
+ */
+int
+linux_sys_swapon(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_swapctl_args ua;
+	struct linux_sys_swapon_args /* {
+		syscallarg(const char *) name;
+	} */ *uap = v;
+
+	SCARG(&ua, cmd) = SWAP_ON;
+	SCARG(&ua, arg) = (void *)SCARG(uap, name);
+	SCARG(&ua, misc) = 0;	/* priority */
+	return (sys_swapctl(p, &ua, retval));
+}
+
+/*
+ * Stop swapping to the file or block device specified by path.
+ */
+int
+linux_sys_swapoff(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_swapctl_args ua;
+	struct linux_sys_swapoff_args /* {
+		syscallarg(const char *) path;
+	} */ *uap = v;
+
+	SCARG(&ua, cmd) = SWAP_OFF;
+	SCARG(&ua, arg) = (void *)SCARG(uap, path);
+	return (sys_swapctl(p, &ua, retval));
+}
+
+/*
+ * Copy of compat_09_sys_setdomainname()
+ */
+/* ARGSUSED */
+int
+linux_sys_setdomainname(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setdomainname_args /* {
+		syscallarg(char *) domainname;
+		syscallarg(int) len;
+	} */ *uap = v;
+	int name;
+	int error;
+
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+	name = KERN_DOMAINNAME;
+	return (kern_sysctl(&name, 1, 0, 0, SCARG(uap, domainname),
+			    SCARG(uap, len), p));
 }

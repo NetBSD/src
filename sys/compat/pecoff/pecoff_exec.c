@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.3.2.3 2000/11/22 16:02:56 bouyer Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.3.2.4 2000/12/08 09:08:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -81,16 +81,12 @@ int pecoff_read_from __P((struct proc *p, struct vnode *vp, int pos,
 			 caddr_t buf, int siz));
 
 
-const char pecoff_emul_path[] = "/emul/pecoff";
 extern char sigcode[], esigcode[];
 
-#if 0
-/*
- * For now, we use just emul_netbsd for pecoff binaries. This may change
- * later.
- */
+#if notyet
 const struct emul emul_pecoff = {
 	"pecoff",
+	"/emul/pecoff",
 	0,
 	sendsig,
 	SYS_syscall,
@@ -104,8 +100,7 @@ const struct emul emul_pecoff = {
 	sigcode,
 	esigcode,
 };
-#endif /* 0 */
-
+#endif
 
 void *
 pecoff_copyargs(pack, arginfo, stack, argp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.52.2.2 2000/11/22 16:05:22 bouyer Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.52.2.3 2000/12/08 09:13:55 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -426,7 +426,7 @@ dopowerhooks(why)
 {
 	struct powerhook_desc *dp;
 
-	if (why == PWR_RESUME) {
+	if (why == PWR_RESUME || why == PWR_SOFTRESUME) {
 		CIRCLEQ_FOREACH_REVERSE(dp, &powerhook_list, sfd_list) {
 			(*dp->sfd_fn)(why, dp->sfd_arg);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.1.8.2 2000/11/22 16:02:20 bouyer Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.1.8.3 2000/12/08 09:08:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_syscall_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +48,6 @@
 
 #include <compat/aout/aout_syscall.h>
  
-const char aout_emul_path[] = "/emul/aout";
 extern struct sysent aout_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const aout_syscallnames[];
@@ -56,6 +57,7 @@ extern char sigcode[], esigcode[];
 
 struct emul emul_netbsd_aout = {
 	"netbsd",
+	"/emul/aout",
 	NULL,
 	sendsig,
 	AOUT_SYS_syscall,
@@ -68,4 +70,8 @@ struct emul emul_netbsd_aout = {
 #endif
 	sigcode,
 	esigcode,
+	NULL,
+	NULL,
+	NULL,
+	EMUL_HAS_SYS___syscall,
 };

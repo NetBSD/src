@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.9.2.2 2000/11/22 16:02:50 bouyer Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.9.2.3 2000/12/08 09:08:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -38,6 +38,7 @@
  * NetBSD 32-bit compatibility module.
  */
 
+#include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -526,10 +527,4 @@ typedef struct firm_event32 {
  */
 #include <compat/common/compat_util.h>
  
-extern const char netbsd32_emul_path[];
-  
-#define NETBSD32_CHECK_ALT_EXIST(p, sgp, path) \
-    emul_find(p, sgp, netbsd32_emul_path, (const char *)path, \
-	(const char **)&path, 0)
-
 #endif /* _COMPAT_NETBSD32_NETBSD32_H_ */

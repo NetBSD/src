@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.41.2.2 2000/11/22 16:02:27 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.41.2.3 2000/12/08 09:08:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -216,7 +216,7 @@ ibcs2_sys_execv(p, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -240,7 +240,7 @@ ibcs2_sys_execve(p, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -612,7 +612,7 @@ ibcs2_sys_mknod(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-        IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+        CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	if (S_ISFIFO(SCARG(uap, mode))) {
                 struct sys_mkfifo_args ap;
                 SCARG(&ap, path) = SCARG(uap, path);
@@ -1047,7 +1047,7 @@ ibcs2_sys_utime(p, v, retval)
 
 	caddr_t sg = stackgap_init(p->p_emul);
 	tp = stackgap_alloc(&sg, 2 * sizeof(struct timeval *));
-        IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+        CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&sa, path) = SCARG(uap, path);
 	if (SCARG(uap, buf)) {
 		struct ibcs2_utimbuf ubuf;
@@ -1328,7 +1328,7 @@ ibcs2_sys_unlink(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_unlink(p, uap, retval);
 }
 
@@ -1343,7 +1343,7 @@ ibcs2_sys_chdir(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chdir(p, uap, retval);
 }
 
@@ -1359,7 +1359,7 @@ ibcs2_sys_chmod(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_chmod(p, uap, retval);
 }
 
@@ -1376,7 +1376,7 @@ ibcs2_sys_chown(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys___posix_chown(p, uap, retval);
 }
 
@@ -1391,7 +1391,7 @@ ibcs2_sys_rmdir(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_rmdir(p, uap, retval);
 }
 
@@ -1407,7 +1407,7 @@ ibcs2_sys_mkdir(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 	return sys_mkdir(p, uap, retval);
 }
 
@@ -1423,8 +1423,8 @@ ibcs2_sys_symlink(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
-	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, link));
 	return sys_symlink(p, uap, retval);
 }
 
@@ -1440,8 +1440,8 @@ ibcs2_sys_rename(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
-	IBCS2_CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
 	return sys___posix_rename(p, uap, retval);
 }
 
@@ -1458,7 +1458,7 @@ ibcs2_sys_readlink(p, v, retval)
 	} */ *uap = v;
         caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	return sys_readlink(p, uap, retval);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.52.2.1 2000/11/20 18:08:02 bouyer Exp $	*/
+/*	$NetBSD: advnops.c,v 1.52.2.2 2000/12/08 09:06:21 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -143,7 +143,9 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, adosfs_truncate },	/* truncate */
 	{ &vop_update_desc, adosfs_update },		/* update */
 	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
-	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+	{ &vop_size_desc, genfs_size },			/* size */
+	{ NULL, NULL }
 };
 
 struct vnodeopv_desc adosfs_vnodeop_opv_desc =
@@ -226,6 +228,7 @@ adosfs_read(v)
 		int a_ioflag;
 		struct ucred *a_cred;
 	} */ *sp = v;
+	struct vnode *vp = sp->a_vp;
 	struct adosfsmount *amp;
 	struct anode *ap;
 	struct uio *uio;
@@ -265,6 +268,28 @@ adosfs_read(v)
 	/*
 	 * taken from ufs_read()
 	 */
+
+	if (vp->v_type == VREG) {
+		error = 0;
+		while (uio->uio_resid > 0) {
+			void *win;
+			vsize_t bytelen = min(ap->fsize - uio->uio_offset,
+					      uio->uio_resid);
+
+			if (bytelen == 0) {
+				break;
+			}
+			win = ubc_alloc(&vp->v_uvm.u_obj, uio->uio_offset,
+					&bytelen, UBC_READ);
+			error = uiomove(win, bytelen, uio);
+			ubc_release(win, 0);
+			if (error) {
+				break;
+			}
+		}
+		goto out;
+	}
+
 	do {
 		/*
 		 * we are only supporting ADosFFS currently
@@ -326,6 +351,8 @@ adosfs_read(v)
 				amp->bsize - amp->dbsize, (int)n, uio);
 		brelse(bp);
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
+
+out:
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);

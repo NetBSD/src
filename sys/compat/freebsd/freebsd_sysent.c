@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_sysent.c,v 1.32.2.1 2000/11/20 18:08:11 bouyer Exp $ */
+/* $NetBSD: freebsd_sysent.c,v 1.32.2.2 2000/12/08 09:08:12 bouyer Exp $ */
 
 /*
  * System call switch table.
@@ -7,6 +7,7 @@
  * created from	NetBSD: syscalls.master,v 1.30 2000/08/08 02:14:48 itojun Exp 
  */
 
+#if defined ( _KERNEL )  && !defined ( _LKM ) 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
 #include "opt_ntp.h"
@@ -14,6 +15,7 @@
 #include "opt_compat_43.h"
 #include "fs_lfs.h"
 #include "fs_nfs.h"
+#endif
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signal.h>

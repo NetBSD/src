@@ -1,4 +1,4 @@
-/*	$NetBSD: iopvar.h,v 1.2.2.2 2000/11/22 17:34:20 bouyer Exp $	*/
+/*	$NetBSD: iopvar.h,v 1.2.2.3 2000/12/08 09:12:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,16 +49,6 @@ struct iop_stat {
 	int64_t	is_bytes;
 };
 
-#ifdef _KERNEL
-
-#include "locators.h"
-
-/* XXX. Tunables. */
-#define	IOP_MAX_INITIATORS	32
-#define	IOP_MAX_PI_QUEUECNT	128
-#define	IOP_MAX_HW_QUEUECNT	256
-#define	IOP_MAX_HW_REPLYCNT	128
-
 /*
  * XXX The following should be adjusted if and when:
  *
@@ -74,6 +64,16 @@ struct iop_stat {
 
 #define	IOP_MAX_SGL_ENTRIES	(IOP_MAX_SGL_SIZE / 8)
 #define	IOP_MAX_MSG_SIZE	(IOP_MAX_BASE_MSG_SIZE + IOP_MAX_SGL_SIZE)
+
+/* Linux sez that some IOPs don't like reply frame sizes other than 128. */
+#define	IOP_MAX_REPLY_SIZE	128
+
+#define	IOP_MAX_HW_QUEUECNT	256
+#define	IOP_MAX_HW_REPLYCNT	256
+
+#ifdef _KERNEL
+
+#include "locators.h"
 
 /*
  * Transfer descriptor.
@@ -94,33 +94,46 @@ struct iop_msg {
 	TAILQ_ENTRY(iop_msg)	im_hash;	/* Hash chain */
 	u_int			im_flags;	/* Control flags */
 	u_int			im_tctx;	/* Transaction context */
-	u_int			im_tid;		/* TID we're addressing */
 	void			*im_dvcontext;	/* Un*x device context */
 	u_int32_t		im_msg[IOP_MAX_MSG_SIZE / sizeof(u_int32_t)];
 	struct iop_xfer		im_xfer[IOP_MAX_MSG_XFERS];
 };
-
 #define	IM_SYSMASK		0x00ff
 #define	IM_REPLIED		0x0001	/* Message has been replied to */
 #define	IM_ALLOCED		0x0002	/* This message wrapper is allocated */
-#define	IM_WAITING		0x0004	/* Somebody is waiting for reply */
 #define	IM_SGLOFFADJ		0x0008	/* S/G list offset adjusted */
 #define	IM_DISCARD		0x0010	/* Discard message wrapper once sent */
+#define	IM_WAITING		0x0020	/* Waiting for completion */
 
 #define	IM_USERMASK		0xff00
 #define	IM_NOWAIT		0x0100	/* Don't sleep when processing */
 #define	IM_NOICTX		0x0200	/* No initiator context field */
 #define	IM_NOINTR		0x0400	/* Don't interrupt when complete */
+#define	IM_NOSTATUS		0x0800	/* Don't check status if waiting */
 
 struct iop_initiator {
-	struct	device *ii_dv;
+	LIST_ENTRY(iop_initiator) ii_list;
+	LIST_ENTRY(iop_initiator) ii_hash;
+
 	void	(*ii_intr)(struct device *, struct iop_msg *, void *);
+	int	(*ii_reconfig)(struct device *);
+	struct	device *ii_dv;
 	int	ii_flags;
-	int	ii_ictx;
+	int	ii_ictx;		/* Initiator context */
+	int	ii_stctx;		/* Static transaction context */
+	int	ii_tid;
 };
 #define	II_DISCARD	0x0001	/* Don't track state; discard msg wrappers */
+#define	II_CONFIGURED	0x0002	/* Already configured */
+#define	II_UTILITY	0x0004	/* Utility initiator (not a `real device') */
 
 #define	IOP_ICTX	0
+
+struct iop_tidmap {
+	u_short	it_tid;
+	u_short	it_flags;
+};
+#define	IT_CONFIGURED	0x02	/* target configured */
 
 /*
  * Per-IOP context.
@@ -131,18 +144,24 @@ struct iop_softc {
 	bus_space_tag_t	sc_iot;		/* bus space tag */
 	bus_dma_tag_t	sc_dmat;	/* bus DMA tag */
 	void	 	*sc_ih;		/* interrupt handler cookie */
+	struct lock	sc_conflock;	/* autoconfiguration lock */
+	bus_addr_t	sc_memaddr;	/* register window address */
+	bus_size_t	sc_memsize;	/* register window size */
 
 	struct i2o_hrt	*sc_hrt;	/* hardware resource table */
 	struct i2o_lct	*sc_lct;	/* logical configuration table */
 	int		sc_nlctent;	/* number of LCT entries */
-	u_int8_t	*sc_lctmap;	/* lct map (per-entry flags) */
+	struct iop_tidmap *sc_tidmap;	/* tid map (per-lct-entry flags) */
 	struct i2o_status sc_status;	/* status */
 	struct iop_stat	sc_stat;	/* counters */
 	int		sc_flags;	/* IOP-wide flags */
 	int		sc_maxreplycnt;	/* reply queue size */
-
+	u_int32_t	sc_chgindicator;/* autoconfig vs. LCT change ind. */
+	LIST_HEAD(, iop_initiator) sc_iilist;/* initiator list */
 	SIMPLEQ_HEAD(,iop_msg) sc_queue;/* software queue */
 	int		sc_maxqueuecnt;	/* maximum # of msgs on h/w queue */
+	struct iop_initiator sc_eventii;/* IOP event handler */
+	struct proc	*sc_reconf_proc;/* reconfiguration process */
 
 	/*
 	 * Reply queue.
@@ -151,28 +170,10 @@ struct iop_softc {
 	int		sc_rep_size;
 	bus_addr_t	sc_rep_phys;
 	caddr_t		sc_rep;
-
-	/*
-	 * Initiator table.
-	 */
-	struct iop_initiator *sc_itab[IOP_MAX_INITIATORS];
-
-	/*
-	 * The following are used only when posting the system table to
-	 * the IOP.  They describe PCI memory and I/O port regions.
-	 */
-	bus_addr_t	sc_memaddr;
-	int		sc_memsize;
-	int		sc_ioaddr;
-	int		sc_iosize;
 };
-
 #define	IOP_OPEN		0x01	/* Device interface open */
-#define	IOP_LCTLKHELD		0x02	/* sc_lct lock held */
-#define	IOP_LCTLKWANTED		0x04	/* sc_lct lock wanted */
-#define	IOP_DRAIN		0x08	/* Draining IOP */
-
-#define	IOP_LCTMAP_INUSE	0x01	/* target is in use */
+#define	IOP_HAVESTATUS		0x02	/* Successfully retrieved status */
+#define	IOP_ONLINE		0x04	/* Can use ioctl interface */
 
 struct iop_attach_args {
 	int	ia_class;		/* device class */
@@ -180,34 +181,55 @@ struct iop_attach_args {
 };
 #define	iopcf_tid	cf_loc[IOPCF_TID]		/* TID */
 
-int	iop_init(struct iop_softc *, const char *);
+void	iop_init(struct iop_softc *, const char *);
 int	iop_intr(void *);
-int	iop_params_get(struct iop_softc *, int, int, void *, int);
-int	iop_simple_cmd(struct iop_softc *, int, int, int);
-void	iop_strvis(const char *, int, char *, int);
+int	iop_lct_get(struct iop_softc *);
+int	iop_param_op(struct iop_softc *, int, int, int, void *, int);
+int	iop_simple_cmd(struct iop_softc *, int, int, int, int, int);
+void	iop_strvis(struct iop_softc *, const char *, int, char *, int);
 
 int	iop_initiator_register(struct iop_softc *, struct iop_initiator *);
 void	iop_initiator_unregister(struct iop_softc *, struct iop_initiator *);
 
-int	iop_lct_get(struct iop_softc *);
-int	iop_lct_lock(struct iop_softc *);
-void	iop_lct_unlock(struct iop_softc *);
-
 int	iop_msg_alloc(struct iop_softc *, struct iop_initiator *,
 		      struct iop_msg **, int);
-int	iop_msg_enqueue(struct iop_softc *, struct iop_msg *);
+int	iop_msg_enqueue(struct iop_softc *, struct iop_msg *, int);
 void	iop_msg_free(struct iop_softc *, struct iop_initiator *,
 		     struct iop_msg *);
 int	iop_msg_map(struct iop_softc *, struct iop_msg *, void *, int, int);
 int	iop_msg_send(struct iop_softc *, struct iop_msg *, int);
 void	iop_msg_unmap(struct iop_softc *, struct iop_msg *);
-int	iop_msg_wait(struct iop_softc *, struct iop_msg *, int);
 
-int	iop_tid_claim(struct iop_softc *, int, int, int);
-int	iop_tid_inuse(struct iop_softc *, int);
-int	iop_tid_lct_index(struct iop_softc *, int);
-void	iop_tid_markallused(struct iop_softc *, int);
+int	iop_util_abort(struct iop_softc *, struct iop_initiator *, int, int,
+		      int);
+int	iop_util_claim(struct iop_softc *, struct iop_initiator *, int, int);
+int	iop_util_eventreg(struct iop_softc *, struct iop_initiator *, int);
 
 #endif	/* _KERNEL */
+
+/*
+ * ioctl() interface.
+ */
+
+struct ioppt_buf {
+	void	*ptb_data;
+	size_t	ptb_datalen;
+	int	ptb_out;
+};
+
+struct ioppt {
+	void	*pt_msg;
+	size_t	pt_msglen;
+	void	*pt_reply;
+	size_t	pt_replylen;
+	int	pt_timo;
+	int	pt_nbufs;
+	struct	ioppt_buf pt_bufs[IOP_MAX_MSG_XFERS];
+};
+
+#define	IOPIOCPT	_IOWR('u', 0, struct ioppt)
+#define	IOPIOCGLCT	_IOW('u', 1, struct iovec)
+#define	IOPIOCGSTATUS	_IOW('u', 2, struct iovec)
+#define	IOPIOCRECONFIG	_IO('u', 3)
 
 #endif	/* !_I2O_IOPVAR_H_ */

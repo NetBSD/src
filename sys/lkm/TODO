@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.2 1996/11/05 02:34:24 explorer Exp $
+$NetBSD: TODO,v 1.2.28.1 2000/12/08 09:14:45 bouyer Exp $
 
 Always a lot to do.  :)
 
@@ -9,10 +9,6 @@ o  Learn how loadable devices can configure themselves, like the interrupt,
 o  Figgure out if binary emulation (freebsd, linux, ultrix, etc) can be
    made loadable or not.  [They can be.  I have some kernel mods which
    will make freebsd and linux loadable at least]
-
-o  decide if lfs is useful in any way as is, or if it should install
-   syscalls as well.  Of course, it's broken in other ways, but...
-   [it will have to install syscalls]
 
 o  decide if it is even useful to make ffs into a loadable module.
    [for diskless boots, sure, why not]

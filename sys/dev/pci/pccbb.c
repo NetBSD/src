@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.3.2.3 2000/11/22 16:04:12 bouyer Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.3.2.4 2000/12/08 09:12:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -364,6 +364,10 @@ pccbb_shutdown(void *arg)
 	pcireg_t command;
 
 	DPRINTF(("%s: shutdown\n", sc->sc_dev.dv_xname));
+
+	/* turn off power */
+	pccbb_power((cardbus_chipset_tag_t)sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+
 	bus_space_write_4(sc->sc_base_memt, sc->sc_base_memh, CB_SOCKET_MASK,
 	    0);
 
@@ -743,7 +747,7 @@ pccbb_chipinit(sc)
 
 	/* Route functional interrupts to PCI. */
 	reg = pci_conf_read(pc, tag, PCI_BCR_INTR);
-	reg &= ~CB_BCR_INTR_IREQ_ENABLE;	/* use PCI Intr */
+	reg |= CB_BCR_INTR_IREQ_ENABLE;		/* disable PCI Intr */
 	reg |= CB_BCR_WRITE_POST_ENABLE;	/* enable write post */
 	reg |= CB_BCR_RESET_ENABLE;		/* assert reset */
 	pci_conf_write(pc, tag, PCI_BCR_INTR, reg);
@@ -1069,6 +1073,9 @@ pccbb_pcmcia_read(ph, reg)
 	struct pcic_handle *ph;
 	int reg;
 {
+	bus_space_barrier(ph->ph_bus_t, ph->ph_bus_h,
+	    PCCBB_PCMCIA_OFFSET + reg, 1, BUS_SPACE_BARRIER_READ);
+
 	return bus_space_read_1(ph->ph_bus_t, ph->ph_bus_h,
 	    PCCBB_PCMCIA_OFFSET + reg);
 }
@@ -1081,6 +1088,9 @@ pccbb_pcmcia_write(ph, reg, val)
 {
 	bus_space_write_1(ph->ph_bus_t, ph->ph_bus_h, PCCBB_PCMCIA_OFFSET + reg,
 	    val);
+
+	bus_space_barrier(ph->ph_bus_t, ph->ph_bus_h,
+	    PCCBB_PCMCIA_OFFSET + reg, 1, BUS_SPACE_BARRIER_WRITE);
 }
 
 /*
@@ -1215,13 +1225,6 @@ pccbb_power(ct, command)
 	bus_space_write_4(memt, memh, CB_SOCKET_CTRL, sock_ctrl);
 	status = bus_space_read_4(memt, memh, CB_SOCKET_STAT);
 
-	delay(20 * 1000);	       /* wait 20 ms: Vcc setup time */
-	/*
-	 * XXX delay 200 ms: though the standard defines that the Vcc set-up
-	 * time is 20 ms, some PC-Card bridge requires longer duration.
-	 */
-	delay(200 * 1000);
-
 	if (status & CB_SOCKET_STAT_BADVCC) {	/* bad Vcc request */
 		printf
 		    ("%s: bad Vcc request. sock_ctrl 0x%x, sock_status 0x%x\n",
@@ -1261,6 +1264,13 @@ pccbb_power(ct, command)
 #endif
 		return 0;
 	}
+
+	/*
+	 * XXX delay 300 ms: though the standard defines that the Vcc set-up
+	 * time is 20 ms, some PC-Card bridge requires longer duration.
+	 */
+	delay(300 * 1000);
+
 	return 1;		       /* power changed correctly */
 }
 
@@ -1649,24 +1659,23 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 	void *arg;
 {
 	struct pccbb_intrhand_list *pil, *newpil;
+	pcireg_t reg;
 
 	DPRINTF(("pccbb_intr_establish start. %p\n", sc->sc_pil));
 
 	if (sc->sc_pil == NULL) {
 		/* initialize bridge intr routing */
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
+		reg &= ~CB_BCR_INTR_IREQ_ENABLE;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, reg);
 
 		switch (sc->sc_chipset) {
 		case CB_TI113X:
-			{
-				pcireg_t cbctrl =
-				    pci_conf_read(sc->sc_pc, sc->sc_tag,
-				    PCI_CBCTRL);
-				/* functional intr enabled */
-				cbctrl |= PCI113X_CBCTRL_PCI_INTR;
-				pci_conf_write(sc->sc_pc, sc->sc_tag,
-				    PCI_CBCTRL, cbctrl);
-				break;
-			}
+			reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
+			/* functional intr enabled */
+			reg |= PCI113X_CBCTRL_PCI_INTR;
+			pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, reg);
+			break;
 		default:
 			break;
 		}
@@ -1711,6 +1720,7 @@ pccbb_intr_disestablish(sc, ih)
 	void *ih;
 {
 	struct pccbb_intrhand_list *pil, **pil_prev;
+	pcireg_t reg;
 
 	DPRINTF(("pccbb_intr_disestablish start. %p\n", sc->sc_pil));
 
@@ -1731,18 +1741,18 @@ pccbb_intr_disestablish(sc, ih)
 
 		DPRINTF(("pccbb_intr_disestablish: no interrupt handler\n"));
 
+		/* stop routing PCI intr */
+		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
+		reg |= CB_BCR_INTR_IREQ_ENABLE;
+		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, reg);
+
 		switch (sc->sc_chipset) {
 		case CB_TI113X:
-			{
-				pcireg_t cbctrl =
-				    pci_conf_read(sc->sc_pc, sc->sc_tag,
-				    PCI_CBCTRL);
-				/* functional intr disabled */
-				cbctrl &= ~PCI113X_CBCTRL_PCI_INTR;
-				pci_conf_write(sc->sc_pc, sc->sc_tag,
-				    PCI_CBCTRL, cbctrl);
-				break;
-			}
+			reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
+			/* functional intr disabled */
+			reg &= ~PCI113X_CBCTRL_PCI_INTR;
+			pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, reg);
+			break;
 		default:
 			break;
 		}
@@ -2215,15 +2225,9 @@ pccbb_pcmcia_socket_enable(pch)
 		return;
 	}
 
-	/* assert reset bit */
-	intr = Pcic_read(ph, PCIC_INTR);
-	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_CARDTYPE_MASK);
-	Pcic_write(ph, PCIC_INTR, intr);
-
 	/* disable socket i/o: negate output enable bit */
 
-	power = Pcic_read(ph, PCIC_PWRCTL);
-	power &= ~PCIC_PWRCTL_OE;
+	power = 0;
 	Pcic_write(ph, PCIC_PWRCTL, power);
 
 	/* power down the socket to reset it, clear the card reset pin */
@@ -2236,21 +2240,16 @@ pccbb_pcmcia_socket_enable(pch)
 	 */
 	/* delay(300*1000); too much */
 
-	/* power up the socket */
-	pccbb_power(sc, voltage);
+	/* assert reset bit */
+	intr = Pcic_read(ph, PCIC_INTR);
+	intr &= ~(PCIC_INTR_RESET | PCIC_INTR_CARDTYPE_MASK);
+	Pcic_write(ph, PCIC_INTR, intr);
 
-	/* 
-	 * wait 100ms until power raise (Tpr) and 20ms to become
-	 * stable (Tsu(Vcc)).
-	 *
-	 * some machines require some more time to be settled
-	 * (another 200ms is added here).
-	 */
-	/* delay((100 + 20 + 200)*1000); too much */
-
+	/* power up the socket and output enable */
 	power = Pcic_read(ph, PCIC_PWRCTL);
 	power |= PCIC_PWRCTL_OE;
 	Pcic_write(ph, PCIC_PWRCTL, power);
+	pccbb_power(sc, voltage);
 
 	/* 
 	 * hold RESET at least 10us.

@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.11.2.1 2000/11/20 18:08:31 bouyer Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.11.2.2 2000/12/08 09:08:36 bouyer Exp $ */
 
 /*
  * System call argument lists.
@@ -1387,10 +1387,7 @@ int	netbsd32_compat_10_sys_shmsys(struct proc *, void *, register_t *);
 int	netbsd32_pread(struct proc *, void *, register_t *);
 int	netbsd32_pwrite(struct proc *, void *, register_t *);
 int	netbsd32_ntp_gettime(struct proc *, void *, register_t *);
-#if defined(NTP) || !defined(_KERNEL)
 int	netbsd32_ntp_adjtime(struct proc *, void *, register_t *);
-#else
-#endif
 int	netbsd32_setgid(struct proc *, void *, register_t *);
 int	netbsd32_setegid(struct proc *, void *, register_t *);
 int	netbsd32_seteuid(struct proc *, void *, register_t *);

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.h,v 1.2.2.2 2000/11/22 16:02:53 bouyer Exp $ */
+/* $NetBSD: osf1_exec.h,v 1.2.2.3 2000/12/08 09:08:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD foundation, Inc.
@@ -35,7 +35,11 @@
 #define _OSF1_EXEC_H
 #define	OSF1_MAX_AUX_ENTRIES	4	/* max we'll ever push (right now) */
 
+extern const struct emul emul_osf1;
+
 void cpu_exec_ecoff_setregs __P((struct proc *, struct exec_package *, u_long));
 int osf1_exec_ecoff_probe __P((struct proc *, struct exec_package *));
+void *osf1_copyargs(struct exec_package *pack,
+    struct ps_strings *arginfo, void *stack, void *argp);
 
 #endif /* OSF1_EXEC_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ipc.c,v 1.9 1999/09/07 18:20:19 christos Exp $	*/
+/*	$NetBSD: svr4_ipc.c,v 1.9.2.1 2000/12/08 09:08:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sysv.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/param.h>

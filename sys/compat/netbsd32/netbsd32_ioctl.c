@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.4.2.1 2000/11/20 18:08:30 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.4.2.2 2000/12/08 09:08:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -521,7 +521,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		 */
 		memset(data32, 0, size32);
 	else if (com&IOC_VOID)
-		*(caddr_t *)data = (caddr_t)(u_long)SCARG(uap, data);
+		*(caddr_t *)data32 = (caddr_t)(u_long)SCARG(uap, data);
 
 /* we define some handy macros here... */
 #define IOCTL_STRUCT_CONV_TO(cmd, type)	\
@@ -544,7 +544,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	 */
 	switch (SCARG(uap, com)) {
 	case FIONBIO:
-		if ((tmp = *(int *)data) != 0)
+		if ((tmp = *(int *)data32) != 0)
 			fp->f_flag |= FNONBLOCK;
 		else
 			fp->f_flag &= ~FNONBLOCK;
@@ -552,7 +552,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		break;
 
 	case FIOASYNC:
-		if ((tmp = *(int *)data) != 0)
+		if ((tmp = *(int *)data32) != 0)
 			fp->f_flag |= FASYNC;
 		else
 			fp->f_flag &= ~FASYNC;
@@ -560,7 +560,7 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 		break;
 
 	case FIOSETOWN:
-		tmp = *(int *)data;
+		tmp = *(int *)data32;
 		if (fp->f_type == DTYPE_SOCKET) {
 			((struct socket *)fp->f_data)->so_pgid = tmp;
 			error = 0;
@@ -583,11 +583,11 @@ printf("netbsd32_ioctl(%d, %x, %x): %s group %c base %d len %d\n",
 	case FIOGETOWN:
 		if (fp->f_type == DTYPE_SOCKET) {
 			error = 0;
-			*(int *)data = ((struct socket *)fp->f_data)->so_pgid;
+			*(int *)data32 = ((struct socket *)fp->f_data)->so_pgid;
 			break;
 		}
-		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data, p);
-		*(int *)data = -*(int *)data;
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, data32, p);
+		*(int *)data32 = -*(int *)data32;
 		break;
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.53.2.2 2000/11/22 16:03:01 bouyer Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.53.2.3 2000/12/08 09:08:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -79,9 +79,11 @@
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_nfsserver.h"
 #include "opt_sysv.h"
 #include "opt_execfmt.h"
+#endif
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -92,7 +94,9 @@
  * handled here.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "fs_nfs.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,6 +173,7 @@ extern char ultrix_sigcode[], ultrix_esigcode[];
 
 const struct emul emul_ultrix = {
 	"ultrix",
+	"/emul/ultrix",
 	NULL,
 	sendsig,
 	ULTRIX_SYS_syscall,

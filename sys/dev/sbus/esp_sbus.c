@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.6.8.3 2000/11/27 14:10:45 bouyer Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.6.8.4 2000/12/08 09:12:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -318,7 +318,7 @@ espattach(esc, gluep)
 	 */
 	sc->sc_cfg1 = sc->sc_id | NCRCFG1_PARENB;
 	sc->sc_cfg2 = NCRCFG2_SCSI2 | NCRCFG2_RPE;
-	sc->sc_cfg3 = NCRCFG3_CDB;
+	sc->sc_cfg3 = NCRCFG3_CDB | NCRCFG3_QTE;
 	NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
 
 	if ((NCR_READ_REG(sc, NCR_CFG2) & ~NCRCFG2_RSVD) !=
@@ -329,7 +329,7 @@ espattach(esc, gluep)
 		NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
 		sc->sc_cfg3 = 0;
 		NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
-		sc->sc_cfg3 = (NCRCFG3_CDB | NCRCFG3_FCLK);
+		sc->sc_cfg3 = (NCRCFG3_CDB | NCRCFG3_FCLK | NCRCFG3_QTE);
 		NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
 		if (NCR_READ_REG(sc, NCR_CFG3) !=
 		    (NCRCFG3_CDB | NCRCFG3_FCLK)) {
@@ -337,7 +337,7 @@ espattach(esc, gluep)
 		} else {
 			/* NCRCFG2_FE enables > 64K transfers */
 			sc->sc_cfg2 |= NCRCFG2_FE;
-			sc->sc_cfg3 = 0;
+			sc->sc_cfg3 = 0 | NCRF9XCFG3_QTE;
 			NCR_WRITE_REG(sc, NCR_CFG3, sc->sc_cfg3);
 			sc->sc_rev = NCR_VARIANT_ESP200;
 		}
@@ -516,3 +516,59 @@ esp_dma_isactive(sc)
 
 	return (DMA_ISACTIVE(esc->sc_dma));
 }
+
+#include "opt_ddb.h"
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_output.h>
+
+void db_esp __P((db_expr_t, int, db_expr_t, char*));
+
+void
+db_esp(addr, have_addr, count, modif)
+	db_expr_t addr;
+	int have_addr;
+	db_expr_t count;
+	char *modif;
+{
+	struct ncr53c9x_softc *sc;
+	struct ncr53c9x_ecb *ecb;
+	struct ncr53c9x_linfo *li;
+	int u, t, i;
+
+	for (u=0; u<10; u++) {
+		sc = (struct ncr53c9x_softc *)
+			getdevunit("esp", u);
+		if (!sc) continue;
+
+		db_printf("esp%d: nexus %p phase %x prev %x dp %p dleft %lx ify %x\n",
+			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase, 
+			  sc->sc_dp, sc->sc_dleft, sc->sc_msgify);
+		db_printf("\tmsgout %x msgpriq %x msgin %x:%x:%x:%x:%x\n",
+			  sc->sc_msgout, sc->sc_msgpriq, sc->sc_imess[0],
+			  sc->sc_imess[1], sc->sc_imess[2], sc->sc_imess[3],
+			  sc->sc_imess[0]);
+		db_printf("ready: ");
+		for (ecb = sc->ready_list.tqh_first; ecb; ecb = ecb->chain.tqe_next) {
+			db_printf("ecb %p ", ecb);
+			if (ecb == ecb->chain.tqe_next) {
+				db_printf("\nWARNING: tailq loop on ecb %p", ecb);
+				break;
+			}
+		}
+		db_printf("\n");
+		
+		for (t=0; t<NCR_NTARG; t++) {
+			LIST_FOREACH(li, &sc->sc_tinfo[t].luns, link) {
+				db_printf("t%d lun %d untagged %p busy %d used %x\n",
+					  t, (int)li->lun, li->untagged, li->busy,
+					  li->used);
+				for (i=0; i<256; i++)
+					if ((ecb = li->queued[i])) {
+						db_printf("ecb %p tag %x\n", ecb, i);
+					}
+			}
+		}
+	}
+}
+#endif

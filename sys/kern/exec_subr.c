@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.17.2.2 2000/11/22 16:05:17 bouyer Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.17.2.3 2000/12/08 09:13:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -163,6 +163,7 @@ vmcmd_map_pagedvn(struct proc *p, struct exec_vmcmd *cmd)
         uobj = uvn_attach((void *) cmd->ev_vp, VM_PROT_READ|VM_PROT_EXECUTE);
         if (uobj == NULL)
                 return(ENOMEM);
+	VREF(cmd->ev_vp);
 
 	/*
 	 * do the map

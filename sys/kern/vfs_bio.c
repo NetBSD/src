@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.58.10.2 2000/11/22 16:05:30 bouyer Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58.10.3 2000/12/08 09:14:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -59,7 +59,7 @@
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
 
-#include <uvm/uvm_extern.h>
+#include <uvm/uvm.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -72,7 +72,7 @@
  * Definitions for the buffer hash lists.
  */
 #define	BUFHASH(dvp, lbn)	\
-	(&bufhashtbl[((long)(dvp) / sizeof(*(dvp)) + (int)(lbn)) & bufhash])
+	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
 struct bio_ops bioops;	/* I/O operation notification */
@@ -134,7 +134,6 @@ bremfree(bp)
 			panic("bremfree: lost tail");
 	}
 	TAILQ_REMOVE(dp, bp, b_freelist);
-
 	splx(s);
 }
 
@@ -166,8 +165,6 @@ bufinit()
 		bp = &buf[i];
 		memset((char *)bp, 0, sizeof(*bp));
 		bp->b_dev = NODEV;
-		bp->b_rcred = NOCRED;
-		bp->b_wcred = NOCRED;
 		bp->b_vnbufs.le_next = NOLIST;
 		LIST_INIT(&bp->b_dep);
 		bp->b_data = buffers + i * MAXBSIZE;
@@ -201,12 +198,8 @@ bio_doread(vp, blkno, size, cred, async)
 	 * Therefore, it's valid if it's I/O has completed or been delayed.
 	 */
 	if (!ISSET(bp->b_flags, (B_DONE | B_DELWRI))) {
-		/* Start I/O for the buffer (keeping credentials). */
+		/* Start I/O for the buffer. */
 		SET(bp->b_flags, B_READ | async);
-		if (cred != NOCRED && bp->b_rcred == NOCRED) {
-			crhold(cred);
-			bp->b_rcred = cred;
-		}
 		VOP_STRATEGY(bp);
 
 		/* Pay for the read. */
@@ -375,7 +368,6 @@ bwrite(bp)
 	bp->b_vp->v_numoutput++;
 	splx(s);
 
-	SET(bp->b_flags, B_WRITEINPROG);
 	VOP_STRATEGY(bp);
 
 	if (sync) {
@@ -509,6 +501,8 @@ brelse(bp)
 	struct bqueues *bufq;
 	int s;
 
+	KASSERT(ISSET(bp->b_flags, B_BUSY));
+
 	/* Wake up any processes waiting for any buffer to become free. */
 	if (needbuffer) {
 		needbuffer = 0;
@@ -602,6 +596,7 @@ brelse(bp)
 already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE|B_ORDERED);
+	SET(bp->b_flags, B_CACHE);
 
 	/* Allow disk interrupts. */
 	splx(s);
@@ -630,7 +625,7 @@ incore(vp, blkno)
 		return (bp);
 	}
 
-	return (0);
+	return (NULL);
 }
 
 /*
@@ -647,56 +642,38 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 	daddr_t blkno;
 	int size, slpflag, slptimeo;
 {
-	struct bufhashhdr *bh;
 	struct buf *bp;
 	int s, err;
 
-	/*
-	 * XXX
-	 * The following is an inlined version of 'incore()', but with
-	 * the 'invalid' test moved to after the 'busy' test.  It's
-	 * necessary because there are some cases in which the NFS
-	 * code sets B_INVAL prior to writing data to the server, but 
-	 * in which the buffers actually contain valid data.  In this
-	 * case, we can't allow the system to allocate a new buffer for
-	 * the block until the write is finished.
-	 */
-	bh = BUFHASH(vp, blkno);
 start:
-        bp = bh->lh_first;
-        for (; bp != NULL; bp = bp->b_hash.le_next) {
-                if (bp->b_lblkno != blkno || bp->b_vp != vp)
-			continue;
-
+	bp = incore(vp, blkno);
+	if (bp != NULL) {
 		s = splbio();
 		if (ISSET(bp->b_flags, B_BUSY)) {
+			if (curproc == uvm.pagedaemon_proc) {
+				splx(s);
+				return NULL;
+			}
 			SET(bp->b_flags, B_WANTED);
 			err = tsleep(bp, slpflag | (PRIBIO + 1), "getblk",
-			    slptimeo);
+				     slptimeo);
 			splx(s);
 			if (err)
 				return (NULL);
 			goto start;
 		}
-
-		if (!ISSET(bp->b_flags, B_INVAL)) {
 #ifdef DIAGNOSTIC
-			if (ISSET(bp->b_flags, B_DONE|B_DELWRI) &&
-			    bp->b_bcount < size)
-				panic("getblk: block size invariant failed");
+		if (ISSET(bp->b_flags, B_DONE|B_DELWRI) && bp->b_bcount < size)
+			panic("getblk: block size invariant failed");
 #endif
-			SET(bp->b_flags, B_BUSY);
-			bremfree(bp);
-			splx(s);
-			break;
-		}
+		SET(bp->b_flags, B_BUSY);
+		bremfree(bp);
 		splx(s);
-        }
-
-	if (bp == NULL) {
+	} else {
 		if ((bp = getnewbuf(slpflag, slptimeo)) == NULL)
 			goto start;
-		binshash(bp, bh);
+
+		binshash(bp, BUFHASH(vp, blkno));
 		bp->b_blkno = bp->b_lblkno = bp->b_rawblkno = blkno;
 		s = splbio();
 		bgetvp(vp, bp);
@@ -720,7 +697,6 @@ geteblk(size)
 	SET(bp->b_flags, B_INVAL);
 	binshash(bp, &invalhash);
 	allocbuf(bp, size);
-
 	return (bp);
 }
 
@@ -737,9 +713,9 @@ allocbuf(bp, size)
 	struct buf *bp;
 	int size;
 {
-	struct buf      *nbp;
-	vsize_t       desired_size;
-	int	     s;
+	struct buf *nbp;
+	vsize_t desired_size;
+	int s;
 
 	desired_size = round_page((vsize_t)size);
 	if (desired_size > MAXBSIZE)
@@ -759,6 +735,7 @@ allocbuf(bp, size)
 		/* find a buffer */
 		while ((nbp = getnewbuf(0, 0)) == NULL)
 			;
+
 		SET(nbp->b_flags, B_INVAL);
 		binshash(nbp, &invalhash);
 
@@ -836,7 +813,7 @@ start:
 		needbuffer = 1;
 		tsleep(&needbuffer, slpflag|(PRIBIO+1), "getnewbuf", slptimeo);
 		splx(s);
-		return (0);
+		return (NULL);
 	}
 
 	if (ISSET(bp->b_flags, B_VFLUSH)) {
@@ -882,18 +859,6 @@ start:
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_bcount = 0;
-	bp->b_dirtyoff = bp->b_dirtyend = 0;
-	bp->b_validoff = bp->b_validend = 0;
-
-	/* nuke any credentials we were holding */
-	if (bp->b_rcred != NOCRED) {
-		crfree(bp->b_rcred);
-		bp->b_rcred = NOCRED; 
-	}
-	if (bp->b_wcred != NOCRED) {
-		crfree(bp->b_wcred);
-		bp->b_wcred = NOCRED;
-	}
 	
 	bremhash(bp);
 	return (bp); 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.31.2.1 2000/11/20 18:08:47 bouyer Exp $	*/
+/*	$NetBSD: db_command.c,v 1.31.2.2 2000/12/08 09:09:51 bouyer Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,6 +38,7 @@
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
+#include <sys/namei.h>
 
 #include <machine/db_machdep.h>		/* type definitions */
 
@@ -427,8 +428,29 @@ db_pool_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char *		modif;
 {
+	pool_printit((struct pool *)addr, modif, db_printf);
+}
 
-	pool_printit((struct pool *) addr, modif, db_printf);
+/*ARGSUSED*/
+void
+db_namecache_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	namecache_print((struct vnode *)addr, db_printf);
+}
+
+/*ARGSUSED*/
+void
+db_uvmexp_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	uvmexp_print(db_printf);
 }
 
 /*
@@ -453,6 +475,8 @@ struct db_command db_show_cmds[] = {
 	{ "buf",	db_buf_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
+	{ "ncache",	db_namecache_print_cmd,	0,	NULL },
+	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
@@ -681,7 +705,7 @@ db_sifting_cmd(addr, have_addr, count, omodif)
 	} else
 		mode = 0;
 
-	if (t==tIDENT)
+	if (t == tIDENT)
 		db_sifting(db_tok_string, mode);
 	else {
 		db_printf("Bad argument (non-string)\n");

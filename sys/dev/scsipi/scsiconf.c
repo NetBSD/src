@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.7 2000/11/22 16:04:49 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.8 2000/12/08 09:12:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -310,6 +310,14 @@ scsi_probe_bus(sc, target, lun)
 			return (EINVAL);
 		maxlun = minlun = lun;
 	}
+
+	/*
+	 * Some HBAs provide an abstracted view of the bus; give them an
+	 * oppertunity to re-scan it before we do.
+	 */
+	if (chan->chan_adapter->adapt_ioctl != NULL)
+		(*chan->chan_adapter->adapt_ioctl)(chan, SCBUSIOLLSCAN, NULL,
+		    0, curproc);
 
 	if ((error = scsipi_adapter_addref(chan->chan_adapter)) != 0)
 		return (error);

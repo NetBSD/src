@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.147.2.1 2000/11/20 18:09:17 bouyer Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.147.2.2 2000/12/08 09:14:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -571,7 +571,6 @@ sys_sync(p, v, retval)
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
-			uvm_vnp_sync(mp);
 			VFS_SYNC(mp, MNT_NOWAIT, p->p_ucred, p);
 			if (asyncflag)
 				 mp->mnt_flag |= MNT_ASYNC;
@@ -1181,6 +1180,11 @@ sys_fhopen(p, v, retval)
 	}
 	if ((error = VOP_OPEN(vp, flags, cred, p)) != 0)
 		goto bad;
+	if (vp->v_type == VREG &&
+	    uvn_attach(vp, flags & FWRITE ? VM_PROT_WRITE : 0) == NULL) {
+		error = EIO;
+		goto bad;
+	}
 	if (flags & FWRITE)
 		vp->v_writecount++;
 
@@ -1582,8 +1586,6 @@ sys_unlink(p, v, retval)
 		error = EBUSY;
 		goto out;
 	}
-
-	(void)uvm_vnp_uncache(vp);
 
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
@@ -2852,7 +2854,6 @@ out:
 		if (fromnd.ni_dvp != tdvp)
 			VOP_LEASE(fromnd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 		if (tvp) {
-			(void)uvm_vnp_uncache(tvp);
 			VOP_LEASE(tvp, p, p->p_ucred, LEASE_WRITE);
 		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,

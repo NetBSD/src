@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.45.2.2 2000/11/22 16:02:24 bouyer Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.45.2.3 2000/12/08 09:08:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,8 +45,10 @@
 /*
  * Various HP-UX compatibility routines
  */
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"
+#endif
 
 #ifndef COMPAT_43
 #define COMPAT_43
@@ -95,13 +97,7 @@
 int unimpresponse = 0;
 #endif
 
-
-extern char sigcode[], esigcode[];
-extern struct sysent hpux_sysent[];
-extern const char * const hpux_syscallnames[];
-
-int	hpuxtobsdioctl __P((u_long));
-
+static int	hpuxtobsdioctl __P((u_long));
 static int	hpux_scale __P((struct timeval *));
 
 /*
@@ -699,7 +695,7 @@ hpux_sys_mmap(p, v, retval)
 	return (sys_mmap(p, &nargs, retval));
 }
 
-int
+static int
 hpuxtobsdioctl(com)
 	u_long com;
 {

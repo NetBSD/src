@@ -1,7 +1,7 @@
-#	$NetBSD: files.tc,v 1.17.2.1 2000/11/20 11:43:14 bouyer Exp $
+#	$NetBSD: files.tc,v 1.17.2.2 2000/12/08 09:12:43 bouyer Exp $
 #
 # Config file and device description for machine-independent
-# TurboChannel code.  Included by ports that need it.
+# TURBOchannel code.  Included by ports that need it.
 
 defopt	TCVERBOSE
 
@@ -9,7 +9,7 @@ device	tc {[slot = -1], [offset = -1]}
 #attach	tc at tcbus
 file	dev/tc/tc.c			tc	needs-flag
 
-# The TurboChannel IOCTL ASIC
+# IOCTL ASIC
 device	ioasic { offset = -1 }
 attach	ioasic at tc
 file	dev/tc/ioasic_subr.c		ioasic
@@ -29,7 +29,39 @@ device  bba: audio,am7930
 attach  bba at ioasic
 file    dev/tc/bba.c                    bba
 
-# DEC DEFTA TC FDDI Controller
+# DEFTA FDDI controller
 device	fta: pdq, fddi, ifnet, arp
 attach	fta at tc
 file	dev/tc/if_fta.c			fta
+
+# CX PMAG-B
+#device cfb: wsemuldisplaydev, rasops8
+#attach cfb at tc
+#file	dev/tc/cfb.c			cfb needs-flag
+
+# MX PMAG-A
+#device mfb: wsemuldisplaydev, rasops8
+#attach mfb at tc
+#file	dev/tc/mfb.c			mfb needs-flag
+
+# TX PMAG-J
+#device tfb: wsemuldisplaydev, rasops8
+#attach tfb at tc
+#file	dev/tc/tfb.c			tfb needs-flag
+
+# HX PMAGB-B
+#device sfb: wsemuldisplaydev, rasops8
+#attach sfb at tc
+#file	dev/tc/sfb.c			sfb needs-flag
+
+# DV MAXINE builtin
+#device xcfb: wsemuldisplaydev, rasops8
+#attach xcfb at tc
+#file	dev/tc/xcfb.c			xcfb needs-flag
+
+# TCDS dual channel SCSI
+#device	tcds { chip = -1 }
+#attach	tcds at tc
+#file	dev/tc/tcds.c			tcds
+#attach	asc at tcds with asc_tcds	
+#file	dev/tc/asc_tcds.c		asc_tcds

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.52.2.2 2000/11/22 16:02:53 bouyer Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.52.2.3 2000/12/08 09:08:39 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -57,7 +57,9 @@
  * rights to redistribute these changes.
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_syscall_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,14 +90,12 @@
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
 #endif
-
-const char osf1_emul_path[] = "/emul/osf1";
 
 int
 osf1_sys_classcntl(p, v, retval)
@@ -188,7 +188,7 @@ osf1_sys_getsysinfo(struct proc *p, void *v, register_t *retval)
 		 * XXX This is not correct, but we don't keep track
 		 * XXX of the fp_control.  Return the fpcr just for fun.
 		 */
-		synchronize_fpstate(p, 1);
+		fpusave_proc(p, 1);
 		error = copyout(&p->p_addr->u_pcb.pcb_fp.fpr_cr,
 		                SCARG(uap, buffer),
 		                sizeof(p->p_addr->u_pcb.pcb_fp.fpr_cr));

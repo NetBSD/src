@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.18.2.1 2000/11/20 18:08:12 bouyer Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.18.2.2 2000/12/08 09:08:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,9 @@
  * Network related HP-UX compatibility routines
  */
 
+#if defined(_KERNEL) && !defined(_LKM)
 #include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

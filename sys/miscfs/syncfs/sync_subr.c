@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.7.2.2 2000/11/20 18:09:50 bouyer Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.7.2.3 2000/12/08 09:15:02 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -188,16 +188,14 @@ sched_sync(v)
 			}
 			s = splbio();
 			if (LIST_FIRST(slp) == vp) {
-				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
-				    vp->v_type != VBLK)
-					panic("sched_sync: fsync failed vp %p tag %d",
-					      vp, vp->v_tag);
+
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
 				 * position and then add us back in at a later
 				 * position.
 				 */
+
 				vn_syncer_add_to_worklist(vp, syncdelay);
 			}
 			splx(s);
@@ -235,7 +233,7 @@ sched_sync(v)
 		 * filesystem activity.
 		 */
 		if (time.tv_sec == starttime)
-			tsleep(&lbolt, PPAUSE, "syncer", 0);
+			tsleep(&rushjob, PPAUSE, "syncer", hz);
 	}
 }
 
@@ -247,21 +245,12 @@ sched_sync(v)
 int
 speedup_syncer()
 {
-	int s;
-	
-	/*
-	 * XXX Should not be doing this, should be using ltsleep()
-	 * XXX with a timeout, rather than sleeping on lbolt.
-	 */
-	SCHED_LOCK(s);
-	if (updateproc && updateproc->p_wchan == &lbolt)
-		setrunnable(updateproc);
-	SCHED_UNLOCK(s);
-
-	if (rushjob < syncdelay / 2) {
-		rushjob += 1;
-		stat_rush_requests += 1;
-		return (1);
+	if (rushjob >= syncdelay / 2) {
+		return (0);
 	}
-	return(0);
+
+	rushjob++;
+	wakeup(&rushjob);
+	stat_rush_requests += 1;
+	return (1);
 }

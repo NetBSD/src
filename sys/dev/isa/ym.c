@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.12.2.1 2000/11/20 11:41:24 bouyer Exp $	*/
+/*	$NetBSD: ym.c,v 1.12.2.2 2000/12/08 09:12:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1054,7 +1054,9 @@ ym_power_hook(why, v)
 
 	s = splaudio();
 
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		/*
 		 * suspending...
 		 */
@@ -1078,7 +1080,9 @@ ym_power_hook(why, v)
 		sc->sc_sa3_scan[SA3_PWR_MNG] = ym_read(sc, SA3_PWR_MNG);
 		if (sc->sc_on_blocks)
 			ym_chip_powerdown(sc);
-	} else {
+		break;
+
+	case PWR_RESUME:
 		/*
 		 * resuming...
 		 */
@@ -1099,6 +1103,11 @@ ym_power_hook(why, v)
 		/* Restore global/digital power-down state. */
 		ym_write(sc, SA3_PWR_MNG, sc->sc_sa3_scan[SA3_PWR_MNG]);
 		ym_write(sc, SA3_DPWRDWN, sc->sc_sa3_scan[SA3_DPWRDWN]);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }

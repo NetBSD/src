@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.4.2.1 2000/11/20 18:08:27 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.4.2.2 2000/12/08 09:08:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -79,7 +79,7 @@ compat_09_netbsd32_osetdomainname(p, v, retval)
 }
 
 int
-compat_09_netbsd32_ouname(p, v, retval)
+compat_09_netbsd32_uname(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.81.2.1 2000/11/20 18:08:39 bouyer Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.81.2.2 2000/12/08 09:08:45 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ svr4_sys_execv(p, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -207,7 +207,7 @@ svr4_sys_execve(p, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p->p_emul);
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -566,7 +566,7 @@ svr4_mknod(p, retval, path, mode, dev)
 {
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	SVR4_CHECK_ALT_CREAT(p, &sg, path);
+	CHECK_ALT_CREAT(p, &sg, path);
 
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
@@ -1358,7 +1358,7 @@ svr4_sys_statvfs(p, v, retval)
 	struct svr4_statvfs sfs;
 	int error;
 
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 
@@ -1417,7 +1417,7 @@ svr4_sys_statvfs64(p, v, retval)
 	struct svr4_statvfs64 sfs;
 	int error;
 
-	SVR4_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&fs_args, path) = SCARG(uap, path);
 	SCARG(&fs_args, buf) = fs;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: scsi_all.h,v 1.14.14.1 2000/11/20 09:59:25 bouyer Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.14.14.2 2000/12/08 09:12:41 bouyer Exp $	*/
 
 /*
- * SCSI-specific insterface description.
+ * SCSI-specific interface description.
  */
 
 /*

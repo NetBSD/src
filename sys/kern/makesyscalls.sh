@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.35.2.2 2000/11/22 16:05:24 bouyer Exp $
+#	$NetBSD: makesyscalls.sh,v 1.35.2.3 2000/12/08 09:13:56 bouyer Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -243,6 +243,15 @@ $1 ~ /^#/ {
 	print > sysnamesbottom
 	next
 }
+$1 ~ /^if/ {
+	print "#"$0 > sysdcl
+	next
+}
+$1 ~ /^endif/ {
+	print "#"$0 > sysdcl
+	next
+}
+	
 syscall != $1 {
 	printf "%s: line %d: syscall number out of sync at %d\n", \
 	   infile, NR, syscall

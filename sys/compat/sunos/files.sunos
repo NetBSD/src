@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunos,v 1.5 1998/08/06 02:58:44 mrg Exp $
+#	$NetBSD: files.sunos,v 1.5.12.1 2000/12/08 09:08:42 bouyer Exp $
 #
 # Config file description for machine-independent SunOS compat code.
 # Included by ports that need it.
@@ -7,6 +7,7 @@
 # own file lists.
 
 file	compat/sunos/sunos_exec.c	compat_sunos
+file	compat/sunos/sunos_exec_aout.c	compat_sunos & exec_aout
 file	compat/sunos/sunos_sysent.c	compat_sunos
 file	compat/sunos/sunos_ioctl.c	compat_sunos
 file	compat/sunos/sunos_misc.c	compat_sunos

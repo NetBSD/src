@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.4.2.2 2000/11/22 16:04:11 bouyer Exp $	*/
+/*	$NetBSD: neo.c,v 1.4.2.3 2000/12/08 09:12:32 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -109,8 +109,6 @@
  * TO-DO list:
  *    Figure out interaction with video stuff (look at Xfree86 driver?)
  *
- *    Power management (neoactivate)
- *
  *    Figure out how to shrink that huge table neo-coeff.h
  */
 
@@ -160,7 +158,9 @@ struct neo_softc {
         u_int32_t       rwmark;
 
 	struct ac97_codec_if *codec_if;
-	struct ac97_host_if host_if;	
+	struct ac97_host_if host_if;
+
+	void		*powerhook;
 };
 
 /* -------------------------------------------------------------------- */
@@ -204,6 +204,7 @@ size_t	neo_round_buffersize(void *, int, size_t);
 paddr_t	neo_mappage(void *, void *, off_t, int);
 int	neo_get_props(void *);
 void	neo_set_mixer(struct neo_softc *sc, int a, int d);
+void	neo_power(int why, void *arg);
 
 struct cfattach neo_ca = {
 	sizeof(struct neo_softc), neo_match, neo_attach
@@ -524,6 +525,17 @@ neo_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
+neo_power(int why, void *addr)
+{
+	struct neo_softc *sc = (struct neo_softc *)addr;
+
+	if (why == PWR_RESUME) {
+		nm_init(sc);
+		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+	}
+}
+
+void
 neo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct neo_softc *sc = (struct neo_softc *)self;
@@ -590,6 +602,8 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((error = ac97_attach(&sc->host_if)) != 0)
 		return;
+
+	sc->powerhook = powerhook_establish(neo_power, sc);
 
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
 }

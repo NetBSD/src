@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_pci_common.c,v 1.3.2.2 2000/11/20 11:42:37 bouyer Exp $	*/
+/*	$NetBSD: siop_pci_common.c,v 1.3.2.3 2000/12/08 09:12:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -242,8 +242,16 @@ siop_pci_attach_common(sc, pa)
 	}
 
 	if (sc->siop.features & SF_CHIP_RAM) {
-		if (pci_mapreg_map(pa, 0x18,
-		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+		int bar;
+		switch (memtype) {
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
+			bar = 0x18;
+			break;
+		case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
+			bar = 0x1c;
+			break;
+		}
+		if (pci_mapreg_map(pa, bar, memtype, 0,
                     &sc->siop.sc_ramt, &sc->siop.sc_ramh,
 		    &sc->siop.sc_scriptaddr, NULL) == 0) {
 			printf("%s: using on-board RAM\n",

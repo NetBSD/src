@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.6.2.1 2000/11/20 18:08:50 bouyer Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.6.2.2 2000/12/08 09:09:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -198,6 +198,22 @@ db_show_callout(addr, haddr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
+	extern struct callout_queue *callwheel;
+	extern int callwheelsize;
+	int i;
 
-	db_printf("`show callout' not currently implemented\n");
+	for (i = 0; i < callwheelsize; i++) {
+		struct callout_queue *bucket = &callwheel[i];
+		struct callout *c = TAILQ_FIRST(bucket);
+
+		if (c) db_printf("bucket %d:\n", i);
+		while (c) {
+			db_printf("%p: time %llx arg %p flags %x func %p: ",
+				  c, (long long) c->c_time, c->c_arg,
+				  c->c_flags, c->c_func);
+			db_printsym((u_long)c->c_func, DB_STGY_PROC, db_printf);
+			db_printf("\n");
+			c = TAILQ_NEXT(c, c_link);
+		}
+	}
 }

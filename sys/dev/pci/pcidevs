@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.159.2.2 2000/11/22 16:04:14 bouyer Exp $
+$NetBSD: pcidevs,v 1.159.2.3 2000/12/08 09:12:34 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -744,6 +744,7 @@ product ATI MACH64_B		0x4750	Mach64 B
 product ATI MACH64_GB		0x4742	Mach64 GB
 product ATI MACH64_GD		0x4744	Mach64 GD
 product ATI MACH64_GI		0x4749	Mach64 GI
+product ATI RAGEXLAGP2X		0x474d	Rage XL AGP 2x
 product ATI MACH64_GP		0x4750	Mach64 GP
 product ATI MACH64_GQ		0x4751	Mach64 GQ
 product ATI MACH64_GT		0x4754	Mach64 GT
@@ -846,6 +847,7 @@ product C4T GPPCI		0x6773	GPPCI
 
 /* Chips and Technologies products */
 product CHIPS 64310		0x00b8	64310
+product CHIPS 69000		0x00c0	69000
 product CHIPS 65545		0x00d8	65545
 product CHIPS 65548		0x00dc	65548
 product CHIPS 65550		0x00e0	65550
@@ -868,6 +870,7 @@ product CIRRUS CL_GD7541	0x1204	CL-GD7541
 product CIRRUS CL_CD4400	0x4400	CL-CD4400 Communications Controller
 product CIRRUS CS4610		0x6001	CS4610 SoundFusion Audio Accelerator
 product CIRRUS CS4280		0x6003	CS4280 CrystalClear Audio Interface
+product CIRRUS CS4281		0x6005	CS4281 CrystalClear Audio Interface
 
 /* CMD Technology products -- info gleaned from their web site */
 product CMDTECH 640		0x0640	PCI0640
@@ -1301,8 +1304,10 @@ product SYMBIOS 860	0x0006	53c860
 product SYMBIOS 896	0x000b	53c896
 product SYMBIOS 895	0x000c	53c895
 product SYMBIOS 885	0x000d	53c885
-product SYMBIOS 875	0x000f	53c875
+product SYMBIOS 875	0x000f	53c875/876
 product SYMBIOS 1510	0x0010	53c1510
+product SYMBIOS 895A	0x0012	53c895A
+product SYMBIOS 1010	0x0020	53c1010
 product SYMBIOS 875J	0x008f	53c875J
 
 /* Packet Engines products */
@@ -1512,6 +1517,7 @@ product SIS 5597_USB		0x7001	5597/5598 USB host controller
 product SIS 7016		0x7016	SiS 7016 10/100 Ethernet
 
 /* Silicon Motion products */
+product SILMOTION LYNX_EMP	0x0712	Lynx EM+
 product SILMOTION LYNX_E	0x0810	Lynx E
 
 /* SMC products */

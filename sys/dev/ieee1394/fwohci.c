@@ -576,11 +576,19 @@ fwohci_power(int why, void *arg)
 	int s;
 
 	s = splimp();
-	if (why == PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		fwohci_shutdown(sc);
+		break;
+	case PWR_RESUME:
 		fwohci_hw_init(sc);
 		fwohci_phy_busreset(sc);
-	} else {
-		fwohci_shutdown(sc);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 }
@@ -780,7 +788,7 @@ fwohci_desc_alloc(struct fwohci_softc *sc)
 	}
 
 	if ((error = bus_dmamap_create(sc->sc_dmat, dsize, sc->sc_dnseg,
-	    sc->sc_descsize, 0, BUS_DMA_WAITOK, &sc->sc_ddmamap)) != 0) {
+	    dsize, 0, BUS_DMA_WAITOK, &sc->sc_ddmamap)) != 0) {
 		printf("%s: unable to create descriptor buffer DMA map, "
 		    "error = %d\n", sc->sc_sc1394.sc1394_dev.dv_xname, error);
 		goto fail_2;
@@ -1102,9 +1110,9 @@ fwohci_buf_pktget(struct fwohci_softc *sc, struct fwohci_ctx *fc, caddr_t *pp,
 	fd = fb->fb_desc;
 #ifdef FW_DEBUG
 	if (fw_verbose)
-		printf("fwohci_buf_pktget: desc %d, off %d, req %d, res %d,"
+		printf("fwohci_buf_pktget: desc %ld, off %d, req %d, res %d,"
 		    " len %d, avail %d\n",
-		    fd - sc->sc_desc, fb->fb_off, fd->fd_reqcount,
+		    (long)(fd - sc->sc_desc), fb->fb_off, fd->fd_reqcount,
 		    fd->fd_rescount, len,
 		    fd->fd_reqcount - fd->fd_rescount - fb->fb_off);
 #endif
@@ -1149,7 +1157,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		 * in descriptor is set.
 		 */
 		len = fwohci_buf_pktget(sc, fc, (caddr_t *)&pkt->fp_trail,
-		    sizeof(pkt->fp_trail));
+		    sizeof(*pkt->fp_trail));
 		if (len <= 0) {
 #ifdef FW_DEBUG
 			if (fw_verbose)
@@ -1234,7 +1242,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	if (!fc->fc_isoch) {
 		/* get trailer */
 		len = fwohci_buf_pktget(sc, fc, (caddr_t *)&pkt->fp_trail,
-		    sizeof(pkt->fp_trail));
+		    sizeof(*pkt->fp_trail));
 		if (len <= 0) {
 			printf("fwohci_buf_input: malformed input 3: %d\n",
 			    pkt->fp_hlen - count);
@@ -1347,8 +1355,9 @@ fwohci_handler_set(struct fwohci_softc *sc,
 		fwohci_ctx_init(sc, fc);
 #ifdef FW_DEBUG
 		if (fw_verbose)
-			printf("fwohci_handler_set: SYNC desc %d\n",
-			    TAILQ_FIRST(&fc->fc_buf)->fb_desc - sc->sc_desc);
+			printf("fwohci_handler_set: SYNC desc %ld\n",
+			    (long)(TAILQ_FIRST(&fc->fc_buf)->fb_desc -
+			    sc->sc_desc));
 #endif
 		OHCI_SYNC_RX_DMA_WRITE(sc, fc->fc_ctx, OHCI_SUBREG_ContextMatch,
 		    (OHCI_CTXMATCH_TAG0 << key2) | key1);
@@ -1656,7 +1665,8 @@ fwohci_at_output(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 
 #ifdef FW_DEBUG
 	if (fw_verbose) {
-		printf("fwohci_at_output: desc %d", fb->fb_desc - sc->sc_desc);
+		printf("fwohci_at_output: desc %ld",
+		    (long)(fb->fb_desc - sc->sc_desc));
 		for (i = 0; i < ndesc * 4; i++)
 			printf("%s%08x", i&7?" ":"\n\t",
 			    ((u_int32_t *)fb->fb_desc)[i]);
@@ -1701,9 +1711,9 @@ fwohci_at_done(struct fwohci_softc *sc, struct fwohci_ctx *fc, int force)
 		fd = fb->fb_desc;
 #ifdef FW_DEBUG
 		if (fw_verbose) {
-			printf("fwohci_at_done: %sdesc %d (%d)",
+			printf("fwohci_at_done: %sdesc %ld (%d)",
 			    force ? "force " : "",
-			    fd - sc->sc_desc, fb->fb_nseg);
+			    (long)(fd - sc->sc_desc), fb->fb_nseg);
 			for (i = 0; i < fb->fb_nseg * 4; i++)
 				printf("%s%08x", i&7?" ":"\n    ",
 				    ((u_int32_t *)fd)[i]);

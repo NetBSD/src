@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.30.12.1 2000/11/20 18:08:37 bouyer Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.30.12.2 2000/12/08 09:08:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -49,7 +49,7 @@
 
 #include <compat/sunos/sunos.h>
 #include <compat/sunos/sunos_syscallargs.h>
-#include <compat/sunos/sunos_util.h>
+#include <compat/common/compat_util.h>
 
 /*
  * SunOS ioctl calls.

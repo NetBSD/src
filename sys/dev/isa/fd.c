@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.8.2.2 2000/11/20 11:41:13 bouyer Exp $	*/
+/*	$NetBSD: fd.c,v 1.8.2.3 2000/12/08 09:12:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
  * XXX This driver should be properly MI'd some day, but this allows us
  * XXX to eliminate a lot of code duplication for now.
  */
-#if !defined(__alpha__) && !defined(bebox) && !defined(__i386__)
+#if !defined(alpha) && !defined(bebox) && !defined(i386) && !defined(prep)
 #error platform not supported by this driver, yet
 #endif
 
@@ -138,7 +138,7 @@
 #include <dev/isa/fdreg.h>
 #include <dev/isa/fdcvar.h>
 
-#if defined(__i386__)
+#if defined(i386)
 
 #include <dev/ic/mc146818reg.h>			/* for NVRAM access */
 #include <i386/isa/nvram.h>
@@ -148,7 +148,7 @@
 #include <machine/mca_machdep.h>		/* for MCA_system */
 #endif
 
-#endif /* __i386__ */
+#endif /* i386 */
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
@@ -254,9 +254,9 @@ void fdstart __P((struct fd_softc *));
 
 struct dkdriver fddkdriver = { fdstrategy };
 
-#if defined(__i386__)
+#if defined(i386)
 struct fd_type *fd_nvtotype __P((char *, int, int));
-#endif /* __i386__ */
+#endif /* i386 */
 void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((void *arg));
 void fd_motor_on __P((void *arg));
@@ -304,7 +304,7 @@ fdcattach(fdc)
 	struct fdc_softc *fdc;
 {
 	struct fdc_attach_args fa;
-#if defined(__i386__)
+#if defined(i386)
 	int type;
 #endif
 
@@ -323,7 +323,7 @@ fdcattach(fdc)
 		return;
 	}
 
-#if defined(__i386__)
+#if defined(i386)
 	/*
 	 * The NVRAM info only tells us about the first two disks on the
 	 * `primary' floppy controller.
@@ -332,11 +332,11 @@ fdcattach(fdc)
 		type = mc146818_read(NULL, NVRAM_DISKETTE); /* XXX softc */
 	else
 		type = -1;
-#endif /* __i386__ */
+#endif /* i386 */
 
 	/* physical limit: four drives per controller. */
 	for (fa.fa_drive = 0; fa.fa_drive < 4; fa.fa_drive++) {
-#if defined(__i386__)
+#if defined(i386)
 		if (type >= 0 && fa.fa_drive < 2)
 			fa.fa_deftype = fd_nvtotype(fdc->sc_dev.dv_xname,
 			    type, fa.fa_drive);
@@ -348,7 +348,7 @@ fdcattach(fdc)
 		 * on these platforms?
 		 */
 		fa.fa_deftype = &fd_types[0];
-#endif /* __i386__ */
+#endif /* i386 */
 		(void)config_found(&fdc->sc_dev, (void *)&fa, fdprint);
 	}
 }
@@ -463,7 +463,7 @@ fdattach(parent, self, aux)
 #endif
 }
 
-#if defined(__i386__)
+#if defined(i386)
 /*
  * Translate nvram type into internal data structure.  Return NULL for
  * none/unknown/unusable.
@@ -506,7 +506,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 		return NULL;
 	}
 }
-#endif /* __i386__ */
+#endif /* i386 */
 
 __inline struct fd_type *
 fd_dev_to_type(fd, dev)

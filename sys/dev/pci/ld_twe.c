@@ -1,4 +1,4 @@
-/*	$NetBSD$	*/
+/*	$NetBSD: ld_twe.c,v 1.1.2.2 2000/12/08 09:12:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 /*
- * 3ware "Escalade" RAID controller front-end for lsu(4) driver.
+ * 3ware "Escalade" RAID controller front-end for ld(4) driver.
  */
 
 #include "rnd.h"
@@ -59,75 +59,75 @@
 
 #include <uvm/uvm_extern.h>
 
-#include <dev/lsuvar.h>
+#include <dev/ldvar.h>
 
 #include <dev/pci/twereg.h>
 #include <dev/pci/twevar.h>
 
-struct lsu_twe_softc {
-	struct	lsu_softc sc_lsu;
+struct ld_twe_softc {
+	struct	ld_softc sc_ld;
 	int	sc_hwunit;
 };
 
-static void	lsu_twe_attach(struct device *, struct device *, void *);
-static int	lsu_twe_dobio(struct lsu_twe_softc *, int, void *, int, int,
+static void	ld_twe_attach(struct device *, struct device *, void *);
+static int	ld_twe_dobio(struct ld_twe_softc *, int, void *, int, int,
 			      int, struct twe_context *);
-static int	lsu_twe_dump(struct lsu_softc *, void *, int, int);
-static void	lsu_twe_handler(struct twe_ccb *, int);
-static int	lsu_twe_match(struct device *, struct cfdata *, void *);
-static int	lsu_twe_start(struct lsu_softc *, struct buf *);
+static int	ld_twe_dump(struct ld_softc *, void *, int, int);
+static void	ld_twe_handler(struct twe_ccb *, int);
+static int	ld_twe_match(struct device *, struct cfdata *, void *);
+static int	ld_twe_start(struct ld_softc *, struct buf *);
 
-struct cfattach lsu_twe_ca = {
-	sizeof(struct lsu_twe_softc), lsu_twe_match, lsu_twe_attach
+struct cfattach ld_twe_ca = {
+	sizeof(struct ld_twe_softc), ld_twe_match, ld_twe_attach
 };
 
 static int
-lsu_twe_match(struct device *parent, struct cfdata *match, void *aux)
+ld_twe_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	return (1);
 }
 
 static void
-lsu_twe_attach(struct device *parent, struct device *self, void *aux)
+ld_twe_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct twe_attach_args *twea;
-	struct lsu_twe_softc *sc;
-	struct lsu_softc *lsu;
+	struct ld_twe_softc *sc;
+	struct ld_softc *ld;
 	struct twe_softc *twe;
 
-	sc = (struct lsu_twe_softc *)self;
-	lsu = &sc->sc_lsu;
+	sc = (struct ld_twe_softc *)self;
+	ld = &sc->sc_ld;
 	twe = (struct twe_softc *)parent;
 	twea = aux;
 
 	sc->sc_hwunit = twea->twea_unit;
-	lsu->sc_flags = LSUF_ENABLED;
-	lsu->sc_maxxfer = TWE_MAX_XFER;
-	lsu->sc_secperunit = twe->sc_dsize[twea->twea_unit];
-	lsu->sc_secsize = TWE_SECTOR_SIZE;
-	lsu->sc_maxqueuecnt =
+	ld->sc_flags = LDF_ENABLED;
+	ld->sc_maxxfer = TWE_MAX_XFER;
+	ld->sc_secperunit = twe->sc_dsize[twea->twea_unit];
+	ld->sc_secsize = TWE_SECTOR_SIZE;
+	ld->sc_maxqueuecnt =
 	    min((twe->sc_nccbs - 1) / twe->sc_nunits, TWE_MAX_PU_QUEUECNT);
-	lsu->sc_start = lsu_twe_start;
-	lsu->sc_dump = lsu_twe_dump;
+	ld->sc_start = ld_twe_start;
+	ld->sc_dump = ld_twe_dump;
 
 	/* Build synthetic geometry as per controller internal rules. */
-	if (lsu->sc_secperunit > 0x200000) {
-		lsu->sc_nheads = 255;
-		lsu->sc_nsectors = 63;
+	if (ld->sc_secperunit > 0x200000) {
+		ld->sc_nheads = 255;
+		ld->sc_nsectors = 63;
 	} else {
-		lsu->sc_nheads = 64;
-		lsu->sc_nsectors = 32;
+		ld->sc_nheads = 64;
+		ld->sc_nsectors = 32;
 	}
-	lsu->sc_ncylinders = lsu->sc_secperunit /
-	    (lsu->sc_nheads * lsu->sc_nsectors);
+	ld->sc_ncylinders = ld->sc_secperunit /
+	    (ld->sc_nheads * ld->sc_nsectors);
 
 	printf("\n");
-	lsuattach(lsu);
+	ldattach(ld);
 }
 
 static int
-lsu_twe_dobio(struct lsu_twe_softc *sc, int unit, void *data, int datasize,
+ld_twe_dobio(struct ld_twe_softc *sc, int unit, void *data, int datasize,
 	      int blkno, int dowrite, struct twe_context *tx)
 {
 	struct twe_ccb *ccb;
@@ -135,7 +135,7 @@ lsu_twe_dobio(struct lsu_twe_softc *sc, int unit, void *data, int datasize,
 	struct twe_softc *twe;
 	int s, rv, flags;
 
-	twe = (struct twe_softc *)sc->sc_lsu.sc_dv.dv_parent;
+	twe = (struct twe_softc *)sc->sc_ld.sc_dv.dv_parent;
 
 	flags = (dowrite ? TWE_CCB_DATA_OUT : TWE_CCB_DATA_IN);
 	if ((rv = twe_ccb_alloc(twe, &ccb, flags)) != 0)
@@ -183,35 +183,35 @@ lsu_twe_dobio(struct lsu_twe_softc *sc, int unit, void *data, int datasize,
 }
 
 static int
-lsu_twe_start(struct lsu_softc *lsu, struct buf *bp)
+ld_twe_start(struct ld_softc *ld, struct buf *bp)
 {
 	struct twe_context tx;
-	struct lsu_twe_softc *sc;
+	struct ld_twe_softc *sc;
 	struct twe_softc *twe;
 
-	sc = (struct lsu_twe_softc *)lsu;
-	twe = (struct twe_softc *)lsu->sc_dv.dv_parent;
+	sc = (struct ld_twe_softc *)ld;
+	twe = (struct twe_softc *)ld->sc_dv.dv_parent;
 
-	tx.tx_handler = lsu_twe_handler;
+	tx.tx_handler = ld_twe_handler;
 	tx.tx_context = bp;
-	tx.tx_dv = &lsu->sc_dv;
+	tx.tx_dv = &ld->sc_dv;
 
-	return (lsu_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
+	return (ld_twe_dobio(sc, sc->sc_hwunit, bp->b_data, bp->b_bcount,
 	    bp->b_rawblkno, (bp->b_flags & B_READ) == 0, &tx));
 }
 
 static void
-lsu_twe_handler(struct twe_ccb *ccb, int error)
+ld_twe_handler(struct twe_ccb *ccb, int error)
 {
 	struct buf *bp;
 	struct twe_context *tx;
-	struct lsu_twe_softc *sc;
+	struct ld_twe_softc *sc;
 	struct twe_softc *twe;
 
 	tx = &ccb->ccb_tx;
 	bp = tx->tx_context;
-	sc = (struct lsu_twe_softc *)tx->tx_dv;
-	twe = (struct twe_softc *)sc->sc_lsu.sc_dv.dv_parent;
+	sc = (struct ld_twe_softc *)tx->tx_dv;
+	twe = (struct twe_softc *)sc->sc_ld.sc_dv.dv_parent;
 
 	twe_ccb_unmap(twe, ccb);
 	twe_ccb_free(twe, ccb);
@@ -223,16 +223,16 @@ lsu_twe_handler(struct twe_ccb *ccb, int error)
 	} else
 		bp->b_resid = 0;
 
-	lsudone(&sc->sc_lsu, bp);
+	lddone(&sc->sc_ld, bp);
 }
 
 static int
-lsu_twe_dump(struct lsu_softc *lsu, void *data, int blkno, int blkcnt)
+ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 {
-	struct lsu_twe_softc *sc;
+	struct ld_twe_softc *sc;
 
-	sc = (struct lsu_twe_softc *)lsu;
+	sc = (struct ld_twe_softc *)ld;
 
-	return (lsu_twe_dobio(sc, sc->sc_hwunit, data, blkcnt * lsu->sc_secsize,
+	return (ld_twe_dobio(sc, sc->sc_hwunit, data, blkcnt * ld->sc_secsize,
 	    blkno, 1, NULL));
 }

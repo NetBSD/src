@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec.c,v 1.10.6.1 2000/11/22 16:02:52 bouyer Exp $ */
+/* $NetBSD: osf1_exec.c,v 1.10.6.2 2000/12/08 09:08:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -46,8 +46,9 @@
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscall.h>
-#include <compat/osf1/osf1_util.h>
+#include <compat/common/compat_util.h>
 #include <compat/osf1/osf1_cvt.h>
+#include <compat/osf1/osf1_exec.h>
 
 struct osf1_exec_emul_arg {
 	int	flags;
@@ -57,9 +58,6 @@ struct osf1_exec_emul_arg {
 	char	loader_name[MAXPATHLEN+1];
 };
 
-static void *osf1_copyargs(struct exec_package *pack,
-    struct ps_strings *arginfo, void *stack, void *argp);
-
 static int osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp);
 
 extern struct sysent osf1_sysent[];
@@ -68,6 +66,7 @@ extern char osf1_sigcode[], osf1_esigcode[];
 
 const struct emul emul_osf1 = {
 	"osf1",
+	"/emul/osf1",
 	(int *)osf1_errno_rxlist,
 	sendsig,
 	OSF1_SYS_syscall,
@@ -76,6 +75,10 @@ const struct emul emul_osf1 = {
 	osf1_syscallnames,
 	osf1_sigcode,
 	osf1_esigcode,
+	NULL,
+	NULL,
+	NULL,
+	EMUL_GETPID_PASS_PPID|EMUL_GETID_PASS_EID,
 };
 
 int
@@ -138,7 +141,7 @@ osf1_exec_ecoff_probe(struct proc *p, struct exec_package *epp)
  * copy arguments onto the stack in the normal way, then copy out
  * any ELF-like AUX entries used by the dynamic loading scheme.
  */
-static void *
+void *
 osf1_copyargs(pack, arginfo, stack, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
@@ -147,7 +150,7 @@ osf1_copyargs(pack, arginfo, stack, argp)
 {
 	struct proc *p = curproc;			/* XXX !!! */
 	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
-	struct osf1_auxv ai[MAX_AUX_ENTRIES], *a;
+	struct osf1_auxv ai[OSF1_MAX_AUX_ENTRIES], *a;
 	char *prognameloc, *loadernameloc;
 	size_t len;
 
@@ -222,7 +225,7 @@ osf1_exec_ecoff_dynamic(struct proc *p, struct exec_package *epp)
 	/*
 	 * locate the loader
 	 */
-	error = emul_find(p, NULL, osf1_emul_path,
+	error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
 	    OSF1_LDR_EXEC_DEFAULT_LOADER, &pathbuf, 0);
 	/* includes /emul/osf1 if appropriate */
 	strncpy(emul_arg->loader_name, pathbuf, MAXPATHLEN + 1);
