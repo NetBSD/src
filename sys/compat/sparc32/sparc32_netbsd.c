@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc32_netbsd.c,v 1.4 1998/08/30 15:32:20 eeh Exp $	*/
+/*	$NetBSD: sparc32_netbsd.c,v 1.5 1998/09/11 00:01:57 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -567,6 +567,7 @@ compat_sparc32_wait4(p, v, retval)
 	struct sys_wait4_args ua;
 	struct rusage ru;
 	struct sparc32_rusage *ru32p;
+	struct sparc32_rusage ru32;
 	int error;
 
 	SPARC32TO64_UAP(pid);
@@ -574,15 +575,19 @@ compat_sparc32_wait4(p, v, retval)
 	SPARC32TO64_UAP(options);
 	ru32p = (struct sparc32_rusage *)(u_long)SCARG(uap, rusage);
 	if (ru32p) {
+		if (copyin(ru32p, &ru32, sizeof(ru32)))
+			return (EFAULT);
 		SCARG(&ua, rusage) = &ru;
-		sparc32_to_rusage(ru32p, &ru);
+		sparc32_to_rusage(&ru32, &ru);
 	} else
 		SCARG(&ua, rusage) = NULL;
 
 	error = sys_wait4(p, &ua, retval);
-	if (ru32p)
-		sparc32_from_rusage(&ru, ru32p);
-
+	if (ru32p) {
+		sparc32_from_rusage(&ru, &ru32);
+		if (copyout(&ru32, ru32p, sizeof(ru32)))
+			error = EFAULT;
+	}
 	return (error);
 }
 
@@ -736,8 +741,12 @@ compat_sparc32_getfsstat(p, v, retval)
 	if (error)
 		return (error);
 
-	if (sb32p)
-		sparc32_from_statfs(&sb, sb32p);
+	if (sb32p) {
+		struct sparc32_statfs sb32;
+		sparc32_from_statfs(&sb, &sb32);
+		if (copyout(&sb32, sb32p, sizeof(sb32)))
+			return EFAULT;
+	}
 	return (0);
 }
 
@@ -814,7 +823,7 @@ compat_sparc32_recvmsg(p, v, retval)
 	struct sys_recvmsg_args ua;
 	struct msghdr mh;
 	struct msghdr *mhp = &mh;
-	struct sparc32_msghdr *mhp32;
+	struct sparc32_msghdr *mhp32, mh32;
 	ssize_t rt;
 	int error;
 
@@ -823,10 +832,12 @@ compat_sparc32_recvmsg(p, v, retval)
 
 	SCARG(&ua, msg) = mhp;
 	mhp32 = (struct sparc32_msghdr *)(u_long)SCARG(uap, msg);
+	if (copyin(mhp32, &mh32, sizeof(mh32))) 
+		return EFAULT;
 	/* sparc32_msghdr needs the iov pre-allocated */
 	MALLOC(mhp->msg_iov, struct iovec *,
-	    sizeof(struct iovec) * mhp32->msg_iovlen, M_TEMP, M_WAITOK);
-	sparc32_to_msghdr(mhp32, mhp);
+	    sizeof(struct iovec) * mh32.msg_iovlen, M_TEMP, M_WAITOK);
+	sparc32_to_msghdr(&mh32, mhp);
 
 	error = sys_recvmsg(p, &ua, (register_t *)&rt);
 	FREE(mhp->msg_iov, M_TEMP);
@@ -848,7 +859,7 @@ compat_sparc32_sendmsg(p, v, retval)
 	struct sys_sendmsg_args ua;
 	struct msghdr mh;
 	struct msghdr *mhp = &mh;
-	struct sparc32_msghdr *mhp32;
+	struct sparc32_msghdr *mhp32, mh32;
 	ssize_t rt;
 	int error;
 
@@ -857,9 +868,11 @@ compat_sparc32_sendmsg(p, v, retval)
 
 	SCARG(&ua, msg) = mhp;
 	mhp32 = (struct sparc32_msghdr *)(u_long)SCARG(uap, msg);
+	if (copyin(mhp32, &mh32, sizeof(mh32))) 
+		return EFAULT;
 	/* sparc32_msghdr needs the iov pre-allocated */
 	MALLOC(mhp->msg_iov, struct iovec *,
-	    sizeof(struct iovec) * mhp32->msg_iovlen, M_TEMP, M_WAITOK);
+	    sizeof(struct iovec) * mh32.msg_iovlen, M_TEMP, M_WAITOK);
 	sparc32_to_msghdr(mhp32, mhp);
 
 	error = sys_sendmsg(p, &ua, (register_t *)&rt);
@@ -1118,7 +1131,7 @@ compat_sparc32_sigaction(p, v, retval)
 	} */ *uap = v;
 	struct sys_sigaction_args ua;
 	struct sigaction nsa, osa;
-	struct sparc32_sigaction *sa32p;
+	struct sparc32_sigaction *sa32p, sa32;
 	int error;
 
 	SPARC32TO64_UAP(signum);
@@ -1129,9 +1142,11 @@ compat_sparc32_sigaction(p, v, retval)
 	if (SCARG(uap, nsa)) {
 		SCARG(&ua, nsa) = &nsa;
 		sa32p = (struct sparc32_sigaction *)(u_long)SCARG(uap, nsa);
-		nsa.sa_handler = (void *)(u_long)sa32p->sa_handler;
-		nsa.sa_mask = sa32p->sa_mask;
-		nsa.sa_flags = sa32p->sa_flags;
+		if (copyin(sa32p, &sa32, sizeof(sa32)))
+			return EFAULT;
+		nsa.sa_handler = (void *)(u_long)sa32.sa_handler;
+		nsa.sa_mask = sa32.sa_mask;
+		nsa.sa_flags = sa32.sa_flags;
 	} else
 		SCARG(&ua, nsa) = NULL;
 	SCARG(&ua, nsa) = &osa;
@@ -1140,10 +1155,12 @@ compat_sparc32_sigaction(p, v, retval)
 		return (error);
 
 	if (SCARG(uap, osa)) {
+		sa32.sa_handler = (sparc32_sigactionp_t)(u_long)osa.sa_handler;
+		sa32.sa_mask = osa.sa_mask;
+		sa32.sa_flags = osa.sa_flags;
 		sa32p = (struct sparc32_sigaction *)(u_long)SCARG(uap, osa);
-		sa32p->sa_handler = (sparc32_sigactionp_t)(u_long)osa.sa_handler;
-		sa32p->sa_mask = osa.sa_mask;
-		sa32p->sa_flags = osa.sa_flags;
+		if (copyout(&sa32, sa32p, sizeof(sa32)))
+			return EFAULT;
 	}
 
 	return (0);
@@ -1415,14 +1432,16 @@ compat_sparc32_setitimer(p, v, retval)
 	} */ *uap = v;
 	struct sys_setitimer_args ua;
 	struct itimerval iit, oit;
-	struct sparc32_itimerval *s32itp;
+	struct sparc32_itimerval *s32itp, s32it;
 	int error;
 
 	SPARC32TO64_UAP(which);
 	s32itp = (struct sparc32_itimerval *)(u_long)SCARG(uap, itv);
-	if (s32itp == NULL) {
+	if (s32itp) {
+		if (copyin(s32itp, &s32it, sizeof(s32it)))
+			return EFAULT;
 		SCARG(&ua, itv) = &iit;
-		sparc32_to_itimerval(s32itp, &iit);
+		sparc32_to_itimerval(&s32it, &iit);
 	} else
 		SCARG(&ua, itv) = NULL;
 	s32itp = (struct sparc32_itimerval *)(u_long)SCARG(uap, oitv);
@@ -1435,8 +1454,11 @@ compat_sparc32_setitimer(p, v, retval)
 	if (error)
 		return (error);
 
-	if (s32itp)
-		sparc32_from_itimerval(&oit, s32itp);
+	if (s32itp) {
+		sparc32_from_itimerval(&oit, &s32it);
+		if (copyout(&s32it, s32itp, sizeof(s32it)))
+			return EFAULT;
+	}
 	return (0);
 }
 
@@ -1452,7 +1474,7 @@ compat_sparc32_getitimer(p, v, retval)
 	} */ *uap = v;
 	struct sys_getitimer_args ua;
 	struct itimerval it;
-	struct sparc32_itimerval *s32itp;
+	struct sparc32_itimerval *s32itp, s32it;
 	int error;
 
 	SPARC32TO64_UAP(which);
@@ -1466,8 +1488,11 @@ compat_sparc32_getitimer(p, v, retval)
 	if (error)
 		return (error);
 
-	if (s32itp)
-		sparc32_from_itimerval(&it, s32itp);
+	if (s32itp) {
+		sparc32_from_itimerval(&it, &s32it);
+		if (copyout(&s32it, s32itp, sizeof(s32it)))
+			return EFAULT;
+	}
 	return (0);
 }
 
@@ -1505,7 +1530,7 @@ compat_sparc32_select(p, v, retval)
 	} */ *uap = v;
 	struct sys_select_args ua;
 	struct timeval tv;
-	struct sparc32_timeval *tv32p;
+	struct sparc32_timeval *tv32p, tv32;
 	int error;
 
 	SPARC32TO64_UAP(nd);
@@ -1513,13 +1538,19 @@ compat_sparc32_select(p, v, retval)
 	SPARC32TOP_UAP(ou, fd_set);
 	SPARC32TOP_UAP(ex, fd_set);
 	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tv);
-	if (tv32p)
-		sparc32_to_timeval(tv32p, &tv);
+	if (tv32p) {
+		if (copyin(tv32p &tv32, sizeof(tv32)))
+			return EFAULT;
+		sparc32_to_timeval(&tv32, &tv);
+	}
 	SCARG(&ua, tv) = &tv;
 
 	error = sys_select(p, &ua, retval);
-	if (tv32p)
-		sparc32_from_timeval(&tv, tv32p);
+	if (tv32p) {
+		sparc32_from_timeval(&tv, &tv32);
+		if (copyout(&tv32 tv32p, sizeof(tv32)))
+			return EFAULT;
+	}
 
 	return (error);
 }
@@ -1706,12 +1737,14 @@ compat_sparc32_gettimeofday(p, v, retval)
 	} */ *uap = v;
 	struct sys_gettimeofday_args ua;
 	struct timeval tv;
-	struct sparc32_timeval *tv32p;
+	struct sparc32_timeval *tv32p, tv32;
 	int error;
 
 	tv32p = (struct sparc32_timeval *)(u_long)SCARG(uap, tp);
 	if (tv32p) {
 		SCARG(&ua, tp) = &tv;
+		if (copyin(tv32p, &tv32, sizeof(tv32)))
+			return EINVAL;
 		sparc32_to_timeval(tv32p, &tv);
 	} else
 		SCARG(&ua, tp) = NULL;
@@ -2214,8 +2247,8 @@ compat_sparc32_ntp_gettime(p, v, retval)
 
 	if (ntv32p) {
 		sparc32_from_timeval(&ntv, ntv32p);
-		ntv32p->maxerror = (sparc32_long)ntv.maxerror;
-		ntv32p->esterror = (sparc32_long)ntv.esterror;
+		ntv32.maxerror = (sparc32_long)ntv.maxerror;
+		ntv32.esterror = (sparc32_long)ntv.esterror;
 	}
 	return (0);
 }
@@ -2601,13 +2634,13 @@ compat_sparc32___semctl(p, v, retval)
 		SCARG(&ua, arg)->buf = dsp;
 		switch (SCARG(uap, cmd)) {
 		case IPC_SET:
-			sparc32_to_semid_ds(sem32p->buf, &ds);
+			sparc32_to_semid_ds(sem32.buf, &ds);
 			break;
 		case SETVAL:
-			SCARG(&ua, arg)->val = sem32p->val;
+			SCARG(&ua, arg)->val = sem32.val;
 			break;
 		case SETALL:
-			SCARG(&ua, arg)->array = (u_short *)(u_long)sem32p->array;
+			SCARG(&ua, arg)->array = (u_short *)(u_long)sem32.array;
 			break;
 		}
 	} else
@@ -2620,7 +2653,7 @@ compat_sparc32___semctl(p, v, retval)
 	if (sem32p) {
 		switch (SCARG(uap, cmd)) {
 		case IPC_STAT:
-			sparc32_from_semid_ds(&ds, sem32p->buf);
+			sparc32_from_semid_ds(&ds, sem32.buf);
 			break;
 		}
 	}
