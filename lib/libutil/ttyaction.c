@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.15 2000/12/19 23:09:02 cgd Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.16 2004/03/29 11:52:39 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ttyaction.c,v 1.15 2000/12/19 23:09:02 cgd Exp $");
+__RCSID("$NetBSD: ttyaction.c,v 1.16 2004/03/29 11:52:39 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -81,7 +81,8 @@ ttyaction(const char *tty, const char *act, const char *user)
 	char env_tty[64];
 	char env_act[64];
 	char env_user[256];
-	int error, linenum, pid, status;
+	int error, linenum, status;
+	pid_t pid;
 
 	_DIAGASSERT(tty != NULL);
 	_DIAGASSERT(act != NULL);
