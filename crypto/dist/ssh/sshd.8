@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.32 2003/04/03 06:21:36 itojun Exp $
+.\"	$NetBSD: sshd.8,v 1.33 2003/06/30 11:52:01 wiz Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -432,11 +432,11 @@ of the remote host must be present in the comma-separated list of
 patterns
 .Pf ( Ql *
 and
-.Ql ?
+.Ql \&?
 serve as wildcards).
 The list may also contain
 patterns negated by prefixing them with
-.Ql ! ;
+.Ql \&! ;
 if the canonical host name matches a negated pattern, the key is not accepted.
 The purpose
 of this option is to optionally increase security: public key authentication
@@ -530,7 +530,7 @@ wildcards); each pattern in turn is matched against the canonical host
 name (when authenticating a client) or against the user-supplied
 name (when authenticating a server).
 A pattern may also be preceded by
-.Ql !
+.Ql \&!
 to indicate negation: if the host name matches a negated
 pattern, it is not accepted (by that line) even if it matched another
 pattern on the line.
