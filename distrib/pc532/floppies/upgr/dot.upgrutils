@@ -1,3 +1,4 @@
+# $NetBSD: dot.upgrutils,v 1.4 2000/06/14 06:48:55 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -26,8 +27,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
-#	$NetBSD: dot.upgrutils,v 1.3 1998/01/06 04:45:33 perry Exp $
 
 # Upgrade cleanup utilites (functions), to make sure a recently-upgraded
 # system is safely runnable.  These are meant to be invoked from the shell

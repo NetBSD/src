@@ -1,3 +1,5 @@
+/* $NetBSD: pdb.c,v 1.7 2000/06/14 06:49:26 cgd Exp $ */
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -30,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pdb.c,v 1.6 1998/08/27 20:31:01 ross Exp $");
+__RCSID("$NetBSD: pdb.c,v 1.7 2000/06/14 06:49:26 cgd Exp $");
 #endif
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint_brk.c,v 1.2 1999/03/10 09:52:54 kleink Exp $	*/
+/* $NetBSD: Lint_brk.c,v 1.3 2000/06/14 06:49:10 cgd Exp $ */
 
 /*
  * This file placed in the public domain.

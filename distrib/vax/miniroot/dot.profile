@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 2000/05/18 02:12:43 matt Exp $
+# $NetBSD: dot.profile,v 1.2 2000/06/14 06:48:57 cgd Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -28,7 +28,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkcases.c,v 1.1 1995/04/24 05:53:36 cgd Exp $	*/
+/* $NetBSD: mkcases.c,v 1.2 2000/06/14 06:49:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou

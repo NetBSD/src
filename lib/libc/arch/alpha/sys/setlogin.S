@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.1 1995/02/10 17:50:39 cgd Exp $	*/
+/* $NetBSD: setlogin.S,v 1.2 2000/06/14 06:49:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.5 1999/01/14 22:48:19 kleink Exp $	*/
+/* $NetBSD: sbrk.S,v 1.6 2000/06/14 06:49:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

@@ -1,3 +1,5 @@
+/* $NetBSD: main.c,v 1.9 2000/06/14 06:49:26 cgd Exp $ */
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -33,7 +35,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.8 1997/10/19 09:56:10 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 2000/06/14 06:49:26 cgd Exp $");
 #endif
 
 /*

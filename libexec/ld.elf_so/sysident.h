@@ -1,4 +1,4 @@
-/*	$NetBSD: sysident.h,v 1.3 1998/09/13 05:53:34 thorpej Exp $	*/
+/* $NetBSD: sysident.h,v 1.4 2000/06/14 06:49:12 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsuspend.S,v 1.4 1998/12/02 01:01:03 thorpej Exp $	*/
+/* $NetBSD: sigsuspend.S,v 1.5 2000/06/14 06:49:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

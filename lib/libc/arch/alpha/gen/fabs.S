@@ -1,4 +1,4 @@
-/*	$NetBSD: fabs.S,v 1.2 1996/10/17 03:08:05 cgd Exp $	*/
+/* $NetBSD: fabs.S,v 1.3 2000/06/14 06:49:02 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.

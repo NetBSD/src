@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 2000/06/12 18:51:17 he Exp $
+# $NetBSD: dot.profile,v 1.2 2000/06/14 06:48:52 cgd Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # Copyright (c) 1997 Perry E. Metzger
@@ -28,7 +28,6 @@
 # THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-#
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH

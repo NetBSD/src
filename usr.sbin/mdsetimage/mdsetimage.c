@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.8 1999/09/12 16:08:14 itojun Exp $	*/
+/* $NetBSD: mdsetimage.c,v 1.9 2000/06/14 06:49:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.8 1999/09/12 16:08:14 itojun Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.9 2000/06/14 06:49:26 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

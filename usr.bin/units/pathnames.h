@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1996/04/06 06:01:00 thorpej Exp $	*/
+/* $NetBSD: pathnames.h,v 1.4 2000/06/14 06:49:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou

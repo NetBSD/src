@@ -1,4 +1,4 @@
-/*	$NetBSD: doexec.c,v 1.4 1999/02/18 10:37:26 is Exp $	*/
+/* $NetBSD: doexec.c,v 1.5 2000/06/14 06:49:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou

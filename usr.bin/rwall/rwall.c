@@ -1,4 +1,4 @@
-/*	$NetBSD: rwall.c,v 1.10 1998/12/19 21:50:45 christos Exp $	*/
+/* $NetBSD: rwall.c,v 1.11 2000/06/14 06:49:22 cgd Exp $ */
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988 Regents of the University of California.\n\
 #if 0
 static char sccsid[] = "from: @(#)wall.c	5.14 (Berkeley) 3/2/91";
 #else
-__RCSID("$NetBSD: rwall.c,v 1.10 1998/12/19 21:50:45 christos Exp $");
+__RCSID("$NetBSD: rwall.c,v 1.11 2000/06/14 06:49:22 cgd Exp $");
 #endif
 #endif /* not lint */
 

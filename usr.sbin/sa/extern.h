@@ -1,3 +1,5 @@
+/* $NetBSD: extern.h,v 1.4 2000/06/14 06:49:26 cgd Exp $ */
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -26,8 +28,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$NetBSD: extern.h,v 1.3 1997/10/18 04:38:08 lukem Exp $
  */
 
 #include <sys/types.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf64.c,v 1.2 1997/10/17 10:28:35 lukem Exp $	*/
+/* $NetBSD: exec_elf64.c,v 1.3 2000/06/14 06:49:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __IDSTRING(e64rcsid,
-    "$NetBSD: exec_elf64.c,v 1.2 1997/10/17 10:28:35 lukem Exp $");
+    "$NetBSD: exec_elf64.c,v 1.3 2000/06/14 06:49:26 cgd Exp $");
 #endif /* not lint */
 
 #define	ELFSIZE		64

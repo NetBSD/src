@@ -1,4 +1,4 @@
-/*	$NetBSD: Lint___sigreturn14.c,v 1.1 1998/09/26 23:58:14 christos Exp $	*/
+/* $NetBSD: Lint___sigreturn14.c,v 1.2 2000/06/14 06:49:10 cgd Exp $ */
 
 /*
  * This file placed in the public domain.

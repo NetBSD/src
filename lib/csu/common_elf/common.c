@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.7 2000/04/02 15:35:47 minoura Exp $	*/
+/* $NetBSD: common.c,v 1.8 2000/06/14 06:48:59 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou

@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.10 1999/12/30 15:34:47 eeh Exp $	*/
+/* $NetBSD: crt0.c,v 1.11 2000/06/14 06:49:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -110,7 +110,7 @@ ___start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.10 1999/12/30 15:34:47 eeh Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.11 2000/06/14 06:49:00 cgd Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX

@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_private.h,v 1.8 2000/05/09 21:55:52 bjh21 Exp $	*/
+/* $NetBSD: nlist_private.h,v 1.9 2000/06/14 06:49:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.

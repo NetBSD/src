@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.19 1999/11/04 02:00:17 erh Exp $	*/
+/* $NetBSD: nlist_elf32.c,v 1.20 2000/06/14 06:49:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
