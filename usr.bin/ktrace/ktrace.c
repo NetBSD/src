@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.23 2001/05/04 07:09:55 simonb Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.24 2001/09/02 23:18:01 assar Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.23 2001/05/04 07:09:55 simonb Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.24 2001/09/02 23:18:01 assar Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,8 +86,9 @@ main(argc, argv)
 {
 	enum { NOTSET, CLEAR, CLEARALL } clear;
 	int append, ch, fd, inherit, ops, pid, pidset, synclog, trpoints;
-	const char *infile, *outfile;
+	const char *outfile;
 #ifdef KTRUSS
+	const char *infile;
 	const char *emul_name = "netbsd";
 #endif
 
@@ -101,7 +102,7 @@ main(argc, argv)
 	outfile = infile = NULL;
 #else
 # define OPTIONS "aCcdf:g:ip:st:"
-	outfile = infile = DEF_TRACEFILE;
+	outfile = DEF_TRACEFILE;
 #endif
 
 	while ((ch = getopt(argc,argv, OPTIONS)) != -1)
@@ -129,7 +130,7 @@ main(argc, argv)
 			break;
 #else
 		case 'f':
-			infile = outfile = optarg;
+			outfile = optarg;
 			break;
 #endif
 		case 'g':
@@ -181,8 +182,12 @@ main(argc, argv)
 	argv += optind;
 	argc -= optind;
 
-	if (!infile && ((pidset && *argv) || (!pidset && !*argv)))
+	if ((pidset && *argv) || (!pidset && !*argv)) {
+#ifdef KTRUSS
+	    if(!infile)
+#endif
 		usage();
+	}
 
 #ifdef KTRUSS
 	if (infile) {
