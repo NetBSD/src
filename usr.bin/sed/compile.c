@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.17 1997/10/19 23:05:11 lukem Exp $	*/
+/*	$NetBSD: compile.c,v 1.18 1998/12/08 14:08:50 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.17 1997/10/19 23:05:11 lukem Exp $");
+__RCSID("$NetBSD: compile.c,v 1.18 1998/12/08 14:08:50 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,8 @@ compile()
 	*compile_stream(&prog) = NULL;
 	fixuplabel(prog, NULL);
 	uselabel();
-	appends = xmalloc(sizeof(struct s_appends) * appendnum);
+	if (appendnum > 0)
+		appends = xmalloc(sizeof(struct s_appends) * appendnum);
 	match = xmalloc((maxnsub + 1) * sizeof(regmatch_t));
 }
 
