@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.2 1996/11/30 01:53:51 jtk Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.3 1997/06/16 02:10:45 jtk Exp $	*/
 /*-
  * Copyright (c) 1996 John T. Kohl.  All rights reserved.
  *
@@ -222,6 +222,9 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+	if (optind < argc)
+		usage();
+
 	fd = open(filename, O_RDWR);
 	if (fd == -1)
 		err(1, "cannot open %s", filename);
