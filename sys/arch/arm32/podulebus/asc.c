@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.4 1996/03/27 21:51:22 mark Exp $ */
+/* $NetBSD: asc.c,v 1.5 1996/04/19 20:13:56 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -410,17 +410,15 @@ asc_dmanext(dev)
 #endif
 }
 
-#ifdef DEBUG
 void
 asc_dump()
 {
 	int i;
 
-	for (i = 0; i < ahsccd.cd_ndevs; ++i)
-		if (ahsccd.cd_devs[i])
-			sbic_dump(ahsccd.cd_devs[i]);
+	for (i = 0; i < asc_cd.cd_ndevs; ++i)
+		if (asc_cd.cd_devs[i])
+			sbic_dump(asc_cd.cd_devs[i]);
 }
-#endif
 
 int
 asc_scsicmd(xs)
