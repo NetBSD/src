@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.193 2004/08/08 08:42:03 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.194 2004/09/17 23:26:42 enami Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -209,7 +209,7 @@ struct proc {
 	u_quad_t 	p_iticks;	/* Statclock hits processing intr */
 
 	int		p_traceflag;	/* Kernel trace points */
-	struct file	*p_tracep;	/* Trace to file */
+	void		*p_tracep;	/* Trace private data */
 	void		*p_systrace;	/* Back pointer to systrace */
 
 	struct vnode 	*p_textvp;	/* Vnode of executable */
