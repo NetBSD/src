@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.12 2003/06/10 17:19:04 dsl Exp $	*/
+/*	$NetBSD: parse.y,v 1.13 2003/11/30 09:22:25 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -57,7 +57,7 @@ static optn_info *cur_optn;
 
 %token <i_value> X Y W H NO BOX SUB HELP MENU NEXT EXIT ACTION ENDWIN OPTION 
 %token <i_value> TITLE DEFAULT DISPLAY ERROR EXITSTRING ALLOW DYNAMIC MENUS
-		 SCROLLABLE SHORTCUT MESSAGES
+		 SCROLLABLE SHORTCUT CLEAR MESSAGES
 %token <s_value> STRING NAME CODE INT_CONST CHAR_CONST
 
 %type <s_value> init_code system helpstr text
@@ -142,6 +142,8 @@ opt	  : NO EXIT		{ cur_menu->info->mopt |= NOEXITOPT; }
 	  | SCROLLABLE		{ cur_menu->info->mopt |= SCROLL; }
 	  | NO SHORTCUT 	{ cur_menu->info->mopt |= NOSHORTCUT; }
 	  | SHORTCUT 		{ cur_menu->info->mopt &= ~NOSHORTCUT; }
+	  | NO CLEAR 		{ cur_menu->info->mopt |= NOCLEAR; }
+	  | CLEAR 		{ cur_menu->info->mopt &= ~NOCLEAR; }
 	  | X "=" INT_CONST	{ cur_menu->info->x = atoi($3); }
 	  | Y "=" INT_CONST	{ cur_menu->info->y = atoi($3); }
 	  | W "=" INT_CONST	{ cur_menu->info->w = atoi($3); }
