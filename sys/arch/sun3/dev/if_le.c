@@ -172,7 +172,6 @@ void leattach(parent, self, args)
 
 	ifp->if_unit = unit;
 	ifp->if_name = "le";
-	ifp->if_mtu = ETHERMTU;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
@@ -181,6 +180,7 @@ void leattach(parent, self, args)
 	bpfattach(&le->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 	if_attach(ifp);
+	ether_ifattach(ifp);
 }
 
 ledrinit(ler2)
