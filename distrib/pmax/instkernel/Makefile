@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/06/01 06:54:57 matt Exp $
+#	$NetBSD: Makefile,v 1.17.2.1 2000/11/13 20:32:06 tv Exp $
 
 .include "../../../Makefile.inc"
 .include <bsd.kernobj.mk>
@@ -10,7 +10,8 @@ KERNBINDIR=	/binary/kernel
 IMAGE=		diskimage
 IMAGESIZE=	4096 # 512 byte blocks, update disktab.diskimage if changed
 DISKTAB=	${.CURDIR}/disktab.diskimage
-DISKTYPE=	miniroot
+DISKTYPE=	"install diskimag"
+LABELPROTO=	${.CURDIR}/diskimage.label.proto
 NEWFSOPTS?=	-c 32 -B le -i 32768	# don't need many inodes!
 
 KERN=		${KERNOBJDIR}/RAMDISK/netbsd
@@ -42,7 +43,7 @@ netbsd.gz: ${KERN} ${RAMDISK}
 ${IMAGE}.gz: netbsd.gz ${DESTDIR}/usr/mdec/boot.pmax
 	dd if=/dev/zero of=${IMAGE} count=${IMAGESIZE}
 	vnconfig ${DISKTYPEARG} -v -c ${VND} ${IMAGE} ${VND_GEOM}
-	disklabel -rw -f ${DISKTAB} ${VND} ${DISKTYPE}
+	disklabel -R -r ${VND}  ${LABELPROTO}
 	newfs -B le -m 0 -o space ${NEWFSOPTS} ${VND_RDEV}
 	${DESTDIR}/usr/mdec/installboot ${VND_RDEV} \
 	    ${DESTDIR}/usr/mdec/bootxx_ffs
