@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.38 1998/06/05 22:17:02 ragge Exp $
+#       $NetBSD: files.vax,v 1.39 1998/07/02 07:55:29 jonathan Exp $
 #
 # new style config file for vax architecture
 #
@@ -98,11 +98,11 @@ file	arch/vax/uba/ts.c		ts needs-count
 # DHU-11 at UBA
 device	dhu: tty
 attach	dhu at uba
-file	arch/vax/uba/dhu.c		dhu needs-count
+file	arch/vax/uba/dhu.c		dhu needs-flag
 
 # DZ11(-compatible) at UBA/vsbus
 device	dz { }: tty
-file	arch/vax/uba/dz.c		dz needs-count
+file	arch/vax/uba/dz.c		dz needs-flag
 
 attach	dz at uba with dz_uba
 file	arch/vax/uba/dz_uba.c		dz_uba
@@ -167,102 +167,102 @@ file	arch/vax/uba/dl.c		dl needs-flag
 # Ikonas framebuffer
 device	ik
 attach	ik at uba
-file	arch/vax/uba/ik.c		ik needs-count
+file	arch/vax/uba/ik.c		ik needs-flag
 
 device	vs
 attach	vs at uba
-file	arch/vax/uba/vs.c		vs needs-count
+file	arch/vax/uba/vs.c		vs needs-flag
 
 # RK06/07 on UBA
 device	rk: disk
 attach	rk at uba
-file	arch/vax/uba/rk.c		rk needs-count
+file	arch/vax/uba/rk.c		rk needs-flag
 
 # TM11/TE10 at UBA
 device	te: tape
 attach	te at uba
-file	arch/vax/uba/tm.c		te needs-count
+file	arch/vax/uba/tm.c		te needs-flag
 
 # TU78 at MBA
 device	mu: tape
 attach	mu at mba
-file	arch/vax/mba/mt.c		mu needs-count
+file	arch/vax/mba/mt.c		mu needs-flag
 
 # DMF32 on UBA
 device	dmf # XXX?
 attach	dmf at uba
-file	arch/vax/uba/dmf.c		dmf needs-count
-file	arch/vax/uba/dmz.c		dmf needs-count
+file	arch/vax/uba/dmf.c		dmf needs-flag
+file	arch/vax/uba/dmz.c		dmf needs-flag
 
 # DMZ32 on UBA
 device	dmz # XXX?
 attach	dmz at uba
-file	arch/vax/uba/dmx.c		dmz needs-count
+file	arch/vax/uba/dmx.c		dmz needs-flag
 
 # DN-11 on UBA
 device	dn # XXX?
 attach	dn at uba
-file	arch/vax/uba/dn.c		dn needs-count
+file	arch/vax/uba/dn.c		dn needs-flag
 
 # IDC (RB730) on UBA (VAX 11/730)
 device	idc { drive=-1 }
 attach	idc at uba
 device	rb: disk
 attach	rb at idc
-file	arch/vax/uba/idc.c		rb needs-count
+file	arch/vax/uba/idc.c		rb needs-flag
 
 # LP-11 at UBA
 device	lp
 attach	lp at uba
-file	arch/vax/uba/lp.c		lp needs-count
+file	arch/vax/uba/lp.c		lp needs-flag
 
 # ???? at UBA
 device	lpa
 attach	lpa at uba
-file	arch/vax/uba/lpa.c		lpa needs-count
+file	arch/vax/uba/lpa.c		lpa needs-flag
 
 # PS2 at UBA
 device	ps
 attach	ps at uba
-file	arch/vax/uba/ps.c		ps needs-count
+file	arch/vax/uba/ps.c		ps needs-flag
 
 # RL02/RL11 at UBA
 device	hl { drive=-1 }
 attach	hl at uba
 device	rl: disk
 attach	rl at hl
-file	arch/vax/uba/rl.c		rl needs-count
+file	arch/vax/uba/rl.c		rl needs-flag
 
 # SC-21/SC-31 at UBA
 device	sc { drive=-1 }
 attach	sc at uba
 device	up: disk
 attach	up at sc
-file	arch/vax/uba/up.c		up needs-count
+file	arch/vax/uba/up.c		up needs-flag
 
 # TU45 at UBA
 device	ut { drive=-1}
 attach	ut at uba
 device	tj: tape
 attach	tj at ut
-file	arch/vax/uba/ut.c		tj needs-count
+file	arch/vax/uba/ut.c		tj needs-flag
 
 # TU58/DECtape II
 device	uu: tape
 attach	uu at uba
-file	arch/vax/uba/uu.c		uu needs-count
+file	arch/vax/uba/uu.c		uu needs-flag
 
 # Benson-Varian plotter at UBA
 device	va { drive=-1}
 attach	va at uba
 device	vz
 attach	vz at va
-file	arch/vax/uba/va.c		va needs-count
+file	arch/vax/uba/va.c		va needs-flag
 
 # Versatec plotter at UBA
 device	vp
 attach	vp at uba
-file	arch/vax/uba/vp.c		vp needs-count
+file	arch/vax/uba/vp.c		vp needs-flag
 
 # QVSS at UBA
 device	qv
@@ -272,28 +272,28 @@ file	arch/vax/uba/qv.c		qv needs-count
 # Interlan NP100 at UBA
 device	np: ifnet
 attach	np at uba
-file	arch/vax/if/if_ix.c		np needs-count
-file	arch/vax/uba/np.c		np needs-count
+file	arch/vax/if/if_ix.c		np needs-flag
+file	arch/vax/uba/np.c		np needs-flag
 
 # ACC LH/DH IMP on UBA
 device	acc: ifnet
 attach	acc at uba
-file	arch/vax/if/if_acc.c		acc needs-count
+file	arch/vax/if/if_acc.c		acc needs-flag
 
 # DR11C at UBA
 device	ct # XXX
 attach	ct at uba
-file	arch/vax/uba/ct.c		ct needs-count
+file	arch/vax/uba/ct.c		ct needs-flag
 
 # A/D-converter on UBA
 device	ad
 attach	ad at uba
-file	arch/vax/uba/ad.c		ad needs-count
+file	arch/vax/uba/ad.c		ad needs-flag
 
 # DH-11/DM-11 on UBA
 device	dh # XXX?
 attach	dh at uba
-file	arch/vax/uba/dh.c		dh needs-count
+file	arch/vax/uba/dh.c		dh needs-flag
 
 # These are general files needed for compilation.
 file	dev/cons.c
