@@ -680,3 +680,100 @@ sys/dev/pci/if_tl.c				patch
 
   Set the default media to UTP, and don't include 'none' in the media
   list, so that sysinst will be able to set media properly.  (bouyer)
+
+usr.bin/ftp/Makefile				patch
+usr.bin/ftp/cmds.c				1.33-1.44
+usr.bin/ftp/cmdtab.c				1.18-1.19
+usr.bin/ftp/complete.c				patch
+usr.bin/ftp/domacro.c				1.11-1.12
+usr.bin/ftp/extern.h				1.19-1.25
+usr.bin/ftp/fetch.c				1.18-1.36
+usr.bin/ftp/ftp.1				1.24-1.30
+usr.bin/ftp/ftp.c				1.31-1.38
+usr.bin/ftp/ftp_var.h				1.22-1.26
+usr.bin/ftp/main.c				1.28-1.34
+usr.bin/ftp/ruserpass.c				1.16-1.21
+usr.bin/ftp/util.c				patch
+usr.bin/ftp/fparseln.c				patch (new)
+usr.bin/ftp/util.h				patch (new)
+
+  Add support to set buffer-size (send+receive), re-dial if the
+  connection attempt failed and saving to a given filename if a
+  URL is given. Also, passive mode is now tried first by default.
+  Other miscellaneous bug fixes and improvements.  (feyrer)
+
+sys/netinet/ip_input.c				1.74
+
+  Once a fragmented IP packet has been reassembled, recompute the
+  packet length before passing it up the stack.  (thorpej)
+
+gnu/usr.bin/gcc/common/combine.c		1.2
+
+  Don't fold equality comparisons with constants if the operand is larger
+  than the word size.  (mycroft)
+
+gnu/usr.bin/gcc/arch/arm32/arm32.c		1.3
+gnu/usr.bin/gcc/arch/arm32/arm32.h		1.3
+gnu/usr.bin/gcc/arch/arm32/arm32.md		1.4
+
+  Works around the bug that causes:
+
+	foo.c:11: internal error--unrecognizable insn:
+	(insn 62 58 31 (set (reg:SI 0 r0)
+	        (smin:SI (reg:SI 0 r0)
+	            (reg:SI 3 r3))) -1 (nil)
+	    (nil))
+	cc: Internal compiler error: program cc1 got fatal signal 6
+
+  (mycroft)
+
+gnu/usr.bin/gcc/arch/arm32/arm32.c		1.4
+gnu/usr.bin/gcc/arch/arm32/arm32.h		1.4
+gnu/usr.bin/gcc/arch/arm32/arm32.md		1.5
+
+  Fixes the abort() that occurs when compiling dhcpd.  (mycroft)
+
+gnu/usr.bin/gcc/arch/arm32/arm32.h		1.5
+gnu/usr.bin/gcc/common/flow.c			1.3
+gnu/usr.bin/gcc/common/integrate.c		1.3
+gnu/usr.bin/gcc/common/sched.c			1.3
+
+  Redo the ARM PIC patches as they were done in GCC 2.8.  (mycroft)
+
+gnu/usr.bin/gcc/common/flow.c 1.4
+
+  Pull in some more bug fixes from GCC 2.8, dealing with spurious
+  -Wuninitialized warnings and lossage when combining alloca() and
+  -fomit-frame-pointer.  (mycroft)
+
+gnu/usr.bin/gcc/common/genoutput.c		1.2
+gnu/usr.bin/gcc/common/reload.c			1.5
+gnu/usr.bin/gcc/arch/arm32/arm32.md		1.6
+
+  Undo a bogus hack that could possibly generate bad code, and fix it
+  correctly.  (mycroft)
+
+gnu/usr.bin/gcc/arch/arm32/aout.h		1.1
+gnu/usr.bin/gcc/arch/arm32/arm32.c		1.6
+gnu/usr.bin/gcc/arch/arm32/arm32.h		1.6
+gnu/usr.bin/gcc/arch/arm32/arm32.md		1.7
+gnu/usr.bin/gcc/arch/arm32/netbsd.h		1.6
+
+  Updates from 2.8/egcs.  Mostly removes dead code.  (mycroft)
+
+gnu/usr.bin/gcc/common/combine.c		1.3
+
+  Fixes PR#5564.  (mycroft)
+
+gnu/usr.bin/gcc/common/reload.c			1.6
+
+  Removes another hack that could generate bad code in some cases.  (mycroft)
+
+gnu/usr.bin/gcc/arch/i386/i386.md		1.3
+
+  Fixes PR#5199.  (mycroft)
+
+sys/dev/ic/dp8390.c				1.14
+
+  Fixes a bug that causes the driver to corrupt its internal state and
+  experience random lossage (sometimes observed as NFS wedging).  (mycroft)
