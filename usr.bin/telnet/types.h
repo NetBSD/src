@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)types.h	8.1 (Berkeley) 6/6/93
- *	$Id: types.h,v 1.3 1994/02/25 03:00:49 cgd Exp $
+ *	$NetBSD: types.h,v 1.4 1996/02/24 01:18:52 jtk Exp $
  */
 
 typedef struct {

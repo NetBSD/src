@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)general.h	8.1 (Berkeley) 6/6/93
- *	$Id: general.h,v 1.3 1994/02/25 03:00:28 cgd Exp $
+ *	$NetBSD: general.h,v 1.4 1996/02/24 01:18:40 jtk Exp $
  */
 
 /*
