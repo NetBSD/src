@@ -1,4 +1,4 @@
-/*	$NetBSD: rbus_machdep.c,v 1.5 2003/08/29 12:36:44 nakayama Exp $	*/
+/*	$NetBSD: rbus_machdep.c,v 1.6 2004/03/21 14:15:35 pk Exp $	*/
 
 /*
  * Copyright (c) 2003 Takeshi Nakayama.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.5 2003/08/29 12:36:44 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rbus_machdep.c,v 1.6 2004/03/21 14:15:35 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,7 +137,8 @@ pccbb_attach_hook(parent, self, pa)
 	struct psycho_pbm *pp = pc->cookie;
 	pcireg_t reg;
 	int node = PCITAG_NODE(pa->pa_tag);
-	int bus, br[2];
+	int error;
+	int bus, *br;
 	int len, intr;
 
 	/*
@@ -145,7 +146,9 @@ pccbb_attach_hook(parent, self, pa)
 	 *	if OBP didn't assign a bus number to the cardbus bridge,
 	 *	then assign it here.
 	 */
-	if (OF_getprop(node, "bus-range", br, sizeof(br)) == sizeof(br)) {
+	br = 0;
+	error = prom_getprop(node, "bus-range", sizeof(br), &len, &brp);
+	if (error == 0 && len == 2) {
 		bus = br[0];
 		DPRINTF("pccbb_attach_hook: bus-range %d-%d\n", br[0], br[1]);
 		if (bus < 0 || bus >= 256)
@@ -189,18 +192,18 @@ pccbb_attach_hook(parent, self, pa)
 	 *	interrupt numbers assigned by OBP are [0x00,0x3f],
 	 *	so they map to [0x40,0x7f] due to inhibit the value 0x00.
 	 */
-	len = OF_getproplen(node, "interrupts");
-	if (len < sizeof(intr))
-		printf("pccbb_attach_hook: interrupts len %d too small\n",
-		       len);
-	else if (OF_getprop(node, "interrupts", &intr, sizeof(intr)) != len)
+	if ((intr = prom_getpropint(node, "interrupts", -1) == -1) {
 		printf("pccbb_attach_hook: could not read interrupts\n");
-	else if (OF_mapintr(node, &intr, sizeof(intr), sizeof(intr)) < 0)
-		printf("pccbb_attach_hook: OF_mapintr failed\n");
-	else {
-		pa->pa_intrline = intr | 0x40;
-		DPRINTF("pccbb_attach_hook: interrupt line %d\n", intr);
+		return;
 	}
+
+	if (OF_mapintr(node, &intr, sizeof(intr), sizeof(intr)) < 0) {
+		printf("pccbb_attach_hook: OF_mapintr failed\n");
+		return;
+	}
+
+	pa->pa_intrline = intr | 0x40;
+	DPRINTF("pccbb_attach_hook: interrupt line %d\n", intr);
 }
 
 /*
