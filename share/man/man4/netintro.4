@@ -1,4 +1,4 @@
-.\"	$NetBSD: netintro.4,v 1.11 2000/04/08 03:31:05 erh Exp $
+.\"	$NetBSD: netintro.4,v 1.12 2000/08/29 16:42:44 jhawk Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)netintro.4	8.2 (Berkeley) 11/30/93
 .\"
-.Dd November 30, 1993
+.Dd August 29, 2000
 .Dt NETINTRO 4
 .Os
 .Sh NAME
@@ -258,7 +258,9 @@ characteristics of the primary address if the default address for
 the address family is specified).
 Rather than making separate calls to set destination or broadcast
 addresses, or network masks (now an integral feature of multiple
-protocols) a separate structure is used to specify all three facets
+protocols) a separate structure,
+.Ar ifaliasreq ,
+is used to specify all three facets
 simultaneously (see below).
 One would use a slightly tailored version of this struct specific
 to each family (replacing each sockaddr by one
@@ -272,12 +274,18 @@ identifier itself to include the total size, as described in
 This requests deletes the specified address from the list
 associated with an interface.
 It also uses the
-.Ar if_aliasreq
+.Ar ifaliasreq
 structure to allow for the possibility of protocols allowing
 multiple masks or destination addresses, and also adopts the
 convention that specification of the default address means
 to delete the first address for the interface belonging to
 the address family in which the original socket was opened.
+.El
+.Pp
+Request making use of the
+.Ar ifconf
+structure:
+.Bl -tag -width SIOCGIFBRDADDR
 .It Dv SIOCGIFCONF
 Get interface configuration list.
 This request takes an
@@ -293,7 +301,7 @@ configuration list.
 .El
 .Bd -literal
 /*
-* Structure used in SIOCAIFCONF request.
+* Structure used in SIOC[AD]IFADDR request.
 */
 struct ifaliasreq {
         char    ifra_name[IFNAMSIZ];   /* if name, e.g. "en0" */
