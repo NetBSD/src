@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.4 2000/07/18 11:15:25 soda Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ pcibios_init()
 #endif
 
 #ifdef PCIBIOS_ADDR_FIXUP
-	pci_addr_fixup(NULL, 0); /* PCI bus #0 only */
+	pci_addr_fixup(NULL, pcibios_max_bus);
 #endif
 }
 
