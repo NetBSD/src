@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.19 2001/02/19 23:22:46 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2001/02/21 13:12:47 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.19 2001/02/19 23:22:46 cgd Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2001/02/21 13:12:47 hubertf Exp $");
 #endif
 
 /*
@@ -549,7 +549,7 @@ main(int argc, char *argv[])
 void 
 usage(void)
 {
-	printf("Usage: %s command args ...\n"
+	printf("usage: pkg_admin command args ...\n"
 	    "Where 'commands' and 'args' are:\n"
 	    " rebuild          - rebuild pkgdb from +CONTENTS files\n"
 	    " check [pkg ...]  - check md5 checksum of installed files\n"
@@ -557,8 +557,7 @@ usage(void)
 	    " add key value    - add key & value\n"
 	    " delete key       - delete reference to key\n"
 #endif
-	    " dump             - dump database\n"
-	    , getprogname());
+	    " dump             - dump database\n");
 	exit(1);
 }
 
