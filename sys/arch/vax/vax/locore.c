@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.57 2001/04/24 20:16:37 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.58 2001/05/01 11:13:46 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -76,6 +76,7 @@ extern struct cpu_dep ka48_calls;
 extern struct cpu_dep ka49_calls;
 extern struct cpu_dep ka53_calls;
 extern struct cpu_dep ka410_calls;
+extern struct cpu_dep ka610_calls;
 extern struct cpu_dep ka630_calls;
 extern struct cpu_dep ka650_calls;
 extern struct cpu_dep ka660_calls;
@@ -186,6 +187,12 @@ _start(struct rpb *prpb)
 		}
 		break;
 #endif
+#if VAX610
+	case VAX_BTYP_610:
+		dep_call = &ka610_calls;
+		strcpy(cpu_model,"MicroVAX I");
+		break;
+#endif
 #if VAX630
 	case VAX_BTYP_630:
 		dep_call = &ka630_calls;
@@ -241,7 +248,16 @@ _start(struct rpb *prpb)
 		break;
 	case VAX_BTYP_681:
 		dep_call = &ka680_calls;
-		strcpy(cpu_model,"VAX 4000/500A"); break;
+		switch((vax_siedata & 0xff00) >> 8) {
+		case VAX_STYP_681:
+			strcpy(cpu_model,"VAX 4000/500A"); break;
+		case VAX_STYP_691:
+			strcpy(cpu_model,"VAX 4000/600A"); break;
+		case VAX_STYP_694:
+			strcpy(cpu_model,"VAX 4000/705A"); break;
+		default:
+			strcpy(cpu_model,"unknown 1305");
+		}
 		break;
 #endif
 #if VAX8200
