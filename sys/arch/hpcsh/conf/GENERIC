@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2003/04/26 14:10:11 ragge Exp $
+# $NetBSD: GENERIC,v 1.29 2003/10/08 11:09:26 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -148,10 +148,12 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # PCMCIA IDE disk
 # PC-Card slot
 wdc1	at pcmcia0 function ?
-wd*	at wdc1 channel ? drive ? flags 0x0000
+atabus1 at wdc1 channel ?
+wd*	at atabus1 drive ? flags 0x0000
 # Compact Flash slot (only memory mapped mode CF can attach)
 wdc0	at pcmcia1 function ?
-wd*	at wdc0 channel ? drive ? flags 0x0000
+atabus0 at wdc0 channel ?
+wd*	at atabus0 drive ? flags 0x0000
 
 # Network Interfaces
 
