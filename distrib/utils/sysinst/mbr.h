@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.12 2003/05/07 19:02:53 dsl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.13 2003/05/16 19:38:18 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -65,6 +65,9 @@ EXTERN int usefull;			/* on install, clobber entire disk */
 
 extern mbr_sector_t mbr;
 
+#ifdef BOOTSEL
+struct mbr_bootsel *mbs;
+#endif
 
 /* from mbr.c */
 void	set_fdisk_geom (void);	/* edit incore BIOS geometry */
@@ -87,12 +90,12 @@ int	otherpart (int);
 int	ourpart (int);
 char	*get_partname (int);
 void	edit_ptn_bounds(void);
-#if defined(__i386__) || defined(__x86_64__)
-#define BOOTSEL
+#ifdef BOOTSEL
 void	disp_bootsel(void);
 void	edit_bootsel_entry(int);
 void	edit_bootsel_timeout(void);
 void	edit_bootsel_default_ptn(int);
 void	edit_bootsel_default_disk(int);
+void	configure_bootsel(void);
 #endif
 
