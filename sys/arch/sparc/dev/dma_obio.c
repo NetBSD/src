@@ -1,12 +1,11 @@
-/*	$NetBSD: espvar.h,v 1.21 1998/03/21 20:29:57 pk Exp $	*/
+/*	$NetBSD: dma_obio.c,v 1.1 1998/08/29 20:49:35 pk Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * by Paul Kranenburg.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the NetBSD
- *	Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,21 +36,72 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct esp_softc {
-	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
-	bus_space_tag_t	sc_bustag;
-	bus_dma_tag_t	sc_dmatag;
-	struct sbusdev	sc_sd;			/* sbus device */
-	struct intrhand	sc_ih;			/* intr handler */
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/errno.h>
+#include <sys/device.h>
+#include <sys/malloc.h>
 
-	volatile u_char	*sc_reg;		/* the registers */
-	struct dma_softc *sc_dma;		/* pointer to my dma */
+#include <machine/bus.h>
+#include <machine/autoconf.h>
+#include <machine/cpu.h>
 
-	/* openprom stuff */
-	int	sc_node;			/* PROM node ID */
-	int	sc_pri;				/* SBUS priority */
+#include <dev/sbus/sbusvar.h>
+
+#include <dev/ic/lsi64854reg.h>
+#include <dev/ic/lsi64854var.h>
+
+int	dmamatch_obio	__P((struct device *, struct cfdata *, void *));
+void	dmaattach_obio	__P((struct device *, struct device *, void *));
+
+struct cfattach dma_obio_ca = {
+	sizeof(struct lsi64854_softc), dmamatch_obio, dmaattach_obio
 };
 
-#define SAME_ESP(sc, bp, sa) \
-	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
-	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
+int
+dmamatch_obio(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba;
+
+	if (uoba->uoba_isobio4 == 0)
+		return (0);
+
+	oba = &uoba->uoba_oba4;
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				4,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
+}
+
+
+void
+dmaattach_obio(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	union obio_attach_args *uoba = aux;
+	struct obio4_attach_args *oba = &uoba->uoba_oba4;
+	struct lsi64854_softc *sc = (void *)self;
+	bus_space_handle_t bh;
+
+	sc->sc_bustag = oba->oba_bustag;
+	sc->sc_dmatag = oba->oba_dmatag;
+
+	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
+			 0, sizeof(struct dma_regs),
+			 0, 0,
+			 &bh) != 0) {
+		printf("dmaattach_obio: cannot map registers\n");
+		return;
+	}
+	sc->sc_regs = bh;
+
+	lsi64854_attach(sc);
+}
