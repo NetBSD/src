@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.97 2004/08/23 04:38:42 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.98 2004/08/23 05:38:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.97 2004/08/23 04:38:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.98 2004/08/23 05:38:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -953,11 +953,6 @@ ccdread(dev_t dev, struct uio *uio, int flags)
 	if ((cs->sc_flags & CCDF_INITED) == 0)
 		return (ENXIO);
 
-	/*
-	 * XXX: It's not clear that using minphys() is completely safe,
-	 * in particular, for raw I/O.  Underlying devices might have some
-	 * non-obvious limits, because of the copy to user-space.
-	 */
 	return (physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
@@ -979,11 +974,6 @@ ccdwrite(dev_t dev, struct uio *uio, int flags)
 	if ((cs->sc_flags & CCDF_INITED) == 0)
 		return (ENXIO);
 
-	/*
-	 * XXX: It's not clear that using minphys() is completely safe,
-	 * in particular, for raw I/O.  Underlying devices might have some
-	 * non-obvious limits, because of the copy to user-space.
-	 */
 	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
