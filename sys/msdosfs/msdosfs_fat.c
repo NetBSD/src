@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.16 1995/03/12 16:27:34 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.17 1995/03/19 20:52:36 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -761,7 +761,7 @@ freeclusterchain(pmp, cluster)
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 		if (lbn != bn) {
 			if (bp)
-				updatefats(pmp, bp, bn);
+				updatefats(pmp, bp, lbn);
 			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
 				return (error);
 			lbn = bn;
