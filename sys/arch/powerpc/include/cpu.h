@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.42 2004/09/22 11:32:03 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.43 2005/01/19 22:22:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -93,6 +93,7 @@ struct cpu_info {
 	register_t ci_disisave[DISISAVE_LEN];
 	struct cache_info ci_ci;		
 	void *ci_sysmon_cookie;
+	void (*ci_idlespin)(void);
 	struct evcnt ci_ev_clock;	/* clock intrs */
 	struct evcnt ci_ev_softclock;	/* softclock intrs */
 	struct evcnt ci_ev_softnet;	/* softnet intrs */
