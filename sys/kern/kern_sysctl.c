@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.126 2003/02/15 18:47:41 dsl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.127 2003/02/27 01:39:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.126 2003/02/15 18:47:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.127 2003/02/27 01:39:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -693,9 +693,14 @@ hw_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		return (sysctl_rdint(oldp, oldlenp, newp, BYTE_ORDER));
 	case HW_PHYSMEM:
 		return (sysctl_rdint(oldp, oldlenp, newp, ctob(physmem)));
+	case HW_PHYSPAGES:
+		return (sysctl_rdquad(oldp, oldlenp, newp, physmem));
 	case HW_USERMEM:
 		return (sysctl_rdint(oldp, oldlenp, newp,
 		    ctob(physmem - uvmexp.wired)));
+	case HW_USERPAGES:
+		return (sysctl_rdquad(oldp, oldlenp, newp,
+		    physmem - uvmexp.wired));
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
 	case HW_ALIGNBYTES:
