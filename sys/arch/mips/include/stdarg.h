@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.19 2000/02/19 09:23:44 mycroft Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.20 2001/08/17 07:15:16 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,6 +41,10 @@
 #include <machine/ansi.h>
 #include <sys/featuretest.h>
 
+#if defined(_MIPS_BSD_API) && _MIPS_BSD_API != _MIPS_BSD_API_LP32
+#error stdargs.h does not work with 64 bit ABIs
+#endif
+
 typedef _BSD_VA_LIST_	va_list;
 
 #ifdef __lint__
@@ -53,15 +57,15 @@ typedef _BSD_VA_LIST_	va_list;
 #if BYTE_ORDER == LITTLE_ENDIAN
 #define	va_arg(ap, T)							\
 	(((T *)(							\
-	    (ap) += (/*CONSTCOND*/ sizeof(T) <= sizeof(int)		\
+	    (ap) += (/*CONSTCOND*/ __alignof__(T) <= sizeof(int)	\
 		? sizeof(int) : ((long)(ap) & 4) + sizeof(T)),		\
-	    (ap) - (/*CONSTCOND*/ sizeof(T) <= sizeof(int)		\
+	    (ap) - (/*CONSTCOND*/ __alignof__(T) <= sizeof(int)		\
 		? sizeof(int) : sizeof(T))				\
  	))[0])
 #else
 #define	va_arg(ap, T)							\
 	(((T *)(							\
-	    (ap) += (/*CONSTCOND*/ sizeof(T) <= sizeof(int)		\
+	    (ap) += (/*CONSTCOND*/ __alignof__(T) <= sizeof(int)	\
 		? sizeof(int) : ((long)(ap) & 4) + sizeof(T))		\
  	))[-1])
 #endif
