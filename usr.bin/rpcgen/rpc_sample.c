@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_sample.c,v 1.9.4.1 2004/06/22 07:15:27 tron Exp $	*/
+/*	$NetBSD: rpc_sample.c,v 1.9.4.2 2004/07/10 12:34:59 tron Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_sample.c  1.1  90/08/30  (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_sample.c,v 1.9.4.1 2004/06/22 07:15:27 tron Exp $");
+__RCSID("$NetBSD: rpc_sample.c,v 1.9.4.2 2004/07/10 12:34:59 tron Exp $");
 #endif
 #endif
 
@@ -207,10 +207,7 @@ write_sample_server(def)
 				return_type(proc);
 				f_print(fout, "*\n");
 			}
-			if (Cflag)
-				pvname_svc(proc->proc_name, vp->vers_num);
-			else
-				pvname(proc->proc_name, vp->vers_num);
+			pvname_svc(proc->proc_name, vp->vers_num);
 			printarglist(proc, "result", RQSTP, "struct svc_req *");
 
 			f_print(fout, "{\n");
