@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.22 1997/05/31 21:21:20 cjs Exp $
+#	$NetBSD: libg++2netbsd,v 1.23 1997/10/25 09:27:11 lukem Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -498,7 +498,7 @@ LIB=		g++
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../../include \
 		  -I$(.CURDIR)/../../libio -I$(.CURDIR)/../../libstdc++
-CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
+CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
 .if (${MACHINE} == "alpha")
 LDADD=		-lcurses
 DPADD=		${LIBCURSES}
@@ -520,7 +520,7 @@ LIB=	io
 %% srcs io
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include 
-CFLAGS+=	-I$(.CURDIR)
+CPPFLAGS+=	-I$(.CURDIR)
 NOMAN=		noman
 NOLINT=		nolint
 
@@ -534,7 +534,7 @@ LIB=	iostream
 
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../include \
 		  -I$(.CURDIR)/../libio 
-CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio
+CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio
 NOMAN=		noman
 NOLINT=		nolint
 
@@ -548,10 +548,10 @@ LIB=	stdc++
 
 %% srcs stdc++
 
-CXXFLAGS+=  -nostdinc++ 
-CFLAGS+=    -I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
-NOMAN=	    noman
-NOLINT=	    nolint
+CXXFLAGS+=	-nostdinc++ 
+CPPFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
+NOMAN=		noman
+NOLINT=		nolint
 
 .PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
 

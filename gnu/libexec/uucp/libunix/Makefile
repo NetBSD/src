@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 1997/10/18 05:47:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 1997/10/25 09:31:34 lukem Exp $
 #
 # This subdirectory contains Unix specific support functions.
 
@@ -13,7 +13,7 @@ SRCS=		access.c addbas.c app3.c app4.c basnam.c bytfre.c cwd.c \
 		status.c time.c tmpfil.c trunc.c uacces.c ufopen.c ultspl.c \
 		unknwn.c uuto.c walk.c wldcrd.c work.c xqtfil.c xqtsub.c \
 		ftw.c corrup.c pipe.c priv.c uid.c tli.c tcp.c sync.c failed.c
-CFLAGS+=	-I$(.CURDIR)/../common_sources \
+CPPFLAGS+=	-I$(.CURDIR)/../common_sources \
 		-DOWNER=\"$(owner)\" -DSBINDIR=\"$(sbindir)\"
 
 NOMAN=		noman

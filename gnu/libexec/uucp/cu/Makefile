@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/18 05:47:50 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/25 09:31:30 lukem Exp $
 #
 # Makefile for cu
 
@@ -10,7 +10,7 @@ PROG=		cu
 SRCS=		cu.c prot.c log.c chat.c conn.c copy.c
 LDADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 DPADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
-CFLAGS+=	-I$(.CURDIR)/../common_sources\
+CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-DVERSION=\"$(VERSION)\"
 
 .include <bsd.prog.mk>

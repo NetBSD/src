@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1997/10/18 05:48:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 1997/10/25 09:32:03 lukem Exp $
 #
 # Makefile for uupick
 
@@ -8,7 +8,7 @@ PROG=		uupick
 SRCS=		uupick.c log.c copy.c
 LDADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
 DPADD+=		$(LIBUNIX) $(LIBUUCONF) $(LIBUUCP)
-CFLAGS+=	-I$(.CURDIR)/../common_sources\
+CPPFLAGS+=	-I$(.CURDIR)/../common_sources\
 		-DVERSION=\"$(VERSION)\"
 
 NOMAN=		noman
