@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.19 2002/05/25 07:58:35 ichiro Exp $	*/
+/*	$NetBSD: fault.c,v 1.20 2002/08/12 20:17:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -262,6 +262,7 @@ data_abort_handler(frame)
 		 fault_code != FAULT_PERM_S && fault_code != FAULT_PERM_P)
 	        || pcb->pcb_onfault == fusubailout)) {
 
+		frame->tf_r0 = EFAULT;
 copyfault:
 #ifdef DEBUG
 		printf("Using pcb_onfault=%p addr=%08x st=%08x p=%p\n",
@@ -515,8 +516,10 @@ copyfault:
 			goto out;
 
 		if (user == 0) {
-			if (pcb->pcb_onfault)
+			if (pcb->pcb_onfault) {
+				frame->tf_r0 = rv;
 				goto copyfault;
+			}
 			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
