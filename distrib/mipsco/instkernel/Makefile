@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 2002/04/14 06:18:13 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2002/04/26 15:50:38 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${_SRC_TOP_}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
 
 .include <bsd.kernobj.mk>
 
