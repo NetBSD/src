@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.39 1998/09/14 21:15:56 hwr Exp $	*/
+/*	$NetBSD: in.h,v 1.39.6.1 2001/05/30 09:43:49 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -297,7 +297,9 @@ struct ip_mreq {
 #define	IPCTL_ANONPORTMAX      11	/* maximum ephemeral port */
 #define	IPCTL_MTUDISCTIMEOUT   12	/* allow path MTU discovery */
 #define	IPCTL_MAXFLOWS         13	/* maximum ip flows allowed */
-#define	IPCTL_MAXID	       14
+/* 14 to 17: assigned after 1.4 was branched */
+#define	IPCTL_MAXFRAGPACKETS   18	/* max packets reassembly queue */
+#define	IPCTL_MAXID	       19
 
 #define	IPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -314,6 +316,11 @@ struct ip_mreq {
 	{ "anonportmax", CTLTYPE_INT }, \
 	{ "mtudisctimeout", CTLTYPE_INT }, \
 	{ "maxflows", CTLTYPE_INT }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ 0, 0 }, \
+	{ "maxfragpackets", CTLTYPE_INT }, \
 }
 #endif /* !_XOPEN_SOURCE */
 
