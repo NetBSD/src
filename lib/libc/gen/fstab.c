@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.9 1997/01/23 14:01:52 mrg Exp $	*/
+/*	$NetBSD: fstab.c,v 1.10 1997/07/13 18:58:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: fstab.c,v 1.9 1997/01/23 14:01:52 mrg Exp $";
+__RCSID("$NetBSD: fstab.c,v 1.10 1997/07/13 18:58:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -64,17 +65,19 @@ fstabscan()
 	static char line[MAXLINELENGTH];
 	char subline[MAXLINELENGTH];
 	int typexx;
+	static const char sep[] = ":\n";
+	static const char ws[] = " \t\n";
 
 	for (;;) {
 		if (!(cp = fgets(line, sizeof(line), _fs_fp)))
 			return(0);
 /* OLD_STYLE_FSTAB */
 		if (!strpbrk(cp, " \t")) {
-			_fs_fstab.fs_spec = strtok(cp, ":\n");
+			_fs_fstab.fs_spec = strtok(cp, sep);
 			if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 				continue;
-			_fs_fstab.fs_file = strtok((char *)NULL, ":\n");
-			_fs_fstab.fs_type = strtok((char *)NULL, ":\n");
+			_fs_fstab.fs_file = strtok(NULL, sep);
+			_fs_fstab.fs_type = strtok(NULL, sep);
 			if (_fs_fstab.fs_type) {
 				if (!strcmp(_fs_fstab.fs_type, FSTAB_XX))
 					continue;
@@ -82,9 +85,9 @@ fstabscan()
 				_fs_fstab.fs_vfstype =
 				    strcmp(_fs_fstab.fs_type, FSTAB_SW) ?
 				    "ufs" : "swap";
-				if (cp = strtok((char *)NULL, ":\n")) {
+				if ((cp = strtok(NULL, sep)) != NULL) {
 					_fs_fstab.fs_freq = atoi(cp);
-					if (cp = strtok((char *)NULL, ":\n")) {
+					if ((cp = strtok(NULL, sep)) != NULL) {
 						_fs_fstab.fs_passno = atoi(cp);
 						return(1);
 					}
@@ -93,19 +96,19 @@ fstabscan()
 			goto bad;
 		}
 /* OLD_STYLE_FSTAB */
-		_fs_fstab.fs_spec = strtok(cp, " \t\n");
+		_fs_fstab.fs_spec = strtok(cp, ws);
 		if (!_fs_fstab.fs_spec || *_fs_fstab.fs_spec == '#')
 			continue;
-		_fs_fstab.fs_file = strtok((char *)NULL, " \t\n");
-		_fs_fstab.fs_vfstype = strtok((char *)NULL, " \t\n");
-		_fs_fstab.fs_mntops = strtok((char *)NULL, " \t\n");
+		_fs_fstab.fs_file = strtok(NULL, ws);
+		_fs_fstab.fs_vfstype = strtok(NULL, ws);
+		_fs_fstab.fs_mntops = strtok(NULL, ws);
 		if (_fs_fstab.fs_mntops == NULL)
 			goto bad;
 		_fs_fstab.fs_freq = 0;
 		_fs_fstab.fs_passno = 0;
-		if ((cp = strtok((char *)NULL, " \t\n")) != NULL) {
+		if ((cp = strtok(NULL, ws)) != NULL) {
 			_fs_fstab.fs_freq = atoi(cp);
-			if ((cp = strtok((char *)NULL, " \t\n")) != NULL)
+			if ((cp = strtok(NULL, ws)) != NULL)
 				_fs_fstab.fs_passno = atoi(cp);
 		}
 		(void)strncpy(subline, _fs_fstab.fs_mntops, sizeof(subline)-1);
@@ -149,7 +152,7 @@ bad:		/* no way to distinguish between EOF and syntax error */
 struct fstab *
 getfsent()
 {
-	if (!_fs_fp && !setfsent() || !fstabscan())
+	if ((!_fs_fp && !setfsent()) || !fstabscan())
 		return((struct fstab *)NULL);
 	return(&_fs_fstab);
 }
@@ -183,7 +186,7 @@ setfsent()
 		rewind(_fs_fp);
 		return(1);
 	}
-	if (_fs_fp = fopen(_PATH_FSTAB, "r"))
+	if ((_fs_fp = fopen(_PATH_FSTAB, "r")) != NULL)
 		return(1);
 	error(errno);
 	return(0);
