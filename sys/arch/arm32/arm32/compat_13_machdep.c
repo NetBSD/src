@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.2 2000/12/22 22:58:53 jdolecek Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3 2001/02/28 18:15:43 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -73,7 +73,7 @@ compat_13_sys_sigreturn(p, v, retval)
 		return (EINVAL);
 
 	/* Restore register context. */
-	tf = p->p_md.md_regs;
+	tf = p->p_addr->u_pcb.pcb_tf;
 	tf->tf_r0    = context.sc_r0;
 	tf->tf_r1    = context.sc_r1;
 	tf->tf_r2    = context.sc_r2;

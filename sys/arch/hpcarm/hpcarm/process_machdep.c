@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.1 2001/02/23 03:48:12 ichiro Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.2 2001/02/28 18:15:44 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -85,7 +85,7 @@ process_frame(p)
 	struct proc *p;
 {
 
-	return (p->p_md.md_regs);
+	return (p->p_addr->u_pcb.pcb_tf);
 }
 
 int

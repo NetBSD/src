@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_init.c,v 1.21 2000/12/12 19:45:47 mycroft Exp $ */
+/* $NetBSD: armfpe_init.c,v 1.22 2001/02/28 18:15:44 bjh21 Exp $ */
 
 /*
  * Copyright (C) 1996 Mark Brinicombe
@@ -181,7 +181,7 @@ arm_fpe_postproc(fpframe, frame)
 	register struct proc *p;
 
 	p = curproc;
-	p->p_md.md_regs = frame;
+	p->p_addr->u_pcb.pcb_tf = frame;
 
 	/* take pending signals */
 

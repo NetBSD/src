@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.38 2000/12/12 20:49:16 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.39 2001/02/28 18:15:44 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#include <sys/user.h>
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
@@ -94,6 +95,7 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/katelib.h>
+#include <machine/pcb.h>
 
 u_int arm700bugcount = 0;
 
@@ -130,7 +132,7 @@ syscall(frame, code)
 
 	uvmexp.syscalls++;
 	p = curproc;
-	p->p_md.md_regs = frame;
+	p->p_addr->u_pcb.pcb_tf = frame;
 
 #ifdef CPU_ARM7
 	/*
@@ -278,7 +280,7 @@ child_return(arg)
 	void *arg;
 {
 	struct proc *p = arg;
-	struct trapframe *frame = p->p_md.md_regs;
+	struct trapframe *frame = p->p_addr->u_pcb.pcb_tf;
 
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	
