@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.4 2002/09/19 10:03:12 scw Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.5 2002/10/08 15:49:26 scw Exp $	*/
 
 /*
  * This is still very much experimental. There is as yet no DB support
@@ -127,7 +127,11 @@ extern db_addr_t branch_taken(int, db_addr_t, db_regs_t *);
  *
  */
 #define	DB_ELF_SYMBOLS
+#ifndef _LP64
 #define	DB_ELFSIZE	32
+#else
+#define	DB_ELFSIZE	64
+#endif
 
 /*
  * We have machine-dependent commands.
