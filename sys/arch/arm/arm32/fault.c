@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.7 2002/01/05 22:41:47 chris Exp $	*/
+/*	$NetBSD: fault.c,v 1.8 2002/02/14 07:08:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -462,16 +462,16 @@ copyfault:
 		 */
 		/* STR instruction ? */
 		if ((fault_instruction & 0x0c100000) == 0x04000000)
-			ftype = VM_PROT_READ | VM_PROT_WRITE; 
+			ftype = VM_PROT_WRITE; 
 		/* STM or CDT instruction ? */
 		else if ((fault_instruction & 0x0a100000) == 0x08000000)
-			ftype = VM_PROT_READ | VM_PROT_WRITE; 
+			ftype = VM_PROT_WRITE; 
 		/* STRH, STRSH or STRSB instruction ? */
 		else if ((fault_instruction & 0x0e100090) == 0x00000090)
-			ftype = VM_PROT_READ | VM_PROT_WRITE; 
+			ftype = VM_PROT_WRITE; 
 		/* SWP instruction ? */
 		else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
-			ftype = VM_PROT_READ | VM_PROT_WRITE; 
+			ftype = VM_PROT_WRITE; 
 		else
 			ftype = VM_PROT_READ;
 
@@ -702,7 +702,7 @@ cowfault(va)
 	KASSERT(current_intr_depth == 0);
 	
 	vm = curproc->p_vmspace;
-	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_READ | VM_PROT_WRITE);
+	error = uvm_fault(&vm->vm_map, va, 0, VM_PROT_WRITE);
 	return error;
 }
 

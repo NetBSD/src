@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 2002/01/28 09:56:49 aymeric Exp $	*/
+/*	$NetBSD: trap.c,v 1.88 2002/02/14 07:08:03 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
 #include "opt_compat_sunos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2002/01/28 09:56:49 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2002/02/14 07:08:03 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,7 +379,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	    mmutype == MMU_68040 ? (code & SSW_RW040) == 0 :
 	    (code & (SSW_DF|SSW_RW)) == SSW_DF)
 							/* what about RMW? */
-		ftype = VM_PROT_READ | VM_PROT_WRITE;
+		ftype = VM_PROT_WRITE;
 	else
 		ftype = VM_PROT_READ;
 	va = trunc_page((vaddr_t)v);

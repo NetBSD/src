@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66 2001/06/28 21:54:23 ragge Exp $     */
+/*	$NetBSD: trap.c,v 1.67 2002/02/14 07:08:18 chs Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -226,7 +226,7 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			map = &p->p_vmspace->vm_map;
 
 		if (frame->trap & T_WRITE)
-			ftype = VM_PROT_WRITE|VM_PROT_READ;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.102 2002/02/11 18:11:43 jdolecek Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.103 2002/02/14 07:08:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.102 2002/02/11 18:11:43 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.103 2002/02/14 07:08:21 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -222,8 +222,7 @@ sys___sysctl(struct proc *p, void *v, register_t *retval)
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
 		if (error)
 			return (error);
-		error = uvm_vslock(p, SCARG(uap, old), oldlen,
-		    VM_PROT_READ|VM_PROT_WRITE);
+		error = uvm_vslock(p, SCARG(uap, old), oldlen, VM_PROT_WRITE);
 		if (error) {
 			(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
 			return error;

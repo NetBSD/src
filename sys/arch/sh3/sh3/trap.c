@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30 2002/02/11 18:55:16 uch Exp $	*/
+/*	$NetBSD: trap.c,v 1.31 2002/02/14 07:08:14 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -371,7 +371,7 @@ trap(int p1, int p2, int p3, int p4,/* dummy param */  struct trapframe frame)
 		else
 			map = &vm->vm_map;
 		if (frame.tf_err & PGEX_W)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 

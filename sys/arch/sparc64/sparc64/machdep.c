@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2002/02/07 21:36:55 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.114 2002/02/14 07:08:15 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1390,7 +1390,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 		PHOLD(p);
 		if (__predict_false(uvm_vslock(p, vaddr, buflen,
 			    (uio->uio_rw == UIO_WRITE) ?
-			    VM_PROT_READ | VM_PROT_WRITE : VM_PROT_READ)
+			    VM_PROT_WRITE : VM_PROT_READ)
 			    != 0)) {
 				goto after_vsunlock;
 			}

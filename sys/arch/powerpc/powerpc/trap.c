@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 2002/02/02 22:02:00 dbj Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 2002/02/14 07:08:14 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -133,7 +133,7 @@ trap(frame)
 				map = &p->p_vmspace->vm_map;
 			}
 			if (frame->dsisr & DSISR_STORE)
-				ftype = VM_PROT_READ | VM_PROT_WRITE;
+				ftype = VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
@@ -172,7 +172,7 @@ trap(frame)
 		KERNEL_PROC_LOCK(p);
 		curcpu()->ci_ev_udsi.ev_count++;
 		if (frame->dsisr & DSISR_STORE)
-			ftype = VM_PROT_READ | VM_PROT_WRITE;
+			ftype = VM_PROT_WRITE;
 		else
 			ftype = VM_PROT_READ;
 		rv = uvm_fault(&p->p_vmspace->vm_map, trunc_page(frame->dar),
