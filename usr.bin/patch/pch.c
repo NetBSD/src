@@ -1,4 +1,4 @@
-/*	$NetBSD: pch.c,v 1.18 2003/07/12 13:47:44 itojun Exp $	*/
+/*	$NetBSD: pch.c,v 1.19 2003/07/30 08:51:04 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pch.c,v 1.18 2003/07/12 13:47:44 itojun Exp $");
+__RCSID("$NetBSD: pch.c,v 1.19 2003/07/30 08:51:04 itojun Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -521,9 +521,10 @@ another_hunk(void)
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == NULL) {
-		if (p_max - p_end < 4)
-		    Strcpy(buf, "  \n");  /* assume blank lines got chopped */
-		else {
+		if (p_max - p_end < 4) {
+		    /* assume blank lines got chopped */
+		    strlcpy(buf, "  \n", sizeof(buf));
+		} else {
 		    if (repl_beginning && repl_could_be_missing) {
 			repl_missing = TRUE;
 			goto hunk_done;
@@ -561,7 +562,7 @@ another_hunk(void)
 		if (!*s)
 		    malformed();
 		if (strnEQ(s, "0,0", 3))
-		    strcpy(s, s + 2);
+		    strlcpy(s, s + 2, sizeof(buf) - (s - buf));
 		p_first = atoi(s);
 		while (isdigit((unsigned char)*s))
 			s++;
@@ -654,7 +655,7 @@ another_hunk(void)
 		repl_could_be_missing = FALSE;
 	    change_line:
 		if (buf[1] == '\n' && canonicalize)
-		    strcpy(buf + 1," \n");
+		    strlcpy(buf + 1," \n", sizeof(buf) - 1);
 		if (!isspace((unsigned char)buf[1]) &&
 		    buf[1] != '>' && buf[1] != '<' &&
 		    repl_beginning && repl_could_be_missing) {
@@ -854,10 +855,11 @@ another_hunk(void)
 	fillsrc = 1;
 	filldst = fillsrc + p_ptrn_lines;
 	p_end = filldst + p_repl_lines;
-	Sprintf(buf, "*** %d,%d ****\n", p_first, p_first + p_ptrn_lines - 1);
+	snprintf(buf, sizeof(buf), "*** %d,%d ****\n", p_first,
+	    p_first + p_ptrn_lines - 1);
 	p_line[0] = xstrdup(buf);
 	p_char[0] = '*';
-        Sprintf(buf, "--- %d,%d ----\n", p_newfirst,
+        snprintf(buf, sizeof(buf), "--- %d,%d ----\n", p_newfirst,
 		p_newfirst + p_repl_lines - 1);
 	p_line[filldst] = xstrdup(buf);
 	p_char[filldst++] = '=';
@@ -869,9 +871,10 @@ another_hunk(void)
 	    ret = pgets(buf, sizeof buf, pfp);
 	    p_input_line++;
 	    if (ret == NULL) {
-		if (p_max - filldst < 3)
-		    Strcpy(buf, " \n");  /* assume blank lines got chopped */
-		else {
+		if (p_max - filldst < 3) {
+		    /* assume blank lines got chopped */
+		    strlcpy(buf, " \n", sizeof(buf));
+		} else {
 		    fatal("unexpected end of file in patch\n");
 		}
 	    }
@@ -986,7 +989,8 @@ another_hunk(void)
 	    grow_hunkmax();
 	p_newfirst = min;
 	p_repl_lines = max - min + 1;
-	Sprintf(buf, "*** %d,%d\n", p_first, p_first + p_ptrn_lines - 1);
+	snprintf(buf, sizeof(buf), "*** %d,%d\n", p_first,
+	    p_first + p_ptrn_lines - 1);
 	p_line[0] = xstrdup(buf);
 	p_char[0] = '*';
 	for (i = 1; i <= p_ptrn_lines; i++) {
@@ -1016,7 +1020,7 @@ another_hunk(void)
 	    if (*buf != '-')
 		fatal("--- expected at line %d of patch\n", p_input_line);
 	}
-	Sprintf(buf, "--- %d,%d\n", min, max);
+	snprintf(buf, sizeof(buf), "--- %d,%d\n", min, max);
 	p_line[i] = xstrdup(buf);
 	p_char[i] = '=';
 	for (i++; i <= p_end; i++) {
@@ -1081,7 +1085,7 @@ pgets(char *bf, int sz, FILE *fp)
 				indent++;
 		}
 		if (buf != s)
-			Strcpy(buf, s);
+			strlcpy(buf, s, sizeof(buf));
 	}
 	return ret;
 }
@@ -1299,9 +1303,9 @@ do_ed_script(void)
 		Unlink(TMPOUTNAME);
 		copy_file(filearg[0], TMPOUTNAME);
 		if (verbose)
-			Sprintf(buf, "/bin/ed %s", TMPOUTNAME);
+			snprintf(buf, sizeof(buf), "/bin/ed %s", TMPOUTNAME);
 		else
-			Sprintf(buf, "/bin/ed - %s", TMPOUTNAME);
+			snprintf(buf, sizeof(buf), "/bin/ed - %s", TMPOUTNAME);
 		pipefp = popen(buf, "w");
 	}
 	for (;;) {
