@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.9 1999/12/04 23:14:40 fvdl Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.10 1999/12/30 16:09:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -48,6 +48,7 @@
 /*
  * uvm_unix.c: traditional sbrk/grow interface to vm.
  */
+#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,3 +253,83 @@ uvm_coredump(p, vp, cred, chdr)
 	return (error);
 }
 
+#if COMPAT_NETBSD32
+/*
+ * uvm_coredump32: dump 32-bit core!
+ */
+
+int
+uvm_coredump32(p, vp, cred, chdr)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+	struct core32 *chdr;
+{
+	register struct vmspace *vm = p->p_vmspace;
+	register vm_map_t map = &vm->vm_map;
+	register vm_map_entry_t entry;
+	vaddr_t start, end;
+	struct coreseg32 cseg;
+	off_t offset;
+	int flag, error = 0;
+
+	offset = chdr->c_hdrsize + chdr->c_seghdrsize + chdr->c_cpusize;
+
+	for (entry = map->header.next; entry != &map->header;
+	    entry = entry->next) {
+
+		/* should never happen for a user process */
+		if (UVM_ET_ISSUBMAP(entry)) {
+			panic("uvm_coredump: user process with submap?");
+		}
+
+		if (!(entry->protection & VM_PROT_WRITE))
+			continue;
+
+		start = entry->start;
+		end = entry->end;
+
+		if (start >= VM_MAXUSER_ADDRESS)
+			continue;
+
+		if (end > VM_MAXUSER_ADDRESS)
+			end = VM_MAXUSER_ADDRESS;
+
+		if (start >= (vaddr_t)vm->vm_maxsaddr) {
+			flag = CORE_STACK;
+			start = trunc_page(USRSTACK - ctob(vm->vm_ssize));
+			if (start >= end)
+				continue;
+		} else
+			flag = CORE_DATA;
+
+		/*
+		 * Set up a new core file segment.
+		 */
+		CORE_SETMAGIC(cseg, CORESEGMAGIC, CORE_GETMID(*chdr), flag);
+		cseg.c_addr = start;
+		cseg.c_size = end - start;
+
+		error = vn_rdwr(UIO_WRITE, vp,
+		    (caddr_t)&cseg, chdr->c_seghdrsize,
+		    offset, UIO_SYSSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+		if (error)
+			break;
+
+		offset += chdr->c_seghdrsize;
+		error = vn_rdwr(UIO_WRITE, vp,
+		    (caddr_t)cseg.c_addr, (int)cseg.c_size,
+		    offset, UIO_USERSPACE,
+		    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+		if (error)
+			break;
+		
+		offset += cseg.c_size;
+		chdr->c_nseg++;
+	}
+
+	return (error);
+}
+
+#endif
