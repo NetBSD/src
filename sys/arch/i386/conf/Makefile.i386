@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.66 1996/02/29 20:56:16 cgd Exp $
+#	$NetBSD: Makefile.i386,v 1.67 1996/05/11 16:12:11 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -146,7 +146,7 @@ links:
 
 SRCS=	${I386}/i386/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

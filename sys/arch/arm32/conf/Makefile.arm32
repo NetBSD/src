@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.10 1996/02/29 20:55:24 cgd Exp $
+#	$NetBSD: Makefile.arm32,v 1.11 1996/05/11 16:11:50 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -146,7 +146,7 @@ links:
 
 SRCS=	${ARM32}/arm32/locore.S modedefs.c \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
 	mkdep -a ${CFLAGS} ${CPPFLAGS} modedefs.c

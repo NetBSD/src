@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.alpha,v 1.14 1996/02/29 20:54:58 cgd Exp $
+#	$NetBSD: Makefile.alpha,v 1.15 1996/05/11 16:11:30 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -146,7 +146,7 @@ links:
 
 SRCS=	${ALPHA}/alpha/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pc532,v 1.25 1996/02/29 20:57:05 cgd Exp $
+#	$NetBSD: Makefile.pc532,v 1.26 1996/05/11 16:12:34 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -148,7 +148,7 @@ links:
 
 SRCS=	${PC532}/pc532/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${PC532}/pc532/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

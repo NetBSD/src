@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.16 1996/02/29 20:55:35 cgd Exp $
+#	$NetBSD: Makefile.atari,v 1.17 1996/05/11 16:11:55 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -149,7 +149,7 @@ links:
 
 SRCS=	${ATARI}/atari/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${ATARI}/atari/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.41 1996/05/09 20:30:59 is Exp $
+#	$NetBSD: Makefile.amiga,v 1.42 1996/05/11 16:11:41 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -163,7 +163,7 @@ links:
 
 SRCS=	${AMIGA}/amiga/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${AMIGA}/amiga/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

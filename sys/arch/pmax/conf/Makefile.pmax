@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.26 1996/02/29 20:57:22 cgd Exp $
+#	$NetBSD: Makefile.pmax,v 1.27 1996/05/11 16:12:51 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -151,7 +151,7 @@ links:
 
 SRCS=	${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore.S ${PMAX}/pmax/fp.S
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}

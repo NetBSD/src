@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1996/02/02 20:34:44 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1996/05/11 16:13:31 mycroft Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
@@ -28,6 +28,10 @@ ${COMPATLIB_PROF}:	.NOTMAIN __always_make_compatlib
 clean:: 		.NOTMAIN __always_make_compatlib
 	@echo cleaning the compat library objects
 	@${COMPATMAKE} clean
+
+depend:: 		.NOTMAIN __always_make_compatlib
+	@echo depending the compat library objects
+	@${COMPATMAKE} depend
 
 __always_make_compatlib:	.NOTMAIN
 	@mkdir -p ${COMPATDST}

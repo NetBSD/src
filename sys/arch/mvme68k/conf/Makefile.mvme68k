@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.10 1996/02/29 20:56:51 cgd Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.11 1996/05/11 16:12:27 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -149,7 +149,7 @@ links:
 
 SRCS=	${MVME68K}/mvme68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
-depend: .depend
+depend:: .depend
 .depend: ${SRCS} assym.h param.c
 	mkdep ${AFLAGS} ${CPPFLAGS} ${MVME68K}/mvme68k/locore.s
 	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
