@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)preen.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: preen.c,v 1.7 1994/09/23 14:27:20 mycroft Exp $";
+static char *rcsid = "$Id: preen.c,v 1.8 1994/10/28 16:55:08 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -294,7 +294,7 @@ retry:
 		printf("Can't stat %s\n", name);
 		return (0);
 	}
-	if ((stblock.st_mode & S_IFMT) == S_IFBLK) {
+	if (S_ISBLK(stblock.st_mode)) {
 		if (stslash.st_dev == stblock.st_rdev)
 			hotroot++;
 		raw = rawname(name);
@@ -303,13 +303,13 @@ retry:
 			printf("Can't stat %s\n", raw);
 			return (name);
 		}
-		if ((stchar.st_mode & S_IFMT) == S_IFCHR) {
+		if (S_ISCHR(stchar.st_mode)) {
 			return (raw);
 		} else {
 			printf("%s is not a character device\n", raw);
 			return (name);
 		}
-	} else if ((stblock.st_mode & S_IFMT) == S_IFCHR && !retried) {
+	} else if (S_ISCHR(stblock.st_mode) && !retried) {
 		name = unrawname(name);
 		retried++;
 		goto retry;
@@ -329,7 +329,7 @@ unrawname(name)
 		return (name);
 	if (stat(name, &stb) < 0)
 		return (name);
-	if ((stb.st_mode & S_IFMT) != S_IFCHR)
+	if (!S_ISCHR(stb.st_mode))
 		return (name);
 	if (dp[1] != 'r')
 		return (name);

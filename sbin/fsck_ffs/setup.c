@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
-static char *rcsid = "$Id: setup.c,v 1.13 1994/09/23 23:49:16 mycroft Exp $";
+static char *rcsid = "$Id: setup.c,v 1.14 1994/10/28 16:55:11 mycroft Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -73,7 +73,7 @@ setup(dev)
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	if ((statb.st_mode & S_IFMT) != S_IFCHR) {
+	if (!S_ISCHR(statb.st_mode)) {
 		pfatal("%s is not a character device", dev);
 		if (reply("CONTINUE") == 0)
 			return (0);
@@ -215,9 +215,9 @@ setup(dev)
 		sblock.fs_nrpos = 8;
 		sblock.fs_postbloff =
 		    (char *)(&sblock.fs_opostbl[0][0]) -
-		    (char *)(&sblock.fs_link);
+		    (char *)(&sblock.fs_unused_1);
 		sblock.fs_rotbloff = &sblock.fs_space[0] -
-		    (u_char *)(&sblock.fs_link);
+		    (u_char *)(&sblock.fs_unused_1);
 		sblock.fs_cgsize =
 			fragroundup(&sblock, CGSIZE(&sblock));
 		sbdirty();
@@ -338,8 +338,8 @@ readsb(listerr)
 	getblk(&asblk, cgsblock(&sblock, sblock.fs_ncg - 1), sblock.fs_sbsize);
 	if (asblk.b_errs)
 		return (0);
-	altsblock.fs_link = sblock.fs_link;
-	altsblock.fs_rlink = sblock.fs_rlink;
+	altsblock.fs_unused_1 = sblock.fs_unused_1;
+	altsblock.fs_unused_2 = sblock.fs_unused_2;
 	altsblock.fs_time = sblock.fs_time;
 	altsblock.fs_cstotal = sblock.fs_cstotal;
 	altsblock.fs_cgrotor = sblock.fs_cgrotor;
