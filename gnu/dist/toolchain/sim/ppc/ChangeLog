@@ -1,3 +1,18 @@
+2002-01-22  matthew green  <mrg@netbsd.org>
+
+	2001-03-04  Andrew Cagney  <ac131313@redhat.com>
+	* emul_netbsd.c [WITH_NetBSD_HOST]: Include <sys/mount.h> and
+	<errno.h>.
+	(do_stat): Only do SYS test when SYS_stat defined.
+	(do_sigprocmask): Ditto for SYS_sigprocmask.
+	(do_fstat): Ditto for SYS_fstat.
+	(do_getdirentries): Ditto for SYS_getdirentries.
+	(do_lstat): Ditto for SYS_lstat.
+
+	2001-01-15  Geoffrey Keating  <geoffk@redhat.com>
+	* emul_netbsd.c (do_open): Translate the flag parameter to the
+	open syscall to the numbers supported by the host.
+
 Fri Apr 28 15:59:27 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 	* events.c (event_queue_process): Call update_time_from_event
