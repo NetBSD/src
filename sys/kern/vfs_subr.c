@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.232 2004/08/15 07:19:54 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.233 2004/09/13 19:45:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.232 2004/08/15 07:19:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.233 2004/09/13 19:45:21 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -2992,6 +2992,7 @@ copy_statvfs_info(struct statvfs *sbp, const struct mount *mp)
 	    sizeof(sbp->f_mntonname));
 	(void)memcpy(sbp->f_mntfromname, mp->mnt_stat.f_mntfromname,
 	    sizeof(sbp->f_mntfromname));
+	sbp->f_namemax = mbp->f_namemax;
 }
 
 int
