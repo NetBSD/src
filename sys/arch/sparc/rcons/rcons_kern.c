@@ -42,7 +42,7 @@
  *	@(#)rcons_kern.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: rcons_kern.c,v 1.28 93/04/20 11:15:38 torek Exp 
- * $Id: rcons_kern.c,v 1.2 1993/10/11 02:49:44 deraadt Exp $
+ * $Id: rcons_kern.c,v 1.3 1993/10/18 11:49:16 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -68,7 +68,6 @@ extern void rcons_puts(struct fbdevice *, char *, int);
 extern void rcons_font(struct fbdevice *);
 
 extern int (*v_putc)();
-extern void ttrstrt(void *);
 
 static struct fbdevice *myfbdevicep;
 
