@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 // piles and matrices
 
@@ -146,18 +146,18 @@ int matrix_box::compute_metrics(int style)
   printf(".nr " SUP_RAISE_FORMAT " \\n[" BASELINE_SEP_FORMAT "]*%d/2"
 	 "+%dM\n",
 	 uid, uid, maxlen-1, axis_height - shift_down);
-  printf(".nr " HEIGHT_FORMAT " \\n[" SUP_RAISE_FORMAT "]+(0",
+  printf(".nr " HEIGHT_FORMAT " 0\\n[" SUP_RAISE_FORMAT "]+(0",
 	 uid, uid);
   for (i = 0; i < len; i++)
     printf(">?\\n[" HEIGHT_FORMAT "]", p[i]->p[0]->uid);
-  printf(")\n");
+  printf(")>?0\n");
   printf(".nr " DEPTH_FORMAT " \\n[" BASELINE_SEP_FORMAT "]*%d-\\n["
 	 SUP_RAISE_FORMAT "]+(0",
 	 uid, uid, maxlen-1, uid);
   for (i = 0; i < len; i++)
     if (p[i]->len == maxlen)
       printf(">?\\n[" DEPTH_FORMAT "]", p[i]->p[maxlen-1]->uid);
-  printf(")\n");
+  printf(")>?0\n");
   return FOUND_NOTHING;
 }
 
@@ -224,7 +224,7 @@ matrix_box::~matrix_box()
 {
   for (int i = 0; i < len; i++)
     delete p[i];
-  delete p;
+  a_delete p;
 }
 
 void matrix_box::append(column *pp)
@@ -234,7 +234,7 @@ void matrix_box::append(column *pp)
     maxlen *= 2;
     p = new column*[maxlen];
     memcpy(p, oldp, sizeof(column*)*len);
-    delete oldp;
+    a_delete oldp;
   }
   p[len++] = pp;
 }

@@ -1,12 +1,12 @@
 // -*- C++ -*-
-/* Copyright (C) 1989, 1990 Free Software Foundation, Inc.
-     Written by James Clark (jjc@jclark.uucp)
+/* Copyright (C) 1989, 1990, 1991, 1992 Free Software Foundation, Inc.
+     Written by James Clark (jjc@jclark.com)
 
 This file is part of groff.
 
 groff is free software; you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free
-Software Foundation; either version 1, or (at your option) any later
+Software Foundation; either version 2, or (at your option) any later
 version.
 
 groff is distributed in the hope that it will be useful, but WITHOUT ANY
@@ -15,7 +15,7 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License along
-with groff; see the file LICENSE.  If not, write to the Free Software
+with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #include "eqn.h"
@@ -85,7 +85,7 @@ int limit_box::compute_metrics(int style)
     res = r;
   }
   printf(".nr " LEFT_WIDTH_FORMAT " "
-	 "\\n[" WIDTH_FORMAT "]",
+	 "0\\n[" WIDTH_FORMAT "]",
 	 uid, p->uid);
   if (from != 0)
     printf(">?(\\n[" SUB_KERN_FORMAT "]+\\n[" WIDTH_FORMAT "])",
@@ -95,7 +95,7 @@ int limit_box::compute_metrics(int style)
 	   p->uid, to->uid);
   printf("/2\n");
   printf(".nr " WIDTH_FORMAT " "
-	 "\\n[" WIDTH_FORMAT "]",
+	 "0\\n[" WIDTH_FORMAT "]",
 	 uid, p->uid);
   if (from != 0)
     printf(">?(-\\n[" SUB_KERN_FORMAT "]+\\n[" WIDTH_FORMAT "])",
