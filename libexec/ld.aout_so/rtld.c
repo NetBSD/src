@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.76 2000/02/11 00:07:36 thorpej Exp $	*/
+/*	$NetBSD: rtld.c,v 1.76.4.1 2000/10/30 23:01:17 tv Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -358,6 +358,7 @@ rtld(version, crtp, dp)
 					(caddr_t)0, 0, crtp->crt_dp);
 	LM_PRIVATE(smp)->spd_refcount++;
 	LM_PRIVATE(smp)->spd_flags |= _RTLD_MAIN | _RTLD_GLOBAL;
+	main_map = smp;
 
 	smp = alloc_link_map(us, (struct sod *)0, (struct so_map *)0,
 					(caddr_t)crtp->crt_ba, 0, dp);
@@ -585,8 +586,6 @@ alloc_link_map(path, sodp, parent, addr, size, dp)
 	smpp->spd_size = size;
 	if (dp == NULL)
 		return (smp);
-
-/*XXX*/	if (addr == 0) main_map = smp;
 
 #ifdef SUN_COMPAT
 	smpp->spd_offset =
@@ -1737,7 +1736,7 @@ __dlopen(name, mode)
 
 	build_sod(name, sodp);
 
-	if ((smp = map_object(sodp, 0)) == NULL) {
+	if ((smp = map_object(sodp, main_map)) == NULL) {
 #ifdef DEBUG
 xprintf("%s: %s\n", name, strerror(errno));
 #endif
