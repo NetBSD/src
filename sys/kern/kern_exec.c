@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.67 1995/04/22 19:42:52 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.68 1995/05/01 22:36:45 cgd Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -144,8 +144,15 @@ check_exec(p, epp)
 	 */
 	error = ENOEXEC;
 	for (i = 0; i < nexecs && error != 0; i++) {
-		if (execsw[i].es_check != NULL)
-			error = (*execsw[i].es_check)(p, epp);
+		int newerror;
+
+		if (execsw[i].es_check == NULL)
+			continue;
+
+		newerror = (*execsw[i].es_check)(p, epp);
+		/* make sure the first "interesting" error code is saved. */
+		if (!newerror || error == ENOEXEC)
+			error = newerror;
 		if (epp->ep_flags & EXEC_DESTR && error != 0)
 			return error;
 	}
