@@ -1,4 +1,4 @@
-/*	$NetBSD: nice.c,v 1.10 1997/10/19 06:28:04 lukem Exp $	*/
+/*	$NetBSD: nice.c,v 1.11 1998/12/19 20:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nice.c,v 1.10 1997/10/19 06:28:04 lukem Exp $");
+__RCSID("$NetBSD: nice.c,v 1.11 1998/12/19 20:11:20 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -75,7 +75,8 @@ main(argc, argv)
 	setlocale(LC_ALL, "");
 
         /* handle obsolete -number syntax */
-        if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
+        if (argc > 1 && argv[1][0] == '-' &&
+	    isdigit((unsigned char)argv[1][1])) {
 		niceness = atoi (argv[1] + 1);
                 argc--; argv++;
         }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.6 1998/04/02 10:42:51 kleink Exp $	*/
+/*	$NetBSD: pr.c,v 1.7 1998/12/19 20:16:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.6 1998/04/02 10:42:51 kleink Exp $");
+__RCSID("$NetBSD: pr.c,v 1.7 1998/12/19 20:16:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1616,11 +1616,13 @@ setup(argc, argv)
 			break;
 		case 'e':
 			++eflag;
-			if ((eoptarg != NULL) && !isdigit(*eoptarg))
+			if ((eoptarg != NULL) &&
+			    !isdigit((unsigned char)*eoptarg))
 				inchar = *eoptarg++;
 			else
 				inchar = INCHAR;
-			if ((eoptarg != NULL) && isdigit(*eoptarg)) {
+			if ((eoptarg != NULL) &&
+			    isdigit((unsigned char)*eoptarg)) {
 				if ((ingap = atoi(eoptarg)) < 0) {
 					(void)fputs(
 					"pr: -e gap must be 0 or more\n", err);
@@ -1643,11 +1645,13 @@ setup(argc, argv)
 			break;
 		case 'i':
 			++iflag;
-			if ((eoptarg != NULL) && !isdigit(*eoptarg))
+			if ((eoptarg != NULL) &&
+			    !isdigit((unsigned char)*eoptarg))
 				ochar = *eoptarg++;
 			else
 				ochar = OCHAR;
-			if ((eoptarg != NULL) && isdigit(*eoptarg)) {
+			if ((eoptarg != NULL) &&
+			    isdigit((unsigned char)*eoptarg)) {
 				if ((ogap = atoi(eoptarg)) < 0) {
 					(void)fputs(
 					"pr: -i gap must be 0 or more\n", err);
@@ -1663,7 +1667,8 @@ setup(argc, argv)
 				ogap = OGAP;
 			break;
 		case 'l':
-			if (!isdigit(*eoptarg) || ((lines=atoi(eoptarg)) < 1)) {
+			if (!isdigit((unsigned char)*eoptarg) ||
+			    ((lines=atoi(eoptarg)) < 1)) {
 				(void)fputs(
 				 "pr: Number of lines must be 1 or more\n",err);
 				return(1);
@@ -1673,11 +1678,13 @@ setup(argc, argv)
 			++merge;
 			break;
 		case 'n':
-			if ((eoptarg != NULL) && !isdigit(*eoptarg))
+			if ((eoptarg != NULL) &&
+			    !isdigit((unsigned char)*eoptarg))
 				nmchar = *eoptarg++;
 			else
 				nmchar = NMCHAR;
-			if ((eoptarg != NULL) && isdigit(*eoptarg)) {
+			if ((eoptarg != NULL) &&
+			    isdigit((unsigned char)*eoptarg)) {
 				if ((nmwd = atoi(eoptarg)) < 1) {
 					(void)fputs(
 					"pr: -n width must be 1 or more\n",err);
@@ -1691,7 +1698,8 @@ setup(argc, argv)
 				nmwd = NMWD;
 			break;
 		case 'o':
-			if (!isdigit(*eoptarg) || ((offst = atoi(eoptarg))< 1)){
+			if (!isdigit((unsigned char)*eoptarg) ||
+			    ((offst = atoi(eoptarg))< 1)){
 				(void)fputs("pr: -o offset must be 1 or more\n",
 					err);
 				return(1);
@@ -1717,7 +1725,8 @@ setup(argc, argv)
 			break;
 		case 'w':
 			++wflag;
-			if (!isdigit(*eoptarg) || ((pgwd = atoi(eoptarg)) < 1)){
+			if (!isdigit((unsigned char)*eoptarg) ||
+			    ((pgwd = atoi(eoptarg)) < 1)){
 				(void)fputs(
 				   "pr: -w width must be 1 or more \n",err);
 				return(1);
