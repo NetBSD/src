@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.43 2002/11/22 22:42:06 tron Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.44 2002/11/22 23:05:29 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -1490,4 +1490,10 @@ sys/dev/ic/lsi64854.c				1.21-1.22
 
 	Adjust residual counter for wide transfers.
 	[martin, ticket #948]
+
+bin/rcp/rcp.c					1.30
+
+	It's a very bad habit to store file sizes in int's, so change it to
+	off_t instead. Obviously noone has tried to rcp files larger than 2GB.
+	[ragge, ticket #1008]
 
