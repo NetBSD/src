@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rrs.c,v 1.14 1994/08/21 15:22:43 pk Exp $
+ *	$Id: rrs.c,v 1.15 1994/12/23 20:32:59 pk Exp $
  */
 
 #include <sys/param.h>
@@ -700,6 +700,8 @@ consider_rrs_section_lengths()
 
 	if (rrs_section_type == RRS_NONE) {
 		got_symbol->defined = 0;
+		if (reserved_rrs_relocs > 0)
+			errx(1, "internal error: empty RRS has reservations");
 		return;
 	}
 
@@ -929,36 +931,37 @@ write_rrs_data()
 		return;
 
 	pos = rrs_data_start + (N_DATOFF(outheader) - DATA_START(outheader));
-	if (lseek(outdesc, pos, L_SET) != pos)
-		err(1, "write_rrs_data: lseek");
+	if (fseek(outstream, pos, SEEK_SET) != 0)
+		err(1, "write_rrs_data: fseek");
 
 	if (rrs_section_type == RRS_PARTIAL) {
 		/*
 		 * Only a GOT and PLT are needed.
 		 */
 		md_swapout_got(rrs_got, number_of_gotslots);
-		mywrite(rrs_got, number_of_gotslots, sizeof(got_t), outdesc);
+		mywrite(rrs_got, number_of_gotslots, sizeof(got_t), outstream);
 
 		md_swapout_jmpslot(rrs_plt, number_of_jmpslots);
-		mywrite(rrs_plt, number_of_jmpslots, sizeof(jmpslot_t), outdesc);
+		mywrite(rrs_plt, number_of_jmpslots,
+			sizeof(jmpslot_t), outstream);
 
 		return;
 	}
 
 	md_swapout__dynamic(&rrs_dyn);
-	mywrite(&rrs_dyn, 1, sizeof(struct _dynamic), outdesc);
+	mywrite(&rrs_dyn, 1, sizeof(struct _dynamic), outstream);
 
 	md_swapout_so_debug(&rrs_so_debug);
-	mywrite(&rrs_so_debug, 1, sizeof(struct so_debug), outdesc);
+	mywrite(&rrs_so_debug, 1, sizeof(struct so_debug), outstream);
 
 	md_swapout_section_dispatch_table(&rrs_sdt);
-	mywrite(&rrs_sdt, 1, sizeof(struct section_dispatch_table), outdesc);
+	mywrite(&rrs_sdt, 1, sizeof(struct section_dispatch_table), outstream);
 
 	md_swapout_got(rrs_got, number_of_gotslots);
-	mywrite(rrs_got, number_of_gotslots, sizeof(got_t), outdesc);
+	mywrite(rrs_got, number_of_gotslots, sizeof(got_t), outstream);
 
 	md_swapout_jmpslot(rrs_plt, number_of_jmpslots);
-	mywrite(rrs_plt, number_of_jmpslots, sizeof(jmpslot_t), outdesc);
+	mywrite(rrs_plt, number_of_jmpslots, sizeof(jmpslot_t), outstream);
 }
 
 void
@@ -971,23 +974,24 @@ write_rrs_text()
 	int			offset = 0;
 	struct shobj		*shp;
 	struct sod		*sodp;
+	int			bind;
 
 	if (rrs_section_type == RRS_PARTIAL)
 		return;
 
 	pos = rrs_text_start + (N_TXTOFF(outheader) - TEXT_START(outheader));
-	if (lseek(outdesc, pos, L_SET) != pos)
-		err(1, "write_rrs_text: lseek");
+	if (fseek(outstream, pos, SEEK_SET) != 0)
+		err(1, "write_rrs_text: fseek");
 
 	/* Write relocation records */
 	md_swapout_reloc(rrs_reloc, reserved_rrs_relocs);
 	mywrite(rrs_reloc, reserved_rrs_relocs,
-		sizeof(struct relocation_info), outdesc);
+		sizeof(struct relocation_info), outstream);
 
 	/* Write the RRS symbol hash tables */
 	md_swapout_rrs_hash(rrs_hashtab, number_of_rrs_hash_entries);
 	mywrite(rrs_hashtab, number_of_rrs_hash_entries,
-		sizeof(struct rrs_hash), outdesc);
+		sizeof(struct rrs_hash), outstream);
 
 	/*
 	 * Determine size of an RRS symbol entry, allocate space
@@ -1059,6 +1063,8 @@ write_rrs_text()
 		if (LD_VERSION_NZLIST_P(soversion))
 			nlp->nz_size = 0;
 
+		bind = (sp->flags & GS_WEAK) ? BIND_WEAK : 0;
+
 		if (sp->defined > 1) {
 			/* defined with known type */
 			if (!(link_mode & SHAREABLE) &&
@@ -1071,7 +1077,7 @@ write_rrs_text()
 				 */
 				nlp->nz_type = sp->alias->defined;
 				nlp->nz_value = sp->alias->value;
-				nlp->nz_other = N_OTHER(0, sp->alias->aux);
+				nlp->nz_other = N_OTHER(bind, sp->alias->aux);
 			} else if (sp->defined == N_SIZE) {
 				/*
 				 * Make sure this symbol isn't going
@@ -1082,28 +1088,32 @@ write_rrs_text()
 			} else {
 				nlp->nz_type = sp->defined;
 				nlp->nz_value = sp->value;
-				nlp->nz_other = N_OTHER(0, sp->aux);
+				nlp->nz_other = N_OTHER(bind, sp->aux);
 			}
 			if (LD_VERSION_NZLIST_P(soversion))
 				nlp->nz_size = sp->size;
 		} else if (sp->common_size) {
 			/*
-			 * a common definition
+			 * A common definition.
 			 */
 			nlp->nz_type = N_UNDF | N_EXT;
 			nlp->nz_value = sp->common_size;
+			nlp->nz_other = N_OTHER(bind, 0);
 		} else if (!sp->defined) {
 			/* undefined */
 			nlp->nz_type = N_UNDF | N_EXT;
 			nlp->nz_value = 0;
 			if (sp->so_defined && sp->jmpslot_offset != -1) {
 				/*
-				 * Define a "weak" function symbol.
+				 * A PLT entry. The auxiliary type -- which
+				 * must be AUX_FUNC -- is used by the run-time
+				 * linker to unambiguously resolve function
+				 * address references.
 				 */
 				if (sp->aux != AUX_FUNC)
 					errx(1, "%s: non-function jmpslot",
 						sp->name);
-				nlp->nz_other = N_OTHER(0, sp->aux);
+				nlp->nz_other = N_OTHER(bind, sp->aux);
 				nlp->nz_value =
 					rrs_sdt.sdt_plt + sp->jmpslot_offset;
 			}
@@ -1148,10 +1158,10 @@ write_rrs_text()
 		md_swapout_symbols(rrs_symbols, number_of_rrs_symbols);
 	else
 		md_swapout_zsymbols(rrs_symbols, number_of_rrs_symbols);
-	mywrite(rrs_symbols, symsize, 1, outdesc);
+	mywrite(rrs_symbols, symsize, 1, outstream);
 
 	/* Write the strings */
-	mywrite(rrs_strtab, rrs_strtab_size, 1, outdesc);
+	mywrite(rrs_strtab, rrs_strtab_size, 1, outstream);
 
 	/*
 	 * Write the names of the shared objects needed at run-time
@@ -1187,7 +1197,7 @@ write_rrs_text()
 			number_of_shobjs);
 
 	md_swapout_sod(sodp, number_of_shobjs);
-	mywrite(sodp, number_of_shobjs, sizeof(struct sod), outdesc);
+	mywrite(sodp, number_of_shobjs, sizeof(struct sod), outstream);
 
 	for (i = 0, shp = rrs_shobjs; shp; i++, shp = shp->next) {
 		char	*name = shp->entry->local_sym_name;
@@ -1196,7 +1206,7 @@ write_rrs_text()
 			name += 2;
 		}
 
-		mywrite(name, strlen(name) + 1, 1, outdesc);
+		mywrite(name, strlen(name) + 1, 1, outstream);
 	}
 }
 

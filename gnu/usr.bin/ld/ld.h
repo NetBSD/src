@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.15 1994/11/30 18:25:00 pk Exp $
+ *	$Id: ld.h,v 1.16 1994/12/23 20:32:57 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -323,7 +323,6 @@ extern int	netzmagic;
 
 
 #ifndef __GNU_STAB__
-
 /* Line number for the data section.  This is to be used to describe
    the source location of a variable declaration. */
 #ifndef N_DSLINE
@@ -335,9 +334,10 @@ extern int	netzmagic;
 #ifndef N_BSLINE
 #define N_BSLINE (N_SLINE+N_BSS-N_TEXT)
 #endif
-
 #endif /* not __GNU_STAB__ */
-
+
+#define N_ISWEAK(p)		(N_BIND(p) & BIND_WEAK)
+
 
 typedef struct localsymbol {
 	struct nzlist		nzlist;		/* n[z]list from file */
@@ -402,14 +402,15 @@ typedef struct glosym {
 
 	long			flags;
 
-#define GS_DEFINED		1	/* Symbol has definition (notyetused)*/
-#define GS_REFERENCED		2	/* Symbol is referred to by something
+#define GS_DEFINED		0x1	/* Symbol has definition (notyetused)*/
+#define GS_REFERENCED		0x2	/* Symbol is referred to by something
 					   interesting */
-#define GS_TRACE		4	/* Symbol will be traced */
-#define GS_HASJMPSLOT		8	/*				 */
+#define GS_TRACE		0x4	/* Symbol will be traced */
+#define GS_HASJMPSLOT		0x8	/*				 */
 #define GS_HASGOTSLOT		0x10	/* Some state bits concerning    */
 #define GS_CPYRELOCRESERVED	0x20	/* entries in GOT and PLT tables */
 #define GS_CPYRELOCCLAIMED	0x40	/*				 */
+#define GS_WEAK			0x80	/* Symbol is weakly defined */
 
 } symbol;
 
@@ -428,6 +429,9 @@ extern symbol *symtab[];
 
 /* # of global symbols referenced and not defined.  */
 extern int	undefined_global_sym_count;
+
+/* # of weak symbols referenced and not defined.  */
+extern int	undefined_weak_sym_count;
 
 /* # of undefined symbols referenced by shared objects */
 extern int	undefined_shobj_sym_count;
@@ -589,7 +593,7 @@ extern int		link_mode;
 #define SHAREABLE	8		/* Build a shared object */
 #define SILLYARCHIVE	16		/* Process .sa companions, if any */
 
-extern int		outdesc;	/* Output file descriptor. */
+extern FILE		*outstream;	/* Output file. */
 extern struct exec	outheader;	/* Output file header. */
 extern int		magic;		/* Output file magic. */
 extern int		oldmagic;
@@ -615,8 +619,8 @@ int	file_open __P((struct file_entry *));
 void	each_file __P((void (*)(), void *));
 void	each_full_file __P((void (*)(), void *));
 unsigned long	check_each_file __P((unsigned long (*)(), void *));
-void	mywrite __P((void *, int, int, int));
-void	padfile __P((int,int));
+void	mywrite __P((void *, int, int, FILE *));
+void	padfile __P((int, FILE *));
 
 /* In warnings.c: */
 void	perror_name __P((char *));
