@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.17 2004/08/14 15:08:04 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.18 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.17 2004/08/14 15:08:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.18 2004/08/19 23:25:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,6 @@ pciide_pnpbios_attach(parent, self, aux)
 	wdc_allocate_regs(&sc->sc_wdcdev);
 
 	cp = &sc->pciide_channels[0];
-	wdr = &cp->ata_channel.ch_wdc->regs[0];
 	sc->wdc_chanarray[0] = &cp->ata_channel;
 	cp->ata_channel.ch_channel = 0;
 	cp->ata_channel.ch_wdc = &sc->sc_wdcdev;
@@ -148,6 +147,7 @@ pciide_pnpbios_attach(parent, self, aux)
 	}
 
 	wdc_cp = &cp->ata_channel;
+	wdr = CHAN_TO_WDC_REGS(wdc_cp);
 	wdr->cmd_iot = compat_iot;
 	wdr->cmd_baseioh = cmd_baseioh;
 
@@ -176,7 +176,7 @@ void
 pciide_pnpbios_setup_channel(chp)
 	struct ata_channel *chp;
 {
-	struct pciide_channel *cp = (struct pciide_channel *)chp;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
 
 	pciide_channel_dma_setup(cp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cypide.c,v 1.11 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: cypide.c,v 1.12 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -183,8 +183,8 @@ cy693_setup_channel(struct ata_channel *chp)
 	int drive;
 	u_int32_t cy_cmd_ctrl;
 	u_int32_t idedma_ctl;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int dma_mode = -1;
 
 	ATADEBUG_PRINT(("cy693_chip_map: old timings reg 0x%x\n",

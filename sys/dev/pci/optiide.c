@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.7 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: optiide.c,v 1.8 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -172,8 +172,8 @@ static void
 opti_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	int drive, spd;
 	int mode[2];
 	u_int8_t rv, mr;
