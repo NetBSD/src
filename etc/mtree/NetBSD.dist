@@ -1,5 +1,5 @@
 #	from: @(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
-#	$Id: NetBSD.dist,v 1.10 1995/08/19 18:09:52 chopps Exp $
+#	$Id: NetBSD.dist,v 1.11 1995/11/25 21:00:28 perry Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -251,6 +251,11 @@ cat8
 # ./usr/local/man/cat8
 ..
 
+# ./usr/local/man/cat9
+cat9
+# ./usr/local/man/cat9
+..
+
 # ./usr/local/man/man1
 man1
 # ./usr/local/man/man1
@@ -289,6 +294,11 @@ man7
 # ./usr/local/man/man8
 man8
 # ./usr/local/man/man8
+..
+
+# ./usr/local/man/man9
+man9
+# ./usr/local/man/man9
 ..
 
 # ./usr/local/man
@@ -996,6 +1006,11 @@ vax
 # ./usr/share/man/cat8
 ..
 
+# ./usr/share/man/cat9
+cat9
+# ./usr/share/man/cat9
+..
+
 # ./usr/share/man/man1
 man1
 # ./usr/share/man/man1
@@ -1131,6 +1146,11 @@ vax
 ..
 
 # ./usr/share/man/man8
+..
+
+# ./usr/share/man/man9
+man9
+# ./usr/share/man/man9
 ..
 
 # ./usr/share/man
