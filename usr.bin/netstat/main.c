@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 1999/02/08 11:34:36 explorer Exp $	*/
+/*	$NetBSD: main.c,v 1.21 1999/02/27 17:37:24 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.20 1999/02/08 11:34:36 explorer Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 1999/02/27 17:37:24 sommerfe Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,6 +141,10 @@ struct nlist nl[] = {
 	{ "_ddpstat"},
 #define N_DDPCB		35
 	{ "_ddpcb"},
+#define N_MBPOOL	36
+	{ "_mbpool" },
+#define N_MCLPOOL	37
+	{ "_mclpool" },
 	{ "" },
 };
 
@@ -375,7 +379,8 @@ main(argc, argv)
 	}
 	if (mflag) {
 		mbpr(nl[N_MBSTAT].n_value,  nl[N_MSIZE].n_value,
-		    nl[N_MCLBYTES].n_value);
+		    nl[N_MCLBYTES].n_value, nl[N_MBPOOL].n_value,
+		    nl[N_MCLPOOL].n_value);
 		exit(0);
 	}
 	if (Pflag) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.12 1999/01/15 19:06:25 kml Exp $	*/
+/*	$NetBSD: netstat.h,v 1.13 1999/02/27 17:37:25 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@ void	ip_stats __P((u_long, char *));
 void	icmp_stats __P((u_long, char *));
 void	igmp_stats __P((u_long, char *));
 
-void	mbpr(u_long, u_long, u_long);
+void	mbpr(u_long, u_long, u_long, u_long, u_long);
 
 void	hostpr __P((u_long, u_long));
 void	impstats __P((u_long, u_long));
