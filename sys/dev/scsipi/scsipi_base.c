@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.85 2003/04/03 22:18:25 fvdl Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.86 2003/04/16 20:25:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.85 2003/04/03 22:18:25 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.86 2003/04/16 20:25:59 thorpej Exp $");
 
 #include "opt_scsi.h"
 
@@ -2246,8 +2246,8 @@ scsipi_print_xfer_mode(periph)
 	printf("%s: ", periph->periph_dev->dv_xname);
 	if (periph->periph_mode & (PERIPH_CAP_SYNC | PERIPH_CAP_DT)) {
 		period = scsipi_sync_factor_to_period(periph->periph_period);
-		printf("sync (%d.%dns offset %d)",
-		    period / 10, period % 10, periph->periph_offset);
+		printf("sync (%d.%02dns offset %d)",
+		    period / 100, period % 100, periph->periph_offset);
 	} else
 		printf("async");
 
@@ -2568,19 +2568,20 @@ scsipi_adapter_delref(adapt)
 
 struct scsipi_syncparam {
 	int	ss_factor;
-	int	ss_period;	/* ns * 10 */
+	int	ss_period;	/* ns * 100 */
 } scsipi_syncparams[] = {
-	{ 0x09,		125 },
-	{ 0x0a,		250 },
-	{ 0x0b,		303 },
-	{ 0x0c,		500 },
+	{ 0x08,		 625 },	/* FAST-160 (Ultra320) */
+	{ 0x09,		1250 },	/* FAST-80 (Ultra160) */
+	{ 0x0a,		2500 },	/* FAST-40 40MHz (Ultra2) */
+	{ 0x0b,		3030 },	/* FAST-40 33MHz (Ultra2) */
+	{ 0x0c,		5000 },	/* FAST-20 (Ultra) */
 };
 const int scsipi_nsyncparams =
     sizeof(scsipi_syncparams) / sizeof(scsipi_syncparams[0]);
 
 int
 scsipi_sync_period_to_factor(period)
-	int period;		/* ns * 10 */
+	int period;		/* ns * 100 */
 {
 	int i;
 
@@ -2589,7 +2590,7 @@ scsipi_sync_period_to_factor(period)
 			return (scsipi_syncparams[i].ss_factor);
 	}
 
-	return ((period / 10) / 4);
+	return ((period / 100) / 4);
 }
 
 int
@@ -2603,7 +2604,7 @@ scsipi_sync_factor_to_period(factor)
 			return (scsipi_syncparams[i].ss_period);
 	}
 
-	return ((factor * 4) * 10);
+	return ((factor * 4) * 100));
 }
 
 int
@@ -2614,7 +2615,7 @@ scsipi_sync_factor_to_freq(factor)
 
 	for (i = 0; i < scsipi_nsyncparams; i++) {
 		if (factor == scsipi_syncparams[i].ss_factor)
-			return (10000000 / scsipi_syncparams[i].ss_period);
+			return (100000000 / scsipi_syncparams[i].ss_period);
 	}
 
 	return (10000000 / ((factor * 4) * 10));

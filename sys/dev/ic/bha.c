@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.52 2003/01/31 00:26:27 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.53 2003/04/16 20:26:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.52 2003/01/31 00:26:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.53 2003/04/16 20:26:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -582,7 +582,7 @@ bha_get_xfer_mode(sc, xm)
 		}
 
 		xm->xm_period =
-		    scsipi_sync_period_to_factor(period * 10);
+		    scsipi_sync_period_to_factor(period * 100);
 		xm->xm_offset = offset;
 	}
 
