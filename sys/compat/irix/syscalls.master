@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.21 2002/02/17 20:50:07 manu Exp $
+	$NetBSD: syscalls.master,v 1.22 2002/02/17 22:49:55 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -46,6 +46,10 @@
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
@@ -58,21 +62,21 @@
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	STD		{ int svr4_sys_open(const char *path, int flags, \
+5	NOARGS		{ int svr4_sys_open(const char *path, int flags, \
 			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	OBSOL		wait
-8	STD		{ int svr4_sys_creat(const char *path, int mode); }
+8	NOARGS		{ int svr4_sys_creat(const char *path, int mode); }
 9	NOARGS		{ int sys_link(char *path, char *link); }
 10	NOARGS		{ int sys_unlink(char *path); }
-11	STD		{ int svr4_sys_execv(const char *path, char **argp); }
+11	NOARGS		{ int svr4_sys_execv(const char *path, char **argp); }
 12	NOARGS		{ int sys_chdir(char *path); }
-13	STD		{ int svr4_sys_time(svr4_time_t *t); }
+13	NOARGS		{ int svr4_sys_time(svr4_time_t *t); }
 14	OBSOL		mknod
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
 16	NOARGS		{ int sys___posix_chown(char *path, int uid, \
 			    int gid); } chown
-17	STD		{ int svr4_sys_break(caddr_t nsize); }
+17	NOARGS		{ int svr4_sys_break(caddr_t nsize); }
 18	OBSOL		stat
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
@@ -83,32 +87,32 @@
 24	NOARGS		{ uid_t sys_getuid_with_euid(void); }
 25	UNIMPL		stime
 26	UNIMPL		ptrace
-27	STD		{ int svr4_sys_alarm(unsigned sec); }
-28	STD		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
-29	STD		{ int svr4_sys_pause(void); }
-30	STD		{ int svr4_sys_utime(const char *path, \
+27	NOARGS		{ int svr4_sys_alarm(unsigned sec); }
+28	NOARGS		{ int svr4_sys_fstat(int fd, struct svr4_stat *sb); }
+29	NOARGS		{ int svr4_sys_pause(void); }
+30	NOARGS		{ int svr4_sys_utime(const char *path, \
 			     struct svr4_utimbuf *ubuf); }
 31	UNIMPL		was stty
 32	UNIMPL		was gtty
-33	STD		{ int svr4_sys_access(const char *path, int flags); }
-34	STD		{ int svr4_sys_nice(int prio); }
+33	NOARGS		{ int svr4_sys_access(const char *path, int flags); }
+34	NOARGS		{ int svr4_sys_nice(int prio); }
 35	UNIMPL		statfs
 36	NOARGS		{ int sys_sync(void); }
-37	STD		{ int svr4_sys_kill(int pid, int signum); }
+37	NOARGS		{ int svr4_sys_kill(int pid, int signum); }
 38	UNIMPL		fstatfs
-39	STD		{ int svr4_sys_pgrpsys(int cmd, int pid, int pgid); }
+39	NOARGS		{ int svr4_sys_pgrpsys(int cmd, int pid, int pgid); }
 40	STD		{ ptrdiff_t irix_sys_syssgi(int request, void *arg1, \
 			    void *arg2, void *arg3, void *arg4, void *arg5); }
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }
-43	STD		{ int svr4_sys_times(struct tms *tp); }
+43	NOARGS		{ int svr4_sys_times(struct tms *tp); }
 44	UNIMPL		profil
 45	UNIMPL		plock
 46	NOARGS		{ int sys_setgid(gid_t gid); }
 47	NOARGS		{ gid_t sys_getgid_with_egid(void); }
 48	OBSOL		ssig
 #ifdef SYSVMSG
-49	STD		{ int svr4_sys_msgsys(int what, int a2, int a3, \
+49	NOARGS		{ int svr4_sys_msgsys(int what, int a2, int a3, \
 					      int a4, int a5); }
 #else
 49	UNIMPL		msgsys
@@ -116,31 +120,31 @@
 50	UNIMPL		sysmips
 51	UNIMPL		acct
 #ifdef SYSVSHM
-52	STD		{ int svr4_sys_shmsys(int what, int a2, int a3, \
+52	NOARGS		{ int svr4_sys_shmsys(int what, int a2, int a3, \
 					      int a4); }
 #else
 52	UNIMPL		shmsys
 #endif
 #ifdef SYSVSEM
-53	STD		{ int svr4_sys_semsys(int what, int a2, int a3, \
+53	NOARGS		{ int svr4_sys_semsys(int what, int a2, int a3, \
 					      int a4, int a5); }
 #else
 53	UNIMPL		semsys
 #endif
-54	STD		{ int svr4_sys_ioctl(int fd, u_long com, \
+54	NOARGS		{ int svr4_sys_ioctl(int fd, u_long com, \
 			    caddr_t data); }
 55	UNIMPL		uadmin
 56	STD		{ int irix_sys_sysmp(int cmd, void *arg1, void *arg2, \
 			    void *arg3, void *arg4); }
-57	STD		{ int svr4_sys_utssys(void *a1, void *a2, int sel, \
+57	NOARGS		{ int svr4_sys_utssys(void *a1, void *a2, int sel, \
 			    void *a3); }
 58	UNIMPL
-59	STD		{ int svr4_sys_execve(const char *path, char **argp, \
+59	NOARGS		{ int svr4_sys_execve(const char *path, char **argp, \
 			    char **envp); }
 60	NOARGS		{ int sys_umask(int newmask); }
 61	NOARGS		{ int sys_chroot(char *path); }
-62	STD		{ int svr4_sys_fcntl(int fd, int cmd, char *arg); }
-63	STD		{ long svr4_sys_ulimit(int cmd, long newlimit); }
+62	NOARGS		{ int svr4_sys_fcntl(int fd, int cmd, char *arg); }
+63	NOARGS		{ long svr4_sys_ulimit(int cmd, long newlimit); }
 64	UNIMPL		reserved for unix/pc
 65	UNIMPL		reserved for unix/pc
 66	UNIMPL		reserved for unix/pc
@@ -165,9 +169,9 @@
 82	STD		{ long irix_sys_sginap (long ticks); }
 83	UNIMPL		sgikopt
 84	UNIMPL		sysfs
-85	STD		{ int svr4_sys_getmsg(int fd, struct svr4_strbuf *ctl, \
+85	NOARGS		{ int svr4_sys_getmsg(int fd, struct svr4_strbuf *ctl, \
 			    struct svr4_strbuf *dat, int *flags); }
-86	STD		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
+86	NOARGS		{ int svr4_sys_putmsg(int fd, struct svr4_strbuf *ctl, \
 			    struct svr4_strbuf *dat, int flags); }
 87	NOARGS		{ int sys_poll(struct pollfd *fds, u_int nfds, \
 			    int timeout); }
@@ -206,7 +210,7 @@
 105	NOARGS		{ int sys_setsockopt(int s, int level, int name, \
 			    const void *val, int valsize); }
 106	NOARGS		{ int sys_shutdown(int s, int how); }
-107	STD		{ int svr4_sys_socket(int domain, int type, \
+107	NOARGS		{ int svr4_sys_socket(int domain, int type, \
 			    int protocol); }
 108	NOARGS		{ int compat_43_sys_gethostname(char *hostname, \
 			    u_int len); }
@@ -237,14 +241,14 @@
 			    struct itimerval *itv, struct itimerval *oitv); }
 127	NOARGS		{ int sys_adjtime(struct timeval *delta, \
 			    struct timeval *olddelta); }
-128	STD		{ int svr4_sys_gettimeofday(struct timeval *tp); }
+128	NOARGS		{ int svr4_sys_gettimeofday(struct timeval *tp); }
 129	UNIMPL		sproc
 130	STD		{ ptrdiff_t irix_sys_prctl(unsigned int option, \
 			    void *arg1); }
 131	UNIMPL		procblk
 132	UNIMPL		sprocsp
 133	UNIMPL		sgigsc
-134	STD		{ void *svr4_sys_mmap(void *addr, svr4_size_t len, \
+134	NOARGS		{ void *svr4_sys_mmap(void *addr, svr4_size_t len, \
 			    int prot, int flags, int fd, svr4_off_t pos); }
 135	UNIMPL		munmap
 136	UNIMPL		mprotect
@@ -267,7 +271,8 @@
 153	UNIMPL		fchmod
 154	UNIMPL		wait3
 155	UNIMPL		socketpair
-156	UNIMPL		systeminfo
+156	STD		{ long irix_sys_systeminfo(int what, char *buf, \
+			    long len); }
 157	UNIMPL		uname
 158	STD		{ int irix_sys_xstat(const int version, \
 			    const char *path, struct stat *buf); }
@@ -276,15 +281,15 @@
 160	STD		{ int irix_sys_fxstat(const int version, \
 			    const int fd, struct stat *buf); }
 161	UNIMPL		xmknod
-162	STD		{ int svr4_sys_sigaction(int signum, \
+162	NOARGS		{ int svr4_sys_sigaction(int signum, \
 			    const struct svr4_sigaction *nsa, \
 			    struct svr4_sigaction *osa); }
-163	STD		{ int svr4_sys_sigpending(int what, \
+163	NOARGS		{ int svr4_sys_sigpending(int what, \
 			    svr4_sigset_t *set); }
-164	STD		{ int svr4_sys_sigprocmask(int how, \
+164	NOARGS		{ int svr4_sys_sigprocmask(int how, \
 			    const svr4_sigset_t *set, \
 			    svr4_sigset_t *oset); }
-165	STD		{ int svr4_sys_sigsuspend( \
+165	NOARGS		{ int svr4_sys_sigsuspend( \
 			    const svr4_sigset_t *set); }
 166	UNIMPL		sigpoll_sys
 167	UNIMPL		swapctl
