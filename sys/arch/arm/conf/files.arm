@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.65 2003/01/02 23:38:00 thorpej Exp $
+#	$NetBSD: files.arm,v 1.66 2003/03/29 07:59:41 bsh Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -11,6 +11,8 @@ defflag	opt_cputypes.h		CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8
 				CPU_XSCALE_PXA2X0
 
 defparam opt_cpuoptions.h	XSCALE_CCLKCFG
+defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_THROUGH
+defflag  opt_cpuoptions.h	XSCALE_CACHE_WRITE_BACK
 
 # Interrupt implementation header definition.
 defparam opt_arm_intr_impl.h	ARM_INTR_IMPL
