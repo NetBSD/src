@@ -161,7 +161,11 @@ static CORE_ADDR
 vax_frame_saved_pc (struct frame_info *frame)
 {
   if (frame->signal_handler_caller)
+#if 0
     return (sigtramp_saved_pc (frame)); /* XXXJRT */
+#else
+    return 0;
+#endif
 
   return (read_memory_integer (frame->frame + 16, 4));
 }
