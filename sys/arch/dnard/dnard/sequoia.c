@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.2 2001/06/05 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.3 2001/11/23 19:36:49 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -51,7 +51,7 @@
 
 #include <dev/isa/isareg.h>
 #include <machine/isa_machdep.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #include <dnard/dnard/sequoia.h>
 #include <dnard/dnard/fiq.h>
 

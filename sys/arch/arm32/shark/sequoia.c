@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.c,v 1.6 2001/06/05 05:14:51 thorpej Exp $	*/
+/*	$NetBSD: sequoia.c,v 1.7 2001/11/23 19:36:49 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -53,7 +53,7 @@
 #include <machine/isa_machdep.h>
 #include <arm32/shark/sequoia.h>
 #include <arm32/shark/fiq.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 
 

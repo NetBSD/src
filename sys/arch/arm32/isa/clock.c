@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2001/06/02 12:51:28 matthias Exp $	*/
+/*	$NetBSD: clock.c,v 1.8 2001/11/23 19:36:48 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -130,7 +130,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
 #include <machine/pio.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

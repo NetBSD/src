@@ -1,4 +1,4 @@
-/*	$NetBSD: int_bus_dma.c,v 1.1 2001/10/27 16:17:51 rearnsha Exp $	*/
+/*	$NetBSD: int_bus_dma.c,v 1.2 2001/11/23 19:36:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 #include <evbarm/integrator/int_bus_dma.h>
 
 #include <machine/cpu.h>
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #include <machine/psl.h>
 
 static int	integrator_bus_dmamap_load_buffer __P((bus_dma_tag_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pl030_rtc.c,v 1.1 2001/10/27 16:19:09 rearnsha Exp $ */
+/*	$NetBSD: pl030_rtc.c,v 1.2 2001/11/23 19:36:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,7 +38,7 @@
 #include <sys/time.h>
 #include <sys/device.h>
 
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #include <machine/intr.h>
 #include <evbarm/ifpga/ifpgavar.h>
 #include <evbarm/ifpga/ifpgamem.h>
