@@ -50,7 +50,7 @@ getstr (lineptr, n, stream, terminator, offset, limit)
      char **lineptr;
      size_t *n;
      FILE *stream;
-     char terminator;
+     int terminator;
      int offset;
      int limit;
 {
@@ -73,6 +73,7 @@ getstr (lineptr, n, stream, terminator, offset, limit)
 	  errno = ENOMEM;
 	  return -1;
 	}
+      *lineptr[0] = '\0';
     }
 
   nchars_avail = *n - offset;

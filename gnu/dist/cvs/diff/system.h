@@ -69,6 +69,16 @@ GNU General Public License for more details.
 #include <unistd.h>
 #endif
 
+#ifdef HAVE_IO_H
+# include <io.h>
+#endif
+
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#else
+# include <sys/file.h>
+#endif
+
 #ifndef SEEK_SET
 #define SEEK_SET 0
 #endif
@@ -122,7 +132,7 @@ GNU General Public License for more details.
 #endif
 
 #ifndef STAT_BLOCKSIZE
-#if HAVE_ST_BLKSIZE
+#if HAVE_STRUCT_STAT_ST_BLKSIZE
 #define STAT_BLOCKSIZE(s) (s).st_blksize
 #else
 #define STAT_BLOCKSIZE(s) (8 * 1024)
@@ -268,4 +278,17 @@ extern int errno;
 	} \
     *(q)++ = '\''; \
   }
+#endif
+
+/* these come from CVS's lib/system.h, but I wasn't sure how to include that
+ * properly or even if I really should
+ */
+#ifndef CVS_OPENDIR
+#define CVS_OPENDIR opendir
+#endif
+#ifndef CVS_READDIR
+#define CVS_READDIR readdir
+#endif
+#ifndef CVS_CLOSEDIR
+#define CVS_CLOSEDIR closedir
 #endif

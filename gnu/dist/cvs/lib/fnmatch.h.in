@@ -29,6 +29,10 @@ Library General Public License for more details.  */
 #undef FNM_NOMATCH
 #define	FNM_NOMATCH	1
 
+/* For Mac OS X namespace conflicts again.  Yuck... */
+#ifdef HAVE_FNMATCH_H
+# define fnmatch cvs_fnmatch
+#endif /* HAVE_FNMATCH_H */
 /* Match STRING against the filename pattern PATTERN,
    returning zero if it matches, FNM_NOMATCH if not.  */
 #if __STDC__

@@ -96,17 +96,17 @@ void wrap_setup()
         wrap_setup_already_done = 1;
 
 #ifdef CLIENT_SUPPORT
-    if (!client_active)
+    if (!current_parsed_root->isremote)
 #endif
     {
 	char *file;
 
-	file = xmalloc (strlen (CVSroot_directory)
+	file = xmalloc (strlen (current_parsed_root->directory)
 			+ sizeof (CVSROOTADM)
 			+ sizeof (CVSROOTADM_WRAPPER)
-			+ 10);
+			+ 3);
 	/* Then add entries found in repository, if it exists.  */
-	(void) sprintf (file, "%s/%s/%s", CVSroot_directory, CVSROOTADM,
+	(void) sprintf (file, "%s/%s/%s", current_parsed_root->directory, CVSROOTADM,
 			CVSROOTADM_WRAPPER);
 	if (isfile (file))
 	{
@@ -125,10 +125,7 @@ void wrap_setup()
        .cvswrappers is).  */
     if (homedir != NULL)
     {
-	char *file;
-
-	file = xmalloc (strlen (homedir) + sizeof (CVSDOTWRAPPER) + 10);
-	(void) sprintf (file, "%s/%s", homedir, CVSDOTWRAPPER);
+	char *file = strcat_filename_onto_homedir (homedir, CVSDOTWRAPPER);
 	if (isfile (file))
 	{
 	    wrap_add_file (file, 0);
@@ -178,14 +175,14 @@ wrap_send ()
 	       and (more importantly) where we found it.  */
 	    error (0, 0, "\
 -m wrapper option is not supported remotely; ignored");
+	send_to_server ("Argument -W\012Argument ", 0);
+	send_to_server (wrap_list[i]->wildCard, 0);
+	send_to_server (" -k '", 0);
 	if (wrap_list[i]->rcsOption != NULL)
-	{
-	    send_to_server ("Argument -W\012Argument ", 0);
-	    send_to_server (wrap_list[i]->wildCard, 0);
-	    send_to_server (" -k '", 0);
 	    send_to_server (wrap_list[i]->rcsOption, 0);
-	    send_to_server ("'\012", 0);
-	}
+	else
+	    send_to_server ("kv", 0);
+	send_to_server ("'\012", 0);
     }
 }
 #endif /* CLIENT_SUPPORT */
@@ -216,32 +213,28 @@ wrap_unparse_rcs_options (line, first_call_p)
     if (first_call_p)
         i = 0;
 
-    for (; i < wrap_count + wrap_tempcount; ++i)
-    {
-	if (wrap_list[i]->rcsOption != NULL)
-	{
-            *line = xmalloc (strlen (wrap_list[i]->wildCard)
-                             + strlen ("\t")
-                             + strlen (" -k '")
-                             + strlen (wrap_list[i]->rcsOption)
-                             + strlen ("'")
-                             + 1);  /* leave room for '\0' */
-            
-            strcpy (*line, wrap_list[i]->wildCard);
-            strcat (*line, " -k '");
-            strcat (*line, wrap_list[i]->rcsOption);
-            strcat (*line, "'");
-
-            /* We're going to miss the increment because we return, so
-               do it by hand. */
-            ++i;
-
-            return;
-	}
+    if (i >= wrap_count + wrap_tempcount) {
+        *line = NULL;
+        return;
     }
 
-    *line = NULL;
-    return;
+    *line = xmalloc (strlen (wrap_list[i]->wildCard)
+                     + strlen ("\t")
+                     + strlen (" -k '")
+                     + (wrap_list[i]->rcsOption != NULL ? 
+                           strlen (wrap_list[i]->rcsOption) : 2)
+                     + strlen ("'")
+                     + 1);  /* leave room for '\0' */
+
+    strcpy (*line, wrap_list[i]->wildCard);
+    strcat (*line, " -k '");
+    if (wrap_list[i]->rcsOption != NULL)
+        strcat (*line, wrap_list[i]->rcsOption);
+    else
+        strcat (*line, "kv");
+    strcat (*line, "'");
+
+    ++i;
 }
 #endif /* SERVER_SUPPORT || CLIENT_SUPPORT */
 
@@ -403,7 +396,7 @@ wrap_add (line, isTemp)
 	switch(opt){
 	case 'f':
 	    /* Before this is reenabled, need to address the problem in
-	       commit.c (see http://www.cyclic.com/cvs/dev-wrap.txt).  */
+	       commit.c (see http://www.cvshome.org/docs/infowrapper.html).  */
 	    error (1, 0,
 		   "-t/-f wrappers not supported by this version of CVS");
 
@@ -417,7 +410,7 @@ wrap_add (line, isTemp)
 	    break;
 	case 't':
 	    /* Before this is reenabled, need to address the problem in
-	       commit.c (see http://www.cyclic.com/cvs/dev-wrap.txt).  */
+	       commit.c (see http://www.cvshome.org/docs/infowrapper.html).  */
 	    error (1, 0,
 		   "-t/-f wrappers not supported by this version of CVS");
 
@@ -438,7 +431,7 @@ wrap_add (line, isTemp)
 	case 'k':
 	    if (e.rcsOption)
 		free (e.rcsOption);
-	    e.rcsOption = xstrdup (temp);
+	    e.rcsOption = strcmp (temp, "kv") ? xstrdup (temp) : NULL;
 	    break;
 	default:
 	    break;
@@ -471,11 +464,7 @@ wrap_add_entry(e, temp)
 
     x=(temp ? wrap_count+(wrap_tempcount++):(wrap_count++));
     wrap_list[x]=(WrapperEntry *)xmalloc(sizeof(WrapperEntry));
-    wrap_list[x]->wildCard=e->wildCard;
-    wrap_list[x]->fromcvsFilter=e->fromcvsFilter;
-    wrap_list[x]->tocvsFilter=e->tocvsFilter;
-    wrap_list[x]->mergeMethod=e->mergeMethod;
-    wrap_list[x]->rcsOption = e->rcsOption;
+    *wrap_list[x]=*e;
 }
 
 /* Return 1 if the given filename is a wrapper filename */

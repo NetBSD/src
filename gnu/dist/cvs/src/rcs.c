@@ -13,6 +13,17 @@
 #include "edit.h"
 #include "hardlink.h"
 
+/* These need to be source after cvs.h or HAVE_MMAP won't be set... */
+#ifdef HAVE_MMAP
+# include <sys/mman.h>
+# ifndef HAVE_GETPAGESIZE
+#  include "getpagesize.h"
+# endif
+# ifndef MAP_FAILED
+#  define MAP_FAILED NULL
+# endif
+#endif
+
 int preserve_perms = 0;
 
 /* The RCS -k options, and a set of enums that must match the array.
@@ -58,8 +69,10 @@ static void rcsbuf_close PROTO ((struct rcsbuffer *));
 static int rcsbuf_getkey PROTO ((struct rcsbuffer *, char **keyp,
 				 char **valp));
 static int rcsbuf_getrevnum PROTO ((struct rcsbuffer *, char **revp));
+#ifndef HAVE_MMAP
 static char *rcsbuf_fill PROTO ((struct rcsbuffer *, char *ptr, char **keyp,
 				 char **valp));
+#endif
 static int rcsbuf_valcmp PROTO ((struct rcsbuffer *));
 static char *rcsbuf_valcopy PROTO ((struct rcsbuffer *, char *val, int polish,
 				    size_t *lenp));
@@ -91,11 +104,6 @@ static void expand_keywords PROTO((RCSNode *, RCSVers *, const char *,
 				   const char *, size_t, enum kflag, char *,
 				   size_t, char **, size_t *));
 static void cmp_file_buffer PROTO((void *, const char *, size_t));
-
-enum rcs_delta_op {RCS_ANNOTATE, RCS_FETCH};
-static void RCS_deltas PROTO ((RCSNode *, FILE *, struct rcsbuffer *, char *,
-			       enum rcs_delta_op, char **, size_t *,
-			       char **, size_t *));
 
 /* Routines for reading, parsing and writing RCS files. */
 static RCSVers *getdelta PROTO ((struct rcsbuffer *, char *, char **,
@@ -735,8 +743,8 @@ RCS_fully_parse (rcs)
 	vers = findnode (rcs->versions, key);
 	if (vers == NULL)
 	    error (1, 0,
-		   "mismatch in rcs file %s between deltas and deltatexts",
-		   rcs->path);
+		   "mismatch in rcs file %s between deltas and deltatexts (%s)",
+		   rcs->path, key);
 
 	vnode = (RCSVers *) vers->data;
 
@@ -794,12 +802,12 @@ unrecognized operation '\\x%x' in %s",
 				   op, rcs->path);
 			(void) strtoul (cp, (char **) &cp, 10);
 			if (*cp++ != ' ')
-			    error (1, 0, "space expected in %s",
-				   rcs->path);
+			    error (1, 0, "space expected in %s revision %s",
+				   rcs->path, vnode->version);
 			count = strtoul (cp, (char **) &cp, 10);
 			if (*cp++ != '\012')
-			    error (1, 0, "linefeed expected in %s",
-				   rcs->path);
+			    error (1, 0, "linefeed expected in %s revision %s",
+				   rcs->path, vnode->version);
 
 			if (op == 'd')
 			    del += count;
@@ -814,8 +822,8 @@ unrecognized operation '\\x%x' in %s",
 				{
 				    if (count != 1)
 					error (1, 0, "\
-invalid rcs file %s: premature end of value",
-					       rcs->path);
+premature end of value in %s revision %s",
+					       rcs->path, vnode->version);
 				    else
 					break;
 				}
@@ -992,14 +1000,45 @@ rcsbuf_open (rcsbuf, fp, filename, pos)
 	error (1, 0, "rcsbuf_open: internal error");
     rcsbuf_inuse = 1;
 
+#ifdef HAVE_MMAP
+    {
+	/* When we have mmap, it is much more efficient to let the system do the
+	 * buffering and caching for us
+	 */
+	struct stat fs;
+	size_t mmap_off = 0;
+
+	if ( fstat (fileno(fp), &fs) < 0 )
+	    error ( 1, errno, "Could not stat RCS archive %s for mapping", filename );
+
+	if (pos)
+	{
+	    size_t ps = getpagesize ();
+	    mmap_off = ( pos / ps ) * ps;
+	}
+
+	/* Map private here since this particular buffer is read only */
+	rcsbuf_buffer = mmap ( NULL, fs.st_size - mmap_off,
+				PROT_READ | PROT_WRITE,
+				MAP_PRIVATE, fileno(fp), mmap_off );
+	if ( rcsbuf_buffer == NULL || rcsbuf_buffer == MAP_FAILED )
+	    error ( 1, errno, "Could not map memory to RCS archive %s", filename );
+
+	rcsbuf_buffer_size = fs.st_size - mmap_off;
+	rcsbuf->ptr = rcsbuf_buffer + pos - mmap_off;
+	rcsbuf->ptrend = rcsbuf_buffer + fs.st_size - mmap_off;
+	rcsbuf->pos = mmap_off;
+    }
+#else /* HAVE_MMAP */
     if (rcsbuf_buffer_size < RCSBUF_BUFSIZE)
 	expand_string (&rcsbuf_buffer, &rcsbuf_buffer_size, RCSBUF_BUFSIZE);
 
     rcsbuf->ptr = rcsbuf_buffer;
     rcsbuf->ptrend = rcsbuf_buffer;
+    rcsbuf->pos = pos;
+#endif /* HAVE_MMAP */
     rcsbuf->fp = fp;
     rcsbuf->filename = filename;
-    rcsbuf->pos = pos;
     rcsbuf->vlen = 0;
     rcsbuf->at_string = 0;
     rcsbuf->embedded_at = 0;
@@ -1013,6 +1052,9 @@ rcsbuf_close (rcsbuf)
 {
     if (! rcsbuf_inuse)
 	error (1, 0, "rcsbuf_close: internal error");
+#ifdef HAVE_MMAP
+    munmap ( rcsbuf_buffer, rcsbuf_buffer_size );
+#endif
     rcsbuf_inuse = 0;
 }
 
@@ -1053,9 +1095,10 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
     ptrend = rcsbuf->ptrend;
 
     /* Sanity check.  */
-    if (ptr < rcsbuf_buffer || ptr > rcsbuf_buffer + rcsbuf_buffer_size)
-	abort ();
+    assert (ptr >= rcsbuf_buffer && ptr <= rcsbuf_buffer + rcsbuf_buffer_size);
+    assert (ptrend >= rcsbuf_buffer && ptrend <= rcsbuf_buffer + rcsbuf_buffer_size);
 
+#ifndef HAVE_MMAP
     /* If the pointer is more than RCSBUF_BUFSIZE bytes into the
        buffer, move back to the start of the buffer.  This keeps the
        buffer from growing indefinitely.  */
@@ -1067,8 +1110,7 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 
 	/* Sanity check: we don't read more than RCSBUF_BUFSIZE bytes
            at a time, so we can't have more bytes than that past PTR.  */
-	if (len > RCSBUF_BUFSIZE)
-	    abort ();
+	assert (len <= RCSBUF_BUFSIZE);
 
 	/* Update the POS field, which holds the file offset of the
            first byte in the RCSBUF_BUFFER buffer.  */
@@ -1079,18 +1121,23 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 	ptrend = ptr + len;
 	rcsbuf->ptrend = ptrend;
     }
+#endif /* ndef HAVE_MMAP */
 
     /* Skip leading whitespace.  */
 
     while (1)
     {
 	if (ptr >= ptrend)
+#ifndef HAVE_MMAP
 	{
 	    ptr = rcsbuf_fill (rcsbuf, ptr, (char **) NULL, (char **) NULL);
 	    if (ptr == NULL)
+#endif
 		return 0;
+#ifndef HAVE_MMAP
 	    ptrend = rcsbuf->ptrend;
 	}
+#endif
 
 	c = *ptr;
 	if (! my_whitespace (c))
@@ -1109,13 +1156,17 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 	{
 	    ++ptr;
 	    if (ptr >= ptrend)
+#ifndef HAVE_MMAP
 	    {
 		ptr = rcsbuf_fill (rcsbuf, ptr, keyp, (char **) NULL);
 		if (ptr == NULL)
+#endif
 		    error (1, 0, "EOF in key in RCS file %s",
 			   rcsbuf->filename);
+#ifndef HAVE_MMAP
 		ptrend = rcsbuf->ptrend;
 	    }
+#endif
 	    c = *ptr;
 	    if (c == ';' || my_whitespace (c))
 		break;
@@ -1144,13 +1195,17 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
     while (1)
     {
 	if (ptr >= ptrend)
+#ifndef HAVE_MMAP
 	{
 	    ptr = rcsbuf_fill (rcsbuf, ptr, keyp, (char **) NULL);
 	    if (ptr == NULL)
+#endif
 		error (1, 0, "EOF while looking for value in RCS file %s",
 		       rcsbuf->filename);
+#ifndef HAVE_MMAP
 	    ptrend = rcsbuf->ptrend;
 	}
+#endif
 	c = *ptr;
 	if (c == ';')
 	{
@@ -1185,6 +1240,7 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 	while (1)
 	{
 	    while ((pat = memchr (ptr, '@', ptrend - ptr)) == NULL)
+#ifndef HAVE_MMAP
 	    {
 		/* Note that we pass PTREND as the PTR value to
                    rcsbuf_fill, so that we will wind up setting PTR to
@@ -1192,25 +1248,31 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
                    that we don't search the same bytes again.  */
 		ptr = rcsbuf_fill (rcsbuf, ptrend, keyp, valp);
 		if (ptr == NULL)
+#endif
 		    error (1, 0,
 			   "EOF while looking for end of string in RCS file %s",
 			   rcsbuf->filename);
+#ifndef HAVE_MMAP
 		ptrend = rcsbuf->ptrend;
 	    }
+#endif
 
 	    /* Handle the special case of an '@' right at the end of
                the known bytes.  */
 	    if (pat + 1 >= ptrend)
+#ifndef HAVE_MMAP
 	    {
 		/* Note that we pass PAT, not PTR, here.  */
 		pat = rcsbuf_fill (rcsbuf, pat, keyp, valp);
 		if (pat == NULL)
 		{
+#endif
 		    /* EOF here is OK; it just means that the last
 		       character of the file was an '@' terminating a
 		       value for a key type which does not require a
 		       trailing ';'.  */
 		    pat = rcsbuf->ptrend - 1;
+#ifndef HAVE_MMAP
 
 		}
 		ptrend = rcsbuf->ptrend;
@@ -1218,6 +1280,7 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 		/* Note that the value of PTR is bogus here.  This is
 		   OK, because we don't use it.  */
 	    }
+#endif
 
 	    if (pat + 1 >= ptrend || pat[1] != '@')
 		break;
@@ -1267,13 +1330,17 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 	    char n;
 
 	    if (ptr >= ptrend)
+#ifndef HAVE_MMAP
 	    {
 		ptr = rcsbuf_fill (rcsbuf, ptr, keyp, valp);
 		if (ptr == NULL)
+#endif
 		    error (1, 0, "EOF in value in RCS file %s",
 			   rcsbuf->filename);
+#ifndef HAVE_MMAP
 		ptrend = rcsbuf->ptrend;
 	    }
+#endif
 	    n = *ptr;
 	    if (n == ';')
 	    {
@@ -1308,6 +1375,7 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 	/* Find the ';' which must end the value.  */
 	start = ptr;
 	while ((psemi = memchr (ptr, ';', ptrend - ptr)) == NULL)
+#ifndef HAVE_MMAP
 	{
 	    int slen;
 
@@ -1318,10 +1386,13 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 	    slen = start - *valp;
 	    ptr = rcsbuf_fill (rcsbuf, ptrend, keyp, valp);
 	    if (ptr == NULL)
+#endif
 		error (1, 0, "EOF in value in RCS file %s", rcsbuf->filename);
+#ifndef HAVE_MMAP
 	    start = *valp + slen;
 	    ptrend = rcsbuf->ptrend;
 	}
+#endif
 
 	/* See if there are any '@' strings in the value.  */
 	pat = memchr (start, '@', psemi - start);
@@ -1365,6 +1436,7 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
 	while (1)
 	{
 	    while ((pat = memchr (ptr, '@', ptrend - ptr)) == NULL)
+#ifndef HAVE_MMAP
 	    {
 		/* Note that we pass PTREND as the PTR value to
                    rcsbuff_fill, so that we will wind up setting PTR
@@ -1372,22 +1444,29 @@ rcsbuf_getkey (rcsbuf, keyp, valp)
                    that we don't search the same bytes again.  */
 		ptr = rcsbuf_fill (rcsbuf, ptrend, keyp, valp);
 		if (ptr == NULL)
+#endif
 		    error (1, 0,
 			   "EOF while looking for end of string in RCS file %s",
 			   rcsbuf->filename);
+#ifndef HAVE_MMAP
 		ptrend = rcsbuf->ptrend;
 	    }
+#endif
 
 	    /* Handle the special case of an '@' right at the end of
                the known bytes.  */
 	    if (pat + 1 >= ptrend)
+#ifndef HAVE_MMAP
 	    {
 		ptr = rcsbuf_fill (rcsbuf, ptr, keyp, valp);
 		if (ptr == NULL)
+#endif
 		    error (1, 0, "EOF in value in RCS file %s",
 			   rcsbuf->filename);
+#ifndef HAVE_MMAP
 		ptrend = rcsbuf->ptrend;
 	    }
+#endif
 
 	    if (pat[1] != '@')
 		break;
@@ -1430,12 +1509,16 @@ rcsbuf_getrevnum (rcsbuf, revp)
     while (1)
     {
 	if (ptr >= ptrend)
+#ifndef HAVE_MMAP
 	{
 	    ptr = rcsbuf_fill (rcsbuf, ptr, (char **) NULL, (char **) NULL);
 	    if (ptr == NULL)
+#endif
 		return 0;
+#ifndef HAVE_MMAP
 	    ptrend = rcsbuf->ptrend;
 	}
+#endif
 
 	c = *ptr;
 	if (! whitespace (c))
@@ -1456,14 +1539,18 @@ unexpected '\\x%x' reading revision number in RCS file %s",
     {
 	++ptr;
 	if (ptr >= ptrend)
+#ifndef HAVE_MMAP
 	{
 	    ptr = rcsbuf_fill (rcsbuf, ptr, revp, (char **) NULL);
 	    if (ptr == NULL)
+#endif
 		error (1, 0,
 		       "unexpected EOF reading revision number in RCS file %s",
 		       rcsbuf->filename);
+#ifndef HAVE_MMAP
 	    ptrend = rcsbuf->ptrend;
 	}
+#endif
 
 	c = *ptr;
     }
@@ -1481,6 +1568,7 @@ unexpected '\\x%x' reading revision number in RCS file %s",
     return 1;
 }
 
+#ifndef HAVE_MMAP
 /* Fill RCSBUF_BUFFER with bytes from the file associated with RCSBUF,
    updating PTR and the PTREND field.  If KEYP and *KEYP are not NULL,
    then *KEYP points into the buffer, and must be adjusted if the
@@ -1502,10 +1590,6 @@ rcsbuf_fill (rcsbuf, ptr, keyp, valp)
 
 	poff = ptr - rcsbuf_buffer;
 	peoff = rcsbuf->ptrend - rcsbuf_buffer;
-	if (keyp != NULL && *keyp != NULL)
-	    koff = *keyp - rcsbuf_buffer;
-	if (valp != NULL && *valp != NULL)
-	    voff = *valp - rcsbuf_buffer;
 	koff = keyp == NULL ? 0 : *keyp - rcsbuf_buffer;
 	voff = valp == NULL ? 0 : *valp - rcsbuf_buffer;
 
@@ -1514,9 +1598,9 @@ rcsbuf_fill (rcsbuf, ptr, keyp, valp)
 
 	ptr = rcsbuf_buffer + poff;
 	rcsbuf->ptrend = rcsbuf_buffer + peoff;
-	if (keyp != NULL && *keyp != NULL)
+	if (keyp != NULL)
 	    *keyp = rcsbuf_buffer + koff;
-	if (valp != NULL && *valp != NULL)
+	if (valp != NULL)
 	    *valp = rcsbuf_buffer + voff;
     }
 
@@ -1532,6 +1616,7 @@ rcsbuf_fill (rcsbuf, ptr, keyp, valp)
 
     return ptr;
 }
+#endif /* HAVE_MMAP */
 
 /* Test whether the last value returned by rcsbuf_getkey is a composite
    value or not. */
@@ -1688,7 +1773,19 @@ rcsbuf_valpolish_internal (rcsbuf, to, from, lenp)
 	    {
 		++from;
 
-		/* Sanity check.  */
+		/* Sanity check.
+		 *
+		 * FIXME: I restored this to an abort from an assert based on
+		 * advice from Larry Jones that asserts should not be used to
+		 * confirm the validity of an RCS file...  This leaves two
+		 * issues here: 1) I am uncertain that the fact that we will
+		 * only find double '@'s hasn't already been confirmed; and:
+		 * 2) If this is the proper place to spot the error in the RCS
+		 * file, then we should print a much clearer error here for the
+		 * user!!!!!!!
+		 *
+		 *	- DRP
+		 */
 		if (*from != '@' || clen == 0)
 		    abort ();
 
@@ -1712,11 +1809,8 @@ rcsbuf_valpolish_internal (rcsbuf, to, from, lenp)
 	}
 
 	/* Sanity check.  */
-	if (from != orig_from + len
-	    || to != orig_to + (len - rcsbuf->embedded_at))
-	{
-	    abort ();
-	}
+	assert (from == orig_from + len
+	    && to == orig_to + (len - rcsbuf->embedded_at));
 
 	*to = '\0';
     }
@@ -1737,7 +1831,7 @@ rcsbuf_valword (rcsbuf, valp)
     register char *ptr, *pat;
     char c;
 
-#define my_whitespace(c)	(my_spacetab[(unsigned char)c] != 0)
+# define my_whitespace(c)	(my_spacetab[(unsigned char)c] != 0)
 
     if (*valp == NULL)
 	return NULL;
@@ -1795,7 +1889,7 @@ rcsbuf_valword (rcsbuf, valp)
        or an id.  Make sure it is not another special character. */
     if (c == '$' || c == '.' || c == ',')
     {
-	error (1, 0, "illegal special character in RCS field in %s",
+	error (1, 0, "invalid special character in RCS field in %s",
 	       rcsbuf->filename);
     }
 
@@ -1815,7 +1909,7 @@ rcsbuf_valword (rcsbuf, valp)
        the character in its memory cell.  Check to make sure that it
        is a legitimate word delimiter -- whitespace or end. */
     if (c != '\0' && !my_whitespace (c))
-	error (1, 0, "illegal special character in RCS field in %s",
+	error (1, 0, "invalid special character in RCS field in %s",
 	       rcsbuf->filename);
 
     *pat = '\0';
@@ -1823,7 +1917,7 @@ rcsbuf_valword (rcsbuf, valp)
     *valp = pat;
     return xstrdup (ptr);
 
-#undef my_whitespace
+# undef my_whitespace
 }
 
 #endif
@@ -1834,7 +1928,7 @@ static unsigned long
 rcsbuf_ftell (rcsbuf)
     struct rcsbuffer *rcsbuf;
 {
-    return rcsbuf->pos + (rcsbuf->ptr - rcsbuf_buffer);
+    return rcsbuf->pos + rcsbuf->ptr - rcsbuf_buffer;
 }
 
 /* Return a pointer to any data buffered for RCSBUF, along with the
@@ -1881,9 +1975,9 @@ rcsbuf_cache_close ()
 {
     if (cached_rcs != NULL)
     {
+	rcsbuf_close (&cached_rcsbuf);
 	if (fclose (cached_rcsbuf.fp) != 0)
 	    error (0, errno, "cannot close %s", cached_rcsbuf.filename);
-	rcsbuf_close (&cached_rcsbuf);
 	freercsnode (&cached_rcs);
 	cached_rcs = NULL;
     }
@@ -1900,6 +1994,7 @@ rcsbuf_cache_open (rcs, pos, pfp, prcsbuf)
     FILE **pfp;
     struct rcsbuffer *prcsbuf;
 {
+#ifndef HAVE_MMAP
     if (cached_rcs == rcs)
     {
 	if (rcsbuf_ftell (&cached_rcsbuf) != pos)
@@ -1930,19 +2025,32 @@ rcsbuf_cache_open (rcs, pos, pfp, prcsbuf)
     }
     else
     {
+#endif /* ifndef HAVE_MMAP */
+	/* FIXME:  If these routines can be rewritten to not write to the
+	 * rcs file buffer, there would be a considerably larger memory savings
+	 * from using mmap since the shared file would never need be copied to
+	 * process memory.
+	 *
+	 * If this happens, cached mmapped buffers would be usable, but don't
+	 * forget to make sure rcs->pos < pos here...
+	 */
 	if (cached_rcs != NULL)
 	    rcsbuf_cache_close ();
 
 	*pfp = CVS_FOPEN (rcs->path, FOPEN_BINARY_READ);
 	if (*pfp == NULL)
 	    error (1, 0, "unable to reopen `%s'", rcs->path);
+#ifndef HAVE_MMAP
 	if (pos != 0)
 	{
 	    if (fseek (*pfp, pos, SEEK_SET) != 0)
 		error (1, 0, "cannot fseek RCS file %s", rcs->path);
 	}
+#endif /* ifndef HAVE_MMAP */
 	rcsbuf_open (prcsbuf, *pfp, rcs->path, pos);
+#ifndef HAVE_MMAP
     }
+#endif /* ifndef HAVE_MMAP */
 }
 
 
@@ -2126,7 +2234,7 @@ RCS_getversion (rcs, tag, date, force_tag_match, simple_tag)
  * -- If tag is a branch tag, returns the branch number, not
  *    the revision of the head of the branch.
  * If tag or revision is not valid or does not exist in file,
- * exit with error.
+ * return NULL.
  */
 char *
 RCS_tag2rev (rcs, tag)
@@ -2205,9 +2313,8 @@ RCS_tag2rev (rcs, tag)
     if (rev)
         return rev;
 
-    error (1, 0, "tag `%s' does not exist", tag);
-    /* NOT REACHED -- error (1 ... ) does not return here */
-    return 0;
+    /* Trust the caller to print warnings. */
+    return NULL;
 }
 
 /*
@@ -2241,7 +2348,7 @@ RCS_gettag (rcs, symtag, force_tag_match, simple_tag)
 	RCS_reparsercsfile (rcs, (FILE **) NULL, (struct rcsbuffer *) NULL);
 
     /* If tag is "HEAD", special case to get head RCS revision */
-    if (tag && (STREQ (tag, TAG_HEAD) || *tag == '\0'))
+    if (tag && STREQ (tag, TAG_HEAD))
 #if 0 /* This #if 0 is only in the Cygnus code.  Why?  Death support?  */
 	if (force_tag_match && (rcs->flags & VALID) && (rcs->flags & INATTIC))
 	    return ((char *) NULL);	/* head request for removed file */
@@ -2838,16 +2945,21 @@ RCS_getdate (rcs, date, force_tag_match)
 
     /* if the head is on a branch, try the branch first */
     if (rcs->branch != NULL)
+    {
 	retval = RCS_getdatebranch (rcs, date, rcs->branch);
-
-    /* if we found a match, we are done */
-    if (retval != NULL)
-	return (retval);
+	if (retval != NULL)
+	    return (retval);
+    }
 
     /* otherwise if we have a trunk, try it */
     if (rcs->head)
     {
 	p = findnode (rcs->versions, rcs->head);
+	if (p == NULL)
+	{
+	    error (0, 0, "%s: head revision %s doesn't exist", rcs->path,
+		   rcs->head);
+	}
 	while (p != NULL)
 	{
 	    /* if the date of this one is before date, take it */
@@ -2865,10 +2977,13 @@ RCS_getdate (rcs, date, force_tag_match)
 		p = (Node *) NULL;
 	}
     }
+    else
+	error (0, 0, "%s: no head revision", rcs->path);
 
     /*
      * at this point, either we have the revision we want, or we have the
-     * first revision on the trunk (1.1?) in our hands
+     * first revision on the trunk (1.1?) in our hands, or we've come up
+     * completely empty
      */
 
     /* if we found what we're looking for, and it's not 1.1 return it */
@@ -2901,7 +3016,8 @@ RCS_getdate (rcs, date, force_tag_match)
     if (retval != NULL)
 	return (retval);
 
-    if (!force_tag_match || RCS_datecmp (vers->date, date) <= 0)
+    if (!force_tag_match ||
+	(vers != NULL && RCS_datecmp (vers->date, date) <= 0))
 	return (xstrdup (vers->version));
     else
 	return (NULL);
@@ -3174,6 +3290,8 @@ translate_symtag (rcs, tag)
 
 	    while (! whitespace (*cp) && *cp != '\0')
 		++cp;
+	    if (*cp == '\0')
+		break;
 	}
     }
 
@@ -4155,7 +4273,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	       whether it should be considered an error for `dest' to exist
 	       at this point.  If so, the unlink call should be removed and
 	       `symlink' should signal the error. -twp) */
-	    if (unlink (dest) < 0 && !existence_error (errno))
+	    if (CVS_UNLINK (dest) < 0 && !existence_error (errno))
 		error (1, errno, "cannot remove %s", dest);
 	    if (symlink (info->data, dest) < 0)
 		error (1, errno, "cannot create symbolic link from %s to %s",
@@ -4244,7 +4362,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 	    /* If the size of `devtype' changes, fix the sscanf call also */
 	    char devtype[16+1];
 
-	    if (sscanf (info->data, "%16s %lu",
+	    if (sscanf (info->data, "%15s %lu",
 			devtype, &devnum_long) < 2)
 		error (1, 0, "%s:%s has bad `special' newphrase %s",
 		       workfile, vers->version, info->data);
@@ -4309,7 +4427,7 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 #ifdef PRESERVE_PERMISSIONS_SUPPORT
     else if (special_file)
     {
-#ifdef HAVE_MKNOD
+# ifdef HAVE_MKNOD
 	char *dest;
 
 	/* Can send either to WORKFILE or to SOUT, as long as SOUT is
@@ -4325,16 +4443,16 @@ RCS_checkout (rcs, workfile, rev, nametag, options, sout, pfn, callerdat)
 
 	/* Unlink `dest', just in case.  It's okay if this provokes a
 	   ENOENT error. */
-	if (unlink (dest) < 0 && existence_error (errno))
+	if (CVS_UNLINK (dest) < 0 && existence_error (errno))
 	    error (1, errno, "cannot remove %s", dest);
 	if (mknod (dest, special_file, devnum) < 0)
 	    error (1, errno, "could not create special file %s",
 		   dest);
-#else
+# else
 	error (1, 0,
 "cannot create %s: unable to create special files on this system",
 workfile);
-#endif
+# endif
     }
 #endif
     else
@@ -4898,7 +5016,7 @@ RCS_checkin (rcs, workfile, message, rev, flags)
 	delta->other_delta = getlist();
 
 	if (CVS_LSTAT (workfile, &sb) < 0)
-	    error (1, 1, "cannot lstat %s", workfile);
+	    error (1, errno, "cannot lstat %s", workfile);
 
 	if (S_ISLNK (sb.st_mode))
 	{
@@ -4937,7 +5055,7 @@ RCS_checkin (rcs, workfile, message, rev, flags)
 		case S_IFREG: break;
 		case S_IFCHR:
 		case S_IFBLK:
-#ifdef HAVE_ST_RDEV
+# ifdef HAVE_STRUCT_STAT_ST_RDEV
 		    np = getnode();
 		    np->type = RCSFIELD;
 		    np->key = xstrdup ("special");
@@ -4947,11 +5065,11 @@ RCS_checkin (rcs, workfile, message, rev, flags)
 			     (unsigned long) sb.st_rdev);
 		    np->data = xstrdup (buf);
 		    addnode (delta->other_delta, np);
-#else
+# else
 		    error (0, 0,
 "can't preserve %s: unable to save device files on this system",
 workfile);
-#endif
+# endif
 		    break;
 
 		default:
@@ -5268,7 +5386,7 @@ workfile);
 	memset (commitpt->text, 0, sizeof (Deltatext));
 
 	bufsize = 0;
-	switch (diff_exec (workfile, tmpfile, diffopts, changefile))
+	switch (diff_exec (workfile, tmpfile, NULL, NULL, diffopts, changefile))
 	{
 	    case 0:
 	    case 1:
@@ -5316,7 +5434,7 @@ workfile);
 	/* This file is not being inserted at the head, but on a side
 	   branch somewhere.  Make a diff from the previous revision
 	   to the working file. */
-	switch (diff_exec (tmpfile, workfile, diffopts, changefile))
+	switch (diff_exec (tmpfile, workfile, NULL, NULL, diffopts, changefile))
 	{
 	    case 0:
 	    case 1:
@@ -5696,7 +5814,7 @@ RCS_setbranch (rcs, rev)
 int
 RCS_lock (rcs, rev, lock_quiet)
      RCSNode *rcs;
-     const char *rev;
+     char *rev;
      int lock_quiet;
 {
     List *locks;
@@ -5715,32 +5833,16 @@ RCS_lock (rcs, rev, lock_quiet)
     /* A revision number of NULL means lock the head or default branch. */
     if (rev == NULL)
 	xrev = RCS_head (rcs);
-
-    /* If rev is a branch number, lock the latest revision on that
-       branch. I think that if the branch doesn't exist, it's
-       okay to return 0 -- that just means that the branch is new,
-       so we don't need to lock it anyway. -twp */
-    else if (RCS_nodeisbranch (rcs, rev))
-    {
-	xrev = RCS_getbranch (rcs, (char *) rev, 1);
-	if (xrev == NULL)
-	{
-	    if (!lock_quiet)
-		error (0, 0, "%s: branch %s absent", rcs->path, rev);
-	    return 1;
-	}
-    }
-
-    if (xrev == NULL)
-	xrev = xstrdup (rev);
+    else
+	xrev = RCS_gettag (rcs, rev, 1, (int *) NULL);
 
     /* Make sure that the desired revision exists.  Technically,
        we can update the locks list without even checking this,
        but RCS 5.7 did this.  And it can't hurt. */
-    if (findnode (rcs->versions, xrev) == NULL)
+    if (xrev == NULL || findnode (rcs->versions, xrev) == NULL)
     {
 	if (!lock_quiet)
-	    error (0, 0, "%s: revision %s absent", rcs->path, xrev);
+	    error (0, 0, "%s: revision %s absent", rcs->path, rev);
 	free (xrev);
 	return 1;
     }
@@ -5806,7 +5908,7 @@ RCS_lock (rcs, rev, lock_quiet)
 int
 RCS_unlock (rcs, rev, unlock_quiet)
      RCSNode *rcs;
-     const char *rev;
+     char *rev;
      int unlock_quiet;
 {
     Node *lock;
@@ -5818,7 +5920,9 @@ RCS_unlock (rcs, rev, unlock_quiet)
     if (rcs->flags & PARTIAL)
 	RCS_reparsercsfile (rcs, (FILE **) NULL, (struct rcsbuffer *) NULL);
 
-    /* If rev is NULL, unlock the latest revision (first in
+    /* If rev is NULL, unlock the revision held by the caller; if more
+       than one, make the user specify the revision explicitly.  This
+       differs from RCS which unlocks the latest revision (first in
        rcs->locks) held by the caller. */
     if (rev == NULL)
     {
@@ -5843,33 +5947,35 @@ RCS_unlock (rcs, rev, unlock_quiet)
 	lock = NULL;
 	for (p = locks->list->next; p != locks->list; p = p->next)
 	{
-	    if (lock != NULL)
+	    if (STREQ (p->data, user))
 	    {
-		if (!unlock_quiet)
-		    error (0, 0, "\
+		if (lock != NULL)
+		{
+		    if (!unlock_quiet)
+			error (0, 0, "\
 %s: multiple revisions locked by %s; please specify one", rcs->path, user);
-		return 1;
+		    return 1;
+		}
+		lock = p;
 	    }
-	    lock = p;
 	}
 	if (lock == NULL)
+	{
+	    if (!unlock_quiet)
+		error (0, 0, "No locks are set for %s.\n", user);
 	    return 0;	/* no lock found, ergo nothing to do */
+	}
 	xrev = xstrdup (lock->key);
     }
-    else if (RCS_nodeisbranch (rcs, rev))
+    else
     {
-	/* If rev is a branch number, unlock the latest revision on that
-	   branch. */
-	xrev = RCS_getbranch (rcs, (char *) rev, 1);
+	xrev = RCS_gettag (rcs, rev, 1, (int *) NULL);
 	if (xrev == NULL)
 	{
-	    error (0, 0, "%s: branch %s absent", rcs->path, rev);
+	    error (0, 0, "%s: revision %s absent", rcs->path, rev);
 	    return 1;
 	}
     }
-    else
-	/* REV is an exact revision number. */
-	xrev = xstrdup (rev);
 
     lock = findnode (RCS_getlocks (rcs), xrev);
     if (lock == NULL)
@@ -5886,6 +5992,9 @@ RCS_unlock (rcs, rev, unlock_quiet)
 	   is called with a NULL revision, since that means "whatever
 	   revision is currently locked by the caller." */
 	char *repos, *workfile;
+	if (!unlock_quiet)
+	    error (0, 0, "\
+%s: revision %s locked by %s; breaking lock", rcs->path, xrev, lock->data);
 	repos = xstrdup (rcs->path);
 	workfile = strrchr (repos, '/');
 	*workfile++ = '\0';
@@ -6391,7 +6500,7 @@ RCS_delete_revs (rcs, tag1, tag2, inclusive)
 		goto delrev_done;
 
 	    outfile = cvs_temp_name();
-	    status = diff_exec (beforefile, afterfile, "-an", outfile);
+	    status = diff_exec (beforefile, afterfile, NULL, NULL, "-an", outfile);
 
 	    if (status == 2)
 	    {
@@ -7030,7 +7139,7 @@ rcs_change_text (name, textbuf, textlen, diffbuf, difflen, retbuf, retlen)
 
    On error, give a fatal error.  */
 
-static void
+void
 RCS_deltas (rcs, fp, rcsbuf, version, op, text, len, log, loglen)
     RCSNode *rcs;
     FILE *fp;
@@ -7107,8 +7216,8 @@ RCS_deltas (rcs, fp, rcsbuf, version, op, text, len, log, loglen)
 	    node = findnode (rcs->versions, key);
 	    if (node == NULL)
 	        error (1, 0,
-		       "mismatch in rcs file %s between deltas and deltatexts",
-		       rcs->path);
+		       "mismatch in rcs file %s between deltas and deltatexts (%s)",
+		       rcs->path, key);
 
 	    /* Stash the previous version.  */
 	    prev_vers = vers;
@@ -7432,7 +7541,7 @@ unable to parse %s; `author' not in the expected place", rcsfile);
 unable to parse %s; `state' not in the expected place", rcsfile);
     vnode->state = rcsbuf_valcopy (rcsbuf, value, 0, (size_t *) NULL);
     /* The value is optional, according to rcsfile(5).  */
-    if (value != NULL && STREQ (value, "dead"))
+    if (value != NULL && STREQ (value, RCSDEAD))
     {
 	vnode->dead = 1;
     }
@@ -7518,7 +7627,7 @@ unable to parse %s; `state' not in the expected place", rcsfile);
 	    vnode->dead = 1;
 	    if (vnode->state != NULL)
 		free (vnode->state);
-	    vnode->state = xstrdup ("dead");
+	    vnode->state = xstrdup (RCSDEAD);
 	    continue;
 	}
 	/* if we have a new revision number, we're done with this delta */
@@ -7600,8 +7709,8 @@ RCS_getdeltatext (rcs, fp, rcsbuf)
 
     p = findnode (rcs->versions, num);
     if (p == NULL)
-	error (1, 0, "mismatch in rcs file %s between deltas and deltatexts",
-	       rcs->path);
+	error (1, 0, "mismatch in rcs file %s between deltas and deltatexts (%s)",
+	       rcs->path, num);
 
     d = (Deltatext *) xmalloc (sizeof (Deltatext));
     d->version = xstrdup (num);
@@ -7961,8 +8070,10 @@ RCS_copydeltas (rcs, fin, rcsbufin, fout, newdtext, insertpt)
     char *bufrest;
     int nls;
     size_t buflen;
+#ifndef HAVE_MMAP
     char buf[8192];
     int got;
+#endif
 
     /* Count the number of versions for which we have to do some
        special operation.  */
@@ -8071,7 +8182,12 @@ RCS_copydeltas (rcs, fin, rcsbufin, fout, newdtext, insertpt)
 
 	fwrite (bufrest, 1, buflen, fout);
     }
-
+#ifndef HAVE_MMAP
+    /* This bit isn't necessary when using mmap since the entire file
+     * will already be available via the RCS buffer.  Besides, the
+     * mmap code doesn't always keep the file pointer up to date, so
+     * this adds some data twice.
+     */
     while ((got = fread (buf, 1, sizeof buf, fin)) != 0)
     {
 	if (nls > 0
@@ -8088,6 +8204,7 @@ RCS_copydeltas (rcs, fin, rcsbufin, fout, newdtext, insertpt)
 
 	nls = 0;
     }
+#endif /* HAVE_MMAP */
 }
 
 /* A helper procedure for RCS_copydeltas.  This is called via walklist
@@ -8270,13 +8387,12 @@ rcs_internal_unlockfile (fp, rcsfile)
        corrupting the repository. */
 
     if (ferror (fp))
-	/* The only case in which using errno here would be meaningful
-	   is if we happen to have left errno unmolested since the call
-	   which produced the error (e.g. fprintf).  That is pretty
-	   fragile even if it happens to sometimes be true.  The real
-	   solution is to check each call to fprintf rather than waiting
+	/* Using errno here may well be misleanding since the most recent
+	   call that set errno may not have anything whatsoever to do with
+	   the error that set the flag, but it's better than nothing.  The
+	   real solution is to check each call to fprintf rather than waiting
 	   until the end like this.  */
-	error (1, 0, "error writing to lock file %s", rcs_lockfile);
+	error (1, errno, "error writing to lock file %s", rcs_lockfile);
     if (fclose (fp) == EOF)
 	error (1, errno, "error closing lock file %s", rcs_lockfile);
     rcs_lockfd = -1;
@@ -8349,7 +8465,8 @@ RCS_rewrite (rcs, newdtext, insertpt)
     /* Update delta_pos to the current position in the output file.
        Do NOT move these statements: they must be done after fin has
        been positioned at the old delta_pos, but before any delta
-       texts have been written to fout. */
+       texts have been written to fout.
+     */
     rcs->delta_pos = ftell (fout);
     if (rcs->delta_pos == -1)
 	error (1, errno, "cannot ftell in RCS file %s", rcs->path);
@@ -8366,7 +8483,7 @@ RCS_rewrite (rcs, newdtext, insertpt)
 	   fragile even if it happens to sometimes be true.  The real
 	   solution is to make sure that all the code which reads
 	   from fin checks for errors itself (some does, some doesn't).  */
-	error (0, 0, "warning: when closing RCS file `%s'", rcs->path);
+	error (0, 0, "warning: ferror set while rewriting RCS file `%s'", rcs->path);
     if (fclose (fin) < 0)
 	error (0, errno, "warning: closing RCS file `%s'", rcs->path);
 
@@ -8389,138 +8506,6 @@ RCS_abandon (rcs)
     rcs->flags |= PARTIAL;
 }
 
-
-/* Annotate command.  In rcs.c for historical reasons (from back when
-   what is now RCS_deltas was part of annotate_fileproc).  */
-
-/* Options from the command line.  */
-
-static int force_tag_match = 1;
-static char *tag = NULL;
-static char *date = NULL;
-
-static int annotate_fileproc PROTO ((void *callerdat, struct file_info *));
-
-static int
-annotate_fileproc (callerdat, finfo)
-    void *callerdat;
-    struct file_info *finfo;
-{
-    FILE *fp = NULL;
-    struct rcsbuffer *rcsbufp = NULL;
-    struct rcsbuffer rcsbuf;
-    char *version;
-
-    if (finfo->rcs == NULL)
-        return (1);
-
-    if (finfo->rcs->flags & PARTIAL)
-    {
-        RCS_reparsercsfile (finfo->rcs, &fp, &rcsbuf);
-	rcsbufp = &rcsbuf;
-    }
-
-    version = RCS_getversion (finfo->rcs, tag, date, force_tag_match,
-			      (int *) NULL);
-    if (version == NULL)
-        return 0;
-
-    /* Distinguish output for various files if we are processing
-       several files.  */
-    cvs_outerr ("Annotations for ", 0);
-    cvs_outerr (finfo->fullname, 0);
-    cvs_outerr ("\n***************\n", 0);
-
-    RCS_deltas (finfo->rcs, fp, rcsbufp, version, RCS_ANNOTATE, NULL,
-		NULL, NULL, NULL);
-    free (version);
-    return 0;
-}
-
-static const char *const annotate_usage[] =
-{
-    "Usage: %s %s [-lRf] [-r rev|-D date] [files...]\n",
-    "\t-l\tLocal directory only, no recursion.\n",
-    "\t-R\tProcess directories recursively.\n",
-    "\t-f\tUse head revision if tag/date not found.\n",
-    "\t-r rev\tAnnotate file as of specified revision/tag.\n",
-    "\t-D date\tAnnotate file as of specified date.\n",
-    "(Specify the --help global option for a list of other help options)\n",
-    NULL
-};
-
-/* Command to show the revision, date, and author where each line of a
-   file was modified.  */
-
-int
-annotate (argc, argv)
-    int argc;
-    char **argv;
-{
-    int local = 0;
-    int c;
-
-    if (argc == -1)
-	usage (annotate_usage);
-
-    optind = 0;
-    while ((c = getopt (argc, argv, "+lr:D:fR")) != -1)
-    {
-	switch (c)
-	{
-	    case 'l':
-		local = 1;
-		break;
-	    case 'R':
-		local = 0;
-		break;
-	    case 'r':
-	        tag = optarg;
-		break;
-	    case 'D':
-	        date = Make_Date (optarg);
-		break;
-	    case 'f':
-	        force_tag_match = 0;
-		break;
-	    case '?':
-	    default:
-		usage (annotate_usage);
-		break;
-	}
-    }
-    argc -= optind;
-    argv += optind;
-
-#ifdef CLIENT_SUPPORT
-    if (client_active)
-    {
-	start_server ();
-	ign_setup ();
-
-	if (local)
-	    send_arg ("-l");
-	if (!force_tag_match)
-	    send_arg ("-f");
-	option_with_arg ("-r", tag);
-	if (date)
-	    client_senddate (date);
-	send_files (argc, argv, local, 0, SEND_NO_CONTENTS);
-	send_file_names (argc, argv, SEND_EXPAND_WILD);
-	send_to_server ("annotate\012", 0);
-	return get_responses_and_close ();
-    }
-#endif /* CLIENT_SUPPORT */
-
-    if (tag != NULL)
-	tag_check_valid (tag, argc, argv, local, 0, "");
-
-    return start_recursion (annotate_fileproc, (FILESDONEPROC) NULL,
-			    (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL, NULL,
-			    argc, argv, local, W_LOCAL, 0, 1, (char *)NULL,
-			    1);
-}
-
 /*
  * For a given file with full pathname PATH and revision number REV,
  * produce a file label suitable for passing to diff.  The default
@@ -8530,6 +8515,11 @@ annotate (argc, argv)
  *
  * The date and time used are the revision's last checkin date and time.
  * If REV is NULL, use the working copy's mtime instead.
+ *
+ * /dev/null is not statted but assumed to have been created on the Epoch.
+ * At least using the POSIX.2 definition of patch, this should cause creation
+ * of files on platforms such as Windoze where the null IO device isn't named
+ * /dev/null to be parsed by patch properly.
  */
 char *
 make_file_label (path, rev, rcs)
@@ -8537,37 +8527,45 @@ make_file_label (path, rev, rcs)
     char *rev;
     RCSNode *rcs;
 {
-    char datebuf[MAXDATELEN];
+    char datebuf[MAXDATELEN + 1];
     char *label;
-    char *file;
 
-    file = last_component (path);
     label = (char *) xmalloc (strlen (path)
-			      + (rev == NULL ? 0 : strlen (rev))
-			      + 50);
+			      + (rev == NULL ? 0 : strlen (rev) + 1)
+			      + MAXDATELEN
+			      + 2);
 
     if (rev)
     {
-	char *date;
+	char date[MAXDATELEN + 1];
+	/* revs cannot be attached to /dev/null ... duh. */
+	assert (strcmp(DEVNULL, path));
 	RCS_getrevtime (rcs, rev, datebuf, 0);
-	date = printable_date (datebuf);
+	(void) date_to_internet (date, datebuf);
 	(void) sprintf (label, "-L%s\t%s\t%s", path, date, rev);
-	free (date);
     }
     else
     {
 	struct stat sb;
-	struct tm *wm;
+	struct tm *wm = NULL;
 
-	if (CVS_STAT (file, &sb) < 0)
-	    error (0, 1, "could not get info for `%s'", path);
+	if (strcmp(DEVNULL, path))
+	{
+	    char *file = last_component (path);
+	    if (CVS_STAT (file, &sb) < 0)
+		error (0, 1, "could not get info for `%s'", path);
+	    else
+		wm = gmtime (&sb.st_mtime);
+	}
 	else
 	{
-	    wm = gmtime (&sb.st_mtime);
-	    (void) sprintf (datebuf, "%04d/%02d/%02d %02d:%02d:%02d",
-			    wm->tm_year + 1900, wm->tm_mon + 1,
-			    wm->tm_mday, wm->tm_hour,
-			    wm->tm_min, wm->tm_sec);
+	    time_t t = 0;
+	    wm = gmtime(&t);
+	}
+
+	if (wm)
+	{
+	    (void) tm_to_internet (datebuf, wm);
 	    (void) sprintf (label, "-L%s\t%s", path, datebuf);
 	}
     }

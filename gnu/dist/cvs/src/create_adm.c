@@ -40,20 +40,17 @@ Create_Admin (dir, update_dir, repository, tag, date, nonbranch, warn,
 
     if (trace)
     {
-	fprintf (stderr, "%s-> Create_Admin (%s, %s, %s, %s, %s, %d, %d)\n",
+	fprintf (stderr, "%s-> Create_Admin (%s, %s, %s, %s, %s, %d, %d, %d)\n",
 		 CLIENT_SERVER_STR,
 		 dir, update_dir, repository, tag ? tag : "",
-		 date ? date : "", nonbranch, warn);
+		 date ? date : "", nonbranch, warn, dotemplate);
     }
 
     if (noexec)
 	return 0;
 
     tmp = xmalloc (strlen (dir) + 100);
-    if (dir != NULL)
-	(void) sprintf (tmp, "%s/%s", dir, CVSADM);
-    else
-	(void) strcpy (tmp, CVSADM);
+    (void) sprintf (tmp, "%s/%s", dir, CVSADM);
     if (isfile (tmp))
 	error (1, 0, "there is a version in %s already", update_dir);
 
@@ -84,7 +81,7 @@ Create_Admin (dir, update_dir, repository, tag, date, nonbranch, warn,
 
     /* record the current cvs root for later use */
 
-    Create_Root (dir, CVSroot_original);
+    Create_Root (dir, current_parsed_root->original);
     if (dir != NULL)
 	(void) sprintf (tmp, "%s/%s", dir, CVSADM_REP);
     else
@@ -106,7 +103,7 @@ Create_Admin (dir, update_dir, repository, tag, date, nonbranch, warn,
        spend the time making sure all of the code can handle it if we
        don't do it. */
 
-    if (strcmp (reposcopy, CVSroot_directory) == 0)
+    if (strcmp (reposcopy, current_parsed_root->directory) == 0)
     {
 	reposcopy = xrealloc (reposcopy, strlen (reposcopy) + 3);
 	strcat (reposcopy, "/.");
@@ -114,21 +111,18 @@ Create_Admin (dir, update_dir, repository, tag, date, nonbranch, warn,
 
     cp = reposcopy;
 
-#ifdef RELATIVE_REPOS
     /*
      * If the Repository file is to hold a relative path, try to strip off
      * the leading CVSroot argument.
      */
-    if (CVSroot_directory != NULL)
     {
-	char *path = xmalloc (strlen (CVSroot_directory) + 10);
+    char *path = xmalloc (strlen (current_parsed_root->directory) + 2);
 
-	(void) sprintf (path, "%s/", CVSroot_directory);
-	if (strncmp (cp, path, strlen (path)) == 0)
-	    cp += strlen (path);
-	free (path);
+    (void) sprintf (path, "%s/", current_parsed_root->directory);
+    if (strncmp (cp, path, strlen (path)) == 0)
+	cp += strlen (path);
+    free (path);
     }
-#endif
 
     if (fprintf (fout, "%s\n", cp) < 0)
     {

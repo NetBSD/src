@@ -1,4 +1,4 @@
-#! xPERL_PATHx
+#! @PERL@
 # -*-Perl-*-
 #
 # Perl filter to handle the log messages from the checkin of files in

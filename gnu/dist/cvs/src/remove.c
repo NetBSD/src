@@ -77,7 +77,7 @@ cvsremove (argc, argv)
     wrap_setup ();
 
 #ifdef CLIENT_SUPPORT
-    if (client_active) {
+    if (current_parsed_root->isremote) {
 	/* Call expand_wild so that the local removal of files will
            work.  It's ok to do it always because we have to send the
            file names expanded anyway.  */
@@ -90,7 +90,7 @@ cvsremove (argc, argv)
 		start_recursion (remove_force_fileproc, (FILESDONEPROC) NULL,
 				 (DIRENTPROC) NULL, (DIRLEAVEPROC) NULL,
 				 (void *) NULL, argc, argv, local, W_LOCAL,
-				 0, 0, (char *) NULL, 0);
+				 0, CVS_LOCK_NONE, (char *) NULL, 0);
 	    }
 	    /* else FIXME should probably act as if the file doesn't exist
 	       in doing the following checks.  */
@@ -100,6 +100,7 @@ cvsremove (argc, argv)
 	ign_setup ();
 	if (local)
 	    send_arg("-l");
+	send_arg ("--");
 	/* FIXME: Can't we set SEND_NO_CONTENTS here?  Needs investigation.  */
 	send_files (argc, argv, local, 0, 0);
 	send_file_names (argc, argv, 0);
@@ -113,9 +114,9 @@ cvsremove (argc, argv)
     err = start_recursion (remove_fileproc, (FILESDONEPROC) NULL,
                            remove_dirproc, (DIRLEAVEPROC) NULL, NULL,
 			   argc, argv,
-                           local, W_LOCAL, 0, 1, (char *) NULL, 1);
+                           local, W_LOCAL, 0, CVS_LOCK_READ, (char *) NULL, 1);
 
-    if (removed_files)
+    if (removed_files && !really_quiet)
 	error (0, 0, "use '%s commit' to remove %s permanently", program_name,
 	       (removed_files == 1) ? "this file" : "these files");
 
@@ -196,11 +197,7 @@ remove_fileproc (callerdat, finfo)
 	 * remove the ,t file for it and scratch it from the
 	 * entries file.  */
 	Scratch_Entry (finfo->entries, finfo->file);
-	fname = xmalloc (strlen (finfo->file)
-			 + sizeof (CVSADM)
-			 + sizeof (CVSEXT_LOG)
-			 + 10);
-	(void) sprintf (fname, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
+	(void) xasprintf (&fname, "%s/%s%s", CVSADM, finfo->file, CVSEXT_LOG);
 	if (unlink_file (fname) < 0
 	    && !existence_error (errno))
 	    error (0, errno, "cannot remove %s", CVSEXT_LOG);
@@ -234,6 +231,14 @@ remove_fileproc (callerdat, finfo)
 	error (0, 0, "\
 cannot remove file `%s' which has a numeric sticky tag of `%s'",
 	       finfo->fullname, vers->tag);
+    }
+    else if (vers->date != NULL)
+    {
+	/* Commit will just give an error, and so there seems to be
+	   little reason to allow the remove.  */
+	error (0, 0, "\
+cannot remove file `%s' which has a sticky date of `%s'",
+	       finfo->fullname, vers->date);
     }
     else
     {

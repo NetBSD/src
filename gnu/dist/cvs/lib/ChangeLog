@@ -1,3 +1,194 @@
+2002-12-27  Derek Price  <derek@ximbiot.com>
+
+	* getdate.c: Regenerated with Bison 1.35.
+
+2002-11-04  Derek Price  <derek@ximbiot.com>
+
+	* getdate.y (Convert): Add comment as to the effectiveness of
+	descriptive error messages.
+
+2002-09-24  Derek Price  <derek@ximbiot.com>
+
+	* Makefile.in: Regenerated using Automake 1.6.3.
+
+2002-09-24  Derek Price  <derek@ximbiot.com>
+
+	* Makefile.in: Regenerated.
+
+2002-09-15  Larry Jones  <lawrence.jones@eds.com>
+
+	* system.h: Add FOPEN_BINARY_READWRITE.
+	(Patch submitted by Josh Lehan <cvs@krellan.com>.)
+
+2002-08-12  Derek Price  <oberon@umich.edu>
+
+	* Makefile.am: Remove obsolete reference to `ftruncate.c'.
+	(Symptoms reported by
+	Andrey Aristarkhov <Aristarkhov@bitechnology.ru>.)
+	* Makefile.in: Regenerated.
+
+2002-08-08  Derek Price  <oberon@umich.edu>
+
+	* regex.c: Removed unused `compile_range' declaration.
+	(Patch from John Tytgat <John.Tytgat@aaug.net>.)
+	
+2002-05-09  Larry Jones  <lawrence.jones@eds.com>
+
+	* getline.c (getstr): Make terminator int instead of char to avoid
+	promotion problems.
+	* getline.h (getstr): Change to match.
+
+2002-05-08  Derek Price  <oberon@umich.edu>
+
+	* Makefile.in: Regenerated.
+	* fnmatch.h: Move this file...
+	* fnmatch.h.in: here.
+
+2002-05-08  Derek Price  <oberon@umich.edu>
+
+	* strerror.c: Use HAVE_CONFIG_H and put config.h in brackets rather
+	than quotes.
+
+2002-05-02  Derek Price  <oberon@umich.edu>
+
+	* fnmatch.h: More #defines to avoid Mac OS X namespace conflicts.
+
+2002-04-30  Derek Price  <oberon@umich.edu>
+
+	* hostname.c: Rename to...
+	* gethostname.c: this.
+	* Makefile.am: Change comment to reflect above.
+
+	* Makefile.in: Regenerated with automake 1.6.
+
+2002-04-28  Derek Price  <oberon@umich.edu>
+
+	* getopt.h: #define new names for functions and variables when they
+	might conflict with system definitions (namely on Mac OS X 10.1 with
+	the most recent dev packages - This should be removable after the Mac
+	dev packages are fixed.).
+	* regex.h: Ditto.
+	* Makefile.am (libcvs_a_SOURCES): Remove fnmatch.h.
+
+2002-04-20  Larry Jones  <larry.jones@sdrc.com>
+
+	* Makefile.am (libcvs_a_SOURCES): Add getpagesize.h.
+	* Makefile.in: Regenerated.
+
+2001-09-18  Derek Price  <dprice@collab.net>
+
+	* fnmatch.c: The header file for a system function we're replacing with
+	our own should be #included using double quotes.
+	(Patch from Corey Minyard  <minyard@acm.org> via
+	Alexey Mahotkin <alexm@hsys.msk.ru>.)
+
+2001-09-04  Derek Price  <dprice@collab.net>
+
+	* Makefile.in: Regenerated with automake 1.5.
+
+2001-08-09  Derek Price  <dprice@collab.net>
+
+	* getpagesize.h: Only include sys/param.h when HAVE_SYS_PARAM_H has
+	been defined by configure.
+
+2001-08-07  Derek Price  <dprice@collab.net>
+
+	* build_lib.com: Verify.
+	* getdate.y: Move the include of xtime.h out from underneath the ifdef
+	so that it is always included.
+	(Patch from Mike Marciniszyn <Mike.Marciniszyn@sanchez.com>.)
+
+	* getdate.c: Regenerated.
+
+2001-08-06  Derek Price  <dprice@collab.net>
+
+	* Makefile.in: Regenerated.
+
+2001-07-05  Larry Jones  <larry.jones@sdrc.com>
+
+	* getpagesize.h: New file to define getpagesize() for systems that
+	don't already have it.
+	* valloc.c (valloc): Use it.
+
+2001-07-04  Derek Price  <dprice@collab.net>
+
+	* Makefile.in: Regenerated with new Automake release candidate 1.4h.
+
+2001-06-28  Derek Price  <dprice@collab.net>
+
+	* Makefile.in: Regenerated with new version of Automake.
+
+2001-06-15  Derek Price  <dprice@collab.net>
+
+	* xselect.h: Don't include xtime.h.
+	(Thanks to Martin Neitzel <neitzel@sco.gaertner.de>.)
+
+2001-04-25  Derek Price  <dprice@collab.net>
+
+	* Makefile.in: Regenerated using AM 1.4e as of today at 18:10 -0400.
+
+2001-04-02  Derek Price  <dprice@collab.net>
+	    for Alon Ziv  <alonz@zapper.com>
+
+	* getdate.y: Add a declaration for yyparse().
+
+	* getdate.c: Regenerated.
+
+2001-03-14  Derek Price  <derek.price@openavenue.com>
+
+        * Makefile.in: Regenerated
+
+2001-02-20  Derek Price  <derek.price@openavenue.com>
+
+	* xgssapi.h: New file to perform GSSAPI include magic.
+	* Makefile.am (EXTRA_DIST): Add xgssapi.h.
+
+	* Makefile.in: Regenerated.
+
+2001-02-14  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.am (libcvs_a_SOURCES): Add xtime.h & xselect.h.
+	* Makefile.in: Regenerated.
+	* getdate.y: Include xtime.h.
+	* getdate.c: Regenerated.
+	* system.h: Include xtime.h.
+	* xtime.h: New file to do include magic for time functions.
+	* xselect.h: New file to do select include magic.
+
+2001-02-06  Derek Price  <derek.price@openavenue.com>
+	    Rex Jolliff  <Rex_Jolliff@notes.ymp.gov>
+	    Shawn Smith  <Shawn_Smith@notes.ymp.gov>
+
+	* system.h: definitions of CVS_OPENDIR, CVS_READDIR, & CVS_CLOSEDIR
+	provided here in support of changes to handle VMS DEC C 5.7
+	{open,read,close}dir problems.  Check today's entry in the vms subdir
+	for more.
+
+2001-01-10  Derek Price  <derek.price@openavenue.com>
+	    Rex Jolliff  <Rex_Jolliff@notes.ymp.gov>
+
+	* rename.c: replace calls to unlink() with CVS_UNLINK() for VMS
+
+2000-12-22  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.am (INCLUDES): Fixed typo
+        * Makefile.in: Regenerated
+
+2000-12-22  Derek Price  <derek.price@openavenue.com>
+
+	* Makefile.am (INCLUDES): Added $(top_srcdir)/src
+        * Makefile.in: Regenerated
+
+2000-12-21  Derek Price  <derek.price@openavenue.com>
+
+	* .cvsignore: Added .deps directory and alphabetized
+	* Makefile.am: New file needed by Automake
+	* Makefile.in: Regenerated
+
+2000-11-15  Derek Price  <derek.price@openavenue.com>
+
+	* system.h:  Added CVS_FDOPEN to conform to CVS_FOPEN precedent
+
 2000-07-10  Larry Jones  <larry.jones@sdrc.com>
 
 	* savecwd.c: #include <sys/types.h> before <fcntl.h>.
