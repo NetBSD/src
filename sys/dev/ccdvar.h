@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.15 1998/11/13 00:26:19 thorpej Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.16 1999/01/12 00:21:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
  *	@(#)cdvar.h	8.1 (Berkeley) 6/10/93
  */
 
+#include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
 
@@ -91,35 +92,16 @@
  */
 
 /*
- * A concatenated disk is described at initialization time by this structure.
- */
-struct ccddevice {
-	int		ccd_unit;	/* logical unit of this ccd */
-	int		ccd_interleave;	/* interleave (DEV_BSIZE blocks) */
-	int		ccd_flags;	/* misc. information */
-	struct vnode	**ccd_vpp;	/* array of component vnodes */
-	char		**ccd_cpp;	/* array of component pathnames */
-	int		ccd_ndev;	/* number of component devices */
-};
-
-/*
  * This structure is used to configure a ccd via ioctl(2).
  */
 struct ccd_ioctl {
 	char	**ccio_disks;		/* pointer to component paths */
 	int	ccio_ndisks;		/* number of disks to concatenate */
 	int	ccio_ileave;		/* interleave (DEV_BSIZE blocks) */
-	int	ccio_flags;		/* misc. information */
+	int	ccio_flags;		/* see sc_flags below */
 	int	ccio_unit;		/* unit number: use varies */
 	size_t	ccio_size;		/* (returned) size of ccd */
 };
-
-/* ccd_flags */
-#define	CCDF_SWAP	0x01	/* interleave should be dmmax */
-#define CCDF_UNIFORM	0x02	/* use LCCD of sizes for uniform interleave */
-
-/* Mask of user-settable ccd flags. */
-#define CCDF_USERMASK	(CCDF_SWAP|CCDF_UNIFORM)
 
 /*
  * Component info table.
@@ -184,7 +166,6 @@ struct ccdbuf;
 struct ccd_softc {
 	int		 sc_unit;		/* logical unit number */
 	int		 sc_flags;		/* flags */
-	int		 sc_cflags;		/* configuration flags */
 	size_t		 sc_size;		/* size of ccd */
 	int		 sc_ileave;		/* interleave */
 	int		 sc_nccdisks;		/* number of components */
@@ -194,14 +175,18 @@ struct ccd_softc {
 	char		 sc_xname[8];		/* XXX external name */
 	struct disk	 sc_dkdev;		/* generic disk device info */
 	struct pool	 sc_cbufpool;		/* component buffer pool */
+	struct lock	 sc_lock;		/* lock on this structure */
 };
 
 /* sc_flags */
-#define CCDF_INITED	0x01	/* unit has been initialized */
-#define CCDF_WLABEL	0x02	/* label area is writable */
-#define CCDF_LABELLING	0x04	/* unit is currently being labelled */
-#define CCDF_WANTED	0x40	/* someone is waiting to obtain a lock */
-#define CCDF_LOCKED	0x80	/* unit is locked */
+#define	CCDF_SWAP	0x01	/* interleave should be dmmax */
+#define	CCDF_UNIFORM	0x02	/* use LCCD of sizes for uniform interleave */
+#define CCDF_INITED	0x10	/* unit has been initialized */
+#define CCDF_WLABEL	0x20	/* label area is writable */
+#define CCDF_LABELLING	0x40	/* unit is currently being labelled */
+
+/* Mask of user-settable ccd flags. */
+#define CCDF_USERMASK	(CCDF_SWAP|CCDF_UNIFORM)
 
 /*
  * Before you can use a unit, it must be configured with CCDIOCSET.
