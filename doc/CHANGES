@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.137 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.138 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -355,3 +355,5 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		written by Shuichiro URATA. [tsutsui 20030406]
 	rsh(1), rlogin(1): Add -p flag to allow specifying a non-standard
 		port number. [hubertf 20030407]
+	kernel: SMBFS uses low-overhead NT Directory Change Notify SMB to watch
+		for vnode kqueue(2) events on directories [jdolecek 20030407]
