@@ -1,4 +1,4 @@
-.\"	$NetBSD: recv.2,v 1.11 1998/08/29 08:32:41 lukem Exp $
+.\"	$NetBSD: recv.2,v 1.12 1999/02/10 18:20:03 kleink Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,7 @@
 .Ft ssize_t
 .Fn recv "int s" "void *buf" "size_t len" "int flags"
 .Ft ssize_t
-.Fn recvfrom "int s" "void *buf" "size_t len" "int flags" "struct sockaddr *from" "int *fromlen"
+.Fn recvfrom "int s" "void *buf" "size_t len" "int flags" "struct sockaddr *from" "socklen_t *fromlen"
 .Ft ssize_t
 .Fn recvmsg "int s" "struct msghdr *msg" "int flags"
 .Sh DESCRIPTION
