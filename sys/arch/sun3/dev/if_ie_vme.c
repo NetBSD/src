@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.8 1997/03/15 18:10:52 is Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.9 1997/10/17 03:44:49 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -97,25 +97,20 @@ ie_vmes_match(parent, cf, args)
 	void *args;
 {
 	struct confargs *ca = args;
-	int x;
-
-#ifdef	DIAGNOSTIC
-	if (ca->ca_bustype != BUS_VME16) {
-		printf("ie_vmes_match: bustype %d?\n", ca->ca_bustype);
-		return (0);
-	}
-#endif
 
 	/* No default VME address. */
 	if (ca->ca_paddr == -1)
 		return(0);
 
-	/* Default interrupt level. */
+	/* Make sure something is there... */
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 2) == -1)
+		return (0);
+
+	/* Default interrupt priority. */
 	if (ca->ca_intpri == -1)
 		ca->ca_intpri = 3;
 
-	x = bus_peek(ca->ca_bustype, ca->ca_paddr, 2);
-	return (x != -1);
+	return (1);
 }
 
 /*
