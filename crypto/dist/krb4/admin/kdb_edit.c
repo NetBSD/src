@@ -15,7 +15,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$Id: kdb_edit.c,v 1.1.1.2 2000/12/29 01:42:18 assar Exp $");
+RCSID("$Id: kdb_edit.c,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $");
 
 #ifdef DEBUG
 extern  kerb_debug;
@@ -47,7 +47,7 @@ static long master_key_version;
 static void
 Usage(void)
 {
-    fprintf(stderr, "Usage: %s [-n]\n", __progname);
+    fprintf(stderr, "Usage: %s [-n]\n", getprogname());
     exit(1);
 }
 
@@ -341,7 +341,7 @@ main(int argc, char **argv)
 
     long    n;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
 
     while (--argc > 0 && (*++argv)[0] == '-')
 	for (i = 1; argv[0][i] != '\0'; i++) {
@@ -384,8 +384,10 @@ main(int argc, char **argv)
 						    stdout)) < 0)
       return 1;
 
+#ifndef HAVE_OPENSSL
     /* Initialize non shared random sequence */
     des_init_random_number_generator(&master_key);
+#endif
 
     /* lookup the default values */
     n = kerb_get_principal(KERB_DEFAULT_NAME, KERB_DEFAULT_INST,

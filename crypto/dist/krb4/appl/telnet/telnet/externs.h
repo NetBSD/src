@@ -33,7 +33,7 @@
  *	@(#)externs.h	8.3 (Berkeley) 5/30/95
  */
 
-/* $Id: externs.h,v 1.1.1.2 2000/12/29 01:42:38 assar Exp $ */
+/* $Id: externs.h,v 1.1.1.3 2001/09/17 12:09:46 assar Exp $ */
 
 #ifndef	BSD
 # define BSD 43
@@ -95,6 +95,8 @@ extern char
     dont[],
     will[],
     wont[],
+    do_dont_resp[],
+    will_wont_resp[],
     options[],		/* All the little options */
     *hostname;		/* Who are we connected to? */
 #if	defined(ENCRYPTION)
@@ -136,7 +138,7 @@ extern int (*decrypt_input) (int);
 #define	set_my_want_state_wont(opt)	{options[opt] &= ~MY_WANT_STATE_WILL;}
 
 /*
- * Make everything symetrical
+ * Make everything symmetrical
  */
 
 #define	HIS_STATE_WILL			MY_STATE_DO
@@ -182,7 +184,7 @@ extern jmp_buf
 int telnet_net_write(unsigned char *str, int len);
 void net_encrypt(void);
 int telnet_spin(void);
-char *telnet_getenv(char *val);
+char *telnet_getenv(const char *val);
 char *telnet_gets(char *prompt, char *result, int length, int echo);
 #endif
 
@@ -200,7 +202,8 @@ unsigned char * env_default(int init, int welldefined);
 unsigned char * env_getvalue(unsigned char *var);
 
 void set_escape_char(char *s);
-unsigned long sourceroute(char *arg, char **cpp, int *lenp);
+int sourceroute(struct addrinfo *ai, char *arg, char **cpp,
+		int *prototp, int *optp);
 
 #if	defined(AUTHENTICATION)
 int auth_enable (char *);
@@ -222,7 +225,7 @@ int 	EncryptStatus (void);
 #endif
 
 #ifdef SIGINFO
-void ayt_status(int);
+RETSIGTYPE ayt_status(int);
 #endif
 int tn(int argc, char **argv);
 void command(int top, char *tbuf, int cnt);
@@ -427,3 +430,9 @@ extern Ring
     ttyoring,
     ttyiring;
 
+extern int resettermname;
+extern int linemode;
+#ifdef KLUDGELINEMODE
+extern int kludgelinemode;
+#endif
+extern int want_status_response;

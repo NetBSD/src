@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/12/29 01:43:54 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/09/17 12:10:05 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -14,33 +14,95 @@ DEFS = @DEFS@
 
 if KRB4
 KAFS=$(top_builddir)/lib/kafs/.libs/libkafs.a
+KAFS_S=$(top_builddir)/lib/kafs/.libs/libkafs.so
 endif
 
+if KRB5
 L = \
 	$(KAFS)						\
 	$(top_builddir)/lib/krb5/.libs/libkrb5.a	\
 	$(top_builddir)/lib/asn1/.libs/libasn1.a	\
 	$(LIB_krb4)					\
-	$(top_builddir)/lib/des/.libs/libdes.a		\
+	$(LIB_des_a)					\
+	$(LIB_com_err_a)				\
+	$(top_builddir)/lib/roken/.libs/libroken.a	\
+	$(LIB_getpwnam_r)				\
+	-lc
+
+L_shared = \
+	$(KAFS_S)					\
+	$(top_builddir)/lib/krb5/.libs/libkrb5.so	\
+	$(top_builddir)/lib/asn1/.libs/libasn1.so	\
+	$(LIB_krb4)					\
+	$(LIB_des_so)					\
+	$(LIB_com_err_so)				\
+	$(top_builddir)/lib/roken/.libs/libroken.so	\
+	$(LIB_getpwnam_r)				\
+	-lc
+
+MOD = libsia_krb5.so
+
+else
+
+L = \
+	$(KAFS)						\
+	$(top_builddir)/lib/kadm/.libs/libkadm.a	\
+	$(top_builddir)/lib/krb/.libs/libkrb.a		\
+	$(LIB_des_a)		\
 	$(top_builddir)/lib/com_err/.libs/libcom_err.a	\
 	$(top_builddir)/lib/roken/.libs/libroken.a	\
 	$(LIB_getpwnam_r)				\
 	-lc
 
-EXTRA_DIST = sia.c krb5_matrix.conf krb5+c2_matrix.conf security.patch
+L_shared = \
+	$(KAFS_S)					\
+	$(top_builddir)/lib/kadm/.libs/libkadm.so	\
+	$(top_builddir)/lib/krb/.libs/libkrb.so		\
+	$(LIB_des_so)		\
+	$(top_builddir)/lib/com_err/.libs/libcom_err.so	\
+	$(top_builddir)/lib/roken/.libs/libroken.so	\
+	$(LIB_getpwnam_r)				\
+	-lc
+
+MOD = libsia_krb4.so
+
+endif
+
+EXTRA_DIST = sia.c krb4_matrix.conf krb4+c2_matrix.conf \
+	krb5_matrix.conf krb5+c2_matrix.conf security.patch
 
 foodir = $(libdir)
-foo_DATA = libsia_krb5.so
+foo_DATA = $(MOD)
 
-LDFLAGS = -rpath $(libdir) -hidden -exported_symbol siad_\* 
+LDFLAGS = @LDFLAGS@ -rpath $(libdir) -Wl,-hidden -Wl,-exported_symbol -Wl,siad_\* 
 
 OBJS = sia.o posix_getpw.o
 
 libsia_krb5.so: $(OBJS)
-	ld -shared -o $@ $(LDFLAGS) $(OBJS) $(L)
+	@if test -f $(top_builddir)/lib/krb5/.libs/libkrb5.a; then \
+		echo "$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L)`"; \
+		$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L)`; \
+	elif test -f $(top_builddir)/lib/krb5/.libs/libkrb5.so; then \
+		echo "$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L_shared)`"; \
+		$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L_shared)`; \
+	else \
+		echo "missing libraries"; exit 1; \
+	fi
 	ostrip -x -z $@
 
-CLEANFILES = libsia_krb5.so $(OBJS) so_locations
+libsia_krb4.so: $(OBJS)
+	@if test -f $(top_builddir)/lib/krb/.libs/libkrb.a; then \
+		echo "$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L)`"; \
+		$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L)`; \
+	elif test -f $(top_builddir)/lib/krb/.libs/libkrb.so; then \
+		echo "$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L_shared)`"; \
+		$(CC) -shared -o $@ `$(SHELL) $(srcdir)/make-rpath $(LDFLAGS) $(OBJS) $(L_shared)`; \
+	else \
+		echo "missing libraries"; exit 1; \
+	fi
+	ostrip -x $@
+
+CLEANFILES = $(MOD) $(OBJS) so_locations
 
 SUFFIXES += .c .o
 

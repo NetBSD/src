@@ -23,13 +23,13 @@
 
 #include "sample.h"
 
-RCSID("$Id: sample_client.c,v 1.1.1.2 2000/12/29 01:42:27 assar Exp $");
+RCSID("$Id: sample_client.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
 
 static void
 usage (void)
 {
   fprintf (stderr, "Usage: %s [-s service] [-p port] hostname checksum\n",
-	   __progname);
+	   getprogname());
   exit (1);
 }
 
@@ -40,7 +40,7 @@ main(int argc, char **argv)
     struct sockaddr_in sin, lsin;
     char *remote_host;
     int status;
-    int namelen;
+    socklen_t namelen;
     int sock = -1;
     KTEXT_ST ticket;
     char buf[512];
@@ -55,7 +55,7 @@ main(int argc, char **argv)
     struct servent *serv;
     char **h_addr_list;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     strlcpy (service, SAMPLE_SERVICE, sizeof(service));
     port = 0;
 

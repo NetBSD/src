@@ -35,7 +35,7 @@
 #include "compile_et.h"
 #include <getarg.h>
 
-RCSID("$Id: compile_et.c,v 1.1.1.2 2000/12/29 01:43:55 assar Exp $");
+RCSID("$Id: compile_et.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
 
 #include <roken.h>
 #include <err.h>
@@ -196,7 +196,7 @@ main(int argc, char **argv)
     char *p;
     int optind = 0;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)

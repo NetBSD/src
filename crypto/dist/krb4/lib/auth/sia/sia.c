@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "sia_locl.h"
 
-RCSID("$Id: sia.c,v 1.1.1.2 2000/12/29 01:43:54 assar Exp $");
+RCSID("$Id: sia.c,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $");
 
 int 
 siad_init(void)
@@ -52,12 +52,18 @@ int
 siad_ses_init(SIAENTITY *entity, int pkgind)
 {
     struct state *s = malloc(sizeof(*s));
+
     SIA_DEBUG(("DEBUG", "siad_ses_init"));
     if(s == NULL)
 	return SIADFAIL;
     memset(s, 0, sizeof(*s));
 #ifdef SIA_KRB5
-    krb5_init_context(&s->context);
+    {
+      krb5_error_code ret;
+      ret = krb5_init_context(&s->context);
+      if (ret)
+	return SIADFAIL;
+    }
 #endif
     entity->mech[pkgind] = (int*)s;
     return SIADSUCCESS;
@@ -489,7 +495,7 @@ siad_chg_password (sia_collect_func_t *collect,
     char new_pw2[MAX_KPW_LEN+1];
     static struct et_list *et_list;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
     SIA_DEBUG(("DEBUG", "siad_chg_password"));
     if(collect == NULL)

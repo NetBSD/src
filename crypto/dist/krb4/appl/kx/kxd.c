@@ -33,7 +33,7 @@
 
 #include "kx.h"
 
-RCSID("$Id: kxd.c,v 1.1.1.2 2000/12/29 01:42:51 assar Exp $");
+RCSID("$Id: kxd.c,v 1.1.1.3 2001/09/17 12:09:49 assar Exp $");
 
 static pid_t wait_on_pid = -1;
 static int   done        = 0;
@@ -112,10 +112,11 @@ recv_conn (int sock, kx_context *kc,
 {
      u_char msg[1024], *p;
      char user[256];
-     int addrlen;
+     socklen_t addrlen;
      struct passwd *passwd;
      struct sockaddr_in thisaddr, thataddr;
      char remotehost[MaxHostNameLen];
+     char remoteaddr[INET6_ADDRSTRLEN];
      int ret = 1;
      int flags;
      int len;
@@ -137,7 +138,9 @@ recv_conn (int sock, kx_context *kc,
      kc->thisaddr = thisaddr;
      kc->thataddr = thataddr;
 
-     inaddr2str (thataddr.sin_addr, remotehost, sizeof(remotehost));
+     getnameinfo_verified ((struct sockaddr *)&thataddr, addrlen,
+			   remotehost, sizeof(remotehost),
+			   NULL, 0, 0);
 
      if (net_read (sock, msg, 4) != 4) {
 	 syslog (LOG_ERR, "read: %m");
@@ -223,9 +226,11 @@ recv_conn (int sock, kx_context *kc,
 	 syslog(LOG_ERR, "setting uid/groups: %m");
 	 fatal (kc, sock, "cannot set uid");
      }
+     inet_ntop (thataddr.sin_family,
+		&thataddr.sin_addr, remoteaddr, sizeof(remoteaddr));
+
      syslog (LOG_INFO, "from %s(%s): %s -> %s",
-	     remotehost,
-	     inet_ntoa(thataddr.sin_addr),
+	     remotehost, remoteaddr,
 	     kc->user, user);
      umask(077);
      if (!(flags & PASSIVE)) {
@@ -290,7 +295,7 @@ doit_conn (kx_context *kc,
     int sock, sock2;
     struct sockaddr_in addr;
     struct sockaddr_in thisaddr;
-    int addrlen;
+    socklen_t addrlen;
     u_char msg[1024], *p;
 
     sock = socket (AF_INET, SOCK_STREAM, 0);
@@ -488,9 +493,21 @@ doit_passive (kx_context *kc,
 	int cookiesp = TRUE;
 	       
 	FD_ZERO(&fds);
+	if (sock >= FD_SETSIZE) {
+	    syslog (LOG_ERR, "fd too large");
+	    cleanup(nsockets, sockets);
+	    return 1;
+	}
+
 	FD_SET(sock, &fds);
-	for (i = 0; i < nsockets; ++i)
+	for (i = 0; i < nsockets; ++i) {
+	    if (sockets[i].fd >= FD_SETSIZE) {
+		syslog (LOG_ERR, "fd too large");
+		cleanup(nsockets, sockets);
+		return 1;
+	    }
 	    FD_SET(sockets[i].fd, &fds);
+	}
 	ret = select(FD_SETSIZE, &fds, NULL, NULL, NULL);
 	if(ret <= 0)
 	    continue;
@@ -504,7 +521,7 @@ doit_passive (kx_context *kc,
 		if (FD_ISSET(sockets[i].fd, &fds)) {
 		    if (sockets[i].flags == TCP) {
 			struct sockaddr_in peer;
-			int len = sizeof(peer);
+			socklen_t len = sizeof(peer);
 
 			fd = accept (sockets[i].fd,
 				     (struct sockaddr *)&peer,
@@ -519,7 +536,7 @@ doit_passive (kx_context *kc,
 			    errno = EINTR;
 			}
 		    } else if(sockets[i].flags == UNIX_SOCKET) {
-			int zero = 0;
+			socklen_t zero = 0;
 
 			fd = accept (sockets[i].fd, NULL, &zero);
 
@@ -691,7 +708,7 @@ main (int argc, char **argv)
     int port;
     int optind = 0;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     roken_openlog ("kxd", LOG_ODELAY | LOG_PID, LOG_DAEMON);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
@@ -721,7 +738,7 @@ main (int argc, char **argv)
 	}
     } else {
 #if defined(KRB5)
-	port = krb5_getportbyname(NULL, "kx", "tcp", htons(KX_PORT));
+	port = krb5_getportbyname(NULL, "kx", "tcp", KX_PORT);
 #elif defined(KRB4)
 	port = k_getportbyname ("kx", "tcp", htons(KX_PORT));
 #else

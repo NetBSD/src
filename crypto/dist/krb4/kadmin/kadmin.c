@@ -31,7 +31,7 @@ or implied warranty.
 #include "getarg.h"
 #include "parse_time.h"
 
-RCSID("$Id: kadmin.c,v 1.1.1.2 2000/12/29 01:43:07 assar Exp $");
+RCSID("$Id: kadmin.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
 
 static int change_password(int argc, char **argv);
 static int change_key(int argc, char **argv);
@@ -79,11 +79,6 @@ static SL_cmd cmds[] = {
 #define PE_NO 0
 #define PE_YES 1
 #define PE_UNSURE 2
-
-/* for get_password, whether it should do the swapping...necessary for
-   using vals structure, unnecessary for change_pw requests */
-#define DONTSWAP 0
-#define SWAP 1
 
 static krb_principal pr;
 static char default_realm[REALM_SZ]; /* default kerberos realm */
@@ -203,7 +198,7 @@ princ_exists(char *name, char *instance, char *realm)
 }
 
 static void
-passwd_to_lowhigh(u_int32_t *low, u_int32_t *high, char *password, int byteswap)
+passwd_to_lowhigh(u_int32_t *low, u_int32_t *high, char *password)
 {
     des_cblock newkey;
 
@@ -231,20 +226,18 @@ passwd_to_lowhigh(u_int32_t *low, u_int32_t *high, char *password, int byteswap)
     *low = 1;
 #endif
 
-    if (byteswap != DONTSWAP) {
-	*low = htonl(*low);
-	*high = htonl(*high);
-    }
+    *low = htonl(*low);
+    *high = htonl(*high);
 }
 
 static int
-get_password(u_int32_t *low, u_int32_t *high, char *prompt, int byteswap)
+get_password(u_int32_t *low, u_int32_t *high, char *prompt)
 {
     char new_passwd[MAX_KPW_LEN];	/* new password */
 
     if (read_long_pw_string(new_passwd, sizeof(new_passwd)-1, prompt, 1))
     	return(BAD_PW);
-    passwd_to_lowhigh (low, high, new_passwd, byteswap);
+    passwd_to_lowhigh (low, high, new_passwd);
     memset (new_passwd, 0, sizeof(new_passwd));
     return(GOOD_PW);
 }
@@ -288,7 +281,9 @@ get_admin_password(void)
 	/* Initialize non shared random sequence from session key. */
 	memset(&c, 0, sizeof(c));
 	krb_get_cred(PWSERV_NAME, KADM_SINST, krbrlm, &c);
+#ifndef HAVE_OPENSSL
 	des_init_random_number_generator(&c.session);
+#endif
     }
     else
 	status = KDC_PR_UNKNOWN;
@@ -374,7 +369,7 @@ do_init(int argc, char **argv)
     int optind = 0;
     int ret;
 
-    set_progname (argv[0]);
+    setprogname (argv[0]);
     
     if(getarg(args, num_args, argc, argv, &optind) < 0)
 	usage(1);
@@ -577,7 +572,7 @@ change_password(int argc, char **argv)
 		     "New password for %s:", user);
 	
 	    if (get_password(&new.key_low, &new.key_high,
-			     pw_prompt, SWAP) != GOOD_PW) {
+			     pw_prompt) != GOOD_PW) {
 		printf("Error reading password; password unchanged\n");
 		return 0;
 	    }
@@ -602,6 +597,20 @@ change_password(int argc, char **argv)
 }
 
 static int
+gethexkey(unsigned char *k)
+{
+    int i;
+    for (i = 0; i < 8; i++) {
+	int tmp;
+
+	if (scanf ("%02x", &tmp) != 1)
+	    return 0;
+	k[i] = tmp;
+    }
+    return 1;
+}
+
+static int
 getkey(unsigned char *k)
 {
     int i, c;
@@ -618,7 +627,13 @@ getkey(unsigned char *k)
 			return 0;
 		    k[i] = oct;
 		}
-	    else if (!isalpha(c))
+	    else if (c == '0') {
+		c = getchar ();
+		if (c == 'x')
+		    return gethexkey(k);
+		ungetc (c, stdin);
+		k[i] = c;
+	    } else if (!isalpha(c))
 		return 0;
 	    else
 		k[i] = c;
@@ -670,7 +685,9 @@ change_key(int argc, char **argv)
 	
 	if (getkey(newkey)) {
 	    memcpy(&new.key_low, newkey, 4);
+	    new.key_low = htonl(new.key_low);
 	    memcpy(&new.key_high, ((char *)newkey) + 4, 4);
+	    new.key_high = htonl(new.key_high);
 	    printf("Entered key for %s: ", argv[1]);
 	    printkey(newkey);
 	    memset(newkey, 0, sizeof(newkey));
@@ -891,13 +908,13 @@ add_new_key(int argc, char **argv)
 			 argv[i]);
 	
 		if (get_password(&new.key_low, &new.key_high,
-				 pw_prompt, SWAP) != GOOD_PW) {
+				 pw_prompt) != GOOD_PW) {
 		    printf("Error reading password: %s not added\n", argv[i]);
 		    memset(&new, 0, sizeof(new));
 		    return 0;
 		}
 	    } else {
-		passwd_to_lowhigh (&new.key_low, &new.key_high, password, SWAP);
+		passwd_to_lowhigh (&new.key_low, &new.key_high, password);
 		memset (password, 0, strlen(password));
 	    }
 

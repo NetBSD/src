@@ -21,7 +21,7 @@ or implied warranty.
 
 #include "krb_locl.h"
 
-RCSID("$Id: get_cred.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
+RCSID("$Id: get_cred.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
 
 /*
  * krb_get_cred takes a service name, instance, and realm, and a
@@ -33,9 +33,9 @@ RCSID("$Id: get_cred.c,v 1.1.1.2 2000/12/29 01:43:12 assar Exp $");
  */
 
 int
-krb_get_cred(char *service,	/* Service name */
-	     char *instance,	/* Instance */
-	     char *realm,	/* Auth domain */
+krb_get_cred(const char *service,	/* Service name */
+	     const char *instance,	/* Instance */
+	     const char *realm,	/* Auth domain */
 	     CREDENTIALS *c)	/* Credentials struct */
 {
     int tf_status;              /* return value of tf function calls */

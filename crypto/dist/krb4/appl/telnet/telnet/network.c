@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: network.c,v 1.1.1.2 2000/12/29 01:42:38 assar Exp $");
+RCSID("$Id: network.c,v 1.1.1.3 2001/09/17 12:09:46 assar Exp $");
 
 Ring		netoring, netiring;
 unsigned char	netobuf[2*BUFSIZ], netibuf[BUFSIZ];

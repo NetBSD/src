@@ -1,0 +1,66 @@
+
+
+
+KDB_UTIL(8)                                                       KDB_UTIL(8)
+
+
+
+NAME
+  kdb_util -  Kerberos key distribution center database utility
+
+SYNOPSIS
+  kdb_util ooppeerraattiioonn ffiilleennaammee
+
+DESCRIPTION
+  _k_d_b___u_t_i_l allows the Kerberos key distribution center (KDC) database admin-
+  istrator to perform utility functions on the database.
+
+  _O_p_e_r_a_t_i_o_n must be one of the following:
+
+  _l_o_a_d      initializes the KDC database with the records described by the
+            text contained in the file _f_i_l_e_n_a_m_e.  Any existing database is
+            overwritten.
+
+  _d_u_m_p      dumps the KDC database into a text representation in the file
+            _f_i_l_e_n_a_m_e.
+
+  _s_l_a_v_e___d_u_m_p
+            performs a database dump like the _d_u_m_p operation, and addition-
+            ally creates a semaphore file signalling the propagation software
+            that an update is available for distribution to slave KDC
+            databases.
+
+  _m_e_r_g_e     merges in the entries from _f_i_l_e_n_a_m_e into the database.
+
+  _n_e_w___m_a_s_t_e_r___k_e_y
+            prompts for the old and new master key strings, and then dumps
+            the KDC database into a text representation in the file _f_i_l_e_n_a_m_e.
+            The keys in the text representation are encrypted in the new mas-
+            ter key.
+
+  _c_o_n_v_e_r_t___o_l_d___d_b
+            prompts for the master key string, and then dumps the KDC
+            database into a text representation in the file _f_i_l_e_n_a_m_e.  The
+            existing database is assumed to be encrypted using the old format
+            (encrypted by the key schedule of the master key); the dumped
+            database is encrypted using the new format (encrypted directly
+            with master key).
+
+DIAGNOSTICS
+
+  "verify_master_key: Invalid master key, does not match database."
+                      The master key string entered was incorrect.
+
+FILES
+
+  /kerberos/principal.pag, /kerberos/principal.dir
+                      DBM files containing database
+
+  _f_i_l_e_n_a_m_e.ok         semaphore file created by _s_l_a_v_e___d_u_m_p_.
+
+
+
+
+
+
+

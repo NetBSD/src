@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rcp.c,v 1.1.1.2 2000/12/29 01:42:22 assar Exp $");
+RCSID("$Id: rcp.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
 
 /* Globals */
 static char	dst_realm_buf[REALM_SZ];
@@ -72,7 +72,8 @@ AUTH_DAT kdata;
 static void
 send_auth(char *h, char *r)
 {
-    int lslen, fslen, status;
+    int status;
+    socklen_t lslen, fslen;
     long opts;
 
     lslen = sizeof(struct sockaddr_in);
@@ -94,7 +95,8 @@ send_auth(char *h, char *r)
 static void
 answer_auth(void)
 {
-    int lslen, fslen, status;
+    socklen_t lslen, fslen;
+    int status;
     long opts;
     char inst[INST_SZ], v[9];
 
@@ -116,7 +118,7 @@ static int
 des_read(int fd, char *buf, int len)
 {
     if (doencrypt)
-	return(des_enc_read(fd, buf, len, schedule, 
+	return(bsd_des_enc_read(fd, buf, len, schedule, 
 			    (iamremote? &kdata.session : &cred.session)));
     else
 	return(read(fd, buf, len));
@@ -126,7 +128,7 @@ static int
 des_write(int fd, char *buf, int len)
 {
     if (doencrypt)
-	return(des_enc_write(fd, buf, len, schedule, 
+	return(bsd_des_enc_write(fd, buf, len, schedule, 
 			     (iamremote? &kdata.session : &cred.session)));
     else
 	return(write(fd, buf, len));
@@ -145,18 +147,21 @@ run_err(const char *fmt, ...)
 	char errbuf[1024];
 
 	va_list args;
-	va_start(args, fmt);
 	++errs;
 #define RCPERR "\001rcp: "
 	strlcpy (errbuf, RCPERR, sizeof(errbuf));
+	va_start(args, fmt);
 	vsnprintf (errbuf + strlen(errbuf),
 		   sizeof(errbuf) - strlen(errbuf),
 		   fmt, args);
+	va_end(args);
 	strlcat (errbuf, "\n", sizeof(errbuf));
 	des_write (rem, errbuf, strlen(errbuf));
-	if (!iamremote)
+	if (!iamremote) {
+		va_start(args, fmt);
 		vwarnx(fmt, args);
-	va_end(args);
+		va_end(args);	
+	}
 }
 
 static void
@@ -180,12 +185,13 @@ allocbuf(BUF *bp, int fd, int blksize)
 {
 	struct stat stb;
 	size_t size;
+	char *p;
 
 	if (fstat(fd, &stb) < 0) {
 		run_err("fstat: %s", strerror(errno));
 		return (0);
 	}
-#ifdef HAVE_ST_BLKSIZE
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
 	size = ROUNDUP(stb.st_blksize, blksize);
 #else
 	size = blksize;
@@ -194,15 +200,16 @@ allocbuf(BUF *bp, int fd, int blksize)
 		size = blksize;
 	if (bp->cnt >= size)
 		return (bp);
-	if (bp->buf == NULL)
-		bp->buf = malloc(size);
-	else
-		bp->buf = realloc(bp->buf, size);
-	if (bp->buf == NULL) {
+	if ((p = realloc(bp->buf, size)) == NULL) {
+		if (bp->buf)
+			free(bp->buf);
+		bp->buf = NULL;
 		bp->cnt = 0;
 		run_err("%s", strerror(errno));
 		return (0);
 	}
+	memset(p, 0, size);
+	bp->buf = p;
 	bp->cnt = size;
 	return (bp);
 }
@@ -920,7 +927,7 @@ main(int argc, char **argv)
 	char *targ;
 	int i;
 
-	set_progname(argv[0]);
+	setprogname(argv[0]);
 
 	/*
 	 * Prepare for execing ourselves.

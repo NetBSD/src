@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 200 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kafs_locl.h"
 
-RCSID("$Id: afssys.c,v 1.1.1.2 2000/12/29 01:43:52 assar Exp $");
+RCSID("$Id: afssys.c,v 1.1.1.3 2001/09/17 12:10:05 assar Exp $");
 
 int _kafs_debug; /* this should be done in a better way */
 
@@ -283,7 +283,7 @@ int
 k_hasafs(void)
 {
 #if !defined(NO_AFS) && defined(SIGSYS)
-    RETSIGTYPE (*saved_func)();
+    RETSIGTYPE (*saved_func)(int);
 #endif
     int saved_errno;
     char *env = getenv ("AFS_SYSCALL");

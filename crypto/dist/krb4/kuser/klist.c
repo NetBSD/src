@@ -22,7 +22,7 @@
 
 #include <parse_time.h>
 
-RCSID("$Id: klist.c,v 1.1.1.2 2000/12/29 01:43:08 assar Exp $");
+RCSID("$Id: klist.c,v 1.1.1.3 2001/09/17 12:09:53 assar Exp $");
 
 static int option_verbose = 0;
 
@@ -55,7 +55,7 @@ print_time_diff(void)
 
 static
 int
-display_tktfile(char *file, int tgt_test, int long_form)
+display_tktfile(const char *file, int tgt_test, int long_form)
 {
     krb_principal pr;
     char    buf1[20], buf2[20];
@@ -80,7 +80,7 @@ display_tktfile(char *file, int tgt_test, int long_form)
      */
 
     /* Open ticket file */
-    if ((k_errno = tf_init(file, R_TKT_FIL))) {
+    if ((k_errno = tf_init((char *)file, R_TKT_FIL))) {
 	if (!tgt_test)
 	    warnx("%s", krb_get_err_text(k_errno));
 	return 1;
@@ -94,7 +94,7 @@ display_tktfile(char *file, int tgt_test, int long_form)
      * really stored in the principal section of the file, the
      * routine we use must itself call tf_init and tf_close.
      */
-    if ((k_errno = krb_get_tf_realm(file, pr.realm)) != KSUCCESS) {
+    if ((k_errno = krb_get_tf_realm((char *)file, pr.realm)) != KSUCCESS) {
 	if (!tgt_test)
 	    warnx("can't find realm of ticket file: %s", 
 		  krb_get_err_text(k_errno));
@@ -102,7 +102,7 @@ display_tktfile(char *file, int tgt_test, int long_form)
     }
 
     /* Open ticket file */
-    if ((k_errno = tf_init(file, R_TKT_FIL))) {
+    if ((k_errno = tf_init((char *)file, R_TKT_FIL))) {
 	if (!tgt_test)
 	    warnx("%s", krb_get_err_text(k_errno));
 	return 1;
@@ -181,7 +181,7 @@ display_tktfile(char *file, int tgt_test, int long_form)
 	printf("-----\nNAT addresses\n");
  
 	/* Open ticket file (again) */
-	if ((k_errno = tf_init(file, R_TKT_FIL))) {
+	if ((k_errno = tf_init((char *)file, R_TKT_FIL))) {
 	    if (!tgt_test)
 		warnx("%s", krb_get_err_text(k_errno));
 	    return 1;
@@ -283,7 +283,7 @@ display_tokens(void)
 }
 
 static void
-display_srvtab(char *file)
+display_srvtab(const char *file)
 {
     int stab;
     char serv[SNAME_SZ];
@@ -326,7 +326,7 @@ usage(void)
 {
     fprintf(stderr,
 	    "Usage: %s [ -v | -s | -t ] [ -f filename ] [-tokens] [-srvtab ]\n",
-	    __progname);
+	    getprogname());
     exit(1);
 }
 
@@ -338,10 +338,10 @@ main(int argc, char **argv)
     int     tgt_test = 0;
     int     do_srvtab = 0;
     int     do_tokens = 0;
-    char   *tkt_file = NULL;
+    const char *tkt_file = NULL;
     int     eval;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
     while (*(++argv)) {
 	if (!strcmp(*argv, "-v")) {
@@ -375,7 +375,7 @@ main(int argc, char **argv)
 	if (!strcmp(*argv, "-srvtab")) {
 		if (tkt_file == NULL)	/* if no other file spec'ed,
 					   set file to default srvtab */
-		    tkt_file = (char *)KEYFILE;
+		    tkt_file = KEYFILE;
 		do_srvtab = 1;
 		continue;
 	}

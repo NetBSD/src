@@ -1,8 +1,24 @@
+/************************************************************************
+* Copyright 1995 by Wietse Venema.  All rights reserved.  Some individual
+* files may be covered by other copyrights.
+*
+* This material was originally written and compiled by Wietse Venema at
+* Eindhoven University of Technology, The Netherlands, in 1990, 1991,
+* 1992, 1993, 1994 and 1995.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that this entire copyright notice
+* is duplicated in all such copies.
+*
+* This software is provided "as is" and without any expressed or implied
+* warranties, including, without limitation, the implied warranties of
+* merchantibility and fitness for any particular purpose.
+************************************************************************/
 /* Author: Wietse Venema <wietse@wzv.win.tue.nl> */
 
 #include "bsd_locl.h"
 
-RCSID("$Id: sysv_environ.c,v 1.1.1.2 2000/12/29 01:42:24 assar Exp $");
+RCSID("$Id: sysv_environ.c,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $");
 
 #ifdef HAVE_ULIMIT_H
 #include <ulimit.h>
@@ -36,7 +52,7 @@ read_etc_environment (void)
 	    if (val == NULL)
 		continue;
 	    *val = '\0';
-	    setenv(buf, val + 1, 1);
+	    esetenv(buf, val + 1, 1);
 	}
 	fclose (f);
     }
@@ -110,12 +126,12 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
 
     for (pp = preserved; pp->name; pp++)
 	if (pp->value)
-	    setenv(pp->name, pp->value, 1);
+	    esetenv(pp->name, pp->value, 1);
 
     /* The TERM definition from e.g. rlogind can override an existing one. */
 
     if (term[0])
-	setenv("TERM", term, 1);
+	esetenv("TERM", term, 1);
 
     /*
      * Environment definitions from the command line overrule existing ones,
@@ -130,7 +146,7 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
     while (argc && *argv) {
 	if (strchr(*argv, '=') == 0) {
 	    snprintf(buf, sizeof(buf), "L%d", count++);
-	    setenv(buf, *argv, 1);
+	    esetenv(buf, *argv, 1);
 	} else {
 	    for (cp = censored; cp->prefix; cp++)
 		if (STREQN(*argv, cp->prefix, cp->length))
@@ -143,20 +159,20 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
 
     /* PATH is always reset. */
 
-    setenv("PATH", pwd->pw_uid ? default_path : default_supath, 1);
+    esetenv("PATH", pwd->pw_uid ? default_path : default_supath, 1);
 
     /* Undocumented: HOME, MAIL and LOGNAME are always reset (SunOS 5.1). */
 
-    setenv("HOME", pwd->pw_dir, 1);
+    esetenv("HOME", pwd->pw_dir, 1);
     {
 	char *sep = "/";
 	if(KRB4_MAILDIR[strlen(KRB4_MAILDIR) - 1] == '/')
 	    sep = "";
 	roken_concat(buf, sizeof(buf), KRB4_MAILDIR, sep, pwd->pw_name, NULL);
     }
-    setenv("MAIL", buf, 1);
-    setenv("LOGNAME", pwd->pw_name, 1);
-    setenv("USER", pwd->pw_name, 1);
+    esetenv("MAIL", buf, 1);
+    esetenv("LOGNAME", pwd->pw_name, 1);
+    esetenv("USER", pwd->pw_name, 1);
 
     /*
      * Variables that may be set according to specifications in the defaults
@@ -167,11 +183,11 @@ void sysv_newenv(int argc, char **argv, struct passwd *pwd,
      */
 
     if (strcasecmp(default_altsh, "YES") == 0)
-	setenv("SHELL", pwd->pw_shell, 1);
+	esetenv("SHELL", pwd->pw_shell, 1);
     if (default_hz)
-	setenv("HZ", default_hz, 0);
+	esetenv("HZ", default_hz, 0);
     if (default_timezone)
-	setenv("TZ", default_timezone, 0);
+	esetenv("TZ", default_timezone, 0);
 
     /* Non-environment stuff. */
 

@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$Id: state.c,v 1.1.1.2 2000/12/29 01:42:41 assar Exp $");
+RCSID("$Id: state.c,v 1.1.1.3 2001/09/17 12:09:47 assar Exp $");
 
 unsigned char	doopt[] = { IAC, DO, '%', 'c', 0 };
 unsigned char	dont[] = { IAC, DONT, '%', 'c', 0 };
@@ -1016,7 +1016,7 @@ suboption(void)
 	    return;
 	settimer(xdisplocsubopt);
 	subpointer[SB_LEN()] = '\0';
-	setenv("DISPLAY", (char *)subpointer, 1);
+	esetenv("DISPLAY", (char *)subpointer, 1);
 	break;
     }  /* end of case TELOPT_XDISPLOC */
 
@@ -1183,7 +1183,7 @@ suboption(void)
 	    case ENV_USERVAR:
 		*cp = '\0';
 		if (valp)
-		    setenv(varp, valp, 1);
+		    esetenv(varp, valp, 1);
 		else
 		    unsetenv(varp);
 		cp = varp = (char *)subpointer;
@@ -1202,7 +1202,7 @@ suboption(void)
 	}
 	*cp = '\0';
 	if (valp)
-	    setenv(varp, valp, 1);
+	    esetenv(varp, valp, 1);
 	else
 	    unsetenv(varp);
 	break;

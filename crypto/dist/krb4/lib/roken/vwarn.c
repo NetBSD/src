@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan 
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan 
  * (Royal Institute of Technology, Stockholm, Sweden).  
  * All rights reserved.
  * 
@@ -33,10 +33,11 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: vwarn.c,v 1.1.1.2 2000/12/29 01:43:31 assar Exp $");
+RCSID("$Id: vwarn.c,v 1.1.1.3 2001/09/17 12:09:58 assar Exp $");
 #endif
 
-#include "err.h"
+#include "roken.h"
+#include <err.h>
 
 void
 vwarn(const char *fmt, va_list ap)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* @(#)$Id: rxkad_locl.h,v 1.1.1.2 2000/12/29 01:43:22 assar Exp $ */
+/* @(#)$Id: rxkad_locl.h,v 1.1.1.3 2001/09/17 12:09:55 assar Exp $ */
 
 #ifndef __RXKAD_LOCL_H
 #define __RXKAD_LOCL_H
@@ -53,7 +53,11 @@
 #define assert(e) ((e) ? (void)0 : (void)osi_Panic("assert(%s) failed: file %s, line %d\n", #e, __FILE__, __LINE__, #e))
 #endif
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 
 #undef RCSID

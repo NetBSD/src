@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/12/29 01:42:56 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/09/17 12:09:50 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -43,12 +43,13 @@ gssapi.c:
 
 CLEANFILES = security.c security.h krb4.c gssapi.c ftpcmd.c
 
+man_MANS = ftpd.8 ftpusers.5
+
 LDADD = ../common/libcommon.a \
-	$(LIB_kafs) \
+	$(LIB_otp) \
 	$(LIB_gssapi) \
 	$(LIB_krb5) \
+	$(LIB_kafs) \
 	$(LIB_krb4) \
-	$(LIB_otp) \
-	$(top_builddir)/lib/des/libdes.la \
-	$(LIB_roken) \
-	$(DBLIB)
+	$(LIB_des) \
+	$(LIB_roken)

@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rsh.c,v 1.1.1.2 2000/12/29 01:42:23 assar Exp $");
+RCSID("$Id: rsh.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
 
 CREDENTIALS cred;
 Key_schedule schedule;
@@ -82,7 +82,7 @@ sendsig(int signo_)
     char signo = signo_;
 #ifndef NOENCRYPTION
     if (doencrypt)
-	des_enc_write(rfd2, &signo, 1, schedule, &cred.session);
+	bsd_des_enc_write(rfd2, &signo, 1, schedule, &cred.session);
     else
 #endif
 	write(rfd2, &signo, 1);
@@ -121,7 +121,7 @@ talk(int nflag, sigset_t omask, int pid, int rem)
 	goto rewrite;
 #ifndef NOENCRYPTION
     if (doencrypt)
-	wc = des_enc_write(rem, bp, cc, schedule, &cred.session);
+	wc = bsd_des_enc_write(rem, bp, cc, schedule, &cred.session);
     else
 #endif
 	wc = write(rem, bp, cc);
@@ -158,7 +158,7 @@ talk(int nflag, sigset_t omask, int pid, int rem)
 	    errno = 0;
 #ifndef NOENCRYPTION
 	    if (doencrypt)
-		cc = des_enc_read(rfd2, buf, sizeof buf,
+		cc = bsd_des_enc_read(rfd2, buf, sizeof buf,
 				  schedule, &cred.session);
 	    else
 #endif
@@ -173,7 +173,7 @@ talk(int nflag, sigset_t omask, int pid, int rem)
 	    errno = 0;
 #ifndef NOENCRYPTION
 	    if (doencrypt)
-		cc = des_enc_read(rem, buf, sizeof buf,
+		cc = bsd_des_enc_read(rem, buf, sizeof buf,
 				  schedule, &cred.session);
 	    else
 #endif
@@ -201,7 +201,7 @@ main(int argc, char **argv)
     host = user = NULL;
     pid = 1;
 
-    set_progname(argv[0]);
+    setprogname(argv[0]);
 
     /* handle "rsh host flags" */
     if (argc > 2 && argv[1][0] != '-') {

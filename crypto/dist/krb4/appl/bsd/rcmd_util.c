@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: rcmd_util.c,v 1.1.1.2 2000/12/29 01:42:21 assar Exp $");
+RCSID("$Id: rcmd_util.c,v 1.1.1.3 2001/09/17 12:09:43 assar Exp $");
 
 int
 get_login_port(int kerberos, int encryption)
@@ -208,7 +208,7 @@ ip_options_and_die (int sock, struct sockaddr_in *fromp)
 #if defined(IP_OPTIONS) && defined(HAVE_GETSOCKOPT)
   u_char optbuf[BUFSIZ/3], *cp;
   char lbuf[BUFSIZ], *lp;
-  int optsize = sizeof(optbuf), ipproto;
+  socklen_t optsize = sizeof(optbuf), ipproto;
   struct protoent *ip;
 
   if ((ip = getprotobyname("ip")) != NULL)
@@ -240,7 +240,7 @@ warning(const char *fmt, ...)
 	rstar_no_warn = "";
     if (strncmp(rstar_no_warn, "yes", 3) != 0) {
 	/* XXX */
-	fprintf(stderr, "%s: warning, using standard ", __progname);
+	fprintf(stderr, "%s: warning, using standard ", getprogname());
 	vwarnx(fmt, args);
     }
     va_end(args);

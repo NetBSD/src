@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -35,7 +35,7 @@
 #endif
 #include "roken.h"
 
-RCSID("$Id: strftime.c,v 1.1.1.2 2000/12/29 01:43:30 assar Exp $");
+RCSID("$Id: strftime.c,v 1.1.1.3 2001/09/17 12:09:57 assar Exp $");
 
 static const char *abb_weekdays[] = {
     "Sun",
@@ -172,7 +172,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 	  const struct tm *tm)
 {
     size_t n = 0;
-    size_t ret;
+    int ret;
 
     while (*format != '\0' && n < maxsize) {
 	if (*format == '%') {
@@ -381,7 +381,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 				"%%%c", *format);
 		break;
 	    }
-	    if (ret >= maxsize - n)
+	    if (ret < 0 || ret >= maxsize - n)
 		return 0;
 	    n   += ret;
 	    buf += ret;

@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: popen.c,v 1.1.1.2 2000/12/29 01:42:59 assar Exp $");
+RCSID("$Id: popen.c,v 1.1.1.3 2001/09/17 12:09:51 assar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -61,10 +61,9 @@ RCSID("$Id: popen.c,v 1.1.1.2 2000/12/29 01:42:59 assar Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <roken.h>
 #include "extern.h"
 
-#include <roken.h>
 
 /* 
  * Special version of popen which avoids call to shell.  This ensures
@@ -97,13 +96,16 @@ ftp_rooted(const char *path)
 }
 
 
+#define MAXARGS	100
+#define MAXGLOBS 1000
+
 FILE *
 ftpd_popen(char *program, char *type, int do_stderr, int no_glob)
 {
 	char *cp;
 	FILE *iop;
 	int argc, gargc, pdes[2], pid;
-	char **pop, *argv[100], *gargv[1000];
+	char **pop, *argv[MAXARGS], *gargv[MAXGLOBS];
 	char *foo;
 
 	if (strcmp(type, "r") && strcmp(type, "w"))
@@ -126,22 +128,32 @@ ftpd_popen(char *program, char *type, int do_stderr, int no_glob)
 
 	/* break up string into pieces */
 	foo = NULL;
-	for (argc = 0, cp = program;; cp = NULL) {
+	for (argc = 0, cp = program; argc < MAXARGS - 1; cp = NULL) {
 		if (!(argv[argc++] = strtok_r(cp, " \t\n", &foo)))
 			break;
 	}
+	argv[MAXARGS - 1] = NULL;
 
 	gargv[0] = (char*)ftp_rooted(argv[0]);
 	/* glob each piece */
-	for (gargc = argc = 1; argv[argc]; argc++) {
+	for (gargc = argc = 1; argv[argc] && gargc < MAXGLOBS - 1; argc++) {
 		glob_t gl;
-		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE
+		    |
+#ifdef GLOB_MAXPATH
+	GLOB_MAXPATH
+#else
+	GLOB_LIMIT
+#endif
+		    ;
 
 		memset(&gl, 0, sizeof(gl));
 		if (no_glob || glob(argv[argc], flags, NULL, &gl))
 			gargv[gargc++] = strdup(argv[argc]);
 		else
-			for (pop = gl.gl_pathv; *pop; pop++)
+			for (pop = gl.gl_pathv;
+			     *pop && gargc < MAXGLOBS - 1;
+			     pop++)
 				gargv[gargc++] = strdup(*pop);
 		globfree(&gl);
 	}

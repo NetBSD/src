@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: rnd_keys.c,v 1.1.1.2 2000/12/29 01:43:41 assar Exp $");
+RCSID("$Id: rnd_keys.c,v 1.1.1.3 2001/09/17 12:10:01 assar Exp $");
 #endif
 
 #include <des.h>
@@ -72,10 +72,6 @@ RCSID("$Id: rnd_keys.c,v 1.1.1.2 2000/12/29 01:43:41 assar Exp $");
 #endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
-#endif
-
-#ifdef HAVE_WINSOCK_H
-#include <winsock.h>
 #endif
 
 /*
@@ -194,6 +190,7 @@ sigALRM(int sig)
 #endif
 #endif
 
+#ifndef HAVE_SETITIMER
 static void
 des_not_rand_data(unsigned char *data, int size)
 {
@@ -204,6 +201,7 @@ des_not_rand_data(unsigned char *data, int size)
   for(i = 0; i < size; ++i)
     data[i] ^= random() % 0x100;
 }
+#endif
 
 #if !defined(WIN32) && !defined(__EMX__) && !defined(__OS2__) && !defined(__CYGWIN32__)
 

@@ -1,0 +1,66 @@
+
+
+
+KSTASH(8)                                                           KSTASH(8)
+
+
+
+NAME
+  kstash - stash Kerberos key distribution center database master key
+
+SYNOPSIS
+  kstash
+
+DESCRIPTION
+  _k_s_t_a_s_h saves the Kerberos key distribution center (KDC) database master key
+  in the master key cache file.
+
+  The user is prompted to enter the key, to verify the authenticity of the
+  key and the authorization to store the key in the file.
+
+DIAGNOSTICS
+
+  "verify_master_key: Invalid master key, does not match database."
+                      The master key string entered was incorrect.
+
+  "kstash: Unable to open master key file"
+                      The attempt to open the cache file for writing failed
+                      (probably due to a system or access permission error).
+
+  "kstash: Write I/O error on master key file"
+                      The wwrriittee(2) system call returned an error while _k_s_t_a_s_h
+                      was attempting to write the key to the file.
+
+FILES
+
+  /var/kerberos/principal.pag, /var/kerberos/principal.dir
+                      DBM files containing database
+
+  /.k                 Master key cache file.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

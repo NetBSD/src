@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,28 +33,10 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: socket.c,v 1.1.1.2 2000/12/29 01:43:29 assar Exp $");
-#endif
-
-#include <string.h>
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN_SYSTM_H
-#include <netinet/in_systm.h>
-#endif
-#ifdef HAVE_NETINET_IP_H
-#include <netinet/ip.h>
+RCSID("$Id: socket.c,v 1.1.1.3 2001/09/17 12:09:57 assar Exp $");
 #endif
 
 #include <roken.h>
-
 #include <err.h>
 
 /*
@@ -240,15 +222,40 @@ socket_set_port (struct sockaddr *sa, int port)
 }
 
 /*
+ * Set the range of ports to use when binding with port = 0.
+ */
+void
+socket_set_portrange (int sock, int restr, int af)
+{
+#if defined(IP_PORTRANGE)
+	if (af == AF_INET) {
+		int on = restr ? IP_PORTRANGE_HIGH : IP_PORTRANGE_DEFAULT;
+		if (setsockopt (sock, IPPROTO_IP, IP_PORTRANGE, &on,
+		    sizeof(on)) < 0)
+			warn ("setsockopt IP_PORTRANGE (ignored)");
+	}
+#endif
+#if defined(IPV6_PORTRANGE)
+	if (af == AF_INET6) {
+		int on = restr ? IPV6_PORTRANGE_HIGH : 
+		    IPV6_PORTRANGE_DEFAULT;
+		if (setsockopt (sock, IPPROTO_IPV6, IPV6_PORTRANGE, &on,
+		    sizeof(on)) < 0)
+			warn ("setsockopt IPV6_PORTRANGE (ignored)");
+	}
+#endif
+}
+	
+/*
  * Enable debug on `sock'.
  */
 
 void
 socket_set_debug (int sock)
 {
+#if defined(SO_DEBUG) && defined(HAVE_SETSOCKOPT)
     int on = 1;
 
-#if defined(SO_DEBUG) && defined(HAVE_SETSOCKOPT)
     if (setsockopt (sock, SOL_SOCKET, SO_DEBUG, (void *) &on, sizeof (on)) < 0)
 	warn ("setsockopt SO_DEBUG (ignored)");
 #endif
