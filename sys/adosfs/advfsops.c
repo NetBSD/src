@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.30 1998/08/09 20:20:11 perry Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.31 1998/09/01 03:33:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -42,6 +42,7 @@
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/disklabel.h>
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <sys/fcntl.h>
@@ -71,6 +72,8 @@ int adosfs_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
 			struct proc *));
 
 struct simplelock adosfs_hashlock;
+
+struct pool adosfs_node_pool;
 
 int
 adosfs_mount(mp, path, data, ndp, p)
@@ -382,7 +385,7 @@ adosfs_vget(mp, an, vpp)
 	/*
 	 * setup, insert in hash, and lock before io.
 	 */
-	vp->v_data = ap = malloc(sizeof(struct anode), M_ANODE, M_WAITOK);
+	vp->v_data = ap = pool_get(&adosfs_node_pool, PR_WAITOK);
 	memset(ap, 0, sizeof(struct anode));
 	ap->vp = vp;
 	ap->amp = amp;
@@ -757,6 +760,10 @@ void
 adosfs_init()
 {
 	simple_lock_init(&adosfs_hashlock);
+
+	pool_init(&adosfs_node_pool, sizeof(struct anode), 0, 0, 0,
+	    "adosndpl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+	    M_ANODE);
 }
 
 int
