@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parser.c	5.3 (Berkeley) 4/12/91";*/
-static char rcsid[] = "$Id: parser.c,v 1.8 1993/08/01 18:58:02 mycroft Exp $";
+static char rcsid[] = "$Id: parser.c,v 1.9 1993/09/06 00:44:46 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"
@@ -429,6 +429,7 @@ TRACE(("expecting DO got %s %s\n", tokname[got], got == TWORD ? wordtext : ""));
 		checkkwd = 1;
 		break;
 	/* Handle an empty command like other simple commands.  */
+	case TSEMI:
 	case TNL:
 	case TWORD:
 		tokpushback++;
