@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.397 2001/01/30 23:32:35 tshiozak Exp $
+#	$NetBSD: GENERIC,v 1.398 2001/02/02 10:53:48 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.397 $"
+#ident 		"GENERIC-$Revision: 1.398 $"
 
 maxusers	32		# estimated number of users
 
@@ -75,6 +75,7 @@ options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_12	# NetBSD 1.2,
 options 	COMPAT_13	# NetBSD 1.3,
 options 	COMPAT_14	# NetBSD 1.4,
+options 	COMPAT_15	# NetBSD 1.5,
 options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
