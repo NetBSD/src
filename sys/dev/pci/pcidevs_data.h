@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.572 2003/09/15 19:51:10 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.573 2003/09/21 07:59:06 nisimura Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.575 2003/09/15 19:50:45 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.576 2003/09/21 07:45:13 nisimura Exp 
  */
 
 /*
@@ -6528,7 +6528,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
 	    0,
-	    "Nvidia Corporation & SGS Thomson Microelectric",
+	    "Nvidia Corporation & SGS-Thomson Microelectrics",
 	    "Riva 128",
 	},
 	{
@@ -7254,13 +7254,13 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_2000,
 	    0,
-	    "SGS Thomson Microelectric",
+	    "SGS-Thomson Microelectrics",
 	    "STG 2000X",
 	},
 	{
 	    PCI_VENDOR_SGSTHOMSON, PCI_PRODUCT_SGSTHOMSON_1764,
 	    0,
-	    "SGS Thomson Microelectric",
+	    "SGS-Thomson Microelectrics",
 	    "STG 1764X",
 	},
 	{
@@ -10230,7 +10230,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_SGSTHOMSON, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "SGS Thomson Microelectric",
+	    "SGS-Thomson Microelectrics",
 	    NULL,
 	},
 	{
@@ -12642,7 +12642,7 @@ const struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NVIDIA_SGS, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Nvidia Corporation & SGS Thomson Microelectric",
+	    "Nvidia Corporation & SGS-Thomson Microelectrics",
 	    NULL,
 	},
 	{
