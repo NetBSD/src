@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 1995/08/09 03:21:59 briggs Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 1995/08/12 04:10:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,7 +108,7 @@ Ljmp0panic:
  * Trap/interrupt vector routines
  */ 
 
-	.globl	_cpu040, _trap, _nofault, _longjmp
+	.globl	_trap, _nofault, _longjmp
 _buserr:
 	tstl	_nofault		| device probe?
 	jeq	Lberr			| no, handle as usual
@@ -857,13 +857,12 @@ start:
 	jbsr	_vm_set_page_size	| Set the vm system page size, now.
 	jbsr	_consinit		| XXX Should only be if graybar on
 
-	tstl	_cpu040
+	cmpl	#MMU_68040, _mmutype	| Set in _getenvvars ONLY if 040.
 	beq	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
 
 	movl	#CACHE4_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
-	movl	#MMU_68040, _mmutype	| 68040 MMU
 
 	movel	#0x0, d0
 	.word	0x4e7b, 0x0004		| Disable itt0
@@ -1713,6 +1712,7 @@ ENTRY(loadustp)
 	rts
 LmotommuC:
 #endif
+	pflusha
 	lea	_protorp,a0		| CRP prototype
 	movl	d0,a0@(4)		| stash USTP
 	pmove	a0@,crp			| load root pointer
@@ -2252,8 +2252,6 @@ _intiolimit:
 	.globl	_load_addr
 _load_addr:
 	.long	0		| Physical address of kernel
-_cpu040:
-	.long	0		| Flag: Are we currently running on a 68040
 lastpage:
 	.long	0		| LAK: to store the addr of last page in mem
 #ifdef DEBUG
