@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.44 1998/01/05 10:32:16 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.45 1999/01/11 22:35:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -303,6 +303,7 @@ udp_input(m, va_alist)
 			/* It was a debugger connect packet, just drop it now */
 				goto bad;
 #endif
+			ip->ip_len += iphlen;
 			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT, 0, 0);
 			return;
 		}
