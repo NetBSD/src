@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.15 2002/07/11 04:52:51 scottr Exp $
+.\"	$NetBSD: install,v 1.16 2002/07/20 02:41:15 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -391,7 +391,7 @@ the actual partition size information at the bottom (the lines starting
 with
 .Sq Li a: ,
 .Sq Li b: ,
-...).
+\&.\&.\&.).
 .Pp
 The size and offset fields are given in sector units.
 Be sure to make
