@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.14 2002/04/08 12:20:49 martin Exp $ 
+ *	$Id: isic.c,v 1.15 2002/04/18 12:19:06 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.14 2002/04/08 12:20:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.15 2002/04/18 12:19:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -91,14 +91,8 @@ isicintr(void *arg)
 	struct isic_softc *sc = arg;
 
 	/* could this be an interrupt for us? */
-	if (sc->sc_intr_valid != ISIC_INTR_VALID) {
-		/* just in case - clear it, or we might never get interrupted
-		 * again */
-		if (sc->sc_intr_valid == ISIC_INTR_DISABLED &&
-		    sc->clearirq)
-			sc->clearirq(sc);
-		return 0;
-	}
+	if (sc->sc_intr_valid == ISIC_INTR_DYING)
+		return 0;	/* do not touch removed hardware */
 
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{
@@ -203,7 +197,8 @@ isicintr(void *arg)
 			if(ipac_irq_stat & IPAC_ISTA_EXD)
 			{
 				/* force ISAC interrupt handling */
-				isic_isac_irq(sc, ISAC_ISTA_EXI);
+				if (sc->sc_intr_valid == ISIC_INTR_VALID)
+					isic_isac_irq(sc, ISAC_ISTA_EXI);
 				was_ipac_irq = 1;
 			}
 	
