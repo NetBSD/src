@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 2002/06/19 15:02:08 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.18 2002/08/09 02:39:29 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -103,6 +103,7 @@ all)
 	makedev pty0
 	makedev bpf0 bpf1 bpf2 bpf3
 	makedev vnd0 vnd1 vnd2 vnd3
+	makedev local
 	makedev random
 	makedev ipl
 	makedev tun0 tun1
@@ -441,6 +442,14 @@ systrace)
 	rm -f systrace
 	mknod systrace c 39 0
 	chmod 644 systrace
+	;;
+
+local)
+	if [ -f "$0.local" ]; then
+		umask 0
+		sh $0.local all
+		umask 77
+	fi
 	;;
 
 *)
