@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.21 1996/12/17 08:41:05 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.22 1997/01/10 00:07:27 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -82,7 +82,7 @@ extern struct emul emul_hpux;
 #if NITE > 0
 #include <hp300/dev/itevar.h>
 #else
-#define	iteon(u,f)
+#define	iteon(u,f)	0	/* normally returns int */
 #define	iteoff(u,f)
 #endif /* NITE > 0 */
 
@@ -381,7 +381,7 @@ grfoff(dev)
 				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
 				     (caddr_t)0);
 	/* XXX: see comment for iteoff above */
-	(void) iteon(sc->sc_ite->sc_data, 2);
+	iteon(sc->sc_ite->sc_data, 2);
 	return(error);
 }
 
