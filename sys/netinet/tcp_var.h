@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_var.h	7.10 (Berkeley) 6/28/90
- *	$Id: tcp_var.h,v 1.5 1994/01/08 23:07:24 mycroft Exp $
+ *	$Id: tcp_var.h,v 1.6 1994/01/10 00:31:11 mycroft Exp $
  */
 
 #ifndef _NETINET_TCP_VAR_H_
@@ -236,7 +236,7 @@ struct tcpcb *
 void	tcp_fasttimo __P((void));
 void	tcp_init __P((void));
 void	tcp_input __P((struct mbuf *, int));
-int	tcp_mss __P((struct tcpcb *, u_short));
+/*int	tcp_mss __P((struct tcpcb *, u_short));*/
 struct tcpcb *
 	tcp_newtcpcb __P((struct inpcb *));
 void	tcp_notify __P((struct inpcb *, int));
