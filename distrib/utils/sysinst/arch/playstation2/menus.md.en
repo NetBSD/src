@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.3 2002/05/18 07:14:31 uch Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.3.2.1 2003/02/08 06:54:23 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -137,6 +137,7 @@ menu chooseid, title  "Partition Kind?";
 	{
 		part[editpart].mbrp_typ = 0;
 	};
+	option "don't change",	exit;
 
 menu editfsparts, y=13, exit;
 	display action  {
