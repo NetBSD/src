@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcmips,v 1.17 2000/05/09 00:56:24 hubertf Exp $
+#	$NetBSD: Makefile.hpcmips,v 1.18 2000/05/21 02:50:11 soren Exp $
 
 # Makefile for NetBSD
 #
@@ -63,7 +63,8 @@ GP?=		-G 20
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-Ttext 0x80030000 -T ${MIPS}/conf/kern.ldscript -e start ${GP}
+LINKFLAGS=	-Ttext 0x80030000 -T ${MIPS}/conf/kern.ldscript.le \
+		-e start ${GP}
 STRIPFLAGS=	-g -X -x
 
 %INCLUDES
