@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_var.h,v 1.8 1997/06/24 02:26:15 thorpej Exp $	*/
+/*	$NetBSD: spp_var.h,v 1.9 1998/09/13 15:21:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -52,8 +52,10 @@ struct sppcb {
 #define SF_RXT	0x40			/* Rxt info changed */
 #define SF_RVD	0x80			/* Calling from read usrreq routine */
 	u_short s_mtu;			/* Max packet size for this stream */
-/* use sequence fields in headers to store sequence numbers for this
-   connection */
+/*
+ * use sequence fields in headers to store sequence numbers for this
+ * connection
+ */
 	struct	idp	*s_idp;
 	struct	sphdr	s_shdr;		/* prototype header to transmit */
 #define s_cc s_shdr.sp_cc		/* connection control (for EM bit) */
@@ -84,7 +86,8 @@ struct sppcb {
 	int	s_ssthresh;		/* s_cwnd size threshhold for
 					 * slow start exponential-to-
 					 * linear switch */
-/* transmit timing stuff
+/*
+ * transmit timing stuff
  * srtt and rttvar are stored as fixed point, for convenience in smoothing.
  * srtt has 3 bits to the right of the binary point, rttvar has 2.
  */
