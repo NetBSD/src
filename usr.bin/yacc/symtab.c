@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $	*/
+/*	$NetBSD: symtab.c,v 1.5 1997/07/25 16:46:38 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)symtab.c	5.3 (Berkeley) 6/1/90";
 #else
-static char rcsid[] = "$NetBSD: symtab.c,v 1.4 1996/03/19 03:21:48 jtc Exp $";
+__RCSID("$NetBSD: symtab.c,v 1.5 1997/07/25 16:46:38 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,18 +57,22 @@ bucket **symbol_table;
 bucket *first_symbol;
 bucket *last_symbol;
 
+int hash __P((char *));
+bucket * make_bucket __P((char *));
+bucket * lookup __P((char *));
+
 
 int
 hash(name)
 char *name;
 {
-    register char *s;
-    register int c, k;
+    char *s;
+    int c, k;
 
     assert(name && *name);
     s = name;
     k = *s;
-    while (c = *++s)
+    while ((c = *++s) != '\0')
 	k = (31*k + c) & (TABLE_SIZE - 1);
 
     return (k);
@@ -78,7 +83,7 @@ bucket *
 make_bucket(name)
 char *name;
 {
-    register bucket *bp;
+    bucket *bp;
 
     assert(name);
     bp = (bucket *) MALLOC(sizeof(bucket));
@@ -105,7 +110,7 @@ bucket *
 lookup(name)
 char *name;
 {
-    register bucket *bp, **bpp;
+    bucket *bp, **bpp;
 
     bpp = symbol_table + hash(name);
     bp = *bpp;
@@ -125,10 +130,11 @@ char *name;
 }
 
 
+void
 create_symbol_table()
 {
-    register int i;
-    register bucket *bp;
+    int i;
+    bucket *bp;
 
     symbol_table = (bucket **) MALLOC(TABLE_SIZE*sizeof(bucket *));
     if (symbol_table == 0) no_space();
@@ -145,6 +151,7 @@ create_symbol_table()
 }
 
 
+void
 free_symbol_table()
 {
     FREE(symbol_table);
@@ -152,9 +159,10 @@ free_symbol_table()
 }
 
 
+void
 free_symbols()
 {
-    register bucket *p, *q;
+    bucket *p, *q;
 
     for (p = first_symbol; p; p = q)
     {
