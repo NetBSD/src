@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_aselect.c,v 1.12 2004/02/27 02:55:18 oster Exp $	*/
+/*	$NetBSD: rf_aselect.c,v 1.13 2004/02/29 01:24:34 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.12 2004/02/27 02:55:18 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_aselect.c,v 1.13 2004/02/29 01:24:34 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -54,7 +54,6 @@ static void TransferDagMemory(RF_DagHeader_t *, RF_DagHeader_t *);
 
 static int InitHdrNode(RF_DagHeader_t **, RF_Raid_t *);
 int     rf_SelectAlgorithm(RF_RaidAccessDesc_t *, RF_RaidAccessFlags_t);
-
 
 /******************************************************************************
  *
@@ -125,7 +124,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	RF_DagHeader_t *dag_h = NULL, *tempdag_h, *lastdag_h;
 	RF_DagList_t *dagList, *dagListend;
 	int     i, j, k;
-	RF_VoidFuncPtr *stripeFuncs, normalStripeFuncs[MAXNSTRIPES];
+	RF_FuncList_t *stripeFuncsList, *stripeFuncs, *stripeFuncsEnd, *temp;
 	RF_AccessStripeMap_t *asm_up, *asm_bp;
 	RF_AccessStripeMapHeader_t ***asmh_u, *endASMList;
 	RF_AccessStripeMapHeader_t ***asmh_b;
@@ -146,21 +145,26 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 	stripeUnitFuncs = NULL;
 	blockFuncs = NULL;
 
-	/* get an array of dag-function creation pointers, try to avoid
-	 * calling malloc */
-	if (asm_h->numStripes <= MAXNSTRIPES)
-		stripeFuncs = normalStripeFuncs;
-	else
-		RF_Malloc(stripeFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr), (RF_VoidFuncPtr *));
+	stripeFuncsList = NULL;
+	stripeFuncsEnd = NULL;
 
 	/* walk through the asm list once collecting information */
 	/* attempt to find a single creation function for each stripe */
 	desc->numStripes = 0;
 	for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 		desc->numStripes++;
-		(raidPtr->Layout.map->SelectionFunc) (raidPtr, type, asm_p, &stripeFuncs[i]);
+		stripeFuncs = rf_AllocFuncList();
+
+		if (stripeFuncsEnd == NULL) {
+			stripeFuncsList = stripeFuncs;
+		} else {
+			stripeFuncsEnd->next = stripeFuncs;
+		}
+		stripeFuncsEnd = stripeFuncs;
+
+		(raidPtr->Layout.map->SelectionFunc) (raidPtr, type, asm_p, &(stripeFuncs->fp));
 		/* check to see if we found a creation func for this stripe */
-		if (stripeFuncs[i] == (RF_VoidFuncPtr) NULL) {
+		if (stripeFuncs->fp == NULL) {
 			/* could not find creation function for entire stripe
 			 * so, let's see if we can find one for each stripe
 			 * unit in the stripe */
@@ -250,12 +254,11 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 
 	if (cantCreateDAGs) {
 		/* free memory and punt */
-		if (asm_h->numStripes > MAXNSTRIPES)
-			RF_Free(stripeFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr));
 		if (numStripesBailed > 0) {
 			stripeNum = 0;
-			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++)
-				if (stripeFuncs[i] == NULL) {
+			stripeFuncs = stripeFuncsList;
+			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
+				if (stripeFuncs->fp == NULL) {
 					numStripeUnits = asm_p->numStripeUnitsAccessed;
 					for (j = 0; j < numStripeUnits; j++)
 						rf_FreeAccessStripeMap(asmh_u[stripeNum][j]);
@@ -263,9 +266,16 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					RF_Free(stripeUnitFuncs[stripeNum], numStripeUnits * sizeof(RF_VoidFuncPtr));
 					stripeNum++;
 				}
+				stripeFuncs = stripeFuncs->next;
+			}
 			RF_ASSERT(stripeNum == numStripesBailed);
 			RF_Free(stripeUnitFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr));
 			RF_Free(asmh_u, asm_h->numStripes * sizeof(RF_AccessStripeMapHeader_t **));
+		}
+		while (stripeFuncsList != NULL) {
+			temp = stripeFuncsList;
+			stripeFuncsList = stripeFuncsList->next;
+			rf_FreeFuncList(temp);
 		}
 		desc->numStripes = 0;
 		return (1);
@@ -278,6 +288,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 
 		dagListend = NULL;
 
+		stripeFuncs = stripeFuncsList;
 		for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
 			/* grab dag header for this stripe */
 			dag_h = NULL;
@@ -294,7 +305,7 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 
 			dagList->desc = desc;
 
-			if (stripeFuncs[i] == (RF_VoidFuncPtr) NULL) {
+			if (stripeFuncs->fp == NULL) {
 				/* use bailout functions for this stripe */
 				for (j = 0, physPtr = asm_p->physInfo; physPtr; physPtr = physPtr->next, j++) {
 					uFunc = stripeUnitFuncs[stripeNum][j];
@@ -349,15 +360,14 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				}
 				lastdag_h = tempdag_h;
 
-				(stripeFuncs[i]) (raidPtr, asm_p, tempdag_h, bp, flags, tempdag_h->allocList);
+				(stripeFuncs->fp) (raidPtr, asm_p, tempdag_h, bp, flags, tempdag_h->allocList);
 			}
 			dagList->dags = dag_h;
+			stripeFuncs = stripeFuncs->next;
 		}
 		RF_ASSERT(i == desc->numStripes);
 
 		/* free memory */
-		if (asm_h->numStripes > MAXNSTRIPES)
-			RF_Free(stripeFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr));
 		if ((numStripesBailed > 0) || (numStripeUnitsBailed > 0)) {
 			stripeNum = 0;
 			stripeUnitNum = 0;
@@ -368,8 +378,9 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 			} else
 				endASMList = NULL;
 			/* walk through io, stripe by stripe */
-			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++)
-				if (stripeFuncs[i] == NULL) {
+			stripeFuncs = stripeFuncsList;
+			for (i = 0, asm_p = asmap; asm_p; asm_p = asm_p->next, i++) {
+				if (stripeFuncs->fp == NULL) {
 					numStripeUnits = asm_p->numStripeUnitsAccessed;
 					/* walk through stripe, stripe unit by
 					 * stripe unit */
@@ -403,6 +414,8 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 					RF_Free(stripeUnitFuncs[stripeNum], numStripeUnits * sizeof(RF_VoidFuncPtr));
 					stripeNum++;
 				}
+				stripeFuncs = stripeFuncs->next;
+			}
 			RF_ASSERT(stripeNum == numStripesBailed);
 			RF_Free(stripeUnitFuncs, asm_h->numStripes * sizeof(RF_VoidFuncPtr));
 			RF_Free(asmh_u, asm_h->numStripes * sizeof(RF_AccessStripeMapHeader_t **));
@@ -411,6 +424,11 @@ rf_SelectAlgorithm(RF_RaidAccessDesc_t *desc, RF_RaidAccessFlags_t flags)
 				RF_Free(blockFuncs, raidPtr->Layout.numDataCol * asm_h->numStripes * sizeof(RF_VoidFuncPtr));
 				RF_Free(asmh_b, raidPtr->Layout.numDataCol * asm_h->numStripes * sizeof(RF_AccessStripeMapHeader_t **));
 			}
+		}
+		while (stripeFuncsList != NULL) {
+			temp = stripeFuncsList;
+			stripeFuncsList = stripeFuncsList->next;
+			rf_FreeFuncList(temp);
 		}
 		return (0);
 	}
