@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.32 2000/12/17 16:09:40 jdolecek Exp $	*/
+/*	$NetBSD: kdump.c,v 1.33 2000/12/20 22:11:16 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.32 2000/12/17 16:09:40 jdolecek Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.33 2000/12/20 22:11:16 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -410,18 +410,18 @@ eprint(e)
 {
 	int i = e;
 
-	if (current->errno) {
+	if (current->errnomap) {
 
 		/* No remapping for ERESTART and EJUSTRETURN */
 		/* Kludge for linux that has negative error numbers */
-		if (current->errno[2] > 0 && e < 0)
+		if (current->errnomap[2] > 0 && e < 0)
 			goto normal;
 
-		for (i = 0; i < current->nerrno; i++)
-			if (e == current->errno[i])
+		for (i = 0; i < current->nerrnomap; i++)
+			if (e == current->errnomap[i])
 				break;
 
-		if (i == current->nerrno) {
+		if (i == current->nerrnomap) {
 			printf("-1 unknown errno %d", e);
 			return;
 		}
