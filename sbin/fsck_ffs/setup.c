@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)setup.c	5.33 (Berkeley) 2/22/91";*/
-static char rcsid[] = "$Id: setup.c,v 1.8 1994/04/25 18:29:04 cgd Exp $";
+static char rcsid[] = "$Id: setup.c,v 1.9 1994/04/25 18:33:42 cgd Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
@@ -530,7 +530,7 @@ getmntdev(name)
 	
 	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
 	for (i = 0; i < mntsize; i++) {
-		if (!strncmp(mntbuf[i].f_type, MOUNT_UFS, MFSNAMELEN) &&
+		if (!strncmp(mntbuf[i].f_fstypename, MOUNT_UFS, MFSNAMELEN) &&
 		    !strcmp(mntbuf[i].f_mntonname, name))
 			return (mntbuf[i].f_mntfromname);
 	}
