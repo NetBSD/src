@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 1997/10/17 06:59:25 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13.2.1 1997/11/06 22:28:49 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -70,6 +70,7 @@ cpu_t cpus[MAX_CPUS];
 
 char cpu_model[48];
 volatile int undefined_test;	/* Used for FPA test */
+extern int cpuctrl;		/* cpu control register value */
 
 /* Declare prototypes */
 
@@ -187,7 +188,7 @@ identify_master_cpu(cpu_number, dev_name)
 	cpus[cpu_number].cpu_class = CPU_CLASS_ARM;
 	cpus[cpu_number].cpu_host = CPU_HOST_MAINBUS;
 	cpus[cpu_number].cpu_flags = CPU_FLAG_PRESENT;
-	cpus[cpu_number].cpu_ctrl = cpu_control(0, 0);
+	cpus[cpu_number].cpu_ctrl = cpuctrl;
 
 	/* Get the cpu ID from coprocessor 15 */
 
