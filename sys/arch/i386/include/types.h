@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 1995/06/28 02:55:52 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.11 1995/07/06 03:39:36 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,6 +40,7 @@
 
 #include <sys/cdefs.h>
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
 typedef struct _physadr {
 	int r[1];
 } *physadr;
@@ -47,6 +48,7 @@ typedef struct _physadr {
 typedef struct label_t {
 	int val[6];
 } label_t;
+#endif
 
 typedef	unsigned long	vm_offset_t;
 typedef	unsigned long	vm_size_t;
