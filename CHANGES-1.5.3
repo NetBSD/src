@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.52 2002/03/25 17:41:19 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.53 2002/03/25 18:02:02 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2528,3 +2528,18 @@ distrib/x68k/floppies/ramdisk-common/Makefile.inc patch
 
   Introduce dependency between ramdisk/miniroot construction and
   osrelease.sh, to better support UPDATE builds of releases.
+
+distrib/notes/common/main			patch
+
+  Correct error in ``Major changes between 1.5 and 1.5.1'' list
+  wrt. which version of DHCP software we shipped.  Fixes PR#12857.
+
+sys/dev/pci/pcidevs				1.412 via patch
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+sys/dev/pci/pciide.c				1.145
+share/man/man4/pciide.4				1.37
+distrib/notes/i386/hardware			1.102
+distrib/notes/common/main			patch
+
+  Add support for the pciide part of the AMD-768 chipset.
