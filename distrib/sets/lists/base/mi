@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.438 2003/11/05 08:23:44 wiz Exp $
+# $NetBSD: mi,v 1.439 2003/11/25 06:28:54 dyoung Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -343,7 +343,7 @@
 ./usr/bin/bzip2		base-util-bin
 ./usr/bin/bzip2recover	base-util-bin
 ./usr/bin/cal		base-util-bin
-./usr/bin/calendar	base-util-bin
+./usr/bin/calendar	base-calendar-bin
 ./usr/bin/cap_mkdb	base-util-bin
 ./usr/bin/cdplay	base-audio-bin
 ./usr/bin/chflags	base-util-bin
@@ -520,7 +520,7 @@
 ./usr/bin/rlog		base-rcs-bin
 ./usr/bin/rlogin	base-netutil-bin
 ./usr/bin/rmd160	base-util-bin
-./usr/bin/rpcinfo	base-netutil-bin
+./usr/bin/rpcinfo	base-rpcutil-bin
 ./usr/bin/rs		base-util-bin
 ./usr/bin/rsh		base-netutil-bin
 ./usr/bin/rup		base-netutil-bin
@@ -716,10 +716,10 @@
 ./usr/libexec/rlogind		base-netutil-bin
 ./usr/libexec/rmail		base-uucp-bin
 ./usr/libexec/rpc.rquotad	base-nfsserver-bin
-./usr/libexec/rpc.rstatd	base-netutil-bin
-./usr/libexec/rpc.rusersd	base-netutil-bin
-./usr/libexec/rpc.rwalld	base-netutil-bin
-./usr/libexec/rpc.sprayd	base-netutil-bin
+./usr/libexec/rpc.rstatd	base-rpcserver-bin
+./usr/libexec/rpc.rusersd	base-rpcserver-bin
+./usr/libexec/rpc.rwalld	base-rpcserver-bin
+./usr/libexec/rpc.sprayd	base-rpcserver-bin
 ./usr/libexec/rshd		base-netutil-bin
 ./usr/libexec/sendmail		base-sendmail-bin
 ./usr/libexec/sendmail/sendmail	base-sendmail-bin
@@ -900,7 +900,7 @@
 ./usr/sbin/rpc.pcnfsd		base-nfsserver-bin
 ./usr/sbin/rpc.statd		base-nfsserver-bin
 ./usr/sbin/rpc.yppasswdd	base-nis-bin
-./usr/sbin/rpcbind		base-netutil-bin
+./usr/sbin/rpcbind		base-rpcbind-bin
 ./usr/sbin/rtadvd		base-router-bin
 ./usr/sbin/rtquery		base-netutil-bin
 ./usr/sbin/rtsold		base-netutil-bin
@@ -913,7 +913,7 @@
 ./usr/sbin/setobjstat		base-sysutil-bin
 ./usr/sbin/sliplogin		base-slip-bin
 ./usr/sbin/slstats		base-slip-bin
-./usr/sbin/spray		base-netutil-bin
+./usr/sbin/spray		base-rpcutil-bin
 ./usr/sbin/sshd			base-secsh-bin
 ./usr/sbin/stdethers		base-nis-bin
 ./usr/sbin/stdhosts		base-nis-bin
@@ -959,17 +959,17 @@
 ./usr/sbin/zdump		base-sysutil-bin
 ./usr/sbin/zic			base-sysutil-bin
 ./usr/share			base-sys-share
-./usr/share/calendar		base-sysutil-share
-./usr/share/calendar/calendar.birthday		base-sysutil-share
-./usr/share/calendar/calendar.christian		base-sysutil-share
-./usr/share/calendar/calendar.computer		base-sysutil-share
-./usr/share/calendar/calendar.history		base-sysutil-share
-./usr/share/calendar/calendar.holiday		base-sysutil-share
-./usr/share/calendar/calendar.judaic		base-sysutil-share
-./usr/share/calendar/calendar.lotr		base-sysutil-share
-./usr/share/calendar/calendar.music		base-sysutil-share
-./usr/share/calendar/calendar.netbsd		base-sysutil-share
-./usr/share/calendar/calendar.usholiday		base-sysutil-share
+./usr/share/calendar		base-calendar-share
+./usr/share/calendar/calendar.birthday		base-calendar-share
+./usr/share/calendar/calendar.christian		base-calendar-share
+./usr/share/calendar/calendar.computer		base-calendar-share
+./usr/share/calendar/calendar.history		base-calendar-share
+./usr/share/calendar/calendar.holiday		base-calendar-share
+./usr/share/calendar/calendar.judaic		base-calendar-share
+./usr/share/calendar/calendar.lotr		base-calendar-share
+./usr/share/calendar/calendar.music		base-calendar-share
+./usr/share/calendar/calendar.netbsd		base-calendar-share
+./usr/share/calendar/calendar.usholiday		base-calendar-share
 ./usr/share/dhcpd		base-dhcpd-bin
 ./usr/share/dhcpd/pxe.defs	base-dhcpd-bin
 ./usr/share/dict		base-reference-share
@@ -2067,7 +2067,7 @@
 ./usr/share/man/man9/x68k		base-man-share
 ./usr/share/man/whatis.db		base-man-share
 ./usr/share/me				base-groff-share
-./usr/share/misc			base-groff-share
+./usr/share/misc			base-termcap-share
 ./usr/share/misc/acronyms		base-reference-share
 ./usr/share/misc/acronyms.comp		base-reference-share
 ./usr/share/misc/ascii			base-reference-share

@@ -10,6 +10,8 @@ base-bind-root	root file system directories required by BIND
 base-bootserver-bin	software for booting diskless systems
 base-c-bin	utilities for the C programming language
 base-c-usr	/usr file system directories required by C programming language utilities
+base-calendar-bin	calendar(1) displays lines from the calendar database matching certain dates
+base-calendar-share	database of important dates for calendar(1)
 base-coda-lkm	loadable kernel modules for the CODA distributed file system
 base-cron-bin	the cron daemon and related utilities
 base-cron-root	root file system directories required by the cron daemon
