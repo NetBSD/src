@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 1994/12/01 17:24:26 chopps Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 1994/12/13 21:20:59 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -119,9 +119,10 @@ bdev_decl(ch);	/* XXX not used yet */
 #include "fd.h"
 bdev_decl(fd);
 dev_decl(Fd,open);
+dev_decl(Fd,close);
 #define	bdev_floppy_init(c) { \
 	dev_init(c,Fd,open), \
-	dev_init(c,fd,close), \
+	dev_init(c,Fd,close), \
 	dev_init(c,fd,strategy), \
 	dev_init(c,fd,ioctl), \
 	(dev_type_dump((*))) enxio, \
@@ -257,10 +258,11 @@ cdev_decl(st);
 
 /* floppy disk */
 cdev_decl(fd);
-dev_type_open(Fdopen);
+dev_decl(Fd,open);
+dev_decl(Fd,close);
 #define	cdev_floppy_init(c) { \
 	dev_init(c,Fd,open), \
-	dev_init(c,fd,close), \
+	dev_init(c,Fd,close), \
 	dev_init(c,fd,read), \
 	dev_init(c,fd,write), \
 	dev_init(c,fd,ioctl), \
