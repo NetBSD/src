@@ -1720,7 +1720,10 @@ fwohci_if_inreg(struct device *self, u_int32_t offhi, u_int32_t offlo,
 static int
 fwohci_if_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 {
-	int i, n, len;
+#ifdef FW_DEBUG
+	int i;
+#endif
+	int n, len;
 	struct mbuf *m;
 	struct iovec *iov;
 	void (*handler)(struct device *, struct mbuf *) = arg;
