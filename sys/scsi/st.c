@@ -144,8 +144,7 @@ stopen(dev_t dev)
 	 * Only allow one at a time
 	 */
 	if(st->flags & ST_OPEN) {
-		printf("already open\n");
-		errcode = ENXIO;
+		errcode = EBUSY;
 		goto bad;
 	}
 	/*
@@ -163,7 +162,7 @@ stopen(dev_t dev)
 		st->flags |= ST_NOREWIND;
 		break;
 	default:
-		printf("st%d: Bad mode (minor number)%d\n", unit, mode);
+		printf("st%d: bad mode (minor number) %d\n", unit, mode);
 		return EINVAL;
 	}
 	/*
@@ -183,37 +182,35 @@ stopen(dev_t dev)
 		dsty_code = QIC525;
 		break;
 	default:
-		printf("st%d: Bad density (minor number)%d\n", unit, dsty);
+		printf("st%d: bad density (minor number) %d\n", unit, dsty);
 		return EINVAL;
 	}
 
 	if(scsi_debug & (PRINTROUTINES | TRACEOPENS))
-		printf("stopen: dev=0x%x (unit %d (of %d))\n", dev, unit, NST);
+		printf("st%d: open dev=0x%x (unit %d (of %d))\n", unit, dev, NST);
 
 	/*
 	 * Make sure the device has been initialised
 	 */
 	if (!st->initialized) {
-		printf("uninitialized\n");
+		/*printf("st%d: uninitialized\n", unit);*/
 		return ENXIO;
 	}
 
 	/*
 	 * Check that it is still responding and ok.
 	 */
-	if(scsi_debug & TRACEOPENS)
-		printf("device is ");
 	if (!(st_req_sense(unit, 0))) {
-		errcode = ENXIO;
+		errcode = EIO;
 		if(scsi_debug & TRACEOPENS)
-			printf("not responding\n");
+			printf("st%d: not responding\n", unit);
 		goto bad;
 	}
 	if(scsi_debug & TRACEOPENS)
-		printf("ok\n");
+		printf("st%d: is responding\n", unit);
 
 	if(!(st_test_ready(unit, 0))) {
-		/*printf("st%d not ready\n", unit);*/
+		printf("st%d: not ready\n", unit);
 		return EIO;
 	}
 
@@ -238,7 +235,7 @@ stopen(dev_t dev)
 	 * Load the physical device parameters
 	 */
 	if(scsi_debug & TRACEOPENS)
-		printf("Params loaded ");
+		printf("st%d: params ", unit);
 	st->flags |= ST_OPEN;
 
 bad:
@@ -260,7 +257,7 @@ stclose(dev_t dev)
 	st = st_data[unit];
 
 	if(scsi_debug & TRACEOPENS)
-		printf("Closing device");
+		printf("st%d: close\n", unit);
 	if(st->flags & ST_WRITTEN)
 		st_write_filemarks(unit, 1, 0);
 
@@ -283,7 +280,7 @@ stclose(dev_t dev)
 		st_load(unit, LD_UNLOAD, SCSI_SILENT);
 		break;
 	default:
-		printf("st%d:close: Bad mode (minor number)%d how's it open?\n",
+		printf("st%d: bad mode (minor number) %d (how's it open?)\n",
 				unit, mode);
 		return EINVAL;
 	}
@@ -394,7 +391,7 @@ ststart(int unit)
 	int drivecount, blkno, nblk;
 
 	if(scsi_debug & PRINTROUTINES)
-		printf("ststart%d ", unit);
+		printf("st%d: start\n", unit);
 
 	/*
 	 * See if there is a buf to do and we are not already
@@ -521,7 +518,7 @@ st_done(int unit, struct scsi_xfer *xs)
 	int retval;
 
 	if(scsi_debug & PRINTROUTINES)
-		printf("st_done%d ", unit);
+		printf("st%d: done\n", unit);
 	if (! (xs->flags & INUSE))
 		panic("scsi_xfer not in use!");
 
@@ -627,11 +624,11 @@ st_done(int unit, struct scsi_xfer *xs)
 					st->flags &= ~ST_AT_EOM;
 					break;
 				}
-				printf("st%d:error ignored\n", unit);
+				printf("st%d: error ignored\n", unit);
 			}
 			break;
 		case    XS_TIMEOUT:
-			printf("st%d timeout\n", unit);
+			printf("st%d: timeout\n", unit);
 			break;
 		case    XS_BUSY:	/* should retry -- how? */
 			/*
@@ -647,7 +644,7 @@ st_done(int unit, struct scsi_xfer *xs)
 					/* don't wake the job, ok? */
 					return;
 				}
-				printf("device busy");
+				printf("st%d: device busy\n");
 				xs->flags |= ITSDONE;
 			}
 		case XS_DRIVER_STUFFUP:
@@ -655,8 +652,8 @@ st_done(int unit, struct scsi_xfer *xs)
 			bp->b_error = EIO;
 			break;
 		default:
-			printf("st%d: unknown error category from scsi driver\n",
-				unit);
+			printf("st%d: unknown error category %d from scsi driver\n",
+				unit, xs->error);
 		}
 		biodone(bp);
 		xs->flags = 0;	/* no longer in use */
@@ -732,7 +729,7 @@ stioctl(dev_t dev, int cmd, caddr_t arg, int mode)
 				st_prevent(unit, PR_ALLOW, 0);
 				ret = st_load(unit, LD_UNLOAD, flags);
 			} else
-				printf("rewind failed, unit still loaded\n");
+				printf("st%d: rewind failed; unit still loaded\n");
 			break;
 		case MTNOP:	/* no operation, sets status only */
 		case MTCACHE:	/* enable controller cache */
@@ -829,12 +826,13 @@ st_rd_blk_lim(int unit, int flags)
 	    sizeof(scsi_cmd), (u_char *)&scsi_blkl, sizeof(scsi_blkl),
 	    5000, flags | SCSI_DATA_IN) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("could not get blk limits for unit %d\n", unit);
+			printf("st%d: read block limits failed\n", unit);
 		st->info_valid = FALSE;
 		return FALSE;
 	} 
 	if (st_debug)
-		printf(" (%d <= blksiz <= %d\n) ", b2tol(scsi_blkl.min_length),
+		printf("st%d: block size min %d max %d\n", unit,
+			b2tol(scsi_blkl.min_length),
 			_3btol(&scsi_blkl.max_length_2));
 
 	st->blkmin = b2tol(scsi_blkl.min_length);
@@ -881,12 +879,12 @@ st_mode_sense(int unit, int flags)
 	    sizeof(scsi_cmd), (u_char *)&scsi_s, sizeof(scsi_s),
 	    5000, flags | SCSI_DATA_IN) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("could not mode sense for unit %d\n", unit);
+			printf("st%d: mode sense failed\n", unit);
 		st->info_valid = FALSE;
 		return FALSE;
 	}
 	if (st_debug)
-		printf("unit %d: %d blocks of %d bytes, write %s, %sbuffered\n",
+		printf("st%d: %d blocks of %d bytes, write %s, %sbuffered\n",
 			unit,
 			_3btol((u_char *)&scsi_s.blk_desc.nblocks),
 			_3btol((u_char *)&scsi_s.blk_desc.blklen),
@@ -936,9 +934,11 @@ st_mode_select(int unit, int flags, int dsty_code)
 	    sizeof(scsi_cmd), (u_char *)&dat, sizeof(dat),
 	    5000, flags | SCSI_DATA_OUT) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("could not mode select for unit %d\n", unit);
+			printf("st%d: mode select failed\n", unit);
+#if 0
 		st->info_valid = FALSE;
 		return FALSE;
+#endif
 	} 
 	return TRUE;
 }
@@ -961,7 +961,8 @@ st_space(int unit, int number, int what, int flags)
 	if (st_scsi_cmd(unit, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)0, 0, 600000, flags) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("could not space st%d\n", unit);
+			printf("st%d: %s space failed\n", unit,
+				(number > 0) ? "forward" : "backward");
 		st->info_valid = FALSE;
 		return FALSE;
 	}
@@ -984,7 +985,7 @@ st_write_filemarks(int unit, int number, int flags)
 	if (st_scsi_cmd(unit, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)0, 0, 100000, flags) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("could not write_filemarks st%d\n", unit);
+			printf("st%d: write file marks failed\n", unit);
 		st->info_valid = FALSE;
 		return FALSE;
 	}
@@ -1016,7 +1017,8 @@ st_load(int unit, int type, int flags)
 	if (st_scsi_cmd(unit, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)0, 0, 30000, flags) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("cannot load/unload  st%d\n", unit);
+			printf("st%d: %s failed\n", unit,
+				type == LD_LOAD ? "load" : "unload");
 		st->info_valid = FALSE;
 		return FALSE;
 	}
@@ -1038,7 +1040,8 @@ st_prevent(int unit, int type, int flags)
 	if (st_scsi_cmd(unit, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)0, 0, 5000, flags) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("cannot prevent/allow on st%d\n", unit);
+			printf("st%d: %s failed\n", unit,
+				type == PR_PREVENT ? "prevent" : "allow");
 		st->info_valid = FALSE;
 		return FALSE;
 	}
@@ -1061,7 +1064,7 @@ st_rewind(int unit, int immed, int flags)
 	if (st_scsi_cmd(unit, (struct scsi_generic *)&scsi_cmd,
 	    sizeof(scsi_cmd), (u_char *)0, 0, immed?5000:300000, flags) != 0) {
 		if(!(flags & SCSI_SILENT))
-			printf("could not rewind st%d\n", unit);
+			printf("st%d: rewind failed\n", unit);
 		st->info_valid = FALSE;
 		return FALSE;
 	}
@@ -1159,8 +1162,8 @@ retry:
 			break;
 		default:
 			retval = EIO;
-			printf("st%d: unknown error category from scsi driver\n",
-				unit);
+			printf("st%d: unknown error category %d from scsi driver\n",
+				unit, xs->error);
 			break;
 		}
 		break;
@@ -1228,15 +1231,15 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 	case 4:
 	case 5:
 	case 6:
-		if(!silent)
+		if(!silent) {
 			printf("st%d: error class %d code %d\n", unit,
 				sense->error_class, sense->error_code);
-		if(sense->valid)
-			if(!silent)
+			if(sense->valid)
 				printf("block no. %d (decimal)\n",
 					(sense->ext.unextended.blockhi <<16),
 					+ (sense->ext.unextended.blockmed <<8),
 					+ (sense->ext.unextended.blocklow ));
+		}
 		return EIO;
 	case 7:
 		/*
@@ -1269,7 +1272,7 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 					}
 				}
 			} else
-				printf("BAD length error?");
+				printf("st%d: bad length error?", unit);
 		}
 
 		key = sense->ext.extended.sense_key;
@@ -1278,9 +1281,9 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 			return ESUCCESS;
 		case 0x1:
 			if(!silent) {
-				printf("st%d: soft error(corrected) ", unit); 
+				printf("st%d: soft error (corrected)", unit); 
 				if(sense->valid) {
-			   		printf("block no. %d (decimal)\n",
+			   		printf(" block %d\n",
 			  		(sense->ext.extended.info[0] <<24)|
 			  		(sense->ext.extended.info[1] <<16)|
 			  		(sense->ext.extended.info[2] <<8)|
@@ -1295,9 +1298,9 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 			return ENODEV;
 		case 0x3:
 			if(!silent) {
-				printf("st%d: medium error ", unit); 
+				printf("st%d: medium error", unit); 
 				if(sense->valid) {
-			   		printf("block no. %d (decimal)\n",
+			   		printf(" block %d\n",
 			  		(sense->ext.extended.info[0] <<24)|
 			  		(sense->ext.extended.info[1] <<16)|
 			  		(sense->ext.extended.info[2] <<8)|
@@ -1308,7 +1311,7 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 			return EIO;
 		case 0x4:
 			if(!silent)
-				printf("st%d: non-media hardware failure\n",
+				printf("st%d: component failure\n",
 					unit); 
 			return EIO;
 		case 0x5:
@@ -1325,10 +1328,10 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 			return ESUCCESS;
 		case 0x7:
 			if(!silent) {
-				printf("st%d: attempted protection violation ",
+				printf("st%d: attempted protection violation",
 					unit); 
 				if(sense->valid) {
-			   		printf("block no. %d (decimal)\n",
+			   		printf(" block %d\n",
 			  		(sense->ext.extended.info[0] <<24)|
 			  		(sense->ext.extended.info[1] <<16)|
 			  		(sense->ext.extended.info[2] <<8)|
@@ -1339,9 +1342,9 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 			return EACCES;
 		case 0x8:
 			if(!silent) {
-				printf("st%d: block wrong state (worm)\n", unit);
+				printf("st%d: block wrong state (worm)", unit);
 				if(sense->valid) {
-			   		printf("block no. %d (decimal)\n",
+			   		printf(" block %d\n",
 			  		(sense->ext.extended.info[0] <<24)|
 			  		(sense->ext.extended.info[1] <<16)|
 			  		(sense->ext.extended.info[2] <<8)|
@@ -1364,9 +1367,9 @@ st_interpret_sense(int unit, struct scsi_xfer *xs)
 			return EIO;
 		case 0xc:
 			if(!silent) {
-				printf("st%d: search returned\n", unit); 
+				printf("st%d: search returned", unit); 
 				if(sense->valid) {
-			   		printf("block no. %d (decimal)\n",
+			   		printf(" block %d\n",
 			  		(sense->ext.extended.info[0] <<24)|
 			  		(sense->ext.extended.info[1] <<16)|
 			  		(sense->ext.extended.info[2] <<8)|
