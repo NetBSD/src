@@ -1,4 +1,4 @@
-/*	$NetBSD: securepath.c,v 1.5 2001/01/03 15:41:19 lukem Exp $	*/
+/*	$NetBSD: secure_path.c,v 1.1 2001/08/20 14:47:50 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1995,1997 Berkeley Software Design, Inc. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: securepath.c,v 1.5 2001/01/03 15:41:19 lukem Exp $");
+__RCSID("$NetBSD: secure_path.c,v 1.1 2001/08/20 14:47:50 wiz Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
