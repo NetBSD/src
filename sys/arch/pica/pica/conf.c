@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.7 1997/01/07 11:35:16 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.8 1997/06/18 13:19:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -204,6 +204,7 @@ dev_t	swapdev = makedev(1, 0);
  *
  * A minimal stub routine can always return 0.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -220,6 +221,7 @@ iskmemdev(dev)
 /*
  * Returns true if def is /dev/zero
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -297,6 +299,7 @@ static int chrtoblktbl[MAXDEV] =  {
  *
  * A minimal stub routine can always return NODEV.
  */
+int
 chrtoblk(dev)
 	dev_t dev;
 {
