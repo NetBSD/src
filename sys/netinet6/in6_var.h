@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_var.h,v 1.16 2000/04/16 15:28:00 itojun Exp $	*/
-/*	$KAME: in6_var.h,v 1.31 2000/03/25 07:23:46 sumikawa Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.17 2001/02/08 14:56:16 itojun Exp $	*/
+/*	$KAME: in6_var.h,v 1.52 2001/02/06 09:16:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -586,6 +586,13 @@ int	in6_prefix_ioctl __P((struct socket *so, u_long cmd, caddr_t data,
 int	in6_prefix_add_ifid __P((int iilen, struct in6_ifaddr *ia));
 void	in6_prefix_remove_ifid __P((int iilen, struct in6_ifaddr *ia));
 void	in6_purgeprefix __P((struct ifnet *));
+
+struct in6pcb;
+int in6_embedscope __P((struct in6_addr *, const struct sockaddr_in6 *,
+	struct in6pcb *, struct ifnet **));
+int in6_recoverscope __P((struct sockaddr_in6 *, const struct in6_addr *,
+	struct ifnet *));
+void in6_clearscope __P((struct in6_addr *));
 #endif /* _KERNEL */
 
 #endif /* _NETINET6_IN6_VAR_H_ */
