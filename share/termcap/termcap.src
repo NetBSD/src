@@ -3594,7 +3594,7 @@ ifmr|Informer D304:\
 #
 li|scoansi|scoansi80x25|SCO Extended Ansi standard crt:\
 	:al=\E[L:am:bs:cd=\E[J:ce=\E[K:cl=\E[2J\E[H:cm=\E[%i%d;%dH:co#80:\
-	:dc=\E[P:dl=\E[M:do=\E[B:bt=\E[Z:ei=:ho=\E[H:ic=\E[from: @:im=:li#25:\
+	:dc=\E[P:dl=\E[M:do=\E[B:bt=\E[Z:ei=:ho=\E[H:ic=\E[@:im=:li#25:\
 	:nd=\E[C:pt:so=\E[7m:se=\E[m:us=\E[4m:ue=\E[m:up=\E[A:\
 	:k1=\E[M:k2=\E[N:k3=\E[O:k4=\E[P:k5=\E[Q:k6=\E[R:\
 	:k7=\E[S:k8=\E[T:k9=\E[U:k0=\E[V:\
