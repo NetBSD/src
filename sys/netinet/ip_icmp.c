@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.78 2003/08/22 22:00:36 itojun Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.79 2003/11/11 20:25:26 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.78 2003/08/22 22:00:36 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.79 2003/11/11 20:25:26 jonathan Exp $");
 
 #include "opt_ipsec.h"
 
@@ -744,7 +744,7 @@ icmp_reflect(m)
 	 * interface.
 	 */
 	if (sin == (struct sockaddr_in *)0)
-		TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+		TAILQ_FOREACH(ia, &in_ifaddrhead, ia_list) {
 			if (ia->ia_ifp->if_flags & IFF_LOOPBACK)
 				continue;
 			sin = &ia->ia_addr;

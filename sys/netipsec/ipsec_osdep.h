@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_osdep.h,v 1.3 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: ipsec_osdep.h,v 1.4 2003/11/11 20:25:26 jonathan Exp $	*/
 
 #ifndef NETIPSEC_OSDEP_H
 #define NETIPSEC_OSDEP_H
@@ -214,7 +214,7 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 
 /*
  * 10. List of all known network interfaces.
- * FreeBSD has listhead in_ifaddread, with ia_link as link.
+ * FreeBSD has listhead in_ifaddrhead, with ia_link as link.
  * NetBSD has listhead in_ifaddr, with ia_list as link.
  * No name-clahses, so just #define the appropriate names on NetBSD.
  * NB: Is it worth introducing iterator (find-first-list/find-next-list)
@@ -224,8 +224,6 @@ if_handoff(struct ifqueue *ifq, struct mbuf *m, struct ifnet *ifp, int adjust)
 /* nothing to do for raw interface list */
 #endif	/* FreeBSD */
 #ifdef __NetBSD__
-/* For now, use FreeBSD-compatible names for raw interface list. */
-#define in_ifaddrhead in_ifaddr
 #define ia_link ia_list
 #endif	/* __NetBSD__ */
 
