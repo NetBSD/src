@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.3 1995/03/21 09:09:08 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 James A. Jegers
  * All rights reserved.

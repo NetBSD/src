@@ -1,3 +1,5 @@
+/*	$NetBSD: cpio.h,v 1.3 1995/03/21 09:07:15 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992 Keith Muller.
  * Copyright (c) 1992, 1993
@@ -34,8 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cpio.h	8.1 (Berkeley) 5/31/93
- *	$Id: cpio.h,v 1.2 1994/06/13 16:33:49 jtc Exp $
+ *	@(#)cpio.h	8.1 (Berkeley) 5/31/93
  */
 
 /*

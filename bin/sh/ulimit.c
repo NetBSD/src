@@ -1,3 +1,5 @@
+/*	$NetBSD: ulimit.c,v 1.2 1995/03/21 09:10:32 cgd Exp $	*/
+
 /*
  * ulimit builtin
  *

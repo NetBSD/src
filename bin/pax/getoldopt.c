@@ -1,3 +1,5 @@
+/*	$NetBSD: getoldopt.c,v 1.3 1995/03/21 09:07:28 cgd Exp $	*/
+
 /*
  * Plug-compatible replacement for getopt() for parsing tar-like
  * arguments.  If the first argument begins with "-", it uses getopt;
@@ -8,7 +10,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: getoldopt.c,v 1.2 1994/12/04 07:11:53 cgd Exp $";
+static char rcsid[] = "$NetBSD: getoldopt.c,v 1.3 1995/03/21 09:07:28 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

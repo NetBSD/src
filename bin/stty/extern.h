@@ -1,3 +1,5 @@
+/*	$NetBSD: extern.h,v 1.7 1995/03/21 09:11:16 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.1 (Berkeley) 5/31/93
- *	$Id: extern.h,v 1.6 1994/09/20 04:52:04 mycroft Exp $
+ *	@(#)extern.h	8.1 (Berkeley) 5/31/93
  */
 
 int	c_cchars __P((const void *, const void *));
