@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4.2.1 1997/11/05 05:52:10 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.4.2.2 1997/11/07 23:16:09 mellon Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -45,17 +45,17 @@ CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
 LintSysNormal.c: ${.CURDIR}/../libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} \
+	@sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${ASM}
 
 LintSysNoerr.c: ${.CURDIR}/../libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -n \
+	@sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -n \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${NOERR}
 
 LintSysPseudo.c: ${.CURDIR}/../libc/sys/makelintstub \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
-	@${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -p \
+	@sh ${.CURDIR}/../libc/sys/makelintstub -o ${.TARGET} -p \
 	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDO}
