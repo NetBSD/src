@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 1999/04/11 04:04:09 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 1999/04/21 02:03:24 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 1999/04/11 04:04:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 1999/04/21 02:03:24 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -548,9 +548,16 @@ cpu_startup()
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 				UVM_ADV_NORMAL, 0)) != KERN_SUCCESS)
-		panic("startup: cannot allocate VM for buffers");
+		panic("cpu_startup: cannot allocate VM for buffers");
+
+	minaddr = (vaddr_t)buffers;
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		bufpages = btoc(MAXBSIZE) * nbuf; /* do not overallocate RAM */
+	}
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
+
+	/* now allocate RAM for buffers */
 	for (i = 0; i < nbuf; i++) {
 		vsize_t curbufsize;
 		vaddr_t curbuf;
