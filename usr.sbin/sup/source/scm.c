@@ -69,6 +69,12 @@
  *	since Tahoe version of <netinet/in.h> does not define them.
  *
  * $Log: scm.c,v $
+ * Revision 1.2  1995/06/03 21:21:51  christos
+ * Changes to write ascii timestamps in the when files.
+ * Looked into making it 64 bit clean, but it is hopeless.
+ * Added little program to convert from the old timestamp files
+ * into the new ones.
+ *
  * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
  * initial import of CMU's SUP to NetBSD
  *
@@ -214,6 +220,10 @@ static int sock = -1;			/* socket used to make connection */
 static struct in_addr remoteaddr;	/* remote host address */
 static char *remotename = NULL;		/* remote host name */
 static int swapmode;			/* byte-swapping needed on server? */
+
+#if __STDC__
+int scmerr(int,char *,...);
+#endif
 
 /***************************************************
  ***    C O N N E C T I O N   R O U T I N E S    ***
