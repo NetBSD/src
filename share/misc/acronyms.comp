@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.59 2005/02/22 12:24:44 grant Exp $
+$NetBSD: acronyms.comp,v 1.60 2005/03/27 00:41:33 uwe Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -45,6 +45,7 @@ CHS	cylinder/head/sector
 CIDR	classless inter-domain routing
 CIS	contact image sensor
 CLI	command line interface
+CLUT	color look-up table
 CLV	constant linear velocity (as opposed to CAV)
 CMYK	cyan magenta yellow black
 COFF	common object file format
