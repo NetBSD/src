@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.25 2002/10/12 19:21:12 thorpej Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.26 2002/10/13 17:19:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.25 2002/10/12 19:21:12 thorpej Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.26 2002/10/13 17:19:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ ar_open(const char *name)
 	flcnt = 0;
 
 #ifdef SUPPORT_RMT
-	if (strchr(name, ':') != NULL && !forcelocal) {
+	if (name && strchr(name, ':') != NULL && !forcelocal) {
 		artyp = ISRMT;
 		if ((arfd = rmtopen(name, O_RDWR, DMOD)) == -1) {
 			syswarn(0, errno, "Failed open on %s", name);
