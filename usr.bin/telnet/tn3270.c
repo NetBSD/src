@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.17 2003/07/12 14:29:36 itojun Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.18 2003/07/14 15:56:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.17 2003/07/12 14:29:36 itojun Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.18 2003/07/14 15:56:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: tn3270.c,v 1.17 2003/07/12 14:29:36 itojun Exp $");
 #include "externs.h"
 #include "fdset.h"
 
-#if	defined(TN3270)
+#ifdef TN3270
 
 #include "../ctlr/screen.h"
 #include "../ctlr/declare.h"
@@ -66,7 +66,6 @@ __RCSID("$NetBSD: tn3270.c,v 1.17 2003/07/12 14:29:36 itojun Exp $");
 
 #include "../sys_curses/telextrn.h"
 
-#if	defined(unix)
 int
 	HaveInput,		/* There is input available to scan */
 	cursesdata,		/* Do we dump curses data? */
@@ -74,7 +73,6 @@ int
 
 char	tline[200];
 char	*transcom = 0;	/* transparent mode command (default: none) */
-#endif	/* defined(unix) */
 
 char	Ibuf[8*BUFSIZ], *Ifrontp, *Ibackp;
 
@@ -90,14 +88,12 @@ static int
 #endif	/* defined(TN3270) */
 
 
-#if	defined(TN3270)
+#ifdef TN3270
 void
 init_3270(void)
 {
-#if	defined(unix)
     HaveInput = 0;
     sigiocount = 0;
-#endif	/* defined(unix) */
     Sent3270TerminalType = 0;
     Ifrontp = Ibackp = Ibuf;
     init_ctlr();		/* Initialize some things */
@@ -108,7 +104,7 @@ init_3270(void)
 #endif	/* defined(TN3270) */
 
 
-#if	defined(TN3270)
+#ifdef TN3270
 
 /*
  * DataToNetwork - queue up some data to go to network.  If "done" is set,
@@ -173,14 +169,12 @@ DataToNetwork(char *buffer,	/* where the data is */
 }
 
 
-#if	defined(unix)
 void
 inputAvailable(int signo)
 {
     HaveInput = 1;
     sigiocount++;
 }
-#endif	/* defined(unix) */
 
 void
 outputPurge(void)
@@ -213,17 +207,13 @@ DataToTerminal(
 
     while (count) {
 	if (TTYROOM() == 0) {
-#if	defined(unix)
 	    struct pollfd set[1];
 
 	    set[0].fd = tout;
 	    set[0].events = POLLOUT;
-#endif	/* defined(unix) */
 	    (void) ttyflush(0);
 	    while (TTYROOM() == 0) {
-#if	defined(unix)
 		(void) poll(set, 1, INFTIM);
-#endif	/* defined(unix) */
 		(void) ttyflush(0);
 	    }
 	}
@@ -273,9 +263,7 @@ void
 Finish3270(void)
 {
     while (Push3270() || !DoTerminalOutput()) {
-#if	defined(unix)
 	HaveInput = 0;
-#endif	/* defined(unix) */
 	;
     }
 }
@@ -295,7 +283,6 @@ StringToTerminal(char *s)
 }
 
 
-#if	((!defined(NOT43)) || defined(PUTCHAR))
 /* _putchar - output a single character to the terminal.  This name is so that
  *	curses(3x) can call us to send out data.
  */
@@ -318,7 +305,6 @@ _putchar(int cc)
 
     return (0);
 }
-#endif	/* ((!defined(NOT43)) || defined(PUTCHAR)) */
 
 void
 SetIn3270(void)
@@ -394,7 +380,6 @@ tn3270_ttype(void)
     }
 }
 
-#if	defined(unix)
 int
 settranscom(int argc, char *argv[])
 {
@@ -414,6 +399,5 @@ settranscom(int argc, char *argv[])
 	}
 	return 1;
 }
-#endif	/* defined(unix) */
 
 #endif	/* defined(TN3270) */

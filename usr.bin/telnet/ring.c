@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.11 2003/06/18 20:51:00 christos Exp $	*/
+/*	$NetBSD: ring.c,v 1.12 2003/07/14 15:56:29 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: ring.c,v 1.11 2003/06/18 20:51:00 christos Exp $");
+__RCSID("$NetBSD: ring.c,v 1.12 2003/07/14 15:56:29 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,20 +54,11 @@ __RCSID("$NetBSD: ring.c,v 1.11 2003/06/18 20:51:00 christos Exp $");
  */
 
 #include	<stdio.h>
-#ifndef NO_STRING_H
 #include	<string.h>
-#endif
 #include	<strings.h>
 #include	<errno.h>
-
-#ifdef	size_t
-#undef	size_t
-#endif
-
 #include	<sys/types.h>
-#ifndef	FILIO_H
 #include	<sys/ioctl.h>
-#endif
 #include	<sys/socket.h>
 
 #include	"ring.h"

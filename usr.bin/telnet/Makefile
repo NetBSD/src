@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2002/09/18 14:00:41 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2003/07/14 15:56:28 itojun Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -38,8 +38,7 @@
 
 PROG=	telnet
 
-CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
-CPPFLAGS+=-DENV_HACK
+CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -DENV_HACK
 CPPFLAGS+=-I${.CURDIR}
 
 LDADD+= -ltermcap -ltelnet

@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.23 2003/07/12 14:29:35 itojun Exp $	*/
+/*	$NetBSD: telnet.c,v 1.24 2003/07/14 15:56:30 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,13 +38,12 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.23 2003/07/12 14:29:35 itojun Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.24 2003/07/14 15:56:30 itojun Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 
-#if	defined(unix)
 #include <signal.h>
 #include <termcap.h>
 #include <unistd.h>
@@ -52,7 +51,6 @@ __RCSID("$NetBSD: telnet.c,v 1.23 2003/07/12 14:29:35 itojun Exp $");
  * among other things, telnet.h #defines 'DO', which is a variable
  * declared in curses.h.
  */
-#endif	/* defined(unix) */
 
 #include <arpa/telnet.h>
 
@@ -105,7 +103,7 @@ int
 	crmod,
 	netdata,	/* Print out network data flow */
 	crlf,		/* Should '\r' be mapped to <CR><LF> (or <CR><NUL>)? */
-#if	defined(TN3270)
+#ifdef TN3270
 	noasynchtty = 0,/* User specified "-noasynch" on command line */
 	noasynchnet = 0,/* User specified "-noasynch" on command line */
 	askedSGA = 0,	/* We have talked about suppress go ahead */
@@ -384,7 +382,7 @@ willoption(int option)
 		settimer(modenegotiated);
 		/* FALL THROUGH */
 	    case TELOPT_STATUS:
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	    case TELOPT_AUTHENTICATION:
 #ifdef	ENCRYPTION
 	    case TELOPT_ENCRYPT:
@@ -528,7 +526,7 @@ dooption(int option)
 		new_state_ok = 1;
 		break;
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	    case TELOPT_AUTHENTICATION:
 		if (autologin)
 			new_state_ok = 1;
@@ -858,7 +856,7 @@ suboption(void)
 	    unsigned char temp[50];
 	    int len;
 
-#if	defined(TN3270)
+#ifdef TN3270
 	    if (tn3270_ttype()) {
 		return;
 	    }
@@ -1005,7 +1003,7 @@ suboption(void)
 	}
 	break;
 
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	case TELOPT_AUTHENTICATION: {
 		if (!autologin)
 			break;
@@ -1250,27 +1248,17 @@ slc_init(void)
 	/* No EOR */
 	initfunc(SLC_ABORT, SLC_FLUSHIN|SLC_FLUSHOUT);
 	initfunc(SLC_EOF, 0);
-#ifndef	SYSV_TERMIO
 	initfunc(SLC_SUSP, SLC_FLUSHIN);
-#endif
 	initfunc(SLC_EC, 0);
 	initfunc(SLC_EL, 0);
-#ifndef	SYSV_TERMIO
 	initfunc(SLC_EW, 0);
 	initfunc(SLC_RP, 0);
 	initfunc(SLC_LNEXT, 0);
-#endif
 	initfunc(SLC_XON, 0);
 	initfunc(SLC_XOFF, 0);
-#ifdef	SYSV_TERMIO
-	spc_data[SLC_XON].mylevel = SLC_CANTCHANGE;
-	spc_data[SLC_XOFF].mylevel = SLC_CANTCHANGE;
-#endif
 	initfunc(SLC_FORW1, 0);
-#ifdef	USE_TERMIO
 	initfunc(SLC_FORW2, 0);
 	/* No FORW2 */
-#endif
 
 	initfunc(SLC_IP, SLC_FLUSHIN|SLC_FLUSHOUT);
 #undef	initfunc
@@ -2201,13 +2189,13 @@ Scheduler(int block)			/* should we block in the select ? */
 			my_want_state_is_will(TELOPT_BINARY));
     ttyout = ring_full_count(&ttyoring);
 
-#if	defined(TN3270)
+#ifdef TN3270
     ttyin = ring_empty_count(&ttyiring) && (clienteof == 0) && (shell_active == 0);
 #else	/* defined(TN3270) */
     ttyin = ring_empty_count(&ttyiring) && (clienteof == 0);
 #endif	/* defined(TN3270) */
 
-#if	defined(TN3270)
+#ifdef TN3270
     netin = ring_empty_count(&netiring);
 #   else /* !defined(TN3270) */
     netin = !ISend && ring_empty_count(&netiring);
@@ -2216,12 +2204,12 @@ Scheduler(int block)			/* should we block in the select ? */
     netex = !SYNCHing;
 
     /* If we have seen a signal recently, reset things */
-#   if defined(TN3270) && defined(unix)
+#   ifdef TN3270
     if (HaveInput) {
 	HaveInput = 0;
 	(void) signal(SIGIO, inputAvailable);
     }
-#endif	/* defined(TN3270) && defined(unix) */
+#endif	/* defined(TN3270) */
 
     /* Call to system code to process rings */
 
@@ -2280,7 +2268,7 @@ telnet(const char *user)
 #endif	/* defined(AUTHENTICATION) || defined(ENCRYPTION) */
 #   if !defined(TN3270)
     if (telnetport) {
-#if	defined(AUTHENTICATION)
+#ifdef AUTHENTICATION
 	if (autologin)
 		send_will(TELOPT_AUTHENTICATION, 1);
 #endif
