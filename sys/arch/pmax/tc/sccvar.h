@@ -1,4 +1,4 @@
-/*	$NetBSD: sccvar.h,v 1.6 2000/01/09 23:10:45 ad Exp $	*/
+/*	$NetBSD: sccvar.h,v 1.7 2000/02/03 04:09:11 nisimura Exp $	*/
 
 #ifndef _PMAX_TC_SCCVAR_H_
 #define _PMAX_TC_SCCVAR_H_
@@ -20,15 +20,15 @@
 #define	SCCCOMM3_PORT	0x2
 #define	SCCKBD_PORT	0x3
 
-struct	scc_regmap;
-
 int	sccGetc __P((dev_t));
 void	sccPutc __P((dev_t, int));
-void	scc_consinit __P((dev_t dev, struct scc_regmap *sccaddr));
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 extern void	(*sccDivertXInput) __P((int));
 extern void	(*sccMouseEvent) __P((void *));
 extern void	(*sccMouseButtons) __P((void *));
+
+void scc_cnattach __P((u_int32_t, u_int32_t));
+void scc_lk201_cnattach __P((u_int32_t, u_int32_t));
 
 #endif	/* !_PMAX_TC_SCCVAR_H_ */

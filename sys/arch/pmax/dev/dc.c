@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.59 2000/01/10 03:24:31 simonb Exp $	*/
+/*	$NetBSD: dc.c,v 1.60 2000/02/03 04:09:19 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.59 2000/01/10 03:24:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.60 2000/02/03 04:09:19 nisimura Exp $");
 
 /*
  * devDC7085.c --
@@ -192,45 +192,67 @@ static struct consdev dccons = {
 	NULL, NULL, dcGetc, dcPutc, dcPollc, NODEV, CN_REMOTE
 };
 
-/*
- * Special-case code to attach a console.
- * We were using PROM callbacks for console I/O,
- * and we just reset the chip under the console.
- * wire up this driver as console ASAP.
- *
- * Must be called at spltty() or higher.
- */
 void
-dc_consinit(dev, dcaddr)
-	dev_t dev;
-	void *dcaddr;
+dc_cnattach(addr, line)
+paddr_t addr;
+int line;
 {
+	void *v;
+	dev_t dev;
 	struct dc_softc *sc;
-	dcregs *addr = (dcregs *)dcaddr;
 
-	/* save address in case we're cold */
-	if (cold && dc_cons_addr == 0) {
-		/* called while very cold to initalize console output */
-		dc_cons_addr = addr;
-		sc = &coldcons_softc;
-		sc->dc_pdma[0].p_addr = (void*)addr;
-		sc->dc_pdma[1].p_addr = (void*)addr;
-		sc->dc_pdma[2].p_addr = (void*)addr;
-		sc->dc_pdma[3].p_addr = (void*)addr;
-	} else {
-		/* being called from dcattach() to reset console */
-		sc = dc_cd.cd_devs[DCUNIT(dev)];
-	}
+	if (line == 4)
+		line = DCCOMM_PORT;
+	else if (line == 0)
+		line = 0;
+	else
+		line = DCPRINTER_PORT;
 
-	/* reset chip */
-	dc_reset(addr);
+	dev = makedev(DCDEV, line);
+	v = (void *)MIPS_PHYS_TO_KSEG1(addr);
+	sc = &coldcons_softc;
+	sc->dc_pdma[0].p_addr = v;
+	sc->dc_pdma[1].p_addr = v;
+	sc->dc_pdma[2].p_addr = v;
+	sc->dc_pdma[3].p_addr = v;
+	dc_cons_addr = v;
 
-	dccons.cn_dev = dev;
-	*cn_tab = dccons;
-	sc->dcsoftCAR |= 1 << DCLINE(cn_tab->cn_dev);
-	dc_tty_init(sc, cn_tab->cn_dev);
+	dc_reset(v);
+	dc_tty_init(sc, dev);
+
+	cn_tab = &dccons;
+	cn_tab->cn_pri = CN_REMOTE;
+	cn_tab->cn_dev = dev;
 }
 
+#if NRASTERCONSOLE > 0
+void
+dckbd_cnattach(addr)
+paddr_t addr;
+{
+	void *v;
+	dev_t dev;
+	struct dc_softc *sc;
+
+	dev = makedev(DCDEV, DCKBD_PORT);
+	v = (void *)MIPS_PHYS_TO_KSEG1(addr);
+	sc = &coldcons_softc;
+	sc->dc_pdma[0].p_addr = v;
+	sc->dc_pdma[1].p_addr = v;
+	sc->dc_pdma[2].p_addr = v;
+	sc->dc_pdma[3].p_addr = v;
+	dc_cons_addr = v;
+
+	dc_reset(v);
+	dc_kbd_init(sc, dev);
+	lk_divert(dcGetc, dev);
+
+	cn_tab = &dccons;
+	cn_tab->cn_pri = CN_NORMAL;
+	cn_tab->cn_getc = lk_getc;
+	rcons_indev(cn_tab); /* cn_dev & cn_putc */
+}
+#endif
 
 /*
  * Attach DC7085 (dz-11) device.

@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.62 2000/01/18 12:19:49 simonb Exp $	*/
+/*	$NetBSD: scc.c,v 1.63 2000/02/03 04:09:07 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.62 2000/01/18 12:19:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.63 2000/02/03 04:09:07 nisimura Exp $");
 
 #include "opt_ddb.h"
 
@@ -252,24 +252,24 @@ static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
 
-
-/*
- * Set up a given unit as a serial console device.
- * We need console output when cold, and before any device is configured.
- * Should be callable when cold, to reset the chip and set parameters
- * for a remote (serial) console or kgdb line.
- * XXX
- * As most DECstations only bring out one rs-232 lead from an SCC
- * to the bulkhead, and use the other for mouse and keyboard, we
- * only allow one unit per SCC to be console.
- */
 void
-scc_consinit(dev, sccaddr)
-	dev_t dev;
-	scc_regmap_t *sccaddr;
+scc_cnattach(base, offset)
+	u_int32_t	base;
+	u_int32_t	offset;
 {
+	scc_regmap_t *sccaddr;
 	struct scc_softc *sc;
+	int dev;
 
+	/* XXX XXX XXX */
+	dev = 0;
+	if (systype == DS_3MIN || systype == DS_3MAXPLUS)
+		dev = SCCCOMM3_PORT;
+	else if (systype == DS_MAXINE)
+		dev = SCCCOMM2_PORT;
+	/* XXX XXX XXX */
+
+	sccaddr = (void *)(base + offset);
 	/* Save address in case we're cold. */
 	if (cold && scc_cons_addr == 0) {
 		scc_cons_addr = sccaddr;
@@ -285,12 +285,28 @@ scc_consinit(dev, sccaddr)
 	/* XXX make sure sccreset() called only once for this chip? */
 	sccreset(sc);
 
-	scccons.cn_dev = dev;
-	*cn_tab = scccons;
+	cn_tab = &scccons;
+	cn_tab->cn_dev = makedev(SCCDEV, dev);
+	cn_tab->cn_pri = CN_NORMAL;
 	sc->scc_softCAR |= 1 << SCCLINE(cn_tab->cn_dev);
 	scc_tty_init(sc, cn_tab->cn_dev);
 }
 
+void
+scc_lk201_cnattach(base, offset)
+	u_int32_t	base;
+	u_int32_t	offset;
+{
+	dev_t dev;
+
+	dev = makedev(SCCDEV, SCCKBD_PORT);
+	lk_divert(sccGetc, dev);
+
+	cn_tab = &scccons;
+	cn_tab->cn_pri = CN_NORMAL;
+	cn_tab->cn_getc = lk_getc;
+	rcons_indev(cn_tab); /* cn_dev & cn_putc */
+}
 
 /*
  * Test to see if device is present.

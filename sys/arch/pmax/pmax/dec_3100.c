@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.23 2000/01/14 13:45:23 simonb Exp $ */
+/* $NetBSD: dec_3100.c,v 1.24 2000/02/03 04:09:04 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -71,7 +71,7 @@
  *	@(#)machdep.c	8.3 (Berkeley) 1/12/94
  */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
@@ -83,9 +83,13 @@
 
 #include <pmax/pmax/machdep.h>
 #include <pmax/pmax/kn01.h>
+#include <pmax/dev/pmvar.h>
+#include <pmax/dev/dcvar.h>
 
 #include <pmax/ibus/ibusvar.h>
 
+#include "rasterconsole.h"
+#include "pm.h"
 #include "dc.h"
 #include "le_pmax.h"
 #include "sii.h"
@@ -144,7 +148,30 @@ dec_3100_bus_reset()
 static void
 dec_3100_cons_init()
 {
-	/* notyet */
+	int kbd, crt, screen;
+
+	kbd = crt = screen = 0;
+	prom_findcons(&kbd, &crt, &screen);
+
+	if (screen > 0) {
+#if NRASTERCONSOLE > 0 && NPM > 0
+		if (pm_cnattach() > 0) {
+			dckbd_cnattach(KN01_SYS_DZ);
+			return;
+		}
+#else
+		printf("No framebuffer device configured: ");
+		printf("using serial console\n");
+#endif
+	}
+	/*
+	 * Delay to allow PROM putchars to complete.
+	 * FIFO depth * character time,
+	 * character time = (1000000 / (defaultrate / 10))
+	 */
+	DELAY(160000000 / 9600);	/* XXX */
+
+	dc_cnattach(KN01_SYS_DZ, kbd);
 }
 
 

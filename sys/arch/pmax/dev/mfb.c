@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.44 2000/01/10 03:24:32 simonb Exp $	*/
+/*	$NetBSD: mfb.c,v 1.45 2000/02/03 04:09:14 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,11 +81,8 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.44 2000/01/10 03:24:32 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.45 2000/02/03 04:09:14 nisimura Exp $");
 
-#include "fb.h"
-#include "mfb.h"
-#if NMFB > 0
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -107,6 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.44 2000/01/10 03:24:32 simonb Exp $");
  */
 static struct fbuaccess mfbu;
 static struct pmax_fbtty mfbfb;
+static struct fbinfo *mfb_fi;
 
 static void	mfbPosCursor __P((struct fbinfo *fi, int x, int y));
 
@@ -168,7 +166,7 @@ struct fbdriver mfb_driver = {
 /*
  * Register offsets
  */
-#define	MFB_OFFSET_VRAM		0x200000	/* from module's base */
+#define MFB_OFFSET_VRAM		0x200000	/* from module's base */
 #define MFB_OFFSET_BT431	0x180000	/* Bt431 registers */
 #define MFB_OFFSET_BT455	0x100000	/* Bt455 registers */
 #define MFB_OFFSET_IREQ		0x080000	/* Interrupt req. control */
@@ -181,12 +179,27 @@ struct fbdriver mfb_driver = {
  */
 static int	mfbmatch __P((struct device *, struct cfdata *, void *));
 static void	mfbattach __P((struct device *, struct device *, void *));
+static int	mfbinit __P((struct fbinfo *, caddr_t, int, int));
 static int	mfb_intr __P((void *sc));
 
 struct cfattach mfb_ca = {
 	sizeof(struct fbinfo), mfbmatch, mfbattach
 };
 
+int
+mfb_cnattach(addr)
+      paddr_t addr;
+{
+      struct fbinfo *fi;
+      caddr_t base;
+
+      base = (caddr_t)MIPS_PHYS_TO_KSEG1(addr);
+      fbcnalloc(&fi);
+      if (mfbinit(fi, base, 0, 1) < 0)
+              return (0);
+      mfb_fi = fi;
+      return (1);
+}
 
 static int
 mfbmatch(parent, match, aux)
@@ -195,11 +208,6 @@ mfbmatch(parent, match, aux)
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
-
-#ifdef FBDRIVER_DOES_ATTACH
-	/* leave configuration  to the fb driver */
-	return 0;
-#endif
 
 	/* make sure that we're looking for this type of device. */
 	if (!TC_BUS_MATCHNAME(ta, "PMAG-AA "))
@@ -219,12 +227,19 @@ mfbattach(parent, self, aux)
 	int unit = self->dv_unit;
 	struct fbinfo *fi;
 	
-	/* Allocate a struct fbinfo and point the softc at it */
-	if (fballoc(mfbaddr, &fi) == 0 && !mfbinit(fi, mfbaddr, unit, 0))
-			return;
+	if (mfb_fi)
+		fi = mfb_fi;
+	else {
+		if (fballoc(&fi) < 0 || mfbinit(fi, mfbaddr, unit, 0) < 0)
+		return /* failed */;
+	}
+	((struct fbsoftc *)self)->sc_fi = fi;
 
-	if ((((struct fbsoftc *)self)->sc_fi = fi) == NULL)
-		return;
+	printf(": %dx%dx%d%s",
+		fi->fi_type.fb_width,
+		fi->fi_type.fb_height,
+		fi->fi_type.fb_depth,
+		(mfb_fi) ? " console" : "");
 
 	/*
 	 * 3MIN does not mask un-established TC option interrupts,
@@ -233,10 +248,8 @@ mfbattach(parent, self, aux)
 	 * interrupt handler, which interrupts during vertical-retrace.
 	 */
 	tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NONE, mfb_intr, fi);
-	fbconnect("PMAG-AA", fi, 0);
 	printf("\n");
 }
-
 
 /*
  * Initialization
@@ -308,7 +321,7 @@ mfbinit(fi, mfbaddr, unit, silent)
 	 * Initialize the color map, the screen, and the mouse.
 	 */
 	if (tb_kbdmouseconfig(fi))
-		return (0);
+		return (-1);
 
 	/*
 	 * black-on-white during first initialization of console,
@@ -320,8 +333,8 @@ mfbinit(fi, mfbaddr, unit, silent)
 	/*
 	 * Connect to the raster-console pseudo-driver.
 	 */
-	fbconnect("PMAG-AA", fi, silent);
-	return (1);
+	fbconnect(fi);
+	return (0);
 }
 
 static u_char	cursor_RGB[6];	/* cursor color 2 & 3 */
@@ -790,5 +803,3 @@ mfb_intr(sc)
 
 	return (0);
 }
-
-#endif /* NMFB */

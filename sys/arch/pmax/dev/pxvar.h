@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxvar.h,v 1.9 2000/01/14 02:00:47 ad Exp $	*/
+/* 	$NetBSD: pxvar.h,v 1.10 2000/02/03 04:09:17 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,9 +136,7 @@ typedef struct px_map {
 
 #ifdef _KERNEL
 
-/* XXX ugly hack to make the PX fit for findcons() */
-struct	fbinfo;
-int	px_init __P((struct fbinfo *, char *, int, int));
+int px_cnattach __P((paddr_t));
 
 #endif /* _KERNEL */
 
