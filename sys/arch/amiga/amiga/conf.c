@@ -55,7 +55,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 	int n __P((dev_t, int, caddr_t, int, struct proc *))
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n __P((dev_t))
+#define	dev_type_dump(n)	int n ()
 #define	dev_type_size(n)	int n __P((dev_t))
 
 #define	dev_decl(n,t)	__CONCAT(dev_type_,t)(__CONCAT(n,t))
