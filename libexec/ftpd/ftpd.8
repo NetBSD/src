@@ -1,4 +1,4 @@
-.\"	$NetBSD: ftpd.8,v 1.35 1999/03/22 18:25:44 garbled Exp $
+.\"	$NetBSD: ftpd.8,v 1.36 1999/05/17 15:14:54 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd September 7, 1998
+.Dd May 18, 1999
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -535,12 +535,8 @@ and unwritable by anyone.
 Make this directory owned by
 .Dq root
 and unwritable by anyone (mode 555).
-The program
-.Xr ls 1
-must be present to support the
-.Sq LIST
-command.
-This program should be mode 111.
+Generally any conversion commands should be installed
+here (mode 111).
 .It Pa ~ftp/etc
 Make this directory owned by
 .Dq root
@@ -554,8 +550,8 @@ and
 (see
 .Xr group 5 )
 must be present for the
-.Xr ls 1
-command to be able to produce owner names rather than numbers.
+.Xr LIST
+command to be able to display owner and group names instead of numbers.
 The password field in
 .Xr passwd 5
 is not used, and should not contain real passwords.
@@ -667,3 +663,9 @@ will be rejected.
 Use of this option is
 .Em strongly
 recommended.
+.Pp
+Don't create
+.Pa ~ftp/tmp
+if you don't want anonymous users to upload files there.
+That directory is only necessary if you want to display the error
+messages of conversion commands to the user.
