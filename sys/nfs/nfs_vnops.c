@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.124 2000/11/27 08:39:51 chs Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.125 2000/11/30 07:24:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -437,6 +437,19 @@ nfs_open(v)
 
 	if (vp->v_type != VREG && vp->v_type != VDIR && vp->v_type != VLNK) {
 		return (EACCES);
+	}
+
+	/*
+	 * if we're opening with write access, initialize the write creds
+	 * in case we only write via memory mappings.
+	 */
+
+	if (ap->a_mode & FWRITE) {
+		if (np->n_wcred) {
+			crfree(np->n_wcred);
+		}
+		np->n_wcred = ap->a_cred;
+		crhold(np->n_wcred);
 	}
 
 #ifndef NFS_V2_ONLY
@@ -1099,6 +1112,10 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 	int error = 0, len, tsiz, wccflag = NFSV3_WCCRATTR, rlen, commit;
 	const int v3 = NFS_ISV3(vp);
 	int committed = NFSV3WRITE_FILESYNC;
+
+	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
+		panic("writerpc readonly vp %p", vp);
+	}
 
 #ifndef DIAGNOSTIC
 	if (uiop->uio_iovcnt != 1)
