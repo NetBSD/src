@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2002/07/09 19:21:03 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 2002/07/28 07:07:46 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,6 +35,7 @@
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ipkdb.h"
+#include "opt_altivec.h"
 #include "opt_multiprocessor.h"
 #include "adb.h"
 #include "zsc.h"
@@ -79,6 +80,9 @@
 #include <machine/trap.h>
 #include <machine/bus.h>
 #include <machine/fpu.h>
+#ifdef ALTIVEC
+#include <powerpc/altivec.h>
+#endif
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -673,43 +677,81 @@ ofkbd_cngetc(dev)
 }
 
 #ifdef MULTIPROCESSOR
+/*
+ * Save a process's FPU state to its PCB.  The state is in another CPU
+ * (though by the time our IPI is processed, it may have been flushed already).
+ */
 void
-save_fpu_proc(p)
+mp_save_fpu_proc(p)
 	struct proc *p;
 {
-	volatile struct cpu_info *fpcpu;
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct cpu_info *fpcpu;
 	int i;
-	extern volatile int IPI[];	/* XXX */
 
-	fpcpu = p->p_addr->u_pcb.pcb_fpcpu;
-	if (fpcpu == curcpu()) {
-		save_fpu(p);
-		return;
-	}
+	/*
+	 * Send an IPI to the other CPU with the data and wait for that CPU
+	 * to flush the data.  Note that the other CPU might have switched
+	 * to a different proc's FPU state by the time it receives the IPI,
+	 * but that will only result in an unnecessary reload.
+	 */
 
-#if 0
-	printf("save_fpu_proc{%d} pid = %d, fpcpu->ci_cpuid = %d\n",
-	    cpu_number(), p->p_pid, fpcpu->ci_cpuid);
-#endif
-
+	fpcpu = pcb->pcb_fpcpu;
 	macppc_send_ipi(fpcpu, MACPPC_IPI_FLUSH_FPU);
 
 	/* Wait for flush. */
 #if 0
-	while (fpcpu->ci_fpuproc);
+	while (pcb->pcb_fpcpu)
+		;
 #else
 	for (i = 0; i < 0x3fffffff; i++) {
-		if (fpcpu->ci_fpuproc == NULL)
-			goto done;
+		if (pcb->pcb_fpcpu == NULL)
+			return;
 	}
-	printf("save_fpu_proc{%d} pid = %d, fpcpu->ci_cpuid = %d\n",
+	printf("mp_save_fpu_proc{%d} pid = %d, fpcpu->ci_cpuid = %d\n",
 	    cpu_number(), p->p_pid, fpcpu->ci_cpuid);
-	printf("IPI[0] = 0x%x, IPI[1] = 0x%x\n", IPI[0], IPI[1]);
-	printf("cpl 0x%x 0x%x\n", cpu_info[0].ci_cpl, cpu_info[1].ci_cpl);
-	printf("ipending 0x%x 0x%x\n", cpu_info[0].ci_ipending, cpu_info[1].ci_ipending);
-	panic("save_fpu_proc");
-done:;
-
+	panic("mp_save_fpu_proc");
 #endif
 }
+
+#ifdef ALTIVEC
+/*
+ * Save a process's AltiVEC state to its PCB.  The state may be in any CPU.
+ * The process must either be curproc or traced by curproc (and stopped).
+ * (The point being that the process must not run on another CPU during
+ * this function).
+ */
+void
+mp_save_vec_proc(p)
+	struct proc *p;
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct cpu_info *veccpu;
+	int i;
+
+	/*
+	 * Send an IPI to the other CPU with the data and wait for that CPU
+	 * to flush the data.  Note that the other CPU might have switched
+	 * to a different proc's AltiVEC state by the time it receives the IPI,
+	 * but that will only result in an unnecessary reload.
+	 */
+
+	veccpu = pcb->pcb_veccpu;
+	macppc_send_ipi(veccpu, MACPPC_IPI_FLUSH_VEC);
+
+	/* Wait for flush. */
+#if 0
+	while (pcb->pcb_veccpu)
+		;
+#else
+	for (i = 0; i < 0x3fffffff; i++) {
+		if (pcb->pcb_veccpu == NULL)
+			return;
+	}
+	printf("mp_save_vec_proc{%d} pid = %d, veccpu->ci_cpuid = %d\n",
+	    cpu_number(), p->p_pid, veccpu->ci_cpuid);
+	panic("mp_save_vec_proc");
+#endif
+}
+#endif /* ALTIVEC */
 #endif /* MULTIPROCESSOR */
