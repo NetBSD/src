@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.422 2002/05/03 12:46:11 augustss Exp $
+$NetBSD: pcidevs,v 1.423 2002/05/14 12:05:13 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -492,6 +492,7 @@ vendor ESSENTIAL	0x120f	Essential Communications
 vendor O2MICRO		0x1217  O2 Micro Inc
 vendor 3DFX		0x121a	3Dfx Interactive
 vendor ARIEL		0x1220	Ariel
+vendor HEURICON		0x1223	Heurikon/Computer Products
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
 vendor CCUBE		0x123f	C-Cube Microsystems
@@ -1228,6 +1229,9 @@ product GLOBALSUN GL24110P02	0x1102	GL24110P PCI IEEE 802.11b
 
 /* Guillemot products */
 product GUILLEMOT MAXIRADIO	0x1001	MAXIRADIO
+
+/* Heuricon products */
+product HEURICON PMPPC		0x000e	PM/PPC
 
 /* Hewlett-Packard products */
 product HP A4977A		0x1005	A4977A Visualize EG
