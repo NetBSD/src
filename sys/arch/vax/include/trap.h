@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.6 1995/05/07 16:43:35 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.7 1995/06/05 17:18:00 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -54,7 +54,7 @@
 #define	T_ASTFLT	7	/* system forced exception */
 #define	T_PTELEN	8	/* Page table length exceeded */
 #define	T_TRANSFLT	9	/* translation fault */
-/* #define	T_TRCTRAP	10	/* trace trap */
+#define	T_TRCTRAP	10	/* trace trap */
 /* #define	T_COMPAT	11	/* compatibility mode fault on VAX */
 #define	T_ACCFLT	12	/* Access violation fault */
 /* #define	T_TABLEFLT	13	/* page table fault */
