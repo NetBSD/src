@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.5 2000/01/03 02:55:25 msaitoh Exp $	*/
+/*	$NetBSD: trap.c,v 1.6 2000/02/24 19:01:25 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -38,6 +38,8 @@
  *
  *	@(#)trap.c	7.4 (Berkeley) 5/13/91
  */
+
+#define RECURSE_TLB_HANDLER
 
 /*
  * SH3 Trap and System call handling
@@ -468,7 +470,7 @@ syscall(frame)
 	argsize = callp->sy_argsize;
 
 	if (ocode == SYS_syscall) {
-		if (argsize){
+		if (argsize) {
 			args[0] = frame->tf_r5;
 			args[1] = frame->tf_r6;
 			args[2] = frame->tf_r7;
@@ -602,15 +604,18 @@ tlb_handler(p1, p2, p3, p4, frame)
 	struct proc *p;
 	struct vmspace *vm;
 	vm_map_t map;
-	int rv;
+	int rv = 0;
 	u_quad_t sticks = 0;
 	int type = 0;
 	vm_prot_t ftype;
 	extern vm_map_t kernel_map;
-	unsigned nss;
+	unsigned int nss;
 	vaddr_t	va_save;
 	unsigned long pteh_save;
 	int exptype;
+#ifdef RECURSE_TLB_HANDLER
+	int reentrant = 0;
+#endif
 
 	uvmexp.traps++;
 
@@ -697,8 +702,20 @@ tlb_handler(p1, p2, p3, p4, frame)
 	}
 #endif
 
+#ifdef RECURSE_TLB_HANDLER
+	if (((PSL_BL | PSL_IMASK) & frame.tf_ssr) == 0)
+		reentrant = 1;
+#endif
 	/* Fault the original page in. */
+#ifdef RECURSE_TLB_HANDLER
+	if (reentrant)
+		enable_ext_intr();
+#endif
 	rv = uvm_fault(map, va, 0, ftype);
+#ifdef RECURSE_TLB_HANDLER
+	if (reentrant)
+		disable_ext_intr();
+#endif
 	if (rv == KERN_SUCCESS) {
 #if 1
 		if (nss > vm->vm_ssize)
