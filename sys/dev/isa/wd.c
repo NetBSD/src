@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.130 1995/01/29 07:37:15 cgd Exp $	*/
+/*	$NetBSD: wd.c,v 1.131 1995/02/27 01:08:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -170,7 +170,7 @@ int wdcprobe __P((struct device *, void *, void *));
 void wdcattach __P((struct device *, struct device *, void *));
 
 struct cfdriver wdccd = {
-	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wd_softc)
+	NULL, "wdc", wdcprobe, wdcattach, DV_DULL, sizeof(struct wdc_softc)
 };
 
 int wdprobe __P((struct device *, void *, void *));
