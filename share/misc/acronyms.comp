@@ -1,9 +1,9 @@
-$NetBSD: acronyms.comp,v 1.48 2005/01/08 18:48:56 jmmv Exp $
+$NetBSD: acronyms.comp,v 1.49 2005/01/08 22:12:21 wiz Exp $
 
 ABI	application binary interface
 ACPI	advanced configuration and power interface
 ADC	analog [to] digital converter
-ADPCM	adaptive differential pulse amplitude modulation
+ADPCM	adaptive differential pulse code modulation
 AGP	accelerated graphics port
 ANSI	american national standards institute
 API	application programming interface
@@ -49,7 +49,7 @@ DFT	discrete fourier transform
 DHCP	dynamic host configuration protocol
 DMA	direct memory access
 DNS	domain name system
-DPCM	differential pulse amplitude modulation
+DPCM	differential pulse code modulation
 DPI	dots per inch
 DRAM	dynamic random access memory
 DSL	digital subscriber line
@@ -122,7 +122,7 @@ LIR	local internet registry
 LRC	longitudinal redundancy check
 LSB	least significant bit [or: byte]
 LUN	logical unit number
-LZW	lempel ziv welch
+LZW	Lempel Ziv Welch
 MAC	media access control
 MBR	master boot record
 MDRAM	multibank dynamic random access memory
@@ -141,7 +141,7 @@ NAT	network address translation
 NFS	network file system
 NIC	network interface card
 NIS	network information service
-NRZ	non return to zero
+NRZ	non-return to zero
 NUMA	non uniform memory access
 OCR	optical character recognition
 OEM	original equipment manufacturer
