@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.10 1996/04/22 01:23:06 christos Exp $	*/
+/*	$NetBSD: disk.h,v 1.11 1996/04/28 20:22:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -145,5 +145,5 @@ void	disk_resetstat __P((struct disk *));
 struct	disk *disk_find __P((char *));
 
 struct device;
-int	dk_establish __P((struct disk *, struct device *));
+void	dk_establish __P((struct disk *, struct device *));
 #endif
