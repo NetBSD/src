@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.12 2002/10/10 10:12:27 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.13 2002/10/10 23:19:13 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -427,12 +427,13 @@ delay(n)
 	    }
 	    return;	
 	}
-	last = delay_clock_count;
-	 
-	/* reset timer */
-	bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
-			TIMER_3_CLEAR, 0);
 
+	/* 
+	 * read the current value (do not reset it as delay is reentrant)
+	 */
+	last = bus_space_read_4(clock_sc->sc_iot, clock_sc->sc_ioh,
+		    TIMER_3_VALUE);
+	 
 	delta = usecs = 0;
 
 	while (n > usecs)
@@ -447,7 +448,11 @@ delay(n)
 	    
 	    if (cur == 0)
 	    {
-		/* reset the timer */
+		/*
+		 * reset the timer, note that if something blocks us for more
+		 * than 1/100s we may delay for too long, but I believe that
+		 * is fairly unlikely.
+		 */
 		bus_space_write_4(clock_sc->sc_iot, clock_sc->sc_ioh,
 			TIMER_3_CLEAR, 0);
 	    }
