@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.1 1996/03/02 01:16:53 cgd Exp 
+ *	NetBSD: tcdevs,v 1.2 1996/03/02 01:20:58 cgd Exp 
  */
 
 /*
@@ -38,8 +38,8 @@
 
 struct tc_knowndev tc_knowndevs[] = {
 	{
-	    "KTZSA-AA",
-	    TC_PRODUCT_KTZSA_AA,
+	    "KZTSA-AA",
+	    TC_PRODUCT_KZTSA_AA,
 	},
 	{
 	    "PMAD-AA ",
