@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.53 2004/03/23 13:22:04 junyoung Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.53.4.1 2005/01/12 22:38:07 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.53 2004/03/23 13:22:04 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.53.4.1 2005/01/12 22:38:07 he Exp $");
 
 #define SYSVSEM
 
@@ -796,6 +796,9 @@ done:
 		semptr = &semaptr->_sem_base[sopptr->sem_num];
 		semptr->sempid = p->p_pid;
 	}
+
+	/* Update sem_otime */
+	semaptr->sem_otime = time.tv_sec;
 
 	/* Do a wakeup if any semaphore was up'd. */
 	if (do_wakeup) {
