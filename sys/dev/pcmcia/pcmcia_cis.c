@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.18 2000/02/21 03:26:41 enami Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.19 2000/07/14 08:02:12 jun Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -778,8 +778,14 @@ pcmcia_parse_cis_tuple(tuple, arg)
 			for (count = 0, start = 0, i = 0;
 			    (count < 4) && ((i + 4) < 256); i++) {
 				ch = pcmcia_tuple_read_1(tuple, 2 + i);
-				if (ch == 0xff)
+				if (ch == 0xff) {
+					if (i > start) {
+						state->card->cis1_info_buf[i] = 0;
+						state->card->cis1_info[count] =
+						    state->card->cis1_info_buf + start;
+					}
 					break;
+				}
 				state->card->cis1_info_buf[i] = ch;
 				if (ch == 0) {
 					state->card->cis1_info[count] =
