@@ -368,7 +368,7 @@ static const struct ld_option ld_options[] =
       '\0', N_("PATH"), N_("Set link time shared library search path"), ONE_DASH },
   { {"shared", no_argument, NULL, OPTION_SHARED},
       '\0', NULL, N_("Create a shared library"), ONE_DASH },
-  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD.  */
+  { {"Bshareable", no_argument, NULL, OPTION_SHARED }, /* FreeBSD, NetBSD. */
       '\0', NULL, NULL, ONE_DASH },
   { {"sort-common", no_argument, NULL, OPTION_SORT_COMMON},
       '\0', NULL, N_("Sort common symbols by size"), TWO_DASHES },

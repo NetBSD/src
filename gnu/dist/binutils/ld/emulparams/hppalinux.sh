@@ -1,5 +1,5 @@
 # If you change this file, please also look at files which source this one:
-# hppanbsd.sh
+# hppanbsd.sh hppaobsd.sh
 
 SCRIPT_NAME=elf
 ELFSIZE=32

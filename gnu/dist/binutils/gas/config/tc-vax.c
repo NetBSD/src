@@ -1570,7 +1570,8 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
    */
 
   static const unsigned char nbytes_r_length[] = {42, 0, 1, 42, 2};
-  long r_symbolnum;
+  int r_symbolnum;
+  int r_flags;
 
   know (fixP->fx_addsy != NULL);
 
@@ -1581,13 +1582,59 @@ tc_aout_fix_to_chars (where, fixP, segment_address_in_file)
   r_symbolnum = (S_IS_DEFINED (fixP->fx_addsy)
 		 ? S_GET_TYPE (fixP->fx_addsy)
 		 : fixP->fx_addsy->sy_number);
+  r_flags = (fixP->fx_pcrel ? 1 : 0)
+      | (!S_IS_DEFINED (fixP->fx_addsy) ? 8 : 0)	/* extern */
+      | ((nbytes_r_length[fixP->fx_size] & 3) << 1);
 
-  where[6] = (r_symbolnum >> 16) & 0x0ff;
-  where[5] = (r_symbolnum >> 8) & 0x0ff;
-  where[4] = r_symbolnum & 0x0ff;
-  where[7] = ((((!S_IS_DEFINED (fixP->fx_addsy)) << 3) & 0x08)
-	      | ((nbytes_r_length[fixP->fx_size] << 1) & 0x06)
-	      | (((fixP->fx_pcrel << 0) & 0x01) & 0x0f));
+#if 0
+  r_flags |= ((!S_IS_DEFINED(fixP->fx_addsy)
+      && fixP->fx_pcrel
+      && fixP->fx_addsy != GOT_symbol
+      && fixP->fx_addsy != PLT_symbol
+      && flags_want_pic) ? 0x10 : 0);
+#endif
+	
+  switch (fixP->fx_r_type) {
+	case NO_RELOC:
+		break;
+	case NO_RELOC2:
+		if (r_flags & 8)
+		    r_flags |= 0x80;		/* setting the copy bit */
+						/*   says we can convert */
+						/*   to gotslot if needed */
+		break;
+	case RELOC_32:
+		if (flag_want_pic && S_IS_EXTERNAL(fixP->fx_addsy)) {
+			r_symbolnum = fixP->fx_addsy->sy_number;  
+			r_flags |= 8;		/* set extern bit */
+		}
+		break;
+	case RELOC_JMP_SLOT:
+		if (flag_want_pic) {
+			r_flags |= 0x20;	/* set jmptable */
+			r_flags &= ~0x08;	/* clear extern bit */
+		}
+		break;
+	case RELOC_JMP_TBL:
+		if (flag_want_pic) {
+			r_flags |= 0x20;	/* set jmptable */
+			r_flags |= 0x08;	/* set extern bit */
+		}
+		break;
+	case RELOC_GLOB_DAT:
+		if (flag_want_pic) {
+			r_flags |= 0x10;	/* set baserel bit */
+			r_symbolnum = fixP->fx_addsy->sy_number;
+			if (S_IS_EXTERNAL(fixP->fx_addsy))
+				r_flags |= 8;	/* set extern bit */
+		}
+		break;
+  }
+
+  where[4] = (r_symbolnum >>  0) & 0xff;
+  where[5] = (r_symbolnum >>  8) & 0xff;
+  where[6] = (r_symbolnum >> 16) & 0xff;
+  where[7] = r_flags;
 }
 #endif /* !BFD_ASSEMBLER */
 #endif /* OBJ_AOUT */
@@ -3256,7 +3303,7 @@ md_create_long_jump (ptr, from_addr, to_addr, frag, to_symbol)
 
 #ifdef OBJ_VMS
 const char *md_shortopts = "d:STt:V+1h:Hv::";
-#elif defined(OBJ_ELC)
+#elif defined(OBJ_ELF)
 const char *md_shortopts = "d:STt:VkK";
 #else
 const char *md_shortopts = "d:STt:V";

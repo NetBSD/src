@@ -47,6 +47,8 @@
 static void usage PARAMS ((FILE *, int)) ATTRIBUTE_NORETURN;
 int main PARAMS ((int, char **));
 
+#include <stdlib.h>
+
 const char *whoami;
 const char *function_mapping_file;
 const char *a_out_name = A_OUTNAME;

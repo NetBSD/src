@@ -58,6 +58,8 @@ static bfd_boolean elf_vax_finish_dynamic_sections
 
 static bfd_boolean elf32_vax_set_private_flags
   PARAMS ((bfd *, flagword));
+static bfd_boolean elf32_vax_copy_private_bfd_data
+  PARAMS ((bfd *, bfd *));
 static bfd_boolean elf32_vax_merge_private_bfd_data
   PARAMS ((bfd *, bfd *));
 static bfd_boolean elf32_vax_print_private_bfd_data
@@ -474,16 +476,16 @@ elf_vax_link_hash_table_create (abfd)
      bfd *abfd;
 {
   struct elf_vax_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf_vax_link_hash_table);
 
-  ret = (struct elf_vax_link_hash_table *) bfd_malloc (amt);
+  ret = ((struct elf_vax_link_hash_table *)
+	 bfd_alloc (abfd, sizeof (struct elf_vax_link_hash_table)));
   if (ret == (struct elf_vax_link_hash_table *) NULL)
     return NULL;
 
   if (! _bfd_elf_link_hash_table_init (&ret->root, abfd,
 				       elf_vax_link_hash_newfunc))
     {
-      free (ret);
+      bfd_release (abfd, ret);
       return NULL;
     }
 
@@ -499,6 +501,26 @@ elf32_vax_set_private_flags (abfd, flags)
   elf_elfheader (abfd)->e_flags = flags;
   elf_flags_init (abfd) = TRUE;
   return TRUE;
+}
+
+/* Copy vax-specific data from one module to another */
+static boolean
+elf32_vax_copy_private_bfd_data (ibfd, obfd)
+     bfd *ibfd;
+     bfd *obfd;
+{
+  flagword in_flags;
+
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return true;
+ 
+  in_flags = elf_elfheader (ibfd)->e_flags;
+ 
+  elf_elfheader (obfd)->e_flags = in_flags;
+  elf_flags_init (obfd) = true;
+ 
+  return true;
 }
 
 /* Merge backend specific data from an object file to the output
@@ -773,8 +795,6 @@ elf_vax_check_relocs (abfd, info, sec, relocs)
 			  || !bfd_set_section_alignment (dynobj, sreloc, 2))
 			return FALSE;
 		    }
-		  if (sec->flags & SEC_READONLY)
-		    info->flags |= DF_TEXTREL;
 		}
 
 	      sreloc->_raw_size += sizeof (Elf32_External_Rela);
@@ -875,7 +895,15 @@ elf_vax_gc_mark_hook (sec, info, rel, h, sym)
 	}
     }
   else
-    return bfd_section_from_elf_index (sec->owner, sym->st_shndx);
+    {
+      if (!(elf_bad_symtab (sec->owner)
+	    && ELF_ST_BIND (sym->st_info) != STB_LOCAL)
+	  && ! ((sym->st_shndx <= 0 || sym->st_shndx >= SHN_LORESERVE)
+		&& sym->st_shndx != SHN_COMMON))
+	{
+	  return bfd_section_from_elf_index (sec->owner, sym->st_shndx);
+	}
+    }
 
   return NULL;
 }
@@ -1483,7 +1511,9 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	  sym = local_syms + r_symndx;
 	  sec = local_sections[r_symndx];
-	  relocation = _bfd_elf_rela_local_sym (output_bfd, sym, sec, rel);
+	  relocation = (sec->output_section->vma
+			+ sec->output_offset
+			+ sym->st_value);
 	}
       else
 	{
@@ -1750,9 +1780,9 @@ elf_vax_relocate_section (output_bfd, info, input_bfd, input_section,
 		    {
 		      relocate = TRUE;
 		      outrel.r_info = ELF32_R_INFO (0, R_VAX_RELATIVE);
-		      BFD_ASSERT (bfd_get_signed_32 (input_bfd,
-						     &contents[rel->r_offset]) == 0);
-		      outrel.r_addend = relocation + rel->r_addend;
+		      outrel.r_addend = bfd_get_signed_32(input_bfd,
+							 &contents[rel->r_offset])
+					+ relocation + rel->r_addend;
 		    }
 		  else
 		    {
@@ -2158,7 +2188,7 @@ elf_vax_finish_dynamic_sections (output_bfd, info)
 #define TARGET_LITTLE_SYM		bfd_elf32_vax_vec
 #define TARGET_LITTLE_NAME		"elf32-vax"
 #define ELF_MACHINE_CODE		EM_VAX
-#define ELF_MAXPAGESIZE			0x1000
+#define ELF_MAXPAGESIZE			0x10000
 
 #define elf_backend_create_dynamic_sections \
 					_bfd_elf_create_dynamic_sections
