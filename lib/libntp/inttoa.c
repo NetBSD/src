@@ -1,3 +1,5 @@
+/*	$NetBSD: inttoa.c,v 1.2 1998/01/09 03:16:16 perry Exp $	*/
+
 /*
  * inttoa - return an asciized signed integer
  */

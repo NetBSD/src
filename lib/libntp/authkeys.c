@@ -1,3 +1,5 @@
+/*	$NetBSD: authkeys.c,v 1.2 1998/01/09 03:15:56 perry Exp $	*/
+
 /*
  * authkeys.c - routines to manage the storage of authentication keys
  */

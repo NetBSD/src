@@ -1,3 +1,5 @@
+/*	$NetBSD: authreadkeys.c,v 1.2 1998/01/09 03:15:58 perry Exp $	*/
+
 /*
  * authreadkeys.c - routines to support the reading of the key file
  */

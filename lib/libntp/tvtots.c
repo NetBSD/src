@@ -1,3 +1,5 @@
+/*	$NetBSD: tvtots.c,v 1.2 1998/01/09 03:16:36 perry Exp $	*/
+
 /*
  * tvtots - tables for converting from Unix struct timeval's to
  *	    NTP time stamp format.

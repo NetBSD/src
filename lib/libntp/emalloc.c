@@ -1,3 +1,5 @@
+/*	$NetBSD: emalloc.c,v 1.2 1998/01/09 03:16:08 perry Exp $	*/
+
 /*
  * emalloc - return new memory obtained from the system.  Belch if none.
  */

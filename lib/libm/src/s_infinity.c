@@ -1,3 +1,5 @@
+/*	$NetBSD: s_infinity.c,v 1.4 1998/01/09 03:15:46 perry Exp $	*/
+
 /*
  * Written by J.T. Conklin <jtc@netbsd.org>.
  * Public domain.

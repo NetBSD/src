@@ -1,3 +1,5 @@
+/*	$NetBSD: a_md5decrypt.c,v 1.3 1998/01/09 03:15:48 perry Exp $	*/
+
 /*
  *  md5crypt - MD5 based authentication routines
  */

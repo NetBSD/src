@@ -1,3 +1,5 @@
+/*	$NetBSD: jrand48.c,v 1.4 1998/01/09 03:15:37 perry Exp $	*/
+
 /*
  * Copyright (c) 1993 Martin Birgmeier
  * All rights reserved.

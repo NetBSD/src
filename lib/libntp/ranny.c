@@ -1,3 +1,5 @@
+/*	$NetBSD: ranny.c,v 1.2 1998/01/09 03:16:29 perry Exp $	*/
+
 /*
  * Random number generator is:
  *

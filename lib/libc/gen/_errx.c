@@ -1,3 +1,5 @@
+/*	$NetBSD: _errx.c,v 1.8 1998/01/09 03:15:24 perry Exp $	*/
+
 /*
  * J.T. Conklin, December 12, 1994
  * Public Domain

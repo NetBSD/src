@@ -1,3 +1,5 @@
+/*	$NetBSD: uglydate.c,v 1.2 1998/01/09 03:16:36 perry Exp $	*/
+
 /*
  * uglydate - convert a time stamp to something barely readable
  *	      The string returned is 37 characters long.

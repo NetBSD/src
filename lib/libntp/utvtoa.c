@@ -1,3 +1,5 @@
+/*	$NetBSD: utvtoa.c,v 1.2 1998/01/09 03:16:39 perry Exp $	*/
+
 /*
  * utvtoa - return an asciized representation of an unsigned struct timeval
  */

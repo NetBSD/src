@@ -1,3 +1,5 @@
+/*	$NetBSD: authdecrypt.c,v 1.2 1998/01/09 03:15:54 perry Exp $	*/
+
 /*
  * authdecrypt - routine to decrypt a packet to see if this guy knows our key.
  */

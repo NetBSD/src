@@ -1,3 +1,5 @@
+/*	$NetBSD: authencrypt.c,v 1.2 1998/01/09 03:15:55 perry Exp $	*/
+
 /*
  * authencrypt - compute and encrypt the mac field in an NTP packet
  */

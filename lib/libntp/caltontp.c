@@ -1,3 +1,5 @@
+/*	$NetBSD: caltontp.c,v 1.2 1998/01/09 03:16:02 perry Exp $	*/
+
 /*
  * caltontp - convert a julian date to an NTP time
  */

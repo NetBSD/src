@@ -1,3 +1,5 @@
+/*	$NetBSD: machines.c,v 1.2 1998/01/09 03:16:18 perry Exp $	*/
+
 /* machines.c - provide special support for peculiar architectures
  *
  * Real bummers unite !

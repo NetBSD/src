@@ -1,3 +1,5 @@
+/*	$NetBSD: fptoms.c,v 1.2 1998/01/09 03:16:11 perry Exp $	*/
+
 /*
  * fptoms - return an asciized s_fp number in milliseconds
  */

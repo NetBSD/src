@@ -1,3 +1,5 @@
+/*	$NetBSD: tvtoa.c,v 1.2 1998/01/09 03:16:35 perry Exp $	*/
+
 /*
  * tvtoa - return an asciized representation of a struct timeval
  */

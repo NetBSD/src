@@ -1,3 +1,5 @@
+/*	$NetBSD: mexit.c,v 1.2 1998/01/09 03:16:19 perry Exp $	*/
+
 /*
  * mexit - Used to exit the XNTPD daemon
  * 

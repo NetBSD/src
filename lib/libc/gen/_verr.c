@@ -1,3 +1,5 @@
+/*	$NetBSD: _verr.c,v 1.7 1998/01/09 03:15:27 perry Exp $	*/
+
 /*
  * J.T. Conklin, December 12, 1994
  * Public Domain

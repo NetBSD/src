@@ -1,3 +1,5 @@
+/*	$NetBSD: _sys_nerr.c,v 1.6 1998/01/09 03:15:26 perry Exp $	*/
+
 /*
  * Written by J.T. Conklin, December 12, 1994
  * Public domain.

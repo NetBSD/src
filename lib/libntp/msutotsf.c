@@ -1,3 +1,5 @@
+/*	$NetBSD: msutotsf.c,v 1.2 1998/01/09 03:16:24 perry Exp $	*/
+
 /*
  * msutotsf - tables for converting from a subsecond millisecond value
  *	      to a time stamp fraction.
