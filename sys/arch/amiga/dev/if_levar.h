@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.4 1997/03/15 18:09:27 is Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.5 1997/03/27 21:15:14 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -34,11 +34,16 @@
  */
 
 /*
- * LANCE registers.
+ * LANCE and PCnet-ISA registers.
  */
 struct lereg1 {
-	u_short	ler1_rdp;	/* data port */
-	u_short	ler1_rap;	/* register select port */
+	u_int16_t ler1_rdp;	/* data port */
+	u_int16_t ler1_rap;	/* register select port */
+	/*
+	 * The next two registers are only available on PCnet-ISA cards.
+	 */
+	u_int16_t ler1_reset;	/* reading this resets the PCnet-ISA */
+	u_int16_t ler1_idp;	/* isa configuration port */
 };
 
 /*
