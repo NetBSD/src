@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_blue.c,v 1.7 2003/10/07 21:22:11 mycroft Exp $	*/
+/*	$NetBSD: altq_blue.c,v 1.8 2003/11/09 22:11:12 christos Exp $	*/
 /*	$KAME: altq_blue.c,v 1.8 2002/01/07 11:25:40 kjc Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.7 2003/10/07 21:22:11 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.8 2003/11/09 22:11:12 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -107,7 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: altq_blue.c,v 1.7 2003/10/07 21:22:11 mycroft Exp $"
 #define	FP_SHIFT	12	/* fixed-point shift */
 
 #define	BLUE_LIMIT	200	/* default max queue lenght */
-#define	BLUE_STATS		/* collect statistics */
 
 /* blue_list keeps all blue_state_t's allocated. */
 static blue_queue_t *blue_list = NULL;
@@ -212,14 +211,14 @@ blueioctl(dev, cmd, addr, flag, p)
 
 		/* allocate and initialize blue_state_t */
 		MALLOC(rqp, blue_queue_t *, sizeof(blue_queue_t), M_DEVBUF, M_WAITOK);
-		bzero(rqp, sizeof(blue_queue_t));
+		(void)memset(rqp, 0, sizeof(blue_queue_t));
 
 		MALLOC(rqp->rq_q, class_queue_t *, sizeof(class_queue_t),
 		       M_DEVBUF, M_WAITOK);
-		bzero(rqp->rq_q, sizeof(class_queue_t));
+		(void)memset(rqp->rq_q, 0, sizeof(class_queue_t));
 
 		MALLOC(rqp->rq_blue, blue_t *, sizeof(blue_t), M_DEVBUF, M_WAITOK); 
-		bzero(rqp->rq_blue, sizeof(blue_t));
+		(void)memset(rqp->rq_blue, 0, sizeof(blue_t));
 
 		rqp->rq_ifq = &ifp->if_snd;
 		qtail(rqp->rq_q) = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.7 2003/08/20 23:32:25 itojun Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.8 2003/11/09 22:11:12 christos Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.11 2002/10/04 14:24:09 kjc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.7 2003/08/20 23:32:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.8 2003/11/09 22:11:12 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -620,7 +620,7 @@ cbq_ifattach(ifacep)
 	MALLOC(new_cbqp, cbq_state_t *, sizeof(cbq_state_t), M_DEVBUF, M_WAITOK);
 	if (new_cbqp == NULL)
 		return (ENOMEM);
-	bzero(new_cbqp, sizeof(cbq_state_t));
+	(void)memset(new_cbqp, 0, sizeof(cbq_state_t));
  	CALLOUT_INIT(&new_cbqp->cbq_callout);
 	MALLOC(new_cbqp->cbq_class_tbl, struct rm_class **,
 	       sizeof(struct rm_class *) * CBQ_MAX_CLASSES, M_DEVBUF, M_WAITOK);
@@ -628,7 +628,8 @@ cbq_ifattach(ifacep)
 		FREE(new_cbqp, M_DEVBUF);
 		return (ENOMEM);
 	}
-	bzero(new_cbqp->cbq_class_tbl, sizeof(struct rm_class *) * CBQ_MAX_CLASSES);
+	(void)memset(new_cbqp->cbq_class_tbl, 0,
+	    sizeof(struct rm_class *) * CBQ_MAX_CLASSES);
 	new_cbqp->cbq_qlen = 0;
 	new_cbqp->ifnp.ifq_ = &ifp->if_snd;	    /* keep the ifq */
        
