@@ -1,4 +1,4 @@
-.\"	$NetBSD: rlogin.1,v 1.15 2003/04/07 01:46:42 hubertf Exp $
+.\"	$NetBSD: rlogin.1,v 1.16 2003/04/07 05:56:14 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,7 +47,6 @@
 .Op Fl l Ar username
 .Op Fl p Ar port
 .Ar host
-
 .Nm
 .Op Fl 8EKLdx
 .Op Fl e Ar char
@@ -62,17 +61,17 @@ starts a terminal session on a remote host
 .Nm
 first attempts to use the Kerberos authorization mechanism, described below.
 If the remote host does not supporting Kerberos the standard Berkeley
-.Pa rhosts
+.Em rhosts
 authorization mechanism is used.
 The options are as follows:
-.Bl -tag -width flag
+.Bl -tag -width XlXusernameX
 .It Fl 8
 The
 .Fl 8
 option allows an eight-bit input data path at all times; otherwise
 parity bits are stripped except when the remote side's stop and start
 characters are other than
-^S/^Q .
+.Sq \&^S/^Q .
 .It Fl E
 The
 .Fl E
@@ -87,7 +86,9 @@ option turns off all Kerberos authentication.
 .It Fl L
 The
 .Fl L
-option allows the rlogin session to be run in ``litout'' (see
+option allows the rlogin session to be run in
+.Dq litout
+(see
 .Xr tty 4 )
 mode.
 .It Fl d
@@ -96,14 +97,15 @@ The
 option turns on socket debugging (see
 .Xr setsockopt 2 )
 on the TCP sockets used for communication with the remote host.
-.It Fl e
+.It Fl e Ar char
 The
 .Fl e
 option allows user specification of the escape character, which is
-``~'' by default.
+.Dq \&~
+by default.
 This specification may be as a literal character, or as an octal
 value in the form \ennn.
-.It Fl k
+.It Fl k Ar realm
 The
 .Fl k
 option requests rlogin to obtain tickets for the remote host
@@ -111,41 +113,48 @@ in realm
 .Ar realm
 instead of the remote host's realm as determined by
 .Xr krb_realmofhost  3  .
-.It Fl l
+.It Fl l Ar username
 the
 .Fl l
 option specifies an alternate
 .Ar username
 for the remote login.
 If this option is not specified, your local username will be used.
-.It Fl p
+.It Fl p Ar port
 Uses the given
-.Pa port 
-instead of the one assigned to the service "login".
+.Ar port
+instead of the one assigned to the service
+.Dq login .
 May be given either as symbolic name or as number.
 .It Fl x
 The
 .Fl x
 option turns on
 .Tn DES
-encryption for all data passed via the
-rlogin session.
+encryption for all data passed via the rlogin session.
 This may impact response time and
 .Tn CPU
-utilization, but provides
-increased security.
+utilization, but provides increased security.
 .El
 .Pp
-A line of the form ``\*[Lt]escape char\*[Gt].'' disconnects from the remote host.
-Similarly, the line ``\*[Lt]escape char\*[Gt]^Z'' will suspend the
+A line of the form
+.Dq \*[Lt]escape char\*[Gt].
+disconnects from the remote host.
+Similarly, the line
+.Dq \*[Lt]escape char\*[Gt]^Z
+will suspend the
 .Nm
-session, and ``\*[Lt]escape char\*[Gt]\*[Lt]delayed-suspend char\*[Gt]'' suspends the
+session, and
+.Dq \*[Lt]escape char\*[Gt]\*[Lt]delayed-suspend char\*[Gt]
+suspends the
 send portion of the rlogin, but allows output from the remote system.
-By default, the tilde (``~'') character is the escape character, and
-normally control-Y (``^Y'') is the delayed-suspend character.
+By default, the tilde
+.Pq Dq \&~
+character is the escape character, and normally control-Y
+.Pq Dq \&^Y
+is the delayed-suspend character.
 .Pp
-All echoing takes place at the remote site, so that (except for delays)
-the
+All echoing takes place at the remote site, so that (except for delays) the
 .Nm
 is transparent.
 Flow control via ^S/^Q and flushing of input and output on interrupts
@@ -154,17 +163,14 @@ are handled properly.
 Each user may have a private authorization list in the file
 .Pa .klogin
 in their home directory.
-Each line in this file should contain a Kerberos principal name of the
-form
+Each line in this file should contain a Kerberos principal name of the form
 .Ar principal.instance@realm  .
-If the originating user is authenticated to one of the principals named
-in
+If the originating user is authenticated to one of the principals named in
 .Pa .klogin ,
 access is granted to the account.
 The principal
 .Ar accountname.@localrealm
-is granted access if
-there is no
+is granted access if there is no
 .Pa .klogin
 file.
 Otherwise a login and password will be prompted for on the remote machine
@@ -172,8 +178,7 @@ as in
 .Xr login  1  .
 To avoid certain security problems, the
 .Pa .klogin
-file must be owned by
-the remote user.
+file must be owned by the remote user.
 .Pp
 If Kerberos authentication fails, a warning message is printed and the
 standard Berkeley
@@ -199,9 +204,4 @@ The
 command appeared in
 .Bx 4.2 .
 .Sh BUGS
-.Nm
-will be replaced by
-.Xr telnet  1
-in the near future.
-.Pp
 More of the environment should be propagated.
