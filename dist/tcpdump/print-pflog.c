@@ -1,5 +1,4 @@
-/*	$NetBSD: print-pflog.c,v 1.3 2002/06/15 02:54:51 itojun Exp $	*/
-
+/*	$NetBSD: print-pflog.c,v 1.4 2002/06/15 02:55:43 itojun Exp $	*/
 /*	$OpenBSD: print-pflog.c,v 1.9 2001/09/18 14:52:53 jakob Exp $	*/
 
 /*
@@ -29,7 +28,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/tcpdump/print-pflog.c,v 1.2 2002/02/06 11:05:35 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-pflog.c,v 1.3 2002/06/15 02:54:51 itojun Exp $");
+__RCSID("$NetBSD: print-pflog.c,v 1.4 2002/06/15 02:55:43 itojun Exp $");
 #endif
 #endif
 
