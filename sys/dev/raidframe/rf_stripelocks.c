@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.15 2002/09/23 04:34:46 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.16 2003/04/10 04:10:17 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.15 2002/09/23 04:34:46 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.16 2003/04/10 04:10:17 simonb Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_stripelocks.c,v 1.15 2002/09/23 04:34:46 oster Ex
 static void AddToWaitersQueue(RF_StripeLockDesc_t * lockDesc, RF_LockReqDesc_t * lockReqDesc);
 static RF_StripeLockDesc_t *AllocStripeLockDesc(RF_StripeNum_t stripeID);
 static void FreeStripeLockDesc(RF_StripeLockDesc_t * p);
+static RF_LockTableEntry_t *rf_MakeLockTable(void);
 #if RF_DEBUG_STRIPELOCK
 static void PrintLockedStripes(RF_LockTableEntry_t * lockTable);
 #endif
@@ -136,6 +137,7 @@ static RF_FreeList_t *rf_stripelock_freelist;
 #define RF_STRIPELOCK_INC        8
 #define RF_STRIPELOCK_INITIAL   32
 
+static void rf_ShutdownStripeLocks(RF_LockTableEntry_t * lockTable);
 static void rf_ShutdownStripeLockFreeList(void *);
 static void rf_RaidShutdownStripeLocks(void *);
 
@@ -173,7 +175,7 @@ rf_ConfigureStripeLockFreeList(listp)
 	return (0);
 }
 
-RF_LockTableEntry_t *
+static RF_LockTableEntry_t *
 rf_MakeLockTable()
 {
 	RF_LockTableEntry_t *lockTable;
@@ -193,7 +195,7 @@ rf_MakeLockTable()
 	return (lockTable);
 }
 
-void 
+static void 
 rf_ShutdownStripeLocks(RF_LockTableEntry_t * lockTable)
 {
 	int     i;

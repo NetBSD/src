@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.h,v 1.4 2001/10/04 15:58:56 oster Exp $	*/
+/*	$NetBSD: rf_stripelocks.h,v 1.5 2003/04/10 04:10:17 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -105,8 +105,6 @@ struct RF_LockTableEntry_s {
   }
 
 int     rf_ConfigureStripeLockFreeList(RF_ShutdownList_t ** listp);
-RF_LockTableEntry_t *rf_MakeLockTable(void);
-void    rf_ShutdownStripeLocks(RF_LockTableEntry_t * lockTable);
 int 
 rf_ConfigureStripeLocks(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
