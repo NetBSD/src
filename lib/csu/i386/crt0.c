@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.25 1997/06/19 06:02:06 mikel Exp $	*/
+/*	$NetBSD: crt0.c,v 1.26 1997/10/09 07:07:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -32,8 +32,9 @@
  */
 
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.25 1997/06/19 06:02:06 mikel Exp $";
+__RCSID("$NetBSD: crt0.c,v 1.26 1997/10/09 07:07:14 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -42,9 +43,10 @@ static char rcsid[] = "$NetBSD: crt0.c,v 1.25 1997/06/19 06:02:06 mikel Exp $";
 
 #include "common.h"
 
-extern unsigned char	etext;
-extern unsigned char	eprol asm("eprol");
-extern void		start __P((void)) asm("start");
+extern	unsigned char	etext;
+extern	unsigned char	eprol asm("eprol");
+extern	void		start __P((void)) asm("start");
+	void			__start __P((int, char *[], char *[]));
 
 __asm("
 	.text
