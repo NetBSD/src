@@ -1,6 +1,0 @@
-#!/bin/sh
-# $NetBSD: script3,v 1.1 2001/03/06 21:15:41 garbled Exp $
-sh -x /etc/defaults/daily.conf 2>&1 | sed -e 's/^+ //' | \
-	sed -e 's/\([EN][SO]\) /\1\
-/' | sed -e 's/=.*//'
-# the newline above is there for a reason

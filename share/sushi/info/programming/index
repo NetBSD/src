@@ -1,9 +1,0 @@
-# $NetBSD: index,v 1.1 2001/01/05 02:06:54 garbled Exp $
-basics		NONE	The basics of making new Sushi Menus
-indexapi	NONE	The index file API
-formapi		NONE	The form creation API
-scriptapi	NONE	The script API
-execapi		NONE	The exec API
-helpapi		NONE	The help file API
-i18n		NONE	Alternate languages for Sushi
-searchpaths	NONE	How searchpaths work in Sushi

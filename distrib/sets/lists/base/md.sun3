@@ -1,8 +1,0 @@
-# $NetBSD: md.sun3,v 1.37 2001/01/26 01:37:19 jwise Exp $
-./sbin/edlabel			base-sysutil-bin
-./usr/mdec/bootxx		base-sysutil-bin
-./usr/mdec/installboot		base-sysutil-bin
-./usr/mdec/netboot		base-sysutil-bin
-./usr/mdec/tapeboot		base-sysutil-bin
-./usr/mdec/ufsboot		base-sysutil-bin
-./usr/sbin/eeprom		base-sysutil-bin

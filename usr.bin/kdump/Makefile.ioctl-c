@@ -1,8 +1,0 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.4 2001/09/25 14:26:56 mycroft Exp $
-
-ioctl.c: mkioctls ${DESTDIR}/usr/include/sys/ioctl.h ${DESTDIR}/usr/include/sys/ioctl_compat.h
-	CC="${CC}" DESTDIR=${DESTDIR} /bin/sh ${.CURDIR}/../kdump/mkioctls \
-	    ${DESTDIR}/usr/include/sys/ioctl.h \
-	    ${DESTDIR}/usr/include/sys/ioctl_compat.h > ioctl.c
-
-${DESTDIR}/usr/include/sys/ioctl.h ${DESTDIR}/usr/include/sys/ioctl_compat.h: .PRECIOUS

@@ -1,7 +1,0 @@
-The security.conf file specifies which of the standard /etc/security
-services are performed.  The /etc/security script is run, by default,
-every night from /etc/daily, on a NetBSD system, if configured do to so
-from /etc/daily.conf. See the security.conf(5) manpage for details on the
-options. 
-
-$NetBSD: help,v 1.1 2001/03/06 21:24:12 garbled Exp $

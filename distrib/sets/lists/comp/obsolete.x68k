@@ -1,3 +1,0 @@
-# $NetBSD: obsolete.x68k,v 1.2 2002/03/24 15:01:04 isaki Exp $
-/usr/include/x68k/bsd_audioio.h
-/usr/include/x68k/svr4_machdep.h
