@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.22 2001/07/07 15:16:14 eeh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.23 2001/07/10 06:06:16 eeh Exp $ */
 
 /*
  * Mach Operating System
@@ -428,7 +428,7 @@ db_dump_fpstate(addr, have_addr, count, modif)
 	fpstate = &ddb_regs.ddb_fpstate;
 	/* Or an arbitrary trapframe */
 	if (have_addr)
-		fpstate = (struct fpstate *)addr;
+		fpstate = (struct fpstate64 *)addr;
 
 	db_printf("fpstate %p: fsr = %llx gsr = %lx\nfpregs:\n",
 		fpstate, (unsigned long long)fpstate->fs_fsr,
