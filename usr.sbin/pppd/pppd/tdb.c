@@ -1,4 +1,4 @@
-/*	$NetBSD: tdb.c,v 1.2 2000/09/23 22:39:39 christos Exp $	*/
+/*	$NetBSD: tdb.c,v 1.3 2002/05/29 19:06:33 christos Exp $	*/
 
 /* 
  * Database functions
@@ -18,6 +18,11 @@
  * Note: this software is also available under the Gnu Public License
  * version 2 or later.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: tdb.c,v 1.3 2002/05/29 19:06:33 christos Exp $");
+#endif
 
 #include <stdlib.h>
 #include <stdio.h>

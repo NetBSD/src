@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.21 2000/09/23 22:39:39 christos Exp $	*/
+/*	$NetBSD: pppd.h,v 1.22 2002/05/29 19:06:33 christos Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -18,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * Id: pppd.h,v 1.56 2000/07/06 11:17:03 paulus Exp 
+ * Id: pppd.h,v 1.59 2001/03/12 22:58:59 paulus Exp
  */
 
 /*
@@ -34,6 +34,7 @@
 #include <sys/types.h>		/* for u_int32_t, if defined */
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
+#include "patchlevel.h"
 
 #if defined(__STDC__)
 #include <stdarg.h>
@@ -72,6 +73,7 @@ enum opt_type {
 	o_int,
 	o_uint32,
 	o_string,
+	o_wild,
 };
 
 typedef struct {
@@ -83,6 +85,9 @@ typedef struct {
 	void	*addr2;
 	int	upper_limit;
 	int	lower_limit;
+	const char *source;
+	short int priority;
+	short int winner;
 } option_t;
 
 /* Values for flags */
@@ -97,19 +102,32 @@ typedef struct {
 #define OPT_ULIMIT	0x8000	/* check value against upper limit */
 #define OPT_LIMITS	(OPT_LLIMIT|OPT_ULIMIT)
 #define OPT_ZEROOK	0x10000	/* 0 value is OK even if not within limits */
+#define OPT_HIDE	0x10000	/* for o_string, print value as ?????? */
+#define OPT_A2LIST	0x10000 /* for o_special, keep list of values */
 #define OPT_NOINCR	0x20000	/* value mustn't be increased */
 #define OPT_ZEROINF	0x40000	/* with OPT_NOINCR, 0 == infinity */
-#define OPT_A2INFO	0x100000 /* addr2 -> option_info to update */
-#define OPT_A2COPY	0x200000 /* addr2 -> second location to rcv value */
-#define OPT_ENABLE	0x400000 /* use *addr2 as enable for option */
-#define OPT_PRIVFIX	0x800000 /* can't be overridden if noauth */
-#define OPT_PREPASS	0x1000000 /* do this opt in pre-pass to find device */
-#define OPT_INITONLY	0x2000000 /* option can only be set in init phase */
-#define OPT_DEVEQUIV	0x4000000 /* equiv to device name */
-#define OPT_DEVNAM	(OPT_PREPASS | OPT_INITONLY | OPT_DEVEQUIV)
-#define OPT_SEENIT	0x10000000 /* have seen this option already */
+#define OPT_PRIO	0x80000	/* process option priorities for this option */
+#define OPT_PRIOSUB	0x100000 /* subsidiary member of priority group */
+#define OPT_ALIAS	0x200000 /* option is alias for previous option */
+#define OPT_A2COPY	0x400000 /* addr2 -> second location to rcv value */
+#define OPT_ENABLE	0x800000 /* use *addr2 as enable for option */
+#define OPT_A2CLR	0x1000000 /* clear *(bool *)addr2 */
+#define OPT_PRIVFIX	0x2000000 /* user can't override if set by root */
+#define OPT_INITONLY	0x4000000 /* option can only be set in init phase */
+#define OPT_DEVEQUIV	0x8000000 /* equiv to device name */
+#define OPT_DEVNAM	(OPT_INITONLY | OPT_DEVEQUIV)
+#define OPT_A2PRINTER	0x10000000 /* *addr2 is a fn for printing option */
+#define OPT_A2STRVAL	0x20000000 /* *addr2 points to current string value */
+#define OPT_NOPRINT	0x40000000 /* don't print this option at all */
 
 #define OPT_VAL(x)	((x) & OPT_VALUE)
+
+/* Values for priority */
+#define OPRIO_DEFAULT	0	/* a default value */
+#define OPRIO_CFGFILE	1	/* value from a configuration file */
+#define OPRIO_CMDLINE	2	/* value from the command line */
+#define OPRIO_SECFILE	3	/* value from options in a secrets file */
+#define OPRIO_ROOT	100	/* added to priority if OPT_PRIVFIX && root */
 
 #ifndef GIDSET_TYPE
 #define GIDSET_TYPE	gid_t
@@ -188,11 +206,10 @@ extern int	link_stats_valid; /* set if link_stats is valid */
 extern int	link_connect_time; /* time the link was up for */
 extern int	using_pty;	/* using pty as device (notty or pty opt.) */
 extern int	log_to_fd;	/* logging to this fd as well as syslog */
-extern bool	log_to_file;	/* log_to_fd is a file */
-extern bool	log_to_specific_fd;	/* log_to_fd was specified by user */
+extern bool	log_default;	/* log_to_fd is default (stdout) */
 extern char	*no_ppp_msg;	/* message to print if ppp not in kernel */
 extern volatile int status;	/* exit status for pppd */
-extern int	devnam_fixed;	/* can no longer change devnam */
+extern bool	devnam_fixed;	/* can no longer change devnam */
 extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	do_callback;	/* set if we want to do callback next */
 extern int	doing_callback;	/* set if this is a callback */
@@ -255,6 +272,8 @@ extern int	req_unit;	/* interface unit number to use */
 extern bool	multilink;	/* enable multilink operation */
 extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
 extern char	*bundle_name;	/* bundle name for multilink */
+extern bool	dump_options;	/* print out option values */
+extern bool	dryrun;		/* check everything, print options, exit */
 
 #ifdef PPP_FILTER
 /* Filter for packets to pass */
@@ -274,6 +293,7 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 extern char *current_option;	/* the name of the option being parsed */
 extern int  privileged_option;	/* set iff the current option came from root */
 extern char *option_source;	/* string saying where the option came from */
+extern int  option_priority;	/* priority of current options */
 
 /*
  * Values for phase.
@@ -333,6 +353,52 @@ struct protent {
 extern struct protent *protocols[];
 
 /*
+ * This struct contains pointers to a set of procedures for
+ * doing operations on a "channel".  A channel provides a way
+ * to send and receive PPP packets - the canonical example is
+ * a serial port device in PPP line discipline (or equivalently
+ * with PPP STREAMS modules pushed onto it).
+ */
+struct channel {
+	/* set of options for this channel */
+	option_t *options;
+	/* find and process a per-channel options file */
+	void (*process_extra_options) __P((void));
+	/* check all the options that have been given */
+	void (*check_options) __P((void));
+	/* get the channel ready to do PPP, return a file descriptor */
+	int  (*connect) __P((void));
+	/* we're finished with the channel */
+	void (*disconnect) __P((void));
+	/* put the channel into PPP `mode' */
+	int  (*establish_ppp) __P((int));
+	/* take the channel out of PPP `mode', restore loopback if demand */
+	void (*disestablish_ppp) __P((int));
+	/* set the transmit-side PPP parameters of the channel */
+	void (*send_config) __P((int, u_int32_t, int, int));
+	/* set the receive-side PPP parameters of the channel */
+	void (*recv_config) __P((int, u_int32_t, int, int));
+	/* cleanup on error or normal exit */
+	void (*cleanup) __P((void));
+	/* close the device, called in children after fork */
+	void (*close) __P((void));
+};
+
+extern struct channel *the_channel;
+
+#define ppp_send_config(unit, mtu, accm, pc, acc)			 \
+do {									 \
+	if (the_channel->send_config)					 \
+		(*the_channel->send_config)((mtu), (accm), (pc), (acc)); \
+} while (0)
+
+#define ppp_recv_config(unit, mtu, accm, pc, acc)			 \
+do {									 \
+	if (the_channel->send_config)					 \
+		(*the_channel->recv_config)((mtu), (accm), (pc), (acc)); \
+} while (0)
+
+/*
  * Prototypes.
  */
 
@@ -342,8 +408,8 @@ void detach __P((void));	/* Detach from controlling tty */
 void die __P((int));		/* Cleanup and exit */
 void quit __P((void));		/* like die(1) */
 void novm __P((char *));	/* Say we ran out of memory, and die */
-void timeout __P((void (*func)(void *), void *arg, int t));
-				/* Call func(arg) after t seconds */
+void timeout __P((void (*func)(void *), void *arg, int s, int us));
+				/* Call func(arg) after s.us seconds */
 void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
 void record_child __P((int, char *, void (*) (void *), void *));
@@ -363,12 +429,6 @@ void notify __P((struct notifier *, int));
 
 /* Procedures exported from tty.c. */
 void tty_init __P((void));
-void tty_device_check __P((void));
-void tty_check_options __P((void));
-int  connect_tty __P((void));
-void disconnect_tty __P((void));
-void tty_close_fds __P((void));
-void cleanup_tty __P((void));
 
 /* Procedures exported from utils.c. */
 void log_packet __P((u_char *, int, char *, int));
@@ -385,6 +445,9 @@ void notice __P((char *, ...));	/* log a notice-level message */
 void warn __P((char *, ...));	/* log a warning message */
 void error __P((char *, ...));	/* log an error message */
 void fatal __P((char *, ...));	/* log an error message and die(1) */
+void init_pr_log __P((char *, int));	/* initialize for using pr_log */
+void pr_log __P((void *, char *, ...));	/* printer fn, output to syslog */
+void end_pr_log __P((void));	/* finish up after using pr_log */
 
 /* Procedures exported from auth.c */
 void link_required __P((int));	  /* we are starting to use the link */
@@ -438,9 +501,8 @@ void sys_close __P((void));	/* Clean up in a child before execing */
 int  ppp_available __P((void));	/* Test whether ppp kernel support exists */
 int  get_pty __P((int *, int *, char *, int));	/* Get pty master/slave */
 int  open_ppp_loopback __P((void)); /* Open loopback for demand-dialling */
-int  establish_ppp __P((int));	/* Turn serial port into a ppp interface */
-void restore_loop __P((void));	/* Transfer ppp unit back to loopback */
-void disestablish_ppp __P((int)); /* Restore port to normal operation */
+int  tty_establish_ppp __P((int));  /* Turn serial port into a ppp interface */
+void tty_disestablish_ppp __P((int)); /* Restore port to normal operation */
 void make_new_bundle __P((int, int, int, int)); /* Create new bundle */
 int  bundle_attach __P((int));	/* Attach link to existing bundle */
 void cfg_bundle __P((int, int, int, int)); /* Configure existing bundle */
@@ -455,11 +517,11 @@ void add_fd __P((int));		/* Add fd to set to wait for */
 void remove_fd __P((int));	/* Remove fd from set to wait for */
 int  read_packet __P((u_char *)); /* Read PPP packet */
 int  get_loop_output __P((void)); /* Read pkts from loopback */
-void ppp_send_config __P((int, int, u_int32_t, int, int));
+void tty_send_config __P((int, u_int32_t, int, int));
 				/* Configure i/f transmit parameters */
-void ppp_set_xaccm __P((int, ext_accm));
+void tty_set_xaccm __P((ext_accm));
 				/* Set extended transmit ACCM */
-void ppp_recv_config __P((int, int, u_int32_t, int, int));
+void tty_recv_config __P((int, u_int32_t, int, int));
 				/* Configure i/f receive parameters */
 int  ccp_test __P((int, u_char *, int, int));
 				/* Test support for compression scheme */
@@ -470,6 +532,7 @@ int  get_idle_time __P((int, struct ppp_idle *));
 				/* Find out how long link has been idle */
 int  get_ppp_stats __P((int, struct pppd_stats *));
 				/* Return link statistics */
+void netif_set_mtu __P((int, int)); /* Set PPP interface MTU */
 int  sifvjcomp __P((int, int, int, int));
 				/* Configure VJ TCP header compression */
 int  sifup __P((int));		/* Configure i/f up for one protocol */
@@ -531,25 +594,13 @@ void option_error __P((char *fmt, ...));
 int int_option __P((char *, int *));
 				/* Simplified number_option for decimal ints */
 void add_options __P((option_t *)); /* Add extra options */
+void check_options __P((void));	/* check values after all options parsed */
+int  override_value __P((const char *, int, const char *));
+				/* override value if permitted by priority */
+void print_options __P((void (*) __P((void *, char *, ...)), void *));
+				/* print out values of all options */
+
 int parse_dotted_ip __P((char *, u_int32_t *));
-
-/*
- * This structure is used to store information about certain
- * options, such as where the option value came from (/etc/ppp/options,
- * command line, etc.) and whether it came from a privileged source.
- */
-
-struct option_info {
-    int	    priv;		/* was value set by sysadmin? */
-    char    *source;		/* where option came from */
-};
-
-extern struct option_info devnam_info;
-extern struct option_info initializer_info;
-extern struct option_info connect_script_info;
-extern struct option_info disconnect_script_info;
-extern struct option_info welcomer_info;
-extern struct option_info ptycommand_info;
 
 /*
  * Hooks to enable plugins to change various things.
@@ -610,7 +661,7 @@ extern void (*ip_choose_hook) __P((u_int32_t *));
  * System dependent definitions for user-level 4.3BSD UNIX implementation.
  */
 
-#define TIMEOUT(r, f, t)	timeout((r), (f), (t))
+#define TIMEOUT(r, f, t)	timeout((r), (f), (t), 0)
 #define UNTIMEOUT(r, f)		untimeout((r), (f))
 
 #define BCOPY(s, d, l)		memcpy(d, s, l)
