@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.171.2.3 1997/11/15 01:01:39 mellon Exp $	*/
+/*	$NetBSD: machdep.c,v 1.171.2.4 1998/01/29 12:23:39 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -2091,6 +2091,24 @@ struct {
 	{ MACH_MACPB180C,	(caddr_t)0xfc040000,	512 * 1024 },
 	{ MACH_MACPB500,	(caddr_t)0x60000000,	512 * 1024 },
 	{ MACH_MACLC520,	(caddr_t)0x60000000,	1024 * 1024 },
+#ifdef MADHATTER
+	{ MACH_MACLC475,	(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACLC475_33,	(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACLC575,	(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACC610,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACC650,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACQ605,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACQ605_33,	(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACQ610,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACQ630,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACQ650,		(caddr_t)0xf9000000,	1024 * 1024 },
+#endif
+	{ MACH_MACQ700,		(caddr_t)0xf9000000,	1024 * 1024 },
+#ifdef MADHATTER
+	{ MACH_MACQ800,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACQ900,		(caddr_t)0xf9000000,	1024 * 1024 },
+	{ MACH_MACQ950,		(caddr_t)0xf9000000,	1024 * 1024 },
+#endif
 	{ 0,			(caddr_t)0x0,		0 },
 };				/* End of intvid_info[] initialization. */
 
