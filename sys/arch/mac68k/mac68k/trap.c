@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.53 1997/06/25 12:44:05 briggs Exp $	*/
+/*	$NetBSD: trap.c,v 1.54 1997/08/07 21:37:03 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -263,14 +263,14 @@ trap(type, code, v, frame)
 		p = &proc0;
 #ifdef DIAGNOSTIC
 	if (p->p_addr == NULL)
-		panic("trap: type 0x%x, code 0x%x, v 0x%x--no pcb\n",
+		panic("trap: type 0x%x, code 0x%x, v 0x%x -- no pcb\n",
 			type, code, v);
 #endif
 
 	switch (type) {
 	default:
 dopanic:
-		printf("trap type %d, code = %x, v= %x\n", type, code, v);
+		printf("trap: type 0x%x, code 0x%x, v 0x%x\n", type, code, v);
 #ifdef DDB
 		if (kdb_trap(type, (db_regs_t *) &frame))
 			return;
