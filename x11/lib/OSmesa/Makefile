@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.2.1 2005/04/06 20:52:32 tron Exp $
+#	$NetBSD: Makefile,v 1.15.2.2 2005/04/06 21:31:06 tron Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -83,7 +83,7 @@ COPTS.s_triangle.c=	-O0
 .endif
 
 .if ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64"
-.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/SPARC
+.PATH:		${X11SRCDIR.xc}/extras/Mesa/src/mesa/sparc
 SRCS+=		sparc.c xform.S clip.S norm.S
 CPPFLAGS+=	-DUSE_SPARC_ASM
 COMPILE.S=	${COMPILE.s}		# XXX don't want -traditional-cpp
