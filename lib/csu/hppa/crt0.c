@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.6 2004/05/17 10:44:22 skrll Exp $	*/
+/*	$NetBSD: crt0.c,v 1.7 2004/08/26 21:07:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Matt Fredette
@@ -38,10 +38,10 @@
 
 #include "common.h"
 
-static void ___start __P((struct ps_strings *,
-    void (*cleanup) __P((void)), const Obj_Entry *, int)) 
+static void ___start(struct ps_strings *,
+    void (*cleanup)(void), const Obj_Entry *, int)
 #ifdef __GNUC__
-    __attribute__((__unused__))
+    __attribute__((__used__))
 #endif
     ;
 
@@ -65,11 +65,10 @@ __asm("\n"
 "	copy	%r27, %arg3		\n");
 
 static void
-___start(ps_strings, cleanup, obj, dp)
-	struct ps_strings *ps_strings;
-	void (*cleanup) __P((void));		/* from shared loader */
-	const Obj_Entry *obj;			/* from shared loader */
-	int dp;
+___start(struct ps_strings *ps_strings,
+    void (*cleanup)(void),			/* from shared loader */
+    const Obj_Entry *obj,			/* from shared loader */
+    int dp)
 {
 	int argc;
 	char **argv;
@@ -153,7 +152,7 @@ ___start(ps_strings, cleanup, obj, dp)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.6 2004/05/17 10:44:22 skrll Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.7 2004/08/26 21:07:14 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
