@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.33 2000/12/19 09:52:53 nisimura Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.34 2001/01/21 13:50:59 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.33 2000/12/19 09:52:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.34 2001/01/21 13:50:59 takemura Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -275,6 +275,11 @@ rasops_reconfig(ri, wantrows, wantcols)
 #if NRASOPS2 > 0
 	case 2:
 		rasops2_init(ri);
+		break;
+#endif
+#if NRASOPS4 > 0
+	case 4:
+		rasops4_init(ri);
 		break;
 #endif
 #if NRASOPS8 > 0
