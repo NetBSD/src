@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.h,v 1.8 2003/03/09 18:33:29 manu Exp $ */
+/*	$NetBSD: mach_iokit.h,v 1.9 2003/03/29 11:04:09 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -316,6 +316,26 @@ typedef struct {
 	mach_msg_trailer_t rep_trailer;
 } mach_io_registry_entry_get_properties_reply_t;
 
+/* io_registry_entry_get_path */
+
+typedef struct {
+	mach_msg_header_t req_msgh;
+	mach_ndr_record_t req_ndr;
+	mach_msg_type_number_t req_offset;
+	mach_msg_type_number_t req_count;
+	char req_plane[128];
+} mach_io_registry_entry_get_path_request_t;
+
+typedef struct {
+	mach_msg_header_t rep_msgh;
+	mach_ndr_record_t rep_ndr;
+	mach_kern_return_t rep_retval;
+	mach_msg_type_number_t rep_offset;
+	mach_msg_type_number_t rep_count;
+	char rep_path[512];
+	mach_msg_trailer_t rep_trailer;
+} mach_io_registry_entry_get_path_reply_t;
+
 int mach_io_service_get_matching_services(struct mach_trap_args *);
 int mach_io_iterator_next(struct mach_trap_args *);
 int mach_io_service_open(struct mach_trap_args *);
@@ -332,6 +352,7 @@ int mach_io_registry_entry_get_name_in_plane(struct mach_trap_args *);
 int mach_io_object_get_class(struct mach_trap_args *);
 int mach_io_registry_entry_get_location_in_plane(struct mach_trap_args *);
 int mach_io_registry_entry_get_properties(struct mach_trap_args *);
+int mach_io_registry_entry_get_path(struct mach_trap_args *);
 
 extern struct mach_iokit_devclass *mach_iokit_devclasses[];
 
