@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2001/12/20 20:10:36 soren Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2001/12/20 20:20:38 soren Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.42 2001/12/20 20:10:36 soren Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2001/12/20 20:20:38 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -610,7 +610,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
-"usage: dump [-0123456789ceFlnstu] [-B records] [-b blocksize] [-d density]",
+"usage: dump [-0123456789ceFlnStu] [-B records] [-b blocksize] [-d density]",
 "            [-f file] [-h level] [-k read block size] [-L label]",
 "            [-r read cache size] [-s feet] [-T date] file system",
 "       dump [-W | -w]");
