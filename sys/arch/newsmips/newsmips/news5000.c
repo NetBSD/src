@@ -1,4 +1,4 @@
-/*	$NetBSD: news5000.c,v 1.7 2000/12/03 01:42:30 matt Exp $	*/
+/*	$NetBSD: news5000.c,v 1.8 2001/04/27 12:55:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -250,4 +250,9 @@ news5000_init(void)
 	readidrom_5000((u_char *)&idrom);
 	readmicrotime = readmicrotime_5000;
 	hostid = idrom.id_serial;
+
+	/* XXX reset uPD72067 FDC to avoid spurious interrupts */
+#define NEWS5000_FDC_FDOUT 0xbed20000
+#define FDO_FRST 0x04
+	*(volatile u_int8_t *)NEWS5000_FDC_FDOUT = FDO_FRST;
 }
