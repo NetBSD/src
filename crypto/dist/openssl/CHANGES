@@ -2,17 +2,40 @@
  OpenSSL CHANGES
  _______________
 
- Changes in security patch
+ Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
-Changes marked "(CHATS)" were sponsored by the Defense Advanced
-Research Projects Agency (DARPA) and Air Force Research Laboratory,
-Air Force Materiel Command, USAF, under agreement number
-F30602-01-2-0537.
+  *) Fix cipher selection routines: ciphers without encryption had no flags
+     for the cipher strength set and where therefore not handled correctly
+     by the selection routines (PR #130).
+     [Lutz Jaenicke]
+
+  *) Fix EVP_dsa_sha macro.
+     [Nils Larsch]
+
+  *) New option
+          SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS
+     for disabling the SSL 3.0/TLS 1.0 CBC vulnerability countermeasure
+     that was added in OpenSSL 0.9.6d.
+
+     As the countermeasure turned out to be incompatible with some
+     broken SSL implementations, the new option is part of SSL_OP_ALL.
+     SSL_OP_ALL is usually employed when compatibility with weird SSL
+     implementations is desired (e.g. '-bugs' option to 's_client' and
+     's_server'), so the new option is automatically set in many
+     applications.
+     [Bodo Moeller]
+
+  *) Changes in security patch:
+
+     Changes marked "(CHATS)" were sponsored by the Defense Advanced
+     Research Projects Agency (DARPA) and Air Force Research Laboratory,
+     Air Force Materiel Command, USAF, under agreement number
+     F30602-01-2-0537.
 
   *) Add various sanity checks to asn1_get_length() to reject
      the ASN1 length bytes if they exceed sizeof(long), will appear
      negative or the content length exceeds the length of the
-     supplied buffer. (CAN-2002-0659)
+     supplied buffer.
      [Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>]
 
   *) Assertions for various potential buffer overflows, not known to
