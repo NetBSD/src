@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.44 2003/02/23 04:28:10 simonb Exp $ */
+/*	$NetBSD: if_gre.c,v 1.45 2003/05/06 17:54:27 grant Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.44 2003/02/23 04:28:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.45 2003/05/06 17:54:27 grant Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -548,7 +548,7 @@ gre_compute_route(struct gre_softc *sc)
 	}
 
 #ifdef DIAGNOSTIC
-	printf("%s: searching a route to %s", sc->sc_if.if_xname,
+	printf("%s: searching for a route to %s", sc->sc_if.if_xname,
 	    inet_ntoa(((struct sockaddr_in *)&ro->ro_dst)->sin_addr));
 #endif
 
