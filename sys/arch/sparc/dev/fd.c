@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.49 1997/04/07 21:01:56 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.50 1997/05/02 13:03:46 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -250,7 +250,7 @@ int	fdcstate __P((struct fdc_softc *));
 void	fdcretry __P((struct fdc_softc *fdc));
 void	fdfinish __P((struct fd_softc *fd, struct buf *bp));
 int	fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
-void	fd_do_eject __P((void));
+void	fd_do_eject __P((struct fd_softc *));
 void	fd_mountroot_hook __P((struct device *));
 static void fdconf __P((struct fdc_softc *));
 
@@ -519,7 +519,7 @@ fdmatch(parent, match, aux)
 	int n, ok;
 
 	if (drive > 0)
-		/* XXX - for now, punt > 1 drives */
+		/* XXX - for now, punt on more than one drive */
 		return (0);
 
 	if (fdc->sc_flags & FDC_82077) {
@@ -565,8 +565,8 @@ fdmatch(parent, match, aux)
 
 	/* turn off motor */
 	if (fdc->sc_flags & FDC_82077) {
-		/* select drive and turn on motor */
-		*fdc->sc_reg_dor = FDO_FRST;
+		/* deselect drive and turn motor off */
+		*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
 	} else {
 		auxregbisc(0, AUXIO4C_FDS);
 	}
@@ -600,6 +600,10 @@ fdattach(parent, self, aux)
 	fd->sc_drive = drive;
 	fd->sc_deftype = type;
 	fdc->sc_fd[drive] = fd;
+
+	out_fdc(fdc, NE7CMD_SPECIFY);
+	out_fdc(fdc, type->steprate);
+	out_fdc(fdc, 6 | NE7_SPECIFY_NODMA);
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -765,12 +769,16 @@ fdc_reset(fdc)
 	struct fdc_softc *fdc;
 {
 	if (fdc->sc_flags & FDC_82077) {
-		*fdc->sc_reg_dor = FDO_MOEN(0);
+		*fdc->sc_reg_dor = FDO_FDMAEN | FDO_MOEN(0);
 	}
 
 	*fdc->sc_reg_drs = DRS_RESET;
 	delay(10);
 	*fdc->sc_reg_drs = 0;
+
+	if (fdc->sc_flags & FDC_82077) {
+		*fdc->sc_reg_dor = FDO_FRST | FDO_FDMAEN | FDO_DS;
+	}
 #ifdef FD_DEBUG
 	if (fdc_debug)
 		printf("fdc reset\n");
@@ -1131,7 +1139,7 @@ fdchwintr(fdc)
 			*fdc->sc_reg_fifo = *fdc->sc_data++;
 		}
 		if (--fdc->sc_tc == 0) {
-			fdc->sc_istate = ISTATE_IDLE;
+			fdc->sc_istate = ISTATE_DONE;
 			FTC_FLIP;
 			fdcresult(fdc);
 			FD_SET_SWINTR;
@@ -1256,7 +1264,8 @@ loop:
 		/* specify command */
 		OUT_FDC(fdc, NE7CMD_SPECIFY, SEEKTIMEDOUT);
 		OUT_FDC(fdc, fd->sc_type->steprate, SEEKTIMEDOUT);
-		OUT_FDC(fdc, 6, SEEKTIMEDOUT);	/* XXX head load time == 6ms */
+		/* XXX head load time == 6ms */
+		OUT_FDC(fdc, 6 | NE7_SPECIFY_NODMA, SEEKTIMEDOUT);
 
 		fdc->sc_istate = ISTATE_SENSEI;
 		/* seek function */
@@ -1276,7 +1285,7 @@ loop:
 
 	case DOIO:
 	doio:
-		if (finfo)
+		if (finfo != NULL)
 			fd->sc_skip = (char *)&(finfo->fd_formb_cylno(0)) -
 				      (char *)finfo;
 		type = fd->sc_type;
@@ -1314,7 +1323,7 @@ loop:
 		fdc->sc_state = IOCOMPLETE;
 		fdc->sc_istate = ISTATE_DMA;
 		fdc->sc_nstat = 0;
-		if (finfo) {
+		if (finfo != NULL) {
 			/* formatting */
 			OUT_FDC(fdc, NE7CMD_FORMAT, IOTIMEDOUT);
 			OUT_FDC(fdc, (head << 2) | fd->sc_drive, IOTIMEDOUT);
@@ -1383,14 +1392,17 @@ loop:
 
 		disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
-		if (fdc->sc_nstat != 7 || (st0 & 0xf8) != 0 || st1 != 0) {
+		if (fdc->sc_nstat != 7 || st1 != 0 ||
+		    ((st0 & 0xf8) != 0 &&
+		     ((st0 & 0xf8) != 0x20 || (fdc->sc_cfg & CFG_EIS) == 0))) {
 #ifdef FD_DEBUG
 			if (fdc_debug) {
 				fdcstatus(&fd->sc_dv, 7,
 					bp->b_flags & B_READ
 					? "read failed" : "write failed");
-				printf("blkno %d nblks %d tc %d\n",
-				       fd->sc_blkno, fd->sc_nblks, fdc->sc_tc);
+				printf("blkno %d nblks %d nstat %d tc %d\n",
+				       fd->sc_blkno, fd->sc_nblks,
+				       fdc->sc_nstat, fdc->sc_tc);
 			}
 #endif
 			if (fdc->sc_nstat == 7 &&
@@ -1444,7 +1456,7 @@ loop:
 		fd->sc_blkno += fd->sc_nblks;
 		fd->sc_skip += fd->sc_nbytes;
 		fd->sc_bcount -= fd->sc_nbytes;
-		if (!finfo && fd->sc_bcount > 0) {
+		if (finfo == NULL && fd->sc_bcount > 0) {
 			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
@@ -1643,7 +1655,7 @@ fdioctl(dev, cmd, addr, flag, p)
 		return (0);
 
 	case DIOCEJECT:
-		fd_do_eject();
+		fd_do_eject(fd);
 		return (0);
 
 	case FDIOCGETFORMAT:
@@ -1937,15 +1949,23 @@ fdgetdisklabel(dev)
 }
 
 void
-fd_do_eject()
+fd_do_eject(fd)
+	struct fd_softc *fd;
 {
+	struct fdc_softc *fdc = (void *)fd->sc_dv.dv_parent;
+
 	if (CPU_ISSUN4C) {
 		auxregbisc(AUXIO4C_FDS, AUXIO4C_FEJ);
 		delay(10);
 		auxregbisc(AUXIO4C_FEJ, AUXIO4C_FDS);
+		return;
 	}
-	if (CPU_ISSUN4M) {
-		/*notyet*/
+	if (CPU_ISSUN4M && (fdc->sc_flags & FDC_82077)) {
+		int dor = FDO_FRST | FDO_FDMAEN | FDO_MOEN(0);
+		*fdc->sc_reg_dor = dor | FDO_EJ;
+		delay(10);
+		*fdc->sc_reg_dor = FDO_FRST | FDO_DS;
+		return;
 	}
 }
 
@@ -1960,7 +1980,7 @@ fd_mountroot_hook(dev)
 {
 	int c;
 
-	fd_do_eject();
+	fd_do_eject((struct fd_softc *)dev);
 	printf("Insert filesystem floppy and press return.");
 	for (;;) {
 		c = cngetc();
@@ -2027,7 +2047,7 @@ fd_read_md_image(sizep, addrp)
 	}
 	(void)fdclose(dev, 0, S_IFCHR, NULL);
 	*sizep = offset;
-	fd_do_eject();
+	fd_do_eject(fd_cd.cd_devs[FDUNIT(dev)]);
 	return (0);
 }
 #endif
