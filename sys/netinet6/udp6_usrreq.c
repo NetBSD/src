@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.43 2001/05/27 17:36:07 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.44 2001/07/03 08:06:20 itojun Exp $	*/
 /*	$KAME: udp6_usrreq.c,v 1.86 2001/05/27 17:33:00 itojun Exp $	*/
 
 /*
@@ -610,6 +610,7 @@ udp6_usrreq(so, req, m, addr6, control, p)
 				   (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
+		in6_pcbpurgeif0(&udb6, (struct ifnet *)control);
 		in6_purgeif((struct ifnet *)control);
 		in6_pcbpurgeif(&udb6, (struct ifnet *)control);
 		return (0);
