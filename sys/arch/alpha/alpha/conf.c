@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.27 1997/10/13 00:46:08 explorer Exp $ */
+/* $NetBSD: conf.c,v 1.28 1998/01/15 07:02:21 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.27 1997/10/13 00:46:08 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.28 1998/01/15 07:02:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ bdev_decl(sw);
 bdev_decl(st);
 #include "cd.h"
 bdev_decl(cd);
-#include "wdc.h"
+#include "wd.h"
 bdev_decl(wd);
 #include "sd.h"
 bdev_decl(sd);
@@ -65,17 +65,13 @@ bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
 
-#include "awdc.h"	/* XXX */
-#undef NWDC		/* XXX */
-#define	NWDC	NAWDC	/* XXX */
-
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NFDC,fd),	/* 0: PC-ish floppy disk driver */
 	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
-	bdev_disk_init(NWDC,wd),	/* 4: IDE disk driver */
+	bdev_disk_init(NWD,wd),		/* 4: IDE disk driver */
 	bdev_notdef(),			/* 5 */
 	bdev_disk_init(NMD,md),		/* 6: memory disk driver */
 	bdev_disk_init(NCCD,ccd),	/* 7: concatenated disk driver */
@@ -202,7 +198,7 @@ struct cdevsw	cdevsw[] =
 	cdev_uk_init(NUK,uk),		/* 33: SCSI unknown */
 	cdev_disk_init(NFDC,fd),	/* 34: PC-ish floppy disk driver */
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
-	cdev_disk_init(NWDC,wd),	/* 36: IDE disk driver */
+	cdev_disk_init(NWD,wd),		/* 36: IDE disk driver */
 	cdev_se_init(NSE,se),		/* 37: Cabletron SCSI<->Ethernet */
 	cdev_satlink_init(NSATLINK,satlink), /* 38: planetconnect satlink */
 	cdev_rnd_init(NRND,rnd),	/* 39: random source pseudo-device */
