@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2001/05/11 04:32:05 thorpej Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2 2001/11/19 17:28:23 soren Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,10 +46,10 @@
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-struct sgi_intr softintr_tab[IPL_NSOFT];
+struct sgimips_intr softintr_tab[IPL_NSOFT];
 
 /* XXX For legacy software interrupts. */
-struct sgi_intrhand *softnet_intrhand;
+struct sgimips_intrhand *softnet_intrhand;
 
 u_int32_t ssir;
 
@@ -62,7 +62,7 @@ void
 softintr_init()
 {
 	static const char *softintr_names[] = IPL_SOFTNAMES;
-	struct sgi_intr *sip;
+	struct sgimips_intr *sip;
 	int i;
 
 	for (i = 0; i < IPL_NSOFT; i++) {
@@ -90,8 +90,8 @@ softintr_init()
 void
 softintr_dispatch()
 {
-	struct sgi_intr *sip;
-	struct sgi_intrhand *sih;
+	struct sgimips_intr *sip;
+	struct sgimips_intrhand *sih;
 	u_int32_t n, i, s;
 
 	s = splhigh();
@@ -121,8 +121,8 @@ softintr_dispatch()
 void *
 softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
-	struct sgi_intr *sip;
-	struct sgi_intrhand *sih;
+	struct sgimips_intr *sip;
+	struct sgimips_intrhand *sih;
 	int s;
 
 	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0))
@@ -152,7 +152,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 void
 softintr_disestablish(void *arg)
 {
-	struct sgi_intrhand *ih = arg;
+	struct sgimips_intrhand *ih = arg;
 	int s;
 
 	s = splsoft();
