@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.16 2003/01/17 23:36:09 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.17 2003/01/18 13:03:17 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@ struct sigcontext {
  * signal handlers, and converting back (in the event the handler modifies
  * the context).
  */
-_MCONTEXT_TO_SIGCONTEXT(uc, sc)						\
+#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
 do {									\
 	(sc)->sc_pc = (uc)->uc_mcontext.__gregs[_REG_EPC];		\
 	memcpy((sc)->sc_regs, (uc)->uc_mcontext.__gregs,		\
