@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.12 2001/12/28 06:08:39 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.13 2002/01/28 18:07:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,9 @@ sadata_upcall_free(struct sadata_upcall *sau)
 		case SA_UPCALL_SIGNAL:
 			pool_put(&siginfo_pool, sau->sau_arg);
 			break;
-
+		case SA_UPCALL_SIGEV:
+			/* don't need to deallocate it at all */
+			break;
 		default:
 			panic("sadata_free: unknown type of sau_arg: %d",
 			    sau->sau_type);
@@ -531,13 +533,13 @@ sa_upcall_userret(struct lwp *l)
 	p = l->l_proc;
 	sa = p->p_sa;
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d)",l->l_lid, p->p_pid));
+	DPRINTFN(7,("sa_upcall_userret(%d.%d)",p->p_pid,l->l_lid));
 
 	if (l->l_flag & L_SA_BLOCKING) {
 		/* Invoke an "unblocked" upcall */
 		struct lwp *l2;
 		int s;
-		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",l->l_lid, p->p_pid));
+		DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking ",p->p_pid, l->l_lid));
 		l2 = sa->sa_preempted;
 		sa->sa_preempted = NULL;
 		if (l2) {
