@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.28 2004/07/23 08:31:39 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.29 2004/07/23 09:22:15 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.20 2004/04/02 23:35:24 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.28 2004/07/23 08:31:39 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.29 2004/07/23 09:22:15 mycroft Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -955,7 +955,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 	struct ieee80211_frame *wh;
 	u_int8_t *frm, *efrm;
 	u_int8_t *ssid, *rates, *xrates;
-	int reassoc, resp, newassoc, allocbs;
+	int reassoc, resp, allocbs;
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	frm = (u_int8_t *)&wh[1];
@@ -1357,10 +1357,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 				("%s: capability mismatch %x for %s\n",
 				__func__, capinfo, ether_sprintf(wh->i_addr2)));
-			IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
-			ni->ni_associd = 0;
 			IEEE80211_SEND_MGMT(ic, ni, resp,
 				IEEE80211_STATUS_CAPINFO);
+			ieee80211_node_leave(ic, ni);
 			ic->ic_stats.is_rx_assoc_capmismatch++;
 			return;
 		}
@@ -1371,10 +1370,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_ANY,
 				("%s: rate mismatch for %s\n",
 				__func__, ether_sprintf(wh->i_addr2)));
-			IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
-			ni->ni_associd = 0;
 			IEEE80211_SEND_MGMT(ic, ni, resp,
 				IEEE80211_STATUS_BASIC_RATE);
+			ieee80211_node_leave(ic, ni);
 			ic->ic_stats.is_rx_assoc_norate++;
 			return;
 		}
@@ -1385,42 +1383,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ni->ni_chan = ic->ic_bss->ni_chan;
 		ni->ni_fhdwell = ic->ic_bss->ni_fhdwell;
 		ni->ni_fhindex = ic->ic_bss->ni_fhindex;
-		if (ni->ni_associd == 0) {
-			u_int16_t aid;
-
-			/*
-			 * It would be clever to search the bitmap
-			 * more efficiently, but this will do for now.
-			 */
-			for (aid = 1; aid < ic->ic_max_aid; aid++) {
-				if (!IEEE80211_AID_ISSET(aid,
-				    ic->ic_aid_bitmap))
-					break;
-			}
-
-			if (ic->ic_bss->ni_associd >= ic->ic_max_aid) {
-				IEEE80211_SEND_MGMT(ic, ni, resp,
-				    IEEE80211_REASON_ASSOC_TOOMANY);
-				return;
-			} else {
-				ni->ni_associd = aid | 0xc000;
-				IEEE80211_AID_SET(ni->ni_associd,
-				    ic->ic_aid_bitmap);
-				newassoc = 1;
-			}
-		} else
-			newassoc = 0;
-		/* XXX for 11g must turn off short slot time if long
-		   slot time sta associates */
-		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_SUCCESS);
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ASSOC | IEEE80211_MSG_DEBUG,
-			("station %s %s associated at aid %d\n",
-			ether_sprintf(ni->ni_macaddr),
-			(newassoc ? "newly" : "already"),
-			ni->ni_associd & ~0xc000));
-		/* give driver a chance to setup state like ni_txrate */
-		if (ic->ic_newassoc)
-			(*ic->ic_newassoc)(ic, ni, newassoc);
+		ieee80211_node_join(ic, ni, resp);
 		break;
 	}
 
@@ -1505,8 +1468,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 					("station %s deauthenticated by "
 					"peer (reason %d)\n",
 					ether_sprintf(ni->ni_macaddr), reason));
-				/* node will be free'd on return */
-				ieee80211_unref_node(&ni);
+				ieee80211_node_leave(ic, ni);
 			}
 			break;
 		default:
@@ -1535,10 +1497,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 					("station %s disassociated by "
 					"peer (reason %d)\n",
 					ether_sprintf(ni->ni_macaddr), reason));
-				IEEE80211_AID_CLR(ni->ni_associd,
-				    ic->ic_aid_bitmap);
-				ni->ni_associd = 0;
-				/* XXX node reclaimed how? */
+				ieee80211_node_leave(ic, ni);
 			}
 			break;
 		default:

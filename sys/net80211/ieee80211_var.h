@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.13 2004/07/23 08:31:39 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.14 2004/07/23 09:22:15 mycroft Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -132,9 +132,9 @@ struct ieee80211com {
 	enum ieee80211_phytype	ic_phytype;	/* XXX wrong for multi-mode */
 	enum ieee80211_opmode	ic_opmode;	/* operation mode */
 	enum ieee80211_state	ic_state;	/* 802.11 state */
-	u_int32_t		ic_aid_bitmap[IEEE80211_AID_MAX / 32 + 1];
-	u_int16_t		ic_max_aid;
 	enum ieee80211_protmode	ic_protmode;	/* 802.11g protection mode */
+	u_int32_t		*ic_aid_bitmap;
+	u_int16_t		ic_max_aid;
 	struct ifmedia		ic_media;	/* interface media config */
 #ifdef __FreeBSD__
 	struct bpf_if		*ic_rawbpf;	/* packet filter structure */
