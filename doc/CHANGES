@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.248 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.249 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -563,3 +563,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 		and PowerBook models [grant 20031227]
 	install(1): Make "copy the file" (the -c option) the default behaviour.
 		[simonb 20031229]
+	kernel: new memory allocation scheme for the buffer cache. [pk 20031230]
