@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.132 2004/10/03 08:17:54 enami Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.133 2004/10/03 08:30:09 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.132 2004/10/03 08:17:54 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.133 2004/10/03 08:30:09 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,9 +452,8 @@ buf_lotsfree(void)
 	/* Don't use "16 * bufmem" here to avoid a 32-bit overflow. */
 	thresh = bufmem / (bufmem_hiwater / 16);
 
-	if ((try > thresh) && (uvmexp.free > (2 * uvmexp.freetarg))) {
+	if (try >= thresh && uvmexp.free > (2 * uvmexp.freetarg))
 		return 1;
-	}
 
 	/* Otherwise don't allocate. */
 	return 0;
