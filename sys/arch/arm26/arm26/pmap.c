@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.6 2000/09/23 11:10:58 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.7 2000/09/23 12:54:47 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -85,11 +85,10 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.6 2000/09/23 11:10:58 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.7 2000/09/23 12:54:47 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
-#define __POOL_EXPOSE /* We need to allocate one statically. */
 #include <sys/pool.h>
 #include <sys/systm.h>
 
@@ -142,11 +141,9 @@ struct pmap {
 #endif
 
 /*
- * Global array of pv_entries.  Should be dynamically allocated based on
- * number of physical pages in system, or something.
+ * Global array of pv_entries.  Dynamically allocated at startup.
  */
-#define PHYSMEM_MAX 1024
-struct pv_entry pv_table[PHYSMEM_MAX];
+struct pv_entry *pv_table;
 
 /* Kernel pmap -- statically allocated to make life slightly less odd. */
 
@@ -154,8 +151,7 @@ struct pmap kernel_pmap_store;
 
 static boolean_t pmap_initialised = FALSE;
 
-static struct pool pmap_pool_store;
-static struct pool *pmap_pool = &pmap_pool_store;
+static struct pool *pmap_pool;
 
 static pmap_t active_pmap;
 
@@ -206,6 +202,13 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 {
 	int i;
 	struct pmap *pmap;
+	size_t pv_table_size;
+
+	/* Set up the bootstrap pv_table */
+	pv_table_size = round_page(physmem * sizeof(struct pv_entry));
+	pv_table =
+	    (struct pv_entry *)pmap_steal_memory(pv_table_size, NULL, NULL);
+	bzero(pv_table, pv_table_size);
 
 	/* Set up the kernel's pmap */
 	pmap = pmap_kernel();
@@ -217,7 +220,6 @@ pmap_bootstrap(int npages, paddr_t zp_physaddr)
 	/* XXX Maybe we should leave zero page alone? */
 	for (i=0; i < npages; i++)
 		MEMC_WRITE(PMAP_UNMAP_ENTRY_32K(i));
-	bzero(pv_table, sizeof(pv_table));
 	/* TODO: Set up control register? */
 	update_memc(0xffffffff, MEMC_CONTROL | MEMC_CTL_PGSZ_32K |
 		    MEMC_CTL_LROMSPD_4N | MEMC_CTL_HROMSPD_4N |
@@ -265,15 +267,31 @@ void
 pmap_init()
 {
 
-	pool_init(pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappool",
-		  0, NULL, NULL, M_VMPMAP);
-	pmap_initialised = 1;
+	/* All deferred to pmap_create, because malloc() is nice. */
 }
 
 struct pmap *
 pmap_create()
 {
 	struct pmap *pmap;
+	struct pv_entry *new_pv_table, *old_pv_table;
+	size_t pv_table_size;
+
+	if (!pmap_initialised) {
+		/* We can now call malloc().  Rationalise our memory usage. */
+		pv_table_size = physmem * sizeof(struct pv_entry);
+		new_pv_table = malloc(pv_table_size, M_VMPMAP, M_WAITOK);
+		memcpy(new_pv_table, pv_table, pv_table_size);
+		old_pv_table = pv_table;
+		pv_table = new_pv_table;
+		uvm_pagefree(PHYS_TO_VM_PAGE(
+		    PMAP_UNMAP_POOLPAGE((vaddr_t)old_pv_table)));
+
+		/* Create pmap pool */
+		pmap_pool = pool_create(sizeof(struct pmap), 0, 0, 0,
+		    "pmappool", 0, NULL, NULL, M_VMPMAP);
+		pmap_initialised = 1;
+	}
 
 	pmap = pool_get(pmap_pool, PR_WAITOK);
 	bzero(pmap, sizeof(*pmap));
@@ -891,8 +909,10 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 	
-	*vstartp = VM_MIN_KERNEL_ADDRESS;
-	*vendp = VM_MAX_KERNEL_ADDRESS - PAGE_SIZE;
+	if (vstartp != NULL)
+		*vstartp = VM_MIN_KERNEL_ADDRESS;
+	if (vendp != NULL)
+		*vendp = VM_MAX_KERNEL_ADDRESS - PAGE_SIZE;
 }
 
 /*
