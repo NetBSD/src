@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.47 1997/09/26 07:44:07 lukem Exp $
+#	$NetBSD: netstart,v 1.48 1997/11/17 17:45:28 mrg Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -120,6 +120,7 @@ fi
 # 
 if [ -n "$configured_interfaces" ]; then
 	echo 'adding interface aliases:';
+	done_aliases_message=yes
 fi
 for int in $configured_interfaces; do
 	eval `echo 'args=$ifaliases_'$int`
@@ -143,8 +144,10 @@ done
 # that contain
 #	address interface netmask
 if [ -f /etc/ifaliases ]; then
-	echo 'adding interface aliases:';
 (
+	if [ "$done_aliases_message" != yes ]; then
+		echo 'adding interface aliases:';
+	fi
 	while read addr int net; do
 		if [ -z "$net" ]; then
 			ifconfig $int inet alias $addr
@@ -155,6 +158,22 @@ if [ -f /etc/ifaliases ]; then
 		route add $addr 127.0.0.1
 	done
 ) < /etc/ifaliases
+fi
+
+# /etc/ppp/peers and $ppp_peers contain boot configuration information
+# for pppd.  each value in $ppp_peers that has a file in /etc/ppp/peers
+# of the same name, will be run as `pppd <peer>'.
+if [ -n "$ppp_peers" ]; then
+	set -- $ppp_peers
+	echo -n "starting pppd:"
+	while [ $# -ge 1 ]; do
+		peer=$1; shift
+		if [ -f /etc/ppp/peers/$peer ]; then
+			pppd call $peer
+			echo -n " $peer"
+		fi
+	done
+	echo "."
 fi
 
 if [ -s /etc/netstart.local ]; then
