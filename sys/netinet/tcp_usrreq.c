@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.13 1995/03/21 07:48:14 glass Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.14 1995/04/13 06:36:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -51,6 +51,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
@@ -86,7 +87,7 @@ tcp_usrreq(so, req, m, nam, control)
 	int ostate;
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (int)m, (caddr_t)nam,
+		return (in_control(so, (long)m, (caddr_t)nam,
 			(struct ifnet *)control));
 	if (control && control->m_len) {
 		m_freem(control);
@@ -285,7 +286,7 @@ tcp_usrreq(so, req, m, nam, control)
 		}
 		m->m_len = 1;
 		*mtod(m, caddr_t) = tp->t_iobc;
-		if (((int)nam & MSG_PEEK) == 0)
+		if (((long)nam & MSG_PEEK) == 0)
 			tp->t_oobflags ^= (TCPOOB_HAVEDATA | TCPOOB_HADDATA);
 		break;
 
@@ -323,8 +324,8 @@ tcp_usrreq(so, req, m, nam, control)
 	 * routine for tracing's sake.
 	 */
 	case PRU_SLOWTIMO:
-		tp = tcp_timers(tp, (int)nam);
-		req |= (int)nam << 8;		/* for debug's sake */
+		tp = tcp_timers(tp, (long)nam);
+		req |= (long)nam << 8;		/* for debug's sake */
 		break;
 
 	default:

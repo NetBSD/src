@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.11 1995/01/23 20:18:35 mycroft Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.12 1995/04/13 06:36:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -278,18 +278,18 @@ send:
 	if (flags & TH_SYN) {
 		tp->snd_nxt = tp->iss;
 		if ((tp->t_flags & TF_NOOPT) == 0) {
-			u_short mss;
+			u_int16_t mss;
 
 			opt[0] = TCPOPT_MAXSEG;
 			opt[1] = 4;
-			mss = htons((u_short) tcp_mss(tp, 0));
+			mss = htons((u_int16_t) tcp_mss(tp, 0));
 			bcopy((caddr_t)&mss, (caddr_t)(opt + 2), sizeof(mss));
 			optlen = 4;
 	 
 			if ((tp->t_flags & TF_REQ_SCALE) &&
 			    ((flags & TH_ACK) == 0 ||
 			    (tp->t_flags & TF_RCVD_SCALE))) {
-				*((u_long *) (opt + optlen)) = htonl(
+				*((u_int32_t *) (opt + optlen)) = htonl(
 					TCPOPT_NOP << 24 |
 					TCPOPT_WINDOW << 16 |
 					TCPOLEN_WINDOW << 8 |
@@ -308,7 +308,7 @@ send:
  	     (flags & TH_RST) == 0 &&
  	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
 	     (tp->t_flags & TF_RCVD_TSTMP))) {
-		u_long *lp = (u_long *)(opt + optlen);
+		u_int32_t *lp = (u_long *)(opt + optlen);
  
  		/* Form timestamp option as shown in appendix A of RFC 1323. */
  		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
@@ -451,9 +451,9 @@ send:
 		win = (long)TCP_MAXWIN << tp->rcv_scale;
 	if (win < (long)(tp->rcv_adv - tp->rcv_nxt))
 		win = (long)(tp->rcv_adv - tp->rcv_nxt);
-	ti->ti_win = htons((u_short) (win>>tp->rcv_scale));
+	ti->ti_win = htons((u_int16_t) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
-		ti->ti_urp = htons((u_short)(tp->snd_up - tp->snd_nxt));
+		ti->ti_urp = htons((u_int16_t)(tp->snd_up - tp->snd_nxt));
 		ti->ti_flags |= TH_URG;
 	} else
 		/*
@@ -469,7 +469,7 @@ send:
 	 * checksum extended header and data.
 	 */
 	if (len + optlen)
-		ti->ti_len = htons((u_short)(sizeof (struct tcphdr) +
+		ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) +
 		    optlen + len));
 	ti->ti_sum = in_cksum(m, (int)(hdrlen + len));
 

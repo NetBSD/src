@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.h,v 1.5 1994/06/29 06:38:56 cgd Exp $	*/
+/*	$NetBSD: udp.h,v 1.6 1995/04/13 06:37:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,8 +40,8 @@
  * Per RFC 768, September, 1981.
  */
 struct udphdr {
-	u_short	uh_sport;		/* source port */
-	u_short	uh_dport;		/* destination port */
-	short	uh_ulen;		/* udp length */
-	u_short	uh_sum;			/* udp checksum */
+	u_int16_t uh_sport;		/* source port */
+	u_int16_t uh_dport;		/* destination port */
+	int16_t	  uh_ulen;		/* udp length */
+	u_int16_t uh_sum;		/* udp checksum */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.8 1994/06/29 06:38:36 cgd Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.9 1995/04/13 06:36:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -120,7 +120,7 @@ tcp_trace(act, ostate, tp, ti, req)
 		if (act == TA_OUTPUT) {
 			seq = ntohl(seq);
 			ack = ntohl(ack);
-			len = ntohs((u_short)len);
+			len = ntohs((u_int16_t)len);
 		}
 		if (act == TA_OUTPUT)
 			len -= sizeof (struct tcphdr);

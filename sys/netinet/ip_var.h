@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.11 1995/03/26 20:32:33 jtc Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.12 1995/04/13 06:36:06 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -39,12 +39,12 @@
  * Overlay for ip header used by other protocols (tcp, udp).
  */
 struct ipovly {
-	caddr_t	ih_next, ih_prev;	/* for protocol sequence q's */
-	u_char	ih_x1;			/* (unused) */
-	u_char	ih_pr;			/* protocol */
-	short	ih_len;			/* protocol length */
-	struct	in_addr ih_src;		/* source internet address */
-	struct	in_addr ih_dst;		/* destination internet address */
+	caddr_t  ih_next, ih_prev;	/* for protocol sequence q's */
+	u_int8_t ih_x1;			/* (unused) */
+	u_int8_t ih_pr;			/* protocol */
+	int16_t	 ih_len;		/* protocol length */
+	struct	 in_addr ih_src;	/* source internet address */
+	struct	 in_addr ih_dst;	/* destination internet address */
 };
 
 /*
@@ -54,13 +54,13 @@ struct ipovly {
  * be reclaimed if memory becomes tight.
  */
 struct ipq {
-	struct	ipq *next,*prev;	/* to other reass headers */
-	u_char	ipq_ttl;		/* time for reass q to live */
-	u_char	ipq_p;			/* protocol of this fragment */
-	u_short	ipq_id;			/* sequence id for reassembly */
-	struct	ipasfrag *ipq_next,*ipq_prev;
+	struct	  ipq *next,*prev;	/* to other reass headers */
+	u_int8_t  ipq_ttl;		/* time for reass q to live */
+	u_int8_t  ipq_p;		/* protocol of this fragment */
+	u_int16_t ipq_id;		/* sequence id for reassembly */
+	struct	  ipasfrag *ipq_next,*ipq_prev;
 					/* to ip headers of fragments */
-	struct	in_addr ipq_src,ipq_dst;
+	struct	  in_addr ipq_src,ipq_dst;
 };
 
 /*
@@ -70,24 +70,24 @@ struct ipq {
  */
 struct	ipasfrag {
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	ip_hl:4,
-		ip_v:4;
+	u_int8_t  ip_hl:4,
+		  ip_v:4;
 #endif
 #if BYTE_ORDER == BIG_ENDIAN
-	u_char	ip_v:4,
-		ip_hl:4;
+	u_int8_t  ip_v:4,
+		  ip_hl:4;
 #endif
-	u_char	ipf_mff;		/* XXX overlays ip_tos: use low bit
+	u_int8_t  ipf_mff;		/* XXX overlays ip_tos: use low bit
 					 * to avoid destroying tos;
 					 * copied from (ip_off&IP_MF) */
-	short	ip_len;
-	u_short	ip_id;
-	short	ip_off;
-	u_char	ip_ttl;
-	u_char	ip_p;
-	u_short	ip_sum;
-	struct	ipasfrag *ipf_next;	/* next fragment */
-	struct	ipasfrag *ipf_prev;	/* previous fragment */
+	int16_t	  ip_len;
+	u_int16_t ip_id;
+	int16_t	  ip_off;
+	u_int8_t  ip_ttl;
+	u_int8_t  ip_p;
+	u_int16_t ip_sum;
+	struct	  ipasfrag *ipf_next;	/* next fragment */
+	struct	  ipasfrag *ipf_prev;	/* previous fragment */
 };
 
 /*
@@ -100,7 +100,7 @@ struct	ipasfrag {
 
 struct ipoption {
 	struct	in_addr ipopt_dst;	/* first-hop dst if source routed */
-	char	ipopt_list[MAX_IPOPTLEN];	/* options proper */
+	int8_t	ipopt_list[MAX_IPOPTLEN];	/* options proper */
 };
 
 /*
@@ -108,11 +108,11 @@ struct ipoption {
  * passed to ip_output when IP multicast options are in use.
  */
 struct ip_moptions {
-	struct	ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
-	u_char	imo_multicast_ttl;	/* TTL for outgoing multicasts */
-	u_char	imo_multicast_loop;	/* 1 => hear sends if a member */
-	u_short	imo_num_memberships;	/* no. memberships this socket */
-	struct	in_multi *imo_membership[IP_MAX_MEMBERSHIPS];
+	struct	  ifnet *imo_multicast_ifp; /* ifp for outgoing multicasts */
+	u_int8_t  imo_multicast_ttl;	/* TTL for outgoing multicasts */
+	u_int8_t  imo_multicast_loop;	/* 1 => hear sends if a member */
+	u_int16_t imo_num_memberships;	/* no. memberships this socket */
+	struct	  in_multi *imo_membership[IP_MAX_MEMBERSHIPS];
 };
 
 struct	ipstat {
@@ -149,12 +149,11 @@ struct	ipstat {
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 
-struct	ipstat	ipstat;
-struct	ipq	ipq;			/* ip reass. queue */
-u_short	ip_id;				/* ip packet ctr, for ids */
-int	ip_defttl;			/* default IP ttl */
+struct	  ipstat ipstat;
+struct	  ipq	 ipq;			/* ip reass. queue */
+u_int16_t ip_id;				/* ip packet ctr, for ids */
+int	  ip_defttl;			/* default IP ttl */
 
-int	 in_control __P((struct socket *, int, caddr_t, struct ifnet *));
 int	 ip_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 void	 ip_deq __P((struct ipasfrag *));
 int	 ip_dooptions __P((struct mbuf *));

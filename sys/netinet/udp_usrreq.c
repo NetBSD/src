@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.14 1994/06/29 06:38:57 cgd Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.15 1995/04/13 06:37:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -49,6 +49,7 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
+#include <netinet/in_var.h>
 #include <netinet/ip.h>
 #include <netinet/in_pcb.h>
 #include <netinet/ip_var.h>
@@ -121,7 +122,7 @@ udp_input(m, iphlen)
 	 * Make mbuf data length reflect UDP length.
 	 * If not enough data to reflect UDP length, drop.
 	 */
-	len = ntohs((u_short)uh->uh_ulen);
+	len = ntohs((u_int16_t)uh->uh_ulen);
 	if (ip->ip_len != len) {
 		if (len > ip->ip_len) {
 			udpstat.udps_badlen++;
@@ -428,7 +429,7 @@ udp_output(inp, m, addr, control)
 	ui->ui_next = ui->ui_prev = 0;
 	ui->ui_x1 = 0;
 	ui->ui_pr = IPPROTO_UDP;
-	ui->ui_len = htons((u_short)len + sizeof (struct udphdr));
+	ui->ui_len = htons((u_int16_t)len + sizeof (struct udphdr));
 	ui->ui_src = inp->inp_laddr;
 	ui->ui_dst = inp->inp_faddr;
 	ui->ui_sport = inp->inp_lport;
@@ -479,7 +480,7 @@ udp_usrreq(so, req, m, addr, control)
 	int s;
 
 	if (req == PRU_CONTROL)
-		return (in_control(so, (int)m, (caddr_t)addr,
+		return (in_control(so, (long)m, (caddr_t)addr,
 			(struct ifnet *)control));
 	if (inp == NULL && req != PRU_ATTACH) {
 		error = EINVAL;

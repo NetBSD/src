@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.10 1995/03/26 20:32:39 jtc Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.11 1995/04/13 06:37:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -122,8 +122,8 @@ struct tcpcb {
 	u_char	rcv_scale;		/* window scaling for recv window */
 	u_char	request_r_scale;	/* pending window scaling */
 	u_char	requested_s_scale;
-	u_long	ts_recent;		/* timestamp echo data */
-	u_long	ts_recent_age;		/* when last updated */
+	u_int32_t ts_recent;		/* timestamp echo data */
+	u_int32_t ts_recent_age;		/* when last updated */
 	tcp_seq	last_ack_sent;
 
 /* TUBA stuff */
@@ -236,7 +236,7 @@ struct	tcpstat {
 #ifdef _KERNEL
 struct	inpcb tcb;		/* head of queue of active tcpcb's */
 struct	tcpstat tcpstat;	/* tcp statistics */
-u_long	tcp_now;		/* for RFC 1323 timestamps */
+u_int32_t tcp_now;		/* for RFC 1323 timestamps */
 
 int	 tcp_attach __P((struct socket *));
 void	 tcp_canceltimers __P((struct tcpcb *));
@@ -249,7 +249,7 @@ struct tcpcb *
 struct tcpcb *
 	 tcp_drop __P((struct tcpcb *, int));
 void	 tcp_dooptions __P((struct tcpcb *,
-	    u_char *, int, struct tcpiphdr *, int *, u_long *, u_long *));
+	    u_char *, int, struct tcpiphdr *, int *, u_int32_t *, u_int32_t *));
 void	 tcp_drain __P((void));
 void	 tcp_fasttimo __P((void));
 void	 tcp_init __P((void));
@@ -264,7 +264,7 @@ void	 tcp_pulloutofband __P((struct socket *,
 void	 tcp_quench __P((struct inpcb *, int));
 int	 tcp_reass __P((struct tcpcb *, struct tcpiphdr *, struct mbuf *));
 void	 tcp_respond __P((struct tcpcb *,
-	    struct tcpiphdr *, struct mbuf *, u_long, u_long, int));
+	    struct tcpiphdr *, struct mbuf *, tcp_seq, tcp_seq, int));
 void	 tcp_setpersist __P((struct tcpcb *));
 void	 tcp_slowtimo __P((void));
 struct tcpiphdr *
