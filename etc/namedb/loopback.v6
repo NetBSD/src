@@ -1,4 +1,4 @@
-;	$NetBSD: 0000:0000:0000:0000:0000:0000:000,v 1.1 2000/01/27 05:17:12 itojun Exp $
+;	$NetBSD: loopback.v6,v 1.1 2000/03/01 11:06:28 itojun Exp $
 
 @	IN	SOA	netbsd.org. hostmaster.netbsd.org.  (
 				1999012100	; Serial
