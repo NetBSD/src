@@ -1,4 +1,4 @@
-$NetBSD: isapnpdevs,v 1.22 1999/03/22 09:41:10 mycroft Exp $
+$NetBSD: isapnpdevs,v 1.23 1999/03/22 22:36:10 bad Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ driver	mpu	MPU-401 MIDI UART
 driver	ne	NE2000 Ethernet
 driver	pcic	PCMCIA bridge
 driver	sb	Creative Soundblaster
+driver	tr	TROPIC Token-Ring
 driver	wdc	Western Digital Disk Controller
 driver	wss	Microsoft Sound System
 driver	ym	Yamaha Sound
@@ -164,6 +165,11 @@ devcompat	sb	PNPB003		0	Generic SB 16
 devlogic	sb	ESS1868		0	ESS1868
 devlogic	sb	ESS1869		0	ESS1869
 
+/*
+ * tr
+ */
+devlogic	tr	IBM0000		0	IBM TROPIC Token-Ring
+devlogic	tr	TCM3190		0	3Com TokenLink Velocity ISA
 
 /*
  * wdc
