@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.6 1997/09/06 14:08:31 drochner Exp $ */
+/* $NetBSD: dev_net.c,v 1.7 1998/01/23 19:13:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -142,6 +142,7 @@ net_open(struct open_file *f, ...)
 			/* Get the NFS file handle (mountd). */
 			error = nfs_mount(netdev_sock, rootip, rootpath);
 			if (error) {
+				error = errno;
 				printf("net_open: NFS mount error=%d\n", error);
 				rootip.s_addr = 0;
 			fail:
