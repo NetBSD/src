@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.20 2005/02/20 22:17:28 heas Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.21 2005/02/21 22:43:07 heas Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.20 2005/02/20 22:17:28 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.21 2005/02/21 22:43:07 heas Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ CFATTACH_DECL(kbd_tty, sizeof(struct kbd_sun_softc),
     sunkbd_match, sunkbd_attach, NULL, NULL);
 
 struct  linesw sunkbd_disc =
-	{ "sunkbd", 7, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
-	  sunkbdinput, sunkbdstart, nullmodem, ttpoll }; /* 7- SUNKBDDISC */
+	{ "sunkbd", -1, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
+	  sunkbdinput, sunkbdstart, nullmodem, ttpoll };
 
 
 /*
