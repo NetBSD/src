@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1995/03/25 18:13:38 glass Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3.4.1 1998/10/24 00:22:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -29,6 +29,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
+ * From: $OpenBSD: pathnames.h,v 1.3 1997/03/01 23:40:11 millert Exp $
  */
 
 #ifndef _PATHNAMES_H_
@@ -38,6 +39,9 @@
 
 #define _PATH_ATJOBS	"/var/at/jobs/"
 #define _PATH_ATSPOOL	"/var/at/spool/"
-#define _PATH_LOCKFILE	"/var/at/lockfile"
+#define _PATH_LOCKFILE	"/var/at/.lockfile"
+#define _PATH_SEQFILE	"/var/at/.SEQ"
+#define _PATH_AT_ALLOW	"/var/at/at.allow"
+#define _PATH_AT_DENY	"/var/at/at.deny"
 
 #endif				/* !_PATHNAMES_H_ */
