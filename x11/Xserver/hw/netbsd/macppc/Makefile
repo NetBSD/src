@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/27 15:16:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2004/01/10 13:04:03 rtr Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -12,17 +12,14 @@ SRCS=	macppcFbs.c macppcIo.c macppcKeyMap.c macppcOFB.c macppc.h \
 
 XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
-# trim fonts / extentions / XSERVERINCDIR if possible
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/macppc \
-		-I${X11SRCDIR.xc}/programs/Xserver \
-		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${X11SRCDIR.xc}/programs/Xserver/mfb \
+		-I${X11SRCDIR.xc}/programs/Xserver/mi \
 		-I${X11SRCDIR.xc}/programs/Xserver/cfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${X11SRCDIR.xc}/programs/Xserver/os \
 		-I${DESTDIR}${X11INCDIR}/X11 \
-		-I${X11SRCDIR.xc}/include/fonts \
-		-I${X11SRCDIR.xc}/include/extensions \
+		-I${DESTDIR}${X11INCDIR}/X11/extensions \
 		-I${XSERVERINCDIR}
 
 CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
