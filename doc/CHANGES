@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.67 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.68 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -231,3 +231,4 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	kprintf(9): Add "aprint" family of autoconfiguration message
 		printing routines that change their behavior based on
 		flags in boothowto.  [thorpej 20021231]
+	procfs:	Add /proc/<pid>/fd/<fd> [christos 20030103]
