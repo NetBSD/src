@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: id.c,v 1.21 2004/11/19 14:18:01 peter Exp $");
+__RCSID("$NetBSD: id.c,v 1.22 2004/11/22 17:21:36 peter Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,10 +334,17 @@ who(u)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: id [user]\n");
-	(void)fprintf(stderr, "       id -G [-n] [user]\n");
-	(void)fprintf(stderr, "       id -g [-nr] [user]\n");
-	(void)fprintf(stderr, "       id -p [user]\n");
-	(void)fprintf(stderr, "       id -u [-nr] [user]\n");
+
+	if (strcmp(getprogname(), "groups") == 0) {
+		(void)fprintf(stderr, "usage: groups [user]\n");
+	} else if (strcmp(getprogname(), "whoami") == 0) {
+		(void)fprintf(stderr, "usage: whoami\n");
+	} else {
+		(void)fprintf(stderr, "usage: id [user]\n");
+		(void)fprintf(stderr, "       id -G [-n] [user]\n");
+		(void)fprintf(stderr, "       id -g [-nr] [user]\n");
+		(void)fprintf(stderr, "       id -p [user]\n");
+		(void)fprintf(stderr, "       id -u [-nr] [user]\n");
+	}
 	exit(1);
 }
