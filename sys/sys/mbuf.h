@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.94 2004/06/24 04:15:50 jonathan Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.95 2004/06/25 15:23:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001 The NetBSD Foundation, Inc.
@@ -432,6 +432,7 @@ do {									\
 		(m)->m_nextpkt = (struct mbuf *)NULL;			\
 		(m)->m_data = (m)->m_pktdat;				\
 		(m)->m_flags = M_PKTHDR;				\
+		(m)->m_pkthdr.rcvif = NULL;				\
 		(m)->m_pkthdr.csum_flags = 0;				\
 		(m)->m_pkthdr.csum_data = 0;				\
 		SLIST_INIT(&(m)->m_pkthdr.tags);			\
