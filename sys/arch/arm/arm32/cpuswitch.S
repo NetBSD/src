@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.19 2002/10/05 13:46:59 bjh21 Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.20 2002/10/08 23:48:24 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -291,7 +291,6 @@ ENTRY(cpu_switch)
 /*
  * Local register usage. Some of these registers are out of date.
  * r1 = oldproc
- * r2 = spl level
  * r3 = whichqs
  * r4 = queue
  * r5 = &qs[queue]
