@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.48 1995/06/26 05:15:37 cgd Exp $	*/
+/*	$NetBSD: st.c,v 1.49 1995/07/04 07:21:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -239,7 +239,6 @@ int	st_write_filemarks __P((struct st_softc *, int number, int flags));
 int	st_load __P((struct st_softc *, u_int type, int flags));
 int	st_mode_select __P((struct st_softc *, int flags));
 void    ststrategy();
-void    stminphys();
 int	st_check_eod();
 void    ststart();
 void	st_unmount();
@@ -765,21 +764,6 @@ done:
 }
 
 /*
- * trim the size of the transfer if needed,
- * called by physio
- * basically the smaller of our min and the scsi driver's
- * minphys
- */
-void 
-stminphys(bp)
-	struct buf *bp;
-{
-	register struct st_softc *st = stcd.cd_devs[STUNIT(bp->b_dev)];
-
-	(st->sc_link->adapter->scsi_minphys) (bp);
-}
-
-/*
  * Actually translate the requested transfer into
  * one the physical driver can understand
  * The transfer is described by a buf and will include
@@ -821,7 +805,6 @@ ststrategy(bp)
 		bp->b_error = EIO;
 		goto bad;
 	}
-	stminphys(bp);
 	opri = splbio();
 
 	/*
@@ -989,6 +972,33 @@ ststart(st)
 		    100000, bp, flags | SCSI_NOSLEEP))
 			printf("%s: not queued\n", st->sc_dev.dv_xname);
 	} /* go back and see if we can cram more work in.. */
+}
+
+void 
+stminphys(bp)
+	struct buf *bp;
+{
+	register struct st_softc *st = stcd.cd_devs[STUNIT(bp->b_dev)];
+
+	(st->sc_link->adapter->scsi_minphys)(bp);
+}
+
+int
+stread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(ststrategy, NULL, dev, B_READ, stminphys, uio));
+}
+
+int
+stwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(ststrategy, NULL, dev, B_WRITE, stminphys, uio));
 }
 
 /*

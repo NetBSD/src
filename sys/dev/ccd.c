@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.9 1995/06/26 05:34:44 cgd Exp $	*/
+/*	$NetBSD: ccd.c,v 1.10 1995/07/04 07:18:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -700,30 +700,30 @@ ccdiodone(cbp)
 	splx(s);
 }
 
+int
 ccdread(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	register int unit = ccdunit(dev);
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdread(%x, %x)\n", dev, uio);
 #endif
-	return(physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
+	return (physio(ccdstrategy, NULL, dev, B_READ, minphys, uio));
 }
 
+int
 ccdwrite(dev, uio)
 	dev_t dev;
 	struct uio *uio;
 {
-	register int unit = ccdunit(dev);
 
 #ifdef DEBUG
 	if (ccddebug & CCDB_FOLLOW)
 		printf("ccdwrite(%x, %x)\n", dev, uio);
 #endif
-	return(physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
+	return (physio(ccdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 ccdioctl(dev, cmd, data, flag)

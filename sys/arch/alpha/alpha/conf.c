@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 1995/06/28 02:45:00 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 1995/07/04 07:15:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,9 +43,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
@@ -54,6 +51,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 int	lkmenodev();
 #endif
 
+bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
 #include "cd.h"
@@ -66,7 +64,7 @@ bdev_decl(vnd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
-	bdev_swap_init(),		/* 1: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
 	bdev_notdef(),			/* 4 */
@@ -89,6 +87,7 @@ cdev_decl(ctty);
 #define	mmread  mmrw
 #define	mmwrite mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

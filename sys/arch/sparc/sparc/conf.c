@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.31 1995/07/02 06:13:27 christos Exp $ */
+/*	$NetBSD: conf.c,v 1.32 1995/07/04 07:17:06 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,9 +52,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifdef LKM
@@ -63,6 +60,7 @@ int	lkmenodev();
 #define	lkmenodev	enodev
 #endif
 
+bdev_decl(sw);
 #include "sd.h"
 bdev_decl(sd);
 #include "xd.h"
@@ -83,7 +81,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 0 */
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),			/* 2 */
-	bdev_swap_init(),		/* 3 */
+	bdev_swap_init(1,sw),		/* 3 */
 	bdev_notdef(),			/* 4 */
 	bdev_notdef(),			/* 5 */
 	bdev_notdef(),			/* 6 */
@@ -113,21 +111,22 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 /* open, close, read, write, ioctl, select */
 #define	cdev_gen_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), 0, 0, \
-	dev_init(c,n,select), 0, 0 }
+	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
 
 /* open, close, ioctl */
 #define	cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
+	(dev_type_mmap((*))) enodev }
 
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 #include "zs.h"
 cdev_decl(zs);
 cdev_decl(ms);

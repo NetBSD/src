@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 1995/06/26 02:34:01 chopps Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 1995/07/04 07:15:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,9 +48,6 @@
 #include <sys/bankeddev.h>
 #endif
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
@@ -59,6 +56,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 int	lkmenodev();
 #endif
 
+bdev_decl(sw);
 #include "vnd.h"
 bdev_decl(vnd);
 #include "sd.h"
@@ -79,7 +77,7 @@ struct bdevsw	bdevsw[] =
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 	bdev_disk_init(NFD,fd),		/* 2: floppy disk */
 #undef	fdopen
-	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NVND,vnd),	/* 6: vnode disk driver */
@@ -98,28 +96,28 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define	cdev_grf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, \
-	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	dev_init(c,n,mmap) }
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
 #define	cdev_view_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, \
-	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	dev_init(c,n,mmap) }
 
 /* open, close, read, write, ioctl -- XXX should be a generic device */
 #define	cdev_par_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
+	0, (dev_type_select((*))) enodev, (dev_type_mmap((*))) enodev }
 
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

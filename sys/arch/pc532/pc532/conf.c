@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1995/04/27 07:16:31 phil Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1995/07/04 07:16:51 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -43,9 +43,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #define	bdev_rd_init(c,n) { \
@@ -55,6 +52,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "sd.h"
 bdev_decl(sd);
+bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
 #ifdef RAMD_SIZE
@@ -71,7 +69,7 @@ bdev_decl(vnd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NSD,sd),		/* 0: SCSI disk */
-	bdev_swap_init(),		/* 1: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 	bdev_tape_init(NST,st),		/* 2: SCSI tape */
 	bdev_rd_init(NRD,rd),		/* 3: ram disk */
 	bdev_disk_init(NCD,cd),		/* 4: SCSI CD-ROM */
@@ -84,7 +82,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 	dev_init(c,n,open), dev_init(c,n,close), \
 	(dev_type_read((*))) enodev, dev_init(c,n,write), \
 	dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0, 0}
+	0, seltrue, (dev_type_mmap((*))) enodev, 0}
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -92,6 +90,7 @@ cdev_decl(ctty);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 cdev_decl(sd);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

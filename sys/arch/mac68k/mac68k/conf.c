@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.26 1995/04/20 15:30:22 briggs Exp $	*/
+/*	$NetBSD: conf.c,v 1.27 1995/07/04 07:16:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,11 +79,9 @@
 #include <sys/vnode.h>
 #include <dev/cons.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
+bdev_decl(sw);
 #include "st.h"
 bdev_decl(st);
 #include "sd.h"
@@ -106,7 +104,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),         		/* 0 */
 	bdev_notdef(),			/* 1 */
 	bdev_notdef(),         		/* 2 */
-	bdev_swap_init(),		/* 3: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),		/* 4: SCSI disk */
 	bdev_tape_init(NST,st),		/* 5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/* 6: SCSI CD-ROM */
@@ -126,8 +124,8 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define	cdev_grf_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, \
-	dev_init(c,n,select), dev_init(c,n,mmap), 0 }
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,select), \
+	dev_init(c,n,mmap) }
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -137,6 +135,7 @@ cdev_decl(ite);
 #define mmread	mmrw
 #define mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

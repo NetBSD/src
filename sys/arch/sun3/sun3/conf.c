@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40 1995/04/26 23:24:13 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.41 1995/07/04 07:17:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -44,11 +44,9 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
+bdev_decl(sw);
 #include "vnd.h"
 bdev_decl(vnd);
 #include "sd.h"
@@ -64,7 +62,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 1: tapemaster tape */
 	bdev_notdef(),			/* 2 */
 	bdev_notdef(),			/* 3: SMD disk on Xylogics 450/451 */
-	bdev_swap_init(),		/* 4: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
 	bdev_disk_init(NVND,vnd),	/* 5: vnode disk driver */
 	bdev_notdef(),			/* 6 */
 	bdev_disk_init(NSD,sd),		/* 7: SCSI disk */
@@ -92,6 +90,7 @@ cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 
 /* XXX - prom driver is dead code! */
 #include "prom.h"

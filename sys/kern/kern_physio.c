@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.20 1994/06/29 06:32:34 cgd Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.21 1995/07/04 07:18:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -300,26 +300,4 @@ minphys(bp)
 
 	bp->b_bcount = min(MAXPHYS, bp->b_bcount);
         return bp->b_bcount;
-}
-
-/*
- * Do a read on a device for a user process.
- */
-rawread(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_READ, minphys, uio));
-}
-
-/*
- * Do a write on a device for a user process.
- */
-rawwrite(dev, uio)
-	dev_t dev;
-	struct uio *uio;
-{
-	return (physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
-	    dev, B_WRITE, minphys, uio));
 }

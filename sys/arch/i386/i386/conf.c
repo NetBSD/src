@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.65 1995/04/19 22:35:40 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.66 1995/07/04 07:16:21 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -37,9 +37,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
@@ -50,6 +47,7 @@ int	lkmenodev();
 
 #include "wdc.h"
 bdev_decl(wd);
+bdev_decl(sw);
 #include "fdc.h"
 #define	fdopen	Fdopen	/* conflicts with fdopen() in kern_descrip.c */
 bdev_decl(fd);
@@ -72,7 +70,7 @@ bdev_decl(scd);
 struct bdevsw	bdevsw[] =
 {
 	bdev_disk_init(NWDC,wd),	/* 0: ST506/ESDI/IDE disk */
-	bdev_swap_init(),		/* 1: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 1: swap pseudo-device */
 #define	fdopen	Fdopen
 	bdev_disk_init(NFDC,fd),	/* 2: floppy diskette */
 #undef	fdopen
@@ -96,19 +94,19 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_pc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), 0, D_TTY }
+	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
 
 /* open, close, write, ioctl */
 #define	cdev_lpt_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
+	0, seltrue, (dev_type_mmap((*))) enodev }
 
 /* open, close, write, ioctl */
 #define	cdev_spkr_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
+	0, seltrue, (dev_type_mmap((*))) enodev }
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -116,6 +114,7 @@ cdev_decl(ctty);
 #define	mmwrite	mmrw
 cdev_decl(mm);
 cdev_decl(wd);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1995/06/05 16:26:34 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1995/07/04 07:17:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -43,9 +43,6 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #ifndef LKM
@@ -62,6 +59,8 @@ bdev_decl(ht);
 
 #include "rk.h"
 bdev_decl(rk);
+
+bdev_decl(sw);
 
 #include "te.h"
 bdev_decl(tm);
@@ -112,7 +111,7 @@ struct bdevsw	bdevsw[] =
 	bdev_tape_init(NTU,ht),		/* 1: TU77 w/ TM03 */
 	bdev_disk_init(NUP,up),		/* 2: SC-21/SC-31 */
 	bdev_disk_init(NRK,rk),		/* 3: RK06/07 */
-	bdev_swap_init(),		/* 4: swap pseudo-device */
+	bdev_swap_init(1,sw),		/* 4: swap pseudo-device */
 	bdev_tape_init(NTE,tm),		/* 5: TM11/TE10 */
 	bdev_tape_init(NTS,ts),		/* 6: TS11 */
 	bdev_tape_init(NMU,mt),		/* 7: TU78 */
@@ -155,33 +154,32 @@ struct	consdev	constab[]={
 #define cdev_plotter_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, 0 }
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
 
 /* console mass storage - open, close, read/write */
 #define	cdev_cnstore_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
 	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
-	(dev_type_mmap((*))) enodev, 0 }
+	(dev_type_mmap((*))) enodev }
 
 #define	cdev_lp_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
-	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev, \
-	0 }
+	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
 
 /* graphic display adapters */
 #define	cdev_graph_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev, 0 }
+	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
 
 /* Ingres */
 #define cdev_ingres_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) nullop, \
 	(dev_type_write((*))) nullop, dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) nullop, \
-	(dev_type_mmap((*))) enodev, 0 }
+	(dev_type_mmap((*))) enodev }
 
 
 
@@ -190,6 +188,7 @@ cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw
 cdev_decl(mm);
+cdev_decl(sw);
 #include "pty.h"
 #define	ptstty		ptytty
 #define	ptsioctl	ptyioctl

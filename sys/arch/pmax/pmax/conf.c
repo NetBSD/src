@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.14 1995/04/21 01:21:06 mellon Exp $	*/
+/*	$NetBSD: conf.c,v 1.15 1995/07/04 07:17:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,13 +46,11 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-int	rawread		__P((dev_t, struct uio *, int));
-int	rawwrite	__P((dev_t, struct uio *, int));
-void	swstrategy	__P((struct buf *));
 int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "vnd.h"
 bdev_decl(vnd);
+bdev_decl(sw);
 #include "rz.h"
 bdev_decl(rz);
 
@@ -62,7 +60,7 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 1: vax ht */
 	bdev_disk_init(NVND,vnd),	/* 2: vnode disk driver */
 	bdev_notdef(),			/* 3: vax rk*/
-	bdev_swap_init(),		/* 4: swap pseudo-device*/
+	bdev_swap_init(1,sw),		/* 4: swap pseudo-device*/
 	bdev_notdef(),			/* 5: vax tm */
 	bdev_notdef(),			/* 6: vax ts */
 	bdev_notdef(),			/* 7: vax mt */
@@ -86,6 +84,7 @@ struct bdevsw	bdevsw[] =
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
 cdev_decl(cn);
+cdev_decl(sw);
 cdev_decl(ctty);
 #define	mmread	mmrw
 #define	mmwrite	mmrw

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.140 1995/06/26 05:18:28 cgd Exp $	*/
+/*	$NetBSD: wd.c,v 1.141 1995/07/04 07:23:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -451,6 +451,24 @@ wdfinish(wd, bp)
 	wd->sc_skip = 0;
 	wd->sc_q.b_actf = bp->b_actf;
 	biodone(bp);
+}
+
+int
+wdread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(wdstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+wdwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(wdstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 /*

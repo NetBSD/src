@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.25 1995/06/26 05:37:16 cgd Exp $	*/
+/*	$NetBSD: wt.c,v 1.26 1995/07/04 07:23:58 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -593,6 +593,24 @@ errxit:
 xit:
 	biodone(bp);
 	return;
+}
+
+int
+wtread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(wtstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+wtwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(wtstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 /*
