@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_vnops.c,v 1.5 1993/07/19 13:40:10 cgd Exp $
+ *	$Id: isofs_vnops.c,v 1.6 1993/08/02 23:00:04 mycroft Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -526,6 +526,7 @@ isofs_strategy(bp)
 /*
  * Print out the contents of an inode.
  */
+void
 isofs_print(vp)
 	struct vnode *vp;
 {
