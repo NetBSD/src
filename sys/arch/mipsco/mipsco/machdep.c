@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2000/08/17 05:05:01 wdk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2000/08/19 12:13:47 wdk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2000/08/17 05:05:01 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2000/08/19 12:13:47 wdk Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2000/08/17 05:05:01 wdk Exp $");
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
 #include <machine/autoconf.h>
+#include <machine/prom.h>
 #include <dev/clock_subr.h>
 #include <dev/cons.h>
 
@@ -145,7 +146,7 @@ extern struct user *proc0paddr;
 
 /* locore callback-vector setup */
 extern void mips_vector_init  __P((void));
-
+extern void prom_init  __P((void));
 void pizazz_init __P((void));
 
 /* platform-specific initialization vector */
@@ -171,17 +172,11 @@ struct consdev *cn_tab = NULL;
 extern struct consdev consdev_prom;
 extern struct consdev consdev_zs;
 
-int tty00_is_console = 0;
-
 static void null_cnprobe __P((struct consdev *));
 static void prom_cninit __P((struct consdev *));
 static int  prom_cngetc __P((dev_t));
 static void prom_cnputc __P((dev_t, int));
 static void null_cnpollc __P((dev_t, int));
-
-void prom_printf();
-void prom_putchar(int);
-int prom_getchar();
 
 struct consdev consdev_prom = {
         null_cnprobe,
@@ -213,6 +208,8 @@ mach_init(argc, argv, envp)
 	/* clear the BSS segment */
 	kernend = (caddr_t)mips_round_page(end);
 	bzero(edata, kernend - edata);
+
+	prom_init();
 
 	/*
 	 * Set the VM page size.
@@ -249,33 +246,21 @@ mach_init(argc, argv, envp)
 	for (i = 1; i < argc; i++) {
 		for (cp = argv[i]; *cp; cp++) {
 			switch (*cp) {
-			case 'a': /* autoboot */
-			case 'A':
-				boothowto &= ~RB_SINGLE;
+			case 'a': /* askname */
+				boothowto |= RB_ASKNAME;
 				break;
 
 #if defined(KGDB) || defined(DDB)
 			case 'd': /* break into the kernel debugger ASAP */
-			case 'D':
 				boothowto |= RB_KDB;
 				break;
 #endif
 
 			case 'm': /* mini root present in memory */
-			case 'M':
 				boothowto |= RB_MINIROOT;
 				break;
 
-			case 'n': /* ask for names */
-				boothowto |= RB_ASKNAME;
-				break;
-
-			case 'N': /* don't ask for names */
-				boothowto &= ~RB_ASKNAME;
-				break;
-
 			case 's': /* single-user (default) */
-			case 'S':
 				boothowto |= RB_SINGLE;
 				break;
 
@@ -498,7 +483,10 @@ void
 prom_halt(howto)
 	int howto;
 {
-	to_monitor(howto);
+	if (howto & RB_HALT)
+		MIPS_PROM(reinit)();
+	MIPS_PROM(reboot)();
+	/* NOTREACHED */
 }
 
 void
@@ -793,7 +781,7 @@ static int
 prom_cngetc(dev)
 	dev_t dev;
 {
-	return prom_getchar();
+	return MIPS_PROM(getchar)();
 }
 
 static void
@@ -801,7 +789,7 @@ prom_cnputc(dev, c)
 	dev_t dev;
 	int c;
 {
-	prom_putchar(c);
+	MIPS_PROM(putchar)(c);
 }
 
 static void
@@ -814,9 +802,7 @@ null_cnpollc(dev, on)
 void
 consinit()
 {
-	int zs_unit = 0;
-
-	tty00_is_console = 1;
+	int zs_unit;
 
 	zs_unit = 0;
 	cn_tab = &consdev_zs;
