@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.16 2001/06/24 05:22:18 msaitoh Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.17 2001/08/19 17:42:03 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -309,8 +309,7 @@ vmapbuf(bp, len)
 	while (len) {
 		pmap_extract(vm_map_pmap(&bp->b_proc->p_vmspace->vm_map),
 			     faddr, &fpa);
-		pmap_enter(vm_map_pmap(phys_map), taddr, fpa,
-			   VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_kenter(taddr, fpa, VM_PROT_READ | VM_PROT_WRITE);
 		faddr += PAGE_SIZE;
 		taddr += PAGE_SIZE;
 		len -= PAGE_SIZE;
@@ -334,6 +333,8 @@ vunmapbuf(bp, len)
 	addr = trunc_page((vaddr_t)bp->b_data);
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
+	pmap_kremove(addr, len);
+	pmap_update();
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
