@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.43 2001/10/14 19:21:45 christos Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.44 2001/11/13 07:26:34 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.44 2001/11/13 07:26:34 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

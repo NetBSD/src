@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.12 2001/06/27 16:03:01 ichiro Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.13 2001/11/13 07:26:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.13 2001/11/13 07:26:34 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.9 2001/08/26 02:49:18 matt Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.10 2001/11/13 07:26:28 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ofrtc.c,v 1.10 2001/11/13 07:26:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

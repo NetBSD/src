@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.11 2001/11/01 03:00:51 imp Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.12 2001/11/13 07:26:33 lukem Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * PCMCIA attachment for Lucent & Intersil WaveLAN PCMCIA card
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.12 2001/11/13 07:26:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
