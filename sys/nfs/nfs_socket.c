@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.24 1996/02/18 11:53:48 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.25 1996/02/25 15:30:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -228,10 +228,12 @@ nfs_connect(nmp, rep)
 		so->so_snd.sb_timeo = 0;
 	}
 	if (nmp->nm_sotype == SOCK_DGRAM) {
-		sndreserve = nmp->nm_wsize + NFS_MAXPKTHDR;
-		rcvreserve = nmp->nm_rsize + NFS_MAXPKTHDR;
+		sndreserve = nmp->nm_wsize, + NFS_MAXPKTHDR;
+		rcvreserve = max(nmp->nm_rsize, nmp->nm_readdirsize) +
+		    NFS_MAXPKTHDR;
 	} else if (nmp->nm_sotype == SOCK_SEQPACKET) {
-		sndreserve = (nmp->nm_wsize + NFS_MAXPKTHDR) * 2;
+		sndreserve = (max(nmp->nm_wsize, nmp->nm_readdirsize) +
+		    NFS_MAXPKTHDR) * 2;
 		rcvreserve = (nmp->nm_rsize + NFS_MAXPKTHDR) * 2;
 	} else {
 		if (nmp->nm_sotype != SOCK_STREAM)
