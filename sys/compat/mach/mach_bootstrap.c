@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.6 2003/05/16 14:36:33 itojun Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.7 2003/06/04 19:51:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.6 2003/05/16 14:36:33 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.7 2003/06/04 19:51:03 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,7 +79,7 @@ mach_bootstrap_look_up(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_count = 1; /* XXX Why? */
 	rep->rep_bootstrap_port = mr->mr_name;
-	strlcpy((char *)&rep->rep_service_name, service_name,
+	strncpy((char *)&rep->rep_service_name, service_name,
 	    sizeof(rep->rep_service_name)); 
 	/* XXX This is the trailer. We should find something better */
 	rep->rep_service_name[service_name_len + 7] = 8;
