@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2003/01/13 20:26:44 augustss Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2003/01/18 18:17:51 augustss Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	    ::	"r"(battable[PMPPC_FLASH_BASE >> 28].batl),
 		"r"(battable[PMPPC_FLASH_BASE >> 28].batu));
 
-#ifdef ART_BAT_PRINT
+#ifdef PMPPC_BAT_PRINT
 	print_bats();
 #endif
 
