@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.21 2001/06/17 19:32:17 tsubai Exp $
+#	$NetBSD: files.powerpc,v 1.22 2001/06/20 02:40:14 briggs Exp $
 defopt	opt_altivec.h	ALTIVEC K_ALTIVEC
 defopt	OPENPIC
 defopt	opt_ppcarch.h	PPC_MPC6XX PPC_MPC8XX PPC_IBM4XX
@@ -10,6 +10,7 @@ file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
 file	arch/powerpc/powerpc/in_cksum.c
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
+file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
 file	arch/powerpc/powerpc/powerpc_machdep.c
@@ -21,8 +22,8 @@ file	arch/powerpc/powerpc/suword.c
 file	arch/powerpc/powerpc/suswintr.c
 file	arch/powerpc/powerpc/sys_machdep.c
 file	arch/powerpc/powerpc/vm_machdep.c
-file    arch/powerpc/powerpc/setjmp.S                   ddb
-file    arch/powerpc/powerpc/db_memrw.c                 ddb
+file    arch/powerpc/powerpc/setjmp.S                   ddb | kgdb
+file    arch/powerpc/powerpc/db_memrw.c                 ddb | kgdb
 file    arch/powerpc/powerpc/db_disasm.c                ddb
 file    arch/powerpc/powerpc/db_interface.c             ddb
 file    arch/powerpc/powerpc/db_trace.c                 ddb
