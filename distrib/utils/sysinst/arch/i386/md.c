@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 1999/04/11 22:40:23 bouyer Exp $ */
+/*	$NetBSD: md.c,v 1.24 1999/04/13 14:49:57 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -271,6 +271,7 @@ editlab:
 
 	case 3: /* custom: ask user for all sizes */
 custom:		ask_sizemult();
+		msg_display(MSG_defaultunit, multname);
 		partstart = ptstart;
 		remain = fsptsize;
 
@@ -280,7 +281,7 @@ custom:		ask_sizemult();
 				   dlcylsize) - partstart;
 		if (partsize > remain)
 			partsize = remain;
-		msg_display(MSG_askfsroot1, remain/sizemult, multname);
+		msg_display_add(MSG_askfsroot1, remain/sizemult, multname);
 		partsize = getpartsize(MSG_askfsroot2, partstart, partsize);
 		bsdlabel[A].pi_offset = partstart;
 		bsdlabel[A].pi_size = partsize;
