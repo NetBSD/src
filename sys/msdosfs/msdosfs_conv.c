@@ -13,7 +13,7 @@
  * 
  * October 1992
  * 
- *	$Id: msdosfs_conv.c,v 1.2 1993/12/18 00:50:38 mycroft Exp $
+ *	$Id: msdosfs_conv.c,v 1.3 1994/03/03 00:51:33 paulus Exp $
  */
 
 /*
@@ -50,8 +50,8 @@ u_short leapyear[] = {
  */
 u_long lasttime;
 u_long lastday;
-union dosdate lastddate;
-union dostime lastdtime;
+u_short lastddate;
+u_short lastdtime;
 
 /*
  * Convert the unix version of time to dos's idea of time to be used in
@@ -60,9 +60,10 @@ union dostime lastdtime;
 void
 unix2dostime(tvp, ddp, dtp)
 	struct timeval *tvp;
-	union dosdate *ddp;
-	union dostime *dtp;
+	u_short *ddp;
+	u_short *dtp;
 {
+	u_long t;
 	u_long days;
 	u_long inc;
 	u_long year;
@@ -73,19 +74,20 @@ unix2dostime(tvp, ddp, dtp)
 	 * If the time from the last conversion is the same as now, then
 	 * skip the computations and use the saved result.
 	 */
-	if (lasttime != tvp->tv_sec) {
-		lasttime = tvp->tv_sec - (tz.tz_minuteswest * 60)
-		     /* +- daylight savings time correction */ ;
-		lastdtime.dts.dt_2seconds = (lasttime % 60) >> 1;
-		lastdtime.dts.dt_minutes = (lasttime / 60) % 60;
-		lastdtime.dts.dt_hours = (lasttime / (60 * 60)) % 24;
+	t = tvp->tv_sec - (tz.tz_minuteswest * 60)
+	     /* +- daylight savings time correction */ ;
+	if (lasttime != t) {
+		lasttime = t;
+		lastdtime = (((t % 60) >> 1) << DT_2SECONDS_SHIFT)
+		    + (((t / 60) % 60) << DT_MINUTES_SHIFT)
+		    + (((t / 3600) % 24) << DT_HOURS_SHIFT);
 
 		/*
 		 * If the number of days since 1970 is the same as the last
 		 * time we did the computation then skip all this leap year
 		 * and month stuff.
 		 */
-		days = lasttime / (24 * 60 * 60);
+		days = t / (24 * 60 * 60);
 		if (days != lastday) {
 			lastday = days;
 			for (year = 1970;; year++) {
@@ -100,19 +102,20 @@ unix2dostime(tvp, ddp, dtp)
 					break;
 				days -= months[month];
 			}
-			lastddate.dds.dd_day = days + 1;
-			lastddate.dds.dd_month = month + 1;
+			lastddate = ((days + 1) << DD_DAY_SHIFT)
+			    + ((month + 1) << DD_MONTH_SHIFT);
 			/*
 			 * Remember dos's idea of time is relative to 1980.
 			 * unix's is relative to 1970.  If somehow we get a
 			 * time before 1980 then don't give totally crazy
 			 * results.
 			 */
-			lastddate.dds.dd_year = year < 1980 ? 0 : year - 1980;
+			if (year > 1980)
+				lastddate += (year - 1980) << DD_YEAR_SHIFT;
 		}
 	}
-	dtp->dti = lastdtime.dti;
-	ddp->ddi = lastddate.ddi;
+	*dtp = lastdtime;
+	*ddp = lastddate;
 }
 
 /*
@@ -121,7 +124,7 @@ unix2dostime(tvp, ddp, dtp)
  */
 #define	SECONDSTO1980	(((8 * 365) + (2 * 366)) * (24 * 60 * 60))
 
-union dosdate lastdosdate;
+u_short lastdosdate;
 u_long lastseconds;
 
 /*
@@ -130,44 +133,46 @@ u_long lastseconds;
  * not be too efficient.
  */
 void
-dos2unixtime(ddp, dtp, tvp)
-	union dosdate *ddp;
-	union dostime *dtp;
+dos2unixtime(dd, dt, tvp)
+	u_short dd;
+	u_short dt;
 	struct timeval *tvp;
 {
 	u_long seconds;
-	u_long month;
-	u_long yr;
+	u_long m, month;
+	u_long y, year;
 	u_long days;
 	u_short *months;
 
-	seconds = (dtp->dts.dt_2seconds << 1) +
-	    (dtp->dts.dt_minutes * 60) +
-	    (dtp->dts.dt_hours * 60 * 60);
+	seconds = ((dt & DT_2SECONDS_MASK) >> DT_2SECONDS_SHIFT)
+	    + ((dt & DT_MINUTES_MASK) >> DT_MINUTES_SHIFT) * 60
+	    + ((dt & DT_HOURS_MASK) >> DT_HOURS_SHIFT) * 3600;
 	/*
 	 * If the year, month, and day from the last conversion are the
 	 * same then use the saved value.
 	 */
-	if (lastdosdate.ddi != ddp->ddi) {
-		lastdosdate.ddi = ddp->ddi;
+	if (lastdosdate != dd) {
+		lastdosdate = dd;
 		days = 0;
-		for (yr = 0; yr < ddp->dds.dd_year; yr++) {
-			days += yr & 0x03 ? 365 : 366;
+		year = (dd & DD_YEAR_MASK) >> DD_YEAR_SHIFT;
+		for (y = 0; y < year; y++) {
+			days += y & 0x03 ? 365 : 366;
 		}
-		months = yr & 0x03 ? regyear : leapyear;
+		months = year & 0x03 ? regyear : leapyear;
 		/*
 		 * Prevent going from 0 to 0xffffffff in the following
 		 * loop.
 		 */
-		if (ddp->dds.dd_month == 0) {
+		month = (dd & DD_MONTH_MASK) >> DD_MONTH_SHIFT;
+		if (month == 0) {
 			printf("dos2unixtime(): month value out of range (%d)\n",
-			    ddp->dds.dd_month);
-			ddp->dds.dd_month = 1;
+			       month);
+			month = 1;
 		}
-		for (month = 0; month < ddp->dds.dd_month - 1; month++) {
-			days += months[month];
+		for (m = 0; m < month - 1; m++) {
+			days += months[m];
 		}
-		days += ddp->dds.dd_day - 1;
+		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
 	tvp->tv_sec = seconds + lastseconds + (tz.tz_minuteswest * 60)

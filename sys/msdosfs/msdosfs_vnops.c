@@ -67,7 +67,6 @@ msdosfs_create(ndp, vap, p)
 	struct proc *p;
 {
 	struct denode ndirent;
-	struct direntry *ndirp = &ndirent.de_de;
 	struct denode *dep;
 	struct denode *pdep = VTODE(ndp->ni_dvp);
 	int error;
@@ -83,12 +82,11 @@ msdosfs_create(ndp, vap, p)
 	 * readonly.
 	 */
 	bzero(&ndirent, sizeof(ndirent));
-	unix2dostime(&time, (union dosdate *) & ndirp->deDate,
-	    (union dostime *) & ndirp->deTime);
-	unix2dosfn((u_char *) ndp->ni_ptr, ndirp->deName, ndp->ni_namelen);
-	ndirp->deAttributes = (vap->va_mode & VWRITE) ? 0 : ATTR_READONLY;
-	ndirp->deStartCluster = 0;
-	ndirp->deFileSize = 0;
+	unix2dostime(&time, &ndirent.de_Date, &ndirent.de_Time);
+	unix2dosfn((u_char *) ndp->ni_ptr, ndirent.de_Name, ndp->ni_namelen);
+	ndirent.de_Attributes = (vap->va_mode & VWRITE) ? 0 : ATTR_READONLY;
+	ndirent.de_StartCluster = 0;
+	ndirent.de_FileSize = 0;
 	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_dev = pdep->de_dev;
 	ndirent.de_devvp = pdep->de_devvp;
@@ -226,8 +224,7 @@ msdosfs_getattr(vp, vap, cred, p)
 	vap->va_rdev = 0;
 	vap->va_size = dep->de_FileSize;
 	vap->va_size_rsv = 0;
-	dos2unixtime((union dosdate *) & dep->de_Date,
-	    (union dostime *) & dep->de_Time, &vap->va_atime);
+	dos2unixtime(dep->de_Date, dep->de_Time, &vap->va_atime);
 	vap->va_atime.tv_usec = 0;
 	vap->va_mtime.tv_sec = vap->va_atime.tv_sec;
 	vap->va_mtime.tv_usec = 0;
@@ -590,6 +587,7 @@ msdosfs_ioctl(vp, com, data, fflag, cred, p)
 	struct vnode *vp;
 	int com;
 	caddr_t data;
+	int fflag;
 	struct ucred *cred;
 	struct proc *p;
 {
@@ -1031,7 +1029,7 @@ msdosfs_rename(fndp, tndp, p)
 			goto bad;
 		}
 		dotdotp = (struct direntry *) bp->b_un.b_addr + 1;
-		dotdotp->deStartCluster = tddep->de_StartCluster;
+		putushort(dotdotp->deStartCluster, tddep->de_StartCluster);
 		error = bwrite(bp);
 		DEUNLOCK(fdep);
 		if (error) {
@@ -1060,15 +1058,15 @@ struct {
 	".       ", "   ",	/* the . entry */
 	ATTR_DIRECTORY,		/* file attribute */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* resevered */
-	1234, 1234,		/* time and date */
-	0,			/* startcluster */
-	0,			/* filesize */
+	210, 4, 210, 4,		/* time and date */
+	0, 0,			/* startcluster */
+	0, 0, 0, 0,		/* filesize */
 	"..      ", "   ",	/* the .. entry */
 	ATTR_DIRECTORY,		/* file attribute */
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,	/* resevered */
-	1234, 1234,		/* time and date */
-	0,			/* startcluster */
-	0,			/* filesize */
+	4, 210, 4, 210,		/* time and date */
+	0, 0,			/* startcluster */
+	0, 0, 0, 0,		/* filesize */
 };
 
 int
@@ -1087,6 +1085,7 @@ msdosfs_mkdir(ndp, vap, p)
 	struct denode ndirent;
 	struct msdosfsmount *pmp;
 	struct buf *bp;
+	u_short dDate, dTime;
 
 	pvp = ndp->ni_dvp;
 	pdep = VTODE(pvp);
@@ -1123,13 +1122,14 @@ msdosfs_mkdir(ndp, vap, p)
 	bzero(bp->b_un.b_addr, pmp->pm_bpcluster);
 	bcopy(&dosdirtemplate, bp->b_un.b_addr, sizeof dosdirtemplate);
 	denp = (struct direntry *) bp->b_un.b_addr;
-	denp->deStartCluster = newcluster;
-	unix2dostime(&time, (union dosdate *) & denp->deDate,
-	    (union dostime *) & denp->deTime);
+	putushort(denp->deStartCluster, newcluster);
+	unix2dostime(&time, &dDate, &dTime);
+	putushort(denp->deDate, dDate);
+	putushort(denp->deTime, dTime);
 	denp++;
-	denp->deStartCluster = pdep->de_StartCluster;
-	unix2dostime(&time, (union dosdate *) & denp->deDate,
-	    (union dostime *) & denp->deTime);
+	putushort(denp->deStartCluster, pdep->de_StartCluster);
+	putushort(denp->deDate, dDate);
+	putushort(denp->deTime, dTime);
 	if (error = bwrite(bp)) {
 		clusterfree(pmp, newcluster, NULL);
 		free(ndp->ni_pnbuf, M_NAMEI);
@@ -1145,8 +1145,7 @@ msdosfs_mkdir(ndp, vap, p)
 	ndep = &ndirent;
 	bzero(ndep, sizeof(*ndep));
 	unix2dosfn((u_char *) ndp->ni_ptr, ndep->de_Name, ndp->ni_namelen);
-	unix2dostime(&time, (union dosdate *) & ndep->de_Date,
-	    (union dostime *) & ndep->de_Time);
+	unix2dostime(&time, &ndep->de_Date, &ndep->de_Time);
 	ndep->de_StartCluster = newcluster;
 	ndep->de_Attributes = ATTR_DIRECTORY;
 	ndep->de_pmp = pmp;	/* createde() needs this	 */
@@ -1435,7 +1434,8 @@ msdosfs_readdir(vp, uio, cred, eofflagp, cookies, ncookies)
 				 */
 				if (dentp->deAttributes & ATTR_DIRECTORY) {
 					/* if this is the root directory */
-					if ((fileno = dentp->deStartCluster) == MSDOSFSROOT)
+					fileno = getushort(dentp->deStartCluster);
+					if (fileno == MSDOSFSROOT)
 						fileno = 1;
 				}
 				else {
