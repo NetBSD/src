@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.139 2004/01/31 21:53:31 christos Exp $
+# $NetBSD: mi,v 1.140 2004/02/06 15:36:52 itohy Exp $
 ./.cshrc					etc-util-etc
 ./.profile					etc-util-etc
 ./dev/MAKEDEV					etc-sys-etc
@@ -48,6 +48,7 @@
 ./etc/inetd.conf				etc-netutil-etc
 ./etc/lkm.conf					etc-sys-etc
 ./etc/localtime					etc-sys-etc
+./etc/locate.conf				etc-sys-etc
 ./etc/mail.rc					etc-mail-etc
 ./etc/mail/aliases				etc-sendmail-etc
 ./etc/mail/helpfile				etc-sendmail-etc	sendmail

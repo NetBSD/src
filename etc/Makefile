@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.279 2004/01/31 15:40:42 lukem Exp $
+#	$NetBSD: Makefile,v 1.280 2004/02/06 15:36:52 itohy Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -85,7 +85,7 @@ BINGRP= wheel
 UTMPGRP= utmp
 BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers \
-	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
+	gettytab group hosts hosts.lpd inetd.conf lkm.conf locate.conf \
 	mailer.conf man.conf monthly monthly.conf mrouted.conf \
 	netconfig networks newsyslog.conf nsswitch.conf ntp.conf \
 	passwd.conf phones printcap profile protocols rbootd.conf rc rc.conf \
