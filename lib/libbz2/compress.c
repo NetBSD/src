@@ -1,3 +1,4 @@
+/*	$NetBSD: compress.c,v 1.2 1998/09/14 03:08:17 ross Exp $	*/
 
 /*-------------------------------------------------------------*/
 /*--- Compression machinery (not incl block sorting)        ---*/
