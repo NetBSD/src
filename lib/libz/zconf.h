@@ -1,11 +1,11 @@
-/* $NetBSD: zconf.h,v 1.8 1999/10/26 03:42:58 itojun Exp $ */
+/* $NetBSD: zconf.h,v 1.8.6.1 2002/03/20 23:18:19 he Exp $ */
 
 /* zconf.h -- configuration of the zlib compression library
- * Copyright (C) 1995-1998 Jean-loup Gailly.
+ * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* @(#) Id */
+/* @(#) $Id: zconf.h,v 1.8.6.1 2002/03/20 23:18:19 he Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H

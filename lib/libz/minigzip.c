@@ -1,7 +1,7 @@
-/* $NetBSD: minigzip.c,v 1.9 1999/07/03 12:30:57 simonb Exp $ */
+/* $NetBSD: minigzip.c,v 1.9.8.1 2002/03/20 23:18:19 he Exp $ */
 
 /* minigzip.c -- simulate gzip using the zlib compression library
- * Copyright (C) 1995-1998 Jean-loup Gailly.
+ * Copyright (C) 1995-2002 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
@@ -17,7 +17,7 @@
   
 /* from: Id: minigzip.c,v 1.10 1996/07/24 13:41:04 me Exp */
 
-/* @(#) Id */
+/* @(#) $Id: minigzip.c,v 1.9.8.1 2002/03/20 23:18:19 he Exp $ */
 
 #include <stdio.h>
 
