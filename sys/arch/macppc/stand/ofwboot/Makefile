@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/03/02 06:32:28 jmc Exp $
+#	$NetBSD: Makefile,v 1.29 2002/03/29 18:21:38 tsutsui Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -7,10 +7,10 @@ FILES=		${PROG}.elf ${PROG}.xcf
 SRCS=		Locore.c ofdev.c hfs.c net.c netif_of.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
-CFLAGS+=	-msoft-float -Wno-main
-#CFLAGS+=	-DDEBUG -DNETIF_DEBUG
-CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
-DBG=		-Os -mmultiple
+CFLAGS+=	-Wno-main -msoft-float -mmultiple
+#CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
+CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP
+DBG=		-Os
 
 .PATH:		${S}/arch/powerpc/powerpc
 SRCS+=		ofwmagic.S
@@ -45,7 +45,7 @@ ENTRY=		_start
 CLEANFILES+=	vers.c ${PROG}.elf ${PROG}.el1 ${PROG}.mrg ${PROG}.xcf
 CLEANFILES+=	machine powerpc
 
-CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
+CPPFLAGS+=	-I${.CURDIR} -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC} -DRELOC_FLATFILE=0x${RELOC_FLATFILE}
 #CPPFLAGS+=	-DXCOFF_GLUE		# for booting PCI Powermacs
 
