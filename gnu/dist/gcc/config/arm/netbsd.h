@@ -59,7 +59,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    define __arm32__ and __NetBSD__, and add __KPRINTF_ATTRIBUTE__ since
    this compiler is hacked with the NetBSD kprintf attribute mods. */
 #undef CPP_PREDEFINES
-#define CPP_PREDEFINES "-D__arm32__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ \
+#define CPP_PREDEFINES "-D__arm32__ -D__arm__ -D__NetBSD__ -D__KPRINTF_ATTRIBUTE__ \
 -Asystem(unix) -Asystem(NetBSD) -Acpu(arm) -Amachine(arm)"
 
 /* Because TARGET_DEFAULT sets ARM_FLAG_APCS_32 */
