@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.35 2002/11/11 20:24:38 thorpej Exp $	*/
+/*	$NetBSD: res_send.c,v 1.36 2002/11/17 20:49:33 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.35 2002/11/11 20:24:38 thorpej Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.36 2002/11/17 20:49:33 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -146,8 +146,8 @@ static int af = 0;	/* address family of socket */
 		if (getnameinfo(address, (size_t)address->sa_len, abuf,
 		    sizeof(abuf), pbuf, sizeof(pbuf),
 		    NI_NUMERICHOST|NI_NUMERICSERV|NI_WITHSCOPEID) != 0) {
-			strcpy(abuf, "?");
-			strcpy(pbuf, "?");
+			strlcpy(abuf, "?", sizeof(abuf));
+			strlcpy(pbuf, "?", sizeof(pbuf));
 		}
 		fprintf(file, "res_send: %s ([%s].%s): %s\n",
 			string, abuf, pbuf, strerror(error));
