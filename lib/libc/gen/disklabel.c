@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.13 1997/02/14 08:30:32 scottr Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.14 1997/07/13 18:54:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.13 1997/02/14 08:30:32 scottr Exp $";
+__RCSID("$NetBSD: disklabel.c,v 1.14 1997/07/13 18:54:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,7 +55,9 @@ static char rcsid[] = "$NetBSD: disklabel.c,v 1.13 1997/02/14 08:30:32 scottr Ex
 #include <string.h>
 #include <unistd.h>
 
+#if 0
 static void	error __P((int));
+#endif
 static int	gettype __P((char *, char **));
 
 struct disklabel *
@@ -180,6 +183,7 @@ gettype(t, names)
 	return (0);
 }
 
+#if 0
 static void
 error(err)
 	int err;
@@ -193,3 +197,4 @@ error(err)
 	(void)write(STDERR_FILENO, p, strlen(p));
 	(void)write(STDERR_FILENO, "\n", 1);
 }
+#endif
