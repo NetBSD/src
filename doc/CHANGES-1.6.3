@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.125 2004/08/13 04:39:45 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.126 2004/08/13 04:41:15 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -1363,3 +1363,9 @@ sys/arch/sparc64/sparc64/locore.s		1.198
 	Change interrupt pending list end value to -1, to avoid linking an
 	interrupt handler twice.
 	[nakayama, ticket #1727]
+
+sbin/dmesg/dmesg.8				1.15-1.16
+
+	Talk a little about the system message buffer and cross-reference
+	MSGBUFSIZE in options(4).
+	[briggs, ticket #1728]
