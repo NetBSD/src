@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.32 2004/03/17 17:04:59 pk Exp $	*/
+/*	$NetBSD: qe.c,v 1.32.4.1 2005/01/24 21:43:29 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.32 2004/03/17 17:04:59 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.32.4.1 2005/01/24 21:43:29 he Exp $");
 
 #define QEDEBUG
 
@@ -1009,7 +1009,8 @@ qeioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			qe_mcreset(sc);
+			if (ifp->if_flags & IFF_RUNNING)
+				qe_mcreset(sc);
 			error = 0;
 		}
 		break;
