@@ -1,8 +1,8 @@
-/*	$NetBSD: ld.script,v 1.5 2003/11/18 03:25:48 chs Exp $	*/
+/*	$NetBSD: ld.script,v 1.6 2004/10/30 18:38:38 thorpej Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
-OUTPUT_FORMAT("elf32-hppa")
+OUTPUT_FORMAT("elf32-hppa-netbsd")
 OUTPUT_ARCH(hppa)
 ENTRY(start)
 SECTIONS
