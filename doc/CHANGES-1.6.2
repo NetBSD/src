@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.25 2003/06/16 13:48:13 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.26 2003/06/16 13:52:27 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -377,3 +377,12 @@ sys/netinet/ip_icmp.c				1.73
 	Clear hardware checksum flags before reusing a mbuf for an ICMP reply
 	as suggested by Enami Tsugutomo. This fixes PR kern/21203 by myself.
 	[tron, ticket #1260]
+
+sys/arch/amiga/dev/grf_et.c			1.20-1.21
+
+	iszthreepa() takes a physical address, not a virtual address.
+	This fixes PR 19175, reported and heavily debugged by Pawel
+	Chwalowski.
+ 
+	fix fatal typo
+	[is, ticket #1266]
