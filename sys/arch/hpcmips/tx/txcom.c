@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.3 1999/12/26 17:05:28 uch Exp $ */
+/*	$NetBSD: txcom.c,v 1.4 2000/01/06 18:11:23 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -212,9 +212,9 @@ txcom_attach(parent, self, aux)
 	tx_intr_establish(tc, TXCOMINTR(TX, slot), IST_EDGE, IPL_TTY,
 			  txcom_txintr, sc);
 	tx_intr_establish(tc, TXCOMINTR(RXOVERRUN, slot), IST_EDGE, IPL_TTY,
-			  txcom_overrun_intr, sc);
+			  txcom_rxintr, sc);
 	tx_intr_establish(tc, TXCOMINTR(TXOVERRUN, slot), IST_EDGE, IPL_TTY,
-			  txcom_overrun_intr, sc);
+			  txcom_txintr, sc);
 	tx_intr_establish(tc, TXCOMINTR(FRAMEERR, slot), IST_EDGE, IPL_TTY,
 			  txcom_frameerr_intr, sc);
 	tx_intr_establish(tc, TXCOMINTR(PARITYERR, slot), IST_EDGE, IPL_TTY,
