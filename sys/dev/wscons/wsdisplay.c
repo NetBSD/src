@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.48 2001/01/03 23:03:45 enami Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.49 2001/01/04 01:33:37 enami Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.48 2001/01/03 23:03:45 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.49 2001/01/04 01:33:37 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1782,14 +1782,11 @@ wsdisplay_pollc(dev, on)
 	struct wsdisplay_softc *sc;
 
 	sc = device_lookup(&wsdisplay_cd, WSDISPLAYUNIT(dev));
-	if (sc == NULL)
-		/* cnpollc() may be called before attach */
-		return;
 
 	wsdisplay_cons_pollmode = on;
 
 	/* notify to fb drivers */
-	if (sc->sc_accessops->pollc != NULL)
+	if (sc != NULL && sc->sc_accessops->pollc != NULL)
 		(*sc->sc_accessops->pollc)(sc->sc_accesscookie, on);
 
 	/* notify to kbd drivers */
