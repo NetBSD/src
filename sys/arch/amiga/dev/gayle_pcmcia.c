@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.15 2004/08/16 10:07:52 aymeric Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.16 2004/08/22 13:15:11 jandberg Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.15 2004/08/16 10:07:52 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.16 2004/08/22 13:15:11 jandberg Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -378,7 +378,7 @@ pcf_io_map(pcmcia_chipset_handle_t pch, int width, bus_addr_t offset,
 	struct pccard_slot *slot = (struct pccard_slot *) pch;
 
 	pcihp->iot = &slot->sc->io_space;
-	pcihp->ioh = offset;
+	bus_space_map(pcihp->iot, offset, size, 0, &pcihp->ioh);
 
 	*windowp = 0;		/* unused */
 	return 0;
