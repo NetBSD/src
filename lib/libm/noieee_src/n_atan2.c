@@ -1,4 +1,4 @@
-/*      $NetBSD: n_atan2.c,v 1.2 1998/10/20 02:26:09 matt Exp $        */
+/*      $NetBSD: n_atan2.c,v 1.3 1998/11/08 19:29:34 ragge Exp $        */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -269,13 +269,13 @@ begin:
 
     /* compute atan(t) for t in [-.4375, .4375] */
 	z = t*t;
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 	z = t*(z*(a1+z*(a2+z*(a3+z*(a4+z*(a5+z*(a6+z*(a7+z*(a8+
 			z*(a9+z*(a10+z*(a11+z*a12))))))))))));
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 	z = t*(z*(a1+z*(a2+z*(a3+z*(a4+z*(a5+z*(a6+z*(a7+z*(a8+
 			z*(a9+z*(a10+z*a11)))))))))));
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 	z = lo - z; z += t; z += hi;
 
 	return(copysign((signx>zero)?z:PI-z,signy));
