@@ -46,7 +46,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: lpt.c,v 1.7.4.11 1993/10/17 05:32:53 mycroft Exp $
+ *	$Id: lpt.c,v 1.7.4.12 1993/10/18 08:35:34 mycroft Exp $
  */
 
 /*
@@ -110,7 +110,6 @@ struct lpt_softc {
 };
 
 static int lptprobe __P((struct device *, struct cfdata *, void *));
-static void lptforceintr __P((void *));
 static void lptattach __P((struct device *, struct device *, void *));
 static int lptintr __P((void *));
 
@@ -218,7 +217,7 @@ lptprobe(parent, cf, aux)
 	outb(iobase + lpt_control, 0);
 
 	if (ia->ia_irq == IRQUNK)
-		ia->ia_irq = isa_discoverintr(lptforceintr, aux);
+		ia->ia_irq = IRQNONE;
 	/* okay if we don't have an irq; will force polling */
 
 	ia->ia_iosize = LPT_NPORTS;
