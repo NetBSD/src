@@ -11,3 +11,4 @@
 ./usr/include/machine/mtpr.h
 ./usr/include/machine/scu.h
 ./usr/include/machine/video.h
+./usr/lib/c++rt0.o
