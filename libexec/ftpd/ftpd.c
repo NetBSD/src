@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.107 2000/11/13 11:52:41 itojun Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.108 2000/11/13 15:11:57 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.107 2000/11/13 11:52:41 itojun Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.108 2000/11/13 15:11:57 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -2404,7 +2404,7 @@ extended_port(const char *arg)
 	p = NULL;
 	(void)strtoul(result[2], &p, 10);
 	if (!*result[2] || *p)
-		goto protounsupp;
+		goto parsefail;
 	p = NULL;
 	proto = strtoul(result[0], &p, 10);
 	if (!*result[0] || *p)
