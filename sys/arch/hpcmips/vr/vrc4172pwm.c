@@ -1,4 +1,4 @@
-/*	$Id: vrc4172pwm.c,v 1.6 2001/02/16 12:31:46 sato Exp $	*/
+/*	$Id: vrc4172pwm.c,v 1.7 2001/02/26 09:33:03 sato Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -360,29 +360,29 @@ vrc4172pwm_event(ctx, type, id, msg)
 
 	if (type == CONFIG_HOOK_POWERCONTROL 
 		&& id == CONFIG_HOOK_POWERCONTROL_LCDLIGHT) {
-		VPRINTF(("vrc4172pwm:POWERCONTROL_LCDLIGHT: %d\n", why));
+		DPRINTF(("vrc4172pwm:POWERCONTROL_LCDLIGHT: %d\n", why));
 		vrc4172pwm_light(sc, why);
 	} else if (type == CONFIG_HOOK_GET
 		&& id == CONFIG_HOOK_POWER_LCDLIGHT) {
 		*(int *)msg = vrc4172pwm_get_light(sc);
-		VPRINTF(("vrc4172pwm:GET LCDLIGHT: %d\n", *(int *)msg));
+		DPRINTF(("vrc4172pwm:GET LCDLIGHT: %d\n", *(int *)msg));
 	} else if (type == CONFIG_HOOK_GET
 		&& id == CONFIG_HOOK_BRIGHTNESS) {
 		*(int *)msg = vrc4172pwm_get_brightness(sc);
-		VPRINTF(("vrc4172pwm:GET BRIGHTNESS: %d\n", *(int *)msg));
+		DPRINTF(("vrc4172pwm:GET BRIGHTNESS: %d\n", *(int *)msg));
 	} else if (type == CONFIG_HOOK_GET
 		&& id == CONFIG_HOOK_BRIGHTNESS_MAX) {
 		if (sc->sc_param == NULL)
 			*(int *)msg = VRC2_PWM_MAX_BRIGHTNESS;
 		else
 			*(int *)msg = sc->sc_param->n_brightness-1;
-		VPRINTF(("vrc4172pwm:GET MAX BRIGHTNESS: %d\n", *(int *)msg));
+		DPRINTF(("vrc4172pwm:GET MAX BRIGHTNESS: %d\n", *(int *)msg));
 	} else if (type == CONFIG_HOOK_SET
 		&& id == CONFIG_HOOK_BRIGHTNESS) {
-		VPRINTF(("vrc4172pwm:SET BRIGHTNESS: %d\n", *(int *)msg));
+		DPRINTF(("vrc4172pwm:SET BRIGHTNESS: %d\n", *(int *)msg));
 		vrc4172pwm_set_brightness(sc, *(int *)msg);
 	} else {
-		VPRINTF(("vrc4172pwm:unknown event: type %d id %ld\n", type, id));
+		DPRINTF(("vrc4172pwm:unknown event: type %d id %ld\n", type, id));
 		return 1;
 	}
 	
