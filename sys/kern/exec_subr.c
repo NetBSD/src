@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.26.2.5 2002/10/18 02:44:50 nathanw Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.26.2.6 2003/01/15 18:58:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.26.2.5 2002/10/18 02:44:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.26.2.6 2003/01/15 18:58:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,6 +219,15 @@ vmcmd_readvn(struct proc *p, struct exec_vmcmd *cmd)
 	    p->p_ucred, NULL, p);
 	if (error)
 		return error;
+
+#ifdef PMAP_NEED_PROCWR
+	/*
+	 * we had to write the process, make sure the pages are synched
+	 * with the instruction cache.
+	 */
+	if (cmd->ev_prot & VM_PROT_EXECUTE)
+		pmap_procwr(p, cmd->ev_addr, cmd->ev_len);
+#endif
 
 	if (cmd->ev_prot != (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) {
 

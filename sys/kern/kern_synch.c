@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.101.2.31 2003/01/07 22:12:15 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.101.2.32 2003/01/15 18:58:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.31 2003/01/07 22:12:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.101.2.32 2003/01/15 18:58:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -253,7 +253,7 @@ schedcpu(void *arg)
 	fixpt_t loadfac = loadfactor(averunnable.ldavg[0]);
 	struct lwp *l;
 	struct proc *p;
-	int s, s1, minslp;
+	int s, minslp;
 	unsigned int newcpu;
 	int clkhz;
 
@@ -298,7 +298,8 @@ schedcpu(void *arg)
 		p->p_cpticks = 0;
 		newcpu = (u_int)decay_cpu(loadfac, p->p_estcpu);
 		p->p_estcpu = newcpu;
-		SCHED_LOCK(s1);
+		splx(s);	/* Done with the process CPU ticks update */
+		SCHED_LOCK(s);
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l->l_slptime > 1)
 				continue;
@@ -314,8 +315,7 @@ schedcpu(void *arg)
 					l->l_priority = l->l_usrpri;
 			}
 		}
-		SCHED_UNLOCK(s1);
-		splx(s);
+		SCHED_UNLOCK(s);
 	}
 	proclist_unlock_read();
 	uvm_meter();
@@ -974,7 +974,7 @@ rqinit()
 }
 
 static __inline void
-resched_proc(struct lwp *l)
+resched_proc(struct lwp *l, u_char pri)
 {
 	struct cpu_info *ci;
 
@@ -1001,7 +1001,7 @@ resched_proc(struct lwp *l)
 	 * sched state, which we currently do not do.
 	 */
 	ci = (l->l_cpu != NULL) ? l->l_cpu : curcpu();
-	if (l->l_priority < ci->ci_schedstate.spc_curpriority)
+	if (pri < ci->ci_schedstate.spc_curpriority)
 		need_resched(ci);
 }
 
@@ -1055,7 +1055,7 @@ setrunnable(struct lwp *l)
 	if ((l->l_flag & L_INMEM) == 0)
 		sched_wakeup((caddr_t)&proc0);
 	else
-		resched_proc(l);
+		resched_proc(l, l->l_priority);
 }
 
 /*
@@ -1075,7 +1075,7 @@ resetpriority(struct lwp *l)
 			NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	l->l_usrpri = newpriority;
-	resched_proc(l);
+	resched_proc(l, l->l_usrpri);
 }
 
 /* 

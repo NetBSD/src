@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.10.6.1 2002/09/17 21:22:35 nathanw Exp $	 */
+/*	$NetBSD: tftp.c,v 1.10.6.2 2003/01/15 18:59:03 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,6 @@
 #include <netinet/udp.h>
 #include <netinet/in_systm.h>
 #include <lib/libkern/libkern.h>
-#include <arpa/tftp.h>
 
 #include "stand.h"
 #include "net.h"

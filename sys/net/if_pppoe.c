@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.3.2.17 2002/12/29 20:55:43 thorpej Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3.2.18 2003/01/15 18:59:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.17 2002/12/29 20:55:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.3.2.18 2003/01/15 18:59:04 thorpej Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -1190,8 +1190,8 @@ pppoe_start(struct ifnet *ifp)
 		len = m->m_pkthdr.len;
 		M_PREPEND(m, PPPOE_HEADERLEN, M_DONTWAIT);
 		if (m == NULL) {
-			m_free(m);
-			break;
+			ifp->if_oerrors++;
+			continue;
 		}
 		p = mtod(m, u_int8_t *);
 		PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
