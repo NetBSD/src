@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.9 2002/07/19 03:22:09 bad Exp $
+# $NetBSD: ntpdate,v 1.10 2003/06/27 07:22:36 lukem Exp $
 #
 
 # PROVIDE: ntpdate
@@ -17,8 +17,11 @@ ntpdate_start()
 {
 	if [ -z "$ntpdate_hosts" ]; then
 		ntpdate_hosts=`awk '
-		    /^(server|peer)[ \t]*127.127/	{next}
-		    /^(server|peer)/		{print $2}
+			/^#/				{ next }
+			/^(server|peer)[ \t]*127.127/	{ next }
+			/^(server|peer)/		{ print $2 }
+			/^multicastclient$/		{ print "224.0.1.1" }
+			/^multicastclient/		{ print $2 }
 		' </etc/ntp.conf`
 	fi
 	if [ -n "$ntpdate_hosts"  ]; then
