@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.2 2003/01/18 10:06:22 thorpej Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.3 2003/01/28 02:20:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -595,17 +595,17 @@ proc_representative_lwp(p)
 				suspended = l;
 				break;
 			}
-			if (onproc)
-				return onproc;
-			if (running)
-				return running;
-			if (sleeping)
-				return sleeping;
-			if (stopped)
-				return stopped;
-			if (suspended)
-				return suspended;
 		}
+		if (onproc)
+			return onproc;
+		if (running)
+			return running;
+		if (sleeping)
+			return sleeping;
+		if (stopped)
+			return stopped;
+		if (suspended)
+			return suspended;
 		break;
 	case SDEAD:
 	case SZOMB:
