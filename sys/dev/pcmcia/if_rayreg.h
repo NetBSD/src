@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rayreg.h,v 1.6 2003/10/22 09:13:17 mjl Exp $	*/
+/*	$NetBSD: if_rayreg.h,v 1.7 2003/11/02 11:14:22 wiz Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -389,7 +389,7 @@ struct ray_startup_params_tail_4 {
  */
 #define	RAY_ECMD_RX_DONE		0x80	/* process rx packet */
 #define	RAY_ECMD_REJOIN_DONE		0x81	/* rejoined the network */
-#define	RAY_ECMD_ROAM_START		0x82	/* romaining started */
+#define	RAY_ECMD_ROAM_START		0x82	/* roaming started */
 #define	RAY_ECMD_JAPAN_CALL_SIGNAL	0x83	/* japan test thing */
 
 
