@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.156 2001/08/20 15:45:10 ad Exp $	*/
+/*	$NetBSD: cd.c,v 1.157 2001/09/02 13:11:53 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -1225,12 +1225,10 @@ cdioctl(dev, cmd, addr, flag, p)
 		if ((error = cd_read_toc(cd, 0, 0, &th, sizeof(th),
 		    XS_CTL_DATA_ONSTACK, 0)) != 0)
 			return (error);
-		if (cd->sc_periph->periph_quirks & PQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t *)&th.len, sizeof(th.len));
-#endif
-		} else
-			th.len = ntohs(th.len);
+		if (cd->sc_periph->periph_quirks & PQUIRK_LITTLETOC)
+			th.len = le16toh(th.len);
+		else
+			th.len = be16toh(th.len);
 		memcpy(addr, &th, sizeof(th));
 		return (0);
 	}
@@ -1259,20 +1257,15 @@ cdioctl(dev, cmd, addr, flag, p)
 			    ntracks >= 0; ntracks--) {
 				cte = &toc.entries[ntracks];
 				cte->addr_type = CD_LBA_FORMAT;
-				if (periph->periph_quirks & PQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-					bswap((u_int8_t*)&cte->addr,
-					    sizeof(cte->addr));
-#endif
-				} else
-					cte->addr.lba = ntohl(cte->addr.lba);
+				if (periph->periph_quirks & PQUIRK_LITTLETOC)
+					cte->addr.lba = le32toh(cte->addr.lba);
+				else
+					cte->addr.lba = be32toh(cte->addr.lba);
 			}
-		if (periph->periph_quirks & PQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t*)&th->len, sizeof(th->len));
-#endif
-		} else
-			th->len = ntohs(th->len);
+		if (periph->periph_quirks & PQUIRK_LITTLETOC)
+			th->len = le16toh(th->len);
+		else
+			th->len = be16toh(th->len);
 		len = min(len, th->len - (sizeof(th->starting_track) +
 		    sizeof(th->ending_track)));
 		return (copyout(toc.entries, te->data, len));
@@ -1295,18 +1288,12 @@ cdioctl(dev, cmd, addr, flag, p)
 
 		cte = &toc.entries[0];
 		if (periph->periph_quirks & PQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t*)&cte->addr, sizeof(cte->addr));
-#endif
-		} else
-			cte->addr.lba = ntohl(cte->addr.lba);
-		if (periph->periph_quirks & PQUIRK_LITTLETOC) {
-#if BYTE_ORDER == BIG_ENDIAN
-			bswap((u_int8_t*)&toc.header.len,
-			    sizeof(toc.header.len));
-#endif
-		} else
-			toc.header.len = ntohs(toc.header.len);
+			cte->addr.lba = le32toh(cte->addr.lba);
+			toc.header.len = le16toh(toc.header.len);
+		} else {
+			cte->addr.lba = be32toh(cte->addr.lba);
+			toc.header.len = be16toh(toc.header.len);
+		}
 
 		*(int*)addr = (toc.header.len >= 10 && cte->track > 1) ?
 			cte->addr.lba : 0;
