@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.42 1998/07/21 17:30:26 drochner Exp $
+#	$NetBSD: files.pci,v 1.43 1998/07/26 03:28:28 explorer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -92,6 +92,11 @@ file	dev/pci/if_ne_pci.c		ne_pci
 device  tl: ether, ifnet, arp, i2c, i2c_eeprom, miibus
 attach  tl at pci
 file    dev/pci/if_tl.c     tl
+
+# SDL Communications N2 PCI Network Interface
+device	ntwoc: ifnet, hd64570
+attach	ntwoc at pci with ntwoc_pci
+file	dev/pci/if_ntwoc_pci.c		ntwoc_pci
 
 # Essential Communications HIPPI interface
 # device declaration in sys/conf/files
