@@ -1,4 +1,4 @@
-.\"	$NetBSD: randomid.3,v 1.4 2003/11/25 23:28:31 wiz Exp $
+.\"	$NetBSD: randomid.3,v 1.5 2003/12/10 05:22:18 itojun Exp $
 .\"
 .\" Copyright (C) 2003 WIDE Project.
 .\" All rights reserved.
@@ -84,17 +84,17 @@ seconds have passed since the last reinitialization.
 For instance,
 .Fa ctx
 configured to generate 16 bit data stream will reinitialize its internal state
-every 6000 calls to
+every 30000 calls to
 .Fn randomid
 .Po
 or after
 .Fa timeo
 seconds
 .Pc ,
-therefore the same data will not appear until after 12000 calls to
+therefore the same data will not appear until after 30000 calls to
 .Fn randomid
 .Po
-or after 2 times
+or after
 .Fa timeo
 seconds
 .Pc .

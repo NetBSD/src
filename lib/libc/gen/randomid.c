@@ -1,4 +1,4 @@
-/*	$NetBSD: randomid.c,v 1.9 2003/11/25 18:13:06 itojun Exp $	*/
+/*	$NetBSD: randomid.c,v 1.10 2003/12/10 05:22:18 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -88,7 +88,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: randomid.c,v 1.9 2003/11/25 18:13:06 itojun Exp $");
+__RCSID("$NetBSD: randomid.c,v 1.10 2003/12/10 05:22:18 itojun Exp $");
 #endif
 
 #include "namespace.h"
@@ -114,6 +114,7 @@ struct randomconf {
 	const u_int32_t rc_agen; /* determine ru_a as ru_agen^(2*rand) */
 	const u_int32_t rc_m;	/* ru_m = 2^x*3^y */
 	const u_int32_t rc_pfacts[4];	/* factors of ru_n */
+	const int	rc_skip;	/* skip values */
 };
 
 struct randomid_ctx {
@@ -125,12 +126,13 @@ struct randomid_ctx {
 #define ru_agen		ru_conf->rc_agen
 #define ru_m		ru_conf->rc_m
 #define ru_pfacts	ru_conf->rc_pfacts
+#define ru_skip		ru_conf->rc_skip
 	long ru_out;		/* Time after wich will be reseeded */
 	u_int32_t ru_counter;
 	u_int32_t ru_msb;
 
 	u_int32_t ru_x;
-	u_int32_t ru_seed;
+	u_int32_t ru_seed, ru_seed2;
 	u_int32_t ru_a, ru_b;
 	u_int32_t ru_g;
 	long ru_reseed;
@@ -145,6 +147,7 @@ static struct randomconf randomconf[] = {
 	7,			/* determine ru_a as RU_AGEN^(2*rand) */
 	1836660096,		/* RU_M = 2^7*3^15 - don't change */
 	{ 2, 3, 59652323, 0 },	/* factors of ru_n */
+	3,			/* skip values */
   },
   {
 	20,			/* resulting bits */
@@ -154,6 +157,7 @@ static struct randomconf randomconf[] = {
 	7,			/* determine ru_a as RU_AGEN^(2*rand) */
 	279936,			/* RU_M = 2^7*3^7 - don't change */
 	{ 2, 3, 14563, 0 },	/* factors of ru_n */
+	3,			/* skip values */
   },
   {
 	16,			/* resulting bits */
@@ -163,6 +167,7 @@ static struct randomconf randomconf[] = {
 	7,			/* determine ru_a as RU_AGEN^(2*rand) */
 	31104,			/* RU_M = 2^7*3^5 - don't change */
 	{ 2, 3, 2729, 0 },	/* factors of ru_n */
+	0,			/* skip values */
   },
   {
 	-1,			/* termination */
@@ -218,6 +223,7 @@ initid(struct randomid_ctx *p)
 
 	/* (bits - 1) bits of random seed */
 	p->ru_seed = arc4random() & (~0U >> (32 - p->ru_bits + 1));
+	p->ru_seed2 = arc4random() & (~0U >> (32 - p->ru_bits + 1));
 
 	/* Determine the LCG we use */
 	p->ru_b = (arc4random() & (~0U >> (32 - p->ru_bits))) | 1;
@@ -297,19 +303,19 @@ u_int32_t
 randomid(struct randomid_ctx *p)
 {
 	int i, n;
-	u_int32_t tmp;
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
 	if (p->ru_counter >= p->ru_max || tv.tv_sec > p->ru_reseed)
 		initid(p);
 
-	tmp = arc4random();
-
 	/* Skip a random number of ids */
-	n = tmp & 0x3; tmp = tmp >> 2;
-	if (p->ru_counter + n >= p->ru_max)
-		initid(p);
+	if (p->ru_skip) {
+		n = arc4random() & p->ru_skip;
+		if (p->ru_counter + n >= p->ru_max)
+			initid(p);
+	} else
+		n = 0;
 
 	for (i = 0; i <= n; i++) {
 		/* Linear Congruential Generator */
@@ -318,6 +324,6 @@ randomid(struct randomid_ctx *p)
 
 	p->ru_counter += i;
 
-	return (p->ru_seed ^ pmod(p->ru_g, p->ru_x, p->ru_n)) |
+	return (p->ru_seed ^ pmod(p->ru_g, p->ru_seed2 + p->ru_x, p->ru_n)) |
 	    p->ru_msb;
 }
