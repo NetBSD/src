@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.28 2003/10/27 00:12:44 lukem Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.28.2.1 2004/06/22 07:28:36 tron Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -65,8 +65,14 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.28 2003/10/27 00:12:44 lukem Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.28.2.1 2004/06/22 07:28:36 tron Exp $");
 #endif /* not lint */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "compat_pwd.h"
+#else
+#include <pwd.h>
+#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -82,12 +88,6 @@ __RCSID("$NetBSD: pwd_mkdb.c,v 1.28 2003/10/27 00:12:44 lukem Exp $");
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
-
-#if HAVE_NBTOOL_CONFIG_H
-#include "compat_pwd.h"
-#else
-#include <pwd.h>
-#endif
 
 #define	MAX_CACHESIZE	8*1024*1024
 #define	MIN_CACHESIZE	2*1024*1024
