@@ -3,7 +3,7 @@
    Turn data structures into printable text. */
 
 /*
- * Copyright (c) 1995, 1996 The Internet Software Consortium.
+ * Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.1.1.4 1998/05/18 06:53:55 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.1.1.5 1999/02/18 21:48:51 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -76,26 +76,26 @@ void print_lease (lease)
 	struct tm *t;
 	char tbuf [32];
 
-	debug ("  Lease %s",
+	debug ("      Lease %s",
 	       piaddr (lease -> ip_addr));
 	
 	t = gmtime (&lease -> starts);
-	strftime (tbuf, sizeof tbuf, "%D %H:%M:%S", t);
-	debug ("  start %s", tbuf);
+	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
+	debug ("        start %s", tbuf);
 	
 	t = gmtime (&lease -> ends);
-	strftime (tbuf, sizeof tbuf, "%D %H:%M:%S", t);
-	debug ("  end %s", tbuf);
+	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
+	debug ("        end %s", tbuf);
 	
 	t = gmtime (&lease -> timestamp);
-	strftime (tbuf, sizeof tbuf, "%D %H:%M:%S", t);
-	debug ("  stamp %s", tbuf);
+	strftime (tbuf, sizeof tbuf, "%Y/%m/%d %H:%M:%S", t);
+	debug ("        stamp %s", tbuf);
 	
-	debug ("    hardware addr = %s",
+	debug ("        hardware addr = %s",
 	       print_hw_addr (lease -> hardware_addr.htype,
 			       lease -> hardware_addr.hlen,
 			       lease -> hardware_addr.haddr));
-	debug ("  host %s  ",
+	debug ("        host %s  ",
 	       lease -> host ? lease -> host -> name : "<none>");
 }	
 
@@ -178,7 +178,7 @@ void hash_dump (table)
 			if (bp -> len)
 				dump_raw (bp -> name, bp -> len);
 			else
-				note (bp -> name);
+				note ((char *)bp -> name);
 		}
 	}
 }

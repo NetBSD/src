@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: tables.c,v 1.1.1.2 1997/06/03 02:49:34 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: tables.c,v 1.1.1.3 1999/02/18 21:48:51 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -78,7 +78,7 @@ struct option dhcp_options [256] = {
 	{ "lpr-servers", "IA",				&dhcp_universe, 9 },
 	{ "impress-servers", "IA",			&dhcp_universe, 10 },
 	{ "resource-location-servers", "IA",		&dhcp_universe, 11 },
-	{ "host-name", "t",				&dhcp_universe, 12 },
+	{ "host-name", "X",				&dhcp_universe, 12 },
 	{ "boot-size", "S",				&dhcp_universe, 13 },
 	{ "merit-dump", "t",				&dhcp_universe, 14 },
 	{ "domain-name", "t",				&dhcp_universe, 15 },
@@ -418,7 +418,7 @@ char *hardware_types [] = {
 	"unknown-5",
 	"token-ring",
 	"unknown-7",
-	"unknown-8",
+	"fddi",
 	"unknown-9",
 	"unknown-10",
 	"unknown-11",
@@ -681,10 +681,12 @@ void initialize_universes()
 		error ("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
 		dhcp_universe.options [i] = &dhcp_options [i];
-		add_hash (dhcp_universe.hash, dhcp_options [i].name, 0,
+		add_hash (dhcp_universe.hash,
+			  (unsigned char *)dhcp_options [i].name, 0,
 			  (unsigned char *)&dhcp_options [i]);
 	}
 	universe_hash.hash_count = DEFAULT_HASH_SIZE;
-	add_hash (&universe_hash, dhcp_universe.name, 0,
+	add_hash (&universe_hash,
+		  (unsigned char *)dhcp_universe.name, 0,
 		  (unsigned char *)&dhcp_universe);
 }

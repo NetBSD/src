@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: packet.c,v 1.1.1.3 1997/06/08 04:54:18 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: packet.c,v 1.1.1.4 1999/02/18 21:48:50 mellon Exp $ Copyright (c) 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -158,7 +158,7 @@ void assemble_udp_ip_header (interface, buf, bufix,
 	int *bufix;
 	u_int32_t from;
 	u_int32_t to;
-	u_int16_t port;
+	unsigned int port;
 	unsigned char *data;
 	int len;
 {
