@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.15 1999/12/06 19:26:00 drochner Exp $ */
+/* $NetBSD: cfb.c,v 1.16 1999/12/08 09:41:24 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.15 1999/12/06 19:26:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.16 1999/12/08 09:41:24 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,7 +488,7 @@ cfb_free_screen(v, cookie)
 }
 
 static int
-cfb_show_screen(v, cookie)
+cfb_show_screen(v, cookie, waitok, cb, cbarg)
 	void *v;
 	void *cookie;
 	int waitok;
