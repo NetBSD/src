@@ -1,7 +1,7 @@
-/*	$NetBSD: lock.h,v 1.5 2001/04/30 01:17:31 lukem Exp $	*/
+/*	$NetBSD: lock.h,v 1.5.10.1 2002/03/19 05:12:05 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,7 +43,7 @@
 #ifndef _I386_LOCK_H_
 #define	_I386_LOCK_H_
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	__volatile unsigned char __cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
@@ -70,7 +70,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 	int __val = __SIMPLELOCK_LOCKED;
 
 	do {
-		__asm __volatile("xchgl %0, %2"
+		__asm __volatile("xchgb %0, %2"
 			: "=r" (__val)
 			: "0" (__val), "m" (*alp));
 	} while (__val != __SIMPLELOCK_UNLOCKED);
@@ -81,7 +81,7 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 {
 	int __val = __SIMPLELOCK_LOCKED;
 
-	__asm __volatile("xchgl %0, %2"
+	__asm __volatile("xchgb %0, %2"
 		: "=r" (__val)
 		: "0" (__val), "m" (*alp));
 
