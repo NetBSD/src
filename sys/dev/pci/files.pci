@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.70 1999/11/02 00:29:20 thorpej Exp $
+#	$NetBSD: files.pci,v 1.71 1999/11/02 11:58:06 augustss Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -145,7 +145,7 @@ file	dev/pci/tga_bt463.c		tga
 file	dev/pci/tga_bt485.c		tga
 
 # Forte Media FM801
-device  fms { }: audio, auconv, mulaw, ac97
+device  fms { }: audio, auconv, mulaw, ac97, midibus
 attach  fms at pci
 file    dev/pci/fms.c                   fms
 
