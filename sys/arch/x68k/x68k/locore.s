@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.19 1997/06/26 22:28:50 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.20 1997/09/12 09:23:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -307,7 +307,6 @@ _fpunsupp:
  */
 	.globl	_fpfault
 _fpfault:
-#ifdef FPCOPROC
 	clrl	sp@-		| stack adjust count
 	moveml	#0xFFFF,sp@-	| save user registers
 	movl	usp,a0		| and save
@@ -318,7 +317,7 @@ _fpfault:
 	fsave	a0@		| save state
 #if defined(M68040) || defined(M68060)
 	/* always null state frame on 68040, 68060 */
-	cmpl	#MMU_68040,_mmutype
+	cmpl	#FPU_68040,_fputype
 	jle	Lfptnull
 #endif
 	tstb	a0@		| null state frame?
@@ -331,9 +330,6 @@ Lfptnull:
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
 	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
-#else
-	jra	_badtrap	| treat as an unexpected trap
-#endif
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -933,18 +929,24 @@ Lnot68030:
 	movl	#MMU_68040,a0@		| with a 68040 compatible MMU 
 	RELOC(_cputype, a0)
 	movl	#CPU_68060,a0@		| and a 68060 CPU
+	RELOC(_fputype, a0)
+	movl	#FPU_68060,a0@		| and a 68060 FPU
 	jra	Lstart1
 Lis68040:
 	RELOC(_mmutype, a0)
 	movl	#MMU_68040,a0@		| with a 68040 MMU
 	RELOC(_cputype, a0)
 	movl	#CPU_68040,a0@		| and a 68040 CPU
+	RELOC(_fputype, a0)
+	movl	#FPU_68040,a0@		| and a 68040 FPU
 	jra	Lstart1
 Lis68020:
 	RELOC(_mmutype, a0)
 	movl	#MMU_68851,a0@		| we have PMMU
 	RELOC(_cputype, a0)
 	movl	#CPU_68020,a0@		| and a 68020 CPU
+	RELOC(_fputype, a0)
+	movl	#FPU_68881,a0@		| and a 68881 FPU
 
 Lstart1:
 /* initialize source/destination control registers for movs */
@@ -1061,8 +1063,6 @@ Lmotommu2:
  * Should be running mapped from this point on
  */
 Lenab1:
-
-Lfinish:
 /* select the software page size now */
 	lea	tmpstk,sp		| temporary stack
 	jbsr	_vm_set_page_size	| select software page size
@@ -1074,12 +1074,14 @@ Lfinish:
 	movl	#USRSTACK-4,a2
 	movl	a2,usp			| init user SP
 	movl	a1,_curpcb		| proc0 is running
-#ifdef FPCOPROC
+
+	tstl	_fputype		| Have an FPU?
+	jeq	Lenab2			| No, skip.
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
 	movl	a1,sp@-
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
-#endif
+Lenab2:
 /* flush TLB and turn on caches */
 	jbsr	_TBIA			| invalidate TLB
 	cmpl	#MMU_68040,_mmutype	| 68040?
@@ -1262,20 +1264,26 @@ Lsw2:
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
 	movl	usp,a2			| grab USP (a2 has been saved)
 	movl	a2,a1@(PCB_USP)		| and save it
-#ifdef FPCOPROC
+
+	tstl	_fputype		| Do we have an FPU?
+	jeq	Lswnofpsave		| No  Then don't attempt save.
 	lea	a1@(PCB_FPCTX),a2	| pointer to FP save area
 	fsave	a2@			| save FP state
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	cmpl	#FPU_68060,_fputype
 	jeq	Lsavfp60
 #endif
 	tstb	a2@			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
 	fmovem	fp0-fp7,a2@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a2@(312)	| save FP control registers
-#ifdef M68060
+#if defined(M68060)
 	jra	Lswnofpsave
 Lsavfp60:
+#endif
+#endif
+#if defined(M68060)
 	tstb	a2@(2)			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
 	fmovem	fp0-fp7,a2@(216)	| save FP general registers
@@ -1284,7 +1292,6 @@ Lsavfp60:
 	fmovem	fpi,a2@(320)
 #endif
 Lswnofpsave:
-#endif
 
 #ifdef DIAGNOSTIC
 	tstl	a0@(P_WCHAN)
@@ -1346,16 +1353,19 @@ Lcxswdone:
 	moveml	a1@(PCB_REGS),#0xFCFC	| and registers
 	movl	a1@(PCB_USP),a0
 	movl	a0,usp			| and USP
-#ifdef FPCOPROC
+
+	tstl	_fputype		| If we don't have an FPU,
+	jeq	Lnofprest		|  don't try to restore it.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	cmpl	#FPU_68060,_fputype
 	jeq	Lresfp60rest1
 #endif
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest		| yes, easy
 #if defined(M68040)
-	cmpl	#CPU_68040,_cputype	| 68040?
+	cmpl	#FPU_68040,_fputype	| 68040?
 	jne	Lresnot040		| no, skip
 	clrl	sp@-			| yes...
 	frestore sp@+			| ...magic!
@@ -1363,27 +1373,25 @@ Lresnot040:
 #endif
 	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
 	fmovem	a0@(216),fp0-fp7	| restore FP general registers
-Lresfprest:
-	frestore a0@			| restore state
-#endif
-	movw	a1@(PCB_PS),sr		| no, restore PS
-	moveq	#1,d0			| return 1 (for alternate returns)
-	rts
-
-#ifdef M68060
+#if defined(M68060)
+	jra	Lresfprest
 Lresfp60rest1:
+#endif
+#endif
+#if defined(M68060)
 	tstb	a0@(2)			| null state frame?
-	jeq	Lresfp60rest2		| yes, easy
+	jeq	Lresfprest		| yes, easy
 	fmovem	a0@(312),fpcr		| restore FP control registers
 	fmovem	a0@(316),fpsr
 	fmovem	a0@(320),fpi
 	fmovem	a0@(216),fp0-fp7	| restore FP general registers
-Lresfp60rest2:
+#endif
+Lresfprest:
 	frestore a0@			| restore state
+Lnofprest:
 	movw	a1@(PCB_PS),sr		| no, restore PS
 	moveq	#1,d0			| return 1 (for alternate returns)
 	rts
-#endif
 	
 /*
  * savectx(pcb)
@@ -1395,20 +1403,26 @@ ENTRY(savectx)
 	movl	usp,a0			| grab USP
 	movl	a0,a1@(PCB_USP)		| and save it
 	moveml	#0xFCFC,a1@(PCB_REGS)	| save non-scratch registers
-#ifdef FPCOPROC
+
+	tstl	_fputype		| Do we have FPU?
+	jeq	Lsvnofpsave		| No?  Then don't save state.
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 	fsave	a0@			| save FP state
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	cmpl	#FPU_68060,_fputype
 	jeq	Lsvsavfp60
 #endif
 	tstb	a0@			| null state frame?
 	jeq	Lsvnofpsave		| yes, all done
 	fmovem	fp0-fp7,a0@(216)	| save FP general registers
 	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
-#ifdef M68060
+#if defined(M68060)
 	jra	Lsvnofpsave
 Lsvsavfp60:
+#endif
+#endif
+#if defined(M68060)
 	tstb	a0@(2)			| null state frame?
 	jeq	Lsvnofpsave		| yes, all done
 	fmovem	fp0-fp7,a0@(216)	| save FP general registers
@@ -1417,7 +1431,6 @@ Lsvsavfp60:
 	fmovem	fpi,a0@(320)
 #endif
 Lsvnofpsave:
-#endif
 	moveq	#0,d0			| return 0
 	rts
 
@@ -1757,31 +1770,30 @@ ENTRY(spl0)
 Lspldone:
 	rts
 
-#ifdef FPCOPROC
 /*
  * Save and restore 68881 state.
- * Pretty awful looking since our assembler does not
- * recognize FP mnemonics.
  */
 ENTRY(m68881_save)
 	movl	sp@(4),a0		| save area pointer
 	fsave	a0@			| save state
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	cmpl	#FPU_68060,_fputype
 	jeq	Lm68060fpsave
 #endif
+Lm68881fpsave:
 	tstb	a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
-	fmovem fp0-fp7,a0@(216)		| save FP general registers
-	fmovem fpcr/fpsr/fpi,a0@(312)	| save FP control registers
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
+	fmovem	fpcr/fpsr/fpi,a0@(312)	| save FP control registers
 Lm68881sdone:
 	rts
-
-#ifdef M68060
+#endif
+#if defined(M68060)
 Lm68060fpsave:
 	tstb	a0@(2)			| null state frame?
 	jeq	Lm68060sdone		| yes, all done
-	fmovem fp0-fp7,a0@(216)		| save FP general registers
+	fmovem	fp0-fp7,a0@(216)	| save FP general registers
 	fmovem	fpcr,a0@(312)		| save FP control registers
 	fmovem	fpsr,a0@(316)
 	fmovem	fpi,a0@(320)
@@ -1791,10 +1803,12 @@ Lm68060sdone:
 
 ENTRY(m68881_restore)
 	movl	sp@(4),a0		| save area pointer
-#ifdef M68060
-	cmpl	#CPU_68060,_cputype
+#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68060)
+	cmpl	#FPU_68060,_fputype
 	jeq	Lm68060fprestore
 #endif
+Lm68881fprestore:
 	tstb	a0@			| null state frame?
 	jeq	Lm68881rdone		| yes, easy
 	fmovem	a0@(312),fpcr/fpsr/fpi	| restore FP control registers
@@ -1802,8 +1816,8 @@ ENTRY(m68881_restore)
 Lm68881rdone:
 	frestore a0@			| restore state
 	rts
-
-#ifdef M68060
+#endif
+#if defined(M68060)
 Lm68060fprestore:
 	tstb	a0@(2)			| null state frame?
 	jeq	Lm68060fprdone		| yes, easy
@@ -1814,7 +1828,6 @@ Lm68060fprestore:
 Lm68060fprdone:
 	frestore a0@			| restore state
 	rts
-#endif
 #endif
 
 /*
