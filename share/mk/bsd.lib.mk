@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.231 2003/08/24 09:35:49 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.232 2003/09/13 02:52:05 erh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -11,6 +11,12 @@
 .PHONY:		checkver cleanlib libinstall
 realinstall:	checkver libinstall
 clean:		cleanlib
+
+##### LIB specific flags.
+COPTS+=    ${COPTS.lib${LIB}}
+CPPFLAGS+=  ${CPPFLAGS.lib${LIB}}
+CXXFLAGS+=  ${CXXFLAGS.lib${LIB}}
+LDADD+=     ${LDADD.lib${LIB}}
 
 ##### Build and install rules
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
