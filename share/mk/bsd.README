@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.116 2003/07/10 10:34:35 lukem Exp $
+#	$NetBSD: bsd.README,v 1.117 2003/07/16 05:42:01 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -606,7 +606,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 		LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 		LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
-		LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
 		LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
 		LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 		LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
