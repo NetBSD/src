@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.26 1996/05/12 23:53:38 mycroft Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.27 1996/10/10 22:05:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -138,19 +138,19 @@ sb_printsc(sc)
 {
 	int i;
     
-	printf("open %d dmachan %d iobase %x\n",
+	kprintf("open %d dmachan %d iobase %x\n",
 	    sc->sc_open, sc->sc_drq, sc->sc_iobase);
-	printf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
+	kprintf("irate %d itc %d imode %d orate %d otc %d omode %d encoding %x\n",
 	    sc->sc_irate, sc->sc_itc, sc->sc_imode,
 	    sc->sc_orate, sc->sc_otc, sc->sc_omode, sc->encoding);
-	printf("outport %d inport %d spkron %d nintr %d\n",
+	kprintf("outport %d inport %d spkron %d nintr %d\n",
 	    sc->out_port, sc->in_port, sc->spkr_state, sc->sc_interrupts);
-	printf("precision %d channels %d intr %x arg %x\n",
+	kprintf("precision %d channels %d intr %x arg %x\n",
 	    sc->sc_precision, sc->sc_channels, sc->sc_intr, sc->sc_arg);
-	printf("gain: ");
+	kprintf("gain: ");
 	for (i = 0; i < SB_NDEVS; i++)
-		printf("%d ", sc->gain[i]);
-	printf("\n");
+		kprintf("%d ", sc->gain[i]);
+	kprintf("\n");
 }
 #endif
 
@@ -269,7 +269,7 @@ sbdsp_attach(sc)
 		sc->in_filter = 0;	/* no filters turned on, please */
 	}
 
-	printf(": dsp v%d.%02d%s\n",
+	kprintf(": dsp v%d.%02d%s\n",
 	       SBVER_MAJOR(sc->sc_model), SBVER_MINOR(sc->sc_model),
 	       ISJAZZ16(sc) ? ": <Jazz16>" : "");
 
@@ -277,7 +277,7 @@ sbdsp_attach(sc)
 	sbdsp_mix_write(sc, SBP_SET_IRQ, 0x04);
 	sbdsp_mix_write(sc, SBP_SET_DRQ, 0x22);
 
-	printf("sbdsp_attach: irq=%02x, drq=%02x\n",
+	kprintf("sbdsp_attach: irq=%02x, drq=%02x\n",
 	    sbdsp_mix_read(sc, SBP_SET_IRQ),
 	    sbdsp_mix_read(sc, SBP_SET_DRQ));
 #else
@@ -1342,7 +1342,7 @@ sbdsp_intr(arg)
 		Dprintf("sbdsp_intr: intr=0x%x\n", sc->sc_intr);
 #endif
 	if (!isa_dmafinished(sc->sc_drq)) {
-		printf("sbdsp_intr: not finished\n");
+		kprintf("sbdsp_intr: not finished\n");
 		return 0;
 	}
 	sc->sc_interrupts++;
