@@ -32,8 +32,7 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)lfs.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: lfs.c,v 1.1 1994/06/08 19:31:19 mycroft Exp $";
+static char sccsid[] = "@(#)lfs.c	8.1 (Berkeley) 6/5/93";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -144,8 +143,7 @@ static struct lfs lfs_default =  {
 	/* lfs_flags */		0,
 	/* lfs_fsmnt */		{ 0 },
 	/* lfs_pad */		{ 0 },
-	/* lfs_cksum */		0,
-	/* lfs_maxsymlinklen */	MAXSYMLINKLEN
+	/* lfs_cksum */		0
 };
 
 
@@ -607,6 +605,10 @@ put(fd, off, p, len)
  * directory.
  */
 
+	u_long	d_ino;			/* inode number of entry */
+	u_short	d_reclen;		/* length of this record */
+	u_short	d_namlen;		/* length of string in d_name */
+	char	d_name[MAXNAMLEN + 1];	/* name with length <= MAXNAMLEN */
 void
 lfsinit()
 {}
