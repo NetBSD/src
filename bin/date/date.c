@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.26 1998/10/14 00:49:44 wsanchez Exp $	*/
+/*	$NetBSD: date.c,v 1.27 1998/10/24 03:45:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.26 1998/10/14 00:49:44 wsanchez Exp $");
+__RCSID("$NetBSD: date.c,v 1.27 1998/10/24 03:45:51 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,8 +97,8 @@ main(argc, argv)
 			rflag = 1;
 			tval = atol(optarg);
 			break;
-		case 'u':		/* do everything in GMT */
-			(void)setenv("TZ", "GMT0", 1);
+		case 'u':		/* do everything in UTC */
+			(void)setenv("TZ", "UTC", 1);
 			break;
 		default:
 			usage();
@@ -199,7 +199,7 @@ setthetime(p)
 		badformat();
 	}
 
-	/* convert broken-down time to GMT clock time */
+	/* convert broken-down time to UTC clock time */
 	if ((tval = mktime(lt)) == -1)
 		badtime();
 
