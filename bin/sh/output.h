@@ -55,9 +55,9 @@ extern struct output *out2;
 
 
 #ifdef __STDC__
-void outstr(char *, struct output *);
-void out1str(char *);
-void out2str(char *);
+void outstr(const char *, struct output *);
+void out1str(const char *);
+void out2str(const char *);
 void outfmt(struct output *, char *, ...);
 void out1fmt(char *, ...);
 void fmtstr(char *, int, char *, ...);
