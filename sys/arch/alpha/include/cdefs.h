@@ -1,7 +1,7 @@
-/*	$NetBSD: cdefs.h,v 1.4 1996/10/09 22:41:54 cgd Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -41,14 +41,14 @@
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak " #alias " ; " #alias " = " #sym)
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\"")
+    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text")
 
 #else /* !__STDC__ */
 
 #define	__weak_alias(alias,sym)						\
     __asm__(".weak alias ; alias = sym")
 #define	__warn_references(sym,msg)					\
-    __asm__(".section .gnu.warning.sym ; .ascii msg")
+    __asm__(".section .gnu.warning.sym ; .ascii msg ; .text")
 
 #endif /* !__STDC__ */
 
