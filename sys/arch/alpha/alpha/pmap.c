@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.88 1999/03/29 05:31:24 mycroft Exp $ */
+/* $NetBSD: pmap.c,v 1.89 1999/04/09 00:38:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 1999/03/29 05:31:24 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 1999/04/09 00:38:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1569,7 +1569,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	vm_prot_t access_type;
 {
 	boolean_t managed;
-	pt_entry_t *pte, npte;
+	pt_entry_t *pte, npte, opte;
 	paddr_t opa;
 	boolean_t tflush = TRUE;
 	boolean_t hadasm = FALSE;	/* XXX gcc -Wuninitialized */
@@ -1663,6 +1663,9 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		pte = pmap_l3pte(pmap, va, l2pte);
 	}
 
+	/* Remember all of the old PTE; used for TBI check later. */
+	opte = *pte;
+
 	/*
 	 * Check to see if the old mapping is valid.  If not, validate the
 	 * new one immediately.
@@ -1713,15 +1716,6 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 			else
 				pmap->pm_stats.wired_count--;
 		}
-
-		/*
-		 * Check to see if the PALcode portion of the
-		 * PTE is the same.  If so, no TLB invalidation
-		 * is necessary.
-		 */
-		if (PG_PALCODE(pmap_pte_prot(pte)) ==
-		    PG_PALCODE(pte_prot(pmap, prot)))
-			tflush = FALSE;
 
 		/*
 		 * Set the PTE.
@@ -1801,6 +1795,13 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (pmapdebug & PDB_ENTER)
 		printf("pmap_enter: new pte = 0x%lx\n", npte);
 #endif
+
+	/*
+	 * If the PALcode portion of the new PTE is the same as the
+	 * old PTE, no TBI is necessary.
+	 */
+	if (PG_PALCODE(opte) == PG_PALCODE(npte))
+		tflush = FALSE;
 
 	/*
 	 * Set the new PTE.
