@@ -1,0 +1,7 @@
+#	$NetBSD: fstab.ramdisk,v 1.1.2.2 2005/04/04 17:31:02 tron Exp $
+#
+# Sample fstab for ramdisk (mfs) based /tmp filesystem.
+# /tmp is on a 5MB mfs partition; see mount_mfs(8) for details.
+# Adjust the size according to the ammount of free RAM.
+#
+swap		/tmp	mfs	rw,-s=5m
