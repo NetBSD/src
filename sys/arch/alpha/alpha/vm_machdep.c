@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.12 1996/07/11 20:14:23 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.13 1996/07/11 23:02:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -138,7 +138,7 @@ cpu_fork(p1, p2)
 	pt_entry_t *ptep;
 	int i;
 	extern struct proc *fpcurproc;
-	extern void proc_trampoline(), rei(), child_return();
+	extern void switch_trampoline(), exception_return(), child_return();
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -202,7 +202,7 @@ cpu_fork(p1, p2)
 	 */
 	{
 		struct trapframe *p2tf;
-		extern void rei();
+		extern void exception_return();
 
 		/*
 		 * Pick a stack pointer, leaving room for a trapframe;
@@ -223,8 +223,8 @@ cpu_fork(p1, p2)
 
 		/*
 		 * Arrange for continuation at child_return(), which
-		 * will return to rei().  Note that the child process
-		 * doesn't stay in the kernel for long!
+		 * will return to exception_return().  Note that the child
+		 * process doesn't stay in the kernel for long!
 		 * 
 		 * This is an inlined version of cpu_set_kpc.
 		 */
@@ -232,9 +232,9 @@ cpu_fork(p1, p2)
 		up->u_pcb.pcb_context[0] =
 		    (u_int64_t)child_return;		/* s0: pc */
 		up->u_pcb.pcb_context[1] =
-		    (u_int64_t)rei;			/* s1: ra */
+		    (u_int64_t)exception_return;	/* s1: ra */
 		up->u_pcb.pcb_context[7] =
-		    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
+		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 	}
 }
 
@@ -245,8 +245,8 @@ cpu_fork(p1, p2)
  * named pc, as if the code at that address were called as a function
  * with argument, the current process's process pointer.
  *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
+ * Note that it's assumed that when the named process returns,
+ * exception_return() should be invoked, to return to user mode.
  *
  * (Note that cpu_fork(), above, uses an open-coded version of this.)
  */
@@ -256,14 +256,14 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
-	extern void proc_trampoline();
-	extern void rei();
+	extern void switch_trampoline();
+	extern void exception_return();
 
 	pcbp = &p->p_addr->u_pcb;
 	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */
-	pcbp->pcb_context[1] = (u_int64_t)rei;	/* s1 - return address */
+	pcbp->pcb_context[1] = (u_int64_t)exception_return; /* s1 - return address */
 	pcbp->pcb_context[7] =
-	    (u_int64_t)proc_trampoline;		/* ra - assembly magic */
+	    (u_int64_t)switch_trampoline;	/* ra - assembly magic */
 }
 
 /*
