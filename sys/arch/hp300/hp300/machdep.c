@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.10 1993/09/05 01:31:14 cgd Exp $
+ *	$Id: machdep.c,v 1.11 1993/09/30 21:41:20 cgd Exp $
  */
 
 #include "param.h"
@@ -258,7 +258,7 @@ again:
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
-#ifdef notdef
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -288,6 +288,7 @@ again:
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
+
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
@@ -296,15 +297,6 @@ again:
  *				 16*NCARGS, TRUE);
  *	NOT CURRENTLY USED -- cgd
  */
-#else /* notdef */
-
-        /*
-         * Allocate a submap for buffer space allocations.
-         */
-        buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-                                 bufpages * CLBYTES, TRUE);
-
-#endif /* notdef */
 
 	/*
 	 * Allocate a submap for physio
