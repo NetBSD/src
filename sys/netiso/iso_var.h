@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_var.h,v 1.9 1996/05/22 13:56:02 mycroft Exp $	*/
+/*	$NetBSD: iso_var.h,v 1.10 1996/09/08 14:28:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1991, 1993
@@ -90,22 +90,11 @@ struct iso_aliasreq {
 	int             ifra_snpaoffset;
 };
 
-struct iso_ifreq {
-	char            ifr_name[IFNAMSIZ];	/* if name, e.g. "en0" */
-	struct sockaddr_iso ifr_Addr;
-};
-
 /*
  *	Given a pointer to an iso_ifaddr (ifaddr),
  *	return a pointer to the addr as a sockaddr_iso
  */
 #define	IA_SIS(ia) (&(((struct iso_ifaddr *)(ia))->ia_addr))
-
-#define	SIOCDIFADDR_ISO	_IOW('i',25, struct iso_ifreq)	/* delete IF addr */
-#define	SIOCAIFADDR_ISO	_IOW('i',26, struct iso_aliasreq)	/* add/chg IFalias */
-#define	SIOCGIFADDR_ISO	_IOWR('i',33, struct iso_ifreq)	/* get ifnet address */
-#define	SIOCGIFDSTADDR_ISO _IOWR('i',34, struct iso_ifreq)	/* get dst address */
-#define	SIOCGIFNETMASK_ISO _IOWR('i',37, struct iso_ifreq)	/* get dst address */
 
 /*
  * This stuff should go in if.h or if_llc.h or someplace else,
