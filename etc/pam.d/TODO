@@ -1,4 +1,4 @@
-# $NetBSD: TODO,v 1.7 2005/02/24 13:16:42 manu Exp $
+# $NetBSD: TODO,v 1.8 2005/02/24 15:15:27 christos Exp $
 
 Status:
 
@@ -10,9 +10,9 @@ imap		- Pkgsrc, nothing to do
 kde		- Pkgsrc, nothing to do
 login		- Done, needs testing and review, working
 other		- Internal
-passwd		- Done, needs testing and review, XXX docs? XXX: ??
+passwd		- Done, needs testing and review, XXX: docs? XXX: ??
 pop3		- Pkgsrc, nothing to do
-rsh		- Done, needs testing and review, XXX: ???
+rsh		- Done, needs testing and review, working
 racoon		- Done, needs testing and review, working
 rexecd		- Done, needs testing and review, working
 rsh		- Done, needs testing and review, working
@@ -20,7 +20,11 @@ sshd		- Done, needs testing and review, working
 su		- Done, needs testing and review, working
 system		- Internal
 telnetd		- Done, needs testing and review, working
-xdm		- Done, needs testing and review, XXX: ???
+xdm		- Done, needs testing and review, working
+		  XXX: ssh-agent data passing appears to be
+		  busted. The agent is running but somehow the data
+		  communication between the agent and the authenticating
+		  process is corrupted.
 
 To enable pam support, recompile with USE_PAM=yes and:
 -------------------------------------------------------------------------------
@@ -33,11 +37,12 @@ other		- Internal
 passwd		- passwd -p usage.
 pop3		- Pkgsrc, nothing to do
 pppd		- XXX: No /etc/pam.d/ppp
-racoon		- Check racoon.conf(5). XXX No /etc/pam.d/racoon
+racoon		- Check racoon.conf(5). XXX: No /etc/pam.d/racoon
 rexecd		- Nothing
 rsh		- Nothing
 sshd		- add "UsePam yes" in /etc/ssh/sshd_config
 su		- Nothing
 system		- Internal
 telnetd		- add "-a valid" in /etc/inetd.conf telnet invocations
-xdm		- XXX: Untested?
+xdm		- Nothing. Note that both the Xserver and xdm need to be
+		  compiled with PAM enabled.
