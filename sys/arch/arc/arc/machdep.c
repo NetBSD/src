@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2000/04/03 11:44:19 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2000/04/15 22:05:51 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -394,12 +394,6 @@ mach_init(argc, argv, envv)
 		cpu_reboot(RB_HALT | RB_NOSYNC, NULL);
 	}
 	physmem = btoc(physmem);
-	mips_hardware_intr = arc_hardware_intr;
-	/*
-	 * XXX - currently, timer interrupt from count/compare register
-	 * is not used. so ...
-	 */
-	mips3_timer_delta = 0; /* longest interval */
 
 	/* look at argv[0] and compute bootdev for autoconfig setup */
 	makebootdev(argv[0]);

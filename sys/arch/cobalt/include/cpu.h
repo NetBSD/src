@@ -1,6 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2000/03/24 23:06:04 soren Exp $	*/
-
-#define MIPS3_INTERNAL_TIMER_INTERRUPT
+/*	$NetBSD: cpu.h,v 1.4 2000/04/15 22:05:52 soda Exp $	*/
 
 #include <mips/cpu.h>
 #include <mips/cpuregs.h>
