@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.s,v 1.42 2000/05/29 20:00:55 ragge Exp $	   */
+/*	$NetBSD: subr.s,v 1.43 2000/05/31 05:10:54 thorpej Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -279,8 +279,12 @@ noque:	.asciz	"swtch"
 1:	bneq	2f			# more processes on queue?
 	bbsc	r3,_sched_whichqs,2f		# no, clear bit in whichqs
 2:	clrl	4(r2)			# clear proc backpointer
-	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
 	mfpr	$PR_SSP,r1		# Get ptr to this cpu_info struct
+	/* p->p_cpu initialized in fork1() for single-processor */
+#if defined(MULTIPROCESSOR)
+	movl	r1,P_CPU(r2)		# p->p_cpu = curcpu();
+#endif
+	movb	$SONPROC,P_STAT(r2)	# p->p_stat = SONPROC;
 	movl	r2,CI_CURPROC(r1)	# set new process running
 	clrl	CI_WANT_RESCHED(r1)	# we are now changing process
 	cmpl	r0,r2			# Same process?
