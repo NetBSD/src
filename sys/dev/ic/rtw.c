@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.10 2004/12/20 23:05:41 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.11 2004/12/23 05:44:39 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.10 2004/12/20 23:05:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.11 2004/12/23 05:44:39 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1406,6 +1406,7 @@ static __inline void
 rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *htc,
     struct rtw_txctl *stx, int ndesc)
 {
+	uint32_t hstat;
 	int data_retry, rts_retry;
 	struct rtw_txdesc *htx0, *htxn;
 	const char *condstring;
@@ -1417,14 +1418,13 @@ rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *htc,
 	htx0 = &htc->htc_desc[stx->stx_first];
 	htxn = &htc->htc_desc[stx->stx_last];
 
-	rts_retry = MASK_AND_RSHIFT(le32toh(htx0->htx_stat),
-	    RTW_TXSTAT_RTSRETRY_MASK);
-	data_retry = MASK_AND_RSHIFT(le32toh(htx0->htx_stat),
-	    RTW_TXSTAT_DRC_MASK);
+	hstat = le32toh(htx0->htx_stat);
+	rts_retry = MASK_AND_RSHIFT(hstat, RTW_TXSTAT_RTSRETRY_MASK);
+	data_retry = MASK_AND_RSHIFT(hstat, RTW_TXSTAT_DRC_MASK);
 
 	sc->sc_if.if_collisions += rts_retry + data_retry;
 
-	if ((htx0->htx_stat & htole32(RTW_TXSTAT_TOK)) != 0)
+	if ((hstat & RTW_TXSTAT_TOK) != 0)
 		condstring = "ok";
 	else {
 		sc->sc_if.if_oerrors++;
