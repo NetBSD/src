@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.20 2002/10/03 20:39:23 mycroft Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.21 2002/11/24 18:16:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -82,6 +82,7 @@
 #include "rtld.h"
 
 void _rtld_bind_start(void);
+void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
 caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 
 void
@@ -89,6 +90,36 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	obj->pltgot[1] = (Elf_Addr) obj;
 	obj->pltgot[2] = (Elf_Addr) &_rtld_bind_start;
+}
+
+void
+_rtld_relocate_nonplt_self(dynp, relocbase)
+	Elf_Dyn *dynp;
+	Elf_Addr relocbase;
+{
+	const Elf_Rela *rela = 0, *relalim;
+	Elf_Addr relasz = 0;
+	Elf_Addr *where;
+
+	for (; dynp->d_tag != DT_NULL; dynp++) {
+		switch (dynp->d_tag) {
+		case DT_RELA:
+			rela = (const Elf_Rela *)(relocbase + dynp->d_un.d_ptr);
+			break;
+		case DT_RELASZ:
+			relasz = dynp->d_un.d_val;
+			break;
+		}
+	}
+	/*
+	 * Assume only 64-bit relocations here, which should always
+	 * be true for the dynamic linker.
+	 */
+	relalim = (const Elf_Rela *)((caddr_t)rela + relasz);
+	for (; rela < relalim; rela++) {
+		where = (Elf_Addr *)(relocbase + rela->r_offset);
+		*where = (Elf_Addr)(relocbase + rela->r_addend);
+	}
 }
 
 int

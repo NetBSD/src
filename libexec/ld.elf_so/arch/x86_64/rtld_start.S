@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.4 2002/09/25 08:37:57 mycroft Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.5 2002/11/24 18:16:45 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,10 +43,22 @@
 	.type	.rtld_start,@function
 .rtld_start:
 	subq	$16,%rsp		# make room of obj_main and exit proc
-	movq	%rsp,%rdi		# stack pointer arg to _rtld
+	movq	%rsp,%r12		# stack pointer arg to _rtld
 	pushq	%rbx			# save ps_strings
 
-	call	_rtld@PLT		# _rtld(sp)
+	leaq	_GLOBAL_OFFSET_TABLE_(%rip),%rbx
+	movq	_GLOBAL_OFFSET_TABLE_@GOTPCREL(%rip),%rdx
+	subq	%rdx,%rbx		# %rbx = relocbase
+
+	movq	_DYNAMIC@GOTPCREL(%rip),%rdi
+	addq	%rbx,%rdi
+	movq	%rbx,%rsi
+	call	_rtld_relocate_nonplt_self@PLT
+
+	movq	%r12,%rdi
+	movq	%rbx,%rsi
+
+	call	_rtld@PLT		# _rtld(sp, relocbase)
 
 	popq	%rbx			# %rbx = ps_strings
 	popq	%rdx			# %rdx = cleanup
