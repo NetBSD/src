@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.14 2003/04/29 17:06:06 scw Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.15 2003/05/18 21:00:57 martin Exp $ */
 
 /*
  * Mach Operating System
@@ -26,8 +26,8 @@
  * the rights to redistribute these changes.
  */
 
-#ifndef	_SPARC_DB_MACHDEP_H_
-#define	_SPARC_DB_MACHDEP_H_
+#ifndef	_SPARC64_DB_MACHDEP_H_
+#define	_SPARC64_DB_MACHDEP_H_
 
 /*
  * Machine-dependent defines for new kernel debugger.
@@ -156,7 +156,7 @@ int kdb_trap __P((int, struct trapframe64 *));
  * KGDB definitions
  */
 typedef u_long		kgdb_reg_t;
-#define KGDB_NUMREGS	72
-#define KGDB_BUFLEN	1024
+#define KGDB_NUMREGS	125
+#define KGDB_BUFLEN	2048
 
-#endif	/* _SPARC_DB_MACHDEP_H_ */
+#endif	/* _SPARC64_DB_MACHDEP_H_ */
