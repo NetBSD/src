@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.21 2001/11/13 06:24:56 lukem Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.22 2001/11/30 13:41:00 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.21 2001/11/13 06:24:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.22 2001/11/30 13:41:00 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,8 @@ static const struct uplcom_product {
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 	/* IOGEAR/ATEN UC-232A */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+	/* ELECOM UC-SGT */
+	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 	{ 0, 0 }
 };
 
