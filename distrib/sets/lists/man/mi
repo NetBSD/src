@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.588 2003/07/01 10:05:46 wiz Exp $
+# $NetBSD: mi,v 1.589 2003/07/04 06:59:53 tshiozak Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -144,6 +144,7 @@
 ./usr/share/man/cat1/history.0			man-util-catman
 ./usr/share/man/cat1/host.0			man-netutil-catman
 ./usr/share/man/cat1/hostname.0			man-util-catman
+./usr/share/man/cat1/iconv.0			man-util-catman
 ./usr/share/man/cat1/id.0			man-util-catman
 ./usr/share/man/cat1/ident.0			man-util-catman
 ./usr/share/man/cat1/indent.0			man-c-catman
@@ -1954,6 +1955,7 @@
 ./usr/share/man/man1/history.1			man-util-man
 ./usr/share/man/man1/host.1			man-netutil-man
 ./usr/share/man/man1/hostname.1			man-util-man
+./usr/share/man/man1/iconv.1			man-util-man
 ./usr/share/man/man1/id.1			man-util-man
 ./usr/share/man/man1/ident.1			man-util-man
 ./usr/share/man/man1/indent.1			man-c-man
