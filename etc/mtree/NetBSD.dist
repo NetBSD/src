@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.75 1999/02/05 18:06:41 perry Exp $
+#	$NetBSD: NetBSD.dist,v 1.76 1999/02/05 18:51:47 perry Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -47,6 +47,11 @@ mtree
 # ./etc/namedb
 namedb
 # ./etc/namedb
+..
+
+# ./etc/postfix
+postfix
+# ./etc/postfix
 ..
 
 # ./etc/sliphome
@@ -1841,6 +1846,17 @@ mqueue
 # ./var/spool/output
 output
 # ./var/spool/output
+..
+
+# ./var/spool/postfix
+postfix
+
+# ./var/spool/postfix/etc
+etc
+# ./var/spool/postfix/etc
+..
+
+# ./var/spool/postfix
 ..
 
 # ./var/spool/sockets
