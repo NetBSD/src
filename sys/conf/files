@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.100 1996/09/30 16:16:46 ws Exp $
+#	$NetBSD: files,v 1.101 1996/10/02 05:29:29 cgd Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -117,18 +117,13 @@ file isofs/cd9660/cd9660_rrip.c		cd9660
 file isofs/cd9660/cd9660_util.c		cd9660
 file isofs/cd9660/cd9660_vfsops.c	cd9660
 file isofs/cd9660/cd9660_vnops.c	cd9660
-# XXX should be conditional on exec_aout
-file kern/exec_aout.c
+file kern/exec_aout.c			exec_aout
 file kern/exec_conf.c
-# XXX should be conditional on only exec_ecoff
-file kern/exec_ecoff.c			exec_ecoff | compat_ultrix | compat_osf1
-# XXX should be conditional on only exec_elf32
-file kern/exec_elf32.c			exec_elf32 | compat_svr4 | compat_linux
+file kern/exec_ecoff.c			exec_ecoff
+file kern/exec_elf32.c			exec_elf32
 file kern/exec_elf64.c			exec_elf64
-# XXX should be conditional on only exec_elf32 | exec_elf64
-file kern/exec_elf_common.c		exec_elf32 | exec_elf64 | compat_svr4 | compat_linux
-# XXX should be conditional on exec_script
-file kern/exec_script.c
+file kern/exec_elf_common.c		exec_elf32 | exec_elf64
+file kern/exec_script.c			exec_script
 file kern/exec_subr.c
 file kern/init_main.c
 file kern/init_sysent.c
