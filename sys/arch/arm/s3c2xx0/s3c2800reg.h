@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800reg.h,v 1.1 2002/11/20 17:52:50 bsh Exp $ */
+/* $NetBSD: s3c2800reg.h,v 1.2 2003/05/12 05:22:31 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -85,8 +85,13 @@
 #define S3C2800_UART0_BASE	0x10170000
 #define S3C2800_UART1_BASE	0x10180000
 #define S3C2800_UART_SIZE	0x2c
+#define S3C2800_IIC0_BASE	0x10190000
+#define S3C2800_IIC1_BASE	0x101a0000
+#define S3C2800_IIC_SIZE	0x10
 #define S3C2800_INTCTL_BASE	0x10020000
 #define S3C2800_INTCTL_SIZE	0x14
+#define S3C2800_WDT_BASE	0x10120000
+#define S3C2800_WDT_SIZE	0x0c
 
 
 /* width of interrupt controller */
@@ -95,7 +100,15 @@
 
 /* Clock & power manager */
 #define CLKMAN_PLLCON	0x00
+
 /* MDIV, PDIV, SDIV */
+#define  PLLCON_MDIV_SHIFT	12
+#define  PLLCON_MDIV_MASK	(0xff<<PLLCON_MDIV_SHIFT)
+#define  PLLCON_PDIV_SHIFT	4
+#define  PLLCON_PDIV_MASK	(0x3f<<PLLCON_PDIV_SHIFT)
+#define  PLLCON_SDIV_SHIFT	0
+#define  PLLCON_SDIV_MASK	(0x03<<PLLCON_SDIV_SHIFT)
+
 #define CLKMAN_CLKCON	0x04
 #define  CLKCON_PCLK	(1<<12)	/* APB clock division ratio */
 #define  CLKCON_HCLK	(1<<11)	/* AHB clock division ratio */
@@ -164,7 +177,8 @@
 #define  REFRESH_TCHR	(3<<12)	/* CAS hold time */
 #define  REFRESH_COUNTER 0x7ff
 #define MEMCTL_DMTMCON  0x18	/* timing control for dynamic memory */
-#define  DMTMCON_DW	(3<<16)	/* bus width */
+#define  DMTMCON_DW_SHIFT   16
+#define  DMTMCON_DW	(3<<DMTMCON_DW_SHIFT)	/* bus width */
 #define  DMTMCON_MT	(3<<10)	/* dynamic memory type */
 #define  DMTMCON_TRCD	(3<<8)	/* DRAM RAS to CAS delay */
 #define  DMTMCON_TCAS	(3<<6)	/* CAS pulse width */
@@ -221,7 +235,6 @@
 #define  TMDAT_PRESCALER  (0xff<<16)
 #define  TMDAT_DATA	0xffff
 #define TIMER_TMCNT	0x08	/* down counter */
-
 
 /* UART (Small diffs to S3C2400's UART) */
 #define  UMCON_AFC	(1<<1)	/* auto flow control */
@@ -301,5 +314,11 @@
 #define PCICTL_PCIBAM1   	0x14c	/* BAR0 mask */
 #define PCICTL_PCIBATPA2	0x150	/* address translation PCI to AHB BAR2 */
 #define PCICTL_PCIBAM2   	0x154	/* BAR0 mask */
+
+/* Watch dog timer */
+#define WDT_WTPSCLR		0x00
+#define WDT_WTCON		0x04
+#define  WTCON_WDTSTOP		0xa5
+#define WDT_WTCNT		0x08
 
 #endif /* _ARM_S3C2XX0_S3C2800REG_H_ */
