@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.3 2000/07/03 03:31:47 matt Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.4 2000/07/14 22:03:03 matt Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -39,31 +39,42 @@ ENTRY(_rtld_start, 0)
 	/* Allocate space on the stack for the cleanup and obj_main
 	 * entries that _rtld() will provide for us.
 	 */
-	subl2	$8, sp
+	clrl	fp
+	subl2	$8,sp
 	pushl	sp
-	calls	$1, _rtld
 
-	movq	(sp)+, r7	/* grab cleanup and obj_main into r7/r8 */
+	calls	$1,_rtld
+
+	movq	(sp)+,r7	/* grab cleanup and obj_main into r7/r8 */
 	jmp	2(r0)		/* jump to entry point + 2 */
 
 /*
  * Lazy binding entry point, called via PLT.
  */
 ALTENTRY(_rtld_bind_start)
-	pushr	$0x3f		/* save R0-R5 */
-	movq	24(sp),r0	/* get addresses of plt.got & reloc index */
+	pushr	$0xff		/* save R0-R7 */
+	movq	32(sp),r0	/* get addresses of plt.got & reloc index */
+	divl3	$12,(r1),r2	/* get reloc index */
+	moval	16(r0)[r2],r6	/* get location in .plt.got */
+	bicl3	$0xfffffffc,(r6),r7	/* get low 2 bits (addend) */
 	pushl	(r1)		/* push relocation index */
-	pushl	r0		/* push address of obj entry */
+	pushl	12(r0)		/* push address of obj entry */
 	calls	$2,_rtld_bind
 	movpsl	-(sp)		/* flush the instruction cache */
 	pushab	1f		/*   by issuing an */
 	rei			/*   rei. */
-1:	movl	r0, 28(sp)	/* save return address onto stack */
-	bicw3	6(fp),(r0),r0	/* does the entry mask save any additional regs */
-	popr	$0x3f		/* restore r0 to r5 (cond flags aren't modified) */
-	bneq	2f		/* yes? do it the hard way */
-	addl2	$4,sp		/* no? skip past plt.got on stack */
+1:	movl	r0,36(sp)	/* save return address onto stack */
+	tstl	r7		/* was this a call (0) or jmp (!0)? */
+	beql	2f		/*   branch if call */
+	addl2	r7,(r6)		/* preserve addend */
+	popr	$0xff		/* restore R0-R7 */
+	jbr	3f		/* jmp directly since this was a jsb/jmp */
+2:	bicw3	6(fp),(r0),r0	/* does the entry mask save any additional regs */
+	popr	$0xff		/* restore R0-R7 (cond flags not modified) */
+	bneq	4f		/* yes? do it the hard way */
+3:	addl2	$4,sp		/* no? skip past plt.got on stack */
 	addl2	$2,(sp)		/*    skip past the mask */
 	rsb			/*    and jump to it */
-2:	callg	(ap),*(sp)+	/* return value from _rtld_bind() == actual */
+4:	addl2	$4,sp
+	callg	(ap),*(sp)+	/* return value from _rtld_bind() == actual */
 	ret
