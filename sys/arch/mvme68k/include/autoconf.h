@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 1996/05/29 02:32:21 chuck Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 1996/09/12 06:14:04 thorpej Exp $	*/
 
 /*
  *
@@ -36,10 +36,10 @@
  */
 
 /* the following are from the prom/bootblocks */
-void	*bootaddr;	/* PA of boot device */
-int	bootctrllun;	/* ctrl_lun of boot device */
-int	bootdevlun;	/* dev_lun of boot device */
-int	bootpart;	/* boot partition (disk) */
+extern void	*bootaddr;	/* PA of boot device */
+extern int	bootctrllun;	/* ctrl_lun of boot device */
+extern int	bootdevlun;	/* dev_lun of boot device */
+extern int	bootpart;	/* boot partition (disk) */
 
 struct	device *bootdv;	/* boot device */
 
