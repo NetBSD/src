@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 1996/10/18 02:37:51 thorpej Exp $
+#	$NetBSD: Makefile,v 1.57 1996/10/26 08:12:09 ragge Exp $
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
 
 TZDIR=		/usr/share/zoneinfo
@@ -94,10 +94,6 @@ distribution: distrib-dirs
 	(cd etc.${MACHINE}; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    fstab.* ${DESTDIR}/etc)
 	(cd ${DESTDIR}/dev; ./MAKEDEV all)
-.if ${MACHINE} == "vax"
-	(cd etc.vax; ${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
-	    ${DESTDIR}/)
-.endif
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 
 
