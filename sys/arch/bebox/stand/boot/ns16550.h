@@ -1,4 +1,4 @@
-/*	$Id: ns16550.h,v 1.1 1998/01/16 04:17:58 sakamoto Exp $	*/
+/*	$Id: ns16550.h,v 1.2 1998/01/19 03:01:03 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -60,8 +60,8 @@ struct NS16550
 #define LSR_TEMT 0x40  /* Xmitter empty */
 #define LSR_ERR  0x80  /* Error */
 
-#define COM1	0x800003F8
-#define COM2	0x800002F8
-#define COM3	0x80000380
-#define COM4	0x80000388
-
+#define COMBASE	0x80000000
+#define	COM1	0x3F8
+#define	COM2	0x2F8
+#define	COM3	0x380
+#define	COM4	0x388

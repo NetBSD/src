@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1998/01/16 04:17:44 sakamoto Exp $	*/
+/*	$NetBSD: devopen.c,v 1.2 1998/01/19 03:01:00 sakamoto Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -60,7 +60,7 @@ devlookup(d)
 		if (dp->dv_name)
 			printf(" %s", dp->dv_name);
 	printf("\n");
-	return (ENODEV);
+	return (-1);
 }
 
 /*
