@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2002/03/25 13:47:26 shin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2002/04/27 23:24:55 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2002/03/25 13:47:26 shin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2002/04/27 23:24:55 shin Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.73 2002/03/25 13:47:26 shin Exp $");
 #include "opt_kgdb.h"
 #include "opt_rtc_offset.h"
 #include "fs_nfs.h"
+#include "opt_kloader.h"
 #include "opt_kloader_kernel_path.h"
 #include "debug_hpc.h"
 #include "opt_md.h"
@@ -171,6 +172,12 @@ static struct bootinfo bi_copy;
 struct bootinfo *bootinfo;
 char booted_kernel[128];
 extern void makebootdev(const char *);
+#ifdef KLOADER
+#if !defined(KLOADER_KERNEL_PATH)
+#define KLOADER_KERNEL_PATH	"/netbsd"
+#endif /* !KLOADER_KERNEL_PATH */
+static char kernel_path[] = KLOADER_KERNEL_PATH;
+#endif /* KLOADER */
 
 /* maps for VM objects */
 struct vm_map *exec_map;
@@ -211,7 +218,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 	 * is lower than kernel text segment, and at exiting, stack pointer
 	 * is changed to proc0.
 	 */
+#ifdef KLOADER
 	struct kloader_bootinfo kbi;
+#endif
 	extern struct user *proc0paddr;
 	extern char edata[], end[];
 #ifdef DDB
@@ -273,7 +282,9 @@ mach_init(int argc, char *argv[], struct bootinfo *bi)
 		}
 	}
 	/* copy boot parameter for kloader */
+#ifdef KLOADER
 	kloader_bootinfo_set(&kbi, argc, argv, bi, FALSE);
+#endif
 
 	/* 
 	 * CPU core Specific Function Hooks 
@@ -664,13 +675,13 @@ cpu_reboot(int howto, char *bootstr)
 		howto |= RB_HALT;
 	}
 
-#ifdef KLOADER_KERNEL_PATH
-#ifdef MEMORY_DISK_HOOKS
-#undef KLOADER_KERNEL_PATH
-#define KLOADER_KERNEL_PATH	"/mnt/netbsd"	/*XXX*/
-#endif
-	if ((howto & RB_HALT) == 0)
-		kloader_reboot_setup(KLOADER_KERNEL_PATH);
+#ifdef KLOADER
+	if ((howto & RB_HALT) == 0) {
+		if (howto & RB_STRING)
+			kloader_reboot_setup(bootstr);
+		else
+			kloader_reboot_setup(kernel_path);
+	}
 #endif
 
 	boothowto = howto;
@@ -703,7 +714,7 @@ cpu_reboot(int howto, char *bootstr)
 	if (howto & RB_HALT) {
 		printf("halted.\n");
 	} else {
-#ifdef KLOADER_KERNEL_PATH
+#ifdef KLOADER
 		kloader_reboot();
 		/* NOTREACHED */
 #endif
