@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.33 2000/12/30 15:58:34 sommerfeld Exp $	*/
+/*	$NetBSD: make.c,v 1.34 2001/01/01 15:47:37 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.33 2000/12/30 15:58:34 sommerfeld Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.34 2001/01/01 15:47:37 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.33 2000/12/30 15:58:34 sommerfeld Exp $");
+__RCSID("$NetBSD: make.c,v 1.34 2001/01/01 15:47:37 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -525,7 +525,7 @@ Make_Recheck (gn)
      * the target is made now. Otherwise archives with ... rules
      * don't work!
      */
-    if ((noExecute && !(gn->type & OP_MAKE)) ||
+    if (NoExecute(gn) ||
 	(gn->type & OP_SAVE_CMDS) || mtime == 0) {
 	if (DEBUG(MAKE)) {
 	    printf("update time to now: %s\n", Targ_FmtTime(gn->mtime));

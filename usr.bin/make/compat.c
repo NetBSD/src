@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.30 2000/04/20 11:23:25 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.31 2001/01/01 15:47:37 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: compat.c,v 1.30 2000/04/20 11:23:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.31 2001/01/01 15:47:37 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.30 2000/04/20 11:23:25 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.31 2001/01/01 15:47:37 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -235,7 +235,7 @@ CompatRunCommand (cmdp, gnp)
      * Print the command before echoing if we're not supposed to be quiet for
      * this one. We also print the command if -n given.
      */
-    if (!silent || (noExecute && !(gn->type & OP_MAKE))) {
+    if (!silent || NoExecute(gn)) {
 	printf ("%s\n", cmd);
 	fflush(stdout);
     }
@@ -244,7 +244,7 @@ CompatRunCommand (cmdp, gnp)
      * If we're not supposed to execute any commands, this is as far as
      * we go...
      */
-    if (noExecute && !(gn->type & OP_MAKE)) {
+    if (NoExecute(gn)) {
 	return (0);
     }
 
