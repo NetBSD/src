@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper.h,v 1.1 2003/06/25 09:51:36 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper.h,v 1.2 2003/07/10 08:50:44 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -95,7 +95,7 @@ _citrus_mapper_init_state(struct _citrus_mapper * __restrict cm,
 			  void * __restrict ps)
 {
 
-	_DIAGASSERT(cm && cm->cm_ops && cm->cm_ops_mo_init_state);
+	_DIAGASSERT(cm && cm->cm_ops && cm->cm_ops->mo_init_state);
 
 	(*cm->cm_ops->mo_init_state)(cm, ps);
 }
