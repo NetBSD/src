@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.54 2000/09/26 13:26:02 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.55 2000/10/11 11:10:46 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -709,6 +709,11 @@ cleanup_dist(name)
 			msg_display_add(MSG_renamed_dir, current->name,
 			    file_path);
 		} else { /* rmdir error */
+			/*
+			 * Don't worry about non-existing directories.
+			 */
+			if (saved_errno == ENOENT)
+				continue;
 			if (logging)
 				fprintf(log, "rm %s failed: %s\n",
 				    current->name, strerror(saved_errno));
