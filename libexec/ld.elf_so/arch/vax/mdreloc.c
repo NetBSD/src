@@ -44,8 +44,8 @@ _rtld_relocate_nonplt_objects(obj, dodebug)
 			if (*where != tmp)
 				*where = tmp;
 			rdbg(dodebug, ("32/GLOB_DAT %s in %s --> %p in %s",
-			    defobj->strtab + def->st_name, obj->path,
-			    (void *)*where, defobj->path));
+			    obj->strtab + obj->symtab[symnum].st_name,
+			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):	/* word32 B + A */
