@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.13 2001/11/15 09:48:18 lukem Exp $ */
+/*	$NetBSD: ses.c,v 1.13.10.1 2003/06/16 12:42:44 grant Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.13 2001/11/15 09:48:18 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.13.10.1 2003/06/16 12:42:44 grant Exp $");
 
 #include "opt_scsi.h"
 
@@ -1405,7 +1405,7 @@ ses_encode(char *b, int amt, uint8_t *ep, int elt, int elm, SesComStat *sp)
  */
 
 static int safte_getconfig(ses_softc_t *);
-static int safte_rdstat(ses_softc_t *, int);;
+static int safte_rdstat(ses_softc_t *, int);
 static int set_objstat_sel(ses_softc_t *, ses_objstat *, int);
 static int wrbuf16(ses_softc_t *, uint8_t, uint8_t, uint8_t, uint8_t, int);
 static void wrslot_stat(ses_softc_t *, int);
@@ -2118,7 +2118,7 @@ safte_rdstat(ses_softc_t *ssc, int slpflg)
 		ssc->ses_objmap[oid].encstat[0] = SES_OBJSTAT_NOTAVAIL;
 		ssc->ses_objmap[oid].encstat[1] = 0;
 		ssc->ses_objmap[oid].encstat[2] = sdata[r];
-		ssc->ses_objmap[oid].encstat[3] = 0;;
+		ssc->ses_objmap[oid].encstat[3] = 0;
 		ssc->ses_objmap[oid++].svalid = 1;
 		r++;
 	}
