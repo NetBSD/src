@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.81 1999/11/20 17:43:15 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.82 1999/11/21 15:49:33 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1117,7 +1117,7 @@ lib/libc/net/inet_pton.c			1.14
 
   Do proper overflow checking of IPv4 addresses, fixing PR#8314.
 
-usr.sbin/mountd/mountd.c			1.58 (via patch)
+usr.sbin/mountd/mountd.c			1.58 via patch
 
   Avoid spurious inaccessibility of exported file systems while
   mountd is restarted or told to reload the exports file, fixing
@@ -1130,7 +1130,7 @@ usr.sbin/rwhod/rwhod.c				1.16
 
 usr.sbin/iostat/iostat.c			1.18
 
-  Truncate device names at 7, not at 4 chars (so raid0 et al comes
+  Truncate device names at 7, not at 3 chars (so raid0 et al comes
   out ok).
 
 sys/arch/mac68k/dev/zs.c			1.32
@@ -1150,3 +1150,55 @@ lib/libc/gen/vis.c				1.14
 usr.sbin/ypserv/ypinit/Makefile.yp		1.9
 
   Sort maps before makedbm. Can speed up large maps over tenfold.
+
+sys/arch/mac68k/dev/adb.c			1.28,1.30-1.32 via patch
+sys/arch/mac68k/dev/adb_direct.c	 	1.26-1.33 via patch
+sys/arch/mac68k/dev/adbsys.c	 		1.41-1.42
+sys/arch/mac68k/dev/aed.c	 		1.8
+sys/arch/mac68k/dev/ite.c	 		1.52
+sys/arch/mac68k/dev/pm_direct.c	 		1.10
+
+  Clean up the ADB driver, and eliminate duplicate keystrokes under
+  heavy load, fixing PR#7870.
+
+sys/dev/ic/aic7xxx.c				1.36
+
+  Add a brief delay after resetting the chip before checking to see
+  if it's done.  Trying to talk to the chip while it is unresponsive
+  can cause a "machine check" on some platforms/busses.
+
+sys/dev/ic/clmpcc.c				1.8
+
+  Fix a problem with changing baud rate to > 9600, and a problem
+  with setting the Rx FIFO threshold register.
+
+regress/sys/kern/getcwd/getcwd.c		1.4-1.5
+
+  Compensate for fix to PR#7761 (kernel now clips overly large
+  length), and add another test.
+
+sbin/fdisk/fdisk.8				1.20
+
+  Fix typo and clean up usage of commas a little.
+
+usr.sbin/mountd/mountd.c			1.56
+
+  Reorder arguments to error message so the message actually makes
+  sense.
+
+distrib/sets/lists/man/mi			1.152 via patch, 1.158
+
+  Add am-utils.info and mktemp(1).
+
+sys/arch/atari/atari/genassym.cf		1.13
+sys/arch/atari/atari/locore.s			1.64
+sys/arch/atari/atari/trap.c			1.45
+sys/arch/mvme68k/mvme68k/genassym.cf		1.15
+sys/arch/mvme68k/mvme68k/locore.s		1.56
+sys/arch/mvme68k/mvme68k/trap.c			1.33
+sys/arch/x68k/x68k/genassym.cf			1.11
+sys/arch/x68k/x68k/locore.s			patch (part of 1.51)
+sys/arch/x68k/x68k/trap.c			1.34
+
+  Fix the problem where single-step tracing of a trap instruction
+  makes the system fall into kernel debugger.
