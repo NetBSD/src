@@ -1,4 +1,4 @@
-/*	$NetBSD: idesc.c,v 1.43 1999/12/10 05:39:20 mhitch Exp $	*/
+/*	$NetBSD: idesc.c,v 1.44 2000/01/15 13:50:13 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -97,6 +97,8 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/zbusvar.h>
+
+#include <machine/cpu.h>
 
 #include "atapibus.h"
 #include "idesc.h"
