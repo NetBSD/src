@@ -1,4 +1,4 @@
-/*	$NetBSD: skey.h,v 1.4 1997/01/23 14:03:08 mrg Exp $	*/
+/*	$NetBSD: skey.h,v 1.5 1998/07/26 21:58:46 mycroft Exp $	*/
 
 /*
  * S/KEY v1.1b (skey.h)
@@ -53,25 +53,25 @@ struct mc
 };
 
 void f __ARGS ((char *x));
-int keycrunch __ARGS ((char *result, char *seed, char *passwd));
-char *btoe __ARGS ((char *engout, char *c));
-char *put8 __ARGS ((char *out, char *s));
-int etob __ARGS ((char *out, char *e));
+int keycrunch __ARGS ((char *result, const char *seed, const char *passwd));
+char *btoe __ARGS ((char *engout, const char *c));
+char *put8 __ARGS ((char *out, const char *s));
+int etob __ARGS ((char *out, const char *e));
 void rip __ARGS ((char *buf));
-int skeychallenge __ARGS ((struct skey * mp, char *name, char *ss, int sslen));
-int skeylookup __ARGS ((struct skey * mp, char *name));
+int skeychallenge __ARGS ((struct skey * mp, const char *name, char *ss, int sslen));
+int skeylookup __ARGS ((struct skey * mp, const char *name));
 int skeyverify __ARGS ((struct skey * mp, char *response));
 void sevenbit __ARGS ((char *s));
 void backspace __ARGS ((char *s));
-char *skipspace __ARGS ((char *s));
+const char *skipspace __ARGS ((const char *s));
 char *readpass __ARGS ((char *buf, int n));
 char *readskey __ARGS ((char *buf, int n));
-int skey_authenticate __ARGS ((char *));
-int skey_passcheck __ARGS ((char *, char *));
-char *skey_keyinfo __ARGS ((char *));
-int skey_haskey __ARGS ((char *));
+int skey_authenticate __ARGS ((const char *));
+int skey_passcheck __ARGS ((const char *, char *));
+char *skey_keyinfo __ARGS ((const char *));
+int skey_haskey __ARGS ((const char *));
 int getskeyprompt __ARGS ((struct skey *, char *, char *));
-int atob8 __ARGS((char *, char *));
-int btoa8 __ARGS((char *, char *));
+int atob8 __ARGS((char *, const char *));
+int btoa8 __ARGS((char *, const char *));
 int htoi __ARGS((char));
 

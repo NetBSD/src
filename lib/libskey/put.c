@@ -1,4 +1,4 @@
-/*	$NetBSD: put.c,v 1.5 1998/02/03 19:12:47 perry Exp $	*/
+/*	$NetBSD: put.c,v 1.6 1998/07/26 21:58:46 mycroft Exp $	*/
 
 /* S/KEY v1.1b (put.c)
  *
@@ -2079,7 +2079,8 @@ char Wp[2048][4] = {
  */
 char *
  btoe (engout, c)
-  char *c, *engout;
+  char *engout;
+  const char *c;
 {
   char cp[9];			/* add in room for the parity 2 bits */
   int p, i;
@@ -2119,7 +2120,7 @@ char *
 int
  etob (out, e)
   char *out;
-  char *e;
+  const char *e;
 {
   char *word;
   int i, p, v, l, low, high;
@@ -2174,7 +2175,7 @@ int
 char *
  put8 (out, s)
   char *out;
-  char *s;
+  const char *s;
 {
   sprintf (out, "%02X%02X %02X%02X %02X%02X %02X%02X",	/* XXX: sprintf (put8()) appears to be unused */
 	   s[0] & 0xff, s[1] & 0xff, s[2] & 0xff,
