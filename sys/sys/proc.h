@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.171 2003/09/13 15:55:29 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.172 2003/09/25 21:58:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -101,8 +101,10 @@ struct emul {
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
 #ifdef __HAVE_SIGINFO
-	void		(*e_sendsig) __P((struct ksiginfo *, sigset_t *));
-	void		(*e_trapsignal) __P((struct lwp *, struct ksiginfo *));
+	void		(*e_sendsig) __P((const struct ksiginfo *,
+					  const sigset_t *));
+	void		(*e_trapsignal) __P((struct lwp *,
+					     const struct ksiginfo *));
 #else
 	void		(*e_sendsig) __P((int, sigset_t *, u_long));
 	void		(*e_trapsignal) __P((struct lwp *, int, u_long));
@@ -112,7 +114,7 @@ struct emul {
 					/* Set registers before execution */
 	struct uvm_object **e_sigobject;/* shared sigcode object */
 	void		(*e_setregs) __P((struct lwp *, struct exec_package *,
-				  u_long));
+					  u_long));
 
 					/* Per-process hooks */
 	void		(*e_proc_exec) __P((struct proc *,
@@ -127,7 +129,7 @@ struct emul {
 #endif
 					/* Emulation specific sysctl */
 	int		(*e_sysctl) __P((int *, u_int , void *, size_t *,
-				void *, size_t, struct proc *));
+					 void *, size_t, struct proc *));
 					/* Specific VM fault handling */
 	int		(*e_fault) __P((struct proc *, vaddr_t, int, int));
 };
