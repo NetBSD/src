@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.41 1999/01/24 02:39:30 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.42 1999/01/31 02:29:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.41 1999/01/24 02:39:30 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.42 1999/01/31 02:29:00 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -885,7 +885,7 @@ progressmeter(flag)
 			    "%02d:%02d ETA", i / 60, i % 60);
 		}
 	}
-	(void)fwrite(buf, sizeof(char), len, ttyout);
+	(void)write(fileno(ttyout), buf, len);
 
 	if (flag == -1) {
 		(void)xsignal(SIGALRM, updateprogressmeter);
@@ -983,7 +983,7 @@ ptransfer(siginfo)
 			    "  (stalled)");
 	}
 	len += snprintf(buf + len, sizeof(buf) - len, "\n");
-	(void)fwrite(buf, sizeof(char), len, siginfo ? stderr : ttyout);
+	(void)write(siginfo ? STDERR_FILENO : fileno(ttyout), buf, len);
 #endif	/* SMALL */
 }
 
