@@ -192,8 +192,8 @@ struct sysent linux_sysent[] = {
 	    linux_sys_readlink },		/* 85 = readlink */
 	{ 1, s(struct linux_sys_uselib_args),
 	    linux_sys_uselib },			/* 86 = uselib */
-	{ 1, s(struct sys_swapon_args),
-	    sys_swapon },			/* 87 = swapon */
+	{ 1, s(struct compat_12_sys_swapon_args),
+	    compat_12_sys_swapon },		/* 87 = swapon */
 	{ 1, s(struct sys_reboot_args),
 	    sys_reboot },			/* 88 = reboot */
 	{ 3, s(struct linux_sys_readdir_args),
