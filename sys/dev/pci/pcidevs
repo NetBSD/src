@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.103 1999/02/05 22:55:19 thorpej Exp $
+$NetBSD: pcidevs,v 1.104 1999/02/14 22:38:18 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -540,6 +540,7 @@ product 3COM 3C905BT4	0x9056	3c905B 100Base-T4
 
 /* 3Dfx Interactive producs */
 product 3DFX VOODOO	0x0001	Voodoo
+product 3DFX VOODOO2	0x0002	Voodoo2
 
 /* 3D Labs products */
 product 3DLABS 300SX	0x0001	GLINT 300SX
