@@ -1,4 +1,4 @@
-/* $NetBSD: font_italic.h,v 1.2 1996/06/03 21:35:12 mark Exp $ */
+/*	$NetBSD: font_italic.h,v 1.3 1997/10/14 11:45:32 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
