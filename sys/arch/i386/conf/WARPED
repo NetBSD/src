@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.12 1996/11/16 01:16:47 fvdl Exp $
+#	$NetBSD: WARPED,v 1.13 1996/11/28 03:15:36 thorpej Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -91,16 +91,19 @@ config		netbsd	root on sd0a swap on sd0b and sd1b
 #options	GENERIC
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
+options 	PCIVERBOSE	# verbose PCI device messages
+
 mainbus0 at root
 
-isa0	at mainbus0
-#eisa0	at mainbus0
-pci0	at mainbus0
+pci0	at mainbus0 bus ?
+
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+
+isa*	at pcib?			# ISA on PCI-ISA bridge
+isa*	at mainbus0			# all other ISA
 
 #apm0	at mainbus0			# Advanced power management
-
-#ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-#pci*	at ppb? bus ?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 

@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.34 1996/11/16 01:16:39 fvdl Exp $
+#	$NetBSD: DISKLESS,v 1.35 1996/11/28 03:15:13 thorpej Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -89,14 +89,18 @@ config		netbsd	root on nfs swap on nfs
 
 mainbus0 at root
 
-isa0	at mainbus0
-eisa0	at mainbus0
 pci0	at mainbus0 bus ?
-
-#apm0	at mainbus0			# Advanced power management
+eisa0	at mainbus0
 
 #ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 #pci*	at ppb? bus ?
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+
+isa*	at pcib?			# ISA on PCI-ISA bridge
+isa*	at mainbus0			# all other ISA
+
+#apm0	at mainbus0			# Advanced power management
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 

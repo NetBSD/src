@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.77 1996/08/25 23:39:31 jtk Exp $
+#	$NetBSD: files.i386,v 1.78 1996/11/28 03:15:39 thorpej Exp $
 #
 # new style config file for i386 architecture
 #
@@ -66,6 +66,16 @@ file	arch/i386/i386/mainbus.c	mainbus
 include "../../../dev/pci/files.pci"
 file	arch/i386/pci/pci_machdep.c	pci
 file	arch/i386/pci/pci_compat.c	pci	# XXX compatibility
+
+# PCI-Host bridge chipsets
+device	pchb
+attach	pchb at pci
+file	arch/i386/pci/pchb.c		pchb
+
+# PCI-ISA bridges
+device	pcib: isabus
+attach	pcib at pci
+file	arch/i386/pci/pcib.c		pcib
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers

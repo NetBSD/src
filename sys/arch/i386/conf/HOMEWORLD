@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.6 1996/11/16 01:16:42 fvdl Exp $
+#	$NetBSD: HOMEWORLD,v 1.7 1996/11/28 03:15:27 thorpej Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -89,11 +89,17 @@ config		netbsd root on sd0a swap on sd0b and sd1b
 #options	GENERIC
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
+options 	PCIVERBOSE	# verbose PCI device messages
+
 mainbus0 at root
 
-isa0	at mainbus0
-#eisa0	at mainbus0
 pci0	at mainbus0 bus ?
+
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+
+isa*	at pcib?			# ISA on PCI-ISA bridge
+isa*	at mainbus0			# all other ISA
 
 #apm0	at mainbus0			# Advanced power management
 
