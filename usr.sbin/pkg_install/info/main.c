@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.28 2002/06/09 13:23:45 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2002/06/09 14:14:50 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.28 2002/06/09 13:23:45 yamt Exp $");
+__RCSID("$NetBSD: main.c,v 1.29 2002/06/09 14:14:50 yamt Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: main.c,v 1.28 2002/06/09 13:23:45 yamt Exp $");
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "aBbcDde:fFhIikLl:mnpqRrsSvV";
+static const char Options[] = "aBbcDde:fFhIikLl:mnpqRrsSvV";
 
 int     Flags = 0;
 Boolean AllInstalled = FALSE;

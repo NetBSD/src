@@ -1,11 +1,11 @@
-/*	$NetBSD: show.c,v 1.22 2002/06/09 03:32:45 yamt Exp $	*/
+/*	$NetBSD: show.c,v 1.23 2002/06/09 14:14:50 yamt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-__RCSID("$NetBSD: show.c,v 1.22 2002/06/09 03:32:45 yamt Exp $");
+__RCSID("$NetBSD: show.c,v 1.23 2002/06/09 14:14:50 yamt Exp $");
 #endif
 #endif
 
@@ -74,7 +74,7 @@ typedef struct show_t {
  * The entries in this table must be ordered the same as
  * pl_ent_t constants
  */
-static show_t showv[] = {
+static const show_t showv[] = {
 	{PLIST_FILE, "%s", "\tFile: %s"},
 	{PLIST_CWD, "@cwd %s", "\tCWD to: %s"},
 	{PLIST_CMD, "@exec %s", "\tEXEC '%s'"},
