@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: sram.c,v 1.2 1996/05/12 20:49:57 oki Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -55,12 +55,12 @@ int sramdebug = SRAM_DEBUG_IOCTL;
  *  functions for probeing.
  */
 /* ARGSUSED */
+void
 sramattach(num)
 	int num;
 {
 	sram_softc.flags = 0;
 	printf("sram0: 16k bytes accessible\n");
-	return (1);
 }
 
 
@@ -120,23 +120,23 @@ sramioctl (dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct sram_softc *su = &sram_softc;
 	int error = 0;
 	struct sram_io *sram_io;
 	register char *sramtop = IODEVbase->io_sram;
 
 #ifdef DEBUG
 	if (sramdebug & SRAM_DEBUG_IOCTL)
-		printf ("Sram ioctl cmd=%x\n",cmd);
+		printf("Sram ioctl cmd=%lx\n", cmd);
 #endif
 	sram_io = (struct sram_io *)data;
 
 	switch (cmd) {
 	case SIOGSRAM:
 #ifdef DEBUG
-		if (sramdebug & SRAM_DEBUG_IOCTL)
-    			printf ("Sram ioctl SIOGSRAM address=%x\n",data);
-    			printf ("Sram ioctl SIOGSRAM offset=%x\n",sram_io->offset);
+		if (sramdebug & SRAM_DEBUG_IOCTL) {
+    			printf("Sram ioctl SIOGSRAM address=%p\n", data);
+    			printf("Sram ioctl SIOGSRAM offset=%x\n", sram_io->offset);
+		}
 #endif
 		if (sram_io == NULL ||
 		    sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
@@ -145,9 +145,10 @@ sramioctl (dev, cmd, data, flag, p)
 		break;
 	case SIOPSRAM:
 #ifdef DEBUG
-		if (sramdebug & SRAM_DEBUG_IOCTL)
-    			printf ("Sram ioctl SIOSSRAM address=%x\n",data);
-    			printf ("Sram ioctl SIOSSRAM offset=%x\n",sram_io->offset);
+		if (sramdebug & SRAM_DEBUG_IOCTL) {
+    			printf("Sram ioctl SIOSSRAM address=%p\n", data);
+    			printf("Sram ioctl SIOSSRAM offset=%x\n", sram_io->offset);
+		}
 #endif
 		if (sram_io == NULL ||
 		    sram_io->offset + SRAM_IO_SIZE > SRAM_SIZE)
@@ -160,5 +161,5 @@ sramioctl (dev, cmd, data, flag, p)
 		error = EINVAL;
 		break;
 	}
-	return(error);
+	return (error);
 }
