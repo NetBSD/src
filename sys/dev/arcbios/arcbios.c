@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.c,v 1.1 2001/07/08 19:58:02 thorpej Exp $	*/
+/*	$NetBSD: arcbios.c,v 1.2 2001/07/08 22:57:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,6 +84,42 @@ arcbios_init(vaddr_t pblkva)
 
 	return (0);
 }
+
+/****************************************************************************
+ * ARC component tree walking routines.
+ ****************************************************************************/
+
+static void
+arcbios_subtree_walk(struct arcbios_component *node,
+    void (*func)(struct arcbios_component *, struct arcbios_treewalk_context *),
+    struct arcbios_treewalk_context *atc)
+{
+
+	for (node = (*ARCBIOS->GetChild)(node);
+	     node != NULL && atc->atc_terminate == 0;
+	     node = (*ARCBIOS->GetPeer)(node)) {
+		(*func)(node, atc);
+		if (atc->atc_terminate)
+			return;
+		arcbios_subtree_walk(node, func, atc);
+	}
+}
+
+void
+arcbios_tree_walk(void (*func)(struct arcbios_component *,
+    struct arcbios_treewalk_context *), void *cookie)
+{
+	struct arcbios_treewalk_context atc;
+
+	atc.atc_cookie = cookie;
+	atc.atc_terminate = 0;
+
+	arcbios_subtree_walk(NULL, func, &atc);
+}
+
+/****************************************************************************
+ * Bootstrap console routines.
+ ****************************************************************************/
 
 int
 arcbios_cngetc(dev_t dev)
