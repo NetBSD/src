@@ -1,13 +1,23 @@
-#	$NetBSD: Makefile,v 1.4 1999/02/13 02:54:52 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2000/12/08 20:15:19 jdolecek Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/sunos $S/arch/${MACHINE_ARCH}/${MACHINE_ARCH}
 
-CPPFLAGS+= -DCOMPAT_SUNOS
+CPPFLAGS+= -DCOMPAT_SUNOS -DSYSVSEM -DSYSVMSG -DSYSVSHM -nostdinc
+AFLAGS=         -x assembler-with-cpp -traditional-cpp -D_LOCORE \
+                -I. -I${S}
+
 MKMAN=	no
 KMOD=	compat_sunos
-SRCS=	sunos_exec.c sunos_ioctl.c sunos_misc.c sunos_syscalls.c \
-	sunos_sysent.c sunos_machdep.c lkminit_emul.c
+
+# common source files
+SRCS+=	lkminit_emul.c
+SRCS+=	sunos_exec.c sunos_ioctl.c sunos_misc.c sunos_syscalls.c sunos_sysent.c
+
+# MD files
+.if ${MACHINE_ARCH} == "m68k"
+SRCS+=	sunos_sigcode.s
+.endif
 
 .include <bsd.kmod.mk>
