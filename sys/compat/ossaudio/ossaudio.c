@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.33 2001/01/18 20:28:28 jdolecek Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.34 2001/05/09 21:50:50 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -403,8 +403,9 @@ oss_ioctl_audio(p, uap, retval)
 			goto out;
 		setblocksize(fp, &tmpinfo, p);
 		bufinfo.fragsize = tmpinfo.blocksize;
-		bufinfo.fragments = /* XXX */
-		bufinfo.fragstotal = tmpinfo.play.buffer_size / bufinfo.fragsize;
+		bufinfo.fragments = tmpinfo.hiwat - tmpinfo.play.seek / 
+						    bufinfo.fragsize;
+		bufinfo.fragstotal = tmpinfo.hiwat;
 		bufinfo.bytes = tmpinfo.play.buffer_size;
 		DPRINTF(("oss_sys_ioctl: SNDCTL_DSP_GETxSPACE = %d %d %d %d\n",
 			 bufinfo.fragsize, bufinfo.fragments, 
