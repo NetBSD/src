@@ -1,15 +1,13 @@
-# $NetBSD: md.bebox,v 1.21 2003/09/24 05:00:16 matt Exp $
+# $NetBSD: md.bebox,v 1.22 2003/10/24 06:49:37 matt Exp $
 ./usr/include/bebox	comp-c-include
 ./usr/include/bebox/ansi.h	comp-c-include
 ./usr/include/bebox/aout_machdep.h	comp-c-include
 ./usr/include/bebox/asm.h	comp-c-include
+./usr/include/bebox/atomic.h	comp-c-include
 ./usr/include/bebox/bootinfo.h	comp-c-include
 ./usr/include/bebox/bswap.h	comp-c-include
-./usr/include/bebox/bus.h	comp-c-include
 ./usr/include/bebox/cdefs.h	comp-c-include
 ./usr/include/bebox/cpu.h	comp-c-include
-./usr/include/bebox/cpufunc.h	comp-c-include
-./usr/include/bebox/db_machdep.h	comp-c-include
 ./usr/include/bebox/disklabel.h	comp-c-include
 ./usr/include/bebox/elf_machdep.h	comp-c-include
 ./usr/include/bebox/endian.h	comp-c-include
@@ -25,9 +23,7 @@
 ./usr/include/bebox/int_mwgwtypes.h	comp-c-include
 ./usr/include/bebox/int_types.h	comp-c-include
 ./usr/include/bebox/intr.h	comp-c-include
-./usr/include/bebox/ipkdb.h	comp-c-include
 ./usr/include/bebox/kcore.h	comp-c-include
-./usr/include/bebox/kgdb.h	comp-c-include
 ./usr/include/bebox/limits.h	comp-c-include
 ./usr/include/bebox/lock.h	comp-c-include
 ./usr/include/bebox/math.h	comp-c-include
@@ -36,10 +32,8 @@
 ./usr/include/bebox/param.h	comp-c-include
 ./usr/include/bebox/pcb.h	comp-c-include
 ./usr/include/bebox/pccons.h	comp-c-include
-./usr/include/bebox/pio.h	comp-c-include
 ./usr/include/bebox/pmap.h	comp-c-include
 ./usr/include/bebox/pmc.h	comp-c-include
-./usr/include/bebox/powerpc.h	comp-c-include
 ./usr/include/bebox/proc.h	comp-c-include
 ./usr/include/bebox/profile.h	comp-c-include
 ./usr/include/bebox/psl.h	comp-c-include
