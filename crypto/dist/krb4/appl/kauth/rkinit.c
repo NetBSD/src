@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,8 @@
 
 #include "kauth.h"
 
-RCSID("$Id: rkinit.c,v 1.2 2002/07/20 08:36:22 grant Exp $");
+__RCSID("$KTH-KRB: rkinit.c,v 1.25 2002/04/26 12:23:26 joda Exp $"
+      "$NetBSD: rkinit.c,v 1.3 2002/09/12 12:33:11 joda Exp $");
 
 static struct in_addr *
 getalladdrs (char *hostname, unsigned *count)
