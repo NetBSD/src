@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.bigram.c,v 1.7 2000/03/20 19:17:35 jdolecek Exp $	*/
+/*	$NetBSD: locate.bigram.c,v 1.8 2000/03/22 21:45:02 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.bigram.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: locate.bigram.c,v 1.7 2000/03/20 19:17:35 jdolecek Exp $");
+__RCSID("$NetBSD: locate.bigram.c,v 1.8 2000/03/22 21:45:02 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: locate.bigram.c,v 1.7 2000/03/20 19:17:35 jdolecek Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/param.h>			/* for MAXPATHLEN */
 
 int	main __P((int, char **));
