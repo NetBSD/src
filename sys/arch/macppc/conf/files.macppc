@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.20 1999/06/07 20:31:31 thorpej Exp $
+#	$NetBSD: files.macppc,v 1.21 1999/07/12 17:48:26 tsubai Exp $
 #
 # macppc-specific configuration info
 
@@ -125,6 +125,10 @@ file arch/macppc/dev/akbd.c			akbd needs-flag
 device ams: wsmousedev
 attach ams at adb
 file arch/macppc/dev/ams.c			ams
+
+device abtn
+attach abtn at adb
+file arch/macppc/dev/abtn.c			abtn
 
 device nvram
 attach nvram at obio
