@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.23 2000/06/26 01:28:42 cgd Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.24 2000/06/27 15:43:38 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -592,3 +592,82 @@ usr.sbin/portmap/portmap.8			1.11
   While there, add a new flag, -p (paranoid) which also disallows
   indirect calls to a small number of other services, including
   key parts of NFS and NIS.
+
+sys/arch/i386/conf/HOMEWORLD			patch
+
+  Update to reflect reality.
+
+sys/arch/i386/i386/apm.c			1.42 via patch
+sys/arch/i386/isa/clock.c			1.62 via patch
+sys/arch/i386/include/cpu.h			1.57 via patch
+
+  Reinitialize clock after hibernation, something which seems to be
+  required on some laptops.  Fixes PR#4808.
+
+sys/dev/pci.c					1.45 via patch
+
+  If the 'PCI_CONFIG_DUMP' option is defined, print a verbose dump
+  of all PCI devices' configuration space.
+
+sbin/ldconfig/ldconfig.c			1.30
+
+  Do not treat non-existance of directories under /emul/aout as
+  errors.
+
+sys/arch/sparc/stand/common/dvma.c		patch
+
+  Fix lossage of the bootstrap program on sun4 machines, at least
+  when booting from disk.  Fixes PR#9906.
+
+domestic/usr.sbin/kerberos/kerberos.c		1.7
+
+  Fix several denial-of-service problems in the KDC.
+
+usr.sbin/wiconfig/wiconfig.c			1.5-1.6
+
+  Add support for the documented but unimplemented -a flag.
+  Clean up argument parsing.
+
+distrib/mac68k/instkernel/ramdisk/Makefile	1.4,1.6
+
+  Make mac68k ramdisk build with or without obj dirs.
+
+etc/etc.mac68k/Makefile.inc			1.5
+
+  Build and install release notes under ``make release''.
+
+sys/arch/mac68k/conf/GENERIC			1.101
+
+  Enable rnd pseudo-device in mac68k GENERIC kernel.
+
+sys/arch/mac68k/nubus/if_ae_nubus.c		1.29
+sys/arch/mac68k/nubus/if_sn_nubus.c		1.20
+
+  Add support for the Macintosh LC Ethernet Adapter.  This was
+  previously erroneously recognized as an 8390-based card, where
+  in fact it is using the 83932 (SONIC) controller.
+
+sys/sys/lockf.h					1.8
+sys/kern/vfs_lockf.c				1.15-1.16
+
+  Fix several problems with byte-range locks, including the one
+  reported in PR#3860.
+
+lib/libbz2/decompress.c				1.9
+
+  Pull in decompression error checking from bzip2-1.0.0.
+  Fixes PR#8237.
+
+distrib/notes/alpha/install			1.17
+
+  Fix link to netboot web page.
+
+sys/kern/vfs_syscalls.c				1.158
+
+  Do not leave a vnode around when trying (and failing) to mount
+  a file system with securelevel 2.  A second attempt would freeze
+  the system.
+
+sys/arch/mac68k/dev/zs.c			1.33
+
+  Correct a bug in handling of CLOCAL and MDMBUF flags.
