@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.24 2001/05/31 16:30:04 thorpej Exp $	*/
+/*	$NetBSD: if_media.h,v 1.25 2001/06/30 17:53:59 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -177,10 +177,10 @@ int	ifmedia_baudrate __P((int));
 #define	IFM_10_FL	13		/* 10BaseFL - Fiber */
 #define	IFM_1000_LX	14		/* 1000baseLX - single-mode fiber */
 #define	IFM_1000_CX	15		/* 1000baseCX - 150ohm STP */
-#define	IFM_1000_TX	16		/* 1000baseTX - 4 pair cat 5 */
+#define	IFM_1000_T	16		/* 1000baseT - 4 pair cat 5 */
 #define	IFM_HPNA_1	17		/* HomePNA 1.0 (1Mb/s) */
 
-#define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseTX) */
+#define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 
 /*
  * Token ring
@@ -350,8 +350,8 @@ struct ifmedia_description {
 	{ IFM_ETHER|IFM_1000_LX,	"1000LX" },			\
 	{ IFM_ETHER|IFM_1000_CX,	"1000baseCX" },			\
 	{ IFM_ETHER|IFM_1000_CX,	"1000CX" },			\
-	{ IFM_ETHER|IFM_1000_TX,	"1000baseTX" },			\
-	{ IFM_ETHER|IFM_1000_TX,	"1000TX" },			\
+	{ IFM_ETHER|IFM_1000_T,		"1000baseT" },			\
+	{ IFM_ETHER|IFM_1000_T,		"1000T" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HomePNA1" },			\
 	{ IFM_ETHER|IFM_HPNA_1,		"HPNA1" },			\
 									\
