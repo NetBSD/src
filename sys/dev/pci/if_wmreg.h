@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.11 2004/05/16 02:34:47 thorpej Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.12 2004/10/05 02:17:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -491,6 +491,24 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WMREG_TQC	0x0418
 
+#define	WMREG_RDFH	0x2410	/* Receive Data FIFO Head */
+
+#define	WMREG_RDFT	0x2418	/* Receive Data FIFO Tail */
+
+#define	WMREG_RDFHS	0x2420	/* Receive Data FIFO Head Saved */
+
+#define	WMREG_RDFTS	0x2428	/* Receive Data FIFO Tail Saved */
+
+#define	WMREG_TDFH	0x3410	/* Transmit Data FIFO Head */
+
+#define	WMREG_TDFT	0x3418	/* Transmit Data FIFO Tail */
+
+#define	WMREG_TDFHS	0x3420	/* Transmit Data FIFO Head Saved */
+
+#define	WMREG_TDFTS	0x3428	/* Transmit Data FIFO Tail Saved */
+
+#define	WMREG_TDFPC	0x3430	/* Transmit Data FIFO Packet Count */
+
 #define	WMREG_OLD_TBDAL	0x0420	/* Transmit Descriptor Base Lo */
 #define	WMREG_TBDAL	0x3800
 
@@ -522,6 +540,14 @@ struct livengood_tcpip_ctxdesc {
 #define	WM_VLAN_TABSIZE	128
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
+#define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
+#define	PBA_ADDR_SHIFT	7		/* KB -> quadwords */
+#define	PBA_16K		0x0010		/* 16K, default Tx allocation */
+#define	PBA_22K		0x0016
+#define	PBA_24K		0x0018
+#define	PBA_30K		0x001e
+#define	PBA_40K		0x0028
+#define	PBA_48K		0x0030		/* 48K, default Rx allocation */
 
 #define	WMREG_TXDMAC	0x3000	/* Transfer DMA Control */
 #define	TXDMAC_DPP	(1U << 0)	/* disable packet prefetch */
