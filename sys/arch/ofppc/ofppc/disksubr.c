@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 2001/08/26 02:47:41 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 2002/09/18 01:44:29 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -93,14 +93,16 @@ get_netbsd_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp->b_blkno = bno + LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags |= B_READ;
-	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) /
+		lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp))
 		goto done;
 
 	for (dlp = (struct disklabel *)bp->b_data;
-	     dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize - sizeof (*dlp));
+	     dlp <= (struct disklabel *)(bp->b_data + lp->d_secsize -
+					 sizeof (*dlp));
 	     dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC
 		    && dlp->d_magic2 == DISKMAGIC
@@ -148,7 +150,8 @@ mbr_to_label(dev_t dev, void (*strat)(struct buf *), daddr_t bno,
 	bp->b_blkno = bno;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags |= B_READ;
-	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) /
+		lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp))
@@ -160,45 +163,46 @@ mbr_to_label(dev_t dev, void (*strat)(struct buf *), daddr_t bno,
 	/* Extract info from MBR partition table */
 	mp = (struct mbr_partition *)(bp->b_data + MBR_PARTOFF);
 	for (i = 0; i < NMBRPART; i++, mp++) {
-		if (get_long(&mp->mbrp_size)) {
-			switch (mp->mbrp_typ) {
-			case MBR_PTYPE_EXT:
-				if (*pnpart < MAXPARTITIONS) {
-					pp = lp->d_partitions + *pnpart;
-					memset(pp, 0, sizeof *pp);
-					pp->p_size = get_long(&mp->mbrp_size);
-					pp->p_offset = off + get_long(&mp->mbrp_start);
-					++*pnpart;
-				}
-				found = mbr_to_label(dev, strat,
-				    off + get_long(&mp->mbrp_start),
-				    lp, pnpart, osdep, off);
-				if (found)
-					goto done;
-				break;
-#ifdef COMPAT_386BSD_MBRPART
-			case MBR_PTYPE_386BSD:
-				printf("WARNING: old BSD partition ID!\n");
-				/* FALLTHROUGH */
-#endif
-			case MBR_PTYPE_NETBSD:
-				/* Found the real NetBSD partition, use it */
-				osdep->cd_start = off + get_long(&mp->mbrp_start);
-				found = get_netbsd_label(dev, strat, lp,
-				    osdep->cd_start);
-				if (found)
-					goto done;
-				/* FALLTHROUGH */
-			default:
-				if (*pnpart < MAXPARTITIONS) {
-					pp = lp->d_partitions + *pnpart;
-					memset(pp, 0, sizeof *pp);
-					pp->p_size = get_long(&mp->mbrp_size);
-					pp->p_offset = off + get_long(&mp->mbrp_start);
-					++*pnpart;
-				}
-				break;
+		if (get_long(&mp->mbrp_size) == 0) {
+			continue;
+		}
+		switch (mp->mbrp_typ) {
+		case MBR_PTYPE_EXT:
+			if (*pnpart < MAXPARTITIONS) {
+				pp = lp->d_partitions + *pnpart;
+				memset(pp, 0, sizeof *pp);
+				pp->p_size = get_long(&mp->mbrp_size);
+				pp->p_offset = off + get_long(&mp->mbrp_start);
+				++*pnpart;
 			}
+			found = mbr_to_label(dev, strat,
+			    off + get_long(&mp->mbrp_start),
+			    lp, pnpart, osdep, off);
+			if (found)
+				goto done;
+			break;
+#ifdef COMPAT_386BSD_MBRPART
+		case MBR_PTYPE_386BSD:
+			printf("WARNING: old BSD partition ID!\n");
+			/* FALLTHROUGH */
+#endif
+		case MBR_PTYPE_NETBSD:
+			/* Found the real NetBSD partition, use it */
+			osdep->cd_start = off + get_long(&mp->mbrp_start);
+			found = get_netbsd_label(dev, strat, lp,
+			    osdep->cd_start);
+			if (found)
+				goto done;
+			/* FALLTHROUGH */
+		default:
+			if (*pnpart < MAXPARTITIONS) {
+				pp = lp->d_partitions + *pnpart;
+				memset(pp, 0, sizeof *pp);
+				pp->p_size = get_long(&mp->mbrp_size);
+				pp->p_offset = off + get_long(&mp->mbrp_start);
+				++*pnpart;
+			}
+			break;
 		}
 	}
 done:
@@ -289,6 +293,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	/*
 	 * Try to re-read a disklabel, in case he changed the MBR.
 	 */
+
 	label = *lp;
 	readdisklabel(dev, strat, &label, osdep);
 	if (osdep->cd_start < 0)
@@ -299,11 +304,12 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	bp->b_dev = dev;
 
 	bp->b_blkno = osdep->cd_start + LABELSECTOR;
-	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / (lp->d_secsize / DEV_BSIZE) /
+		lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags |= B_WRITE;
 
-	memcpy((caddr_t)bp->b_data, (caddr_t)lp, sizeof *lp);
+	memcpy(bp->b_data, lp, sizeof *lp);
 
 	(*strat)(bp);
 	error = biowait(bp);
