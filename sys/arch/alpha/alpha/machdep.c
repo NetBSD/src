@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.123 1998/05/25 05:16:42 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.124 1998/06/06 20:39:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 1998/05/25 05:16:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 1998/06/06 20:39:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1295,7 +1295,12 @@ haltsys:
 	printf("\n");
 #endif
 
-	/* Finally, halt/reboot the system. */
+	/* Finally, powerdown/halt/reboot the system. */
+	if ((howto && RB_POWERDOWN) == RB_POWERDOWN &&
+	    platform.powerdown != NULL) {
+		(*platform.powerdown)();
+		printf("WARNING: powerdown failed!\n");
+	}
 	printf("%s\n\n", howto & RB_HALT ? "halted." : "rebooting...");
 	prom_halt(howto & RB_HALT);
 	/*NOTREACHED*/
