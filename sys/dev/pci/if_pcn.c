@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.14 2002/10/02 16:51:27 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.15 2002/10/21 23:38:10 fair Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.14 2002/10/02 16:51:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.15 2002/10/21 23:38:10 fair Exp $");
 
 #include "bpfilter.h"
 
@@ -1949,7 +1949,7 @@ pcn_79c970_mediainit(struct pcn_softc *sc)
 {
 	const char *sep = "";
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, pcn_79c970_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, pcn_79c970_mediachange,
 	    pcn_79c970_mediastatus);
 
 #define	ADD(s, m, d)							\
