@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2004/05/03 03:20:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.30 2004/06/18 20:26:51 thorpej Exp $
 
 HOSTLIB=	nbcompat
 
@@ -59,7 +59,7 @@ defs.mk: config.cache
 
 # Run by hand, then "configure" script committed:
 regen:
-	cd ${.CURDIR} && ${TOOLDIR}/bin/nbautoconf
+	cd ${.CURDIR} && ${TOOLDIR}/bin/${_TOOL_PREFIX}autoconf
 
 include/.stamp:
 	mkdir -p include/sys include/machine include/rpc
