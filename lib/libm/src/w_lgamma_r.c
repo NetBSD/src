@@ -15,7 +15,7 @@
  * wrapper double lgamma_r(double x, int *signgamp)
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 
 #ifdef __STDC__

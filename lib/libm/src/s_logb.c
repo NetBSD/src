@@ -17,7 +17,7 @@
  * Use ilogb instead.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double one = 1.0;
