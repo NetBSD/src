@@ -1,5 +1,5 @@
-/*	$NetBSD: altq_qop.h,v 1.2 2001/08/16 07:48:12 itojun Exp $	*/
-/*	$KAME: altq_qop.h,v 1.4 2000/10/18 09:15:18 kjc Exp $	*/
+/*	$NetBSD: altq_qop.h,v 1.3 2002/03/05 04:11:53 itojun Exp $	*/
+/*	$KAME: altq_qop.h,v 1.5 2002/02/12 10:14:01 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -124,8 +124,7 @@ struct fltrinfo {
 	int			dontwarn;	/* supress warning msg */
 };
 
-int DoCommand(char *infile, FILE *infp);
-
+int do_command(FILE *infp);
 int qcmd_enable(const char *ifname);
 int qcmd_disable(const char *ifname);
 int qcmd_delete_if(const char *ifname);
