@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0.c,v 1.7 1998/08/05 03:59:43 mark Exp $	*/
+/*	$NetBSD: crt0.c,v 1.8 1999/01/22 11:45:16 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997 Mark Brinicombe
@@ -41,7 +41,8 @@
 	__syscall(SYS_mmap, (addr), (len), (prot), (flags),	\
 	(fd), 0, (off_t)(off)) 
 
-void	__start __P((int, char *[], char *[], struct ps_strings *));
+extern	void		start __P((void)) asm("start");
+	void		__start __P((int, char *[], char *[]));
 
 __asm("
 	.text
@@ -50,8 +51,9 @@ __asm("
 start:
 	/* Get ps_strings pointer from kernel */
 	teq	r10, #0
-	moveq	r3, r0
-	movne	r3, #0
+	ldr	r3, Lps_strings
+	movne	r0, #0
+	str	r0, [r3]
 
 	/* Get argc, argv, and envp from stack */
 	ldr	r0, [sp, #0x0000]
@@ -60,24 +62,29 @@ start:
 	add	r2, r2, #0x0004
 
 	b	___start	
+
+	.align	0
+Lps_strings:
+	.word	___ps_strings
 ");
 
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: crt0.c,v 1.8 1999/01/22 11:45:16 mycroft Exp $");
+#endif /* LIBC_SCCS and not lint */
+
 void
-__start(argc, argv, envp, ps_strings)
+__start(argc, argv, envp)
 	int argc;
 	char *argv[];
 	char *envp[];
-	struct ps_strings *ps_strings;		/* NetBSD extension */
 {
+	char *ap;
 
  	environ = envp;
 
-	if (ps_strings != (struct ps_strings *)0)
-		__ps_strings = ps_strings;
-
-	if (argv[0])
-		if ((__progname = _strrchr(argv[0], '/')) == NULL)
-			__progname = argv[0];
+	if ((ap = argv[0]))
+		if ((__progname = _strrchr(ap, '/')) == NULL)
+			__progname = ap;
 		else
 			++__progname;
 
@@ -86,7 +93,7 @@ __start(argc, argv, envp, ps_strings)
 #ifdef	stupid_gcc
 	if (&_DYNAMIC)
 #else
-	if (({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }))
+	if ( ({volatile caddr_t x = (caddr_t)&_DYNAMIC; x; }) )
 #endif
 		__load_rtld(&_DYNAMIC);
 #endif	/* DYNAMIC */
@@ -97,13 +104,12 @@ __start(argc, argv, envp, ps_strings)
 #endif	/* MCRT0 */
 
 __asm("__callmain:");		/* Defined for the benefit of debuggers */
-
 	exit(main(argc, argv, envp));
 }
 
 #ifndef ntohl
 inline in_addr_t
-ntohl(x)
+__crt0_swap(x)
 	in_addr_t x;
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -115,6 +121,9 @@ ntohl(x)
 	return x;
 #endif	/* BYTE_ORDER */
 }
+
+#define	ntohl(x)	__crt0_swap(x)
+#define	htonl(x)	__crt0_swap(x)
 #endif	/* ntohl */
 
 #ifdef	DYNAMIC
@@ -131,5 +140,9 @@ ___syscall:
 #include "common.c"
 
 #ifdef MCRT0
-__asm(".text; .align 0; eprol:");
+__asm("
+	.text
+	.align 0
+eprol:
+");
 #endif	/* MCRT0 */
