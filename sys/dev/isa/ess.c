@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.11 1998/08/09 02:54:50 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.12 1998/08/09 03:48:42 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -2194,7 +2194,7 @@ ess_srtotc(rate)
 	u_int tc;
 
 	/* The following formulae are from the ESS data sheet. */
-	if (rate < 22050)
+	if (rate <= 22050)
 		tc = 128 - 397700L / rate;
 	else
 		tc = 256 - 795500L / rate;
