@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.11 1996/03/15 03:03:36 paulus Exp $";
+static char rcsid[] = "$Id: auth.c,v 1.12 1996/03/23 05:43:11 scottr Exp $";
 #endif
 
 #include <stdio.h>
@@ -164,7 +164,7 @@ link_down(unit)
         if (protp->protocol != PPP_LCP && protp->lowerdown != NULL)
 	    (*protp->lowerdown)(unit);
         if (protp->protocol < 0xC000 && protp->close != NULL)
-	    (*protp->close)(unit);
+	    (*protp->close)(unit, "LCP link down");
     }
     num_np_open = 0;
     num_np_up = 0;
