@@ -1,4 +1,4 @@
-/* $NetBSD: ttyflags.c,v 1.13 2003/02/14 16:21:49 grant Exp $ */
+/* $NetBSD: ttyflags.c,v 1.14 2003/07/12 14:33:55 itojun Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: ttyflags.c,v 1.13 2003/02/14 16:21:49 grant Exp $");
+__RCSID("$NetBSD: ttyflags.c,v 1.14 2003/07/12 14:33:55 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -180,36 +180,36 @@ change_ttyflags(tep)
 	/* Convert ttyent.h flags into ioctl flags. */
 	if (st & TTY_LOCAL) {
 		flags |= TIOCFLAG_CLOCAL;
-		(void)strcat(strflags, "local");
+		(void)strlcat(strflags, "local", sizeof(strflags));
 		sep++;
 	}
 	if (st & TTY_RTSCTS) {
 		flags |= TIOCFLAG_CRTSCTS;
 		if (sep++)
-			(void)strcat(strflags, "|");
-		(void)strcat(strflags, "rtscts");
+			(void)strlcat(strflags, "|", sizeof(strflags));
+		(void)strlcat(strflags, "rtscts", sizeof(strflags));
 	}
 	if (st & TTY_DTRCTS) {
 		flags |= TIOCFLAG_CDTRCTS;
 		if (sep++)
-			(void)strcat(strflags, "|");
-		(void)strcat(strflags, "dtrcts");
+			(void)strlcat(strflags, "|", sizeof(strflags));
+		(void)strlcat(strflags, "dtrcts", sizeof(strflags));
 	}
 	if (st & TTY_SOFTCAR) {
 		flags |= TIOCFLAG_SOFTCAR;
 		if (sep++)
-			(void)strcat(strflags, "|");
-		(void)strcat(strflags, "softcar");
+			(void)strlcat(strflags, "|", sizeof(strflags));
+		(void)strlcat(strflags, "softcar", sizeof(strflags));
 	}
 	if (st & TTY_MDMBUF) {
 		flags |= TIOCFLAG_MDMBUF;
 		if (sep++)
-			(void)strcat(strflags, "|");
-		(void)strcat(strflags, "mdmbuf");
+			(void)strlcat(strflags, "|", sizeof(strflags));
+		(void)strlcat(strflags, "mdmbuf", sizeof(strflags));
 	}
 
 	if (strflags[0] == '\0')
-		(void)strcpy(strflags, "none");
+		(void)strlcpy(strflags, "none", sizeof(strflags));
 
 	/* Find the full device path name. */
 	(void)snprintf(path, sizeof path, "%s%s", _PATH_DEV, tep->ty_name);
