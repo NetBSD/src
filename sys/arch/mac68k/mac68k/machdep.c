@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 1997/08/07 21:30:20 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 1997/08/11 22:53:47 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -137,8 +137,8 @@
 #include <dev/cons.h>
 
 #include <machine/viareg.h>
-#include <arch/mac68k/mac68k/macrom.h>
-#include <arch/mac68k/dev/adbvar.h>
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/adbvar.h>
 #include "arp.h"
 
 /* The following is used externally (sysctl_hw) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.33 1997/06/19 17:00:02 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.34 1997/08/11 22:53:49 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -55,7 +55,7 @@
 
 #include <ufs/mfs/mfs_extern.h>
 
-#include "macrom.h"
+#include <mac68k/mac68k/macrom.h>
 
 #define PA2VA(v, t)	(t)((u_int)(v) - firstpa)
 

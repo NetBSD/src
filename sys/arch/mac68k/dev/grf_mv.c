@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.30 1997/08/03 06:42:31 scottr Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.31 1997/08/11 22:53:31 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -47,8 +47,8 @@
 #include <machine/grfioctl.h>
 #include <machine/viareg.h>
 
-#include "nubus.h"
-#include "grfvar.h"
+#include <mac68k/dev/nubus.h>
+#include <mac68k/dev/grfvar.h>
 
 static void	load_image_data __P((caddr_t data, struct image_data *image));
 

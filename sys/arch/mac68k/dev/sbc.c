@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.28 1997/06/30 05:24:35 scottr Exp $	*/
+/*	$NetBSD: sbc.c,v 1.29 1997/08/11 22:53:39 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -68,8 +68,8 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
-#include "sbcreg.h"
-#include "sbcvar.h"
+#include <mac68k/dev/sbcreg.h>
+#include <mac68k/dev/sbcvar.h>
 
 int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;

@@ -1,4 +1,4 @@
-/*	$NetBSD: adbsys.c,v 1.29 1997/08/09 20:21:45 ender Exp $	*/
+/*	$NetBSD: adbsys.c,v 1.30 1997/08/11 22:53:28 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -38,8 +38,8 @@
 #include <machine/cpu.h>
 #include <machine/viareg.h>
 
-#include <arch/mac68k/mac68k/macrom.h>
-#include "adbvar.h"
+#include <mac68k/mac68k/macrom.h>
+#include <mac68k/dev/adbvar.h>
 
 extern	struct mac68k_machine_S mac68k_machine;
 
