@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.250 2003/03/25 11:33:46 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.251 2003/05/01 14:14:46 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4224,7 +4224,11 @@ pmap_reference(pm)
 static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
 				struct segmap *sp, int vr, int vs)
 {
+
 	/* Invalidate level 2 PTP entry */
+	if (pm->pm_ctx)
+		tlb_flush_segment(VSTOVA(vr,vs), pm->pm_ctxnum,
+				  PMAP_CPUSET(pm));
 	setpgt4m(&rp->rg_seg_ptps[vs], SRMMU_TEINVALID);
 	pool_put(&L23_pool, sp->sg_pte);
 	sp->sg_pte = NULL;
@@ -4232,6 +4236,9 @@ static void pgt_lvl23_remove4m(struct pmap *pm, struct regmap *rp,
 	/* If region is now empty, remove level 2 pagetable as well */
 	if (--rp->rg_nsegmap == 0) {
 		int n = 0;
+		if (pm->pm_ctx)
+			tlb_flush_region(VRTOVA(vr), pm->pm_ctxnum,
+					 PMAP_CPUSET(pm));
 #ifdef MULTIPROCESSOR
 		/* Invalidate level 1 PTP entries on all CPUs */
 		for (; n < ncpu; n++)
