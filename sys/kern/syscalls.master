@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.90.4.2 1999/07/01 23:43:21 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.90.4.3 1999/08/02 22:16:51 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -159,7 +159,7 @@
 66	STD		{ int sys_vfork(void); }
 67	OBSOL		vread
 68	OBSOL		vwrite
-69	STD		{ int sys_sbrk(int incr); }
+69	STD		{ int sys_sbrk(intptr_t incr); }
 70	STD		{ int sys_sstk(int incr); }
 71	COMPAT_43	{ int sys_mmap(caddr_t addr, size_t len, int prot, \
 			    int flags, int fd, long pos); } ommap
