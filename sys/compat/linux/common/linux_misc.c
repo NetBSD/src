@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.10 2002/04/01 07:44:26 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.11 2002/04/01 22:14:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.10 2002/04/01 07:44:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.11 2002/04/01 22:14:39 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,8 +544,8 @@ linux_sys_msync(l, v, retval)
 }
 
 int
-linux_sys_mprotect(p, v, retval)
-	struct proc *p;
+linux_sys_mprotect(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -557,7 +557,7 @@ linux_sys_mprotect(p, v, retval)
 	unsigned long end, start = (unsigned long)SCARG(uap, start), len;
 	int prot = SCARG(uap, prot);
 	struct vm_map_entry *entry;
-	struct vm_map *map = &p->p_vmspace->vm_map;
+	struct vm_map *map = &l->l_proc->p_vmspace->vm_map;
 
 	if (start & PAGE_MASK)
 		return EINVAL;
