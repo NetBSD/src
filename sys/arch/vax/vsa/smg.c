@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.17 1999/08/27 17:49:41 ragge Exp $ */
+/*	$NetBSD: smg.c,v 1.18 1999/10/27 16:40:47 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -478,17 +478,24 @@ smgcninit(cndev)
 
 	curscr = &smg_conscreen;
 	wsdisplay_cnattach(&smg_stdscreen, &smg_conscreen, 0, 0, 0);
-	cn_tab->cn_dev = makedev(WSCONSOLEMAJOR, 0);
-#if NLKC
+	cn_tab->cn_pri = CN_INTERNAL;
+#if 0
 	lkccninit(cndev);
 	wsdisplay_set_cons_kbd(lkccngetc, nullcnpollc);
 #endif
 }
 
-int smgprobe(void);
-int
-smgprobe()
+/*
+ * Called very early to setup the glass tty as console.
+ * Because it's called before the VM system is inited, virtual memory
+ * for the framebuffer can be stolen directly without disturbing anything.
+ */
+void
+smgcnprobe(cndev)
+	struct  consdev *cndev;
 {
+	extern vaddr_t virtual_avail;
+
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
 	case VAX_BTYP_420:
@@ -496,14 +503,14 @@ smgprobe()
 		if ((vax_confdata & KA420_CFG_L3CON) ||
 		    (vax_confdata & KA420_CFG_MULTU))
 			break; /* doesn't use graphics console */
-		sm_addr = (caddr_t)vax_map_physmem(SMADDR, (SMSIZE/VAX_NBPG));
-		if (sm_addr == 0)
-			return 0;
-
-		return 1;
+		sm_addr = (caddr_t)virtual_avail;
+		virtual_avail += SMSIZE;
+		ioaccess((vaddr_t)sm_addr, SMADDR, (SMSIZE/VAX_NBPG));
+		cndev->cn_pri = CN_INTERNAL;
+		cndev->cn_dev = makedev(WSCONSOLEMAJOR, 0);
+		break;
 
 	default:
 		break;
 	}
-	return 0;
 }
