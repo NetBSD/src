@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.5 2000/06/18 07:10:23 mrg Exp $	*/
+/*	$NetBSD: cs4231_ebus.c,v 1.6 2000/07/09 20:57:50 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@ cs4231_attach_ebus(parent, self, aux)
 	/* Establish interrupt channels */
 	for (i = 0; i < ea->ea_nintrs; i++)
 		bus_intr_establish(ea->ea_bustag,
-				   ea->ea_intrs[i], 0,
+				   ea->ea_intrs[i], IPL_AUDIO, 0,
 				   cs4231_intr, sc);
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.37 2000/06/29 07:40:08 mrg Exp $ */
+/*	$NetBSD: sbus.c,v 1.38 2000/07/09 20:57:47 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,8 @@ static int _sbus_bus_map __P((
 		bus_space_handle_t *));
 static void *sbus_intr_establish __P((
 		bus_space_tag_t,
-		int,			/*level*/
+		int,			/*Sbus interrupt level*/
+		int,			/*`device class' priority*/
 		int,			/*flags*/
 		int (*) __P((void *)),	/*handler*/
 		void *));		/*handler arg*/
@@ -719,8 +720,9 @@ sbus_get_intr(sc, node, ipp, np)
  * Install an interrupt handler for an Sbus device.
  */
 void *
-sbus_intr_establish(t, level, flags, handler, arg)
+sbus_intr_establish(t, pri, level, flags, handler, arg)
 	bus_space_tag_t t;
+	int pri;
 	int level;
 	int flags;
 	int (*handler) __P((void *));
@@ -728,26 +730,29 @@ sbus_intr_establish(t, level, flags, handler, arg)
 {
 	struct sbus_softc *sc = t->cookie;
 	struct intrhand *ih;
-	int ipl;
+	int pil;
 
 	ih = (struct intrhand *)
 		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 		return (NULL);
 
+	/*
+	 * Translate Sbus interrupt priority to CPU interrupt level
+	 */
 	if ((flags & BUS_INTR_ESTABLISH_SOFTINTR) != 0)
-		ipl = level;
-	else if ((level & SBUS_INTR_COMPAT) != 0)
-		ipl = level & ~SBUS_INTR_COMPAT;
+		pil = pri;
+	else if ((pri & SBUS_INTR_COMPAT) != 0)
+		pil = pri & ~SBUS_INTR_COMPAT;
 	else
-		ipl = sc->sc_intr2ipl[level];
+		pil = sc->sc_intr2ipl[pri];
 
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	if ((flags & BUS_INTR_ESTABLISH_FASTTRAP) != 0)
-		intr_fasttrap(ipl, (void (*)__P((void)))handler);
+		intr_fasttrap(pil, (void (*)__P((void)))handler);
 	else
-		intr_establish(ipl, ih);
+		intr_establish(pil, ih);
 	return (ih);
 }
 
