@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.30 2002/10/23 09:12:55 jdolecek Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.31 2003/01/18 08:44:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.30 2002/10/23 09:12:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.31 2003/01/18 08:44:27 thorpej Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.30 2002/10/23 09:12:55 jdolecek Exp $
 #include <sys/conf.h>
 #include <sys/mount.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -277,7 +278,7 @@ svr4_ptm_alloc(p)
 		if ((error = copyout(ptyname, path, sizeof(ptyname))) != 0)
 			return error;
 
-		switch (error = sys_open(p, &oa, &fd)) {
+		switch (error = sys_open(curlwp, &oa, &fd)) { /* XXX NJWLWP */
 		case ENOENT:
 		case ENXIO:
 			return error;

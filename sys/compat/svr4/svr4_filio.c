@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.8 2001/11/13 02:09:22 lukem Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.9 2003/01/18 08:44:26 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.8 2001/11/13 02:09:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.9 2003/01/18 08:44:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.8 2001/11/13 02:09:22 lukem Exp $")
 #include <net/if.h>
 #include <sys/malloc.h>
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/svr4/svr4_types.h>
@@ -67,14 +68,15 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.8 2001/11/13 02:09:22 lukem Exp $")
 
 
 int
-svr4_fil_ioctl(fp, p, retval, fd, cmd, data)
+svr4_fil_ioctl(fp, l, retval, fd, cmd, data)
 	struct file *fp;
-	struct proc *p;
+	struct lwp *l;
 	register_t *retval;
 	int fd;
 	u_long cmd;
 	caddr_t data;
 {
+	struct proc *p = l->l_proc;
 	int error;
 	int num;
 	struct filedesc *fdp = p->p_fd;
