@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.6 1995/10/11 21:16:57 pk Exp $	*/
+/*	$NetBSD: gets.c,v 1.7 2000/03/30 12:19:48 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,8 +41,8 @@ void
 gets(buf)
 	char *buf;
 {
-	register int c;
-	register char *lp;
+	int c;
+	char *lp;
 
 	for (lp = buf;;)
 		switch (c = getchar() & 0177) {
@@ -67,7 +67,7 @@ gets(buf)
 			break;
 #endif
 		case 'r'&037: {
-			register char *p;
+			char *p;
 
 			putchar('\n');
 			for (p = buf; p < lp; ++p)

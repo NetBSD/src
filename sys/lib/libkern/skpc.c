@@ -1,4 +1,4 @@
-/*	$NetBSD: skpc.c,v 1.3 1996/03/14 18:52:18 christos Exp $	*/
+/*	$NetBSD: skpc.c,v 1.4 2000/03/30 12:19:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -40,11 +40,11 @@
 
 int
 skpc(mask, size, cp)
-	register int mask;
+	int mask;
 	size_t size;
-	register u_char *cp;
+	u_char *cp;
 {
-	register u_char *end = &cp[size];
+	u_char *end = &cp[size];
 
 	while (cp < end && *cp == (u_char) mask)
 		cp++;
