@@ -1,4 +1,4 @@
-/*	$NetBSD: print-rt6.c,v 1.5 2000/04/24 13:02:30 itojun Exp $	*/
+/*	$NetBSD: print-rt6.c,v 1.6 2001/01/28 10:05:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -27,7 +27,7 @@ static const char rcsid[] =
     "@(#) /master/usr.sbin/tcpdump/tcpdump/print-icmp.c,v 2.1 1995/02/03 18:14:42 polk Exp (LBL)";
 #else
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print-rt6.c,v 1.5 2000/04/24 13:02:30 itojun Exp $");
+__RCSID("$NetBSD: print-rt6.c,v 1.6 2001/01/28 10:05:07 itojun Exp $");
 #endif
 #endif
 
@@ -65,12 +65,13 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 	register const struct ip6_hdr *ip;
 	register const u_char *ep;
 	int i, len;
+	register const struct in6_addr *addr;
 
 	dp = (struct ip6_rthdr *)bp;
 	ip = (struct ip6_hdr *)bp2;
 	len = dp->ip6r_len;
 
-	/* 'ep' points to the end of avaible data. */
+	/* 'ep' points to the end of available data. */
 	ep = snapend;
 
 #if 0
@@ -81,36 +82,36 @@ rt6_print(register const u_char *bp, register const u_char *bp2)
 
 	TCHECK(dp->ip6r_segleft);
 
-	printf("srcrt (len=%d, ", dp->ip6r_len);
-	printf("type=%d, ", dp->ip6r_type);
-	printf("segleft=%d, ", dp->ip6r_segleft);
+	printf("srcrt (len=%d", dp->ip6r_len);	/*)*/
+	printf(", type=%d", dp->ip6r_type);
+	printf(", segleft=%d", dp->ip6r_segleft);
 
 	switch (dp->ip6r_type) {
+#ifndef IPV6_RTHDR_TYPE_0
+#define IPV6_RTHDR_TYPE_0 0
+#endif
 	case IPV6_RTHDR_TYPE_0:
 		dp0 = (struct ip6_rthdr0 *)dp;
 
 		TCHECK(dp0->ip6r0_reserved);
 		if (dp0->ip6r0_reserved || vflag) {
-			printf("rsv=0x%0x, ",
-				(u_int32_t)ntohl(dp0->ip6r0_reserved));
+			printf(", rsv=0x%0x",
+			    (u_int32_t)ntohl(dp0->ip6r0_reserved));
 		}
 
 		if (len % 2 == 1)
 			goto trunc;
 		len >>= 1;
+		addr = &dp0->ip6r0_addr[0];
 		for (i = 0; i < len; i++) {
-			struct in6_addr *addr;
-
-			addr = ((struct in6_addr *)(dp0 + 1)) + i;
-			if ((u_char *)addr > ep - sizeof(*addr))
+			if ((u_char *)(addr + 1) > ep)
 				goto trunc;
-
-			printf("[%d]%s", i, ip6addr_string((u_char *)addr));
-			if (i != len - 1)
-				printf(", ");
-		   
+		
+			printf(", [%d]%s", i, ip6addr_string(addr));
+			addr++;
 		}
-		printf(")");
+		/*(*/
+		printf(") ");
 		return((dp0->ip6r0_len + 1) << 3);
 		break;
 	default:

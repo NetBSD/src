@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.13 1999/10/05 20:37:22 is Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.14 2001/01/28 10:05:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.13 1999/10/05 20:37:22 is Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.14 2001/01/28 10:05:07 itojun Exp $");
 #endif
 #endif
 
@@ -265,6 +265,16 @@ main(int argc, char **argv)
 		case 'w':
 			WFileName = optarg;
 			break;
+
+		case 'x':
+			++xflag;
+			break;
+
+		case 'X':
+    		        ++xflag;
+			++Xflag;
+			break;
+
 #ifdef YYDEBUG
 		case 'Y':
 			{
@@ -274,14 +284,6 @@ main(int argc, char **argv)
 			}
 			break;
 #endif
-		case 'x':
-			++xflag;
-			break;
-
-		case 'X':
-			++Xflag;
-			break;
-
 		default:
 			usage();
 			/* NOTREACHED */

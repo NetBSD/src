@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.15 2000/08/01 17:39:46 itojun Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.16 2001/01/28 10:05:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-udp.c,v 1.60 97/07/27 21:58:48 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-udp.c,v 1.15 2000/08/01 17:39:46 itojun Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.16 2001/01/28 10:05:07 itojun Exp $");
 #endif
 #endif
 
@@ -71,14 +71,14 @@ __RCSID("$NetBSD: print-udp.c,v 1.15 2000/08/01 17:39:46 itojun Exp $");
 #include "bootp.h"
 
 struct rtcphdr {
-	u_short rh_flags;	/* T:2 P:1 CNT:5 PT:8 */
-	u_short rh_len;		/* length of message (in words) */
-	u_int rh_ssrc;		/* synchronization src id */
+	u_int16_t rh_flags;	/* T:2 P:1 CNT:5 PT:8 */
+	u_int16_t rh_len;	/* length of message (in words) */
+	u_int32_t rh_ssrc;	/* synchronization src id */
 };
 
 typedef struct {
-	u_int upper;		/* more significant 32 bits */
-	u_int lower;		/* less significant 32 bits */
+	u_int32_t upper;	/* more significant 32 bits */
+	u_int32_t lower;	/* less significant 32 bits */
 } ntp64;
 
 /*
@@ -86,9 +86,9 @@ typedef struct {
  */
 struct rtcp_sr {
 	ntp64 sr_ntp;		/* 64-bit ntp timestamp */
-	u_int sr_ts;		/* reference media timestamp */
-	u_int sr_np;		/* no. packets sent */
-	u_int sr_nb;		/* no. bytes sent */
+	u_int32_t sr_ts;	/* reference media timestamp */
+	u_int32_t sr_np;	/* no. packets sent */
+	u_int32_t sr_nb;	/* no. bytes sent */
 };
 
 /*
@@ -96,12 +96,12 @@ struct rtcp_sr {
  * Time stamps are middle 32-bits of ntp timestamp.
  */
 struct rtcp_rr {
-	u_int rr_srcid;		/* sender being reported */
-	u_int rr_nl;		/* no. packets lost */
-	u_int rr_ls;		/* extended last seq number received */
-	u_int rr_dv;		/* jitter (delay variance) */
-	u_int rr_lsr;		/* orig. ts from last rr from this src  */
-	u_int rr_dlsr;		/* time from recpt of last rr to xmit time */
+	u_int32_t rr_srcid;	/* sender being reported */
+	u_int32_t rr_nl;	/* no. packets lost */
+	u_int32_t rr_ls;	/* extended last seq number received */
+	u_int32_t rr_dv;	/* jitter (delay variance) */
+	u_int32_t rr_lsr;	/* orig. ts from last rr from this src  */
+	u_int32_t rr_dlsr;	/* time from recpt of last rr to xmit time */
 };
 
 /*XXX*/
@@ -123,7 +123,7 @@ static void
 vat_print(const void *hdr, u_int len, register const struct udphdr *up)
 {
 	/* vat/vt audio */
-	u_int ts = *(u_short *)hdr;
+	u_int ts = *(u_int16_t *)hdr;
 	if ((ts & 0xf060) != 0) {
 		/* probably vt */
 		(void)printf(" udp/vt %u %d / %d",
@@ -131,8 +131,8 @@ vat_print(const void *hdr, u_int len, register const struct udphdr *up)
 			     ts & 0x3ff, ts >> 10);
 	} else {
 		/* probably vat */
-		u_int i0 = ntohl(((u_int *)hdr)[0]);
-		u_int i1 = ntohl(((u_int *)hdr)[1]);
+		u_int32_t i0 = (u_int32_t)ntohl(((u_int *)hdr)[0]);
+		u_int32_t i1 = (u_int32_t)ntohl(((u_int *)hdr)[1]);
 		printf(" udp/vat %u c%d %u%s",
 			(u_int32_t)(ntohs(up->uh_ulen) - sizeof(*up) - 8),
 			i0 & 0xffff,
@@ -151,8 +151,8 @@ rtp_print(const void *hdr, u_int len, register const struct udphdr *up)
 	/* rtp v1 or v2 */
 	u_int *ip = (u_int *)hdr;
 	u_int hasopt, hasext, contype, hasmarker;
-	u_int i0 = ntohl(((u_int *)hdr)[0]);
-	u_int i1 = ntohl(((u_int *)hdr)[1]);
+	u_int32_t i0 = (u_int32_t)ntohl(((u_int *)hdr)[0]);
+	u_int32_t i1 = (u_int32_t)ntohl(((u_int *)hdr)[1]);
 	u_int dlen = ntohs(up->uh_ulen) - sizeof(*up) - 8;
 	const char * ptype;
 
@@ -186,7 +186,7 @@ rtp_print(const void *hdr, u_int len, register const struct udphdr *up)
 		i0 & 0xffff,
 		i1);
 	if (vflag) {
-		printf(" %u", i1);
+		printf(" %u", (u_int32_t)ntohl(((u_int *)hdr)[2]));
 		if (hasopt) {
 			u_int i2, optlen;
 			do {
@@ -223,7 +223,7 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 	struct rtcp_sr *sr;
 	struct rtcphdr *rh = (struct rtcphdr *)hdr;
 	u_int len;
-	u_short flags;
+	u_int16_t flags;
 	int cnt;
 	double ts, dts;
 	if ((u_char *)(rh + 1) > ep) {
@@ -240,7 +240,7 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 		if (len != cnt * sizeof(*rr) + sizeof(*sr) + sizeof(*rh))
 			printf(" [%d]", len);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		if ((u_char *)(sr + 1) > ep) {
 			printf(" [|rtcp]");
 			return (ep);
@@ -258,18 +258,18 @@ rtcp_print(const u_char *hdr, const u_char *ep)
 			printf(" [%d]", len);
 		rr = (struct rtcp_rr *)(rh + 1);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		break;
 	case RTCP_PT_SDES:
 		printf(" sdes %d", len);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		cnt = 0;
 		break;
 	case RTCP_PT_BYE:
 		printf(" bye %d", len);
 		if (vflag)
-		  printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
+			printf(" %u", (u_int32_t)ntohl(rh->rh_ssrc));
 		cnt = 0;
 		break;
 	default:
@@ -331,7 +331,7 @@ static int udp_cksum(register const struct ip *ip,
 		sum += *sp++;
 
 	if (tlen & 1) {
-		sum += htons( (*(const char *)sp) << 8);
+		sum += htons( (*(const u_int8_t *)sp) << 8);
 	}
 
 	while (sum > 0xffff)
@@ -379,7 +379,7 @@ static int udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up,
 		sum += *sp++;
 
 	if (tlen & 1)
-		sum += htons((*(const char *)sp) << 8);
+		sum += htons((*(const u_int8_t *)sp) << 8);
 
 	while (sum > 0xffff)
 		sum = (sum & 0xffff) + (sum >> 16);
@@ -404,12 +404,13 @@ static int udp6_cksum(const struct ip6_hdr *ip6, const struct udphdr *up,
 
 #ifdef INET6
 #define RIPNG_PORT 521		/*XXX*/
-#define DHCP6_PORT1 546		/*XXX*/
-#define DHCP6_PORT2 547		/*XXX*/
+#define DHCP6_SERV_PORT 546	/*XXX*/
+#define DHCP6_CLI_PORT 547	/*XXX*/
 #endif
 
 void
-udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
+udp_print(register const u_char *bp, u_int length,
+	  register const u_char *bp2, int fragmented)
 {
 	register const struct udphdr *up;
 	register const struct ip *ip;
@@ -432,11 +433,14 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #endif /*INET6*/
 	cp = (u_char *)(up + 1);
 	if (cp > snapend) {
-		printf("[|udp]");
+		(void)printf("%s > %s: [|udp]",
+			ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst));
 		return;
 	}
 	if (length < sizeof(struct udphdr)) {
-		(void)printf(" truncated-udp %d", length);
+		(void)printf("%s > %s: truncated-udp %d",
+			ipaddr_string(&ip->ip_src), ipaddr_string(&ip->ip_dst),
+			length);
 		return;
 	}
 	length -= sizeof(struct udphdr);
@@ -444,6 +448,13 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	sport = ntohs(up->uh_sport);
 	dport = ntohs(up->uh_dport);
 	ulen = ntohs(up->uh_ulen);
+	if (ulen < 8) {
+		(void)printf("%s > %s: truncated-udplength %d",
+			     ipaddr_string(&ip->ip_src),
+			     ipaddr_string(&ip->ip_dst),
+			     ulen);
+		return;
+	}
 	if (packettype) {
 		register struct rpc_msg *rp;
 		enum msg_type direction;
@@ -567,7 +578,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 	}
 #endif
 
-	if (ip->ip_v == 4 && vflag) {
+	if (ip->ip_v == 4 && vflag && !fragmented) {
 		int sum = up->uh_sum;
 		if (sum == 0) {
 			(void)printf(" [no cksum]");
@@ -580,7 +591,7 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 		}
 	}
 #ifdef INET6
-	if (ip->ip_v == 6 && ip6->ip6_plen && vflag) {
+	if (ip->ip_v == 6 && ip6->ip6_plen && vflag && !fragmented) {
 		int sum = up->uh_sum;
 		/* for IPv6, UDP checksum is mandatory */
 		if (TTEST2(cp[0], length)) {
@@ -617,9 +628,10 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #ifdef INET6
 		else if (ISPORT(RIPNG_PORT))
 			ripng_print((const u_char *)(up + 1), length);
-		else if (ISPORT(DHCP6_PORT1) || ISPORT(DHCP6_PORT2))
+		else if (ISPORT(DHCP6_SERV_PORT) || ISPORT(DHCP6_CLI_PORT)) {
 			dhcp6_print((const u_char *)(up + 1), length,
 				sport, dport);
+		}
 #endif /*INET6*/
 		/*
 		 * Kludge in test for whiteboard packets.
