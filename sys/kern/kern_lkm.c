@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.47 1999/03/24 05:51:23 mrg Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.48 1999/05/25 00:16:08 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -157,20 +157,19 @@ lkmunreserve()
 	if (lkm_state == LKMS_IDLE)
 		return;
 
+	if (curp && curp->syms) {
 #ifdef DDB
-	if (curp && curp->private.lkm_any && curp->private.lkm_any->lkm_name)
-	    db_del_symbol_table(curp->private.lkm_any->lkm_name);
+		db_del_symbol_table(curp->private.lkm_any->lkm_name);
 #endif
+		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
+		curp->syms = 0;
+	}
 	/*
 	 * Actually unreserve the memory
 	 */
 	if (curp && curp->area) {
 		uvm_km_free(kernel_map, curp->area, curp->size);/**/
 		curp->area = 0;
-	}
-	if (curp && curp->syms) {
-		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
-		curp->syms = 0;
 	}
 	lkm_state = LKMS_IDLE;
 }
