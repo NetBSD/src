@@ -1,4 +1,4 @@
-# $NetBSD: md.arm32,v 1.33 2001/01/11 22:30:22 bjh21 Exp $
+# $NetBSD: md.arm32,v 1.34 2001/01/13 17:04:50 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
@@ -17,6 +17,7 @@
 ./usr/include/arm/lock.h		comp-c-include
 ./usr/include/arm/math.h		comp-c-include
 ./usr/include/arm/setjmp.h		comp-c-include
+./usr/include/arm/signal.h		comp-c-include
 ./usr/include/arm/stdarg.h		comp-c-include
 ./usr/include/arm/trap.h		comp-c-include
 ./usr/include/arm/varargs.h		comp-c-include
