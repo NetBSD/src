@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.22 1998/11/12 15:51:44 christos Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.23 1999/01/19 06:24:08 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.22 1998/11/12 15:51:44 christos Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.23 1999/01/19 06:24:08 abs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,6 +58,8 @@ __RCSID("$NetBSD: disklabel.c,v 1.22 1998/11/12 15:51:44 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
+#include <disktab.h>
+
 #ifdef __weak_alias
 __weak_alias(getdiskbyname,_getdiskbyname);
 #endif
@@ -67,6 +69,20 @@ static void	error __P((int));
 #endif
 static int	gettype __P((char *, const char *const *));
 
+static char  	*db_array[2] = { _PATH_DISKTAB, 0 };
+
+int
+setdisktab(name)
+	char *name;
+{
+	if (!name || !*name)
+		return -1;
+
+	db_array[0] = name;
+	return 0;
+}
+
+
 struct disklabel *
 getdiskbyname(name)
 	const char *name;
@@ -75,7 +91,6 @@ getdiskbyname(name)
 	struct	disklabel *dp = &disk;
 	struct partition *pp;
 	char	*buf;
-	char  	*db_array[2] = { _PATH_DISKTAB, 0 };
 	char	*cp, *cq;	/* can't be */
 	char	p, max, psize[3], pbsize[3],
 		pfsize[3], poffset[3], ptype[3];

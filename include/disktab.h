@@ -1,4 +1,4 @@
-/*	$NetBSD: disktab.h,v 1.6 1998/07/27 09:09:24 mycroft Exp $	*/
+/*	$NetBSD: disktab.h,v 1.7 1999/01/19 06:24:09 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,25 +43,11 @@
 /*
  * Disk description table, see disktab(5)
  */
-#define	DISKTAB		"/etc/disktab"
+#define	_PATH_DISKTAB	"/etc/disktab"
 
-struct	partition {
-	int	p_size;		/* #sectors in partition */
-	short	p_bsize;	/* block size in bytes */
-	short	p_fsize;	/* frag size in bytes */
-};
-
-struct	disktab {
-	__aconst char *d_name;		/* drive name */
-	__aconst char *d_type;		/* drive type */
-	int	d_secsize;		/* sector size in bytes */
-	int	d_ntracks;		/* # tracks/cylinder */
-	int	d_nsectors;		/* # sectors/track */
-	int	d_ncylinders;	/* # cylinders */
-	int	d_rpm;		/* revolutions/minute */
-	int	d_badsectforw;	/* supports DEC bad144 std */
-	int	d_sectoffset;	/* use sect rather than cyl offsets */
-	struct	partition d_partitions[8];
-};
+__BEGIN_DECLS
+int setdisktab __P((char *));
+struct disklabel *getdiskbyname __P((const char *));
+__END_DECLS
 
 #endif /* !_DISKTAB_H_ */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.23 1998/04/27 21:03:08 fair Exp $
+.\"	$NetBSD: disklabel.8,v 1.24 1999/01/19 06:24:09 abs Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,6 +50,7 @@
 .Nm ""
 .Fl w
 .Op Fl r
+.Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
 .Nm ""
@@ -71,6 +72,7 @@
 .sp
 .Nm ""
 .Fl B
+.Op Fl f Ar disktab
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -80,6 +82,7 @@
 .Nm ""
 .Fl w
 .Fl B
+.Op Fl f Ar disktab
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -89,6 +92,7 @@
 .Nm ""
 .Fl R
 .Fl B
+.Op Fl f Ar disktab
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -179,6 +183,12 @@ If the disk does not already have a label, the
 .Fl r
 flag must be used.
 In either case, the kernel's in-core label is replaced.
+.Pp
+An alternate
+.Xr disktab 5
+file may be specified with the
+.Fl f Ar disktab
+option.
 .Pp
 An existing disk label may be edited by using the
 .Fl e
