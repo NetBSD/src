@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.30 1999/03/22 14:29:14 mycroft Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.31 1999/10/05 03:42:53 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -92,6 +92,11 @@ struct ad1848_isa_softc {
 
 	/* Only used by pss XXX */
 	int	sc_iobase;
+
+#ifndef AUDIO_NO_POWER_CTL
+	int	(*powerctl)__P((void *, int));
+	void	*powerarg;
+#endif
 };
 
 #ifdef _KERNEL
