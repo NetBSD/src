@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.6 1998/07/02 21:46:18 phil Exp $	*/
+/*	$NetBSD: parse.y,v 1.6.2.1 1999/06/24 00:52:26 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,6 +138,7 @@ opt	  : NO EXIT		{ cur_menu->info->mopt |= NOEXITOPT; }
 	  | W "=" INT_CONST	{ cur_menu->info->w = atoi($3); }
 	  | H "=" INT_CONST	{ cur_menu->info->h = atoi($3); }
 	  | TITLE STRING 	{ cur_menu->info->title = $2; }
+	  | EXITSTRING STRING	{ cur_menu->info->exitstr = $2; }
 	  ;
 
 option_list : option
