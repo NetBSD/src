@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.28 1998/06/20 21:01:43 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.29 1998/06/21 21:45:07 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -141,21 +141,30 @@ start()
 		case VAX_BTYP_43:
 			vax_confdata = *(int *)(0x20020000);
 			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
-			dep_call = (vax_boardtype == VAX_BTYP_43 ?
-			    &ka43_calls : &ka410_calls);
+#if VAX410
+			if (vax_boardtype != VAX_BTYP_43)
+				dep_call = &ka410_calls;
+#endif
+#if VAX43
+			if (vax_boardtype == VAX_BTYP_43)
+				dep_call = &ka43_calls;
+#endif
 			strcpy(cpu_model, (vax_confdata & 0x80 ?
 			    "MicroVAX " : "VAXstation "));
 			switch (vax_boardtype) {
+#if VAX410
 			case VAX_BTYP_410:
                         	strcat(cpu_model, "2000");
 				break;
-
+#endif
+#if VAX43
 			case VAX_BTYP_43:
                         	strcat(cpu_model, "3100/m76");
 				break;
-
-			case VAX_BTYP_420:
+#endif
 			default:
+#if VAX410
+			case VAX_BTYP_420:
                         	strcat(cpu_model, "3100");
 				switch ((vax_siedata >> 8) & 0xff) {
 				case 0:
@@ -173,6 +182,7 @@ start()
 					strcat(cpu_model, " unknown model");
 					break;
 				}
+#endif
 				break;
 			}
 			break;
