@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.37 2002/10/01 12:56:43 fvdl Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.38 2002/10/16 02:46:03 lukem Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -18,7 +18,6 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096	# size of memory disk, in blocks
-#options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
