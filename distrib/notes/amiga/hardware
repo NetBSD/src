@@ -35,7 +35,7 @@ Supported devices include:
 		53c710 based boards: A4091, Magnum, Warp Engine, Zeus 
 		    and DraCo builtin.
 		FAS216 based SCSI boards: FastLane Z3, Blizzard I and II,
-		    Blizzard IV, Blizzard 2060, CyberSCSI Mk I**)
+		    Blizzard IV, Blizzard 2060, CyberSCSI Mk I and II.
 	Video controllers:
 		ECS, AGA and A2024 built in on various Amigas.
 		Retina Z2, Retina Z3 and Altais.
@@ -67,14 +67,14 @@ Supported devices include:
 			Archive Viper, Cipher SCSI-2 ST150.
 	Scanners:
 		SCSI-2 scanners behaving as SCSI-2 scanner devices,
-		HP Scanjet II, Mustek SCSI scanner.***)
+		HP Scanjet II, Mustek SCSI scanner.**)
 	CD-ROM drives:
 		Most SCSI CD-ROM drives
 	Serial cards:
 		MultiFaceCard II and III
 		A2232
 	Amiga floppy drives with Amiga (880/1760kB) and 
-		IBM (720/1440kB) encoding. ****)
+		IBM (720/1440kB) encoding. ***)
 	Amiga parallel port.
 	Amiga serial port.
 	Amiga mouse.
@@ -88,25 +88,21 @@ If its not on the above lists, there is no support for it in this
 release. Especially (but this is an incomplete list), there is no
 driver for:
 
-	Cyberstorm I SCSI option, Blizzard IV SCSI,
-	Ferret SCSI, Oktagon SCSI, CyberVision64/3D.
+	Blizzard III SCSI option, Cyberstorm Mk III SCSI option,
+	Ferret SCSI, Oktagon SCSI, CyberVision 64/3D.
 
 Known problems with some hardware:
 
 	*) the Emplant SCSI adapter has been reported by a party to
 	hang after doing part of the installation without problems.
 
-	**) Fastlane SCSI is reported to show data errors and hangs at
-	least when used with multiple devices on the bus. This might
-	be a problem with any FAS board. 
-
-	***) SCSI scanner support is machine independent, so it should
+	**) SCSI scanner support is machine independent, so it should
 	work, but hasn't been tested yet on most Amiga configurations.
 	There are reports that the Mustek and HP Scanjet hang if
 	accessed from the A3000. This might apply to other
 	33C93-Adapters, too.
 
-	****) Our floppy driver doesn't notice when mounted floppies are 
+	***) Our floppy driver doesn't notice when mounted floppies are 
 	write-protected at the moment. Your floppy will stay
 	unchanged, but you might not notice that you didn't write
 	anything due to the buffer cache. Also note that HD floppy
