@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.39 1996/05/07 02:40:43 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -201,9 +201,9 @@ slattach()
 	register int i = 0;
 
 	for (sc = sl_softc; i < NSL; sc++) {
+		sc->sc_unit = i;		/* XXX */
 		sprintf(sc->sc_if.if_xname, "sl%d", i++);
 		sc->sc_if.if_softc = sc;
-		sc->sc_unit = i;		/* XXX */
 		sc->sc_if.if_mtu = SLMTU;
 		sc->sc_if.if_flags =
 		    IFF_POINTOPOINT | SC_AUTOCOMP | IFF_MULTICAST;
