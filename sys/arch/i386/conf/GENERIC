@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.458 2002/01/03 18:56:40 augustss Exp $
+# $NetBSD: GENERIC,v 1.459 2002/01/04 21:04:42 augustss Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.458 $"
+#ident 		"GENERIC-$Revision: 1.459 $"
 
 maxusers	32		# estimated number of users
 
@@ -819,8 +819,8 @@ scsibus* at usscanner? channel ?
 uyap* at uhub? port ?
 
 # D-Link DSB-R100 USB radio
-#udsbr*	at uhub? port ?
-#radio*	at udsbr?
+udsbr*	at uhub? port ?
+radio*	at udsbr?
 
 # USB Generic driver
 ugen*	at uhub? port ?
