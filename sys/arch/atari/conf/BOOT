@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BOOT,v 1.12 1996/10/04 07:08:29 leo Exp $
+#	$NetBSD: BOOT,v 1.13 1996/10/16 12:50:31 leo Exp $
 #
 # BOOT
 #
@@ -9,7 +9,7 @@
 # on 4Mb machines.
 #
 
-include "std.atari"
+include "arch/atari/conf/std.atari"
 #
 # Add support for about 16 users. This variable is used to size
 # various kernel structures.
