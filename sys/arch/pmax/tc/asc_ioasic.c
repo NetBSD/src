@@ -1,7 +1,7 @@
-/* $NetBSD: asc_ioasic.c,v 1.1.2.10 1999/09/05 09:42:58 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.1.2.11 1999/09/06 03:48:47 nisimura Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.10 1999/09/05 09:42:58 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.1.2.11 1999/09/06 03:48:47 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -194,7 +194,7 @@ asc_ioasic_intr(sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	int trans, resid;
-	u_int tcl, tcm, ssr;
+	u_int tcl, tcm, ssr, scr;
 	
 	if (asc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
@@ -235,41 +235,39 @@ asc_ioasic_intr(sc)
 
 #if 1
 	/*
-	 * following is supposedly to fixup irregular sized transter.
+	 * following is supposedly to fixup irregular sized transfers.
 	 * I'm not sure whether this is doing things correctly, indeed,
 	 * failed to cure any of erroneous symptoms I'm experiencing.
 	 */
-	if (asc->sc_ispullup) {
-		u_int32_t scr, ptr;
+	scr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_SCSI_SCR);
+	if (asc->sc_ispullup && scr != 0) {
+		u_int32_t ptr;
 		u_int16_t *addr;
 		union {
 			u_int32_t sdr[2];
-			u_int16_t word[4];
+			u_int16_t half[4];
 		} scratch;
-
-		scr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
-						IOASIC_SCSI_SCR);
+		scratch.sdr[0] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+						IOASIC_SCSI_SDR0);
+		scratch.sdr[1] = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
+						IOASIC_SCSI_SDR1);
 		ptr = bus_space_read_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_DMAPTR);
-		if (scr != 0) {
-			/*
-			 * scr &= IOASIC_SCR_WORD;
-			 *	1 -> word[0]
-			 *	2 -> word[0] + word[1]
-			 *	3 -> word[0] + word[1] + word[2]
-			 */
-printf("SCSI_SCR: %x\n", scr);
-			scratch.sdr[0] = bus_space_read_4(asc->sc_bst,
-						asc->sc_bsh, IOASIC_SCSI_SDR0);
-			scratch.sdr[1] = bus_space_read_4(asc->sc_bst,
-						asc->sc_bsh, IOASIC_SCSI_SDR1);
-			addr = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
-			addr[0] = scratch.word[0];
-			if (scr > 1)
-				addr[1] = scratch.word[1];
-			if (scr > 2)
-				addr[2] = scratch.word[2];
-		}
+		ptr = (ptr >> 3) & 0x1ffffffc;
+printf("SCSI_SCR: %x, DMAPTR: %p\n", scr, (void *)ptr);
+		addr = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr);
+		/*
+		 * scr
+		 *	1 -> half[0]
+		 *	2 -> half[0] + half[1]
+		 *	3 -> half[0] + half[1] + half[2]
+		 */
+		scr &= IOASIC_SCR_WORD;
+		addr[0] = scratch.half[0];
+		if (scr > 1)
+			addr[1] = scratch.half[1];
+		if (scr > 2)
+			addr[2] = scratch.half[2];
 	}
 #endif
 
@@ -344,11 +342,6 @@ asc_ioasic_setup(sc, addr, len, datain, dmasize)
 				IOASIC_SCSI_DMAPTR, IOASIC_DMA_ADDR(phys));
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh,
 				IOASIC_SCSI_NEXTPTR, IOASIC_DMA_ADDR(nphys));
-	if (asc->sc_ispullup)
-		ssr |=  IOASIC_CSR_SCSI_DIR;
-	else
-		ssr &= ~IOASIC_CSR_SCSI_DIR;
-	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 	return 0;
 }
 
@@ -360,6 +353,14 @@ asc_ioasic_go(sc)
 	u_int32_t ssr;
 
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	if (asc->sc_ispullup)
+		ssr |= IOASIC_CSR_SCSI_DIR;
+	else {
+		/* ULTRIX does in this way */
+		ssr &= ~IOASIC_CSR_SCSI_DIR;
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
+		ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
+	}
 	ssr |= IOASIC_CSR_DMAEN_SCSI;
 	bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR, ssr);
 	asc->sc_active = 1;
