@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.159 2002/02/27 21:32:05 scw Exp $
+.\"	$NetBSD: main,v 1.160 2002/03/06 02:41:00 simonb Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,8 +47,8 @@
 .ds MACHINE_LIST algor alpha amiga amigappc arc arm26 arm32 atari bebox cobalt
 .as MACHINE_LIST " dreamcast evbsh3 hp300 hpcmips hpcsh i386 luna68k mac68k
 .as MACHINE_LIST " macppc mmeye mvme68k mvmeppc news68k newsmips next68k ofppc
-.as MACHINE_LIST " pc532 playstation2 pmax prep sgimips sparc sparc64 sun2 sun3
-.as MACHINE_LIST " vax x68k
+.as MACHINE_LIST " pc532 playstation2 pmax prep sbmips sgimips sparc sparc64
+.as MACHINE_LIST " sun2 sun3 vax x68k
 .
 .so \*[.CURDIR]/../common/macros
 .
@@ -1439,6 +1439,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Ta
 .It Ta Mark Brinicombe Ta Mt mark@netbsd.org Ta Sy arm32
 .It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy pmax
+.It Ta Simon Burge Ta Mt simonb@netbsd.org Ta Sy sbmips
 .It Ta Jeremy Cooper Ta Mt jeremy@netbsd.org Ta Sy sun3x
 .It Ta Matt Fredette Ta Mt fredette@netbsd.org Ta Sy sun2
 .It Ta Chris Gilbert Ta Mt chris@netbsd.org Ta Sy cats
