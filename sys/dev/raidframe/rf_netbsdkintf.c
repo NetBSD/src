@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.86 2000/05/28 05:23:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.87 2000/05/29 02:57:35 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -3007,6 +3007,7 @@ rf_have_enough_components(cset)
 	int num_cols;
 	int num_missing;
 	int mod_counter;
+	int mod_counter_found;
 
 	/* check to see that we have enough 'live' components
 	   of this set.  If so, we can configure it if necessary */
@@ -3018,11 +3019,16 @@ rf_have_enough_components(cset)
 
 	/* Determine what the mod_counter is supposed to be for this set. */
 
-	mod_counter = -1;
+	mod_counter_found = 0;
 	ac = cset->ac;
 	while(ac!=NULL) {
-		if (ac->clabel->mod_counter > mod_counter) {
+		if (mod_counter_found==0) {
 			mod_counter = ac->clabel->mod_counter;
+			mod_counter_found = 1;
+		} else {
+			if (ac->clabel->mod_counter > mod_counter) {
+				mod_counter = ac->clabel->mod_counter;
+			}
 		}
 		ac = ac->next;
 	}
