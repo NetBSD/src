@@ -1,4 +1,4 @@
-#	$NetBSD: majors.x86_64,v 1.1.2.2 2002/05/30 07:14:54 gehenna Exp $
+#	$NetBSD: majors.x86_64,v 1.1.2.3 2002/07/15 01:41:07 gehenna Exp $
 #
 # Device majors for x86_64
 #
@@ -74,3 +74,4 @@ device-major	iop		char 76			iop
 device-major	altq		char 77			altq
 device-major	mlx		char 78			mlx
 device-major	clockctl	char 79			clockctl
+device-major	systrace	char 80			systrace

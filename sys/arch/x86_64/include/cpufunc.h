@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1.14.1 2002/05/30 15:36:50 gehenna Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.1.14.2 2002/07/15 01:41:08 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -201,19 +201,19 @@ wbinvd(void)
 static __inline u_int64_t
 rdtsc(void)
 {
-	u_int64_t rv;
+	uint32_t hi, lo;
 
-	__asm __volatile("rdtsc" : "=A" (rv));
-	return (rv);
+	__asm __volatile("rdtsc" : "=d" (hi), "=a" (lo));
+	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
 static __inline u_int64_t
 rdpmc(u_int pmc)
 {
-	u_int64_t rv;
+	uint32_t hi, lo;
 
-	__asm __volatile("rdpmc" : "=A" (rv) : "c" (pmc));
-	return (rv);
+	__asm __volatile("rdpmc" : "=d" (hi), "=a" (lo) : "c" (pmc));
+	return (((uint64_t)hi << 32) | (uint64_t) lo);
 }
 
 /* Break into DDB/KGDB. */
