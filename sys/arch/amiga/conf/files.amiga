@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.68 1997/10/16 23:58:36 is Exp $
+#	$NetBSD: files.amiga,v 1.69 1997/10/18 23:31:37 is Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -176,12 +176,19 @@ device	mfcp
 attach	mfcp at mfc
 file	arch/amiga/dev/mfc.c		mfcs | mfcp needs-count
 
-# DraCo superio chip
+# direct bus ISA-chip i/o
 define	supio {port = -1}
+
+# DraCo superio chip
 
 device	drsupio: supio
 attach	drsupio at mainbus
 file	arch/amiga/dev/drsupio.c	drsupio
+
+# Hypercom 3/4
+device	hyper:	supio
+attach	hyper at zbus
+file	arch/amiga/dev/hyper.c		hyper
 
 attach	com at supio with com_supio
 file	arch/amiga/dev/com_supio.c	com_supio
