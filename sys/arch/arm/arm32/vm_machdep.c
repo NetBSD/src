@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.27 2003/04/22 00:24:49 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.28 2003/05/17 00:41:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -315,38 +315,27 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	pt_entry_t *fpte, *tpte;
-	size_t ptecnt = size >> PAGE_SHIFT;
+	paddr_t pa;
+	boolean_t rv;
 
 	if (size % PAGE_SIZE)
 		panic("pagemove: size=%08lx", (u_long) size);
 
-#ifdef PMAP_DEBUG
-	if (pmap_debug_level >= 0)
-		printf("pagemove: V%p to %p size %08lx\n",
-		    from, to, (u_long) size);
-#endif	/* PMAP_DEBUG */
-
-	fpte = vtopte((vaddr_t)from);
-	tpte = vtopte((vaddr_t)to);
-
-	/*
-	 * Make sure the cache does not have dirty data for the
-	 * pages we are moving. Pages in the buffers are only
-	 * ever moved with pagemove, so we only need to clean
-	 * the 'from' area.
-	 */
-
-	cpu_dcache_wbinv_range((vaddr_t) from, size);
-
 	while (size > 0) {
-		*tpte++ = *fpte;
-		*fpte++ = 0;
+		rv = pmap_extract(pmap_kernel(), (vaddr_t) from, &pa);
+#ifdef DEBUG
+		if (rv == FALSE)
+			panic("pagemove 2");
+		if (pmap_extract(pmap_kernel(), (vaddr_t) to, NULL) == TRUE)
+			panic("pagemove 3");
+#endif
+		pmap_kremove((vaddr_t) from, PAGE_SIZE);
+		pmap_kenter_pa((vaddr_t) to, pa, VM_PROT_READ|VM_PROT_WRITE);
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-	PTE_SYNC_RANGE(vtopte((vaddr_t)from), ptecnt);
-	PTE_SYNC_RANGE(vtopte((vaddr_t)to), ptecnt);
-	//cpu_tlb_flushD();
+	pmap_update(pmap_kernel());
 }
 
 /*
