@@ -11,6 +11,7 @@
 ./usr/bin/indxbib
 ./usr/bin/lkbib
 ./usr/bin/lookbib
+./usr/bin/makeinfo
 ./usr/bin/neqn
 ./usr/bin/nroff
 ./usr/bin/pfbtops
@@ -20,6 +21,8 @@
 ./usr/bin/refer
 ./usr/bin/soelim
 ./usr/bin/tbl
+./usr/bin/texi2dvi
+./usr/bin/texindex
 ./usr/bin/tfmtodit
 ./usr/bin/troff
 ./usr/bin/vgrind
