@@ -1,4 +1,4 @@
-/*	$NetBSD: regex2.h,v 1.7 1998/11/14 16:43:49 christos Exp $	*/
+/*	$NetBSD: regex2.h,v 1.8 1998/12/08 13:41:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -78,14 +78,15 @@
  * immediately *preceding* "execution" of that operator.
  */
 typedef u_int32_t sop;	/* strip operator */
-typedef int32_t sopno;
+typedef int sopno;
 #define	OPRMASK	((u_int32_t)0xf8000000UL)
 #define	OPDMASK	((u_int32_t)0x07ffffffUL)
-#define	OPSHIFT	((u_int32_t)27)
-#define OPC(n)	(((u_int32_t)(n))<<OPSHIFT)
+#define	OPSHIFT	((unsigned)27)
 #define	OP(n)	((n)&OPRMASK)
-#define	OPND(n)	((int32_t)((n)&OPDMASK))
+#define	OPND(n)	((int)((n)&OPDMASK))
 #define	SOP(op, opnd)	((op)|(opnd))
+
+#define OPC(n)	(((u_int32_t)(n))<<OPSHIFT)
 /* operators		   meaning	operand			*/
 /*					(back, fwd are offsets)	*/
 #define	OEND	OPC(1)	/* endmarker	-			*/
