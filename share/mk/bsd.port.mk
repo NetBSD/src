@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.30 1998/01/15 22:58:59 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.31 1998/01/16 09:07:46 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -201,7 +201,7 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  (default: none).
 #
 # FETCH_CMD		  - Full path to ftp/http fetch command if not in $PATH
-#				  (default: /usr/bin/ftp).
+#				  (default: /usr/bin/ftp if available, else /usr/bin/ftp).
 # FETCH_BEFORE_ARGS -
 #				  Arguments to ${FETCH_CMD} before filename (default: none).
 # FETCH_AFTER_ARGS -
