@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.11 1996/03/16 23:13:49 christos Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.12 1996/09/17 16:43:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -661,16 +661,11 @@ tpip_ctlinput(cmd, sa, dummy)
 	struct sockaddr *sa;
 	void *dummy;
 {
-	struct sockaddr_in *sin = (struct sockaddr_in *) sa;
 	extern int      inetctlerrmap[];
 	void            (*notify) __P((struct inpcb *, int));
 	int             errno;
 
-	if (cmd < 0 || cmd >= PRC_NCMDS)
-		return NULL;
-	if (sin->sin_family != AF_INET && sin->sin_family != AF_IMPLINK)
-		return NULL;
-	if (sin->sin_addr.s_addr == INADDR_ANY)
+	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	errno = inetctlerrmap[cmd];
 	switch (cmd) {
@@ -706,7 +701,7 @@ tpip_ctlinput(cmd, sa, dummy)
 		notify = tpin_abort;
 		break;
 	}
-	in_pcbnotifyall(&tp_inpcb, sintosa(sin), errno, notify);
+	in_pcbnotifyall(&tp_inpcb, satosin(sa)->sin_addr, errno, notify);
 	return NULL;
 }
 
