@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.11 1999/08/13 10:57:05 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.12 1999/08/25 12:38:14 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -478,7 +478,7 @@ udp6_ctlinput(cmd, sa, ip6, m, off)
 		struct in6_addr s;
 
 		/* translate addresses into internal form */
-		memcpy(&s, &ip6->ip6_dst, sizeof(s));
+		memcpy(&s, &ip6->ip6_src, sizeof(s));
 		if (IN6_IS_ADDR_LINKLOCAL(&s))
 			s.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
 
