@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.5 1999/01/11 21:32:13 thorpej Exp $ */
+/*	$NetBSD: if_gre.c,v 1.6 1999/01/26 21:21:14 hwr Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,8 +42,7 @@
  * If_gre is compatible with Cisco GRE tunnels, so you can
  * have a NetBSD box as the other end of a tunnel interface of a Cisco
  * router. See gre(4) for more details.
- * Also supported: IP in IP encaps (proto 4) as of RFC 2003
- *                 IP in IP encaps (proto 55) as of RFC 2004
+ * Also supported:  IP in IP encaps (proto 55) as of RFC 2004
  */
 
 #include "gre.h"
@@ -148,7 +147,7 @@ void greattach(void)
 		if_attach(&sc->sc_if);
 #if 0
 #if NBPFILTER > 0
-		bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_NULL, sizeof(u_int32_t) );
+		bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_RAW, sizeof(u_int32_t) );
 #endif
 #endif
 
@@ -158,7 +157,7 @@ void greattach(void)
 
 /* 
  * The output routine. Takes a packet and encapsulates it in the protocol
- * given by sc->g_proto. See also RFC 1701, RFC 2003 and RFC 2004
+ * given by sc->g_proto. See also RFC 1701 and RFC 2004
  */
 
 struct ip ip_h;
