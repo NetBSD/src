@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.81 1998/11/16 16:44:57 oster Exp $
+#	$NetBSD: GENERIC,v 1.82 1998/11/25 20:30:45 hwr Exp $
 #
 # GENERIC
 
@@ -211,6 +211,7 @@ pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		64	# pseudo-terminals

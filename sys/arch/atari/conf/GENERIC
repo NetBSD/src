@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.49 1998/11/16 16:44:56 oster Exp $
+#	$NetBSD: GENERIC,v 1.50 1998/11/25 20:30:45 hwr Exp $
 #
 # Generic atari
 #
@@ -151,6 +151,7 @@ pseudo-device	loop			# Loopback network
 pseudo-device	vnd		3	# 3 pseudo disks (see vnconfig)
 pseudo-device	bpfilter	2	# berkeley packet filters
 pseudo-device	tun		2	# network tunnel
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 pseudo-device	ccd		4	# concatenating disk driver
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	md		2	# Boot memory disk

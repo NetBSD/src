@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.15 1998/11/18 09:05:18 sakamoto Exp $
+#	$NetBSD: GENERIC,v 1.16 1998/11/25 20:30:45 hwr Exp $
 #
 # First try for BEBOX config file
 #
@@ -56,6 +56,7 @@ pseudo-device	loop
 pseudo-device	bpfilter	8	# packet filter
 pseudo-device	pty		64
 #pseudo-device	raid		4	# RAIDframe disk driver
+#pseudo-device	gre		2	# generic L3 over IP tunnel
 
 #
 # device
