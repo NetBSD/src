@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.31 1994/07/03 07:57:32 cgd Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.32 1994/08/29 01:47:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -304,6 +304,18 @@ bwrite(bp)
 	wasdelayed = ISSET(bp->b_flags, B_DELWRI);
 	CLR(bp->b_flags, (B_READ | B_DONE | B_ERROR | B_DELWRI));
 
+	/*
+	 * If not synchronous, pay for the I/O operation and make
+	 * sure the buf is on the correct vnode queue.  We have
+	 * to do this now, because if we don't, the vnode may not
+	 * be properly notified that it's i/o has completed.
+	 */
+	if (!sync)
+		if (wasdelayed)
+			reassignbuf(bp, bp->b_vp);
+		else
+			curproc->p_stats->p_ru.ru_oublock++;
+
 	/* Initiate disk write.  Make sure the appropriate party is charged. */
 	SET(bp->b_flags, B_WRITEINPROG);
 	bp->b_vp->v_numoutput++;
@@ -317,12 +329,14 @@ bwrite(bp)
 
 	/*
 	 * Pay for the I/O operation, if it's not been paid for, and
-	 * make sure it's on the correct vnode queue.
+	 * make sure it's on the correct vnode queue. (async operatings
+	 * were payed for above.)
 	 */
-	if (wasdelayed)
-		reassignbuf(bp, bp->b_vp);
-	else
-		curproc->p_stats->p_ru.ru_oublock++;
+	if (sync)
+		if (wasdelayed)
+			reassignbuf(bp, bp->b_vp);
+		else
+			curproc->p_stats->p_ru.ru_oublock++;
 
 	/* Release the buffer, or, if async, make sure it gets reused ASAP. */
 	if (sync)
