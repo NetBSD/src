@@ -1,10 +1,13 @@
-#	$NetBSD: Makefile,v 1.2 2003/09/26 17:51:18 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2004/04/02 13:36:32 mrg Exp $
 
 .include "Makefile.inc"
 
 SUBDIR=		bfd libiberty opcodes
 .if ${USE_LIBEDIT} == no || ${USE_TUI} == yes
 SUBDIR+=	readline
+.endif
+.if ${MACHINE_ARCH} == "powerpc" || ${MACHINE_ARCH} == "powerpcle"
+SUBDIR+= sim .WAIT
 .endif
 SUBDIR+= gdb # gdbreplay gdbserver
 
