@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.8 2000/10/11 12:18:45 tsutsui Exp $
+.\"	$NetBSD: macros,v 1.9 2000/10/29 08:14:39 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -64,8 +64,10 @@
 ..
 .
 .
-.\" Standard indented literal display, with nice showmatch parens in the name
-.
+.\" Standard indented literal display, with nice showmatch parens in the name.
+.\" Be warned that using font change macros such as `Ic', `Em' and `Sy' inside
+.\" may cause formatting problems further on; this is probably a bug in the
+.\" mdoc macros...
 .
 .de (disp
 .	Bd -literal -offset indent
@@ -146,11 +148,6 @@
 .	El
 ..
 .
-.de D2
-.	Pp
-.	Dl Ic $@
-..
-.
 .\" Generate NetBSD/${MACHINE}, with NetBSD being done with .Nx.
 .\" If there's trailing args to the macro, concatinate with no space.
 .
@@ -159,6 +156,20 @@
 .el .Nx Ns / Ns \*M
 ..
 .
+.\" Key-cap; literal text one point size smaller
+.
+.de Key
+.ps -1
+.Li \\$*
+.ps +1
+..
+.
+.
+.\" Macro for `UNIX-like', since we don't want to just use `UNIX'
+.
+.de Ul
+.Ux -like
+..
 .
 .\"	--------------------  MISC  --------------------
 .
@@ -194,7 +205,7 @@
 .
 .\" Other strings available:
 .\"
-.\"	\*M		${MACHINE} (e.g, `i386')
-.\"	\*A		${MACHINE_ARCH} (e.g, `m68k')
-.\"	\*V		Version (e.g, `1.5')
+.\"	\*M		${MACHINE} (e.g., `i386')
+.\"	\*A		${MACHINE_ARCH} (e.g., `m68k')
+.\"	\*V		Version (e.g., `1.5')
 .\"	\*[.CURDIR]	${.CURDIR}
