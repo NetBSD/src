@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.17 2004/09/19 16:50:11 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.18 2004/09/20 03:21:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,9 @@
 #else
 typedef unsigned long linux_clock_t;
 typedef unsigned long linux_time_t;
+typedef struct {
+	long val[2];
+} linux_fsid_t;
 #endif
 
 /*
