@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: kadmind.c,v 1.2 2000/08/06 06:48:50 thorpej Exp $");
+RCSID("$Id: kadmind.c,v 1.3 2000/12/19 21:31:11 nathanw Exp $");
 
 static char *config_file;
 static char *keyfile;
@@ -95,7 +95,9 @@ main(int argc, char **argv)
 
     set_progname(argv[0]);
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx(1, "krb5_init_context failed: %u", ret);
 
     ret = krb5_openlog(context, "kadmind", &logf);
     ret = krb5_set_warn_dest(context, logf);
