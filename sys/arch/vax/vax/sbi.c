@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.10 1996/07/20 18:14:41 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.11 1996/08/20 14:13:50 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,19 +33,14 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_page.h>
-#include <machine/ka750.h>
-#include <machine/pmap.h>
+
 #include <machine/sid.h>
 #include <machine/cpu.h>
-
-struct nexus *nexus;
+#include <machine/nexus.h>
 
 static	int sbi_print __P((void *, char *));
-	int sbi_match __P((struct device *, void *, void *));
-	void sbi_attach __P((struct device *, struct device *, void*));
+static	int sbi_match __P((struct device *, void *, void *));
+static	void sbi_attach __P((struct device *, struct device *, void*));
 
 int
 sbi_print(aux, name)
@@ -90,86 +85,23 @@ sbi_attach(parent, self, aux)
 	u_int	nexnum, maxnex, minnex;
 	struct	sbi_attach_args sa;
 
-	switch (vax_cputype) {
-#ifdef VAX730
-	case VAX_730:
-		maxnex = NNEX730;
-		printf(": BL[730\n");
-		break;
-#endif
-#ifdef VAX750
-	case VAX_750:
-		maxnex = NNEX750;
-		printf(": CMI750\n");
-		break;
-#endif
-#ifdef VAX630
-	case VAX_78032:
-		switch (vax_boardtype) {
-		case VAX_BTYP_630:
-			maxnex = NNEX630;
-			printf(": Q22\n");
-			break;
-		default:
-			panic("Microvax not supported");
-		};
-		break;
-#endif
-#ifdef VAX650
-	case VAX_650:
-		maxnex = NNEX630; /* XXX */
-		printf(": Q22\n");
-		break;
-#endif
-#if VAX780 || VAX8600
-	case VAX_780:
-	case VAX_8600:
-		maxnex = NNEXSBI;
-		printf(": SBI780\n");
-		break;
-#endif
-	default:
-		maxnex = 0; /* Leave it */
-		break;
-	}
+	printf("\n");
 
 	/*
 	 * Now a problem: on different machines with SBI units identifies
 	 * in different ways (if they identifies themselves at all).
 	 * We have to fake identifying depending on different CPUs.
 	 */
-	minnex = self->dv_unit * maxnex;
-	for (nexnum = minnex; nexnum < minnex + maxnex; nexnum++) {
+	minnex = self->dv_unit * NNEXSBI;
+	for (nexnum = minnex; nexnum < minnex + NNEXSBI; nexnum++) {
 		volatile int tmp;
 
 		if (badaddr((caddr_t)&nexus[nexnum], 4))
 			continue;
 
-		switch (vax_cputype) {
-#ifdef VAX750
-		case VAX_750:
-		{	extern	int nexty750[];
-			sa.type = nexty750[nexnum];
-			break;
-		}
-#endif
-#ifdef VAX730
-		case VAX_730:
-		{	extern	int nexty730[];
-			sa.type = nexty730[nexnum];
-			break;
-		}
-#endif
-#if VAX630 || VAX650
-		case VAX_78032:
-		case VAX_650:
-			sa.type = NEX_UBA0;
-			break;
-#endif
-		default:
-			tmp = nexus[nexnum].nexcsr.nex_csr; /* no byte reads */
-			sa.type = tmp & 255;
-		}
+		tmp = nexus[nexnum].nexcsr.nex_csr; /* no byte reads */
+		sa.type = tmp & 255;
+
 		sa.nexnum = nexnum;
 		sa.nexaddr = nexus + nexnum;
 		config_found(self, (void*)&sa, sbi_print);
