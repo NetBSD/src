@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.65 2000/01/25 12:06:21 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.66 2000/01/28 10:19:48 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -2370,7 +2370,7 @@ ohci_device_clear_toggle(pipe)
 {
 	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
 
-	opipe->sed->ed.ed_tailp &= LE(~OHCI_TOGGLECARRY);
+	opipe->sed->ed.ed_headp &= LE(~OHCI_TOGGLECARRY);
 }
 
 static void
