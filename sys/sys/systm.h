@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.148 2002/08/25 20:01:12 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.149 2002/08/25 22:28:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -322,7 +322,7 @@ void	doexithooks __P((struct proc *));
 int	trace_enter __P((struct proc *, register_t, void *, register_t []));
 void	trace_exit __P((struct proc *, register_t, void *, register_t [], int));
 
-int	uiomove __P((void *, int, struct uio *));
+int	uiomove __P((void *, size_t, struct uio *));
 
 #ifdef _KERNEL
 caddr_t	allocsys __P((caddr_t, caddr_t (*)(caddr_t)));
