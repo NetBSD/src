@@ -1,4 +1,4 @@
-/*	$NetBSD: token.l,v 1.9 2003/07/01 07:20:14 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.10 2003/07/22 03:37:59 itojun Exp $	*/
 /*	$KAME: token.l,v 1.41 2003/06/27 06:02:07 itojun Exp $	*/
 
 /*
@@ -67,20 +67,6 @@ void yyerror __P((const char *s));
 extern void parse_init __P((void));
 int parse __P((FILE **));
 int yyparse __P((void));
-
-/* make the code compile on *BSD-current */
-#ifndef SADB_X_AALG_SHA2_256
-#define SADB_X_AALG_SHA2_256	(-1)
-#endif
-#ifndef SADB_X_AALG_SHA2_384
-#define SADB_X_AALG_SHA2_384	(-1)
-#endif
-#ifndef SADB_X_AALG_SHA2_512
-#define SADB_X_AALG_SHA2_512	(-1)
-#endif
-#ifndef SADB_X_EALG_TWOFISHCBC
-#define SADB_X_EALG_TWOFISHCBC	(-1)
-#endif
 %}
 
 /* common section */
@@ -178,7 +164,6 @@ ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
 <S_ENCALG>cast128-cbc	{ yylval.num = SADB_X_EALG_CAST128CBC; BEGIN INITIAL; return(ALG_ENC); }
 <S_ENCALG>des-deriv	{ yylval.num = SADB_EALG_DESCBC; BEGIN INITIAL; return(ALG_ENC_DESDERIV); }
 <S_ENCALG>des-32iv	{ yylval.num = SADB_EALG_DESCBC; BEGIN INITIAL; return(ALG_ENC_DES32IV); }
-<S_ENCALG>twofish-cbc	{ yylval.num = SADB_X_EALG_TWOFISHCBC; BEGIN INITIAL; return(ALG_ENC); }
 <S_ENCALG>rijndael-cbc	{ yylval.num = SADB_X_EALG_RIJNDAELCBC; BEGIN INITIAL; return(ALG_ENC); }
 
 	/* compression algorithms */
