@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.99 1998/11/30 19:47:53 jtk Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.100 1998/12/05 19:02:15 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -1880,6 +1880,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "SGS Thomson Microelectric",
 	    "STG 1764X",
+	},
+	{
+	    PCI_VENDOR_SIGMA, PCI_PRODUCT_SIGMA_HOLLYWOODPLUS,
+	    0,
+	    "Sigma Designs",
+	    "REALmagic Hollywood-Plus MPEG-2 Decoder",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
