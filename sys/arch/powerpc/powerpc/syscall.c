@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2002/10/30 06:41:45 manu Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7 2002/10/30 07:39:40 manu Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -100,7 +100,7 @@ EMULNAME(syscall_plain)(struct trapframe *frame)
 
 	code = frame->fixreg[0];
 
-#if MACH_SYSCALL
+#ifdef MACH_SYSCALL
 	if (code < 0) {
 #ifdef DEBUG_MACH
 		printf("->mach(%d)\n", code);
