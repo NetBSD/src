@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.14 1995/08/13 00:00:04 mycroft Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.15 1995/09/19 21:50:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -104,14 +104,15 @@ static int nfs_asyncdaemon[NFS_MAXASYNCDAEMON];
 /*
  * Get file handle system call
  */
-getfh(p, uap, retval)
+getfh(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct getfh_args /* {
 		syscallarg(char *) fname;
 		syscallarg(fhandle_t *) fhp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct vnode *vp;
 	fhandle_t fh;
 	int error;
@@ -144,14 +145,15 @@ getfh(p, uap, retval)
  * - remains in the kernel as an nfsd
  * - remains in the kernel as an nfsiod
  */
-nfssvc(p, uap, retval)
+nfssvc(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct nfssvc_args /* {
 		syscallarg(int) flag;
 		syscallarg(caddr_t) argp;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	struct nameidata nd;
 	struct file *fp;
 	struct mbuf *nam;

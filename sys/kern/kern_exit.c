@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.30 1995/06/24 20:33:59 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.31 1995/09/19 21:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -68,24 +68,26 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
-__dead void cpu_exit __P((struct proc *)) __attribute__((noreturn));
-__dead void exit1 __P((struct proc *, int)) __attribute__((noreturn));
+void cpu_exit __P((struct proc *));	/* XXX MOVE ME */
+void exit1 __P((struct proc *, int));
 
 /*
  * exit --
  *	Death of process.
  */
-__dead void
-exit(p, uap, retval)
+int
+exit(p, v, retval)
 	struct proc *p;
-	struct exit_args /* {
-		syscallarg(int) rval;
-	} */ *uap;
+	void *v;
 	int *retval;
 {
+	struct exit_args /* {
+		syscallarg(int) rval;
+	} */ *uap = v;
 
 	exit1(p, W_EXITCODE(SCARG(uap, rval), 0));
 	/* NOTREACHED */
+	return (0);
 }
 
 /*
@@ -93,7 +95,7 @@ exit(p, uap, retval)
  * to zombie, and unlink proc from allproc and parent's lists.  Save exit
  * status and rusage for wait().  Check for child processes and orphan them.
  */
-__dead void
+void
 exit1(p, rv)
 	register struct proc *p;
 	int rv;
@@ -267,16 +269,17 @@ exit1(p, rv)
 }
 
 int
-wait4(q, uap, retval, compat)
+wait4(q, v, retval)
 	register struct proc *q;
+	void *v;
+	register_t *retval;
+{
 	register struct wait4_args /* {
 		syscallarg(int) pid;
 		syscallarg(int *) status;
 		syscallarg(int) options;
 		syscallarg(struct rusage *) rusage;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register int nfound;
 	register struct proc *p, *t;
 	int status, error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.35 1995/06/24 20:33:55 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.36 1995/09/19 21:44:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -104,13 +104,14 @@ fd_unused(fdp, fd)
  * Duplicate a file descriptor.
  */
 /* ARGSUSED */
-dup(p, uap, retval)
+dup(p, v, retval)
 	struct proc *p;
-	struct dup_args /* {
-		syscallarg(u_int) fd;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct dup_args /* {
+		syscallarg(u_int) fd;
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register int old = SCARG(uap, fd);
 	int new;
@@ -127,14 +128,15 @@ dup(p, uap, retval)
  * Duplicate a file descriptor to a particular value.
  */
 /* ARGSUSED */
-dup2(p, uap, retval)
+dup2(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct dup2_args /* {
 		syscallarg(u_int) from;
 		syscallarg(u_int) to;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct filedesc *fdp = p->p_fd;
 	register int old = SCARG(uap, from), new = SCARG(uap, to);
 	int i, error;
@@ -162,15 +164,16 @@ dup2(p, uap, retval)
  * The file control system call.
  */
 /* ARGSUSED */
-fcntl(p, uap, retval)
+fcntl(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct fcntl_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
@@ -356,13 +359,14 @@ fdrelease(p, fd)
  * Close a file descriptor.
  */
 /* ARGSUSED */
-close(p, uap, retval)
+close(p, v, retval)
 	struct proc *p;
-	struct close_args /* {
-		syscallarg(int) fd;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct close_args /* {
+		syscallarg(int) fd;
+	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 
@@ -375,14 +379,15 @@ close(p, uap, retval)
  * Return status information about a file descriptor.
  */
 /* ARGSUSED */
-fstat(p, uap, retval)
+fstat(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct fstat_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct stat *) sb;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
@@ -416,14 +421,15 @@ fstat(p, uap, retval)
  * Return pathconf information about a file descriptor.
  */
 /* ARGSUSED */
-fpathconf(p, uap, retval)
+fpathconf(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct fpathconf_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) name;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
@@ -741,14 +747,15 @@ closef(fp, p)
  * the entire file (l_whence = SEEK_SET, l_start = 0, l_len = 0).
  */
 /* ARGSUSED */
-flock(p, uap, retval)
+flock(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct flock_args /* {
 		syscallarg(int) fd;
 		syscallarg(int) how;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	int fd = SCARG(uap, fd);
 	int how = SCARG(uap, how);
 	register struct filedesc *fdp = p->p_fd;

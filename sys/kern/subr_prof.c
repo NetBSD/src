@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.5 1995/03/19 23:44:54 mycroft Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.6 1995/09/19 21:45:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -146,16 +146,17 @@ sysctl_doprof(name, namelen, oldp, oldlenp, newp, newlen, p)
  * 1.0 is represented as 0x10000.  A scale factor of 0 turns off profiling.
  */
 /* ARGSUSED */
-profil(p, uap, retval)
+profil(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	register struct profil_args /* {
 		syscallarg(caddr_t) samples;
 		syscallarg(u_int) size;
 		syscallarg(u_int) offset;
 		syscallarg(u_int) scale;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
 	register struct uprof *upp;
 	int s;
 

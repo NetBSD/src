@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.36 1995/06/26 10:39:20 cgd Exp $	*/
+/*	$NetBSD: systm.h,v 1.37 1995/09/19 21:40:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -96,7 +96,8 @@ extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
 	short	sy_argsize;	/* total size of arguments */
-	int	(*sy_call)();	/* implementing function */
+				/* implementing function */
+	int	(*sy_call) __P((struct proc *, void *, register_t *));
 } sysent[];
 extern int nsysent;
 #define	SCARG(p,k)	((p)->k.datum)	/* get arg from args pointer */
