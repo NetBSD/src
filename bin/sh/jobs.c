@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.47 2002/09/27 18:56:53 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.48 2002/09/27 21:04:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.47 2002/09/27 18:56:53 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.48 2002/09/27 21:04:08 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -252,11 +252,11 @@ fgcmd(argc, argv)
 	if (jp->jobctl == 0)
 		error("job not created under job control");
 
-	for (i = 0; i <= jp->nprocs; i++)
+	for (i = 0; i < jp->nprocs; i++)
 	    if (tcsetpgrp(ttyfd, jp->ps[i].pid) != -1)
 		    break;
 
-	if (i > jp->nprocs) {
+	if (i >= jp->nprocs) {
 		error("Cannot set tty process group (%s) at %d",
 		    strerror(errno), __LINE__);
 	}
@@ -295,10 +295,10 @@ restartjob(jp)
 	if (jp->state == JOBDONE)
 		return;
 	INTOFF;
-	for (i = 0; i <= jp->nprocs; i++)
+	for (i = 0; i < jp->nprocs; i++)
 		if (killpg(jp->ps[i].pid, SIGCONT) != -1)
 			break;
-	if (i > jp->nprocs)
+	if (i >= jp->nprocs)
 		error("Cannot continue job (%s)", strerror(errno));
 	for (ps = jp->ps, i = jp->nprocs ; --i >= 0 ; ps++) {
 		if (WIFSTOPPED(ps->status)) {
