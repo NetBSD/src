@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.146 2004/12/09 21:52:24 matt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.147 2005/02/26 21:34:55 perry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.146 2004/12/09 21:52:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.147 2005/02/26 21:34:55 perry Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -611,7 +611,7 @@ unsleep(struct lwp *l)
 __inline void
 sa_awaken(struct lwp *l)
 {
- 
+
 	SCHED_ASSERT_LOCKED();
 
 	if (l == l->l_savp->savp_lwp && l->l_flag & L_SA_YIELD)

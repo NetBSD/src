@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.79 2004/09/03 18:14:09 darrenr Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.80 2005/02/26 21:34:56 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.79 2004/09/03 18:14:09 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.80 2005/02/26 21:34:56 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -525,7 +525,7 @@ unp_attach(struct socket *so)
 	struct unpcb *unp;
 	struct timeval tv;
 	int error;
-	
+
 	if (so->so_snd.sb_hiwat == 0 || so->so_rcv.sb_hiwat == 0) {
 		switch (so->so_type) {
 
@@ -557,7 +557,7 @@ unp_attach(struct socket *so)
 void
 unp_detach(struct unpcb *unp)
 {
-	
+
 	if (unp->unp_vnode) {
 		unp->unp_vnode->v_socket = 0;
 		vrele(unp->unp_vnode);
@@ -982,7 +982,7 @@ unp_internalize(struct mbuf *control, struct proc *p)
 		if (newcm == NULL)
 			return (E2BIG);
 		memcpy(newcm, cm, sizeof(struct cmsghdr));
-		files = (struct file **)CMSG_DATA(newcm);		
+		files = (struct file **)CMSG_DATA(newcm);
 	} else {
 		/* we can convert in-place */
 		newcm = NULL;
@@ -1181,7 +1181,7 @@ unp_gc(void)
 					unp_scan(so1->so_rcv.sb_mb, unp_mark, 0);
 				}
 			}
-			
+
 		}
 	} while (unp_defer);
 	/*
@@ -1304,7 +1304,7 @@ unp_mark(struct file *fp)
 {
 	if (fp == NULL)
 		return;
-	
+
 	if (fp->f_flag & FMARK)
 		return;
 
