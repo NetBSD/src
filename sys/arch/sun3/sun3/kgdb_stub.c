@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.7 1996/12/17 21:11:30 gwr Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.8 1997/01/23 23:58:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -62,9 +62,11 @@
 #include <machine/reg.h>
 #include <machine/trap.h>
 
-#include <sun3/sun3/kgdb_proto.h>
 #include <machine/db_machdep.h>
 #include <machine/remote-sl.h>
+
+#include <sun3/sun3/kgdb_proto.h>
+#include <sun3/sun3/sunmon.h>
 
 #ifndef KGDBDEV
 #define KGDBDEV -1
@@ -570,12 +572,12 @@ kgdb_trap(type, tf)
 
 		case KGDB_HALT:
 			kgdb_send(out, 0, 0);
-			sun3_mon_halt();
+			sunmon_halt();
 			/* NOTREACHED */
 
 		case KGDB_BOOT:
 			kgdb_send(out, 0, 0);
-			sun3_mon_reboot("");
+			sunmon_reboot("");
 			/* NOTREACHED */
 
 		case KGDB_EXEC:
