@@ -1,5 +1,5 @@
-#	$NetBSD: netbsd-msp.mc,v 1.2 2003/04/01 03:19:19 atatat Exp $
+#	$NetBSD: netbsd-msp.mc,v 1.3 2004/07/15 03:47:18 atatat Exp $
 include(`../m4/cf.m4')
-VERSIONID(`@(#)netbsd-msp.mc	$Revision: 1.2 $')
+VERSIONID(`@(#)netbsd-msp.mc	$Revision: 1.3 $')
 OSTYPE(bsd4.4)dnl
-FEATURE(`msp')dnl
+FEATURE(`msp', `[localhost.]')dnl
