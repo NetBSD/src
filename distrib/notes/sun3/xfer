@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.9 2001/07/24 18:24:51 nra Exp $
+.\"	$NetBSD: xfer,v 1.10 2002/06/30 13:01:50 lukem Exp $
 .
 Installation is supported from several media types, including:
 .(bullet -compact -offset indent
@@ -19,8 +19,8 @@ NFS server.
 .Note)
 .Pp
 The procedure for transferring the distribution sets onto
-installation media depends on the type of media. Instructions
-for each type of media are given below.
+installation media depends on the type of media.
+Instructions for each type of media are given below.
 .Pp
 In order to create installation media, you will need all the
 files in the directory
@@ -46,16 +46,16 @@ The install tape is created as follows:
 .Dl # Ic "sh MakeInstallTape /dev/nrst0"
 .Pp
 If the tapes do not work as expected, you may need to explicitly
-set the EOF mark at the end of each tape segment. It may also be
-necessary to use the
+set the EOF mark at the end of each tape segment.
+It may also be necessary to use the
 .Cm conv=osync
 argument to
 .Xr dd 1 .
 Note that
 this argument is incompatible with the
 .Cm bs=
-argument. Consult
-the tape-related manual pages on the system where the tapes are
+argument.
+Consult the tape-related manual pages on the system where the tapes are
 created for more details.
 .
 .Ss2 Boot/Install from NFS server
@@ -63,20 +63,21 @@ created for more details.
 If your machine has a disk and network connection, but no tape drive,
 it may be convenient for you to install
 .Nx
-over the network. This
-involves temporarily booting your machine over NFS, just long enough
-so you can initialize its disk. This method requires that you have
-access to an NFS server on your network so you can configure it to
-support diskless boot for your machine. Configuring the NFS server
-is normally a task for a system administrator, and is not trivial.
+over the network.
+This involves temporarily booting your machine over NFS, just long enough
+so you can initialize its disk.
+This method requires that you have access to an NFS server on your
+network so you can configure it to support diskless boot for your machine.
+Configuring the NFS server is normally a task for a system administrator,
+and is not trivial.
 .Pp
 If you are using a
 .Nx
 system as the boot-server, have a look at
 the
 .Xr diskless 8
-manual page for guidelines on how to proceed with
-this. If the server runs another operating system, consult the
+manual page for guidelines on how to proceed with this.
+If the server runs another operating system, consult the
 documentation that came with it (i.e.
 .Xr add_client 8
 on
@@ -94,7 +95,8 @@ machine's recently acquired IP
 .if r_sun3x address and an extension which corresponds to the
 .if r_sun3x machine architecture.
 (It may be handy to have a hexadecimal
-calculator for this next step.) The filename
+calculator for this next step.)
+The filename
 .if r_sun3x prefix
 is created by
 converting the machine's assigned IP address into hexadecimal,
@@ -118,15 +120,15 @@ is a symbolic link to the
 program, which should
 be located in a place where the
 .Tn TFTP
-daemon can find it. (Remember, many
-TFTP daemons run in a chroot'ed environment.) The netboot program
-may be found in the install directory of this distribution.
+daemon can find it.
+(Remember, many TFTP daemons run in a chroot'ed environment.)
+The netboot program may be found in the install directory of this distribution.
 .Pp
 The netboot program will query a bootparamd server to find the
 NFS server address and path name for its root, and then load a
-kernel from that location. The server should have a copy of the
-netbsd-rd kernel in the root area for your client (no other files
-are needed in the client root) and
+kernel from that location.
+The server should have a copy of the netbsd-rd kernel in the root area
+for your client (no other files are needed in the client root) and
 .Pa /etc/bootparams
 on the server
 should have an entry for your client and its root directory.
@@ -137,18 +139,20 @@ If you will be installing
 .Nx
 on several clients, it may be useful
 to know that you can use a single NFS root for all the clients as long
-as they only use the netbsd-rd kernel. There will be no conflict
-between clients because the RAM-disk kernel will not use the NFS root.
+as they only use the netbsd-rd kernel.
+There will be no conflict between clients because the RAM-disk kernel will
+not use the NFS root.
 No swap file is needed; the RAM-disk kernel does not use that either.
 .
 .Ss2 Install/Upgrade from CD-ROM
 .
 This method requires that you boot from another device (i.e. tape
 or network, as described above). You may need to make a boot tape
-on another machine using the files provided on the CD-ROM. Once
-you have booted netbsd-rd (the RAM-disk kernel) and loaded the
+on another machine using the files provided on the CD-ROM.
+Once you have booted netbsd-rd (the RAM-disk kernel) and loaded the
 miniroot, you can load any of the distribution sets directly from
-the CD-ROM. The
+the CD-ROM.
+The
 .Ic install
 program in the miniroot automates the
 work required to mount the CD-ROM and extract the files.
@@ -156,12 +160,14 @@ work required to mount the CD-ROM and extract the files.
 .Ss2 Install/Upgrade via FTP
 .
 This method requires that you boot from another device (i.e. tape
-or network, as described above). You may need to make a boot tape
-on another machine using the files in
+or network, as described above).
+You may need to make a boot tape on another machine using the files in
 .Pa .../install
-(which you get via FTP). Once you have booted netbsd-rd (the RAM-disk kernel)
+(which you get via FTP).
+Once you have booted netbsd-rd (the RAM-disk kernel)
 and loaded the miniroot, you can load any of the distribution sets
-over the net using FTP. The
+over the net using FTP.
+The
 .Ic install
 program in the miniroot
 automates the work required to configure the network interface and
@@ -171,15 +177,15 @@ The preparations for this installation/upgrade method are easy; all
 you make sure that there's some FTP site from which you can retrieve
 the
 .Nx
-distribution when you're about to install or upgrade. You
-need to know the numeric IP address of that site, and, if it's not on
+distribution when you're about to install or upgrade.
+You need to know the numeric IP address of that site, and, if it's not on
 a network directly connected to the machine on which you're installing
 or upgrading
 .Nx ,
 you need to know the numeric IP address of the
 router closest to the
 .Nx
-machine. Finally, you need to know the
-numeric IP address of the
+machine.
+Finally, you need to know the numeric IP address of the
 .Nx
 machine itself.

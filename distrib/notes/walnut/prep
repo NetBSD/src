@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.1 2002/06/16 00:38:35 wiz Exp $
+.\"	$NetBSD: prep,v 1.2 2002/06/30 13:04:33 lukem Exp $
 .
 When installing NetBSD for your
 .Nx*M
@@ -7,8 +7,8 @@ The firmware does not support loading the kernel from a disk.
 .
 .Ss2 Booting over a serial line
 .
-This is not currently documented or supported.  If you would like to
-attempt this and supply documentation, please do!
+This is not currently documented or supported.
+If you would like to attempt this and supply documentation, please do!
 .
 .Ss2 Booting from the network
 .
