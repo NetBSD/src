@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.4 2004/09/14 00:31:20 lukem Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.5 2004/09/14 00:32:55 lukem Exp $	*/
 /*	Id: if_ipw.c,v 1.1.2.7 2004/08/20 11:20:11 damien Exp   */
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.4 2004/09/14 00:31:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.5 2004/09/14 00:32:55 lukem Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1682,13 +1682,6 @@ ipw_config(struct ipw_softc *sc)
 	u_int32_t data;
 	int error, i;
 
-	DPRINTF(("Setting adapter MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
-	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
-	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr, 
-	    IEEE80211_ADDR_LEN);
-	if (error != 0)
-		return error;
-
 	switch (ic->ic_opmode) {
 	case IEEE80211_M_STA:
 	case IEEE80211_M_HOSTAP:
@@ -1717,6 +1710,18 @@ ipw_config(struct ipw_softc *sc)
 		if (error != 0)
 			return error;
 	}
+
+	if (ic->ic_opmode == IEEE80211_M_MONITOR) {
+		DPRINTF(("Enabling adapter\n"));
+		return ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
+	}
+
+	DPRINTF(("Setting adapter MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
+	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
+	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr, 
+	    IEEE80211_ADDR_LEN);
+	if (error != 0)
+		return error;
 
 	config.flags = htole32(IPW_CFG_BSS_MASK | IPW_CFG_IBSS_MASK | 
 			       IPW_CFG_PREAMBLE_LEN | IPW_CFG_802_1x_ENABLE);
