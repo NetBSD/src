@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.h,v 1.5 1997/07/31 00:21:56 jtc Exp $	*/
+/*	$NetBSD: fsdb.h,v 1.6 1998/03/18 17:03:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@ extern long dev_bsize;
 extern long secsize;
 extern int fsmodified;
 extern int fsfd;
+extern int doswap;
+extern int needswap;
+extern int markclean;
 
 struct cmdtable {
 	const char *cmd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.11 1997/10/14 15:06:59 christos Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.12 1998/03/18 17:03:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.11 1997/10/14 15:06:59 christos Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.12 1998/03/18 17:03:15 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: fsdb.c,v 1.11 1997/10/14 15:06:59 christos Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include "fsdb.h"
 #include "fsck.h"
@@ -116,14 +117,16 @@ main(argc, argv)
 	}
 	if (fsys == NULL)
 		usage();
+	endian = 0;
 	if (!setup(fsys))
 		errx(1, "cannot set up file system `%s'", fsys);
 	printf("Editing file system `%s'\nLast Mounted on %s\n", fsys,
-	    sblock.fs_fsmnt);
+	    sblock->fs_fsmnt);
 	rval = cmdloop();
-	sblock.fs_clean = 0;	/* mark it dirty */
+	sblock->fs_clean = 0;	/* mark it dirty */
 	sbdirty();
-	ckfini(0);
+	markclean = 0;
+	ckfini();
 	printf("*** FILE SYSTEM MARKED DIRTY\n");
 	printf("*** BE SURE TO RUN FSCK TO CLEAN UP ANY DAMAGE\n");
 	printf("*** IF IT WAS MOUNTED, RE-MOUNT WITH -u -o reload\n");
@@ -358,7 +361,9 @@ CMDFUNCSTART(uplink)
 {
 	if (!checkactive())
 		return 1;
-	printf("inode %d link count now %d\n", curinum, ++curinode->di_nlink);
+	curinode->di_nlink = iswap16(iswap16(curinode->di_nlink) + 1);
+	printf("inode %d link count now %d\n", curinum,
+		iswap16(curinode->di_nlink));
 	inodirty();
 	return 0;
 }
@@ -367,7 +372,9 @@ CMDFUNCSTART(downlink)
 {
 	if (!checkactive())
 		return 1;
-	printf("inode %d link count now %d\n", curinum, --curinode->di_nlink);
+	curinode->di_nlink = iswap16(iswap16(curinode->di_nlink) - 1);
+	printf("inode %d link count now %d\n", curinum,
+		iswap16(curinode->di_nlink));
 	inodirty();
 	return 0;
 }
@@ -399,7 +406,8 @@ scannames(idesc)
 	struct direct *dirp = idesc->id_dirp;
 
 	printf("slot %d ino %d reclen %d: %s, `%.*s'\n",
-	    slot++, dirp->d_ino, dirp->d_reclen, typename[dirp->d_type],
+	    slot++, iswap32(dirp->d_ino), iswap16(dirp->d_reclen),
+		typename[dirp->d_type],
 	    dirp->d_namlen, dirp->d_name);
 	return (KEEPON);
 }
@@ -518,7 +526,7 @@ chinumfunc(idesc)
 	struct direct *dirp = idesc->id_dirp;
 
 	if (slotcount++ == desired) {
-		dirp->d_ino = idesc->id_parent;
+		dirp->d_ino = iswap32(idesc->id_parent);
 		return STOP | ALTERED | FOUND;
 	}
 	return KEEPON;
@@ -564,7 +572,7 @@ chnamefunc(idesc)
 	if (slotcount++ == desired) {
 		/* will name fit? */
 		testdir.d_namlen = strlen(idesc->id_name);
-		if (DIRSIZ(NEWDIRFMT, &testdir) <= dirp->d_reclen) {
+		if (DIRSIZ(NEWDIRFMT, &testdir, 0) <= iswap16(dirp->d_reclen)) {
 			dirp->d_namlen = testdir.d_namlen;
 			strcpy(dirp->d_name, idesc->id_name);
 			return STOP | ALTERED | FOUND;
@@ -626,7 +634,7 @@ CMDFUNCSTART(newtype)
 
 	if (!checkactive())
 		return 1;
-	type = curinode->di_mode & IFMT;
+	type = iswap16(curinode->di_mode) & IFMT;
 	for (tp = typenamemap;
 	    tp < &typenamemap[sizeof(typemap) / sizeof(*typemap)];
 	    tp++) {
@@ -641,8 +649,7 @@ CMDFUNCSTART(newtype)
 		warnx("try one of `file', `dir', `socket', `fifo'");
 		return 1;
 	}
-	curinode->di_mode &= ~IFMT;
-	curinode->di_mode |= type;
+	curinode->di_mode  = iswap16((iswap16(curinode->di_mode) & ~IFMT) | type);
 	inodirty();
 	printactive();
 	return 0;
@@ -650,7 +657,6 @@ CMDFUNCSTART(newtype)
 
 CMDFUNCSTART(chmode)
 {
-	int     rval = 1;
 	long    modebits;
 	char   *cp;
 
@@ -662,16 +668,15 @@ CMDFUNCSTART(chmode)
 		warnx("bad modebits `%s'", argv[1]);
 		return 1;
 	}
-	curinode->di_mode &= ~07777;
-	curinode->di_mode |= modebits;
+	curinode->di_mode =
+		iswap16((iswap16(curinode->di_mode) & ~07777) | modebits);
 	inodirty();
 	printactive();
-	return rval;
+	return 0;
 }
 
 CMDFUNCSTART(chlen)
 {
-	int     rval = 1;
 	long    len;
 	char   *cp;
 
@@ -683,15 +688,14 @@ CMDFUNCSTART(chlen)
 		warnx("bad length '%s'", argv[1]);
 		return 1;
 	}
-	curinode->di_size = len;
+	curinode->di_size = iswap64(len);
 	inodirty();
 	printactive();
-	return rval;
+	return 0;
 }
 
 CMDFUNCSTART(chaflags)
 {
-	int     rval = 1;
 	u_long  flags;
 	char   *cp;
 
@@ -708,15 +712,14 @@ CMDFUNCSTART(chaflags)
 		    flags);
 		return (1);
 	}
-	curinode->di_flags = flags;
+	curinode->di_flags = iswap32(flags);
 	inodirty();
 	printactive();
-	return rval;
+	return 0;
 }
 
 CMDFUNCSTART(chgen)
 {
-	int     rval = 1;
 	long    gen;
 	char   *cp;
 
@@ -732,15 +735,14 @@ CMDFUNCSTART(chgen)
 		warnx("gen set beyond 32-bit range of field (0x%lx)\n", gen);
 		return (1);
 	}
-	curinode->di_gen = gen;
+	curinode->di_gen = iswap32(gen);
 	inodirty();
 	printactive();
-	return rval;
+	return 0;
 }
 
 CMDFUNCSTART(linkcount)
 {
-	int     rval = 1;
 	int     lcnt;
 	char   *cp;
 
@@ -756,15 +758,14 @@ CMDFUNCSTART(linkcount)
 		warnx("max link count is %d\n", USHRT_MAX);
 		return 1;
 	}
-	curinode->di_nlink = lcnt;
+	curinode->di_nlink = iswap16(lcnt);
 	inodirty();
 	printactive();
-	return rval;
+	return 0;
 }
 
 CMDFUNCSTART(chowner)
 {
-	int     rval = 1;
 	unsigned long uid;
 	char   *cp;
 	struct passwd *pwd;
@@ -782,15 +783,14 @@ CMDFUNCSTART(chowner)
 			return 1;
 		}
 	}
-	curinode->di_uid = uid;
+	curinode->di_uid = iswap32(uid);
 	inodirty();
 	printactive();
-	return rval;
+	return 0;
 }
 
 CMDFUNCSTART(chgroup)
 {
-	int     rval = 1;
 	unsigned long gid;
 	char   *cp;
 	struct group *grp;
@@ -807,10 +807,10 @@ CMDFUNCSTART(chgroup)
 			return 1;
 		}
 	}
-	curinode->di_gid = gid;
+	curinode->di_gid = iswap32(gid);
 	inodirty();
 	printactive();
-	return rval;
+	return 0;
 }
 
 static int
@@ -864,8 +864,8 @@ badformat:
 		warnx("date/time out of range");
 		return 1;
 	}
-	*rsec = sec;
-	*rnsec = nsec;
+	*rsec = iswap32(sec);
+	*rnsec = iswap32(nsec);
 	return 0;
 }
 
