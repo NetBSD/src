@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.19 2003/05/03 18:11:07 wiz Exp $	*/
+/*	$NetBSD: intio.c,v 1.20 2003/07/15 01:44:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
 /*
  * NetBSD/x68k internal I/O virtual bus.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.20 2003/07/15 01:44:51 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

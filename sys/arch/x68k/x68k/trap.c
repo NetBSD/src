@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.62 2003/04/01 15:14:21 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.63 2003/07/15 01:44:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)trap.c	8.5 (Berkeley) 1/4/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.63 2003/07/15 01:44:57 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

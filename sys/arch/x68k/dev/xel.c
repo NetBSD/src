@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.6 2002/10/02 16:02:44 thorpej Exp $	*/
+/*	$NetBSD: xel.c,v 1.7 2003/07/15 01:44:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,9 @@
  * TSR Xellent30 driver.
  * Detect Xellent30, and reserve its I/O area.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.7 2003/07/15 01:44:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
