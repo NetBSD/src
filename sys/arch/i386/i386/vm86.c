@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.37 2003/10/28 23:10:02 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.38 2003/12/04 13:05:16 keihan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.37 2003/10/28 23:10:02 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.38 2003/12/04 13:05:16 keihan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ fast_intxx(l, intrno)
 		 * int.  Some applications rely on this (i.e. dynamically
 		 * emulate an IDT), and those that don't will crash in a
 		 * spectacular way, I suppose.
-		 *	--thorpej@netbsd.org
+		 *	--thorpej@NetBSD.org
 		 */
 		goto vector;
 	}
