@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.15 1996/12/07 00:37:00 mrg Exp $	*/
+/*	$NetBSD: inetd.c,v 1.16 1996/12/30 23:38:19 mouse Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
  * All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$Id: inetd.c,v 1.15 1996/12/07 00:37:00 mrg Exp $";
+static char rcsid[] = "$Id: inetd.c,v 1.16 1996/12/30 23:38:19 mouse Exp $";
 #endif /* not lint */
 
 /*
@@ -60,7 +60,7 @@ static char rcsid[] = "$Id: inetd.c,v 1.15 1996/12/07 00:37:00 mrg Exp $";
  * to receive further messages on, or ``take over the socket'',
  * processing all arriving datagrams and, eventually, timing
  * out.	 The first type of server is said to be ``multi-threaded'';
- * the second type of server ``single-threaded''. 
+ * the second type of server ``single-threaded''.
  *
  * Inetd uses a configuration file which is read at startup
  * and, possibly, at some later time in response to a hangup signal.
@@ -85,6 +85,30 @@ static char rcsid[] = "$Id: inetd.c,v 1.15 1996/12/07 00:37:00 mrg Exp $";
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
  *
+ * For non-RPC services, the "service name" can be of the form
+ * hostaddress:servicename, in which case the hostaddress is used
+ * as the host portion of the address to listen on.  If hostaddress
+ * consists of a single `*' character, INADDR_ANY is used.
+ *
+ * A line can also consist of just
+ *	hostaddress:
+ * where hostaddress is as in the preceding paragraph.  Such a line must
+ * have no further fields; the specified hostaddress is remembered and
+ * used for all further lines that have no hostaddress specified,
+ * until the next such line (or EOF).  (This is why * is provided to
+ * allow explicit specification of INADDR_ANY.)  A line
+ *	*:
+ * is implicitly in effect at the beginning of the file.
+ *
+ * The hostaddress specifier may (and often will) contain dots;
+ * the service name must not.
+ *
+ * For RPC services, host-address specifiers are accepted and will
+ * work to some extent; however, because of limitations in the
+ * portmapper interface, it will not work to try to give more than
+ * one line for any given RPC service, even if the host-address
+ * specifiers are different.
+ *
  * Comment lines are indicated by a `#' in column 1.
  */
 
@@ -92,23 +116,23 @@ static char rcsid[] = "$Id: inetd.c,v 1.15 1996/12/07 00:37:00 mrg Exp $";
  * Here's the scoop concerning the user.group feature:
  *
  * 1) set-group-option off.
- * 
+ *
  * 	a) user = root:	NO setuid() or setgid() is done
- * 
+ *
  * 	b) other:	setuid()
  * 			setgid(primary group as found in passwd)
  * 			initgroups(name, primary group)
- * 
+ *
  * 2) set-group-option on.
- * 
+ *
  * 	a) user = root:	NO setuid()
  * 			setgid(specified group)
  * 			NO initgroups()
- * 
+ *
  * 	b) other:	setuid()
  * 			setgid(specified group)
  * 			initgroups(name, specified group)
- * 
+ *
  */
 
 #include <sys/param.h>
@@ -170,7 +194,11 @@ int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 
 extern	int errno;
 
+/* Why aren't these static? */
 void	config(), reapchild(), retry(), goaway();
+char    *newstr();
+
+/* Why isn't this done with <strings.h>? */
 char	*index();
 
 int	debug;
@@ -197,6 +225,7 @@ struct rlimit	rlim_ofile;
 #endif
 
 struct	servtab {
+	char	*se_hostaddr;		/* host address to listen on */
 	char	*se_service;		/* name of service */
 	int	se_socktype;		/* type of socket to use */
 	int	se_family;		/* address family */
@@ -331,7 +360,11 @@ main(argc, argv, envp)
 #endif
 		case '?':
 		default:
-			fprintf(stderr, "usage: %s [-d] [conf]", progname);
+#ifdef LIBWRAP
+			fprintf(stderr, "usage: %s [-dl] [conf]\n", progname);
+#else
+			fprintf(stderr, "usage: %s [-d] [conf]\n", progname);
+#endif
 			exit(1);
 		}
 	argc -= optind;
@@ -612,6 +645,7 @@ config()
 	while (cp = getconfigent()) {
 		for (sep = servtab; sep; sep = sep->se_next)
 			if (strcmp(sep->se_service, cp->se_service) == 0 &&
+			    strcmp(sep->se_service, cp->se_hostaddr) == 0 &&
 			    strcmp(sep->se_proto, cp->se_proto) == 0)
 				break;
 		if (sep != 0) {
@@ -623,10 +657,10 @@ config()
 			/*
 			 * sep->se_wait may be holding the pid of a daemon
 			 * that we're waiting for.  If so, don't overwrite
-			 * it unless the config file explicitly says don't 
+			 * it unless the config file explicitly says don't
 			 * wait.
 			 */
-			if (cp->se_bi == 0 && 
+			if (cp->se_bi == 0 &&
 			    (sep->se_wait == 1 || cp->se_wait == 0))
 				sep->se_wait = cp->se_wait;
 			SWAP(int, cp->se_max, sep->se_max);
@@ -657,7 +691,7 @@ config()
 				break;
 			(void)unlink(sep->se_service);
 			n = strlen(sep->se_service);
-			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1) 
+			if (n > sizeof sep->se_ctrladdr_un.sun_path - 1)
 				n = sizeof sep->se_ctrladdr_un.sun_path - 1;
 			strncpy(sep->se_ctrladdr_un.sun_path, sep->se_service, n);
 			sep->se_ctrladdr_un.sun_family = AF_UNIX;
@@ -667,6 +701,25 @@ config()
 			break;
 		case AF_INET:
 			sep->se_ctrladdr_in.sin_family = AF_INET;
+			if (!strcmp(sep->se_hostaddr,"*"))
+				sep->se_ctrladdr_in.sin_addr.s_addr = INADDR_ANY;
+			else if (!inet_aton(sep->se_hostaddr,&sep->se_ctrladdr_in.sin_addr)) {
+				/* Do we really want to support hostname lookups here? */
+				struct hostent *hp;
+				hp = gethostbyname(sep->se_hostaddr);
+				if (hp == 0) {
+					syslog(LOG_ERR,"%s: unknown host",sep->se_hostaddr);
+					continue;
+				} else if (hp->h_addrtype != AF_INET) {
+					syslog(LOG_ERR,"%s: address isn't an Internet address",sep->se_hostaddr);
+					continue;
+				} else if (hp->h_length != sizeof(struct in_addr)) {
+					syslog(LOG_ERR,"%s: address size wrong (under DNS corruption attack?)",sep->se_hostaddr);
+					continue;
+				} else {
+					bcopy(hp->h_addr_list[0],&sep->se_ctrladdr_in.sin_addr,sizeof(struct in_addr));
+				}
+			}
 			sep->se_ctrladdr_size = sizeof sep->se_ctrladdr_in;
 			if (isrpcservice(sep)) {
 				struct rpcent *rp;
@@ -905,12 +958,14 @@ FILE	*fconfig = NULL;
 struct	servtab serv;
 char	line[256];
 char	*skip(), *nextline();
+char    *defhost;
 
 setconfig()
 {
-
+	if (defhost) free(defhost);
+	defhost = newstr("*");
 	if (fconfig != NULL) {
-		fseek(fconfig, 0L, L_SET);
+		fseek(fconfig, 0L, SEEK_SET);
 		return (1);
 	}
 	fconfig = fopen(CONFIG, "r");
@@ -923,6 +978,10 @@ endconfig()
 		(void) fclose(fconfig);
 		fconfig = NULL;
 	}
+	if (defhost) {
+		free(defhost);
+		defhost = 0;
+	}
 }
 
 struct servtab *
@@ -930,7 +989,8 @@ getconfigent()
 {
 	register struct servtab *sep = &serv;
 	int argc;
-	char *cp, *arg, *newstr();
+	char *cp, *arg;
+	char *hostdelim;
 
 more:
 #ifdef MULOG
@@ -969,9 +1029,25 @@ more:
 		return ((struct servtab *)0);
 	bzero((char *)sep, sizeof *sep);
 	sep->se_service = newstr(skip(&cp));
+	hostdelim = rindex(sep->se_service,':');
+	if (hostdelim) {
+		*hostdelim = '\0';
+		sep->se_hostaddr = sep->se_service;
+		sep->se_service = newstr(hostdelim+1);
+	} else {
+		sep->se_hostaddr = newstr(defhost);
+	}
 	arg = skip(&cp);
-	if (arg == NULL)
-		goto more;
+	if (arg == NULL) {
+		if (!strcmp(sep->se_service,"")) {
+			/* if we didn't have a colon, still OK */
+			free(defhost);
+			defhost = sep->se_hostaddr;
+		} else
+			free(sep->se_hostaddr);
+		free(sep->se_service);
+ 		goto more;
+	}
 
 	if (strcmp(arg, "stream") == 0)
 		sep->se_socktype = SOCK_STREAM;
@@ -1011,7 +1087,7 @@ more:
 			}
 			if (*ccp == '-') {
 				cp = ccp + 1;
-				sep->se_rpcversh = strtol(cp, &ccp, 0); 
+				sep->se_rpcversh = strtol(cp, &ccp, 0);
 				if (ccp == cp)
 					goto badafterall;
 			}
@@ -1100,6 +1176,8 @@ freeconfig(cp)
 {
 	int i;
 
+	if (cp->se_hostaddr)
+		free(cp->se_hostaddr);
 	if (cp->se_service)
 		free(cp->se_service);
 	if (cp->se_proto)
@@ -1184,9 +1262,9 @@ inetd_setproctitle(a, s)
 	size = sizeof(sin);
 	if (getpeername(s, (struct sockaddr *)&sin, &size) == 0)
 		(void)snprintf(buf, sizeof buf, "-%s [%s]", a,
-		    inet_ntoa(sin.sin_addr)); 
+		    inet_ntoa(sin.sin_addr));
 	else
-		(void)snprintf(buf, sizeof buf, "-%s", a); 
+		(void)snprintf(buf, sizeof buf, "-%s", a);
 	strncpy(cp, buf, LastArg - cp);
 	cp += strlen(cp);
 	while (cp < LastArg)
