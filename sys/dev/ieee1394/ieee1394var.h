@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1394var.h,v 1.4 2000/12/13 11:30:15 enami Exp $	*/
+/*	$NetBSD: ieee1394var.h,v 1.5 2001/05/01 04:48:11 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,10 +47,15 @@ struct ieee1394_node;
  * requisite reference counting.
  */
 struct ieee1394_abuf {
-	struct ieee1394_node *ab_node;		/* destination/source */
-	bus_dmamap_t *ab_dmamap;
-	off_t ab_csr;
-	size_t ab_length;
+	struct ieee1394_softc *ab_node;		/* destination/source */
+	u_int32_t *ab_data;
+	u_int64_t ab_csr;
+        u_int8_t ab_tcode;
+        u_int8_t ab_tlabel;
+        u_int16_t ab_length; 
+        u_int16_t ab_retlen;                    /* length returned from read. */
+        void (*ab_cb)(struct ieee1394_abuf *, int);
+        void *ab_cbarg;
 };
 
 struct ieee1394_callbacks {
@@ -61,12 +66,22 @@ struct ieee1394_callbacks {
 				struct ieee1394_abuf *);
 };
 
+struct ieee1394_attach_args {
+        char name[7]; 
+        u_int8_t uid[8];
+        u_int16_t nodeid;
+        void *input;
+        void *output;
+        void *inreg;
+};    
+ 
 struct ieee1394_softc {
 	struct device sc1394_dev;
 	struct device *sc1394_if;
 
 	const struct ieee1394_callbacks sc1394_callback;
 	u_int32_t *sc1394_configrom;
+        u_int32_t sc1394_configrom_len;  /* quadlets. */
 	u_int32_t sc1394_max_receive;
 	u_int8_t sc1394_guid[8];
 	u_int8_t sc1394_link_speed;	/* IEEE1394_SPD_* */
@@ -76,6 +91,8 @@ struct ieee1394_softc {
 	    void (*)(struct device *, struct mbuf *));
 	int (*sc1394_ifinreg)(struct device *, u_int32_t, u_int32_t,
 	    void (*)(struct device *, struct mbuf *));
+    
+	LIST_ENTRY(ieee1394_softc) sc1394_node;
 };
 
 struct ieee1394_node {
