@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.10 2000/12/11 03:53:54 chs Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.11 2000/12/13 15:32:31 chs Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -4848,6 +4848,8 @@ softdep_setup_pagecache(ip, lbn, size)
 
 	/*
 	 * Enter pagecache dependency buf in hash.
+	 * Always reset b_resid to be the full amount of data in the block
+	 * since the caller has the corresponding pages locked and dirty.
 	 */
 
 	bp = softdep_lookup_pcbp(vp, lbn);
@@ -4859,14 +4861,10 @@ softdep_setup_pagecache(ip, lbn, size)
 
 		bp->b_vp = vp;
 		bp->b_lblkno = lbn;
-		bp->b_bcount = bp->b_resid = size;
 		LIST_INIT(&bp->b_dep);
 		LIST_INSERT_HEAD(&pcbphashhead[PCBPHASH(vp, lbn)], bp, b_hash);
-	} else {
-		KASSERT(size >= bp->b_bcount);
-		bp->b_resid += size - bp->b_bcount;
-		bp->b_bcount = size;
 	}
+	bp->b_bcount = bp->b_resid = size;
 	return bp;
 }
 
