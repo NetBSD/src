@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.2 2002/08/12 07:55:08 simonb Exp $ */
+/* $NetBSD: opb.c,v 1.3 2002/08/13 04:57:49 simonb Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -89,12 +89,12 @@ const struct opb_dev {
 	bus_addr_t addr;
 	int irq;
 } opb_devs [] = {
-	{ IBM405GP,	"com",	UART0_BASE,	 0 },
-	{ IBM405GP,	"com",	UART1_BASE,	 1 },
-	{ IBM405GP,	"emac",	EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
-	{ IBM405GP,	"gpio",	GPIO0_BASE,	-1 },
-	{ IBM405GP,	"iic",	IIC0_BASE,	 2 },
-	{ IBM405GP,	"wdog",	-1,        	-1 },
+	{ IBM405GP,	"com",	IBM405GP_UART0_BASE,	 0 },
+	{ IBM405GP,	"com",	IBM405GP_UART1_BASE,	 1 },
+	{ IBM405GP,	"emac",	IBM405GP_EMAC0_BASE,	 9 }, /* XXX: really irq 9..15 */
+	{ IBM405GP,	"gpio",	IBM405GP_GPIO0_BASE,	-1 },
+	{ IBM405GP,	"iic",	IBM405GP_IIC0_BASE,	 2 },
+	{ IBM405GP,	"wdog",	-1,	        	-1 },
 	{ 0,		 NULL }
 };
 
