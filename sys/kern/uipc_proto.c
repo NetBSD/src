@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_proto.c,v 1.7 1996/02/09 19:00:47 christos Exp $	*/
+/*	$NetBSD: uipc_proto.c,v 1.8 1996/02/13 21:10:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -41,6 +41,7 @@
 #include <sys/domain.h>
 #include <sys/mbuf.h>
 #include <sys/un.h> 
+#include <sys/socketvar.h>
                         
 #include <net/if.h>
 #include <net/raw_cb.h>
@@ -48,10 +49,6 @@
 /*
  * Definitions of protocols supported in the UNIX domain.
  */
-
-/* XXX: remove the declarations after prototypes are done. */
-int	uipc_usrreq(), raw_usrreq();
-void	raw_init(), raw_input(), raw_ctlinput();
 
 extern	struct domain unixdomain;		/* or at least forward */
 
