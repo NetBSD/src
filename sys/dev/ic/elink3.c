@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.21 1997/03/15 18:11:29 is Exp $	*/
+/*	$NetBSD: elink3.c,v 1.22 1997/03/30 22:47:10 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -46,8 +46,7 @@
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
-#include <net/if_types.h>
-
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>

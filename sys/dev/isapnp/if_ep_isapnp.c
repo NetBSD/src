@@ -1,6 +1,7 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.5 1997/03/21 00:56:43 mycroft Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.6 1997/03/30 22:47:07 jonathan Exp $	*/
 
 /*
+ * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
  * Copyright (c) 1997 Charles M. Hannum.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,9 +44,8 @@
 
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_types.h>
-
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
