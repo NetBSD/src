@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.17 2004/01/04 01:29:11 augustss Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.18 2004/01/04 02:13:11 dsainty Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.17 2004/01/04 01:29:11 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.18 2004/01/04 02:13:11 dsainty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,7 +514,7 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 	memcpy(buf+1, data, len);
 
 	retstat = usbd_set_report(scd->sc_parent->sc_iface, type,
-				  scd->sc_report_id, data, len + 1);
+				  scd->sc_report_id, buf, len + 1);
 
 	free(buf, M_TEMP);
 
