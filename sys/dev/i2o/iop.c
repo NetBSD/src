@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.44 2004/09/13 12:55:47 drochner Exp $	*/
+/*	$NetBSD: iop.c,v 1.45 2004/09/15 09:10:42 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.44 2004/09/13 12:55:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.45 2004/09/15 09:10:42 drochner Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -593,7 +593,7 @@ iop_config_interrupts(struct device *self)
 	ia.ia_tid = I2O_TID_IOP;
 	ldesc->len = 1;
 	ldesc->locs[IOPCF_TID] = I2O_TID_IOP;
-	config_found_sm_loc(self, "iop", NULL, &ia, iop_print, iop_submatch);
+	config_found_sm_loc(self, "iop", ldesc, &ia, iop_print, iop_submatch);
 
 	/*
 	 * Start device configuration.
@@ -844,7 +844,7 @@ iop_configure_devices(struct iop_softc *sc, int mask, int maskval)
 		ldesc->len = 1;
 		ldesc->locs[IOPCF_TID] = ii->ii_tid;
 
-		dv = config_found_sm_loc(&sc->sc_dv, "iop", NULL, &ia,
+		dv = config_found_sm_loc(&sc->sc_dv, "iop", ldesc, &ia,
 					 iop_print, iop_submatch);
 		if (dv != NULL) {
  			sc->sc_tidmap[i].it_flags |= IT_CONFIGURED;
