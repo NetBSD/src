@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.155 2003/10/21 21:17:20 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.156 2003/10/22 02:45:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.155 2003/10/21 21:17:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.156 2003/10/22 02:45:57 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -310,6 +310,9 @@ void
 tcp_init()
 {
 	int hlen;
+
+	/* Initialize the TCPCB template. */
+	tcp_tcpcb_template();
 
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    NULL);
@@ -885,6 +888,61 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 }
 
 /*
+ * Template TCPCB.  Rather than zeroing a new TCPCB and initializing
+ * a bunch of members individually, we maintain this template for the
+ * static and mostly-static components of the TCPCB, and copy it into
+ * the new TCPCB instead.
+ */
+static struct tcpcb tcpcb_template = {
+	.t_delack_ch = CALLOUT_INITIALIZER,
+
+	.t_srtt = TCPTV_SRTTBASE,
+	.t_rttmin = TCPTV_MIN,
+
+	.snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT,
+	.snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT,
+};
+
+/*
+ * Updates the TCPCB template whenever a parameter that would affect
+ * the template is changed.
+ */
+void
+tcp_tcpcb_template(void)
+{
+	struct tcpcb *tp = &tcpcb_template;
+	int flags, i;
+
+	tp->t_peermss = tcp_mssdflt;
+	tp->t_ourmss = tcp_mssdflt;
+	tp->t_segsz = tcp_mssdflt;
+
+	for (i = 0; i < TCPT_NTIMERS; i++)
+		TCP_TIMER_INIT(tp, i);
+
+	flags = 0;
+	if (tcp_do_rfc1323 && tcp_do_win_scale)
+		flags |= TF_REQ_SCALE;
+	if (tcp_do_rfc1323 && tcp_do_timestamps)
+		flags |= TF_REQ_TSTMP;
+	if (tcp_do_sack == 2)
+		flags |= TF_WILL_SACK;
+	else if (tcp_do_sack == 1)
+		flags |= TF_WILL_SACK|TF_IGNR_RXSACK;
+	flags |= TF_CANT_TXSACK;
+	tp->t_flags = flags;
+
+	/*
+	 * Init srtt to TCPTV_SRTTBASE (0), so we can tell that we have no
+	 * rtt estimate.  Set rttvar so that srtt + 2 * rttvar gives
+	 * reasonable initial retransmit time.
+	 */
+	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << (TCP_RTTVAR_SHIFT + 2 - 1);
+	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
+	    TCPTV_MIN, TCPTV_REXMTMAX);
+}
+
+/*
  * Create a new TCP control block, making an
  * empty reassembly queue and hooking it to the argument
  * protocol control block.
@@ -895,87 +953,49 @@ tcp_newtcpcb(family, aux)
 	void *aux;
 {
 	struct tcpcb *tp;
-	int i;
 
-	switch (family) {
-	case PF_INET:
-		break;
-#ifdef INET6
-	case PF_INET6:
-		break;
-#endif
-	default:
-		return NULL;
-	}
-
+	/* XXX Consider using a pool_cache for speed. */
 	tp = pool_get(&tcpcb_pool, PR_NOWAIT);
 	if (tp == NULL)
 		return (NULL);
-	bzero((caddr_t)tp, sizeof(struct tcpcb));
+	memcpy(tp, &tcpcb_template, sizeof(*tp));
 	TAILQ_INIT(&tp->segq);
 	TAILQ_INIT(&tp->timeq);
 	tp->t_family = family;		/* may be overridden later on */
-	tp->t_peermss = tcp_mssdflt;
-	tp->t_ourmss = tcp_mssdflt;
-	tp->t_segsz = tcp_mssdflt;
-	LIST_INIT(&tp->t_sc);
+	LIST_INIT(&tp->t_sc);		/* XXX can template this */
 
-	tp->t_lastm = NULL;
-	tp->t_lastoff = 0;
-
-	callout_init(&tp->t_delack_ch);
-	for (i = 0; i < TCPT_NTIMERS; i++)
-		TCP_TIMER_INIT(tp, i);
-
-	tp->t_flags = 0;
-	if (tcp_do_rfc1323 && tcp_do_win_scale)
-		tp->t_flags |= TF_REQ_SCALE;
-	if (tcp_do_rfc1323 && tcp_do_timestamps)
-		tp->t_flags |= TF_REQ_TSTMP;
-	if (tcp_do_sack == 2)
-		tp->t_flags |= TF_WILL_SACK;
-	else if (tcp_do_sack == 1)
-		tp->t_flags |= TF_WILL_SACK|TF_IGNR_RXSACK;
-	tp->t_flags |= TF_CANT_TXSACK;
 	switch (family) {
-	case PF_INET:
-		tp->t_inpcb = (struct inpcb *)aux;
-		tp->t_mtudisc = ip_mtudisc;
-		break;
-#ifdef INET6
-	case PF_INET6:
-		tp->t_in6pcb = (struct in6pcb *)aux;
-		/* for IPv6, always try to run path MTU discovery */
-		tp->t_mtudisc = 1;
-		break;
-#endif
-	}
-	/*
-	 * Init srtt to TCPTV_SRTTBASE (0), so we can tell that we have no
-	 * rtt estimate.  Set rttvar so that srtt + 2 * rttvar gives
-	 * reasonable initial retransmit time.
-	 */
-	tp->t_srtt = TCPTV_SRTTBASE;
-	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << (TCP_RTTVAR_SHIFT + 2 - 1);
-	tp->t_rttmin = TCPTV_MIN;
-	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
-	    TCPTV_MIN, TCPTV_REXMTMAX);
-	tp->snd_cwnd = TCP_MAXWIN << TCP_MAX_WINSHIFT;
-	tp->snd_ssthresh = TCP_MAXWIN << TCP_MAX_WINSHIFT;
-	if (family == AF_INET) {
+	case AF_INET:
+	    {
 		struct inpcb *inp = (struct inpcb *)aux;
+
 		inp->inp_ip.ip_ttl = ip_defttl;
 		inp->inp_ppcb = (caddr_t)tp;
-	}
+
+		tp->t_inpcb = inp;
+		tp->t_mtudisc = ip_mtudisc;
+		break;
+	    }
 #ifdef INET6
-	else if (family == AF_INET6) {
+	case AF_INET6:
+	    {
 		struct in6pcb *in6p = (struct in6pcb *)aux;
+
 		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
 			in6p->in6p_route.ro_rt ? in6p->in6p_route.ro_rt->rt_ifp
 					       : NULL);
 		in6p->in6p_ppcb = (caddr_t)tp;
+
+		tp->t_in6pcb = in6p;
+		/* for IPv6, always try to run path MTU discovery */
+		tp->t_mtudisc = 1;
+		break;
+	    }
+#endif /* INET6 */
+	default:
+		pool_put(&tcpcb_pool, tp);
+		return (NULL);
 	}
-#endif
 
 	/*
 	 * Initialize our timebase.  When we send timestamps, we take
