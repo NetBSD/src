@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.110 2004/01/13 23:02:40 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.111 2004/01/14 04:11:13 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.110 2004/01/13 23:02:40 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.111 2004/01/14 04:11:13 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4333,6 +4333,9 @@ key_timehandler(arg)
 			}
 		}
 	}
+
+	/* invalidate all cached SPD pointers on pcb */
+	ipsec_invalpcbcacheall();
     }
 
 	/* SAD */
