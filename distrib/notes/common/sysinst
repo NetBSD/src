@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.31 2002/03/29 22:49:32 he Exp $
+.\"	$NetBSD: sysinst,v 1.32 2002/04/05 21:14:34 scw Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,7 +58,7 @@ for the installation and as such covers many details to be completed.
 Do not let this discourage you, the install program is not hard
 to use.
 .
-.if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .It
 .To 2 "Possible PCMCIA issues"
 .Em Possible Tn PCMCIA Em issues
@@ -246,7 +246,7 @@ We hope to provide a more elegant solution to this problem in a future
 .Nx
 release.
 .\} \" r_i386
-.\} \" ! \n[macppc]:\[news68k]:\n[pmax]:\n[x68k]
+.\} \" ! \n[macppc]:\[mvme68k]:\[news68k]:\n[pmax]:\n[x68k]
 .It
 .To 2 General
 .Em General
@@ -301,6 +301,7 @@ a harddisk and a minimum of
 .if r_alpha 32 MB
 .if r_i386 4 MB
 .if r_macppc 8 MB
+.if r_mvme68k 4 MB
 .if r_news68k 4 MB
 .if r_pmax 8 MB
 .if r_sparc 4 MB
@@ -310,6 +311,7 @@ The harddisk should have at least
 .if r_alpha 200
 .if r_i386 70
 .if r_macppc 200
+.if r_mvme68k 100
 .if r_news68k 100
 .if r_pmax 200
 .if r_sparc 200
@@ -477,14 +479,14 @@ Further information can be found on
 .Em Booting NetBSD
 .
 .
-.if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 Unplug your
 .Tn PCMCIA
 devices, so that they won't be found by
 .Nx .
 .pcmcia)
-.\} \" !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
+.\} \" !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
 .ie \n[macppc]:\n[pmax]:\n[sparc] \{\
 .Pp
 Boot the system as described in the previous section.
@@ -601,12 +603,12 @@ It will also include instructions for using the menus.
 .It
 .To 2 "Network configuration"
 .Em Network configuration
-.if !\n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
+.if !\n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k] \{\
 .(pcmcia
 You can skip this section, as you will only get data
 from floppy in the first part of the install.
 .pcmcia)
-.\} \" ! \n[macppc]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
+.\} \" ! \n[macppc]:\n[mvme68k]:\n[news68k]:\n[pmax]:\n[sparc]:\n[x68k]
 .Pp
 If you will not use network operation during the installation,
 but you do want your machine to be configured for networking once
