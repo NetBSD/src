@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.201 2000/03/15 16:03:50 tron Exp $
+#	$NetBSD: mi,v 1.202 2000/03/15 16:09:20 tron Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -224,6 +224,7 @@
 ./usr/include/dev/isapnp/isapnpvar.h		comp-c-include
 ./usr/include/dev/md.h		comp-c-include
 ./usr/include/dev/microcode/aic7xxx		comp-c-include
+./usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h		comp-c-include
 ./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h		comp-c-include
 ./usr/include/dev/mii		comp-c-include
 ./usr/include/dev/mii/icsphyreg.h		comp-c-include
