@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.39.2.5 2000/08/09 14:39:15 castor Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.39.2.6 2001/04/23 22:05:02 he Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -182,6 +182,11 @@ const struct tulip_pci_product {
 
 	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AL981,
 	  TULIP_CHIP_AL981 },
+
+	{ PCI_VENDOR_ADMTEK,		PCI_PRODUCT_ADMTEK_AN985,
+	  TULIP_CHIP_AN985 },
+	{ PCI_VENDOR_ACCTON,		PCI_PRODUCT_ACCTON_EN2242,
+	  TULIP_CHIP_AN985 },
 
 #if 0
 	{ PCI_VENDOR_ASIX,		PCI_PRODUCT_ASIX_AX88140A,
@@ -414,6 +419,27 @@ tlp_pci_attach(parent, self, aux)
 
 	case TULIP_CHIP_WB89C840F:
 		sc->sc_regshift = 2;
+		break;
+
+	case TULIP_CHIP_AN985:
+		/*
+		 * The AN983 and AN985 are very similar, and are
+		 * differentiated by a "signature" register that
+		 * is like, but not identical, to a PCI ID register.
+		 */
+		reg = pci_conf_read(pc, pa->pa_tag, 0x80);
+		switch (reg) {
+		case 0x09811317:
+			sc->sc_chip = TULIP_CHIP_AN985;
+			break;
+
+		case 0x09851317:
+			sc->sc_chip = TULIP_CHIP_AN983;
+			break;
+
+		default:
+			/* Unknown -- use default. */
+		}
 		break;
 
 	case TULIP_CHIP_AX88140:
@@ -832,6 +858,29 @@ tlp_pci_attach(parent, self, aux)
 		sc->sc_mediasw = &tlp_al981_mediasw;
 		break;
 
+	case TULIP_CHIP_AN983:
+	case TULIP_CHIP_AN985:
+		/*
+		 * The ADMtek AN985's Ethernet address is located
+		 * at offset 8 of its EEPROM.
+		 */
+		memcpy(enaddr, &sc->sc_srom[8], ETHER_ADDR_LEN);
+
+		/*
+		 * The ADMtek AN985 can be configured in Single-Chip
+		 * mode or MAC-only mode.  Single-Chip uses the built-in
+		 * PHY, MAC-only has an external PHY (usually HomePNA).
+		 * The selection is based on an EEPROM setting, and both
+		 * PHYs are accessed via MII attached to SIO.
+		 *
+		 * The AN985 "ghosts" the internal PHY onto all
+		 * MII addresses, so we have to use a media init
+		 * routine that limits the search.
+		 * XXX How does this work with MAC-only mode?
+		 */
+		sc->sc_mediasw = &tlp_an985_mediasw;
+		break;
+
 	case TULIP_CHIP_DM9102:
 	case TULIP_CHIP_DM9102A:
 		/*
@@ -888,7 +937,7 @@ tlp_pci_attach(parent, self, aux)
 		/*
 		 * Map and establish our interrupt.
 		 */
-		if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
+		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->intrpin,
 		    pa->pa_intrline, &ih)) {
 			printf("%s: unable to map interrupt\n",
 			    sc->sc_dev.dv_xname);
