@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.26 1997/09/02 13:19:08 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.27 1997/09/02 13:23:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,9 +27,12 @@
  * rights to redistribute these changes.
  */
 
+#include "opt_dec_2100_a50.h"
+#include "opt_dec_eb64plus.h"
+
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.26 1997/09/02 13:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.27 1997/09/02 13:23:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
