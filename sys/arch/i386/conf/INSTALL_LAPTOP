@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.81 2005/02/25 13:46:49 simonb Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.82 2005/03/01 02:31:26 itojun Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -520,6 +520,7 @@ uhid*	at uhidev? reportid ?
 umass*	at uhub? port ? configuration ? interface ?
 
 # USB Ethernet adapters
+atu*	at uhub? port ?		# Atmel AT76C50XX based adapters
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
 axe*	at uhub? port ?		# ASIX AX88172 based adapters
 cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
