@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.13 2000/06/20 06:00:28 thorpej Exp $
+#	$NetBSD: checkflist,v 1.14 2000/11/18 05:29:21 wiz Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -34,7 +34,7 @@ while : ; do
 		;;
 	-*)
 		cat 1>&2 <<USAGE
-Usage: $0 [-x11|-both] [-secr]
+Usage: $0 [-x11|-both] [-u|-c]
 	-x11		check only x11 lists
 	-both		check netbsd + x11 lists
 	-u		output differences in "unified diff" style
