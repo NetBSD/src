@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.16 1999/04/20 06:48:58 mrg Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.17 1999/11/15 05:25:57 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -21,8 +21,6 @@
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
-
-#include <machine/autoconf.h>
 
 #include <pmax/dev/device.h>		/* XXX */
 #include <pmax/dev/scsi.h>		/* XXX */
@@ -72,12 +70,7 @@ asc_ioasic_match(parent, match, aux)
 {
 	struct ioasicdev_attach_args *d = aux;
 
-	if (strncmp(d->iada_modname, "asc", TC_ROM_LLEN) &&
-	    strncmp(d->iada_modname, "PMAZ-AA ", TC_ROM_LLEN))
-		return (0);
-
-	/* probe for chip */
-	if (tc_badaddr(d->iada_addr + ASC_OFFSET_53C94))
+	if (strncmp(d->iada_modname, "asc", TC_ROM_LLEN) != 0)
 		return (0);
 
 	return (1);
