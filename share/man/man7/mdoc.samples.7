@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.30 2001/05/06 12:03:39 wiz Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.31 2001/07/08 06:23:15 blymn Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1086,7 +1086,8 @@ may be used with
 (function argument)
 to get around the limitation. For example:
 .Bd -literal -offset indent
-\&.Fo "int res_mkquery"
+\&.Ft "int"
+\&.Fo "res_mkquery"
 \&.Fa "int op"
 \&.Fa "char *dname"
 \&.Fa "int class"
@@ -1101,7 +1102,8 @@ to get around the limitation. For example:
 .Pp
 Produces:
 .Bd -filled -offset indent
-.Fo "int res_mkquery"
+.Ft "int"
+.Fo "res_mkquery"
 .Fa "int op"
 .Fa "char *dname"
 .Fa "int class"
