@@ -1,4 +1,4 @@
-$NetBSD: TODO.users,v 1.3 1996/04/25 04:28:05 cgd Exp $
+$NetBSD: TODO.users,v 1.4 1996/06/13 20:36:14 cgd Exp $
 
 The NetBSD/Alpha "User" To-Do List
 
@@ -24,15 +24,11 @@ Test programs; find and fix bugs.  In particular:
 	(3) /usr/games
 
 Test TurboChannel option slot support.  Write TurboChannel option
-board support.  Test PMAD-A support.
+board drivers.  Test PMAD-A (TC le) driver.
 
 Get the GNU tools to generate a.out binaries for the alpha.  Once that
-is done:
-	(1) make gprof work, then profile the kernel and tell me how
-	    bad my assumptions lost.  (Actually, the gprof in the Cygnus
-	    toolchain may already work.)
-	(2) make the rest of the NetBSD a.out-manipulation tools (e.g.
-	    nm) work.
+is done, make the rest of the NetBSD a.out-manipulation tools (e.g. nm)
+work.
 
 Make DDB work.  (For completeness, may require a.out kernel binaries
 and/or some ecoff symbol handling code to be written; the former is
