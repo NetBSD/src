@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.29 1997/06/05 06:14:17 mikel Exp $	*/
+/*	$NetBSD: pstat.c,v 1.30 1997/06/12 07:45:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$NetBSD: pstat.c,v 1.29 1997/06/05 06:14:17 mikel Exp $";
+static char *rcsid = "$NetBSD: pstat.c,v 1.30 1997/06/12 07:45:35 bouyer Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,8 +148,10 @@ int	nfs_print __P((struct vnode *));
 void	swapmode __P((void));
 void	ttymode __P((void));
 void	ttyprt __P((struct tty *));
+void	ufs_getflags __P((struct vnode *, struct inode *, char *));
 void	ufs_header __P((void));
 int	ufs_print __P((struct vnode *));
+int		ext2fs_print __P((struct vnode *));
 void	usage __P((void));
 void	vnode_header __P((void));
 void	vnode_print __P((struct vnode *, struct vnode *));
@@ -277,6 +279,9 @@ vnodemode()
 			} else if (!strncmp(ST.f_fstypename, MOUNT_NFS,
 			    MFSNAMELEN)) {
 				nfs_header();
+			} else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS,
+				MFSNAMELEN)) {
+				ufs_header();
 			}
 			(void)printf("\n");
 		}
@@ -286,6 +291,8 @@ vnodemode()
 			ufs_print(vp);
 		} else if (!strncmp(ST.f_fstypename, MOUNT_NFS, MFSNAMELEN)) {
 			nfs_print(vp);
+		} else if (!strncmp(ST.f_fstypename, MOUNT_EXT2FS, MFSNAMELEN)) {
+			ext2fs_print(vp);
 		}
 		(void)printf("\n");
 	}
@@ -362,22 +369,13 @@ vnode_print(avnode, vp)
 }
 
 void
-ufs_header() 
-{
-	(void)printf(" FILEID IFLAG RDEV|SZ");
-}
-
-int
-ufs_print(vp) 
+ufs_getflags(vp, ip, flags)
 	struct vnode *vp;
+	struct inode *ip;
+	char *flags;
 {
 	register int flag;
-	struct inode inode, *ip = &inode;
-	char flagbuf[16], *flags = flagbuf;
-	char *name;
-	mode_t type;
 
-	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
 	flag = ip->i_flag;
 	if (flag & IN_LOCKED)
 		*flags++ = 'L';
@@ -403,16 +401,61 @@ ufs_print(vp)
 		*flags++ = '-';
 	*flags = '\0';
 
+}
+
+void
+ufs_header() 
+{
+	(void)printf(" FILEID IFLAG RDEV|SZ");
+}
+
+int
+ufs_print(vp) 
+	struct vnode *vp;
+{
+	struct inode inode, *ip = &inode;
+	char flagbuf[16];
+	char *name;
+	mode_t type;
+
+	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
+	ufs_getflags(vp, ip, flagbuf);
 	(void)printf(" %6d %5s", ip->i_number, flagbuf);
-	type = ip->i_mode & S_IFMT;
-	if (S_ISCHR(ip->i_mode) || S_ISBLK(ip->i_mode))
-		if (usenumflag || ((name = devname(ip->i_rdev, type)) == NULL))
+	type = ip->i_ffs_mode & S_IFMT;
+	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode))
+		if (usenumflag || ((name = devname(ip->i_ffs_rdev, type)) == NULL))
 			(void)printf("   %2d,%-2d", 
-			    major(ip->i_rdev), minor(ip->i_rdev));
+			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
 		else
 			(void)printf(" %7s", name);
 	else
-		(void)printf(" %7qd", ip->i_size);
+		(void)printf(" %7qd", ip->i_ffs_size);
+	return (0);
+}
+
+int
+ext2fs_print(vp) 
+	struct vnode *vp;
+{
+	struct inode inode, *ip = &inode;
+	char flagbuf[16];
+	char *name;
+	mode_t type;
+
+	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
+	ufs_getflags(vp, ip, flagbuf);
+	(void)printf(" %6d %5s", ip->i_number, flagbuf);
+	type = ip->i_e2fs_mode & S_IFMT;
+	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode))
+		if (usenumflag || ((name = devname(ip->i_din.e2fs_din.e2di_rdev,
+			type)) == NULL))
+			(void)printf("   %2d,%-2d", 
+			    major(ip->i_din.e2fs_din.e2di_rdev),
+						minor(ip->i_din.e2fs_din.e2di_rdev));
+		else
+			(void)printf(" %7s", name);
+	else
+		(void)printf(" %7u", (u_int)ip->i_e2fs_size);
 	return (0);
 }
 
