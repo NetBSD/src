@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.30 1996/10/02 18:07:25 ws Exp $	*/
+/*	$NetBSD: print.c,v 1.31 1997/03/19 05:34:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: print.c,v 1.30 1996/10/02 18:07:25 ws Exp $";
+static char rcsid[] = "$NetBSD: print.c,v 1.31 1997/03/19 05:34:47 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ logname(k, ve)
 #ifndef NEWVM
 	(void)printf("%-*s", v->width, KI_PROC(k)->p_logname);
 #else
-	(void)printf("%-*s", v->width, KI_EPROC(k)->e_login);
+	(void)printf("%-*.*s", v->width, v->width, KI_EPROC(k)->e_login);
 #endif
 }
 
