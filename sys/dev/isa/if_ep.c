@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.61 1994/11/18 22:03:19 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.62 1994/11/25 23:19:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -488,7 +488,7 @@ startagain:
 	 */
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
-		+sc->sc_arpcom.ac_if.if_oerrors;
+		++sc->sc_arpcom.ac_if.if_oerrors;
 		IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
 		m_freem(m0);
 		goto readcheck;
