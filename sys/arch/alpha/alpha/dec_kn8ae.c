@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.21 1998/11/19 02:22:01 ross Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.22 1999/02/13 02:41:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.21 1998/11/19 02:22:01 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.22 1999/02/13 02:41:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,7 +586,7 @@ dec_kn8ae_mcheck_handler(mces, framep, vector, param)
 		kn8ae_mcheck(mces, vector, param, framep);
 		break;
 	default:
-		printf("KN8AE_MCHECK: unknown check vector %x\n", vector);
+		printf("KN8AE_MCHECK: unknown check vector 0x%lx\n", vector);
 		machine_check(mces, framep, vector, param);
 		break;
 	}
