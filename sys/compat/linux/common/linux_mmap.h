@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mmap.h,v 1.14 2003/01/18 08:04:37 thorpej Exp $	*/
+/*	$NetBSD: linux_mmap.h,v 1.15 2003/06/23 21:26:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,9 +87,16 @@ struct linux_sys_mmap_args {
 	syscallarg(linux_off_t) offset;
 };
 
+/*
+ * Same arguments, but different meaning for "offset".
+ * See linux_misc.c:linux_sys_mmap2().
+ */
+#define linux_sys_mmap2_args linux_sys_mmap_args
+
 #ifdef _KERNEL
 __BEGIN_DECLS
 int linux_sys_mmap __P((struct lwp *p, void *v, register_t *retval));
+int linux_sys_mmap2 __P((struct lwp *p, void *v, register_t *retval));
 __END_DECLS
 #endif /* !_KERNEL */
 

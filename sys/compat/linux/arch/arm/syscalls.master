@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12 2003/01/18 08:02:47 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.13 2003/06/23 21:25:56 christos Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -326,7 +326,9 @@
 190	NOARGS		vfork { int sys___vfork14(void); }
 191	STD		{ int linux_sys_ugetrlimit(int which, \
 			    struct rlimit *rlp); }
-192	UNIMPL		mmap2
+192	NOARGS		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
+			    size_t len, int prot, int flags, int fd, \
+			    linux_off_t offset); }
 193	STD		{ int linux_sys_truncate64(const char *path, \
 				off_t length); }
 194	NOARGS		ftruncate64 { int sys_ftruncate(int fd, \
