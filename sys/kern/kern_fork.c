@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.98 2002/11/13 00:51:02 provos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.99 2002/11/17 08:32:44 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.98 2002/11/13 00:51:02 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.99 2002/11/17 08:32:44 chs Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -198,6 +198,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	uid_t		uid;
 	int		count, s;
 	vaddr_t		uaddr;
+	boolean_t	inmem;
 	static int	nextpid, pidchecked;
 
 	/*
@@ -231,10 +232,10 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Allocate virtual address space for the U-area now, while it
 	 * is still easy to abort the fork operation if we're out of
 	 * kernel virtual address space.  The actual U-area pages will
-	 * be allocated and wired in uvm_fork().
+	 * be allocated and wired in uvm_fork() if needed.
 	 */
 
-	uaddr = uvm_uarea_alloc();
+	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
@@ -280,7 +281,7 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in uvm_fork().
 	 */
-	p2->p_flag = P_INMEM | (p1->p_flag & P_SUGID);
+	p2->p_flag = (inmem ? P_INMEM : 0) | (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
