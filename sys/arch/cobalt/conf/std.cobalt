@@ -1,4 +1,4 @@
-#	$NetBSD: std.cobalt,v 1.7 2003/08/30 22:44:39 chs Exp $
+#	$NetBSD: std.cobalt,v 1.8 2003/09/12 17:55:48 tsutsui Exp $
 
 machine cobalt mips
 makeoptions	MACHINE_ARCH="mipsel"
@@ -9,7 +9,5 @@ options 	MIPS3_L2CACHE_ABSENT
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts
-
-options 	__NO_SOFT_SERIAL_INTERRUPT
 
 makeoptions	DEFTEXTADDR="0x80001000"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.4 2003/07/15 01:29:23 lukem Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.5 2003/09/12 17:55:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2003/07/15 01:29:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.5 2003/09/12 17:55:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.4 2003/07/15 01:29:23 lukem Exp
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-#include <machine/intr_machdep.h>
+#include <machine/intr.h>
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
