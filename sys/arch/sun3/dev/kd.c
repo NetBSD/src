@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.5 1994/11/21 21:31:08 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.6 1994/12/01 22:46:26 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -52,7 +52,7 @@
 
 #define BURST	64
 
-static int  kdmatch(struct device *, struct cfdata *, void *);
+static int  kdmatch(struct device *, void *, void *);
 static void kdattach(struct device *, struct device *, void *);
 
 struct cfdriver kdcd = {
@@ -71,7 +71,7 @@ static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
 
 static int
-kdmatch(struct device *parent, struct cfdata *cf, void *aux)
+kdmatch(struct device *parent, void *vcf, void *aux)
 {
 	/* XXX - Enforce unit zero? */
 	return 1;
@@ -268,7 +268,7 @@ kdcnprobe(cp)
 
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == kdopen)
+		if (cdevsw[maj].d_open == (void*)kdopen)
 			break;
 
 	/* initialize required fields */
