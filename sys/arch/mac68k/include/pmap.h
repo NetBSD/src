@@ -71,7 +71,7 @@
 
 /* 
  *	from: @(#)pmap.h	7.6 (Berkeley) 5/10/91
- *	$Id: pmap.h,v 1.3 1993/12/15 03:22:59 briggs Exp $
+ *	$Id: pmap.h,v 1.4 1994/04/21 23:16:15 briggs Exp $
  */
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
@@ -85,6 +85,7 @@
 struct pmap {
 	struct pte		*pm_ptab;	/* KVA of page table */
 	struct ste		*pm_stab;	/* KVA of segment table */
+	struct ste		*pm_rtab;	/* KVA of 68040 root table */
 	int			pm_stchanged;	/* ST changed */
 	short			pm_sref;	/* segment table ref count */
 	short			pm_count;	/* pmap reference count */
@@ -103,7 +104,8 @@ extern pmap_t		kernel_pmap;
 #define PMAP_ACTIVATE(pmapp, pcbp, iscurproc) \
 	if ((pmapp) != NULL && (pmapp)->pm_stchanged) { \
 		(pcbp)->pcb_ustp = \
-		    mac68k_btop(pmap_extract(kernel_pmap, (pmapp)->pm_stab)); \
+		    mac68k_btop(pmap_extract(kernel_pmap, \
+		    cpu040 ? (pmapp)->pm_rtab : (pmapp)->pm_stab)); \
 		if (iscurproc) \
 			loadustp((pcbp)->pcb_ustp); \
 		(pmapp)->pm_stchanged = FALSE; \
