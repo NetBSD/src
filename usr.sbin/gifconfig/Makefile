@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1 1999/07/01 19:41:57 itojun Exp $
+# $NetBSD: Makefile,v 1.2 1999/07/03 06:26:25 itojun Exp $
 
 PROG=	gifconfig
-CFLAGS+=-DINET6
+CPPFLAGS+=-DINET6
 MAN=	gifconfig.8
 
 .include <bsd.prog.mk>
