@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.53 1999/10/13 19:11:07 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.54 1999/10/15 14:42:17 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.53 1999/10/13 18:55:32 augustss Exp 
+ *	NetBSD: usbdevs,v 1.54 1999/10/15 14:41:43 augustss Exp 
  */
 
 /*
@@ -167,6 +167,7 @@
 #define	USB_PRODUCT_PHILIPS_DSS350	0x0101		/* DSS 350 Digital Speaker System */
 #define	USB_PRODUCT_PHILIPS_DSS	0x0104		/* DSS XXX Digital Speaker System */
 #define	USB_PRODUCT_PHILIPS_HUB	0x0201		/* hub */
+#define	USB_PRODUCT_PHILIPS_DSS150	0x0471		/* DSS XXX Digital Speaker System */
 
 /* Connectix products */
 #define	USB_PRODUCT_CONNECTIX_QUICKCAM	0x0001		/* QuickCam */
