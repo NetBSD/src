@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: scn.c,v 1.6 1994/03/10 21:35:50 phil Exp $
+ *	$Id: scn.c,v 1.7 1994/03/22 00:15:23 phil Exp $
  */
 
 #include "scn.h"
@@ -435,9 +435,14 @@ scnopen(dev_t dev, int flag, int mode, struct proc *p)
 	register int unit = UNIT(dev);
 	register struct rs232_s *rs = &line[unit];
 	int error = 0;
- 
+	int x;
+
+if (unit==1) printf ("scnopen 1\n"); 
 	if (unit >= NLINES || (scn_active & (1 << unit)) == 0)
 		return (ENXIO);
+
+	x = spltty();
+
 	if(!scn_tty[unit]) {
 		tp = scn_tty[unit] = ttymalloc();
 	} else
@@ -448,37 +453,48 @@ scnopen(dev_t dev, int flag, int mode, struct proc *p)
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		if (tp->t_ispeed == 0) {
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_ispeed = tp->t_ospeed = scndefaultrate;
-		}
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		tp->t_cflag = TTYDEF_CFLAG;
+/* i386		if (sc->sc_swflags & COM_SW_CLOCAL)
+			tp->t_cflag |= CLOCAL;
+		if (sc->sc_swflags & COM_SW_CRTSCTS)
+			tp->t_cflag |= CRTSCTS;  */
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = scndefaultrate;
 		scnparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 
 		/* Turn on DTR and RTS. */
 		istart(rs);
 		rx_ints_on (rs);
-	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0)
-		return (EBUSY);
-	(void) spltty();
 
-	if ((scnsoftCAR & (1 << unit)) || get_dcd(rs))
-		tp->t_state |= TS_CARR_ON; 
-	while ((flag&O_NONBLOCK) == 0 && (tp->t_cflag&CLOCAL) == 0 &&
-	       (tp->t_state & TS_CARR_ON) == 0) {
-		tp->t_state |= TS_WOPEN;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
-			break;
+		/* Carrier?  XXX fix more like i386 */
+		if ((scnsoftCAR & (1 << unit)) || get_dcd(rs))
+			tp->t_state |= TS_CARR_ON; 
+	} else if (tp->t_state&TS_XCLUDE && p->p_ucred->cr_uid != 0) {
+		splx(x);
+		return (EBUSY);
 	}
 
-	(void) spl0();
-	if (error == 0)
-		error = (*linesw[tp->t_line].l_open)(dev, tp);
-	return (error);
+	/* wait for carrier if necessary */
+	if ((flag & O_NONBLOCK) == 0)
+		while ((tp->t_cflag & CLOCAL) == 0 &&
+		    (tp->t_state & TS_CARR_ON) == 0) {
+			tp->t_state |= TS_WOPEN;
+			error = ttysleep(tp, (caddr_t)&tp->t_rawq, 
+			    TTIPRI | PCATCH, ttopen, 0);
+			if (error) {
+				/* XXX should turn off chip if we're the
+				   only waiter */
+				splx(x);
+				return error;
+			}
+		}
+if (unit==1) printf ("scnopen end\n");
+	splx(x);
+		
+	return (*linesw[tp->t_line].l_open)(dev, tp);
 }
  
 /*ARGSUSED*/
@@ -609,7 +625,7 @@ scnintr(int uart_no)
 	if ((rs_stat & IMR_TX_INT) && (tp0 != NULL) 
 	    && (tp0->t_state & TS_BUSY)) {
 		/* output char done. */
-		tp0->t_state &=~ (TS_BUSY|TS_FLUSH);
+		tp0->t_state &= ~(TS_BUSY|TS_FLUSH);
 		tx_ints_off(rs0);
 		if (tp0->t_line)
 			(*linesw[tp0->t_line].l_start)(tp0);
@@ -636,15 +652,19 @@ scnintr(int uart_no)
 	}
 	if ((rs_stat & IMR_TXB_INT)  && (tp1 != NULL)
 	     && (tp1->t_state & TS_BUSY)) {
+if (line1==1)printf ("tty1 tx int");
 		/* output char done. */
-		tp1->t_state &=~ (TS_BUSY|TS_FLUSH);
+		tp1->t_state &= ~(TS_BUSY|TS_FLUSH);
+		tx_ints_off(rs1);
 		if (tp1->t_line)
 			(*linesw[tp1->t_line].l_start)(tp1);
 		else
 			scnstart(tp1);
 	 	rs_work = TRUE;
+if (line1==1)printf ("\n");
 	}
 	if (rs_stat & IMR_BRKB_INT && (tp1 != NULL)) {
+if (line1==1)printf ("tty1 brk int\n");
 		/* A break interrupt! */
 		rs1->lstatus = RD_ADR(u_char, rs1->stat_port);
 		if (rs1->lstatus & SR_BREAK) {
@@ -656,10 +676,12 @@ scnintr(int uart_no)
 		rs_work = TRUE;
 	}
 	if (rs_stat & IMR_RXB_INT && (tp1 != NULL)) {
+if (line1==1)printf ("tty1 rx int");
 		ch = RD_ADR(u_char, rs1->recv_port);
 		if (tp1->t_state & TS_ISOPEN) 
 			(*linesw[tp1->t_line].l_rint)(ch, tp1);
 		rs_work = TRUE;
+if (line1==1)printf ("\n");
 	}
 	if (rs_stat & IMR_IP_INT) {
 		rs_work = TRUE;
@@ -698,7 +720,6 @@ scnioctl(dev, cmd, data, flag, p)
 	if (error >= 0)
 		return (error);
 
-printf ("scnioctl %d\n", cmd);
 	switch (cmd) {
 
 	case TIOCSBRK:
@@ -738,7 +759,7 @@ printf ("scnioctl %d\n", cmd);
 		break;
 
 	default:
-		printf ("scn.c: bad ioctl 0x%x\n", cmd);
+/*		printf ("scn.c: bad ioctl 0x%x\n", cmd); */
 		return (ENOTTY);
 	}
 	return (0);
@@ -810,7 +831,7 @@ scnstart(tp)
 	struct rs232_s *rs = &line[unit];
  
 	s = spltty();
-	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP))
+	if (tp->t_state & (TS_BUSY|TS_TTSTOP))
 		goto out;
  	if (tp->t_outq.c_cc <= tp->t_lowat) {
  		if (tp->t_state&TS_ASLEEP) {
@@ -821,9 +842,9 @@ scnstart(tp)
  	}
  	if (tp->t_outq.c_cc == 0)
  		goto out;
+	tp->t_state |= TS_BUSY;
 	if (tx_rdy(rs)) {
 		c = getc(&tp->t_outq);
-		tp->t_state |= TS_BUSY;
 		WR_ADR(u_char, rs->xmit_port, c);
 		tx_ints_on(rs);
 	}
