@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.22.2.2 2002/07/15 01:41:04 gehenna Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.22.2.3 2002/09/03 00:25:08 gehenna Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -186,7 +186,7 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 #if NDZKBD > 0
 	/* Don't touch this port if this is the console */
-	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0))
+	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0)) {
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
 		    | DZ_LPR_8_BIT_CHAR;
 		daa.daa_line = 0;
