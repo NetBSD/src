@@ -1,4 +1,4 @@
-/* $NetBSD: kftxxreg.h,v 1.3 1997/04/06 20:08:37 cgd Exp $ */
+/* $NetBSD: kftxxreg.h,v 1.4 1997/06/04 01:47:15 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -46,7 +46,7 @@
  *	  Order Number EK-T8030-TM. A01''
  */
 
-#define	REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define	REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * There are (potentially) 4 I/O hoses per I/O node.
