@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.10 2002/01/19 18:51:58 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.11 2002/01/22 19:14:48 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -154,23 +154,8 @@ void consinit		__P((void));
 int fcomcnattach __P((u_int iobase, int rate,tcflag_t cflag));
 int fcomcndetach __P((void));
 
-void map_section	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa,
-			     int cacheable));
-void map_pagetable	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry		__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
-vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
-			     vm_offset_t pa, vm_size_t size, u_int acc,
-			     u_int flg));
-
-void process_kernel_args	__P((char *));
-void data_abort_handler		__P((trapframe_t *frame));
-void prefetch_abort_handler	__P((trapframe_t *frame));
-void undefinedinstruction_bounce	__P((trapframe_t *frame));
+static void process_kernel_args	__P((char *));
 extern void configure		__P((void));
-extern void parse_mi_bootargs	__P((char *args));
-extern void dumpsys		__P((void));
 
 /* A load of console goo. */
 #include "vga.h"
@@ -766,7 +751,7 @@ initarm(bootargs)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
-void
+static void
 process_kernel_args(args)
 	char *args;
 {
