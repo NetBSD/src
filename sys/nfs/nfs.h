@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.4 1994/06/29 06:42:03 cgd Exp $	*/
+/*	$NetBSD: nfs.h,v 1.5 1994/08/17 11:41:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,8 +173,7 @@ struct nfsstats {
  * Nfs outstanding request list element
  */
 struct nfsreq {
-	struct nfsreq	*r_next;
-	struct nfsreq	*r_prev;
+	TAILQ_ENTRY(nfsreq) r_chain;
 	struct mbuf	*r_mreq;
 	struct mbuf	*r_mrep;
 	struct mbuf	*r_md;
@@ -190,6 +189,11 @@ struct nfsreq {
 	int		r_rtt;		/* RTT for rpc */
 	struct proc	*r_procp;	/* Proc that did I/O system call */
 };
+
+/*
+ * Queue head for nfsreq's
+ */
+TAILQ_HEAD(nfsreqs, nfsreq) nfs_reqq;
 
 /* Flag values for r_flags */
 #define R_TIMING	0x01		/* timing request (in mntp) */
