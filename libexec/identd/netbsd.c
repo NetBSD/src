@@ -1,5 +1,5 @@
 /*
-**	$Id: netbsd.c,v 1.6 1995/06/18 22:44:10 cgd Exp $
+**	$Id: netbsd.c,v 1.7 1995/07/08 23:53:46 pk Exp $
 **
 ** netbsd.c		Low level kernel access functions for NetBSD
 **
@@ -88,12 +88,14 @@ static struct inpcbtable tcbtable;
 
 int k_open()
 {
+  char errbuf[_POSIX2_LINE_MAX];
+
   /*
   ** Open the kernel memory device
   */
-  if ((kd = kvm_openfiles(path_unix, path_kmem, NULL, O_RDONLY, "identd")) ==
+  if ((kd = kvm_openfiles(path_unix, path_kmem, NULL, O_RDONLY, errbuf)) ==
       NULL)
-    ERROR("main: kvm_open");
+    ERROR1("main: kvm_open: %s", errbuf);
   
   /*
   ** Extract offsets to the needed variables in the kernel
