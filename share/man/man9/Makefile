@@ -1,11 +1,11 @@
-#       $NetBSD: Makefile,v 1.28 1997/08/27 23:08:25 augustss Exp $
+#       $NetBSD: Makefile,v 1.29 1997/10/04 14:04:15 kleink Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	access.9 arp.9 audio.9 bus_space.9 bus_dma.9 copy.9 cpu_reboot.9 \
 	ctxsw.9 disk.9 disklabel.9 doshutdownhooks.9 ethersubr.9 extent.9 \
-	fetch.9 inittodr.9 intro.9 log.9 malloc.9 panic.9 pfil.9 physio.9 \
-	psignal.9 resettodr.9 shutdownhook_establish.9 sleep.9 spl.9 \
+	fetch.9 inittodr.9 intro.9 log.9 malloc.9 mbuf.9 panic.9 pfil.9 \
+	physio.9 psignal.9 resettodr.9 shutdownhook_establish.9 sleep.9 spl.9 \
 	store.9 time.9 timeout.9 vslock.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
@@ -67,6 +67,15 @@ MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \
 MLINKS+=fetch.9 fubyte.9 fetch.9 fuibyte.9 fetch.9 fusword.9 \
 	fetch.9 fuswintr.9 fetch.9 fuword.9 fetch.9 fuiword.9
 MLINKS+=malloc.9 free.9
+MLINKS+=mbuf.9 cltom.9 mbuf.9 m_adj.9 mbuf.9 m_align.9 mbuf.9 m_cat.9 \
+	mbuf.9 m_copy_pkthdr.9 mbuf.9 m_copyback.9 mbuf.9 m_copydata.9 \
+	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_devget.9 \
+	mbuf.9 m_free.9 mbuf.9 m_freem.9 mbuf.9 m_get.9 mbuf.9 m_getclr.9 \
+	mbuf.9 m_gethdr.9 mbuf.9 m_leadingspace.9 mbuf.9 m_prepend.9 \
+	mbuf.9 m_pullup.9 mbuf.9 m_split.9 mbuf.9 m_trailingspace.9 \
+	mbuf.9 mchtype.9 mbuf.9 mclget.9 mbuf.9 mextadd.9 mbuf.9 mextmalloc.9 \
+	mbuf.9 mextremove.9 mbuf.9 mfree.9 mbuf.9 mget.9 mbuf.9 mgethdr.9 \
+	mbuf.9 mh_align.9 mbuf.9 mtocl.9 mbuf.9 mtod.9
 MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
