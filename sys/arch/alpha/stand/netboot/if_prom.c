@@ -1,4 +1,4 @@
-/*	$NetBSD: if_prom.c,v 1.1 1996/09/18 20:03:10 cgd Exp $	*/
+/*	$NetBSD: if_prom.c,v 1.2 1996/09/23 04:30:57 cgd Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -77,7 +77,6 @@ prom_match(nif, machdep_hint)
 	void *machdep_hint;
 {
 
-	printf("prom_match(0x%lx, 0x%lx)\n", nif, machdep_hint);
 	return (1);
 }
 
@@ -87,7 +86,6 @@ prom_probe(nif, machdep_hint)
 	void *machdep_hint;
 {
 
-	printf("prom_probe(0x%lx, 0x%lx)\n", nif, machdep_hint);
 	return 0;
 }
 
@@ -98,7 +96,6 @@ prom_put(desc, pkt, len)
 	int len;
 {
 
-	/* printf("prom_put(0x%lx, 0x%lx, %d)\n", desc, pkt, len); */
 	prom_write(netfd, len, pkt, 0);
 
 	return len;
@@ -117,14 +114,10 @@ prom_get(desc, pkt, len, timeout)
         int cc;
 	char hate[2000];
 
-#if 0
-	printf("prom_get(0x%lx, 0x%lx, %d, %d)\n", desc, pkt, len, timeout);
-#endif
-
         t = getsecs();  
         cc = 0;                 
         while (((getsecs() - t) < timeout) && !cc) {
-#if 1 /* TC machines' firmware */
+#if 0 /* TC machines' firmware */
                 ret.bits = prom_read(netfd, 0, hate, 0);
 #else
                 ret.bits = prom_read(netfd, sizeof hate, hate, 0);
@@ -133,14 +126,7 @@ prom_get(desc, pkt, len, timeout)
 			cc += ret.u.retval;
         }
 
-#if 0
-	printf("got %d\n", cc);
-
-	if (cc != len)
-		printf("prom_get: cc = %d, len = %d\n", cc, len);
-#endif
-
-#if 1 /* TC machines' firmware */
+#if 0 /* TC machines' firmware */
 	cc = min(cc, len);
 #else
 	cc = len;
@@ -150,6 +136,8 @@ prom_get(desc, pkt, len, timeout)
         return cc;
 }
 
+extern char *strchr();
+
 void
 prom_init(desc, machdep_hint)
 	struct iodesc *desc;
@@ -158,17 +146,54 @@ prom_init(desc, machdep_hint)
 
         prom_return_t ret;
         char devname[64], tmpbuf[14];
-        int devlen;
-
-	printf("prom_init(0x%lx, 0x%lx)\n", desc, machdep_hint);
+        int devlen, i;
+	char *enet_addr;
 
         ret.bits = prom_getenv(PROM_E_BOOTED_DEV, devname, sizeof(devname));
         devlen = ret.u.retval;
-        printf("devlen = %d\n", devlen);
-printf("booted_dev was: %s\n", devname);
+
+	printf("booted_dev = \"%s\"\n", devname);
+	/* Ethernet address is the 9th component of the booted_dev string. */
+	enet_addr = devname;
+	for (i = 0; i < 8; i++) {
+		printf("enet_addr = \"%s\"\n", enet_addr);
+		enet_addr = strchr(enet_addr, ' ');
+		if (enet_addr == NULL) {
+			printf("enet_addr too short.\n");
+		}
+		enet_addr++;
+	}
+	if (enet_addr != NULL) {
+		int hv, lv;
+
+		printf("enet_addr is now \"%s\"\n", enet_addr);
+
+#define	dval(c)	(((c) >= '0' && (c) <= '9') ? ((c) - '0') : \
+		 (((c) >= 'A' && (c) <= 'F') ? (10 + (c) - 'A') : \
+		  (((c) >= 'a' && (c) <= 'f') ? (10 + (c) - 'a') : -1)))
+
+		for (i = 0; i < 6; i++) {
+			hv = dval(*enet_addr); enet_addr++;
+			lv = dval(*enet_addr); enet_addr++;
+			enet_addr++;
+
+			if (hv == -1 || lv == -1) {
+				printf("bogus ethernet address\n");
+				printf("i = %d, hv = %d, lv = %d\n", i, hv, lv);
+				halt();
+			}
+
+			printf("i = %d, hv = %x, lv = %x\n", i, hv, lv);
+			desc->myea[i] = (hv << 4) | lv;
+		}
+		printf("ethernet address is: %s\n", ether_sprintf(desc->myea));
+		
+#undef dval
+	}
+
         ret.bits = prom_open(devname, devlen + 1); 
         if (ret.u.status) {
-                printf("open failed: %d\n", ret.u.status);
+                printf("prom_init: open failed: %d\n", ret.u.status);
                 return;
         }
         netfd = ret.u.retval;
@@ -176,6 +201,7 @@ printf("booted_dev was: %s\n", devname);
 	bzero(tmpbuf, sizeof(tmpbuf));
 	prom_write(netfd, sizeof(tmpbuf), tmpbuf, 0);
 
+#if 0
 	/* PLUG YOUR ENET ADDR IN HERE. */
 #if 1
 #if 1
@@ -201,6 +227,7 @@ printf("booted_dev was: %s\n", devname);
 	desc->myea[4] = 0xa6;
 	desc->myea[5] = 0x81;
 #endif
+#endif
 }
 
 void
@@ -208,6 +235,5 @@ prom_end(nif)
 	struct netif *nif;
 {
 
-	printf("prom_end(0x%lx)\n", nif);
 	prom_close(netfd);
 }

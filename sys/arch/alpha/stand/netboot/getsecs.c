@@ -15,8 +15,10 @@ getsecs()
 		wrapsecs = (0xffffffff /
 		    ((struct rpb *)HWRPB_ADDR)->rpb_cc_freq) + 1;
 
+#if 0
 		printf("getsecs: cc freq = %d, time to wrap = %d\n",
 		    ((struct rpb *)HWRPB_ADDR)->rpb_cc_freq, wrapsecs);
+#endif
 	}
 
 	curpcc = alpha_rpcc() & 0xffffffff;
