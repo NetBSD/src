@@ -68,6 +68,10 @@ Boston, MA 02111-1307, USA.  */
 
 #define TARGET_MEM_FUNCTIONS
 
+/* Trampoline code for closures should call _cacheflush()
+    to ensure I-cache consistency after writing trampoline code.  */
+#define MIPS_CACHEFLUSH_FUNC "_cacheflush"
+
 /* Define mips-specific netbsd predefines... */
 #ifndef CPP_PREDEFINES
 #define CPP_PREDEFINES "-D__ANSI_COMPAT \
