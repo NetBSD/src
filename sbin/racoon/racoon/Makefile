@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2000/10/04 00:21:22 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2000/10/11 05:41:18 itojun Exp $
 
 PROG=	racoon
-SRCS=	main.c session.c isakmp.c handler.c \
+SRCS=	main.c session.c isakmp.c handler.c random.c \
 	isakmp_ident.c isakmp_agg.c isakmp_base.c \
 	isakmp_quick.c isakmp_inf.c isakmp_newg.c \
 	pfkey.c admin.c ipsec_doi.c oakley.c grabmyaddr.c \
@@ -26,8 +26,6 @@ LDADD+=	-L${LIBPFKEYDIR} -lpfkey
 DPADD+=	${LIBPFKEYDIR}/libpfkey.a
 LDADD+=	-lipsec -ly -ll -lcrypto
 DPADD+=	${LIBIPSEC} ${LIBY} ${LIBL} ${LIBCRYPTO}
-
-WARNS=0
 
 #CFLAGS+=-g
 OPTFLAG+=-DHAVE_PFKEYV2 -DYIPS_DEBUG
