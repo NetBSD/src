@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.13 2000/05/09 22:51:34 pk Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.14 2000/05/11 20:55:04 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,9 @@
  * This sun version based on i386 version 1.30.
  */
 
+#ifndef I82586_DEBUG
 #define I82586_DEBUG 0
+#endif
 
 /* Debug elements */
 #define	IED_RINT	0x01
@@ -121,6 +123,7 @@
 #define INTR_ENTER	0		/* intr hook called on ISR entry */
 #define INTR_EXIT	1		/* intr hook called on ISR exit */
 #define INTR_LOOP	2		/* intr hook called on ISR loop */
+#define INTR_ACK	3		/* intr hook called on ie_ack */
 
 #define CHIP_PROBE	0		/* reset called from chip probe */
 #define CARD_RESET	1		/* reset called from card reset */
