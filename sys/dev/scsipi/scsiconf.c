@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.48 1996/02/14 21:47:27 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.49 1996/02/18 20:32:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -76,7 +76,6 @@
  */
 void scsi_probedev __P((struct scsibus_softc *, int, int));
 int scsi_probe_bus __P((int bus, int target, int lun));
-void scsi_strvis __P((u_char *, u_char *, int));
 
 struct scsi_device probe_switch = {
 	NULL,
