@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpcmd.y,v 1.38 1999/09/06 06:01:44 simonb Exp $	*/
+/*	$NetBSD: ftpcmd.y,v 1.39 1999/10/04 17:36:52 tron Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1993, 1994
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: ftpcmd.y,v 1.38 1999/09/06 06:01:44 simonb Exp $");
+__RCSID("$NetBSD: ftpcmd.y,v 1.39 1999/10/04 17:36:52 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -1516,7 +1516,7 @@ yylex()
 	dostr1:
 		if (cbuf[cpos] == ' ') {
 			cpos++;
-			state = state == OSTR ? STR2 : ++state;
+			state = state == OSTR ? STR2 : state+1;
 			return (SP);
 		}
 		break;
