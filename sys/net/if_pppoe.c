@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.56 2004/12/04 18:31:43 peter Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.57 2004/12/08 07:43:29 martin Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.56 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.57 2004/12/08 07:43:29 martin Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -176,6 +176,7 @@ static int pppoe_ioctl(struct ifnet *, unsigned long, caddr_t);
 static void pppoe_tls(struct sppp *);
 static void pppoe_tlf(struct sppp *);
 static void pppoe_start(struct ifnet *);
+static void pppoe_clear_softc(struct pppoe_softc *, const char *);
 
 /* internal timeout handling */
 static void pppoe_timeout(void *);
@@ -687,22 +688,7 @@ breakbreak:;
 	case PPPOE_CODE_PADT:
 		if (sc == NULL)
 			goto done;
-		/* stop timer (we might be about to transmit a PADT ourself) */
-		callout_stop(&sc->sc_timeout);
-		if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
-			printf("%s: session 0x%x terminated, received PADT\n",
-			    sc->sc_sppp.pp_if.if_xname, session);
-		/* clean up softc */
-		sc->sc_state = PPPOE_STATE_INITIAL;
-		memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
-		if (sc->sc_ac_cookie) {
-			free(sc->sc_ac_cookie, M_DEVBUF);
-			sc->sc_ac_cookie = NULL;
-		}
-		sc->sc_ac_cookie_len = 0;
-		sc->sc_session = 0;
-		/* signal upper layer */
-		sc->sc_sppp.pp_down(&sc->sc_sppp);
+		pppoe_clear_softc(sc, "received PADT");
 		break;
 	default:
 		printf("%s: unknown code (0x%04x) session = 0x%04x\n",
@@ -1452,9 +1438,35 @@ pppoe_ifattach_hook(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 			    sc->sc_sppp.pp_if.if_xname);
 		}
 		sc->sc_eth_if = NULL;
+		pppoe_clear_softc(sc, "ethernet interface detached");
 	}
 	splx(s);
 
 	return 0;
 }
 #endif
+
+static void
+pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
+{
+	/* stop timer (we might be about to transmit a PADT ourself) */	
+	callout_stop(&sc->sc_timeout);
+	if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
+		printf("%s: session 0x%x terminated, %s\n",
+		    sc->sc_sppp.pp_if.if_xname, sc->sc_session, message);
+
+	/* fix our state */
+	sc->sc_state = PPPOE_STATE_INITIAL;
+
+	/* signal upper layer */
+	sc->sc_sppp.pp_down(&sc->sc_sppp);
+
+	/* clean up softc */
+	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
+	if (sc->sc_ac_cookie) {
+		free(sc->sc_ac_cookie, M_DEVBUF);
+		sc->sc_ac_cookie = NULL;
+	}
+	sc->sc_ac_cookie_len = 0;
+	sc->sc_session = 0;
+}
