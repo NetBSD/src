@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_core.c,v 1.34 2003/07/25 10:16:28 itojun Exp $	*/
+/*	$NetBSD: ah_core.c,v 1.35 2003/07/25 10:17:36 itojun Exp $	*/
 /*	$KAME: ah_core.c,v 1.57 2003/07/25 09:33:36 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.34 2003/07/25 10:16:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_core.c,v 1.35 2003/07/25 10:17:36 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -253,8 +253,8 @@ ah_common_mature(sav)
 		return 1;
 	}
 
-	if (sav->key_auth->sadb_key_bits < algo->keymin
-	 || algo->keymax < sav->key_auth->sadb_key_bits) {
+	if (sav->key_auth->sadb_key_bits < algo->keymin ||
+	    algo->keymax < sav->key_auth->sadb_key_bits) {
 		ipseclog((LOG_ERR,
 		    "ah_common_mature: invalid key length %d for %s.\n",
 		    sav->key_auth->sadb_key_bits, algo->name));
