@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.9 2000/07/05 11:46:42 ad Exp $ */
+/*	$NetBSD: pidlock.c,v 1.10 2002/11/16 23:30:32 itojun Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.9 2000/07/05 11:46:42 ad Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.10 2002/11/16 23:30:32 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -201,8 +201,8 @@ ttylock(const char *tty, int flags, pid_t *locker)
 	/* locker is not used */
 
 	/* make sure the tty exists */
-	strcpy(ttyfile, DEVPATH);
-	strncat(ttyfile, tty, MAXPATHLEN-strlen(DEVPATH));
+	strlcpy(ttyfile, DEVPATH, sizeof(ttyfile));
+	strlcat(ttyfile, tty, sizeof(ttyfile));
 	if (stat(ttyfile, &sb))  {
 		errno = ENOENT; return -1;
 	}
@@ -211,8 +211,8 @@ ttylock(const char *tty, int flags, pid_t *locker)
 	}
 
 	/* do the lock */
-	strcpy(lockfile, LOCKPATH);
-	strncat(lockfile, tty, MAXPATHLEN-strlen(LOCKPATH));
+	strlcpy(lockfile, LOCKPATH, sizeof(lockfile));
+	strlcat(lockfile, tty, sizeof(lockfile));
 	return pidlock(lockfile, 0, 0, 0);
 }
 
@@ -226,8 +226,8 @@ ttyunlock(const char *tty)
 	_DIAGASSERT(tty != NULL);
 
 	/* make sure the tty exists */
-	strcpy(ttyfile, DEVPATH);
-	strncat(ttyfile, tty, MAXPATHLEN-strlen(DEVPATH));
+	strlcpy(ttyfile, DEVPATH, sizeof(ttyfile));
+	strlcat(ttyfile, tty, sizeof(ttyfile));
 	if (stat(ttyfile, &sb))  {
 		errno = ENOENT; return -1;
 	}
@@ -236,7 +236,7 @@ ttyunlock(const char *tty)
 	}
 
 	/* undo the lock */
-	strcpy(lockfile, LOCKPATH);
-	strncat(lockfile, tty, MAXPATHLEN-strlen(LOCKPATH));
+	strlcpy(lockfile, LOCKPATH, sizeof(lockfile));
+	strlcat(lockfile, tty, sizeof(lockfile));
 	return unlink(lockfile);
 }
