@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.45 2000/09/26 17:47:40 uch Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.46 2000/09/26 18:22:12 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -420,7 +420,7 @@ NESTED_NOPROFILE(mips1_SystemCall, CALLFRAME_SIZ, ra)
 	lw	k1, _C_LABEL(curpcb)
 	nop
 	addu	k1, k1, USPACE - FRAME_SIZ
-	sw	AT, FRAME_AST(k1)
+	#sw	AT, FRAME_AST(k1)
 	.set	at
 	sw	v0, FRAME_V0(k1)		# syscall #
 	sw	v1, FRAME_V1(k1)		# used by syscall()
