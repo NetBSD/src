@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.16 2002/01/31 19:27:53 tv Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.16.2.1 2004/04/07 06:57:12 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -37,12 +33,16 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-#if defined(__RCSID) && !defined(lint)
+#if !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.16 2002/01/31 19:27:53 tv Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.16.2.1 2004/04/07 06:57:12 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ ARCHD archd;
 /*
  * list()
  *	list the contents of an archive which match user supplied pattern(s)
- *	(no pattern matches all).
+ *	(if no pattern is supplied, list entire contents).
  */
 
 void
@@ -107,6 +107,17 @@ list(void)
 	 * step through the archive until the format says it is done
 	 */
 	while (next_head(arcn) == 0) {
+		if (arcn->type == PAX_GLL || arcn->type == PAX_GLF) {
+			/*
+			 * we need to read, to get the real filename
+			 */
+			off_t cnt;
+			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
+			    ? -1 : -2, &cnt));
+				(void)rd_skip(cnt + arcn->pad);
+			continue;
+		}
+
 		if (arcn->name[0] == '/' && !check_Aflag()) {
 			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
 		}
@@ -131,9 +142,8 @@ list(void)
 			if ((res = mod_name(arcn)) < 0)
 				break;
 			if (res == 0)
-				ls_list(arcn, now);
+				ls_list(arcn, now, stdout);
 		}
-
 		/*
 		 * skip to next archive format header using values calculated
 		 * by the format header read routine
@@ -166,6 +176,7 @@ extract(void)
 	off_t cnt;
 	struct stat sb;
 	int fd;
+	time_t now;
 
 	arcn = &archd;
 	/*
@@ -176,6 +187,8 @@ extract(void)
 	if ((get_arc() < 0) || ((*frmt->options)() < 0) ||
 	    ((*frmt->st_rd)() < 0) || (dir_start() < 0))
 		return;
+
+	now = time((time_t *)NULL);
 
 	/*
 	 * When we are doing interactive rename, we store the mapping of names
@@ -189,8 +202,15 @@ extract(void)
 	 * says it is done
 	 */
 	while (next_head(arcn) == 0) {
-		int gnu_longlink_hack =
-		    (arcn->type == PAX_GLL || arcn->type == PAX_GLF);
+		if (arcn->type == PAX_GLL || arcn->type == PAX_GLF) {
+			/*
+			 * we need to read, to get the real filename
+			 */
+			if (!(*frmt->rd_data)(arcn, arcn->type == PAX_GLF
+			    ? -1 : -2, &cnt));
+				(void)rd_skip(cnt + arcn->pad);
+			continue;
+		}
 
 		if (arcn->name[0] == '/' && !check_Aflag()) {
 			memmove(arcn->name, arcn->name + 1, strlen(arcn->name));
@@ -199,24 +219,22 @@ extract(void)
 		 * check for pattern, and user specified options match. When
 		 * all the patterns are matched we are done
 		 */
-		if (!gnu_longlink_hack) {
-			if ((res = pat_match(arcn)) < 0)
-				break;
+		if ((res = pat_match(arcn)) < 0)
+			break;
 
-			if ((res > 0) || (sel_chk(arcn) != 0)) {
-				/*
-				 * file is not selected. skip past any file
-				 * data and padding and go back for the next
-				 * archive member
-				 */
-				(void)rd_skip(arcn->skip + arcn->pad);
-				continue;
-			}
+		if ((res > 0) || (sel_chk(arcn) != 0)) {
+			/*
+			 * file is not selected. skip past any file
+			 * data and padding and go back for the next
+			 * archive member
+			 */
+			(void)rd_skip(arcn->skip + arcn->pad);
+			continue;
 		}
 
 		/*
 		 * with -u or -D only extract when the archive member is newer
-		 * than the file with the same name in the file system (nos
+		 * than the file with the same name in the file system (no
 		 * test of being the same type is required).
 		 * NOTE: this test is done BEFORE name modifications as
 		 * specified by pax. this operation can be confusing to the
@@ -224,8 +242,7 @@ extract(void)
 		 * file AFTER the name mod. In honesty the pax spec is probably
 		 * flawed in this respect.  ignore this for GNU long links.
 		 */
-		if ((uflag || Dflag) && ((lstat(arcn->name, &sb) == 0)) &&
-		    !gnu_longlink_hack) {
+		if ((uflag || Dflag) && ((lstat(arcn->name, &sb) == 0))) {
 			if (uflag && Dflag) {
 				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
 				    (arcn->sb.st_ctime <= sb.st_ctime)) {
@@ -261,8 +278,7 @@ extract(void)
 		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip; ignore this for GNU long links.
 		 */
-		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0)) &&
-		    !gnu_longlink_hack) {
+		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {
 			if (Yflag && Zflag) {
 				if ((arcn->sb.st_mtime <= sb.st_mtime) &&
 				    (arcn->sb.st_ctime <= sb.st_ctime)) {
@@ -281,15 +297,26 @@ extract(void)
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
-			vfpart = 1;
+			if (vflag > 1)
+				ls_list(arcn, now, listf);
+			else {
+				(void)safe_print(arcn->name, listf);
+				vfpart = 1;
+			}
 		}
 
 		/*
+		 * if required, chdir around.
+		 */
+		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL) &&
+		    !to_stdout)
+			if (chdir(arcn->pat->chdname) != 0)
+				syswarn(1, errno, "Cannot chdir to %s",
+				    arcn->pat->chdname);
+		/*
 		 * all ok, extract this member based on type
 		 */
-		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG) &&
-		    !gnu_longlink_hack) {
+		if ((arcn->type != PAX_REG) && (arcn->type != PAX_CTG)) { 
 			/*
 			 * process archive members that are not regular files.
 			 * throw out padding and any data that might follow the
@@ -305,35 +332,47 @@ extract(void)
 				purg_lnk(arcn);
 
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
 		}
-		/*
-		 * we have a file with data here. If we can not create it, skip
-		 * over the data and purge the name from hard link table
-		 */
-		if (gnu_longlink_hack)
-			fd = -1;  /* this tells the pax internals to DTRT */
-		else if ((fd = file_creat(arcn)) < 0) {
-			(void)rd_skip(arcn->skip + arcn->pad);
-			purg_lnk(arcn);
-			continue;
+		if (to_stdout)
+			fd = STDOUT_FILENO;
+		else {
+			/*
+			 * We have a file with data here. If we cannot create
+			 * it, skip over the data and purge the name from hard
+			 * link table.
+			 */
+			if ((fd = file_creat(arcn)) < 0) {
+				(void)fflush(listf);
+				(void)rd_skip(arcn->skip + arcn->pad);
+				purg_lnk(arcn);
+				continue;
+			}
 		}
 		/*
 		 * extract the file from the archive and skip over padding and
 		 * any unprocessed data
 		 */
 		res = (*frmt->rd_data)(arcn, fd, &cnt);
-		if (!gnu_longlink_hack)
+		if (!to_stdout)
 			file_close(arcn, fd);
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 		if (!res)
 			(void)rd_skip(cnt + arcn->pad);
+
+		/*
+		 * if required, chdir around.
+		 */
+		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
+			if (fchdir(cwdfd) != 0)
+				syswarn(1, errno,
+				    "Can't fchdir to starting directory");
 	}
 
 	/*
@@ -363,6 +402,7 @@ wr_archive(ARCHD *arcn, int is_app)
 	off_t cnt;
 	int (*wrf)(ARCHD *);
 	int fd = -1;
+	time_t now;
 
 	/*
 	 * if this format supports hard link storage, start up the database
@@ -378,6 +418,8 @@ wr_archive(ARCHD *arcn, int is_app)
 		return;
 	wrf = frmt->wr;
 
+	now = time((time_t *)NULL);
+
 	/*
 	 * When we are doing interactive rename, we store the mapping of names
 	 * so we can fix up hard links files later in the archive.
@@ -386,7 +428,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		return;
 
 	/*
-	 * if this not append, and there are no files, we do no write a trailer
+	 * if this is not append, and there are no files, we do no write a trailer
 	 */
 	wr_one = is_app;
 
@@ -428,7 +470,7 @@ wr_archive(ARCHD *arcn, int is_app)
 			 * the link table).
 			 */
 			if ((fd = open(arcn->org_name, O_RDONLY, 0)) < 0) {
-				syswarn(1,errno, "Unable to open %s to read",
+				syswarn(1, errno, "Unable to open %s to read",
 					arcn->org_name);
 				purg_lnk(arcn);
 				continue;
@@ -462,8 +504,12 @@ wr_archive(ARCHD *arcn, int is_app)
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
-			vfpart = 1;
+			if (vflag > 1)
+				ls_list(arcn, now, listf);
+			else {
+				(void)safe_print(arcn->name, listf);
+				vfpart = 1;
+			}
 		}
 		++flcnt;
 
@@ -482,7 +528,7 @@ wr_archive(ARCHD *arcn, int is_app)
 			 * so we are done messing with this file
 			 */
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			rdfile_close(arcn, &fd);
@@ -500,7 +546,7 @@ wr_archive(ARCHD *arcn, int is_app)
 		res = (*frmt->wr_data)(arcn, fd, &cnt);
 		rdfile_close(arcn, &fd);
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 		if (res < 0)
@@ -611,7 +657,7 @@ append(void)
 	 * reading the archive may take a long time. If verbose tell the user
 	 */
 	if (vflag) {
-		(void)fprintf(stderr,
+		(void)fprintf(listf,
 			"%s: Reading archive to position at the end...", argv0);
 		vfpart = 1;
 	}
@@ -673,7 +719,7 @@ append(void)
 	 * tell the user we are done reading.
 	 */
 	if (vflag && vfpart) {
-		(void)fputs("done.\n", stderr);
+		(void)safe_print("done.\n", listf);
 		vfpart = 0;
 	}
 
@@ -731,7 +777,12 @@ copy(void)
 	 * set up the destination dir path and make sure it is a directory. We
 	 * make sure we have a trailing / on the destination
 	 */
-	dlen = l_strncpy(dirbuf, dirptr, PAXPATHLEN);
+	dlen = strlcpy(dirbuf, dirptr, sizeof(dirbuf));
+	if (dlen >= sizeof(dirbuf) ||
+	    (dlen == sizeof(dirbuf) - 1 && dirbuf[dlen - 1] != '/')) {
+		tty_warn(1, "directory name is too long %s", dirptr);
+		return;
+	}
 	dest_pt = dirbuf + dlen;
 	if (*(dest_pt-1) != '/') {
 		*dest_pt++ = '/';
@@ -795,17 +846,12 @@ copy(void)
 			/*
 			 * create the destination name
 			 */
-			if (*(arcn->name) == '/')
-				res = 1;
-			else
-				res = 0;
-			if ((arcn->nlen - res) > drem) {
+			if (strlcpy(dest_pt, arcn->name + (*arcn->name == '/'),
+			    drem + 1) > drem) {
 				tty_warn(1, "Destination pathname too long %s",
 					arcn->name);
 				continue;
 			}
-			(void)strncpy(dest_pt, arcn->name + res, drem);
-			dirbuf[PAXPATHLEN] = '\0';
 
 			/*
 			 * if existing file is same age or newer skip
@@ -859,7 +905,7 @@ copy(void)
 		}
 
 		if (vflag) {
-			(void)fputs(arcn->name, stderr);
+			(void)safe_print(arcn->name, listf);
 			vfpart = 1;
 		}
 		++flcnt;
@@ -874,7 +920,7 @@ copy(void)
 			res = chk_same(arcn);
 		if (res <= 0) {
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -894,7 +940,7 @@ copy(void)
 			if (res < 0)
 				purg_lnk(arcn);
 			if (vflag && vfpart) {
-				(void)putc('\n', stderr);
+				(void)putc('\n', listf);
 				vfpart = 0;
 			}
 			continue;
@@ -924,7 +970,7 @@ copy(void)
 		rdfile_close(arcn, &fdsrc);
 
 		if (vflag && vfpart) {
-			(void)putc('\n', stderr);
+			(void)putc('\n', listf);
 			vfpart = 0;
 		}
 	}
@@ -969,6 +1015,7 @@ next_head(ARCHD *arcn)
 	int hsz;
 	int in_resync = 0;		/* set when we are in resync mode */
 	int cnt = 0;			/* counter for trailer function */
+	int first = 1;			/* on 1st read, EOF isn't premature. */
 
 	/*
 	 * set up initial conditions, we want a whole frmt->hsz block as we
@@ -987,13 +1034,23 @@ next_head(ARCHD *arcn)
 				break;
 
 			/*
+			 * If we read 0 bytes (EOF) from an archive when we
+			 * expect to find a header, we have stepped upon
+			 * an archive without the customary block of zeroes
+			 * end marker.  It's just stupid to error out on
+			 * them, so exit gracefully.
+			 */
+			if (first && ret == 0)
+				return(-1);
+			first = 0;
+
+			/*
 			 * some kind of archive read problem, try to resync the
 			 * storage device, better give the user the bad news.
 			 */
 			if ((ret == 0) || (rd_sync() < 0)) {
-				if (!is_oldgnutar)
-					tty_warn(1,
-					    "Premature end of file on archive read");
+				tty_warn(1,
+				    "Premature end of file on archive read");
 				return(-1);
 			}
 			if (!in_resync) {
