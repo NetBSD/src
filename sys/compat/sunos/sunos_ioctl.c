@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.43 2003/01/18 08:36:15 thorpej Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.44 2003/02/23 14:37:32 pk Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.43 2003/01/18 08:36:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.44 2003/02/23 14:37:32 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -422,8 +422,10 @@ sunos_sys_ioctl(l, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	if ((fp->f_flag & (FREAD|FWRITE)) == 0)
+	if ((fp->f_flag & (FREAD|FWRITE)) == 0) {
+		simple_unlock(&fp->f_slock);
 		return EBADF;
+	}
 
 	ctl = fp->f_ops->fo_ioctl;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.23 2003/01/18 08:44:26 thorpej Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.24 2003/02/23 14:37:33 pk Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.23 2003/01/18 08:44:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.24 2003/02/23 14:37:33 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -126,6 +126,8 @@ svr4_sys_ioctl(l, v, retval)
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
+
+	simple_unlock(&fp->f_slock);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
 		return EBADF;

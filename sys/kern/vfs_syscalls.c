@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.182 2003/02/14 18:25:34 drochner Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.183 2003/02/23 14:37:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.182 2003/02/14 18:25:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.183 2003/02/23 14:37:34 pk Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -1726,8 +1726,10 @@ sys_pread(l, v, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp->f_flag & FREAD) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -1780,8 +1782,10 @@ sys_preadv(l, v, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FREAD) == 0)
+	if ((fp->f_flag & FREAD) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -1834,8 +1838,10 @@ sys_pwrite(l, v, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp->f_flag & FWRITE) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -1888,8 +1894,10 @@ sys_pwritev(l, v, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
-	if ((fp->f_flag & FWRITE) == 0)
+	if ((fp->f_flag & FWRITE) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(fp);
 

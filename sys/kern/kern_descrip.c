@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.102 2003/02/14 21:50:10 pk Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.103 2003/02/23 14:37:33 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.102 2003/02/14 21:50:10 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.103 2003/02/23 14:37:33 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,14 @@ fd_unused(struct filedesc *fdp, int fd)
 	}
 }
 
+/*
+ * Lookup the file structure corresponding to a file descriptor
+ * and return it locked.
+ * Note: typical usage is: `fp = fd_getfile(..); FILE_USE(fp);'
+ * The locking strategy has been optimised for this case, i.e.
+ * fd_getfile() returns the file locked while FILE_USE() will increment
+ * the file's use count and unlock.
+ */
 struct file *
 fd_getfile(struct filedesc *fdp, int fd)
 {
@@ -130,8 +138,11 @@ fd_getfile(struct filedesc *fdp, int fd)
 	if ((u_int) fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (NULL);
 
-	if (FILE_IS_USABLE(fp) == 0)
+	simple_lock(&fp->f_slock);
+	if (FILE_IS_USABLE(fp) == 0) {
+		simple_unlock(&fp->f_slock);
 		return (NULL);
+	}
 
 	return (fp);
 }
@@ -205,10 +216,13 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	if ((u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
-	    (u_int)new >= maxfiles)
+	    (u_int)new >= maxfiles) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	if (old == new) {
+		simple_unlock(&fp->f_slock);
 		*retval = new;
 		return (0);
 	}
@@ -477,6 +491,7 @@ finishdup(struct proc *p, int old, int new, register_t *retval)
 	FILE_UNUSE(fp, p);
 
 	if (delfp != NULL) {
+		simple_lock(&delfp->f_slock);
 		FILE_USE(delfp);
 		if (new < fdp->fd_knlistsize)
 			knote_fdclose(p, new);
@@ -504,6 +519,12 @@ fdrelease(struct proc *p, int fd)
 	fp = *fpp;
 	if (fp == NULL)
 		return (EBADF);
+
+	simple_lock(&fp->f_slock);
+	if (!FILE_IS_USABLE(fp)) {
+		simple_unlock(&fp->f_slock);
+		return (EBADF);
+	}
 
 	FILE_USE(fp);
 
@@ -533,8 +554,12 @@ sys_close(struct lwp *l, void *v, register_t *retval)
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
 
+	if ((u_int) fd >= fdp->fd_nfiles)
+		return (NULL);
+#if 0
 	if (fd_getfile(fdp, fd) == NULL)
 		return (EBADF);
+#endif
 
 	return (fdrelease(p, fd));
 }
@@ -785,11 +810,12 @@ falloc(struct proc *p, struct file **resultfp, int *resultfd)
 	}
 	simple_unlock(&filelist_slock);
 	p->p_fd->fd_ofiles[i] = fp;
+	simple_lock_init(&fp->f_slock);
 	fp->f_count = 1;
 	fp->f_cred = p->p_ucred;
 	crhold(fp->f_cred);
 	if (resultfp) {
-		FILE_USE(fp);
+		fp->f_usecount = 1;
 		*resultfp = fp;
 	}
 	if (resultfd)
@@ -813,7 +839,7 @@ ffree(struct file *fp)
 	LIST_REMOVE(fp, f_list);
 	crfree(fp->f_cred);
 #ifdef DIAGNOSTIC
-	fp->f_count = 0;
+	fp->f_count = 0; /* What's the point? */
 #endif
 	nfiles--;
 	simple_unlock(&filelist_slock);
@@ -1043,6 +1069,7 @@ fdfree(struct proc *p)
 		fp = *fpp;
 		if (fp != NULL) {
 			*fpp = NULL;
+			simple_lock(&fp->f_slock);
 			FILE_USE(fp);
 			if (i < fdp->fd_knlistsize)
 				knote_fdclose(p, fdp->fd_lastfile - i);
@@ -1101,6 +1128,7 @@ closef(struct file *fp, struct proc *p)
 	 * happen if a filedesc structure is shared by multiple
 	 * processes.
 	 */
+	simple_lock(&fp->f_slock);
 	if (fp->f_iflags & FIF_WANTCLOSE) {
 		/*
 		 * Another user of the file is already closing, and is
@@ -1116,6 +1144,7 @@ closef(struct file *fp, struct proc *p)
 #endif
 		if (--fp->f_usecount == 1)
 			wakeup(&fp->f_usecount);
+		simple_unlock(&fp->f_slock);
 		return (0);
 	} else {
 		/*
@@ -1129,6 +1158,7 @@ closef(struct file *fp, struct proc *p)
 				panic("closef: no wantclose and usecount < 1");
 #endif
 			fp->f_usecount--;
+			simple_unlock(&fp->f_slock);
 			return (0);
 		}
 	}
@@ -1156,12 +1186,14 @@ closef(struct file *fp, struct proc *p)
 		panic("closef: usecount < 1");
 #endif
 	while (fp->f_usecount > 1)
-		(void) tsleep(&fp->f_usecount, PRIBIO, "closef", 0);
+		(void) ltsleep(&fp->f_usecount, PRIBIO, "closef", 0,
+				&fp->f_slock);
 #ifdef DIAGNOSTIC
 	if (fp->f_usecount != 1)
 		panic("closef: usecount != 1");
 #endif
 
+	simple_unlock(&fp->f_slock);
 	if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1295,8 +1327,10 @@ dupfdopen(struct proc *p, int indx, int dfd, int mode, int error)
 	if ((wfp = fd_getfile(fdp, dfd)) == NULL)
 		return (EBADF);
 
-	if (fp == wfp)
+	if (fp == wfp) {
+		simple_unlock(&fp->f_slock);
 		return (EBADF);
+	}
 
 	FILE_USE(wfp);
 
