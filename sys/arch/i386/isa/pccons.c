@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.49 1994/02/25 05:36:51 mycroft Exp $
+ *	$Id: pccons.c,v 1.50 1994/03/01 18:30:13 mycroft Exp $
  */
 
 /*
@@ -1534,6 +1534,15 @@ sget()
 top:
 	dt = inb(KBDATAP);
 
+	switch (dt) {
+	case KBR_ACK:
+		ack = 1;
+		goto loop;
+	case KBR_RESEND:
+		nak = 1;
+		goto loop;
+	}
+
 	if (pc_xmode > 0) {
 #if defined(DDB) && defined(XSERVER_DDB)
 		/* F12 enters the debugger while in X mode */
@@ -1591,12 +1600,6 @@ top:
 	switch (dt) {
 	case KBR_EXTENDED:
 		extended = 1;
-		goto loop;
-	case KBR_ACK:
-		ack = 1;
-		goto loop;
-	case KBR_RESEND:
-		nak = 1;
 		goto loop;
 	}
 
