@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.2 2000/06/29 15:10:14 soren Exp $
+#	$NetBSD: files.sgimips,v 1.3 2000/06/29 15:20:27 soren Exp $
 
 maxpartitions 16
 
@@ -47,6 +47,11 @@ file arch/sgimips/dev/if_mec.c		mec
 device macepci: pcibus
 attach macepci at mace
 file arch/sgimips/pci/macepci.c		macepci
+
+device	zsc {[channel = -1]}
+device	zstty: tty
+attach	zstty at zsc
+file	dev/ic/z8530tty.c		zstty needs-count       
 
 file arch/sgimips/sgimips/arcs.c
 file arch/sgimips/sgimips/autoconf.c
