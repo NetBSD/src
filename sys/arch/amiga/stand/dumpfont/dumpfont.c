@@ -1,5 +1,3 @@
-/*	$Id: dumpfont.c,v 1.2 1993/08/02 17:52:03 mycroft Exp $ */
-
 /* This is a *real* hack to dump the topaz80 kernel font. This one is 
    ways nicer than the ugly Mach font, but we'll have to dump it from a
    running system to not run against Commodore copyrights. *NEVER* distribute

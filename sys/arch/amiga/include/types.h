@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)types.h	7.9 (Berkeley) 3/9/91
- *	$Id: types.h,v 1.2 1993/08/01 19:23:44 mycroft Exp $
+ *	@(#)types.h	7.9 (Berkeley) 3/9/91
  */
 
 #ifndef	_MACHTYPES_H_

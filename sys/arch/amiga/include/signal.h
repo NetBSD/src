@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1982, 1986 Regents of the University of California.
+ * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,44 +30,35 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)psl.h	7.2 (Berkeley) 5/4/91
+ *	from: @(#)signal.h	7.16 (Berkeley) 3/17/91
+ *	$Id: signal.h,v 1.1 1993/10/30 23:42:01 mw Exp $
  */
 
-#ifndef PSL_C
-/*
- * MC68000 program status word
- */
+#ifndef _MACHINE_SIGNAL_H_
+#define _MACHINE_SIGNAL_H_
 
-#define	PSL_C		0x0001		/* carry bit */
-#define	PSL_V		0x0002		/* overflow bit */
-#define	PSL_Z		0x0004		/* zero bit */
-#define	PSL_N		0x0008		/* negative bit */
-#define	PSL_X		0x0010		/* extend bit */
-#define	PSL_ALLCC	0x001F		/* all cc bits - unlikely */
-#define	PSL_IPL0	0x0000		/* interrupt priority level 0 */
-#define	PSL_IPL1	0x0100		/* interrupt priority level 1 */
-#define	PSL_IPL2	0x0200		/* interrupt priority level 2 */
-#define	PSL_IPL3	0x0300		/* interrupt priority level 3 */
-#define	PSL_IPL4	0x0400		/* interrupt priority level 4 */
-#define	PSL_IPL5	0x0500		/* interrupt priority level 5 */
-#define	PSL_IPL6	0x0600		/* interrupt priority level 6 */
-#define	PSL_IPL7	0x0700		/* interrupt priority level 7 */
-#define	PSL_S		0x2000		/* supervisor enable bit */
-#define	PSL_T		0x8000		/* trace enable bit */
-
-#define	PSL_LOWIPL	(PSL_S)
-#define	PSL_HIGHIPL	(PSL_S | PSL_IPL7)
-#define PSL_IPL		(PSL_IPL7)
-#define	PSL_USER	(0)
-
-#define	PSL_MBZ		0x58E0		/* must be zero bits */
-
-#define	PSL_USERSET	(0)
-#define	PSL_USERCLR	(PSL_S | PSL_IPL7 | PSL_MBZ)
+typedef int sig_atomic_t;
 
 /*
- * Macros to decode processor status word.
+ * Get the "code" values
  */
-#define	USERMODE(ps)	(((ps) & PSL_S) == 0)
-#define	BASEPRI(ps)	(((ps) & PSL_IPL7) == 0)
-#endif
+#include <machine/trap.h>
+
+/*
+ * Information pushed on stack when a signal is delivered.
+ * This is used by the kernel to restore state following
+ * execution of the signal handler.  It is also made available
+ * to the handler to allow it to restore state properly if
+ * a non-standard exit is performed.
+ */
+struct	sigcontext {
+	int	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore */
+	int	sc_sp;			/* sp to restore */
+	int	sc_fp;			/* fp to restore */
+	int	sc_ap;			/* ap to restore */
+	int	sc_pc;			/* pc to restore */
+	int	sc_ps;			/* psl to restore */
+};
+
+#endif	/* _MACHINE_SIGNAL_H_ */

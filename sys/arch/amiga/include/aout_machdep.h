@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: aout_machdep.h,v 1.2 1993/10/18 09:46:56 pk Exp $
+ *	$Id: aout_machdep.h,v 1.3 1993/10/30 23:41:52 mw Exp $
  */
 
 #ifndef _AMIGA_EXEC_H_
@@ -44,6 +44,7 @@ struct relocation_info_amiga {
 		      r_relative :  1,	/* load address relative */
 			  r_copy :  1;	/* run time copy */
 };
-#define relocation_info relocation_info_amiga
+#define relocation_info	relocation_info_hp300
+
 
 #endif  /* _AMIGA_EXEC_H_ */

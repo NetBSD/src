@@ -30,11 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.3 1993/08/18 00:22:44 jtc Exp $
+ *	@(#)limits.h	7.2 (Berkeley) 6/28/90
  */
 
 #define	CHAR_BIT	8		/* number of bits in a char */
+#define	CLK_TCK		100		/* ticks per second */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
 
 #define	SCHAR_MIN	0x80		/* max value for a signed char */

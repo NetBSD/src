@@ -35,18 +35,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machparam.h 1.11 89/08/14
- *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.3 1993/09/02 18:08:22 mw Exp $
+ * from: Utah $Hdr: machparam.h 1.11 89/08/14$
+ *
+ *	@(#)param.h	7.8 (Berkeley) 6/28/91
  */
 
 /*
  * Machine dependent constants for amiga
  */
 #define	MACHINE		"amiga"
-/* this is the common denominator, MID_AMIGA040 binaries should never be
-   the default */
-#define MID_MACHINE	MID_AMIGA030
+#define MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

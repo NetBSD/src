@@ -1,5 +1,3 @@
-/*	$Id: loadbsd.c,v 1.3 1993/09/02 18:08:26 mw Exp $ */
-
 #include <sys/types.h>
 #include <a.out.h>
 #include <stdio.h>
