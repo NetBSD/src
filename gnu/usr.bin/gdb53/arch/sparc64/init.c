@@ -85,12 +85,14 @@ extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_main;
 extern initialize_file_ftype _initialize_mi_parse;
 extern initialize_file_ftype _initialize_nbsd_thread;
+#ifdef USE_TUI
 extern initialize_file_ftype _initialize_tui;
 extern initialize_file_ftype _initialize_tuiLayout;
 extern initialize_file_ftype _initialize_tuiRegs;
 extern initialize_file_ftype _initialize_tuiStack;
 extern initialize_file_ftype _initialize_tuiWin;
 extern initialize_file_ftype _initialize_tui_out;
+#endif
 
 void
 initialize_all_files (void)
@@ -177,11 +179,13 @@ initialize_all_files (void)
   _initialize_mi_main ();
   _initialize_mi_parse ();
   _initialize_nbsd_thread ();
+#ifdef USE_TUI
   _initialize_tui ();
   _initialize_tuiLayout ();
   _initialize_tuiRegs ();
   _initialize_tuiStack ();
   _initialize_tuiWin ();
   _initialize_tui_out ();
+#endif
   _initialize_corelow ();
 }
