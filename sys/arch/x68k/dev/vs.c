@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.18 2002/10/02 16:02:43 thorpej Exp $	*/
+/*	$NetBSD: vs.c,v 1.19 2002/10/13 10:00:08 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -270,9 +270,9 @@ vs_dmaintr(void *hdl)
 		/* start next transfer */
 		sc->sc_current.dmap += sc->sc_current.blksize;
 		if (sc->sc_current.dmap + sc->sc_current.blksize
-			> sc->sc_current.bufsize)
+		    > sc->sc_current.bufsize)
 			sc->sc_current.dmap -= sc->sc_current.bufsize;
-		dmac_start_xfer_offset (sc->sc_dma_ch->ch_softc,
+		dmac_start_xfer_offset(sc->sc_dma_ch->ch_softc,
 					sc->sc_current.xfer,
 					sc->sc_current.dmap,
 					sc->sc_current.blksize);
@@ -281,15 +281,15 @@ vs_dmaintr(void *hdl)
 		/* start next transfer */
 		sc->sc_current.dmap += sc->sc_current.blksize;
 		if (sc->sc_current.dmap + sc->sc_current.blksize
-			> sc->sc_current.bufsize)
+		    > sc->sc_current.bufsize)
 			sc->sc_current.dmap -= sc->sc_current.bufsize;
-		dmac_start_xfer_offset (sc->sc_dma_ch->ch_softc,
+		dmac_start_xfer_offset(sc->sc_dma_ch->ch_softc,
 					sc->sc_current.xfer,
 					sc->sc_current.dmap,
 					sc->sc_current.blksize);
 		sc->sc_rintr(sc->sc_rarg);
 	} else {
-		printf ("vs_dmaintr: spurious interrupt\n");
+		printf("vs_dmaintr: spurious interrupt\n");
 	}
 
 	return 1;
@@ -388,7 +388,8 @@ vs_set_params(void *hdl, int setmode, int usemode,
 	void (*pswcode)(void *, u_char *, int);
 	void (*rswcode)(void *, u_char *, int);
 
-	DPRINTF(1, ("vs_set_params: setmode=%d, usemode=%d\n", setmode, usemode));
+	DPRINTF(1, ("vs_set_params: setmode=%d, usemode=%d\n",
+		setmode, usemode));
 
 	/* set first record info, then play info */
 	for (mode = AUMODE_RECORD; mode != -1;
@@ -528,7 +529,7 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 	vs_set_sr(sc, sc->sc_current.prate);
 	vs_set_po(sc, VS_PANOUT_LR);
 
-	xf = dmac_alloc_xfer (chan, sc->sc_dmat, vd->vd_map);
+	xf = dmac_alloc_xfer(chan, sc->sc_dmat, vd->vd_map);
 	sc->sc_current.xfer = xf;
 	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
 			DMAC_DCR_OPS_8BIT);
@@ -537,9 +538,9 @@ vs_trigger_output(void *hdl, void *start, void *end, int bsize,
 	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
 	xf->dx_device = sc->sc_addr + MSM6258_DATA*2 + 1;
 
-	dmac_load_xfer (chan->ch_softc, xf);
-	dmac_start_xfer_offset (chan->ch_softc, xf, 0, sc->sc_current.blksize);
-	bus_space_write_1 (sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
+	dmac_load_xfer(chan->ch_softc, xf);
+	dmac_start_xfer_offset(chan->ch_softc, xf, 0, sc->sc_current.blksize);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 2);
 
 	return 0;
 }
@@ -574,7 +575,7 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 	}
 
 	vs_set_sr(sc, sc->sc_current.rrate);
-	xf = dmac_alloc_xfer (chan, sc->sc_dmat, vd->vd_map);
+	xf = dmac_alloc_xfer(chan, sc->sc_dmat, vd->vd_map);
 	sc->sc_current.xfer = xf;
 	chan->ch_dcr = (DMAC_DCR_XRM_CSWOH | DMAC_DCR_OTYP_EASYNC |
 			DMAC_DCR_OPS_8BIT);
@@ -583,9 +584,9 @@ vs_trigger_input(void *hdl, void *start, void *end, int bsize,
 	xf->dx_scr = DMAC_SCR_MAC_COUNT_UP | DMAC_SCR_DAC_NO_COUNT;
 	xf->dx_device = sc->sc_addr + MSM6258_DATA*2 + 1;
 
-	dmac_load_xfer (chan->ch_softc, xf);
-	dmac_start_xfer_offset (chan->ch_softc, xf, 0, sc->sc_current.blksize);
-	bus_space_write_1 (sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
+	dmac_load_xfer(chan->ch_softc, xf);
+	dmac_start_xfer_offset(chan->ch_softc, xf, 0, sc->sc_current.blksize);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 4);
 
 	return 0;
 }
@@ -599,7 +600,7 @@ vs_halt_output(void *hdl)
 
 	/* stop ADPCM play */
 	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
-	bus_space_write_1 (sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
 
 	return 0;
 }
@@ -613,19 +614,14 @@ vs_halt_input(void *hdl)
 
 	/* stop ADPCM recoding */
 	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
-	bus_space_write_1 (sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, MSM6258_STAT, 1);
 
 	return 0;
 }
 
 static int
-vs_allocmem(sc, size, align, boundary, flags, vd)
-	struct vs_softc *sc;
-	size_t size;
-	size_t align;
-	size_t boundary;
-	int flags;
-	struct vs_dma *vd;
+vs_allocmem(struct vs_softc *sc, size_t size, size_t align, size_t boundary,
+	int flags, struct vs_dma *vd)
 {
 	int error, wait;
 
@@ -673,8 +669,7 @@ vs_allocmem(sc, size, align, boundary, flags, vd)
 }
 
 static void
-vs_freemem(vd)
-	struct vs_dma *vd;
+vs_freemem(struct vs_dma *vd)
 {
 
 	bus_dmamap_unload(vd->vd_dmat, vd->vd_map);
@@ -718,11 +713,7 @@ vs_query_devinfo(void *hdl, mixer_devinfo_t *mi)
 }
 
 static void *
-vs_allocm(hdl, direction, size, type, flags)
-	void *hdl;
-	int direction;
-	size_t size;
-	int type, flags;
+vs_allocm(void *hdl, int direction, size_t size, int type, int flags)
 {
 	struct vs_softc *sc = hdl;
 	struct vs_dma *vd;
@@ -745,10 +736,7 @@ vs_allocm(hdl, direction, size, type, flags)
 }
 
 static void
-vs_freem(hdl, addr, type)
-	void *hdl;
-	void *addr;
-	int type;
+vs_freem(void *hdl, void *addr, int type)
 {
 	struct vs_softc *sc = hdl;
 	struct vs_dma *p, **pp;
@@ -774,11 +762,7 @@ vs_round_buffersize(void *hdl, int direction, size_t bufsize)
 
 #if 0
 paddr_t
-vs_mappage(addr, mem, off, prot)
-	void *addr;
-	void *mem;
-	off_t off;
-	int prot;
+vs_mappage(void *addr, void *mem, off_t off, int prot)
 {
 	struct vs_softc *sc = addr;
 	struct vs_dma *p;
