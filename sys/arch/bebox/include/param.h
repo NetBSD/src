@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 1998/04/29 23:11:00 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.3 1998/05/28 08:45:01 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,6 +66,8 @@
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	NBPG		/* default message buffer size */
 #endif
+
+#define	__NO_FIXED_MSGBUF
 
 #define	KERNBASE	0x3100
 

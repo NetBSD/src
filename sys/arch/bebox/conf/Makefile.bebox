@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bebox,v 1.5 1998/04/12 23:47:43 tv Exp $
+#	$NetBSD: Makefile.bebox,v 1.6 1998/05/28 08:44:59 sakamoto Exp $
 
 # Makefile for NetBSD
 #
@@ -41,6 +41,7 @@ COPTS?=	-O2
 S!=	cd ../../../..; pwd
 .endif
 BEBOX=	$S/arch/bebox
+POWERPC= $S/arch/powerpc
 
 HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
@@ -142,7 +143,7 @@ cleandir: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
-	    ${BEBOX}/bebox/Locore.c ${CFILES} \
+	    ${POWERPC}/powerpc/Locore.c ${CFILES} \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
 

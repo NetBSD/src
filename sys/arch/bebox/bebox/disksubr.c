@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.2 1997/12/15 08:00:22 sakamoto Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.3 1998/05/28 08:44:57 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -124,8 +124,14 @@ readdisklabel(dev, strat, lp, osdep)
 				}
 
 				/* is this ours? */
-				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
-				    && dospartoff == 0) {
+				if (dp->dp_size &&
+				    (dp->dp_typ == DOSPTYP_NETBSD
+#ifdef COMPAT_386BSD_MBRPART
+				      || (dp->dp_typ == DOSPTYP_386BSD &&
+				      (printf("old BSD partition ID!\n"), 1)
+				      /* XXX XXX - libsa printf() is void */)
+#endif
+				    ) && dospartoff == 0) {
 					/* need sector address for SCSI/IDE,
 					   cylinder for ESDI/ST506/RLL */
 					dospartoff = dp->dp_start;
@@ -311,8 +317,14 @@ writedisklabel(dev, strat, lp, osdep)
 			    NDOSPART * sizeof(*dp));
 			for (i = 0; i < NDOSPART; i++, dp++)
 				/* is this ours? */
-				if (dp->dp_size && dp->dp_typ == DOSPTYP_386BSD
-				    && dospartoff == 0) {
+				if (dp->dp_size &&
+				    (dp->dp_typ == DOSPTYP_NETBSD
+#ifdef COMPAT_386BSD_MBRPART
+				     || (dp->dp_typ == DOSPTYP_386BSD &&
+				      (printf("old BSD partition ID!\n"), 1)
+				      /* XXX XXX - libsa printf() is void */)
+#endif
+				    ) && dospartoff == 0) {
 					/* need sector address for SCSI/IDE,
 					   cylinder for ESDI/ST506/RLL */
 					dospartoff = dp->dp_start;
