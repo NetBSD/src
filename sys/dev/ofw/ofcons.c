@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.16 2002/03/17 19:40:59 atatat Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.16.4.1 2002/05/16 12:01:02 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.16 2002/03/17 19:40:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofcons.c,v 1.16.4.1 2002/05/16 12:01:02 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,7 +57,6 @@ struct ofcons_softc {
 
 #define	OFBURSTLEN	128	/* max number of bytes to write in one chunk */
 
-cdev_decl(ofcons_);
 cons_decl(ofcons_);
 
 static int stdin, stdout;
@@ -70,6 +69,19 @@ struct cfattach ofcons_ca = {
 };
 
 extern struct cfdriver ofcons_cd;
+
+dev_type_open(ofcons_open);
+dev_type_close(ofcons_close);
+dev_type_read(ofcons_read);
+dev_type_write(ofcons_write);
+dev_type_ioctl(ofcons_ioctl);
+dev_type_tty(ofcons_tty);
+dev_type_poll(ofcons_poll);
+
+const struct cdevsw ofcons_cdevsw = {
+	ofcons_open, ofcons_close, ofcons_read, ofcons_write, ofcons_ioctl,
+	nostop, ofcons_tty, ofcons_poll, nommap, D_TTY
+};
 
 static int ofcons_probe __P((void));
 
@@ -223,13 +235,6 @@ ofcons_tty(dev)
 	return sc->of_tty;
 }
 
-void
-ofcons_stop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-}
-
 static void
 ofcons_start(tp)
 	struct tty *tp;
@@ -322,9 +327,7 @@ ofcons_cnprobe(cd)
 	if (!ofcons_probe())
 		return;
 
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == ofcons_open)
-			break;
+	maj = cdevsw_lookup_major(&ofcons_cdevsw);
 	cd->cn_dev = makedev(maj, 0);
 	cd->cn_pri = CN_INTERNAL;
 }
