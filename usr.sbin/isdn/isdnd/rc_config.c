@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.10 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: rc_config.c,v 1.11 2002/04/05 15:26:59 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -1165,7 +1165,6 @@ check_config(void)
 	/* entry sections */
 	
 	for (cep = get_first_cfg_entry(); cep; cep = NEXT_CFE(cep)) {
-		/* isdn controller number */
 
 		/* numbers used for dialout */
 		
