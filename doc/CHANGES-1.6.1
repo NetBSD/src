@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.125 2003/03/08 00:12:21 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.126 2003/03/20 09:49:03 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3802,3 +3802,16 @@ usr.bin/file/readelf.c				1.17 (hand patch)
 	[pooka, ticket #1199]
 
 	[Moved RC2 tag for these 2 files]
+
+crypto/dist/openssl/crypto/rsa/rsa_eay.c	1.2
+crypto/dist/openssl/crypto/rsa/rsa_lib.c	1.2
+
+	Enable RSA blinding by default.
+	[itojun, ticket #1221]
+
+crypto/dist/openssl/ssl/s3_srvr.c		1.4
+
+	OpenSSL Security Advisory [19 March 2003]
+	Klima-Pokorny-Rosa attack on RSA in SSL/TLS
+	[itojun, ticket #1222]
+
