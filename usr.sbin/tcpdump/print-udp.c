@@ -1,4 +1,4 @@
-/*	$NetBSD: print-udp.c,v 1.4 1996/05/20 00:41:16 fvdl Exp $	*/
+/*	$NetBSD: print-udp.c,v 1.5 1997/09/26 18:12:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
@@ -221,7 +221,7 @@ udp_print(register const u_char *bp, int length, register const u_char *bp2)
 		    (atalk_port(sport) || atalk_port(dport))) {
 			if (vflag)
 				fputs("kip ", stdout);
-			atalk_print(cp, length);
+			llap_print(cp, length);
 			return;
 		}
 	}
