@@ -1,4 +1,4 @@
-/* 	$Id: lwp.h,v 1.1.2.12 2002/03/28 22:07:57 ragge Exp $	*/
+/* 	$Id: lwp.h,v 1.1.2.13 2002/04/24 04:20:28 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -109,11 +109,11 @@ extern struct lwp lwp0;			/* LWP for proc0 */
 #define	L_SELECT	0x00040	/* Selecting; wakeup/waiting danger. */
 #define	L_SINTR		0x00080	/* Sleep is interruptible. */
 #define	L_TIMEOUT	0x00400	/* Timing out during sleep. */
-#define	L_DETACHED	0x00800 /* Won't be waited for. */
 #define	L_BIGLOCK	0x80000	/* LWP needs kernel "big lock" to run */
 #define	L_SA		0x100000 /* Scheduler activations LWP */
 #define	L_SA_UPCALL	0x200000 /* SA upcall is pending */
 #define	L_SA_BLOCKING	0x400000 /* Blocking in tsleep() */
+#define	L_DETACHED	0x800000 /* Won't be waited for. */
 
 /*
  * Status values.
