@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.7 2000/03/19 13:22:14 pk Exp $	*/
+/*	$NetBSD: kd.c,v 1.8 2000/03/20 11:27:16 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -76,8 +76,6 @@
 #include <dev/sun/kbd_xlate.h>
 #include <dev/sun/kbdvar.h>
 
-struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
-
 #define	KDMAJOR 1
 #define PUT_WSIZE	64
 
@@ -100,7 +98,6 @@ static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
 static void kd_init __P((struct kd_softc *));
 static void kd_cons_input __P((int));
-
 
 /*
  * Prepare the console tty; called on first open of /dev/console
@@ -126,6 +123,7 @@ kd_init(kd)
 	/* If the raster console driver is attached, copy its size */
 	kd->rows = fbrcons_rows();
 	kd->cols = fbrcons_cols();
+	rcons_ttyinit(tp);
 #endif
 
 	/* else, consult the PROM */
