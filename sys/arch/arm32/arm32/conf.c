@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1997/01/07 11:35:06 mrg Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1997/01/28 05:00:03 mark Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -52,13 +52,11 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include <machine/conf.h>
+
 #include "wdc.h"
-bdev_decl(wd);
-bdev_decl(sw);
 #include "fdc.h"
-bdev_decl(fd);
 #include "md.h"
-bdev_decl(md);
 #include "sd.h"
 #include "st.h"
 #include "cd.h"
@@ -122,101 +120,27 @@ struct bdevsw bdevsw[] = {
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-
-/* Character device declarations */
-
-/* open, close, read, write, ioctl, tty, mmap */
-#define cdev_physcon_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), 0 }
-
-/* open, close, write, ioctl */
-#define cdev_lpt_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
-#define cdev_beep_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
-#define cdev_kbd_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
-#define cdev_cpu_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
-#define cdev_vidcvid_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
-	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, \
-	0, seltrue, dev_init(c,n,mmap), 0 }
-
-/* open, close, write, ioctl */
-#define cdev_iic_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
-/* open, close, write, ioctl */
-#define cdev_rtc_init(c,n) { \
-	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
-	0, seltrue, (dev_type_mmap((*))) enodev, 0 }
-
 #include "vt.h"                                 
-cdev_decl(physcon);
-cdev_decl(vidcvideo);
-#define mmread  mmrw
-#define mmwrite mmrw
-cdev_decl(mm);
-cdev_decl(wd);
-cdev_decl(sw);
 #include "pty.h"
 #define ptstty          ptytty
 #define ptsioctl        ptyioctl
 #define ptctty          ptytty
 #define ptcioctl        ptyioctl
 #include "com.h"
-cdev_decl(com);
 #include "lpt.h"
-cdev_decl(lpt);
-cdev_decl(fd);
-cdev_decl(md);
 #include "bpfilter.h"
 #include "ch.h"
 #include "uk.h"
 #include "ss.h"
 #include "tun.h"
 #include "quadmouse.h"
-cdev_decl(quadmouse);
 #include "pms.h"
-cdev_decl(pms);
 #include "beep.h"
-cdev_decl(beep);
 #include "kbd.h"
-cdev_decl(kbd);
 #include "audio.h"
-cdev_decl(audio);
 #include "cpu.h"
-cdev_decl(cpu);
 #include "iic.h"
-cdev_decl(iic);
 #include "rtc.h"
-cdev_decl(rtc);
 #include "ipfilter.h"
 
 /* Character devices */
