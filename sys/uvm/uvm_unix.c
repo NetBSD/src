@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.19 2001/03/15 06:10:58 chs Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.20 2001/03/19 02:25:33 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -105,10 +105,11 @@ sys_obreak(p, v, retval)
 				(long)diff, error);
 			return error;
 		}
+		vm->vm_dsize += atop(diff);
 	} else {
 		uvm_deallocate(&vm->vm_map, new, -diff);
+		vm->vm_dsize -= atop(-diff);
 	}
-	vm->vm_dsize += atop(diff);
 	return 0;
 }
 
