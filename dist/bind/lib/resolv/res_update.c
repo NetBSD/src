@@ -1,4 +1,4 @@
-/*	$NetBSD: res_update.c,v 1.1.1.1 1999/11/20 18:54:12 veego Exp $	*/
+/*	$NetBSD: res_update.c,v 1.2 2000/10/08 20:03:13 is Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char rcsid[] = "Id: res_update.c,v 1.24 1999/10/15 19:49:12 vixie Exp";
@@ -80,7 +80,8 @@ struct zonegrp {
 
 static int	nscopy(struct sockaddr_in *, const struct sockaddr_in *, int);
 static int	nsprom(struct sockaddr_in *, const struct in_addr *, int);
-static void	dprintf(const char *, ...);
+static void	dprintf(const char *, ...) 
+     __attribute__((__format__(__printf__, 1, 2)));
 
 /* Macros. */
 
