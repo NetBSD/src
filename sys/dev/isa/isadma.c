@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma.c,v 1.23.2.2 1997/05/17 00:32:41 thorpej Exp $	*/
+/*	$NetBSD: isadma.c,v 1.23.2.3 1997/05/28 20:05:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -287,6 +287,8 @@ isa_dmastart(isadev, chan, addr, nbytes, p, flags, busdmaflags)
 	__asm(".globl isa_dmastart_aftersync ; isa_dmastart_aftersync:");
 #endif
 
+	sc->sc_dmalength[chan] = nbytes;
+
 	isa_dmamask(sc, chan);
 	sc->sc_dmafinished &= ~(1 << chan);
 
@@ -373,24 +375,32 @@ isa_dmacount(isadev, chan)
 
 	isa_dmamask(sc, chan);
 
-	/* check that the terminal count was reached */
-	if (isa_dmafinished(isadev, chan) == 0) {
-		/* read count */
-		if ((chan & 4) == 0) {
-			waport = DMA1_CHN(ochan);
-			nbytes = bus_space_read_1(sc->sc_iot, sc->sc_dma1h,
-			    waport + 1) + 1;
-			nbytes += bus_space_read_1(sc->sc_iot, sc->sc_dma1h,
-			    waport + 1) << 8;
-		} else {
-			waport = DMA2_CHN(ochan);
-			nbytes = bus_space_read_1(sc->sc_iot, sc->sc_dma2h,
-			    waport + 2) + 1;
-			nbytes += bus_space_read_1(sc->sc_iot, sc->sc_dma2h,
-			    waport + 2) << 8;
-			nbytes <<= 1;
-		}
-	} else
+	/*
+	 * We have to shift the byte count by 1.  If we're in auto-initialize
+	 * mode, the count may have wrapped around to the initial value.  We
+	 * can't use the TC bit to check for this case, so instead we compare
+	 * against the original byte count.
+	 * If we're not in auto-initialize mode, then the count will wrap to
+	 * -1, so we also handle that case.
+	 */
+	if ((chan & 4) == 0) {
+		waport = DMA1_CHN(ochan);
+		nbytes = bus_space_read_1(sc->sc_iot, sc->sc_dma1h,
+		    waport + 1) + 1;
+		nbytes += bus_space_read_1(sc->sc_iot, sc->sc_dma1h,
+		    waport + 1) << 8;
+		nbytes &= 0xffff;
+	} else {
+		waport = DMA2_CHN(ochan);
+		nbytes = bus_space_read_1(sc->sc_iot, sc->sc_dma2h,
+		    waport + 2) + 1;
+		nbytes += bus_space_read_1(sc->sc_iot, sc->sc_dma2h,
+		    waport + 2) << 8;
+		nbytes <<= 1;
+		nbytes &= 0x1ffff;
+	}
+
+	if (nbytes == sc->sc_dmalength[chan])
 		nbytes = 0;
 
 	isa_dmaunmask(sc, chan);

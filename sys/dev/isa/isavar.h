@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.25.8.1 1997/05/13 03:33:06 thorpej Exp $	*/
+/*	$NetBSD: isavar.h,v 1.25.8.2 1997/05/28 20:05:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ struct isa_softc {
 	 * DMA maps used for the 8 DMA channels.
 	 */
 	bus_dmamap_t	sc_dmamaps[8];
+	vm_size_t	sc_dmalength[8];
 
 	int	sc_dmareads;		/* state for isa_dmadone() */
 	int	sc_dmafinished;		/* DMA completion state */
