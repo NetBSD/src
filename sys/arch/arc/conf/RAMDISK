@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.43 2003/10/08 11:55:43 bouyer Exp $
+#	$NetBSD: RAMDISK,v 1.44 2003/10/18 08:30:12 lukem Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
 #
@@ -7,7 +7,7 @@ include		"arch/arc/conf/std.arc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.43 $"
+#ident		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32		# estimated number of users
 
@@ -241,7 +241,6 @@ com*		at ast? slave ?
 wdc0		at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1		at isa? port 0x170 irq 15 flags 0x00
 wdc*		at isapnp?
-atabus* 	at wdc? channel ?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -257,7 +256,7 @@ atabus* 	at wdc? channel ?
 wd*		at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus*	at atabus?
+atapibus*	at atapi?
 
 # ISA parallel printer interfaces
 lpt0		at isa? port 0x378 irq 7
@@ -311,6 +310,9 @@ rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
+# ATA (IDE) bus support
+atabus* at ata?
+
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.
 # The 0x0001 flag force the driver to use DMA, even if the driver doesn't know
@@ -328,18 +330,6 @@ pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-atabus*	at pciide? channel ?
-atabus* at acardide? channel ?
-atabus* at aceride? channel ?
-atabus* at cmdide? channel ?
-atabus* at cypide? channel ?
-atabus* at hptide? channel ?
-atabus* at optiide? channel ?
-atabus* at piixide? channel ?
-atabus* at pdcide? channel ?
-atabus* at siside? channel ?
-atabus* at slide? channel ?
-atabus* at viaide? channel ?
 
 #### MII/PHY support
 

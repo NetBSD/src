@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.25 2003/10/08 11:06:24 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.26 2003/10/18 08:30:12 lukem Exp $
 #
 # First try for BEBOX config file
 #
@@ -130,7 +130,7 @@ fd0	at fdc? drive 1
 #fd*	at fdc? drive ?
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-atabus* at wdc? channel ?		# ATA bus
+atabus* at ata?
 wd*	at atabus? drive ?
 
 ne0	at isa? port 0x300 irq 5	# NE[12]000 ethernet cards

@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.21 2003/10/08 11:00:38 bouyer Exp $
+#	$NetBSD: NC_WSCONS,v 1.22 2003/10/18 08:30:12 lukem Exp $
 #
 #	NC - with wscons
 #
@@ -201,9 +201,12 @@ pioc0	at mainbus? base 0x00210000
 # IDE disk controller
 #wdc0	at pioc? offset 0x01f0 irq 9
 #wdc*	at pioc? offset 0x0170 irq -1
-#atabus* at wdc? channel ?
+
+# ATA (IDE) bus support
+#atabus* at ata?
+
 #wd*	at atabus? drive ?
-#atapibus* at atabus?
+#atapibus* at atapi?
 #cd*	at atapibus? drive ?
 #sd*	at atapibus? drive ?
 
@@ -266,15 +269,12 @@ podulebus0	at root
 
 #icside*	at podulebus?			# ICS IDE card
 #wd*	at icside? channel ? drive ?
-#atabus* at icside? channel ?
 
 #rapide*	at podulebus?			# Yellowstone RapIDE card
 #wd*	at rapide? channel ? drive ?
-#atabus* at rapide? channel ?
 
 #simide*	at podulebus?			# Simtec IDE card
 #wd*	at simide? channel ? drive ?
-#atabus* at simide? channel ?
 
 #amps*	at podulebus?			# Atomwide Multi-Port Serial card
 #com*	at amps?
