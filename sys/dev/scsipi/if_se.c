@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.36 2001/07/18 18:25:41 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.37 2001/07/18 18:27:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -265,7 +265,7 @@ struct scsipi_inquiry_pattern se_patterns[] = {
 /*
  * Compare two Ether/802 addresses for equality, inlined and
  * unrolled for speed.
- * Note: use this like bcmp()
+ * Note: use this like memcmp()
  */
 static __inline u_int16_t
 ether_cmp(one, two)
