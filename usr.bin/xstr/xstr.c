@@ -1,4 +1,4 @@
-/*	$NetBSD: xstr.c,v 1.4 1994/11/26 09:25:24 jtc Exp $	*/
+/*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$NetBSD: xstr.c,v 1.4 1994/11/26 09:25:24 jtc Exp $";
+static char rcsid[] = "$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$NetBSD: xstr.c,v 1.4 1994/11/26 09:25:24 jtc Exp $";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <stdlib.h>
 #include "pathnames.h"
 
 /*
