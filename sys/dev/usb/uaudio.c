@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.50 2002/03/07 14:37:03 kent Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.51 2002/03/12 15:12:03 kent Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.50 2002/03/07 14:37:03 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.51 2002/03/12 15:12:03 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,6 +175,7 @@ struct uaudio_softc {
 #define HAS_ALAW  0x08
 #define HAS_MULAW 0x10
 #define UA_NOFRAC	0x20		/* don't do sample rate adjustment */
+#define HAS_24		0x40
 
 	int	sc_mode;		/* play/record capability */
 
@@ -1127,16 +1128,20 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 	format = UGETW(asid->wFormatTag);
 	chan = asf1d->bNrChannels;
 	prec = asf1d->bBitResolution;
-	if (prec != 8 && prec != 16) {
-#ifdef UAUDIO_DEBUG
+	if (prec != 8 && prec != 16 && prec != 24) {
 		printf("%s: ignored setting with precision %d\n",
 		       USBDEVNAME(sc->sc_dev), prec);
-#endif
 		return (USBD_NORMAL_COMPLETION);
 	}
 	switch (format) {
 	case UA_FMT_PCM:
-		sc->sc_altflags |= prec == 8 ? HAS_8 : HAS_16;
+		if (prec == 8) {
+			sc->sc_altflags |= HAS_8;
+		} else if (prec == 16) {
+			sc->sc_altflags |= HAS_16;
+		} else if (prec == 24) {
+			sc->sc_altflags |= HAS_24;
+		}
 		enc = AUDIO_ENCODING_SLINEAR_LE;
 		break;
 	case UA_FMT_PCM8:
@@ -1173,15 +1178,15 @@ uaudio_process_as(struct uaudio_softc *sc, char *buf, int *offsp,
 			DPRINTFN(1, ("uaudio_process_as:  rate=%d-%d\n",
 				     UA_SAMP_LO(asf1d), UA_SAMP_HI(asf1d)));
 		} else {
-			DPRINTFN(1, ("uaudio_process_as:"));
+			DPRINTFN(1, ("uaudio_process_as: "));
 			for (j = 0; j < asf1d->bSamFreqType; j++)
 				DPRINTFN(1, (" %d", UA_GETSAMP(asf1d, j)));
 			DPRINTFN(1, ("\n"));
 		}
 		if (ai.attributes & UA_SED_FREQ_CONTROL)
-			DPRINTFN(1, ("uaudio_process_as: FREQ_CONTROL\n"));
+			DPRINTFN(1, ("uaudio_process_as:  FREQ_CONTROL\n"));
 		if (ai.attributes & UA_SED_PITCH_CONTROL)
-			DPRINTFN(1, ("uaudio_process_as: PITCH_CONTROL\n"));
+			DPRINTFN(1, ("uaudio_process_as:  PITCH_CONTROL\n"));
 	}
 #endif
 	sc->sc_mode |= (dir == UE_DIR_OUT) ? AUMODE_PLAY : AUMODE_RECORD;
