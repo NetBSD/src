@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)newfs.c	6.27 (Berkeley) 7/3/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/newfs/newfs.c,v 1.3 1993/03/23 00:29:24 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/newfs/newfs.c,v 1.4 1993/04/18 18:46:43 mycroft Exp $";
 #endif /* not lint */
 
 #ifndef lint
@@ -557,15 +557,11 @@ rewritelabel(s, fd, lp)
 }
 
 /*VARARGS*/
-fatal(fmt)
-	char *fmt;
+fatal(fmt,arg1,arg2,arg3)
+	char *fmt,*arg1,*arg2,*arg3;
 {
-	va_list ap;
-
 	fprintf(stderr, "%s: ", progname);
-	va_start(ap, fmt);
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
+	fprintf(stderr, fmt, arg1, arg2, arg3);
 	putc('\n', stderr);
 	exit(1);
 }
