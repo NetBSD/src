@@ -1,4 +1,4 @@
-/*	$NetBSD: infinity.c,v 1.1 2001/10/27 23:36:32 bjh21 Exp $	*/
+/*	$NetBSD: infinity.c,v 1.2 2003/10/24 16:35:08 kleink Exp $	*/
 
 /*
  * This file is in the Public Domain.
@@ -8,19 +8,19 @@
 
 /*
  * Check that HUGE_VAL (alias __infinity) really is infinite.
- * Alternatively, check that isinf() minimally works.
+ * Alternatively, check that isinf() and _isinfl() minimally work.
  */
 
-#include <err.h>
+#include "namespace.h"
+#include <assert.h>
 #include <math.h>
-#include <stdlib.h>
 
 int
 main(int argc, char **argv)
 {
 
 	/* HUGE_VAL is meant to be an infinity. */
-	if (!isinf(HUGE_VAL))
-		errx(1, "Infinity isn't infinite");
+	assert(isinf(HUGE_VAL));
+	assert(_isinfl(HUGE_VAL));
 	return 0;
 }
