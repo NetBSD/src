@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: demand.c,v 1.2 1996/08/10 20:39:35 explorer Exp $";
+static char rcsid[] = "$Id: demand.c,v 1.3 1996/12/18 16:54:59 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -37,12 +37,12 @@ static char rcsid[] = "$Id: demand.c,v 1.2 1996/08/10 20:39:35 explorer Exp $";
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/bpf.h>
+#include <pcap.h>
 
 #include "pppd.h"
 #include "fsm.h"
 #include "ipcp.h"
 #include "lcp.h"
-#include "bpf_compile.h"
 
 char *frame;
 int framelen;
