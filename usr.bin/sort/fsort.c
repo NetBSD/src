@@ -1,4 +1,4 @@
-/*	$NetBSD: fsort.c,v 1.11 2001/01/19 10:13:21 jdolecek Exp $	*/
+/*	$NetBSD: fsort.c,v 1.12 2001/02/05 14:25:34 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -47,7 +47,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: fsort.c,v 1.11 2001/01/19 10:13:21 jdolecek Exp $");
+__RCSID("$NetBSD: fsort.c,v 1.12 2001/02/05 14:25:34 itojun Exp $");
 __SCCSID("@(#)fsort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ fsort(binno, depth, top, filelist, nfiles, outfp, ftbl)
 	if (!buffer) {
 		buffer = malloc(bufsize);
 		keylist = malloc(MAXNUM * sizeof(u_char *));
+		memset(keylist, 0, MAXNUM * sizeof(u_char *));
 		if (!SINGL_FLD) {
 			linebuf_size = DEFLLEN;
 			linebuf = malloc(linebuf_size);
