@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.1 2002/06/22 14:42:07 fvdl Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.2 2002/06/24 01:23:11 fvdl Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -1499,7 +1499,7 @@ bge_blockinit(sc)
 		CSR_WRITE_4(sc, BGE_MI_STS, BGE_MISTS_LINK);
  	} else {
 		BGE_SETBIT(sc, BGE_MI_MODE, BGE_MIMODE_AUTOPOLL|10<<16);
-		if (sc->bge_asicrev == BGE_ASICREV_BCM5700)
+		if (BGE_IS_5700_Ax_Bx(sc->bge_asicrev))
 			CSR_WRITE_4(sc, BGE_MAC_EVT_ENB,
 			    BGE_EVTENB_MI_INTERRUPT);
 	}
@@ -1757,10 +1757,6 @@ bge_attach(parent, self, aux)
 	sc->bge_asicrev =
 	    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
 	    BGE_PCIMISCCTL_ASICREV;
-
-	/* Pretend all 5700s are the same */
-	if ((sc->bge_asicrev & 0xFF000000) == BGE_ASICREV_BCM5700)
-		sc->bge_asicrev = BGE_ASICREV_BCM5700;
 
 	/*
 	 * Figure out what sort of media we have by checking the
@@ -2042,16 +2038,17 @@ bge_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-#if 0 /* currently broken for some packets, possibly related to TCP options */
-		m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
-		if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
-			sumflags |= M_CSUM_IPv4_BAD;
-		if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM) {
-			m->m_pkthdr.csum_data = cur_rx->bge_tcp_udp_csum;
-			m->m_pkthdr.csum_flags |=
-			    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_DATA);
+		if (sc->bge_asicrev != BGE_ASICREV_BCM5700_B0) {
+			m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
+			if ((cur_rx->bge_ip_csum ^ 0xffff) != 0)
+				m->m_pkthdr.csum_flags |= M_CSUM_IPv4_BAD;
+			if (cur_rx->bge_flags & BGE_RXBDFLAG_TCP_UDP_CSUM) {
+				m->m_pkthdr.csum_data =
+				    cur_rx->bge_tcp_udp_csum;
+				m->m_pkthdr.csum_flags |=
+				    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_DATA);
+			}
 		}
-#endif
 
 		/*
 		 * If we received a packet with a vlan tag, pass it
@@ -2183,7 +2180,7 @@ bge_intr(xsc)
 	 * the interrupt handler.
 	 */
 
-	if (sc->bge_asicrev == BGE_ASICREV_BCM5700) {
+	if (BGE_IS_5700_Ax_Bx(sc->bge_asicrev)) {
 		u_int32_t		status;
 
 		status = CSR_READ_4(sc, BGE_MAC_STS);
