@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldiv.3,v 1.7 1998/02/05 18:50:00 perry Exp $
+.\"	$NetBSD: ldiv.3,v 1.8 2000/03/06 18:32:30 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft ldiv_t
-.Fn ldiv "long num" "long denom"
+.Fn ldiv "long int num" "long int denom"
 .Sh DESCRIPTION
 The
 .Fn ldiv
@@ -65,6 +65,7 @@ and
 .Ar rem .
 .Sh SEE ALSO
 .Xr div 3 ,
+.Xr lldiv 3 ,
 .Xr qdiv 3 ,
 .Xr math 3
 .Sh STANDARDS
