@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.66 1997/01/31 02:07:29 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.66.4.1 1997/03/12 13:55:21 is Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -79,6 +79,7 @@
 #include <machine/ctlreg.h>
 #include <machine/pmap.h>
 #include <sparc/sparc/asm.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/timerreg.h>
 
 #ifdef DDB
@@ -170,9 +171,6 @@ str2hex(str, vp)
 #ifdef SUN4
 struct promvec promvecdat;
 struct om_vector *oldpvec = (struct om_vector *)PROM_BASE;
-
-struct idprom idprom;
-void	getidprom __P((struct idprom *, int size));
 #endif
 
 /*
@@ -183,7 +181,6 @@ void	getidprom __P((struct idprom *, int size));
 void
 bootstrap()
 {
-	int nregion = 0, nsegment = 0, ncontext = 0;
 	extern int msgbufmapped;
 
 #if defined(SUN4)
@@ -225,77 +222,16 @@ bootstrap()
 		 */
 		if (oldpvec->romvecVersion >= 2)
 			*oldpvec->vector_cmd = oldmon_w_cmd;
-		getidprom(&idprom, sizeof(idprom));
-		switch (cpumod = idprom.id_machine) {
-		case SUN4_100:
-			nsegment = 256;
-			ncontext = 8;
-			break;
-		case SUN4_200:
-			nsegment = 512;
-			ncontext = 16;
-			break;
-		case SUN4_300:
-			nsegment = 256;
-			ncontext = 16;
-			break;
-		case SUN4_400:
-			nsegment = 1024;
-			ncontext = 64;
-			nregion = 256;
-			mmu_3l = 1;
-			break;
-		default:
-			printf("bootstrap: sun4 machine type %2x unknown!\n",
-			    idprom.id_machine);
-			callrom();
-		}
 	}
 #endif /* SUN4 */
 
-#if defined(SUN4C)
-	if (CPU_ISSUN4C) {
-		register int node = findroot();
-		nsegment = getpropint(node, "mmu-npmg", 128);
-		ncontext = getpropint(node, "mmu-nctx", 8);
-	}
-#endif /* SUN4C */
+	bzero(&cpuinfo, sizeof(struct cpu_softc));
+	cpuinfo.master = 1;
+	getcpuinfo(&cpuinfo, 0);
 
-#if defined (SUN4M)
-	if (CPU_ISSUN4M) {
-		nsegment = 0;
-		cpumod = (u_int) getpsr() >> 24;
-		mmumod = (u_int) lda(SRMMU_PCR, ASI_SRMMU) >> 28;
-		/*
-		 * We use the max. number of contexts on the micro and
-		 * hyper SPARCs. The SuperSPARC would let us use up to 65536
-		 * contexts (by powers of 2), but we keep it at 4096 since
-		 * the table must be aligned to #context*4. With 4K contexts,
-		 * we waste at most 16K of memory. Note that the context
-		 * table is *always* page-aligned, so there can always be
-		 * 1024 contexts without sacrificing memory space (given
-		 * that the chip supports 1024 contexts).
-		 *
-		 * Currently known limits: MS2=256, HS=4096, SS=65536
-		 * 	some old SS's=4096
-		 *
-		 * XXX Should this be a tuneable parameter?
-		 */
-		switch (mmumod) {
-		case SUN4M_MMU_MS1:
-			ncontext = 64;
-			break;
-		case SUN4M_MMU_MS:
-			ncontext = 256;
-			break;
-		default:
-			ncontext = 4096;
-			break;
-		}
-	}
-#endif /* SUN4M */
-
-	pmap_bootstrap(ncontext, nregion, nsegment);
+	pmap_bootstrap(cpuinfo.mmu_ncontext,
+		       cpuinfo.mmu_nregion,
+		       cpuinfo.mmu_nsegment);
 	msgbufmapped = 1;	/* enable message buffer */
 #ifdef KGDB
 	zs_kgdb_init();		/* XXX */
@@ -401,6 +337,13 @@ bootstrap()
 		timerreg_4m = (struct timer_4m *)ra.ra_vaddrs[ra.ra_nvaddrs-1];
 	}
 #endif /* SUN4M */
+
+	if (CPU_ISSUN4OR4C) {
+		/* Map Interrupt Enable Register */
+		pmap_enter(pmap_kernel(), INTRREG_VA,
+			   INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
+			   VM_PROT_READ | VM_PROT_WRITE, 1);
+	}
 }
 
 /*
@@ -600,23 +543,23 @@ bootpath_fake(bp, cp)
 
 			int  target, lun;
 
-			switch (cpumod) {
-			case SUN4_200:
-			case SUN4_400:
+			switch (cpuinfo.cpu_type) {
+			case CPUTYP_4_200:
+			case CPUTYP_4_400:
 				BP_APPEND(bp, "vmes", -1, 0, 0);
 				BP_APPEND(bp, "si", -1, v0val[0], 0);
 				break;
-			case SUN4_100:
+			case CPUTYP_4_100:
 				BP_APPEND(bp, "obio", -1, 0, 0);
 				BP_APPEND(bp, "sw", -1, v0val[0], 0);
 				break;
-			case SUN4_300:
+			case CPUTYP_4_300:
 				BP_APPEND(bp, "obio", -1, 0, 0);
 				BP_APPEND(bp, "esp", -1, v0val[0], 0);
 				break;
 			default:
-				panic("bootpath_fake: unknown cpumod %d",
-				      cpumod);
+				panic("bootpath_fake: unknown system type %d",
+				      cpuinfo.cpu_type);
 			}
 			/*
 			 * Deal with target/lun encodings.
@@ -866,9 +809,11 @@ configure()
 			 * must be 0xZYYYYYYY, where (Z != 0)
 			 * make sure we get the correct memreg cfdriver!
 			 */
-			if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
+			if (cpuinfo.cpu_type == CPUTYP_4_100 &&
+			    (cf->cf_loc[0] & 0xf0000000))
 				continue;
-			if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
+			if (cpuinfo.cpu_type != CPUTYP_4_100 &&
+			    !(cf->cf_loc[0] & 0xf0000000))
 				continue;
 			for (p = cf->cf_parents; memregcf==NULL && *p >= 0; p++)
 				if (cfdata[*p].cf_driver == &obio_cd)
@@ -904,6 +849,17 @@ configure()
 	oca.ca_ra.ra_name = cp = "mainbus";
 	if (config_rootfound(cp, (void *)&oca) == NULL)
 		panic("mainbus not configured");
+
+	/* Enable device interrupts */
+#if defined(SUN4M)
+	if (CPU_ISSUN4M)
+		ienab_bic(SINTR_MA);
+#endif
+#if defined(SUN4) || defined(SUN4C)
+	if (CPU_ISSUN4OR4C)
+		ienab_bis(IE_ALLIE);
+#endif
+
 	(void)spl0();
 
 	/*
@@ -1108,8 +1064,8 @@ mainbus_attach(parent, dev, aux)
 {
 	struct confargs oca;
 	register const char *const *ssp, *sp = NULL;
-#if defined(SUN4C) || defined(SUN4M)
 	struct confargs *ca = aux;
+#if defined(SUN4C) || defined(SUN4M)
 	register int node0, node;
 	const char *const *openboot_special;
 #define L1A_HACK		/* XXX hack to allow L1-A during autoconf */
@@ -1173,11 +1129,11 @@ mainbus_attach(parent, dev, aux)
 #define openboot_special4m	((void *)0)
 #endif
 
-#if defined(SUN4M)
-	if (CPU_ISSUN4M)
-		printf(": %s", getpropstring(ca->ca_ra.ra_node, "name"));
-#endif
-	printf("\n");
+	if (CPU_ISSUN4)
+		printf("SUN-4/%d series\n", cpuinfo.classlvl);
+	else
+		printf(": %s\n", getpropstring(ca->ca_ra.ra_node, "name"));
+
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -1223,26 +1179,30 @@ mainbus_attach(parent, dev, aux)
 	node = ca->ca_ra.ra_node;	/* i.e., the root node */
 
 	/* the first early device to be configured is the cpu */
-#if defined(SUN4M)
 	if (CPU_ISSUN4M) {
 		/* XXX - what to do on multiprocessor machines? */
 		register const char *cp;
 
 		for (node = firstchild(node); node; node = nextsibling(node)) {
 			cp = getpropstring(node, "device_type");
-			if (strcmp(cp, "cpu") == 0)
-				break;
+			if (strcmp(cp, "cpu") == 0) {
+				bzero(&oca, sizeof(oca));
+				oca.ca_ra.ra_node = node;
+				oca.ca_ra.ra_name = "cpu";
+				oca.ca_ra.ra_paddr = 0;
+				oca.ca_ra.ra_nreg = 0;
+				config_found(dev, (void *)&oca, mbprint);
+			}
 		}
-		if (node == 0)
-			panic("None of the CPUs found\n");
+	} else if (CPU_ISSUN4C) {
+		bzero(&oca, sizeof(oca));
+		oca.ca_ra.ra_node = node;
+		oca.ca_ra.ra_name = "cpu";
+		oca.ca_ra.ra_paddr = 0;
+		oca.ca_ra.ra_nreg = 0;
+		config_found(dev, (void *)&oca, mbprint);
 	}
-#endif
 
-	oca.ca_ra.ra_node = node;
-	oca.ca_ra.ra_name = "cpu";
-	oca.ca_ra.ra_paddr = 0;
-	oca.ca_ra.ra_nreg = 0;
-	config_found(dev, (void *)&oca, mbprint);
 
 	node = ca->ca_ra.ra_node;	/* re-init root node */
 
@@ -1301,12 +1261,6 @@ mainbus_attach(parent, dev, aux)
 			(void) config_found(dev, (void *)&oca, mbprint);
 		}
 	}
-#if defined(SUN4M)
-	if (CPU_ISSUN4M) {
-		/* Enable device interrupts */
-		ienab_bic(SINTR_MA);
-	}
-#endif
 #endif /* SUN4C || SUN4M */
 }
 

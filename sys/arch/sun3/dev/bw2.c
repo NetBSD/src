@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.9 1996/12/17 21:10:37 gwr Exp $	*/
+/*	$NetBSD: bw2.c,v 1.9.6.1 1997/03/12 14:04:33 is Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -146,6 +146,7 @@ bw2attach(parent, self, args)
 	struct fbdevice *fb = &sc->sc_fb;
 	struct confargs *ca = args;
 	struct fbtype *fbt;
+	int tmp;
 
 	sc->sc_phys = ca->ca_paddr;
 
@@ -162,18 +163,24 @@ bw2attach(parent, self, args)
 	fbt->fb_height = 900;
 	fbt->fb_size = BW2_FBSIZE;
 
-	/*
-	 * Only the model 60 can have hi-res.
-	 * XXX - Use PROM screen size values?
-	 */
-	if (cpu_machine_id == SUN3_MACH_60) {
-		int tmp;
+	switch (cpu_machine_id) {
+	case SUN3_MACH_60:
+		/*
+		 * Only the model 60 can have hi-res.
+		 * XXX - Use PROM screen size values?
+		 */
 	    tmp = bus_peek(BUS_OBMEM, BW2_CR_PADDR, 1);
-		if ((tmp != -1) && (tmp & 0x80) == 0) {
-			fbt->fb_width = 1600;
-			fbt->fb_height = 1280;
-			fbt->fb_size = BW2_FBSIZE_HIRES;
-		}
+		if ((tmp != -1) && (tmp & 0x80) == 0)
+			goto high_res;
+		break;
+
+	case SUN3_MACH_260:
+		/* The Sun3/260 is ALWAYS high-resolution! */
+	high_res:
+		fbt->fb_width = 1600;
+		fbt->fb_height = 1280;
+		fbt->fb_size = BW2_FBSIZE_HIRES;
+		break;
 	}
 
 	printf(" (%dx%d)\n", fbt->fb_width, fbt->fb_height);

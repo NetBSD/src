@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.34.4.1 1997/03/10 15:14:45 is Exp $
+#	$NetBSD: files.sparc,v 1.34.4.2 1997/03/12 13:55:05 is Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -87,7 +87,7 @@ device lebuffer {}
 attach lebuffer at sbus
 file	arch/sparc/dev/lebuffer.c	lebuffer
 
-device esp: scsi
+device esp: scsi, ncr53c9x
 attach esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 

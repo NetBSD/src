@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.10 1997/01/27 19:54:06 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.10.4.1 1997/03/12 14:04:37 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -135,12 +135,14 @@ struct cfattach si_obio_ca = {
 };
 
 /*
- * Options.  Interesting values are: 1,3,5,7
- * Some people report good behavior with: 5
- * so maybe it's a DMA interrupt bug...
+ * Options for disconnect/reselect, DMA, and interrupts.
+ * By default, allow disconnect/reselect on targets 4-6.
+ * Those are normally tapes that really need it enabled.
+ *
+ * XXX - Leave interrupts disabled for now, to avoid the
+ * not-yet-identified "everything dumps core" bug...
  */
-/* XXX: Using 1 for now to mask an unidentified bug... */
-int si_obio_options = 1;	/* XXX */
+int si_obio_options = SI_FORCE_POLLING | 0x0f;
 
 
 static int
@@ -172,9 +174,13 @@ si_obio_attach(parent, self, args)
 	struct cfdata *cf = self->dv_cfdata;
 	struct confargs *ca = args;
 
-	/* Get options from config flags... */
-	sc->sc_options = cf->cf_flags | si_obio_options;
-	printf(": options=%d\n", sc->sc_options);
+	/* Get options from config flags if specified. */
+	if (cf->cf_flags)
+		sc->sc_options = cf->cf_flags;
+	else
+		sc->sc_options = si_obio_options;
+
+	printf(": options=0x%x\n", sc->sc_options);
 
 	sc->sc_adapter_type = ca->ca_bustype;
 	sc->sc_regs = (struct si_regs *)

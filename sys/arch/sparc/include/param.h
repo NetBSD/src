@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 1996/10/22 19:11:19 pk Exp $ */
+/*	$NetBSD: param.h,v 1.27.6.1 1997/03/12 13:55:19 is Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,9 +64,16 @@
  * Round p (pointer or byte index) up to a correctly-aligned value for
  * the machine's strictest data type.  The result is u_int and must be
  * cast to any desired pointer type.
+ *
+ * ALIGNED_POINTER is a boolean macro that checks whether an address
+ * is valid to fetch data elements of type t from on this architecture.
+ * This does not reflect the optimal alignment, just the possibility
+ * (within reasonable limits). 
+ *
  */
-#define	ALIGNBYTES	7
-#define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define	ALIGNBYTES		7
+#define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
+#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define SUN4_PGSHIFT	13	/* for a sun4 machine */
 #define SUN4CM_PGSHIFT	12	/* for a sun4c or sun4m machine */
@@ -173,8 +180,10 @@ extern void	delay __P((unsigned int));
 #define	DELAY(n)	delay(n)
 
 extern int cputyp;
+#if 0
 extern int cpumod;
 extern int mmumod;
+#endif
 
 #endif /* _LOCORE */
 #endif /* _KERNEL */
@@ -185,27 +194,6 @@ extern int mmumod;
 #define CPU_SUN4	0
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
-/*
- * Values for cpumod (cpu model) variable.  XXX currently valid only for sun4
- * or Sun4M
- */
-#define SUN4_100	0x22
-#define SUN4_200	0x21
-#define SUN4_300	0x23
-#define SUN4_400	0x24
-#define SUN4M_MS	0x04	/* MicroSPARC-II */
-#define SUN4M_SS	0x40	/* Generic SuperSPARC */
-#define SUN4M_HS	0x10	/* Generic ROSS sparc product (HyperSPARC) */
-#define SUN4M_RT620	0x1f	/* Ross HyperSPARC RT620 */
-#define SUN4M_STP1020N	0x41	/* TI SuperSPARC STP1020N */
-#define SUN4M_STP1020P	0x40	/* TI SuperSPARC STP1020P */
-#define SUN4M_STP1020A	0x40	/* TI SuperSPARC STP1020A */
-
-/* Values for mmumod (mmu model) variable. Valid only for Sun4M */
-#define	SUN4M_MMU_HS	0x1	/* ROSS HyperSparc */
-#define SUN4M_MMU_SS	0x0	/* TI SuperSPARC */
-#define SUN4M_MMU_MS1	0x4	/* MicroSPARC-I (??? XXX) */
-#define SUN4M_MMU_MS	0x0	/* MicroSPARC-II (ugh, conflicts w/SS) */
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.

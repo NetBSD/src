@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.34 1997/01/27 20:50:36 gwr Exp $	*/
+/*	$NetBSD: clock.c,v 1.34.4.1 1997/03/12 14:05:05 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -54,6 +54,8 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
+#include <m68k/asm_single.h>
+
 #include <machine/autoconf.h>
 #include <machine/control.h>
 #include <machine/cpu.h>
@@ -61,19 +63,21 @@
 #include <machine/obio.h>
 #include <machine/machdep.h>
 
+#include <dev/clock_subr.h>
+
 #include <sun3/sun3/interreg.h>
 #include "intersil7170.h"
 
 #define	CLOCK_PRI	5
+#define IREG_CLK_BITS	(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5)
 
 void _isr_clock __P((void));	/* in locore.s */
 void clock_intr __P((struct clockframe));
-static void frob_leds __P((struct clockframe *));
+static void frob_leds __P((void));
 
-/* Note: this is used by locore.s:__isr_clock */
-static volatile char *clock_va;
+static volatile void *intersil_va;
 
-#define intersil_clock ((volatile struct intersil7170 *) clock_va)
+#define intersil_clock ((volatile struct intersil7170 *) intersil_va)
 
 #define intersil_command(run, interrupt) \
 	(run | interrupt | INTERSIL_CMD_FREQ_32K | INTERSIL_CMD_24HR_MODE | \
@@ -91,6 +95,21 @@ struct cfattach clock_ca = {
 struct cfdriver clock_cd = {
 	NULL, "clock", DV_DULL
 };
+
+/*
+ * This is called very early (by obio_init()) but after
+ * intreg_init() has found the PROM mapping for the
+ * interrupt register and cleared it.
+ */
+void
+clock_init()
+{
+	intersil_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
+	if (!intersil_va) {
+		mon_printf("clock_init\n");
+		sunmon_abort();
+	}
+}
 
 static int
 clock_match(parent, cf, args)
@@ -125,6 +144,20 @@ clock_attach(parent, self, args)
 	printf("\n");
 
 	/*
+	 * Set the clock to the correct interrupt rate, but
+	 * do not enable the interrupt until cpu_initclocks.
+	 * XXX: Actually, the interrupt_reg should be zero
+	 * at this point, so the clock interrupts should not
+	 * affect us, but we need to set the rate...
+	 */
+	intersil_clock->clk_cmd_reg =
+		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+	intersil_clear();
+
+	/* Set the clock to 100 Hz, but do not enable it yet. */
+	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+
+	/*
 	 * Can not hook up the ISR until cpu_initclocks()
 	 * because hardclock is not ready until then.
 	 * For now, the handler is _isr_autovec(), which
@@ -136,77 +169,69 @@ clock_attach(parent, self, args)
  * Set and/or clear the desired clock bits in the interrupt
  * register.  We have to be extremely careful that we do it
  * in such a manner that we don't get ourselves lost.
+ * XXX:  Watch out!  It's really easy to break this!
  */
 void
-set_clk_mode(on, off, enable)
+set_clk_mode(on, off, enable_clk)
 	u_char on, off;
-	int enable;
+	int enable_clk;
 {
 	register u_char interreg;
-	register int s;
 
-	s = getsr();
-	if ((s & PSL_IPL) < PSL_IPL7)
-		panic("set_clk_mode: ipl");
+	/*
+	 * If we have not yet mapped the register,
+	 * then we do not want to do any of this...
+	 */
+	if (!interrupt_reg)
+		return;
 
-	if (!intersil_clock)
-		panic("set_clk_mode: map");
+#ifdef	DIAGNOSTIC
+	/* Assertion: were are at splhigh! */
+	if ((getsr() & PSL_IPL) < PSL_IPL7)
+		panic("set_clk_mode: bad ipl");
+#endif
 
 	/*
 	 * make sure that we are only playing w/
 	 * clock interrupt register bits
 	 */
-	on &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
-	off &= (IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
+	on  &= IREG_CLK_BITS;
+	off &= IREG_CLK_BITS;
+
+	/* First, turn off the "master" enable bit. */
+	single_inst_bclr_b(*interrupt_reg, IREG_ALL_ENAB);
 
 	/*
-	 * Get a copy of current interrupt register,
-	 * turning off any undesired bits (aka `off')
+	 * Save the current interrupt register clock bits,
+	 * and turn off/on the requested bits in the copy.
 	 */
-	interreg = *interrupt_reg & ~(off | IREG_ALL_ENAB);
-	*interrupt_reg &= ~IREG_ALL_ENAB;
+	interreg = *interrupt_reg & IREG_CLK_BITS;
+	interreg &= ~off;
+	interreg |= on;
 
-	/*
-	 * Next we turns off the CLK5 and CLK7 bits to clear
-	 * the flip-flops, then we disable clock interrupts.
-	 * Now we can read the clock's interrupt register
-	 * to clear any pending signals there.
-	 */
-	*interrupt_reg &= ~(IREG_CLOCK_ENAB_7 | IREG_CLOCK_ENAB_5);
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
+	/* Clear the CLK5 and CLK7 bits to clear the flip-flops. */
+	single_inst_bclr_b(*interrupt_reg, IREG_CLK_BITS);
 
-	/*
-	 * Now we set all the desired bits
-	 * in the interrupt register, then
-	 * we turn the clock back on and
-	 * finally we can enable all interrupts.
-	 */
-	*interrupt_reg |= (interreg | on);		/* enable flip-flops */
+	if (intersil_va) {
+		/*
+		 * Then disable clock interrupts, and read the clock's
+		 * interrupt register to clear any pending signals there.
+		 */
+		intersil_clock->clk_cmd_reg =
+			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
+		intersil_clear();
+	}
 
-	if (enable)
+	/* Set the requested bits in the interrupt register. */
+	single_inst_bset_b(*interrupt_reg, interreg);
+
+	/* Turn the clock back on (maybe) */
+	if (intersil_va && enable_clk)
 		intersil_clock->clk_cmd_reg =
 			intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
-}
-
-/* Called very early by internal_configure. */
-void clock_init()
-{
-	clock_va = obio_find_mapping(OBIO_CLOCK, OBIO_CLOCK_SIZE);
-
-	if (!clock_va || !interrupt_reg) {
-		mon_printf("clock_init\n");
-		sunmon_abort();
-	}
-
-	/* Turn off clock interrupts until cpu_initclocks() */
-	/* intreg_init() already cleared the interrupt register. */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IDISABLE);
-	intersil_clear();
+	/* Finally, turn the "master" enable back on. */
+	single_inst_bset_b(*interrupt_reg, IREG_ALL_ENAB);
 }
 
 /*
@@ -219,20 +244,14 @@ cpu_initclocks(void)
 {
 	int s;
 
-	if (!clock_va)
-		panic("cpu_initclocks");
 	s = splhigh();
 
 	/* Install isr (in locore.s) that calls clock_intr(). */
 	isr_add_custom(5, (void*)_isr_clock);
 
-	/* Set the clock to interrupt 100 time per second. */
-	intersil_clock->clk_intr_reg = INTERSIL_INTER_CSECONDS;
+	/* Now enable the clock at level 5 in the interrupt reg. */
+	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
 
-	*interrupt_reg |= IREG_CLOCK_ENAB_5;	/* enable clock */
-	intersil_clock->clk_cmd_reg =
-		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
-	*interrupt_reg |= IREG_ALL_ENAB;		/* enable interrupts */
 	splx(s);
 }
 
@@ -249,33 +268,41 @@ setstatclockrate(newhz)
 
 /*
  * This is is called by the "custom" interrupt handler.
+ * Note that we can get ZS interrupts while this runs,
+ * and those may touch the interrupt_reg, so we have to
+ * be careful to use the single_inst_* macros to modify
+ * the interrupt register atomically.
  */
 void
 clock_intr(cf)
 	struct clockframe cf;
 {
-	register volatile struct intersil7170 *clk = intersil_clock;
-	extern int ticks;
 
 	/* Read the clock interrupt register. */
-	(void) clk->clk_intr_reg;
-	/* Pulse the clock intr. enable low. */
-	*interrupt_reg &= ~IREG_CLOCK_ENAB_5;
-	*interrupt_reg |=  IREG_CLOCK_ENAB_5;
-	/* Read the clock intr. reg AGAIN! */
-	(void) clk->clk_intr_reg;
+	intersil_clear();
 
+	/* Pulse the clock intr. enable low. */
+	single_inst_bclr_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
+	single_inst_bset_b(*interrupt_reg, IREG_CLOCK_ENAB_5);
+
+	/* Read the clock intr. reg. AGAIN! */
+	intersil_clear();
+
+	/* Call common clock interrupt handler. */
 	hardclock(&cf);
 
-	if ((ticks & 7) == 0)
-		frob_leds(&cf);
+	/* Entertainment! */
+	frob_leds();
 }
 
 static void
-frob_leds(cf)
-	struct clockframe *cf;
+frob_leds()
 {
 	static unsigned char led_pattern = 0xFE;
+	extern int ticks;
+
+	if ((ticks & 7) != 0)
+		return;
 
 	/* XXX - Move this LED frobbing to the idle loop? */
 	led_pattern = (led_pattern << 1) | 1;
@@ -283,6 +310,7 @@ frob_leds(cf)
 		led_pattern = 0xFE;
 	set_control_byte((char *) DIAG_REG, led_pattern);
 }
+
 
 /*
  * Return the best possible estimate of the time in the timeval
@@ -327,8 +355,6 @@ microtime(tvp)
  *
  * Resettodr restores the time of day hardware after a time change.
  */
-#define SECDAY		86400L
-#define SECYR		(SECDAY * 365)
 
 static long clk_get_secs(void);
 static void clk_set_secs(long);
@@ -392,207 +418,103 @@ void resettodr()
 	clk_set_secs(time.tv_sec);
 }
 
-/*
- * Machine dependent base year:
- * Note: must be < 1970
- */
-#define	CLOCK_BASE_YEAR	1968
-
 
 /*
- * Routine to copy state into and out of the clock.
+ * Routines to copy state into and out of the clock.
  * The clock registers have to be read or written
  * in sequential order (or so it appears). -gwr
  */
-static void clk_get_dt(struct date_time *dt)
+static void
+clk_get_dt(struct clock_ymdhms *dt)
 {
+	register volatile struct date_time *isdt;
 	int s;
-	register volatile char *src, *dst;
 
-	src = (char *) &intersil_clock->counters;
-
+	isdt = &intersil_clock->counters;
 	s = splhigh();
+
+	/* Enable read (stop time) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
-	dst = (char *) dt;
-	dt++;	/* end marker */
-	do {
-		*dst++ = *src++;
-	} while (dst < (char*)dt);
+	/* Copy the info.  Careful about the order! */
+	dt->dt_sec  = isdt->dt_csec;  /* throw-away */
+	dt->dt_hour = isdt->dt_hour;
+	dt->dt_min  = isdt->dt_min;
+	dt->dt_sec  = isdt->dt_sec;
+	dt->dt_mon  = isdt->dt_month;
+	dt->dt_day  = isdt->dt_day;
+	dt->dt_year = isdt->dt_year;
+	dt->dt_wday = isdt->dt_dow;
 
+	/* Done reading (time wears on) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
 
-static void clk_set_dt(struct date_time *dt)
+static void
+clk_set_dt(struct clock_ymdhms *dt)
 {
+	register volatile struct date_time *isdt;
 	int s;
-	register volatile char *src, *dst;
 
-	dst = (char *) &intersil_clock->counters;
-
+	isdt = &intersil_clock->counters;
 	s = splhigh();
+
+	/* Enable write (stop time) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_STOP, INTERSIL_CMD_IENABLE);
 
-	src = (char *) dt;
-	dt++;	/* end marker */
-	do {
-		*dst++ = *src++;
-	} while (src < (char *)dt);
+	/* Copy the info.  Careful about the order! */
+	isdt->dt_csec = 0;
+	isdt->dt_hour = dt->dt_hour;
+	isdt->dt_min  = dt->dt_min;
+	isdt->dt_sec  = dt->dt_sec;
+	isdt->dt_month= dt->dt_mon;
+	isdt->dt_day  = dt->dt_day;
+	isdt->dt_year = dt->dt_year;
+	isdt->dt_dow  = dt->dt_wday;
 
+	/* Done writing (time wears on) */
 	intersil_clock->clk_cmd_reg =
 		intersil_command(INTERSIL_CMD_RUN, INTERSIL_CMD_IENABLE);
 	splx(s);
 }
 
-
-
-/*
- * Generic routines to convert to or from a POSIX date
- * (seconds since 1/1/1970) and  yr/mo/day/hr/min/sec
- *
- * These are organized this way mostly to so the code
- * can easily be tested in an independent user program.
- * (These are derived from the hp300 code.)
- */
-
-/* Traditional UNIX base year */
-#define	POSIX_BASE_YEAR	1970
-#define FEBRUARY	2
-
-#define	leapyear(year)		((year) % 4 == 0)
-#define	days_in_year(a) 	(leapyear(a) ? 366 : 365)
-#define	days_in_month(a) 	(month_days[(a) - 1])
-
-static int month_days[12] = {
-	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
-};
-
-void gmt_to_dt(long *tp, struct date_time *dt)
-{
-	register int i;
-	register long days, secs;
-
-	days = *tp / SECDAY;
-	secs = *tp % SECDAY;
-
-	/* Hours, minutes, seconds are easy */
-	dt->dt_hour = secs / 3600;
-	secs = secs % 3600;
-	dt->dt_min  = secs / 60;
-	secs = secs % 60;
-	dt->dt_sec  = secs;
-
-	/* Day of week (Note: 1/1/1970 was a Thursday) */
-	dt->dt_dow = (days + 4) % 7;
-
-	/* Number of years in days */
-	i = POSIX_BASE_YEAR;
-	while (days >= days_in_year(i)) {
-		days -= days_in_year(i);
-		i++;
-	}
-	dt->dt_year = i - CLOCK_BASE_YEAR;
-
-	/* Number of months in days left */
-	if (leapyear(i))
-		days_in_month(FEBRUARY) = 29;
-	for (i = 1; days >= days_in_month(i); i++)
-		days -= days_in_month(i);
-	days_in_month(FEBRUARY) = 28;
-	dt->dt_month = i;
-
-	/* Days are what is left over (+1) from all that. */
-	dt->dt_day = days + 1;
-}
-
-void dt_to_gmt(struct date_time *dt, long *tp)
-{
-	register int i;
-	register long tmp;
-	int year;
-
-	/*
-	 * Hours are different for some reason. Makes no sense really.
-	 */
-
-	tmp = 0;
-
-	if (dt->dt_hour >= 24) goto out;
-	if (dt->dt_day  >  31) goto out;
-	if (dt->dt_month > 12) goto out;
-
-	year = dt->dt_year + CLOCK_BASE_YEAR;
-
-	/*
-	 * Compute days since start of time
-	 * First from years, then from months.
-	 */
-	for (i = POSIX_BASE_YEAR; i < year; i++)
-		tmp += days_in_year(i);
-	if (leapyear(year) && dt->dt_month > FEBRUARY)
-		tmp++;
-
-	/* Months */
-	for (i = 1; i < dt->dt_month; i++)
-	  	tmp += days_in_month(i);
-	tmp += (dt->dt_day - 1);
-
-	/* Now do hours */
-	tmp = tmp * 24 + dt->dt_hour;
-
-	/* Now do minutes */
-	tmp = tmp * 60 + dt->dt_min;
-
-	/* Now do seconds */
-	tmp = tmp * 60 + dt->dt_sec;
-
- out:
-	*tp = tmp;
-}
 
 /*
  * Now routines to get and set clock as POSIX time.
+ * Our clock keeps "years since 1/1/1968".
  */
+#define	CLOCK_BASE_YEAR 1968
 
-static long clk_get_secs()
+static long
+clk_get_secs()
 {
-	struct date_time dt;
-	long gmt;
+	struct clock_ymdhms dt;
+	long secs;
 
 	clk_get_dt(&dt);
-	dt_to_gmt(&dt, &gmt);
-	return (gmt);
+
+	if ((dt.dt_hour > 24) ||
+		(dt.dt_day  > 31) ||
+		(dt.dt_mon  > 12))
+		return (0);
+
+	dt.dt_year += CLOCK_BASE_YEAR;
+	secs = clock_ymdhms_to_secs(&dt);
+	return (secs);
 }
 
-static void clk_set_secs(long secs)
+static void
+clk_set_secs(secs)
+	long secs;
 {
-	struct date_time dt;
-	long gmt;
+	struct clock_ymdhms dt;
 
-	gmt = secs;
-	gmt_to_dt(&gmt, &dt);
+	clock_secs_to_ymdhms(secs, &dt);
+	dt.dt_year -= CLOCK_BASE_YEAR;
+
 	clk_set_dt(&dt);
 }
-
-
-#ifdef	DEBUG
-/* Call this from DDB or whatever... */
-int clkdebug()
-{
-	struct date_time dt;
-	long gmt;
-	long *lp;
-
-	bzero((char*)&dt, sizeof(dt));
-	clk_get_dt(&dt);
-	lp = (long*)&dt;
-	printf("clkdebug: dt=[%x,%x]\n", lp[0], lp[1]);
-
-	dt_to_gmt(&dt, &gmt);
-	printf("clkdebug: gmt=%x\n", gmt);
-}
-#endif

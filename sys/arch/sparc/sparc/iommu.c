@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.8 1996/12/10 23:17:44 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.8.6.1 1997/03/12 13:55:30 is Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -45,6 +45,7 @@
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/sparc/iommureg.h>
 
 struct iommu_softc {
@@ -155,6 +156,8 @@ iommu_attach(parent, self, aux)
 #endif
 
 	sc->sc_hasiocache = node_has_property(node, "cache-coherence?");
+	if (CACHEINFO.c_enabled == 0) /* XXX - is this correct? */
+		sc->sc_hasiocache = 0;
 	has_iocache = sc->sc_hasiocache; /* Set global flag */
 
 	sc->sc_pagesize = getpropint(node, "page-size", NBPG),

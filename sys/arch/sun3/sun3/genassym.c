@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.37 1997/02/03 19:31:44 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.37.4.1 1997/03/12 14:05:10 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -95,6 +95,9 @@ struct nv {
 
 struct nv assyms[] = {
 
+	/* XXX: for copy.s */
+	def("M68020", 1),
+
 	/* bus error stuff */
 	def1(BUSERR_REG),
 	def1(BUSERR_MMU),
@@ -116,8 +119,6 @@ struct nv assyms[] = {
 	def1(SYSTEM_ENAB),
 	def1(SYSTEM_ENAB_FPP),
 	def1(SEGMAP_BASE),
-	def1(NBPG),
-	def1(NBSG),
 
 	/* sun3 memory map */
 	def1(DVMA_SPACE_START),
@@ -128,6 +129,8 @@ struct nv assyms[] = {
 	/* kernel-isms */
 	def1(KERNBASE),
 	def1(USPACE),
+	def1(NBPG),
+	def1(NBSG),
 
 	/* system calls */
 	def1(SYS_sigreturn),
@@ -159,7 +162,7 @@ struct nv assyms[] = {
 
 	/* VM structure fields */
 	def("VM_PMAP", offsetof(struct vmspace, vm_pmap)),
-	def("VM_PMAP_CTX", offsetof(struct vmspace, vm_pmap.pm_ctxnum)),
+	def("PM_CTXNUM", offsetof(struct pmap, pm_ctxnum)),
 
 	/* pcb offsets */
 	def("PCB_FLAGS", offsetof(struct pcb, pcb_flags)),

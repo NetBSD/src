@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.29 1996/12/10 23:24:56 pk Exp $	*/
+/*	$NetBSD: obio.c,v 1.29.6.1 1997/03/12 13:55:13 is Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -50,6 +50,7 @@
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 #include <sparc/dev/sbusvar.h>
 
 struct bus_softc {
@@ -311,9 +312,11 @@ busattach(parent, cf, args, bustype)
 		 * XXX: We also assume that 4/[23]00 obio addresses
 		 * must be 0xZYYYYYYY, where (Z != 0)
 		 */
-		if (cpumod == SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
+		if (cpuinfo.cpu_type == CPUTYP_4_100 &&
+		    (cf->cf_loc[0] & 0xf0000000))
 			return 0;
-		if (cpumod != SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
+		if (cpuinfo.cpu_type != CPUTYP_4_100 &&
+		    !(cf->cf_loc[0] & 0xf0000000))
 			return 0;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.10 1997/01/27 19:40:57 gwr Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.10.2.1 1997/03/12 14:04:47 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 /*
- * Hooks for kgdb when attached vi the z8530 driver
- * XXX - not tested yet...
+ * Hooks for kgdb when attached via the z8530 driver
  *
  * To use this, build a kernel with: option KGDB, and
  * boot that kernel with "-d".  (The kernel will call
  * zs_kgdb_init, kgdb_connect.)  When the console prints
- * "kgdb waiting..." you run "gdb -k kernel" and then
- * connect to the remote using: "target remote /dev/ttyX"
+ * "kgdb waiting..." you run "gdb -k kernel" and do:
+ *   (gdb) set remotebaud 19200
+ *   (gdb) target remote /dev/ttyb
  */
 
 #include <sys/param.h>
@@ -55,11 +55,11 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#include <sys/kgdb.h>
 
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
-
-#include <machine/remote-sl.h>
+#include <sun3/dev/zs_cons.h>
 
 /* The Sun3 provides a 4.9152 MHz clock to the ZS chips. */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
@@ -75,19 +75,14 @@ struct zschan {
 	u_char		zc_xxx1;
 };
 
-extern int kgdb_dev;
-extern int kgdb_rate;
-
-struct zschan * zs_get_chan_addr __P((int zsc_unit, int channel));
-
-extern int  zs_getc __P((void *arg));
-extern void zs_putc __P((void *arg,	int c));
+static void zs_setparam __P((struct zs_chanstate *, int, int));
+static void zskgdb __P((struct zs_chanstate *));
 
 struct zsops zsops_kgdb;
 
 static u_char zs_kgdb_regs[16] = {
 	0,	/* 0: CMD (reset, etc.) */
-	ZSWR1_RIE,	/* NOT: (ZSWR1_TIE | ZSWR1_SIE) */
+	0,	/* 1: ~(ZSWR1_RIE | ZSWR1_TIE | ZSWR1_SIE) */
 	0x18 + ZSHARD_PRI,	/* IVECT */
 	ZSWR3_RX_8 | ZSWR3_RX_ENABLE,
 	ZSWR4_CLK_X16 | ZSWR4_ONESB | ZSWR4_EVENP,
@@ -117,8 +112,8 @@ zs_setparam(cs, iena, rate)
 
 	bcopy(zs_kgdb_regs, cs->cs_preg, 16);
 
-	if (iena == 0) {
-		cs->cs_preg[1] = 0;
+	if (iena) {
+		cs->cs_preg[1] = ZSWR1_RIE | ZSWR1_SIE;
 	}
 
 	/* Initialize the speed, etc. */
@@ -135,6 +130,7 @@ zs_setparam(cs, iena, rate)
 /*
  * Set up for kgdb; called at boot time before configuration.
  * KGDB interrupts will be enabled later when zs0 is configured.
+ * Called after cninit(), so printf() etc. works.
  */
 void
 zs_kgdb_init()
@@ -143,22 +139,29 @@ zs_kgdb_init()
 	volatile struct zschan *zc;
 	int channel, zsc_unit;
 
-	if (major(kgdb_dev) != ZSTTY_MAJOR)
+	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
+	if (major(kgdb_dev) != zs_major)
 		return;
 
 	/* Note: (ttya,ttyb) on zsc1, and (ttyc,ttyd) on zsc0 */
-	zsc_unit = 2 - (kgdb_dev & 2);
-	channel  =      kgdb_dev & 1;
-	printf("zs_kgdb_init: attaching zstty%d at %d baud\n",
-		   channel, kgdb_rate);
+	zsc_unit = (kgdb_dev & 2) ? 0 : 1;
+	channel  =  kgdb_dev & 1;
+	printf("zs_kgdb_init: attaching tty%c at %d baud\n",
+		   'a' + (kgdb_dev & 3), kgdb_rate);
 
 	/* Setup temporary chanstate. */
 	bzero((caddr_t)&cs, sizeof(cs));
 	zc = zs_get_chan_addr(zsc_unit, channel);
-	cs.cs_reg_csr  = &zc->zc_csr;
-	cs.cs_reg_data = &zc->zc_data;
+	if (zc == NULL) {
+		printf("zs_kgdb_init: zs not mapped.\n");
+		kgdb_dev = -1;
+		return;
+	}
+
 	cs.cs_channel = channel;
 	cs.cs_brg_clk = PCLK / 16;
+	cs.cs_reg_csr  = &zc->zc_csr;
+	cs.cs_reg_data = &zc->zc_data;
 
 	/* Now set parameters. (interrupts disabled) */
 	zs_setparam(&cs, 0, kgdb_rate);
@@ -179,22 +182,18 @@ zs_check_kgdb(cs, dev)
 	struct zs_chanstate *cs;
 	int dev;
 {
-	int tconst;
 
 	if (dev != kgdb_dev)
 		return (0);
 
 	/*
-	 * Yes, this is the kgdb port.  Finish the autoconfig
-	 * message and set up the port for our exclusive use.
+	 * Yes, this is port in use by kgdb.
 	 */
-	printf(" (kgdb)\n");
-
 	cs->cs_private = NULL;
 	cs->cs_ops = &zsops_kgdb;
 
 	/* Now set parameters. (interrupts enabled) */
-	zs_setparam(&cs, 1, kgdb_rate);
+	zs_setparam(cs, 1, kgdb_rate);
 
 	return (1);
 }
@@ -203,7 +202,9 @@ zs_check_kgdb(cs, dev)
  * KGDB framing character received: enter kernel debugger.  This probably
  * should time out after a few seconds to avoid hanging on spurious input.
  */
-zskgdb()
+static void
+zskgdb(cs)
+	struct zs_chanstate *cs;
 {
 	int unit = minor(kgdb_dev);
 
@@ -217,11 +218,16 @@ zskgdb()
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
+static void zs_kgdb_rxint __P((struct zs_chanstate *));
+static void zs_kgdb_txint __P((struct zs_chanstate *));
+static void zs_kgdb_stint __P((struct zs_chanstate *));
+static void zs_kgdb_softint __P((struct zs_chanstate *));
+
 int kgdb_input_lost;
 
 static void
 zs_kgdb_rxint(cs)
-	register struct zs_chanstate *cs;
+	struct zs_chanstate *cs;
 {
 	register u_char c, rr1;
 
@@ -236,8 +242,8 @@ zs_kgdb_rxint(cs)
 		zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 	}
 
-	if (c == FRAME_START) {
-		zskgdb();
+	if (c == KGDB_START) {
+		zskgdb(cs);
 	} else {
 		kgdb_input_lost++;
 	}
@@ -261,6 +267,14 @@ zs_kgdb_stint(cs)
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
+
+	/*
+	 * Check here for console break, so that we can abort
+	 * even when interrupts are locking up the machine.
+	 */
+	if (rr0 & ZSRR0_BREAK) {
+		zskgdb(cs);
+	}
 }
 
 static void

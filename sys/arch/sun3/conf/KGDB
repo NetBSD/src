@@ -1,8 +1,11 @@
-#	$NetBSD: KGDB,v 1.8 1997/01/31 02:08:23 thorpej Exp $
+#	$NetBSD: KGDB,v 1.8.2.1 1997/03/12 14:04:29 is Exp $
 
 #
 # GENERIC_KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
-# like GENERIC but supports KGDB (gdb -k on other machine)
+# like GENERIC but supports gdb on other machine, i.e.:
+#	% gdb -k netbsd.gdb
+#	(gdb) set remotebaud 19200
+#	(gdb) target remote /dev/ttyb
 #
 
 include "arch/sun3/conf/std.sun3"
@@ -19,9 +22,10 @@ options 	KTRACE			# system call tracing support
 
 # Debugging options.  Uncomment either this:
 #options 	DDB
-# ... or these two: (for KGDB on another machine)
-makeoptions DEBUG="-g"			# symbols for kgdb + nm
+# ... or these for KGDB (gdb remote target)
+makeoptions DEBUG="-g"			# debugging symbols for gdb
 options 	KGDB
+options 	KGDBDEV=0x0C01
 
 # Filesystem options
 file-system 	FFS		# ufs file system
@@ -59,7 +63,6 @@ options 	PMAP_DEBUG
 #options 	EXEC_DEBUG
 options 	DIAGNOSTIC
 #options 	SCSIDEBUG
-options 	NCR5380_DEBUG
 
 config		netbsd root on ? type ?
 
@@ -77,18 +80,28 @@ ms0    at zsc0 channel 1	# mouse
 #
 
 # Intel Ethernet (onboard, or VME)
-ie0 at obio0 addr ? level ?
+ie0 at obio0 addr   0x0C0000 level 3
 ie1 at vmes0 addr 0xffe88000 level 3 vect 0x75
 
 # Lance Ethernet (only onboard)
-le0 at obio0 addr ? level ?
+le0 at obio0 addr   0x120000 level 3
 
 #
 # Disk and tape devices
 #
 
 # Sun3 "si" SCSI controller (NCR 5380)
-si0 at obio0 addr ? level ?
+# This driver has several flags which may be enabled by OR'ing
+# the values and using the "flags" directive.  (PR#1929)
+# Valid flags are:
+#
+#	0x01		Use DMA (may be polled)
+#	0x02		Use DMA completion interrupts
+#	0x04		Allow disconnect/reselect
+#
+# E.g. "flags 0x07" would enable DMA, interrupts, and reselect.
+# Note: these values are quite a bit paranoid...
+si0 at obio0 addr   0x140000 level 2
 si0 at vmes0 addr 0xff200000 level 2 vect 0x40
 si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.29 1997/01/27 16:11:11 gwr Exp $
+#	$NetBSD: files.sun3,v 1.29.4.1 1997/03/12 14:04:31 is Exp $
 
 #
 # sun3-specific configuration info
@@ -11,6 +11,7 @@ maxusers 2 8 64
 
 # Standard stuff
 file arch/sun3/sun3/autoconf.c
+file arch/sun3/sun3/bus_subr.c
 file arch/sun3/sun3/cache.c			havecache
 file arch/sun3/sun3/conf.c
 file arch/sun3/sun3/control.c	
@@ -21,10 +22,12 @@ file arch/sun3/sun3/disksubr.c
 file arch/sun3/sun3/dvma.c
 file arch/sun3/sun3/fpu.c
 file arch/sun3/sun3/isr.c
-file arch/sun3/sun3/kgdb_stub.c 		kgdb
+file arch/sun3/sun3/kgdb_machdep.c 		kgdb
 file arch/sun3/sun3/machdep.c
 file arch/sun3/sun3/mem.c
 file arch/sun3/sun3/pmap.c
+file arch/sun3/sun3/regdump.c
+file arch/sun3/sun3/sig_machdep.c
 file arch/sun3/sun3/stub.c
 file arch/sun3/sun3/sun3_startup.c
 file arch/sun3/sun3/sunmon.c
@@ -90,6 +93,7 @@ file arch/sun3/dev/eeprom.c		eeprom
 device clock
 attach clock at obio
 file arch/sun3/sun3/clock.c		clock
+file dev/clock_subr.c			clock
 
 device memerr
 attach memerr at obio
@@ -99,7 +103,7 @@ device intreg
 attach intreg at obio
 file arch/sun3/sun3/intreg.c		intreg
 
-device ie: ifnet, ether
+device ie: ifnet, ether, arp
 attach ie at obio with ie_obio
 attach ie at vmes with ie_vmes
 file arch/sun3/dev/if_ie_obio.c		ie_obio

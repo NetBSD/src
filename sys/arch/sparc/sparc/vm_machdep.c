@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 1996/10/28 23:02:54 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.29.6.1 1997/03/12 13:55:39 is Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -66,7 +66,7 @@
 #include <machine/frame.h>
 #include <machine/trap.h>
 
-#include <sparc/sparc/cache.h>
+#include <sparc/sparc/cpuvar.h>
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -226,8 +226,8 @@ dvma_mapin(map, va, len, canwait)
 	/*
 	 * XXX Only have to do this on write.
 	 */
-	if (vactype == VAC_WRITEBACK)			/* XXX */
-		cache_flush((caddr_t)ova, olen);	/* XXX */
+	if (CACHEINFO.c_vactype == VAC_WRITEBACK)	/* XXX */
+		cpuinfo.cache_flush((caddr_t)ova, olen);	/* XXX */
 
 	return kva + off;
 }
@@ -258,8 +258,8 @@ dvma_mapout(kva, va, len)
 	wakeup(dvmamap);
 	splx(s);
 
-	if (vactype != VAC_NONE)
-		cache_flush((caddr_t)va, len);
+	if (CACHEINFO.c_vactype != VAC_NONE)
+		cpuinfo.cache_flush((caddr_t)va, len);
 }
 
 /*
@@ -328,8 +328,8 @@ vunmapbuf(bp, sz)
 	kmem_free_wakeup(kernel_map, trunc_page(kva), size);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;
-	if (vactype != VAC_NONE)
-		cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
+	if (CACHEINFO.c_vactype != VAC_NONE)
+		cpuinfo.cache_flush(bp->b_un.b_addr, bp->b_bcount - bp->b_resid);
 }
 
 

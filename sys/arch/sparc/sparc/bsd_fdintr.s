@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.9 1996/12/08 23:41:39 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.9.6.1 1997/03/12 13:55:23 is Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -41,14 +41,11 @@
 #include <sparc/dev/fdreg.h>
 #include <sparc/dev/fdvar.h>
 
-/* XXX this goes in a header file -- currently, it's hidden in locore.s */
-#define INTREG_ADDR 0xf8002000
-
 #define FD_SET_SWINTR_4C				\
-	sethi	%hi(INTREG_ADDR), %l5;			\
-	ldub	[%l5 + %lo(INTREG_ADDR)], %l6;		\
+	sethi	%hi(INTRREG_VA), %l5;			\
+	ldub	[%l5 + %lo(INTRREG_VA)], %l6;		\
 	or	%l6, IE_L4, %l6;			\
-	stb	%l6, [%l5 + %lo(INTREG_ADDR)]
+	stb	%l6, [%l5 + %lo(INTRREG_VA)]
 
 ! raise(0,PIL_AUSOFT)	! NOTE: CPU#0 and PIL_AUSOFT=4
 #define FD_SET_SWINTR_4M				\
@@ -57,9 +54,9 @@
 	st	%l5, [%l6]
 
 /* set software interrupt */
-#if defined(SUN4C) && !defined(SUN4M)
+#if (defined(SUN4) || defined(SUN4C)) && !defined(SUN4M)
 #define FD_SET_SWINTR	FD_SET_SWINTR_4C
-#elif !defined(SUN4C) && defined(SUN4M)
+#elif !(defined(SUN4) || defined(SUN4C)) && defined(SUN4M)
 #define FD_SET_SWINTR	FD_SET_SWINTR_4M
 #else
 #define FD_SET_SWINTR					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 1997/02/02 08:33:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.44.2.1 1997/03/12 14:05:14 is Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -105,6 +105,7 @@ L_high_code:
 | kernel can sanity-check the DDB symbols at [end...esym].
 | Pass the struct exec at tmpstk-32 to __bootstrap().
 	lea	tmpstk-32, sp
+	movl	#0,a6
 	jsr	__bootstrap		| See sun3_startup.c
 
 | Now that __bootstrap() is done using the PROM setcxsegmap
@@ -134,16 +135,18 @@ L_high_code:
  * cpu_set_kpc() to arrange for a call to a kernel function
  * before the new process does its rte out to user mode.
  */
-	clrw	sp@-			| vector offset/frame type
-	clrl	sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,sp@-		| in user mode
-	clrl	sp@-			| stack adjust count and padding
-	lea	sp@(-64),sp		| construct space for D0-D7/A0-A7
-	lea	_proc0,a0		| proc0 in a0
-	movl	sp,a0@(P_MDREGS)	| save frame for proc0
-	movl	usp,a1
-	movl	a1,sp@(FR_SP)		| save user stack pointer in frame
-	jbsr	_main			| main()
+	clrw	sp@-			| tf_format,tf_vector
+	clrl	sp@-			| tf_pc (filled in later)
+	movw	#PSL_USER,sp@-		| tf_sr for user mode
+	clrl	sp@-			| tf_stackadj
+	lea	sp@(-64),sp		| tf_regs[16]
+	movl	sp,a1			| a1=trapframe
+	lea	_proc0,a0		| proc0.p_md.md_regs = 
+	movl	a1,a0@(P_MDREGS)	|   trapframe
+	movl	a2,a1@(FR_SP)		| a2 == usp (from above)
+	pea	a1@			|
+	jbsr	_main			| main(&trapframe)
+	addql	#4,sp			| help backtrace work
 	trap	#15			| should not get here
 
 | This is used by cpu_fork() to return to user mode.
@@ -552,44 +555,18 @@ Lbrkpt1:
 	bgt	Lbrkpt1
 
 Lbrkpt2:
-	| Call the trap handler for the kernel debugger.
-	| Do not call trap() to do it, so that we can
+	| Call the special kernel debugger trap handler.
+	| Do not call trap() to handle it, so that we can
 	| set breakpoints in trap() if we want.  We know
 	| the trap type is either T_TRACE or T_BREAKPOINT.
-	| If we have both DDB and KGDB, let KGDB see it first,
-	| because KGDB will just return 0 if not connected.
-	| Save args in d2, a2
-	movl	d0,d2			| trap type
-	movl	sp,a2			| frame ptr
-#ifdef	KGDB
-	| Let KGDB handle it (if connected)
-	movl	a2,sp@-			| push frame ptr
-	movl	d2,sp@-			| push trap type
-	jbsr	_kgdb_trap		| handle the trap
-	addql	#8,sp			| pop args
-	cmpl	#0,d0			| did kgdb handle it
-	jne	Lbrkpt3			| yes, done
-#endif
-#ifdef	DDB
-	| Let DDB handle it.
-	movl	a2,sp@-			| push frame ptr
-	movl	d2,sp@-			| push trap type
-	jbsr	_kdb_trap		| handle the trap
-	addql	#8,sp			| pop args
-	cmpl	#0,d0			| did ddb handle it
-	jne	Lbrkpt3			| yes, done
-#endif
-	| Drop into the PROM temporarily...
-	movl	a2,sp@-			| push frame ptr
-	movl	d2,sp@-			| push trap type
-	jbsr	__nodb_trap		| handle the trap
-	addql	#8,sp			| pop args
-Lbrkpt3:
+	movl	d0,sp@-			| push trap type
+	jbsr	_trap_kdebug
+	addql	#4,sp			| pop args
+
 	| The stack pointer may have been modified, or
 	| data below it modified (by kgdb push call),
 	| so push the hardware frame at the current sp
 	| before restoring registers and returning.
-
 	movl	sp@(FR_SP),a0		| modified sp
 	lea	sp@(FR_SIZE),a1		| end of our frame
 	movl	a1@-,a0@-		| copy 2 longs with

@@ -1,4 +1,4 @@
-/* $NetBSD: xy.c,v 1.12 1996/12/17 21:10:59 gwr Exp $ */
+/*	$NetBSD: xy.c,v 1.12.6.1 1997/03/12 14:04:43 is Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x y . c   x y l o g i c s   4 5 0 / 4 5 1   s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xy.c,v 1.12 1996/12/17 21:10:59 gwr Exp $
+ * id: $NetBSD: xy.c,v 1.12.6.1 1997/03/12 14:04:43 is Exp $
  * started: 14-Sep-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -61,7 +61,6 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -73,6 +72,8 @@
 #include <sys/disk.h>
 #include <sys/syslog.h>
 #include <sys/dkbad.h>
+#include <sys/conf.h>
+
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
@@ -165,21 +166,16 @@ int	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
 /* machine interrupt hook */
 int	xycintr __P((void *));
 
-/* {b,c}devsw */
-int	xyclose __P((dev_t, int, int));
-int	xydump __P((dev_t));
-int	xyioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	xyopen __P((dev_t, int, int));
-int	xyread __P((dev_t, struct uio *));
-int	xywrite __P((dev_t, struct uio *));
-int	xysize __P((dev_t));
-void	xystrategy __P((struct buf *));
+/* bdevsw, cdevsw */
+bdev_decl(xy);
+cdev_decl(xy);
 
 /* autoconf */
 int	xycmatch __P((struct device *, struct cfdata *, void *));
 void	xycattach __P((struct device *, struct device *, void *));
 int	xymatch __P((struct device *, struct cfdata *, void *));
 void	xyattach __P((struct device *, struct device *, void *));
+int  xyc_print __P((void *, char *name));
 
 static	void xydummystrat __P((struct buf *));
 int	xygetdisklabel __P((struct xy_softc *, void *));
@@ -429,12 +425,28 @@ xycattach(parent, self, aux)
 	xa.booting = 1;
 
 	for (xa.driveno = 0; xa.driveno < XYC_MAXDEV; xa.driveno++)
-		(void) config_found(self, (void *) &xa, NULL);
+		(void) config_found(self, (void *) &xa, xyc_print);
 
 	dvma_free(xa.dvmabuf, XYFM_BPS);
 
 	/* start the watchdog clock */
 	timeout(xyc_tick, xyc, XYC_TICKCNT);
+}
+
+int
+xyc_print(aux, name)
+	void *aux;
+	char *name;
+{
+	struct xyc_attach_args *xa = aux;
+
+	if (name != NULL)
+		printf("%s: ", name);
+
+	if (xa->driveno != -1)
+		printf(" drive %d", xa->driveno);
+
+	return UNCONF;
 }
 
 /*

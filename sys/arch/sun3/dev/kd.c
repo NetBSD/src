@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.23 1997/01/27 19:40:50 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.23.2.1 1997/03/12 14:04:35 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -78,12 +78,12 @@ struct kd_softc {
  * There is no point in pretending there might be
  * more than one keyboard/display device.
  */
-struct kd_softc kd_softc;
+static struct kd_softc kd_softc;
+static int kd_is_console;
 
 static int kdparam(struct tty *, struct termios *);
 static void kdstart(struct tty *);
 
-int kd_is_console;
 
 /*
  * This is called by kbd_attach() 
@@ -254,6 +254,14 @@ kdioctl(dev, cmd, data, flag, p)
 	return ENOTTY;
 }
 
+void
+kdstop(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+
+}
+
 
 static int
 kdparam(tp, t)
@@ -268,18 +276,10 @@ kdparam(tp, t)
 }
 
 
-void
-kdstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-
-}
-
 static void kd_later(void*);
 static void kd_putfb(struct tty *);
 
-void
+static void
 kdstart(tp)
 	struct tty *tp;
 {
@@ -349,7 +349,8 @@ kd_later(tpaddr)
  * This can take a while, so to avoid missing
  * interrupts, this is called at splsoftclock.
  */
-static void kd_putfb(tp)
+static void
+kd_putfb(tp)
 	struct tty *tp;
 {
 	char buf[PUT_WSIZE];
@@ -382,7 +383,7 @@ kd_input(c)
 	tp = kd->kd_tty;
 	if (tp == NULL)
 		return;
-    if ((tp->t_state & TS_ISOPEN) == 0)
+	if ((tp->t_state & TS_ISOPEN) == 0)
 		return;
 
 	(*linesw[tp->t_line].l_rint)(c, tp);
@@ -393,18 +394,38 @@ kd_input(c)
  * kd console support
  ****************************************************************/
 
-cons_decl(kd);
-
 /* The debugger gets its own key translation state. */
 static struct kbd_state kdcn_state;
 
-void
+static void kdcnprobe __P((struct consdev *));
+static void kdcninit __P((struct consdev *));
+static int  kdcngetc __P((dev_t));
+static void kdcnputc __P((dev_t, int));
+static void kdcnpollc __P((dev_t, int));
+
+struct consdev consdev_kd = {
+	kdcnprobe,
+	kdcninit,
+	kdcngetc,
+	kdcnputc,
+	kdcnpollc,
+};
+
+/* We never call this. */
+static void
+kdcnprobe(cn)
+	struct consdev *cn;
+{
+}
+
+static void
 kdcninit(cn)
 	struct consdev *cn;
 {
 	struct kbd_state *ks = &kdcn_state;
 
-	mon_printf("console on kd0 (keyboard/display)\n");
+	cn->cn_dev = makedev(KDMAJOR, 0);
+	cn->cn_pri = CN_INTERNAL;
 
 	/* This prepares kbd_translate() */
 	ks->kbd_id = KBD_MIN_TYPE;
@@ -414,7 +435,7 @@ kdcninit(cn)
 	kd_is_console = 1;
 }
 
-int
+static int
 kdcngetc(dev)
 	dev_t dev;
 {
@@ -456,7 +477,7 @@ out:
 	return (keysym);
 }
 
-void
+static void
 kdcnputc(dev, c)
 	dev_t dev;
 	int c;
@@ -464,7 +485,8 @@ kdcnputc(dev, c)
 	(romVectorPtr->fbWriteChar)(c & 0x7f);
 }
 
-void kdcnpollc(dev, on)
+static void
+kdcnpollc(dev, on)
 	dev_t dev;
 	int on;
 {
@@ -479,14 +501,4 @@ void kdcnpollc(dev, on)
 		/* Resuming kernel. */
 	}
 }
-
-struct consdev consdev_kd = {
-	nullcnprobe,
-	kdcninit,
-	kdcngetc,
-	kdcnputc,
-	kdcnpollc,
-	makedev(KDMAJOR, 0),
-	CN_INTERNAL
-};
 

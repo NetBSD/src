@@ -1,7 +1,7 @@
-/*	$NetBSD: kgdb_proto.h,v 1.2 1996/11/20 18:57:33 gwr Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.2.2.2 1997/03/12 14:05:12 is Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
@@ -41,30 +41,83 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kgdb_proto.h	8.1 (Berkeley) 6/10/93
+ *	@(#)kgdb_stub.c	8.4 (Berkeley) 1/12/94
  */
 
 /*
- * Message types.
+ * Machine-dependent part of the KGDB remote "stub"
  */
-#define KGDB_MEM_R	0x01
-#define KGDB_MEM_W	0x02
-#define KGDB_REG_R	0x03
-#define KGDB_REG_W	0x04
-#define KGDB_CONT	0x05
-#define KGDB_STEP	0x06
-#define KGDB_KILL	0x07
-#define KGDB_SIGNAL	0x08
-#define KGDB_EXEC	0x09
-#define KGDB_HALT       0x0a
-#define KGDB_BOOT       0x0b
 
-#define KGDB_CMD(x) ((x) & 0x0f)
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kgdb.h>
+
+#include <machine/control.h>
+#include <machine/pte.h>
+
+extern void Debugger __P((void));
 
 /*
- * Message flags.
+ * Determine if the memory at va..(va+len) is valid.
  */
-#define KGDB_ACK	0x80
-#define KGDB_DELTA	0x40
-#define KGDB_MORE	0x20
-#define KGDB_SEQ	0x10
+int
+kgdb_acc(va, ulen)
+	vm_offset_t va;
+	size_t ulen;
+{
+	int len, pte, pgoff;
+
+	len = (int)ulen;
+	pgoff = va & PGOFSET;
+	va  -= pgoff;
+	len += pgoff;
+
+	while (len > 0) {
+		pte = get_pte(va);
+		if ((pte & PG_VALID) == 0)
+			return (0);
+		va  += NBPG;
+		len -= NBPG;
+	}
+
+	return (1);
+}
+
+/*
+ * Trap into kgdb to wait for debugger to connect,
+ * noting on the console why nothing else is going on.
+ */
+void
+kgdb_connect(verbose)
+	int verbose;
+{
+
+	if (kgdb_dev < 0)
+		return;
+
+	if (verbose)
+		printf("kgdb waiting...");
+
+	Debugger();
+
+	if (verbose)
+		printf("connected.\n");
+
+	kgdb_debug_panic = 1;
+}
+
+/*
+ * Decide what to do on panic.
+ *
+ * The sun3 implementation of Debugger() arranges to call
+ * either kgdb_trap() or kdb_trap() as appropriate, so
+ * we can just call Debugger() here.
+ */
+void
+kgdb_panic()
+{
+	if (kgdb_dev >= 0 && kgdb_debug_panic) {
+		printf("entering kgdb\n");
+		Debugger();
+	}
+}

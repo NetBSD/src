@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.53 1996/12/28 23:29:14 pk Exp $	*/
+/*	$NetBSD: conf.c,v 1.53.6.1 1997/03/12 14:05:07 is Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -44,21 +44,85 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "cd.h"
-bdev_decl(cd);
-cdev_decl(cd);
+/*
+ * Device headers and declarations:
+ * (alphabetically by device prefix)
+ */
+
+#include "bpfilter.h"
+cdev_decl(bpf);
+
+#include "bwtwo.h"
+#define bw2poll seltrue
+cdev_decl(bw2);
 
 #include "ccd.h"
 bdev_decl(ccd);
 cdev_decl(ccd);
 
+#include "cd.h"
+bdev_decl(cd);
+cdev_decl(cd);
+
+#include "cgtwo.h"
+#define cg2poll seltrue
+cdev_decl(cg2);
+
+#include "cgfour.h"
+#define cg4poll seltrue
+cdev_decl(cg4);
+
+#include "ch.h"
+cdev_decl(ch);
+
+cdev_decl(cn);
+
+cdev_decl(ctty);
+
+#define fbpoll seltrue
+cdev_decl(fb);
+
+#ifdef	sun3x
+#include "fdc.h"	/* has NFDC and NFD; see files.sun3x */
+#else
+#define	NFD 0
+#endif
+bdev_decl(fd);
+cdev_decl(fd);
+
+dev_decl(filedesc,open);
+
+#include "kbd.h"
+cdev_decl(kbd);
+cdev_decl(kd);
+
+cdev_decl(log);
+
 #include "md.h"
 bdev_decl(md);
-/* no cdev for md */
+cdev_decl(md);
+
+#define	mmread	mmrw
+#define	mmwrite	mmrw
+cdev_decl(mm);
+
+#include "ms.h"
+cdev_decl(ms);
+
+#include "pty.h"
+#define	ptstty		ptytty
+#define	ptsioctl	ptyioctl
+cdev_decl(pts);
+#define	ptctty		ptytty
+#define	ptcioctl	ptyioctl
+cdev_decl(ptc);
 
 #include "sd.h"
 bdev_decl(sd);
 cdev_decl(sd);
+
+#include "ss.h"
+cdev_decl(ss);
 
 #include "st.h"
 bdev_decl(st);
@@ -68,6 +132,12 @@ cdev_decl(st);
 bdev_decl(sw);
 cdev_decl(sw);
 
+#include "tun.h"
+cdev_decl(tun);
+
+#include "uk.h"
+cdev_decl(uk);
+
 #include "vnd.h"
 bdev_decl(vnd);
 cdev_decl(vnd);
@@ -76,6 +146,7 @@ cdev_decl(vnd);
 bdev_decl(xd);
 cdev_decl(xd);
 
+/* #include "xt.h" not yet */
 #define	NXT 0	/* XXX */
 bdev_decl(xt);
 cdev_decl(xt);
@@ -84,6 +155,10 @@ cdev_decl(xt);
 bdev_decl(xy);
 cdev_decl(xy);
 
+#include "zstty.h"
+cdev_decl(zs);
+
+/* Block devices */
 struct bdevsw	bdevsw[] =
 {
 	bdev_notdef(),			/* 0 */
@@ -99,76 +174,22 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NXD,xd),		/* 10: SMD disk on Xylogics 7053 */
 	bdev_tape_init(NST,st),		/* 11: SCSI tape */
 	bdev_notdef(),			/* 12: Sun ns? */
-	bdev_disk_init(NMD,md),		/* 13: Memory disk - for install tape */
+	bdev_disk_init(NMD,md),		/* 13: Memory disk (install tape) */
 	bdev_notdef(),			/* 14: Sun ft? */
 	bdev_notdef(),			/* 15: Sun hd? */
-	bdev_notdef(),			/* 16: Sun fd? */
+	bdev_disk_init(NFD,fd),		/* 16: floppy disk */
 	bdev_notdef(),			/* 17: Sun vd_unused */
 	bdev_disk_init(NCD,cd),		/* 18: SCSI CD-ROM */
-	bdev_notdef(),			/* 19: Sun vd_unused */
-	bdev_notdef(),			/* 20: Sun vd_unused */
-	bdev_notdef(),			/* 21: Sun vd_unused */
-	bdev_notdef(),			/* 22: Sun IPI disks... */
-	bdev_notdef(),			/* 23: Sun IPI disks... */
+	bdev_lkm_dummy(),		/* 19 */
+	bdev_lkm_dummy(),		/* 20 */
+	bdev_lkm_dummy(),		/* 21 */
+	bdev_lkm_dummy(),		/* 22 */
+	bdev_lkm_dummy(),		/* 23 */
+	bdev_lkm_dummy(),		/* 24 */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-/*
- * Devices that have only CHR nodes are declared below.
- */
-
-cdev_decl(cn);
-cdev_decl(ctty);
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
-
-#include "zstty.h"
-cdev_decl(zs);
-
-#include "kbd.h"
-cdev_decl(kbd);
-cdev_decl(kd);
-
-#include "ms.h"
-cdev_decl(ms);
-
-#include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-
-/* frame-buffer devices */
-#define fbpoll seltrue
-cdev_decl(fb);
-
-#include "bwtwo.h"
-#define bw2poll seltrue
-cdev_decl(bw2);
-
-#include "cgtwo.h"
-#define cg2poll seltrue
-cdev_decl(cg2);
-
-#include "cgfour.h"
-#define cg4poll seltrue
-cdev_decl(cg4);
-
-cdev_decl(log);
-cdev_decl(fd);
-
-#include "bpfilter.h"
-cdev_decl(bpf);
-
-#include "tun.h"
-cdev_decl(tun);
-
-dev_decl(filedesc,open);
-
-
+/* Character devices */
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -178,7 +199,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 4: was PROM console */
 	cdev_notdef(),			/* 5: tapemaster tape */
 	cdev_notdef(),			/* 6: systech/versatec */
-	cdev_swap_init(1,sw),		/* 7: /dev/drum {swap pseudo-device) */
+	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */
 	cdev_notdef(),			/* 8: Archive QIC-11 tape */
 	cdev_disk_init(NXY,xy),		/* 9: SMD disk on Xylogics 450/451 */
 	cdev_notdef(),			/* 10: systech multi-terminal board */
@@ -223,16 +244,16 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 49: (chat) */
 	cdev_notdef(),			/* 50: (chut) */
 	cdev_notdef(),			/* 51: (chut) */
-	cdev_notdef(),			/* 52: RAM disk - for install tape */
+	cdev_disk_init(NMD,md), 	/* 52: Memory disk (install tape) */
 	cdev_notdef(),			/* 53: (hd - N/A) */
-	cdev_notdef(),			/* 54: (fd - N/A) */
+	cdev_disk_init(NFD,fd),		/* 54: floppy disk (3/80 only) */
 	cdev_notdef(),			/* 55: cgthree */
 	cdev_notdef(),			/* 56: (pp) */
 	cdev_notdef(),			/* 57: (vd) Loadable Module control */
-	cdev_disk_init(NCD,cd),		/* 58: SCSI CD-ROM */
-	cdev_notdef(),			/* 59: (vd) Loadable Module stub */
-	cdev_notdef(),			/* 60:  ||     ||      ||    ||  */
-	cdev_notdef(),			/* 61:  ||     ||      ||    ||  */
+	cdev_disk_init(NCD,cd), 	/* 58: SCSI CD-ROM */
+	cdev_ch_init(NCH,ch),		/* 59: SCSI autochanger */
+	cdev_scanner_init(NSS,ss),	/* 60: SCSI scanner */
+	cdev_uk_init(NUK,uk),		/* 61: SCSI unknown */
 	cdev_notdef(),			/* 62: (taac) */
 	cdev_notdef(),			/* 63: (tcp/tli) */
 	cdev_notdef(),			/* 64: cgeight */
@@ -243,6 +264,14 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 69: /dev/audio */
 	cdev_notdef(),			/* 70: open prom */
 	cdev_notdef(),			/* 71: (sg?) */
+	cdev_lkm_init(NLKM,lkm),	/* 72: loadable module driver */
+	cdev_lkm_dummy(),		/* 73 */
+	cdev_lkm_dummy(),		/* 74 */
+	cdev_lkm_dummy(),		/* 75 */
+	cdev_lkm_dummy(),		/* 76 */
+	cdev_lkm_dummy(),		/* 77 */
+	cdev_lkm_dummy(),		/* 78 */
+	cdev_notdef(),			/* 79 */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -289,11 +318,11 @@ static int chrtoblktbl[] = {
 	/*  2 */	NODEV,
 	/*  3 */	NODEV,
 	/*  4 */	NODEV,
-	/*  5 */	1,
+	/*  5 */	NODEV,
 	/*  6 */	NODEV,
-	/*  7 */	NODEV,
+	/*  7 */	4,	/* sw */
 	/*  8 */	NODEV,
-	/*  9 */	3,
+	/*  9 */	3,	/* xy */
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
 	/* 12 */	NODEV,
@@ -301,9 +330,9 @@ static int chrtoblktbl[] = {
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
-	/* 17 */	7,
-	/* 18 */	11,
-	/* 19 */	5,
+	/* 17 */	7,	/* sd */
+	/* 18 */	11,	/* st */
+	/* 19 */	5,	/* vnd */
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
 	/* 22 */	NODEV,
@@ -314,10 +343,10 @@ static int chrtoblktbl[] = {
 	/* 27 */	NODEV,
 	/* 28 */	NODEV,
 	/* 29 */	NODEV,
-	/* 30 */	8,
+	/* 30 */	8,	/* xt */
 	/* 31 */	NODEV,
 	/* 32 */	NODEV,
-	/* 33 */	9,
+	/* 33 */	9,	/* ccd */
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
 	/* 36 */	NODEV,
@@ -326,8 +355,8 @@ static int chrtoblktbl[] = {
 	/* 39 */	NODEV,
 	/* 40 */	NODEV,
 	/* 41 */	NODEV,
-	/* 42 */	NODEV,
-	/* 43 */	10,
+	/* 42 */	10,	/* xd */
+	/* 43 */	NODEV,
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
@@ -336,13 +365,13 @@ static int chrtoblktbl[] = {
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
 	/* 51 */	NODEV,
-	/* 52 */	13,
+	/* 52 */	13,	/* md */
 	/* 53 */	NODEV,
-	/* 54 */	NODEV,
+	/* 54 */	16,	/* fd */
 	/* 55 */	NODEV,
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
-	/* 58 */	18,
+	/* 58 */	18,	/* cd */
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
@@ -356,6 +385,14 @@ static int chrtoblktbl[] = {
 	/* 69 */	NODEV,
 	/* 70 */	NODEV,
 	/* 71 */	NODEV,
+	/* 72 */	NODEV,
+	/* 73 */	NODEV,
+	/* 74 */	NODEV,
+	/* 75 */	NODEV,
+	/* 76 */	NODEV,
+	/* 77 */	NODEV,
+	/* 78 */	NODEV,
+	/* 79 */	NODEV,
 };
 
 /*

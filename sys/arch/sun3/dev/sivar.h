@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.4 1997/01/27 19:40:56 gwr Exp $	*/
+/*	$NetBSD: sivar.h,v 1.4.4.1 1997/03/12 14:04:40 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -83,10 +83,11 @@ struct si_softc {
 	void *sc_dmacmd;
 };
 
-/* Options.  Interesting values are: 1,3,7 */
-#define SI_ENABLE_DMA	1	/* Use DMA (maybe polled) */
-#define SI_DMA_INTR 	2	/* DMA completion interrupts */
-#define	SI_DO_RESELECT	4	/* Allow disconnect/reselect */
+/* Options for disconnect/reselect, DMA, and interrupts. */
+#define SI_NO_DISCONNECT    0xff
+#define SI_NO_PARITY_CHK  0xff00
+#define SI_FORCE_POLLING 0x10000
+#define SI_DISABLE_DMA   0x20000
 /* The options are taken from the config file (PR#1929) */
 
 extern int si_debug;

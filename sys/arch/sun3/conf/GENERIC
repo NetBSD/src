@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.35 1997/01/31 02:08:21 thorpej Exp $
+#	$NetBSD: GENERIC,v 1.35.2.1 1997/03/12 14:04:27 is Exp $
 
 #
 # GENERIC Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -19,9 +19,10 @@ options 	KTRACE			# system call tracing support
 
 # Debugging options.  Uncomment either this:
 options 	DDB
-# ... or these two: (for KGDB on another machine)
-#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+# ... or these for KGDB (gdb remote target)
+#makeoptions DEBUG="-g"			# debugging symbols for gdb
 #options 	KGDB
+#options 	KGDBDEV=0x0C01
 
 # Filesystem options
 file-system 	FFS		# ufs file system

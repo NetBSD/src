@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.32 1997/01/23 02:11:23 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.32.4.1 1997/03/12 13:55:15 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <machine/pmap.h>
 
 #include <sparc/sparc/vaddrs.h>
+#include <sparc/sparc/cpuvar.h>
 
 #ifndef DDB
 #define	Debugger()
@@ -288,13 +289,15 @@ si_match(parent, cf, aux)
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
 		/* AFAIK, the `si' can only exist on the vmes. */
-		if (strcmp(ra->ra_name, "si") || cpumod == SUN4_100)
+		if (strcmp(ra->ra_name, "si") ||
+		    cpuinfo.cpu_type == CPUTYP_4_100)
 			return (0);
 		break;
 
 	case BUS_OBIO:
 		/* AFAIK, an `sw' can only exist on the obio. */
-		if (strcmp(ra->ra_name, "sw") || cpumod != SUN4_100)
+		if (strcmp(ra->ra_name, "sw") ||
+		    cpuinfo.cpu_type != CPUTYP_4_100)
 			return (0);
 		break;
 
@@ -410,8 +413,8 @@ si_attach(parent, self, args)
 	}
 
 	ncr_sc->sc_flags = 0;
-	if (sc->sc_options & SI_DO_RESELECT)
-		ncr_sc->sc_flags |= NCR5380_PERMIT_RESELECT;
+	if ((sc->sc_options & SI_DO_RESELECT) == 0)
+		ncr_sc->sc_no_disconnect = 0xFF;
 	if ((sc->sc_options & SI_DMA_INTR) == 0)
 		ncr_sc->sc_flags |= NCR5380_FORCE_POLLING;
 	ncr_sc->sc_min_dma_len = MIN_DMA_LEN;

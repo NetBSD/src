@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.4 1997/02/04 04:57:15 perry Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4.2.1 1997/03/12 14:04:50 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -114,7 +114,7 @@ void	cninit __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
 
-int 	fpu_emulate __P((struct frame *, struct fpframe *));
+int 	fpu_emulate __P((struct trapframe *, struct fpframe *));
 
 int 	getdfc __P((void));
 int 	getsfc __P((void));
@@ -138,7 +138,7 @@ void	pmap_bootstrap __P((void));
 void	pmap_get_ksegmap __P((u_char *));
 void	pmap_get_pagemap __P((int *pt, int off));
 
-void	regdump __P((struct frame *, int));
+void	regdump __P((struct trapframe *, int));
 
 void	savectx __P((struct pcb *));
 

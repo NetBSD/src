@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 1997/01/27 21:59:56 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.65.2.1 1997/03/12 14:05:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -56,6 +56,9 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
+#ifdef	KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
@@ -77,14 +80,16 @@ extern struct emul emul_sunos;
 extern char fubail[], subail[];
 
 /* These are called from locore.s */
-void syscall __P((register_t code, struct frame));
-void trap __P((int type, u_int code, u_int v, struct frame));
-int _nodb_trap __P((int type, struct frame *));
+void syscall __P((register_t code, struct trapframe));
+void trap __P((int type, u_int code, u_int v, struct trapframe));
+void trap_kdebug __P((int type, struct trapframe tf));
+int _nodb_trap __P((int type, struct trapframe *));
+void straytrap __P((struct trapframe));
+
+static void userret __P((struct proc *, struct trapframe *, u_quad_t));
 
 int astpending;
 int want_resched;
-
-static void userret __P((struct proc *, struct frame *, u_quad_t));
 
 char	*trap_type[] = {
 	"Bus error",
@@ -139,6 +144,7 @@ int mmupid = -1;
 #define MDB_WBFOLLOW	2
 #define MDB_WBFAILED	4
 #define MDB_CPFAULT 	8
+static int curtrap = -1;
 #endif
 
 /*
@@ -146,9 +152,9 @@ int mmupid = -1;
  * returning to user mode.
  */
 static void
-userret(p, fp, oticks)
+userret(p, tf, oticks)
 	register struct proc *p;
-	register struct frame *fp;
+	register struct trapframe *tf;
 	u_quad_t oticks;
 {
 	int sig, s;
@@ -182,7 +188,7 @@ userret(p, fp, oticks)
 	 */
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
-		addupc_task(p, fp->f_pc,
+		addupc_task(p, tf->tf_pc,
 		            (int)(p->p_sticks - oticks) * psratio);
 	}
 
@@ -196,10 +202,10 @@ userret(p, fp, oticks)
  */
 /*ARGSUSED*/
 void
-trap(type, code, v, frame)
+trap(type, code, v, tf)
 	int type;
 	u_int code, v;
-	struct frame frame;
+	struct trapframe tf;
 {
 	register struct proc *p;
 	register int sig, tmp;
@@ -219,12 +225,23 @@ trap(type, code, v, frame)
 		panic("trap: no pcb");
 #endif
 
-	if (USERMODE(frame.f_sr)) {
+	if (USERMODE(tf.tf_sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
-		p->p_md.md_regs = frame.f_regs;
-	} else
+		p->p_md.md_regs = tf.tf_regs;
+	} else {
 		sticks = 0;
+#ifdef	DEBUG
+		if (curtrap == -1)
+			curtrap = type;
+		else {
+			printf("trap %d recursion\n", curtrap);
+			/* Debugger may longjmp() */
+			curtrap = -1;
+			goto dopanic;
+		}
+#endif
+	}
 
 	switch (type) {
 	default:
@@ -238,11 +255,11 @@ trap(type, code, v, frame)
 		tmp = splhigh();
 #ifdef KGDB
 		/* If connected, step or cont returns 1 */
-		if (kgdb_trap(type, &frame))
+		if (kgdb_trap(type, &tf))
 			goto kgdb_cont;
 #endif
 #ifdef	DDB
-		(void) kdb_trap(type, (db_regs_t *) &frame);
+		(void) kdb_trap(type, (db_regs_t *) &tf);
 #endif
 #ifdef KGDB
 	kgdb_cont:
@@ -256,7 +273,7 @@ trap(type, code, v, frame)
 			 */
 			panic("trap during panic!");
 		}
-		regdump(&frame, 128);
+		regdump(&tf, 128);
 		type &= ~T_USER;
 		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
@@ -274,10 +291,10 @@ trap(type, code, v, frame)
 		 * indicated location and set flag informing buserror code
 		 * that it may need to clean up stack frame.
 		 */
-		frame.f_stackadj = exframesize[frame.f_format];
-		frame.f_format = frame.f_vector = 0;
-		frame.f_pc = (int) p->p_addr->u_pcb.pcb_onfault;
-		return;
+		tf.tf_stackadj = exframesize[tf.tf_format];
+		tf.tf_format = tf.tf_vector = 0;
+		tf.tf_pc = (int) p->p_addr->u_pcb.pcb_onfault;
+		goto done;
 
 	case T_BUSERR|T_USER:	/* bus error */
 	case T_ADDRERR|T_USER:	/* address error */
@@ -301,7 +318,7 @@ trap(type, code, v, frame)
 		p->p_sigcatch  &= ~tmp;
 		p->p_sigmask   &= ~tmp;
 		sig = SIGILL;
-		ucode = frame.f_format;
+		ucode = tf.tf_format;
 		break;
 
 	case T_COPERR|T_USER:	/* user coprocessor violation */
@@ -333,8 +350,8 @@ trap(type, code, v, frame)
 	case T_FPEMULI|T_USER:	/* unimplemented FP instuction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */
 #ifdef	FPU_EMULATE
-		sig = fpu_emulate(&frame, &p->p_addr->u_pcb.pcb_fpregs);
-		/* XXX - Deal with tracing? (frame.f_sr & PSL_T) */
+		sig = fpu_emulate(&tf, &p->p_addr->u_pcb.pcb_fpregs);
+		/* XXX - Deal with tracing? (tf.tf_sr & PSL_T) */
 #else
 		uprintf("pid %d killed: no floating point support\n", p->p_pid);
 		sig = SIGILL;
@@ -343,14 +360,14 @@ trap(type, code, v, frame)
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-		ucode = frame.f_format;
+		ucode = tf.tf_format;
 		sig = SIGILL;
 		break;
 
 	case T_ZERODIV|T_USER:	/* Divide by zero */
 	case T_CHKINST|T_USER:	/* CHK instruction trap */
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
-		ucode = frame.f_format;
+		ucode = tf.tf_format;
 		sig = SIGFPE;
 		break;
 
@@ -372,8 +389,8 @@ trap(type, code, v, frame)
 	 */
 	case T_TRACE:		/* kernel trace trap */
 	case T_TRAP15:		/* kernel breakpoint */
-		frame.f_sr &= ~PSL_T;
-		return;
+		tf.tf_sr &= ~PSL_T;
+		goto done;
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
@@ -386,7 +403,7 @@ trap(type, code, v, frame)
 		if (p->p_emul == &emul_sunos)
 			goto douret;
 #endif
-		frame.f_sr &= ~PSL_T;
+		tf.tf_sr &= ~PSL_T;
 		sig = SIGTRAP;
 		break;
 
@@ -403,9 +420,13 @@ trap(type, code, v, frame)
 		goto douret;
 
 	case T_MMUFLT:		/* kernel mode page fault */
+		/* Hacks to avoid calling VM code from debugger. */
 #ifdef	DDB
-		/* Hack to avoid calling VM code from DDB. */
 		if (db_recover != 0)
+			goto dopanic;
+#endif
+#ifdef	KGDB
+		if (kgdb_recover != 0)
 			goto dopanic;
 #endif
 		/*
@@ -436,7 +457,7 @@ trap(type, code, v, frame)
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
 		printf("trap: T_MMUFLT pid=%d, code=%x, v=%x, pc=%x, sr=%x\n",
-		       p->p_pid, code, v, frame.f_pc, frame.f_sr);
+		       p->p_pid, code, v, tf.tf_pc, tf.tf_sr);
 #endif
 
 		/*
@@ -474,7 +495,7 @@ trap(type, code, v, frame)
 
 #ifdef	DEBUG
 		if (rv && MDB_ISPID(p->p_pid)) {
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %x, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 			if (mmudebug & MDB_WBFAILED)
 				Debugger();
@@ -525,21 +546,26 @@ trap(type, code, v, frame)
 finish:
 	/* If trap was from supervisor mode, just return. */
 	if ((type & T_USER) == 0)
-		return;
+		goto done;
 	/* Post a signal if necessary. */
 	if (sig != 0)
 		trapsignal(p, sig, ucode);
 douret:
-	userret(p, &frame, sticks);
+	userret(p, &tf, sticks);
+
+done:
+#ifdef	DEBUG
+	curtrap = -1;
+#endif
 }
 
 /*
  * Process a system call.
  */
 void
-syscall(code, frame)
+syscall(code, tf)
 	register_t code;
-	struct frame frame;
+	struct trapframe tf;
 {
 	register caddr_t params;
 	register struct sysent *callp;
@@ -550,12 +576,12 @@ syscall(code, frame)
 	u_quad_t sticks;
 
 	cnt.v_syscall++;
-	if (!USERMODE(frame.f_sr))
+	if (!USERMODE(tf.tf_sr))
 		panic("syscall");
 	p = curproc;
 	sticks = p->p_sticks;
-	p->p_md.md_regs = frame.f_regs;
-	opc = frame.f_pc;
+	p->p_md.md_regs = tf.tf_regs;
+	opc = tf.tf_pc;
 
 	nsys = p->p_emul->e_nsysent;
 	callp = p->p_emul->e_sysent;
@@ -569,7 +595,7 @@ syscall(code, frame)
 		 * code assumes the kernel pops the syscall argument the
 		 * glue pushed on the stack. Sigh...
 		 */
-		code = fuword((caddr_t)frame.f_regs[SP]);
+		code = fuword((caddr_t)tf.tf_regs[SP]);
 
 		/*
 		 * XXX
@@ -578,7 +604,7 @@ syscall(code, frame)
 		 * number without a gap.
 		 */
 		if (code != SUNOS_SYS_sigreturn) {
-			frame.f_regs[SP] += sizeof (int);
+			tf.tf_regs[SP] += sizeof (int);
 			/*
 			 * remember that we adjusted the SP,
 			 * might have to undo this if the system call
@@ -593,7 +619,7 @@ syscall(code, frame)
 	}
 #endif
 
-	params = (caddr_t)frame.f_regs[SP] + sizeof(int);
+	params = (caddr_t)tf.tf_regs[SP] + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -642,20 +668,20 @@ syscall(code, frame)
 	if (error)
 		goto bad;
 	rval[0] = 0;
-	rval[1] = frame.f_regs[D1];
+	rval[1] = tf.tf_regs[D1];
 	error = (*callp->sy_call)(p, args, rval);
 	switch (error) {
 	case 0:
-		frame.f_regs[D0] = rval[0];
-		frame.f_regs[D1] = rval[1];
-		frame.f_sr &= ~PSL_C;	/* carry bit */
+		tf.tf_regs[D0] = rval[0];
+		tf.tf_regs[D1] = rval[1];
+		tf.tf_sr &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
 		 * We always enter through a `trap' instruction, which is 2
 		 * bytes, so adjust the pc by that amount.
 		 */
-		frame.f_pc = opc - 2;
+		tf.tf_pc = opc - 2;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -664,8 +690,8 @@ syscall(code, frame)
 	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
-		frame.f_regs[D0] = error;
-		frame.f_sr |= PSL_C;	/* carry bit */
+		tf.tf_regs[D0] = error;
+		tf.tf_sr |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -677,10 +703,10 @@ syscall(code, frame)
 	if (p->p_md.md_flags & MDP_STACKADJ) {
 		p->p_md.md_flags &= ~MDP_STACKADJ;
 		if (error == ERESTART)
-			frame.f_regs[SP] -= sizeof (int);
+			tf.tf_regs[SP] -= sizeof (int);
 	}
 #endif
-	userret(p, &frame, sticks);
+	userret(p, &tf, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -695,18 +721,18 @@ void
 child_return(p)
 	struct proc *p;
 {
-	struct frame *f;
+	struct trapframe *tf;
 
-	f = (struct frame *)p->p_md.md_regs;
-	f->f_regs[D0] = 0;
-	f->f_sr &= ~PSL_C;
-	f->f_format = FMT0;
+	tf = (struct trapframe *)p->p_md.md_regs;
+	tf->tf_regs[D0] = 0;
+	tf->tf_sr &= ~PSL_C;
+	tf->tf_format = FMT0;
 
 	/*
 	 * Old ticks (3rd arg) is zero so we will charge the child
 	 * for any clock ticks that might happen before this point.
 	 */
-	userret(p, f, 0);
+	userret(p, tf, 0);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
@@ -719,19 +745,76 @@ child_return(p)
  * Drop into the PROM temporarily...
  */
 int
-_nodb_trap(type, fp)
+_nodb_trap(type, tf)
 	int type;
-	struct frame *fp;
+	struct trapframe *tf;
 {
 
 	if ((0 <= type) && (type < trap_types))
 		printf("\r\nKernel %s,", trap_type[type]);
 	else
 		printf("\r\nKernel trap 0x%x,", type);
-	printf(" frame=%p\r\n", fp);
+	printf(" frame=%p\r\n", tf);
 	printf("\r\n*No debugger. Doing PROM abort...\r\n");
 	sunmon_abort();
 	/* OK then, just resume... */
-	fp->f_sr &= ~PSL_T;
+	tf->tf_sr &= ~PSL_T;
 	return(1);
+}
+
+/*
+ * This is called by locore for supervisor-mode trace and
+ * breakpoint traps.  This is separate from trap() above
+ * so that breakpoints in trap() will work.
+ *
+ * If we have both DDB and KGDB, let KGDB see it first,
+ * because KGDB will just return 0 if not connected.
+ */
+void
+trap_kdebug(type, tf)
+	int type;
+	struct trapframe tf;
+{
+
+#ifdef	KGDB
+	/* Let KGDB handle it (if connected) */
+	if (kgdb_trap(type, &tf))
+		return;
+#endif
+#ifdef	DDB
+	/* Let DDB handle it. */
+	if (kdb_trap(type, &tf))
+		return;
+#endif
+
+	/* Drop into the PROM temporarily... */
+	(void)_nodb_trap(type, &tf);
+}
+
+/*
+ * Called by locore.s for an unexpected interrupt.
+ * XXX - Almost identical to trap_kdebug...
+ */
+void
+straytrap(tf)
+	struct trapframe tf;
+{
+	int type = -1;
+
+	printf("unexpected trap; vector=0x%x at pc=0x%x\n",
+		tf.tf_vector, tf.tf_pc);
+
+#ifdef	KGDB
+	/* Let KGDB handle it (if connected) */
+	if (kgdb_trap(type, &tf))
+		return;
+#endif
+#ifdef	DDB
+	/* Let DDB handle it. */
+	if (kdb_trap(type, &tf))
+		return;
+#endif
+
+	/* Drop into the PROM temporarily... */
+	(void)_nodb_trap(type, &tf);
 }

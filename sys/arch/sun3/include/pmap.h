@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 1997/01/27 19:41:06 gwr Exp $	*/
+/*	$NetBSD: pmap.h,v 1.18.4.1 1997/03/12 14:04:52 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,19 +44,18 @@
  */
 
 struct pmap {
-	int	                pm_refcount;	/* pmap reference count */
-	simple_lock_data_t      pm_lock;	/* lock on pmap */
-	struct pmap_statistics	pm_stats;	/* pmap statistics */
-	int                     pm_version;
-	int                     pm_ctxnum;
-	unsigned char           *pm_segmap;
+	int             	pm_refcount;	/* pmap reference count */
+	simple_lock_data_t	pm_lock;    	/* lock on pmap */
+	int             	pm_version;
+	int             	pm_ctxnum;
+	unsigned char   	*pm_segmap;
 };
 
 typedef struct pmap *pmap_t;
 
 #ifdef _KERNEL
-extern struct pmap	kernel_pmap_store;
-#define	pmap_kernel()			(&kernel_pmap_store)
+extern	struct pmap	kernel_pmap_store;
+#define	pmap_kernel()	(&kernel_pmap_store)
 
 /* This is called from locore.s:cpu_switch() */
 void	pmap_activate __P((pmap_t pmap));
@@ -73,9 +72,19 @@ int _pmap_fault __P((vm_map_t, vm_offset_t, vm_prot_t));
 extern void pmap_prefer(vm_offset_t, vm_offset_t *);
 #define PMAP_PREFER(fo, ap) pmap_prefer((fo), (ap))
 
-/* This needs to be a macro to get code in kern_sysctl.c */
+/* This needs to be a macro for kern_sysctl.c */
 extern segsz_t pmap_resident_pages(pmap_t);
-#define	pmap_resident_count(pmap)	pmap_resident_pages(pmap)
+#define	pmap_resident_count(pmap)	(pmap_resident_pages(pmap))
+
+/* This needs to be a macro for vm_mmap.c */
+extern segsz_t pmap_wired_pages(pmap_t);
+#define	pmap_wired_count(pmap)	(pmap_wired_pages(pmap))
+
+/* We use the PA plus some low bits for device mmap. */
+#define pmap_phys_address(addr) 	(addr)
+
+/* Our memory is contiguous (or nearly so). */
+#define pmap_page_index(pa) (atop(pa))
 
 /*
  * Since PTEs also contain type bits, we have to have some way
@@ -86,11 +95,11 @@ extern segsz_t pmap_resident_pages(pmap_t);
  * The values below must agree with pte.h such that:
  *	(PMAP_OBIO << PG_MOD_SHIFT) == PGT_OBIO
  */
-#define	PMAP_OBIO	0x04		/* tells pmap_enter to use PG_OBIO */
-#define	PMAP_VME16	0x08		/* etc */
-#define	PMAP_VME32	0x0C		/* etc */
-#define	PMAP_NC		0x10		/* tells pmap_enter to set PG_NC */
-#define	PMAP_SPEC	0x1C		/* mask to get all above. */
+#define	PMAP_OBIO	0x04	/* tells pmap_enter to use PG_OBIO */
+#define	PMAP_VME16	0x08	/* etc */
+#define	PMAP_VME32	0x0C	/* etc */
+#define	PMAP_NC		0x10	/* tells pmap_enter to set PG_NC */
+#define	PMAP_SPEC	0x1C	/* mask to get all above. */
 
 #endif	/* _KERNEL */
 #endif	/* _MACHINE_PMAP_ */

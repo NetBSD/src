@@ -1,4 +1,4 @@
-/*	$NetBSD: vaddrs.h,v 1.7 1996/05/16 15:57:28 abrown Exp $ */
+/*	$NetBSD: vaddrs.h,v 1.7.8.1 1997/03/12 13:55:38 is Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -83,6 +83,7 @@
 #define	AUXREG_VA	(       ZS1_VA + _MAXNBPG)
 #define	TMPMAP_VA	(    AUXREG_VA + _MAXNBPG)
 #define	MSGBUF_VA	(    TMPMAP_VA + _MAXNBPG)
+#define INTRREG_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4/4c] */
 #define PI_INTR_VA	(    MSGBUF_VA + _MAXNBPG)		/* [4m] */
 #define SI_INTR_VA	(   PI_INTR_VA + _MAXNBPG*_MAXNCPU)	/* [4m] */
 #define	IODEV_BASE	(   SI_INTR_VA + _MAXNBPG)
@@ -114,5 +115,10 @@
 #define DVMA4M_TOP	0xffffffff 	/* do not modify */
 #define DVMA4M_START	0xfd000000	/* 16M of DVMA */
 #define DVMA4M_END	0xfe000000	/* XXX is this enough? */
+
+/*
+ * Virtual address of the per cpu `cpu_softc' structure.
+ */
+#define CPUINFO_VA	(KERNBASE+8192)
 
 #endif /* IODEV_0 */
