@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.20 1998/02/13 02:09:13 cgd Exp $ */
+/* $NetBSD: cpu.h,v 1.21 1998/02/16 03:59:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -145,6 +145,7 @@ void	XentRestart __P((void));				/* MAGIC */
 void	XentSys __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
 void	XentUna __P((u_int64_t, u_int64_t, u_int64_t));		/* MAGIC */
 void	alpha_init __P((u_long, u_long, u_long, u_long, u_long));
+int	alpha_pa_access __P((u_long));
 void	ast __P((struct trapframe *));
 int	badaddr	__P((void *, size_t));
 int	badaddr_read __P((void *, size_t, void *));
