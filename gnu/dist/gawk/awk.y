@@ -1905,7 +1905,7 @@ NODE *subn;
 		fatal("%s() cannot have %d argument%c",
 			tokentab[idx].operator, nexp, nexp == 1 ? ' ' : 's');
 
-	r->awkproc = tokentab[idx].ptr;
+	r->proc = tokentab[idx].ptr;
 
 	/* special case processing for a few builtins */
 	/*
@@ -1913,14 +1913,14 @@ NODE *subn;
 	 *	  here is really right. Move anything that's not into
 	 *	  the corresponding routine.
 	 */
-	if (nexp == 0 && r->awkproc == do_length) {
+	if (nexp == 0 && r->proc == do_length) {
 		subn = node(node(make_number(0.0), Node_field_spec, (NODE *) NULL),
 		            Node_expression_list,
 			    (NODE *) NULL);
-	} else if (r->awkproc == do_match) {
+	} else if (r->proc == do_match) {
 		if (subn->rnode->lnode->type != Node_regex)
 			subn->rnode->lnode = mk_rexp(subn->rnode->lnode);
-	} else if (r->awkproc == do_sub || r->awkproc == do_gsub) {
+	} else if (r->proc == do_sub || r->proc == do_gsub) {
 		if (subn->lnode->type != Node_regex)
 			subn->lnode = mk_rexp(subn->lnode);
 		if (nexp == 2)
@@ -1934,8 +1934,8 @@ NODE *subn;
 				warning("string literal as last arg of substitute");
 		} else if (! isassignable(subn->rnode->rnode->lnode))
 			yyerror("%s third parameter is not a changeable object",
-				r->awkproc == do_sub ? "sub" : "gsub");
-	} else if (r->awkproc == do_gensub) {
+				r->proc == do_sub ? "sub" : "gsub");
+	} else if (r->proc == do_gensub) {
 		if (subn->lnode->type != Node_regex)
 			subn->lnode = mk_rexp(subn->lnode);
 		if (nexp == 3)
@@ -1944,7 +1944,7 @@ NODE *subn;
 						     (NODE *) NULL),
 					        Node_expression_list,
 						(NODE *) NULL));
-	} else if (r->awkproc == do_split) {
+	} else if (r->proc == do_split) {
 		if (nexp == 2)
 			append_right(subn,
 			    node(FS_node, Node_expression_list, (NODE *) NULL));
