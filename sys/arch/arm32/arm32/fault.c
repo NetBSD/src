@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.38 1999/03/23 17:14:35 mycroft Exp $	*/
+/*	$NetBSD: fault.c,v 1.39 1999/03/23 18:02:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -330,48 +330,29 @@ copyfault:
 		panic("Unhandled trap (frame = %p)", frame);
 #endif	/* DDB */
           
-	case FAULT_PERM_S:		 /* Section Permission Fault */
-		/*
-		 * Section permission faults should not happen often.
-		 * Only from user processes mis-behaving.
-		 * If this happens from SVC mode then we are in trouble.
-		 */
-		if (user == 0)
-			goto we_re_toast;
-
-		report_abort("", fault_status, fault_address, fault_pc);
-		trapsignal(p, SIGSEGV, TRAP_CODE);
-		break;
-
+	case FAULT_TRANS_P:              /* Page Translation Fault */
 	case FAULT_PERM_P:		 /* Page Permission Fault */
-	/* Ok we have a permission fault in user or kernel mode */
+	case FAULT_TRANS_S:              /* Section Translation Fault */
+	case FAULT_PERM_S:		 /* Section Permission Fault */
+	/*
+	 * Page/section translation/permission fault -- need to fault in
+	 * the page and possibly the page table page.
+	 */
 	{
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
 		int rv;
 		vm_prot_t ftype;
+		extern vm_map_t kernel_map;
 
-		/*
-		 * Ok we have a permission fault in user mode. This will be
-		 * caused by writing read-only pages or by reading/writing
-		 * pages with no USR access from USR mode. This may be
-		 * a genuine fault or it may be a bad access.
-		 * It can also be caused software PTE modified bit emulation
-		 */
 		va = trunc_page((vm_offset_t)fault_address);
 
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
-			printf("page permission fault: addr=V%08lx ", va);
+			printf("page fault: addr=V%08lx ", va);
 #endif
-
-		if (va >= VM_MAXUSER_ADDRESS && user) {
-			report_abort("", fault_status, fault_address, fault_pc);
-			trapsignal(p, SIGSEGV, TRAP_CODE);
-			break;
-		}
-
+          
 		/*
 		 * It is only a kernel address space fault iff:
 		 *	1. user == 0  and
@@ -380,10 +361,9 @@ copyfault:
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
-		if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS
-		    || va <= VM_MIN_ADDRESS)) {
+		if (!user &&
+		    (va >= VM_MIN_KERNEL_ADDRESS || va < VM_MIN_ADDRESS)) {
 			/* Was the fault due to the FPE/IPKDB ? */
- 
 			if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
 				report_abort("UND32", fault_status,
 				    fault_address, fault_pc);
@@ -399,285 +379,77 @@ copyfault:
 				userret(p, frame->tf_pc, p->p_sticks);
 				return;
 			}
-
-			goto we_re_toast;
+			map = kernel_map;
 		} else
 			map = &vm->vm_map;
 
-#ifdef DIAGNOSTIC
-		if (va == 0 && map == kernel_map) {
-			printf("fault: bad kernel access at %lx\n", va);
-			goto we_re_toast;
-		}
-#endif
-
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
 			printf("vmmap=%p ", map);
 #endif
-
-		/*
-		 * We need to know whether the page should be mapped as
-		 * R or R/W. The MMU does not give us the info as to
-		 * whether the fault was caused by a read or a write.
-		 * This means we need to disassemble the instruction
-		 * responcible and determine if it was a read or write
-		 * instruction.
-		 */
-		ftype = VM_PROT_READ;
-
-		/* STR instruction ? */
-		if ((fault_instruction & 0x0c100000) == 0x04000000)
-			ftype |= VM_PROT_WRITE; 
-		/* STM or CDT instruction ? */
-		else if ((fault_instruction & 0x0a100000) == 0x08000000)
-			ftype |= VM_PROT_WRITE; 
-		/* STRH, STRSH or STRSB instruction ? */
-		else if ((fault_instruction & 0x0e100090) == 0x00000090)
-			ftype |= VM_PROT_WRITE; 
-		/* SWP instruction ? */
-		else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
-			ftype |= VM_PROT_WRITE; 
-
-		if (pmap_modified_emulation(map->pmap, va))
-			goto out;
-		else {
-			/* The page must be mapped to cause a permission fault. */
-#if defined(UVM)
-			rv = uvm_fault(map, va, 0, ftype);
-#else
-			rv = vm_fault(map, va, ftype, FALSE);
-#endif
-#ifdef PMAP_DEBUG
-			if (pmap_debug_level >= 0)
-				printf("fault result=%d\n", rv);
-#endif
-			if (rv == KERN_SUCCESS)
-				goto out;
-			
-			report_abort("", fault_status, fault_address, fault_pc);
-			if (rv == KERN_RESOURCE_SHORTAGE) {
-				printf("UVM: pid %d (%s), uid %d killed: "
-				       "out of swap\n", p->p_pid, p->p_comm,
-				       p->p_cred && p->p_ucred ?
-				       p->p_ucred->cr_uid : -1);
-				trapsignal(p, SIGKILL, TRAP_CODE);
-			} else {
-				trapsignal(p, SIGSEGV, TRAP_CODE);
-			}
-			break;
-		}
-		break;
-	}            
-
-	case FAULT_TRANS_P:              /* Page Translation Fault */
-	/* Ok page translation fault - The page does not exist */
-	{
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
-		int rv;
-		vm_prot_t ftype;
-		extern vm_map_t kernel_map;
-		u_int nss;
-
-		va = trunc_page((vm_offset_t)fault_address);
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("page fault: addr=V%08lx ", va);
-#endif
-          
-		if (va >= VM_MAXUSER_ADDRESS && user) {
-			report_abort("", fault_status, fault_address, fault_pc);
-			trapsignal(p, SIGSEGV, TRAP_CODE);
-			break;
-		}
-
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. user == 0  and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (user == 0 && (va >= VM_MIN_KERNEL_ADDRESS
-		    || va < VM_MIN_ADDRESS))
-			map = kernel_map;
-		else
-			map = &vm->vm_map;
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("vmmap=%p ", map);
-#endif
-		if (pmap_handled_emulation(map->pmap, va))
-			goto out;
 
 		/*
 		 * We need to know whether the page should be mapped
 		 * as R or R/W. The MMU does not give us the info as
 		 * to whether the fault was caused by a read or a write.
 		 * This means we need to disassemble the instruction
-		 * responcible and determine if it was a read or write
-		 * instruction. For the moment we will cheat and make
-		 * it read only. If it was a write, when the instruction
-		 * is re-executed we will get a permission fault instead.
+		 * responsible and determine if it was a read or write
+		 * instruction.
 		 */
- 
-		ftype = VM_PROT_READ;
-
 		/* STR instruction ? */
 		if ((fault_instruction & 0x0c100000) == 0x04000000)
-			ftype |= VM_PROT_WRITE; 
+			ftype = VM_PROT_READ | VM_PROT_WRITE; 
 		/* STM or CDT instruction ? */
 		else if ((fault_instruction & 0x0a100000) == 0x08000000)
-			ftype |= VM_PROT_WRITE; 
+			ftype = VM_PROT_READ | VM_PROT_WRITE; 
 		/* STRH, STRSH or STRSB instruction ? */
 		else if ((fault_instruction & 0x0e100090) == 0x00000090)
-			ftype |= VM_PROT_WRITE; 
+			ftype = VM_PROT_READ | VM_PROT_WRITE; 
 		/* SWP instruction ? */
 		else if ((fault_instruction & 0x0fb00ff0) == 0x01000090)
-			ftype |= VM_PROT_WRITE; 
+			ftype = VM_PROT_READ | VM_PROT_WRITE; 
+		else
+			ftype = VM_PROT_READ;
 
 #ifdef PMAP_DEBUG
 		if (pmap_debug_level >= 0)
 			printf("fault protection = %d\n", ftype);
 #endif
             
-#ifdef DIAGNOSTIC
-		if (va == 0 && map == kernel_map) {
-			printf("trap: bad kernel access at %lx\n", va);
-			goto we_re_toast;
-		}
-#endif	/* DIAGNOSTIC */
-
-		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr
-		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
-		    && map != kernel_map) {
-			nss = clrnd(btoc(USRSTACK-(u_int)va));
-			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				rv = KERN_FAILURE;
-				goto nogo;
-			}
-		}
+		if ((ftype & VM_PROT_WRITE) ?
+		    pmap_modified_emulation(map->pmap, va) :
+		    pmap_handled_emulation(map->pmap, va))
+			goto out;
 
 #if defined(UVM)
 		rv = uvm_fault(map, va, 0, ftype);
 #else
 		rv = vm_fault(map, va, ftype, FALSE);
 #endif
-		if (rv == KERN_SUCCESS) {
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-			if (fault_code == FAULT_TRANS_P)
-				return;
+		if (rv == KERN_SUCCESS)
 			goto out;
-		}
-nogo:
+
 		if (user == 0) {
-			if (pcb->pcb_onfault)
-				goto copyfault;
-			printf("Failed page fault in kernel\n");
-			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
-			    map, va, ftype, rv);
-			goto we_re_toast;
-		}
-		report_abort("", fault_status, fault_address, fault_pc);
-		trapsignal(p, SIGSEGV, TRAP_CODE);
-		break;
-	}            
-          
-	case FAULT_TRANS_S:              /* Section Translation Fault */
-	/* Section translation fault - the L1 page table does not exist */
-	{
-		register vm_offset_t va;
-		register struct vmspace *vm = p->p_vmspace;
-		register vm_map_t map;
-		int rv;
-		vm_prot_t ftype;
-		u_int nss;
-
-		va = trunc_page((vm_offset_t)fault_address);
-
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("section fault page addr=V%08lx\n", va);
-#endif
-          
-		/*
-		 * It is only a kernel address space fault iff:
-		 *	1. user == 0  and
-		 *	2. pcb_onfault not set or
-		 *	3. pcb_onfault set but supervisor space fault
-		 * The last can occur during an exec() copyin where the
-		 * argument space is lazy-allocated.
-		 */
-		if (user == 0 && va >= VM_MIN_KERNEL_ADDRESS)
-			map = kernel_map;
-		else
-			map = &vm->vm_map;
-
-		/* We are mapping a page table so this must be kernel r/w */
-		ftype = VM_PROT_READ | VM_PROT_WRITE;
-#ifdef DIAGNOSTIC
-		if (va == 0 && map == kernel_map) {
-			printf("trap: bad kernel access at %lx\n", va);
-			goto we_re_toast;
-		}
-#endif	/* DIAGNOSTIC */
-
-		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr
-		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
-		    && map != kernel_map) {
-			nss = clrnd(btoc(USRSTACK-(u_int)va));
-			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-#ifdef DEBUG
-				printf("Stack limit exceeded %x %x\n",
-				    nss, (u_int)btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur));
-#endif
-				rv = KERN_FAILURE;
-				goto nogo1;
-			}
-		}
-
-		/* check if page table is mapped, if not, fault it first */
-#ifdef PMAP_DEBUG
-		if (pmap_debug_level >= 0)
-			printf("faulting in page %08lx\n", va);
-#endif
-		ftype = VM_PROT_READ;
-
-#if defined(UVM)
-		rv = uvm_fault(map, va, 0, ftype);
-#else
-		rv = vm_fault(map, va, ftype, FALSE);
-#endif
-		if (rv == KERN_SUCCESS) {
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-			if (fault_code == FAULT_TRANS_S)
-				return;
-			goto out;
-		}
-nogo1:
-		report_abort("", fault_status, fault_address, fault_pc);
-		if (user == 0) {
-			printf("Section fault in SVC mode\n");
 			if (pcb->pcb_onfault)
 				goto copyfault;
 			printf("[u]vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, SIGSEGV, TRAP_CODE);
+
+		report_abort("", fault_status, fault_address, fault_pc);
+		if (rv == KERN_RESOURCE_SHORTAGE) {
+			printf("UVM: pid %d (%s), uid %d killed: "
+			       "out of swap\n", p->p_pid, p->p_comm,
+			       p->p_cred && p->p_ucred ?
+			       p->p_ucred->cr_uid : -1);
+			trapsignal(p, SIGKILL, TRAP_CODE);
+		} else
+			trapsignal(p, SIGSEGV, TRAP_CODE);
 		break;
 	}            
 	}
-
+          
 out:
 	/* Call userret() if it was a USR mode fault */
 	if (user)
