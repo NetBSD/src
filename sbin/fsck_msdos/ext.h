@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.5 1997/10/17 11:19:48 ws Exp $	*/
+/*	$NetBSD: ext.h,v 1.6 2000/04/25 23:02:51 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -72,6 +72,8 @@ int checkfilesys __P((const char *));
 #define	FSFATMOD	4		/* The FAT was modified */
 #define	FSERROR		8		/* Some unrecovered error remains */
 #define	FSFATAL		16		/* Some unrecoverable error occured */
+#define FSDIRTY		32		/* File system is dirty */
+#define FSFIXFAT	64		/* Fix file system FAT */
 
 /*
  * read a boot block in a machine independend fashion and translate
@@ -104,7 +106,7 @@ int checkfat __P((struct bootblock *, struct fatEntry *));
 /*
  * Write back FAT entries
  */
-int writefat __P((int, struct bootblock *, struct fatEntry *));
+int writefat __P((int, struct bootblock *, struct fatEntry *, int));
 
 /*
  * Read a directory
