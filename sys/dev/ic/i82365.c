@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.58 2000/04/02 18:29:14 mycroft Exp $	*/
+/*	$NetBSD: i82365.c,v 1.59 2000/04/03 01:55:25 cgd Exp $	*/
 
 #define	PCICDEBUG
 
@@ -198,6 +198,11 @@ pcic_attach(sc)
 		if (socket == 0)
 			h->vendor = (h+1)->vendor = pcic_vendor(h);
 
+		/*
+		 * During the socket probe, read the ident register twice.
+		 * I don't understand why, but sometimes the clone chips
+		 * in hpcmips boxes read all-0s the first time. -- mycroft
+		 */
 		reg = pcic_read(h, PCIC_IDENT);
 		reg = pcic_read(h, PCIC_IDENT);
 		DPRINTF(("ident reg 0x%02x\n", reg));
