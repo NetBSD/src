@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.3 1994/02/27 09:09:50 deraadt Exp $
+ * $Id: kbd.c,v 1.4 1994/02/27 19:49:11 deraadt Exp $
  */
 
 /*
@@ -586,6 +586,7 @@ kbdioctl(dev_t dev, int cmd, register caddr_t data, int flag, struct proc *p)
 		return (0);
 
 	case KIOCLAYOUT:
+		*data = 0;
 		return (0);
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
