@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.14 1994/10/07 14:28:26 mycroft Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.15 1995/01/19 01:54:52 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -40,6 +40,8 @@
 
 #ifndef	_CDEFS_H_
 #define	_CDEFS_H_
+
+#include <machine/cdefs.h>
 
 #if defined(__cplusplus)
 #define	__BEGIN_DECLS	extern "C" {
@@ -119,24 +121,6 @@
 #ifndef __dead
 #define	__dead
 #define	__pure
-#endif
-
-#ifdef __GNUC__
-#ifdef __STDC__
-#define __weak_reference(sym,alias)	\
-	__asm__(".stabs \"_" #alias "\",11,0,0,0");	\
-	__asm__(".stabs \"_" #sym "\",1,0,0,0")
-#define __warn_references(sym,msg)	\
-	__asm__(".stabs \"" msg "\",30,0,0,0");		\
-	__asm__(".stabs \"_" #sym "\",1,0,0,0")
-#else
-#define __weak_reference(sym,alias)	\
-	__asm__(".stabs \"_/**/alias\",11,0,0,0");	\
-	__asm__(".stabs \"_/**/sym\",1,0,0,0")
-#define __warn_references(sym,msg)	\
-	__asm__(".stabs msg,30,0,0,0");			\
-	__asm__(".stabs \"_/**/sym\",1,0,0,0")
-#endif
 #endif
 
 #endif /* !_CDEFS_H_ */
