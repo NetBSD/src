@@ -1,4 +1,4 @@
-/*	$NetBSD: bios.S,v 1.13 1996/01/06 22:15:29 mycroft Exp $	*/
+/*	$NetBSD: bios.S,v 1.13.4.1 1996/12/10 05:26:14 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -69,25 +69,26 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 ENTRY(biosread)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movb	16(%ebp), %dh
-	movw	12(%ebp), %cx
+	movb	28(%esp), %dh
+	movw	24(%esp), %cx
 	xchgb	%ch, %cl	# cylinder; the highest 2 bits of cyl is in %cl
 	rorb	$2, %cl
-	movb	20(%ebp), %al
+	movb	32(%esp), %al
 	orb	%al, %cl
 	incb	%cl		# sector; sec starts from 1, not 0
-	movb	8(%ebp), %dl	# device
-	movl	28(%ebp), %ebx	# offset
+	movb	20(%esp), %dl	# device
+	movl	40(%esp), %ebx	# offset
 				# prot_to_real will set %es to BOOTSEG
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
 	movb	$0x2, %ah	# subfunction
 	addr32
-	movb	24(%ebp), %al	# number of sectors
+	movb	36(%esp), %al	# number of sectors
 	int	$0x13
 	setc	%bl
 
@@ -97,31 +98,36 @@ ENTRY(biosread)
 	xorl	%eax, %eax
 	movb	%bl, %al	# return value in %ax
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
 
 
-/*
 #ifndef SERIAL
+/*
 # BIOS call "INT 10H Function 0Eh" to write character to console
 #	Call with	%ah = 0x0e
 #			%al = character
 #			%bh = page
 #			%bl = foreground color
-#else
+*/
+#else /* SERIAL */
+/*
 # BIOS call "INT 14H Function 01h" to write character to console
 #	Call with	%ah = 0x01
 #			%al = character
 #			%dx = port number
-#endif
 */
+#endif /* SERIAL */
 ENTRY(putc)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movb	8(%ebp), %cl
+	movb	20(%esp), %cl
 
 	call	_C_LABEL(prot_to_real)
 
@@ -132,49 +138,54 @@ ENTRY(putc)
 	data32
 	movl	$0x0001, %ebx
 	int	$0x10		# display a byte
-#else
+#else /* SERIAL */
 	movb	$0x01, %ah
 	xorl	%edx, %edx
 	int	$0x14		# display a byte
-#endif
+#endif /* SERIAL */
 
 	data32
 	call	_C_LABEL(real_to_prot)
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
 
 
-/*
 #ifndef SERIAL
+/*
 # BIOS call "INT 16H Function 00H" to read character from the keyboard
 #	Call with	%ah = 0x00
 #	Return:		%ah = keyboard scan code
 #			%al = ASCII character
-#else
+*/
+#else /* SERIAL */
+/*
 # BIOS call "INT 14H Function 02H" to read character from the serial port
 #	Call with	%ah = 0x02
 #			%dx = port number
 #	Return:		%ah = line status
 #			%al = ASCII character
-#endif
 */
+#endif /* SERIAL */
 ENTRY(getc)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	call	_C_LABEL(prot_to_real)
 
 #ifndef SERIAL
 	movb	$0x00, %ah
 	int	$0x16
-#else
+#else /* SERIAL */
 	movb	$0x02, %ah
 	xorl	%edx, %edx
 	int	$0x14
-#endif
+#endif /* SERIAL */
 
 	movb	%al, %bl	# real_to_prot uses %eax
 
@@ -184,13 +195,15 @@ ENTRY(getc)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
 
 
-/*
 #ifndef SERIAL
+/*
 # BIOS call "INT 16H Function 01H" to check whether a character is pending
 #	Call with	%ah = 0x01
 #	Return:	
@@ -200,18 +213,21 @@ ENTRY(getc)
 #			ZF  = clear
 #		else
 #			ZF  = set
-#else
+*/
+#else /* SERIAL */
+/*
 # BIOS call "INT 14H Function 03H" to check whether a character is pending
 #	Call with	%ah = 0x03
 #			%dx = port number
 #	Return:		%ah = line status
 #			%al = modem status
-#endif
 */
+#endif /* SERIAL */
 ENTRY(ischar)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
 	call	_C_LABEL(prot_to_real)
 
@@ -219,12 +235,12 @@ ENTRY(ischar)
 	movb	$0x01, %ah
 	int	$0x16
 	setnz	%ah
-#else
+#else /* SERIAL */
 	movb	$0x03, %ah
 	xorl	%edx, %edx
 	int	$0x14
 	andb	$0x1f, %ah
-#endif
+#endif /* SERIAL */
 
 	movb	%ah, %bl	# real_to_prot uses %eax
 
@@ -234,6 +250,8 @@ ENTRY(ischar)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -247,10 +265,11 @@ ENTRY(ischar)
 
 ENTRY(get_diskinfo)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movb	8(%ebp), %dl		# diskinfo(drive #)
+	movb	20(%esp), %dl		# diskinfo(drive #)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
@@ -284,6 +303,8 @@ ok:
 	andb	$0x3f, %cl		# mask of cylinder gunk
 	movb	%cl, %al		# max sector (and # sectors)
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -300,10 +321,11 @@ ok:
 
 ENTRY(memsize)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movl	8(%ebp), %ebx
+	movl	20(%esp), %ebx
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
@@ -326,6 +348,9 @@ xdone:
 	call	_C_LABEL(real_to_prot)
 
 	movl	%ebx, %eax
+
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
@@ -343,11 +368,12 @@ xdone:
 */
 ENTRY(usleep)
 	pushl	%ebp
-	movl	%esp, %ebp
 	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
 
-	movw	8(%ebp), %dx
-	movw	10(%ebp), %cx
+	movw	20(%esp), %dx
+	movw	22(%esp), %cx
 
 	call	_C_LABEL(prot_to_real)
 
@@ -363,6 +389,8 @@ ENTRY(usleep)
 	xorl	%eax, %eax
 	movb	%bl, %al
 
+	popl	%edi
+	popl	%esi
 	popl	%ebx
 	popl	%ebp
 	ret
