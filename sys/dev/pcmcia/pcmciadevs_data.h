@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.56 1999/10/28 20:00:29 sommerfeld Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.57 1999/11/06 00:59:56 enami Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.55 1999/10/28 19:59:31 sommerfeld Exp 
+ *	NetBSD: pcmciadevs,v 1.56 1999/11/06 00:58:32 enami Exp 
  */
 
 /*-
@@ -206,11 +206,11 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "IBM EtherJet Ethernet PC Card"	},
 	},
 	{
-	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
-	    PCMCIA_CIS_IODATA_PCLAT,
+	    PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
+	    PCMCIA_CIS_IODATA_PCLATE,
 	    0,
 	    "I-O DATA",
-	    "I-O DATA PCLA/T"	},
+	    "I-O DATA PCLA/TE"	},
 	},
 	{
 	    PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
@@ -533,6 +533,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "AmbiCom Inc",
 	    "AmbiCom AMB8002T"	},
+	},
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_IODATA_PCLAT,
+	    PCMCIA_CIS_IODATA_PCLAT,
+	    0,
+	    "I-O DATA",
+	    "IO-DATA PCLA/T"	},
 	},
 	{
 	    PCMCIA_VENDOR_FUJITSU, 0,
