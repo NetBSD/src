@@ -1,14 +1,22 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.24 1997/10/27 04:18:06 lukem Exp $
+#	$NetBSD: daily,v 1.25 1998/01/26 12:02:43 lukem Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
+export PATH
 host=`hostname`
 echo "Subject: $host daily run output"
 
 umask 077
+
+if [ -f /etc/rc.subr ]; then
+	. /etc/rc.subr
+else
+	echo "Can't read /etc/rc.subr; aborting."
+	exit 1;
+fi
 
 if [ -z "$MAILTO" -o "$USER" != "root" ]; then
   MAILTO=root
@@ -65,7 +73,7 @@ fi
 TMP=daily.$$
 TMP2=daily2.$$
 
-if [ "$find_core" != NO ] ; then
+if checkyesno find_core; then
 	find / \( ! -fstype local -o -fstype rdonly -o -fstype fdesc \
 		-o -fstype kernfs -o -fstype procfs \) -a -prune -o \
 		-name 'lost+found' -a -prune -o \
@@ -91,15 +99,15 @@ if [ "$find_core" != NO ] ; then
 	rm -f $TMP $TMP2
 fi
 
-if [ "$run_msgs" != NO ]; then
+if checkyesno run_msgs; then
 	msgs -c
 fi
 
-if [ "$expire_news" != NO -a -f /etc/news.expire ]; then
+if checkyesno expire_news && [ -f /etc/news.expire ]; then
 	/etc/news.expire
 fi
 
-if [ "$purge_accounting" != NO -a -f /var/account/acct ]; then
+if checkyesno purge_accounting && [ -f /var/account/acct ]; then
 	echo ""
 	echo "Purging accounting records:"
 	mv /var/account/acct.2 /var/account/acct.3
@@ -109,7 +117,7 @@ if [ "$purge_accounting" != NO -a -f /var/account/acct ]; then
 	sa -sq
 fi
 
-if [ "$run_calendar" != NO ]; then
+if checkyesno run_calendar; then
 	calendar -a > $TMP
 	if [ -s $TMP ]; then
 		echo ""
@@ -119,14 +127,14 @@ if [ "$run_calendar" != NO ]; then
 	rm -f $TMP
 fi
 
-if [ "$check_uucp" != NO -a -d /var/spool/uucp -a \
-    -f /usr/libexec/uucp/clean.daily ]; then
+if checkyesno check_uucp && \
+    [ -d /var/spool/uucp -a -f /usr/libexec/uucp/clean.daily ]; then
 	echo ""
 	echo "Cleaning up UUCP:"
 	su daemon -c /usr/libexec/uucp/clean.daily
 fi
 
-if [ "$check_disks" != NO ]; then
+if checkyesno check_disks; then
 	df -k > $TMP 
 	dump W > $TMP2
 	if [ -s $TMP -o -s $TMP2 ]; then
@@ -148,7 +156,7 @@ fi
 
 rm -f $TMP $TMP2
 
-if [ "$check_mailq" != NO ]; then
+if checkyesno check_mailq; then
 	mailq > $TMP
 	if ! grep -q "^Mail queue is empty$" $TMP; then
 		echo ""
@@ -159,7 +167,7 @@ fi
 
 rm -f $TMP
 
-if [ "$check_uucp" != NO -a -d /var/spool/uucp ]; then
+if checkyesno check_uucp && [ -d /var/spool/uucp ]; then
 	uustat -a > $TMP
 	if [ -s $TMP ]; then
 		echo ""
@@ -170,7 +178,7 @@ fi
 
 rm -f $TMP
 
-if [ "$check_network" != NO ]; then
+if checkyesno check_network; then
 	echo ""
 	echo "network:"
 	netstat -i
@@ -181,14 +189,14 @@ if [ "$check_network" != NO ]; then
 	fi
 fi
 
-if [ "$run_fsck" != NO ]; then
+if checkyesno run_fsck; then
 	echo ""
 	echo "Checking filesystems:"
 	fsck -n | grep -v '^\*\* Phase'
 fi
 
 echo ""
-if [ "$run_rdist" != NO -a -f /etc/Distfile ]; then
+if checkyesno run_rdist && [ -f /etc/Distfile ]; then
 	echo "Running rdist:"
 	if [ -d /var/log/rdist ]; then
 		logf=`date +%Y.%b.%e`
@@ -198,7 +206,7 @@ if [ "$run_rdist" != NO -a -f /etc/Distfile ]; then
 	fi
 fi
 
-if [ "$run_security" != NO ]; then
+if checkyesno run_security; then
 	sh /etc/security 2>&1 | mail -s "$host daily insecurity output" $MAILTO
 fi
 

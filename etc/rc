@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.99 1998/01/24 19:12:55 veego Exp $
+#	$NetBSD: rc,v 1.100 1998/01/26 12:02:50 lukem Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -119,9 +119,9 @@ for fs in /usr /var $critical_filesystems; do
 done
 
 # Network Address Translation...
-if [ "$ipnat" != NO ] && [ -f /etc/ipnat.conf ]; then
+if checkyesno ipnat && [ -f /etc/ipnat.conf ]; then
 	echo 'installing NAT rules ... '
-	if [ "$ipfilter" = NO ] || [ ! -f /etc/ipf.conf ]; then
+	if ! checkyesno ipfilter || [ ! -f /etc/ipf.conf ]; then
 		ipf -E -Fa
 	fi
 	ipnat -F -f /etc/ipnat.conf
@@ -133,7 +133,7 @@ fi
 swapctl -A -t noblk
 
 # Check for no swap, and warn about it unless that is desired.
-if [ "$no_swap" != YES ]; then
+if ! checkyesno no_swap; then
 	swapctl -s | grep 'no swap devices configured' > /dev/null && \
 		echo "WARNING:  no swap space configured!"
 fi
@@ -242,7 +242,7 @@ if checkyesno nfs_server; then
 		echo -n > /var/db/mountdtab
 		echo -n ' mountd';              mountd $mountd_flags
 		echo -n ' nfsd';                nfsd $nfsd_flags
-		nfs_locking=MAYBE
+		nfs_locking=YES
 	else
 		echo
 		logger -s "WARNING: /etc/exports not readable; " \
@@ -252,10 +252,10 @@ fi
 
 if checkyesno nfs_client; then
         echo -n ' nfsiod';              nfsiod $nfsiod_flags
-	nfs_locking=MAYBE
+	nfs_locking=YES
 fi
 
-if [ "$nfs_locking" != NO ]; then
+if checkyesno nfs_locking; then
 	if checkyesno statd; then
 		echo -n ' rpc.statd';		rpc.statd $statd_flags
 	fi

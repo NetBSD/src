@@ -1,16 +1,22 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.9 1997/10/27 04:11:40 lukem Exp $
+#	$NetBSD: weekly,v 1.10 1998/01/26 12:02:58 lukem Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
 export PATH
+host=`hostname`
+echo "Subject: $host weekly run output"
 
 umask 077
 
-host=`hostname`
-echo "Subject: $host weekly run output"
+if [ -f /etc/rc.subr ]; then
+	. /etc/rc.subr
+else
+	echo "Can't read /etc/rc.subr; aborting."
+	exit 1;
+fi
 
 if [ -s /etc/weekly.conf ]; then
 	. /etc/weekly.conf
@@ -45,7 +51,7 @@ fi
 #	rm -rf $TDIR
 #fi
 
-if [ "$clean_uucp" = YES ] && [ -f /usr/libexec/uucp/clean.weekly ]; then
+if checkyesno clean_uucp && [ -f /usr/libexec/uucp/clean.weekly ]; then
 	echo ""
 	echo "Cleaning up UUCP:"
 	su daemon -c /usr/libexec/uucp/clean.weekly
@@ -53,7 +59,7 @@ fi
 echo ""
 
 echo ""
-if [ "$rebuild_locatedb" = YES ] && [ -f /var/db/locate.database ]; then
+if checkyesno rebuild_locatedb && [ -f /var/db/locate.database ]; then
 	echo "Rebuilding locate database:"
 	chmod 644 /var/db/locate.database
 	chown nobody.nobody /var/db/locate.database

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: netstart,v 1.50 1998/01/24 19:12:54 veego Exp $
+#	$NetBSD: netstart,v 1.51 1998/01/26 12:02:47 lukem Exp $
 #	from: @(#)netstart	8.1 (Berkeley) 7/23/93
 
 if [ -f /etc/rc.subr ]; then
@@ -33,7 +33,7 @@ if [ -n "$domainname" ]; then
 fi
 
 # Flush all routes just to make sure it is clean
-if [ "$flushroutes" = YES ]; then
+if checkyesno flushroutes; then
 	route flush
 fi
 
@@ -91,7 +91,7 @@ if [ "$net_interfaces" != NO ]; then
 				ifconfig $int $args
 			done) < /etc/ifconfig.$int
 		else
-			if [ "$auto_ifconfig" != YES ]; then
+			if ! checkyesno auto_ifconfig; then
 				echo
 				echo "WARNING: /etc/ifconfig.$int missing " \
 				    "and ifconfig_$int not set; " \
