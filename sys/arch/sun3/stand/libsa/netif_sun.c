@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.11 1998/06/29 20:05:36 gwr Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.12 1998/07/02 21:58:25 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ struct devdata {
 	u_char dd_myea[6];
 } netif_devdata;
 
-void netif_getether(struct saioreq *, u_char *);
+void netif_getether(struct saif *, u_char *);
 
 
 /*
@@ -146,7 +146,7 @@ netif_init(aux)
 #endif
 
 	/* Record our ethernet address. */
-	netif_getether(si, dd->dd_myea);
+	netif_getether(si->si_sif, dd->dd_myea);
 
 	dd->dd_opens = 0;
 
@@ -428,37 +428,47 @@ break2:
 
 /*
  * Copy our Ethernet address into the passed array.
- * Later PROM versions offer a function to do this.
+ *
+ * On Sun3X machines I want to use the PROM function
+ * to get our Ethernet address, though I don't know
+ * which PROM versions support the sif->sif_macaddr()
+ * function of the Standalone network I/F.  At least
+ * PROM version 3.0 supports it.  Maybe earlier ones.
+ *
+ * Most old Sun3 PROMs do not have sif_macaddr, so
+ * just read the Sun3 IDPROM directly.
  */
 void
-netif_getether(si, ea)
-	struct saioreq *si;
+netif_getether(sif, ea)
+	struct saif *sif;
 	u_char *ea;
 {
-	struct saif *sif;
+	char *rev;
 
-	sif = si->si_sif;
-
-	/*
-	 * On Sun3X machines we want to use the PROM function
-	 * to gets our Ethernet address.  On old Sun3 machines
-	 * the PROM usually does not provide that function, so
-	 * those do it the old way (by reading control space).
-	 */
-	if (_is3x) {
-		/*
-		 * All Sun3X machines have PROM version 3.0 or later.
-		 * Well... I hope so anyway.  If not, loose here.
-		 */
-		if (romVectorPtr->monId[0] < '3')
-			panic("netboot on Sun3X needs PROM 3.0 or later");
-		(*sif->sif_macaddr)(ea);
+	if (_is3x == 0) {
+		/* Sun3: read the IDPROM */
+		sun3_etheraddr(ea);
 		return;
 	}
 
 	/*
-	 * Old Sun3 PROMs may not have sif_macaddr,
-	 * so go read the Sun3 IDPROM directly.
+	 * Sun3X: try to use sif->sif_macaddr(), but
+	 * check the PROM revision first.  Old PROMs
+	 * prefix the rev string (i.e. "Rev 2.6").
 	 */
-	sun3_etheraddr(ea);
+	rev = romVectorPtr->monId;
+	if (!strncmp(rev, "Rev ", 4))
+		rev += 4;
+	if (strcmp(rev, "3.0") < 0) {
+		printf("netif_getether: Uh oh, PROM Rev %s\n", rev);
+		printf(" sif [%p] %p %p %p %p\n", sif,
+			   sif->sif_xmit,
+			   sif->sif_poll,
+			   sif->sif_reset,
+			   sif->sif_macaddr);
+		printf("Please record those numbers, then do: c<enter>\n");
+		breakpoint();
+		printf("OK, calling sif->sif_macaddr ...\n");
+	}
+	(*sif->sif_macaddr)(ea);
 }
