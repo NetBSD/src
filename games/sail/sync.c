@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.14 2000/02/09 22:27:56 jsm Exp $	*/
+/*	$NetBSD: sync.c,v 1.15 2001/01/01 21:57:38 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.14 2000/02/09 22:27:56 jsm Exp $");
+__RCSID("$NetBSD: sync.c,v 1.15 2001/01/01 21:57:38 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,11 +69,7 @@ static long sync_seek;
 static FILE *sync_fp;
 
 void
-fmtship(buf, len, fmt, ship)
-	char *buf;
-	size_t len;
-	const char *fmt;
-	struct ship *ship;
+fmtship(char *buf, size_t len, const char *fmt, struct ship *ship)
 {
 	while (*fmt) {
 		if (len-- == 0) {
@@ -98,78 +94,50 @@ fmtship(buf, len, fmt, ship)
 
 /*VARARGS3*/
 void
-#ifdef __STDC__
 makesignal(struct ship *from, const char *fmt, struct ship *ship, ...)
-#else
-makesignal(va_alias)
-	va_dcl
-#endif
 {
 	char message[BUFSIZ];
 	char format[BUFSIZ];
 	va_list ap;
-#ifndef __STDC__
-	struct ship *from;
-	const char *fmt;
-	struct ship *ship;
 
-	va_start(ap);
-	from = va_arg(ap, struct ship *);
-	fmt = va_arg(ap, const char *);
-	ship = va_arg(ap, struct ship *);
-#else
 	va_start(ap, ship);
-#endif
 	fmtship(format, sizeof(format), fmt, ship);
-	(void) vsprintf(message, format, ap);
+	vsprintf(message, format, ap);
 	va_end(ap);
 	Writestr(W_SIGNAL, from, message);
 }
 
+/*VARARGS2*/
 void
-#ifdef __STDC__
 makemsg(struct ship *from, const char *fmt, ...)
-#else
-makemsg(va_alias)
-	va_dcl
-#endif
 {
 	char message[BUFSIZ];
 	va_list ap;
-#ifndef __STDC__
-	struct ship *from;
-	const char *fmt;
 
-	va_start(ap);
-	from = va_arg(ap, struct ship *);
-	fmt = va_arg(ap, const char *);
-#else
 	va_start(ap, fmt);
-#endif
-	(void) vsprintf(message, fmt, ap);
+	vsprintf(message, fmt, ap);
 	va_end(ap);
 	Writestr(W_SIGNAL, from, message);
 }
 
 int
-sync_exists(game)
-	int game;
+sync_exists(int game)
 {
 	char buf[sizeof sync_file];
 	struct stat s;
 	time_t t;
 
-	(void) sprintf(buf, SF, game);
-	(void) time(&t);
+	sprintf(buf, SF, game);
+	time(&t);
 	setegid(egid);
 	if (stat(buf, &s) < 0) {
 		setegid(gid);
 		return 0;
 	}
 	if (s.st_mtime < t - 60*60*2) {		/* 2 hours */
-		(void) unlink(buf);
-		(void) sprintf(buf, LF, game);
-		(void) unlink(buf);
+		unlink(buf);
+		sprintf(buf, LF, game);
+		unlink(buf);
 		setegid(gid);
 		return 0;
 	} else {
@@ -179,18 +147,18 @@ sync_exists(game)
 }
 
 int
-sync_open()
+sync_open(void)
 {
 	struct stat tmp;
 	if (sync_fp != NULL)
-		(void) fclose(sync_fp);
-	(void) sprintf(sync_lock, LF, game);
-	(void) sprintf(sync_file, SF, game);
+		fclose(sync_fp);
+	sprintf(sync_lock, LF, game);
+	sprintf(sync_file, SF, game);
 	setegid(egid);
 	if (stat(sync_file, &tmp) < 0) {
 		mode_t omask = umask(002);
 		sync_fp = fopen(sync_file, "w+");
-		(void) umask(omask);
+		umask(omask);
 	} else
 		sync_fp = fopen(sync_file, "r+");
 	setegid(gid);
@@ -201,54 +169,45 @@ sync_open()
 }
 
 void
-sync_close(remove)
-	char remove;
+sync_close(int remove)
 {
 	if (sync_fp != 0)
-		(void) fclose(sync_fp);
+		fclose(sync_fp);
 	if (remove) {
 		setegid(egid);
-		(void) unlink(sync_file);
+		unlink(sync_file);
 		setegid(gid);
 	}
 }
 
 void
-Write(type, ship, a, b, c, d)
-	int type;
-	struct ship *ship;
-	long a, b, c, d;
+Write(int type, struct ship *ship, long a, long b, long c, long d)
 {
 
-	(void) sprintf(sync_bp, "%d %d 0 %ld %ld %ld %ld\n",
+	sprintf(sync_bp, "%d %d 0 %ld %ld %ld %ld\n",
 		       type, ship->file->index, a, b, c, d);
 	while (*sync_bp++)
 		;
 	sync_bp--;
 	if (sync_bp >= &sync_buf[sizeof sync_buf])
 		abort();
-	(void) sync_update(type, ship, NULL, a, b, c, d);
+	sync_update(type, ship, NULL, a, b, c, d);
 }
 
 void
-Writestr(type, ship, a)
-	int type;
-	struct ship *ship;
-	const char *a;
+Writestr(int type, struct ship *ship, const char *a)
 {
-
-	(void) sprintf(sync_bp, "%d %d 1 %s\n",
-		       type, ship->file->index, a);
+	sprintf(sync_bp, "%d %d 1 %s\n", type, ship->file->index, a);
 	while (*sync_bp++)
 		;
 	sync_bp--;
 	if (sync_bp >= &sync_buf[sizeof sync_buf])
 		abort();
-	(void) sync_update(type, ship, a, 0, 0, 0, 0);
+	sync_update(type, ship, a, 0, 0, 0, 0);
 }
 
 int
-Sync()
+Sync(void)
 {
 	sig_t sighup, sigint;
 	int n;
@@ -280,7 +239,7 @@ Sync()
 	}
 	if (n <= 0)
 		return -1;
-	(void) fseek(sync_fp, sync_seek, SEEK_SET);
+	fseek(sync_fp, sync_seek, SEEK_SET);
 	for (;;) {
 		switch (fscanf(sync_fp, "%d%d%d", &type, &shipnum, &isstr)) {
 		case 3:
@@ -326,31 +285,27 @@ bad:
 	erred++;
 out:
 	if (!erred && sync_bp != sync_buf) {
-		(void) fseek(sync_fp, 0L, SEEK_END);
-		(void) fwrite(sync_buf, sizeof *sync_buf, sync_bp - sync_buf,
+		fseek(sync_fp, 0L, SEEK_END);
+		fwrite(sync_buf, sizeof *sync_buf, sync_bp - sync_buf,
 			sync_fp);
-		(void) fflush(sync_fp);
+		fflush(sync_fp);
 		sync_bp = sync_buf;
 	}
 	sync_seek = ftell(sync_fp);
 #ifdef LOCK_EX
-	(void) flock(fileno(sync_fp), LOCK_UN);
+	flock(fileno(sync_fp), LOCK_UN);
 #else
 	setegid(egid);
-	(void) unlink(sync_lock);
+	unlink(sync_lock);
 	setegid(gid);
 #endif
-	(void) signal(SIGHUP, sighup);
-	(void) signal(SIGINT, sigint);
+	signal(SIGHUP, sighup);
+	signal(SIGINT, sigint);
 	return erred ? -1 : 0;
 }
 
 int
-sync_update(type, ship, astr, a, b, c, d)
-	int type;
-	struct ship *ship;
-	const char *astr;
-	long a, b, c, d;
+sync_update(int type, struct ship *ship, const char *astr, long a, long b, long c, long d)
 {
 	switch (type) {
 	case W_DBP: {
@@ -427,7 +382,7 @@ sync_update(type, ship, astr, a, b, c, d)
 		break;
 		}
 	case W_CAPTAIN:
-		(void) strncpy(ship->file->captain, astr,
+		strncpy(ship->file->captain, astr,
 			sizeof ship->file->captain - 1);
 		ship->file->captain[sizeof ship->file->captain - 1] = 0;
 		break;
@@ -466,7 +421,7 @@ sync_update(type, ship, astr, a, b, c, d)
 		ship->specs->hull = a;
 		break;
 	case W_MOVE:
-		(void) strncpy(ship->file->movebuf, astr,
+		strncpy(ship->file->movebuf, astr,
 			sizeof ship->file->movebuf - 1);
 		ship->file->movebuf[sizeof ship->file->movebuf - 1] = 0;
 		break;
@@ -529,7 +484,7 @@ sync_update(type, ship, astr, a, b, c, d)
 		windspeed = b;
 		break;
 	case W_BEGIN:
-		(void) strcpy(ship->file->captain, "begin");
+		strcpy(ship->file->captain, "begin");
 		people++;
 		break;
 	case W_END:

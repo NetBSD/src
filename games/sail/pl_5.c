@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.8 2001/01/01 21:57:38 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.8 2001/01/01 21:57:38 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: pl_5.c,v 1.7 1999/02/10 00:45:46 hubertf Exp $");
 #define turnfirst(x) (*x == 'r' || *x == 'l')
 
 void
-acceptmove()
+acceptmove(void)
 {
 	int ta;
 	int ma;
@@ -65,7 +65,7 @@ acceptmove()
 
 	ta = maxturns(ms, &af);
 	ma = maxmove(ms, mf->dir, 0);
-	(void) sprintf(prompt, "move (%d,%c%d): ", ma, af ? '\'' : ' ', ta);
+	sprintf(prompt, "move (%d,%c%d): ", ma, af ? '\'' : ' ', ta);
 	sgetstr(prompt, buf, sizeof buf);
 	dir = mf->dir;
 	vma = ma;
@@ -140,15 +140,15 @@ acceptmove()
 		}
 	}
 	if (*buf)
-		(void) strcpy(movebuf, buf);
+		strcpy(movebuf, buf);
 	else
-		(void) strcpy(movebuf, "d");
+		strcpy(movebuf, "d");
 	Writestr(W_MOVE, ms, movebuf);
 	Msg("Helm: %s.", movebuf);
 }
 
 void
-acceptboard()
+acceptboard(void)
 {
 	struct ship *sp;
 	int n;
@@ -201,11 +201,7 @@ acceptboard()
 }
 
 void
-parties(crew, to, isdefense, buf)
-struct ship *to;
-int crew[3];
-char isdefense;
-char buf;
+parties(int *crew, struct ship *to, int isdefense, int buf)
 {
 	int k, j, men; 
 	struct BP *ptr;
@@ -231,26 +227,26 @@ char buf;
 			Write(isdefense ? W_DBP : W_OBP, ms,
 				j, turn, to->file->index, men);
 			if (isdefense) {
-				(void) wmove(slot_w, 2, 0);
+				wmove(slot_w, 2, 0);
 				for (k=0; k < NBP; k++)
 					if (temp[k] && !crew[k])
-						(void) waddch(slot_w, k + '1');
+						waddch(slot_w, k + '1');
 					else
-						(void) wmove(slot_w, 2, 1 + k);
-				(void) mvwaddstr(slot_w, 3, 0, "DBP");
+						wmove(slot_w, 2, 1 + k);
+				mvwaddstr(slot_w, 3, 0, "DBP");
 				makemsg(ms, "repelling boarders");
 			} else {
-				(void) wmove(slot_w, 0, 0);
+				wmove(slot_w, 0, 0);
 				for (k=0; k < NBP; k++)
 					if (temp[k] && !crew[k])
-						(void) waddch(slot_w, k + '1');
+						waddch(slot_w, k + '1');
 					else
-						(void) wmove(slot_w, 0, 1 + k);
-				(void) mvwaddstr(slot_w, 1, 0, "OBP");
+						wmove(slot_w, 0, 1 + k);
+				mvwaddstr(slot_w, 1, 0, "OBP");
 				makesignal(ms, "boarding the $$", to);
 			}
 			blockalarm();
-			(void) wrefresh(slot_w);
+			wrefresh(slot_w);
 			unblockalarm();
 		} else
 			Msg("Sending no crew sections.");
