@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.21 2000/07/02 17:40:18 sommerfeld Exp $ */
+/* $NetBSD: netisr.h,v 1.22 2000/07/02 19:58:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -58,6 +58,8 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_natm.h" 
+#include "arp.h"
+#include "ppp.h"
 
 #if !defined(_LOCORE)
 
@@ -73,7 +75,6 @@
 #ifdef INET
 #include <netinet/in.h>
 #include <netinet/ip_var.h>
-#include "arp.h"
 #if NARP > 0
 #include <netinet/if_inarp.h>
 #endif
@@ -101,7 +102,6 @@
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
 #endif
-#include "ppp.h"
 #if NPPP > 0
 #include <net/ppp_defs.h>
 #include <net/if_ppp.h>
