@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.106 2000/08/22 17:28:29 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.107 2000/09/23 00:48:29 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -79,7 +79,7 @@
 
 static void proc_stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
-static int build_corename __P((struct proc *, char *));
+static int build_corename __P((struct proc *, char [MAXPATHLEN]));
 #if COMPAT_NETBSD32
 static int coredump32 __P((struct proc *, struct vnode *));
 #endif
@@ -1547,48 +1547,42 @@ sys_nosys(p, v, retval)
 static int
 build_corename(p, dst)
 	struct proc *p;
-	char *dst;
+	char dst[MAXPATHLEN];
 {
 	const char *s;
-	char *d;
-	int len, i;
+	char *d, *end;
+	int i;
 	
-	for (s = p->p_limit->pl_corename, len = 0, d = dst;
+	for (s = p->p_limit->pl_corename, d = dst, end = d + MAXPATHLEN;
 	    *s != '\0'; s++) {
 		if (*s == '%') {
-			switch (*(s+1)) {
+			switch (*(s + 1)) {
 			case 'n':
-				i = snprintf(d,MAXPATHLEN - 1 - len, "%s",
-				    p->p_comm);
+				i = snprintf(d, end - d, "%s", p->p_comm);
 				break;
 			case 'p':
-				i = snprintf(d, MAXPATHLEN - 1 - len, "%d",
-				    p->p_pid);
+				i = snprintf(d, end - d, "%d", p->p_pid);
 				break;
 			case 'u':
-				i = snprintf(d, MAXPATHLEN - 1 - len, "%s",
+				i = snprintf(d, end - d, "%s",
 				    p->p_pgrp->pg_session->s_login);
 				break;
 			case 't':
-				i = snprintf(d, MAXPATHLEN - 1 - len, "%ld",
+				i = snprintf(d, end - d, "%ld",
 				    p->p_stats->p_start.tv_sec);
 				break;
 			default:
 				goto copy;
 			}
-			if (i >= MAXPATHLEN - 1 - len)
-				return ENAMETOOLONG;
-			len += i;
 			d += i;
 			s++;
 		} else {
 copy:			*d = *s;
 			d++;
-			len++;
-			if (len >= MAXPATHLEN - 1)
-				return ENAMETOOLONG;
 		}
+		if (d >= end)
+			return (ENAMETOOLONG);
 	}
 	*d = '\0';
-	return 0;
+	return (0);
 }
