@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn.h,v 1.11 2000/02/08 16:22:59 scottb Exp $	*/
+/*	$NetBSD: dlfcn.h,v 1.12 2000/02/11 00:07:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ typedef struct _dl_info {
 	const char	*dli_fname;	/* File defining the symbol */
 	void		*dli_fbase;	/* Base address */
 	const char	*dli_sname;	/* Symbol name */
-	void		*dli_saddr;	/* Symbol address */
+	const void	*dli_saddr;	/* Symbol address */
 } Dl_info;
 #endif /* !defined(_XOPEN_SOURCE) */
 
