@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.185 2003/11/19 22:40:55 fvdl Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.186 2003/11/24 20:54:59 scw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.185 2003/11/19 22:40:55 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.186 2003/11/24 20:54:59 scw Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -588,6 +588,8 @@ ip_input(struct mbuf *m)
 	 */
 #ifdef IPSEC
 	if (!ipsec_getnhist(m))
+#elif defined(FAST_IPSEC)
+	if (!ipsec_indone(m))
 #else
 	if (1)
 #endif

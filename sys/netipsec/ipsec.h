@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.3 2003/10/06 22:05:15 tls Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.4 2003/11/24 20:54:59 scw Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -411,6 +411,8 @@ extern int ipsec4_common_input_cb(struct mbuf *m, struct secasvar *sav,
 extern int ipsec4_process_packet __P((struct mbuf *, struct ipsecrequest *,
 			int, int));
 extern int ipsec_process_done __P((struct mbuf *, struct ipsecrequest *));
+#define ipsec_indone(m)	\
+	(m_tag_find((m), PACKET_TAG_IPSEC_IN_DONE, NULL) != NULL)
 
 extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
 
