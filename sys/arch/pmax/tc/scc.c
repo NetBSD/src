@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.19 1997/04/26 02:26:54 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.20 1997/05/15 04:49:32 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,8 +66,6 @@
  */
 
 
-#include "scc.h"
-#if NSCC > 0
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
  * Personal DECstation 5000/xx and DECstation 5000/1xx, plus the keyboard
@@ -416,8 +414,12 @@ sccmatch(parent, cfdata, aux)
 	    (strncmp(d->iada_modname, "scc", TC_ROM_LLEN)!= 0))
 	    return (0);
 	    
-	/* XXX MATCH CFLOC */
-	if (cf->cf_unit >= NSCC)
+	/*
+	 * Check user-specified offset against the ioasic offset.
+	 * Allow it to be wildcarded.
+	 */
+	if (cf->cf_loc[0] != -1 &&
+	    cf->cf_loc[0] != d->iada_offset)
 		return (0);
 
 	/* Get the address, and check it for validity. */
@@ -1601,4 +1603,3 @@ rr(msg, regs)
 	    r0, r1, r2, r10, r15);
 }
 #endif /* SCC_DEBUG */
-#endif /* NSCC */
