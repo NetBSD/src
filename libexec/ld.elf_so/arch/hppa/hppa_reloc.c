@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.15 2002/09/26 20:42:11 mycroft Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.16 2003/07/24 10:12:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ static Elf_Addr *hppa_got_cache_got;
 #define	HPPA_OBJ_GOT(obj)	((obj) == hppa_got_cache_obj ?		\
 				  hppa_got_cache_got :			\
 				  _rtld_fill_hppa_got_cache(obj))
-static Elf_Addr *_rtld_fill_hppa_got_cache __P((const Obj_Entry *));
+static Elf_Addr *_rtld_fill_hppa_got_cache(const Obj_Entry *);
 
 /*
  * This bootstraps the dynamic linker by relocating its GOT.
@@ -321,8 +321,7 @@ _rtld_setup_pltgot(const Obj_Entry *obj)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
@@ -470,8 +469,7 @@ _rtld_relocate_nonplt_objects(obj)
 }
 
 int
-_rtld_relocate_plt_lazy(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 

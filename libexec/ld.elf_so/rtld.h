@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.68 2003/05/30 15:43:33 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.69 2003/07/24 10:12:26 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -164,17 +164,15 @@ typedef struct Struct_Obj_Entry {
 	Search_Path    *rpaths;		/* Search path specified in object */
 	Needed_Entry   *needed;		/* Shared objects needed by this (%) */
 
-	void            (*init) 	/* Initialization function to call */
-	    __P((void));
-	void            (*fini)		/* Termination function to call */
-	    __P((void));
+	void            (*init)(void); 	/* Initialization function to call */
+	void            (*fini)(void);	/* Termination function to call */
 
 	/* Entry points for dlopen() and friends. */
-	void           *(*dlopen) __P((const char *, int));
-	void           *(*dlsym) __P((void *, const char *));
-	char           *(*dlerror) __P((void));
-	int             (*dlclose) __P((void *));
-	int             (*dladdr) __P((const void *, Dl_info *));
+	void           *(*dlopen)(const char *, int);
+	void           *(*dlsym)(void *, const char *);
+	char           *(*dlerror)(void);
+	int             (*dlclose)(void *);
+	int             (*dladdr)(const void *, Dl_info *);
 
 	u_int32_t	mainprog:1,	/* True if this is the main program */
 	        	rtld:1,		/* True if this is the dynamic linker */
@@ -213,66 +211,66 @@ extern Objlist _rtld_list_main;
 extern Elf_Sym _rtld_sym_zero;
 
 /* rtld.c */
-void _rtld_error __P((const char *, ...))
+void _rtld_error(const char *, ...)
      __attribute__((__format__(__printf__,1,2)));
-void _rtld_die __P((void));
-char *_rtld_dlerror __P((void));
-void *_rtld_dlopen __P((const char *, int));
-void *_rtld_objmain_sym __P((const char *));
-void *_rtld_dlsym __P((void *, const char *));
-int _rtld_dlclose __P((void *));
-int _rtld_dladdr __P((const void *, Dl_info *));
-void _rtld_debug_state __P((void));
-void _rtld_linkmap_add __P((Obj_Entry *));
-void _rtld_linkmap_delete __P((Obj_Entry *));
-void _rtld_objlist_add __P((Objlist *, Obj_Entry *));
-Objlist_Entry *_rtld_objlist_find __P((Objlist *, const Obj_Entry *));
+void _rtld_die(void);
+char *_rtld_dlerror(void);
+void *_rtld_dlopen(const char *, int);
+void *_rtld_objmain_sym(const char *);
+void *_rtld_dlsym(void *, const char *);
+int _rtld_dlclose(void *);
+int _rtld_dladdr(const void *, Dl_info *);
+void _rtld_debug_state(void);
+void _rtld_linkmap_add(Obj_Entry *);
+void _rtld_linkmap_delete(Obj_Entry *);
+void _rtld_objlist_add(Objlist *, Obj_Entry *);
+Objlist_Entry *_rtld_objlist_find(Objlist *, const Obj_Entry *);
 
 /* headers.c */
-void _rtld_digest_dynamic __P((Obj_Entry *));
-Obj_Entry *_rtld_digest_phdr __P((const Elf_Phdr *, int, caddr_t));
+void _rtld_digest_dynamic(Obj_Entry *);
+Obj_Entry *_rtld_digest_phdr(const Elf_Phdr *, int, caddr_t);
 
 /* load.c */
-Obj_Entry *_rtld_load_object __P((char *, int));
-int _rtld_load_needed_objects __P((Obj_Entry *, int));
-int _rtld_preload __P((const char *));
+Obj_Entry *_rtld_load_object(char *, int);
+int _rtld_load_needed_objects(Obj_Entry *, int);
+int _rtld_preload(const char *);
 
 /* path.c */
-void _rtld_add_paths __P((Search_Path **, const char *));
-void _rtld_process_hints __P((Search_Path **, Library_Xform **, const char *));
+void _rtld_add_paths(Search_Path **, const char *);
+void _rtld_process_hints(Search_Path **, Library_Xform **, const char *);
 
 /* reloc.c */
-int _rtld_do_copy_relocations __P((const Obj_Entry *));
-int _rtld_relocate_objects __P((Obj_Entry *, bool));
-int _rtld_relocate_nonplt_objects __P((const Obj_Entry *));
-int _rtld_relocate_plt_lazy __P((const Obj_Entry *));
-int _rtld_relocate_plt_objects __P((const Obj_Entry *));
-void _rtld_setup_pltgot __P((const Obj_Entry *));
+int _rtld_do_copy_relocations(const Obj_Entry *);
+int _rtld_relocate_objects(Obj_Entry *, bool);
+int _rtld_relocate_nonplt_objects(const Obj_Entry *);
+int _rtld_relocate_plt_lazy(const Obj_Entry *);
+int _rtld_relocate_plt_objects(const Obj_Entry *);
+void _rtld_setup_pltgot(const Obj_Entry *);
 
 /* search.c */
-Obj_Entry *_rtld_load_library __P((const char *, const Obj_Entry *, int));
+Obj_Entry *_rtld_load_library(const char *, const Obj_Entry *, int);
 
 /* symbol.c */
-unsigned long _rtld_elf_hash __P((const char *));
-const Elf_Sym *_rtld_symlook_obj __P((const char *, unsigned long,
-    const Obj_Entry *, bool));
-const Elf_Sym *_rtld_find_symdef __P((unsigned long, const Obj_Entry *,
-    const Obj_Entry **, bool));
+unsigned long _rtld_elf_hash(const char *);
+const Elf_Sym *_rtld_symlook_obj(const char *, unsigned long,
+    const Obj_Entry *, bool);
+const Elf_Sym *_rtld_find_symdef(unsigned long, const Obj_Entry *,
+    const Obj_Entry **, bool);
 const Elf_Sym *_rtld_symlook_list(const char *, unsigned long,
     const Objlist *, const Obj_Entry **, bool);
 const Elf_Sym *_rtld_symlook_default(const char *, unsigned long,
     const Obj_Entry *, const Obj_Entry **, bool);
 
 /* map_object.c */
-Obj_Entry *_rtld_map_object __P((char *, int, const struct stat *));
+Obj_Entry *_rtld_map_object(char *, int, const struct stat *);
 void _rtld_obj_free(Obj_Entry *);
 Obj_Entry *_rtld_obj_new(void);
 
 /* function descriptors */
 #ifdef __HAVE_FUNCTION_DESCRIPTORS
-Elf_Addr _rtld_function_descriptor_alloc __P((const Obj_Entry *, 
-    const Elf_Sym *, Elf_Addr));
-const void *_rtld_function_descriptor_function __P((const void *));
+Elf_Addr _rtld_function_descriptor_alloc(const Obj_Entry *, 
+    const Elf_Sym *, Elf_Addr);
+const void *_rtld_function_descriptor_function(const void *);
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 #endif /* _RTLD_SOURCE */

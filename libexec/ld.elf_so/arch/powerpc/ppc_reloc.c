@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.34 2003/02/21 01:12:56 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.35 2003/07/24 10:12:29 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -39,8 +39,8 @@
 #include "debug.h"
 #include "rtld.h"
 
-void _rtld_powerpc_pltcall __P((Elf_Word));
-void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
+void _rtld_powerpc_pltcall(Elf_Word);
+void _rtld_powerpc_pltresolve(Elf_Word, Elf_Word);
 
 #define ha(x) ((((u_int32_t)(x) & 0x8000) ? \
 			((u_int32_t)(x) + 0x10000) : (u_int32_t)(x)) >> 16)
@@ -48,7 +48,7 @@ void _rtld_powerpc_pltresolve __P((Elf_Word, Elf_Word));
 
 void _rtld_bind_start(void);
 void _rtld_relocate_nonplt_self(Elf_Dyn *, Elf_Addr);
-caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
+caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
 
 /*
  * Setup the plt glue routines.
@@ -57,8 +57,7 @@ caddr_t _rtld_bind __P((const Obj_Entry *, Elf_Word));
 #define PLTRESOLVE_SIZE	24
 
 void
-_rtld_setup_pltgot(obj)
-	const Obj_Entry *obj;
+_rtld_setup_pltgot(const Obj_Entry *obj)
 {
 	Elf_Word *pltcall, *pltresolve;
 	Elf_Word *jmptab;
@@ -87,9 +86,7 @@ _rtld_setup_pltgot(obj)
 }
 
 void
-_rtld_relocate_nonplt_self(dynp, relocbase)
-	Elf_Dyn *dynp;
-	Elf_Addr relocbase;
+_rtld_relocate_nonplt_self(Elf_Dyn *dynp, Elf_Addr relocbase)
 {
 	const Elf_Rela *rela = 0, *relalim;
 	Elf_Addr relasz = 0;
@@ -113,8 +110,7 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_nonplt_objects(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 
@@ -189,8 +185,7 @@ _rtld_relocate_nonplt_objects(obj)
 }
 
 int
-_rtld_relocate_plt_lazy(obj)
-	const Obj_Entry *obj;
+_rtld_relocate_plt_lazy(const Obj_Entry *obj)
 {
 	const Elf_Rela *rela;
 	int reloff;
@@ -223,9 +218,7 @@ _rtld_relocate_plt_lazy(obj)
 }
 
 caddr_t
-_rtld_bind(obj, reloff)
-	const Obj_Entry *obj;
-	Elf_Word reloff;
+_rtld_bind(const Obj_Entry *obj, Elf_Word reloff)
 {
 	const Elf_Rela *rela = obj->pltrela + reloff;
 	Elf_Word *where = (Elf_Word *)(obj->relocbase + rela->r_offset);

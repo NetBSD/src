@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.25 2002/12/05 04:56:56 junyoung Exp $	 */
+/*	$NetBSD: load.c,v 1.26 2003/07/24 10:12:25 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -55,8 +55,8 @@
 #include "debug.h"
 #include "rtld.h"
 
-static bool _rtld_load_by_name __P((const char *, Obj_Entry *, Needed_Entry **,
-    int));
+static bool _rtld_load_by_name(const char *, Obj_Entry *, Needed_Entry **,
+    int);
 
 #ifdef RTLD_LOADER
 Objlist _rtld_list_main =	/* Objects loaded at program startup */
@@ -65,9 +65,7 @@ Objlist _rtld_list_global =	/* Objects dlopened with RTLD_GLOBAL */
   SIMPLEQ_HEAD_INITIALIZER(_rtld_list_global);
 
 void
-_rtld_objlist_add(list, obj)
-	Objlist *list;
-	Obj_Entry *obj;
+_rtld_objlist_add(Objlist *list, Obj_Entry *obj)
 {
 	Objlist_Entry *elm;
 
@@ -98,9 +96,7 @@ _rtld_objlist_find(Objlist *list, const Obj_Entry *obj)
  * on failure.
  */
 Obj_Entry *
-_rtld_load_object(filepath, mode)
-	char *filepath;
-	int mode;
+_rtld_load_object(char *filepath, int mode)
 {
 	Obj_Entry *obj;
 	int fd = -1;
@@ -175,11 +171,7 @@ _rtld_load_object(filepath, mode)
 }
 
 static bool
-_rtld_load_by_name(name, obj, needed, mode)
-	const char *name;
-	Obj_Entry *obj;
-	Needed_Entry **needed;
-	int mode;
+_rtld_load_by_name(const char *name, Obj_Entry *obj, Needed_Entry **needed, int mode)
 {
 	Library_Xform *x = _rtld_xforms;
 	Obj_Entry *o = NULL;
@@ -269,9 +261,7 @@ _rtld_load_by_name(name, obj, needed, mode)
  * returns -1 on failure.
  */
 int
-_rtld_load_needed_objects(first, mode)
-	Obj_Entry *first;
-	int mode;
+_rtld_load_needed_objects(Obj_Entry *first, int mode)
 {
 	Obj_Entry *obj;
 	int status = 0;
@@ -296,8 +286,7 @@ _rtld_load_needed_objects(first, mode)
 
 #ifdef RTLD_LOADER
 int
-_rtld_preload(preload_path)
-	const char *preload_path;
+_rtld_preload(const char *preload_path)
 {
 	const char *path;
 	char *cp, *buf;
