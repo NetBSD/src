@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 1998/04/09 00:05:14 tv Exp $
+#	$NetBSD: Makefile,v 1.13 1998/07/25 11:21:24 mycroft Exp $
 
 # XXX Temporary for USE_EGCS
 .include <bsd.own.mk>
@@ -10,6 +10,6 @@ SUBDIR+= libf2c libstdc++
 SUBDIR+= libg++
 .endif
 
-SUBDIR+= bfd readline
+SUBDIR+= bfd
 
 .include <bsd.subdir.mk>
