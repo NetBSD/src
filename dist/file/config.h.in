@@ -1,5 +1,5 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
-/*	$NetBSD: config.h.in,v 1.5 2004/03/23 08:40:11 pooka Exp $	*/
+/*	$NetBSD: config.h.in,v 1.6 2004/04/08 12:29:45 pooka Exp $	*/
 
 /* Autoheader needs me */
 #undef PACKAGE
@@ -61,9 +61,6 @@
 
 /* The number of bytes in a uint64_t.  */
 #define SIZEOF_UINT64_T 0
-
-/* Define to 1 if you have the <dlfcn.h> header file. */
-#undef HAVE_DLFCN_H
 
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
@@ -196,6 +193,9 @@
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const
+
+/* Define to a type if <wchar.h> does not define. */
+#undef mbstate_t
 
 /* Define to `long' if <sys/types.h> does not define. */
 #undef off_t
