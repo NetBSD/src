@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.45 1996/12/10 22:55:08 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.46 1997/04/09 13:15:13 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -1384,7 +1384,11 @@ zsparam(tp, t)
 		return (0);
 	}
 	tmp = BPS_TO_TCONST(PCLK / 16, tmp);
-	if (tmp < 2)
+#ifdef ALLOW_TC_EQUAL_ZERO
+	if (tmp < 0)
+#else
+	if (tmp < 1)
+#endif
 		return (EINVAL);
 
 	cflag = t->c_cflag;
