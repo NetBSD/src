@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ipip.c,v 1.5 1999/04/04 00:21:53 tron Exp $	*/
+/*	$NetBSD: ip_ipip.c,v 1.6 1999/04/04 09:10:27 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -303,6 +303,8 @@ ipip_ioctl(ifp, cmd, data)
 
 		sc->sc_src = (satosin(ifa->ifa_addr))->sin_addr;
 		sc->sc_dst = ia->ia_dstaddr.sin_addr;
+		ifp->if_mtu = 0;
+		ifp->if_flags &= ~IFF_UP;
 
 		if (!in_nullhost(sc->sc_src) && !in_nullhost(sc->sc_dst)) {
 			struct rtentry *rt;
@@ -324,6 +326,27 @@ ipip_ioctl(ifp, cmd, data)
 	case SIOCSIFFLAGS:
 		if (in_nullhost(sc->sc_src) || in_nullhost(sc->sc_dst))
 			ifp->if_flags &= ~IFF_UP;
+
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->sc_route.ro_rt == NULL) {
+				struct rtentry *rt;
+
+				ipip_compute_route(sc);
+				rt = sc->sc_route.ro_rt;
+				if (rt != NULL)
+					ifp->if_mtu = rt->rt_ifp->if_mtu -
+						      ifp->if_hdrlen;
+				else
+					ifp->if_flags &= ~IFF_UP;
+			}
+		}
+		else {
+			if (sc->sc_route.ro_rt != NULL) {
+				RTFREE(sc->sc_route.ro_rt);
+				sc->sc_route.ro_rt = NULL;
+			}
+			ifp->if_mtu = 0;
+		}
 		break;
 
 	case SIOCSIFMTU:
