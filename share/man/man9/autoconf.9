@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.1 2001/07/01 04:11:13 gmcgarry Exp $
+.\"     $NetBSD: autoconf.9,v 1.2 2001/08/17 06:22:46 cjs Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -201,7 +201,9 @@ diagnostic.
 .It Fn config_found "parent" "aux" "print"
 This function is equivalent to calling
 .Fn config_found_sm "parent" "aux" "print" "submatch"
-and is provided for compatibility with older drivers.
+with
+.Fa submatch
+set to NULL and is provided for compatibility with older drivers.
 .It Fn config_attach "parent" "cf" "aux" "print"
 Attach a found device.  Allocates the memory for the
 .Em softc
