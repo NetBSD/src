@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.13 1996/10/13 03:00:43 christos Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.14 1996/11/13 21:13:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -133,7 +133,7 @@ tcds_dma_intr(sc)
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-		printf("tcds_dma %d: xfer (%d) > req (%d)\n",
+		printf("tcds_dma %d: xfer (%d) > req (%ld)\n",
 		    sc->sc_slot, trans, sc->sc_dmasize);
 		trans = sc->sc_dmasize;
 	}
@@ -161,7 +161,7 @@ tcds_dma_intr(sc)
 			if (dud & TCDS_DUD0_VALID11)
 				dudmask |= TCDS_DUD_BYTE11;
 #endif
-			ESP_DMA(("dud0 at 0x%lx dudmask 0x%x\n",
+			ESP_DMA(("dud0 at 0x%p dudmask 0x%x\n",
 			    addr, dudmask));
 			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
@@ -182,7 +182,7 @@ tcds_dma_intr(sc)
 			if (dud & TCDS_DUD1_VALID11)
 				panic("tcds_dma: dud1 byte 3 valid");
 #endif
-			ESP_DMA(("dud1 at 0x%lx dudmask 0x%x\n",
+			ESP_DMA(("dud1 at 0x%p dudmask 0x%x\n",
 			    addr, dudmask));
 			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
@@ -224,7 +224,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	sc->sc_dmalen = len;
 	sc->sc_iswrite = datain;
 
-	ESP_DMA(("tcds_dma %d: start %d@0x%lx,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
+	ESP_DMA(("tcds_dma %d: start %ld@%p,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
 
 	/*
 	 * the rules say we cannot transfer more than the limit
@@ -234,7 +234,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	size = min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
 	*dmasize = sc->sc_dmasize = size;
 
-	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
+	ESP_DMA(("dma_start: dmasize = %ld\n", sc->sc_dmasize));
 
 	/* Load address, set/clear unaligned transfer and read/write bits. */
 	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */

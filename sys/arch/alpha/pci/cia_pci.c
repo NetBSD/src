@@ -1,4 +1,4 @@
-/*	$NetBSD: cia_pci.c,v 1.5 1996/10/13 03:00:04 christos Exp $	*/
+/*	$NetBSD: cia_pci.c,v 1.6 1996/11/13 21:13:26 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -113,6 +113,11 @@ cia_conf_read(cpv, tag, offset)
 	int s, secondary, ba;
 	int32_t old_haxr2;					/* XXX */
 
+#ifdef DIAGNOSTIC
+	s = 0;					/* XXX gcc -Wuninitialized */
+	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
+#endif
+
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);
 	if (secondary) {
@@ -158,6 +163,11 @@ cia_conf_write(cpv, tag, offset, data)
 	pcireg_t *datap;
 	int s, secondary;
 	int32_t old_haxr2;					/* XXX */
+
+#ifdef DIAGNOSTIC
+	s = 0;					/* XXX gcc -Wuninitialized */
+	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
+#endif
 
 	/* secondary if bus # != 0 */
 	pci_decompose_tag(&ccp->cc_pc, tag, &secondary, 0, 0);

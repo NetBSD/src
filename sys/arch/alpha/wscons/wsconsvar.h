@@ -1,4 +1,4 @@
-/*	$NetBSD: wsconsvar.h,v 1.2 1996/04/12 06:10:36 cgd Exp $	*/
+/*	$NetBSD: wsconsvar.h,v 1.3 1996/11/13 21:13:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -107,5 +107,16 @@ void	wscons_attach_input __P((struct device *,
  * then need length.)
  */
 void	wscons_input __P((char *));
+
+void	msattach __P((struct device *, struct wscons_mdev_spec *));
+void	ms_event __P((char, int, int));
+
+void	kbdattach __P((struct device *, struct wscons_idev_spec *));
+void	kbd_input __P((int));
+void	wscons_kbd_bell __P((void));
+int	kbd_cngetc __P((dev_t));
+void	kbd_cnpollc __P((dev_t, int));
+int	kbdioctl __P((dev_t dev, u_long cmd, register caddr_t data,
+	    int flag, struct proc *p));
 
 #endif /* _ALPHA_WSCONS_WSCONSVAR_H_ */
