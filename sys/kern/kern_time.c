@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.22 2002/11/11 22:13:54 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.23 2002/12/03 23:22:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.22 2002/11/11 22:13:54 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.23 2002/12/03 23:22:16 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -845,10 +845,14 @@ timerupcall(struct lwp *l, void *arg)
 {
 	struct ptimer *pt = (struct ptimer *)arg;
 
+	KERNEL_PROC_LOCK(l);
+
 	/* The upcall should be generated exactly once. */
 	if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
 	    sizeof(siginfo_t), &pt->pt_info) == 0)
 		l->l_proc->p_userret = NULL;
+
+	KERNEL_PROC_UNLOCK(l);
 }
 
 
