@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.72 1997/02/18 21:07:56 mrg Exp $
+#	$NetBSD: GENERIC,v 1.73 1997/03/13 04:15:24 cgd Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -157,6 +157,8 @@ scsibus* at uha?
 wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
 scsibus* at wds?
+isp*	at pci? dev ? function ?	# Qlogic ISP 10x0 SCSI controllers
+scsibus* at isp?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
