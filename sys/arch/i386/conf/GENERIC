@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.300.2.7 2000/08/07 01:08:27 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.300.2.8 2000/08/25 00:40:06 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.7 $"
+#ident 		"GENERIC-$Revision: 1.300.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -115,7 +115,7 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
+#options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
