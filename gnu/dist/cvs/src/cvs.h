@@ -377,8 +377,9 @@ extern int use_editor;
 extern int cvswrite;
 extern mode_t cvsumask;
 extern char *RCS_citag;
-
-
+extern char *CVS_admin_group;
+extern char *CVS_admin_options;
+extern int admin_group_member PROTO((void));
 
 /* This global variable holds the global -d option.  It is NULL if -d
    was not used, which means that we must get the CVSroot information
