@@ -33,12 +33,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: termout.c,v 1.4 1995/04/29 05:57:04 cgd Exp $";
+static char rcsid[] = "$Id: termout.c,v 1.5 1995/10/10 04:18:01 thorpej Exp $";
 #endif /* not lint */
 
 #if defined(unix)
 #include <signal.h>
-#include <sgtty.h>
+#include <termios.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -632,9 +632,8 @@ void
 InitTerminal()
 {
 #if defined(unix)
-    struct sgttyb ourttyb;
-    static int speeds[] = { 0, 50, 75, 110, 134, 150, 200, 300, 600, 1200, 1800,
-		2400, 4800, 9600 };
+    struct termios term;
+    speed_t speed;
 #endif
     extern void InitMapping();
     
@@ -661,11 +660,12 @@ InitTerminal()
 
 	TryToSend = FastScreen;
 #if defined(unix)
-	ioctl(1, TIOCGETP, (char *) &ourttyb);
-	if ((ourttyb.sg_ospeed < 0) || (ourttyb.sg_ospeed > B9600)) {
+	tcgetattr(1, &term);
+	speed = cfgetospeed(&term);
+	if ((speed < 0) || (speed > 9600)) {
 	    max_changes_before_poll = 1920;
 	} else {
-	    max_changes_before_poll = speeds[ourttyb.sg_ospeed]/10;
+	    max_changes_before_poll = speed/10;
 	    if (max_changes_before_poll < 40) {
 		max_changes_before_poll = 40;
 	    }
