@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 2002/07/25 23:46:47 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.40 2002/07/28 07:07:46 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,10 +50,6 @@
 #endif
 #include <machine/fpu.h>
 #include <machine/pcb.h>
-
-#if !defined(MULTIPROCESSOR) && defined(PPC_HAVE_FPU)
-#define save_fpu_proc(p) save_fpu(p)		/* XXX */
-#endif
 
 #ifdef PPC_IBM4XX
 vaddr_t vmaprange(struct proc *, vaddr_t, vsize_t, int);
@@ -108,8 +104,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*pcb = p1->p_addr->u_pcb;
 #ifdef ALTIVEC
 	if (p1->p_addr->u_pcb.pcb_vr != NULL) {
-		if (p1->p_addr->u_pcb.pcb_veccpu)
-			save_vec(p1);
+		save_vec_proc(p1);
 		pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
 		*pcb->pcb_vr = *p1->p_addr->u_pcb.pcb_vr;
 	}
@@ -218,17 +213,17 @@ cpu_exit(p)
 	void switchexit(struct proc *);		/* Defined in locore.S */
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct cpu_info *ci = curcpu();
 #endif
 
 #ifdef PPC_HAVE_FPU
 	if (pcb->pcb_fpcpu)			/* release the FPU */
-		ci->ci_fpuproc = NULL;
+		save_fpu_proc(p);
 #endif
 #ifdef ALTIVEC
 	if (pcb->pcb_veccpu) {			/* release the AltiVEC */
-		ci->ci_vecproc = NULL;
+		save_vec_proc(p);
 		__asm __volatile("dssall;sync"); /* stop any streams */
+/* XXX this stops streams on the current cpu, should be pcb->pcb_veccpu */
 	}
 	if (pcb->pcb_vr != NULL)
 		pool_put(&vecpool, pcb->pcb_vr);
@@ -270,8 +265,8 @@ cpu_coredump(p, vp, cred, chdr)
 
 #ifdef ALTIVEC
 	if (pcb->pcb_flags & PCB_ALTIVEC) {
-		if (p->p_addr->u_pcb.pcb_veccpu)
-			save_vec(p);
+		if (pcb->pcb_veccpu)
+			save_vec_proc(p);
 		md_core.vstate = *pcb->pcb_vr;
 	} else
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.5 2002/07/25 23:46:47 matt Exp $	*/
+/*	$NetBSD: altivec.c,v 1.6 2002/07/28 07:07:45 chs Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -44,17 +44,16 @@
 struct pool vecpool;
 
 void
-enable_vec(struct proc *p)
+enable_vec()
 {
+	struct cpu_info *ci = curcpu();
+	struct proc *p = curproc;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	struct trapframe *tf = trapframe(p);
 	struct vreg *vr = pcb->pcb_vr;
 	int msr, scratch;
 
-	/*
-	 * Enable AltiVec when we return to user-mode.
-	 */
-	tf->srr1 |= PSL_VEC;
+	KASSERT(pcb->pcb_veccpu == NULL);
 
 	/*
 	 * Allocate a vreg structure if we haven't done so.
@@ -62,9 +61,11 @@ enable_vec(struct proc *p)
 	if (!(pcb->pcb_flags & PCB_ALTIVEC)) {
 		vr = pcb->pcb_vr = pool_get(&vecpool, PR_WAITOK);
 		pcb->pcb_flags |= PCB_ALTIVEC;
+
 		/*
 		 * Initialize the vectors with NaNs
 		 */
+
 		for (scratch = 0; scratch < 32; scratch++) {
 			vr->vreg[scratch][0] = 0x7FFFDEAD;
 			vr->vreg[scratch][1] = 0x7FFFDEAD;
@@ -76,16 +77,20 @@ enable_vec(struct proc *p)
 	}
 
 	/*
-	 * Enable AltiVec temporarily
+	 * Enable AltiVec temporarily (and disable interrupts).
 	 */
-	__asm __volatile ("mfmsr %0; oris %1,%0,%2@h; mtmsr %1; isync"
-	    :	"=r"(msr), "=r"(scratch)
-	    :	"J"(PSL_VEC));
+	msr = mfmsr();
+	mtmsr((msr & ~PSL_EE) | PSL_VEC);
+	__asm __volatile ("isync");
+	if (ci->ci_vecproc) {
+		save_vec_cpu();
+	}
+	KASSERT(curcpu()->ci_vecproc == NULL);
 
 	/*
 	 * Restore VSCR by first loading it into a vector and then into VSCR.
 	 * (this needs to done before loading the user's vector registers
-	 * since we need to a scratch vector register)
+	 * since we need to use a scratch vector register)
 	 */
 	__asm __volatile("vxor %2,%2,%2; lvewx %2,%0,%1; mtvscr %2" \
 	    ::	"r"(vr), "r"(offsetof(struct vreg, vscr)), "n"(0));
@@ -110,27 +115,46 @@ enable_vec(struct proc *p)
 	LVX(20,vr);	LVX(21,vr);	LVX(22,vr);	LVX(23,vr);
 	LVX(24,vr);	LVX(25,vr);	LVX(26,vr);	LVX(27,vr);
 	LVX(28,vr);	LVX(29,vr);	LVX(30,vr);	LVX(31,vr);
+	__asm __volatile ("isync");
+
+	/*
+	 * Enable AltiVec when we return to user-mode.
+	 * Record the new ownership of the AltiVec unit.
+	 */
+	tf->srr1 |= PSL_VEC;
+	curcpu()->ci_vecproc = p;
+	pcb->pcb_veccpu = curcpu();
+	__asm __volatile ("sync");
 
 	/*
 	 * Restore MSR (turn off AltiVec)
 	 */
-	__asm __volatile ("mtmsr %0; isync" :: "r"(msr));
+	mtmsr(msr);
 }
 
 void
-save_vec(struct proc *p)
+save_vec_cpu(void)
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
-	struct trapframe *tf = trapframe(p);
-	struct vreg *vr = pcb->pcb_vr;
-	int msr, scratch;
+	struct cpu_info *ci = curcpu();
+	struct proc *p;
+	struct pcb *pcb;
+	struct vreg *vr;
+	struct trapframe *tf;
+	int msr;
 	
 	/*
-	 * Turn on AltiVEC
+	 * Turn on AltiVEC, turn off interrupts.
 	 */
-	__asm __volatile ("mfmsr %0; oris %1,%0,%2@h; mtmsr %1; isync"
-	    :	"=r"(msr), "=r"(scratch)
-	    :	"J"(PSL_VEC));
+	msr = mfmsr();
+	mtmsr((msr & ~PSL_EE) | PSL_VEC);
+	__asm __volatile ("isync");
+	p = ci->ci_vecproc;
+	if (p == NULL) {
+		goto out;
+	}
+	pcb = &p->p_addr->u_pcb;
+	vr = pcb->pcb_vr;
+	tf = trapframe(p);
 
 #define	STVX(n,vr)	__asm /*__volatile*/("stvx %2,%0,%1" \
 	    ::	"r"(vr), "r"(offsetof(struct vreg, vreg[n])), "n"(n));
@@ -161,18 +185,61 @@ save_vec(struct proc *p)
 	vr->vrsave = tf->vrsave;
 
 	/*
-	 * Restore MSR (turn off AltiVec).
-	 */
-	__asm __volatile ("mtmsr %0; isync" :: "r"(msr));
-
-	/*
 	 * Note that we aren't using any CPU resources and stop any
 	 * data streams.
 	 */
-	__asm __volatile ("dssall;sync");
-	pcb->pcb_veccpu = NULL;
-	curcpu()->ci_vecproc = NULL;
 	tf->srr1 &= ~PSL_VEC;
+	pcb->pcb_veccpu = NULL;
+	ci->ci_vecproc = NULL;
+	__asm __volatile ("dssall; sync");
+
+ out:
+
+	/*
+	 * Restore MSR (turn off AltiVec)
+	 */
+	mtmsr(msr);
+}
+
+/*
+ * Save a process's AltiVEC state to its PCB.  The state may be in any CPU.
+ * The process must either be curproc or traced by curproc (and stopped).
+ * (The point being that the process must not run on another CPU during
+ * this function).
+ */
+void
+save_vec_proc(p)
+	struct proc *p;
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	struct cpu_info *ci = curcpu();
+
+	/*
+	 * If it's already in the PCB, there's nothing to do.
+	 */
+
+	if (pcb->pcb_veccpu == NULL) {
+		return;
+	}
+
+	/*
+	 * If the state is in the current CPU, just flush the current CPU's
+	 * state.
+	 */
+
+	if (p == ci->ci_vecproc) {
+		save_vec_cpu();
+		return;
+	}
+
+#ifdef MULTIPROCESSOR
+
+	/*
+	 * It must be on another CPU, flush it from there.
+	 */
+
+	mp_save_vec_proc(p);
+#endif
 }
 
 #define ZERO_VEC	19
@@ -187,9 +254,9 @@ vzeropage(paddr_t pa)
 	__asm __volatile("mfmsr %0" : "=r"(omsr) :);
 
 	/*
-	 * Turn on AltiVec.
+	 * Turn on AltiVec, turn off interrupts.
 	 */
-	msr = omsr | PSL_VEC;
+	msr = (omsr & ~PSL_EE) | PSL_VEC;
 	__asm __volatile("sync; mtmsr %0; isync" :: "r"(msr));
 
 	/*
@@ -246,9 +313,9 @@ vcopypage(paddr_t dst, paddr_t src)
 	__asm __volatile("mfmsr %0" : "=r"(omsr) :);
 
 	/*
-	 * Turn on AltiVec.
+	 * Turn on AltiVec, turn off interrupts.
 	 */
-	msr = omsr | PSL_VEC;
+	msr = (omsr & ~PSL_EE) | PSL_VEC;
 	__asm __volatile("sync; mtmsr %0; isync" :: "r"(msr));
 
 	/*
