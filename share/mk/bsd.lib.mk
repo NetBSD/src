@@ -1,5 +1,5 @@
 #	from: @(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
-#	$Id: bsd.lib.mk,v 1.39 1993/11/14 16:45:05 pk Exp $
+#	$Id: bsd.lib.mk,v 1.40 1993/12/04 01:28:39 cgd Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -12,10 +12,10 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 
 .MAIN: all
 
-# prefer .s to a .c, add .po, remove stuff not used in the BSD libraries
+# prefer .S to a .c, add .po, remove stuff not used in the BSD libraries
 # .so used for PIC object files
 .SUFFIXES:
-.SUFFIXES: .out .o .po .so .s .c .cc .C .f .y .l .0 .1 .2 .3 .4 .5 .6 .7 .8
+.SUFFIXES: .out .o .po .so .S .s .c .cc .C .f .y .l .0 .1 .2 .3 .4 .5 .6 .7 .8
 
 .c.o:
 	${CC} ${CFLAGS} -c ${.IMPSRC} 
@@ -43,19 +43,19 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 .cc.so .C.so:
 	${CXX} ${PICFLAG} -DPIC ${CXXFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 
-.s.o:
+.S.o .s.o:
 	${CPP} -E ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}
 	@${LD} -x -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-.s.po:
+.S.po .s.po:
 	${CPP} -E -DPROF ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
 
-.s.so:
+.S.so .s.so:
 	${CPP} -E -DPIC ${CFLAGS:M-[ID]*} ${AINC} ${.IMPSRC} | \
 	    ${AS} -k -o ${.TARGET}
 
