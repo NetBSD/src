@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_extern.h,v 1.1 1998/08/14 03:26:12 mark Exp $	*/
+/*	$NetBSD: filecore_extern.h,v 1.2 1998/08/14 18:04:05 mark Exp $	*/
 
 /*-
  * Copyright (c) 1998 Andrew McMurry
@@ -56,8 +56,8 @@ struct filecore_mnt {
 	u_int32_t mask;
 	u_int64_t nblks;
 
-        uid_t fc_uid;           /* uid to set as owner of the files */
-        gid_t fc_gid;           /* gid to set as owner of the files */
+	uid_t fc_uid;		/* uid to set as owner of the files */
+	gid_t fc_gid;		/* gid to set as owner of the files */
 	int fc_mntflags;
 	struct netexport fc_export;
 	struct filecore_disc_record drec;
