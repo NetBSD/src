@@ -66,14 +66,11 @@
 
 /**/
 
-#ifdef  __386BSD__
-#include "ddb.h"
-#if     NDDB > 0
+#ifdef  NDDB 
 int     Debugger();
 #else   NDDB
 #define Debugger() panic("should call debugger here")
 #endif  NDDB
-#endif  __386BSD__
 
 #ifdef  MACH
 int     Debugger();
