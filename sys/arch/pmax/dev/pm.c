@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.22.6.1 1997/11/15 00:14:09 mellon Exp $	*/
+/*	$NetBSD: pm.c,v 1.22.6.2 1997/11/18 01:20:59 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.22.6.1 1997/11/15 00:14:09 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.22.6.2 1997/11/18 01:20:59 mellon Exp $");
 
 
 #include <sys/param.h>
@@ -109,6 +109,9 @@ void pmPosCursor __P((struct fbinfo *fi, int x, int y));
 void bt478CursorColor __P((struct fbinfo *fi, u_int *color));
 void bt478InitColorMap __P((struct fbinfo *fi));
 
+void pccCursorOn  __P((struct fbinfo *fi));
+void pccCursorOff __P((struct fbinfo *fi));
+void pmInitColorMap __P((struct fbinfo *fi));
 
 int pminit __P((struct fbinfo *fi, int unit, int cold_console_flag));
 int pmattach __P((struct fbinfo *fi, int unit, int cold_console_flag));
@@ -143,7 +146,7 @@ struct cfdriver pm_cd = {
 struct fbdriver pm_driver = {
 	pm_video_on,
 	pm_video_off,
-	bt478InitColorMap,
+	pmInitColorMap,		/* pcc cursor wrapper for bt478InitColorMap */
 	bt478GetColorMap,
 	bt478LoadColorMap,
 	pmPosCursor,
@@ -261,10 +264,10 @@ pmattach(fi, unit, cold_console_flag)
 	 */
 	pcc->cmdr = PCC_FOPB | PCC_VBHI;
 
-	/*
-	 * Initialize the cursor register.
-	 */
-	pcc->cmdr = curReg = 0;
+	/* Initialize the cursor register on . */
+	/* Turn off the hardware cursor sprite for rcons text mode. */
+	curReg = 0;	/* XXX */
+	pccCursorOff(fi);
 
 	/*
 	 * Initialize the color map, the screen, and the mouse.
@@ -315,6 +318,8 @@ pmattach(fi, unit, cold_console_flag)
  *
  * Side effects:
  *	The cursor is loaded into the hardware cursor.
+ *	Also, turn on the cursor in case it was disabled before.
+ *	If someone sets a cursor pattern, it should probably be displayed.
  *
  * ----------------------------------------------------------------------------
  */
@@ -333,7 +338,9 @@ pmLoadCursor(fi, cur)
 		wbflush();
 	}
 	curReg &= ~PCC_LODSA;
-	curReg |= PCC_ENPA | PCC_ENPB;
+
+	/* turn on the cursor plane overlays in the PCC chip. */
+ 	curReg |= (PCC_ENPA | PCC_ENPB);
 	pcc->cmdr = curReg;
 }
 
@@ -351,6 +358,9 @@ pmLoadCursor(fi, cur)
  *
  * Side effects:
  *	None.
+ *	NB:  should not turn on the hardwar cursor, since the 
+ *	Xserver positions the cursor to upper left corner as the last
+ * 	cursor operation before it exits.
  *
  *----------------------------------------------------------------------
  */
@@ -375,6 +385,46 @@ pmPosCursor(fi, x, y)
 
 
 /*
+ * Turn hardware cursor on by turning on the enable for A and B
+ * overlay planes. video output under the cursor sprite is then
+ * determined by  the A and B plane contents.
+ */
+void pccCursorOn(fi)
+	struct fbinfo *fi;
+{
+	register PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
+	pcc -> cmdr = curReg | (PCC_ENPA | PCC_ENPB);
+	wbflush();
+}
+
+
+/*
+ * Turn hardware cursor off by turning off the enable for A and B
+ * overlay planes. video output under the cursor sprite is then
+ * determined by the framebuffer contents.
+ */
+void pccCursorOff(fi)
+	struct fbinfo *fi;
+{
+	register PCCRegs *pcc = (PCCRegs *)fi -> fi_base;
+	pcc -> cmdr = curReg & ~(PCC_ENPA | PCC_ENPB);
+	wbflush();
+}
+
+
+/*
+ * Initialize colourmap to default values.
+ * The default cursor hardware state is off.
+ */
+void pmInitColorMap(fi)
+	struct fbinfo *fi;
+{
+	bt478InitColorMap(fi);
+	pccCursorOff(fi);
+}
+
+
+/*
  * Enable the video display.
  */
 static int
@@ -392,8 +442,13 @@ pm_video_on (fi)
 	return 0;
 }
 
-/* disable the video display. */
-
+/*
+ *  Disable the video display.
+ *  Sets the FOPA and FOPB bits in the PCC chip to force the contents
+ *  of the A and B overlay planes to 1. Video output is then
+ *  determined  by  colourmap entry 12 (0x0c), which we set here to
+ *  black.
+ */
 static int pm_video_off (fi)
 	struct fbinfo *fi;
 {
