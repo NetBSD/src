@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.6 1997/03/29 00:54:58 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.7 1997/03/29 01:57:55 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$Id: ip_fil.c,v 1.6 1997/03/29 00:54:58 thorpej Exp $";
+static	char	rcsid[] = "$Id: ip_fil.c,v 1.7 1997/03/29 01:57:55 thorpej Exp $";
 #endif
 
 #ifndef	SOLARIS
@@ -162,11 +162,31 @@ char *s;
 # endif /* IPFILTER_LKM */
 
 
+/*
+ * BSD pseudo-device attach routine; this is a no-op.
+ */
+/* ARGSUSED */
 #if defined(__NetBSD__)
-int ipfilterattach()
+void
+ipfilterattach(count)
 #else
-int iplattach()
-#endif
+void
+iplattach(count)
+#endif /* __NetBSD__ */
+	int count;
+{
+
+	/*
+	 * Nothing to do here, really.  The filter will be enabled
+	 * by the SIOCFRENB ioctl.
+	 */
+}
+
+
+/*
+ * Enable the filter by hooking it into the IP input/output stream.
+ */
+int ipl_enable()
 {
 	int s, i;
 
@@ -176,6 +196,7 @@ int iplattach()
 		SPLX(s);
 		return EBUSY;
 	}
+
 #ifdef NETBSD_PF
 	pfil_add_hook((void *)fr_check, PFIL_IN|PFIL_OUT);
 #endif
@@ -199,11 +220,11 @@ int iplattach()
 }
 
 
-#if defined(__NetBSD__)
-int ipfilterdetach()
-#else
-int ipldetach()
-#endif
+/*
+ * Disable the filter by removing the hooks from the IP input/output
+ * stream.
+ */
+int ipl_disable()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
@@ -327,7 +348,7 @@ int mode;
 		*(int *)data = iplused[unit];
 #endif
 		break;
-#if !defined(IPFILTER_LKM) && defined(_KERNEL)
+#if defined(_KERNEL)
 	case SIOCFRENB :
 	{
 		u_int	enable;
@@ -336,17 +357,10 @@ int mode;
 			error = EPERM;
 		else {
 			IRCOPY(data, (caddr_t)&enable, sizeof(enable));
-#if defined(__NetBSD__)
 			if (enable)
-				error = ipfilterattach();
+				error = ipl_enable();
 			else
-				error = ipfilterdetach();
-#else
-			if (enable)
-				error = iplattach();
-			else
-				error = ipldetach();
-#endif /* __NetBSD__ */
+				error = ipl_disable();
 		}
 		break;
 	}
