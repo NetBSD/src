@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.202 2001/06/04 12:58:35 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.203 2001/06/09 13:56:33 bjh21 Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	adv.4 adw.4 ahb.4 ahc.4 an.4 aria.4 atalk.4 audio.4 auich.4 auvia.4 \
@@ -44,7 +44,7 @@ MAN+=	aha.4 ai.4 aic.4 ast.4 ate.4 boca.4 cs.4 cy.4 ec.4 ef.4 \
 MAN+=	pcic.4 tcic.4 pcmcom.4 xi.4
 
 # machine-independent podulebus devices
-MAN+=	ea.4 eb.4
+MAN+=	dtide.4 ea.4 eb.4
 
 # machine-independent VME devices
 MAN+=	si.4
