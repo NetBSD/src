@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_inst.c,v 1.3 2001/06/13 10:46:06 wiz Exp $	*/
+/*	$NetBSD: gsp_inst.c,v 1.4 2002/08/08 13:24:15 soren Exp $	*/
 /*
  * TMS34010 GSP assembler - Instruction encoding
  *
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gsp_inst.c,v 1.3 2001/06/13 10:46:06 wiz Exp $");
+__RCSID("$NetBSD: gsp_inst.c,v 1.4 2002/08/08 13:24:15 soren Exp $");
 #endif
 
 #include <string.h>
@@ -747,7 +747,7 @@ encode_instr(struct inst *ip, operand ops, int *spec, u_int16_t *iwords)
 		opc |= val[0] & 0x1F;
 		break;
 	default:
-		perr("BUG: unknown instruction class %d\n", class);
+		perr("BUG: unknown instruction class %d", class);
 	}
 	iwords[0] = opc;
 	return nw;
