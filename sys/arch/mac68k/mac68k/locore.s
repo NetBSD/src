@@ -86,7 +86,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	from: @(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.15 1994/07/02 13:03:13 briggs Exp $
+ *	$Id: locore.s,v 1.16 1994/07/03 11:57:56 briggs Exp $
  */
 
 #include "assym.s"
@@ -281,6 +281,7 @@ _fpfline:
 _fpunsupp:
 	jra	_illinst
 
+#ifdef FPSP
 | FPSP entry points and support routines
 	.globl	real_fline,real_bsun,real_unfl,real_operr,real_ovfl,real_snan
 	.globl	real_unsupp,real_inex
@@ -340,6 +341,7 @@ real_operr:
 real_ovfl:
 real_snan:
 | Fall through into FP coprocessor exceptions
+#endif	/* if FPSP */
 
 /*
  * Handles all other FP coprocessor exceptions.
@@ -965,6 +967,7 @@ start:
 	tstl	_cpu040
 	beq	Lstartnot040		| It's not an '040
 	.word	0xf4f8			| cpusha bc - push and invalidate caches
+#ifdef FPSP
 	lea	Lvectab+0xc0,a0		| Set up 68040 floating point
 	movl	#fpsp_bsun,a0@+		|  exception vectors
 	movl	#real_inex,a0@+
@@ -974,6 +977,7 @@ start:
 	movl	#fpsp_ovfl,a0@+
 	movl	#fpsp_snan,a0@+
 	movl	#fpsp_unsupp,a0@+
+#endif	/* if FPSP */
 
 	movl	#CACHE40_OFF,d0		| 68040 cache disable
 	movc	d0, cacr
@@ -1631,7 +1635,8 @@ Ldoproc0:				| The 040 comes back here...
 	clrw	a1@(PCB_FLAGS)		| clear flags
 #ifdef FPCOPROC
 	clrl	a1@(PCB_FPCTX)		| ensure null FP context
-	movl	a1,sp@-
+|WRONG!	movl	a1,sp@-			| commented according to amiga.
+	pea	a1@(PCB_FPCTX)
 	jbsr	_m68881_restore		| restore it (does not kill a1)
 	addql	#4,sp
 #endif
