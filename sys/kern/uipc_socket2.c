@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.55 2003/09/06 22:03:10 christos Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.56 2003/09/21 19:17:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.55 2003/09/06 22:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.56 2003/09/21 19:17:11 jdolecek Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -303,8 +303,6 @@ sb_lock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb, int code)
 {
-	struct proc	*p;
-
 	selnotify(&sb->sb_sel, 0);
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
@@ -312,25 +310,19 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 		wakeup((caddr_t)&sb->sb_cc);
 	}
 	if (sb->sb_flags & SB_ASYNC) {
-		ksiginfo_t ksi;
-		memset(&ksi, 0, sizeof(ksi));
-		ksi.ksi_signo = SIGIO;
-		ksi.ksi_code = code;
+		int band;
 		if (code == POLL_IN) {
 			if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
-				ksi.ksi_band = (POLLPRI | POLLRDBAND);
+				band = (POLLPRI | POLLRDBAND);
 			else
-				ksi.ksi_band = (POLLIN | POLLRDNORM);
+				band = (POLLIN | POLLRDNORM);
 		} else {
 			if (so->so_oobmark)
-				ksi.ksi_band = (POLLPRI | POLLWRBAND);
+				band = (POLLPRI | POLLWRBAND);
 			else
-				ksi.ksi_band = (POLLOUT | POLLWRNORM);
+				band = (POLLOUT | POLLWRNORM);
 		}
-		if (so->so_pgid < 0)
-			kgsignal(-so->so_pgid, &ksi, so);
-		else if (so->so_pgid > 0 && (p = pfind(so->so_pgid)) != 0)
-			kpsignal(p, &ksi, so);
+		fownsignal(so->so_pgid, code, band, so);
 	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.84 2003/08/13 19:44:12 wrstuden Exp $	*/
+/*	$NetBSD: bpf.c,v 1.85 2003/09/21 19:17:13 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.84 2003/08/13 19:44:12 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.85 2003/09/21 19:17:13 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -518,15 +518,9 @@ static __inline void
 bpf_wakeup(d)
 	struct bpf_d *d;
 {
-	struct proc *p;
-
 	wakeup((caddr_t)d);
-	if (d->bd_async) {
-		if (d->bd_pgid > 0)
-			gsignal (d->bd_pgid, SIGIO);
-		else if (d->bd_pgid && (p = pfind (-d->bd_pgid)) != NULL)
-			psignal (p, SIGIO);
-	}
+	if (d->bd_async)
+		fownsignal(d->bd_pgid, 0, 0, NULL);
 
 	selnotify(&d->bd_sel, 0);
 	/* XXX */
@@ -625,7 +619,6 @@ bpfioctl(dev, cmd, addr, flag, p)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
-	pid_t pgid;
 #ifdef BPF_KERN_FILTER
 	struct bpf_insn **p;
 #endif
@@ -863,25 +856,14 @@ bpfioctl(dev, cmd, addr, flag, p)
 		d->bd_async = *(int *)addr;
 		break;
 
-	/*
-	 * N.B.  ioctl (FIOSETOWN) and fcntl (F_SETOWN) both end up doing
-	 * the equivalent of a TIOCSPGRP and hence end up here.  *However*
-	 * TIOCSPGRP's arg is a process group if it's positive and a process
-	 * id if it's negative.  This is exactly the opposite of what the
-	 * other two functions want!
-	 * There is code in ioctl and fcntl to make the SETOWN calls do
-	 * a TIOCSPGRP with the pgid of the process if a pid is given.
-	 */
 	case TIOCSPGRP:		/* Process or group to send signals to */
-		pgid = *(int *)addr;
-		if (pgid != 0)
-			error = pgid_in_session(p, pgid);
-		if (error == 0)
-			d->bd_pgid = pgid;
+	case FIOSETOWN:
+		error = fsetown(p, &d->bd_pgid, cmd, addr);
 		break;
 
 	case TIOCGPGRP:
-		*(int *)addr = d->bd_pgid;
+	case FIOGETOWN:
+		error = fgetown(p, d->bd_pgid, cmd, addr);
 		break;
 	}
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.10 2001/10/31 20:08:17 atatat Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.11 2003/09/21 19:17:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -36,7 +36,7 @@ struct tun_softc {
 
 #define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
 
-	int	tun_pgrp;		/* the process group - if any */
+	pid_t	tun_pgid;		/* PID or process group ID */
 	struct	selinfo	tun_rsel;	/* read select */
 	struct	selinfo	tun_wsel;	/* write select (not used) */
 	int	tun_unit;		/* the tunnel unit number */
