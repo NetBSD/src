@@ -206,9 +206,6 @@ int is_attach(isa_dev)
 
 	if_attach(ifp);
 
-#if NBPFILTER > 0
-        bpfattach(&is->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 /*
          * Search down the ifa address list looking for the AF_LINK type
@@ -235,6 +232,10 @@ entry
         }
 
 	printf (" ethernet address %s", ether_sprintf(is->arpcom.ac_enaddr)) ;
+
+#if NBPFILTER > 0
+        bpfattach(&is->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 }
 
 int
