@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.153.2.10 2002/11/28 13:31:31 tron Exp $	*/
+/*	$NetBSD: pciide.c,v 1.153.2.11 2003/04/28 06:25:40 tron Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153.2.10 2002/11/28 13:31:31 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.153.2.11 2003/04/28 06:25:40 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -194,6 +194,8 @@ void pdc202xx_setup_channel __P((struct channel_softc*));
 void pdc20268_setup_channel __P((struct channel_softc*));
 int  pdc202xx_pci_intr __P((void *));
 int  pdc20265_pci_intr __P((void *));
+static void pdc20262_dma_start __P((void*, int, int));
+static int  pdc20262_dma_finish __P((void*, int, int, int));
 
 void opti_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void opti_setup_channel __P((struct channel_softc*));
@@ -3657,6 +3659,13 @@ pdc202xx_chip_map(sc, pa)
 	sc->sc_wdcdev.channels = sc->wdc_chanarray;
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66 ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100 ||
+	    sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100X) {
+		sc->sc_wdcdev.dma_start = pdc20262_dma_start;
+		sc->sc_wdcdev.dma_finish = pdc20262_dma_finish;
+	}
+
 	if (!PDC_IS_268(sc)) {
 		/* setup failsafe defaults */
 		mode = 0;
@@ -3979,6 +3988,61 @@ pdc20265_pci_intr(arg)
 			rv = 1;
 	}
 	return rv;
+}
+
+static void
+pdc20262_dma_start(v, channel, drive)
+	void *v;
+	int channel, drive;
+{
+	struct pciide_softc *sc = v;
+	struct pciide_dma_maps *dma_maps =
+	    &sc->pciide_channels[channel].dma_maps[drive];
+	int atapi;
+
+	if (dma_maps->dma_flags & WDC_DMA_LBA48) {
+		atapi = (dma_maps->dma_flags & WDC_DMA_READ) ?
+		    PDC262_ATAPI_LBA48_READ : PDC262_ATAPI_LBA48_WRITE;
+		atapi |= dma_maps->dmamap_xfer->dm_mapsize >> 1;
+		bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_ATAPI(channel), atapi);
+	}
+
+	pciide_dma_start(v, channel, drive);
+}
+
+int
+pdc20262_dma_finish(v, channel, drive, force)
+	void *v;
+	int channel, drive;
+	int force;
+{
+	struct pciide_softc *sc = v;
+	struct pciide_dma_maps *dma_maps =
+	    &sc->pciide_channels[channel].dma_maps[drive];
+	struct channel_softc *chp;
+	int atapi, error;
+
+	error = pciide_dma_finish(v, channel, drive, force);
+
+	if (dma_maps->dma_flags & WDC_DMA_LBA48) {
+		chp = sc->wdc_chanarray[channel];
+		atapi = 0;
+		if (chp->ch_drive[0].drive_flags & DRIVE_ATAPI ||
+		    chp->ch_drive[1].drive_flags & DRIVE_ATAPI) {
+			if ((!(chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
+			    (chp->ch_drive[1].drive_flags & DRIVE_UDMA) ||
+			    !(chp->ch_drive[1].drive_flags & DRIVE_DMA)) &&
+			    (!(chp->ch_drive[1].drive_flags & DRIVE_UDMA) ||
+			    (chp->ch_drive[0].drive_flags & DRIVE_UDMA) ||
+			    !(chp->ch_drive[0].drive_flags & DRIVE_DMA)))
+				atapi = PDC262_ATAPI_UDMA;
+		}
+		bus_space_write_4(sc->sc_dma_iot, sc->sc_dma_ioh,
+		    PDC262_ATAPI(channel), atapi);
+	}
+
+	return error;
 }
 
 void
