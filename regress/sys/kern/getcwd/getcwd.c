@@ -1,4 +1,4 @@
-/* $NetBSD: getcwd.c,v 1.2 1999/03/26 13:14:12 sommerfe Exp $ */
+/* $NetBSD: getcwd.c,v 1.3 1999/03/26 22:23:58 sommerfe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@ static void test___getcwd_chroot __P((void));
 
 static void stress_test_getcwd __P((void));
 static void usage __P((char *progname));
+
+/* libc-private interface */
+int __getcwd __P((char *, size_t));
 
 /*
  * test cases:
