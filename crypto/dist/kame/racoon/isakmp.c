@@ -173,8 +173,8 @@ isakmp_handler(so_isakmp)
 		goto end;
 	}
 
-	/* check isakmp header length */
-	if (len < sizeof(isakmp)) {
+	/* check isakmp header length, as well as sanity of header length */
+	if (len < sizeof(isakmp) || ntohl(isakmp.len) < sizeof(isakmp)) {
 		plog(LLV_ERROR, LOCATION, (struct sockaddr *)&remote,
 			"packet shorter than isakmp header size.\n");
 		/* dummy receive */
