@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.39 1997/10/11 16:13:19 mhitch Exp $	*/
+/*	$NetBSD: fd.c,v 1.40 1998/01/12 10:39:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -241,16 +241,10 @@ struct cfattach fd_ca = {
 	sizeof(struct fd_softc), fdmatch, fdattach
 };
 
-struct cfdriver fd_cd = {
-	NULL, "fd", DV_DISK, NULL, 0
-};
+extern struct cfdriver fd_cd;
 
 struct cfattach fdc_ca = {
 	sizeof(struct device), fdcmatch, fdcattach
-};
-
-struct cfdriver fdc_cd = {
-	NULL, "fdc", DV_DULL, NULL, 0
 };
 
 /*

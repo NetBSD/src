@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.30 1997/04/04 06:27:32 is Exp $ */
+/*	$NetBSD: if_bah.c,v 1.31 1998/01/12 10:39:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -194,10 +194,6 @@ void	bah_reconwatch(void *);
 
 struct cfattach bah_zbus_ca = {
 	sizeof(struct bah_softc), bah_zbus_match, bah_zbus_attach
-};
-
-struct cfdriver bah_cd = {
-	NULL, "bah", DV_IFNET
 };
 
 int

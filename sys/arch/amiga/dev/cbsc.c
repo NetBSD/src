@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.2 1997/10/24 01:43:57 mhitch Exp $	*/
+/*	$NetBSD: cbsc.c,v 1.3 1998/01/12 10:39:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -68,10 +68,6 @@ int	cbscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach cbsc_ca = {
 	sizeof(struct cbsc_softc), cbscmatch, cbscattach
-};
-
-struct cfdriver cbsc_cd = {
-	NULL, "cbsc", DV_DULL
 };
 
 struct scsipi_adapter cbsc_switch = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.31 1997/09/15 22:17:55 is Exp $	*/
+/*	$NetBSD: clock.c,v 1.32 1998/01/12 10:39:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,9 +94,6 @@ void calibrate_delay __P((struct device *));
 struct cfattach clock_ca = {
 	sizeof(struct device), clockmatch, clockattach
 };
-
-struct cfdriver clock_cd = {
-	NULL, "clock", DV_DULL, NULL, 0 };
 
 int
 clockmatch(pdp, cfp, auxp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.5 1997/12/20 21:13:13 perry Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.6 1998/01/12 10:39:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -263,9 +263,6 @@ struct cfattach grfcv3d_ca = {
 	sizeof(struct grf_softc), grfcv3dmatch, grfcv3dattach
 };
 
-struct cfdriver grfcv3d_cd = {
-	NULL, "grfcv3d", DV_DULL, NULL, 0
-};
 static struct cfdata *cfdata;
 
 #define CV3D_ULCURSOR	1	/* Underlined Cursor in textmode */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.24 1997/07/30 11:05:55 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.25 1998/01/12 10:39:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -256,9 +256,6 @@ struct cfattach grfcv_ca = {
 	sizeof(struct grf_cv_softc), grfcvmatch, grfcvattach
 };
 
-struct cfdriver grfcv_cd = {
-	NULL, "grfcv", DV_DULL, NULL, 0
-};
 static struct cfdata *cfdata;
 
 #define CV_INT_NUM 6	/* CV interrupt Level: #2 or #6 */

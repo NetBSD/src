@@ -1,4 +1,4 @@
-/*	$NetBSD: cbiisc.c,v 1.2 1997/10/24 01:43:53 mhitch Exp $	*/
+/*	$NetBSD: cbiisc.c,v 1.3 1998/01/12 10:39:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -68,10 +68,6 @@ int	cbiiscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach cbiisc_ca = {
 	sizeof(struct cbiisc_softc), cbiiscmatch, cbiiscattach
-};
-
-struct cfdriver cbiisc_cd = {
-	NULL, "cbiisc", DV_DULL
 };
 
 struct scsipi_adapter cbiisc_switch = {

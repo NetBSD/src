@@ -1,4 +1,4 @@
-/*	$NetBSD: bzsc.c,v 1.19 1997/10/12 19:32:12 mhitch Exp $	*/
+/*	$NetBSD: bzsc.c,v 1.20 1998/01/12 10:39:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -74,10 +74,6 @@ int	bzscmatch	__P((struct device *, struct cfdata *, void *));
 /* Linkup to the rest of the kernel */
 struct cfattach bzsc_ca = {
 	sizeof(struct bzsc_softc), bzscmatch, bzscattach
-};
-
-struct cfdriver bzsc_cd = {
-	NULL, "bzsc", DV_DULL
 };
 
 struct scsipi_adapter bzsc_switch = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.21 1997/11/24 21:00:50 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.22 1998/01/12 10:39:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -112,10 +112,6 @@ struct cfattach aucc_ca = {
 	sizeof(struct aucc_softc),
 	auccmatch,
 	auccattach
-};
-
-struct	cfdriver aucc_cd = {
-	NULL, "aucc", DV_DULL, NULL, 0
 };
 
 struct audio_device aucc_device = {
