@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.9 1996/05/03 21:43:47 cgd Exp $	*/
+/*	$NetBSD: hash.c,v 1.10 1996/11/07 06:48:01 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-static char rcsid[] = "$NetBSD: hash.c,v 1.9 1996/05/03 21:43:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.10 1996/11/07 06:48:01 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -511,7 +511,7 @@ flush_meta(hashp)
 	else
 		if (wsize != sizeof(HASHHDR)) {
 			errno = EFTYPE;
-			hashp->errno = errno;
+			hashp->err = errno;
 			return (-1);
 		}
 	for (i = 0; i < NCACHED; i++)
@@ -542,7 +542,7 @@ hash_get(dbp, key, data, flag)
 
 	hashp = (HTAB *)dbp->internal;
 	if (flag) {
-		hashp->errno = errno = EINVAL;
+		hashp->err = errno = EINVAL;
 		return (ERROR);
 	}
 	return (hash_access(hashp, HASH_GET, (DBT *)key, data));
@@ -559,11 +559,11 @@ hash_put(dbp, key, data, flag)
 
 	hashp = (HTAB *)dbp->internal;
 	if (flag && flag != R_NOOVERWRITE) {
-		hashp->errno = errno = EINVAL;
+		hashp->err = errno = EINVAL;
 		return (ERROR);
 	}
 	if ((hashp->flags & O_ACCMODE) == O_RDONLY) {
-		hashp->errno = errno = EPERM;
+		hashp->err = errno = EPERM;
 		return (ERROR);
 	}
 	return (hash_access(hashp, flag == R_NOOVERWRITE ?
@@ -580,11 +580,11 @@ hash_delete(dbp, key, flag)
 
 	hashp = (HTAB *)dbp->internal;
 	if (flag && flag != R_CURSOR) {
-		hashp->errno = errno = EINVAL;
+		hashp->err = errno = EINVAL;
 		return (ERROR);
 	}
 	if ((hashp->flags & O_ACCMODE) == O_RDONLY) {
-		hashp->errno = errno = EPERM;
+		hashp->err = errno = EPERM;
 		return (ERROR);
 	}
 	return (hash_access(hashp, HASH_DELETE, (DBT *)key, NULL));
@@ -735,7 +735,7 @@ hash_seq(dbp, key, data, flag)
 
 	hashp = (HTAB *)dbp->internal;
 	if (flag && flag != R_FIRST && flag != R_NEXT) {
-		hashp->errno = errno = EINVAL;
+		hashp->err = errno = EINVAL;
 		return (ERROR);
 	}
 #ifdef HASH_STATISTICS
