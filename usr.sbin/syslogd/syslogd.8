@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslogd.8,v 1.24 2002/01/19 11:45:03 wiz Exp $
+.\"	$NetBSD: syslogd.8,v 1.25 2002/02/02 01:59:04 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -165,7 +165,6 @@ Refer to
 .Xr hosts_access 5
 for details.
 .Sh SYSLOG PROTOCOL NOTES
-.Pp
 The message sent to
 .Nm
 should consist of a single line.
@@ -191,10 +190,10 @@ The kernel log device.
 .El
 .Sh SEE ALSO
 .Xr logger 1 ,
-.Xr newsyslog 8 ,
 .Xr syslog 3 ,
 .Xr services 5 ,
-.Xr syslog.conf 5
+.Xr syslog.conf 5 ,
+.Xr newsyslog 8
 .Sh HISTORY
 The
 .Nm
