@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.14 1998/09/19 16:45:43 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.15 1999/01/15 00:26:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -280,11 +280,12 @@ vmematch_mainbus(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct mainbus_attach_args *ma = aux;
 
 	if (!CPU_ISSUN4)
 		return (0);
 
-	return (1);
+	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
 }
 
 int
@@ -293,9 +294,9 @@ vmematch_iommu(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
+	struct iommu_attach_args *ia = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0);
+	return (strcmp(cf->cf_driver->cd_name, ia->iom_name) == 0);
 }
 
 
