@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/07/26 15:16:28 simonb Exp $
+#	$NetBSD: Makefile,v 1.4 2000/07/28 16:43:49 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,9 @@ SUBDIR=	libssh ssh sshd ssh-add ssh-keygen ssh-agent scp
 
 distribution:
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 \
-	    ${SSHDIST}/ssh_config ${DESTDIR}/etc/ssh_config
+	    ${SSHDIST}/ssh.conf ${DESTDIR}/etc/ssh.conf
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 644 \
-	    ${SSHDIST}/sshd_config ${DESTDIR}/etc/sshd_config
+	    ${SSHDIST}/sshd.conf ${DESTDIR}/etc/sshd.conf
 .else
 distribution:
 	@true
