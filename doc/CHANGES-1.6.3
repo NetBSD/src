@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.54 2004/03/29 08:43:03 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.55 2004/03/31 20:12:00 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -333,4 +333,10 @@ gnu/usr.bin/cvs/include/config.h		patch
 	Fixes a known security problem w. syslog'ing as root (and prevents
 	pserver from being run as root).
 	[jmc, ticket #1641]
+
+sys/netinet/udp_usrreq.c			1.117-1.118
+
+	Drop packet if IPv6 udp packet does not have checksum (checksum is
+	mandatory in IPv6).
+	[itojun, ticket #1645]
 
