@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.16 (Berkeley) 3/27/91";*/
-static char rcsid[] = "$Id: main.c,v 1.3 1993/08/29 22:47:03 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1994/03/08 06:40:05 mycroft Exp $";
 #endif /* not lint */
 
 #define USE_OLD_TTY
@@ -271,12 +271,6 @@ main(argc, argv)
 			for (i = 0; environ[i] != (char *)0; i++)
 				env[i] = environ[i];
 			makeenv(&env[i]);
-
-			/* 
-			 * this is what login was doing anyway.
-			 * soon we rewrite getty completely.
-			 */
-			set_ttydefaults(0);
 			execle(LO, "login", "-p", name, (char *) 0, env);
 			syslog(LOG_ERR, "%s: %m", LO);
 			exit(1);
