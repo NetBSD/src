@@ -72,18 +72,27 @@ To upgrade your system, follow the following instructions:
 
 	If you don't already have the NetBSD distribution sets on your
 	disk, look in the installation section for information on how
-	to transfer them to your disk.  Once they are transferred to
-	your disk, continue here.  (Obviously, if the NetBSD
-	distribution sets are already on your disk, because you've
-	transferred them before starting the upgrade process, you
-	don't need to transfer them again now!)
+	to transfer them to your disk.
+
+	If you have only one floppy drive, and don't have the disk
+	space to copy all of the distribution onto the hard drive, you can
+	do the following:
+		Install a kernel on the hard drive as detailed a few
+		paragraphs down.  Then boot off the hard drive.
+		Now you can copy and install distribution sets
+		incrementally from your one floppy drive.
+		
+	Once the distribution sets are transferred to your disk,
+	continue here.  (Obviously, if the NetBSD distribution sets
+	are already on your disk, because you've transferred them before
+	starting the upgrade process, you don't need to transfer them
+	again now!)
 
 	After the software has been transferred to the machine (or
 	mounted, in the case of upgrading via NFS), change into the
-	directory containing the "base10" distribution set.  (Don't
-	forget that your hard disk is mounted on /mnt!)  Once you are
-	there, run the "Set_tmp_dir" command, and hit return at the
-	prompt to select the default answer for the temporary
+	directory containing the "base10" distribution set.
+	Once you are there, run the "Set_tmp_dir" command, and hit return
+	at theprompt to select the default answer for the temporary
 	directory's path name.  (It should be the path name of the
 	directory that you're in.)
 
