@@ -1,4 +1,4 @@
-.\"	$NetBSD: tset.1,v 1.4 1994/12/07 05:08:13 jtc Exp $
+.\"	$NetBSD: tset.1,v 1.5 1996/11/15 05:52:48 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,7 +78,8 @@ The terminal type associated with the standard error output device in the
 .Pa /etc/ttys
 file.
 .It
-The default terminal type, ``unknown''.
+The default terminal type,
+.Dq unknown .
 .El
 .Pp
 If the terminal type was not specified on the command-line, the
@@ -174,9 +175,9 @@ option is specified, the terminal type and the termcap entry are written
 to the standard output, separated by a space and without a terminating
 newline.
 This can be assigned to an array by
-.Nm csh
+.Xr csh 1
 and
-.Nm ksh
+.Xr ksh 1
 users and then used like any other shell array.
 .Pp
 When the
@@ -185,13 +186,19 @@ option is specified, the commands to enter the information into the
 shell's environment are written to the standard output.
 If the
 .Ev SHELL
-environmental variable ends in ``csh'', the commands are for the
-.Nm csh ,
+environmental variable ends in
+.Dq csh ,
+the commands are for the
+.Xr csh 1 ,
 otherwise, they are for
-.Xr sh .
+.Xr sh 1 .
 Note, the
-.Nm csh
-commands set and unset the shell variable
+.Xr csh 1
+commands
+.Ic set
+and
+.Ic unset
+the shell variable
 .Dq noglob ,
 leaving it unset.
 The following line in the
