@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)term.c	8.41 (Berkeley) 1/23/94"; */
-static char *rcsid = "$Id: term.c,v 1.2 1994/01/24 06:39:17 cgd Exp $";
+static char *rcsid = "$Id: term.c,v 1.3 1994/03/02 01:54:09 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,7 +146,8 @@ term_init(sp)
 
 	/* Set keys found in the termios structure. */
 #define	TERMSET(name, val) {						\
-	if ((ch = gp->original_termios.c_cc[name]) != _POSIX_VDISABLE)	\
+	if (F_ISSET(gp, G_HAVETTY) && 					\
+	    (ch = gp->original_termios.c_cc[name]) != _POSIX_VDISABLE)	\
 		for (kp = keylist;; ++kp)				\
 			if (kp->value == (val)) {			\
 				kp->ch = ch;				\

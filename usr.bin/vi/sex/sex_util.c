@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)sex_util.c	8.9 (Berkeley) 12/23/93"; */
-static char *rcsid = "$Id: sex_util.c,v 1.2 1994/01/24 06:41:07 cgd Exp $";
+static char *rcsid = "$Id: sex_util.c,v 1.3 1994/03/02 01:54:21 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ sex_suspend(sp)
 	int rval;
 
 	/* Save ex/vi terminal settings, and restore the original ones. */
-	if (F_ISSET(sp->gp, G_ISFROMTTY)) {
+	if (F_ISSET(sp->gp, G_ISFROMTTY) && F_ISSET(sp->gp, G_HAVETTY)) {
 		(void)tcgetattr(STDIN_FILENO, &t);
 		(void)tcsetattr(STDIN_FILENO,
 		    TCSADRAIN, &sp->gp->original_termios);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)gs.h	8.26 (Berkeley) 1/9/94
- *	$Id: gs.h,v 1.2 1994/01/24 06:38:53 cgd Exp $
+ *	$Id: gs.h,v 1.3 1994/03/02 01:54:04 cgd Exp $
  */
 
 struct _gs {
@@ -86,6 +86,7 @@ struct _gs {
 #define	G_SLEEPING	0x00800		/* Asleep (die on signal). */
 #define	G_SNAPSHOT	0x01000		/* Always snapshot files. */
 #define	G_TMP_INUSE	0x02000		/* Temporary buffer in use. */
+#define	G_HAVETTY	0x04000		/* Do we have access to a tty */
 	u_int	 flags;
 };
 
