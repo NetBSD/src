@@ -1,7 +1,7 @@
-/* $NetBSD: cpu.c,v 1.33 1998/11/19 01:59:39 ross Exp $ */
+/* $NetBSD: cpu.c,v 1.34 1999/02/23 03:20:01 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -66,14 +66,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 1998/11/19 01:59:39 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.34 1999/02/23 03:20:01 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 
@@ -88,17 +87,22 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.33 1998/11/19 01:59:39 ross Exp $");
 #include <alpha/alpha/cpuvar.h>
 
 #if defined(MULTIPROCESSOR)
-TAILQ_HEAD(, cpu_softc) cpu_spinup_queue =
-    TAILQ_HEAD_INITIALIZER(cpu_spinup_queue);
+#include <sys/malloc.h>
+#include <sys/kthread.h>
 
-/* Map CPU ID to cpu_softc; allocate in cpu_attach(). */
-struct cpu_softc **cpus;
-
-/* Quick access to the primary CPU. */
-struct cpu_softc *primary_cpu;
+/*
+ * Array of CPU info structures.  Must be statically-allocated because
+ * curproc, etc. are used early.
+ */
+struct cpu_info cpu_info[ALPHA_MAXPROCS];
 
 /* Bitmask of CPUs currently running. */
 u_long cpus_running;
+
+void	cpu_create_idle_thread __P((void *));
+#else
+paddr_t curpcb;				/* PA of our current context */
+struct	proc *fpcurproc;		/* current owner of FPU */
 #endif /* MULTIPROCESSOR */
 
 /* Definition of the driver for autoconfig. */
@@ -106,7 +110,7 @@ static int	cpumatch(struct device *, struct cfdata *, void *);
 static void	cpuattach(struct device *, struct device *, void *);
 
 struct cfattach cpu_ca = {
-	sizeof(struct cpu_softc), cpumatch, cpuattach
+	sizeof(struct device), cpumatch, cpuattach
 };
 
 extern struct cfdriver cpu_cd;
@@ -152,25 +156,21 @@ struct cputable_struct {
  * works.
  *
  * As we find processors during the autoconfiguration sequence, all
- * processors that are available and not the primary are placed on
- * a "spin-up queue".  Once autoconfiguration has completed, this
- * queue is run to spin up the secondary processors.
+ * processors that are available and not the primary are set up to
+ * have a kernel thread created for them.  This kernel thread will
+ * be that CPUs "idle thread" (analog of proc0).  These threads are
+ * created after init(8) is created.
  *
- * cpu_run_spinup_queue() pulls each processor off the list, switches
- * it to OSF/1 PALcode, sets the entry point to the cpu_spinup_trampoline,
- * and then sends a "START" command to the secondary processor's console.
+ * cpu_create_idle_thread() creates one idle thread, and starts that
+ * thread's prcessor, switches it to OSF/1 PALcode, sets the entry point
+ * to cpu_spinup_trampoline, and then sends a "START" command to the
+ * secondary processor's console.
  *
  * Upon successful processor bootup, the cpu_spinup_trampoline will call
  * cpu_hatch(), which will print a message indicating that the processor
  * is running, and will set the "hatched" flag in its softc.  At the end
  * of cpu_hatch() is a spin-forever loop; we do not yet attempt to schedule
  * anything on secondary CPUs.
- *
- * To summarize:
- *
- *	[primary cpu] cpu_run_spinup_queue -> return
- *
- *	[secondary cpus] cpu_spinup_trampoline -> cpu_hatch -> spin-loop
  */
 
 static int
@@ -197,7 +197,6 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	struct cpu_softc *sc = (struct cpu_softc *)dev;
 	struct mainbus_attach_args *ma = aux;
 	int i;
 	char **s;
@@ -206,14 +205,13 @@ cpuattach(parent, dev, aux)
 	int needcomma;
 #endif
 	u_int32_t major, minor;
+#if defined(MULTIPROCESSOR)
+	struct cpu_info *ci;
+#endif
 
 	p = LOCATE_PCS(hwrpb, ma->ma_slot);
 	major = PCS_CPU_MAJORTYPE(p);
 	minor = PCS_CPU_MINORTYPE(p);
-
-	simple_lock_init(&sc->sc_slock);
-
-	sc->sc_cpuid = ma->ma_slot;
 
 	printf(": ID %d%s, ", ma->ma_slot,
 	    ma->ma_slot == hwrpb->rpb_primary_cpu_id ? " (primary)" : "");
@@ -263,21 +261,14 @@ recognized:
 
 #if defined(MULTIPROCESSOR)
 	if (ma->ma_slot > ALPHA_WHAMI_MAXID) {
-		printf("%s: procssor ID too large, ignoring\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: procssor ID too large, ignoring\n", dev->dv_xname);
 		return;
 	}
 
-	if (cpus == NULL) {
-		size_t size = sizeof(struct cpu_softc *) * hwrpb->rpb_pcs_cnt;
-
-		cpus = malloc(size, M_DEVBUF, M_NOWAIT);
-		if (cpus == NULL)
-			panic("cpu_attach: unable to allocate cpus array");
-		memset(cpus, 0, size);
-	}
-
-	cpus[ma->ma_slot] = sc;
+	ci = &cpu_info[ma->ma_slot];
+	simple_lock_init(&ci->ci_slock);
+	ci->ci_cpuid = ma->ma_slot;
+	ci->ci_dev = dev;
 #endif /* MULTIPROCESSOR */
 
 	/*
@@ -295,157 +286,139 @@ recognized:
 	if (ma->ma_slot == hwrpb->rpb_primary_cpu_id) {
 		u_long cpumask = (1UL << ma->ma_slot);
 
-		sc->sc_flags |= CPUF_PRIMARY;
+		ci->ci_flags |= CPUF_PRIMARY;
+		ci->ci_idle_thread = &proc0;
 		alpha_atomic_setbits_q(&cpus_running, cpumask);
-		primary_cpu = sc;
 		return;
 	}
 
 	/*
-	 * Not the primary CPU; need to queue this processor to be
-	 * started after autoconfiguration is finished.
+	 * Not the primary CPU; need to queue a kernel thread to be created
+	 * to be this processor's idle thread.  The creation of the kernel
+	 * thread will also spin up the processor.
 	 */
 
 	if ((p->pcs_flags & PCS_PA) == 0) {
-		printf("%s: processor not available for use\n",
-		    sc->sc_dev.dv_xname);
+		printf("%s: processor not available for use\n", dev->dv_xname);
 		return;
 	}
 
-	/*
-	 * Place this processor on the cpu-spinup queue.  No locking is
-	 * necessary; only the primary CPU will access this list.
-	 */
-	TAILQ_INSERT_TAIL(&cpu_spinup_queue, sc, sc_q);
+	kthread_create_deferred(cpu_create_idle_thread, ci);
 #endif /* MULTIPROCESSOR */
 }
 
 #if defined(MULTIPROCESSOR)
 void
-cpu_run_spinup_queue()
+cpu_create_idle_thread(arg)
+	void *arg;
 {
-	struct cpu_softc *sc;
+	struct cpu_info *ci = arg;
+	struct proc *p;
 	long timeout;
 	struct pcs *pcsp, *primary_pcsp;
 	struct pcb *pcb;
 	u_long cpumask;
 
 	primary_pcsp = LOCATE_PCS(hwrpb, hwrpb->rpb_primary_cpu_id);
+	pcsp = LOCATE_PCS(hwrpb, ci->ci_cpuid);
+	cpumask = (1UL << ci->ci_cpuid);
 
-	while ((sc = TAILQ_FIRST(&cpu_spinup_queue)) != NULL) {
-		TAILQ_REMOVE(&cpu_spinup_queue, sc, sc_q);
-
-		pcsp = LOCATE_PCS(hwrpb, sc->sc_cpuid);
-		cpumask = (1UL << sc->sc_cpuid);
-
-		/* Make sure the processor has valid PALcode. */
-		if ((pcsp->pcs_flags & PCS_PV) == 0) {
-			printf("%s: PALcode not valid\n", sc->sc_dev.dv_xname);
-			continue;
-		}
-
-		/*
-		 * XXX This really should fork honest idleprocs (a'la proc0)
-		 * XXX but we aren't called via MI code yet, so we can't
-		 * XXX really fork.
-		 */
-
-		/* Allocate the idle stack. */
-		sc->sc_idle_stack = malloc(USPACE, M_TEMP, M_NOWAIT);
-		if (sc->sc_idle_stack == NULL) {
-			printf("%s: unable to allocate idle stack\n",
-			    sc->sc_dev.dv_xname);
-			continue;
-		}
-		memset(sc->sc_idle_stack, 0, USPACE);
-#if 0
-		printf("%s: idle stack = %p\n", sc->sc_dev.dv_xname,
-		    sc->sc_idle_stack);
-#endif
-
-		/*
-		 * Initialize the PCB and copy it to the PCS.
-		 * XXX We don't yet use the trapframe.  Will we ever?
-		 */
-		pcb = (struct pcb *)sc->sc_idle_stack;
-		pcb->pcb_hw.apcb_ksp =
-		    (u_int64_t)sc->sc_idle_stack + USPACE -
-		    sizeof(struct trapframe);
-		pcb->pcb_hw.apcb_backup_ksp = pcb->pcb_hw.apcb_ksp;
-		pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
-		pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
-		memcpy(pcsp->pcs_hwpcb, &pcb->pcb_hw, sizeof(pcb->pcb_hw));
-#if 0
-		printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
-		    pcb->pcb_hw.apcb_ksp);
-		printf("%s: hwpcb ptbr = 0x%lx\n", sc->sc_dev.dv_xname,
-		    pcb->pcb_hw.apcb_ptbr);
-#endif
-
-		/*
-		 * Set up the HWRPB to restart the secondary processor
-		 * with our spin-up trampoline.
-		 */
-		hwrpb->rpb_restart = (u_int64_t) cpu_spinup_trampoline;
-		hwrpb->rpb_restart_val = (u_int64_t) sc;
-		hwrpb->rpb_checksum = hwrpb_checksum();
-
-		/*
-		 * Configure the CPU to start in OSF/1 PALcode by copying
-		 * the primary CPU's PALcode revision info to the secondary
-		 * CPUs PCS.
-		 */
-
-		/*
-		 * XXX Until I can update the boot block on my test system.
-		 * XXX --thorpej
-		 */
-#if 0
-		memcpy(&pcsp->pcs_pal_rev, &primary_pcsp->pcs_pal_rev,
-		    sizeof(pcsp->pcs_pal_rev));
-#else
-		memcpy(&pcsp->pcs_pal_rev,
-		    &pcsp->pcs_palrevisions[PALvar_OSF1],
-		    sizeof(pcsp->pcs_pal_rev));
-#endif
-		pcsp->pcs_flags |= (PCS_CV|PCS_RC);
-		pcsp->pcs_flags &= ~PCS_BIP;
-
-		/* Make sure the secondary console sees all this. */
-		alpha_mb();
-
-		/* Send a "START" command to the secondary CPU's console. */
-		if (cpu_iccb_send(sc->sc_cpuid, "START\r\n")) {
-			printf("%s: unable to issue `START' command\n",
-			    sc->sc_dev.dv_xname);
-			continue;
-		}
-
-		/* Wait for the processor to boot. */
-		for (timeout = 10000; timeout != 0; timeout--) {
-			alpha_mb();
-			if (pcsp->pcs_flags & PCS_BIP)
-				break;
-			delay(1000);
-		}
-		if (timeout == 0)
-			printf("%s: processor failed to boot\n",
-			    sc->sc_dev.dv_xname);
-
-		/*
-		 * ...and now wait for verification that it's running kernel
-		 * code.
-		 */
-		for (timeout = 10000; timeout != 0; timeout--) {
-			alpha_mb();
-			if ((volatile u_long)cpus_running & cpumask)
-				break;
-			delay(1000);
-		}
-		if (timeout == 0)
-			printf("%s: processor failed to hatch\n",
-			    sc->sc_dev.dv_xname);
+	/* Make sure the processor has valid PALcode. */
+	if ((pcsp->pcs_flags & PCS_PV) == 0) {
+		printf("%s: PALcode not valid\n", ci->ci_dev->dv_xname);
+		return;
 	}
+
+	/*
+	 * Create the CPU's idle thread.  Note, the thread entry point
+	 * and argument is effectively ignored in this case; we set up
+	 * the entry point below, when we set up the CPU's HWPCB.
+	 */
+	if (kthread_create(NULL, NULL, &ci->ci_idle_thread, "%s idle",
+	    ci->ci_dev->dv_xname)) {
+		printf("%s: unable to create idle thread\n",
+		    ci->ci_dev->dv_xname);
+		return;
+	}
+	p = ci->ci_idle_thread;
+
+	/*
+	 * Initialize the idle thread's PCB.  Note we initialize the
+	 * ASN and PTBR now, but we're going to call pmap_activate()
+	 * immediately once the CPU is hatched.
+	 */
+	pcb = &p->p_addr->u_pcb;
+	pcb->pcb_hw.apcb_backup_ksp = pcb->pcb_hw.apcb_ksp;
+	pcb->pcb_hw.apcb_asn = proc0.p_addr->u_pcb.pcb_hw.apcb_asn;
+	pcb->pcb_hw.apcb_ptbr = proc0.p_addr->u_pcb.pcb_hw.apcb_ptbr;
+	memcpy(pcsp->pcs_hwpcb, &pcb->pcb_hw, sizeof(pcb->pcb_hw));
+#if 0
+	printf("%s: hwpcb ksp = 0x%lx\n", sc->sc_dev.dv_xname,
+	    pcb->pcb_hw.apcb_ksp);
+	printf("%s: hwpcb ptbr = 0x%lx\n", sc->sc_dev.dv_xname,
+	    pcb->pcb_hw.apcb_ptbr);
+#endif
+
+	/*
+	 * Set up the HWRPB to restart the secondary processor
+	 * with our spin-up trampoline.
+	 */
+	hwrpb->rpb_restart = (u_int64_t) cpu_spinup_trampoline;
+	hwrpb->rpb_restart_val = (u_int64_t) ci;
+	hwrpb->rpb_checksum = hwrpb_checksum();
+
+	/*
+	 * Configure the CPU to start in OSF/1 PALcode by copying
+	 * the primary CPU's PALcode revision info to the secondary
+	 * CPUs PCS.
+	 */
+
+	/*
+	 * XXX Until I can update the boot block on my test system.
+	 * XXX --thorpej
+	 */
+#if 0
+	memcpy(&pcsp->pcs_pal_rev, &primary_pcsp->pcs_pal_rev,
+	    sizeof(pcsp->pcs_pal_rev));
+#else
+	memcpy(&pcsp->pcs_pal_rev, &pcsp->pcs_palrevisions[PALvar_OSF1],
+	    sizeof(pcsp->pcs_pal_rev));
+#endif
+	pcsp->pcs_flags |= (PCS_CV|PCS_RC);
+	pcsp->pcs_flags &= ~PCS_BIP;
+
+	/* Make sure the secondary console sees all this. */
+	alpha_mb();
+
+	/* Send a "START" command to the secondary CPU's console. */
+	if (cpu_iccb_send(ci->ci_cpuid, "START\r\n")) {
+		printf("%s: unable to issue `START' command\n",
+		    ci->ci_dev->dv_xname);
+		return;
+	}
+
+	/* Wait for the processor to boot. */
+	for (timeout = 10000; timeout != 0; timeout--) {
+		alpha_mb();
+		if (pcsp->pcs_flags & PCS_BIP)
+			break;
+		delay(1000);
+	}
+	if (timeout == 0)
+		printf("%s: processor failed to boot\n", ci->ci_dev->dv_xname);
+
+	/*
+	 * ...and now wait for verification that it's running kernel
+	 * code.
+	 */
+	for (timeout = 10000; timeout != 0; timeout--) {
+		alpha_mb();
+		if ((volatile u_long)cpus_running & cpumask)
+			break;
+		delay(1000);
+	}
+	if (timeout == 0)
+		printf("%s: processor failed to hatch\n", ci->ci_dev->dv_xname);
 }
 
 void
@@ -454,10 +427,10 @@ cpu_halt_secondary(cpu_id)
 {
 	long timeout;
 	u_long cpumask = (1UL << cpu_id);
-	struct cpu_softc *sc;
 
 #ifdef DIAGNOSTIC
-	if (cpu_id >= hwrpb->rpb_pcs_cnt || (sc = cpus[cpu_id]) == NULL)
+	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
+	    cpu_info[cpu_id].ci_dev == NULL)
 		panic("cpu_halt_secondary: bogus cpu_id");
 #endif
 
@@ -480,20 +453,26 @@ cpu_halt_secondary(cpu_id)
 
 	/* Erk, secondary failed to halt. */
 	printf("WARNING: %s (ID %lu) failed to halt\n",
-	    sc->sc_dev.dv_xname, cpu_id);
+	    cpu_info[cpu_id].ci_dev->dv_xname, cpu_id);
 }
 
 void
-cpu_hatch(sc)
-	struct cpu_softc *sc;
+cpu_hatch(ci)
+	struct cpu_info *ci;
 {
-	u_long cpumask = (1UL << sc->sc_cpuid);
+	u_long cpumask = (1UL << ci->ci_cpuid);
+
+	/* Set our `curpcb' to reflect our context. */
+	curpcb = (paddr_t)ci->ci_idle_thread->p_md.md_pcbpaddr;
+
+	/* Fully activate our address space. */
+	pmap_activate(ci->ci_idle_thread);
 
 	/* Initialize trap vectors for this processor. */
 	trap_init();
 
 	/* Yahoo!  We're running kernel code!  Announce it! */
-	printf("%s: processor ID %lu running\n", sc->sc_dev.dv_xname,
+	printf("%s: processor ID %lu running\n", ci->ci_dev->dv_xname,
 	    alpha_pal_whami());
 	alpha_atomic_setbits_q(&cpus_running, cpumask);
 

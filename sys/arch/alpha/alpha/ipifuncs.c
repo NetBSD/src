@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.3 1998/09/29 19:40:33 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.4 1999/02/23 03:20:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.3 1998/09/29 19:40:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.4 1999/02/23 03:20:01 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -75,19 +75,19 @@ void
 alpha_send_ipi(cpu_id, ipinum)
 	u_long cpu_id, ipinum;
 {
-	struct cpu_softc *sc;
 	u_long ipimask;
 
 #ifdef DIAGNOSTIC
 	if (ipinum >= ALPHA_NIPIS)
 		panic("alpha_sched_ipi: bogus ipinum");
 
-	if (cpu_id >= hwrpb->rpb_pcs_cnt || (sc = cpus[cpu_id]) == NULL)
+	if (cpu_id >= hwrpb->rpb_pcs_cnt ||
+	    cpu_info[cpu_id].ci_dev == NULL)
 		panic("alpha_sched_ipi: bogus cpu_id");
 #endif
 
 	ipimask = (1UL << ipinum);
-	alpha_atomic_setbits_q(&sc->sc_ipis, ipimask);
+	alpha_atomic_setbits_q(&cpu_info[cpu_id].ci_ipis, ipimask);
 printf("SENDING IPI TO %lu\n", cpu_id);
 	alpha_pal_wripir(cpu_id);
 printf("IPI SENT\n");
@@ -98,12 +98,11 @@ alpha_ipi_halt()
 {
 	u_long cpu_id = alpha_pal_whami();
 	struct pcs *pcsp = LOCATE_PCS(hwrpb, cpu_id);
-	struct cpu_softc *sc = cpus[cpu_id];
 
 	/* Disable interrupts. */
 	(void) splhigh();
 
-	printf("%s: shutting down...\n", sc->sc_dev.dv_xname);
+	printf("%s: shutting down...\n", cpu_info[cpu_id].ci_dev->dv_xname);
 	alpha_atomic_clearbits_q(&cpus_running, (1UL << cpu_id));
 
 	pcsp->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);

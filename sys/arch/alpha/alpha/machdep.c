@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.160 1999/02/12 06:30:08 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.161 1999/02/23 03:20:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 1999/02/12 06:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 1999/02/23 03:20:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1337,7 +1337,7 @@ haltsys:
 	/* Kill off any secondary CPUs. */
 	for (cpu_id = 0; cpu_id < hwrpb->rpb_pcs_cnt; cpu_id++) {
 		if (cpu_id == hwrpb->rpb_primary_cpu_id ||
-		    cpus[cpu_id] == NULL)
+		    cpu_info[cpu_id].ci_softc == NULL)
 			continue;
 		cpu_halt_secondary(cpu_id);
 	}
@@ -1730,7 +1730,6 @@ sendsig(catcher, sig, mask, code)
 	struct trapframe *frame;
 	struct sigacts *psp = p->p_sigacts;
 	int onstack, fsize, rndfsize;
-	extern struct proc *fpcurproc;
 
 	frame = p->p_md.md_tf;
 
@@ -1869,7 +1868,6 @@ sys___sigreturn14(p, v, retval)
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
 	struct sigcontext *scp, ksc;
-	extern struct proc *fpcurproc;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -1985,7 +1983,6 @@ setregs(p, pack, stack)
 	u_long stack;
 {
 	struct trapframe *tfp = p->p_md.md_tf;
-	extern struct proc *fpcurproc;
 #ifdef DEBUG
 	int i;
 #endif

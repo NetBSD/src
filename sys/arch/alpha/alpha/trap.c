@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.39 1998/11/19 02:29:49 ross Exp $ */
+/* $NetBSD: trap.c,v 1.40 1999/02/23 03:20:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 1998/11/19 02:29:49 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40 1999/02/23 03:20:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,8 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.39 1998/11/19 02:29:49 ross Exp $");
 #ifdef COMPAT_OSF1
 #include <compat/osf1/osf1_syscall.h>
 #endif
-
-struct proc *fpcurproc;		/* current user of the FPU */
 
 void		userret __P((struct proc *, u_int64_t, u_quad_t));
 
