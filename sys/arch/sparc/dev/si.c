@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.3 1995/08/16 23:01:16 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.4 1995/09/03 22:21:27 pk Exp $	*/
 
 /*
  * Copyright (C) 1994 Adam Glass, Gordon W. Ross
@@ -96,6 +96,17 @@ struct cfdriver sicd = {
 	sizeof(struct ncr5380_softc), NULL, 0,
 };
 
+/*
+ * An `sw' is just an `si' behind a different DMA engine.
+ * This driver doesn't currently do DMA, so we can more or less
+ * handle it here.  (It's really not much different than the
+ * Sun 3/50 SCSI controller, if I understand it right.)
+ */
+struct cfdriver swcd = {
+	NULL, "sw", si_match, si_attach, DV_DULL,
+	sizeof(struct ncr5380_softc), NULL, 0,
+};
+
 static int
 si_print(aux, name)
 	void *aux;
@@ -117,11 +128,30 @@ si_match(parent, vcf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
-	/* AFAIK, Sun 4s can only have an `si' on the VME16 (?) */
-	if (cputyp != CPU_SUN4 || ca->ca_bustype != BUS_VME16)
+	/* Nothing but a Sun 4 is going to have these devices. */
+	if (cputyp != CPU_SUN4)
 		return (0);
 
-	/* Default interrupt priority always splbio==2 */
+	/* Figure out the bus type and look for the appropriate adapter. */
+	switch (ca->ca_bustype) {
+	case BUS_VME16:
+		/* AFAIK, the `si' can only exist on the vmes. */
+		if (strcmp(ra->ra_name, "si") || cpumod == SUN4_100)
+			return (0);
+		break;
+
+	case BUS_OBIO:
+		/* AFAIK, an `sw' can only exist on the obio. */
+		if (strcmp(ra->ra_name, "sw") || cpumod != SUN4_100)
+			return (0);
+		break;
+
+	default:
+		/* Don't know what we ended up with ... */
+		return (0);
+	}
+
+	/* Default interrupt priority always splbio == 2 */
 	if (ra->ra_intr[0].int_pri == -1)
 		ra->ra_intr[0].int_pri == 2;
 
@@ -130,14 +160,15 @@ si_match(parent, vcf, aux)
 		return (0);
 
 	/*
-	 * We have to determine whether it is an `sc' (Sun2) or
-	 * `si' (Sun3) SCSI board.  This can be determined using
-	 * the fact that the `sc' board occupies 4K bytes in VME
-	 * space but the `si' board occupies 2K bytes.
+	 * If we're looking for an `si', we have to determine whether
+	 * it is an `sc' (Sun2) or `si' (Sun3) SCSI board.  This can be
+	 * determined using the fact that the `sc' board occupies 4K bytes
+	 * in VME space but the `si' board occupies 2K bytes.
 	 * Note that the `si' board should NOT respond to this.
 	 */
-	if (probeget(ra->ra_vaddr + 0x801, 1) != -1)
-		return(0);
+	if (strcmp(cf->cf_driver->cd_name, "si") == 0)
+		if (probeget(ra->ra_vaddr + 0x801, 1) != -1)
+			return(0);
 
 	return (1);
 }
@@ -148,29 +179,43 @@ si_attach(parent, self, aux)
 	void		*aux;
 {
 	struct ncr5380_softc *ncr5380 = (struct ncr5380_softc *) self;
-	volatile sci_regmap_t *regs;
+	volatile struct si_regs *regs;
 	struct confargs *ca = aux;
 	struct romaux *ra = &ca->ca_ra;
+	struct bootpath *bp;
+
+	/* Map the controller registers. */
+	regs = (struct si_regs *)mapiodev(ra->ra_paddr,
+	    sizeof(struct si_regs), ca->ca_bustype);
+
+	/* Establish the interrupt. */
+	ncr5380->sc_ih.ih_fun = si_intr;
+	ncr5380->sc_ih.ih_arg = ncr5380;
 
 	switch (ca->ca_bustype) {
 	case BUS_VME16:
-		regs = (sci_regmap_t *)
-		    mapiodev(ra->ra_paddr, sizeof(sci_regmap_t),
-		    ca->ca_bustype);
-		ncr5380->sc_ih.ih_fun = si_intr;
-		ncr5380->sc_ih.ih_arg = ncr5380;
+		/*
+		 * This will be an `si'.
+		 */
 		vmeintr_establish(ra->ra_intr[0].int_vec,
 		    ra->ra_intr[0].int_pri, &ncr5380->sc_ih);
+		ncr5380->sc_adapter_iv_am =
+		    VME_SUPV_DATA_24 | (ra->ra_intr[0].int_vec & 0xFF);
+		break;
+
+	case BUS_OBIO:
+		/*
+		 * This will be an `sw'.
+		 */
+		intr_establish(ra->ra_intr[0].int_pri, &ncr5380->sc_ih);
 		break;
 
 	default:
-		printf("unknown\n");
-		return;
+		printf("\n");
+		panic("si_attach: unknown bus type 0x%x", ca->ca_bustype);
 	}
 
 	ncr5380->sc_adapter_type = ca->ca_bustype;
-	ncr5380->sc_adapter_iv_am =
-		VME_SUPV_DATA_24 | (ra->ra_intr[0].int_vec & 0xFF);
 	ncr5380->sc_regs = regs;
 
 	/*
@@ -188,7 +233,21 @@ si_attach(parent, self, aux)
 	printf(" pri %d\n", ra->ra_intr[0].int_pri);
 	reset_adapter(ncr5380);
 	ncr5380_reset_scsibus(ncr5380);
+
+	/*
+	 * If the boot path is "sw" or "si" at the moment and it's me, then
+	 * walk out pointer to the sub-device, ready for the config
+	 * below.
+	 */
+	bp = ra->ra_bp;
+	if (bp != NULL && strcmp(bp->name, ra->ra_name) == 0 &&
+	    bp->val[0] == -1 && bp->val[1] == ncr5380->sc_dev.dv_unit)
+		bootpath_store(1, bp + 1);
+
+	/* Configure sub-devices */
 	config_found(self, &(ncr5380->sc_link), si_print);
+
+	bootpath_store(1, NULL);
 }
 
 static void
@@ -210,18 +269,38 @@ si_intr(arg)
 	volatile struct si_regs *si = ncr5380->sc_regs;
 	int rv = 0;
 
-	/* Interrupts not enabled?  Can not be for us. */
-	if ((si->si_csr & SI_CSR_INTR_EN) == 0)
-		return rv;
+	switch (ncr5380->sc_adapter_type) {
+	case BUS_VME16:
+		/* Interrupts not enabled?  Can not be for us. */
+		if ((si->si_csr & SI_CSR_INTR_EN) == 0)
+			return rv;
 
-	if (si->si_csr & SI_CSR_DMA_IP) {
-		si_dma_intr(ncr5380);
-		rv++;
+		if (si->si_csr & SI_CSR_DMA_IP) {
+			si_dma_intr(ncr5380);
+			rv++;
+		}
+		if (si->si_csr & SI_CSR_SBC_IP) {
+			ncr5380_sbc_intr(ncr5380);
+			rv++;
+		}
+		break;
+
+	case BUS_OBIO:
+		/* Interrupts not enabled?  Can not be for us. */
+		if ((si->sw_csr & SI_CSR_INTR_EN) == 0)
+			return rv;
+
+		if (si->sw_csr & SI_CSR_DMA_IP) {
+			si_dma_intr(ncr5380);
+			rv++;
+		}
+		if (si->sw_csr & SI_CSR_SBC_IP) {
+			ncr5380_sbc_intr(ncr5380);
+			rv++;
+		}
+		break;
 	}
-	if (si->si_csr & SI_CSR_SBC_IP) {
-		ncr5380_sbc_intr(ncr5380);
-		rv++;
-	}
+
 	return rv;
 }
 
@@ -237,17 +316,27 @@ reset_adapter(sc)
 	}
 #endif
 
-	/* The reset bits in the CSR are active low. */
-	si->si_csr = 0;
-	delay(20);
-	si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES;
-	si->fifo_count = 0;
-	if (sc->sc_adapter_type == BUS_VME16) {
+	switch(sc->sc_adapter_type) {
+	case BUS_VME16:
+		/* The reset bits in the CSR are active low. */
+		si->si_csr = 0;
+		delay(20);
+		si->si_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES;
+		si->fifo_count = 0;
 		si->dma_addrh = 0;
 		si->dma_addrl = 0;
 		si->dma_counth = 0;
 		si->dma_countl = 0;
 		si->iv_am = sc->sc_adapter_iv_am;
+		break;
+
+	case BUS_OBIO:
+		si->sw_csr = 0;
+		delay(20);
+		si->sw_csr = SI_CSR_FIFO_RES | SI_CSR_SCSI_RES;
+		si->dma_addr = 0;
+		si->dma_count = 0;
+		break;
 	}
 }
 

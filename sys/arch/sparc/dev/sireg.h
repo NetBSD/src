@@ -1,4 +1,4 @@
-/*	$NetBSD: sireg.h,v 1.1 1995/07/08 21:32:48 pk Exp $	*/
+/*	$NetBSD: sireg.h,v 1.2 1995/09/03 22:21:29 pk Exp $	*/
 
 /*
  * Register map for the Sun3 SCSI Interface (si)
@@ -25,29 +25,57 @@
 struct si_regs {
 	sci_regmap_t sci;	/* See ncr5380.h */
 	/* DMA controller registers */
-	u_short			dma_addrh;	/* dma address (VME only) */
-	u_short			dma_addrl;	/* (high word, low word)  */
-	u_short			dma_counth;	/* dma count   (VME only) */
-	u_short			dma_countl;	/* (high word, low word)  */
+	union {
+		u_short		_Dma_addrh;	/* dma address (VME only) */
+		u_short		_Dma_addrl;	/* (high word, low word)  */
+		u_int		_Dma_addr;	/* dma address (OBIO) */
+	} _si_u1;
+#define dma_addrh	_si_u1._Dma_addrh
+#define dma_addrl	_si_u1._Dma_addrl
+#define dma_addr	_si_u1._Dma_addr
 
-	/* AMD 9516 regs (OBIO only) see am9516.h */
-	u_short			udc_data;	/* Am9516, reg data (OBIO only) */
-	u_short			udc_addr;	/* Am9516, reg addr (OBIO only) */
+	union {
+		u_short		_Dma_counth;	/* dma count   (VME only) */
+		u_short		_Dma_countl;	/* (high word, low word)  */
+		u_int		_Dma_count;	/* dma count (OBIO) */
+	} _si_u2;
+#define dma_counth	_si_u2._Dma_counth
+#define dma_countl	_si_u2._Dma_countl
+#define dma_count	_si_u2._Dma_count
 
-	/* These three registers are on both OBIO and VME versions. */
-	u_short			fifo_data;	/* fifo data register */
-						/* holds extra byte on odd */
-						/* byte dma read */
-	u_short			fifo_count;		/* fifo byte count */
-	u_short			si_csr;		/* control/status register */
+	union {
+		u_short		_Udc_data;	/* Am9516 data reg (OBIO si) */
+		u_short		_Udc_addr;	/* Am9516 addr reg (OBIO si) */
+		u_int		_Sw_bcr;	/* non-existent sw bcr */
+	} _si_u3;
+#define udc_data	_si_u3._Udc_data
+#define udc_addr	_si_u3._Udc_addr
+#define sw_bcr		_si_u3._Sw_bcr
+
+	union {
+		u_short		_Fifo_data;	/* fifo data register */
+		u_short		_Fifo_count;	/* fifo count register */
+		u_int		_Sw_csr;	/* sw control/status */
+	} _si_u4;
+#define fifo_data	_si_u4._Fifo_data
+#define fifo_count	_si_u4._Fifo_count
+#define sw_csr		_si_u4._Sw_csr
+
+	union {
+		u_short		_Si_csr;	/* si control/status */
+		u_short		_Bprh;		/* VME byte pack high */
+		u_int		_Bpr;		/* sw byte pack */
+	} _si_u5;
+#define si_csr		_si_u5._Si_csr
+#define bprh		_si_u5._Bprh
+#define bpr		_si_u5._Bpr
 
 	/* The rest of these are on the VME interface only: */
-	u_short			bprh;		/* byte pack, high (VME only) */
-	u_short			bprl;		/* byte pack, low  (VME only) */
+	u_short			bprl;		/* VME byte pack low */
 	u_short			iv_am;		/* bits 0-7: intr vector */
-						/* bits 8-13: addr modifier (VME only) */
+						/* bits 8-13: addr modifier */
 						/* bits 14-15: unused */
-	u_short			bcrh;		/* high portion of bcr (VME only) */
+	u_short			bcrh;		/* high portion of bcr */
 };
 
 /* possible values for the address modifier, sun3 vme version only */
