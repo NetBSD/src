@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.19 2004/04/21 01:05:33 christos Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.20 2004/07/06 16:39:37 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.19 2004/04/21 01:05:33 christos Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.20 2004/07/06 16:39:37 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -272,6 +272,7 @@ static void
 usage()
 {
 	(void)fprintf(stderr,
-		"usage: mount_lfs [-dns] [-o options] special node\n");
+		"usage: %s [-bdns] [-N nsegs] [-o options] special node\n",
+		getprogname());
 	exit(1);
 }
