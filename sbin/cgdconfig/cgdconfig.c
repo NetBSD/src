@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.10 2004/03/17 01:29:13 dan Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.10.2.1 2004/08/13 15:02:17 tv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 2002, 2003\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.10 2004/03/17 01:29:13 dan Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.10.2.1 2004/08/13 15:02:17 tv Exp $");
 #endif
 
 #include <err.h>
