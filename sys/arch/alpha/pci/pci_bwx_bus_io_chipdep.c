@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.2 1998/06/06 22:28:16 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_io_chipdep.c,v 1.3 1998/06/07 00:29:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -407,6 +407,7 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	printf("io: allocated 0x%lx to 0x%lx\n", ioaddr, ioaddr + size - 1);
 #endif
 
+	*addrp = ioaddr;
 	*bshp = ALPHA_PHYS_TO_K0SEG(CHIP_IO_SYS_START(v)) + ioaddr;
 
 	return (0);
