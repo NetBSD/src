@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.5 2002/06/01 23:50:55 lukem Exp $	*/
+/*	$NetBSD: iop.c,v 1.6 2003/07/03 13:19:30 rjs Exp $	*/
 
 /*
  * Copyright (c) 2000 Allen Briggs.
@@ -360,6 +360,8 @@ receive_iop_message(iop, chan)
 	IOPHW		*ioph;
 	struct iop_msg	*msg;
 	int		offset;
+
+	ioph = iop->iop;
 
 	msg = SIMPLEQ_FIRST(&iop->recvq[chan]);
 	if (msg) {
