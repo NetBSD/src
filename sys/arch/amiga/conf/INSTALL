@@ -1,9 +1,9 @@
-# $NetBSD: INSTALL,v 1.37 2003/02/27 19:22:38 perseant Exp $
+# $NetBSD: INSTALL,v 1.38 2003/04/16 20:43:29 is Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.9 2002/11/22 12:20:59 wiz Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.12 2003/04/16 20:42:34 is Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37 $"
+#ident 		"GENERIC-$Revision: 1.38 $"
 
 makeoptions	COPTS="-Os"
 
@@ -155,6 +155,9 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	SERIBUF_SIZE=4096
 #options 	SEROBUF_SIZE=32
 #options 	LEV6_DEFER	# defers l6 to l4 (below serial l5)
+
+#options	DEVRELOAD	# implement /dev/reload
+#				# currently only works for a.out kernels
 
 options 	RETINACONSOLE	# enable code to allow retina to be console
 options 	ULOWELLCONSOLE	# enable code to allow a2410 to be console
