@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.31 1999/02/28 17:10:53 explorer Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.32 1999/03/25 23:19:16 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -747,7 +747,8 @@ mb86960_start(ifp)
 		 * (i.e., minimum packet sized) packets rapidly.  An 8KB
 		 * buffer can hold 130 blocks of 62 bytes long...
 		 */
-		if (sc->txb_free < ETHER_MAX_LEN + FE_DATA_LEN_LEN) {
+		if (sc->txb_free <
+		    (ETHER_MAX_LEN - ETHER_CRC_LEN) + FE_DATA_LEN_LEN) {
 			/* No room. */
 			goto indicate_active;
 		}
@@ -1034,12 +1035,13 @@ mb86960_rint(sc, rstat)
 		 *
 		 * Is this statement true?  FIXME.
 		 */
-		if (len > ETHER_MAX_LEN || len < ETHER_HDR_SIZE) {
+		if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN) ||
+		    len < ETHER_HDR_LEN) {
 #if FE_DEBUG >= 2
 			log(LOG_WARNING,
 			    "%s: received a %s packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname,
-			    len < ETHER_HDR_SIZE ? "partial" : "big", len);
+			    len < ETHER_HDR_LEN ? "partial" : "big", len);
 #endif
 			ifp->if_ierrors++;
 			mb86960_droppacket(sc);
@@ -1053,7 +1055,7 @@ mb86960_rint(sc, rstat)
 		 * if it carries data for upper layer.
 		 */
 #if FE_DEBUG >= 2
-		if (len < ETHER_MIN_LEN) {
+		if (len < (ETHER_MIN_LEN - ETHER_CRC_LEN)) {
 			log(LOG_WARNING,
 			    "%s: received a short packet? (%u bytes)\n",
 			    sc->sc_dev.dv_xname, len);
@@ -1461,10 +1463,11 @@ mb86960_write_mbufs(sc, m)
 	 * it should be a bug of upper layer.  We just ignore it.
 	 * ... Partial (too short) packets, neither.
 	 */
-	if (totlen > ETHER_MAX_LEN || totlen < ETHER_HDR_SIZE) {
+	if (totlen > (ETHER_MAX_LEN - ETHER_CRC_LEN) ||
+	    totlen < ETHER_HDR_LEN) {
 		log(LOG_ERR, "%s: got a %s packet (%u bytes) to send\n",
 		    sc->sc_dev.dv_xname,
-		    totlen < ETHER_HDR_SIZE ? "partial" : "big", totlen);
+		    totlen < ETHER_HDR_LEN ? "partial" : "big", totlen);
 		sc->sc_ec.ec_if.if_oerrors++;
 		return;
 	}
@@ -1478,20 +1481,22 @@ mb86960_write_mbufs(sc, m)
 	 * packet in the transmission buffer, we can skip the
 	 * padding process.  It may gain performance slightly.  FIXME.
 	 */
-	bus_space_write_2(bst, bsh, FE_BMPR8, max(totlen, ETHER_MIN_LEN));
+	bus_space_write_2(bst, bsh, FE_BMPR8,
+	    max(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN)));
 
 	/*
 	 * Update buffer status now.
 	 * Truncate the length up to an even number, since we use outw().
 	 */
 	totlen = (totlen + 1) & ~1;
-	sc->txb_free -= FE_DATA_LEN_LEN + max(totlen, ETHER_MIN_LEN);
+	sc->txb_free -= FE_DATA_LEN_LEN +
+	    max(totlen, (ETHER_MIN_LEN - ETHER_CRC_LEN));
 	sc->txb_count++;
 
 #if FE_DELAYED_PADDING
 	/* Postpone the packet padding if necessary. */
-	if (totlen < ETHER_MIN_LEN)
-		sc->txb_padding = ETHER_MIN_LEN - totlen;
+	if (totlen < (ETHER_MIN_LEN - ETHER_CRC_LEN))
+		sc->txb_padding = (ETHER_MIN_LEN - ETHER_CRC_LEN) - totlen;
 #endif
 
 	/*
@@ -1540,7 +1545,7 @@ mb86960_write_mbufs(sc, m)
 	/*
 	 * Pad the packet to the minimum length if necessary.
 	 */
-	len = (ETHER_MIN_LEN >> 1) - (totlen >> 1);
+	len = ((ETHER_MIN_LEN - ETHER_CRC_LEN) >> 1) - (totlen >> 1);
 	while (--len >= 0)
 		bus_space_write_2(bst, bsh, FE_BMPR8, 0);
 #endif
