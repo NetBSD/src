@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.2 2001/11/13 13:14:35 lukem Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.3 2002/10/22 00:01:55 fair Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.2 2001/11/13 13:14:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.3 2002/10/22 00:01:55 fair Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ ax88190_media_init(struct dp8390_softc *sc)
 	sc->sc_mii.mii_readreg = ax88190_mii_readreg;
 	sc->sc_mii.mii_writereg = ax88190_mii_writereg;
 	sc->sc_mii.mii_statchg = ax88190_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, dp8390_mediachange,
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, dp8390_mediachange,
 	    dp8390_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
