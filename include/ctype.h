@@ -1,4 +1,4 @@
-/*	$NetBSD: ctype.h,v 1.24 2003/08/07 09:44:09 agc Exp $	*/
+/*	$NetBSD: ctype.h,v 1.25 2003/10/22 15:51:18 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -78,7 +78,7 @@ int	_tolower __P ((int));
 int	_toupper __P ((int));
 #endif
 
-#if defined(_ISO_C99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
+#if defined(_ISOC99_SOURCE) || (_POSIX_C_SOURCE - 0) > 200112L || \
     (_XOPEN_SOURCE - 0) > 600 || defined(_NETBSD_SOURCE)
 int	isblank __P ((int));
 #endif
