@@ -1,4 +1,4 @@
-/*	$NetBSD: date.c,v 1.19 1998/01/20 21:47:44 mycroft Exp $	*/
+/*	$NetBSD: date.c,v 1.20 1998/01/20 22:06:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.19 1998/01/20 21:47:44 mycroft Exp $");
+__RCSID("$NetBSD: date.c,v 1.20 1998/01/20 22:06:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -156,8 +156,6 @@ setthetime(p)
 		if (strlen(dot) != 2)
 			badformat();
 		lt->tm_sec = ATOI2(dot);
-		if (lt->tm_sec > 61)
-			badformat();
 	} else
 		lt->tm_sec = 0;
 
@@ -183,24 +181,16 @@ setthetime(p)
 		/* FALLTHROUGH */
 	case 8:					/* mm */
 		lt->tm_mon = ATOI2(p);
-		if (lt->tm_mon > 12)
-			badformat();
 		--lt->tm_mon;			/* time struct is 0 - 11 */
 		/* FALLTHROUGH */
 	case 6:					/* dd */
 		lt->tm_mday = ATOI2(p);
-		if (lt->tm_mday > 31)
-			badformat();
 		/* FALLTHROUGH */
 	case 4:					/* hh */
 		lt->tm_hour = ATOI2(p);
-		if (lt->tm_hour > 23)
-			badformat();
 		/* FALLTHROUGH */
 	case 2:					/* mm */
 		lt->tm_min = ATOI2(p);
-		if (lt->tm_min > 59)
-			badformat();
 		break;
 	default:
 		badformat();
