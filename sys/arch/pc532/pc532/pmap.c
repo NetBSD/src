@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.18 1996/12/23 08:36:11 matthias Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19 1997/04/01 16:32:58 matthias Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -89,6 +89,7 @@
 #include <vm/vm_page.h>
 
 #include <machine/cpu.h>
+#include <machine/cpufunc.h>
 
 /*
  * Allocate various and sundry SYSMAPs used in the days of old VM
@@ -645,7 +646,8 @@ pmap_pinit(pmap)
 	pmap->pm_pdir = (pd_entry_t *) kmem_alloc(kernel_map, NBPG);
 
 	/* wire in kernel global address entries */
-	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], nkpde * sizeof(pd_entry_t));
+	movsdnu(&PTD[KPTDI], &pmap->pm_pdir[KPTDI],
+		nkpde * sizeof(pd_entry_t) / 4);
 
 	/* install self-referential address mapping entry */
 	pmap->pm_pdir[PTDPTDI] =
@@ -1460,7 +1462,7 @@ pmap_zero_page(phys)
 
 	pmap_dump_pvlist(phys, "pmap_zero_page: phys");
 	*CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
-	pmap_update();
+	tlbflush_entry(CADDR2);
 	bzero(CADDR2, NBPG);
 }
 
@@ -1483,8 +1485,9 @@ pmap_copy_page(src, dst)
 	pmap_dump_pvlist(dst, "pmap_copy_page: dst");
 	*CMAP1 = (src & PG_FRAME) | PG_V | PG_KR;
 	*CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
-	pmap_update();
-	bcopy(CADDR1, CADDR2, NBPG);
+	tlbflush_entry(CADDR1);
+	tlbflush_entry(CADDR2);
+	movsdnu(CADDR1, CADDR2, NBPG / 4);
 }
 
 /*
