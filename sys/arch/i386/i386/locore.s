@@ -1883,7 +1883,6 @@ IDTVEC(fpu)
 	INTRENTRY
 	pushl	_cpl
 	pushl	$0		/* dummy unit to finish building intr frame */
-	incl	_cnt+V_TRAP
 	call	_npxintr
 	INTREXIT
 #else
