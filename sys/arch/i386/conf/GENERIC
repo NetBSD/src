@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.484 2002/04/17 02:22:49 mycroft Exp $
+# $NetBSD: GENERIC,v 1.485 2002/04/18 12:06:11 bouyer Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.484 $"
+#ident 		"GENERIC-$Revision: 1.485 $"
 
 maxusers	32		# estimated number of users
 
@@ -437,6 +437,7 @@ isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
 mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
 siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
+#options 	SIOP_SYMLED		# drive the act. LED in software
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # EISA SCSI controllers
