@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/06/10 03:01:14 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.14 2000/06/19 23:46:08 tsutsui Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -27,17 +27,17 @@ SIZE=		400k
 # bigendian, minfree, opt, b/i , cpg
 NEWFSARGS= -B be -m 0 -o space -i 4096 -c 20
 
-KERNELS= netbsd-RAMDISK netbsd-RAMDISK3X
+KERNELS= netbsd.RAMDISK netbsd.RAMDISK3X
 CLEANFILES= $(KERNELS) ${IMAGE}.fs netbsd-tmp
 
 all: $(KERNELS)
 
-netbsd-RAMDISK : ${IMAGE}.fs
+netbsd.RAMDISK : ${IMAGE}.fs
 	cp ${KERNEL3} netbsd-tmp
 	mdsetimage -v netbsd-tmp ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
 
-netbsd-RAMDISK3X : ${IMAGE}.fs
+netbsd.RAMDISK3X : ${IMAGE}.fs
 	cp ${KERNEL3X} netbsd-tmp
 	mdsetimage -v netbsd-tmp ${IMAGE}.fs
 	-mv -f netbsd-tmp $@
