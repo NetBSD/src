@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.1 2002/12/09 12:15:53 scw Exp $
+#	$NetBSD: majors.evbppc,v 1.2 2002/12/31 22:45:25 thorpej Exp $
 #
 # Device majors for evbppc
 #
@@ -51,6 +51,6 @@ device-major	isdntel		char 58			isdntel
 device-major	clockctl	char 59			clockctl
 device-major	systrace	char 60			systrace
 device-major	kttcp		char 61			kttcp
-device-major	sysmon		char 62			sysmon
+device-major	sysmon		char 62			sysmon_envsys | sysmon_wdog
 device-major	pci		char 63			pci
 device-major	cgd		char 64  block 13	cgd
