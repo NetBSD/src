@@ -1,4 +1,4 @@
-.\"     $NetBSD: delay.9,v 1.1 2002/05/25 02:16:37 gmcgarry Exp $
+.\"     $NetBSD: delay.9,v 1.2 2002/08/04 01:16:09 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -51,3 +51,16 @@
 Wait approximately
 .Fa us
 microseconds.
+.Pp
+The delay is implemented as a machine loop, preventing events other than
+interrupt handlers for unmasked interrupts to run.
+.Fn DELAY
+is safe to use in interrupt or process context.
+.Pp
+For long delays,
+.Xr tsleep 9
+should be considered, however it can only be called from process context
+and its resolution is limited by the system clock frequency.
+.Sh SEE ALSO
+.Xr hz 9 ,
+.Xr tsleep 9
