@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.70 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.71 2004/05/25 04:33:59 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.70 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.71 2004/05/25 04:33:59 atatat Exp $");
 
 #include "opt_inet.h"
 
@@ -1112,12 +1112,14 @@ SYSCTL_SETUP(sysctl_net_route_setup, "sysctl net.route subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "route", NULL,
+		       CTLTYPE_NODE, "route",
+		       SYSCTL_DESCR("PF_ROUTE information"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_ROUTE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "rtable", NULL,
+		       CTLTYPE_NODE, "rtable",
+		       SYSCTL_DESCR("Routing table information"),
 		       sysctl_rtable, 0, NULL, 0,
 		       CTL_NET, PF_ROUTE, 0 /* any protocol */, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.47 2004/04/22 01:01:40 matt Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.48 2004/05/25 04:33:59 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.47 2004/04/22 01:01:40 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_domain.c,v 1.48 2004/05/25 04:33:59 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -215,7 +215,8 @@ SYSCTL_SETUP(sysctl_net_setup, "sysctl net subtree setup")
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "local", NULL,
+		       CTLTYPE_NODE, "local",
+		       SYSCTL_DESCR("PF_LOCAL related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_LOCAL, CTL_EOL);
 
