@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs_aout.h,v 1.12 2002/12/05 05:47:24 simonb Exp $	*/
+/*	$NetBSD: cdefs_aout.h,v 1.13 2003/02/23 04:50:18 simonb Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@wimsey.com> 01/17/95.
@@ -70,7 +70,8 @@
 
 #ifndef __lint__
 #define	__link_set_make_entry(set, sym, type)				\
-	static void const * const __link_set_##set##_sym_##sym = &sym;	\
+	static void const * const					\
+	    __link_set_##set##_sym_##sym __unused = &sym;		\
 	__asm(".stabs \"___link_set_" #set "\", " #type ", 0, 0, _" #sym)
 #else
 #define	__link_set_make_entry(set, sym, type)				\
