@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75 2001/01/12 22:55:10 cgd Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.76 2001/05/27 01:29:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -770,6 +770,8 @@ setroot(bootdv, bootpartition)
 				break;
 			if (len == 4 && strcmp(buf, "halt") == 0)
 				cpu_reboot(RB_HALT, NULL);
+			else if (len == 6 && strcmp(buf, "reboot") == 0)
+				cpu_reboot(0, NULL);
 			else if (len == 7 && strcmp(buf, "generic") == 0) {
 				mountroot = NULL;
 				break;
@@ -783,7 +785,7 @@ setroot(bootdv, bootpartition)
 					if (vops->vfs_mountroot != NULL)
 						printf(" %s", vops->vfs_name);
 				}
-				printf(" halt\n");
+				printf(" halt reboot\n");
 			} else {
 				mountroot = vops->vfs_mountroot;
 				break;
@@ -1008,7 +1010,7 @@ getdisk(str, len, defpart, devp, isdump)
 		}
 		if (isdump)
 			printf(" none");
-		printf(" halt\n");
+		printf(" halt reboot\n");
 	}
 	return (dv);
 }
@@ -1030,6 +1032,8 @@ parsedisk(str, len, defpart, devp)
 
 	if (len == 4 && strcmp(str, "halt") == 0)
 		cpu_reboot(RB_HALT, NULL);
+	else if (len == 6 && strcmp(str, "reboot") == 0)
+		cpu_reboot(0, NULL);
 
 	cp = str + len - 1;
 	c = *cp;
