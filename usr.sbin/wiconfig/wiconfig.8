@@ -1,4 +1,4 @@
-.\"	$NetBSD: wiconfig.8,v 1.28 2004/08/25 18:29:28 wrstuden Exp $
+.\"	$NetBSD: wiconfig.8,v 1.29 2004/08/25 18:34:54 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	From: wicontrol.8,v 1.6 1999/05/22 16:12:47 wpaul Exp $
 .\"
-.Dd March 31, 2003
+.Dd August 25, 2004
 .Dt WICONFIG 8
 .Os
 .Sh NAME
@@ -107,6 +107,14 @@ interface.
 The options are as follows:
 .Pp
 .Bl -tag -width Fl
+.It Fl A Ar 1|2
+Set the authentication type for a specified interface.
+Permitted values are
+.Ar 1
+(Open System Authentication) or
+.Ar 2
+(Shared Key Authentication).
+The default is 1.
 .It Fl a Ar access_point_density
 Specify the
 .Ar access point density
@@ -122,14 +130,6 @@ The
 .Ar max data length
 can be any number from 256 to 2346.
 The default is 2304.
-.It Fl A Ar 1|2
-Set the authentication type for a specified interface.
-Permitted values are
-.Ar 1
-(Open System Authentication) or
-.Ar 2
-(Shared Key Authentication).
-The default is 1.
 .It Fl M Ar 0|1
 Enable or disable
 .Qq microwave oven robustness
