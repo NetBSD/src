@@ -134,7 +134,7 @@ ibcs2_msgsys(p, uap, retval)
 	case 1: {			/* msgctl */
 		int error;
 		struct compat_10_msgsys_args margs;
-		caddr_t sg = stackgap_init();
+		caddr_t sg = stackgap_init(p->p_emul);
 
 		SCARG(&margs, which) = 0;
 		SCARG(&margs, a2) = SCARG(uap, a2);
@@ -257,7 +257,7 @@ ibcs2_semsys(p, uap, retval)
 		    {
 			struct ibcs2_semid_ds *isp;
 			struct semid_ds *sp;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 
 			isp = (struct ibcs2_semid_ds *)SCARG(uap, a5);
 			sp = stackgap_alloc(&sg, sizeof(struct semid_ds));
@@ -277,7 +277,7 @@ ibcs2_semsys(p, uap, retval)
 		    {
 			struct ibcs2_semid_ds *isp;
 			struct semid_ds *sp;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 
 			isp = stackgap_alloc(&sg, sizeof(*isp));
 			sp = stackgap_alloc(&sg, sizeof(*sp));
@@ -374,7 +374,7 @@ ibcs2_shmsys(p, uap, retval)
 		    {
 			struct ibcs2_shmid_ds *isp;
 			struct shmid_ds *sp;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 
 			isp = (struct ibcs2_shmid_ds *)SCARG(uap, a4);
 			sp = stackgap_alloc(&sg, sizeof(*sp));
@@ -394,7 +394,7 @@ ibcs2_shmsys(p, uap, retval)
 		    {
 			struct ibcs2_shmid_ds *isp;
 			struct shmid_ds *sp;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 
 			isp = stackgap_alloc(&sg, sizeof(*isp));
 			sp = stackgap_alloc(&sg, sizeof(*sp));

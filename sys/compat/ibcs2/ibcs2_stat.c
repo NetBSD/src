@@ -102,9 +102,9 @@ ibcs2_statfs(p, uap, retval)
 	register struct statfs *sp;
 	int error;
 	struct nameidata nd;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECKALTEXIST(p, &sg, SCARG(uap, path));
+	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if (error = namei(&nd))
 		return (error);
@@ -148,9 +148,9 @@ ibcs2_stat(p, uap, retval)
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_stat_args cup;
 	int error;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECKALTEXIST(p, &sg, SCARG(uap, path));
+	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	if (error = compat_43_stat(p, &cup, retval))
@@ -172,9 +172,9 @@ ibcs2_lstat(p, uap, retval)
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_lstat_args cup;
 	int error;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
-	CHECKALTEXIST(p, &sg, SCARG(uap, path));
+	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
 	if (error = compat_43_lstat(p, &cup, retval))
@@ -196,7 +196,7 @@ ibcs2_fstat(p, uap, retval)
 	struct ibcs2_stat ibcs2_st;
 	struct compat_43_fstat_args cup;
 	int error;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&cup, fd) = SCARG(uap, fd);
 	SCARG(&cup, sb) = stackgap_alloc(&sg, sizeof(st));

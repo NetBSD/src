@@ -1,3 +1,4 @@
+/*	$NetBSD: ibcs2_util.h,v 1.2 1995/06/24 20:19:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -27,40 +28,12 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * from: svr4_util.h,v 1.5 1994/11/18 02:54:31 christos Exp
- * from: linux_util.h,v 1.2 1995/03/05 23:23:50 fvdl Exp
- */
-
-/*
- * This file is pretty much the same as Christos' svr4_util.h
- * (for now).
  */
 
 #ifndef	_IBCS2_UTIL_H_
 #define	_IBCS2_UTIL_H_
 
-#include <machine/vmparam.h>
-#include <sys/exec.h>
-#include <sys/cdefs.h>
-
-static __inline caddr_t
-stackgap_init()
-{
-	extern char     sigcode[], esigcode[];
-#define szsigcode ((caddr_t)(esigcode - sigcode))
-	return STACKGAPBASE;
-}
-
-
-static __inline void *
-stackgap_alloc(sgp, sz)
-	caddr_t	*sgp;
-	size_t   sz;
-{
-	void	*p = (void *) *sgp;
-	*sgp += ALIGN(sz);
-	return p;
-}
+#include <compat/common/compat_util.h>
 
 #ifdef DEBUG_IBCS2
 #define DPRINTF(a)      printf a;
@@ -70,13 +43,10 @@ stackgap_alloc(sgp, sz)
 
 extern const char ibcs2_emul_path[];
 
-int ibcs2_emul_find __P((struct proc *, caddr_t *, const char *, char *,
-			char **, int));
+#define IBCS2_CHECK_ALT_EXIST(p, sgp, path) \
+	CHECK_ALT_EXIST(p, sgp, ibcs2_emul_path, path)
 
-#define CHECKALTEXIST(p, sgp, path) \
-    ibcs2_emul_find(p, sgp, ibcs2_emul_path, path, &(path), 0)
-
-#define CHECKALTCREAT(p, sgp, path) \
-    ibcs2_emul_find(p, sgp, ibcs2_emul_path, path, &(path), 1)
+#define IBCS2_CHECK_ALT_CREAT(p, sgp, path) \
+	CHECK_ALT_CREAT(p, sgp, ibcs2_emul_path, path)
 
 #endif /* !_IBCS2_UTIL_H_ */

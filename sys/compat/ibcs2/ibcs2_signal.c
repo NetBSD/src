@@ -207,7 +207,7 @@ ibcs2_sigsys(p, uap, retval)
 		{
 			struct sigaction *sap, *osap;
 			struct sigaction_args sa_args;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 			sap = stackgap_alloc(&sg, sizeof(*sap));
 			osap = stackgap_alloc(&sg, sizeof(*sap));
 			sap->sa_handler = SCARG(uap, fp);
@@ -253,7 +253,7 @@ ibcs2_sigsys(p, uap, retval)
 		{
 			struct sigaction *sap;
 			struct sigaction_args sa_args;
-			caddr_t sg = stackgap_init();
+			caddr_t sg = stackgap_init(p->p_emul);
 
 			sap = stackgap_alloc(&sg, sizeof(*sap));
 			sap->sa_handler = SIG_IGN;
@@ -291,7 +291,7 @@ ibcs2_sigaction(p, uap, retval)
 	int error;
 	struct sigaction_args sa;
 	struct ibcs2_sigaction *isa, *oisa;
-	caddr_t sg = stackgap_init();
+	caddr_t sg = stackgap_init(p->p_emul);
 
 	isa = stackgap_alloc(&sg, sizeof(*isa));
 	oisa = stackgap_alloc(&sg, sizeof(*oisa));
