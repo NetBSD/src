@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.2 2002/05/15 13:34:27 lukem Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.3 2002/05/20 14:56:10 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.2 2002/05/15 13:34:27 lukem Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.3 2002/05/20 14:56:10 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -82,7 +82,7 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams)
 		goto done;
 	}
 
-		/* first check that it _could_ exist here */
+		/* First check that it _could_ exist here */
 	rv = pread(params->fsfd, bb, bbparams->maxsize, bbparams->offset);
 	if (rv == -1) {
 		warn("Reading `%s'", params->filesystem);
@@ -92,7 +92,7 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams)
 		goto done;
 	}
 
-		/* now clear it out to nothing */
+		/* Now clear it out to nothing */
 	memset(bb, 0, bbparams->maxsize);
 
 	if (params->flags & IB_VERBOSE)
@@ -169,10 +169,10 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		goto done;
 	}
 
-	/*
-	 * Quick sanity check that the bootstrap given
-	 * is *not* an ELF executable.
-	 */
+		/*
+		 * Quick sanity check that the bootstrap given
+		 * is *not* an ELF executable.
+		 */
 	if (memcmp(bb + bbparams->headeroffset + 1, "ELF", strlen("ELF"))
 	    == 0) {
 		warnx("`%s' is an ELF executable; need raw binary", 
@@ -182,7 +182,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 
 #define HOSTTOTARGET32(x) (bbparams->littleendian ? le32toh((x)) : be32toh((x)))
 
-	/* Look for the bbinfo structure. */
+		/* Look for the bbinfo structure. */
 	for (bbi = 0; bbi < bbparams->maxsize; bbi += sizeof(uint32_t)) {
 		bbinfop = (void *) (bb + bbi);
 		if (memcmp(bbinfop->bbi_magic, bbparams->magic,
@@ -201,7 +201,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		goto done;
 	}
 
-	/* Allocate space for our block list. */
+		/* Allocate space for our block list. */
 	blocks = malloc(sizeof(*blocks) * maxblk);
 	if (blocks == NULL) {
 		warn("Allocating %lu bytes", 
@@ -218,7 +218,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		sync();
 	}
 
-	/* Collect the blocks for the secondary bootstrap. */
+		/* Collect the blocks for the secondary bootstrap. */
 	nblk = maxblk;
 	if (! params->fstype->findstage2(params, &nblk, blocks))
 		goto done;
@@ -228,7 +228,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		goto done;
 	}
 
-	/* Save those blocks in the primary bootstrap. */
+		/* Save those blocks in the primary bootstrap. */
 	bbinfop->bbi_block_count = HOSTTOTARGET32(nblk);
 	bbinfop->bbi_block_size = HOSTTOTARGET32(blocks[0].blocksize);
 	for (blk_i = 0; blk_i < nblk; blk_i++) {
