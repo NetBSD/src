@@ -1,4 +1,4 @@
-.\"	$NetBSD: grf.4,v 1.6 2001/09/11 06:30:04 gmcgarry Exp $
+.\"	$NetBSD: grf.4,v 1.7 2002/01/15 01:35:27 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@ machine and transferring the binaries to the
 .Bx
 machine, or by compilation
 with the use of the
-.Xr hpux 1
+.Ic hpux
 command.
 Applications using Starbase libraries have been run successfully
 on
@@ -158,6 +158,16 @@ Unmap control registers and framebuffer space.
 .El
 .Pp
 For further information about the use of ioctl see the man page.
+.Sh FILES
+.Bl -tag -width /dev/*crt*? -compact
+.It Pa /dev/grf?
+.Bx
+interface special files
+.It Pa /dev/*crt*
+.Tn HP-UX
+.Em starbase
+interface special files
+.El
 .Sh EXAMPLES
 This short code fragment is an example of opening some graphics device and
 mapping in the control and frame buffer space:
@@ -182,16 +192,6 @@ mapping in the control and frame buffer space:
 	frame_buffer = (u_char *) Addr + gi.gd_regsize; /* Frame buffer mem */
 }
 .Ed
-.Sh FILES
-.Bl -tag -width /dev/*crt*? -compact
-.It Pa /dev/grf?
-.Bx
-interface special files
-.It Pa /dev/*crt*
-.Tn HP-UX
-.Em starbase
-interface special files
-.El
 .Sh DIAGNOSTICS
 None under
 .Bx .
@@ -212,7 +212,7 @@ Invalid ioctl specification.
 .Xr ioctl 2 ,
 .Xr dvbox 4 ,
 .Xr gbox 4 ,
+.Xr hil 4 ,
 .Xr hyper 4 ,
 .Xr rbox 4 ,
-.Xr topcat 4 ,
-.Xr hil 4
+.Xr topcat 4
