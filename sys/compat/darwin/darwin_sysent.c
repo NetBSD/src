@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.26.2.1 2004/08/03 10:43:30 skrll Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.26.2.2 2004/08/06 10:14:01 skrll Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.26.2.1 2004/08/03 10:43:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.26.2.2 2004/08/06 10:14:01 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -28,7 +28,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.26.2.1 2004/08/03 10:43:30 skrll
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_vm.h>
 #include <compat/darwin/darwin_signal.h>
-#include <compat/darwin/darwin_audit.h>
 #include <compat/darwin/darwin_syscallargs.h>
 
 #define	s(type)	sizeof(type)

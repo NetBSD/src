@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.10.2.2 2004/08/03 10:44:45 skrll Exp $
+# $NetBSD: majors,v 1.10.2.3 2004/08/06 10:14:01 skrll Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -15,3 +15,4 @@ device-major	vinum		char 162 block 162	vinum
 device-major	fss		char 163 block 163	fss
 device-major	pps		char 164		pps
 device-major	ptm		char 165		pty
+device-major	atabus		char 166		atabus
