@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.19 1998/11/05 22:49:09 kenh Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.20 1998/11/23 23:02:11 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -126,6 +126,7 @@
 #define WDCC_SLEEP	0xe6	/* enter sleep mode */
 #define WDCC_STANDBY	0xe2	/* set standby timer & enter standby mode */
 #define WDCC_STANDBY_IMMED 0xe0	/* enter standby mode */
+#define WDCC_CHECK_PWR	0xe5	/* check power mode */
 
 /* Subcommands for SET_FEATURES (features register ) */
 #define WDSF_EN_WR_CACHE	0x02
