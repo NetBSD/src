@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2000/06/26 14:20:32 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2000/06/29 08:34:09 mrg Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -65,7 +65,6 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/exec.h>
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 #include <sys/sysctl.h>
 #include <sys/mount.h>

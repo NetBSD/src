@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.22 2000/06/09 05:28:47 soda Exp $	*/
+/*	$NetBSD: fd.c,v 1.23 2000/06/29 08:34:11 mrg Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -91,7 +91,8 @@
 #include <sys/uio.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.12 2000/06/20 08:26:55 soda Exp $	*/
+/*	$NetBSD: isabus.c,v 1.13 2000/06/29 08:34:11 mrg Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -97,7 +97,8 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>

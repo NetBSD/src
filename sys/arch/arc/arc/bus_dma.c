@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.4 2000/06/26 14:20:32 mrg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.5 2000/06/29 08:34:09 mrg Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -42,8 +42,6 @@
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

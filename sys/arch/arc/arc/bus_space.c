@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2000/06/09 05:14:44 soda Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2000/06/29 08:34:09 mrg Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -43,7 +43,7 @@
 #include <sys/malloc.h>
 #include <sys/extent.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 

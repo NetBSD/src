@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:00 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.4 2000/06/29 08:32:35 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:00 thorpej Exp $");
+__RCSID("$NetBSD: vm_machdep.c,v 1.4 2000/06/29 08:32:35 mrg Exp $");
 
 #include <sys/buf.h>
 #include <sys/exec.h>
@@ -75,7 +75,7 @@ __RCSID("$NetBSD: vm_machdep.c,v 1.3 2000/05/28 05:49:00 thorpej Exp $");
 #include <sys/syscallargs.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/armreg.h>
 #include <machine/frame.h>

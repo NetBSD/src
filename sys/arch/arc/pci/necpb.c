@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.3 2000/06/26 14:20:33 mrg Exp $	*/
+/*	$NetBSD: necpb.c,v 1.4 2000/06/29 08:34:12 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,8 +75,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/extent.h>
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

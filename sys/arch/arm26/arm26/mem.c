@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.2 2000/06/26 04:55:26 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.3 2000/06/29 08:32:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,10 +54,7 @@
 #include <machine/cpu.h>
 #include <machine/memcreg.h>
 
-#include <vm/vm.h>
-#if defined(UVM)
 #include <uvm/uvm_extern.h>
-#endif
 
 caddr_t zeropage;
 int physlock;

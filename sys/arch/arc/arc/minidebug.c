@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.9 2000/06/09 05:51:51 soda Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.10 2000/06/29 08:34:09 mrg Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <dev/cons.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #undef SP
 #include <machine/pte.h>
 #include <mips/locore.h>

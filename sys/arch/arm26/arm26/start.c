@@ -1,4 +1,4 @@
-/* $NetBSD: start.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $ */
+/* $NetBSD: start.c,v 1.2 2000/06/29 08:32:35 mrg Exp $ */
 /*-
  * Copyright (c) 1998, 2000 Ben Harris
  * All rights reserved.
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "SId$");
 
 #include <dev/cons.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include "arcvideo.h"
 #include "ioc.h"

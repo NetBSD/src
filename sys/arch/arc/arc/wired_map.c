@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.3 2000/06/09 06:06:58 soda Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.4 2000/06/29 08:34:10 mrg Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 #include <machine/cpu.h>
 #include <mips/locore.h>
 #include <mips/pte.h>

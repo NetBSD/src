@@ -1,4 +1,4 @@
-/*	$NetBSD: picabus.c,v 1.13 2000/06/17 07:23:06 soda Exp $	*/
+/*	$NetBSD: picabus.c,v 1.14 2000/06/29 08:34:12 mrg Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -35,7 +35,8 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

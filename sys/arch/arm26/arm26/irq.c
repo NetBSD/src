@@ -1,4 +1,4 @@
-/* $NetBSD: irq.c,v 1.2 2000/06/08 23:26:10 bjh21 Exp $ */
+/* $NetBSD: irq.c,v 1.3 2000/06/29 08:32:34 mrg Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: irq.c,v 1.2 2000/06/08 23:26:10 bjh21 Exp $");
+__RCSID("$NetBSD: irq.c,v 1.3 2000/06/29 08:32:34 mrg Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h> /* for cold */
@@ -41,7 +41,6 @@ __RCSID("$NetBSD: irq.c,v 1.2 2000/06/08 23:26:10 bjh21 Exp $");
 #include <sys/queue.h>
 #include <sys/systm.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>

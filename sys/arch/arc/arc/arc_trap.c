@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.13 2000/06/09 05:41:56 soda Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.14 2000/06/29 08:34:08 mrg Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <mips/locore.h>
