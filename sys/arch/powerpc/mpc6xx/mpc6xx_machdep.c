@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.12 2003/01/22 21:44:55 kleink Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.13 2003/01/24 21:26:08 kleink Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -300,7 +300,7 @@ mpc6xx_init(void (*handler)(void))
 		}
 	}
 
-	if (cpu_altivec == 1 || cpuvers != MPC601) {
+	if (!cpu_altivec || cpuvers != MPC601) {
 		/*
 		 * Sync the changed instructions.
 		 */
