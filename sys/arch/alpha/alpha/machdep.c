@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.282 2004/03/24 15:34:46 atatat Exp $ */
+/* $NetBSD: machdep.c,v 1.282.2.1 2004/07/10 13:07:56 tron Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2004/03/24 15:34:46 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282.2.1 2004/07/10 13:07:56 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1022,6 +1022,9 @@ cpu_reboot(howto, bootstr)
 	 * primary will spin, waiting for us to halt.
 	 */
 	alpha_broadcast_ipi(ALPHA_IPI_HALT);
+
+	/* Ensure any CPUs paused by DDB resume execution so they can halt */
+	cpus_paused = 0;
 
 	for (i = 0; i < 10000; i++) {
 		alpha_mb();
