@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.74 2004/08/19 15:12:36 drochner Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.75 2004/10/22 09:49:18 peter Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.74 2004/08/19 15:12:36 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.75 2004/10/22 09:49:18 peter Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -87,8 +87,6 @@ struct vm_map *lkm_map;
 # define LKMDB_LOAD	0x02
 int	lkmdebug = 0;
 #endif
-
-#define PAGESIZE 1024		/* kmem_alloc() allocation quantum */
 
 #define	LKM_ALLOC	0x01
 
@@ -574,7 +572,7 @@ lkmioctl(dev, cmd, data, flag, p)
 		statp->offset	= curp->private.lkm_any->lkm_offset;
 		statp->type	= curp->private.lkm_any->lkm_type;
 		statp->area	= curp->area;
-		statp->size	= curp->size / PAGESIZE;
+		statp->size	= curp->size / 1024;
 		statp->private	= (unsigned long)curp->private.lkm_any;
 		statp->ver	= LKM_VERSION;
 		copystr(curp->private.lkm_any->lkm_name,
