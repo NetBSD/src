@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.29 2001/07/25 22:41:10 christos Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.30 2001/07/25 23:05:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -132,7 +132,7 @@ struct vm_page {
 
 	u_int			wire_count: 16,	/* wired down map refs [P] */
 				pqflags:    8,	/* page queue flags [P] */
-				dummy:      8;
+				       :    8;
 
 	u_int			loan_count;	/* number of active loans
 						 * to read: [O or P]
