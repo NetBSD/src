@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 2003/09/10 19:47:40 christos Exp $
+	$NetBSD: syscalls.master,v 1.29 2003/09/13 18:44:30 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -181,8 +181,13 @@
 94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
 			    fchown
 95	UNIMPL
-96	NOARGS		{ int compat_16_sys___sigreturn14(struct sigcontext *sigcntxp); } \
-			    sigreturn
+#ifdef __HAVE_SIGINFO
+96	NOARGS		{ int compat_16_sys___sigreturn14(struct sigcontext \
+			    *sigcntxp); } sigreturn
+#else
+96	NOARGS		{ int sys___sigreturn14(struct sigcontext *sigcntxp); \
+			    } sigreturn
+#endif
 97	STD		{ int ibcs2_sys_sigaltstack( \
 			    const struct ibcs2_sigaltstack *nss, \
 			    struct ibcs2_sigaltstack *oss); }
