@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.62 2005/01/08 22:16:23 manu Exp $	*/
+/*	$NetBSD: su.c,v 1.63 2005/01/09 21:32:38 manu Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -40,16 +40,16 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.62 2005/01/08 22:16:23 manu Exp $");
+__RCSID("$NetBSD: su.c,v 1.63 2005/01/09 21:32:38 manu Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #ifdef USE_PAM
 #include <sys/wait.h>
 #endif
-#include <sys/resource.h>
 #include <err.h>
 #include <errno.h>
 #include <grp.h>
@@ -69,32 +69,16 @@ __RCSID("$NetBSD: su.c,v 1.62 2005/01/08 22:16:23 manu Exp $");
 #ifdef USE_PAM
 #include <security/pam_appl.h>
 #include <security/openpam.h>   /* for openpam_ttyconv() */
-
-static pam_handle_t *pamh;
-static struct pam_conv pamc;
-
-#define fatal(x) do { \
-	if (pam_err == PAM_SUCCESS) \
-		pam_end(pamh, pam_err); \
-	err x;  \
-} while (/*CONSTCOND*/ 0)
-#define fatalx(x) do { \
-	if (pam_err == PAM_SUCCESS) \
-		pam_end(pamh, pam_err); \
-	errx x; \
-} while (/*CONSTCOND*/ 0)
-
-#else
-#define fatal(x) err x
-#define fatalx(x) errx x
-
+ 
+static pam_handle_t *pamh = NULL;
+static const struct pam_conv pamc = { &openpam_ttyconv, NULL };
 #endif
 
 #ifdef LOGIN_CAP
 #include <login_cap.h>
 #endif
 
-#ifdef KERBEROS
+#if defined(KERBEROS) && !defined(USE_PAM)
 #include <des.h>
 #include <krb.h>
 #include <netdb.h>
@@ -104,7 +88,7 @@ static int koktologin __P((char *, char *, char *));
 
 #endif
 
-#ifdef KERBEROS5
+#if defined(KERBEROS5) && !defined(USE_PAM)
 #include <krb5.h>
 
 static int kerberos5 __P((char *, char *, int));
@@ -135,9 +119,12 @@ int main __P((int, char **));
 
 static int chshell __P((const char *));
 static char *ontty __P((void));
+#ifndef USE_PAM
 static int check_ingroup __P((int, const char *, const char *, int));
+#endif
 
 
+#ifndef USE_PAM
 int
 main(argc, argv)
 	int argc;
@@ -158,18 +145,6 @@ main(argc, argv)
 	time_t pw_warntime = _PASSWORD_WARNDAYS * SECSPERDAY;
 #ifdef LOGIN_CAP
 	login_cap_t *lc;
-#endif
-#ifdef USE_PAM
-	char **pam_envlist, **pam_env;
-	char hostname[MAXHOSTNAMELEN];
-	const char **usernamep;
-	char *tty; 
-	int pam_err, status;
-	pid_t pid;
-#ifdef notdef
-	extern int _openpam_debug;
-	_openpam_debug = 1;
-#endif
 #endif
 
 	asme = asthem = fastlogin = 0;
@@ -225,99 +200,16 @@ main(argc, argv)
 	/* get current login name and shell */
 	ruid = getuid();
 	username = getlogin();
-	/* get target login information, default to root */
-	user = *argv ? *argv : "root";
-
-#ifdef USE_PAM
-	pamc.conv = &openpam_ttyconv;
-	pam_start("su", user, &pamc, &pamh);
-
-	/* Fill in hostname, username and tty */	
-	if ((pam_err = pam_set_item(pamh, PAM_RUSER, username)) != PAM_SUCCESS)
-		goto pam_failed;
-
-	gethostname(hostname, sizeof(hostname));
-	if ((pam_err = pam_set_item(pamh, PAM_RHOST, hostname)) != PAM_SUCCESS)
-		goto pam_failed;
-	
-	tty = ttyname(STDERR_FILENO);
-	if ((pam_err = pam_set_item(pamh, PAM_TTY, tty)) != PAM_SUCCESS)
-		goto pam_failed;
-
-	/* authentication */
-	if ((pam_err = pam_authenticate(pamh, 0)) != PAM_SUCCESS)
-		goto pam_failed;
-
-	if ((pam_err = pam_acct_mgmt(pamh, 0)) == PAM_NEW_AUTHTOK_REQD)
-		pam_err = pam_chauthtok(pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
-	if (pam_err != PAM_SUCCESS)
-		goto pam_failed;
-
-	/* Get user credentials */
-	if ((pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED)) != PAM_SUCCESS)
-		goto pam_failed;
-
-	/* Open the session */
-	if ((pam_err = pam_open_session(pamh, 0)) != PAM_SUCCESS)
-		goto pam_failed;
-
-	/* New user name? */
-	usernamep = (const char **)&username;
-	pam_err = pam_get_item(pamh, PAM_USER, (const void **)usernamep);
-	if (pam_err != PAM_SUCCESS)
-		goto pam_failed;
-
-pam_failed:
-	/*
-	 * If PAM is broken, fallback to plain old authentication.
-	 * Do not do that on authentication errors.
-	 */	
-	switch(pam_err) {
-	case PAM_SUCCESS:
-		break;
-
-	case PAM_ABORT:
-	case PAM_BUF_ERR:
-	case PAM_SYMBOL_ERR:
-	case PAM_SYSTEM_ERR:
-		warnx("PAM failed: %s", pam_strerror(pamh, pam_err));
-		warnx("fallback to plain old authentication");
-		pam_end(pamh, pam_err);
-		username = getlogin();
-		break;
-
-	default:
-		fatalx((1, "Sorry: %s\n", pam_strerror(pamh, pam_err)));
-		break;
-	}	
-
-	/* 
-	 * Now any failure should use fatal/fatalx instead of err/errx
-	 * so that pam_end() is called on errors.
-	 */
-#endif
 	if (username == NULL || (pwd = getpwnam(username)) == NULL ||
 	    pwd->pw_uid != ruid)
 		pwd = getpwuid(ruid);
 	if (pwd == NULL)
-		fatalx((1, "who are you?"));
-
+		errx(1, "who are you?");
 	username = strdup(pwd->pw_name);
 	userpass = strdup(pwd->pw_passwd);
 	if (username == NULL || userpass == NULL)
-		fatal((1, "strdup"));
+		err(1, "strdup");
 
-#ifdef USE_PAM
-	/* Get PAM environment */
-	if ((pam_err == PAM_SUCCESS) && 
-	    ((pam_envlist = pam_getenvlist(pamh)) != NULL)) {
-		for (pam_env = pam_envlist; *pam_env != NULL; ++pam_env) {
-			putenv(*pam_env);
-			free(*pam_env);
-		}
-		free(pam_envlist);
-	}
-#endif
 
 	if (asme) {
 		if (pwd->pw_shell && *pwd->pw_shell) {
@@ -328,20 +220,23 @@ pam_failed:
 			iscsh = NO;
 		}
 	}
+	/* get target login information, default to root */
+	user = *argv ? *argv : "root";
 	np = *argv ? argv : argv-1;
 
 	if ((pwd = getpwnam(user)) == NULL)
-		fatalx((1, "unknown login %s", user));
+		errx(1, "unknown login %s", user);
 
 #ifdef LOGIN_CAP
 	/* force the usage of specified class */
 	if (class) {
 		if (ruid)
-			fatalx((1, "Only root may use -c"));
+			errx(1, "Only root may use -c");
 
 		pwd->pw_class = class;
 	}
-	lc = login_getclass(pwd->pw_class);
+	if ((lc = login_getclass(pwd->pw_class)) == NULL)
+		errx(1, "Unknown class %s\n", pwd->pw_class);
 
 	pw_warntime = login_getcaptime(lc, "password-warn",  
                                     _PASSWORD_WARNDAYS * SECSPERDAY,
@@ -349,9 +244,6 @@ pam_failed:
 #endif
 
 	if (ruid
-#ifdef USE_PAM	
-	    && (pam_err != PAM_SUCCESS)
-#endif
 #ifdef KERBEROS5
 	    && (!use_kerberos || kerberos5(username, user, pwd->pw_uid))
 #endif
@@ -383,18 +275,17 @@ pam_failed:
 			ok = check_ingroup(-1, SU_GROUP, username, 1);
 		}
 		if (!ok)
-			fatalx((1,
+			errx(1,
 	    "you are not listed in the correct secondary group (%s) to su %s.",
-					    SU_GROUP, user));
+					    SU_GROUP, user);
 		/* if target requires a password, verify it */
 		if (*pass) {
 			p = getpass("Password:");
 #ifdef SKEY
 			if (strcasecmp(p, "s/key") == 0) {
-				if (skey_haskey(user)) {
-					fatalx((1, 
-					    "Sorry, you have no s/key."));
-				} else {
+				if (skey_haskey(user))
+					errx(1, "Sorry, you have no s/key.");
+				else {
 					if (skey_authenticate(user)) {
 						goto badlogin;
 					}
@@ -418,7 +309,7 @@ badlogin:
 	if (asme) {
 		/* if asme and non-standard target shell, must be root */
 		if (!chshell(pwd->pw_shell) && ruid)
-			fatalx((1,"permission denied (shell)."));
+			errx(1,"permission denied (shell).");
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
 		shell = pwd->pw_shell;
 		iscsh = UNSET;
@@ -436,34 +327,6 @@ badlogin:
 	if (iscsh == UNSET)
 		iscsh = strstr(avshell, "csh") ? YES : NO;
 
-#ifdef USE_PAM
-	/* 
-	 * If PAM is in use, we must release PAM resources and close
-	 * the session after su child exits. That requires a fork now,
-	 * before we drop the root privs (needed for PAM)
-	 */
-	if (pam_err == PAM_SUCCESS) {
-		switch(pid = fork()) {
-		case -1:
-			fatal((1, "fork"));
-			break;
-		case 0:		/* child */
-			break;
-		default:	/* parent */
-			waitpid(pid, &status, 0);	
-			pam_err = pam_close_session(pamh, 0);
-			pam_end(pamh, pam_err);
-
-			exit(WEXITSTATUS(status));
-			break;
-		}
-	}
-
-	/* 
-	 * Everything here happens in the child, it should not 
-	 * do any PAM operation anymore (don't use fatal/fatalx)
-	 */
-#endif
 	/* set permissions */
 #ifdef LOGIN_CAP
 	if (setusercontext(lc, pwd, pwd->pw_uid,
@@ -564,6 +427,418 @@ badlogin:
         /* NOTREACHED */
 }
 
+#else /* USE_PAM */
+
+int
+main(argc, argv)
+	int argc;
+	char **argv;
+{
+	extern char **environ;
+	struct passwd *pwd;
+	char *p;
+	uid_t ruid;
+	int asme, ch, asthem, fastlogin, prio, gohome;
+	enum { UNSET, YES, NO } iscsh = UNSET;
+	char *user, *shell, *avshell, *username, **np;
+	char *class;
+	char shellbuf[MAXPATHLEN], avshellbuf[MAXPATHLEN];
+	int pam_err;
+	char hostname[MAXHOSTNAMELEN];
+	char *tty;
+	const void *newuser;
+#ifdef LOGIN_CAP
+	login_cap_t *lc;
+#endif
+
+	asme = asthem = fastlogin = 0;
+	gohome = 1;
+	shell = class = NULL;
+	while ((ch = getopt(argc, argv, ARGSTR)) != -1)
+		switch((char)ch) {
+#if defined(KERBEROS) || defined(KERBEROS5)
+		case 'K':
+			fprintf(stderr, "%s: -K is not supported anymore\n",
+			    getprogname());
+			use_kerberos = 0;
+			break;
+#endif
+#ifdef LOGIN_CAP
+		case 'c':
+			class = optarg;
+			break;
+#endif
+		case 'd':
+			asme = 0;
+			asthem = 1;
+			gohome = 0;
+			break;
+		case 'f':
+			fastlogin = 1;
+			break;
+		case '-':
+		case 'l':
+			asme = 0;
+			asthem = 1;
+			break;
+		case 'm':
+			asme = 1;
+			asthem = 0;
+			break;
+		case '?':
+		default:
+			(void)fprintf(stderr,
+			    "usage: %s [%s] [login [shell arguments]]\n",
+			    getprogname(), ARGSTR);
+			exit(1);
+		}
+	argv += optind;
+
+	/* Lower the priority so su runs faster */
+	errno = 0;
+	prio = getpriority(PRIO_PROCESS, 0);
+	if (errno)
+		prio = 0;
+	if (prio > -2)
+		(void)setpriority(PRIO_PROCESS, 0, -2);
+	openlog("su", 0, LOG_AUTH);
+
+	/* get current login name and shell */
+	ruid = getuid();
+	username = getlogin();
+	if (username == NULL || (pwd = getpwnam(username)) == NULL ||
+	    pwd->pw_uid != ruid)
+		pwd = getpwuid(ruid);
+	if (pwd == NULL)
+		errx(1, "who are you?");
+	if ((username = strdup(pwd->pw_name)) == NULL)
+		err(1, "strdup");
+
+
+	if (asme) {
+		if (pwd->pw_shell && *pwd->pw_shell) {
+			strlcpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
+			shell = shellbuf;
+		} else {
+			shell = _PATH_BSHELL;
+			iscsh = NO;
+		}
+	}
+	/* get target login information, default to root */
+	user = *argv ? *argv : "root";
+	np = *argv ? argv : argv-1;
+
+	if ((pwd = getpwnam(user)) == NULL)
+		errx(1, "unknown login %s", user);
+
+	/*
+	 * PAM initialization
+	 */
+#define PAM_END(func) do {                                              \
+	syslog(LOG_ERR, "%s: %s", func, pam_strerror(pamh, pam_err));   \
+	warnx("%s: %s", func, pam_strerror(pamh, pam_err));             \
+	pam_end(pamh, pam_err);                                         \
+	exit(1);                                                        \
+} while (/* CONSTCOND */0)
+
+	if ((pam_err = pam_start("su", user, &pamc, &pamh)) != PAM_SUCCESS) {
+		if (pamh != NULL)		
+			PAM_END("pam_start");
+		/* Things went really bad... */
+		syslog(LOG_ERR, "pam_start failed");
+		errx(1, "pam_start failed");
+	}
+
+	/*
+	 * Fill hostname, username and tty
+	 */
+	if ((pam_err = pam_set_item(pamh, PAM_RUSER, username)) != PAM_SUCCESS)
+		PAM_END("pam_set_item(PAM_RUSER)");
+
+	if ((gethostname(hostname, sizeof(hostname)) == 0) &&
+	    ((pam_err = pam_set_item(pamh, 
+	    PAM_RHOST, hostname) != PAM_SUCCESS)))
+		PAM_END("pam_set_item(PAM_RHOST)");
+
+	if (((tty = ttyname(STDERR_FILENO)) != NULL) &&
+	    ((pam_err = pam_set_item(pamh, PAM_TTY, tty)) != PAM_SUCCESS))
+		PAM_END("pam_set_item(PAM_TTY)");
+			
+	/* 
+	 * Authentication 
+	 */
+	if ((pam_err = pam_authenticate(pamh, 0)) != PAM_SUCCESS) {
+		syslog(LOG_WARNING, "BAD SU %s to %s%s",
+		    username, user, ontty());
+		pam_end(pamh, pam_err);
+		errx(1, "Sorry");
+	}
+
+	/*
+	 * Authorization
+	 */
+	switch(pam_err = pam_acct_mgmt(pamh, 0)) {
+	case PAM_NEW_AUTHTOK_REQD:
+		pam_err = pam_chauthtok(pamh, PAM_CHANGE_EXPIRED_AUTHTOK);
+		if (pam_err != PAM_SUCCESS)
+			PAM_END("pam_chauthok");
+		break;
+	case PAM_SUCCESS:
+		break;
+	default:
+		PAM_END("pam_acct_mgmt");
+		break;
+	}
+
+	/*
+	 * pam_authenticate might have changed the target user. 
+	 * refresh pwd and user
+	 */
+	pam_err = pam_get_item(pamh, PAM_USER, &newuser);
+	if (pam_err != PAM_SUCCESS) {
+		syslog(LOG_WARNING,
+		    "pam_get_item(PAM_USER): %s", pam_strerror(pamh, pam_err));
+	} else {
+		user = (char *)newuser;
+		if ((pwd = getpwnam(user)) == NULL) {	
+			pam_end(pamh, pam_err);
+			syslog(LOG_ERR, "unknown login: %s", username);
+			errx(1, "unknown login: %s", username);
+		}
+	}
+
+#define ERRX_PAM_END(args) do {			\
+	pam_end(pamh, pam_err);			\
+	errx args;				\
+} while (/* CONSTOCOND */0)
+
+#define ERR_PAM_END(args) do {			\
+	pam_end(pamh, pam_err);			\
+	err args;				\
+} while (/* CONSTOCOND */0)
+	
+#ifdef LOGIN_CAP
+	/* force the usage of specified class */
+	if (class) {
+		if (ruid) 
+			ERRX_PAM_END((1, "Only root may use -c"));
+
+		pwd->pw_class = class;
+	}
+	if ((lc = login_getclass(pwd->pw_class)) == NULL)
+		ERRX_PAM_END((1, "Unknown class %s\n", pwd->pw_class));
+#endif
+
+	if (asme) {
+		/* if asme and non-standard target shell, must be root */
+		if (!chshell(pwd->pw_shell) && ruid)
+			ERRX_PAM_END((1,"permission denied (shell)."));
+	} else if (pwd->pw_shell && *pwd->pw_shell) {
+		shell = pwd->pw_shell;
+		iscsh = UNSET;
+	} else {
+		shell = _PATH_BSHELL;
+		iscsh = NO;
+	}
+
+	if ((p = strrchr(shell, '/')) != NULL)
+		avshell = p+1;
+	else
+		avshell = shell;
+
+	/* if we're forking a csh, we want to slightly muck the args */
+	if (iscsh == UNSET)
+		iscsh = strstr(avshell, "csh") ? YES : NO;
+
+	/* 
+	 * Set permissions. We change the user credentials (UID) here 
+	 * XXX PAM should come before LOGIN_CAP so that the class
+	 * specified through -c can override PAM. But as we might drop
+	 * root UID on both operations, it is not possible to do that.
+	 * If a login class was specified, skip PAM. 
+	 */
+#ifdef LOGIN_CAP
+	if (class) {
+		if (setusercontext(lc, pwd, pwd->pw_uid,
+		    (asthem ? (LOGIN_SETPRIORITY | LOGIN_SETUMASK) : 0) |
+		    LOGIN_SETRESOURCES | LOGIN_SETGROUP | LOGIN_SETUSER))
+			ERR_PAM_END((1, "setting user context"));
+	} else 
+#endif
+	{
+		pam_err = pam_setcred(pamh, PAM_ESTABLISH_CRED);
+		if (pam_err != PAM_SUCCESS)
+			PAM_END("pam_setcred");
+	}
+
+	/*
+	 * Manage session. 
+	 */
+	if (asthem) {
+		pid_t pid, xpid;
+		void *oint;
+		void *oabrt;
+		int status;
+
+ 		if ((pam_err = pam_open_session(pamh, 0)) != PAM_SUCCESS)
+			PAM_END("pam_open_session");
+
+		/*
+		 * In order to call pam_close_session after the
+		 * command terminates, we need to fork. 
+		 * Make sure signals cannot kill the parent.
+		 * This is copied from crontab(8), which has to
+		 * cope with a similar situation. XXX FreeBSD 
+		 * has a much more complicated code (CVS logs 
+		 * tell about workaround in libpthread, but we 
+		 * might miss useful stuff)
+		 */
+		oint = signal(SIGINT, SIG_IGN);
+		oabrt = signal(SIGABRT, SIG_IGN);
+		
+		switch (pid = fork()) {
+		case -1:
+			pam_err = pam_close_session(pamh, 0);
+			if (pam_err != PAM_SUCCESS) {
+				syslog(LOG_ERR, "pam_close_session: %s", 
+				    pam_strerror(pamh, pam_err));
+				warnx("pam_close_session: %s", 
+				    pam_strerror(pamh, pam_err));
+			}
+			ERR_PAM_END((1, "fork"));
+			break;
+
+		case 0:	/* Child */
+			break;
+
+		default:
+			/*
+			 * Parent: wait for the child to terminate
+			 * and call pam_close_session.
+			 */
+			if ((xpid = wait(&status)) != pid) {
+				pam_err = pam_close_session(pamh, 0);
+				if (pam_err != PAM_SUCCESS) {
+					syslog(LOG_ERR, 
+					    "pam_close_session: %s", 
+					    pam_strerror(pamh, pam_err));
+					warnx("pam_close_session: %s", 
+					    pam_strerror(pamh, pam_err));
+				}
+				ERRX_PAM_END((1, 
+				    "wrong PID: %d != %d", pid, xpid));
+			}
+		
+			(void)signal(SIGINT, oint);
+			(void)signal(SIGABRT, oabrt);
+
+ 			pam_err = pam_close_session(pamh, 0);
+			if (pam_err != PAM_SUCCESS)
+				PAM_END("pam_open_session");
+
+			pam_end(pamh, PAM_SUCCESS);
+			exit(0);
+			break;	
+		}
+	}
+
+	/* 
+	 * The child: starting here, we don't have to care about
+	 * handling PAM issues if we exit, the parent will do the 
+	 * job when we exit.
+	 */
+#undef PAM_END
+#undef ERR_PAM_END
+#undef ERRX_PAM_END
+
+	if (!asme) {
+		if (asthem) {
+			char **pamenv;
+
+			p = getenv("TERM");
+			/* 
+			 * Create an empty environment 
+			 */
+			if ((environ = malloc(sizeof(char *))) == NULL)
+				err(1, NULL);
+			environ[0] = NULL;
+
+			/* 
+			 * Add PAM environement, before the LOGIN_CAP stuff:
+			 * if the login class is unspecified, we'll get the
+			 * same data from PAM, if -c was used, the specified
+			 * class must override PAM.
+	 		 */
+			if ((pamenv = pam_getenvlist(pamh)) != NULL) {
+				char **envitem;
+
+				/* 
+				 * XXX Here FreeBSD filters out 
+				 * SHELL, LOGNAME, MAIL, CDPATH, IFS, PATH
+				 * how could we get untrusted data here?
+				 */
+				for (envitem = pamenv; *envitem; envitem++) {
+					putenv(*envitem);
+					free(*envitem); 
+				}
+
+				free(pamenv);
+			}
+
+#ifdef LOGIN_CAP
+			if (setusercontext(lc, pwd, pwd->pw_uid, LOGIN_SETPATH))
+				err(1, "setting user context");
+#else
+			(void)setenv("PATH", _PATH_DEFPATH, 1);
+#endif
+			if (p)
+				(void)setenv("TERM", p, 1);
+			if (gohome && chdir(pwd->pw_dir) < 0)
+				errx(1, "no directory");
+		} 
+
+		if (asthem || pwd->pw_uid)
+			(void)setenv("USER", pwd->pw_name, 1);
+		(void)setenv("HOME", pwd->pw_dir, 1);
+		(void)setenv("SHELL", shell, 1);
+	}
+	(void)setenv("SU_FROM", username, 1);
+
+	if (iscsh == YES) {
+		if (fastlogin)
+			*np-- = "-f";
+		if (asme)
+			*np-- = "-m";
+	} else {
+		if (fastlogin)
+			unsetenv("ENV");
+	}
+
+	if (asthem) {
+		avshellbuf[0] = '-';
+		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		avshell = avshellbuf;
+	} else if (iscsh == YES) {
+		/* csh strips the first character... */
+		avshellbuf[0] = '_';
+		(void)strlcpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		avshell = avshellbuf;
+	}
+	*np = avshell;
+
+	if (ruid != 0)
+		syslog(LOG_NOTICE, "%s to %s%s",
+		    username, pwd->pw_name, ontty());
+
+	/* Raise our priority back to what we had before */
+	(void)setpriority(PRIO_PROCESS, 0, prio);
+
+	execv(shell, np);
+	err(1, "%s", shell);
+        /* NOTREACHED */
+}
+#endif /* USE_PAM */
+
 static int
 chshell(sh)
 	const char *sh;
@@ -589,6 +864,7 @@ ontty()
 	return (buf);
 }
 
+#ifndef USE_PAM
 #ifdef KERBEROS5
 static int
 kerberos5(username, user, uid)
@@ -893,3 +1169,4 @@ check_ingroup (gid, gname, user, ifempty)
 #endif
 	return ok;
 }
+#endif /* USE_PAM */
