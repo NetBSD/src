@@ -258,7 +258,7 @@ MY(write_object_contents) (abfd)
   struct external_exec exec_bytes;
   struct internal_exec *execp = exec_hdr (abfd);
 
-#if CHOOSE_RELOC_SIZE
+#ifdef CHOOSE_RELOC_SIZE
   CHOOSE_RELOC_SIZE(abfd);
 #else
   obj_reloc_entry_size (abfd) = RELOC_STD_SIZE;
@@ -330,6 +330,12 @@ MY(set_sizes) (abfd)
 #ifndef MY_finish_dynamic_link
 #define MY_finish_dynamic_link 0
 #endif
+#ifndef MY_translate_from_native_sym_flags
+#define MY_translate_from_native_sym_flags 0
+#endif
+#ifndef MY_translate_to_native_sym_flags
+#define MY_translate_to_native_sym_flags 0
+#endif
 
 static CONST struct aout_backend_data MY(backend_data) = {
   MY_zmagic_contiguous,
@@ -344,7 +350,9 @@ static CONST struct aout_backend_data MY(backend_data) = {
   MY_link_dynamic_object,
   MY_write_dynamic_symbol,
   MY_check_dynamic_reloc,
-  MY_finish_dynamic_link
+  MY_finish_dynamic_link,
+  MY_translate_from_native_sym_flags,
+  MY_translate_to_native_sym_flags
 };
 #define MY_backend_data &MY(backend_data)
 #endif
