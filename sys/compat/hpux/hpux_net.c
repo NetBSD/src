@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_net.c,v 1.10 1995/05/10 16:45:34 christos Exp $	*/
+/*	$NetBSD: hpux_net.c,v 1.11 1995/09/19 22:53:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,10 +73,6 @@
  * HPUX netioctl() to BSD syscall map.
  * Indexed by callno - MINBSDIPCCODE
  */
-extern int socket(), listen(), bind(), compat_43_accept(), connect(), compat_43_recv();
-extern int compat_43_send(), shutdown(), compat_43_getsockname(), sendto();
-extern int compat_43_recvfrom(), compat_43_getpeername();
-int hpux_getsockopt(), hpux_setsockopt();
 
 struct hpuxtobsdipc {
 	int (*rout)();
@@ -121,11 +117,12 @@ struct hpuxtobsdipc {
  * Gleened from disassembled libbsdipc.a syscall entries.
  */
 int
-hpux_netioctl(p, uap, retval)
+hpux_netioctl(p, v, retval)
 	struct proc *p;
-	struct hpux_netioctl_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct hpux_netioctl_args *uap = v;
 	int *args, i;
 	register int code;
 	int error;
@@ -190,11 +187,12 @@ struct hpux_setsockopt_args {
 };
 
 /* ARGSUSED */
-hpux_setsockopt(p, uap, retval)
+hpux_setsockopt(p, v, retval)
 	struct proc *p;
-	struct hpux_setsockopt_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct hpux_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int tmp, error;
@@ -233,11 +231,12 @@ hpux_setsockopt(p, uap, retval)
 
 /* ARGSUSED */
 int
-hpux_setsockopt2(p, uap, retval)
+hpux_setsockopt2(p, v, retval)
 	struct proc *p;
-	register struct hpux_setsockopt2_args *uap;
+	void *v;
 	register_t *retval;
 {
+	register struct hpux_setsockopt2_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
@@ -270,11 +269,12 @@ struct hpux_getsockopt_args {
 };
 
 int
-hpux_getsockopt(p, uap, retval)
+hpux_getsockopt(p, v, retval)
 	struct proc *p;
-	struct hpux_getsockopt_args *uap;
+	void *v;
 	register_t *retval;
 {
+	struct hpux_getsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int valsize, error;

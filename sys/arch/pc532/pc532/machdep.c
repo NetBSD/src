@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1995/09/01 20:06:12 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1995/09/19 23:15:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -593,13 +593,14 @@ sendsig(catcher, sig, mask, code)
  * a machine fault.
  */
 int
-sigreturn(p, uap, retval)
+sigreturn(p, v, retval)
 	struct proc *p;
-	struct sigreturn_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap;
+	void *v;
 	register_t *retval;
 {
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
 	register int *regs = p->p_md.md_regs;
@@ -1039,14 +1040,16 @@ void reboot_cpu()
 }
 
 int
-sysarch(p, uap, retval)
+sysarch(p, v, retval)
 	struct proc *p;
+	void *v;
+	register_t *retval;
+{
 	struct sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
-	} */ *uap;
-	register_t *retval;
-{
+	} */ *uap = v;
+
 	return ENOSYS;
 }
 

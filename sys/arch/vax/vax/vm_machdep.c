@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.14 1995/06/05 16:27:27 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.15 1995/09/19 23:18:28 thorpej Exp $       */
 
 #undef SWDEBUG
 /*
@@ -50,6 +50,8 @@
 #include "machine/macros.h"
 #include "machine/trap.h"
 #include "machine/pcb.h"
+
+#include <sys/syscallargs.h>
 
 volatile int whichqs;
 
@@ -333,7 +335,15 @@ printf("Warning: reno_omagic\n");
 	return(error);
 }
 
-sysarch(){return(EINVAL);}
+int
+sysarch(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	return (ENOSYS);
+};
 
 /*
  * 4.3BSD Reno programs have an 1K header first in the executable
