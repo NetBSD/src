@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.11 2004/01/12 03:30:51 sekiya Exp $	*/
+/*	$NetBSD: bus.h,v 1.12 2004/01/13 05:47:09 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -616,6 +616,8 @@ struct sgimips_bus_dmamap {
 };
 
 #ifdef _SGIMIPS_BUS_DMA_PRIVATE
+void	sgimips_bus_dma_init(void);
+
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);
 void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
@@ -628,7 +630,9 @@ int	_bus_dmamap_load_uio(bus_dma_tag_t, bus_dmamap_t,
 int	_bus_dmamap_load_raw(bus_dma_tag_t, bus_dmamap_t,
 	    bus_dma_segment_t *, int, bus_size_t, int);
 void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
-void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+void	_bus_dmamap_sync_mips1(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+void	_bus_dmamap_sync_mips3(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
 
 int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
