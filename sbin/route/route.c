@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.59 2002/07/20 08:36:27 grant Exp $	*/
+/*	$NetBSD: route.c,v 1.60 2002/10/18 00:16:25 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.59 2002/07/20 08:36:27 grant Exp $");
+__RCSID("$NetBSD: route.c,v 1.60 2002/10/18 00:16:25 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -934,7 +934,8 @@ newroute(argc, argv)
 				forcenet++;
 				break;
 			case K_PREFIXLEN:
-				argc--;
+				if (!--argc)
+					usage(1+*argv);
 				if (prefixlen(*++argv) == 128) {
 					forcenet = 0;
 					ishost = 1;
