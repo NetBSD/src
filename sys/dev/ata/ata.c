@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.26 2004/01/03 22:56:53 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.27 2004/01/03 23:59:58 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.26 2004/01/03 22:56:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.27 2004/01/03 23:59:58 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -135,7 +135,7 @@ atabus_thread(void *arg)
 		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
 		     chp->ch_queue->queue_freeze == 0)) {
 			chp->ch_flags &= ~WDCF_TH_RUN;
-			(void) tsleep(&chp->thread, PRIBIO, "atath", 0);
+			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
 			chp->ch_flags |= WDCF_TH_RUN;
 		}
 		splx(s);
@@ -164,7 +164,7 @@ atabus_thread(void *arg)
 			panic("ata_thread: queue_freeze");
 		splx(s);
 	}
-	chp->thread = NULL;
+	chp->ch_thread = NULL;
 	wakeup(&chp->ch_flags);
 	kthread_exit(0);
 }
@@ -181,7 +181,7 @@ atabus_create_thread(void *arg)
 	struct wdc_channel *chp = sc->sc_chan;
 	int error;
 
-	if ((error = kthread_create1(atabus_thread, sc, &chp->thread,
+	if ((error = kthread_create1(atabus_thread, sc, &chp->ch_thread,
 				     "%s", sc->sc_dev.dv_xname)) != 0)
 		aprint_error("%s: unable to create kernel thread: error %d\n",
 		    sc->sc_dev.dv_xname, error);
@@ -305,8 +305,8 @@ atabus_detach(struct device *self, int flags)
 	/* Shutdown the channel. */
 	/* XXX NEED AN INTERLOCK HERE. */
 	chp->ch_flags |= WDCF_SHUTDOWN;
-	wakeup(&chp->thread);
-	while (chp->thread != NULL)
+	wakeup(&chp->ch_thread);
+	while (chp->ch_thread != NULL)
 		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
 	
 	/*
