@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.136 2004/02/18 14:42:20 hannken Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.137 2004/03/02 09:15:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.136 2004/02/18 14:42:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.137 2004/03/02 09:15:26 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -423,6 +423,7 @@ exit1(struct lwp *l, int rv)
 	p->p_stat = SZOMB;
 
 	LIST_REMOVE(l, l_list);
+	LIST_REMOVE(l, l_sibling);
 	l->l_flag |= L_DETACHED|L_PROCEXIT;	/* detached from proc too */
 	l->l_stat = LSDEAD;
 
@@ -745,6 +746,11 @@ proc_free(struct proc *p)
 {
 	struct proc *parent = p->p_pptr;
 	int s;
+
+	KASSERT(p->p_nlwps == 0);
+	KASSERT(p->p_nzlwps == 0);
+	KASSERT(p->p_nrlwps == 0);
+	KASSERT(LIST_EMPTY(&p->p_lwps));
 
 	/*
 	 * If we got the child via ptrace(2) or procfs, and
