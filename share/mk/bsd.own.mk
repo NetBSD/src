@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.93 1998/10/30 00:20:45 mark Exp $
+#	$NetBSD: bsd.own.mk,v 1.94 1998/10/31 09:23:53 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -102,8 +102,7 @@ PMAP_NEW?=	yes
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if  (${MACHINE_ARCH} == "vax") || \
-    ((${MACHINE_ARCH} == "mips") && defined(STATIC_TOOLCHAIN)) || \
+.if ((${MACHINE_ARCH} == "mips") && defined(STATIC_TOOLCHAIN)) || \
     (${MACHINE_ARCH} == "powerpc")
 NOPIC=
 .endif
@@ -131,7 +130,8 @@ NOPROFILE=
 # Some platforms are already transitioned to egcs.
 .if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "ns32k") || \
-    (${MACHINE_ARCH} == "sparc64")
+    (${MACHINE_ARCH} == "sparc64") || \
+    (${MACHINE_ARCH} == "vax")
 USE_EGCS=1
 .endif
 
