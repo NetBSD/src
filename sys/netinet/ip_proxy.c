@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_proxy.c,v 1.15 1998/11/22 15:17:20 mrg Exp $	*/
+/*	$NetBSD: ip_proxy.c,v 1.16 1999/01/23 08:50:52 mycroft Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -207,7 +207,7 @@ nat_t *nat;
 			sum = fr_tcpsum(*(mb_t **)fin->fin_mp,
 					ip, tcp, ip->ip_len);
 #endif
-			if (tcp->th_sum != sum) {
+			if (sum != 0) {
 				frstats[fin->fin_out].fr_tcpbad++;
 				return -1;
 			}
@@ -225,6 +225,7 @@ nat_t *nat;
 
 		if (tcp != NULL) {
 			err = ap_fixseqack(fin, ip, aps, err);
+			tcp->th_sum = 0;
 #if SOLARIS && defined(_KERNEL)
 			tcp->th_sum = fr_tcpsum(fin->fin_qfm, ip, tcp,
 					        ip->ip_len);
