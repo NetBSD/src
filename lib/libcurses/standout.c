@@ -1,4 +1,4 @@
-/*	$NetBSD: standout.c,v 1.7 1997/07/22 07:37:05 mikel Exp $	*/
+/*	$NetBSD: standout.c,v 1.8 1999/04/13 14:08:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
 #else
-__RCSID("$NetBSD: standout.c,v 1.7 1997/07/22 07:37:05 mikel Exp $");
+__RCSID("$NetBSD: standout.c,v 1.8 1999/04/13 14:08:19 mrg Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -60,7 +60,6 @@ wstandout(win)
 		win->flags |= __WSTANDOUT;
 	return (1);
 }
-
 /*
  * wstandend --
  *	Exit standout mode.

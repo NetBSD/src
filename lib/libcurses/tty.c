@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.10 1998/01/30 04:33:37 perry Exp $	*/
+/*	$NetBSD: tty.c,v 1.11 1999/04/13 14:08:19 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,9 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.10 1998/01/30 04:33:37 perry Exp $");
+__RCSID("$NetBSD: tty.c,v 1.11 1999/04/13 14:08:19 mrg Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
+
+#include <sys/types.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
 
 #include <stdlib.h>
 #include <termios.h>
@@ -56,15 +60,17 @@ __RCSID("$NetBSD: tty.c,v 1.10 1998/01/30 04:33:37 perry Exp $");
  * See also the comments in getterm().
  */
 #ifdef TCSASOFT
-int __tcaction = 1;			/* Ignore hardware settings. */
+int	__tcaction = 1;			/* Ignore hardware settings. */
 #else
-int __tcaction = 0;
+int	__tcaction = 0;
 #endif
 
 struct termios __orig_termios, __baset;
-int __endwin;
+int	__endwin;
 static struct termios cbreakt, rawt, *curt;
 static int useraw;
+static int ovmin = 1;
+static int ovtime = 0;
 
 #ifndef	OXTABS
 #ifdef	XTABS			/* SMI uses XTABS. */
@@ -82,14 +88,15 @@ int
 gettmode()
 {
 	useraw = 0;
-	
+
 	if (tcgetattr(STDIN_FILENO, &__orig_termios))
 		return (ERR);
 
 	__baset = __orig_termios;
 	__baset.c_oflag &= ~OXTABS;
 
-	GT = 0;		/* historical. was used before we wired OXTABS off */
+	GT = 0;			/* historical. was used before we wired OXTABS
+				 * off */
 	NONL = (__baset.c_oflag & ONLCR) == 0;
 
 	/*
@@ -105,9 +112,9 @@ gettmode()
 	cbreakt.c_cc[VTIME] = 0;
 
 	rawt = cbreakt;
-	rawt.c_iflag &= ~(IGNBRK|BRKINT|PARMRK|INLCR|IGNCR|ICRNL|IXON);
+	rawt.c_iflag &= ~(IGNBRK | BRKINT | PARMRK | INLCR | IGNCR | ICRNL | IXON);
 	rawt.c_oflag &= ~OPOST;
-	rawt.c_lflag &= ~(ECHO|ECHONL|ICANON|ISIG|IEXTEN);
+	rawt.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 
 	/*
 	 * In general, curses should leave hardware-related settings alone.
@@ -119,7 +126,7 @@ gettmode()
 	 */
 	if (!__tcaction) {
 		rawt.c_iflag &= ~ISTRIP;
-		rawt.c_cflag &= ~(CSIZE|PARENB);
+		rawt.c_cflag &= ~(CSIZE | PARENB);
 		rawt.c_cflag |= CS8;
 	}
 
@@ -136,7 +143,7 @@ raw()
 		__endwin = 0;
 		__restartwin();
 	}
-	
+
 	useraw = __pfast = __rawmode = 1;
 	curt = &rawt;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
@@ -151,7 +158,7 @@ noraw()
 		__endwin = 0;
 		__restartwin();
 	}
-	
+
 	useraw = __pfast = __rawmode = 0;
 	curt = &__baset;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
@@ -166,7 +173,7 @@ cbreak()
 		__endwin = 0;
 		__restartwin();
 	}
-	
+
 	__rawmode = 1;
 	curt = useraw ? &rawt : &cbreakt;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
@@ -187,7 +194,120 @@ nocbreak()
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, curt) ? ERR : OK);
 }
-	
+
+int
+__delay()
+ {
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
+	rawt.c_cc[VMIN] = 1;
+	rawt.c_cc[VTIME] = 0;
+	cbreakt.c_cc[VMIN] = 1;
+	cbreakt.c_cc[VTIME] = 0;
+	__baset.c_cc[VMIN] = 1;
+	__baset.c_cc[VTIME] = 0;
+
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+		TCSASOFT : TCSANOW, curt) ? ERR : OK);
+}
+
+int
+__nodelay()
+{
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
+	rawt.c_cc[VMIN] = 0;
+	rawt.c_cc[VTIME] = 0;
+	cbreakt.c_cc[VMIN] = 0;
+	cbreakt.c_cc[VTIME] = 0;
+	__baset.c_cc[VMIN] = 0;
+	__baset.c_cc[VTIME] = 0;
+
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+		TCSASOFT : TCSANOW, curt) ? ERR : OK);
+}
+
+void
+__save_termios()
+{
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
+	ovmin = cbreakt.c_cc[VMIN];
+	ovtime = cbreakt.c_cc[VTIME];
+}
+
+void
+__restore_termios()
+{
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
+	rawt.c_cc[VMIN] = ovmin;
+	rawt.c_cc[VTIME] = ovtime;
+	cbreakt.c_cc[VMIN] = ovmin;
+	cbreakt.c_cc[VTIME] = ovtime;
+	__baset.c_cc[VMIN] = ovmin;
+	__baset.c_cc[VTIME] = ovtime;
+}
+
+int
+__timeout(delay)
+	int	delay;
+{
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
+	ovmin = cbreakt.c_cc[VMIN];
+	ovtime = cbreakt.c_cc[VTIME];
+	rawt.c_cc[VMIN] = 0;
+	rawt.c_cc[VTIME] = delay;
+	cbreakt.c_cc[VMIN] = 0;
+	cbreakt.c_cc[VTIME] = delay;
+	__baset.c_cc[VMIN] = 0;
+	__baset.c_cc[VTIME] = delay;
+
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+		TCSASOFT | TCSANOW : TCSANOW, curt) ? ERR : OK);
+}
+
+int
+__notimeout()
+{
+	/* Check if we need to restart ... */
+	if (__endwin) {
+		__endwin = 0;
+		__restartwin();
+	}
+
+	rawt.c_cc[VMIN] = 1;
+	rawt.c_cc[VTIME] = 0;
+	cbreakt.c_cc[VMIN] = 1;
+	cbreakt.c_cc[VTIME] = 0;
+	__baset.c_cc[VMIN] = 1;
+	__baset.c_cc[VTIME] = 0;
+
+	return (tcsetattr(STDIN_FILENO, __tcaction ?
+		TCSASOFT | TCSANOW : TCSANOW, curt) ? ERR : OK);
+}
+
 int
 echo()
 {
@@ -200,7 +320,7 @@ echo()
 	rawt.c_lflag |= ECHO;
 	cbreakt.c_lflag |= ECHO;
 	__baset.c_lflag |= ECHO;
-	
+
 	__echoit = 1;
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
 	    TCSASOFT | TCSADRAIN : TCSADRAIN, curt) ? ERR : OK);
@@ -272,14 +392,14 @@ __startwin()
 	static char *stdbuf;
 	static size_t len;
 
-	(void)fflush(stdout);
+	(void) fflush(stdout);
 
 	/*
 	 * Some C libraries default to a 1K buffer when talking to a tty.
 	 * With a larger screen, especially across a network, we'd like
 	 * to get it to all flush in a single write.  Make it twice as big
 	 * as just the characters (so that we have room for cursor motions
-	 * and standout information) but no more than 8K.
+	 * and attribute information) but no more than 8K.
 	 */
 	if (stdbuf == NULL) {
 		if ((len = LINES * COLS * 2) > 8192)
@@ -287,10 +407,11 @@ __startwin()
 		if ((stdbuf = malloc(len)) == NULL)
 			len = 0;
 	}
-	(void)setvbuf(stdout, stdbuf, _IOFBF, len);
+	(void) setvbuf(stdout, stdbuf, _IOFBF, len);
 
 	tputs(TI, 0, __cputchar);
 	tputs(VS, 0, __cputchar);
+	tputs(KS, 0, __cputchar);
 }
 
 int
@@ -298,6 +419,20 @@ endwin()
 {
 	__endwin = 1;
 	return __stopwin();
+}
+
+int
+isendwin()
+{
+	return (__endwin);
+}
+
+int
+flushinp()
+{
+	int what = FREAD;
+	(void) ioctl(STDIN_FILENO, TIOCFLUSH, &what);
+	return (OK);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: box.c,v 1.9 1998/02/03 19:12:16 perry Exp $	*/
+/*	$NetBSD: box.c,v 1.10 1999/04/13 14:08:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)box.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: box.c,v 1.9 1998/02/03 19:12:16 perry Exp $");
+__RCSID("$NetBSD: box.c,v 1.10 1999/04/13 14:08:17 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -52,9 +52,9 @@ __RCSID("$NetBSD: box.c,v 1.9 1998/02/03 19:12:16 perry Exp $");
 int
 box(win, vert, hor)
 	WINDOW *win;
-	int vert, hor;
+	int     vert, hor;
 {
-	int endy, endx, i;
+	int     endy, endx, i;
 	__LDATA *fp, *lp;
 
 	endx = win->maxx;
@@ -69,7 +69,7 @@ box(win, vert, hor)
 	endx--;
 	for (i = 0; i <= endy; i++) {
 		win->lines[i]->line[0].ch = vert;
-	        win->lines[i]->line[endx].ch = vert;
+		win->lines[i]->line[endx].ch = vert;
 		win->lines[i]->line[0].attr &= ~__STANDOUT;
 		win->lines[i]->line[endx].attr &= ~__STANDOUT;
 	}

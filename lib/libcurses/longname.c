@@ -1,4 +1,4 @@
-/*	$NetBSD: longname.c,v 1.8 1998/02/03 19:12:28 perry Exp $	*/
+/*	$NetBSD: longname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)longname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: longname.c,v 1.8 1998/02/03 19:12:28 perry Exp $");
+__RCSID("$NetBSD: longname.c,v 1.9 1999/04/13 14:08:18 mrg Exp $");
 #endif
-#endif	/* not lint */
+#endif				/* not lint */
 
 #include "curses.h"
 
@@ -48,11 +48,11 @@ __RCSID("$NetBSD: longname.c,v 1.8 1998/02/03 19:12:28 perry Exp $");
  * longname --
  *	Fill in "def" with the long name of the terminal.
  */
-char *
+char   *
 longname(bp, def)
-	char *bp, *def;
+	char   *bp, *def;
 {
-	char *cp;
+	char   *cp;
 
 	while (*bp && *bp != ':' && *bp != '|')
 		bp++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrace.c,v 1.5 1997/07/22 07:36:32 mikel Exp $	*/
+/*	$NetBSD: ctrace.c,v 1.6 1999/04/13 14:08:17 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,9 +38,9 @@
 #if 0
 static char sccsid[] = "@(#)ctrace.c	8.2 (Berkeley) 10/5/93";
 #else
-__RCSID("$NetBSD: ctrace.c,v 1.5 1997/07/22 07:36:32 mikel Exp $");
+__RCSID("$NetBSD: ctrace.c,v 1.6 1999/04/13 14:08:17 mrg Exp $");
 #endif
-#endif /* not lint */
+#endif				/* not lint */
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -57,15 +57,15 @@ __RCSID("$NetBSD: ctrace.c,v 1.5 1997/07/22 07:36:32 mikel Exp $");
 #define	TFILE	"__curses.out"
 #endif
 
-static FILE *tracefp;			/* Curses debugging file descriptor. */
+static FILE *tracefp;		/* Curses debugging file descriptor. */
 
 void
 #ifdef __STDC__
-__CTRACE(const char *fmt, ...)
+__CTRACE(const char *fmt,...)
 #else
 __CTRACE(fmt, va_alist)
-	char *fmt;
-	va_dcl
+	char   *fmt;
+va_dcl
 #endif
 {
 	va_list ap;
@@ -78,8 +78,8 @@ __CTRACE(fmt, va_alist)
 		tracefp = fopen(TFILE, "w");
 	if (tracefp == NULL)
 		return;
-	(void)vfprintf(tracefp, fmt, ap);
+	(void) vfprintf(tracefp, fmt, ap);
 	va_end(ap);
-	(void)fflush(tracefp);
+	(void) fflush(tracefp);
 }
 #endif
