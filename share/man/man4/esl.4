@@ -1,4 +1,4 @@
-.\"	$NetBSD: esl.4,v 1.1 2001/09/29 18:50:42 augustss Exp $
+.\"	$NetBSD: esl.4,v 1.2 2001/09/29 23:51:33 augustss Exp $
 .\"
 .\" Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>
 .\" All rights reserved.
@@ -57,13 +57,6 @@ playback at rates up to 44.1kHz.
 .Pp
 Putting a machine into suspend mode while this driver is active will
 cause the machine to freeze.
-.Pp
-When the card is removed, the 
-.Xr opl 4
-device isn't detached (and as a result, neither is the
-.Xr midi 4
-device). This causes multiple copies of each driver to be present after
-many removes / inserts.
 .Pp
 Recording is not yet supported by this driver.
 .Sh SEE ALSO
