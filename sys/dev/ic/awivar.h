@@ -1,4 +1,4 @@
-/* $NetBSD: awivar.h,v 1.6 2000/03/22 11:22:22 onoe Exp $ */
+/* $NetBSD: awivar.h,v 1.7 2000/03/27 12:55:00 onoe Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -105,6 +105,7 @@ struct awi_softc
 				sc_busy:1,
 				sc_cansleep:1,
 				sc_invalid:1,
+				sc_enab_intr:1,
 				sc_cmd_inprog:1,
 				sc_format_llc:1,
 				sc_start_bss:1,

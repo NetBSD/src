@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.14 2000/03/27 12:52:45 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.15 2000/03/27 12:54:59 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -867,7 +867,7 @@ awi_intr(arg)
 	u_int16_t status;
 	int error, handled = 0, ocansleep;
 
-	if (sc->sc_invalid)
+	if (!sc->sc_enabled || !sc->sc_enab_intr || sc->sc_invalid)
 		return 0;
 
 	am79c930_gcr_setbits(&sc->sc_chip,
@@ -1490,6 +1490,7 @@ awi_init_hw(sc)
 	int i, error;
 	u_int8_t banner[AWI_BANNER_LEN];
 
+	sc->sc_enab_intr = 0;
 	awi_drvstate(sc, AWI_DRV_RESET);
 
 	/* reset firmware */
@@ -1535,6 +1536,7 @@ awi_init_hw(sc)
 	}
 
 	/* initializing interrupt */
+	sc->sc_enab_intr = 1;
 	error = awi_intr_lock(sc);
 	if (error)
 		return error;
