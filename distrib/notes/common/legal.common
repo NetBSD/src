@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.31 2003/08/22 06:36:26 itojun Exp $
+.\"	$NetBSD: legal.common,v 1.32 2003/09/04 15:26:35 tsutsui Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -301,5 +301,3 @@ This product includes software developed by Computing Services
 at Carnegie Mellon University (http://www.cmu.edu/computing/).
 .It
 This product includes software developed by Boris Popov.
-.It
-This product includes software developed by Shingo WATANABE.
