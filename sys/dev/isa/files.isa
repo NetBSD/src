@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.137 2005/02/27 00:27:17 perry Exp $
+#	$NetBSD: files.isa,v 1.138 2005/03/25 23:06:19 cube Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -451,7 +451,7 @@ device	rtii: radiodev, tea5757
 attach	rtii at isa
 file	dev/isa/radiotrack2.c		rtii
 
-# PC PPI + TIMER 1 (speaker interface)
+# PC PPI (speaker interface)
 device	pcppi {}
 attach	pcppi at isa
 file	dev/isa/pcppi.c			pcppi			needs-flag
@@ -460,6 +460,10 @@ attach	spkr at pcppi
 file	dev/isa/spkr.c			spkr			needs-flag
 attach	midi at pcppi with midi_pcppi: midisyn
 file	dev/isa/midi_pcppi.c		midi_pcppi
+
+# AT Timer (TIMER 1)
+attach	attimer at isa with attimer_isa
+file	dev/isa/attimer_isa.c		attimer_isa
 
 #
 # Environmental monitors
