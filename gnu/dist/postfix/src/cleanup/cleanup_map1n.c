@@ -101,7 +101,11 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, char *addr,
 	    break;
 	}
 	for (count = 0; /* void */ ; count++) {
-	    if (been_here_fixed(been_here, argv->argv[arg]) != 0)
+
+	    /*
+	     * Don't expand an address that already expanded into itself.
+	     */
+	    if (been_here_check_fixed(been_here, argv->argv[arg]) != 0)
 		break;
 	    if (count >= MAX_RECURSION) {
 		msg_warn("%s: unreasonable %s map nesting for %s",
@@ -118,6 +122,12 @@ ARGV   *cleanup_map1n_internal(CLEANUP_STATE *state, char *addr,
 			argv_add(argv, STR(state->temp1), ARGV_END);
 			argv_terminate(argv);
 		    }
+
+		    /*
+		     * Allow an address to expand into itself once.
+		     */
+		    if (strcasecmp(saved_lhs, STR(state->temp1)) == 0)
+			been_here_fixed(been_here, saved_lhs);
 		}
 		myfree(saved_lhs);
 		argv_free(lookup);
