@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.7 2003/09/06 10:56:37 jdolecek Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.7.2.1 2004/05/23 10:46:22 tron Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,9 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2003/09/06 10:56:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7.2.1 2004/05/23 10:46:22 tron Exp $");
 
 #include <sys/param.h>
+#include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -48,6 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.7 2003/09/06 10:56:37 jdolecek Exp
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+
+#include <coda/coda.h>
+#include <coda/coda_vfsops.h>
 
 int coda_lkmentry(struct lkm_table *, int, int);
 
@@ -95,6 +99,7 @@ int
 coda_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 {
 	int error = 0;
+	static struct sysctllog *_coda_log;
 
 	switch (cmd) {
 	case LKM_E_LOAD:
@@ -102,8 +107,11 @@ coda_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 		if (error)
 			break;
 		error = coda_dispatch_vfs(lkmtp, cmd, ver);
+		if (!error)
+			sysctl_vfs_coda_setup(&_coda_log);
 		break;
 	case LKM_E_UNLOAD:
+		sysctl_teardown(&_coda_log);
 		error = coda_dispatch_vfs(lkmtp, cmd, ver);
 		if (error)
 			break;
