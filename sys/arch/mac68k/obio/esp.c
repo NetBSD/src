@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.27 2000/12/29 21:31:44 briggs Exp $	*/
+/*	$NetBSD: esp.c,v 1.28 2001/01/18 03:43:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -524,11 +524,27 @@ esp_quick_dma_intr(sc)
 
 		res = NCR_READ_REG(sc, NCR_TCL);
 		res += NCR_READ_REG(sc, NCR_TCM) << 8;
-		printf("dmaintr: DMA xfer of zero xferred %d\n", res);
+		/* This can happen in the case of a TRPAD operation */
+		/* Pretend that it was complete */
+		sc->sc_espstat |= NCRSTAT_TC;
+#if DEBUG
+		if (mac68k_esp_debug) {
+			printf("dmaintr: DMA xfer of zero xferred %d\n",
+			    65536 - res);
+		}
+#endif
 		return 0;
 	}
 
 	if ((sc->sc_espstat & NCRSTAT_TC) == 0) {
+		if (esc->sc_datain == 0) {
+			resid = NCR_READ_REG(sc, NCR_FFLAG) & 0x1f;
+#if DEBUG
+			if (mac68k_esp_debug) {
+				printf("Write FIFO residual %d bytes\n", resid);
+			}
+#endif
+		}
 		resid += NCR_READ_REG(sc, NCR_TCL);
 		resid += NCR_READ_REG(sc, NCR_TCM) << 8;
 		if (resid == 0)
@@ -577,8 +593,7 @@ esp_quick_dma_setup(sc, addr, len, datain, dmasize)
 
 #if DIAGNOSTIC
 	if (esc->sc_dmasize == 0) {
-		printf("esp_quick_dma_setup called with %lx, %lx, %d, %lx\n",
-		    (long) *addr, (long) *len, datain, (long) esc->sc_dmasize);
+		/* This can happen in the case of a TRPAD operation */
 	}
 #endif
 #if DEBUG
@@ -696,7 +711,7 @@ restart_dmago:
 
 			if (esp_have_dreq(esc)) {
 				/*
-				 * Get the length from the address
+				 * Get the remaining length from the address
 				 * differential.
 				 */
 				addr = (u_int16_t *) mac68k_a2_fromfault;
