@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3min.c,v 1.9 1999/03/02 09:24:17 jonathan Exp $	*/
+/*	$NetBSD: dec_3min.c,v 1.10 1999/03/02 09:37:35 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.9 1999/03/02 09:24:17 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.10 1999/03/02 09:37:35 jonathan Exp $");
 
 
 #include <sys/types.h>
@@ -213,13 +213,16 @@ dec_3min_os_init()
 	 * with 4Mbyte SIMMs, which causes the physmem computation
 	 * to lose.  Find out how big the SIMMS are and set
 	 * max_	physmem accordingly.
-	 * XXX Do MAXINEs lose the same way?
 	 */
 	physmem_boardmax = KMIN_PHYS_MEMORY_END + 1;
 	if ((*(int*)(MIPS_PHYS_TO_KSEG1(KMIN_REG_MSR)) &
 	     KMIN_MSR_SIZE_16Mb) == 0)
 		physmem_boardmax = physmem_boardmax >> 2;
 	physmem_boardmax = MIPS_PHYS_TO_KSEG1(physmem_boardmax);
+
+	* (volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK) =
+	  kmin_tc3_imask | 
+	  (KMIN_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
 }
 
 
@@ -341,28 +344,28 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 	register u_int intr;
 	register volatile struct chiptime *c = 
 	    (volatile struct chiptime *) MIPS_PHYS_TO_KSEG1(KMIN_SYS_CLOCK);
-	volatile u_int *imaskp =
+	volatile u_int * const imaskp =
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK);
-	volatile u_int *intrp =
+	volatile u_int * const intrp =
 		(volatile u_int *)MIPS_PHYS_TO_KSEG1(KMIN_REG_INTR);
 	unsigned int old_mask;
 	struct clockframe cf;
 	int temp;
 	static int user_warned = 0;
 
-	old_mask = *imaskp & kmin_tc3_imask;
-	*imaskp = kmin_tc3_imask |
-		 (KMIN_IM0 & ~(KN03_INTR_TC_0|KN03_INTR_TC_1|KN03_INTR_TC_2));
+	static int intr_depth = 0;
+	intr_depth++;
+
+	old_mask = *imaskp;
 
 	if (mask & MIPS_INT_MASK_4)
 		prom_haltbutton();
 
 	if (mask & MIPS_INT_MASK_3) {
-		intr = *intrp;
-
+		/* NB: status & MIPS_INT_MASK3 must also be set */
 		/* masked interrupts are still observable */
-		intr &= old_mask;
-	
+		intr = *intrp & old_mask & kmin_tc3_imask;
+
 		if (intr & IOASIC_INTR_SCSI_PTR_LOAD) {
 			*intrp &= ~IOASIC_INTR_SCSI_PTR_LOAD;
 #ifdef notdef
@@ -393,7 +396,17 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			hardclock(&cf);
 			intrcnt[HARDCLOCK]++;
 		}
-	
+
+		/* If clock interrups were enabled, re-enable them ASAP. */
+		if (old_mask & KMIN_INTR_CLOCK) {
+			/*  ioctl interrupt mask to splclock and higher */
+			*imaskp = old_mask & 
+			  ~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
+			  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
+			wbflush();
+		    splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_3));
+		}
+
 		if ((intr & KMIN_INTR_SCC_0) &&
 		    tc_slot_info[KMIN_SCC0_SLOT].intr) {
 			(*(tc_slot_info[KMIN_SCC0_SLOT].intr))
@@ -407,7 +420,21 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 			  (tc_slot_info[KMIN_SCC1_SLOT].sc);
 			intrcnt[SERIAL1_INTR]++;
 		}
-	
+
+#ifdef notyet /* untested */
+		/* If tty interrupts were enabled, re-enable them ASAP. */
+		if ((old_mask & (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) ==
+		     (KMIN_INTR_SCC_1|KMIN_INTR_SCC_0)) {
+			*imaskp = old_mask & 
+			  ~(KMIN_INTR_SCC_0|KMIN_INTR_SCC_1 |
+			  IOASIC_INTR_LANCE|IOASIC_INTR_SCSI);
+			wbflush();
+		}
+
+		/* XXX until we know about SPLs of TC options. */
+		if (intr_depth > 1)
+			 goto done;
+#endif
 		if ((intr & IOASIC_INTR_LANCE) &&
 		    tc_slot_info[KMIN_LANCE_SLOT].intr) {
 			(*(tc_slot_info[KMIN_LANCE_SLOT].intr))
@@ -445,13 +472,12 @@ dec_3min_intr(mask, pc, statusReg, causeReg)
 		intrcnt[SLOT2_INTR]++;
 	}
 
-#if 0 /*XXX*/
-	if (mask & (MIPS_INT_MASK_2|MIPS_INT_MASK_1|MIPS_INT_MASK_0))
-		printf("kmin: slot intr, mask 0x%x\n",
-			mask &
-			(MIPS_INT_MASK_2|MIPS_INT_MASK_1|MIPS_INT_MASK_0));
-#endif
-	
+done:
+	/* restore entry state */
+	splhigh();
+	intr_depth--;
+	*imaskp = old_mask;
+
 	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
 		MIPS_SR_INT_ENA_CUR);
 }
@@ -493,4 +519,3 @@ dec_3min_mcclock_cpuspeed(mcclock_addr, clockmask)
 	*ioasic_intrmaskp = saved_imask;
 	wbflush();
 }
-
