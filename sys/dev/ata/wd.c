@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.200 2000/01/21 23:39:57 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.201 2000/01/24 14:51:07 enami Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -258,7 +258,7 @@ wdattach(parent, self, aux)
 	struct wd_softc *wd = (void *)self;
 	struct ata_atapi_attach *aa_link= aux;
 	int i, blank;
-	char buf[41], c, *p, *q;
+	char buf[41], pbuf[9], c, *p, *q;
 	WDCDEBUG_PRINT(("wdattach\n"), DEBUG_FUNCS | DEBUG_PROBE);
 
 	BUFQ_INIT(&wd->sc_q);
@@ -317,30 +317,21 @@ wdattach(parent, self, aux)
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
-		printf("%s: %dMB, %d cyl, %d head, %d sec, "
-		    "%d bytes/sect x %d sectors\n",
-		    self->dv_xname,
-		    wd->sc_capacity / (1048576 / DEV_BSIZE),
-		    wd->sc_params.atap_cylinders,
-		    wd->sc_params.atap_heads,
-		    wd->sc_params.atap_sectors,
-		    DEV_BSIZE,
-		    wd->sc_capacity);
 	} else {
 		printf(" chs addressing\n");
 		wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
-		printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d "
-		    "sectors\n", self->dv_xname,
-		    wd->sc_capacity / (1048576 / DEV_BSIZE),
-		    wd->sc_params.atap_cylinders,
-		    wd->sc_params.atap_heads,
-		    wd->sc_params.atap_sectors,
-		    DEV_BSIZE,
-		    wd->sc_capacity);
 	}
+	format_bytes(pbuf, sizeof(pbuf),
+	    (u_int64_t)wd->sc_capacity * DEV_BSIZE);
+	printf("%s: %s, %d cyl, %d head, %d sec, "
+	    "%d bytes/sect x %d sectors\n",
+	    self->dv_xname, pbuf, wd->sc_params.atap_cylinders,
+	    wd->sc_params.atap_heads, wd->sc_params.atap_sectors,
+	    DEV_BSIZE, wd->sc_capacity);
+
 	WDCDEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
 	    self->dv_xname, wd->sc_params.atap_dmatiming_mimi,
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
