@@ -1,10 +1,9 @@
-#	$NetBSD: std.cobalt,v 1.9 2003/12/13 01:31:57 sekiya Exp $
+#	$NetBSD: std.cobalt,v 1.10 2004/03/15 16:56:55 rafal Exp $
 
 machine cobalt mips
 makeoptions	MACHINE_ARCH="mipsel"
 
 options 	MIPS3
-options 	MIPS3_5200
 
 options 	EXEC_ELF32	# exec ELF32 binaries
 options 	EXEC_SCRIPT	# exec #! scripts
