@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.30 2000/10/01 23:32:43 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.31 2000/11/15 01:02:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -335,10 +335,6 @@ smc91cxx_attach(sc, myea)
 		ifmedia_set(ifm, IFM_ETHER | (aui ? IFM_10_5 : IFM_10_T));
 		break;
 	}
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -1341,9 +1337,6 @@ smc91cxx_detach(self, flags)
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);

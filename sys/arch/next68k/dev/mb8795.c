@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.18 2000/08/09 02:26:26 tv Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.19 2000/11/15 01:02:13 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -173,10 +173,6 @@ mb8795_config(sc)
 	 * alignment problems
 	 */
 	ifp->if_mtu -= 16;
-
-#if NBPFILTER > 0
-  bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
   sc->sc_sh = shutdownhook_establish(mb8795_shutdown, sc);
   if (sc->sc_sh == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.26 2000/07/21 04:48:55 onoe Exp $	*/
+/*	$NetBSD: awi.c,v 1.27 2000/11/15 01:02:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -325,9 +325,6 @@ awi_attach(sc)
 #endif
 #else
 	ether_ifattach(ifp, sc->sc_mib_addr.aMAC_Address);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 #endif
 
 #ifdef IFM_IEEE80211
@@ -378,9 +375,6 @@ awi_detach(sc)
 	}
 	if (sc->sc_wep_ctx != NULL)
 		free(sc->sc_wep_ctx, M_DEVBUF);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 #ifdef IFM_IEEE80211
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 #endif

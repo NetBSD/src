@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.21 2000/11/12 19:39:42 bouyer Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.22 2000/11/15 01:02:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -303,10 +303,6 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		 */
 		ether_ifattach(ifp, LLADDR(p->if_sadl));
 		ifp->if_hdrlen = sizeof(struct ether_vlan_header); /* XXX? */
-#if NBPFILTER > 0
-		bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
-		    sizeof(struct ether_header));
-#endif
 		break;
 	    }
 
@@ -366,9 +362,6 @@ vlan_unconfig(struct ifnet *ifp)
 			}
 		}
 
-#if NBPFILTER > 0
-		bpfdetach(ifp); 
-#endif
 		ether_ifdetach(ifp);
 		break;
 	    }

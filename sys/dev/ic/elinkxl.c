@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.44 2000/11/14 18:21:01 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.45 2000/11/15 01:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -450,11 +450,6 @@ ex_config(sc)
 	sc->tx_succ_ok = 0;
 
 	/* TODO: set queues to 0 */
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -1526,9 +1521,6 @@ ex_detach(sc)
 
 #if NRND > 0
 	rnd_detach_source(&sc->rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);

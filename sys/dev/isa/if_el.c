@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.61 2000/10/01 23:32:43 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.62 2000/11/15 01:02:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -241,12 +241,6 @@ elattach(parent, self, aux)
 
 	/* Print out some information for the user. */
 	printf("%s: address %s\n", self->dv_xname, ether_sprintf(myaddr));
-
-	/* Finally, attach to bpf filter if it is present. */
-#if NBPFILTER > 0
-	DPRINTF(("Attaching to BPF...\n"));
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_NET, elintr, sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.15 2000/10/16 10:26:41 itojun Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.16 2000/11/15 01:02:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -591,10 +591,7 @@ cnw_attach(parent, self, aux)
 	/* Attach the interface */
 	if_attach(ifp);
 	ether_ifattach(ifp, macaddr);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
+
 	sc->sc_resource |= CNW_RES_NET;
 
 	ifp->if_baudrate = IF_Mbps(1);
@@ -1232,9 +1229,6 @@ cnw_detach(self, flags)
 	cnw_disable(sc);
 
 	if ((sc->sc_resource & CNW_RES_NET) != 0) {
-#if NBPFILTER > 0
-		bpfdetach(ifp);
-#endif
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 	}

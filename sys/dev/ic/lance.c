@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.15 2000/11/03 06:21:32 tsutsui Exp $	*/
+/*	$NetBSD: lance.c,v 1.16 2000/11/15 01:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -277,10 +277,6 @@ lance_config(sc)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_sh = shutdownhook_establish(lance_shutdown, sc);
 	if (sc->sc_sh == NULL)

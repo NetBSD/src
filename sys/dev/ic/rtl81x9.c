@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.17 2000/11/14 18:21:02 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.18 2000/11/15 01:02:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -761,10 +761,6 @@ rtk_attach(sc)
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
 
-#if NBPFILTER > 0
-	bpfattach(&sc->ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 	/*
 	 * Make sure the interface is shutdown during reboot.
 	 */
@@ -872,9 +868,6 @@ rtk_detach(sc)
 	/* Delete all remaining media. */
 	ifmedia_delete_instance(&sc->mii.mii_media, IFM_INST_ANY);
 
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 

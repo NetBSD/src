@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.19 2000/10/28 08:36:57 tsutsui Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.20 2000/11/15 01:02:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 Network Computer, Inc.
@@ -588,10 +588,6 @@ sip_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	/*
 	 * Make sure the interface is shutdown during reboot.

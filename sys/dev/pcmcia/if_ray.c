@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.22 2000/10/01 23:32:44 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.23 2000/11/15 01:02:18 thorpej Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -630,9 +630,6 @@ ray_attach(parent, self, aux)
 	else
 		ifmedia_set(&sc->sc_media, IFM_INFRA);
 
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 	/* disable the card */
 	pcmcia_function_disable(sc->sc_pf);
 
@@ -718,9 +715,7 @@ ray_detach(self, flags)
 	}
 
 	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-#if NBPFILTER > 0
-	bpfdetach(ifp);
-#endif
+
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	powerhook_disestablish(sc->sc_pwrhook);

@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.5 2000/11/03 00:25:36 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.6 2000/11/15 01:02:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.5 2000/11/03 00:25:36 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.6 2000/11/15 01:02:17 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -233,12 +233,6 @@ seeq8005_attach(struct seeq8005_softc *sc, const u_int8_t *myaddr)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-
-	/* Finally, attach to bpf filter if it is present. */
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	printf("\n");
 

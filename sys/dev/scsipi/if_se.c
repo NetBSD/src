@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.31 2000/10/01 23:32:45 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.32 2000/11/15 01:02:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -358,10 +358,6 @@ seattach(parent, self, aux)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 

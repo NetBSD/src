@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.31 2000/11/04 19:48:38 scw Exp $	*/
+/*	$NetBSD: i82586.c,v 1.32 2000/11/15 01:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.31 2000/11/04 19:48:38 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.32 2000/11/15 01:02:16 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -278,10 +278,6 @@ i82586_attach(sc, name, etheraddr, media, nmedia, defmedia)
 	ether_ifattach(ifp, etheraddr);
 
 	printf(" address %s, type %s\n", ether_sprintf(etheraddr), name);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 

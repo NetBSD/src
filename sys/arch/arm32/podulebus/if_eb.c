@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.25 2000/10/01 23:32:40 thorpej Exp $ */
+/* $NetBSD: if_eb.c,v 1.26 2000/11/15 01:02:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -370,13 +370,6 @@ ebattach(parent, self, aux)
 /*	dprintf(("Attaching interface...\n"));*/
 	if_attach(ifp);
 	ether_ifattach(ifp, myaddr);
-
-	/* Finally, attach to bpf filter if it is present. */
-
-#if NBPFILTER > 0
-/*	dprintf(("Attaching to BPF...\n"));*/
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	/* Should test the RAM */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.13 2000/11/14 18:42:57 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.14 2000/11/15 01:02:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1826,11 +1826,6 @@ static void ti_attach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&sc->ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-		  sizeof(struct ether_header));
-#endif
 
 	return;
 fail2:

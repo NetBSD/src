@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.14 2000/11/01 20:21:58 tsubai Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.15 2000/11/15 01:02:13 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -269,10 +269,6 @@ bmac_attach(parent, self, aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 /*

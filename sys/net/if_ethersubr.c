@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.68 2000/10/15 19:49:55 matt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.69 2000/11/15 01:02:15 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,6 +72,7 @@
 #include "opt_ns.h"
 #include "opt_gateway.h"
 #include "vlan.h"
+#include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +93,10 @@
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#if NBPFILTER > 0 
+#include <net/bpf.h>
+#endif
 
 #include <net/if_ether.h>
 #if NVLAN > 0
@@ -808,6 +813,9 @@ ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
+#if NBPFILTER > 0
+	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
+#endif
 }
 
 void
@@ -817,6 +825,10 @@ ether_ifdetach(struct ifnet *ifp)
 	struct sockaddr_dl *sdl = ifp->if_sadl;
 	struct ether_multi *enm;
 	int s;
+
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
 
 #if NVLAN > 0
 	if (ec->ec_nvlans)

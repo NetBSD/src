@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ln.c,v 1.15 2000/10/01 23:32:41 thorpej Exp $	*/
+/*	$NetBSD: if_ln.c,v 1.16 2000/11/15 01:02:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -343,9 +343,6 @@ lnattach(parent, self, aux)
 #if NRND > 0
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_NET, 0);
-#endif
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	/*

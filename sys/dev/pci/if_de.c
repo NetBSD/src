@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.94 2000/11/14 18:42:55 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.95 2000/11/15 01:02:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -5153,10 +5153,6 @@ tulip_attach(
     TULIP_ETHER_IFATTACH(sc);
 #endif
 #endif /* __bsdi__ */
-
-#if NBPFILTER > 0
-    TULIP_BPF_ATTACH(sc);
-#endif
 
 #if defined(__NetBSD__) && NRND > 0
     rnd_attach_source(&sc->tulip_rndsource, sc->tulip_dev.dv_xname,

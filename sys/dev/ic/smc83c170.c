@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.38 2000/11/14 18:21:02 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.39 2000/11/15 01:02:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -268,10 +268,6 @@ epic_attach(sc)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 
 	/*
 	 * Make sure the interface is shutdown during reboot.
