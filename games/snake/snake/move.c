@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.15 1997/10/14 01:02:48 lukem Exp $	*/
+/*	$NetBSD: move.c,v 1.16 1999/08/14 16:38:45 tron Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.15 1997/10/14 01:02:48 lukem Exp $");
+__RCSID("$NetBSD: move.c,v 1.16 1999/08/14 16:38:45 tron Exp $");
 #endif
 #endif				/* not lint */
 
@@ -108,7 +108,7 @@ int     CMlength;
 int     NDlength;
 int     BSlength;
 int     delaystr[10];
-speed_t ospeed;
+short ospeed;
 
 static char str[80];
 
