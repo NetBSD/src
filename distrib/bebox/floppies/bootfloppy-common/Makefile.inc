@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2001/10/21 23:23:19 jmc Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/03/05 20:01:34 thorpej Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -18,9 +18,9 @@ MDEC=		${DESTDIR}/usr/mdec
 MDSETIMAGE?=	mdsetimage
 
 LISTS=		${COMMONDIR}/list
-RAMDISK	!=cd $(.CURDIR)/../ramdisk/; \
-        printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
-	${MAKE} -s -f-
+
+RAMDISKDIR!=	cd $(.CURDIR)/../ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 DISKTYPE?=	floppy3
 DISKSIZE?=	2880

@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/09 00:37:38 ross Exp $
+#	$NetBSD: Makefile,v 1.6 2002/03/05 19:57:47 thorpej Exp $
 
 IMAGE1=		disk1of2
 IMAGE2=		disk2of2
 
-INSTKERNEL!=cd ${.CURDIR}/../instkernel; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/netbsd.gz\n" | \
-	${MAKE} -s -f-
+INSTKERNELDIR!=	cd ${.CURDIR}/../instkernel && ${PRINTOBJDIR}
+INSTKERNEL=	${INSTKERNELDIR}/netbsd.gz
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
