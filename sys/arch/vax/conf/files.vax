@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.91 2002/01/21 21:57:06 jdolecek Exp $
+#	$NetBSD: files.vax,v 1.92 2002/02/23 23:48:00 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -350,12 +350,12 @@ file	arch/vax/vax/ka650.c		vax650  | vaxany
 file	arch/vax/vax/ka660.c		vax660  | vaxany
 file	arch/vax/vax/ka670.c		vax670  | vaxany
 file	arch/vax/vax/ka680.c		vax680  | vaxany
-file	arch/vax/vax/emulate.s		!no_insn_emulate
-file	arch/vax/vax/unimpl_emul.s	!no_insn_emulate
+file	arch/vax/vax/emulate.S		!no_insn_emulate
+file	arch/vax/vax/unimpl_emul.S	!no_insn_emulate
 file	arch/vax/vax/scb.c
 file	arch/vax/vax/conf.c
-file	arch/vax/vax/urem.s
-file	arch/vax/vax/udiv.s
+file	arch/vax/vax/urem.S
+file	arch/vax/vax/udiv.S
 file	arch/vax/vax/trap.c
 file	arch/vax/vax/bus_dma.c
 file	arch/vax/vax/bus_mem.c
