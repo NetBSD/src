@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/10/19 00:18:53 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2003/10/19 04:45:01 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ USETBL=
 CLEANFILES+=	siglist.out siglist.out.tmp
 # two steps to prevent the creation of a bogus siglist.out
 siglist.out: config.h sh.h siglist.in siglist.sh
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	sh $(.CURDIR)/siglist.sh "$(CC) -E $(CPPFLAGS) $(DEFS) -I. -I$(.CURDIR)" < $(.CURDIR)/siglist.in > siglist.out.tmp \
 	    && mv siglist.out.tmp siglist.out
@@ -29,14 +29,14 @@ siglist.out: config.h sh.h siglist.in siglist.sh
 # two steps to prevent the creation of a bogus emacs.out
 CLEANFILES+=	emacs.out emacs.out.tmp
 emacs.out: emacs.c
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	sh $(.CURDIR)/emacs-gen.sh $(.CURDIR)/emacs.c > emacs.out.tmp \
 	    && mv emacs.out.tmp emacs.out
 
 CLEANFILES+=	ksh.1 ksh.1.tmp
 ksh.1: ksh.Man mkman
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	sh $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
 	    && mv ksh.1.tmp ksh.1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2003/10/19 01:19:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.43 2003/10/19 04:45:01 lukem Exp $
 
 .include <bsd.own.mk>			# for OBJECT_FMT definition
 .include <bsd.shlib.mk>			# for SHLINKINSTALLDIR definition
@@ -53,7 +53,7 @@ CLEANFILES+=	ld.so
 all dependall: ${FILES}
 
 ld.so:	${.CURDIR}/ld.so.${MACHINE_ARCH}.uue
-	${_MKMSG} " create  ${.TARGET}"
+	${_MKMSGCREATE}
 	${_MKCMD}\
 	${TOOL_UUDECODE} ${.ALLSRC}
 
