@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.42 2002/05/04 07:45:05 manu Exp $
+	$NetBSD: syscalls.master,v 1.43 2002/05/22 05:14:03 manu Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -63,7 +63,7 @@
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ int sys_read(int fd, char *buf, u_int nbyte); }
 4	NOARGS		{ int sys_write(int fd, char *buf, u_int nbyte); }
-5	NOARGS		{ int svr4_sys_open(const char *path, int flags, \
+5	STD		{ int irix_sys_open(const char *path, int flags, \
 			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
 7	OBSOL		wait
@@ -275,7 +275,7 @@
 151	UNIMPL		cachectl
 152	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
 			    fchown
-153	STD		{ int irix_sys_fchmod(int fd, int mode); }
+153	NOARGS		{ int sys_fchmod(int fd, int mode); }
 154	UNIMPL		wait3
 155	UNIMPL		socketpair
 156	STD		{ long irix_sys_systeminfo(int what, char *buf, \

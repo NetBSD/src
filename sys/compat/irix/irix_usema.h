@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.1 2002/04/23 05:51:14 manu Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.2 2002/05/22 05:14:03 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,10 +41,21 @@
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/queue.h>
   
 #include <compat/irix/irix_types.h>
+#include <compat/irix/irix_exec.h>
 
-#ifdef _KERNEL
+extern const dev_t irix_usemaclonedev;
+
+extern struct vfsops irix_usema_dummy_vfsops;
+void irix_usema_dummy_vfs_init __P((void));
+extern const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[];
+extern const struct vnodeopv_desc irix_usema_opv_desc;
+extern int (**irix_usema_vnodeop_p) __P((void *));
+extern const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[];
+
+
 void	irix_usemaattach __P((struct device *, struct device *, void *));
 int	irix_usemaopen	__P((dev_t, int, int, struct proc *));
 int	irix_usemaread	__P((dev_t, struct uio *, int));
@@ -52,16 +63,56 @@ int	irix_usemawrite	__P((dev_t, struct uio *, int));
 int	irix_usemapoll	__P((dev_t, int, struct proc *));
 int	irix_usemaioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
 int	irix_usemaclose	__P((dev_t, int, int, struct proc *)); 
-#endif
+
+int	irix_usema_close	__P((void *));
+int	irix_usema_access	__P((void *));
+int	irix_usema_getattr	__P((void *));
+int	irix_usema_setattr	__P((void *));
+int	irix_usema_fcntl	__P((void *));
+int	irix_usema_ioctl	__P((void *));
+int	irix_usema_poll		__P((void *));
+int	irix_usema_inactive	__P((void *));
 
 #define IRIX_USEMADEV_MINOR	1
 #define IRIX_USEMACLNDEV_MINOR	0
+
+/* Semaphore internal structure: undocumented in IRIX */
+struct irix_semaphore {
+	int is_val;	/* Sempahore value */	
+	int is_uk1;	/* unknown, usually small integer < 3000  */
+	int is_uk2;	/* metric, debug or history pointer ? */
+	int is_uk3;	/* unknown, usually equal to 0 */
+	int is_uk4;	/* unknown, usually equal to 0 */
+	int is_uk5;	/* unknown, usually two 16 bits small integers < 200 */
+	int is_oid;	/* owned id? usually equal to -1 */
+	int is_uk7;	/* unknown, usually equal to -1 */
+	int is_uk8;	/* unknown, usually equal to 0 */
+	int is_uk9;	/* unknown, usually equal to 0 */
+	int is_uk10;	/* semaphore page base address ? */
+	int is_uk12;	/* unknown, usually equal to 0 */
+	int is_uk13;	/* metric, debug or history pointer ? */
+	int is_uk14;	/* padding? */
+};
+
+struct irix_usema_idaddr {
+	int iui_uk1;	/* unknown, usually equal to 0 */
+	int *iui_oidp;	/* pointer to is_oid field in struct irix_semaphore */
+};
+
+/* File descriptor vs sempahore address list */
+struct irix_usema_rec {
+	LIST_ENTRY(irix_usema_rec)	iur_list;
+	struct vnode *iur_vn;
+	struct irix_semaphore *iur_sem;
+	int iur_wakeup;
+};
 
 /* From IRIX's <sys/usioctl.h> */
 #define IRIX_USEMADEV		"/dev/usema"
 #define IRIX_USEMACLNDEV	"/dev/usemaclone"
 
 #define IRIX_UIOC	('u' << 16 | 's' << 8)
+#define IRIX_UIOC_MASK	0x00ffff00
 
 #define IRIX_UIOCATTACHSEMA	(IRIX_UIOC|2)
 #define IRIX_UIOCBLOCK		(IRIX_UIOC|3)
