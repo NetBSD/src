@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/04/11 12:22:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.16 2002/04/11 12:59:19 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,7 @@ TARGETS=	INSTALL		${RAMDISK_B}	-		\
 		INSTALL_TINY	${RAMDISK_T}	nocluster	\
 		INSTALL_PS2	${RAMDISK_S}	nocluster
 
-release: check_RELEASEDIR
+release: check_RELEASEDIR .WAIT ${KERNELS}
 	-mkdir -p ${RELEASEDIR}/binary/kernel
 	${RELINSTALL} ${KERNELS} ${KERNELSYMS} ${RELEASEDIR}/binary/kernel
 
