@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.12 1993/05/27 16:44:13 cgd Exp $
+ *	$Id: locore.s,v 1.13 1993/06/02 04:11:48 cgd Exp $
  */
 
 
@@ -386,7 +386,7 @@ eicode:
 _szicode:
 	.long	_szicode-_icode
 
-	.globl	_sigcode,_szsigcode
+	.globl	_sigcode,_esigcode
 _sigcode:
 	movl	12(%esp),%eax	# unsure if call will dec stack 1st
 	call	%eax
@@ -394,9 +394,7 @@ _sigcode:
 	movb	$103,%al	# sigreturn()
 	LCALL(0x7,0)		# enter kernel with args on stack
 	hlt			# never gets here
-
-_szsigcode:
-	.long	_szsigcode-_sigcode
+_esigcode:
 
 	/*
 	 * Support routines for GCC

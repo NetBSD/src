@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	5.4 (Berkeley) 5/9/91
- *	$Id: cpu.h,v 1.6 1993/05/21 12:26:03 cgd Exp $
+ *	$Id: cpu.h,v 1.7 1993/06/02 04:16:15 cgd Exp $
  */
 
 /*
@@ -47,7 +47,7 @@
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#undef	COPY_SIGCODE		/* don't copy sigcode above user stack in exec */
+#define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
 /*
  * function vs. inline configuration;
