@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.24 2002/10/02 05:15:51 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.25 2003/01/28 22:19:25 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.24 2002/10/02 05:15:51 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.25 2003/01/28 22:19:25 wiz Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -301,7 +301,7 @@ topcat_common_attach(sc, grf, secid)
 		break;
 #endif
 	default:
-		printf("%s: unkown device 0x%x\n",
+		printf("%s: unknown device 0x%x\n",
 		    sc->sc_dev.dv_xname, secid);
 		panic("topcat_common_attach");
 	}
