@@ -13,7 +13,7 @@ int main(void)
 	 * include libm.so.
 	 */
 
-	handle = dlopen("libm.so", DL_LAZY);
+	handle = dlopen("libm.so", RTLD_LAZY);
 	error = dlerror();
 	if (error != NULL)
 		errx(1, "Error opening libm.so: %s", error);
