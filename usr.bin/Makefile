@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.59 1995/11/17 09:49:19 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.58 1995/10/22 16:54:40 pk Exp $
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	checknr chflags chpass cksum cmp col colcrt colrm column comm \

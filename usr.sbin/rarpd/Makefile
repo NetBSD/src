@@ -1,4 +1,4 @@
-# @(#) $Id: Makefile,v 1.3 1995/09/01 21:55:44 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1995/11/17 09:51:08 thorpej Exp $
 
 PROG=	rarpd
 SRCS=	rarpd.c
