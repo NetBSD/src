@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.h,v 1.2 1998/09/13 14:46:24 christos Exp $	*/
+/*	$NetBSD: swap.h,v 1.3 1999/01/31 09:26:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1998 Matthew R. Green
@@ -67,6 +67,7 @@ struct swapent {
 #define SWAP_OSTATS	4		/* old SWAP_STATS, no se_path */
 #define SWAP_CTL	5		/* change priority on device */
 #define SWAP_STATS	6		/* get device info */
+#define SWAP_DUMPDEV	7		/* use this device as dump device */
 
 #define SWF_INUSE	0x00000001	/* in use: we have swapped here */
 #define SWF_ENABLE	0x00000002	/* enabled: we can swap here */
