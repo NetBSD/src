@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.28 1997/09/19 13:56:39 leo Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.28.2.1 1997/10/22 01:30:01 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -221,9 +221,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstring(oldp, oldlenp, newp, version));
 	case KERN_MAXVNODES:
 		old_vnodes = desiredvnodes;
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &old_vnodes);
-		if (old_vnodes > desiredvnodes)
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &desiredvnodes);
+		if (old_vnodes > desiredvnodes) {
+		        desiredvnodes = old_vnodes;
 			return (EINVAL);
+		}
 		return (error);
 	case KERN_MAXPROC:
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxproc));
