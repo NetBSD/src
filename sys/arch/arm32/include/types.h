@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.11 2000/06/06 20:17:35 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.12 2000/12/12 18:26:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,5 +77,6 @@ typedef int32_t                 register_t;
 
 #define __HAVE_NWSCONS
 #define	__HAVE_DEVICE_REGISTER
+#define __HAVE_MINIMAL_EMUL
 
 #endif	/* _ARM32_TYPES_H_ */
