@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.18 2001/06/01 02:51:03 toshii Exp $
+#	$NetBSD: files.hpcarm,v 1.19 2001/06/18 22:26:17 bjh21 Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -24,7 +24,6 @@ major   {md = 18}
 
 # Generic MD files
 file	arch/hpcarm/hpcarm/autoconf.c
-file	arch/hpcarm/hpcarm/bus_space_notimpl.S
 file	arch/hpcarm/hpcarm/conf.c
 file	arch/hpcarm/hpcarm/cpuswitch.S
 file	arch/hpcarm/hpcarm/exception.S
