@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.18 2002/07/12 01:40:18 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.19 2002/07/17 19:54:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.18 2002/07/12 01:40:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.19 2002/07/17 19:54:30 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -834,12 +834,17 @@ psignal1(struct proc *p, int signum,
 	} else {
 		/* Process is sleeping or stopped */
 		/* Find out if any of the sleeps are interruptable */
-		for (l = LIST_FIRST(&p->p_lwps); 
-		     l != NULL; 
-		     l = LIST_NEXT(l, l_sibling))
-			if (l->l_stat == LSSLEEP && 
-			    l->l_flag & L_SINTR)
-				break;
+		if (p->p_flag & P_SA) {
+			KDASSERT(p->p_sa->sa_idle != NULL);
+			l = p->p_sa->sa_idle;
+		} else {
+			for (l = LIST_FIRST(&p->p_lwps); 
+			     l != NULL; 
+			     l = LIST_NEXT(l, l_sibling))
+				if (l->l_stat == LSSLEEP && 
+				    l->l_flag & L_SINTR)
+					break;
+		}
 		if (p->p_stat == SACTIVE) {
 			/* All LWPs must be sleeping */
 			
