@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2002/06/28 02:30:06 matt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.2 2002/07/11 19:32:43 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -35,6 +35,7 @@
 #include "opt_altivec.h"
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
+#include "opt_compat_linux.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
@@ -54,11 +55,15 @@
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#if 0
-#include <machine/pcb.h>
-#include <machine/psl.h>
-#include <machine/trap.h>
-#include <powerpc/spr.h>
+
+#ifdef COMPAT_LINUX
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_errno.h>
+#include <compat/linux/linux_syscall.h>
+#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
+#include <compat/linux/arch/powerpc/linux_siginfo.h>
+#include <compat/linux/arch/powerpc/linux_machdep.h>
 #endif
 
 #define	FIRSTARG	3		/* first argument is in reg 3 */
@@ -160,6 +165,14 @@ syscall_intern(struct proc *p)
 {
 	p->p_md.md_syscall = syscall_fancy;
 }
+
+#ifdef COMPAT_LINUX
+void
+linux_syscall_intern(struct proc *p)
+{
+	p->p_md.md_syscall = syscall_fancy;
+}
+#endif
 
 void
 child_return(void *arg)
