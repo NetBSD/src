@@ -1,4 +1,4 @@
-/*	$NetBSD: tdb.c,v 1.3 2002/05/29 19:06:33 christos Exp $	*/
+/*	$NetBSD: tdb.c,v 1.4 2003/10/16 06:28:47 itojun Exp $	*/
 
 /* 
  * Database functions
@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tdb.c,v 1.3 2002/05/29 19:06:33 christos Exp $");
+__RCSID("$NetBSD: tdb.c,v 1.4 2003/10/16 06:28:47 itojun Exp $");
 #endif
 
 #include <stdlib.h>
@@ -369,7 +369,11 @@ static int tdb_expand(TDB_CONTEXT *tdb, tdb_off length)
 	tdb->map_size += length;
 
         if (tdb->fd == -1) {
-            tdb->map_ptr = realloc(tdb->map_ptr, tdb->map_size);
+		void *n;
+		n = realloc(tdb->map_ptr, tdb->map_size);
+		if (!n)
+			goto fail;
+		tdb->map_ptr = n;
         }
 
 	/* write it out */
