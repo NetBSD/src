@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.93 2003/03/04 19:19:43 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.94 2003/03/08 02:55:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.93 2003/03/04 19:19:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.94 2003/03/08 02:55:50 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_lock_desc, ufs_lock },			/* lock */
 	{ &vop_unlock_desc, ufs_unlock },		/* unlock */
 	{ &vop_bmap_desc, ufs_bmap },			/* bmap */
-	{ &vop_strategy_desc, ufs_strategy },		/* strategy */
+	{ &vop_strategy_desc, lfs_strategy },		/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
 	{ &vop_islocked_desc, ufs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
@@ -1008,6 +1008,97 @@ lfs_reclaim(void *v)
 	ip->inode_ext.lfs = NULL;
 	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
+	return (0);
+}
+
+/*
+ * Read a block from, or write a block to, a storage device.
+ * In order to avoid reading blocks that are in the process of being
+ * written by the cleaner---and hence are not mutexed by the normal
+ * buffer cache / page cache mechanisms---check for collisions before
+ * reading.
+ *
+ * We inline ufs_strategy to make sure that the VOP_BMAP occurs *before*
+ * the active cleaner test.
+ *
+ * XXX This code assumes that lfs_markv makes synchronous checkpoints.
+ */
+int
+lfs_strategy(void *v)
+{
+	struct vop_strategy_args /* {
+		struct buf *a_bp;
+	} */ *ap = v;
+	struct buf	*bp;
+	struct lfs	*fs;
+	struct vnode	*vp;
+	struct inode	*ip;
+	daddr_t		tbn;
+	int		i, sn, error, slept;
+
+	bp = ap->a_bp;
+	vp = bp->b_vp;
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		panic("lfs_strategy: spec");
+	KASSERT(bp->b_bcount != 0);
+	if (bp->b_blkno == bp->b_lblkno) {
+		error = VOP_BMAP(vp, bp->b_lblkno, NULL, &bp->b_blkno,
+				 NULL);
+		if (error) {
+			bp->b_error = error;
+			bp->b_flags |= B_ERROR;
+			biodone(bp);
+			return (error);
+		}
+		if ((long)bp->b_blkno == -1) /* no valid data */
+			clrbuf(bp);
+	}
+	if ((long)bp->b_blkno < 0) { /* block is not on disk */
+		biodone(bp);
+		return (0);
+	}
+
+	/* XXX simplelock seglock */
+	slept = 1;
+	while (slept && bp->b_flags & B_READ && fs->lfs_seglock) {
+		/*
+		 * Look through list of intervals.
+		 * There will only be intervals to look through
+		 * if the cleaner holds the seglock.
+		 * Since the cleaner is synchronous, we can trust
+		 * the list of intervals to be current.
+		 */
+		tbn = dbtofsb(fs, bp->b_blkno);
+		sn = dtosn(fs, tbn);
+		slept = 0;
+		for (i = 0; i < fs->lfs_cleanind; i++) {
+			if (sn == dtosn(fs, fs->lfs_cleanint[i]) &&
+			    tbn >= fs->lfs_cleanint[i]) {
+#ifdef DEBUG_LFS
+				printf("lfs_strategy: ino %d lbn %" PRId64
+				       " ind %d sn %d fsb %" PRIx32
+				       " given sn %d fsb %" PRIx64 "\n",
+					ip->i_number, bp->b_lblkno, i,
+					dtosn(fs, fs->lfs_cleanint[i]),
+					fs->lfs_cleanint[i], sn, tbn);
+				printf("lfs_strategy: sleeping on ino %d lbn %"
+				       PRId64 "\n", ip->i_number, bp->b_lblkno);
+#endif
+				tsleep(&fs->lfs_seglock, PRIBIO+1,
+					"lfs_strategy", 0);
+				/* Things may be different now; start over. */
+				slept = 1;
+				break;
+			}
+		}
+	}
+
+	vp = ip->i_devvp;
+	bp->b_dev = vp->v_rdev;
+	VOCALL (vp->v_op, VOFFSET(vop_strategy), ap);
 	return (0);
 }
 

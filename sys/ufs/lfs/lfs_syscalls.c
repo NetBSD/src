@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.84 2003/02/24 08:42:49 perseant Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.85 2003/03/08 02:55:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.84 2003/02/24 08:42:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.85 2003/03/08 02:55:49 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -1224,41 +1224,16 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp, str
 	return (0);
 }
 
-void
-lfs_fakebuf_iodone(struct buf *bp)
-{
-	struct buf *obp = bp->b_saveaddr;
-
-	if (!(obp->b_flags & (B_DELWRI | B_DONE)))
-		obp->b_flags |= B_INVAL;
-	bp->b_saveaddr = (caddr_t)(VTOI(obp->b_vp)->i_lfs);
-	brelse(obp);
-	lfs_callback(bp);
-}
-
+/*
+ * Make up a "fake" cleaner buffer, copy the data from userland into it.
+ */
 struct buf *
 lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uaddr)
 {
 	struct buf *bp;
 	int error;
-	
-	struct buf *obp;
 
 	KASSERT(VTOI(vp)->i_number != LFS_IFILE_INUM);
-
-	/*
-	 * make corresponding buffer busy to avoid
-	 * reading blocks that isn't written yet.
-	 * it's needed because we'll update metadatas in lfs_updatemeta
-	 * before data pointed by them is actually written to disk.
-	 *
-	 * XXX no need to allocbuf.
-	 *
-	 * XXX this can cause buf starvation.
-	 */
-	obp = getblk(vp, lbn, size, 0, 0);
-	if (obp == NULL)
-		panic("lfs_fakebuf: getblk failed");
 
 	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, size, LFS_NB_CLEAN);
 	error = copyin(uaddr, bp->b_data, size);
@@ -1266,15 +1241,8 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 		lfs_freebuf(fs, bp);
 		return NULL;
 	}
-	bp->b_saveaddr = obp;
 	KDASSERT(bp->b_iodone == lfs_callback);
-	bp->b_iodone = lfs_fakebuf_iodone;
 
-#ifdef DIAGNOSTIC
-	if (obp->b_flags & B_GATHERED)
-		panic("lfs_fakebuf: gathered bp: %p, ino=%u, lbn=%d",
-		    bp, VTOI(vp)->i_number, lbn);
-#endif
 #if 0
 	bp->b_saveaddr = (caddr_t)fs;
 	++fs->lfs_iocount;

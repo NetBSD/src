@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.35 2003/03/04 19:15:26 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.36 2003/03/08 02:55:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.35 2003/03/04 19:15:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.36 2003/03/08 02:55:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,8 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 	
 	fs->lfs_seglock = 1;
 	fs->lfs_lockpid = curproc->p_pid;
-	
+	fs->lfs_cleanind = 0;
+
 	/* Drain fragment size changes out */
 	lockmgr(&fs->lfs_fraglock, LK_EXCLUSIVE, 0);
 
@@ -455,7 +456,13 @@ lfs_segunlock(struct lfs *fs)
 
 		pool_put(&fs->lfs_bpppool, sp->bpp);
 		sp->bpp = NULL;
-		/* The sync case holds a reference in `sp' to be freed below */
+
+		/*
+		 * If we're not sync, we're done with sp, get rid of it.
+		 * Otherwise, we keep a local copy around but free
+		 * fs->lfs_sp so another process can use it (we have to
+		 * wait but they don't have to wait for us).
+		 */
 		if (!sync)
 			pool_put(&fs->lfs_segpool, sp);
 		fs->lfs_sp = NULL;
@@ -469,8 +476,9 @@ lfs_segunlock(struct lfs *fs)
 			lfs_countlocked(&locked_queue_count,
 					&locked_queue_bytes, "lfs_segunlock");
 			wakeup(&locked_queue_count);
-			wakeup(&fs->lfs_iocount);
 		}
+		if (fs->lfs_iocount <= 1)
+			wakeup(&fs->lfs_iocount);
 		/*
 		 * If we're not checkpointing, we don't have to block
 		 * other processes to wait for a synchronous write
@@ -498,6 +506,7 @@ lfs_segunlock(struct lfs *fs)
 		}
 		if (sync)
 			pool_put(&fs->lfs_segpool, sp);
+
 		if (ckp) {
 			fs->lfs_nactive = 0;
 			/* If we *know* everything's on disk, write both sbs */
