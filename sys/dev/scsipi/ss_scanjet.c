@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.22 2001/04/25 17:53:41 bouyer Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.23 2001/07/18 18:21:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -271,7 +271,7 @@ scanjet_read(ss, bp)
 	/*
 	 *  Fill out the scsi command
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ;
 
 	/*
@@ -316,7 +316,7 @@ scanjet_ctl_write(ss, buf, size)
 	if ((ss->flags & SSF_AUTOCONF) != 0)
 		flags |= XS_CTL_DISCOVERY;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE;
 	_lto3b(size, cmd.len);
 	return (scsipi_command(ss->sc_periph,
@@ -342,7 +342,7 @@ scanjet_ctl_read(ss, buf, size)
 	if ((ss->flags & SSF_AUTOCONF) != 0)
 		flags |= XS_CTL_DISCOVERY;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ;
 	_lto3b(size, cmd.len);
 	return (scsipi_command(ss->sc_periph,
