@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.4 2004/02/27 03:23:12 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.h,v 1.5 2004/02/27 03:53:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,8 +51,9 @@ public:
 	TabWindow	*_main;
 	TabWindow	*_option;
 	TabWindow	*_console;
+
+	int _button_width;
 	int _button_height;
-	int _cmdbar_height;
 
 private:
 	HWND _saved_focus;

@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.14 2004/02/27 03:23:12 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: rootwindow.cpp,v 1.15 2004/02/27 03:53:33 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -228,7 +228,11 @@ RootWindow::WMCreate(HWND w, LPCREATESTRUCT aux)
 	_app._cmdbar = CommandBar_Create(aux->hInstance, w, IDC_CMDBAR);
 	CommandBar_AddAdornments(_app._cmdbar, 0, 0);
 	cmdbar_height = CommandBar_Height(_app._cmdbar);
+
 	_button_height = cmdbar_height;
+	_button_width = BOOT_BUTTON_WIDTH;
+	if (GetDeviceCaps(GetDC(w), HORZRES) > 320)
+	    _button_width += _button_width/2;
 
 	RECT rect;
 	GetClientRect(w, &rect);
@@ -367,7 +371,7 @@ RootWindow::unprogress()
 BOOL
 BootButton::create(LPCREATESTRUCT aux)
 {
-	int cx = BOOT_BUTTON_WIDTH;
+	int cx = _root._button_width;
 	int cy = _root._button_height;
 
 	_window = CreateWindow(TEXT("BUTTON"), TEXT("Boot"),
@@ -387,9 +391,9 @@ BootButton::create(LPCREATESTRUCT aux)
 BOOL
 CancelButton::create(LPCREATESTRUCT aux)
 {
-	int cx = BOOT_BUTTON_WIDTH;
+	int cx = _root._button_width;
 	int cy = _root._button_height;
-	int x = _rect.right - BOOT_BUTTON_WIDTH;
+	int x = _rect.right - _root._button_width;
 
 	_window = CreateWindow(TEXT("BUTTON"), TEXT("Cancel"),
 	    BS_PUSHBUTTON | BS_NOTIFY | WS_TABSTOP |
@@ -408,9 +412,9 @@ CancelButton::create(LPCREATESTRUCT aux)
 BOOL
 ProgressBar::create(LPCREATESTRUCT aux)
 {
-	int cx = _rect.right - _rect.left - BOOT_BUTTON_WIDTH * 2;
+	int cx = _rect.right - _rect.left - _root._button_width * 2;
 	int cy = _root._button_height;
-	int x = _rect.left + BOOT_BUTTON_WIDTH;
+	int x = _rect.left + _root._button_width;
 	_window = CreateWindowEx(WS_EX_CLIENTEDGE,
 	    PROGRESS_CLASS, TEXT(""),
 	    PBS_SMOOTH | WS_VISIBLE | WS_CHILD,
