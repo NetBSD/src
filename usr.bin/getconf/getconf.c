@@ -1,4 +1,4 @@
-/*	$NetBSD: getconf.c,v 1.20 2003/02/02 20:33:10 kleink Exp $	*/
+/*	$NetBSD: getconf.c,v 1.21 2004/11/10 00:29:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getconf.c,v 1.20 2003/02/02 20:33:10 kleink Exp $");
+__RCSID("$NetBSD: getconf.c,v 1.21 2004/11/10 00:29:07 lukem Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -232,7 +232,7 @@ main(argc, argv)
 		errno = 0;
 		if ((val = sysconf(cp->value)) == -1) {
 			if (errno != 0) {
-				err(1, "malloc");
+				err(1, "sysconf");
 				/* NOTREACHED */
 			}
 
