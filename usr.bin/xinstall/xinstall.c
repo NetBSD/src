@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.23 1997/11/30 22:20:00 tv Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.24 1997/12/01 21:11:39 chuck Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.23 1997/11/30 22:20:00 tv Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.24 1997/12/01 21:11:39 chuck Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,7 +422,7 @@ copy(from_fd, from_name, to_fd, to_name, size)
 	 */
 	if (size <= 8 * 1048576) {
 		if ((p = mmap(NULL, (size_t)size, PROT_READ,
-		    0, from_fd, (off_t)0)) == (char *)-1)
+		    MAP_PRIVATE, from_fd, (off_t)0)) == (char *)-1)
 			err(1, "%s", from_name);
 		if (write(to_fd, p, size) != size)
 			err(1, "%s", to_name);
