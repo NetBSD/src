@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.16 2001/10/29 22:50:43 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.17 2001/12/19 17:58:08 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -64,7 +64,7 @@
 #	tun*	network tunnel driver
 #	ipl	ip filter
 #	random	Random number generator
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	wsmux*	wscons event multiplexor
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.7 2001/02/21 01:45:25 nisimura Exp $
+#	$NetBSD: MAKEDEV,v 1.8 2001/12/19 17:58:07 wiz Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -26,7 +26,7 @@
 #	ipl	IP filter
 #	lkm	loadable kernel modules interface
 #	random	Random number generator
-#	scsibus* SCSI busses
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown

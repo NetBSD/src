@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.2 2001/07/13 03:24:49 fredette Exp $
+#	$NetBSD: MAKEDEV,v 1.3 2001/12/19 17:58:10 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -63,7 +63,7 @@
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	random	Random number generator
-#	scsibus* SCSI busses, see scsictl(8), scsi(4)
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc

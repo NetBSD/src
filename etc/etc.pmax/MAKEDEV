@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.40 2001/12/02 02:51:28 gmcgarry Exp $
+#	$NetBSD: MAKEDEV,v 1.41 2001/12/19 17:58:09 wiz Exp $
 #
 #	from: @(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
@@ -39,7 +39,7 @@
 #	ipl	IP packet filter
 #	lkm	loadable kernel modules interface    (unsupported in 1.3_ALPHA)
 #	random	Random number generator
-#	scsibus* SCSI busses, see scsictl(8), scsi(4)
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	MI scsi scanners
 #	tun*	network tunnel driver
 #	uk*	MI unknown scsi devices

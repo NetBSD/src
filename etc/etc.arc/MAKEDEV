@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.7 2001/10/29 22:50:41 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.8 2001/12/19 17:58:05 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -91,7 +91,7 @@
 #	pms*	PS/2 mouse
 #	joy*	joystick device
 #	random	Random number generator
-#	scsibus* SCSI busses, see scsictl(8), scsi(8)
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	tun*	network tunnel driver
 #	uk*	SCSI unknown

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.62 2001/10/29 22:50:40 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.63 2001/12/19 17:58:05 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -108,7 +108,7 @@
 #	random	Random number generator
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
-#	scsibus* SCSI busses, see scsictl(8), scsi(4)
+#	scsibus* SCSI busses, see scsi(4), scsictl(8)
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
