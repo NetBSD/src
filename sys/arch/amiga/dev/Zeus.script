@@ -1,0 +1,302 @@
+; **
+; ** 53C710 SCRIPTS for Progressive Peripherals, Inc. Zeus SCSI-2 driver
+; **
+; **	$Id: Zeus.script,v 1.3.2.2 1994/07/10 23:00:30 chopps Exp $
+
+; **
+; ** Absolute definitions
+; **
+
+ABSOLUTE ds_Device	= 0x00
+ABSOLUTE ds_Identify 	= ds_Device + 4
+ABSOLUTE ds_Cmd		= ds_Identify + 8
+ABSOLUTE ds_Status	= ds_Cmd + 8
+ABSOLUTE ds_Msg		= ds_Status + 8
+ABSOLUTE ds_MsgOut	= ds_Msg + 8
+ABSOLUTE ds_MsgIn	= ds_MsgOut + 8
+ABSOLUTE ds_Data	= ds_MsgIn + 8
+
+;ABSOLUTE xx		= 0x00ff00
+;ABSOLUTE xx		= 0x00ff01
+;ABSOLUTE xx		= 0x00ff02
+;ABSOLUTE xx		= 0x00ff03
+;ABSOLUTE xx		= 0x00ff04
+;ABSOLUTE xx		= 0x00ff05
+;ABSOLUTE xx		= 0x00ff06
+;ABSOLUTE xx		= 0x00ff07
+;ABSOLUTE xx		= 0x00ff08
+;ABSOLUTE xx		= 0x00ff09
+;ABSOLUTE xx		= 0x00ff10
+;ABSOLUTE xx		= 0x00ff11
+;ABSOLUTE xx		= 0x00ff12
+;ABSOLUTE xx		= 0x00ff13
+;ABSOLUTE xx		= 0x00ff14
+;ABSOLUTE xx		= 0x00ff15
+;ABSOLUTE xx		= 0x00ff16
+;ABSOLUTE xx		= 0x00ff17
+;ABSOLUTE xx		= 0x00ff18
+;ABSOLUTE xx		= 0x00ff19
+;ABSOLUTE xx		= 0x00ff20
+;ABSOLUTE xx		= 0x00ff21
+;ABSOLUTE xx		= 0x00ff22
+;ABSOLUTE xx		= 0x00ff23
+;ABSOLUTE xx		= 0x00ff24
+;ABSOLUTE xx		= 0x00ff25
+;ABSOLUTE xx		= 0x00ff26
+;ABSOLUTE xx		= 0x00fffb
+;ABSOLUTE xx		= 0x00fffc
+;ABSOLUTE xx		= 0x00fffd
+;ABSOLUTE xx		= 0x00fffe
+
+ENTRY msgout, cmd, status, msgin, dataout, datain
+
+PROC scripts:
+
+; **
+; ** Initial starting point - select device with ATN
+; **
+
+SELECT ATN FROM ds_Device, REL(x288)
+JUMP REL(status), WHEN Status
+MOVE CTEST7 | 0x10 TO CTEST7		; ** disable selection timeout?
+
+; **
+; ** Should be message out phase [older devices won't respond to Select with ATN]
+; **
+
+msgout:
+JUMP REL(cmd), IF Cmd			; **FIX** target wants command directly
+INT 0x0000ff01, IF NOT Msg_Out		; ** expected message out
+MOVE SCRATCH1 | 0x00 TO SFBR
+JUMP REL(x78), IF 0x00
+
+; **
+; ** Scratch1 != 00 means we have a special message to send to the target
+; ** (the synchronous negotiation message)
+
+x30:
+SET ATN
+MOVE FROM ds_MsgOut, WHEN Msg_Out		; ** send message
+
+x40:
+JUMP REL(status), WHEN Status
+MOVE FROM ds_MsgIn, WHEN Msg_In		; ** receive response
+JUMP REL(status), WHEN Status
+JUMP REL(x30), IF Msg_Out
+JUMP REL(status), IF Status
+JUMP REL(x180), IF Msg_In
+JUMP REL(cmd)
+
+; **
+; ** send identify message
+; **
+
+x78:
+MOVE FROM ds_Identify, WHEN Msg_Out
+JUMP REL(status), WHEN Status
+JUMP REL(x78), IF Msg_Out
+JUMP REL(status), IF Status
+JUMP REL(x180), IF Msg_In
+
+; **
+; ** Should be in command phase
+; **
+
+cmd:
+INT 0x0000ff02, IF NOT Cmd			; ** expected command
+MOVE FROM ds_Cmd, WHEN Cmd
+JUMP REL(x1d8), WHEN Msg_In
+JUMP REL(status), IF Status
+JUMP REL(datain), IF Data_In
+JUMP REL(dataout), IF Data_Out
+INT 0x0000ff03					; ** invalid phase after command
+
+; **
+; ** Should be in status phase
+; **
+
+status:
+MOVE FROM ds_Status, WHEN Status
+MOVE SIDL | 0x00 TO SFBR
+MOVE SFBR | 0x00 TO SCRATCH0			; ** save status in SCRATCH0
+
+; **
+; ** Should be in message in phase
+; **
+
+msgin:
+INT 0x0000ff04, WHEN NOT Msg_In			; ** expected message in
+MOVE FROM ds_Msg, WHEN Msg_In
+JUMP REL(msgin_rej), IF 0x07			; ** assume REJECT is for sync neg
+INT 0x0000ff26, IF NOT 0x00			; ** message byte != complete
+CLEAR ACK
+WAIT DISCONNECT
+MOVE CTEST7 & 0xef TO CTEST7
+MOVE SCRATCH0 | 0x00 TO SFBR			; ** check status byte
+INT 0x0000fffc, IF 0x02				; ** -> Check Condition
+INT 0x0000fffb, IF 0x08				; ** -> Busy
+INT 0x0000fffd, IF 0x18				; ** -> ??
+INT 0x0000fffe, IF NOT 0x00			; ** -> not good status
+INT 0x0000ff00					; ** -> normal completion
+msgin_rej:
+CLEAR ATN
+INT 0x0000ff26
+CLEAR ACK
+JUMP REL(cmd) WHEN Cmd
+JUMP REL(status) WHEN Status
+JUMP REL(msgin) WHEN Msg_In
+
+; **
+; ** Should be in data out phase
+; **
+
+dataout:
+MOVE FROM ds_Data, WHEN Data_Out
+JUMP REL(chain_out), WHEN Data_Out
+
+; **
+; ** Check phase after data transfer
+; **
+
+x158:
+JUMP REL(status), WHEN Status
+JUMP REL(x230), IF Msg_In
+INT 0x0000ff05					; ** unexpected phase after data
+
+; **
+; ** Should be data in phase
+; **
+
+datain:
+MOVE FROM ds_Data, WHEN Data_In
+JUMP REL(chain_in), WHEN Data_In
+JUMP REL(x158)
+
+; **
+; ** Got message in phase after sending message out
+;
+
+x180:
+MOVE FROM ds_Msg, WHEN Msg_In
+JUMP REL(x1a8), IF 0x01				; ** -> Extended message
+INT 0x0000ff08, IF 0x02				; ** -> Save Data Pointer
+JUMP REL(x1c0), IF 0x04				; ** -> Disconnect
+INT 0x0000ff06					; ** Unexpected message
+
+; **
+; ** Extended message
+; **
+
+x1a8:
+CLEAR ACK
+MOVE FROM ds_MsgIn, WHEN Msg_In			; ** input message
+INT 0x0000ff07					; ** and interrupt
+
+; **
+; ** Disconnect message received
+; **
+
+x1c0:
+CLEAR ACK
+WAIT DISCONNECT
+INT 0x0000ff09
+
+; **
+; ** Message in after command
+; **
+
+x1d8:
+MOVE FROM ds_Msg, WHEN Msg_In			; ** get message byte
+JUMP REL(x200), IF 0x01				; ** -> Extended Message
+INT 0x0000ff10, IF 0x02				; ** -> Save Data Pointer
+JUMP REL(x218), IF 0x04				; ** -> Disconnect
+INT 0x0000ff11					; ** unexpected message
+
+; **
+; ** Extended message after command
+; **
+
+x200:
+CLEAR ACK
+MOVE FROM ds_MsgIn, WHEN Msg_In
+INT 0x0000ff12
+
+; **
+; ** Disconnect after command
+; **
+
+x218:
+CLEAR ACK
+WAIT DISCONNECT
+INT 0x0000ff13
+
+; **
+; ** Message in after data transfer
+; **
+
+x230:
+MOVE FROM ds_Msg, WHEN Msg_In			; ** Get message byte
+JUMP REL(x258), IF 0x01				; ** -> Extended Message
+INT 0x0000ff14, IF 0x02				; ** -> Save Data Pointers
+JUMP REL(x270), IF 0x04				; ** -> Disconnected
+INT 0x0000ff15					; ** Unexpected message
+
+; **
+; ** Extended message after data transfer
+; **
+
+x258:
+CLEAR ACK
+MOVE FROM ds_MsgIn, WHEN Msg_In
+INT 0x0000ff16
+
+; **
+; ** Disconnect after data transfer
+; **
+
+x270:
+CLEAR ACK
+WAIT DISCONNECT
+INT 0x0000ff17
+
+; **
+; ** Selection aborted
+; **
+
+x288:
+WAIT RESELECT REL (x2d0)
+INT 0x0000ff18, WHEN NOT Msg_In
+MOVE FROM ds_Msg, WHEN Msg_In
+INT 0x0000ff19, WHEN Data_In
+INT 0x0000ff20, IF Data_Out
+INT 0x0000ff21, IF Msg_In
+INT 0x0000ff22, IF Status
+INT 0x0000ff23, IF Msg_Out
+INT 0x0000ff24
+
+x2d0:
+INT 0x0000ff25
+
+; **
+; ** DMA chaining
+; **
+
+chain_in:
+MOVE DSA0 + 8 TO SFBR
+JUMP REL(chain_in1), IF NOT 00, AND MASK 0x07
+MOVE DSA1 + 1 TO DSA1
+chain_in1:
+MOVE SFBR TO DSA0
+MOVE FROM ds_Data, WHEN Data_In
+JUMP REL(chain_in), WHEN Data_In
+INT 0x0000ff27					; ** DMA chain transfer complete
+
+chain_out:
+MOVE DSA0 + 8 TO SFBR
+JUMP REL(chain_out1), IF NOT 00, AND MASK 0x07
+MOVE DSA1 + 1 TO DSA1
+chain_out1:
+MOVE SFBR TO DSA0
+MOVE FROM ds_Data, WHEN Data_Out
+JUMP REL(chain_out), WHEN Data_Out
+INT 0x0000ff27					; ** DMA chain transfer complete
