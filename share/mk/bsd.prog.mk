@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.78 1997/05/09 05:43:44 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.79 1997/05/09 07:56:03 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -105,8 +105,7 @@ MAN=	${PROG}.1
 .endif	# !defined(MAN)
 .endif	# defined(PROG)
 
-all depend: ${SRCS}
-all: ${PROG}
+all: ${SRCS} ${PROG}
 
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \
@@ -175,11 +174,9 @@ ${DESTDIR}${SCRIPTSDIR_${S}}/${SCRIPTSNAME_${S}}: ${S}
 scriptsinstall::
 .endif
 
-.if !target(lint)
 lint: ${LOBJS}
 .if defined(LOBJS) && !empty(LOBJS)
 	@${LINT} ${LINTFLAGS} ${LDFLAGS:M-L*} ${LOBJS} ${LDADD}
-.endif
 .endif
 
 .if !defined(NOMAN)
