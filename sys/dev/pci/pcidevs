@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.31 1997/07/19 09:54:09 cgd Exp $
+$NetBSD: pcidevs,v 1.32 1997/08/03 23:40:27 fvdl Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -909,12 +909,14 @@ product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
 product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products */
-product VIATECH VT82C505	0x0505	VT82C505 (\"Pluto\") 
+product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C576	0x0576	VT82C576 3V
-product VIATECH	VT82C570M	0x1000	VT82C570M (\"Apollo\") Host-PCI Bridge
-product VIATECH VT82C570MV	0x1006	VT82C570M (\"Apollo\") PCI-ISA Bridge
+product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
+product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
+product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH VT82C416MV	0x1571	VT82C416MV
+product VIATECH VT82C595	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_6000B	0x0001	GDT 6000b
