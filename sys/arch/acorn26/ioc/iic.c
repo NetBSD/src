@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $	*/
+/*	$NetBSD: iic.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iic.c,v 1.4 2002/10/02 02:21:21 thorpej Exp $");
+__RCSID("$NetBSD: iic.c,v 1.5 2002/10/02 03:25:47 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -73,7 +73,7 @@ static void iic_attach(struct device *, struct device *, void *);
 static int  iicsearch(struct device *, struct cfdata *, void *);
 
 CFATTACH_DECL(iic, sizeof(struct iic_softc),
-	iic_match, iic_attach, NULL, NULL);
+    iic_match, iic_attach, NULL, NULL);
 
 /* Local function prototypes */
 
