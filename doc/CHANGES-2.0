@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.180 2004/05/06 05:18:59 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.181 2004/05/06 05:25:12 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1841,3 +1841,10 @@ share/man/man4/acpilid.4			1.2
 
 	Update ACPI manual pages to reflect more reality.
 	[kochi, ticket #251]
+
+usr.sbin/powerd/powerd.8			1.6
+usr.sbin/envstat/envstat.8			1.7
+share/man/man4/envsys.4				1.14
+
+	Add references to ACPI man pages.
+	[kochi, ticket #250]
