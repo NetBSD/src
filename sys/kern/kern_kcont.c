@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.8 2004/03/25 23:02:58 enami Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.9 2004/03/27 00:42:38 jonathan Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,16 +37,18 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.8 2004/03/25 23:02:58 enami Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.9 2004/03/27 00:42:38 jonathan Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
 #include <sys/pool.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
+#include <sys/systm.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/intr.h>	/* IPL_*, and schedsoftnet() */
@@ -65,6 +67,7 @@ static __inline struct kc *kcont_dequeue_atomic(kcq_t *kcq);
 
 
 static void	kcont_worker(void * /*arg*/);
+static void	kcont_create_worker(void *);
 
 
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
@@ -340,6 +343,14 @@ kcont_run_softserial(void *arg)
 }
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
 
+
+static void
+kcont_create_worker(void *arg)
+{
+	if (kthread_create1(kcont_worker, NULL, NULL, "kcont"))
+		panic("fork kcont");
+}
+
 /*
  * Main entrypoint for kcont worker kthreads to execute
  * a continuation which requested deferral to process context.
@@ -352,8 +363,8 @@ kcont_worker(void *arg)
 	(void)arg;	/* kill GCC warning */
 
 	while (1) {
-		status = ltsleep(&kcq_process_ctxt, PCATCH, "kcont", 0, NULL);
-		if (status != 0)
+		status = ltsleep(&kcq_process_ctxt, PCATCH, "kcont", hz, NULL);
+		if (status != 0 && status != EWOULDBLOCK)
 			break;
 		kcont_run(&kcq_process_ctxt, NULL, 0, KC_IPL_DEFER_PROCESS);
 	}
@@ -395,5 +406,5 @@ kcont_init(void)
 	 * locking should have at least one worker kthread per CPU).
 	 */
 	SIMPLEQ_INIT(&kcq_process_ctxt);
-	kthread_create(kcont_worker, NULL);
+	kthread_create(kcont_create_worker, NULL);
 }
