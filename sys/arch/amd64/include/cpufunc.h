@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2003/04/26 18:39:39 fvdl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2003/05/08 01:04:35 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <machine/specialreg.h>
 
 #ifdef _KERNEL
+
+extern int cpu_feature;
 
 static __inline void 
 invlpg(u_int64_t addr)
@@ -261,6 +263,12 @@ static __inline void
 breakpoint(void)
 {
 	__asm __volatile("int $3");
+}
+
+static __inline void
+x86_pause(void)
+{
+	/* nothing */
 }
 
 #define read_psl()	read_rflags()

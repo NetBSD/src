@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.1 2003/02/26 21:26:12 fvdl Exp $ */
+/* $NetBSD: lapic.c,v 1.2 2003/05/08 01:04:35 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -411,6 +411,8 @@ void lapic_delay(usec)
 		else
 			deltat -= otick - tick;
 		otick = tick;
+
+		x86_pause();
 	}
 }
 
