@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.9 1994/07/31 14:23:33 briggs Exp $
+ *	$Id: conf.c,v 1.10 1994/08/03 02:53:36 briggs Exp $
  */
 /*
    ALICE
@@ -166,16 +166,35 @@ bdev_decl(sd);
 bdev_decl(cd);
 bdev_decl(vn);
 
+#ifdef LKM
+int	lkmenodev();
+#else
+#define lkmenodev	enodev
+#endif
+
+#define LKM_BDEV() { \
+	(dev_type_open((*))) lkmenodev, (dev_type_close((*))) lkmenodev, \
+	(dev_type_strategy((*))) lkmenodev, (dev_type_ioctl((*))) lkmenodev, \
+	(dev_type_dump((*))) lkmenodev, 0, 0 }
+
 struct bdevsw	bdevsw[] =
 {
-	bdev_notdef(),         	/* 0: was cs80 cartridge tape */
-	bdev_notdef(),		/* 1 */
-	bdev_notdef(),         	/* 2: was hpib disk */
+	bdev_notdef(),         	/* 0: */
+	bdev_notdef(),		/* 1: */
+	bdev_notdef(),         	/* 2: */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
 	bdev_tape_init(NST,st),	/* 5: scsi tape */
 	bdev_cd_init(NCD,cd),	/* 6: scsi CD driver */
-	bdev_notdef(),		/* i386-14: vnode disk driver (swap to files) */
+	bdev_notdef(),         	/* 7: */
+	bdev_disk_init(NVN,vn),	/* 8: vnode disk driver. */
+	bdev_notdef(),		/* 9: */
+	LKM_BDEV(),		/* 10: Empty slot for LKM */
+	LKM_BDEV(),		/* 11: Empty slot for LKM */
+	LKM_BDEV(),		/* 12: Empty slot for LKM */
+	LKM_BDEV(),		/* 13: Empty slot for LKM */
+	LKM_BDEV(),		/* 14: Empty slot for LKM */
+	LKM_BDEV(),		/* 15: Empty slot for LKM */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -251,10 +270,9 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	(dev_type_map((*))) enodev, 0 }
 
 cdev_decl(no);			/* dummy declarations */
-cdev_decl(ite);
-cdev_decl(con);
-/* open, close, read, write, ioctl, select -- XXX should be a tty */
-#define	cdev_con_init(c,n) { \
+
+cdev_decl(cn);
+#define cdev_cn_init(c,n) { \
 	dev_init(c,n,open), \
 	dev_init(c,n,close), \
 	dev_init(c,n,read), \
@@ -264,6 +282,20 @@ cdev_decl(con);
 	(dev_type_reset((*))) nullop, \
 	0, \
 	dev_init(c,n,select), \
+	(dev_type_map((*))) enodev, \
+	0 }
+
+cdev_decl(ite);
+#define cdev_ite_init(c,n) { \
+	dev_init(c,n,open), \
+	dev_init(c,n,close), \
+	dev_init(c,n,read), \
+	dev_init(c,n,write), \
+	dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) nullop, \
+	dev_tty_init(c,n), \
+	ttselect, \
 	(dev_type_map((*))) enodev, \
 	0 }
 
@@ -449,26 +481,63 @@ cdev_decl(bpf);
 	(dev_type_map((*))) enodev, \
 	0 }
 
+#ifdef LKM
+#define NLKM	1
+#else
+#define NLKM	0
+#endif
+
+dev_type_open(lkmopen);
+dev_type_close(lkmclose);
+dev_type_ioctl(lkmioctl);
+
+#define cdev_lkm_init(c) { \
+	dev_init(c,lkm,open), \
+	dev_init(c,lkm,close), \
+	(dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, \
+	dev_init(c,lkm,ioctl), \
+	(dev_type_stop((*))) enodev, \
+	(dev_type_reset((*))) enodev, \
+	(struct tty **) NULL, \
+	(dev_type_select((*))) enodev,\
+	(dev_type_map((*))) enodev, \
+	(dev_type_strategy((*))) NULL \
+}
+
+#define LKM_CDEV() { \
+	(dev_type_open((*))) lkmenodev, \
+	(dev_type_close((*))) lkmenodev, \
+	(dev_type_read((*))) lkmenodev, \
+	(dev_type_write((*))) lkmenodev, \
+	(dev_type_ioctl((*))) lkmenodev, \
+	(dev_type_stop((*))) lkmenodev, \
+	(dev_type_reset((*))) nullop, \
+	(struct tty **) NULL, \
+	(dev_type_select((*))) seltrue, \
+	(dev_type_map((*))) lkmenodev, \
+	(dev_type_strategy((*))) NULL \
+}
 
 struct cdevsw	cdevsw[] =
 {
-	cdev_tty_init(1,ite),		/* 0: virtual console */
+	cdev_cn_init(1,cn),		/* 0: virtual console */
 	cdev_ctty_init(1,ctty),		/* 1: controlling terminal */
 	cdev_mm_init(1,mm),		/* 2: /dev/{null,mem,kmem,...} */
 	cdev_swap_init(1,sw),		/* 3: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_notdef(),			/* 7: was cs80 cartridge tape */
-	cdev_notdef(),			/* 8: was scsi disk */
-	cdev_notdef(),			/* 9: was hpib disk */
-	cdev_grf_init(1,grf),		/* 10: was frame buffer */
-	cdev_notdef(),			/* 11: was printer/plotter interface */
+	cdev_notdef(),			/* 7: */
+	cdev_notdef(),			/* 8: */
+	cdev_notdef(),			/* 9: */
+	cdev_grf_init(1,grf),		/* 10: frame buffer */
+	cdev_ite_init(NITE,ite),	/* 11: console terminal emulator */
 	cdev_tty_init(NSER,ser),	/* 12: 2 mac serial ports -- BG*/
 	cdev_disk_init(NSD,sd),		/* 13: scsi disk */
 	cdev_tape_init(NST,st),		/* 14: scsi tape */
 	cdev_tape_init(NCD,cd),		/* 15: scsi compact disc */
-	cdev_notdef(),			/* 16: nothing */
+	cdev_notdef(),			/* 16: */
 /*	cdev_disk_init(NCH,ch),		 17: scsi changer device */
 	cdev_notdef(),			/* 17: until we find chstrategy... */
 	cdev_clock_init(NCLOCK,clock),	/* 18: mapped clock */
@@ -477,6 +546,14 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,fd),		/* 21: file descriptor pseudo-dev */
 	cdev_bpf_init(NBPFILTER,bpf),	/* 22: berkeley packet filter */
 	cdev_adb_init(adb),		/* 23: ADB event interface */
+	cdev_notdef(),			/* 24: */
+	cdev_lkm_init(NLKM),		/* 25: loadable kernel modules pdev */
+	LKM_CDEV(),			/* 26: Empty slot for LKM */
+	LKM_CDEV(),			/* 27: Empty slot for LKM */
+	LKM_CDEV(),			/* 28: Empty slot for LKM */
+	LKM_CDEV(),			/* 29: Empty slot for LKM */
+	LKM_CDEV(),			/* 30: Empty slot for LKM */
+	LKM_CDEV(),			/* 31: Empty slot for LKM */
 };
 
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
