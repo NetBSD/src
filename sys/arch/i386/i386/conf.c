@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.146 2001/09/13 22:08:44 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.147 2001/09/21 23:44:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -233,6 +233,8 @@ cdev_decl(iop);
 cdev_decl(mlx);
 #include "mly.h"
 cdev_decl(mly);
+#include "dpti.h"
+cdev_decl(dpti);
 cdev_decl(edmca);
 #include "agp.h"
 cdev_decl(agp);
@@ -338,6 +340,7 @@ struct cdevsw	cdevsw[] =
 	cdev__oci_init(NWSFONT,wsfont),	/* 81: wsfont pseudo-device */
 	cdev__ocim_init(NAGP,agp),	/* 82: AGP graphics aperture device */
 	cdev_pci_init(NPCI,pci),	/* 83: PCI bus access device */
+	cdev__oci_init(NDPTI,dpti),	/* 84: DPT/Adaptec RAID management */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -463,6 +466,7 @@ static int chrtoblktbl[] = {
 	/* 81 */	NODEV,
 	/* 82 */	NODEV,
 	/* 83 */	NODEV,
+	/* 84 */	NODEV,
 };
 
 /*
