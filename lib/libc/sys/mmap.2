@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.28 2003/03/31 03:02:59 perry Exp $
+.\"	$NetBSD: mmap.2,v 1.29 2003/04/10 18:22:47 atatat Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)mmap.2	8.4 (Berkeley) 5/11/95
 .\"
-.Dd May 11, 1995
+.Dd April 10, 2003
 .Dt MMAP 2
 .Os
 .Sh NAME
@@ -123,13 +123,23 @@ argument by
 the following values:
 .Pp
 .Bl -tag -width MAP_FIXEDX
+.It Dv MAP_ALIGNED(n)
+Request that the allocation be aligned to the given boundary.
+The parameter
+.Ar n
+should be the base 2 logarithm of the desired alignment (e.g. to
+request alignment to 16K, use 14 as the value for n).
+The alignment must be equal to or greater than the platform's page
+size as returned by
+.Xr sysconf 3
+with the
+.Dv _SC_PAGESIZE
+request.
 .It Dv MAP_ANON
 Map anonymous memory not associated with any specific file.
-The file descriptor used for creating
+The file descriptor is not used for creating
 .Dv MAP_ANON
-regions is used only for
-naming, and may be specified as \-1 if no name is associated with the
-region.
+regions, and must be specified as \-1.
 .It Dv MAP_FILE
 Mapped from a regular file or character-special device memory.
 .It Dv MAP_FIXED
@@ -173,6 +183,12 @@ In the future we may define an additional mapping type,
 in which
 the file descriptor argument specifies a file or device to which swapping
 should be done.
+.Pp
+If
+.Dv MAP_FIXED
+is not specified, the system will attempt to place the mapping in an
+unused portion of the address space chosen to minimize possible
+collision between mapped regions and the heap.
 .Sh RETURN VALUES
 Upon successful completion,
 .Nm mmap
@@ -259,7 +275,8 @@ would exceed the offset maximum established in its open file description.
 .Xr mprotect 2 ,
 .Xr msync 2 ,
 .Xr munmap 2 ,
-.Xr getpagesize 3
+.Xr getpagesize 3 ,
+.Xr sysconf 3
 .Sh BUGS
 The
 .Dv MAP_COPY
