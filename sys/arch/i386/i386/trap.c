@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93 1996/04/15 00:20:32 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.94 1996/05/03 19:42:31 christos Exp $	*/
 
 #undef DEBUG
 #define DEBUG
@@ -66,6 +66,9 @@
 #include <machine/psl.h>
 #include <machine/reg.h>
 #include <machine/trap.h>
+#ifdef DDB
+#include <machine/db_machdep.h>
+#endif
 
 #ifdef COMPAT_IBCS2
 #include <compat/ibcs2/ibcs2_errno.h>
@@ -83,11 +86,16 @@ extern struct emul emul_freebsd;
 
 #include "npx.h"
 
+static __inline void userret __P((struct proc *, int, u_quad_t));
+void trap __P((struct trapframe));
+int trapwrite __P((unsigned));
+void syscall __P((struct trapframe));
+
 /*
  * Define the code needed before returning to user mode, for
  * trap and syscall.
  */
-static inline void
+static __inline void
 userret(p, pc, oticks)
 	register struct proc *p;
 	int pc;
@@ -172,7 +180,7 @@ trap(frame)
 	register struct proc *p = curproc;
 	int type = frame.tf_trapno;
 	u_quad_t sticks;
-	struct pcb *pcb;
+	struct pcb *pcb = NULL;
 	extern char fusubail[],
 		    resume_iret[], resume_pop_ds[], resume_pop_es[];
 	struct trapframe *vframe;
@@ -185,7 +193,7 @@ trap(frame)
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
 		    frame.tf_eflags, rcr2(), cpl);
-		printf("curproc %x\n", curproc);
+		printf("curproc %p\n", curproc);
 	}
 #endif
 
@@ -362,7 +370,7 @@ trap(frame)
 
 #ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
-			printf("trap: bad kernel access at %x\n", va);
+			printf("trap: bad kernel access at %lx\n", va);
 			goto we_re_toast;
 		}
 #endif
@@ -408,7 +416,7 @@ trap(frame)
 		if (type == T_PAGEFLT) {
 			if (pcb->pcb_onfault != 0)
 				goto copyfault;
-			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
@@ -429,7 +437,9 @@ trap(frame)
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
+#ifdef MATH_EMULATE
 	trace:
+#endif
 		trapsignal(p, SIGTRAP, type &~ T_USER);
 		break;
 
@@ -513,7 +523,6 @@ syscall(frame)
 	cnt.v_syscall++;
 	if (!USERMODE(frame.tf_cs, frame.tf_eflags))
 		panic("syscall");
-	p = curproc;
 	sticks = p->p_sticks;
 	p->p_md.md_regs = &frame;
 	opc = frame.tf_eip;

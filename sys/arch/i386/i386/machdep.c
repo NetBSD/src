@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.199 1996/04/18 09:58:13 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.200 1996/05/03 19:42:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -77,6 +77,8 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
 
+#include <sys/sysctl.h>
+
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
@@ -91,6 +93,13 @@
 #include <dev/ic/mc146818reg.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/nvram.h>
+
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
+#endif
 
 #ifdef VM86
 #include <machine/vm86.h>
@@ -135,10 +144,14 @@ extern	vm_offset_t avail_start, avail_end;
 static	vm_offset_t hole_start, hole_end;
 static	vm_offset_t avail_next;
 
-void identifycpu __P((void));
-caddr_t allocsys __P((caddr_t));
-void dumpsys __P((void));
-void cpu_reset __P((void));
+caddr_t	allocsys __P((caddr_t));
+void	dumpsys __P((void));
+void	identifycpu __P((void));
+void	init386 __P((vm_offset_t));
+void	consinit __P((void));
+#ifdef COMPAT_NOMID
+static int exec_nomid	__P((struct proc *, struct exec_package *));
+#endif
 
 /*
  * Machine-dependent startup code
@@ -243,7 +256,7 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
@@ -362,7 +375,6 @@ struct cpu_nameclass i386_cpus[] = {
 void
 identifycpu()
 {
-	int len;
 	extern char cpu_vendor[];
 
 	printf("CPU: ");
@@ -484,6 +496,8 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 }
 
 #ifdef COMPAT_IBCS2
+void ibcs2_sendsig __P((sig_t, int, int, u_long));
+
 void
 ibcs2_sendsig(catcher, sig, mask, code)
 	sig_t catcher;
@@ -799,8 +813,7 @@ dumpsys()
 	int maddr, psize;
 	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
-	int error = 0;
-	int c;
+	int error;
 
 	/* Save registers. */
 	savectx(&dumppcb);
@@ -817,7 +830,7 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 	printf("dump ");
@@ -835,6 +848,7 @@ dumpsys()
 	maddr = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
+	error = 0;
 	for (i = 0; i < bytes; i += n) {
 		/*
 		 * Avoid dumping the ISA memory hole, and areas that
@@ -1044,9 +1058,7 @@ init386(first_avail)
 	int x;
 	unsigned biosbasemem, biosextmem;
 	struct region_descriptor region;
-	extern char etext[], sigcode[], esigcode[];
 	extern void consinit __P((void));
-	extern void lgdt();
 
 	proc0.p_addr = proc0paddr;
 
@@ -1291,7 +1303,6 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
-	struct exec_vmcmd *ccmdp;
 
 	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->a_text;
