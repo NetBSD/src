@@ -1,4 +1,4 @@
-/*	$NetBSD: deattack.c,v 1.11 2002/03/08 02:00:52 itojun Exp $	*/
+/*	$NetBSD: deattack.c,v 1.11.2.1 2003/09/17 23:25:51 christos Exp $	*/
 /*
  * Cryptographic attack detector for ssh - source code
  *
@@ -101,12 +101,12 @@ detect_attack(u_char *buf, u_int32_t len, u_char *IV)
 
 	if (h == NULL) {
 		debug("Installing crc compensation attack detector.");
+		h = (u_int16_t *) xmalloc(l * HASH_ENTRYSIZE);
 		n = l;
-		h = (u_int16_t *) xmalloc(n * HASH_ENTRYSIZE);
 	} else {
 		if (l > n) {
+			h = (u_int16_t *) xrealloc(h, l * HASH_ENTRYSIZE);
 			n = l;
-			h = (u_int16_t *) xrealloc(h, n * HASH_ENTRYSIZE);
 		}
 	}
 
