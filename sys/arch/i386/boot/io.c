@@ -25,7 +25,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: io.c,v 1.6 1993/12/23 07:12:00 cgd Exp $
+ *	$Id: io.c,v 1.7 1994/01/11 14:24:11 mycroft Exp $
  */
 
 #include <sys/types.h>
@@ -68,54 +68,57 @@ gateA20()
 /* printf - only handles %d as decimal, %c as char, %s as string */
 
 printf(format,data)
-     char *format;
-     int data;
+	char *format;
+	int data;
 {
 	int *dataptr = &data;
 	char c;
 
 	reset_twiddle();
-	while (c = *format++)
-		if (c != '%')
+	while (c = *format++) {
+		if (c != '%') {
 			putchar(c);
-		else
-			switch (c = *format++) {
-			      case 'd': {
-				      int num = *dataptr++;
-				      char buf[10], *ptr = buf;
-				      if (num<0) {
-					      num = -num;
-					      putchar('-');
-				      }
-				      do
-					      *ptr++ = '0'+num%10;
-				      while (num /= 10);
-				      do
-					      putchar(*--ptr);
-				      while (ptr != buf);
-				      break;
-			      }
-			      case 'x': {
-				      int num = *dataptr++, dig;
-				      char buf[8], *ptr = buf;
-				      do
-					      *ptr++ = (dig=(num&0xf)) > 9?
-							'a' + dig - 10 :
-							'0' + dig;
-				      while (num >>= 4);
-				      do
-					      putchar(*--ptr);
-				      while (ptr != buf);
-				      break;
-			      }
-			      case 'c': putchar((*dataptr++)&0xff); break;
-			      case 's': {
-				      char *ptr = (char *)*dataptr++;
-				      while (c = *ptr++)
-					      putchar(c);
-				      break;
-			      }
+			continue;
+		}
+		switch (c = *format++) {
+		case 'd': {
+			int num = *dataptr++;
+			char buf[10], *ptr = buf;
+			if (num < 0) {
+				num = -num;
+				putchar('-');
 			}
+			do
+				*ptr++ = '0' + num % 10;
+			while (num /= 10);
+			do
+				putchar(*--ptr);
+			while (ptr != buf);
+			break;
+		}
+		case 'x': {
+			int num = *dataptr++, dig;
+			char buf[8], *ptr = buf;
+			do
+				*ptr++ = (dig = (num & 0xf)) > 9?
+					'a' + dig - 10 :
+					'0' + dig;
+			while (num >>= 4);
+			do
+				putchar(*--ptr);
+			while (ptr != buf);
+			break;
+		}
+		case 'c':
+			putchar((*dataptr++) & 0xff); break;
+		case 's': {
+			char *ptr = (char *)*dataptr++;
+			while (c = *ptr++)
+				putchar(c);
+			break;
+		}
+		}
+	}
 }
 
 putchar(c)
@@ -129,7 +132,7 @@ getchar()
 {
 	int c;
 
-	if ((c=getc()) == '\r')
+	if ((c = getc()) == '\r')
 		c = '\n';
 	if (c == '\b') {
 		putchar('\b');
@@ -140,30 +143,31 @@ getchar()
 }
 
 gets(buf)
-char *buf;
+	char *buf;
 {
 	int	i;
-	char *ptr=buf;
+	char *ptr = buf;
 
-	for (i = 240000; i>0; i--)
+	for (i = 240000; i > 0; i--)
 		if (ischar())
 			for (;;)
-				switch(*ptr = getchar() & 0xff) {
-				      case '\n':
-				      case '\r':
+				switch (*ptr = getchar() & 0xff) {
+				case '\n':
+				case '\r':
 					*ptr = '\0';
 					return 1;
-				      case '\b':
-					if (ptr > buf) ptr--;
+				case '\b':
+					if (ptr > buf)
+						ptr--;
 					continue;
-				      default:
+				default:
 					ptr++;
 				}
 	return 0;
 }
 
 strcmp(s1, s2)
-char *s1, *s2;
+	char *s1, *s2;
 {
 	while (*s1 == *s2) {
 		if (!*s1++)
@@ -174,8 +178,8 @@ char *s1, *s2;
 }
 
 bcopy(from, to, len)
-char *from, *to;
-int len;
+	char *from, *to;
+	int len;
 {
 	while (len-- > 0)
 		*to++ = *from++;
