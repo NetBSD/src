@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.4.3 1996/06/07 12:28:13 briggs Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.4.4 1996/06/09 04:43:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -56,6 +56,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/viareg.h>
 
 /*
  * XXX: Hard code this to make console init easier...
