@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 1999/11/13 00:32:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 1999/11/14 17:25:01 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
 /* #define BOOT_DEBUG */
@@ -1693,7 +1693,7 @@ pmap_enter(pm, va, pa, prot, flags)
 #endif
 /*	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va); /* Not used any more. */
 	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
-				 (access_type & VM_PROT_WRITE),
+				 (flags & VM_PROT_WRITE),
 				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
 #ifdef HWREF
 	if (prot & VM_PROT_WRITE) tte.data.data |= TLB_REAL_W;
