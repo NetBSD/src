@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.77 2003/06/30 02:23:06 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.78 2003/06/30 02:25:23 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -899,3 +899,8 @@ sys/netinet/ip_mroute.h				1.21
 
 	cleanup multicast routing stuff on if_detach().
 	[itojun, ticket #1342]
+
+sys/netinet/ip_mroute.c				1.73
+
+	expire mrt if mrt_stall goes empty.  ono@kame
+	[itojun, ticket #1345]
