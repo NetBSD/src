@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.23 2000/06/06 09:22:02 mycroft Exp $
+#	$NetBSD: bsd.nls.mk,v 1.24 2000/06/06 09:53:30 mycroft Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -41,20 +41,33 @@ realall: ${NLSALL}
 cleannls:
 	rm -f ${NLSALL}
 
+nlsinstall:: ${DESTDIR}${NLSDIR}
+.PRECIOUS:: ${DESTDIR}${NLSDIR}
+.PHONY:: ${DESTDIR}${NLSDIR}
+
+${DESTDIR}${NLSDIR}:
+	@if [ ! -d ${.TARGET} ] || [ -h ${.TARGET} ] ; then \
+		echo creating ${.TARGET}; \
+		/bin/rm -rf ${.TARGET}; \
+		${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} -m 755 \
+		    ${.TARGET}; \
+	fi
+
 nlsinstall:: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .PRECIOUS: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .if !defined(UPDATE)
 .PHONY: ${NLSALL:@F@${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat@}
 .endif
 
+__nlsinstall: .USE
+	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${NLSOWN} \
+	    -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} ${.TARGET}
+
 .for F in ${NLSALL}
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: .MADE
 .endif
-${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F}
-	${INSTALL} ${INSTPRIV} -d -o ${NLSOWN} -g ${NLSGRP} ${.TARGET:H}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${NLSOWN} \
-	    -g ${NLSGRP} -m ${NLSMODE} ${.ALLSRC} ${.TARGET}
+${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat: ${F} __nlsinstall
 .endfor
 .else
 cleannls:
