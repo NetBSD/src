@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.34 1998/11/14 07:17:58 tls Exp $	*/
+/*	$NetBSD: init.c,v 1.34.2.1 2000/01/23 12:01:51 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.34 1998/11/14 07:17:58 tls Exp $");
+__RCSID("$NetBSD: init.c,v 1.34.2.1 2000/01/23 12:01:51 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -478,7 +478,6 @@ getsecuritylevel()
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
 	size_t len;
-	extern int errno;
 
 	name[0] = CTL_KERN;
 	name[1] = KERN_SECURELVL;
@@ -503,7 +502,6 @@ setsecuritylevel(newlevel)
 {
 #ifdef KERN_SECURELVL
 	int name[2], curlevel;
-	extern int errno;
 
 	curlevel = getsecuritylevel();
 	if (newlevel == curlevel)
