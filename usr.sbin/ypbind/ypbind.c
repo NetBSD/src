@@ -1,4 +1,4 @@
-/*	$NetBSD: ypbind.c,v 1.44 2000/12/20 01:34:39 cgd Exp $	*/
+/*	$NetBSD: ypbind.c,v 1.45 2001/01/11 01:47:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef LINT
-__RCSID("$NetBSD: ypbind.c,v 1.44 2000/12/20 01:34:39 cgd Exp $");
+__RCSID("$NetBSD: ypbind.c,v 1.45 2001/01/11 01:47:55 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -902,7 +902,7 @@ direct(buf, outlen)
 		    "%s/%s%s", BINDINGDIR, domainname, YPSERVERSSUFF);
 		df = fopen(ypservers_path, "r");
 		if (df == NULL) {
-			yp_log(LOG_WARNING, "%s: ", ypservers_path);
+			yp_log(LOG_ERR, "%s: ", ypservers_path);
 			exit(1);
 		}
 	}
@@ -930,7 +930,7 @@ direct(buf, outlen)
 			continue;
 		hp = gethostbyname(p);
 		if (!hp) {
-			yp_log(LOG_ERR, "%s: %s", p, hstrerror(h_errno));
+			yp_log(LOG_WARNING, "%s: %s", p, hstrerror(h_errno));
 			continue;
 		}
 		/* step through all addresses in case first is unavailable */
@@ -946,7 +946,7 @@ direct(buf, outlen)
 		}
 	}
 	if (!count) {
-		yp_log(LOG_ERR, "no contactable servers found in %s",
+		yp_log(LOG_WARNING, "no contactable servers found in %s",
 		    ypservers_path);
 		return -1;
 	}
