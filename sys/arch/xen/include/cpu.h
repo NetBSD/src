@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.3 2004/04/25 19:01:27 cl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4 2004/04/26 22:05:05 cl Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -443,6 +443,10 @@ void kgdb_port_init(void);
 /* bus_machdep.c */
 void x86_bus_space_init(void);
 void x86_bus_space_mallocok(void);
+
+/* xen_machdep.c */
+void	xpmap_init(void);
+paddr_t	find_pmap_mem_end(vaddr_t);
 
 #include <machine/psl.h>	/* Must be after struct cpu_info declaration */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.4 2004/04/25 19:01:27 cl Exp $	*/
+/*	$NetBSD: locore.S,v 1.5 2004/04/26 22:05:04 cl Exp $	*/
 /*	NetBSD: locore.S,v 1.26 2004/04/12 13:17:46 yamt Exp 	*/
 
 /*-
@@ -449,7 +449,7 @@ start:
 	leal	(PROC0STACK)(%esi),%eax
 	movl	%eax,_C_LABEL(proc0paddr)
 	leal	(USPACE-FRAMESIZE)(%eax),%esp
-	subl	$KERNTEXTOFF,%esi
+	subl	$KERNBASE_LOCORE,%esi
 	movl	%esi,PCB_CR3(%eax)	# pcb->pcb_cr3
 	xorl	%ebp,%ebp               # mark end of frames
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.2 2004/04/24 19:43:53 cl Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.3 2004/04/26 22:05:05 cl Exp $	*/
 
 /*
  *
@@ -38,6 +38,7 @@
 void xpq_queue_invlpg(vaddr_t);
 void xpq_queue_pde_update(pd_entry_t *, pd_entry_t);
 void xpq_queue_pte_update(pt_entry_t *, pt_entry_t);
+void xpq_queue_unchecked_pte_update(pt_entry_t *, pt_entry_t);
 void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
 void xpq_queue_set_ldt(vaddr_t, uint32_t);
@@ -88,12 +89,18 @@ paddr_t *xpmap_phys_to_machine_mapping;
 } while (/*CONSTCOND*/0)
 #define	PTE_GET(_ptp)						\
 	(pmap_valid_entry(*(_ptp)) ? xpmap_mtop(*(_ptp)) : *(_ptp))
+#define	PTE_GET_MA(_ptp)					\
+	*(_ptp)
 #define PTE_SET(_ptp,_npte) do {				\
 	xpq_queue_pte_update((_ptp), xpmap_ptom((_npte)));	\
 	xpq_flush_queue();					\
 } while (/*CONSTCOND*/0)
 #define PTE_SET_MA(_ptp,_npte) do {				\
 	xpq_queue_pte_update((_ptp), (_npte));			\
+	xpq_flush_queue();					\
+} while (/*CONSTCOND*/0)
+#define PTE_SET_MA_UNCHECKED(_ptp,_npte) do {			\
+	xpq_queue_unchecked_pte_update((_ptp), (_npte));	\
 	xpq_flush_queue();					\
 } while (/*CONSTCOND*/0)
 #define PTE_CLEAR(_ptp) do {					\
@@ -106,12 +113,17 @@ paddr_t *xpmap_phys_to_machine_mapping;
 	xpq_flush_queue();					\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_SET_MA(_ptp,_npte,_opte) do {		\
-	(_opte) = PTE_GET(_ptp);				\
+	(_opte) = *(_ptp);					\
 	xpq_queue_pte_update((_ptp), (_npte));			\
 	xpq_flush_queue();					\
 } while (/*CONSTCOND*/0)
 #define PTE_ATOMIC_CLEAR(_ptp,_opte) do {			\
 	(_opte) = PTE_GET(_ptp);				\
+	xpq_queue_pte_update((_ptp), 0);			\
+	xpq_flush_queue();					\
+} while (/*CONSTCOND*/0)
+#define PTE_ATOMIC_CLEAR_MA(_ptp,_opte) do {			\
+	(_opte) = *(_ptp);					\
 	xpq_queue_pte_update((_ptp), 0);			\
 	xpq_flush_queue();					\
 } while (/*CONSTCOND*/0)
@@ -156,15 +168,23 @@ paddr_t *xpmap_phys_to_machine_mapping;
 static __inline paddr_t
 xpmap_mtop(paddr_t mpa)
 {
-	return (machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) |
-		(mpa & ~PG_FRAME);
+	return ((machine_to_phys_mapping[mpa >> PAGE_SHIFT] << PAGE_SHIFT) +
+	    (KERNTEXTOFF - KERNBASE_LOCORE)) | (mpa & ~PG_FRAME);
 }
 
 static __inline paddr_t
 xpmap_ptom(paddr_t ppa)
 {
-	return (xpmap_phys_to_machine_mapping[ppa >> PAGE_SHIFT] << PAGE_SHIFT) |
-		(ppa & ~PG_FRAME);
+	return (xpmap_phys_to_machine_mapping[(ppa -
+	    (KERNTEXTOFF - KERNBASE_LOCORE)) >> PAGE_SHIFT] << PAGE_SHIFT)
+		| (ppa & ~PG_FRAME);
+}
+
+static __inline paddr_t
+xpmap_ptom_masked(paddr_t ppa)
+{
+	return (xpmap_phys_to_machine_mapping[(ppa -
+	    (KERNTEXTOFF - KERNBASE_LOCORE)) >> PAGE_SHIFT] << PAGE_SHIFT);
 }
 
 #endif /* _XEN_XENPMAP_H_ */

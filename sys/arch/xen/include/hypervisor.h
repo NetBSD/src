@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.6 2004/04/25 18:30:55 cl Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.7 2004/04/26 22:05:05 cl Exp $	*/
 
 /*
  * 
@@ -94,6 +94,17 @@ static inline int HYPERVISOR_mmu_update(mmu_update_t *req, int count)
 
     if (__predict_false(ret < 0))
         panic("Failed mmu update: %p, %d", req, count);
+
+    return ret;
+}
+
+static inline int HYPERVISOR_mmu_update_fail_ok(mmu_update_t *req, int count)
+{
+    int ret;
+    __asm__ __volatile__ (
+        TRAP_INSTR
+        : "=a" (ret) : "0" (__HYPERVISOR_mmu_update), 
+        "b" (req), "c" (count) : "memory" );
 
     return ret;
 }

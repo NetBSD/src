@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.6 2004/04/25 23:46:07 cl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7 2004/04/26 22:05:04 cl Exp $	*/
 /*	NetBSD: machdep.c,v 1.552 2004/03/24 15:34:49 atatat Exp 	*/
 
 /*-
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2004/04/25 23:46:07 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2004/04/26 22:05:04 cl Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -280,6 +280,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
+extern	paddr_t pmap_pa_start, pmap_pa_end;
 
 #ifdef ISA_CLOCK
 void (*delay_func)(int) = i8254_delay;
@@ -1413,9 +1414,9 @@ initgdt()
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
 #else
-	frames[0] = xpmap_ptom((uint32_t)gdt - KERNTEXTOFF) >> PAGE_SHIFT;
+	frames[0] = xpmap_ptom((uint32_t)gdt - KERNBASE) >> PAGE_SHIFT;
 	/* pmap_kremove((vaddr_t)gdt, PAGE_SIZE); */
-	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNTEXTOFF,
+	pmap_kenter_pa((vaddr_t)gdt, (uint32_t)gdt - KERNBASE,
 	    VM_PROT_READ);
 	XENPRINTK(("loading gdt %lx, %d entries\n", frames[0] << PAGE_SHIFT,
 	    LAST_RESERVED_GDT_ENTRY + 1));
@@ -1506,8 +1507,11 @@ init386(paddr_t first_avail)
 #else
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
-	avail_start = first_avail - KERNTEXTOFF;
-	avail_end = ptoa(xen_start_info.nr_pages);
+	avail_start = first_avail - KERNBASE;
+	avail_end = ptoa(xen_start_info.nr_pages) +
+		(KERNTEXTOFF - KERNBASE_LOCORE);
+	pmap_pa_start = (KERNTEXTOFF - KERNBASE_LOCORE);
+	pmap_pa_end = avail_end;
 	mem_clusters[0].start = avail_start;
 	mem_clusters[0].size = avail_end - avail_start;
 	mem_cluster_cnt++;
@@ -1696,9 +1700,9 @@ init386(paddr_t first_avail)
 
 	XENPRINTK(("load the memory cluster %p(%d) - %p(%ld)\n",
 	    (void *)avail_start, (int)atop(avail_start),
-	    (void *)ptoa(xen_start_info.nr_pages), xen_start_info.nr_pages));
-	uvm_page_physload(atop(avail_start), xen_start_info.nr_pages,
-	    atop(avail_start), xen_start_info.nr_pages,
+	    (void *)avail_end, (int)atop(avail_end)));
+	uvm_page_physload(atop(avail_start), atop(avail_end),
+	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
 
 #if !defined(XEN)

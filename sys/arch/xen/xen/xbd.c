@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.6 2004/04/24 21:55:37 cl Exp $ */
+/* $NetBSD: xbd.c,v 1.7 2004/04/26 22:05:05 cl Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.6 2004/04/24 21:55:37 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.7 2004/04/26 22:05:05 cl Exp $");
 
 #include "xbd.h"
 
@@ -808,8 +808,7 @@ fill_ring(struct xbdreq *xr)
 #else
 		pmap_extract(pmap_kernel(), addr, &pa);
 #endif
-		ma = (xpmap_phys_to_machine_mapping[pa >> PAGE_SHIFT] <<
-		    PAGE_SHIFT) + off;
+		ma = xpmap_ptom_masked(pa) + off;
 		DIAGCONDPANIC((ma & (XEN_BSIZE - 1)) != 0,
 		    ("xbd request ma not sector aligned"));
 
