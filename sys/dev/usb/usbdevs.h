@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.56 1999/10/28 06:41:40 augustss Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.57 1999/11/10 12:31:31 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp 
+ *	NetBSD: usbdevs,v 1.57 1999/11/10 12:31:01 augustss Exp 
  */
 
 /*
@@ -68,6 +68,7 @@
 #define	USB_VENDOR_LUCENT	0x047e		/* Lucent */
 #define	USB_VENDOR_STMICRO	0x0483		/* STMicroelectronics */
 #define	USB_VENDOR_ACER	0x04a5		/* Acer Peripheral Inc. */
+#define	USB_VENDOR_CANON	0x04a9		/* Canon Inc. */
 #define	USB_VENDOR_CYPRESS	0x04b4		/* Cypress Semiconductor */
 #define	USB_VENDOR_EPSON	0x04b8		/* Seiko Epson Corp. */
 #define	USB_VENDOR_3COM	0x04c1		/* U.S. Robotics */
@@ -81,6 +82,7 @@
 #define	USB_VENDOR_KAWATSU	0x050f		/* Kawatsu Semiconductor, Inc. */
 #define	USB_VENDOR_APC	0x051d		/* American Power Conversion */
 #define	USB_VENDOR_AKS	0x0529		/* Fast Security AG */
+#define	USB_VENDOR_UNIACCESS	0x0540		/* Universal Access */
 #define	USB_VENDOR_ANCHOR	0x0547		/* Anchor Chips Inc. */
 #define	USB_VENDOR_VISION	0x0553		/* VLSI Vision Ltd. */
 #define	USB_VENDOR_ATEN	0x0557		/* ATEN International Corp. Ltd. */
@@ -183,6 +185,9 @@
 /* Acer products */
 #define	USB_PRODUCT_ACER_ACERSCAN_C310U	0x12a6		/* Acerscan C310U */
 
+/* Canon Inc. products */
+#define	USB_PRODUCT_CANON_S10	0x3041		/* PowerShot S10 */
+
 /* Cypress Semiconductor products */
 #define	USB_PRODUCT_CYPRESS_MOUSE	0x0001		/* mouse */
 #define	USB_PRODUCT_CYPRESS_THERMO	0x0002		/* thermometer */
@@ -219,6 +224,9 @@
 
 /* AKS products */
 #define	USB_PRODUCT_AKS_USBHASP	0x0001		/* USB-HASP 0.06 */
+
+/* Universal Access products */
+#define	USB_PRODUCT_UNIACCESS_PANACHE	0x0101		/* Panache Surf USB ISDN Adapter */
 
 /* Anchor products */
 #define	USB_PRODUCT_ANCHOR_EZUSB	0x2131		/* EZUSB */
