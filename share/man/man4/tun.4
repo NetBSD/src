@@ -1,4 +1,4 @@
-.\" $NetBSD: tun.4,v 1.7 2000/12/12 18:15:38 itojun Exp $
+.\" $NetBSD: tun.4,v 1.8 2001/05/19 17:23:39 jdolecek Exp $
 .\" Based on PR#2411
 .\"
 .Dd March 10, 1996
@@ -85,7 +85,7 @@ Once the interface is ready,
 .Fn read
 will return a packet if one is available; if not, it will either block
 until one is or return
-.Er EWOULDBLOCK ,
+.Er EAGAIN ,
 depending on whether non-blocking I/O has been enabled.  If the packet
 is longer than is allowed for in the buffer passed to
 .Fn read ,
