@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.35 2003/07/15 02:15:01 lukem Exp $ */
+/*	$NetBSD: hp.c,v 1.36 2003/12/29 16:23:58 pk Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.35 2003/07/15 02:15:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hp.c,v 1.36 2003/12/29 16:23:58 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,7 +384,7 @@ hper1:
 		bc = bus_space_read_4(md->md_mba->sc_iot,
 		    md->md_mba->sc_ioh, MBA_BC);
 		byte = ~(bc >> 16);
-		diskerr(buf, hp_cd.cd_name, "soft ecc", LOG_PRINTF,
+		diskerr(bp, hp_cd.cd_name, "soft ecc", LOG_PRINTF,
 		    btodb(bp->b_bcount - byte), sc->sc_disk.dk_label);
 		er1 &= ~(1<<HPER1_DCK);
 		break;
