@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_boot.c,v 1.32 1997/03/17 17:41:45 thorpej Exp $	*/
+/*	$NetBSD: nfs_boot.c,v 1.33 1997/05/27 23:37:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Adam Glass, Gordon Ross
@@ -63,16 +63,15 @@ int nfs_boot_init(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
-	panic("nfs_boot_init: no ether");
+	printf("nfs_boot: NETHER == 0\n");
+	return (ENXIO);
 }
 
-void
-nfs_boot_getfh(bpsin, key, ndmntp)
-	struct sockaddr_in *bpsin;
-	char *key;
-	struct nfs_dlmount *ndmntp;
+int
+nfs_boot_getfh(ndm)
+	struct nfs_dlmount *ndm;
 {
-	/* can not get here */
+	return (ENXIO);
 }
 
 #else /* NETHER */
@@ -101,7 +100,7 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 static int bp_whoami __P((struct sockaddr_in *bpsin,
 	struct in_addr *my_ip, struct in_addr *gw_ip));
 static int bp_getfile __P((struct sockaddr_in *bpsin, char *key,
-	struct sockaddr_in *mdsin, char *servname, char *path));
+	struct nfs_dlmount *ndm));
 
 /* mountd RPC */
 static int md_mount __P((struct sockaddr_in *mdsin, char *path,
@@ -150,24 +149,35 @@ nfs_boot_init(nd, procp)
 	 * Get the old interface flags and or IFF_UP into them; if
 	 * IFF_UP set blindly, interface selection can be clobbered.
 	 */
-	if ((error = socreate(AF_INET, &so, SOCK_DGRAM, 0)) != 0)
-		panic("nfs_boot: socreate, error=%d", error);
+	so = 0;
+	error = socreate(AF_INET, &so, SOCK_DGRAM, 0);
+	if (error) {
+		printf("nfs_boot: socreate, error=%d\n", error);
+		so = 0;
+		goto out;
+	}
 	error = ifioctl(so, SIOCGIFFLAGS, (caddr_t)&ireq, procp);
-	if (error)
-		panic("nfs_boot: GIFFLAGS, error=%d", error);
+	if (error) {
+		printf("nfs_boot: GIFFLAGS, error=%d\n", error);
+		goto out;
+	}
 	ireq.ifr_flags |= IFF_UP;
 	error = ifioctl(so, SIOCSIFFLAGS, (caddr_t)&ireq, procp);
-	if (error)
-		panic("nfs_boot: SIFFLAGS, error=%d", error);
+	if (error) {
+		printf("nfs_boot: SIFFLAGS, error=%d\n", error);
+		goto out;
+	}
 
 	/*
 	 * Do RARP for the interface address.
 	 */
 	if ((error = revarpwhoami(&my_ip, ifp)) != 0) {
 		printf("revarp failed, error=%d\n", error);
-		return (EIO);
+		error = EIO;	/* XXX */
+		goto out;
 	}
-	printf("nfs_boot: client_addr=0x%x\n", (u_int32_t)ntohl(my_ip.s_addr));
+	printf("nfs_boot: client_addr=0x%x\n",
+	       (u_int32_t)ntohl(my_ip.s_addr));
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
@@ -179,10 +189,10 @@ nfs_boot_init(nd, procp)
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = my_ip.s_addr;
 	error = ifioctl(so, SIOCSIFADDR, (caddr_t)&ireq, procp);
-	if (error)
-		panic("nfs_boot: set if addr, error=%d", error);
-
-	soclose(so);
+	if (error) {
+		printf("nfs_boot: set if addr, error=%d\n", error);
+		goto out;
+	}
 
 	/*
 	 * Get client name and gateway address.
@@ -198,11 +208,11 @@ nfs_boot_init(nd, procp)
 	bp_sin.sin_addr.s_addr = INADDR_BROADCAST;
 	hostnamelen = MAXHOSTNAMELEN;
 
-	/* this returns gateway IP address */
+	/* Do the RPC/bootparam/whoami. */
 	error = bp_whoami(&bp_sin, &my_ip, &gw_ip);
 	if (error) {
 		printf("nfs_boot: bootparam whoami, error=%d\n", error);
-		return (error);
+		goto out;
 	}
 	printf("nfs_boot: server_addr=0x%x\n",
 		   (u_int32_t)ntohl(bp_sin.sin_addr.s_addr));
@@ -248,34 +258,50 @@ nfs_boot_init(nd, procp)
 
 	bcopy(&bp_sin, &nd->nd_boot, sizeof(bp_sin));
 
-	return (0);
+	/*
+	 * Now fetch the server:pathname strings and server IP
+	 * for root and swap.  Missing swap is not fatal.
+	 */
+	error = bp_getfile(&nd->nd_boot, "root", &nd->nd_root);
+	if (error) {
+		printf("nfs_boot: bootparam get root: %d\n", error);
+		goto out;
+	}
+
+	error = bp_getfile(&nd->nd_boot, "swap", &nd->nd_swap);
+	if (error) {
+		printf("nfs_boot: bootparam get swap: %d", error);
+		error = 0;
+	}
+
+ out:
+	if (so) soclose(so);
+
+	return (error);
 }
 
-void
-nfs_boot_getfh(bpsin, key, ndmntp)
-	struct sockaddr_in *bpsin;	/* bootparam server */
-	char *key;			/* root or swap */
-	struct nfs_dlmount *ndmntp;	/* output */
+int
+nfs_boot_getfh(ndm)
+	struct nfs_dlmount *ndm;	/* output */
 {
 	struct nfs_args *args;
-	char pathname[MAXPATHLEN];
-	char *sp, *dp, *endp;
 	struct sockaddr_in *sin;
+	char *pathname;
 	int error;
 
-	args = &ndmntp->ndm_args;
+	args = &ndm->ndm_args;
 
 	/* Initialize mount args. */
 	bzero((caddr_t) args, sizeof(*args));
-	args->addr     = &ndmntp->ndm_saddr;
+	args->addr     = &ndm->ndm_saddr;
 	args->addrlen  = args->addr->sa_len;
 #ifdef NFS_BOOT_TCP
 	args->sotype   = SOCK_STREAM;
 #else
 	args->sotype   = SOCK_DGRAM;
 #endif
-	args->fh       = ndmntp->ndm_fh;
-	args->hostname = ndmntp->ndm_host;
+	args->fh       = ndm->ndm_fh;
+	args->hostname = ndm->ndm_host;
 	args->flags    = NFSMNT_RESVPORT | NFSMNT_NFSV3;
 
 #ifdef	NFS_BOOT_OPTIONS
@@ -292,23 +318,27 @@ nfs_boot_getfh(bpsin, key, ndmntp)
 	args->rsize    = NFS_BOOT_RWSIZE;
 #endif
 
-	sin = (void*)&ndmntp->ndm_saddr;
+	/*
+	 * Find the pathname part of the "server:pathname"
+	 * string left in ndm->ndm_host by nfs_boot_init.
+	 */
+	pathname = strchr(ndm->ndm_host, ':');
+	if (pathname == 0) {
+		printf("nfs_boot: getfh - no pathname\n");
+		return (EIO);
+	}
+	pathname++;
 
 	/*
-	 * Get server:pathname for "key" (root or swap)
-	 * using RPC to bootparam/getfile
+	 * Get file handle using RPC to mountd/mount
 	 */
-	error = bp_getfile(bpsin, key, sin, ndmntp->ndm_host, pathname);
-	if (error)
-		panic("nfs_boot: bootparam get %s: %d", key, error);
-
-	/*
-	 * Get file handle for "key" (root or swap)
-	 * using RPC to mountd/mount
-	 */
+	sin = (struct sockaddr_in *)&ndm->ndm_saddr;
 	error = md_mount(sin, pathname, args);
-	if (error)
-		panic("nfs_boot: mountd %s, error=%d", key, error);
+	if (error) {
+		printf("nfs_boot: mountd `%s', error=%d\n",
+		    ndm->ndm_host, error);
+		return (error);
+	}
 
 	/* Set port number for NFS use. */
 	/* XXX: NFS port is always 2049, right? */
@@ -319,26 +349,19 @@ retry:
 		    (args->flags & NFSMNT_NFSV3) ? NFS_VER3 : NFS_VER2,
 		    (args->sotype == SOCK_STREAM) ? IPPROTO_TCP : IPPROTO_UDP,
 		    &sin->sin_port);
-
-	if (error || (sin->sin_port == htons(0))) {
+	if (sin->sin_port == htons(0))
+		error = EIO;
+	if (error) { 
 #ifdef NFS_BOOT_TCP
 		if (args->sotype == SOCK_STREAM) {
 			args->sotype = SOCK_DGRAM;
 			goto retry;
 		}
 #endif
-		panic("nfs_boot: portmap NFS, error=%d", error);
+		printf("nfs_boot: portmap NFS, error=%d\n", error);
 	}
 
-	/* Construct remote path (for getmntinfo(3)) */
-	dp = ndmntp->ndm_host;
-	endp = dp + MNAMELEN - 1;
-	dp += strlen(dp);
-	*dp++ = ':';
-	for (sp = pathname; *sp && dp < endp;)
-		*dp++ = *sp++;
-	*dp = '\0';
-
+	return (error);
 }
 
 
@@ -466,16 +489,16 @@ out:
  *	server pathname
  */
 static int
-bp_getfile(bpsin, key, md_sin, serv_name, pathname)
+bp_getfile(bpsin, key, ndm)
 	struct sockaddr_in *bpsin;
 	char *key;
-	struct sockaddr_in *md_sin;
-	char *serv_name;
-	char *pathname;
+	struct nfs_dlmount *ndm;
 {
-	struct mbuf *m;
-	struct sockaddr_in *sin;
+	char pathname[MNAMELEN];
 	struct in_addr inaddr;
+	struct sockaddr_in *sin;
+	struct mbuf *m;
+	char *serv_name;
 	int error, sn_len, path_len;
 
 	/*
@@ -494,7 +517,7 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 
 	/* RPC: bootparam/getfile */
 	error = krpc_call(bpsin, BOOTPARAM_PROG, BOOTPARAM_VERS,
-			BOOTPARAM_GETFILE, &m, NULL);
+	                  BOOTPARAM_GETFILE, &m, NULL);
 	if (error)
 		return error;
 
@@ -503,7 +526,8 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 	 */
 
 	/* server name */
-	sn_len = MNAMELEN-1;
+	serv_name = &ndm->ndm_host[0];
+	sn_len = sizeof(ndm->ndm_host) - 1;
 	m = xdr_string_decode(m, serv_name, &sn_len);
 	if (m == NULL)
 		goto bad;
@@ -514,17 +538,27 @@ bp_getfile(bpsin, key, md_sin, serv_name, pathname)
 		goto bad;
 
 	/* server pathname */
-	path_len = MAXPATHLEN-1;
+	path_len = sizeof(pathname) - 1;
 	m = xdr_string_decode(m, pathname, &path_len);
 	if (m == NULL)
 		goto bad;
 
-	/* setup server socket address */
-	sin = md_sin;
+	/*
+	 * Store the results in the nfs_dlmount.
+	 * The strings become "server:pathname"
+	 */
+	sin = (struct sockaddr_in *) &ndm->ndm_saddr;
 	bzero((caddr_t)sin, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr = inaddr;
+	if ((sn_len + 1 + path_len + 1) > sizeof(ndm->ndm_host)) {
+		printf("nfs_boot: getfile name too long\n");
+		error = EIO;
+		goto out;
+	}
+	ndm->ndm_host[sn_len] = ':';
+	bcopy(pathname, ndm->ndm_host + sn_len + 1, path_len + 1);
 
 	/* success */
 	goto out;

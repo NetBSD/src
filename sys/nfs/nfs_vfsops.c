@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.58 1997/02/22 02:48:26 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.59 1997/05/27 23:37:41 gwr Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -102,9 +102,9 @@ struct vfsops nfs_vfsops = {
 extern u_int32_t nfs_procids[NFS_NPROCS];
 extern u_int32_t nfs_prog, nfs_vers;
 
-static struct mount *
-nfs_mount_diskless __P((struct nfs_dlmount *, const char *, int,
-    struct vnode **));
+static int
+nfs_mount_diskless __P((struct nfs_dlmount *, const char *,
+    struct mount **, struct vnode **));
 
 #define TRUE	1
 #define	FALSE	0
@@ -255,10 +255,9 @@ nfs_fsinfo(nmp, vp, cred, p)
 /*
  * Mount a remote root fs via. NFS.  It goes like this:
  * - Call nfs_boot_init() to fill in the nfs_diskless struct
- *   (using RARP, bootparam RPC, mountd RPC)
- * - hand craft the swap nfs vnode hanging off a fake mount point
- *	if swdevt[0].sw_dev == NODEV
  * - build the rootfs mount point and call mountnfs() to do the rest.
+ * - hand craft the swap nfs vnode hanging off a fake mount point
+ *     (only if swdevt[0].sw_dev == NODEV)
  */
 int
 nfs_mountroot()
@@ -297,8 +296,12 @@ nfs_mountroot()
 	/*
 	 * Create the root mount point.
 	 */
-	nfs_boot_getfh(&nd.nd_boot, "root", &nd.nd_root);
-	mp = nfs_mount_diskless(&nd.nd_root, "/", 0, &vp);
+	error = nfs_boot_getfh(&nd.nd_root);
+	if (error)
+		return (error);
+	error = nfs_mount_diskless(&nd.nd_root, "/", &mp, &vp);
+	if (error)
+		return (error);
 	printf("root on %s\n", nd.nd_root.ndm_host);
 
 	/*
@@ -321,17 +324,22 @@ nfs_mountroot()
 
 	/* Get root attributes (for the time). */
 	error = VOP_GETATTR(vp, &attr, procp->p_ucred, procp);
-	if (error) panic("nfs_mountroot: getattr for root");
+	if (error)
+		panic("nfs_mountroot: getattr for root");
 	n = attr.va_mtime.tv_sec;
 #ifdef	DEBUG
 	printf("root time: 0x%lx\n", n);
 #endif
 	inittodr(n);
 
+#if 0
 	/* 
 	 * XXX splnet, so networks will receive...
+	 * XXX What system needed this hack?
+	 * XXX Should already be at spl0.
 	 */
 	splnet();
+#endif
 
 #ifdef notyet
 	/* Set up swap credentials. */
@@ -362,8 +370,15 @@ nfs_mountroot()
 	 * Create a fake mount point just for the swap vnode so that the
 	 * swap file can be on a different server from the rootfs.
 	 */
-	nfs_boot_getfh(&nd.nd_boot, "swap", &nd.nd_swap);
-	mp = nfs_mount_diskless(&nd.nd_swap, "/swap", 0, &vp);
+	if ((error = nfs_boot_getfh(&nd.nd_swap)) != 0) {
+		printf("nfs_boot: warning: getfh(swap), error=%d\n", error);
+		return (0);
+	}
+	error = nfs_mount_diskless(&nd.nd_swap, "/swap", &mp, &vp);
+	if (error) {
+		printf("nfs_boot: warning: mount(swap), error=%d\n", error);
+		return (0);
+	}
 #ifdef Lite2_integrated
 	vfs_unbusy(mp, procp);
 #endif
@@ -395,11 +410,11 @@ nfs_mountroot()
 /*
  * Internal version of mount system call for diskless setup.
  */
-static struct mount *
-nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
+static int
+nfs_mount_diskless(ndmntp, mntname, mpp, vpp)
 	struct nfs_dlmount *ndmntp;
-	const char *mntname;
-	int mntflag;
+	const char *mntname;	/* mount point name */
+	struct mount **mpp;
 	struct vnode **vpp;
 {
 	struct mount *mp;
@@ -415,7 +430,7 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 	bzero((char *)mp, (u_long)sizeof(struct mount));
 #endif
 	mp->mnt_op = &nfs_vfsops;
-	mp->mnt_flag = mntflag;
+	/* mp->mnt_flag = 0 */
 
 	/* Get mbuf for server sockaddr. */
 	m = m_get(M_WAIT, MT_SONAME);
@@ -426,10 +441,14 @@ nfs_mount_diskless(ndmntp, mntname, mntflag, vpp)
 
 	error = mountnfs(&ndmntp->ndm_args, mp, m, mntname,
 			 ndmntp->ndm_args.hostname, vpp);
-	if (error)
-		panic("nfs_mountroot: mount %s failed: %d", mntname, error);
+	if (error) {
+		printf("nfs_mountroot: mount %s failed: %d\n",
+		       mntname, error);
+		free(mp, M_MOUNT);
+	} else
+		*mpp = mp;
 
-	return (mp);
+	return (error);
 }
 
 void
