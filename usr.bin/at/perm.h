@@ -1,4 +1,4 @@
-/*	$NetBSD: perm.h,v 1.1 1998/06/27 21:15:08 christos Exp $	*/
+/*	$NetBSD: perm.h,v 1.2 2000/10/04 19:24:59 mjl Exp $	*/
 
 /* 
  *  perm.h -  header for at(1)
@@ -25,4 +25,4 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int check_permission __P((void));
+int check_permission (void);
