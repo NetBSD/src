@@ -1,3 +1,4 @@
+# $NetBSD: md.atari,v 1.5 1999/08/01 20:08:15 abs Exp $
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF68_SVGA
 ./usr/X11R6/bin/XF68_W32
