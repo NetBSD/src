@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.68 2003/09/25 18:56:17 matt Exp $
+#	$NetBSD: INSTALL,v 1.69 2003/10/08 11:11:33 bouyer Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -91,7 +91,7 @@ siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 cbb*	at pci? dev ? function ?	# PCI-CardBus bridge
 ohci*	at pci? dev ? function ?	# Open Host Controller
-pciide*	at pci? dev ? function ?	# PCI IDE Controller
+pciide* at pci? dev ? function ?	# PCI IDE Controller
 obio0	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
@@ -148,11 +148,12 @@ sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 wdc*	at obio? flags 0x1
-wd*	at wdc? channel ? drive ? flags 0x0000
-wd*	at pciide? channel ? drive ? flags 0x0000
+atabus* at wdc? channel ?
+atabus* at pciide? channel ?
 
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+wd*	at atabus? drive ? flags 0x0000
+
+atapibus* at atabus?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
