@@ -1,4 +1,4 @@
-/*	$NetBSD: pmc.c,v 1.2 2003/03/09 00:42:56 lukem Exp $	*/
+/*	$NetBSD: pmc.c,v 1.3 2003/05/21 20:29:51 kristerw Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmc.c,v 1.2 2003/03/09 00:42:56 lukem Exp $");
+__RCSID("$NetBSD: pmc.c,v 1.3 2003/05/21 20:29:51 kristerw Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
+#include <string.h>
 #include <pmc.h>
 
 #include "pmc_private.h"
