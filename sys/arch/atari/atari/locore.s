@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.20 1996/09/10 08:58:42 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.21 1996/09/16 06:25:45 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -602,7 +602,6 @@ sccint:
 
 	/* Level 1 (Software) interrupt handler */
 _lev1intr:
-	moveb	#0, SOFTINT_ADDR	|  Turn off software interrupt
 	moveml	d0-d1/a0-a1,sp@-
 	movl	_stio_addr, a0		|  get KVA of ST-IO area
 	moveb	#0, a0@(SCU_SOFTINT)	|  Turn off software interrupt
@@ -790,7 +789,6 @@ Lstart3:
 	movl	d5,sp@-			|  pass fastmem_start
 	movl	d2,sp@-			|  pass machine id
 	movl	d3,_boothowto		|  save reboot flags
-
 	movl	#ATARI_68030,d1		|  68030 type from loader
 	andl	d2,d1
 	jeq	Ltestfor020		|  Not an 68030, try 68020
@@ -1888,12 +1886,14 @@ Ldoreboot:
 	pmove	a0@,srp			|  and the Supervisor root pointer
 	jra	Ldoboot1		| Ok, continue with actual reboot
 Lmmuoff040:
-	movl	#0,d0
 	.word	0x4e7b,0x0003		|  movc d0,TC
 	.word	0x4e7b,0x0806		|  movc d0,URP
 	.word	0x4e7b,0x0807		|  movc d0,SRP
+
 Ldoboot1:
-	movl	0x4,a0			| fetch reset-vector
+	movl	#0, a0
+	movc	a0,vbr
+	movl	a0@(4), a0		| fetch reset-vector
 	jmp	a0@			| jump through it
 	/* NOTREACHED */
 
