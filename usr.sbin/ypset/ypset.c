@@ -78,7 +78,7 @@ char *dom, *server;
 			fprintf(stderr, "ypset: can't find address for %s\n", server);
 			exit(1);
 		}
-		bcopy(&hp->h_addr, &ypsd.ypsetdom_addr, sizeof(ypsd.ypsetdom_addr));
+		bcopy(hp->h_addr, &ypsd.ypsetdom_addr, sizeof(ypsd.ypsetdom_addr));
 	}
 
 	strncpy(ypsd.ypsetdom_domain, dom, sizeof ypsd.ypsetdom_domain);
