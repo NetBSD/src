@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.8 2002/01/14 23:14:42 bjh21 Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.9 2002/03/22 14:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -58,6 +58,13 @@ struct linux_flock {
 	linux_pid_t l_pid;
 };
 
+struct linux_flock64 {
+	short       l_type;
+	short       l_whence;
+	off_t	    l_start;
+	off_t	    l_len;
+	linux_pid_t l_pid;
+};
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_fcntl.h>
 #elif defined(__m68k__)
