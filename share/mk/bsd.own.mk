@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.283 2002/04/08 12:25:22 wiz Exp $
+#	$NetBSD: bsd.own.mk,v 1.284 2002/04/10 15:05:45 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -31,7 +31,7 @@ PRINTOBJDIR=	echo # prevent infinite recursion
 .endif
 
 .if !defined(_SRC_TOP_)
-# Find the top of the source tree to see if we're inside of $BSDSRCDIR
+# Find the actual top of the source tree
 _SRC_TOP_!= cd ${.CURDIR}; while :; do \
 		here=`pwd`; \
 		[ -f build.sh  ] && [ -d tools ] && { echo $$here; break; }; \
