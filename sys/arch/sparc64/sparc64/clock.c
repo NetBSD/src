@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.67 2004/02/13 11:36:18 wiz Exp $ */
+/*	$NetBSD: clock.c,v 1.68 2004/03/17 14:26:59 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67 2004/02/13 11:36:18 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.68 2004/03/17 14:26:59 pk Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -159,7 +159,6 @@ CFATTACH_DECL(timer, sizeof(struct device),
 
 int clock_wenable __P((struct todr_chip_handle *, int));
 struct chiptime;
-void myetheraddr __P((u_char *));
 int chiptotime __P((int, int, int, int, int, int));
 void timetochip __P((struct chiptime *));
 void stopcounter __P((struct timer_4u *));
@@ -550,40 +549,6 @@ stopcounter(creg)
 	volatile int discard;
 	discard = creg->t_limit;
 	creg->t_limit = 0;
-}
-
-/*
- * XXX this belongs elsewhere
- */
-void
-myetheraddr(cp)
-	u_char *cp;
-{
-	struct idprom *idp;
-
-	if (((idp = idprom) == NULL) ||
-		(((idp->id_ether[0] | idp->id_ether[1] | idp->id_ether[2] |
-			idp->id_ether[3] | idp->id_ether[4] | 
-			idp->id_ether[5]) == 0))) {
-		int node, n;
-
-		node = findroot();
-		if (PROM_getprop(node, "idprom", sizeof *idp, &n, &idp) ||
-		    n != 1) {
-			printf("\nmyetheraddr: clock not setup yet, "
-			       "and no idprom property in /\n");
-			return;
-		}
-	}
-
-	cp[0] = idp->id_ether[0];
-	cp[1] = idp->id_ether[1];
-	cp[2] = idp->id_ether[2];
-	cp[3] = idp->id_ether[3];
-	cp[4] = idp->id_ether[4];
-	cp[5] = idp->id_ether[5];
-	if (idprom == NULL)
-		free(idp, M_DEVBUF);
 }
 
 /*
