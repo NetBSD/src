@@ -31,11 +31,7 @@
 #
 
 #SUBDIR=	common omapip minires server client relay dhcpctl
-SUBDIR=	common omapip minires server relay
-
-.if ${MACHINE} != alpha
-SUBDIR += client
-.endif
+SUBDIR=	common omapip minires server client relay
 
 all-server all-client all-relay: all-common
 
