@@ -1,6 +1,6 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
 .\" $Heimdal: krb5_auth_context.3,v 1.5 2002/09/02 12:42:00 joda Exp $
-.\" $NetBSD: krb5_auth_context.3,v 1.6 2002/09/12 13:19:15 joda Exp $
+.\" $NetBSD: krb5_auth_context.3,v 1.7 2002/12/21 13:20:09 wiz Exp $
 .Dd January 21, 2001
 .Dt KRB5_AUTH_CONTEXT 3
 .Os
@@ -128,12 +128,12 @@ that holds the context for the thread or process.
 .Nm krb5_auth_context
 is used by various functions that are directly related to
 authentication between the server/client. Example of data that this
-structure contains are varius flags, addresses of client and server,
+structure contains are various flags, addresses of client and server,
 port numbers, keyblocks (and subkeys), sequence numbers, replay cache,
 and checksum-type.
 .Pp
 .Fn krb5_auth_con_init
-allocates and initilizes the
+allocates and initializes the
 .Nm krb5_auth_context
 structure. Default values can be changed with
 .Fn krb5_auth_con_setcksumtype
