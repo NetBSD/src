@@ -1,2 +1,0 @@
-gawk: aryprm3.awk:6: fatal: attempt to use array `a (from arr)' in a scalar context
-EXIT CODE: 2

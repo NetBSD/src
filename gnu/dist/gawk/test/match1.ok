@@ -1,6 +1,0 @@
-arr[0] = "foooobazbarrrrr"
-arr[0, "start"] = 1, arr[0, "length"] = 15
-arr[1] = "foooo"
-arr[1, "start"] = 1, arr[1, "length"] = 5
-arr[2] = "barrrrr"
-arr[2, "start"] = 9, arr[2, "length"] = 7

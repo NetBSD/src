@@ -1,2 +1,0 @@
-gawk: arryref4.awk:10: fatal: attempt to use scalar parameter `b' as an array
-EXIT CODE: 2
