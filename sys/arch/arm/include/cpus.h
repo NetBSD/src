@@ -1,4 +1,4 @@
-/*	$NetBSD: cpus.h,v 1.7 2001/03/10 20:15:46 bjh21 Exp $	*/
+/*	$NetBSD: cpus.h,v 1.8 2001/03/11 00:14:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -93,12 +93,6 @@ typedef struct _cpu {
 
 	u_int cpu_id;		/* The CPU id */
 	u_int cpu_ctrl;		/* The CPU control register */
-
-	u_int cpu_svc_r13;	/* local data */
-	u_int cpu_und_r13;	/* local data */
-	u_int cpu_abt_r13;	/* local data */
-	u_int cpu_irq_r13;	/* local data */
-
 } cpu_t;
 
 #ifdef _KERNEL
