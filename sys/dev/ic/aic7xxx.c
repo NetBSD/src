@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.57 2000/06/26 19:38:14 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.58 2000/06/28 17:12:53 mrg Exp $	*/
 
 /*
  * Generic driver for the aic7xxx based adaptec SCSI controllers
@@ -106,7 +106,7 @@
 #include <dev/scsipi/scsipi_debug.h>
 #include <dev/scsipi/scsiconf.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/ic/aic7xxxvar.h>
 #include <dev/microcode/aic7xxx/sequencer.h>

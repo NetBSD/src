@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.18 2000/06/26 14:38:51 mrg Exp $        */
+/* $NetBSD: adwlib.c,v 1.19 2000/06/28 17:12:50 mrg Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -68,7 +68,7 @@
 
 #include <dev/pci/pcidevs.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/ic/adwlib.h>
 #include <dev/ic/adwmcode.h>

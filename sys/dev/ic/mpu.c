@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu.c,v 1.3 1999/10/05 03:29:22 itohy Exp $	*/
+/*	$NetBSD: mpu.c,v 1.4 2000/06/28 17:13:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <vm/vm.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>

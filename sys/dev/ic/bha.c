@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.36 2000/03/30 12:45:30 augustss Exp $	*/
+/*	$NetBSD: bha.c,v 1.37 2000/06/28 17:12:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 
-#include <vm/vm.h>			/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>

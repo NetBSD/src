@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.34 2000/05/29 17:37:13 jhawk Exp $	*/
+/*	$NetBSD: i82557.c,v 1.35 2000/06/28 17:12:57 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <machine/endian.h>
 
-#include <vm/vm.h>		/* for PAGE_SIZE */
+#include <uvm/uvm_extern.h>
 
 #if NRND > 0
 #include <sys/rnd.h>

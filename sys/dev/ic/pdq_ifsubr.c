@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.27 2000/06/26 14:21:09 mrg Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.28 2000/06/28 17:13:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -92,7 +92,9 @@
 #include <netns/ns_if.h>
 #endif
 
+#ifndef __NetBSD__
 #include <vm/vm.h>
+#endif
 
 #if defined(__FreeBSD__)
 /*

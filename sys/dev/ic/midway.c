@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.40 2000/04/12 10:36:45 itojun Exp $	*/
+/*	$NetBSD: midway.c,v 1.41 2000/06/28 17:13:01 mrg Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -157,7 +157,11 @@
 #include <net/if.h>
 #include <net/if_atm.h>
 
+#ifdef __NetBSD__
+#include <uvm/uvm_extern.h>
+#else
 #include <vm/vm.h>
+#endif
 
 #if defined(INET) || defined(INET6)
 #include <netinet/in.h>

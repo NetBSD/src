@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.2 2000/06/13 17:21:06 nathanw Exp $ */
+/* $NetBSD: bt463.c,v 1.3 2000/06/28 17:12:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,8 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/tgareg.h>
