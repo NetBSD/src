@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)terminal.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: terminal.c,v 1.3 1994/02/25 03:00:47 cgd Exp $";
+/* from: static char sccsid[] = "@(#)terminal.c	8.2 (Berkeley) 2/16/95"; */
+static char rcsid[] = "$NetBSD: terminal.c,v 1.4 1996/02/24 01:18:50 jtk Exp $";
 #endif /* not lint */
 
 #include <arpa/telnet.h>
@@ -141,7 +141,8 @@ ttyflush(drop)
 		n1 = n0 - n;
 		if (!drop)
 			n1 = TerminalWrite(ttyoring.bottom, n1);
-		n += n1;
+		if (n1 > 0)
+			n += n1;
 	}
 	ring_consumed(&ttyoring, n);
     }

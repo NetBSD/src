@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)authenc.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: authenc.c,v 1.3 1994/02/25 03:00:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: authenc.c,v 1.4 1996/02/24 01:18:30 jtk Exp $";
 #endif /* not lint */
 
 #if	defined(AUTHENTICATION)

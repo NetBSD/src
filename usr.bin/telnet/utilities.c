@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: utilities.c,v 1.3 1994/02/25 03:00:51 cgd Exp $";
+/* from: static char sccsid[] = "@(#)utilities.c	8.3 (Berkeley) 5/30/95"; */
+static char rcsid[] = "$NetBSD: utilities.c,v 1.4 1996/02/24 01:18:53 jtk Exp $";
 #endif /* not lint */
 
 #define	TELOPTS
@@ -524,7 +524,7 @@ printsub(direction, pointer, length)
 		    break;
 		}
 		break;
-		
+
 	    case LM_SLC:
 		fprintf(NetTrace, "SLC");
 		for (i = 2; i < length - 2; i += 3) {
@@ -656,7 +656,7 @@ printsub(direction, pointer, length)
 			    fprintf(NetTrace, "\n");
 
 			break;
-				
+
 		    default:
 			fprintf(NetTrace, " %d", pointer[i]);
 			break;

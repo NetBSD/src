@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)tn3270.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$Id: tn3270.c,v 1.3 1994/02/25 03:00:48 cgd Exp $";
+/* from: static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95"; */
+static char rcsid[] = "$NetBSD: tn3270.c,v 1.4 1996/02/24 01:18:51 jtk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -243,7 +243,7 @@ Push3270()
     if (save) {
 	if (Ifrontp+save > Ibuf+sizeof Ibuf) {
 	    if (Ibackp != Ibuf) {
-		memcpy(Ibuf, Ibackp, Ifrontp-Ibackp);
+		memmove(Ibuf, Ibackp, Ifrontp-Ibackp);
 		Ifrontp -= (Ibackp-Ibuf);
 		Ibackp = Ibuf;
 	    }

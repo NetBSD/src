@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fdset.h	8.1 (Berkeley) 6/6/93
- *	$Id: fdset.h,v 1.3 1994/02/25 03:00:27 cgd Exp $
+ *	$NetBSD: fdset.h,v 1.4 1996/02/24 01:18:38 jtk Exp $
  */
 
 /*
