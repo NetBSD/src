@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.124 2003/07/02 13:43:05 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.125 2003/07/12 16:17:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.124 2003/07/02 13:43:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.125 2003/07/12 16:17:08 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -125,10 +125,6 @@ static int lfs_mountfs(struct vnode *, struct mount *, struct proc *);
 extern const struct vnodeopv_desc lfs_vnodeop_opv_desc;
 extern const struct vnodeopv_desc lfs_specop_opv_desc;
 extern const struct vnodeopv_desc lfs_fifoop_opv_desc;
-extern int lfs_subsys_pages;	
-extern int  locked_queue_count;
-extern long locked_queue_bytes;
-extern struct simplelock lfs_subsys_lock;
 
 pid_t lfs_writer_daemon = 0;
 int lfs_do_flush = 0;
@@ -221,6 +217,7 @@ lfs_writerd(void *arg)
 		/*
 		 * If global state wants a flush, flush everything.
 		 */
+		simple_lock(&lfs_subsys_lock);
 		while (lfs_do_flush || locked_queue_count > LFS_MAX_BUFS || 
 			locked_queue_bytes > LFS_MAX_BYTES ||
 			lfs_subsys_pages > LFS_MAX_PAGES) {
@@ -241,7 +238,7 @@ lfs_writerd(void *arg)
 			lfs_flush(NULL, SEGM_WRITERD);
 			lfs_do_flush = 0;
 		}
-		wakeup(&lfs_subsys_pages);
+		simple_unlock(&lfs_subsys_lock);
 	}
 	/* NOTREACHED */
 }
@@ -850,12 +847,12 @@ check_segsum(struct lfs *fs, daddr_t offset,
 	if (flags & CHECK_UPDATE) {
 		fs->lfs_avail -= (offset - oldoffset);
 		/* Don't clog the buffer queue */
+		simple_lock(&lfs_subsys_lock);
 		if (locked_queue_count > LFS_MAX_BUFS ||
 		    locked_queue_bytes > LFS_MAX_BYTES) {
-			lfs_writer_enter(fs, "cssdirop");
 			lfs_flush(fs, SEGM_CKP);
-			lfs_writer_leave(fs);
 		}
+		simple_unlock(&lfs_subsys_lock);
 	}
 
     err2:
