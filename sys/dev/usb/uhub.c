@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.56 2001/11/20 13:48:03 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.57 2001/11/20 16:08:37 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.56 2001/11/20 13:48:03 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.57 2001/11/20 16:08:37 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,7 @@ USB_ATTACH(uhub)
 	 *  For all ports
 	 *     get port status
 	 *     if device connected
+	 *        wait 100 ms
 	 *        turn on reset
 	 *        wait
 	 *        clear C_PORT_RESET
