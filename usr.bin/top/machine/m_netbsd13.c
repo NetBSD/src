@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd13.c,v 1.4 1999/04/12 06:02:27 ross Exp $	*/
+/*	$NetBSD: m_netbsd13.c,v 1.5 1999/06/28 22:13:04 tron Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.4 1999/04/12 06:02:27 ross Exp $
+ * $Id: m_netbsd13.c,v 1.5 1999/06/28 22:13:04 tron Exp $
  */
 #define UVM
 
@@ -405,8 +405,10 @@ get_system_info(si)
 	memory_stats[5] = dbtob(totalsize) / 1024 - memory_stats[4];
 	/*  Free here, before we malloc again in the next
 	 *  iteration of this loop.  */
-	if (seporig)
+	if (seporig) {
 		free(seporig);
+		seporig = NULL;
+	}
     } while (0);
     /*  Catch the case where we malloc'd, but then exited the
      *  loop due to nswap != rnswap.  */
