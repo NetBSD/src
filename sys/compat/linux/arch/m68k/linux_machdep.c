@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6 2000/12/22 22:58:57 jdolecek Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.7 2001/02/04 10:16:43 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,8 @@
 
 #include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_syscallargs.h>
+
+#include <m68k/m68k.h>
 
 /* XXX should be in an include file somewhere */
 #define CC_PURGE	1
