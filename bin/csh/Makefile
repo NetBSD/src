@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 5/31/93
-#	$Id: Makefile,v 1.6 1994/09/21 00:10:23 mycroft Exp $
+#	$Id: Makefile,v 1.7 1994/12/18 11:42:39 cgd Exp $
 #
 # C Shell with process control; VM/UNIX VAX Makefile
 # Bill Joy UC Berkeley; Jim Kulp IIASA, Austria
@@ -41,5 +41,9 @@ const.h: const.c
 	    sort >> $@
 
 .depend alloc.o: const.h err.h 
+
+.if make(install)
+SUBDIR+= USD.doc
+.endif
 
 .include <bsd.prog.mk>
