@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.17 1998/03/01 02:24:13 fvdl Exp $	*/
+/*	$NetBSD: mman.h,v 1.18 1998/05/30 22:18:56 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -38,6 +38,15 @@
 #ifndef _SYS_MMAN_H_
 #define _SYS_MMAN_H_
 
+#include <sys/featuretest.h>
+
+#include <machine/ansi.h>
+
+#ifdef	_BSD_SIZE_T_
+typedef	_BSD_SIZE_T_	size_t;
+#undef	_BSD_SIZE_T_
+#endif
+
 /*
  * Protections are chosen from these bits, or-ed together
  */
@@ -71,6 +80,14 @@
 #define	MAP_ANON	0x1000	/* allocated from memory, swap space */
 
 /*
+ * Flags to msync
+ */
+#define	MS_ASYNC	0x01	/* perform asynchronous writes */
+#define	MS_INVALIDATE	0x02	/* invalidate cached data */
+#define	MS_SYNC		0x04	/* perform synchronous writes */
+
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
+/*
  * Advice to madvise
  */
 #define	MADV_NORMAL	0	/* no further special treatment */
@@ -78,20 +95,13 @@
 #define	MADV_SEQUENTIAL	2	/* expect sequential page references */
 #define	MADV_WILLNEED	3	/* will need these pages */
 #define	MADV_DONTNEED	4	/* dont need these pages */
-
-/*
- * Flags to msync
- */
-#define	MS_ASYNC	0x01	/* perform asynchronous writes */
-#define	MS_INVALIDATE	0x02	/* invalidate cached data */
-#define	MS_SYNC		0x04	/* perform synchronous writes */
+#endif
 
 #ifndef _KERNEL
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-/* Some of these int's should probably be size_t's */
 void   *mmap __P((void *, size_t, int, int, int, off_t));
 int	munmap __P((void *, size_t));
 int	mprotect __P((void *, size_t, int));
@@ -101,9 +111,11 @@ int	__msync13 __P((void *, size_t, int));
 #else
 int	msync __P((void *, size_t, int))	__RENAME(__msync13);
 #endif
-int	mlock __P((void *, size_t));
-int	munlock __P((void *, size_t));
+int	mlock __P((const void *, size_t));
+int	munlock __P((const void *, size_t));
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 int	madvise __P((void *, size_t, int));
+#endif
 __END_DECLS
 
 #endif /* !_KERNEL */
