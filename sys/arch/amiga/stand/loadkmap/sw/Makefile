@@ -1,3 +1,9 @@
-# $NetBSD: Makefile,v 1.1 1996/06/08 15:28:55 is Exp $
+# $NetBSD: Makefile,v 1.2 1996/06/08 15:42:01 is Exp $
+
+BINDIR=/usr/share/keymaps/amiga
+NOMAN=
+
+PROG=sw-kbdmap
+MAP=sw.map
 
 .include <bsd.prog.mk>
