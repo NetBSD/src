@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2002/01/12 12:23:48 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2002/03/16 16:55:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -158,16 +158,16 @@ struct bdevsw bdevsw[] = {
 
 int nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 #include "vt.h"
 #include "vidcconsole.h"                                 
@@ -291,11 +291,11 @@ struct cdevsw cdevsw[] = {
 	cdev_notdef(),			/* 76: USB scanner */
 	cdev_notdef(),			/* 77: */
         cdev_notdef(),			/* 78: bicons pseudo-dev */
-	cdev_i4b_init(NI4B, i4b),		/* 79: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 80: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 81: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 82: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 83: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),		/* 79: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 80: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 81: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 82: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 83: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 84: clockctl pseudo device */
 };
 

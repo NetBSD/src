@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.6 2002/01/21 12:31:42 martin Exp $
+# $NetBSD: GENERIC_ISDN,v 1.7 2002/03/16 16:55:55 martin Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -67,12 +67,12 @@ isic* at pcmcia? function ?
 # ISDN user land devices, drivers and pseudo-devices.
 #---------------------------------------------------------------------
 #
-pseudo-device	i4b		  # communication with userland daemon
-pseudo-device	i4btrc		2 # userland driver to do ISDN tracing
-pseudo-device	i4bctl		  # userland driver to control the whole thing
-pseudo-device	i4brbch		4 # userland driver for access to raw B channel
-pseudo-device	i4btel		2 # userland driver for telephony
+pseudo-device	isdn		  # communication with userland daemon
+pseudo-device	isdntrc		2 # userland driver to do ISDN tracing
+pseudo-device	isdnctl		  # userland driver to control the whole thing
+pseudo-device	isdnbchan	4 # userland driver for access to raw B channel
+pseudo-device	isdntel		2 # userland driver for telephony
 options 	IPR_VJ		  # compile support for VJ compression
-pseudo-device	i4bipr		2 # network driver for IP over raw HDLC ISDN
-pseudo-device	i4bisppp	2 # synchronous PPP over ISDN
+pseudo-device	irip		2 # network driver for IP over raw HDLC ISDN
+pseudo-device	ippp		2 # synchronous PPP over ISDN
 #---------------------------------------------------------------------

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.1 2002/03/06 02:13:50 simonb Exp $ */
+/* $NetBSD: conf.c,v 1.2 2002/03/16 16:55:58 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.1 2002/03/06 02:13:50 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.2 2002/03/16 16:55:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,16 +252,16 @@ cdev_decl(urio);
 #include "uscanner.h"
 cdev_decl(uscanner);
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 #include <altq/altqconf.h>
 
@@ -334,11 +334,11 @@ struct cdevsw cdevsw[] =
 	cdev_ugen_init(NUGEN,ugen),	/* 48: USB generic driver */
 	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
-	cdev_i4b_init(NI4B, i4b),		/* 51: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 52: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 53: i4b raw b-chnl access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 54: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel),	/* 55: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),		/* 51: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl),	/* 52: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan),	/* 53: isdn raw b-chnl access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc),	/* 54: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel),	/* 55: isdn phone device */
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
 	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
