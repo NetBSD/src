@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.7 1998/07/27 16:43:26 mycroft Exp $	*/
+/*	$NetBSD: pax.c,v 1.8 1998/07/28 05:31:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.7 1998/07/27 16:43:26 mycroft Exp $");
+__RCSID("$NetBSD: pax.c,v 1.8 1998/07/28 05:31:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,6 +297,7 @@ sig_cleanup(which_sig)
 	if (tflag)
 		atdir_end();
 	exit(1);
+	/* NOTREACHED */
 }
 
 /*

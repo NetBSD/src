@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.24 1997/07/20 21:27:36 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.25 1998/07/28 05:31:27 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.24 1997/07/20 21:27:36 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.25 1998/07/28 05:31:27 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ tryexec(cmd, argv, envp)
 #endif
 		setparam(argv + 1);
 		exraise(EXSHELLPROC);
-		/*NOTREACHED*/
+		/* NOTREACHED */
 	}
 	errno = e;
 }

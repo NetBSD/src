@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.22 1998/07/28 02:47:19 mycroft Exp $	*/
+/*	$NetBSD: csh.c,v 1.23 1998/07/28 05:31:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.22 1998/07/28 02:47:19 mycroft Exp $");
+__RCSID("$NetBSD: csh.c,v 1.23 1998/07/28 05:31:23 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,12 +218,18 @@ main(argc, argv)
     (void) fclose(cshin);
     (void) fclose(cshout);
     (void) fclose(csherr);
-    if (!(cshin  = funopen((void *) &SHIN,  readf, writef, seekf, closef)))
+    if (!(cshin  = funopen((void *) &SHIN,  readf, writef, seekf, closef))) {
 	exit(1);
-    if (!(cshout = funopen((void *) &SHOUT, readf, writef, seekf, closef)))
+	/* NOTREACHED */
+    }
+    if (!(cshout = funopen((void *) &SHOUT, readf, writef, seekf, closef))) {
 	exit(1);
-    if (!(csherr = funopen((void *) &SHERR, readf, writef, seekf, closef)))
+	/* NOTREACHED */
+    }
+    if (!(csherr = funopen((void *) &SHERR, readf, writef, seekf, closef))) {
 	exit(1);
+	/* NOTREACHED */
+    }
     (void) setvbuf(cshin,  NULL, _IOLBF, 0);
     (void) setvbuf(cshout, NULL, _IOLBF, 0);
     (void) setvbuf(csherr, NULL, _IOLBF, 0);

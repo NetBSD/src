@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd.c,v 1.9 1997/09/14 08:51:39 lukem Exp $	*/
+/*	$NetBSD: pwd.c,v 1.10 1998/07/28 05:31:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pwd.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: pwd.c,v 1.9 1997/09/14 08:51:39 lukem Exp $");
+__RCSID("$NetBSD: pwd.c,v 1.10 1998/07/28 05:31:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ main(argc, argv)
 		err(1, "%s", "");
 	(void)printf("%s\n", p);
 	exit(0);
+	/* NOTREACHED */
 }
 
 void
@@ -96,4 +97,5 @@ usage()
 
 	(void)fprintf(stderr, "usage: pwd\n");
 	exit(1);
+	/* NOTREACHED */
 }

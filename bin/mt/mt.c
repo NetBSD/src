@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $	*/
+/*	$NetBSD: mt.c,v 1.28 1998/07/28 05:31:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.27 1998/07/27 17:06:48 mycroft Exp $");
+__RCSID("$NetBSD: mt.c,v 1.28 1998/07/28 05:31:26 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,4 +312,5 @@ usage()
 {
 	(void)fprintf(stderr, "usage: mt [-f device] command [ count ]\n");
 	exit(1);
+	/* NOTREACHED */
 }

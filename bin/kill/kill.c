@@ -1,4 +1,4 @@
-/*	$NetBSD: kill.c,v 1.14 1998/07/28 05:15:47 mycroft Exp $	*/
+/*	$NetBSD: kill.c,v 1.15 1998/07/28 05:31:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kill.c,v 1.14 1998/07/28 05:15:47 mycroft Exp $");
+__RCSID("$NetBSD: kill.c,v 1.15 1998/07/28 05:31:24 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,9 +91,11 @@ main(argc, argv)
 				nosig(*argv);
 			(void)printf("%s\n", sys_signame[numsig]);
 			exit(0);
+			/* NOTREACHED */
 		}
 		printsignals(stdout);
 		exit(0);
+		/* NOTREACHED */
 	}
 
 	if (!strcmp(*argv, "-s")) {
@@ -165,6 +167,7 @@ nosig(name)
 	warnx("unknown signal %s; valid signals:", name);
 	printsignals(stderr);
 	exit(1);
+	/* NOTREACHED */
 }
 
 void
@@ -191,4 +194,5 @@ usage()
 	(void)fprintf(stderr, "       kill -signal_name pid ...\n");
 	(void)fprintf(stderr, "       kill -signal_number pid ...\n");
 	exit(1);
+	/* NOTREACHED */
 }
