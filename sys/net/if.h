@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.77 2002/05/27 02:53:49 itojun Exp $	*/
+/*	$NetBSD: if.h,v 1.78 2002/05/27 13:46:45 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -749,6 +749,8 @@ char	*ether_sprintf __P((const u_char *));
 void	if_alloc_sadl __P((struct ifnet *));
 void	if_free_sadl __P((struct ifnet *));
 void	if_attach __P((struct ifnet *));
+void	if_attachdomain __P((void));
+void	if_attachdomain1 __P((struct ifnet *));
 void	if_deactivate __P((struct ifnet *));
 void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
