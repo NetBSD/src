@@ -1,4 +1,4 @@
-.\"     $NetBSD: ipkdb.9,v 1.2 2002/05/25 11:07:28 wiz Exp $
+.\"     $NetBSD: ipkdb.9,v 1.3 2002/05/25 11:37:34 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,7 +66,9 @@ The machine-dependent code must support this interface for operation with
 .Pp
 During system bootstrap, machine-dependent code must invoke
 .Fn ipkdb_init .
-If the kernel is booted with RB_KDB set in boothowto, then
+If the kernel is booted with
+.Dv RB_KDB
+set in boothowto, then
 .Xr ipkdb 4
 is enabled by invoking
 .Fn ipkdb_connect ,
@@ -74,26 +76,28 @@ setting the
 .Fa when
 argument to 0.
 .Pp
-.Fn ipkdbcmds()
+.Fn ipkdbcmds
 is invoked by machine-dependent code when the trap mechanism
-determines that the debugger should be entered, i.e. on a single step
+determines that the debugger should be entered, i.e., on a single step
 or breakpoint interrupt from kernel code.  The trapping mechanism
 should already have stored the registers into the global area
 ipkdbregs.  The layout of this area must be the same as that expected
-by GDB.  Valid return values are:
+by
+.Xr gdb 1 .
+Valid return values are:
 .Pp
-.Bl -tag -offset indent -width RI_CURSORCLIP -compact
-.It IPKDB_CMD_RUN
+.Bl -tag -offset indent -width IPKDB_CMD_EXITXX -compact
+.It Dv IPKDB_CMD_RUN
 user wants to continue
-.It IPKDB_CMD_STEP
+.It Dv IPKDB_CMD_STEP
 user wants to do single stepping
-.It IPKDB_CMD_EXIT
+.It Dv IPKDB_CMD_EXIT
 user has detached from debugging
 .El
 .Sh FUNCTIONS
 The machine-dependent code must provide the following functions for
 the machine-independent code.
-.Bl -tag -width compact
+.Bl -tag -width ipkdbif_initXXXXXXX -compact
 .It Fn ipkdbinit ""
 This routine gets called when the debugger should be entered for the
 first time.
@@ -110,22 +114,32 @@ driver must invoke
 .Fn ipkdbif_init
 with
 .Fa kip
-specifying a struct ipkdb_if plus some additional parameters that
-allow it to access the devices registers, hopefully using bus_space_*
-methods.  In the ipkdb_if structure, the attach routine must
-initialize the following fields:
+specifying a
+.Fa struct ipkdb_if
+plus some additional parameters that allow it to access the devices
+registers, hopefully using
+.Xr bus_space 9
+methods.  In the
+.Fa ipkdb_if
+structure, the attach routine must initialize the following fields:
 .Pp
-.Bl -tag -offset indent -width RI_CURSORCLIP -compact
+.Bl -tag -offset indent -width myenetaddr -compact
 .It myenetaddr
 fill this with the own ethernet address of the device/machine
 .It flags
-mark at least IPKDB_MYHW here
+mark at least
+.Dv IPKDB_MYHW
+here
 .It name
 name of the device, only used for a message
 .It start
-routine called every time IPKDB is entered
+routine called every time
+.Nm
+is entered
 .It leave
-routine called every time IPKDB is left
+routine called every time
+.Nm
+is left
 .It receive
 routine called to receive a packet
 .It send
@@ -134,9 +148,11 @@ routine called to send a packet
 .Pp
 Additional fields that may be set are:
 .Pp
-.Bl -tag -offset indent -width RI_CURSORCLIP -compact
+.Bl -tag -offset indent -width myinetaddr -compact
 .It myinetaddr
-fill this with the own internet address, and mark IPKDB_MYIP in flags
+fill this with the own internet address, and mark
+.Dv IPKDB_MYIP
+in flags
 .It port
 may be used as a pointer to some device
 .El
@@ -144,7 +160,7 @@ may be used as a pointer to some device
 This routine should fetch a byte from address
 .Fa c .
 It must not enter any
-trap handling code, but instead return -1 on inability to access the data.
+trap handling code, but instead return \-1 on inability to access the data.
 .It Fn ipkdbsbyte "c" "i"
 This routine should set the byte pointed to by
 .Fa c
@@ -153,5 +169,6 @@ to the value given as
 The routine must not enter any trap handling code.  Furthermore it should
 reset the modification bit in the relevant page table entry to the value
 before the store.
+.El
 .Sh SEE ALSO
 .Xr ipkdb 4
