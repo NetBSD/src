@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_bus_mem.c,v 1.5 2000/11/29 05:56:49 thorpej Exp $ */
+/* $NetBSD: irongate_bus_mem.c,v 1.6 2000/11/29 06:29:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.5 2000/11/29 05:56:49 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.6 2000/11/29 06:29:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,16 +53,12 @@ __KERNEL_RCSID(1, "$NetBSD: irongate_bus_mem.c,v 1.5 2000/11/29 05:56:49 thorpej
 #include <alpha/pci/irongatereg.h>
 #include <alpha/pci/irongatevar.h>
 
-void	irongate_bus_mem_init_hook(bus_space_tag_t, void *);
-
 #define	CHIP		irongate
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct irongate_config *)(v))->ic_mallocsafe)
 #define	CHIP_MEM_EXTENT(v)	(((struct irongate_config *)(v))->ic_mem_ex)
 
 #define	CHIP_MEM_SYS_START(v)	IRONGATE_MEM_BASE
-
-#define	CHIP_MEM_INIT_HOOK(t, v) irongate_bus_mem_init_hook((t), (v))
 
 /* 
  * AMD 751 core logic appears on EV6.  We require at least EV56 
@@ -78,7 +74,7 @@ extern phys_ram_seg_t mem_clusters[];
 extern int mem_cluster_cnt;
 
 void
-irongate_bus_mem_init_hook(bus_space_tag_t t, void *v)
+irongate_bus_mem_init2(bus_space_tag_t t, void *v)
 {
 	int i, error;
 
