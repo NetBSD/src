@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2004/10/23 21:24:05 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -125,16 +125,6 @@ static __inline void softintr(int);
 #define APIC_LEVEL(l)   ((l) << 4)
 
 /*
- * compiler barrier: prevent reordering of instructions.
- * XXX something similar will move to <sys/cdefs.h>
- * or thereabouts.
- * This prevents the compiler from reordering code around
- * this "instruction", acting as a sequence point for code generation.
- */
-
-#define	__splbarrier() __asm __volatile("":::"memory")
-
-/*
  * Add a mask to cpl, and return the old value of cpl.
  */
 static __inline int
@@ -146,7 +136,7 @@ splraise(int nlevel)
 	olevel = ci->ci_ilevel;
 	if (nlevel > olevel)
 		ci->ci_ilevel = nlevel;
-	__splbarrier();
+	__insn_barrier();
 	return (olevel);
 }
 
@@ -161,7 +151,7 @@ spllower(int nlevel)
 	u_int32_t imask;
 	u_long psl;
 
-	__splbarrier();
+	__insn_barrier();
 
 	imask = IUNMASK(ci, nlevel);
 	psl = read_psl();

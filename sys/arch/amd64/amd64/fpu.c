@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.11 2004/03/05 21:21:14 drochner Exp $	*/
+/*	$NetBSD: fpu.c,v 1.12 2004/10/31 10:39:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.11 2004/03/05 21:21:14 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.12 2004/10/31 10:39:34 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -358,8 +358,7 @@ fpusave_lwp(struct lwp *l, int save)
 			}
 		}
 #else
-		__splbarrier();		/* XXX replace by generic barrier */
-		;
+		__insn_barrier();
 #endif
 	}
 #else
