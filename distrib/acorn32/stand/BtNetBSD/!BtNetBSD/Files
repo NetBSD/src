@@ -1,4 +1,4 @@
-$NetBSD: Files,v 1.1.1.1 2002/05/09 20:03:57 jdolecek Exp $
+$NetBSD: Files,v 1.2 2004/06/08 22:27:16 gavan Exp $
 
 FBInstall               - describes how to install
 Settype                 - types all file for RiscOS
@@ -11,8 +11,9 @@ List of files of !BtNetBSD :
 !Sprites                } Standard Application Files
 !Sprites22              }
 !Edit                   - Edits the `fastboot' file
-Banner                  - RiscBSD banner module
-BtNetBSD                - RiscBSD bootloader
+Banner                  - NetBSD banner module
+BtNetBSD                - Old NetBSD bootloader
+boot32                  - New NetBSD bootloader
 checkro403              - Tests if we're running RO4.03 for MemFix
 MemFix                  - Module repairing memory layout reporting for Kinetic
 TestBoot                - Fastboot tester
