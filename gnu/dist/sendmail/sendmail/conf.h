@@ -10,7 +10,7 @@
  * the sendmail distribution.
  *
  *
- *	Id: conf.h,v 8.496.4.37 2001/02/12 21:40:16 gshapiro Exp
+ *	Id: conf.h,v 8.496.4.54 2001/07/31 22:30:24 gshapiro Exp
  */
 
 /*
@@ -84,7 +84,7 @@ struct rusage;	/* forward declaration to get gcc to shut up in wait.h */
 #define MAXMIMEARGS	20		/* max args in Content-Type: */
 #define MAXMIMENESTING	20		/* max MIME multipart nesting */
 #define QUEUESEGSIZE	1000		/* increment for queue size */
-#define MAXQFNAME	20		/* max qf file name length */
+#define MAXQFNAME	21		/* max qf file name length */
 #define MACBUFSIZE	4096		/* max expanded macro buffer size */
 #define TOBUFSIZE	SM_ARG_MAX	/* max buffer to hold address list */
 #define MAXSHORTSTR	203		/* max short string length */
@@ -488,6 +488,7 @@ typedef int		pid_t;
 #  endif /* ! __svr4__ */
 #  define GIDSET_T	gid_t
 #  define USE_SA_SIGACTION	1	/* use sa_sigaction field */
+#  define HASSTRERROR	1	/* has strerror(3) */
 #  if _FFR_MILTER
 #   define BROKEN_PTHREAD_SLEEP	1	/* sleep after pthread_create() fails */
 #  endif /* _FFR_MILTER */
@@ -551,6 +552,9 @@ typedef int		pid_t;
 #   undef _PATH_SENDMAILPID	/* tmpfs /var/run added in 2.8 */
 #   define _PATH_SENDMAILPID	"/var/run/sendmail.pid"
 #  endif /* SOLARIS >= 20800 || (SOLARIS < 10000 && SOLARIS >= 208) */
+#  if SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209)
+#   define HASURANDOMDEV	1	/* /dev/[u]random added in S9 */
+#  endif /* SOLARIS >= 20900 || (SOLARIS < 10000 && SOLARIS >= 209) */
 #  ifndef HASGETUSERSHELL
 #   define HASGETUSERSHELL 0	/* getusershell(3) causes core dumps pre-2.7 */
 #  endif /* ! HASGETUSERSHELL */
@@ -864,9 +868,11 @@ typedef int		pid_t;
 #ifdef __bsdi__
 # include <paths.h>
 # define HASUNSETENV	1	/* has the unsetenv(3) call */
+# define HASSETREUID	0	/* BSD-OS has broken setreuid(2) emulation */
 # define HASSETSID	1	/* has the setsid(2) POSIX syscall */
 # define USESETEUID	1	/* has usable seteuid(2) call */
 # define HASFCHMOD	1	/* has fchmod(2) syscall */
+# define HASFCHOWN	1	/* has fchown(2) syscall */
 # define HASSETLOGIN	1	/* has setlogin(2) */
 # define HASSNPRINTF	1	/* has snprintf(3) and vsnprintf(3) */
 # define HASUNAME	1	/* has uname(2) syscall */
@@ -893,6 +899,9 @@ typedef int		pid_t;
 # if defined(_BSDI_VERSION) && _BSDI_VERSION >= 199701	/* on 3.x */
 #  define HASSETUSERCONTEXT 1	/* has setusercontext */
 # endif /* defined(_BSDI_VERSION) && _BSDI_VERSION >= 199701 */
+# if defined(_BSDI_VERSION) && _BSDI_VERSION >= 199910	/* on 4.x */
+#  define HASURANDOMDEV	1	/* has /dev/urandom(4) */
+# endif /* defined(_BSDI_VERSION) && _BSDI_VERSION >= 199910 */
 #endif /* __bsdi__ */
 
 
@@ -1005,6 +1014,7 @@ typedef int		pid_t;
 #  undef SPT_TYPE
 #  define SPT_TYPE	SPT_BUILTIN	/* setproctitle is in libc */
 #  define HASSETLOGIN	1	/* has setlogin(2) */
+#  define HASSETREUID	0	/* OpenBSD has broken setreuid(2) emulation */
 #  define HASURANDOMDEV	1	/* has /dev/urandom(4) */
 #  if OpenBSD < 199912
 #   define HASSTRL	0	/* strlcat(3) is broken in 2.5 and earlier */
@@ -1471,10 +1481,10 @@ extern void		*malloc();
 #   else /* (GLIBC_VERSION >= 0x201) */
 #    include <linux/in6.h>	/* IPv6 support */
 #   endif /* (GLIBC_VERSION >= 0x201) */
-#   if (GLIBC_VERSION == 0x201 && !defined(NEEDSGETIPNODE))
+#   if (GLIBC_VERSION >= 0x201 && !defined(NEEDSGETIPNODE))
      /* Have APIs in <netdb.h>, but no support in glibc */
 #    define NEEDSGETIPNODE	1
-#   endif /* (GLIBC_VERSION == 0x201 && ! NEEDSGETIPNODE) */
+#   endif /* (GLIBC_VERSION >= 0x201 && !defined(NEEDSGETIPNODE)) */
 #   undef GLIBC_VERSION
 #  endif /* defined(__GLIBC__) && defined(__GLIBC_MINOR__) */
 # endif /* NETINET6 */
@@ -1717,6 +1727,7 @@ typedef int		pid_t;
 # include <sys/mkdev.h>
 # define __svr4__
 # define SYS5SIGNALS		1
+# define HASFCHOWN		1	/* has fchown(2) call */
 # define HASSETSID		1
 # define HASSNPRINTF		1
 # define HASSETREUID		1
@@ -2246,7 +2257,9 @@ typedef struct msgb		mblk_t;
 /* general BSD defines */
 #ifdef BSD
 # define HASGETDTABLESIZE 1	/* has getdtablesize(2) call */
-# define HASSETREUID	1	/* has setreuid(2) call */
+# ifndef HASSETREUID
+#  define HASSETREUID	1	/* has setreuid(2) call */
+# endif /* ! HASSETREUID */
 # define HASINITGROUPS	1	/* has initgroups(3) call */
 # ifndef IP_SRCROUTE
 #  define IP_SRCROUTE	1	/* can check IP source routing */
@@ -2513,6 +2526,10 @@ typedef struct msgb		mblk_t;
 #ifndef S_IWOTH
 # define S_IWOTH		0002
 #endif /* ! S_IWOTH */
+
+#ifndef O_ACCMODE
+# define O_ACCMODE	(O_RDONLY|O_WRONLY|O_RDWR)
+#endif /* ! O_ACCMODE */
 
 /* close-on-exec flag */
 #ifndef FD_CLOEXEC
