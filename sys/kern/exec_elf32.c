@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.37 1998/09/12 17:20:02 christos Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.38 1998/10/01 16:06:24 erh Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -107,12 +107,6 @@
 #include <compat/ibcs2/ibcs2_exec.h>
 #endif
 
-#define	CONCAT(x,y)	__CONCAT(x,y)
-#define	ELFNAME(x)	CONCAT(elf,CONCAT(ELFSIZE,CONCAT(_,x)))
-#define	ELFNAME2(x,y)	CONCAT(x,CONCAT(_elf,CONCAT(ELFSIZE,CONCAT(_,y))))
-#define	ELFNAMEEND(x)	CONCAT(x,CONCAT(_elf,ELFSIZE))
-#define	ELFDEFNNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
-
 int	ELFNAME(check_header) __P((Elf_Ehdr *, int));
 int	ELFNAME(load_file) __P((struct proc *, struct exec_package *, char *,
 	    struct exec_vmcmd_set *, u_long *, struct elf_args *, Elf_Addr *));
@@ -145,8 +139,8 @@ struct emul ELFNAMEEND(emul_netbsd) = {
 
 int (*ELFNAME(probe_funcs)[]) __P((struct proc *, struct exec_package *,
     Elf_Ehdr *, char *, Elf_Addr *)) = {
-#if defined(COMPAT_LINUX) && (ELFSIZE == 32)
-	ELFNAME2(linux,probe),			/* XXX not 64-bit safe */
+#if defined(COMPAT_LINUX)
+	ELFNAME2(linux,probe),
 #endif
 #if defined(COMPAT_SVR4) && (ELFSIZE == 32)
 	ELFNAME2(svr4,probe),			/* XXX not 64-bit safe */
@@ -571,7 +565,8 @@ ELFNAME2(exec,makecmds)(p, epp)
 	/*
 	 * On the same architecture, we may be emulating different systems.
 	 * See which one will accept this executable. This currently only
-	 * applies to Linux, SVR4, and IBCS2 on the i386.
+	 * applies to SVR4, and IBCS2 on the i386 and Linux on the i386
+	 * and the Alpha.
 	 *
 	 * Probe functions would normally see if the interpreter (if any)
 	 * exists. Emulation packages may possibly replace the interpreter in
@@ -584,7 +579,6 @@ ELFNAME2(exec,makecmds)(p, epp)
 		for (i = 0; i < n && error; i++)
 			error = ELFNAME(probe_funcs)[i](p, epp, eh,
 			    interp, &pos);
-
 #ifdef notyet
 		/*
 		 * We should really use a signature in our native binaries
