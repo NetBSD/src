@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.69 2000/06/27 20:57:19 perseant Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.70 2000/06/28 14:16:43 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -57,10 +57,6 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/lockf.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>

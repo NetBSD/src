@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.35 2000/05/30 17:23:52 mycroft Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.36 2000/06/28 14:16:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -51,10 +51,6 @@
 #include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
