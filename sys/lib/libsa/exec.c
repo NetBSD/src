@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.4 1994/11/25 23:08:31 deraadt Exp $	*/
+/*	$NetBSD: exec.c,v 1.5 1995/02/21 06:33:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -100,7 +100,7 @@ exec(path, loadaddr, howto)
 	ssym = addr;
 	bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 	addr += sizeof(x.a_syms);
-	printf(" [%d+", x.a_syms);
+	printf("+[%d", x.a_syms);
 	if (read(io, addr, x.a_syms) != x.a_syms)
 		goto shread;
 	addr += x.a_syms;
@@ -119,7 +119,7 @@ exec(path, loadaddr, howto)
 
 	/* and that many bytes of (debug symbols?) */
 
-	printf("%d] ", i);
+	printf("+%d] ", i);
 
 #define	round_to_size(x) \
 	(((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
