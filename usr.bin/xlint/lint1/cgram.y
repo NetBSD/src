@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.27 2002/10/22 13:48:51 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.28 2002/10/22 18:15:00 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.27 2002/10/22 13:48:51 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.28 2002/10/22 18:15:00 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1593,6 +1593,14 @@ term:
 	| T_LPARN type_name T_RPARN term		%prec T_UNOP {
 		$$ = cast($4, $2);
 	  }
+	| T_LPARN type_name T_RPARN 			%prec T_UNOP {
+		sym_t *tmp = mktempsym($2);
+		idecl(tmp, 1, NULL);
+	  } init_lbrace init_expr_list init_rbrace {
+		if (!Sflag)
+			gnuism(319);
+		$$ = getnnode(initsym, 0);
+	  }
 	;
 
 string:
@@ -1655,7 +1663,6 @@ identifier:
 int
 yyerror(char *msg)
 {
-
 	error(249);
 	if (++sytxerr >= 5)
 		norecover();

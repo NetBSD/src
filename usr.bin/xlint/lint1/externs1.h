@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.17 2002/10/22 13:48:52 christos Exp $	*/
+/*	$NetBSD: externs1.h,v 1.18 2002/10/22 18:15:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -81,6 +81,7 @@ extern	void	clrwflgs(void);
 extern	sym_t	*getsym(sbuf_t *);
 extern	void	cleanup(void);
 extern	sym_t	*pushdown(sym_t *);
+extern	sym_t	*mktempsym(type_t *);
 extern	void	rmsym(sym_t *);
 extern	void	rmsyms(sym_t *);
 extern	void	inssym(int, sym_t *);
@@ -196,6 +197,7 @@ extern	tnode_t	*promote(op_t, int, tnode_t *);
 extern	tnode_t	*convert(op_t, int, type_t *, tnode_t *);
 extern	void	cvtcon(op_t, int, type_t *, val_t *, val_t *);
 extern	const	char *tyname(char *, size_t, type_t *);
+extern	const	char *basictyname(tspec_t);
 extern	tnode_t	*bldszof(type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
 extern	tnode_t	*funcarg(tnode_t *, tnode_t *);
