@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 2003/03/15 23:41:25 fvdl Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 2003/04/24 19:19:55 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -60,7 +60,6 @@ struct sigcontext {
 	struct fxsave64 *sc_fpstate;
 	u_int64_t	sc_onstack;
 	sigset_t	sc_mask;
-	u_int64_t	sc_pad0;
 	mcontext_t	sc_mcontext;
 };
 
