@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2002/08/12 02:22:55 grant Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2003/05/16 19:48:30 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -45,22 +45,11 @@ message md_hello
 
 }
 
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac, czy chcesz 
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-
-Instalacja na czesci dysku, tworzy partycje, lub 'plaster', dla NetBSD
-w tablicy partycji MBR twojego dysku. Instalacja na calym dysku jest
-`zdecydowanie polecana': zabiera ona caly MBR. Spowoduje to calkowita
-utrate danych na dysku. Uniemozliwia ona take pozniejsza instalacje kilku
-systemow na tym dysku (chyba, ze nadpiszesz NetBSD i przeinstalujesz uzywajac
-tylko czesci dysku).
-
-Ktora instalacje chcesz zrobic?
-}
-
 message wdtype
 {Jakim rodzajem dysku jest %s?}
+
+message Select_type
+{Wybierz typ}
 
 message sectforward
 {Czy twoj dysk przesuwa AUTOMATYCZNIE sektory?}
@@ -70,114 +59,16 @@ message dlgeom
 BSD disklabel i disklabel raportuje, ze geometria jest inna od prawdziwej.
 Te dwie geometrie to:
 
-disklabel:		%d cylindrow, %d glowic, %d sektorow 
-prawdziwa geometria:	%d cylindrow, %d glowic, %d sektorow 
+disklabel:		%d cylindrow, %d glowic, %d sektorow
+prawdziwa geometria:	%d cylindrow, %d glowic, %d sektorow
 }
 
-/* the %s's will expand into three character strings */
-message part_header
-{   Calkowity rozmiar dysku %d %s.
-
-   Pocz(%3s)  Koniec(%3s) Rozm(%3s)  Rodzaj
-   ---------- ----------- ---------- ----
-}
-
-message part_row_start_unused
-{%-1d:                                 }
-
-message part_row_start_used
-{%-1d: %-10d %-11d %-10d}
-
-message part_row_end
-{ %s\n}
-
-message setbiosgeom
-{Zostaniesz poproszony o podanie geometrii. Podaj wartosci jakie chcesz.
-Ilosc cylindrow powinna byc <= 1024 a ilosc sektorow <= 63. Jesli twoj
-BIOS jest ustawiony aby obslugiwac > 1024 cylindry po prostu zmniejsz
-tutaj ta ilosc do 1024; NetBSD rozpozna reszte cylindrow.
-
-}
-
-message confirmbiosgeom
-{Sprawdz czy geometria dysku z BIOS ponizej jest poprawna. Mozliwe ze
-ilosc cylindrow zostala zmniejszona do 1024. Jest to w porzadku o ile
-reszta parametrow jest poprawna; tylko 1024 cylindry moga byc podane
-w MBR, reszta zostanie odnaleziona przez NetBSD w inny sposob.
-
-Jesli poprawiles wartosci, upewnij sie ze sa one poprawne i odpowiadaja
-tym uzywanym przez inne systemy na tym dysku. Wartosci, ktore sa nie poprawne
-moga spowodowac utrate danych.
-
-}
-
-message badgeom
-{Aktualne wartosci dla geometrii twojego dysku to:
-
-}
-
-message realgeom
-{praw. geo: %d cyl, %d glowic, %d sek  (tylko dla porownania)\n}
-
-message biosgeom
-{BIOS geom: %d cyl, %d glowic, %d sek\n}
-
-message reentergeom
-{Wartosci podane dla geometrii sa nieprawidlowe. Sprawdz i podaj
-je jeszcze raz.
-}
-
-message ovrwrite
-{Twoj dysk aktualnie posiada partycje nie-NetBSD. Czy napewno chcesz ja
-nadpisac z NetBSD?
-}
-
-message parttable
-{Aktualnie tablica partycji na twoim dysku wyglada tak:
-}
-
-message editpart
-{Edytujesz partycje %d. Podswietlona partycja to ta, ktora edytujesz.
-
-}
-
-message editparttable
-{Wyedytuj DOSowa tablice partycji. Podswietlona partycja jest aktualnie
-aktywna. Tablica partycji wyglada tak:
-
-}
-
-message mbrpart_start_special
-{
-  Specjalne wartosci, ktore moga byc podane jako wartosc poczatkowa:
- -N:    zacznij na koncu partycji N
-  0:    zacznij na poczatku dysku
-}
-
-message mbrpart_size_special
-{
-  Specjalne wartoscki, ktore moga byc podane jako wartosc rozmiaru:
- -N:    rozciagnij partycje, az do partycji N
-  0:    rozciagnij partycje, az do konca dysku
-}
-
-message reeditpart
-{Partycje MBR sie nakladaja, lub jest wiecej niz jedna partycja NetBSD.
-Powinienes zrekonfigurowac tablice partycji MBR.
-
-Czy chcesz ja przekonfigurowac?
-}
-
-message nobsdpart
-{Nie ma partycji NetBSD w tablicy partycji MBR.}
-
-message multbsdpart
-{W tablicy partycji MBR znajduje sie kilka partycji NetBSD.
-Zostanie uzyta partycja %d.}
-
-message dofdisk
-{Konfigurowanie DOSowej tablicy partycji ...
-}
+message Choose_an_option
+{Wybierz opcje}
+message Use_real_geometry
+{Uzyj prawdziwej geometrii}
+message Use_disklabel_geometry
+{Uzyj geometrii disklabel}
 
 message dobad144
 {Instalowanie tablicy zlych blokow ...
@@ -186,6 +77,19 @@ message dobad144
 message getboottype
 {Czy chcesz zainstalowac normalne bootbloki, czy te do uzycia z zewn. konsola?
 }
+
+message Bootblocks_selection
+{Wybor bootblokow}
+message Use_normal_bootblocks
+{Uzyj normalnych bootblokow}
+message Use_serial_9600_bootblocks
+{Uzyj bootblokow na zewn. konsole (9600)}
+message Use_serial_38400_bootblocks
+{Uzyj bootblokow na zewn. konsole (38400)}
+message Use_serial_57600_bootblocks
+{Uzyj bootblokow na zewn. konsole (57600)}
+message Use_serial_115200_bootblocks
+{Uzyj bootblokow na zewn. konsole (115200)}
 
 message dobootblks
 {Instalowanie bootblokow na %s....
@@ -227,6 +131,13 @@ konczy sie poza 1024 cylindrem BIOS. Aby byc pewnym, ze system bedzie
 mogl sie zawsze uruchomic, cala glowna partycja powinna znajdowac sie ponizej
 tego ograniczenia. Mozesz ponadto: }
 
+message Reedit_both_MBR_and_label
+{Zmien MBR i disklabel}
+message Reedit_the_label
+{Zmien disklabel}
+message Use_it_anyway
+{Uzyj, mimo to}
+
 message onebiosmatch
 {Ten dysk odpowiada ponizszemu dyskowi BIOS:
 
@@ -240,6 +151,13 @@ message onebiosmatch_header
 message onebiosmatch_row
 {%-6x %-10d %-7d %d\n}
 
+message This_is_the_correct_geometry
+{To jest prawidlowa geometria}
+message Set_the_geometry_by_hand
+{Ustaw geometrie recznie}
+message Use_one_of_these_disks
+{Uzyj jednego z tych dyskow}
+
 message biosmultmatch
 {Ten dysk odpowiada ponizszym dyskom BIOS:
 
@@ -252,7 +170,7 @@ message biosmultmatch_header
 
 message biosgeom_advise
 {
-Notatka: od kiedy sysinst jest w stanie unikalnie rozpoznac dysk, ktory 
+Notatka: od kiedy sysinst jest w stanie unikalnie rozpoznac dysk, ktory
 wybrales i powiazac go z dyskiem BIOS, wartosci wyswietlane powyzej sa
 bardzo prawdopodobnie prawidlowe i nie powinny byc zmieniane. Zmieniaj je
 tylko wtedy jesli sa naprawde _obrzydliwie_ zle.
@@ -274,64 +192,84 @@ chcesz to zrobic?
 
 (Odpowiedz 'nie' zabierze cie spowrotem do menu edycji partycji.)}
 
-message installbootsel
-{Wyglada na to, ze masz wiecej niz jeden system operacyjny zainstalowany
-na dysku. Czy chcesz zainstalowac program pozwalajacy na wybranie, ktory
-system ma sie uruchomic kiedy wlaczasz/restartujesz komputer?}
-
-message installmbr
-{Poczatek dysku NetBSD lezy poza zakresem, ktory BIOS moze zaadresowac.
-Inicjujacy bootcode w MBR musi miec mozliwosc korzystania z rozszerzonego
-interfejsu  BIOS aby  uruchomic system z tej partycji.  Czy  chcesz
-zainstalowac bootcode NetBSD do MBR aby bylo to mozliwe? Pamietaj, ze
-taka operacja nadpisze istniejacy kod w MBR,  np. bootselector.} 
-
-message installnormalmbr
-{Wybrales aby nie instalowac bootselectora. Jesli zrobiles to poniewaz
-masz juz taki program zainstalowany, nic wiecej nie musisz robic.
-Jakkolwiek, jesli nie masz bootselectora, normalny bootcode musi byc
-uzyty, aby system mogl sie prawidlowo uruchomic. Czy chcesz uzyc normalnego
-bootcode NetBSD?}
-
-message configbootsel
-{Skonfiguruj rozne opcje bootselectora. Mozesz zmienic podstawowe wpisy
-menu do odpowiednich partycji, ktore sa wyswietlane kiedy system sie
-uruchamia. Mozesz takze ustawic opoznienie czasowe oraz domyslny system
-do uruchomienia (jesli nic nie wybierzesz przy starcie w bootmenu).\n
-}
-
-message bootseltimeout
-{Opoznienie bootmenu: %d\n}
-
-message defbootselopt
-{Domyslna akcja bootmenu: }
-
-message defbootseloptactive
-{uruchom pierwsza aktywna partycje.\n}
-
-message defbootseloptpart
-{uruchom partycje %d.\n}
-
-message defbootseloptdisk
-{uruchom twardy dysk %d.\n}
-
-message bootselitemname
-{Podaj nazwe dla opcji}
-
-message bootseltimeoutval
-{Opoznienie w sekundach (0-3600)}
-
-message bootsel_header
-{Numer  Typ                             Wpis Menu
------- -------------------------------- ----------
-}
-
-message bootsel_row
-{%-6d %-32s %s\n}
-
 message emulbackup
 {Albo /emul/aout albo /emul w twoim systemie byl symbolicznym linkiem
 wskazujacym na niezamontowany system. Zostalo mu dodane rozszerzenie '.old'.
 Kiedy juz uruchomisz swoj zaktualizowany system, mozliwe ze bedziesz musial
 zajac sie polaczeniem nowo utworzonego /emul/aout ze starym.
 }
+
+message Change_a
+{Zmien a}
+message Change_b
+{Zmien b}
+message NetBSD_partition_cant_change
+{partycja NetBSD - nie mozna zmienic}
+message Whole_disk_cant_change
+{Caly dysk - nie mozna zmienic}
+message Change_e
+{Zmien e}
+message Change_f
+{Zmien f}
+message Change_g
+{Zmien g}
+message Change_h
+{Zmien h}
+message Change_i
+{Zmien i}
+message Change_j
+{Zmien j}
+message Change_k
+{Zmien k}
+message Change_l
+{Zmien l}
+message Change_m
+{Zmien m}
+message Change_n
+{Zmien n}
+message Change_o
+{Zmien o}
+message Change_p
+{Zmien p}
+message Set_new_allocation_size
+{Ustaw nowy przydzial rozmiarow}
+
+message Selection_toggles_inclusion
+{Wybierz}
+message Kernel_GENERIC
+{Kernel (GENERIC)}
+message Kernel_GENERIC_TINY
+{Kernel (GENERIC_TINY)}
+message Kernel_GENERIC_LAPTOP
+{Kernel (GENERIC_LAPTOP)}
+message Kernel_GENERIC_DIAGNOSTIC
+{Kernel (GENERIC_DIAGNOSTIC)}
+message Kernel_GENERIC_PS2TINY
+{Kernel (GENERIC_PS2TINY)}
+message Base
+{Base}
+message System_etc
+{System (/etc)}
+message Compiler_Tools
+{Compiler Tools}
+message Games
+{Games}
+message Online_Manual_Pages
+{Online manual pages}
+message Miscellaneous
+{Miscellaneous}
+message Text_Processing_Tools
+{Text Processing Tools}
+message X11_base_and_clients
+{X11 base and clients}
+message X11_fonts
+{X11 fonts}
+message X11_servers
+{X11 servers}
+message X_contrib_clients
+{X contrib clients}
+message X11_programming
+{X11 programming}
+message X11_Misc
+{X11 Misc.}
+
