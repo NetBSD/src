@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1990, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)rec_get.c	8.2 (Berkeley) 9/7/93"; */
-static char *rcsid = "$Id: rec_get.c,v 1.5 1994/02/24 09:03:39 cgd Exp $";
+static char sccsid[] = "@(#)rec_get.c	8.5 (Berkeley) 6/20/94";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -131,12 +130,15 @@ __rec_fpipe(t, top)
 	char *p;
 
 	if (t->bt_dbufsz < t->bt_reclen) {
-		if ((t->bt_dbuf = realloc(t->bt_dbuf, t->bt_reclen)) == NULL)
+		t->bt_dbuf = (char *)(t->bt_dbuf == NULL ?
+		    malloc(t->bt_reclen) : realloc(t->bt_dbuf, t->bt_reclen));
+		if (t->bt_dbuf == NULL)
 			return (RET_ERROR);
 		t->bt_dbufsz = t->bt_reclen;
 	}
 	data.data = t->bt_dbuf;
 	data.size = t->bt_reclen;
+
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
 		len = t->bt_reclen;
 		for (p = t->bt_dbuf;; *p++ = ch)
@@ -194,8 +196,10 @@ __rec_vpipe(t, top)
 			if (sz == 0) {
 				len = p - t->bt_dbuf;
 				t->bt_dbufsz += (sz = 256);
-				if ((t->bt_dbuf =
-				    realloc(t->bt_dbuf, t->bt_dbufsz)) == NULL)
+				t->bt_dbuf = (char *)(t->bt_dbuf == NULL ?
+				    malloc(t->bt_dbufsz) :
+				    realloc(t->bt_dbuf, t->bt_dbufsz));
+				if (t->bt_dbuf == NULL)
 					return (RET_ERROR);
 				p = t->bt_dbuf + len;
 			}
@@ -231,16 +235,18 @@ __rec_fmap(t, top)
 	size_t len;
 	char *p;
 
-	sp = t->bt_cmap;
-	ep = t->bt_emap;
-	data.data = t->bt_dbuf;
-	data.size = t->bt_reclen;
-
 	if (t->bt_dbufsz < t->bt_reclen) {
-		if ((t->bt_dbuf = realloc(t->bt_dbuf, t->bt_reclen)) == NULL)
+		t->bt_dbuf = (char *)(t->bt_dbuf == NULL ?
+		    malloc(t->bt_reclen) : realloc(t->bt_dbuf, t->bt_reclen));
+		if (t->bt_dbuf == NULL)
 			return (RET_ERROR);
 		t->bt_dbufsz = t->bt_reclen;
 	}
+	data.data = t->bt_dbuf;
+	data.size = t->bt_reclen;
+
+	sp = t->bt_cmap;
+	ep = t->bt_emap;
 	for (nrec = t->bt_nrecs; nrec < top; ++nrec) {
 		if (sp >= ep) {
 			SET(t, R_EOF);

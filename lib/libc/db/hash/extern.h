@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1991, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.1 (Berkeley) 6/4/93
- *	$Id: extern.h,v 1.2 1993/08/01 18:43:36 mycroft Exp $
+ *	@(#)extern.h	8.4 (Berkeley) 6/16/94
  */
 
 BUFHEAD	*__add_ovflpage __P((HTAB *, BUFHEAD *));
@@ -41,26 +40,26 @@ int	 __big_insert __P((HTAB *, BUFHEAD *, const DBT *, const DBT *));
 int	 __big_keydata __P((HTAB *, BUFHEAD *, DBT *, DBT *, int));
 int	 __big_return __P((HTAB *, BUFHEAD *, int, DBT *, int));
 int	 __big_split __P((HTAB *, BUFHEAD *, BUFHEAD *, BUFHEAD *,
-		int, u_int, SPLIT_RETURN *));
+		int, u_int32_t, SPLIT_RETURN *));
 int	 __buf_free __P((HTAB *, int, int));
 void	 __buf_init __P((HTAB *, int));
-u_int	 __call_hash __P((HTAB *, char *, int));
+u_int32_t	 __call_hash __P((HTAB *, char *, int));
 int	 __delpair __P((HTAB *, BUFHEAD *, int));
 int	 __expand_table __P((HTAB *));
 int	 __find_bigpair __P((HTAB *, BUFHEAD *, int, char *, int));
-u_short	 __find_last_page __P((HTAB *, BUFHEAD **));
+u_int16_t	 __find_last_page __P((HTAB *, BUFHEAD **));
 void	 __free_ovflpage __P((HTAB *, BUFHEAD *));
-BUFHEAD	*__get_buf __P((HTAB *, u_int, BUFHEAD *, int));
-int	 __get_page __P((HTAB *, char *, u_int, int, int, int));
-int	 __init_bitmap __P((HTAB *, int, int, int));
-u_int	 __log2 __P((u_int));
-int	 __put_page __P((HTAB *, char *, u_int, int, int));
+BUFHEAD	*__get_buf __P((HTAB *, u_int32_t, BUFHEAD *, int));
+int	 __get_page __P((HTAB *, char *, u_int32_t, int, int, int));
+int	 __ibitmap __P((HTAB *, int, int, int));
+u_int32_t	 __log2 __P((u_int32_t));
+int	 __put_page __P((HTAB *, char *, u_int32_t, int, int));
 void	 __reclaim_buf __P((HTAB *, BUFHEAD *));
-int	 __split_page __P((HTAB *, u_int, u_int));
+int	 __split_page __P((HTAB *, u_int32_t, u_int32_t));
 
 /* Default hash routine. */
-extern int	(*__default_hash) __P((u_char *, int));
+extern u_int32_t (*__default_hash) __P((const void *, size_t));
 
 #ifdef HASH_STATISTICS
-extern long hash_accesses, hash_collisions, hash_expansions, hash_overflows;
+extern int hash_accesses, hash_collisions, hash_expansions, hash_overflows;
 #endif

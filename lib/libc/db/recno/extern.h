@@ -30,15 +30,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)extern.h	8.1 (Berkeley) 6/4/93
- *	$Id: extern.h,v 1.2 1993/08/01 18:43:18 mycroft Exp $
+ *	@(#)extern.h	8.3 (Berkeley) 6/4/94
  */
 
 #include "../btree/extern.h"
 
 int	 __rec_close __P((DB *));
 int	 __rec_delete __P((const DB *, const DBT *, u_int));
-int	 __rec_dleaf __P((BTREE *, PAGE *, int));
+int	 __rec_dleaf __P((BTREE *, PAGE *, u_int32_t));
 int	 __rec_fd __P((const DB *));
 int	 __rec_fmap __P((BTREE *, recno_t));
 int	 __rec_fout __P((BTREE *));
