@@ -1,4 +1,4 @@
-/*	$NetBSD: skeylogin.c,v 1.10 1999/07/02 15:45:23 simonb Exp $	*/
+/*	$NetBSD: skeylogin.c,v 1.11 1999/08/24 09:01:36 mrg Exp $	*/
 
 /* S/KEY v1.1b (skeylogin.c)
  *
@@ -39,6 +39,9 @@
  *
  * The file read/write pointer is left at the start of the
  * record.
+ *
+ * XXX this function should be changed to have a length param for the
+ * prompt!
  */
 int
 getskeyprompt(mp,name,prompt)
@@ -57,7 +60,7 @@ getskeyprompt(mp,name,prompt)
 	case -1:	/* File error */
 		return -1;
 	case 0:		/* Lookup succeeded, return challenge */
-		sprintf(prompt,"s/key %d %s\n",mp->n - 1,mp->seed);	/* XXX: sprintf (getskeyprompt()) appears unused */
+		sprintf(prompt,"s/key %d %s\n",mp->n - 1,mp->seed);
 		return 0;
 	case 1:		/* User not found */
 		fclose(mp->keyfile);
