@@ -1,8 +1,10 @@
-# $NetBSD: lkm.mi,v 1.2 2003/03/17 09:18:53 jdolecek Exp $
+# $NetBSD: lkm.mi,v 1.3 2003/03/28 01:45:06 thorpej Exp $
 ./usr/lkm			base-sys-usr
 ./usr/lkm/adosfs.o		base-vfs-lkm
+./usr/lkm/bsdcomp.o		base-ppp-lkm
 ./usr/lkm/cd9660.o		base-vfs-lkm
 ./usr/lkm/coda.o		base-vfs-lkm
+./usr/lkm/deflate.o		base-ppp-lkm
 ./usr/lkm/ext2fs.o		base-vfs-lkm
 ./usr/lkm/fdesc.o		base-vfs-lkm
 ./usr/lkm/filecorefs.o		base-vfs-lkm
