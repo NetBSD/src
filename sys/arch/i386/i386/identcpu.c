@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.13 2004/04/30 02:05:43 lukem Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.14 2004/07/10 21:25:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.13 2004/04/30 02:05:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.14 2004/07/10 21:25:53 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_enhanced_speedstep.h"
@@ -551,6 +551,7 @@ cyrix6x86_cpu_setup(ci)
 	 */
 
 	extern int clock_broken_latch;
+	u_char c3;
 
 	switch (ci->ci_signature) {
 	case 0x440:     /* Cyrix MediaGX */
@@ -563,14 +564,15 @@ cyrix6x86_cpu_setup(ci)
 	/* Enable suspend on halt */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
 	/* enable access to ccr4/ccr5 */
-	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) | 0x10);
+	c3 = cyrix_read_reg(0xC3);
+	cyrix_write_reg(0xC3, c3 | 0x10);
 	/* cyrix's workaround  for the "coma bug" */
 	cyrix_write_reg(0x31, cyrix_read_reg(0x31) | 0xf8);
 	cyrix_write_reg(0x32, cyrix_read_reg(0x32) | 0x7f);
 	cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xff);
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
-	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
+	cyrix_write_reg(0xC3, c3);
 
 	/*
 	 * XXX disable page zero in the idle loop, it seems to
