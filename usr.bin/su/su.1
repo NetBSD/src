@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.10 1997/01/31 23:12:17 ghudson Exp $
+.\"	$NetBSD: su.1,v 1.11 1997/03/08 14:21:16 mouse Exp $
 .\"
 .Dd April 18, 1994
 .Dt SU 1
@@ -64,8 +64,8 @@ is executed by root, no password is requested and a shell
 with the appropriate user ID is executed; no additional Kerberos tickets
 are obtained.
 .Pp
-Alternately, if the user enters the password "s/key", they will be
-authenticated using the S/Key one-time password system as described in
+Alternatively, if the user enters the password "s/key", authentication
+will use the S/Key one-time password system as described in
 .Xr skey 1 .
 S/Key is a Trademark of Bellcore.
 .Pp
