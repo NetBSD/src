@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.6 2002/12/10 13:44:48 pk Exp $	*/
+/*	$NetBSD: zx.c,v 1.7 2003/06/29 09:56:29 darrenr Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.6 2002/12/10 13:44:48 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.7 2003/06/29 09:56:29 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ zx_attach(struct device *parent, struct device *self, void *args)
 }
 
 int
-zxopen(dev_t dev, int flags, int mode, struct proc *p)
+zxopen(dev_t dev, int flags, int mode, struct lwp *l)
 {
 
 	if (device_lookup(&zx_cd, minor(dev)) == NULL)
@@ -286,7 +286,7 @@ zxopen(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-zxclose(dev_t dev, int flags, int mode, struct proc *p)
+zxclose(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct zx_softc *sc;
 
@@ -298,7 +298,7 @@ zxclose(dev_t dev, int flags, int mode, struct proc *p)
 }
 
 int
-zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
+zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 {
 	struct zx_softc *sc;
 	struct fbcmap *cm;
@@ -474,7 +474,7 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
 	default:
 #ifdef DEBUG
 		log(LOG_NOTICE, "zxioctl(0x%lx) (%s[%d])\n", cmd,
-		    p->p_comm, p->p_pid);
+		    l->l_proc->p_comm, l->l_proc->p_pid);
 #endif
 		return (ENOTTY);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.6 2002/10/23 09:13:53 jdolecek Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.7 2003/06/29 09:56:30 darrenr Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.6 2002/10/23 09:13:53 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.7 2003/06/29 09:56:30 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,10 +219,10 @@ bwtwoattach(sc, name, isconsole)
 }
 
 int
-bwtwoopen(dev, flags, mode, p)
+bwtwoopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -233,12 +233,12 @@ bwtwoopen(dev, flags, mode, p)
 }
 
 int
-bwtwoioctl(dev, cmd, data, flags, p)
+bwtwoioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 

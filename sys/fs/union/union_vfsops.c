@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.5 2003/06/29 09:56:33 darrenr Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.5 2003/06/29 09:56:33 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,32 +61,34 @@ __KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Ex
 #include <fs/union/union.h>
 
 int union_mount __P((struct mount *, const char *, void *, struct nameidata *,
-		     struct proc *));
-int union_start __P((struct mount *, int, struct proc *));
-int union_unmount __P((struct mount *, int, struct proc *));
-int union_root __P((struct mount *, struct vnode **));
-int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int union_statfs __P((struct mount *, struct statfs *, struct proc *));
-int union_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int union_vget __P((struct mount *, ino_t, struct vnode **));
-int union_fhtovp __P((struct mount *, struct fid *, struct vnode **));
+		     struct lwp *));
+int union_start __P((struct mount *, int, struct lwp *));
+int union_unmount __P((struct mount *, int, struct lwp *));
+int union_root __P((struct mount *, struct vnode **, struct lwp *));
+int union_quotactl __P((struct mount *, int, uid_t, caddr_t, struct lwp *));
+int union_statfs __P((struct mount *, struct statfs *, struct lwp *));
+int union_sync __P((struct mount *, int, struct ucred *, struct lwp *));
+int union_vget __P((struct mount *, ino_t, struct vnode **, struct lwp *));
+int union_fhtovp __P((struct mount *, struct fid *, struct vnode **, \
+		      struct lwp *));
 int union_checkexp __P((struct mount *, struct mbuf *, int *,
 		      struct ucred **));
 int union_vptofh __P((struct vnode *, struct fid *));
 int union_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-		      struct proc *));
+		      struct lwp *));
 
 /*
  * Mount union filesystem
  */
 int
-union_mount(mp, path, data, ndp, p)
+union_mount(mp, path, data, ndp, l)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	struct nameidata *ndp;
-	struct proc *p;
+	struct lwp *l;
 {
+	struct proc *p = l->l_proc;
 	int error = 0;
 	struct union_args args;
 	struct vnode *lowerrootvp = NULLVP;
@@ -136,7 +138,7 @@ union_mount(mp, path, data, ndp, p)
 	 * Find upper node.
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW,
-	       UIO_USERSPACE, args.target, p);
+	       UIO_USERSPACE, args.target, l);
 
 	if ((error = namei(ndp)) != 0)
 		goto bad;
@@ -227,7 +229,7 @@ union_mount(mp, path, data, ndp, p)
 	vfs_getnewfsid(mp);
 
 	error = set_statfs_info( path, UIO_USERSPACE, NULL, UIO_USERSPACE,
-	    mp, p);
+	    mp, l);
 	if (error)
 		goto bad;
 
@@ -287,10 +289,10 @@ bad:
  */
  /*ARGSUSED*/
 int
-union_start(mp, flags, p)
+union_start(mp, flags, l)
 	struct mount *mp;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (0);
@@ -300,10 +302,10 @@ union_start(mp, flags, p)
  * Free reference to union layer
  */
 int
-union_unmount(mp, mntflags, p)
+union_unmount(mp, mntflags, l)
 	struct mount *mp;
 	int mntflags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	struct vnode *um_rootvp;
@@ -314,7 +316,7 @@ union_unmount(mp, mntflags, p)
 	printf("union_unmount(mp = %p)\n", mp);
 #endif
 
-	if ((error = union_root(mp, &um_rootvp)) != 0)
+	if ((error = union_root(mp, &um_rootvp, l)) != 0)
 		return (error);
 
 	/*
@@ -385,9 +387,10 @@ union_unmount(mp, mntflags, p)
 }
 
 int
-union_root(mp, vpp)
+union_root(mp, vpp, l)
 	struct mount *mp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int error;
@@ -430,22 +433,22 @@ union_root(mp, vpp)
 
 /*ARGSUSED*/
 int
-union_quotactl(mp, cmd, uid, arg, p)
+union_quotactl(mp, cmd, uid, arg, l)
 	struct mount *mp;
 	int cmd;
 	uid_t uid;
 	caddr_t arg;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
 }
 
 int
-union_statfs(mp, sbp, p)
+union_statfs(mp, sbp, l)
 	struct mount *mp;
 	struct statfs *sbp;
-	struct proc *p;
+	struct lwp *l;
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
@@ -460,7 +463,7 @@ union_statfs(mp, sbp, p)
 	memset(&mstat, 0, sizeof(mstat));
 
 	if (um->um_lowervp) {
-		error = VFS_STATFS(um->um_lowervp->v_mount, &mstat, p);
+		error = VFS_STATFS(um->um_lowervp->v_mount, &mstat, l);
 		if (error)
 			return (error);
 	}
@@ -470,7 +473,7 @@ union_statfs(mp, sbp, p)
 	sbp->f_blocks = mstat.f_blocks - mstat.f_bfree;
 	sbp->f_files = mstat.f_files - mstat.f_ffree;
 
-	error = VFS_STATFS(um->um_uppervp->v_mount, &mstat, p);
+	error = VFS_STATFS(um->um_uppervp->v_mount, &mstat, l);
 	if (error)
 		return (error);
 
@@ -500,11 +503,11 @@ union_statfs(mp, sbp, p)
 
 /*ARGSUSED*/
 int
-union_sync(mp, waitfor, cred, p)
+union_sync(mp, waitfor, cred, l)
 	struct mount *mp;
 	int waitfor;
 	struct ucred *cred;
-	struct proc *p;
+	struct lwp *l;
 {
 
 	/*
@@ -515,10 +518,11 @@ union_sync(mp, waitfor, cred, p)
 
 /*ARGSUSED*/
 int
-union_vget(mp, ino, vpp)
+union_vget(mp, ino, vpp, l)
 	struct mount *mp;
 	ino_t ino;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 	
 	return (EOPNOTSUPP);
@@ -526,10 +530,11 @@ union_vget(mp, ino, vpp)
 
 /*ARGSUSED*/
 int
-union_fhtovp(mp, fidp, vpp)
+union_fhtovp(mp, fidp, vpp, l)
 	struct mount *mp;
 	struct fid *fidp;
 	struct vnode **vpp;
+	struct lwp *l;
 {
 
 	return (EOPNOTSUPP);
@@ -558,14 +563,14 @@ union_vptofh(vp, fhp)
 }
 
 int
-union_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+union_sysctl(name, namelen, oldp, oldlenp, newp, newlen, l)
 	int *name;
 	u_int namelen;
 	void *oldp;
 	size_t *oldlenp;
 	void *newp;
 	size_t newlen;
-	struct proc *p;
+	struct lwp *l;
 {
 	return (EOPNOTSUPP);
 }

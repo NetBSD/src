@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.10 2003/01/18 10:38:38 thorpej Exp $ */
+/*	$NetBSD: cgsix.c,v 1.11 2003/06/29 09:56:30 darrenr Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.10 2003/01/18 10:38:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.11 2003/06/29 09:56:30 darrenr Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,10 +535,10 @@ cg6attach(sc, name, isconsole)
 
 
 int
-cgsixopen(dev, flags, mode, p)
+cgsixopen(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	int unit = minor(dev);
 
@@ -548,10 +548,10 @@ cgsixopen(dev, flags, mode, p)
 }
 
 int
-cgsixclose(dev, flags, mode, p)
+cgsixclose(dev, flags, mode, l)
 	dev_t dev;
 	int flags, mode;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 
@@ -565,12 +565,12 @@ cgsixclose(dev, flags, mode, p)
 }
 
 int
-cgsixioctl(dev, cmd, data, flags, p)
+cgsixioctl(dev, cmd, data, flags, l)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct proc *p;
+	struct lwp *l;
 {
 	struct cgsix_softc *sc = cgsix_cd.cd_devs[minor(dev)];
 	u_int count;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.49 2003/05/10 23:12:48 thorpej Exp $	*/
+/*	$NetBSD: xy.c,v 1.50 2003/06/29 09:56:32 darrenr Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.49 2003/05/10 23:12:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.50 2003/06/29 09:56:32 darrenr Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -846,10 +846,10 @@ done:
  * xyclose: close device
  */
 int
-xyclose(dev, flag, fmt, p)
+xyclose(dev, flag, fmt, l)
 	dev_t   dev;
 	int     flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 
 {
 	struct xy_softc *xy = xy_cd.cd_devs[DISKUNIT(dev)];
@@ -913,14 +913,15 @@ xydump(dev, blkno, va, size)
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
 int
-xyioctl(dev, command, addr, flag, p)
+xyioctl(dev, command, addr, flag, l)
 	dev_t   dev;
 	u_long  command;
 	caddr_t addr;
 	int     flag;
-	struct proc *p;
+	struct lwp *l;
 
 {
+	struct proc *p = l->l_proc;
 	struct xy_softc *xy;
 	struct xd_iocmd *xio;
 	int     error, s, unit;
@@ -1040,10 +1041,10 @@ xyioctl(dev, command, addr, flag, p)
  */
 
 int
-xyopen(dev, flag, fmt, p)
+xyopen(dev, flag, fmt, l)
 	dev_t   dev;
 	int     flag, fmt;
-	struct proc *p;
+	struct lwp *l;
 {
 	int     unit, part;
 	struct xy_softc *xy;
