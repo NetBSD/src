@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)diskpart.c	8.3 (Berkeley) 11/30/94";
 #else
-__RCSID("$NetBSD: diskpart.c,v 1.11 1999/01/19 22:23:36 tron Exp $");
+__RCSID("$NetBSD: diskpart.c,v 1.12 2002/05/27 16:39:29 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,14 +94,14 @@ char	layouts[NLAYOUTS][NPARTITIONS] = {
  * (e.g. swap areas or for access to the entire device).
  */
 struct	partition defparam[NPARTITIONS] = {
-	{ 0, 0, 1024, FS_UNUSED, 8, { 0 }, },		/* a */
-	{ 0, 0, 1024, FS_SWAP,   8, { 0 }, },		/* b */
-	{ 0, 0, 1024, FS_UNUSED, 8, { 0 }, },		/* c */
-	{ 0, 0,  512, FS_UNUSED, 8, { 0 }, },		/* d */
-	{ 0, 0, 1024, FS_UNUSED, 8, { 0 }, },		/* e */
-	{ 0, 0, 1024, FS_UNUSED, 8, { 0 }, },		/* f */
-	{ 0, 0, 1024, FS_UNUSED, 8, { 0 }, },		/* g */
-	{ 0, 0, 1024, FS_UNUSED, 8, { 0 }, }		/* h */
+	{ 0, 0, { 1024 }, FS_UNUSED, 8, { 0 }, },		/* a */
+	{ 0, 0, { 1024 }, FS_SWAP,   8, { 0 }, },		/* b */
+	{ 0, 0, { 1024 }, FS_UNUSED, 8, { 0 }, },		/* c */
+	{ 0, 0, {  512 }, FS_UNUSED, 8, { 0 }, },		/* d */
+	{ 0, 0, { 1024 }, FS_UNUSED, 8, { 0 }, },		/* e */
+	{ 0, 0, { 1024 }, FS_UNUSED, 8, { 0 }, },		/* f */
+	{ 0, 0, { 1024 }, FS_UNUSED, 8, { 0 }, },		/* g */
+	{ 0, 0, { 1024 }, FS_UNUSED, 8, { 0 }, }		/* h */
 };
 
 /*
