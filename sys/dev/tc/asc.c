@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.22 1996/06/11 05:15:32 mhitch Exp $	*/
+/*	$NetBSD: asc.c,v 1.23 1996/07/16 15:20:38 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1543,17 +1543,13 @@ asc_dma_in(asc, status, ss, ir)
 		state->buflen -= len;
 	}
 
-	/*
-	 * If this is the first input (DMA_IN_PROGRESS == 0), make sure
-	 * the FIFO is empty.  There shouldn't be any input yet.
-	 */
+#ifdef DEBUG
 	if (!(state->flags & DMA_IN_PROGRESS) &&
 	    (regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0) {
 		printf("asc_dma_in: FIFO count %x flags %x\n",
 		    regs->asc_flags, state->flags);
-		while ((regs->asc_flags & ASC_FLAGS_FIFO_CNT) != 0)
-			regs->asc_fifo;
 	}
+#endif
 	/* setup to start reading the next chunk */
 	len = state->buflen;
 #ifdef DEBUG
