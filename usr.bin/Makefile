@@ -20,7 +20,7 @@ SUBDIR=	ar awk biff basename cal calendar \
 	login logname lorder m4 machine mail make man mesg mkdep mkfifo \
 	mkstr more netstat nfsstat nice nm nohup pagesize \
 	passwd paste pr printenv printf ranlib \
-	rdist renice rlogin rsh ruptime rwho script sed \
+	rdist renice rlogin rpcgen rpcinfo rsh ruptime rwho script sed \
 	shar showmount size soelim sort split strings \
 	strip su symorder tail talk tar tee telnet tftp time \
 	tip touch tput tr true tsort tty ul unexpand unifdef uniq \
