@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.37 1998/01/12 09:23:23 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.38 1998/03/04 18:10:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -390,7 +390,7 @@ ep_internalconfig(sc)
 	 * (Demon, Vortex, and later).
 	 */
 	const char *onboard_ram_config[] = {
-		"5:3", "3:1", "1:1", "(undefined)" };
+		"5:3", "3:1", "1:1", "3:5" };
 
 	GO_WINDOW(3);
 	config0 = (u_int)bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG);
