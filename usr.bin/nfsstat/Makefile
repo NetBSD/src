@@ -1,5 +1,4 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$Id: Makefile,v 1.1.1.2 1994/06/13 21:02:00 mycroft Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	nfsstat
 CFLAGS+=-DNFS
