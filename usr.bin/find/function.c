@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	5.17 (Berkeley) 5/24/91";*/
-static char rcsid[] = "$Id: function.c,v 1.7 1993/08/06 01:53:33 deraadt Exp $";
+static char rcsid[] = "$Id: function.c,v 1.8 1993/09/16 21:41:30 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -772,6 +772,7 @@ c_size(arg)
 	ftsoptions &= ~FTS_NOSTAT;
 
 	new = palloc(N_SIZE, f_size);
+	endch = 'c';
 	new->o_data = find_parsenum(new, "-size", arg, &endch);
 	if (endch == 'c')
 		divsize = 0;
