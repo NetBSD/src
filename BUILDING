@@ -141,6 +141,18 @@ CONFIGURATION
 
                  Default: ``/etc/mk.conf''
 
+     MAKEVERBOSE
+                 Level of verbosity of status messages.  Supported values:
+
+                 0    No descriptive messages are shown.
+
+                 1    Descriptive messages are shown.
+
+                 2    Descriptive messages (prefixed with a `#') and command
+                      output is not suppressed.
+
+                 Default: 2
+
      MKCATPAGES  Can be set to ``yes'' or ``no''.  Indicates whether prefor-
                  matted plaintext manual pages will be created during a build.
 
@@ -565,6 +577,16 @@ BUILDING
                      sbmips-eb     sbmips     mipseb
                      sbmips-el     sbmips     mipsel
 
+     -N noiselevel
+               Set the ``noisyness'' level of the build Supported values of
+               noiselevel are:
+
+               0    Quiet build.
+
+               1    Operations are described, command lines are suppressed.
+
+               2    Noisy build.  This is the default.
+
      -n        Show the commands that would be executed by build.sh, but do
                not make any changes.  This is similar in concept to ``make
                -n''.
@@ -663,4 +685,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                          August 7, 2003                          NetBSD
+NetBSD                         October 25, 2003                         NetBSD

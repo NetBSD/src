@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.29 2003/09/29 07:55:17 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.30 2003/10/25 03:46:09 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd August 7, 2003
+.Dd October 25, 2003
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -321,6 +321,22 @@ configuration file.
 .Em Only settable in the process environment.
 .DFLT
 .Dq /etc/mk.conf
+.
+.It Sy MAKEVERBOSE
+Level of verbosity of status messages.
+Supported values:
+.Bl -tag -width xxx
+.It 0
+No descriptive messages are shown.
+.It 1
+Descriptive messages are shown.
+.It 2
+Descriptive messages (prefixed with a
+.Sq # )
+and command output is not suppressed.
+.El
+.DFLT
+2
 .
 .It Sy MKCATPAGES
 .YorN
@@ -1094,6 +1110,23 @@ values will result:
 .It sbmips Ta sbmips Ta (not set)
 .It sbmips-eb Ta sbmips Ta mipseb
 .It sbmips-el Ta sbmips Ta mipsel
+.El
+.
+.It Fl N Ar noiselevel
+Set the
+.Dq noisyness
+level of the build
+Supported values of
+.Ar noiselevel
+are:
+.Bl -tag -width xxx
+.It 0
+Quiet build.
+.It 1
+Operations are described, command lines are suppressed.
+.It 2
+Noisy build.
+This is the default.
 .El
 .
 .It Fl n
