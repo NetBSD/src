@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.9 1998/08/13 02:11:00 eeh Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.10 1998/10/11 23:02:31 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -434,18 +434,15 @@ udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
 	mapfn = cdevsw[major(device)].d_mmap;
 
 	/*
-	 * now we must determine the offset in udv to use and the VA to use
-	 * for pmap_enter.  note that we always pmap_enter() in the
-	 * ufi->orig_map's pmap, but that our ufi->entry may be from some
-	 * other map (in the submap/sharemap case).  so we must convert the
-	 * VA from ufi->map to ufi->orig_map (note that in many cases these
-	 * maps are the same).   note that ufi->orig_rvaddr and ufi->rvaddr
-	 * refer to the same physical page.
+	 * now we must determine the offset in udv to use and the VA to
+	 * use for pmap_enter.  note that we always use orig_map's pmap
+	 * for pmap_enter (even if we have a submap).   since virtual
+	 * addresses in a submap must match the main map, this is ok.
 	 */
 	/* udv offset = (offset from start of entry) + entry's offset */
 	curr_offset = (vaddr - entry->start) + entry->offset;	
-	/* pmap va = orig_va + (offset of vaddr from translated va) */
-	curr_va = ufi->orig_rvaddr + (vaddr - ufi->rvaddr);
+	/* pmap va = vaddr (virtual address of pps[0]) */
+	curr_va = vaddr;
 	
 	/*
 	 * loop over the page range entering in as needed
