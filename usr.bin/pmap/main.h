@@ -1,4 +1,4 @@
-/*      $NetBSD: main.h,v 1.3 2003/03/28 23:10:33 atatat Exp $ */
+/*      $NetBSD: main.h,v 1.4 2003/04/04 03:49:20 atatat Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -65,6 +65,5 @@ extern struct cache_head lcache;
 #define PRINT_VM_ANON		0x00000040
 #define DUMP_NAMEI_CACHE	0x00001000
 
-void (*process_map)(kvm_t *, pid_t, struct kinfo_proc2 *);
 void load_name_cache(kvm_t *);
 const char *mapname(void *);
