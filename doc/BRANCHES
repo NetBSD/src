@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.23 2005/02/14 16:08:23 is Exp $
+#	$NetBSD: BRANCHES,v 1.24 2005/02/16 22:13:31 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -658,10 +658,16 @@ Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		kernel
 Notes:		http://mail-index.NetBSD.org/tech-kern/2004/12/25/0005.html
 
+		the followings are per-port status.
+		(account names mean "tested by".)
+
 		works enough to go to multiuser:
-			alpha
-			i386
-			pc532 (tested by simonb@)
+			alpha, i386 (yamt@)
+			pc532 (simonb@)
+			alpha, i386, macppc, pmax, sparc, sparc64 (chs@)
+
+		known to have a problem:
+			mac68k (chs@, crashes while starting init)
 
 		buildable:
 			src/sys/arch/acorn26/conf/GENERIC
