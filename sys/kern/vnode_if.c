@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.24 2000/09/13 16:09:52 thorpej Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.25 2000/09/19 21:58:01 fvdl Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.24 2000/05/13 23:43:07 perseant Exp 
+ *	NetBSD: vnode_if.src,v 1.25 2000/09/19 21:57:14 fvdl Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.21 2000/09/13 16:09:27 thorpej Exp 
  */
@@ -581,10 +581,12 @@ struct vnodeop_desc vop_fsync_desc = {
 };
 #ifdef VNODE_OP_NOINLINE
 int
-VOP_FSYNC(vp, cred, flags, p)
+VOP_FSYNC(vp, cred, flags, offlo, offhi, p)
 	struct vnode *vp;
 	struct ucred *cred;
 	int flags;
+	off_t offlo;
+	off_t offhi;
 	struct proc *p;
 {
 	struct vop_fsync_args a;
@@ -592,6 +594,8 @@ VOP_FSYNC(vp, cred, flags, p)
 	a.a_vp = vp;
 	a.a_cred = cred;
 	a.a_flags = flags;
+	a.a_offlo = offlo;
+	a.a_offhi = offhi;
 	a.a_p = p;
 	return (VCALL(vp, VOFFSET(vop_fsync), &a));
 }
