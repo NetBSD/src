@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.27 1999/09/23 11:04:33 enami Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.28 1999/09/30 22:57:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -322,7 +322,7 @@ atapi_probedev(atapi, target)
 		return;
 
 	if (wdc_atapi_get_params(atapi->adapter_link, target,
-	    SCSI_POLL|SCSI_NOSLEEP, id) == COMPLETE) {
+	    XS_CTL_POLL|XS_CTL_NOSLEEP, id) == COMPLETE) {
 #ifdef ATAPI_DEBUG_PROBE
 		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
 		    atapi->sc_dev.dv_xname, target,
@@ -342,6 +342,7 @@ atapi_probedev(atapi, target)
 		}
 		/* Fill in link. */
 		*sc_link = *atapi->adapter_link;
+		sc_link->active = 0;
 		sc_link->scsipi_atapi.drive = target;
 		sc_link->device = NULL;
 		TAILQ_INIT(&sc_link->pending_xfers);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.10 1999/09/11 21:42:58 thorpej Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.11 1999/09/30 22:57:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@ sd_scsibus_mode_sense(sd, scsipi_sense, page, flags)
 	return (scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)scsipi_sense, sizeof(*scsipi_sense),
-	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT));
+	    SDRETRIES, 6000, NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT));
 }
 
 static int
@@ -214,7 +214,7 @@ sd_scsibus_get_optparms(sd, dp, flags)
 	if ((error = scsipi_command(sd->sc_link,  
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
 	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
-	    6000, NULL, flags | SCSI_DATA_IN)) != 0)
+	    6000, NULL, flags | XS_CTL_DATA_IN)) != 0)
 		return (SDGP_RESULT_OFFLINE);		/* XXX? */
 
 	dp->blksize = _3btol(scsipi_sense.blk_desc.blklen);
@@ -361,7 +361,7 @@ sd_scsibus_flush(sd, flags)
 		return(scsipi_command(sc_link,
 		       (struct scsipi_generic *)&sync_cmd, sizeof(sync_cmd),
 		       NULL, 0, SDRETRIES, 100000, NULL,
-		       flags|SCSI_IGNORE_ILLEGAL_REQUEST));
+		       flags|XS_CTL_IGNORE_ILLEGAL_REQUEST));
 	} else
 		return(0);
 }
