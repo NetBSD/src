@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.18 2004/02/21 20:06:29 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.19 2004/03/05 03:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.18 2004/02/21 20:06:29 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.19 2004/03/05 03:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -180,9 +180,11 @@ rf_CommonCreateLargeWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 							asmap->raidAddress,
 							&which_ru);
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating large-write DAG]\n");
 	}
+#endif
 	dag_h->creator = "LargeWriteDAG";
 
 	dag_h->numCommitNodes = 1;
@@ -497,9 +499,11 @@ rf_CommonCreateSmallWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	numDataNodes = asmap->numStripeUnitsAccessed;
 	numParityNodes = (asmap->parityInfo->next) ? 2 : 1;
 
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating small-write DAG]\n");
 	}
+#endif
 	RF_ASSERT(numDataNodes > 0);
 	dag_h->creator = "SmallWriteDAG";
 
@@ -1005,9 +1009,11 @@ rf_CreateRaidOneWriteDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 	parityStripeID = rf_RaidAddressToParityStripeID(&(raidPtr->Layout),
 	    asmap->raidAddress, &which_ru);
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating RAID level 1 write DAG]\n");
 	}
+#endif
 	dag_h->creator = "RaidOneWriteDAG";
 
 	/* 2 implies access not SU aligned */

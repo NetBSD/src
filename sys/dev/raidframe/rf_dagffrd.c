@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffrd.c,v 1.11 2004/01/10 00:56:27 oster Exp $	*/
+/*	$NetBSD: rf_dagffrd.c,v 1.12 2004/03/05 03:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.11 2004/01/10 00:56:27 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffrd.c,v 1.12 2004/03/05 03:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -145,15 +145,19 @@ rf_CreateNonredundantDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		doFunc = rf_DiskReadFunc;
 		undoFunc = rf_DiskReadUndoFunc;
 		name = "R  ";
+#if RF_DEBUG_DAG
 		if (rf_dagDebug)
 			printf("[Creating non-redundant read DAG]\n");
+#endif
 		break;
 	case RF_IO_TYPE_WRITE:
 		doFunc = rf_DiskWriteFunc;
 		undoFunc = rf_DiskWriteUndoFunc;
 		name = "W  ";
+#if RF_DEBUG_DAG
 		if (rf_dagDebug)
 			printf("[Creating non-redundant write DAG]\n");
+#endif
 		break;
 	default:
 		RF_PANIC();
@@ -313,9 +317,11 @@ CreateMirrorReadDAG(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 	n = asmap->numStripeUnitsAccessed;
 	dag_h->creator = "RaidOneReadDAG";
+#if RF_DEBUG_DAG
 	if (rf_dagDebug) {
 		printf("[Creating RAID level 1 read DAG]\n");
 	}
+#endif
 	/*
          * This dag can not commit until the commit node is reached
          * errors prior to the commit point imply the dag has failed.

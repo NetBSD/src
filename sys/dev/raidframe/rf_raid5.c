@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5.c,v 1.12 2004/02/29 20:11:26 oster Exp $	*/
+/*	$NetBSD: rf_raid5.c,v 1.13 2004/03/05 03:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.12 2004/02/29 20:11:26 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5.c,v 1.13 2004/03/05 03:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -171,8 +171,10 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 
 	if ((asmap->numDataFailed + asmap->numParityFailed > 1) ||
 	    (raidPtr->numFailures > 1)){
+#if RF_DEBUG_DAG
 		if (rf_dagDebug) 
 			RF_ERRORMSG("Multiple disks failed in a single group!  Aborting I/O operation.\n");
+#endif
 		*createFunc = NULL;
 		return;
 	}
@@ -190,9 +192,11 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 			    rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, failedPDA->startSector) : 0
 			    );
 		if (prior_recon) {
+#if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
 			RF_RowCol_t oc = failedPDA->col;
 			RF_SectorNum_t oo = failedPDA->startSector;
-			
+#endif			
+
 			if (layoutPtr->map->flags & RF_DISTRIBUTE_SPARE) {	/* redirect to dist
 										 * spare space */
 				
@@ -245,12 +249,14 @@ rf_RaidFiveDagSelect(RF_Raid_t *raidPtr, RF_IoType_t type,
 			
 			RF_ASSERT(failedPDA->col != -1);
 			
+#if RF_DEBUG_DAG > 0 || RF_DEBUG_MAP > 0
 			if (rf_dagDebug || rf_mapDebug) {
 				printf("raid%d: Redirected type '%c' c %d o %ld -> c %d o %ld\n",
 				       raidPtr->raidid, type, oc, 
 				       (long) oo, failedPDA->col,
 				       (long) failedPDA->startSector);
 			}
+#endif
 			asmap->numDataFailed = asmap->numParityFailed = 0;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.30 2004/03/05 02:53:55 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.31 2004/03/05 03:22:05 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.30 2004/03/05 02:53:55 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.31 2004/03/05 03:22:05 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -739,12 +739,14 @@ rf_redirect_asm(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 	RF_ASSERT(raidPtr->status == rf_rs_reconstructing);
 	for (pda = asmap->physInfo; pda; pda = pda->next) {
 		if (pda->col == fcol) {
+#if RF_DEBUG_DAG
 			if (rf_dagDebug) {
 				if (!rf_CheckRUReconstructed(raidPtr->reconControl->reconMap,
 					pda->startSector)) {
 					RF_PANIC();
 				}
 			}
+#endif
 			/* printf("Remapped data for large write\n"); */
 			if (ds) {
 				raidPtr->Layout.map->MapSector(raidPtr, pda->raidAddress,
@@ -756,11 +758,13 @@ rf_redirect_asm(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap)
 	}
 	for (pda = asmap->parityInfo; pda; pda = pda->next) {
 		if (pda->col == fcol) {
+#if RF_DEBUG_DAG
 			if (rf_dagDebug) {
 				if (!rf_CheckRUReconstructed(raidPtr->reconControl->reconMap, pda->startSector)) {
 					RF_PANIC();
 				}
 			}
+#endif
 		}
 		if (ds) {
 			(raidPtr->Layout.map->MapParity) (raidPtr, pda->raidAddress, &pda->col, &pda->startSector, RF_REMAP);
@@ -946,9 +950,11 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 										 * buf if not needed */
 		RF_MallocAndAdd(rdBuf, rf_RaidAddressToByte(raidPtr, numSect[0] + numSect[1] + numParitySect), (char *), allocList);
 		bufP = rdBuf;
+#if RF_DEBUG_DAG
 		if (rf_degDagDebug)
 			printf("Newly allocated buffer (%d bytes) is 0x%lx\n",
 			    (int) rf_RaidAddressToByte(raidPtr, numSect[0] + numSect[1] + numParitySect), (unsigned long) bufP);
+#endif
 	}
 	/* now walk through the pdas one last time and assign buffer pointers
 	 * (ugh!).  Again, ignore the parity.  also, count nodes to find out
@@ -993,6 +999,7 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 		RF_ERRORMSG("GenerateFailedAccessASMs: did not find failedPDA in asm list\n");
 		RF_ASSERT(0);
 	}
+#if RF_DEBUG_DAG
 	if (rf_degDagDebug) {
 		if (new_asm_h[0]) {
 			printf("First asm:\n");
@@ -1003,6 +1010,7 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 			rf_PrintFullAccessStripeMap(new_asm_h[1], 1);
 		}
 	}
+#endif
 }
 
 
