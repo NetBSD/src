@@ -1,4 +1,4 @@
-/*	$NetBSD: pbsdboot.h,v 1.6 2000/01/16 03:07:33 takemura Exp $	*/
+/*	$NetBSD: pbsdboot.h,v 1.7 2000/01/31 12:45:29 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -83,6 +83,7 @@ struct preference_s {
 	BOOL check_last_chance;
 	BOOL load_debug_info;
 	BOOL serial_port;
+	BOOL reverse_video;
 };
 
 /*
