@@ -1,4 +1,4 @@
-.\"	$NetBSD: disklabel.8,v 1.51 2004/03/19 18:22:31 dyoung Exp $
+.\"	$NetBSD: disklabel.8,v 1.52 2004/03/20 18:51:06 wiz Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,34 +40,25 @@
 .Nd read and write disk pack label
 .Sh SYNOPSIS
 .Nm
-.Op Fl rt
-.Op Fl C
-.Op Fl F
+.Op Fl CFrt
 .Ar disk
 .Nm
 .Fl w
-.Op Fl r
-.Op Fl F
+.Op Fl Fr
 .Op Fl f Ar disktab
 .Ar disk Ar disktype
 .Oo Ar packid Oc
 .Nm
 .Fl e
-.Op Fl r
-.Op Fl I
-.Op Fl C
-.Op Fl F
+.Op Fl CFIr
 .Ar disk
 .Nm
 .Fl i
-.Op Fl I
-.Op Fl r
-.Op Fl F
+.Op Fl FIr
 .Ar disk
 .Nm
 .Fl R
-.Op Fl r
-.Op Fl F
+.Op Fl Fr
 .Ar disk Ar protofile
 .Nm
 .Op Fl NW
@@ -116,7 +107,7 @@ On some systems,
 .Nm
 can be used to install bootstrap code as well.
 .Pp
-There are several forms of the command that read (display), install or edit
+There are several forms of the command that read (display), install, or edit
 the label on a disk.
 Each form has an additional option,
 .Fl r ,
@@ -134,7 +125,7 @@ The
 option indicates that
 .Nm
 should treat
-.Ar disk 
+.Ar disk
 as if it is a regular file, instead of as if it is a block device,
 for the purposes of reading and writing a disklabel.
 .Pp
@@ -155,7 +146,10 @@ option is not supported on all platforms.
 These variants are described later.
 .Pp
 The first form of the command (read) is used to examine the label on the named
-disk drive (e.g., sd0 or /dev/rsd0c).
+disk drive (e.g.,
+.Pa sd0
+or
+.Pa /dev/rsd0c ) .
 It will display all of the parameters associated with the drive
 and its partition layout.
 Unless the
@@ -179,8 +173,9 @@ The second form of the command, with the
 flag, is used to write a standard label on the designated drive.
 The required arguments to
 .Nm
-are the drive to be labelled (e.g. sd0), and
-the drive type as described in the
+are the drive to be labelled (e.g.,
+.Pa sd0 ) ,
+and the drive type as described in the
 .Xr disktab 5
 file.
 The drive parameters and partitions are taken from that file.
