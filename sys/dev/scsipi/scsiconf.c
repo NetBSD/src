@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.92 1997/10/01 01:19:03 enami Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.93 1997/10/03 02:04:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -667,12 +667,16 @@ scsi_probedev(scsi, target, lun)
 		case T_SEQUENTIAL:
 		case T_PRINTER:
 		case T_PROCESSOR:
-		case T_CDROM:
 		case T_WORM:
+		case T_CDROM:
 		case T_SCANNER:
 		case T_OPTICAL:
 		case T_CHANGER:
 		case T_COMM:
+		case T_IT8_1:
+		case T_IT8_2:
+		case T_STORARRAY:
+		case T_ENCLOSURE:
 		default:
 			break;
 		case T_NODEVICE:
