@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.559 2003/04/08 06:02:18 jdc Exp $
+#	$NetBSD: mi,v 1.560 2003/04/18 04:56:58 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -776,6 +776,7 @@
 ./usr/include/sys/pmc.h			comp-c-include
 ./usr/include/sys/poll.h		comp-c-include
 ./usr/include/sys/pool.h		comp-c-include
+./usr/include/sys/power.h		comp-c-include
 ./usr/include/sys/proc.h		comp-c-include
 ./usr/include/sys/properties.h		comp-c-include
 ./usr/include/sys/protosw.h		comp-c-include
