@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ip.c,v 1.10 2000/02/03 17:42:01 itojun Exp $	*/
+/*	$NetBSD: print-ip.c,v 1.11 2001/01/19 09:10:13 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-ip.c,v 1.66 97/05/28 12:51:43 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-ip.c,v 1.10 2000/02/03 17:42:01 itojun Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.11 2001/01/19 09:10:13 kleink Exp $");
 #endif
 #endif
 
@@ -560,6 +560,13 @@ again:
 				printf(" (mobile encap)");
 				return;
 			}
+			break;
+
+#ifndef IPPROTO_VRRP
+#define IPPROTO_VRRP 112
+#endif
+		case IPPROTO_VRRP:
+			vrrp_print(cp, len, (const u_char *)ip);
 			break;
 
 		default:
