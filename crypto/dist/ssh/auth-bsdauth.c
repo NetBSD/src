@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.2 2002/03/08 02:00:50 itojun Exp $	*/
+/*	$NetBSD: auth-bsdauth.c,v 1.3 2002/04/22 07:59:35 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
  *
@@ -23,12 +23,13 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth-bsdauth.c,v 1.2 2001/12/19 07:18:56 deraadt Exp $");
+RCSID("$OpenBSD: auth-bsdauth.c,v 1.3 2002/03/18 17:50:31 provos Exp $");
 
 #ifdef BSD_AUTH
 #include "xmalloc.h"
 #include "auth.h"
 #include "log.h"
+#include "monitor_wrap.h"
 
 static void *
 bsdauth_init_ctx(Authctxt *authctxt)
@@ -36,7 +37,7 @@ bsdauth_init_ctx(Authctxt *authctxt)
 	return authctxt;
 }
 
-static int
+int
 bsdauth_query(void *ctx, char **name, char **infotxt,
    u_int *numprompts, char ***prompts, u_int **echo_on)
 {
@@ -77,7 +78,7 @@ bsdauth_query(void *ctx, char **name, char **infotxt,
 	return 0;
 }
 
-static int
+int
 bsdauth_respond(void *ctx, u_int numresponses, char **responses)
 {
 	Authctxt *authctxt = ctx;
@@ -112,6 +113,14 @@ KbdintDevice bsdauth_device = {
 	bsdauth_init_ctx,
 	bsdauth_query,
 	bsdauth_respond,
+	bsdauth_free_ctx
+};
+
+KbdintDevice mm_bsdauth_device = {
+	"bsdauth",
+	bsdauth_init_ctx,
+	mm_bsdauth_query,
+	mm_bsdauth_respond,
 	bsdauth_free_ctx
 };
 #endif
