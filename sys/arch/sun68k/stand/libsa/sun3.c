@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3.c,v 1.1 2001/06/14 12:57:15 fredette Exp $	*/
+/*	$NetBSD: sun3.c,v 1.2 2001/11/30 16:00:27 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@
 
 #define OBIO_MASK 0xFFFFFF
 
-u_int	get_pte __P((vm_offset_t va));
-void	set_pte __P((vm_offset_t va, u_int pte));
+u_int	get_pte __P((vaddr_t va));
+void	set_pte __P((vaddr_t va, u_int pte));
 char *	dvma3_alloc  __P((int len));
 void	dvma3_free  __P((char *dvma, int len));
 char *	dvma3_mapin  __P((char *pkt, int len));
@@ -229,7 +229,7 @@ dvma3_free(char *dvma, int len)
 
 u_int
 get_pte(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
 	return (get_control_word(va));
@@ -237,7 +237,7 @@ get_pte(va)
 
 void
 set_pte(va, pte)
-	vm_offset_t va;
+	vaddr_t va;
 	u_int pte;
 {
 	va = CONTROL_ADDR_BUILD(PGMAP_BASE, va);
@@ -246,7 +246,7 @@ set_pte(va, pte)
 
 int
 get_segmap(va)
-	vm_offset_t va;
+	vaddr_t va;
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
 	return (get_control_byte(va));
@@ -254,7 +254,7 @@ get_segmap(va)
 
 void
 set_segmap(va, sme)
-	vm_offset_t va;
+	vaddr_t va;
 	int sme;
 {
 	va = CONTROL_ADDR_BUILD(SEGMAP_BASE, va);
@@ -268,7 +268,7 @@ set_segmap(va, sme)
 void
 sun3_getidprom(u_char *dst)
 {
-	vm_offset_t src;	/* control space address */
+	vaddr_t src;	/* control space address */
 	int len, x;
 
 	src = IDPROM_BASE;
