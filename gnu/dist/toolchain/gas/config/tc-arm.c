@@ -6895,7 +6895,23 @@ fix_new_arm (frag, where, size, exp, pc_rel, reloc)
 }
 
 
-/* This fix_new is called by cons via TC_CONS_FIX_NEW.  */
+/*
+ * This fix_new is called by cons via TC_CONS_FIX_NEW
+ *
+ * We check the expression to see if it is of the form
+ *  __GLOBAL_OFFSET_TABLE + ???
+ * If it is then this is a PC relative reference to the GOT.
+ * i.e.
+ * 	ldr	sl, L1
+ * 	add	sl, pc, sl
+ * L2:
+ * 	...
+ * L1:
+ *	.word	__GLOBAL_OFFSET_TABLE + (. - (L2 + 4))
+ *
+ * In this case use a reloc type BFD_RELOC_ARM_GOTPC instead of the
+ * normal BFD_RELOC_{16,32,64}
+ */
 void
 cons_fix_new_arm (frag, where, size, exp)
      fragS *       frag;
@@ -6925,6 +6941,31 @@ cons_fix_new_arm (frag, where, size, exp)
       break;
     }
   
+	/* Look for possible GOTPC reloc */
+
+	/*
+	 * Look for pic assembler and 'undef symbol + expr symbol' expression
+	 * and a 32 bit size
+	 */
+
+	if (pic_code != 0 && size == 4 && exp->X_op == O_add
+	    && exp->X_add_symbol
+	    && S_GET_SEGMENT (exp->X_add_symbol) == undefined_section
+	    && exp->X_op_symbol
+	    && S_GET_SEGMENT (exp->X_op_symbol) == expr_section) 
+	  {
+	    /*
+	     * This could be it
+	     * Is the primary symbol name "__GLOBAL_OFFSET_TABLE" ?
+	     */
+	    if (strcmp (S_GET_NAME(exp->X_add_symbol),
+		       GLOBAL_OFFSET_TABLE_NAME) == 0) 
+	      {
+		type = BFD_RELOC_ARM_GOTPC;
+		pcrel = 1;
+	      }
+	  }
+	
   fix_new_exp (frag, where, (int) size, exp, pcrel, type);
 }
 
@@ -7209,80 +7250,6 @@ s_cons(size)
 	  abort();		/* Whoops */
 #endif
 	cons (size);
-}
-
-/*
- * This fix_new is called by cons via TC_CONS_FIX_NEW
- *
- * We check the expression to see if it is of the form
- *  __GLOBAL_OFFSET_TABLE + ???
- * If it is then this is a PC relative reference to the GOT.
- * i.e.
- * 	ldr	sl, L1
- * 	add	sl, pc, sl
- * L2:
- * 	...
- * L1:
- *	.word	__GLOBAL_OFFSET_TABLE + (. - (L2 + 4))
- *
- * In this case use a reloc type BFD_RELOC_ARM_GOTPC instead of the
- * normal BFD_RELOC_{16,32,64}
- */
-
-void
-cons_fix_new_arm(frag, where, size, exp)
-	fragS *frag;
-	int where;
-	int size;
-	expressionS *exp;
-{
-	bfd_reloc_code_real_type type;
-	int pcrel = 0;
-
-	/* Pick a reloc ...
-	 *
-	 * @@ Should look at CPU word size.
-	 */
-	switch (size) 
-	  {
-	  case 2:
-	    type = BFD_RELOC_16;
-	    break;
-	  case 4:
-	  default:
-	    type = BFD_RELOC_32;
-	    break;
-	  case 8:
-	    type = BFD_RELOC_64;
-	    break;
-	  }
-	
-	/* Look for possible GOTPC reloc */
-
-	/*
-	 * Look for pic assembler and 'undef symbol + expr symbol' expression
-	 * and a 32 bit size
-	 */
-
-	if (pic_code != 0 && size == 4 && exp->X_op == O_add
-	    && exp->X_add_symbol
-	    && S_GET_SEGMENT (exp->X_add_symbol) == undefined_section
-	    && exp->X_op_symbol
-	    && S_GET_SEGMENT (exp->X_op_symbol) == expr_section) 
-	  {
-	    /*
-	     * This could be it
-	     * Is the primary symbol name "__GLOBAL_OFFSET_TABLE" ?
-	     */
-	    if (strcmp (S_GET_NAME(exp->X_add_symbol),
-		       GLOBAL_OFFSET_TABLE_NAME) == 0) 
-	      {
-		type = BFD_RELOC_ARM_GOTPC;
-		pcrel = 1;
-	      }
-	  }
-	
-	fix_new_exp (frag, where, (int) size, exp, pcrel, type);
 }
 
 #define AUX_OBJECT	1
