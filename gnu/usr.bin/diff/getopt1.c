@@ -17,14 +17,18 @@
    Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char *rcsid = "$Id: getopt1.c,v 1.4 1993/09/16 17:39:15 jtc Exp $";
+static char *rcsid = "$Id: getopt1.c,v 1.5 1993/09/29 21:37:10 jtc Exp $";
 #endif
 
 #ifdef HAVE_CONFIG_H
+#if defined (emacs) || defined (CONFIG_BROKETS)
 /* We use <config.h> instead of "config.h" so that a compilation
    using -I. -I$srcdir will use ./config.h rather than $srcdir/config.h
-   (which it would do because getopt1.c was found in $srcdir).  */
+   (which it would do because it found this file in $srcdir).  */
 #include <config.h>
+#else
+#include "config.h"
+#endif
 #endif
 
 #include "getopt.h"
