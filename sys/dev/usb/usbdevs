@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.103 2000/06/19 14:58:02 augustss Exp $
+$NetBSD: usbdevs,v 1.103.2.1 2000/07/03 22:55:53 thorpej Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -107,6 +107,7 @@ vendor ATEN		0x0557	ATEN International Co. Ltd.
 vendor MUSTEK		0x055f	Mustek Systems, Inc.
 vendor TELEX		0x0562	Telex Communications, Inc.
 vendor PERACOM		0x0565	Peracom Networks, Inc.
+vendor ALCOR2		0x0566	Alcor Micro, Inc.
 vendor WACOM		0x056a	WACOM Corp. Ltd.
 vendor ETEK		0x056c	e-TEK Labs
 vendor EIZO		0x056d	EIZO
@@ -269,6 +270,14 @@ product ELECOM MOUSE29UO	0x0002	mouse 29UO
 
 /* AKS products */
 product AKS USBHASP		0x0001	USB-HASP 0.06
+
+/* Alcor Micro, Inc. products */
+product ALCOR2 KBD_HUB		0x2802	Kbd Hub
+
+product ALCOR MA_KBD_HUB	0x9213	MacAlly Kbd Hub
+product ALCOR AU9814		0x9215	AU9814 Hub
+product ALCOR SM_KBD		0x9410	MicroConnectors/StrongMan Keyboard
+product ALCOR NEC_KBD_HUB	0x9472	NEC Kbd Hub
 
 /* Altec Lansing products */
 product ALTEC ADA70		0x0070	ADA70 Speakers
