@@ -1157,7 +1157,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 		 * in descriptor is set.
 		 */
 		len = fwohci_buf_pktget(sc, fc, (caddr_t *)&pkt->fp_trail,
-		    sizeof(pkt->fp_trail));
+		    sizeof(*pkt->fp_trail));
 		if (len <= 0) {
 #ifdef FW_DEBUG
 			if (fw_verbose)
@@ -1242,7 +1242,7 @@ fwohci_buf_input(struct fwohci_softc *sc, struct fwohci_ctx *fc,
 	if (!fc->fc_isoch) {
 		/* get trailer */
 		len = fwohci_buf_pktget(sc, fc, (caddr_t *)&pkt->fp_trail,
-		    sizeof(pkt->fp_trail));
+		    sizeof(*pkt->fp_trail));
 		if (len <= 0) {
 			printf("fwohci_buf_input: malformed input 3: %d\n",
 			    pkt->fp_hlen - count);
