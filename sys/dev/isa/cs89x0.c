@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.10 1999/05/18 23:52:57 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.11 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -442,7 +442,15 @@ cs_attach(sc, enaddr, media, nmedia, defmedia)
 		printf("%s: invalid DMA channel, not using DMA\n",
 		    sc->sc_dev.dv_xname);
 	else {
+		bus_size_t maxsize;
 		bus_addr_t dma_addr;
+
+		maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
+		if (maxsize < CS8900_DMASIZE) {
+			printf("%s: max DMA size %d is less than required %d\n",
+			    sc->sc_dev.dv_xname, maxsize, CS8900_DMASIZE);
+			goto after_dma_block;
+		}
 
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 		    CS8900_DMASIZE, BUS_DMA_NOWAIT) != 0) {

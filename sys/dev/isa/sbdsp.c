@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.103 2000/01/20 19:27:03 thorpej Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.104 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -418,6 +418,14 @@ sbdsp_attach(sc)
 	sc->sc_fullduplex = ISSB16CLASS(sc) && 
 	    sc->sc_drq8 != -1 && sc->sc_drq16 != -1 &&
 	    sc->sc_drq8 != sc->sc_drq16;
+
+	if (sc->sc_drq8 != -1)
+		sc->sc_drq8_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_drq8);
+
+	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8)
+		sc->sc_drq16_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_drq16);
 }
 
 void
@@ -881,7 +889,7 @@ sbdsp_open(addr, flags)
 
 	if (sc->sc_drq8 != -1) {
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq8,
-		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		    sc->sc_drq8_maxsize, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq8);
@@ -891,7 +899,7 @@ sbdsp_open(addr, flags)
 	}
 	if (sc->sc_drq16 != -1 && sc->sc_drq16 != sc->sc_drq8) {
 		error = isa_dmamap_create(sc->sc_ic, sc->sc_drq16,
-		    MAX_ISADMA, BUS_DMA_NOWAIT);
+		    sc->sc_drq16_maxsize, BUS_DMA_NOWAIT);
 		if (error) {
 			printf("%s: can't create map for drq %d\n",
 			    sc->sc_dev.dv_xname, sc->sc_drq16);
@@ -2268,8 +2276,16 @@ sb_round_buffersize(addr, direction, size)
 	int direction;
 	size_t size;
 {
-	if (size > MAX_ISADMA)
-		size = MAX_ISADMA;
+	struct sbdsp_softc *sc = addr;
+	bus_size_t maxsize;
+
+	if (sc->sc_drq8 != -1)
+		maxsize = sc->sc_drq8_maxsize;
+	else
+		maxsize = sc->sc_drq16_maxsize;
+
+	if (size > maxsize)
+		size = maxsize;
 	return (size);
 }
 

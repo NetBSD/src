@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.67 1999/03/30 16:40:47 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.68 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -188,7 +188,9 @@ struct gus_softc {
 	int sc_iobase;			/* I/O base address */
 	int sc_irq;			/* IRQ used */
 	int sc_playdrq;			/* DMA channel for play */
+	bus_size_t sc_play_maxsize;	/* DMA size for play */
 	int sc_recdrq;			/* DMA channel for recording */
+	bus_size_t sc_req_maxsize;	/* DMA size for recording */
 
 	int sc_flags;			/* Various flags about the GUS */
 #define GUS_MIXER_INSTALLED	0x01	/* An ICS mixer is installed */
@@ -911,6 +913,27 @@ gusattach(parent, self, aux)
 	sc->sc_mixcontrol =
 		(m | GUSMASK_LATCHES) & ~(GUSMASK_LINE_OUT|GUSMASK_LINE_IN);
 
+	if (sc->sc_playdrq != -1) {
+		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_playdrq);
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
+		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			       sc->sc_dev.dv_xname, sc->sc_playdrq);
+			return;
+		}
+	}
+	if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
+		sc->sc_req_maxsize = isa_dmamaxsize(sc->sc_ic,
+		    sc->sc_recdrq);
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
+		    sc->sc_req_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			       sc->sc_dev.dv_xname, sc->sc_recdrq);
+			return;
+		}
+	}
+
 	/* XXX WILL THIS ALWAYS WORK THE WAY THEY'RE OVERLAYED?! */
 	sc->sc_codec.sc_ic = sc->sc_ic;
 
@@ -920,23 +943,6 @@ gusattach(parent, self, aux)
 	}
 	if (sc->sc_revision >= 10)
 		gus_init_cs4231(sc);
-
-	if (sc->sc_playdrq != -1) {
-		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			       sc->sc_dev.dv_xname, sc->sc_playdrq);
-			return;
-		}
-	}
-	if (sc->sc_recdrq != -1 && sc->sc_recdrq != sc->sc_playdrq) {
-		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
-		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-			printf("%s: can't create map for drq %d\n",
-			       sc->sc_dev.dv_xname, sc->sc_recdrq);
-			return;
-		}
-	}
 
  	SELECT_GUS_REG(iot, ioh2, GUSREG_RESET);
  	/*
@@ -2889,7 +2895,9 @@ gus_init_cs4231(sc)
 		sc->sc_flags |= GUS_CODEC_INSTALLED;
 		sc->sc_codec.sc_ad1848.parent = sc;
 		sc->sc_codec.sc_playdrq = sc->sc_recdrq;
+		sc->sc_codec.sc_play_maxsize = sc->sc_req_maxsize;
 		sc->sc_codec.sc_recdrq = sc->sc_playdrq;
+		sc->sc_codec.sc_rec_maxsize = sc->sc_play_maxsize;
 		gus_hw_if = gusmax_hw_if;
 		/* enable line in and mic in the GUS mixer; the codec chip
 		   will do the real mixing for them. */

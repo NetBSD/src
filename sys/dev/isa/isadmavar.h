@@ -1,7 +1,7 @@
-/*	$NetBSD: isadmavar.h,v 1.15 1999/02/22 02:32:43 mycroft Exp $	*/
+/*	$NetBSD: isadmavar.h,v 1.16 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,8 +40,6 @@
 #ifndef _DEV_ISA_ISADMAVAR_H_
 #define	_DEV_ISA_ISADMAVAR_H_
 
-#define MAX_ISADMA	65536
-
 #define	DMAMODE_WRITE		0x00
 #define	DMAMODE_READ		0x01
 #define	DMAMODE_SINGLE		0x00
@@ -63,6 +61,7 @@ struct isa_dma_state {
 	bus_dma_tag_t ids_dmat;		/* DMA tag for DMA controller */
 	bus_dmamap_t ids_dmamaps[8];	/* DMA maps for each channel */
 	bus_size_t ids_dmalength[8];	/* size of DMA transfer per channel */
+	bus_size_t ids_maxsize[8];	/* max size per channel */
 	int	ids_drqmap;		/* available DRQs (bitmap) */
 	int	ids_dmareads;		/* state for isa_dmadone() (bitmap) */
 	int	ids_dmafinished;	/* DMA completion state (bitmap) */
@@ -105,6 +104,8 @@ void	   _isa_dmainit __P((struct isa_dma_state *, bus_space_tag_t,
 	       bus_dma_tag_t, struct device *));
 
 int	   _isa_dmacascade __P((struct isa_dma_state *, int));
+
+bus_size_t _isa_dmamaxsize __P((struct isa_dma_state *, int));
 
 int	   _isa_dmamap_create __P((struct isa_dma_state *, int,
 	       bus_size_t, int));

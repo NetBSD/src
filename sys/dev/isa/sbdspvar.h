@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.47 1999/10/10 00:10:26 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.48 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -103,7 +103,9 @@ struct sbdsp_softc {
 	int	sc_irq;			/* interrupt */
 
 	int	sc_drq8;		/* DMA (8-bit) */
+	bus_size_t sc_drq8_maxsize;
 	int	sc_drq16;		/* DMA (16-bit) */
+	bus_size_t sc_drq16_maxsize;
 
 	int	sc_open;		/* reference count of open calls */
 #define SB_CLOSED 0

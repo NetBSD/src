@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.130 2000/02/07 20:16:51 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.131 2000/02/07 22:07:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ struct fdc_softc {
 #define	sc_fdinioh	sc_fdctlioh
 
 	int sc_drq;
+	bus_size_t sc_maxiosize;
 
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
@@ -455,7 +456,9 @@ fdcattach(parent, self, aux)
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
-	if (isa_dmamap_create(fdc->sc_ic, fdc->sc_drq, FDC_MAXIOSIZE,
+	fdc->sc_maxiosize = isa_dmamaxsize(fdc->sc_ic, fdc->sc_drq);
+
+	if (isa_dmamap_create(fdc->sc_ic, fdc->sc_drq, fdc->sc_maxiosize,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't set up ISA DMA map\n",
 		    fdc->sc_dev.dv_xname);
@@ -1107,7 +1110,7 @@ loop:
 		sec = fd->sc_blkno % type->seccyl;
 		nblks = type->seccyl - sec;
 		nblks = min(nblks, fd->sc_bcount / FDC_BSIZE);
-		nblks = min(nblks, FDC_MAXIOSIZE / FDC_BSIZE);
+		nblks = min(nblks, fdc->sc_maxiosize / FDC_BSIZE);
 		fd->sc_nblks = nblks;
 		fd->sc_nbytes = finfo ? bp->b_bcount : nblks * FDC_BSIZE;
 		head = sec / type->sectrac;

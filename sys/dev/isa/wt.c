@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.46 1999/01/10 21:57:19 augustss Exp $	*/
+/*	$NetBSD: wt.c,v 1.47 2000/02/07 22:07:31 thorpej Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -230,6 +230,7 @@ wtattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
+	bus_size_t maxsize;
 
 	/* Map i/o space */
 	if (bus_space_map(iot, ia->ia_iobase, AV_NPORT, 0, &ioh)) {
@@ -268,6 +269,12 @@ ok:
 	sc->dens = -1;			/* unknown density */
 
 	sc->chan = ia->ia_drq;
+
+	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->chan)) < MAXPHYS) {
+		printf("%s: max DMA size %d is less than required %d\n",
+		    sc->sc_dev.dv_xname, maxsize, MAXPHYS);
+		return;
+	}
 
 	if (isa_dmamap_create(sc->sc_ic, sc->chan, MAXPHYS,
 	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {

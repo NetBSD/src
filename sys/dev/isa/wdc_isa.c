@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.15 1999/05/19 14:41:25 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.16 2000/02/07 22:07:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,6 +172,15 @@ static void
 wdc_isa_dma_setup(sc)
 	struct wdc_isa_softc *sc;
 {
+	bus_size_t maxsize;
+
+	if ((maxsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq)) < MAXPHYS) {
+		printf("%s: max DMA size %d is less than required %d\n",
+		    sc->sc_wdcdev.sc_dev.dv_xname, maxsize, MAXPHYS);
+		sc->sc_wdcdev.cap &= ~WDC_CAPABILITY_DMA;
+		return;
+	}
+
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq,
 	    MAXPHYS, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",

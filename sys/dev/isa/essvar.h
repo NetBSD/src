@@ -1,4 +1,4 @@
-/*	$NetBSD: essvar.h,v 1.15 1999/06/18 20:25:23 augustss Exp $	*/
+/*	$NetBSD: essvar.h,v 1.16 2000/02/07 22:07:31 thorpej Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essvar.h,v $ $Revision: 1.15 $ (SHARK) $Date: 1999/06/18 20:25:23 $
+** @(#) $RCSfile: essvar.h,v $ $Revision: 1.16 $ (SHARK) $Date: 2000/02/07 22:07:31 $
 **
 **++
 **
@@ -97,6 +97,7 @@
 struct ess_audio_channel
 {
 	int	drq;			/* DMA channel */
+	bus_size_t maxsize;		/* max size for DMA channel */
 #define IS16BITDRQ(drq) ((drq) >= 4)
 	int	irq;			/* IRQ line for this DMA channel */
 	int	ist;
