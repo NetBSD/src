@@ -1,4 +1,4 @@
-/*	$NetBSD: perror.c,v 1.19 1999/01/28 20:13:40 kleink Exp $	*/
+/*	$NetBSD: perror.c,v 1.20 1999/03/09 13:14:36 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)perror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: perror.c,v 1.19 1999/01/28 20:13:40 kleink Exp $");
+__RCSID("$NetBSD: perror.c,v 1.20 1999/03/09 13:14:36 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,10 +53,6 @@ __RCSID("$NetBSD: perror.c,v 1.19 1999/01/28 20:13:40 kleink Exp $");
  * static buffer, both functions supply their own buffers to the
  * internal function __strerror().
  */
-
-#ifdef __weak_alias
-__weak_alias(perror,_perror);
-#endif
 
 void
 perror(s)

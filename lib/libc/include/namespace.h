@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.36 1999/02/06 15:04:05 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.37 1999/03/09 13:14:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -268,7 +268,6 @@
 #define openlog			_openlog
 #define pause			_pause
 #define pclose			_pclose
-#define perror			_perror
 #define pmap_getmaps		_pmap_getmaps
 #define pmap_getport		_pmap_getport
 #define pmap_rmtcall		_pmap_rmtcall
