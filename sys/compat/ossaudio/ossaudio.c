@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.30 1999/11/17 00:06:38 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.30.4.1 2000/08/07 00:28:49 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,9 +58,12 @@ int ossdebug = 0;
 #endif
 
 #define TO_OSSVOL(x) ((x) * 100 / 255)
-#define FROM_OSSVOL(x) ((x) * 255 / 100)
+#define FROM_OSSVOL(x) (((x) > 100 ? 100 : (x)) * 255 / 100)
 
 static struct audiodevinfo *getdevinfo __P((struct file *, struct proc *));
+static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
+static int enum_to_ord(struct audiodevinfo *di, int enm);
+static int enum_to_mask(struct audiodevinfo *di, int enm);
 
 static void setblocksize __P((struct file *, struct audio_info *, struct proc *));
 
@@ -508,9 +511,56 @@ struct audiodevinfo {
 	dev_t dev;
 	int16_t devmap[OSS_SOUND_MIXER_NRDEVICES], 
 	        rdevmap[NETBSD_MAXDEVS];
+	char names[NETBSD_MAXDEVS][MAX_AUDIO_DEV_LEN];
+	int enum2opaque[NETBSD_MAXDEVS];
         u_long devmask, recmask, stereomask;
 	u_long caps, source;
 };
+
+static int
+opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq)
+{
+	int i, o;
+
+	for (i = 0; i < NETBSD_MAXDEVS; i++) {
+		o = di->enum2opaque[i];
+		if (o == opq)
+			break;
+		if (o == -1 && label != NULL &&
+		    !strncmp(di->names[i], label->name, sizeof di->names[i])) {
+			di->enum2opaque[i] = opq;
+			break;
+		}
+	}
+	if (i >= NETBSD_MAXDEVS)
+		i = -1;
+	/*printf("opq_to_enum %s %d -> %d\n", label->name, opq, i);*/
+	return (i);
+}
+
+static int
+enum_to_ord(struct audiodevinfo *di, int enm)
+{
+	if (enm >= NETBSD_MAXDEVS)
+		return (-1);
+
+	/*printf("enum_to_ord %d -> %d\n", enm, di->enum2opaque[enm]);*/
+	return (di->enum2opaque[enm]);
+}
+
+static int
+enum_to_mask(struct audiodevinfo *di, int enm)
+{
+	int m;
+	if (enm >= NETBSD_MAXDEVS)
+		return (0);
+
+	m = di->enum2opaque[enm];
+	if (m == -1)
+		m = 0;
+	/*printf("enum_to_mask %d -> %d\n", enm, di->enum2opaque[enm]);*/
+	return (m);
+}
 
 /* 
  * Collect the audio device information to allow faster
@@ -524,7 +574,7 @@ getdevinfo(fp, p)
 	struct proc *p;
 {
 	mixer_devinfo_t mi;
-	int i;
+	int i, j, e;
 	static struct {
 		char *name;
 		int code;
@@ -557,7 +607,8 @@ getdevinfo(fp, p)
 	static struct audiodevinfo devcache = { 0 };
 	struct audiodevinfo *di = &devcache;
 
-	/* Figure out what device it is so we can check if the
+	/* 
+	 * Figure out what device it is so we can check if the
 	 * cached data is valid.
 	 */
 	vp = (struct vnode *)fp->f_data;
@@ -573,12 +624,15 @@ getdevinfo(fp, p)
 	di->devmask = 0;
 	di->recmask = 0;
 	di->stereomask = 0;
-	di->source = -1;
+	di->source = ~0;
 	di->caps = 0;
 	for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++)
 		di->devmap[i] = -1;
-	for(i = 0; i < NETBSD_MAXDEVS; i++)
+	for(i = 0; i < NETBSD_MAXDEVS; i++) {
 		di->rdevmap[i] = -1;
+		di->names[i][0] = '\0';
+		di->enum2opaque[i] = -1;
+	}
 	for(i = 0; i < NETBSD_MAXDEVS; i++) {
 		mi.index = i;
 		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, (caddr_t)&mi, p) < 0)
@@ -594,29 +648,37 @@ getdevinfo(fp, p)
 				di->devmask |= 1 << dp->code;
 				if (mi.un.v.num_channels == 2)
 					di->stereomask |= 1 << dp->code;
+				strncpy(di->names[i], mi.label.name, 
+					sizeof di->names[i]);
 			}
 			break;
+		}
+	}
+	for(i = 0; i < NETBSD_MAXDEVS; i++) {
+		mi.index = i;
+		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, (caddr_t)&mi, p) < 0)
+			break;
+		if (strcmp(mi.label.name, AudioNsource) != 0)
+			continue;
+		di->source = i;
+		switch(mi.type) {
 		case AUDIO_MIXER_ENUM:
-			if (strcmp(mi.label.name, AudioNsource) == 0) {
-				int j;
-				di->source = i;
-				for(j = 0; j < mi.un.e.num_mem; j++)
-					di->recmask |= 1 << di->rdevmap[mi.un.e.member[j].ord];
-				di->caps = OSS_SOUND_CAP_EXCL_INPUT;
+			for(j = 0; j < mi.un.e.num_mem; j++) {
+				e = opaque_to_enum(di,
+						   &mi.un.e.member[j].label,
+						   mi.un.e.member[j].ord);
+				if (e >= 0)
+					di->recmask |= 1 << di->rdevmap[e];
 			}
+			di->caps = OSS_SOUND_CAP_EXCL_INPUT;
 			break;
 		case AUDIO_MIXER_SET:
-			if (strcmp(mi.label.name, AudioNsource) == 0) {
-				int j;
-				di->source = i;
-				for(j = 0; j < mi.un.s.num_mem; j++) {
-					int k, mask = mi.un.s.member[j].mask;
-					if (mask) {
-						for(k = 0; !(mask & 1); mask >>= 1, k++)
-							;
-						di->recmask |= 1 << di->rdevmap[k];
-					}
-				}
+			for(j = 0; j < mi.un.s.num_mem; j++) {
+				e = opaque_to_enum(di,
+						   &mi.un.s.member[j].label,
+						   mi.un.s.member[j].mask);
+				if (e >= 0)
+					di->recmask |= 1 << di->rdevmap[e];
 			}
 			break;
 		}
@@ -644,7 +706,7 @@ oss_ioctl_mixer(p, uap, retval)
 	int idat;
 	int i;
 	int error;
-	int l, r, n;
+	int l, r, n, e;
 	int (*ioctlf) __P((struct file *, u_long, caddr_t, struct proc *));
 
 	fdp = p->p_fd;
@@ -673,6 +735,9 @@ oss_ioctl_mixer(p, uap, retval)
 
 	ioctlf = fp->f_ops->fo_ioctl;
 	switch (com) {
+	case OSS_GET_VERSION:
+		idat = OSS_SOUND_VERSION;
+		break;
 	case OSS_SOUND_MIXER_INFO:
 	case OSS_SOUND_OLD_MIXER_INFO:
 		error = ioctlf(fp, AUDIO_GETDEV, (caddr_t)&adev, p);
@@ -693,18 +758,17 @@ oss_ioctl_mixer(p, uap, retval)
 			error = ioctlf(fp, AUDIO_MIXER_READ, (caddr_t)&mc, p);
 			if (error)
 				goto out;
-			idat = 1 << di->rdevmap[mc.un.ord];
+			e = opaque_to_enum(di, NULL, mc.un.ord);
+			if (e >= 0)
+				idat = 1 << di->rdevmap[e];
 		} else {
-			int k;
-			unsigned int mask;
 			mc.type = AUDIO_MIXER_SET;
 			error = ioctlf(fp, AUDIO_MIXER_READ, (caddr_t)&mc, p);
 			if (error)
 				goto out;
-			idat = 0;
-			for(mask = mc.un.mask, k = 0; mask; mask >>= 1, k++)
-				if (mask & 1)
-					idat |= 1 << di->rdevmap[k];
+			e = opaque_to_enum(di, NULL, mc.un.mask);
+			if (e >= 0)
+				idat = 1 << di->rdevmap[e];
 		}
 		break;
 	case OSS_SOUND_MIXER_READ_DEVMASK:
@@ -735,21 +799,17 @@ oss_ioctl_mixer(p, uap, retval)
 				if (idat & (1 << i))
 					break;
 			if (i >= OSS_SOUND_MIXER_NRDEVICES ||
-			    di->devmap[i] == -1) {
-				error = EINVAL;
-				goto out;
-			}
-			mc.un.ord = di->devmap[i];
+			    di->devmap[i] == -1)
+				return EINVAL;
+			mc.un.ord = enum_to_ord(di, di->devmap[i]);
 		} else {
 			mc.type = AUDIO_MIXER_SET;
 			mc.un.mask = 0;
 			for(i = 0; i < OSS_SOUND_MIXER_NRDEVICES; i++) {
 				if (idat & (1 << i)) {
-					if (di->devmap[i] == -1) {
-						error = EINVAL;
-						goto out;
-					}
-					mc.un.mask |= 1 << di->devmap[i];
+					if (di->devmap[i] == -1)
+						return EINVAL;
+					mc.un.mask |= enum_to_mask(di, di->devmap[i]);
 				}
 			}
 		}
