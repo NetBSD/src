@@ -62,7 +62,7 @@
 	public void cmd_addhist ();
 	public void cmd_accept ();
 	public int cmd_char ();
-	public int cmd_int ();
+	public LINENUM cmd_int ();
 	public char * get_cmdbuf ();
 	public int in_mca ();
 	public void dispversion ();
@@ -153,9 +153,9 @@
 	public POSITION back_raw_line ();
 	public void clr_linenum ();
 	public void add_lnum ();
-	public int find_linenum ();
+	public LINENUM find_linenum ();
 	public POSITION find_pos ();
-	public int currline ();
+	public LINENUM currline ();
 	public void lsystem ();
 	public int pipe_mark ();
 	public int pipe_data ();
