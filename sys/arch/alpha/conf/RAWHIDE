@@ -1,4 +1,4 @@
-# $NetBSD: RAWHIDE,v 1.1 1998/04/15 21:53:25 mjacob Exp $
+# $NetBSD: RAWHIDE,v 1.2 1998/05/05 20:29:18 mjacob Exp $
 #
 # Alpha kernel for an AlphaServer 4100.
 
@@ -155,7 +155,9 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # Workstation Console attachments
-wscons*	at	vga?
+wsdisplay*	at	vga?
+wskbd*		at	pckbd?
+wsmouse*	at	psm?
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
