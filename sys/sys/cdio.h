@@ -1,4 +1,4 @@
-/*	$NetBSD: cdio.h,v 1.8 1994/06/29 06:43:41 cgd Exp $	*/
+/*	$NetBSD: cdio.h,v 1.9 1994/08/05 22:56:19 mycroft Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
@@ -128,7 +128,7 @@ struct	ioc_vol
 #define	CDIOCGETVOL	_IOR('c',10,struct ioc_vol)
 #define	CDIOCSETVOL	_IOW('c',11,struct ioc_vol)
 #define	CDIOCSETMONO	_IO('c',12)
-#define	CDIOCSETSTERIO	_IO('c',13)
+#define	CDIOCSETSTEREO	_IO('c',13)
 #define	CDIOCSETMUTE	_IO('c',14)
 #define	CDIOCSETLEFT	_IO('c',15)
 #define	CDIOCSETRIGHT	_IO('c',16)
