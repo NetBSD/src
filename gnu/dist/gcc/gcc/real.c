@@ -2612,7 +2612,7 @@ encode_ieee_single (fmt, buf, r)
      const REAL_VALUE_TYPE *r;
 {
   unsigned long image, sig, exp;
-  unsigned sign = r->sign;
+  unsigned long sign = r->sign;
   bool denormal = (r->sig[SIGSZ-1] & SIG_MSB) == 0;
 
   image = sign << 31;
