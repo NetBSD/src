@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.9 2000/10/29 14:08:06 lukem Exp $
+.\"	$NetBSD: prep,v 1.10 2001/07/20 19:00:38 nra Exp $
 .
 Currently, only installing the miniroot from the network is supported.
 This may change in a future release.
@@ -7,7 +7,7 @@ You will need information about your disk's geometry, based on 512-byte
 sectors. You must have this information before proceeding. The
 file
 .Pa .../installation/misc/HP-IB.geometry
-has geometry inforomation for
+has geometry information for
 several HP-IB disks, but may be incomplete. Geometry may be calculated
 from an HP-UX
 .Pa /etc/disktab
@@ -57,7 +57,7 @@ Controllers are numbered 0, 1, ... starting with the lowest select code.
 SCSI controllers and HP-IB controllers are counted separately. Therefore,
 if you had a system with an internal HP-IB interface at select code 7,
 a fast HP-IB interface at select code 14, and a SCSI interface at select
-code 16, unit numers might be something like the following:
+code 16, unit numbers might be something like the following:
 .Bl -column -offset indent HP-IB\ at\ 14,\ slave\ 5 Unit (disk:\ rd13)
 .It Sy Location Ta Sy Unit
 .It HP-IB\ at\ 7,\ slave\ 2 Ta 2 Ta (disk:\ rd2)
@@ -234,7 +234,7 @@ The next step is to copy the miniroot image onto the target disk.
 .Dl sys_inst\*> Ic miniroot
 .Pp
 You will be prompted for the target disk and the source of the miniroot
-filesytem image.
+filesystem image.
 .Pp
 Enter the filename of the miniroot image. Note that this file
 .Em must
