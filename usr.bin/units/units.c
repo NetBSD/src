@@ -1,4 +1,4 @@
-/*	$NetBSD: units.c,v 1.9 2000/04/14 06:11:11 simonb Exp $	*/
+/*	$NetBSD: units.c,v 1.10 2002/04/02 18:08:28 atatat Exp $	*/
 
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
@@ -638,7 +638,7 @@ usage()
 	fprintf(stderr,
 	    "\nunits [-f unitsfile] [-q] [-v] [from-unit to-unit]\n");
 	fprintf(stderr, "\n    -f specify units file\n");
-	fprintf(stderr, "    -q supress prompting (quiet)\n");
+	fprintf(stderr, "    -q suppress prompting (quiet)\n");
 	fprintf(stderr, "    -v print version number\n");
 	exit(3);
 }
@@ -673,14 +673,26 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (optind != argc - 2 && optind != argc)
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 3 && argc != 2 && argc != 0)
 		usage();
 
 	readunits(userfile);
 
-	if (optind == argc - 2) {
-		strcpy(havestr, argv[optind]);
-		strcpy(wantstr, argv[optind + 1]);
+	if (argc == 3) {
+		strcpy(havestr, argv[0]);
+		strcat(havestr, " ");
+		strcat(havestr, argv[1]);
+		argc--;
+		argv++;
+		argv[0] = havestr;
+	}
+
+	if (argc == 2) {
+		strcpy(havestr, argv[0]);
+		strcpy(wantstr, argv[1]);
 		initializeunit(&have);
 		addunit(&have, havestr, 0);
 		completereduce(&have);
