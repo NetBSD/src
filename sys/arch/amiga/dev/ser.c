@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.31 1996/04/21 21:12:28 veego Exp $	*/
+/*	$NetBSD: ser.c,v 1.32 1996/04/23 16:38:32 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  *	@(#)ser.c	7.12 (Berkeley) 6/27/91
  */
 /*
- * XXX This file needs major cleanup it will never ervice more than one
+ * XXX This file needs major cleanup it will never service more than one
  * XXX unit.
  */
 
@@ -124,30 +124,6 @@ int	serswflags;
 struct	vbl_node ser_vbl_node[NSER];
 struct	tty ser_cons;
 struct	tty *ser_tty[NSER];
-
-struct speedtab serspeedtab[] = {
-	{ 0,		0		},
-	{ 50,		SERBRD(50)	},
-	{ 75,		SERBRD(75)	},
-	{ 110,		SERBRD(110)	},
-	{ 134,		SERBRD(134)	},
-	{ 150,		SERBRD(150)	},
-	{ 200,		SERBRD(200)	},
-	{ 300,		SERBRD(300)	},
-	{ 600,		SERBRD(600)	},
-	{ 1200,		SERBRD(1200)	},
-	{ 1800,		SERBRD(1800)	},
-	{ 2400,		SERBRD(2400)	},
-	{ 4800,		SERBRD(4800)	},
-	{ 9600,		SERBRD(9600)	},
-	{ 19200,	SERBRD(19200)	},
-	{ 38400,	SERBRD(38400)	},
-	{ 57600,	SERBRD(57600)	},
-	{ 76800,	SERBRD(76800)	},
-	{ 115200,	SERBRD(115200)	},
-	{ -1,		-1 }
-};
-
 
 /* 
  * Since this UART is not particularly bright (to put it nicely), we'll
@@ -722,9 +698,14 @@ serparam(tp, t)
 	
 	cflag = t->c_cflag;
 	unit = SERUNIT(tp->t_dev);
-	ospeed = ttspeedtab(t->c_ospeed, serspeedtab);
 
-	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
+	if (t->c_ospeed > 0) {
+		if (t->c_ospeed < 110)
+			return(EINVAL);
+		ospeed = SERBRD(t->c_ospeed);
+	}
+
+	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
 		return(EINVAL);
 
 	/* 
@@ -740,7 +721,7 @@ serparam(tp, t)
 	custom.intena = INTF_SETCLR | INTF_RBF | INTF_TBE;
 	last_ciab_pra = ciab.pra;
 
-	if (ospeed == 0)
+	if (t->c_ospeed == 0)
 		(void)sermctl(tp->t_dev, 0, DMSET);	/* hang up line */
 	else {
 		/* 
@@ -1045,7 +1026,7 @@ serinit(unit, rate)
 	/*
 	 * might want to fiddle with the CIA later ???
 	 */
-	custom.serper = ttspeedtab(rate, serspeedtab);
+	custom.serper = (rate>=110 ? SERBRD(rate) : 0);
 	splx(s);
 }
 
