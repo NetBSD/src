@@ -1,5 +1,5 @@
 /*
- * $Id: warnings.c,v 1.14 1994/07/21 14:59:11 pk Exp $
+ * $Id: warnings.c,v 1.15 1994/07/23 08:40:57 pk Exp $
  */
 
 #include <sys/param.h>
@@ -668,7 +668,7 @@ warnx("Unexpected multiple definitions of symbol `%s', type %#x\n", g->name, np-
 			 * used by the warning stabs itself.
 			 */
 			if (np->n_type != (N_EXT | N_UNDF) ||
-			    (i && entry->symbols[i-1].nzlist.nz_type == N_WARNING))
+			    (entry->symbols[i].flags & LS_WARNING))
 				continue;
 
 			errfmt = g->warning;
