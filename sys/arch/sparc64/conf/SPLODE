@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.6 2002/01/19 14:49:18 mrg Exp $
+# 	$NetBSD: SPLODE,v 1.7 2002/01/22 01:23:18 mrg Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	256
 
@@ -14,7 +14,7 @@ maxusers	256
 # Options for variants of the Sun SPARC architecure.
 # We currently support three architecture types; at least one is required.
 options 	SUN4U		# sun4u - UltraSPARC
-#options 	LOCKDEBUG
+options 	BLINK		# blink the system LED
 
 ## System options specific to the sparc machine type
 
@@ -390,6 +390,9 @@ pseudo-device	ppp		4
 ## Berkeley Packet Filter, required to run RARPD.  A generic C-language
 ## interface that allows selective examining of incoming packets.
 pseudo-device	bpfilter	8
+
+## Simple inter-network traffic bridging
+pseudo-device bridge
 
 ## IP Filter, used in firewall and NAT applications.  See ipnat(8) for
 ## one example of the use of the IP Filter.
