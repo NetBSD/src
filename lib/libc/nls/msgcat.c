@@ -31,7 +31,7 @@ up-to-date.  Many thanks.
 ******************************************************************/
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: msgcat.c,v 1.6 1994/10/06 05:41:45 jtc Exp $";
+static char *rcsid = "$Id: msgcat.c,v 1.7 1994/11/18 15:36:19 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /* Edit History
@@ -79,7 +79,7 @@ static char *rcsid = "$Id: msgcat.c,v 1.6 1994/10/06 05:41:45 jtc Exp $";
 static nl_catd loadCat();
 static nl_catd loadSet();
 
-nl_catd 	__catopen( name, type)
+nl_catd 	_catopen( name, type)
 char *name;
 int type;
 {
@@ -235,7 +235,7 @@ int msgId;
     return(msg);
 }
 
-char		*__catgets( catd, setId, msgId, dflt)
+char		*_catgets( catd, setId, msgId, dflt)
 nl_catd catd;
 int setId;
 int msgId;
@@ -252,7 +252,7 @@ char *dflt;
 }
 
 
-void		__catclose( catd)
+int		_catclose( catd)
 nl_catd catd;
 {
     MCCatT	*cat = (MCCatT *) catd;
@@ -260,7 +260,7 @@ nl_catd catd;
     MCMsgT	*msg;
     int		i, j;
 
-    if (!cat) return;
+    if (!cat) return -1;
     
     if (cat->loadType != MCLoadAll) close(cat->fd);
     for (i = 0; i < cat->numSets; ++i) {
@@ -272,6 +272,8 @@ nl_catd catd;
     }
     free(cat->sets);
     free(cat);
+
+    return 0;
 }
 
 /*
