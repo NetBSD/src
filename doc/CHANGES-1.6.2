@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.172 2003/10/02 20:41:56 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.173 2003/10/02 20:57:14 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2208,4 +2208,14 @@ sys/netinet6/ip6_forward.c			1.37
 	Correctly look at outer IPv6 header when forwarding packet into ipsec
 	tunnel. iij seil team
 	[itojun, ticket #1500]
+
+sys/netinet6/ip6_forward.c			1.38
+
+	Do not deref state.ro if it is NULL
+	[itojun, ticket #1501]
+
+lib/libipsec/policy_parse.y			1.11
+
+	Correct unsafe use of realloc().
+	[itojun, ticket #1502]
 
