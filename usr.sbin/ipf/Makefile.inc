@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.8 2001/03/13 16:29:42 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2002/09/18 03:54:30 lukem Exp $
 
-CPPFLAGS+=-I${.CURDIR}/../../../sys -I${.CURDIR}/../../../sys/netinet
+.include <bsd.own.mk>
+
+CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${NETBSDSRCDIR}/sys/netinet
 CPPFLAGS+=-DUSE_INET6 -DSTATETOP
 
-.PATH:	${.CURDIR}/../../../dist/ipf \
-	${.CURDIR}/../../../dist/ipf/man
+.PATH:	${NETBSDSRCDIR}/dist/ipf \
+	${NETBSDSRCDIR}/dist/ipf/man
 
 .if exists(${.CURDIR}/../../Makefile.inc)
 .include "${.CURDIR}/../../Makefile.inc"

@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.28 2002/05/31 09:45:47 itojun Exp $	
+#	$NetBSD: Makefile,v 1.29 2002/09/18 03:54:38 lukem Exp $	
 
 .include <bsd.own.mk>
 
-SRCDIR=	${.CURDIR}/../../dist/tcpdump
+SRCDIR=	${NETBSDSRCDIR}/dist/tcpdump
 .PATH:	${SRCDIR}
 
 PROG=	tcpdump
