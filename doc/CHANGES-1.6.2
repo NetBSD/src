@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.34 2003/06/16 21:56:29 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.35 2003/06/17 16:36:11 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -483,3 +483,42 @@ sys/arch/newsmips/newsmips/cpu_cons.c		1.7
 	This should fix boot failure of the INSTALL kernel
 	on news3400 with serial console.
 	[tsutsui, ticket #1276]
+
+sys/netinet6/ip6_mroute.c			1.47
+
+	don't try to forward multicast packet to mif that went away.
+	[itojun, ticket #1317]
+
+sys/arch/mac68k/dev/if_mc.c			1.21
+sys/arch/macppc/dev/am79c950.c			1.14
+
+	Don't bring down mc(4) interfaces when they underflow.
+	Fixes PR#12088. [bjh21, ticket #1314]
+
+sys/netinet/tcp_input.c				1.168
+
+	Inherit IPV6_V6ONLY from listening socket. Fixes PR#21713.
+	[itojun, ticket #1304]
+
+sys/dev/pci/if_ste.c				1.17
+
+	Add a missed htole32() for DMA txdescs.
+	[tsutsui, ticket #1315]
+
+sys/dev/ic/i82557.c				1.74 (via patch)
+
+	Fix of possible null pointer dereferences.
+	[yamt, ticket #1296]
+
+etc/services					1.65
+
+	Add "kamanda" 10081/udp for Amanda with Kerberos. Fixes PR#21756.
+	[fair, ticket #1312]
+
+sys/net/route.h					1.32
+sys/net/route.c					1.55
+sys/netinet/ip_input.c				1.163 (via patch)
+
+	Remove all entries in rt timer queue on ip_mtudisc change, instead
+	of destroying the queue.
+	[itojun, ticket #984]
