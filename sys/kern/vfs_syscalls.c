@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.111 1998/02/10 14:09:55 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.112 1998/02/14 19:49:43 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -67,7 +67,8 @@
 
 static int change_dir __P((struct nameidata *, struct proc *));
 static int change_mode __P((struct vnode *, int, struct proc *p));
-static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *));
+static int change_owner __P((struct vnode *, uid_t, gid_t, struct proc *,
+    int));
 static int change_utimes __P((struct vnode *vp, const struct timeval *,
 	       struct proc *p));
 static int rename_files __P((const char *, const char *, struct proc *, int));
@@ -1592,7 +1593,36 @@ sys_chown(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
-	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p);
+	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p, 0);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+/*
+ * Set ownership given a path name; this version follows links.
+ * Provides POSIX semantics.
+ */
+/* ARGSUSED */
+int
+sys___posix_chown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_chown_args /* {
+		syscallarg(const char *) path;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p, 1);
 
 	vrele(nd.ni_vp);
 	return (error);
@@ -1620,7 +1650,32 @@ sys_fchown(p, v, retval)
 		return (error);
 
 	return (change_owner((struct vnode *)fp->f_data, SCARG(uap, uid),
-	    SCARG(uap, gid), p));
+	    SCARG(uap, gid), p, 0));
+}
+
+/*
+ * Set ownership given a file descriptor, providing POSIX/XPG semantics.
+ */
+/* ARGSUSED */
+int
+sys___posix_fchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_fchown_args /* {
+		syscallarg(int) fd;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	int error;
+	struct file *fp;
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+
+	return (change_owner((struct vnode *)fp->f_data, SCARG(uap, uid),
+	    SCARG(uap, gid), p, 1));
 }
 
 /*
@@ -1645,24 +1700,54 @@ sys_lchown(p, v, retval)
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
-	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p);
+	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p, 0);
 
 	vrele(nd.ni_vp);
 	return (error);
 }
 
 /*
- * Common routine to set ownership given a vnode.
+ * Set ownership given a path name; this version does not follow links.
+ * Provides POSIX/XPG semantics.
+ */
+/* ARGSUSED */
+int
+sys___posix_lchown(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_lchown_args /* {
+		syscallarg(const char *) path;
+		syscallarg(uid_t) uid;
+		syscallarg(gid_t) gid;
+	} */ *uap = v;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+
+	error = change_owner(nd.ni_vp, SCARG(uap, uid), SCARG(uap, gid), p, 1);
+
+	vrele(nd.ni_vp);
+	return (error);
+}
+
+/*
+ * Common routine to set ownership given a vnode.  
  */
 static int
-change_owner(vp, uid, gid, p)
+change_owner(vp, uid, gid, p, posix_semantics)
 	register struct vnode *vp;
 	uid_t uid;
 	gid_t gid;
 	struct proc *p;
+	int posix_semantics;
 {
 	struct vattr vattr;
-	mode_t newmode = VNOVAL;
+	mode_t newmode;
 	int error;
 
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
@@ -1674,20 +1759,47 @@ change_owner(vp, uid, gid, p)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
 		goto out;
 
+#define CHANGED(x) ((x) != -1)
 	/*
-	 * Unless the caller is the superuser, clear the (S_ISUID | S_ISGID)
-	 * bits, but alter va_mode only if those are actually set on the vnode.
+	 * If we don't own the file, are trying to change the owner
+	 * of the file, or are not a member of the target group,
+	 * the caller must be superuser or the call fails.
 	 */
-	if ((suser(p->p_ucred, NULL) != 0) &&
-	    (vattr.va_mode & (S_ISUID | S_ISGID)))
-		newmode = vattr.va_mode & ~(S_ISUID | S_ISGID);
+	if ((p->p_ucred->cr_uid != vattr.va_uid || 
+	     (CHANGED(uid) && uid != vattr.va_uid) ||
+	     (CHANGED(gid) && !groupmember(gid, p->p_ucred))) &&
+	    ((error = suser(p->p_ucred, &p->p_acflag)) != 0))
+		goto out;
 
+	newmode = vattr.va_mode;
+	if (posix_semantics) {
+		/*
+		 * POSIX/XPG semantics: clear set-user-id and set-group-id
+		 * bits, unless the caller is the super-user.
+		 */
+		if (suser(p->p_ucred, NULL) != 0)
+			newmode &= ~(S_ISUID | S_ISGID);
+	} else {
+		/*
+		 * NetBSD semantics: when changing owner and/or group,
+		 * clear the respective bit(s).
+		 */
+		if (CHANGED(uid))
+			newmode &= ~S_ISUID;
+		if (CHANGED(gid))
+			newmode &= ~S_ISGID;
+	}
+	/* Update va_mode iff altered. */
+	if (vattr.va_mode == newmode)
+		newmode = VNOVAL;
+	
 	VATTR_NULL(&vattr);
-	vattr.va_uid = uid;
-	vattr.va_gid = gid;
+	vattr.va_uid = CHANGED(uid) ? uid : VNOVAL;
+	vattr.va_gid = CHANGED(gid) ? gid : VNOVAL;
 	vattr.va_mode = newmode;
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
-
+#undef CHANGED
+	
 out:
 	VOP_UNLOCK(vp);
 	return (error);
@@ -1936,12 +2048,12 @@ sys_rename(p, v, retval)
  */
 /* ARGSUSED */
 int
-sys_posix_rename(p, v, retval)
+sys___posix_rename(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_posix_rename_args /* {
+	register struct sys___posix_rename_args /* {
 		syscallarg(const char *) from;
 		syscallarg(const char *) to;
 	} */ *uap = v;
