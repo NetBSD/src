@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.92 2003/10/22 17:29:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 2003/10/25 16:31:39 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2003/10/22 17:29:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 2003/10/25 16:31:39 chs Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -81,6 +81,7 @@ trap(struct trapframe *frame)
 	struct proc *p = l ? l->l_proc : NULL;
 	struct pcb *pcb = curpcb;
 	struct vm_map *map;
+	struct faultbuf *onfault;
 	ksiginfo_t ksi;
 	int type = frame->exc;
 	int ftype, rv;
@@ -153,7 +154,11 @@ trap(struct trapframe *frame)
 			else
 				ftype = VM_PROT_READ;
 
+			onfault = pcb->pcb_onfault;
+			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), 0, ftype);
+			pcb->pcb_onfault = onfault;
+
 			if (map != kernel_map) {
 				/*
 				 * Record any stack growth...
