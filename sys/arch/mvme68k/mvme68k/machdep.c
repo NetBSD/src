@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 1997/09/12 07:00:45 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 1997/09/12 09:27:49 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -117,12 +117,6 @@ int	bufpages = 0;
 int	msgbufmapped;		/* set when safe to use msgbuf */
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
-
-#ifdef	FPCOPROC
-int fputype = FPU_68882;
-#else
-int fputype = FPU_NONE;
-#endif
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
