@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.1 1999/08/01 00:23:49 matt Exp $ */
+/*	$NetBSD: p9100.c,v 1.2 1999/08/01 06:27:00 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ p9100_sbus_attach(struct device *parent, struct device *self, void *args)
 	fb->fb_driver = &p9100fbdriver;
 	fb->fb_device = &sc->sc_dev;
 	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
-	fb->fb_type.fb_type = FBTYPE_SUN2COLOR;
+	fb->fb_type.fb_type = FBTYPE_SUN3COLOR;
 
 	/*
 	 * When the ROM has mapped in a p9100 display, the address
@@ -496,10 +496,23 @@ p9100mmap(dev_t dev, int off, int prot)
 	if (off < 0)
 		return (-1);
 
+#define CG3_MMAP_OFFSET	0x04000000
+	/* Make Xsun think we are a CG3 (SUN3COLOR)
+	 */
+	if (off >= CG3_MMAP_OFFSET && off < CG3_MMAP_OFFSET + sc->sc_fb_psize) {
+		off -= CG3_MMAP_OFFSET;
+		if (bus_space_mmap(sc->sc_bustag,
+				   sc->sc_fb_btype,
+				   sc->sc_fb_paddr + off,
+				   BUS_SPACE_MAP_LINEAR, &bh))
+			return (-1);
+		return ((int)bh);
+	}
+
 	if (off >= sc->sc_fb_psize + sc->sc_ctl_psize + sc->sc_cmd_psize)
 		return (-1);
 
-	if (off <= sc->sc_fb_psize) {
+	if (off < sc->sc_fb_psize) {
 		if (bus_space_mmap(sc->sc_bustag,
 				   sc->sc_fb_btype,
 				   sc->sc_fb_paddr + off,
@@ -508,7 +521,7 @@ p9100mmap(dev_t dev, int off, int prot)
 		return ((int)bh);
 	}
 	off -= sc->sc_fb_psize;
-	if (off <= sc->sc_ctl_psize) {
+	if (off < sc->sc_ctl_psize) {
 		if (bus_space_mmap(sc->sc_bustag,
 				   sc->sc_ctl_btype,
 				   sc->sc_ctl_paddr + off,
