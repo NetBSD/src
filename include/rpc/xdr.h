@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr.h,v 1.7 1995/04/29 05:28:06 cgd Exp $	*/
+/*	$NetBSD: xdr.h,v 1.8 1998/02/10 00:44:54 perry Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -38,8 +38,8 @@
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-#ifndef _RPC_XDR_H
-#define _RPC_XDR_H
+#ifndef _RPC_XDR_H_
+#define _RPC_XDR_H_
 #include <sys/cdefs.h>
 
 /*
@@ -304,4 +304,4 @@ extern bool_t xdrrec_skiprecord	__P((XDR *));
 extern bool_t xdrrec_eof	__P((XDR *));
 __END_DECLS
 
-#endif /* !_RPC_XDR_H */
+#endif /* !_RPC_XDR_H_ */
