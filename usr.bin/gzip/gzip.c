@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.3 2003/12/23 08:11:58 jdolecek Exp $	*/
+/*	$NetBSD: gzip.c,v 1.4 2003/12/23 15:02:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -28,6 +28,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
+     All rights reserved.\n");
+__RCSID("$NetBSD: gzip.c,v 1.4 2003/12/23 15:02:40 mrg Exp $");
+#endif /* not lint */
+
 /*
  * gzip.c -- GPL free gzip using zlib.
  *
@@ -56,8 +63,6 @@
 # define GZ_SUFFIX ".gz"
 #endif
 
-#define SUFFIX_LEN sizeof(GZ_SUFFIX)
-
 #define BUFLEN 4096
 
 #define ORIG_NAME 0x08
@@ -79,7 +84,7 @@ static	int	tflag;			/* test */
 static	int	vflag;			/* verbose mode */
 static	const char *Sflag = GZ_SUFFIX;	/* suffix (.gz) */
 
-static	int	suffix_len = SUFFIX_LEN; /* length of suffix; includes nul */
+static	int	suffix_len;		/* length of suffix; includes nul */
 static	char	*newfile;		/* name of newly created file */
 static	char	*infile;		/* name of file coming in */
 
@@ -183,7 +188,6 @@ main(int argc, char **argv)
 			break;
 		case 'S':
 			Sflag = optarg;
-			suffix_len = strlen(Sflag) + 1;
 			break;
 		case 't':
 			cflag = 1;
@@ -207,6 +211,8 @@ main(int argc, char **argv)
 	argc -= optind;
 	if (dflag)
 		gzipflags[0] = 'r';
+
+	suffix_len = strlen(Sflag) + 1;
 
 	if (argc == 0) {
 		if (dflag)	/* stdin mode */
@@ -724,14 +730,14 @@ handle_dir(char *dir, struct stat *sbp)
 
 /* print compression statistics, and the new name (if there is one!) */
 static void
-print_verbage(char *file, char *newfile, ssize_t usize, ssize_t gsize)
+print_verbage(char *file, char *nfile, ssize_t usize, ssize_t gsize)
 {
 	float percent = 100.0 - (100.0 * gsize / usize);
 
 	fprintf(stderr, "%s:%s  %4.1f%%", file,
 	    strlen(file) < 7 ? "\t\t" : "\t", percent);
-	if (newfile)
-		fprintf(stderr, " -- replaced with %s", newfile);
+	if (nfile)
+		fprintf(stderr, " -- replaced with %s", nfile);
 	fprintf(stderr, "\n");
 	fflush(stderr);
 }
