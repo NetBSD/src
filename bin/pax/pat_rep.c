@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.c,v 1.12 2001/10/25 05:33:33 lukem Exp $	*/
+/*	$NetBSD: pat_rep.c,v 1.13 2002/01/31 19:27:54 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pat_rep.c,v 1.12 2001/10/25 05:33:33 lukem Exp $");
+__RCSID("$NetBSD: pat_rep.c,v 1.13 2002/01/31 19:27:54 tv Exp $");
 #endif
 #endif /* not lint */
 
