@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.23 1998/08/17 21:16:13 augustss Exp $	*/
+/*	$NetBSD: ess.c,v 1.24 1998/08/22 22:55:09 augustss Exp $	*/
 
 /*
  * Copyright 1997
@@ -779,6 +779,7 @@ void
 essattach(sc)
 	struct ess_softc *sc;
 {
+	struct audio_attach_args arg;
 	struct audio_params pparams, rparams;
         int i;
         u_int v;
@@ -876,6 +877,11 @@ essattach(sc)
 	sprintf(ess_device.version, "0x%04x", sc->sc_version);
 
 	audio_attach_mi(&ess_hw_if, sc, &sc->sc_dev);
+
+	arg.type = AUDIODEV_TYPE_OPL;
+	arg.hwif = 0;
+	arg.hdl = 0;
+	(void)config_found(&sc->sc_dev, &arg, audioprint);
 
 #ifdef AUDIO_DEBUG
 	ess_printsc(sc);
