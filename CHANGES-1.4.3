@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.22 2000/06/04 14:31:13 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.23 2000/06/26 01:28:42 cgd Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -582,3 +582,13 @@ sys/dev/pci/pcidevs_data.h			regenerate
 
   Add support for PCI variants of Cyclom-4Y and -8Y cards.
   Also fixes PR#7175 (new serial controller).
+
+usr.sbin/portmap/portmap.c			1.25
+usr.sbin/portmap/portmap.8			1.11
+
+  Fix a hole in the portmap libwrap access control. The new code
+  disallows all indirect calls to the portmapper except for
+  PMAPPROC_NULL unless the -i (insecure) flag has been specified.
+  While there, add a new flag, -p (paranoid) which also disallows
+  indirect calls to a small number of other services, including
+  key parts of NFS and NIS.
