@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.3 2003/01/22 03:24:21 christos Exp $ */
+/*	$NetBSD: progress.c,v 1.4 2003/01/22 04:11:34 jhawk Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.3 2003/01/22 03:24:21 christos Exp $");
+__RCSID("$NetBSD: progress.c,v 1.4 2003/01/22 04:11:34 jhawk Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -182,7 +182,6 @@ main(int argc, char *argv[])
 	ttyout = stdout;
 
 	if (ioctl(fileno(ttyout), TIOCGSIZE, &ts) == -1) {
-		warn("could not get tty window size");
 		ttywidth = 80;
 	} else
 		ttywidth = ts.ts_cols;
