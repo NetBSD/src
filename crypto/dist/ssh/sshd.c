@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.22 2002/05/29 23:54:29 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.23 2002/06/24 05:48:40 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.241 2002/05/13 15:53:19 millert Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.250 2002/06/23 10:29:52 deraadt Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -190,7 +190,7 @@ int *startup_pipes = NULL;
 int startup_pipe;		/* in child */
 
 /* variables used for privilege separation */
-extern struct monitor *monitor;
+extern struct monitor *pmonitor;
 extern int use_privsep;
 
 /* Prototypes for various functions defined later in this file. */
@@ -207,6 +207,7 @@ static void
 close_listen_socks(void)
 {
 	int i;
+
 	for (i = 0; i < num_listen_socks; i++)
 		close(listen_socks[i]);
 	num_listen_socks = -1;
@@ -216,6 +217,7 @@ static void
 close_startup_pipes(void)
 {
 	int i;
+
 	if (startup_pipes)
 		for (i = 0; i < options.max_startups; i++)
 			if (startup_pipes[i] != -1)
@@ -248,7 +250,8 @@ sighup_restart(void)
 	close_listen_socks();
 	close_startup_pipes();
 	execv(saved_argv[0], saved_argv);
-	log("RESTART FAILED: av[0]='%.100s', error: %.100s.", saved_argv[0], strerror(errno));
+	log("RESTART FAILED: av[0]='%.100s', error: %.100s.", saved_argv[0],
+	    strerror(errno));
 	exit(1);
 }
 
@@ -268,8 +271,8 @@ sigterm_handler(int sig)
 static void
 main_sigchld_handler(int sig)
 {
-	pid_t pid;
 	int save_errno = errno;
+	pid_t pid;
 	int status;
 
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0 ||
@@ -329,6 +332,7 @@ static void
 key_regeneration_alarm(int sig)
 {
 	int save_errno = errno;
+
 	signal(SIGALRM, SIG_DFL);
 	errno = save_errno;
 	key_do_regen = 1;
@@ -360,13 +364,14 @@ sshd_exchange_identification(int sock_in, int sock_out)
 
 	if (client_version_string == NULL) {
 		/* Send our protocol version identification. */
-		if (atomic_write(sock_out, server_version_string, strlen(server_version_string))
+		if (atomic_write(sock_out, server_version_string,
+		    strlen(server_version_string))
 		    != strlen(server_version_string)) {
 			log("Could not write ident string to %s", get_remote_ipaddr());
 			fatal_cleanup();
 		}
 
-		/* Read other side's version identification. */
+		/* Read other sides version identification. */
 		memset(buf, 0, sizeof(buf));
 		for (i = 0; i < sizeof(buf) - 1; i++) {
 			if (atomic_read(sock_in, &buf[i], 1) != 1) {
@@ -463,7 +468,6 @@ sshd_exchange_identification(int sock_in, int sock_out)
 	}
 }
 
-
 /* Destroy the host and server keys.  They will no longer be needed. */
 void
 destroy_sensitive_data(void)
@@ -514,8 +518,8 @@ static void
 privsep_preauth_child(void)
 {
 	u_int32_t rand[256];
-	int i;
 	struct passwd *pw;
+	int i;
 
 	/* Enable challenge-response authentication for privilege separation */
 	privsep_challenge_enable();
@@ -554,22 +558,22 @@ privsep_preauth(void)
 	pid_t pid;
 
 	/* Set up unprivileged child process to deal with network data */
-	monitor = monitor_init();
+	pmonitor = monitor_init();
 	/* Store a pointer to the kex for later rekeying */
-	monitor->m_pkex = &xxx_kex;
+	pmonitor->m_pkex = &xxx_kex;
 
 	pid = fork();
 	if (pid == -1) {
 		fatal("fork of unprivileged child failed");
 	} else if (pid != 0) {
-		debug2("Network child is on pid %d", pid);
+		debug2("Network child is on pid %ld", (long)pid);
 
-		close(monitor->m_recvfd);
-		authctxt = monitor_child_preauth(monitor);
-		close(monitor->m_sendfd);
+		close(pmonitor->m_recvfd);
+		authctxt = monitor_child_preauth(pmonitor);
+		close(pmonitor->m_sendfd);
 
 		/* Sync memory */
-		monitor_sync(monitor);
+		monitor_sync(pmonitor);
 
 		/* Wait for the child's exit status */
 		while (waitpid(pid, &status, 0) < 0)
@@ -579,7 +583,7 @@ privsep_preauth(void)
 	} else {
 		/* child */
 
-		close(monitor->m_sendfd);
+		close(pmonitor->m_sendfd);
 
 		/* Demote the child */
 		if (getuid() == 0 || geteuid() == 0)
@@ -599,7 +603,7 @@ privsep_postauth(Authctxt *authctxt)
 
 	if (authctxt->pw->pw_uid == 0 || options.use_login) {
 		/* File descriptor passing is broken or root login */
-		monitor_apply_keystate(monitor);
+		monitor_apply_keystate(pmonitor);
 		use_privsep = 0;
 		return;
 	}
@@ -612,21 +616,21 @@ privsep_postauth(Authctxt *authctxt)
 	}
 
 	/* New socket pair */
-	monitor_reinit(monitor);
+	monitor_reinit(pmonitor);
 
-	monitor->m_pid = fork();
-	if (monitor->m_pid == -1)
+	pmonitor->m_pid = fork();
+	if (pmonitor->m_pid == -1)
 		fatal("fork of unprivileged child failed");
-	else if (monitor->m_pid != 0) {
-		debug2("User child is on pid %d", monitor->m_pid);
-		close(monitor->m_recvfd);
-		monitor_child_postauth(monitor);
+	else if (pmonitor->m_pid != 0) {
+		debug2("User child is on pid %ld", (long)pmonitor->m_pid);
+		close(pmonitor->m_recvfd);
+		monitor_child_postauth(pmonitor);
 
 		/* NEVERREACHED */
 		exit(0);
 	}
 
-	close(monitor->m_sendfd);
+	close(pmonitor->m_sendfd);
 
 	/* Demote the private keys to public keys. */
 	demote_sensitive_data();
@@ -635,7 +639,7 @@ privsep_postauth(Authctxt *authctxt)
 	do_setusercontext(authctxt->pw);
 
 	/* It is safe now to apply the key state */
-	monitor_apply_keystate(monitor);
+	monitor_apply_keystate(pmonitor);
 }
 
 static char *
@@ -671,6 +675,7 @@ Key *
 get_hostkey_by_type(int type)
 {
 	int i;
+
 	for (i = 0; i < options.num_host_key_files; i++) {
 		Key *key = sensitive_data.host_keys[i];
 		if (key != NULL && key->type == type)
@@ -691,6 +696,7 @@ int
 get_hostkey_index(Key *key)
 {
 	int i;
+
 	for (i = 0; i < options.num_host_key_files; i++) {
 		if (key == sensitive_data.host_keys[i])
 			return (i);
@@ -966,11 +972,13 @@ main(int ac, char **av)
 		 * hate software patents. I dont know if this can go? Niels
 		 */
 		if (options.server_key_bits >
-		    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) - SSH_KEY_BITS_RESERVED &&
-		    options.server_key_bits <
-		    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) + SSH_KEY_BITS_RESERVED) {
+		    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) -
+		    SSH_KEY_BITS_RESERVED && options.server_key_bits <
+		    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) +
+		    SSH_KEY_BITS_RESERVED) {
 			options.server_key_bits =
-			    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) + SSH_KEY_BITS_RESERVED;
+			    BN_num_bits(sensitive_data.ssh1_host_key->rsa->n) +
+			    SSH_KEY_BITS_RESERVED;
 			debug("Forcing server key to %d bits to make it differ from host key.",
 			    options.server_key_bits);
 		}
@@ -986,6 +994,9 @@ main(int ac, char **av)
 		if ((stat(_PATH_PRIVSEP_CHROOT_DIR, &st) == -1) ||
 		    (S_ISDIR(st.st_mode) == 0))
 			fatal("Missing privilege separation directory: %s",
+			    _PATH_PRIVSEP_CHROOT_DIR);
+		if (st.st_uid != 0 || (st.st_mode & (S_IWGRP|S_IWOTH)) != 0)
+			fatal("Bad owner or mode for %s",
 			    _PATH_PRIVSEP_CHROOT_DIR);
 	}
 
@@ -1135,7 +1146,7 @@ main(int ac, char **av)
 			 */
 			f = fopen(options.pid_file, "w");
 			if (f) {
-				fprintf(f, "%u\n", (u_int) getpid());
+				fprintf(f, "%ld\n", (long) getpid());
 				fclose(f);
 			}
 		}
@@ -1282,7 +1293,7 @@ main(int ac, char **av)
 				if (pid < 0)
 					error("fork: %.100s", strerror(errno));
 				else
-					debug("Forked child %d.", pid);
+					debug("Forked child %ld.", (long)pid);
 
 				close(startup_p[1]);
 
@@ -1313,7 +1324,7 @@ main(int ac, char **av)
 	 * setlogin() affects the entire process group.  We don't
 	 * want the child to be able to affect the parent.
 	 */
-	if (setsid() < 0)
+	if (!debug_flag && !inetd_flag && setsid() < 0)
 		error("setsid: %.100s", strerror(errno));
 
 	/*
@@ -1435,7 +1446,7 @@ main(int ac, char **av)
 	 * the current keystate and exits
 	 */
 	if (use_privsep) {
-		mm_send_keystate(monitor);
+		mm_send_keystate(pmonitor);
 		exit(0);
 	}
 
@@ -1719,6 +1730,10 @@ do_ssh2_kex(void)
 	if (options.macs != NULL) {
 		myproposal[PROPOSAL_MAC_ALGS_CTOS] =
 		myproposal[PROPOSAL_MAC_ALGS_STOC] = options.macs;
+	}
+	if (!options.compression) {
+		myproposal[PROPOSAL_COMP_ALGS_CTOS] =
+		myproposal[PROPOSAL_COMP_ALGS_STOC] = "none";
 	}
 	myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = list_hostkey_types();
 

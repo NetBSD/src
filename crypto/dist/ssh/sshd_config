@@ -1,8 +1,8 @@
-#	$NetBSD: sshd_config,v 1.14 2002/05/14 23:33:08 itojun Exp $
-#	$OpenBSD: sshd_config,v 1.52 2002/05/04 02:39:35 deraadt Exp $
+#	$NetBSD: sshd_config,v 1.15 2002/06/24 05:48:40 itojun Exp $
+#	$OpenBSD: sshd_config,v 1.56 2002/06/20 23:37:12 markus Exp $
 
-# This is the sshd server system-wide configuration file.  See sshd(8)
-# for more information.
+# This is the sshd server system-wide configuration file.  See
+# sshd_config(5) for more information.
 
 # The strategy used for options in the default sshd_config shipped with
 # OpenSSH is to specify options with their default value where
@@ -77,6 +77,7 @@
 #KeepAlive yes
 #UseLogin no
 #UsePrivilegeSeparation yes
+#Compression yes
 
 #MaxStartups 10
 # no default banner path
