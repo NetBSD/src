@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.3 1999/12/23 16:58:07 uch Exp $ */
+/*	$NetBSD: tx39io.c,v 1.4 2000/01/09 18:56:37 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -300,22 +300,27 @@ __dump_and_attach_handler(tc, reg_dir, reg_out, reg_in, reg_pwr,
 	if (ISSET(reg_dir, i)) {
 #if defined TX39IO_MFIOOUTPORT_ON || defined TX39IO_MFIOOUTPORT_OFF
 		txreg_t reg;
+#ifdef TX392X
 		if (io) {
-#ifdef TX392X			
 			reg = tx_conf_read(tc, TX39_IODATAINOUT_REG);
 #ifdef TX39IO_MFIOOUTPORT_ON
 			reg |= (1 << (i + 16));
+			printf("on.");
 #else
 			reg &= ~(1 << (i + 16));
+			printf("off.");
 #endif
 			tx_conf_write(tc, TX39_IODATAINOUT_REG, reg);
+		} else 
 #endif /* TX392X */
-		} else {
+		{
 			reg = tx_conf_read(tc, TX39_IOMFIODATAOUT_REG);
 #ifdef TX39IO_MFIOOUTPORT_ON
 			reg |= (1 << i);
+			printf("on.");
 #else
 			reg &= ~(1 << i);
+			printf("off.");
 #endif
 			tx_conf_write(tc, TX39_IOMFIODATAOUT_REG, reg);
 		}
