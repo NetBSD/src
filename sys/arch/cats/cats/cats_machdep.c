@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.8 2002/01/07 22:58:08 chris Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.9 2002/01/12 13:37:55 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -136,7 +136,8 @@ extern int pmap_debug_level;
 
 #define KERNEL_PT_SYS		0	/* Page table for mapping proc0 zero page */
 #define KERNEL_PT_KERNEL	1	/* Page table for mapping kernel */
-#define KERNEL_PT_VMDATA	2	/* Page tables for mapping kernel VM */
+#define KERNEL_PT_KERNEL2	2	/* 2nd page table for mapping kernel */
+#define KERNEL_PT_VMDATA	3	/* Page tables for mapping kernel VM */
 #ifndef KERNEL_PT_VMDATA_NUM
 #define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
 #endif
@@ -538,6 +539,9 @@ initarm(bootargs)
 	    kernel_pt_table[KERNEL_PT_SYS]);
 	map_pagetable(l1pagetable, KERNEL_BASE,
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	map_pagetable(l1pagetable, KERNEL_BASE + 0x00400000,
+	    kernel_pt_table[KERNEL_PT_KERNEL2]);
+
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		map_pagetable(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop]);
@@ -612,6 +616,9 @@ initarm(bootargs)
 	l2pagetable = kernel_ptpt.pv_pa;
 	map_entry_nc(l2pagetable, (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL]);
+	map_entry_nc(l2pagetable, ((KERNEL_BASE +0x00400000) >> (PGSHIFT-2)),
+	    kernel_pt_table[KERNEL_PT_KERNEL2]);
+
 	map_entry_nc(l2pagetable, (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa);
 	map_entry_nc(l2pagetable, (0x00000000 >> (PGSHIFT-2)),
