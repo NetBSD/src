@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.5 2003/07/19 02:05:35 thorpej Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.6 2003/07/25 13:59:09 briggs Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.5 2003/07/19 02:05:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.6 2003/07/25 13:59:09 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -250,6 +250,157 @@ swdmover_func_fill8_process(struct dmover_request *dreq)
 		/* XXXUNLOCK */
 	}
 
+	dmover_done(dreq);
+}
+
+static void
+xor2(uint8_t *dst, uint8_t *src1, uint8_t *src2, int cnt)
+{
+
+	while (cnt--)
+		*dst++ = *src1++ ^ *src2++;
+}
+
+/*
+ * swdmover_func_xor_process:
+ *
+ *	Processing routine for the "xor" function.
+ */
+static void
+swdmover_func_xor_process(struct dmover_request *dreq)
+{
+#define INBUF_L(x)	dreq->dreq_inbuf[(x)].dmbuf_linear
+#define OUTBUF_L	dreq->dreq_outbuf.dmbuf_linear
+
+	uint32_t *dst32, *src32;
+	uint8_t *dst8, *src8;
+	int	i, ninputs = dreq->dreq_assignment->das_algdesc->dad_ninputs;
+	int	aligned, len, nwords;
+
+	/* XXX Currently, both buffers must be of same type. */
+	if (dreq->dreq_inbuf_type != dreq->dreq_outbuf_type) {
+		/* XXXLOCK */
+		dreq->dreq_error = EINVAL;
+		dreq->dreq_flags |= DMOVER_REQ_ERROR;
+		/* XXXUNLOCK */
+		goto done;
+	}
+
+	switch (dreq->dreq_outbuf_type) {
+	case DMOVER_BUF_LINEAR:
+		aligned = 1;
+		if ((ulong) OUTBUF_L.l_addr & 0x3)
+			aligned = 0;
+		for (i = 0 ; i < ninputs ; i++) {
+			if (len != INBUF_L(i).l_len) {
+				/* XXXLOCK */
+				dreq->dreq_error = EINVAL;
+				dreq->dreq_flags |= DMOVER_REQ_ERROR;
+				/* XXXUNLOCK */
+				break;
+			}
+			if ((ulong) INBUF_L(i).l_addr & 0x3)
+				aligned = 0;
+		}
+		len = OUTBUF_L.l_len;
+		if (aligned) {
+			dst32 = (uint32_t *) OUTBUF_L.l_addr;
+			nwords = len / 4;
+			while (nwords--) {
+				*dst32 = 0;
+				for (i = 0 ; i < ninputs ; i++) {
+					src32 = (uint32_t *) INBUF_L(i).l_addr;
+					*dst32 ^= *src32;
+				}
+				dst32++;
+				len -= 4;
+			}
+		}
+		if (len) {
+			dst8 = (uint8_t *) OUTBUF_L.l_addr;
+			while (len--) {
+				*dst8 = 0;
+				for (i = 0 ; i < ninputs ; i++) {
+					src8 = (uint8_t *) INBUF_L(i).l_addr;
+					*dst8 ^= *src8;
+				}
+				dst8++;
+			}
+		}
+		
+		break;
+
+	case DMOVER_BUF_UIO:
+	    {
+		struct uio *uio_out = dreq->dreq_outbuf.dmbuf_uio;
+		struct uio *uio_in = dreq->dreq_inbuf[0].dmbuf_uio;
+		struct uio *uio;
+		char *cp, *dst;
+		size_t count, buflen;
+		int error;
+
+		if (uio_in->uio_rw != UIO_WRITE ||
+		    uio_out->uio_rw != UIO_READ ||
+		    uio_in->uio_resid != uio_out->uio_resid) {
+			/* XXXLOCK */
+			dreq->dreq_error = EINVAL;
+			dreq->dreq_flags |= DMOVER_REQ_ERROR;
+			/* XXXUNLOCK */
+			break;
+		}
+
+		buflen = uio_in->uio_resid;
+		if (buflen > 1024)
+			buflen = 1024;
+		cp = alloca(buflen);
+		dst = alloca(buflen);
+
+		/*
+		 * For each block, copy first input buffer into the destination
+		 * buffer and then read the rest, one by one, into a temporary
+		 * buffer and xor into the destination buffer.  After all of
+		 * the inputs have been xor'd in, move the destination buffer
+		 * out and loop.
+		 */
+		while ((count = uio_in->uio_resid) != 0) {
+			if (count > buflen)
+				count = buflen;
+			error = uiomove(dst, count, uio_in);
+			if (error) {
+				/* XXXLOCK */
+				dreq->dreq_error = error;
+				dreq->dreq_flags |= DMOVER_REQ_ERROR;
+				/* XXXUNLOCK */
+				break;
+			}
+			for (i=1 ; (i < ninputs) && (error == 0) ; i++) {
+				uio = dreq->dreq_inbuf[i].dmbuf_uio;
+				error = uiomove(cp, count, uio);
+				if (error == 0) {
+					xor2(dst, dst, cp, count);
+				}
+			}
+			if (error == 0) {
+				error = uiomove(dst, count, uio_out);
+			} else {
+				/* XXXLOCK */
+				dreq->dreq_error = error;
+				dreq->dreq_flags |= DMOVER_REQ_ERROR;
+				/* XXXUNLOCK */
+				break;
+			}
+		}
+		break;
+	    }
+
+	default:
+		/* XXXLOCK */
+		dreq->dreq_error = EINVAL;
+		dreq->dreq_flags |= DMOVER_REQ_ERROR;
+		/* XXXUNLOCK */
+	}
+
+ done:
 	dmover_done(dreq);
 }
 
@@ -503,11 +654,50 @@ static struct swdmover_function swdmover_func_copy = {
 	swdmover_func_copy_process
 };
 
+static struct swdmover_function swdmover_func_xor = {
+	swdmover_func_xor_process
+};
+
 static struct swdmover_function swdmover_func_iscsi_crc32c = {
 	swdmover_func_iscsi_crc32c_process
 };
 
 const struct dmover_algdesc swdmover_algdescs[] = {
+	{
+	  DMOVER_FUNC_XOR2,
+	  &swdmover_func_xor,
+	  2
+	},
+	{
+	  DMOVER_FUNC_XOR3,
+	  &swdmover_func_xor,
+	  3
+	},
+	{
+	  DMOVER_FUNC_XOR4,
+	  &swdmover_func_xor,
+	  4
+	},
+	{
+	  DMOVER_FUNC_XOR5,
+	  &swdmover_func_xor,
+	  5
+	},
+	{
+	  DMOVER_FUNC_XOR6,
+	  &swdmover_func_xor,
+	  6
+	},
+	{
+	  DMOVER_FUNC_XOR7,
+	  &swdmover_func_xor,
+	  7
+	},
+	{
+	  DMOVER_FUNC_XOR8,
+	  &swdmover_func_xor,
+	  8
+	},
 	{
 	  DMOVER_FUNC_ZERO,
 	  &swdmover_func_zero,
