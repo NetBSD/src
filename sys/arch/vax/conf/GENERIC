@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2003/04/26 14:10:06 ragge Exp $
+# $NetBSD: GENERIC,v 1.114 2003/08/29 13:51:47 ragge Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -220,6 +220,7 @@ mtc*		at uba? csr 0174500	# Tape MSCP ctlr
 #qv0		at uba? csr 0177400	# Monochrome graphics
 de*		at uba? csr 0174510	# DELUA/DEUNA
 qe*		at uba? csr 0174440	# DEQNA/DELQA
+qt*		at uba? csr 0174440	# DELQA-PLUS in Turbo mode
 dhu*		at uba? csr 0160440	# DHU-11
 #dmf*		at uba? csr 0160340	# DMF-32
 dz*		at uba? csr 0160100	# DZ-11
