@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.4 2003/10/29 09:13:51 dsl Exp $
+#	$NetBSD: msg_xlat.sh,v 1.5 2003/11/11 17:25:45 dsl Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@ msg_long="((msg)(long)"
 close_paren=")"
 open_brace="{"
 close_brace="}"
-star="*"
 slash="/"
 
 rval=0
@@ -103,7 +102,7 @@ do
 	m="${msg%$close_brace}"
 	[ "$m" = "$msg" ] && {
 		# Allow <tab>*/* comment */ (eg XXX translate)
-		m="${msg%%$close_brace*$slash$star*$star$slash}"
+		m="${msg%%$close_brace*$slash[*]*[*]$slash}"
 		[ "$m" = "$msg" ] &&
 			continue
 	}
