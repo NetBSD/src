@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.54 1996/11/02 07:18:53 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.55 1997/01/07 07:45:45 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -146,15 +146,28 @@ VIA_initialize()
 		}
 
 		/*
-		 * unlock nubus and set vPCR for SCSI interrupts.
+		 * Set vPCR for SCSI interrupts.
 		 */
 		via2_reg(vPCR)   = 0x66;
-		via2_reg(vBufB) |= 0x02;
-		via2_reg(vDirB) |= 0x02;
+		switch(mac68k_machine.machineid) {
+		case MACH_MACPB140:
+		case MACH_MACPB145:
+		case MACH_MACPB150:
+		case MACH_MACPB160:
+		case MACH_MACPB165:
+		case MACH_MACPB165C:
+		case MACH_MACPB170:
+		case MACH_MACPB180:
+		case MACH_MACPB180C:
+			break;
+		default:
+			via2_reg(vBufB) |= 0x02;	/* Unlock NuBus */
+			via2_reg(vDirB) |= 0x02;
+			break;
+		}
 
 		real_via2_intr = via2_intr;
 		via2itab[1] = via2_nubus_intr;
-
 	} else {	/* RBV */
 #ifdef DISABLE_EXT_CACHE
 		if (current_mac_model->class == MACH_CLASSIIci) {
