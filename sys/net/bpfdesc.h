@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.11 1995/09/27 18:30:42 thorpej Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.12 1997/10/09 18:19:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -38,9 +38,13 @@
  * SUCH DAMAGE.
  *
  *	@(#)bpfdesc.h	8.1 (Berkeley) 6/10/93
+ *
+ * @(#) Header: bpfdesc.h,v 1.14 96/06/16 22:28:07 leres Exp  (LBL)
  */
 
+#if BSD >= 199103
 #include <sys/select.h>
+#endif
 
 /*
  * Descriptor associated with each open bpf file.
