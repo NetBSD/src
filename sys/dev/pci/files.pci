@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.84 2000/04/05 02:31:19 mrg Exp $
+#	$NetBSD: files.pci,v 1.85 2000/04/10 07:42:56 haya Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -239,9 +239,8 @@ attach	sip at pci
 file	dev/pci/if_sip.c		sip
 
 # Realtek 8129/8139 Ethernet controllers
-device	rl: ether, ifnet, arp, mii
-attach	rl at pci
-file	dev/pci/if_rl.c			rl
+attach	rl at pci with rl_pci
+file	dev/pci/if_rl_pci.c		rl_pci
 
 # DECchip 21x4x Ethernet controller family, and assorted clones.
 attach	tlp at pci with tlp_pci
