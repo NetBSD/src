@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1996/10/13 03:35:57 christos Exp $	   */
+/*	$NetBSD: pmap.c,v 1.31 1997/02/12 17:53:01 ragge Exp $	   */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -114,12 +114,6 @@ vm_offset_t   virtual_avail, virtual_end; /* Available virtual memory	*/
  * within this address-range, something went wrong and we're assuming
  * some save amount of physical memory. This might be paranoid, but...
  */
-#ifndef MAX_PHYSMEM_AVAIL
-#define MAX_PHYSMEM_AVAIL     512*1024*1024
-#endif
-#ifndef MIN_PHYSMEM_AVAIL
-#define MIN_PHYSMEM_AVAIL	8*1024*1024
-#endif
 
 /*
  * pmap_bootstrap().
@@ -136,8 +130,6 @@ pmap_bootstrap()
 	struct	pmap *p0pmap;
 
 	p0pmap = &vmspace0.vm_pmap;
-
-	sysptsize = SYSPTSIZE;
 
 	/*
 	 * Because of the badaddr() problem with some VAXstations we
@@ -158,9 +150,25 @@ pmap_bootstrap()
 #endif
 		avail_end += NBPG * 128;/* Memory is checked in 64K hunks */
 	}
+	/*
+	 * Calculation of the System Page Table is somewhat a pain,
+	 * because it must be in contiguous physical memory and all
+	 * size calculations must be done now.
+	 */
+
+	/* Kernel alloc area */
+	sysptsize = (((0x100000 * maxproc) >> PGSHIFT) / 4);
+	/* reverse mapping struct */
+	sysptsize += avail_end >> PGSHIFT;
+	/* User Page table area. This may grow big */
+#define	USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / NBPG)
+	sysptsize += ((USRPTSIZE * 4) / NBPG) * maxproc;
+	/* Kernel stacks per process */
+	sysptsize += UPAGES * maxproc;
+
 
 #if VAX410 || VAX420 || VAX43 || VAX46 || VAX49 || VAX50
-	sysptsize += (16 * 1024) >> PGSHIFT;  /* guc->uc_sysptSpace ?? */
+	sysptsize += ((16 * 1024) >> PGSHIFT);  /* guc->uc_sysptSpace ?? */
 #endif
 
 	/*
@@ -171,7 +179,6 @@ pmap_bootstrap()
 	 * a variable here that is changed dependent of the physical
 	 * memory size.
 	 */
-	sysptsize += avail_end >> PGSHIFT;
 	virtual_avail = KERNBASE;
 	virtual_end = KERNBASE + sysptsize * NBPG;
 	avail_start = 0;
@@ -240,7 +247,7 @@ pmap_bootstrap()
 #ifdef PMAPDEBUG
 	printf("Sysmap %x, istack %x, scratch %x\n",Sysmap,istack,scratch);
 	printf("etext %x\n", &etext);
-	printf("SYSPTSIZE %x, USRPTSIZE %x\n",sysptsize,USRPTSIZE);
+	printf("SYSPTSIZE %x\n",sysptsize);
 	printf("pv_table %x, vmmap %x, pte_cmap %x\n",
 		pv_table,vmmap,pte_cmap);
 	printf("avail_start %x, avail_end %x\n",avail_start,avail_end);
@@ -285,7 +292,7 @@ pmap_init(start, end)
 
 	/* reserve place on SPT for UPT */
 	pte_map = kmem_suballoc(kernel_map, &ptemapstart, &ptemapend, 
-	    USRPTSIZE * 4, TRUE);
+	    USRPTSIZE * 4 * maxproc, TRUE);
 }
 
 
