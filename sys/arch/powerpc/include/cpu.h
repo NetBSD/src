@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2003/07/25 10:12:45 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2003/08/02 19:35:26 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -79,10 +79,20 @@ struct cpu_info {
 	int ci_intrdepth;
 	char *ci_intstk;
 	char *ci_spillstk;
-	register_t ci_tempsave[8];
-	register_t ci_ddbsave[8];
-	register_t ci_ipkdbsave[8];
-	register_t ci_disisave[4];
+#define	CPUSAVE_LEN	8
+	register_t ci_tempsave[CPUSAVE_LEN];
+	register_t ci_ddbsave[CPUSAVE_LEN];
+	register_t ci_ipkdbsave[CPUSAVE_LEN];
+#define	CPUSAVE_R28	0		/* where r28 gets saved */
+#define	CPUSAVE_R29	1		/* where r29 gets saved */
+#define	CPUSAVE_R30	2		/* where r30 gets saved */
+#define	CPUSAVE_R31	3		/* where r31 gets saved */
+#define	CPUSAVE_DAR	4		/* where SPR_DAR gets saved */
+#define	CPUSAVE_DSISR	5		/* where SPR_DSISR gets saved */
+#define	CPUSAVE_SRR0	6		/* where SRR0 gets saved */
+#define	CPUSAVE_SRR1	7		/* where SRR1 gets saved */
+#define	DISISAVE_LEN	4
+	register_t ci_disisave[DISISAVE_LEN];
 	struct cache_info ci_ci;		
 	struct sysmon_envsys ci_sysmon;
 	struct envsys_tre_data ci_tau_info;
@@ -190,6 +200,10 @@ static __inline uint64_t
 mftb(void)
 {
 	uint64_t tb;
+
+#ifdef _LP64
+	__asm __volatile ("mftb %0" : "=r"(tb));
+#else
 	int tmp;
 
 	__asm __volatile (
@@ -205,6 +219,7 @@ mftb(void)
 "	cmplw %0,%1	\n"
 "	bne- 1b		\n"
 	: "=r" (tb), "=r"(tmp) :: "cr0");
+#endif
 
 	return tb;
 }
