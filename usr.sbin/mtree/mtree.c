@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.15 2001/03/09 03:09:45 simonb Exp $	*/
+/*	$NetBSD: mtree.c,v 1.16 2001/03/21 23:56:35 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.15 2001/03/09 03:09:45 simonb Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.16 2001/03/21 23:56:35 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,8 @@ main(int argc, char **argv)
 	int ch;
 	char *dir, *p;
 	int status;
+
+	setprogname(argv[0]);
 
 	dir = NULL;
 	keys = KEYDEFAULT;
