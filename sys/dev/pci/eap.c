@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.30 1999/11/01 18:12:20 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.31 1999/11/02 05:40:59 soren Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -41,19 +41,19 @@
  * Debugging:   Andreas Gustafsson <gson@araneus.fi>
  * Testing:     Chuck Cranor       <chuck@maria.wustl.edu>
  *              Phil Nelson        <phil@cs.wwu.edu>
+ *
+ * ES1371/AC97:	Ezra Story         <ezy@panix.com>
  */
 
 /* 
- * Ensoniq AudoiPCI ES1370 + AK4531 driver. 
- * Data sheets can be found at 
- * http://www.ensoniq.com/multimedia/semi_html/html/es1370.zip
- * and
- * http://206.214.38.151/pdf/4531.pdf
+ * Ensoniq ES1370 + AK4531 and ES1371/ES1373 + AC97
  *
- * Added Creative Ensoniq support: ES1371 + AC97 = hack city.
- * -- Ezra Story <ezy@panix.com>
- * Check es1371.zip from above, and the Audio Codec 97 spec from
- * intel.com.
+ * Documentation links:
+ * 
+ * http://www.ensoniq.com/multimedia/semi_html/html/es1370.zip
+ * ftp://ftp.alsa-project.org/pub/manuals/asahi_kasei/4531.pdf
+ * http://www.ensoniq.com/multimedia/semi_html/html/es1371.zip
+ * ftp://download.intel.com/pc-supp/platform/ac97/ac97r21.pdf
  */
  
 
@@ -422,7 +422,7 @@ int	eap_midi_open __P((void *, int, void (*)(void *, int),
 int	eap_midi_output __P((void *, int));
 #endif
 
-struct audio_hw_if eap_hw_if = {
+struct audio_hw_if eap1370_hw_if = {
 	eap_open,
 	eap_close,
 	NULL,
@@ -442,6 +442,35 @@ struct audio_hw_if eap_hw_if = {
 	eap_mixer_set_port,
 	eap_mixer_get_port,
 	eap_query_devinfo,
+	eap_malloc,
+	eap_free,
+	eap_round_buffersize,
+	eap_mappage,
+	eap_get_props,
+	eap_trigger_output,
+	eap_trigger_input,
+};
+
+struct audio_hw_if eap1371_hw_if = {
+	eap_open,
+	eap_close,
+	NULL,
+	eap_query_encoding,
+	eap_set_params,
+	eap_round_blocksize,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	eap_halt_output,
+	eap_halt_input,
+	NULL,
+	eap_getdev,
+	NULL,
+	eap1371_mixer_set_port,
+	eap1371_mixer_get_port,
+	eap1371_query_devinfo,
 	eap_malloc,
 	eap_free,
 	eap_round_buffersize,
@@ -698,6 +727,7 @@ eap_attach(parent, self, aux)
 	struct eap_softc *sc = (struct eap_softc *)self;
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
+	struct audio_hw_if *eap_hw_if;
 	char const *intrstr;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
@@ -756,9 +786,7 @@ eap_attach(parent, self, aux)
 		eap_write_codec(sc, AK_RESET, AK_PD | AK_NRST);
 		eap_write_codec(sc, AK_CS, 0x0);
 
-		eap_hw_if.query_devinfo = eap_query_devinfo;
-		eap_hw_if.set_port = eap_mixer_set_port;
-		eap_hw_if.get_port = eap_mixer_get_port;
+		eap_hw_if = &eap1370_hw_if;
 
 		/* Enable all relevant mixer switches. */
 		ctl.dev = EAP_OUTPUT_SELECT;
@@ -766,25 +794,25 @@ eap_attach(parent, self, aux)
 		ctl.un.mask = 1 << EAP_VOICE_VOL | 1 << EAP_FM_VOL | 
 			1 << EAP_CD_VOL | 1 << EAP_LINE_VOL | 1 << EAP_AUX_VOL |
 			1 << EAP_MIC_VOL;
-		eap_hw_if.set_port(sc, &ctl);
+		eap_hw_if->set_port(sc, &ctl);
 
 		ctl.type = AUDIO_MIXER_VALUE;
 		ctl.un.value.num_channels = 1;
 		for (ctl.dev = EAP_MASTER_VOL; ctl.dev < EAP_MIC_VOL; 
 		     ctl.dev++) {
 			ctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = VOL_0DB;
-			eap_hw_if.set_port(sc, &ctl);
+			eap_hw_if->set_port(sc, &ctl);
 		}
 		ctl.un.value.level[AUDIO_MIXER_LEVEL_MONO] = 0;
-		eap_hw_if.set_port(sc, &ctl);
+		eap_hw_if->set_port(sc, &ctl);
 		ctl.dev = EAP_MIC_PREAMP;
 		ctl.type = AUDIO_MIXER_ENUM;
 		ctl.un.ord = 0;
-		eap_hw_if.set_port(sc, &ctl);
+		eap_hw_if->set_port(sc, &ctl);
 		ctl.dev = EAP_RECORD_SOURCE;
 		ctl.type = AUDIO_MIXER_SET;
 		ctl.un.mask = 1 << EAP_MIC_VOL;
-		eap_hw_if.set_port(sc, &ctl);
+		eap_hw_if->set_port(sc, &ctl);
 	} else {
                 /* clean slate */
                 EWRITE4(sc, EAP_SIC, 0);
@@ -834,9 +862,7 @@ eap_attach(parent, self, aux)
 		} else
 			return;
 
-		eap_hw_if.query_devinfo = eap1371_query_devinfo;
-		eap_hw_if.set_port = eap1371_mixer_set_port;
-		eap_hw_if.get_port = eap1371_mixer_get_port;
+		eap_hw_if = &eap1371_hw_if;
 
 		/* Just enable the DAC and master volumes by default */
 		ctl.type = AUDIO_MIXER_ENUM;
@@ -860,7 +886,7 @@ eap_attach(parent, self, aux)
 
         }
 
-	audio_attach_mi(&eap_hw_if, sc, &sc->sc_dev);
+	audio_attach_mi(eap_hw_if, sc, &sc->sc_dev);
 
 #if NMIDI > 0
 	midi_attach_mi(&eap_midi_hw_if, sc, &sc->sc_dev);
