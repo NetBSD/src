@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.30 2002/10/23 09:12:41 jdolecek Exp $	*/
+/*	$NetBSD: com.c,v 1.31 2003/07/15 01:44:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,6 +75,9 @@
  * COM driver, based on HP dca driver
  * uses National Semiconductor NS16450/NS16550AF UART
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.31 2003/07/15 01:44:51 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"

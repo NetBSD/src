@@ -1,9 +1,12 @@
-/*	$NetBSD: bellctrl.c,v 1.7 2003/05/17 10:11:19 isaki Exp $	*/
+/*	$NetBSD: bellctrl.c,v 1.8 2003/07/15 01:44:53 lukem Exp $	*/
 
 /*
  * bellctrl - OPM bell controller (for NetBSD/X680x0)
  * Copyright (c)1995 ussy.
  */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: bellctrl.c,v 1.8 2003/07/15 01:44:53 lukem Exp $");
 
 #include <err.h>
 #include <stdio.h>
