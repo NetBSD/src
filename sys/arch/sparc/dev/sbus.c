@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.25 1998/07/27 22:34:48 pk Exp $ */
+/*	$NetBSD: sbus.c,v 1.26 1998/07/29 18:42:32 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -102,7 +102,8 @@
 void sbusreset __P((int));
 
 static bus_space_tag_t sbus_alloc_bustag __P((struct sbus_softc *));
-static int sbus_get_intr __P((struct sbus_softc *, int, int *));
+static int sbus_get_intr __P((struct sbus_softc *, int,
+			      struct sbus_intr **, int *));
 static int sbus_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 			      int, bus_space_handle_t *));
 static int _sbus_bus_map __P((
@@ -142,7 +143,7 @@ struct cfattach sbus_xbox_ca = {
 extern struct cfdriver sbus_cd;
 
 /* If the PROM does not provide the `ranges' property, we make up our own */
-struct rom_range sbus_translations[] = {
+struct sbus_range sbus_translations[] = {
 	/* Assume a maximum of 4 Sbus slots, all mapped to on-board io space */
 	{ 0, 0, PMAP_OBIO, SBUS_ADDR(0,0), 1 << 25 },
 	{ 1, 0, PMAP_OBIO, SBUS_ADDR(1,0), 1 << 25 },
@@ -189,12 +190,13 @@ sbus_print(args, busname)
 	const char *busname;
 {
 	struct sbus_attach_args *sa = args;
+	int i;
 
 	if (busname)
 		printf("%s at %s", sa->sa_name, busname);
 	printf(" slot %d offset 0x%x", sa->sa_slot, sa->sa_offset);
-	if (sa->sa_pri) {
-		int level = sa->sa_pri;
+	for (i = 0; i < sa->sa_nintr; i++) {
+		u_int32_t level = sa->sa_intr[i].sbi_pri;
 		struct sbus_softc *sc =
 			(struct sbus_softc *) sa->sa_bustag->cookie;
 
@@ -405,6 +407,7 @@ sbus_attach(sc, busname, busnode, bp, specials)
 			panic("sbus_attach: %s: incomplete", sp);
 		}
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
+		sbus_destroy_attach_args(&sa);
 	}
 
 	for (node = node0; node; node = nextsibling(node)) {
@@ -425,6 +428,7 @@ sbus_attach(sc, busname, busnode, bp, specials)
 			continue;
 		}
 		(void) config_found(&sc->sc_dev, (void *)&sa, sbus_print);
+		sbus_destroy_attach_args(&sa);
 	}
 }
 
@@ -437,39 +441,71 @@ sbus_setup_attach_args(sc, bustag, dmatag, node, bp, sa)
 	struct bootpath		*bp;
 	struct sbus_attach_args	*sa;
 {
-	struct	rom_reg romreg;
-	int	base;
+	/*struct	rom_reg romreg;*/
+	/*int	base;*/
 	int	error;
+	int n;
 
 	bzero(sa, sizeof(struct sbus_attach_args));
-	sa->sa_name = getpropstring(node, "name");
+	error = getpropA(node, "name", 1, &n, (void **)&sa->sa_name);
+	if (error != 0)
+		return (error);
+	sa->sa_name[n] = '\0';
+
 	sa->sa_bustag = bustag;
 	sa->sa_dmatag = dmatag;
 	sa->sa_node = node;
 	sa->sa_bp = bp;
 
-	if ((error = getprop_reg1(node, &romreg)) != 0)
-		return (error);
-
-	/* We pass only the first "reg" property */
-	base = (int)romreg.rr_paddr;
-	if (SBUS_ABS(base)) {
-		sa->sa_slot = SBUS_ABS_TO_SLOT(base);
-		sa->sa_offset = SBUS_ABS_TO_OFFSET(base);
-	} else {
-		sa->sa_slot = romreg.rr_iospace;
-		sa->sa_offset = base;
+	error = getpropA(node, "reg", sizeof(struct sbus_reg),
+			 &sa->sa_nreg, (void **)&sa->sa_reg);
+	if (error != 0) {
+		char buf[32];
+		if (error != ENOENT ||
+		    !node_has_property(node, "device_type") ||
+		    strcmp(getpropstringA(node, "device_type", buf),
+			   "hierarchical") != 0)
+			return (error);
 	}
-	sa->sa_size = romreg.rr_len;
+	for (n = 0; n < sa->sa_nreg; n++) {
+		/* Convert to relative addressing, if necessary */
+		u_int32_t base = sa->sa_reg[n].sbr_offset;
+		if (SBUS_ABS(base)) {
+			sa->sa_reg[n].sbr_slot = SBUS_ABS_TO_SLOT(base);
+			sa->sa_reg[n].sbr_offset = SBUS_ABS_TO_OFFSET(base);
+		}
+	}
 
-	if ((error = sbus_get_intr(sc, node, &sa->sa_pri)) != 0)
+	if ((error = sbus_get_intr(sc, node, &sa->sa_intr, &sa->sa_nintr)) != 0)
 		return (error);
 
-	if ((error = getprop_address1(node, &sa->sa_promvaddr)) != 0)
+	error = getpropA(node, "address", sizeof(u_int32_t),
+			 &sa->sa_npromvaddrs, (void **)&sa->sa_promvaddrs);
+	if (error != 0 && error != ENOENT)
 		return (error);
 
 	return (0);
 }
+
+void
+sbus_destroy_attach_args(sa)
+	struct sbus_attach_args	*sa;
+{
+	if (sa->sa_name != NULL)
+		free(sa->sa_name, M_DEVBUF);
+
+	if (sa->sa_nreg != 0)
+		free(sa->sa_reg, M_DEVBUF);
+
+	if (sa->sa_intr)
+		free(sa->sa_intr, M_DEVBUF);
+
+	if (sa->sa_promvaddrs)
+		free(sa->sa_promvaddrs, M_DEVBUF);
+
+	bzero(sa, sizeof(struct sbus_attach_args));/*DEBUG*/
+}
+
 
 int
 _sbus_bus_map(t, btype, offset, size, flags, vaddr, hp)
@@ -593,40 +629,52 @@ sbusreset(sbus)
  * Get interrupt attributes for an Sbus device.
  */
 int
-sbus_get_intr(sc, node, ip)
+sbus_get_intr(sc, node, ipp, np)
 	struct sbus_softc *sc;
 	int node;
-	int *ip;
+	struct sbus_intr **ipp;
+	int *np;
 {
-	struct rom_intr *rip;
-	int *ipl;
-	int n;
+	int error, n;
+	u_int32_t *ipl = NULL;
 
 	/*
 	 * The `interrupts' property contains the Sbus interrupt level.
 	 */
-	ipl = NULL;
-	if (getpropA(node, "interrupts", sizeof(int), &n, (void **)&ipl) == 0) {
-		*ip = ipl[0];
+	if (getpropA(node, "interrupts", sizeof(int), np, (void **)&ipl) == 0) {
+		/* Change format to an `struct sbus_intr' array */
+		struct sbus_intr *ip;
+		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
+		if (ip == NULL)
+			return (ENOMEM);
+		for (n = 0; n < *np; n++) {
+			ip[n].sbi_pri = ipl[n];
+			ip[n].sbi_vec = 0;
+		}
 		free(ipl, M_DEVBUF);
+		*ipp = ip;
 		return (0);
 	}
 
 	/*
 	 * Fall back on `intr' property.
 	 */
-	rip = NULL;
-	switch (getpropA(node, "intr", sizeof(*rip), &n, (void **)&rip)) {
+	*ipp = NULL;
+	error = getpropA(node, "intr", sizeof(struct sbus_intr),
+			 np, (void **)ipp);
+	switch (error) {
 	case 0:
-		*ip = (rip[0].int_pri & 0xf) | SBUS_INTR_COMPAT;
-		free(rip, M_DEVBUF);
-		return (0);
+		for (n = *np; n-- > 0;) {
+			(*ipp)[n].sbi_pri &= 0xf;
+			(*ipp)[n].sbi_pri |= SBUS_INTR_COMPAT;
+		}
+		break;
 	case ENOENT:
-		*ip = 0;
-		return (0);
+		error = 0;
+		break;
 	}
 
-	return (-1);
+	return (error);
 }
 
 
