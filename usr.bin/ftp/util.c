@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.95 2000/05/01 10:35:19 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.96 2000/06/15 13:08:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.95 2000/05/01 10:35:19 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.96 2000/06/15 13:08:27 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -110,8 +110,7 @@ __RCSID("$NetBSD: util.c,v 1.95 2000/05/01 10:35:19 lukem Exp $");
 #include "ftp_var.h"
 
 /*
- * Connect to peer server and
- * auto-login, if possible.
+ * Connect to peer server and auto-login, if possible.
  */
 void
 setpeer(int argc, char *argv[])
@@ -150,8 +149,6 @@ setpeer(int argc, char *argv[])
 		host = hookup(argv[1], port);
 
 	if (host) {
-		int overbose;
-
 		if (gatemode && verbose) {
 			fprintf(ttyout,
 			    "Connecting via pass-through server %s\n",
@@ -175,58 +172,68 @@ setpeer(int argc, char *argv[])
 		bytesize = 8;
 		if (autologin)
 			(void)ftp_login(argv[1], NULL, NULL);
-
-		overbose = verbose;
-		if (debug == 0)
-			verbose = -1;
-		if (command("SYST") == COMPLETE && overbose) {
-			char *cp, c;
-			c = 0;
-			cp = strchr(reply_string + 4, ' ');
-			if (cp == NULL)
-				cp = strchr(reply_string + 4, '\r');
-			if (cp) {
-				if (cp[-1] == '.')
-					cp--;
-				c = *cp;
-				*cp = '\0';
-			}
-
-			fprintf(ttyout, "Remote system type is %s.\n",
-			    reply_string + 4);
-			if (cp)
-				*cp = c;
-		}
-		if (!strncmp(reply_string, "215 UNIX Type: L8", 17)) {
-			if (proxy)
-				unix_proxy = 1;
-			else
-				unix_server = 1;
-			/*
-			 * Set type to 0 (not specified by user),
-			 * meaning binary by default, but don't bother
-			 * telling server.  We can use binary
-			 * for text files unless changed by the user.
-			 */
-			type = 0;
-			(void)strlcpy(typename, "binary", sizeof(typename));
-			if (overbose)
-			    fprintf(ttyout,
-				"Using %s mode to transfer files.\n",
-				typename);
-		} else {
-			if (proxy)
-				unix_proxy = 0;
-			else
-				unix_server = 0;
-			if (overbose &&
-			    !strncmp(reply_string, "215 TOPS20", 10))
-				fputs(
-"Remember to set tenex mode when transferring binary files from this machine.\n",
-				    ttyout);
-		}
-		verbose = overbose;
 	}
+}
+
+/*
+ * Determine the remote system type.
+ * Call after a successful login (i.e, connected = -1)
+ */
+void
+remotesyst(void)
+{
+	int overbose;
+
+	overbose = verbose;
+	if (debug == 0)
+		verbose = -1;
+	if (command("SYST") == COMPLETE && overbose) {
+		char *cp, c;
+		c = 0;
+		cp = strchr(reply_string + 4, ' ');
+		if (cp == NULL)
+			cp = strchr(reply_string + 4, '\r');
+		if (cp) {
+			if (cp[-1] == '.')
+				cp--;
+			c = *cp;
+			*cp = '\0';
+		}
+
+		fprintf(ttyout, "Remote system type is %s.\n",
+		    reply_string + 4);
+		if (cp)
+			*cp = c;
+	}
+	if (!strncmp(reply_string, "215 UNIX Type: L8", 17)) {
+		if (proxy)
+			unix_proxy = 1;
+		else
+			unix_server = 1;
+		/*
+		 * Set type to 0 (not specified by user),
+		 * meaning binary by default, but don't bother
+		 * telling server.  We can use binary
+		 * for text files unless changed by the user.
+		 */
+		type = 0;
+		(void)strlcpy(typename, "binary", sizeof(typename));
+		if (overbose)
+		    fprintf(ttyout,
+			"Using %s mode to transfer files.\n",
+			typename);
+	} else {
+		if (proxy)
+			unix_proxy = 0;
+		else
+			unix_server = 0;
+		if (overbose &&
+		    !strncmp(reply_string, "215 TOPS20", 10))
+			fputs(
+"Remember to set tenex mode when transferring binary files from this machine.\n",
+			    ttyout);
+	}
+	verbose = overbose;
 }
 
 /*
@@ -236,13 +243,15 @@ setpeer(int argc, char *argv[])
  * to perform a clean shutdown before this is invoked.
  */
 void
-cleanuppeer()
+cleanuppeer(void)
 {
 
 	if (cout)
 		(void)fclose(cout);
 	cout = NULL;
 	connected = 0;
+	unix_server = 0;
+	unix_proxy = 0;
 			/*
 			 * determine if anonftp was specifically set with -a
 			 * (1), or implicitly set by auto_fetch() (2). in the
@@ -312,7 +321,8 @@ lostpeer(int dummy)
 
 
 /*
- * login to remote host, using given username & password if supplied
+ * Login to remote host, using given username & password if supplied.
+ * Return non-zero if successful.
  */
 int
 ftp_login(const char *host, const char *user, const char *pass)
@@ -417,6 +427,7 @@ ftp_login(const char *host, const char *user, const char *pass)
 		goto cleanup_ftp_login;
 
 	connected = -1;
+	remotesyst();
 	for (n = 0; n < macnum; ++n) {
 		if (!strcmp("init", macros[n].mac_name)) {
 			(void)strlcpy(line, "$init", sizeof(line));
