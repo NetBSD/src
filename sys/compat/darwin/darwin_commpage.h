@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.h,v 1.1 2004/07/03 00:14:30 manu Exp $ */
+/*	$NetBSD: darwin_commpage.h,v 1.2 2004/07/03 16:47:13 manu Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -73,8 +73,8 @@ struct darwin_commpage {
 	char dcp_64bit;			/* 37/0x025 */
 	short dcp_cachelinelen;		/* 38/0x026 */
 	char dcp_pad3[24];
-	double dcp_2pow52;			/* 64/0x040 */
-	double dcp_10pow6;			/* 72/0x048 */
+	long long dcp_2pow52;			/* 64/0x040 */
+	long long dcp_10pow6;			/* 72/0x048 */
 	char dcp_pad4[16];
 	long long dcp_timebase;			/* 96/0x060 */
 	long long dcp_timestamp;		/* 104/0x068 */
