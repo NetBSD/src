@@ -1,4 +1,4 @@
-/*	$NetBSD: adosfs.h,v 1.5 1994/07/11 05:07:38 chopps Exp $	*/
+/*	$NetBSD: adosfs.h,v 1.6 1994/12/28 08:51:59 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -72,6 +72,8 @@ struct anode {
 	int ntabent;		/* (r/d) number of entries in table */
 	int nwords;		/* size of blocks in long words */
 	int adprot;		/* (d/f) amigados protection bits */
+	uid_t  uid;		/* (d/f) uid of directory/file */
+	gid_t  gid;		/* (d/f) gid of directory/file */
 	int flags;		/* misc flags */ 
 	char *slinkto;		/* name of file or dir */
 };
