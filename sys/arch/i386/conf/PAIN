@@ -1,7 +1,7 @@
 #
 # PAIN -- kernel for another of cgd's 486/50 EISA boxes...
 #
-#	$Id: PAIN,v 1.28 1994/04/20 23:39:30 mycroft Exp $
+#	$Id: PAIN,v 1.29 1994/05/09 23:10:42 cgd Exp $
 #
 machine		"i386"
 cpu		"I486_CPU"
@@ -51,7 +51,8 @@ options		FDESC,FIFO,KERNFS,LOFS,PORTAL,PROCFS
 options		QUOTA
 
 # SysV compat stuff
-options		SYSVMSG,SYSVSEM,SYSVSHM
+options		SYSVMSG,SYSVSEM
+#options	SYSVSHM
 #options	"SHMMAXPAGES=1024"		# 1024 is the default.
 
 # Various "debugging" stuff
