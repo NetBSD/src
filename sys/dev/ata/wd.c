@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.261 2003/09/19 21:36:01 mycroft Exp $ */
+/*	$NetBSD: wd.c,v 1.262 2003/10/08 10:58:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.261 2003/09/19 21:36:01 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.262 2003/10/08 10:58:12 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -126,7 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.261 2003/09/19 21:36:01 mycroft Exp $");
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
 #ifdef WDCDEBUG
-extern int wdcdebug_wd_mask; /* init'ed in ata_wdc.c */
+int wdcdebug_wd_mask = 0x0; 
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_wd_mask & (level)) \
 		printf args
@@ -262,10 +262,6 @@ wdprobe(struct device *parent, struct cfdata *match, void *aux)
 	if (adev->adev_bustype->bustype_type != SCSIPI_BUSTYPE_ATA)
 		return 0;
 
-	if (match->cf_loc[ATACF_CHANNEL] != ATACF_CHANNEL_DEFAULT &&
-	    match->cf_loc[ATACF_CHANNEL] != adev->adev_channel)
-		return 0;
-
 	if (match->cf_loc[ATACF_DRIVE] != ATACF_DRIVE_DEFAULT &&
 	    match->cf_loc[ATACF_DRIVE] != adev->adev_drv_data->drive)
 		return 0;
@@ -293,7 +289,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	wd->atabus = adev->adev_bustype;
 	wd->openings = adev->adev_openings;
 	wd->drvp = adev->adev_drv_data;
-	wd->wdc_softc = parent;
 	/* give back our softc to our caller */
 	wd->drvp->drv_softc = &wd->sc_dev;
 
@@ -755,7 +750,7 @@ wddone(void *v)
 		errmsg = "error";
 		do_perror = 1;
 retry:		/* Just reset and retry. Can we do more ? */
-		wd->atabus->ata_reset_channel(wd->drvp);
+		wd->atabus->ata_reset_channel(wd->drvp, 0);
 		diskerr(bp, "wd", errmsg, LOG_PRINTF,
 		    wd->sc_wdc_bio.blkdone, wd->sc_dk.dk_label);
 		if (wd->retries < WDIORETRIES)
@@ -1067,7 +1062,7 @@ wdgetdisklabel(struct wd_softc *wd)
 
 	wd->sc_badsect[0] = -1;
 
-	if (wd->drvp->state > RECAL)
+	if (wd->drvp->state > RESET)
 		wd->drvp->drive_flags |= DRIVE_RESET;
 	errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit, RAW_PART),
 	    wdstrategy, lp, wd->sc_dk.dk_cpulabel);
@@ -1078,7 +1073,7 @@ wdgetdisklabel(struct wd_softc *wd)
 		 * assume the DOS geometry is now in the label and try
 		 * again.  XXX This is a kluge.
 		 */
-		if (wd->drvp->state > RECAL)
+		if (wd->drvp->state > RESET)
 			wd->drvp->drive_flags |= DRIVE_RESET;
 		errstring = readdisklabel(MAKEWDDEV(0, wd->sc_dev.dv_unit,
 		    RAW_PART), wdstrategy, lp, wd->sc_dk.dk_cpulabel);
@@ -1088,7 +1083,7 @@ wdgetdisklabel(struct wd_softc *wd)
 		return;
 	}
 
-	if (wd->drvp->state > RECAL)
+	if (wd->drvp->state > RESET)
 		wd->drvp->drive_flags |= DRIVE_RESET;
 #ifdef HAS_BAD144_HANDLING
 	if ((lp->d_flags & D_BADSECT) != 0)
@@ -1269,7 +1264,7 @@ wdioctl(dev_t dev, u_long xfer, caddr_t addr, int flag, struct proc *p)
 		    lp, /*wd->sc_dk.dk_openmask : */0,
 		    wd->sc_dk.dk_cpulabel);
 		if (error == 0) {
-			if (wd->drvp->state > RECAL)
+			if (wd->drvp->state > RESET)
 				wd->drvp->drive_flags |= DRIVE_RESET;
 			if (xfer == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
