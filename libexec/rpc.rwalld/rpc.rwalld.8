@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.rwalld.8,v 1.5 1996/08/30 20:22:14 thorpej Exp $
+.\"	$NetBSD: rpc.rwalld.8,v 1.6 1997/10/20 02:50:54 enami Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -35,13 +35,13 @@
 .Dt RPC.RWALLD 8
 .Os BSD 4.3
 .Sh NAME
-.Nm rwalld ,
-.Nm rpc.rwalld 
+.Nm rpc.rwalld ,
+.Nm rwalld
 .Nd write messages to users currently logged in server
 .Sh SYNOPSIS
 .Nm /usr/libexec/rpc.rwalld
 .Sh DESCRIPTION
-.Nm rpc.rwalld
+.Nm
 is a server which will send a message to users
 currently logged in to the system. This server
 invokes the 
@@ -53,11 +53,11 @@ Messages are sent to this server by the
 .Xr rwall 1
 command.
 The
-.Nm rpc.rwalld
+.Nm
 daemon is normally invoked by 
 .Xr inetd 8 .
 .Pp
-.Nm rpc.rwalld
+.Nm
 uses an RPC protocol defined in 
 .Pa /usr/include/rpcsvc/rwall.x .
 .Sh SEE ALSO
