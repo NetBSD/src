@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.13 1994/04/10 01:11:28 cgd Exp $
+ *	$Id: cons.c,v 1.14 1994/04/11 19:53:29 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -101,8 +101,14 @@ cnopen(dev, flag, mode, p)
 	 */
 	dev = cn_tab->cn_dev;
 	if (cn_devvp == NULLVP) {
-		/* try to get a reference on its vnode, but fail silently */
-		cdevvp(dev, &cn_devvp);
+		/*
+		 * try to get a reference on its vnode, but fail silently
+		 * vfinddev XXX
+		 */
+		if (vfinddev(dev, VCHR, &cn_devvp) == 0 && vcount(cn_devvp))
+			vref(cn_devvp);
+		else
+			cdevvp(dev, &cn_devvp);
 	}
 	return ((*cdevsw[major(dev)].d_open)(dev, flag, mode, p));
 }
@@ -129,7 +135,7 @@ cnclose(dev, flag, mode, p)
 		vrele(cn_devvp);
 		cn_devvp = NULLVP;
 	}
-	if ((vfinddev(dev, VCHR, &vp) == 0) && vcount(vp))
+	if ((vfinddev(dev, VCHR, &vp) == 0) && vcount(vp)) 	/* XXX */
 		return (0);
 	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
 }
