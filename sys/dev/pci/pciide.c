@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.1 1998/03/04 06:35:11 cgd Exp $	*/
+/*	$NetBSD: pciide.c,v 1.2 1998/03/04 19:18:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -36,10 +36,11 @@
  * Author: Christopher G. Demetriou, March 2, 1998 (derived from NetBSD
  * sys/dev/pci/ppb.c, revision 1.16).
  *
- * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" from the
- * PCI SIG.
+ * See "PCI IDE Controller Specification, Revision 1.0 3/4/94" and
+ * "Programming Interface for Bus Master IDE Controller, Revision 1.0
+ * 5/16/94" from the PCI SIG.
  *
- * XXX Does not yet support DMA.
+ * XXX Does not yet support DMA (but does map the Bus Master DMA regs).
  *
  * XXX Does not support serializing the two channels for broken (at least
  * XXX according to linux and freebsd) controllers, e.g. CMD PCI0640.
@@ -58,6 +59,9 @@ struct pciide_softc {
 	struct device		sc_dev;
 
 	void			*sc_pci_ih;	/* PCI interrupt handle */
+	int			sc_dma_ioh_valid; /* bus-master DMA info */
+	bus_space_tag_t		sc_dma_iot;
+	bus_space_handle_t	sc_dma_ioh;
 
 	struct pciide_channel {			/* per-channel data */
 		/* internal bookkeeping */
@@ -73,7 +77,7 @@ struct pciide_softc {
 		/* filled in by wdc attachment (written by wdc attach) */
 		int		(*ihand) __P((void *));
 		void		*ihandarg;
-	} channels[PCIIDE_NUM_CHANNELS];
+	} sc_channels[PCIIDE_NUM_CHANNELS];
 };
 
 #define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
@@ -176,15 +180,28 @@ pciide_attach(parent, self, aux)
 		}
 	}
 
-	for (i = 0; i < PCIIDE_NUM_CHANNELS; i++) {
-		cp = &sc->channels[i];
+	/*
+	 * Map DMA registers, if DMA is supported.
+	 *
+	 * Note that sc_dma_ioh_valid is a good test to see if DMA can
+	 * be done.  If the interface doesn't support DMA, sc_dma_ioh_valid
+	 * will never be non-zero.  If the DMA regs couldn't be mapped,
+	 * it'll be zero.  I.e., sc_dma_ioh_valid will only be non-zero
+	 * if the interface supports DMA and the registers could be
+	 * mapped.
+	 */
+	if (interface & PCIIDE_INTERFACE_BUS_MASTER_DMA) {
+		sc->sc_dma_ioh_valid = (pci_mapreg_map(pa,
+		    PCIIDE_REG_BUS_MASTER_DMA, PCI_MAPREG_TYPE_IO, 0,
+		    &sc->sc_dma_iot, &sc->sc_dma_ioh, NULL, NULL) == 0);
+		printf("%s: Bus Master DMA support present, but unused (%s)\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_dma_ioh_valid ? "no driver support" :
+		      "couldn't map regs!");
+	}
 
-		printf("%s: %s channel %s to %s mode\n",
-		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(i),
-		    (interface & PCIIDE_INTERFACE_SETTABLE(i)) ?
-		      "configured" : "wired",
-		    (interface & PCIIDE_INTERFACE_PCI(i)) ? "native-PCI" :
-		      "compatibility");
+	for (i = 0; i < PCIIDE_NUM_CHANNELS; i++) {
+		cp = &sc->sc_channels[i];
 
 		if (interface & PCIIDE_INTERFACE_PCI(i)) {
 			cp->compat = 0;
@@ -212,7 +229,14 @@ pciide_attach(parent, self, aux)
 	}
 
 	for (i = 0; i < PCIIDE_NUM_CHANNELS; i++) {
-		cp = &sc->channels[i];
+		cp = &sc->sc_channels[i];
+
+		printf("%s: %s channel %s to %s mode\n",
+		    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(i),
+		    (interface & PCIIDE_INTERFACE_SETTABLE(i)) ?
+		      "configured" : "wired",
+		    (interface & PCIIDE_INTERFACE_PCI(i)) ? "native-PCI" :
+		      "compatibility");
 
 		if (cp->cmd_ioh_valid && cp->ctl_ioh_valid && cp->ih != NULL) {
 			aa.channel = i;
@@ -223,7 +247,12 @@ pciide_attach(parent, self, aux)
 			aa.ihandp = &cp->ihand;
 			aa.ihandargp = &cp->ihandarg;
 			cp->dev = config_found(self, &aa, pciide_print);
-			/* XXX unmap compat intr if compat and not found? */
+			
+			/*
+			 * Note that if the 'wdc' device isn't configured,
+			 * the controller's resources are still marked as
+			 * being in use.  This is a feature.
+			 */
 		} else {
 			printf("%s: couldn't configure %s channel (cmd regs %s, ctl regs %s, (%s) intr %s)\n",
 			    sc->sc_dev.dv_xname, PCIIDE_CHANNEL_NAME(i),
@@ -277,7 +306,7 @@ pciide_pci_intr(arg)
 
 	rv = 0;
 	for (i = 0; i < PCIIDE_NUM_CHANNELS; i++) {
-		cp = &sc->channels[i];
+		cp = &sc->sc_channels[i];
 
 		/* If a compat channel or there's no handler, skip. */
 		if (cp->compat || cp->ihand == NULL)
