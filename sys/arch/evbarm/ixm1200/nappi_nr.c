@@ -1,4 +1,4 @@
-/* $NetBSD: nappi_nr.c,v 1.4 2003/02/17 20:51:53 ichiro Exp $ */
+/* $NetBSD: nappi_nr.c,v 1.5 2003/03/25 06:53:16 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: nappi_nr.c,v 1.5 2003/03/25 06:53:16 igy Exp $");
 
 /*
  * LED support for NAPPI.
