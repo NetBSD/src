@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.149 2004/03/14 09:18:45 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.150 2004/03/26 19:31:05 drochner Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -14,7 +14,7 @@ SRCS+=	Ovfork.S __clone.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S \
 _LSRC=	Lint_Ovfork.c Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c \
 	Lint_exect.c Lint_fork.c Lint_pipe.c Lint_ptrace.c Lint_sbrk.c \
-	Lint_setlogin.c Lint___sigreturn14.c Lint_syscall.c Lint___syscall.c \
+	Lint_setlogin.c Lint_syscall.c Lint___syscall.c \
 	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 .if ${MKLINT} != "no"
