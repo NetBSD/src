@@ -38,7 +38,7 @@
  *
  * from: Utah Hdr: machdep.c 1.63 91/04/24
  * from: @(#)machdep.c	7.17 (Berkeley) 2/26/93
- * $Id: machdep.c,v 1.2 1993/10/15 03:00:56 deraadt Exp $
+ * $Id: machdep.c,v 1.3 1994/01/16 00:41:17 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -145,7 +145,10 @@ int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
 #endif
-int	msgbufmapped = 0;	/* set when safe to use msgbuf */
+
+struct msgbuf *msgbufp;
+int msgbufmapped = 0;		/* set when safe to use msgbuf */
+
 int	maxmem;			/* max memory per process */
 int	physmem;		/* max supported memory, changes to actual */
 int	pmax_boardtype;		/* Mother board type */
@@ -154,51 +157,50 @@ u_long	asc_iomem;		/* and 7 * 8K buffers for the scsi */
 u_long	asic_base;		/* Base address of I/O asic */
 const	struct callback *callv;	/* pointer to PROM entry points */
 const struct callback callvec = {
-	(void	*(*)())0,
-	(void	*(*)())0,
-	(char	*(*)())0,
-	(int	(*)())0,
-	(char	*(*)())0,
-	(int	(*)())0,
-	(char	*(*)())0,
-	(char	*(*)())0,
-	(int	(*)())0,
-	(int	(*)())DEC_PROM_GETCHAR,
-	(char	*(*)())0,
-	(int	(*)())DEC_PROM_PUTS,
-	(int	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(long	(*)())0,
-	(psig_t	(*)())0,
-	(int	(*)())0,
-	(long	(*)())0,
-	(int	(*)())0,
-	(void	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(char	*(*)())DEC_PROM_GETENV2,
-	(int	(*)())0,
-	(u_long	(*)())0,
-	(void	(*)())0,
-	(void	(*)())0,
-	(void	(*)())0,
-	(void	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(int	(*)())0,
-	(void	*)0,
-	(int	(*)())0,
-	(void	(*)())0,
-	(void	(*)())0,
-	(tcinfo	*(*)())0,
-	(int	(*)())0,
-	(void	(*)())0,
-	/* b0 to d4 reserved */
+	(void *(*) __P((void *s1, void *s2, int n)))0,
+	(void *(*) __P((void *s1, int c, int n)))0,
+	(char *(*) __P((char *s1, char *s2)))DEC_PROM_STRCAT,
+	(int (*) __P((char *s1, char *s2)))DEC_PROM_STRCMP,
+	(char *(*) __P((char *s1, char *s2)))DEC_PROM_STRCPY,
+	(int (*) __P((char *s1)))DEC_PROM_STRLEN,
+	(char *(*) __P((char *s1, char *s2, int n)))0,
+	(char *(*) __P((char *s1, char *s2, int n)))0,
+	(int (*) __P((char *s1, char *s2, int n)))0,
+	(int (*) __P((void)))DEC_PROM_GETCHAR,
+	(char *(*) __P((char *s)))DEC_PROM_GETS,
+	(int (*) __P((char *s)))DEC_PROM_PUTS,
+	(int (*) __P((char *fmt, ...)))DEC_PROM_PRINTF,
+	(int (*) __P((char *s, char *fmt, ...)))0,
+	(int (*) __P((void)))0,
+	(long (*) __P((char *s, char **endptr, int base)))0,
+	(psig_t (*) __P((int sig, psig_t func)))0,
+	(int (*) __P((int sig)))0,
+	(long (*) __P((long *tod)))0,
+	(int (*) __P((jmp_buf env)))0,
+	(void (*) __P((jmp_buf env, int value)))0,
+	(int (*) __P((void)))0,
+	(int (*) __P((int b, void *buffer, int n)))0,
+	(int (*) __P((int b, void *buffer, int n)))0,
+	(int (*) __P((char *name, char *value)))DEC_PROM_SETENV2,
+	(char *(*) __P((char *name)))DEC_PROM_GETENV2,
+	(int (*) __P((char *name)))DEC_PROM_UNSETENV,
+	(u_long (*) __P((int sn)))0,
+	(void (*) __P((void)))0,
+	(void (*) __P((int delay)))0,
+	(void (*) __P((int value)))0,
+	(void (*) __P((void)))0,
+	(int (*) __P((void)))0,
+	(int (*) __P((memmap *map)))0,
+	(int (*) __P((int sn)))0,
+	(int (*) __P((int sn)))0,
+	(int (*) __P((int sn)))0,
+	(void *)0,
+	(int (*) __P((void)))0,
+	(void (*) __P((int *v, int cnt)))0,
+	(void (*) __P((void)))0,
+	(tcinfo *(*) __P(()))0,
+	(int (*) __P((char *cmd)))0,
+	(void (*) __P((char cmd)))0,
 };
 
 void	(*tc_enable_interrupt)();
@@ -303,9 +305,11 @@ mach_init(argc, argv, code, cv)
 					boothowto |= RB_DFLTROOT;
 					break;
 
+#ifdef RB_MINIROOT
 				case 'm': /* mini root present in memory */
 					boothowto |= RB_MINIROOT;
 					break;
+#endif
 
 				case 'n': /* ask for names */
 					boothowto |= RB_ASKNAME;
@@ -318,7 +322,7 @@ mach_init(argc, argv, code, cv)
 		}
 	}
 
-#ifdef MFS
+#if defined (MFS) && defined(RB_MINIROOT)
 	/*
 	 * Check to see if a mini-root was loaded into memory. It resides
 	 * at the start of the next page just after the end of BSS.
@@ -704,6 +708,7 @@ mach_init(argc, argv, code, cv)
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
+void
 consinit()
 {
 	register int kbd, crt;
@@ -878,6 +883,7 @@ remcons:
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -932,12 +938,14 @@ cpu_startup()
 		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
+#if 0
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 16*NCARGS, TRUE);
+#endif
 	/*
 	 * Allocate a submap for physio
 	 */
@@ -964,7 +972,7 @@ cpu_startup()
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %d\n", ptoa(vm_page_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	/*
@@ -987,16 +995,17 @@ cpu_startup()
  * Set registers on exec.
  * Clear all registers except sp, pc.
  */
-setregs(p, entry, retval)
+void
+setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
+	u_long stack;
 	int retval[2];
 {
-	int sp = p->p_md.md_regs[SP];
 	extern struct proc *machFPCurProcPtr;
 
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
-	p->p_md.md_regs[SP] = sp;
+	p->p_md.md_regs[SP] = stack;
 	p->p_md.md_regs[PC] = entry & ~3;
 	p->p_md.md_regs[PS] = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
@@ -1042,7 +1051,7 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
-	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
+	oonstack = psp->ps_onstack;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in data space, the
@@ -1051,12 +1060,9 @@ sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sigframe);
-	if ((psp->ps_flags & SAS_ALTSTACK) &&
-	    (psp->ps_sigstk.ss_flags & SA_ONSTACK) == 0 &&
-	    (psp->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
-					 psp->ps_sigstk.ss_size - fsize);
-		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
+	if (!oonstack && (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigsp - fsize);
+		psp->ps_onstack = 1;
 	} else
 		fp = (struct sigframe *)(regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -1117,7 +1123,7 @@ sendsig(catcher, sig, mask, code)
 	if ((sigdebug & SDB_FOLLOW) ||
 	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
-		       p->p_pid, sig);
+			p->p_pid, sig);
 #endif
 }
 
@@ -1172,10 +1178,7 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	if (scp->sc_onstack & 01)
-		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
-	else
-		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
+	p->p_sigacts->ps_onstack = scp->sc_onstack & 1;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	regs[PC] = scp->sc_pc;
 	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
@@ -1188,6 +1191,7 @@ sigreturn(p, uap, retval)
 
 int	waittime = -1;
 
+void
 boot(howto)
 	register int howto;
 {
@@ -1480,6 +1484,45 @@ pmax_slot_hand_fill()
 		}
 	}
 }
+
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	return (ENOEXEC);
+}
+
+int
+ptrace_set_pc(p, addr)
+	struct proc *p;
+	u_long addr;
+{
+	/* IMPLEMENT! */
+}
+
+int
+ptrace_getregs(p, addr)
+	struct proc *p;
+	u_long addr;
+{
+	/* IMPLEMENT! */
+}
+
+int
+ptrace_setregs(p, addr)
+	struct proc *p;
+	u_long addr;
+{
+	/* IMPLEMENT! */
+}
+
+int
+ptrace_single_step(p)
+struct proc *p;
+{
+	/* IMPLEMENT! */
+}
+
 
 #ifdef DS5000
 /* 
