@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.3 2003/08/24 19:52:46 marcus Exp $	*/
+/*	$NetBSD: aica.c,v 1.4 2003/08/25 18:48:31 marcus Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.3 2003/08/24 19:52:46 marcus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.4 2003/08/25 18:48:31 marcus Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -511,11 +511,13 @@ aica_set_params(void *addr, int setmode, int usemode,
 		break;
 
 	case AUDIO_ENCODING_ULAW:
+		play->factor = 2;
 		play->sw_code = mulaw_to_slinear16_le;
 		play->hw_precision = 16;
 		sc->sc_precision = play->hw_precision;
 		break;
 	case AUDIO_ENCODING_ALAW:
+		play->factor = 2;
 		play->sw_code = alaw_to_slinear16_le;
 		play->hw_precision = 16;
 		sc->sc_precision = play->hw_precision;
