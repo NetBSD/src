@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119.6.3 2002/11/08 09:25:26 tron Exp $ */
+/*	$NetBSD: machdep.c,v 1.119.6.4 2002/11/22 17:14:55 tron Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1744,7 +1744,7 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 	u_int64_t pa;
 	paddr_t	pm_flags = 0;
 	vm_prot_t pm_prot = VM_PROT_READ;
-	int err;
+	int err, map_little = 0;
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -1783,13 +1783,13 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 		return (0);
 		/* FALLTHROUGH */
 	case PCI_IO_BUS_SPACE:
-		pm_flags = PMAP_LITTLE;
+		map_little = 1;
 		break;
 	case PCI_MEMORY_BUS_SPACE:
-		pm_flags = PMAP_LITTLE;
+		map_little = 1;
 		break;
 	default:
-		pm_flags = 0;
+		map_little = 0;
 		break;
 	}
 
@@ -1797,10 +1797,10 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 	/* If it's not LINEAR don't bother to map it.  Use phys accesses. */
 	if ((flags & BUS_SPACE_MAP_LINEAR) == 0) {
 		hp->_ptr = addr;
-		if (pm_flags & PMAP_LITTLE)
+		if (map_little)
 			hp->_asi = ASI_PHYS_NON_CACHED_LITTLE;
 		else
-		hp->_asi = ASI_PHYS_NON_CACHED;
+			hp->_asi = ASI_PHYS_NON_CACHED;
 		hp->_sasi = ASI_PHYS_NON_CACHED;
 		return (0);
 	}
@@ -1814,11 +1814,11 @@ sparc_bus_map(t, addr, size, flags, unused, hp)
 
 	/* note: preserve page offset */
 	hp->_ptr = (v | ((u_long)addr & PGOFSET));
-	hp->_asi = ASI_PRIMARY;
-	if (pm_flags & PMAP_LITTLE)
-		hp->_sasi = ASI_PRIMARY_LITTLE;
+	hp->_sasi = ASI_PRIMARY;
+	if (map_little)
+		hp->_asi = ASI_PRIMARY_LITTLE;
 	else
-		hp->_sasi = ASI_PRIMARY;
+		hp->_asi = ASI_PRIMARY;
 
 	pa = addr & ~PAGE_MASK; /* = trunc_page(addr); Will drop high bits */
 	if (!(flags&BUS_SPACE_MAP_READONLY)) pm_prot |= VM_PROT_WRITE;
