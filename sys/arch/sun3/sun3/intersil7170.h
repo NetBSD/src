@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: intersil7170.h,v 1.5 1994/09/20 16:52:26 gwr Exp $
+ * $Id: intersil7170.h,v 1.6 1994/09/26 17:25:21 gwr Exp $
  */
 
 /*
@@ -39,20 +39,20 @@
  *                          document #301680-005, Dec 85
  */
 
-struct intersil_map {		       /* from p. 7 of 10 */
-    unsigned char csecs;
-    unsigned char hours;
-    unsigned char minutes;
-    unsigned char seconds;
-    unsigned char month;
-    unsigned char date;
-    unsigned char year;
-    unsigned char day;
+struct date_time {		       /* from p. 7 of 10 */
+    unsigned char dt_csec;
+    unsigned char dt_hour;
+    unsigned char dt_min;
+    unsigned char dt_sec;
+    unsigned char dt_month;
+    unsigned char dt_day;
+    unsigned char dt_year;
+    unsigned char dt_dow;
 };
 
 struct intersil7170 {
-    struct intersil_map counters;
-    struct intersil_map clk_ram;	/* should be ok as both are word aligned */
+    struct date_time counters;
+    struct date_time clk_ram;	/* should be ok as both are word aligned */
     unsigned char clk_intr_reg;
     unsigned char clk_cmd_reg;
 };
@@ -87,11 +87,4 @@ struct intersil7170 {
 #define INTERSIL_INTER_PENDING    0x80 /* read-only */
 
 #define INTERSIL_INTER_BITS "\20\10PENDING\7DAYS\6HRS\5MIN\4SCDS\3DSEC\2CSEC\1ALARM"
-
-/* useful info */
-
-#define INTERSIL_YEAR_BASE 68
-#define INTERSIL_UNIX_BASE 70
-
-#define INTERSIL_LEAP_YEAR(x) !((x) % 4)
 
