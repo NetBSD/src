@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.5 1995/02/21 06:33:23 mycroft Exp $	*/
+/*	$NetBSD: printf.c,v 1.6 1995/09/03 20:51:21 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -68,7 +68,39 @@
 
 #include "stand.h"
 
-static void kprintn __P((u_long, int));
+static void kprintn __P((void (*)(int), u_long, int));
+static void sputchar __P((int));
+static void kprintf __P((void (*)(int), const char *, va_list));
+
+static char *sbuf;
+
+static void
+sputchar(c)
+	int c;
+{
+	*sbuf++ = c;
+}
+
+void
+#ifdef __STDC__
+sprintf(char *buf, const char *fmt, ...)
+#else
+sprintf(buf, fmt, va_alist)
+	char *buf, *fmt;
+#endif
+{
+	va_list ap;
+
+	sbuf = buf;
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	kprintf(sputchar, fmt, ap);
+	va_end(ap);
+	*sbuf = '\0';
+}
 
 void
 #ifdef __STDC__
@@ -78,10 +110,6 @@ printf(fmt, va_alist)
 	char *fmt;
 #endif
 {
-	register char *p;
-	register int ch, n;
-	unsigned long ul;
-	int lflag, set;
 	va_list ap;
 
 #ifdef __STDC__
@@ -89,11 +117,26 @@ printf(fmt, va_alist)
 #else
 	va_start(ap);
 #endif
+	kprintf(putchar, fmt, ap);
+	va_end(ap);
+}
+
+void
+kprintf(put, fmt, ap)
+	void (*put)__P((int));
+	const char *fmt;
+	va_list ap;
+{
+	register char *p;
+	register int ch, n;
+	unsigned long ul;
+	int lflag, set;
+
 	for (;;) {
 		while ((ch = *fmt++) != '%') {
 			if (ch == '\0')
 				return;
-			putchar(ch);
+			put(ch);
 		}
 		lflag = 0;
 reswitch:	switch (ch = *fmt++) {
@@ -103,68 +146,69 @@ reswitch:	switch (ch = *fmt++) {
 		case 'b':
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
-			kprintn(ul, *p++);
+			kprintn(put, ul, *p++);
 
 			if (!ul)
 				break;
 
 			for (set = 0; (n = *p++);) {
 				if (ul & (1 << (n - 1))) {
-					putchar(set ? ',' : '<');
+					put(set ? ',' : '<');
 					for (; (n = *p) > ' '; ++p)
-						putchar(n);
+						put(n);
 					set = 1;
 				} else
 					for (; *p > ' '; ++p);
 			}
 			if (set)
-				putchar('>');
+				put('>');
 			break;
 		case 'c':
 			ch = va_arg(ap, int);
-				putchar(ch & 0x7f);
+				put(ch & 0x7f);
 			break;
 		case 's':
 			p = va_arg(ap, char *);
 			while ((ch = *p++))
-				putchar(ch);
+				put(ch);
 			break;
 		case 'd':
 			ul = lflag ?
 			    va_arg(ap, long) : va_arg(ap, int);
 			if ((long)ul < 0) {
-				putchar('-');
+				put('-');
 				ul = -(long)ul;
 			}
-			kprintn(ul, 10);
+			kprintn(put, ul, 10);
 			break;
 		case 'o':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(ul, 8);
+			kprintn(put, ul, 8);
 			break;
 		case 'u':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(ul, 10);
+			kprintn(put, ul, 10);
 			break;
 		case 'x':
 			ul = lflag ?
 			    va_arg(ap, u_long) : va_arg(ap, u_int);
-			kprintn(ul, 16);
+			kprintn(put, ul, 16);
 			break;
 		default:
-			putchar('%');
+			put('%');
 			if (lflag)
-				putchar('l');
-			putchar(ch);
+				put('l');
+			put(ch);
 		}
 	}
 	va_end(ap);
 }
 
 static void
-kprintn(ul, base)
+kprintn(put, ul, base)
+	void (*put)__P((int));
 	unsigned long ul;
 	int base;
 {
@@ -176,7 +220,7 @@ kprintn(ul, base)
 		*p++ = "0123456789abcdef"[ul % base];
 	} while (ul /= base);
 	do {
-		putchar(*--p);
+		put(*--p);
 	} while (p > buf);
 }
 
