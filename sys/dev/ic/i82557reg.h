@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557reg.h,v 1.8 2001/05/22 15:29:30 thorpej Exp $	*/
+/*	$NetBSD: i82557reg.h,v 1.9 2001/05/25 08:54:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -178,9 +178,9 @@ struct fxp_cb_ias {
 #define	__FXP_BITFIELD2(a, b)			b, a
 #define	__FXP_BITFIELD3(a, b, c)		c, b, a
 #define	__FXP_BITFIELD4(a, b, c, d)		d, c, b, a
-#define	__FXP_BITFIELD5(a, b, c, d, e)		e, d, c, b, a,
+#define	__FXP_BITFIELD5(a, b, c, d, e)		e, d, c, b, a
 #define	__FXP_BITFIELD6(a, b, c, d, e, f)	f, e, d, c, b, a
-#define	__FXP_BITFIELD6(a, b, c, d, e, f, g)	g, f, e, d, c, b, a
+#define	__FXP_BITFIELD7(a, b, c, d, e, f, g)	g, f, e, d, c, b, a
 #define	__FXP_BITFIELD8(a, b, c, d, e, f, g, h)	h, g, f, e, d, c, b, a
 #endif
 
