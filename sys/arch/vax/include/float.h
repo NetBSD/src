@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.6 2003/08/07 16:30:09 agc Exp $	*/
+/*	$NetBSD: float.h,v 1.7 2003/10/22 16:18:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 Regents of the University of California.
@@ -34,9 +34,27 @@
 #ifndef _VAX_FLOAT_H_
 #define _VAX_FLOAT_H_
 
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+
 #define FLT_RADIX	2		/* b */
 #define FLT_ROUNDS	1		/* FP addition rounds to nearest */
 
+#if !defined(_ANSI_SOURCE) && !defined(_POSIX_C_SOURCE) && \
+    !defined(_XOPEN_SOURCE) || \
+    ((__STDC_VERSION__ - 0) >= 199901L) || \
+    ((_POSIX_C_SOURCE - 0) >= 200112L) || \
+    ((_XOPEN_SOURCE  - 0) >= 600) || \
+    defined(_ISOC99_SOURCE) || defined(_NETBSD_SOURCE)
+#if __GNUC_PREREQ__(3, 3)
+#define	FLT_EVAL_METHOD	__FLT_EVAL_METHOD__
+#else
+#define	FLT_EVAL_METHOD	0		/* evaluate all operations and
+					   constants just to the range and
+					   precision of the type */
+#endif /* GCC >= 3.3 */
+#endif /* !defined(_ANSI_SOURCE) && ... */
+					   
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
 #define FLT_DIG		6		/* floor((p-1)*log10(b))+(b == 10) */
