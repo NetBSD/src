@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.2 1999/06/21 13:51:18 perry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.3 1999/06/21 16:16:20 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1387,6 +1387,7 @@ setmemrange(void)
 {
 	int i;
 	psize_t s, min, max;
+	int basemax = ctob(physmem);
 	struct memlist *mlist = memlist;
 	u_long h;
 
@@ -1423,12 +1424,12 @@ setmemrange(void)
 		 * But some type of extended memory is in 32bit address space.
 		 * Check whether.
 		 */
-		if (!mem_exists(mlist[i].base, avail_end))
+		if (!mem_exists(mlist[i].base, basemax))
 			continue;
 		h = 0;
 		/* range check */
 		for (s = min; s <= max; s += 0x00100000) {
-			if (!mem_exists(mlist[i].base + s - 4, h))
+			if (!mem_exists(mlist[i].base + s - 4, basemax))
 				break;
 			h = (u_long)(mlist[i].base + s);
 		}
