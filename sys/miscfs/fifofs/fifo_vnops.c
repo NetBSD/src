@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.14 1994/12/14 18:45:42 mycroft Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.15 1995/04/02 19:27:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -145,8 +145,15 @@ fifo_open(ap)
 	int error;
 	static char openstr[] = "fifo";
 
-	if ((ap->a_mode & (FREAD|FWRITE)) == (FREAD|FWRITE))
+	if ((ap->a_mode & (FREAD|FWRITE)) == (FREAD|FWRITE)) {
+#ifdef COMPAT_IBCS2
+		if (ap->a_p->p_emul == EMUL_IBCS2_COFF ||
+		    ap->a_p->p_emul == EMUL_IBCS2_XOUT)
+			ap->a_mode = (ap->a_mode & ~FWRITE) | O_NONBLOCK;
+		else
+#endif
 		return (EINVAL);
+	}
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
 		vp->v_fifoinfo = fip;
