@@ -5503,7 +5503,7 @@ ENTRY(raise)
  * On exit: %o1 == sync fault status, %o2 == sync fault address
  *	    %o3 == async fault status, %o4 == async fault address
  */
-ENTRY(srmmu_get_fltstatus)
+ALTENTRY(srmmu_get_fltstatus)
 	set	SRMMU_SFADDR, %o2
 	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
 	set	SRMMU_SFSTAT, %o1
@@ -5513,7 +5513,7 @@ ENTRY(srmmu_get_fltstatus)
 	retl
 	 clr	%o4
 
-ENTRY(viking_get_fltstatus)
+ALTENTRY(viking_get_fltstatus)
 	cmp	%l3, T_TEXTFAULT
 	be,a	1f
 	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
@@ -5528,8 +5528,8 @@ ENTRY(viking_get_fltstatus)
 	retl
 	 clr	%o4
 
-ENTRY(ms1_get_fltstatus)
-ENTRY(swift_get_fltstatus)
+ALTENTRY(ms1_get_fltstatus)
+ALTENTRY(swift_get_fltstatus)
 	cmp	%l3, T_TEXTFAULT
 	be,a	1f
 	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
@@ -5544,7 +5544,7 @@ ENTRY(swift_get_fltstatus)
 	retl
 	 clr	%o4
 
-ENTRY(cypress_get_fltstatus)
+ALTENTRY(cypress_get_fltstatus)
 	cmp	%l3, T_TEXTFAULT
 	be,a	1f
 	 mov	%l1, %o2		! use PC if type == T_TEXTFAULT
@@ -5561,7 +5561,7 @@ ENTRY(cypress_get_fltstatus)
 	retl
 	 lda	[%o4] ASI_SRMMU, %o4	! get async fault address
 
-ENTRY(hypersparc_get_fltstatus)
+ALTENTRY(hypersparc_get_fltstatus)
 	set	SRMMU_SFADDR, %o2
 	lda	[%o2] ASI_SRMMU, %o2	! sync virt addr; must be read first
 	set	SRMMU_SFSTAT, %o1
