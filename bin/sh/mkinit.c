@@ -1,4 +1,4 @@
-/*	$NetBSD: mkinit.c,v 1.19 1998/07/28 11:41:56 mycroft Exp $	*/
+/*	$NetBSD: mkinit.c,v 1.20 2000/07/18 19:13:20 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,17 +36,18 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #ifndef lint
-__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n");
+static const char copyright[] =
+    "@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkinit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mkinit.c,v 1.19 1998/07/28 11:41:56 mycroft Exp $");
+static const char rcsid[] =
+    "$NetBSD: mkinit.c,v 1.20 2000/07/18 19:13:20 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -61,7 +62,6 @@ __RCSID("$NetBSD: mkinit.c,v 1.19 1998/07/28 11:41:56 mycroft Exp $");
  */
 
 
-#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -153,21 +153,21 @@ struct text decls;			/* declarations */
 int amiddecls;				/* for formatting */
 
 
-void readfile __P((char *));
-int match __P((char *, char *));
-int gooddefine __P((char *));
-void doevent __P((struct event *, FILE *, char *));
-void doinclude __P((char *));
-void dodecl __P((char *, FILE *));
-void output __P((void));
-void addstr __P((char *, struct text *));
-void addchar __P((int, struct text *));
-void writetext __P((struct text *, FILE *));
-FILE *ckfopen __P((char *, char *));
-void *ckmalloc __P((int));
-char *savestr __P((char *));
-void error __P((char *));
-int main __P((int, char **));
+void readfile(char *);
+int match(char *, char *);
+int gooddefine(char *);
+void doevent(struct event *, FILE *, char *);
+void doinclude(char *);
+void dodecl(char *, FILE *);
+void output(void);
+void addstr(char *, struct text *);
+void addchar(int, struct text *);
+void writetext(struct text *, FILE *);
+FILE *ckfopen(char *, char *);
+void *ckmalloc(int);
+char *savestr(char *);
+void error(char *);
+int main(int, char **);
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)
 
