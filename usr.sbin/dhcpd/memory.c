@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: memory.c,v 1.1.1.1 1996/10/03 06:33:25 mrg Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: memory.c,v 1.2 1997/01/16 22:27:03 perry Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -337,6 +337,9 @@ struct subnet *find_grouped_subnet (share, addr)
 	struct iaddr addr;
 {
 	struct subnet *rv;
+
+	if (!share)
+		return (struct subnet *)0;
 
 	for (rv = share -> subnets; rv; rv = rv -> next_sibling) {
 		if (addr_eq (subnet_number (addr, rv -> netmask), rv -> net))
