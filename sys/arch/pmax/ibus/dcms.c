@@ -1,4 +1,4 @@
-/* $NetBSD: dcms.c,v 1.1.2.4 1999/11/25 08:57:48 nisimura Exp $ */
+/* $NetBSD: dcms.c,v 1.1.2.5 1999/11/25 09:56:51 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dcms.c,v 1.1.2.4 1999/11/25 08:57:48 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcms.c,v 1.1.2.5 1999/11/25 09:56:51 nisimura Exp $");
 
 /*
  * WSCONS attachments for VSXXX and DC7085 combo
@@ -66,6 +66,8 @@ dcms_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct dc_attach_args *args = aux;
+
 	/* Exact match is better than wildcard. */
 	if (cf->cf_loc[DCCF_LINE] == args->line)
 		return 2;
@@ -84,6 +86,7 @@ dcms_attach(parent, self, aux)
 {
 	struct dc_softc *dc = (void *)parent;
 	struct vsxxx_softc *dcms = (void *)self;
+	struct dc_attach_args *args = aux;
 	struct wsmousedev_attach_args a;
 
 #if 0
@@ -96,7 +99,7 @@ dcms_attach(parent, self, aux)
 #endif  
 	printf("\n");
 
-	dc->sc_wscons[VSMSE] = vsxxx_input;
+	dc->sc_wscons[args->line] = vsxxx_input;
 
 	a.accessops = &vsxxx_accessops;
 	a.accesscookie = (void *)dcms;

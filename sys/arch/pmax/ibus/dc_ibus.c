@@ -1,4 +1,4 @@
-/* $NetBSD: dc_ibus.c,v 1.1.2.3 1999/11/19 11:06:23 nisimura Exp $ */
+/* $NetBSD: dc_ibus.c,v 1.1.2.4 1999/11/25 09:56:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dc_ibus.c,v 1.1.2.3 1999/11/19 11:06:23 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc_ibus.c,v 1.1.2.4 1999/11/25 09:56:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,9 +42,13 @@ __KERNEL_RCSID(0, "$NetBSD: dc_ibus.c,v 1.1.2.3 1999/11/19 11:06:23 nisimura Exp
 #include <pmax/ibus/ibusvar.h>
 #include <pmax/ibus/dc7085reg.h>
 #include <pmax/ibus/dc7085var.h>
+#include <pmax/pmax/pmaxtype.h>
+
+#include "locators.h"
 
 int  dc_ibus_match __P((struct device *, struct cfdata *, void *));
 void dc_ibus_attach __P((struct device *, struct device *, void *));
+int  dc_ibus_submatch __P((struct device *, struct cfdata *, void *));
 int  dc_ibus_print __P((void *, const char *));
 
 struct cfattach dc_ibus_ca = {
@@ -75,6 +79,48 @@ dc_ibus_match(parent, match, aux)
 	return 1;
 }
 
+int
+dc_ibus_submatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct dc_softc *sc = (void *)parent;
+	struct dc_attach_args *args = aux;
+	char *defname = "";
+ 
+	if (cf->cf_loc[DCCF_LINE] != DCCF_LINE_DEFAULT &&
+	    cf->cf_loc[DCCF_LINE] != args->line)
+		return 0; 
+	if (cf->cf_loc[DCCF_LINE] == DCCF_LINE_DEFAULT) {
+		if (sc->sc_unit == 0) {
+			switch (systype) {
+			    case DS_PMAX:
+			    case DS_3MAX:
+			/* XXX distinguish DECsystem cases XXX */
+				if (args->line == 0)
+					defname = "vsms";
+				else if (args->line == 1)
+					defname = "lkkbd";
+				else
+					defname = "dctty";
+				break;
+			    case DS_MIPSMATE:
+				defname = "dctty";
+				break;
+			    default:
+				/* XXX panic */
+				return 0;
+			}
+		}
+		else
+			defname = "dctty";
+		if (strcmp(cf->cf_driver->cd_name, defname))
+			return 0;
+	}
+	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+}
+
 void
 dc_ibus_attach(parent, self, aux)
 	struct device *parent, *self;
@@ -96,7 +142,8 @@ dc_ibus_attach(parent, self, aux)
 
 	for (line = 0; line < 4; line++) {
 		args.line = line;
-		config_found(self, (void *)&args, dc_ibus_print);
+		config_found_sm(self, (void *)args,
+				dc_ibus_print, dc_ibus_submatch);
 	}
 
 	ibus_intr_establish(self, d->ia_cookie, IPL_TTY, dcintr, sc);
