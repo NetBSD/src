@@ -1,4 +1,4 @@
-/*	$NetBSD: awacs.c,v 1.5 2001/03/12 15:41:52 tsubai Exp $	*/
+/*	$NetBSD: awacs.c,v 1.6 2001/03/15 19:42:42 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -384,12 +384,24 @@ awacs_query_encoding(h, ae)
 		ae->flags = 0;
 		return 0;
 	case 3:
+		strcpy(ae->name, AudioEulinear_be);
+		ae->encoding = AUDIO_ENCODING_ULINEAR_BE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		return 0;
+	case 4:
+		strcpy(ae->name, AudioEulinear_le);
+		ae->encoding = AUDIO_ENCODING_ULINEAR_LE;
+		ae->precision = 16;
+		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		return 0;
+	case 5:
 		strcpy(ae->name, AudioEmulaw);
 		ae->encoding = AUDIO_ENCODING_ULAW;
 		ae->precision = 8;
 		ae->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
-	case 4:
+	case 6:
 		strcpy(ae->name, AudioEalaw);
 		ae->encoding = AUDIO_ENCODING_ALAW;
 		ae->precision = 8;
@@ -477,8 +489,14 @@ awacs_set_params(h, setmode, usemode, play, rec)
 
 		case AUDIO_ENCODING_ULINEAR_LE:
 			awacs_write_reg(sc, AWACS_BYTE_SWAP, 1);
+			if (p->channels == 2 && p->precision == 16)
+				p->sw_code = change_sign16_le;
+			else
+				return EINVAL;
+			break;
+
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
+			if (p->channels == 2 && p->precision == 16)
 				p->sw_code = change_sign16_be;
 			else
 				return EINVAL;
@@ -508,7 +526,8 @@ awacs_set_params(h, setmode, usemode, play, rec)
 	/* Set the speed */
 	rate = p->sample_rate;
 
-	awacs_set_rate(sc, rate);
+	if (awacs_set_rate(sc, rate))
+		return EINVAL;
 
 	return 0;
 }
