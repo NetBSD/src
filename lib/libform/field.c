@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.20 2002/08/05 12:43:44 blymn Exp $	*/
+/*	$NetBSD: field.c,v 1.21 2002/08/09 14:15:12 blymn Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -30,6 +30,7 @@
 
 #include <stdlib.h>
 #include <strings.h>
+#include <stdarg.h>
 #include <form.h>
 #include "internals.h"
 
@@ -77,6 +78,8 @@ FIELD _formi_default_field = {
 };
 
 /* internal function prototypes */
+static int
+field_buffer_init(FIELD *field, int buffer, size_t len);
 static FIELD *
 _formi_create_field(FIELD *, int, int, int, int, int, int);
 
@@ -302,13 +305,98 @@ dynamic_field_info(FIELD *field, int *drows, int *dcols, int *max)
 }
 
 /*
+ * Init all the field variables, perform wrapping and other tasks
+ * after the field buffer is set.
+ */
+static int
+field_buffer_init(FIELD *field, int buffer, size_t len)
+{
+	int status;
+	
+	if (buffer == 0) {
+		field->start_char = 0;
+		field->start_line = 0;
+		field->row_xpos = 0;
+		field->cursor_xpos = 0;
+		field->cursor_ypos = 0;
+		field->row_count = 1; /* must be at least one row */
+		field->lines[0].start = 0;
+		field->lines[0].end = (len > 0)? (len - 1) : 0;
+		field->lines[0].length =
+			_formi_tab_expanded_length(field->buffers[0].string,
+						   0, field->lines[0].end);
+
+		  /* we have to hope the wrap works - if it does not then the
+		     buffer is pretty much borked */
+		status = _formi_wrap_field(field, 0);
+		if (status != E_OK)
+			return status;
+
+		  /*
+		   * calculate the tabs for a single row field, the
+		   * multiline case is handled when the wrap is done.
+		   */
+		if (field->row_count == 1)
+			_formi_calculate_tabs(field, 0);
+
+		  /* redraw the field to reflect the new contents. If the field
+		   * is attached....
+		   */
+		if ((field->parent != NULL) && (field->parent->posted == 1)) {
+			_formi_redraw_field(field->parent, field->index);
+			  /* make sure cursor goes back to current field */
+			pos_form_cursor(field->parent);
+		}
+	}
+
+	return E_OK;
+}
+
+
+/*
+ * Set the field buffer to the string that results from processing
+ * the given format (fmt) using sprintf.
+ */
+int
+set_field_printf(FIELD *field, int buffer, char *fmt, ...)
+{
+	int len;
+	va_list args;
+	
+	if (field == NULL)
+		return E_BAD_ARGUMENT;
+
+	if (buffer >= field->nbuf)
+		return E_BAD_ARGUMENT;
+
+	va_start(args, fmt);
+	  /* check for buffer already existing, free the storage */
+	if (field->buffers[buffer].allocated != 0)
+		free(field->buffers[buffer].string);
+
+	len = vasprintf(&field->buffers[buffer].string, fmt, args);
+	va_end(args);
+	if (len < 0)
+		return E_SYSTEM_ERROR;
+	
+	field->buffers[buffer].length = len;
+	field->buffers[buffer].allocated = len + 1;
+	if (((field->opts & O_STATIC) == O_STATIC) && (len > field->cols)
+	    && ((field->rows + field->nrows) == 1))
+		len = field->cols;
+
+	field->buffers[buffer].string[len] = '\0';
+	return field_buffer_init(field, buffer, (unsigned int) len);
+}
+	
+/*
  * Set the value of the field buffer to the value given.
  */
 
 int
 set_field_buffer(FIELD *field, int buffer, char *value)
 {
-	unsigned len;
+	size_t len;
 	int status;
 	
 	if (field == NULL)
@@ -346,43 +434,7 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 	strlcpy(field->buffers[buffer].string, value, len + 1);
 	field->buffers[buffer].length = len;
 	field->buffers[buffer].allocated = len + 1;
-
-	if (buffer == 0) {
-		field->start_char = 0;
-		field->start_line = 0;
-		field->row_xpos = 0;
-		field->cursor_xpos = 0;
-		field->cursor_ypos = 0;
-		field->row_count = 1; /* must be at least one row */
-		field->lines[0].start = 0;
-		field->lines[0].end = (len > 0)? (len - 1) : 0;
-		field->lines[0].length =
-			_formi_tab_expanded_length(field->buffers[0].string,
-						   0, field->lines[0].end);
-	
-		  /* we have to hope the wrap works - if it does not then the
-		     buffer is pretty much borked */
-		status = _formi_wrap_field(field, 0);
-		if (status != E_OK)
-			return status;
-
-		  /*
-		   * calculate the tabs for a single row field, the
-		   * multiline case is handled when the wrap is done.
-		   */
-		if (field->row_count == 1)
-			_formi_calculate_tabs(field, 0);
-
-		  /* redraw the field to reflect the new contents. If the field
-		   * is attached....
-		   */
-		if ((field->parent != NULL) && (field->parent->posted == 1)) {
-			_formi_redraw_field(field->parent, field->index);
-			  /* make sure cursor goes back to current field */
-			pos_form_cursor(field->parent);
-		}
-		
-	}
+	status = field_buffer_init(field, buffer, len);
 
 #ifdef DEBUG
 	fprintf(dbg, "set_field_buffer: exit: len = %d, value = %s\n",
@@ -393,7 +445,7 @@ set_field_buffer(FIELD *field, int buffer, char *value)
 		field->lines[0].length);
 #endif
 
-	return E_OK;
+	return status;
 }
 
 /*

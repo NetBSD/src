@@ -1,4 +1,4 @@
-/*	$NetBSD: form.h,v 1.16 2002/05/20 15:00:11 blymn Exp $	*/
+/*	$NetBSD: form.h,v 1.17 2002/08/09 14:15:13 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -348,6 +348,8 @@ int          set_field_init(FORM *, Form_Hook);
 int          set_field_just(FIELD *, int);
 int          set_field_opts(FIELD *, Form_Options);
 int          set_field_pad(FIELD *, int);
+int          set_field_printf(FIELD *, int, char *, ...)
+				__attribute__((__format__(__printf__, 3, 4)));
 int          set_field_status(FIELD *, int);
 int          set_field_term(FORM *, Form_Hook);
 int          set_field_type(FIELD *, FIELDTYPE *, ...);
