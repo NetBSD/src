@@ -2754,6 +2754,9 @@ changequote([,])dnl
 	romp-*-openbsd*)
 		# Nothing special
 		;;
+	powerpc-*-netbsd*)
+		tmake_file="${tmake_file} rs6000/t-rs6000"
+		;;
 	powerpc-*-openbsd*)
 		tmake_file="${tmake_file} rs6000/t-rs6000 rs6000/t-openbsd"
 		;;
@@ -3035,9 +3038,11 @@ changequote([,])dnl
 		tm_file="sparc/aout.h libgloss.h"
 		;;
 	sparc-*-netbsdelf*)
+		tmake_file="${tmake_file} sparc/t-netbsd"
 		gas=yes gnu_ld=yes
 		;;
 	sparc-*-netbsd*)
+		tmake_file="${tmake_file} sparc/t-netbsd"
 		;;
 	sparc-*-openbsd*)
 		# we need collect2 until our bug is fixed...
