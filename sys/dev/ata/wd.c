@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.237 2003/01/27 18:21:29 thorpej Exp $ */
+/*	$NetBSD: wd.c,v 1.238 2003/02/23 08:50:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.237 2003/01/27 18:21:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.238 2003/02/23 08:50:58 yamt Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1454,6 +1454,7 @@ wi_get()
 	int s;
 
 	wi = malloc(sizeof(struct wd_ioctl), M_TEMP, M_WAITOK|M_ZERO);
+	simple_lock_init(&wi->wi_bp.b_interlock);
 	s = splbio();
 	LIST_INSERT_HEAD(&wi_head, wi, wi_list);
 	splx(s);
