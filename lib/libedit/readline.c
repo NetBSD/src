@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.13 2000/12/31 09:50:32 jdolecek Exp $	*/
+/*	$NetBSD: readline.c,v 1.14 2001/01/01 11:03:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.13 2000/12/31 09:50:32 jdolecek Exp $");
+__RCSID("$NetBSD: readline.c,v 1.14 2001/01/01 11:03:16 jdolecek Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -753,7 +753,7 @@ history_tokenize(const char *str)
 		start = i;
 		for (; str[i]; i++) {
 			if (str[i] == '\\') {
-				if (str[i] != '\0')
+				if (str[i+1] != '\0')
 					i++;
 			} else if (str[i] == delim)
 				delim = '\0';
@@ -1450,8 +1450,14 @@ rl_complete_internal(int what_to_do)
 		int i, retval = CC_REFRESH;
 		int matches_num, maxlen, match_len, match_display=1;
 
-		el_deletestr(e, (int) len);
-		el_insertstr(e, matches[0]);
+		/*
+		 * Only replace the completed string with common part of
+		 * possible matches if there is possible completion.
+		 */
+		if (matches[0][0] != '\0') {
+			el_deletestr(e, (int) len);
+			el_insertstr(e, matches[0]);
+		}
 
 		if (what_to_do == '?')
 			goto display_matches;
