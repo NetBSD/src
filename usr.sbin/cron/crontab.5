@@ -1,4 +1,4 @@
-.\"	$NetBSD: crontab.5,v 1.5 1997/07/13 11:01:16 mouse Exp $
+.\"	$NetBSD: crontab.5,v 1.6 1997/07/20 02:54:55 mouse Exp $
 .\"
 .\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
 .\" * All rights reserved
@@ -99,8 +99,10 @@ minute	0-59
 .br
 hour	0-23
 .br
+.\" changed from 0-31 to 1-31: mouse, 1997-07-13
 day of month	1-31
 .br
+.\" changed from 0-12 to 1-12: mouse, 1997-07-13
 month	1-12 (or names, see below)
 .br
 day of week	0-7 (0 or 7 is Sun, or use names)
@@ -148,6 +150,7 @@ field matches the current time.  For example,
 ``30 4 1,15 * 5''
 would cause a command to be run at 4:30 am on the 1st and 15th of each
 month, plus every Friday.
+.\" Everything from here to .SH EXAMPLE CRON FILE added: mouse, 1997-07-13
 .PP
 Instead of the first five fields, one of eight special strings may appear:
 .IP
@@ -209,6 +212,7 @@ Command output is mailed to the crontab owner (BSD can't do this), can be
 mailed to a person other than the crontab owner (SysV can't do this), or the
 feature can be turned off and no mail will be sent at all (SysV can't do this
 either).
+.\" This next paragraph added: mouse, 1997-07-13
 .PP
 All of the `@' commands that can appear in place of the first five fields
 are extensions.
