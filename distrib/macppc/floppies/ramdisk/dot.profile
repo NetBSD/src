@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.11 2001/12/10 06:18:26 jmc Exp $
+# $NetBSD: dot.profile,v 1.12 2002/03/30 07:30:37 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -49,15 +49,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	# set up some sane defaults
 	echo 'erase ^H, werase ^W, kill ^U, intr ^C, status ^T'
 	stty newcrt werase ^W intr ^C kill ^U erase ^H status ^T 38400
-
-	# Create real /dev
-	echo 'Creating real /dev (this may take a while) ...'
-	mount -t mfs swap /dev
-	gzcat /MAKEDEV.gz > /dev/MAKEDEV
-	cd /dev
-	sh MAKEDEV all 2> /dev/null
-	cd ..
-	echo 'Done.'
 
 	# mount root read-write
 	mount -u /dev/md0a /
