@@ -37,7 +37,6 @@ SRCS   = raw.c parse.c nit.c icmp.c dispatch.c conflex.c upf.c bpf.c socket.c \
 
 NOPROFILE=
 NOPIC=
-NOLINT=
 
 # only needed during build
 libinstall::
