@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.86 2004/04/17 23:45:40 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.87 2004/04/18 20:46:39 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.86 2004/04/17 23:45:40 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.87 2004/04/18 20:46:39 pk Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -672,11 +672,11 @@ srmmu_vcache_flush_page(va, ctx)
 	cachestats.cs_npgflush++;
 	p = (char *)va;
 	ls = CACHEINFO.c_linesize;
-	i = PAGE_SIZE >> CACHEINFO.c_l2linesize;
+	i = PAGE_SIZE;
 	octx = getcontext4m();
 	trapoff();
 	setcontext4m(ctx);
-	for (; --i >= 0; p += ls)
+	for (; i > 0; p += ls, i -= ls)
 		sta(p, ASI_IDCACHELFP, 0);
 #if defined(MULTIPROCESSOR)
 	/*
@@ -712,13 +712,13 @@ srmmu_vcache_flush_range(int va, int len, int ctx)
 	/* Compute # of cache lines covered by this range */
 	ls = CACHEINFO.c_linesize;
 	offset = va & (ls - 1);
-	i = (offset + len + ls - 1) >> CACHEINFO.c_l2linesize;
-	p = (char *)(va & -ls);
+	i = len + offset;
+	p = (char *)(va & ~(ls - 1));
 
 	octx = getcontext4m();
 	trapoff();
 	setcontext4m(ctx);
-	for (; --i >= 0; p += ls)
+	for (; i > 0; p += ls, i -= ls)
 		sta(p, ASI_IDCACHELFP, 0);
 
 #if defined(MULTIPROCESSOR)
@@ -1065,3 +1065,4 @@ smp_vcache_flush_context(ctx)
 		ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */
+int xxxcnt = 0xa00000;
