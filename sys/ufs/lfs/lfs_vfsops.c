@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.27 1999/03/24 11:05:31 tron Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28 1999/03/25 21:39:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -310,17 +310,11 @@ lfs_mountfs(devvp, mp, p)
 	struct proc *p;
 {
 	extern struct vnode *rootvp;
-	struct dlfs *dfs;
-#ifdef LFS_TOGGLE_SB
-	struct dlfs *adfs;
-#endif
+	struct dlfs *dfs, *adfs;
 	register struct lfs *fs;
 	register struct ufsmount *ump;
 	struct vnode *vp;
-	struct buf *bp;
-#ifdef LFS_TOGGLE_SB
-	struct buf *abp;
-#endif
+	struct buf *bp, *abp;
 	struct partinfo dpart;
 	dev_t dev;
 	int error, i, ronly, size;
@@ -361,7 +355,6 @@ lfs_mountfs(devvp, mp, p)
 		goto out;
 	dfs = (struct dlfs *)bp->b_data;
 
-#ifdef LFS_TOGGLE_SB
 	/*
 	 * Check the second superblock to see which is newer; then mount
 	 * using the older of the two.  This is necessary to ensure that
@@ -373,7 +366,6 @@ lfs_mountfs(devvp, mp, p)
 	adfs = (struct dlfs *)abp->b_data;
 	if(adfs->dlfs_tstamp < dfs->dlfs_tstamp) /* XXX KS - 1s resolution? */
 		dfs = adfs;
-#endif /* LFS_TOGGLE_SB */
 
 	/* Check the basics. */
 	if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
@@ -390,17 +382,13 @@ lfs_mountfs(devvp, mp, p)
 		bp->b_flags |= B_INVAL;
 	brelse(bp);
 	bp = NULL;
-#ifdef LFS_TOGGLE_SB
 	brelse(abp);
 	abp = NULL;
-#endif
 
 	/* Set up the I/O information */
 	fs->lfs_iocount = 0;
 	fs->lfs_dirvcount = 0;
-#ifdef LFS_TOGGLE_SB
 	fs->lfs_activesb = 0;
-#endif
 #ifdef LFS_CANNOT_ROLLFW
 	fs->lfs_sbactive = NULL;
 #endif
@@ -408,7 +396,6 @@ lfs_mountfs(devvp, mp, p)
 	for(i=0;i<LFS_THROTTLE;i++)
 		fs->lfs_pending[i] = LFS_UNUSED_DADDR;
 #endif
-	fs->lfs_loanedbytes=0;
 
 	/* Set up the ifile and lock aflags */
 	fs->lfs_doifile = 0;
@@ -455,10 +442,8 @@ lfs_mountfs(devvp, mp, p)
 out:
 	if (bp)
 		brelse(bp);
-#ifdef TOGGLE_SB
 	if (abp)
 		brelse(abp);
-#endif
 	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
 	if (ump) {
 		free(ump->um_lfs, M_UFSMNT);
