@@ -1,4 +1,4 @@
-/*	$NetBSD: sh5_clock.c,v 1.3 2002/08/26 10:10:22 scw Exp $	*/
+/*	$NetBSD: sh5_clock.c,v 1.4 2003/04/20 21:26:46 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -271,6 +271,7 @@ inittodr(time_t base)
 
         if (todr_gettime(todr_handle, (struct timeval *)&time) != 0 ||
             time.tv_sec == 0) {
+badrtc:
                 printf("WARNING: bad date in battery clock");
                 /*
                  * Believe the time in the file system for lack of
@@ -286,6 +287,9 @@ inittodr(time_t base)
                         deltat = -deltat;
                 if (waszero || deltat < 2 * SECDAY)
                         return;
+		if (deltat > 50 * SECDAY)
+			goto badrtc;
+
                 printf("WARNING: clock %s %d days",
                     time.tv_sec < base ? "lost" : "gained", deltat / SECDAY);
         }
