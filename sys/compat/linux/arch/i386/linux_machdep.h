@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.23 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.24 2002/11/26 18:42:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #ifndef _I386_LINUX_MACHDEP_H
 #define _I386_LINUX_MACHDEP_H
 
+#include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_siginfo.h>
 
 /*
  * The Linux sigcontext, pretty much a standard 386 trapframe.
@@ -80,8 +82,11 @@ struct linux_sigcontext {
 
 struct linux_sigframe {
 	int	sf_sig;
-	struct	linux_sigcontext sf_sc;
+	struct	linux_siginfo  *sf_sip;
+	struct	linux_sigcontext *sf_scp;
 	sig_t	sf_handler;
+	struct	linux_siginfo  sf_si;
+	struct	linux_sigcontext sf_sc;
 };
 
 #ifdef _KERNEL
