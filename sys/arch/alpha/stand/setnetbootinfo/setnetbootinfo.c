@@ -1,4 +1,4 @@
-/* $NetBSD: setnetbootinfo.c,v 1.10 1999/04/05 02:55:38 cgd Exp $ */
+/* $NetBSD: setnetbootinfo.c,v 1.11 2001/07/22 15:17:32 wiz Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -208,7 +208,7 @@ main(argc, argv)
 
 	if (verbose)
 		printf("setting netbbinfo structure...\n");
-	bzero(netbbinfop, sizeof *netbbinfop);
+	memset(netbbinfop, 0, sizeof *netbbinfop);
 	netbbinfop->magic1 = 0xfeedbabedeadbeefLL;
 	netbbinfop->magic2 = 0xfeedbeefdeadbabeLL;
 	netbbinfop->set = unset ? 0 : 1;
