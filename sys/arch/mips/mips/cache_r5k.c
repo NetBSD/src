@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r5k.c,v 1.1.2.3 2001/11/12 16:17:28 thorpej Exp $	*/
+/*	$NetBSD: cache_r5k.c,v 1.1.2.4 2001/11/14 16:45:06 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -183,7 +183,7 @@ void
 r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	uint32_t status, ostatus;
+	uint32_t ostatus;
 
 	/*
 	 * This is pathetically slow, but the chip bug is pretty
@@ -203,47 +203,43 @@ r4600v1_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 	}
 
 	ostatus = mips_cp0_status_read();
-	status = ostatus & ~MIPS_SR_INT_IE;
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while (va < eva) {
-		mips_cp0_status_write(status);
 		__asm __volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		mips_cp0_status_write(ostatus);
 		va += 32;
 	}
+
+	mips_cp0_status_write(ostatus);
 }
 
 void
 r4600v2_pdcache_wbinv_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	uint32_t status, ostatus;
+	uint32_t ostatus;
 
 	va = trunc_line(va);
 
 	ostatus = mips_cp0_status_read();
-	status = ostatus & ~MIPS_SR_INT_IE;
 
-	/*
-	 * Between blasts of big cache chunks, give interrupts
-	 * a chance to get though.
-	 */
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
+
 	while ((eva - va) >= (32 * 32)) {
-		mips_cp0_status_write(status);
 		(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va,
 		    CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
-		mips_cp0_status_write(ostatus);
 		va += (32 * 32);
 	}
 
-	mips_cp0_status_write(status);
 	(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB_INV);
 		va += 32;
 	}
+
 	mips_cp0_status_write(ostatus);
 }
 
@@ -302,7 +298,7 @@ void
 r4600v1_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	uint32_t status, ostatus;
+	uint32_t ostatus;
 
 	/*
 	 * This is pathetically slow, but the chip bug is pretty
@@ -313,46 +309,46 @@ r4600v1_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	ostatus = mips_cp0_status_read();
-	status = ostatus & ~MIPS_SR_INT_IE;
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while (va < eva) {
-		mips_cp0_status_write(status);
 		__asm __volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		mips_cp0_status_write(ostatus);
 		va += 32;
 	}
+
+	mips_cp0_status_write(ostatus);
 }
 
 void
 r4600v2_pdcache_inv_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	uint32_t status, ostatus;
+	uint32_t ostatus;
 
 	va = trunc_line(va);
 
 	ostatus = mips_cp0_status_read();
-	status = ostatus & ~MIPS_SR_INT_IE;
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	/*
 	 * Between blasts of big cache chunks, give interrupts
 	 * a chance to get though.
 	 */
 	while ((eva - va) >= (32 * 32)) {
-		mips_cp0_status_write(status);
 		(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
-		mips_cp0_status_write(ostatus);
 		va += (32 * 32);
 	}
 
-	mips_cp0_status_write(status);
 	(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_INV);
 		va += 32;
 	}
+
 	mips_cp0_status_write(ostatus);
 }
 
@@ -378,7 +374,7 @@ void
 r4600v1_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	uint32_t status, ostatus;
+	uint32_t ostatus;
 
 	/*
 	 * This is pathetically slow, but the chip bug is pretty
@@ -389,46 +385,46 @@ r4600v1_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 	va = trunc_line(va);
 
 	ostatus = mips_cp0_status_read();
-	status = ostatus & ~MIPS_SR_INT_IE;
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	while (va < eva) {
-		mips_cp0_status_write(status);
 		__asm __volatile("nop; nop; nop; nop;");
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		mips_cp0_status_write(ostatus);
 		va += 32;
 	}
+
+	mips_cp0_status_write(ostatus);
 }
 
 void
 r4600v2_pdcache_wb_range_32(vaddr_t va, vsize_t size)
 {
 	vaddr_t eva = round_line(va + size);
-	uint32_t status, ostatus;
+	uint32_t ostatus;
 
 	va = trunc_line(va);
 
 	ostatus = mips_cp0_status_read();
-	status = ostatus & ~MIPS_SR_INT_IE;
+
+	mips_cp0_status_write(ostatus & ~MIPS_SR_INT_IE);
 
 	/*
 	 * Between blasts of big cache chunks, give interrupts
 	 * a chance to get though.
 	 */
 	while ((eva - va) >= (32 * 32)) {
-		mips_cp0_status_write(status);
 		(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
 		cache_r4k_op_32lines_32(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
-		mips_cp0_status_write(ostatus);
 		va += (32 * 32);
 	}
 
-	mips_cp0_status_write(status);
 	(void) *(__volatile int *)MIPS_PHYS_TO_KSEG1(0);
 	while (va < eva) {
 		cache_op_r4k_line(va, CACHE_R4K_D|CACHEOP_R4K_HIT_WB);
 		va += 32;
 	}
+
 	mips_cp0_status_write(ostatus);
 }
 
