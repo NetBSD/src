@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.3 2001/05/07 08:32:20 kleink Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.4 2002/10/06 12:07:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,11 +38,13 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoll.c,v 1.3 2001/05/07 08:32:20 kleink Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.4 2002/10/06 12:07:28 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#ifdef _LIBC
 #include "namespace.h"
+#endif
 
 #include <assert.h>
 #include <ctype.h>
@@ -50,10 +52,17 @@ __RCSID("$NetBSD: strtoll.c,v 1.3 2001/05/07 08:32:20 kleink Exp $");
 #include <limits.h>
 #include <stdlib.h>
 
+#ifdef _LIBC
 #ifdef __weak_alias
 __weak_alias(strtoll, _strtoll)
 #endif
+#endif
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#if !HAVE_STRTOLL
 /*
  * Convert a string to a long long integer.
  *
@@ -62,7 +71,11 @@ __weak_alias(strtoll, _strtoll)
  */
 /* LONGLONG */
 long long int
+#ifdef _LIBC
 _strtoll(nptr, endptr, base)
+#else
+strtoll(nptr, endptr, base)
+#endif
 	const char *nptr;
 	char **endptr;
 	int base;
@@ -173,3 +186,4 @@ _strtoll(nptr, endptr, base)
 		*endptr = (char *)(any ? s - 1 : nptr);
 	return (acc);
 }
+#endif
