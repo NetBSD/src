@@ -168,7 +168,11 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 #endif
 	if (error) {
 	    state->name = mystrdup("unknown");
+#ifdef INET6
+	    state->peer_code = (error == EAI_AGAIN ? 4 : 5);
+#else
 	    state->peer_code = (h_errno == TRY_AGAIN ? 4 : 5);
+#endif
 	} else if (!valid_hostname(hbuf, DONT_GRIPE)) {
 	    state->name = mystrdup("unknown");
 	    state->peer_code = 5;
