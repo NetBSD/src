@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 1996/11/06 15:33:05 leo Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 1996/11/08 14:21:09 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -47,19 +47,18 @@ typedef u_long bus_io_size_t;
 /*
  * Memory addresses (in bus space)
  */
-typedef u_long	bus_mem_addr_t;
-typedef u_long	bus_mem_size_t;
+typedef u_long	bus_addr_t;
+typedef u_long	bus_size_t;
 
 /*
- * Access methods for bus resources, I/O space, and memory space.
+ * Access methods for bus resources and address space.
  */
-typedef void	*bus_chipset_tag_t;
-typedef caddr_t	bus_io_handle_t;
-typedef caddr_t	bus_mem_handle_t;
+typedef int	bus_space_tag_t;
+typedef caddr_t	bus_space_handle_t;
 
-int	bus_mem_map __P((bus_chipset_tag_t, bus_mem_addr_t, bus_mem_size_t,
-				int, bus_mem_handle_t *));
-void	bus_mem_unmap __P((bus_chipset_tag_t, bus_mem_handle_t,
-				bus_mem_size_t));
+int	bus_space_map __P((bus_space_tag_t, bus_addr_t, bus_size_t,
+				int, bus_space_handle_t *));
+void	bus_space_unmap __P((bus_space_tag_t, bus_space_handle_t,
+				bus_size_t));
 
 #endif /* _ATARI_BUS_H_ */

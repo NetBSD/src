@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1996/11/06 13:53:35 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 1996/11/08 14:21:02 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,6 +93,8 @@
 #include <machine/iomap.h>
 #include <machine/bus.h>
 #include <dev/cons.h>
+
+#include <atari/atari/m68k_intr.h>
 
 static void bootsync __P((void));
 static void call_sicallbacks __P((void));
@@ -374,6 +376,11 @@ again:
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/*
+	 * Initialize interrupt mapping.
+	 */
+	m68k_intr_init();
 
 	/*
 	 * Configure the system.
@@ -1427,12 +1434,12 @@ cpu_exec_aout_makecmds(p, epp)
 }
 
 int
-bus_mem_map(t, bpa, size, cachable, mhp)
-bus_chipset_tag_t	t;
-bus_mem_addr_t		bpa;
-bus_mem_size_t		size;
+bus_space_map(t, bpa, size, cachable, mhp)
+bus_space_tag_t		t;
+bus_addr_t		bpa;
+bus_size_t		size;
 int			cachable;
-bus_mem_handle_t	*mhp;
+bus_space_handle_t	*mhp;
 {
 	vm_offset_t	va;
 	u_long		pa, endpa;
@@ -1460,10 +1467,10 @@ bus_mem_handle_t	*mhp;
 }
 
 void
-bus_mem_unmap(t, memh, size)
-bus_chipset_tag_t	t;
-bus_mem_handle_t	memh;
-bus_mem_size_t		size;
+bus_space_unmap(t, memh, size)
+bus_space_tag_t		t;
+bus_space_handle_t	memh;
+bus_size_t		size;
 {
 	vm_offset_t	va, endva;
 
