@@ -1,15 +1,15 @@
-/*	$NetBSD: isapnpdevs.h,v 1.21 1999/03/18 17:07:51 drochner Exp $	*/
+/*	$NetBSD: isapnpdevs.h,v 1.22 1999/03/22 09:41:59 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: isapnpdevs,v 1.21 1999/03/18 17:07:09 drochner Exp 
+ *	NetBSD: isapnpdevs,v 1.22 1999/03/22 09:41:10 mycroft Exp 
  */
 
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,9 +47,16 @@
 /*
  * List of known drivers
  */
+struct isapnp_matchinfo {
+	const char *name;
+	int variant;
+};
+
 struct isapnp_devinfo {
-	const char *const *devlogic;
-	const char *const *devcompat;
+	const struct isapnp_matchinfo *devlogic;
+	int nlogic;
+	const struct isapnp_matchinfo *devcompat;
+	int ncompat;
 };
 
 /* Adaptec SCSI */
@@ -68,6 +75,8 @@ extern const struct isapnp_devinfo isapnp_joy_devinfo;
 extern const struct isapnp_devinfo isapnp_gus_devinfo;
 /* Lance Ethernet */
 extern const struct isapnp_devinfo isapnp_le_devinfo;
+/* MPU-401 MIDI UART */
+extern const struct isapnp_devinfo isapnp_mpu_devinfo;
 /* NE2000 Ethernet */
 extern const struct isapnp_devinfo isapnp_ne_devinfo;
 /* PCMCIA bridge */
