@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.70 1998/03/03 13:32:28 fvdl Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.71 1998/03/03 19:07:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -429,7 +429,12 @@ nfs_mount_diskless(ndmntp, mntname, mpp, vpp, p)
 	vfs_rootmountalloc(MOUNT_NFS, (char *)mntname, &mp);
 
 	mp->mnt_op = &nfs_vfsops;
-	/* mp->mnt_flag = 0 */
+
+	/*
+	 * Historical practice expects NFS root file systems to
+	 * be initially mounted r/w.
+	 */
+	mp->mnt_flag &= ~MNT_RDONLY;
 
 	/* Get mbuf for server sockaddr. */
 	m = m_get(M_WAIT, MT_SONAME);
