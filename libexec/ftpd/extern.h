@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.19 1999/07/02 05:52:14 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.20 1999/12/07 05:30:54 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,11 +69,11 @@ char   *conffilename __P((const char *));
 char  **copyblk __P((char **));
 void	cwd __P((const char *));
 void	delete __P((const char *));
-char   *do_conversion __P((const char *));
+char  **do_conversion __P((const char *));
 void	dologout __P((int));
 void	fatal __P((const char *));
 int	ftpd_pclose __P((FILE *));
-FILE   *ftpd_popen __P((char *, char *, int));
+FILE   *ftpd_popen __P((char *[], const char *, int));
 char   *getline __P((char *, int, FILE *));
 void	logcmd __P((const char *, off_t, const char *, const char *,
 	    const struct timeval *, const char *));
@@ -90,7 +90,7 @@ void	removedir __P((const char *));
 void	renamecmd __P((const char *, const char *));
 char   *renamefrom __P((char *));
 void	reply __P((int, const char *, ...));
-void	retrieve __P((const char *, const char *));
+void	retrieve __P((char *[], const char *));
 void	send_file_list __P((const char *));
 void	show_chdir_messages __P((int));
 void	statcmd __P((void));
@@ -118,7 +118,7 @@ struct ftpconv {
 struct ftpclass {
 	int		 checkportcmd;	/* Check PORT commands are valid */
 	char		*classname;	/* Current class */
-	struct ftpconv 	*conversions;	/* List of conversions */
+	struct ftpconv	*conversions;	/* List of conversions */
 	char		*display;	/* Files to display upon chdir */
 	unsigned int	 maxtimeout;	/* Maximum permitted timeout */
 	int		 modify;	/* Allow dele, mkd, rmd, umask, chmod */
