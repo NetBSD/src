@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.376 2003/01/17 16:04:54 wiz Exp $
+# $NetBSD: mi,v 1.377 2003/01/22 00:29:44 grant Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -335,6 +335,7 @@
 ./usr/bin/pr		base-util-bin
 ./usr/bin/printenv	base-util-bin
 ./usr/bin/printf	base-util-bin
+./usr/bin/progress	base-util-bin
 ./usr/bin/purgestat	base-mailwrapper-bin
 ./usr/bin/pwhash	base-util-bin
 ./usr/bin/qsubst	base-util-bin
