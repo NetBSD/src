@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.8 2000/10/29 14:08:11 lukem Exp $
+.\"	$NetBSD: hardware,v 1.8.2.1 2002/07/02 04:20:19 lukem Exp $
 .
 .Nx*M
 \*V runs on most Sun3 machines, including:
@@ -18,10 +18,11 @@ machines, which used to be supported with a separate
 distribution.
 .Pp
 The minimal configuration requires 4 MB of RAM and about 80 MB of disk
-space.  To install the entire system requires much more disk space
+space.
+To install the entire system requires much more disk space
 (approx. 100 MB additional space is necessary for full sources).
-To run X or compile the system, more RAM is recommended.  Good
-performance requires 8 MB of RAM, or 16 MB when running the
+To run X or compile the system, more RAM is recommended.
+Good performance requires 8 MB of RAM, or 16 MB when running the
 X Window System.
 .Pp
 Here is a table of recommended HD partition sizes for a full install:
@@ -39,7 +40,8 @@ Anything else is up to you!
 As you may note, the recommended size of
 .Pa /usr
 is 100 MB greater than
-needed. This is to leave room for a kernel source and compile tree as
+needed.
+This is to leave room for a kernel source and compile tree as
 you will probably want to compile your own kernel.
 .Li ( GENERIC
 is large and bulky to accommodate all people).
@@ -47,8 +49,8 @@ is large and bulky to accommodate all people).
 Note that the \*M installation procedure uses a
 .Em miniroot
 image
-which is placed into the swap area of the disk.  The swap partition
-must be at least as large as the miniroot image (10 MB).
+which is placed into the swap area of the disk.
+The swap partition must be at least as large as the miniroot image (10 MB).
 .
 .Ss2 Supported hardware
 .(bullet -offset indent

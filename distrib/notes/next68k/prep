@@ -1,9 +1,9 @@
-.\"	$NetBSD: prep,v 1.4 2002/05/03 03:59:55 mbw Exp $
+.\"	$NetBSD: prep,v 1.4.2.1 2002/07/02 04:20:14 lukem Exp $
 .
 .Ss2 Get to the ROM Monitor prompt
 .
 After the system performs its power-on self test, and while it tries to
-boot an operating system, press the 
+boot an operating system, press the
 .Key COMMAND-`
 keys (the backquote is above 7 on the keypad on the right of the keyboard).
 You should see a prompt like this:
@@ -17,8 +17,8 @@ Memory size 40 MB
 NeXT\*>
 .disp)
 .Pp
-Write down the ethernet address.  You will need this later to configure
-the netboot server for your 
+Write down the ethernet address.
+You will need this later to configure the netboot server for your
 .Nx*M
 system.
 .
@@ -26,28 +26,30 @@ system.
 .
 Press the
 .Key p
-key to modify the configuration parameters.  You will need to change the
+key to modify the configuration parameters.
+You will need to change the
 .Li "boot command"
-to 
+to
 .Li "en()netbsd"
-which is to boot from the 
+which is to boot from the
 .Li "en()"
 ethernet device the kernel named
 .Li netbsd .
-You should wite down what the original 
+You should wite down what the original
 .Li "boot command"
-was in case you wish to boot 
+was in case you wish to boot
 .Tn NEXTSTEP
-in the future.  It will probably be
+in the future.
+It will probably be
 .Li "sd()" .
 While modifying the parameters, you may wish to set the system to use
 .Li "verbose test mode"
 which will print detailed messages while it is attempting to load the
-kernel, as opposed to the normal graphic of a network cable.  You
-should not set the
+kernel, as opposed to the normal graphic of a network cable.
+You should not set the
 .Li "extended diagnostics"
-as the system will try to boot a diagnostic kernel.  Here is an
-example configuration session:
+as the system will try to boot a diagnostic kernel.
+Here is an example configuration session:
 .(disp
 .No "NeXT\*>" Ic p
 .No "boot command: sd()?" Ic "en()netbsd"
@@ -65,8 +67,8 @@ example configuration session:
 .No "enable parity cehcking if parity memory is present:  no?" Ic "no"
 .disp)
 .Pp
-Now, whenever you reset or power on your system, it will attempt to
-netboot.  From the ROM Monitor prompt, you can simply type
+Now, whenever you reset or power on your system, it will attempt to netboot.
+From the ROM Monitor prompt, you can simply type
 .Key b
-to netboot.  You can also press the power key (above the arrows) to turn
-off the system.
+to netboot.
+You can also press the power key (above the arrows) to turn off the system.

@@ -1,6 +1,6 @@
-.\"	$NetBSD: main,v 1.179.2.4 2002/06/19 01:26:38 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.5 2002/07/02 04:20:05 lukem Exp $
 .\"
-.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@
 .nr FOR_RELEASE 1
 .nr DOC_XR 1
 .ds MACHINE_LIST acorn26 acorn32 algor alpha amiga amigappc arc atari bebox
-.as MACHINE_LIST " cats cesfic cobalt dreamcast evbarm evbmips evbsh3 hp300 
+.as MACHINE_LIST " cats cesfic cobalt dreamcast evbarm evbmips evbsh3 hp300
 .as MACHINE_LIST " hpcarm hpcmips hpcsh i386 luna68k mac68k macppc mipsco
 .as MACHINE_LIST " mmeye mvme68k mvmeppc netwinder news68k newsmips next68k
 .as MACHINE_LIST " ofppc pc532 playstation2 pmax prep sandpoint sbmips
@@ -53,7 +53,7 @@
 .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd May 21, 2001
+.Dd June 28, 2002
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -71,7 +71,8 @@ This document describes the installation procedure for
 .Nx \*V
 on the
 .Em \*M
-platform. It is available in four different formats titled
+platform.
+It is available in four different formats titled
 .Pa INSTALL. Ns Ar ext ,
 where
 .Ar \&.ext
@@ -90,7 +91,8 @@ systems by the
 .Xr more 1
 and
 .Xr less 1
-pager utility programs. This is the format in which the on-line
+pager utility programs.
+This is the format in which the on-line
 .Em man
 pages are generally presented.
 .It Pa \&.txt
@@ -115,7 +117,8 @@ Fetch the
 .if r_i386 \{\
 appropriate pair of boot floppy images from the
 .Pa installation/floppy/
-directory.  Most people will need the
+directory.
+Most people will need the
 .Pa boot1.fs
 and
 .Pa boot2.fs
@@ -126,18 +129,19 @@ and
 if installing on a laptop.
 .\}
 .if r_macppc \{\
-files necessary to boot your system.  The files depend on what model you
-are using and how you plan to boot your machine.  For systems with 
-built-in floppy drives, fetch the bootloader
-.Pa installation/ofwboot.xcf 
+files necessary to boot your system.
+The files depend on what model you
+are using and how you plan to boot your machine.
+For systems with built-in floppy drives, fetch the bootloader
+.Pa installation/ofwboot.xcf
 and the installation kernel
 .Pa binary/kernel/netbsd.INSTALL.gz .
 For systems without floppy drives, fetch the bootloader
-.Pa installation/ofwboot.xcf 
+.Pa installation/ofwboot.xcf
 and the installation kernel
 .Pa binary/kernel/netbsd.GENERIC_MD.gz .
 Alternatively, you can fetch the CD image,
-.Pa macppc_bootable.iso 
+.Pa macppc_bootable.iso
 or the boot floppy image
 .Pa installation/floppy/boot.fs
 which include the bootloader and installation kernel.
@@ -151,8 +155,8 @@ You need either the pair of floppies or the CD to boot your system.
 .\}
 .if \n[macppc]:\n[sparc] \{\
 Alternatively, you may netboot the installation kernel, which requires
-several local netboot services.  The details are not covered here, as
-setting up a netboot server is hardly 
+several local netboot services.
+The details are not covered here, as setting up a netboot server is hardly
 .Dq quick .
 .\}
 .It
@@ -205,16 +209,17 @@ If your mac has a floppy drive, copy
 .Pa ofwboot.xcf No and Pa netbsd.INSTALL.gz
 to an MS-DOS formatted floppy disk and rename
 .Pa netbsd.INSTALL.gz No to Pa netbsd.gz .
-Otherwise, drag 
+Otherwise, drag
 .Pa ofwboot.xcf No and Pa netbsd.GENERIC_MD.gz
-to your hard drive icon (the top level of the drive, not the desktop).  If 
-you are making a CD, burn it now.
+to your hard drive icon (the top level of the drive, not the desktop).
+If you are making a CD, burn it now.
 .\}
 .if \n[sparc] \{
 .It
-Make sure your sparc's CD-ROM drive is bootable.  Burn the CD.  Otherwise,
-write the floppy images directly to a pair of floppies (after
-uncompressing disk1.gz).
+Make sure your sparc's CD-ROM drive is bootable.
+Burn the CD.
+Otherwise, write the floppy images directly to a pair of floppies
+(after uncompressing disk1.gz).
 .\}
 .Pp
 The disk(s) you just prepared will be used to boot the installation
@@ -233,11 +238,12 @@ cannot exist on the same hard drive as
 .Tn MacOS
 unless you partition your disk using a
 .Tn MacOS
-partitioning utility.  Open Firmware versions prior to 3 cannot boot into
+partitioning utility.
+Open Firmware versions prior to 3 cannot boot into
 .Nx
-on a drive partitioned this way -- you must use the entire disk,
-partitioned with the installation tools.  Open Firmware version 3 cannot
-boot into
+on a drive partitioned this way \(em you must use the entire disk,
+partitioned with the installation tools.
+Open Firmware version 3 cannot boot into
 .Nx
 on a drive partitioned with the installation tools, you must use a
 .Tn MacOS
@@ -247,17 +253,18 @@ option in the installer (selecting the
 .Dq Me "Install NetBSD to hard disk"
 or
 .Dq Me "Upgrade NetBSD on a hard disk"
-options will render your drive unbootable).  If you are unsure, you may
-want to read the section below on
+options will render your drive unbootable).
+If you are unsure, you may want to read the section below on
 .Sx Partitioning your hard drive for NetBSD
 .It
 For systems with Open Firmware versions prior to 3, you may need to use
 Apple's System Disk utility to enter Open Firmware and use your screen and
-keyboard.  To enter Open Firmware, hold down the
+keyboard.
+To enter Open Firmware, hold down the
 .Key COMMAND-OPTION-O-F
-keys after the boot chime starts, but before it ends.  Entering Open
-Firmware versions prior to 3 is usually the most frustrating part of
-installation -- you may want to read the section below on
+keys after the boot chime starts, but before it ends.
+Entering Open Firmware versions prior to 3 is usually the most frustrating
+part of installation \(em you may want to read the section below on
 .Sx Older Open Firmware System Preparation
 .Pp
 You should have the Open Firmware
@@ -267,8 +274,8 @@ prompt on your screen before attempting to boot
 .\}
 .if r_macppc \{\
 .It
-At the Open Firmware prompt, type the command to boot.  To boot from a
-floppy, the command is
+At the Open Firmware prompt, type the command to boot.
+To boot from a floppy, the command is
 .Dq Ic "boot fd:,\eofwboot.xcf netbsd.gz" .
 For the install kernel and bootloader on your hard drive (Open Firmware
 3), the command is
@@ -281,12 +288,14 @@ For boot CDs, the command is something like
 (for earlier Open Firmware versions).
 You will need to use the correct case for
 .Ic OFWBOOT.XCF No and Ic NETBSD.MACPPC
-depending on how your version of Open Firmware interprets the ISO 
-filesystem.  You may need to replace
+depending on how your version of Open Firmware interprets the ISO
+filesystem.
+You may need to replace
 .Ic cd
 with
 .Ic "scsi/sd@3 , scsi-int/sd@3 , scsi-ext/sd@3 , ata/atapi-disk ,"
-or some other device alias.  You should also use the Open Firmware
+or some other device alias.
+You should also use the Open Firmware
 .Ic dir
 command to confirm that the
 .Nx*M
@@ -297,10 +306,12 @@ kernel is called
 .It
 You will need to get to the OpenBoot PROM
 .Dq Ic "ok"
-prompt.  After your system first powers on, and displays some initial
-information, press the
+prompt.
+After your system first powers on, and displays some initial information,
+press the
 .Key STOP-A
-keys.  At the
+keys.
+At the
 .Dq Ic "ok"
 prompt, type the command to boot your system into
 .Nx .
@@ -323,7 +334,7 @@ For third-party programs which are not part of the base
 .Nx
 distribution, you will want to explore the
 .Ic pkgsrc
-system with its more than 2100 program packages.
+system with its more than 2700 program packages.
 .El
 .\}
 .Ss "What is NetBSD?"
@@ -337,13 +348,17 @@ Operating System is a fully functional
 operating system derived from the University of California, Berkeley
 Networking Release 2 (Net/2), 4.4BSD-Lite, and 4.4BSD-Lite2 sources.
 .Nx
-runs on thirty-one different system architectures featuring twelve distinct
-families of CPUs, and is being ported to more. The
+runs on fifty three different system architectures (ports),
+featuring seventeen machine architectures
+across eleven distinct CPU families,
+and is being ported to more.
+The
 .Nx \*V
-release contains complete binary releases for fifteen different
-machine types. (The sixteen remaining are not fully supported at this time
-and are thus not part of the binary distribution. For information on
-them, please see the
+release contains complete binary releases for thirty eight different
+system architectures.
+(The fifteen remaining are not fully supported at this time
+and are thus not part of the binary distribution.
+For information on them, please see the
 .Nx
 web site at
 .Lk http://www.netbsd.org/ . )
@@ -370,13 +385,12 @@ If you are not installing your system ``from scratch'' but instead
 are going to upgrade an existing system already running
 .Nx
 you need to know which versions you can upgrade with
-.Nx
-1.6.
+.Nx 1.6 .
 .Pp
-.Nx
-1.6 is an upgrade of
-.Nx
-1.5.3 and earlier major and patch releases of
+.Nx 1.6
+is an upgrade of
+.Nx 1.5.3
+and earlier major and patch releases of
 .Nx .
 .Pp
 The intermediate development versions of code available on the main trunk
@@ -400,178 +414,34 @@ probably result in problems.
 .Pp
 Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions mentioned
-above and 1.6.1 to determine if a given feature is present or absent
-in 1.6.1.  The development of 1.6 and the subsequent ``point'' releases
-is done on a separate branch in the CVS repository. The branch was created when
-the release cycle for 1.6 was started, and during the release cycle of
-1.5 and its patch releases, selected fixes and enhancements have been
-imported from the main development trunk.
+above and 1.6 to determine if a given feature is present or absent
+in 1.6.
+The development of 1.6 and the subsequent ``point'' releases
+is done on a separate branch in the CVS repository.
+The branch was created when the release cycle for 1.6 was started,
+and during the release cycle of 1.5 and its patch releases,
+selected fixes and enhancements have been imported from the
+main development trunk.
+.ig
 So, there are features in 1.6.1 which were not in, e.g. 1.6B, and vice
 versa.
-.Ss Major Changes Between 1.5 and 1.5.1
-The complete list of changes between
-.Nx
-1.5 and 1.5.1 can be found in the file CHANGES-1.5.1 in the top directory
-of the source tree.
-The following are highlights only:
-.Bl -bullet
-.It
-A driver for the Aironet/Cisco wireless PCMCIA cards has been added;
-see
-.Xr an 4 .
-.It
-NFS client performance has been improved, typically by 40% for
-writes but possibly up to 100% in certain setups.
-.It
-The
-.Xr siop 4
-driver has improved in performance and robustness. A
-.Xr esiop 4
-driver has been added, which improves performances for 53c825, 53c875 and
-newer controllers.
-.It
-Support for cloning pseudo-interfaces has been added. See
-.Xr ifconfig 8 .
-.It
-Support for 802.1Q virtual LANs has been added.
-See
-.Xr vlan 4 .
-.It
-The
-.Xr isp 4
-driver has been upgraded to (among other things) work on MacPPC.
-.It
-BIND has been upgraded to version 8.2.3 (SA2001-001).
-.It
-Support for booting from RAIDframe RAID1 mirrors on i386 added.
-.It
-The
-.Xr lfs 4
-file system has again been substantially updated, but is still
-experimental.
-.It
-Ultra/66 support has been added for capable VIA chipsets, and
-Ultra/100 support has been added for the HPT370, Promise and Intel
-ICH2 controllers in the
-.Xr pciide 4
-driver.
-Support for Intel 82801BAM controllers has also been added, and
-handling of Ali controllers has been improved.
-.It
-OpenSSH has been updated to deal with a security issue (SA2001-003).
-.It
-Sendmail has been upgraded to version 8.11.3.
-.It
-The
-.Xr ex 4
-driver has added support for 3Com 3c555, 3c556 and 3c556B MiniPCI Ethernet
-cards.
-.It
-A driver for the on-board audio hardware found on many Apple
-PowerMacs has been added; see
-.Xr awacs 4 .
-.It
-The
-.Xr sip 4
-driver has been fixed to properly support the dp83815, as found in
-current Netgear FA311 10/100 cards.
-.It
-.Xr ftpd 8
-has been updated to deal with two security issues (SA2000-018 and
-SA2001-005).
-.It
-.Xr ntpd 8
-has been updated to deal with a security issue (SA2001-004).
-.It
-.Xr telnetd 8
-has been updated to deal with a security issue (SA2000-017).
-.It
-A vulnerability on i386 related to USER_LDT has been fixed (SA2001-002).
-.It
-The Linux emulation has been enhanced to prepare for the
-support of using the Linux version of VMware.
-.It
-IP checksumming speed has been improved on i386 compared to
-.Nx 1.5
-by about 10%.
-.It
-Support for the Socket Communications LP-E Type II PCMCIA NE2000
-clone card has been added to
-.Xr ne 4 .
-.It
-The DHCP software has been upgraded to ISC version 3, Beta 2, patchlevel 23,
-to fix core dumps in
-.Xr dhclient 8 ,
-among other things.  Please note that the new
-.Xr dhcpd 8
-forces you to configure a "ddns-update-style" of either
-"ad-hoc", "interim" or "none".
-.It
-Various fixes and enhancements to INET6 and IPSEC code;
-among them improved interaction between IPF/Nat and IPSEC.
-.It
-The Heimdal
-.Xr kerberos 8
-implementation has been upgraded to version 0.3e.
-.It
-Support for Accton EN2242 and other AmdTek AN985 cards added
-to the
-.Xr tlp 4
-driver.
-.It
-Several country-specific keyboard mappings have been added for USB
-keyboards.
-.It
-A driver for Yamaha YMF724/740/744/745-based sound cards has
-been added, see
-.Xr yds 4 .
-.It
-The maximum number of BSD disklabel partitions on the i386 port
-has been increased from 8 to 16.
-.It
-Drivers for the AC'97 based audio sound chips
-ESS Technology Maestro 1, 2, and 2E (see
-.Xr esm 4 ),
-NeoMagic 256 (see
-.Xr neo 4 ),
-and Cirrus Logic CrystalClear PCI Audio CS4281 (see
-.Xr clct 4 ) have been added.
-.El
-.Pp
-In addition, many bugs have been fixed\(emmore than 95 problems
-reported through our problem tracking system have been fixed,
-and some other non-reported problems have also been found and fixed.
-See the CHANGES-1.5.1 file for the complete list.
-.if \n[FOR_RELEASE] \{\
-.if r_i386 \{
-.Ss New Compatibility Issues Introduced With NetBSD 1.5.1
-.Pp
-With the increase of the maximum number of partitions from 8 to 16
-on the i386 port, it is worth noting:
-.Bl -bullet
-.It
-Once you start using more than 8 partitions, you can no longer
-downgrade to a 1.5 kernel.
-.It
-The user-land tools which handle disklabels in 1.5.1 can not be
-used running under a 1.5 kernel.
-.El
-.\}
-.Ss Changes Between The NetBSD 1.4 and 1.5 Releases
+..
+.Ss Changes Between The NetBSD 1.5 and 1.6 Releases
 .Pp
 The
-.Nx 1.5
-release 
+.Nx 1.6
+release
 provides numerous significant functional enhancements, including
 support for many new devices, integration of hundreds of bug fixes,
-new and updated kernel subsystems, and many userland enhancements. The
-result of these improvements is a stable operating system fit for
+new and updated kernel subsystems, and many userland enhancements.
+The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
-It is impossible to completely summarize over one year of
+It is impossible to completely summarize over eighteen months of
 development that went into the
 .Nx \*V
-release. Some highlights include:
+release.
+Some highlights include:
 .
 .Ss2 Kernel
 .
@@ -635,7 +505,7 @@ The KAME IPv6 part includes results from the unified-IPv6 effort.
 Significant Fast file system (FFS) performance enhancements via
 integration of Kirk McKusick's soft updates and trickle sync code.
 .It
-Support for the 
+Support for the
 .Tn "Windows NT"
 .Sq NTFS
 file system (read-only at this stage).
@@ -688,13 +558,13 @@ security).
 .It
 Disable various services by default, and set the default options for
 disabled daemons to a higher level of logging.
-.It 
-Several code audits were performed. One audit replaced string routines
-that were used without bounds checking, and another one identified and
-disabled places where format strings were used in unsafe ways,
-allowing arbitrary data to be entered by (possibly) malicious users to
-overwrite application code, and leading from Denial of Service attacks
-to compromised systems.
+.It
+Several code audits were performed.
+One audit replaced string routines that were used without bounds checking,
+and another one identified and disabled places where format strings were
+used in unsafe ways, allowing arbitrary data to be entered by (possibly)
+malicious users to overwrite application code, and leading from
+Denial of Service attacks to compromised systems.
 .It
 .Xr sshd 8
 and
@@ -787,8 +657,8 @@ The package framework itself now has full wildcard dependency support.
 .bullet)
 .Pp
 Kernel interfaces have continued to be refined, and more subsystems
-and device drivers are shared among the different ports. You can look
-for this trend to continue.
+and device drivers are shared among the different ports.
+You can look for this trend to continue.
 .Pp
 .so whatis -----------------------------------------------
 .\} \" \n[FOR_RELEASE]
@@ -799,11 +669,13 @@ for this trend to continue.
 The
 .Nx
 Foundation has been incorporated as a non-profit
-organization. Its purpose is to encourage, foster and promote the
-free exchange of computer software, namely the
+organization.
+Its purpose is to encourage, foster and promote the free exchange
+of computer software, namely the
 .Nx
 Operating
-System. The foundation will allow for many things to be handled more
+System.
+The foundation will allow for many things to be handled more
 smoothly than could be done with our previous informal organization.
 In particular, it provides the framework to deal with other parties
 that wish to become involved in the
@@ -832,8 +704,8 @@ periodically organizing workshops for developers and other
 interested people to discuss ongoing work.
 .bullet)
 .Pp
-We intend to begin narrowing the time delay between releases. Our
-ambition is to provide a full release every six to eight months.
+We intend to begin narrowing the time delay between releases.
+Our ambition is to provide a full release every six to eight months.
 .Pp
 We hope to support even
 .Em more
@@ -908,16 +780,16 @@ export regulations of the United States, e.g.
 code under
 .Pa src/crypto
 and
-.Pa src/sys/crypto . 
+.Pa src/sys/crypto .
 It is your responsibility
 to determine whether or not it is legal for you to export these portions
 and to act accordingly.
 .Pp
 The source distribution sets can be found in subdirectories of the
 .Pa source
-subdirectory of the distribution tree. They contain the
-complete sources to the system. The source distribution sets
-are as follows:
+subdirectory of the distribution tree.
+They contain the complete sources to the system.
+The source distribution sets are as follows:
 .(tag sharesrc
 .It Sy gnusrc
 This set contains the
@@ -969,8 +841,8 @@ All the above source sets are located in the
 .Pa source/sets
 subdirectory of the distribution tree.
 .Pp
-The source sets are distributed as compressed tar files. They may be
-unpacked into
+The source sets are distributed as compressed tar files.
+They may be unpacked into
 .Pa /usr/src
 with the command:
 .Pp
@@ -980,8 +852,8 @@ The
 .Pa sets/Split/
 subdirectory contains split
 versions of the source sets for those users who need to load the
-source sets from floppy or otherwise need a split distribution. The
-split sets are named
+source sets from floppy or otherwise need a split distribution.
+The split sets are named
 .Pa "set_name." Ns Ar xx
 where
 .Pa set_name
@@ -992,10 +864,11 @@ starting with
 .Dq aa
 for the first file in the distribution set, then
 .Dq ab
-for the next, and so on. All of these files except the last one
-of each set should be exactly 240,640 bytes long. (The last file is
-just long enough to contain the remainder of the data for that
-distribution set.)
+for the next, and so on.
+All of these files except the last one of each set should be exactly
+240,640 bytes long.
+(The last file is just long enough to contain the remainder of the data
+for that distribution set.)
 .Pp
 The split distributions may be reassembled and extracted with
 .Ic cat
@@ -1031,7 +904,8 @@ the command:
 .tag)
 .Pp
 The MD5 digest is the safest checksum, followed by the POSIX
-checksum. The other two checksums are provided only to ensure
+checksum.
+The other two checksums are provided only to ensure
 that the widest possible range of system can check the integrity
 of the release files.
 .\}
@@ -1107,7 +981,7 @@ following problems and compatibility issues in mind when upgrading to
 modified to use
 .Pa /etc/rc.d/*
 .Pp
-Prior to 
+Prior to
 .Nx 1.5 ,
 .Pa /etc/rc
 was a traditional
@@ -1250,10 +1124,11 @@ and filename for the main configuration files are changed.
 .Ss "Using online NetBSD documentation"
 .Pp
 Documentation is available if you first install the manual
-distribution set. Traditionally, the
+distribution set.
+Traditionally, the
 .Dq man pages
 (documentation) are denoted by
-.Sq Li name(section) .
+.Sq Li name(section . )
 Some examples of this are
 .Pp
 .(bullet -compact -offset indent
@@ -1282,9 +1157,10 @@ The brackets
 .Op \&
 around the
 section should not be entered, but rather indicate that the section is
-optional. If you don't ask for a particular section, the topic with the
-lowest numbered section name will be displayed. For instance, after
-logging in, enter
+optional.
+If you don't ask for a particular section, the topic with the
+lowest numbered section name will be displayed.
+For instance, after logging in, enter
 .Pp
 .Dl # Ic "man passwd"
 .Pp
@@ -1309,7 +1185,8 @@ related man pages will be displayed.
 .Ss Administrivia
 .Pp
 .
-If you've got something to say, do so! We'd like your input.
+If you've got something to say, do so!
+We'd like your input.
 There are various mailing lists available via the mailing list
 server at
 .Mt majordomo@netbsd.org .
@@ -1318,16 +1195,17 @@ list server, send mail to that address with an empty body, and it will
 reply with instructions.
 .Pp
 There are various mailing lists set up to deal with comments and
-questions about this release. Please send comments to:
+questions about this release.
+Please send comments to:
 .Mt netbsd-comments@netbsd.org .
 .Pp
 To report bugs, use the
 .Xr send-pr 1
 command shipped with
 .Nx ,
-and fill in as much information about the problem as you can. Good
-bug reports include lots of details. Additionally, bug reports can
-be sent by mail to:
+and fill in as much information about the problem as you can.
+Good bug reports include lots of details.
+Additionally, bug reports can be sent by mail to:
 .Mt netbsd-bugs@netbsd.org .
 .Pp
 Use of
@@ -1355,10 +1233,10 @@ you could be useful, send us mail or subscribe to:
 .Mt netbsd-help@netbsd.org .
 .Pp
 As a favor, please avoid mailing huge documents or files to these
-mailing lists. Instead, put the material you would have sent up
-for FTP or WWW somewhere, then mail the appropriate list about it, or, if
-you'd rather not do that, mail the list saying you'll send the data
-to those who want it.
+mailing lists.
+Instead, put the material you would have sent up for FTP or WWW somewhere,
+then mail the appropriate list about it, or, if you'd rather not do that,
+mail the list saying you'll send the data to those who want it.
 .
 .Ss Thanks go to
 .
@@ -1429,16 +1307,16 @@ have made donations or loans of hardware and/or money, to support
 .Nx
 development, and deserve credit for it:
 .so ../common/donations -----------------------------------------------
-(If you're not on that list and should be, tell us! We probably were
-not able to get in touch with you, to verify that you wanted to be
-listed.)
+(If you're not on that list and should be, tell us!
+We probably were not able to get in touch with you, to verify that you
+wanted to be listed.)
 .It
 Finally, we thank all of the people who've put sweat and tears into
 developing
 .Nx
-since its inception in January, 1993. (Obviously,
-there are a lot more people who deserve thanks here. If you're one of
-them, and would like to mentioned, tell us!)
+since its inception in January, 1993.
+(Obviously, there are a lot more people who deserve thanks here.
+If you're one of them, and would like to mentioned, tell us!)
 .bullet)
 .
 .Ss "We are..."
@@ -1502,10 +1380,12 @@ them, and would like to mentioned, tell us!)
 .br_ne 1i
 .It-span Em "The NetBSD \*V Release Engineering team:"
 .It Ta Ta
+.It Ta Erik Berls Ta Mt cyber@netbsd.org
 .It Ta Chris G. Demetriou Ta Mt cgd@netbsd.org
 .It Ta H\(oavard Eidnes Ta Mt he@netbsd.org
 .It Ta Ted Lemon Ta Mt mellon@netbsd.org
 .It Ta Perry Metzger Ta Mt perry@netbsd.org
+.It Ta Luke Mewburn Ta Mt lukem@netbsd.org
 .It Ta Curt Sampson Ta Mt cjs@netbsd.org
 .It Ta Jason Thorpe Ta Mt thorpej@netbsd.org
 .It Ta Todd Vierling Ta Mt tv@netbsd.org
@@ -1523,6 +1403,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Robert V. Baron Ta Mt rvb@netbsd.org
 .It Ta Jason Beegan Ta Mt jtb@netbsd.org
 .It Ta Erik Berls Ta Mt cyber@netbsd.org
+.It Ta Hiroyuki Bessho Ta Mt bsh@netbsd.org
 .It Ta John Birrell Ta Mt jb@netbsd.org
 .It Ta Mason Loring Bliss Ta Mt mason@netbsd.org
 .It Ta Rafal Boni Ta Mt rafal@netbsd.org
@@ -1601,6 +1482,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Takahiro Kambe Ta Mt taca@netbsd.org
 .It Ta Antti Kantee Ta Mt pooka@netbsd.org
 .It Ta Masanori Kanaoka Ta Mt kanaoka@netbsd.org
+.It Ta Mattias Karlsson Ta Mt keihan@netbsd.org
 .It Ta KAWAMOTO Yosihisa Ta Mt kawamoto@netbsd.org
 .It Ta Mario Kemper Ta Mt magick@netbsd.org
 .It Ta Lawrence Kesteloot Ta Mt kesteloo@cs.unc.edu
@@ -1656,6 +1538,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Wilfredo Sanchez Ta Mt wsanchez@netbsd.org
 .It Ta Ty Sarna Ta Mt tsarna@netbsd.org
 .It Ta SATO Kazumi Ta Mt sato@netbsd.org
+.It Ta Jan Schaumann Ta Mt jschauma@netbsd.org
 .It Ta Matthias Scheler Ta Mt tron@netbsd.org
 .It Ta Karl Schilke (rAT) Ta Mt rat@netbsd.org
 .It Ta Amitai Schlair Ta Mt schmonz@netbsd.org

@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.20 2002/05/10 05:29:59 mbw Exp $
+.\"	$NetBSD: install,v 1.20.2.1 2002/07/02 04:20:10 lukem Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -8,7 +8,7 @@ command is:
 .Pp
 .Dl boot boot-device [boot-file] [-as]
 .Pp
-where the 
+where the
 .Li boot-device
 describes where to find the bootloader,
 .Li boot-file
@@ -19,8 +19,8 @@ kernel, and the options specify how you want to boot.
 You use the
 .Li boot-device
 to tell Open Firmware where to find
-.Xr ofwboot 7 
-by listing the device, the partition (if it's a disk), and the filename 
+.Xr ofwboot 7
+by listing the device, the partition (if it's a disk), and the filename
 of the bootloader (if using
 .Pa ofwboot.xcf No Ns ).
 .Pp
@@ -28,8 +28,8 @@ If the
 .Li boot-file
 is on the same device and (if it's a disk) partition as the
 .Li boot-device
-then you can just specify the kernel filename.  Otherwise, you need
-to specify the full Open Firmware path to the kernel.
+then you can just specify the kernel filename.
+Otherwise, you need to specify the full Open Firmware path to the kernel.
 .Pp
 The
 .Fl a
@@ -43,9 +43,10 @@ flag will boot into
 mode.
 .Pp
 The exact command you will be using depends on which version of Open Firmware
-your machine has and which device you will be booting from.  Sometimes you
-may have to guess as we don't know all of the combinations of models,
-device names, and file names.  In general the format is:
+your machine has and which device you will be booting from.
+Sometimes you may have to guess as we don't know all of the combinations
+of models, device names, and file names.
+In general the format is:
 .Li "device:[partition][,\efilename]" .
 Keep in mind for the future that you may be able to have your
 .Li boot-device
@@ -59,10 +60,10 @@ ATA/IDE bus).
 .Pp
 We'll try to walk you through the process of figuring out what Open
 Firmware calls your device, partition, and file names.
-To start with, Open Firmware keeps a 
+To start with, Open Firmware keeps a
 .Dq device tree
-with all of the devices it finds in your system.  You can get a
-listing of the nodes in this device tree with the 
+with all of the devices it finds in your system.
+You can get a listing of the nodes in this device tree with the
 .Ic dev No and Ic ls
 commands.
 .Ic dev
@@ -82,14 +83,15 @@ following commands:
 .disp)
 .Pp
 Open Firmware has device aliases which are simple names for the full
-hardware path to a device (similar to 
+hardware path to a device (similar to
 .Ic alias
-in 
+in
 .Xr csh 1 ).
 You can find out
 what device aliases Apple created on your machine with the
 .Ic devalias
-command.  For example, here are the devaliases on a PowerMacintosh 7300:
+command.
+For example, here are the devaliases on a PowerMacintosh 7300:
 .Pp
 .(disp
 .No 0 \*> Ic devalias
@@ -106,8 +108,8 @@ scsi-int            /bandit/gc/mesh
  ok
 .disp)
 .Pp
-On most systems, you'll find the devices you're looking for.  Typical
-aliases are:
+On most systems, you'll find the devices you're looking for.
+Typical aliases are:
 .Bl -column xxx "scsi-intxxxxxx" "internal scsi bus (on system with multiple SCSI busses)"
 .It Ta Dl hd Ta No "internal hard drive"
 .It Ta Dl cd Ta No "CD-ROM drive"
@@ -122,9 +124,10 @@ aliases are:
 .It Ta Dl ultraN Ta No "Ultra/66 or Ultra/100 IDE bus number N"
 .El
 .Pp
-Note that some of these items are the device itself, and some are a
-bus.  When you only have the devalias to a bus, you need to specify which
-device on that bus you want to use.  You can use the Open Firmware
+Note that some of these items are the device itself, and some are a bus.
+When you only have the devalias to a bus, you need to specify which
+device on that bus you want to use.
+You can use the Open Firmware
 .Ic dev No and Ic ls
 commands.
 For example, here are the devices on the internal SCSI bus of a
@@ -147,7 +150,7 @@ the actual devices currently connected, but that's OK -- we've got more
 tricks up our sleeve.
 .Pp
 If you've got ATA/IDE drives, you have all the device information you need
-(since Apple only ever ships drives as 
+(since Apple only ever ships drives as
 .Dq master
 which is typically something like
 .Li ata-disk@0 , Li ATA-Disk@0 , Li atapi-disk , or Li disk@0 ).
@@ -169,14 +172,16 @@ Open Firmware calls SCSI IDs
 .Dq Li Target .
 The
 .Dq Li Unit
-number is the Logical Unit Number (LUN).  This is almost always zero.
+number is the Logical Unit Number (LUN).
+This is almost always zero.
 Thus, this PowerMacintosh system has an IBM hard drive (DCAS-32160) at
 SCSI ID 0, and a Sony CD-ROM drive (CDU-8005) at SCSI ID 3.
 .Pp
 Now, we've got enough information to construct the device name for
-Open Firmware.  Just stick everything together to describe to Open
-Firmware what you want.  For example, Open Firmware calls the CD-ROM drive
-in this system 
+Open Firmware.
+Just stick everything together to describe to Open Firmware what you want.
+For example, Open Firmware calls the CD-ROM drive
+in this system
 .Li scsi-int/sd@3 .
 .Pp
 To determine if a device is bootable, type:
@@ -190,21 +195,22 @@ dma-map-in    dma-free     dma-alloc
  ok
 .disp)
 .Pp
-If the 
+If the
 .Ic word Li Dq open
 is present in the list, then the device is almost certainly bootable.
 .Pp
 Next, you need to figure out what partition Open Firmware thinks your
-bootloader is located on if you're going to boot from a disk.  If you're
-using a 
+bootloader is located on if you're going to boot from a disk.
+If you're using a
 .Dq "partition zero"
-bootloader, the answer is obvious: 0.  Thus, your 
+bootloader, the answer is obvious: 0.
+Thus, your
 .Li boot-device
-for the 
+for the
 .Nx*M
-CD-R image on an Open Firmware 1.0.5 system would be 
+CD-R image on an Open Firmware 1.0.5 system would be
 .Li scsi-int/sd@3:0
-since the image has a 
+since the image has a
 .Sq "partition zero"
 bootloader.
 .Pp
@@ -212,19 +218,23 @@ Other situations get a little
 trickier, as we know of no way to get a partition map from
 within Open Firmware, and it uses a different numbering scheme than either
 .Nx
-or MacOS 9.x and earlier.  See the FAQ for an explanation:
+or MacOS 9.x and earlier.
+See the FAQ for an explanation:
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#partitions
 .Pp
 Typically, MS-DOS and ISO9660 formatted disks have their filesystems at
-partition 1.  Typically, Drive Setup formatted disks have their
-filesystems starting at partition number 9.  Often, if you omit the
-partition number, Open Firmware looks in the first partition it
-understands holding a valid filesystem.
+partition 1.
+Typically, Drive Setup formatted disks have their
+filesystems starting at partition number 9.
+Often, if you omit the partition number, Open Firmware
+looks in the first partition it understands holding a valid filesystem.
 .Pp
 Open Firmware uses a comma (,) to separate the partition number from the
-filename.  It uses a backslash (the 
+filename.
+It uses a backslash (the
 .Pa \e
-character) to separate directories.  The bootloader uses forward slashes (the 
+character) to separate directories.
+The bootloader uses forward slashes (the
 .Pa /
 character) to separate directories when specifying the
 .Li boot-file .
@@ -236,14 +246,16 @@ use:
 Now, to confirm that you and Open Firmware are looking at the same files,
 you can get a directory listing of the filesystem on your device with the
 .Ic dir
-command.  This command is only useful with filesystems that Open Firmware
-understands and is able to boot from.  On Open Firmware 1.0.5, 1.1.22,
-and 2.0.x systems, you can use
+command.
+This command is only useful with filesystems that Open Firmware
+understands and is able to boot from.
+On Open Firmware 1.0.5, 1.1.22, and 2.0.x systems, you can use
 .Ic dir
-on ISO9660 (not hybrid) and MS-DOS filesystems.  On Open Firmware 2.4, you
-can use it on HFS, HFS+, hybrid, ISO9960, and MS-DOS filesystems.  On Open
-Firmware 3, you can use it on HFS, HFS+, hybrid (not pure ISO9660), and
-MS-DOS filesystems.
+on ISO9660 (not hybrid) and MS-DOS filesystems.
+On Open Firmware 2.4, you can use it on HFS, HFS+, hybrid, ISO9960,
+and MS-DOS filesystems.
+On Open Firmware 3, you can use it on HFS, HFS+, hybrid (not pure ISO9660),
+and MS-DOS filesystems.
 .(disp
 .No 0 \*> Ic "dir fd:,\e"
 FINDER  .DAT 022 2 2B8
@@ -258,29 +270,31 @@ You can see that this
 .Tn MacOS
 formatted floppy has a bunch of stuff, as well as the two important files:
 .Pa NETBSD~1.GZ No and Pa OFWBOOT.XCF .
-Note that 
+Note that
 .Tn MacOS
 shortened
 .Pa netbsd.GENERIC_MD.gz No to Pa NETBSD~1.GZ
 since MS-DOS filesystems can only natively hold 8 characters for the
-filename.  Keep in mind that Open Firmware is often case-sensitive when it
+filename.
+Keep in mind that Open Firmware is often case-sensitive when it
 comes to filenames.
 .Pp
 If the
 .Ic dir
 command showed you the files you're looking for, then you've figure out
-how to tell Open Firmware to look for your bootloader!  In this case, your
+how to tell Open Firmware to look for your bootloader!
+In this case, your
 .Li boot-device
 is
 .Li fd:,\eOFWBOOT.XCF
-and your 
+and your
 .Li boot-file
 is
 .Li fd:,/NETBSD~1.GZ .
 .Pp
-For additional help, see 
+For additional help, see
 .Xr ofwboot 7
-and the FAQ on topics like how to use the 
+and the FAQ on topics like how to use the
 Open Firmware command environment and how to boot from a device attached
 to a PCI card which has Open Firmware support:
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-use
@@ -293,7 +307,7 @@ Here are some examples of the commands you might use to boot your system:
 .To 2 "Booting off an MS-DOS floppy"
 .Em "Booting off an MS-DOS floppy"
 .br
-(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
+(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
 .(Note
 This is not a normal
@@ -303,8 +317,8 @@ boot floppy -- you must enter Open Firmware and type a boot command.
 .Pp
 Use the Open Firmware
 .Ic dir
-command to get a listing of the files on the floppy.  Typically you'll
-find filenames like
+command to get a listing of the files on the floppy.
+Typically you'll find filenames like
 .Li OFWBOOT.XCF No and Li NETBSD~1.GZ .
 .(disp
 .No 0 \*> Ic "boot fd:,\eOFWBOOT.XCF NETBSD~1.GZ"
@@ -319,12 +333,12 @@ You can eject a floppy by typing:
 .To 2 "Booting off the NetBSD install floppy"
 .Em "Booting off the NetBSD install floppy"
 .br
-(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
+(Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
 .Pp
 The floppy disk has a
 .Sq "partition zero"
-bootloader. 
+bootloader.
 .(Note
 This is not a normal
 .Tn MacOS
@@ -361,15 +375,18 @@ specifying the bootloader filename and the kernel name:
 .disp)
 .(Note
 Some Open Firmware 1.0.5 machines have their MAC address stored
-incorrectly.  Make sure that your netboot server is using the same MAC
-address that your \*M client is using.  See the section on
+incorrectly.
+Make sure that your netboot server is using the same MAC
+address that your \*M client is using.
+See the section on
 .Sx Setting up pre-Open Firmware 3 to boot NetBSD
 to figure out your MAC address.
 .Note)
 .(Note
-Some Open Firmware 1.0.5 machines, using 
+Some Open Firmware 1.0.5 machines, using
 .Li ofwboot.xcf
-version 1.2 cannot load compressed kernels.  Uncompress them first.
+version 1.2 cannot load compressed kernels.
+Uncompress them first.
 .Note)
 .It
 .Em "Boot over the ethernet"
@@ -424,9 +441,10 @@ usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
 Open Firmware doesn't understand long filenames (created with the RockRidge
 and Joliet extensions), so you may need to figure out what your file is
-called. You should use the Open Firmware
+called.
+You should use the Open Firmware
 .Ic dir
-command to get a listing of the files on your CD.  
+command to get a listing of the files on your CD.
 .Pp
 For instance,
 .Ic Toast
@@ -435,7 +453,8 @@ for
 creates CDs with long filenames, but uses
 .Tn MS-DOS
 style short names
-as well. Instead of referencing
+as well.
+Instead of referencing
 .Pa netbsd-GENERIC
 you would need to open
 .Pa NETBSD-G.ENE
@@ -443,23 +462,24 @@ The
 .Ic mkisofs
 and
 .Ic mkhybrid
-programs have a similar problem. For them,
+programs have a similar problem.
+For them,
 .Pa netbsd.GENERIC_MD.gz
 becomes
 .Pa NETBSD_GENERIC_MD.GZ .
 .Pp
 Another thing to note is that you
 .Em must
-use the same case when specifying the filename to load that Open Firmware 
+use the same case when specifying the filename to load that Open Firmware
 uses.
 Also, keep in mind what format your CD-R has to be for your version of
 Open Firmware (pure ISO versus hybrid ISO/HFS).
 .Pp
 We'll assume that you've wisely renamed your kernel to
 .Pa netbsd.gz
-to avoid many of these name issues.  Here are some
-examples of what you might use to boot from CD-ROM (Apple
-usually sets their CD-ROM drives to SCSI ID 3):
+to avoid many of these name issues.
+Here are some examples of what you might use to boot from CD-ROM
+(Apple usually sets their CD-ROM drives to SCSI ID 3):
 .Pp
 .(disp
 .No 0 \*> Ic "boot scsi-int/sd@3:,\eOFWBOOT.XCF NETBSD.GZ"
@@ -478,7 +498,8 @@ Firmware 2.4)
 .Pp
 You do not specify a file to load, since the
 .Sq "partition zero"
-booloader knows what to do. You would boot such a system if you have dumped
+booloader knows what to do.
+You would boot such a system if you have dumped
 the boot floppy image to your drive, or if you have an already-installed
 .Nx*M
 system
@@ -510,7 +531,8 @@ drivers.
 You may find that your first HFS or HFS+ partition might be as high as
 partition 9.
 You may need to keep trying higher partition numbers until you find the one
-that has your bootloader.  If you're running 
+that has your bootloader.
+If you're running
 .Tn MacOS X
 you can run the following command to print out the partition table on your
 drive:
@@ -518,7 +540,7 @@ drive:
 .No % Ic "sudo pdisk /dev/disk0 -dump"
 .disp)
 .Pp
-If you are confused by the various partition numbering schemes, see the 
+If you are confused by the various partition numbering schemes, see the
 explanation in the FAQ
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#partitions
 .Pp
@@ -530,8 +552,8 @@ If bootloader is on a different partition from the
 .Nx
 kernel, you will need to specify where to find the kernel.
 .Pp
-Remember, that SCSI Zip disks are usually ID 5 or 6. Internal hard drives
-are usually SCSI ID 0.
+Remember, that SCSI Zip disks are usually ID 5 or 6.
+Internal hard drives are usually SCSI ID 0.
 .Pp
 Here are some examples of what you might use to boot the installer kernel
 located on an HFS or HFS+ partition:
@@ -555,7 +577,7 @@ get an idea of what to expect (user-typed commands are in
  Apple PowerBook3,1 2.1f1 BootROM built on 01/29/00 at 22:38:07
  Copyright 1994-2000 Apple Computer, Inc.
  All Rights Reserved
- 
+
  Welcome to Open Firmware.
  To continue booting, type "mac-boot" and press return.
  To shut down, type "shut-down" and press return.
@@ -570,17 +592,17 @@ get an idea of what to expect (user-typed commands are in
  loading .text, done..
  loading .data, done..
  clearing .bss, done..
- 
+
  \*>\*> NetBSD/macppc OpenFirmware Boot, Revision 1.3
- \*>\*> (tsubai@mint.iri.co.jp, Sun Nov 26 01:41:27 JST 2000) 
+ \*>\*> (tsubai@mint.iri.co.jp, Sun Nov 26 01:41:27 JST 2000)
  1701508+177748 [100+68176+55886]=0x1e9468
- 
+
   start=0x100000
  Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001
      The NetBSD Foundation, Inc.  All rights reserved.
  Copyright (c) 1982, 1986, 1989, 1991, 1993
      The Regents of the University of California.  All rights reserved.
- 
+
  NetBSD 1.5.1 (INSTALL) #0: Thu Mar 15 00:52:56 PST 2001
      mw@al:/usr/src/sys/arch/macppc/compile/INSTALL
  total memory = 192 MB
@@ -595,50 +617,52 @@ get an idea of what to expect (user-typed commands are in
 .
 .Ss2 Common Problems and Error Messages
 .
-This is a brief list of some of the Open Firmware problems you may run 
-into.  See the
+This is a brief list of some of the Open Firmware problems you may run into.
+See the
 .Nx*M
 FAQ for a thorough list.
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#boot-trouble
 .(Note
 You may find it necessary to remove all non-Apple devices from your
-machine.  Some users have found this necessary.
+machine.
+Some users have found this necessary.
 .Note)
 .Pp
 .(bullet
 .To 2 "Black screen"
 Black screen
 .Pp
-If your system is a PowerBook, 
+If your system is a PowerBook,
 .Nx
-may have turned down the brightness of the backlight.  Use the buttons to
-turn your brightness back up.
+may have turned down the brightness of the backlight.
+Use the buttons to turn your brightness back up.
 .Pp
-Otherwise, you need a serial console. See the section entitled
+Otherwise, you need a serial console.
+See the section entitled
 .Sx Getting to the Open Firmware Prompt on Older Models
 .It
 .To 2 "Grey screen with flashing question mark"
 Grey screen with flashing question mark
 .Pp
-This means that your system is trying to boot 
+This means that your system is trying to boot
 .Tn MacOS .
-You might get to this state if you didn't properly enter Open Firmware, or if 
-your Open Firmware boot command is misformed. 
+You might get to this state if you didn't properly enter Open Firmware, or if
+your Open Firmware boot command is misformed.
 .Pp
 If you typed a bad boot command, Open Firmware tries to boot from the
 value stored in the
 .Li boot-device
  variable, whose default value is the MacOS ROM.
 .Pp
-The grey screen with the icon is generated by the MacOS ROM. A flashing
-question-mark or broken folder means that your machine is looking for a
-bootable MacOS filesystem, but can't find one. A happy face means it's
-trying to boot MacOS. 
+The grey screen with the icon is generated by the MacOS ROM.
+A flashing question-mark or broken folder means that your machine
+is looking for a bootable MacOS filesystem, but can't find one.
+A happy face means it's trying to boot MacOS.
 .Pp
 The boot floppy does not have a bootable MacOS filesystem, it has a
-bootable NetBSD filesystem. 
+bootable NetBSD filesystem.
 .Pp
-Reboot, re-enter Open Firmware and check your syntax carefully. 
+Reboot, re-enter Open Firmware and check your syntax carefully.
 .Pp
 .(Note
 Don't forget to check your Open Firmware environment variables, as they
@@ -650,8 +674,8 @@ may have been changed by your brief excursion into
 Information on your screen seems garbled or out of sync
 .Pp
 If you have a PowerMacintosh 7300 through 8600, then you need to read the
-section on System Disk and the patches it applies.  See the section
-entitled
+section on System Disk and the patches it applies.
+See the section entitled
 .Sx Getting to the Open Firmware Prompt on Older Models
 .Pp
 If you have a Twentieth Anniversary Macintosh, Open Firmware does not work
@@ -662,27 +686,31 @@ with the internal display, you will need to set up a serial console.
 .Dq Li "DEFAULT CATCH!"
 .Pp
 This is a general message from Open Firmware to the effect that it had
-trouble loading a file. 
+trouble loading a file.
 .Pp
 If your machine is Open Firmware version 1.0.5, 2.0.x, or 2.4, this error
-does sometimes appear randomly. You might try the boot command a second time
-(this is known to work on some models). It's also an indication that
-either your floppy disk is bad, or the floppy drive is bad. Try doing a
-low-level format on the floppy, re-copy the files, and try again. 
+does sometimes appear randomly.
+You might try the boot command a second time
+(this is known to work on some models).
+It's also an indication that either your floppy disk is bad,
+or the floppy drive is bad.
+Try doing a low-level format on the floppy, re-copy the files, and try again.
 .Pp
 There are several models that cannot be booted while using the on-board
-video and keyboard. Try using a serial console. 
+video and keyboard.
+Try using a serial console.
 .It
 .To 2 "CLAIM failed"
 .Dq Li "CLAIM failed"
 .Pp
 This is a general message from Open Firmware to the effect that it failed
-to allocate some memory or memory is messed up. 
+to allocate some memory or memory is messed up.
 .Pp
 First, make sure you have the Open Firmware variable
 .Li load-base
-set correctly.  If your system is Open Firmware version 1.0.5, 1.1.22,
-2.0.x, or 2.4, see the section above on 
+set correctly.
+If your system is Open Firmware version 1.0.5, 1.1.22,
+2.0.x, or 2.4, see the section above on
 .Sx Setting up pre-Open Firmware 3 to boot NetBSD
 .Pp
 Do not change
@@ -690,26 +718,29 @@ Do not change
 on an Open Firmware 3 system.
 .Pp
 If you tried one boot command and it failed, then you tried a second and
-got the 
+got the
 .Li CLAIM failed
-message, then this is an indication that you should
-reboot between attempts.  Use the Open Firmware
+message, then this is an indication that you should reboot between attempts.
+Use the Open Firmware
 .Ic reset-all
 command.
 .Pp
 Contradictorily, if your machine is Open Firmware version 1.0.5, 2.0.x or
-2.4, this error does sometimes appear randomly. You might try the boot
-command a second time (this is known to work on some models). 
+2.4, this error does sometimes appear randomly.
+You might try the boot command a second time
+(this is known to work on some models).
 .Pp
 There are several models that cannot be booted while using the on-board
-video and keyboard. Try using a serial console. 
+video and keyboard.
+Try using a serial console.
 .It
 .To 2 "can't OPEN"
 .Dq Li "can't OPEN"
 .Pp
 Open Firmware either can't open the device you specified (because it is not
-present or the device path is mistyped) or the file you specified. Check your
-typing and check to make sure that the media has the files you think it has.
+present or the device path is mistyped) or the file you specified.
+Check your typing and check to make sure that the media has the
+files you think it has.
 .Pp
 Use the Open Firmware
 .Ic dir
@@ -719,11 +750,12 @@ command to verify that the file(s) you tried accessing are really there.
 .Dq Li "unrecognized Client Program formatstate not valid"
 .Pp
 This is a general Open Firmware error message indicating that the filename
-you tried to open either doesn't exist or is in the wrong format. For
-Open Firmware 1 and 2 machines, it must be an XCOFF file (such as
+you tried to open either doesn't exist or is in the wrong format.
+For Open Firmware 1 and 2 machines, it must be an XCOFF file (such as
 .Pa ofwboot.xcf )
 and for Open Firmware 3 machines, it must be either XCOFF or ELF (such as
-a kernel).  Make sure that you have use binary mode to FTP the files, and
+a kernel).
+Make sure that you have use binary mode to FTP the files, and
 that they are properly uncompressed.
 .It
 .To 2 "bad partition number, using 0no bootable HFS partition"
@@ -738,13 +770,13 @@ partitions).
 .Dq Li "TFTP timeout"
 .Pp
 Either the server's TFTP server isn't running, or you're using a model
-with Open Firmware 1.0.5 and not specifying the location of the
-bootloader. Unfortunately, on the early models, 
+with Open Firmware 1.0.5 and not specifying the location of the bootloader.
+Unfortunately, on the early models,
 .Pa ofwboot.xcf
-gets confused and doesn't work right unless you load it explicitly from the 
+gets confused and doesn't work right unless you load it explicitly from the
 .Li boot-device ,
-even if the bootp or DHCP server provides the correct information. You
-need to boot with a command like: 
+even if the bootp or DHCP server provides the correct information.
+You need to boot with a command like:
 .(disp
 .No 0 \*> Ic "boot enet:,ofwboot.xcf"
 .disp)
@@ -759,8 +791,9 @@ in Open Firmware or it got erased by your booting into
 .Pp
 Make sure you have the Open Firmware variable
 .Li real-base
-set correctly.  If your system is Open Firmware version 1.0.5, 1.1.22,
-2.0.x, or 2.4, see the section above on 
+set correctly.
+If your system is Open Firmware version 1.0.5, 1.1.22,
+2.0.x, or 2.4, see the section above on
 .Sx Setting up pre-Open Firmware 3 to boot NetBSD
 .Pp
 Do not set
@@ -770,53 +803,59 @@ on an Open Firmware 3 system.
 .To 2 "Hang after configuring devices"
 Hang after configuring devices, but before doing anything else
 .Pp
-Actually, this can have many causes.  The most likely is a keyboard
-problem.  First, try 
-plugging the USB keyboard directly into the computer (i.e. not through a
-hub) and unplugging the mouse.
+Actually, this can have many causes.
+The most likely is a keyboard problem.
+First, try plugging the USB keyboard directly into the computer
+(i.e. not through a hub) and unplugging the mouse.
 .Pp
 This is also a known problem on some PowerMacintosh G3 (Blue and
-White) and iMac (Bondi Blue) machines.  If you have a
-PowerMacintosh G3 (Blue and White) with this problem, then you can try the
-following procedure:
+White) and iMac (Bondi Blue) machines.
+If you have a PowerMacintosh G3 (Blue and White) with this problem,
+then you can try the following procedure:
 .(enum
 Unplug the USB keyboard and plug in an ADB keyboard
 .It
-Boot 
+Boot
 .Nx
-with the ADB keyboard 
+with the ADB keyboard
 .It
-Enter root, swap and filesystem responses on the ADB keyboard 
+Enter root, swap and filesystem responses on the ADB keyboard
 .It
 When the system gets to the shell prompt (or login if you went
-multi-user), unplug the ADB and plug in the USB keyboard 
+multi-user), unplug the ADB and plug in the USB keyboard
 .enum)
 .Pp
-The USB will be usable at this point and you can use the system. You'll
-notice that the ADB is dead even before you unplugged it. Also you MUST
-boot without the USB installed or this won't work. 
+The USB will be usable at this point and you can use the system.
+You'll notice that the ADB is dead even before you unplugged it.
+Also you
+.Em must
+boot without the USB installed or this won't work.
 .Pp
-Alternatively, much as it pains us to say this, 
+Alternatively, much as it pains us to say this,
 .Nx
 1.4.3 works fine on both the iMac (Bondi Blue) and the PowerMacintosh G3
-(Blue and White) models and does not have this USB keyboard problem. 
+(Blue and White) models and does not have this USB keyboard problem.
 .bullet)
 .
 .Ss2 Milestone
 .
-If you've reached this point, then you must've gotten the 
-.Nx 
-installer to boot.  Congratulations!  That was the hard part.  From now 
-through the rest of this document, there should be no more Open Firmware 
+If you've reached this point, then you must've gotten the
+.Nx
+installer to boot.
+Congratulations!
+That was the hard part.
+From now through the rest of this document,
+there should be no more Open Firmware
 specific problems, so read everything because it applies to all models.
 .
 .so ../common/sysinst
 .
-Now, you can reboot to get to the Open Firmware prompt.  Once there, you
-can set Open Firmware to always boot into 
+Now, you can reboot to get to the Open Firmware prompt.
+Once there, you can set Open Firmware to always boot into
 .Nx
-from the media of your choice.  First, make sure you know what command you
-need to boot (see above).  If you are using a 
+from the media of your choice.
+First, make sure you know what command you need to boot (see above).
+If you are using a
 .Sq "partition zero"
 style boot scheme, you would type something like the following:
 .Pp
@@ -830,9 +869,9 @@ style boot scheme, you would type something like the following:
 The last command resets the system so that these settings are stored.
 Replace
 .Ic scsi/sd@0:0
-with the actual device you will be booting from.  If you find that your
-system tries booting before your hard drive has spun up, you may need to
-also enter something like:
+with the actual device you will be booting from.
+If you find that your system tries booting before your hard drive has
+spun up, you may need to also enter something like:
 .Pp
 .(disp
 .No 0 \*> Ic "setenv boot-command begin ['] boot catch 1000 ms cr again"

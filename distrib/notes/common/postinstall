@@ -1,6 +1,6 @@
-.\"	$NetBSD: postinstall,v 1.33.2.2 2002/06/19 00:56:53 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.33.2.3 2002/07/02 04:20:05 lukem Exp $
 .\"
-.\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -39,7 +39,7 @@ Configuring
 .Pa /etc/rc.conf
 .Pp
 If you or the installation software haven't done any configuration of
-.Pa /etc/rc.conf 
+.Pa /etc/rc.conf
 .Ic ( sysinst
 usually will),
 the system will drop you into single user mode on first reboot with the
@@ -49,12 +49,13 @@ message
 .Pp
 and with the root file system
 .Pq Pa /
-mounted read-write. When the system
-asks you to choose a shell, simply press
+mounted read-write.
+When the system asks you to choose a shell, simply press
 .Key RETURN
-to get to a 
+to get to a
 .Pa /bin/sh
-prompt. If you are asked for a terminal type, respond with
+prompt.
+If you are asked for a terminal type, respond with
 .ie r_hp300 \{\
 .Ic hp300h
 for a local console, or whatever is appropriate for your serial console.
@@ -89,13 +90,15 @@ to work properly, depending on your keyboard:
 At this point, you need to configure at least
 one file in the
 .Pa /etc
-directory. You will need to mount your root filesystem read/write with:
+directory.
+You will need to mount your root filesystem read/write with:
 .Dl # Ic "/sbin/mount -u -w /"
 Change to the
 .Pa /etc
 directory and take a look at the
 .Pa /etc/rc.conf
-file. Modify it to your tastes, making sure that you set
+file.
+Modify it to your tastes, making sure that you set
 .Li rc_configured=YES
 so that your changes will be enabled and a multi-user boot can
 proceed.
@@ -126,8 +129,8 @@ Do the following:
 .Pp
 If you have
 .Pa /var
-on a separate partition, you need to repeat
-that step for it. After that, you can edit
+on a separate partition, you need to repeat that step for it.
+After that, you can edit
 .Pa /etc/rc.conf
 with
 .Xr vi 1 .
@@ -145,7 +148,7 @@ furthermore add an
 .Ar ifconfig_int
 for your
 .Aq int
-network interface, 
+network interface,
 .ie r_macppc \{\
 where your on-board interfaces may be one of
 .Li mc0 , bm0 , de0 No or Li gm0 .
@@ -205,23 +208,27 @@ Select the proper terminal devices
 .Pp
 You will have to edit the
 .Pa /etc/ttys
-file. If you don't have a Milan, you must disable the
+file.
+If you don't have a Milan, you must disable the
 .Pa ttyEx
-devices. For the Milan, you will have to disable the
+devices.
+For the Milan, you will have to disable the
 .Pa ttyex
-devices. This is easy, just change 'on' to 'off' on the corresponding lines.
+devices.
+This is easy, just change 'on' to 'off' on the corresponding lines.
 .\}
 .It
 Logging in
 .Pp
 After reboot, you can log in as
 .Li root
-at the login prompt. Unless you've set a password in
+at the login prompt.
+Unless you've set a password in
 .Ic sysinst ,
 there
-is no initial password. If you're using the machine in a
-networked environment, you should create an account for yourself
-(see below) and protect it and the
+is no initial password.
+If you're using the machine in a networked environment,
+you should create an account for yourself (see below) and protect it and the
 .Dq root
 account with good passwords.
 Unless you have connected an unusual terminal device as the console
@@ -238,7 +245,8 @@ command to add accounts to your system,
 .Em do not
 edit
 .Pa /etc/passwd
-directly. See
+directly.
+See
 .Xr useradd 8
 for more information on how to add a new user to the system.
 .if !\n[next68k] \{\
@@ -249,7 +257,7 @@ If you have installed the X Window System, look at the files in
 .Pa /usr/X11R6/lib/X11/doc
 for information.
 .if \n[hp300] \{\
-Also, you may want to read through the 
+Also, you may want to read through the
 .Nx*M
 FAQ entry on X11.
 .br
@@ -257,21 +265,23 @@ FAQ entry on X11.
 http://www.netbsd.org/Ports/faq.html#x11
 .\}
 .if \n[macppc] \{\
-Also, you may want to read through the 
+Also, you may want to read through the
 .Nx*M
 X11R6 FAQ.
 .br
 .Lk http://www.netbsd.org/Ports/macppc/x11.html
 .\}
 .\} \" ! !\n[next68k]
-.if \n[cats]:\n[i386]:\n[shark] \{\
+.if \n[i386]:\n[shark] \{\
 .Pp
 You will need to set up a configuration file, see
 .Pa /usr/X11R6/lib/X11/XF86Config.eg
-for an example. The
+for an example.
+The
 .Xr xf86config 1
 utility can interactively create a first version of such a configuration
-file for you. See
+file for you.
+See
 .Lk http://www.xfree86.org/
 and the XFree86 manual page for more information.
 .\}
@@ -287,8 +297,8 @@ If you wish to install any of the software freely available for
 systems
 you are strongly advised to first check the
 .Nx
-package system. This automatically handles any changes necessary to
-make the software run on
+package system.
+This automatically handles any changes necessary to make the software run on
 .Nx ,
 retrieval and installation of any other packages on which the software
 may depend, and simplifies installation (and deinstallation), both
@@ -305,7 +315,8 @@ Precompiled binaries can be found at
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages ,
 usually in the
 .Pa \*V/\*M/All
-subdir.  You can install them with the following commands:
+subdir.
+You can install them with the following commands:
 .Pp
 .Bd -unfilled
 .Ic # PKG_PATH=ftp://ftp.netbsd.org/pub/NetBSD/packages/\*V/\*M/All
@@ -319,7 +330,7 @@ subdir.  You can install them with the following commands:
 The above commands will install the tcsh shell,
 the Apache web server and
 the perl programming language as well as all the packages they
-depend on. 
+depend on.
 .It
 Package sources for compiling packages on your own can be obtained by
 retrieving the file
@@ -342,7 +353,8 @@ Misc
 .(bullet
 Edit
 .Pa /etc/mail/aliases
-to forward root mail to the right place. Don't forget to run
+to forward root mail to the right place.
+Don't forget to run
 .Xr newaliases 1
 afterwards.
 .It

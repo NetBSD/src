@@ -1,4 +1,4 @@
-.\"$NetBSD: hardware,v 1.24.2.2 2002/06/21 16:15:27 lukem Exp $
+.\"$NetBSD: hardware,v 1.24.2.3 2002/07/02 04:20:10 lukem Exp $
 .
 Currently,
 .Nx*M
@@ -8,34 +8,38 @@ to boot.
 Open Firmware is a command environment using the FORTH language which the
 .Nx
 kernel uses to gether information about your system, and to control some
-of your devices.  It is part of the boot ROMs in most 
-.Tn PowerPC Ns No -based Tn Macintosh
-systems.  Until late 1996, 
-.Tn Apple 
-never intended to use Open Firmware for anything other than internal debugging and hardware support.  It was not
-intended to be used to boot an operating system.  This is why earlier machines
-have so much trouble with Open Firmware.
+of your devices.
+It is part of the boot ROMs in most
+.Tn PowerPC Ns No -based
+.Tn Macintosh
+systems.
+Until late 1996,
+.Tn Apple
+never intended to use Open Firmware for anything other than internal debugging and hardware support.
+It was not intended to be used to boot an operating system.
+This is why earlier machines have so much trouble with Open Firmware.
 This also means that PowerMacs and clones that lack Open Firmware cannot boot
 .Nx
-on the \*M platform. Most machines introduced by Apple and the clone-makers
+on the \*M platform.
+Most machines introduced by Apple and the clone-makers
 after August 17, 1995 have Open Firmware and are supported.
 .Pp
 Apple made several revisions of this Open Firmware environment, and each has
-various quirks and problems that we must work around. The single hardest step
-of installing
+various quirks and problems that we must work around.
+The single hardest step of installing
 .Nx*M
-is to set up Open Firmware properly. Open Firmware versions 1.0.5 and 
-2.0.x act
-similarly and the same set of instructions applies to them. Open Firmware
-version 2.4 is slightly different with regards to booting. Open Firmware
-version 3 is altogether different.
+is to set up Open Firmware properly.
+Open Firmware versions 1.0.5 and 2.0.x act similarly
+and the same set of instructions applies to them
+. Open Firmware version 2.4 is slightly different with regards to booting.
+Open Firmware version 3 is altogether different.
 .Pp
 At present,
 .Nx*M
 does not support the PPC 601 microprocessor, which means that the
-PowerMacintosh 7200 and 7500 models are not supported. The PowerMacintosh
-7500 may be upgraded to a PPC 604, G3, or G4 microprocessor via a
-daughtercard replacement, in which case
+PowerMacintosh 7200 and 7500 models are not supported.
+The PowerMacintosh 7500 may be upgraded to a PPC 604, G3
+or G4 microprocessor via a daughtercard replacement, in which case
 .Nx
 will run on this system.
 .Pp
@@ -43,9 +47,9 @@ The minimal configuration requires 16 MB of RAM and ~80 MB of disk space.
 To install the entire system requires much more disk space, and to run
 X or compile the system, more RAM is recommended, as
 .Nx
-with 16 MB of RAM is very slow. Note that until you have
-around 32 MB of RAM, getting more RAM is more important than getting a
-faster CPU.
+with 16 MB of RAM is very slow.
+Note that until you have around 32 MB of RAM,
+getting more RAM is more important than getting a faster CPU.
 .
 .Ss2 Supported models
 Find your model from the list below and take note of its Open Firmware
@@ -108,7 +112,7 @@ models with ATI Rage Pro: Desktop, Mini Tower, and All-in-One)
 Apple original iBook, iBook SE, iBook (Dual USB), and iBook (Summer 2002)
 .It
 Apple iMac; Bondi Blue (Rev A and Rev B, 233 MHz),
-5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), iMac (Slot Loading), 
+5 Flavors (Rev C and Rev D, 266 MHz and 333 MHz), iMac (Slot Loading),
 iMac (Summer 2000), iMac (Early 2001), and iMac (Summer 2001)
 .It
 Apple PowerBook (G3 Series (bronze keyboard) and G3 (FireWire))
@@ -123,8 +127,11 @@ Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
 .bullet)
 .(Note
 Some iMac (Bondi Blue) and PowerMacintosh G3 (Blue and
-White) machines have keyboard problems.  There is a workaround for the
-PowerMacintosh described in the NetBSD/macppc FAQ.  There is no known 
+White) machines have keyboard problems.
+There is a workaround for the PowerMacintosh described in the
+.Nx*M
+FAQ.
+There is no known
 workaround for the iMac machines encountering this problem.
 See
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#usb-keyboard-problems
@@ -161,8 +168,8 @@ Systems released in the second half of 2002 and later (future releases of
 will support these systems)
 .It
 Systems released before the second half of 2002, but not listed
-above.  These models might work, but have not been tested as of the
-release of
+above.
+These models might work, but have not been tested as of the release of
 .Nx \*V .
 .bullet)
 .
@@ -170,8 +177,10 @@ release of
 .(bullet -offset indent
 CPU upgrades
 .(bullet -compact
-Most CPU upgrades are supported.  Some older models will not automatically
-enable the L2 cache on a G3 or G4 processor.  See the FAQ entry
+Most CPU upgrades are supported.
+Some older models will not automatically enable the L2 cache on
+a G3 or G4 processor.
+See the FAQ entry
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#cpu-upgrade
 .bullet)
 .It
@@ -287,8 +296,8 @@ AMD 53c974
 Apple 53c875 Ultra Wide SCSI (shipped in some Beige G3 models)
 .Pq Em ncr No or Em siop
 .(Note
-This card may need a firmware update to boot NetBSD.  Use the 
-Mac OS X SCSI Card Updater from
+This card may need a firmware update to boot NetBSD.
+Use the Mac OS X SCSI Card Updater from
 .Lk http://docs.info.apple.com/article.html?artnum=25176
 .Note)
 .It
@@ -336,7 +345,7 @@ On-board video on most models
 Several models have been reported to not work with
 .Nx
 if the on-board video is in use, such as the Performa 54xx, 6360, 6400,
-PowerComputing PowerCenter and PowerTower, and UMAX C600 and Apus 3000.  
+PowerComputing PowerCenter and PowerTower, and UMAX C600 and Apus 3000.
 Also, the video
 card that shipped with the PowerMacintosh 9500/150, 9500/180, and 9500/200
 systems is reported to have the same problem.
@@ -355,9 +364,9 @@ On-board audio on most models
 This driver has only recently been introduced and is considered
 .Dq experimental
 meaning that it may cause your system to crash and/or is lacking some
-features you may expect.  Due to interrupt conflicts with some G4 models,
-this driver is disabled by default and you will need to build a kernel
-with it enabled.
+features you may expect.
+Due to interrupt conflicts with some G4 models, this driver is disabled
+by default and you will need to build a kernel with it enabled.
 .Note)
 .Pp
 .It
@@ -365,7 +374,7 @@ USB audio devices
 .Pq Em uaudio
 .Pp
 .It
-PCI audio cards, although only the Ensoniq AudioPCI 
+PCI audio cards, although only the Ensoniq AudioPCI
 .Pq Em eap
 has been thoroughly tested
 .bullet)
@@ -375,16 +384,17 @@ Serial ports
 On-board serial ports (the modem and printer ports)
 .Pq Em ttya No and Em ttyb
 .br
-.Em ttya 
+.Em ttya
 is the mini-DIN 8 serial port with the
 .Sq Modem
-icon, and 
+icon, and
 .Em ttyb
 is has the
 .Sq Printer
-icon.  Some models with internal modems have the serial port with the
+icon.
+Some models with internal modems have the serial port with the
 .Sq Modem
-icon covered over, and the modem is 
+icon covered over, and the modem is
 .Em ttya .
 .(Note
 The on-board serial ports can be used for console (38400 bps, 8 bits, no
@@ -396,7 +406,8 @@ reported problems trying to run ppp or other high speed serial applications
 The Gee Three Stealth Serial Port, possibly the Griffin Technology gPort
 .(Note
 These serial ports can be used for console (57600 bps, 8 bits, no parity,
-1 stop bit, no handshaking).  Use 
+1 stop bit, no handshaking).
+Use
 .Pq Em scca
 for the Open Firmware
 .Sq input-device
@@ -411,7 +422,7 @@ Some USB, PCI, and Cardbus serial ports should work, but no one has tried them
 .It
 USB devices
 .(bullet -compact
-Most MI USB devices should work (such as disks, printers, input devices, 
+Most MI USB devices should work (such as disks, printers, input devices,
 SCSI adapters, and ethernet interfaces)
 .Lk http://www.netbsd.org/Hardware/usb.html
 .bullet)
@@ -438,8 +449,8 @@ While the
 kernel may support the various Cardbus, PCI, PCMCIA, and USB devices you may
 have, Open Firmware does
 .Em not
-unless it has a specific Open Firmware ROM. This means you cannot boot from
-these devices.
+unless it has a specific Open Firmware ROM.
+This means you cannot boot from these devices.
 Some Adaptec SCSI controllers have bootable Open Firmware ROMs.
 .Note)
 .bullet)
@@ -474,23 +485,24 @@ On-board video capture
 .Ss2 Supported boot devices and media
 .
 Each version of Open Firmware supports different devices and media that you
-may boot from.  We define the terms
+may boot from.
+We define the terms
 .Dq "bootable media"
 as the media (hard drive, floppy, CD-R, ethernet) that will be used to
 bootstrap your \*M system into
-.Nx No Ns ,
+.Nx ,
 and
 .Dq "distribution sets"
 or
 .Dq "distribution media"
 as the media (hard drive, CD-R, ethernet) that contains the files that
-will be installed to generate a working 
+will be installed to generate a working
 .Nx
 system onto your destination media.
 .Pp
 Go to the
 .Nx*M
-Model Support webpage and look up your system. Take note of the comments
-about your model and keep these in mind during the rest of this installation
-procedure.
+Model Support webpage and look up your system.
+Take note of the comments about your model and keep these in
+mind during the rest of this installation procedure.
 .Lk http://www.netbsd.org/Ports/macppc/models.html

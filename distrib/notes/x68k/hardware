@@ -1,11 +1,12 @@
-.\"	$NetBSD: hardware,v 1.13.2.1 2002/05/28 04:09:10 lukem Exp $
+.\"	$NetBSD: hardware,v 1.13.2.2 2002/07/02 04:20:20 lukem Exp $
 .
 .Nx*M
 \*V runs on the Sharp X68030 series PCs with a
 .Em true
-MC68030 MPU (not the original MC68EC030).  Since the processor of
-the X68030 series is the MC68EC030, you need to replace it with an
-MC68030. Simply remove the old chip and put in the new one instead.
+MC68030 MPU (not the original MC68EC030).
+Since the processor of the X68030 series is the MC68EC030,
+you need to replace it with an MC68030.
+Simply remove the old chip and put in the new one instead.
 The largest difficulty might be to open your X68030.
 .Pp
 In addition, some accelerators are supported:
@@ -21,8 +22,8 @@ Jupiter-X (040 / 060)
 .bullet)
 .Pp
 Note that the processor for the Xellent30 series is MC68EC030, so
-you need to replace your processor as well as for X68030.  040Excel
-is reported
+you need to replace your processor as well as for X68030.
+040Excel is reported
 .Em not
 to work at all; possibly because MC68LC040 support is
 incomplete.
@@ -31,7 +32,8 @@ For 68030 systems, installing MC68881 or MC68882 FPCP is highly recommended
 but not required.
 .Pp
 The minimal configuration requires 4 MB of RAM and about 100 MB of
-disk space.  To install the entire system requires much more disk space,
+disk space.
+To install the entire system requires much more disk space,
 and to run X or compile the system, more RAM is recommended.
 .Pp
 Here is a table of recommended HD partition sizes for a full install:
@@ -48,7 +50,8 @@ Anything else is up to you!
 .Pp
 As you may note the recommended size of
 .Pa /usr
-is 100 MB greater than needed. This is to leave room for a kernel source and
+is 100 MB greater than needed.
+This is to leave room for a kernel source and
 compile tree as you will probably want to compile your own kernel.
 .Li ( ALL
 is large and bulky to accommodate all people).
