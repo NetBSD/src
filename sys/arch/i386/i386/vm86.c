@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.10 1996/04/18 19:58:09 mycroft Exp $	*/
+/*	$NetBSD: vm86.c,v 1.11 1996/04/18 20:36:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -285,6 +285,7 @@ vm86_gpfault(p, type)
 	int type;
 {
 	struct trapframe *tf = p->p_md.md_regs;
+	int trace;
 	/*
 	 * we want to fetch some stuff from the current user virtual
 	 * address space for checking.  remember that the frame's
@@ -297,6 +298,8 @@ vm86_gpfault(p, type)
 	ip = IP(tf);
 	ss = SS(tf) << 4;
 	sp = SP(tf);
+
+	trace = tf->tf_eflags & PSL_T;
 
 	/*
 	 * For most of these, we must set all the registers before calling
@@ -367,7 +370,7 @@ vm86_gpfault(p, type)
 		goto bad;
 	}
 
-	if (tf->tf_eflags & PSL_T)
+	if (trace)
 		trapsignal(p, SIGTRAP, T_TRCTRAP);
 	return;
 
