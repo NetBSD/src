@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_uuid.c,v 1.3 2004/09/12 23:17:37 thorpej Exp $	*/
+/*	$NetBSD: kern_uuid.c,v 1.4 2005/01/24 21:25:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Marcel Moolenaar
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.3 2004/09/12 23:17:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_uuid.c,v 1.4 2005/01/24 21:25:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -104,9 +104,9 @@ uuid_node(uint16_t *node)
 	int i, s;
 
 	s = splnet();
-	TAILQ_FOREACH(ifp, &ifnet, if_list) {
+	IFNET_FOREACH(ifp) {
 		/* Walk the address list */
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 			sdl = (struct sockaddr_dl*)ifa->ifa_addr;
 			if (sdl != NULL && sdl->sdl_family == AF_LINK &&
 			    sdl->sdl_type == IFT_ETHER) {

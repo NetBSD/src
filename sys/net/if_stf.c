@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.41 2004/12/04 18:31:43 peter Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.42 2005/01/24 21:25:09 matt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $	*/
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.41 2004/12/04 18:31:43 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.42 2005/01/24 21:25:09 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -316,7 +316,7 @@ stf_getsrcifa6(ifp)
 	struct sockaddr_in6 *sin6;
 	struct in_addr in;
 
-	TAILQ_FOREACH(ia, &ifp->if_addrlist, ifa_list)
+	IFADDR_FOREACH(ifa, ifp)
 	{
 		if (ia->ifa_addr == NULL)
 			continue;
