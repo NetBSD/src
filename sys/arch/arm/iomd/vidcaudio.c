@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.26 2003/12/31 21:24:47 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.27 2004/01/01 16:23:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.26 2003/12/31 21:24:47 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.27 2004/01/01 16:23:15 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.26 2003/12/31 21:24:47 bjh21 Exp $")
 #include <dev/mulaw.h>
 
 #include <machine/intr.h>
+#include <machine/machdep.h>
 #include <arm/arm32/katelib.h>
 
 #include <arm/iomd/vidcaudiovar.h>
@@ -98,8 +99,7 @@ struct vidcaudio_softc {
 	irqhandler_t	sc_ih;
 	int	sc_dma_intr;
 
-	u_int	sc_hw_encoding;
-	u_int	sc_hw_precision;
+	int	sc_is16bit;
 
 	void	*sc_pstart;
 	void	*sc_pend;
@@ -212,22 +212,23 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 
 	switch (IOMD_ID) {
 	case RPC600_IOMD_ID:
-		sc->sc_hw_encoding = AUDIO_ENCODING_ULAW;
-		sc->sc_hw_precision = 8;
+		sc->sc_is16bit = (cmos_read(0xc4) >> 5) & 1;
 		sc->sc_dma_intr = IRQ_DMASCH0;
-		aprint_normal(": 8-bit\n");
 		break;
 	case ARM7500_IOC_ID:
 	case ARM7500FE_IOC_ID:
-		sc->sc_hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-		sc->sc_hw_precision = 16;
+		sc->sc_is16bit = TRUE;
 		sc->sc_dma_intr = IRQ_SDMA;
-		aprint_normal(": 16-bit\n");
 		break;
 	default:
 		aprint_error(": strange IOMD\n");
 		return;
 	}
+
+	if (sc->sc_is16bit)
+		aprint_normal(": 16-bit external DAC\n");
+	else
+		aprint_normal(": 8-bit internal DAC\n");
 
 	/* Install the irq handler for the DMA interrupt */
 	sc->sc_ih.ih_func = vidcaudio_intr;
@@ -279,14 +280,11 @@ vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 		strcpy(fp->name, AudioEmulaw);
 		fp->encoding = AUDIO_ENCODING_ULAW;
 		fp->precision = 8;
-		if (sc->sc_hw_encoding != AUDIO_ENCODING_ULAW)
-			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		else
-			fp->flags = 0;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 
 	case 1:
-		if (sc->sc_hw_encoding == AUDIO_ENCODING_SLINEAR_LE) {
+		if (sc->sc_is16bit) {
 			strcpy(fp->name, AudioEslinear_le);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			fp->precision = 16;
@@ -334,8 +332,24 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 	int sample_period, ch;
 
 	if (setmode & AUMODE_PLAY) {
-		switch (sc->sc_hw_encoding) {
-		case AUDIO_ENCODING_ULAW:
+		if (sc->sc_is16bit) {
+			/* ARM7500ish, 16-bit, two-channel */
+			if (p->encoding == AUDIO_ENCODING_ULAW &&
+			    p->precision == 8) {
+				p->sw_code = mulaw_to_slinear16_le;
+				p->factor = 2; p->factor_denom = 1;
+			} else if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
+			    p->precision != 16)
+				return EINVAL;
+			p->hw_channels = 2;
+			sample_period = 705600 / 4 / p->sample_rate;
+			if (sample_period < 3) sample_period = 3;
+			p->hw_sample_rate =
+			    705600 / 4 / sample_period;
+			vidcaudio_rate(sample_period - 2);
+			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
+			p->hw_precision = 16;
+		} else {
 			/* VIDC20ish, u-law, 8-channel */
 			if (p->encoding != AUDIO_ENCODING_ULAW ||
 			    p->precision != 8)
@@ -377,27 +391,6 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 				for (ch = 0; ch < 8; ch++)
 					vidcaudio_stereo(ch, ch & 1 ? 
 					    SIR_LEFT_100 : SIR_RIGHT_100);
-			break;
-
-		case AUDIO_ENCODING_SLINEAR_LE:
-			/* ARM7500ish, 16-bit, two-channel */
-			if (p->encoding == AUDIO_ENCODING_ULAW &&
-			    p->precision == 8) {
-				p->sw_code = mulaw_to_slinear16_le;
-				p->factor = 2; p->factor_denom = 1;
-			} else if (p->encoding != AUDIO_ENCODING_SLINEAR_LE ||
-			    p->precision != 16)
-				return EINVAL;
-			p->hw_channels = 2;
-			sample_period = 705600 / 4 / p->sample_rate;
-			if (sample_period < 3) sample_period = 3;
-			p->hw_sample_rate =
-			    705600 / 4 / sample_period;
-			vidcaudio_rate(sample_period - 2);
-			vidcaudio_ctrl(SCR_SERIAL);
-			p->hw_encoding = AUDIO_ENCODING_SLINEAR_LE;
-			p->hw_precision = 16;
-			break;
 		}
 	}
 	return 0;
