@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1 2002/02/11 13:50:18 skrll Exp $	*/
+/*	$NetBSD: md.h,v 1.2 2002/04/11 16:34:00 skrll Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,6 +115,9 @@ EXTERN	char *disk_names[]
  * On cats, that is msdos.
  */
 EXTERN char *fdtype INIT("msdos");
+
+#define LIB_COUNT       0
+#define LIB_MOVE        1
 
 /*
  *  prototypes for MD code.
