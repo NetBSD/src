@@ -10905,7 +10905,7 @@ _ACEOF
 fi
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile magic/Makefile doc/Makefile python/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile magic/Makefile doc/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
