@@ -1,15 +1,17 @@
-#	$NetBSD: Makefile,v 1.1 1996/05/17 19:31:46 chuck Exp $
+#	$NetBSD: Makefile,v 1.2 1996/05/17 19:50:10 chuck Exp $
 
 LIB=bug
 
 NOPIC=
 NOPROFILE=
 
-CFLAGS+=-I${.CURDIR}/../../include
+S=${.CURDIR}/../../../..
+DIR_SA=$S/lib/libsa
 
-SRCS=	delay.c diskrd.c diskwr.c getbrdid.c instat.c outln.c outstr.c \
-	return.c rtc_rd.c
-.PATH:    ${.CURDIR}/../../../../lib/libc_sa
+CFLAGS+=-I${.CURDIR}/../../include -I${DIR_SA}
+
+SRCS=	delay.c diskrd.c diskwr.c getbrdid.c inchr.c instat.c outln.c \
+	outstr.c putchar.c return.c rtc_rd.c
 
 install:
 

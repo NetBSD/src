@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 1996/05/17 19:31:48 chuck Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1996/05/17 19:50:19 chuck Exp $
 
 LIB_BUG_DIR=${S}/arch/${MACHINE}/stand/libbug
 
