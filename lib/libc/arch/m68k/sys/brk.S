@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.5 1995/12/13 22:17:52 thorpej Exp $	*/
+/*	$NetBSD: brk.S,v 1.6 1998/07/01 06:44:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,21 +43,21 @@
 #if 0
 	RCSID("from: @(#)brk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: brk.S,v 1.5 1995/12/13 22:17:52 thorpej Exp $")
+	RCSID("$NetBSD: brk.S,v 1.6 1998/07/01 06:44:15 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-	.globl	_end
+	.globl	_C_LABEL(end)
 	.globl	minbrk
 	.globl	curbrk
 
 	.data
-minbrk:	.long	_end
+minbrk:	.long	_C_LABEL(end)
 	.text
 
 ENTRY(brk)
 #ifdef	PIC
-	movl	#__GLOBAL_OFFSET_TABLE_,a1
+	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a1
 	lea	pc@(0,a1:l),a1
 	movl	a1@(minbrk:w),a0
 	movl	a0@,d0

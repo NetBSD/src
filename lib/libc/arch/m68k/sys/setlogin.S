@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.4 1995/12/13 22:18:09 thorpej Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.5 1998/07/01 06:44:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -39,19 +39,19 @@
 #if 0
 	RCSID("from: @(#)setlogin.s	5.1 (Berkeley) 5/6/91")
 #else
-	RCSID("$NetBSD: setlogin.S,v 1.4 1995/12/13 22:18:09 thorpej Exp $")
+	RCSID("$NetBSD: setlogin.S,v 1.5 1998/07/01 06:44:15 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-.globl	___logname_valid		/* in getlogin() */
+.globl	_C_LABEL(__logname_valid)		/* in getlogin() */
 
 SYSCALL(setlogin)
 #ifdef	PIC
-	movl	#__GLOBAL_OFFSET_TABLE_,a1
+	movl	#_C_LABEL(_GLOBAL_OFFSET_TABLE_),a1
 	lea	pc@(0,a1:l),a1
-	movl	a1@(___logname_valid:w),a1
+	movl	a1@(_C_LABEL(__logname_valid):w),a1
 	clrl	a1@
 #else
-	clrl	___logname_valid
+	clrl	_C_LABEL(__logname_valid)
 #endif
 	rts				/* setlogin(name) */

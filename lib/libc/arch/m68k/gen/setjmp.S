@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.7 1997/12/05 02:09:49 thorpej Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.8 1998/07/01 06:44:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.7 1997/12/05 02:09:49 thorpej Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.8 1998/07/01 06:44:14 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,9 +62,9 @@ ENTRY(setjmp)
 	subl	#12,sp		/* space for sigstack args/rvals */
 	clrl	sp@		/* don't change it... */
 	movl	sp,sp@(4)	/* ...but return the current val */
-	jbsr	___sigaltstack14 /* note: flags returned in sp@(8) */
+	jbsr	_C_LABEL(__sigaltstack14) /* note: flags returned in sp@(8) */
 	clrl	sp@		/* don't change mask, just return */
-	jbsr	_sigblock	/*   old value */
+	jbsr	_C_LABEL(sigblock) /*  old value */
 	movl	sp@(8),d1	/* old flags value */
 	andl	#1,d1		/* extract onstack flag */
 	addl	#12,sp
@@ -91,8 +91,8 @@ ENTRY(longjmp)
 ok:
 	moveml	a0@(28),#0x3CFC	/* restore non-scratch regs */
 	movl	a0,sp@-		/* let sigreturn */
-	jbsr	_sigreturn	/*   finish for us */
+	jbsr	_C_LABEL(sigreturn) /*  finish for us */
 
 botch:
-	jbsr	_longjmperror
+	jbsr	_C_LABEL(longjmperror)
 	stop	#0
