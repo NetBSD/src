@@ -1,4 +1,4 @@
-/* $NetBSD: amiga_bus_simple_4.c,v 1.1 1999/12/30 20:56:44 is Exp $ */
+/* $NetBSD: amiga_bus_simple_4.c,v 1.2 2000/02/01 05:21:24 mhitch Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,4 +37,84 @@
  */
 
 #define AMIGA_SIMPLE_BUS_STRIDE 4		/* 1 byte per long */
+#define AMIGA_SIMPLE_BUS_WORD_METHODS
+
 #include "simple_busfuncs.c"
+
+/*
+ * Little-endian word methods.
+ * Stream access does not swap, used for 16-bit wide transfers of byte streams.
+ * Non-stream access swaps bytes.
+ * XXX Only *_multi_2 transfers currently swap bytes XXX
+ */
+
+bsrm(oabs(bsrm2_swap_), u_int16_t);
+bswm(oabs(bswm2_swap_), u_int16_t);
+
+void
+oabs(bsrm2_swap_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	u_int16_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int16_t *p;
+
+	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*pointer++ = bswap16(*p);
+		--count;
+	}
+}
+
+void
+oabs(bswm2_swap_)(handle, offset, pointer, count)
+	bus_space_handle_t handle;
+	bus_size_t offset;
+	const u_int16_t *pointer;
+	bus_size_t count;
+{
+	volatile u_int16_t *p;
+
+	p = (volatile u_int16_t *)(handle + offset * AMIGA_SIMPLE_BUS_STRIDE);
+	
+	while (count > 0) {
+		*p = bswap16(*pointer);
+		++pointer;
+		--count;
+	}
+}
+
+const struct amiga_bus_space_methods amiga_bus_stride_4swap = {
+
+        oabs(bsm_),
+        oabs(bsms_),
+        oabs(bsu_),
+        0,
+        0,
+ 
+        oabs(bsr1_),
+        oabs(bsw1_),
+        oabs(bsrm1_),
+        oabs(bswm1_),
+        oabs(bsrr1_),
+        oabs(bswr1_),
+        oabs(bssr1_),
+        oabs(bscr1_),
+
+        oabs(bsr2_),		/* XXX swap? */
+        oabs(bsw2_),		/* XXX swap? */
+        oabs(bsr2_),
+        oabs(bsw2_),
+        oabs(bsrm2_swap_),
+        oabs(bswm2_swap_),
+        oabs(bsrm2_),
+        oabs(bswm2_),
+        oabs(bsrr2_),		/* XXX swap? */
+        oabs(bswr2_),		/* XXX swap? */
+        oabs(bsrr2_),
+        oabs(bswr2_),
+        oabs(bssr2_),		/* XXX swap? */
+        oabs(bscr2_)		/* XXX swap? */
+};
