@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.8 2000/12/23 23:06:51 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.9 2000/12/26 23:18:50 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -85,7 +85,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.8 2000/12/23 23:06:51 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.9 2000/12/26 23:18:50 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -537,44 +537,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	       ppn, lpn, pmap);
 #endif
 	s = splimp();
-	/* Check if the physical page is mapped already elsewhere. */
-	if (pmap == pmap_kernel()) {
-		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
-			if (pv->pv_pmap != NULL &&
-			    (pv->pv_pmap != pmap || pv->pv_lpn != lpn)) {
-				if (pv->pv_vflags & PV_WIRED) {
-					printf("new: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pmap, ppn, lpn);
-					printf("old: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pv->pv_pmap,
-					       pv->pv_ppn, pv->pv_lpn);
-					panic("Mapping clash not handled");
-				} else {
-					pmap_remove(pv->pv_pmap,
-						    pv->pv_lpn * PAGE_SIZE,
-						    (pv->pv_lpn+1) *
-						    PAGE_SIZE);
-				}
-			}
-	} else {
-		for (pv = &pv_table[ppn]; pv != NULL; pv = pv->pv_next)
-			if (pv->pv_pmap == pmap_kernel() ||
-			    (pv->pv_pmap == pmap && pv->pv_lpn != lpn)) {
-				if (pv->pv_vflags & PV_WIRED) {
-					printf("new: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pmap, ppn, lpn);
-					printf("old: pmap = %p, ppn = %d, "
-					       "lpn = %d\n", pv->pv_pmap,
-					       pv->pv_ppn, pv->pv_lpn);
-					panic("Mapping clash not handled");
-				} else {
-					pmap_remove(pv->pv_pmap,
-						    pv->pv_lpn * PAGE_SIZE,
-						    (pv->pv_lpn+1) *
-						    PAGE_SIZE);
-				}
-			}
-	}
 
 	/* Remove any existing mapping at this lpn */
 	if (pmap->pm_entries[lpn] != NULL &&
@@ -774,6 +736,19 @@ pmap_fault(struct pmap *pmap, vaddr_t va, vm_prot_t atype)
 			pmap_update_page(ppn);
 			return TRUE;
 		}
+	}
+	/*
+	 * It wasn't a referenced/modified fault.
+	 * If it looks like the access should have been allowed, try pushing
+	 * the mapping back into the MEMC.
+	 */
+	if ((atype & ~pv->pv_prot) == 0) {
+#if 0
+		printf("pmap_fault: MEMC miss; pmap = %p, lpn = %d, ppn = %d\n",
+		    pv->pv_pmap, pv->pv_lpn, pv->pv_ppn);
+#endif
+		MEMC_WRITE(pv->pv_activate);
+		return TRUE;
 	}
 	return FALSE;
 }
