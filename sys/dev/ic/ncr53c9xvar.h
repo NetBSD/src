@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.23 2000/03/29 03:03:28 simonb Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.24 2000/06/05 07:59:54 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -233,7 +233,6 @@ struct ncr53c9x_softc {
 
 	struct evcnt sc_intrcnt;		/* intr count */
 	struct scsipi_link sc_link;		/* scsipi link struct */
-	struct scsipi_adapter sc_adapter;	/* scsipi adapter glue */
 	struct device *sc_child;		/* attached scsibus, if any */
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
@@ -395,7 +394,8 @@ struct ncr53c9x_softc {
 #define	ncr53c9x_cpb2stp(sc, cpb)	\
 	((250 * (cpb)) / (sc)->sc_freq)
 
-void	ncr53c9x_attach __P((struct ncr53c9x_softc *, struct scsipi_device *));
+void	ncr53c9x_attach __P((struct ncr53c9x_softc *,
+		struct scsipi_adapter *, struct scsipi_device *));
 int	ncr53c9x_detach __P((struct ncr53c9x_softc *, int));
 int	ncr53c9x_scsi_cmd __P((struct scsipi_xfer *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
