@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_disk.c,v 1.1.1.1 1995/06/01 20:38:07 gwr Exp $ */
+/*	$NetBSD: dev_disk.c,v 1.2 1995/10/13 21:45:15 gwr Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -49,22 +49,38 @@
 #include "dvma.h"
 #include "promdev.h"
 
+struct saioreq disk_ioreq;
+
 int
 disk_open(f, devname)
 	struct open_file *f;
 	char *devname;		/* Device part of file name (or NULL). */
 {
-	struct saioreq *sip;
+	struct bootparam *bp;
+	struct saioreq *si;
 	int	error;
 
 #ifdef DEBUG_PROM
 	printf("disk_open: %s\n", devname);
 #endif
 
-	if ((error = prom_iopen(&sip)) != 0)
+	/*
+	 * Setup our part of the saioreq.
+	 * (determines what gets opened)
+	 */
+	si = &disk_ioreq;
+	bzero((caddr_t)si, sizeof(*si));
+	bp = *romp->bootParam;
+
+	si->si_boottab = bp->bootDevice;
+	si->si_ctlr = bp->ctlrNum;
+	si->si_unit = bp->unitNum;
+	si->si_boff = bp->partNum;
+
+	if ((error = prom_iopen(si)) != 0)
 		return (error);
 
-	f->f_devdata = sip;
+	f->f_devdata = si;
 	return 0;
 }
 
@@ -72,10 +88,10 @@ int
 disk_close(f)
 	struct open_file *f;
 {
-	struct saioreq *sip;
+	struct saioreq *si;
 
-	sip = f->f_devdata;
-	prom_iclose(sip);
+	si = f->f_devdata;
+	prom_iclose(si);
 	f->f_devdata = NULL;
 	return 0;
 }
