@@ -5,9 +5,9 @@
 #
 
 # set defaults
-: ${MAKE=make}
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
-arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
+MAKE="${MAKE:-make} -j 1"
+machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | ${MAKE} -s -f-`}
+arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | ${MAKE} -s -f-`}
 setd=`dirname $0`
 prefix=/
 

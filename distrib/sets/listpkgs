@@ -1,14 +1,14 @@
 #!/bin/sh
 #
-# $NetBSD: listpkgs,v 1.3 2002/03/24 22:15:28 bjh21 Exp $
+# $NetBSD: listpkgs,v 1.4 2002/07/23 09:02:45 lukem Exp $
 #
 # List all packages in the given pkgset by parsing the list files.
 #
 
 # set defaults
-: ${MAKE=make}
-machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | $MAKE -s -f-`}
-arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | $MAKE -s -f-`}
+MAKE="${MAKE:-make} -j 1"
+machine=${MACHINE:-`printf 'xxx:\n\techo ${MACHINE}' | ${MAKE} -s -f-`}
+arch=${MACHINE_ARCH:-`printf 'xxx:\n\techo ${MACHINE_ARCH}' | ${MAKE} -s -f-`}
 setd=`dirname $0`
 prefix=/
 
