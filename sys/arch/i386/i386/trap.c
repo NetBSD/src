@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.24 1994/01/09 22:53:16 mycroft Exp $
+ *	$Id: trap.c,v 1.25 1994/01/11 15:37:18 mycroft Exp $
  */
 
 /*
@@ -74,10 +74,10 @@ extern int cpl;
  * trap and syscall.
  */
 static inline void
-userret(p, pc, syst)
+userret(p, pc, oticks)
 	struct proc *p;
 	int pc;
-	struct timeval syst;
+	struct timeval oticks;
 {
 	int sig;
 
@@ -110,8 +110,8 @@ userret(p, pc, syst)
 		int ticks;
 		struct timeval *tv = &p->p_stime;
 
-		ticks = ((tv->tv_sec - syst.tv_sec) * 1000 +
-			(tv->tv_usec - syst.tv_usec) / 1000) / (tick / 1000);
+		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
+			(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
 		if (ticks) {
 #ifdef PROFTIMER
 			extern int profscale;
@@ -163,7 +163,7 @@ trap(frame)
 	register struct proc *p;
 	register struct pcb *pcb;
 	int type, code;
-	struct timeval syst;
+	struct timeval sticks;
 #ifdef notyet
 	extern char fusubail[];
 #endif
@@ -172,8 +172,8 @@ trap(frame)
 
 #ifdef DEBUG
 	printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
-		frame.tf_eflags, rcr2(), cpl);
+	    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
+	    frame.tf_eflags, rcr2(), cpl);
 	printf("curproc %x\n", curproc);
 #endif
 
@@ -197,7 +197,7 @@ trap(frame)
 		return;
 	}
 
-	syst = p->p_stime;
+	sticks = p->p_stime;
 
 	if (ISPL(frame.tf_cs) != SEL_KPL) {
 		type |= T_USER;
@@ -225,7 +225,7 @@ trap(frame)
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-			type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
+		    type, code, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -266,7 +266,7 @@ trap(frame)
 		}
 #else
 		printf("pid %d killed due to lack of floating point\n",
-			p->p_pid);
+		    p->p_pid);
 		rv = SIGKILL;
 #endif
 		trapsignal(p, rv, type &~ T_USER);
@@ -291,7 +291,7 @@ trap(frame)
 #endif
 
 		/*FALLTHROUGH*/
-	case T_PAGEFLT|T_USER: {		/* page fault */
+	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vm_offset_t va;
 		register struct vmspace *vm = p->p_vmspace;
 		register vm_map_t map;
@@ -303,9 +303,9 @@ trap(frame)
 		va = trunc_page((vm_offset_t)rcr2());
 		/*
 		 * It is only a kernel address space fault iff:
-		 *      1. (type & T_USER) == 0  and
-		 *      2. pcb_onfault not set or
-		 *      3. pcb_onfault set but supervisor space fault
+		 *	1. (type & T_USER) == 0  and
+		 *	2. pcb_onfault not set or
+		 *	3. pcb_onfault set but supervisor space fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
 		 */
@@ -356,7 +356,7 @@ trap(frame)
 			   not a page table fault as well */
 			if (!v && map != kernel_map)
 				vm_map_pageable(map, va, round_page(va+1),
-						FALSE);
+				    FALSE);
 			if (type == T_PAGEFLT)
 				return;
 			goto out;
@@ -366,21 +366,21 @@ trap(frame)
 			if (pcb->pcb_onfault)
 				goto copyfault;
 			printf("vm_fault(%x, %x, %x, 0) -> %x\n",
-			       map, va, ftype, rv);
+			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
 		trapsignal(p, (rv == KERN_PROTECTION_FAILURE)
-			      ? SIGBUS : SIGSEGV, T_PAGEFLT);
+		    ? SIGBUS : SIGSEGV, T_PAGEFLT);
 		break;
-	    }
+	}
 
 #ifndef DDB
 	/* XXX need to deal with this when DDB is present, too */
-	case T_TRCTRAP: /* kernel trace trap -- someone single stepping lcall's */
+	case T_TRCTRAP:	/* kernel trace trap; someone single stepping lcall's */
 			/* syscall has to turn off the trace bit itself */
 		return;
 #endif
-	
+
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
 	trace:
@@ -409,7 +409,7 @@ trap(frame)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(p, frame.tf_eip, syst);
+	userret(p, frame.tf_eip, sticks);
 }
 
 /*
@@ -461,7 +461,7 @@ syscall(frame)
 	register int i;
 	register struct sysent *callp;
 	register struct proc *p = curproc;
-	struct timeval syst;
+	struct timeval sticks;
 	int error, opc;
 	int args[8], rval[2];
 	int code;
@@ -471,7 +471,7 @@ syscall(frame)
 
 	cnt.v_syscall++;
 
-	syst = p->p_stime;
+	sticks = p->p_stime;
 	code = frame.tf_eax;
 	p->p_regs = (int *)&frame;
 	params = (caddr_t)frame.tf_esp + sizeof(int);
@@ -507,7 +507,7 @@ syscall(frame)
 	error = (*callp->sy_call)(p, args, rval);
 	if (error == ERESTART)
 		frame.tf_eip = opc;
-	else if (error != EJUSTRETURN) {
+	else if (error != EJUSTRETURN)
 		if (error) {
 			frame.tf_eax = error;
 			frame.tf_eflags |= PSL_C;	/* carry bit */
@@ -516,7 +516,6 @@ syscall(frame)
 			frame.tf_edx = rval[1];
 			frame.tf_eflags &= ~PSL_C;	/* carry bit */
 		}
-	}
 	/* else if (error == EJUSTRETURN) */
 		/* nothing to do */
 done:
@@ -525,7 +524,7 @@ done:
 	 * if this is a child returning from fork syscall.
 	 */
 	p = curproc;
-	userret(p, frame.tf_eip, syst);
+	userret(p, frame.tf_eip, sticks);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);
@@ -534,7 +533,7 @@ done:
 { extern int _udatasel, _ucodesel;
 	if (frame.tf_ss != _udatasel)
 		printf("ss %x call %d\n", frame.tf_ss, code);
-	if ((frame.tf_cs&0xffff) != _ucodesel)
+	if ((frame.tf_cs & 0xffff) != _ucodesel)
 		printf("cs %x call %d\n", frame.tf_cs, code);
 	if (frame.tf_eip >= VM_MAXUSER_ADDRESS) {
 		printf("eip %x call %d\n", frame.tf_eip, code);
