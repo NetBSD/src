@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/mon.h,v 1.11 1994/02/04 08:20:00 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/mon.h,v 1.12 1994/02/23 08:29:15 glass Exp $
  */
 /*
  * This file derived from kernel/mach/sun3.md/machMon.h from the
@@ -357,6 +357,7 @@ extern  void    Mach_MonTrap _ARGS_((Address address_to_trap_to));
 
 #define mon_printf (romVectorPtr->printf)
 #define mon_putchar (romVectorPtr->putChar)
+#define mon_may_getchar (romVectorPtr->mayGet)
 #define mon_exit_to_mon (romVectorPtr->exitToMon)
 #define mon_reboot (romVectorPtr->exitToMon)
 #define mon_panic(x) { mon_printf(x); mon_exit_to_mon();}

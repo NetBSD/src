@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/Attic/obio.h,v 1.6 1994/02/04 08:20:02 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/Attic/obio.h,v 1.7 1994/02/23 08:29:17 glass Exp $
  */
 
 /*
@@ -38,7 +38,6 @@
  * Supposedly these values are constant across the entire sun3 architecture.
  *
  */
-
 
 #define OBIO_KEYBD_MS     0x00000000
 #define OBIO_ZS           0x00020000

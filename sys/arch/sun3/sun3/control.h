@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.h,v 1.8 1994/02/04 08:19:51 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/control.h,v 1.9 1994/02/23 08:29:13 glass Exp $
  */
 
 /*
@@ -68,6 +68,15 @@
 #define CONTEXT_7  0x7
 #define CONTEXT_NUM 0x8
 #define CONTEXT_MASK 0x7
+
+#define SYSTEM_ENAB_DIAG  0x01
+#define SYSTEM_ENAB_FPA   0x02
+#define SYSTEM_ENAB_COPY  0x04
+#define SYSTEM_ENAB_VIDEO 0x08
+#define SYSTEM_ENAB_CACHE 0x10
+#define SYSTEM_ENAB_SVDMA 0x20
+#define SYSTEM_ENAB_FPP   0x40
+#define SYSTEM_ENAB_BOOT  0x80
 
 #include <sys/types.h>
 
