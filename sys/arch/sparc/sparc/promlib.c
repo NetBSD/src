@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.22 2003/08/27 15:59:54 mrg Exp $ */
+/*	$NetBSD: promlib.c,v 1.23 2003/10/13 17:59:19 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.22 2003/08/27 15:59:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.23 2003/10/13 17:59:19 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -689,8 +689,21 @@ char *
 obp_v2_getbootfile()
 {
 	struct v2bootargs *ba = promops.po_bootcookie;
+	char *kernel = parse_bootfile(*ba->v2_bootargs);
+	int optionsnode;
 
-	return (parse_bootfile(*ba->v2_bootargs));
+	if (kernel[0] != '\0')
+		return kernel;
+
+	/*
+	 * The PROM does not insert the `boot-file' variable if any argument
+	 * was given to the `boot' command (e.g `boot -s'). If we determine
+	 * in parse_bootfile() above, that boot args contain only switches
+	 * then get the `boot-file' value (if any) ourselves.
+	 * Note: PROM_getpropstring() imposes a 31 char size limit.
+	 */
+	optionsnode = findnode(firstchild(findroot()), "options");
+	return PROM_getpropstring(optionsnode, "boot-file");
 }
 
 void
