@@ -1,5 +1,5 @@
-.\"	$NetBSD: setkey.8,v 1.8 2001/06/05 12:46:08 wiz Exp $
-.\"     $KAME: setkey.8,v 1.32 2000/10/15 13:42:36 itojun Exp $
+.\"	$NetBSD: setkey.8,v 1.9 2001/08/12 09:38:18 itojun Exp $
+.\"	$KAME: setkey.8,v 1.53 2001/08/12 09:33:03 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
 .\" All rights reserved.
@@ -94,7 +94,8 @@ it has been expired but remains
 because it is referenced by SPD entries.
 .It Fl d
 Enable to print debugging messages for command parser,
-without talking to kernel.  It is not used usually.
+without talking to kernel.
+It is not used usually.
 .It Fl x
 Loop forever and dump all the messages transmitted to
 .Dv PF_KEY
@@ -113,7 +114,8 @@ The program will dump messages exchanged on
 socket, including messages sent from other processes to the kernel.
 .El
 .Pp
-Operations have the following grammar. Note that lines starting with
+Operations have the following grammar.
+Note that lines starting with
 hashmarks ('#') are treated as comment lines.
 .Bl -tag -width Ds
 .It Xo
@@ -189,6 +191,7 @@ Dumps all SPD entries.
 .\"
 .Pp
 Meta-arguments are as follows:
+.Pp
 .Bl -tag -compact -width Ds
 .It Ar src
 .It Ar dst
@@ -247,39 +250,49 @@ The default value is
 .It Fl r Ar size
 Specify window size of bytes for replay prevention.
 .Ar size
-must be decimal number in 32-bit word.  If
+must be decimal number in 32-bit word.
+If
 .Ar size
 is zero or not specified, replay check don't take place.
 .\"
 .It Fl u Ar id
-Specify the identifier of policy.  See also
-.Xr ipsec_set_policy 3 .
+Specify the identifier of the policy entry in SPD.
+See
+.Ar policy .
 .\"
 .It Fl f Ar pad_option
+defines the content of the ESP padding.
 .Ar pad_option
 is one of following:
-.Li zero-pad , random-pad
-or
-.Li seq-pad
+.Bl -tag -width random-pad -compact
+.It Li zero-pad
+All of the padding are zero.
+.It Li random-pad
+A series of randomized values are set.
+.It Li seq-pad
+A series of sequential increasing numbers started from 1 are set.
+.El
 .\"
 .It Fl f Li nocyclic-seq
 Don't allow cyclic sequence number.
 .\"
 .It Fl lh Ar time
 .It Fl ls Ar time
-Specify hard/soft lifetime.
+Specify hard/soft life time duration of the SA.
 .El
 .\"
 .Pp
 .It Ar algorithm
 .Bl -tag -width Fl -compact
 .It Fl E Ar ealgo Ar key
-Specify encryption algorithm.
+Specify a encryption algorithm.
 .It Fl A Ar aalgo Ar key
-Specify authentication algorithm.
+Specify a authentication algorithm.
 If
 .Fl A
-is used for esp, it will be treated as ESP payload authentication algorithm.
+is used with
+.Ar protocol Li esp ,
+it will be treated as ESP payload authentication algorithm.
 .It Fl C Ar calgo Op Fl R
 Specify compression algorithm.
 If
@@ -306,28 +319,30 @@ field needs to be smaller than
 in this case.
 .El
 .Pp
-.Li esp
-SAs accept
+.Ar protocol Li esp
+accepts
 .Fl E
 and
 .Fl A .
-.Li esp-old
-SAs accept
+.Ar protocol Li esp-old
+accepts
 .Fl E
 only.
-.Li ah
+.Ar protocol Li ah
 and
 .Li ah-old
-SAs accept
+accept
 .Fl A
 only.
-.Li ipcomp
-SAs accept
+.Ar protocol Li ipcomp
+accepts
 .Fl C
 only.
 .Pp
 .Ar key
-must be double-quoted character string or series of hexadecimal digits.
+must be double-quoted character string, or a series of hexadecimal digits
+preceded by
+.Dq Li 0x .
 .Pp
 Possible values for
 .Ar ealgo ,
@@ -336,6 +351,7 @@ and
 .Ar calgo
 are specified in separate section.
 .\"
+.Pp
 .It Ar src_range
 .It Ar dst_range
 These are selections of the secure communication specified as
@@ -430,18 +446,33 @@ is either
 .Li transport
 or
 .Li tunnel .
-You must specify the end-points addresses of the SA as
+If
+.Ar mode
+is
+.Li tunnel ,
+you must specify the end-points addresses of the SA as
 .Ar src
 and
 .Ar dst
 with
 .Sq -
 between these addresses which is used to specify the SA to use.
+If
+.Ar mode
+is
+.Li transport ,
+both
+.Ar src
+and
+.Ar dst
+can be omited.
 .Ar level
 is to be one of the following:
-.Li default , use
+.Li default , use , require
 or
-.Li require .
+.Li unique .
+If the SA is not available in every level, the kernel will request
+getting SA to the key exchange daemon.
 .Li default
 means the kernel consults to the system wide default against protocol you
 specified, e.g.
@@ -451,7 +482,23 @@ sysctl variable, when the kernel processes the packet.
 means that the kernel use a SA if it's available,
 otherwise the kernel keeps normal operation.
 .Li require
-means SA is required whenever the kernel deals with the packet.
+means SA is required whenever the kernel sends a packet matched
+with the policy.
+.Li unique
+is the same to require.
+In addition, it allows the policy to bind with the unique out-bound SA.
+If you use the SA by manual keying,
+you can put the decimal number as the policy identifier after
+.Li unique
+separated by colon
+.Sq \:
+like the following;
+.Li unique:number .
+.Li number
+must be between 1 and 32767.
+It corresponds to
+.Ar extensions Fl u .
+.Pp
 Note that
 .Dq Li discard
 and
@@ -530,13 +577,13 @@ lzs		rfc2395
 .Sh EXAMPLES
 .Bd -literal -offset
 add	3ffe:501:4819::1 3ffe:501:481d::1 esp 123457
-		-E des-cbc "ESP SA!!" ;
+		-E des-cbc 0x3ffe05014819ffff ;
 
 add	3ffe:501:4819::1 3ffe:501:481d::1 ah 123456
 		-A hmac-sha1 "AH SA configuration!" ;
 
 add	10.0.11.41 10.0.11.33 esp 0x10001
-		-E des-cbc "ESP with"
+		-E des-cbc 0x3ffe05014819ffff
 		-A hmac-md5 "authentication!!" ;
 
 get	3ffe:501:4819::1 3ffe:501:481d::1 ah 123456 ;
@@ -555,7 +602,8 @@ The command exits with 0 on success, and non-zero on errors.
 .\"
 .Sh SEE ALSO
 .Xr ipsec_set_policy 3 ,
-.Xr sysctl 8
+.Xr sysctl 8 ,
+.Xr racoon 8
 .\"
 .Sh HISTORY
 The
