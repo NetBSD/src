@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.2 1999/04/25 09:10:07 veego Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.3 1999/06/19 00:00:48 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -134,6 +134,7 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 	int ch;
 	int count = 0;
 	int y,x;
+	char *ibuf = alloca(max_chars);
 
 	msg_vprintf (msg, ap);
 	if (def != NULL && *def) {
@@ -157,10 +158,10 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 			} else
 				msg_beep ();
 		}
-		else if (count < max_chars && isprint(ch)) {
+		else if (count < (max_chars - 1) && isprint(ch)) {
 			if (do_echo)
 				waddch (msg_win, ch);
-			val[count++] = ch;
+			ibuf[count++] = ch;
 		} else
 			msg_beep ();
 		if (do_echo)
@@ -169,13 +170,14 @@ static void msg_vprompt (char *msg, char *def, char *val, int max_chars,
 	if (do_echo)
 		waddch(msg_win, '\n');
 
-	if (count != 0)
-		val[count] = '\0';
-
-	/* Do a string copy if needed to get default */
-	if (count == 0 && def != NULL && val != def)
-		strncpy (val, def, max_chars);
-
+	/* copy the appropriate string to the output */
+	if (count != 0) {
+		ibuf[count] = '\0';
+		strcpy(val, ibuf);		/* size known to be OK */
+	} else if (val != def) {
+		strncpy(val, def, max_chars);
+		val[max_chars - 1] = '\0';
+	}
 }
 
 void msg_prompt_addstr (char *fmt, char *def, char *val, int max_chars, ...)
