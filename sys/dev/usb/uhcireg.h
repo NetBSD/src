@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.4 1998/12/10 23:16:47 augustss Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.5 1998/12/27 23:40:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ typedef struct {
 #define UHCI_TD_GET_PID(s)	((s) & 0xff)
 #define UHCI_TD_SET_DEVADDR(a)	((a) << 8)
 #define UHCI_TD_GET_DEVADDR(s)	(((s) >> 8) & 0x7f)
-#define UHCI_TD_SET_ENDPT(e)	((e) << 15)
+#define UHCI_TD_SET_ENDPT(e)	(((e)&0xf) << 15)
 #define UHCI_TD_GET_ENDPT(s)	(((s) >> 15) & 0xf)
 #define UHCI_TD_SET_DT(t)	((t) << 19)
 #define UHCI_TD_GET_DT(s)	(((s) >> 19) & 1)
