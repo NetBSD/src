@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2000/05/26 21:20:04 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2000/05/29 21:35:04 deberg Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -100,17 +100,6 @@
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <next68k/next68k/seglist.h>
-
-#include "nextkbd.h"
-#if (NNEXTKBD > 0)
-#include <next68k/dev/nextkbdvar.h>
-#endif
-
-#include "nextdisplay.h"
-#if (NNEXTDISPLAY > 0)
-#include <next68k/dev/nextdisplayvar.h>
-#endif
-
 #include <next68k/next68k/nextrom.h>
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
