@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.86 2004/01/24 19:58:54 dsl Exp $	*/
+/*	$NetBSD: var.c,v 1.87 2004/02/20 09:03:26 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.86 2004/01/24 19:58:54 dsl Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.87 2004/02/20 09:03:26 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.86 2004/01/24 19:58:54 dsl Exp $");
+__RCSID("$NetBSD: var.c,v 1.87 2004/02/20 09:03:26 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -2712,8 +2712,14 @@ Var_Parse(const char *str, GNode *ctxt, Boolean err, int *lengthPtr,
 
 		    copy = FALSE;
 		    nest = 1;
+		    /*
+		     * In the loop below, ignore ':' unless we are at
+		     * (or back to) the original brace level.
+		     * XXX This will likely not work right if $() and ${}
+		     * are intermixed.
+		     */
 		    for (cp = tstr + 1;
-			 *cp != '\0' && *cp != ':';
+			 *cp != '\0' && !(*cp == ':' && nest == 1);
 			 cp++)
 		    {
 			if (*cp == '\\' &&

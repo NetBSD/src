@@ -1,3 +1,18 @@
+LIB=a X_LIBS:M${LIB${LIB:tu}} is "/tmp/liba.a"
+LIB=a X_LIBS:M*/lib${LIB}.a is "/tmp/liba.a"
+LIB=a X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBA.A"
+LIB=b X_LIBS:M${LIB${LIB:tu}} is ""
+LIB=b X_LIBS:M*/lib${LIB}.a is ""
+LIB=b X_LIBS:M*/lib${LIB}.a:tu is ""
+LIB=c X_LIBS:M${LIB${LIB:tu}} is ""
+LIB=c X_LIBS:M*/lib${LIB}.a is ""
+LIB=c X_LIBS:M*/lib${LIB}.a:tu is ""
+LIB=d X_LIBS:M${LIB${LIB:tu}} is "/tmp/libd.a"
+LIB=d X_LIBS:M*/lib${LIB}.a is "/tmp/libd.a"
+LIB=d X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBD.A"
+LIB=e X_LIBS:M${LIB${LIB:tu}} is "/tmp/libe.a"
+LIB=e X_LIBS:M*/lib${LIB}.a is "/tmp/libe.a"
+LIB=e X_LIBS:M*/lib${LIB}.a:tu is "/TMP/LIBE.A"
 LIST="one two three four five six"
 LIST:ts,="one,two,three,four,five,six"
 LIST:ts/:tu="ONE/TWO/THREE/FOUR/FIVE/SIX"
@@ -30,11 +45,6 @@ LIST:ts/x:tu="\x:tu}"
 FU_mod-ts="a/b/cool"
 FU_mod-ts:ts:T="cool" == cool?
 B.${AAA:ts}="Baaa" == Baaa?
-default FU=<v>fu</v> FOO=<v>foo</v> VAR=<v></v>
-two FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
-three FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
-four FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
-show FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
 make: Bad modifier `:[]' for LIST
 LIST:[]="" is an error
 LIST:[0]="one two three four five six"
@@ -165,3 +175,8 @@ The answer is empty
 The answer is known
 The answer is 42
 The answer is 42
+default FU=<v>fu</v> FOO=<v>foo</v> VAR=<v></v>
+two FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
+three FU=<v>bar</v> FOO=<v>goo</v> VAR=<v></v>
+four FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
+show FU=<v>bar</v> FOO=<v>goo</v> VAR=<v>Internal</v>
