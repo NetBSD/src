@@ -1,93 +1,43 @@
-#	$NetBSD: Makefile,v 1.14 2002/01/23 21:10:00 scw Exp $
+#	$NetBSD: Makefile,v 1.15 2002/03/24 18:08:19 scw Exp $
 
-TOP=		${.CURDIR}/..
+.include "${.CURDIR}/../../Makefile.inc"
+.include <bsd.own.mk>
 
-# This include just sets REV=XX
-.include "${TOP}/Makefile.inc"
+IMAGE=		ramdisk.fs
+IMAGESIZE=	1600b
 
-IMAGE=		ramdisk-${REV}.fs
-CBIN=		rd_bin
+WARNS=		1
 
-TREE=		mtree.conf
-LISTS=		list
-CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	be
+MAKEDEVTARGETS=	std md0 sd0 sd1 sd2 st0 cd0
+IMAGEDEPENDS=	${CRUNCHBIN} \
+		${DESTDIR}/usr/mdec/bootxx \
+		${_SRC_TOP_}/etc/group ${_SRC_TOP_}/etc/master.passwd \
+		${_SRC_TOP_}/etc/protocols ${_SRC_TOP_}/etc/netconfig \
+		${_SRC_TOP_}/etc/services
 
-KERNEL=		${KERNOBJDIR}/RAMDISK/netbsd
 
-MOUNT_POINT?=   /mnt
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
-VND?=           vnd0
-VND_CDEV=       /dev/${VND}c
-VND_CRDEV=      /dev/r${VND}c
+realall: ${IMAGE}
 
-CRUNCHGEN?=	crunchgen
-MDSETIMAGE?=	mdsetimage
-MTREE?=		mtree
+release:
 
-# These are all the parameters for the root fs: (384K)
-# NOTE: If you change NBLKS, you *must* also edit the
-#       rdroot entry in /etc/disktab
-DISKTYPE=	rdroot
-NBLKS=		1024
-
-CLEANFILES+=	netbsd-rd ${IMAGE}
-
-netbsd-rd:	${IMAGE}
-	cp ${KERNEL} netbsd-tmp
-	${MDSETIMAGE} netbsd-tmp ${IMAGE}
-	-mv -f netbsd-tmp $@
-
-${IMAGE}:	${TREE} ${LISTS} ${CBIN}
-	dd if=/dev/zero of=${IMAGE} count=${NBLKS}
-	vnconfig -t ${DISKTYPE} -v -c ${VND} ${IMAGE}
-	newfs -B be -m 0 -o space -i 2048 ${VND_CRDEV} ${DISKTYPE}
-	mount ${VND_CDEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${TREE} -p ${MOUNT_POINT}/ -u
-	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-	    KERNOBJDIR=${KERNOBJDIR} \
-	    TARGDIR=${MOUNT_POINT} sh ${.CURDIR}/runlist.sh ${.CURDIR}/${LISTS}
-	@echo ""
-	@df -i ${MOUNT_POINT}
-	@echo ""
-	umount ${MOUNT_POINT}
-	vnconfig -u ${VND}
-
-unconfig:
-	-umount -f ${MOUNT_POINT}     
-	-vnconfig -u ${VND}      
-	-/bin/rm -f ${IMAGE}
-
-# Do not delete this if I change my mind and kill make...
-.PRECIOUS: ${IMAGE}
-
-CLEANFILES+= ${CBIN} ${CBIN}.c ${CBIN}.cache ${CBIN}.mk ${CBIN}.syms
-CLEANFILES+= *.cro *_stub.o *_stub.c
-
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${BSDSRCDIR} -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
-
-${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
-	${MAKE} -f ${CBIN}.mk all
-
-# This is listed in rd_bin.conf but is built here.
-${CBIN} : libhack.o
 
 # Use stubs to eliminate some large stuff from libc
-HACKSRC=${TOP}/../utils/libhack
+HACKSRC=${DISTRIBDIR}/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
-release:	netbsd-rd
-	-mkdir -p ${RELEASEDIR}/installation/tapeimage
-	gzip < netbsd-rd > ${RELEASEDIR}/installation/tapeimage/netbsd-rd.gz
+# Turn off libhack's gethostby*() as it only supports /etc/hosts
+HACKOBJS:=	${HACKOBJS:Ngethost.o}
 
-clean cleandir distclean:
-	-rm -f a.out core *.core *.o
-	-rm -f ${CLEANFILES}
+# This is listed in ramdiskbin.conf but is built here.
+${CRUNCHBIN}: libhack.o
 
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
-.include <bsd.kernobj.mk>
-.include <bsd.sys.mk>
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
 .include <bsd.prog.mk>
-
