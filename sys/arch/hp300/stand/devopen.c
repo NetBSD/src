@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6 1996/06/26 17:44:28 thorpej Exp $	*/
+/*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
  *  Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -71,18 +71,15 @@ devlookup(d, len)
 	    switch (i) {
 	    case 0:	/* ct */
 		bcopy(file_system_rawfs, file_system, sizeof(struct fs_ops));
-		__machdep_start = machdep_start_disk_tape;
 		break;
 
 	    case 2:	/* rd */
 	    case 4:	/* sd */
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
-		__machdep_start = machdep_start_disk_tape;
 		break;
 
 	    case 6:	/* le */
 		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
-		__machdep_start = machdep_start_net;
 		break;
 
 	    default:
@@ -117,7 +114,7 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 {
     int *argp, i;
     char *s, *args[4];
-    
+
     /* get device name and make lower case */
     for (s = (char *)fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
 	if (isupper(*s)) *s = tolower(*s);
@@ -161,7 +158,7 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 
     /* second form */
     else if (*s == ':') {
-	int unit;
+	int temp;
 
 	/* isolate device */
 	for (s = (char *)fname; *s != ':' && !isdigit(*s); s++);
@@ -171,10 +168,10 @@ devparse(fname, dev, adapt, ctlr, unit, part, file)
 	    goto baddev;
 
 	/* isolate unit */
-	if ((unit = atoi(s)) > 255)
+	if ((temp = atoi(s)) > 255)
 	    goto bad;
-	*adapt = unit / 8;
-	*ctlr = unit % 8;
+	*adapt = temp / 8;
+	*ctlr = temp % 8;
 	for (; isdigit(*s); s++);
 	
 	/* translate partition */
@@ -217,52 +214,49 @@ devopen(f, fname, file)
 	unit  = B_UNIT(bootdev);
 	part  = B_PARTITION(bootdev);
 
+	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
+	    return(error);
+
 	/*
-	 * Set up defaults for filesystem and startup, according to
-	 * type detetect by the BOOT ROM. 
+	 * Set up filesystem type based on what device we're opening.
 	 */
 	switch (dev) {
 	case 0:		/* ct */
 		bcopy(file_system_rawfs, file_system, sizeof(struct fs_ops));
-		__machdep_start = machdep_start_disk_tape;
 		break;
 
 	case 2:		/* rd */
 	case 4:		/* sd */
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
-		__machdep_start = machdep_start_disk_tape;
 		break; 
 
 	case 6:		/* le */
 		bcopy(file_system_nfs, file_system, sizeof(struct fs_ops));
-		__machdep_start = machdep_start_net;
 		break;
 
 	default:
 		/* XXX what else should we do here? */
 		printf("WARNING: BOGUS BOOT DEV TYPE 0x%x!\n", dev);
-		printf("FALLING BACK ON `sd'\n");
-		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
-		__machdep_start = machdep_start_disk_tape;
-		break;
+		return (EIO);
 	}
 
-
-	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
-	    return(error);
-	
 	dp = &devsw[dev];
 	
 	if (!dp->dv_open)
 		return(ENODEV);
 
-	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
-
 	f->f_dev = dp;
 
-	if ((error = (*dp->dv_open)(f, adapt, ctlr, part)) == 0)
-	    return(0);
-	
+	if ((error = (*dp->dv_open)(f, adapt, ctlr, part)) == 0) {
+		if ((error =
+		    (*punitsw[dev].p_punit)(adapt, ctlr, &unit)) != 0) {
+			goto bad;
+		}
+		opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
+		return(0);
+	}
+
+ bad:
 	printf("%s(%d,%d,%d,%d): %s\n", devsw[dev].dv_name,
 	    adapt, ctlr, unit, part, strerror(error));
 
