@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.9 1998/01/12 20:52:30 thorpej Exp $ */
+/*	$NetBSD: kdb.c,v 1.10 1998/01/18 22:09:16 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,6 +44,7 @@
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/malloc.h>
 
 #include <vm/vm.h>
