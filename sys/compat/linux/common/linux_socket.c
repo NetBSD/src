@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.36 2002/03/16 20:43:54 christos Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.37 2002/03/29 20:49:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.36 2002/03/16 20:43:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.37 2002/03/29 20:49:40 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -89,6 +89,12 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.36 2002/03/16 20:43:54 christos E
 #include <compat/linux/common/linux_sockio.h>
 
 #include <compat/linux/linux_syscallargs.h>
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 /*
  * The calls in this file are entered either via the linux_socketcall()
@@ -1012,8 +1018,10 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 	struct sockaddr_in6 *sin6;
 #endif
 
-	if (*osalen < 2 || *osalen > UCHAR_MAX || !osa)
+	if (*osalen < 2 || *osalen > UCHAR_MAX || !osa) {
+		DPRINTF(("bad osa=%p osalen=%d\n", osa, *osalen));
 		return (EINVAL);
+	}
 
 	alloclen = *osalen;
 #ifdef INET6
@@ -1031,11 +1039,14 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 
 	kosa = (struct osockaddr *) malloc(alloclen, M_TEMP, M_WAITOK);
 
-	if ((error = copyin(osa, (caddr_t) kosa, *osalen)))
+	if ((error = copyin(osa, (caddr_t) kosa, *osalen))) {
+		DPRINTF(("error copying osa %d\n", error));
 		goto out;
+	}
 
 	bdom = linux_to_bsd_domain(kosa->sa_family);
 	if (bdom == -1) {
+		DPRINTF(("bad linux family=%d\n", kosa->sa_family));
 		error = EINVAL;
 		goto out;
 	}
@@ -1069,12 +1080,20 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 			error = EINVAL;
 			goto out;
 		}
+	} else if (bdom == AF_INET) {
+		alloclen = sizeof(struct sockaddr_in);
 	}
 #endif
 
 	sa = (struct sockaddr *) kosa;
 	sa->sa_family = bdom;
 	sa->sa_len = alloclen;
+#ifdef DEBUG_LINUX
+	DPRINTF(("family %d, len = %d [ ", sa->sa_family, sa->sa_len));
+	for (bdom = 0; bdom < sizeof(sa->sa_data); bdom++)
+	    DPRINTF(("%02x ", sa->sa_data[bdom]));
+	DPRINTF(("\n"));
+#endif
 
 	usa = (struct sockaddr *) stackgap_alloc(p, sgp, alloclen);
 	if (!usa) {
@@ -1082,8 +1101,10 @@ linux_sa_get(p, sgp, sap, osa, osalen)
 		goto out;
 	}
 
-	if ((error = copyout(sa, usa, alloclen)))
+	if ((error = copyout(sa, usa, alloclen))) {
+		DPRINTF(("error copying out socket %d\n", error));
 		goto out;
+	}
 
 	*sap = usa;
 
