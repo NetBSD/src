@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6 1998/03/12 23:34:29 cgd Exp $	*/
+/*	$NetBSD: pciide.c,v 1.7 1998/06/08 06:55:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -83,11 +83,7 @@ struct pciide_softc {
 
 #define	PCIIDE_CHANNEL_NAME(chan)	((chan) == 0 ? "primary" : "secondary")
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	pciide_match __P((struct device *, void *, void *));
-#else
 int	pciide_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	pciide_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pciide_ca = {
@@ -111,11 +107,7 @@ int	pciide_pci_intr __P((void *));
 int
 pciide_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: isp_pci.c,v 1.19 1998/02/04 05:14:56 thorpej Exp $	*/
+/*	$NetBSD: isp_pci.c,v 1.20 1998/06/08 06:55:57 thorpej Exp $	*/
 
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
@@ -111,11 +111,7 @@ static struct ispmdvec mdvec_2100 = {
 #define MEM_MAP_REG	0x14
 
 
-#ifdef	__BROKEN_INDIRECT_CONFIG
-static int isp_pci_probe __P((struct device *, void *, void *));
-#else
 static int isp_pci_probe __P((struct device *, struct cfdata *, void *));
-#endif
 static void isp_pci_attach __P((struct device *, struct device *, void *));
 
 struct isp_pcisoftc {
@@ -139,12 +135,8 @@ struct cfattach isp_pci_ca = {
 static int
 isp_pci_probe(parent, match, aux)
         struct device *parent;
-#ifdef	__BROKEN_INDIRECT_CONFIG
-        void *match, *aux; 
-#else
         struct cfdata *match;
 	void *aux; 
-#endif
 {       
         struct pci_attach_args *pa = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uha_eisa.c,v 1.10 1998/02/17 03:02:56 thorpej Exp $	*/
+/*	$NetBSD: uha_eisa.c,v 1.11 1998/06/08 07:04:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -53,11 +53,7 @@
 #define	UHA_EISA_SLOT_OFFSET	0xc80
 #define	UHA_EISA_IOSIZE		0x020
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	uha_eisa_match __P((struct device *, void *, void *));
-#else
 int	uha_eisa_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	uha_eisa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach uha_eisa_ca = {
@@ -83,11 +79,7 @@ void	u24_init __P((struct uha_softc *));
 int
 uha_eisa_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct eisa_attach_args *ea = aux;

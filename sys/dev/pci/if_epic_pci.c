@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.1 1998/06/02 01:29:41 thorpej Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.2 1998/06/08 06:55:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,11 +96,7 @@ struct epic_pci_softc {
 	void	*sc_ih;			/* interrupt handle */
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	epic_pci_match __P((struct device *, void *, void *));
-#else
 int	epic_pci_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	epic_pci_attach __P((struct device *, struct device *, void *));
 
 struct cfattach epic_pci_ca = {
@@ -110,11 +106,7 @@ struct cfattach epic_pci_ca = {
 int
 epic_pci_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.6 1998/05/26 13:28:03 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.7 1998/06/08 06:55:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -244,11 +244,7 @@ int	eapdebug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	eap_match __P((struct device *, void *, void *));
-#else
 int	eap_match __P((struct device *, struct cfdata *, void *));
-#endif
 void	eap_attach __P((struct device *, struct device *, void *));
 int	eap_intr __P((void *));
 
@@ -357,11 +353,7 @@ struct audio_device eap_device = {
 int
 eap_match(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.66 1998/05/28 13:51:09 matt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.67 1998/06/08 06:55:57 thorpej Exp $	*/
 
 /**************************************************************************
 **
@@ -1413,11 +1413,7 @@ static	void	ncr_usercmd	(ncb_p np);
 static  void    ncr_wakeup      (ncb_p np, u_long code);
 
 #ifdef __NetBSD__
-#ifdef __BROKEN_INDIRECT_CONFIG
-static	int	ncr_probe	(struct device *, void *, void *);
-#else
 static	int	ncr_probe	(struct device *, struct cfdata *, void *);
-#endif
 static	void	ncr_attach	(struct device *, struct device *, void *);
 #else /* !__NetBSD__ */
 static  char*	ncr_probe       (pcici_t tag, pcidi_t type);
@@ -1438,7 +1434,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.66 1998/05/28 13:51:09 matt Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.67 1998/06/08 06:55:57 thorpej Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3512,11 +3508,7 @@ static int ncr_chip_lookup(u_long device_id, u_char revision_id)
 int
 ncr_probe(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;

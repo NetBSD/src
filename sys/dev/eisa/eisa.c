@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa.c,v 1.20 1998/01/12 08:57:23 thorpej Exp $	*/
+/*	$NetBSD: eisa.c,v 1.21 1998/06/08 07:04:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -50,42 +50,23 @@
 #include <dev/eisa/eisavar.h>
 #include <dev/eisa/eisadevs.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	eisamatch __P((struct device *, void *, void *));
-#else
 int	eisamatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	eisaattach __P((struct device *, struct device *, void *));
 
 struct cfattach eisa_ca = {
 	sizeof(struct device), eisamatch, eisaattach
 };
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	eisasubmatch __P((struct device *, void *, void *));
-#else
 int	eisasubmatch __P((struct device *, struct cfdata *, void *));
-#endif
 int	eisaprint __P((void *, const char *));
 void	eisa_devinfo __P((const char *, char *));
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-eisamatch(parent, match, aux)
-#else
 eisamatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct eisabus_attach_args *eba = aux;
 
 	if (strcmp(eba->eba_busname, cf->cf_driver->cd_name))
@@ -113,22 +94,11 @@ eisaprint(aux, pnp)
 }
 
 int
-#ifdef __BROKEN_INDIRECT_CONFIG
-eisasubmatch(parent, match, aux)
-#else
 eisasubmatch(parent, cf, aux)
-#endif
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *cf;
-#endif
 	void *aux;
 {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	struct cfdata *cf = match;
-#endif
 	struct eisa_attach_args *ea = aux;
 
 	if (cf->eisacf_slot != EISA_UNKNOWN_SLOT &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.7 1997/06/17 05:44:22 cgd Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.8 1998/06/08 06:55:54 thorpej Exp $	*/
 
 /*
  * cy_pci.c
@@ -24,11 +24,7 @@
 #include <dev/ic/cyreg.h>
 #include <dev/ic/cyvar.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-static int cy_match_pci __P((struct device *, void *, void *));
-#else
 static int cy_match_pci __P((struct device *, struct cfdata *, void *));
-#endif
 static void cy_attach_pci  __P((struct device *, struct device *, void *));
 static int cy_map_pci __P((struct pci_attach_args *, bus_space_tag_t *,
     bus_space_handle_t *, bus_size_t  *, bus_space_tag_t *,
@@ -87,11 +83,7 @@ cy_unmap_pci(iot, ioh, iosize, memt, memh, memsize)
 static int
 cy_match_pci(parent, match, aux)
 	struct device	*parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void		*match;
-#else
 	struct cfdata	*match;
-#endif
 	void		*aux;
 {
 	struct pci_attach_args *pap = aux;
