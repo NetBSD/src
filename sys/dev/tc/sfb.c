@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.39 2000/11/25 11:43:42 nisimura Exp $ */
+/* $NetBSD: sfb.c,v 1.40 2001/01/15 09:37:42 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.39 2000/11/25 11:43:42 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.40 2001/01/15 09:37:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -887,7 +887,8 @@ bt459_set_curpos(sc)
 
 #if defined(alpha)
 #define	WRITE_MB() tc_wmb()
-#define	BUMP(p) ((p) = (caddr_t)(((long)(p) + 128) & ~0x400))
+/* registers is replicated in 128B stride; rap round 8th iteration */
+#define	BUMP(p) ((p) = (caddr_t)(((long)(p) + 0x80) & ~0x400))
 #endif
 
 #define	SFBMODE(p, v) \
@@ -918,65 +919,7 @@ sfb_cursor(id, on, row, col)
 	void *id;
 	int on, row, col;
 {
-	caddr_t sfb, p;
-	int scanspan, height, width, align, x, y;
-	u_int32_t lmask, rmask;
-	int fg, bg;
-
-	x = ri->ri_ccol * ri->ri_font->fontwidth;
-	y = ri->ri_crow * ri->ri_font->fontheight;
-	scanspan = ri->ri_stride;
-	height = ri->ri_font->fontheight;
-
-	p = ri->ri_bits + y * scanspan + x;
-	align = (long)p & SFBALIGNMASK;
-	p -= align;
-	width = ri->ri_font->fontwidth + align;
-	lmask = SFBSTIPPLEALL1 << align;
-	rmask = SFBSTIPPLEALL1 >> (-width & SFBSTIPPLEBITMASK);
-	sfb = ri->ri_hw;
-
-	SFBMODE(sfb, MODE_TRANSPARENTSTIPPLE);
-	SFBPLANEMASK(sfb, ~0);
-	SFBROP(sfb, 6);			/* ROP_XOR */
-	rasops_unpack_attr(attr, &fg, &bg, 0);
-	fg ^= bg;			/* (fg ^ bg) to swap fg/bg */
-	fg |= fg << 8;
-	fg |= fg << 16;
-	SFBFG(sfb, fg);
-	if (width <= SFBSTIPPLEBITS) {
-		lmask = lmask & rmask;
-		while (height > 0) {
-			SFBADDRESS(sfb, (long)p);
-			SFBSTART(sfb, lmask);
-			p += scanspan;
-			height--;
-		}
-	}
-#if supportlargerfonts
-	else {
-		caddr_t q = p;
-		while (height > 0) {
-			*(u_int32_t *)p = lmask;
-			WRITE_MB();
-			width -= 2 * SFBSTIPPLEBITS;
-			while (width > 0) {
-				p += SFBSTIPPLEBYTESDONE;
-				*(u_int32_t *)p = SFBSTIPPLEALL1;
-				WRITE_MB();
-				width -= SFBSTIPPLEBITS;
-			}
-			p += SFBSTIPPLEBYTESDONE;
-			*(u_int32_t *)p = rmask;
-			WRITE_MB();
-			p = (q += scanspan);
-			width = w + align;
-			height--;
-		}
-	}
-#endif
-	SFBMODE(sfb, MODE_SIMPLE);
-	SFBROP(sfb, 3);			/* ROP_COPY */
+	/* use Bt459 sprite cursor */
 }
 #endif
 
@@ -995,7 +938,6 @@ sfb_putchar(id, row, col, uc, attr)
 	int scanspan, height, width, align, x, y;
 	u_int32_t lmask, rmask, glyph;
 	u_int8_t *g;
-	int fg, bg;
 
 	x = col * ri->ri_font->fontwidth;
 	y = row * ri->ri_font->fontheight;
@@ -1014,42 +956,20 @@ sfb_putchar(id, row, col, uc, attr)
 
 	SFBMODE(sfb, MODE_OPAQUESTIPPLE);
 	SFBPLANEMASK(sfb, ~0);
-	rasops_unpack_attr(attr, &fg, &bg, 0);
-	fg |= fg << 8;
-	fg |= fg << 16;
-	bg |= bg << 8;
-	bg |= bg << 16;
-	SFBFG(sfb, fg);
-	SFBBG(sfb, bg);
-	if (1 /* width <= SFBSTIPPLEBITS */) {
-		lmask = lmask & rmask;
-		while (height > 0) {
-			glyph = *(u_int16_t *)g;		/* XXX */
-			SFBPIXELMASK(sfb, lmask);
-			SFBADDRESS(sfb, (long)p);
-			SFBSTART(sfb, glyph << align);
-			p += scanspan;
-			g += 2;					/* XXX */
-			height--;
-		}
+	SFBFG(sfb, ri->ri_devcmap[(attr >> 24) & 15]);
+	SFBBG(sfb, ri->ri_devcmap[(attr >> 16) & 15]);
+
+	/* XXX 2B stride fonts only XXX */
+	lmask = lmask & rmask;
+	while (height > 0) {
+		glyph = *(u_int16_t *)g;		/* XXX */
+		SFBPIXELMASK(sfb, lmask);
+		SFBADDRESS(sfb, (long)p);
+		SFBSTART(sfb, glyph << align);
+		p += scanspan;
+		g += 2;					/* XXX */
+		height--;
 	}
-#if supportlargerfonts
-	else {
-		/*
-		 * It's hard to draw oversized glyphs whose width is
-		 * larger than 24 pixel.
-		 */
-		caddr_t q = p;
-		while (height > 0) {
-			/* XXX */
-			/* XXX */
-			/* XXX */
-			p = (q += scanspan);
-			g += 2;					/* XXX */
-			height--;
-		}
-	}
-#endif
 	SFBMODE(sfb, MODE_SIMPLE);
 	SFBPIXELMASK(sfb, ~0);		/* entire pixel */
 }
