@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.169 2002/01/27 10:52:31 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.170 2002/01/27 11:07:38 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -34,7 +34,7 @@
 
 include "arch/amiga/conf/std.amiga"
 
-#ident 		"GENERIC-$Revision: 1.169 $"
+#ident 		"GENERIC-$Revision: 1.170 $"
 
 #ifdef INSTALL_CONFIGURATION
 makeoptions	COPTS="-Os"
@@ -205,7 +205,7 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	NKPTADD=4	# set this for 4 additional KPT pages
 #options 	NKPTADDSHIFT=24	# set this for 1 additional KPT page
 				# per 16 MB (1<<24 bytes) of RAM
-				# define and decrease this, or define and
+				# uncomment and decrease this, or uncomment and
 				# increase NKPTADD if you get "out of PT pages"
 				# panics.
 
