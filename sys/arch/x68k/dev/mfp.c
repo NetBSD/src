@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.8 2002/10/01 04:43:05 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.9 2002/10/02 16:02:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ static void mfp_init __P((void));
 static void mfp_calibrate_delay __P((void));
 
 CFATTACH_DECL(mfp, sizeof(struct mfp_softc),
-    mfp_match, mfp_attach, NULL, NULL)
+    mfp_match, mfp_attach, NULL, NULL);
 
 static int
 mfp_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_any.c,v 1.7 2002/10/01 05:39:43 thorpej Exp $ */
+/*	$NetBSD: bwtwo_any.c,v 1.8 2002/10/02 16:02:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,10 +117,10 @@ struct bwtwosun2_softc {
 };
 
 CFATTACH_DECL(bwtwo_obio, sizeof(struct bwtwosun2_softc),
-    bwtwomatch_any, bwtwoattach_any, NULL, NULL)
+    bwtwomatch_any, bwtwoattach_any, NULL, NULL);
 
 CFATTACH_DECL(bwtwo_obmem, sizeof(struct bwtwosun2_softc),
-    bwtwomatch_any, bwtwoattach_any, NULL, NULL)
+    bwtwomatch_any, bwtwoattach_any, NULL, NULL);
 
 static int	bwtwo_get_video_sun2 __P((struct bwtwo_softc *));
 static void	bwtwo_set_video_sun2 __P((struct bwtwo_softc *, int));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.33 2002/10/01 18:40:06 thorpej Exp $	*/
+/*	$NetBSD: ebus.c,v 1.34 2002/10/02 16:02:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -99,7 +99,7 @@ int	ebus_match __P((struct device *, struct cfdata *, void *));
 void	ebus_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
-    ebus_match, ebus_attach, NULL, NULL)
+    ebus_match, ebus_attach, NULL, NULL);
 
 bus_space_tag_t ebus_alloc_bus_tag __P((struct ebus_softc *, int));
 

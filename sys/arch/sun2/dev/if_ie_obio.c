@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.4 2002/10/01 05:39:44 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.5 2002/10/02 16:02:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ int ie_obio_match __P((struct device *, struct cfdata *, void *));
 void ie_obio_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ie_obio, sizeof(struct ie_softc),
-    ie_obio_match, ie_obio_attach, NULL, NULL)
+    ie_obio_match, ie_obio_attach, NULL, NULL);
 
 /* Supported media */
 static int media[] = {

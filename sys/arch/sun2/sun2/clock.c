@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2002/10/01 05:39:45 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.5 2002/10/02 16:02:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -99,7 +99,7 @@ static int  clock_match __P((struct device *, struct cfdata *, void *args));
 static void clock_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(clock, sizeof(struct device),
-    clock_match, clock_attach, NULL, NULL)
+    clock_match, clock_attach, NULL, NULL);
 
 static int
 clock_match(parent, cf, args)

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.71 2002/10/01 18:57:49 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.72 2002/10/02 16:02:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -85,7 +85,7 @@ static void iommu_copy_prom_entries __P((struct iommu_softc *));
 #endif
 
 CFATTACH_DECL(iommu, sizeof(struct iommu_softc),
-    iommu_match, iommu_attach, NULL, NULL)
+    iommu_match, iommu_attach, NULL, NULL);
 
 /* IOMMU DMA map functions */
 int	iommu_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: slhci_intio.c,v 1.3 2002/10/01 04:43:07 thorpej Exp $	*/
+/*	$NetBSD: slhci_intio.c,v 1.4 2002/10/02 16:02:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static void slhci_intio_enable_intr(void *, int);
 static int  slhci_intio_intr(void *);
 
 CFATTACH_DECL(slhci_intio, sizeof(struct slhci_intio_softc),
-    slhci_intio_match, slhci_intio_attach, NULL, NULL)
+    slhci_intio_match, slhci_intio_attach, NULL, NULL);
 
 static int
 slhci_intio_match(struct device *parent, struct cfdata *cf, void *aux)

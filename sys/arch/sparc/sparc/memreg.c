@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.34 2002/10/01 18:57:49 thorpej Exp $ */
+/*	$NetBSD: memreg.c,v 1.35 2002/10/02 16:02:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,10 +73,10 @@ static void	memregattach_obio
 			__P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(memreg_mainbus, sizeof(struct device),
-    memregmatch_mainbus, memregattach_mainbus, NULL, NULL)
+    memregmatch_mainbus, memregattach_mainbus, NULL, NULL);
 
 CFATTACH_DECL(memreg_obio, sizeof(struct device),
-    memregmatch_obio, memregattach_obio, NULL, NULL)
+    memregmatch_obio, memregattach_obio, NULL, NULL);
 
 #if defined(SUN4M)
 static void hardmemerr4m __P((unsigned, u_int, u_int, u_int, u_int));

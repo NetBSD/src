@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.17 2002/10/01 05:32:43 thorpej Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.18 2002/10/02 16:02:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ static int  ie_obio_match __P((struct device *, struct cfdata *, void *));
 static void ie_obio_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ie_obio, sizeof(struct ie_softc),
-    ie_obio_match, ie_obio_attach, NULL, NULL)
+    ie_obio_match, ie_obio_attach, NULL, NULL);
 
 static int
 ie_obio_match(parent, cf, args)
