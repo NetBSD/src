@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.x68k,v 1.48 2000/12/17 15:52:44 jdolecek Exp $
+#	$NetBSD: Makefile.x68k,v 1.49 2000/12/29 15:18:37 minoura Exp $
 
 # Makefile for NetBSD
 #
@@ -41,19 +41,7 @@ X68K=	$S/arch/x68k
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dx68k
-
-M68060!=	( echo '\#include "opt_m680x0.h"';	\
-		  echo '\#ifdef M68060';		\
-		  echo '1';				\
-		  echo '\#else';			\
-		  echo '0';				\
-		  echo '\#endif' )			\
-			| ${CPP} | sed -e '/^\#/d' -e '/^$$/d'
-.if ${M68060}
-CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-m68851
-.else
-CMACHFLAGS=	-m68030
-.endif
+CMACHFLAGS?=	-m68020-60 -Wa,-m68030 -Wa,-m68851
 CWARNFLAGS?=	-Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
