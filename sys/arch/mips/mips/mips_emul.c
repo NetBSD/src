@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.10 2004/03/26 17:34:18 drochner Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.11 2004/04/26 22:29:07 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.10 2004/03/26 17:34:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.11 2004/04/26 22:29:07 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,8 @@ MachEmulateBranch(f, instpc, fpuCSR, allowNonBranch)
 		else if (allowNonBranch)
 			nextpc = instpc + 4;
 		else
-			panic("MachEmulateBranch: Non-branch");
+			panic("MachEmulateBranch: Non-branch instruction at "
+			    "pc 0x%lx", (long)instpc);
 		break;
 
 	case OP_BCOND:
