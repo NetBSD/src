@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.18 1996/04/25 02:15:42 thorpej Exp $
+#	$NetBSD: files.isa,v 1.19 1996/05/06 21:36:58 is Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -170,6 +170,12 @@ file	dev/isa/if_fe.c			fe
 device	ie: ether, ifnet, elink
 attach	ie at isa
 file	dev/isa/if_ie.c			ie
+
+# Intel i82595-based boards.
+# (Intel EtherExpress PRO)
+device  iy: ether, ifnet         
+attach	iy at isa
+file    dev/isa/if_iy.c			iy
 
 # XXX ???
 # XXX NOT IN TREE?
