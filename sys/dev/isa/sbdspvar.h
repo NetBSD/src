@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.34 1998/06/09 00:05:46 thorpej Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.35 1998/06/29 22:40:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -96,6 +96,7 @@ struct sbdsp_softc {
 
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
+	int	sc_ist;			/* interrupt share type */
 	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
 
