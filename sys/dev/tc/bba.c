@@ -1,4 +1,4 @@
-/* $NetBSD: bba.c,v 1.2 2000/05/28 06:13:40 gmcgarry Exp $ */
+/* $NetBSD: bba.c,v 1.3 2000/06/01 21:46:17 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -498,8 +498,6 @@ bba_trigger_output(addr, start, end, blksize, intr, arg, param)
 	ssr |= IOASIC_CSR_DMAEN_ISDN_T;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
 
-	wbflush();
-
 	d->active = 1;
 
 	return 0;
@@ -567,8 +565,6 @@ bba_trigger_input(addr, start, end, blksize, intr, arg, param)
 	/* kick off DMA */
 	ssr |= IOASIC_CSR_DMAEN_ISDN_R;
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, IOASIC_CSR, ssr);
-
-	wbflush();
 
 	d->active = 1;
 
