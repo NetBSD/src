@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.h,v 1.2 2001/01/13 16:44:26 bjh21 Exp $	*/
+/*	$NetBSD: disassem.h,v 1.3 2001/01/13 16:52:01 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -44,5 +44,5 @@ typedef struct {
 
 /* Prototypes for callable functions */
 
-vm_offset_t disasm(disasm_interface_t *, vm_offset_t, int);
+vm_offset_t disasm(const disasm_interface_t *, vm_offset_t, int);
 void disassemble(u_int);
