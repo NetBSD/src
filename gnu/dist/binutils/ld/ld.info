@@ -5397,8 +5397,8 @@ Index
 * -R FILE:                               Options.
 * -rpath:                                Options.
 * -rpath-link:                           Options.
-* -S:                                    Options.
 * -s:                                    Options.
+* -S:                                    Options.
 * -shared:                               Options.
 * -soname=NAME:                          Options.
 * -static:                               Options.
@@ -5472,8 +5472,8 @@ Index
 * common symbol placement:               Input Section Common.
 * compatibility, MRI:                    Options.
 * constants in linker scripts:           Constants.
-* CONSTRUCTORS:                          Output Section Keywords.
 * constructors:                          Options.
+* CONSTRUCTORS:                          Output Section Keywords.
 * constructors, arranging in link:       Output Section Keywords.
 * crash of linker:                       Bug Criteria.
 * CREATE_OBJECT_SYMBOLS:                 Output Section Keywords.
@@ -5531,8 +5531,8 @@ Index
 * forcing input section alignment:       Forced Input Alignment.
 * FORMAT (MRI):                          MRI.
 * functions in expressions:              Builtin Functions.
-* garbage collection <1>:                Input Section Keep.
-* garbage collection:                    Options.
+* garbage collection <1>:                Options.
+* garbage collection:                    Input Section Keep.
 * generating optimized output:           Options.
 * GNU linker:                            Overview.
 * GNUTARGET:                             Environment.
