@@ -1,0 +1,101 @@
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1 $>
+
+
+[Note: This file does not mention every change made to the NetBSD source tree.
+For an exhaustive list, please subscribe to the `source-changes' mailing list,
+or see the mailing list archives.  For more information, send a message
+containing just the word `help' to `majordomo@netbsd.org'.]
+
+
+Changes from NetBSD 1.6 to NetBSD 1.7:
+	libcrypt: support bcrypt password entries.  can be chosen with
+		"blowfish" keyword in passwd.conf.  from openbsd
+		[itojun 20020524]
+	tcp: implement path MTU discovery blackhole detection (turn off path
+		MTU discovery if the connection is losing).  PR 12790.
+		[itojun 20020526]
+	pppd: import 2.4.1 [christos 20020529]
+	ftpd: optionally and experimentally use mmap(2) instead of read(2)
+		for binary file transfer [enami 20020530]
+	prep: support IBM RS/6000 43P 7043-140. [nonaka 20020530]
+	pmppc: a port to Artesyn's PM/PPC board.  [augustss 20020531]
+	tcpdump(8): upgrade to 3.7.1 as of 2002/5/31. [itojun 20020531]
+	amdpm(4): driver for AMD768 Power Management Controller (but currently
+		an interface to rnd(4) only.)  [enami 20020602]
+	gspahextoc: was obsoleted by the -c option to gspa(1) a long
+		time ago, and has thus been removed [is 20020607]
+	netinet6: synchronize with recent interface/router/prefix management
+		logic from KAME.  [itojun 20020608]
+	greconfig(8): obsoleted.  use ifconfig(8) for configuration.
+		[itojun 20020609]
+	netinet: path MTU discovery is turned on by default (currently used
+		for TCP only).  [itojun 20020613]
+	amd(8): add new mount option ""xlatecookie" to support NFS v3 mounts
+		with cookie translation.  [tron 20020614]
+	factor(6): Use a Pollard Rho algorithm to factor arbitrary sized
+		numbers.  [simonb 20020615]
+	systrace: Integrate Niels Provos' systrace(1) binary sand-boxing,
+		device and userland support. [christos 20020617]
+	netstat(1): add -q flag to print information about
+		software interrupt queue.  [enami 20020703]
+	Socket buffer insertion is now O(C).  This can provide a
+		substantial performance boost to some applications
+		which use large socket buffers.  [thorpej 20020703]
+	Added support for the SuperH SH-5 CPU architecture.
+		[scw 20020705]
+	chflags(1), chgrp(1), chmod(1), chown(8): Change default behaviour
+		to follow symlinks on the command line rather than ignoring
+		them, finally fixing PR 563.  [bjh21 20020707]
+	file(1): update to 3.39. [pooka 20020709]
+	Import pdisk 0.8a1, the Apple disk partitioning utility [dbj 20020709]
+	Switch to a signal trampoline provided by libc.  The kernel
+		will provide one for backward compatibility, and
+		for emulations.  [thorpej 20020710]
+	m68k-based ports now use __HAVE_SYSCALL_INTERN syscall interface.
+		[scw 20020713]
+	evbarm: Add support for the Intel IXM1200 eval board for
+		the ixp12x0 Network Processor.  [ichiro 20020715]
+	mopd: Added "-s <mopdir>" to avoid hard coding /tftpboot/mop.
+		[mrg 20020719]
+	hpcarm: X server for the Jornada 720 now works [manu 20020722]
+	pciide(4): added support for the Silicon Image 0680 IDE controller.
+		[onoe 20020726]
+	macppc: finished support for 2nd CPU on 9500/180MP and 9600/200MP
+		[chs 20020728]
+	systrace: Update systrace(1) and the kernel code.  Note that the
+		update contains backward-incompatible change in ioctl.
+		[itojun 20020730]
+	Added dmover(4) API, interface to hardware-assisted data
+		movers.  [thorpej 20020801]
+	pkg_admin(8): Add 'pmatch' keyword to return true if 'pkg' matches
+		'pattern', false else. [hubertf 20020804]
+	macppc: added support for 2nd CPU on dual G4 boxes [chs 20020805]
+	pmc(9): Added new performance counter framework.  [briggs 20020806]
+	auich(4): Added support for ICH4 and SiS 7012.  [kent 20020807]
+	pmc(3): Added new performance counter interface library.
+		[thorpej 20020808]
+	Added slhci(4), ScanLogic SL811HS/T USB Host Controller.
+		[isaki 20020811]
+	Added new "ibss", "ibss-master", and "hostap" ifmedia media options
+		for 802.11 interfaces.  [thorpej 20020810]
+	wi(4): Add experimental Host-AP support, allowing Intelsil
+		Prism2/2.5/3-based boards to be used to make an
+		802.11 Access Point.  [thorpej 20020811]
+	arm: New versions of copyin(), copyout(), and kcopy().  These make
+		almost all user/kernel interactions faster.  [briggs 20020812]
+	lpd(8): add libwrap support. [itojun 20020812]
+	sparc64: Add sab driver for sab82532 serial controller. Written by
+		Jason L. Wright for OpenBSD. [petrov 20020816]
+	wscons(4): Add wsmoused(8) for mouse cut and paste in wscons vga
+		driver. [christos 20020820]
+	utmpx: All userland programs have been converted to understand both
+		utmp and utmpx, wtmp and wtmpx, lastlog and lastlogx
+		[christos 20020821]
+	rescue: enable /rescue system recovery tools.  [lukem 20020822]
+	boot: allow path to init(8) to be entered when booting with
+		RB_ASKNAME ("boot -a").  [lukem 20020823]
+	rasctl(2): Restartable Atomic Sequences (RAS).  [gmcgarry 20020828]
+	pmap(1): Added to tree.  Prints the address space of a given
+		process (or processes).  [atatat 20020831]
+	zx(4): Add a driver for the Sun ZX/Leo framebuffer.  [ad 20020913]
+	ipf(8): updated to version 3.4.29. [martti 20020919]
