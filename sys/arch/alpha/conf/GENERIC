@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.123 1999/07/29 10:37:13 augustss Exp $
+# $NetBSD: GENERIC,v 1.124 1999/07/29 19:36:58 augustss Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -297,11 +297,11 @@ uhub*	at uhub? port ?
 
 # USB mice
 ums*	at uhub? port ?
-wsmouse* at ums?
+wsmouse* at ums? mux 0
 
 # USB Keyboards
 ukbd*	at uhub? port ?
-wskbd*	at ukbd? console ?
+wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
 uhid*	at uhub? port ?
@@ -314,8 +314,8 @@ ulpt*	at uhub? port ?
 wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
-wskbd*		at	pckbd?
-wsmouse*	at	pms?
+wskbd*		at	pckbd? mux 1
+wsmouse*	at	pms? mux 0
 
 pseudo-device	bpfilter	16
 pseudo-device	ccd		4
@@ -328,6 +328,7 @@ pseudo-device	pty		64
 pseudo-device	sl		4
 pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 
 # rnd is EXPERIMENTAL
 #pseudo-device	rnd			# /dev/random and in-kernel generator
