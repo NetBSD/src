@@ -31,9 +31,7 @@
  
 extern char *line;		/* see sys_term.c */
 
-#ifdef __P
-krb5_error_code rd_and_store_for_creds __P((krb5_context, krb5_auth_context, krb5_data *, krb5_ticket *));
-#endif
+krb5_error_code rd_and_store_for_creds(krb5_context, krb5_auth_context, krb5_data *, krb5_ticket *);
 
 /* Decode, decrypt and store the forwarded creds in the local ccache. */
 krb5_error_code

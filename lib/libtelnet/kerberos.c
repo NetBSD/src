@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.14 2003/10/21 01:10:47 fvdl Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.15 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.14 2003/10/21 01:10:47 fvdl Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.15 2005/02/06 05:53:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,7 +77,7 @@ __RCSID("$NetBSD: kerberos.c,v 1.14 2003/10/21 01:10:47 fvdl Exp $");
 
 #include <sys/cdefs.h>
 
-int kerberos4_cksum __P((unsigned char *, int));
+int kerberos4_cksum(unsigned char *, int);
 
 static unsigned char str_data[1024] = { IAC, SB, TELOPT_AUTHENTICATION, 0,
 			  		AUTHTYPE_KERBEROS_V4, };
@@ -102,7 +102,7 @@ static Schedule sched;
 static Block	challenge	= { 0 };
 #endif	/* ENCRYPTION */
 
-static int Data P((Authenticator *, int, void *, int));
+static int Data(Authenticator *, int, void *, int);
 
 	static int
 Data(ap, type, d, c)

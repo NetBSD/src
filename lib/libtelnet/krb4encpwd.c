@@ -1,4 +1,4 @@
-/*	$NetBSD: krb4encpwd.c,v 1.5 2003/08/07 16:44:55 agc Exp $	*/
+/*	$NetBSD: krb4encpwd.c,v 1.6 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)krb4encpwd.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: krb4encpwd.c,v 1.5 2003/08/07 16:44:55 agc Exp $");
+__RCSID("$NetBSD: krb4encpwd.c,v 1.6 2005/02/06 05:53:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,8 @@ __RCSID("$NetBSD: krb4encpwd.c,v 1.5 2003/08/07 16:44:55 agc Exp $");
 
 #include <sys/cdefs.h>
 
-int krb_mk_encpwd_req __P((KTEXT, char *, char *, char *, char *, char *, char *));
-int krb_rd_encpwd_req __P((KTEXT, char *, char *, u_long, AUTH_DAT *, char *, char *, char *, char *));
+int krb_mk_encpwd_req(KTEXT, char *, char *, char *, char *, char *, char *);
+int krb_rd_encpwd_req(KTEXT, char *, char *, u_long, AUTH_DAT *, char *, char *, char *, char *);
 
 extern auth_debug_mode;
 

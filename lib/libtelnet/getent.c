@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.9 2004/04/23 17:54:02 christos Exp $	*/
+/*	$NetBSD: getent.c,v 1.10 2005/02/06 05:53:07 perry Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getent.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: getent.c,v 1.9 2004/04/23 17:54:02 christos Exp $");
+__RCSID("$NetBSD: getent.c,v 1.10 2005/02/06 05:53:07 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,8 +43,8 @@ __RCSID("$NetBSD: getent.c,v 1.9 2004/04/23 17:54:02 christos Exp $");
 
 static char *area;
 
-int getent __P((char *, char *));
-char *getstr __P((char *, char **));
+int getent(char *, char *);
+char *getstr(char *, char **);
 
 /*ARGSUSED*/
 int
