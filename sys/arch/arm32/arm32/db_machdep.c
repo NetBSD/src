@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.3 1996/06/03 21:53:35 mark Exp $ */
+/* $NetBSD: db_machdep.c,v 1.4 1996/06/12 19:57:06 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -33,11 +33,14 @@
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/systm.h>
+
 #include <machine/db_machdep.h>
 
 #include <ddb/db_access.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
+
+#include <machine/irqhandler.h>
 
 void
 db_show_fs_cmd(addr, have_addr, count, modif)
@@ -162,4 +165,36 @@ db_show_vmstat_cmd(addr, have_addr, count, modif)
 	db_printf("%9u pages active\n", sum.v_active_count);
 	db_printf("%9u pages inactive\n", sum.v_inactive_count);
 	db_printf("%9u bytes per page\n", sum.v_page_size);
+}
+
+void
+db_show_intrchain_cmd(addr, have_addr, count, modif)
+	db_expr_t       addr;
+	int             have_addr;
+	db_expr_t       count;
+	char            *modif;
+{
+	int loop;
+	irqhandler_t *ptr;
+	char *name;
+	db_expr_t offset;
+
+	for (loop = 0; loop < NIRQS; ++loop) {
+		ptr = irqhandlers[loop];
+		if (ptr) {
+			db_printf("IRQ %d\n", loop);
+
+			while (ptr) {
+				db_printf("  %-13s %d ", ptr->ih_name, ptr->ih_level);
+				db_find_sym_and_offset((u_int)ptr->ih_func, &name, &offset);
+				if (name == NULL)
+					name = "?";
+
+				db_printf("%s(", name);
+				db_printsym((u_int)ptr->ih_func, DB_STGY_PROC);
+				db_printf(") %08x\n", (u_int)ptr->ih_arg);
+				ptr = ptr->ih_next;
+			}
+		}
+	}
 }

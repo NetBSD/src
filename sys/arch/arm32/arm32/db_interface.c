@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.7 1996/06/03 21:53:34 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.8 1996/06/12 19:57:08 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -233,13 +233,15 @@ Debugger()
 }
 
 void db_show_vmstat_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_fs_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
-void db_show_vnode_cmd __P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_show_fs_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_show_vnode_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
+void db_show_intrchain_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 
 struct db_command arm32_db_command_table[] = {
 	{ "vmstat",	db_show_vmstat_cmd,	0, NULL },
 	{ "fs",		db_show_fs_cmd,		0, NULL },
 	{ "vnode",	db_show_vnode_cmd,	0, NULL },
+	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
 	{ NULL, 	NULL, 			0, NULL }
 };
 
