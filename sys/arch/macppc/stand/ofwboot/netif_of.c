@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.1 1998/05/15 10:16:00 tsubai Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.2 1999/02/04 12:14:24 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -95,6 +95,8 @@ netif_open(machdep_hint)
 	io->io_netif = &netif_of;
 	
 	/* Put our ethernet address in io->myea */
+	OF_getprop(OF_instance_to_package(op->handle),
+		   "local-mac-address", io->myea, sizeof io->myea) == -1 &&
 	OF_getprop(OF_instance_to_package(op->handle),
 		   "mac-address", io->myea, sizeof io->myea);
 
