@@ -7,4 +7,4 @@ nested control structures, such as those in `awf'.
 The problem goes away if you use either bison or Berkeley yacc.
 
 Arnold Robbins
-arnold@gnu.ai.mit.edu
+arnold@gnu.org

@@ -10,4 +10,12 @@ Removing and redoing the symlinks fixes the problem.  It is fixed in
 post-4.1 RedHat Linux.
 
 Arnold Robbins
-arnold@gnu.ai.mit.edu
+arnold@gnu.org
+
+Sun Aug  3 15:07:06 EDT 1997
+
+As of version 3.1 of gawk, this is no longer a problem, since gawk now
+completely interprets the special file names internally.
+
+Arnold Robbins
+arnold@gnu.org

@@ -1,9 +1,11 @@
+/*	$NetBSD: random.h,v 1.1.1.2 2003/10/06 15:46:26 wiz Exp $	*/
+
 /*
  * random.h - redefine name of random lib routines to avoid conflicts
  */
 
 /* 
- * Copyright (C) 1996 the Free Software Foundation, Inc.
+ * Copyright (C) 1996, 2001 the Free Software Foundation, Inc.
  * 
  * This file is part of GAWK, the GNU implementation of the
  * AWK Programming Language.
@@ -23,7 +25,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #define initstate gawk_initstate
 #define setstate gawk_setstate
 #define random gawk_random
 #define srandom gawk_srandom
+
+#ifdef __STDC__
+#undef __P
+#define __P(s) s
+#else
+#define __P(s) ()
+#endif
+
+extern long random __P((void));
