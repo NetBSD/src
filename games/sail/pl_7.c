@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.25 2001/09/24 13:22:29 wiz Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.26 2001/12/06 12:21:00 blymn Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.25 2001/09/24 13:22:29 wiz Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.26 2001/12/06 12:21:00 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ initscreen(void)
 	leaveok(stat_w, 1);
 	leaveok(turn_w, 1);
 	noecho();
-	crmode();
+	cbreak();
 }
 
 void
