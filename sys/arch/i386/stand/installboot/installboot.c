@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.12 1999/01/28 22:47:25 christos Exp $	 */
+/* $NetBSD: installboot.c,v 1.13 1999/01/29 18:43:11 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -62,7 +62,6 @@
 
 #define DEFBBLKNAME "boot"
 
-static u_long checkspace __P((u_long, size_t));
 char *loadprotoblocks __P((char *, size_t *));
 static int devread __P((int, void *, daddr_t, size_t, char *));
 static int add_fsblk __P((struct fs *, daddr_t, int));
@@ -85,72 +84,6 @@ struct nlist nl[] = {
 int verbose = 0;
 int conblockmode, conblockstart;
 
-u_long marks[MARK_MAX];
-
-u_long bp, ep;
-
-
-static u_long checkspace(p, c)
-	u_long p;
-	size_t c;
-{
-	u_long np;
-	if (bp > p + c)
-		return p;
-
-	c = p + c - bp + 10240;
-	np = (u_long)realloc((void *) bp, c);
-
-	if (np != marks[MARK_START])
-		p += (long)np - (long)bp;
-
-	bp = np;
-	ep = bp + p;
-	return p;
-}
-
-ssize_t vread(f, p, v, c)
-	int f;
-	u_long p;
-	u_long *v;
-	size_t c;
-{
-	int e, i = p != *v;
-
-	*v = checkspace(p, c);
-	if ((e = read(f, (void *)*v, c)) != c)
-		return e;
-	if (i)
-		*v += c;
-	return c;
-}
-
-void vcopy(s, d, v, c)
-	u_long s;
-	u_long d;
-	u_long *v;
-	size_t c;
-{
-	int i = d != *v;
-
-	*v = checkspace(d, c);
-	(void)memcpy((void *)*v, (const void *)s, c);
-	if (i)
-		*v += c;
-}
-
-void vzero(d, v, c)
-	u_long d;
-	u_long *v;
-	size_t c;
-{
-	int i = d != *v;
-
-	*v = checkspace(d, c);
-	(void)memset((void *)*v, 0, c);
-	if (i)
-		*v += c;
-}
 
 char *
 loadprotoblocks(fname, size)
@@ -159,9 +92,9 @@ loadprotoblocks(fname, size)
 {
 	int fd;
 	struct nlist *nlp;
+	u_long marks[MARK_MAX], bp;
 
 	fd = -1;
-	bp = NULL;
 
 	/* Locate block number array in proto file */
 	if (nlist(fname, nl) != 0) {
@@ -176,15 +109,16 @@ loadprotoblocks(fname, size)
 		}
 	}
 
-	bp = marks[MARK_START] = (u_long) malloc(10240);
-	ep = bp + 10240;
-
-	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
+	marks[MARK_START] = 0;
+	if ((fd = loadfile(fname, marks, COUNT_TEXT|COUNT_DATA)) == -1)
 		return NULL;
-
 	(void)close(fd);
 
-	*size = roundup((marks[MARK_END] - bp), DEV_BSIZE);
+	*size = roundup(marks[MARK_END], DEV_BSIZE);
+	bp = marks[MARK_START] = (u_long)malloc(*size);
+	if ((fd = loadfile(fname, marks, LOAD_TEXT|LOAD_DATA)) == -1)
+		return NULL;
+	(void)close(fd);
 
 	/* NOSTRICT */
 	fraglist = (struct fraglist *) (bp + nl[X_fraglist].n_value);
