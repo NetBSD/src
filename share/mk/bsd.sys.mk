@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.80 2002/06/11 16:25:11 lukem Exp $
+#	$NetBSD: bsd.sys.mk,v 1.81 2002/07/20 11:43:34 mrg Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -41,6 +41,10 @@ FOPTS+=		-msoft-float
 CFLAGS+=	-mieee
 FFLAGS+=	-mieee
 .endif
+.endif
+
+.if ${MACHINE} == "sparc64" && ${MACHINE_ARCH} == "sparc"
+CFLAGS+=	-Wa,-Av8plus
 .endif
 
 # Helpers for cross-compiling
