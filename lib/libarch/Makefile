@@ -1,33 +1,30 @@
-#	Makefile,v 1.6 1993/09/10 23:32:17 jtc Exp
+#	$Id: Makefile,v 1.5 1993/12/05 14:51:56 cgd Exp $
 
-ARCH?=${MACHINE}
-
-.if exists (${.CURDIR}/${MACHINE}/Makefile.inc)
+.if exists(${.CURDIR}/${MACHINE})
 .PATH:	${.CURDIR}/${MACHINE}
 .include "${.CURDIR}/${MACHINE}/Makefile.inc"
 AINC+= -I${.CURDIR}/${MACHINE}
 .endif
 
-.if defined(ARCH) && !empty(ARCH)
-.if exists (${.CURDIR}/${ARCH}/Makefile.inc)
-.PATH:	${.CURDIR}/${ARCH}
-.include "${.CURDIR}/${ARCH}/Makefile.inc"
-AINC+= -I${.CURDIR}/${ARCH}
-.endif
+.if exists(${.CURDIR}/${MACHINE_ARCH}) && (${MACHINE} != ${MACHINE_ARCH})
+.PATH:	${.CURDIR}/${MACHINE_ARCH}
+.include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
+AINC+= -I${.CURDIR}/${MACHINE_ARCH}
 .endif
 
 OBJS+= ${ASM}
 POBJS+=	${ASM:.o=.po}
 CLEANFILES+= ${ASM} ${POBJS}
 
-.if exists (${.CURDIR}/${ARCH})
-LIB=	${ARCH}
+.if exists(${.CURDIR}/${MACHINE}) || exists(${.CURDIR}/${MACHINE_ARCH})
+LIB=	${MACHINE}
 
 .include <bsd.lib.mk>
 .else
 all:
 clean:
 cleandir:
-obj:
 depend:
+install:
+obj:
 .endif
