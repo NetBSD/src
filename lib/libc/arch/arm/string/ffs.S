@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.2 2001/11/13 13:07:52 bjh21 Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3 2002/08/17 01:23:36 chris Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.2 2001/11/13 13:07:52 bjh21 Exp $")
+RCSID("$NetBSD: ffs.S,v 1.3 2002/08/17 01:23:36 chris Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -46,7 +46,7 @@ RCSID("$NetBSD: ffs.S,v 1.2 2001/11/13 13:07:52 bjh21 Exp $")
  */
 
 ENTRY(ffs)
-	/* Standard trick to isolate bottom bit in a0 or 0 if r0 = 0 on entry */
+	/* Standard trick to isolate bottom bit in r0 or 0 if r0 = 0 on entry */
  	rsb     r1, r0, #0
  	ands    r0, r0, r1
 	/*
