@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.17 2001/06/21 11:59:00 wiz Exp $
+.\" $NetBSD: extent.9,v 1.18 2001/07/01 03:13:20 gmcgarry Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -280,7 +280,11 @@ arguments are provided.
 .Sh LOCKING
 The extent manager performs all necessary locking on the extent map
 itself, and any other data structures internal to the extent manager.
-The locks used by the extent manager are spin locks, and will never sleep.
+The locks used by the extent manager are simplelocks, and will never sleep
+.Po
+see 
+.Xr lock 9
+.Pc .
 This should be taken into account when designing the locking protocol
 for users of the extent manager.
 .Sh RETURN VALUES
