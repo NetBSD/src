@@ -1,0 +1,9 @@
+#	$NetBSD: files.sysmon,v 1.1 2002/04/16 21:00:29 thorpej Exp $
+
+define	sysmon_envsys
+file	dev/sysmon/sysmon_envsys.c	sysmon_envsys		needs-flag
+
+define	sysmon_wdog
+file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
+
+file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog

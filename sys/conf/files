@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.513 2002/04/16 20:50:16 thorpej Exp $
+#	$NetBSD: files,v 1.514 2002/04/16 21:00:27 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -267,13 +267,10 @@ file	ipkdb/ipkdb_if.c		ipkdb
 device	ld: disk
 file	dev/ld.c			ld			needs-flag
 
-# Central clearing house for system monitoring.
 #
-define	sysmon_envsys
-define	sysmon_wdog
-file	dev/sysmon/sysmon_envsys.c	sysmon_envsys		needs-flag
-file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
-file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog
+# System monitoring framework
+#
+include "dev/sysmon/files.sysmon"
 
 #
 # MII/PHY support for network devices
