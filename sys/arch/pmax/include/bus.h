@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 1998/05/22 21:14:04 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 1998/06/03 04:38:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -513,6 +513,7 @@ typedef struct pmax_bus_dmamap		*bus_dmamap_t;
 struct pmax_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+	bus_addr_t	_ds_vaddr;	/* virtual address, 0 if invalid */
 };
 typedef struct pmax_bus_dma_segment	bus_dma_segment_t;
 
