@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.198 2004/07/07 05:34:33 mycroft Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.199 2004/07/07 05:38:42 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.196 2004/07/07 05:34:18 mycroft Exp 
+ *	NetBSD: pcmciadevs,v 1.197 2004/07/07 05:38:29 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -747,9 +747,9 @@
 #define	PCMCIA_CIS_AMBICOM_AMB8002T	{ "AmbiCom Inc", "AMB8002T", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMBICOM_AMB8002T	-1
 #define	PCMCIA_STR_AMBICOM_AMB8002T	"AmbiCom AMB8002T"
-#define	PCMCIA_CIS_AMBICON_AMB8110	{ "AmbiCom,Inc.", "Fast Ethernet PC Card(AMB8110)", NULL, NULL }
-#define	PCMCIA_PRODUCT_AMBICON_AMB8110	-1
-#define	PCMCIA_STR_AMBICON_AMB8110	"AmbiCom AMB8110"
+#define	PCMCIA_CIS_AMBICOM_AMB8110	{ "AmbiCom,Inc.", "Fast Ethernet PC Card(AMB8110)", NULL, NULL }
+#define	PCMCIA_PRODUCT_AMBICOM_AMB8110	-1
+#define	PCMCIA_STR_AMBICOM_AMB8110	"AmbiCom AMB8110"
 #define	PCMCIA_CIS_AMD_AM79C930	{ "AMD", "Am79C930", NULL, NULL }
 #define	PCMCIA_PRODUCT_AMD_AM79C930	-1
 #define	PCMCIA_STR_AMD_AM79C930	"AMD Am79C930"
