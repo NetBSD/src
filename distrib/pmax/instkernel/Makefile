@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2002/04/26 15:50:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.29 2002/05/02 13:26:38 simonb Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/Makefile.inc"
@@ -9,7 +9,7 @@ IMAGE=		diskimage
 IMAGESIZE=	2m
 LISTS=		${.CURDIR}/list
 IMAGEENDIAN=	le
-IMAGEDEPENDS=	install.gz ${DESTDIR}/usr/mdec/boot
+IMAGEDEPENDS=	install.gz ${DESTDIR}/usr/mdec/boot.pmax
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
