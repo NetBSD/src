@@ -2,7 +2,7 @@
 # DECstation (3100 or 5000/xxx)
 #
 #	Generic config.new configuration for NetBSD/pmax
-# 	$NetBSD: NEWCONF,v 1.10 1996/12/03 01:18:19 cgd Exp $
+# 	$NetBSD: NEWCONF,v 1.11 1997/01/15 01:29:09 perry Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -25,12 +25,6 @@ options		DS5000_200		# 3MAX (kn02) support, one day
 
 
 options		DS3100			# PMAX (kn01) DECstation 2100, 3100
-
-
-# You need to set this locally, but it doesn't do much outside the kernel.
-# Set up /etc/localtime instead.
-options		TIMEZONE="8*60"		# minutes west of GMT (for)
-options		DST=1			# use daylight savings rules
 
 
 # Standard system options

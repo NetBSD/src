@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.36 1996/12/07 00:25:58 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.37 1997/01/15 01:28:44 perry Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -23,8 +23,7 @@ options		XSERVER,UCONSOLE
 options		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	32		# estimated number of users
-options		TIMEZONE=0	# time zone to adjust RTC time by
-options		DST=0		# daylight savings time used by RTC
+options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options	NTP		# NTP phase/frequency locked loop
 
 options		DDB		# in-kernel debugger
