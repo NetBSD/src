@@ -1,4 +1,4 @@
-/*	linux_sched.c,v 1.14 2004/09/08 19:45:22 jdolecek Exp	*/
+/*	$NetBSD: linux_sched.c,v 1.17 2004/09/09 10:45:52 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "linux_sched.c,v 1.14 2004/09/08 19:45:22 jdolecek Exp");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.17 2004/09/09 10:45:52 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
