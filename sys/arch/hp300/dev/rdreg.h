@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.7 1996/02/09 18:00:37 scottr Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.8 2001/05/27 05:29:48 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,14 +54,14 @@ struct	rd_iocmd {
 	long	c_len;
 	char	c_cmd;
 	char	c_pad2;
-};
+} __attribute__((__packed__));
 
 struct	rd_rscmd {
 	char	c_unit;
 	char	c_sram;
 	char	c_ram;
 	char	c_cmd;
-};
+} __attribute__((__packed__));
 
 struct	rd_stat {
 	char	c_vu;
@@ -81,7 +81,7 @@ struct	rd_stat {
 			short	cu_sect;
 		} cu_tva;
 	} c_pf;
-};
+} __attribute__((__packed__));
 #define c_raw	c_pf.cu_raw
 #define c_blk	c_pf.cu_sva.cu_lsl	/* for now */
 #define c_tva	c_pf.cu_tva
@@ -93,19 +93,19 @@ struct	rd_ssmcmd {
 	short	c_fefm;
 	short	c_aefm;
 	short	c_iefm;
-};
+} __attribute__((__packed__));
 
 struct	rd_srcmd {
 	char	c_unit;
 	char	c_nop;
 	char	c_cmd;
 	char	c_param;
-};
+} __attribute__((__packed__));
 
 struct	rd_clearcmd {
 	char	c_unit;
 	char	c_cmd;
-};
+} __attribute__((__packed__));
 
 struct rd_describe {
 	u_int	d_iuw:16,	/* controller: installed unit word */
@@ -129,7 +129,7 @@ struct rd_describe {
 		d_maxvsecth:16,	/* volume: maximum sector on volume (MSW) */
 		d_maxvsectl:32,	/* volume: maximum sector on volume (LSWs) */
 		d_interleave:8;	/* volume: current interleave */
- };
+} __attribute__((__packed__));
 
 /* HW ids */
 #define	RD7946AID	0x220	/* also 7945A */
