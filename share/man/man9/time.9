@@ -1,4 +1,4 @@
-.\" $NetBSD: time.9,v 1.12 2002/08/07 13:43:33 wiz Exp $
+.\" $NetBSD: time.9,v 1.13 2002/10/14 13:43:34 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -63,7 +63,8 @@ system call and by periodic clock interrupts.
 .Pp
 The
 .Va boottime
-variable holds the system boot time.  It is set from
+variable holds the system boot time.
+It is set from
 .Va time
 at system boot, and is updated when the system time is adjusted
 with
@@ -85,11 +86,11 @@ function, rather than being copied from
 .Pp
 The
 .Va mono_time
-variable is a monotonically increasing system clock.  It is set
-from
+variable is a monotonically increasing system clock.
+It is set from
 .Va time
-at boot, and is updated by the periodic timer interrupt.  (It is
-not updated by
+at boot, and is updated by the periodic timer interrupt.
+(It is not updated by
 .Xr settimeofday 2 . )
 .Pp
 All of these variables contain times

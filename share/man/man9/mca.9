@@ -1,4 +1,4 @@
-.\"     $NetBSD: mca.9,v 1.4 2002/02/13 08:18:45 ross Exp $
+.\"     $NetBSD: mca.9,v 1.5 2002/10/14 13:43:27 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,24 +65,28 @@
 The
 .Nm
 device provides support for IBM's MicroChannel Architecture bus found
-on IBM PS/2 systems and selected workstations.  It was designed as a
-replacement bus for the ISA bus found on IBM's older machines.
+on IBM PS/2 systems and selected workstations.
+It was designed as a replacement bus for the ISA bus found on IBM's
+older machines.
 However, the bus specifications were only available under license, so
 MCA did not achieve widespread acceptance in the industry.
 .Pp
 Being a replacement for the ISA bus, the MCA bus does share some
-similar aspects with the ISA bus.  Some MCA devices can be detected
-via the usual ISA-style probing.  However, most device detection is
-done through the Programmable Option Select (POS) registers.  These
-registers provide a window into a device to determine device-specific
-properties and configuration.  The configuration of devices and their
-POS registers is performed using IBM's system configuration software.
+similar aspects with the ISA bus.
+Some MCA devices can be detected via the usual ISA-style probing.
+However, most device detection is done through the Programmable Option
+Select (POS) registers.
+These registers provide a window into a device to determine device-specific
+properties and configuration.
+The configuration of devices and their POS registers is performed using
+IBM's system configuration software.
 .Pp
 The MCA bus uses level-triggered interrupts while the ISA bus uses
-edge-triggered interrupts.  Level triggered interrupts have the
-advantage that they can be shared among multiple device.  Therefore,
-most MCA-specific devices should be coded with shared interrupts in
-mind.
+edge-triggered interrupts.
+Level triggered interrupts have the advantage that they can be shared
+among multiple device.
+Therefore, most MCA-specific devices should be coded with shared
+interrupts in mind.
 .Sh DATA TYPES
 Drivers for devices attached to the MCA bus will make use of the
 following data types:
@@ -144,28 +148,31 @@ on the MCA bus specified by
 .Fa mc .
 .El
 .Sh AUTOCONFIGURATION
-The MCA bus is a direct-connection bus.  During autoconfiguration, the
-parent specifies the MCA device ID for the found device in the
+The MCA bus is a direct-connection bus.
+During autoconfiguration, the parent specifies the MCA device ID for the
+found device in the
 .Fa ma_id
 member of the
 .Em mca_attach_args
-structure.  Drivers should match on the device ID.  Device
-capabilities and configuration information should be read from device
-POS registers using
+structure.
+Drivers should match on the device ID.
+Device capabilities and configuration information should be read from
+device POS registers using
 .Fn mca_conf_read .
 Some important configuration information found in the POS registers
 include the I/O base address, memory base address and interrupt
-number.  The location of these configurable options with the POS
-registers are device specific.
+number.
+The location of these configurable options with the POS registers are
+device specific.
 .Sh DMA SUPPORT
-The MCA bus supports 32-bit, bidirectional DMA transfers.  Currently,
-no machine-independent support for MCA DMA is available.
+The MCA bus supports 32-bit, bidirectional DMA transfers.
+Currently, no machine-independent support for MCA DMA is available.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent MCA subsystem can be found.  All pathnames are
-relative to
+machine-independent MCA subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The MCA subsystem itself is implemented within the file
@@ -176,13 +183,14 @@ The database of known devices exists within the file
 .Fa sys/dev/mca/mcadevs_data.h
 and is generated automatically from the file
 .Pa sys/dev/mca/mcadevs .
-New vendor and product identifiers should be added to this
-file.  The database can be regenerated using the Makefile
+New vendor and product identifiers should be added to this file.
+The database can be regenerated using the Makefile
 .Pa sys/dev/mca/Makefile.mcadevs .
 .Pp
 A good source of information about MCA devices is IBM's system
-configuration disk.  The disk contains .adf files which describe the
-location of device configuration options in the POS registers.
+configuration disk.
+The disk contains .adf files which describe the location of device
+configuration options in the POS registers.
 .Sh SEE ALSO
 .Xr mca 4 ,
 .Xr autoconf 9 ,
@@ -193,5 +201,6 @@ location of device configuration options in the POS registers.
 .Sh BUGS
 The machine-independent
 .Nm
-driver does not currently support DMA.  MCA devices which require DMA
-operation currently access the DMA capabilities directly.
+driver does not currently support DMA.
+MCA devices which require DMA operation currently access the DMA
+capabilities directly.

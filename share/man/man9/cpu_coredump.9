@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_coredump.9,v 1.3 2002/05/25 11:08:21 wiz Exp $
+.\"     $NetBSD: cpu_coredump.9,v 1.4 2002/10/14 13:43:18 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,8 @@
 .Fn cpu_coredump
 is the machine-dependent interface invoked by machine-independent code
 to dump the machine-dependent header information at the start of a
-process core dump.  The header information primarily consists of the
+process core dump.
+The header information primarily consists of the
 CPU and floating-point registers.
 .Fa p
 is the process structure of the processing being dumped.
@@ -66,8 +67,8 @@ returns 0 on success and an appropriate error code on failure.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilizing the
-machine-dependent coredump interface can be found.  All pathnames are
-relative to
+machine-dependent coredump interface can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 Process core dumps are initiated within the file

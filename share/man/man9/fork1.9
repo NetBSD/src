@@ -1,4 +1,4 @@
-.\"	$NetBSD: fork1.9,v 1.7 2002/08/06 14:00:03 pooka Exp $
+.\"	$NetBSD: fork1.9,v 1.8 2002/10/14 13:43:23 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,8 +50,8 @@
 .Fn fork1
 creates a new process out of
 .Ar p1 ,
-which is assumed to be the current process.  This function is used primarily
-to implement the
+which is assumed to be the current process.
+This function is used primarily to implement the
 .Xr fork 2
 and
 .Xr vfork 2
@@ -69,9 +69,9 @@ or exits (either by a call to
 .Xr _exit 2
 or abnormally).
 .It FORK_SHAREVM
-The child process will share the parent's virtual address space.  If this
-flag is not specified, the child will get a copy-on-write snapshot of the
-parent's address space.
+The child process will share the parent's virtual address space.
+If this flag is not specified, the child will get a copy-on-write
+snapshot of the parent's address space.
 .It FORK_SHARECWD
 The child process will share the parent's current directory, root directory,
 and file creation mask.
@@ -92,7 +92,8 @@ value of 0 indicates a standard fork operation.
 .Pp
 The
 .Ar retval
-argument is provided for the use of system call stubs.  If
+argument is provided for the use of system call stubs.
+If
 .Ar retval
 is not NULL, it will hold the following values after successful completion
 of the fork operation:
@@ -100,8 +101,8 @@ of the fork operation:
 .It Ar retval[0]
 This will contain the pid of the child process.
 .It Ar retval[1]
-In the parent process, this will contain the value 0.  In the child process,
-this will contain 1.
+In the parent process, this will contain the value 0.
+In the child process, this will contain 1.
 .El
 .Pp
 User level system call stubs typically subtract 1 from
@@ -119,7 +120,8 @@ the fork operation.
 .Sh RETURN VALUES
 Upon successful completion of the fork operation,
 .Fn fork1
-returns 0.  Otherwise, the following error values are returned:
+returns 0.
+Otherwise, the following error values are returned:
 .Bl -tag -width [EAGAIN]
 .It Bq Er EAGAIN
 The limit on the total number of system processes would be exceeded.

@@ -1,4 +1,4 @@
-.\"     $NetBSD: isapnp.9,v 1.5 2002/02/13 08:18:43 ross Exp $
+.\"     $NetBSD: isapnp.9,v 1.6 2002/10/14 13:43:24 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,15 +62,17 @@
 .Sh DESCRIPTION
 The machine-independent
 .Nm
-subsystem provides support for ISAPNP devices.  ISAPNP devices were
-developed to support "plug and play" connection on the ISA bus.  In
-all other aspects, the ISAPNP bus is same as the ISA bus (see
+subsystem provides support for ISAPNP devices.
+ISAPNP devices were developed to support "plug and play" connection
+on the ISA bus.
+In all other aspects, the ISAPNP bus is same as the ISA bus (see
 .Xr isa 9 ) .
 .Pp
 Devices on the ISAPNP bus are uniquely identified by a 7-character
-string.  Resources, such as I/O address space and interrupts, should
-be allocated to the devices by the machine firmware.  On some machine
-the firmware seems doesn't work correctly and
+string.
+Resources, such as I/O address space and interrupts, should
+be allocated to the devices by the machine firmware.
+On some machine the firmware seems doesn't work correctly and
 .Nx
 will attempt to allocate resources as necessary.
 .Sh DATA TYPES
@@ -79,8 +81,8 @@ types:
 .Bl -tag -width compact
 .It Fa struct isapnp_matchinfo
 .Nx
-kernel contains a database of known ISAPNP devices.  Each entry in the
-database has a
+kernel contains a database of known ISAPNP devices.
+Each entry in the database has a
 .Em struct isapnp_matchinfo .
 It contains the following members:
 .Bd -literal
@@ -88,8 +90,8 @@ It contains the following members:
 	int variant;			/* variant flag */
 .Ed
 .It Fa struct isapnp_devinfo
-Defines the devices supported by a driver.  It contains pointer to an
-array of supported
+Defines the devices supported by a driver.
+It contains pointer to an array of supported
 .Em struct isapnp_matchinfo
 structures and a pointer to another array of compatibility devices.
 It contains the following members:
@@ -100,8 +102,8 @@ It contains the following members:
 	int ncompat;
 .Ed
 .It Fa struct isapnp_region
-Describes ISAPNP bus-space regions.  It contains the following
-members:
+Describes ISAPNP bus-space regions.
+It contains the following members:
 .Bd -literal
 	bus_space_handle_t h;
 	u_int32_t base;
@@ -109,7 +111,8 @@ members:
 .Ed
 .It Fa struct isapnp_pin
 Describes the wiring of interrupts and DMA pins from the ISAPNP bus
-onto the host processor.  It contains the following members:
+onto the host processor.
+It contains the following members:
 .Bd -literal
 	u_int8_t  num;
 	u_int8_t  flags:4;
@@ -117,8 +120,8 @@ onto the host processor.  It contains the following members:
 	u_int16_t bits;
 .Ed
 .It Fa struct isapnp_attach_args
-A structure used to inform the driver of the device properties.  It
-contains the following members:
+A structure used to inform the driver of the device properties.
+It contains the following members:
 .Bd -literal
 	bus_space_tag_t	ipa_iot;	/* isa i/o space tag */
 	bus_space_tag_t	ipa_memt;	/* isa mem space tag */
@@ -152,7 +155,8 @@ bus-space tags
 .Fa iot
 and
 .Fa memt
-respectively.  The
+respectively.
+The
 .Fa ipa_io ,
 .Fa ipa_mem ,
 .Fa ipa_mem32 ,
@@ -171,8 +175,8 @@ Free the resources allocated by
 .Sh AUTOCONFIGURATION
 During autoconfiguration, an ISAPNP driver will receive a pointer to
 .Fa struct isapnp_attach_args
-describing the device attached to the ISAPNP bus.  Drivers match the
-device using
+describing the device attached to the ISAPNP bus.
+Drivers match the device using
 .Fn ispnp_devmatch .
 .Pp
 During the driver attach step, driver should initially allocate and
@@ -218,7 +222,8 @@ This section describes places within the
 source tree where actual code implementing or utilising the
 machine-independent
 .Nm
-subsystem can be found.  All pathnames are relative to
+subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The
@@ -229,8 +234,8 @@ The database of the known devices exists within the file
 .Pa sys/dev/isapnp/isapnpdevs.c
 and is generated automatically from the file
 .Pa sys/dev/isapnp/isapnpdevs .
-New devices should be added to this file.  The database can be
-regenerated using the Makefile
+New devices should be added to this file.
+The database can be regenerated using the Makefile
 .Pa sys/dev/isapnp/Makefile.isapnpdevs .
 .Sh SEE ALSO
 .Xr isa 4 ,

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ltsleep.9,v 1.1 2002/09/29 17:36:17 wiz Exp $
+.\"	$NetBSD: ltsleep.9,v 1.2 2002/10/14 13:43:26 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -132,13 +132,14 @@ will return
 .It Fa slock
 If not NULL, the
 .Fa slock
-interlock is unlocked once the scheduler lock is acquired. Unless
+interlock is unlocked once the scheduler lock is acquired.
+Unless
 .Dv PNORELOCK
 was set,
 .Fa slock
 is locked again once
-the process is resumed from sleep. This provides wakeup-before-sleep
-condition protection facility.
+the process is resumed from sleep.
+This provides wakeup-before-sleep condition protection facility.
 .El
 .Pp
 The
@@ -191,8 +192,8 @@ returns because of a timeout it returns
 .Xr hz 9 ,
 .Xr lock 9
 .Sh HISTORY
-The sleep/wakeup process synchronization mechanism is very old.  It
-appeared in a very early version of Unix.
+The sleep/wakeup process synchronization mechanism is very old.
+It appeared in a very early version of Unix.
 .Fn tsleep
 appeared in
 .Bx 4.4 .

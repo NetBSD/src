@@ -1,4 +1,4 @@
-.\" $NetBSD: properties.9,v 1.3 2002/02/13 08:18:49 ross Exp $
+.\" $NetBSD: properties.9,v 1.4 2002/10/14 13:43:30 wiz Exp $
 .\"
 .\" Copyright (c) 2001 Eduardo Horvath
 .\" All rights reserved.
@@ -75,7 +75,8 @@ property management routines allow kernel subsystems to associate
 .Po name , value Pc
 pairs with arbitrary keys in a generalized manner.
 .Pp
-A database is a container for a set of properties.  It is created with
+A database is a container for a set of properties.
+It is created with
 .Fn propdb_create
 and discarded with
 .Fn propdb_destroy .
@@ -85,8 +86,8 @@ namespace conflicts.
 A property is a tuple that consists of an opaque identifier
 .Po often a pointer to a kernel data structure
 .Pc ,
-string, and an arbitrary amount of data.  This
-association is established by
+string, and an arbitrary amount of data.
+This association is established by
 .Fn prop_set ,
 retrieved by
 .Fn prop_get ,
@@ -117,9 +118,10 @@ type is a 64-bit scalar type used to store arbitrary object identifiers.
 The
 .Nm
 makes no type distinctions, but it does associate a type datum with each
-property.  Users of the interface can use that field to help determine what
-information is stored in the value field of the property.  There are three
-base types:
+property.
+Users of the interface can use that field to help determine what
+information is stored in the value field of the property.
+There are three base types:
 .El
 .Pp
 .Bl -tag -width "PROP_ELSZ(type)  " -compact -offset indent
@@ -139,8 +141,9 @@ Property is an array of values.
 .It PROP_CONST
 Property value has static storage and is maintained outside the database.
 .It PROP_ELSZ Pq Fa size
-Encode element size into the type field.  This is primarily used to describe
-the size of individual elements of an array.
+Encode element size into the type field.
+This is primarily used to describe the size of individual elements
+of an array.
 .El
 .Sh FUNCTIONS
 .Bl -tag -width indent
@@ -151,14 +154,15 @@ Allocate and initialize a kernel database object, and associate
 with the database.
 .Fa name
 may later be used to access this database from userland throught the
-userland database query interface.  This operation may block.
+userland database query interface.
+This operation may block.
 Returns
 .Li NULL
 on failure.
 .Pp
 .It Fn "void propdb_destroy" "propdb_t db"
-Destroy and deallocate a kernel database and all data within.  This
-routine deallocates all properties contained within the database.
+Destroy and deallocate a kernel database and all data within.
+This routine deallocates all properties contained within the database.
 .Pp
 .It Fn "int prop_set" "propdb_t db" "opaque_t object" "const char *name" \
 "void *val" "size_t len" "int type" "int wait"
@@ -175,16 +179,20 @@ byte value copied from location
 The database must already have been initialized with
 .Fn propdb_create .
 .Fa object
-is treated as an opaque value.  If
+is treated as an opaque value.
+If
 .Fa len
 is
 .Li 0
-then no data is copied.  This can be used to create properties which
-convey information by their presence or absence.  The
+then no data is copied.
+This can be used to create properties which convey information by
+their presence or absence.
+The
 .Fa type
-field is used to identify what the format of the object is.  This value
-is usually only used to help programs dump property values into human
-readable formats.  However, if
+field is used to identify what the format of the object is.
+This value is usually only used to help programs dump property values
+into human readable formats.
+However, if
 .Li PROP_CONST
 is specified in the
 .Fa type
@@ -193,11 +201,13 @@ queried it will copy
 .Fa len
 bytes directly from the location specified by
 .Fa val ,
-so that data cannot be freed or the kernel may panic.  If
+so that data cannot be freed or the kernel may panic.
+If
 .Fa wait
 is zero then
 .Fn prop_set
-will not sleep for resource shortage.  Returns
+will not sleep for resource shortage.
+Returns
 .Li 0
 on success, or an error value.
 .Pp
@@ -208,7 +218,8 @@ Retrieve a property called
 associated with
 .Fa object .
 .Fa name
-is a pointer to a string.  The property that matches both
+is a pointer to a string.
+The property that matches both
 .Fa object
 and
 .Fa name
@@ -234,7 +245,8 @@ the type information associated with that property is stored in the location
 it points to.
 .Pp
 .It Fn "int prop_delete" "propdb_t db" "opaque_t object" "const char *name"
-Remove a property from a database.  If a
+Remove a property from a database.
+If a
 .Li NULL
 is supplied for
 .Fa name ,
@@ -249,26 +261,30 @@ Copy all properties associated with
 .Fa source
 to
 .Fa dest
-structure.  If
+structure.
+If
 .Fa wait
 is zero then
 .Fn prop_copy
-will not sleep for resource shortage.  Returns
+will not sleep for resource shortage.
+Returns
 .Li 0
-on success or an error value.  The state of properties is undefined if the
-operation fails.
+on success or an error value.
+The state of properties is undefined if the operation fails.
 .It Fn "size_t prop_objs" "propdb_t db" "opaque_t *objects" "size_t len"
-Get a list of objects identifiers from a database.  An array of object
-idientifiers will be copied into the buffer pointed to by
+Get a list of objects identifiers from a database.
+An array of object idientifiers will be copied into the buffer pointed
+to by
 .Fa objects
 up to
 .Fa len
-bytes.  It returns the amount of memory needed to store the entire list.
+bytes.
+It returns the amount of memory needed to store the entire list.
 .Pp
 .It Fn "size_t prop_list" "propdb_t db" "opaque_t object" "char *names" \
 "size_t len"
-Get a list of an object's properties from the database.  It queries the
-database to locate all properties associated with
+Get a list of an object's properties from the database.
+It queries the database to locate all properties associated with
 .Pa object
 objedt identifier, and copies up to
 .Pa len
@@ -277,8 +293,8 @@ bytes of
 terminated property names into the buffer pointed to by
 .Pa names .
 Partial strings are not copied, and another NUL character to indicate the
-termination of the list.  It returns the size needed to hold the
-entire list.
+termination of the list.
+It returns the size needed to hold the entire list.
 .El
 .Sh HISTORY
 The

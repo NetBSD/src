@@ -1,4 +1,4 @@
-.\" $NetBSD: inittodr.9,v 1.7 2001/09/04 02:51:16 wiz Exp $
+.\" $NetBSD: inittodr.9,v 1.8 2002/10/14 13:43:23 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -75,8 +75,8 @@ variable.
 The
 .Fn inittodr
 function prints diagnostic messages if it has trouble figuring
-out the system time.  Conditions that can cause diagnostic
-messages to be printed include:
+out the system time.
+Conditions that can cause diagnostic messages to be printed include:
 .Bl -bullet
 .It
 The battery-backed clock's time appears nonsensical.
@@ -99,8 +99,8 @@ has to convert from
 a time expressed in terms of year, month, day, hours, minutes,
 and seconds to
 .Va time ,
-expressed in seconds.  Many of the implementations could share code,
-but do not.
+expressed in seconds.
+Many of the implementations could share code, but do not.
 .Pp
 Each system's heuristics for picking the correct time are slightly
 different.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.7 2002/09/20 03:35:33 uebayasi Exp $
+.\"	$NetBSD: cons.9,v 1.8 2002/10/14 13:43:18 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,8 +54,8 @@
 .Ft void
 .Fn cnputc "int c"
 .Sh DESCRIPTION
-These functions operate over current console device. The console has
-to be initialized first, before these functions could be used.
+These functions operate over current console device.
+The console has to be initialized first, before these functions could be used.
 .Pp
 Console input polling functions
 .Fn cngetc ,
@@ -63,9 +63,9 @@ Console input polling functions
 and
 .Fn cnpollc
 are only to be used during initial system
-boot, e.g. when asking for root and dump device or to get
-necessary user input within mountroothooks. Once the system
-boots, user input is read via standard
+boot, e.g., when asking for root and dump device or to get
+necessary user input within mountroothooks.
+Once the system boots, user input is read via standard
 .Xr tty 4
 facilities.
 .Pp
@@ -92,16 +92,18 @@ could be used.
 should be used during kernel startup only.
 .It Fn cngetsn
 Read one line of user input, stop reading once the newline
-key is input. Input is echoed back. This
-uses
+key is input.
+Input is echoed back.
+This uses
 .Fn cnpollc
 and
 .Fn cngetc .
 Number of read characters is
 .Fa size
 at maximum, user is notified by console bell when the end
-of input buffer is reached. \*[Lt]Backspace\*[Gt] key
-works as expected. \*[Lt]@\*[Gt] or \*[Lt]CTRL\*[Gt]-u make
+of input buffer is reached.
+\*[Lt]Backspace\*[Gt] key works as expected.
+\*[Lt]@\*[Gt] or \*[Lt]CTRL\*[Gt]-u make
 .Fn cngetsn
 discard input read so far, print newline and
 wait for next input.
@@ -123,7 +125,8 @@ is zero.
 .Fn cnpollc
 should be used during kernel startup only.
 .It Fn cnputc
-Console kernel output character routine. Commonly, kernel code uses
+Console kernel output character routine.
+Commonly, kernel code uses
 .Xr printf 9
 rather than using this low-level interface.
 .El

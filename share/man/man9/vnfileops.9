@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnfileops.9,v 1.1 2002/10/14 04:56:49 gmcgarry Exp $
+.\"     $NetBSD: vnfileops.9,v 1.2 2002/10/14 13:43:36 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,14 +67,15 @@
 .Fn vn_write "struct file *fp" "off_t *offset" "struct uio *uio" "struct ucred *cred" "int flags"
 .Sh DESCRIPTION
 The functions described in this page are the vnode-specific file
-descriptor operations.  They should only be accessed through the
-opaque function pointers in the file descriptor entries.  They are
-described here only for completeness.
+descriptor operations.
+They should only be accessed through the opaque function pointers
+in the file descriptor entries.
+They are described here only for completeness.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn vn_closefile "fp" "p"
-Common code for a file table vnode close operation.  The file is
-described by
+Common code for a file table vnode close operation.
+The file is described by
 .Fa fp
 and
 .Fa p
@@ -86,8 +87,8 @@ with the appropriate arguments.
 .It Fn vn_fcntl "fp" "com" "data" "p"
 Common code for a file table vnode
 .Xr fcntl 2
-operation.  The file is
-specified by
+operation.
+The file is specified by
 .Fa fp .
 The argument
 .Fa p
@@ -99,11 +100,12 @@ with the command
 .Fa com
 and buffer
 .Fa data .
-The vnode is unlocked on return.  If the operation is successful zero
-is returned, otherwise an appropriate error is returned.
+The vnode is unlocked on return.
+If the operation is successful zero is returned, otherwise an
+appropriate error is returned.
 .It Fn vn_ioctl "fp" "com" "data" "p"
-Common code for a file table vnode ioctl operation.  The file is
-specified by
+Common code for a file table vnode ioctl operation.
+The file is specified by
 .Fa fp .
 The argument
 .Fa p
@@ -115,23 +117,27 @@ with the command
 .Fa com
 and buffer
 .Fa data .
-The vnode is unlocked on return.  If the operation is successful zero
-is returned, otherwise an appropriate error is returned.
+The vnode is unlocked on return.
+If the operation is successful zero is returned, otherwise an
+appropriate error is returned.
 .It Fn vn_read "fp" "offset" "uio" "cred" "flags"
-Common code for a file table vnode read.  The argument
+Common code for a file table vnode read.
+The argument
 .Fa fp
 is the file structure,  The argument
 .Fa offset
-is the offset into the file.  The argument
+is the offset into the file.
+The argument
 .Fa uio
-is the uio structure describing the memory to read into.  The caller's
-credentials are specified in
+is the uio structure describing the memory to read into.
+The caller's credentials are specified in
 .Fa cred .
 The
 .Fa flags
 argument can define FOF_UPDATE_OFFSET to update the read position in
-the file.  If the operation is successful zero is returned, otherwise
-an appropriate error is returned.
+the file.
+If the operation is successful zero is returned, otherwise an
+appropriate error is returned.
 .It Fn vn_poll "fp" "events" "p"
 Common code for a file table vnode poll operation.
 .Fn vn_poll
@@ -144,12 +150,13 @@ and the calling process
 If the operation is success zero is returned, otherwise an appropriate
 error code is returned.
 .It Fn vn_statfile "fp" "sb" "p"
-Common code for a stat operation.  The file descriptor is specified by
-the argument
+Common code for a stat operation.
+The file descriptor is specified by the argument
 .Fa fp
 and
 .Fa sb
-is the buffer to return the stat information.  The argument
+is the buffer to return the stat information.
+The argument
 .Fa p
 is the calling process.
 .Fn vn_statfile
@@ -159,26 +166,30 @@ and transfer the contents of a vattr structure into a struct stat.
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn vn_write "fp" "offset" "uio" "cred" "flags"
-Common code for a file table vnode write.  The argument
+Common code for a file table vnode write.
+The argument
 .Fa fp
 is the file structure,  The argument
 .Fa offset
-is the offset into the file.  The argument
+is the offset into the file.
+The argument
 .Fa uio
-is the uio structure describing the memory to read from.  The caller's
-credentials are specified in
+is the uio structure describing the memory to read from.
+The caller's credentials are specified in
 .Fa cred .
 The
 .Fa flags
 argument can define FOF_UPDATE_OFFSET to update the read position in
-the file.  If the operation is successful zero is returned, otherwise
-an appropriate error is returned.
+the file.
+If the operation is successful zero is returned, otherwise an
+appropriate error is returned.
 .El
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the vnode
-framework can be found.  All pathnames are relative to
+framework can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The high-level convenience functions are implemented within the file

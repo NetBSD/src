@@ -1,4 +1,4 @@
-.\"	$NetBSD: powerhook_establish.9,v 1.3 2001/06/21 11:59:01 wiz Exp $
+.\"	$NetBSD: powerhook_establish.9,v 1.4 2002/10/14 13:43:30 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,8 @@ function adds
 .Fa fn
 of the list of hooks invoked by
 .Xr dopowerhooks 9
-at power change.  When invoked, the hook function
+at power change.
+When invoked, the hook function
 .Fa fn
 will be passed the new power state as the first argument and
 .Fa arg
@@ -63,21 +64,23 @@ The
 .Fn powerhook_disestablish
 function removes the hook described by the opaque pointer
 .Fa cookie
-from the list of hooks to be invoked at power change.  If
+from the list of hooks to be invoked at power change.
+If
 .Fa cookie
 is invalid, the result of
 .Fn powerhook_disestablish
 is undefined.
 .Pp
 Power hooks should be used to perform activities
-that must happen when the power situation to the computer changes.  Because
-of the environment in which they are run, shutdown hooks cannot
+that must happen when the power situation to the computer changes.
+Because of the environment in which they are run, shutdown hooks cannot
 rely on many system services (including file systems, and timeouts
 and other interrupt-driven services).
 The power hooks are typically executed from an interrupt context.
 .Pp
 The different reasons for calling the power hooks are: suspend, standby, and
-resume.  The reason is reflected in the
+resume.
+The reason is reflected in the
 .Fa why
 argument and the values
 .Dv PWR_SOFTSUSPEND ,
@@ -97,6 +100,7 @@ back to normal.
 If successful,
 .Fn powerhook_establish
 returns an opaque pointer describing the newly-established
-shutdown hook.  Otherwise, it returns NULL.
+shutdown hook.
+Otherwise, it returns NULL.
 .Sh SEE ALSO
 .Xr dopowerhooks 9

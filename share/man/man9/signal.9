@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.3 2002/07/28 22:18:52 manu Exp $
+.\"	$NetBSD: signal.9,v 1.4 2002/10/14 13:43:33 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,11 +120,11 @@ always be within the range of
 .Bq 1- Ns NSIG .
 .Pp
 Most of the kernel's signal infrastructure is implemented in
-machine-independent code.  Machine-dependent code provides
-support for invoking a process's signal handler, restoring
-context when the signal handler returns, generating signals
-when hardware traps occur, triggering the delivery of signals
-when a process is about to return from the kernel to userspace.
+machine-independent code.
+Machine-dependent code provides support for invoking a process's
+signal handler, restoring context when the signal handler returns,
+generating signals when hardware traps occur, triggering the delivery
+of signals when a process is about to return from the kernel to userspace.
 .Pp
 The signal state for a process is contained in
 .Fa struct sigctx .
@@ -143,7 +143,8 @@ functions:
 .Pp
 This function initializes the signal state of
 .Va proc0
-to the system default.  This signal state is then inherited by
+to the system default.
+This signal state is then inherited by
 .Xr init 8
 when it is started by the kernel.
 .It void Fn sigactsinit "struct proc *np" "struct proc *pp" "int share"
@@ -194,7 +195,8 @@ to the system defaults when the process execs a new program image.
 .Pp
 This function implements the
 .Xr sigaction 2
-system call.  The
+system call.
+The
 .Fa tramp
 and
 .Fa vers
@@ -202,7 +204,8 @@ arguments provide support for userspace signal trampolines.
 Trampoline version 0 is reserved for the legacy kernel-provided
 signal trampoline;
 .Fa tramp
-must be NULL in this case.  Otherwise,
+must be NULL in this case.
+Otherwise,
 .Fa vers
 specifies the ABI of the trampoline specified by
 .Fa tramp .
@@ -250,7 +253,8 @@ to be delivered to all members of the process group
 If
 .Fa checkctty
 is non-zero, the signal is only sent to processes which have a
-controlling terminal.  See
+controlling terminal.
+See
 .Fn psignal
 below for a complete description of the signal scheduling semantics.
 .It void Fn trapsignal "struct proc *p" "int signum" "u_long code"
@@ -281,8 +285,9 @@ does not by itself cause a context switch to happen.
 The target process is not marked as runnable in the following cases:
 .Bl -bullet -offset indent
 .It
-The target process is sleeping uninterruptibly.  The signal will be
-noticed when the process returns from the system call or trap.
+The target process is sleeping uninterruptibly.
+The signal will be noticed when the process returns from the system
+call or trap.
 .It
 The target process is currently ignoring the signal.
 .It
@@ -342,15 +347,15 @@ The
 .Fn postsig
 function is used to invoke the action for the signal
 .Fa signum
-in the current process.  If the default action of a signal
-is to terminate the process, and the signal does not have
-a registered handler, the process exits using
+in the current process.
+If the default action of a signal is to terminate the process, and the
+signal does not have a registered handler, the process exits using
 .Fn sigexit ,
 dumping a core image if necessary.
 .It void Fn killproc "struct proc *p" "const char *why"
 .Pp
-This function sends a SIGKILL signal to the specified process.  The
-message provided by
+This function sends a SIGKILL signal to the specified process.
+The message provided by
 .Fa why
 is sent to the system log and is also displayed on the process's
 controlling terminal.
@@ -360,8 +365,8 @@ This function forces the process
 .Fa p
 to exit with the signal
 .Fa signum ,
-generating a core file if appropriate.  No checks are made for masked
-or caught signals; the process always exits.
+generating a core file if appropriate.
+No checks are made for masked or caught signals; the process always exits.
 .It int Fn sigmasked "struct proc *p" "int signum"
 .Pp
 This function returns non-zero if the signal specified by
@@ -377,8 +382,8 @@ must prepare the registers and stack of the current process to
 invoke the signal handler stored in the process's
 .Fa struct sigacts .
 This may include switching to an alternate signal
-stack specified by the process.  The previous register, stack,
-and signal state are stored in a
+stack specified by the process.
+The previous register, stack, and signal state are stored in a
 .Fa struct sigcontext ,
 which is then copied out to the user's stack.
 .Pp
@@ -396,8 +401,9 @@ is a signal-specific code, and
 .Fa scp
 is the pointer to the
 .Fa struct sigcontext
-on the user's stack.  The registers and stack must also
-arrange for the signal handler to return to the signal trampoline.
+on the user's stack.
+The registers and stack must also arrange for the signal handler to
+return to the signal trampoline.
 The trampoline is then used to return to the code which was executing
 when the signal was delivered using the
 .Xr sigreturn 2
@@ -406,29 +412,32 @@ system call.
 For performance reasons, it is recommended that
 .Fn sendsig
 arrange for the signal handler to be invoked directly on architectures
-where it is convenient to do so.  In this case, the trampoline is used
-only for the signal return path.  If it is not feasible to directly
-invoke the signal handler, the trampoline is also used to invoke the
-handler, performing any final set up that was not possible for
+where it is convenient to do so.
+In this case, the trampoline is used only for the signal return path.
+If it is not feasible to directly invoke the signal handler, the
+trampoline is also used to invoke the handler, performing any final
+set up that was not possible for
 .Fn sendsig
 to perform.
 .Pp
 .Fn sendsig
-must invoke the signal trampoline with the correct ABI.  The ABI of
-the signal trampoline is specified on a per-signal basis in the
+must invoke the signal trampoline with the correct ABI.
+The ABI of the signal trampoline is specified on a per-signal basis in the
 .Fn sigacts
-structure for the process.  Trampoline version 0 is reserved for the
-legacy kernel-provided, on-stack signal trampoline.  All other trampoline
-versions indicate a specific trampoline ABI.  This ABI is coordinated
-with machine-dependent code in the system C library.
+structure for the process.
+Trampoline version 0 is reserved for the legacy kernel-provided,
+on-stack signal trampoline.
+All other trampoline versions indicate a specific trampoline ABI.
+This ABI is coordinated with machine-dependent code in the system
+C library.
 .El
 .Ss SIGNAL TRAMPOLINE
 The signal trampoline is a special piece of code which provides
-support for invoking the signal handlers for a process.  The trampoline
-is used to return from the signal handler back to the code which was
-executing when the signal was delivered, and is also used to invoke the
-handler itself on architectures where it is not feasible to have the
-kernel invoke the handler directly.
+support for invoking the signal handlers for a process.
+The trampoline is used to return from the signal handler back to the
+code which was executing when the signal was delivered, and is also used
+to invoke the handler itself on architectures where it is not feasible to
+have the kernel invoke the handler directly.
 .Pp
 In traditional
 .Ux
@@ -436,22 +445,24 @@ systems, the signal trampoline, also referred to as the
 .Dq sigcode ,
 is provided by the kernel and copied to the top of the user's
 stack when a new process is created or a new program image is
-exec'd.  Starting in
+exec'd.
+Starting in
 .Nx 2.0 ,
-the signal trampoline is provided by the system C library.  This
-allows for more flexibility when the signal facility is extended,
+the signal trampoline is provided by the system C library.
+This allows for more flexibility when the signal facility is extended,
 makes dealing with signals easier in debuggers, such as
 .Xr gdb 1 ,
 and may also enhance system security by allowing the kernel to
 disallow execution of code on the stack.
 .Pp
-The signal trampoline is specified on a per-signal basis.  The
-correct trampoline is selected automatically by the C library
+The signal trampoline is specified on a per-signal basis.
+The correct trampoline is selected automatically by the C library
 when a signal handler is registered by a process.
 .Pp
 Signal trampolines have a special naming convention which enables
 debuggers to determine the characteristics of the signal handler
-and its arguments.  Trampoline functions are named like so:
+and its arguments.
+Trampoline functions are named like so:
 .Bd -literal -offset indent
 __sigtramp_\*[Lt]flavor\*[Gt]_\*[Lt]version\*[Gt]
 .Ed
@@ -459,7 +470,8 @@ __sigtramp_\*[Lt]flavor\*[Gt]_\*[Lt]version\*[Gt]
 where:
 .Bl -tag -width versionXX
 .It \*[Lt]flavor\*[Gt]
-The flavor of the signal handler.  The following flavors are valid:
+The flavor of the signal handler.
+The following flavors are valid:
 .Bl -tag -width sigcontextXX
 .It sigcontext
 Specifies a traditional BSD-style signal handler with the following
@@ -483,8 +495,8 @@ handlers is not yet implemented in the
 kernel.
 .El
 .It \*[Lt]version\*[Gt]
-Specifies the ABI version of the signal trampoline.  The trampoline
-ABI is coordinated with the machine-dependent kernel
+Specifies the ABI version of the signal trampoline.
+The trampoline ABI is coordinated with the machine-dependent kernel
 .Fn sendsig
 function.
 .El

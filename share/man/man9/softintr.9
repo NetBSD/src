@@ -1,4 +1,4 @@
-.\" $NetBSD: softintr.9,v 1.9 2002/02/13 08:18:51 ross Exp $
+.\" $NetBSD: softintr.9,v 1.10 2002/10/14 13:43:33 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou.
 .\" All rights reserved.
@@ -54,11 +54,11 @@ The
 .Nx
 machine-independent software interrupt framework is designed to provide
 a generic software interrupt mechanism which can be used any time a
-low-priority callback is needed.  It allows dynamic registration of
-software interrupts for loadable drivers and protocol stacks,
-prioritization and fair queueing of software interrupts, and
-allows machine-dependent optimizations to reduce cost and code
-complexity.
+low-priority callback is needed.
+It allows dynamic registration of software interrupts for loadable
+drivers and protocol stacks, prioritization and fair queueing of software
+interrupts, and allows machine-dependent optimizations to reduce cost
+and code complexity.
 .Pp
 In order to provide this framework, the machine-dependent
 .Aq Pa machine/types.h

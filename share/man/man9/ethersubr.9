@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethersubr.9,v 1.13 2002/02/13 08:18:40 ross Exp $
+.\"	$NetBSD: ethersubr.9,v 1.14 2002/10/14 13:43:22 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -163,7 +163,8 @@ which the caller must provide.
 .It Fn ETHER_FIRST_MULTI
 must be called to initialize
 .Fa step
-and get the first record.  Both macros return a
+and get the first record.
+Both macros return a
 .Dv NULL
 .Fa enm
 when there are no remaining records.

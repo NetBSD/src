@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasops.9,v 1.4 2002/02/13 08:18:50 ross Exp $
+.\"     $NetBSD: rasops.9,v 1.5 2002/10/14 13:43:31 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -153,21 +153,24 @@ completed successfully
 .It Fn rasops_init "ri" "wantrows" "wantcols"
 Initialise a
 .Em rasops_info
-desriptor.  The arguments
+desriptor.
+The arguments
 .Fa wantrows
 and
 .Fa wantcols
-are the number of rows and columns we'd like.  In terms of
-optimization, fonts that are a multiple of 8 pixels wide work the
-best.
+are the number of rows and columns we'd like.
+In terms of optimization, fonts that are a multiple of 8 pixels wide
+work the best.
 .It Fn rasops_reconfig "ri" "wantrows" "wantcols"
 Reconfigure a
 .Em rasops_info
-descriptor because parameters have changed in some way.  The arguments
+descriptor because parameters have changed in some way.
+The arguments
 .Fa wantrows
 and
 .Fa wantcols
-are the number of rows and columns we'd like.  If calling
+are the number of rows and columns we'd like.
+If calling
 .Fn rasops_reconfig
 to change the font and ri_wsfcookie \*[Ge] 0, you must call
 .Fn wsfont_unlock
@@ -177,7 +180,8 @@ on it, and reset it to -1 (or a new, valid cookie).
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the rasops
-subsystem can be found.  All pathnames are relative to
+subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The rasops subsystem is implemented within the directory

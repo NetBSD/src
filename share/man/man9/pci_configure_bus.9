@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci_configure_bus.9,v 1.8 2002/02/25 00:40:19 kleink Exp $
+.\"	$NetBSD: pci_configure_bus.9,v 1.9 2002/10/14 13:43:28 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -55,7 +55,8 @@
 .Sh DESCRIPTION
 The
 .Fn pci_configure_bus
-function configures a PCI bus for use.  This involves:
+function configures a PCI bus for use.
+This involves:
 .Bl -bullet
 .It
 Defining bus numbers for all busses on the system,
@@ -77,28 +78,37 @@ should be called prior to the auto-configuration of the bus.
 The
 .Fa pc
 argument is a machine-dependent tag used to specify the PCI chipset to the
-system.  This should be the same value used with
+system.
+This should be the same value used with
 .Fn pci_make_tag .
 The extent arguments
 define memory extents from which the address space for the cards will be
-taken.  These addresses should be in the PCI address space.  The
+taken.
+These addresses should be in the PCI address space.
+The
 .Fa ioext
-extent is for PCI I/O accesses.  The
+extent is for PCI I/O accesses.
+The
 .Fa memext
-extent is for PCI memory accesses that might have side effects.  I.e.,
-that can not be cached.  The
+extent is for PCI memory accesses that might have side effects.
+I.e., that can not be cached.
+The
 .Fa pmemext
-extent is for PCI memory accesses that can be cached.  The
+extent is for PCI memory accesses that can be cached.
+The
 .Fa pmemext
 extent will be used for any ROMs and any memory regions that are marked as
 .Dq prefetchable
-in their BAR.  If an implementation does not distinguish between
+in their BAR.
+If an implementation does not distinguish between
 prefetchable and non-prefetchable memory, it may pass NULL for
 .Fa pmemext .
 In this case, prefetchable memory allocations will be made from the
-non-prefetchable region.  The
+non-prefetchable region.
+The
 .Fa firstbus
-argument indicates the number of the first bus to be configured.  The
+argument indicates the number of the first bus to be configured.
+The
 .Fa cacheline_size
 argument is used to configure the PCI Cache Line Size Register; it
 should be the size, in bytes, of the largest D-cache line on the system.
@@ -107,15 +117,16 @@ An implementation may choose to not have full configuration performed
 by
 .Fn pci_configure_bus
 on certain PCI devices, such as PCI host bridges or PCI bus analyzers
-which are instantiated as devices on the bus.  In order for this to
-take place, the header
+which are instantiated as devices on the bus.
+In order for this to take place, the header
 .Aq Pa machine/pci_machdep.h
 must define the
 .Dv __HAVE_PCI_CONF_HOOK
 symbol (without a value), and a machine-dependent function
 .Fn pci_conf_hook
 (declared in the same header)
-must be defined.  The prototype for this function is
+must be defined.
+The prototype for this function is
 .Pp
 .Fn "int pci_conf_hook" "pci_chipset_tag_t pc" "int bus" \
     "int device" "int function" "pcireg_t id"
@@ -156,10 +167,12 @@ One of the functions of
 .Fn pci_configure_bus
 is to configure interrupt
 .Dq line
-information.  This must be done on a machine-dependent basis, so a
+information.
+This must be done on a machine-dependent basis, so a
 machine-dependent function
 .Fn pci_conf_interrupt
-must be defined.  The prototype for this function is
+must be defined.
+The prototype for this function is
 .Pp
 .Fn "void pci_conf_interrupt" "pci_chipset_tag_t pc" "int bus" \
     "int device" "int function" "int swiz" "int *iline"
@@ -169,13 +182,14 @@ In this function,
 .Fa device ,
 and
 .Fa function ,
-uniquely identify the item being configured.  The
+uniquely identify the item being configured.
+The
 .Fa swiz
 argument is a
 .Dq swizzle ,
 a sum of the device numbers of the primary interface of the bridges between
-the host bridge and the current device.  The function is responsible for
-setting the value of
+the host bridge and the current device.
+The function is responsible for setting the value of
 .Fa iline .
 See chapter 9 of the
 .Dq PCI-to-PCI Bridge Architecture Specification
@@ -183,9 +197,10 @@ for more information on swizzling (also known as interrupt routing).
 .Sh RETURN VALUES
 If successful
 .Fn pci_configure_bus
-returns 0.  A non-zero return value means that the bus was not completely
-configured for some reason.  A description of the failure will be displayed
-on the console.
+returns 0.
+A non-zero return value means that the bus was not completely
+configured for some reason.
+A description of the failure will be displayed on the console.
 .Sh ENVIRONMENT
 The
 .Fn pci_configure_bus

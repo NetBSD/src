@@ -1,4 +1,4 @@
-.\"     $NetBSD: suser.9,v 1.2 2002/06/25 20:28:36 wiz Exp $
+.\"     $NetBSD: suser.9,v 1.3 2002/10/14 13:43:34 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,11 +49,13 @@
 .Fn suser
 tests whether the specified credentials
 .Fa cred
-imply super-user privilege.  The argument
+imply super-user privilege.
+The argument
 .Fa acflag ,
 if non-NULL, is a pointer to the
 .Em ac_flag
-in the accounting structure.  If super-user privilege is implied by
+in the accounting structure.
+If super-user privilege is implied by
 the credentials, and
 .Fa acflag
 is not NULL,

@@ -1,4 +1,4 @@
-.\"     $NetBSD: cpu_swapout.9,v 1.1 2002/05/25 02:16:37 gmcgarry Exp $
+.\"     $NetBSD: cpu_swapout.9,v 1.2 2002/10/14 13:43:20 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,8 +53,10 @@
 and
 .Fn cpu_swapin
 are the machine-dependent interface for swapping processes in and out
-of the system.  They perform any machine-specific operations such as
-saving and restoring floating point state.  They are invoked by
+of the system.
+They perform any machine-specific operations such as
+saving and restoring floating point state.
+They are invoked by
 .Fn uvm_swapout
 and
 .Fn uvm_swapin

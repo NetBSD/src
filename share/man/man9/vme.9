@@ -1,4 +1,4 @@
-.\"     $NetBSD: vme.9,v 1.5 2002/02/13 08:18:55 ross Exp $
+.\"     $NetBSD: vme.9,v 1.6 2002/10/14 13:43:36 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,18 +107,19 @@
 .Sh DESCRIPTION
 The
 .Nm
-bus provides support for VME devices.  The VME bus is a
-high-performance backplane bus for use in computer systems.  It is
-based on the VMEbus specification initially released by the VMEbus
-International Trade Association (VITA) in August of 1982.  It has
-since undergone IEC and IEEE standardisation.
+bus provides support for VME devices.
+The VME bus is a high-performance backplane bus for use in computer systems.
+It is based on the VMEbus specification initially released by the VMEbus
+International Trade Association (VITA) in August of 1982.
+It has since undergone IEC and IEEE standardisation.
 .Pp
 The VME bus supports 8, 16, and 32-bit transfers over non-multiplexed
-32-bit data and address paths.  The latest revisions allow 64-bit,
-multiplexed transfers.  It supports asynchronous, fully handshaken
-transfers at speeds up to 80 MB/sec.  It has a master-slave
-architecture, encouraging multiprocessing and supports up to seven
-interrupt levels.
+32-bit data and address paths.
+The latest revisions allow 64-bit, multiplexed transfers.
+It supports asynchronous, fully handshaken transfers at speeds
+up to 80 MB/sec.
+It has a master-slave architecture, encouraging multiprocessing and
+supports up to seven interrupt levels.
 .Sh DATA TYPES
 Drivers attached to the
 .Nm
@@ -129,23 +130,23 @@ An opaque type identifying the bus controller.
 .It Fa vme_addr_t
 Addresses on the bus.
 .It Fa vme_am_t
-Address modifiers.  Valid values are VME_AM_A32, VME_AM_A16,
-VME_AM_A24, VME_AM_USERDEF (user/vendor definable), VME_AM_MBO,
-VME_AM_SUPER, VME_AM_USER, VME_AM_DATA, VME_AM_PRG, VME_AM_BLT32 and
-VME_AM_BLT64.
+Address modifiers.
+Valid values are VME_AM_A32, VME_AM_A16, VME_AM_A24, VME_AM_USERDEF
+(user/vendor definable), VME_AM_MBO, VME_AM_SUPER, VME_AM_USER,
+VME_AM_DATA, VME_AM_PRG, VME_AM_BLT32 and VME_AM_BLT64.
 .It Fa vme_datasize_t
-The datasize of the address space.  Valid values are
-VME_D8, VME_D16, and VME_D32.
+The datasize of the address space.
+Valid values are VME_D8, VME_D16, and VME_D32.
 .It Fa vme_mapresc_t
 Generic placeholder for any resources needed for a mapping.
 .It Fa vme_intr_handle_t
 An opaque type describing an interrupt mapping.
 .It Fa vme_swap_t
-Hardware swap capabilities for controlling data endianness.  Valid
-values have not been specified yet.
+Hardware swap capabilities for controlling data endianness.
+Valid values have not been specified yet.
 .It Fa struct vme_range
-A structure used to describe an address range on the VME bus.  It
-contains the following members:
+A structure used to describe an address range on the VME bus.
+It contains the following members:
 .Bd -literal
 	vme_addr_t offset;
 	vme_size_t size;
@@ -153,7 +154,8 @@ contains the following members:
 .Ed
 .It Fa struct vme_attach_args
 A structure used to inform the driver of the
-device properties.  It contains the following members:
+device properties.
+It contains the following members:
 .Bd -literal
 	vme_chipset_tag_t va_vct;
 	bus_dma_tag_t va_bdt;
@@ -176,7 +178,8 @@ with address modifiers
 .Fa am
 and datasize
 .Fa datasize
-for a device.  If a VME device is found, the function
+for a device.
+If a VME device is found, the function
 .Fa callback()
 (if it is not NULL) is called to perform device-specific
 identification.
@@ -201,7 +204,8 @@ datasize
 .Fa datasize
 and endianness
 .Fa swap
-for a device.  If the mapping is successful
+for a device.
+If the mapping is successful
 .Fa tag
 contains the bus-space tag and
 .Fa handle
@@ -254,8 +258,8 @@ Increment the interrupt event counter for the interrupt specified by
 .Fa "flags" "map"
 .Fc
 Allocates a DMA handle and initializes it according to the parameters
-provided.  The VME-specific parameters describe the
-address-space modifiers
+provided.
+The VME-specific parameters describe the address-space modifiers
 .Fa am ,
 datasize
 .Fa datasize ,
@@ -264,8 +268,8 @@ and endianness
 The remaining parameters are described in
 .Xr bus_dma 9 .
 .It Fn vme_dmamap_destroy "vc" "map"
-Frees all resources associated with a given DMA handle.  The parameters
-are described in
+Frees all resources associated with a given DMA handle.
+The parameters are described in
 .Xr bus_dma 9 .
 .It Fo vme_dmamem_alloc
 .Fa "vc" "size" "am" "datasize" "swap" "segs" "nsegs" "rsegs" "flags"
@@ -314,12 +318,14 @@ and address-space modifiers
 Returns EINVAL on invalid inputs.
 .El
 .Sh AUTOCONFIGURATION
-The VME bus is an indirect-connection bus.  During autoconfiguration
-each driver is required to probe the bus for the presence of a
-device.  A VME driver will receive a pointer to a
+The VME bus is an indirect-connection bus.
+During autoconfiguration each driver is required to probe the bus
+for the presence of a device.
+A VME driver will receive a pointer to a
 .Fa struct vme_attach_args
 hinting at "locations" (address ranges) on the VME bus where the
-device may be located.  The driver should check the number of address
+device may be located.
+The driver should check the number of address
 ranges, allocate the address space of these ranges using
 .Fn vme_space_alloc ,
 and probe the address space for the device using
@@ -342,7 +348,8 @@ This section describes places within the
 source tree where actual code implementing or utilising the
 machine-independent
 .Nm
-subsystem can be found.  All pathnames are relative to
+subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The

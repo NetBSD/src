@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.8 2002/02/13 08:18:48 ross Exp $
+.\"     $NetBSD: pcmcia.9,v 1.9 2002/10/14 13:43:28 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -117,29 +117,32 @@
 The machine-independent
 .Nm
 subsystem provides support for PC-Card devices defined by the Personal
-Computer Memory Card International Assocation (PCMCIA).  The
+Computer Memory Card International Assocation (PCMCIA).
+The
 .Nm
 bus supports insertion and removal of cards while a system is
-powered-on (ie, dynamic reconfiguration).  The socket must be
-powered-off when a card is not present.  To the user, this appears as
-though the socket is "hot" during insertion and removal events.
+powered-on (ie, dynamic reconfiguration).
+The socket must be powered-off when a card is not present.
+To the user, this appears as though the socket is "hot" during
+insertion and removal events.
 .Pp
 A PCMCIA controller interfaces the PCMCIA bus with the ISA or PCI
-busses on the host system.  The controller is responsible for
-detecting and enabling devices and for allocating and mapping
-resources such as memory and interrupts to devices on the
-PCMCIA bus.
+busses on the host system.
+The controller is responsible for detecting and enabling devices and
+for allocating and mapping resources such as memory and interrupts
+to devices on the PCMCIA bus.
 .Pp
 Each device has a table called the Card Information Structure (CIS)
-which contains configuration information.  The tuples in the CIS are
-used by the controller to uniquely identify the device.  Additional
-information may be present in the CIS, such as the ethernet MAC
-address, that can be accessed and utilised within a device driver.
+which contains configuration information.
+The tuples in the CIS are used by the controller to uniquely identify
+the device.
+Additional information may be present in the CIS, such as the ethernet
+MAC address, that can be accessed and utilised within a device driver.
 .Pp
 Devices on the PCMCIA bus are uniquely identified by a 32-bit
-manufacturer ID and a 32-bit product ID.  Additionally, devices can
-perform multiple functions (such a ethernet and modem) and these
-functions are identified by a function ID.
+manufacturer ID and a 32-bit product ID.
+Additionally, devices can perform multiple functions (such a ethernet
+and modem) and these functions are identified by a function ID.
 .Pp
 PCMCIA devices do not support DMA, however memory on the device can be
 mapped into the address space of the host.
@@ -149,8 +152,8 @@ Drivers attached to the
 bus will make use of the following data types:
 .Bl -tag -width compact
 .It Fa struct pcmcia_card
-Devices (cards) have their identity recorded in this structure.  It
-contains the following members:
+Devices (cards) have their identity recorded in this structure.
+It contains the following members:
 .Bd -literal
 	char		*cis1_info[4];
         int32_t         manufacturer;
@@ -159,9 +162,10 @@ contains the following members:
         SIMPLEQ_HEAD(, pcmcia_function)	pf_head;
 .Ed
 .It Fa struct pcmcia_function
-Identifies the function of the devices.  A device can have multiple
-functions.  Consider it an opaque type for identifying a particular
-function of a device.
+Identifies the function of the devices.
+A device can have multiple functions.
+Consider it an opaque type for identifying a particular function
+of a device.
 .It struct pcmcia_config_entry
 Contains information about the resources requested by the device.
 It contains the following members:
@@ -188,14 +192,15 @@ It contains the following members:
 .It Fa struct pcmcia_tuple
 A handle for identifying an entry in the CIS.
 .It Fa struct pcmcia_io_handle
-A handle for mapping and allocating I/O address spaces.  It contains
-the tag and handle for accessing the bus-space.
+A handle for mapping and allocating I/O address spaces.
+It contains the tag and handle for accessing the bus-space.
 .It Fa struct pcmcia_mem_handle
-A handle for mapping and allocating memory address spaces.  It contains
-the tag and handle for accessing the bus-space.
+A handle for mapping and allocating memory address spaces.
+It contains the tag and handle for accessing the bus-space.
 .It Fa struct pcmcia_attach_args
 A structure used to inform the driver of the
-device properties.  It contains the following members:
+device properties.
+It contains the following members:
 .Bd -literal
 	int32_t			manufacturer;
 	int32_t			product;
@@ -243,7 +248,8 @@ An I/O window of size
 .Fa size
 is mapped at offset
 .Fa offset
-in the chipset I/O window.  The width of data access is specified by
+in the chipset I/O window.
+The width of data access is specified by
 .Fa width .
 Valid values for the width are:
 .Bl -tag -width PCMCIA_WIDTH_AUTO
@@ -371,8 +377,8 @@ During autoconfiguration, a
 .Nm
 driver will receive a pointer to
 .Fa struct pcmcia_attach_args
-describing the device attached to the PCMCIA bus.  Drivers match the
-device using the
+describing the device attached to the PCMCIA bus.
+Drivers match the device using the
 .Em manufacturer
 and
 .Em product
@@ -381,23 +387,25 @@ members.
 During the driver attach step, drivers will use the pcmcia function
 .Em pf .
 The driver should traverse the list of config entries searching for a
-useful configuration.  This config entry is passed to
+useful configuration.
+This config entry is passed to
 .Fn pcmcia_function_init
-to initialise the machine-independent interface.  I/O and memory
-resources should be initialised using
+to initialise the machine-independent interface.
+I/O and memory resources should be initialised using
 .Fn pcmcia_io_alloc
 and
 .Fn pcmcia_mem_alloc
-using the specified resources in the config entry.  These resources
-can then be mapped into processor bus space using
+using the specified resources in the config entry.
+These resources can then be mapped into processor bus space using
 .Fn pcmcia_io_map
 and
 .Fn pcmcia_mem_map
-respectively.  Upon successful allocation of resources, power can be
-applied to the device with
+respectively.
+Upon successful allocation of resources, power can be applied to the
+device with
 .Fn pcmcia_function_enable
-so that device-specific interrogation can be performed.  Finally,
-power should be removed from the device using
+so that device-specific interrogation can be performed.
+Finally, power should be removed from the device using
 .Fn pcmcia_function_disable .
 .Pp
 Since PCMCIA devices support dynamic configuration, drivers should
@@ -411,8 +419,8 @@ PCMCIA devices do not support DMA.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent PCMCIA subsystem can be found.  All pathnames are
-relative to
+machine-independent PCMCIA subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The PCMCIA subsystem itself is implemented within the file
@@ -421,8 +429,8 @@ The database of known devices exists within the file
 .Pa sys/dev/pcmcia/pcmciadevs_data.h
 and is generated automatically from the file
 .Pa sys/dev/pcmcia/pcmciadevs .
-New manufacturer and product identifiers should be added to this
-file.  The database can be regenerated using the Makefile
+New manufacturer and product identifiers should be added to this file.
+The database can be regenerated using the Makefile
 .Pa sys/dev/pcmcia/Makefile.pcmciadevs .
 .Sh SEE ALSO
 .Xr pcic 4 ,

@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.6 2002/02/13 08:18:40 ross Exp $
+.\" $NetBSD: evcnt.9,v 1.7 2002/10/14 13:43:22 wiz Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -58,7 +58,8 @@ system events (including device interrupts).
 .Pp
 The fundamental component of this framework is the
 .Nm evcnt
-structure.  Its user-accessible fields are:
+structure.
+Its user-accessible fields are:
 .Bd -literal
 struct evcnt {
         u_int64_t       ev_count;      /* how many have occurred */
@@ -95,10 +96,10 @@ Each event counter also has a group name
 and
 an event name
 .Pq Fa ev_name
-which are used to identify the counter.  The group name
-may be shared by a set of counters.  For example, device
-interrupt counters would use the name of the device whose
-interrupts are being counted as the group name.
+which are used to identify the counter.
+The group name may be shared by a set of counters.
+For example, device interrupt counters would use the name of the
+device whose interrupts are being counted as the group name.
 The counter
 name is meant to distinguish the counter from others in its group
 (and need not be unique across groups).
@@ -115,10 +116,11 @@ In the current implementation it is 256.
 To support hierarchical tracking of events, each event counter can
 name a
 .Dq parent
-event counter.  For instance, interrupt dispatch code could have an
-event counter per interrupt line, and devices could each have
-counters for the number of interrupts that they were responsible for
-causing.  In that case, the counter for a device on a given interrupt line
+event counter.
+For instance, interrupt dispatch code could have an event counter per
+interrupt line, and devices could each have counters for the number
+of interrupts that they were responsible for causing.
+In that case, the counter for a device on a given interrupt line
 would have the line's counter as its parent.
 The value
 .Dv NULL
@@ -129,10 +131,12 @@ and detached after the counter is detached.
 The
 .Fn EVCNT_INITIALIZER
 macro can be used to provide a static initializer for an event
-counter structure.  It is be invoked as
+counter structure.
+It is be invoked as
 .Fn EVCNT_INITIALIZER "type" "parent" "group" "name" ,
 and its arguments will be placed into the corresponding fields of
-the event counter structure it is initializing.  The
+the event counter structure it is initializing.
+The
 .Fa group
 and
 .Fa name
@@ -144,8 +148,9 @@ The following is a brief description of each function in the framework:
 .Pp
 Attach the event counter structure pointed to by
 .Fa ev
-to the system event list.  The event counter is cleared and its fields
-initialized using the arguments to the function call.
+to the system event list.
+The event counter is cleared and its fields initialized using the
+arguments to the function call.
 The contents of the remaining elements in the structure (e.g., the
 name lengths) are calculated, and the counter is added to the
 system event list.
@@ -159,12 +164,12 @@ not copied into, the counter.
 Attach the statically-initialized event counter structure
 pointed to by
 .Fa ev
-to the system event list.  The event counter is assumed to be
-statically initialized using the
+to the system event list.
+The event counter is assumed to be statically initialized using the
 .Fn EVCNT_INITIALIZER
-macro.  This function simply calculates structure elements'
-values as appropriate (e.g., the string lengths), and adds
-the counter to the system event list.
+macro.
+This function simply calculates structure elements' values as appropriate
+(e.g., the string lengths), and adds the counter to the system event list.
 .It Fn "void evcnt_detach" "struct evcnt *ev"
 .Pp
 Detach the event counter structure pointed to by
@@ -173,12 +178,12 @@ from the system event list.
 .El
 .Pp
 Note that no method is provided to increment the value of an
-event counter.  Code incrementing an event counter should
-do so by directly accessing its
+event counter.
+Code incrementing an event counter should do so by directly accessing its
 .Fa ev_count
-field in a manner that is known to be safe.  For instance,
-additions to a device's event counters in the interrupt handler
-for that device will often be safe without additional protection
+field in a manner that is known to be safe.
+For instance, additions to a device's event counters in the interrupt
+handler for that device will often be safe without additional protection
 (because interrupt handler entries for a given device have to be
 serialized).
 However, for other uses of event counters, additional locking
@@ -186,8 +191,8 @@ or use of machine-dependent atomic operation may be appropriate.
 (The overhead of using a mechanism that is guaranteed to
 be safe to increment every counter, regardless of actual need
 for such a mechanism where the counter is being incremented,
-would be too great.  On some systems, it might involve a global
-lock and several function calls.)
+would be too great.
+On some systems, it might involve a global lock and several function calls.)
 .Sh USING THE FRAMEWORK
 This section includes a description on basic use of the framework
 and example usage of its functions.
@@ -199,8 +204,8 @@ and
 functions to manage device-specific event counters.
 Statically configured system modules can use
 .Fn evcnt_attach_static
-to configure global event counters.  Similarly, loadable
-modules can use
+to configure global event counters.
+Similarly, loadable modules can use
 .Fn evcnt_attach_static
 to configure their global event counters,
 .Fn evcnt_attach_dynamic
@@ -212,8 +217,9 @@ to detach all counters when being unloaded.
 Device drivers that wish to use the generic event counter
 framework should place event counter structures in their
 .Dq softc
-structures.  For example, to keep track of the number of interrupts
-for a given device (broken down further into
+structures.
+For example, to keep track of the number of interrupts for a given
+device (broken down further into
 .Dq device readable
 and
 .Dq device writable

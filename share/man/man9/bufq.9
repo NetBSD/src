@@ -1,4 +1,4 @@
-.\"     $NetBSD: bufq.9,v 1.3 2002/07/23 14:00:17 hannken Exp $
+.\"     $NetBSD: bufq.9,v 1.4 2002/10/14 13:43:15 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -102,7 +102,8 @@ for reads with read priority
 .It Fn bufq_alloc "bufq" "flags"
 Initialize a
 .Em bufq_state
-descriptor.  The argument
+descriptor.
+The argument
 .Fa flags
 controls the strategy and sort order.
 .It Fn bufq_free "bufq"
