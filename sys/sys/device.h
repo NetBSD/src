@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.46 2001/07/01 02:56:20 gmcgarry Exp $ */
+/* $NetBSD: device.h,v 1.47 2001/08/26 02:48:12 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -142,6 +142,7 @@ TAILQ_HEAD(evcntlist, evcnt);
 /* ev_type values */
 #define	EVCNT_TYPE_MISC		0	/* miscellaneous; catch all */
 #define	EVCNT_TYPE_INTR		1	/* interrupt; count with vmstat -i */
+#define	EVCNT_TYPE_TRAP		2	/* processor trap/execption */
 
 /*
  * initializer for an event count structure.  the lengths are initted and
