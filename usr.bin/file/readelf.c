@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.10 2001/12/09 23:21:07 thorpej Exp $	*/
+/*	$NetBSD: readelf.c,v 1.11 2002/03/30 16:21:28 bjh21 Exp $	*/
 
 #include "file.h"
 
@@ -20,7 +20,7 @@
 #if 0
 FILE_RCSID("@(#)Id: readelf.c,v 1.17 2000/08/05 19:00:12 christos Exp ")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.10 2001/12/09 23:21:07 thorpej Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.11 2002/03/30 16:21:28 bjh21 Exp $");
 #endif
 #endif
 
@@ -177,9 +177,14 @@ dophn_exec(class, swap, fd, off, num, size)
 	size_t size;
 {
 	Elf32_Phdr ph32;
+	Elf32_Nhdr *nh32;
 	Elf64_Phdr ph64;
+	Elf64_Nhdr *nh64;
 	char *linking_style = "statically";
 	char *shared_libraries = "";
+	char nbuf[BUFSIZ];
+	int bufsize;
+	size_t offset, nameoffset;
 
 	if (lseek(fd, off, SEEK_SET) == -1)
 		error("lseek failed (%s).\n", strerror(errno));
@@ -194,6 +199,80 @@ dophn_exec(class, swap, fd, off, num, size)
 			break;
 		case PT_INTERP:
 			shared_libraries = " (uses shared libs)";
+			break;
+		case PT_NOTE:
+			/*
+			 * This is a PT_NOTE section; loop through all the notes
+			 * in the section.
+			 */
+			if (lseek(fd, (off_t) ph_offset, SEEK_SET) == -1)
+				error("lseek failed (%s).\n", strerror(errno));
+			bufsize = read(fd, nbuf, BUFSIZ);
+			if (bufsize == -1)
+				error(": " "read failed (%s).\n",
+				    strerror(errno));
+			offset = 0;
+			for (;;) {
+				if (offset >= bufsize)
+					break;
+				if (class == ELFCLASS32)
+					nh32 = (Elf32_Nhdr *)&nbuf[offset];
+				else
+					nh64 = (Elf64_Nhdr *)&nbuf[offset];
+				offset += nh_size;
+	
+				if (offset + nh_namesz >= bufsize) {
+					/*
+					 * We're past the end of the buffer.
+					 */
+					break;
+				}
+
+				nameoffset = offset;
+				offset += nh_namesz;
+				offset = ((offset + 3)/4)*4;
+
+				if (offset + nh_descsz >= bufsize)
+					break;
+
+				if (nh_namesz == 4 &&
+				    strcmp(&nbuf[nameoffset], "GNU") == 0 &&
+				    nh_type == NT_GNU_VERSION &&
+				    nh_descsz == 16) {
+					uint32_t *desc =
+					    (uint32_t *)&nbuf[offset];
+
+					printf(", for GNU/");
+					switch (getu32(swap, desc[0])) {
+					case GNU_OS_LINUX:
+						printf("Linux");
+						break;
+					case GNU_OS_HURD:
+						printf("Hurd");
+						break;
+					case GNU_OS_SOLARIS:
+						printf("Solaris");
+						break;
+					default:
+						printf("<unknown>");
+					}
+					printf(" %d.%d.%d",
+					    getu32(swap, desc[1]),
+					    getu32(swap, desc[2]),
+					    getu32(swap, desc[3]));
+				}
+
+				if (nh_namesz == 7 &&
+				    strcmp(&nbuf[nameoffset], "NetBSD") == 0 &&
+				    nh_type == NT_NETBSD_VERSION &&
+				    nh_descsz == 4) {
+					printf(", for NetBSD");
+					/*
+					 * Version number is stuck at 199905,
+					 * and hence is basically content-free.
+					 */
+				}
+			}
 			break;
 		}
 	}
