@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.11 1993/09/30 21:41:20 cgd Exp $
+ *	$Id: machdep.c,v 1.12 1993/10/13 09:36:43 cgd Exp $
  */
 
 #include "param.h"
@@ -978,7 +978,7 @@ boot(howto)
 	/*NOTREACHED*/
 }
 
-int	dumpmag = 0x8fca0101;	/* magic number for savecore */
+u_int	dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
@@ -1621,3 +1621,30 @@ cpu_exec_aout_prep_oldzmagic(p, epp)
   return 0;
 }
 #endif /* COMPAT_NOMID */
+
+/*
+ * XXX -- these functions need to be implemented
+ */
+int
+ptrace_set_pc (struct proc *p, unsigned int addr)
+{
+	return EINVAL;
+}
+
+int
+ptrace_single_step (struct proc *p)
+{
+	return EINVAL;
+}
+
+int
+ptrace_getregs (struct proc *p, unsigned int *addr)
+{
+	return EINVAL;
+}
+
+int
+ptrace_setregs (struct proc *p, unsigned int *addr)
+{
+	return EINVAL;
+}
