@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.21 1997/05/25 22:46:21 veego Exp $	*/
+/*	$NetBSD: grf_cv.c,v 1.22 1997/06/15 21:09:10 veego Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -905,7 +905,7 @@ cv_mode(gp, cmd, arg, a2, a3)
 
 	    case GM_GRFOFF:
 #ifndef CV64CONSOLE
-		cvscreen(1, gp->g_regkva - 0x02000000)
+		cvscreen(1, gp->g_regkva - 0x02000000);
 #else
 		cv_load_mon(gp, &cvconsole_mode);
 		ite_reinit(gp->g_itedev);
