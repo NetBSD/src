@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Kenneth Almquist.
@@ -32,12 +32,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *	@(#)echo.c	8.1 (Berkeley) 5/31/93
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)echo.c	5.2 (Berkeley) 3/13/91";*/
-static char rcsid[] = "$Id: echo.c,v 1.4 1993/08/01 18:58:43 mycroft Exp $";
-#endif /* not lint */
 
 /*
  * Echo command.
