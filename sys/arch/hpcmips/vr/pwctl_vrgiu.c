@@ -1,8 +1,10 @@
-/*	$NetBSD: pwctl_vrgiu.c,v 1.3 2000/02/11 03:20:21 takemura Exp $	*/
+/*	$NetBSD: pwctl_vrgiu.c,v 1.4 2000/09/10 15:30:32 sato Exp $	*/
 
 /*-
  * Copyright (c) 1999
  *         Shin Takemura and PocketBSD Project. All rights reserved.
+ * Copyright (c) 2000
+ *         SATO Kazumi. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,6 +68,8 @@ struct pwctl_vrgiu_softc {
 	long sc_id;
 	int sc_on, sc_off;
 	config_hook_tag sc_hook_tag;
+	config_hook_tag sc_hook_hardpower;
+	int sc_save;
 };
 
 static int	pwctl_vrgiu_match __P((struct device *, struct cfdata *,
@@ -74,6 +78,7 @@ static void	pwctl_vrgiu_attach __P((struct device *, struct device *,
 					void *));
 static int	pwctl_vrgiu_hook __P((void *ctx, int type, long id,
 				      void *msg));
+int	pwctl_vrgiu_hardpower __P((void *, int, long, void *));
 
 struct cfattach pwctl_vrgiu_ca = {
 	sizeof(struct pwctl_vrgiu_softc), pwctl_vrgiu_match, pwctl_vrgiu_attach
@@ -125,6 +130,11 @@ pwctl_vrgiu_attach(parent, self, aux)
 		sc->sc_hook_tag = config_hook(CONFIG_HOOK_POWERCONTROL,
 					      sc->sc_id, CONFIG_HOOK_SHARE,
 					      pwctl_vrgiu_hook, sc);
+		sc->sc_hook_hardpower = config_hook(CONFIG_HOOK_PMEVENT,
+						CONFIG_HOOK_PMEVENT_HARDPOWER,
+						CONFIG_HOOK_SHARE,
+						pwctl_vrgiu_hardpower, sc);
+
 	}
 	printf("\n");
 }
@@ -142,5 +152,36 @@ pwctl_vrgiu_hook(ctx, type, id, msg)
 		 msg ? "ON" : "OFF", msg ? sc->sc_on : sc->sc_off));
 	sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port,
 				msg ? sc->sc_on : sc->sc_off);
+	return (0);
+}
+
+int
+pwctl_vrgiu_hardpower(ctx, type, id, msg)
+	void *ctx;
+	int type;
+	long id;
+	void *msg;
+{
+	struct pwctl_vrgiu_softc *sc = ctx;
+	int why =(int)msg;
+
+#if 0
+	/* XXX debug print cause hang system... Huum...*/
+	DPRINTF(("pwctl hardpower: port %d %s: %s(%d)\n", sc->sc_port,
+		why == PWR_RESUME? "resume" 
+		: why == PWR_SUSPEND? "suspend" : "standby",
+		sc->sc_save == sc->sc_on ? "on": "off", sc->sc_save));
+#endif /* 0 */
+	switch (why) {
+	case PWR_STANDBY:
+		break;
+	case PWR_SUSPEND:
+		sc->sc_save = sc->sc_gf->gf_portread(sc->sc_gc, sc->sc_port);
+		sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port, sc->sc_off);
+		break;
+	case PWR_RESUME:
+		sc->sc_gf->gf_portwrite(sc->sc_gc, sc->sc_port, sc->sc_save);
+		break;
+	}
 	return (0);
 }
