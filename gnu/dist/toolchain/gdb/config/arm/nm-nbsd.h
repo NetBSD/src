@@ -34,6 +34,16 @@
 extern int
 arm_register_u_addr PARAMS ((int, int));
 
+/* Figure out where the longjmp will land.  Slurp the args out of the stack.
+   We expect the first arg to be a pointer to the jmp_buf structure from which
+   we extract the pc (JB_PC) that we will land at.  The pc is copied into ADDR.
+   This routine returns true on success */
+
+extern int
+get_longjmp_target PARAMS ((CORE_ADDR *));
+
+#define GET_LONGJMP_TARGET(ADDR) get_longjmp_target(ADDR)
+
 /* We'd like the functions for handling 26-bit modes, please. */
 #define ARM_26BIT_R15
 
