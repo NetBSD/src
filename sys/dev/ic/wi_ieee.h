@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.5 2001/11/11 00:16:07 christos Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.6 2001/11/11 00:34:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -298,7 +298,6 @@ struct wi_ltv_keys {
 #define WI_RID_MEMSZ		0xFD02 /* memory size info */
 #define WI_RID_PRI_SUP_RANGE	0xFD03 /* primary supplier compatibility */
 #define WI_RID_CIF_ACT_RANGE	0xFD04 /* controller sup. compatibility */
-#define WI_RID_SYSTEM_SCALE	0xFC06
 #define WI_RID_SERIALNO		0xFD0A /* card serial number */
 #define WI_RID_CARD_ID		0xFD0B /* card identification */
 #define WI_RID_MFI_SUP_RANGE	0xFD0C /* modem supplier compatibility */
