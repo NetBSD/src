@@ -151,7 +151,6 @@ com*|tty*)
 	unit=`expr $i : '...\(.*\)'`
 	rm -f com$unit tty0$unit
 	mknod tty0$unit c 8 $unit
-	ln -s tty0$unit com$unit
 	chown uucp.wheel tty0$unit
 	;;
 
