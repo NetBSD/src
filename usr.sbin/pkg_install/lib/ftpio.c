@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.41 2002/07/20 08:40:19 grant Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.42 2002/09/19 02:13:57 mycroft Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.41 2002/07/20 08:40:19 grant Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.42 2002/09/19 02:13:57 mycroft Exp $");
 #endif
 
 /*
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: ftpio.c,v 1.41 2002/07/20 08:40:19 grant Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
+#include <sys/poll.h>
 #include <signal.h>
 #include <assert.h>
 #include <ctype.h>
@@ -100,7 +101,7 @@ expect(int fd, const char *str, int *ftprc)
 #endif /* EXPECT_DEBUG */
     regex_t rstr;
     int done;
-    struct timeval timeout;
+    struct pollfd set[1];
     int retval;
     regmatch_t match;
     int verbose_expect=0;
@@ -124,16 +125,12 @@ expect(int fd, const char *str, int *ftprc)
 
     memset(buf, '\n', sizeof(buf));
 
-    timeout.tv_sec=10*60;    /* seconds until next message from tar */
-    timeout.tv_usec=0;
     done=0;
     retval=0;
+    set[0].fd = fd;
+    set[0].events = POLLIN;
     while(!done) {
-	fd_set fdset;
-
-	FD_ZERO(&fdset);
-	FD_SET(fd, &fdset);
-	rc = select(FD_SETSIZE, &fdset, NULL, NULL, &timeout);
+	rc = poll(set, 1, 10*60*1000);    /* seconds until next message from tar */
 	switch (rc) {
 	case -1:
 	    if (errno == EINTR)
@@ -164,6 +161,12 @@ expect(int fd, const char *str, int *ftprc)
 	    retval = -1;
 	    break;
 	default:
+	    if (set[0].revents & POLLHUP) {
+		done = 1;
+		retval = -1;
+		break;
+	    }
+
 	    rc=read(fd,&buf[sizeof(buf)-1],1);
 
 	    if (verbose_expect)
@@ -332,7 +335,7 @@ setupCoproc(const char *base)
 static void
 sigchld_handler (int n)
 {
-	/* Make select(2) return EINTR */
+	/* Make poll(2) return EINTR */
 }
 
 
@@ -667,7 +670,9 @@ unpackURL(const char *url, const char *dir)
 	/* Leave a hint for any depending pkgs that may need it */
 	if (getenv("PKG_PATH") == NULL) {
 		setenv("PKG_PATH", pkg_path, 1);
+#if 0
 		path_create(pkg_path); /* XXX */
+#endif
 		printf("setenv PKG_PATH='%s'\n",pkg_path);
 	}
 	
