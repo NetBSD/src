@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_smbfs.8,v 1.7 2003/04/04 07:57:58 jdolecek Exp $
+.\" $NetBSD: mount_smbfs.8,v 1.8 2003/04/11 12:02:09 jdolecek Exp $
 .\" from: Id: mount_smbfs.8,v 1.10 2002/04/16 02:47:41 bp Exp
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -56,7 +56,10 @@
 .Op Fl n Ar opt
 .Op Fl u Ar uid
 .Sm off
-.No // Ar user No @ Ar server No / Ar share
+.Xo
+.No // Ar user No @ Ar server
+.No / Ar share
+.Xc
 .Sm on
 .Ar node
 .Sh DESCRIPTION
