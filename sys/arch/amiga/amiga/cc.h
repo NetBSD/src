@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.h,v 1.9 1997/06/23 23:46:24 is Exp $	*/
+/*	$NetBSD: cc.h,v 1.10 1999/09/25 21:47:03 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -163,9 +163,9 @@ struct mem_node {
 #define MNODES_MEM(mn) ((u_char *)(&mn[1]))
 #define PREP_DMA_MEM(mem) (void *)((caddr_t)mem - CHIPMEMADDR)
 
-vm_offset_t CHIPMEMADDR;
-vm_offset_t chipmem_start;
-vm_offset_t chipmem_end;
+vaddr_t CHIPMEMADDR;
+vaddr_t chipmem_start;
+vaddr_t chipmem_end;
 #define CHIPMEMBASE	(0x00000000)
 #define CHIPMEMTOP	(0x00200000)
 #define NCHIPMEMPG	btoc(CHIPMEMTOP - CHIPMEMBASE)

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.9 1999/09/06 21:50:47 is Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.10 1999/09/25 21:47:04 is Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,10 +58,10 @@
 #include <m68k/cacheops.h>
 
 static char db_read_data __P((char *src));
-void db_read_bytes __P((vm_offset_t addr, register int size, register char *data));
+void db_read_bytes __P((db_addr_t addr, register int size, register char *data));
 static void db_write_text __P((char *dst, int ch));
 static void db_write_data __P((char *dst, int ch));
-void db_write_bytes __P((vm_offset_t addr, int size, char *data));
+void db_write_bytes __P((db_addr_t addr, int size, char *data));
 
 
 /*
@@ -73,7 +73,7 @@ db_read_data(src)
 	char *src;
 {
 	u_int *pte;
-	vm_offset_t pgva;
+	vaddr_t pgva;
 
 	pgva = m68k_trunc_page((long)src);
 	pte = kvtopte(pgva);
@@ -91,7 +91,7 @@ db_read_data(src)
  */
 void
 db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
+	db_addr_t	addr;
 	register int	size;
 	register char	*data;
 {
@@ -118,7 +118,7 @@ db_write_text(dst, ch)
 {
 	u_int *pte, oldpte;
 
-	pte = kvtopte((vm_offset_t)dst);
+	pte = kvtopte((vaddr_t)dst);
 	oldpte = *pte;
 	if ((oldpte & PG_V) == 0) {
 		db_printf(" address %p not a valid page\n", dst);
@@ -129,12 +129,12 @@ db_write_text(dst, ch)
 printf("db_write_text: %x: %x = %x (%x:%x)\n", dst, *dst, ch, pte, *pte);
 #endif
 	*pte &= ~PG_RO;
-	TBIS((vm_offset_t)dst);
+	TBIS((vaddr_t)dst);
 
 	*dst = (char) ch;
 
 	*pte = oldpte;
-	TBIS((vm_offset_t)dst);
+	TBIS((vaddr_t)dst);
 	dma_cachectl (dst, 1);
 }
 
@@ -149,7 +149,7 @@ db_write_data(dst, ch)
 {
 	u_int *pte;
 
-	pte = kvtopte((vm_offset_t)dst);
+	pte = kvtopte((vaddr_t)dst);
 
 	if ((*pte & (PG_V | PG_RO)) != PG_V) {
 		db_printf(" address %p not a valid page\n", dst);
@@ -163,7 +163,7 @@ db_write_data(dst, ch)
  */
 void
 db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
+	db_addr_t	addr;
 	int	size;
 	char	*data;
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49 1999/09/06 21:50:48 is Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.50 1999/09/25 21:47:05 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -355,16 +355,16 @@ vmapbuf(bp, len)
 	vm_size_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vm_offset_t uva;	/* User VA (map from) */
-	vm_offset_t kva;	/* Kernel VA (new to) */
-	vm_offset_t pa; 	/* physical address */
-	vm_size_t off;
+	vaddr_t uva;	/* User VA (map from) */
+	vaddr_t kva;	/* Kernel VA (new to) */
+	paddr_t pa; 	/* physical address */
+	vaddr_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - uva;
+	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
 	kva = uvm_km_valloc_wait(phys_map, len);
 	bp->b_data = (caddr_t)(kva + off);
@@ -389,14 +389,14 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vm_size_t len;
 {
-	vm_offset_t kva;
-	vm_size_t off;
+	vaddr_t kva;
+	vaddr_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = m68k_trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - kva;
+	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 
 	/*

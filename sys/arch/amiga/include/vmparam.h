@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 1999/04/26 22:46:44 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 1999/09/25 21:47:02 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,11 +143,11 @@
 /*
  * user/kernel map constants
  */
-#define VM_MIN_ADDRESS		((vm_offset_t)0)		/* user min */
-#define VM_MAX_ADDRESS		((vm_offset_t)(USRSTACK))	/* user max */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)(VM_MAX_ADDRESS))	/* same */
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)(0-NBPG))
+#define VM_MIN_ADDRESS		((vaddr_t)0)		/* user min */
+#define VM_MAX_ADDRESS		((vaddr_t)(USRSTACK))	/* user max */
+#define VM_MAXUSER_ADDRESS	((vaddr_t)(VM_MAX_ADDRESS))	/* same */
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-NBPG))
 
 /*
  * virtual sizes (bytes) for various kernel submaps

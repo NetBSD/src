@@ -1,4 +1,4 @@
-/*	$NetBSD: bzivsc.c,v 1.6 1998/11/19 21:44:34 thorpej Exp $	*/
+/*	$NetBSD: bzivsc.c,v 1.7 1999/09/25 21:47:05 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -352,7 +352,7 @@ bzivsc_dma_setup(sc, addr, len, datain, dmasize)
 	size_t *dmasize;
 {
 	struct bzivsc_softc *bsc = (struct bzivsc_softc *)sc;
-	vm_offset_t pa;
+	paddr_t pa;
 	u_char *ptr;
 	size_t xfer;
 

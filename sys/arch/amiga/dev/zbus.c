@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.40 1999/06/22 21:12:00 is Exp $	*/
+/*	$NetBSD: zbus.c,v 1.41 1999/09/25 21:47:11 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -348,8 +348,8 @@ zbusmap (pa, size)
 	caddr_t pa;
 	u_int size;
 {
-	static vm_offset_t nextkva = 0;
-	vm_offset_t kva;
+	static vaddr_t nextkva = 0;
+	vaddr_t kva;
 
 	if (nextkva == 0)
 		nextkva = ZBUSADDR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.70 1999/09/06 21:50:48 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.71 1999/09/25 21:47:05 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -310,7 +310,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	extern vm_map_t kernel_map;
 	struct vmspace *vm = NULL;
 	vm_prot_t ftype;
-	vm_offset_t va;
+	vaddr_t va;
 	vm_map_t map;
 	u_int nss;
 	int rv;
@@ -390,7 +390,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		ftype = VM_PROT_READ | VM_PROT_WRITE;
 	else
 		ftype = VM_PROT_READ;
-	va = trunc_page((vm_offset_t)v);
+	va = trunc_page((vaddr_t)v);
 #ifdef DEBUG
 	if (map == kernel_map && va == 0) {
 		printf("trap: bad kernel access at %x pc %x\n", v, fp->f_pc);
@@ -994,13 +994,13 @@ _write_back (wb, wb_sts, wb_data, wb_addr, wb_map)
 	/* See if we're going to span two pages (for word or long transfers) */
 
 	if((wb_sts & WBS_SZMASK) == WBS_SIZE_WORD)
-		if(trunc_page((vm_offset_t)wb_addr) !=
-		    trunc_page((vm_offset_t)wb_addr+1))
+		if(trunc_page((vaddr_t)wb_addr) !=
+		    trunc_page((vaddr_t)wb_addr+1))
 			wb_extra_page = 1;
 
 	if((wb_sts & WBS_SZMASK) == WBS_SIZE_LONG)
-		if(trunc_page((vm_offset_t)wb_addr) !=
-		    trunc_page((vm_offset_t)wb_addr+3))
+		if(trunc_page((vaddr_t)wb_addr) !=
+		    trunc_page((vaddr_t)wb_addr+3))
 			wb_extra_page = 3;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: flscvar.h,v 1.4 1997/10/24 01:50:08 mhitch Exp $	*/
+/*	$NetBSD: flscvar.h,v 1.5 1999/09/25 21:47:11 is Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch.
@@ -47,7 +47,7 @@ struct flsc_softc {
 	size_t		sc_dmatrans;
 	char		**sc_dmaaddr;
 	size_t		*sc_pdmalen;
-	vm_offset_t	sc_pa;
+	paddr_t		sc_pa;
 
 	char		*sc_alignbuf;
 	u_char		sc_pad1[2];		/* XXX */

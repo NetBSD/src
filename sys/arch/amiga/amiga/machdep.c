@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 1999/09/12 01:16:59 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 1999/09/25 21:47:04 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -171,7 +171,7 @@ vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
 caddr_t	msgbufaddr;
-vm_offset_t msgbufpa;
+paddr_t msgbufpa;
 
 int	maxmem;			/* max memory per process */
 int	physmem = MAXMEM;	/* max supported memory, changes to actual */
@@ -247,8 +247,8 @@ cpu_startup()
 	extern int pmapdebug;
 	int opmapdebug = pmapdebug;
 #endif
-	vm_offset_t minaddr, maxaddr;
-	vm_size_t size = 0;
+	paddr_t minaddr, maxaddr;
+	paddr_t size = 0;
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -262,7 +262,7 @@ cpu_startup()
 	 */
 
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vm_offset_t)msgbufaddr + i * NBPG,
+		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * NBPG,
 		    msgbufpa + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
 		    VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
