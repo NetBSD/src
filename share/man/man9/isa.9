@@ -1,4 +1,4 @@
-.\"     $NetBSD: isa.9,v 1.6 2002/02/13 08:18:42 ross Exp $
+.\"     $NetBSD: isa.9,v 1.7 2002/10/14 13:43:24 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,22 +120,22 @@ The machine-independent
 .Nm
 subsystem provides support for the ISA bus.
 .Pp
-The ISA bus was introduced on the IBM PC/AT.  It is an extension to
-the original bus found on the original IBM PC.  The ISA bus is
-essentially the host bus of the Intel 80286 processor, however the
-widespread acceptance of the bus as a defacto standard has seen it
-appear on systems without Intel processors.
+The ISA bus was introduced on the IBM PC/AT.
+It is an extension to the original bus found on the original IBM PC.
+The ISA bus is essentially the host bus of the Intel 80286 processor,
+however the widespread acceptance of the bus as a defacto standard has
+seen it appear on systems without Intel processors.
 .Pp
 The ISA bus has a 16-bit data bus, a 24-bit memory address bus, a
-16-bit I/O address bus, and operates at 8MHz.  It provides 15
-interrupt lines and 8 DMA channels supporting DMA transfers of 64KB or
-128KB transfers depending on the width of the channel being
-used. Historically, some devices only decoded the 10 lowest bits of
+16-bit I/O address bus, and operates at 8MHz.
+It provides 15 interrupt lines and 8 DMA channels supporting DMA transfers
+of 64KB or 128KB transfers depending on the width of the channel being used.
+Historically, some devices only decoded the 10 lowest bits of
 the I/O address bus, preventing use of the full 16-bit address space.
 .Pp
 On newer machines, the ISA bus is no longer connected directly to the
-host bus, and is usually connected via a PCI-ISA bridge.  Either way,
-the bus looks the same to the device driver.
+host bus, and is usually connected via a PCI-ISA bridge.
+Either way, the bus looks the same to the device driver.
 .Sh DATA TYPES
 Drivers for devices attached to the
 .Nm
@@ -144,8 +144,8 @@ bus will make use of the following data types:
 .It Fa isa_chipset_tag_t
 Chipset tag for the ISA bus.
 .It Fa struct isa_attach_args
-Location hints for devices are recorded in this structure.  It
-contains the following members:
+Location hints for devices are recorded in this structure.
+It contains the following members:
 .Bd -literal
 	bus_space_tag_t ia_iot;		/* isa i/o space tag */
 	bus_space_tag_t ia_memt;	/* isa mem space tag */
@@ -164,8 +164,8 @@ contains the following members:
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn isa_intr_alloc "ic" "mask" "type" "irq"
-This function is generally not required by device drivers.  It is used
-by bridges attaching other busses to the ISA bus.
+This function is generally not required by device drivers.
+It is used by bridges attaching other busses to the ISA bus.
 .It Fn isa_intr_evcnt "ic" "irq"
 Returns the event counter associated with interrupt line
 .Fa irq .
@@ -272,17 +272,19 @@ for channel
 The kernel virtual address space used by the mapping is freed.
 .It Fn isa_malloc "ic" "chan" "size" "pool" "flags"
 This function is a shortcut for allocating and mapping DMA-safe memory
-in a single step.  The arguments correspond with the arguments to
+in a single step.
+The arguments correspond with the arguments to
 .Fn isa_dmamem_alloc
 and
 .Fn isa_dmamem_map .
 The argument
 .Fa pool
-is a pool to record the memory allocation.  This function returns
-a pointer to the DMA-safe memory.
+is a pool to record the memory allocation.
+This function returns a pointer to the DMA-safe memory.
 .It Fn isa_free "addrp" "pool"
 This function is a shortcut for unmapping and deallocating DMA-safe
-memory in a single step.  It replaces
+memory in a single step.
+It replaces
 .Fn isa_dmamem_unmap
 and
 .Fn isa_dmamem_free .
@@ -305,13 +307,14 @@ and set it in motion.
 The argument
 .Fa proc
 is used to indicate the address space in which the buffer is located.
-If NULL, the buffer is assumed to be in kernel space.  Otherwise, the
-buffer is assumed to be in process
+If NULL, the buffer is assumed to be in kernel space.
+Otherwise, the buffer is assumed to be in process
 .Fa proc 's
 address space.
 The argument
 .Fa flags
-describes the type of ISA DMA.  Valid values are:
+describes the type of ISA DMA.
+Valid values are:
 .Bl -tag -width compact
 .It DMAMODE_WRITE
 DMA transfer from host to device.
@@ -329,7 +332,8 @@ Transfer buffer continuously in loop and demand mode.
 .sp
 The argument
 .Fa bf
-is the bus-space flags.  Valid values are the same as for
+is the bus-space flags.
+Valid values are the same as for
 .Fn bus_dmamap_load
 (see
 .Xr bus_dma 9 ) .
@@ -356,8 +360,9 @@ or
 members of
 .Fa struct isa_attach_args
 are wildcarded, then the driver is expected to probe the hardware for
-valid DMA channels.  In this case, the driver can check to see if the
-hardware-supported DMA channel
+valid DMA channels.
+In this case, the driver can check to see if the hardware-supported
+DMA channel
 .Fa chan
 is available for use.
 .It Fn isa_dmacascade "ic" "chan"
@@ -370,8 +375,9 @@ Provides support for user
 of DMA-safe memory.
 .El
 .Sh AUTOCONFIGURATION
-The ISA bus is an indirect-connection bus.  During autoconfiguration
-each driver is required to probe the bus for the presence of a device.
+The ISA bus is an indirect-connection bus.
+During autoconfiguration each driver is required to probe the bus
+for the presence of a device.
 An ISA driver will receive a pointer to
 .Fa struct isa_attach_args
 hinting at "locations" on the ISA bus where the device may be located.
@@ -381,13 +387,15 @@ They should use the
 .Em ia_maddr ,
 and
 .Em ia_msize
-members.  Not all of these hints will be necessary; locators may
-be wildcarded with IOBASEUNK and MADDRUNK for
+members.
+Not all of these hints will be necessary; locators may be wildcarded
+with IOBASEUNK and MADDRUNK for
 .Em ia_iobase
 and
 .Em ia_maddr
-respectively.  If a driver can probe the device for configuration
-information at default locations, it may update the members of
+respectively.
+If a driver can probe the device for configuration information at default
+locations, it may update the members of
 .Fa struct isa_attach_args .
 The IRQ and DMA locators can also be wildcarded with IRQUNK and DRQUNK
 respectively.
@@ -396,10 +404,10 @@ During the driver attach step, the I/O and memory address spaces
 should be mapped (see
 .Xr bus_space 9 ) .
 .Sh DMA SUPPORT
-Extensive DMA facilities are provided for the ISA bus.  A driver can
-use up to two DMA channels simultaneously.  The DMA channels allocated
-during autoconfiguration are passed to the driver during the driver
-attach using the
+Extensive DMA facilities are provided for the ISA bus.
+A driver can use up to two DMA channels simultaneously.
+The DMA channels allocated during autoconfiguration are passed to the
+driver during the driver attach using the
 .Fa ia_drq
 and
 .Fa ia_drq2
@@ -414,8 +422,8 @@ channel using
 A DMA map should be created first using
 .Fn isa_dmamap_create .
 A DMA map describes how DMA memory is loaded into the DMA controllers.
-Only DMA-safe memory can be used for DMA transfers.  DMA-safe memory
-is allocated using
+Only DMA-safe memory can be used for DMA transfers.
+DMA-safe memory is allocated using
 .Fn isa_dmamem_alloc .
 The memory allocated by
 .Fn isa_dmamem_alloc
@@ -424,8 +432,8 @@ must now be mapped into kernel virtual address space by
 so that it can be accessed by the driver.
 .Pp
 For a DMA transfer from the host to the device, the driver will fill
-the DMA memory with the data to be transferred.  The DMA-transfer of
-the memory is started using
+the DMA memory with the data to be transferred.
+The DMA-transfer of the memory is started using
 .Fn isa_dmastart
 with
 .Fa flags
@@ -444,7 +452,8 @@ containing DMAMODE_READ.
 When the DMA transfer is completed, a call to
 .Fn isa_dmadone
 cleans up the DMA transfer by unloading the memory from the
-controller.  The memory can now be access by the driver.
+controller.
+The memory can now be access by the driver.
 .Pp
 When the DMA resources are no longer required they should be released
 using
@@ -456,8 +465,8 @@ and
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-machine-independent ISA subsystem can be found.  All pathnames are
-relative to
+machine-independent ISA subsystem can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The ISA subsystem itself is implemented within the files
@@ -483,5 +492,5 @@ was to invoke
 .Fn panic
 on failure.
 .Fn isa_intr_establish
-now returns NULL on failure.  Some old drivers written for the former
-behaviour discard the return value.
+now returns NULL on failure.
+Some old drivers written for the former behaviour discard the return value.

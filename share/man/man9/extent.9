@@ -1,4 +1,4 @@
-.\" $NetBSD: extent.9,v 1.22 2002/02/13 08:18:41 ross Exp $
+.\" $NetBSD: extent.9,v 1.23 2002/10/14 13:43:22 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,8 +83,8 @@
 The
 .Nx
 extent manager provides management of areas of memory or
-other number spaces (such as I/O ports).  An opaque structure
-called an
+other number spaces (such as I/O ports).
+An opaque structure called an
 .Nm extent map
 keeps track of allocated regions within the number space.
 .Pp
@@ -93,7 +93,8 @@ creates an extent map managing the space from
 .Fa start
 to
 .Fa end
-inclusive.  All memory allocation will use the memory type
+inclusive.
+All memory allocation will use the memory type
 .Fa mtype
 .Po
 see
@@ -101,13 +102,15 @@ see
 .Pc .
 The extent map will have the name
 .Fa name ,
-used for identification in case of an error.  If the flag
+used for identification in case of an error.
+If the flag
 .Dv EX_NOCOALESCE
 is specified, only entire regions may be freed within the extent map,
 but internal coalescing of regions is disabled so that
 .Fn extent_free
 will never have to allocate a region descriptor and therefore will
-never fail.  The caller must specify one of the flags
+never fail.
+The caller must specify one of the flags
 .Dv EX_NOWAIT
 or
 .Dv EX_WAITOK ,
@@ -144,8 +147,9 @@ map may be extended using a call to
 .Fn extent_destroy
 destroys the extent map
 .Fa ex ,
-freeing all allocated regions.  If the extent is not a fixed extent,
-the region and internal extent descriptors themselves are freed.
+freeing all allocated regions.
+If the extent is not a fixed extent, the region and internal extent
+descriptors themselves are freed.
 This function always succeeds.
 .Pp
 .Fn extent_alloc
@@ -153,8 +157,8 @@ allocates a region in extent
 .Fa ex
 of size
 .Fa size
-that fits the provided parameters.  There are two distinct allocation
-policies, which are selected by the
+that fits the provided parameters.
+There are two distinct allocation policies, which are selected by the
 .Fa flags
 argument:
 .Bl -tag -offset indent -width "XXXXXXXXX"
@@ -180,19 +184,22 @@ or
 flags, if waiting for overhead allocation is allowed.
 The request will be aligned to
 .Fa alignment
-boundaries.  Alignment values must be a power of 2.  If no alignment
-is necessary, the value 1 should be specified.  If
+boundaries.
+Alignment values must be a power of 2.
+If no alignment is necessary, the value 1 should be specified.
+If
 .Fa boundary
 is nonzero, the allocated region will not cross any of the numbers
 which are a multiple of
 .Fa boundary .
 If the caller specifies the
 .Dv EX_BOUNDZERO
-flag, the boundary lines begin at zero.  Otherwise, the boundary lines
-begin at the beginning of the extent.  The allocated region may begin on a
-boundary address, but the end of the region will not touch nor cross
-it.  A boundary argument smaller than the size of the request is
-invalid.  Upon successful completion,
+flag, the boundary lines begin at zero.
+Otherwise, the boundary lines begin at the beginning of the extent.
+The allocated region may begin on a boundary address, but the end of
+the region will not touch nor cross it.
+A boundary argument smaller than the size of the request is invalid.
+Upon successful completion,
 .Fa *result
 will contain the start of the allocated region.
 .Pp
@@ -204,7 +211,8 @@ fall within the subregion from
 .Fa substart
 to
 .Fa subend
-inclusive.  The other arguments and the return values of
+inclusive.
+The other arguments and the return values of
 .Fn extent_alloc_subregion
 are otherwise the same as those of
 .Fn extent_alloc .
@@ -259,24 +267,27 @@ starting at
 .Fa start .
 If the extent has the
 .Dv EX_NOCOALESCE
-property, only entire regions may be freed.  If the extent has the
+property, only entire regions may be freed.
+If the extent has the
 .Dv EX_NOCOALESCE
 property and the caller attempts to free a partial region, behavior is
-undefined.  The caller must specify one of the flags
+undefined.
+The caller must specify one of the flags
 .Dv EX_NOWAIT
 or
 .Dv EX_WAITOK
 to specify whether waiting for memory is okay; these flags have
 meaning in the event that allocation of a region descriptor is
-required during the freeing process.  This situation occurs only when
-a partial region that begins and ends in the middle of another region
-is freed.  Behavior is undefined if invalid arguments are provided.
+required during the freeing process.
+This situation occurs only when a partial region that begins and ends
+in the middle of another region is freed.
+Behavior is undefined if invalid arguments are provided.
 .Pp
 .Fn extent_print
 Print out information about extent
 .Fa ex .
-This function always succeeds.  Behavior is undefined if invalid
-arguments are provided.
+This function always succeeds.
+Behavior is undefined if invalid arguments are provided.
 .Sh LOCKING
 The extent manager performs all necessary locking on the extent map
 itself, and any other data structures internal to the extent manager.
@@ -293,8 +304,8 @@ invalid arguments.
 .Fn extent_create
 returns the extent map on success, or
 .Dv NULL
-if it fails to allocate storage for the extent map.  It always
-succeeds when creating a fixed extent or when given the flag
+if it fails to allocate storage for the extent map.
+It always succeeds when creating a fixed extent or when given the flag
 .Dv EX_WAITOK .
 .Fn extent_alloc ,
 .Fn extent_alloc_region ,
@@ -317,7 +328,8 @@ Requested region is not available and
 was not specified.
 .It Dv EINTR
 Process received a signal while waiting for the requested region to
-become available in the extent.  Does not apply to
+become available in the extent.
+Does not apply to
 .Fn extent_free .
 .El
 .Sh EXAMPLES
@@ -369,7 +381,8 @@ Function prototypes for the framework are located in
 .Pa sys/sys/extent.h .
 .Pp
 The i386 bus management code uses the extent manager for managing I/O
-ports and I/O memory.  This code is in the file
+ports and I/O memory.
+This code is in the file
 .Pa sys/arch/i386/i386/machdep.c .
 .Sh SEE ALSO
 .Xr malloc 9
@@ -382,7 +395,8 @@ extent manager appeared in
 The
 .Nx
 extent manager was architected and implemented by Jason
-R. Thorpe \*[Lt]thorpej@NetBSD.ORG\*[Gt].  Matthias Drochner
-\*[Lt]drochner@zelux6.zel.kfa-juelich.de\*[Gt] contributed to the initial
-testing and optimization of the implementation.  Chris Demetriou
-\*[Lt]cgd@NetBSD.ORG\*[Gt] contributed many architectural suggestions.
+R. Thorpe \*[Lt]thorpej@NetBSD.ORG\*[Gt].
+Matthias Drochner \*[Lt]drochner@zelux6.zel.kfa-juelich.de\*[Gt]
+contributed to the initial testing and optimization of the implementation.
+Chris Demetriou \*[Lt]cgd@NetBSD.ORG\*[Gt] contributed many
+architectural suggestions.

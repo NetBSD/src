@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.8 2002/10/14 04:56:49 gmcgarry Exp $
+.\"     $NetBSD: vnsubr.9,v 1.9 2002/10/14 13:43:37 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,8 @@ functions for simplied access to the vnode operations described in
 .It Fn vn_bwrite "ap"
 Common code for block write operations.
 .It Fn vn_close "vp" "flags" "cred" "p"
-Common code for a vnode close.  The argument
+Common code for a vnode close.
+The argument
 .Fa vp
 is the locked vnode of the vnode to close.
 .Fn vn_close
@@ -105,15 +106,17 @@ simply locks the vnode, invokes the vnode operation
 .Xr VOP_CLOSE 9
 and calls
 .Fn vput
-to return the vnode to the freelist or holdlist.  Note that
+to return the vnode to the freelist or holdlist.
+Note that
 .Fn vn_close
 expects an unlocked, referenced vnode and will dereference the vnode
-prior to returning.  If the operation is successful zero is returned,
+prior to returning.
+If the operation is successful zero is returned,
 otherwise an appropriate error is returned.
 .It Fn vn_default_error "v"
-A generic "default" routine that just returns error.  It is used by a
-file system to specify unsupported operations in the vnode operations
-vector.
+A generic "default" routine that just returns error.
+It is used by a file system to specify unsupported operations in
+the vnode operations vector.
 .It Fn vn_isunder "dvp" "rvp" "p"
 Common code to check if one directory specified by the vnode
 .Fa rvp
@@ -129,8 +132,8 @@ is intended to be used in
 .Xr fchdir 2 ,
 etc., to ensure that
 .Xr chroot 2
-actually means something.  If the operation is successful zero is
-returned, otherwise 1 is returned.
+actually means something.
+If the operation is successful zero is returned, otherwise 1 is returned.
 .It Fn vn_lock "vp" "flags"
 Common code to acquire the lock for vnode
 .Fa vp .
@@ -138,14 +141,16 @@ The argument
 .Fa flags
 specifies the
 .Xr lockmgr 9
-flags used to lock the vnode.  If the operation is successful zero is
-returned, otherwise an appropriate error code is returned.  The vnode
-interlock
+flags used to lock the vnode.
+If the operation is successful zero is returned, otherwise an
+appropriate error code is returned.
+The vnode interlock
 .Em v_interlock
 is releases on return.
 .Pp
 .Fn vn_lock
-must not be called when the vnode's reference count is zero.  Instead,
+must not be called when the vnode's reference count is zero.
+Instead,
 .Xr vget 9
 should be used.
 .It Fn vn_markexec "vp"
@@ -169,8 +174,8 @@ Common code to restore the vnode lock flags for the vnode
 It is called when done with
 .Fn vn_setrecurse .
 .It Fn vn_open "ndp" "fmode" "cmode"
-Common code for vnode open operations.  The pathname is described in
-the nameidata pointer (see
+Common code for vnode open operations.
+The pathname is described in the nameidata pointer (see
 .Xr namei 9 ) .
 The arguments
 .Fa fmode
@@ -184,31 +189,35 @@ checks  permissions and invokes the
 .Xr VOP_OPEN 9
 or
 .Xr VOP_CREATE 9
-vnode operations.  If the operation is successful zero is returned,
+vnode operations.
+If the operation is successful zero is returned,
 otherwise an appropriate error code is returned.
 .It Fo vn_rdwr
 .Fa "rw" "vp" "base" "len" "offset" "segflg" "ioflg"
 .Fa "cred" "aresid" "p"
 .Fc
 Common code to package up an I/O request on a vnode into a uio and
-then perform the I/O.  The argument
+then perform the I/O.
+The argument
 .Fa rw
 specifies whether the I/O is a read (UIO_READ) or write (UIO_WRITE)
-operation.  The unlocked vnode is specified by
+operation.
+The unlocked vnode is specified by
 .Fa vp .
 The arguments
 .Fa p
 and
 .Fa cred
-are the calling process and its credentials.  The remaining arguments
-specify the uio parameters.  For further information on these
-parameters see
+are the calling process and its credentials.
+The remaining arguments specify the uio parameters.
+For further information on these parameters see
 .Xr uiomove 9 .
 .It Fo vn_readdir
 .Fa "fp" "buf" "segflg" "count" "done" "p" "cookies"
 .Fa "ncookies"
 .Fc
-Common code for reading the contents of a directory.  The argument
+Common code for reading the contents of a directory.
+The argument
 .Fa fp
 is the file structure,
 .Fa buf
@@ -218,7 +227,8 @@ The arguments
 and
 .Fa ncookies
 specify the addresses for the list and number of directory seek
-cookies generated for NFS.  Both
+cookies generated for NFS.
+Both
 .Fa cookies
 and
 .Fa ncookies
@@ -227,12 +237,13 @@ should be NULL is they aren't required to be returned by
 If the operation is successful zero is returned, otherwise an
 appropriate error code is returned.
 .It Fn vn_stat "vp" "sb" "p"
-Common code for a vnode stat operation.  The vnode is specified by the
-argument
+Common code for a vnode stat operation.
+The vnode is specified by the argument
 .Fa vp
 and
 .Fa sb
-is the buffer to return the stat information.  The argument
+is the buffer to return the stat information.
+The argument
 .Fa p
 is the calling process.
 .Fn vn_stat
@@ -253,8 +264,8 @@ returned to indicate that the vnode can be written to.
 .It Bq Er ETXTBSY
 Cannot write to a vnode since is a process's text image.
 .It Bq Er ENOENT
-The vnode has been reclaimed and is dead.  This error is only returned
-if the LK_RETRY flag is not passed to
+The vnode has been reclaimed and is dead.
+This error is only returned if the LK_RETRY flag is not passed to
 .Fn vn_lock .
 .It Bq Er EBUSY
 The LK_NOWAIT flag was set and
@@ -265,7 +276,8 @@ would have slept.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the vnode
-framework can be found.  All pathnames are relative to
+framework can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The high-level convenience functions are implemented within the file

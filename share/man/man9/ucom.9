@@ -1,4 +1,4 @@
-.\"	$NetBSD: ucom.9,v 1.10 2002/06/01 09:16:08 wiz Exp $
+.\"	$NetBSD: ucom.9,v 1.11 2002/10/14 13:43:35 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,8 @@ struct ucom_attach_args {
 .It Dv int portno
 identifies the port if the devices should have more than one
 .Nm
-attached.  Use the value
+attached.
+Use the value
 .Dv UCOM_UNK_PORTNO
 if there is only one port.
 .It Dv int bulkin
@@ -93,12 +94,14 @@ the number of the bulk output pipe.
 .It Dv u_int ibufsize
 the size of the read requests on the bulk in pipe.
 .It Dv u_int ibufsizepad
-the size of the input buffer.  This is usually the same as
+the size of the input buffer.
+This is usually the same as
 .Dv ibufsize .
 .It Dv u_int obufsize
 the size of the write requests on the bulk out pipe.
 .It Dv u_int ibufsizepad
-the size of the output buffer.  This is usually the same as
+the size of the output buffer.
+This is usually the same as
 .Dv obufsize .
 .It Dv usbd_device_handle device
 a handle to the device.
@@ -116,8 +119,9 @@ The
 .Dv ucom_methods
 struct contains a number of function pointers used by the
 .Nm
-driver at various stages.  If the device is not interested
-in being called at a particular point it should just use a
+driver at various stages.
+If the device is not interested in being called at a particular point
+it should just use a
 .Dv NULL
 pointer and the
 .Nm
@@ -185,7 +189,8 @@ raw characters from
 .Fa src
 into the buffer at
 .Fa dst
-and do the appropriate padding.  The
+and do the appropriate padding.
+The
 .Fa count
 should be updated to the new size.
 The buffer at

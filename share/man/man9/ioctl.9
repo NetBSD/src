@@ -1,4 +1,4 @@
-.\" $NetBSD: ioctl.9,v 1.16 2002/06/11 23:31:01 wiz Exp $
+.\" $NetBSD: ioctl.9,v 1.17 2002/10/14 13:43:24 wiz Exp $
 .\"
 .\" Copyright (c) 1999  The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,8 +63,8 @@ system call as second argument, e.g.
 a macro which can be one of
 .Bl -tag -width _IOWR
 .It _IO
-the call is a simple message to the kernel by itself.  It does not copy
-anything into the kernel, nor does it want anything back.
+the call is a simple message to the kernel by itself.
+It does not copy anything into the kernel, nor does it want anything back.
 .It _IOR
 the call only reads parameters from the kernel and does not
 pass any to it
@@ -228,16 +228,17 @@ ite devices (amiga, atari, x68k)
 passthrough ioctls
 .El
 .It Ar n
-This numbers the ioctl within the group. There may be only one
+This numbers the ioctl within the group.
+There may be only one
 .Ar n
 for a given
 .Ar t .
 This is a unsigned 8 bit number.
 .It Ar pt
-This specifies the type of the passed parameter. This one gets internally
-transformed to the size of the parameter, so if you e.g. want to pass
-a structure, then you have to specify that structure and not a pointer
-to it or sizeof(struct foo)
+This specifies the type of the passed parameter.
+This one gets internally transformed to the size of the parameter, so
+if you e.g. want to pass a structure, then you have to specify that
+structure and not a pointer to it or sizeof(struct foo)
 .El
 .Pp
 In order for the new ioctl to be known to the system it is installed
@@ -268,14 +269,14 @@ driver_ioctl(..., u_long cmd, caddr_t data)
 .Sh NOTES
 Note that if you e.g. try to read information from e.g. a ethernet
 driver where the name of the card is included in the third argument
-(e.g. ioctl(s, READFROMETH, struct ifreq *)), then you have to use
+(e.g., ioctl(s, READFROMETH, struct ifreq *)), then you have to use
 the _IOWR() form not the _IOR(), as passing the name of the card to the
 kernel already consists of writing data.
 .Sh RETURN VALUES
 All ioctl() routines should return either 0 or a defined error code.
 The use of magic numbers such as -1, to indicate that a given ioctl
-code was not handled is strongly discouraged.  The value -1 coincides
-with the historic value for
+code was not handled is strongly discouraged.
+The value -1 coincides with the historic value for
 .Cm ERESTART
 which was shown to produce user space code that never returned from
 a call to
@@ -287,16 +288,16 @@ are not handled by a given routine, the pseudo error value
 is provided.
 .Cm EPASSTHROUGH
 indicates that no error occurred during processing (it did not fail),
-but neither was anything processed (it did not succeed).  This
-supercedes the use of either
+but neither was anything processed (it did not succeed).
+This supercedes the use of either
 .Cm ENOTTY
 (which is an explicit failure) or -1 (which has no contextual meaning)
 as a return value.
 .Cm ENOTTY
 will get passed directly back to user space and bypass any further
-processing by other ioctl layers.  Only code that wishes to suppress
-possible further processing of an ioctl code (eg, the tty line discipline
-code) should return
+processing by other ioctl layers.
+Only code that wishes to suppress possible further processing of an
+ioctl code (e.g., the tty line discipline code) should return
 .Cm ENOTTY .
 All other code should return
 .Cm EPASSTHROUGH ,

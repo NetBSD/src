@@ -1,4 +1,4 @@
-.\"     $NetBSD: config.9,v 1.8 2002/09/06 15:44:45 wiz Exp $
+.\"     $NetBSD: config.9,v 1.9 2002/10/14 13:43:17 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,8 @@ In
 the
 .Xr config 8
 program reads and verifies a machine description file specifying the
-devices to include in the kernel.  A table is produced by
+devices to include in the kernel.
+A table is produced by
 .Xr config 8
 which is used by the kernel during autoconfiguration (see
 .Xr autoconf 9 )
@@ -61,34 +62,39 @@ Each device in the machine description file has:
 .Bl -tag -width xxxxxx
 .It A Name
 The name is simply an alphanumeric string that ends in a unit number
-(eg. "sd0", "sd1", and so forth).  These unit numbers identify
-particular instances of a base device name; the base name in turn maps
-directly to a device driver.  Device unit numbers are independent of
-hardware features.
+(e.g., "sd0", "sd1", and so forth).
+These unit numbers identify particular instances of a base device name;
+the base name in turn maps directly to a device driver.
+Device unit numbers are independent of hardware features.
 .It A Parent
-Every device must have a parent.  The pairing is denoted by "child at
-parent".  These pairings form the links in a directed graph.  The root
-device is the only exception, as it does not have a parent.
+Every device must have a parent.
+The pairing is denoted by "child at parent".
+These pairings form the links in a directed graph.
+The root device is the only exception, as it does not have a parent.
 .It Locators
 Locators are used to augment the parent/child pairings the locate
-specific devices.  Each locator value is simply an integer that
-represents some sort of device address on the parent bus or
-controller.  This can be a memory address, and I/O port, a driver
-number, or any other value.  Locators can sometimes be wildcarded on
-devices that support direct connection.
+specific devices.
+Each locator value is simply an integer that represents some sort of
+device address on the parent bus or controller.
+This can be a memory address, and I/O port, a driver number, or any
+other value.
+Locators can sometimes be wildcarded on devices that support direct
+connection.
 .It Attributes
 An attribute describes the device's relationship with the code; it
-then serves to constrain the device graph.  A
+then serves to constrain the device graph.
+A
 .Em plain attribute
-describes some attribute of a device.  An
+describes some attribute of a device.
+An
 .Em interface attribute
 describes a kind of
 .Do
 software interface
 .Dc
 and declares the devices's ability to support other devices that use
-that interface.  In addition, an interface attribute usually identifies
-additional locators.
+that interface.
+In addition, an interface attribute usually identifies additional locators.
 .El
 .Pp
 During autoconfiguration, the directed graph is turned into a tree by
@@ -97,11 +103,13 @@ devices by doing a depth-first traversal through the graph starting at
 this root node.
 .Pp
 However, there must be constraints on the parent/child pairings that
-are possible.  These constraints are embedded in the
+are possible.
+These constraints are embedded in the
 .Do
 device definition
 .Dc
-files.  The remainder of this page describes the
+files.
+The remainder of this page describes the
 .Do
 device definition
 .Dc
@@ -110,29 +118,33 @@ language and how to use this language to add new functionality to the
 kernel.
 .Sh DEVICE DEFINITION FILES
 The device definition files are separated into machine-dependent and
-machine-independent files.  The machine-dependent file is located in
+machine-independent files.
+The machine-dependent file is located in
 .Pa sys/arch/\*[Lt]arch\*[Gt]/conf/files.\*[Lt]arch\*[Gt] ,
 where \*[Lt]arch\*[Gt] is the name of
 .Nx
-architecture.  The machine-independent file is located in
+architecture.
+The machine-independent file is located in
 .Pa sys/conf/files .
 It in turn includes files for the machine-independent drivers located
 in
 .Pa sys/dev/\*[Lt]bus\*[Gt]/files.\*[Lt]bus\*[Gt] ,
 where \*[Lt]bus\*[Gt] is the name of the machine-independent bus.
 .Pp
-These files define all legal devices and pseudo-devices.  They also
-define all attributes and interfaces, establishing the rules that
+These files define all legal devices and pseudo-devices.
+They also define all attributes and interfaces, establishing the rules that
 determine allowable machine descriptions, and list the source files
 that make up the kernel.
 .Pp
 Each device definition file consists of a list of statements,
-typically one per line.  Comments may be inserted anywhere using the
+typically one per line.
+Comments may be inserted anywhere using the
 .Do
 #
 .Dc
 character, and any line that begins with white space continues the
-previous line.  Valid statements are:
+previous line.
+Valid statements are:
 .Bl -tag -width xxxxxx
 .It defflag [filename] {options}
 The space-separated list of pre-processor macros
@@ -142,9 +154,9 @@ are defined in file
 This statement permits ``options FOO'' for FOO (i.e, without a value)
 in the machine description file.
 .Xr config 8
-will generate an error if a value is given.  If the filename field is
-not specified, the options are defined on the commandline invocation
-of
+will generate an error if a value is given.
+If the filename field is not specified, the options are defined on
+the commandline invocation of
 .Xr make 1 .
 The
 .Em option
@@ -157,9 +169,9 @@ are defined in file
 This statement permits ``options FOO=bar'' or ``option FOO="\\"com\\""''
 in the machine description file.
 .Xr config 8
-will generate an error if a value is not given.  If the filename field
-is not specified, the options are defined on the commandline
-invocation of
+will generate an error if a value is not given.
+If the filename field is not specified, the options are defined on
+the commandline invocation of
 .Xr make 1 .
 The
 .Em option
@@ -173,10 +185,11 @@ This statement permits the syntax of either the defflag and defparam
 statements and
 .Xr config 8
 does not perform any checking of whether ``options FOO'' takes a
-value.  Therefore, the use of the defopt statement is deprecated in
-favour of the defflag and defparam statements.  If the filename field
-is not specified, the options are defined on the commandline
-invocation of
+value.
+Therefore, the use of the defopt statement is deprecated in
+favour of the defflag and defparam statements.
+If the filename field is not specified, the options are defined on
+the commandline invocation of
 .Xr make 1 .
 The
 .Em option
@@ -191,8 +204,8 @@ A device class is similar to an attribute.
 .It define name [{locators}]
 The attribute
 .Em name
-is defined and device definitions can then refer to it.  If the
-attribute is an interface attribute and defines optional
+is defined and device definitions can then refer to it.
+If the attribute is an interface attribute and defines optional
 .Em locators ,
 device attributes that refer to
 .Em name
@@ -224,31 +237,33 @@ define attribute dependencies.
 .It defpseudo name: [{locators}]
 The pseudo-device
 .Em name
-is defined.  The optional
+is defined.
+The optional
 .Em locators
 may be defined, but are largely pointless since no device can attach
 to a pseudo-device.
 .It file pathname [attributes [flags]] [rule]
 The file
 .Em pathname
-is added to the list of files used to build the kernel.  If no
-attributes are specified, the file is always added to the kernel
-compilation.  If any of the attributes are specified by other devices
-in the machine descripton file, then the file is included in
-compilation, otherwise it is omitted.  Valid values for the optional
-flags are:
+is added to the list of files used to build the kernel.
+If no attributes are specified, the file is always added to the kernel
+compilation.
+If any of the attributes are specified by other devices in the machine
+descripton file, then the file is included in compilation, otherwise it
+is omitted.
+Valid values for the optional flags are:
 .Bl -tag -width xxxxxx
 .It needs-count
 Specify that config should generate a file for each of the attributes
 notifying the driver how many of some particular device or set of
-devices are configured in the kernel.  This flag
-allows drivers to make calculations of driver used at compile time.
+devices are configured in the kernel.
+This flag allows drivers to make calculations of driver used at compile time.
 This option prevents autoconfiguration cloning.
 .It needs-flag
 This flag performs the same operation as
 .Em needs-count
-but only records if the number is nonzero.  Since the count is not
-exact,
+but only records if the number is nonzero.
+Since the count is not exact,
 .Em needs-flag
 does not prevent autoconfiguration cloning.
 .El
@@ -256,26 +271,28 @@ does not prevent autoconfiguration cloning.
 The character device switch
 .Em name
 associated with a character major device number is added to the list of
-device switches used to build the kernel. If
+device switches used to build the kernel.
+If
 .Em block
 is specified, the block device switch associated with a block major device
-number is also added. If all of attributes are specified by devices in the
-machine description files, then device switches are added into the device
-switches' table of the kernel in compilation, otherwise they are omitted.
+number is also added.
+If all of attributes are specified by devices in the machine description
+files, then device switches are added into the device switches' table of
+the kernel in compilation, otherwise they are omitted.
 .El
 .Pp
 To allow locators to be wildcarded in the machine description file,
-their default value must be defined in the attribute definition.  To
-allow locators to be omitted entirely in the machine description file,
-enclose the locator in square brackets.  This can be used when some
-locators do not make sense for some devices, but the software
-interface requires them.
+their default value must be defined in the attribute definition.
+To allow locators to be omitted entirely in the machine description file,
+enclose the locator in square brackets.
+This can be used when some locators do not make sense for some devices,
+but the software interface requires them.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the
-autoconfiguration framework can be found.  All pathnames are relative
-to
+autoconfiguration framework can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The device definition files are in

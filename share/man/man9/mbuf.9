@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.22 2002/05/12 15:48:38 wiz Exp $
+.\"	$NetBSD: mbuf.9,v 1.23 2002/10/14 13:43:26 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -293,7 +293,8 @@ Creates a copy of an mbuf chain starting
 .Fa off0
 bytes from the beginning, continuing for
 .Fa len
-bytes.  If the
+bytes.
+If the
 .Fa len
 requested is
 .Dv M_COPYALL ,
@@ -422,7 +423,8 @@ must be smaller or equal than
 Partitions an mbuf chain in two pieces, returning the tail,
 which is all but the first
 .Fa len0
-bytes.  In case of failure, it returns
+bytes.
+In case of failure, it returns
 .Dv NULL
 and attempts to
 restore the chain to its original state.

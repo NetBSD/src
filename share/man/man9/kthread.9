@@ -1,4 +1,4 @@
-.\"     $NetBSD: kthread.9,v 1.8 2002/10/09 15:27:23 itojun Exp $
+.\"     $NetBSD: kthread.9,v 1.9 2002/10/14 13:43:25 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,9 +53,10 @@
 "const char *fmt" "..."
 .Sh DESCRIPTION
 Kernel threads are light-weight processes which execute entirely
-within the kernel.  Any process can request the creation of a new
-kernel thread.  Kernel threads are not swapped out during memory
-congestion.  The VM space and limits are shared with proc0 (usually swapper).
+within the kernel.
+Any process can request the creation of a new kernel thread.
+Kernel threads are not swapped out during memory congestion.
+The VM space and limits are shared with proc0 (usually swapper).
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn kthread_create1 "void (*func)(void *)" "void *arg" "struct proc **newpp" "const char *fmt" "..."
@@ -73,16 +74,17 @@ thread name.
 .It Fn kthread_create "void (*func)(void *)" "void *arg"
 Register function
 .Fa func
-to defer creation of the kernel thread.  Deferral of kernel thread
-creation is required during system startup when kernel thread resources
-are not available.
+to defer creation of the kernel thread.
+Deferral of kernel thread creation is required during system startup
+when kernel thread resources are not available.
 .It Fn kthread_exit "int ecode"
 Exit from a kernel thread.
 .El
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn kthread_create1
-returns 0.  Otherwise, the following error values are returned:
+returns 0.
+Otherwise, the following error values are returned:
 .Bl -tag -width [EAGAIN]
 .It Bq Er EAGAIN
 The limit on the total number of system processes would be exceeded.
@@ -96,7 +98,8 @@ user id would be exceeded.
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the kthread
-framework can be found.  All pathnames are relative to
+framework can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The kthread framework itself is implemented within the file

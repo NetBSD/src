@@ -1,4 +1,4 @@
-.\" $NetBSD: shutdownhook_establish.9,v 1.6 2001/09/04 02:51:16 wiz Exp $
+.\" $NetBSD: shutdownhook_establish.9,v 1.7 2002/10/14 13:43:32 wiz Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -51,7 +51,8 @@ function adds
 .Fa fn
 to the list of hooks invoked by
 .Xr doshutdownhooks 9
-at shutdown.  When invoked, the hook function
+at shutdown.
+When invoked, the hook function
 .Fa fn
 will be passed
 .Fa arg
@@ -61,15 +62,16 @@ The
 .Fn shutdownhook_disestablish
 function removes the hook described by the opaque pointer
 .Fa cookie
-from the list of hooks to be invoked at shutdown.  If
+from the list of hooks to be invoked at shutdown.
+If
 .Fa cookie
 is invalid, the result of
 .Fn shutdownhook_disestablish
 is undefined.
 .Pp
 Shutdown hooks should be used to perform one-time activities
-that must happen immediately before the kernel exits.  Because
-of the environment in which they are run, shutdown hooks cannot
+that must happen immediately before the kernel exits.
+Because of the environment in which they are run, shutdown hooks cannot
 rely on many system services (including file systems, and timeouts
 and other interrupt-driven services), or even basic system
 integrity (because the system could be rebooting after a crash).
@@ -77,7 +79,8 @@ integrity (because the system could be rebooting after a crash).
 If successful,
 .Fn shutdownhook_establish
 returns an opaque pointer describing the newly-established
-shutdown hook.  Otherwise, it returns NULL.
+shutdown hook.
+Otherwise, it returns NULL.
 .Sh EXAMPLES
 It may be appropriate to use a shutdown hook to
 disable a device that does direct memory access, so that

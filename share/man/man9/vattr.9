@@ -1,4 +1,4 @@
-.\"     $NetBSD: vattr.9,v 1.3 2002/02/13 08:18:54 ross Exp $
+.\"     $NetBSD: vattr.9,v 1.4 2002/10/14 13:43:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -80,7 +80,8 @@ struct vattr {
 .Ed
 .Pp
 A field value of VNOVAL represents a field whose value is unavailable
-or which is not to be changed.  Valid flag values for
+or which is not to be changed.
+Valid flag values for
 .Em va_flags
 are:
 .Pp
@@ -111,7 +112,8 @@ This function is an alias for
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising the vnode
-attributes can be found.  All pathnames are relative to
+attributes can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The vnode attributes ares implemented within the file
