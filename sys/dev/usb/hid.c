@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.13 2000/03/27 12:33:53 augustss Exp $	*/
+/*	$NetBSD: hid.c,v 1.14 2000/04/06 22:58:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -126,7 +126,7 @@ hid_get_item(s, h)
 {
 	struct hid_item *c = &s->cur;
 	unsigned int bTag, bType, bSize;
-	struct hid_location oldloc;
+	u_int32_t oldpos;
 	u_char *data;
 	int32_t dval;
 	u_char *p;
@@ -300,9 +300,9 @@ hid_get_item(s, h)
 				break;
 			case 11: /* Pop */
 				hi = c->next;
-				oldloc = c->loc;
+				oldpos = c->loc.pos;
 				s->cur = *hi;
-				c->loc = oldloc;
+				c->loc.pos = oldpos;
 				free(hi, M_TEMP);
 				break;
 			default:
