@@ -20,7 +20,7 @@ MFILES=	float.h frame.h
 LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
 
 DIRS=arpa protocols
-LDIRS=	net netimp netinet netiso netns nfs sys ufs
+LDIRS=	net netimp netinet netiso netns nfs sys ufs vm
 
 NOOBJ=	noobj
 
@@ -71,7 +71,7 @@ copies:
 		cd /sys; \
 		tar cf - $$i/*.h | (cd ${DESTDIR}/usr/include; tar xpfB -); \
 	done
-	rm -f ${DESTDIR}/usr/include/machine
+	rm -rf ${DESTDIR}/usr/include/machine
 	mkdir ${DESTDIR}/usr/include/machine
 	cd /sys/${MACHINE}/include; \
 	tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -); \
@@ -83,7 +83,7 @@ symlinks:
 		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
 		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/$$i; \
 	done
-	rm -f ${DESTDIR}/usr/include/machine
+	rm -rf ${DESTDIR}/usr/include/machine
 	ln -s /sys/${MACHINE}/include ${DESTDIR}/usr/include/machine
 	chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/machine
 
