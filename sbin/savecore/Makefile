@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1997/05/08 21:11:33 gwr Exp $
+#	$NetBSD: Makefile,v 1.21 1998/02/18 01:24:08 thorpej Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/17/94
 
 PROG=	savecore
@@ -8,6 +8,7 @@ PROG=	savecore
 	(${MACHINE} == "amiga")   || \
 	(${MACHINE} == "atari")   || \
 	(${MACHINE} == "hp300")   || \
+	(${MACHINE} == "i386")    || \
 	(${MACHINE} == "mac68k")  || \
 	(${MACHINE} == "mvme68k") || \
 	(${MACHINE} == "pc532")   || \
