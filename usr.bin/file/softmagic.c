@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.1.1.7 2001/07/22 22:31:53 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.1.1.8 2001/09/09 10:38:52 pooka Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -37,7 +37,7 @@
 #include "file.h"
 
 #ifndef	lint
-FILE_RCSID("@(#)Id: softmagic.c,v 1.45 2001/07/22 21:04:15 christos Exp ")
+FILE_RCSID("@(#)Id: softmagic.c,v 1.46 2001/07/23 00:02:32 christos Exp ")
 #endif	/* lint */
 
 static int match	__P((struct magic *, uint32, unsigned char *, int));
@@ -216,10 +216,7 @@ mprint(p, m)
 	union VALUETYPE *p;
 	struct magic *m;
 {
-	char *pp, *rt;
-	char *oldtz, tz[16];
 	uint32 v;
-	time_t curtime;
 	int32 t=0 ;
 
 
@@ -392,7 +389,6 @@ mconvert(p, m)
 		return 1;
 	case STRING:
 		{
-			char *ptr;
 			int n;
 
 			/* Null terminate and eat *trailing* return */
