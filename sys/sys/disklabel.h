@@ -53,7 +53,7 @@
  */
 #define	MAXMAXPARTITIONS	22
 #if MAXPARTITIONS > MAXMAXPARTITIONS
-#warn beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
+#warning beware: MAXPARTITIONS bigger than MAXMAXPARTITIONS
 #endif
 
 /*
