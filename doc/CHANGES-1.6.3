@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.48 2004/03/28 22:14:48 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.49 2004/03/28 22:24:24 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -290,3 +290,8 @@ lib/libc/time/strptime.3		1.16-1.17 via patch
 
 	% doesn't write anything; a literal  0s matched.
 	[kleink, ticket #1635]
+
+sys/dev/ic/wdc.c			patch
+
+	Wait a bit more after reset before re-enabling interrupts. PR#24904
+	[bouyer, ticket #1637]
