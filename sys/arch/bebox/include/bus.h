@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.9 1998/02/04 05:12:51 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.10 1998/02/04 14:13:46 sakamoto Exp $	*/
 /*	$OpenBSD: bus.h,v 1.1 1997/10/13 10:53:42 pefo Exp $	*/
 
 /*-
@@ -135,7 +135,7 @@ typedef	u_int32_t bus_space_tag_t;
  * Access methods for bus resources
  */
 
-#define	__BUS_SPACE_NEED_STREAM_METHODS
+#define	__BUS_SPACE_HAS_STREAM_METHODS
 
 /*
  *	int bus_space_map  __P((bus_space_tag_t t, bus_addr_t addr,
