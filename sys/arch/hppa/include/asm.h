@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.3 2003/10/06 05:27:19 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.4 2004/07/18 23:21:35 chs Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -66,15 +66,38 @@
 #define ALTENTRY(x) ! .export x, entry ! .label  x
 #define EXIT(x) ! .exit ! .procend
 
-#define RCSID(x)	.text			!	\
-			.asciz x		!	\
+#define RCSID(x)	.text				!\
+			.asciz x			!\
 			.align	4
 
 #define WEAK_ALIAS(alias,sym)				\
 	.weak alias !					\
 	alias = sym
 
+#define CALL(func,tmp)					!\
+	ldil	L%func, tmp				!\
+	ldo	R%func(tmp), tmp			!\
+	.call						!\
+	blr	%r0, %rp				!\
+	bv,n	%r0(tmp)				!\
+	nop
+
+#ifdef PIC
+#define PIC_CALL(func)					!\
+	addil	LT%func, %r19				!\
+	ldw	RT%func(%r1), %r1			!\
+	.call						!\
+	blr	%r0, %rp				!\
+	bv,n	%r0(%r1)				!\
+	nop
+#else
+#define PIC_CALL(func)					!\
+	CALL(func,%r1)
+#endif
+
 /* XXX unimplemented */
 #define WARN_REFERENCES(sym, msg)
+
+#define	SZREG	4
 
 #endif /* _HPPA_ASM_H_ */

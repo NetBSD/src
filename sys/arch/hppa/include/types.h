@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2003/11/01 18:23:38 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2004/07/18 23:21:35 chs Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -65,13 +65,14 @@ typedef unsigned long vm_size_t;
  */
 typedef __volatile unsigned long __cpu_simple_lock_t __attribute__ ((aligned (16)));
 
-#define __SIMPLELOCK_LOCKED	1
-#define __SIMPLELOCK_UNLOCKED	0
+#define __SIMPLELOCK_LOCKED	0
+#define __SIMPLELOCK_UNLOCKED	1
 
 typedef int			register_t;
 
 #define	__MACHINE_STACK_GROWS_UP	/* stack grows to higher addresses */
 #define	__HAVE_FUNCTION_DESCRIPTORS	/* function ptrs may be descriptors */
 #define	__HAVE_MD_RUNQUEUE
+#define	__HAVE_RAS
 
 #endif	/* _HPPA_TYPES_H_ */
