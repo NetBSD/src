@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.3 1997/03/24 00:04:53 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.4 1997/04/02 02:29:34 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -180,7 +180,7 @@ void	seattach __P((struct device *, struct device *, void *));
 void	se_ifstart __P((struct ifnet *));
 void	sestart __P((void *));
 
-static	int sedone __P((struct scsi_xfer *, int));
+static	void sedone __P((struct scsi_xfer *));
 int	se_ioctl __P((struct ifnet *, u_long, caddr_t));
 void	sewatchdog __P((struct ifnet *));
 
@@ -453,67 +453,61 @@ se_ifstart(ifp)
 /*
  * Called from the scsibus layer via our scsi device switch.
  */
-static int
-sedone(xs, complete)
+static void
+sedone(xs)
 	struct scsi_xfer *xs;
-	int complete;
 {
 	int error;
 	struct se_softc *sc = xs->sc_link->device_softc;
 	struct scsi_generic *cmd = xs->cmd;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	if(complete) {
-		/*
-		 * "complete" indicates we're freeing resources used
-		 * by the transfer.
-		 */
-		int s = splnet();
-		error = !(xs->error == XS_NOERROR);
+	int s;
 
-		if(IS_SEND(cmd)) {
-			if (xs->error == XS_BUSY) {
-				printf("se: busy, retry txmit\n");
-				timeout(se_delayed_ifstart, ifp, hz);
+	error = !(xs->error == XS_NOERROR);
+
+	s = splnet();
+	if(IS_SEND(cmd)) {
+		if (xs->error == XS_BUSY) {
+			printf("se: busy, retry txmit\n");
+			timeout(se_delayed_ifstart, ifp, hz);
+		} else {
+			ifp->if_flags &= ~IFF_OACTIVE;
+			/* the generic scsi_done will call
+			 * sestart (through scsi_free_xs).
+			 */
+		}
+	} else if(IS_RECV(cmd)) {
+		/* RECV complete */
+		/* pass data up. reschedule a recv */
+		/* scsi_free_xs will call start. Harmless. */
+		if (error) {
+			/* Reschedule after a delay */
+			timeout(se_recv, (void *)sc, se_poll);
+		} else {
+			int n;
+			n = se_read(sc, xs->data, xs->datalen - xs->resid);
+
+			if(n > 0) {
+#ifdef SEDEBUG
+				if (sc->sc_debug)
+					printf("sedone: received %d packets \n", n);
+#endif
+				if(ifp->if_snd.ifq_head)
+					/* Output is
+					 * pending. Do next
+					 * recv after the next
+					 * send. */
+					sc->sc_flags |= SE_NEED_RECV;
+				else {
+					timeout(se_recv, (void *)sc, se_poll0);
+				}
 			} else {
-				ifp->if_flags &= ~IFF_OACTIVE;
-				/* the generic scsi_done will call
-				 * sestart (through scsi_free_xs).
-				 */
-			}
-		} else if(IS_RECV(cmd)) {
-			/* RECV complete */
-			/* pass data up. reschedule a recv */
-			/* scsi_free_xs will call start. Harmless. */
-			if (error) {
 				/* Reschedule after a delay */
 				timeout(se_recv, (void *)sc, se_poll);
-			} else {
-				int n;
-				n = se_read(sc, xs->data, xs->datalen - xs->resid);
-				
-				if(n > 0) {
-#ifdef SEDEBUG
-					if (sc->sc_debug)
-						printf("sedone: received %d packets \n", n);
-#endif
-					if(ifp->if_snd.ifq_head)
-						/* Output is
-						 * pending. Do next
-						 * recv after the next
-						 * send. */
-						sc->sc_flags |= SE_NEED_RECV;
-					else {
-						timeout(se_recv, (void *)sc, se_poll0);
-					}
-				} else {
-					/* Reschedule after a delay */
-					timeout(se_recv, (void *)sc, se_poll);
-				}
 			}
 		}
-		splx(s);
 	}
-	return (0);
+	splx(s);
 }
 
 static void se_recv(v)
