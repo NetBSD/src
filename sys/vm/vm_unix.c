@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_unix.c,v 1.19 1996/02/10 00:08:14 christos Exp $	*/
+/*	$NetBSD: vm_unix.c,v 1.20 1997/07/22 10:06:43 drochner Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -185,6 +185,16 @@ vm_coredump(p, vp, cred, chdr)
                             (long) entry->offset);
 #endif
 			continue;
+		}
+
+		if (entry->object.vm_object &&
+		    entry->object.vm_object->pager &&
+		    entry->object.vm_object->pager->pg_type == PG_DEVICE) {
+#ifdef DEBUG
+		    printf("vm_coredump: skipping dev @ %lx\n",
+			   (u_long)entry->start);
+#endif
+		    continue;
 		}
 
 		if (!(entry->protection & VM_PROT_WRITE))
