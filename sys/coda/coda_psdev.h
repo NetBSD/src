@@ -1,11 +1,11 @@
-/*	$NetBSD: coda_subr.h,v 1.5 1998/09/25 15:01:13 rvb Exp $	*/
+/*	$NetBSD: coda_psdev.h,v 1.1 1998/09/25 15:01:13 rvb Exp $	*/
 
 /*
  * 
  *             Coda: an Experimental Distributed File System
  *                              Release 3.1
  * 
- *           Copyright (c) 1987-1998 Carnegie Mellon University
+ *           Copyright (c) 1998 Carnegie Mellon University
  *                          All Rights Reserved
  * 
  * Permission  to  use, copy, modify and distribute this software and its
@@ -28,20 +28,13 @@
  * improvements or extensions that  they  make,  and  to  grant  Carnegie
  * Mellon the rights to redistribute these changes without encumbrance.
  * 
- * 	@(#) coda/coda_subr.h,v 1.1.1.1 1998/08/29 21:26:45 rvb Exp $ 
+ * 	@(#) coda/coda_psdev.h,v 1.1 1998/08/29 21:26:45 rvb Exp $ 
  */
 
-struct cnode *coda_alloc(void);
-void  coda_free(struct cnode *cp);
-struct cnode *coda_find(ViceFid *fid);
-void coda_flush(enum dc_status dcstat);
-void coda_testflush(void);
-void coda_checkunmounting(struct mount *mp);
-void coda_cacheprint(struct mount *whoIam);
-void coda_debugon(void);
-void coda_debugoff(void);
-int  coda_kill(struct mount *whoIam, enum dc_status dcstat);
-void coda_save(struct cnode *cp);
-void coda_unsave(struct cnode *cp);
 
-
+int vc_nb_open(dev_t dev, int flag, int mode, struct proc *p);
+int vc_nb_close (dev_t dev, int flag, int mode, struct proc *p);
+int vc_nb_read(dev_t dev, struct uio *uiop, int flag);
+int vc_nb_write(dev_t dev, struct uio *uiop, int flag);
+int vc_nb_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p);
+int vc_nb_poll(dev_t dev, int events, struct proc *p);
