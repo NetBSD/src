@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2001/08/11 12:59:45 chris Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2002/02/22 06:41:48 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -67,9 +67,9 @@
 #endif
 
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 
