@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.1 2002/09/21 08:19:29 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.2 2002/10/20 15:48:02 lukem Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" NOTE: After changing this file, run "make build-docs" to generate the
 .\" proper plaintext versions, and check in all BUILDING.* files!
 .\"
-.Dd September 21, 2002
+.Dd October 21, 2002
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -824,6 +824,40 @@ as necessary to enforce build ordering.
 If you see build failures with -j, please save complete build logs 
 so the failures can be analyzed.
 .
+.It Sy -k Em kernel
+Build a new kernel.
+The
+.Em kernel
+argument is the name of a configuration file suitable
+for use by
+.Xr config 8 .
+If
+.Em kernel
+does not contain any
+.Sq /
+characters, the configuration file is expected to be found in the
+.Sy KERNCONFDIR
+directory, which is typically
+.Sy sys/arch/MACHINE/conf .
+The new kernel will be built in a subdirectory of
+.Sy KERNOBJDIR ,
+which is typically
+.Sy sys/arch/MACHINE/compile
+or an associated object directory.
+In order to ensure that the kernel is built using up-to-date tools,
+it is strongly recommended that the tools be rebuilt (using the
+.Sy -t 
+option) in a separate invocation of
+.Nm build.sh
+prior to using the
+.Sy -k
+option, or that the
+.Sy -t
+and
+.Sy -k
+options be used together in a single invocation of
+.Nm build.sh .
+.
 .It Sy -m Em mach
 Set the value of
 .Sy MACHINE
@@ -962,6 +996,28 @@ and
 This script can be symlinked into a directory listed in
 .Sy PATH ,
 or called with an absolute path.
+.
+.Sh EXAMPLES
+.Bl -tag -width "build.sh"
+.It Li "./build.sh -t"
+Build a new toolchain.
+.It Li "cd ${KERNCONFDIR} ; ${TOOLDIR}/bin/nbconfig GENERIC"
+Use the new version of
+.Xr config 8
+to prepare to build a new GENERIC kernel.
+.It Li "cd ${KERNOBJDIR}/GENERIC ; ${TOOLDIR}/bin/nbmake-${MACHINE} dependall"
+Use the new toolchain to build a new GENERIC kernel.
+.It Li "./build.sh -t -k GENERIC"
+Build a new toolchain, and use the new toolchain to
+configure and build a new GENERIC kernel.
+.It Li "./build.sh -U -d"
+Using unprivileged mode,
+build a complete distribution in
+.Sy DESTDIR .
+.It Li "./build.sh -U -R /some/dir/RELEASE"
+Using unprivileged mode,
+build a complete release in the specified release directory.
+.El
 .
 .Sh OBSOLETE VARIABLES
 .

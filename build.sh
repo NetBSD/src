@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#  $NetBSD: build.sh,v 1.69 2002/10/02 16:57:29 thorpej Exp $
+#  $NetBSD: build.sh,v 1.70 2002/10/20 15:48:01 lukem Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -90,6 +90,7 @@ getmakevar () {
 _x_:
 	echo \${$1}
 .include <bsd.prog.mk>
+.include <bsd.kernobj.mk>
 EOF
 }
 
@@ -101,31 +102,35 @@ resolvepath () {
 }
 
 usage () {
-	echo "Usage:"
-	echo "$0 [-bdorUu] [-a arch] [-B buildid] [-j njob] [-m mach] "
-	echo "   [-w wrapper] [-D dest] [-M obj] [-O obj] [-R release] [-T tools]"
-	echo ""
-	echo "    -a: set MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
-	echo "    -B: set BUILDID to buildid"
-	echo "    -b: build nbmake and nbmake wrapper script, if needed"
-	echo "    -D: set DESTDIR to dest"
-	echo "    -d: build a full distribution into DESTDIR (including etc files)"
-	echo "    -j: Run up to njob jobs in parallel; see make(1)"
-	echo "    -M: set obj root directory to obj (sets MAKEOBJDIRPREFIX)"
-	echo "    -m: set MACHINE to mach (not required if NetBSD native)"
-	echo "    -n: show commands that would be executed, but do not execute them"
-	echo "    -O: set obj root directory to obj (sets a MAKEOBJDIR pattern)"
-	echo "    -o: set MKOBJDIRS=no (do not create objdirs at start of build)"
-	echo "    -R: build a release (and set RELEASEDIR to release)"
-	echo "    -r: remove contents of TOOLDIR and DESTDIR before building"
-	echo "    -T: set TOOLDIR to tools"
-	echo "    -t: build and install tools only (implies -b)"
-	echo "    -U: set UNPRIVED"
-	echo "    -u: set UPDATE"
-	echo "    -w: create nbmake script at wrapper (default TOOLDIR/bin/nbmake-MACHINE)"
-	echo ""
-	echo "Note: if -T is unset and TOOLDIR is not set in the environment,"
-	echo "      nbmake will be [re]built unconditionally."
+	cat <<_usage_
+Usage:
+$0 [-bdorUu] [-a arch] [-B buildid] [-D dest] [-j njob] [-k kernel]
+	   [-M obj] [-m mach] [-O obj] [-R release] [-T tools] [-w wrapper]
+
+    -a arch	set MACHINE_ARCH to arch (otherwise deduced from MACHINE)
+    -B buildid	set BUILDID to buildid
+    -b		build nbmake and nbmake wrapper script, if needed
+    -D dest	set DESTDIR to dest
+    -d		build a full distribution into DESTDIR (including etc files)
+    -j njob	run up to njob jobs in parallel; see make(1)
+    -k kernel	build a kernel using the named configuration file
+    -M obj	set obj root directory to obj (sets MAKEOBJDIRPREFIX)
+    -m mach	set MACHINE to mach (not required if NetBSD native)
+    -n		show commands that would be executed, but do not execute them
+    -O obj	set obj root directory to obj (sets a MAKEOBJDIR pattern)
+    -o		set MKOBJDIRS=no (do not create objdirs at start of build)
+    -R release	build a release (and set RELEASEDIR to release)
+    -r remove	contents of TOOLDIR and DESTDIR before building
+    -T tools	set TOOLDIR to tools
+    -t		build and install tools only (implies -b)
+    -U		set UNPRIVED
+    -u		set UPDATE
+    -w wrapper	create nbmake script at wrapper
+		(default TOOLDIR/bin/nbmake-MACHINE)
+
+Note: if -T is unset and TOOLDIR is not set in the environment,
+      nbmake will be [re]built unconditionally.
+_usage_
 	exit 1
 }
 
@@ -133,13 +138,14 @@ usage () {
 MAKEFLAGS=
 buildtarget=build
 do_buildsystem=true
+do_buildonlykernel=false
 do_buildonlytools=false
 do_rebuildmake=false
 do_removedirs=false
 makeenv=
 makewrapper=
 opt_a=no
-opts='a:B:bdhj:m:nortuw:D:M:O:R:T:U'
+opts='a:B:bdhj:k:m:nortuw:D:M:O:R:T:U'
 runcmd=
 
 if type getopts >/dev/null 2>&1; then
@@ -172,6 +178,10 @@ while eval $getoptcmd; do case $opt in
 
 	-j)	eval $optargcmd
 		parallel="-j $OPTARG";;
+
+	-k)	do_buildonlykernel=true; do_buildsystem=false
+		eval $optargcmd
+		KERNCONFNAME=$OPTARG;;
 
 	# -m overrides MACHINE_ARCH unless "-a" is specified
 	-m)	eval $optargcmd
@@ -308,7 +318,7 @@ fi
 if [ -z "$TOOLDIR" ] && [ "$MKOBJDIRS" != "no" ]; then
 	$runcmd cd tools
 	$runcmd $make -m ${TOP}/share/mk obj NOSUBDIR= || exit 1
-	$runcmd cd ..
+	$runcmd cd "$TOP"
 fi
 
 #
@@ -394,7 +404,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.69 2002/10/02 16:57:29 thorpej Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.70 2002/10/20 15:48:01 lukem Exp $
 #
 
 EOF
@@ -412,14 +422,52 @@ $runcmd chmod +x "$makewrapper"
 
 if $do_buildsystem; then
 	${runcmd-exec} "$makewrapper" $parallel $buildtarget
-elif $do_buildonlytools; then
-	if [ "$MKOBJDIRS" != "no" ]; then
-		$runcmd "$makewrapper" $parallel obj-tools || exit 1
+else
+	# One or more of do_buildonlytools and do_buildonlykernel
+	# might be set.  Do them in the appropriate order.
+	if $do_buildonlytools; then
+		if [ "$MKOBJDIRS" != "no" ]; then
+			$runcmd "$makewrapper" $parallel obj-tools || exit 1
+		fi
+		$runcmd cd tools
+		if [ "$UPDATE" = "" ]; then
+			$runcmd "$makewrapper" cleandir dependall install
+		else
+			$runcmd "$makewrapper" dependall install
+		fi
 	fi
-	$runcmd cd tools
-	if [ "$UPDATE" = "" ]; then
-		${runcmd-exec} "$makewrapper" cleandir dependall install
-	else
-		${runcmd-exec} "$makewrapper" dependall install
+	if $do_buildonlykernel; then
+		$runcmd echo "===> Building kernel ${KERNCONFNAME}"
+		if [ "$runcmd" = "echo" ]; then
+			# shown symbolically with -n
+			# because getmakevar might not work yet
+			KERNCONFDIR='${KERNCONFDIR}'
+			KERNOBJDIR='${KERNOBJDIR}'
+		else
+			KERNCONFDIR="$( getmakevar KERNCONFDIR )"
+			KERNOBJDIR="$( getmakevar KERNOBJDIR )"
+		fi
+		case "${KERNCONFNAME}" in
+		*/*)
+			kernconfpath=${KERNCONFNAME}
+			KERNCONFNAME=`basename ${KERNCONFNAME}`
+			;;
+		*)
+			kernconfpath=${KERNCONFDIR}/${KERNCONFNAME}
+			;;
+		esac
+		$runcmd mkdir -p "${KERNOBJDIR}/${KERNCONFNAME}"
+		if [ "$UPDATE" = "" ]; then
+			$runcmd cd "${KERNOBJDIR}/${KERNCONFNAME}"
+			$runcmd "$makewrapper" cleandir
+			$runcmd cd "$TOP"
+		fi
+		$runcmd "${TOOLDIR}/bin/nbconfig" \
+			-b "${KERNOBJDIR}/${KERNCONFNAME}" \
+			-s "${TOP}/sys" "${kernconfpath}"
+		$runcmd cd "${KERNOBJDIR}/${KERNCONFNAME}"
+		$runcmd "$makewrapper" depend
+		$runcmd "$makewrapper" $parallel all
+		echo "New kernel should be in ${KERNOBJDIR}/${KERNCONFNAME}"
 	fi
 fi
