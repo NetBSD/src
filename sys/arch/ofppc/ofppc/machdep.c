@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 2001/09/10 21:19:21 chris Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 2001/10/22 16:44:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,6 +54,8 @@
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
+
+#include <dev/ofw/openfirm.h>
 
 #include <machine/autoconf.h>
 #include <machine/bat.h>
@@ -111,6 +113,8 @@ struct machvec machine_interface = {
 	fake_irq_establish,
 };
 
+char	platform_name[64];
+
 void
 initppc(startkernel, endkernel, args)
 	u_int startkernel, endkernel;
@@ -131,7 +135,7 @@ initppc(startkernel, endkernel, args)
 #ifdef IPKDB
 	extern int ipkdblow, ipkdbsize;
 #endif
-	int exc, scratch;
+	int exc, scratch, node;
 
 	proc0.p_addr = proc0paddr;
 	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
@@ -139,6 +143,12 @@ initppc(startkernel, endkernel, args)
 	curpcb = &proc0paddr->u_pcb;
 
 	curpm = curpcb->pcb_pmreal = curpcb->pcb_pm = pmap_kernel();
+
+	/*
+	 * Fetch the platform name from the root of the OFW tree.
+	 */
+	node = OF_peer(0);
+	OF_getprop(node, "name", platform_name, sizeof(platform_name));
 
 	/*
 	 * i386 port says, that this shouldn't be here,
