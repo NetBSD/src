@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.6 1999/09/30 23:04:41 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.7 1999/10/01 12:20:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.6 1999/09/30 23:04:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.7 1999/10/01 12:20:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,21 +157,33 @@ dpt_intr(xxx_sc)
 	struct dpt_softc *sc;
 	struct dpt_ccb *ccb;
 	struct eata_sp *sp;
-	volatile int junk;
+	int more;
 
 	sc = xxx_sc;
 	sp = sc->sc_sp;
+	more = 0;
 
 #ifdef DEBUG
 	if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0)
 		printf("%s: spurious intr\n", sc->sc_dv.dv_xname);
 #endif
 	
-	/*
-	 * HBA might have interrupted while we were dealing with the last
-	 * completed command, since we ACK before we deal; keep polling. 
-	 */ 
-	while ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) != 0) {
+	for (;;) {
+		/*
+		 * HBA might have interrupted while we were dealing with the
+		 * last completed command, since we ACK before we deal; keep 
+		 * polling. If no interrupt is signalled, but the HBA has
+		 * indicated that more data will be available soon, hang 
+		 * around. 
+		 */ 
+		if ((dpt_inb(sc, HA_AUX_STATUS) & HA_AUX_INTR) == 0) {
+			if (more != 0) {
+				DELAY(10);
+				continue;
+			}
+			break;
+		}
+		
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap_ccb, sc->sc_spoff,
 		    sizeof(struct eata_sp), BUS_DMASYNC_POSTREAD);
 
@@ -212,7 +224,7 @@ dpt_intr(xxx_sc)
 			 */
 			sp->sp_ccbid = -1;
 			ccb->ccb_flg |= CCB_INTR;
-			junk = dpt_inb(sc, HA_STATUS);
+			more = dpt_inb(sc, HA_STATUS) & HA_ST_MORE;
 			if ((ccb->ccb_flg & CCB_PRIVATE) == 0)
 				dpt_done_ccb(sc, ccb);
 		} else {
@@ -221,7 +233,7 @@ dpt_intr(xxx_sc)
 
 			/* Ack the interrupt */
 			sp->sp_ccbid = -1;
-			junk = dpt_inb(sc, HA_STATUS);
+			more = dpt_inb(sc, HA_STATUS) & HA_ST_MORE;
 		}
 	}
 
@@ -741,10 +753,12 @@ dpt_done_ccb(sc, ccb)
 	 * Otherwise, put the results of the operation into the xfer and 
 	 * call whoever started it.
 	 */
+#ifdef DIAGNOSTIC
 	if ((ccb->ccb_flg & CCB_ALLOC) == 0) {
 		panic("%s: done ccb not allocated!\n", sc->sc_dv.dv_xname);
 		return;
 	}
+#endif
 	
 	if (xs->error == XS_NOERROR) {
 		if (ccb->ccb_hba_status != HA_NO_ERROR) {
@@ -778,6 +792,8 @@ dpt_done_ccb(sc, ccb)
 			}
 		} else
 			xs->resid = 0;
+			
+		xs->status = ccb->ccb_scsi_status;
 	}
 
 	/* Free up the CCB and mark the command as done */
