@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.405 2003/04/22 08:05:08 wiz Exp $
+# $NetBSD: mi,v 1.406 2003/04/27 12:35:20 fvdl Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1268,7 +1268,7 @@
 ./usr/share/man/cat8/sun3		base-man-share
 ./usr/share/man/cat8/vax		base-man-share
 ./usr/share/man/cat8/x68k		base-man-share
-./usr/share/man/cat8/x86_64		base-man-share
+./usr/share/man/cat8/amd64		base-man-share
 ./usr/share/man/cat9		base-man-share
 ./usr/share/man/cat9/acorn26		base-man-share
 ./usr/share/man/cat9/alpha		base-man-share
@@ -1364,7 +1364,7 @@
 ./usr/share/man/html8/sun3		base-man-share
 ./usr/share/man/html8/vax		base-man-share
 ./usr/share/man/html8/x68k		base-man-share
-./usr/share/man/html8/x86_64		base-man-share
+./usr/share/man/html8/amd64		base-man-share
 ./usr/share/man/html9			base-man-share
 ./usr/share/man/html9/acorn26		base-man-share
 ./usr/share/man/html9/alpha		base-man-share
@@ -1461,7 +1461,7 @@
 ./usr/share/man/man8/sun3		base-man-share
 ./usr/share/man/man8/vax		base-man-share
 ./usr/share/man/man8/x68k		base-man-share
-./usr/share/man/man8/x86_64		base-man-share
+./usr/share/man/man8/amd64		base-man-share
 ./usr/share/man/man9			base-man-share
 ./usr/share/man/man9/acorn26		base-man-share
 ./usr/share/man/man9/alpha		base-man-share
