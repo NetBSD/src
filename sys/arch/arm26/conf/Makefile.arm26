@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.8 2001/07/28 13:48:32 bjh21 Exp $
+#	$NetBSD: Makefile.arm26,v 1.9 2001/10/23 17:32:36 thorpej Exp $
 
 # Makefile for NetBSD/arm26
 #
@@ -11,6 +11,8 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/arm26/conf/Makefile.arm26
 # after which config should be rerun for all machines of that type.
+
+.include <bsd.own.mk>
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
