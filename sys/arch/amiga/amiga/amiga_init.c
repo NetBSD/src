@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.62 1998/08/12 19:46:12 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.63 1998/08/21 18:51:58 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -719,10 +719,11 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync, boot_part
 	 * Put user page tables starting at next 16MB boundary, to make kernel
 	 * dumps more readable, with guaranteed 16MB of.
 	 * XXX depends on Sysmap being last.
-	 * XXX maybe even at 256 MB boundary?
+	 * XXX 16 MB instead of 256 MB should be enough, but...
+	 * we need to fix the fastmem loading first. (see comment at line 375)
 	 */
 	RELOC(amiga_uptbase, vm_offset_t) =
-	    roundup(RELOC(Sysmap, u_int) + 0x1000000, 0x1000000);
+	    roundup(RELOC(Sysmap, u_int) + 0x10000000, 0x10000000);
 
 	/*
 	 * get the pmap module in sync with reality.
