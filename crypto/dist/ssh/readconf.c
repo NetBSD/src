@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.22 2005/02/13 05:57:26 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.23 2005/02/16 05:04:05 elric Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: readconf.c,v 1.134 2004/07/11 17:48:47 deraadt Exp $");
-__RCSID("$NetBSD: readconf.c,v 1.22 2005/02/13 05:57:26 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.23 2005/02/16 05:04:05 elric Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -409,9 +409,26 @@ parse_flag:
 		intptr = &options->challenge_response_authentication;
 		goto parse_flag;
 
+#if defined(KRB4) || defined(KRB5)
+	case oKerberosAuthentication:
+		intptr = &options->kerberos_authentication;
+		goto parse_flag;
+#endif
+#if defined(AFS) || defined(KRB5)
+	case oKerberosTgtPassing:
+		intptr = &options->kerberos_tgt_passing;
+		goto parse_flag;
+#endif
+
 	case oGssAuthentication:
 		intptr = &options->gss_authentication;
 		goto parse_flag;
+
+#ifdef AFS
+	case oAFSTokenPassing:
+		intptr = &options->afs_token_passing;
+ 		goto parse_flag;
+#endif
 
 	case oGssDelegateCreds:
 		intptr = &options->gss_deleg_creds;
@@ -884,6 +901,15 @@ initialize_options(Options * options)
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
 	options->challenge_response_authentication = -1;
+#if defined(KRB4) || defined(KRB5)
+	options->kerberos_authentication = -1;
+#endif
+#if defined(AFS) || defined(KRB5)
+	options->kerberos_tgt_passing = -1;
+#endif
+#ifdef AFS
+	options->afs_token_passing = -1;
+#endif
 	options->gss_authentication = -1;
 	options->gss_deleg_creds = -1;
 	options->password_authentication = -1;
@@ -964,6 +990,18 @@ fill_default_options(Options * options)
 		options->pubkey_authentication = 1;
 	if (options->challenge_response_authentication == -1)
 		options->challenge_response_authentication = 1;
+#if defined(KRB4) || defined(KRB5)
+	if (options->kerberos_authentication == -1)
+		options->kerberos_authentication = 1;
+#endif
+#if defined(AFS) || defined(KRB5)
+	if (options->kerberos_tgt_passing == -1)
+		options->kerberos_tgt_passing = 1;
+#endif
+#ifdef AFS
+	if (options->afs_token_passing == -1)
+		options->afs_token_passing = 1;
+#endif
 	if (options->gss_authentication == -1)
 		options->gss_authentication = 0;
 	if (options->gss_deleg_creds == -1)
