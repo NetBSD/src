@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.7.2.1 2004/05/10 15:01:59 tron Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.7.2.2 2004/05/10 15:06:03 tron Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/ipsec.h,v 1.2.4.1 2003/01/24 05:11:35 sam Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -346,6 +346,7 @@ extern char *ipsec_dump_policy __P((caddr_t, char *));
 extern const char *ipsec_strerror __P((void));
 #endif /* !_KERNEL */
 
+#ifdef _KERNEL
 /* External declarations of per-file init functions */
 INITFN void ah_attach(void);
 INITFN void esp_attach(void);
@@ -353,5 +354,5 @@ INITFN void ipcomp_attach(void);
 INITFN void ipe4_attach(void);
 
 INITFN void ipsec_attach(void);
-
+#endif /* _KERNEL */
 #endif /* _NETIPSEC_IPSEC_H_ */
