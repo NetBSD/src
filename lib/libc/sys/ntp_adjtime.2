@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntp_adjtime.2,v 1.1 2001/09/06 00:18:18 wiz Exp $
+.\"	$NetBSD: ntp_adjtime.2,v 1.2 2001/09/07 23:46:03 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ The two system calls
 .Fn ntp_adjtime
 and
 .Fn ntp_gettime
-are the interface to the Network Time Protocol (NTP) daemon
+are the kernel interface to the Network Time Protocol (NTP) daemon
 .Xr ntpd 8 .
 .Pp
 The
@@ -188,9 +188,8 @@ PLL time constant, determines the bandwidth, or
 of the PLL (read-write).
 .It Fa precision
 Clock precision (in microseconds).  In most cases the same
-as the kernel tick variable.
-.\" (see
-.\" .Xr hz 9 )
+as the kernel tick variable (see
+.Xr hz 9 ) .
 If a precision clock counter or external time-keeping signal is available,
 it could be much lower (and depend on the state of the signal)
 (read-only).
