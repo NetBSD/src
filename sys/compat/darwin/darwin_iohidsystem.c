@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.1 2003/02/16 15:02:06 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.2 2003/02/20 22:39:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.1 2003/02/16 15:02:06 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.2 2003/02/20 22:39:43 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,8 +57,16 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.1 2003/02/16 15:02:06 manu 
 #include <compat/darwin/darwin_iohidsystem.h>
 #include <compat/darwin/darwin_iokit.h>
 
+struct mach_iokit_devclass darwin_iohidsystem_devclass = {
+	"<dict ID=\"0\"><key>IOProviderClass</key>"
+	    "<string ID=\"1\">IOHIDSystem</string></dict>",
+	NULL,
+	darwin_iohidsystem_connect_method_scalari_scalaro,
+	"IOHIDSystem",
+};
+
 int
-darwin_iokit_iohidsystem(args)
+darwin_iohidsystem_connect_method_scalari_scalaro(args)
 	struct mach_trap_args *args;
 {
 	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
@@ -66,7 +74,7 @@ darwin_iokit_iohidsystem(args)
 	size_t *msglen = args->rsize;
 
 #ifdef DEBUG_DARWIN
-	printf("darwin_iokit_iohidsystem()\n");
+	printf("darwin_iohidsystem_connect_method_scalari_scalaro()\n");
 #endif
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
@@ -76,6 +84,6 @@ darwin_iokit_iohidsystem(args)
 	rep->rep_outcount = 0;
 	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
 
-	*msglen = sizeof(*rep) - 4096 + rep->rep_outcount;
+	*msglen = sizeof(*rep) - ((4096 + rep->rep_outcount) * sizeof(int));
 	return 0;
 }
