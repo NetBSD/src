@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.4 2000/10/08 12:37:06 itojun Exp $
+# $NetBSD: Makefile,v 1.5 2001/03/17 07:10:54 tsutsui Exp $
 # Build ping6 without IPSEC
 
 SRCDIR= ${.CURDIR}/../../../sbin/ping6
 PROG=	ping6
-NOMAN=	yes
+MKMAN=	no
 
 CPPFLAGS+=-I${SRCDIR}
 CPPFLAGS+=-DINET6
