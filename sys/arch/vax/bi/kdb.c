@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.8 1998/01/03 00:23:53 thorpej Exp $ */
+/*	$NetBSD: kdb.c,v 1.9 1998/01/12 20:52:30 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -87,13 +87,11 @@ int	kdbprint __P((void *, const char *));
 void	kdbsaerror __P((struct device *, int));
 int	kdbgo __P((struct device *, struct buf *));
 
-struct	cfdriver kdb_cd = {
-	NULL, "kdb", DV_DULL
-};
-
 struct	cfattach kdb_ca = {
 	sizeof(struct kdb_softc), kdbmatch, kdbattach
 };
+
+extern struct cfdriver kdb_cd;
 
 /*
  * More driver definitions, for generic MSCP code.

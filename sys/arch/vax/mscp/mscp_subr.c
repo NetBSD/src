@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.6 1997/01/11 11:20:34 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.7 1998/01/12 20:52:43 thorpej Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -68,10 +68,6 @@ int	mscp_waitstep __P((struct mscp_softc *, int, int));
 
 struct	cfattach mscpbus_ca = {
 	sizeof(struct mscp_softc), mscp_match, mscp_attach
-};
-
-struct	cfdriver mscpbus_cd = {
-	NULL, "mscpbus", DV_DULL
 };
 
 struct	mscp slavereply;

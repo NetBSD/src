@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.9 1997/10/17 20:24:35 oki Exp $	*/
+/*	$NetBSD: com.c,v 1.10 1998/01/12 21:13:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -132,9 +132,7 @@ struct cfattach xcom_ca = {
 	sizeof(struct com_softc), comprobe, comattach,
 };
 
-struct cfdriver xcom_cd = {
-	NULL, "xcom", DV_TTY
-};
+extern struct cfdriver xcom_cd;
 
 #define	outb(addr, val)		*(u_char *)(addr) = (val)
 #define	inb(addr)		*(u_char *)(addr)

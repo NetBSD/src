@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.16 1997/07/17 02:22:26 jtk Exp $ */
+/*	$NetBSD: hp.c,v 1.17 1998/01/12 20:52:37 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -89,13 +89,11 @@ int	hpread __P((dev_t, struct uio *));
 int	hpwrite __P((dev_t, struct uio *));
 int	hpsize __P((dev_t));
 
-struct	cfdriver hp_cd = {
-	NULL, "hp", DV_DISK
-};
-
 struct	cfattach hp_ca = {
 	sizeof(struct hp_softc), hpmatch, hpattach
 };
+
+extern struct cfdriver hp_cd;
 
 /*
  * Check if this is a disk drive; done by checking type from mbaattach.

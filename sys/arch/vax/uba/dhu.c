@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.9 1997/01/11 11:34:41 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.10 1998/01/12 20:52:45 thorpej Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -135,13 +135,11 @@ static unsigned	dhumctl __P((struct dhu_softc *,int, int, int));
 	void	dhustop __P((struct tty *, int));
 struct tty *	dhutty __P((dev_t));
 
-struct	cfdriver dhu_cd = {
-	NULL, "dhu", DV_TTY
-};
-
 struct	cfattach dhu_ca = {
 	sizeof(struct dhu_softc), dhu_match, dhu_attach
 };
+
+extern struct cfdriver dhu_cd;
 
 /* Autoconfig handles: setup the controller to interrupt, */
 /* then complete the housecleaning for full operation */
