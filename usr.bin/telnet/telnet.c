@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.13 1999/07/28 06:35:16 abs Exp $	*/
+/*	$NetBSD: telnet.c,v 1.14 1999/12/30 09:52:03 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.13 1999/07/28 06:35:16 abs Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.14 1999/12/30 09:52:03 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1530,10 +1530,15 @@ unsigned char *opt_replyend;
 	void
 env_opt_start()
 {
-	if (opt_reply)
-		opt_reply = (unsigned char *)realloc(opt_reply, OPT_REPLY_SIZE);
-	else
-		opt_reply = (unsigned char *)malloc(OPT_REPLY_SIZE);
+	unsigned char *p;
+
+	if (opt_reply) {
+		p = (unsigned char *)realloc(opt_reply, OPT_REPLY_SIZE);
+		if (p == NULL)
+			free(opt_reply);
+	} else
+		p = (unsigned char *)malloc(OPT_REPLY_SIZE);
+	opt_reply = p;
 	if (opt_reply == NULL) {
 /*@*/		printf("env_opt_start: malloc()/realloc() failed!!!\n");
 		opt_reply = opt_replyp = opt_replyend = NULL;
@@ -1581,9 +1586,13 @@ env_opt_add(ep)
 				strlen((char *)ep) + 6 > opt_replyend)
 	{
 		register int len;
+		unsigned char *p;
 		opt_replyend += OPT_REPLY_SIZE;
 		len = opt_replyend - opt_reply;
-		opt_reply = (unsigned char *)realloc(opt_reply, len);
+		p = (unsigned char *)realloc(opt_reply, len);
+		if (p == NULL)
+			free(opt_reply);
+		opt_reply = p;
 		if (opt_reply == NULL) {
 /*@*/			printf("env_opt_add: realloc() failed!!!\n");
 			opt_reply = opt_replyp = opt_replyend = NULL;
