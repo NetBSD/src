@@ -1,3 +1,68 @@
+Changes in release 0.3e
+
+ * rcp program included
+
+ * fix buffer overrun in ftpd
+
+ * handle omitted sequence numbers as zeroes to handle MIT krb5 that
+   cannot generate zero sequence numbers
+
+ * handle v4 /.k files better
+
+ * configure/portability fixes
+
+ * fixes in parsing of options to kadmin (sub-)commands
+
+ * handle errors in kadmin load better
+
+ * bug fixes
+
+Changes in release 0.3d
+
+ * add krb5-config
+
+ * fix a bug in 3des gss-api mechanism, making it compatible with the
+   specification and the MIT implementation
+
+ * make telnetd only allow a specific list of environment variables to
+   stop it from setting `sensitive' variables
+
+ * try to use an existing libdes
+
+ * lib/krb5, kdc: use correct usage type for ap-req messages.  This
+   should improve compatability with MIT krb5 when using 3DES
+   encryption types
+
+ * kdc: fix memory allocation problem
+
+ * update config.guess and config.sub
+
+ * lib/roken: more stuff implemented
+
+ * bug fixes and portability enhancements
+
+Changes in release 0.3c
+
+ * lib/krb5: memory caches now support the resolve operation
+
+ * appl/login: set PATH to some sane default
+
+ * kadmind: handle several realms
+
+ * bug fixes (including memory leaks)
+
+Changes in release 0.3b
+
+ * kdc: prefer default-salted keys on v5 requests
+
+ * kdc: lowercase hostnames in v4 mode
+
+ * hprop: handle more types of MIT salts
+
+ * lib/krb5: fix memory leak
+
+ * bug fixes
+
 Changes in release 0.3a:
 
  * implement arcfour-hmac-md5 to interoperate with W2K

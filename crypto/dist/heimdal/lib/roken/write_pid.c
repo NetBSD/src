@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: write_pid.c,v 1.1.1.1 2000/08/02 20:00:01 assar Exp $");
+RCSID("$Id: write_pid.c,v 1.1.1.2 2001/02/11 13:51:47 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -49,7 +49,7 @@ pid_file_write (const char *progname)
     FILE *fp;
     char *ret;
 
-    asprintf (&ret, _PATH_VARRUN "%s.pid", progname);
+    asprintf (&ret, "%s%s.pid", _PATH_VARRUN, progname);
     if (ret == NULL)
 	return NULL;
     fp = fopen (ret, "w");
@@ -71,3 +71,25 @@ pid_file_delete (char **filename)
 	*filename = NULL;
     }
 }
+
+#ifndef HAVE_PIDFILE
+static char *pidfile_path;
+
+static void
+pidfile_cleanup(void)
+{
+    if(pidfile_path != NULL)
+	pid_file_delete(&pidfile_path);
+}
+
+void
+pidfile(const char *basename)
+{
+    if(pidfile_path != NULL)
+	return;
+    if(basename == NULL)
+	basename = __progname;
+    pidfile_path = pid_file_write(basename);
+    atexit(pidfile_cleanup);
+}
+#endif

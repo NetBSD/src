@@ -32,17 +32,17 @@
  * SUCH DAMAGE. 
  */
 
+#undef ECHO
+
 #include "make_cmds.h"
 #include "parse.h"
 
-RCSID("$Id: lex.l,v 1.1.1.2 2000/08/02 20:00:18 assar Exp $");
+RCSID("$Id: lex.l,v 1.1.1.3 2001/02/11 13:51:50 assar Exp $");
 
 static unsigned lineno = 1;
 static int getstring(void);
 
 #define YY_NO_UNPUT
-
-#undef ECHO
 
 %}
 

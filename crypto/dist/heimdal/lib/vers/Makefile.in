@@ -69,22 +69,25 @@ CATMAN = @CATMAN@
 CATMANEXT = @CATMANEXT@
 CC = @CC@
 CPP = @CPP@
-CPPFLAGS_roken = @CPPFLAGS_roken@
 CXX = @CXX@
 CXXCPP = @CXXCPP@
 DBLIB = @DBLIB@
 DEPDIR = @DEPDIR@
+DIR_des = @DIR_des@
 DIR_roken = @DIR_roken@
 DLLTOOL = @DLLTOOL@
 EXEEXT = @EXEEXT@
 EXTRA_LIB45 = @EXTRA_LIB45@
 GROFF = @GROFF@
+INCLUDES_roken = @INCLUDES_roken@
 INCLUDE_ = @INCLUDE_@
 LEX = @LEX@
 LIBOBJS = @LIBOBJS@
 LIBTOOL = @LIBTOOL@
 LIB_ = @LIB_@
 LIB_AUTH_SUBDIRS = @LIB_AUTH_SUBDIRS@
+LIB_des = @LIB_des@
+LIB_des_appl = @LIB_des_appl@
 LIB_kdb = @LIB_kdb@
 LIB_otp = @LIB_otp@
 LIB_roken = @LIB_roken@
@@ -110,22 +113,22 @@ dpagaix_CFLAGS = @dpagaix_CFLAGS@
 dpagaix_LDADD = @dpagaix_LDADD@
 install_sh = @install_sh@
 
-# $Id: Makefile.in,v 1.1.1.1 2000/08/02 19:59:45 assar Exp $
+# $Id: Makefile.in,v 1.1.1.2 2001/02/11 13:51:46 assar Exp $
 
 
-# $Id: Makefile.in,v 1.1.1.1 2000/08/02 19:59:45 assar Exp $
+# $Id: Makefile.in,v 1.1.1.2 2001/02/11 13:51:46 assar Exp $
 
 
-# $Id: Makefile.in,v 1.1.1.1 2000/08/02 19:59:45 assar Exp $
+# $Id: Makefile.in,v 1.1.1.2 2001/02/11 13:51:46 assar Exp $
 
 
 AUTOMAKE_OPTIONS = foreign no-dependencies
 
 SUFFIXES = .et .h .1 .3 .5 .8 .cat1 .cat3 .cat5 .cat8 .x
 
-INCLUDES = -I$(top_builddir)/include
+INCLUDES = -I$(top_builddir)/include $(INCLUDES_roken)
 
-AM_CFLAGS =  $(WFLAGS) $(CPPFLAGS_roken)
+AM_CFLAGS =  $(WFLAGS)
 
 CP = cp
 
@@ -148,6 +151,7 @@ LIB_getsockopt = @LIB_getsockopt@
 LIB_logout = @LIB_logout@
 LIB_logwtmp = @LIB_logwtmp@
 LIB_odm_initialize = @LIB_odm_initialize@
+LIB_pidfile = @LIB_pidfile@
 LIB_readline = @LIB_readline@
 LIB_res_search = @LIB_res_search@
 LIB_setpcred = @LIB_setpcred@
@@ -155,6 +159,8 @@ LIB_setsockopt = @LIB_setsockopt@
 LIB_socket = @LIB_socket@
 LIB_syslog = @LIB_syslog@
 LIB_tgetent = @LIB_tgetent@
+
+LIBS = @LIBS@
 
 HESIODLIB = @HESIODLIB@
 HESIODINCLUDE = @HESIODINCLUDE@
@@ -171,14 +177,6 @@ INCLUDE_readline = @INCLUDE_readline@
 
 LEXLIB = @LEXLIB@
 
-cat1dir = $(mandir)/cat1
-cat3dir = $(mandir)/cat3
-cat5dir = $(mandir)/cat5
-cat8dir = $(mandir)/cat8
-
-MANRX = \(.*\)\.\([0-9]\)
-CATSUFFIX = @CATSUFFIX@
-
 NROFF_MAN = groff -mandoc -Tascii
 
 @KRB4_TRUE@LIB_kafs = @KRB4_TRUE@$(top_builddir)/lib/kafs/libkafs.la $(AIX_EXTRA_KAFS)
@@ -191,8 +189,7 @@ CHECK_LOCAL = $(PROGRAMS)
 
 CLEANFILES = print_version.h
 
-lib_LTLIBRARIES = libvers.la
-libvers_la_LDFLAGS = -version-info 1:0:0
+noinst_LTLIBRARIES = libvers.la
 
 build_HEADERZ = vers.h
 
@@ -205,17 +202,17 @@ subdir = lib/vers
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = ../../include/config.h
 CONFIG_CLEAN_FILES = 
-LTLIBRARIES =  $(lib_LTLIBRARIES)
+LTLIBRARIES =  $(noinst_LTLIBRARIES)
 
 
 DEFS = @DEFS@ -I. -I$(srcdir) -I../../include
 CPPFLAGS = @CPPFLAGS@
 LDFLAGS = @LDFLAGS@
-LIBS = @LIBS@
 X_CFLAGS = @X_CFLAGS@
 X_LIBS = @X_LIBS@
 X_EXTRA_LIBS = @X_EXTRA_LIBS@
 X_PRE_LIBS = @X_PRE_LIBS@
+libvers_la_LDFLAGS = 
 libvers_la_LIBADD = 
 am_libvers_la_OBJECTS =  print_version.lo
 libvers_la_OBJECTS =  $(am_libvers_la_OBJECTS)
@@ -253,31 +250,14 @@ Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
 	  && CONFIG_FILES=$(subdir)/$@ CONFIG_HEADERS= $(SHELL) ./config.status
 
 
-mostlyclean-libLTLIBRARIES:
+mostlyclean-noinstLTLIBRARIES:
 
-clean-libLTLIBRARIES:
-	-test -z "$(lib_LTLIBRARIES)" || rm -f $(lib_LTLIBRARIES)
+clean-noinstLTLIBRARIES:
+	-test -z "$(noinst_LTLIBRARIES)" || rm -f $(noinst_LTLIBRARIES)
 
-distclean-libLTLIBRARIES:
+distclean-noinstLTLIBRARIES:
 
-maintainer-clean-libLTLIBRARIES:
-
-install-libLTLIBRARIES: $(lib_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(libdir)
-	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
-	  if test -f $$p; then \
-	    echo " $(LIBTOOL)  --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(libdir)/$$p"; \
-	    $(LIBTOOL)  --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$p $(DESTDIR)$(libdir)/$$p; \
-	  else :; fi; \
-	done
-
-uninstall-libLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(lib_LTLIBRARIES)'; for p in $$list; do \
-	  echo " $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p"; \
-	  $(LIBTOOL)  --mode=uninstall rm -f $(DESTDIR)$(libdir)/$$p; \
-	done
+maintainer-clean-noinstLTLIBRARIES:
 
 mostlyclean-compile:
 	-rm -f *.o core *.core
@@ -301,7 +281,7 @@ distclean-libtool:
 maintainer-clean-libtool:
 
 libvers.la: $(libvers_la_OBJECTS) $(libvers_la_DEPENDENCIES)
-	$(LINK) -rpath $(libdir) $(libvers_la_LDFLAGS) $(libvers_la_OBJECTS) $(libvers_la_LIBADD) $(LIBS)
+	$(LINK)  $(libvers_la_LDFLAGS) $(libvers_la_OBJECTS) $(libvers_la_LIBADD) $(LIBS)
 
 mostlyclean-noinstPROGRAMS:
 
@@ -379,7 +359,7 @@ check-am: all-am
 check: check-am
 installcheck-am:
 installcheck: installcheck-am
-install-exec-am: install-libLTLIBRARIES
+install-exec-am:
 	@$(NORMAL_INSTALL)
 	$(MAKE) $(AM_MAKEFLAGS) install-exec-hook
 install-exec: install-exec-am
@@ -390,14 +370,13 @@ install-data: install-data-am
 install-am: all-am
 	@$(MAKE) $(AM_MAKEFLAGS) install-exec-am install-data-am
 install: install-am
-uninstall-am: uninstall-libLTLIBRARIES
+uninstall-am:
 uninstall: uninstall-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) all-local
 all-redirect: all-am
 install-strip:
 	$(MAKE) $(AM_MAKEFLAGS) INSTALL_STRIP_FLAG=-s install
 installdirs:
-	$(mkinstalldirs)  $(DESTDIR)$(libdir)
 
 
 mostlyclean-generic:
@@ -411,26 +390,26 @@ distclean-generic:
 
 maintainer-clean-generic:
 	-rm -f Makefile.in
-mostlyclean-am:  mostlyclean-libLTLIBRARIES mostlyclean-compile \
+mostlyclean-am:  mostlyclean-noinstLTLIBRARIES mostlyclean-compile \
 		mostlyclean-libtool mostlyclean-noinstPROGRAMS \
 		mostlyclean-tags mostlyclean-generic
 
 mostlyclean: mostlyclean-am
 
-clean-am:  clean-libLTLIBRARIES clean-compile clean-libtool \
+clean-am:  clean-noinstLTLIBRARIES clean-compile clean-libtool \
 		clean-noinstPROGRAMS clean-tags clean-generic \
 		mostlyclean-am
 
 clean: clean-am
 
-distclean-am:  distclean-libLTLIBRARIES distclean-compile \
+distclean-am:  distclean-noinstLTLIBRARIES distclean-compile \
 		distclean-libtool distclean-noinstPROGRAMS \
 		distclean-tags distclean-generic clean-am
 	-rm -f libtool
 
 distclean: distclean-am
 
-maintainer-clean-am:  maintainer-clean-libLTLIBRARIES \
+maintainer-clean-am:  maintainer-clean-noinstLTLIBRARIES \
 		maintainer-clean-compile maintainer-clean-libtool \
 		maintainer-clean-noinstPROGRAMS maintainer-clean-tags \
 		maintainer-clean-generic distclean-am
@@ -439,12 +418,11 @@ maintainer-clean-am:  maintainer-clean-libLTLIBRARIES \
 
 maintainer-clean: maintainer-clean-am
 
-.PHONY: mostlyclean-libLTLIBRARIES distclean-libLTLIBRARIES \
-clean-libLTLIBRARIES maintainer-clean-libLTLIBRARIES \
-uninstall-libLTLIBRARIES install-libLTLIBRARIES mostlyclean-compile \
-distclean-compile clean-compile maintainer-clean-compile \
-mostlyclean-libtool distclean-libtool clean-libtool \
-maintainer-clean-libtool mostlyclean-noinstPROGRAMS \
+.PHONY: mostlyclean-noinstLTLIBRARIES distclean-noinstLTLIBRARIES \
+clean-noinstLTLIBRARIES maintainer-clean-noinstLTLIBRARIES \
+mostlyclean-compile distclean-compile clean-compile \
+maintainer-clean-compile mostlyclean-libtool distclean-libtool \
+clean-libtool maintainer-clean-libtool mostlyclean-noinstPROGRAMS \
 distclean-noinstPROGRAMS clean-noinstPROGRAMS \
 maintainer-clean-noinstPROGRAMS tags mostlyclean-tags distclean-tags \
 clean-tags maintainer-clean-tags distdir info-am info dvi-am dvi \
@@ -461,7 +439,10 @@ install-suid-programs:
 	for file in $$foo; do \
 	x=$(DESTDIR)$(bindir)/$$file; \
 	if chown 0:0 $$x && chmod u+s $$x; then :; else \
-	chmod 0 $$x; fi; done
+	echo "*"; \
+	echo "* Failed to install $$x setuid root"; \
+	echo "*"; \
+	fi; done
 
 install-exec-hook: install-suid-programs
 
@@ -543,87 +524,8 @@ dist-cat8-mans:
 
 dist-hook: dist-cat1-mans dist-cat3-mans dist-cat5-mans dist-cat8-mans
 
-install-cat1-mans:
-	@ext=1;\
-	foo='$(man1_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.1) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat1dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat1/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat1dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat1dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat3-mans:
-	@ext=3;\
-	foo='$(man3_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.3) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat3dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat3/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat3dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat3dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat5-mans:
-	@ext=5;\
-	foo='$(man5_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.5) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat5dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat5/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat5dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat5dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat8-mans:
-	@ext=8;\
-	foo='$(man8_MANS)'; \
-	bar='$(man_MANS)'; \
-	for i in $$bar; do \
-	case $$i in \
-	*.8) foo="$$foo $$i";; \
-	esac; done; \
-	if test "$$foo"; then \
-		$(mkinstalldirs) $(DESTDIR)$(cat8dir); \
-		for x in $$foo; do \
-			f=`echo $$x | sed 's/\.[^.]*$$/.cat8/'`; \
-			if test -f "$(srcdir)/$$f"; then \
-				b=`echo $$x | sed 's!$(MANRX)!\1!'`; \
-				echo "$(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(cat8dir)/$$b.$(CATSUFFIX)";\
-				$(INSTALL_DATA) $(srcdir)/$$g $(DESTDIR)$(cat8dir)/$$b.$(CATSUFFIX);\
-			 fi; \
-		done ;\
-	fi
-
-install-cat-mans: install-cat1-mans install-cat3-mans install-cat5-mans install-cat8-mans
+install-cat-mans:
+	$(SHELL) $(top_srcdir)/cf/install-catman.sh "$(INSTALL_DATA)" "$(mkinstalldirs)" "$(srcdir)" "$(DESTDIR)$(mandir)" '$(CATMANEXT)' $(man_MANS) $(man1_MANS) $(man3_MANS) $(man5_MANS) $(man8_MANS)
 
 install-data-local: install-cat-mans
 

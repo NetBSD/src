@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: get_for_creds.c,v 1.1.1.2 2000/08/02 19:59:28 assar Exp $");
+RCSID("$Id: get_for_creds.c,v 1.1.1.3 2001/02/11 13:51:44 assar Exp $");
 
 static krb5_error_code
 add_addrs(krb5_context context,
@@ -263,7 +263,11 @@ krb5_get_forwarded_creds (krb5_context	    context,
 	return ret;
     }    
 
-    krb5_crypto_init(context, auth_context->local_subkey, 0, &crypto);
+    ret = krb5_crypto_init(context, auth_context->local_subkey, 0, &crypto);
+    if (ret) {
+	free_KRB_CRED(&cred);
+	return ret;
+    }
     ret = krb5_encrypt_EncryptedData (context,
 				      crypto,
 				      KRB5_KU_KRB_CRED,

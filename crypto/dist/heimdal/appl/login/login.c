@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -39,7 +39,7 @@
 #include <sys/capability.h>
 #endif
 
-RCSID("$Id: login.c,v 1.1.1.2 2000/08/02 19:58:08 assar Exp $");
+RCSID("$Id: login.c,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $");
 
 static int login_timeout = 60;
 
@@ -77,8 +77,11 @@ start_logout_process(void)
 	argv0 = prog;
 
     pid = fork();
-    if(pid == 0)
+    if(pid == 0) {
+	/* avoid getting signals sent to the shell */
+	setpgid(0, getpid());
 	return 0;
+    }
     if(pid == -1)
 	err(1, "fork");
     /* wait for the real login process to exit */
@@ -149,18 +152,12 @@ krb5_verify(struct passwd *pwd, const char *password)
     krb5_error_code ret;
     krb5_principal princ;
 
+    ret = krb5_parse_name(context, pwd->pw_name, &princ);
     if(ret)
 	return 1;
-	    
-    ret = krb5_parse_name(context, pwd->pw_name, &princ);
-    if(ret){
-	krb5_free_context(context);
-	return 1;
-    }
     ret = krb5_cc_gen_new(context, &krb5_mcc_ops, &id);
-    if(ret){
+    if(ret) {
 	krb5_free_principal(context, princ);
-	krb5_free_context(context);
 	return 1;
     }
     ret = krb5_verify_user_lrealm(context,
@@ -170,13 +167,11 @@ krb5_verify(struct passwd *pwd, const char *password)
 				  1,
 				  NULL);
     krb5_free_principal(context, princ);
-    if (ret)
-	krb5_free_context (context);
     return ret;
 }
 
 #ifdef KRB4
-static void
+static krb5_error_code
 krb5_to4 (krb5_ccache id)
 {
     if (krb5_config_get_bool(context, NULL,
@@ -191,14 +186,16 @@ krb5_to4 (krb5_ccache id)
 
 	ret = krb5_cc_get_principal (context, id, &princ);
 	if (ret)
-	    return;
+	    return ret;
 
-	krb5_make_principal(context, &mcred.server,
-			    princ->realm,
-			    "krbtgt",
-			    princ->realm,
-			    NULL);
+	ret = krb5_make_principal(context, &mcred.server,
+				  princ->realm,
+				  "krbtgt",
+				  princ->realm,
+				  NULL);
 	krb5_free_principal (context, princ);
+	if (ret)
+	    return ret;
 
 	ret = krb5_cc_retrieve_cred(context, id, 0, &mcred, &cred);
 	if(ret == 0) {
@@ -214,6 +211,7 @@ krb5_to4 (krb5_ccache id)
 	}
 	krb5_free_principal(context, mcred.server);
     }
+    return 0;
 }
 #endif /* KRB4 */
 
@@ -279,7 +277,6 @@ krb5_get_afs_tokens (const struct passwd *pwd)
 			      pwd->pw_uid, pwd->pw_dir);
 	krb5_cc_close (context, id2);
     }
-    krb5_free_context (context);
 }
 
 #endif /* KRB4 */
@@ -345,7 +342,9 @@ krb4_get_afs_tokens (const struct passwd *pwd)
 
 static int f_flag;
 static int p_flag;
+#if 0
 static int r_flag;
+#endif
 static int version_flag;
 static int help_flag;
 static char *remote_host;
@@ -431,7 +430,7 @@ do_login(const struct passwd *pwd, char *tty, char *ttyn)
     else
 	tty_gid = pwd->pw_gid;
 
-    if (chown (ttyn, pwd->pw_uid, pwd->pw_gid) < 0) {
+    if (chown (ttyn, pwd->pw_uid, tty_gid) < 0) {
 	warn("chown %s", ttyn);
 	if (rootlogin == 0)
 	    exit (1);
@@ -541,7 +540,6 @@ do_login(const struct passwd *pwd, char *tty, char *ttyn)
 #ifdef KRB5
     if (auth == AUTH_KRB5) {
 	krb5_start_session (pwd);
-	krb5_finish ();
     }
 #ifdef KRB4
     else if (auth == 0) {
@@ -557,11 +555,14 @@ do_login(const struct passwd *pwd, char *tty, char *ttyn)
 
     krb5_get_afs_tokens (pwd);
 #endif /* KRB4 */
+    krb5_finish ();
 #endif /* KRB5 */
 
 #ifdef KRB4
     krb4_get_afs_tokens (pwd);
 #endif /* KRB4 */
+
+    add_env("PATH", _PATH_DEFPATH);
 
     {
 	const char *str = login_conf_get_string("environment");
@@ -652,7 +653,13 @@ main(int argc, char **argv)
     set_progname(argv[0]);
 
 #ifdef KRB5
-    krb5_init_context(&context);
+    {
+	krb5_error_code ret;
+
+	ret = krb5_init_context(&context);
+	if (ret)
+	    errx (1, "krb5_init_context failed: %d", ret);
+    }
 #endif
 
     openlog("login", LOG_ODELAY, LOG_AUTH);
@@ -694,7 +701,7 @@ main(int argc, char **argv)
     }
 
 #if defined(DCE) && defined(AIX)
-    setenv("AUTHSTATE", "DCE", 1);
+    esetenv("AUTHSTATE", "DCE", 1);
 #endif
 
     /* XXX should we care about environment on the command line? */
@@ -718,7 +725,10 @@ main(int argc, char **argv)
 #endif
 
 	if(ask){
-	    f_flag = r_flag = 0;
+	    f_flag = 0;
+#if 0
+	    r_flag = 0;
+#endif
 	    ret = read_string("login: ", username, sizeof(username), 1);
 	    if(ret == -3)
 		exit(0);

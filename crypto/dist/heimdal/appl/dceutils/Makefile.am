@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/08/02 19:58:06 assar Exp $
+# $Id: Makefile.am,v 1.1.1.2 2001/02/11 13:51:10 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -20,4 +20,8 @@ k5dcecon_SOURCES  = k5dcecon.c k5dce.h
 
 dpagaix_SOURCES = dpagaix.c
 
+if IRIX
+LDADD = $(LIB_dce)
+else
 LDADD = $(LIB_roken) $(LIB_dce)
+endif

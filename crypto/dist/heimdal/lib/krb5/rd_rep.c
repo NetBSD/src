@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: rd_rep.c,v 1.1.1.2 2000/08/02 19:59:38 assar Exp $");
+RCSID("$Id: rd_rep.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 
 krb5_error_code
 krb5_rd_rep(krb5_context context,
@@ -62,7 +62,9 @@ krb5_rd_rep(krb5_context context,
     goto out;
   }
 
-  krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
+  ret = krb5_crypto_init(context, auth_context->keyblock, 0, &crypto);
+  if (ret)
+      goto out;
   ret = krb5_decrypt_EncryptedData (context, 
 				    crypto,	
 				    KRB5_KU_AP_REQ_ENC_PART,

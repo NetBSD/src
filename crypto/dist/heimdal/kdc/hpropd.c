@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "hprop.h"
 
-RCSID("$Id: hpropd.c,v 1.1.1.2 2000/08/02 19:58:54 assar Exp $");
+RCSID("$Id: hpropd.c,v 1.1.1.3 2001/02/11 13:51:31 assar Exp $");
 
 #ifdef KRB4
 static des_cblock mkey4;
@@ -210,7 +210,7 @@ main(int argc, char **argv)
     int nprincs;
 #ifdef KRB4
     int e;
-    int fd_out;
+    int fd_out = -1;
 #endif
 
     set_progname(argv[0]);
@@ -250,7 +250,7 @@ main(int argc, char **argv)
     else {
 	struct sockaddr_storage ss;
 	struct sockaddr *sa = (struct sockaddr *)&ss;
-	int sin_len = sizeof(ss);
+	socklen_t sin_len = sizeof(ss);
 	char addr_name[256];
 	krb5_ticket *ticket;
 	char *server;
@@ -364,7 +364,7 @@ main(int argc, char **argv)
 
 	if(from_stdin) {
 	    ret = krb5_read_message(context, &fd, &data);
-	    if(ret)
+	    if(ret != 0 && ret != HEIM_ERR_EOF)
 		krb5_err(context, 1, ret, "krb5_read_message");
 	} else {
 	    ret = krb5_read_priv_message(context, ac, &fd, &data);
@@ -372,7 +372,7 @@ main(int argc, char **argv)
 		krb5_err(context, 1, ret, "krb5_read_priv_message");
 	}
 
-	if(data.length == 0) {
+	if(ret == HEIM_ERR_EOF || data.length == 0) {
 	    if(!from_stdin) {
 		data.data = NULL;
 		data.length = 0;

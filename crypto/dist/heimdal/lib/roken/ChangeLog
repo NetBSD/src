@@ -1,4 +1,119 @@
+2001-01-30  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (libroken_la_LDFLAGS): bump version to 11:1:2
+	* print_version.c (print_version): add 2001
+
+2001-01-29  Assar Westerlund  <assar@sics.se>
+
+	* getifaddrs.c (getifaddrs2): copy the entire sockaddr
+
+	* roken-common.h (_PATH_BSHELL): add
+
+2001-01-27  Assar Westerlund  <assar@sics.se>
+
+	* roken.h.in: move __attribute__ to roken-common.h
+
+	* esetenv.c (esetenv): cast to handle a setenv that takes a `char
+ 	* which is the case on Unicos
+
+2000-12-29  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am (EXTRA_libroken_la_SOURCES): ifaddrs.h ->
+	ifaddrs.hin
+
+2000-12-25  Assar Westerlund  <assar@sics.se>
+
+	* getarg.c (print_arg): add a case for arg_strings
+
+2000-12-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* snprintf.c (append_string): handle NULL strings by printing
+	`(null)'
+
+2000-12-12  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken-common.h: add c++ externs
+
+	* roken.h.in: fix last commit differently
+
+2000-12-11  Assar Westerlund  <assar@sics.se>
+
+	* err.hin (warnerr): remove, it's not part of the err.h interface
+	* roken-common.h (warnerr): moved here from err.hin
+	* Makefile.am (libroken_la_LDFLAGS): set version to 11:0:2
+	* vis.c: s/u_int32_t/unsigned/ for systems that do not define
+	u_int32_t
+
+2000-12-10  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: rename some headers to avoid conflict with possible
+	system headers
+
+2000-12-06  Johan Danielsson  <joda@pdc.kth.se>
+
+	* vis.c: make sure _DIAGASSERT is defined
+
+	* unvis.c: make sure _DIAGASSERT is defined
+
+	* Makefile.am: unvis.c, and vis.h
+
+	* vis.h: vis.h from NetBSD
+
+	* unvis.c: unvis from NetBSD
+
+	* roken.h.in: cleanup previous
+
+	* roken-common.h: make `extern "C"' into a macro, this make emacs
+	much happier
+
+	* vis.c: strvis implementation from NetBSD
+
+	* roken.h.in: add prototypes for strvis*
+
+2000-12-05  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ifaddrs.h: fix freeifaddrs prototype, and add ifa_broadaddr
+	macro
+
+	* getifaddrs.c: free some memory
+
+2000-12-04  Johan Danielsson  <joda@pdc.kth.se>
+
+	* ifaddrs.h: getifaddrs implementation using SIOCGIFCONFIG etc
+
+	* getifaddrs.c: getifaddrs implementation using SIOCGIFCONFIG etc
+
+2000-10-08  Assar Westerlund  <assar@sics.se>
+
+	* mini_inetd.c (mini_inetd): check that fds are not too large to
+	select on
+
+2000-09-24  Assar Westerlund  <assar@sics.se>
+
+	*  esetenv.c: new file/function
+
+2000-08-16  Assar Westerlund  <assar@sics.se>
+
+	* Makefile.am: bump version to 10:0:1
+
+2000-08-10  Assar Westerlund  <assar@sics.se>
+
+	* mini_inetd.c (accept_it): type-correctness on parameters to
+	accept
+
+2000-08-07  Johan Danielsson  <joda@pdc.kth.se>
+
+	* roken.h.in: add proto compat for getsockname
+
+2000-08-04  Johan Danielsson  <joda@pdc.kth.se>
+
+	* write_pid.c: conditionalise pidfile
+
+	* write_pid.c: add pidfile function
+
 2000-07-25  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: bump version to 9:0:0
 
 	* warnerr.c: add get_progname
 
@@ -26,6 +141,15 @@
 2000-07-18  Johan Danielsson  <joda@pdc.kth.se>
 
 	* configure.in: AM_PROG_LIBTOOL -> AC_PROG_LIBTOOL
+
+2000-07-17  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: set ACLOCAL_AMFLAGS
+
+2000-07-15  Johan Danielsson  <joda@pdc.kth.se>
+
+	* getaddrinfo_hostspec.c: add new function that takes socktype
+	hint as parameter
 
 2000-07-09  Assar Westerlund  <assar@sics.se>
 
