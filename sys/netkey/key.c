@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 
-/* KAME $Id: key.c,v 1.2 1999/07/01 08:12:59 itojun Exp $ */
+/* KAME $Id: key.c,v 1.3 1999/07/02 19:58:27 itojun Exp $ */
 
 /*
  * This code is referd to RFC 2367,
@@ -2560,7 +2560,9 @@ key_mature(sa)
 		case SADB_EALG_NULL:
 		case SADB_EALG_BLOWFISHCBC:
 		case SADB_EALG_CAST128CBC:
+#ifdef SADB_EALG_RC5CBC
 		case SADB_EALG_RC5CBC:
+#endif
 			break;
 		default:
 			printf("key_mature: unknown encryption algorithm.\n");
