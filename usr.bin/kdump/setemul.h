@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.h,v 1.3 2000/12/20 22:11:16 itojun Exp $	*/
+/*	$NetBSD: setemul.h,v 1.4 2001/01/19 14:14:03 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ struct emulation {
 	const char *name;	/* Emulation name */
 	const char * const *sysnames;	/* Array of system call names */
 	int  nsysnames;		/* Number of */
-	int  *errnomap;		/* Array of error number mapping */
+	const int  *errnomap;	/* Array of error number mapping */
 	int  nerrnomap;		/* number of elements in array */
 };
 
