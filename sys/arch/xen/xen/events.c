@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.3 2004/04/17 12:46:42 cl Exp $	*/
+/*	$NetBSD: events.c,v 1.4 2004/04/24 19:32:37 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.3 2004/04/17 12:46:42 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: events.c,v 1.4 2004/04/24 19:32:37 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,10 +71,10 @@ init_events()
 	for (i = 0; i < MAXEVENTS; i++)
 		ev_vectors[i].ev_handler = NULL;
 
-	event_set_handler(_EVENT_DIE, &xen_die_handler, IPL_DIE);
+	event_set_handler(_EVENT_DIE, &xen_die_handler, NULL, IPL_DIE);
 	hypervisor_enable_event(_EVENT_DIE);
 
-	event_set_handler(_EVENT_DEBUG, &xen_debug_handler, IPL_DEBUG);
+	event_set_handler(_EVENT_DEBUG, &xen_debug_handler, NULL, IPL_DEBUG);
 	hypervisor_enable_event(_EVENT_DEBUG);
 }
 
@@ -123,7 +123,7 @@ do_event(int num, struct trapframe *regs)
 }
 
 int
-event_set_handler(int num, ev_handler_t handler, int level)
+event_set_handler(int num, ev_handler_t handler, void *arg, int level)
 {
 	struct intrsource *isp;
 	struct intrhand *ih;
@@ -151,7 +151,7 @@ event_set_handler(int num, ev_handler_t handler, int level)
 	isp->is_resume = xenev_stubs[num].ist_resume;
 	ih->ih_level = level;
 	ih->ih_fun = handler;
-	ih->ih_arg = NULL;
+	ih->ih_arg = arg;
 	ih->ih_next = NULL;
 	isp->is_handlers = ih;
 	isp->is_pic = &xenev_pic;
