@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.47 1999/11/12 00:34:57 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.48 1999/11/12 19:11:25 mjacob Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -222,7 +222,9 @@ static void	ukbd_set_leds __P((void *, int));
 
 #if defined(__NetBSD__)
 static int	ukbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 static void	ukbd_rawrepeat __P((void *v));
+#endif
 
 const struct wskbd_accessops ukbd_accessops = {
 	ukbd_enable,
