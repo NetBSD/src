@@ -114,14 +114,17 @@ fetch_inferior_registers (regno)
       ptrace (PT_GETREGS, inferior_pid,
               (PTRACE_ARG3_TYPE) &inferior_registers, 0);
       supply_regs ((char *) &inferior_registers);
-
-      if (regno != -1)
-        return;
     }
 
-  ptrace (PT_GETFPREGS, inferior_pid,
-          (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
-  supply_fpregs ((char *) &inferior_fp_registers);
+  if (regno == -1 || regno >= FP0_REGNUM)
+    {
+      ptrace (PT_GETFPREGS, inferior_pid,
+              (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+      supply_fpregs ((char *) &inferior_fp_registers);
+    }
+
+  /* Reset virtual frame pointer.  */
+  supply_register (FP_REGNUM, NULL);
 }
 
 void
@@ -131,23 +134,31 @@ store_inferior_registers (regno)
   struct reg inferior_registers;
   struct fpreg inferior_fp_registers;
 
-  /* Integer registers */
-  memcpy (&inferior_registers.r_regs[0],
-	  &registers[REGISTER_BYTE (0)],
-	  sizeof(inferior_registers.r_regs));
-  /* The PC travels in the R_ZERO slot. */
-  inferior_registers.r_regs[R_ZERO] =
-    *(long *) &registers[REGISTER_BYTE (PC_REGNUM)];    
-  ptrace (PT_SETREGS, inferior_pid,
-	  (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+  if (regno == -1 || GETREGS_SUPPLIES (regno))
+    {
+      memcpy (&inferior_registers.r_regs[0],
+	      &registers[REGISTER_BYTE (0)],
+	      sizeof(inferior_registers.r_regs));
 
-  /* Floating point registers */
-  memcpy (&inferior_fp_registers.fpr_regs[0],
-	  &registers[REGISTER_BYTE (FP0_REGNUM)],
-	  sizeof(inferior_fp_registers.fpr_regs));
-  inferior_fp_registers.fpr_cr = 0;
-  ptrace (PT_SETFPREGS, inferior_pid,
-	  (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+      /* The PC travels in the R_ZERO slot. */
+      inferior_registers.r_regs[R_ZERO] =
+        *(long *) &registers[REGISTER_BYTE (PC_REGNUM)];    
+
+      ptrace (PT_SETREGS, inferior_pid,
+	      (PTRACE_ARG3_TYPE) &inferior_registers, 0);
+    }
+
+  if (regno == -1 || regno >= FP0_REGNUM)
+    {
+      memcpy (&inferior_fp_registers.fpr_regs[0],
+	      &registers[REGISTER_BYTE (FP0_REGNUM)],
+	      sizeof(inferior_fp_registers.fpr_regs));
+      memcpy (&inferior_fp_registers.fpr_cr,
+	      &registers[REGISTER_BYTE (FPCR_REGNUM)],
+	      sizeof(inferior_fp_registers.fpr_cr));
+      ptrace (PT_SETFPREGS, inferior_pid,
+	      (PTRACE_ARG3_TYPE) &inferior_fp_registers, 0);
+    }
 }
 
 static void
