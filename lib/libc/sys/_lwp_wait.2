@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_wait.2,v 1.1.2.3 2003/01/15 16:09:28 wiz Exp $
+.\"	$NetBSD: _lwp_wait.2,v 1.1.2.4 2003/01/15 16:11:06 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -60,7 +60,9 @@ waits for any undetached LWP in the current process.
 .Pp
 If
 .Fa rlwp
-is not NULL, then it points to the location where the LWP ID of
+is not
+.Dv NULL ,
+then it points to the location where the LWP ID of
 the exited LWP is stored.
 .Sh RETURN VALUES
 Upon successful completion,
