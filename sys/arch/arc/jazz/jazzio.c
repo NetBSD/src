@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.7 2002/10/02 04:59:49 thorpej Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.8 2003/01/01 00:32:05 thorpej Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -175,10 +175,10 @@ jazzioprint(aux, pnp)
 	struct jazzio_attach_args *ja = aux;
 
 	if (pnp)
-		printf("%s at %s", ja->ja_name, pnp);
-	printf(" addr 0x%lx", ja->ja_addr);
+		aprint_normal("%s at %s", ja->ja_name, pnp);
+	aprint_normal(" addr 0x%lx", ja->ja_addr);
 	if (ja->ja_intr != -1)
-		printf(" intr %d", ja->ja_intr);
+		aprint_normal(" intr %d", ja->ja_intr);
 	return (UNCONF);
 }
 
