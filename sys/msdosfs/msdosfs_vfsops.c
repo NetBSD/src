@@ -1,5 +1,35 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.16 1994/07/16 21:33:24 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.17 1994/07/18 21:38:18 cgd Exp $	*/
 
+/*-
+ * Copyright (C) 1994 Wolfgang Solfrank.
+ * Copyright (C) 1994 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Written by Paul Popelka (paulp@uts.amdahl.com)
  * 
@@ -195,9 +225,9 @@ msdosfs_mount(mp, path, data, ndp, p)
 	pmp->pm_uid = args.uid;
 	pmp->pm_mask = args.mask;
 	(void) msdosfs_statfs(mp, &mp->mnt_stat, p);
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 	return 0;
 }
 
@@ -239,14 +269,14 @@ mountmsdosfs(devvp, mp, p)
 	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD | FWRITE, FSCRED, p))
 		return error;
 	needclose = 1;
-#if defined(HDSUPPORT)
+#ifdef HDSUPPORT
 	/*
 	 * Put this in when we support reading dos filesystems from
 	 * partitioned harddisks.
 	 */
 	if (VOP_IOCTL(devvp, DIOCGPART, &msdosfspart, FREAD, NOCRED, p) == 0) {
 	}
-#endif				/* defined(HDSUPPORT) */
+#endif
 
 	/*
 	 * Read the boot sector of the filesystem, and then check the boot
@@ -375,8 +405,10 @@ mountmsdosfs(devvp, mp, p)
 	 * Allocate memory for the bitmap of allocated clusters, and then
 	 * fill it in.
 	 */
-	pmp->pm_inusemap = malloc((pmp->pm_maxcluster >> 3) + 1,
-	    M_MSDOSFSFAT, M_WAITOK);
+	pmp->pm_inusemap = malloc(((pmp->pm_maxcluster + N_INUSEBITS - 1)
+				   / N_INUSEBITS)
+				  * sizeof(*pmp->pm_inusemap),
+				  M_MSDOSFSFAT, M_WAITOK);
 
 	/*
 	 * fillinusemap() needs pm_devvp.
@@ -409,7 +441,7 @@ mountmsdosfs(devvp, mp, p)
         mp->mnt_stat.f_fsid.val[0] = (long)dev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_MSDOS);
 	mp->mnt_flag |= MNT_LOCAL;
-#if defined(QUOTA)
+#ifdef QUOTA
 	/*
 	 * If we ever do quotas for DOS filesystems this would be a place
 	 * to fill in the info in the msdosfsmount structure. You dolt,
@@ -417,7 +449,7 @@ mountmsdosfs(devvp, mp, p)
 	 * owners on dos filesystems. of course there is some empty space
 	 * in the directory entry where we could put uid's and gid's.
 	 */
-#endif				/* defined(QUOTA) */
+#endif
 	devvp->v_specflags |= SI_MOUNTEDON;
 
 	return 0;
@@ -470,12 +502,12 @@ msdosfs_unmount(mp, mntflags, p)
 			return EINVAL;
 		flags |= FORCECLOSE;
 	}
-#if defined(QUOTA)
-#endif				/* defined(QUOTA) */
+#ifdef QUOTA
+#endif
 	if (error = vflush(mp, NULLVP, flags))
 		return error;
 	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
 	printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
 	    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
@@ -487,7 +519,7 @@ msdosfs_unmount(mp, mntflags, p)
 	    vp->v_cleanblkhd, vp->v_dirtyblkhd, vp->v_numoutput, vp->v_type);
 	printf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
 	    vp->v_socket, vp->v_tag, vp->v_data[0], vp->v_data[1]);
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 	error = VOP_CLOSE(pmp->pm_devvp, pmp->pm_ronly ? FREAD : FREAD | FWRITE,
 	    NOCRED, p);
 	vrele(pmp->pm_devvp);
@@ -508,10 +540,10 @@ msdosfs_root(mp, vpp)
 	int error;
 
 	error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, NULL, &ndep);
-#if defined(MSDOSFSDEBUG)
+#ifdef MSDOSFS_DEBUG
 	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
 	    mp, pmp, ndep, DETOV(ndep));
-#endif				/* defined(MSDOSFSDEBUG) */
+#endif
 	if (error == 0)
 		*vpp = DETOV(ndep);
 	return error;
@@ -525,10 +557,10 @@ msdosfs_quotactl(mp, cmds, uid, arg, p)
 	caddr_t arg;
 	struct proc *p;
 {
-#if defined(QUOTA)
+#ifdef QUOTA
 #else
 	return EOPNOTSUPP;
-#endif				/* defined(QUOTA) */
+#endif
 }
 
 int
@@ -608,7 +640,7 @@ loop:
 		if (VOP_ISLOCKED(vp))	/* file is busy		 */
 			continue;
 		dep = VTODE(vp);
-		if ((dep->de_flag & DEUPD) == 0 &&
+		if ((dep->de_flag & DE_UPD) == 0 &&
 		    vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
 		if (vget(vp, 1))	/* not there anymore?	 */
