@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2002/01/31 19:32:11 tv Exp $
+#	$NetBSD: Makefile,v 1.13 2002/05/30 10:45:04 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 .include <bsd.own.mk>
@@ -24,6 +24,7 @@ CAP_MKDB?=	cap_mkdb
 
 realall: vfontedpr vgrindefs.src.db
 
+# there's no issue of endianness as DB keys are ascii strings.
 .if ${MKSHARE} != "no"
 vgrindefs.src.db: vgrindefs.src
 	${CAP_MKDB} -f vgrindefs.src ${.CURDIR}/vgrindefs.src
