@@ -1203,6 +1203,7 @@ print_help ()
   printf ("  -v                        Display the version number\n");
   printf ("  -H                        Print the name of header files as they are used\n");
   printf ("  -C                        Do not discard comments\n");
+  printf ("  -CC                       Preserve comments in macro bodies\n");
   printf ("  -dM                       Display a list of macro definitions active at end\n");
   printf ("  -dD                       Preserve macro definitions in output\n");
   printf ("  -dN                       As -dD except that only the names are preserved\n");
@@ -1662,7 +1663,12 @@ main (argc, argv)
 	break;
 
       case 'C':
-	put_out_comments = 1;
+	if (!strcmp(argv[i] + 1, "CC")) {
+	  put_out_comments = 2;
+	}
+	else {
+	  put_out_comments = 1;
+	}
 	break;
 
       case 'E':			/* -E comes from cc -E; ignore it.  */
@@ -2872,7 +2878,7 @@ do { ip = &instack[indepth];		\
 	    RECACHE;
 	    continue;
 	  }
-	  if (!traditional) {
+	  if (!(traditional || put_out_comments == 2)) {
 	    error_with_line (line_for_error (start_line),
 			     "unterminated string or character constant");
 	    if (multiline_string_line) {
@@ -2890,7 +2896,7 @@ do { ip = &instack[indepth];		\
 	  ++op->lineno;
 	  /* Traditionally, end of line ends a string constant with no error.
 	     So exit the loop and record the new line.  */
-	  if (traditional) {
+	  if (traditional || put_out_comments == 2) {
 	    beg_of_line = ibp;
 	    goto while2end;
 	  }
@@ -2943,7 +2949,7 @@ do { ip = &instack[indepth];		\
       break;
 
     case '/':
-      if (ip->macro != 0)
+      if (ip->macro != 0 && put_out_comments != 2)
 	goto randomchar;
       if (*ibp == '\\' && ibp[1] == '\n')
 	newline_fix (ibp);
@@ -3781,7 +3787,8 @@ handle_directive (ip, op)
       limit = ip->buf + ip->length;
       unterminated = 0;
       already_output = 0;
-      keep_comments = traditional && kt->type == T_DEFINE;
+      keep_comments = kt->type == T_DEFINE && (traditional ||
+	put_out_comments == 2);
       /* #import is defined only in Objective C, or when on the NeXT.  */
       if (kt->type == T_IMPORT
 	  && !(objc || lookup ((U_CHAR *) "__NeXT__", -1, -1)))
@@ -4006,7 +4013,7 @@ handle_directive (ip, op)
 		while (xp != ip->bufp)
 		  *cp++ = *xp++;
 	      /* Delete or replace the slash.  */
-	      else if (traditional)
+	      else if (traditional || put_out_comments == 2)
 		cp--;
 	      else
 		cp[-1] = ' ';
@@ -6138,6 +6145,22 @@ collect_expansion (buf, end, nargs, arglist)
 	    stringify = p;
 	}
 	break;
+      case '/':
+	if (expected_delimiter != '\0') /* No comments inside strings.  */
+	  break;
+	if (*p == '*') {
+	  /* If we find a comment that wasn't removed by handle_directive,
+	     this must be put_out_comments == 2 */
+	  while (p < limit) {
+	    *exp_p++ = *p++;
+	    if (p[0] == '*' && p[1] == '/') {
+	      *exp_p++ = *p++;
+	      *exp_p++ = *p++;
+	      break;
+	    }
+	  }
+	}
+        break;
       }
     } else {
       /* In -traditional mode, recognize arguments inside strings and
@@ -6170,11 +6193,22 @@ collect_expansion (buf, end, nargs, arglist)
 	  /* If we find a comment that wasn't removed by handle_directive,
 	     this must be -traditional.  So replace the comment with
 	     nothing at all.  */
-	  exp_p--;
-	  while (++p < limit) {
-	    if (p[0] == '*' && p[1] == '/') {
-	      p += 2;
-	      break;
+	  if (put_out_comments != 2) {
+	    exp_p--;
+	    while (++p < limit) {
+	      if (p[0] == '*' && p[1] == '/') {
+		p += 2;
+		break;
+	      }
+	    }
+	  } else {
+	    while (p < limit) {
+	      *exp_p++ = *p++;
+	      if (p[0] == '*' && p[1] == '/') {
+		  *exp_p++ = *p++;
+		  *exp_p++ = *p++;
+		  break;
+	      }
 	    }
 	  }
 #if 0
@@ -7154,6 +7188,24 @@ eval_if_expression (buf, length)
   pcp_inside_if = 0;
   delete_macro (save_defined);	/* clean up special symbol */
 
+  if (put_out_comments == 2) {
+    char *ptr, *eptr = temp_obuf.buf + temp_obuf.length;
+
+    for (ptr = temp_obuf.buf; ptr < eptr; ptr++) {
+      if (*ptr == '/' && ptr + 1 < eptr && ptr[1] == '*') {
+	*ptr++ = ' ';
+	*ptr++ = ' ';
+	while (ptr < eptr) {
+	  if (*ptr == '*' && ptr + 1 < eptr && ptr[1] == '/') {
+	    *ptr++ = ' ';
+	    *ptr++ = ' ';
+	    break;
+	  } else
+	    *ptr++ = ' ';
+	}
+      }
+    }
+  }
   temp_obuf.buf[temp_obuf.length] = '\n';
   value = parse_c_expression ((char *) temp_obuf.buf,
 			      warn_undef && !instack[indepth].system_header_p);
