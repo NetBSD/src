@@ -142,17 +142,8 @@ object_headers *headers;
 {
 	tc_headers_hook(headers);
 	
-#if defined(OLD_GAS) && defined(TC_I386)
- /* I think that this old behaviour was wrong, but this lets me compare to the
-    previous gas.  xoxorich.  */
-	md_number_to_chars(*where, headers->header.a_info, 2);
-	*where += 2;
-	md_number_to_chars(*where, 0, 2);
-	*where += 2;
-#else /* not (TC_I386 && OLD_GAS) */
 	md_number_to_chars(*where, headers->header.a_info, sizeof(headers->header.a_info));
 	*where += sizeof(headers->header.a_info);
-#endif /* not (TC_I386 && OLD_GAS) */
 
 #ifdef TE_HPUX
 	md_number_to_chars(*where, 0, 4); *where += 4; /* a_spare1 */
