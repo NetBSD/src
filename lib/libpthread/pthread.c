@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.15 2002/02/06 19:20:19 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.16 2002/02/19 23:56:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -77,10 +77,7 @@ static int started;
 void pthread_init(void)
 {
 	pthread_t first;
-	int retval;
 	extern int __isthreaded;
-	extern timer_t pthread_alarmtimer;
-	struct sigevent ev;
 
 #ifdef PTHREAD__DEBUG
 	pthread__debug_init();
@@ -93,17 +90,14 @@ void pthread_init(void)
 	PTQ_INIT(&runqueue);
 	PTQ_INIT(&idlequeue);
 	
-	ev.sigev_notify = SIGEV_SA;
-	ev.sigev_signo = 0;
-	ev.sigev_value.sival_int = 0;
-	retval = timer_create(CLOCK_REALTIME, &ev, &pthread_alarmtimer);
-	if (retval)
-		err(1, "timer_create");
 	/* Create the thread structure corresponding to main() */
 	pthread__initmain(&first);
 	pthread__initthread(first);
 	sigprocmask(0, NULL, &first->pt_sigmask);
 	PTQ_INSERT_HEAD(&allqueue, first, pt_allq);
+
+	/* Start subsystems */
+	pthread__alarm_init();
 
 	/* Tell libc that we're here and it should role-play accordingly. */
 	__isthreaded = 1;
@@ -566,15 +560,17 @@ pthread_cancel(pthread_t thread)
 		thread->pt_cancel = 1;
 		pthread_spinlock(self, &thread->pt_statelock);
 		if (thread->pt_state == PT_STATE_BLOCKED_SYS) {
-			/* It's sleeping in the kernel. If we can
-			 * wake it up, it will notice the cancellation
-			 * when it returns. If we can't wake it up...
-			 * there's not much to be done about it.
+			/* It's sleeping in the kernel. If we can wake
+			 * it up, it will notice the cancellation when
+			 * it returns. If it doesn't wake up when we
+			 * make this call, then it's blocked
+			 * uninterruptably in the kernel, and there's
+			 * not much to be done about it.  
 			 */
 			_lwp_wakeup(thread->pt_blockedlwp);
 		} else if (thread->pt_state == PT_STATE_BLOCKED_QUEUE) {
 			/* We're blocked somewhere (pthread__block()
-			 * was called. Cause it to wakeup and the
+			 * was called. Cause it to wake up and the
 			 * caller will check for the cancellation.
 			 */
 			pthread_spinlock(self, thread->pt_sleeplock);
