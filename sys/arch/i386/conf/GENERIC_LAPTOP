@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.8.2.3 2001/04/30 16:23:08 sommerfeld Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.8.2.4 2001/05/13 00:48:52 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.8.2.3 $"
+#ident 		"GENERIC-$Revision: 1.8.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -144,7 +144,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
+#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.300.2.15 2001/05/07 17:07:21 sommerfeld Exp $
+#	$NetBSD: GENERIC,v 1.300.2.16 2001/05/13 00:48:52 sommerfeld Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.300.2.15 $"
+#ident 		"GENERIC-$Revision: 1.300.2.16 $"
 
 maxusers	32		# estimated number of users
 
@@ -145,7 +145,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
+#options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	I2OVERBOSE	# verbose I2O driver messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
