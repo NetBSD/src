@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.95 1997/06/18 15:32:33 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.96 1997/06/20 10:50:11 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1182,22 +1182,26 @@ ttymodem(tp, flag)
 {
 
 	if (flag == 0) {
-		/*
-		 * Lost carrier.
-		 */
-		CLR(tp->t_state, TS_CARR_ON);
-		if (ISSET(tp->t_state, TS_ISOPEN) && !CONNECTED(tp)) {
-			if (tp->t_session && tp->t_session->s_leader)
-				psignal(tp->t_session->s_leader, SIGHUP);
-			ttyflush(tp, FREAD | FWRITE);
-			return (0);
+		if (ISSET(tp->t_state, TS_CARR_ON)) {
+			/*
+			 * Lost carrier.
+			 */
+			CLR(tp->t_state, TS_CARR_ON);
+			if (ISSET(tp->t_state, TS_ISOPEN) && !CONNECTED(tp)) {
+				if (tp->t_session && tp->t_session->s_leader)
+					psignal(tp->t_session->s_leader, SIGHUP);
+				ttyflush(tp, FREAD | FWRITE);
+				return (0);
+			}
 		}
 	} else {
-		/*
-		 * Carrier now on.
-		 */
-		SET(tp->t_state, TS_CARR_ON);
-		ttwakeup(tp);
+		if (!ISSET(tp->t_state, TS_CARR_ON)) {
+			/*
+			 * Carrier now on.
+			 */
+			SET(tp->t_state, TS_CARR_ON);
+			ttwakeup(tp);
+		}
 	}
 	return (1);
 }
