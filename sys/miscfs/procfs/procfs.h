@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.42 2003/04/17 19:04:25 jdolecek Exp $	*/
+/*	$NetBSD: procfs.h,v 1.43 2003/04/18 10:00:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -111,8 +111,8 @@ struct procfs_args {
 
 #define PROCFS_FILENO(pid, type, fd) \
     (((type) < Pproc) ? ((type) + 2) : \
-	(((fd) == -1) ? ((((pid)+1) << 4) + ((int) (type))) : \
-	((((pid)+1) << 16) | ((fd) << 4) | ((int) (type)))))
+	(((fd) == -1) ? ((((pid)+1) << 5) + ((int) (type))) : \
+	((((pid)+1) << 16) | ((fd) << 5) | ((int) (type)))))
 
 struct procfsmount {
 	void *pmnt_exechook;
