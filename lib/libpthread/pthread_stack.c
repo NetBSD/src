@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.1.2.4 2001/07/25 23:54:58 nathanw Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.1.2.5 2002/09/04 19:54:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -118,15 +118,16 @@ pthread__stackid_setup(void *base, int size)
 	pthread_t t;
 	int pagesize, ret;
 
-	/* Deallocate the bottom page but one as a red zone. */
+	/* Protect the next-to-bottom stack page as a red zone. */
 	/* XXX assumes that the stack grows down. */
 	pagesize = sysconf(_SC_PAGESIZE);
-	ret = munmap( ((char *)base + pagesize), pagesize);
+	ret = mprotect( (char *)base + pagesize, pagesize, PROT_NONE);
 	if (ret == -1)
-		err(2, "Couldn't munmap()-protect stack redzone at %p\n",
+		err(2, "Couldn't mprotect() stack redzone at %p\n",
 		    (char *)base + pagesize);
-	/* Put a pointer to the pthread in the bottom (but
-         *  redzone-protected section) of the stack. 
+	/*
+	 * Put a pointer to the pthread in the bottom (but
+         * redzone-protected section) of the stack. 
 	 */
 	t = base;
 	
