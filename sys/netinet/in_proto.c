@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.44 2000/10/18 17:09:14 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.45 2001/02/20 08:49:15 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -235,14 +235,22 @@ struct protosw inetsw[] = {
   tp_init,	0,		tp_slowtimo,	tp_drain,
 },
 #endif /* TPIP */
+#ifdef ISO
 /* EON (ISO CLNL over IP) */
 #ifdef EON
 { SOCK_RAW,	&inetdomain,	IPPROTO_EON,	0,
-  eoninput,	0,		eonctlinput,		0,
+  eoninput,	0,		eonctlinput,	0,
   0,
   eonprotoinit,	0,		0,		0,
 },
+#else
+{ SOCK_RAW,	&inetdomain,	IPPROTO_EON,	0,
+  encap4_input,	rip_output,	0,		rip_ctloutput,
+  rip_usrreq,	/*XXX*/
+  0,		0,		0,		0,
+},
 #endif /* EON */
+#endif /* ISO */
 #ifdef NSIP
 { SOCK_RAW,	&inetdomain,	IPPROTO_IDP,	PR_ATOMIC|PR_ADDR,
   idpip_input,	NULL,		nsip_ctlinput,	0,
