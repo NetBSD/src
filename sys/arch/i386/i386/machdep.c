@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.41 1993/07/19 16:38:35 cgd Exp $
+ *	$Id: machdep.c,v 1.42 1993/07/22 13:04:21 brezak Exp $
  */
 
 #include "npx.h"
@@ -137,9 +137,6 @@ cpu_startup()
 			   VM_PROT_ALL, TRUE);
 	msgbufmapped = 1;
 
-#ifdef KDB
-	kdb_init();			/* startup kernel debugger */
-#endif
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
@@ -1027,7 +1024,7 @@ init386(first)
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 
 #ifdef DDB
-	kdb_init();
+	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
