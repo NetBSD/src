@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_subr.c	7.20 (Berkeley) 12/1/90
- *	$Id: tcp_subr.c,v 1.8 1994/01/10 20:14:32 mycroft Exp $
+ *	$Id: tcp_subr.c,v 1.9 1994/01/10 23:27:44 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -339,7 +339,7 @@ tcp_close(tp)
 				rt->rt_rmx.rmx_ssthresh = i;
 		}
 	}
-#endif RTV_RTT
+#endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
 	t = tp->seg_next;
 	while (t != (struct tcpiphdr *)tp) {
