@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.3 2000/05/23 01:48:53 perseant Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.4 2000/06/14 18:43:58 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -49,6 +49,7 @@ extern struct dups *muldup;	/* end of unique duplicate dup block numbers */
 
 extern struct zlncnt *zlnhead;	/* head of zero link count list */
 
+extern daddr_t	idaddr;         /* inode block containing ifile inode */
 extern long     numdirs, listmax, inplast;
 
 extern long     dev_bsize;	/* computed value of DEV_BSIZE */

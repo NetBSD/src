@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.4 2000/05/23 01:48:55 perseant Exp $	 */
+/* $NetBSD: utilities.c,v 1.5 2000/06/14 18:44:00 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -322,7 +322,6 @@ bread(int fd, char *buf, daddr_t blk, long size)
 	offset *= dev_bsize;
 	if (lseek(fd, offset, 0) < 0) {
 		rwerror("SEEK", blk);
-		raise(1);
 	} else if (read(fd, buf, (int)size) == size)
 		return (0);
 	rwerror("READ", blk);

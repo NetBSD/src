@@ -1,4 +1,4 @@
-/* $NetBSD: vars.c,v 1.3 2000/05/23 01:48:56 perseant Exp $	 */
+/* $NetBSD: vars.c,v 1.4 2000/06/14 18:44:01 perseant Exp $	 */
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -22,6 +22,7 @@ struct dups    *muldup;		/* end of unique duplicate dup block numbers */
 
 struct zlncnt  *zlnhead;	/* head of zero link count list */
 
+daddr_t		idaddr;		/* inode block containing ifile inode */
 long            numdirs, listmax, inplast;
 
 long            dev_bsize;	/* computed value of DEV_BSIZE */
