@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.3 2002/03/17 23:45:57 nonaka Exp $	*/
+/*	$NetBSD: installboot.c,v 1.4 2003/10/06 08:44:39 he Exp $	*/
 
 /*
  * Copyright (c) 2000 NONAKA Kimihiro (nonaka@netbsd.org).
@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
+#include <string.h>
 
 int nowrite, verbose;
 char *boot, *dev;
