@@ -1,8 +1,8 @@
-/* $NetBSD: ioasic.c,v 1.1.2.3 1999/03/18 07:27:29 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.4 1999/03/29 16:50:35 drochner Exp $ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.3 1999/03/18 07:27:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.4 1999/03/29 16:50:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -13,7 +13,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.3 1999/03/18 07:27:29 nisimura Exp 
 #include <machine/intr.h>
 
 #include <dev/tc/tcvar.h>
-#include <pmax/tc/ioasicvar.h>
+#include <dev/tc/ioasicvar.h>
 #include <pmax/tc/ioasicreg.h>
 #include <pmax/pmax/pmaxtype.h>
 
@@ -43,13 +43,6 @@ extern u_int32_t iplmask[], oldiplmask[];
 /* XXX XXX XXX */
 
 #define	C(x)	(void *)(x)
-
-struct ioasic_dev {
-	char		*iad_modname;
-	tc_offset_t	iad_offset;
-	void		*iad_cookie;
-	u_int32_t	iad_intrbits;
-};
 
 struct ioasic_dev xine_ioasic_devs[] = {
 	{ "lance",	0x0c0000, C(SYS_DEV_LANCE), IOASIC_INTR_LANCE,	},
@@ -124,7 +117,6 @@ ioasicattach(parent, self, aux)
 {
 	struct ioasic_softc *sc = (struct ioasic_softc *)self;
 	struct tc_attach_args *ta = aux;
-	struct ioasicdev_attach_args ioasicdev;
 	int i;
 
 	ioasicfound = 1;
@@ -132,7 +124,7 @@ ioasicattach(parent, self, aux)
 	sc->sc_bst = ta->ta_memt;
 	sc->sc_dmat = ta->ta_dmat;
 	if (bus_space_map(ta->ta_memt, ta->ta_addr,
-			0x400000, 0, &sc->sc_bsh)) {
+			  0x400000, 0, &sc->sc_bsh)) {
 		printf("%s: unable to map device\n", sc->sc_dv.dv_xname);
 		return;
 	}
@@ -161,43 +153,7 @@ ioasicattach(parent, self, aux)
 	ioasic_lance_dma_setup(sc);
 #endif
 
-        /*
-	 * Try to configure each device.
-	 */
-	for (i = 0; i < builtin_ndevs; i++) {
-		strncpy(ioasicdev.iada_modname, ioasic_devs[i].iad_modname,
-			TC_ROM_LLEN);
-		ioasicdev.iada_modname[TC_ROM_LLEN] = '\0';
-		ioasicdev.iada_offset = ioasic_devs[i].iad_offset;
-		ioasicdev.iada_addr = sc->sc_base + ioasic_devs[i].iad_offset;
-		ioasicdev.iada_cookie = ioasic_devs[i].iad_cookie;
-
-                /* Tell the autoconfig machinery we've found the hardware. */
-                config_found(self, &ioasicdev, ioasicprint);
-        }
-}
-
-int
-ioasicprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct ioasicdev_attach_args *d = aux;
-
-        if (pnp)
-                printf("%s at %s", d->iada_modname, pnp);
-        printf(" offset 0x%lx", (long)d->iada_offset);
-        return (UNCONF);
-}
-
-int
-ioasic_submatch(match, d)
-	struct cfdata *match;
-	struct ioasicdev_attach_args *d;
-{
-
-	return ((match->ioasiccf_offset == d->iada_offset) ||
-		(match->ioasiccf_offset == IOASIC_OFFSET_UNKNOWN));
+	ioasic_attach_devs(sc, ioasic_devs, builtin_ndevs);
 }
 
 void
