@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.3 2000/12/23 10:52:34 itojun Exp $	*/
+/*	$NetBSD: runetable.c,v 1.4 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.3 2000/12/23 10:52:34 itojun Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.4 2000/12/28 05:22:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,10 +52,10 @@ __RCSID("$NetBSD: runetable.c,v 1.3 2000/12/23 10:52:34 itojun Exp $");
 #include "rune.h"
 #include <stdlib.h>
 
-extern rune_t	_none_sgetrune __P((_RuneLocale *, const char *, size_t,
-	char const **, void *));
-extern int	_none_sputrune __P((_RuneLocale *, rune_t, char *, size_t,
-	char **, void *));
+extern size_t	_none_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *,
+	size_t, void *));
+extern size_t	_none_wcrtomb __P((struct _RuneLocale *, char *, size_t,
+	const rune_t, void *));
 
 static _RuneState _DefaultRuneState = {
 	0,		/* sizestate */
@@ -268,8 +268,8 @@ _RuneLocale _DefaultRuneLocale = {
     { 0, NULL },
     { 0, NULL },
     NULL, 0, 
-    (__rune_sgetrune_t)_none_sgetrune,
-    (__rune_sputrune_t)_none_sputrune,
+    (__rune_mbrtowc_t)_none_mbrtowc,
+    (__rune_wcrtomb_t)_none_wcrtomb,
     &_DefaultRuneState, 1
 };
 

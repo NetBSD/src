@@ -1,4 +1,4 @@
-/*	$NetBSD: runenone.c,v 1.3 2000/12/25 01:39:48 itojun Exp $	*/
+/*	$NetBSD: runenone.c,v 1.4 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)none.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: runenone.c,v 1.3 2000/12/25 01:39:48 itojun Exp $");
+__RCSID("$NetBSD: runenone.c,v 1.4 2000/12/28 05:22:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,8 +51,10 @@ __RCSID("$NetBSD: runenone.c,v 1.3 2000/12/25 01:39:48 itojun Exp $");
 #include <errno.h>
 #include <stdlib.h>
 
-rune_t	_none_sgetrune __P((_RuneLocale *, const char *, size_t, char const **, void *));
-int	_none_sputrune __P((_RuneLocale *, rune_t, char *, size_t, char **, void *));
+size_t	_none_mbrtowc __P((struct _RuneLocale *, rune_t *, const char *, size_t,
+	void *));
+size_t	_none_wcrtomb __P((struct _RuneLocale *, char *, size_t, const rune_t,
+	void *));
 
 static _RuneState _NONE_RuneState = {
 	0,		/* sizestate */
@@ -67,8 +69,8 @@ int
 _none_init(rl)
 	_RuneLocale *rl;
 {
-	rl->__rune_sgetrune = _none_sgetrune;
-	rl->__rune_sputrune = _none_sputrune;
+	rl->__rune_mbrtowc = _none_mbrtowc;
+	rl->__rune_wcrtomb = _none_wcrtomb;
 
 	rl->__rune_RuneState = &_NONE_RuneState;
 	rl->__rune_mb_cur_max = 1;
@@ -76,40 +78,45 @@ _none_init(rl)
 	return(0);
 }
 
-/* ARGSUSED */
-rune_t
-_none_sgetrune(rl, string, n, result, state)
+/* s is non-null */
+size_t
+_none_mbrtowc(rl, pwcs, s, n, state)
 	_RuneLocale *rl;
-	const char *string;
+	rune_t *pwcs;
+	const char *s;
 	size_t n;
-	char const **result;
 	void *state;
 {
-	if (n < 1) {
-		if (result)
-			*result = string;
-		return(_INVALID_RUNE);
-	}
-	if (result)
-		*result = string + 1;
-	return(*string & 0xff);
+
+	if (n < 1)
+		return (size_t)-2;
+	if (pwcs)
+		*pwcs = *s & 0xff;
+	if (!*s)
+		return 0;
+	else
+		return 1;
 }
 
-/* ARGSUSED */
-int
-_none_sputrune(rl, c, string, n, result, state)
-	_RuneLocale *rl;
-	rune_t c;
-	char *string, **result;
+/* s is non-null */
+size_t
+_none_wcrtomb(rl, s, n, wc, state)
+        _RuneLocale *rl;
+        char *s;
 	size_t n;
-	void *state;
+        const rune_t wc;
+        void *state;
 {
-	if (n >= 1 && (c & ~0xff) == 0) {
-		if (string)
-			*string = c;
-		if (result)
-			*result = string + 1;
-	} else if (result)
-		*result = (char *)0;
-	return(1);
+
+	if (wc & ~0xff) {
+		errno = EILSEQ;
+		return (size_t)-1;
+	}
+	if (n < 1) {
+		/* bound check failure */
+		errno = EILSEQ;	/*XXX*/
+		return (size_t)-1;
+	}
+	*s = wc & 0xff;
+	return 1;
 }

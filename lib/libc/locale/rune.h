@@ -1,4 +1,4 @@
-/*	$NetBSD: rune.h,v 1.2 2000/12/21 11:29:47 itojun Exp $	*/
+/*	$NetBSD: rune.h,v 1.3 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,8 +46,8 @@
 
 /* note the tree underlines! */
 #define ___INVALID_RUNE(rl)	(rl)->__invalid_rune
-#define ___sgetrune(rl)		(rl)->__rune_sgetrune
-#define ___sputrune(rl)		(rl)->__rune_sputrune
+#define ___mbrtowc(rl)		(rl)->__rune_mbrtowc
+#define ___wcrtomb(rl)		(rl)->__rune_wcrtomb
 #define ___CurrentRuneState(rl)	(rl)->__rune_RuneState
 #define ___rune_initstate(rl)	___CurrentRuneState(rl)->__initstate
 #define ___rune_sizestate(rl)	___CurrentRuneState(rl)->__sizestate
@@ -55,19 +55,12 @@
 #define ___rune_unpackstate(rl)	___CurrentRuneState(rl)->__unpackstate
 
 #define _INVALID_RUNE   	___INVALID_RUNE(_CurrentRuneLocale)
-#define __sgetrune		___sgetrune(_CurrentRuneLocale)
-#define __sputrune		___sputrune(_CurrentRuneLocale)
+#define __mbrtowc		___mbrtowc(_CurrentRuneLocale)
+#define __wcrtomb		___wcrtomb(_CurrentRuneLocale)
 #define _CurrentRuneState	___CurrentRuneState(_CurrentRuneLocale)
 #define __rune_initstate	___rune_initstate(_CurrentRuneLocale)
 #define __rune_sizestate	___rune_sizestate(_CurrentRuneLocale)
 #define __rune_packstate	___rune_packstate(_CurrentRuneLocale)
 #define __rune_unpackstate	___rune_unpackstate(_CurrentRuneLocale)
-
-#define sgetrune(s, n, r, st) \
-	(*___sgetrune(_CurrentRuneLocale))(_CurrentRuneLocale, (s), (n), \
-		(r), (st))
-#define sputrune(c, s, n, r, st) \
-	(*___sputrune(_CurrentRuneLocale))(_CurrentRuneLocale, (c), (s), \
-		(n), (r), (st))
 
 #endif	/*! _RUNE_H_ */
