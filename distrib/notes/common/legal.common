@@ -1,4 +1,4 @@
-.\"	$NetBSD: legal.common,v 1.7 2000/07/06 11:09:54 ad Exp $	
+.\"	$NetBSD: legal.common,v 1.8 2000/07/24 11:47:03 ad Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,6 +143,8 @@ This product includes software developed by Kenneth Stailey.
 This product includes software developed by Leo Weppelman.
 
 This product includes software developed by Lloyd Parkes.
+
+This product includes software developed by Manuel Bouyer.
 
 This product includes software developed by Mark Brinicombe.
 
