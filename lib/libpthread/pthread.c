@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.9 2003/02/15 04:34:40 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.10 2003/02/22 00:53:29 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -355,6 +355,7 @@ pthread_exit(void *retval)
 
 	/* Disable cancellability. */
 	self->pt_flags |= PT_FLAG_CS_DISABLED;
+	self->pt_cancel = 0;
 
 	/* Call any cancellation cleanup handlers */
 	while (!PTQ_EMPTY(&self->pt_cleanup_stack)) {
