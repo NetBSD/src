@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.634 2003/09/25 15:58:14 pooka Exp $
+#	$NetBSD: files,v 1.635 2003/09/30 00:35:30 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -90,7 +90,6 @@ defflag	opt_compat_netbsd.h	COMPAT_NOMID
 #
 # Cryptography support.  Include this early, since several things
 # use it.
-#
 
 # Individual crypto transforms
 include "crypto/arc4/files.arc4"
@@ -214,6 +213,9 @@ device	audio
 attach	audio at audiobus
 device	midi
 attach	midi at midibus
+
+# I2C device support
+include "dev/i2c/files.i2c"
 
 # IR device support
 include	"dev/ir/files.ir"
@@ -640,11 +642,6 @@ file	dev/ic/pckbc.c			pckbc			needs-flag
 device	clmpcc: tty
 file	dev/ic/clmpcc.c			clmpcc			needs-flag
 
-# Device description for i2c bus and i2c eeprom
-#
-define	i2c
-define	i2c_eeprom
-
 # National Semiconductor LM7[89]
 #
 device	lm: sysmon_envsys
@@ -1064,8 +1061,6 @@ file	dev/cgd_crypto.c		cgd
 file	dev/clock_subr.c
 file	dev/clockctl.c			clockctl		needs-flag
 file	dev/dksubr.c			cgd
-file	dev/i2c/i2c_bus.c		i2c
-file	dev/i2c/i2c_eeprom.c		i2c_eeprom
 file	dev/md.c			md			needs-count
 file	dev/midi.c			midi | midibus		needs-flag
 file	dev/midisyn.c			midisyn
