@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.13 2003/07/15 00:04:48 lukem Exp $	*/
+/*	$NetBSD: asc.c,v 1.14 2005/01/22 07:32:05 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.13 2003/07/15 00:04:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.14 2005/01/22 07:32:05 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,6 +442,8 @@ asc_dma_stop(sc)
 	/* halt DMA */
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh, R4030_DMA_ENAB, 0);
 	bus_space_write_4(asc->sc_iot, asc->sc_dmaioh, R4030_DMA_MODE, 0);
+
+	bus_dmamap_unload(asc->sc_dmat, asc->sc_dmamap);
 
 	asc->sc_active = 0;
 }
