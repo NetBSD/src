@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.23 2001/04/17 10:42:11 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2002/03/05 13:01:19 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.23 2001/04/17 10:42:11 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2002/03/05 13:01:19 agc Exp $");
 #endif
 
 /*
@@ -135,6 +135,7 @@ check1pkg(const char *pkgdir)
 		case PLIST_IGNORE_INST:
 		case PLIST_OPTION:
 		case PLIST_PKGCFL:
+		case PLIST_BLDDEP:
 			break;
 		}
 	}
@@ -245,6 +246,7 @@ rebuild(void)
 			case PLIST_IGNORE_INST:
 			case PLIST_OPTION:
 			case PLIST_PKGCFL:
+			case PLIST_BLDDEP:
 				break;
 			}
 		}

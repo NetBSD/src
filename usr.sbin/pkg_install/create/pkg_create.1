@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.31 2002/02/02 01:31:50 wiz Exp $
+.\" $NetBSD: pkg_create.1,v 1.32 2002/03/05 13:01:21 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -220,6 +220,11 @@ This is assumed to be a whitespace separated list of package names
 and is meant as a convenient shorthand for specifying multiple
 .Cm @pkgdep
 directives in the packing list (see PACKING LIST DETAILS section below).
+In addition, the exact versions of the packages referred to in the
+.Ar dpkgs
+list will be added to the packing list in the form of
+.Cm @blddep
+directives.
 .It Fl p Ar prefix
 Set
 .Ar prefix
@@ -454,6 +459,14 @@ installed, and this package must be deinstalled before the
 package is deinstalled.  Multiple
 .Cm @pkgdep
 directives may be used if the package depends on multiple other packages.
+.It Cm @blddep Ar pkgname
+Declare that this package was built with the exact version
+of
+.Ar pkgname
+(since the
+.Cm @pkgdep
+directive may contain wildcards or relational
+package version information).
 .It Cm @pkgcfl Ar pkgcflname
 Declare a conflict with the
 .Ar pkgcflname

@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.36 2001/07/15 00:34:15 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.37 2002/03/05 13:01:21 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -118,7 +118,8 @@ typedef enum pl_ent_t {
 	PLIST_DIR_RM,		/* 14 */
 	PLIST_IGNORE_INST,	/* 15 */
 	PLIST_OPTION,		/* 16 */
-	PLIST_PKGCFL		/* 17 */
+	PLIST_PKGCFL,		/* 17 */
+	PLIST_BLDDEP		/* 18 */
 }       pl_ent_t;
 
 /* Types */

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.28 2001/07/15 00:23:14 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.29 2002/03/05 13:01:21 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.28 2001/07/15 00:23:14 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.29 2002/03/05 13:01:21 agc Exp $");
 #endif
 #endif
 
@@ -204,6 +204,13 @@ cleanup(int sig)
 	signal(SIGHUP, oldhup);
 }
 
+static int
+note_whats_installed(const char *found, char *note)
+{
+	(void) strcpy(note, found);
+	return 0;
+}
+
 int
 pkg_perform(lpkg_head_t *pkgs)
 {
@@ -213,6 +220,7 @@ pkg_perform(lpkg_head_t *pkgs)
 	package_t plist;
 	char   *suffix;		/* What we tack on to the end of the finished package */
 	lpkg_t *lpp;
+	char    installed[FILENAME_MAX];
 
 	lpp = TAILQ_FIRST(pkgs);
 	pkg = lpp->lp_name;	/* Only one arg to create */
@@ -258,6 +266,9 @@ pkg_perform(lpkg_head_t *pkgs)
 				add_plist(&plist, PLIST_PKGDEP, cp);
 				if (Verbose && !PlistOnly)
 					printf(" %s", cp);
+				if (findmatchingname(_pkgdb_getPKGDB_DIR(), cp, note_whats_installed, installed) > 0) {
+					add_plist(&plist, PLIST_BLDDEP, installed);
+				}
 			}
 		}
 		if (Verbose && !PlistOnly)
