@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 1996/05/25 17:09:47 ws Exp $	*/
+/*	$NetBSD: main.c,v 1.3 1996/09/11 20:35:14 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -34,7 +34,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: main.c,v 1.2 1996/05/25 17:09:47 ws Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.3 1996/09/11 20:35:14 christos Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -42,6 +42,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.2 1996/05/25 17:09:47 ws Exp $";
 #include <ctype.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <fstab.h>
 #include <errno.h>
 #if __STDC__
 #include <stdarg.h>
@@ -57,6 +58,8 @@ int preen;		/* set when preening */
 int rdonly;		/* device is opened read only (supersedes above) */
 
 char *fname;		/* filesystem currently checked */
+
+static char *rawname __P((const char *));
 	
 static void
 usage()
@@ -97,15 +100,43 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	if (!argc)
-		usage();
-	
-	while (argc-- > 0) {
-		erg = checkfilesys(fname = *argv++);
-		if (erg > ret)
-			ret = erg;
+#define	BADTYPE(type)							\
+	(strcmp(type, FSTAB_RO) &&					\
+	    strcmp(type, FSTAB_RW) && strcmp(type, FSTAB_RQ))
+
+	if (argc == 0) {
+		struct fstab *fs;
+
+		if (!preen)
+			usage();
+
+		while ((fs = getfsent()) != NULL) {
+
+			if (fs->fs_passno == 0)
+				continue;
+
+			if (BADTYPE(fs->fs_type))
+				continue;
+
+			if (strcmp(fs->fs_vfstype, "msdos"))
+				continue;
+
+			erg = checkfilesys(fname = rawname(fs->fs_spec));
+
+			if (erg > ret)
+				ret = erg;
+		}
+
 	}
-	exit(ret);
+	else {
+		while (argc-- > 0) {
+			erg = checkfilesys(fname = *argv++);
+			if (erg > ret)
+				ret = erg;
+		}
+	}
+
+	return ret;
 }
 
 /*VARARGS*/
@@ -229,4 +260,21 @@ ask(def, fmt, va_alist)
 				return 0;
 	} while (c != 'y' && c != 'Y' && c != 'n' && c != 'N');
 	return c == 'y' || c == 'Y';
+}
+
+static char *
+rawname(name)
+	const char *name;
+{
+	static char rawbuf[32];
+	char *dp;
+
+	if ((dp = strrchr(name, '/')) == 0)
+		return (0);
+	*dp = 0;
+	(void)strcpy(rawbuf, name);
+	*dp = '/';
+	(void)strcat(rawbuf, "/r");
+	(void)strcat(rawbuf, &dp[1]);
+	return (rawbuf);
 }
