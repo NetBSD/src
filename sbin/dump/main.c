@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.51 2002/11/16 14:15:35 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2002/11/17 04:44:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.51 2002/11/16 14:15:35 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2002/11/17 04:44:42 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,7 +206,7 @@ main(int argc, char *argv[])
 			    >= sizeof(labelstr)) {
 				msg(
 		"WARNING Label `%s' is larger than limit of %d characters.\n",
-				    optarg, sizeof(labelstr) - 1);
+				    optarg, (int)sizeof(labelstr) - 1);
 				msg("WARNING: Using truncated label `%s'.\n",
 				    labelstr);
 			}
