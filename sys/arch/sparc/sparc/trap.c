@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.114 2002/12/14 14:52:24 christos Exp $ */
+/*	$NetBSD: trap.c,v 1.115 2002/12/17 10:04:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -304,6 +304,22 @@ trap(type, psr, pc, tf)
 			return;
 		}
 #endif
+		if (type == T_UNIMPLFLUSH) {
+			/*
+			 * This should happen only on hypersparc.
+			 * It also is a rare event to get this trap
+			 * from kernel space. For now, just flush the
+			 * entire I-cache.
+			 */
+			(*cpuinfo.pure_vcache_flush)();
+#if defined(MULTIPROCESSOR)
+			/* Broadcast to other CPUs */
+			/* e.g. xcall(cpuinfo.pure_vcache_flush, 0, 0, 0, 0);*/
+#endif
+			ADVANCE;
+			return;
+		}
+
 		/*
 		 * Storing %fsr in cpu_attach will cause this trap
 		 * even though the fpu has been enabled, if and only
