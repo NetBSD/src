@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.57 2002/10/26 06:03:50 yamt Exp $	*/
+/*	$NetBSD: fstat.c,v 1.58 2003/01/19 18:14:06 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.57 2002/10/26 06:03:50 yamt Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.58 2003/01/19 18:14:06 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ int maxfiles;
 
 kvm_t *kd;
 
-void	dofiles __P((struct kinfo_proc *));
+void	dofiles __P((struct kinfo_proc2 *));
 int	ext2fs_filestat __P((struct vnode *, struct filestat *));
 int	getfname __P((char *));
 void	getinetproto __P((int));
@@ -175,7 +175,7 @@ main(argc, argv)
 	char **argv;
 {
 	struct passwd *passwd;
-	struct kinfo_proc *p, *plast;
+	struct kinfo_proc2 *p, *plast;
 	int arg, ch, what;
 	char *memf, *nlistf;
 	char buf[_POSIX2_LINE_MAX];
@@ -263,7 +263,7 @@ main(argc, argv)
 	if (nlistf == NULL && memf == NULL)
 		(void)setgid(getgid());
 
-	if ((p = kvm_getprocs(kd, what, arg, &cnt)) == NULL) {
+	if ((p = kvm_getproc2(kd, what, arg, sizeof *p, &cnt)) == NULL) {
 		errx(1, "%s", kvm_geterr(kd));
 	}
 	if (nflg)
@@ -278,7 +278,7 @@ main(argc, argv)
 		putchar('\n');
 
 	for (plast = &p[cnt]; p < plast; ++p) {
-		if (p->kp_proc.p_stat == SZOMB)
+		if (p->p_stat == SZOMB)
 			continue;
 		dofiles(p);
 	}
@@ -311,33 +311,31 @@ pid_t	Pid;
  * print open files attributed to this process
  */
 void
-dofiles(kp)
-	struct kinfo_proc *kp;
+dofiles(p)
+	struct kinfo_proc2 *p;
 {
 	int i;
 	struct filedesc0 filed0;
 #define	filed	filed0.fd_fd
 	struct cwdinfo cwdi;
-	struct proc *p = &kp->kp_proc;
-	struct eproc *ep = &kp->kp_eproc;
 
-	Uname = user_from_uid(ep->e_ucred.cr_uid, 0);
+	Uname = user_from_uid(p->p_uid, 0);
 	Pid = p->p_pid;
 	Comm = p->p_comm;
 
 	if (p->p_fd == NULL || p->p_cwdi == NULL)
 		return;
 	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
-		warnx("can't read filedesc at %p for pid %d", p->p_fd, Pid);
+		warnx("can't read filedesc at %#llx for pid %d", p->p_fd, Pid);
 		return;
 	}
 	if (!KVM_READ(p->p_cwdi, &cwdi, sizeof(cwdi))) {
-		warnx("can't read cwdinfo at %p for pid %d", p->p_cwdi, Pid);
+		warnx("can't read cwdinfo at %#llx for pid %d", p->p_cwdi, Pid);
 		return;
 	}
 	if (filed.fd_nfiles < 0 || filed.fd_lastfile >= filed.fd_nfiles ||
 	    filed.fd_freefile > filed.fd_lastfile + 1) {
-		dprintf("filedesc corrupted at %p for pid %d", p->p_fd, Pid);
+		dprintf("filedesc corrupted at %#llx for pid %d", p->p_fd, Pid);
 		return;
 	}
 	/*
@@ -353,7 +351,7 @@ dofiles(kp)
 	 * ktrace vnode, if one
 	 */
 	if (p->p_tracep)
-		ftrans(p->p_tracep, TRACE);
+		ftrans((struct file *)(intptr_t)p->p_tracep, TRACE);
 	/*
 	 * open files
 	 */
