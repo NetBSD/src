@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.11.2.2 2004/05/10 15:14:17 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.11.2.3 2004/05/25 04:14:03 jmc Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.2 2004/05/10 15:14:17 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.3 2004/05/25 04:14:03 jmc Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -7688,6 +7688,11 @@ SYSCTL_SETUP(sysctl_net_keyv2_setup, "sysctl net.keyv2 subtree setup")
 		       CTLTYPE_INT, "esp_keymin", NULL,
 		       NULL, 0, &ipsec_esp_keymin, 0,
 		       CTL_NET, FAST_IPSEC_PFKEY, KEYCTL_ESP_KEYMIN, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "prefered_oldsa", NULL,
+		       NULL, 0, &key_prefered_oldsa, 0,
+		       CTL_NET, PF_KEY, KEYCTL_PREFERED_OLDSA, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "esp_auth", NULL,
