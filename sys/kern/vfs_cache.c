@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.56 2004/04/25 16:42:41 simonb Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.57 2004/05/02 12:00:34 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.56 2004/04/25 16:42:41 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.57 2004/05/02 12:00:34 pk Exp $");
 
 #include "opt_ddb.h"
 #include "opt_revcache.h"
@@ -133,7 +133,7 @@ cache_free(struct namecache *ncp)
 {
 
 	pool_put(&namecache_pool, ncp);
-	numcache--; /* XXX MP */
+	numcache--;
 }
 
 static __inline struct namecache *
@@ -418,7 +418,6 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 	 * Free the cache slot at head of lru chain.
 	 */
 	simple_lock(&namecache_slock);
-	KASSERT(cache_lookup_entry(dvp, cnp) == NULL);
 	if (numcache < numvnodes) {
 		numcache++;
 		simple_unlock(&namecache_slock);
@@ -431,6 +430,17 @@ cache_enter(struct vnode *dvp, struct vnode *vp, struct componentname *cnp)
 		simple_unlock(&namecache_slock);
 		return;
 	}
+
+	/*
+	 * Concurrent lookups in the same directory may race for a
+	 * cache entry. If we loose, free our tentative entry and return.
+	 */
+	if (cache_lookup_entry(dvp, cnp) != NULL) {
+		cache_free(ncp);
+		simple_unlock(&namecache_slock);
+		return;
+	}
+
 	/* Grab the vnode we just found. */
 	ncp->nc_vp = vp;
 	if (vp == NULL) {
