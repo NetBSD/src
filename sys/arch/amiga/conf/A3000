@@ -1,0 +1,117 @@
+#
+# Minimal AMIGA 3000
+#
+# $Id: A3000,v 1.1 1994/04/18 00:25:16 chopps Exp $
+#
+# This configuration file is for a multiple disk/multiple tape A3000.
+#
+machine		"amiga"
+cpu		"M68030"	# A3000
+
+#
+# Name this kernel A3000
+#
+ident		"A3000"
+
+#
+# Add support for about 16 users. This variable is used to size
+# various kernel structures.
+#
+maxusers	16
+
+#
+# Set the timezone that the kernel will use.
+#
+timezone	5 dst
+
+#
+# Set the maximum number of file descriptors
+#
+maxfdescs	256
+
+
+options		FPCOPROC	# Support for MC68881/MC68882
+
+#
+# Networking options
+#
+options		INET		# Basic networking support
+
+options		FFS		# Berkeley fast file system
+options		MFS		# Memory based filesystem
+options		PROCFS		# Process filesystem
+options		KERNFS		# Kernel parameter filesystem
+options		LOFS		# Loopback filesystem
+
+options		FIFO		# FIFO operations on vnodes
+
+options		SWAPPAGER	# Pager for swap device
+options		VNODEPAGER	# Pager for vnodes
+options		DEVPAGER	# Pager
+
+#
+# Compatability options for various existing systems
+#
+options		"COMPAT_09"	# fs type binary compatability (name vs number)
+options		COMPAT_SUNOS	# Support to run Sun-3 executables
+options		"COMPAT_43"	# 4.3 BSD compatible system calls
+options		"TCP_COMPAT_42"	# Use 4.2 BSD style TCP
+options		"COMPAT_NOMID"	# ???
+
+#
+# Graphics options
+# 
+options		GRF_ECS			# Enhanced Chip Set
+options		GRF_NTSC		# NTSC
+options		GRF_PAL			# PAL
+options		"GRF_A2024"		# Support for the A2024
+
+#
+# Support for System V IPC facilities.
+#
+options		SYSVSHM		# System V shared memory
+options		SYSVMSG		# System V messages
+options		SYSVSEM		# System V semaphores
+
+#
+# Support for various kernel options
+#
+options		KTRACE		# Add kernel tracing system call
+options		DIAGNOSTIC	# Add additional error checking code
+options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
+options		GENERIC		# Mini-root boot support
+
+#
+# Build one kernel that can boot from any disk.
+#
+config		netbsd swap generic
+
+pseudo-device	ite	2	# Bit-mapped display terminal emulator
+pseudo-device	view	10	# View (graphics mapping)
+pseudo-device	kbd	1	# Keyboard support
+pseudo-device	mouse	2	# Mouse support
+pseudo-device	pty		# Pseudo-tty support
+pseudo-device	loop		# Loopback network
+
+#
+#The following sections describe various hardware options.
+#
+
+#
+# Devices on an Amiga 3000
+#
+master		a3000scsi0	at manufacturer	1	product	1
+disk		sd1	at a3000scsi0 slave 1
+disk		sd2	at a3000scsi0 slave 2
+disk		sd3	at a3000scsi0 slave 3
+disk		sd4	at a3000scsi0 slave 4
+disk		sd5	at a3000scsi0 slave 5
+disk		sd6	at a3000scsi0 slave 6
+tape		st0	at a3000scsi0 slave ?
+
+device		ser0	at manufacturer	1	product	3
+device		par0	at manufacturer	1	product	6
+device		grf0	at manufacturer	1	product	7
+device		rtclocka0 at manufacturer 1	product 4 # A3000
+
+device		fd0	at manufacturer 1	product 10
