@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.28 2000/06/08 17:35:47 matt Exp $
+#	$NetBSD: INSTALL,v 1.29 2000/06/11 10:56:16 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -127,7 +127,7 @@ scsibus* at pcscp?
 sd*	at scsibus? target ? lun ?	# SCSI disks
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
-wdc*	at obio? flags 0x0
+wdc*	at obio? flags 0x1
 wd*	at wdc? channel ? drive ? flags 0x0000
 
 atapibus* at wdc? channel ?
