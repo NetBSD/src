@@ -1,13 +1,15 @@
-# $NetBSD: Makefile,v 1.23 1999/04/02 03:11:57 cgd Exp $
+# $NetBSD: Makefile,v 1.24 1999/04/02 03:20:00 cgd Exp $
 
 PROG = boot
 
-SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
-SRCS+= devopen.c filesystem.c prom_swpal.S
+SRCS = start.S boot.c loadfile.c blkdev.c prom.c prom_disp.S OSFpal.c
+SRCS+= filesystem.c prom_swpal.S booted_dev.c
 
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 
-CPPFLAGS += ${SECONDARY_CPPFLAGS}
+CPPFLAGS += ${SECONDARY_CPPFLAGS} \
+		-DLIBSA_SINGLE_DEVICE=blkdev \
+		  -D"blkdevioctl(x,y,z)=EINVAL"
 
 CLEANFILES+= vers.c vers.o ${PROG}.sym
 
