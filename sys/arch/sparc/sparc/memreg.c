@@ -1,4 +1,4 @@
-/*	$NetBSD: memreg.c,v 1.27 1998/09/20 19:34:16 pk Exp $ */
+/*	$NetBSD: memreg.c,v 1.28 1998/09/21 10:32:00 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -183,33 +183,8 @@ memregattach_obio(parent, self, aux)
  * and take the page out of the page pool, but for now...
  */
 
-#if defined(SUN4)
 void
-memerr4(issync, ser, sva, aer, ava, tf)
-	unsigned int issync;
-	u_int ser, sva, aer, ava;
-	struct trapframe *tf;	/* XXX - unused/invalid */
-{
-	char bits[64];
-
-	if (par_err_reg) {
-		printf("mem err: ser=%s sva=0x%x\n",
-		    bitmask_snprintf(ser, SER_BITS, bits,
-		    sizeof(bits)), sva);
-		printf("parity error register = %s\n",
-			bitmask_snprintf(*par_err_reg, PER_BITS,
-			bits, sizeof(bits)));
-	} else {
-		printf("mem err: ser=? sva=?\n");
-		printf("parity error register not mapped yet!\n"); /* XXX */
-	}
-	panic("memory error");		/* XXX */
-}
-#endif /* SUN4 */
-
-#if defined(SUN4C)
-void
-memerr4c(issync, ser, sva, aer, ava, tf)
+memerr4_4c(issync, ser, sva, aer, ava, tf)
 	unsigned int issync;
 	u_int ser, sva, aer, ava;
 	struct trapframe *tf;	/* XXX - unused/invalid */
@@ -217,29 +192,23 @@ memerr4c(issync, ser, sva, aer, ava, tf)
 	char bits[64];
 
 	printf("%ssync mem arr: ser=%s sva=0x%x ",
-		issync ? "" : "a", bitmask_snprintf(ser, SER_BITS,
-		bits, sizeof(bits)), sva);
+		issync ? "" : "a",
+		bitmask_snprintf(ser, SER_BITS, bits, sizeof(bits)),
+		sva);
 	printf("aer=%s ava=0x%x\n", bitmask_snprintf(aer & 0xff,
 		AER_BITS, bits, sizeof(bits)), ava);
 	if (par_err_reg)
 		printf("parity error register = %s\n",
 			bitmask_snprintf(*par_err_reg, PER_BITS,
-			bits, sizeof(bits)));
+					 bits, sizeof(bits)));
 	panic("memory error");		/* XXX */
 }
-#endif /* SUN4C */
 
 
 #if defined(SUN4M)
 /*
  * hardmemerr4m: called upon fatal memory error. Print a message and panic.
- * Note that issync is not really an indicator of whether or not the error
- * was synchronous; if it is set, it means that the fsr/faddr pair correspond
- * to the MMU's fault status register; if clear, they correspond to the
- * HyperSPARC asynchronous error register. If issync==2, then both decodings
- * of the error register are printed.
  */
-
 static void
 hardmemerr4m(type, sfsr, sfva, afsr, afva)
 	unsigned type;
