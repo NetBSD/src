@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.7 2001/10/06 00:14:59 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.8 2001/10/10 03:41:24 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -1560,8 +1560,8 @@ stge_init(struct ifnet *ifp)
 	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
 	 * empty again.
 	 */
-	bus_space_write_4(st, sh, STGE_FlowOnTresh, 29696 / 16);
-	bus_space_write_4(st, sh, STGE_FlowOffThresh, 0);
+	bus_space_write_2(st, sh, STGE_FlowOnTresh, 29696 / 16);
+	bus_space_write_2(st, sh, STGE_FlowOffThresh, 0);
 
 	/*
 	 * Set the maximum frame size.
