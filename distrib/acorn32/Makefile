@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2002/02/11 23:02:23 reinoud Exp $
+# $NetBSD: Makefile,v 1.4 2002/02/11 23:07:46 reinoud Exp $
 
 ITARGET=	${RELEASEDIR}/installation
 IINST=		${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -m ${NONBINMODE}
@@ -24,7 +24,9 @@ release:
 	${IINST} ${KERNELOBJ}/netbsd.${kern}.gz ${ITARGET}/kernel/
 .endfor
 	cd ${.CURDIR}/../../sys/arch/acorn32/stand && \
-		./export-BtNetBSD && mv BtNetBSD.tar ${ITARGET}/misc && \
+		./export-BtNetBSD && \
+		mv -f BtNetBSD.tar ${ITARGET}/misc && \
+		rm -rf ${ITARGET}/misc/BtNetBSD.tar.gz
 		gzip ${ITARGET}/misc/BtNetBSD.tar && \
-	rm -rf BtNetBSD.tar 
+		rm -rf BtNetBSD.tar 
 .endif
