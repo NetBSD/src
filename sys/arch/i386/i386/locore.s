@@ -1,5 +1,5 @@
 
-/*	$NetBSD: locore.s,v 1.172.2.3 1997/11/15 18:02:30 mellon Exp $	*/
+/*	$NetBSD: locore.s,v 1.172.2.4 1997/11/19 21:18:38 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -2019,30 +2019,10 @@ IDTVEC(trap0e_pentium)
 	jnz	calltrap
 	movl	%cr2,%eax
 	subl	_idt,%eax
-	jc	calltrap
-	cmpl	$(7*8),%eax
-	jnc	calltrap
-	andl	$0x38,%eax
-	movl	trap0e_table+0(%eax),%ecx
-	movl	trap0e_table+4(%eax),%edx
-	movl	%ecx,TF_TRAPNO(%esp)
-	jmp	%edx
-	ALIGN_TEXT
-trap03_fixup:
-trap04_fixup:
-	incl	TF_EIP(%esp)
-trap01_fixup:
-	andl	$~PSL_RF,TF_EFLAGS(%esp)
+	cmpl	$(6*8),%eax
+	jne	calltrap
+	movb	$T_PRIVINFLT,TF_TRAPNO(%esp)
 	jmp	calltrap
-	ALIGN_TEXT
-trap0e_table:
-	.long	T_DIVIDE,    calltrap
-	.long	T_TRCTRAP,   trap01_fixup
-	.long	T_NMI,       calltrap
-	.long	T_BPTFLT,    trap03_fixup
-	.long	T_OFLOW,     trap04_fixup
-	.long	T_BOUND,     calltrap
-	.long	T_PRIVINFLT, calltrap
 #endif
 IDTVEC(trap0f)
 	/*
