@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 1995/04/19 14:01:58 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 1995/04/22 11:53:40 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -966,45 +966,13 @@ boot(howto)
 
 	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
-		register struct buf *bp;
-		int iter, nbusy;
-
 		waittime = 0;
-		(void) spl0();
-		printf("syncing disks... ");
-		/*
-		 * Release vnodes held by texts before sync.
-		 */
-		if (panicstr == 0)
-			vnode_pager_umount(NULL);
-#ifdef notdef
-#include "fd.h"
-#if NFD > 0
-		fdshutdown();
-#endif
-#endif
-		sync(&proc0, (void *)NULL, (int *)NULL);
 
 		/*
-		 * Unmount filesystems
+		 * Release inodes, sync and unmount the filesystems.
 		 */
-		if (panicstr == 0)
-			vfs_unmountall();
+		vfs_shutdown();
 
-		for (iter = 0; iter < 20; iter++) {
-			nbusy = 0;
-			for (bp = &buf[nbuf]; --bp >= buf; )
-				if ((bp->b_flags & (B_BUSY|B_INVAL)) == B_BUSY)
-					nbusy++;
-			if (nbusy == 0)
-				break;
-			printf("%d ", nbusy);
-			delay(40000 * iter);
-		}
-		if (nbusy)
-			printf("giving up\n");
-		else
-			printf("done\n");
 		/*
 		 * If we've been adjusting the clock, the todr
 		 * will be out of synch; adjust it now.
@@ -1014,10 +982,10 @@ boot(howto)
 	splhigh();			/* extreme priority */
 	if (howto&RB_HALT) {
 		/* LAK: Actually shut down machine */
+		printf("halted\n\n");
 #if 1
 		via_shutdown();  /* in via.c */
 #else
-		printf("halted\n\n");
 		asm("	stop	#0x2700");
 #endif
 	} else {
