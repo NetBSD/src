@@ -1,4 +1,4 @@
-/*	$NetBSD: grfconfig.c,v 1.9 1997/11/20 10:35:15 veego Exp $	*/
+/*	$NetBSD: grfconfig.c,v 1.10 2001/01/22 21:11:23 is Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1997 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: grfconfig.c,v 1.9 1997/11/20 10:35:15 veego Exp $");
+__RCSID("$NetBSD: grfconfig.c,v 1.10 2001/01/22 21:11:23 is Exp $");
 #endif /* not lint */
 
 #include <sys/file.h>
@@ -172,7 +172,7 @@ main(ac, av)
 				cps[i + 1] = strtok(NULL, " \b\t\r\n");
 			cps[i] = NULL;
 
-			if (cps[13] == NULL) {
+			if (i < 14) {
 				printf("grfconfig: too few values in mode "
 				    "definition file:\n %s\n", obuf);
 				return (1);
