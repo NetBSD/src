@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.2 2003/09/25 14:48:16 ichiro Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.1 2003/09/25 14:11:18 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.2 2003/09/25 14:48:16 ichiro Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -165,6 +165,9 @@ ixp425_io_bs_init(bus_space_tag_t bs, void *cookie)
 	bs->bs_free = ixp425_pci_io_bs_free;
 	bs->bs_vaddr = ixp425_pci_io_bs_vaddr;
 
+	/*
+	 * IXP425 processor does not have PCI I/O windows
+	 */
 	/* read (single) */
 	bs->bs_r_1 = _pci_io_bs_r_1;
 	bs->bs_r_2 = _pci_io_bs_r_2;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.10 2003/09/25 14:11:18 ichiro Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.11 2003/09/25 14:48:16 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -430,8 +430,6 @@
 #define	IXP425_PCI_MEM_SIZE	0x04000000UL	/* 64MB */
 
 /* PCI I/O Space */
-#define	IXP425_PCI_IO_HWBASE	0x90000000UL
-#define	IXP425_PCI_IO_VBASE	IXP425_PCI_IO_HWBASE
 #define	IXP425_PCI_IO_SIZE	0x00100000UL    /* 1Mbyte */
 
 /* PCI Controller Configuration Offset */
