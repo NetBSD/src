@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2003/06/12 10:51:39 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.13 2003/06/13 22:27:05 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,8 +48,6 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-
-struct disklist *disklist = NULL;
 
 
 /* prototypes */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.55 2003/06/13 11:45:49 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.56 2003/06/13 22:27:03 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -904,15 +904,6 @@ message config_open_error
 
 message config_read_error
 {Impossible de lire le fichier de configuration %s.n}
-
-message nobiosgeom
-{Sysinst n'a pas pu déterminer automatiquement la géométrie utilisée par le
-BIOS pour votre disque.
-La géométrie physique est %d cylindres %d secteurs %d têtes\n}
-
-message biosguess
-{En utilisant les informations déja présentes sur le disque, je suppose que
-la géométrie utilisée par le BIOS est %d cylindres %d secteurs %d têtes\n}
 
 message cmdfail
 {La commande

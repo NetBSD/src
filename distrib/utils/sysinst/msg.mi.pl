@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.18 2003/06/13 11:45:50 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.19 2003/06/13 22:27:04 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -882,14 +882,6 @@ message config_open_error
 
 message config_read_error
 {Nie moglem odczytac pliku konfiguracyjnego %s\n}
-
-message nobiosgeom
-{Sysinst nie mogl automatycznie rozpoznac geometrii dysku z BIOS.
-Fizyczna geometria to %d cylindrow %d sektorow %d glowic\n}
-
-message biosguess
-{Uzywajac informacji z dysku, najlepsze parametry geometrii dysku z BIOS to
-%d cylindrow %d sektorow %d glowic\n}
 
 message cmdfail
 {Polecenie
