@@ -1,4 +1,4 @@
-.\"	$NetBSD: disk.9,v 1.18 2002/10/14 13:43:21 wiz Exp $
+.\"	$NetBSD: disk.9,v 1.19 2002/11/06 03:55:01 enami Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .Ft void
 .Fn disk_busy "struct disk *"
 .Ft void
-.Fn disk_unbusy "struct disk *"
+.Fn disk_unbusy "struct disk *" "long bcount" "int read"
 .Ft void
 .Fn disk_resetstat "struct disk *"
 .Ft struct disk *
@@ -85,9 +85,11 @@ struct disk {
 	 * on certain types of disks.
 	 */
 	int	  dk_busy;	/* busy counter */
-	u_int64_t dk_xfer;	/* total number of transfers */
+	u_int64_t dk_rxfer;	/* total number of read transfers */
+	u_int64_t dk_wxfer;	/* total number of write transfers */
 	u_int64_t dk_seek;	/* total independent seek operations */
-	u_int64_t dk_bytes;	/* total bytes transfered */
+	u_int64_t dk_rbytes;	/* total bytes read */
+	u_int64_t dk_wbytes;	/* total bytes written */
 	struct timeval	dk_attachtime;	/* time disk was attached */
 	struct timeval	dk_timestamp;	/* timestamp of last unbusy */
 	struct timeval	dk_time;	/* total time spent busy */
@@ -147,6 +149,11 @@ the difference to the disk's running total.
 Set the disk's timestamp to the current time.
 If the provided byte count is greater than 0, add it to the disk's
 running total and increment the number of transfers performed by the disk.
+The third argument
+.Ar read
+specifies the direction of I/O;
+if non-zero it means reading from the disk,
+otherwise it means writing to the disk.
 .It Fn disk_resetstat
 Reset the running byte, transfer, and time totals.
 .It Fn disk_find
@@ -303,6 +310,11 @@ The disk's timestamp is then updated in case there is more than one
 pending transfer on the disk.
 A byte count is also added to the disk's running total, and if greater than
 zero, the number of transfers the disk has performed is incremented.
+The third argument
+.Ar read
+specifies the direction of I/O;
+if non-zero it means reading from the disk,
+otherwise it means writing to the disk.
 .Bd -literal
 void
 foodone(xfer)
@@ -326,7 +338,8 @@ foodone(xfer)
 	[ . . . ]
 
 	/* Notify the disk framework that we've completed the transfer. */
-	disk_unbusy(\*[Am]sc-\*[Gt]sc_dk, nbytes);
+	disk_unbusy(\*[Am]sc-\*[Gt]sc_dk, nbytes,
+	    bp != NULL ? bp-\*[Gt]b_flags \*[Am] B_READ : 0);
 
 	[ . . . ]
 }
