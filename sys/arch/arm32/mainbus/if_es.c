@@ -1,4 +1,4 @@
-/* $NetBSD */
+/* $NetBSD: if_es.c,v 1.2 1996/05/20 17:09:24 mark Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
