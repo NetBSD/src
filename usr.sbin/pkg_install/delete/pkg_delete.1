@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_delete.1,v 1.6 1999/01/19 17:02:00 hubertf Exp $
+.\" $NetBSD: pkg_delete.1,v 1.7 1999/02/26 10:49:30 chopps Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -86,6 +86,12 @@ as the directory in which to delete files from any installed packages
 which do not explicitly set theirs.  For most packages, the prefix will
 be set automatically to the installed location by
 .Xr pkg_add 1 .
+.It Fl r
+.Nm Pkg_delete
+first builds a list of all packages that require (directly and indirectly)
+the one being deleted.  It then deletes these packages using 
+.Nm pkg_delete
+with the given options before deleting the user specified package.
 .It Fl d
 Remove empty directories created by file cleanup.  By default, only
 files/directories explicitly listed in a package's contents (either as
