@@ -1,3 +1,4 @@
+/*	$NetBSD: machdep.h,v 1.2 1997/01/27 16:58:59 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,14 +44,14 @@
  *	cpu.h,v 1.2 1993/05/22 07:58:17 cgd Exp
  */
 
-#ifdef _KERNEL
-
 /*
  * Internal definitions unique to sun3/68k cpu support.
  * These are the "private" declarations - those needed
  * only here in machine-independent code.  The "public"
  * definitions are in cpu.h (used by common code).
  */
+
+#ifdef _KERNEL
 
 /* 680X0 function codes */
 #define	FC_USERD	1	/* user data space */
@@ -77,7 +78,6 @@ struct pcb;
 struct proc;
 struct reg;
 struct trapframe;
-struct pmap;
 
 extern int cache_size;
 extern int cold;
@@ -94,9 +94,10 @@ extern vm_offset_t avail_start, avail_end;
 /* The "hole" (used to skip the Sun3/50 video RAM) */
 extern vm_offset_t hole_start, hole_size;
 
-void	ICIA __P((void));
+/* Cache flush functions. */
 void	DCIA __P((void));
 void	DCIU __P((void));
+void	ICIA __P((void));
 
 void	cache_enable __P((void));
 void	cache_flush_page(vm_offset_t pgva);
@@ -134,7 +135,6 @@ void	netintr __P((void));
 void	proc_trampoline __P((void));
 
 void	pmap_bootstrap __P((void));
-int 	pmap_fault_reload __P((struct pmap *, vm_offset_t, int));
 void	pmap_get_ksegmap __P((u_char *));
 void	pmap_get_pagemap __P((int *pt, int off));
 
@@ -144,9 +144,6 @@ void	savectx __P((struct pcb *));
 
 void	setvbr __P((void **));
 
-void	sun3_mon_abort __P((void));
-void	sun3_mon_halt __P((void));
-void	sun3_mon_reboot __P((char *));
 void	sun3_pmeg_init __P((void));
 void	sun3_reserve_pmeg __P((int pmeg_num));
 
