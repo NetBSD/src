@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd.8,v 1.9 2001/04/10 08:08:04 itojun Exp $
+.\"	$NetBSD: sshd.8,v 1.10 2001/04/10 09:15:49 itojun Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -822,9 +822,10 @@ or
 Note that lines in this file are usually several hundred bytes long
 (because of the size of the RSA key modulus).
 You don't want to type them in; instead, copy the
-.Pa identity.pub
-or the
+.Pa identity.pub ,
 .Pa id_dsa.pub
+or the
+.Pa id_rsa.pub
 file and edit it.
 .Pp
 The options (if present) consist of comma-separated option
@@ -1015,6 +1016,8 @@ It is recommended that it not be accessible by others.
 The format of this file is described above.
 Users will place the contents of their
 .Pa id_dsa.pub
+and/or
+.Pa id_rsa.pub
 files into this file, as described in
 .Xr ssh-keygen 1 .
 .It Pa "/etc/ssh_known_hosts" and "$HOME/.ssh/known_hosts"
