@@ -1,4 +1,4 @@
-// $Id: rvax.doc.ic.ac.uk,v 1.1 1993/11/27 21:21:01 mycroft Exp $
+// $Id: rvax.doc.ic.ac.uk,v 1.2 1994/06/13 19:49:55 mycroft Exp $
 // rvax
 
 #define FSTYPE_UFS	4.2
