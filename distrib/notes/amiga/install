@@ -117,7 +117,7 @@ begin again from scratch.
 
 	The install program will now make the the file systems you
 	specified.  There should be only one error per file system in
-	this section of the installation.  It will look like so:
+	this section of the installation.  It will look like this:
 
 		newfs: ioctl (WDINFO): Invalid argument
 		newfs: /dev/rsd0a: can't rewrite disk label
@@ -134,7 +134,7 @@ begin again from scratch.
 	Since the network configuration might have lead to additional (nfs)
 	filesystem entries, you get another chance to modify your fstab.
 
-	Your are finally at the point where some real data will be put on
+	You are finally at the point where some real data will be put on
 	your freshly made filesystems. Select the device type you wish
 	to install from and off you go....
 	Some notes:
@@ -178,10 +178,10 @@ like so:
 
 Your system is now complete but not completely configured; you
 should adjust the /etc/sendmail.cf file as necessary to suit your
-site and/or disable sendmail and other network related programs.
-These things can be found in /etc/netstart.  Use vi, if you installed
-the man pages you can type `man vi' or `man ed' for instructions
-on how to use these somewhat non-intuitive editors.
+site.  You should also examine and adjust the settings in /etc/rc.conf.
+You can use vi or ed to edit the files. If you installed the man pages
+you can type `man vi' or `man ed' for instructions on how to use these
+somewhat non-intuitive editors.  
 
 Once you are done with the rest of configuration unmount your file
 systems and halt your system, then reboot:

@@ -6,19 +6,24 @@ out as follows:
 	INSTALL			Installation notes; this file.
 
 	binary/
+		kernel/		The GENERIC kernel.
+
 		sets/		Amiga binary distribution sets;
 				see below.
+
+			Split/	.tgz files split for loading onto
+				floppies.
 
 		security/	Amiga security distribution;
 				see below;
 
 	installation/
-			miniroot/	Amiga miniroot file system
-					image; see below.
+		miniroot/	Amiga miniroot file system
+				image; see below.
 
-			misc/		Miscellaneous Amiga
-					installation utilities; see
-					installation section, below.
+		misc/		Miscellaneous Amiga
+				installation utilities; see
+				installation section, below.
 
 The Amiga now uses a single miniroot filesystem for both an initial
 installation and for an upgrade.  A gzipped version is available, for easier
@@ -40,10 +45,11 @@ Miniroot file system:
 	This file is named "miniroot.fs".
 
 The NetBSD/Amiga binary distribution sets contain the binaries which
-comprise the NetBSD _VER release for the Amiga.  There are seven binary
-distribution sets, and the "security" distribution set.  The binary
-distribution sets can be found in subdirectories of the "amiga/binary"
-subdirectory of the NetBSD _VER distribution tree, and are as follows:
+comprise the NetBSD _VER release for the Amiga.  There are seven standard
+binary distribution sets, 5 X11 distribution sets, and the "security"
+distribution set.  The standard and X11 binary distribution sets can be
+found in the "amiga/binary/sets" subdirectory of the NetBSD _VER
+distribution tree, and are as follows:
 
 	base	The NetBSD/Amiga _VER base binary distribution.  You
 		MUST install this distribution set.  It contains the
@@ -93,26 +99,52 @@ subdirectory of the NetBSD _VER distribution tree, and are as follows:
 		manual pages.
 		[ 960K gzipped, 3.7M uncompressed ]
 
-The Amiga security distribution set is named "secr" and can be found
-in the "amiga/security" subdirectory of the NetBSD _VER distribution
-tree.  It contains crypt.c (the source file for the DES encryption
-algorithm) and the binaries which depend on it.  It can only be found
-on those sites which carry the complete NetBSD distribution and that
-can legally obtain it.  (Remember, because of United States law, it
-may not be legal to distribute this set to locations outside of the
-United States and Canada.)  [ 740K gzipped, 2.5M uncompressed ]
+	xbase	The basic files needed for a complete X
+		client environment. This does not include
+		the X servers.
+		[ 2.4M gzipped, 7.4M uncompressed ]
 
-The Amiga binary distribution sets are distributed in the same form as
-the source distribution sets; catted together, the members of a set
+	xcomp	The extra libraries and include files needed
+		to compile X source code.
+		[ 1.6M gzipped, 6.7M uncompressed ]
+
+	xcontrib	Programs that were contributed to X.
+		[ 178k gzipped, 670k uncompressed ]
+
+	xfont	Fonts needed by X.
+		[ 5.7M gzipped, 7M uncompressed ]
+
+	xserver	Amiga X servers.
+		[ 1.5M gzipped, 3.7M unzipped ]
+
+The Amiga security distribution set is named "secr" and can be found in
+the "amiga/binary/security" subdirectory of the NetBSD _VER
+distribution tree.  It contains security related binaries which depend
+on cryptographic source code. You do not need this distribution set to
+use encrypted passwords in your password file; the "base" distribution
+includes a crypt library which can perform only the decryption
+function.  The security distribution includes a version of the
+Kerberos IV network security system, and a Kerberized version of the
+"telnet" program.  The "secr" distribution set can be found only on
+those sites which carry the complete NetBSD distribution and which can
+legally obtain it.  (Remember, because of United States law, it may
+not be legal to distribute this set to locations outside of the United
+States and Canada.)
+	[ 798K gzipped, 2.4M uncompressed ]
+
+The Amiga binary distribution sets are distributed as gzipped tar files
+named with the extension ".tgz", e.g. "base.tgz". They are also
+available in split form -- catted together, the members of a split set
 form a gzipped tar file.  Each Amiga binary distribution set also has
-its own "CKSUMS" file, just as the source distribution sets do.
+its own checksum files, just as the source distribution sets do.
 
 The instructions given for extracting the source sets work equally
 well for the binary sets, but it is worth noting that if you use that
 method, the files are extracted "below" the current directory.  That
 is, if you want to extract the binaries "into" your system, i.e.
-replace the system binaries with them, you have to run the "tar xvfp"
+replace the system binaries with them, you have to run the "tar xfp"
 from /.  Also note that if you upgrade or install this way, those
-programs that you are using at the time will NOT be replaced.  If you
-follow the normal installation or upgrade procedures, this will be
-taken care of for you.
+programs that you are using at the time will NOT be replaced unless
+you run "tar" with the "--unlink" option.  If you follow the normal
+installation or upgrade procedures, this will be taken care of for
+you.
