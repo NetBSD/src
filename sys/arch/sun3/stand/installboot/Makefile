@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 1995/10/08 23:44:02 gwr Exp $
+#	$NetBSD: Makefile,v 1.5 1997/06/22 06:25:58 mrg Exp $
 
 PROG=	installboot
-MAN=	installboot.8
+NOMAN=	yes
 BINDIR=/usr/mdec
 
 # Need this to work in the miniroot
