@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)unistd.h	5.13 (Berkeley) 6/17/91
- *	$Id: unistd.h,v 1.11 1993/10/13 18:22:06 jtc Exp $
+ *	$Id: unistd.h,v 1.12 1993/10/14 23:15:26 jtc Exp $
  */
 
 #ifndef _UNISTD_H_
@@ -52,7 +52,7 @@
 __BEGIN_DECLS
 __dead void	 _exit __P((int));
 int	 access __P((const char *, int));
-u_int	 alarm __P((u_int));
+unsigned alarm __P((unsigned));
 int	 chdir __P((const char *));
 int	 chown __P((const char *, uid_t, gid_t));
 int	 close __P((int));
@@ -90,7 +90,7 @@ int	 setgid __P((gid_t));
 int	 setpgid __P((pid_t, pid_t));
 pid_t	 setsid __P((void));
 int	 setuid __P((uid_t));
-u_int	 sleep __P((u_int));
+unsigned sleep __P((unsigned));
 long	 sysconf __P((int));			/* not yet */
 pid_t	 tcgetpgrp __P((int));
 int	 tcsetpgrp __P((int, pid_t));
