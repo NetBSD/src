@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.22 2000/07/03 10:06:26 enami Exp $
+.\"	$NetBSD: mountd.8,v 1.23 2002/09/21 20:35:00 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@
 mount requests
 .Sh SYNOPSIS
 .Nm
+.Op Fl P Ar policy
 .Op Fl dn
 .Op Ar exportsfile
 .Sh DESCRIPTION
@@ -62,6 +63,17 @@ Appendix I.
 Options and operands available for
 .Nm mountd :
 .Bl -tag -width Ds
+.It Fl P Ar policy
+IPsec 
+.Ar policy
+string,
+as described in
+.Xr ipsec_set_policy 3 .
+Multiple IPsec policy strings may be specified by using a semicolon as
+a separator. If conflicting policy strings are found in a single line,
+the last string will take effect. If an invalid IPsec policy string is used
+.Nm
+logs an error message and terminates itself.
 .It Fl d
 Enable debugging mode.
 .Nm
