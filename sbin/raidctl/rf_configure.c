@@ -1,4 +1,4 @@
-/*      $NetBSD: rf_configure.c,v 1.8 1999/08/13 03:37:42 oster Exp $   */
+/*      $NetBSD: rf_configure.c,v 1.9 2000/05/23 00:46:53 thorpej Exp $   */
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -82,10 +82,10 @@ char   *rf_find_white(char *p);
 
 
 
-static int rf_search_file_for_start_of(char *string, char *buf, int len,
+static int rf_search_file_for_start_of(const char *string, char *buf, int len,
 	FILE *fp);
 static int rf_get_next_nonblank_line(char *buf, int len, FILE *fp,
-	char *errmsg);
+	const char *errmsg);
 
 /* called from user level to read the configuration file and create
  * a configuration control structure.  This is used in the user-level
@@ -160,11 +160,11 @@ int rf_MakeConfig(configname, cfgPtr)
     RF_ERRORMSG1("Can't determine queue type and/or max outstanding reqs from line: %s",buf);
     RF_ERRORMSG2("Using %s-%d\n", cfgPtr->diskQueueType, cfgPtr->maxOutstandingDiskReqs);
   } else {
-    char *c;
+    char *ch;
     bcopy(buf1, cfgPtr->diskQueueType, RF_MIN(sizeof(cfgPtr->diskQueueType), strlen(buf1)+1));
-    for(c=buf1;*c;c++) {
-      if (*c == ' ') {
-        *c = '\0';
+    for(ch=buf1;*ch;ch++) {
+      if (*ch == ' ') {
+        *ch = '\0';
         break;
       }
     }
@@ -367,7 +367,7 @@ rf_find_white(char *p)
  * specified as a parameter
  */
 static int rf_search_file_for_start_of(string, buf, len, fp)
-  char  *string;
+  const char *string;
   char  *buf;
   int    len;
   FILE  *fp;
@@ -390,7 +390,7 @@ int rf_get_next_nonblank_line(buf, len, fp, errmsg)
   char  *buf;
   int    len;
   FILE  *fp;
-  char  *errmsg;
+  const char *errmsg;
 {
   char *p;
 
