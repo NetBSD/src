@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.21 1999/07/27 23:45:13 thorpej Exp $	*/
+/*	$NetBSD: lock.h,v 1.22 1999/07/28 19:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -140,6 +140,7 @@ struct lock {
 	int	lk_sharecount;		/* # of accepted shared locks */
 	short	lk_exclusivecount;	/* # of recursive exclusive locks */
 	short	lk_recurselevel;	/* lvl above which recursion ok */
+	int	lk_waitcount;		/* # of sleepers/spinners */
 
 	/*
 	 * This is the sleep message for sleep locks, and a simple name
@@ -151,9 +152,6 @@ struct lock {
 		struct {
 			/* pid of exclusive lock holder */
 			pid_t lk_sleep_lockholder;
-
-			/* # of processes sleeping for lock */
-			int lk_sleep_waitcount;
 
 			/* priority at which to sleep */
 			int lk_sleep_prio;
@@ -171,7 +169,6 @@ struct lock {
 	} lk_un;
 
 #define	lk_lockholder	lk_un.lk_un_sleep.lk_sleep_lockholder
-#define	lk_waitcount	lk_un.lk_un_sleep.lk_sleep_waitcount
 #define	lk_prio		lk_un.lk_un_sleep.lk_sleep_prio
 #define	lk_timo		lk_un.lk_un_sleep.lk_sleep_timo
 
