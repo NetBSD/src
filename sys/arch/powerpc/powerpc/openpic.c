@@ -1,4 +1,4 @@
-/*	$NetBSD: openpic.c,v 1.1 2001/02/02 06:11:53 briggs Exp $	*/
+/*	$NetBSD: openpic.c,v 1.2 2001/02/04 17:35:28 briggs Exp $	*/
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -7,7 +7,7 @@
 volatile unsigned char *openpic_base;
 
 void
-openpic_init(unsigned char *base)
+openpic_init(unsigned char *base, int topirq)
 {
 	int irq, maxirq;
 	u_int x;
@@ -29,10 +29,10 @@ openpic_init(unsigned char *base)
 	openpic_write(OPENPIC_CONFIG, x);
 
 	/* send all interrupts to cpu 0 */
-	for (irq = 0; irq < ICU_LEN; irq++)
+	for (irq = 0; irq < topirq; irq++)
 		openpic_write(OPENPIC_IDEST(irq), 1 << 0);
 
-	for (irq = 0; irq < ICU_LEN; irq++) {
+	for (irq = 0; irq < topirq; irq++) {
 		x = OPENPIC_INIT_SRC(irq);
 		openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 	}
@@ -47,7 +47,7 @@ openpic_init(unsigned char *base)
 		openpic_eoi(0);
 	}
 
-	for (irq = 0; irq < ICU_LEN; irq++)
+	for (irq = 0; irq < topirq; irq++)
 		openpic_disable_irq(irq);
 }
 
