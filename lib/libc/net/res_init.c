@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.39 2002/08/02 07:50:35 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.40 2003/01/06 13:17:02 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.39 2002/08/02 07:50:35 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.40 2003/01/06 13:17:02 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -99,7 +99,7 @@ static const char sort_mask[] = "/&";
 struct __res_state _res;
 #else
 struct __res_state _res = {
-	RES_TIMEOUT,               	/* retransmition time interval */
+	RES_TIMEOUT,               	/* retransmission time interval */
 	4,                         	/* number of times to retransmit */
 	RES_DEFAULT,			/* options flags */
 	1,                         	/* number of name servers */
