@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2000/06/14 22:52:46 cgd Exp $
+# $NetBSD: dot.profile,v 1.4 2001/02/01 06:08:00 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -55,9 +55,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount a /tmp on mfs, to avoid filling the md
 	mount -t mfs swap /tmp
-
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs kern /kern
 
 	# get the terminal type
 	_forceloop=""
