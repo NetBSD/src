@@ -39,17 +39,17 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ruptime.c	5.8 (Berkeley) 7/21/90";*/
-static char rcsid[] = "$Id: ruptime.c,v 1.2 1993/08/01 18:09:01 mycroft Exp $";
+static char rcsid[] = "$Id: ruptime.c,v 1.3 1993/12/04 01:49:05 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/dir.h>
 #include <sys/file.h>
-#include <sys/errno.h>
+#include <dirent.h>
 #include <protocols/rwhod.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 size_t	nhosts, hspace = 20;
 struct hs {
@@ -75,7 +75,7 @@ main(argc, argv)
 	register struct whod *wd;
 	register struct whoent *we;
 	register DIR *dirp;
-	struct direct *dp;
+	struct dirent *dp;
 	int aflg, cc, ch, f, i, maxloadav;
 	char buf[sizeof(struct whod)];
 	int (*cmp)() = hscmp;

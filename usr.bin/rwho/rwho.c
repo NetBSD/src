@@ -39,12 +39,12 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rwho.c,v 1.2 1993/08/01 18:08:45 mycroft Exp $";
+static char rcsid[] = "$Id: rwho.c,v 1.3 1993/12/04 01:49:21 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
-#include <sys/dir.h>
 #include <sys/file.h>
+#include <dirent.h>
 #include <protocols/rwhod.h>
 #include <stdio.h>
 
@@ -77,7 +77,7 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 	int ch;
-	struct direct *dp;
+	struct dirent *dp;
 	int cc, width;
 	register struct whod *w = &wd;
 	register struct whoent *we;
