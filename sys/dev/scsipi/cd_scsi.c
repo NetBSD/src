@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.7 1997/10/17 17:54:33 bouyer Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.8 1997/10/18 19:50:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -173,7 +173,7 @@ cd_scsibus_get_mode(cd, data, page, len)
 	scsipi_cmd.opcode = SCSI_MODE_SENSE;
 	scsipi_cmd.page = page;
 	scsipi_cmd.length = len & 0xff;
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
 	    SCSI_DATA_IN));
@@ -195,7 +195,7 @@ cd_scsibus_set_mode(cd, data, len)
 	scsipi_cmd.byte2 |= SMS_PF;
 	scsipi_cmd.length = len & 0xff;
 	data->header.data_length = 0;
-	return ((*cd->sc_link->scsipi_cmd)(cd->sc_link,
+	return (scsipi_command(cd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)data, sizeof(*data), CDRETRIES, 20000, NULL,
 	    SCSI_DATA_OUT));

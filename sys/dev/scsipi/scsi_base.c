@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.54 1997/10/08 21:39:25 mjacob Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.55 1997/10/18 19:51:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -71,7 +71,7 @@ scsi_change_def(sc_link, flags)
 	scsipi_cmd.opcode = SCSI_CHANGE_DEFINITION;
 	scsipi_cmd.how = SC_SCSI_2;
 
-	return ((*sc_link->scsipi_cmd)(sc_link,
+	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, 2, 100000, NULL, flags));
 }

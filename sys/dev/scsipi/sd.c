@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.121 1997/10/13 00:47:58 explorer Exp $	*/
+/*	$NetBSD: sd.c,v 1.122 1997/10/18 19:51:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -641,7 +641,7 @@ sdstart(v)
 		 * Call the routine that chats with the adapter.
 		 * Note: we cannot sleep as we may be an interrupt
 		 */
-		error = (*sc_link->scsipi_cmd)(sc_link, cmdp, cmdlen,
+		error = scsipi_command(sc_link, cmdp, cmdlen,
 		    (u_char *)bp->b_data, bp->b_bcount,
 		    SDRETRIES, 60000, bp, SCSI_NOSLEEP |
 		    ((bp->b_flags & B_READ) ? SCSI_DATA_IN : SCSI_DATA_OUT));
@@ -887,7 +887,7 @@ sd_reassign_blocks(sd, blkno)
 	_lto2b(sizeof(rbdata.defect_descriptor[0]), rbdata.length);
 	_lto4b(blkno, rbdata.defect_descriptor[0].dlbaddr);
 
-	return ((*sd->sc_link->scsipi_cmd)(sd->sc_link,
+	return (scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)&rbdata, sizeof(rbdata), SDRETRIES, 5000, NULL,
 	    SCSI_DATA_OUT));
@@ -918,7 +918,7 @@ sd_mode_sense(sd, scsipi_sense, page, flags)
 	 * If the command worked, use the results to fill out
 	 * the parameter structure
 	 */
-	return ((*sd->sc_link->scsipi_cmd)(sd->sc_link,
+	return (scsipi_command(sd->sc_link,
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),
 	    (u_char *)scsipi_sense, sizeof(*scsipi_sense),
 	    SDRETRIES, 6000, NULL, flags | SCSI_DATA_IN | SCSI_SILENT));
@@ -955,7 +955,7 @@ sd_get_optparms(sd, flags, dp)
 	scsipi_cmd.length = sizeof(struct scsi_mode_header) +
 	    sizeof(struct scsi_blk_desc);
 
-	if ((error = (*sd->sc_link->scsipi_cmd)(sd->sc_link,  
+	if ((error = scsipi_command(sd->sc_link,  
 	    (struct scsipi_generic *)&scsipi_cmd, sizeof(scsipi_cmd),  
 	    (u_char *)&scsipi_sense, sizeof(scsipi_sense), SDRETRIES,
 	    6000, NULL, flags | SCSI_DATA_IN)) != 0)
@@ -1185,8 +1185,8 @@ sddump(dev, blkno, va, size)
 		/*
 		 * Fill out the scsipi_xfer structure
 		 *    Note: we cannot sleep as we may be an interrupt
-		 * don't use sc_link->scsipi_cmd() as it may want
-		 * to wait for an xs.
+		 * don't use scsipi_command() as it may want to wait
+		 * for an xs.
 		 */
 		bzero(xs, sizeof(sx));
 		xs->flags |= SCSI_AUTOCONF | INUSE | SCSI_DATA_OUT;
@@ -1204,7 +1204,7 @@ sddump(dev, blkno, va, size)
 		/*
 		 * Pass all this info to the scsi driver.
 		 */
-		retval = (*sd->sc_link->adapter->scsipi_cmd)(xs);
+		retval = scsipi_command_direct(xs);
 		if (retval != COMPLETE)
 			return (ENXIO);
 #else	/* SD_DUMP_NOT_TRUSTED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.27 1997/10/01 01:19:12 enami Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.28 1997/10/18 19:51:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -251,7 +251,7 @@ scsistrategy(bp)
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= SCSI_ESCAPE;
 
-	error = (*sc_link->scsipi_cmd)(sc_link,
+	error = scsipi_command(sc_link,
 	    (struct scsipi_generic *)screq->cmd, screq->cmdlen,
 	    (u_char *)bp->b_data, screq->datalen,
 	    0, /* user must do the retries *//* ignored */

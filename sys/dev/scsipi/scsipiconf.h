@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.3 1997/10/01 01:19:14 enami Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.4 1997/10/18 19:51:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -309,6 +309,22 @@ struct scsi_quirk_inquiry_pattern {
 	u_int16_t quirks;
 };
 
+/*
+ * Macro to issue a SCSI command.  Treat it like a function:
+ *
+ *	int scsipi_command __P((struct scsi_link *link,
+ *	    struct scsipi_generic *scsipi_cmd, int cmdlen,
+ *	    u_char *data_addr, int datalen, int retries,
+ *	    int timeout, struct buf *bp, int flags));
+ */
+#define	scsipi_command(l, c, cl, da, dl, r, t, b, f)			\
+	(*(l)->scsipi_cmd)((l), (c), (cl), (da), (dl), (r), (t), (b), (f))
+
+/*
+ * Similar, but invoke the controller directly with a scsipi_xfer.
+ */
+#define	scsipi_command_direct(xs)					\
+	(*(xs)->sc_link->adapter->scsipi_cmd)((xs))
 
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
