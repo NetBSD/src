@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.41 2004/07/15 06:20:58 dyoung Exp $	*/
+/*	$NetBSD: atw.c,v 1.42 2004/07/15 06:28:37 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.41 2004/07/15 06:20:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.42 2004/07/15 06:28:37 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -884,16 +884,6 @@ atw_reset(struct atw_softc *sc)
 static void
 atw_clear_sram(struct atw_softc *sc)
 {
-#if 0
-	for (addr = 0; addr < 448; addr++) {
-		ATW_WRITE(sc, ATW_WEPCTL,
-		    ATW_WEPCTL_WR | ATW_WEPCTL_UNKNOWN0	| addr);
-		DELAY(1000);
-		ATW_WRITE(sc, ATW_WESK, 0);
-		DELAY(1000); /* paranoia */
-	}
-	return;
-#endif
 	memset(sc->sc_sram, 0, sizeof(sc->sc_sram));
 	/* XXX not for revision 0x20. */
 	atw_write_sram(sc, 0, sc->sc_sram, sizeof(sc->sc_sram));
