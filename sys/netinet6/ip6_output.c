@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.37 2001/10/15 09:51:17 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.38 2001/10/17 08:23:06 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -870,12 +870,7 @@ skip_ipsec2:;
 		/* clean ipsec history once it goes out of the node */
 		ipsec_delaux(m);
 #endif
-#ifdef OLDIP6OUTPUT
-		error = (*ifp->if_output)(ifp, m, (struct sockaddr *)dst,
-					  ro->ro_rt);
-#else
 		error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
-#endif
 		goto done;
 	} else if (mtu < IPV6_MMTU) {
 		/*
@@ -1004,13 +999,7 @@ sendorfree:
 			/* clean ipsec history once it goes out of the node */
 			ipsec_delaux(m);
 #endif
-#ifdef OLDIP6OUTPUT
-			error = (*ifp->if_output)(ifp, m,
-						  (struct sockaddr *)dst,
-						  ro->ro_rt);
-#else
 			error = nd6_output(ifp, origifp, m, dst, ro->ro_rt);
-#endif
 		} else
 			m_freem(m);
 	}

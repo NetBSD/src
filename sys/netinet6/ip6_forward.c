@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.23 2001/07/18 09:24:26 itojun Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.24 2001/10/17 08:23:06 itojun Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -503,13 +503,7 @@ ip6_forward(m, srcrt)
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* PFIL_HOOKS */
 
-#ifdef OLDIP6OUTPUT
-	error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,
-					 (struct sockaddr *)dst,
-					 ip6_forward_rt.ro_rt);
-#else
 	error = nd6_output(rt->rt_ifp, origifp, m, dst, rt);
-#endif
 	if (error) {
 		in6_ifstat_inc(rt->rt_ifp, ifs6_out_discard);
 		ip6stat.ip6s_cantforward++;
