@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.1.2.5 2002/09/04 19:54:48 nathanw Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.1.2.6 2002/10/27 23:35:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sys/queue.h>
 #include <sys/mman.h>
 
-#include "sched.h"
+#include <sched.h>
 #include "pthread.h"
 #include "pthread_int.h"
 

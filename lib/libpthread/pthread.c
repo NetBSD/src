@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.1.2.29 2002/10/22 01:28:20 nathanw Exp $	*/
+/*	$NetBSD: pthread.c,v 1.1.2.30 2002/10/27 23:35:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <ucontext.h>
 #include <sys/cdefs.h>
 
-#include "sched.h"
+#include <sched.h>
 #include "pthread.h"
 #include "pthread_int.h"
 
