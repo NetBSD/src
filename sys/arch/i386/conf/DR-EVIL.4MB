@@ -1,7 +1,0 @@
-#	$NetBSD: DR-EVIL.4MB,v 1.1 2000/09/07 18:55:30 thorpej Exp $
-#
-#	A DR-EVIL kernel using large pages for the kernel image.
-#
-
-include	"arch/i386/conf/DR-EVIL"
-include "arch/i386/conf/largepages.inc"
