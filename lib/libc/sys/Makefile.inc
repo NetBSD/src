@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.113 2001/07/18 23:03:10 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.114 2001/09/06 00:18:18 wiz Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -199,7 +199,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	link.2 listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 mount.2 \
 	mprotect.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \
-	munmap.2 nanosleep.2 nfssvc.2 open.2 pathconf.2 pipe.2 \
+	munmap.2 nanosleep.2 nfssvc.2 ntp_adjtime.2 open.2 pathconf.2 pipe.2 \
 	poll.2 profil.2 ptrace.2 quotactl.2 read.2 readlink.2 \
 	reboot.2 recv.2 rename.2 revoke.2 rmdir.2 select.2 semctl.2 \
 	semget.2 semop.2 send.2 setgroups.2 setpgid.2 setregid.2 \
@@ -237,6 +237,7 @@ MLINKS+=lseek.2 seek.2
 MLINKS+=mlock.2 munlock.2
 MLINKS+=mlockall.2 munlockall.2
 MLINKS+=mount.2 unmount.2
+MLINKS+=ntp_adjtime.2 ntp_gettime.2
 MLINKS+=pathconf.2 fpathconf.2
 MLINKS+=read.2 readv.2 read.2 pread.2 read.2 preadv.2
 MLINKS+=recv.2 recvfrom.2 recv.2 recvmsg.2
