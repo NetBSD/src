@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.15 1999/12/20 04:06:25 jwise Exp $	*/
+/*	$NetBSD: cmds.c,v 1.16 1999/12/20 21:42:50 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: cmds.c,v 1.15 1999/12/20 04:06:25 jwise Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.16 1999/12/20 21:42:50 jwise Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -57,25 +57,22 @@ command(cmd)
 {
 	struct command *c;
 	struct mode *p;
-	char *cp;
+	char *args;
 	sigset_t set;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
 	sigprocmask(SIG_BLOCK, &set, NULL);
-	for (cp = cmd; *cp && !isspace((unsigned char)*cp); cp++)
-		;
-	if (*cp)
-		*cp++ = '\0';
-	if (*cmd == '\0')
-		return;
-	for (; *cp && isspace((unsigned char)*cp); cp++)
-		;
+
+	args = cmd;
+
+	args  = strtok(cmd, " \t");
+	args  = strtok(NULL, " \t");
 
 	if (curmode->c_commands) {
 		for (c = curmode->c_commands; c->c_name; c++) {
 			if (strcmp(cmd, c->c_name) == 0) {
-				(c->c_cmd)(cp);
+				(c->c_cmd)(args);
 				goto done;
 			}
 		}
@@ -83,14 +80,9 @@ command(cmd)
 
 	for (c = global_commands; c->c_name; c++) {
 		if (strcmp(cmd, c->c_name) == 0) {
-			(c->c_cmd)(cp);
+			(c->c_cmd)(args);
 			goto done;
 		}
-	}
-
-	if (isdigit(cmd[0])) {
-		global_interval(cmd);
-		goto done;
 	}
 
 	for (p = modes; p->c_name; p++) {
@@ -98,6 +90,11 @@ command(cmd)
 			switch_mode(p);
 			goto done;
 		}
+	}
+
+	if (isdigit(cmd[0])) {
+		global_interval(cmd);
+		goto done;
 	}
 
 	error("%s: Unknown command.", cmd);
