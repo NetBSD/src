@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/09/17 19:39:40 drochner Exp $	 */
+/*	$NetBSD: main.c,v 1.8.2.1 1997/11/01 04:25:56 mellon Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -67,6 +67,7 @@ void	command_ls __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
 void	command_mode __P((char *));
+void	command_dev __P((char *));
 
 struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -75,6 +76,7 @@ struct bootblk_command commands[] = {
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "mode",	command_mode },
+	{ "dev",	command_dev },
 	{ NULL,		NULL },
 };
 
@@ -97,7 +99,8 @@ parsebootfile(fname, fsmode, devname, unit, partition, file)
 	if (fname == NULL)
 		return (0);
 
-	if ((col = strchr(fname, ':'))) {	/* device given */
+	if (strcmp(current_fsmode, "dos") && (col = strchr(fname, ':'))) {
+		/* no DOS, device given */
 		static char     savedevname[MAXDEVNAME + 1];
 		int             devlen;
 		unsigned int    u = 0, p = 0;
@@ -297,6 +300,7 @@ command_help(arg)
 	       "     (ex. \"sd0a:netbsd.old -s\"\n"
 	       "ls [path]\n"
 	       "mode ufs|dos\n"
+	       "dev xd[N[x]]:\n"
 	       "help|?\n"
 	       "quit\n");
 }
@@ -345,4 +349,35 @@ command_mode(arg)
 		current_fsmode = "ufs";
 	else
 		printf("invalid mode\n");
+}
+
+void
+command_dev(arg)
+	char *arg;
+{
+	static char savedevname[MAXDEVNAME + 1];
+	char *fsname, *devname;
+	const char *file; /* dummy */
+
+	if (!strcmp(current_fsmode, "dos")) {
+		printf("not available in DOS mode\n");
+		return;
+	}
+
+	if (*arg == '\0') {
+		printf("%s%d%c:\n", default_devname, default_unit,
+		       'a' + default_partition);
+		return;
+	}
+
+	if (!strchr(arg, ':') ||
+	    parsebootfile(arg, &fsname, &devname, &default_unit,
+			  &default_partition, &file)) {
+		command_help(NULL);
+		return;
+	}
+	    
+	/* put to own static storage */
+	strncpy(savedevname, devname, MAXDEVNAME + 1);
+	default_devname = savedevname;
 }
