@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.26 2000/10/11 14:46:03 is Exp $
+#	$NetBSD: Makefile,v 1.27 2001/03/27 00:48:59 pooka Exp $
 
 .include <bsd.own.mk>
 
 WFORMAT=	1
 MFILESDIR=	/usr/share/misc
-MFILES=		magic magic.mime
+MFILES=		magic magic.mgc magic.mime
 MAGIC=		${MFILESDIR}/magic
 .if ${MKSHARE} != "no"
 FILESDIR=	${MFILESDIR}
@@ -15,7 +15,7 @@ PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
 		print.c compress.c readelf.c 
 CPPFLAGS+=	-DMAGIC='"$(MAGIC)"' -DHAVE_CONFIG_H -I${.CURDIR}
-CPPFLAGS+=	-DBUILTIN_ELF -DELFCORE
+CPPFLAGS+=	-DQUICK -DBUILTIN_ELF -DELFCORE
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic
@@ -30,6 +30,7 @@ MAGFILES=	$(.CURDIR)/Header \
 .if ${MKSHARE} != "no"
 magic:		$(MAGFILES)
 	cat $(MAGFILES) > $(.TARGET)
+	$(.CURDIR)/$(PROG) -C -m $(.TARGET)
 .else
 magic:
 .endif
