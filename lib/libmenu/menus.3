@@ -1,4 +1,4 @@
-.\"	$NetBSD: menus.3,v 1.8 2002/02/20 17:49:14 wiz Exp $
+.\"	$NetBSD: menus.3,v 1.9 2002/06/20 12:18:48 blymn Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -257,3 +257,27 @@ The menu driver could not process the request.
 .Xr menu_post 3 ,
 .Xr menu_userptr 3 ,
 .Xr menu_win 3
+.Sh NOTES
+This implementation of the menus library does depart in behaviour
+subtly from the original AT \*[Am] T implementation.  Some of the more
+notable departures are:
+.Pp
+.Bl -tag -width "item marking" -compact
+.It unmark
+The original implementation did not have a marker for an unmarked field
+the mark was only displayed next to a field when it had been marked using
+the REQ_TOGGLE_ITEM.  In this implementation a separate marker can be used
+to indicate an unmarked item.  This can be set using set_menu_unmark function.
+There is no requirement for the mark and unmark strings to be the same
+length. Room will be left for the longest of the two.  The unmark string
+is optional, if it is not set then menus defaults to the old behaviour.
+.It item marking
+In the original implementation the current item was considered selected
+and hence had the mark string displayed next to it.  This implementation
+does not do this because the Author considers the effect too confusing. 
+Especially in the case of a multiple selection menu because there was no
+way to tell if the current item is selected or not without shifting off 
+of it.  Since the current item is displayed using the foreground 
+attribute it was deemed unnecessary to also display the mark string against
+the current item.
+.El
