@@ -1,4 +1,4 @@
-# $NetBSD: YEAH-BABY,v 1.1 2000/05/22 16:46:11 thorpej Exp $
+# $NetBSD: YEAH-BABY,v 1.2 2000/05/23 02:04:31 thorpej Exp $
 #
 # yeah-baby.shagadelic.org -- thorpej's Alphastation 200 file server
 # and wireless network gateway
@@ -23,7 +23,7 @@ options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 #options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 #options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 #options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
-#options 	DEC_KN300	# KN300:	AlphaServer 4100
+#options 	DEC_KN300	# KN300:	AlphaServer 4100 and 1200
 #options 	DEC_550		# Miata:	Digital Personal Workstation
 #options 	DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
 #options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
