@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.64 2001/05/19 19:46:08 soren Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.65 2001/07/06 18:06:59 mcr Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -438,6 +438,11 @@ pccbbattach(parent, self, aux)
 #if rbus
 	sc->sc_rbus_iot = rbus_pccbb_parent_io(pa);
 	sc->sc_rbus_memt = rbus_pccbb_parent_mem(pa);
+
+#if 0
+	printf("pa->pa_memt: %08x vs rbus_mem->rb_bt: %08x\n",
+	       pa->pa_memt, sc->sc_rbus_memt->rb_bt);
+#endif
 #endif /* rbus */
 
 	sc->sc_base_memh = 0;
@@ -1680,6 +1685,29 @@ pccbb_cb_intr_disestablish(ct, ih)
 }
 
 
+void
+pccbb_intr_route(sc)
+     struct pccbb_softc *sc;
+{
+  pcireg_t reg;
+
+  /* initialize bridge intr routing */
+  reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
+  reg &= ~CB_BCR_INTR_IREQ_ENABLE;
+  pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, reg);
+
+  switch (sc->sc_chipset) {
+  case CB_TI113X:
+    reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
+    /* functional intr enabled */
+    reg |= PCI113X_CBCTRL_PCI_INTR;
+    pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, reg);
+    break;
+  default:
+    break;
+  }
+}
+
 /*
  * static void *pccbb_intr_establish(struct pccbb_softc *sc,
  *				     int irq,
@@ -1701,26 +1729,12 @@ pccbb_intr_establish(sc, irq, level, func, arg)
 	void *arg;
 {
 	struct pccbb_intrhand_list *pil, *newpil;
-	pcireg_t reg;
 
 	DPRINTF(("pccbb_intr_establish start. %p\n", sc->sc_pil));
 
 	if (sc->sc_pil == NULL) {
-		/* initialize bridge intr routing */
-		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR);
-		reg &= ~CB_BCR_INTR_IREQ_ENABLE;
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_BCR_INTR, reg);
+	  pccbb_intr_route(sc);
 
-		switch (sc->sc_chipset) {
-		case CB_TI113X:
-			reg = pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_CBCTRL);
-			/* functional intr enabled */
-			reg |= PCI113X_CBCTRL_PCI_INTR;
-			pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_CBCTRL, reg);
-			break;
-		default:
-			break;
-		}
 	}
 
 	/* 
@@ -2916,8 +2930,8 @@ pccbb_rbus_cb_space_alloc(ct, rb, addr, size, mask, align, flags, addrp, bshp)
 
 	} else {
 		DPRINTF(
-		    ("pccbb_rbus_cb_space_alloc: Bus space tag %x is NOT used.\n",
-		    rb->rb_bt));
+		    ("pccbb_rbus_cb_space_alloc: Bus space tag %x is NOT used. io: %d, mem: %d\n",
+		    rb->rb_bt, sc->sc_iot, sc->sc_memt));
 		return 1;
 		/* XXX: panic here? */
 	}
