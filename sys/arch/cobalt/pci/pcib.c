@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.7 2003/07/15 01:29:23 lukem Exp $	*/
+/*	$NetBSD: pcib.c,v 1.8 2003/09/12 14:59:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2003/07/15 01:29:23 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.8 2003/09/12 14:59:15 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.7 2003/07/15 01:29:23 lukem Exp $");
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
-#include <machine/autoconf.h> 
+#include <machine/autoconf.h>
 #include <machine/intr.h>
 #include <machine/intr_machdep.h>
 
@@ -96,13 +96,13 @@ pcib_attach(parent, self, aux)
 	cpu_intr_establish(4, IPL_NONE, icu_intr, NULL);
 }
 
-void *   
+void *
 icu_intr_establish(irq, type, level, func, arg)
-        int irq;
-        int type;
-        int level;
-        int (*func)(void *);
-        void *arg;
+	int irq;
+	int type;
+	int level;
+	int (*func)(void *);
+	void *arg;
 {
 	int i;
 
