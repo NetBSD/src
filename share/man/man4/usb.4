@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.24 2000/03/30 17:53:56 augustss Exp $
+.\" $NetBSD: usb.4,v 1.25 2000/04/14 14:55:18 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,6 +123,8 @@ driver for CATC USB-EL1201A USB Ethernet.
 driver for Kawasaki LSI KL5KUSB101B USB Ethernet.
 .It uaudio
 driver for audio devices.
+.It uftdi
+driver for FTDI based serial adapters.
 .It ugen
 generic driver for
 .Tn USB
@@ -130,7 +132,7 @@ devices.
 .It uhid
 generic driver for Human Interface Devices.
 .It ukbd
-keyboard driver
+keyboard driver.
 .It ulpt
 printer driver.
 .It umass
@@ -138,9 +140,13 @@ driver for mass storage devices, such as disks.
 .It umodem
 driver for communication devices that use the Abstract Control Model.
 .It ums
-mouse driver
+mouse driver.
+.It upl
+driver for
+.Tn Prolific
+host-to-host adapter.
 .It uvisor
-Handspring Visor driver
+Handspring Visor driver.
 .El
 
 .Sh INTRODUCTION TO USB
@@ -262,16 +268,24 @@ be filled by information about the device on that address.
 Should no such device exist an error is reported.
 .Bd -literal
 struct usb_device_info {
-	uByte	addr;		/* device address */
-	char	product[USB_MAX_STRING_LEN];
-	char	vendor[USB_MAX_STRING_LEN];
-	char	release[8];
-	uByte	class;
-	uByte	config;
-	uByte	lowspeed;
-	int	power;
-	int	nports;
-	uByte	ports[16];
+	u_int8_t	bus;
+	u_int8_t	addr;
+	usb_event_cookie_t cookie;
+	char		product[USB_MAX_STRING_LEN];
+	char		vendor[USB_MAX_STRING_LEN];
+	char		release[8];
+	u_int16_t	productNo;
+	u_int16_t	vendorNo;
+	u_int16_t	releaseNo;
+	u_int8_t	class;
+	u_int8_t	subclass;
+	u_int8_t	protocol;
+	u_int8_t	config;
+	u_int8_t	lowspeed;
+	int		power;
+	int		nports;
+	char		devnames[USB_MAX_DEVNAMES][USB_MAX_DEVNAMELEN];
+	u_int8_t	ports[16];
 #define USB_PORT_ENABLED 0xff
 #define USB_PORT_SUSPENDED 0xfe
 #define USB_PORT_POWERED 0xfd
@@ -380,6 +394,7 @@ specifications can be found at
 .Xr ulpt 4 ,
 .Xr umass 4 ,
 .Xr ums 4 ,
+.Xr upl 4 ,
 .Xr uvisor 4 ,
 .Xr usb 3 ,
 .Xr usbdevs 8
