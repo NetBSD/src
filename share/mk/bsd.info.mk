@@ -1,64 +1,73 @@
-#	$NetBSD: bsd.info.mk,v 1.22 2001/08/14 07:02:13 tv Exp $
+#	$NetBSD: bsd.info.mk,v 1.23 2001/11/02 05:21:50 tv Exp $
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.depall.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
-MAKEINFO?=	makeinfo
-INFOFLAGS?=	
-INSTALL_INFO?=	install-info
-
+##### Basic targets
 .PHONY:		infoinstall cleaninfo
 cleandir:	cleaninfo
+realinstall:	infoinstall
+
+##### Default values
+MAKEINFO?=	makeinfo
+INFOFLAGS?=
+INSTALL_INFO?=	install-info
+
+INFOFILES?=
+
+##### Build rules
+.if ${MKINFO} != "no"
+
+INFOFILES=	${TEXINFO:C/\.te?xi(nfo)?$/.info/}
+
+realall:	${INFOFILES}
+.NOPATH:	${INFOFILES}
 
 .SUFFIXES: .txi .texi .texinfo .info
 
 .txi.info .texi.info .texinfo.info:
 	${MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
 
-.if defined(TEXINFO) && !empty(TEXINFO)
-INFOFILES=	${TEXINFO:C/\.te?xi(nfo)?$/.info/}
-.NOPATH:	${INFOFILES}
+.endif # ${MKINFO} != "no"
 
+##### Install rules
+infoinstall::	# ensure existence
 .if ${MKINFO} != "no"
-realinstall: infoinstall
-realall: ${INFOFILES}
-.endif
-
-cleaninfo:
-	rm -f ${INFOFILES}
-
-infoinstall:: ${INFOFILES:@F@${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${F}:U${INFONAME:U${F:T}}}@}
-.PRECIOUS: ${INFOFILES:@F@${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${F}:U${INFONAME:U${F:T}}}@}
-.if !defined(UPDATE)
-.PHONY: ${INFOFILES:@F@${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${F}:U${INFONAME:U${F:T}}}@}
-.endif
 
 __infoinstall: .USE
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} \
+	${INSTALL_FILE} \
 	    -o ${INFOOWN_${.ALLSRC:T}:U${INFOOWN}} \
 	    -g ${INFOGRP_${.ALLSRC:T}:U${INFOGRP}} \
 	    -m ${INFOMODE_${.ALLSRC:T}:U${INFOMODE}} \
 	    ${.ALLSRC} ${.TARGET}
-	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${.TARGET}
+	@${INSTALL_INFO} --remove --info-dir=${DESTDIR}${INFODIR} ${.TARGET} 2>/dev/null
 	${INSTALL_INFO} --info-dir=${DESTDIR}${INFODIR} ${.TARGET}
 
 .for F in ${INFOFILES:O:u}
+_FDIR:=		${INFODIR_${F}:U${INFODIR}}		# dir overrides
+_FNAME:=	${INFONAME_${F}:U${INFONAME:U${F:T}}}	# name overrides
+_F:=		${DESTDIR}${_FDIR}/${_FNAME}		# installed path
+
+${_F}:		${F} __infoinstall			# install rule
+infoinstall::	${_F}
+.PRECIOUS:	${_F}					# keep if install fails
+.PHONY:		${UPDATE:U${_F}}			# clobber unless UPDATE
 .if !defined(BUILD) && !make(all) && !make(${F})
-${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${F}:U${INFONAME:U${F:T}}}: .MADE
+${_F}:		.MADE					# no build at install
 .endif
-${DESTDIR}${INFODIR_${F}:U${INFODIR}}/${INFONAME_${F}:U${INFONAME:U${F:T}}}: ${F} __infoinstall
 .endfor
-.else
+
+.undef _FDIR
+.undef _FNAME
+.undef _F
+.endif # ${MKINFO} != "no"
+
+##### Clean rules
 cleaninfo:
+.if !empty(INFOFILES)
+	rm -f ${INFOFILES}
 .endif
 
-# Make sure all of the standard targets are defined, even if they do nothing.
-clean depend includes lint regress tags:
+##### Pull in related .mk logic
+.include <bsd.obj.mk>
+
+${TARGETS}:	# ensure existence

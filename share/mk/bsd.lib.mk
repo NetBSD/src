@@ -1,21 +1,14 @@
-#	$NetBSD: bsd.lib.mk,v 1.187 2001/10/25 19:32:15 nathanw Exp $
+#	$NetBSD: bsd.lib.mk,v 1.188 2001/11/02 05:21:50 tv Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
-.if !target(__initialized__)
-__initialized__:
-.if exists(${.CURDIR}/../Makefile.inc)
-.include "${.CURDIR}/../Makefile.inc"
-.endif
-.include <bsd.own.mk>
-.include <bsd.obj.mk>
-.include <bsd.depall.mk>
-.MAIN:		all
-.endif
+.include <bsd.init.mk>
 
+##### Basic targets
 .PHONY:		checkver cleanlib libinstall
 realinstall:	checkver libinstall
 clean:		cleanlib
 
+##### Build and install rules
 .if !defined(SHLIB_MAJOR) && exists(${SHLIB_VERSION_FILE})
 SHLIB_MAJOR != . ${SHLIB_VERSION_FILE} ; echo $$major
 SHLIB_MINOR != . ${SHLIB_VERSION_FILE} ; echo $$minor
@@ -349,10 +342,11 @@ __archivebuild: .USE
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${LIBOWN} \
-	    -g ${LIBGRP} -m 600 ${.ALLSRC} ${.TARGET}
+	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m 600 ${.ALLSRC} ${.TARGET}
 	${RANLIB} -t ${.TARGET}
+.if !defined(UNPRIVILEGED)
 	chmod ${LIBMODE} ${.TARGET}
+.endif
 
 DPSRCS+=	${SRCS:M*.[ly]:C/..$/.c/}
 CLEANFILES+=	${DPSRCS} ${YHEADER:D${SRCS:M*.y:.y=.h}}
@@ -473,8 +467,8 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: .MADE
 .endif
 ${DESTDIR}${LIBDIR}/lib${LIB}.so.${SHLIB_FULLVERSION}: lib${LIB}.so.${SHLIB_FULLVERSION}
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${LIBOWN} \
-	    -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} ${.TARGET}
+	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+		${.ALLSRC} ${.TARGET}
 .if ${OBJECT_FMT} == "a.out" && !defined(DESTDIR)
 	/sbin/ldconfig -m ${LIBDIR}
 .endif
@@ -503,11 +497,12 @@ libinstall:: ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: .MADE
 .endif
 ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
-	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} ${INSTPRIV} -o ${LIBOWN} \
-	    -g ${LIBGRP} -m ${LIBMODE} ${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
+	${INSTALL_FILE} -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
+		${.ALLSRC} ${DESTDIR}${LINTLIBDIR}
 .endif
 .endif
 
+##### Pull in related .mk logic
 .include <bsd.man.mk>
 .include <bsd.nls.mk>
 .include <bsd.files.mk>
@@ -516,5 +511,4 @@ ${DESTDIR}${LINTLIBDIR}/llib-l${LIB}.ln: llib-l${LIB}.ln
 .include <bsd.dep.mk>
 .include <bsd.sys.mk>
 
-# Make sure all of the standard targets are defined, even if they do nothing.
-lint regress:
+${TARGETS}:	# ensure existence
