@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.82 2002/09/27 15:38:06 provos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.83 2002/12/12 12:28:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.82 2002/09/27 15:38:06 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.83 2002/12/12 12:28:13 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -973,13 +973,25 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * is actually written.
 	 */
 	if (daddr != LFS_UNUSED_DADDR) {
-		LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
+		u_int32_t oldsn = dtosn(fs, daddr);
 #ifdef DIAGNOSTIC
-		if (sup->su_nbytes < DINODE_SIZE * (1 + sp->ndupino)) {
+		int ndupino = (sp->seg_number == oldsn) ? sp->ndupino : 0;
+#endif
+		LFS_SEGENTRY(sup, fs, oldsn, bp);
+#ifdef DIAGNOSTIC
+		if (sup->su_nbytes + DINODE_SIZE * ndupino < DINODE_SIZE) {
 			printf("lfs_writeinode: negative bytes "
-			       "(segment %d short by %d)\n",
+			       "(segment %d short by %d, "
+			       "oldsn=%u, cursn=%u, daddr=%d, su_nbytes=%u, "
+			       "ndupino=%d)\n",
 			       dtosn(fs, daddr),
-			       (int)DINODE_SIZE - sup->su_nbytes);
+			       (int)DINODE_SIZE * (1 - sp->ndupino)
+				   - sup->su_nbytes,
+			       (unsigned int)oldsn,
+			       (unsigned int)sp->seg_number,
+			       (int)daddr,
+			       (unsigned int)sup->su_nbytes,
+			       sp->ndupino);
 			panic("lfs_writeinode: negative bytes");
 			sup->su_nbytes = DINODE_SIZE;
 		}
@@ -1274,13 +1286,18 @@ lfs_updatemeta(struct segment *sp)
 		 * and location.
 		 */
 		if (daddr > 0) {
+			u_int32_t oldsn = dtosn(fs, daddr);
+#ifdef DIAGNOSTIC
+			int ndupino = (sp->seg_number == oldsn) ?
+			    sp->ndupino : 0;
+#endif
 			if (lbn >= 0 && lbn < NDADDR)
 				osize = ip->i_lfs_fragsize[lbn];
 			else
 				osize = fs->lfs_bsize;
-			LFS_SEGENTRY(sup, fs, dtosn(fs, daddr), bp);
+			LFS_SEGENTRY(sup, fs, oldsn, bp);
 #ifdef DIAGNOSTIC
-			if (sup->su_nbytes < osize + DINODE_SIZE * sp->ndupino) {
+			if (sup->su_nbytes + DINODE_SIZE * ndupino < osize) {
 				printf("lfs_updatemeta: negative bytes "
 				       "(segment %d short by %d)\n",
 				       dtosn(fs, daddr),
@@ -1288,8 +1305,9 @@ lfs_updatemeta(struct segment *sp)
 				printf("lfs_updatemeta: ino %d, lbn %d, "
 				       "addr = 0x%x\n", VTOI(sp->vp)->i_number,
 				       lbn, daddr);
+				printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 				panic("lfs_updatemeta: negative bytes");
-				sup->su_nbytes = osize + DINODE_SIZE * sp->ndupino;
+				sup->su_nbytes = osize;
 			}
 #endif
 #ifdef DEBUG_SU_NBYTES
