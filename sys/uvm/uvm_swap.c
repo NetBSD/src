@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.37 2000/05/19 03:45:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.37.4.1 2000/11/13 20:55:38 tv Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -730,12 +730,6 @@ sys_swapctl(p, v, retval)
 			free(sdp, M_VMSWAP);
 			break;
 		}
-
-		/*
-		 * got it!   now add a second reference to vp so that
-		 * we keep a reference to the vnode after we return.
-		 */
-		vref(vp);
 		break;
 
 	case SWAP_OFF:
@@ -769,9 +763,10 @@ sys_swapctl(p, v, retval)
 	}
 
 	/*
-	 * done!   use vput to drop our reference and unlock
+	 * done!  release the ref gained by namei() and unlock.
 	 */
 	vput(vp);
+
 out:
 	lockmgr(&swap_syscall_lock, LK_RELEASE, NULL);
 
@@ -953,6 +948,11 @@ swap_on(p, sdp)
 		printf("leaving %d pages of swap\n", size);
 	}
 
+	/*
+	 * add a ref to vp to reflect usage as a swap device.
+	 */
+	vref(vp);
+
   	/*
 	 * add anons to reflect the new swap space
 	 */
@@ -1023,16 +1023,16 @@ swap_off(p, sdp)
 #endif
 
 	/*
-	 * done with the vnode.
+	 * done with the vnode and saved creds.
+	 * drop our ref on the vnode before calling VOP_CLOSE()
+	 * so that spec_close() can tell if this is the last close.
 	 */
 	if (sdp->swd_vp->v_type == VREG) {
 		crfree(sdp->swd_cred);
 	}
+	vrele(sdp->swd_vp);
 	if (sdp->swd_vp != rootvp) {
 		(void) VOP_CLOSE(sdp->swd_vp, FREAD|FWRITE, p->p_ucred, p);
-	}
-	if (sdp->swd_vp) {
-		vrele(sdp->swd_vp);
 	}
 
 	/* remove anons from the system */
