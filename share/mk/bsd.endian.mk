@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.endian.mk,v 1.6 2004/03/12 23:43:41 soren Exp $
+#	$NetBSD: bsd.endian.mk,v 1.7 2004/03/13 02:36:43 christos Exp $
 
 .if !defined(_BSD_ENDIAN_MK_)
 _BSD_ENDIAN_MK_=1
@@ -21,7 +21,7 @@ TARGET_ENDIANNESS=	little
       ${MACHINE_ARCH} == "powerpc" || \
       ${MACHINE_ARCH} == "sh5eb" || \
       ${MACHINE_ARCH} == "sparc" || \
-      ${MACHINE_ARCH} == "sparc64" ||
+      ${MACHINE_ARCH} == "sparc64"
 TARGET_ENDIANNESS=	big
 .else
 TARGET_ENDIANNESS=	unknown
