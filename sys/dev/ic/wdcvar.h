@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.55 2004/01/03 23:59:58 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.56 2004/04/13 19:51:06 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct wdc_channel {
 	bus_space_handle_t      data32ioh;
 
 	/* Our state */
-	int ch_flags;
+	volatile int ch_flags;
 #define WDCF_ACTIVE   0x01	/* channel is active */
 #define WDCF_SHUTDOWN 0x02	/* channel is shutting down */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
