@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.6 2000/06/26 04:56:12 simonb Exp $	*/
+/*	$NetBSD: fbvar.h,v 1.6.4.1 2002/06/28 08:22:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -44,6 +44,8 @@
  *	@(#)fbvar.h	8.1 (Berkeley) 6/11/93
  */
 
+#include <sys/event.h>		/* for struct knote */
+
 /*
  * Frame buffer variables.  All frame buffer drivers must provide the
  * following in order to participate.
@@ -77,6 +79,7 @@ struct fbdriver {
 	int 	(*fbd_open) __P((dev_t, int, int, struct proc *));
 	int 	(*fbd_close) __P((dev_t, int, int, struct proc *));
 	paddr_t	(*fbd_mmap) __P((dev_t, off_t, int));
+	int	(*fbd_kqfilter) __P((dev_t, struct knote *));
 	/* These are the internal ioctl functions */
 	int 	(*fbd_gattr) __P((struct fbdevice *,  void *));
 	int 	(*fbd_gvideo) __P((struct fbdevice *, void *));

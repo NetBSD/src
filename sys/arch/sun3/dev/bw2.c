@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.16.4.2 2002/06/23 17:42:37 jdolecek Exp $	*/
+/*	$NetBSD: bw2.c,v 1.16.4.3 2002/06/28 08:22:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -100,7 +100,7 @@ static int bw2gvideo __P((struct fbdevice *, void *));
 static int bw2svideo __P((struct fbdevice *, void *));
 
 static struct fbdriver bw2fbdriver = {
-	bw2open, bw2close, bw2mmap,
+	bw2open, bw2close, bw2mmap, bw2kqfilter,
 	fb_noioctl,
 	bw2gvideo, bw2svideo,
 	fb_noioctl, fb_noioctl, };
@@ -344,6 +344,31 @@ bw2mmap(dev, off, prot)
 	 * getting horribly broken behaviour without it.
 	 */
 	return ((sc->sc_phys + off) | PMAP_NC);
+}
+
+static void
+filt_bw2detach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops bw2_filtops =
+	{ 1, NULL, filt_bw2detach, filt_seltrue };
+
+int
+bw2kqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &bw2_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /* FBIOGVIDEO: */
