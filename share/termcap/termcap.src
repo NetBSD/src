@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.63 2000/10/22 19:29:46 scottr Exp $
+#	$NetBSD: termcap.src,v 1.64 2001/01/14 19:10:59 jdc Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -1781,8 +1781,13 @@ xterm-nc|vs100-nc|xterms-nc|xterm terminal emulator (X Window System):\
 	:u6=\E[%i%d;%dR:u7=\E[6n:u8=\E[?1;2c:u9=\E[c:\
 	:tc=xterm-r6:
 
-# This is the standard xterm entry.
+# This is the standard xterm entry.  Visual bell is undefined for compatibility
+# with older implementations.
 xterm|vs100|xterms|xterm terminal emulator (X Window System):\
+	:vb@:tc=xterm-xf86-v33:
+
+# Xterm with the visual bell capability.
+xterm-vb|xterm terminal emulator with visual bell:\
 	:tc=xterm-xf86-v33:
 
 # These entries allow access to the X titlebar and icon name as a status line. 
