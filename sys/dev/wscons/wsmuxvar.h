@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmuxvar.h,v 1.6 2001/10/27 00:39:29 augustss Exp $	*/
+/*	$NetBSD: wsmuxvar.h,v 1.7 2002/03/02 08:22:28 takemura Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ struct	wsmux_softc *wsmux_getmux(int);
 struct	wsmux_softc *wsmux_create(const char *, int);
 int	wsmux_attach_sc(struct wsmux_softc *, struct wsevsrc *);
 void	wsmux_detach_sc(struct wsevsrc *);
+int	wsmux_set_display(struct wsmux_softc *, struct device *);
 
 int	wskbd_add_mux(int, struct wsmux_softc *);
 int	wsmouse_add_mux(int, struct wsmux_softc *);
