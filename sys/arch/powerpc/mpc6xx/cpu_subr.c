@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.14.4.3 2002/06/21 05:33:01 lukem Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.14.4.4 2002/06/21 05:35:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -224,6 +224,7 @@ cpu_attach_common(struct device *self, int id)
 
 #ifdef NAPMODE
 	switch (vers) {
+	case IBM750FX:
 	case MPC750:
 	case MPC7400:
 		/* Select NAP mode. */
@@ -234,6 +235,7 @@ cpu_attach_common(struct device *self, int id)
 #endif
 
 	switch (vers) {
+	case IBM750FX:
 	case MPC750:
 		hid0 &= ~HID0_DBP;		/* XXX correct? */
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
@@ -274,7 +276,7 @@ cpu_attach_common(struct device *self, int id)
 	/*
 	 * Display speed and cache configuration.
 	 */
-	if (vers == MPC750 || vers == MPC7400 ||
+	if (vers == MPC750 || vers == MPC7400 || vers == IBM750FX ||
 	    vers == MPC7410 || vers == MPC7450 || vers == MPC7455) {
 		printf("%s", self->dv_xname);
 		cpu_print_speed();
@@ -289,7 +291,7 @@ cpu_attach_common(struct device *self, int id)
 	 * XXX supported by Motorola and may return values that are off by 
 	 * XXX 35-55 degrees C.
 	 */
-	if (vers == MPC750)
+	if (vers == MPC750 || vers == IBM750FX)
 		cpu_tau_setup(ci);
 #endif
 
