@@ -1,15 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2002/03/05 20:29:33 thorpej Exp $
-
-.include <bsd.own.mk>
-
-TOP=	${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-
-IMAGE=	boot-big.fs
-
-KERNDIR!=	cd ${TOP}/kernel-ramdisk && ${PRINTOBJDIR}
-KERN=		${KERNDIR}/netbsd.INSTALL.gz
+#	$NetBSD: Makefile,v 1.16 2002/04/11 12:17:14 lukem Exp $
 
 # This Makefile builds a boot image on a 2.88M-sized image.
 #
@@ -25,9 +14,12 @@ KERN=		${KERNDIR}/netbsd.INSTALL.gz
 # This should place the image in i386-cd.img, which can hopefully
 # be used to burn a CD.
 
+IMAGE=		boot-big.fs
+KERNELDIR=	kernel-ramdisk
+KERNEL=		netbsd.INSTALL.gz
 DISKSIZE=	5760
 METAFILE!=	printf "USTAR.volsize.%o" ${DISKSIZE}
 BLOCK8K=	359
-PAD=yes
+PAD=		yes
 
-.include "${TOP}/common/Makefile.bootfloppy"
+.include "${.CURDIR}/../common/Makefile.bootfloppy"
