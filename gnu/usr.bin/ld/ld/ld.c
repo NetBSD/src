@@ -32,7 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    Set, indirect, and warning symbol features added by Randy Smith. */
 
 /*
- *	$Id: ld.c,v 1.12 1993/11/10 21:53:30 pk Exp $
+ *	$Id: ld.c,v 1.13 1993/11/14 16:51:17 pk Exp $
  */
    
 /* Define how to initialize system-dependent header fields.  */
@@ -1969,7 +1969,9 @@ write_header ()
 {
 	int flags = (rrs_section_type == RRS_FULL) ? EX_DYNAMIC : 0;
 
-	N_SET_FLAG (outheader, flags);
+	if (flags && oldmagic)
+		error("File format incompatible with DYNAMIC flag");
+	if (!oldmagic) N_SET_FLAG (outheader, flags);
 	outheader.a_text = text_size;
 	outheader.a_data = data_size;
 	outheader.a_bss = bss_size;
