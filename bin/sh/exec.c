@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)exec.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: exec.c,v 1.12 1994/12/05 19:07:39 cgd Exp $";
+static char *rcsid = "$Id: exec.c,v 1.13 1995/01/15 09:29:16 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -583,20 +583,17 @@ hashcd() {
 void
 changepath(newval)
 	char *newval;
-	{
+{
 	char *old, *new;
 	int index;
 	int firstchange;
 	int bltin;
-	int hasdot;
 
 	old = pathval();
 	new = newval;
 	firstchange = 9999;	/* assume no change */
-	index = hasdot = 0;
+	index = 0;
 	bltin = -1;
-	if (*new == ':')
-		hasdot++;
 	for (;;) {
 		if (*old != *new) {
 			firstchange = index;
@@ -613,14 +610,9 @@ changepath(newval)
 			char c = *(new+1);
 
 			index++;
-			if (c == ':' || c == '\0' || (c == '.' && 
-			   ((c = *(new+2)) == ':' || c == '\0')))
-				hasdot++;
 		}
 		new++, old++;
 	}
-	if (hasdot && geteuid() == 0)
-		out2str("sh: warning: running as root with dot in PATH\n");
 	if (builtinloc < 0 && bltin >= 0)
 		builtinloc = bltin;		/* zap builtins */
 	if (builtinloc >= 0 && bltin < 0)
