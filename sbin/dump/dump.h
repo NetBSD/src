@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.19.6.4 2002/01/16 09:40:52 he Exp $	*/
+/*	$NetBSD: dump.h,v 1.19.6.5 2002/01/16 09:55:20 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -49,21 +49,21 @@ struct ufsi {
 	int32_t ufs_bsize;	/* block size */
 	int32_t ufs_bshift;	/* log2(ufs_bsize) */
 	int32_t ufs_fsize;	/* fragment size */
-	int32_t ufs_frag;       /* block size / frag size */
+	int32_t ufs_frag;	/* block size / frag size */
 	int32_t ufs_fsatoda;	/* disk address conversion constant */
 	int32_t	ufs_nindir;	/* disk addresses per indirect block */
-	int32_t ufs_inopb;      /* inodes per block */
+	int32_t ufs_inopb;	/* inodes per block */
 	int32_t ufs_maxsymlinklen; /* max symlink length */
-	int32_t ufs_bmask;      /* block mask */
-	int32_t ufs_fmask;      /* frag mask */
-	int64_t ufs_qbmask;     /* ~ufs_bmask */
-	int64_t ufs_qfmask;     /* ~ufs_fmask */
+	int32_t ufs_bmask;	/* block mask */
+	int32_t ufs_fmask;	/* frag mask */
+	int64_t ufs_qbmask;	/* ~ufs_bmask */
+	int64_t ufs_qfmask;	/* ~ufs_fmask */
 };
 #define fsatoda(u,a) ((a) << (u)->ufs_fsatoda)
 #define ufs_fragroundup(u,size) /* calculates roundup(size, ufs_fsize) */ \
-        (((size) + (u)->ufs_qfmask) & (u)->ufs_fmask)
+	(((size) + (u)->ufs_qfmask) & (u)->ufs_fmask)
 #define ufs_blkoff(u,loc)   /* calculates (loc % u->ufs_bsize) */ \
-        ((loc) & (u)->ufs_qbmask)
+	((loc) & (u)->ufs_qbmask)
 #define ufs_dblksize(u,d,b) \
 	((((b) >= NDADDR || (d)->di_size >= ((b)+1) << (u)->ufs_bshift \
 		? (u)->ufs_bsize \
@@ -222,6 +222,7 @@ void	interrupt __P((int signo));	/* in case operator bangs on console */
  *	Exit status codes
  */
 #define	X_FINOK		0	/* normal exit */
+#define	X_STARTUP	1	/* startup error */
 #define	X_REWRITE	2	/* restart writing from the check point */
 #define	X_ABORT		3	/* abort dump; don't attempt checkpointing */
 
@@ -243,19 +244,15 @@ struct dumpdates {
 	char	dd_level;
 	time_t	dd_ddate;
 };
-struct dumptime {
-	struct	dumpdates dt_value;
-	struct	dumptime *dt_next;
-};
-struct	dumptime *dthead;	/* head of the list version */
 int	nddates;		/* number of records (might be zero) */
-int	ddates_in;		/* we have read the increment file */
 struct	dumpdates **ddatev;	/* the arrayfied version */
+
 void	initdumptimes __P((void));
 void	getdumptime __P((void));
 void	putdumptime __P((void));
 #define	ITITERATE(i, ddp) \
-	for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
+	if (ddatev != NULL) \
+		for (ddp = ddatev[i = 0]; i < nddates; ddp = ddatev[++i])
 
 void	sig __P((int signo));
 
