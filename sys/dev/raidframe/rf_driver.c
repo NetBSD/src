@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.30 2000/02/23 03:44:02 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.31 2000/02/24 23:39:21 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -296,10 +296,17 @@ rf_UnconfigureVnodes( raidPtr )
 	for (r = 0; r < raidPtr->numRow; r++) {
 		for (c = 0; c < raidPtr->numCol; c++) {
 			printf("Closing vnode for row: %d col: %d\n", r, c);
-			if (raidPtr->raid_cinfo[r][c].ci_vp) {
-				VOP_UNLOCK(raidPtr->raid_cinfo[r][c].ci_vp, 0);
-				(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
-				    FREAD | FWRITE, p->p_ucred, p);
+			if (raidPtr->raid_cinfo[r][c].ci_vp != NULL) {
+				if (raidPtr->Disks[r][c].auto_configured == 1) {
+					VOP_CLOSE(raidPtr->raid_cinfo[r][c].ci_vp, 
+						  FREAD, NOCRED, 0);
+					vput(raidPtr->raid_cinfo[r][c].ci_vp);
+		
+				} else {				
+					VOP_UNLOCK(raidPtr->raid_cinfo[r][c].ci_vp, 0);
+					(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
+							FREAD | FWRITE, p->p_ucred, p);
+				}
 				raidPtr->raid_cinfo[r][c].ci_vp = NULL;
 			} else {
 				printf("vnode was NULL\n");
@@ -310,9 +317,16 @@ rf_UnconfigureVnodes( raidPtr )
 	for (r = 0; r < raidPtr->numSpare; r++) {
 		printf("Closing vnode for spare: %d\n", r);
 		if (raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp) {
-			VOP_UNLOCK(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp, 0);
-			(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp,
-			    FREAD | FWRITE, p->p_ucred, p);
+			if (raidPtr->Disks[r][c].auto_configured == 1) {
+				VOP_CLOSE(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp, 
+					  FREAD, NOCRED, 0);
+				vput(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp);
+				
+			} else {
+				VOP_UNLOCK(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp, 0);
+				(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp,
+						FREAD | FWRITE, p->p_ucred, p);
+			}
 			raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp = NULL;
 		} else {
 			printf("vnode was NULL\n");
