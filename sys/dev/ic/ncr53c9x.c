@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.95 2002/08/26 05:17:48 petrov Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.96 2002/08/26 06:23:32 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.95 2002/08/26 05:17:48 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.96 2002/08/26 06:23:32 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1676,7 +1676,7 @@ gotit:
 				    "target %d\n",
 				    sc->sc_dev.dv_xname, 
 				    ecb->xs->xs_periph->periph_target);
-				ti->flags &= ~T_WIDE;
+				ti->flags &= ~(T_WIDE | T_WDTRSENT);
 				ti->width = 0;
 				break;
 
@@ -1801,7 +1801,12 @@ gotit:
 					ncr53c9x_setsync(sc, ti);
 				} else
 					ti->width = 0;
-				ti->flags &= ~T_WIDE;
+				/*
+				 * Device started width negotiation.
+				 */
+				if (!(ti->flags & T_WDTRSENT))
+					ncr53c9x_sched_msgout(SEND_WDTR);
+				ti->flags &= ~(T_WIDE | T_WDTRSENT);
 				break;
 			default:
 				scsipi_printaddr(ecb->xs->xs_periph);
@@ -2508,6 +2513,7 @@ printf("<<RESELECT CONT'd>>");
 					goto reset;
 				}
 				if (ti->flags & T_WIDE) {
+					ti->flags |= T_WDTRSENT;
 					ncr53c9x_sched_msgout(SEND_WDTR);
 				}
 				if (ti->flags & T_NEGOTIATE) {
