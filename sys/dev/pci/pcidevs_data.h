@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.420 2002/04/16 10:08:59 drochner Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.421 2002/04/18 17:40:56 tshiozak Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -10423,6 +10423,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_C4T, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "c't Magazin",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_KURUSUGAWA, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Kurusugawa Electronics, Inc.",
 	    NULL,
 	},
 	{
