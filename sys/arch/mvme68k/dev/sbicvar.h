@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.5 1998/11/19 21:47:03 thorpej Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.6 2000/03/18 22:33:04 scw Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -102,7 +102,7 @@ struct  sbic_softc {
     struct  scsipi_link     sc_link;    /* proto for sub devices */
     struct  scsipi_adapter  sc_adapter;
     sbic_regmap_p           sc_sbicp;   /* the SBIC */
-    volatile void           *sc_cregs;  /* driver specific regs */
+    void                   *sc_driver;  /* driver specific field */
     int                     sc_ipl;
 
     /* Lists of command blocks */
@@ -202,5 +202,7 @@ struct scsipi_xfer;
 
 void sbic_minphys __P((struct buf *bp));
 int sbic_scsicmd __P((struct scsipi_xfer *));
+void sbicinit __P((struct sbic_softc *));
+int sbicintr __P((struct sbic_softc *));
 
 #endif /* _SBICVAR_H_ */

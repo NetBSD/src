@@ -1,11 +1,11 @@
-/*	$NetBSD: zsvar.h,v 1.5 2000/03/18 22:33:05 scw Exp $	*/
+/*	$NetBSD: mainbus.h,v 1.2 2000/03/18 22:33:03 scw Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Steve C. Woodford.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,50 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Non-exported definitons common to the different attachment
- * types for the SCC on the Motorola MVME series of computers.
- */
+#ifndef _MVME68K_MAINBUS_H
+#define _MVME68K_MAINBUS_H
 
-/*
- * The MVME provides a 4.9152 MHz clock to the SCC chips.
- */
-#define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
-
-/*
- * SCC should interrupt host at level 4.
- */
-#define ZSHARD_PRI	4
-
-/*
- * No delay needed when writing SCC registers.
- */
-#define ZS_DELAY()
-
-/*
- * XXX Make cnprobe a little easier.
- */
-#define NZSC	2
-
-/*
- * The layout of this is hardware-dependent (padding, order).
- */
-struct zschan {
-	volatile u_char zc_csr;		/* ctrl,status, and indirect access */
-	volatile u_char zc_data;	/* data */
+struct mainbus_attach_args {
+	const char	*ma_name;
+	bus_dma_tag_t	 ma_dmat;
+	bus_space_tag_t	 ma_bust;
+	bus_addr_t	 ma_offset;
 };
 
-struct zsdevice {
-	/* Yes, they are backwards. */
-	struct	zschan zs_chan_b;
-	struct	zschan zs_chan_a;
-};
+/*
+ * Mainbus offsets for devices on MVME147
+ */
+#define	MAINBUS_PCC_OFFSET		0x0000u
 
-/* Globals exported from zs.c */
-extern	u_char zs_init_reg[];
+/*
+ * Mainbus offsets for devices on MVME167 and MVME177
+ */
+#define MAINBUS_VMETWO_OFFSET	0x0000u
+#define	MAINBUS_PCCTWO_OFFSET	0x2000u
 
-/* Functions exported to ASIC-specific drivers. */
-void	zs_config __P((struct zsc_softc *, bus_space_tag_t,bus_space_handle_t));
-void	zs_cnconfig __P((int, int, bus_space_tag_t, bus_space_handle_t));
-int	zshard __P((void *));
-void	zssoft __P((void *));
+#endif /* _MVME68K_MAINBUS_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 2000/02/11 19:30:28 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.20 2000/03/18 22:33:05 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,6 +51,11 @@
 #define	_MACHINE 	mvme68k
 #define	MACHINE		"mvme68k"
 
+/*
+ * Grab the interrupt definitions
+ */
+#include <machine/intr.h>
+
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
@@ -71,33 +76,10 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 
-#include <machine/psl.h>
-
-#ifdef _KERNEL
-/* spl0 requires checking for software interrupts */
-
-#define spllowersoftclock()	spl1()
-#define splsoftclock()		splraise1()
-#define splsoftnet()		splraise1()
-#define splbio()		splraise2()
-#define splnet()		splraise3()
-#define spltty()		splraise3()
-#define splimp()		splraise3()
-#define splserial()		splraise4()
-#define splclock()		splraise5()
-#define splstatclock()		splraise5()
-#define splvm()			splraise5()
-#define splhigh()		spl7()
-#define splsched()		spl7()
-
-/* watch out for side effects */
-#define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
-
-#ifndef _LOCORE
+#if defined(_KERNEL) && !defined(_LOCORE)
 extern void _delay __P((unsigned));
 #define delay(us)	_delay((us)<<8)
 #define DELAY(n)	delay(n)
-#endif	/* !_LOCORE */
-#endif	/* _KERNEL */
+#endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* !_MACHINE_PARAM_H_ */

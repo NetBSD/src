@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.28 2000/01/20 22:18:57 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29 2000/03/18 22:33:07 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,6 +64,8 @@
 #include <machine/reg.h>
 #include <m68k/cacheops.h>
 
+void setredzone __P((pt_entry_t *, caddr_t));
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
@@ -91,7 +93,8 @@ cpu_fork(p1, p2, stack, stacksize)
 	struct trapframe *tf;
 	struct switchframe *sf;
 	extern struct pcb *curpcb;
-	extern void proc_trampoline();
+	extern void proc_trampoline __P((void));
+	extern void savectx __P((struct pcb *));
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
@@ -156,6 +159,7 @@ void
 cpu_exit(p)
 	struct proc *p;
 {
+	extern void switch_exit __P((struct proc *));
 
 	(void) splhigh();
 	uvmexp.swtch++;
@@ -354,6 +358,7 @@ iounmap(kva, size)
  * Look at _lev6intr in locore.s for more details.
  */
 /*ARGSUSED*/
+void
 setredzone(pte, vaddr)
 	pt_entry_t *pte;
 	caddr_t vaddr;
@@ -363,6 +368,7 @@ setredzone(pte, vaddr)
 /*
  * Convert kernel VA to physical address
  */
+paddr_t
 kvtop(addr)
 	caddr_t addr;
 {
@@ -370,7 +376,7 @@ kvtop(addr)
 
 	if (pmap_extract(pmap_kernel(), (vaddr_t)addr, &pa) == FALSE)
 		panic("kvtop: zero page frame");
-	return((int)pa);
+	return(pa);
 }
 
 extern vm_map_t phys_map;

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.19 1999/09/18 09:26:00 scw Exp $	*/
+/*	$NetBSD: conf.c,v 1.20 2000/03/18 22:33:06 scw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -206,6 +206,7 @@ dev_t	swapdev = makedev(3, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -216,6 +217,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -292,8 +294,6 @@ chrtoblk(dev)
  */
 #include <dev/cons.h>
 
-#define zsc_pcccngetc		zscngetc
-#define zsc_pcccnputc		zscnputc
 #define zsc_pcccnpollc		nullcnpollc
 #include "zsc_pcc.h"
 cons_decl(zsc_pcc);

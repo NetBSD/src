@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: lptvar.h,v 1.3 2000/03/18 22:33:03 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,8 @@ struct lpt_softc {
 #define	LPT_NOINTR	0x80	/* do not use interrupt */
 
 	/* Back-end specific stuff */
-	void			*sc_regs;
+	bus_space_tag_t		sc_bust;
+	bus_space_handle_t	sc_bush;
 	int			sc_ipl;
 	u_char			sc_icr;
 	u_char			sc_laststatus;

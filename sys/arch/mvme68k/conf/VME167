@@ -1,4 +1,4 @@
-#	$NetBSD: VME167,v 1.4 1999/07/29 10:37:20 augustss Exp $
+#	$NetBSD: VME167,v 1.5 2000/03/18 22:33:02 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -20,7 +20,7 @@ options 	COMPAT_43
 file-system 	FFS
 file-system 	NFS	
 file-system 	KERNFS
-#file-system 	MFS
+file-system 	MFS
 #file-system	MSDOSFS
 #file-system	UNION
 
@@ -64,12 +64,11 @@ ncrsc0		at pcctwo? ipl 2
 lpt0		at pcctwo? ipl 1
 
 # VMEbus Support
-vmechip0 	at mainbus0
-vmes0 		at vmechip0
-vmel0 		at vmechip0
+vmetwo0 	at mainbus0
+vme0 		at vmetwo0
 
-# example only - A24D16 device
-#foo0 		at vmes0 atype 24 addr 0x0ef00 ipl 3 vec 0x80
+# Example VMEbus device
+#foo0 		at vme0 addr 0x10001000 am 0x0d irq 3 vect 0x80
 
 # SCSI Bus Support
 scsibus*	at ncrsc?

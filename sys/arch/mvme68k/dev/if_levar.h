@@ -1,4 +1,4 @@
-/*	$NetBSD: if_levar.h,v 1.3 1998/08/15 10:18:16 mycroft Exp $	*/
+/*	$NetBSD: if_levar.h,v 1.4 2000/03/18 22:33:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,6 @@
  */
 struct	le_softc {
 	struct	am7990_softc sc_am7990;	/* glue to MI code */
-
-	struct	lereg1 *sc_r1;		/* LANCE registers */
+	bus_space_tag_t sc_bust;
+	bus_space_handle_t sc_bush;
 };

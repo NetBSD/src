@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.3 1999/02/20 00:11:59 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.4 2000/03/18 22:33:03 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,89 +37,94 @@
  */
 
 /*
- * PCCchip2 at $FFF42000
+ * Register definitions for the PCCchip2 device, and offset to the
+ * various subordinate devices which hang off it.
  */
-
-#ifndef	__mvme68k_pcctworeg_h
-#define	__mvme68k_pcctworeg_h
-
-
-#define PCCTWO_BASE	    0xfff42000	/* Phys Addr of PCCchip2 space */
-#define PCCTWO_REG_OFF	    0x0000	/* Offset of PCCchip2 registers */
-#define PCCTWO_LPT_OFF	    0x0000	/* Offset of parallel port registers */
-#define PCCTWO_MEMC_OFF	    0x1000	/* Offset of Memory Controller's regs */
-#define PCCTWO_SCC_OFF      0x3000	/* Offset of CD2401 Serial Comms chip */
-#define PCCTWO_IE_OFF	    0x4000	/* Offset of 82596 LAN controller */
-#define PCCTWO_NCRSC_OFF    0x5000	/* Offset of NCR53C710 SCSI chip */
-#define PCCTWO_CLOCK_OFF    0x7e000	/* Offset of MK48T18 NVRAM */
-#define PCCTWO_RTC_OFF      0x1ff8	/* Offset of MK48T18 RTC registers */
-
-#define PCCTWO_PADDR(off)	((void *)(PCCTWO_BASE + (off)))
+#ifndef	_MVME68K_PCCTWOREG_H
+#define	_MVME68K_PCCTWOREG_H
 
 /*
- * The PCCchip2 space is permanently mapped by pmap_bootstrap().  This
- * macro translates PCCTWO offsets into the corresponding KVA.
+ * Offsets to the various devices which hang off the PCCChip2.
  */
-#define PCCTWO_VADDR(off)	((void *)IIOV(PCCTWO_BASE + (off))) 
-
+#define PCCTWO_REG_OFF	    0x00000	/* Offset of PCCChip2's own registers */
+#define PCCTWO_LPT_OFF	    0x00000	/* Offset of parallel port registers */
+#define PCCTWO_MEMC_OFF	    0x01000	/* Offset of Memory Controller's regs */
+#define PCCTWO_SCC_OFF      0x03000	/* Offset of CD2401 Serial Comms chip */
+#define PCCTWO_IE_OFF	    0x04000	/* Offset of 82596 LAN controller */
+#define PCCTWO_NCRSC_OFF    0x05000	/* Offset of NCR53C710 SCSI chip */
+#define PCCTWO_NVRAM_OFF    0x7e000	/* Offset of MK48T18 NVRAM */
+#define PCCTWO_RTC_OFF      0x7fff8	/* Offset of MK48T18 RTC registers */
 
 /*
- * The layout of the PCCchip2's Registers
+ * This is needed to figure out the boot device.
+ * (The physical address of the boot device's registers are passed in
+ * from the Boot ROM)
  */
-struct pcctwo {
-    volatile u_char	chip_id;	/* Chip ID Register */
-    volatile u_char	chip_rev;	/* Chip Revision Register */
-    volatile u_char	gen_ctrl;	/* General Control Register */
-    volatile u_char	vector_base;	/* Vector Base Register */
-    volatile u_long	tt1_compare;	/* Tick Timer 1 Compare Register */
-    volatile u_long	tt1_counter;	/* Tick Timer 1 Counter Register */
-    volatile u_long	tt2_compare;	/* Tick Timer 2 Compare Register */
-    volatile u_long	tt2_counter;	/* Tick Timer 2 Counter Register */
-    volatile u_char	prescale_cnt;	/* Prescaler Count Register */
-    volatile u_char	prescale_adj;	/* Prescaler Clock Adjust Register */
-    volatile u_char	tt2_ctrl;	/* Tick Timer 2 Control Register */
-    volatile u_char	tt1_ctrl;	/* Tick Timer 1 Control Register */
-    volatile u_char	gp_in_icr;	/* GP Input Interrupt Control Reg. */
-    volatile u_char	gpio_ctrl;	/* GP Input/Output Control Register */
-    volatile u_char	tt2_icr;	/* Tick Timer 2 Interrupt Control Reg */
-    volatile u_char	tt1_icr;	/* Tick Timer 1 Interrupt Control Reg */
-    volatile u_char	scc_err_sr;	/* SCC Error Status Register */
-    volatile u_char	scc_mod_icr;	/* SCC Modem Interrupt Control Reg. */
-    volatile u_char	scc_tx_icr;	/* SCC Transmit Interrupt Control Reg */
-    volatile u_char	scc_rx_icr;	/* SCC Receive Interrupt Control Reg */
-    volatile u_char	resvd1[3];
-    volatile u_char	scc_mod_piack;	/* SCC Modem PIACK Register */
-    volatile u_char	resvd2;
-    volatile u_char	scc_tx_piack;	/* SCC Transmit PIACK Register */
-    volatile u_char	resvd3;
-    volatile u_char	scc_rx_piack;	/* SCC Receive PIACK Register */
-    volatile u_char	lanc_err_sr;	/* LANC Error Status Register */
-    volatile u_char	resvd4;
-    volatile u_char	lanc_icr;	/* LANC Interrupt Control Register */
-    volatile u_char	lanc_berr_sr;	/* LANC Bus Error Interrupt Ctrl Reg */
-    volatile u_char	scsi_err_sr;	/* SCSI Error Status Register */
-    volatile u_char 	resvd5[2];
-    volatile u_char	scsi_icr;	/* SCSI Interrupt Control Register */
-    volatile u_char	prt_ack_icr;	/* Printer ACK Interrupt Control Reg */
-    volatile u_char	prt_fault_icr;	/* Printer FAULT Interrupt Ctrl Reg */
-    volatile u_char	prt_sel_icr;	/* Printer SEL Interrupt Control Reg */
-    volatile u_char	prt_pe_icr;	/* Printer PE Interrupt Control Reg */
-    volatile u_char	prt_busy_icr;	/* Printer BUSY Interrupt Control Reg */
-    volatile u_char	resvd6;
-    volatile u_char	prt_input_sr;	/* Printer Input Status Register */
-    volatile u_char	prt_ctrl;	/* Printer Port Control Register */
-    volatile u_short	chip_speed;	/* Chip Speed Register */
-    volatile u_short	prt_data;	/* Printer Data Register */
-    volatile u_char 	resvd7[2];
-    volatile u_char	irq_level;	/* Interrupt Priority Level Register */
-    volatile u_char	irq_mask;	/* Interrupt Mask Register */
-};
+#define PCCTWO_PADDR(off)	((void *)(0xfff40000u + (off)))
 
 
 /*
- * Pointer to PCCChip2's Registers. Set up during system boot.
+ * The layout of the PCCchip2's Registers.
+ * Each one is 8-bits wide, unless otherwise indicated.
  */
-extern struct pcctwo *sys_pcctwo;
+#define	PCC2REG_CHIP_ID		0x00	/* Chip ID */
+#define	PCC2REG_CHIP_REVISION	0x01	/* Chip Revision */
+#define	PCC2REG_GENERAL_CONTROL	0x02	/* General Control */
+#define	PCC2REG_VECTOR_BASE	0x03	/* Vector Base */
+#define	PCC2REG_TIMER1_COMPARE	0x04	/* Tick Timer 1 Compare (32-bit) */
+#define	PCC2REG_TIMER1_COUNTER	0x08	/* Tick Timer 1 Counter (32-bit) */
+#define	PCC2REG_TIMER2_COMPARE	0x0c	/* Tick Timer 2 Compare (32-bit) */
+#define	PCC2REG_TIMER2_COUNTER	0x10	/* Tick Timer 2 Counter (32-bit) */
+#define	PCC2REG_PRESCALE_COUNT	0x14	/* Prescaler Count */
+#define	PCC2REG_PRESCALE_ADJUST	0x15	/* Prescaler Clock Adjust */
+#define	PCC2REG_TIMER2_CONTROL	0x16	/* Tick Timer 2 Control */
+#define	PCC2REG_TIMER1_CONTROL	0x17	/* Tick Timer 1 Control */
+#define	PCC2REG_GPIO_ICSR	0x18	/* GP Input Interrupt Control */
+#define	PCC2REG_GPIO_CONTROL	0x19	/* GP Input/Output Control */
+#define	PCC2REG_TIMER2_ICSR	0x1a	/* Tick Timer 2 Interrupt Control */
+#define	PCC2REG_TIMER1_ICSR	0x1b	/* Tick Timer 1 Interrupt Control */
+#define	PCC2REG_SCC_ERR_STATUS	0x1c	/* SCC Error Status */
+#define	PCC2REG_SCC_MODEM_ICSR	0x1d	/* SCC Modem Interrupt Control */
+#define	PCC2REG_SCC_TX_ICSR	0x1e	/* SCC Transmit Interrupt Control */
+#define	PCC2REG_SCC_RX_ICSR	0x1f	/* SCC Receive Interrupt Control */
+#define	PCC2REG_SCC_MODEM_PIACK	0x23	/* SCC Modem PIACK */
+#define	PCC2REG_SCC_TX_PIACK	0x25	/* SCC Transmit PIACK */
+#define	PCC2REG_SCC_RX_PIACK	0x27	/* SCC Receive PIACK */
+#define	PCC2REG_ETH_ERR_STATUS	0x28	/* LANC Error Status */
+#define	PCC2REG_ETH_ICSR	0x2a	/* LANC Interrupt Control */
+#define	PCC2REG_ETH_BERR_STATUS	0x2b	/* LANC Bus Error Interrupt Ctrl */
+#define	PCC2REG_SCSI_ERR_STATUS	0x2c	/* SCSI Error Status */
+#define	PCC2REG_SCSI_ICSR	0x2f	/* SCSI Interrupt Control */
+#define	PCC2REG_PRT_ACK_ICSR	0x30	/* Printer ACK Interrupt Control */
+#define	PCC2REG_PRT_FAULT_ICSR	0x31	/* Printer FAULT Interrupt Ctrl */
+#define	PCC2REG_PRT_SEL_ICSR	0x32	/* Printer SEL Interrupt Control */
+#define	PCC2REG_PRT_PE_ICSR	0x33	/* Printer PE Interrupt Control */
+#define	PCC2REG_PRT_BUSY_ICSR	0x34	/* Printer BUSY Interrupt Control */
+#define	PCC2REG_PRT_INPUT_STATUS 0x36	/* Printer Input Status */
+#define	PCC2REG_PRT_CONTROL	0x37	/* Printer Port Control */
+#define	PCC2REG_CHIP_SPEED	0x38	/* Chip Speed (16-bit) */
+#define	PCC2REG_PRT_DATA	0x3a	/* Printer Data (16-bit) */
+#define	PCC2REG_IRQ_LEVEL	0x3e	/* Interrupt Priority Level */
+#define	PCC2REG_IRQ_MASK	0x3f	/* Interrupt Mask */
+
+#define PCC2REG_SIZE		0x40
+
+/*
+ * Convenience macroes for accessing the PCCChip2's registers
+ * through bus_space.
+ */
+#define	pcc2_reg_read(sc,r)	\
+		bus_space_read_1((sc)->sc_bust, (sc)->sc_bush, (r))
+#define	pcc2_reg_read16(sc,r)	\
+		bus_space_read_2((sc)->sc_bust, (sc)->sc_bush, (r))
+#define	pcc2_reg_read32(sc,r)	\
+		bus_space_read_4((sc)->sc_bust, (sc)->sc_bush, (r))
+#define	pcc2_reg_write(sc,r,v)	\
+		bus_space_write_1((sc)->sc_bust, (sc)->sc_bush, (r), (v))
+#define	pcc2_reg_write16(sc,r,v)	\
+		bus_space_write_2((sc)->sc_bust, (sc)->sc_bush, (r), (v))
+#define	pcc2_reg_write32(sc,r,v)	\
+		bus_space_write_4((sc)->sc_bust, (sc)->sc_bush, (r), (v))
 
 /*
  * We use the interrupt vector bases suggested in the Motorola Docs...
@@ -154,7 +159,7 @@ extern struct pcctwo *sys_pcctwo;
 
 
 /*
- * Bit Values for the General Control Register (sys_pcctwo->gen_ctrl)
+ * Bit Values for the General Control Register (PCC2REG_GENERAL_CONTROL)
  */
 #define	PCCTWO_GEN_CTRL_FAST	(1u<<0)	/* BBRAM Speed Control */
 #define	PCCTWO_GEN_CTRL_MIEN	(1u<<1)	/* Master Interrupt Enable */
@@ -164,7 +169,7 @@ extern struct pcctwo *sys_pcctwo;
 
 /*
  * Calculate the Prescaler Adjust value for a given
- * value of BCLK in MHz. (sys_pcctwo->prescale_adj)
+ * value of BCLK in MHz. (PCC2REG_PRESCALE_ADJUST)
  */
 #define PCCTWO_PRES_ADJ(mhz)	(256 - (mhz))
 
@@ -173,12 +178,12 @@ extern struct pcctwo *sys_pcctwo;
  * Calculate the Tick Timer Compare register value for
  * a given number of micro-seconds. With the PCCChip2,
  * this is simple since the Tick Counters already have
- * a 1uS period. (sys_pcctwo->tt[12]_compare)
+ * a 1uS period. (PCC2REG_TIMER[12]_COMPARE)
  */
 #define PCCTWO_US2LIM(us)	(us)
 
 /*
- * The Tick Timer Control Registers (sys_pcctwo->tt[12]_ctrl)
+ * The Tick Timer Control Registers (PCC2REG_TIMER[12]_CONTROL)
  */
 #define PCCTWO_TT_CTRL_CEN	(1u<<0)	/* Counter Enable */
 #define PCCTWO_TT_CTRL_COC	(1u<<1)	/* Clear On Compare */
@@ -187,8 +192,8 @@ extern struct pcctwo *sys_pcctwo;
 
 
 /*
- * All the Interrupt Control Registers on the PCCChip2 mostly
- * share the same basic layout. These are defined as follows:
+ * All the Interrupt Control Registers (PCC2REG_*_ICSR) on the PCCChip2
+ * mostly share the same basic layout. These are defined as follows:
  */
 #define PCCTWO_ICR_LEVEL_MASK	0x7	/* Mask for the interrupt level */
 #define PCCTWO_ICR_ICLR		(1u<<3)	/* Clear Int. (edge-sensitive mode) */
@@ -205,7 +210,7 @@ extern struct pcctwo *sys_pcctwo;
 
 
 /*
- * Most of the Error Status Registers (sys_pcctwo->*_err_sr) mostly
+ * Most of the Error Status Registers (PCC2REG_*_ERR_STATUS) mostly
  * follow the same layout. These error registers are used when a
  * device (eg. SCC, LANC) is mastering the PCCChip2's local bus (for
  * example, performing a DMA) and some error occurs. The bits are
@@ -221,7 +226,7 @@ extern struct pcctwo *sys_pcctwo;
 
 /*
  * General Purpose Input/Output Pin Control Register
- * (sys_pcctwo->gpio_ctrl)
+ * (PCC2REG_GPIO_CONTROL)
  */
 #define PCCTWO_GPIO_CTRL_GPO	(1u<<0)	/* Controls the GP Output Pin */
 #define PCCTWO_GPIO_CTRL_GPOE	(1u<<1)	/* General Purpose Output Enable */
@@ -229,7 +234,7 @@ extern struct pcctwo *sys_pcctwo;
 
 
 /*
- * Printer Input Status Register (sys_pcctwo->prt_input_sr)
+ * Printer Input Status Register (PCC2REG_PRT_INPUT_STATUS)
  */
 #define PCCTWO_PRT_IN_SR_BSY	(1u<<0)	/* State of printer's BSY Input */
 #define PCCTWO_PRT_IN_SR_PE	(1u<<1)	/* State of printer's PE Input */
@@ -240,7 +245,7 @@ extern struct pcctwo *sys_pcctwo;
 
 
 /*
- * Printer Port Control Register (sys_pcctwo->prt_ctrl)
+ * Printer Port Control Register (PCC2REG_PRT_CONTROL)
  */
 #define PCCTWO_PRT_CTRL_MAN	(1u<<0)	/* Manual Strobe Control */
 #define PCCTWO_PRT_CTRL_FAST	(1u<<1)	/* Fast Auto Strobe */
@@ -248,4 +253,4 @@ extern struct pcctwo *sys_pcctwo;
 #define PCCTWO_PRT_CTRL_INP	(1u<<3)	/* Printer Input Prime */
 #define	PCCTWO_PRT_CTRL_DOEN	(1u<<4)	/* Printer Data Output Enable */
 
-#endif	/* __mvme68k_pcctworeg_h */
+#endif	/* _MVME68K_PCCTWOREG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.2 1999/02/14 17:54:28 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.3 2000/03/18 22:33:03 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -40,74 +40,68 @@
  * PCCchip2 Driver
  */
 
-#include "pcctwo.h"
-
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/proc.h>
-#include <sys/user.h>
-#include <sys/tty.h>
-#include <sys/uio.h>
-#include <sys/callout.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/syslog.h>
-#include <sys/fcntl.h>
+#include <sys/systm.h>
 #include <sys/device.h>
-#include <machine/cpu.h>
-#include <dev/cons.h>
+
+#include <machine/bus.h>
 
 #include <mvme68k/mvme68k/isr.h>
 
-#include <mvme68k/dev/pccvar.h>
+#include <mvme68k/dev/mainbus.h>
 #include <mvme68k/dev/pcctworeg.h>
+#include <mvme68k/dev/pcctwovar.h>
 
 /*
  * Autoconfiguration stuff.
  */
-
-struct pcctwosoftc {
-	struct device	sc_dev;
-	struct pcctwo	*sc_pcc;
-};
-
-void	pcctwoattach __P((struct device *, struct device *, void *));
-int 	pcctwomatch __P((struct device *, struct cfdata *, void *));
-int 	pcctwoprint __P((void *, const char *));
+void pcctwoattach __P((struct device *, struct device *, void *));
+int pcctwomatch __P((struct device *, struct cfdata *, void *));
+int pcctwoprint __P((void *, const char *));
 
 struct cfattach pcctwo_ca = {
-	sizeof(struct pcctwosoftc), pcctwomatch, pcctwoattach
+	sizeof(struct pcctwo_softc), pcctwomatch, pcctwoattach
 };
 
 extern struct cfdriver pcctwo_cd;
 
-int	pcctwointr __P((void *));
+/*
+ * Global Pointer to the PCCChip2's soft state
+ */
+struct pcctwo_softc *sys_pcctwo;
 
 /*
- * Global Pointer to the PCCChip2's Registers
+ * Structure used to describe a device for autoconfiguration purposes.
  */
-struct pcctwo *sys_pcctwo = NULL;
+struct pcctwo_device {
+	char *pcc_name;		/* name of device (e.g. "clock") */
+	bus_addr_t pcc_offset;	/* offset from PCC2 base */
+};
 
 /*
  * Devices that live on the PCCchip2, attached in this order.
  */
-struct pcc_device pcctwo_devices[] = {
-	{ "clock",	PCCTWO_CLOCK_OFF,	1 },
-	{ "clmpcc",	PCCTWO_SCC_OFF,		1 },
-	{ "ie",		PCCTWO_IE_OFF,		1 },
-	{ "ncrsc",	PCCTWO_NCRSC_OFF,	1 },
-	{ "lpt",	PCCTWO_LPT_OFF,		1 },
-	{ NULL,		0,			0 },
+struct pcctwo_device pcctwo_devices[] = {
+	{"clock", PCCTWO_RTC_OFF},
+	{"clmpcc", PCCTWO_SCC_OFF},
+	{"ie", PCCTWO_IE_OFF},
+	{"ncrsc", PCCTWO_NCRSC_OFF},
+	{"lpt", PCCTWO_LPT_OFF},
+	{"nvram", PCCTWO_NVRAM_OFF},
+	{NULL, 0}
 };
 
+/* ARGSUSED */
 int
 pcctwomatch(parent, cf, args)
 	struct device *parent;
 	struct cfdata *cf;
 	void *args;
 {
-	char *ma_name = (char *)args;
+	struct mainbus_attach_args *ma;
+
+	ma = args;
 
 	/*
 	 * Note: We don't need to check we're running on a 'machineid'
@@ -119,45 +113,45 @@ pcctwomatch(parent, cf, args)
 	if (sys_pcctwo)
 		return (0);
 
-	return (strcmp(ma_name, pcctwo_cd.cd_name) == 0);
+	return (strcmp(ma->ma_name, pcctwo_cd.cd_name) == 0);
 }
 
+/* ARGSUSED */
 void
 pcctwoattach(parent, self, args)
-	struct device *parent, *self;
+	struct device *parent;
+	struct device *self;
 	void *args;
 {
-	struct pcctwosoftc *pccsc;
-	struct pcc_attach_args npa;
-	caddr_t kva;
+	struct mainbus_attach_args *ma;
+	struct pcctwo_softc *sc;
+	struct pcctwo_attach_args npa;
 	int i;
 
-	if (sys_pcctwo)
-		panic("pcctwoattach: PCCchip2 already attached!");
+	ma = args;
+	sc = sys_pcctwo = (struct pcctwo_softc *) self;
 
-	sys_pcctwo = (struct pcctwo *)PCCTWO_VADDR(PCCTWO_REG_OFF);
-
-	/*
-	 * Get Soft State Structure and record register base
-	 */
-	pccsc = (struct pcctwosoftc *) self;
-	pccsc->sc_pcc = sys_pcctwo;
+	/* Get a handle to the PCCChip2's registers */
+	sc->sc_bust = ma->ma_bust;
+	bus_space_map(sc->sc_bust, PCCTWO_REG_OFF + ma->ma_offset,
+	    PCC2REG_SIZE, 0, &sc->sc_bush);
 
 	/*
 	 * Announce ourselves to the world in general
 	 */
 	printf(": Peripheral Channel Controller (PCCchip2), Rev %d\n",
-		pccsc->sc_pcc->chip_rev);
+	    pcc2_reg_read(sc, PCC2REG_CHIP_REVISION));
 
 	/*
 	 * Fix up the vector base for PCCChip2 Interrupts
 	 */
-	pccsc->sc_pcc->vector_base = PCCTWO_VECBASE;
+	pcc2_reg_write(sc, PCC2REG_VECTOR_BASE, PCCTWO_VECBASE);
 
 	/*
 	 * Enable PCCChip2 Interrupts
 	 */
-	pccsc->sc_pcc->gen_ctrl |= PCCTWO_GEN_CTRL_MIEN;
+	pcc2_reg_write(sc, PCC2REG_GENERAL_CONTROL,
+	    pcc2_reg_read(sc, PCC2REG_GENERAL_CONTROL) | PCCTWO_GEN_CTRL_MIEN);
 
 	/*
 	 * Attach configured children.
@@ -167,20 +161,13 @@ pcctwoattach(parent, self, args)
 		 * Note that IPL is filled in by match function.
 		 */
 		npa.pa_name = pcctwo_devices[i].pcc_name;
-		npa.pa_offset = pcctwo_devices[i].pcc_offset;
 		npa.pa_ipl = -1;
-
-		/* Check for hardware. (XXX is this really necessary?) */
-		kva = PCCTWO_VADDR(npa.pa_offset);
-		if (badaddr(kva, pcctwo_devices[i].pcc_bytes)) {
-			/*
-			 * Hardware not present.
-			 */
-			continue;
-		}
+		npa.pa_dmat = ma->ma_dmat;
+		npa.pa_bust = ma->ma_bust;
+		npa.pa_offset = pcctwo_devices[i].pcc_offset + ma->ma_offset;
 
 		/* Attach the device if configured. */
-		(void)config_found(self, &npa, pcctwoprint);
+		(void) config_found(self, &npa, pcctwoprint);
 	}
 }
 
@@ -189,7 +176,9 @@ pcctwoprint(aux, cp)
 	void *aux;
 	const char *cp;
 {
-	struct pcc_attach_args *pa = aux;
+	struct pcctwo_attach_args *pa;
+
+	pa = aux;
 
 	if (cp)
 		printf("%s at %s", pa->pa_name, cp);
@@ -210,15 +199,17 @@ pcctwointr_establish(vec, hand, lvl, arg)
 	int (*hand) __P((void *)), lvl;
 	void *arg;
 {
-	if ((vec < 0) || (vec >= PCCTWOV_MAX)) {
+
+#ifdef DEBUG
+	if (vec < 0 || vec >= PCCTWOV_MAX) {
 		printf("pcctwo: illegal vector offset: 0x%x\n", vec);
 		panic("pcctwointr_establish");
 	}
-
-	if ((lvl < 1) || (lvl > 7)) {
+	if (lvl < 1 || lvl > 7) {
 		printf("pcctwo: illegal interrupt level: %d\n", lvl);
 		panic("pcctwointr_establish");
 	}
+#endif
 
 	isrlink_vectored(hand, arg, lvl, vec + PCCTWO_VECBASE);
 }
@@ -227,10 +218,13 @@ void
 pcctwointr_disestablish(vec)
 	int vec;
 {
-	if ((vec < 0) || (vec >= PCCTWOV_MAX)) {
+
+#ifdef DEBUG
+	if (vec < 0 || vec >= PCCTWOV_MAX) {
 		printf("pcctwo: illegal vector offset: 0x%x\n", vec);
-		panic("pcctwointr_establish");
+		panic("pcctwointr_disestablish");
 	}
+#endif
 
 	isrunlink_vectored(vec + PCCTWO_VECBASE);
 }

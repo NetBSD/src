@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 1999/12/04 21:20:55 ragge Exp $	*/
+/*	$NetBSD: mem.c,v 1.13 2000/03/18 22:33:07 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,14 +58,18 @@
 
 #include <uvm/uvm_extern.h>
 
+#define mmread mmrw
+cdev_decl(mm);
+
 extern u_int lowram;
 static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -73,9 +77,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+	struct proc *p;
 {
 
 	return (0);
@@ -186,7 +191,9 @@ mmrw(dev, uio, flags)
 		uio->uio_resid -= c;
 	}
 	if (minor(dev) == 0) {
+#ifndef DEBUG
 unlock:
+#endif
 		if (physlock > 1)
 			wakeup((caddr_t)&physlock);
 		physlock = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.4 1998/01/12 19:51:20 thorpej Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.5 2000/03/18 22:33:06 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _MVME68K_CLOCKVAR_H
+#define _MVME68K_CLOCKVAR_H
+
 /*
  * Defintions exported to ASIC-specific clock attachment.
  */
@@ -46,8 +49,14 @@ extern	struct evcnt clock_statcnt;
 extern	int clock_statvar;
 extern	int clock_statmin;
 
-void	clock_config __P((struct device *, caddr_t, caddr_t, int,
-	    void (*)(int, int)));
+struct clock_attach_args {
+	bus_space_tag_t		ca_bust;
+	bus_space_handle_t	ca_bush;
+	void			(*ca_initfunc) __P((void *, int, int));
+	void			*ca_arg;
+};
+
+void	clock_config __P((struct device *, struct clock_attach_args *));
 
 /*
  * Macro to compute a new randomized interval.  The intervals are
@@ -61,3 +70,5 @@ void	clock_config __P((struct device *, caddr_t, caddr_t, int,
 		do { r = random() & (var - 1); } while (r == 0);	\
 		(statmin + r);						\
 	})
+
+#endif /* _MVME68K_CLOCKVAR_H */

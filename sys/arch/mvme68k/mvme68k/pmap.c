@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 1999/11/13 00:30:39 thorpej Exp $        */
+/*	$NetBSD: pmap.c,v 1.40 2000/03/18 22:33:07 scw Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -382,7 +382,7 @@ pmap_init()
 	 */
 	addr = (vaddr_t) intiobase;
 	if (uvm_map(kernel_map, &addr,
-		    intiotop_phys - intiobase_phys,
+		    (intiotop_phys - intiobase_phys),
 		    NULL, UVM_UNKNOWN_OFFSET,
 		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE,
 				UVM_INH_NONE, UVM_ADV_RANDOM,
@@ -2501,6 +2501,41 @@ pmap_procwr(p, va, len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
+void
+_pmap_set_page_cacheable(pm, va)
+	struct pmap *pm;
+	vaddr_t va;
+{
+	pt_entry_t *pte;
+
+	if (!pmap_ste_v(pm, va))
+		return;
+
+	pte = pmap_pte(pm, va);
+
+	if ( pmap_pte_ci(pte) ) {
+		*pte &= ~PG_CI;
+		TBIS(va);
+	}
+}
+
+void
+_pmap_set_page_cacheinhibit(pm, va)
+	struct pmap *pm;
+	vaddr_t va;
+{
+	pt_entry_t *pte;
+
+	if (!pmap_ste_v(pm, va))
+		return;
+
+	pte = pmap_pte(pm, va);
+
+	if ( ! pmap_pte_ci(pte) ) {
+		*pte |= PG_CI;
+		TBIS(va);
+	}
+}
 
 #ifdef DEBUG
 /*

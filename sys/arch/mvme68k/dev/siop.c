@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.4 2000/02/26 16:50:55 scw Exp $ */
+/*	$NetBSD: siop.c,v 1.5 2000/03/18 22:33:04 scw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -921,7 +921,7 @@ siop_checkintr(sc, istat, dstat, sstat0, status)
 		/* Normal completion status, or check condition */
 #ifdef DEBUG
 		if (rp->siop_dsa != kvtop((caddr_t)&acb->ds)) {
-			printf ("siop: invalid dsa: %lx %x\n", rp->siop_dsa,
+			printf ("siop: invalid dsa: %lx %lx\n", rp->siop_dsa,
 			    kvtop((caddr_t)&acb->ds));
 			panic("*** siop DSA invalid ***");
 		}
@@ -1369,7 +1369,7 @@ bad_phase:
 	 * XXXX need to clean this up to print out the info, reset, and continue
 	 */
 	printf ("siopchkintr: target %x ds %p\n", target, &acb->ds);
-	printf ("scripts %lx ds %x rp %x dsp %lx dcmd %lx\n", sc->sc_scriptspa,
+	printf ("scripts %lx ds %lx rp %lx dsp %lx dcmd %lx\n",sc->sc_scriptspa,
 	    kvtop((caddr_t)&acb->ds), kvtop((caddr_t)rp), rp->siop_dsp,
 	    *((long *)&rp->siop_dcmd));
 	printf ("siopchkintr: istat %x dstat %x sstat0 %x dsps %lx dsa %lx sbcl %x sts %x msg %x %x sfbr %x\n",

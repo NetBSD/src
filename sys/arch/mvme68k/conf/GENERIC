@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.5 2000/01/23 23:46:14 hubertf Exp $
+#	$NetBSD: GENERIC,v 1.6 2000/03/18 22:33:02 scw Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
-#ident 		"GENERIC-$Revision: 1.5 $"
+#ident 		"GENERIC-$Revision: 1.6 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -23,7 +23,7 @@ options 	COMPAT_43
 file-system 	FFS
 file-system 	NFS	
 file-system 	KERNFS
-#file-system 	MFS
+file-system 	MFS
 #file-system	MSDOSFS
 #file-system	UNION
 
@@ -83,7 +83,7 @@ mainbus0	at root
 
 # MVME147 specific devices
 pcc0		at mainbus0
-vmechip*	at pcc?
+vmepcc0 	at pcc?
 zsc*		at pcc? ipl 4
 zstty*		at zsc? channel ?
 clock0		at pcc? ipl 5
@@ -93,18 +93,18 @@ lpt*		at pcc? ipl 1
 
 # MVME167 specific devices
 pcctwo0		at mainbus0
-vmechip* 	at mainbus0
+vmetwo0 	at mainbus0
 clock0		at pcctwo? ipl 5
 clmpcc0		at pcctwo? ipl 4
 ie0		at pcctwo? ipl 3
 ncrsc0		at pcctwo? ipl 2
 lpt*		at pcctwo? ipl 1
 
-vmes0		at vmechip?
-vmel0		at vmechip?
+vme0		at vmepcc0
+vme0		at vmetwo0
 
-# example only - A24D16 device
-#foo0		at vmes0 atype 24 addr 0x0ef00 ipl 3 vec 0x60
+# Example VMEbus device
+#foo0		at vme0 addr 0x00ef0000 irq 3 vect 0x80
 
 scsibus*	at wdsc?
 scsibus*	at ncrsc?
