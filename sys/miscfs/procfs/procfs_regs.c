@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_regs.c,v 1.11 1997/08/27 08:52:54 thorpej Exp $	*/
+/*	$NetBSD: procfs_regs.c,v 1.11.28.1 2001/03/30 21:48:56 he Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -98,8 +98,9 @@ procfs_doregs(curp, p, pfs, uio)
 }
 
 int
-procfs_validregs(p)
+procfs_validregs(p, mp)
 	struct proc *p;
+	struct mount *mp;
 {
 
 #if defined(PT_SETREGS) || defined(PT_GETREGS)
