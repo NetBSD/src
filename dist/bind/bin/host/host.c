@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.2 1999/11/20 19:12:58 veego Exp $	*/
+/*	$NetBSD: host.c,v 1.2.8.1 2000/10/08 18:28:42 is Exp $	*/
 
 #ifndef lint
 static const char rcsid[] = "Id: host.c,v 8.34 1999/11/11 19:39:10 cyarnell Exp";
@@ -349,7 +349,6 @@ main(int argc, char **argv) {
 					printf ("%s for %s not found, last verified key %s\n",
 						chase_step & SD_SIG ? "Key" : "Signature",
 						chase_step & SD_SIG ? chase_signer : chase_domain, 
-						chase_domain, 
 						chase_lastgoodkey ? chase_lastgoodkey : "None");
 				}
 			}
@@ -742,12 +741,12 @@ void print_hex_field (u_int8_t field[], int length, int width, char *pref)
 	do
 	{
 		stop=(start+width)<length?(start+width):length;
-		printf (pref);
+		printf ("%s", pref);
  		for (i = start; i < stop; i++)
 			printf ("%02x ", (u_char) field[i]);
 		printf ("\n");
 
-		printf (pref);
+		printf ("%s", pref);
 		for (i = start; i < stop; i++)
 			if (isprint(field[i]))
 				printf (" %c ", (u_char) field[i]);
@@ -1237,15 +1236,15 @@ pr_rr(const u_char *cp, const u_char *msg, FILE *file, int filter) {
 		/* original ttl */
 		origttl = cp;
 		if (doprint && verbose)
-			fprintf(file, " %d", ns_get32(cp));
+			fprintf(file, " %lu", ns_get32(cp));
 		cp += INT32SZ;
 		/* signature expiration */
 		if (doprint && verbose)
-			fprintf(file, " %d", ns_get32(cp));
+			fprintf(file, " %lu", ns_get32(cp));
 		cp += INT32SZ;
 		/* time signed */
 		if (doprint && verbose)
-			fprintf(file, " %d", ns_get32(cp));
+			fprintf(file, " %lu", ns_get32(cp));
 		cp += INT32SZ;
 		/* key footprint */
 		if (doprint && verbose)
@@ -1454,7 +1453,7 @@ pr_rr(const u_char *cp, const u_char *msg, FILE *file, int filter) {
 		u_char cdname[NS_MAXCDNAME];
 
 		if (doprint && !verbose)
-			fprintf (file, " (chasing signature)", sigchase-1);
+			fprintf (file, " (chasing signature %d)", sigchase-1);
 
 		/* unpack rr */
 
