@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.18 2003/08/07 11:16:14 agc Exp $	*/
+/*	$NetBSD: tftp.c,v 1.19 2004/10/02 05:05:35 erh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.18 2003/08/07 11:16:14 agc Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.19 2004/10/02 05:05:35 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,13 +234,13 @@ send_data:
 				tpacket("received", ap, n);
 			/* should verify packet came from server */
 			ap->th_opcode = ntohs(ap->th_opcode);
-			ap->th_block = ntohs(ap->th_block);
 			if (ap->th_opcode == ERROR) {
 				printf("Error code %d: %s\n", ap->th_code,
 					ap->th_msg);
 				goto abort;
 			}
 			if (ap->th_opcode == ACK) {
+				ap->th_block = ntohs(ap->th_block);
 				int j;
 
 				if (ap->th_block == 0) {
@@ -371,13 +371,13 @@ send_ack:
 				tpacket("received", dp, n);
 			/* should verify client address */
 			dp->th_opcode = ntohs(dp->th_opcode);
-			dp->th_block = ntohs(dp->th_block);
 			if (dp->th_opcode == ERROR) {
 				printf("Error code %d: %s\n", dp->th_code,
 					dp->th_msg);
 				goto abort;
 			}
 			if (dp->th_opcode == DATA) {
+				dp->th_block = ntohs(dp->th_block);
 				int j;
 
 				if (dp->th_block == 1 && !oack) {
@@ -420,7 +420,7 @@ send_ack:
 			break;
 		}
 		amount += size;
-	} while (size == blksize || block == 1);
+	} while (size == blksize);
 abort:						/* ok to ack, since user */
 	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
 	ap->th_block = htons((u_short)block);
