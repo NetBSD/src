@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.99 2004/04/18 02:28:24 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.100 2004/04/19 03:36:12 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1013,3 +1013,8 @@ usr.bin/calendar/calendars/calendar.history	1.15
 	Lincoln was fatally shot on the 14th, and only the 14th.  Move the 
 	more detailed entry from 04/16 to 04/14.
 	[snj, ticket #154]
+
+bin/pax/tar.c					1.48
+
+	Redo GNU tar --exclude emulation to actually work the same.
+	[mrg, ticket #155]
