@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_syscallargs.h,v 1.14 1998/02/19 03:34:18 thorpej Exp $	*/
+/*	$NetBSD: osf1_syscallargs.h,v 1.15 1998/05/20 16:35:20 chs Exp $	*/
 
 /*
  * System call argument lists.
@@ -132,7 +132,7 @@ struct osf1_sys_sendto_args {
 	syscallarg(caddr_t) buf;
 	syscallarg(size_t) len;
 	syscallarg(int) flags;
-	syscallarg(caddr_t) to;
+	syscallarg(struct sockaddr *) to;
 	syscallarg(int) tolen;
 };
 
@@ -217,7 +217,7 @@ int	sys_pipe	__P((struct proc *, void *, register_t *));
 int	osf1_sys_open	__P((struct proc *, void *, register_t *));
 int	sys_getgid	__P((struct proc *, void *, register_t *));
 int	sys_sigprocmask	__P((struct proc *, void *, register_t *));
-int	sys_getlogin	__P((struct proc *, void *, register_t *));
+int	sys___getlogin	__P((struct proc *, void *, register_t *));
 int	sys_setlogin	__P((struct proc *, void *, register_t *));
 int	sys_acct	__P((struct proc *, void *, register_t *));
 int	osf1_sys_ioctl	__P((struct proc *, void *, register_t *));
@@ -269,7 +269,7 @@ int	sys_settimeofday	__P((struct proc *, void *, register_t *));
 int	sys___posix_fchown	__P((struct proc *, void *, register_t *));
 int	sys_fchmod	__P((struct proc *, void *, register_t *));
 int	compat_43_sys_recvfrom	__P((struct proc *, void *, register_t *));
-int	sys_posix___posix_rename	__P((struct proc *, void *, register_t *));
+int	sys___posix_rename	__P((struct proc *, void *, register_t *));
 int	osf1_sys_truncate	__P((struct proc *, void *, register_t *));
 int	osf1_sys_ftruncate	__P((struct proc *, void *, register_t *));
 int	osf1_sys_setgid	__P((struct proc *, void *, register_t *));

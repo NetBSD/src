@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_syscall.h,v 1.15 1998/02/19 03:34:18 thorpej Exp $	*/
+/*	$NetBSD: osf1_syscall.h,v 1.16 1998/05/20 16:35:19 chs Exp $	*/
 
 /*
  * System call numbers.
@@ -101,8 +101,8 @@
 /* syscall: "sigprocmask" ret: "int" args: "int" "sigset_t" */
 #define	OSF1_SYS_sigprocmask	48
 
-/* syscall: "getlogin" ret: "int" args: "char *" "u_int" */
-#define	OSF1_SYS_getlogin	49
+/* syscall: "__getlogin" ret: "int" args: "char *" "u_int" */
+#define	OSF1_SYS___getlogin	49
 
 /* syscall: "setlogin" ret: "int" args: "char *" */
 #define	OSF1_SYS_setlogin	50
@@ -257,8 +257,8 @@
 /* syscall: "recvfrom" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int *" */
 #define	OSF1_SYS_recvfrom	125
 
-/* syscall: "posix___posix_rename" ret: "int" args: "char *" "char *" */
-#define	OSF1_SYS_posix___posix_rename	128
+/* syscall: "__posix_rename" ret: "int" args: "const char *" "const char *" */
+#define	OSF1_SYS___posix_rename	128
 
 /* syscall: "truncate" ret: "int" args: "char *" "off_t" */
 #define	OSF1_SYS_truncate	129
@@ -269,7 +269,7 @@
 /* syscall: "setgid" ret: "int" args: "gid_t" */
 #define	OSF1_SYS_setgid	132
 
-/* syscall: "sendto" ret: "int" args: "int" "caddr_t" "size_t" "int" "caddr_t" "int" */
+/* syscall: "sendto" ret: "int" args: "int" "caddr_t" "size_t" "int" "struct sockaddr *" "int" */
 #define	OSF1_SYS_sendto	133
 
 /* syscall: "shutdown" ret: "int" args: "int" "int" */
