@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.41 1999/03/24 12:42:47 dante Exp $	
+.\"	$NetBSD: hardware,v 1.42 1999/03/25 03:50:18 explorer Exp $	
 .Nx \*V
 runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors. It
@@ -147,6 +147,10 @@ Supported devices include:
 	FDDI adapters:
 		Digital DEFPA PCI FDDI adapters [*] [+]
 		Digital DEFEA EISA FDDI adapters [*] [+]
+	High Speed Serial:
+		LAN Media Corporation SSI/LMC10000 (up to 10Mbps) [*] [+]
+		LAN Media Corporation HSSI/LMC5200 [*] [+]
+		LAN Media Corporation DS3/LMC5245 [*] [+]
 	Tape drives:
 		Most SCSI tape drives
 		QIC-02 and QIC-36 format (Archive- and Wangtek-
