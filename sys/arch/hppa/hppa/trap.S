@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.4 2002/08/13 20:29:52 fredette Exp $	*/
+/*	$NetBSD: trap.S,v 1.5 2002/08/25 20:19:59 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -2601,8 +2601,17 @@ ENTRY(__pmap_pv_update,64)
 	break	HPPA_BREAK_KERNEL, HPPA_BREAK_SET_PSW
 	copy	t1, arg0
 	
-	/* Find the struct pv_head for this physical page. */
-	shd	%r0, arg0, (PGSHIFT - 5), arg0	/* arg0 = tlbbtop(arg0) */
+	/*
+	 * Find the struct pv_head for this physical page.
+	 * If this is a page in I/O space, conjure up a fake 
+	 * struct pv_head on the stack.
+	 */
+	shd	%r0, arg0, (PGSHIFT - 5), t1	/* t1 = tlbbtop(arg0) */
+	ldil	L%HPPA_IOSPACE, t2
+	copy	%r0, %r1			/* fake pv_head_wrd value */
+	comb,<<= t2, arg0, $pmap_pv_update_given
+	ldo	20(%r3), arg0			/* fake pv_head pointer */
+	copy	t1, arg0
 	PV_HEAD(arg0, t1)
 	ldw	PV_HEAD_WRITABLE_DIRTY_REF(arg0), %r1
 
@@ -2629,6 +2638,8 @@ ENTRY(__pmap_pv_update,64)
 	andcm	t1, arg2, t1			! \
 	or	t1, arg3, t1			! \
 	stw	t1, PV_TLBPROT(pv)
+
+$pmap_pv_update_given
 
 	/* If pv is non-NULL, flush and update that mapping. */
 	comb,=,n %r0, arg1, $pmap_pv_update_others

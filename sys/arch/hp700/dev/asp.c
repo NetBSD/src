@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.2 2002/08/16 15:02:39 fredette Exp $	*/
+/*	$NetBSD: asp.c,v 1.3 2002/08/25 20:20:00 fredette Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -104,6 +104,11 @@ struct asp_trs {
 #define	asp_scsi	_asp_ios.asp_scsi
 };
 
+#define	ASP_BANK_SZ	0x02000000
+#define	ASP_REG_INT	0x00800000
+#define	ASP_ETHER_ADDR	0x00810000
+#define	ASP_REG_MISC	0x0082f000
+
 const struct asp_spus_tag {
 	char	name[12];
 	int	ledword;
@@ -126,9 +131,6 @@ struct asp_softc {
 	volatile struct asp_hwr *sc_hw;
 	volatile struct asp_trs *sc_trs;
 };
-
-/* ASP "Primary Controller" HPA */
-#define	ASP_CHPA	0xF0800000
 
 int	aspmatch __P((struct device *, struct cfdata *, void *));
 void	aspattach __P((struct device *, struct device *, void *));
@@ -178,6 +180,12 @@ aspmatch(parent, cf, aux)
 	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
 		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
 
+	/*
+	 * Forcibly mask the HPA down to the start of the ASP
+	 * chip address space.
+	 */
+	ca->ca_hpa &= ~(ASP_BANK_SZ - 1);
+
 	return 1;
 }
 
@@ -194,15 +202,31 @@ aspattach(parent, self, aux)
 	register u_int32_t irr;
 	register int s;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa, IOMOD_HPASIZE, 0, &ioh)) {
-#ifdef DEBUG
-		printf("aspattach: can't map IO space\n");
-#endif
-		return;
-	}
+	/*
+	 * Map the ASP interrupt registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_INT,
+			  sizeof(struct asp_trs), 0, &ioh))
+		panic("aspattach: can't map interrupt registers.");
+	sc->sc_trs = (struct asp_trs *)ioh;
 
-	sc->sc_trs = (struct asp_trs *)ASP_CHPA;
-	sc->sc_hw = (struct asp_hwr *)ca->ca_hpa;
+	/*
+	 * Map the ASP miscellaneous registers.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_REG_MISC,
+			  sizeof(struct asp_hwr), 0, &ioh))
+		panic("aspattach: can't map miscellaneous registers.");
+	sc->sc_hw = (struct asp_hwr *)ioh;
+
+	/*
+	 * Map the Ethernet address and read it out.
+	 */
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + ASP_ETHER_ADDR,
+			  sizeof(ga.ga_ether_address), 0, &ioh))
+		panic("aspattach: can't map EEPROM.");
+	bus_space_read_region_1(ca->ca_iot, ioh, 0,
+		ga.ga_ether_address, sizeof(ga.ga_ether_address));
+	bus_space_unmap(ca->ca_iot, ioh, sizeof(ga.ga_ether_address));
 
 	machine_ledaddr = &sc->sc_trs->asp_cled;
 	machine_ledword = asp_spus[sc->sc_trs->asp_spu].ledword;
@@ -231,7 +255,6 @@ aspattach(parent, self, aux)
 	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
 	ga.ga_name = "gsc";
-	ga.ga_hpa = ASP_CHPA;
 	ga.ga_int_reg = &sc->sc_int_reg;
 	ga.ga_fix_args = asp_fix_args;
 	ga.ga_fix_args_cookie = sc;
