@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.39 2003/10/24 17:04:35 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.40 2004/05/08 23:40:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.39 2003/10/24 17:04:35 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_cardbus.c,v 1.40 2004/05/08 23:40:01 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -621,27 +621,8 @@ tlp_cardbus_setup(csc)
 		break;
 	}
 
-	if (cardbus_get_capability(cc, cf, csc->sc_tag,
-	    PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		reg = cardbus_conf_read(cc, cf, csc->sc_tag, pmreg + 4) & 0x03;
-#if 1 /* XXX Probably not right for CardBus. */
-		if (reg == 3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-#endif
-		if (reg != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
-			cardbus_conf_write(cc, cf, csc->sc_tag,
-			    pmreg + 4, 0);
-		}
-	}
+	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
+	    PCI_PWR_D0);
 
 	/* Make sure the right access type is on the CardBus bridge. */
 	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
