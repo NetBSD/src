@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmca.S,v 1.2 2001/05/14 22:14:47 jdolecek Exp $	*/
+/*	$NetBSD: biosmca.S,v 1.3 2003/01/23 21:01:18 jdolecek Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -83,22 +83,22 @@ ENTRY(biosmca)
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
-	# zero %cx
+	# zero %ecx
 	data32
-	xorl	%cx, %cx
+	xorl	%ecx, %ecx
 
 	data32
-	xorl	%ax, %ax
+	xorl	%eax, %eax
 	movb	$0xc0, %ah	# subfunction
 	int	$0x15
 	jc	back
 
 	# check feature byte 1 if MCA bus present and replaces ISA
 	addr32
-	movb	%es:5(%ebx), %ax
-	andw	$0x02, %ax	# bit 1 set means MCA instead of ISA
-	cmpw	$0x02, %ax	# see also arch/i386/mca/mca_machdep.c
-	jne	back
+	movb	%es:5(%ebx), %al
+	andb	$0x02, %al	# bit 1 set means MCA instead of ISA
+				# see also arch/i386/mca/mca_machdep.c
+	jnz	back
 	
 	# save model and submodel bytes to %cx
 	addr32
