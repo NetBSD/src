@@ -1,4 +1,4 @@
-.\" $NetBSD: useradd.8,v 1.7 2000/10/03 12:18:09 bjh21 Exp $ */
+.\" $NetBSD: useradd.8,v 1.8 2000/10/03 19:32:23 bjh21 Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,7 +39,7 @@
 .Nd add a user to the system
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl D
+.Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-secs
@@ -49,6 +49,7 @@
 .Fl r Ar low Ns Li .. Ns Ar high
 .Oc
 .Nm ""
+.Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl b Ar base-dir
 .Op Fl c Ar comment
@@ -58,15 +59,12 @@
 .Oo
 .Fl g Ar gid | name | Li =uid Oc
 .Op Fl k Ar skel-dir
-.Op Fl m
-.Op Fl o
 .Op Fl p Ar password
 .Oo
 .Fl r Ar low Ns Li .. Ns Ar high
 .Oc
 .Op Fl s Ar shell
 .Op Fl u Ar uid
-.Op Fl v
 .Ar user
 .Sh DESCRIPTION
 The

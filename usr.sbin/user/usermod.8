@@ -1,4 +1,4 @@
-.\" $NetBSD: usermod.8,v 1.6 2000/10/03 12:47:13 bjh21 Exp $ */
+.\" $NetBSD: usermod.8,v 1.7 2000/10/03 19:32:23 bjh21 Exp $ */
 .\"
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -39,6 +39,7 @@
 .Nd modify user login information
 .Sh SYNOPSIS
 .Nm
+.Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
@@ -48,12 +49,9 @@
 .Fl g Ar gid | name | Li =uid
 .Oc
 .Op Fl l Ar new-login
-.Op Fl m
-.Op Fl o
 .Op Fl p Ar password
 .Op Fl s Ar shell
 .Op Fl u Ar uid
-.Op Fl v
 .Ar user
 .Sh DESCRIPTION
 The
