@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.11 2002/12/30 09:37:50 explorer Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.12 2002/12/30 10:19:59 chris Exp $	*/
 
 /*
  * Copyright 2001 Bill Sommerfeld.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.11 2002/12/30 09:37:50 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.12 2002/12/30 10:19:59 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,8 +77,9 @@ struct acpibat_softc {
 	int sc_pred_capacity;		/* estimated current max */
 	int sc_warn_capacity;		/* warning level */
 	int sc_low_capacity;		/* low level */
+#if 0
 	struct sysmon_power sc_sysmon;	/* sysmon hook */
-
+#endif
 	ACPI_OBJECT sc_Ret[BAT_WORDS];	/* Return Buffer */
 };
 
