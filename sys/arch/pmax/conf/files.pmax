@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.34 1996/10/11 19:58:43 mhitch Exp $
+#	$NetBSD: files.pmax,v 1.35 1996/10/13 05:21:17 jonathan Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -72,17 +72,18 @@ device oldscsibus	{target = -1, drive = -1}
 attach oldscsibus at oldscsi
 
 # asc:  system-slot or turbochannel-option SCSI interface
-device asc: oldscsi,scsi
+#device asc: oldscsi,scsi
+device asc: oldscsi
 attach asc at ioasic with asc_ioasic
 file	dev/tc/asc_ioasic.c		asc_ioasic
 attach asc at tc with asc_tc
 file	dev/tc/asc_tc.c			asc_tc
 
-
 file	dev/tc/asc.c			asc needs-flag
 
 # sii:  kn01 SCSI interface 
-device sii: oldscsi,scsi
+#device sii: scsi,oldscsi
+device sii: oldscsi
 file	arch/pmax/dev/sii.c		sii needs-flag
 attach sii at mainbus with sii_ds
 file	arch/pmax/dev/sii_ds.c		sii_ds
@@ -103,7 +104,7 @@ file	arch/pmax/dev/rz.c		rz needs-count
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
 device dc
-file	arch/pmax/dev/dc.c		dc needs-flag
+file	arch/pmax/dev/dc.c		dc	needs-flag
 attach dc at ioasic with dc_ioasic
 file	arch/pmax/dev/dc_ioasic.c	dc_ioasic
 attach dc at mainbus with dc_ds
