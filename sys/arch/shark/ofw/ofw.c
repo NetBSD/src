@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.4 2002/02/20 20:41:18 thorpej Exp $	*/
+/*	$NetBSD: ofw.c,v 1.5 2002/02/21 06:33:05 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -1431,9 +1431,9 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 							    : PTE_NOCACHE);
 				va += NBPD;
 				pa += NBPD;
-			} /* END while */
-		} /* END if */
-	} /* END for */
+			}
+		}
+	}
 
 	/* OUT parameters are the new ttbbase and the pt which maps pts. */
 	*proc0_ttbbase = proc0_pagedir;
