@@ -1,4 +1,4 @@
-/*	$NetBSD: print-llc.c,v 1.4 1999/02/11 07:52:14 abs Exp $	*/
+/*	$NetBSD: print-llc.c,v 1.5 2000/05/28 01:25:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -30,7 +30,7 @@
 static const char rcsid[] =
     "@(#) Header: print-llc.c,v 1.24 97/01/01 20:56:48 leres Exp ";
 #else
-__RCSID("$NetBSD: print-llc.c,v 1.4 1999/02/11 07:52:14 abs Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.5 2000/05/28 01:25:20 matt Exp $");
 #endif
 #endif
 
@@ -196,7 +196,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		caplen -= 4;
 	}
 	(void)printf(" len=%d", length);
-	if (caplen > 0) {
+	if (caplen > 0 && !xflag) {
 		default_print_unaligned(p, caplen);
 	}
 	return(1);
