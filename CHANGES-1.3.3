@@ -569,7 +569,7 @@ distrib/notes/Makefile				1.7-1.8
   Strip NetBSD RCS tags from input files.  (cgd)
 
 distrib/notes/x68k/contents			1.6-1.7
-distrib/notes/x68k/hardware			1.3-1.4
+distrib/notes/x68k/hardware			patch
 distrib/notes/x68k/install			1.3-1.6
 distrib/notes/x68k/prep				1.2-1.3
 distrib/notes/x68k/upgrade			1.5-1.6
@@ -1231,3 +1231,17 @@ sys/vm/vm_map.c					1.41
 etc/etc.pmax/disktab				1.6
 
   Add disktab entry for 'miniroot' (currently a full root image).  (simonb)
+
+sys/dev/isa/wss.c				patch
+
+  Work around a problem that could cause the wss driver to panic during 
+  attach when a DRQ gets allocated twice.  (augustss)
+
+distrib/sets/lists/xbase/mi			1.9-1.10
+
+  Bring the list up to date for XFree86 3.3.3.  (simonb)
+
+usr.sbin/bootpd/bootpd.c			1.10
+
+  Ignore requests with bogus network types (which avoids an out of
+  bounds array access), as discussed on BUGTRAQ.  (abs)
