@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.83 2003/03/27 17:50:28 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.84 2003/05/02 03:15:24 itojun Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.83 2003/03/27 17:50:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.84 2003/05/02 03:15:24 itojun Exp $");
 
 #include "ppp.h"
 
@@ -706,7 +706,7 @@ pppsioctl(ifp, cmd, data)
 	    error = EAFNOSUPPORT;
 	    break;
 	}
-	switch(ifr->ifr_addr.sa_family) {
+	switch (ifr->ifr_addr.sa_family) {
 #ifdef INET
 	case AF_INET:
 	    break;

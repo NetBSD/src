@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.58 2003/02/26 06:31:13 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.59 2003/05/02 03:15:25 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.58 2003/02/26 06:31:13 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.59 2003/05/02 03:15:25 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -311,8 +311,7 @@ route_output(m, va_alist)
 		rt = (struct rtentry *)rn;
 		rt->rt_refcnt++;
 
-		switch(rtm->rtm_type) {
-
+		switch (rtm->rtm_type) {
 		case RTM_GET:
 		report:
 			dst = rt_key(rt);
@@ -921,7 +920,7 @@ sysctl_iflist(af, w, type)
 			continue;
 		ifa = TAILQ_FIRST(&ifp->if_addrlist);
 		ifpaddr = ifa->ifa_addr;
-		switch(type) {
+		switch (type) {
 		case NET_RT_IFLIST:
 			error =
 			    rt_msg2(RTM_IFINFO, &info, (caddr_t)0, w, &len);
@@ -939,7 +938,7 @@ sysctl_iflist(af, w, type)
 			return (error);
 		ifpaddr = 0;
 		if (w->w_where && w->w_tmem && w->w_needed <= 0) {
-			switch(type) {
+			switch (type) {
 			case NET_RT_IFLIST: {
 				struct if_msghdr *ifm;
 
