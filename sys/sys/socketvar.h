@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.72 2004/04/18 21:43:45 matt Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.73 2004/04/18 21:47:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -279,7 +279,7 @@ int 	soo_close(struct file *, struct proc *);
 int	soo_stat(struct file *, struct stat *, struct proc *);
 void	sbappend(struct sockbuf *, struct mbuf *);
 void	sbappendstream(struct sockbuf *, struct mbuf *);
-int	sbappendaddr(struct sockbuf *, struct sockaddr *, struct mbuf *,
+int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
 	    struct mbuf *);
 int	sbappendcontrol(struct sockbuf *, struct mbuf *, struct mbuf *);
 void	sbappendrecord(struct sockbuf *, struct mbuf *);
