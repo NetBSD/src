@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2000/08/11 09:20:40 toddpw Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2000/09/27 16:04:14 fvdl Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -11,7 +11,7 @@ BASENAME?=	boot
 IMAGE1?=	${BASENAME}1.fs
 FSTMP=		ustar.tmp
 MDEC=		${DESTDIR}/usr/mdec
-BOOTCODE?=	${MDEC}/biosboot.sym
+BOOTCODE=	${MDEC}/biosboot.sym
 #BOOTCODE=	${MDEC}/biosboot_com0.sym	# Serial output
 STRIP?=		strip
 
@@ -25,9 +25,8 @@ realall:	netbsd boot
 	tar cvf ${FSTMP} boot netbsd
 	@echo
 	@echo Making disk number one
-	-mv -f ${IMAGE1} ${IMAGE1}.tmp
-	dd if=/dev/zero of=${IMAGE1}.tmp count=${DISKSIZE}
-	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}.tmp
+	dd if=/dev/zero of=${IMAGE1} count=${DISKSIZE}
+	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	@echo "installing new bootblocks"
@@ -64,7 +63,6 @@ realall:	netbsd boot
                 echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
                         on disk $$disks."; \
 	)
-	mv -f ${IMAGE1}.tmp ${IMAGE1}
 
 # Let the kernel on the diskette be called "netbsd" although
 # it is compressed.  This is because the boot code will search
@@ -96,7 +94,7 @@ release:
 	done
 	
 clean cleandir distclean:
-	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs ${IMAGE1}.tmp
+	/bin/rm -f *.core ${CLEANFILES} ${BASENAME}?.fs
 
 .include <bsd.own.mk>
 .include <bsd.obj.mk>
