@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.44 2004/01/13 14:07:09 augustss Exp $
+ * $Id: ahc_pci.c,v 1.45 2004/03/16 05:32:09 simonb Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.44 2004/01/13 14:07:09 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.45 2004/03/16 05:32:09 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,10 +773,11 @@ ahc_pci_attach(parent, self, aux)
 	uint32_t	   devconfig;
 	int		   error;
 	pcireg_t	   subid;
-	int		   ioh_valid, memh_valid;
+	int		   ioh_valid;
 	bus_space_tag_t    st, iot;
 	bus_space_handle_t sh, ioh;
 #ifdef AHC_ALLOW_MEMIO
+	int		   memh_valid;
 	bus_space_tag_t    memt;
 	bus_space_handle_t memh;
 	pcireg_t memtype;
@@ -817,9 +818,10 @@ ahc_pci_attach(parent, self, aux)
 	if (error != 0)
 		return;
 
-	ioh_valid = memh_valid = 0;
+	ioh_valid = 0;
 
 #ifdef AHC_ALLOW_MEMIO
+	memh_valid = 0;
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, AHC_PCI_MEMADDR);
 	switch (memtype) {
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT:
