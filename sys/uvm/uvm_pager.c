@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.16.4.4 1999/07/11 05:48:34 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.16.4.5 1999/07/31 19:01:33 chs Exp $	*/
 
 /*
  *
@@ -35,6 +35,7 @@
  */
 
 #include "opt_pmap_new.h"
+#include "opt_uvmhist.h"
 
 /*
  * uvm_pager.c: generic functions used to assist the pagers.
@@ -196,7 +197,6 @@ uvm_pagermapout(kva, npages)
 	vsize_t size = npages << PAGE_SHIFT;
 	vm_map_entry_t entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
-	
 	UVMHIST_LOG(maphist, " (kva=0x%x, npages=%d)", kva, npages,0,0);
 
 	/*
@@ -212,6 +212,7 @@ uvm_pagermapout(kva, npages)
 	}
 	simple_unlock(&pager_map_wanted_lock);
 	vm_map_unlock(pager_map);
+	pmap_remove(pmap_kernel(), kva, kva + (npages << PAGE_SHIFT));
 	if (entries)
 		uvm_unmap_detach(entries, 0);
 
@@ -804,7 +805,7 @@ uvm_aio_biodone(bp)
 }
 
 /*
- * do iodone processing for normal async i/os.
+ * uvm_aio_aiodone: do iodone processing for async i/os.
  * this should be called in thread context, not interrupt context.
  */
 
@@ -812,28 +813,95 @@ void
 uvm_aio_aiodone(bp)
 	struct buf *bp;
 {
-	int pages = bp->b_bufsize >> PAGE_SHIFT;
-	struct vm_page *pgs[pages];
+	int npages = bp->b_bufsize >> PAGE_SHIFT;
+	struct vm_page *pg, *pgs[npages];
+	struct uvm_object *uobj;
 	int s, i;
-	boolean_t release;
+	boolean_t release, write, swap;
+	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
+	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
 
 	release = (bp->b_flags & (B_ERROR|B_READ)) == (B_ERROR|B_READ);
-	for (i = 0; i < pages; i++) {
+	write = (bp->b_flags & B_READ) == 0;
+	uobj = NULL;
+	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
+	}
+	uvm_pagermapout((vaddr_t)bp->b_data, npages);
+	for (i = 0; i < npages; i++) {
+		pg = pgs[i];
+
+		if (i == 0) {
+			swap = (pg->pqflags & PQ_SWAPBACKED) != 0;
+			if (!swap) {
+				uobj = pg->uobject;
+				simple_lock(&uobj->vmobjlock);
+			}
+		}
+#ifdef DIAGNOSTIC
+		if (!swap && pg->uobject != uobj) {
+			panic("uvm_aio_aiodone: mismatched pg %d %p uobj %p",
+			      i, pg, uobj);
+		}
+#endif
+
+		if (swap) {
+			if (pg->pqflags & PQ_ANON) {
+				simple_lock(&pg->uanon->an_lock);
+			} else {
+				simple_lock(&pg->uobject->vmobjlock);
+			}
+		}
 
 		/*
-		 * if this is an async read and we got an error,
-		 * mark the pages PG_RELEASED so that uvm_pager_dropcluster()
-		 * will free them.
+		 * if this is a read and we got an error, mark the pages
+		 * PG_RELEASED so that uvm_page_unbusy() will free them.
 		 */
 
 		if (release) {
-			pgs[i]->flags |= PG_RELEASED;
+			if (pg->pqflags & PQ_ANON) {
+				pg->flags &= ~(PG_BUSY);
+				UVM_PAGE_OWN(pg, NULL);
+				simple_unlock(&pg->uanon->an_lock);
+				uvm_anfree(pg->uanon);
+			} else {
+				uobj->pgops->pgo_releasepg(pg, NULL);
+				if (swap) {
+					simple_unlock(&pg->uobject->vmobjlock);
+				}
+			}
+			continue;
+		}
+
+#ifdef DIAGNOSTIC
+		if (write && pgs[i]->flags & PG_FAKE) {
+			panic("uvm_aio_aiodone: wrote PG_FAKE page %p", pgs[i]);
+		}
+#endif
+
+		/*
+		 * if this is a read and the page is PG_FAKE
+		 * or this was a write, mark the page PG_CLEAN and not PG_FAKE.
+		 */
+
+		if (pgs[i]->flags & PG_FAKE || write) {
+			pmap_clear_reference(PMAP_PGARG(pgs[i]));
+			pmap_clear_modify(PMAP_PGARG(pgs[i]));
+			pgs[i]->flags |= PG_CLEAN;
+			pgs[i]->flags &= ~PG_FAKE;
+		}
+		if (swap) {
+			if (pg->pqflags & PQ_ANON) {
+				simple_unlock(&pg->uanon->an_lock);
+			} else {
+				simple_unlock(&pg->uobject->vmobjlock);
+			}
 		}
 	}
-	uvm_pagermapout((vaddr_t)bp->b_data, pages);
-	uvm_pager_dropcluster((struct uvm_object *)bp->b_vp, NULL, pgs,
-			      &pages, PGO_PDFREECLUST, 0);
+	uvm_page_unbusy(pgs, npages);
+	if (!swap) {
+		simple_unlock(&uobj->vmobjlock);
+	}
 
 	s = splbio();
 	pool_put(&bufpool, bp);
