@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.11 2003/12/12 20:17:53 nathanw Exp $	*/
+/*	$NetBSD: vector.S,v 1.12 2004/02/20 17:35:01 yamt Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -860,27 +860,32 @@ calltrap:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-2:	/* Check for ASTs on exit to user mode. */
+	testb	$SEL_RPL,TF_CS(%esp)
+	jnz	alltraps_checkast
+#ifdef VM86
+	testl	$PSL_VM,TF_EFLAGS(%esp)
+	jz	6f
+#else
+	jmp	6f
+#endif
+alltraps_checkast:
+	/* Check for ASTs on exit to user mode. */
 	cli
 	CHECK_ASTPENDING(%eax)
-	je	1f
-	testb	$SEL_RPL,TF_CS(%esp)
-#ifdef VM86
-	jnz	5f
-	testl	$PSL_VM,TF_EFLAGS(%esp)
-#endif
-	jz	1f
+	jz	3f
 5:	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-	jmp	2b
+	jmp	alltraps_checkast	/* re-check ASTs */
+3:	CHECK_DEFERRED_SWITCH(%eax)
+	jnz	9f
 #ifndef DIAGNOSTIC
-1:	INTRFASTEXIT
+6:	INTRFASTEXIT
 #else
-1:	cmpl	CPUVAR(ILEVEL),%ebx
+6:	cmpl	CPUVAR(ILEVEL),%ebx
 	jne	3f
 	INTRFASTEXIT
 3:	sti
@@ -891,9 +896,12 @@ calltrap:
 	int	$3
 #endif /* DDB */
 	movl	%ebx,CPUVAR(ILEVEL)
-	jmp	2b
+	jmp	alltraps_checkast	/* re-check ASTs */
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
+9:	sti
+	call	_C_LABEL(pmap_load)
+	jmp	alltraps_checkast	/* re-check ASTs */
 
 #ifdef IPKDB
 /* LINTSTUB: Ignore */
