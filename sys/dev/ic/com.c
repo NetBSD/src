@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.167 2000/02/06 23:23:37 jonathan Exp $	*/
+/*	$NetBSD: com.c,v 1.168 2000/02/07 02:17:18 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1936,7 +1936,7 @@ comintr(arg)
 	cc = sc->sc_rbavail;
 
 	do {
-		u_char	msr, delta, ppsdelta;
+		u_char	msr, delta;
 
 		lsr = bus_space_read_1(iot, ioh, com_lsr);
 #if defined(DDB) || defined(KGDB)
@@ -2018,10 +2018,9 @@ comintr(arg)
 		 * Pulse-per-second (PSS) signals on edge of DCD?
 		 * Process these even if line discipline is ignoring DCD.
 		 */
-		ppsdelta = delta & sc->sc_ppsmask;
-		if (ppsdelta) {
+		if (delta & sc->sc_ppsmask) {
 			struct timeval tv;
-		    	if (ppsdelta == sc->sc_ppsassert) {
+		    	if ((msr & sc->sc_ppsmask) == sc->sc_ppsassert) {
 				/* XXX nanotime() */
 				microtime(&tv);
 				TIMEVAL_TO_TIMESPEC(&tv, 
@@ -2039,7 +2038,7 @@ comintr(arg)
 				sc->ppsinfo.assert_sequence++;
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
 
-			} else if (ppsdelta == sc->sc_ppsclear) {
+			} else if ((msr & sc->sc_ppsmask) == sc->sc_ppsclear) {
 				/* XXX nanotime() */
 				microtime(&tv);
 				TIMEVAL_TO_TIMESPEC(&tv, 
@@ -2058,6 +2057,7 @@ comintr(arg)
 				sc->ppsinfo.current_mode = sc->ppsparam.mode;
 			}
 		}
+
 		/*
 		 * Process normal status changes
 		 */
