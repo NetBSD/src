@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.16 2003/09/08 05:34:35 jlam Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.17 2003/09/08 06:41:23 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.16 2003/09/08 05:34:35 jlam Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.17 2003/09/08 06:41:23 jlam Exp $");
 #endif
 
 /*
@@ -217,7 +217,7 @@ pkgdb_remove_pkg(const char *pkg)
 	}
 	cc = strlen(pkg);
 	for (ret = 1, type = R_FIRST; (*pkgdbp->seq)(pkgdbp, &key, &data, type) == 0 ; type = R_NEXT) {
-		if (cc == data.size && strncmp(data.data, pkg, cc) == 0) {
+		if ((cc + 1) == data.size && strncmp(data.data, pkg, cc) == 0) {
 			if (Verbose) {
 				printf("Removing file %s from pkgdb\n", (char *)key.data);
 			}
