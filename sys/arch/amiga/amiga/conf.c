@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21 1994/12/14 19:13:43 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.22 1994/12/28 08:57:36 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -257,8 +257,8 @@ cdev_decl(st);
 
 /* floppy disk */
 cdev_decl(fd);
-dev_decl(Fd,open);
-dev_decl(Fd,close);
+dev_type_open(Fdopen);
+dev_type_close(Fdclose);
 #define	cdev_floppy_init(c) { \
 	dev_init(c,Fd,open), \
 	dev_init(c,Fd,close), \
@@ -554,6 +554,9 @@ dev_type_ioctl(lkmioctl);
 #include "ser.h"
 cdev_decl(ser);
 
+#include "mfcs.h"
+cdev_decl(mfcs);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1),		/* 0: virtual console */
@@ -573,7 +576,7 @@ struct cdevsw	cdevsw[] =
 	cdev_kbd_init(NKBD),		/* 14: /dev/kbd */
 	cdev_mouse_init(NMOUSE),	/* 15: /dev/mouse0 /dev/mouse1 */
 	cdev_view_init(NVIEW),		/* 16: /dev/view00 /dev/view01 ... */
-	cdev_notdef(),			/* 17: */
+	cdev_tty_init(NMFCS,mfcs),	/* 17: MultiFaceCard III serial */
 	cdev_floppy_init(NFD),		/* 18: floppy */
 	cdev_disk_init(NVN,vn),		/* 19: vnode disk */
 	cdev_st_init(NST),		/* 20: scsi tape */
@@ -716,14 +719,16 @@ chrtoblk(dev)
  * console capable devices entry points.
  */
 int sercnprobe(), sercninit(), sercngetc(), sercnputc();
+void sercnpollc();
 int ite_cnprobe(), ite_cninit(), ite_cngetc(), ite_cnputc();
+void ite_cnpollc();
 
 struct	consdev constab[] = {
 #if NSER > 0
-	{ sercnprobe,	sercninit,	sercngetc,	sercnputc },
+	{ sercnprobe,	sercninit,	sercngetc,	sercnputc,	sercnpollc },
 #endif
 #if NITE > 0
-	{ ite_cnprobe,	ite_cninit,	ite_cngetc,	ite_cnputc },
+	{ ite_cnprobe,	ite_cninit,	ite_cngetc,	ite_cnputc,	ite_cnpollc },
 #endif
 	{ 0 },
 };
