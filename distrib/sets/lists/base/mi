@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.162 2000/05/10 23:25:44 thorpej Exp $
+# $NetBSD: mi,v 1.163 2000/05/14 23:07:43 christos Exp $
 .
 ./altroot
 ./bin
@@ -1044,6 +1044,7 @@
 ./usr/share/misc/inter.phone
 ./usr/share/misc/language
 ./usr/share/misc/magic
+./usr/share/misc/magic.mime
 ./usr/share/misc/mail.help
 ./usr/share/misc/mail.tildehelp
 ./usr/share/misc/map3270
