@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.7 2000/11/02 08:20:27 mbw Exp $
+.\"	$NetBSD: install,v 1.8 2000/11/04 06:08:34 mbw Exp $
 .
 .Ss2 Booting the installer
 .
@@ -277,7 +277,12 @@ a kernel).
 .It
 Black screen
 .Pp
-You need a serial console. See the section entitled
+If your system is a PowerBook, 
+.Nx
+may have turned down the brightness of the backlight.  Use the buttons to
+turn your brightness back up.
+.Pp
+Otherwise, you need a serial console. See the section entitled
 .Sx Getting to the Open Firmware Prompt
 .It
 Grey screen with flashing question mark
@@ -317,11 +322,6 @@ Plug the USB keyboard directly into the computer (i.e. not through a hub)
 .Pp
 See
 .Lk http://www.netbsd.org/Ports/macppc/faq.html#pciide-lost-interrupt
-.It
-.Dq Li "Panic: mesh: FIFO != 0"
-.Pp
-Try unplugging your Zip drive. If that doesn't work, see
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#mesh-fifo
 .bullet)
 .
 .so ../common/sysinst
