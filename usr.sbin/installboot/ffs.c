@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.14 2004/03/21 21:18:40 dsl Exp $	*/
+/*	$NetBSD: ffs.c,v 1.14.2.1 2004/06/22 07:19:55 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,13 +36,20 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.14 2004/03/21 21:18:40 dsl Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.14.2.1 2004/06/22 07:19:55 tron Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
+
+#if !HAVE_NBTOOL_CONFIG_H
 #include <sys/mount.h>
+#endif
 
 #include <assert.h>
 #include <err.h>
