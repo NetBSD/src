@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.199 2003/10/19 03:32:25 matt Exp $
+#	$NetBSD: files.pci,v 1.200 2003/10/31 06:49:58 nisimura Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -259,6 +259,11 @@ file	dev/pci/slide.c		slide
 device	viaide {[channel = -1]}: ata, pciide_common
 attach	viaide at pci
 file	dev/pci/viaide.c	viaide
+
+# STMicroelectronics STPC IDE controllers
+device	stpcide {[channel = -1 ]}: ata, pciide_common
+attach	stpcide at pci
+file	dev/pci/stpcide.c	stpcide
 
 # PCI-PCI bridge chips
 device	ppb: pcibus
