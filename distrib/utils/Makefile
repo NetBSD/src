@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2003/01/19 12:35:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15.2.1 2004/06/17 08:03:04 tron Exp $
 
 SUBDIR=	libhack more ssh tls \
 	x_dhclient x_dmesg x_ed x_gzip x_ifconfig \
@@ -6,6 +6,10 @@ SUBDIR=	libhack more ssh tls \
 
 .if exists(sysinst/arch/${MACHINE})
 SUBDIR+=sysinst
+.endif
+
+.if ${MACHINE} == "acorn32"
+SUBDIR+=sparkcrc
 .endif
 
 # IPv6
