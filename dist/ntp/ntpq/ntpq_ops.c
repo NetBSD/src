@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq_ops.c,v 1.1.1.1 2000/03/29 12:38:55 simonb Exp $	*/
+/*	$NetBSD: ntpq_ops.c,v 1.1.1.2 2000/04/22 14:53:46 simonb Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by ntpdc
@@ -942,7 +942,7 @@ printassoc(
 			conf = "yes";
 		else
 			conf = "no";
-		if (statval & CTL_PST_REACH) {
+		if (statval & CTL_PST_REACH || 1) {
 			reach = "yes";
 			if (statval & CTL_PST_AUTHENABLE) {
 				if (statval & CTL_PST_AUTHENTIC)

@@ -1,4 +1,4 @@
-/*	$NetBSD: authencrypt.c,v 1.1.1.1 2000/03/29 12:38:49 simonb Exp $	*/
+/*	$NetBSD: authencrypt.c,v 1.1.1.2 2000/04/22 14:52:55 simonb Exp $	*/
 
 /*
  * DES interface for rsaref2.0
@@ -69,7 +69,7 @@ int
 DESauthdecrypt(
 	u_char *key,		/* key pointer */
 	u_int32 *pkt,		/* packet pointer */
-	int length, 	/* packet length */
+	int length, 		/* packet length */
 	int size		/* size of MAC field */
 	)
 {

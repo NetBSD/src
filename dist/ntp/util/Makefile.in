@@ -86,6 +86,7 @@ MAKE_LIBPARSE = @MAKE_LIBPARSE@
 MAKE_LIBPARSE_KERNEL = @MAKE_LIBPARSE_KERNEL@
 MAKE_LIBRSAREF = @MAKE_LIBRSAREF@
 MAKE_NTPTIME = @MAKE_NTPTIME@
+MAKE_NTP_GENKEYS = @MAKE_NTP_GENKEYS@
 MAKE_PARSEKMODULE = @MAKE_PARSEKMODULE@
 MAKE_TICKADJ = @MAKE_TICKADJ@
 PACKAGE = @PACKAGE@
@@ -103,10 +104,12 @@ install_sh = @install_sh@
 
 
 AUTOMAKE_OPTIONS = ansi2knr
-bin_PROGRAMS = @MAKE_TICKADJ@ @MAKE_NTPTIME@
-EXTRA_PROGRAMS = byteorder hist jitter kern longsize ntptime \
-precision tickadj testrs6000 timetrim sht
+bin_PROGRAMS = @MAKE_TICKADJ@ @MAKE_NTPTIME@ @MAKE_NTP_GENKEYS@
+EXTRA_PROGRAMS = byteorder hist jitter kern longsize ntp_genkeys ntptime \
+precision sht testrs6000 tickadj timetrim
 
+
+ntp_genkeys_LDADD = ../librsaref/librsaref.a ../libntp/libntp.a
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/librsaref
 # LDADD might need RESLIB and ADJLIB
@@ -150,6 +153,10 @@ longsize_OBJECTS =  longsize$U.o
 longsize_LDADD = $(LDADD)
 longsize_DEPENDENCIES =  ../libntp/libntp.a
 longsize_LDFLAGS = 
+ntp_genkeys_SOURCES = ntp_genkeys.c
+ntp_genkeys_OBJECTS =  ntp_genkeys$U.o
+ntp_genkeys_DEPENDENCIES =  ../librsaref/librsaref.a ../libntp/libntp.a
+ntp_genkeys_LDFLAGS = 
 ntptime_SOURCES = ntptime.c
 ntptime_OBJECTS =  ntptime$U.o
 ntptime_LDADD = $(LDADD)
@@ -183,8 +190,9 @@ timetrim_LDFLAGS =
 COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) $(LDFLAGS) -o $@
-DIST_SOURCES =  byteorder.c hist.c jitter.c kern.c longsize.c ntptime.c \
-precision.c sht.c testrs6000.c tickadj.c timetrim.c
+DIST_SOURCES =  byteorder.c hist.c jitter.c kern.c longsize.c \
+ntp_genkeys.c ntptime.c precision.c sht.c testrs6000.c tickadj.c \
+timetrim.c
 DIST_COMMON =  README Makefile.am Makefile.in ansi2knr.1 ansi2knr.c
 
 
@@ -194,11 +202,11 @@ GZIP_ENV = --best
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 DEP_FILES =  @AMDEP@ $(DEPDIR)/byteorder$U.Po $(DEPDIR)/hist$U.Po \
 $(DEPDIR)/jitter$U.Po $(DEPDIR)/kern$U.Po $(DEPDIR)/longsize$U.Po \
-$(DEPDIR)/ntptime$U.Po $(DEPDIR)/precision$U.Po $(DEPDIR)/sht$U.Po \
-$(DEPDIR)/testrs6000$U.Po $(DEPDIR)/tickadj$U.Po \
-$(DEPDIR)/timetrim$U.Po
-SOURCES = byteorder.c hist.c jitter.c kern.c longsize.c ntptime.c precision.c sht.c testrs6000.c tickadj.c timetrim.c
-OBJECTS = byteorder$U.o hist$U.o jitter$U.o kern$U.o longsize$U.o ntptime$U.o precision$U.o sht$U.o testrs6000$U.o tickadj$U.o timetrim$U.o
+$(DEPDIR)/ntp_genkeys$U.Po $(DEPDIR)/ntptime$U.Po \
+$(DEPDIR)/precision$U.Po $(DEPDIR)/sht$U.Po $(DEPDIR)/testrs6000$U.Po \
+$(DEPDIR)/tickadj$U.Po $(DEPDIR)/timetrim$U.Po
+SOURCES = byteorder.c hist.c jitter.c kern.c longsize.c ntp_genkeys.c ntptime.c precision.c sht.c testrs6000.c tickadj.c timetrim.c
+OBJECTS = byteorder$U.o hist$U.o jitter$U.o kern$U.o longsize$U.o ntp_genkeys$U.o ntptime$U.o precision$U.o sht$U.o testrs6000$U.o tickadj$U.o timetrim$U.o
 
 all: all-redirect
 .SUFFIXES:
@@ -291,6 +299,10 @@ longsize: $(longsize_OBJECTS) $(longsize_DEPENDENCIES)
 	@rm -f longsize
 	$(LINK) $(longsize_LDFLAGS) $(longsize_OBJECTS) $(longsize_LDADD) $(LIBS)
 
+ntp_genkeys: $(ntp_genkeys_OBJECTS) $(ntp_genkeys_DEPENDENCIES)
+	@rm -f ntp_genkeys
+	$(LINK) $(ntp_genkeys_LDFLAGS) $(ntp_genkeys_OBJECTS) $(ntp_genkeys_LDADD) $(LIBS)
+
 ntptime: $(ntptime_OBJECTS) $(ntptime_DEPENDENCIES)
 	@rm -f ntptime
 	$(LINK) $(ntptime_LDFLAGS) $(ntptime_OBJECTS) $(ntptime_LDADD) $(LIBS)
@@ -324,6 +336,8 @@ kern_.c: kern.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/kern.c; then echo $(srcdir)/kern.c; else echo kern.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > kern_.c
 longsize_.c: longsize.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/longsize.c; then echo $(srcdir)/longsize.c; else echo longsize.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > longsize_.c
+ntp_genkeys_.c: ntp_genkeys.c $(ANSI2KNR)
+	$(CPP) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntp_genkeys.c; then echo $(srcdir)/ntp_genkeys.c; else echo ntp_genkeys.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > ntp_genkeys_.c
 ntptime_.c: ntptime.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/ntptime.c; then echo $(srcdir)/ntptime.c; else echo ntptime.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > ntptime_.c
 precision_.c: precision.c $(ANSI2KNR)
@@ -336,8 +350,9 @@ tickadj_.c: tickadj.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/tickadj.c; then echo $(srcdir)/tickadj.c; else echo tickadj.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > tickadj_.c
 timetrim_.c: timetrim.c $(ANSI2KNR)
 	$(CPP) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) `if test -f $(srcdir)/timetrim.c; then echo $(srcdir)/timetrim.c; else echo timetrim.c; fi` | sed 's/^# \([0-9]\)/#line \1/' | $(ANSI2KNR) > timetrim_.c
-byteorder_.o hist_.o jitter_.o kern_.o longsize_.o ntptime_.o \
-precision_.o sht_.o testrs6000_.o tickadj_.o timetrim_.o : $(ANSI2KNR)
+byteorder_.o hist_.o jitter_.o kern_.o longsize_.o ntp_genkeys_.o \
+ntptime_.o precision_.o sht_.o testrs6000_.o tickadj_.o timetrim_.o : \
+$(ANSI2KNR)
 
 tags: TAGS
 
@@ -391,6 +406,7 @@ distdir: $(DISTFILES)
 @AMDEP@include $(DEPDIR)/jitter$U.Po
 @AMDEP@include $(DEPDIR)/kern$U.Po
 @AMDEP@include $(DEPDIR)/longsize$U.Po
+@AMDEP@include $(DEPDIR)/ntp_genkeys$U.Po
 @AMDEP@include $(DEPDIR)/ntptime$U.Po
 @AMDEP@include $(DEPDIR)/precision$U.Po
 @AMDEP@include $(DEPDIR)/sht$U.Po
