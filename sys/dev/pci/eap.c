@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.32 1999/11/02 17:48:01 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.33 2000/03/06 03:18:11 perry Exp $	*/
 /*      $OpenBSD: eap.c,v 1.6 1999/10/05 19:24:42 csapuntz Exp $ */
 
 /*
@@ -734,9 +734,10 @@ eap_attach(parent, self, aux)
 	char devinfo[256];
 	mixer_ctrl_t ctl;
 	int i;
+	int revision;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	printf(": %s (rev. 0x%02x)\n", devinfo, (revision = PCI_REVISION(pa->pa_class)));
 
         /* Flag if we're "creative" */
 	sc->sc_1371 = PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ENSONIQ_AUDIOPCI97;
@@ -815,7 +816,14 @@ eap_attach(parent, self, aux)
 		eap_hw_if->set_port(sc, &ctl);
 	} else {
                 /* clean slate */
-                EWRITE4(sc, EAP_SIC, 0);
+
+#define ES1371_BINTSUMM_OFF 0x07
+	        if ((revision == 7) || (revision >= 9)) {
+		     EWRITE4(sc, ES1371_BINTSUMM_OFF, 0x20);
+		} else {
+		     EWRITE4(sc, EAP_SIC, 0);
+		}
+
                 EWRITE4(sc, EAP_ICSC, 0);
                 EWRITE4(sc, E1371_LEGACY, 0);
 
