@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.77 2003/08/07 16:31:54 agc Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.78 2003/09/16 15:55:26 drochner Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.77 2003/08/07 16:31:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.78 2003/09/16 15:55:26 drochner Exp $");
 
 #include "opt_ktrace.h"
 
@@ -110,7 +110,7 @@ dofileread(struct proc *p, int fd, struct file *fp, void *buf, size_t nbyte,
 	size_t		cnt;
 	int		error;
 #ifdef KTRACE
-	struct iovec	ktriov;
+	struct iovec	ktriov = {0};
 #endif
 	error = 0;
 
@@ -266,7 +266,7 @@ dofilereadv(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
 	if (ktriov != NULL) {
-		if (error == 0)
+		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
 			ktrgenio(p, fd, UIO_READ, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
@@ -324,7 +324,7 @@ dofilewrite(struct proc *p, int fd, struct file *fp, const void *buf,
 	size_t		cnt;
 	int		error;
 #ifdef KTRACE
-	struct iovec	ktriov;
+	struct iovec	ktriov = {0};
 #endif
 
 	error = 0;
@@ -485,8 +485,8 @@ dofilewritev(struct proc *p, int fd, struct file *fp, const struct iovec *iovp,
 	}
 	cnt -= auio.uio_resid;
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_GENIO))
-		if (error == 0) {
+	if (ktriov != NULL) {
+		if (KTRPOINT(p, KTR_GENIO) && (error == 0))
 			ktrgenio(p, fd, UIO_WRITE, ktriov, cnt, error);
 		free(ktriov, M_TEMP);
 	}
