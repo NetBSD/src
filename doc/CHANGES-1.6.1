@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.76 2002/12/19 00:49:30 lukem Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.77 2002/12/26 07:57:40 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2684,3 +2684,7 @@ gnu/dist/toolchain/gcc/integrate.c		1.2
 	Fixes reset of PR#18314.
 	[kristerw, ticket #1039]
 
+sys/sys/malloc.h                                1.80-1.81 (via hand patch)
+
+        M_ZERO for inline'ed MALLOC.
+        [yamt, ticket #957]
