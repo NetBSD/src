@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.37 2001/12/21 06:30:44 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.38 2001/12/21 08:54:19 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.37 2001/12/21 06:30:44 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.38 2001/12/21 08:54:19 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -204,25 +204,25 @@ struct ip6protosw inet6sw[] = {
 #endif /* IPSEC */
 #ifdef INET
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap6_input,	rip6_output, 	0,		rip6_ctloutput,
+  encap6_input,	rip6_output, 	encap6_ctlinput, rip6_ctloutput,
   rip6_usrreq,
   encap_init,	0,		0,		0,
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_IPV6,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap6_input, rip6_output,	 0,		rip6_ctloutput,
+  encap6_input, rip6_output,	encap6_ctlinput, rip6_ctloutput,
   rip6_usrreq,
   encap_init,	0,		0,		0,
 },
 #ifdef ISO
 { SOCK_RAW,	&inet6domain,	IPPROTO_EON,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  encap6_input,	rip6_output,	0,		rip6_ctloutput,
+  encap6_input,	rip6_output,	encap6_ctlinput, rip6_ctloutput,
   rip6_usrreq,	/*XXX*/
   encap_init,	0,		0,		0,
 },
 #endif
 { SOCK_RAW,     &inet6domain,	IPPROTO_PIM,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  pim6_input,    rip6_output,	0,              rip6_ctloutput, 
+  pim6_input,	rip6_output,	0,              rip6_ctloutput, 
   rip6_usrreq,
   0,            0,              0,              0,
 },
@@ -270,7 +270,7 @@ u_int32_t ip6_flow_seq;
 int	ip6_auto_flowlabel = 1;
 int	ip6_use_deprecated = 1;	/* allow deprecated addr (RFC2462 5.5.4) */
 int	ip6_rr_prune = 5;	/* router renumbering prefix
-				 * walk list every 5 sec.    */
+				 * walk list every 5 sec. */
 int	ip6_v6only = 1;
 
 u_int32_t ip6_id = 0UL;
