@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.44 1998/11/20 01:22:37 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.45 1998/11/21 15:41:41 drochner Exp $ */
 
 
 /*
@@ -416,12 +416,10 @@ wdcattach(chp)
  * are shared.
  */
 void
-wdcstart(wdc, channel)
-	struct wdc_softc *wdc;
-	int channel;
+wdcstart(chp)
+	struct channel_softc *chp;
 {
 	struct wdc_xfer *xfer;
-	struct channel_softc *chp;
 
 #ifdef WDC_DIAGNOSTIC
 	int spl1, spl2;
@@ -437,9 +435,8 @@ wdcstart(wdc, channel)
 #endif /* WDC_DIAGNOSTIC */
 
 	/* is there a xfer ? */
-	if ((xfer = wdc->channels[channel].ch_queue->sc_xfer.tqh_first) == NULL)
+	if ((xfer = chp->ch_queue->sc_xfer.tqh_first) == NULL)
 		return;
-	chp = &wdc->channels[xfer->channel];
 	if ((chp->ch_flags & WDCF_ACTIVE) != 0 ) {
 		return; /* channel aleady active */
 	}
@@ -447,8 +444,8 @@ wdcstart(wdc, channel)
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
 		panic("wdcstart: channel waiting for irq\n");
 #endif
-	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
-		if (!(*wdc->claim_hw)(chp, 0))
+	if (chp->wdc->cap & WDC_CAPABILITY_HWLOCK)
+		if (!(*chp->wdc->claim_hw)(chp, 0))
 			return;
 
 	WDCDEBUG_PRINT(("wdcstart: xfer %p channel %d drive %d\n", xfer,
@@ -470,7 +467,7 @@ wdcrestart(v)
 	int s;
 
 	s = splbio();
-	wdcstart(chp->wdc, chp->channel);
+	wdcstart(chp);
 	splx(s);
 }
 	
@@ -1006,7 +1003,7 @@ __wdccommand_done(chp, xfer)
 		else
 			wdc_c->callback(wdc_c->callback_arg);
 	}
-	wdcstart(chp->wdc, chp->channel);
+	wdcstart(chp);
 	return;
 }
 
@@ -1091,7 +1088,7 @@ wdc_exec_xfer(chp, xfer)
 	TAILQ_INSERT_TAIL(&chp->ch_queue->sc_xfer,xfer , c_xferchain);
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
-	wdcstart(chp->wdc, chp->channel);
+	wdcstart(chp);
 	xfer->c_flags |= C_NEEDDONE; /* we can now call upper level done() */
 }
 

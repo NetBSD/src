@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.10 1998/10/12 16:09:19 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.11 1998/11/21 15:41:42 drochner Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 
 struct wdc_isa_softc {
 	struct	wdc_softc sc_wdcdev;
+	struct	channel_softc *wdc_chanptr;
 	struct	channel_softc wdc_channel;
 	isa_chipset_tag_t sc_ic;
 	void	*sc_ih;
@@ -151,7 +152,8 @@ wdc_isa_attach(parent, self, aux)
 	}
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32;
 	sc->sc_wdcdev.pio_mode = 0;
-	sc->sc_wdcdev.channels = &sc->wdc_channel;
+	sc->wdc_chanptr = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
