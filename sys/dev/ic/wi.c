@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.44 2002/02/26 09:29:18 dbj Exp $	*/
+/*	$NetBSD: wi.c,v 1.45 2002/03/04 01:19:24 dbj Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.44 2002/02/26 09:29:18 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.45 2002/03/04 01:19:24 dbj Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -577,7 +577,7 @@ void wi_update_stats(sc)
 			"AP change",
 			"AP out of range",
 			"AP in range",
-			"Association Faild"
+			"Association Failed"
 		};
 
 		if (gen.wi_len != 2) {
@@ -609,7 +609,7 @@ void wi_update_stats(sc)
 			"STA Reassociated",
 			"STA Disassociated",
 			"Association Failure",
-			"Authentication Faild"
+			"Authentication Failed"
 		};
 		if (gen.wi_len != 10)
                         break;
