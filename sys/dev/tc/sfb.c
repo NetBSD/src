@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.7 1999/01/11 21:35:56 drochner Exp $ */
+/* $NetBSD: sfb.c,v 1.8 1999/01/15 23:31:25 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.7 1999/01/11 21:35:56 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.8 1999/01/15 23:31:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.7 1999/01/11 21:35:56 drochner Exp $");
 
 /* XXX BUS'IFYING XXX */
  
-#if defined(__pmax__)
+#if defined(pmax)
 #define	machine_btop(x) mips_btop(x)
 #define	MACHINE_KSEG0_TO_PHYS(x) MIPS_KSEG1_TO_PHYS(x)
 #endif

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.11 1998/04/19 07:50:25 jonathan Exp $ */
+/* $NetBSD: mcclock.c,v 1.12 1999/01/15 23:29:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.11 1998/04/19 07:50:25 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.12 1999/01/15 23:29:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,10 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.11 1998/04/19 07:50:25 jonathan Exp $"
 
 /*
  * XXX rate is machine-dependent.
- */#ifdef __alpha__
+ */
+#ifdef __alpha__
 #define MC_DFEAULTRATE MC_RATE_1024_Hz
 #endif
-#ifdef __pmax__
+#ifdef pmax
 #define MC_DEFAULTRATE MC_RATE_256_Hz
 #endif
 
