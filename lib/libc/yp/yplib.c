@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char *rcsid = "$Id: yplib.c,v 1.12 1994/09/20 07:20:36 deraadt Exp $";
+static char *rcsid = "$Id: yplib.c,v 1.13 1994/09/28 01:38:06 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -48,9 +48,8 @@ static char *rcsid = "$Id: yplib.c,v 1.12 1994/09/20 07:20:36 deraadt Exp $";
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-#ifndef BINDINGDIR
-#define BINDINGDIR "/var/yp/binding"
-#endif
+#define BINDINGDIR	"/var/yp/binding"
+#define YPBINDLOCK	"/var/run/ypbind.lock"
 #define YPMATCHCACHE
 
 extern bool_t xdr_domainname(), xdr_ypbind_resp();
@@ -186,6 +185,17 @@ struct dom_binding **ypdb;
 	int new=0, r;
 	int count = 0;
 
+	/*
+	 * test if YP is running or not
+	 */
+	if ((fd=open(YPBINDLOCK, O_RDONLY)) == -1)
+		return YPERR_YPBIND;
+	if( !(flock(fd, LOCK_EX|LOCK_NB) == -1 && errno==EWOULDBLOCK)) {
+		close(fd);
+		return YPERR_YPBIND;
+	}
+	close(fd);
+
 	gpid = getpid();
 	if( !(pid==-1 || pid==gpid) ) {
 		ysd = _ypbindlist;
@@ -217,7 +227,6 @@ struct dom_binding **ypdb;
 		new = 1;
 	}
 again:
-#ifdef BINDINGDIR
 	if(ysd->dom_vers==0) {
 		sprintf(path, "%s/%s.%d", BINDINGDIR, dom, 2);
 		if( (fd=open(path, O_RDONLY)) == -1) {
@@ -261,7 +270,6 @@ again:
 		}
 	}
 trynet:
-#endif
 	if(ysd->dom_vers==-1 || ysd->dom_vers==0) {
 		memset(&clnt_sin, 0, sizeof clnt_sin);
 		clnt_sin.sin_family = AF_INET;
