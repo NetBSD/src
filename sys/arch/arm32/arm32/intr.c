@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15 1999/06/28 08:20:42 itojun Exp $	*/
+/*	$NetBSD: intr.c,v 1.16 2000/01/10 04:05:50 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -190,7 +190,7 @@ dosoftints()
 		INC_SINTRCNT(SOFTIRQ_CLOCK);
 		clearsoftintr(SOFTIRQ_BIT(SOFTIRQ_CLOCK));
 		softclock();
-		splx(s);
+		(void)splx(s);
 	}
 
 	/*
@@ -263,7 +263,7 @@ dosoftints()
 			pppintr();
 		}
 #endif
-		splx(s);
+		(void)splx(s);
 	}
 	/*
 	 * Serial software interrupts
@@ -277,7 +277,7 @@ dosoftints()
 #if NCOM > 0
 		comsoft();
 #endif	/* NCOM > 0 */
-		splx(s);
+		(void)splx(s);
 	}
 }
 
