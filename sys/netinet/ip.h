@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.h,v 1.8 1995/04/17 05:32:56 cgd Exp $	*/
+/*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -78,6 +78,7 @@ struct ip {
 #define	IPTOS_LOWDELAY		0x10
 #define	IPTOS_THROUGHPUT	0x08
 #define	IPTOS_RELIABILITY	0x04
+/*	IPTOS_LOWCOST		0x02 XXX */
 
 /*
  * Definitions for IP precedence (also in ip_tos) (hopefully unused)
@@ -89,7 +90,7 @@ struct ip {
 #define	IPTOS_PREC_FLASH		0x60
 #define	IPTOS_PREC_IMMEDIATE		0x40
 #define	IPTOS_PREC_PRIORITY		0x20
-#define	IPTOS_PREC_ROUTINE		0x10
+#define	IPTOS_PREC_ROUTINE		0x00
 
 /*
  * Definitions for options.
