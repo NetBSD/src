@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.128 2004/08/29 14:08:06 jdolecek Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.129 2004/09/13 20:09:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.128 2004/08/29 14:08:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.129 2004/09/13 20:09:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ bsd_to_linux_statfs(bsp, lsp)
 		lsp->l_ftype = fstypes[i].linux;
 	}
 
-	lsp->l_fbsize = bsp->f_bsize;
+	lsp->l_fbsize = bsp->f_frsize;
 	lsp->l_fblocks = bsp->f_blocks;
 	lsp->l_fbfree = bsp->f_bfree;
 	lsp->l_fbavail = bsp->f_bavail;
@@ -329,7 +329,7 @@ bsd_to_linux_statfs(bsp, lsp)
 	/* Linux sets the fsid to 0..., we don't */
 	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
 	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
-	lsp->l_fnamelen = MAXNAMLEN;	/* XXX */
+	lsp->l_fnamelen = bsp->f_namemax;
 	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
 }
 
