@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.20 1995/06/12 00:47:49 mycroft Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.21 1995/06/18 20:01:15 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -91,8 +91,9 @@ rip_input(m)
 	struct socket *last = 0;
 
 	ripsrc.sin_addr = ip->ip_src;
-	for (inp = rawcbtable.inpt_list.lh_first; inp != 0;
-	    inp = inp->inp_list.le_next) {
+	for (inp = rawcbtable.inpt_queue.cqh_first;
+	    inp != (struct inpcb *)&rawcbtable.inpt_queue;
+	    inp = inp->inp_queue.cqe_next) {
 		if (inp->inp_ip.ip_p && inp->inp_ip.ip_p != ip->ip_p)
 			continue;
 		if (inp->inp_laddr.s_addr &&
