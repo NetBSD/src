@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.43 2002/03/22 19:50:42 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.44 2002/04/03 14:30:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.43 2002/03/22 19:50:42 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.44 2002/04/03 14:30:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,7 @@ MKINIT short backgndpid = -1;	/* pid of last background process */
 int initialpgrp;		/* pgrp of shell on invocation */
 short curjob;			/* current job */
 #endif
+static int ttyfd = -1;
 
 STATIC void restartjob __P((struct job *));
 STATIC void freejob __P((struct job *));
@@ -102,6 +103,29 @@ STATIC int waitproc __P((int, struct job *, int *));
 STATIC void cmdtxt __P((union node *));
 STATIC void cmdputs __P((const char *));
 
+#ifdef OLD_TTY_DRIVER
+static pid_t tcgetpgrp __P((int fd));
+static int tcsetpgrp __P((int fd, pid_t pgrp));
+
+static pid_t
+tcgetpgrp(fd)
+	int fd;
+{
+	pid_t pgrp;
+	if (ioctl(fd, TIOCGPGRP, (char *)&pgrp) == -1)
+		return -1;
+	else
+		return pgrp;
+}
+
+static int
+tcsetpgrp(fd, pgrp)
+	int fd;
+	pid_t pgrp;
+{
+	return ioctl(fd, TIOCSPGRP, (char *)&pgrp);
+}
+#endif
 
 /*
  * Turn job control on and off.
@@ -124,13 +148,29 @@ setjobctl(on)
 	if (on == jobctl || rootshell == 0)
 		return;
 	if (on) {
-		do { /* while we are in the background */
-#ifdef OLD_TTY_DRIVER
-			if (ioctl(2, TIOCGPGRP, (char *)&initialpgrp) < 0) {
-#else
-			initialpgrp = tcgetpgrp(2);
-			if (initialpgrp < 0) {
+#if defined(FIOCLEX) || defined(FD_CLOEXEC)
+		int err;
+		if (ttyfd != -1)
+			close(ttyfd);
+		if ((ttyfd = open("/dev/tty", O_RDWR)) == -1)
+			goto out;
+#ifdef FIOCLEX
+		err = ioctl(ttyfd, FIOCLEX, 0);
+#elif FD_CLOEXEC
+		err = fcntl(ttyfd, FD_CLOEXEC, 1);
 #endif
+		if (err == -1) {
+			close(ttyfd);
+			ttyfd = -1;
+			goto out;
+		}
+#else
+		out2str("sh: Need FIOCLEX or FD_CLOEXEC to support job control");
+		goto out;
+#endif
+		do { /* while we are in the background */
+			if ((initialpgrp = tcgetpgrp(ttyfd)) < 0) {
+out:
 				out2str("sh: can't access tty; job control turned off\n");
 				mflag = 0;
 				return;
@@ -138,12 +178,14 @@ setjobctl(on)
 			if (initialpgrp == -1)
 				initialpgrp = getpgrp();
 			else if (initialpgrp != getpgrp()) {
-				killpg(initialpgrp, SIGTTIN);
+				killpg(0, SIGTTIN);
 				continue;
 			}
 		} while (0);
+
 #ifdef OLD_TTY_DRIVER
-		if (ioctl(2, TIOCGETD, (char *)&ldisc) < 0 || ldisc != NTTYDISC) {
+		if (ioctl(ttyfd, TIOCGETD, (char *)&ldisc) < 0
+		    || ldisc != NTTYDISC) {
 			out2str("sh: need new tty driver to run job control; job control turned off\n");
 			mflag = 0;
 			return;
@@ -153,18 +195,12 @@ setjobctl(on)
 		setsignal(SIGTTOU);
 		setsignal(SIGTTIN);
 		setpgid(0, rootpid);
-#ifdef OLD_TTY_DRIVER
-		ioctl(2, TIOCSPGRP, (char *)&rootpid);
-#else
-		tcsetpgrp(2, rootpid);
-#endif
+		tcsetpgrp(ttyfd, rootpid);
 	} else { /* turning job control off */
 		setpgid(0, initialpgrp);
-#ifdef OLD_TTY_DRIVER
-		ioctl(2, TIOCSPGRP, (char *)&initialpgrp);
-#else
-		tcsetpgrp(2, initialpgrp);
-#endif
+		tcsetpgrp(ttyfd, initialpgrp);
+		close(ttyfd);
+		ttyfd = -1;
 		setsignal(SIGTSTP);
 		setsignal(SIGTTOU);
 		setsignal(SIGTTIN);
@@ -201,11 +237,7 @@ fgcmd(argc, argv)
 	if (jp->jobctl == 0)
 		error("job not created under job control");
 	pgrp = jp->ps[0].pid;
-#ifdef OLD_TTY_DRIVER
-	ioctl(2, TIOCSPGRP, (char *)&pgrp);
-#else
-	tcsetpgrp(2, pgrp);
-#endif
+	tcsetpgrp(ttyfd, pgrp);
 	restartjob(jp);
 	INTOFF;
 	status = waitforjob(jp);
@@ -585,7 +617,7 @@ forkshell(jp, n, mode)
 	INTOFF;
 	pid = fork();
 	if (pid == -1) {
-		TRACE(("Fork failed, errno=%d\n", errno));
+		TRACE(("Fork failed, errno=%d", errno));
 		INTON;
 		error("Cannot fork");
 	}
@@ -616,13 +648,8 @@ forkshell(jp, n, mode)
 			setpgid(0, pgrp);
 			if (mode == FORK_FG) {
 				/*** this causes superfluous TIOCSPGRPS ***/
-#ifdef OLD_TTY_DRIVER
-				if (ioctl(2, TIOCSPGRP, (char *)&pgrp) < 0)
-					error("TIOCSPGRP failed, errno=%d", errno);
-#else
-				if (tcsetpgrp(2, pgrp) < 0)
+				if (tcsetpgrp(ttyfd, pgrp) < 0)
 					error("tcsetpgrp failed, errno=%d", errno);
-#endif
 			}
 			setsignal(SIGTSTP);
 			setsignal(SIGTTOU);
@@ -715,13 +742,8 @@ waitforjob(jp)
 	}
 #if JOBS
 	if (jp->jobctl) {
-#ifdef OLD_TTY_DRIVER
-		if (ioctl(2, TIOCSPGRP, (char *)&mypgrp) < 0)
-			error("TIOCSPGRP failed, errno=%d\n", errno);
-#else
-		if (tcsetpgrp(2, mypgrp) < 0)
+		if (tcsetpgrp(ttyfd, mypgrp) < 0)
 			error("tcsetpgrp failed, errno=%d\n", errno);
-#endif
 	}
 	if (jp->state == JOBSTOPPED)
 		curjob = jp - jobtab + 1;
