@@ -1,5 +1,5 @@
 #
-# $NetBSD: miniroot.list,v 1.1 2002/04/22 21:17:57 fredette Exp $
+# $NetBSD: list,v 1.1 2002/04/26 03:49:06 lukem Exp $
 #
 
 # The PROM provides a default kernel name of "vmunix"
@@ -32,7 +32,7 @@ COPY	${DESTDIR}/etc/spwd.db		etc/spwd.db
 # some /etc files get special handling (for MFS /tmp yuck)
 COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
 SYMLINK	/tmp/disktab.shadow		etc/disktab
-COPY	${TOPDIR}/common/mr.fstab	tmp/fstab.shadow
+COPY	${CURDIR}/fstab			tmp/fstab.shadow
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
 SYMLINK	/tmp/hosts			etc/hosts
@@ -42,14 +42,14 @@ COPY	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 COPY	${DESTDIR}/dev/MAKEDEV.local	dev/MAKEDEV.local
 
 # copy the miniroot installation tools
-COPY	${TOPDIR}/common/mr.profile	.profile
-COPY	${TOPDIR}/common/mr.termcap	usr/share/misc/termcap
+COPY	${CURDIR}/profile		.profile
+COPY	${CURDIR}/termcap		usr/share/misc/termcap
 
-COPY	${TOPDIR}/common/install.md	install.md	0644
+COPY	${CURDIR}/install.md		install.md	0644
 COPY	${OBJDIR}/install.sub		install.sub	0644
 
-COPY	${TOPDIR}/../miniroot/install.sh install	0755
-COPY	${TOPDIR}/../miniroot/upgrade.sh upgrade	0755
+COPY	${DISTRIBDIR}/miniroot/install.sh install	0755
+COPY	${DISTRIBDIR}/miniroot/upgrade.sh upgrade	0755
 
 # miniroot files from /sbin:
 # Extras not in ../../miniroot/list:
