@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26 2003/06/01 17:48:48 mbw Exp $
+.\"	$NetBSD: install,v 1.27 2003/07/26 17:07:08 salo Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -224,7 +224,7 @@ or MacOS 9 (or earlier).  You can use
 .Ic pdisk
 to get a listing of the partitions on a disk.
 See the Partitioning HOW-TO for help:
-.Lk http://www.netbsd.org/Ports/macppc/partitioning.html#pdisk
+.Lk http://www.NetBSD.org/Ports/macppc/partitioning.html#pdisk
 .Pp
 Typically, MS-DOS and ISO9660 formatted disks have their file systems at
 partition 1.
@@ -305,8 +305,8 @@ For additional help, see
 and the FAQ on topics like how to use the
 Open Firmware command environment and how to boot from a device attached
 to a PCI card which has Open Firmware support:
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#ofw-use
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#boot-pci
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#ofw-use
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#boot-pci
 .
 .Ss2 Examples of Open Firmware boot commands
 .
@@ -543,7 +543,7 @@ You may need to keep trying higher partition numbers until you find the one
 that has your bootloader.  You can use
 .Ic pdisk
 to print out your partition map:
-.Lk http://www.netbsd.org/Ports/macppc/partitioning.html#pdisk
+.Lk http://www.NetBSD.org/Ports/macppc/partitioning.html#pdisk
 .Pp
 You should use the Open Firmware
 .Ic dir
@@ -622,7 +622,7 @@ This is a brief list of some of the Open Firmware problems you may run into.
 See the
 .Nx*M
 FAQ for a thorough list.
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#boot-trouble
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#boot-trouble
 .(Note
 You may find it necessary to remove all non-Apple devices from your
 machine.

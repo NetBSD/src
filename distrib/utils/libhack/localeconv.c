@@ -1,7 +1,7 @@
-/*	$NetBSD: localeconv.c,v 1.2 2002/11/19 23:15:59 chris Exp $	*/
+/*	$NetBSD: localeconv.c,v 1.3 2003/07/26 17:07:36 salo Exp $	*/
 
 /*
- * Written by J.T. Conklin <jtc@netbsd.org>.
+ * Written by J.T. Conklin <jtc@NetBSD.org>.
  * Public domain.
  */
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.4 2002/06/30 12:07:35 lukem Exp $
+.\"	$NetBSD: xfer,v 1.5 2003/07/26 17:07:14 salo Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,10 +40,10 @@ As a result, there is no automated install procedure.
 Begin by retrieving the
 .Nx
 set files onto the serving machine.
-These can be found at ftp.netbsd.org.
+These can be found at ftp.NetBSD.org.
 You may want to keep the following information handy:
 .(disp
-IP Address: ftp.netbsd.org
+IP Address: ftp.NetBSD.org
 Login: anonymous
 Password: \*<your e-mail address\*>
 Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary/sets

@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: upgrade.sh,v 1.2 2002/05/07 14:47:45 lukem Exp $
+# $NetBSD: upgrade.sh,v 1.3 2003/07/26 17:06:26 salo Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -16,7 +16,7 @@
 # 3. All advertising materials mentioning features or use of this software
 #    must display the following acknowledgement:
 #          This product includes software developed for the
-#          NetBSD Project.  See http://www.netbsd.org/ for
+#          NetBSD Project.  See http://www.NetBSD.org/ for
 #          information about NetBSD.
 # 4. The name of the author may not be used to endorse or promote products
 #    derived from this software without specific prior written permission.
