@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4.2.5 2002/06/20 03:42:45 nathanw Exp $
+	$NetBSD: syscalls.master,v 1.4.2.6 2002/06/21 05:53:53 gmcgarry Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -192,7 +192,7 @@
 48	EXCL		compat_13_sys_sigprocmask
 #endif
 49	NOARGS		{ int sys___getlogin(char *namebuf, size_t namelen); }
-50	NOARGS		{ int sys_setlogin(const char *namebuf); }
+50	NOARGS		{ int sys___setlogin(const char *namebuf); }
 51	NOARGS		{ int sys_acct(const char *path); }
 #ifdef COMPAT_13
 52	NOARGS		{ int compat_13_sys_sigpending(void); } sigpending13
