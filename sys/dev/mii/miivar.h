@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.40 2004/08/23 06:05:30 thorpej Exp $	*/
+/*	$NetBSD: miivar.h,v 1.41 2004/09/01 20:59:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -207,7 +207,6 @@ struct mii_media {
 #define	MII_NMEDIA		10
 
 #ifdef _KERNEL
-#include "locators.h"
 
 #define	PHY_READ(p, r) \
 	(*(p)->mii_pdata->mii_readreg)((p)->mii_dev.dv_parent, \
