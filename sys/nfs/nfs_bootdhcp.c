@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootdhcp.c,v 1.6 1998/03/01 07:15:40 ross Exp $	*/
+/*	$NetBSD: nfs_bootdhcp.c,v 1.7 1998/04/24 18:38:30 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -336,10 +336,11 @@ struct bootpcontext {
 static int bootpset __P((struct mbuf*, void*, int));
 static int bootpcheck __P((struct mbuf*, void*));
 
-static int bootpset(m, context, waited)
-struct mbuf *m;
-void *context;
-int waited;
+static int
+bootpset(m, context, waited)
+	struct mbuf *m;
+	void *context;
+	int waited;
 {
 	struct bootp *bootp;
 
@@ -348,12 +349,13 @@ int waited;
 
 	bootp->bp_secs = htons(waited);
 
-	return(0);
+	return (0);
 }
 
-static int bootpcheck(m, context)
-struct mbuf *m;
-void *context;
+static int
+bootpcheck(m, context)
+	struct mbuf *m;
+	void *context;
 {
 	struct bootp *bootp;
 	struct bootpcontext *bpc = context;
@@ -365,11 +367,11 @@ void *context;
 	 */
 	if (m->m_pkthdr.len < BOOTP_SIZE_MIN) {
 		DPRINT("short packet");
-		return(-1);
+		return (-1);
 	}
 	if (m->m_pkthdr.len > BOOTP_SIZE_MAX) {
 		DPRINT("long packet");
-		return(-1);
+		return (-1);
 	}
 
 	/*
@@ -379,26 +381,26 @@ void *context;
 	if (m->m_len < ofs(struct bootp, bp_secs)) {
 		m = m_pullup(m, ofs(struct bootp, bp_secs));
 		if (m == NULL)
-			return(-1);
+			return (-1);
 	}
 #undef ofs
 	bootp = mtod(m, struct bootp*);
 
 	if (bootp->bp_op != BOOTREPLY) {
 		DPRINT("not reply");
-		return(-1);
+		return (-1);
 	}
 	if (bootp->bp_hlen != bpc->halen) {
 		DPRINT("bad hwa_len");
-		return(-1);
+		return (-1);
 	}
 	if (bcmp(bootp->bp_chaddr, bpc->haddr, bpc->halen)) {
 		DPRINT("wrong hwaddr");
-		return(-1);
+		return (-1);
 	}
 	if (bootp->bp_xid != bpc->xid) {
 		DPRINT("wrong xid");
-		return(-1);
+		return (-1);
 	}
 
 	/*
@@ -412,11 +414,23 @@ void *context;
 	bootp = bpc->replybuf;
 
 	/*
+	 * Check if the IP address we get looks correct.
+	 * (DHCP servers can send junk to unknown clients.)
+	 * XXX more checks might be needed
+	 */
+	if (bootp->bp_yiaddr.s_addr == INADDR_ANY ||
+	    bootp->bp_yiaddr.s_addr == INADDR_BROADCAST) {
+		printf("nfs_boot: wrong IP addr 0x%x",
+		       INTOHL(bootp->bp_yiaddr));
+		goto warn;
+	}
+
+	/*
 	 * Check the vendor data.
 	 */
 	if (bcmp(bootp->bp_vend, vm_rfc1048, 4)) {
-		printf("nfs_boot: reply missing options\n");
-		return(-1);
+		printf("nfs_boot: reply missing options");
+		goto warn;
 	}
 	p = &bootp->bp_vend[4];
 	limit = ((char*)bootp) + bpc->replylen;
@@ -428,14 +442,14 @@ void *context;
 			continue;
 		len = *p++;
 		if ((p + len) > limit) {
-			printf("nfs_boot: option %d too long\n", tag);
-			return(-1);
+			printf("nfs_boot: option %d too long", tag);
+			goto warn;
 		}
 		switch (tag) {
 #ifdef NFS_BOOT_DHCP
 		    case TAG_DHCP_MSGTYPE:
 			if (*p != bpc->expected_dhcpmsgtype)
-				return(-1);
+				return (-1);
 			bpc->dhcp_ok = 1;
 			break;
 		    case TAG_SERVERID:
@@ -448,7 +462,11 @@ void *context;
 		}
 		p += len;
 	}
-	return(0);
+	return (0);
+
+warn:
+	printf(" (bad reply from 0x%x)\n", INTOHL(bootp->bp_siaddr));
+	return (-1);
 }
 
 static int
@@ -615,6 +633,14 @@ bootpc_call(so, ifp, nd, procp)
 	 * bootpcheck() has copied the receive mbuf into
 	 * the buffer at bpc.replybuf.
 	 */
+#ifdef NFS_BOOT_DHCP
+	printf("nfs_boot: %s server: 0x%x\n",
+	       (bpc.dhcp_ok ? "DHCP" : "BOOTP"),
+#else
+	printf("nfs_boot: BOOTP server: 0x%x\n",
+#endif
+	       INTOHL(bpc.replybuf->bp_siaddr));
+
 	bootp_extract(bpc.replybuf, bpc.replylen, nd);
 
 out:
@@ -627,7 +653,8 @@ out:
 	return (error);
 }
 
-static void bootp_extract(bootp, replylen, nd)
+static void
+bootp_extract(bootp, replylen, nd)
 	struct bootp *bootp;
 	int replylen;
 	struct nfs_diskless *nd;
@@ -662,10 +689,12 @@ static void bootp_extract(bootp, replylen, nd)
 		if (tag == TAG_PAD)
 			continue;
 		len = *p++;
+#if 0 /* already done in bootpcheck() */
 		if ((p + len) > limit) {
 			printf("nfs_boot: option %d too long\n", tag);
 			break;
 		}
+#endif
 		switch (tag) {
 		    case TAG_SUBNET_MASK:
 			bcopy(p, &netmask, 4);
