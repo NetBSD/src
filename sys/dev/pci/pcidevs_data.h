@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.323 2001/04/25 03:07:19 simonb Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.324 2001/05/06 16:10:45 fvdl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.319 2001/04/25 03:06:11 simonb Exp 
+ *	NetBSD: pcidevs,v 1.320 2001/05/06 16:09:38 fvdl Exp 
  */
 
 /*
@@ -758,6 +758,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD756 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_ISA,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD766 PCI-to-ISA Bridge",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_IDE,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD766 IDE controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_PMC,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD766 Power Management Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC766_USB,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD766 USB Host Controller",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
