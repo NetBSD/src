@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.115 2001/05/02 16:05:07 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.116 2001/05/29 21:28:15 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -49,6 +49,7 @@
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -781,3 +782,22 @@ bi_intr_establish(void *icookie, int vec, void (*func)(void *), void *arg,
 	scb_vecalloc(vec, func, arg, SCB_ISTACK, ev);
 }
 
+#if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
+/*
+ * Called from locore.
+ */
+void	krnlock(void);
+void	krnunlock(void);
+
+void
+krnlock()
+{
+	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+}
+
+void
+krnunlock()
+{
+	KERNEL_UNLOCK();
+}
+#endif
