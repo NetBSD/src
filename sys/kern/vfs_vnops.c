@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.39 2000/02/14 22:00:21 fvdl Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.40 2000/03/30 02:15:09 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -289,7 +289,6 @@ unionread:
 
 #ifdef UNION
 {
-	extern int (**union_vnodeop_p) __P((void *));
 	extern struct vnode *union_dircache __P((struct vnode *));
 
 	if (count == auio.uio_resid && (vp->v_op == union_vnodeop_p)) {
