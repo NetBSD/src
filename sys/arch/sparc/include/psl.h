@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.30 2002/12/06 15:36:45 pk Exp $ */
+/*	$NetBSD: psl.h,v 1.31 2002/12/31 15:51:18 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,6 @@
 #define PIL_SER		13
 #define	PIL_AUD		13
 #define PIL_HIGH	15
-#define PIL_SCHED	PIL_CLOCK
 #define PIL_LOCK	PIL_HIGH
 
 /* 
@@ -362,6 +361,8 @@ _SPLRAISE(splvm, IPL_IMP)
 /* clock interrupts at level 10 */
 _SPLRAISE(splclock, IPL_CLOCK)
 
+_SPLRAISE(splsched, IPL_SCHED)
+
 /* fd hardware, ts102, and tadpole microcontoller interrupts are at level 11 */
 _SPLRAISE(splfd, 11)
 _SPLRAISE(splts102, 11)
@@ -392,7 +393,6 @@ static __inline int splhigh()
 	return (oldipl);
 }
 
-#define	splsched()	splhigh()
 #define	spllock()	splhigh()
 
 /* splx does not have a return value */
