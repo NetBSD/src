@@ -1,4 +1,4 @@
-/* $NetBSD: zutil.h,v 1.6 1999/04/22 16:32:01 christos Exp $ */
+/* $NetBSD: zutil.h,v 1.7 1999/11/11 20:31:07 thorpej Exp $ */
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-1998 Jean-loup Gailly.
@@ -20,7 +20,9 @@
 #if defined(__NetBSD__) && (defined(_KERNEL) || defined(_STANDALONE))
 
 /* XXX doesn't seem to need anything at all, but this is for consistency. */
+# ifndef _STANDALONE
 #  include <lib/libkern/libkern.h>
+# endif
 
 #else
 #ifdef STDC
