@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: quota.c,v 1.9 1995/06/18 11:00:49 cgd Exp $";
+static char rcsid[] = "$Id: quota.c,v 1.10 1996/02/01 02:34:36 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -452,7 +452,7 @@ getprivs(id, quotatype)
 		if (strncmp(fst[i].f_fstypename, "nfs", MFSNAMELEN) == 0) {
 			if (getnfsquota(&fst[i], NULL, qup, id, quotatype) == 0)
 				continue;
-		} else if (strncmp(fst[i].f_fstypename, "ufs",
+		} else if (strncmp(fst[i].f_fstypename, "ffs",
 		    MFSNAMELEN) == 0) {
 			/*
 			 * XXX
