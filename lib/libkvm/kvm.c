@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm.c	5.18 (Berkeley) 5/7/91"; */
-static char rcsid[] = "$Id: kvm.c,v 1.10 1993/06/15 07:16:06 deraadt Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.11 1993/07/19 12:37:13 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -816,7 +816,8 @@ kvm_getu(p)
 int
 kvm_procread(p, addr, buf, len)
 	const struct proc *p;
-	const unsigned addr, buf, len;
+	const unsigned addr, len;
+	char *buf;
 {
 	register struct kinfo_proc *kp = (struct kinfo_proc *) p;
 	struct swapblk swb;
@@ -863,29 +864,34 @@ kvm_procread(p, addr, buf, len)
 		if (memaddr != 0) {
 			memaddr += addr & CLOFSET;
 		} else {
-			swaddr += addr & CLOFSET;
+			swaddr = swb.offset + (addr & CLOFSET);
 			swb.size -= addr & CLOFSET;
-	                if (swb.size >= real_len)
-				swaddr = swb.offset;
 		}
         }
 
 	if (memaddr) {
 		if (lseek(mem, memaddr, 0) == -1)
 			seterr("kvm_getu: lseek");
-		real_len = read(mem, (char *)buf, real_len);
+		real_len = read(mem, buf, real_len);
 		if (real_len == -1) {
-			real_len = 0;
 			seterr("kvm_procread: read");
+			return 0;
 		}
 	} else if (swaddr) {
-		if (lseek(swap, swaddr, 0) == -1)
-			seterr("kvm_getu: lseek");
-		real_len = read(swap, (char *)buf, real_len);
-		if (real_len == -1) {
-			real_len = 0;
-			seterr("kvm_procread: read");
+		char bouncebuf[CLBYTES];
+		unsigned len;
+		if (lseek(swap, swaddr & ~CLOFSET, 0) == -1) {
+			seterr("kvm_procread: lseek");
+			return 0;
 		}
+		len = read(swap, bouncebuf, CLBYTES);
+		if (len == -1 || len <= (swaddr & CLOFSET)) {
+			seterr("kvm_procread: read");
+			return 0;
+		}
+		len = MIN(len - (swaddr & CLOFSET), real_len);
+		memcpy(buf, &bouncebuf[swaddr & CLOFSET], len);
+		return len;
 	} else
 		real_len = 0;
 
@@ -895,12 +901,13 @@ kvm_procread(p, addr, buf, len)
 int
 kvm_procreadstr(p, addr, buf, len)
         const struct proc *p;
-        const unsigned addr, buf;
+        const unsigned addr;
+	char *buf;
 	unsigned len;
 {
 	int	done, little;
 	char	copy[200], *pb;
-	char	a, *bp = (char *) buf;
+	char	a;
 
 	done = 0;
 	while (len) {
@@ -910,7 +917,7 @@ kvm_procreadstr(p, addr, buf, len)
 		pb = copy;
 		while (little--) {
 			len--;
-			if( (*bp++ = *pb++) == '\0' )
+			if( (*buf++ = *pb++) == '\0' )
 			return done;
 		done++;
 		}
@@ -931,7 +938,7 @@ kvm_getargs(p, up)
 	if (up == NULL || p->p_pid == 0 || p->p_pid == 2)
 		goto retucomm;
 
-	if (kvm_procread(p, PS_STRINGS, &arginfo, sizeof(arginfo)) !=
+	if (kvm_procread(p, PS_STRINGS, (char *)&arginfo, sizeof(arginfo)) !=
 		sizeof(arginfo))
 		goto bad;
 
@@ -979,7 +986,7 @@ kvm_getenv(p, up)
 	if (up == NULL || p->p_pid == 0 || p->p_pid == 2)
 		goto retemptyenv;
 
-	if (kvm_procread(p, PS_STRINGS, &arginfo, sizeof(arginfo)) !=
+	if (kvm_procread(p, PS_STRINGS, (char *)&arginfo, sizeof(arginfo)) !=
 		sizeof(arginfo))
 		goto bad;
 
