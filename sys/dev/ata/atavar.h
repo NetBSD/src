@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.33 2003/12/14 05:10:19 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.34 2003/12/14 05:14:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -205,6 +205,17 @@ struct ata_bustype {
 /* #define SCSIPI_BUSTYPE_SCSI	0 */
 /* #define SCSIPI_BUSTYPE_ATAPI	1 */
 #define	SCSIPI_BUSTYPE_ATA	2
+
+/*
+ * Describe an ATA device.  Has to be compatible with scsipi_channel, so
+ * start with a pointer to ata_bustype.
+ */
+struct ata_device {
+	const struct ata_bustype *adev_bustype;
+	int adev_channel;
+	int adev_openings;
+	struct ata_drive_datas *adev_drv_data;
+};
 
 /*
  * If WDSM_ATTR_ADVISORY, device exceeded intended design life period.
