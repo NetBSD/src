@@ -1,11 +1,7 @@
-/*	$NetBSD: ibusvar.h,v 1.3 1998/10/23 23:01:44 jonathan Exp $	*/
+/*	$NetBSD: ibusvar.h,v 1.4 1999/03/15 07:43:06 nisimura Exp $	*/
 
 #ifndef __IBUSVAR_H
 #define __IBUSVAR_H
-
-
-void config_ibus __P((struct device *mb, void *,
-	int	printfn __P((void *, const char *)) ));	/* XXX */
 
 /*
  * function types for interrupt establish/diestablish
@@ -36,7 +32,7 @@ struct ibus_dev_attach_args {
 struct ibus_attach_args {
 	char	*ia_name;		/* Device name. */
 	int	ia_cookie;		/* Device slot (table entry). */
-	tc_addr_t ia_addr;		/* Device address. */
+	u_int32_t ia_addr;		/* Device address. */
 };
 
 
@@ -48,6 +44,6 @@ struct ibus_attach_args {
 void	ibus_intr_establish __P((void * cookie, int level,
 			int (*handler) __P((intr_arg_t)), intr_arg_t arg));
 void	ibus_intr_disestablish __P((struct ibus_attach_args *));
-int ibusprint __P((void *aux, const char *pnp));
+int	ibusprint __P((void *aux, const char *pnp));
 
 #endif /* __IBUSVAR_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.27 1999/03/15 01:54:56 nisimura Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.28 1999/03/15 07:43:05 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -38,17 +38,13 @@
 #include <dev/tc/tcvar.h>	/* XXX */
 #include "tc.h"			/* XXX Is TURBOchannel configured? */
 
-struct mainbus_softc {
-	struct	device sc_dv;
-};
-
 /* Definition of the mainbus driver. */
 static int	mbmatch __P((struct device *, struct cfdata *, void *));
 static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbprint __P((void *, const char *));
 
 struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mbmatch, mbattach
+	sizeof(struct device), mbmatch, mbattach
 };
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus_3100.c,v 1.2 1998/10/23 23:01:45 jonathan Exp $	*/
+/*	$NetBSD: ibus_3100.c,v 1.3 1999/03/15 07:43:06 nisimura Exp $	*/
 
 
 /*
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.2 1998/10/23 23:01:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus_3100.c,v 1.3 1999/03/15 07:43:06 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ extern ibus_intr_establish_t	dec_3100_intr_establish;
 extern ibus_intr_disestablish_t	dec_3100_intr_disestablish;
 
 
-#define KV(x) ((tc_addr_t)MIPS_PHYS_TO_KSEG1(x))
+#define KV(x) MIPS_PHYS_TO_KSEG1(x)
 
 static struct ibus_attach_args kn01_devs[] = {
 	/* name     cookie   addr			  */
