@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.h,v 1.1 2001/04/24 19:28:00 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.h,v 1.2 2001/05/21 15:55:04 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,9 @@ public:
 	virtual void init(HWND w);
 	virtual void command(int id, int msg);
 	void get(void);
+
+	// control layouter.
+	void layout(void);
 };
 
 class OptionTabWindow : public TabWindow
