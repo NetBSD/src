@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.6 1993/05/22 08:00:04 cgd Exp $
+ *	$Id: trap.c,v 1.7 1993/05/27 16:44:25 cgd Exp $
  */
 
 /*
@@ -401,18 +401,6 @@ int trapwrite(unsigned addr) {
 	if (va > VM_MAXUSER_ADDRESS) return(1);
 	rv = vm_fault(&curproc->p_vmspace->vm_map, va,
 		VM_PROT_READ | VM_PROT_WRITE, FALSE);
-	if (rv == KERN_SUCCESS) return(0);
-	else return(1);
-}
-
-int trapread(unsigned addr) {
-	int rv;
-	vm_offset_t va;
-
-	va = trunc_page((vm_offset_t)addr);
-	if (va > VM_MAXUSER_ADDRESS) return(1);
-	rv = vm_fault(&curproc->p_vmspace->vm_map, va,
-		VM_PROT_READ, FALSE);
 	if (rv == KERN_SUCCESS) return(0);
 	else return(1);
 }
