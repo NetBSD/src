@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_linux.c,v 1.1 1996/08/22 20:18:19 explorer Exp $ */
+/* $NetBSD: lkminit_linux.c,v 1.2 1996/10/07 19:55:07 cgd Exp $ */
 
 /*
  * Copyright (C) Michael Graff, 1996.
@@ -43,7 +43,6 @@
 
 #include <machine/cpu.h>
 #include <machine/reg.h>
-#include <machine/exec.h>
 
 #include <compat/linux/linux_exec.h>
 
