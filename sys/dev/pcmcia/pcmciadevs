@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.200 2004/07/17 19:55:14 mycroft Exp $
+$NetBSD: pcmciadevs,v 1.201 2004/08/05 17:23:47 mycroft Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -91,6 +91,7 @@ vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274  The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
+vendor ASUSTEK			0x02aa	Asustek Computer
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
 vendor ACTIONTEC		0x1668	ACTIONTEC
@@ -153,6 +154,9 @@ product	ARCHOS ARC_ATAPI	0x0043 MiniCD
 
 /* ARtem */
 product ARTEM ONAIR		0x0001 ARtem Onair Wireless LAN
+
+/* Asustek */
+product ASUSTEK WL_100		0x0002 SpaceLink WL-100 Wireless LAN
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
