@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.13 1996/02/26 23:29:05 jonathan Exp $	*/
+/*	$NetBSD: varargs.h,v 1.13.16.1 1999/02/01 07:02:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,29 +40,22 @@
  *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
-#ifndef _PMAX_VARARGS_H_
-#define	_PMAX_VARARGS_H_
+#ifndef _MIPS_VARARGS_H_
+#define	_MIPS_VARARGS_H_
 
-#include <machine/ansi.h>
+#include <machine/stdarg.h>
 
-typedef _BSD_VA_LIST_	va_list;
-
-#define	va_dcl	int va_alist;
-
-#define	va_start(ap) \
-	ap = (char *)&va_alist
-
-#ifdef _KERNEL
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type)))[-1]
+#if __GNUC__ == 1
+#define	__va_ellipsis
 #else
-#define	va_arg(ap, type) \
-	((type *)(ap += sizeof(type) == sizeof(int) ? sizeof(type) : \
-		sizeof(type) > sizeof(int) ? \
-		(-(int)(ap) & (sizeof(type) - 1)) + sizeof(type) : \
-		(abort(), 0)))[-1]
+#define	__va_ellipsis	...
 #endif
 
-#define	va_end(ap)	((void) 0)
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		long __builtin_va_alist; __va_ellipsis
 
-#endif /* !_PMAX_VARARGS_H_ */
+#undef va_start
+#define	va_start(ap) \
+	((ap) = (va_list)&__builtin_va_alist)
+
+#endif /* !_MIPS_VARARGS_H_ */
