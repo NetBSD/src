@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.33 2002/03/16 18:11:11 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.34 2002/03/16 18:26:00 bjh21 Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -851,6 +851,15 @@ cpufunc_null_fixup(arg)
 
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
     defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
+
+#ifdef DEBUG_FAULT_CORRECTION
+#define DFC_PRINTF(x)		printf x
+#define DFC_DISASSEMBLE(x)	disassemble(x)
+#else
+#define DFC_PRINTF(x)		/* nothing */
+#define DFC_DISASSEMBLE(x)	/* nothing */
+#endif
+
 /*
  * "Early" data abort fixup.
  *
@@ -907,14 +916,10 @@ early_abort_fixup(arg)
 		int count;
 		int *registers = &frame->tf_r0;
         
-#ifdef DEBUG_FAULT_CORRECTION
-		printf("LDM/STM\n");
-		disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_PRINTF(("LDM/STM\n"));
+		DFC_DISASSEMBLE(fault_pc);
 		if (fault_instruction & (1 << 21)) {
-#ifdef DEBUG_FAULT_CORRECTION
-			printf("This instruction must be corrected\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("This instruction must be corrected\n"));
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
@@ -924,19 +929,14 @@ early_abort_fixup(arg)
 				if (fault_instruction & (1<<loop))
 					++count;
 			}
-#ifdef DEBUG_FAULT_CORRECTION
-			printf("%d registers used\n", count);
-			printf("Corrected r%d by %d bytes ", base, count * 4);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("%d registers used\n", count));
+			DFC_PRINTF(("Corrected r%d by %d bytes ",
+				       base, count * 4));
 			if (fault_instruction & (1 << 23)) {
-#ifdef DEBUG_FAULT_CORRECTION
-				printf("down\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("down\n"));
 				registers[base] -= count * 4;
 			} else {
-#ifdef DEBUG_FAULT_CORRECTION
-				printf("up\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("up\n"));
 				registers[base] += count * 4;
 			}
 		}
@@ -945,31 +945,26 @@ early_abort_fixup(arg)
 		int offset;
 		int *registers = &frame->tf_r0;
 	
-/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
+		/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
 
-#ifdef DEBUG_FAULT_CORRECTION
-		disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_DISASSEMBLE(fault_pc);
 
-/* Only need to fix registers if write back is turned on */
+		/* Only need to fix registers if write back is turned on */
 
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
+			if (base == 13 &&
+			    (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
 				return ABORT_FIXUP_FAILED;
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
 
 			offset = (fault_instruction & 0xff) << 2;
-#ifdef DEBUG_FAULT_CORRECTION
-			printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("r%d=%08x\n", base, registers[base]));
 			if ((fault_instruction & (1 << 23)) != 0)
 				offset = -offset;
 			registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("r%d=%08x\n", base, registers[base]));
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000)
 		return ABORT_FIXUP_FAILED;
@@ -1060,9 +1055,7 @@ late_abort_fixup(arg)
 	/* Was is a swap instruction ? */
 
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
-#ifdef DEBUG_FAULT_CORRECTION
-		disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_DISASSEMBLE(fault_pc);
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
 		/* Was is a ldr/str instruction */
@@ -1072,24 +1065,22 @@ late_abort_fixup(arg)
 		int offset;
 		int *registers = &frame->tf_r0;
 
-#ifdef DEBUG_FAULT_CORRECTION
-		disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_DISASSEMBLE(fault_pc);
 		
 		/* This is for late abort only */
 
 		if ((fault_instruction & (1 << 24)) == 0
 		    || (fault_instruction & (1 << 21)) != 0) {	
-/* postindexed ldr/str with no writeback */
+			/* postindexed ldr/str with no writeback */
 
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
+			if (base == 13 &&
+			    (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
 				return ABORT_FIXUP_FAILED;
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
-#ifdef DEBUG_FAULT_CORRECTION
-			printf("late abt fix: r%d=%08x : ", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("late abt fix: r%d=%08x : ",
+				       base, registers[base]));
 			if ((fault_instruction & (1 << 25)) == 0) {
 				/* Immediate offset - easy */
 
@@ -1097,9 +1088,7 @@ late_abort_fixup(arg)
 				if ((fault_instruction & (1 << 23)))
 					offset = -offset;
 				registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-				printf("imm=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("imm=%08x ", offset));
 			} else {
 				/* offset is a shifted register */
 				int shift;
@@ -1108,7 +1097,10 @@ late_abort_fixup(arg)
 				if (offset == base)
 					return ABORT_FIXUP_FAILED;
                 
-/* Register offset - hard we have to cope with shifts ! */
+				/*
+				 * Register offset - hard we have to
+				 * cope with shifts !
+				 */
 				offset = registers[offset];
 
 				if ((fault_instruction & (1 << 4)) == 0)
@@ -1122,14 +1114,10 @@ late_abort_fixup(arg)
 					shift = ((fault_instruction >> 8) & 0xf);
 					if (base == shift)
 						return ABORT_FIXUP_FAILED;
-#ifdef DEBUG_FAULT_CORRECTION
-					printf("shift reg=%d ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
+					DFC_PRINTF(("shift reg=%d ", shift));
 					shift = registers[shift];
 				}
-#ifdef DEBUG_FAULT_CORRECTION
-				printf("shift=%08x ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("shift=%08x ", shift));
 				switch (((fault_instruction >> 5) & 0x3)) {
 				case 0 : /* Logical left */
 					offset = (int)(((u_int)offset) << shift);
@@ -1147,19 +1135,14 @@ late_abort_fixup(arg)
 					break;
 				}
 
-#ifdef DEBUG_FAULT_CORRECTION
-				printf("abt: fixed LDR/STR with register offset\n");
-#endif	/* DEBUG_FAULT_CORRECTION */               
+				DFC_PRINTF(("abt: fixed LDR/STR with "
+					       "register offset\n"));
 				if ((fault_instruction & (1 << 23)))
 					offset = -offset;
-#ifdef DEBUG_FAULT_CORRECTION
-				printf("offset=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("offset=%08x ", offset));
 				registers[base] += offset;
 			}
-#ifdef DEBUG_FAULT_CORRECTION
-			printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("r%d=%08x\n", base, registers[base]));
 		}
 	}
 
