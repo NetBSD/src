@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isa.c,v 1.19 1998/08/17 21:16:15 augustss Exp $	*/
+/*	$NetBSD: sb_isa.c,v 1.20 1999/02/19 16:10:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -100,8 +100,9 @@ sbfind(parent, sc, ia)
 		return 0;
 	}
 
-	sc->sc_iot = ia->ia_iot;
+	sc->sc_ic = ia->ia_ic;
 
+	sc->sc_iot = ia->ia_iot;
 	/* Map i/o space [we map 24 ports which is the max of the sb and pro */
 	if (bus_space_map(sc->sc_iot, ia->ia_iobase, SBP_NPORT, 0,
 	    &sc->sc_ioh)) {
@@ -110,12 +111,12 @@ sbfind(parent, sc, ia)
 		return 0;
 	}
 
+	/* XXX These are only for setting chip configuration registers. */
 	sc->sc_iobase = ia->ia_iobase;
 	sc->sc_irq = ia->ia_irq;
-	sc->sc_ist = IST_EDGE;
+
 	sc->sc_drq8 = ia->ia_drq;
 	sc->sc_drq16 = ia->ia_drq2;
-	sc->sc_ic = ia->ia_ic;
 
 	if (!sbmatch(sc))
 		goto bad;
@@ -160,6 +161,9 @@ sb_isa_attach(parent, self, aux)
 		printf("%s: sbfind failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	sc->sc_ic = ia->ia_ic;
+
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_AUDIO, sbdsp_intr, sc);
+
 	sbattach(sc);
 }

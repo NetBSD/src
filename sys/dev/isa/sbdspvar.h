@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.40 1999/02/18 15:47:29 mycroft Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.41 1999/02/19 16:10:44 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -93,15 +93,15 @@
  */
 struct sbdsp_softc {
 	struct	device sc_dev;		/* base device */
-	struct	isadev sc_id;		/* ISA device */
 	isa_chipset_tag_t sc_ic;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
 	void	*sc_ih;			/* interrupt vectoring */
 
+	/* XXX These are only for setting chip configuration registers. */
 	int	sc_iobase;		/* I/O port base address */
 	int	sc_irq;			/* interrupt */
-	int	sc_ist;			/* interrupt share type */
+
 	int	sc_drq8;		/* DMA (8-bit) */
 	int	sc_drq16;		/* DMA (16-bit) */
 

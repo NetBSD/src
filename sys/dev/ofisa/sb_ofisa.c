@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_ofisa.c,v 1.3 1998/08/18 17:55:09 thorpej Exp $	*/
+/*	$NetBSD: sb_ofisa.c,v 1.4 1999/02/19 16:10:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,15 +145,14 @@ sb_ofisa_attach(parent, self, aux)
 	sc->sc_ic = aa->ic;
 
 	sc->sc_iot = aa->iot;
-	sc->sc_iobase = reg.addr;
-	if (bus_space_map(sc->sc_iot, sc->sc_iobase, reg.len, 0,
-	    &sc->sc_ioh)) {
+	if (bus_space_map(sc->sc_iot, reg.addr, reg.len, 0, &sc->sc_ioh)) {
 		printf(": unable to map register space\n");
 		return;
 	}
 
+	/* XXX These are only for setting chip configuration registers. */
+	sc->sc_iobase = reg.addr;
 	sc->sc_irq = intr.irq;
-	sc->sc_ist = intr.share;
 
 	sc->sc_drq8 = DRQUNK;
 	sc->sc_drq16 = DRQUNK;
@@ -184,6 +183,9 @@ sb_ofisa_attach(parent, self, aux)
 		printf(": sbmatch failed\n");
 		return;
 	}
+
+	sc->sc_ih = isa_intr_establish(aa_ic, intr.irq, IST_EDGE, IPL_AUDIO,
+	    sbdsp_intr, sc);
 
 	n = OF_getproplen(aa->oba.oba_phandle, "model");
 	if (n > 0) {
