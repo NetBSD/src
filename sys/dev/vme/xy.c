@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.55 2003/12/23 13:15:18 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.56 2004/10/28 07:07:46 yamt Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.55 2003/12/23 13:15:18 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.56 2004/10/28 07:07:46 yamt Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.55 2003/12/23 13:15:18 pk Exp $");
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/device.h>

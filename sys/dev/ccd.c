@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.100 2004/10/26 22:44:45 thorpej Exp $	*/
+/*	$NetBSD: ccd.c,v 1.101 2004/10/28 07:07:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -125,13 +125,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.100 2004/10/26 22:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.101 2004/10/28 07:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/namei.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.13 2004/08/23 05:39:46 thorpej Exp $ */
+/* $NetBSD: dksubr.c,v 1.14 2004/10/28 07:07:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.13 2004/08/23 05:39:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.14 2004/10/28 07:07:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.13 2004/08/23 05:39:46 thorpej Exp $");
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
 #include <sys/namei.h>

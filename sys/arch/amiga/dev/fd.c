@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.62 2003/07/14 15:57:39 aymeric Exp $ */
+/*	$NetBSD: fd.c,v 1.63 2004/10/28 07:07:35 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2003/07/14 15:57:39 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.63 2004/10/28 07:07:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.62 2003/07/14 15:57:39 aymeric Exp $");
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>

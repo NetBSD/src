@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.27 2004/09/22 10:08:51 yamt Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.28 2004/10/28 07:07:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.27 2004/09/22 10:08:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.28 2004/10/28 07:07:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.27 2004/09/22 10:08:51 yamt Exp $");
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 #include <sys/buf.h>
+#include <sys/bufq.h>
 #include <sys/uio.h>
 #include <sys/stat.h>
 #include <sys/syslog.h>
