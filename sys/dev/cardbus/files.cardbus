@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.26 2005/01/29 21:59:53 jonathan Exp $
+#	$NetBSD: files.cardbus,v 1.27 2005/01/29 22:05:26 jonathan Exp $
 #
 # files.cardbus
 #
@@ -112,9 +112,3 @@ file	dev/cardbus/if_ath_cardbus.c	ath_cardbus
 #
 attach	njs at cardbus with njs_cardbus
 file	dev/cardbus/njs_cardbus.c	njs_cardbus
-
-#
-# Realtek 8169 Ethernet controllers
-#
-attach	re at cardbus with re_cardbus
-file	dev/cardbus/if_re_cardbus.c	re_cardbus
