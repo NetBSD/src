@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.22 1998/02/02 23:01:05 cgd Exp $	*/
+/*	$NetBSD: comvar.h,v 1.23 1998/06/10 12:06:24 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -108,6 +108,14 @@ struct com_softc {
 	int (*enable) __P((struct com_softc *));
 	void (*disable) __P((struct com_softc *));
 	int enabled;
+
+	/* PPS signal on DCD, with or without inkernel clock disciplining */
+	int	sc_ppsassertmask;		/* pps signal mask */
+	int	sc_ppsassert;			/* pps edge mask */
+	int	sc_ppsclearmask;		/* pps signal mask */
+	int	sc_ppsclear;			/* pps edge mask */
+	pps_info_t ppsinfo;
+	pps_params_t ppsparam;
 
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
