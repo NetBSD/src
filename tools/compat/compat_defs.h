@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.23 2002/11/29 13:00:22 lukem Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.24 2003/01/27 01:17:47 uwe Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -314,6 +314,11 @@ void *setmode(const char *);
 
 #undef RCSID
 #define RCSID(x)
+
+/* pwd_mkdb expects this one. */
+
+#undef __SCCSID
+#define __SCCSID(x)
 
 /* Some definitions not available on all systems. */
 
