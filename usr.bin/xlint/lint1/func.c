@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.14 2001/05/28 12:40:37 lukem Exp $	*/
+/*	$NetBSD: func.c,v 1.15 2001/11/21 17:33:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: func.c,v 1.14 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: func.c,v 1.15 2001/11/21 17:33:29 wiz Exp $");
 #endif
 
 #include <stdlib.h>
@@ -366,7 +366,7 @@ funcend(void)
 	/*
 	 * write the information about the function definition to the
 	 * output file
-	 * inline functions explicitely declared extern are written as
+	 * inline functions explicitly declared extern are written as
 	 * declarations only.
 	 */
 	if (dcs->d_scl == EXTERN && funcsym->s_inline) {

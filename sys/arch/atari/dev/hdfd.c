@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.28 2001/07/08 18:06:43 wiz Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.29 2001/11/21 17:33:27 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -526,7 +526,7 @@ fdc_ctrl_intr(frame)
 
 	/*
 	 * Disable further interrupts. The fdcintr() routine
-	 * explicitely enables them when needed.
+	 * explicitly enables them when needed.
 	 */
 	MFP2->mf_ierb &= ~IB_DCHG;
 
