@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.1 2002/12/28 23:57:38 reinoud Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.2 2003/11/23 15:24:20 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -98,8 +98,8 @@ extern int os_readc(void);
 /* OS_CLI */
 
 #ifndef __ASSEMBLER__
-extern void os_CLI(char *);
-extern os_error *xos_CLI(char *);
+extern void os_cli(char *);
+extern os_error *xos_cli(char *);
 #endif
 
 /* OS_Byte */
