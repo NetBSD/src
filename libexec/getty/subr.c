@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.17 1995/10/05 07:16:25 mycroft Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.18 1995/10/05 08:51:31 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -393,6 +393,7 @@ register long flags;
 	if (ISSET(flags, RAW)) {
 		iflag &= IXOFF;
 		CLR(lflag, ISIG|ICANON|IEXTEN);
+		CLR(cflag, PARENB);
 	} else {
 		SET(iflag, BRKINT|IXON|IMAXBEL);
 		SET(lflag, ISIG|IEXTEN);
@@ -400,20 +401,25 @@ register long flags;
 			CLR(lflag, ICANON);
 		else
 			SET(lflag, ICANON);
-	}
-
-	switch (ISSET(flags, ANYP)) {
-	case EVENP:
-		SET(iflag, INPCK);
-		CLR(cflag, PARODD);
-		break;
-	case ODDP:
-		SET(iflag, INPCK);
-		SET(cflag, PARODD);
-		break;
-	default:
-		CLR(iflag, INPCK);
-		break;
+		switch (ISSET(flags, ANYP)) {
+		case 0:
+			CLR(cflag, PARENB);
+			break;
+		case ANYP:
+			SET(cflag, PARENB);
+			CLR(iflag, INPCK);
+			break;
+		case EVENP:
+			SET(cflag, PARENB);
+			SET(iflag, INPCK);
+			CLR(cflag, PARODD);
+			break;
+		case ODDP:
+			SET(cflag, PARENB);
+			SET(iflag, INPCK);
+			SET(cflag, PARODD);
+			break;
+		}
 	}
 
 	/* Nothing we can do with CRTBS. */
@@ -450,7 +456,7 @@ register long flags;
 	SET(lflag, ISSET(flags, TOSTOP|FLUSHO|PENDIN|NOFLSH));
 
 	if (ISSET(flags, RAW|LITOUT|PASS8)) {
-		CLR(cflag, CSIZE|PARENB);
+		CLR(cflag, CSIZE);
 		SET(cflag, CS8);
 		if (!ISSET(flags, RAW|PASS8))
 			SET(iflag, ISTRIP);
@@ -462,7 +468,7 @@ register long flags;
 			CLR(oflag, OPOST);
 	} else {
 		CLR(cflag, CSIZE);
-		SET(cflag, CS7|PARENB);
+		SET(cflag, CS7);
 		SET(iflag, ISTRIP);
 		SET(oflag, OPOST);
 	}
