@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.14 1997/11/25 20:35:02 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.15 1997/12/04 09:05:37 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,7 +58,7 @@
 default x=20, y=12, no exit;
 
 menu netbsd, title "  NetBSD-@@VERSION@@ Install System";
-	display action  { msg_display (MSG_hello); };
+	display action  { toplevel(); };
 	option "Install NetBSD to hard disk",
 		action { do_install(); };
 	option "Upgrade NetBSD on a hard disk",
