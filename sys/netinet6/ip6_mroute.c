@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.42 2003/05/14 06:47:42 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.43 2003/05/14 17:00:22 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.42 2003/05/14 06:47:42 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.43 2003/05/14 17:00:22 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -1295,10 +1295,10 @@ ip6_mdq(m, ifp, rt)
  */
 
 #define MC6_SEND(ip6, mifp, m) do {				\
-		if ((mifp)->m6_flags & MIFF_REGISTER)		\
-		    register_send((ip6), (mifp), (m));		\
-		else						\
-		    phyint_send((ip6), (mifp), (m));		\
+	if ((mifp)->m6_flags & MIFF_REGISTER)			\
+		register_send((ip6), (mifp), (m));		\
+	else							\
+		phyint_send((ip6), (mifp), (m));		\
 } while (/*CONSTCOND*/ 0)
 
 	/*
