@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.6.1 2004/11/14 08:16:12 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.6.2 2004/11/29 07:24:51 skrll Exp $
 
 .include "../Makefile.inc"
 
@@ -10,6 +10,10 @@ CPPFLAGS+=	-nostdinc -D_KERNEL -DEXEC_AOUT -DCOMPAT_LINUX
 KMOD=	exec_linux_aout
 
 SRCS=	lkminit_exec.c
-SRCS+=	linux_exec_aout.c linux_exec_machdep.c
+SRCS+=	linux_exec_aout.c
+
+.if ${MACHINE} == "i386"
+SRCS+=	linux_exec_machdep.c
+.endif
 
 .include <bsd.kmod.mk>

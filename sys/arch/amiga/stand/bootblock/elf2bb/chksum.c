@@ -1,4 +1,4 @@
-/* $NetBSD: chksum.c,v 1.1 2001/12/19 06:51:05 mhitch Exp $ */
+/* $NetBSD: chksum.c,v 1.1.18.1 2004/11/29 07:24:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,6 +35,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 
 #include <stdio.h>
 #include <unistd.h>

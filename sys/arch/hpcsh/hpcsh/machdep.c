@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41.2.3 2004/09/21 13:16:25 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41.2.4 2004/11/29 07:24:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.2.3 2004/09/21 13:16:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41.2.4 2004/11/29 07:24:04 skrll Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -432,14 +432,14 @@ mem_cluster_init(paddr_t addr)
 	phys_ram_seg_t *seg;
 	int npages, i;
 
-	/* cluster 0 is always kernel myself. */
+	/* cluster 0 is always the kernel itself. */
 	mem_clusters[0].start = SH_CS3_START;
 	mem_clusters[0].size = addr - SH_CS3_START;
 	mem_cluster_cnt = 1;
 
 	/* search CS3 */
 #ifdef SH3
-	/* SH7709A's CS3 is splited to 2 banks. */
+	/* SH7709A's CS3 is split to 2 banks. */
 	if (CPU_IS_SH3) {
 		__find_dram_shadow(addr, SH7709_CS3_BANK0_END);
 		__find_dram_shadow(SH7709_CS3_BANK1_START,
@@ -447,7 +447,7 @@ mem_cluster_init(paddr_t addr)
 	}
 #endif
 #ifdef SH4
-	/* contig CS3 */
+	/* contiguous CS3 */
 	if (CPU_IS_SH4) {
 		__find_dram_shadow(addr, SH_CS3_END);
 	}

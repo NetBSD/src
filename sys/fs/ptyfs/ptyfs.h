@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.h,v 1.1.2.2 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: ptyfs.h,v 1.1.2.3 2004/11/29 07:24:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -102,7 +102,22 @@ struct ptyfsnode {
 	struct timespec	ptyfs_ctime, ptyfs_mtime, ptyfs_atime, ptyfs_birthtime;
 };
 
+struct ptyfsmount {
+	gid_t pmnt_gid;
+	mode_t pmnt_mode;
+};
+
+#define VFSTOPTY(mp)	((struct ptyfsmount *)(mp)->mnt_data)
+
 #endif /* _KERNEL */
+
+struct ptyfs_args {
+	int version;
+	gid_t gid;
+	mode_t mode;
+};
+
+#define PTYFS_ARGSVERSION	1
 
 /*
  * Kernel stuff follows

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_scan.c,v 1.1.2.2 2004/10/19 15:57:37 skrll Exp $	*/
+/*	$NetBSD: ip_scan.c,v 1.1.2.3 2004/11/29 07:24:33 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -300,7 +300,7 @@ int n;
 				return 1;
 			break;
 		case '?' :
-			if (!isalpha(*up) || ((*s & 0x5f) != (*up & 0x5f)))
+			if (!ISALPHA(*up) || ((*s & 0x5f) != (*up & 0x5f)))
 				return 1;
 			break;
 		case '*' :

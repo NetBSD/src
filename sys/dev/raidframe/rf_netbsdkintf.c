@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.6 2004/11/02 07:52:46 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.161.2.7 2004/11/29 07:24:32 skrll Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.6 2004/11/02 07:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.161.2.7 2004/11/29 07:24:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -1285,6 +1285,12 @@ raidioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 
 
 		RF_LOCK_MUTEX(raidPtr->mutex);
+		if (raidPtr->status == rf_rs_reconstructing) {
+			/* you can't fail a disk while we're reconstructing! */
+			/* XXX wrong for RAID6 */
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
+			return (EINVAL);
+		}
 		if ((raidPtr->Disks[rr->col].status == 
 		     rf_ds_optimal) && (raidPtr->numFailures > 0)) { 
 			/* some other component has failed.  Let's not make
@@ -1947,8 +1953,11 @@ KernelWakeupFunc(struct buf *vbp)
 	if (bp->b_flags & B_ERROR) {
 		/* Mark the disk as dead */
 		/* but only mark it once... */
-		if (queue->raidPtr->Disks[queue->col].status ==
-		    rf_ds_optimal) {
+		/* and only if it wouldn't leave this RAID set 
+		   completely broken */
+		if ((queue->raidPtr->Disks[queue->col].status ==
+		    rf_ds_optimal) && (queue->raidPtr->numFailures < 
+				       queue->raidPtr->Layout.map->faultsTolerated)) {
 			printf("raid%d: IO Error.  Marking %s as failed.\n",
 			       queue->raidPtr->raidid,
 			       queue->raidPtr->Disks[queue->col].devname);
@@ -2545,6 +2554,7 @@ rf_RewriteParityThread(RF_Raid_t *raidPtr)
 	int retcode;
 	int s;
 
+	raidPtr->parity_rewrite_stripes_done = 0;
 	raidPtr->parity_rewrite_in_progress = 1;
 	s = splbio();
 	retcode = rf_RewriteParity(raidPtr);

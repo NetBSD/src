@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80.2.4 2004/09/21 13:20:50 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.80.2.5 2004/11/29 07:24:05 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.4 2004/09/21 13:20:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80.2.5 2004/11/29 07:24:05 skrll Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -570,8 +570,10 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out;
+	}
 
 	while (len > 0) {
 		size_t seglen;
@@ -582,10 +584,10 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		uva += seglen;
 		kp += seglen;
 		len -= seglen;
+		unsetusr();
 	}
 
   out:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
@@ -598,8 +600,10 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out;
+	}
 
 	while (len > 0) {
 		size_t seglen;
@@ -610,10 +614,10 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		uva += seglen;
 		kp += seglen;
 		len -= seglen;
+		unsetusr();
 	}
 
   out:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
@@ -844,8 +848,10 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out2;
+	}
 
 	while (len > 0) {
 		size_t seglen;
@@ -855,9 +861,12 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 		len -= seglen;
 		uva += seglen;
 		for (; seglen-- > 0; p++) {
-			if ((*kp++ = *(char *)p) == 0)
+			if ((*kp++ = *(char *)p) == 0) {
+				unsetusr();
 				goto out;
+			}
 		}
+		unsetusr();
 	}
 	rv = ENAMETOOLONG;
 
@@ -865,7 +874,6 @@ copyinstr(const void *udaddr, void *kaddr, size_t len, size_t *done)
 	if (done != NULL)
 		*done = kp - (char *) kaddr;
  out2:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }
@@ -879,8 +887,10 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 	struct faultbuf env;
 	int rv;
 
-	if ((rv = setfault(&env)) != 0)
+	if ((rv = setfault(&env)) != 0) {
+		unsetusr();
 		goto out2;
+	}
 
 	while (len > 0) {
 		size_t seglen;
@@ -890,9 +900,12 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 		len -= seglen;
 		uva += seglen;
 		for (; seglen-- > 0; p++) {
-			if ((*(char *)p = *kp++) == 0)
+			if ((*(char *)p = *kp++) == 0) {
+				unsetusr();
 				goto out;
+			}
 		}
+		unsetusr();
 	}
 	rv = ENAMETOOLONG;
 
@@ -900,7 +913,6 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 	if (done != NULL)
 		*done = kp - (char *) kaddr;
  out2:
-	unsetusr();
 	curpcb->pcb_onfault = 0;
 	return rv;
 }

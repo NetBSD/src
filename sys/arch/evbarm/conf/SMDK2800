@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.3.2.5 2004/11/14 08:15:06 skrll Exp $
+#	$NetBSD: SMDK2800,v 1.3.2.6 2004/11/29 07:24:03 skrll Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -172,6 +172,7 @@ pci0	at sspci0
 #cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 #hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 #pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+#pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 #satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 
 # ATA bus support

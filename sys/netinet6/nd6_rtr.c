@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.44.2.4 2004/11/02 07:53:24 skrll Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.44.2.5 2004/11/29 07:25:04 skrll Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44.2.4 2004/11/02 07:53:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.44.2.5 2004/11/29 07:25:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1432,8 +1432,8 @@ nd6_prefix_onlink(pr)
 	if ((pr->ndpr_stateflags & NDPRF_ONLINK) != 0) {
 		nd6log((LOG_ERR,
 		    "nd6_prefix_onlink: %s/%d is already on-link\n",
-		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr), pr->ndpr_plen);
-		return (EEXIST));
+		    ip6_sprintf(&pr->ndpr_prefix.sin6_addr), pr->ndpr_plen));
+		return (EEXIST);
 	}
 
 	/*

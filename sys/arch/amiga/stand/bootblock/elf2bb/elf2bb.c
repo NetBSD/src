@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2bb.c,v 1.7.2.3 2004/09/21 13:12:46 skrll Exp $	*/
+/*	$NetBSD: elf2bb.c,v 1.7.2.4 2004/11/29 07:24:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/types.h>
 
 #include <err.h>
@@ -46,9 +50,9 @@
 #include <unistd.h>
 
 #include <sys/mman.h>		/* of the machine we're running on */
-#include <machine/endian.h>	/* of the machine we're running on */
+#include <sys/endian.h>		/* of the machine we're running on */
 
-#include <elf.h>		/* TARGET */
+#include <sys/exec_elf.h>	/* TARGET */
 #ifndef R_68K_32		/* XXX host not m68k XXX */
 #define	R_68K_32	1
 #define	R_68K_PC32	4

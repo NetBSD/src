@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.40.2.5 2004/11/14 08:15:57 skrll Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.40.2.6 2004/11/29 07:24:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.5 2004/11/14 08:15:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.40.2.6 2004/11/29 07:24:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -728,7 +728,7 @@ pipe_direct_write(fp, wpipe, uio)
 			 pgs, UVM_LOAN_TOPAGE);
 	if (error) {
 		pipe_loan_free(wpipe);
-		return (error);
+		return (ENOMEM); /* so that caller fallback to ordinary write */
 	}
 
 	/* Enter the loaned pages to kva */
@@ -1259,7 +1259,7 @@ pipe_stat(fp, ub, l)
 	ub->st_blksize = pipe->pipe_buffer.size;
 	ub->st_size = pipe->pipe_buffer.cnt;
 	ub->st_blocks = (ub->st_size) ? 1 : 0;
-	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec)
+	TIMEVAL_TO_TIMESPEC(&pipe->pipe_atime, &ub->st_atimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_mtime, &ub->st_mtimespec);
 	TIMEVAL_TO_TIMESPEC(&pipe->pipe_ctime, &ub->st_ctimespec);
 	ub->st_uid = fp->f_cred->cr_uid;

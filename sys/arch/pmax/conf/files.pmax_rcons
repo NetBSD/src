@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax_rcons,v 1.1.4.4 2004/09/21 13:20:14 skrll Exp $
+#	$NetBSD: files.pmax_rcons,v 1.1.4.5 2004/11/29 07:24:05 skrll Exp $
 
 # DC7085 (DZ-like four-port serial device) on ibus
 device dc: tty
@@ -58,8 +58,9 @@ attach	px at tc
 file	arch/pmax/dev/px.c 		px needs-flag
 
 # pmax configuration glue for rconsole. Requires fb pseudo-device.
-
-include "dev/rcons/files.rcons"
+# XXX - assuming/knowing that files.wscons includes files.rscons 
+#       (otherwise duplications from files.wscons need to go here)
+include "dev/wscons/files.wscons"
 include "dev/wsfont/files.wsfont"
 
 defpseudo	rasterconsole

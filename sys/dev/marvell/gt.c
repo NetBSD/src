@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.4.2.3 2004/09/21 13:30:16 skrll Exp $	*/
+/*	$NetBSD: gt.c,v 1.4.2.4 2004/11/29 07:24:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,9 +42,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.4.2.3 2004/09/21 13:30:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.4.2.4 2004/11/29 07:24:15 skrll Exp $");
 
 #include "opt_marvell.h"
+#include "locators.h"
 
 #include <sys/param.h>
 #include <sys/types.h>

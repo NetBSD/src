@@ -1,4 +1,4 @@
-/*	$NetBSD: gtvar.h,v 1.4.2.3 2004/09/21 13:30:17 skrll Exp $	*/
+/*	$NetBSD: gtvar.h,v 1.4.2.4 2004/11/29 07:24:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -95,10 +95,22 @@ struct obio_attach_args {
 };
 
 #ifdef _KERNEL
+#include "locators.h"
 
 #ifdef DEBUG
 extern int gtpci_debug;
 #endif
+
+/*
+ * Locators for GT private devices, as specified to config.
+ */
+#define	GT_UNK_UNIT		GTCF_UNIT_DEFAULT	/* wcarded 'function' */
+
+#define	OBIO_UNK_OFFSET		OBIOCF_OFFSET_DEFAULT	/* wcarded 'offset' */
+
+#define	OBIO_UNK_SIZE		OBIOCF_SIZE_DEFAULT	/* wcarded 'size' */
+
+#define	OBIO_UNK_IRQ		OBIOCF_IRQ_DEFAULT	/* wcarded 'irq' */
 
 void	gt_attach_common(struct gt_softc *);
 uint32_t gt_read_mpp(void);
