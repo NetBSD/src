@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2003/07/04 02:21:50 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.11 2003/07/04 02:35:38 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -479,9 +479,6 @@ cpu_startup(void)
 	if (board_info_set("mem-size", &board_data.mem_size, 
 		sizeof(&board_data.mem_size), PROP_CONST, 0))
 		panic("setting mem-size");
-	if (board_info_set("emac-mac-addr", &board_data.mac_address_local, 
-		sizeof(&board_data.mac_address_local), PROP_CONST, 0))
-		panic("setting emac-mac-addr");
 	if (board_info_set("sip0-mac-addr", &board_data.mac_address_pci, 
 		sizeof(&board_data.mac_address_pci), PROP_CONST, 0))
 		panic("setting sip0-mac-addr");
