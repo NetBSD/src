@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.1 2000/08/12 22:58:48 wdk Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.2 2001/02/07 11:40:18 wdk Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -48,19 +48,25 @@
 #include <machine/bus.h>
 #include <dev/ic/z8530sc.h>
 
+struct zs_channel {
+	struct zs_chanstate	cs_zscs; 	/* Required: soft state */
+	bus_space_tag_t		cs_bustag;	/* Machine-dependent */
+	bus_space_handle_t	cs_regs;
+};	
+
 struct zsc_softc {
-	struct	device zsc_dev;	/* required first: base device */
-	struct	zs_chanstate *zsc_cs[2]; /* channel A and B soft state */
-	struct  zs_chanstate  zsc_cs_store[2];
+	struct	device		zsc_dev;	/* required: base device */
+	struct	zs_chanstate   *zsc_cs[2];	/* channel soft state */
+	struct  zs_channel	zsc_cs_store[2];
 	/* Machine-dependent part follows... */
-	bus_space_tag_t		zsc_bustag;
-	bus_space_handle_t	zsc_base;	/* Base address */
-        struct  evcnt zs_intrcnt; 	/* Interrupt counter */
+	bus_space_tag_t		zsc_bustag;	/* Bus type */
+	bus_space_handle_t	zsc_base; 	/* Device base address */
+        struct  evcnt		zs_intrcnt; 	/* Interrupt counter */
 };
 
 /*
  * Functions to read and write individual registers in a channel.
- * The ZS chip requires a 1.6 uSec. recovery time between accesses
+ * The SCC chip requires 3-4 PCLK cycles recovery time between accesses
  */
 
 u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
@@ -71,5 +77,5 @@ void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
 void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
 void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 
-/* Zilog Serial hardware interrupts (level 1) */
+/* Zilog Serial hardware interrupts (level 0) */
 #define splzs()		spltty()
