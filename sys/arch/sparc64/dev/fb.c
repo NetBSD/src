@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.4 1999/04/13 18:45:42 ad Exp $ */
+/*	$NetBSD: fb.c,v 1.5 1999/04/13 19:02:38 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,12 +267,15 @@ fbrcons_init(fb)
 	/* Pick our default font. There is always a fallback */
 	wsfont_init();
 	
+	/* XXX leave font init to rasops until rasops1 is fixed */
+	if (ri->ri_depth != 1) 
 #ifdef RASTERCONS_SMALLFONT
-	if ((cookie = wsfont_find("Bold", 0, 0, 0)) >= 0)
+		if ((cookie = wsfont_find("Bold", 0, 0, 0)) >= 0)
 #else
-	if ((cookie = wsfont_find("Gallant", 0, 0, 0)) >= 0)
+		if ((cookie = wsfont_find("Gallant", 0, 0, 0)) >= 0)
 #endif	
-		wsfont_lock(cookie, &ri->ri_font, WSFONT_LITTLE, WSFONT_LITTLE);
+			wsfont_lock(cookie, &ri->ri_font, WSFONT_LITTLE, 
+			    WSFONT_LITTLE);
 
 #if !defined(RASTERCONS_FULLSCREEN) && !defined(RASTERCONS_SMALLFONT)
 #if defined(SUN4)
