@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.14 2000/08/01 17:29:48 itojun Exp $	*/
+/*	$NetBSD: interface.h,v 1.15 2001/01/05 03:21:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -129,18 +129,11 @@ extern int packettype;		/* as specified by -T */
 #endif
 
 /*
- * XXX This is a really ugly hack, but the preprocessor simply doesn't
- * know whether it's running on a 32- or 64-bit machine.
+ * All NetBSD ports support 64 bit ints.
  */
-#if defined(__alpha__) || defined(__sparc_v9__)
-#define   INT64_FORMAT   "%ld"
-#define U_INT64_FORMAT   "%lu"
-#define HEX_INT64_FORMAT "%lx"
-#else
-#define   INT64_FORMAT   "%qd"
-#define U_INT64_FORMAT   "%qu"
-#define HEX_INT64_FORMAT "%qx"
-#endif
+#define   INT64_FORMAT   "%lld"
+#define U_INT64_FORMAT   "%llu"
+#define HEX_INT64_FORMAT "%llx"
 
 extern char *program_name;	/* used to generate self-identifying messages */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.13 2000/08/19 15:59:43 fvdl Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.14 2001/01/05 03:21:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.13 2000/08/19 15:59:43 fvdl Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.14 2001/01/05 03:21:53 lukem Exp $");
 #endif
 #endif
 
@@ -147,13 +147,13 @@ static int print_int64(const u_int32_t *dp, int how)
 	res = ((u_int64_t)ntohl(dp[0]) << 32) | (u_int64_t)ntohl(dp[1]);
 	switch (how) {
 	case SIGNED:
-		printf(INT64_FORMAT, res);
+		printf(INT64_FORMAT, (long long)res);
 		break;
 	case UNSIGNED:
-		printf(U_INT64_FORMAT, res);
+		printf(U_INT64_FORMAT, (long long)res);
 		break;
 	case HEX:
-		printf(HEX_INT64_FORMAT, res);
+		printf(HEX_INT64_FORMAT, (long long)res);
 		break;
 	default:
 		return (0);
