@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.13 1994/08/20 09:13:25 deraadt Exp $
+ * $Id: locore.s,v 1.14 1994/08/23 11:24:55 deraadt Exp $
  */
 
 #define	LOCORE
@@ -2346,9 +2346,12 @@ dostart:
 	 * Sun4 passes in the `load address'.  Although possible, its highly
 	 * unlikely that OpenBoot would place the prom vector there.
 	 */
+	set	0x4000, %o1
 	cmp	%o0, 0x4000
 	beq	is_sun4
-	 mov	%o0, %g7		! save prom vector pointer
+	 nop
+
+	mov	%o0, %g7		! save prom vector pointer
 
 	/*
 	 * are we on a sun4c or a sun4m?
@@ -2400,8 +2403,10 @@ is_sun4:
 	stba	%g0, [%g1] ASI_CONTROL
 
 	b	start_havetype
-	 mov	CPU_SUN4C, %g4
+	 mov	CPU_SUN4, %g4
 #else
+	set	PROM_BASE, %g7
+
 	set	sun4_notsup-KERNBASE, %o0
 	ld	[%g7 + 0x18], %o1
 	call	%o1			! print a message saying that the
@@ -2463,9 +2468,7 @@ start_havetype:
 #if defined(SUN4C)
 	cmp	%g4, CPU_SUN4C
 	bne	1f
-	 nop
-
-	set	1 << 18, %l3		! segment size in bytes
+	 set	1 << 18, %l3		! segment size in bytes
 0:
 	lduba	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
 	stba	%l4, [%l1] ASI_SEGMAP
@@ -2497,9 +2500,7 @@ start_havetype:
 #if defined(SUN4)
 	cmp	%g4, CPU_SUN4
 	bne	2f
-	 nop
-
-	set	1 << 18, %l3		! segment size in bytes
+	 set	1 << 18, %l3		! segment size in bytes
 0:
 	lduha	[%l0] ASI_SEGMAP, %l4	! segmap[highva] = segmap[lowva];
 	stha	%l4, [%l1] ASI_SEGMAP
@@ -2531,10 +2532,9 @@ start_havetype:
 #if defined(SUN4M)
 	cmp	%g4, CPU_SUN4M		! skip for sun4m!
 	bne	3f
-	 nop
+	 set	_mapme-KERNBASE, %o0
 
 	! rominterpret("0 0 f8000000 15c6a0 map-pages");
-	set	_mapme-KERNBASE, %o0
 	ld	[%g7 + 0x7c], %o1
 	call	%o1			! forth eval
 	 nop

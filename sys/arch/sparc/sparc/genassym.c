@@ -42,7 +42,7 @@
  *	@(#)genassym.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: genassym.c,v 1.15 93/04/21 06:09:30 torek Exp  (LBL)
- * $Id: genassym.c,v 1.6 1994/08/20 01:36:36 deraadt Exp $
+ * $Id: genassym.c,v 1.7 1994/08/23 11:24:53 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -57,6 +57,7 @@
 
 #include <machine/pmap.h>
 #include <machine/cpu.h>
+#include <machine/oldmon.h>
 
 #ifdef notyet
 #include <sparc/dev/zsreg.h>
@@ -190,6 +191,7 @@ main()
 	off("AMD_BBRB", struct amd7930, bbrb);
 	off("AMD_BBTB", struct amd7930, bbtb);
 
+	def("PROM_BASE", PROM_BASE);
 	flush();
 
 	exit(0);
