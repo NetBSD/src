@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.6 2001/07/07 16:46:35 thorpej Exp $	*/
+/*	$NetBSD: yds.c,v 1.6.4.1 2001/10/11 00:02:13 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -221,6 +221,7 @@ static struct audio_hw_if yds_hw_if = {
 	yds_get_props,
 	yds_trigger_output,
 	yds_trigger_input,
+	NULL,
 };
 
 struct audio_device yds_device = {

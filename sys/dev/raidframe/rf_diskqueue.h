@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.h,v 1.5.10.1 2001/09/07 04:45:28 thorpej Exp $	*/
+/*	$NetBSD: rf_diskqueue.h,v 1.5.10.2 2001/10/11 00:02:18 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,10 +38,11 @@
 #ifndef _RF__RF_DISKQUEUE_H_
 #define _RF__RF_DISKQUEUE_H_
 
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 #include "rf_acctrace.h"
 #include "rf_alloclist.h"
-#include "rf_types.h"
 #include "rf_etimer.h"
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.150.4.1 2001/10/01 12:42:06 fvdl Exp $ */
+/*	$NetBSD: autoconf.c,v 1.150.4.2 2001/10/11 00:01:51 fvdl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -330,9 +330,9 @@ bootstrap()
 
 	if (CPU_ISSUN4OR4C) {
 		/* Map Interrupt Enable Register */
-		pmap_enter(pmap_kernel(), INTRREG_VA,
+		pmap_kenter_pa(INTRREG_VA,
 		    INT_ENABLE_REG_PHYSADR | PMAP_NC | PMAP_OBIO,
-		    VM_PROT_READ | VM_PROT_WRITE, PMAP_WIRED);
+		    VM_PROT_READ | VM_PROT_WRITE);
 		pmap_update(pmap_kernel());
 		/* Disable all interrupts */
 		*((unsigned char *)INTRREG_VA) = 0;
@@ -845,14 +845,17 @@ void
 cpu_rootconf()
 {
 	struct bootpath *bp;
-	struct device *bootdv;
 	int bootpartition;
 
 	bp = nbootpath == 0 ? NULL : &bootpath[nbootpath-1];
-	bootdv = bp == NULL ? NULL : bp->dev;
-	bootpartition = bootdv == NULL ? 0 : bp->val[2];
+	if (bp == NULL) 
+		bootpartition = 0;
+	else if (booted_device != bp->dev)
+		bootpartition = 0;
+	else
+		bootpartition = bp->val[2];
 
-	setroot(bootdv, bootpartition);
+	setroot(booted_device, bootpartition);
 }
 
 /*
@@ -1693,7 +1696,7 @@ device_register(dev, aux)
 				strcpy(bootpath[nbootpath].name, "fd");
 				nbootpath++;
 			}
-			bp->dev = dev;
+			booted_device = bp->dev = dev;
 			bootpath_store(1, bp + 1);
 			return;
 		}

@@ -1,9 +1,9 @@
-# $NetBSD: files.rcons,v 1.7 1999/11/23 01:52:52 scottr Exp $
+# $NetBSD: files.rcons,v 1.7.10.1 2001/10/11 00:02:26 fvdl Exp $
 #
 # Configuration file for RASTER Console.
 #
-file dev/rcons/raster_op.c	raster
-file dev/rcons/raster_text.c	raster
+file dev/rcons/raster_op.c	raster | wsrasteremulops
+file dev/rcons/raster_text.c	raster | wsrasteremulops
 
 file dev/rcons/rcons_kern.c	rasterconsole
 file dev/rcons/rcons_subr.c	rasterconsole

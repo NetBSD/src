@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16.4.2 2001/10/10 11:56:34 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.16.4.3 2001/10/11 00:01:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -206,7 +206,7 @@ static	int firstopen = 1;
 		/* Notify the input device that serves us */
 		struct cons_channel *cc = kd->kd_in;
 		if (cc != NULL &&
-		    (error = (*cc->cc_iopen)(cc)) != 0) {
+		    (error = (*cc->cc_iopen)(cc, devvp)) != 0) {
 			splx(s);
 			return (error);
 		}
@@ -252,7 +252,7 @@ kdclose(devvp, flag, mode, p)
 	ttyclose(tp);
 
 	if ((cc = kd->kd_in) != NULL)
-		(void)(*cc->cc_iclose)(cc->cc_dev);
+		(void)(*cc->cc_iclose)(cc->cc_dev, devvp);
 
 	return (0);
 }
@@ -450,21 +450,23 @@ kd_putfb(tp)
 /*
  * Default PROM-based console input stream
  */
-static int kd_rom_iopen __P((struct cons_channel *));
-static int kd_rom_iclose __P((struct cons_channel *));
+static int kd_rom_iopen __P((struct cons_channel *, struct vnode *));
+static int kd_rom_iclose __P((struct cons_channel *, struct vnode *));
 
 static struct cons_channel prom_cons_channel;
 
 int
-kd_rom_iopen(cc)
+kd_rom_iopen(cc, devvp)
 	struct cons_channel *cc;
+	struct vnode *devvp;
 {
 	return (0);
 }
 
 int
-kd_rom_iclose(cc)
+kd_rom_iclose(cc, devvp)
 	struct cons_channel *cc;
+	struct vnode *devvp;
 {
 	return (0);
 }

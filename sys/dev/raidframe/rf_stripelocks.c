@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_stripelocks.c,v 1.7 2001/09/01 23:50:44 thorpej Exp $	*/
+/*	$NetBSD: rf_stripelocks.c,v 1.7.2.1 2001/10/11 00:02:25 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -56,7 +56,8 @@
  * searching through stripe lock descriptors.
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_stripelocks.h"
 #include "rf_alloclist.h"
@@ -566,14 +567,6 @@ AddToWaitersQueue(
     RF_StripeLockDesc_t * lockDesc,
     RF_LockReqDesc_t * lockReqDesc)
 {
-#if 0 /* XXX fvdl -- unitialized use of 'tid' */
-	int     tid;
-
-	if (rf_stripeLockDebug) {
-		Dprintf3("[%d] Waiting on lock for stripe %ld table 0x%lx\n", tid, lockDesc->stripeID, (unsigned long) lockTable);
-		FLUSH;
-	}
-#endif
 	if (!lockDesc->waitersH) {
 		lockDesc->waitersH = lockDesc->waitersT = lockReqDesc;
 	} else {

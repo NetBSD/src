@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.19.4.2 2001/10/10 11:56:33 fvdl Exp $	*/
+/*	$NetBSD: kd.c,v 1.19.4.3 2001/10/11 00:01:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -221,7 +221,7 @@ static	int firstopen = 1;
 		/* Notify the input device that serves us */
 		struct cons_channel *cc = kd->kd_in;
 		if (cc != NULL &&
-		    (error = (*cc->cc_iopen)(cc)) != 0) {
+		    (error = (*cc->cc_iopen)(cc, devvp)) != 0) {
 			return (error);
 		}
 
@@ -266,7 +266,7 @@ kdclose(devvp, flag, mode, p)
 	ttyclose(tp);
 
 	if ((cc = kd->kd_in) != NULL)
-		(void)(*cc->cc_iclose)(cc);
+		(void)(*cc->cc_iclose)(cc, devvp);
 
 	return (0);
 }
@@ -499,15 +499,16 @@ kd_attach_input(cc)
  * Since the PROM does not notify us when data is available on the
  * input channel these functions periodically poll the PROM.
  */
-static int kd_rom_iopen __P((struct cons_channel *));
-static int kd_rom_iclose __P((struct cons_channel *));
+static int kd_rom_iopen __P((struct cons_channel *, struct vnode *));
+static int kd_rom_iclose __P((struct cons_channel *, struct vnode *));
 static void kd_rom_intr __P((void *));
 
 static struct cons_channel prom_cons_channel;
 
 int
-kd_rom_iopen(cc)
+kd_rom_iopen(cc, devvp)
 	struct cons_channel *cc;
+	struct vnode *devvp;
 {
 	/* Poll for ROM input 4 times per second */
 	callout_reset(&cc->cc_callout, hz / 4, kd_rom_intr, cc);
@@ -515,8 +516,9 @@ kd_rom_iopen(cc)
 }
 
 int
-kd_rom_iclose(cc)
+kd_rom_iclose(cc, devvp)
 	struct cons_channel *cc;
+	struct vnode *devvp;
 {
 
 	callout_stop(&cc->cc_callout);

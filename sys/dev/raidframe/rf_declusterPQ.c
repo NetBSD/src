@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_declusterPQ.c,v 1.5 2001/01/26 14:06:17 oster Exp $	*/
+/*	$NetBSD: rf_declusterPQ.c,v 1.5.6.1 2001/10/11 00:02:18 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,10 +34,10 @@
  *
  *--------------------------------------------------*/
 
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_archs.h"
-#include "rf_types.h"
 #include "rf_raid.h"
-#include "rf_configure.h"
 #include "rf_decluster.h"
 #include "rf_declusterPQ.h"
 #include "rf_debugMem.h"

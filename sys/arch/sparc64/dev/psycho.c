@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.34.2.1 2001/10/01 12:42:23 fvdl Exp $	*/
+/*	$NetBSD: psycho.c,v 1.34.2.2 2001/10/11 00:01:54 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -455,6 +455,17 @@ found:
 		 *
 		 * For the moment, 32KB should be more than enough.
 		 */
+		sc->sc_is = malloc(sizeof(struct iommu_state),
+			M_DEVBUF, M_NOWAIT);
+		if (sc->sc_is == NULL)
+			panic("psycho_attach: malloc iommu_state");
+
+
+		sc->sc_is->is_sb[0] = 0;
+		sc->sc_is->is_sb[1] = 0;
+		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") >= 0)
+			sc->sc_is->is_sb[0] = &pci_ctl->pci_strbuf;
+
 		psycho_iommu_init(sc, 2);
 
 		sc->sc_configtag = psycho_alloc_config_tag(sc->sc_psycho_this);
@@ -472,6 +483,10 @@ found:
 		sc->sc_is = osc->sc_is;
 		sc->sc_configtag = osc->sc_configtag;
 		sc->sc_configaddr = osc->sc_configaddr;
+
+		if (PROM_getproplen(sc->sc_node, "no-streaming-cache") >= 0)
+			sc->sc_is->is_sb[1] = &pci_ctl->pci_strbuf;
+		iommu_reset(sc->sc_is);
 	}
 
 	/*
@@ -685,25 +700,14 @@ psycho_iommu_init(sc, tsbsize)
 	int tsbsize;
 {
 	char *name;
-	struct iommu_state *is;
+	struct iommu_state *is = sc->sc_is;
 	u_int32_t iobase = -1;
 	int *vdma = NULL;
 	int nitem;
 
-	is = malloc(sizeof(struct iommu_state), M_DEVBUF, M_NOWAIT);
-	if (is == NULL)
-		panic("psycho_iommu_init: malloc is");
-
-	sc->sc_is = is;
-
 	/* punch in our copies */
 	is->is_bustag = sc->sc_bustag;
 	is->is_iommu = &sc->sc_regs->psy_iommu;
-
-	if (PROM_getproplen(sc->sc_node, "no-streaming-cache") < 0)
-		is->is_sb = 0;
-	else
-		is->is_sb = &sc->sc_regs->psy_iommu_strbuf;
 
 	/*
 	 * Separate the men from the boys.  Get the `virtual-dma'

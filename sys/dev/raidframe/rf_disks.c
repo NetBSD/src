@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.34.6.1 2001/09/07 04:45:28 thorpej Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.34.6.2 2001/10/11 00:02:18 fvdl Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,11 +66,11 @@
  * rf_disks.c -- code to perform operations on the actual disks
  ***************************************************************/
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_alloclist.h"
 #include "rf_utils.h"
-#include "rf_configure.h"
 #include "rf_general.h"
 #include "rf_options.h"
 #include "rf_kintf.h"
@@ -1018,10 +1018,6 @@ rf_add_hot_spare(raidPtr, sparePtr)
 	unsigned int bs;
 	int spare_number;
 
-#if 0
-	printf("Just in rf_add_hot_spare: %d\n",raidPtr->numSpare);
-	printf("Num col: %d\n",raidPtr->numCol);
-#endif
 	if (raidPtr->numSpare >= RF_MAXSPARE) {
 		RF_ERRORMSG1("Too many spares: %d\n", raidPtr->numSpare);
 		return(EINVAL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.7.4.1 2001/10/10 11:56:35 fvdl Exp $	*/
+/*	$NetBSD: pcons.c,v 1.7.4.2 2001/10/11 00:01:54 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -50,7 +50,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/bsd_openprom.h>
 #include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>

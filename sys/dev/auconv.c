@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.3 1999/11/01 18:12:19 augustss Exp $	*/
+/*	$NetBSD: auconv.c,v 1.3.12.1 2001/10/11 00:02:00 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,10 +39,7 @@
 #include <dev/auconv.h>
 
 void
-change_sign8(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign8(void *v, u_char *p, int cc)
 {
 	while (--cc >= 0) {
 		*p ^= 0x80;
@@ -51,10 +48,7 @@ change_sign8(v, p, cc)
 }
 
 void
-change_sign16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_le(void *v, u_char *p, int cc)
 {
 	while ((cc -= 2) >= 0) {
 		p[1] ^= 0x80;
@@ -63,10 +57,7 @@ change_sign16_le(v, p, cc)
 }
 
 void
-change_sign16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_be(void *v, u_char *p, int cc)
 {
 	while ((cc -= 2) >= 0) {
 		p[0] ^= 0x80;
@@ -75,10 +66,7 @@ change_sign16_be(v, p, cc)
 }
 
 void
-swap_bytes(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+swap_bytes(void *v, u_char *p, int cc)
 {
 	u_char t;
 
@@ -91,10 +79,7 @@ swap_bytes(v, p, cc)
 }
 
 void
-swap_bytes_change_sign16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+swap_bytes_change_sign16_le(void *v, u_char *p, int cc)
 {
 	u_char t;
 
@@ -107,10 +92,7 @@ swap_bytes_change_sign16_le(v, p, cc)
 }
 
 void
-swap_bytes_change_sign16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+swap_bytes_change_sign16_be(void *v, u_char *p, int cc)
 {
 	u_char t;
 
@@ -123,28 +105,19 @@ swap_bytes_change_sign16_be(v, p, cc)
 }
 
 void
-change_sign16_swap_bytes_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_swap_bytes_le(void *v, u_char *p, int cc)
 {
 	swap_bytes_change_sign16_be(v, p, cc);
 }
 
 void
-change_sign16_swap_bytes_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+change_sign16_swap_bytes_be(void *v, u_char *p, int cc)
 {
 	swap_bytes_change_sign16_le(v, p, cc);
 }
 
 void
-linear8_to_linear16_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear8_to_linear16_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -158,10 +131,7 @@ linear8_to_linear16_le(v, p, cc)
 }
 
 void
-linear8_to_linear16_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear8_to_linear16_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -175,10 +145,7 @@ linear8_to_linear16_be(v, p, cc)
 }
 
 void
-linear16_to_linear8_le(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear16_to_linear8_le(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 
@@ -189,10 +156,7 @@ linear16_to_linear8_le(v, p, cc)
 }
 
 void
-linear16_to_linear8_be(v, p, cc)
-	void *v;
-	u_char *p;
-	int cc;
+linear16_to_linear8_be(void *v, u_char *p, int cc)
 {
 	u_char *q = p;
 

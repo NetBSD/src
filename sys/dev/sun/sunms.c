@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.4.4.1 2001/10/10 11:57:02 fvdl Exp $	*/
+/*	$NetBSD: sunms.c,v 1.4.4.2 2001/10/11 00:02:27 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,6 +68,7 @@
 #include <sys/select.h>
 #include <sys/syslog.h>
 #include <sys/fcntl.h>
+#include <sys/stat.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
 
@@ -85,7 +86,8 @@ int	sunms_bps = MS_BPS;
 
 static int	sunms_match(struct device *, struct cfdata *, void *);
 static void	sunms_attach(struct device *, struct device *, void *);
-static int	sunmsiopen(struct device *, int mode);
+static int	sunmsiopen(struct device *, int mode, struct vnode *);
+static int	sunmsiclose(struct device *, int mode, struct vnode *);
 int	sunmsinput(int, struct tty *);
 
 struct cfattach ms_ca = {
@@ -133,7 +135,8 @@ sunms_attach(parent, self, aux)
 	tp->t_sc  = ms;
 	ms->ms_cs = (struct zs_chanstate *)tp;
         ms->ms_deviopen = sunmsiopen;
-        ms->ms_deviclose = NULL;
+        ms->ms_deviclose = sunmsiclose;
+	ms->ms_rdev = args->kmta_dev;
 
 	printf("\n");
 
@@ -152,10 +155,11 @@ sunms_attach(parent, self, aux)
  * But I'm putting it here until we have a generic internal open
  * mechanism.
  */
-int
-sunmsiopen(dev, flags)
+static int
+sunmsiopen(dev, flags, devvp)
 	struct device *dev;
 	int flags;
+	struct vnode *devvp;
 {
 	struct ms_softc *ms = (void *) dev;
 	struct tty *tp = (struct tty *)ms->ms_cs;
@@ -165,24 +169,47 @@ sunmsiopen(dev, flags)
 	int error;
 	dev_t rdev;
 
-	rdev = vdev_rdev(tp->t_devvp);
+	rdev = ms->ms_rdev;
 	maj = major(rdev);
 	if (p == NULL)
 		p = &proc0;
 
+	error = cdevvp(rdev, &ms->ms_devvp);
+	if (error != 0)
+		return error;
+
 	/* Open the lower device */
-	if ((error = (*cdevsw[maj].d_open)(tp->t_devvp, O_NONBLOCK|flags,
-					   0/* ignored? */, p)) != 0)
+	if ((error = (*cdevsw[maj].d_open)(ms->ms_devvp, O_NONBLOCK|flags,
+					   S_IFCHR, p)) != 0)
 		return (error);
 
 	/* Now configure it for the console. */
 	tp->t_ospeed = 0;
+	tp->t_devvp = ms->ms_devvp;
 	t.c_ispeed = sunms_bps;
 	t.c_ospeed = sunms_bps;
 	t.c_cflag =  CLOCAL;
 	(*tp->t_param)(tp, &t);
 
 	return (0);
+}
+
+static int
+sunmsiclose(dev, flags, devvp)
+	struct device *dev;
+	int flags;
+	struct vnode *devvp;
+{
+	struct ms_softc *ms = (void *) dev;
+	int error;
+	struct proc *p = curproc;
+
+	error = vn_lock(ms->ms_devvp, LK_EXCLUSIVE | LK_RETRY);
+	if (error != 0)
+		return error;
+	error = VOP_CLOSE(ms->ms_devvp, O_NONBLOCK|flags, p->p_ucred, p);
+	vput(ms->ms_devvp);
+	return error;
 }
 
 int

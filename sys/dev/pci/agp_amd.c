@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd.c,v 1.3.4.2 2001/10/01 12:45:50 fvdl Exp $	*/
+/*	$NetBSD: agp_amd.c,v 1.3.4.3 2001/10/11 00:02:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -99,6 +99,7 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 	u_int32_t entries = apsize >> AGP_PAGE_SHIFT;
 	struct agp_amd_gatt *gatt;
 	int i, npages;
+	caddr_t vdir;
 
 	gatt = malloc(sizeof(struct agp_amd_gatt), M_AGP, M_NOWAIT);
 	if (!gatt)
@@ -106,14 +107,16 @@ agp_amd_alloc_gatt(struct agp_softc *sc)
 
 	if (agp_alloc_dmamem(sc->as_dmat,
 	    AGP_PAGE_SIZE + entries * sizeof(u_int32_t), 0,
-	    &gatt->ag_dmamap, (caddr_t *)&gatt->ag_vdir, &gatt->ag_pdir,
+	    &gatt->ag_dmamap, &vdir, &gatt->ag_pdir,
 	    &gatt->ag_dmaseg, 1, &gatt->ag_nseg) != 0) {
 		printf("failed to allocate GATT\n");
+		free(gatt, M_AGP);
 		return NULL;
 	}
 
+	gatt->ag_vdir = (u_int32_t *)vdir;
 	gatt->ag_entries = entries;
-	gatt->ag_virtual = gatt->ag_vdir + AGP_PAGE_SIZE;
+	gatt->ag_virtual = (u_int32_t *)(vdir + AGP_PAGE_SIZE);
 	gatt->ag_physical = gatt->ag_pdir + AGP_PAGE_SIZE;
 	gatt->ag_size = AGP_PAGE_SIZE + entries * sizeof(u_int32_t);
 
@@ -154,6 +157,7 @@ agp_amd_match(const struct pci_attach_args *pa)
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 	case PCI_PRODUCT_AMD_SC751_SC:
+	case PCI_PRODUCT_AMD_SC762_NB:
 		return 1;
 	}
 

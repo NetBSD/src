@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylog.c,v 1.5 2000/01/07 03:41:01 oster Exp $	*/
+/*	$NetBSD: rf_paritylog.c,v 1.5.10.1 2001/10/11 00:02:21 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,8 @@
  * Append-only log for recording parity "update" and "overwrite" records
  */
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 #include "rf_mcpair.h"
 #include "rf_raid.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.5 2000/05/28 00:48:30 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.5.8.1 2001/10/11 00:02:24 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef _RF__RF_RECONSTRUCT_H_
 #define _RF__RF_RECONSTRUCT_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 #include <sys/time.h>
 #include "rf_reconmap.h"
 #include "rf_psstatus.h"

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2001/04/11 19:07:39 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.8.4.1 2001/10/11 00:02:00 fvdl Exp $
 
-SUBDIR=	ata dec hpc i2o ic isa ofw pci pckbc pcmcia sbus scsipi sun tc	\
-	usb vme wscons 
+SUBDIR=	ata dec hpc i2o ic isa ofw pci pckbc pcmcia raidframe \
+	sbus scsipi sun tc usb vme wscons 
 
 KDIR=	/sys/dev
 INCSDIR= /usr/include/dev

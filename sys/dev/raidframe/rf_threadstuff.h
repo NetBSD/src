@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.10 2001/01/27 20:42:21 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.10.6.1 2001/10/11 00:02:25 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,14 +43,13 @@
 #ifndef _RF__RF_THREADSTUFF_H_
 #define _RF__RF_THREADSTUFF_H_
 
-#include "rf_types.h"
 #include <sys/types.h>
 #include <sys/param.h>
-#ifdef _KERNEL
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#endif
+
+#include <dev/raidframe/raidframevar.h>
 
 #define rf_create_managed_mutex(a,b) _rf_create_managed_mutex(a,b,__FILE__,__LINE__)
 #define rf_create_managed_cond(a,b) _rf_create_managed_cond(a,b,__FILE__,__LINE__)

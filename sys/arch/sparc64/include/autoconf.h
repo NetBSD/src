@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10.2.1 2001/10/01 12:42:27 fvdl Exp $ */
+/*	$NetBSD: autoconf.h,v 1.10.2.2 2001/10/11 00:01:55 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -175,6 +175,7 @@ int	nextsibling __P((int));
 void	callrom __P((void));
 struct device *getdevunit __P((char *, int));
 void	*findzs __P((int));
+void	rominterpret __P((char *));
 int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
 int	findnode __P((int, const char *));

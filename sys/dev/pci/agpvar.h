@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.3.4.2 2001/10/01 12:45:52 fvdl Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.3.4.3 2001/10/11 00:02:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -56,7 +56,6 @@ struct agp_info {
 	u_int32_t	ai_mode;
 	bus_addr_t	ai_aperture_base;
 	bus_size_t	ai_aperture_size;
-	void *		ai_aperture_vaddr;
 	vsize_t		ai_memory_allowed;
 	vsize_t		ai_memory_used;
 	u_int32_t	ai_devid;
@@ -132,10 +131,10 @@ struct agp_methods {
 struct agp_softc {
 	struct device		as_dev;
 	bus_space_tag_t		as_apt;
-	bus_space_handle_t	as_aph;
 	int			as_capoff;
 	bus_addr_t		as_apaddr;
 	bus_size_t		as_apsize;
+	int			as_apflags;
 	bus_dma_tag_t		as_dmat;
 	u_int32_t		as_maxmem;	/* allocation upper bound */
 	u_int32_t		as_allocated;	/* amount allocated */

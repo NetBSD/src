@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.60.4.1 2001/10/01 12:46:55 fvdl Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.60.4.2 2001/10/11 00:02:31 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -69,6 +69,11 @@ TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 static struct pool phpool;
+
+#ifdef POOL_SUBPAGE
+/* Pool of subpages for use by normal pools. */
+static struct pool psppool;
+#endif
 
 /* # of seconds to retain page after last use */
 int pool_inactive_time = 10;
@@ -153,6 +158,10 @@ static void	pool_prime_page(struct pool *, caddr_t,
 		    struct pool_item_header *);
 static void	*pool_page_alloc(unsigned long, int, int);
 static void	pool_page_free(void *, unsigned long, int);
+#ifdef POOL_SUBPAGE
+static void	*pool_subpage_alloc(unsigned long, int, int);
+static void	pool_subpage_free(void *, unsigned long, int);
+#endif
 
 static void pool_print1(struct pool *, const char *,
 	void (*)(const char *, ...));
@@ -381,13 +390,24 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		panic("pool_init: page size invalid (%lx)\n", (u_long)pagesz);
 
 	if (alloc == NULL && release == NULL) {
+#ifdef POOL_SUBPAGE
+		alloc = pool_subpage_alloc;
+		release = pool_subpage_free;
+		pagesz = POOL_SUBPAGE;
+#else
 		alloc = pool_page_alloc;
 		release = pool_page_free;
 		pagesz = PAGE_SIZE;	/* Rounds to PAGE_SIZE anyhow. */
+#endif
 	} else if ((alloc != NULL && release != NULL) == 0) {
 		/* If you specifiy one, must specify both. */
 		panic("pool_init: must specify alloc and release together");
 	}
+#ifdef POOL_SUBPAGE
+	else if (alloc == pool_page_alloc_nointr &&
+	    release == pool_page_free_nointr)
+		pagesz = POOL_SUBPAGE;
+#endif
 			
 	if (pagesz == 0)
 		pagesz = PAGE_SIZE;
@@ -503,8 +523,16 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * XXX LOCKING.
 	 */
 	if (phpool.pr_size == 0) {
+#ifdef POOL_SUBPAGE
+		pool_init(&phpool, sizeof(struct pool_item_header), 0, 0, 0,
+		    "phpool", PAGE_SIZE, pool_page_alloc, pool_page_free, 0);
+		pool_init(&psppool, POOL_SUBPAGE, POOL_SUBPAGE, 0,
+		    PR_RECURSIVE, "psppool", PAGE_SIZE,
+		    pool_page_alloc, pool_page_free, 0);
+#else
 		pool_init(&phpool, sizeof(struct pool_item_header), 0, 0,
 		    0, "phpool", 0, 0, 0, 0);
+#endif
 		pool_init(&pcgpool, sizeof(struct pool_cache_group), 0, 0,
 		    0, "pcgpool", 0, 0, 0, 0);
 	}
@@ -1229,6 +1257,41 @@ pool_page_free(void *v, unsigned long sz, int mtype)
 	uvm_km_free_poolpage((vaddr_t)v);
 }
 
+#ifdef POOL_SUBPAGE
+/*
+ * Sub-page allocator, for machines with large hardware pages.
+ */
+static void *
+pool_subpage_alloc(unsigned long sz, int flags, int mtype)
+{
+
+	return pool_get(&psppool, flags);
+}
+
+static void
+pool_subpage_free(void *v, unsigned long sz, int mtype)
+{
+
+	pool_put(&psppool, v);
+}
+#endif
+
+#ifdef POOL_SUBPAGE
+/* We don't provide a real nointr allocator.  Maybe later. */
+void *
+pool_page_alloc_nointr(unsigned long sz, int flags, int mtype)
+{
+
+	return pool_subpage_alloc(sz, flags, mtype);
+}
+
+void
+pool_page_free_nointr(void *v, unsigned long sz, int mtype)
+{
+
+	pool_subpage_free(v, sz, mtype);
+}
+#else
 /*
  * Alternate pool page allocator for pools that know they will
  * never be accessed in interrupt context.
@@ -1248,6 +1311,7 @@ pool_page_free_nointr(void *v, unsigned long sz, int mtype)
 
 	uvm_km_free_poolpage1(kernel_map, (vaddr_t)v);
 }
+#endif
 
 
 /*

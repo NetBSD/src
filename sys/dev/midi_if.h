@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.9 2000/07/07 01:11:12 wrstuden Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.9.6.1 2001/10/11 00:02:01 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,23 +49,23 @@ struct midi_info {
 struct midi_softc;
 
 struct midi_hw_if {
-	int	(*open)__P((void *, int, 	/* open hardware */
-			    void (*)__P((void *, int)), /* input callback */
-			    void (*)__P((void *)), /* output callback */
-			    void *));
-	void	(*close)__P((void *));		/* close hardware */
-	int	(*output)__P((void *, int));	/* output a byte */
-	void	(*getinfo)__P((void *, struct midi_info *));
-	int	(*ioctl)__P((void *, u_long, caddr_t, int, struct proc *));
+	int	(*open)(void *, int, 	/* open hardware */
+			void (*)(void *, int), /* input callback */
+			void (*)(void *), /* output callback */
+			void *);
+	void	(*close)(void *);		/* close hardware */
+	int	(*output)(void *, int);	/* output a byte */
+	void	(*getinfo)(void *, struct midi_info *);
+	int	(*ioctl)(void *, u_long, caddr_t, int, struct proc *);
 };
 
-void	midi_attach __P((struct midi_softc *, struct device *));
-struct device *midi_attach_mi __P((struct midi_hw_if *, void *, 
-				   struct device *));
+void	midi_attach(struct midi_softc *, struct device *);
+struct device *midi_attach_mi(struct midi_hw_if *, void *, 
+				   struct device *);
 
-int	midi_unit_count __P((void));
-void	midi_getinfo __P((dev_t, struct midi_info *));
-int	midi_writebytes __P((int, u_char *, int));
+int	midi_unit_count(void);
+void	midi_getinfo(dev_t, struct midi_info *);
+int	midi_writebytes(int, u_char *, int);
 
 #if !defined(IPL_AUDIO)
 #define splaudio splbio		/* XXX */

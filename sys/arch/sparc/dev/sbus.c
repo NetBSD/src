@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.39.2.1 2001/10/01 12:41:59 fvdl Exp $ */
+/*	$NetBSD: sbus.c,v 1.39.2.2 2001/10/11 00:01:51 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -709,8 +709,10 @@ sbus_get_intr(sc, node, ipp, np)
 		/* Change format to an `struct sbus_intr' array */
 		struct sbus_intr *ip;
 		ip = malloc(*np * sizeof(struct sbus_intr), M_DEVBUF, M_NOWAIT);
-		if (ip == NULL)
+		if (ip == NULL) {
+			free(ipl, M_DEVBUF);
 			return (ENOMEM);
+		}
 		for (n = 0; n < *np; n++) {
 			ip[n].sbi_pri = ipl[n];
 			ip[n].sbi_vec = 0;

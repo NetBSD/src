@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77.4.3 2001/10/10 11:56:53 fvdl Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.4.4 2001/10/11 00:02:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -157,6 +157,7 @@ struct zstty_softc {
 	struct	device zst_dev;		/* required first: base device */
 	struct  tty *zst_tty;
 	struct	zs_chanstate *zst_cs;
+	dev_t	zst_rdev;
 
 	struct callout zst_diag_ch;
 
@@ -350,6 +351,7 @@ zstty_attach(parent, self, aux)
 	tty_attach(tp);
 
 	zst->zst_tty = tp;
+	zst->zst_rdev = dev;
 	zst->zst_rbuf = malloc(zstty_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	zst->zst_ebuf = zst->zst_rbuf + (zstty_rbuf_size << 1);
 	/* Disable the high water mark. */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.16 2001/07/19 01:46:15 oster Exp $
+#	$NetBSD: Makefile.mips,v 1.16.2.1 2001/10/11 00:01:47 fvdl Exp $
 
 # Makefile for NetBSD
 #
@@ -46,7 +46,8 @@ MIPS=		$S/arch/mips
 
 HAVE_EGCS!=	${CC} --version | egrep "^(2\.[89]|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT -D${TARGET_MACHINE}
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT \
+		-D${TARGET_MACHINE}
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
 		-Wpointer-arith
 # XXX Delete -Wuninitialized for now, since the compiler doesn't
@@ -56,26 +57,20 @@ CWARNFLAGS+=	-Wno-uninitialized
 CWARNFLAGS+=	-Wno-main
 .endif
 GP?=		${DEFGP}
-CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
+CFLAGS=		${ENDIAN} ${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP}
+AFLAGS=		${ENDIAN} -x assembler-with-cpp -traditional-cpp -D_LOCORE
+LD+=		${ENDIAN}
+KERNLDSCRIPT?=	${MIPS}/conf/kern.ldscript
+LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP} -T ${KERNLDSCRIPT}
 .if (${ENDIAN} == "-EB")
-LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.be
-CFLAGS+=	-EB
-AFLAGS+=	-EB
-LD+=		-EB
+LINKFLAGS+=	--oformat elf32-bigmips
 .else
-LINKFLAGS+=	-T ${MIPS}/conf/kern.ldscript.le
-CFLAGS+=	-EL
-AFLAGS+=	-EL
-LD+=		-EL
+LINKFLAGS+=	--oformat elf32-littlemips
 .endif
 STRIPFLAGS=	-g -X -x
 
-.if exists(${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc)
-.include "${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc"
-.endif
+.-include "${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc"
 
 %INCLUDES
 

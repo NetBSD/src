@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.6 2001/07/30 20:12:10 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.6.6.1 2001/10/11 00:02:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -516,8 +516,8 @@ stge_attach(struct device *parent, struct device *self, void *aux)
 	 * such chips to 1.
 	 */
 	for (i = 0; i < STGE_NTXDESC; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    STGE_NTXFRAGS, MCLBYTES, 0, 0,
+		if ((error = bus_dmamap_create(sc->sc_dmat,
+		    ETHER_MAX_LEN_JUMBO, STGE_NTXFRAGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].ds_dmamap)) != 0) {
 			printf("%s: unable to create tx DMA map %d, "
 			    "error = %d\n", sc->sc_dev.dv_xname, i, error);
@@ -1560,8 +1560,8 @@ stge_init(struct ifnet *ifp)
 	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
 	 * empty again.
 	 */
-	bus_space_write_4(st, sh, STGE_FlowOnTresh, 29696 / 16);
-	bus_space_write_4(st, sh, STGE_FlowOffThresh, 0);
+	bus_space_write_2(st, sh, STGE_FlowOnTresh, 29696 / 16);
+	bus_space_write_2(st, sh, STGE_FlowOffThresh, 0);
 
 	/*
 	 * Set the maximum frame size.

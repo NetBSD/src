@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.11.2.1 2001/10/01 12:46:55 fvdl Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.11.2.2 2001/10/11 00:02:32 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -1251,7 +1251,7 @@ pipe_write(fp, offset, uio, cred, flags)
 		if ((space < uio->uio_resid) && (uio->uio_resid <= PIPE_BUF))
 			space = 0;
 
-		if (space > 0 && (wpipe->pipe_buffer.cnt < PIPE_SIZE)) {
+		if (space > 0) {
 			int size;	/* Transfer size */
 			int segsize;	/* first segment to transfer */
 

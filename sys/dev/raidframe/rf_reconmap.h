@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.h,v 1.3 1999/02/05 00:06:16 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.h,v 1.3.24.1 2001/10/11 00:02:24 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,8 @@
 #ifndef _RF__RF_RECONMAP_H_
 #define _RF__RF_RECONMAP_H_
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_threadstuff.h"
 
 /*

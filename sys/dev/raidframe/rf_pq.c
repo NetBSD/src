@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pq.c,v 1.9 2001/07/18 06:45:34 thorpej Exp $	*/
+/*	$NetBSD: rf_pq.c,v 1.9.2.1 2001/10/11 00:02:23 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,8 @@
 
 #if (RF_INCLUDE_DECL_PQ > 0) || (RF_INCLUDE_RAID6 > 0) || (RF_INCLUDE_EVENODD > 0)
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
+
 #include "rf_raid.h"
 #include "rf_dag.h"
 #include "rf_dagffrd.h"

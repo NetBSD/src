@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.65.2.1 2001/10/01 12:46:29 fvdl Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.65.2.2 2001/10/11 00:02:28 fvdl Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -419,6 +419,7 @@ aue_read_mac(struct aue_softc *sc, u_char *dest)
 Static void
 aue_lock_mii(struct aue_softc *sc)
 {
+	sc->aue_refcnt++;
 	lockmgr(&sc->aue_mii_lock, LK_EXCLUSIVE, NULL);
 }
 
@@ -426,6 +427,8 @@ Static void
 aue_unlock_mii(struct aue_softc *sc)
 {
 	lockmgr(&sc->aue_mii_lock, LK_RELEASE, NULL);
+	if (--sc->aue_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->aue_dev));
 }
 
 Static int
@@ -892,6 +895,11 @@ USB_DETACH(aue)
 #endif
 
 	sc->aue_attached = 0;
+
+	if (--sc->aue_refcnt >= 0) {
+		/* Wait for processes to go away. */
+		usb_detach_wait(USBDEV(sc->aue_dev));
+	}
 	splx(s);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev, 
@@ -1243,7 +1251,7 @@ aue_tick_task(void *xsc)
 
 	mii_tick(mii);
 	if (!sc->aue_link) {
-		mii_pollstat(mii);
+		mii_pollstat(mii); /* XXX FreeBSD has removed this call */
 		if (mii->mii_media_status & IFM_ACTIVE &&
 		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 			DPRINTFN(2,("%s: %s: got link\n",

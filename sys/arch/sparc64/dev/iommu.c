@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.37.2.1 2001/10/01 12:42:21 fvdl Exp $	*/
+/*	$NetBSD: iommu.c,v 1.37.2.2 2001/10/11 00:01:53 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -142,8 +142,19 @@ int iommudebug = 0x0;
 #define DPRINTF(l, s)
 #endif
 
-#define iommu_strbuf_flush(i,v) bus_space_write_8((i)->is_bustag, \
-	(bus_space_handle_t)(u_long)&(i)->is_sb->strbuf_pgflush, 0, (v))
+#define iommu_strbuf_flush(i,v) do {				\
+	if ((i)->is_sb[0])					\
+		bus_space_write_8((i)->is_bustag,		\
+			(bus_space_handle_t)(u_long)		\
+			&(i)->is_sb[0]->strbuf_pgflush,		\
+			0, (v));				\
+	if ((i)->is_sb[1])					\
+		bus_space_write_8((i)->is_bustag,		\
+			(bus_space_handle_t)(u_long)		\
+			&(i)->is_sb[1]->strbuf_pgflush,		\
+			0, (v));				\
+	} while (0)
+
 static	int iommu_strbuf_flush_done __P((struct iommu_state *));
 
 /*
@@ -231,8 +242,8 @@ iommu_init(name, is, tsbsize, iovabase)
 	/*
 	 * Initialize streaming buffer, if it is there.
 	 */
-	if (is->is_sb)
-		(void)pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush,
+	if (is->is_sb[0] || is->is_sb[1])
+		(void)pmap_extract(pmap_kernel(), (vaddr_t)&is->is_flush[0],
 		    (paddr_t *)&is->is_flushpa);
 
 	/*
@@ -263,27 +274,40 @@ iommu_reset(is)
 
 	/* Need to do 64-bit stores */
 	bus_space_write_8(is->is_bustag, 
-			  (bus_space_handle_t)(u_long)&is->is_iommu->iommu_tsb, 
-			  0, is->is_ptsb);
+		(bus_space_handle_t)(u_long)&is->is_iommu->iommu_tsb,
+		0, is->is_ptsb);
 	/* Enable IOMMU in diagnostic mode */
 	bus_space_write_8(is->is_bustag, 
-			  (bus_space_handle_t)(u_long)&is->is_iommu->iommu_cr, 0, 
-			  is->is_cr|IOMMUCR_DE);
+		(bus_space_handle_t)(u_long)&is->is_iommu->iommu_cr,
+		0, is->is_cr|IOMMUCR_DE);
 
+	if (is->is_sb[0]) {
 
-	if (!is->is_sb)
-		return;
+		/* Enable diagnostics mode? */
+		bus_space_write_8(is->is_bustag,
+			(bus_space_handle_t)(u_long)&is->is_sb[0]->strbuf_ctl,
+			0, STRBUF_EN);
 
-	/* Enable diagnostics mode? */
-	bus_space_write_8(is->is_bustag, 
-			  (bus_space_handle_t)(u_long)&is->is_sb->strbuf_ctl,
-			  0, STRBUF_EN);
+		/* No streaming buffers? Disable them */
+		if (bus_space_read_8(is->is_bustag,
+			(bus_space_handle_t)(u_long)&is->is_sb[0]->strbuf_ctl,
+			0) == 0)
+		is->is_sb[0] = 0;
+	}
 
-	/* No streaming buffers? Disable them */
-	if (bus_space_read_8(is->is_bustag,
-			     (bus_space_handle_t)(u_long)&is->is_sb->strbuf_ctl, 
-			     0) == 0)
-		is->is_sb = 0;
+	if (is->is_sb[1]) {
+
+		/* Enable diagnostics mode? */
+		bus_space_write_8(is->is_bustag,
+			(bus_space_handle_t)(u_long)&is->is_sb[1]->strbuf_ctl,
+			0, STRBUF_EN);
+
+		/* No streaming buffers? Disable them */
+		if (bus_space_read_8(is->is_bustag,
+			(bus_space_handle_t)(u_long)&is->is_sb[1]->strbuf_ctl,
+			0) == 0)
+		is->is_sb[1] = 0;
+	}
 }
 
 /*
@@ -307,7 +331,7 @@ iommu_enter(is, va, pa, flags)
 			(flags&BUS_DMA_STREAMING));
 	
 	/* Is the streamcache flush really needed? */
-	if (is->is_sb) {
+	if (is->is_sb[0] || is->is_sb[1]) {
 		iommu_strbuf_flush(is, va);
 		iommu_strbuf_flush_done(is);
 	}
@@ -372,7 +396,7 @@ iommu_remove(is, va, len)
 	while (len > 0) {
 		DPRINTF(IDB_IOMMU, ("iommu_remove: clearing TSB slot %d for va %p size %lx\n", 
 		    (int)IOTSBSLOT(va,is->is_tsbsize), (void *)(u_long)va, (u_long)len));
-		if (is->is_sb) {
+		if (is->is_sb[0] || is->is_sb[0]) {
 			DPRINTF(IDB_IOMMU, ("iommu_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
 			       (void *)(u_long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
 			       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
@@ -417,7 +441,7 @@ iommu_strbuf_flush_done(is)
 	} \
 }
 
-	if (!is->is_sb)
+	if (!is->is_sb[0] && !is->is_sb[1])
 		return (0);
 				
 	/*
@@ -433,38 +457,51 @@ iommu_strbuf_flush_done(is)
 	 * went wrong.
 	 */
 
-	is->is_flush = 0;
-	membar_sync();	/* #StoreStore is prolly enuf. */
-	bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
-			  &is->is_sb->strbuf_flushsync, 0, is->is_flushpa);
-	membar_sync();	/* Prolly not needed at all. */
+	is->is_flush[0] = 1;
+	is->is_flush[1] = 1;
+	if (is->is_sb[0]) {
+		is->is_flush[0] = 0;
+		bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
+			&is->is_sb[0]->strbuf_flushsync, 0, is->is_flushpa);
+	}
+	if (is->is_sb[1]) {
+		is->is_flush[0] = 1;
+		bus_space_write_8(is->is_bustag, (bus_space_handle_t)(u_long)
+			&is->is_sb[1]->strbuf_flushsync, 0, is->is_flushpa + 8);
+	}
 
 	microtime(&flushtimeout); 
 	cur = flushtimeout;
 	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
 	
-	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
-		       (long)is->is_flush, (long)&is->is_flush, 
-		       (long)is->is_flushpa, cur.tv_sec, cur.tv_usec, 
-		       flushtimeout.tv_sec, flushtimeout.tv_usec));
+	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flush = %lx,%lx "
+		"at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n",
+		(long)is->is_flush[0], (long)is->is_flush[1],
+		(long)&is->is_flush[0], (long)is->is_flushpa, 
+		cur.tv_sec, cur.tv_usec,
+		flushtimeout.tv_sec, flushtimeout.tv_usec));
+
 	/* Bypass non-coherent D$ */
-	while (!ldxa(is->is_flushpa, ASI_PHYS_CACHED) && 
-	       ((cur.tv_sec <= flushtimeout.tv_sec) && 
-		(cur.tv_usec <= flushtimeout.tv_usec)))
+	while ((!ldxa(is->is_flushpa, ASI_PHYS_CACHED) ||
+		!ldxa(is->is_flushpa + 8, ASI_PHYS_CACHED)) &&
+		((cur.tv_sec <= flushtimeout.tv_sec) &&
+			(cur.tv_usec <= flushtimeout.tv_usec)))
 		microtime(&cur);
 
 #ifdef DIAGNOSTIC
-	if (!ldxa(is->is_flushpa, ASI_PHYS_CACHED)) {
-		printf("iommu_strbuf_flush_done: flush timeout %p at %p\n",
-		    (void *)(u_long)is->is_flush, 
-		    (void *)(u_long)is->is_flushpa); /* panic? */
+	if ((!ldxa(is->is_flushpa, ASI_PHYS_CACHED) ||
+		!ldxa(is->is_flushpa + 8, ASI_PHYS_CACHED)) {
+		printf("iommu_strbuf_flush_done: flush timeout %p,%p at %p\n",
+			(void *)(u_long)is->is_flush[0],
+			(void *)(u_long)is->is_flush[1],
+			(void *)(u_long)is->is_flushpa); /* panic? */
 #ifdef DDB
 		Debugger();
 #endif
 	}
 #endif
 	DPRINTF(IDB_IOMMU, ("iommu_strbuf_flush_done: flushed\n"));
-	return (is->is_flush);
+	return (is->is_flush[0] && is->is_flush[1]);
 }
 
 /*
@@ -572,9 +609,9 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 			/* How can this fail?  And if it does what can we do? */
 			err = extent_free(is->is_dvmamap,
 				dvmaddr, sgsize, EX_NOWAIT);
-			splx(s);
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
+			splx(s);
 			return (E2BIG);
 		}
 		sgstart = roundup(sgstart, boundary);
@@ -654,13 +691,13 @@ iommu_dvmamap_unload(t, is, map)
 	s = splhigh();
 	error = extent_free(is->is_dvmamap, map->_dm_dvmastart, 
 		map->_dm_dvmasize, EX_NOWAIT);
+	map->_dm_dvmastart = 0;
+	map->_dm_dvmasize = 0;
 	splx(s);
 	if (error != 0)
 		printf("warning: %qd of DVMA space lost\n", (long long)sgsize);
 
 	/* Clear the map */
-	map->_dm_dvmastart = 0;
-	map->_dm_dvmasize = 0;
 }
 
 
@@ -879,9 +916,9 @@ fail:
 			/* How can this fail?  And if it does what can we do? */
 			err = extent_free(is->is_dvmamap,
 				dvmaddr, sgsize, EX_NOWAIT);
-			splx(s);
 			map->_dm_dvmastart = 0;
 			map->_dm_dvmasize = 0;
+			splx(s);
 			return (E2BIG);
 		}
 		sgstart = roundup(sgstart, boundary);
@@ -938,7 +975,7 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_POSTREAD\n", (void *)(u_long)va, (u_long)len));
 		/* if we have a streaming buffer, flush it here first */
-		if (is->is_sb)
+		if (is->is_sb[0] || is->is_sb[1])
 			while (len > 0) {
 				DPRINTF(IDB_BUSDMA,
 				    ("iommu_dvmamap_sync: flushing va %p, %lu "
@@ -957,7 +994,7 @@ iommu_dvmamap_sync(t, is, map, offset, len, ops)
 		    ("iommu_dvmamap_sync: syncing va %p len %lu "
 		     "BUS_DMASYNC_PREWRITE\n", (void *)(u_long)va, (u_long)len));
 		/* if we have a streaming buffer, flush it here first */
-		if (is->is_sb)
+		if (is->is_sb[0] || is->is_sb[1])
 			while (len > 0) {
 				DPRINTF(IDB_BUSDMA,
 				    ("iommu_dvmamap_sync: flushing va %p, %lu "

@@ -1,4 +1,4 @@
-/* $NetBSD: irongate.c,v 1.3.6.1 2001/10/01 12:37:04 fvdl Exp $ */
+/* $NetBSD: irongate.c,v 1.3.6.2 2001/10/11 00:01:41 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.3.6.1 2001/10/01 12:37:04 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate.c,v 1.3.6.2 2001/10/11 00:01:41 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,6 +194,7 @@ irongate_attach(struct device *parent, struct device *self, void *aux)
 		apa.apa_busname = "agp";
 		apa.apa_pci_args.pa_iot = pba.pba_iot;
 		apa.apa_pci_args.pa_memt = pba.pba_memt;
+		apa.apa_pci_args.pa_dmat = pba.pba_dmat;
 		apa.apa_pci_args.pa_pc = pba.pba_pc;
 		apa.apa_pci_args.pa_bus = pba.pba_bus;
 		apa.apa_pci_args.pa_device = IRONGATE_PCIHOST_DEV;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.1.4.2 2001/10/01 12:45:35 fvdl Exp $ */
+/*	$NetBSD: gem.c,v 1.1.4.3 2001/10/11 00:02:03 fvdl Exp $ */
 
 /*
  * 
@@ -32,9 +32,6 @@
 /*
  * Driver for Sun GEM ethernet controllers.
  */
-
-#define	GEM_DEBUG
-int gem_opdebug = 0;
 
 #include "bpfilter.h"
 
@@ -224,7 +221,6 @@ gem_config(sc)
 	 * before this point releases all resources that may have been
 	 * allocated.
 	 */
-	sc->sc_flags |= GEMF_ATTACHED;
 
 	/* Announce ourselves. */
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
@@ -447,7 +443,6 @@ gem_stop(struct ifnet *ifp, int disable)
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	struct gem_txsoft *txs;
 
-if (gem_opdebug) printf("in stop %d\n", disable);
 	DPRINTF(sc, ("%s: gem_stop\n", sc->sc_dev.dv_xname));
 
 	callout_stop(&sc->sc_tick_ch);
@@ -727,7 +722,6 @@ gem_init(struct ifnet *ifp)
 
 	/* step 1 & 2. Reset the Ethernet Channel */
 	gem_stop(ifp, 0);
-if (gem_opdebug) printf("in init\n");
 	gem_reset(sc);
 	DPRINTF(sc, ("%s: gem_init: restarting\n", sc->sc_dev.dv_xname));
 
@@ -957,9 +951,6 @@ gem_start(ifp)
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
 
-if (gem_opdebug) printf("in start free %x next %x kick %x\n", 
-sc->sc_txfree, sc->sc_txnext, 	
-bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
@@ -1075,7 +1066,7 @@ bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 			 * to do it.
 			 */
 			sc->sc_txdescs[nexttx].gd_addr =
-			    htole64(dmamap->dm_segs[seg].ds_addr);
+			    GEM_DMA_WRITE(sc, dmamap->dm_segs[seg].ds_addr);
 			flags = dmamap->dm_segs[seg].ds_len & GEM_TD_BUFSIZE;
 			if (nexttx == firsttx) {
 				flags |= GEM_TD_START_OF_PACKET;
@@ -1084,7 +1075,7 @@ bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 				flags |= GEM_TD_END_OF_PACKET;
 			}
 			sc->sc_txdescs[nexttx].gd_flags =
-				htole64(flags);
+				GEM_DMA_WRITE(sc, flags);
 			lasttx = nexttx;
 		}
 
@@ -1094,9 +1085,9 @@ bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 			for (seg = sc->sc_txnext;; seg = GEM_NEXTTX(seg)) {
 				printf("descriptor %d:\t", seg);
 				printf("gd_flags:   0x%016llx\t", (long long)
-					le64toh(sc->sc_txdescs[seg].gd_flags));
+					GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_flags));
 				printf("gd_addr: 0x%016llx\n", (long long)
-					le64toh(sc->sc_txdescs[seg].gd_addr));
+					GEM_DMA_READ(sc, sc->sc_txdescs[seg].gd_addr));
 				if (seg == lasttx)
 					break;
 			}
@@ -1143,43 +1134,14 @@ bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 	if (sc->sc_txfree != ofree) {
 		DPRINTF(sc, ("%s: packets enqueued, IC on %d, OWN on %d\n",
 		    sc->sc_dev.dv_xname, lasttx, firsttx));
-#if 0
-		/*
-		 * Cause a transmit interrupt to happen on the
-		 * last packet we enqueued.
-		 */
-		sc->sc_txdescs[lasttx].gd_flags |= htole64(GEM_TD_INTERRUPT_ME);
-		GEM_CDTXSYNC(sc, lasttx, 1,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-#endif
 		/*
 		 * The entire packet chain is set up.  
 		 * Kick the transmitter.
 		 */
 		DPRINTF(sc, ("%s: gem_start: kicking tx %d\n",
 			sc->sc_dev.dv_xname, nexttx));
-if (gem_opdebug) {
-	int i;
-	int64_t pa;
-	i = bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK);
-	printf("GEM_TX_KICK %x GEM_TX_DATA_PTR %llx GEM_TX_RING_PTR %llx\n",
-		i, 
-		(long long)bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_DATA_PTR),
-		(long long)bus_space_read_8(sc->sc_bustag, sc->sc_h, GEM_TX_RING_PTR));
-	printf("descriptor %d: ", (i = lasttx));
-	printf("gd_flags: 0x%016llx\t", (long long)
-		le64toh(sc->sc_txdescs[i].gd_flags));
-		pa = le64toh(sc->sc_txdescs[i].gd_addr);
-	printf("gd_addr: 0x%016llx\n", (long long) pa);
-	printf("GEM_TX_CONFIG %x GEM_MAC_XIF_CONFIG %x GEM_MAC_TX_CONFIG %x\n", 
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_CONFIG),
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_MAC_XIF_CONFIG),
-		bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_MAC_TX_CONFIG));
-}
 		bus_space_write_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK,
 			sc->sc_txnext);
-if (gem_opdebug) printf("gem_start: txkick %x\n", 
-	bus_space_read_4(sc->sc_bustag, sc->sc_h, GEM_TX_KICK));
 
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1202,8 +1164,7 @@ gem_tint(sc)
 	int txlast;
 
 
-	DPRINTF(sc, ("%s: gem_tint: sc_flags 0x%08x\n",
-	    sc->sc_dev.dv_xname, sc->sc_flags));
+	DPRINTF(sc, ("%s: gem_tint\n", sc->sc_dev.dv_xname));
 
 	/*
 	 * Unload collision counters
@@ -1238,9 +1199,9 @@ gem_tint(sc)
 			for (i = txs->txs_firstdesc;; i = GEM_NEXTTX(i)) {
 				printf("descriptor %d: ", i);
 				printf("gd_flags: 0x%016llx\t", (long long)
-					le64toh(sc->sc_txdescs[i].gd_flags));
+					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_flags));
 				printf("gd_addr: 0x%016llx\n", (long long)
-					le64toh(sc->sc_txdescs[i].gd_addr));
+					GEM_DMA_READ(sc, sc->sc_txdescs[i].gd_addr));
 				if (i == txs->txs_lastdesc)
 					break;
 			}
@@ -1326,8 +1287,7 @@ gem_rint(sc)
 	u_int64_t rxstat;
 	int i, len;
 
-	DPRINTF(sc, ("%s: gem_rint: sc_flags 0x%08x\n",
-		sc->sc_dev.dv_xname, sc->sc_flags));
+	DPRINTF(sc, ("%s: gem_rint\n", sc->sc_dev.dv_xname));
 	/*
 	 * XXXX Read the lastrx only once at the top for speed.
 	 */
@@ -1340,7 +1300,7 @@ gem_rint(sc)
 		GEM_CDRXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 
-		rxstat = le64toh(sc->sc_rxdescs[i].gd_flags);
+		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
 			printf("gem_rint: completed descriptor "
@@ -1364,9 +1324,9 @@ gem_rint(sc)
 		if (ifp->if_flags & IFF_DEBUG) {
 			printf("    rxsoft %p descriptor %d: ", rxs, i);
 			printf("gd_flags: 0x%016llx\t", (long long)
-				le64toh(sc->sc_rxdescs[i].gd_flags));
+				GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags));
 			printf("gd_addr: 0x%016llx\n", (long long)
-				le64toh(sc->sc_rxdescs[i].gd_addr));
+				GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_addr));
 		}
 #endif
 
@@ -1376,12 +1336,6 @@ gem_rint(sc)
 		 */
 		len = GEM_RD_BUFLEN(rxstat);
 
-		/*
-		 * We align the mbuf data in gem_add_rxbuf() so
-		 * we can use __NO_STRICT_ALIGNMENT here
-		 */
-#define __NO_STRICT_ALIGNMENT
-#ifdef __NO_STRICT_ALIGNMENT
 		/*
 		 * Allocate a new mbuf cluster.  If that fails, we are
 		 * out of memory, and must drop the packet and recycle
@@ -1396,42 +1350,6 @@ gem_rint(sc)
 			continue;
 		}
 		m->m_data += 2; /* We're already off by two */
-#else
-		/*
-		 * The Gem's receive buffers must be 4-byte aligned.
-		 * But this means that the data after the Ethernet header
-		 * is misaligned.  We must allocate a new buffer and
-		 * copy the data, shifted forward 2 bytes.
-		 */
-		MGETHDR(m, M_DONTWAIT, MT_DATA);
-		if (m == NULL) {
- dropit:
-			ifp->if_ierrors++;
-			GEM_INIT_RXDESC(sc, i);
-			bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
-			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-			continue;
-		}
-		if (len > (MHLEN - 2)) {
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				m_freem(m);
-				goto dropit;
-			}
-		}
-		m->m_data += 2;
-
-		/*
-		 * Note that we use clusters for incoming frames, so the
-		 * buffer is virtually contiguous.
-		 */
-		memcpy(mtod(m, caddr_t), mtod(rxs->rxs_mbuf, caddr_t), len);
-
-		/* Allow the receive descriptor to continue using its mbuf. */
-		GEM_INIT_RXDESC(sc, i);
-		bus_dmamap_sync(sc->sc_dmatag, rxs->rxs_dmamap, 0,
-		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
-#endif /* __NO_STRICT_ALIGNMENT */
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
@@ -1557,35 +1475,14 @@ gem_intr(v)
 	bus_space_handle_t seb = sc->sc_h;
 	u_int32_t status;
 	int r = 0;
-
+#ifdef GEM_DEBUG
 	char bits[128];
+#endif
 
 	status = bus_space_read_4(t, seb, GEM_STATUS);
 	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %s\n",
 		sc->sc_dev.dv_xname, (status>>19),
 		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
-if (gem_opdebug) printf("%s: gem_intr: cplt %x status %s\n",
-	sc->sc_dev.dv_xname, (status>>19),
-	bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits)));
-if (gem_opdebug && (status & GEM_INTR_TX_DONE)) {
-	int i;
-	int64_t pa;
-	i = bus_space_read_4(t, seb, GEM_TX_KICK);
-	printf("GEM_TX_KICK %x GEM_TX_DATA_PTR %llx GEM_TX_RING_PTR %llx\n",
-		i, (long long)bus_space_read_4(t, seb, GEM_TX_DATA_PTR),
-		(long long)bus_space_read_8(t, seb, GEM_TX_RING_PTR));
-	printf("descriptor %d: ", --i);
-	printf("gd_flags: 0x%016llx\t", (long long)
-		le64toh(sc->sc_txdescs[i].gd_flags));
-		pa = le64toh(sc->sc_txdescs[i].gd_addr);
-	printf("gd_addr: 0x%016llx\n", (long long) pa);
-	printf("GEM_TX_CONFIG %x GEM_MAC_XIF_CONFIG %x GEM_MAC_TX_CONFIG %x "
-		"GEM_MAC_TX_STATUS %x\n",
-		bus_space_read_4(t, seb, GEM_TX_CONFIG),
-		bus_space_read_4(t, seb, GEM_MAC_XIF_CONFIG),
-		bus_space_read_4(t, seb, GEM_MAC_TX_CONFIG),
-		bus_space_read_4(t, seb, GEM_MAC_TX_STATUS));
-}
 
 	if ((status & (GEM_INTR_RX_TAG_ERR | GEM_INTR_BERR)) != 0)
 		r |= gem_eint(sc, status);
@@ -1629,7 +1526,6 @@ gem_watchdog(ifp)
 	++ifp->if_oerrors;
 
 	/* Try to get more packets going. */
-//	gem_reset(sc);
 	gem_start(ifp);
 }
 
@@ -1755,15 +1651,17 @@ gem_mii_statchg(dev)
 	struct device *dev;
 {
 	struct gem_softc *sc = (void *)dev;
+#ifdef GEM_DEBUG
 	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
-	int phy = sc->sc_phys[instance];
+#endif
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mac = sc->sc_h;
 	u_int32_t v;
 
 #ifdef GEM_DEBUG
 	if (sc->sc_debug)
-		printf("gem_mii_statchg: status change: phy = %d\n", phy);
+		printf("gem_mii_statchg: status change: phy = %d\n", 
+			sc->sc_phys[instance];);
 #endif
 
 

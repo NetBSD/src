@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.43.2.1 2001/10/01 12:42:24 fvdl Exp $ */
+/*	$NetBSD: sbus.c,v 1.43.2.2 2001/10/11 00:01:54 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -320,7 +320,8 @@ sbus_attach(parent, self, aux)
 	/* punch in our copies */
 	sc->sc_is.is_bustag = sc->sc_bustag;
 	sc->sc_is.is_iommu = &sc->sc_sysio->sys_iommu;
-	sc->sc_is.is_sb = &sc->sc_sysio->sys_strbuf;
+	sc->sc_is.is_sb[0] = &sc->sc_sysio->sys_strbuf;
+	sc->sc_is.is_sb[1] = NULL;
 
 	/* give us a nice name.. */
 	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);

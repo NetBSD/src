@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_pqdeg.h,v 1.4 2001/06/20 03:09:23 oster Exp $	*/
+/*	$NetBSD: rf_pqdeg.h,v 1.4.4.1 2001/10/11 00:02:23 fvdl Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,9 +31,8 @@
 
 #if (RF_INCLUDE_PQ > 0) || (RF_INCLUDE_RAID6 > 0)
 
-#include "rf_types.h"
+#include <dev/raidframe/raidframevar.h>
 
-#if RF_UTILITY == 0
 #include "rf_dag.h"
 
 /* extern decl's of the failure mode PQ functions.
@@ -59,7 +58,6 @@ RF_CREATE_DAG_FUNC_DECL(rf_PQ_011_CreateWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_110_CreateWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_101_CreateWriteDAG);
 RF_CREATE_DAG_FUNC_DECL(rf_PQ_200_CreateWriteDAG);
-#endif				/* RF_UTILITY == 0 */
 
 typedef RF_uint32 RF_ua32_t[32];
 typedef RF_uint8 RF_ua1024_t[1024];

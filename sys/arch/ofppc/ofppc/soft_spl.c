@@ -1,4 +1,4 @@
-/*	$NetBSD: soft_spl.c,v 1.5 2001/08/26 02:47:41 matt Exp $	*/
+/*	$NetBSD: soft_spl.c,v 1.5.2.1 2001/10/11 00:01:48 fvdl Exp $	*/
 
 /*
  * Copyright (C) 1997 Wolfgang Solfrank.
@@ -183,7 +183,8 @@ soft_spltty()
 static int
 soft_splvm()
 {
-	return splraise(SPLIMP | SPLSOFTCLOCK | SPLSOFTNET);
+	return splraise(SPLIMP | SPLBIO | SPLNET | SPLTTY | SPLSOFTCLOCK |
+	    SPLSOFTNET);
 }
 
 static int
@@ -207,7 +208,8 @@ soft_splsoftclock()
 static int
 soft_splsoftnet()
 {
-	return splraise(SPLSOFTNET);
+	/* splsoftnet() needs to block softclock */
+	return splraise(SPLSOFTNET|SPLSOFTCLOCK);
 }
 
 static void

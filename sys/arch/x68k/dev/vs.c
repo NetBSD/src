@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.7 2001/05/28 06:18:20 minoura Exp $	*/
+/*	$NetBSD: vs.c,v 1.7.6.1 2001/10/11 00:01:58 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -143,6 +143,8 @@ static struct audio_hw_if vs_hw_if = {
 
 	vs_trigger_output,
 	vs_trigger_input,
+
+	NULL,
 };
 
 static struct audio_device vs_device = {

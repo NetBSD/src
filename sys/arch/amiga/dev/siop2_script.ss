@@ -1,4 +1,4 @@
-;	$NetBSD: siop2_script.ss,v 1.3 1999/03/26 22:50:23 mhitch Exp $
+;	$NetBSD: siop2_script.ss,v 1.3.20.1 2001/10/11 00:01:42 fvdl Exp $
 
 ;
 ; Copyright (c) 1998 Michael L. Hitch
@@ -79,6 +79,7 @@ scripts:
 	SELECT ATN FROM ds_Device, REL(reselect)
 ;
 switch:
+	MOVE GPREG | 0x10 TO GPREG
 	JUMP REL(msgin), WHEN MSG_IN
 	JUMP REL(msgout), IF MSG_OUT
 	JUMP REL(command_phase), IF CMD
@@ -124,6 +125,7 @@ neg_msg:
 
 disc:
 	MOVE SCNTL2 & 0x7f TO SCNTL2
+	MOVE GPREG & 0xEF TO GPREG
 	CLEAR ACK
 	WAIT DISCONNECT
 
@@ -215,5 +217,6 @@ end:
 	MOVE SCNTL2 & 0x7f TO SCNTL2
 	CLEAR ACK
 	WAIT DISCONNECT
+	MOVE GPREG & 0xEF TO GPREG
 	INT ok				; signal completion
 	JUMP REL(wait_reselect)

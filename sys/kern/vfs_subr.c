@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.156.2.7 2001/10/01 12:46:59 fvdl Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.156.2.8 2001/10/11 00:02:32 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -484,7 +484,7 @@ getnewvnode(tag, mp, vops, vpp)
 				if ((vp->v_flag & VLAYER) == 0)
 					break;
 				if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT |
-					    LK_INTERLOCK)) {
+					    LK_RECURSEFAIL | LK_INTERLOCK)) {
 					continue;
 				}
 				VOP_UNLOCK(vp, 0);
