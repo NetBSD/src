@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.44 1997/06/09 19:36:56 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -733,7 +733,7 @@ scsi_interpret_sense(xs)
 				int n;
 				printf(", data =");
 				for (n = 0; n < sense->extra_len; n++)
-					printf(" %02x", sense->extra_bytes[n]);
+					printf(" %02x", sense->cmd_spec_info[n]);
 			}
 			printf("\n");
 		}
