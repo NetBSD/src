@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.43 1999/03/22 17:24:22 sommerfe Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.44 1999/03/25 13:05:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -639,8 +639,11 @@ union_open(v)
 		}
 
 		/*
-		 * Just open the lower vnode
+		 * Just open the lower vnode, but check for nodev mount flag
 		 */
+		if ((tvp->v_type == VBLK || tvp->v_type == VCHR) &&
+		    (ap->a_vp->v_mount->mnt_flag & MNT_NODEV))
+			return ENXIO;
 		un->un_openl++;
 		vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);
 		error = VOP_OPEN(tvp, mode, cred, p);
@@ -648,6 +651,12 @@ union_open(v)
 
 		return (error);
 	}
+	/*
+	 * Just open the upper vnode, checking for nodev mount flag first
+	 */
+	if ((tvp->v_type == VBLK || tvp->v_type == VCHR) &&
+	    (ap->a_vp->v_mount->mnt_flag & MNT_NODEV))
+		return ENXIO;
 
 	FIXUP(un);
 
