@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_domain.c,v 1.24 1998/07/05 22:48:07 jonathan Exp $	*/
+/*	$NetBSD: uipc_domain.c,v 1.25 1999/01/14 01:14:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -99,13 +99,7 @@ domaininit()
 #ifdef NETATALK
 	ADDDOMAIN(atalk);
 #endif
-#ifdef notdef /* XXXX */
-#include "imp.h"
-#if NIMP > 0
-	ADDDOMAIN(imp);
-#endif
-#endif
-#endif
+#endif /* ! lint */
 
 	for (dp = domains; dp; dp = dp->dom_next) {
 		if (dp->dom_init)
