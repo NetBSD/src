@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_message.h,v 1.12 2003/04/20 11:53:28 fvdl Exp $	*/
+/*	$NetBSD: scsi_message.h,v 1.13 2003/04/20 12:05:42 fvdl Exp $	*/
 
 /* Messages (1 byte) */		     /* I/T (M)andatory or (O)ptional */
 #define MSG_CMDCOMPLETE		0x00 /* M/M */
@@ -78,7 +78,7 @@
 #define MSG_EXT_PPR_QAS_REQ	MSG_EXT_PPR_QAS
 #define MSG_EXT_PPR_DT_REQ	MSG_EXT_PPR_DT
 #define MSG_EXT_PPR_IU_REQ	MSG_EXT_PPR_IU
-#define MSG_EXT_PPR_PCOM_EN	MSG_EXT_PPR_PCOM
+#define MSG_EXT_PPR_PCOMP_EN	MSG_EXT_PPR_PCOM
 
 #define MSG_ISEXTENDED(m)	((m) == MSG_EXTENDED)
 
