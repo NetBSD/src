@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.8 1997/01/23 14:02:29 mrg Exp $	*/
+/*	$NetBSD: localtime.c,v 1.9 1997/04/22 12:33:19 mrg Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -277,6 +277,7 @@ register struct state * const	sp;
 
 	if (name == NULL && (name = TZDEFAULT) == NULL)
 		return -1;
+
 	{
 		register int	doaccess;
 		/*
@@ -308,6 +309,12 @@ register struct state * const	sp;
 		}
 		if (doaccess && access(name, R_OK) != 0)
 			return -1;
+		/*
+		 * XXX potential security problem here if user of a set-id
+		 * program has set TZ (which is passed in as name) here,
+		 * and uses a race condition trick to defeat the access(2)
+		 * above.
+		 */
 		if ((fid = open(name, OPEN_MODE)) == -1)
 			return -1;
 	}
