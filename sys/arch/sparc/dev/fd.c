@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.67 1999/03/24 05:51:10 mrg Exp $	*/
+/*	$NetBSD: fd.c,v 1.68 1999/11/21 15:23:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -484,7 +484,8 @@ fdcattach_obio(parent, self, aux)
 			bp = sa->sa_bp;
 	}
 
-	fdcattach(fdc, sa->sa_pri, bp);
+	if (sa->sa_nintr != 0)
+		fdcattach(fdc, sa->sa_pri, bp);
 }
 
 void
