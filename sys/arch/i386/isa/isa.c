@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.43 1994/03/10 18:14:32 mycroft Exp $
+ *	$Id: isa.c,v 1.44 1994/03/10 21:38:46 mycroft Exp $
  */
 
 /*
@@ -111,14 +111,14 @@ isa_configure()
 	INTREN(IRQ_SLAVE);
 	enable_intr();
 
-	for (dvp = isa_devtab_tty; config_isadev(dvp, &ttymask); dvp++)
-		;
-	for (dvp = isa_devtab_bio; config_isadev(dvp, &biomask); dvp++)
-		;
-	for (dvp = isa_devtab_net; config_isadev(dvp, &netmask); dvp++)
-		;
-	for (dvp = isa_devtab_null; config_isadev(dvp, (u_int *) NULL); dvp++)
-		;
+	for (dvp = isa_devtab_tty; dvp->id_driver; dvp++)
+		config_isadev(dvp, &ttymask);
+	for (dvp = isa_devtab_bio; dvp->id_driver; dvp++)
+		config_isadev(dvp, &biomask);
+	for (dvp = isa_devtab_net; dvp->id_driver; dvp++)
+		config_isadev(dvp, &netmask);
+	for (dvp = isa_devtab_null; dvp->id_driver; dvp++)
+		config_isadev(dvp, (u_int *) NULL);
 
 	printf("biomask %x ttymask %x netmask %x\n",
 	       biomask, ttymask, netmask);
@@ -135,69 +135,73 @@ isa_configure()
 /*
  * Configure an ISA device.
  */
-int
 config_isadev(isdp, mp)
 	struct isa_device *isdp;
 	u_int *mp;
 {
-	struct isa_driver *dp;
+	struct isa_driver *dp = isdp->id_driver;
  
-	if (dp = isdp->id_driver) {
-		if (isdp->id_maddr) {
-			extern u_int atdevbase;
-
-			isdp->id_maddr -= 0xa0000; /* XXX should be a define */
-			isdp->id_maddr += atdevbase;
-		}
+	if (isdp->id_masunit != -1) {
+		/* Not really an ISA device; just call the probe and attach. */
 		isdp->id_alive = (*dp->probe)(isdp);
-		if (isdp->id_irq == (u_short)-1)
-			isdp->id_alive = 0;
-		/*
-		 * Only print the I/O address range if id_alive != -1
-		 * Right now this is a temporary fix just for the new
-		 * NPX code so that if it finds a 486 that can use trap
-		 * 16 it will not report I/O addresses.
-		 * Rod Grimes 04/26/94
-		 *
-		 * XXX -- cgd
-		 */
-		if (isdp->id_alive) {
-			printf("%s%d", dp->name, isdp->id_unit);
-			if (isdp->id_iobase) {
-				printf(" at 0x%x", isdp->id_iobase);
-				if ((isdp->id_iobase + isdp->id_alive - 1) !=
-				    isdp->id_iobase)
-					printf("-0x%x", isdp->id_iobase +
-					    isdp->id_alive - 1);
-			}
-			if (isdp->id_irq != 0)
-				printf(" irq %d", ffs(isdp->id_irq)-1);
-			if (isdp->id_drq != -1)
-				printf(" drq %d", isdp->id_drq);
-			if (isdp->id_maddr != 0)
-				printf(" maddr 0x%x", kvtop(isdp->id_maddr));
-			if (isdp->id_msize != 0)
-				printf("-0x%x", kvtop(isdp->id_maddr) +
-					isdp->id_msize - 1);
-			if (isdp->id_flags != 0)
-				printf(" flags 0x%x", isdp->id_flags);
-			printf(" on isa\n");
-
+		if (isdp->id_alive)
 			config_attach(dp, isdp);
+		return;
+	}
 
-			if (isdp->id_irq) {
-				int intrno;
+	if (isdp->id_maddr) {
+		extern u_int atdevbase;
 
-				intrno = ffs(isdp->id_irq)-1;
-				setidt(ICU_OFFSET+intrno, isdp->id_intr,
-					 SDT_SYS386IGT, SEL_KPL);
-				if(mp)
-					INTRMASK(*mp,isdp->id_irq);
-				INTREN(isdp->id_irq);
-			}
+		isdp->id_maddr -= 0xa0000; /* XXX should be a define */
+		isdp->id_maddr += atdevbase;
+	}
+	isdp->id_alive = (*dp->probe)(isdp);
+	if (isdp->id_irq == (u_short)-1)
+		isdp->id_alive = 0;
+	/*
+	 * Only print the I/O address range if id_alive != -1
+	 * Right now this is a temporary fix just for the new
+	 * NPX code so that if it finds a 486 that can use trap
+	 * 16 it will not report I/O addresses.
+	 * Rod Grimes 04/26/94
+	 *
+	 * XXX -- cgd
+	 */
+	if (isdp->id_alive) {
+		printf("%s%d", dp->name, isdp->id_unit);
+		if (isdp->id_iobase) {
+			printf(" at 0x%x", isdp->id_iobase);
+			if ((isdp->id_iobase + isdp->id_alive - 1) !=
+			    isdp->id_iobase)
+				printf("-0x%x", isdp->id_iobase +
+				    isdp->id_alive - 1);
 		}
-		return (1);
-	} else	return(0);
+		if (isdp->id_irq != 0)
+			printf(" irq %d", ffs(isdp->id_irq)-1);
+		if (isdp->id_drq != -1)
+			printf(" drq %d", isdp->id_drq);
+		if (isdp->id_maddr != 0)
+			printf(" maddr 0x%x", kvtop(isdp->id_maddr));
+		if (isdp->id_msize != 0)
+			printf("-0x%x", kvtop(isdp->id_maddr) +
+				isdp->id_msize - 1);
+		if (isdp->id_flags != 0)
+			printf(" flags 0x%x", isdp->id_flags);
+		printf(" on isa\n");
+
+		config_attach(dp, isdp);
+
+		if (isdp->id_irq) {
+			int intrno;
+
+			intrno = ffs(isdp->id_irq)-1;
+			setidt(ICU_OFFSET+intrno, isdp->id_intr,
+				 SDT_SYS386IGT, SEL_KPL);
+			if(mp)
+				INTRMASK(*mp,isdp->id_irq);
+			INTREN(isdp->id_irq);
+		}
+	}
 }
 
 void
@@ -206,33 +210,27 @@ config_attach(struct isa_driver *dp, struct isa_device *isdp)
 	extern struct isa_device isa_subdev[];
 	struct isa_device *dvp;
 
-	if(isdp->id_masunit==-1) {
-		(void)(*dp->attach)(isdp);
-		return;
-	}
+	(void)(*dp->attach)(isdp);
 
-	if(isdp->id_masunit==0) {
-		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
-			if (dvp->id_driver != dp)
-				continue;
-			if (dvp->id_masunit != isdp->id_unit)
-				continue;
-			if (dvp->id_physid == -1)
-				continue;
-			dvp->id_alive = (*dp->attach)(dvp);
-		}
-		for(dvp = isa_subdev; dvp->id_driver; dvp++) {
-			if (dvp->id_driver != dp)
-				continue;
-			if (dvp->id_masunit != isdp->id_unit)
-				continue;
-			if (dvp->id_physid != -1)
-				continue;
-			dvp->id_alive = (*dp->attach)(dvp);
-		}
-		return;
+	/* XXXX This is for SCSI controllers, and it sucks. */
+	for (dvp = isa_subdev; dvp->id_driver; dvp++) {
+		if (dvp->id_driver != dp)
+			continue;
+		if (dvp->id_masunit != isdp->id_unit)
+			continue;
+		if (dvp->id_physid == -1)
+			continue;
+		dvp->id_alive = (*dp->attach)(dvp);
 	}
-	printf("id_masunit has weird value\n");
+	for (dvp = isa_subdev; dvp->id_driver; dvp++) {
+		if (dvp->id_driver != dp)
+			continue;
+		if (dvp->id_masunit != isdp->id_unit)
+			continue;
+		if (dvp->id_physid != -1)
+			continue;
+		dvp->id_alive = (*dp->attach)(dvp);
+	}
 }
 
 
