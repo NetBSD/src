@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/08/19 10:16:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2002/08/23 03:19:08 lukem Exp $
 #	@(#)Makefile	8.6 (Berkeley) 5/8/95
 
 .include <bsd.own.mk>
@@ -13,6 +13,10 @@ SRCS=	mount.c vfslist.c
 
 SRCS+= getmntopts.c fattr.c checkname.c
 CPPFLAGS+= -I${.CURDIR} -DMOUNT_NOMAIN
+
+.if defined(RESCUEDIR)
+CPPFLAGS+= -D_PATH_RESCUE=\"${RESCUEDIR}\"
+.endif
 
 # Note: mount_portal is excluded by purpose, mainly because it contains
 # more stuff and hence cannot be made to export only mount_FOO() symbol
