@@ -26,7 +26,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* @(#) $Header: /cvsroot/src/usr.bin/lex/Attic/flexdef.h,v 1.10 1996/12/10 07:18:43 mikel Exp $ (LBL) */
+/* $NetBSD: flexdef.h,v 1.11 1998/01/05 05:15:48 perry Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

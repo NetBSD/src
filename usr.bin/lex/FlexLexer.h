@@ -1,4 +1,4 @@
-// $Header: /cvsroot/src/usr.bin/lex/Attic/FlexLexer.h,v 1.7 1996/12/10 07:18:37 mikel Exp $
+// $NetBSD: FlexLexer.h,v 1.8 1998/01/05 05:15:43 perry Exp $
 
 // FlexLexer.h -- define interfaces for lexical analyzer classes generated
 //		  by flex
