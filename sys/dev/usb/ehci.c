@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.64 2004/06/23 06:45:56 mycroft Exp $	*/
+/*	$NetBSD: ehci.c,v 1.65 2004/06/29 03:58:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.64 2004/06/23 06:45:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.65 2004/06/29 03:58:14 mycroft Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -477,7 +477,7 @@ ehci_intr(void *v)
 	/* If we get an interrupt while polling, then just ignore it. */
 	if (sc->sc_bus.use_polling) {
 #ifdef DIAGNOSTIC
-		printf("ehci_intr: ignored interrupt while polling\n");
+		DPRINTFN(16, ("ehci_intr: ignored interrupt while polling\n"));
 #endif
 		return (0);
 	}
