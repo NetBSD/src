@@ -13,7 +13,7 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This software is a component of "386BSD" developed by 
-	William F. Jolitz, TeleMuse.
+ *	William F. Jolitz, TeleMuse.
  * 4. Neither the name of the developer nor the name "386BSD"
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -22,7 +22,7 @@
  * AND IS INTENDED FOR RESEARCH AND EDUCATIONAL PURPOSES ONLY. THIS 
  * SOFTWARE SHOULD NOT BE CONSIDERED TO BE A COMMERCIAL PRODUCT. 
  * THE DEVELOPER URGES THAT USERS WHO REQUIRE A COMMERCIAL PRODUCT 
- * NOT MAKE USE THIS WORK.
+ * NOT MAKE USE OF THIS WORK.
  *
  * FOR USERS WHO WISH TO UNDERSTAND THE 386BSD SYSTEM DEVELOPED
  * BY WILLIAM F. JOLITZ, WE RECOMMEND THE USER STUDY WRITTEN 
@@ -46,13 +46,18 @@
  * SUCH DAMAGE.
  *
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/kern/Attic/tty_ring.c,v 1.2 1993/03/24 23:55:29 cgd Exp $";
 
 #include "param.h"
 #include "systm.h"
 #include "buf.h"
 #include "ioctl.h"
 #include "tty.h"
+
+/*
+ * XXX - put this in tty.h someday.
+ */
+size_t rb_write __P((struct ringb *to, char *buf, size_t nfrom));
 
 putc(c, rbp) struct ringb *rbp;
 {
@@ -150,13 +155,48 @@ initrb(rbp) struct ringb *rbp; {
  */
 
 /*
- * Concatinate ring buffers.
+ * Concatenate ring buffers.
  */
 catb(from, to)
 	struct ringb *from, *to;
 {
-	char c;
+	size_t nfromleft;
+	size_t nfromright;
 
-	while ((c = getc(from)) >= 0)
-		putc(c, to);
+	nfromright = RB_CONTIGGET(from);
+	rb_write(to, from->rb_hd, nfromright);
+	from->rb_hd += nfromright;
+	from->rb_hd = RB_ROLLOVER(from, from->rb_hd);
+	nfromleft = RB_CONTIGGET(from);
+	rb_write(to, from->rb_hd, nfromleft);
+	from->rb_hd += nfromleft;
+}
+
+/*
+ * Copy ordinary buffer to ring buffer, return count of what fitted.
+ */
+size_t rb_write(to, buf, nfrom)
+	struct ringb *to;
+	char *buf;
+	size_t nfrom;
+{
+	char *toleft;
+	size_t ntoleft;
+	size_t ntoright;
+
+	ntoright = RB_CONTIGPUT(to);
+	if (nfrom < ntoright) {
+		bcopy(buf, to->rb_tl, nfrom);
+		to->rb_tl += nfrom;
+		return (nfrom);
+	}
+	bcopy(buf, to->rb_tl, ntoright);
+	nfrom -= ntoright;
+	toleft = to->rb_buf;	/* fast RB_ROLLOVER */
+	ntoleft = to->rb_hd - toleft;	/* fast RB_CONTIGPUT */
+	if (nfrom > ntoleft)
+		nfrom = ntoleft;
+	bcopy(buf + ntoright, toleft, nfrom);
+	to->rb_tl = toleft + nfrom;
+	return (ntoright + nfrom);
 }
