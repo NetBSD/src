@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.129 2002/05/03 03:50:11 rafal Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.130 2002/06/01 12:27:04 simonb Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.129 2002/05/03 03:50:11 rafal Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.130 2002/06/01 12:27:04 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -508,7 +508,7 @@ mips3_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* !MIPS3_5900 */
 
@@ -557,7 +557,7 @@ r5900_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS3_5900 */
 #endif /* MIPS3 */
@@ -629,7 +629,7 @@ mips32_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS32 */
 
@@ -706,7 +706,7 @@ mips64_vector_init(void)
 	mips_dcache_wbinv_all();
 
 	/* Clear BEV in SR so we start handling our own exceptions */
-	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS3_SR_DIAG_BEV);
+	mips_cp0_status_write(mips_cp0_status_read() & ~MIPS_SR_BEV);
 }
 #endif /* MIPS64 */
 
