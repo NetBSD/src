@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.23 1998/01/03 01:13:12 thorpej Exp $     */
+/*      $NetBSD: pmap.h,v 1.24 1998/01/18 22:07:50 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -75,8 +75,8 @@ typedef struct pv_entry {
 } *pv_entry_t;
 
 /* ROUND_PAGE used before vm system is initialized */
-#define ROUND_PAGE(x)   (((uint)(x) + PAGE_SIZE-1)& ~(PAGE_SIZE - 1))
-#define	TRUNC_PAGE(x)	((uint)(x) & ~(PAGE_SIZE - 1))
+#define ROUND_PAGE(x)   (((uint)(x) + CLOFSET)& ~CLOFSET)
+#define	TRUNC_PAGE(x)	((uint)(x) & ~CLOFSET)
 
 /* Mapping macros used when allocating SPT */
 #define	MAPVIRT(ptr, count)					\
@@ -119,7 +119,6 @@ extern	struct pmap kernel_pmap_store;
 
 /* Prototypes */
 void	pmap_bootstrap __P((void));
-
 void	pmap_pinit __P((pmap_t));
 
 #endif PMAP_H
