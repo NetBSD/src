@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.10 2003/05/18 07:57:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2003/10/19 04:05:01 lukem Exp $
 
 PROG=		crunchgen
 SRCS=		crunchgen.c crunched_skel.c
 CLEANFILES+=	crunched_skel.c
 
 crunched_skel.c: mkskel.sh crunched_main.c
-	sh ${.ALLSRC} >${.TARGET}
+	${_MKMSGCREATE}
+	${_MKCMD}\
+	${HOST_SH} ${.ALLSRC} >${.TARGET}
 
 .include <bsd.prog.mk>
 
