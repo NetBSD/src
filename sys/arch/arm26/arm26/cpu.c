@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.4 2001/01/22 22:10:41 bjh21 Exp $ */
+/* $NetBSD: cpu.c,v 1.5 2001/01/23 22:07:58 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,7 +33,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2001/01/22 22:10:41 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5 2001/01/23 22:07:58 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/proc.h>
@@ -87,7 +87,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	printf(": ");
 	cpu_type = cpu_identify();
 	supported = 0;
-	switch (cpu_type & CPU_ID_CPU_MASK) {
+	switch (cpu_type) {
 	case CPU_ID_ARM2:
 		printf("ARM2");
 #ifdef CPU_ARM2
