@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)autoconf.c	7.1 (Berkeley) 5/9/91
- *	$Id: autoconf.c,v 1.6 1993/08/01 19:25:32 mycroft Exp $
+ *	$Id: autoconf.c,v 1.7 1993/08/10 08:42:25 deraadt Exp $
  */
 
 /*
@@ -129,11 +129,7 @@ static	char devname[][2] = {
 	's','w',	/* 1 = sw */
 	'f','d',	/* 2 = fd */
 	'w','t',	/* 3 = wt */
-#ifndef SCSI
-	'a','s',	/* 4 = as */
-#else
 	's','d',	/* 4 = sd -- new SCSI system */
-#endif
 };
 
 #define	PARTITIONMASK	0x7
