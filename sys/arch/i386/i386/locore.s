@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.262 2002/10/04 03:20:59 junyoung Exp $	*/
+/*	$NetBSD: locore.s,v 1.263 2002/10/04 04:40:12 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1060,7 +1060,7 @@ ENTRY(i386_copyout)
 	xorl	%eax,%eax
 	popl	%edi
 	popl	%esi
-	popl	%eax,PCB_ONFAULT(%edx)
+	movl	%eax,PCB_ONFAULT(%edx)
 	ret
 #endif /* I386_CPU */
 
