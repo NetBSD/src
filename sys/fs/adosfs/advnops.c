@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.6 2003/06/29 22:31:07 fvdl Exp $	*/
+/*	$NetBSD: advnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6 2003/06/29 22:31:07 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.7 2004/01/25 18:06:48 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -391,7 +391,6 @@ adosfs_strategy(v)
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
-	error = 0;
 	bp = sp->a_bp;
 	if (bp->b_vp == NULL) {
 		bp->b_flags |= B_ERROR;
@@ -415,8 +414,7 @@ adosfs_strategy(v)
 		goto reterr;
 	}
 	vp = ap->amp->devvp;
-	bp->b_dev = vp->v_rdev;
-	VOCALL(vp->v_op, VOFFSET(vop_strategy), sp);
+	error = VOP_STRATEGY(vp, bp);
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.38 2003/11/05 10:18:38 hannken Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.39 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.38 2003/11/05 10:18:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_inode.c,v 1.39 2004/01/25 18:06:49 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		if (bp->b_bcount > bp->b_bufsize)
 			panic("ext2fs_indirtrunc: bad buffer size");
 		bp->b_blkno = dbn;
-		VOP_STRATEGY(bp);
+		VOP_STRATEGY(vp, bp);
 		error = biowait(bp);
 	}
 	if (error) {

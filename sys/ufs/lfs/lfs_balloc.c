@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.47 2003/12/30 12:33:24 pk Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.47 2003/12/30 12:33:24 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.48 2004/01/25 18:06:49 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -267,7 +267,7 @@ lfs_balloc(void *v)
 				} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
 					ibp->b_blkno = fsbtodb(fs, idaddr);
 					ibp->b_flags |= B_READ;
-					VOP_STRATEGY(ibp);
+					VOP_STRATEGY(vp, ibp);
 					biowait(ibp);
 				}
 				/*
@@ -344,7 +344,7 @@ lfs_balloc(void *v)
 			 */
 			bp->b_blkno = daddr;
 			bp->b_flags |= B_READ;
-			VOP_STRATEGY(bp);
+			VOP_STRATEGY(vp, bp);
 			return (biowait(bp));
 		}
 	}
