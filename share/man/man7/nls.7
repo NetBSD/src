@@ -1,4 +1,4 @@
-.\"     $NetBSD: nls.7,v 1.10 2003/06/26 11:53:18 wiz Exp $
+.\"     $NetBSD: nls.7,v 1.11 2003/06/26 11:55:56 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -291,7 +291,8 @@ YIDDISH	YI	GERMANIC
 YORUBA	YO	NEGRO-AFRICAN
 ZHUANG	ZA
 ZULU	ZU	NEGRO-AFRICAN
-.ta.fi
+.ta
+.fi
 .Pp
 For example, the locale for the Danish language spoken in Denmark
 using the ISO8859-1 character set is da_DK.ISO8859-1.
@@ -433,8 +434,8 @@ There are two types for wide characters:
 and
 .Em wint_t .
 .Em wchar_t
-is a type which can contain one wide character and operates like
-'char' type does for one character.
+is a type which can contain one wide character and operates like 'char'
+type does for one character.
 .Em wint_t
 can contain one wide character or WEOF (wide EOF).
 .Pp
