@@ -1,8 +1,8 @@
-#	$Id: Makefile.inc,v 1.2 1993/10/15 06:21:09 cgd Exp $
+#	$Id: Makefile.inc,v 1.3 1993/10/15 08:41:25 cgd Exp $
 
 SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
-	bcmp.c bzero.s ffs.s strcat.c strcmp.c strcpy.c strlen.s strncpy.c \
-	htonl.s htons.s ntohl.s ntohs.s
+	bcmp.c bzero.s ffs.s strcat.c strcmp.c strcpy.c strlen.s strncmp.c \
+	strncpy.c htonl.s htons.s ntohl.s ntohs.s
 
 SRCS+=	umul.s mul.s rem.s sdiv.s udiv.s umul.s urem.s
 SRCS+=	_setjmp.s fabs.s fixunsdfsi.s modf.s mul.s saveregs.s setjmp.s umul.s
