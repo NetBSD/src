@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.48 2002/12/14 13:41:25 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.49 2002/12/17 15:23:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.48 2002/12/14 13:41:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.49 2002/12/17 15:23:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,13 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 	slept = 0;
 	while (fsb > 0 && !lfs_fits(fs, fsb + fs->lfs_ravail) &&
 	    vp != fs->lfs_unlockvp) {
+#if 0
+		/*
+		 * XXX ideally, we should unlock vnodes here
+		 * because we might sleep very long time.
+		 */
 		VOP_UNLOCK(vp, 0);
+#endif
 
 		if (!slept) {
 #ifdef DEBUG
@@ -155,7 +161,9 @@ lfs_reserve(struct lfs *fs, struct vnode *vp, int fsb)
 			
 		error = tsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_reserve",
 			       0);
+#if 0
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY); /* XXX use lockstatus */
+#endif
 		if (error)
 			return error;
 	}
