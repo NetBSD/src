@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.169 2002/02/25 07:35:05 atatat Exp $
+#	$NetBSD: MAKEDEV,v 1.170 2002/02/25 13:03:36 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -157,8 +157,6 @@ if [ -d fd ]; then
 else
 	nofdesc=true
 fi
-
-chown root:wheel .
 
 makedev()
 {
