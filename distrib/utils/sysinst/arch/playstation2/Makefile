@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/10/15 16:22:51 uch Exp $
+#	$NetBSD: Makefile,v 1.2 2002/10/17 02:05:38 lukem Exp $
 #
 # Makefile for playstation2
 #
@@ -10,7 +10,5 @@ SRCS=	menu_defs.c msg_defs.c main.c install.c upgrade.c \
 	label.c target.c md.c mbr.c mbr_buf.s
 
 fdisk.o md.o:	menu_defs.h msg_defs.h
-
-CPPFLAGS+=-DINET6
 
 .include "../../Makefile.inc"

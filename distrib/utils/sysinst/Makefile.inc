@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2002/06/06 09:53:22 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2002/10/17 02:05:37 lukem Exp $
 #
 # Makefile for install
 
@@ -16,6 +16,10 @@ VER!=		sh ${VERDEP}
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
+
+.if defined(SMALLPROG_INET6)
+CPPFLAGS+=-DINET6
+.endif
 
 
 # Host to ftp from.  Default:
