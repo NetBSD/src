@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.55 2004/07/01 22:34:12 kleink Exp $	*/
+/*	$NetBSD: lock.h,v 1.56 2004/10/17 16:06:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -272,7 +272,7 @@ struct lock {
  * unless one of the following is true:
  *	LK_FORCEUPGRADE is requested and some other process has already
  *	    requested a lock upgrade (returns EBUSY).
- *	LK_WAIT is set and a sleep would be required (returns EBUSY).
+ *	LK_NOWAIT is set and a sleep would be required (returns EBUSY).
  *	LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK).
  *	PCATCH is set in lock priority and a signal arrives (returns
  *	    either EINTR or ERESTART if system calls is to be restarted).
