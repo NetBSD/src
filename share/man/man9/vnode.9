@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnode.9,v 1.20 2003/10/24 07:43:35 wiz Exp $
+.\"     $NetBSD: vnode.9,v 1.20.2.1 2004/05/30 15:13:00 tron Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -463,8 +463,12 @@ into an atomic group.
 Many file systems rely on it to prevent race conditions in updating
 file system type specific data structures rather than using their
 own private locks.
-The vnode lock operates as a multiple-reader (shared-access lock)
-or single-writer lock (exclusive access lock).
+The vnode lock can operate as a multiple-reader (shared-access lock)
+or single-writer lock (exclusive access lock), however many current file
+system implementations were written assuming only single-writer
+locking.
+Multiple-reader locking functions equivalently only in the presence
+of big-lock SMP locking or a uni-processor machine.
 The lock may be held while sleeping.
 While the
 .Em v_vnlock
