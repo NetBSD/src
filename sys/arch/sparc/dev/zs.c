@@ -42,7 +42,7 @@
  *	@(#)zs.c	8.1 (Berkeley) 7/19/93
  *
  * from: Header: zs.c,v 1.30 93/07/19 23:44:42 torek Exp 
- * $Id: zs.c,v 1.10 1994/06/24 08:11:53 deraadt Exp $
+ * $Id: zs.c,v 1.11 1994/07/21 22:06:01 deraadt Exp $
  */
 
 /*
@@ -72,7 +72,7 @@
 #include <sparc/sparc/vaddrs.h>
 #include <sparc/sparc/auxreg.h>
 
-#include <sparc/dev/kbd.h>
+#include <machine/kbd.h>
 #include <sparc/dev/zsreg.h>
 #include <sparc/dev/zsvar.h>
 
