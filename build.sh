@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.54 2002/03/24 22:21:41 bjh21 Exp $
+#  $NetBSD: build.sh,v 1.55 2002/04/02 16:34:49 thorpej Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -20,11 +20,8 @@ TOP=`pwd`
 getarch () {
 	# Translate a MACHINE into a default MACHINE_ARCH.
 	case $MACHINE in
-		acorn26|evbarm|hpcarm|netwinder)
+		acorn26|acorn32|cats|netwinder|shark|*arm)
 			MACHINE_ARCH=arm;;
-
-		acorn32|cats|shark)
-			MACHINE_ARCH=arm32;;
 
 		sun2)
 			MACHINE_ARCH=m68000;;
@@ -369,7 +366,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.54 2002/03/24 22:21:41 bjh21 Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.55 2002/04/02 16:34:49 thorpej Exp $
 #
 
 EOF
