@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.1 2001/11/21 19:09:08 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.2 2001/11/21 22:13:55 soren Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
 
 /*
  * We won't go overboard with gzip'd kernel names.  After all we can
- * still boot a gzip'd kernel called "netbsd.pmax" - it doesn't need
+ * still boot a gzip'd kernel called "netbsd.sgimips" - it doesn't need
  * the .gz suffix.
  */
 char *kernelnames[] = {
@@ -286,7 +286,7 @@ devname(fname)
 				break;
 		/*
 		 * Make "N/rzY" with no trailing '/' valid by adding
-		 * the extra '/' before appending 'boot.pmax' to the path.
+		 * the extra '/' before appending 'boot.sgimips' to the path.
 		 */
 		if (c != '/') {
 			fname--;
