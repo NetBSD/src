@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.10 2000/02/17 03:12:24 itohy Exp $	*/
+/*	$NetBSD: ftree.c,v 1.11 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.10 2000/02/17 03:12:24 itohy Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.11 2001/10/25 05:33:33 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,13 @@ static FTREE *ftcur = NULL;		/* current file arg being processed */
 static FTSENT *ftent = NULL;		/* current file tree entry */
 static int ftree_skip;			/* when set skip to next file arg */
 
-static int ftree_arg __P((void));
+static int ftree_arg(void);
+
+#ifdef NET2_FTS
+#define	FTS_ERRNO(x)	errno
+#else
+#define	FTS_ERRNO(x)	(x)->fts_errno
+#endif
 
 /*
  * ftree_start()
@@ -96,13 +102,8 @@ static int ftree_arg __P((void));
  *	0 if there is at least one valid file arg to process, -1 otherwise
  */
 
-#if __STDC__
 int
 ftree_start(void)
-#else
-int
-ftree_start()
-#endif
 {
 	/*
 	 * set up the operation mode of fts, open the first file arg. We must
@@ -127,11 +128,11 @@ ftree_start()
 	else
 		ftsopts |= FTS_PHYSICAL;
 	if (Hflag)
-#	ifdef NET2_FTS
+#ifdef NET2_FTS
 		tty_warn(0, "The -H flag is not supported on this version");
-#	else
+#else
 		ftsopts |= FTS_COMFOLLOW;
-#	endif
+#endif
 	if (Xflag)
 		ftsopts |= FTS_XDEV;
 
@@ -155,15 +156,8 @@ ftree_start()
  *	0 if added to the linked list, -1 if failed
  */
 
-#if __STDC__
 int
 ftree_add(char *str, int isdir)
-#else
-int
-ftree_add(str, isdir)
-	char *str;
-	int isdir;
-#endif
 {
 	FTREE *ft;
 	int len;
@@ -206,14 +200,8 @@ ftree_add(str, isdir)
  *	-n and -d processing.
  */
 
-#if __STDC__
 void
 ftree_sel(ARCHD *arcn)
-#else
-void
-ftree_sel(arcn)
-	ARCHD *arcn;
-#endif
 {
 	/*
 	 * set reference bit for this pattern. This linked list is only used
@@ -245,13 +233,8 @@ ftree_sel(arcn)
  *	have a selected member (reference count still 0)
  */
 
-#if __STDC__
 void
 ftree_chk(void)
-#else
-void
-ftree_chk()
-#endif
 {
 	FTREE *ft;
 	int wban = 0;
@@ -288,13 +271,8 @@ ftree_chk()
  *	stdin).
  */
 
-#if __STDC__
 static int
 ftree_arg(void)
-#else
-static int
-ftree_arg()
-#endif
 {
 	char *pt;
 
@@ -363,14 +341,8 @@ ftree_arg()
  *	0 when contents of arcn have been set with the next file, -1 when done.
  */
 
-#if __STDC__
 int
 next_file(ARCHD *arcn)
-#else
-int
-next_file(arcn)
-	ARCHD *arcn;
-#endif
 {
 	int cnt;
 	time_t atime;
@@ -436,13 +408,13 @@ next_file(arcn)
 			 * remember to force the time (this is -t on a read
 			 * directory, not a created directory).
 			 */
-#			ifdef NET2_FTS
-			if (!tflag || (get_atdir(ftent->fts_statb.st_dev,
-			    ftent->fts_statb.st_ino, &mtime, &atime) < 0))
-#			else
-			if (!tflag || (get_atdir(ftent->fts_statp->st_dev,
-			    ftent->fts_statp->st_ino, &mtime, &atime) < 0))
-#			endif
+			if (!tflag || (get_atdir(
+#ifdef NET2_FTS
+			    ftent->fts_statb.st_dev, ftent->fts_statb.st_ino,
+#else
+			    ftent->fts_statp->st_dev, ftent->fts_statp->st_ino,
+#endif
+			    &mtime, &atime) < 0))
 				continue;
 			set_ftime(ftent->fts_path, mtime, atime, 1);
 			continue;
@@ -454,28 +426,16 @@ next_file(arcn)
 			    ftent->fts_path);
 			continue;
 		case FTS_DNR:
-#			ifdef NET2_FTS
-			syswarn(1, errno,
-#			else
-			syswarn(1, ftent->fts_errno,
-#			endif
+			syswarn(1, FTS_ERRNO(ftent),
 			    "Unable to read directory %s", ftent->fts_path);
 			continue;
 		case FTS_ERR:
-#			ifdef NET2_FTS
-			syswarn(1, errno,
-#			else
-			syswarn(1, ftent->fts_errno,
-#			endif
+			syswarn(1, FTS_ERRNO(ftent),
 			    "File system traversal error");
 			continue;
 		case FTS_NS:
 		case FTS_NSOK:
-#			ifdef NET2_FTS
-			syswarn(1, errno,
-#			else
-			syswarn(1, ftent->fts_errno,
-#			endif
+			syswarn(1, FTS_ERRNO(ftent),
 			    "Unable to access %s", ftent->fts_path);
 			continue;
 		}
@@ -488,11 +448,11 @@ next_file(arcn)
 		arcn->pad = 0;
 		arcn->ln_nlen = 0;
 		arcn->ln_name[0] = '\0';
-#		ifdef NET2_FTS
+#ifdef NET2_FTS
 		arcn->sb = ftent->fts_statb;
-#		else
+#else
 		arcn->sb = *(ftent->fts_statp);
-#		endif
+#endif
 
 		/*
 		 * file type based set up and copy into the arcn struct

@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.h,v 1.10 2001/09/04 21:47:31 wiz Exp $	*/
+/*	$NetBSD: pax.h,v 1.11 2001/10/25 05:33:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -166,13 +166,13 @@ typedef struct {
 	int inhead;		/* is the trailer encoded in a valid header? */
 				/* if not, trailers are assumed to be found */
 				/* in invalid headers (i.e like tar) */
-	int (*id)		/* checks if a buffer is a valid header */
-		__P((char *, int)); /* returns 1 if it is, o.w. returns a 0 */
-	int (*st_rd)		/* initialize routine for read. so format */
-		__P((void));	/* can set up tables etc before it starts */
+	int (*id)(char *, int);	/* checks if a buffer is a valid header */
+				/* returns 1 if it is, o.w. returns a 0 */
+	int (*st_rd)(void);	/* initialize routine for read. so format */
+				/* can set up tables etc before it starts */
 				/* reading an archive */
 	int (*rd)		/* read header routine. passed a pointer to */
-		__P((ARCHD *, char *)); /* ARCHD. It must extract the info */
+		(ARCHD *, char *); /* ARCHD. It must extract the info */
 				/* from the format and store it in the  ARCHD */
 				/* struct. This routine is expected to fill */
 				/* all the fields in the ARCHD (including */
@@ -183,14 +183,13 @@ typedef struct {
 				/* amount of padding and the number of bytes */
 				/* of data which follow the header. This info */
 				/* is used to skip to the next file header */
-	off_t (*end_rd)		/* read cleanup. Allows format to clean up */
-		__P((void));	/* and MUST RETURN THE LENGTH OF THE TRAILER */
+	off_t (*end_rd)(void);	/* read cleanup. Allows format to clean up */
+				/* and MUST RETURN THE LENGTH OF THE TRAILER */
 				/* RECORD (so append knows how many bytes */
 				/* to move back to rewrite the trailer) */
-	int (*st_wr)		/* initialize routine for write operations */
-		__P((void));
-	int (*wr)		/* write archive header. Passed an ARCHD */
-		__P((ARCHD *)); /* filled with the specs on the next file to */
+	int (*st_wr)(void);	/* initialize routine for write operations */
+	int (*wr)(ARCHD *);	/* write archive header. Passed an ARCHD */
+				/* filled with the specs on the next file to */
 				/* archived. Returns a 1 if no file data is */
 				/* is to be stored; 0 if file data is to be */
 				/* added. A -1 is returned if a write */
@@ -199,25 +198,24 @@ typedef struct {
 				/* the proper padding can be added after */
 				/* file data. This routine must NEVER write */
 				/* a flawed archive header. */
-	int (*end_wr)		/* end write. write the trailer and do any */
-		__P((void));	/* other format specific functions needed */
+	int (*end_wr)(void);	/* end write. write the trailer and do any */
+				/* other format specific functions needed */
 				/* at the ecnd of a archive write */
 	int (*trail)		/* returns 0 if a valid trailer, -1 if not */
-		__P((char *, int, int *)); /* For formats which encode the */
+		(char *, int, int *); /* For formats which encode the */
 				/* trailer outside of a valid header, a */
 				/* return value of 1 indicates that the block */
 				/* passed to it can never contain a valid */
 				/* header (skip this block, no point in */
 				/* looking at it) */
 	int (*subtrail)		/* read/process file data from the archive */
-		__P((ARCHD *)); /* this function is called for trailers */
+		(ARCHD *);	/* this function is called for trailers */
 				/* inside headers. */
 	int (*rd_data)		/* read/process file data from the archive */
-		__P((ARCHD *, int, off_t *));
+		(ARCHD *, int, off_t *);
 	int (*wr_data)		/* write/process file data to the archive */
-		__P((ARCHD *, int, off_t *));
-	int (*options)		/* process format specific options (-o) */
-		__P((void));
+		(ARCHD *, int, off_t *);
+	int (*options)(void);	/* process format specific options (-o) */
 } FSUB;
 
 /*
@@ -253,3 +251,26 @@ typedef struct oplist {
  * ${TMPDIR} or, as a fall-back, _PATH_TMP.
  */
 #define TMPFILE	"paxXXXXXX"
+
+/*
+ * Macros to manipulate off_t as a u_long or u_longlong_t
+ */
+#ifdef NET2_STAT
+#define	OFFT_F			"%lu"
+#define	OFFT_FP(x)		"%" x "lu"
+#define	OFFT_T			u_long
+#define	ASC_OFFT(x,y,z)		asc_ul(x,y,z)
+#define	OFFT_ASC(w,x,y,z)	ul_asc((u_long)w,x,y,z)
+#define	OFFT_OCT(w,x,y,z)	ul_oct((u_long)w,x,y,z)
+#define	STRTOOFFT(x,y,z)	strtol(x,y,z)
+#define	OFFT_MAX		LONG_MAX
+#else
+#define	OFFT_F			"%llu"
+#define	OFFT_FP(x)		"%" x "llu"
+#define	OFFT_T			u_longlong_t
+#define	ASC_OFFT(x,y,z)		asc_ull(x,y,z)
+#define	OFFT_ASC(w,x,y,z)	ull_asc((u_longlong_t)w,x,y,z)
+#define	OFFT_OCT(w,x,y,z)	ull_oct((u_longlong_t)w,x,y,z)
+#define	STRTOOFFT(x,y,z)	strtoll(x,y,z)
+#define	OFFT_MAX		ULLONG_MAX
+#endif
