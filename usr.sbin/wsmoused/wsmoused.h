@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.h,v 1.5 2003/08/06 23:58:40 jmmv Exp $ */
+/* $NetBSD: wsmoused.h,v 1.6 2004/01/05 12:01:52 jmmv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _WSMOUSED_WSMOUSED_H
 #define _WSMOUSED_WSMOUSED_H
 
+#include <stdbool.h>
+
 #define IS_MOTION_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_DELTA_X) || \
                                ((type) == WSCONS_EVENT_MOUSE_DELTA_Y) || \
                                ((type) == WSCONS_EVENT_MOUSE_DELTA_Z))
@@ -52,7 +54,7 @@ struct mode_bootstrap {
 	int  (*mb_startup)(struct mouse *);
 	int  (*mb_cleanup)(void);
 	void (*mb_wsmouse_event)(struct wscons_event);
-	void (*mb_wscons_event)(struct wscons_event);
+	void (*mb_wscons_event)(struct wscons_event, bool);
 	void (*mb_poll_timeout)(void);
 };
 
