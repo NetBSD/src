@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.17 2000/08/01 20:49:11 itojun Exp $
+# $NetBSD: network,v 1.18 2000/08/02 13:59:11 itojun Exp $
 #
 
 # PROVIDE: network
@@ -307,8 +307,8 @@ network_start()
 			    "ip6mode must be set to 'autohost' to use rtsol."
 			fi
 
-			# wait till DAD is completed. always invoke it in case
-			# if are configured manually by ifconfig
+			# wait till DAD is completed, for global addresses
+			# configured by router advert message.
 			#
 			sleep $dadcount
 			sleep 1
