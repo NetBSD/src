@@ -1,4 +1,4 @@
-/*	$NetBSD: sqphy.c,v 1.2 1998/11/04 22:15:41 thorpej Exp $	*/
+/*	$NetBSD: sqphy.c,v 1.3 1998/11/04 23:07:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
 
 struct sqphy_softc {
 	struct mii_softc sc_mii;		/* generic PHY */
-	int sc_capabilities;
 	int sc_ticks;
 	int sc_active;
 };
@@ -103,7 +102,6 @@ struct cfattach sqphy_ca = {
 
 int	sqphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	sqphy_reset __P((struct sqphy_softc *));
-void	sqphy_auto __P((struct sqphy_softc *));
 void	sqphy_status __P((struct sqphy_softc *));
 
 int
@@ -147,12 +145,14 @@ sqphyattach(parent, self, aux)
 
 	sqphy_reset(sc);
 
-	sc->sc_capabilities = PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
+	sc->sc_mii.mii_capabilities =
+	    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
-	if ((sc->sc_capabilities & BMSR_MEDIAMASK) == 0)
+	if ((sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->sc_capabilities, sc->sc_mii.mii_inst);
+		mii_add_media(mii, sc->sc_mii.mii_capabilities,
+		    sc->sc_mii.mii_inst);
 	printf("\n");
 #undef ADD
 }
@@ -200,7 +200,7 @@ sqphy_service(self, mii, cmd)
 			 */
 			if (PHY_READ(&sc->sc_mii, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
-			sqphy_auto(sc);
+			(void) mii_phy_auto(&sc->sc_mii);
 			break;
 		case IFM_100_T4:
 			/*
@@ -254,7 +254,7 @@ sqphy_service(self, mii, cmd)
 
 		sc->sc_ticks = 0;
 		sqphy_reset(sc);
-		sqphy_auto(sc);
+		(void) mii_phy_auto(&sc->sc_mii);
 		break;
 	}
 
@@ -307,29 +307,6 @@ sqphy_status(sc)
 		mii->mii_media_active |= IFM_10_T;
 	if (status & STATUS_DPLX_DET)
 		mii->mii_media_active |= IFM_FDX;
-}
-
-void
-sqphy_auto(sc)
-	struct sqphy_softc *sc;
-{
-	int bmsr, i;
-
-	PHY_WRITE(&sc->sc_mii, MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
-
-	/* Wait 500ms for it to complete. */
-	for (i = 0; i < 500; i++) {
-		if ((bmsr = PHY_READ(&sc->sc_mii, MII_BMSR)) & BMSR_ACOMP)
-			return;
-		delay(1000);
-	}
-#if 0
-	if ((bmsr & BMSR_ACOMP) == 0)
-		printf("%s: autonegotiation failed to complete\n",
-		    sc->sc_mii.mii_dev.dv_xname);
-#endif
 }
 
 void

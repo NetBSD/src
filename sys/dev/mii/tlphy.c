@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.12 1998/11/04 22:15:41 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.13 1998/11/04 23:07:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,6 @@
 
 struct tlphy_softc {
 	struct mii_softc sc_mii;		/* generic PHY */
-	int sc_capabilities;
 	int sc_ticks;
 	int sc_tlphycap;
 	int sc_active;
@@ -160,10 +159,10 @@ tlphyattach(parent, self, aux)
 	 */
 	sc->sc_tlphycap = tlsc->tl_product->tp_tlphymedia;
 	if ((sc->sc_tlphycap & TLPHY_MEDIA_NO_10_T) == 0)
-		sc->sc_capabilities =
+		sc->sc_mii.mii_capabilities =
 		    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
 	else
-		sc->sc_capabilities = 0;
+		sc->sc_mii.mii_capabilities = 0;
 
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 
@@ -188,9 +187,10 @@ tlphyattach(parent, self, aux)
 			PRINT("10base5/AUI");
 		}
 	}
-	if (sc->sc_capabilities & BMSR_MEDIAMASK) {
+	if (sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) {
 		printf(sep);
-		mii_add_media(mii, sc->sc_capabilities, sc->sc_mii.mii_inst);
+		mii_add_media(mii, sc->sc_mii.mii_capabilities,
+		    sc->sc_mii.mii_inst);
 	} else if ((sc->sc_tlphycap & (TLPHY_MEDIA_10_2 | TLPHY_MEDIA_10_5))
 	    == 0)
 		printf("no media present");
@@ -368,25 +368,10 @@ void
 tlphy_auto(sc)
 	struct tlphy_softc *sc;
 {
-	int aner, anlpar, bmsr, i;
+	int aner, anlpar;
 
-	PHY_WRITE(&sc->sc_mii, MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
-
-	/* Wait 500ms for it to complete. */
-	for (i = 0; i < 500; i++) {
-		if ((bmsr = PHY_READ(&sc->sc_mii, MII_BMSR)) & BMSR_ACOMP)
-			return;
-		delay(1000);
-	}
-	if ((bmsr & BMSR_ACOMP) == 0) {
-#if 0
-		printf("%s: autonegotiation failed to complete\n",
-		    sc->sc_mii.mii_dev.dv_xname);
-#endif
+	if (mii_phy_auto(&sc->sc_mii) == 0)
 		goto dflt;
-	}
 
 	/*
 	 * Grr, braindead ThunderLAN PHY doesn't self-configure

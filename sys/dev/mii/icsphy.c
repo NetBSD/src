@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.2 1998/11/04 22:15:40 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.3 1998/11/04 23:07:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,6 @@
 
 struct icsphy_softc {
 	struct mii_softc sc_mii;		/* generic PHY */
-	int sc_capabilities;
 	int sc_active;
 };
 
@@ -102,7 +101,6 @@ struct cfattach icsphy_ca = {
 
 int	icsphy_service __P((struct mii_softc *, struct mii_data *, int));
 void	icsphy_reset __P((struct icsphy_softc *));
-void	icsphy_auto __P((struct icsphy_softc *));
 void	icsphy_status __P((struct icsphy_softc *));
 
 int
@@ -146,12 +144,14 @@ icsphyattach(parent, self, aux)
 
 	icsphy_reset(sc);
 
-	sc->sc_capabilities = PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
+	sc->sc_mii.mii_capabilities =
+	    PHY_READ(&sc->sc_mii, MII_BMSR) & ma->mii_capmask;
 	printf("%s: ", sc->sc_mii.mii_dev.dv_xname);
-	if ((sc->sc_capabilities & BMSR_MEDIAMASK) == 0)
+	if ((sc->sc_mii.mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(mii, sc->sc_capabilities, sc->sc_mii.mii_inst);
+		mii_add_media(mii, sc->sc_mii.mii_capabilities,
+		    sc->sc_mii.mii_inst);
 	printf("\n");
 #undef ADD
 }
@@ -199,7 +199,7 @@ icsphy_service(self, mii, cmd)
 			 */
 			if (PHY_READ(&sc->sc_mii, MII_BMCR) & BMCR_AUTOEN)
 				return (0);
-			icsphy_auto(sc);
+			(void) mii_phy_auto(&sc->sc_mii);
 			break;
 		case IFM_100_T4:
 			/*
@@ -296,29 +296,6 @@ icsphy_status(sc)
 		mii->mii_media_active |= IFM_10_T;
 	if (qpr & QPR_FDX)
 		mii->mii_media_active |= IFM_FDX;
-}
-
-void
-icsphy_auto(sc)
-	struct icsphy_softc *sc;
-{
-	int bmsr, i;
-
-	PHY_WRITE(&sc->sc_mii, MII_ANAR,
-	    BMSR_MEDIA_TO_ANAR(sc->sc_capabilities) | ANAR_CSMA);
-	PHY_WRITE(&sc->sc_mii, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
-
-	/* Wait 500ms for it to complete. */
-	for (i = 0; i < 500; i++) {
-		if ((bmsr = PHY_READ(&sc->sc_mii, MII_BMSR)) & BMSR_ACOMP)
-			return;
-		delay(1000);
-	}
-#if 0
-	if ((bmsr & BMSR_ACOMP) == 0)
-		printf("%s: autonegotiation failed to complete\n",
-		    sc->sc_mii.mii_dev.dv_xname);
-#endif
 }
 
 void
