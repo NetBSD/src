@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.1 2003/02/04 01:21:05 thorpej Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.2 2003/02/04 10:14:53 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -414,8 +414,8 @@ db_show_callout_bucket(struct callout_circq *bucket)
 #endif
 		db_printf("%9d %2d/%-4d " POINTER_WIDTH "  %s\n",
 		    c->c_time - hardclock_ticks,
-		    (bucket - timeout_wheel) / WHEELSIZE,
-		    bucket - timeout_wheel, (u_long) c->c_arg, name);
+		    (int)((bucket - timeout_wheel) / WHEELSIZE),
+		    (int)(bucket - timeout_wheel), (u_long) c->c_arg, name);
 	}
 }
 
