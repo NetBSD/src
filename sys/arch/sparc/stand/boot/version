@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.16 2002/12/16 13:02:58 jdc Exp $
+$NetBSD: version,v 1.17 2003/03/01 13:01:56 pk Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -16,3 +16,4 @@ is taken as the current.
 1.11:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.12:	add prom patches for JavaStation-1
 1.13:	add additional match function pointer and prom patch Cycle 5 IP
+1.14:	search for physical memory segment and map to kernel's link address

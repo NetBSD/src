@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2003/02/25 08:09:30 pk Exp $ */
+/*	$NetBSD: boot.c,v 1.15 2003/03/01 13:01:56 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -57,7 +57,10 @@ int	debug;
 int	netif_debug;
 
 char	fbuf[80], dbuf[128];
-u_long	maxkernsize;
+paddr_t bstart, bend;	/* physical start & end address of the boot program */
+
+int	compatmode = 0;		/* For loading older kernels */
+u_long	loadaddrmask = -1UL;
 
 extern char bootprog_name[], bootprog_rev[], bootprog_date[], bootprog_maker[];
 
@@ -104,10 +107,69 @@ bootoptions(ap)
 	return (v);
 }
 
+static paddr_t getphysmem(u_long size)
+{
+	struct	memarr *pmemarr;	/* physical memory regions */
+	int	npmemarr;		/* number of entries in pmemarr */
+	struct memarr *mp;
+	int i;
+	extern char start[];	/* top of stack (see srt0.S) */
+
+	/*
+	 * Find the physical memory area that's in use by the boot loader.
+	 * Our stack grows down from label `start'; assume we need no more
+	 * than 16K of stack space.
+	 * The top of the boot loader is the next 4MB boundary.
+	 */
+	if (pmap_extract((vaddr_t)start - (16*1024), &bstart) != 0)
+		return ((paddr_t)-1);
+
+	bend = roundup(bstart, 0x400000);
+
+	/*
+	 * Get available physical memory from the prom.
+	 */
+	npmemarr = prom_makememarr(NULL, 0, MEMARR_AVAILPHYS);
+	pmemarr = alloc(npmemarr*sizeof(struct memarr));
+	if (pmemarr == NULL)
+		return ((paddr_t)-1);
+	npmemarr = prom_makememarr(pmemarr, npmemarr, MEMARR_AVAILPHYS);
+
+	/*
+	 * Find a suitable loading address.
+	 */
+	for (mp = pmemarr, i = npmemarr; --i >= 0; mp++) {
+		paddr_t pa = (paddr_t)pmemarr[i].addr;
+		u_long len = (u_long)pmemarr[i].len;
+
+		/* Check whether it will fit in front of us */
+		if (pa < bstart && len >= size && (bstart - pa) >= size)
+			return (pa);
+
+		/* Skip the boot program memory */
+		if (pa < bend) {
+			if (len < bend - pa)
+				/* Not large enough */
+				continue;
+
+			/* Shrink this segment */
+			len -=  bend - pa;
+			pa = bend;
+		}
+
+		/* Does it fit in the remainder of this segment? */
+		if (len >= size)
+			return (pa);
+	}
+	return ((paddr_t)-1);
+}
+
 static int
 loadk(char *kernel, u_long *marks)
 {
 	int fd, error;
+	vaddr_t va;
+	paddr_t pa;
 	u_long size;
 
 	if ((fd = open(kernel, 0)) < 0)
@@ -118,13 +180,34 @@ loadk(char *kernel, u_long *marks)
 		goto out;
 
 	size = marks[MARK_END] - marks[MARK_START];
-	if (size > maxkernsize) {
-		printf("kernel too large: %lu"
-			" (maximum kernel size is %lu)\n",
-			marks[MARK_END] - marks[MARK_START],
-			maxkernsize);
+
+	/* We want that leading 4K in front of the kernel image */
+	size += PROM_LOADADDR;
+	va = marks[MARK_START] - PROM_LOADADDR;
+
+	/* Extra space for bootinfo and kernel bootstrap */
+	size += 512 * 1024;
+
+	/* Get a physical load address */
+	pa = getphysmem(size);
+	if (pa == (paddr_t)-1) {
 		error = EFBIG;
 		goto out;
+	}
+
+	if (boothowto & AB_VERBOSE)
+		printf("Loading at physical address %lx\n", pa);
+	if (pmap_map(va, pa, size) != 0) {
+		error = EFAULT;
+		goto out;
+	}
+
+	/* XXX - to do: inspect kernel image and set compat mode */
+	if (compatmode) {
+		/* Double-map at VA 0 for compatibility; ignore errors */
+		if (pa + size < bstart)
+			(void)pmap_map(0, pa, size);
+		loadaddrmask = 0x07ffffffUL;
 	}
 
 	marks[MARK_START] = 0;
@@ -149,17 +232,8 @@ main()
 		setheap((void *)ALIGN(end), (void *)0xffffffff);
 	}
 #endif
-	{
-		/*
-		 * Find maximum the kernel size that we can handle.
-		 * Our stack grows down from label `start'; assume
-		 * we need no more that 16K of stack space.
-		 */
-		extern char start[];	/* top of stack (see srt0.S) */
-		maxkernsize = (u_long)start - (16*1024) - PROM_LOADADDR;
-		
-	}
 	prom_init();
+	mmu_init();
 
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
@@ -228,21 +302,20 @@ main()
 		}
 	}
 
-	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(int) - 1)) &
-	    (-sizeof(int));
+	marks[MARK_END] = (((u_long)marks[MARK_END] + sizeof(u_long) - 1)) &
+	    (-sizeof(u_long));
 	arg = (prom_version() == PROM_OLDMON) ? (caddr_t)PROM_LOADADDR : romp;
 
-	/* Should work with both a.out and ELF, but somehow ELF is busted */
-	bootinfo = bi_init(marks[MARK_END]);
+	/* Setup boot info structure at the end of the kernel image */
+	bootinfo = bi_init(marks[MARK_END] & loadaddrmask);
 
-	bi_sym.nsym = marks[MARK_NSYM];
-	bi_sym.ssym = marks[MARK_SYM];
-	bi_sym.esym = marks[MARK_END];
+	/* Add kernel symbols to bootinfo */
+	bi_sym.nsym = marks[MARK_NSYM] & loadaddrmask;
+	bi_sym.ssym = marks[MARK_SYM] & loadaddrmask;
+	bi_sym.esym = marks[MARK_END] & loadaddrmask;
 	bi_add(&bi_sym, BTINFO_SYMTAB, sizeof(bi_sym));
 
-	/*
-	 * Add kernel path to bootinfo
-	 */
+	/* Add kernel path to bootinfo */
 	i = sizeof(struct btinfo_common) + strlen(kernel) + 1;
 	/* Impose limit (somewhat arbitrary) */
 	if (i < BOOTINFO_SIZE / 2) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.16 2003/02/26 17:39:07 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.17 2003/03/01 13:01:56 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1168,6 +1168,10 @@ prom_init_opf()
 void
 prom_init()
 {
+#ifdef _STANDALONE
+	int node;
+	char *cp;
+#endif
 
 	if (CPU_ISSUN4) {
 		prom_init_oldmon();
@@ -1179,4 +1183,35 @@ prom_init()
 		 */
 		prom_init_opf();
 	}
+
+#ifdef _STANDALONE
+	/*
+	 * Find out what type of machine we're running on.
+	 *
+	 * This process is actually started in srt0.S, which has discovered
+	 * the minimal set of machine specific parameters for the 1st-level
+	 * boot program (bootxx) to run. The page size has already been set
+	 * and the CPU type is either CPU_SUN4 or CPU_SUN4C.
+	 */
+
+	if (cputyp == CPU_SUN4)
+		return;
+
+	/*
+	 * We have SUN4C, SUN4M or SUN4D.
+	 * Use the PROM `compatible' property to determine which.
+	 * Absence of the `compatible' property means `sun4c'.
+	 */
+
+	node = prom_findroot();
+	cp = PROM_getpropstring(node, "compatible");
+	if (*cp == '\0' || strcmp(cp, "sun4c") == 0)
+		cputyp = CPU_SUN4C;
+	else if (strcmp(cp, "sun4m") == 0)
+		cputyp = CPU_SUN4M;
+	else if (strcmp(cp, "sun4d") == 0)
+		cputyp = CPU_SUN4D;
+	else
+		printf("Unknown CPU type (compatible=`%s')\n", cp);
+#endif /* _STANDALONE */
 }
