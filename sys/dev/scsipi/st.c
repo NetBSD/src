@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.98 1998/08/06 10:20:39 drochner Exp $ */
+/*	$NetBSD: st.c,v 1.99 1998/08/10 16:56:25 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -353,7 +353,7 @@ struct scsipi_device st_switch = {
 
 #define	ST_INFO_VALID	0x0001
 #define	ST_BLOCK_SET	0x0002	/* block size, mode set by ioctl      */
-#define	ST_WRITTEN	0x0004	/* data have been written, EOD needed */
+#define	ST_WRITTEN	0x0004	/* data has been written, EOD needed */
 #define	ST_FIXEDBLOCKS	0x0008
 #define	ST_AT_FILEMARK	0x0010
 #define	ST_EIO_PENDING	0x0020	/* error reporting deferred until next op */
@@ -658,17 +658,50 @@ stclose(dev, flags, mode, p)
 	 */
 
 	stxx = st->flags & (ST_WRITTEN | ST_FM_WRITTEN);
-	if (stxx == ST_WRITTEN || ((flags & O_ACCMODE) == FWRITE && stxx == 0))
-		error = st_check_eod(st, FALSE, &stxx, 0); /* recycling stxx */
+	if (((flags & FWRITE) && stxx == ST_WRITTEN) ||
+	    ((flags & O_ACCMODE) == FWRITE && stxx == 0)) {
+		int nm;
+		error = st_check_eod(st, FALSE, &nm, 0);
+	}
+
 	switch (STMODE(dev)) {
 	case NORMAL_MODE:
 		st_unmount(st, NOEJECT);
 		break;
 	case NOREW_MODE:
 	case CTRL_MODE:
-		/* leave mounted unless media seems to have been removed */
-		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED))
+		/*
+		 * Leave mounted unless media seems to have been removed.
+		 *
+		 * Otherwise, if we're to terminate a tape with more than one
+		 * filemark [ and because we're not rewinding here ], backspace
+		 * one filemark so that later appends will see an unbroken
+		 * sequence of:
+		 *
+		 *	file - FMK - file - FMK ... file - FMK FMK (EOM)
+		 */
+		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED)) {
 			st_unmount(st, NOEJECT);
+		} else if (error == 0) {
+			/*
+			 * ST_WRITTEN was preserved from above.
+			 *
+			 * All we need to know here is:
+			 *
+			 *	Were we writing this tape and was the last
+			 *	operation a write?
+			 *
+			 *	Are there supposed to be 2FM at EOD?
+			 *	
+			 * If both statements are true, then we backspace
+			 * one filemark.
+			 */
+			stxx |= (st->flags & ST_2FM_AT_EOD);
+			if ((flags & FWRITE) != 0 &&
+			    (stxx == (ST_2FM_AT_EOD|ST_WRITTEN))) {
+				error = st_space(st, -1, SP_FILEMARKS, 0);
+			}
+		}
 		break;
 	case EJECT_MODE:
 		st_unmount(st, EJECT);
@@ -1136,6 +1169,8 @@ stdone(xs)
 		struct st_softc *st = xs->sc_link->device_softc;
 		if ((xs->bp->b_flags & B_READ) == B_WRITE) {
 			st->flags |= ST_WRITTEN;
+		} else {
+			st->flags &= ~ST_WRITTEN;
 		}
 #if NRND > 0
 		rnd_add_uint32(&st->rnd_source, xs->bp->b_blkno);
