@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.8 2004/02/06 14:29:51 itohy Exp $
+#	$NetBSD: updatedb.sh,v 1.9 2004/04/19 01:05:22 lukem Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,7 @@ CONF=/etc/locate.conf			# configuration file
 
 PATH="/bin:/usr/bin"
 
-ignorefs_default='! -fstype local -o -fstype cd9660 -o -fstype fdesc -o -fstype kernfs -o -fstype procfs'
-ignorefs=unset
+ignorefs='! -fstype local -o -fstype cd9660 -o -fstype fdesc -o -fstype kernfs -o -fstype procfs'
 ignore=
 SRCHPATHS=
 
@@ -63,34 +62,22 @@ if [ -f "$CONF" ]; then
 			SRCHPATHS="$SRCHPATHS $args";;
 		ignorefs)
 			for i in $args; do
-				case "$args" in
+				case "$i" in
 				none)	ignorefs=;;
 				*)	fs=`echo "$i" | sed -e 's/^!/! -fstype /' -e t -e 's/^/-fstype /'`
-					case "$ignorefs" in
-					''|unset)
-						ignorefs="$fs";;
-					*)	ignorefs="$ignorefs -o $fs";;
-					esac;;
+					ignorefs="${ignorefs:+${ignorefs} -o }${fs}"
 				esac
 			done;;
 		ignore)
 			set -f
 			for i in $args; do
-				case "$ignore" in
-				'')	;;
-				*)	ignore="$ignore -o";;
-				esac
-				ignore="$ignore -path $i"
+				ignore="${ignore:+${ignore} -o }-path ${i}"
 			done
 			set +f;;
 		ignorecontents)
 			set -f
 			for i in $args; do
-				case "$ignore" in
-				'')	;;
-				*)	ignore="$ignore -o";;
-				esac
-				ignore="$ignore -path $i -print"
+				ignore="${ignore:+${ignore} -o }-path ${i} -print"
 			done
 			set +f;;
 		workdir)
@@ -106,11 +93,6 @@ if [ -f "$CONF" ]; then
 	done
 	exec <&5 5>&-
 fi
-
-# default value when "ignorefs" is absent
-case "$ignorefs" in
-unset)	ignorefs=$ignorefs_default;;
-esac
 
 : ${SRCHPATHS:=/}			# directories to be put in the database
 export TMPDIR
