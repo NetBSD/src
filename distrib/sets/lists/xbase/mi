@@ -336,6 +336,7 @@
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/O2
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indigo
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indy
+./usr/X11R6/lib/X11/xkb/geometry/sharp
 ./usr/X11R6/lib/X11/xkb/geometry/sony
 ./usr/X11R6/lib/X11/xkb/geometry/sun
 ./usr/X11R6/lib/X11/xkb/geometry/winbook
@@ -355,6 +356,7 @@
 ./usr/X11R6/lib/X11/xkb/keycodes/sgi/iris
 ./usr/X11R6/lib/X11/xkb/keycodes/sony
 ./usr/X11R6/lib/X11/xkb/keycodes/sun
+./usr/X11R6/lib/X11/xkb/keycodes/x68k
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree86
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree98
 ./usr/X11R6/lib/X11/xkb/keymap
@@ -392,6 +394,7 @@
 ./usr/X11R6/lib/X11/xkb/keymap/sun
 ./usr/X11R6/lib/X11/xkb/keymap/sun/de
 ./usr/X11R6/lib/X11/xkb/keymap/sun/us
+./usr/X11R6/lib/X11/xkb/keymap/x68k
 ./usr/X11R6/lib/X11/xkb/keymap/xfree86
 ./usr/X11R6/lib/X11/xkb/keymap/xfree98
 ./usr/X11R6/lib/X11/xkb/rules
