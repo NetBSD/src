@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 by Internet Software Consortium, Inc.
+ * Copyright (c) 1999-2001 by Internet Software Consortium, Inc.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,12 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: ns_sign.c,v 1.1.1.1 2000/04/22 07:11:54 mellon Exp $";
+static const char rcsid[] = "$Id: ns_sign.c,v 1.1.1.2 2001/04/02 21:57:09 mellon Exp $";
+#endif
+
+#if defined (TRACING)
+#define time(x)		trace_mr_time (x)
+time_t trace_mr_time (time_t *);
 #endif
 
 /* Import. */
@@ -44,8 +49,7 @@ static const char rcsid[] = "$Id: ns_sign.c,v 1.1.1.1 2000/04/22 07:11:54 mellon
 #define BOUNDS_CHECK(ptr, count) \
 	do { \
 		if ((ptr) + (count) > eob) { \
-			errno = EMSGSIZE; \
-			return(NS_TSIG_ERROR_NO_SPACE); \
+			return ISC_R_NOSPACE; \
 		} \
 	} while (0)
 
@@ -68,7 +72,7 @@ static const char rcsid[] = "$Id: ns_sign.c,v 1.1.1.1 2000/04/22 07:11:54 mellon
  *	- bad key / sign failed (-BADKEY)
  *	- not enough space (NS_TSIG_ERROR_NO_SPACE)
  */
-int
+isc_result_t
 ns_sign(u_char *msg, unsigned *msglen, unsigned msgsize, int error, void *k,
 	const u_char *querysig, unsigned querysiglen, u_char *sig,
 	unsigned *siglen, time_t in_timesigned)
@@ -83,7 +87,7 @@ ns_sign(u_char *msg, unsigned *msglen, unsigned msgsize, int error, void *k,
 
 	dst_init();
 	if (msg == NULL || msglen == NULL || sig == NULL || siglen == NULL)
-		return (-1);
+		ISC_R_INVALIDARG;
 
 	/* Name. */
 	if (key != NULL && error != ns_r_badsig && error != ns_r_badkey)
@@ -92,7 +96,7 @@ ns_sign(u_char *msg, unsigned *msglen, unsigned msgsize, int error, void *k,
 	else
 		n = dn_comp("", cp, (unsigned)(eob - cp), NULL, NULL);
 	if (n < 0)
-		return (NS_TSIG_ERROR_NO_SPACE);
+		return ISC_R_NOSPACE;
 	name = cp;
 	cp += n;
 
@@ -107,14 +111,14 @@ ns_sign(u_char *msg, unsigned *msglen, unsigned msgsize, int error, void *k,
 	/* Alg. */
 	if (key != NULL && error != ns_r_badsig && error != ns_r_badkey) {
 		if (key->dk_alg != KEY_HMAC_MD5)
-			return (-ns_r_badkey);
+			return ISC_R_BADKEY;
 		n = dn_comp(NS_TSIG_ALG_HMAC_MD5,
 			    cp, (unsigned)(eob - cp), NULL, NULL);
 	}
 	else
 		n = dn_comp("", cp, (unsigned)(eob - cp), NULL, NULL);
 	if (n < 0)
-		return (NS_TSIG_ERROR_NO_SPACE);
+		ISC_R_NOSPACE;
 	alg = cp;
 	cp += n;
 	
@@ -186,7 +190,7 @@ ns_sign(u_char *msg, unsigned *msglen, unsigned msgsize, int error, void *k,
 		n = dst_sign_data(SIG_MODE_FINAL, key, &ctx, NULL, 0,
 				  sig, *siglen);
 		if (n < 0)
-			return (-ns_r_badkey);
+			ISC_R_BADKEY;
 		*siglen = n;
 	} else
 		*siglen = 0;
@@ -218,28 +222,29 @@ ns_sign(u_char *msg, unsigned *msglen, unsigned msgsize, int error, void *k,
 
 	hp->arcount = htons(ntohs(hp->arcount) + 1);
 	*msglen = (cp - msg);
-	return (0);
+	return ISC_R_SUCCESS;
 }
 
-int
+#if 0
+isc_result_t
 ns_sign_tcp_init(void *k, const u_char *querysig, unsigned querysiglen,
 		 ns_tcp_tsig_state *state)
 {
 	dst_init();
 	if (state == NULL || k == NULL || querysig == NULL || querysiglen < 0)
-		return (-1);
+		return ISC_R_INVALIDARG;
 	state->counter = -1;
 	state->key = k;
 	if (state->key->dk_alg != KEY_HMAC_MD5)
-		return (-ns_r_badkey);
+		return ISC_R_BADKEY;
 	if (querysiglen > sizeof(state->sig))
-		return (-1);
+		return ISC_R_NOSPACE;
 	memcpy(state->sig, querysig, querysiglen);
 	state->siglen = querysiglen;
-	return (0);
+	return ISC_R_SUCCESS;
 }
 
-int
+isc_result_t
 ns_sign_tcp(u_char *msg, unsigned *msglen, unsigned msgsize, int error,
 	    ns_tcp_tsig_state *state, int done)
 {
@@ -250,13 +255,13 @@ ns_sign_tcp(u_char *msg, unsigned *msglen, unsigned msgsize, int error,
 	int n;
 
 	if (msg == NULL || msglen == NULL || state == NULL)
-		return (-1);
+		return ISC_R_INVALIDARG;
 
 	state->counter++;
 	if (state->counter == 0)
-		return (ns_sign(msg, msglen, msgsize, error, state->key,
-				state->sig, state->siglen,
-				state->sig, &state->siglen, 0));
+		return ns_sign(msg, msglen, msgsize, error, state->key,
+			       state->sig, state->siglen,
+			       state->sig, &state->siglen, 0);
 
 	if (state->siglen > 0) {
 		u_int16_t siglen_n = htons(state->siglen);
@@ -273,7 +278,7 @@ ns_sign_tcp(u_char *msg, unsigned *msglen, unsigned msgsize, int error,
 		      NULL, 0);
 
 	if (done == 0 && (state->counter % 100 != 0))
-		return (0);
+		return ISC_R_SUCCESS;
 
 	cp = msg + *msglen;
 	eob = msg + msgsize;
@@ -282,7 +287,7 @@ ns_sign_tcp(u_char *msg, unsigned *msglen, unsigned msgsize, int error,
 	n = dn_comp(state->key->dk_key_name,
 		    cp, (unsigned)(eob - cp), NULL, NULL);
 	if (n < 0)
-		return (NS_TSIG_ERROR_NO_SPACE);
+		return ISC_R_NOSPACE;
 	cp += n;
 
 	/* Type, class, ttl, length (not filled in yet). */
@@ -297,7 +302,7 @@ ns_sign_tcp(u_char *msg, unsigned *msglen, unsigned msgsize, int error,
 	n = dn_comp(NS_TSIG_ALG_HMAC_MD5,
 		    cp, (unsigned)(eob - cp), NULL, NULL);
 	if (n < 0)
-		return (NS_TSIG_ERROR_NO_SPACE);
+		return ISC_R_NOSPACE;
 	cp += n;
 	
 	/* Time. */
@@ -323,7 +328,7 @@ ns_sign_tcp(u_char *msg, unsigned *msglen, unsigned msgsize, int error,
 	n = dst_sign_data(SIG_MODE_FINAL, state->key, &state->ctx, NULL, 0,
 			  state->sig, sizeof(state->sig));
 	if (n < 0)
-		return (-ns_r_badkey);
+		return ISC_R_BADKEY;
 	state->siglen = n;
 
 	/* Add the signature. */
@@ -346,5 +351,6 @@ ns_sign_tcp(u_char *msg, unsigned *msglen, unsigned msgsize, int error,
 
 	hp->arcount = htons(ntohs(hp->arcount) + 1);
 	*msglen = (cp - msg);
-	return (0);
+	return ISC_R_SUCCESS;
 }
+#endif
