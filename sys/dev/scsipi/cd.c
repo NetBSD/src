@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: cd.c,v 1.21 1994/01/11 17:21:57 mycroft Exp $
+ *	$Id: cd.c,v 1.22 1994/02/06 10:05:54 mycroft Exp $
  */
 
 #define SPLCD splbio
@@ -471,7 +471,7 @@ cdstart(int unit)
 	dp = &cd_buf_queue[unit];
 	if ((bp = dp->b_actf) != NULL)	/* yes, an assign */
 	{
-		dp->b_actf = bp->av_forw;
+		dp->b_actf = bp->b_actf;
 	}
 	else
 	{ 
