@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.32 1998/12/29 08:59:14 marc Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.33 1999/01/01 19:30:52 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.29 1998/12/29 08:58:37 marc Exp 
+ *	NetBSD: pcmciadevs,v 1.30 1999/01/01 19:30:03 christos Exp 
  */
 
 /*-
@@ -197,6 +197,9 @@
 #define	PCMCIA_CIS_TDK_XIR_PS_CE2_10	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_TDK_XIR_PS_CE2_10	0x010b
 #define	PCMCIA_STR_TDK_XIR_PS_CE2_10	"Xircom CreditCard CE2 Ethernet"
+#define	PCMCIA_CIS_TDK_XIR_CNW	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_TDK_XIR_CNW	0x0802
+#define	PCMCIA_STR_TDK_XIR_CNW	"Xircom CreditCard Netwave"
 
 /* NewMedia Products */
 #define	PCMCIA_CIS_NEWMEDIA_BASICS	{ NULL, NULL, NULL, NULL }
