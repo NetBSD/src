@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.4 2000/08/29 08:24:06 wdk Exp $	*/
+/*	$NetBSD: asc.c,v 1.5 2000/09/04 22:28:53 wdk Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -258,7 +258,7 @@ static __inline void
 check_fifo(esc)
 	struct asc_softc *esc;
 {
-	register int i=16;
+	register int i=100;
 	
 	while (i && !(bus_space_read_4(esc->sc_bst, esc->dm_bsh,
 				       RAMBO_MODE) & RB_FIFO_EMPTY)) {
@@ -320,12 +320,6 @@ asc_dma_setup(sc, addr, len, datain, dmasize)
 	}
 #endif
 
-	/* Flush FIFO from previous operation */
-
-	bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE,
-			  RB_CLRFIFO|RB_CLRERROR);
- 	bus_space_write_4(esc->sc_bst, esc->dm_bsh, RAMBO_MODE, 0);
-
 	esc->sc_dmaaddr = addr;
 	esc->sc_dmalen  = len;
 	esc->sc_dmasize = *dmasize;
@@ -333,6 +327,9 @@ asc_dma_setup(sc, addr, len, datain, dmasize)
 
 	NCR_DMA(("asc_dma_setup va=%p len=%d datain=%d count=%d\n",
 		 *addr, *len, datain, esc->sc_dmasize));
+
+	if (esc->sc_dmasize == 0)
+		return 0;
 
 	/* have dmamap for the transfering addresses */
 	if (err=bus_dmamap_load(esc->sc_dmat, esc->sc_dmamap,
@@ -367,15 +364,12 @@ asc_dma_setup(sc, addr, len, datain, dmasize)
 	prime = (u_int32_t)*esc->sc_dmaaddr & 0x3f;
 	if (prime) {
 		if (esc->sc_flags & DMA_PULLUP) {
+			/* Read from NCR 53c94 controller*/
 			u_int16_t *p;
 
 			p = (u_int16_t *)((u_int32_t)*esc->sc_dmaaddr & ~0x3f);
-			/* Read from NCR 53c94 controller*/
-			while (prime > 0) {
-				bus_space_write_2(esc->sc_bst, esc->dm_bsh,
-						  RAMBO_FIFO, *p++);
-				prime -= 2;
-			}
+			bus_space_write_multi_2(esc->sc_bst, esc->dm_bsh,
+						RAMBO_FIFO, p, prime>>1);
 		} else {
 			/* Fetch the first block */
 			bus_space_write_2(esc->sc_bst, esc->dm_bsh,
@@ -424,13 +418,21 @@ asc_dma_intr(sc)
 	}
 #endif
 
-	if ((resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
+	resid = 0;
+	if (!(esc->sc_flags & DMA_PULLUP) &&
+	    (resid = (NCR_READ_REG(sc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("asc_intr: empty FIFO of %d ", resid));
 		DELAY(10);
 	}
 
-	resid = (tcl = NCR_READ_REG(sc, NCR_TCL)) +
+	resid += (tcl = NCR_READ_REG(sc, NCR_TCL)) +
 		((tcm = NCR_READ_REG(sc, NCR_TCM)) << 8);
+
+	if (esc->sc_dmasize == 0) { /* Transfer pad operation */
+		NCR_DMA(("asc_intr: discard %d bytes\n", resid));
+		return 0;
+	}
+	
 	trans = esc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
 		printf("asc_intr: xfer (%d) > req (%d)\n",
@@ -456,12 +458,10 @@ asc_dma_intr(sc)
 			/* find the starting address of fractional data */
 			p = (u_int16_t *)MIPS_PHYS_TO_KSEG0(ptr+(resid<<1));
 
-			/* XXX - disable DMA xfer before flushing FIFO ? */
+			/* duplicate trailing data to FIFO for force flush */
 			len = RB_BLK_CNT - resid;
-			while (len--) {
-				bus_space_write_2(esc->sc_bst, esc->dm_bsh,
-						  RAMBO_FIFO, *p++);
-			}
+			bus_space_write_multi_2(esc->sc_bst, esc->dm_bsh,
+						RAMBO_FIFO, p, len);
 			check_fifo(esc);
 		} else {		/* SCSI Write */
 			bus_space_write_4(esc->sc_bst, esc->dm_bsh, 
@@ -520,9 +520,6 @@ rambo_dma_chain(esc)
 	paddr_t paddr;
 
 	seg = ++esc->dm_curseg;
-
-	if (!(esc->sc_flags & DMA_PULLUP)) /* Wait for FIFO during write */
-		check_fifo(esc);
 
 #ifdef DIAGNOSTIC
 	if (!(esc->sc_flags & DMA_ACTIVE) || seg > esc->sc_dmamap->dm_nsegs)
