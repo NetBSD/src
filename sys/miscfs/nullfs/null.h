@@ -1,4 +1,4 @@
-/*	$NetBSD: null.h,v 1.2 1994/06/29 06:34:31 cgd Exp $	*/
+/*	$NetBSD: null.h,v 1.3 1994/08/19 11:25:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,8 +53,7 @@ struct null_mount {
  * A cache of vnode references
  */
 struct null_node {
-	struct null_node	*null_forw;	/* Hash chain */
-	struct null_node	*null_back;
+	LIST_ENTRY(null_node)	null_hash;	/* Hash list */
 	struct vnode	        *null_lowervp;	/* VREFed once */
 	struct vnode		*null_vnode;	/* Back pointer */
 };
