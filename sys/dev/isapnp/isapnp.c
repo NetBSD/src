@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.9.4.4 1998/11/24 07:53:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -214,6 +214,8 @@ isapnp_alloc_region(t, r)
 #endif
 		if (error == 0)
 			return 0;
+		if (r->align == 0)
+			break;
 	}
 	return error;
 }
