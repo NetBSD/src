@@ -30,13 +30,16 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: adbsys.c,v 1.4 1994/07/30 04:21:42 lkestel Exp $
+ * $Id: adbsys.c,v 1.5 1994/09/12 03:54:05 briggs Exp $
  *
  */
 
 /*
  * $Log: adbsys.c,v $
- * Revision 1.4  1994/07/30 04:21:42  lkestel
+ * Revision 1.5  1994/09/12 03:54:05  briggs
+ * Remove need for "bounds.h."  Brad can still use it if he wants ;-)
+ *
+ * Revision 1.4  1994/07/30  04:21:42  lkestel
  * Moved adbsys.h grfioctl.h and keyboard.h to include to make desktop
  * and X compile more cleanly.
  *
@@ -64,7 +67,8 @@
 #include <sys/systm.h>
 #include "../mac68k/via.h"
 #include <machine/adbsys.h>
-#include "bounds.h"
+/* #include "bounds.h" */
+#define CHECKBOUNDS(arg1, arg2)
 
 extern unsigned char keyboard[128][3];
 
