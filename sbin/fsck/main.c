@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	5.27 (Berkeley) 8/7/90";*/
-static char rcsid[] = "$Id: main.c,v 1.9 1993/10/06 00:52:07 cgd Exp $";
+static char rcsid[] = "$Id: main.c,v 1.10 1993/10/15 15:15:25 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -281,11 +281,13 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	zlnhead = (struct zlncnt *)0;
 	duplist = (struct dups *)0;
 	inocleanup();
+#ifdef notyet
 	if (!clean && !nflag && fswritefd != -1) {
 		sblock.fs_state = FSOKAY;
 		sblock.fs_clean = FS_CLEANFREQ;
 		fsmodified = 1;
 	}
+#endif
 	if (fsmodified) {
 		(void)time(&sblock.fs_time);
 		sbdirty();
