@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.100 2000/11/03 09:07:25 toddpw Exp $
+$NetBSD: pcmciadevs,v 1.101 2000/11/10 01:02:32 hubertf Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,7 @@ vendor COREGA			0xc00f	Corega K.K.
 vendor ALLIEDTELESIS		0xc00f	Allied Telesis K.K.
 vendor HAGIWARASYSCOM		0xc012	Hagiwara SYS-COM
 vendor RATOC			0xc015  RATOC System Inc.
+vendor ELSA			0xd601  Elsa 
 
 /*
  * List of known products.  Grouped by vendor.
@@ -116,6 +117,10 @@ product DAYNA COMMUNICARD_E_2	0x002f Dayna CommuniCard E
 
 /* DIGITAL Products */
 product DIGITAL MOBILE_MEDIA_CDROM 0x0d00 Digital Mobile Media CD-ROM
+
+/* ELSA Products */
+product ELSA MC2_IEEE		0x0001 AirLancer MC-2 IEEE
+product ELSA XI300_IEEE		0x0002 XI300 Wireless LAN
 
 /* Fujutsu Products */
 product FUJITSU SCSI600		0x0401 Fujitsu SCSI 600 Interface
