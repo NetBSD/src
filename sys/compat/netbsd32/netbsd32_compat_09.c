@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_09.c,v 1.11.2.1 2004/08/03 10:44:21 skrll Exp $	*/
+/*	$NetBSD: netbsd32_compat_09.c,v 1.11.2.2 2004/09/18 14:43:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.11.2.1 2004/08/03 10:44:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_09.c,v 1.11.2.2 2004/09/18 14:43:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

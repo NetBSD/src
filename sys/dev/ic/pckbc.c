@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.26.2.1 2004/08/03 10:46:18 skrll Exp $ */
+/* $NetBSD: pckbc.c,v 1.26.2.2 2004/09/18 14:46:00 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.26.2.1 2004/08/03 10:46:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.26.2.2 2004/09/18 14:46:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900var.h,v 1.2.46.1 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: am79900var.h,v 1.2.46.2 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

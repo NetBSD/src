@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.184.2.2 2004/08/12 11:42:04 skrll Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.184.2.3 2004/09/18 14:50:23 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.

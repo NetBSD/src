@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258.c,v 1.10.10.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: msm6258.c,v 1.10.10.2 2004/09/18 14:45:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.10.10.1 2004/08/03 10:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msm6258.c,v 1.10.10.2 2004/09/18 14:45:59 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>

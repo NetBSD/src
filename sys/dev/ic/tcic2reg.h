@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2reg.h,v 1.1.42.1 2004/08/03 10:46:20 skrll Exp $	*/
+/*	$NetBSD: tcic2reg.h,v 1.1.42.2 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

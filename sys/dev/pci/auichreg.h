@@ -1,4 +1,4 @@
-/*	$NetBSD: auichreg.h,v 1.5.2.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: auichreg.h,v 1.5.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Michael Shalayeff

@@ -1,4 +1,4 @@
-/* $NetBSD: dnload.h-dist,v 1.3.10.1 2004/08/03 10:48:32 skrll Exp $ */
+/* $NetBSD: dnload.h-dist,v 1.3.10.2 2004/09/18 14:48:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

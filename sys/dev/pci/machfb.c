@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.14.2.2 2004/08/03 10:49:09 skrll Exp $	*/
+/*	$NetBSD: machfb.c,v 1.14.2.3 2004/09/18 14:49:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.14.2.2 2004/08/03 10:49:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.14.2.3 2004/09/18 14:49:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ struct wsscreen_list mach64_screenlist = {
 	_mach64_scrlist
 };
 
-int	mach64_ioctl(void *, u_long, caddr_t, int, struct lwp *);
+int	mach64_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t	mach64_mmap(void *, off_t, int);
 int	mach64_alloc_screen(void *, const struct wsscreen_descr *, void **,
 	    int *, int *, long *);
@@ -1226,7 +1226,7 @@ mach64_eraserows(void *cookie, int row, int nrows, long fillattr)
  */
 
 int
-mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct lwp *l)
+mach64_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 
 	return ENOTTY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.62.2.1 2004/08/03 10:47:58 skrll Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.62.2.2 2004/09/18 14:47:46 skrll Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62.2.1 2004/08/03 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.62.2.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -220,7 +220,7 @@ iyprobe(parent, match, aux)
 
 	iot = ia->ia_iot;
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return 0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh))
@@ -267,7 +267,7 @@ iyprobe(parent, match, aux)
 	if (eepromreadall(iot, ioh, eaddr, 8))
 		goto out;
 	
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		irq = eepro_irqmap[eaddr[EEPPW1] & EEPP_Int];
 	else
 		irq = ia->ia_irq[0].ir_irq;

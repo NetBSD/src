@@ -1,4 +1,4 @@
-/*	$NetBSD: ahavar.h,v 1.11.22.1 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: ahavar.h,v 1.11.22.2 2004/09/18 14:45:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.2.1 2004/08/03 10:42:46 skrll Exp $
+# $NetBSD: GENERIC,v 1.90.2.2 2004/09/18 14:42:23 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.2.1 $"
+#ident 		"GENERIC-$Revision: 1.90.2.2 $"
 
 maxusers	8
 
@@ -200,6 +200,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
+#options 	PIM		# Protocol Independent Multicast
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
 #options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP

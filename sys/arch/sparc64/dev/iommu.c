@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.65.2.1 2004/08/03 10:41:23 skrll Exp $	*/
+/*	$NetBSD: iommu.c,v 1.65.2.2 2004/09/18 14:41:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.65.2.1 2004/08/03 10:41:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.65.2.2 2004/09/18 14:41:04 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.3.4.2 2004/08/03 10:43:04 skrll Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.3.4.3 2004/09/18 14:42:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.3.4.2 2004/08/03 10:43:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.3.4.3 2004/09/18 14:42:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

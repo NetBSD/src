@@ -1,4 +1,4 @@
-/*	$NetBSD: cnode.h,v 1.11.2.1 2004/08/03 10:43:19 skrll Exp $	*/
+/*	$NetBSD: cnode.h,v 1.11.2.2 2004/09/18 14:43:02 skrll Exp $	*/
 
 /*
  * 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.14.2.1 2004/08/12 11:42:05 skrll Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.14.2.2 2004/09/18 14:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.14.2.1 2004/08/12 11:42:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.14.2.2 2004/09/18 14:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,8 @@ const size_t pcmcom_nproducts =
     sizeof(pcmcom_products) / sizeof(pcmcom_products[0]);
 
 int	pcmcom_print __P((void *, const char *));
-int	pcmcom_submatch __P((struct device *, struct cfdata *, void *));
+int	pcmcom_submatch __P((struct device *, struct cfdata *,
+			     const locdesc_t *, void *));
 
 int	pcmcom_enable __P((struct pcmcom_softc *));
 void	pcmcom_disable __P((struct pcmcom_softc *));
@@ -153,6 +154,8 @@ pcmcom_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	int slave;
 	int error;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	sc->sc_pf = pa->pf;
 
@@ -180,8 +183,12 @@ pcmcom_attach(parent, self, aux)
 		pca.pca_ioh = cfe->iospace[slave].handle.ioh;
 		pca.pca_slave = slave;
 
-		sc->sc_slaves[slave] = config_found_sm(&sc->sc_dev, &pca,
-		    pcmcom_print, pcmcom_submatch);
+		ldesc->len = 1;
+		ldesc->locs[PCMCOMCF_SLAVE] = slave;
+
+		sc->sc_slaves[slave] = config_found_sm_loc(&sc->sc_dev,
+			"pcmcom", ldesc,
+			&pca, pcmcom_print, pcmcom_submatch);
 	}
 
 	pcmcom_disable(sc);
@@ -268,15 +275,15 @@ pcmcom_print(aux, pnp)
 }
 
 int
-pcmcom_submatch(parent, cf, aux)
+pcmcom_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
-	struct pcmcom_attach_args *pca = aux;
 
-	if (cf->cf_loc[PCMCOMCF_SLAVE] != pca->pca_slave &&
-	    cf->cf_loc[PCMCOMCF_SLAVE] != PCMCOMCF_SLAVE_DEFAULT)
+	if (cf->cf_loc[PCMCOMCF_SLAVE] != PCMCOMCF_SLAVE_DEFAULT &&
+	    cf->cf_loc[PCMCOMCF_SLAVE] != ldesc->locs[PCMCOMCF_SLAVE]);
 		return (0);
 
 	return (config_match(parent, cf, aux));

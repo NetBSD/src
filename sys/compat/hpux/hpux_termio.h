@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_termio.h,v 1.8.2.1 2004/08/03 10:43:46 skrll Exp $	*/
+/*	$NetBSD: hpux_termio.h,v 1.8.2.2 2004/09/18 14:43:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993

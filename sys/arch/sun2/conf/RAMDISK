@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.16.2.1 2004/08/03 10:41:48 skrll Exp $
+# $NetBSD: RAMDISK,v 1.16.2.2 2004/09/18 14:41:28 skrll Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:

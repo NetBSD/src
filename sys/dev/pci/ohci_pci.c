@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.23.6.1 2004/08/03 10:49:10 skrll Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.23.6.2 2004/09/18 14:49:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.23.6.1 2004/08/03 10:49:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.23.6.2 2004/09/18 14:49:04 skrll Exp $");
 
 #include "ehci.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.25.24.1 2004/08/03 10:42:36 skrll Exp $	*/
+/*	$NetBSD: ka650.c,v 1.25.24.2 2004/09/18 14:42:13 skrll Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.25.24.1 2004/08/03 10:42:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka650.c,v 1.25.24.2 2004/09/18 14:42:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>

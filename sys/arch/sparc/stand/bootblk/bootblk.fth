@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.5.2.1 2004/08/03 10:41:22 skrll Exp $
+\	$NetBSD: bootblk.fth,v 1.5.2.2 2004/09/18 14:41:03 skrll Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \

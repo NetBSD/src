@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphyreg.h,v 1.1.14.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: urlphyreg.h,v 1.1.14.2 2004/09/18 14:48:44 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.

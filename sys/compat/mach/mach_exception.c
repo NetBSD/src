@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.4.2.4 2004/08/12 11:41:14 skrll Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.4.2.5 2004/09/18 14:43:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4.2.4 2004/08/12 11:41:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4.2.5 2004/09/18 14:43:45 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.41.2.1 2004/08/03 10:48:22 skrll Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.41.2.2 2004/09/18 14:48:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.41.2.1 2004/08/03 10:48:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isapnp.c,v 1.41.2.2 2004/09/18 14:48:18 skrll Exp $");
 
 #include "isadma.h"
 
@@ -82,7 +82,8 @@ static void isapnp_configure __P((struct isapnp_softc *,
 static void isapnp_print_pin __P((const char *, struct isapnp_pin *, size_t));
 static int isapnp_print __P((void *, const char *));
 #ifdef _KERNEL
-static int isapnp_submatch __P((struct device *, struct cfdata *, void *));
+static int isapnp_submatch __P((struct device *, struct cfdata *,
+				const locdesc_t *, void *));
 #endif
 static int isapnp_find __P((struct isapnp_softc *, int));
 static int isapnp_match __P((struct device *, struct cfdata *, void *));
@@ -602,11 +603,13 @@ isapnp_print(aux, str)
  *	Probe the logical device...
  */
 static int
-isapnp_submatch(parent, match, aux)
+isapnp_submatch(parent, match, ldesc, aux)
 	struct device *parent;
 	struct cfdata *match;
+	const locdesc_t *ldesc;
 	void *aux;
 {
+
 	return (config_match(parent, match, aux));
 }
 
@@ -1036,8 +1039,8 @@ isapnp_callback(self)
 
 			isapnp_write_reg(sc, ISAPNP_ACTIVATE, 1);
 #ifdef _KERNEL
-			if (config_found_sm(self, lpa, isapnp_print,
-			    isapnp_submatch) == NULL)
+			if (config_found_sm_loc(self, "isapnp", NULL, lpa,
+			    isapnp_print, isapnp_submatch) == NULL)
 				isapnp_write_reg(sc, ISAPNP_ACTIVATE, 0);
 #else
 			isapnp_print(lpa, NULL);

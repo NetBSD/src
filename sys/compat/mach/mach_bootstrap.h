@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.h,v 1.2.6.1 2004/08/03 10:44:06 skrll Exp $ */
+/*	$NetBSD: mach_bootstrap.h,v 1.2.6.2 2004/09/18 14:43:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.

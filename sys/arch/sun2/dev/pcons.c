@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.6.6.1 2004/08/03 10:41:48 skrll Exp $	*/
+/*	$NetBSD: pcons.c,v 1.6.6.2 2004/09/18 14:41:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.6.6.1 2004/08/03 10:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.6.6.2 2004/09/18 14:41:28 skrll Exp $");
 
 #include "opt_ddb.h"
 

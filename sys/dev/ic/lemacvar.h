@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.6.22.1 2004/08/03 10:46:17 skrll Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.6.22.2 2004/09/18 14:45:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>

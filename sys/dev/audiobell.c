@@ -1,4 +1,4 @@
-/*	$NetBSD: audiobell.c,v 1.1.4.3 2004/08/27 10:39:19 skrll Exp $	*/
+/*	$NetBSD: audiobell.c,v 1.1.4.4 2004/09/18 14:44:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Richard Earnshaw
@@ -31,7 +31,7 @@
  */
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.1.4.3 2004/08/27 10:39:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audiobell.c,v 1.1.4.4 2004/09/18 14:44:27 skrll Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>
@@ -160,7 +160,7 @@ audiobell(void *arg, u_int pitch, u_int period, u_int volume, int poll)
 	auio.uio_resid = period * 8;
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_lwp = NULL;
+	auio.uio_procp = NULL;
 
 	audiowrite(AUDIO_DEVICE | audio->dv_unit, &auio, 0);
 

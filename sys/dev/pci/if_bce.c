@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.5.2.3 2004/08/25 06:58:05 skrll Exp $	 */
+/* $NetBSD: if_bce.c,v 1.5.2.4 2004/09/18 14:49:03 skrll Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.

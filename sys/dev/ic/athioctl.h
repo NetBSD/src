@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.6.2.2 2004/08/03 10:46:10 skrll Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.6.2.3 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting

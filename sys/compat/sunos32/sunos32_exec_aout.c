@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec_aout.c,v 1.7.2.2 2004/08/26 19:28:31 skrll Exp $	*/
+/*	$NetBSD: sunos32_exec_aout.c,v 1.7.2.3 2004/09/18 14:44:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.7.2.2 2004/08/26 19:28:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.7.2.3 2004/09/18 14:44:05 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_exec_aout.c,v 1.7.2.2 2004/08/26 19:28:31 sk
 #include <compat/netbsd32/netbsd32_exec.h>
 
 int
-exec_sunos32_aout_makecmds(l, epp)
-	struct lwp *l;
+exec_sunos32_aout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	struct sunos_exec *sunmag = epp->ep_hdr;
@@ -64,13 +64,13 @@ exec_sunos32_aout_makecmds(l, epp)
 
 	switch (sunmag->a_magic) {
 	case ZMAGIC:
-		error = netbsd32_exec_aout_prep_zmagic(l->l_proc, epp);
+		error = netbsd32_exec_aout_prep_zmagic(p, epp);
 		break;
 	case NMAGIC:
-		error = netbsd32_exec_aout_prep_nmagic(l->l_proc, epp);
+		error = netbsd32_exec_aout_prep_nmagic(p, epp);
 		break;
 	case OMAGIC:
-		error = netbsd32_exec_aout_prep_omagic(l->l_proc, epp);
+		error = netbsd32_exec_aout_prep_omagic(p, epp);
 		break;
 	}
 	return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.h,v 1.2.2.1 2004/08/03 10:46:07 skrll Exp $	*/
+/*	$NetBSD: aic79xx_osm.h,v 1.2.2.2 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*
  * NetBSD platform specific driver option settings, data structures,
@@ -32,9 +32,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $NetBSD: aic79xx_osm.h,v 1.2.2.1 2004/08/03 10:46:07 skrll Exp $
+ * $NetBSD: aic79xx_osm.h,v 1.2.2.2 2004/09/18 14:45:56 skrll Exp $
  *
- * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.2.2.1 2004/08/03 10:46:07 skrll Exp $
+ * //depot/aic7xxx/freebsd/dev/aic7xxx/aic79xx_osm.h#19 $$NetBSD: aic79xx_osm.h,v 1.2.2.2 2004/09/18 14:45:56 skrll Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic79xx_osm.h,v 1.9 2003/05/26 21:43:29 gibbs Exp $
  */

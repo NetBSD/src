@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.25.2.1 2004/08/03 10:43:52 skrll Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.25.2.2 2004/09/18 14:43:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.25.2.1 2004/08/03 10:43:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.25.2.2 2004/09/18 14:43:25 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>

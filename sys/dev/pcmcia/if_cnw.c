@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.24.6.2 2004/08/12 11:42:00 skrll Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.24.6.3 2004/09/18 14:50:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.24.6.2 2004/08/12 11:42:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.24.6.3 2004/09/18 14:50:23 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

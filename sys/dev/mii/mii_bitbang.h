@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.h,v 1.1.32.1 2004/08/25 06:58:05 skrll Exp $	*/
+/*	$NetBSD: mii_bitbang.h,v 1.1.32.2 2004/09/18 14:48:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

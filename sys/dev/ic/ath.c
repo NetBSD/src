@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.32.2.4 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: ath.c,v 1.32.2.5 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.54 2004/04/05 04:42:42 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.4 2004/08/25 06:57:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.32.2.5 2004/09/18 14:45:56 skrll Exp $");
 #endif
 
 /*
@@ -316,8 +316,7 @@ sysctl_ath_verify(SYSCTLFN_ARGS)
 			return (EINVAL);
 #ifdef AR_DEBUG
 	} else if (node.sysctl_num == ath_debug_nodenum) {
-		if (t < 0 || t > 2)
-			return (EINVAL);
+		;		/* Accept any vaule */
 #endif /* AR_DEBUG */
 	} else
 		return (EINVAL);

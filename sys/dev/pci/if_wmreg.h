@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.5.2.1 2004/08/03 10:49:09 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.5.2.2 2004/09/18 14:49:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.

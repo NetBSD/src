@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_seeprom.c,v 1.8.2.1 2004/08/03 10:46:10 skrll Exp $	*/
+/*	$NetBSD: aic7xxx_seeprom.c,v 1.8.2.2 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*       
  * Product specific probe and attach routines for: 
@@ -46,13 +46,13 @@
  * from the FreeBSD source file aic7xxx_pci.c by Frank van der Linden
  * <fvdl@NetBSD.org>
  * 
- * $Id: aic7xxx_seeprom.c,v 1.8.2.1 2004/08/03 10:46:10 skrll Exp $
+ * $Id: aic7xxx_seeprom.c,v 1.8.2.2 2004/09/18 14:45:56 skrll Exp $
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx_pci.c,v 1.22 2003/01/20 20:44:55 gibbs Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.8.2.1 2004/08/03 10:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_seeprom.c,v 1.8.2.2 2004/09/18 14:45:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lc_isa.c,v 1.16.6.1 2004/08/03 10:47:58 skrll Exp $ */
+/*	$NetBSD: if_lc_isa.c,v 1.16.6.2 2004/09/18 14:47:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.1 2004/08/03 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lc_isa.c,v 1.16.6.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ lemac_isa_find(sc, ia, attach)
 	/*
 	 * Disallow wildcarded i/o addresses.
 	 */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return 0;
 
 	/*
@@ -124,7 +124,7 @@ lemac_isa_find(sc, ia, attach)
 	 */
 	lemac_info_get(sc->sc_iot, sc->sc_ioh, &maddr, &msize, &irq);
 
-	if (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	if (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 	    ia->ia_iomem[0].ir_addr != maddr)
 		goto outio;
 
@@ -144,7 +144,7 @@ lemac_isa_find(sc, ia, attach)
 	/*
 	 * Double-check IRQ configuration.
 	 */
-	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 	    ia->ia_irq[0].ir_irq != irq)
 		printf("%s: overriding IRQ %d to %d\n", sc->sc_dv.dv_xname,
 		       ia->ia_irq[0].ir_irq, irq);

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_stat.c,v 1.10.2.1 2003/07/02 15:25:45 darrenr Exp $ */
+/*	$NetBSD: irix_stat.c,v 1.10.2.2 2004/09/18 14:43:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.10.2.1 2003/07/02 15:25:45 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_stat.c,v 1.10.2.2 2004/09/18 14:43:26 skrll Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -145,7 +145,7 @@ irix_sys_xstat(l, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___stat13(l, &cup, retval)) != 0)
@@ -203,7 +203,7 @@ irix_sys_lxstat(l, v, retval)
 	int error;
 
 	SCARG(&cup, ub) = stackgap_alloc(p, &sg, sizeof(struct stat));
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___lstat13(l, &cup, retval)) != 0)

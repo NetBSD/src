@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.26.2.2 2004/08/12 11:41:44 skrll Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.26.2.3 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.2 2004/08/12 11:41:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.26.2.3 2004/09/18 14:49:02 skrll Exp $");
 
 #include "midi.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.16.6.1 2004/08/03 10:42:45 skrll Exp $ */
+/*	$NetBSD: lkc.c,v 1.16.6.2 2004/09/18 14:42:23 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkc.c,v 1.16.6.1 2004/08/03 10:42:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkc.c,v 1.16.6.2 2004/09/18 14:42:23 skrll Exp $");
 
 #include "opt_ddb.h"
 

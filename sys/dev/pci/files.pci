@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.187.2.4 2004/09/03 12:45:28 skrll Exp $
+#	$NetBSD: files.pci,v 1.187.2.5 2004/09/18 14:49:03 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.17.2.1 2004/08/03 10:44:06 skrll Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.17.2.2 2004/09/18 14:43:46 skrll Exp $	 */
 
 /*-
  * Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
@@ -263,8 +263,8 @@ struct mach_message {
 #define MACH_OOL_FREE	0x1	/* Free kernel buffer after copyout */
 #define MACH_OOL_TRACE	0x2	/* ktrace OOL data */
 
-inline int mach_ool_copyin(struct lwp *, const void *, void **, size_t, int);
-inline int mach_ool_copyout(struct lwp *, void *, void **, size_t, int);
+inline int mach_ool_copyin(struct proc *, const void *, void **, size_t, int);
+inline int mach_ool_copyout(struct proc *, void *, void **, size_t, int);
 inline void mach_set_trailer(void *, size_t);
 inline void mach_set_header(void *, void *, size_t);
 inline void mach_add_port_desc(void *, mach_port_name_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_conf.c,v 1.4.42.1 2004/08/03 10:42:47 skrll Exp $	*/
+/*	$NetBSD: grf_conf.c,v 1.4.42.2 2004/09/18 14:42:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_conf.c,v 1.4.42.1 2004/08/03 10:42:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_conf.c,v 1.4.42.2 2004/09/18 14:42:24 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>

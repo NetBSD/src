@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.16.22.1 2004/08/03 10:46:12 skrll Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.16.22.2 2004/09/18 14:45:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.

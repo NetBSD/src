@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isapnp.c,v 1.2.4.2 2004/08/03 10:48:22 skrll Exp $ */
+/* $NetBSD: atppc_isapnp.c,v 1.2.4.3 2004/09/18 14:48:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.2.4.2 2004/08/03 10:48:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isapnp.c,v 1.2.4.3 2004/09/18 14:48:18 skrll Exp $");
 
 #include "opt_atppc.h"
 

@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.2.2.1 2004/08/03 10:45:03 skrll Exp $
+#	$NetBSD: devlist2h.awk,v 1.2.2.2 2004/09/18 14:44:42 skrll Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.

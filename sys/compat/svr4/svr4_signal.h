@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.24.2.1 2004/08/03 10:44:32 skrll Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.24.2.2 2004/09/18 14:44:05 skrll Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.

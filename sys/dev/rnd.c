@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.42.2.2 2004/08/03 10:44:54 skrll Exp $	*/
+/*	$NetBSD: rnd.c,v 1.42.2.3 2004/09/18 14:44:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.42.2.2 2004/08/03 10:44:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.42.2.3 2004/09/18 14:44:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -343,7 +343,7 @@ rnd_init(void)
 }
 
 int
-rndopen(dev_t dev, int flags, int ifmt, struct lwp *l)
+rndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 {
 
 	if (rnd_ready == 0)
@@ -495,7 +495,7 @@ rndwrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 int
-rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	rndsource_element_t *rse;
 	rndstat_t *rst;
@@ -503,11 +503,9 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 	rndctl_t *rctl;
 	rnddata_t *rnddata;
 	u_int32_t count, start;
-	struct proc *p;
 	int ret, s;
 
 	ret = 0;
-	p = l->l_proc;
 
 	switch (cmd) {
 
@@ -667,7 +665,7 @@ rndioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 }
 
 int
-rndpoll(dev_t dev, int events, struct lwp *l)
+rndpoll(dev_t dev, int events, struct proc *p)
 {
 	u_int32_t entcnt;
 	int revents, s;
@@ -701,7 +699,7 @@ rndpoll(dev_t dev, int events, struct lwp *l)
 	if (entcnt >= RND_ENTROPY_THRESHOLD * 8)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
-		selrecord(l, &rnd_selq);
+		selrecord(p, &rnd_selq);
 
 	return (revents);
 }

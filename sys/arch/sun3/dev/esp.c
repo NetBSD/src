@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.17.6.1 2004/08/03 10:42:03 skrll Exp $	*/
+/*	$NetBSD: esp.c,v 1.17.6.2 2004/09/18 14:41:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.17.6.1 2004/08/03 10:42:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.17.6.2 2004/09/18 14:41:39 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.7.2.1 2004/08/03 10:47:59 skrll Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.7.2.2 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.7.2.1 2004/08/03 10:47:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.7.2.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ struct moxa_isa_softc {
 int moxa_isaprobe __P((struct device *, struct cfdata *, void *));
 void moxa_isaattach __P((struct device *, struct device *, void *));
 int moxa_isaintr __P((void *));
-int moxa_isaprint __P((void *, const char *));
 
 CFATTACH_DECL(moxa_isa, sizeof(struct moxa_isa_softc),
     moxa_isaprobe, moxa_isaattach, NULL, NULL);
@@ -99,9 +98,9 @@ moxa_isaprobe(parent, self, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	/* if the first port is in use as console, then it. */
@@ -144,19 +143,6 @@ out:
 	return (rv);
 }
 
-int
-moxa_isaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 moxa_isaattach(parent, self, aux)
 	struct device *parent, *self;
@@ -191,7 +177,7 @@ moxa_isaattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 1;
 
-		sc->sc_slaves[i] = config_found(self, &ca, moxa_isaprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

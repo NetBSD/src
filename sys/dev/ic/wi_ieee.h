@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.20.2.1 2004/08/03 10:46:21 skrll Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.20.2.2 2004/09/18 14:46:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999

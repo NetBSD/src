@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.12.2.1 2004/08/03 10:41:08 skrll Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.12.2.2 2004/09/18 14:40:48 skrll Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -126,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12.2.1 2004/08/03 10:41:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.12.2.2 2004/09/18 14:40:48 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_multiprocessor.h"

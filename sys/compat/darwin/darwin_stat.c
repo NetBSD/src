@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_stat.c,v 1.3.2.2 2004/08/03 10:43:29 skrll Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.3.2.3 2004/09/18 14:43:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.3.2.2 2004/08/03 10:43:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.3.2.3 2004/09/18 14:43:05 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,7 +74,7 @@ darwin_sys_stat(l, v, retval)
 	struct stat12 *stp;
 	int error;
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	stp = stackgap_alloc(p, &sg, sizeof(*stp));
 
 	SCARG(&cup, path) = SCARG(uap, path);
@@ -149,7 +149,7 @@ darwin_sys_lstat(l, v, retval)
 	struct stat12 *stp;
 	int error;
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	stp = stackgap_alloc(p, &sg, sizeof(*stp));
 
 	SCARG(&cup, path) = SCARG(uap, path);
@@ -185,7 +185,7 @@ darwin_sys_mknod(l, v, retval)
 	struct proc *p = l->l_proc;
 	caddr_t sg = stackgap_init(p, 0);
 
-	CHECK_ALT_CREAT(l, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	SCARG(&cup, path) = SCARG(uap, path);
 	SCARG(&cup, mode) = SCARG(uap, mode);

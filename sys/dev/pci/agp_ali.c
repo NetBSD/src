@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.4.2.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.4.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.4.2.1 2004/08/03 10:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.4.2.2 2004/09/18 14:49:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: pecoff_sysent.c,v 1.7.2.1 2004/08/03 10:44:24 skrll Exp $ */
+/* $NetBSD: pecoff_sysent.c,v 1.7.2.2 2004/09/18 14:44:05 skrll Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.7.2.1 2004/08/03 10:44:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_sysent.c,v 1.7.2.2 2004/09/18 14:44:05 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"

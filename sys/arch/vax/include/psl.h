@@ -1,4 +1,4 @@
-/*      $NetBSD: psl.h,v 1.8.24.1 2004/08/03 10:42:23 skrll Exp $      */
+/*      $NetBSD: psl.h,v 1.8.24.2 2004/09/18 14:42:06 skrll Exp $      */
 
 /*
  * Rewritten for the VAX port. Based on Berkeley code. /IC

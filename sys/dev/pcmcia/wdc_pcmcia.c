@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.55.2.3 2004/08/25 06:58:43 skrll Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.55.2.4 2004/09/18 14:50:23 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55.2.3 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55.2.4 2004/09/18 14:50:23 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -247,7 +247,7 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 		    &wdr->cmd_iohs[i]) != 0) {
 			aprint_error("%s: can't subregion I/O space\n",
 			    self->dv_xname);
-			goto fail2;
+			goto fail;
 		}
 	}
 
@@ -291,8 +291,6 @@ wdc_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;
 
-fail2:
-	wdc_pcmcia_enable(self, 0);
 fail:
 	pcmcia_function_unconfigure(pa->pf);
 }

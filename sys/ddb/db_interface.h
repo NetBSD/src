@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.11.2.1 2004/08/03 10:44:46 skrll Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.11.2.2 2004/09/18 14:44:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.

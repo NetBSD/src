@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.7.2.1 2004/08/12 11:41:43 skrll Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.7.2.2 2004/09/18 14:47:46 skrll Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.7.2.1 2004/08/12 11:41:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.7.2.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ cs_isa_dma_attach(struct cs_softc *sc)
 {
 	struct cs_softc_isa *isc = (void *)sc;
 
-	if (isc->sc_drq == ISACF_DRQ_DEFAULT)
+	if (isc->sc_drq == ISA_UNKNOWN_DRQ)
 		printf("%s: DMA channel unspecified, not using DMA\n",
 		    sc->sc_dev.dv_xname);
 	else if (isc->sc_drq < 5 || isc->sc_drq > 7)

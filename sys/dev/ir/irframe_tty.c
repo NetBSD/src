@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.26.2.2 2004/08/03 10:47:57 skrll Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.26.2.3 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.26.2.2 2004/08/03 10:47:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.26.2.3 2004/09/18 14:47:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -133,7 +133,7 @@ struct irframet_softc {
 int	irframetopen(dev_t dev, struct tty *tp);
 int	irframetclose(struct tty *tp, int flag);
 int	irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag,
-		      struct lwp *);
+		      struct proc *);
 int	irframetinput(int c, struct tty *tp);
 int	irframetstart(struct tty *tp);
 
@@ -141,11 +141,11 @@ int	irframetstart(struct tty *tp);
 void	irframettyattach(int);
 
 /* irframe methods */
-Static int	irframet_open(void *h, int flag, int mode, struct lwp *l);
-Static int	irframet_close(void *h, int flag, int mode, struct lwp *l);
+Static int	irframet_open(void *h, int flag, int mode, struct proc *p);
+Static int	irframet_close(void *h, int flag, int mode, struct proc *p);
 Static int	irframet_read(void *h, struct uio *uio, int flag);
 Static int	irframet_write(void *h, struct uio *uio, int flag);
-Static int	irframet_poll(void *h, int events, struct lwp *l);
+Static int	irframet_poll(void *h, int events, struct proc *p);
 Static int	irframet_kqfilter(void *h, struct knote *kn);
 Static int	irframet_set_params(void *h, struct irda_params *params);
 Static int	irframet_get_speeds(void *h, int *speeds);
@@ -207,12 +207,10 @@ irframettyattach(int n)
 int
 irframetopen(dev_t dev, struct tty *tp)
 {
-	struct lwp *l = curlwp;		/* XXX */
+	struct proc *p = curproc;		/* XXX */
 	struct irframet_softc *sc;
-	struct proc *p;
 	int error, s;
 
-	p = l->l_proc;
 	DPRINTF(("%s\n", __FUNCTION__));
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -287,7 +285,7 @@ irframetclose(struct tty *tp, int flag)
 /* ARGSUSED */
 int
 irframetioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, 
-	     struct lwp *l)
+	     struct proc *p)
 {
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
 	int error;
@@ -461,7 +459,7 @@ irframetinput(int c, struct tty *tp)
 /*** irframe methods ***/
 
 int
-irframet_open(void *h, int flag, int mode, struct lwp *l)
+irframet_open(void *h, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -482,7 +480,7 @@ irframet_open(void *h, int flag, int mode, struct lwp *l)
 }
 
 int
-irframet_close(void *h, int flag, int mode, struct lwp *l)
+irframet_close(void *h, int flag, int mode, struct proc *p)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -640,7 +638,7 @@ irt_write_frame(struct tty *tp, u_int8_t *buf, size_t len)
 }
 
 int
-irframet_poll(void *h, int events, struct lwp *l)
+irframet_poll(void *h, int events, struct proc *p)
 {
 	struct tty *tp = h;
 	struct irframet_softc *sc = (struct irframet_softc *)tp->t_sc;
@@ -661,7 +659,7 @@ irframet_poll(void *h, int events, struct lwp *l)
 			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			DPRINTF(("%s: recording select\n", __FUNCTION__));
-			selrecord(l, &sc->sc_rsel);
+			selrecord(p, &sc->sc_rsel);
 		}
 	}
 	splx(s);
@@ -837,7 +835,7 @@ irt_ioctl(struct tty *tp, u_long cmd, void *arg)
 	dev = tp->t_dev;
 	cdev = cdevsw_lookup(dev);
 	if (cdev != NULL)
-		error = (*cdev->d_ioctl)(dev, cmd, arg, 0, curlwp);
+		error = (*cdev->d_ioctl)(dev, cmd, arg, 0, curproc);
 	else
 		error = ENXIO;
 #ifdef DIAGNOSTIC

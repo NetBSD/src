@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: makemachservices.sh,v 1.5.4.2 2004/08/03 10:44:07 skrll Exp $
+#	$NetBSD: makemachservices.sh,v 1.5.4.3 2004/09/18 14:43:47 skrll Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.

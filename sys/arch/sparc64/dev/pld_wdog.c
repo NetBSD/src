@@ -1,4 +1,4 @@
-/*	$NetBSD: pld_wdog.c,v 1.3.4.2 2004/08/03 10:41:24 skrll Exp $	*/
+/*	$NetBSD: pld_wdog.c,v 1.3.4.3 2004/09/18 14:41:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.

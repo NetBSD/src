@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.17.6.1 2004/08/03 10:45:57 skrll Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.17.6.2 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.17.6.1 2004/08/03 10:45:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.17.6.2 2004/09/18 14:45:47 skrll Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =

@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.20.6.1 2004/08/03 10:42:23 skrll Exp $	*/
+/*	$NetBSD: nexus.h,v 1.20.6.2 2004/09/18 14:42:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.h,v 1.8.2.3 2004/08/24 17:57:36 skrll Exp $	*/
+/*	$NetBSD: coda_vfsops.h,v 1.8.2.4 2004/09/18 14:43:02 skrll Exp $	*/
 
 /*
  * 
@@ -47,13 +47,13 @@ struct mount;
 
 int coda_vfsopstats_init(void);
 int coda_mount(struct mount *, const char *, void *, struct nameidata *, 
-		       struct lwp *);
-int coda_start(struct mount *, int, struct lwp *);
-int coda_unmount(struct mount *, int, struct lwp *);
+		       struct proc *);
+int coda_start(struct mount *, int, struct proc *);
+int coda_unmount(struct mount *, int, struct proc *);
 int coda_root(struct mount *, struct vnode **);
-int coda_quotactl(struct mount *, int, uid_t, void *, struct lwp *);
-int coda_nb_statvfs(struct mount *, struct statvfs *, struct lwp *);
-int coda_sync(struct mount *, int, struct ucred *, struct lwp *);
+int coda_quotactl(struct mount *, int, uid_t, void *, struct proc *);
+int coda_nb_statvfs(struct mount *, struct statvfs *, struct proc *);
+int coda_sync(struct mount *, int, struct ucred *, struct proc *);
 int coda_vget(struct mount *, ino_t, struct vnode **);
 int coda_fhtovp(struct mount *, struct fid *, struct mbuf *, struct vnode **,
 		       int *, struct ucred **);
@@ -61,7 +61,7 @@ int coda_vptofh(struct vnode *, struct fid *);
 void coda_init(void);
 void coda_done(void);
 int coda_sysctl(int *, u_int, void *, size_t *, void *, size_t,
-		    struct lwp *);
+		    struct proc *);
 int getNewVnode(struct vnode **vpp);
 
 #ifdef SYSCTL_SETUP_PROTO

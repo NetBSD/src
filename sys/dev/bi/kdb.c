@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.32.2.1 2004/08/03 10:45:46 skrll Exp $ */
+/*	$NetBSD: kdb.c,v 1.32.2.2 2004/09/18 14:45:26 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.32.2.1 2004/08/03 10:45:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.32.2.2 2004/09/18 14:45:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

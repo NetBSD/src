@@ -1,4 +1,4 @@
-/*	$NetBSD: esoreg.h,v 1.5.28.1 2004/08/03 10:49:07 skrll Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.5.28.2 2004/09/18 14:49:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein

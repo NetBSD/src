@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5.2.1 2004/08/03 10:42:23 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.5.2.2 2004/09/18 14:42:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.

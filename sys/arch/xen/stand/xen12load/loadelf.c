@@ -1,4 +1,4 @@
-/* $NetBSD: loadelf.c,v 1.1.4.2 2004/08/03 10:43:19 skrll Exp $ */
+/* $NetBSD: loadelf.c,v 1.1.4.3 2004/09/18 14:42:53 skrll Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: loadelf.c,v 1.1.4.2 2004/08/03 10:43:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: loadelf.c,v 1.1.4.3 2004/09/18 14:42:53 skrll Exp $");
 
 #if !defined(ELFSIZE)
 #define ELFSIZE 32

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4237reg.h,v 1.1.36.1 2004/08/03 10:46:12 skrll Exp $ */
+/*	$NetBSD: cs4237reg.h,v 1.1.36.2 2004/09/18 14:45:57 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.

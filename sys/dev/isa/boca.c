@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.41 2003/01/01 00:10:20 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.41.2.1 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.41 2003/01/01 00:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: boca.c,v 1.41.2.1 2004/09/18 14:47:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ int bocaprobe __P((struct device *, struct cfdata *, void *));
 void bocaattach __P((struct device *, struct device *, void *));
 int bocaintr __P((void *));
 void boca_fixup __P((void *));
-int bocaprint __P((void *, const char *));
 
 CFATTACH_DECL(boca, sizeof(struct boca_softc),
     bocaprobe, bocaattach, NULL, NULL);
@@ -103,9 +102,9 @@ bocaprobe(parent, self, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	iobase = ia->ia_io[0].ir_addr;
@@ -150,19 +149,6 @@ out:
 	return (rv);
 }
 
-int
-bocaprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 bocaattach(parent, self, aux)
 	struct device *parent, *self;
@@ -198,7 +184,7 @@ bocaattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		sc->sc_slaves[i] = config_found(self, &ca, bocaprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

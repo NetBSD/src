@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.17.6.1 2004/08/03 10:45:47 skrll Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.17.6.2 2004/09/18 14:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.17.6.1 2004/08/03 10:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_cardbus.c,v 1.17.6.2 2004/09/18 14:45:26 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.22.6.1 2004/08/03 10:46:16 skrll Exp $ */
+/* $NetBSD: isp_inline.h,v 1.22.6.2 2004/09/18 14:45:58 skrll Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *

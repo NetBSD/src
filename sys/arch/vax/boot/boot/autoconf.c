@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20.6.1 2004/08/03 10:42:21 skrll Exp $ */
+/*	$NetBSD: autoconf.c,v 1.20.6.2 2004/09/18 14:41:58 skrll Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdreg.h,v 1.4.2.1 2004/08/03 10:42:04 skrll Exp $	*/
+/*	$NetBSD: xdreg.h,v 1.4.2.2 2004/09/18 14:41:39 skrll Exp $	*/
 
 /*
  *

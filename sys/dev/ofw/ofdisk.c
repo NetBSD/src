@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.27.2.1 2004/08/03 10:49:05 skrll Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.27.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27.2.1 2004/08/03 10:49:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.27.2.2 2004/09/18 14:49:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

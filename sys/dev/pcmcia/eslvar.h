@@ -1,4 +1,4 @@
-/*	$NetBSD: eslvar.h,v 1.3.18.2 2004/08/12 11:41:59 skrll Exp $	*/
+/*	$NetBSD: eslvar.h,v 1.3.18.3 2004/09/18 14:50:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Jared D. McNeill <jmcneill@invisible.yi.org>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC3X,v 1.57.2.1 2004/08/03 10:42:03 skrll Exp $
+# $NetBSD: GENERIC3X,v 1.57.2.2 2004/09/18 14:41:39 skrll Exp $
 
 # GENERIC Sun3X (3/80, 3/470)
 # Supports root on: ie0, le0, sd*, ...

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.17.2.2 2004/08/25 06:58:05 skrll Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.17.2.3 2004/09/18 14:49:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17.2.2 2004/08/25 06:58:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.17.2.3 2004/09/18 14:49:04 skrll Exp $");
 
 #include "bpfilter.h"
 

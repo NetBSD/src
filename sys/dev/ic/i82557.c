@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.75.2.1 2004/08/03 10:46:14 skrll Exp $	*/
+/*	$NetBSD: i82557.c,v 1.75.2.2 2004/09/18 14:45:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.75.2.1 2004/08/03 10:46:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.75.2.2 2004/09/18 14:45:57 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"

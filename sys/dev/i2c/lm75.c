@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.1.4.3 2004/08/12 11:41:22 skrll Exp $	*/
+/*	$NetBSD: lm75.c,v 1.1.4.4 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.

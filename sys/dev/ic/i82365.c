@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.72.2.3 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: i82365.c,v 1.72.2.4 2004/09/18 14:45:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.72.2.3 2004/08/25 06:57:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.72.2.4 2004/09/18 14:45:57 skrll Exp $");
 
 #define	PCICDEBUG
 
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.72.2.3 2004/08/25 06:57:35 skrll Exp $"
 #include <dev/ic/i82365reg.h>
 #include <dev/ic/i82365var.h>
 
+#include "locators.h"
+
 #ifdef PCICDEBUG
 int	pcic_debug = 0;
 #define	DPRINTF(arg) if (pcic_debug) printf arg;
@@ -87,7 +89,8 @@ int	pcic_debug = 0;
 void	pcic_attach_socket __P((struct pcic_handle *));
 void	pcic_attach_socket_finish __P((struct pcic_handle *));
 
-int	pcic_submatch __P((struct device *, struct cfdata *, void *));
+int	pcic_submatch __P((struct device *, struct cfdata *,
+			   const locdesc_t *, void *));
 int	pcic_print  __P((void *arg, const char *pnp));
 int	pcic_intr_socket __P((struct pcic_handle *));
 void	pcic_poll_intr __P((void *));
@@ -247,6 +250,7 @@ pcic_attach(sc)
 
 		h->ph_parent = (struct device *)sc;
 		h->chip = chip;
+		h->socket = socket;
 		h->sock = chip * PCIC_CHIP_OFFSET + socket * PCIC_SOCKET_OFFSET;
 		h->laststate = PCIC_LASTSTATE_EMPTY;
 		/* initialize pcic_read and pcic_write functions */
@@ -392,6 +396,8 @@ pcic_attach_socket(h)
 {
 	struct pcmciabus_attach_args paa;
 	struct pcic_softc *sc = (struct pcic_softc *)h->ph_parent;
+	int help[3];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	/* initialize the rest of the handle */
 
@@ -408,7 +414,12 @@ pcic_attach_socket(h)
 	paa.iobase = sc->iobase;
 	paa.iosize = sc->iosize;
 
-	h->pcmcia = config_found_sm(&sc->dev, &paa, pcic_print, pcic_submatch);
+	ldesc->len = 2;
+	ldesc->locs[PCMCIABUSCF_CONTROLLER] = h->chip;
+	ldesc->locs[PCMCIABUSCF_SOCKET] = h->socket;
+
+	h->pcmcia = config_found_sm_loc(&sc->dev, "pcmciabus", ldesc, &paa,
+					pcic_print, pcic_submatch);
 	if (h->pcmcia == NULL) {
 		h->flags &= ~PCIC_FLAG_SOCKETP;
 		return;
@@ -511,24 +522,9 @@ pcic_create_event_thread(arg)
 	void *arg;
 {
 	struct pcic_handle *h = arg;
-	const char *cs;
+	char cs[4];
 
-	switch (h->sock) {
-	case C0SA:
-		cs = "0,0";
-		break;
-	case C0SB:
-		cs = "0,1";
-		break;
-	case C1SA:
-		cs = "1,0";
-		break;
-	case C1SB:
-		cs = "1,1";
-		break;
-	default:
-		panic("pcic_create_event_thread: unknown pcic socket");
-	}
+	snprintf(cs, sizeof(cs), "%d,%d", h->chip, h->socket);
 
 	if (kthread_create1(pcic_event_thread, h, &h->event_thread,
 	    "%s,%s", h->ph_parent->dv_xname, cs)) {
@@ -646,63 +642,19 @@ pcic_event_thread(arg)
 }
 
 int
-pcic_submatch(parent, cf, aux)
+pcic_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 
-	struct pcmciabus_attach_args *paa = aux;
-	struct pcic_handle *h = (struct pcic_handle *) paa->pch;
-
-	switch (h->sock) {
-	case C0SA:
-		if (cf->pcmciabuscf_controller !=
-		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->pcmciabuscf_controller != 0)
+	if (cf->cf_loc[PCMCIABUSCF_CONTROLLER] != PCMCIABUSCF_CONTROLLER_DEFAULT &&
+	    cf->cf_loc[PCMCIABUSCF_CONTROLLER] != ldesc->locs[PCMCIABUSCF_CONTROLLER])
 			return 0;
-		if (cf->pcmciabuscf_socket !=
-		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->pcmciabuscf_socket != 0)
+	if (cf->cf_loc[PCMCIABUSCF_SOCKET] != PCMCIABUSCF_SOCKET_DEFAULT &&
+	    cf->cf_loc[PCMCIABUSCF_SOCKET] != ldesc->locs[PCMCIABUSCF_SOCKET])
 			return 0;
-
-		break;
-	case C0SB:
-		if (cf->pcmciabuscf_controller !=
-		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->pcmciabuscf_controller != 0)
-			return 0;
-		if (cf->pcmciabuscf_socket !=
-		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->pcmciabuscf_socket != 1)
-			return 0;
-
-		break;
-	case C1SA:
-		if (cf->pcmciabuscf_controller !=
-		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->pcmciabuscf_controller != 1)
-			return 0;
-		if (cf->pcmciabuscf_socket !=
-		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->pcmciabuscf_socket != 0)
-			return 0;
-
-		break;
-	case C1SB:
-		if (cf->pcmciabuscf_controller !=
-		    PCMCIABUSCF_CONTROLLER_DEFAULT &&
-		    cf->pcmciabuscf_controller != 1)
-			return 0;
-		if (cf->pcmciabuscf_socket !=
-		    PCMCIABUSCF_SOCKET_DEFAULT &&
-		    cf->pcmciabuscf_socket != 1)
-			return 0;
-
-		break;
-	default:
-		panic("unknown pcic socket");
-	}
 
 	return (config_match(parent, cf, aux));
 }
@@ -719,22 +671,7 @@ pcic_print(arg, pnp)
 	if (pnp)
 		aprint_normal("pcmcia at %s", pnp);
 
-	switch (h->sock) {
-	case C0SA:
-		aprint_normal(" controller 0 socket 0");
-		break;
-	case C0SB:
-		aprint_normal(" controller 0 socket 1");
-		break;
-	case C1SA:
-		aprint_normal(" controller 1 socket 0");
-		break;
-	case C1SB:
-		aprint_normal(" controller 1 socket 1");
-		break;
-	default:
-		panic("unknown pcic socket");
-	}
+	aprint_normal(" controller %d socket %d", h->chip, h->socket);
 
 	return (UNCONF);
 }

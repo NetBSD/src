@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.13.24.1 2004/08/03 10:42:23 skrll Exp $ */
+/*	$NetBSD: vsbus.h,v 1.13.24.2 2004/09/18 14:42:06 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

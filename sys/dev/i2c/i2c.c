@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.2.2.2 2004/08/03 10:46:05 skrll Exp $	*/
+/*	$NetBSD: i2c.c,v 1.2.2.3 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -72,7 +72,8 @@ iic_print(void *aux, const char *pnp)
 }
 
 static int
-iic_search(struct device *parent, struct cfdata *cf, void *aux)
+iic_search(struct device *parent, struct cfdata *cf,
+	   const locdesc_t *ldesc, void *aux)
 {
 	struct iic_softc *sc = (void *) parent;
 	struct i2c_attach_args ia;
@@ -111,7 +112,7 @@ iic_attach(struct device *parent, struct device *self, void *aux)
 	 * Attach all i2c devices described in the kernel
 	 * configuration file.
 	 */
-	config_search(iic_search, self, NULL);
+	config_search_ia(iic_search, self, "iic", NULL);
 }
 
 CFATTACH_DECL(iic, sizeof(struct iic_softc),

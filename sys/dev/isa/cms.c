@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.7 2002/10/02 03:10:46 thorpej Exp $ */
+/* $NetBSD: cms.c,v 1.7.6.1 2004/09/18 14:47:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.7 2002/10/02 03:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.7.6.1 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ cms_probe(parent, match, aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return 0;
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return 0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, CMS_IOSIZE, 0, &ioh))

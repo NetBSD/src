@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.27 2002/10/02 03:10:46 thorpej Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.27.6.1 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.27 2002/10/02 03:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_isa.c,v 1.27.6.1 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,7 @@ esp_isa_match(parent, match, aux)
 
 	ESP_TRACE(("[esp_isa_match] "));
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return 0;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, ESP_ISA_IOSIZE, 0, &ioh))
@@ -352,7 +352,7 @@ esp_isa_match(parent, match, aux)
 	bus_space_unmap(iot, ioh, ESP_ISA_IOSIZE);
 
 	if (rv) {
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != epd.sc_irq) {
 #ifdef DIAGNOSTIC
 		printf("esp_isa_match: configured IRQ (%0d) does not "
@@ -398,7 +398,7 @@ esp_isa_attach(parent, self, aux)
 		return;
 	}
 
-	if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
+	if (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ) {
 		if ((error = isa_dmacascade(ic, ia->ia_drq[0].ir_drq)) != 0) {
 			printf("%s: unable to cascade DRQ, error = %d\n",
 			    sc->sc_dev.dv_xname, error);

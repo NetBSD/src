@@ -1,4 +1,4 @@
-/*	$NetBSD: elfXX_exec.c,v 1.3.22.1 2004/08/03 10:41:22 skrll Exp $	*/
+/*	$NetBSD: elfXX_exec.c,v 1.3.22.2 2004/09/18 14:41:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Eduardo Horvath.  All rights reserved.

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.18.2.3 2004/08/25 06:57:34 skrll Exp $      */
+/*      $NetBSD: ata.c,v 1.18.2.4 2004/09/18 14:45:25 skrll Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.3 2004/08/25 06:57:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.4 2004/09/18 14:45:25 skrll Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -864,6 +864,7 @@ ata_reset_channel(struct ata_channel *chp, int flags)
 	if ((flags & (AT_POLL | AT_WAIT)) == 0) {
 		if (chp->ch_flags & ATACH_TH_RESET) {
 			/* No need to schedule a reset more than one time. */
+			chp->ch_queue->queue_freeze--;
 			return;
 		}
 		chp->ch_flags |= ATACH_TH_RESET;
@@ -1252,7 +1253,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 
 /* management of the /dev/atabus* devices */
 int
-atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
+atabusopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
         struct atabus_softc *sc;
         int error, unit = minor(dev);
@@ -1274,7 +1275,7 @@ atabusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 
 
 int
-atabusclose(dev_t dev, int flag, int fmt, struct lwp *l)
+atabusclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 
@@ -1286,7 +1287,7 @@ atabusclose(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 int
-atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+atabusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
 	struct ata_channel *chp = sc->sc_chan;

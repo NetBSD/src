@@ -1,5 +1,4 @@
-/*	$NetBSD: if_ipwreg.h,v 1.2.2.2 2004/08/25 06:58:05 skrll Exp $	*/
-/*      Id: if_ipwreg.h,v 1.1.2.1 2004/08/19 16:28:26 damien Exp  */
+/*	$NetBSD: if_ipwreg.h,v 1.2.2.3 2004/09/18 14:49:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -162,7 +161,7 @@ struct ipw_hdr {
 /* command */
 struct ipw_cmd {
 	u_int32_t	type;
-#define IPW_CMD_ENABLE		     		2
+#define IPW_CMD_ENABLE				2
 #define IPW_CMD_SET_CONFIGURATION		6
 #define IPW_CMD_SET_ESSID			8
 #define IPW_CMD_SET_MANDATORY_BSSID		9
@@ -250,25 +249,25 @@ struct ipw_configuration {
  * control and status registers access macros
  */
 #define CSR_READ_1(sc, reg)						\
-        bus_space_read_1((sc)->sc_st, (sc)->sc_sh, (reg))
+	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, (reg))
 
 #define CSR_READ_2(sc, reg)						\
-        bus_space_read_2((sc)->sc_st, (sc)->sc_sh, (reg))
+	bus_space_read_2((sc)->sc_st, (sc)->sc_sh, (reg))
 
 #define CSR_READ_4(sc, reg)						\
-        bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
+	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (reg))
 
 #define CSR_WRITE_1(sc, reg, val)					\
-        bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 #define CSR_WRITE_2(sc, reg, val)					\
-        bus_space_write_2((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+	bus_space_write_2((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 #define CSR_WRITE_4(sc, reg, val)					\
-        bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
+	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 #define CSR_WRITE_MULTI_1(sc, reg, buf, len)				\
-	bus_space_write_multi_1((sc)->sc_st, (sc)->sc_sh, (reg), 	\
+	bus_space_write_multi_1((sc)->sc_st, (sc)->sc_sh, (reg),	\
 	    (buf), (len));
 
 /*

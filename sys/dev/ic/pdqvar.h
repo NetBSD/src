@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.33.22.1 2004/08/03 10:46:18 skrll Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.33.22.2 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>

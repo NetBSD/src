@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.6.2.1 2004/08/03 10:45:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nssearch.c,v 1.6.2.2 2004/09/18 14:44:44 skrll Exp $");
 
 #define __NSSEARCH_C__
 

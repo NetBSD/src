@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.112.2.1 2004/08/03 10:48:00 skrll Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.112.2.2 2004/09/18 14:47:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.112.2.1 2004/08/03 10:48:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbdsp.c,v 1.112.2.2 2004/09/18 14:47:47 skrll Exp $");
 
 #include "midi.h"
 #include "mpu.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cyzfirm2h.c,v 1.2.24.1 2004/08/03 10:48:32 skrll Exp $	*/
+/*	$NetBSD: cyzfirm2h.c,v 1.2.24.2 2004/09/18 14:48:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cyzfirm2h.c,v 1.2.24.1 2004/08/03 10:48:32 skrll Exp $");
+__RCSID("$NetBSD: cyzfirm2h.c,v 1.2.24.2 2004/09/18 14:48:28 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 		err(1, "unable to mmap input file");
 	(void) close(i);
 
-	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.2.24.1 2004/08/03 10:48:32 skrll Exp $\t*/\n\n");
+	fprintf(out_file, "/*\t$NetBSD: cyzfirm2h.c,v 1.2.24.2 2004/09/18 14:48:28 skrll Exp $\t*/\n\n");
 	fprintf(out_file, "\
 /*
  * Firmware for Cyclades Z series multiport serial boards.

@@ -1,4 +1,4 @@
-/*	$NetBSD: apcdmareg.h,v 1.3.12.1 2004/08/03 10:46:10 skrll Exp $	*/
+/*	$NetBSD: apcdmareg.h,v 1.3.12.2 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.discovery,v 1.6.2.1 2004/08/03 10:48:22 skrll Exp $
+#	$NetBSD: files.discovery,v 1.6.2.2 2004/09/18 14:48:19 skrll Exp $
 #
 # Config file and device description for machine-independent support for
 # the Marvell (formerly Galileo Technology) Discovery system controllers.
@@ -33,7 +33,7 @@ device	gt: gt
 file	dev/marvell/gt.c			gt
 
 # PCI bus
-device	gtpci: isabus, pcibus
+device	gtpci: pcibus
 attach	gtpci at gt
 file	dev/marvell/gtpci.c			gt & pci
 

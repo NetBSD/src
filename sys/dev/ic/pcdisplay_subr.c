@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_subr.c,v 1.25.6.1 2004/08/03 10:46:18 skrll Exp $ */
+/* $NetBSD: pcdisplay_subr.c,v 1.25.6.2 2004/09/18 14:46:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25.6.1 2004/08/03 10:46:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_subr.c,v 1.25.6.2 2004/09/18 14:46:00 skrll Exp $");
 
 #include "opt_wsdisplay_compat.h" /* for WSDISPLAY_CHARFUNCS */
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm.c,v 1.5.2.1 2004/08/03 10:49:06 skrll Exp $	*/
+/*	$NetBSD: amdpm.c,v 1.5.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.5.2.1 2004/08/03 10:49:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm.c,v 1.5.2.2 2004/09/18 14:49:02 skrll Exp $");
 
 #include "opt_amdpm.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.7.4.3 2004/08/25 06:58:06 skrll Exp $	*/
+/*	$NetBSD: rccide.c,v 1.7.4.4 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.7.4.3 2004/08/25 06:58:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.7.4.4 2004/09/18 14:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.7.2.1 2004/08/03 10:46:20 skrll Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.7.2.2 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.

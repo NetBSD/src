@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_xout.c,v 1.5.2.2 2004/08/03 10:43:46 skrll Exp $	*/
+/*	$NetBSD: ibcs2_exec_xout.c,v 1.5.2.3 2004/09/18 14:43:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.5.2.2 2004/08/03 10:43:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.5.2.3 2004/09/18 14:43:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,14 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_xout.c,v 1.5.2.2 2004/08/03 10:43:46 skrl
 #include <compat/ibcs2/ibcs2_util.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 
-int exec_ibcs2_xout_prep_nmagic __P((struct lwp *, struct exec_package *,
+int exec_ibcs2_xout_prep_nmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
-int exec_ibcs2_xout_prep_zmagic __P((struct lwp *, struct exec_package *,
+int exec_ibcs2_xout_prep_zmagic __P((struct proc *, struct exec_package *,
 				     struct xexec *, struct xext *));
 
 int
-exec_ibcs2_xout_makecmds(l, epp)
-	struct lwp *l;
+exec_ibcs2_xout_makecmds(p, epp)
+	struct proc *p;
 	struct exec_package *epp;
 {
 	int error;
@@ -87,10 +87,10 @@ exec_ibcs2_xout_makecmds(l, epp)
 	xep = (void *)((char *)epp->ep_hdr + sizeof(struct xexec));
 #ifdef notyet
 	if (xp->x_renv & XE_PURE)
-		error = exec_ibcs2_xout_prep_zmagic(l, epp, xp, xep);
+		error = exec_ibcs2_xout_prep_zmagic(p, epp, xp, xep);
 	else
 #endif
-		error = exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep);
+		error = exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep);
 
 	if (error)
 		kill_vmcmds(&epp->ep_vmcmds);
@@ -104,8 +104,8 @@ exec_ibcs2_xout_makecmds(l, epp)
  */
 
 int
-exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
-	struct lwp *l;
+exec_ibcs2_xout_prep_nmagic(p, epp, xp, xep)
+	struct proc *p;
 	struct exec_package *epp;
 	struct xexec *xp;
 	struct xext *xep;
@@ -124,8 +124,8 @@ exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
 	xs = (struct xseg *)malloc(segsize, M_TEMP, M_WAITOK);
 	error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)xs,
 			segsize, xep->xe_segpos,
-			UIO_SYSSPACE, IO_NODELOCKED, l->l_proc->p_ucred,
-			&resid, l);
+			UIO_SYSSPACE, IO_NODELOCKED, p->p_ucred,
+			&resid, NULL);
 	if (error) {
 		DPRINTF(("segment table read error %d\n", error));
 		free(xs, M_TEMP);
@@ -196,5 +196,5 @@ exec_ibcs2_xout_prep_nmagic(l, epp, xp, xep)
 		 epp->ep_entry));
 	
 	free(xs, M_TEMP);
-	return (*epp->ep_esch->es_setup_stack)(l->l_proc, epp);
+	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }

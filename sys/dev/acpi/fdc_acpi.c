@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.9.2.1 2004/08/03 10:45:03 skrll Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.9.2.2 2004/09/18 14:44:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9.2.1 2004/08/03 10:45:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.9.2.2 2004/09/18 14:44:42 skrll Exp $");
 
 #include "rnd.h"
 

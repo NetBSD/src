@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.6.6.2 2004/08/25 06:57:35 skrll Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.6.6.3 2004/09/18 14:46:01 skrll Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.6.6.2 2004/08/25 06:57:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.6.6.3 2004/09/18 14:46:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.6.2.2 2004/09/03 12:45:08 skrll Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.6.2.3 2004/09/18 14:42:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.2 2004/09/03 12:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.6.2.3 2004/09/18 14:42:43 skrll Exp $");
 
 #include "opt_acpi.h"
 #include "opt_mpbios.h"

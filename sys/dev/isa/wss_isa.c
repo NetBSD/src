@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.16 2003/05/03 18:11:29 wiz Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.16.2.1 2004/09/18 14:47:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.16 2003/05/03 18:11:29 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_isa.c,v 1.16.2.1 2004/09/18 14:47:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ wssfind(parent, sc, probing, ia)
     sc->wss_playdrq = ia->ia_drq[0].ir_drq;
     sc->wss_ic      = ia->ia_ic;
 
-    if (sc->wss_playdrq != ISACF_DRQ_DEFAULT &&
+    if (sc->wss_playdrq != ISA_UNKNOWN_DRQ &&
         !isa_drq_isfree(sc->wss_ic, sc->wss_playdrq))
 	    goto bad;
 
@@ -189,14 +189,14 @@ wssfind(parent, sc, probing, ia)
 	recdrq = ia->ia_drq[1].ir_drq;
     } else {
 	ndrq = 1;
-	recdrq = ISACF_IRQ_DEFAULT;
+	recdrq = ISA_UNKNOWN_DRQ;
     }
 
     if (ac->mode <= 1)
 	ndrq = 1;
     sc->wss_recdrq = 
 	ac->mode > 1 && ndrq > 1 &&
-	recdrq != ISACF_DRQ_DEFAULT ? recdrq : playdrq;
+	recdrq != ISA_UNKNOWN_DRQ ? recdrq : playdrq;
     if (sc->wss_recdrq != sc->wss_playdrq && !isa_drq_isfree(sc->wss_ic,
       sc->wss_recdrq))
 	goto bad;

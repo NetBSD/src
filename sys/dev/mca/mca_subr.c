@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_subr.c,v 1.5.16.1 2004/08/03 10:48:23 skrll Exp $	*/
+/*	$NetBSD: mca_subr.c,v 1.5.16.2 2004/09/18 14:48:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.5.16.1 2004/08/03 10:48:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_subr.c,v 1.5.16.2 2004/09/18 14:48:19 skrll Exp $");
 
 #include "opt_mcaverbose.h"
 

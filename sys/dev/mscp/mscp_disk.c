@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.41.2.2 2004/08/12 16:17:15 skrll Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.41.2.3 2004/09/18 14:49:02 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.2 2004/08/12 16:17:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mscp_disk.c,v 1.41.2.3 2004/09/18 14:49:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -221,10 +221,10 @@ ra_putonline(ra)
  */
 /*ARGSUSED*/
 int
-raopen(dev, flag, fmt, l)
+raopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct	lwp *l;
+	struct	proc *p;
 {
 	struct ra_softc *ra;
 	int part, unit, mask;
@@ -282,10 +282,10 @@ raopen(dev, flag, fmt, l)
 
 /* ARGSUSED */
 int
-raclose(dev, flags, fmt, l)
+raclose(dev, flags, fmt, p)
 	dev_t dev;
 	int flags, fmt;
-	struct	lwp *l;
+	struct	proc *p;
 {
 	int unit = DISKUNIT(dev);
 	struct ra_softc *ra = ra_cd.cd_devs[unit];
@@ -402,12 +402,12 @@ rawrite(dev, uio, flags)
  * I/O controls.
  */
 int
-raioctl(dev, cmd, data, flag, l)
+raioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp, *tp;
@@ -677,10 +677,10 @@ rx_putonline(rx)
  */
 /*ARGSUSED*/
 int
-rxopen(dev, flag, fmt, l)
+rxopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
-	struct	lwp *l;
+	struct	proc *p;
 {
 	struct rx_softc *rx;
 	int unit;
@@ -783,12 +783,12 @@ rxwrite(dev, uio, flag)
  * I/O controls.
  */
 int
-rxioctl(dev, cmd, data, flag, l)
+rxioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit = DISKUNIT(dev);
 	struct disklabel *lp;

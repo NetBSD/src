@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.21.2.1 2004/08/03 10:45:46 skrll Exp $ */
+/*	$NetBSD: if_ni.c,v 1.21.2.2 2004/09/18 14:45:26 skrll Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.21.2.1 2004/08/03 10:45:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.21.2.2 2004/09/18 14:45:26 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.63.2.2 2004/09/03 12:45:08 skrll Exp $	*/
+/*	$NetBSD: psycho.c,v 1.63.2.3 2004/09/18 14:41:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.63.2.2 2004/09/03 12:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.63.2.3 2004/09/18 14:41:04 skrll Exp $");
 
 #include "opt_ddb.h"
 

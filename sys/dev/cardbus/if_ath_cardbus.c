@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_cardbus.c,v 1.4.2.3 2004/08/12 11:41:22 skrll Exp $ */
+/*	$NetBSD: if_ath_cardbus.c,v 1.4.2.4 2004/09/18 14:45:26 skrll Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.3 2004/08/12 11:41:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_cardbus.c,v 1.4.2.4 2004/09/18 14:45:26 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -154,6 +154,8 @@ ath_cardbus_attach(struct device *parent, struct device *self,
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
 	csc->sc_tag = ca->ca_tag;
+
+	printf("\n");
 
 	/*
 	 * Power management hooks.

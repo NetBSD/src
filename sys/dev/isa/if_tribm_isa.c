@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tribm_isa.c,v 1.4 2002/01/07 21:47:09 thorpej Exp $	*/
+/*	$NetBSD: if_tribm_isa.c,v 1.4.16.1 2004/09/18 14:47:46 skrll Exp $	*/
 
 /* XXXJRT changes isa_attach_args too early */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.4 2002/01/07 21:47:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tribm_isa.c,v 1.4.16.1 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ tribm_isa_probe(parent, match, aux)
 	if (ia->ia_iobase == IOBASEUNK)
 		ia->ia_iobase = 0xa20;
 #else
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 #endif
 
@@ -125,7 +125,7 @@ tribm_isa_probe(parent, match, aux)
 	case 0xF:
 	case 0xE:
 	case 0xD:
-		if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
+		if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
 #ifdef notyet
 			ia->ia_maddr = TR_SRAM_DEFAULT;
 #else
@@ -134,7 +134,7 @@ tribm_isa_probe(parent, match, aux)
 		break;
 	case 0xC:
 		i = bus_space_read_1(memt, mmioh, TR_ACA_OFFSET) << 12;
-		if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
+		if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
 			ia->ia_iomem[0].ir_addr = i;
 		else if (ia->ia_iomem[0].ir_addr != i) {
 			printf(
@@ -167,7 +167,7 @@ tribm_isa_probe(parent, match, aux)
 		return 0;
 	}
 
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		ia->ia_irq[0].ir_irq = irq;
 	else if (ia->ia_irq[0].ir_irq != irq) {
 		printf(

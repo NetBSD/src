@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_piix_reg.h,v 1.7.10.1 2004/08/03 10:49:11 skrll Exp $	*/
+/*	$NetBSD: pciide_piix_reg.h,v 1.7.10.2 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.6.24.1 2004/08/03 10:46:18 skrll Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.6.24.2 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.17.2.2 2004/09/03 12:45:17 skrll Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.17.2.3 2004/09/18 14:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.

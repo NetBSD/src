@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.5.2.1 2004/08/03 10:44:23 skrll Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.5.2.2 2004/09/18 14:43:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.5.2.1 2004/08/03 10:44:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.5.2.2 2004/09/18 14:43:58 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"

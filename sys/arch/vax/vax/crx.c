@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.7.6.2 2004/08/12 16:17:14 skrll Exp $	*/
+/*	$NetBSD: crx.c,v 1.7.6.3 2004/09/18 14:42:13 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.7.6.2 2004/08/12 16:17:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.7.6.3 2004/09/18 14:42:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -92,10 +92,10 @@ struct rx50state {
  */
 /*ARGSUSED*/
 int
-crxopen(dev, flags, fmt, l)
+crxopen(dev, flags, fmt, p)
 	dev_t dev;
 	int flags, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 	int unit;
 
@@ -118,10 +118,10 @@ crxopen(dev, flags, fmt, l)
  */
 /*ARGSUSED*/
 int
-crxclose(dev, flags, fmt, l)
+crxclose(dev, flags, fmt, p)
 	dev_t dev;
 	int flags, fmt;
-	struct lwp *l;
+	struct proc *p;
 {
 #if	CRXDEBUG
 	printf("crxclose(csa%d)\n", minor(dev));

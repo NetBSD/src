@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.19.6.1 2004/08/03 10:47:56 skrll Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.19.6.2 2004/09/18 14:47:45 skrll Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.19.6.1 2004/08/03 10:47:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.19.6.2 2004/09/18 14:47:45 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"

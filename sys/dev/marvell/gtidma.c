@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidma.c,v 1.2.2.1 2004/08/03 10:48:22 skrll Exp $	*/
+/*	$NetBSD: gtidma.c,v 1.2.2.2 2004/09/18 14:48:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.2.2.1 2004/08/03 10:48:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtidma.c,v 1.2.2.2 2004/09/18 14:48:19 skrll Exp $");
 
 #include "opt_idma.h"
 #include "opt_ddb.h"

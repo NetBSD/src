@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdide.c,v 1.11.2.3 2004/08/25 06:58:05 skrll Exp $	*/
+/*	$NetBSD: cmdide.c,v 1.11.2.4 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.

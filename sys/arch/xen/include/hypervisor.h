@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.8.2.2 2004/08/03 10:43:10 skrll Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.8.2.3 2004/09/18 14:42:53 skrll Exp $	*/
 
 /*
  * 

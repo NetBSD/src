@@ -1,4 +1,4 @@
-/* $NetBSD: linux_errno.h,v 1.2.24.1 2004/08/03 10:44:03 skrll Exp $ */
+/* $NetBSD: linux_errno.h,v 1.2.24.2 2004/09/18 14:43:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1.20.1 2004/08/03 10:42:22 skrll Exp $ */
+/*	$NetBSD: start.S,v 1.1.20.2 2004/09/18 14:41:58 skrll Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.

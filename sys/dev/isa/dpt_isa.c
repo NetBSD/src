@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt_isa.c,v 1.11.6.1 2004/08/03 10:47:58 skrll Exp $	*/
+/*	$NetBSD: dpt_isa.c,v 1.11.6.2 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.11.6.1 2004/08/03 10:47:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt_isa.c,v 1.11.6.2 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ dpt_isa_match(struct device *parent, struct cfdata *match, void *aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
 
-	if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT) 
+	if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) 
 		return (dpt_isa_probe(ia, ia->ia_io[0].ir_addr));
 
 	for (i = 0; dpt_isa_iobases[i] != 0; i++) {
@@ -213,7 +213,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	 * configuration, use that value.  If the HBA told us, use that
 	 * value.  Otherwise, puke.
 	 */
-	if ((drq = ia->ia_drq[0].ir_drq) == ISACF_DRQ_DEFAULT) {
+	if ((drq = ia->ia_drq[0].ir_drq) == ISA_UNKNOWN_DRQ) {
 		int dmanum = ((ec.ec_feat1 & EC_F1_DMA_NUM_MASK) >> 
 		    EC_F1_DMA_NUM_SHIFT);
 	
@@ -226,7 +226,7 @@ dpt_isa_probe(struct isa_attach_args *ia, int iobase)
 	 * Which IRQ to use: if it was hardwired in the kernel configuration, 
 	 * use that value.  Otherwise, use what the HBA told us.
 	 */
-	if ((irq = ia->ia_irq[0].ir_irq) == ISACF_IRQ_DEFAULT)
+	if ((irq = ia->ia_irq[0].ir_irq) == ISA_UNKNOWN_IRQ)
 		irq = ((ec.ec_feat1 & EC_F1_IRQ_NUM_MASK) >>
 		    EC_F1_IRQ_NUM_SHIFT);
 

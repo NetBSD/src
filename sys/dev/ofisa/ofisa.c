@@ -1,4 +1,4 @@
-/*	$NetBSD: ofisa.c,v 1.13.2.1 2004/08/03 10:49:05 skrll Exp $	*/
+/*	$NetBSD: ofisa.c,v 1.13.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.13.2.1 2004/08/03 10:49:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofisa.c,v 1.13.2.2 2004/09/18 14:49:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

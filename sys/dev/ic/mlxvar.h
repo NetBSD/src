@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.7 2002/09/22 18:59:00 ad Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.7.6.1 2004/09/18 14:45:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,8 +66,6 @@
 
 #ifndef _IC_MLXVAR_H_
 #define	_IC_MLXVAR_H_
-
-#include "locators.h"
 
 /* Older boards allow up to 17 segments and 64kB transfers. */
 #define	MLX_MAX_SEGS		17
@@ -182,8 +180,6 @@ struct mlx_softc {
 struct mlx_attach_args {
 	int		mlxa_unit;
 };
-
-#define	mlxacf_unit	cf_loc[MLXCF_UNIT]
 
 int	mlx_flush(struct mlx_softc *, int);
 void	mlx_init(struct mlx_softc *, const char *);

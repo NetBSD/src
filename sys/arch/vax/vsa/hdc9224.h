@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.h,v 1.4.22.1 2004/08/03 10:42:45 skrll Exp $ */
+/*	$NetBSD: hdc9224.h,v 1.4.22.2 2004/09/18 14:42:22 skrll Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6.16.1 2004/08/03 10:42:21 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.6.16.2 2004/09/18 14:41:58 skrll Exp $
 
 RELOC=0x2f0000
 .PATH:	${.CURDIR}/../../vax ${.CURDIR}/../common

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.121.2.4 2004/09/03 12:45:16 skrll Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.121.2.5 2004/09/18 14:43:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.4 2004/09/03 12:45:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.121.2.5 2004/09/18 14:43:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ bsd_to_linux_statfs(bsp, lsp)
 		lsp->l_ftype = fstypes[i].linux;
 	}
 
-	lsp->l_fbsize = bsp->f_bsize;
+	lsp->l_fbsize = bsp->f_frsize;
 	lsp->l_fblocks = bsp->f_blocks;
 	lsp->l_fbfree = bsp->f_bfree;
 	lsp->l_fbavail = bsp->f_bavail;
@@ -329,7 +329,7 @@ bsd_to_linux_statfs(bsp, lsp)
 	/* Linux sets the fsid to 0..., we don't */
 	lsp->l_ffsid.val[0] = bsp->f_fsidx.__fsid_val[0];
 	lsp->l_ffsid.val[1] = bsp->f_fsidx.__fsid_val[1];
-	lsp->l_fnamelen = MAXNAMLEN;	/* XXX */
+	lsp->l_fnamelen = bsp->f_namemax;
 	(void)memset(lsp->l_fspare, 0, sizeof(lsp->l_fspare));
 }
 
@@ -356,7 +356,7 @@ linux_sys_statfs(l, v, retval)
 	sg = stackgap_init(p, 0);
 	bsp = (struct statvfs *) stackgap_alloc(p, &sg, sizeof (struct statvfs));
 
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&bsa, path) = SCARG(uap, path);
 	SCARG(&bsa, buf) = bsp;
@@ -783,7 +783,7 @@ linux_sys_getdents(l, v, retval)
 		goto out1;
 	}
 
-	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, l)))
+	if ((error = VOP_GETATTR(vp, &va, p->p_ucred, p)))
 		goto out1;
 
 	nbytes = SCARG(uap, count);
@@ -808,7 +808,7 @@ again:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = NULL;
 	auio.uio_resid = buflen;
 	auio.uio_offset = off;
 	/*
@@ -892,7 +892,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return error;
 }
 

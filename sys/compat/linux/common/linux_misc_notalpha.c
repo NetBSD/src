@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.1 2003/07/02 15:25:48 darrenr Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.69.2.2 2004/09/18 14:43:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.1 2003/07/02 15:25:48 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.69.2.2 2004/09/18 14:43:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,7 +260,7 @@ linux_sys_utime(l, v, retval)
 
 	sg = stackgap_init(p, 0);
 	tvp = (struct timeval *) stackgap_alloc(p, &sg, sizeof(tv));
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ua, path) = SCARG(uap, path);
 

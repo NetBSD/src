@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy_subr.c,v 1.6.6.1 2004/08/03 10:48:49 skrll Exp $	*/
+/*	$NetBSD: ukphy_subr.c,v 1.6.6.2 2004/09/18 14:48:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.6.6.1 2004/08/03 10:48:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy_subr.c,v 1.6.6.2 2004/09/18 14:48:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

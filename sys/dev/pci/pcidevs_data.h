@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.3 2004/09/03 12:45:28 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.4 2004/09/18 14:49:05 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.647 2004/08/26 13:14:59 itohy Exp 
+ *	NetBSD: pcidevs,v 1.651 2004/09/18 08:47:46 martin Exp 
  */
 
 /*
@@ -2172,6 +2172,10 @@ const struct pci_vendor pci_vendors[] = {
 	    "Sandburst, Inc.",
 	},
 	{
+	    PCI_VENDOR_S2IO,
+	    "S2io Technologies",
+	},
+	{
 	    PCI_VENDOR_SYMPHONY2,
 	    "Symphony Labs (2nd PCI Vendor ID)",
 	},
@@ -2296,7 +2300,7 @@ const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 564;
+const int pci_nvendors = 565;
 
 const struct pci_product pci_products[] = {
 	{
@@ -6440,6 +6444,10 @@ const struct pci_product pci_products[] = {
 	    "USB Host Controller",
 	},
 	{
+	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_EVDO,
+	    "Sierra Wireless AirCard 580",
+	},
+	{
 	    PCI_VENDOR_LUCENT, PCI_PRODUCT_LUCENT_FW322_323,
 	    "FW322/323 IEEE 1394 Host Controller",
 	},
@@ -6806,6 +6814,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919_1,
 	    "FC919",
+	},
+	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC929X,
+	    "FC929X",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
@@ -7300,6 +7312,10 @@ const struct pci_product pci_products[] = {
 	    "Quadro FX 3000",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GF_FX5700_LE,
+	    "GeForce FX 5700 LE",
+	},
+	{
 	    PCI_VENDOR_NVIDIA_SGS, PCI_PRODUCT_NVIDIA_SGS_RIVA128,
 	    "Riva 128",
 	},
@@ -7602,6 +7618,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_RNS, PCI_PRODUCT_RNS_FDDI,
 	    "2200 FDDI",
+	},
+	{
+	    PCI_VENDOR_S2IO, PCI_PRODUCT_S2IO_XFRAME,
+	    "Xframe 10 Gigabit ethernet adapter",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE,
@@ -9648,4 +9668,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1837;
+const int pci_nproducts = 1841;

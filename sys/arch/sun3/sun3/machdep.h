@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.28.6.1 2004/08/03 10:42:12 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.28.6.2 2004/09/18 14:41:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.

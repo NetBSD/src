@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.9.2.3 2004/08/25 06:58:05 skrll Exp $	*/
+/*	$NetBSD: acardide.c,v 1.9.2.4 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.3.2.1 2004/08/03 10:48:50 skrll Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.3.2.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.3.2.1 2004/08/03 10:48:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.3.2.2 2004/09/18 14:49:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

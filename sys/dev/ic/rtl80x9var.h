@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl80x9var.h,v 1.2.24.1 2004/08/03 10:46:18 skrll Exp $	*/
+/*	$NetBSD: rtl80x9var.h,v 1.2.24.2 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

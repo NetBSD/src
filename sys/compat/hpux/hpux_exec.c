@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.37.2.3 2004/08/25 06:57:33 skrll Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.37.2.4 2004/09/18 14:43:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.37.2.3 2004/08/25 06:57:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.37.2.4 2004/09/18 14:43:15 skrll Exp $");
+
+#if defined(_KERNEL_OPT)
+#include "opt_syscall_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,7 +125,11 @@ const struct emul emul_hpux = {
 	HPUX_SYS_NSYSENT,
 #endif
 	hpux_sysent,
+#ifdef SYSCALL_DEBUG
 	hpux_syscallnames,
+#else
+	NULL,
+#endif
 	hpux_sendsig,
 	trapsignal,
 	NULL,
@@ -164,7 +172,7 @@ hpux_sys_execv(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);
@@ -189,7 +197,7 @@ hpux_sys_execve(l, v, retval)
 	caddr_t sg;
 
 	sg = stackgap_init(p, 0);
-	CHECK_ALT_EXIST(l, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ap, path) = SCARG(uap, path);
 	SCARG(&ap, argp) = SCARG(uap, argp);

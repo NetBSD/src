@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.64.2.2 2004/08/03 10:44:03 skrll Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.64.2.3 2004/09/18 14:43:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.64.2.2 2004/08/03 10:44:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.64.2.3 2004/09/18 14:43:42 skrll Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -77,14 +77,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.64.2.2 2004/08/03 10:44:03 sk
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-static int ELFNAME2(linux,signature) __P((struct lwp *, struct exec_package *,
+static int ELFNAME2(linux,signature) __P((struct proc *, struct exec_package *,
 	Elf_Ehdr *, char *));
 #ifdef LINUX_GCC_SIGNATURE
-static int ELFNAME2(linux,gcc_signature) __P((struct lwp *l,
+static int ELFNAME2(linux,gcc_signature) __P((struct proc *p,
 	struct exec_package *, Elf_Ehdr *));
 #endif
 #ifdef LINUX_ATEXIT_SIGNATURE
-static int ELFNAME2(linux,atexit_signature) __P((struct lwp *l,
+static int ELFNAME2(linux,atexit_signature) __P((struct proc *p,
 	struct exec_package *, Elf_Ehdr *));
 #endif
 
@@ -178,8 +178,8 @@ out:
  * XXX NetBSD binaries as Linux.
  */
 static int
-ELFNAME2(linux,gcc_signature)(l, epp, eh)
-	struct lwp *l;
+ELFNAME2(linux,gcc_signature)(p, epp, eh)
+	struct proc *p;
 	struct exec_package *epp;
 	Elf_Ehdr *eh;
 {
@@ -192,7 +192,7 @@ ELFNAME2(linux,gcc_signature)(l, epp, eh)
 
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, eh->e_shoff, sh, shsize);
+	error = exec_read_from(p, epp->ep_vp, eh->e_shoff, sh, shsize);
 	if (error)
 		goto out;
 
@@ -210,7 +210,7 @@ ELFNAME2(linux,gcc_signature)(l, epp, eh)
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		error = exec_read_from(l, epp->ep_vp, s->sh_offset, buf,
+		error = exec_read_from(p, epp->ep_vp, s->sh_offset, buf,
 		    sizeof(signature) - 1);
 		if (error)
 			continue;
@@ -233,8 +233,8 @@ out:
 #endif
 
 static int
-ELFNAME2(linux,signature)(l, epp, eh, itp)
-	struct lwp *l;
+ELFNAME2(linux,signature)(p, epp, eh, itp)
+	struct proc *p;
 	struct exec_package *epp;
 	Elf_Ehdr *eh;
 	char *itp;
@@ -251,7 +251,7 @@ ELFNAME2(linux,signature)(l, epp, eh, itp)
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	error = exec_read_from(l, epp->ep_vp, eh->e_phoff, ph, phsize);
+	error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph, phsize);
 	if (error)
 		goto out;
 
@@ -266,7 +266,7 @@ ELFNAME2(linux,signature)(l, epp, eh, itp)
 			continue;
 
 		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
-		error = exec_read_from(l, epp->ep_vp, ephp->p_offset, np,
+		error = exec_read_from(p, epp->ep_vp, ephp->p_offset, np,
 		    ephp->p_filesz);
 		if (error)
 			goto next;
@@ -310,8 +310,8 @@ out:
 }
 
 int
-ELFNAME2(linux,probe)(l, epp, eh, itp, pos)
-	struct lwp *l;
+ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
+	struct proc *p;
 	struct exec_package *epp;
 	void *eh;
 	char *itp;
@@ -319,18 +319,18 @@ ELFNAME2(linux,probe)(l, epp, eh, itp, pos)
 {
 	int error;
 
-	if (((error = ELFNAME2(linux,signature)(l, epp, eh, itp)) != 0) &&
+	if (((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0) &&
 #ifdef LINUX_GCC_SIGNATURE
-	    ((error = ELFNAME2(linux,gcc_signature)(l, epp, eh)) != 0) &&
+	    ((error = ELFNAME2(linux,gcc_signature)(p, epp, eh)) != 0) &&
 #endif
 #ifdef LINUX_ATEXIT_SIGNATURE
-	    ((error = ELFNAME2(linux,atexit_signature)(l, epp, eh)) != 0) &&
+	    ((error = ELFNAME2(linux,atexit_signature)(p, epp, eh)) != 0) &&
 #endif
 	    1) 
 			return error;
 
 	if (itp) {
-		if ((error = emul_find_interp(l, epp->ep_esch->es_emul->e_path,
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
 		    itp)))
 			return (error);
 	}
@@ -344,17 +344,16 @@ ELFNAME2(linux,probe)(l, epp, eh, itp, pos)
  * extra information in case of dynamic binding.
  */
 int
-ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
+ELFNAME2(linux,copyargs)(struct proc *p, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	struct proc *p = l->l_proc;
 	size_t len;
 	AuxInfo ai[LINUX_ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
 	int error;
 	struct vattr *vap;
 
-	if ((error = copyargs(l, pack, arginfo, stackp, argp)) != 0)
+	if ((error = copyargs(p, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.22.2.1 2004/08/03 10:45:47 skrll Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.22.2.2 2004/09/18 14:45:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.1 2004/08/03 10:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.2 2004/09/18 14:45:26 skrll Exp $");
 
 #include "opt_cardslot.h"
 
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.22.2.1 2004/08/03 10:45:47 skrll Exp 
 #include <dev/pcmcia/pcmciachip.h>
 #include <dev/ic/i82365var.h>
 
+#include "locators.h"
 
 #if defined CARDSLOT_DEBUG
 #define STATIC
@@ -72,7 +73,8 @@ static void cardslot_event_thread __P((void *arg));
 
 STATIC int cardslot_cb_print __P((void *aux, const char *pcic));
 static int cardslot_16_print __P((void *, const char *));
-static int cardslot_16_submatch __P((struct device *, struct cfdata *,void *));
+static int cardslot_16_submatch __P((struct device *, struct cfdata *,
+				     const locdesc_t *, void *));
 
 CFATTACH_DECL(cardslot, sizeof(struct cardslot_softc),
     cardslotmatch, cardslotattach, NULL, NULL);
@@ -116,20 +118,25 @@ cardslotattach(parent, self, aux)
 	SIMPLEQ_INIT(&sc->sc_events);
 	sc->sc_th_enable = 0;
 
-	printf(" slot %d flags %x\n", sc->sc_slot, sc->sc_dev.dv_cfdata->cf_flags);
+	printf(" slot %d flags %x\n", sc->sc_slot,
+	       sc->sc_dev.dv_cfdata->cf_flags);
 
 	DPRINTF(("%s attaching CardBus bus...\n", sc->sc_dev.dv_xname));
 	if (cba != NULL) {
-		if (NULL != (csc = (void *)config_found(self, cba, cardslot_cb_print))) {
+		csc = (void *)config_found_ia(self, "cbbus", cba,
+					      cardslot_cb_print);
+		if (csc) {
 			/* cardbus found */
-			DPRINTF(("cardslotattach: found cardbus on %s\n", sc->sc_dev.dv_xname));
+			DPRINTF(("cardslotattach: found cardbus on %s\n",
+				 sc->sc_dev.dv_xname));
 			sc->sc_cb_softc = csc;
 		}
 	}
 
 	if (pa != NULL) {
-		if (NULL != (psc = (void *)config_found_sm(self, pa,
-		    cardslot_16_print, cardslot_16_submatch))) {
+		psc = (void *)config_found_sm_loc(self, "pcmciabus", NULL, pa,
+			cardslot_16_print, cardslot_16_submatch);
+		if (psc) {
 			/* pcmcia 16-bit bus found */
 			DPRINTF(("cardslotattach: found 16-bit pcmcia bus\n"));
 			sc->sc_16_softc = psc;
@@ -178,9 +185,10 @@ cardslot_cb_print(aux, pnp)
 
 
 static int
-cardslot_16_submatch(parent, cf, aux)
+cardslot_16_submatch(parent, cf, ldesc, aux)
 	struct device *parent;
 	struct cfdata *cf;
+	const locdesc_t *ldesc;
 	void *aux;
 {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.106.2.1 2004/08/12 11:41:24 skrll Exp $	*/
+/*	$NetBSD: elink3.c,v 1.106.2.2 2004/09/18 14:45:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.106.2.1 2004/08/12 11:41:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.106.2.2 2004/09/18 14:45:57 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"

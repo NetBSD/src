@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.35.2.3 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.35.2.4 2004/09/18 14:50:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35.2.3 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.35.2.4 2004/09/18 14:50:23 skrll Exp $");
 
 #include "opt_pcmciaverbose.h"
 

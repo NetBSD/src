@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcbatterytable.h,v 1.3.24.1 2004/08/03 10:45:57 skrll Exp $	*/
+/*	$NetBSD: hpcbatterytable.h,v 1.3.24.2 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 SATO Kazumi

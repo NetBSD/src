@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.9.6.1 2004/08/03 10:42:22 skrll Exp $ */
+/*      $NetBSD: if_ze.c,v 1.9.6.2 2004/09/18 14:42:05 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.9.6.1 2004/08/03 10:42:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.9.6.2 2004/09/18 14:42:05 skrll Exp $");
 
 #include "opt_cputype.h"
 

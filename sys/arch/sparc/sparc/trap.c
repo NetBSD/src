@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.136.2.3 2004/09/03 12:45:06 skrll Exp $ */
+/*	$NetBSD: trap.c,v 1.136.2.4 2004/09/18 14:40:49 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136.2.3 2004/09/03 12:45:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.136.2.4 2004/09/18 14:40:49 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -1564,7 +1564,7 @@ child_return(arg)
 	p = l->l_proc;
 	if (KTRPOINT(p, KTR_SYSRET)) {
 		KERNEL_PROC_LOCK(l);
-		ktrsysret(l,
+		ktrsysret(p,
 			  (p->p_flag & P_PPWAIT) ? SYS_vfork : SYS_fork, 0, 0);
 		KERNEL_PROC_UNLOCK(l);
 	}

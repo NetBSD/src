@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.91.2.2 2004/08/26 19:28:32 skrll Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.91.2.3 2004/09/18 14:46:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.91.2.2 2004/08/26 19:28:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.91.2.3 2004/09/18 14:46:01 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -539,16 +539,15 @@ zs_shutdown(zst)
  * Open a zs serial (tty) port.
  */
 int
-zsopen(dev, flags, mode, l)
+zsopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
 	struct tty *tp;
-	struct proc *p;
 	int s, s2;
 	int error;
 
@@ -558,7 +557,6 @@ zsopen(dev, flags, mode, l)
 
 	tp = zst->zst_tty;
 	cs = zst->zst_cs;
-	p = l->l_proc;
 
 	/* If KGDB took the line, then tp==NULL */
 	if (tp == NULL)
@@ -695,11 +693,11 @@ bad:
  * Close a zs serial port.
  */
 int
-zsclose(dev, flags, mode, l)
+zsclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
@@ -751,37 +749,36 @@ zswrite(dev, uio, flags)
 }
 
 int
-zspoll(dev, events, l)
+zspoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct tty *tp = zst->zst_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int
-zsioctl(dev, cmd, data, flag, l)
+zsioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flag;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct zstty_softc *zst = device_lookup(&zstty_cd, ZSUNIT(dev));
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
-	struct proc *p = l->l_proc;
 	int error;
 	int s;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flag, l);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error != EPASSTHROUGH)
 		return (error);
 

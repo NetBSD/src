@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2.2.1 2004/08/03 10:48:22 skrll Exp $	*/
+/*	$NetBSD: obio.c,v 1.2.2.2 2004/09/18 14:48:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2.2.1 2004/08/03 10:48:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2.2.2 2004/09/18 14:48:19 skrll Exp $");
 
 #include "opt_marvell.h"
 
@@ -69,9 +69,12 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.2.2.1 2004/08/03 10:48:22 skrll Exp $");
 #include <sys/systm.h>	/* for Debugger() */
 #endif
 
+#include "locators.h"
+
 static int obio_cfprint(void *, const char *);
 static int obio_cfmatch(struct device *, struct cfdata *, void *);
-static int obio_cfsearch(struct device *, struct cfdata *, void *);
+static int obio_cfsearch(struct device *, struct cfdata *,
+			 const locdesc_t *, void *);
 static void obio_cfattach(struct device *, struct device *, void *);
 
 struct obio_softc {
@@ -108,7 +111,7 @@ obio_cfprint(void *aux, const char *pnp)
 		aprint_normal("%s at %s", oa->oa_name, pnp);
 	}
 	aprint_normal(" offset %#x size %#x", oa->oa_offset, oa->oa_size);
-	if (oa->oa_irq != OBIO_UNK_IRQ)
+	if (oa->oa_irq != OBIOCF_IRQ_DEFAULT)
 		aprint_normal(" irq %d", oa->oa_irq);
 
 	return (UNCONF);
@@ -116,16 +119,17 @@ obio_cfprint(void *aux, const char *pnp)
 
 
 int
-obio_cfsearch(struct device *parent, struct cfdata *cf, void *aux)
+obio_cfsearch(struct device *parent, struct cfdata *cf,
+	      const locdesc_t *ldesc, void *aux)
 {
 	struct obio_softc *sc = (struct obio_softc *) parent;
 	struct obio_attach_args oa;
 
 	oa.oa_name = cf->cf_name;
 	oa.oa_memt = sc->sc_memt;
-	oa.oa_offset = cf->obiocf_offset;
-	oa.oa_size = cf->obiocf_size;
-	oa.oa_irq = cf->obiocf_irq;
+	oa.oa_offset = cf->cf_loc[OBIOCF_OFFSET];
+	oa.oa_size = cf->cf_loc[OBIOCF_SIZE];
+	oa.oa_irq = cf->cf_loc[OBIOCF_IRQ];
 
 	if (config_match(parent, cf, &oa) > 0)
 		config_attach(parent, cf, &oa, obio_cfprint);
@@ -172,6 +176,5 @@ obio_cfattach(struct device *parent, struct device *self, void *aux)
 	    GT_LowAddr_GET(datal), GT_HighAddr_GET(datah),
 	    GT_PCISwap_GET(datal) == 1 ? "little" : "big");
 
-        config_search(obio_cfsearch, &sc->sc_dev, NULL);
+        config_search_ia(obio_cfsearch, &sc->sc_dev, "obio", NULL);
 }
-

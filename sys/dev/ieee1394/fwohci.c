@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.78.2.2 2004/08/03 10:47:56 skrll Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.78.2.3 2004/09/18 14:47:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78.2.2 2004/08/03 10:47:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.78.2.3 2004/09/18 14:47:45 skrll Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -178,7 +178,7 @@ int fwohci_ir_ctx_clear(struct device *, ieee1394_ir_tag_t);
 int fwohci_ir_read(struct device *, ieee1394_ir_tag_t, struct uio *,
     int, int);
 int fwohci_ir_wait(struct device *, ieee1394_ir_tag_t, void *, char *name);
-int fwohci_ir_select(struct device *, ieee1394_ir_tag_t, struct lwp *);
+int fwohci_ir_select(struct device *, ieee1394_ir_tag_t, struct proc *);
 
 
 
@@ -233,7 +233,8 @@ static int  fwohci_inreg(struct ieee1394_abuf *, int);
 static int  fwohci_unreg(struct ieee1394_abuf *, int);
 static int  fwohci_parse_input(struct fwohci_softc *, void *,
     struct fwohci_pkt *);
-static int  fwohci_submatch(struct device *, struct cfdata *, void *);
+static int  fwohci_submatch(struct device *, struct cfdata *,
+			    const locdesc_t *, void *);
 
 /* XXX */
 u_int16_t fwohci_cycletimer(struct fwohci_softc *);
@@ -3237,8 +3238,9 @@ fwohci_uid_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *res)
 			memcpy(fwa.uid, fu->fu_uid, 8);
 			fwa.nodeid = n;
 			iea = (struct ieee1394_softc *)
-			    config_found_sm(&sc->sc_sc1394.sc1394_dev, &fwa, 
-			    fwohci_print, fwohci_submatch);
+			    config_found_sm_loc(&sc->sc_sc1394.sc1394_dev,
+				"fwbus", NULL, &fwa, 
+				fwohci_print, fwohci_submatch);
 			if (iea != NULL)
 				LIST_INSERT_HEAD(&sc->sc_nodelist, iea,
 				    sc1394_node);
@@ -4257,7 +4259,8 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 }
 
 static int
-fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
+fwohci_submatch(struct device *parent, struct cfdata *cf,
+		const locdesc_t *ldesc, void *aux)
 {
 	struct ieee1394_attach_args *fwa = aux;
 
@@ -5297,12 +5300,12 @@ fwohci_ir_wait(struct device *dev, ieee1394_ir_tag_t tag, void *wchan, char *nam
 
 /*
  * int fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag,
- *			   struct lwp *l)
+ *			   struct proc *p)
  *
  *	This function returns the number of packets in queue.
  */
 int
-fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag, struct lwp *l)
+fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag, struct proc *p)
 {
 	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)tag;
 	int pktnum;
@@ -5313,7 +5316,7 @@ fwohci_ir_select(struct device *dev, ieee1394_ir_tag_t tag, struct lwp *l)
 	}
 
 	if ((pktnum = fwohci_ir_ctx_packetnum(irc)) == 0) {
-		selrecord(l, &irc->irc_sel);
+		selrecord(p, &irc->irc_sel);
 	}
 
 	return pktnum;

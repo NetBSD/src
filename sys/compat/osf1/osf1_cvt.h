@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.h,v 1.8.10.1 2004/08/03 10:44:24 skrll Exp $ */
+/* $NetBSD: osf1_cvt.h,v 1.8.10.2 2004/09/18 14:43:58 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.

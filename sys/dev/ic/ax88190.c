@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.3.6.1 2004/08/25 06:57:35 skrll Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.3.6.2 2004/09/18 14:45:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.3.6.1 2004/08/25 06:57:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.3.6.2 2004/09/18 14:45:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdbreg.h,v 1.3.28.1 2004/08/03 10:45:46 skrll Exp $	*/
+/*	$NetBSD: kdbreg.h,v 1.3.28.2 2004/09/18 14:45:26 skrll Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.

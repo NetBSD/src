@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.c,v 1.2.2.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: mpt.c,v 1.2.2.2 2004/09/18 14:45:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.2.2.1 2004/08/03 10:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt.c,v 1.2.2.2 2004/09/18 14:45:59 skrll Exp $");
 
 #include <dev/ic/mpt.h>
 

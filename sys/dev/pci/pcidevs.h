@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.543.2.3 2004/09/03 12:45:28 skrll Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.543.2.4 2004/09/18 14:49:04 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.647 2004/08/26 13:14:59 itohy Exp 
+ *	NetBSD: pcidevs,v 1.651 2004/09/18 08:47:46 martin Exp 
  */
 
 /*
@@ -590,6 +590,7 @@
 #define	PCI_VENDOR_FZJZEL	0x1796		/* FZ Juelich / ZEL */
 #define	PCI_VENDOR_HAWKING	0x17b3		/* Hawking Technology */
 #define	PCI_VENDOR_SANDBURST	0x17ba		/* Sandburst, Inc. */
+#define	PCI_VENDOR_S2IO	0x17d5		/* S2io Technologies */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_HINT	0x3388		/* HiNT */
@@ -1911,6 +1912,7 @@
 #define	PCI_PRODUCT_LUCENT_OR3LP26	0x5400		/* ORCA FPGA w/32-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_OR3TP12	0x5401		/* ORCA FPGA w/64-bit PCI ASIC core */
 #define	PCI_PRODUCT_LUCENT_USBHC	0x5801		/* USB Host Controller */
+#define	PCI_PRODUCT_LUCENT_EVDO	0x5802		/* Sierra Wireless AirCard 580 */
 #define	PCI_PRODUCT_LUCENT_FW322_323	0x5811		/* FW322/323 IEEE 1394 Host Controller */
 
 /* Macronix */
@@ -2041,6 +2043,7 @@
 #define	PCI_PRODUCT_SYMBIOS_FC929_1	0x0623		/* FC929 */
 #define	PCI_PRODUCT_SYMBIOS_FC919	0x0624		/* FC919 */
 #define	PCI_PRODUCT_SYMBIOS_FC919_1	0x0625		/* FC919 */
+#define	PCI_PRODUCT_SYMBIOS_FC929X	0x0626		/* FC929X */
 
 /* Packet Engines products */
 #define	PCI_PRODUCT_SYMBIOS_PE_GNIC	0x0702		/* Packet Engines G-NIC Ethernet */
@@ -2184,6 +2187,7 @@
 #define	PCI_PRODUCT_NVIDIA_GF_FX5900XT	0x0332		/* GeForce FX 5900XT */
 #define	PCI_PRODUCT_NVIDIA_GF_FX5950U	0x0333		/* GeForce FX 5950 Ultra */
 #define	PCI_PRODUCT_NVIDIA_QUADRO_FX_3000	0x0338		/* Quadro FX 3000 */
+#define	PCI_PRODUCT_NVIDIA_GF_FX5700_LE	0x0343		/* GeForce FX 5700 LE */
 
 /* Nvidia Corporation & SGS-Thomson Microelectronics */
 #define	PCI_PRODUCT_NVIDIA_SGS_RIVA128	0x0018		/* Riva 128 */
@@ -2302,6 +2306,9 @@
 
 /* RNS products */
 #define	PCI_PRODUCT_RNS_FDDI	0x2200		/* 2200 FDDI */
+
+/* S2io products */
+#define	PCI_PRODUCT_S2IO_XFRAME	0x5831		/* Xframe 10 Gigabit ethernet adapter */
 
 /* S3 products */
 #define	PCI_PRODUCT_S3_VIRGE	0x5631		/* ViRGE */

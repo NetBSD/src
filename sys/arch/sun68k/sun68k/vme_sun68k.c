@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_sun68k.c,v 1.6.6.1 2004/08/03 10:42:21 skrll Exp $	*/
+/*	$NetBSD: vme_sun68k.c,v 1.6.6.2 2004/09/18 14:41:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.6.6.1 2004/08/03 10:42:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_sun68k.c,v 1.6.6.2 2004/09/18 14:41:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.3 2004/08/25 06:57:33 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.24.2.4 2004/09/18 14:43:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.3 2004/08/25 06:57:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.24.2.4 2004/09/18 14:43:05 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_union.h"
@@ -108,16 +108,17 @@ compat_43_sys_stat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) path;
 		syscallarg(struct stat43 *) ub;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct stat sb;
 	struct stat43 osb;
 	int error;
 	struct nameidata nd;
 
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	    SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
-	error = vn_stat(nd.ni_vp, &sb, l);
+	error = vn_stat(nd.ni_vp, &sb, p);
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
@@ -137,6 +138,7 @@ compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 		syscallarg(char *) path;
 		syscallarg(struct ostat *) ub;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct vnode *vp, *dvp;
 	struct stat sb, sb1;
 	struct stat43 osb;
@@ -146,7 +148,7 @@ compat_43_sys_lstat(struct lwp *l, void *v, register_t *retval)
 
 	ndflags = NOFOLLOW | LOCKLEAF | LOCKPARENT;
 again:
-	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, ndflags, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd))) {
 		if (error == EISDIR && (ndflags & LOCKPARENT) != 0) {
 			/*
@@ -171,18 +173,18 @@ again:
 			else
 				vput(dvp);
 		}
-		error = vn_stat(vp, &sb, l);
+		error = vn_stat(vp, &sb, p);
 		vput(vp);
 		if (error)
 			return (error);
 	} else {
-		error = vn_stat(dvp, &sb, l);
+		error = vn_stat(dvp, &sb, p);
 		vput(dvp);
 		if (error) {
 			vput(vp);
 			return (error);
 		}
-		error = vn_stat(vp, &sb1, l);
+		error = vn_stat(vp, &sb1, p);
 		vput(vp);
 		if (error)
 			return (error);
@@ -220,8 +222,8 @@ compat_43_sys_fstat(struct lwp *l, void *v, register_t *retval)
 		return (EBADF);
 
 	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
-	FILE_UNUSE(fp, l);
+	error = (*fp->f_ops->fo_stat)(fp, &ub, p);
+	FILE_UNUSE(fp, p);
 
 	if (error == 0) {
 		cvtstat(&ub, &oub);
@@ -382,7 +384,7 @@ unionread:
 	auio.uio_iovcnt = 1;
 	auio.uio_rw = UIO_READ;
 	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_lwp = l;
+	auio.uio_procp = p;
 	auio.uio_resid = count;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	loff = auio.uio_offset = fp->f_offset;
@@ -458,7 +460,7 @@ unionread:
 			 * If the directory is opaque,
 			 * then don't show lower entries
 			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, l);
+			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
 			if (va.va_flags & OPAQUE) {
 				vput(lvp);
 				lvp = NULL;
@@ -466,7 +468,7 @@ unionread:
 		}
 		
 		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, l);
+			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
 			VOP_UNLOCK(lvp, 0);
 
 			if (error) {
@@ -475,7 +477,7 @@ unionread:
 			}
 			fp->f_data = (caddr_t) lvp;
 			fp->f_offset = 0;
-			error = vn_close(vp, FREAD, fp->f_cred, l);
+			error = vn_close(vp, FREAD, fp->f_cred, p);
 			if (error)
 				goto out;
 			vp = lvp;
@@ -500,6 +502,6 @@ unionread:
 	    sizeof(long));
 	*retval = count - auio.uio_resid;
  out:
-	FILE_UNUSE(fp, l);
+	FILE_UNUSE(fp, p);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.13.2.2 2004/08/26 19:28:30 skrll Exp $	*/
+/*	$NetBSD: sab.c,v 1.13.2.3 2004/09/18 14:41:04 skrll Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.13.2.2 2004/08/26 19:28:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.13.2.3 2004/09/18 14:41:04 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.13.2.2 2004/08/26 19:28:30 skrll Exp $");
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
 #include <sparc64/dev/sab82532reg.h>
+
+#include "locators.h"
 
 #define SABUNIT(x)		(minor(x) & 0x7ffff)
 #define SABDIALOUT(x)		(minor(x) & 0x80000)
@@ -123,6 +125,8 @@ struct sabtty_softc *sabtty_cons_output;
 
 int sab_match(struct device *, struct cfdata *, void *);
 void sab_attach(struct device *, struct device *, void *);
+int sab_submatch(struct device *, struct cfdata *,
+		 const locdesc_t *, void *);
 int sab_print(void *, const char *);
 int sab_intr(void *);
 
@@ -238,6 +242,8 @@ sab_attach(parent, self, aux)
 	struct ebus_attach_args *ea = aux;
 	u_int8_t r;
 	u_int i;
+	int help[2];
+	locdesc_t *ldesc = (void *)help; /* XXX */
 
 	sc->sc_bt = ea->ea_bustag;
 	sc->sc_node = ea->ea_node;
@@ -296,11 +302,28 @@ sab_attach(parent, self, aux)
 		struct sabtty_attach_args sta;
 
 		sta.sbt_portno = i;
-		sc->sc_child[i] = (struct sabtty_softc *)config_found_sm(self,
-		    &sta, sab_print, sabtty_match);
+
+		ldesc->len = 1;
+		ldesc->locs[SABCF_CHANNEL] = i;
+
+		sc->sc_child[i] =
+		    (struct sabtty_softc *)config_found_sm_loc(self,
+		     "sab", ldesc, &sta, sab_print, sab_submatch);
 		if (sc->sc_child[i] != NULL)
 			sc->sc_nchild++;
 	}
+}
+
+int
+sab_submatch(struct device *parent, struct cfdata *cf,
+	     const locdesc_t *ldesc, void *aux)
+{
+
+        if (cf->cf_loc[SABCF_CHANNEL] != SABCF_CHANNEL_DEFAULT &&
+            cf->cf_loc[SABCF_CHANNEL] != ldesc->locs[SABCF_CHANNEL])
+                return (0);
+
+        return (config_match(parent, cf, aux));
 }
 
 int
@@ -360,11 +383,8 @@ sabtty_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct sabtty_attach_args *sa = aux;
 
-	if (sa->sbt_portno < SAB_NCHAN)
-		return (1);
-	return (0);
+	return (1);
 }
 
 void
@@ -640,14 +660,13 @@ sabtty_softintr(sc)
 }
 
 int
-sabopen(dev, flags, mode, l)
+sabopen(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sabtty_softc *sc;
 	struct tty *tp;
-	struct proc *p;
 	int s, s1;
 
 	sc = device_lookup(&sabtty_cd, SABUNIT(dev));
@@ -656,7 +675,6 @@ sabopen(dev, flags, mode, l)
 
 	tp = sc->sc_tty;
 	tp->t_dev = dev;
-	p = l->l_proc;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		ttychars(tp);
@@ -744,10 +762,10 @@ sabopen(dev, flags, mode, l)
 }
 
 int
-sabclose(dev, flags, mode, l)
+sabclose(dev, flags, mode, p)
 	dev_t dev;
 	int flags, mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct sab_softc *bc = sc->sc_parent;
@@ -811,23 +829,22 @@ sabwrite(dev, uio, flags)
 }
 
 int
-sabioctl(dev, cmd, data, flags, l)
+sabioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
 	caddr_t data;
 	int flags;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
-	struct proc *p = l->l_proc;
 	int error;
 
-	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, l);
+	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
 	if (error >= 0)
 		return (error);
 
-	error = ttioctl(tp, cmd, data, flags, l);
+	error = ttioctl(tp, cmd, data, flags, p);
 	if (error >= 0)
 		return (error);
 
@@ -907,15 +924,15 @@ sabstop(tp, flag)
 }
 
 int
-sabpoll(dev, events, l)
+sabpoll(dev, events, p)
 	dev_t dev;
 	int events;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct sabtty_softc *sc = device_lookup(&sabtty_cd, SABUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, l));
+	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1.20.1 2004/08/03 10:48:50 skrll Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.1.20.2 2004/09/18 14:49:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.

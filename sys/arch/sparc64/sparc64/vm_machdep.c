@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.49.2.3 2004/09/03 12:45:08 skrll Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.49.2.4 2004/09/18 14:41:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49.2.3 2004/09/03 12:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49.2.4 2004/09/18 14:41:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -404,13 +404,13 @@ cpu_coredump(l, vp, cred, chdr)
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, l);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, NULL);
 	if (!error)
 		chdr->c_nseg++;
 

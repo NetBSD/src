@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.11.10.1 2004/08/03 10:41:11 skrll Exp $
+#	$NetBSD: binstall.sh,v 1.11.10.2 2004/09/18 14:41:03 skrll Exp $
 #
 
 vecho () {

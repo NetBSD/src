@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583reg.h,v 1.1.4.2 2004/08/03 10:46:06 skrll Exp $	*/
+/*	$NetBSD: pcf8583reg.h,v 1.1.4.3 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*
  * Ben Harris, 2000

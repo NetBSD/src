@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.31.2.2 2004/08/25 06:58:05 skrll Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.31.2.3 2004/09/18 14:47:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31.2.2 2004/08/25 06:58:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.31.2.3 2004/09/18 14:47:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,11 +104,11 @@ wdc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
 
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
-	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 		ia->ia_ndrq = 0;
 
 	memset(&wdc, 0, sizeof(wdc));
@@ -186,7 +186,7 @@ wdc_isa_attach(struct device *parent, struct device *self, void *aux)
 	wdr->data32ioh = wdr->cmd_iohs[0];
 
 #if 0
-	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
+	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ) {
 		sc->sc_drq = ia->ia_drq[0].ir_drq;
 
 		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DMA;

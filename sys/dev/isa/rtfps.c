@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.46 2003/01/01 00:10:21 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.46.2.1 2004/09/18 14:47:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.46 2003/01/01 00:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.46.2.1 2004/09/18 14:47:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ struct rtfps_softc {
 int rtfpsprobe __P((struct device *, struct cfdata *, void *));
 void rtfpsattach __P((struct device *, struct device *, void *));
 int rtfpsintr __P((void *));
-int rtfpsprint __P((void *, const char *));
 
 CFATTACH_DECL(rtfps, sizeof(struct rtfps_softc),
     rtfpsprobe, rtfpsattach, NULL, NULL);
@@ -98,9 +97,9 @@ rtfpsprobe(parent, self, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	/* if the first port is in use as console, then it. */
@@ -143,19 +142,6 @@ out:
 	return (rv);
 }
 
-int
-rtfpsprint(aux, pnp)
-	void *aux;
-	const char *pnp;
-{
-	struct commulti_attach_args *ca = aux;
-
-	if (pnp)
-		aprint_normal("com at %s", pnp);
-	aprint_normal(" slave %d", ca->ca_slave);
-	return (UNCONF);
-}
-
 void
 rtfpsattach(parent, self, aux)
 	struct device *parent, *self;
@@ -165,12 +151,8 @@ rtfpsattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	static int irqport[] = {
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		0x2f2,              0x6f2,              0x6f3,
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		ISACF_PORT_DEFAULT
+		-1, -1, -1, -1, -1, -1, -1, -1,
+		-1, 0x2f2, 0x6f2, 0x6f3, -1, -1, -1, -1
 	};
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase, irq;
@@ -181,7 +163,7 @@ rtfpsattach(parent, self, aux)
 	sc->sc_iobase = ia->ia_io[0].ir_addr;
 	irq = ia->ia_irq[0].ir_irq;
 
-	if (irq >= 16 || irqport[irq] == ISACF_PORT_DEFAULT) {
+	if (irq >= 16 || irqport[irq] == -1) {
 		printf("%s: invalid irq\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -212,7 +194,7 @@ rtfpsattach(parent, self, aux)
 		ca.ca_iobase = sc->sc_iobase + i * COM_NPORTS;
 		ca.ca_noien = 0;
 
-		sc->sc_slaves[i] = config_found(self, &ca, rtfpsprint);
+		sc->sc_slaves[i] = config_found(self, &ca, commultiprint);
 		if (sc->sc_slaves[i] != NULL)
 			sc->sc_alive |= 1 << i;
 	}

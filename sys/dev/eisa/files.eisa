@@ -1,4 +1,4 @@
-#	$NetBSD: files.eisa,v 1.25.16.1 2004/09/03 12:45:18 skrll Exp $
+#	$NetBSD: files.eisa,v 1.25.16.2 2004/09/18 14:45:39 skrll Exp $
 #
 # Config file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be

@@ -1,4 +1,4 @@
-;	$NetBSD: siop.ss,v 1.17.6.1 2004/08/03 10:48:49 skrll Exp $
+;	$NetBSD: siop.ss,v 1.17.6.2 2004/09/18 14:48:44 skrll Exp $
 
 ;
 ;  Copyright (c) 2000 Manuel Bouyer.

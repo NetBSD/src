@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.10.2.5 2004/08/25 06:57:34 skrll Exp $
+# $NetBSD: majors,v 1.10.2.6 2004/09/18 14:44:18 skrll Exp $
 #
 # Device majors for Machine-Independent drivers.
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.122.2.2 2004/08/12 11:41:25 skrll Exp $	*/
+/*	$NetBSD: tulip.c,v 1.122.2.3 2004/09/18 14:46:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.2 2004/08/12 11:41:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.122.2.3 2004/09/18 14:46:00 skrll Exp $");
 
 #include "bpfilter.h"
 

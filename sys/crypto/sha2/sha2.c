@@ -1,4 +1,4 @@
-/*	$NetBSD: sha2.c,v 1.2.4.2 2004/08/03 10:44:46 skrll Exp $	*/
+/*	$NetBSD: sha2.c,v 1.2.4.3 2004/09/18 14:44:26 skrll Exp $	*/
 /*	$KAME: sha2.c,v 1.9 2003/07/20 00:28:38 itojun Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.2 2004/08/03 10:44:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha2.c,v 1.2.4.3 2004/09/18 14:44:26 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>

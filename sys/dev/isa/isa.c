@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.116.2.2 2004/09/03 12:45:18 skrll Exp $	*/
+/*	$NetBSD: isa.c,v 1.116.2.3 2004/09/18 14:47:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.116.2.2 2004/09/03 12:45:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.116.2.3 2004/09/18 14:47:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.116.2.2 2004/09/03 12:45:18 skrll Exp $");
 #include <dev/isapnp/isapnpreg.h>
 #include <dev/isapnp/isapnpvar.h>
 #endif
+
+#include "locators.h"
 
 int	isamatch(struct device *, struct cfdata *, void *);
 void	isaattach(struct device *, struct device *, void *);

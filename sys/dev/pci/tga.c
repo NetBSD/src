@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.52.2.1 2004/08/03 10:49:12 skrll Exp $ */
+/* $NetBSD: tga.c,v 1.52.2.2 2004/09/18 14:49:06 skrll Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.52.2.1 2004/08/03 10:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.52.2.2 2004/09/18 14:49:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818reg.h,v 1.2.56.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: mc146818reg.h,v 1.2.56.2 2004/09/18 14:45:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ihareg.h,v 1.6.6.1 2004/08/03 10:46:15 skrll Exp $ */
+/*	$NetBSD: ihareg.h,v 1.6.6.2 2004/09/18 14:45:58 skrll Exp $ */
 
 /*-
  * Device driver for the INI-9XXXU/UW or INIC-940/950 PCI SCSI Controller.

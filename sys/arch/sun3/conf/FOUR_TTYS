@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.34.2.1 2004/08/03 10:42:02 skrll Exp $
+#	$NetBSD: FOUR_TTYS,v 1.34.2.2 2004/09/18 14:41:39 skrll Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys

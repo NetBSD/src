@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.22.2.2 2004/08/25 06:57:34 skrll Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.22.2.3 2004/09/18 14:44:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.

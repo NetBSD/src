@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.58.2.4 2004/09/03 12:45:29 skrll Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.58.2.5 2004/09/18 14:49:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -173,21 +173,6 @@ struct pci_softc {
 
 extern struct cfdriver pci_cd;
 
-/*
- * Locators devices that attach to 'pcibus', as specified to config.
- */
-#define	pcibuscf_bus		cf_loc[PCIBUSCF_BUS]
-#define	PCIBUS_UNK_BUS		PCIBUSCF_BUS_DEFAULT	/* wildcarded 'bus' */
-
-/*
- * Locators for PCI devices, as specified to config.
- */
-#define	pcicf_dev		cf_loc[PCICF_DEV]
-#define	PCI_UNK_DEV		PCICF_DEV_DEFAULT	/* wildcarded 'dev' */
-
-#define	pcicf_function		cf_loc[PCICF_FUNCTION]
-#define	PCI_UNK_FUNCTION	PCICF_FUNCTION_DEFAULT /* wildcarded 'function' */
-
 int pcibusprint(void *, const char *);
 
 /*
@@ -221,7 +206,7 @@ const struct pci_quirkdata *
  */
 struct proc;
 int	pci_devioctl __P((pci_chipset_tag_t, pcitag_t, u_long, caddr_t,
-	    int flag, struct lwp *));
+	    int flag, struct proc *));
 
 /*
  * Power Management (PCI 2.2)

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113.2.1 2004/08/03 10:42:22 skrll Exp $
+# $NetBSD: GENERIC,v 1.113.2.2 2004/09/18 14:41:58 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113.2.1 $"
+#ident 		"GENERIC-$Revision: 1.113.2.2 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -66,6 +66,7 @@ options 	INET6		# IPV6
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
+#options 	PIM		# Protocol Independent Multicast
 #options 	NS		# XNS
 #options 	NSIP		# XNS tunneling over IP
 #options 	ISO,TPIP	# OSI

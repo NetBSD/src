@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24.2.1 2004/08/03 10:42:48 skrll Exp $	*/
+/*	$NetBSD: zs.c,v 1.24.2.2 2004/09/18 14:42:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.24.2.1 2004/08/03 10:42:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.24.2.2 2004/09/18 14:42:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

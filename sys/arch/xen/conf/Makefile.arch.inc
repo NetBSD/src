@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arch.inc,v 1.1.4.2 2004/08/03 10:43:10 skrll Exp $
+#	$NetBSD: Makefile.arch.inc,v 1.1.4.3 2004/09/18 14:42:43 skrll Exp $
 
 .if defined(MACHINE) && ${MACHINE} != "xen"
 XEN_BUILD?=	${MACHINE}

@@ -1,4 +1,4 @@
-/*      $NetBSD: adw.h,v 1.9.28.1 2004/08/03 10:46:07 skrll Exp $        */
+/*      $NetBSD: adw.h,v 1.9.28.2 2004/09/18 14:45:55 skrll Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced

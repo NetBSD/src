@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.13.6.1 2004/08/03 10:49:12 skrll Exp $	*/
+/*	$NetBSD: trm.c,v 1.13.6.2 2004/09/18 14:49:06 skrll Exp $	*/
 /*
  * Device Driver for Tekram DC395U/UW/F, DC315/U
  * PCI SCSI Bus Master Host Adapter
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.13.6.1 2004/08/03 10:49:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.13.6.2 2004/09/18 14:49:06 skrll Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.16.2.3 2004/08/12 11:41:14 skrll Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.16.2.4 2004/09/18 14:43:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.3 2004/08/12 11:41:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.16.2.4 2004/09/18 14:43:05 skrll Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -132,8 +132,8 @@ const struct emul emul_darwin = {
  * extra information in case of dynamic binding.
  */
 int
-exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
+exec_darwin_copyargs(p, pack, arginfo, stackp, argp)
+	struct proc *p;
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
 	char **stackp;
@@ -141,7 +141,6 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 {
 	struct exec_macho_emul_arg *emea;
 	struct exec_macho_object_header *macho_hdr;
-	struct proc *p = l->l_proc;
 	char **cpp, *dp, *sp, *progname;
 	size_t len;
 	void *nullp = NULL;
@@ -319,7 +318,6 @@ static void
 darwin_e_proc_exit(p)
 	struct proc *p;
 {
-	struct lwp *l;
 	struct darwin_emuldata *ded;
 	int error, mode;
 	struct wsdisplay_cmap cmap;
@@ -385,7 +383,7 @@ darwin_e_proc_exit(p)
 		    ((error = copyout(kgreen, green, 256)) != 0) ||
 		    ((error = copyout(kblue, blue, 256)) != 0))
 			error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
-			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, l);
+			    WSDISPLAYIO_PUTCMAP, (caddr_t)&cmap, 0, p);
 #ifdef DEBUG_DARWIN
 		if (error != 0)
 			printf("Cannot revert colormap (error %d)\n", error);

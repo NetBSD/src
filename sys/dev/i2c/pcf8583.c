@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.1.4.3 2004/08/27 09:09:27 skrll Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.1.4.4 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -159,7 +159,7 @@ pcfrtc_attach(struct device *parent, struct device *self, void *aux)
 
 /*ARGSUSED*/
 int
-pcfrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
+pcfrtc_open(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct pcfrtc_softc *sc;
 
@@ -177,7 +177,7 @@ pcfrtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
 
 /*ARGSUSED*/
 int
-pcfrtc_close(dev_t dev, int flag, int fmt, struct lwp *l)
+pcfrtc_close(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct pcfrtc_softc *sc;
 

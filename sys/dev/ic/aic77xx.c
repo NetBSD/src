@@ -1,4 +1,4 @@
-/*	$NetBSD: aic77xx.c,v 1.3.2.1 2004/08/03 10:46:07 skrll Exp $	*/
+/*	$NetBSD: aic77xx.c,v 1.3.2.2 2004/09/18 14:45:55 skrll Exp $	*/
 
 /*
  * Common routines for AHA-27/284X and aic7770 motherboard SCSI controllers.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.3.2.1 2004/08/03 10:46:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic77xx.c,v 1.3.2.2 2004/09/18 14:45:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.5.2.1 2004/08/03 10:42:36 skrll Exp $   */
+/*	$NetBSD: intvec.S,v 1.5.2.2 2004/09/18 14:42:13 skrll Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.

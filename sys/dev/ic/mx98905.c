@@ -1,4 +1,4 @@
-/*	$NetBSD: mx98905.c,v 1.4.2.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: mx98905.c,v 1.4.2.2 2004/09/18 14:45:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.4.2.1 2004/08/03 10:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mx98905.c,v 1.4.2.2 2004/09/18 14:45:59 skrll Exp $");
 
 #include <sys/device.h>
 #include <sys/mbuf.h>

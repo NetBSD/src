@@ -1,4 +1,4 @@
-/*	$NetBSD: rijndael-api-fst.c,v 1.12.6.1 2004/08/03 10:44:46 skrll Exp $	*/
+/*	$NetBSD: rijndael-api-fst.c,v 1.12.6.2 2004/09/18 14:44:26 skrll Exp $	*/
 
 /**
  * rijndael-api-fst.c
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.12.6.1 2004/08/03 10:44:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rijndael-api-fst.c,v 1.12.6.2 2004/09/18 14:44:26 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL

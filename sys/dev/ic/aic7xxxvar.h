@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.39.2.1 2004/08/03 10:46:10 skrll Exp $
+ * $Id: aic7xxxvar.h,v 1.39.2.2 2004/09/18 14:45:56 skrll Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */

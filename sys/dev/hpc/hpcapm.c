@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.1.2.2 2004/08/03 10:45:57 skrll Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.1.2.3 2004/09/18 14:45:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.1.2.2 2004/08/03 10:45:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm.c,v 1.1.2.3 2004/09/18 14:45:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
