@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.44 2002/10/26 13:48:34 martin Exp $
+#	$NetBSD: MAKEDEV,v 1.45 2002/11/24 20:53:53 martin Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -84,6 +84,9 @@
 #	urio*	Diamond Rio 500
 #	uscanner*	Scanners
 #	ttyU*	Modem
+# Printers:
+#	lpt*	stock lp
+#	lpa*	interruptless lp
 # ISDN devices:
 #	isdn	communication between userland isdnd and kernel
 #	isdnctl	control device
@@ -148,6 +151,7 @@ all)
 	makedev audio0 audio1 audio2 audio3
 	makedev pty0 vnd0 vnd1 vnd2 vnd3 audio
 	makedev tun0 tun1 tun2 tun3
+	makedev lpt0 lpt1 lpt2
 	makedev ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -586,6 +590,15 @@ magma*)
 
 	mknod bpp${unit}0 c 101 $(($unit * 64 + 0))
 	mknod bpp${unit}1 c 101 $(($unit * 64 + 1))
+	;;
+
+lpt*|lpa*)
+	case $i in
+	lpt*) name=lpt;	unit=${i#lpt};	chr=37;	flags=0;;
+	lpa*) name=lpa;	unit=${i#lpa};	chr=37;	flags=128;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $(($unit + $flags))
 	;;
 
 scsibus*)
