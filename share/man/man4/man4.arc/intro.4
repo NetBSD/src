@@ -1,4 +1,4 @@
-.\"     $NetBSD: intro.4,v 1.2 2003/04/29 20:57:24 wiz Exp $
+.\"     $NetBSD: intro.4,v 1.3 2003/04/29 22:02:44 tsutsui Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,17 +97,18 @@ supports a variety of systems conforming to the ARC machine
 specification.  The following systems are supported:
 .Pp
 .Bl -tag -width XXXXXX -offset indent -compact
-.It DESKstation Tyne
+.It Acer PICA
 .It DESKstation rPC44
-.It MIPS Magnum
+.It DESKstation Tyne
+.It MIPS Magnum 4000
 .It NEC Express 5800/230 PCI R4K
+.It NEC Express 5800/240 EISA R4K
 .It NEC Express RISCserver
 .It NEC ImageRISCstation
+.It NEC RISCserver 2200
 .It NEC RISCstation 2200 EISA
 .It NEC RISCstation 2200 PCI
 .It NEC RISCstation 2250
-.It Pica
-.It RISCserver 220
 .El
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of the
@@ -118,17 +119,41 @@ Not all supported devices are listed.
 .Bl -tag -width jazzisabr -offset indent -compact
 .It arcsisabr
 DESKstation rPC44 ISA host bridge
-.It asc
-NCR 53c9x-base  SCSI interface
 .It jazzio
 Jazz internal bus host bridge
 .It jazzisabr
 Jazz ISA/EISA bus bridge
 .It necpb
 NEC RISCstation PCI host bridge
-.It timer
 .It tyneisabr
 DESKstation Tyne ISA host bridge
+.El
+.Pp
+The following devices on the Jazz internal bus are supported.
+.Pp
+.Bl -tag -width mcclock -offset indent -compact
+.It asc
+NCR 53c9x-based SCSI interface
+.It com
+NS16550-based serial communications interface
+.It fdc
+Floppy disk controller
+.It lpt
+Parallel port
+.It mcclock
+DS1287 real-time clock
+.It oosiop
+Symbios/NCR 53c700-based SCSI interface
+.It osiop
+Symbios/NCR 53c710-based SCSI interface
+.It pckbc
+PC keyboard controller
+.It sn
+SONIC Ethernet
+.It timer
+Interval timer
+.It vga
+VGA graphics
 .El
 .Pp
 PCI devices are supported through the
@@ -139,25 +164,29 @@ ISA devices are supported through the
 .Xr isa 4
 bus and associated device drivers.
 .Pp
-EISA devices are supported through the
-.Xr eisa 4
-bus and associated device drivers.
-.Pp
-Console devices using ISA, EISA, or PCI video adaptors and standard AT
+.\"EISA devices are supported through the
+.\".Xr eisa 4
+.\"bus and associated device drivers.
+.\".Pp
+Console devices using ISA, Jazzio, or PCI video adaptors and standard AT
 or PS/2 keyboards are supported by the machine independent
 .Xr wscons 4
 console driver.
-.\" .Sh UNSUPPORTED DEVICES
-.\" The following devices are not supported, due to unavailability of
-.\" either documentation or sample hardware:
-.\" .Pp
-.\" .Bl -tag -width XXXXX -offset indent -compact
-.\" .It not yet
-.\" .El
-.\" .Pp
+.Sh UNSUPPORTED DEVICES
+The following devices are not supported, due to unavailability of
+either documentation or sample hardware:
+.Pp
+.Bl -tag -width XXXXXX -offset indent -compact
+.It AD1848 audio on Jazzio
+.It EISA devices
+.It VXL framebuffer on MIPS Magnum and RISCstation 2200 EISA
+.El
+.Pp
 .Sh HISTORY
 This
 .Tn arc
 .Nm intro
 appeared with
 .Nx 2.0 .
+.Sh BUGS
+DESKstation rPC44 and Tyne support is currently broken.
