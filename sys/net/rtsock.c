@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.55 2002/02/22 17:26:31 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.56 2002/11/02 07:26:57 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.55 2002/02/22 17:26:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.56 2002/11/02 07:26:57 perry Exp $");
 
 #include "opt_inet.h"
 
@@ -223,7 +223,7 @@ route_output(m, va_alist)
 	so = va_arg(ap, struct socket *);
 	va_end(ap);
 
-#define senderr(e) do { error = e; goto flush;} while (0)
+#define senderr(e) do { error = e; goto flush;} while (/*CONSTCOND*/ 0)
 	if (m == 0 || ((m->m_len < sizeof(int32_t)) &&
 	   (m = m_pullup(m, sizeof(int32_t))) == 0))
 		return (ENOBUFS);

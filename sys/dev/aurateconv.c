@@ -1,4 +1,4 @@
-/*	$NetBSD: aurateconv.c,v 1.6 2002/10/13 11:34:54 kent Exp $	*/
+/*	$NetBSD: aurateconv.c,v 1.7 2002/11/02 07:23:11 perry Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.6 2002/10/13 11:34:54 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aurateconv.c,v 1.7 2002/11/02 07:23:11 perry Exp $");
 
 #include <sys/systm.h>
 #include <sys/types.h>
@@ -239,7 +239,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 	do { \
 		if (V >= (C)->ring_end) \
 			V = (C)->ring_start; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define READ_S8LE(P)		*(int8_t*)(P)
 #define WRITE_S8LE(P, V)	*(int8_t*)(P) = V
@@ -254,7 +254,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		int vv = V; \
 		(P)[0] = vv; \
 		(P)[1] = vv >> 8; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #else
 # define READ_S16LE(P)		(int16_t)((P)[0] | ((P)[1]<<8))
 # define WRITE_S16LE(P, V)	\
@@ -262,7 +262,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		int vv = V; \
 		(P)[0] = vv; \
 		(P)[1] = vv >> 8; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 # define READ_S16BE(P)		*(int16_t*)(P)
 # define WRITE_S16BE(P, V)	*(int16_t*)(P) = V
 #endif
@@ -273,7 +273,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		(P)[0] = vvv; \
 		(P)[1] = vvv >> 8; \
 		(P)[2] = vvv >> 16; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define READ_S24BE(P)		(int32_t)((P)[2] | ((P)[1]<<8) | (((int8_t)((P)[0]))<<16))
 #define WRITE_S24BE(P, V)	\
 	do { \
@@ -281,7 +281,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 		(P)[0] = vvv >> 16; \
 		(P)[1] = vvv >> 8; \
 		(P)[2] = vvv; \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define P_READ_Sn(BITS, EN, V, RP, PAR)	\
 	do { \
@@ -290,7 +290,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 			(V)[j] = READ_S##BITS####EN##(RP); \
 			RP += (BITS) / NBBY; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define P_WRITE_Sn(BITS, EN, V, WP, PAR, CON, WC)	\
 	do { \
 		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
@@ -318,7 +318,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 			} \
 			WC += (BITS) / NBBY * j; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 #define R_READ_Sn(BITS, EN, V, RP, PAR, CON, RC)	\
 	do { \
@@ -329,7 +329,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 			RING_CHECK(CON, RP); \
 			RC += (BITS) / NBBY; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 #define R_WRITE_Sn(BITS, EN, V, WP, PAR, WC)	\
 	do { \
 		if ((PAR)->channels == 2 && (PAR)->hw_channels == 1) { \
@@ -350,7 +350,7 @@ auconv_play(struct auconv_context *context, const struct audio_params *params,
 			} \
 			WC += (BITS) / NBBY * j; \
 		} \
-	} while (0)
+	} while (/*CONSTCOND*/ 0)
 
 /*
  * Function templates
