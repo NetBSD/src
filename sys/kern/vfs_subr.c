@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.145 2001/02/06 10:58:55 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.146 2001/02/21 21:40:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
 	VREG, VNON, VLNK, VNON, VSOCK, VNON, VNON, VBAD,
 };
-int	vttoif_tab[9] = {
+const int	vttoif_tab[9] = {
 	0, S_IFREG, S_IFDIR, S_IFBLK, S_IFCHR, S_IFLNK,
 	S_IFSOCK, S_IFIFO, S_IFMT,
 };
@@ -1780,7 +1780,7 @@ loop:
 /*
  * Print out a description of a vnode.
  */
-static char *typename[] =
+static const char * const typename[] =
    { "VNON", "VREG", "VDIR", "VBLK", "VCHR", "VLNK", "VSOCK", "VFIFO", "VBAD" };
 
 void

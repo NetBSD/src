@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.15 2001/01/27 12:28:35 jdolecek Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.16 2001/02/21 21:39:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,7 +64,7 @@ struct kern_target {
 };
 
 struct kernfs_node {
-	struct kern_target *kf_kt;
+	const struct kern_target *kf_kt;
 };
 
 #define VFSTOKERNFS(mp)	((struct kernfs_mount *)((mp)->mnt_data))

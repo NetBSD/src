@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.86 2001/01/22 12:17:41 jdolecek Exp $	*/
+/*	$NetBSD: vnode.h,v 1.87 2001/02/21 21:40:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -218,7 +218,7 @@ struct vattr {
  * defines mode word of stat structure in terms of inode formats).
  */
 extern enum vtype	iftovt_tab[];
-extern int		vttoif_tab[];
+extern const int	vttoif_tab[];
 #define IFTOVT(mode)	(iftovt_tab[((mode) & S_IFMT) >> 12])
 #define VTTOIF(indx)	(vttoif_tab[(int)(indx)])
 #define MAKEIMODE(indx, mode)	(int)(VTTOIF(indx) | (mode))
