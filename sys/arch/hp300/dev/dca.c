@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.29 1996/10/14 07:14:12 thorpej Exp $	*/
+/*	$NetBSD: dca.c,v 1.30 1996/12/09 03:14:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Jason R. Thorpe.  All rights reserved.
@@ -196,7 +196,7 @@ dcaattach(hd)
 	sc->sc_dca = dca;
 
 	/* Establish interrupt handler. */
-	isrlink(dcaintr, sc, hd->hp_ipl,
+	(void) isrlink(dcaintr, sc, hd->hp_ipl,
 	    (sc->sc_flags & DCA_HASFIFO) ? ISRPRI_TTY : ISRPRI_TTYNOBUF);
 
 	sc->sc_flags |= DCA_ACTIVE;
