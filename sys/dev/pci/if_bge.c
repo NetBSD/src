@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.18 2002/07/13 22:48:40 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.19 2002/07/18 02:07:13 mjl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1841,7 +1841,7 @@ bge_attach(parent, self, aux)
 	DPRINTFN(5, ("bzero\n"));
 	sc->bge_rdata = (struct bge_ring_data *)kva;
 
-	memset(sc->bge_rdata, sizeof(struct bge_ring_data), 0);
+	memset(sc->bge_rdata, 0, sizeof(struct bge_ring_data));
 
 	/* Try to allocate memory for jumbo buffers. */
 	if (bge_alloc_jumbo_mem(sc)) {
