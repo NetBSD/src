@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2001/01/16 02:34:14 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 2002/09/19 12:08:38 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ SRCS=	sushi.c scandir.c menutree.c scanform.c run.c functions.c \
 
 MAN=	sushi.8
 
-LIBINSTALL != cd ${.CURDIR}/../pkg_install/lib && ${PRINTOBJDIR}
+LIBINSTALL != cd ${NETBSDSRCDIR}/usr.sbin/pkg_install/lib && ${PRINTOBJDIR}
 
 LDADD+=	-lutil -lcdk -lform -lcurses -lm -L${LIBINSTALL} -linstall
 DPADD+= ${LIBUTIL} ${LIBCDK} ${LIBFORM} ${LIBCURSES} ${LIBM} \
