@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.41 2000/05/27 00:40:45 sommerfeld Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.41.4.1 2001/07/29 19:37:27 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -441,12 +441,17 @@ pgdelete(pgrp)
 	struct pgrp *pgrp;
 {
 
+	/* Remove reference (if any) from tty to this process group */
 	if (pgrp->pg_session->s_ttyp != NULL && 
 	    pgrp->pg_session->s_ttyp->t_pgrp == pgrp)
 		pgrp->pg_session->s_ttyp->t_pgrp = NULL;
 	LIST_REMOVE(pgrp, pg_hash);
-	if (--pgrp->pg_session->s_count == 0)
+	if (--pgrp->pg_session->s_count == 0) {
+		/* Remove reference (if any) from tty to this session */
+		if (pgrp->pg_session->s_ttyp != NULL)
+			pgrp->pg_session->s_ttyp->t_session = NULL;
 		FREE(pgrp->pg_session, M_SESSION);
+	}
 	pool_put(&pgrp_pool, pgrp);
 }
 
