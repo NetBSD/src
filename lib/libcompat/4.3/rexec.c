@@ -44,12 +44,13 @@ static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #include <netdb.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 
-extern	errno;
-char	*index();
 int	rexecoptions;
-char	*getpass(), *getlogin();
 
+void ruserpass __P((const char *, char **, char **));
+
+int
 rexec(ahost, rport, name, pass, cmd, fd2p)
 	char **ahost;
 	int rport;
@@ -89,9 +90,9 @@ retry:
 		perror(hp->h_name);
 		return (-1);
 	}
+	port = 0;
 	if (fd2p == 0) {
 		(void) write(s, "", 1);
-		port = 0;
 	} else {
 		char num[8];
 		int s2, sin2len;

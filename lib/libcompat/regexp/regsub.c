@@ -20,7 +20,7 @@
  */
 
 #ifndef lint
-static char *rcsid = "$Id: regsub.c,v 1.3 1993/08/26 00:45:37 jtc Exp $";
+static char *rcsid = "$Id: regsub.c,v 1.4 1995/06/05 19:42:35 pk Exp $";
 #endif /* not lint */
 
 #include <regexp.h>
@@ -48,7 +48,6 @@ char *dest;
 	register char c;
 	register int no;
 	register int len;
-	extern char *strncpy();
 
 	if (prog == NULL || source == NULL || dest == NULL) {
 		regerror("NULL parm to regsub");

@@ -29,13 +29,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ftime.c,v 1.3 1994/05/06 06:42:21 cgd Exp $";
+static char rcsid[] = "$Id: ftime.c,v 1.4 1995/06/05 19:42:19 pk Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/timeb.h>
 
+int
 ftime(tbp)
         struct timeb *tbp;
 {
