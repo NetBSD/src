@@ -1,4 +1,4 @@
-/*	$NetBSD: ali1543.c,v 1.5 2003/02/26 22:23:06 fvdl Exp $	*/
+/*	$NetBSD: ali1543.c,v 1.6 2005/02/03 21:35:44 perry Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -94,7 +94,7 @@
 /* HAYAKAWA Koichi wrote ALi 1543 PCI ICU code basing on VIA82C586 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.5 2003/02/26 22:23:06 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.6 2005/02/03 21:35:44 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,9 @@ __KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.5 2003/02/26 22:23:06 fvdl Exp $");
 #include <i386/pci/piixvar.h>
 
 
-int ali1543_getclink (pciintr_icu_handle_t, int, int *);
-int ali1543_get_intr (pciintr_icu_handle_t, int, int *);
-int ali1543_set_intr (pciintr_icu_handle_t, int, int);
+int ali1543_getclink(pciintr_icu_handle_t, int, int *);
+int ali1543_get_intr(pciintr_icu_handle_t, int, int *);
+int ali1543_set_intr(pciintr_icu_handle_t, int, int);
 
 
 const struct pciintr_icu ali1543_icu = {
