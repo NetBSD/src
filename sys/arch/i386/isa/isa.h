@@ -95,7 +95,11 @@ unsigned kbd_8042cmd(int);
 #define	IO_BT1          0x334		/* bustek 742a default addr. */
 #define IO_AHA1         0x334		/* adaptec 1542 default addr. */
 
-					/* 0x338 - 0x36F Open */
+					/* 0x338 - 0x34F Open */
+
+#define IO_WDS		0x350		/* WD7000 scsi */
+
+					/* 0x354 - 0x36F Open */
 
 #define IO_FD2		0x370		/* secondary base i/o address */
 #define IO_LPT1		0x378		/* Parallel Port #1 */
