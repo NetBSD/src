@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +35,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fgetline.c	5.2 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: fgetline.c,v 1.3 1993/08/26 00:46:41 jtc Exp $";
+/* from: static char sccsid[] = "@(#)fgetline.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: fgetline.c,v 1.4 1993/12/22 07:11:10 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -46,8 +46,10 @@ static char *rcsid = "$Id: fgetline.c,v 1.3 1993/08/26 00:46:41 jtc Exp $";
 
 /*
  * Expand the line buffer.  Return -1 on error.
+#ifdef notdef
  * The `new size' does not account for a terminating '\0',
  * so we add 1 here.
+#endif
  */
 __slbexpand(fp, newsize)
 	FILE *fp;
@@ -55,7 +57,10 @@ __slbexpand(fp, newsize)
 {
 	void *p;
 
-	if (fp->_lb._size >= ++newsize)
+#ifdef notdef
+	++newsize;
+#endif
+	if (fp->_lb._size >= newsize)
 		return (0);
 	if ((p = realloc(fp->_lb._base, newsize)) == NULL)
 		return (-1);
@@ -66,9 +71,10 @@ __slbexpand(fp, newsize)
 
 /*
  * Get an input line.  The returned pointer often (but not always)
- * points into a stdio buffer.  Fgetline smashes the newline (if any)
- * in the stdio buffer; callers must not use it on streams that
- * have `magic' setvbuf() games happening.
+ * points into a stdio buffer.  Fgetline does not alter the text of
+ * the returned line (which is thus not a C string because it will
+ * not necessarily end with '\0'), but does allow callers to modify
+ * it if they wish.  Thus, we set __SMOD in case the caller does.
  */
 char *
 fgetline(fp, lenp)
@@ -81,8 +87,7 @@ fgetline(fp, lenp)
 
 	/* make sure there is input */
 	if (fp->_r <= 0 && __srefill(fp)) {
-		if (lenp != NULL)
-			*lenp = 0;
+		*lenp = 0;
 		return (NULL);
 	}
 
@@ -91,31 +96,26 @@ fgetline(fp, lenp)
 		register char *ret;
 
 		/*
-		 * Found one.  Flag buffer as modified to keep
-		 * fseek from `optimising' a backward seek, since
-		 * the newline is about to be trashed.  (We should
-		 * be able to get away with doing this only if
-		 * p is not pointing into an ungetc buffer, since
-		 * fseek discards ungetc data, but this is the
-		 * usual case anyway.)
+		 * Found one.  Flag buffer as modified to keep fseek from
+		 * `optimising' a backward seek, in case the user stomps on
+		 * the text.
 		 */
+		p++;		/* advance over it */
 		ret = (char *)fp->_p;
-		len = p - fp->_p;
+		*lenp = len = p - fp->_p;
 		fp->_flags |= __SMOD;
-		*p = 0;
-		fp->_r -= len + 1;
-		fp->_p = p + 1;
-		if (lenp != NULL)
-			*lenp = len;
+		fp->_r -= len;
+		fp->_p = p;
 		return (ret);
 	}
 
 	/*
 	 * We have to copy the current buffered data to the line buffer.
+	 * As a bonus, though, we can leave off the __SMOD.
 	 *
-	 * OPTIMISTIC is length that we (optimistically)
-	 * expect will accomodate the `rest' of the string,
-	 * on each trip through the loop below.
+	 * OPTIMISTIC is length that we (optimistically) expect will
+	 * accomodate the `rest' of the string, on each trip through the
+	 * loop below.
 	 */
 #define OPTIMISTIC 80
 
@@ -123,14 +123,13 @@ fgetline(fp, lenp)
 		register size_t diff;
 
 		/*
-		 * Make sure there is room for more bytes.
-		 * Copy data from file buffer to line buffer,
-		 * refill file and look for newline.  The
-		 * loop stops only when we find a newline.
+		 * Make sure there is room for more bytes.  Copy data from
+		 * file buffer to line buffer, refill file and look for
+		 * newline.  The loop stops only when we find a newline.
 		 */
 		if (__slbexpand(fp, len + OPTIMISTIC))
 			goto error;
-		(void) bcopy((void *)fp->_p, (void *)(fp->_lb._base + off),
+		(void)memcpy((void *)(fp->_lb._base + off), (void *)fp->_p,
 		    len - off);
 		off = len;
 		if (__srefill(fp))
@@ -139,24 +138,24 @@ fgetline(fp, lenp)
 			continue;
 
 		/* got it: finish up the line (like code above) */
-		fp->_flags |= __SMOD;	/* soon */
+		p++;
 		diff = p - fp->_p;
 		len += diff;
 		if (__slbexpand(fp, len))
 			goto error;
-		(void) bcopy((void *)fp->_p, (void *)(fp->_lb._base + off),
+		(void)memcpy((void *)(fp->_lb._base + off), (void *)fp->_p,
 		    diff);
-		fp->_r -= diff + 1;
-		fp->_p = p + 1;
+		fp->_r -= diff;
+		fp->_p = p;
 		break;
 	}
-	if (lenp != NULL)
-		*lenp = len;
+	*lenp = len;
+#ifdef notdef
 	fp->_lb._base[len] = 0;
+#endif
 	return ((char *)fp->_lb._base);
 
 error:
-	if (lenp != NULL)
-		*lenp = 0;	/* ??? */
+	*lenp = 0;		/* ??? */
 	return (NULL);		/* ??? */
 }
