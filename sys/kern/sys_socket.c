@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.31 2001/06/16 21:29:32 manu Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.31.2.1 2001/07/10 13:43:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -50,8 +50,10 @@
 #include <net/if.h>
 #include <net/route.h>
 
-struct	fileops socketops =
-    { soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll, soo_stat, soo_close};
+struct	fileops socketops = {
+	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
+	soo_stat, soo_close, soo_kqfilter
+};
 
 /* ARGSUSED */
 int
