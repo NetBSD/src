@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.30.2.8 2002/10/03 23:49:30 nathanw Exp $	*/
+/*	$NetBSD: time.h,v 1.30.2.9 2002/11/09 02:14:16 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -187,7 +187,8 @@ struct 	ptimer {
 	struct	sigevent pt_ev;
 	struct	itimerval pt_time;
 	siginfo_t	pt_info;
-	int	pt_overruns;
+	int	pt_overruns;	/* Overruns currently accumulating */
+	int	pt_poverruns;	/* Overruns associated w/ a delivery */
 	int	pt_type;
 	struct proc *pt_proc; 
 };

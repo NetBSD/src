@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.20 2002/10/27 21:12:38 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.21 2002/11/09 02:14:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.20 2002/10/27 21:12:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.21 2002/11/09 02:14:52 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -581,6 +581,7 @@ sys_timer_create(struct lwp *l, void *v, register_t *retval)
 	pt->pt_type = id;
 	pt->pt_proc = p;
 	pt->pt_overruns = 0;
+	pt->pt_poverruns = 0;
 	timerclear(&pt->pt_time.it_value);
 	if (id == CLOCK_REALTIME)
 		callout_init(&pt->pt_ch);
@@ -835,7 +836,7 @@ sys_timer_getoverrun(struct lwp *l, void *v, register_t *retval)
 	    ((pt = p->p_timers->pts_timers[timerid]) == NULL))
 		return (EINVAL);
 
-	*retval = pt->pt_overruns;
+	*retval = pt->pt_poverruns;
 
 	return (0);
 }
@@ -1158,6 +1159,7 @@ itimerfire(struct ptimer *pt)
 		if (sigismember(&p->p_sigctx.ps_siglist, pt->pt_ev.sigev_signo))
 			pt->pt_overruns++;
 		else {
+			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
 			psignal(p, pt->pt_ev.sigev_signo);
 		}
@@ -1168,6 +1170,7 @@ itimerfire(struct ptimer *pt)
 		if (p->p_userret == NULL) {
 			if (sa->sa_idle)
 				wakeup(p);
+			pt->pt_poverruns = pt->pt_overruns;
 			pt->pt_overruns = 0;
 			p->p_userret = timerupcall;
 			p->p_userret_arg = pt;
