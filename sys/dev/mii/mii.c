@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.26 2001/06/20 01:42:41 thorpej Exp $	*/
+/*	$NetBSD: mii.c,v 1.27 2001/08/25 18:04:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -53,18 +53,16 @@
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-int	mii_print __P((void *, const char *));
-int	mii_submatch __P((struct device *, struct cfdata *, void *));
+int	mii_print(void *, const char *);
+int	mii_submatch(struct device *, struct cfdata *, void *);
 
 /*
  * Helper function used by network interface drivers, attaches PHYs
  * to the network interface driver parent.
  */
 void
-mii_attach(parent, mii, capmask, phyloc, offloc, flags)
-	struct device *parent;
-	struct mii_data *mii;
-	int capmask, phyloc, offloc, flags;
+mii_attach(struct device *parent, struct mii_data *mii, int capmask,
+    int phyloc, int offloc, int flags)
 {
 	struct mii_attach_args ma;
 	struct mii_softc *child;
@@ -153,10 +151,7 @@ mii_attach(parent, mii, capmask, phyloc, offloc, flags)
 }
 
 void
-mii_activate(mii, act, phyloc, offloc)
-	struct mii_data *mii;
-	enum devact act;
-	int phyloc, offloc;
+mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 {
 	struct mii_softc *child;
 
@@ -190,9 +185,7 @@ mii_activate(mii, act, phyloc, offloc)
 }
 
 void
-mii_detach(mii, phyloc, offloc)
-	struct mii_data *mii;
-	int phyloc, offloc;
+mii_detach(struct mii_data *mii, int phyloc, int offloc)
 {
 	struct mii_softc *child, *nchild;
 
@@ -219,9 +212,7 @@ mii_detach(mii, phyloc, offloc)
 }
 
 int
-mii_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+mii_print(void *aux, const char *pnp)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -235,10 +226,7 @@ mii_print(aux, pnp)
 }
 
 int
-mii_submatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mii_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
@@ -253,8 +241,7 @@ mii_submatch(parent, cf, aux)
  * Media changed; notify all PHYs.
  */
 int
-mii_mediachg(mii)
-	struct mii_data *mii;
+mii_mediachg(struct mii_data *mii)
 {
 	struct mii_softc *child;
 	int rv;
@@ -275,8 +262,7 @@ mii_mediachg(mii)
  * Call the PHY tick routines, used during autonegotiation.
  */
 void
-mii_tick(mii)
-	struct mii_data *mii;
+mii_tick(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
@@ -289,8 +275,7 @@ mii_tick(mii)
  * Get media status from PHYs.
  */
 void
-mii_pollstat(mii)
-	struct mii_data *mii;
+mii_pollstat(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
@@ -306,8 +291,7 @@ mii_pollstat(mii)
  * Inform the PHYs that the interface is down.
  */
 void
-mii_down(mii)
-	struct mii_data *mii;
+mii_down(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
@@ -327,8 +311,7 @@ bitreverse(unsigned char x)
 }
 
 int
-mii_oui(id1, id2)
-	int id1, id2;
+mii_oui(int id1, int id2)
 {
 	int h;
 
