@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_callbacks.h,v 1.7 1999/01/17 16:01:38 drochner Exp $ */
+/* $NetBSD: wscons_callbacks.h,v 1.8 1999/01/18 20:03:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,6 @@ void	wscons_glue_set_callback __P((void));
  * Calls to the display interface from the glue code.
  */
 int	wsdisplay_is_console __P((struct device *));
-int	wsdisplay_has_emulator __P((struct device *));
 struct device *wsdisplay_kbd __P((struct device *));
 void	wsdisplay_set_kbd __P((struct device *, struct device *));
 

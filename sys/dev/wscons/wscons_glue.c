@@ -1,4 +1,4 @@
-/* $NetBSD: wscons_glue.c,v 1.4 1998/07/25 20:02:20 augustss Exp $ */
+/* $NetBSD: wscons_glue.c,v 1.5 1999/01/18 20:03:59 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wscons_glue.c,v 1.4 1998/07/25 20:02:20 augustss Exp $";
+    "$NetBSD: wscons_glue.c,v 1.5 1999/01/18 20:03:59 drochner Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +124,6 @@ wscons_setup_glue(v)
 		for (; i < wsdisplay_cd.cd_ndevs; i++) {
 			if (wsdisplay_cd.cd_devs[i] == NULL ||
 			    wsdisplay_kbd(wsdisplay_cd.cd_devs[i]) != NULL)
-				continue;
-
-			if (!wsdisplay_has_emulator(wsdisplay_cd.cd_devs[i]))
 				continue;
 
 			displaydev = i;
