@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.8 2004/06/26 16:31:33 fredb Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.9 2004/06/27 01:36:04 fredb Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.8 2004/06/26 16:31:33 fredb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.9 2004/06/27 01:36:04 fredb Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -86,7 +86,6 @@ cc_microtime(struct timeval *tvp)
 	int64_t cc, sec, usec;
 	int s;
 
-	simple_lock(&microtime_slock);
 #ifdef MULTIPROCESSOR
 	s = splipi();		/* also blocks IPIs */
 #else
@@ -105,20 +104,9 @@ cc_microtime(struct timeval *tvp)
 		 * more than the interval between microset() calls.  In any
 		 * case, the following sanity checks will suppress timewarps.
 		 */
+		simple_lock(&microtime_slock);
 		t = ci->ci_cc_time;
 		cc = cpu_counter32() - ci->ci_cc_cc;
-	} else {
-		/*
-		 * Can't use the CC -- just use the system time.
-		 */
-		/* XXXSMP: not atomic */
-		t = time;
-		cc = 0;
-	}
-
-	splx(s);
-
-	if (cc) {
 		if (cc < 0)
 			cc += 0x100000000LL;
 		t.tv_usec += (cc / (ci->ci_cc_denom / ci->ci_cc_ms_delta));
@@ -126,6 +114,13 @@ cc_microtime(struct timeval *tvp)
 			t.tv_usec -= 1000000;
 			t.tv_sec++;
 		}
+	} else {
+		/*
+		 * Can't use the CC -- just use the system time.
+		 */
+		/* XXXSMP: not atomic */
+		simple_lock(&microtime_slock);
+		t = time;
 	}
 
 	/*
@@ -152,6 +147,8 @@ cc_microtime(struct timeval *tvp)
 	}
 	lasttime = t;
 	simple_unlock(&microtime_slock);
+
+	splx(s);
 
 	*tvp = t;
 }
