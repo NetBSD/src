@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.15 1997/01/31 02:00:59 thorpej Exp $	*/
+/*	$NetBSD: tz.c,v 1.16 1998/03/30 19:50:47 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -187,9 +187,12 @@ tzprobe(xxxsd)
 	printf("tz%d at %s%d drive %d slave %d", sd->sd_unit,
 		sd->sd_cdriver->d_name, sd->sd_ctlr, sd->sd_drive,
 		sd->sd_slave);
-	if (i == 5 && inqbuf.version == 1 && inqbuf.qualifier == 0x50) {
+	if (i == 5 && inqbuf.version == 1 && (inqbuf.qualifier == 0x50 ||
+	    inqbuf.qualifier == 0x30)) {
 		printf(" TK50\n");
 		sc->sc_tapeid = MT_ISTK50;
+		if (inqbuf.qualifier == 0x30)
+			sc->sc_modelen = 14;
 	} else if (i >= 5 && inqbuf.version == 1 && inqbuf.qualifier == 0 &&
 	    inqbuf.length == 0) {
 		/* assume Emultex MT02 controller */
