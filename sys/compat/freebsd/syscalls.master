@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.39 2002/12/22 00:04:29 gmcgarry Exp $
+	$NetBSD: syscalls.master,v 1.40 2003/01/18 07:33:16 thorpej Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -46,6 +46,7 @@
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
@@ -137,7 +138,7 @@
 48	NOARGS		{ int compat_13_sys_sigprocmask(int how, \
 			    int mask); }
 49	NOARGS		{ int sys___getlogin(char *namebuf, u_int namelen); }
-50	NOARGS		{ int sys_setlogin(char *namebuf); }
+50	NOARGS		{ int sys___setlogin(char *namebuf); }
 51	NOARGS		{ int sys_acct(char *path); }
 52	NOARGS		{ int compat_13_sys_sigpending(void); }
 53	NOARGS		{ int compat_13_sys_sigaltstack( \

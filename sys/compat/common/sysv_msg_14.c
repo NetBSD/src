@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.4 2001/11/13 02:08:03 lukem Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.4 2001/11/13 02:08:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.4 2001/11/13 02:08:03 lukem Exp $"
 #define	SYSVMSG
 #endif
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 static void msqid_ds14_to_native __P((struct msqid_ds14 *, struct msqid_ds *));
@@ -100,16 +101,14 @@ native_to_msqid_ds14(msqbuf, omsqbuf)
 }
 
 int
-compat_14_sys_msgctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_14_sys_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds14 *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msqid_ds msqbuf;
 	struct msqid_ds14 omsqbuf;
 	int cmd, error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.16 2002/11/26 18:43:20 christos Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.17 2003/01/18 07:33:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.16 2002/11/26 18:43:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.17 2003/01/18 07:33:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.16 2002/11/26 18:43:20 christos E
 #include <sys/ktrace.h>
 #endif
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/freebsd/freebsd_syscallargs.h>
@@ -63,8 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.16 2002/11/26 18:43:20 christos E
 #include <compat/freebsd/freebsd_signal.h>
 
 int
-freebsd_sys_msync(p, v, retval)
-	struct proc *p;
+freebsd_sys_msync(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -83,14 +84,14 @@ freebsd_sys_msync(p, v, retval)
 	SCARG(&bma, addr) = SCARG(uap, addr);
 	SCARG(&bma, len) = SCARG(uap, len);
 	SCARG(&bma, flags) = SCARG(uap, flags);
-	return sys___msync13(p, &bma, retval);
+	return sys___msync13(l, &bma, retval);
 }
 
 /* just a place holder */
 
 int
-freebsd_sys_rtprio(p, v, retval)
-	struct proc *p;
+freebsd_sys_rtprio(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -107,8 +108,8 @@ freebsd_sys_rtprio(p, v, retval)
 
 #ifdef NTP
 int
-freebsd_ntp_adjtime(p, v, retval)
-	struct proc *p;
+freebsd_ntp_adjtime(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -123,8 +124,8 @@ freebsd_ntp_adjtime(p, v, retval)
 #endif
 
 int
-freebsd_sys_sigaction4(p, v, retval)
-	struct proc *p;
+freebsd_sys_sigaction4(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -133,6 +134,7 @@ freebsd_sys_sigaction4(p, v, retval)
 		syscallarg(const struct freebsd_sigaction4 *) nsa;
 		syscallarg(struct freebsd_sigaction4 *) osa;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct freebsd_sigaction4 nesa, oesa;
 	struct sigaction nbsa, obsa;
 	int error;
@@ -162,8 +164,8 @@ freebsd_sys_sigaction4(p, v, retval)
 }
 
 int
-freebsd_sys_utrace(p, v, retval)
-	struct proc *p;
+freebsd_sys_utrace(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -172,6 +174,7 @@ freebsd_sys_utrace(p, v, retval)
 		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 
 	if (KTRPOINT(p, KTR_USER))
 		ktruser(p, "FreeBSD utrace", SCARG(uap, addr), SCARG(uap, len),

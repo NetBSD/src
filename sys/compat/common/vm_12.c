@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.10 2001/11/13 02:08:05 lukem Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.11 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -29,21 +29,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.10 2001/11/13 02:08:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_12.c,v 1.11 2003/01/18 07:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mount.h>		/* needed for next include! */
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <sys/swap.h>
 #include <sys/mman.h>
 
 int
-compat_12_sys_swapon(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_12_sys_swapon(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys_swapctl_args ua;
 	struct compat_12_sys_swapon_args /* {
@@ -53,14 +51,11 @@ compat_12_sys_swapon(p, v, retval)
 	SCARG(&ua, cmd) = SWAP_ON;
 	SCARG(&ua, arg) = (void *)SCARG(uap, name);
 	SCARG(&ua, misc) = 0;	/* priority */
-	return (sys_swapctl(p, &ua, retval));
+	return (sys_swapctl(l, &ua, retval));
 }
 
 int
-compat_12_sys_msync(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_12_sys_msync(struct lwp *l, void *v, register_t *retval)
 {
 	struct sys___msync13_args ua;
 	struct compat_12_sys_msync_args /* {
@@ -71,5 +66,5 @@ compat_12_sys_msync(p, v, retval)
 	SCARG(&ua, addr) = SCARG(uap, addr);;
 	SCARG(&ua, len) = SCARG(uap, len);;
 	SCARG(&ua, flags) = MS_SYNC | MS_INVALIDATE;
-	return (sys___msync13(p, &ua, retval));
+	return (sys___msync13(l, &ua, retval));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource_43.c,v 1.9 2001/11/13 02:08:01 lukem Exp $	*/
+/*	$NetBSD: kern_resource_43.c,v 1.10 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.9 2001/11/13 02:08:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.10 2003/01/18 07:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,19 +52,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource_43.c,v 1.9 2001/11/13 02:08:01 lukem E
 #include <sys/proc.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 /* ARGSUSED */
 int
-compat_43_sys_getrlimit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_getrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_getrlimit_args /* {
 		syscallarg(int) which;
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct orlimit olim;
 
@@ -82,15 +81,13 @@ compat_43_sys_getrlimit(p, v, retval)
 
 /* ARGSUSED */
 int
-compat_43_sys_setrlimit(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_43_sys_setrlimit(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_43_sys_setrlimit_args /* {
 		syscallarg(int) which;
 		syscallarg(const struct orlimit *) rlp;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int which = SCARG(uap, which);
 	struct orlimit olim;
 	struct rlimit lim;

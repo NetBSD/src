@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.8 2002/11/26 18:43:20 christos Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.9 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.8 2002/11/26 18:43:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.9 2003/01/18 07:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig_13.c,v 1.8 2002/11/26 18:43:20 christos Exp
 #include <sys/systm.h>
 
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <machine/limits.h>
@@ -118,15 +119,13 @@ native_sigaltstack_to_sigaltstack13(sa, osa)
 }
 
 int
-compat_13_sys_sigaltstack(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigaltstack(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigaltstack_args /* {
 		syscallarg(const struct sigaltstack13 *) nss;
 		syscallarg(struct sigaltstack13 *) oss;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigaltstack13 ness, oess;
 	struct sigaltstack nbss, obss;
 	int error;
@@ -151,16 +150,14 @@ compat_13_sys_sigaltstack(p, v, retval)
 }
 
 int
-compat_13_sys_sigaction(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigaction(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigaction_args /* {
 		syscallarg(int) signum;
 		syscallarg(const struct sigaction13 *) nsa;
 		syscallarg(struct sigaction13 *) osa;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sigaction13 nesa, oesa;
 	struct sigaction nbsa, obsa;
 	int error;
@@ -186,15 +183,13 @@ compat_13_sys_sigaction(p, v, retval)
 }
 
 int
-compat_13_sys_sigprocmask(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigprocmask(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigprocmask_args /* {
 		syscallarg(int) how;
 		syscallarg(int) mask;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	sigset13_t ness, oess;
 	sigset_t nbss, obss;
 	int error;
@@ -210,11 +205,9 @@ compat_13_sys_sigprocmask(p, v, retval)
 }
 
 int
-compat_13_sys_sigpending(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigpending(struct lwp *l, void *v, register_t *retval)
 {
+	struct proc *p = l->l_proc;
 	sigset13_t ess;
 	sigset_t bss;
 
@@ -225,14 +218,12 @@ compat_13_sys_sigpending(p, v, retval)
 }
 
 int
-compat_13_sys_sigsuspend(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigsuspend(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_13_sys_sigsuspend_args /* {
 		syscallarg(sigset13_t) mask;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	sigset13_t ess;
 	sigset_t bss;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm_14.c,v 1.4 2001/11/13 02:08:03 lukem Exp $	*/
+/*	$NetBSD: sysv_shm_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.4 2001/11/13 02:08:03 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.5 2003/01/18 07:28:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_shm_14.c,v 1.4 2001/11/13 02:08:03 lukem Exp $"
 #define	SYSVSHM
 #endif
 
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 static void shmid_ds14_to_native __P((struct shmid_ds14 *, struct shmid_ds *));
@@ -95,16 +96,14 @@ native_to_shmid_ds14(shmbuf, oshmbuf)
 }
 
 int
-compat_14_sys_shmctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+compat_14_sys_shmctl(struct lwp *l, void *v, register_t *retval)
 {
 	struct compat_14_sys_shmctl_args /* {
 		syscallarg(int) shmid;
 		syscallarg(int) cmd;
 		syscallarg(struct shmid_ds14 *) buf;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct shmid_ds shmbuf;
 	struct shmid_ds14 oshmbuf;
 	int cmd, error;
