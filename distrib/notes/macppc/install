@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.30 2003/11/01 03:02:59 grant Exp $
+.\"	$NetBSD: install,v 1.31 2003/12/08 21:08:07 mbw Exp $
 .
 .Ss2 Open Firmware boot syntax
 .
@@ -19,7 +19,7 @@ kernel, and the options specify how you want to boot.
 You use the
 .Li boot-device
 to tell Open Firmware where to find
-.Xr ofwboot 7
+.Xr ofwboot 8
 by listing the device, the partition (if it's a disk), and the filename
 of the bootloader (if using
 .Pa ofwboot.xcf No Ns ).
@@ -313,7 +313,7 @@ is
 .Sq Li fd:,/NETBSD~1.GZ .
 .Pp
 For additional help, see
-.Xr ofwboot 7
+.Xr ofwboot 8
 and the FAQ on topics like how to use the
 Open Firmware command environment and how to boot from a device attached
 to a PCI card which has Open Firmware support:
