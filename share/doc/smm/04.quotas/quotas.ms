@@ -1,5 +1,5 @@
-.\" Copyright (c) 1983 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1983, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)quotas.ms	6.3 (Berkeley) 4/17/91
+.\"	@(#)quotas.ms	8.1 (Berkeley) 6/8/93
 .\"
 .EH 'SMM:4-%''Disc Quotas in a \s-2UNIX\s+2 Environment'
 .OH 'Disc Quotas in a \s-2UNIX\s+2 Environment''SMM:4-%'
