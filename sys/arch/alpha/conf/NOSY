@@ -1,4 +1,4 @@
-#	$NetBSD: NOSY,v 1.12 1997/01/31 01:42:37 thorpej Exp $
+#	$NetBSD: NOSY,v 1.13 1997/01/31 05:20:06 thorpej Exp $
 #
 # Kernel for nostromo.nas.nasa.gov.
 #
@@ -27,7 +27,6 @@ file-system 	FDESC		# user file descriptor file system (/dev/fd)
 # File system options
 options		FIFO		# POSIX fifo support (in all file systems)
 options		NFSSERVER	# Sun NFS-compatible file system server
-options 	NFSCLIENT	# XXX for now
 
 # Networking options
 options		INET		# Internet protocol suite
