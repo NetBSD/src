@@ -1,3 +1,5 @@
+/*	$NetBSD: bpf_image.c,v 1.2 1995/03/06 11:38:11 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1992, 1994
  *	The Regents of the University of California.  All rights reserved.

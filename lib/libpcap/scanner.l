@@ -1,4 +1,6 @@
 %{
+/*	$NetBSD: scanner.l,v 1.2 1995/03/06 11:39:12 mycroft Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -33,7 +35,7 @@ static char rcsid[] =
 #include <pcap-namedb.h>
 
 #include "gencode.h"
-#include "tokdefs.h"
+#include "y.tab.h"
 
 #ifndef __GNUC__
 #define inline
@@ -63,7 +65,6 @@ static inline int xdtoi(int);
 #define getc(fp)  (*in_buffer == 0 ? EOF : *in_buffer++)
 #endif
 
-#define yylval pcap_lval
 extern YYSTYPE yylval;
 
 static char *in_buffer;
