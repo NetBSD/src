@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2003/01/18 06:23:31 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.8 2003/01/19 02:43:12 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,8 @@ include <machine/pcb.h>
 include <machine/pmap.h>
 
 include <powerpc/cpu.h>
+
+define	CALLFRAMELEN	CALLFRAMELEN
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_0		offsetof(struct trapframe, fixreg[0])
@@ -95,7 +97,7 @@ define	SPFRAME_R4		offsetof(struct spillframe, r4)
 define	SPFRAME_R3		offsetof(struct spillframe, r3)
 define	SPFRAME_R0		offsetof(struct spillframe, r0)
 
-define	SFRAMELEN	roundup(sizeof(struct switchframe), 16)
+define	SFRAMELEN	roundup(sizeof(struct switchframe), CALLFRAMELEN)
 
 define	PCB_PMR		offsetof(struct pcb, pcb_pmreal)
 define	PCB_SP		offsetof(struct pcb, pcb_sp)
@@ -114,7 +116,7 @@ define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_PROC		offsetof(struct lwp, l_proc)
 
-define	LSONPROC		LSONPROC
+define	LSONPROC	LSONPROC
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
 
 define	CI_SIZE		sizeof(struct cpu_info)

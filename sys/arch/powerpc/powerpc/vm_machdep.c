@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 2003/01/18 06:23:36 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45 2003/01/19 02:43:13 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -140,18 +140,18 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	 * for an extra call frame (or at least space for callee
 	 * to store LR).
 	 */
-	stktop2 = (caddr_t)((u_long)stktop2 & ~15);
+	stktop2 = (caddr_t)((uintptr_t)stktop2 & ~(CALLFRAMELEN-1));
 
 	/*
 	 * There happens to be a callframe, too.
 	 */
 	cf = (struct callframe *)stktop2;
-	cf->lr = (int)fork_trampoline;
+	cf->lr = (register_t)fork_trampoline;
 
 	/*
 	 * Below the trap frame, there is another call frame:
 	 */
-	stktop2 -= 16;
+	stktop2 -= CALLFRAMELEN;
 	cf = (struct callframe *)stktop2;
 	cf->r31 = (register_t)func;
 	cf->r30 = (register_t)arg;
@@ -159,15 +159,17 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 	/*
 	 * Below that, we allocate the switch frame:
 	 */
-	stktop2 -= roundup(sizeof *sf, 16);	/* must match SFRAMELEN in genassym */
+	stktop2 -= roundup(sizeof *sf, CALLFRAMELEN);	/* must match SFRAMELEN in genassym */
 	sf = (struct switchframe *)stktop2;
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
-	sf->sp = (int)cf;
+	sf->sp = (register_t)cf;
 #ifndef PPC_IBM4XX
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
-	pcb->pcb_sp = (int)stktop2;
+	pcb->pcb_sp = (register_t)stktop2;
 	pcb->pcb_spl = 0;
+	pcb->pcb_kmapsr = 0;
+	pcb->pcb_umapsr = 0;
 }
 
 void
@@ -184,21 +186,23 @@ cpu_setfunc(l, func, arg)
 	caddr_t vaddr;
 
 	tf = trapframe(l);
-	cf = (struct callframe *) ((u_long)tf & ~15);
+	cf = (struct callframe *) ((uintptr_t)tf & ~(CALLFRAMELEN-1));
 	cf->lr = (register_t) fork_trampoline;
 	cf--;
 	cf->r31 = (register_t) func;
 	cf->r30 = (register_t) arg;
 	vaddr = (unsigned char *) cf;
-	vaddr -= roundup(sizeof *sf, 16);
+	vaddr -= roundup(sizeof *sf, CALLFRAMELEN);
 	sf = (struct switchframe *) vaddr;
 	memset((void *)sf, 0, sizeof *sf);		/* just in case */
 	sf->sp = (register_t) cf;
-#ifndef PPC_IBM4XX
+#ifdef PPC_MPC6XX
 	sf->user_sr = pmap_kernel()->pm_sr[USER_SR]; /* again, just in case */
 #endif
-	pcb->pcb_sp = (int)sf;
+	pcb->pcb_sp = (register_t)sf;
 	pcb->pcb_spl = 0;
+	pcb->pcb_kmapsr = 0;
+	pcb->pcb_umapsr = 0;
 }
 
 void
