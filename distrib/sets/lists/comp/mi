@@ -74,11 +74,11 @@
 ./usr/include/dev/isa/isavar.h
 ./usr/include/dev/isa/lptreg.h
 ./usr/include/dev/isa/mcdreg.h
-./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/pasreg.h
 ./usr/include/dev/isa/pssreg.h
 ./usr/include/dev/isa/sbdspvar.h
 ./usr/include/dev/isa/sbreg.h
+./usr/include/dev/isa/wdreg.h
 ./usr/include/dev/isa/wssreg.h
 ./usr/include/dev/isa/wtreg.h
 ./usr/include/dev/pci
