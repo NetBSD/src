@@ -1,3 +1,5 @@
+/*	$NetBSD: api_bsd.c,v 1.4 1997/01/09 20:21:43 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)api_bsd.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: api_bsd.c,v 1.3 1995/04/29 05:56:57 cgd Exp $";
+static char rcsid[] = "$NetBSD: api_bsd.c,v 1.4 1997/01/09 20:21:43 tls Exp $";
 #endif /* not lint */
 
 #if	defined(unix)

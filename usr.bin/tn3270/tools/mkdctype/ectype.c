@@ -1,3 +1,5 @@
+/*	$NetBSD: ectype.c,v 1.3 1997/01/09 20:22:54 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ectype.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: ectype.c,v 1.2 1993/08/01 18:05:06 mycroft Exp $";
+static char rcsid[] = "$NetBSD: ectype.c,v 1.3 1997/01/09 20:22:54 tls Exp $";
 #endif /* not lint */
 
 #include "ectype.h"

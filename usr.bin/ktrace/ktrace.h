@@ -1,3 +1,5 @@
+/*	$NetBSD: ktrace.h,v 1.4 1997/01/09 20:20:30 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ktrace.h	8.1 (Berkeley) 6/6/93
- *	$Id: ktrace.h,v 1.3 1995/07/19 15:14:06 christos Exp $
+ *	$NetBSD: ktrace.h,v 1.4 1997/01/09 20:20:30 tls Exp $
  */
 
 #define DEF_POINTS (KTRFAC_SYSCALL | KTRFAC_SYSRET | KTRFAC_NAMEI | \

@@ -1,3 +1,5 @@
+/*	$NetBSD: finger.h,v 1.5 1997/01/09 20:19:21 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -34,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)finger.h	5.5 (Berkeley) 6/1/90
- *	$Id: finger.h,v 1.4 1996/11/21 06:01:49 lukem Exp $
+ *	$NetBSD: finger.h,v 1.5 1997/01/09 20:19:21 tls Exp $
  */
 
 #include <pwd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.15 1997/01/09 06:57:46 tls Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.16 1997/01/09 20:21:05 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.15 1997/01/09 06:57:46 tls Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.16 1997/01/09 20:21:05 tls Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,13 +83,17 @@ static char rcsid[] = "$NetBSD: rlogin.c,v 1.15 1997/01/09 06:57:46 tls Exp $";
 #ifdef KERBEROS
 #include <kerberosIV/des.h>
 #include <kerberosIV/krb.h>
+#include <kerberosIV/kstream.h>
 
 #include "krb.h"
 
 CREDENTIALS cred;
 Key_schedule schedule;
+MSG_DAT msg_data;
+struct sockaddr_in local, foreign;
 int use_kerberos = 1, doencrypt;
-char dst_realm_buf[REALM_SZ], *dest_realm = NULL;
+char dest_realm[REALM_SZ];
+kstream krem;
 #endif
 
 #ifndef TIOCPKT_WINDOW
@@ -162,6 +166,15 @@ main(argc, argv)
 	char *host, *p, *user, term[1024] = "network";
 	speed_t ospeed;
 	struct sigaction sa;
+#ifdef KERBEROS
+	KTEXT_ST ticket;
+	char **orig_argv = argv;
+	int sock;
+	long authopts;
+	int through_once = 0;
+	char *cp = (char *) NULL;
+	extern int _kstream_des_debug_OOB;
+#endif
 
 	argoff = dflag = 0;
 	one = 1;
@@ -200,6 +213,9 @@ main(argc, argv)
 #endif
 			break;
 		case 'd':
+#ifdef KERBEROS
+			_kstream_des_debug_OOB = 1;
+#endif
 			dflag = 1;
 			break;
 		case 'e':
@@ -208,7 +224,6 @@ main(argc, argv)
 			break;
 #ifdef KERBEROS
 		case 'k':
-			dest_realm = dst_realm_buf;
 			(void)strncpy(dest_realm, optarg, REALM_SZ);
 			break;
 #endif
@@ -219,7 +234,6 @@ main(argc, argv)
 #ifdef KERBEROS
 		case 'x':
 			doencrypt = 1;
-			des_set_key(cred.session, schedule);
 			break;
 #endif
 #endif
@@ -317,37 +331,77 @@ try_connect:
 
 		rem = KSUCCESS;
 		errno = 0;
-		if (dest_realm == NULL)
-			dest_realm = krb_realmofhost(host);
-
 #ifdef CRYPT
 		if (doencrypt)
-			rem = krcmd_mutual(&host, sp->s_port, user, term, 0,
-			    dest_realm, &cred, schedule);
+			authopts = KOPT_DO_MUTUAL;
 		else
 #endif /* CRYPT */
-			rem = krcmd(&host, sp->s_port, user, term, 0,
-			    dest_realm);
-		if (rem < 0) {
+			authopts = 0L;
+
+		/* default this now, once. */
+		if (!(cp = krb_realmofhost (host))) {
+			warnx("Unknown realm for host %s.", host);
 			use_kerberos = 0;
-			sp = getservbyname("login", "tcp");
-			if (sp == NULL)
-				errx(1, "unknown service login/tcp.");
-			if (errno == ECONNREFUSED)
-				warning("remote host doesn't support Kerberos");
-			if (errno == ENOENT)
-				warning("can't provide Kerberos auth data");
 			goto try_connect;
 		}
+
+		strncpy(dest_realm, cp, REALM_SZ);
+
+		rem = kcmd(&sock, &host, sp->s_port, pw->pw_name, user, 
+			   term, 0, &ticket, "rcmd", dest_realm,
+			   &cred, schedule, &msg_data, &local, &foreign,
+			   authopts);
+
+		if (rem != KSUCCESS) {
+			switch(rem) {
+
+				case KDC_PR_UNKNOWN:
+					warnx("Host %s not registered for %s",
+				       	      host, "Kerberos rlogin service");
+					use_kerberos = 0;
+					goto try_connect;
+				case NO_TKT_FIL:
+					if (through_once++) {
+						use_kerberos = 0;
+						goto try_connect;
+					}
+#ifdef notyet
+				krb_get_pw_in_tkt(user, krb_realm, "krbtgt",
+						  krb_realm,
+					          DEFAULT_TKT_LIFE/5, 0);
+				goto try_connect;
+#endif
+			default:
+				warnx("Kerberos rcmd failed: %s",
+				      (rem == -1) ? "rcmd protocol failure" :
+				      krb_err_txt[rem]);
+				use_kerberos = 0;
+				goto out;
+		}
+	}
+	rem = sock;
+	if (doencrypt)
+		krem = kstream_create_rlogin_from_fd(rem, &schedule,
+						     &cred.session);
+	else
+		krem = kstream_create_from_fd(rem, 0, 0);
+	kstream_set_buffer_mode(krem, 0);
 	} else {
 #ifdef CRYPT
+		out:
 		if (doencrypt)
 			errx(1, "the -x flag requires Kerberos authentication.");
+#else
+		out:
 #endif /* CRYPT */
 		rem = rcmd(&host, sp->s_port, pw->pw_name, user, term, 0);
+		if ( rem < 0 )
+			exit(1);
+		krem = kstream_create_from_fd(rem, 0, 0);
 	}
 #else
 	rem = rcmd(&host, sp->s_port, pw->pw_name, user, term, 0);
+
 #endif /* KERBEROS */
 
 	if (rem < 0)
@@ -587,26 +641,19 @@ writer()
 				continue;
 			}
 			if (c != escapechar)
-#ifdef CRYPT
 #ifdef KERBEROS
-				if (doencrypt)
-					(void)des_write(rem,
-					    (char *)&escapechar, 1);
-				else
+				(void)kstream_write(krem,
+				    (char *)&escapechar, 1);
+			else
 #endif
-#endif
-					(void)write(rem, &escapechar, 1);
+				(void)write(rem, &escapechar, 1);
 		}
 
-#ifdef CRYPT
 #ifdef KERBEROS
-		if (doencrypt) {
-			if (des_write(rem, &c, 1) == 0) {
+		if (kstream_write(krem, &c, 1) == 0) {
 				msg("line gone");
 				break;
-			}
-		} else
-#endif
+		}
 #endif
 			if (write(rem, &c, 1) == 0) {
 				msg("line gone");
@@ -697,12 +744,8 @@ sendwindow()
 	wp->ws_xpixel = htons(winsize.ws_xpixel);
 	wp->ws_ypixel = htons(winsize.ws_ypixel);
 
-#ifdef CRYPT
 #ifdef KERBEROS
-	if(doencrypt)
-		(void)des_write(rem, obuf, sizeof(obuf));
-	else
-#endif
+		(void)kstream_write(krem, obuf, sizeof(obuf));
 #endif
 		(void)write(rem, obuf, sizeof(obuf));
 }
@@ -840,12 +883,8 @@ reader(smask)
 		rcvcnt = 0;
 		rcvstate = READING;
 
-#ifdef CRYPT
 #ifdef KERBEROS
-		if (doencrypt)
-			rcvcnt = des_read(rem, rcvbuf, sizeof(rcvbuf));
-		else
-#endif
+			rcvcnt = kstream_read(krem, rcvbuf, sizeof(rcvbuf));
 #endif
 			rcvcnt = read(rem, rcvbuf, sizeof (rcvbuf));
 		if (rcvcnt == 0)

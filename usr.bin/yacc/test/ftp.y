@@ -1,3 +1,5 @@
+/*	$NetBSD: ftp.y,v 1.5 1997/01/09 20:23:33 tls Exp $	*/
+
 /*
  * Copyright (c) 1985, 1988 Regents of the University of California.
  * All rights reserved.
@@ -15,7 +17,7 @@
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
  *	from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89
- *	$Id: ftp.y,v 1.4 1996/04/08 19:10:49 jtc Exp $
+ *	$NetBSD: ftp.y,v 1.5 1997/01/09 20:23:33 tls Exp $
  */
 
 /*
@@ -27,7 +29,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpcmd.y	5.20.1.1 (Berkeley) 3/2/89";*/
-static char rcsid[] = "$Id: ftp.y,v 1.4 1996/04/08 19:10:49 jtc Exp $";
+static char rcsid[] = "$NetBSD: ftp.y,v 1.5 1997/01/09 20:23:33 tls Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

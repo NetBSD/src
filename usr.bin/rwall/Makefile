@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1994/12/22 12:30:49 cgd Exp $
+#	$NetBSD: Makefile,v 1.7 1997/01/09 20:21:20 tls Exp $
 
 PROG = rwall
 

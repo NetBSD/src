@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$NetBSD: groups.sh,v 1.3 1997/01/09 20:20:04 tls Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -32,7 +33,7 @@
 # SUCH DAMAGE.
 #
 #	from: @(#)groups.sh	8.1 (Berkeley) 6/6/93
-#	$Id: groups.sh,v 1.2 1994/05/05 23:24:40 cgd Exp $
+#	$NetBSD: groups.sh,v 1.3 1997/01/09 20:20:04 tls Exp $
 #
 
 id -Gn $*

@@ -1,3 +1,5 @@
+/*	$NetBSD: wc.c,v 1.10 1997/01/09 20:23:20 tls Exp $	*/
+
 /*
  * Copyright (c) 1980, 1987 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)wc.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$Id: wc.c,v 1.9 1994/01/03 03:11:06 andrew Exp $";
+static char rcsid[] = "$NetBSD: wc.c,v 1.10 1997/01/09 20:23:20 tls Exp $";
 #endif /* not lint */
 
 /* wc line, word and char count */

@@ -1,3 +1,5 @@
+/*	$NetBSD: oia.c,v 1.3 1997/01/09 20:22:13 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)oia.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: oia.c,v 1.2 1993/08/01 18:05:49 mycroft Exp $";
+static char rcsid[] = "$NetBSD: oia.c,v 1.3 1997/01/09 20:22:13 tls Exp $";
 #endif /* not lint */
 
 /*

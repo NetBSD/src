@@ -1,4 +1,5 @@
-/*	$NetBSD: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.10 1997/01/09 20:21:06 tls Exp $	*/
+
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -31,7 +32,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
-static char cvsid[] = "$Id: rpc_main.c,v 1.9 1996/02/19 11:12:43 pk Exp $";
+static char rcsid[] = "$NetBSD: rpc_main.c,v 1.10 1997/01/09 20:21:06 tls Exp $";
 #endif
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: printf.c,v 1.14 1997/01/09 20:20:49 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -41,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.13 1994/02/03 01:10:49 jtc Exp $";
+static char rcsid[] = "$NetBSD: printf.c,v 1.14 1997/01/09 20:20:49 tls Exp $";
 #endif /* not lint */
 
 #include <ctype.h>

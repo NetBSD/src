@@ -1,3 +1,5 @@
+/*	$NetBSD: map3270.c,v 1.4 1997/01/09 20:21:57 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map3270.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: map3270.c,v 1.3 1994/04/01 04:09:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: map3270.c,v 1.4 1997/01/09 20:21:57 tls Exp $";
 #endif /* not lint */
 
 /*	This program reads a description file, somewhat like /etc/termcap,

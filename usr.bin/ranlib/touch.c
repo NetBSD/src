@@ -1,3 +1,5 @@
+/*	$NetBSD: touch.c,v 1.4 1997/01/09 20:21:01 tls Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -36,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)touch.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$Id: touch.c,v 1.3 1994/03/03 10:20:12 pk Exp $";
+static char rcsid[] = "$NetBSD: touch.c,v 1.4 1997/01/09 20:21:01 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

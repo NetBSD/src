@@ -1,4 +1,4 @@
-/*      $NetBSD: ftp_var.h,v 1.10 1996/12/06 02:06:51 lukem Exp $      */
+/*	$NetBSD: ftp_var.h,v 1.11 1997/01/09 20:19:39 tls Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994

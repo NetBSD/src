@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1995/11/22 05:38:58 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/01/09 20:21:41 tls Exp $
 
 .if make(clean) || make(cleandir) || make(depend) || make(obj) || make(lint)
 SUBDIR += tools

@@ -1,4 +1,4 @@
-/*	$NetBSD: rwho.c,v 1.5 1997/01/09 15:33:43 tls Exp $	*/
+/*	$NetBSD: rwho.c,v 1.6 1997/01/09 20:21:23 tls Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: rwho.c,v 1.5 1997/01/09 15:33:43 tls Exp $";
+static char rcsid[] = "$NetBSD: rwho.c,v 1.6 1997/01/09 20:21:23 tls Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

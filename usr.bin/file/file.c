@@ -1,3 +1,5 @@
+/*	$NetBSD: file.c,v 1.10 1997/01/09 20:18:52 tls Exp $	*/
+
 /*
  * file - find type of a file or files - main program.
  *
@@ -26,7 +28,7 @@
  */
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: file.c,v 1.9 1996/10/05 20:20:26 christos Exp $";
+	"@(#)$NetBSD: file.c,v 1.10 1997/01/09 20:18:52 tls Exp $";
 #endif	/* lint */
 
 #include <stdio.h>

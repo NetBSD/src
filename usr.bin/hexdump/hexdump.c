@@ -1,3 +1,5 @@
+/*	$NetBSD: hexdump.c,v 1.4 1997/01/09 20:19:54 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: hexdump.c,v 1.3 1996/05/07 18:32:26 jtc Exp $";
+static char rcsid[] = "$NetBSD: hexdump.c,v 1.4 1997/01/09 20:19:54 tls Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

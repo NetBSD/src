@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1994/12/22 12:30:47 cgd Exp $
+#	$NetBSD: Makefile,v 1.8 1997/01/09 20:21:17 tls Exp $
 
 PROG = rusers
 

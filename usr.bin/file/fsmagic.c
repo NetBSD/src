@@ -1,3 +1,5 @@
+/*	$NetBSD: fsmagic.c,v 1.9 1997/01/09 20:18:54 tls Exp $	*/
+
 /*
  * fsmagic - magic based on filesystem info - directory, special files, etc.
  *
@@ -51,7 +53,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: fsmagic.c,v 1.8 1996/10/05 20:20:28 christos Exp $";
+	"@(#)$NetBSD: fsmagic.c,v 1.9 1997/01/09 20:18:54 tls Exp $";
 #endif	/* lint */
 
 int

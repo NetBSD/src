@@ -1,3 +1,5 @@
+/*	$NetBSD: tar.h,v 1.5 1997/01/09 20:19:02 tls Exp $	*/
+
 /*
  * Header file for public domain tar (tape archive) program.
  *
@@ -5,7 +7,7 @@
  *
  * Created 25 August 1985 by John Gilmore, ihnp4!hoptoad!gnu.
  *
- * $Id: tar.h,v 1.4 1995/03/25 22:36:45 christos Exp $ # checkin only
+ * $NetBSD: tar.h,v 1.5 1997/01/09 20:19:02 tls Exp $
  */
 
 /*

@@ -1,5 +1,5 @@
+#	$NetBSD: Makefile,v 1.4 1997/01/09 20:19:51 tls Exp $
 #	from: @(#)Makefile	5.5 (Berkeley) 3/7/91
-#	$Id: Makefile,v 1.3 1994/12/22 12:29:54 cgd Exp $
 
 PROG=	hexdump
 SRCS=	conv.c display.c hexdump.c hexsyntax.c odsyntax.c parse.c

@@ -1,3 +1,5 @@
+/*	$NetBSD: pr_comment.c,v 1.4 1997/01/09 20:20:19 tls Exp $	*/
+
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
  * Copyright (c) 1980 The Regents of the University of California.
@@ -35,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)pr_comment.c	5.12 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: pr_comment.c,v 1.3 1993/08/07 06:56:51 cgd Exp $";
+static char rcsid[] = "$NetBSD: pr_comment.c,v 1.4 1997/01/09 20:20:19 tls Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

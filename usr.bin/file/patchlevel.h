@@ -3,9 +3,12 @@
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
- * $Id: patchlevel.h,v 1.6 1996/10/05 20:20:29 christos Exp $
+ * $NetBSD: patchlevel.h,v 1.7 1997/01/09 20:18:58 tls Exp $
  *
  * $Log: patchlevel.h,v $
+ * Revision 1.7  1997/01/09 20:18:58  tls
+ * RCS ID police
+ *
  * Revision 1.6  1996/10/05 20:20:29  christos
  * Changes from file-3.21
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: quota.c,v 1.12 1997/01/09 20:20:53 tls Exp $	*/
+
 /*
  * Copyright (c) 1980, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -42,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)quota.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$Id: quota.c,v 1.11 1996/04/01 21:31:33 mark Exp $";
+static char rcsid[] = "$NetBSD: quota.c,v 1.12 1997/01/09 20:20:53 tls Exp $";
 #endif /* not lint */
 
 /*

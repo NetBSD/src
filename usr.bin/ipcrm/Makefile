@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.5 1994/12/22 12:29:59 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/01/09 20:20:20 tls Exp $
 
 PROG=	ipcrm
 

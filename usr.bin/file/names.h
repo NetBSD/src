@@ -1,3 +1,5 @@
+/*	$NetBSD: names.h,v 1.5 1997/01/09 20:18:57 tls Exp $	*/
+
 /*
  * Names.h - names and types used by ascmagic in file(1).
  * These tokens are here because they can appear anywhere in
@@ -10,7 +12,7 @@
  *
  * See LEGAL.NOTICE
  *
- * $Id: names.h,v 1.4 1995/04/28 19:23:56 christos Exp $
+ * $NetBSD: names.h,v 1.5 1997/01/09 20:18:57 tls Exp $
  */
 
 /* these types are used to index the table 'types': keep em in sync! */

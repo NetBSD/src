@@ -1,3 +1,5 @@
+/*	$NetBSD: dohits.c,v 1.4 1997/01/09 20:23:06 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dohits.c	4.2 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: dohits.c,v 1.3 1994/04/10 07:20:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: dohits.c,v 1.4 1997/01/09 20:23:06 tls Exp $";
 #endif /* not lint */
 
 /*

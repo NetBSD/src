@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.6 1997/01/09 20:20:44 tls Exp $
 #
 # Makefile for modstat
 #
@@ -33,7 +34,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: Makefile,v 1.5 1994/12/22 12:30:24 cgd Exp $
+#	$NetBSD: Makefile,v 1.6 1997/01/09 20:20:44 tls Exp $
 #
 
 PROG=	modstat

@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.5 1995/04/24 07:40:22 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.6 1997/01/09 20:21:42 tls Exp $
 
 CFLAGS += -DTERMCAP -DSRCRT -DKLUDGELINEMODE -DUSE_TERMIO -DTN3270 -Dunix
 KBD = unix.kbd

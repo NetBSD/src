@@ -1,3 +1,5 @@
+/*	$NetBSD: ipcrm.c,v 1.5 1997/01/09 20:20:22 tls Exp $	*/
+
 /*
  * Copyright (c) 1994 Adam Glass
  * All rights reserved.
@@ -28,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: ipcrm.c,v 1.4 1994/08/07 18:27:42 glass Exp $
+ * $NetBSD: ipcrm.c,v 1.5 1997/01/09 20:20:22 tls Exp $
  */
 
 #include <stdio.h>

@@ -1,5 +1,7 @@
+/*	$NetBSD: getopt.c,v 1.3 1997/01/09 20:19:47 tls Exp $	*/
+
 #ifndef lint
-static char rcsid[] = "$Id: getopt.c,v 1.2 1993/08/02 17:54:29 mycroft Exp $";
+static char rcsid[] = "$NetBSD: getopt.c,v 1.3 1997/01/09 20:19:47 tls Exp $";
 #endif /* not lint */
 
 #include <stdio.h>

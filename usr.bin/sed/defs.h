@@ -1,3 +1,5 @@
+/*	$NetBSD: defs.h,v 1.7 1997/01/09 20:21:28 tls Exp $	*/
+
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
  * Copyright (c) 1992, 1993
@@ -35,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	8.1 (Berkeley) 6/6/93
- *	$Id: defs.h,v 1.6 1995/03/09 11:19:28 mycroft Exp $
+ *	$NetBSD: defs.h,v 1.7 1997/01/09 20:21:28 tls Exp $
  */
 
 /*

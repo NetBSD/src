@@ -1,3 +1,5 @@
+/*	$NetBSD: pathnames.h,v 1.3 1997/01/09 20:21:14 tls Exp $	*/
+
 /*
  * Copyright (c) 1989 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 4/9/90
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:09:06 mycroft Exp $
+ *	$NetBSD: pathnames.h,v 1.3 1997/01/09 20:21:14 tls Exp $
  */
 
 #define	_PATH_RLOGIN	"/usr/bin/rlogin"

@@ -1,3 +1,5 @@
+/*	$NetBSD: find.h,v 1.6 1997/01/09 20:19:11 tls Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)find.h	8.1 (Berkeley) 6/6/93
- *	$Id: find.h,v 1.5 1993/12/30 21:15:22 jtc Exp $
+ *	$NetBSD: find.h,v 1.6 1997/01/09 20:19:11 tls Exp $
  */
 
 /* node type */

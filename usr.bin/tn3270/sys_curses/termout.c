@@ -1,3 +1,5 @@
+/*	$NetBSD: termout.c,v 1.7 1997/01/09 20:22:33 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -33,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)termout.c	4.3 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$Id: termout.c,v 1.6 1995/12/11 23:22:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: termout.c,v 1.7 1997/01/09 20:22:33 tls Exp $";
 #endif /* not lint */
 
 #if defined(unix)

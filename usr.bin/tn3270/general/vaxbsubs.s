@@ -1,3 +1,5 @@
+/*	$NetBSD: vaxbsubs.s,v 1.3 1997/01/09 20:22:23 tls Exp $	*/
+
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -31,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vaxbsubs.s	4.2 (Berkeley) 4/26/91
- *	$Id: vaxbsubs.s,v 1.2 1993/08/01 18:05:26 mycroft Exp $
+ *	$NetBSD: vaxbsubs.s,v 1.3 1997/01/09 20:22:23 tls Exp $
  */
 
 /* This is taken from bcmp.s from 4.2.

@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.3 1993/08/02 17:56:20 mycroft Exp $
+#	$NetBSD: Makefile,v 1.4 1997/01/09 20:22:40 tls Exp $
 
 SUBDIR = mkhits mkastosc mkastods mkdstoas mkdctype
 
