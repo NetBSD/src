@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2003/12/07 20:03:47 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2004/03/17 20:23:28 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -116,7 +116,7 @@
  * USRSTACK is the top of user stack. 
  */
 #define USRSTACK	VM_MAXUSER_ADDRESS
-#define USRSTACK32	USRSTACK
+#define USRSTACK32	((u_int32_t)USRSTACK)
 
 /* Virtual memory resoruce limit. */
 #define MAXTSIZ                 (64 * 1024 * 1024)      /* max text size */
