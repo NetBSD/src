@@ -1,3 +1,7 @@
+2003-12-09  Derek Price  <derek@ximbiot.com>
+
+	* system.h: Correct spelling in comment.
+
 2003-12-03  Derek Price  <derek@ximbiot.com>
 
 	* fncase.c (OSX_filename_classes): New array.

@@ -467,7 +467,7 @@ extern int errno;
  * defining a configure macro to define WOE32 appropriately.  If they ever do
  * write such a beast, we should use it, though in most cases it would be
  * preferable to avoid referencing any OS or compiler anyhow, per Autoconf
- * convention, and reference only tested features of hte system.
+ * convention, and reference only tested features of the system.
  */
 # define WOE32 1
 #endif /* defined (__CYGWIN32__) || defined (WIN32) */
