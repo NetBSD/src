@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.38 2003/12/15 17:35:33 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2003/12/15 19:36:16 martin Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
 
-KERNEL_SETS=		GENERIC GENERIC_SCSI3 GENERIC_SUN4U GENERIC.MP
+KERNEL_SETS=		GENERIC GENERIC_SCSI3 GENERIC_SUN4U GENERIC.MP	\
+			MRCOFFEE_OFW MRCOFFEE KRUPS
 
 BUILD_KERNELS=		INSTALL
 
