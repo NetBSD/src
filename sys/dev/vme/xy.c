@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.51 2003/06/29 22:31:01 fvdl Exp $	*/
+/*	$NetBSD: xy.c,v 1.52 2003/08/27 15:41:04 mrg Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.51 2003/06/29 22:31:01 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.52 2003/08/27 15:41:04 mrg Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -419,6 +419,7 @@ xycattach(parent, self, aux)
 	bus_dma_segment_t	seg;
 	int			rseg;
 	vme_mapresc_t resc;
+	bus_addr_t		busaddr;
 
 	/* get addressing and intr level stuff from autoconfig and load it
 	 * into our xyc_softc. */
@@ -486,11 +487,12 @@ xycattach(parent, self, aux)
 	if ((error = xy_dmamem_alloc(xyc->dmatag, xyc->iopmap, &seg, &rseg,
 				     XYC_MAXIOPB * sizeof(struct xy_iopb),
 				     (caddr_t *)&xyc->iopbase,
-				     (bus_addr_t *)&xyc->dvmaiopb)) != 0) {
+				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
+	xyc->dvmaiopb = BUS_ADDR_PADDR(busaddr);
 
 	bzero(xyc->iopbase, XYC_MAXIOPB * sizeof(struct xy_iopb));
 
@@ -627,6 +629,7 @@ xyattach(parent, self, aux)
 	struct dkbad *dkb;
 	int			rseg, error;
 	bus_dma_segment_t	seg;
+	bus_addr_t		busaddr;
 	caddr_t			dmaddr;
 	caddr_t			buf;
 
@@ -679,11 +682,12 @@ xyattach(parent, self, aux)
 	if ((error = xy_dmamem_alloc(xyc->dmatag, xyc->auxmap, &seg, &rseg,
 				     XYFM_BPS,
 				     (caddr_t *)&buf,
-				     (bus_addr_t *)&dmaddr)) != 0) {
+				     &busaddr)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
 			xyc->sc_dev.dv_xname, error);
 		return;
 	}
+	dmaddr = BUS_ADDR_PADDR(busaddr);
 
 	/* first try and reset the drive */
 	error = xyc_cmd(xyc, XYCMD_RST, 0, xy->xy_drive, 0, 0, 0, fmode);
@@ -2237,12 +2241,15 @@ xyc_ioctlcmd(xy, dev, xio)
 
 	/* create DVMA buffer for request if needed */
 	if (xio->dlen) {
+		bus_addr_t busbuf;
+
 		if ((error = xy_dmamem_alloc(xycsc->dmatag, xycsc->auxmap,
 					     &seg, &rseg,
 					     xio->dlen, &buf,
-					     (bus_addr_t *)&dvmabuf)) != 0) {
+					     &busbuf)) != 0) {
 			return (error);
 		}
+		dvmabuf = BUS_ADDR_PADDR(busbuf);
 
 		if (xio->cmd == XYCMD_WR) {
 			if ((error = copyin(xio->dptr, buf, xio->dlen)) != 0) {
