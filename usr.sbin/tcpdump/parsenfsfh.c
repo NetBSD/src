@@ -1,4 +1,4 @@
-/*	$NetBSD: parsenfsfh.c,v 1.4 1997/10/03 19:54:55 christos Exp $	*/
+/*	$NetBSD: parsenfsfh.c,v 1.4.12.1 2002/06/06 20:01:11 he Exp $	*/
 
 /*
  * parsenfsfh.c - portable parser for NFS file handles
@@ -15,7 +15,7 @@
 static const char rcsid[] =
     "@(#) Header: parsenfsfh.c,v 1.14 97/06/15 13:20:27 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: parsenfsfh.c,v 1.4 1997/10/03 19:54:55 christos Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.4.12.1 2002/06/06 20:01:11 he Exp $");
 #endif
 #endif
 
@@ -81,19 +81,19 @@ __RCSID("$NetBSD: parsenfsfh.c,v 1.4 1997/10/03 19:54:55 christos Exp $");
 	((lsb) + ((e)<<8) + ((d)<<16) + ((c)<<24))
 #endif
 
-static int is_UCX(unsigned char *);
+static int is_UCX(const unsigned char *);
 
 void
 Parse_fh(fh, len, fsidp, inop, osnamep, fsnamep, ourself)
-register caddr_t *fh;
+register const unsigned char *fh;
 int len;
 my_fsid *fsidp;
 ino_t *inop;
-char **osnamep;		/* if non-NULL, return OS name here */
-char **fsnamep;		/* if non-NULL, return server fs name here (for VMS) */
+const char **osnamep;	/* if non-NULL, return OS name here */
+const char **fsnamep;	/* if non-NULL, return server fs name here (for VMS) */
 int ourself;		/* true if file handle was generated on this host */
 {
-	register unsigned char *fhp = (unsigned char *)fh;
+	register const unsigned char *fhp = fh;
 	u_int32_t temp;
 	int fhtype = FHT_UNKNOWN;
 
@@ -407,7 +407,7 @@ int ourself;		/* true if file handle was generated on this host */
  */
 static int
 is_UCX(fhp)
-unsigned char *fhp;
+const unsigned char *fhp;
 {
 	register int i;
 	int seen_null = 0;
