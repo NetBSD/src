@@ -67,6 +67,8 @@
 #include <sys/stat.h>
 #include <sys/errno.h>
 
+#include "extern.h"
+
 char *pname = "crunchide";
 
 void usage(void);
@@ -226,7 +228,7 @@ int hide_syms(const char *filename)
                         break;
 	}
 	if (i == n) {
-		fprintf(stderr, "%s: unknown executable format", filename);
+		fprintf(stderr, "%s: unknown executable format\n", filename);
 		goto err;
 	}
 
