@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.10 2003/08/25 17:50:29 uwe Exp $	*/
+/*	$NetBSD: zx.c,v 1.11 2003/10/28 14:18:39 ad Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.10 2003/08/25 17:50:29 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.11 2003/10/28 14:18:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -655,7 +655,7 @@ zx_cursor_set(struct zx_softc *sc)
 		SETREG(zcu->zcu_misc, zcu->zcu_misc & ~0x80);
 
 	for (j = 0; j < 2; j++) {
-		SETREG(zcu->zcu_type, 0x20 << i);
+		SETREG(zcu->zcu_type, 0x20 << j);
 
 		for (i = sc->sc_shifty; i < 32; i++) {
 			data = sc->sc_curbits[j][i];
