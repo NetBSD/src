@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk_ll.c,v 1.6 1999/03/08 00:09:25 fvdl Exp $	 */
+/*	$NetBSD: biosdisk_ll.c,v 1.7 1999/03/30 17:55:49 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -47,16 +47,21 @@
 
 extern long ourseg;
 
-extern void get_diskinfo __P((struct biosdisk_ll *));
+extern int get_diskinfo __P((int));
 extern void int13_getextinfo __P((int, struct biosdisk_ext13info *));
 extern int int13_extension __P((int));
 extern int biosread __P((int, int, int, int, int, char *));
 extern int biosextread __P((int, void *));
 static int do_read __P((struct biosdisk_ll *, int, int, char *));
 
-#define	SPT(di)		((di)&0xff)
-#define	HEADS(di)	((((di)>>8)&0xff)+1)
-#define CYL(di)		
+/*
+ * we get from get_diskinfo():
+ * xxxx  %ch  %cl  %dh (registers after int13/8), ie
+ * xxxx cccc Csss hhhh
+ */
+#define	SPT(di)		(((di)>>8)&0x3f)
+#define	HEADS(di)	(((di)&0xff)+1)
+#define CYL(di)		(((((di)>>16)&0xff)|(((di)>>6)&0x300))+1)
 
 #ifndef BIOSDISK_RETRIES
 #define BIOSDISK_RETRIES 5
@@ -67,12 +72,15 @@ set_geometry(d, ed)
 	struct biosdisk_ll *d;
 	struct biosdisk_ext13info *ed;
 {
-	d->sec = d->head = 0;
+	int diskinfo;
 
-	get_diskinfo(d);
+	diskinfo = get_diskinfo(d->dev);
+	d->sec = SPT(diskinfo);
+	d->head = HEADS(diskinfo);
+	d->cyl = CYL(diskinfo);
 
 	d->flags = 0;
-	if ((d->dev&0x80) && int13_extension(d->dev)) {
+	if ((d->dev & 0x80) && int13_extension(d->dev)) {
 		d->flags |= BIOSDISK_EXT13;
 		if (ed != NULL)
 			int13_getextinfo(d->dev, ed);
@@ -82,7 +90,7 @@ set_geometry(d, ed)
 	 * get_diskinfo assumes floppy if BIOS call fails. Check at least
 	 * "valid" geometry.
 	 */
-	return (!d->sec || !d->head || !d->cyl);
+	return (!d->sec || !d->head);
 }
 
 /*
@@ -124,7 +132,7 @@ do_read(d, dblk, num, buf)
 
 		return ext.cnt;
 	} else {
-		spc = (d->head  + 1) * d->sec;
+		spc = d->head * d->sec;
 		cyl = dblk / spc;
 		head = (dblk % spc) / d->sec;
 		sec = dblk % d->sec;
@@ -157,22 +165,21 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 
 			/* no, read from disk */
 			char           *trbuf;
+			int maxsecs;
 			int retries = BIOSDISK_RETRIES;
-
-			nsec = num;
 
 			if (cold) {
 				/* transfer directly to buffer */
 				trbuf = buf;
+				maxsecs = num;
 			} else {
 				/* fill read-ahead buffer */
 				trbuf = diskbuf;
-				if (nsec > RA_SECTORS)
-					nsec = RA_SECTORS;
-
+				maxsecs = RA_SECTORS;
+				diskbuf_user = 0; /* not yet valid */
 			}
 
-			while ((nsec = do_read(d, dblk, nsec, trbuf)) < 0) {
+			while ((nsec = do_read(d, dblk, maxsecs, trbuf)) < 0) {
 #ifdef DISK_DEBUG
 				if (!cold)
 					printf("read error C:%d H:%d S:%d-%d\n",
@@ -180,8 +187,6 @@ readsects(d, dblk, num, buf, cold)	/* reads ahead if (!cold) */
 #endif
 				if (--retries >= 0)
 					continue;
-				if (!cold)
-					diskbuf_user = 0; /* mark invalid */
 				return (-1);	/* XXX cannot output here if
 						 * (cold) */
 			}
