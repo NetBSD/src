@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.38 2004/08/09 04:30:31 junyoung Exp $
+# $NetBSD: HACKS,v 1.39 2004/10/08 07:07:26 skrll Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -190,7 +190,7 @@ port	sparc64
 	who	eeh
 	file	libexec/ld.elf_so/arch/sparc64/mdreloc.c
 	descr
-		The first for PLT entries are reserved.  There is some
+		The first four PLT entries are reserved.  There is some
 		disagreement whether they should have associated relocation
 		entries.  Both the SPARC 32-bit and 64-bit ELF specifications
 		say that they should have relocation entries, but the 32-bit
