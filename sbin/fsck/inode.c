@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inode.c	5.18 (Berkeley) 3/19/91";*/
-static char rcsid[] = "$Id: inode.c,v 1.6 1994/04/18 06:08:27 cgd Exp $";
+static char rcsid[] = "$Id: inode.c,v 1.7 1994/04/25 18:28:25 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/time.h>
 #include <ufs/dinode.h>
 #include <ufs/fs.h>
 #include <ufs/dir.h>
@@ -505,7 +506,8 @@ allocino(request, type)
 		return (0);
 	}
 	dp->di_mode = type;
-	(void)time(&dp->di_atime);
+	(void)time(&dp->di_atime.ts_sec);
+	dp->di_atime.ts_nsec = 0;
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
 	dp->di_size = sblock.fs_fsize;
 	dp->di_blocks = btodb(sblock.fs_fsize);

@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)dir.c	5.19 (Berkeley) 7/26/91";*/
-static char rcsid[] = "$Id: dir.c,v 1.5 1993/11/05 23:32:06 mycroft Exp $";
+static char rcsid[] = "$Id: dir.c,v 1.6 1994/04/25 18:28:20 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/time.h>
 #include <ufs/dinode.h>
 #include <ufs/fs.h>
 #define KERNEL
