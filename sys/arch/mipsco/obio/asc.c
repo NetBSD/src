@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1 2000/08/12 22:58:55 wdk Exp $	*/
+/*	$NetBSD: asc.c,v 1.2 2000/08/14 21:04:44 wdk Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -368,6 +368,7 @@ asc_dma_setup(sc, addr, len, datain, dmasize)
 						       RAMBO_FIFO);
 				prime -= 2;
 			}
+			blocks--;	/* 1 block has been prefetched */
 		}
 	}
 	esc->sc_blkcnt = blocks;
