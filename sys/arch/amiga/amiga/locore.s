@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.122 2001/03/02 16:29:41 mhitch Exp $	*/
+/*	$NetBSD: locore.s,v 1.123 2001/05/08 06:09:29 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,6 +53,8 @@
 #include "opt_compat_sunos.h"
 #include "opt_fpsp.h"
 #include "opt_lockdebug.h"
+
+#include "opt_lev6_defer.h"
 
 #include "assym.h"
 #include <machine/asm.h>
