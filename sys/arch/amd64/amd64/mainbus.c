@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2003/05/11 21:39:00 fvdl Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2003/05/11 21:54:49 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -52,6 +52,7 @@
 #include <machine/cpuvar.h>
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
+#include <machine/mpacpi.h>
 
 #if NACPI > 0
 #include <dev/acpi/acpivar.h>
