@@ -1,4 +1,39 @@
-/*	$NetBSD: mcount.c,v 1.13 2003/08/07 16:43:02 agc Exp $	*/
+/*	$NetBSD: mcount.c,v 1.13.2.1 2004/05/11 14:51:55 tron Exp $	*/
+
+/*
+ * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
+ * All rights reserved.
+ *
+ * Written by Nathan J. Williams for Wasabi Systems, Inc.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed for the NetBSD Project by
+ *	Wasabi Systems, Inc.
+ * 4. The name of Wasabi Systems, Inc. may not be used to endorse
+ *    or promote products derived from this software without specific prior
+ *    written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY WASABI SYSTEMS, INC. ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL WASABI SYSTEMS, INC
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,12 +72,20 @@
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.13 2003/08/07 16:43:02 agc Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.13.2.1 2004/05/11 14:51:55 tron Exp $");
 #endif
 #endif
 
 #include <sys/param.h>
 #include <sys/gmon.h>
+
+#include "reentrant.h"
+
+#ifdef _REENTRANT
+extern thread_key_t _gmonkey;
+extern struct gmonparam _gmondummy;
+struct gmonparam *_m_gmon_alloc(void);
+#endif
 
 _MCOUNT_DECL __P((u_long, u_long)) __attribute__((__unused__));	/* see below. */
 
@@ -72,7 +115,17 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	int s;
 #endif
 
-	p = &_gmonparam;
+#if defined(_REENTRANT) && !defined(_KERNEL)
+	if (__isthreaded) {
+		p = thr_getspecific(_gmonkey);
+		if (p == NULL) {
+			/* Prevent recursive calls while allocating */
+			thr_setspecific(_gmonkey, &_gmondummy);
+			p = _m_gmon_alloc();
+		}
+	} else
+#endif
+		p = &_gmonparam;
 	/*
 	 * check that we are profiling
 	 * and that we aren't recursively invoked.
