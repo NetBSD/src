@@ -1,5 +1,5 @@
 .\"	@(#)getrpcport.3r	2.2 88/08/02 4.0 RPCSRC; from 1.12 88/02/26 SMI
-.\"	$NetBSD: getrpcport.3,v 1.2 1995/02/25 03:01:46 cgd Exp $
+.\"	$NetBSD: getrpcport.3,v 1.3 1998/02/05 18:49:08 perry Exp $
 .\"
 .Dd October 6, 1987
 .Dt GETRPCPORT 3
@@ -7,6 +7,8 @@
 .Sh NAME
 .Nm getrpcport
 .Nd get RPC port number
+.Sh LIBRARY
+.Lb libc
 .Sh SYNOPSIS
 .Ft int
 .Fn getrpcport "char *host" "int prognum" "int versnum" "int proto"
