@@ -292,6 +292,37 @@ bit_extract (buffer, offset, count)
   return result;
 }
 
+/* Like bit extract but the buffer is valid and doen't need to be
+ * fetched
+ */
+static int
+bit_extract_simple (buffer, offset, count)
+     bfd_byte *buffer;
+     int offset;
+     int count;
+{
+  int result;
+  int mask;
+  int bit;
+
+  buffer += offset >> 3;
+  offset &= 7;
+  bit = 1;
+  result = 0;
+  while (count--)
+    {
+      if ((*buffer & (1 << offset)))
+	result |= bit;
+      if (++offset == 8)
+	{
+	  offset = 0;
+	  buffer++;
+	}
+      bit <<= 1;
+    }
+  return result;
+}
+
 static void
 bit_copy (buffer, offset, count, to)
      char *buffer;
@@ -807,14 +838,14 @@ int invalid_float(p, len)
   register val;
 
   if ( len == 4 )
-    val = (bit_extract(p, 23, 8)/*exponent*/ == 0xff
-	   || (bit_extract(p, 23, 8)/*exponent*/ == 0 &&
-	       bit_extract(p, 0, 23)/*mantisa*/ != 0));
+    val = (bit_extract_simple(p, 23, 8)/*exponent*/ == 0xff
+	   || (bit_extract_simple(p, 23, 8)/*exponent*/ == 0 &&
+	       bit_extract_simple(p, 0, 23)/*mantisa*/ != 0));
   else if ( len == 8 )
-    val = (bit_extract(p, 52, 11)/*exponent*/ == 0x7ff
-	   || (bit_extract(p, 52, 11)/*exponent*/ == 0
-	       && (bit_extract(p, 0, 32)/*low mantisa*/ != 0
-		   || bit_extract(p, 32, 20)/*high mantisa*/ != 0)));
+    val = (bit_extract_simple(p, 52, 11)/*exponent*/ == 0x7ff
+	   || (bit_extract_simple(p, 52, 11)/*exponent*/ == 0
+	       && (bit_extract_simple(p, 0, 32)/*low mantisa*/ != 0
+		   || bit_extract_simple(p, 32, 20)/*high mantisa*/ != 0)));
   else
     val = 1;
   return (val);
