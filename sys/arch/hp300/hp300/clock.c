@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.5 1993/12/06 13:30:52 mycroft Exp $
+ *	$Id: clock.c,v 1.6 1994/02/04 23:02:03 mycroft Exp $
  */
 
 #include "param.h"
@@ -378,24 +378,23 @@ stopprofclock()
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-profclock(pc, ps)
-	caddr_t pc;
-	int ps;
+profclock(framep)
+	clockframe *framep;
 {
 	/*
 	 * Came from user mode.
 	 * If this process is being profiled record the tick.
 	 */
-	if (USERMODE(ps)) {
+	if (CLKF_USERMODE(framep)) {
 		if (p->p_stats.p_prof.pr_scale)
-			addupc(pc, &curproc->p_stats.p_prof, 1);
+			addupc(framep->pc, &curproc->p_stats.p_prof, 1);
 	}
 	/*
 	 * Came from kernel (supervisor) mode.
 	 * If we are profiling the kernel, record the tick.
 	 */
 	else if (profiling < 2) {
-		register int s = pc - s_lowpc;
+		register int s = framep->pc - s_lowpc;
 
 		if (s < s_textsize)
 			kcount[s / (HISTFRACTION * sizeof (*kcount))]++;
