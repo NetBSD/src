@@ -18,5 +18,14 @@
    Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.  */
 
+#ifndef NM_NBSD_H
+#define NM_NBSD_H
+
+#ifdef __ELF__
+#define SVR4_SHARED_LIBS
+#endif
+
 /* Get generic NetBSD native definitions. */
 #include <nm-nbsd.h>
+
+#endif /* NM_NBSD_H */
