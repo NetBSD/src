@@ -1,4 +1,4 @@
-/*	$NetBSD: modes.c,v 1.1 1995/10/03 15:02:45 hpeyerl Exp $	*/
+/*	$NetBSD: modes.c,v 1.2 1997/07/17 05:44:33 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)modes.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: modes.c,v 1.1 1995/10/03 15:02:45 hpeyerl Exp $";
+__RCSID("$NetBSD: modes.c,v 1.2 1997/07/17 05:44:33 mikel Exp $");
 #endif
 #endif /* not lint */
 
