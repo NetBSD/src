@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rt.c,v 1.39.6.6 2002/10/18 02:34:55 nathanw Exp $ */
+/*	$NetBSD: grf_rt.c,v 1.39.6.7 2003/01/03 16:38:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.39.6.6 2002/10/18 02:34:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rt.c,v 1.39.6.7 2003/01/03 16:38:45 thorpej Exp $");
 
 #include "grfrt.h"
 #if NGRFRT > 0
@@ -879,7 +879,7 @@ int
 grfrtprint(void *auxp, const char *pnp)
 {
 	if (pnp)
-		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		aprint_normal("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
 			pnp);
 	return(UNCONF);
 }

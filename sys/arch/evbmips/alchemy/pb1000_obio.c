@@ -1,4 +1,4 @@
-/* $NetBSD: pb1000_obio.c,v 1.1.2.2 2002/10/18 02:36:36 nathanw Exp $ */
+/* $NetBSD: pb1000_obio.c,v 1.1.2.3 2003/01/03 16:45:06 thorpej Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -119,9 +119,9 @@ obio_print(void *aux, const char *pnp)
 	struct obio_attach_args *oa = aux;
 
 	if (pnp)
-		printf("%s at %s", oa->oba_name, pnp);
+		aprint_normal("%s at %s", oa->oba_name, pnp);
 	if (oa->oba_addr != OBIOCF_ADDR_DEFAULT)
-		printf(" addr 0x%lx", oa->oba_addr);
+		aprint_normal(" addr 0x%lx", oa->oba_addr);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.8.11 2002/11/11 21:58:12 nathanw Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.8.12 2003/01/03 16:45:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.11 2002/11/11 21:58:12 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.8.12 2003/01/03 16:45:07 thorpej Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -158,7 +158,7 @@ grfprint(aux, pnp)
 
 	/* Only ITEs can attach to GRFs, easy... */
 	if (pnp)
-		printf("ite at %s", pnp);
+		aprint_normal("ite at %s", pnp);
 
 	return (UNCONF);
 }

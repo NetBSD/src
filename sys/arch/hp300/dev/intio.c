@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.6.32.6 2002/12/29 19:25:43 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.6.32.7 2003/01/03 16:45:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.6.32.6 2002/12/29 19:25:43 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.6.32.7 2003/01/03 16:45:08 thorpej Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,11 +162,11 @@ intioprint(aux, pnp)
 	struct intio_attach_args *ia = aux;
 
 	if (pnp != NULL)
-		printf("%s at %s", ia->ia_modname, pnp);
+		aprint_normal("%s at %s", ia->ia_modname, pnp);
 	if (ia->ia_iobase != 0) {
-                printf(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
+                aprint_normal(" addr 0x%lx", INTIOBASE + ia->ia_iobase);
 		if (ia->ia_ipl != -1 && pnp != NULL)
-			printf(" ipl %d", ia->ia_ipl);
+			aprint_normal(" ipl %d", ia->ia_ipl);
 	}
 	return (UNCONF);
 }

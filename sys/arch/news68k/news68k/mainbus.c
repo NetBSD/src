@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2.14.2 2002/12/29 19:33:46 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.14.3 2003/01/03 16:48:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -104,7 +104,7 @@ mainbus_print(aux, cp)
 	struct mainbus_attach_args *ma = aux;
 
 	if (cp)
-		printf("%s at %s", ma->ma_name, cp);
+		aprint_normal("%s at %s", ma->ma_name, cp);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: hyper.c,v 1.10.12.3 2002/10/18 02:34:57 nathanw Exp $ */
+/*	$NetBSD: hyper.c,v 1.10.12.4 2003/01/03 16:38:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997,1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.10.12.3 2002/10/18 02:34:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyper.c,v 1.10.12.4 2003/01/03 16:38:46 thorpej Exp $");
 
 /*
  * zbus HyperCom driver
@@ -174,7 +174,7 @@ hyperprint(void *auxp, const char *pnp)
 	if (pnp == NULL)
 		return(QUIET);
 
-	printf("%s at %s port 0x%02x",
+	aprint_normal("%s at %s port 0x%02x",
 	    supa->supio_name, pnp, supa->supio_iobase);
 
 	return(UNCONF);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.11.2.4 2002/10/18 02:35:23 nathanw Exp $
+#	$NetBSD: Makefile.arm,v 1.11.2.5 2003/01/03 16:41:08 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -33,7 +33,7 @@ GENASSYM=	${ARM}/arm32/genassym.cf
 ##
 ## (2) compile settings
 ##
-CPPFLAGS+=	-D${MACHINE}
+# CPPFLAGS set by platform-specific Makefile fragment.
 AFLAGS+=	-x assembler-with-cpp
 
 ##

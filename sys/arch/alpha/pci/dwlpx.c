@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.23.2.3 2002/10/18 02:34:19 nathanw Exp $ */
+/* $NetBSD: dwlpx.c,v 1.23.2.4 2003/01/03 16:38:41 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.23.2.3 2002/10/18 02:34:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.23.2.4 2003/01/03 16:38:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ dwlpxprint(aux, pnp)
 	register struct pcibus_attach_args *pba = aux;
 	/* only PCIs can attach to DWLPX's; easy. */
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
 

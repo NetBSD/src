@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cc.c,v 1.28.8.4 2002/10/18 02:34:52 nathanw Exp $ */
+/*	$NetBSD: grf_cc.c,v 1.28.8.5 2003/01/03 16:38:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.28.8.4 2002/10/18 02:34:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cc.c,v 1.28.8.5 2003/01/03 16:38:43 thorpej Exp $");
 
 #include "grfcc.h"
 #if NGRFCC > 0
@@ -152,7 +152,7 @@ int
 grfccprint(void *auxp, const char *pnp)
 {
 	if (pnp)
-		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		aprint_normal("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
 			pnp);
 	return(UNCONF);
 }

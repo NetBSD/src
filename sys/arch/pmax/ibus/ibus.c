@@ -1,4 +1,4 @@
-/*	$NetBSD: ibus.c,v 1.7.12.1 2002/10/18 02:39:26 nathanw Exp $	*/
+/*	$NetBSD: ibus.c,v 1.7.12.2 2003/01/03 16:48:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.7.12.1 2002/10/18 02:39:26 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibus.c,v 1.7.12.2 2003/01/03 16:48:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,9 +95,9 @@ ibusprint(aux, pnp)
 	struct ibus_attach_args *ia = aux;
 
 	if (pnp)
-		printf("%s at %s", ia->ia_name, pnp);
+		aprint_normal("%s at %s", ia->ia_name, pnp);
 
-	printf(" addr 0x%x", MIPS_KSEG1_TO_PHYS(ia->ia_addr));
+	aprint_normal(" addr 0x%x", MIPS_KSEG1_TO_PHYS(ia->ia_addr));
 
 	return (UNCONF);
 }

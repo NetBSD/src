@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.2.8.2 2002/10/18 02:33:27 nathanw Exp $ */
+/* $NetBSD: ioc.c,v 1.2.8.3 2003/01/03 16:38:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.2.8.2 2002/10/18 02:33:27 nathanw Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.2.8.3 2003/01/03 16:38:36 thorpej Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -163,9 +163,9 @@ ioc_print(void *aux, const char *pnp)
 	struct ioc_attach_args *ioc = aux;
 
 	if (ioc->ioc_bank != IOCCF_BANK_DEFAULT)
-		printf(" bank %d", ioc->ioc_bank);
+		aprint_normal(" bank %d", ioc->ioc_bank);
 	if (ioc->ioc_offset != IOCCF_OFFSET_DEFAULT)
-		printf(" offset 0x%02x", ioc->ioc_offset);
+		aprint_normal(" offset 0x%02x", ioc->ioc_offset);
 	return UNCONF;
 }
 

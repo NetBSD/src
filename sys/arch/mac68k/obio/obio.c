@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.10.34.2 2002/10/18 02:38:31 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.10.34.3 2003/01/03 16:48:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ obio_print(args, name)
 	struct obio_attach_args *oa = (struct obio_attach_args *)args;
 
 	if (oa->oa_addr != (-1))
-		printf(" addr %x", oa->oa_addr);
+		aprint_normal(" addr %x", oa->oa_addr);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.6.4.5 2002/12/11 05:58:41 thorpej Exp $ */
+/*	$NetBSD: apmdev.c,v 1.6.4.6 2003/01/03 16:45:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -721,7 +721,7 @@ int
 apmprint(void *aux, const char *pnp)
 {
 	if (pnp)
-		printf("apm at %s", pnp);
+		aprint_normal("apm at %s", pnp);
 
 	return (UNCONF);
 }

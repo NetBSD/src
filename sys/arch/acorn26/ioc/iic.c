@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.1.8.2 2002/10/18 02:33:29 nathanw Exp $	*/
+/*	$NetBSD: iic.c,v 1.1.8.3 2003/01/03 16:38:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iic.c,v 1.1.8.2 2002/10/18 02:33:29 nathanw Exp $");
+__RCSID("$NetBSD: iic.c,v 1.1.8.3 2003/01/03 16:38:36 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -308,7 +308,7 @@ iicprint(void *aux, const char *name)
 
 	if (!name) {
 		if (iba->ib_addr)
-			printf(" addr 0x%02x", iba->ib_addr);
+			aprint_normal(" addr 0x%02x", iba->ib_addr);
 	}
 
 	/* XXXX print flags */

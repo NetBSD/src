@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4173bcu.c,v 1.3.4.5 2002/10/18 02:37:18 nathanw Exp $	*/
+/*	$NetBSD: vrc4173bcu.c,v 1.3.4.6 2003/01/03 16:45:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001,2002 Enami Tsugutomo.
@@ -430,13 +430,15 @@ vrc4173bcu_print(void *aux, const char *hoge)
 	struct vrip_attach_args *va = (struct vrip_attach_args*)aux;
 
 	if (va->va_addr != VRIPIFCF_ADDR_DEFAULT)
-		printf(" addr 0x%04lx", va->va_addr);
+		aprint_normal(" addr 0x%04lx", va->va_addr);
 	if (va->va_size != VRIPIFCF_SIZE_DEFAULT)
-		printf("-%04lx", (va->va_addr + va->va_size - 1) & 0xffff);
+		aprint_normal("-%04lx",
+		    (va->va_addr + va->va_size - 1) & 0xffff);
 	if (va->va_addr2 != VRIPIFCF_ADDR2_DEFAULT)
-		printf(", 0x%04lx", va->va_addr2);
+		aprint_normal(", 0x%04lx", va->va_addr2);
 	if (va->va_size2 != VRIPIFCF_SIZE2_DEFAULT)
-		printf("-%04lx", (va->va_addr2 + va->va_size2 - 1) & 0xffff);
+		aprint_normal("-%04lx",
+		    (va->va_addr2 + va->va_size2 - 1) & 0xffff);
 
 	return (UNCONF);
 }

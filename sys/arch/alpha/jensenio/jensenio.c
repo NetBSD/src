@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.3.2.2 2002/10/18 02:34:15 nathanw Exp $ */
+/* $NetBSD: jensenio.c,v 1.3.2.3 2003/01/03 16:38:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.3.2.2 2002/10/18 02:34:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.3.2.3 2003/01/03 16:38:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ jensenio_print(void *aux, const char *pnp)
 	struct jensenio_attach_args *ja = aux;
 
 	if (pnp != NULL)
-		printf("%s at %s", ja->ja_name, pnp);
+		aprint_normal("%s at %s", ja->ja_name, pnp);
 
 	/*
 	 * Skip the locator song-and-dance if we're attaching the
@@ -252,7 +252,7 @@ jensenio_print(void *aux, const char *pnp)
 	 */
 	if (strcmp(ja->ja_name, "eisa") != 0 &&
 	    strcmp(ja->ja_name, "isa") != 0)
-		printf(" port 0x%lx", ja->ja_ioaddr);
+		aprint_normal(" port 0x%lx", ja->ja_ioaddr);
 
 	return (UNCONF);
 }

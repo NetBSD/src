@@ -1,4 +1,4 @@
-#	$NetBSD: files.pxa2x0,v 1.1.2.3 2002/12/29 19:20:09 thorpej Exp $
+#	$NetBSD: files.pxa2x0,v 1.1.2.4 2003/01/03 16:41:11 thorpej Exp $
 #
 # Configuration info for Intel PXA2[51]0 CPU support
 #
@@ -10,7 +10,7 @@ device pxaip { [addr=-1], [size=0], [intr=-1], [gpio=-1], [index=-1]} : bus_spac
 attach pxaip at mainbus
 file	arch/arm/xscale/pxa2x0.c
 file	arch/arm/xscale/pxa2x0_intr.c
-file	arch/arm/xscale/pxa2x0_irq.S
+file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/xscale/pxa2x0_space.c
 #file	arch/arm/xscale/pxa2x0_freqchg.S
 file	arch/arm/xscale/pxa2x0_dma.c

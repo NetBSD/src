@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11.12.3 2002/11/11 22:00:07 nathanw Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11.12.4 2003/01/03 16:48:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -515,7 +515,7 @@ fd_print(auxp, controller)
 
 	ia = (iwmAttachArgs_t *)auxp;
 	if (NULL != controller)
-		printf("fd%d at %s", ia->unit, controller);
+		aprint_normal("fd%d at %s", ia->unit, controller);
 	return UNCONF;
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sbscd.c,v 1.1.12.2 2002/10/18 02:38:49 nathanw Exp $ */
+/* $NetBSD: sbscd.c,v 1.1.12.3 2003/01/03 16:48:27 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,12 +103,12 @@ sbscd_print(void *aux, const char *pnp)
 	int i;
 
 	if (pnp)
-		printf("%s at %s",
+		aprint_normal("%s at %s",
 		    sbscd_device_type_name(sap->sa_locs.sa_type), pnp);
-	printf(" offset 0x%lx", (long)sap->sa_locs.sa_offset);
+	aprint_normal(" offset 0x%lx", (long)sap->sa_locs.sa_offset);
 	for (i = 0; i < 2; i++) {
 		if (sap->sa_locs.sa_intr[i] != -1)
-			printf("%s%ld", i == 0 ? " intr " : ",",
+			aprint_normal("%s%ld", i == 0 ? " intr " : ",",
 			    (long)sap->sa_locs.sa_intr[i]);
 	}
 	return (UNCONF);

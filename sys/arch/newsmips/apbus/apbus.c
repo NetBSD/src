@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.8.2.2 2002/10/18 02:39:09 nathanw Exp $	*/
+/*	$NetBSD: apbus.c,v 1.8.2.3 2003/01/03 16:48:32 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -163,7 +163,7 @@ apbusprint(aux, pnp)
 	struct apbus_attach_args *a = aux;
 
 	if (pnp)
-		printf("%s at %s slot%d addr 0x%lx",
+		aprint_normal("%s at %s slot%d addr 0x%lx",
 			a->apa_name, pnp, a->apa_slotno, a->apa_hwbase);
 
 	return UNCONF;

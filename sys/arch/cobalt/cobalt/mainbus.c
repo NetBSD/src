@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2.14.1 2002/10/18 02:36:16 nathanw Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.2.14.2 2003/01/03 16:41:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -103,9 +103,9 @@ mainbus_print(aux, pnp)
 		return QUIET;
 
 	if (ma->ma_addr != MAINBUSCF_ADDR_DEFAULT)
-		printf(" addr 0x%lx", ma->ma_addr);
+		aprint_normal(" addr 0x%lx", ma->ma_addr);
 	if (ma->ma_level != MAINBUSCF_LEVEL_DEFAULT)
-		printf(" level %d", ma->ma_level);
+		aprint_normal(" level %d", ma->ma_level);
 
 	return UNCONF;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: sbobio.c,v 1.2.4.3 2002/11/11 22:00:59 nathanw Exp $ */
+/* $NetBSD: sbobio.c,v 1.2.4.4 2003/01/03 16:48:27 thorpej Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -181,12 +181,12 @@ sbobio_print(void *aux, const char *pnp)
 	int i;
 
 	if (pnp)
-		printf("%s at %s",
+		aprint_normal("%s at %s",
 		    sbobio_device_type_name(sap->sa_locs.sa_type), pnp);
-	printf(" offset 0x%lx", (long)sap->sa_locs.sa_offset);
+	aprint_normal(" offset 0x%lx", (long)sap->sa_locs.sa_offset);
 	for (i = 0; i < 2; i++) {
 		if (sap->sa_locs.sa_intr[i] != SBOBIOCF_INTR_DEFAULT)
-			printf("%s%ld", i == 0 ? " intr " : ",",
+			aprint_normal("%s%ld", i == 0 ? " intr " : ",",
 			    (long)sap->sa_locs.sa_intr[i]);
 	}
 	return (UNCONF);

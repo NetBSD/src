@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmb.c,v 1.1.4.5 2002/10/18 02:38:06 nathanw Exp $	*/
+/*	$NetBSD: pcmb.c,v 1.1.4.6 2003/01/03 16:48:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.1.4.5 2002/10/18 02:38:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmb.c,v 1.1.4.6 2003/01/03 16:48:21 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -140,6 +140,6 @@ pcmb_print(aux, pnp)
 	union pcmb_attach_args *ma = aux;
 
 	if (pnp)
-		printf("%s at %s", ma->ma_name, pnp);
+		aprint_normal("%s at %s", ma->ma_name, pnp);
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.1.2.2 2002/12/11 05:53:17 thorpej Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.1.2.3 2003/01/03 16:41:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -80,24 +80,6 @@
 #include <arm/softintr.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
-
-#if EVBARM_BOARDTYPE == EVBARM_BOARDTYPE_S3C2800
-#include <arm/s3c2xx0/s3c2800reg.h>
-
-/*
- * on S3C2800's interrupt controller, interrupt source bits 9, and 29..31 are
- * reserved. we map software interrupts to those unused bits.
- */
-#define SI_TO_IRQBIT(si)  ((si)==SI_SOFTSERIAL? (1<<9) : (1U<<(ICU_LEN+(si))))
-#endif
-
-#if EVBARM_BOARDTYPE == EVBARM_BOARTYPE_S3C24X0
-/*
- * XXX
- * on S3c24[10]0, we don't have unused bits in interrupt controller.
- * what should we do?
- */
-#endif
 
 typedef int (* s3c2xx0_irq_handler_t)(void *);
 

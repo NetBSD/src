@@ -1,4 +1,4 @@
-#	$NetBSD: files.footbridge,v 1.5.10.5 2002/11/11 21:56:38 nathanw Exp $
+#	$NetBSD: files.footbridge,v 1.5.10.6 2003/01/03 16:41:08 thorpej Exp $
 #
 # Shared footbridge files information
 
@@ -9,7 +9,7 @@ file	arch/arm/footbridge/footbridge.c		footbridge
 file	arch/arm/footbridge/footbridge_machdep.c	footbridge
 file	arch/arm/footbridge/footbridge_io.c		footbridge
 file	arch/arm/footbridge/footbridge_pci.c		footbridge
-file	arch/arm/footbridge/footbridge_irq.S		footbridge
+file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/footbridge/footbridge_irqhandler.c	footbridge
 file	arch/arm/footbridge/footbridge_clock.c		footbridge
 file	arch/arm/arm/softintr.c				footbridge

@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.2.14.1 2002/10/18 02:38:13 nathanw Exp $ */
+/* $NetBSD: mainbus.c,v 1.2.14.2 2003/01/03 16:48:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2.14.1 2002/10/18 02:38:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2.14.2 2003/01/03 16:48:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ mainbus_print(aux, pnp)
 	struct mainbus_attach_args *ma = aux;
 
 	if (pnp)
-		printf("%s at %s", ma->ma_name, pnp);
+		aprint_normal("%s at %s", ma->ma_name, pnp);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.1.2.3 2002/11/11 22:00:19 nathanw Exp $ */
+/* $NetBSD: aubus.c,v 1.1.2.4 2003/01/03 16:48:26 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -229,14 +229,14 @@ aubus_print(void *aux, const char *pnp)
 	struct aubus_attach_args *aa = aux;
 
 	if (pnp)
-		printf("%s at %s", aa->aa_name, pnp);
+		aprint_normal("%s at %s", aa->aa_name, pnp);
 
 	if (aa->aa_addr != AUBUSCF_ADDR_DEFAULT)
-		printf(" %s 0x%lx", aubuscf_locnames[AUBUSCF_ADDR],
+		aprint_normal(" %s 0x%lx", aubuscf_locnames[AUBUSCF_ADDR],
 		    aa->aa_addr);
 	if (aa->aa_irq[0] >= 0)
-		printf(" irq %d", aa->aa_irq[0]);
+		aprint_normal(" irq %d", aa->aa_irq[0]);
 	if (aa->aa_irq[1] >= 0)
-		printf(",%d", aa->aa_irq[1]);
+		aprint_normal(",%d", aa->aa_irq[1]);
 	return (UNCONF);
 }

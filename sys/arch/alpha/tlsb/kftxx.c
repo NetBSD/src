@@ -1,4 +1,4 @@
-/* $NetBSD: kftxx.c,v 1.9.26.1 2002/10/18 02:34:34 nathanw Exp $ */
+/* $NetBSD: kftxx.c,v 1.9.26.2 2003/01/03 16:38:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.9.26.1 2002/10/18 02:34:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kftxx.c,v 1.9.26.2 2003/01/03 16:38:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +78,8 @@ kftprint(aux, pnp)
 {
 	register struct kft_dev_attach_args *ka = aux;
 	if (pnp)
-		 printf("%s at %s", ka->ka_name, pnp);
-	printf(" hose %d", ka->ka_hosenum);
+		 aprint_normal("%s at %s", ka->ka_name, pnp);
+	aprint_normal(" hose %d", ka->ka_hosenum);
 	return (UNCONF);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.14.8.4 2002/10/18 02:34:45 nathanw Exp $ */
+/*	$NetBSD: aster.c,v 1.14.8.5 2003/01/03 16:38:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.8.4 2002/10/18 02:34:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.8.5 2003/01/03 16:38:43 thorpej Exp $");
 
 /*
  * zbus ISDN Blaster, ISDN Master driver.
@@ -161,7 +161,7 @@ asterprint(void *auxp, const char *pnp)
 	if (pnp == NULL)
 		return(QUIET);
 
-	printf("%s at %s port 0x%04x",
+	aprint_normal("%s at %s port 0x%04x",
 	    supa->supio_name, pnp, supa->supio_iobase);
 
 	return(UNCONF);

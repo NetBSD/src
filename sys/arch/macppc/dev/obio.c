@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.14.8.2 2002/10/18 02:38:36 nathanw Exp $	*/
+/*	$NetBSD: obio.c,v 1.14.8.3 2003/01/03 16:48:25 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -181,10 +181,10 @@ obio_print(aux, obio)
 			return QUIET;
 
 	if (obio)
-		printf("%s at %s", ca->ca_name, obio);
+		aprint_normal("%s at %s", ca->ca_name, obio);
 
 	if (ca->ca_nreg > 0)
-		printf(" offset 0x%x", ca->ca_reg[0]);
+		aprint_normal(" offset 0x%x", ca->ca_reg[0]);
 
 	return UNCONF;
 }

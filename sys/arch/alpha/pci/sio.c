@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.33.2.1 2002/10/18 02:34:24 nathanw Exp $ */
+/* $NetBSD: sio.c,v 1.33.2.2 2003/01/03 16:38:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.33.2.1 2002/10/18 02:34:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.33.2.2 2003/01/03 16:38:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,7 +298,7 @@ sioprint(aux, pnp)
         register union sio_attach_args *sa = aux;
 
         if (pnp)
-                printf("%s at %s", sa->sa_name, pnp);
+                aprint_normal("%s at %s", sa->sa_name, pnp);
         return (UNCONF);
 }
 

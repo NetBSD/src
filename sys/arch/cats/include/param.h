@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3.8.4 2002/08/01 02:41:27 nathanw Exp $	*/
+/*	$NetBSD: param.h,v 1.3.8.5 2003/01/03 16:41:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -41,10 +41,6 @@
 
 #define	_MACHINE	cats
 #define	MACHINE		"cats"
-#ifndef __ELF__
-#define	_MACHINE_ARCH	arm32
-#define	MACHINE_ARCH	"arm32"
-#endif /* __ELF__ */
 
 /*
  * cats boot dmesg is bigger than 4k

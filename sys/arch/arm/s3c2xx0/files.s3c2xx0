@@ -1,4 +1,4 @@
-#	$NetBSD: files.s3c2xx0,v 1.1.2.2 2002/12/11 05:53:13 thorpej Exp $
+#	$NetBSD: files.s3c2xx0,v 1.1.2.3 2003/01/03 16:41:10 thorpej Exp $
 #
 # Configuration info common to Samsung S3C2800/S3C24[10]0
 #
@@ -10,7 +10,7 @@ file	arch/arm/s3c2xx0/s3c2xx0_space.c
 #
 device ssio { [index=-1], [addr=0], [size=0], [intr=-1] } : bus_space_generic
 attach ssio at mainbus
-file	arch/arm/s3c2xx0/s3c2xx0_irq.S
+file	arch/arm/arm32/irq_dispatch.S
 file	arch/arm/s3c2xx0/s3c2xx0_intr.c
 
 # S3C2XX0's integrated peripherals.

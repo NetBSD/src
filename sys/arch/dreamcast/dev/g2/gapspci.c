@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.3.6.2 2002/10/18 02:36:21 nathanw Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.3.6.3 2003/01/03 16:41:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -139,8 +139,8 @@ gaps_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312.c,v 1.3.4.8 2002/10/18 02:35:41 nathanw Exp $	*/
+/*	$NetBSD: i80312.c,v 1.3.4.9 2003/01/03 16:41:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -299,9 +299,9 @@ i80312_pcibus_print(void *aux, const char *pnp)
 	struct pcibus_attach_args *pba = aux;
 
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
 
-	printf(" bus %d", pba->pba_bus);
+	aprint_normal(" bus %d", pba->pba_bus);
 
 	return (UNCONF);
 }

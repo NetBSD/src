@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.12.4.5 2002/10/18 02:37:19 nathanw Exp $	*/
+/*	$NetBSD: vrip.c,v 1.12.4.6 2003/01/03 16:45:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -254,16 +254,17 @@ vrip_print(void *aux, const char *hoge)
 	bus_addr_t endaddr, mask;
 
 	if (va->va_addr != VRIPIFCF_ADDR_DEFAULT)
-		printf(" addr 0x%08lx", va->va_addr);
+		aprint_normal(" addr 0x%08lx", va->va_addr);
 	if (va->va_size != VRIPIFCF_SIZE_DEFAULT) {
 		endaddr = (va->va_addr + va->va_size - 1);
 		mask = ((va->va_addr ^ endaddr) & 0xff0000) ? 0xffffff:0xffff;
-		printf("-%04lx", endaddr & mask);
+		aprint_normal("-%04lx", endaddr & mask);
 	}
 	if (va->va_addr2 != VRIPIFCF_ADDR2_DEFAULT)
-		printf(", 0x%08lx", va->va_addr2);
+		aprint_normal(", 0x%08lx", va->va_addr2);
 	if (va->va_size2 != VRIPIFCF_SIZE2_DEFAULT)
-		printf("-%04lx", (va->va_addr2 + va->va_size2 - 1) & 0xffff);
+		aprint_normal("-%04lx",
+		    (va->va_addr2 + va->va_size2 - 1) & 0xffff);
 
 	return (UNCONF);
 }

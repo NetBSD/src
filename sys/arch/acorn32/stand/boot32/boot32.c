@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.2.2.2 2002/12/29 19:15:06 thorpej Exp $	*/
+/*	$NetBSD: boot32.c,v 1.2.2.3 2003/01/03 16:38:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -267,7 +267,7 @@ void prepare_and_check_relocation_system(void) {
 
 void get_memory_configuration(void) {
 	int loop, current_page_type, page_count, phys_page;
-	int page, count;
+	int page, count, bank;
 	int mapped_screen_memory;
 
 	printf("Getting memory configuration ");
@@ -340,25 +340,24 @@ void get_memory_configuration(void) {
 
 	printf(" \n\n");
 
-	/* find top of DRAM pages */
-	top_physdram = 0;
-	
-	for (loop = podram_blocks-1; (loop >= 0) && (PODRAM_addr[loop] == 0); loop++);
-	if (loop >= 0) top_physdram = PODRAM_addr[loop] + PODRAM_pages[loop]*nbpp;
-	if (top_physdram == 0) {
-		for (loop = dram_blocks-1; (loop >= 0) && (DRAM_addr[loop] == 0); loop++);
-		if (loop >= 0) top_physdram = DRAM_addr[loop] + DRAM_pages[loop]*nbpp;
-	};
-	if (top_physdram == 0) panic("reality check: No DRAM in this machine?");
-
 	if (VRAM_pages[0] == 0) {
-		/* map top DRAM as video memory */
-		mapped_screen_memory = 1024 * 1024;	/* max allowed on RiscPC */
-		videomem_start   = DRAM_addr[0];
+		/* map bottom DRAM as video memory */
+		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & ~(nbpp-1);
+#if 0
+		mapped_screen_memory = 1024 * 1024;		/* max allowed on RiscPC	*/
 		videomem_pages   = (mapped_screen_memory / nbpp);
-		display_size	 = vdu_var(os_VDUVAR_TOTAL_SCREEN_SIZE) & (nbpp-1);
+		videomem_start   = DRAM_addr[0];
 		DRAM_addr[0]	+= videomem_pages * nbpp;
-		DRAM_pages[0]	-= videomem_pages * nbpp;
+		DRAM_pages[0]	-= videomem_pages;
+#else
+		mapped_screen_memory = display_size;
+		bank = dram_blocks-1;				/* pick last SIMM		*/
+		videomem_pages   = (mapped_screen_memory / nbpp);
+
+		/* Map video memory at the end of the SIMM	*/
+		videomem_start   = DRAM_addr[bank] + (DRAM_pages[bank] - videomem_pages)*nbpp;
+		DRAM_pages[bank]-= videomem_pages;
+#endif
 	} else {
 		/* use VRAM */
 		mapped_screen_memory = 0;
@@ -370,6 +369,18 @@ void get_memory_configuration(void) {
 	if (mapped_screen_memory) {
 		printf("Used 1st Mb of DRAM at 0x%s for video memory\n", sprint0(8,'0','x', videomem_start));
 	};
+
+	/* find top of DRAM pages */
+	top_physdram = 0;
+	
+	for (loop = podram_blocks-1; (loop >= 0) && (PODRAM_addr[loop] == 0); loop++);
+	if (loop >= 0) top_physdram = PODRAM_addr[loop] + PODRAM_pages[loop]*nbpp;
+	if (top_physdram == 0) {
+		for (loop = dram_blocks-1; (loop >= 0) && (DRAM_addr[loop] == 0); loop++);
+		if (loop >= 0) top_physdram = DRAM_addr[loop] + DRAM_pages[loop]*nbpp;
+	};
+	if (top_physdram == 0) panic("reality check: No DRAM in this machine?");
+
 
 	videomem_start_ro = vdu_var(os_VDUVAR_DISPLAY_START);
 
@@ -478,7 +489,7 @@ void create_initial_page_tables(void) {
 	/* video memory is mapped 1:1 in the DRAM section or in VRAM section	*/
 
 	/* map 1Mb from top of memory to bottom 1Mb of virtual memmap		*/
-	initial_page_tables[0] = ((top_physdram >> 20) << 20) | section;
+	initial_page_tables[0] = (((top_physdram - 1024*1024) >> 20) << 20) | section;
 
 	/* map 16 Mb of kernel space to KERNEL_BASE i.e. marks[KERNEL_START]	*/
 	for (page = 0; page < 16; page++) {
@@ -497,8 +508,13 @@ void add_pagetables_at_top(void) {
 	/* get 4 pages on the top of the physical memeory and copy PT's in it	*/
 	new_L1_pages_phys = top_physdram - 4*nbpp;
 
+	/* If the L1 page tables are not 16 kb aligned, adjust base until it is	*/
+	while (new_L1_pages_phys & (16*1024-1)) {
+		new_L1_pages_phys -= nbpp;
+	};
+	if (new_L1_pages_phys & (16*1024-1)) panic("Paranoia : L1 pages not on 16Kb boundary");
+
 	dst = new_L1_pages_phys;
-	if (dst & (16*1024-1)) panic("L1 pages not on 16Kb boundary");
 	src = (u_long) initial_page_tables;
 
 	for (page = 0; page < 4; page++) {
@@ -559,7 +575,7 @@ void create_configuration(int argc, char **argv, int start_args) {
 	};
 
 	bconfig->kernvirtualbase	= marks[MARK_START];
-	bconfig->kernphysicalbase	= marks[MARK_START] - pv_offset;
+	bconfig->kernphysicalbase	= kernel_physical_start;
 	bconfig->kernsize		= kernel_free_vm_start - marks[MARK_START];
 	bconfig->ksym_start		= marks[MARK_SYM];
 	bconfig->ksym_end		= marks[MARK_SYM] + marks[MARK_NSYM];

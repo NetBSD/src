@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.9.2.3 2002/10/18 02:34:18 nathanw Exp $ */
+/* $NetBSD: a12c.c,v 1.9.2.4 2003/01/03 16:38:40 thorpej Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.9.2.3 2002/10/18 02:34:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.9.2.4 2003/01/03 16:38:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.9.2.3 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.9.2.4 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);
@@ -180,8 +180,8 @@ a12cprint(aux, pnp)
 
 	/* can attach xbar or pci to a12c */
 	if (pnp)
-		printf("%s at %s", pba->pba_busname, pnp);
-	printf(" bus %d", pba->pba_bus);
+		aprint_normal("%s at %s", pba->pba_busname, pnp);
+	aprint_normal(" bus %d", pba->pba_bus);
 	return (UNCONF);
 }
 

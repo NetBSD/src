@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.1.2.3 2002/10/18 02:35:43 nathanw Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.1.2.4 2003/01/03 16:41:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -37,6 +37,10 @@
 
 #ifndef _I80321_INTR_H_
 #define _I80321_INTR_H_
+
+#define	ARM_IRQ_HANDLER	_C_LABEL(i80321_intr_dispatch)
+
+#ifndef _LOCORE
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -121,5 +125,7 @@ void	splx(int);
 void	_setsoftintr(int);
 
 #endif /* ! EVBARM_SPL_NOINLINE */
+
+#endif /* _LOCORE */
 
 #endif _I80321_INTR_H_

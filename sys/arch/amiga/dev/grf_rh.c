@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.31.6.6 2002/10/18 02:34:55 nathanw Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.31.6.7 2003/01/03 16:38:45 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.31.6.6 2002/10/18 02:34:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.31.6.7 2003/01/03 16:38:45 thorpej Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -1603,7 +1603,7 @@ int
 grfrhprint(void *auxp, const char *pnp)
 {
 	if (pnp)
-		printf("ite at %s", pnp);
+		aprint_normal("ite at %s", pnp);
 	return(UNCONF);
 }
 

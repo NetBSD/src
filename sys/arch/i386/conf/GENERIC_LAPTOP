@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.12.2.17 2002/12/29 19:29:10 thorpej Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.12.2.18 2003/01/03 16:48:19 thorpej Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -8,7 +8,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.12.2.17 $"
+#ident 		"GENERIC-$Revision: 1.12.2.18 $"
 
 maxusers	32		# estimated number of users
 
@@ -201,6 +201,7 @@ cpu0 at mainbus0
 #ioapic* at mainbus?
 
 apm0	at mainbus0			# Advanced power management
+#acpi0	at mainbus0			# Advanced Control and Power Interface
 
 # Tuning for power management, see apm(4) for more details.
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
