@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.52 2001/08/19 14:05:13 yamt Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.53 2001/08/20 07:47:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -797,8 +797,7 @@ scsipi_interpret_sense(xs)
 				periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 			if ((xs->xs_control & XS_CTL_IGNORE_NOT_READY) != 0)
 				return (0);
-			if (sense->add_sense_code == 0x3A &&
-			    sense->add_sense_code_qual == 0x00) {
+			if (sense->add_sense_code == 0x3A) {
 				error = ENODEV; /* Medium not present */
 				if (xs->xs_control & XS_CTL_SILENT_NODEV)
 					return (error);
