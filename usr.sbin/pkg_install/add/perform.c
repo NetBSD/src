@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29.2.3 1999/09/13 21:57:36 he Exp $	*/
+/*	$NetBSD: perform.c,v 1.29.2.4 1999/12/20 15:08:12 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29.2.3 1999/09/13 21:57:36 he Exp $");
+__RCSID("$NetBSD: perform.c,v 1.29.2.4 1999/12/20 15:08:12 he Exp $");
 #endif
 #endif
 
@@ -327,8 +327,9 @@ pkg_do(char *pkg)
 					if (cp) {
 						if (Verbose)
 							printf("Loading it from %s.\n", cp);
-						if (vsystem("%s/pkg_add %s%s %s%s",
+						if (vsystem("%s/pkg_add %s%s%s %s%s",
 							BINDIR,
+							Force ? "-f " : "",
 							Prefix ? "-p " : "",
 							Prefix ? Prefix : "",
 							Verbose ? "-v " : "", cp)) {
@@ -365,8 +366,9 @@ pkg_do(char *pkg)
 								    p->name, CONTENTS_FNAME);
 								if (!Force)
 									++code;
-							} else if (vsystem("(pwd; cat %s) | pkg_add %s%s %s-S",
+							} else if (vsystem("(pwd; cat %s) | pkg_add %s%s%s %s-S",
 									CONTENTS_FNAME,
+									Force ? "-f " : "",
 									Prefix ? "-p " : "",
 									Prefix ? Prefix : "",
 								Verbose ? "-v " : "")) {
