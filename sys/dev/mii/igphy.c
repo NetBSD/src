@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.2 2004/04/10 18:47:56 thorpej Exp $	*/
+/*	$NetBSD: igphy.c,v 1.3 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.2 2004/04/10 18:47:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.3 2004/04/11 15:40:56 thorpej Exp $");
 
 #include "opt_mii.h"
 
@@ -360,7 +360,7 @@ igphy_status(struct mii_softc *sc)
 
 		if (pssr & PSSR_FULL_DUPLEX)
 			mii->mii_media_active |=
-			    IFM_FDX | gmii_phy_getflowcontrol(sc);
+			    IFM_FDX | mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }

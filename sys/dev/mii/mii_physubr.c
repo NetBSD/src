@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.39 2004/04/10 18:54:46 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.40 2004/04/11 15:40:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.39 2004/04/10 18:54:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.40 2004/04/11 15:40:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -605,10 +605,9 @@ mii_phy_match(const struct mii_attach_args *ma, const struct mii_phydesc *mpd)
 
 /*
  * Return the flow control status flag from MII_ANAR & MII_ANLPAR.
- * (1000BASE only?)
  */
 u_int
-gmii_phy_getflowcontrol(struct mii_softc *sc)
+mii_phy_flowstatus(struct mii_softc *sc)
 {
 	u_int anar, anlpar;
 
