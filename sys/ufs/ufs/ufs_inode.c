@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.26 2001/09/30 02:54:42 chs Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.27 2001/10/10 06:37:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -166,7 +166,7 @@ ufs_balloc_range(vp, off, len, cred, flags)
 	struct ucred *cred;
 	int flags;
 {
-	off_t oldeof, neweof, oldeob, neweob, oldpagestart, pagestart;
+	off_t tmpeof, oldeof, neweof, oldeob, neweob, oldpagestart, pagestart;
 	struct uvm_object *uobj;
 	struct genfs_node *gp = VTOG(vp);
 	int i, delta, error, npages1, npages2;
@@ -286,9 +286,11 @@ out:
 		 */
 
 		if (flags & B_SYNC) {
+			tmpeof = MIN(neweof,
+				     (oldeof + bsize - 1) & ~(bsize - 1));
+			vp->v_size = tmpeof;
 			(uobj->pgops->pgo_put)(uobj, oldeof & ~(bsize - 1),
-			    MIN((oldeof + bsize) & ~(bsize - 1),
-				round_page(neweob)), PGO_CLEANIT | PGO_SYNCIO);
+			    round_page(tmpeof), PGO_CLEANIT | PGO_SYNCIO);
 			simple_lock(&uobj->vmobjlock);
 		}
 	}
