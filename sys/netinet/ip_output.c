@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.130 2004/03/02 02:28:28 thorpej Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.131 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.130 2004/03/02 02:28:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.131 2004/04/26 01:31:57 matt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -163,13 +163,7 @@ extern struct pfil_head inet_pfil_hook;			/* XXX */
  * The mbuf opt, if present, will not be freed.
  */
 int
-#if __STDC__
 ip_output(struct mbuf *m0, ...)
-#else
-ip_output(m0, va_alist)
-	struct mbuf *m0;
-	va_dcl
-#endif
 {
 	struct ip *ip;
 	struct ifnet *ifp;

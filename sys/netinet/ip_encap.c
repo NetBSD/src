@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.17 2004/03/04 15:15:06 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.18 2004/04/26 01:31:56 matt Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -290,13 +290,7 @@ encap4_lookup(m, off, proto, dir)
 }
 
 void
-#if __STDC__
 encap4_input(struct mbuf *m, ...)
-#else
-encap4_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int off, proto;
 	va_list ap;

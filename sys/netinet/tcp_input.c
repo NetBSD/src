@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.201 2004/04/25 22:25:03 jonathan Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.202 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.201 2004/04/25 22:25:03 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.202 2004/04/26 01:31:57 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -778,12 +778,7 @@ tcp6_log_refused(ip6, th)
  * protocol specification dated September, 1981 very closely.
  */
 void
-#if __STDC__
 tcp_input(struct mbuf *m, ...)
-#else
-tcp_input(m, va_alist)
-	struct mbuf *m;
-#endif
 {
 	struct tcphdr *th;
 	struct ip *ip;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.84 2004/04/22 01:01:41 matt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.84 2004/04/22 01:01:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.85 2004/04/26 01:31:57 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1591,13 +1591,7 @@ encap_send(ip, vifp, m)
  * De-encapsulate a packet and feed it back through ip input.
  */
 static void
-#if __STDC__
 vif_input(struct mbuf *m, ...)
-#else
-vif_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int off, proto;
 	va_list ap;

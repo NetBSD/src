@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.37 2004/04/25 16:42:42 simonb Exp $	*/
+/*	$NetBSD: igmp.c,v 1.38 2004/04/26 01:31:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.37 2004/04/25 16:42:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igmp.c,v 1.38 2004/04/26 01:31:56 matt Exp $");
 
 #include "opt_mrouting.h"
 
@@ -137,13 +137,7 @@ rti_delete(ifp)
 }
 
 void
-#if __STDC__
 igmp_input(struct mbuf *m, ...)
-#else
-igmp_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int proto;
 	int iphlen;

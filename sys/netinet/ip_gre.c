@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.29 2003/09/05 23:02:43 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.29 2003/09/05 23:02:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.30 2004/04/26 01:31:56 matt Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -113,13 +113,7 @@ int	gre_input2 __P((struct mbuf *, int, u_char));
  * This really is simple
  */
 void
-#if __STDC__
 gre_input(struct mbuf *m, ...)
-#else
-gre_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	int off, ret, proto;
 	va_list ap;
@@ -257,13 +251,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
  * between IP header and payload
  */
 void
-#if __STDC__
 gre_mobile_input(struct mbuf *m, ...)
-#else
-gre_mobile_input(m, va_alist)
-	struct mbuf *m;
-	va_dcl
-#endif
 {
 	struct ip *ip;
 	struct mobip_h *mip;
