@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.53.2.10 2002/07/12 01:40:27 nathanw Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.53.2.11 2002/07/15 20:23:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.10 2002/07/12 01:40:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.53.2.11 2002/07/15 20:23:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -277,8 +277,7 @@ spec_read(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ)
 		panic("spec_read mode");
-	if (uio->uio_segflg == UIO_USERSPACE && 
-	    uio->uio_procp != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 		panic("spec_read proc");
 #endif
 	if (uio->uio_resid == 0)
@@ -355,8 +354,7 @@ spec_write(v)
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
 		panic("spec_write mode");
-	if (uio->uio_segflg == UIO_USERSPACE && 
-	    uio->uio_procp != curproc)
+	if (uio->uio_segflg == UIO_USERSPACE && uio->uio_procp != curproc)
 		panic("spec_write proc");
 #endif
 
