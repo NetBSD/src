@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.20.8.2 2000/11/09 23:08:41 tv Exp $
+.\"	$NetBSD: prep,v 1.20.8.3 2001/02/26 17:12:59 he Exp $
 .
 You will need an
 .Tn AmigaDOS
@@ -107,9 +107,9 @@ if on.
 .It
 Set the dostype to one of these three choices:
 .(disp
-root partition  : 0x4e425207
-swap partition  : 0x4e425301
-other partitions: 0x4e425507
+root partition  : 0x4e425207	(NBR\\007)
+swap partition  : 0x4e425301	(NBS\\001)
+other partitions: 0x4e425507	(NBU\\007)
 .disp)
 .Pp
 Here
