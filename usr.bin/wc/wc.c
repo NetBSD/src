@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.16 1999/02/14 18:03:18 mjacob Exp $	*/
+/*	$NetBSD: wc.c,v 1.17 1999/02/14 19:10:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.16 1999/02/14 18:03:18 mjacob Exp $");
+__RCSID("$NetBSD: wc.c,v 1.17 1999/02/14 19:10:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,13 +69,22 @@ __RCSID("$NetBSD: wc.c,v 1.16 1999/02/14 18:03:18 mjacob Exp $");
 #include <unistd.h>
 #include <err.h>
 
-static u_int64_t	tlinect, twordct, tcharct;
+#ifdef NO_QUAD
+typedef u_long wc_count_t;
+# define WCFMT	" %lu"
+# define WCCAST unsigned long
+#else
+typedef u_quad_t wc_count_t;
+# define WCFMT	" %llu"
+# define WCCAST	unsigned long long
+#endif
+
+static wc_count_t	tlinect, twordct, tcharct;
 static int		doline, doword, dochar;
 static int 		rval = 0;
-static char *qfmt;
 
 static void	cnt __P((char *));
-static void	print_counts __P((u_int64_t, u_int64_t, u_int64_t, char *));
+static void	print_counts __P((wc_count_t, wc_count_t, wc_count_t, char *));
 static void	usage __P((void));
 int	main __P((int, char *[]));
 
@@ -87,10 +96,6 @@ main(argc, argv)
 	int ch;
 
 	setlocale(LC_ALL, "");
-	if (sizeof (u_int64_t) > 4)
-		qfmt = " %7u";
-	else
-		qfmt = " %7qu";
 
 	while ((ch = getopt(argc, argv, "lwcm")) != -1)
 		switch((char)ch) {
@@ -139,7 +144,7 @@ cnt(file)
 	u_char *C;
 	short gotsp;
 	int len;
-	u_int64_t linect, wordct, charct;
+	wc_count_t linect, wordct, charct;
 	struct stat sb;
 	int fd;
 	u_char buf[MAXBSIZE];
@@ -251,18 +256,18 @@ cnt(file)
 
 static void
 print_counts(lines, words, chars, name)
-	u_int64_t lines;
-	u_int64_t words;
-	u_int64_t chars;
+	wc_count_t lines;
+	wc_count_t words;
+	wc_count_t chars;
 	char *name;
 {
 
 	if (doline)
-		printf(qfmt, lines);
+		printf(WCFMT, (WCCAST)lines);
 	if (doword)
-		printf(qfmt, words);
+		printf(WCFMT, (WCCAST)words);
 	if (dochar)
-		printf(qfmt, chars);
+		printf(WCFMT, (WCCAST)chars);
 
 	printf(" %s\n", name);
 }
