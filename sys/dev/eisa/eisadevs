@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.22 2001/04/17 14:29:47 ad Exp $
+$NetBSD: eisadevs,v 1.23 2001/05/06 19:43:54 ad Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -142,6 +142,16 @@ product INT 1010	EtherExpress 32 Flash Ethernet
 
 /* Madge products */
 product MDG 0002	Smart 16/4 EISA Ringnode
+
+/* Mylex products */
+product MLX 0070	DAC960 RAID controller
+product MLX 0071	DAC960 RAID controller
+product MLX 0072	DAC960 RAID controller
+product MLX 0073	DAC960 RAID controller
+product MLX 0074	DAC960 RAID controller
+product MLX 0075	DAC960-A RAID controller
+product MLX 0076	DAC960-A RAID controller
+product MLX 0077	DAC960-A RAID controller
 
 /* NEC products */
 product NEC 8200	EATA SCSI controller
