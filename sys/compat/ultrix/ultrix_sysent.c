@@ -141,8 +141,8 @@ struct sysent ultrix_sysent[] = {
 	    sys_nosys },			/* 52 = unimplemented */
 	{ 0, 0,
 	    sys_nosys },			/* 53 = unimplemented syslock */
-	{ 3, s(struct sys_ioctl_args),
-	    sys_ioctl },			/* 54 = ioctl */
+	{ 3, s(struct ultrix_sys_ioctl_args),
+	    ultrix_sys_ioctl },			/* 54 = ioctl */
 	{ 1, s(struct sys_reboot_args),
 	    sys_reboot },			/* 55 = reboot */
 	{ 0, 0,
@@ -219,8 +219,8 @@ struct sysent ultrix_sysent[] = {
 	    sys_nosys },			/* 91 = unimplemented getdopt */
 	{ 3, s(struct sys_fcntl_args),
 	    sys_fcntl },			/* 92 = fcntl */
-	{ 5, s(struct sys_select_args),
-	    sys_select },			/* 93 = select */
+	{ 5, s(struct ultrix_sys_select_args),
+	    ultrix_sys_select },		/* 93 = select */
 	{ 0, 0,
 	    sys_nosys },			/* 94 = unimplemented setdopt */
 	{ 1, s(struct sys_fsync_args),
@@ -413,8 +413,8 @@ struct sysent ultrix_sysent[] = {
 	    sys_nosys },			/* 182 = unimplemented 0 lockf */
 	{ 2, s(struct ultrix_sys_ustat_args),
 	    ultrix_sys_ustat },			/* 183 = ustat */
-	{ 0, 0,
-	    sys_nosys },			/* 184 = unimplemented getmnt */
+	{ 5, s(struct ultrix_sys_getmnt_args),
+	    ultrix_sys_getmnt },		/* 184 = getmnt */
 	{ 0, 0,
 	    sys_nosys },			/* 185 = unimplemented notdef */
 	{ 0, 0,
