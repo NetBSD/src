@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.42 1994/02/25 18:17:30 mycroft Exp $
+ *	$Id: wd.c,v 1.43 1994/02/25 18:30:37 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -49,11 +49,12 @@
 /* TODO: find and fix the timing bugs apparent on some controllers */
 
 #include "wd.h"
-#if	NWDC > 0
+#if NWDC > 0
 
 #include <sys/param.h>
 #include <sys/dkbad.h>
 #include <sys/systm.h>
+#include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -739,9 +740,9 @@ outt:
 			/* see if more to transfer */
 			if (du->dk_bc > 0 && (du->dk_flags & DKFL_ERROR) == 0) {
 				if ((du->dk_flags & DKFL_SINGLE) ||
-				    (du->dk_flags & B_READ) == 0) { /* XXXX */
+				    (bp->b_flags & B_READ) == 0) {
 					wdstart(ctrlr);
-					return;		/* next chunk is started */
+					return;	/* next chunk is started */
 				}
 			} else if ((du->dk_flags & (DKFL_SINGLE | DKFL_ERROR)) == DKFL_ERROR) {
 				du->dk_skip = 0;
@@ -1479,7 +1480,6 @@ wddump(dev_t dev)
 	}
 	return 0;
 }
-#endif
 
 /*
  * Internalize the bad sector table.
@@ -1570,3 +1570,5 @@ wdtimeout(caddr_t arg)
 	splx(x);
 	return 0;
 }
+
+#endif /* NWDC > 0 */
