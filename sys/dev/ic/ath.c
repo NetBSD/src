@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.18 2003/12/16 06:48:09 dyoung Exp $	*/
+/*	$NetBSD: ath.c,v 1.19 2004/02/29 00:47:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.36 2003/11/29 01:23:59 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.18 2003/12/16 06:48:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.19 2004/02/29 00:47:21 dyoung Exp $");
 #endif
 
 /*
@@ -1335,7 +1335,9 @@ ath_calcrxfilter(struct ath_softc *sc)
 static void
 ath_mode_init(struct ath_softc *sc)
 {
+#ifdef __FreeBSD__
 	struct ieee80211com *ic = &sc->sc_ic;
+#endif
 	struct ath_hal *ah = sc->sc_ah;
 	u_int32_t rfilt, mfilt[2];
 
@@ -1344,7 +1346,7 @@ ath_mode_init(struct ath_softc *sc)
 	ath_hal_setrxfilter(ah, rfilt);
 
 	/* configure operational mode */
-	ath_hal_setopmode(ah, ic->ic_opmode);
+	ath_hal_setopmode(ah);
 
 	/* calculate and install multicast filter */
 #ifdef __FreeBSD__
@@ -1694,8 +1696,7 @@ ath_beacon_config(struct ath_softc *sc)
 		DPRINTF(("%s: intval %u nexttbtt %u\n",
 			__func__, ni->ni_intval, nexttbtt));
 		ath_hal_intrset(ah, 0);
-		ath_hal_beaconinit(ah, ic->ic_opmode,
-			nexttbtt, ni->ni_intval);
+		ath_hal_beaconinit(ah, nexttbtt, ni->ni_intval);
 		if (ic->ic_opmode != IEEE80211_M_MONITOR)
 			sc->sc_imask |= HAL_INT_SWBA;	/* beacon prepare */
 		ath_hal_intrset(ah, sc->sc_imask);
@@ -3133,7 +3134,7 @@ ath_getchannels(struct ath_softc *sc, u_int cc, HAL_BOOL outdoor)
 		return ENOMEM;
 	}
 	if (!ath_hal_init_channels(ah, chans, IEEE80211_CHAN_MAX, &nchan,
-	    cc, HAL_MODE_ALL, outdoor)) {
+	    cc, HAL_MODE_ALL, outdoor, 0 /* no extended channels */)) {
 		if_printf(ifp, "unable to collect channel list from hal\n");
 		free(chans, M_TEMP);
 		return EINVAL;
