@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.255 2003/07/18 08:26:03 lukem Exp $
+#	$NetBSD: Makefile,v 1.256 2003/08/22 19:03:03 dsl Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -307,7 +307,9 @@ TOOL_MTREE.unpriv=	-W
 .endif
 
 distrib-dirs: check_DESTDIR
+.if !defined(DISTRIBUTION_DONE)
 	${INSTALL_DIR} -o root -g wheel -m 755 ${BASE_PKG} ${DESTDIR}
+.endif
 	${TOOL_MTREE} -def ${.CURDIR}/mtree/NetBSD.dist -N ${.CURDIR} \
 	    -p ${DESTDIR}/ -U ${TOOL_MTREE.unpriv}
 
@@ -460,22 +462,31 @@ build_kernels: ${_KERNELS_TO_BUILD}
 .for configfile in ${KERNEL_SETS}					# {
 _KERNELSETS_TO_BUILD+=kernset-${configfile}
 kernset-${configfile}:
-	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
+	@ kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
-	kernsuffixes="${KERNEL_SUFFIXES}"; \
-	cd $${kerndir} && ( \
-		echo "/set uname=${BINOWN} gname=${BINGRP}"; \
-		echo ". type=dir optional"; \
+	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
+	kern_tgz=${RELEASEDIR}/${MACHINE}/binary/sets/kern-${configfile}.tgz; \
+	pax_cmd="GZIP=-9 ${TOOL_PAX} -O -zw -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	cd $${kerndir} && { \
+		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
-			echo "./$${kernel} type=file"; \
-			for s in $${kernsuffixes}; do \
-				if [ -f $${kernel}.$${s} ]; then \
-					echo "./$${kernel}.$${s} type=file"; \
-				fi; \
+			for s in "" $${kernsuffixes}; do \
+				ks="$${kernel}$${s}"; \
+				[ -f $${ks} ] || continue; \
+				kernels="$${kernels} $${ks}"; \
+				[ -z "$${newest}" -o $${ks} -nt "$${newest}" ] && \
+					newest=$${ks}; \
 			done; \
-		done ) | GZIP=-9 ${TOOL_PAX} -O -zw \
-		    -M -N ${NETBSDSRCDIR}/etc \
-		    -f ${RELEASEDIR}/${MACHINE}/binary/sets/kern-${configfile}.tgz
+		done; \
+		[ $${kern_tgz} -nt "$${newest}" ] || { \
+			echo "echo $${kernels} | $${pax_cmd}"; \
+			( echo "/set uname=${BINOWN} gname=${BINGRP}"; \
+			echo ". type=dir optional"; \
+			for kernel in $${kernels}; do \
+				echo "./$${kernel} type=file"; \
+			done ) | eval $${pax_cmd}; \
+		} \
+	}
 .endfor	# KERNEL_SETS							# }
 
 build_kernelsets: ${_KERNELSETS_TO_BUILD}
@@ -487,21 +498,21 @@ build_kernelsets: ${_KERNELSETS_TO_BUILD}
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
 _RELEASEKERNELS_TO_BUILD+=releasekern-${configfile}
 releasekern-${configfile}:
-	kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
+	@ kernlist=`${GETKERNELAWK} ${KERNCONFDIR}/${configfile:C/.*\///}`; \
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
-	kernsuffixes="${KERNEL_SUFFIXES}"; \
-	cd $${kerndir} &&	\
-		gziplist=`for kernel in $${kernlist}; do \
-			echo "$${kernel}"; \
-			for s in $${kernsuffixes}; do \
-				if [ -f $${kernel}.$${s} ]; then \
-					echo "$${kernel}.$${s}"; \
-				fi; \
+	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
+	cd $${kerndir} && {	\
+		for kernel in $${kernlist}; do \
+			for s in "" $${kernsuffixes}; do \
+				ks="$${kernel}$${s}"; \
+				[ ! -f $${ks} ] && continue; \
+				knl_gz="${RELEASEDIR}/${MACHINE}/binary/kernel/$${ks}-${configfile:C/.*\///}.gz"; \
+				[ $${knl_gz} -nt $${ks} ] && continue; \
+				echo "gzip -c -9 < $${kerndir}/$${ks} > $${knl_gz}"; \
+				gzip -c -9 < $${ks} > $${knl_gz}; \
 			done; \
-		done`; \
-		for kernel in $${gziplist} ; do \
-		gzip -c -9 < $${kernel} > \
-		    ${RELEASEDIR}/${MACHINE}/binary/kernel/$${kernel}-${configfile:C/.*\///}.gz ; done
+		done; \
+	}
 .endfor	# KERNEL_SETS EXTRA_KERNELS					# }
 
 build_releasekernels: ${_RELEASEKERNELS_TO_BUILD}
