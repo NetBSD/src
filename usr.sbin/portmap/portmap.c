@@ -1,4 +1,4 @@
-/*	$NetBSD: portmap.c,v 1.22 2000/01/23 15:54:31 drochner Exp $	*/
+/*	$NetBSD: portmap.c,v 1.23 2000/01/27 16:28:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)portmap.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: portmap.c,v 1.22 2000/01/23 15:54:31 drochner Exp $");
+__RCSID("$NetBSD: portmap.c,v 1.23 2000/01/27 16:28:32 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -629,6 +629,9 @@ callit(rqstp, xprt)
 			    a.rmt_prog);
 		return;
 	}
+
+	setproctitle("callit: %s", inet_ntoa(svc_getcaller(xprt)->sin_addr));
+
 	port = pml->pml_map.pm_port;
 	get_myaddress(&me);
 	me.sin_port = htons(port);
@@ -745,6 +748,8 @@ logit(severity, addr, procnum, prognum, text)
      */
 
     if (fork() == 0) {
+
+	setproctitle("logit");
 
         /* Try to map program number to name. */
 
