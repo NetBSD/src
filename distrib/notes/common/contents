@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.97 2004/01/17 05:30:01 lukem Exp $
+.\"	$NetBSD: contents,v 1.97.2.1 2004/06/15 22:26:35 he Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -194,6 +194,10 @@ A kernel which supports sparc64 hardware in 32-bit mode only.  See the
 sparc64 INSTALL notes for help installing this kernel on your sparc64 
 hardware.
 .\}
+.if \n[sparc64] \{\
+.			It Pa netbsd-INSTALL.gz
+The install kernel.
+.\}
 .
 .if \n[sgimips] \{\
 .			It Pa netbsd-GENERIC_INDY.gz
@@ -334,7 +338,7 @@ Netboot bootloader and root filesystem with install tools; see below.
 .\}
 .if \n[sparc64] \{\
 .		It Pa netboot/
-Server boot-file image for diskless machines.
+Netboot bootloader; see below.
 .\}
 .
 .if \n[sun2] \{\
@@ -441,7 +445,18 @@ The binary distribution sets can be found in the
 subdirectory
 of the
 .Nx \*V
-distribution tree, and are as follows:
+.ie \n[sparc64] \{\
+distribution tree.  If you want to install 32-bit only binaries, you will 
+need the
+.Nx /sparc
+.Pa binary/sets
+and will need to use the 
+.Pa kern-GENERIC_SUN4U.tgz 
+kernel distribution.  You still need to follow the \*M installation
+procedure, not sparc.
+Most people will want the 64-bit \*M distribution tree:
+.\}
+.el distribution tree, and are as follows:
 .(tag xserver
 .
 .It Sy base
@@ -480,7 +495,7 @@ everything described below.
 .if \n[i386] .setsize 19 45
 .if \n[luna68k] .setsize 17 41
 .if \n[mac68k] .setsize 17 41
-.if \n[macppc] .setsize 20 53
+.if \n[macppc] .setsize 20 54
 .if \n[mipsco] .setsize 22 71
 .if \n[mvme68k] .setsize 17 41
 .if \n[netwinder] .setsize 21 50
@@ -493,8 +508,8 @@ everything described below.
 .if \n[sbmips] .setsize 22 71
 .if \n[sgimips] .setsize 22 71
 .if \n[shark] .setsize 21 50
-.if \n[sparc] .setsize 20 50
-.if \n[sparc64] .setsize 21 60
+.if \n[sparc] .setsize 20 51
+.if \n[sparc64] .setsize 21 58
 .if \n[sun2] .setsize 53 118
 .if \n[sun3] .setsize 17 41
 .if \n[vax] .setsize 17 40
@@ -533,7 +548,7 @@ system call and library manual pages.
 .if \n[i386] .setsize 15 54
 .if \n[luna68k] .setsize 14 52
 .if \n[mac68k] .setsize 14 53
-.if \n[macppc] .setsize 17 64
+.if \n[macppc] .setsize 24 84
 .if \n[mipsco] .setsize 17 73
 .if \n[mvme68k] .setsize 14 52
 .if \n[netwinder] .setsize 16 57
@@ -546,8 +561,8 @@ system call and library manual pages.
 .if \n[sbmips] .setsize 16 73
 .if \n[sgimips] .setsize 16 73
 .if \n[shark] .setsize 16 57
-.if \n[sparc] .setsize 16 60
-.if \n[sparc64] .setsize 17 73
+.if \n[sparc] .setsize 22 77
+.if \n[sparc64] .setsize 23 89
 .if \n[sun2] .setsize 13 46
 .if \n[sun3] .setsize 14 52
 .if \n[vax] .setsize 12 45
@@ -657,6 +672,28 @@ install either this distribution set or kern-GENERIC.
 .showsize 1 3
 .\}
 .el \{\
+.ie \n[macppc] \{\
+.It Sy kern-GENERIC
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC
+kernel named
+.Pa /netbsd .
+You
+.Em must
+install this distribution set.
+.showsize 3 6
+.It Sy kern-GENERIC.MP
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC.MP
+kernel, which will use multiple processors (if present), named
+.Pa /netbsd .
+.showsize 3 6
+.\}
+.el \{\
 .ie \n[sgimips] \{\
 .It Sy kern-GENERIC_INDY
 This set contains a
@@ -672,6 +709,70 @@ You
 .Em must
 install this distribution set.
 .showsize 3 7
+.\}
+.el \{\
+.ie \n[sparc] \{\
+.It Sy kern-GENERIC
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC
+kernel named
+.Pa /netbsd .
+You
+.Em must
+install this distribution set.
+.showsize 2 4
+.It Sy kern-GENERIC.MP
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC.MP
+kernel, which will use multiple processors (if present), named
+.Pa /netbsd .
+.showsize 2 4
+.It Sy kern-GENERIC_SCSI3
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC_SCSI3
+kernel, which will set SCSI ID 3 to 
+.Li sd0 ,
+named
+.Pa /netbsd .
+.showsize 2 4
+.It Sy kern-GENERIC_SUN4U
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC_SUN4U
+kernel, which supports only UltraSPARC systems in 32 bit mode, named
+.Pa /netbsd .
+.showsize 3 6
+.It Sy kern-KRUPS
+This set contains a
+.Nx*M
+\*V
+.Li GENERIC-KRUPS
+kernel, which supports the JavaStation-NC, named
+.Pa /netbsd .
+.showsize 1 2
+.It Sy kern-MRCOFFEE
+This set contains a
+.Nx*M
+\*V
+.Li MRCOFFE
+kernel, which which supports the OpenBOOT PROM 2 JavaStation-1, named
+.Pa /netbsd .
+.showsize 1 2
+.It Sy kern-MRCOFFEE_OFW
+This set contains a
+.Nx*M
+\*V
+.Li MRCOFFE_OFW
+kernel, which which supports the OpenFirmware JavaStation-1, named
+.Pa /netbsd .
+.showsize 1 2
 .\}
 .el \{\
 .ie \n[evbppc] \{\
@@ -718,7 +819,7 @@ that your system may need to boot.
 .if \n[hpcsh] .setsize 1 2
 .if \n[i386] .setsize 3 6
 .if \n[luna68k] .setsize 1 2
-.if \n[macppc] .setsize 2 5
+.if \n[macppc] .setsize 3 7
 .if \n[mvme68k] .setsize 1 2
 .if \n[netwinder] .setsize 2 3
 .if \n[news68k] .setsize 1 2
@@ -728,8 +829,7 @@ that your system may need to boot.
 .if \n[prep] .setsize 2 4
 .if \n[sandpoint] .setsize 3 8
 .if \n[shark] .setsize 2 4
-.if \n[sparc] .setsize 2 4
-.if \n[sparc64] .setsize 3 5
+.if \n[sparc64] .setsize 3 7
 .if \n[sun2] .setsize 1 2
 .if \n[sun3] .setsize 1 2
 .if \n[vax] .setsize 1 2
@@ -775,11 +875,11 @@ all related programs, and their manual pages.
 .if \n[mipseb] .setsize 2 8
 .if \n[mipsel] .setsize 2 8
 .if \n[ns32k] .setsize -unknown- -unknown-
-.if \n[powerpc] .setsize 2 6
+.if \n[powerpc] .setsize 2 7
 .if \n[sh3eb] .setsize 3 8
 .if \n[sh3el] .setsize 3 8
-.if \n[sparc] .setsize 2 6
-.if \n[sparc64] .setsize 2 6
+.if \n[sparc] .setsize 2 7
+.if \n[sparc64] .setsize 2 8
 .if \n[vax] .setsize 2 6
 .if \n[x86_64] .setsize -unknown- -unknown-
 .showsize
@@ -798,11 +898,7 @@ currently does not ship with an X server or X clients.
 .\}
 .el \{\
 These sources are based on XFree86, and tightly track XFree86 releases.
-.ie \n[i386] \{\
-They are currently equivalent to XFree86 4.2.0.
-.\}
-.el \{\
-They are currently equivalent to XFree86 3.3.6.
+They are currently equivalent to XFree86 4.4.0.
 .\}
 Binary sets for the X Window System are distributed with
 .Nx .
@@ -824,11 +920,11 @@ This does not include the X servers.
 .if \n[mipseb] .setsize 4 12
 .if \n[mipsel] .setsize 4 12
 .if \n[ns32k] .setsize -unknown- -unknown-
-.if \n[powerpc] .setsize 3 9
+.if \n[powerpc] .setsize 7 19
 .if \n[sh3eb] .setsize -unknown- -unknown-
 .if \n[sh3el] .setsize -unknown- -unknown-
-.if \n[sparc] .setsize 3 8
-.if \n[sparc64] .setsize 3 9
+.if \n[sparc] .setsize 6 18
+.if \n[sparc64] .setsize 6 21
 .if \n[vax] .setsize 3 7
 .if \n[x86_64] .setsize -unknown- -unknown-
 .showsize
@@ -845,11 +941,11 @@ The extra libraries and include files needed to compile X source code.
 .if \n[mipseb] .setsize 3 10
 .if \n[mipsel] .setsize 3 10
 .if \n[ns32k] .setsize -unknown- -unknown-
-.if \n[powerpc] .setsize 2 9
+.if \n[powerpc] .setsize 13 44
 .if \n[sh3eb] .setsize -unknown- -unknown-
 .if \n[sh3el] .setsize -unknown- -unknown-
-.if \n[sparc] .setsize 2 8
-.if \n[sparc64] .setsize 2 10
+.if \n[sparc] .setsize 12 42
+.if \n[sparc64] .setsize 12 50
 .if \n[vax] .setsize 2 8
 .if \n[x86_64] .setsize -unknown- -unknown-
 .showsize
@@ -860,7 +956,10 @@ Fonts needed by X.
 .\" XXX CHASE THIS UP XXX
 .setsize 6 7
 .if \n[i386] .setsize 15 19
+.if \n[powerpc] .setsize 31 39
 .if \n[shark] .setsize 6 8
+.if \n[sparc] .setsize 31 39
+.if \n[sparc64] .setsize 31 39
 .showsize
 .
 .if \n[acorn32] \{\
@@ -918,7 +1017,7 @@ Firmware-compatible video cards with man pages.  Acceleration and depths
 greater than 256 colors are not supported.  See the X11 FAQ for help 
 installing and using the XFree86 server.
 .Lk http://www.NetBSD.org/Ports/macppc/x11.html
-.showsize 2 5
+.showsize 10 27
 .\}
 .
 .if \n[pmax] \{\
@@ -936,7 +1035,7 @@ The shark X server.
 .if \n[sparc] \{\
 .It Sy xserver
 The Xsun, Xsun24, XsunMono and Xprt servers with man pages.
-.showsize 4 9
+.showsize 5 13
 .\}
 .
 .if \n[sparc64] \{\
@@ -944,7 +1043,7 @@ The Xsun, Xsun24, XsunMono and Xprt servers with man pages.
 The Xsun, Xsun24, XsunMono and Xprt
 servers with man pages.
 The 64-bit X server current has problems with pixmaps.
-.showsize 4 9
+.showsize 5 14
 .\}
 .
 .if \n[x68k] \{\
