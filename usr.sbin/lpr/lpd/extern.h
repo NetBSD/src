@@ -53,7 +53,7 @@ struct info {
 
 void       printjob __P((void));
 void       recvjob __P((void));
-void       sttyclearflags __P((struct termios *tp, long flags));
-void       sttysetflags __P((struct termios *tp, long flags));
-void       sttyclearlflags __P((struct termios *tp, long flags));
-void       sttysetlflags __P((struct termios *tp, long flags));
+void       sttyclearflags __P((struct termios *tp, int flags));
+void       sttysetflags __P((struct termios *tp, int flags));
+void       sttyclearlflags __P((struct termios *tp, int flags));
+void       sttysetlflags __P((struct termios *tp, int flags));
