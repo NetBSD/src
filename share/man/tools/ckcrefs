@@ -12,7 +12,7 @@ do
 		then
 			continue
 		fi
-		grep ".*([1-8][cmsgxjvCMSGXJV]*)" $file >> $TMPDIR/cref$dir
+		grep ".*([1-9][cmsgxjvCMSGXJV]*)" $file >> $TMPDIR/cref$dir
 	done
 
 	cd $TMPDIR
@@ -22,7 +22,7 @@ do
 	date > badcref$dir
 	echo >> badcref$dir
 	ed - cref$dir >> lower.suf$dir <<!
-		g/ *\(([1-8][CMSGXJVcmsgxjv]*)\)/s//\1/
+		g/ *\(([1-9][CMSGXJVcmsgxjv]*)\)/s//\1/
 		1,\$s/ /\\
 /g
 		1,\$s/	/\\
@@ -32,7 +32,7 @@ do
 		v/(/d
 		g/\\\\\^/s///
 		g/\\\\\|/s///
-		g/([1-8][cgmsxjv])/p
+		g/([1-9][cgmsxjv])/p
 		g//d
 		g/^(/d
 		g/(/s//./
@@ -61,7 +61,7 @@ do
 		fi
 	done < tmp.$$
 	ed - badcref$dir <<!
-		g/\.\([1-8]\)/s//(\1/
+		g/\.\([1-9]\)/s//(\1/
 		g/c$/s//C)/
 		g/m$/s//M)/
 		g/s$/s//S)/

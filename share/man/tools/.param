@@ -2,7 +2,7 @@ export MANDIR TMPDIR
 export DIRLST FILLST
 export LFLAG PFLAG ID
 
-MANDIR=/usr/man
+MANDIR=/usr/share/man
 TMPDIR=/tmp
 DIRLST=
 FILLST=
@@ -86,7 +86,7 @@ done
 
 if [ -z "$DIRLST" ]
 then
-	DIRLST="1 2 3 4 5 6 7 8"
+	DIRLST="1 2 3 4 5 6 7 8 9"
 fi
 
 if [ -z "$FILLST" ]
