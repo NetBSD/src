@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.1 2001/12/17 21:39:52 fredette Exp $
+.\"	$NetBSD: hardware,v 1.2 2002/05/08 16:32:55 fredette Exp $
 .
 .Nx*M
 \*V runs on Multibus Sun2 machines, including:
@@ -6,18 +6,18 @@
 .It 2/120 Ta 2/170 Ta 2/100U
 .El
 .Pp
-The minimal configuration requires 4 MB of RAM and about 80 MB of disk
+The minimal configuration requires 4 MB of RAM and about 130 MB of disk
 space.  To install the entire system requires much more disk space
 (approx. 100 MB additional space is necessary for full sources).
 To compile the system, more RAM is recommended.  Good
 performance requires 7 MB of RAM.
 .Pp
 Here is a table of recommended HD partition sizes for a full install:
-.Bl -column -offset indent Partition Suggested 100xMBxx Needed 100xMB
-.It Partition Ta Suggested Ta +\ X     Ta Needed  Ta +\ X
-.It /\ (root) Ta "20 MB"   Ta "20 MB"  Ta "15 MB" Ta "15 MB"
-.It /usr      Ta "175 MB"  Ta "205 MB" Ta "75 MB" Ta "105 MB"
-.It /var      Ta "20 MB"   Ta "20 MB"  Ta "5 MB"  Ta "5 MB"
+.Bl -column -offset indent Partition Suggested Needed 
+.It Partition Ta Suggested Ta Needed 
+.It /\ (root) Ta "20 MB"   Ta "15 MB"
+.It /usr      Ta "210 MB"  Ta "110 MB"
+.It /var      Ta "20 MB"   Ta "5 MB"
 .It swap      Ta Em 2*RAM \&...
 .El
 .(item -offset indent
