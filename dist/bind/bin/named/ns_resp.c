@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_resp.c,v 1.11 2003/08/07 09:20:47 agc Exp $	*/
+/*	$NetBSD: ns_resp.c,v 1.12 2003/11/26 01:35:32 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_resp.c	4.65 (Berkeley) 3/3/91";
-static const char rcsid[] = "Id: ns_resp.c,v 8.186.6.4 2003/06/02 09:56:35 marka Exp";
+static const char rcsid[] = "Id: ns_resp.c,v 8.186.6.5 2003/09/04 03:03:18 marka Exp";
 #endif /* not lint */
 
 /*
@@ -269,7 +269,7 @@ ns_resp(u_char *msg, int msglen, struct sockaddr_in from, struct qstream *qsp)
 	int soacount;
 	u_int qtype, qclass;
 	int validanswer, dbflags;
-	int cname, lastwascname, externalcname;
+	int cname, lastwascname, externalcname, cachenegative;
 	int count, founddata, foundname;
 	int buflen;
 	int newmsglen;
@@ -909,6 +909,7 @@ tcp_retry:
 	cname = 0;
 	lastwascname = 0;
 	externalcname = 0;
+	cachenegative = 1;
 	strcpy(aname, qname);
 
 	if (count) {
@@ -978,6 +979,7 @@ tcp_retry:
 						 name);
 				db_detach(&dp);
 				validanswer = 0;
+				cachenegative = 0;
 				continue;
 			}
 			if (type == T_CNAME &&
@@ -1012,6 +1014,7 @@ tcp_retry:
 				 "last was cname, ignoring auth. and add.");
 				db_detach(&dp);
 				validanswer = 0;
+				cachenegative = 0;
 				break;
 			}
 			if (i < arfirst) {
@@ -1027,6 +1030,7 @@ tcp_retry:
 							sin_ntoa(from));
 						db_detach(&dp);
 						validanswer = 0;
+						cachenegative = 0;
 						continue;
 					} else if (!ns_samedomain(name,
 							       qp->q_domain)) {
@@ -1040,6 +1044,7 @@ tcp_retry:
 							 sin_ntoa(from));
 						db_detach(&dp);
 						validanswer = 0;
+						cachenegative = 0;
 						continue;
 					}
 					if (type == T_NS) {
@@ -1203,8 +1208,9 @@ tcp_retry:
 	     )
 	    )
 	{
-		cache_n_resp(msg, msglen, from, qp->q_name,
-			     qp->q_class, qp->q_type);
+		if (cachenegative)
+			cache_n_resp(msg, msglen, from, qp->q_name,
+				     qp->q_class, qp->q_type);
 
 		if (!qp->q_cmsglen && validanswer) {
 			ns_debug(ns_log_default, 3,
