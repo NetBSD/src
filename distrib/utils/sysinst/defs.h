@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.48 1999/08/16 08:29:04 abs Exp $	*/
+/*	$NetBSD: defs.h,v 1.49 2000/01/04 08:33:51 itojun Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -212,6 +212,10 @@ EXTERN char net_mask[STRSIZE] INIT("");
 EXTERN char net_namesvr[STRSIZE] INIT("");
 EXTERN char net_defroute[STRSIZE] INIT("");
 EXTERN char net_media[STRSIZE] INIT("");
+#ifdef INET6
+EXTERN char net_ip6[STRSIZE] INIT("");
+EXTERN char net_namesvr6[STRSIZE] INIT("");
+#endif
 
 /* Variables for upgrade. */
 #if 0
