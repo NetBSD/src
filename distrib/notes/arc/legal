@@ -1,0 +1,8 @@
+.\"	$NetBSD: legal,v 1.1 2000/06/17 09:12:42 soda Exp $
+.Pp
+This product includes software developed by Per Fogelstrom.
+.Pp
+This product includes software developed under OpenBSD by Per Fogelstrom.
+.Pp
+This product includes software developed under OpenBSD by Per Fogelstrom,
+Opsycon AB.
