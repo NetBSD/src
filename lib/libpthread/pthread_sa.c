@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.1.2.34 2002/12/16 18:32:21 nathanw Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.1.2.35 2002/12/30 22:24:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -381,7 +381,7 @@ pthread__resolve_locks(pthread_t self, pthread_t *intqueuep)
 						 */
 						lock = victim->pt_heldlock;
 						victim->pt_heldlock = NULL;
-						__cpu_simple_unlock(lock);
+						pthread__simple_unlock(lock);
 						victim->pt_uc = 
 						    victim->pt_sleepuc;
 						victim->pt_sleepuc = NULL;

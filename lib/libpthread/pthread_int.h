@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.36 2002/12/16 18:17:46 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.37 2002/12/30 22:24:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,11 @@ struct	pthread_st {
 #endif
 };
 
-
+struct pthread_lock_ops {
+	void	(*plo_init)(__cpu_simple_lock_t *);
+	int	(*plo_try)(__cpu_simple_lock_t *);
+	void	(*plo_unlock)(__cpu_simple_lock_t *);
+};
 
 /* Thread types */
 #define PT_THREAD_NORMAL	1
@@ -235,10 +239,17 @@ int	pthread__alarm_fired(struct pt_alarm_t *);
 void	pthread__alarm_process(pthread_t self, void *arg);
 
 /* Internal locking primitives */
+void	pthread__lockprim_init(void);
 void	pthread_lockinit(pthread_spin_t *lock);
 void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
 int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
 void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
+
+extern const struct pthread_lock_ops *pthread__lock_ops;
+
+#define	pthread__simple_lock_init(alp)	(*pthread__lock_ops->plo_init)(alp)
+#define	pthread__simple_lock_try(alp)	(*pthread__lock_ops->plo_try)(alp)
+#define	pthread__simple_unlock(alp)	(*pthread__lock_ops->plo_unlock)(alp)
 
 int	_getcontext_u(ucontext_t *);
 int	_setcontext_u(const ucontext_t *);

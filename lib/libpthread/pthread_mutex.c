@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.1.2.15 2002/10/26 02:17:44 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.1.2.16 2002/12/30 22:24:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,8 +89,8 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
  * same mutex.
  * 
  * A memory barrier after a lock and before an unlock will provide
- * this behavior. This code relies on __cpu_simple_lock_try() to issue
- * a barrier after obtaining a lock, and on __cpu_simple_unlock() to
+ * this behavior. This code relies on pthread__simple_lock_try() to issue
+ * a barrier after obtaining a lock, and on pthread__simple_unlock() to
  * issue a barrier before releasing a lock.
  */
 
@@ -103,7 +103,7 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 		return EINVAL;
 #endif
 
-	if (__predict_false(__cpu_simple_lock_try(&mutex->ptm_lock) == 0))
+	if (__predict_false(pthread__simple_lock_try(&mutex->ptm_lock) == 0))
 		pthread_mutex_lock_slow(mutex);
 
 	/* We have the lock! */
@@ -121,7 +121,7 @@ pthread_mutex_lock_slow(pthread_mutex_t *mutex)
 	self = pthread__self();
 
 	while (/*CONSTCOND*/1) {
-		if (__cpu_simple_lock_try(&mutex->ptm_lock))
+		if (pthread__simple_lock_try(&mutex->ptm_lock))
 		    break; /* got it! */
 		
 		/* Okay, didn't look free. Get the interlock... */
@@ -169,7 +169,7 @@ pthread_mutex_trylock(pthread_mutex_t *mutex)
 		return EINVAL;
 #endif
 
-	if (__cpu_simple_lock_try(&mutex->ptm_lock) == 0)
+	if (pthread__simple_lock_try(&mutex->ptm_lock) == 0)
 		return EBUSY;
 
 #ifdef ERRORCHECK
@@ -201,7 +201,7 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 #ifdef ERRORCHECK
 	mutex->ptm_owner = NULL;
 #endif
-	__cpu_simple_unlock(&mutex->ptm_lock);
+	pthread__simple_unlock(&mutex->ptm_lock);
 	pthread_spinunlock(self, &mutex->ptm_interlock);
 
 	/* Give the head of the blocked queue another try. */
