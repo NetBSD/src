@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.24 2002/02/02 18:37:44 jdolecek Exp $
+#	$NetBSD: files.prep,v 1.25 2002/02/24 13:19:06 kleink Exp $
 #
 # prep-specific configuration info
 #
@@ -93,7 +93,9 @@ include "dev/rasops/files.rasops"
 # XXX devices to 'pci'.
 #
 include "dev/pci/files.pci"
-file	arch/prep/pci/pci_machdep.c	pci
+file	arch/prep/pci/pci_machdep.c		pci
+file	arch/prep/pci/prep_pciconf_direct.c	pci
+file	arch/prep/pci/prep_pciconf_indirect.c	pci
 
 # PCI-Host bridge chipsets
 device	pchb: pcibus
