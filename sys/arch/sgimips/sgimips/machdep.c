@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2001/09/18 05:19:29 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2001/09/22 16:26:34 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -240,11 +240,9 @@ mach_init(argc, argv, envp)
 	boothowto = RB_SINGLE;
 
 	for (i = 0; i < argc; i++) {
-#if 0
 		if (strcmp(argv[i], "OSLoadOptions=auto") == 0) {
 			boothowto &= ~RB_SINGLE;
 		}
-#endif
 #if 0
 		printf("argv[%d]: %s\n", i, argv[i]);
 		/* delay(20000); */ /* give the user a little time.. */
