@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.4 1997/06/26 19:11:34 drochner Exp $	*/
+/*	$NetBSD: cread.c,v 1.5 1997/07/04 18:45:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -114,13 +114,15 @@ static int get_byte(s)
 {
     if (s->z_eof) return EOF;
     if (s->stream.avail_in == 0) {
+	int got;
 	errno = 0;
-	s->stream.avail_in = oread(s->fd, s->inbuf, Z_BUFSIZE);
-	if (s->stream.avail_in == 0) {
+	got = oread(s->fd, s->inbuf, Z_BUFSIZE);
+	if (got <= 0) {
 	    s->z_eof = 1;
 	    if (errno) s->z_err = Z_ERRNO;
 	    return EOF;
 	}
+	s->stream.avail_in = got;
 	s->stream.next_in = s->inbuf;
     }
     s->stream.avail_in--;
@@ -283,22 +285,27 @@ read(fd, buf, len)
 		s->stream.avail_in  -= n;
 	      }
 	      if (s->stream.avail_out > 0) {
-		s->stream.avail_out -= oread(s->fd, s->stream.next_out, s->stream.avail_out);
+		  int got;
+		  got = oread(s->fd, s->stream.next_out, s->stream.avail_out);
+		  if(got == -1)
+			  return(got);
+		  s->stream.avail_out -= got;
 	      }
 	      return (int)(len - s->stream.avail_out);
 	    }
 
 	    if (s->stream.avail_in == 0 && !s->z_eof) {
-
+	      int got;
 	      errno = 0;
-	      s->stream.avail_in = oread(fd, s->inbuf, Z_BUFSIZE);
-	      if (s->stream.avail_in == 0) {
+	      got = oread(fd, s->inbuf, Z_BUFSIZE);
+	      if (got <= 0) {
 		s->z_eof = 1;
 		if (errno) {
 		  s->z_err = Z_ERRNO;
 		  break;
 		}
 	      }
+	      s->stream.avail_in = got;
 	      s->stream.next_in = s->inbuf;
 	    }
 	    s->z_err = inflate(&(s->stream), Z_NO_FLUSH);
