@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2002/08/13 09:46:21 manu Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 2002/09/22 03:04:31 dbj Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -165,43 +165,6 @@ initppc(startkernel, endkernel, args)
 		*args++ = 0;
 		while (*args)
 			BOOT_FLAG(*args++, boothowto);
-	}
-
-	/*
-	 * If the bootpath doesn't start with a / then it isn't
-	 * an OFW path and probably is an alias, so look up the alias
-	 * and regenerate the full bootpath so device_register will work.
-	 */
-	if (bootpath[0] != '/' && bootpath[0] != '\0') {
-		int aliases = OF_finddevice("/aliases");
-		char tmpbuf[100];
-		char aliasbuf[256];
-		if (aliases != 0) {
-			char *cp1, *cp2, *cp;
-			char saved_ch = 0;
-			int len;
-			cp1 = strchr(bootpath, ':');
-			cp2 = strchr(bootpath, ',');
-			cp = cp1;
-			if (cp1 == NULL || (cp2 != NULL && cp2 < cp1))
-				cp = cp2;
-			tmpbuf[0] = '\0';
-			if (cp != NULL) {
-				strcpy(tmpbuf, cp);
-				saved_ch = *cp;
-				*cp = '\0';
-			}
-			len = OF_getprop(aliases, bootpath, aliasbuf,
-			    sizeof(aliasbuf));
-			if (len > 0) {
-				if (aliasbuf[len-1] == '\0')
-					len--;
-				memcpy(bootpath, aliasbuf, len);
-				strcpy(&bootpath[len], tmpbuf);
-			} else {
-				*cp = saved_ch;
-			}
-		}
 	}
 
 	/*
