@@ -1,4 +1,4 @@
-/* $NetBSD: cia.c,v 1.46 1998/07/29 01:28:44 thorpej Exp $ */
+/* $NetBSD: cia.c,v 1.47 1999/04/10 01:21:38 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.46 1998/07/29 01:28:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia.c,v 1.47 1999/04/10 01:21:38 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,9 +179,9 @@ cia_init(ccp, mallocsafe)
 	 * have this: the EB164 systype (AlphaPC164LX and AlphaPC164SX)
 	 * and the DEC_550 systype (Miata).
 	 */
-	if ((hwrpb->rpb_type == ST_EB164 &&
+	if ((cputype == ST_EB164 &&
 	     (hwrpb->rpb_variation & SV_ST_MASK) >= SV_ST_ALPHAPC164LX_400) ||
-	    hwrpb->rpb_type == ST_DEC_550)
+	    cputype == ST_DEC_550)
 		ccp->cc_flags |= CCF_ISPYXIS;
 
 	/*
@@ -298,7 +298,7 @@ ciaattach(parent, self, aux)
 		printf("%s: using BWX for %s access\n", self->dv_xname, name);
 
 #ifdef DEC_550
-	if (hwrpb->rpb_type == ST_DEC_550 &&
+	if (cputype == ST_DEC_550 &&
 	    (hwrpb->rpb_variation & SV_ST_MASK) < SV_ST_MIATA_1_5) {
 		/*
 		 * Miata 1 systems have a bug: DMA cannot cross
@@ -334,7 +334,7 @@ ciaattach(parent, self, aux)
 
 	cia_dma_init(ccp);
 
-	switch (hwrpb->rpb_type) {
+	switch (cputype) {
 #ifdef DEC_KN20AA
 	case ST_DEC_KN20AA:
 		pci_kn20aa_pickintr(ccp);
