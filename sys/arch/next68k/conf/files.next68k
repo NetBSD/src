@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.6 1999/01/27 11:27:16 dbj Exp $
+# $NetBSD: files.next68k,v 1.7 1999/01/28 11:46:24 dbj Exp $
 
 # next68k-specific configuration info
 
@@ -65,6 +65,15 @@ device  xe: arp, ether, ifnet
 attach  xe at intio
 file    arch/next68k/dev/mb8795.c
 file    arch/next68k/dev/if_xe.c
+
+device  nextdisplay: wsemuldisplaydev, wsrasteremulops
+attach  nextdisplay at mainbus
+file    arch/next68k/dev/nextdisplay.c  nextdisplay needs-flag
+
+device  nextkbd: wskbddev
+attach  nextkbd at intio
+file    arch/next68k/dev/nextkbd.c      nextkbd needs-flag
+file	arch/next68k/dev/wskbdmap_mfii.c		nextkbd
 
 device	esp: scsi, ncr53c9x, disk
 attach	esp at intio
