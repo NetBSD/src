@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.5 1998/07/27 12:10:24 mycroft Exp $	*/
+/*	$NetBSD: hash.c,v 1.6 2001/05/28 12:40:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hash.c,v 1.5 1998/07/27 12:10:24 mycroft Exp $");
+__RCSID("$NetBSD: hash.c,v 1.6 2001/05/28 12:40:38 lukem Exp $");
 #endif
 
 /*
@@ -51,14 +51,13 @@ __RCSID("$NetBSD: hash.c,v 1.5 1998/07/27 12:10:24 mycroft Exp $");
 /* pointer to hash table, initialized in inithash() */
 static	hte_t	**htab;
 
-static	int	hash __P((const char *));
+static	int	hash(const char *);
 
 /*
  * Initialize hash table.
  */
 void
-_inithash(tablep)
-	hte_t ***tablep;	
+_inithash(hte_t ***tablep)
 {
 
 	if (tablep == NULL)
@@ -71,8 +70,7 @@ _inithash(tablep)
  * Compute hash value from a string.
  */
 static int
-hash(s)
-	const	char *s;
+hash(const char *s)
 {
 	u_int	v;
 	const	u_char *us;
@@ -90,10 +88,7 @@ hash(s)
  * given name exists and mknew is set, create a new one.
  */
 hte_t *
-_hsearch(table, s, mknew)
-	hte_t	**table;
-	const	char *s;
-	int	mknew;
+_hsearch(hte_t **table, const char *s, int mknew)
 {
 	int	h;
 	hte_t	*hte;
@@ -133,9 +128,7 @@ _hsearch(table, s, mknew)
  * Call function f for each name in the hash table.
  */
 void
-_forall(table, f)
-	hte_t	**table;
-	void	(*f) __P((hte_t *));
+_forall(hte_t **table, void (*f)(hte_t *))
 {
 	int	i;
 	hte_t	*hte;
@@ -153,8 +146,7 @@ _forall(table, f)
  * Free all contents of the hash table that this module allocated.
  */
 void
-_destroyhash(table)
-	hte_t	**table;
+_destroyhash(hte_t **table)
 {
 	int	i;
 	hte_t	*hte, *nexthte;

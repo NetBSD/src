@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.9 2000/06/14 06:49:23 cgd Exp $ */
+/* $NetBSD: chk.c,v 1.10 2001/05/28 12:40:38 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: chk.c,v 1.9 2000/06/14 06:49:23 cgd Exp $");
+__RCSID("$NetBSD: chk.c,v 1.10 2001/05/28 12:40:38 lukem Exp $");
 #endif
 
 #include <stdlib.h>
@@ -48,32 +48,30 @@ __RCSID("$NetBSD: chk.c,v 1.9 2000/06/14 06:49:23 cgd Exp $");
 ttab_t	ttab[NTSPEC];
 
 
-static	void	chkund __P((hte_t *));
-static	void	chkdnu __P((hte_t *));
-static	void	chkdnud __P((hte_t *));
-static	void	chkmd __P((hte_t *));
-static	void	chkvtui __P((hte_t *, sym_t *, sym_t *));
-static	void	chkvtdi __P((hte_t *, sym_t *, sym_t *));
-static	void	chkfaui __P((hte_t *, sym_t *, sym_t *));
-static	void	chkau __P((hte_t *, int, sym_t *, sym_t *, pos_t *,
-			   fcall_t *, fcall_t *, type_t *, type_t *));
-static	void	chkrvu __P((hte_t *, sym_t *));
-static	void	chkadecl __P((hte_t *, sym_t *, sym_t *));
-static	void	printflike __P((hte_t *,fcall_t *, int,
-				const char *, type_t **));
-static	void	scanflike __P((hte_t *, fcall_t *, int,
-			       const char *, type_t **));
-static	void	badfmt __P((hte_t *, fcall_t *));
-static	void	inconarg __P((hte_t *, fcall_t *, int));
-static	void	tofewarg __P((hte_t *, fcall_t *));
-static	void	tomanyarg __P((hte_t *, fcall_t *));
-static	int	eqtype __P((type_t *, type_t *, int, int, int, int *));
-static	int	eqargs __P((type_t *, type_t *, int *));
-static	int	mnoarg __P((type_t *, int *));
+static	void	chkund(hte_t *);
+static	void	chkdnu(hte_t *);
+static	void	chkdnud(hte_t *);
+static	void	chkmd(hte_t *);
+static	void	chkvtui(hte_t *, sym_t *, sym_t *);
+static	void	chkvtdi(hte_t *, sym_t *, sym_t *);
+static	void	chkfaui(hte_t *, sym_t *, sym_t *);
+static	void	chkau(hte_t *, int, sym_t *, sym_t *, pos_t *,
+			   fcall_t *, fcall_t *, type_t *, type_t *);
+static	void	chkrvu(hte_t *, sym_t *);
+static	void	chkadecl(hte_t *, sym_t *, sym_t *);
+static	void	printflike(hte_t *,fcall_t *, int, const char *, type_t **);
+static	void	scanflike(hte_t *, fcall_t *, int, const char *, type_t **);
+static	void	badfmt(hte_t *, fcall_t *);
+static	void	inconarg(hte_t *, fcall_t *, int);
+static	void	tofewarg(hte_t *, fcall_t *);
+static	void	tomanyarg(hte_t *, fcall_t *);
+static	int	eqtype(type_t *, type_t *, int, int, int, int *);
+static	int	eqargs(type_t *, type_t *, int *);
+static	int	mnoarg(type_t *, int *);
 
 
 void
-inittyp()
+inittyp(void)
 {
 	int	i;
 	static	struct {
@@ -164,7 +162,7 @@ inittyp()
  * If there is a symbol named "main", mark it as used.
  */
 void
-mainused()
+mainused(void)
 {
 	hte_t	*hte;
 
@@ -176,8 +174,7 @@ mainused()
  * Performs all tests for a single name
  */
 void
-chkname(hte)
-	hte_t	*hte;
+chkname(hte_t *hte)
 {
 	sym_t	*sym, *def, *pdecl, *decl;
 
@@ -222,8 +219,7 @@ chkname(hte)
  * Print a warning if the name has been used, but not defined.
  */
 static void
-chkund(hte)
-	hte_t	*hte;
+chkund(hte_t *hte)
 {
 	fcall_t	*fcall;
 	usym_t	*usym;
@@ -244,8 +240,7 @@ chkund(hte)
  * Print a warning if the name has been defined, but never used.
  */
 static void
-chkdnu(hte)
-	hte_t	*hte;
+chkdnu(hte_t *hte)
 {
 	sym_t	*sym;
 
@@ -266,8 +261,7 @@ chkdnu(hte)
  * or defined.
  */
 static void
-chkdnud(hte)
-	hte_t	*hte;
+chkdnud(hte_t *hte)
 {
 	sym_t	*sym;
 
@@ -289,8 +283,7 @@ chkdnud(hte)
  * this name.
  */
 static void
-chkmd(hte)
-	hte_t	*hte;
+chkmd(hte_t *hte)
 {
 	sym_t	*sym, *def1;
 	char	*pos1;
@@ -327,9 +320,7 @@ chkmd(hte)
  * call as it's done for function arguments.
  */
 static void
-chkvtui(hte, def, decl)
-	hte_t	*hte;
-	sym_t	*def, *decl;
+chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
 {
 	fcall_t	*call;
 	char	*pos1;
@@ -390,9 +381,7 @@ chkvtui(hte, def, decl)
  * types of return values are tested.
  */
 static void
-chkvtdi(hte, def, decl)
-	hte_t	*hte;
-	sym_t	*def, *decl;
+chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
 {
 	sym_t	*sym;
 	type_t	*tp1, *tp2;
@@ -431,9 +420,7 @@ chkvtdi(hte, def, decl)
  * of the same function.
  */
 static void
-chkfaui(hte, def, decl)
-	hte_t	*hte;
-	sym_t	*def, *decl;
+chkfaui(hte_t *hte, sym_t *def, sym_t *decl)
 {
 	type_t	*tp1, *tp2, **ap1, **ap2;
 	pos_t	*pos1p = NULL;
@@ -541,13 +528,8 @@ chkfaui(hte, def, decl)
  *
  */
 static void
-chkau(hte, n, def, decl, pos1p, call1, call, arg1, arg2)
-	hte_t	*hte;
-	int	n;
-	sym_t	*def, *decl;
-	pos_t	*pos1p;
-	fcall_t	*call1, *call;
-	type_t	*arg1, *arg2;
+chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
+	fcall_t *call1, fcall_t *call, type_t *arg1, type_t *arg2)
 {
 	/* LINTED (automatic hides external declaration: warn) */
 	int	promote, asgn, warn;
@@ -699,12 +681,7 @@ chkau(hte, n, def, decl, pos1p, call1, call, arg1, arg2)
  * string fmt.
  */
 static void
-printflike(hte, call, n, fmt, ap)
-	hte_t	*hte;
-	fcall_t	*call;
-	int	n;
-	const	char *fmt;
-	type_t	**ap;
+printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
 	int	fc;
@@ -929,12 +906,7 @@ printflike(hte, call, n, fmt, ap)
  * string fmt.
  */
 static void
-scanflike(hte, call, n, fmt, ap)
-	hte_t	*hte;
-	fcall_t	*call;
-	int	n;
-	const	char *fmt;
-	type_t	**ap;
+scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
 	int	fc;
@@ -964,7 +936,7 @@ scanflike(hte, call, n, fmt, ap)
 			noasgn = 1;
 			fc = *fp++;
 		}
-		
+
 		if (isdigit(fc)) {
 			fwidth = 1;
 			do { fc = *fp++; } while (isdigit(fc));
@@ -1125,38 +1097,33 @@ scanflike(hte, call, n, fmt, ap)
 }
 
 static void
-badfmt(hte, call)
-	hte_t	*hte;
-	fcall_t	*call;
+badfmt(hte_t *hte, fcall_t *call)
 {
+
 	/* %s: malformed format string\t%s */
 	msg(13, hte->h_name, mkpos(&call->f_pos));
 }
 
 static void
-inconarg(hte, call, n)
-	hte_t	*hte;
-	fcall_t	*call;
-	int	n;
+inconarg(hte_t *hte, fcall_t *call, int n)
 {
+
 	/* %s, arg %d inconsistent with format\t%s(%d) */
 	msg(14, hte->h_name, n, mkpos(&call->f_pos));
 }
 
 static void
-tofewarg(hte, call)
-	hte_t	*hte;
-	fcall_t	*call;
+tofewarg(hte_t *hte, fcall_t *call)
 {
+
 	/* %s: too few args for format  \t%s */
 	msg(15, hte->h_name, mkpos(&call->f_pos));
 }
 
 static void
-tomanyarg(hte, call)
-	hte_t	*hte;
-	fcall_t	*call;
+tomanyarg(hte_t *hte, fcall_t *call)
 {
+
 	/* %s: too many args for format  \t%s */
 	msg(16, hte->h_name, mkpos(&call->f_pos));
 }
@@ -1167,9 +1134,7 @@ tomanyarg(hte, call)
  * or return values which are always or sometimes ignored.
  */
 static void
-chkrvu(hte, def)
-	hte_t	*hte;
-	sym_t	*def;
+chkrvu(hte_t *hte, sym_t *def)
 {
 	fcall_t	*call;
 	int	used, ignored;
@@ -1217,9 +1182,7 @@ chkrvu(hte, def)
  * Print warnings for inconsistent argument declarations.
  */
 static void
-chkadecl(hte, def, decl)
-	hte_t	*hte;
-	sym_t	*def, *decl;
+chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
 {
 	/* LINTED (automatic hides external declaration: warn) */
 	int	osdef, eq, warn, n;
@@ -1299,9 +1262,7 @@ chkadecl(hte, def, decl)
  *		an incompatible prototype declaration
  */
 static int
-eqtype(tp1, tp2, ignqual, promot, asgn, warn)
-	type_t	*tp1, *tp2;
-	int	ignqual, promot, asgn, *warn;
+eqtype(type_t *tp1, type_t *tp2, int ignqual, int promot, int asgn, int *warn)
 {
 	tspec_t	t, to;
 	int	indir;
@@ -1331,7 +1292,7 @@ eqtype(tp1, tp2, ignqual, promot, asgn, warn)
 			if (indir == 1 && (t == VOID || tp2->t_tspec == VOID))
 				return (1);
 		}
-		
+
 		if (t != tp2->t_tspec) {
 			/*
 			 * Give pointer to types which differ only in
@@ -1427,9 +1388,7 @@ eqtype(tp1, tp2, ignqual, promot, asgn, warn)
  * Compares arguments of two prototypes
  */
 static int
-eqargs(tp1, tp2, warn)
-	type_t	*tp1, *tp2;
-	int	*warn;
+eqargs(type_t *tp1, type_t *tp2, int *warn)
 {
 	type_t	**a1, **a2;
 
@@ -1463,9 +1422,7 @@ eqargs(tp1, tp2, warn)
  *	   is applied on it
  */
 static int
-mnoarg(tp, warn)
-	type_t	*tp;
-	int	*warn;
+mnoarg(type_t *tp, int *warn)
 {
 	type_t	**arg;
 	tspec_t	t;
@@ -1482,4 +1439,3 @@ mnoarg(tp, warn)
 	}
 	return (1);
 }
-

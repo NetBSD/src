@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.5 2000/06/14 06:49:23 cgd Exp $ */
+/* $NetBSD: lint2.h,v 1.6 2001/05/28 12:40:38 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -100,7 +100,7 @@ typedef	struct {
 	u_short	p_line;		/* line number in p_src */
 	u_short	p_isrc;		/* index of (included) file */
 	u_short p_iline;	/* line number in p_iline */
-} pos_t;	
+} pos_t;
 
 /*
  * Used for definitions and declarations
@@ -117,7 +117,7 @@ typedef	struct sym {
 		u_int	s_def : 3;	/* DECL, TDEF or DEF */
 #else
 		def_t	s_def;
-#endif		
+#endif
 		u_int	s_rval : 1;	/* function has return value */
 		u_int	s_osdef : 1;	/* old style function definition */
 		u_int	s_static : 1;	/* symbol is static */
