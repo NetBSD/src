@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.17 2002/04/14 12:24:28 martin Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.18 2003/01/06 12:46:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@ struct spppidletimeout {
 
 struct spppauthfailurestats {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */
-	int	auth_failures;		/* number of LCP failures since last successfull TLU */
+	int	auth_failures;		/* number of LCP failures since last successful TLU */
 	int	max_failures;		/* max. allowed authorization failures */
 };
 
