@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.13 1995/12/26 04:46:08 jonathan Exp $
+	$NetBSD: syscalls.master,v 1.14 1995/12/26 10:06:15 jonathan Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -46,7 +46,7 @@
 5	STD		{ int ultrix_sys_open(char *path, int flags, \
 			    int mode); }
 6	NOARGS		{ int sys_close(int fd); }
-7	UNIMPL		old_wait
+7	NOARGS		{ int compat_43_sys_wait(void); } owait
 8	NOARGS		{ int compat_43_sys_creat(char *path, int mode); }
 9	NOARGS		{ int sys_link(char *path, char *link); }
 10	NOARGS		{ int sys_unlink(char *path); }
@@ -61,7 +61,8 @@
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
 			    int whence); }
 20	NOARGS		{ pid_t sys_getpid(void); }
-21	OBSOL		mount
+21	STD		{ int ultrix_sys_mount(char *special, char *dir, \
+			     int rdonly, int type, caddr_t data); }
 22	OBSOL		sysV_unmount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
@@ -260,7 +261,8 @@
 168	STD		{ int ultrix_sys_quotactl(int cmd, char *special, \
 			    int uid, caddr_t addr); }
 169	STD		{ int ultrix_sys_exportfs(char *path, char *ex); }
-170	UNIMPL		mount
+170	UNIMPL		{ int ultrix_sys_mount(char *special, char *dir, \
+			     int rdonly, int type, caddr_t data); }
 171	UNIMPL	4 hdwconf
 172	UNIMPL		msgctl
 173	UNIMPL		msgget
