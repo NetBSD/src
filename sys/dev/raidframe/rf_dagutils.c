@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.33 2004/03/06 23:52:20 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.34 2004/03/06 23:53:31 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.33 2004/03/06 23:52:20 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.34 2004/03/06 23:53:31 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -289,7 +289,8 @@ char   *
 rf_NodeStatusString(RF_DagNode_t *node)
 {
 	switch (node->status) {
-		case rf_wait:return ("wait");
+	case rf_wait:
+		return ("wait");
 	case rf_fired:
 		return ("fired");
 	case rf_good:
