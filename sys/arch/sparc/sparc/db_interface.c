@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.16 1997/08/04 20:03:01 pk Exp $ */
+/*	$NetBSD: db_interface.c,v 1.17 1997/08/31 21:22:44 pk Exp $ */
 
 /*
  * Mach Operating System
@@ -41,16 +41,70 @@
 #include <dev/cons.h>
 
 #include <machine/db_machdep.h>
+
+#if defined(DDB)
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
+#endif
+
 #include <machine/bsd_openprom.h>
 #include <machine/ctlreg.h>
 #include <sparc/sparc/asm.h>
 
+
+/*
+ * Read bytes from kernel address space for debugger.
+ */
+void
+db_read_bytes(addr, size, data)
+	vm_offset_t	addr;
+	register size_t	size;
+	register char	*data;
+{
+	register char	*src;
+
+	src = (char *)addr;
+	while (size-- > 0)
+		*data++ = *src++;
+}
+
+/*
+ * Write bytes to kernel address space for debugger.
+ */
+void
+db_write_bytes(addr, size, data)
+	vm_offset_t	addr;
+	register size_t	size;
+	register char	*data;
+{
+	extern char	etext[];
+	register char	*dst;
+
+	dst = (char *)addr;
+	while (size-- > 0) {
+		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) && (dst < etext))
+			pmap_writetext(dst, *data);
+		else
+			*dst = *data;
+		dst++, data++;
+	}
+
+}
+
+void
+Debugger()
+{
+	asm("ta 0x81");
+}
+
+#if defined(DDB)
+/*
+ * Data and functions used by DDB only.
+ */
 static int nil;
 
 struct db_variable db_regs[] = {
@@ -141,8 +195,8 @@ kdb_trap(type, tf)
 
 	/* Should switch to kdb`s own stack here. */
 
-	ddb_regs.ddb_tf = *tf;
-	ddb_regs.ddb_fr = *(struct frame *)tf->tf_out[6];
+	ddb_regs.db_tf = *tf;
+	ddb_regs.db_fr = *(struct frame *)tf->tf_out[6];
 
 	db_active++;
 	cnpollc(TRUE);
@@ -150,55 +204,10 @@ kdb_trap(type, tf)
 	cnpollc(FALSE);
 	db_active--;
 
-	*(struct frame *)tf->tf_out[6] = ddb_regs.ddb_fr;
-	*tf = ddb_regs.ddb_tf;
+	*(struct frame *)tf->tf_out[6] = ddb_regs.db_fr;
+	*tf = ddb_regs.db_tf;
 
 	return (1);
-}
-
-/*
- * Read bytes from kernel address space for debugger.
- */
-void
-db_read_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
-{
-	register char	*src;
-
-	src = (char *)addr;
-	while (size-- > 0)
-		*data++ = *src++;
-}
-
-/*
- * Write bytes to kernel address space for debugger.
- */
-void
-db_write_bytes(addr, size, data)
-	vm_offset_t	addr;
-	register size_t	size;
-	register char	*data;
-{
-	extern char	etext[];
-	register char	*dst;
-
-	dst = (char *)addr;
-	while (size-- > 0) {
-		if ((dst >= (char *)VM_MIN_KERNEL_ADDRESS) && (dst < etext))
-			pmap_writetext(dst, *data);
-		else
-			*dst = *data;
-		dst++, data++;
-	}
-
-}
-
-void
-Debugger()
-{
-	asm("ta 0x81");
 }
 
 void
@@ -221,3 +230,4 @@ db_machine_init()
 {
 	db_machine_commands_install(sparc_db_command_table);
 }
+#endif /* DDB */
