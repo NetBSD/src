@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.19 2004/04/01 02:43:33 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.20 2004/04/01 02:44:55 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -196,3 +196,8 @@ usr.bin/gzip/gzip.c				1.33-1.34
 	This is consistent with the old gzip and required by pkgsrc 
 	to implement MANZ properly.
 	[tron, ticket #33]
+
+sys/netinet/ip_compat.h				1.37
+
+	Only #define COPYIN copyin, et cetera, in the kernel.
+	[mrg, ticket #34]
