@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3.6.1 1997/03/06 13:05:29 is Exp $	*/
+/*	$NetBSD: if_le.c,v 1.3.6.2 1997/03/06 13:26:28 is Exp $	*/
 
 #define LEDEBUG	 1		/* debug-level: 0 or 1 */
 /* #define LE_CHIP_IS_POKEY	/* does VS2000 need this ??? */
@@ -104,12 +104,15 @@ struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
 
-integrate void
+hide void lewrcsr __P ((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P ((struct am7990_softc *, u_int16_t));
+
+hide void
 lewrcsr(sc, port, val)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 #ifdef LE_CHIP_IS_POKEY
 	LEWREG(port, ler1->ler1_rap);
@@ -120,12 +123,12 @@ lewrcsr(sc, port, val)
 #endif
 }
 
-integrate u_int16_t
+hide u_int16_t
 lerdcsr(sc, port)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	struct lereg1 *ler1 = sc->sc_r1;
+	struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 #ifdef LE_CHIP_IS_POKEY
@@ -136,6 +139,12 @@ lerdcsr(sc, port)
 	val = ler1->ler1_rdp;
 #endif
 	return (val);
+}
+
+integrate void
+lehwinit(sc)
+	struct am7990_softc *sc;
+{
 }
 
 int
@@ -176,6 +185,10 @@ leattach(parent, self, aux)
 	sc->sc_am7990.sc_mem = le_iomem;
 	sc->sc_am7990.sc_addr = le_ioaddr;
 	sc->sc_am7990.sc_memsize = LE_IOSIZE;
+	sc->sc_am7990.sc_wrcsr = lewrcsr;
+	sc->sc_am7990.sc_rdcsr = lerdcsr;
+	sc->sc_am7990.sc_hwinit = lehwinit;
+	sc->sc_am7990.sc_nocarrier = NULL;
 
 	xdebug(("leattach: mem=%x, addr=%x, size=%x (%d)\n",
 	    sc->sc_am7990.sc_mem, sc->sc_am7990.sc_addr,
@@ -205,12 +218,6 @@ leattach(parent, self, aux)
 
 	vsbus_intr_register(ca, am7990_intr, &sc->sc_am7990);
 	vsbus_intr_enable(ca);
-}
-
-integrate void
-lehwinit(sc)
-	struct le_softc *sc;
-{
 }
 
 #ifdef LE_CHIP_IS_POKEY
