@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.384 2003/02/22 23:39:54 lukem Exp $
+# $NetBSD: mi,v 1.385 2003/03/04 14:39:06 jmmv Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -928,6 +928,8 @@
 ./usr/share/examples/veriexecctl	base-sysutil-examples
 ./usr/share/examples/veriexecctl/gen_md5	base-sysutil-examples
 ./usr/share/examples/veriexecctl/gen_sha1	base-sysutil-examples
+./usr/share/examples/wsmoused		base-sysutil-examples
+./usr/share/examples/wsmoused.conf	base-sysutil-examples
 ./usr/share/games			base-games-share
 ./usr/share/games/atc			base-games-share
 ./usr/share/games/boggle		base-games-share
