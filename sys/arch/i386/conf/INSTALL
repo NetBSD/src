@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.196.4.3 2003/01/28 06:28:37 jmc Exp $
+#	$NetBSD: INSTALL,v 1.196.4.4 2003/09/10 16:55:35 grant Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -72,7 +72,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
