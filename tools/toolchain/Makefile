@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/10/31 01:20:10 tv Exp $
+#	$NetBSD: Makefile,v 1.8 2001/11/01 01:52:45 thorpej Exp $
 
 .include <bsd.own.mk>	# for TOOLDIR
 
@@ -52,9 +52,9 @@ toolchain.configure:
 
 toolchain.all: toolchain.configure
 	cd toolchain && \
-		MACHINE= PATH="${TOOLDIR}/bin:$$PATH" \
+		PATH="${TOOLDIR}/bin:$$PATH" \
 		${MAKE} -j1 all-binutils all-gas all-ld all-gcc \
-		LEX=true BISON=true DESTDIR=
+		LEX=true BISON=true MACHINE= DESTDIR=
 
 toolchain.install:
 	cd toolchain && \
