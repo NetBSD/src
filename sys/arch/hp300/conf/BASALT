@@ -1,4 +1,4 @@
-#	$NetBSD: BASALT,v 1.7 1996/10/03 01:25:32 thorpej Exp $
+#	$NetBSD: BASALT,v 1.8 1996/10/15 22:01:53 thorpej Exp $
 #
 # BASALT - thorpej's hp380
 #
@@ -55,7 +55,6 @@ options		COMPAT_HPUX	# HP-UX binary compatibility
 # Debugging options
 options		DDB		# Kernel Dynamic Debugger
 
-options		GENERIC
 config		netbsd swap generic
 
 master		hpib0	at scode7
