@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.3 1993/08/02 17:56:23 mycroft Exp $
+#	$Id: Makefile,v 1.4 1995/10/22 00:13:41 christos Exp $
 
-.if !make(install)
+.if make(clean) || make(cleandir) || make(depend)
 SUBDIR += tools
 .endif
 SUBDIR += tn3270 mset
