@@ -91,17 +91,3 @@ symlinks:
 	ln -s /sys/${MACHINE}/include ${DESTDIR}/usr/include/machine
 
 .include <bsd.prog.mk>
-de ${DESTDIR}/usr/include/machine
-
-.include <bsd.prog.mk>
-nks: ${LDIRS}
-	@for i in ${LDIRS}; do \
-		rm -rf ${DESTDIR}/usr/include/$$i; \
-		ln -s /sys/$$i ${DESTDIR}/usr/include/$$i; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/$$i; \
-	done
-	rm -rf ${DESTDIR}/usr/include/machine
-	ln -s /sys/${MACHINE}/include ${DESTDIR}/usr/include/machine
-	chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/machine
-
-.include <bsd.prog.mk>
