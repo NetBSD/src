@@ -1,4 +1,4 @@
-/*	$NetBSD: fwalk.c,v 1.7 1998/02/03 18:41:16 perry Exp $	*/
+/*	$NetBSD: fwalk.c,v 1.8 1999/09/16 11:45:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)fwalk.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fwalk.c,v 1.7 1998/02/03 18:41:16 perry Exp $");
+__RCSID("$NetBSD: fwalk.c,v 1.8 1999/09/16 11:45:28 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include "local.h"
@@ -57,6 +58,14 @@ _fwalk(function)
 	FILE *fp;
 	int n, ret;
 	struct glue *g;
+
+	_DIAGASSERT(function != NULL);
+#ifdef _DIAGNOSTIC
+	if (function == NULL) {
+		errno = EFAULT;
+		return EOF;
+	}
+#endif
 
 	ret = 0;
 	for (g = &__sglue; g != NULL; g = g->next)

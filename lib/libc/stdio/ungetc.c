@@ -1,4 +1,4 @@
-/*	$NetBSD: ungetc.c,v 1.9 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: ungetc.c,v 1.10 1999/09/16 11:45:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)ungetc.c	8.2 (Berkeley) 11/3/93";
 #else
-__RCSID("$NetBSD: ungetc.c,v 1.9 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: ungetc.c,v 1.10 1999/09/16 11:45:31 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -64,6 +66,8 @@ __submore(fp)
 {
 	int i;
 	unsigned char *p;
+
+	_DIAGASSERT(fp != NULL);
 
 	if (fp->_ub._base == fp->_ubuf) {
 		/*
@@ -96,6 +100,15 @@ ungetc(c, fp)
 	int c;
 	FILE *fp;
 {
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
+
 	if (c == EOF)
 		return (EOF);
 	if (!__sdidinit)

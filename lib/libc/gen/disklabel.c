@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.23 1999/01/19 06:24:08 abs Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.24 1999/09/16 11:44:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.23 1999/01/19 06:24:08 abs Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.24 1999/09/16 11:44:56 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: disklabel.c,v 1.23 1999/01/19 06:24:08 abs Exp $");
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -96,6 +97,12 @@ getdiskbyname(name)
 		pfsize[3], poffset[3], ptype[3];
 	u_int32_t *dx;
 	long f;
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return NULL;
+#endif
 
 	if (cgetent(&buf, db_array, name) < 0)
 		return NULL;
@@ -198,6 +205,9 @@ gettype(t, names)
 	const char *const *names;
 {
 	const char *const *nm;
+
+	_DIAGASSERT(t != NULL);
+	_DIAGASSERT(names != NULL);
 
 	for (nm = names; *nm; nm++)
 		if (strcasecmp(t, *nm) == 0)

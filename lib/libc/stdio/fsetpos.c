@@ -1,4 +1,4 @@
-/*	$NetBSD: fsetpos.c,v 1.6 1997/07/13 20:15:06 christos Exp $	*/
+/*	$NetBSD: fsetpos.c,v 1.7 1999/09/16 11:45:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)fsetpos.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fsetpos.c,v 1.6 1997/07/13 20:15:06 christos Exp $");
+__RCSID("$NetBSD: fsetpos.c,v 1.7 1999/09/16 11:45:28 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 
 /*
@@ -55,5 +57,18 @@ fsetpos(iop, pos)
 	FILE *iop;
 	const fpos_t *pos;
 {
+	_DIAGASSERT(iop != NULL);
+	_DIAGASSERT(pos != NULL);
+#ifdef _DIAGNOSTIC
+	if (iop == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (pos == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	return (fseek(iop, (long)*pos, SEEK_SET));
 }

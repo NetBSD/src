@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.23 1999/04/18 02:04:04 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.24 1999/09/16 11:44:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,22 +33,25 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.23 1999/04/18 02:04:04 lukem Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.24 1999/09/16 11:44:59 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
-#include <stdio.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <db.h>
+#include <err.h>
+#include <fcntl.h>
 #define _NETGROUP_PRIVATE
 #include <netgroup.h>
-#include <string.h>
-#include <fcntl.h>
-#include <err.h>
-#include <ctype.h>
 #include <nsswitch.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <stringlist.h>
-#include <db.h>
+
 #ifdef YP
 #include <rpc/rpc.h>
 #include <rpcsvc/ypclnt.h>
@@ -111,6 +114,9 @@ getstring(pp, del, str)
 	size_t len;
 	char *sp, *ep, *dp;
 
+	_DIAGASSERT(pp != NULL);
+	_DIAGASSERT(str != NULL);
+
 	/* skip leading blanks */
 	for (sp = *pp; *sp && _NG_ISSPACE(*sp); sp++)
 		continue;
@@ -152,8 +158,12 @@ static struct netgroup *
 getnetgroup(pp)
 	char	**pp;
 {
-	struct netgroup *ng = malloc(sizeof(struct netgroup));
+	struct netgroup *ng;
 
+	_DIAGASSERT(pp != NULL);
+	_DIAGASSERT(*pp != NULL);
+
+	ng = malloc(sizeof(struct netgroup));
 	if (ng == NULL)
 		err(1, _ngoomem);
 
@@ -320,6 +330,9 @@ lookup(name, line, bywhat)
 		{ 0 }
 	};
 
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(line != NULL);
+
 	r = nsdispatch(NULL, dtab, NSDB_NETGROUP, "lookup", default_files_nis,
 	    name, line, bywhat);
 	return (r == NS_SUCCESS) ? 1 : 0;
@@ -338,6 +351,16 @@ _ng_parse(p, name, ng)
 	char		**name;
 	struct netgroup	**ng;
 {
+
+	_DIAGASSERT(p != NULL);
+	_DIAGASSERT(*p != NULL);
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(ng != NULL);
+#ifdef _DIAGNOSTIC
+	if (p == NULL || *p == NULL || name == NULL || ng == NULL)
+		return _NG_NONE;
+#endif
+
 	while (**p) {
 		if (**p == '#')
 			/* comment */
@@ -385,6 +408,9 @@ addgroup(sl, grp)
 	char		*line, *p;
 	struct netgroup	*ng;
 	char		*name;
+
+	_DIAGASSERT(sl != NULL);
+	_DIAGASSERT(grp != NULL);
 
 #ifdef DEBUG_NG
 	(void) fprintf(stderr, "addgroup(%s)\n", grp);
@@ -447,6 +473,12 @@ in_check(host, user, domain, ng)
 	const char	*domain;
 	struct netgroup	*ng;
 {
+
+	/* host may be NULL */
+	/* user may be NULL */
+	/* domain may be NULL */
+	_DIAGASSERT(ng != NULL);
+
 	if ((host != NULL) && (ng->ng_host != NULL)
 	    && strcmp(ng->ng_host, host) != 0)
 		return 0;
@@ -478,6 +510,12 @@ in_find(sl, grp, host, user, domain)
 	int		 i;
 	struct netgroup	*ng;
 	char		*name;
+
+	_DIAGASSERT(sl != NULL);
+	_DIAGASSERT(grp != NULL);
+	/* host may be NULL */
+	/* user may be NULL */
+	/* domain may be NULL */
 
 #ifdef DEBUG_NG
 	(void) fprintf(stderr, "in_find(%s)\n", grp);
@@ -552,7 +590,12 @@ _ng_makekey(s1, s2, len)
 	const char	*s1, *s2;
 	size_t		 len;
 {
-	char *buf = malloc(len);
+	char *buf;
+
+	/* s1 may be NULL */
+	/* s2 may be NULL */
+
+	buf = malloc(len);
 	if (buf == NULL)
 		err(1, _ngoomem);
 	(void) snprintf(buf, len, "%s.%s", _NG_STAR(s1), _NG_STAR(s2));
@@ -565,6 +608,13 @@ _ng_print(buf, len, ng)
 	size_t len;
 	const struct netgroup *ng;
 {
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(ng != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || ng == NULL)
+		return;
+#endif
+
 	(void) snprintf(buf, len, "(%s,%s,%s)", _NG_EMPTY(ng->ng_host),
 	    _NG_EMPTY(ng->ng_user), _NG_EMPTY(ng->ng_domain));
 }
@@ -583,6 +633,9 @@ in_lookup1(key, domain, map)
 	size_t	 len;
 	char	*ptr;
 	int	 res;
+
+	/* key may be NULL */
+	/* domain may be NULL */
 
 	len = (key ? strlen(key) : 1) + (domain ? strlen(domain) : 1) + 2;
 	ptr = _ng_makekey(key, domain, len);
@@ -604,6 +657,10 @@ in_lookup(group, key, domain, map)
 {
 	size_t	 len;
 	char	*ptr, *line;
+
+	_DIAGASSERT(group != NULL);
+	/* key may be NULL */
+	/* domain may be NULL */
 
 	if (domain != NULL) {
 		/* Domain specified; look in "group.domain" and "*.domain" */
@@ -668,6 +725,12 @@ setnetgrent(ng)
 	StringList	*sl = sl_init();
 	char		*ng_copy;
 
+	_DIAGASSERT(ng != NULL);
+#ifdef _DIAGNOSTIC
+	if (ng == NULL)
+		return;
+#endif
+
 	/* Cleanup any previous storage */
 	if (_nghead != NULL)
 		endnetgrent();
@@ -690,6 +753,14 @@ getnetgrent(host, user, domain)
 	const char	**user;
 	const char	**domain;
 {
+	_DIAGASSERT(host != NULL);
+	_DIAGASSERT(user != NULL);
+	_DIAGASSERT(domain != NULL);
+#ifdef _DIAGNOSTIC
+	if (host == NULL || user == NULL || domain == NULL)
+		return 0;
+#endif
+
 	if (_nglist == NULL)
 		return 0;
 
@@ -709,6 +780,15 @@ innetgr(grp, host, user, domain)
 {
 	int	 found;
 	StringList *sl;
+
+	_DIAGASSERT(grp != NULL);
+	/* host may be NULL */
+	/* user may be NULL */
+	/* domain may be NULL */
+#ifdef _DIAGNOSTIC
+	if (grp == NULL)
+		return 0;
+#endif
 
 	if (_ng_db == NULL)
 		_ng_db = dbopen(_PATH_NETGROUP_DB, O_RDONLY, 0, DB_HASH, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.30 1998/11/15 17:19:05 christos Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.31 1999/09/16 11:45:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.30 1998/11/15 17:19:05 christos Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.31 1999/09/16 11:45:31 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,8 @@ __RCSID("$NetBSD: vfprintf.c,v 1.30 1998/11/15 17:19:05 christos Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
+
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +85,9 @@ __sprint(fp, uio)
 {
 	int err;
 
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(uio != NULL);
+
 	if (uio->uio_resid == 0) {
 		uio->uio_iovcnt = 0;
 		return (0);
@@ -107,6 +112,9 @@ __sbprintf(fp, fmt, ap)
 	int ret;
 	FILE fake;
 	unsigned char buf[BUFSIZ];
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(fmt != NULL);
 
 	/* copy the important variables */
 	fake._flags = fp->_flags & ~__SNBF;
@@ -278,6 +286,19 @@ vfprintf(fp, fmt0, ap)
 	    flags&LONGINT ? va_arg(ap, u_long) : \
 	    flags&SHORTINT ? (u_long)(u_short)va_arg(ap, int) : \
 	    (u_long)va_arg(ap, u_int))
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(fmt0 != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (fmt0 == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	FLOCKFILE(fp);
 
@@ -750,6 +771,10 @@ cvt(value, ndigits, flags, sign, decpt, ch, length)
 	int mode, dsgn;
 	char *digits, *bp, *rve;
 
+	_DIAGASSERT(decpt != NULL);
+	_DIAGASSERT(length != NULL);
+	_DIAGASSERT(sign != NULL);
+
 	if (ch == 'f') {
 		mode = 3;		/* ndigits after the decimal point */
 	} else {
@@ -792,6 +817,8 @@ exponent(p0, exp, fmtch)
 {
 	char *p, *t;
 	char expbuf[MAXEXP];
+
+	_DIAGASSERT(p0 != NULL);
 
 	p = p0;
 	*p++ = fmtch;

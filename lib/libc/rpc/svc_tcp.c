@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.23 1999/05/03 15:32:13 christos Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.24 1999/09/16 11:45:25 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.23 1999/05/03 15:32:13 christos Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.24 1999/09/16 11:45:25 lukem Exp $");
 #endif
 #endif
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: svc_tcp.c,v 1.23 1999/05/03 15:32:13 christos Exp $");
 #include <sys/poll.h>
 #include <sys/socket.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -211,6 +212,14 @@ svcfd_create(fd, sendsize, recvsize)
 	u_int recvsize;
 {
 
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
+
 	return (makefd_xprt(fd, sendsize, recvsize));
 }
 
@@ -223,6 +232,8 @@ makefd_xprt(fd, sendsize, recvsize)
 	SVCXPRT *xprt;
 	struct tcp_conn *cd;
  
+	_DIAGASSERT(fd != -1);
+
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == (SVCXPRT *)NULL) {
 		warnx("svc_tcp: makefd_xprt: out of memory");
@@ -261,6 +272,9 @@ rendezvous_request(xprt, msg)
 	struct sockaddr_in addr;
 	socklen_t len;
 
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
+
 	r = (struct tcp_rendezvous *)xprt->xp_p1;
     again:
 	len = sizeof(struct sockaddr_in);
@@ -292,7 +306,11 @@ static void
 svctcp_destroy(xprt)
 	SVCXPRT *xprt;
 {
-	struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
+	struct tcp_conn *cd;
+
+	_DIAGASSERT(xprt != NULL);
+
+	cd = (struct tcp_conn *)xprt->xp_p1;
 
 	xprt_unregister(xprt);
 	if (xprt->xp_sock != -1)
@@ -322,10 +340,19 @@ readtcp(xprtp, buf, len)
 	caddr_t buf;
 	int len;
 {
-	SVCXPRT *xprt = (SVCXPRT *)(void *)xprtp;
-	int sock = xprt->xp_sock;
+	SVCXPRT *xprt;
+	int sock;
 	int milliseconds = 35 * 1000;
 	struct pollfd pollfd;
+
+	xprt = (SVCXPRT *)(void *)xprtp;
+	_DIAGASSERT(xprt != NULL);
+
+	sock = xprt->xp_sock;
+#ifdef _DIAGNOSTIC
+	if (buf == NULL)
+		goto fatal_err;
+#endif
 
 	do {
 		pollfd.fd = sock;
@@ -362,11 +389,20 @@ writetcp(xprtp, buf, len)
 	caddr_t buf;
 	int len;
 {
-	SVCXPRT *xprt = (SVCXPRT *)(void *)xprtp;
+	SVCXPRT *xprt;
 	int i, cnt;
+
+	xprt = (SVCXPRT *)(void *)xprtp;
+	_DIAGASSERT(xprt != NULL);
+
+#ifdef _DIAGNOSTIC
+	if (buf == NULL)
+		goto fatal_write;
+#endif
 
 	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
 		if ((i = write(xprt->xp_sock, buf, (size_t)cnt)) < 0) {
+fatal_write:
 			((struct tcp_conn *)(xprt->xp_p1))->strm_stat =
 			    XPRT_DIED;
 			return (-1);
@@ -379,7 +415,11 @@ static enum xprt_stat
 svctcp_stat(xprt)
 	SVCXPRT *xprt;
 {
-	struct tcp_conn *cd = (struct tcp_conn *)(xprt->xp_p1);
+	struct tcp_conn *cd;
+
+	_DIAGASSERT(xprt != NULL);
+
+	cd = (struct tcp_conn *)(xprt->xp_p1);
 
 	if (cd->strm_stat == XPRT_DIED)
 		return (XPRT_DIED);
@@ -393,8 +433,14 @@ svctcp_recv(xprt, msg)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
-	struct tcp_conn *cd = (struct tcp_conn *)(xprt->xp_p1);
-	XDR *xdrs = &(cd->xdrs);
+	struct tcp_conn *cd;
+	XDR *xdrs;
+
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
+
+	cd = (struct tcp_conn *)(xprt->xp_p1);
+	xdrs = &(cd->xdrs);
 
 	xdrs->x_op = XDR_DECODE;
 	(void)xdrrec_skiprecord(xdrs);
@@ -413,6 +459,9 @@ svctcp_getargs(xprt, xdr_args, args_ptr)
 	caddr_t args_ptr;
 {
 
+	_DIAGASSERT(xprt != NULL);
+	/* args_ptr may be NULL */
+
 	return ((*xdr_args)(&(((struct tcp_conn *)(xprt->xp_p1))->xdrs),
 	    args_ptr));
 }
@@ -423,7 +472,12 @@ svctcp_freeargs(xprt, xdr_args, args_ptr)
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
 {
-	XDR *xdrs = &(((struct tcp_conn *)(xprt->xp_p1))->xdrs);
+	XDR *xdrs;
+
+	_DIAGASSERT(xprt != NULL);
+	/* args_ptr may be NULL */
+
+	xdrs = &(((struct tcp_conn *)(xprt->xp_p1))->xdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_args)(xdrs, args_ptr));
@@ -434,9 +488,15 @@ svctcp_reply(xprt, msg)
 	SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
-	struct tcp_conn *cd = (struct tcp_conn *)(xprt->xp_p1);
-	XDR *xdrs = &(cd->xdrs);
+	struct tcp_conn *cd;
+	XDR *xdrs;
 	bool_t stat;
+
+	_DIAGASSERT(xprt != NULL);
+	_DIAGASSERT(msg != NULL);
+
+	cd = (struct tcp_conn *)(xprt->xp_p1);
+	xdrs = &(cd->xdrs);
 
 	xdrs->x_op = XDR_ENCODE;
 	msg->rm_xid = cd->x_id;

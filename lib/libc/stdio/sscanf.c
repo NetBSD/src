@@ -1,4 +1,4 @@
-/*	$NetBSD: sscanf.c,v 1.9 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: sscanf.c,v 1.10 1999/09/16 11:45:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)sscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sscanf.c,v 1.9 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: sscanf.c,v 1.10 1999/09/16 11:45:31 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #if __STDC__
@@ -80,6 +82,15 @@ sscanf(str, fmt, va_alist)
 	int ret;
 	va_list ap;
 	FILE f;
+
+	_DIAGASSERT(str != NULL);
+	_DIAGASSERT(fmt != NULL);
+#ifdef _DIAGNOSTIC
+	if (str == NULL || fmt == NULL) {
+		errno = EFAULT;
+		return (EOF);
+	}
+#endif
 
 	f._flags = __SRD;
 	/* LINTED we don't touch the string */

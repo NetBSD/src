@@ -1,4 +1,4 @@
-/*	$NetBSD: strdup.c,v 1.9 1998/10/13 20:27:55 kleink Exp $	*/
+/*	$NetBSD: strdup.c,v 1.10 1999/09/16 11:45:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)strdup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strdup.c,v 1.9 1998/10/13 20:27:55 kleink Exp $");
+__RCSID("$NetBSD: strdup.c,v 1.10 1999/09/16 11:45:41 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -56,6 +59,14 @@ strdup(str)
 {
 	size_t len;
 	char *copy;
+
+	_DIAGASSERT(str != NULL);
+#ifdef _DIAGNOSTIC
+	if (str == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
 
 	len = strlen(str) + 1;
 	if (!(copy = malloc(len)))

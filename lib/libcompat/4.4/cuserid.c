@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cuserid.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: cuserid.c,v 1.4 1998/07/26 19:31:35 mycroft Exp $");
+__RCSID("$NetBSD: cuserid.c,v 1.5 1999/09/16 11:45:48 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -51,6 +51,8 @@ cuserid(s)
 {
 	struct passwd *pw;
 	static char buf[L_cuserid];
+
+	/* s may be NULL */
 
 	if ((pw = getpwuid(geteuid())) == NULL) {
 		if (s)

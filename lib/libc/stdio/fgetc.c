@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetc.c,v 1.7 1998/01/19 07:38:43 jtc Exp $	*/
+/*	$NetBSD: fgetc.c,v 1.8 1999/09/16 11:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)fgetc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fgetc.c,v 1.7 1998/01/19 07:38:43 jtc Exp $");
+__RCSID("$NetBSD: fgetc.c,v 1.8 1999/09/16 11:45:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include "reentrant.h"
 
@@ -53,6 +55,14 @@ fgetc(fp)
 	FILE *fp;
 {
 	int r;
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
 
 	FLOCKFILE(fp);
 	r = __sgetc(fp);

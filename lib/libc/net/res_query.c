@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.22 1998/11/24 22:19:01 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.23 1999/09/16 11:45:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_query.c,v 8.10 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.22 1998/11/24 22:19:01 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.23 1999/09/16 11:45:18 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,11 +70,13 @@ __RCSID("$NetBSD: res_query.c,v 1.22 1998/11/24 22:19:01 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 #include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
-#include <ctype.h>
-#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -110,10 +112,19 @@ res_query(name, class, type, answer, anslen)
 	int anslen;		/* size of answer buffer */
 {
 	u_char buf[MAXPACKET];
-	register HEADER *hp = (HEADER *)(void *)answer;
+	HEADER *hp = (HEADER *)(void *)answer;
 	int n;
 
 	hp->rcode = NOERROR;	/* default */
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(answer != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || answer == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return (-1);
+	}
+#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -190,6 +201,15 @@ res_search(name, class, type, answer, anslen)
 	u_int dots;
 	int trailing_dot, ret, saved_herrno;
 	int got_nodata = 0, got_servfail = 0, tried_as_is = 0;
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(answer != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || answer == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return (-1);
+	}
+#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
@@ -331,6 +351,16 @@ res_querydomain(name, domain, class, type, answer, anslen)
 	const char *longname = nbuf;
 	size_t n, d;
 
+	_DIAGASSERT(name != NULL);
+	/* domain may be NULL */
+	_DIAGASSERT(answer != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || answer == NULL) {
+		h_errno = NETDB_INTERNAL;
+		return (-1);
+	}
+#endif
+
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (-1);
@@ -369,13 +399,19 @@ res_querydomain(name, domain, class, type, answer, anslen)
 
 const char *
 __hostalias(name)
-	register const char *name;
+	const char *name;
 {
-	register char *cp1, *cp2;
+	char *cp1, *cp2;
 	FILE *fp;
 	char *file;
 	char buf[BUFSIZ];
 	static char abuf[MAXDNAME];
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (NULL);
+#endif
 
 	if (_res.options & RES_NOALIASES)
 		return (NULL);

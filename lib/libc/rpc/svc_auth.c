@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_auth.c,v 1.8 1998/11/15 17:32:45 christos Exp $	*/
+/*	$NetBSD: svc_auth.c,v 1.9 1999/09/16 11:45:24 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_auth.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_auth.c	2.1 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_auth.c,v 1.8 1998/11/15 17:32:45 christos Exp $");
+__RCSID("$NetBSD: svc_auth.c,v 1.9 1999/09/16 11:45:24 lukem Exp $");
 #endif
 #endif
 
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: svc_auth.c,v 1.8 1998/11/15 17:32:45 christos Exp $");
  *
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
+
+#include <assert.h>
 
 #include <rpc/rpc.h>
 
@@ -98,6 +100,13 @@ _authenticate(rqst, msg)
 	struct rpc_msg *msg;
 {
 	int cred_flavor;
+
+	_DIAGASSERT(rqst != NULL);
+	_DIAGASSERT(msg != NULL);
+#ifdef _DIAGNOSTIC
+	if (rqst == NULL || msg == NULL)
+		return (AUTH_FAILED);
+#endif
 
 	rqst->rq_cred = msg->rm_call.cb_cred;
 	rqst->rq_xprt->xp_verf.oa_flavor = _null_auth.oa_flavor;

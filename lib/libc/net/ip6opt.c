@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6opt.c,v 1.2 1999/07/04 00:43:44 itojun Exp $	*/
+/*	$NetBSD: ip6opt.c,v 1.3 1999/09/16 11:45:15 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,6 +36,7 @@
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -70,7 +71,16 @@ inet6_option_init(bp, cmsgp, type)
 	struct cmsghdr **cmsgp;
 	int type;
 {
-	register struct cmsghdr *ch = (struct cmsghdr *)bp;
+	register struct cmsghdr *ch;
+
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(cmsgp != NULL);
+#ifdef _DIAGNOSTIC
+	if (bp == NULL || cmsgp == NULL)
+		return (-1);
+#endif
+
+	ch = (struct cmsghdr *)bp;
 
 	/* argument validation */
 	if (type != IPV6_HOPOPTS && type != IPV6_DSTOPTS)
@@ -102,8 +112,18 @@ inet6_option_append(cmsg, typep, multx, plusy)
 	int plusy;
 {
 	int padlen, optlen, off;
-	register u_char *bp = (u_char *)cmsg + cmsg->cmsg_len;
-	struct ip6_ext *eh = (struct ip6_ext *)CMSG_DATA(cmsg);
+	register u_char *bp;
+	struct ip6_ext *eh;
+
+	_DIAGASSERT(cmsg != NULL);
+	_DIAGASSERT(typep != NULL);
+#ifdef _DIAGNOSTIC
+	if (cmsg == NULL || typep == NULL)
+		return (-1);
+#endif
+
+	bp = (u_char *)cmsg + cmsg->cmsg_len;
+	eh = (struct ip6_ext *)CMSG_DATA(cmsg);
 
 	/* argument validation */
 	if (multx != 1 && multx != 2 && multx != 4 && multx != 8)
@@ -176,9 +196,18 @@ inet6_option_alloc(cmsg, datalen, multx, plusy)
 	int plusy;
 {
 	int padlen, off;
-	register u_int8_t *bp = (u_char *)cmsg + cmsg->cmsg_len;
+	register u_int8_t *bp;
 	u_int8_t *retval;
-	struct ip6_ext *eh = (struct ip6_ext *)CMSG_DATA(cmsg);
+	struct ip6_ext *eh;
+
+	_DIAGASSERT(cmsg != NULL);
+#ifdef _DIAGNOSTIC
+	if (cmsg == NULL)
+		return(NULL);
+#endif
+
+	bp = (u_char *)cmsg + cmsg->cmsg_len;
+	eh = (struct ip6_ext *)CMSG_DATA(cmsg);
 
 	/* argument validation */
 	if (multx != 1 && multx != 2 && multx != 4 && multx != 8)
@@ -243,6 +272,15 @@ inet6_option_next(cmsg, tptrp)
 	int hdrlen, optlen;
 	u_int8_t *lim;
 
+	_DIAGASSERT(cmsg != NULL);
+	_DIAGASSERT(tptrp != NULL);
+#ifdef _DIAGNOSTIC
+	if (cmsg == NULL || tptrp == NULL) {
+		/* XXX: can't set tptrp to non NULL for this error...  */
+		return (-1);
+	}
+#endif
+
 	if (cmsg->cmsg_level != IPPROTO_IPV6 ||
 	    (cmsg->cmsg_type != IPV6_HOPOPTS &&
 	     cmsg->cmsg_type != IPV6_DSTOPTS))
@@ -302,6 +340,15 @@ inet6_option_find(cmsg, tptrp, type)
 	int hdrlen, optlen;
 	u_int8_t *optp, *lim;
 
+	_DIAGASSERT(cmsg != NULL);
+	_DIAGASSERT(tptrp != NULL);
+#ifdef _DIAGNOSTIC
+	if (cmsg == NULL || tptrp == NULL) {
+		/* XXX: can't set tptrp to non NULL for this error...  */
+		return (-1);
+	}
+#endif
+
 	if (cmsg->cmsg_level != IPPROTO_IPV6 ||
 	    (cmsg->cmsg_type != IPV6_HOPOPTS &&
 	     cmsg->cmsg_type != IPV6_DSTOPTS))
@@ -354,6 +401,9 @@ ip6optlen(opt, lim)
 {
 	int optlen;
 
+	_DIAGASSERT(opt != NULL);
+	_DIAGASSERT(lim != NULL);
+
 	if (*opt == IP6OPT_PAD1)
 		optlen = 1;
 	else {
@@ -371,6 +421,9 @@ ip6optlen(opt, lim)
 static void
 inet6_insert_padopt(u_char *p, int len)
 {
+
+	_DIAGASSERT(p != NULL);
+
 	switch(len) {
 	 case 0:
 		 return;

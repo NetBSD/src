@@ -1,4 +1,4 @@
-/*	$NetBSD: login.c,v 1.10 1999/06/12 18:06:40 christos Exp $	*/
+/*	$NetBSD: login.c,v 1.11 1999/09/16 11:45:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,18 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)login.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login.c,v 1.10 1999/06/12 18:06:40 christos Exp $");
+__RCSID("$NetBSD: login.c,v 1.11 1999/09/16 11:45:50 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <utmp.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <util.h>
+#include <utmp.h>
 
 void
 login(ut)
@@ -57,6 +59,12 @@ login(ut)
 {
 	int fd;
 	int tty;
+
+	_DIAGASSERT(ut != NULL);
+#ifdef _DIAGNOSTIC
+	if (ut == NULL)
+		return;
+#endif
 
 	tty = ttyslot();
 	if (tty > 0 && (fd = open(_PATH_UTMP, O_WRONLY|O_CREAT, 0644)) >= 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pidlock.c,v 1.6 1999/01/11 23:20:35 kleink Exp $ */
+/*	$NetBSD: pidlock.c,v 1.7 1999/09/16 11:45:51 lukem Exp $ */
 
 /*
  * Copyright 1996, 1997 by Curt Sampson <cjs@netbsd.org>.
@@ -24,13 +24,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidlock.c,v 1.6 1999/01/11 23:20:35 kleink Exp $");
+__RCSID("$NetBSD: pidlock.c,v 1.7 1999/09/16 11:45:51 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -58,6 +59,17 @@ pidlock(lockfile, flags, locker, info)
 	int	f;
 	char	s[256];
 	char	*p;
+
+	_DIAGASSERT(lockfile != NULL);
+	/* locker may be NULL */
+	/* info may be NULL */
+#ifdef _DIAGNOSTIC
+	if (lockfile == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+#endif
+
 
 	if (gethostname(hostname, sizeof(hostname)))
 		return -1;
@@ -198,6 +210,15 @@ ttylock(tty, flags, locker)
 	char	ttyfile[MAXPATHLEN];
 	struct stat sb;
 
+	_DIAGASSERT(tty != NULL);
+	/* locker is not used */
+#ifdef _DIAGNOSTIC
+	if (tty == NULL || *tty == '\0') {
+		errno = ENOENT;
+		return -1;
+	}
+#endif
+
 	/* make sure the tty exists */
 	strcpy(ttyfile, DEVPATH);
 	strncat(ttyfile, tty, MAXPATHLEN-strlen(DEVPATH));
@@ -221,6 +242,14 @@ ttyunlock(tty)
 	char	lockfile[MAXPATHLEN];
 	char	ttyfile[MAXPATHLEN];
 	struct stat sb;
+
+	_DIAGASSERT(tty != NULL);
+#ifdef _DIAGNOSTIC
+	if (tty == NULL || *tty == '\0') {
+		errno = ENOENT;
+		return -1;
+	}
+#endif
 
 	/* make sure the tty exists */
 	strcpy(ttyfile, DEVPATH);

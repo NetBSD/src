@@ -1,4 +1,4 @@
-/*	$NetBSD: jrand48.c,v 1.4 1998/01/09 03:15:37 perry Exp $	*/
+/*	$NetBSD: jrand48.c,v 1.5 1999/09/16 11:45:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -14,6 +14,9 @@
  */
 
 #include "namespace.h"
+
+#include <assert.h>
+
 #include "rand48.h"
 
 #ifdef __weak_alias
@@ -23,6 +26,13 @@ __weak_alias(jrand48,_jrand48);
 long
 jrand48(unsigned short xseed[3])
 {
+
+	_DIAGASSERT(xseed != NULL);
+#ifdef _DIAGNOSTIC
+	if (xseed == NULL)
+		return (0L);
+#endif
+
 	__dorand48(xseed);
 	return ((long) xseed[2] << 16) + (long) xseed[1];
 }

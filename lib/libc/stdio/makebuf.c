@@ -1,4 +1,4 @@
-/*	$NetBSD: makebuf.c,v 1.10 1998/11/15 17:16:27 christos Exp $	*/
+/*	$NetBSD: makebuf.c,v 1.11 1999/09/16 11:45:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,16 +41,18 @@
 #if 0
 static char sccsid[] = "@(#)makebuf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: makebuf.c,v 1.10 1998/11/15 17:16:27 christos Exp $");
+__RCSID("$NetBSD: makebuf.c,v 1.11 1999/09/16 11:45:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "local.h"
 
 /*
@@ -68,6 +70,12 @@ __smakebuf(fp)
 	int flags;
 	size_t size;
 	int couldbetty;
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL)
+		return;
+#endif
 
 	if (fp->_flags & __SNBF) {
 		fp->_bf._base = fp->_p = fp->_nbuf;
@@ -100,6 +108,14 @@ __swhatbuf(fp, bufsize, couldbetty)
 	int *couldbetty;
 {
 	struct stat st;
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(bufsize != NULL);
+	_DIAGASSERT(couldbetty != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL || bufsize == NULL || couldbetty == NULL)
+		return (__SNPT);
+#endif
 
 	if (fp->_file < 0 || fstat(fp->_file, &st) < 0) {
 		*couldbetty = 0;

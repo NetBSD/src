@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.14 1999/01/20 11:37:35 lukem Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.15 1999/09/16 11:45:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.14 1999/01/20 11:37:35 lukem Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.15 1999/09/16 11:45:22 lukem Exp $");
 #endif
 #endif
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: clnt_raw.c,v 1.14 1999/01/20 11:37:35 lukem Exp $");
 
 #include "namespace.h"
 
+#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -159,6 +160,8 @@ clntraw_call(h, proc, xargs, argsp, xresults, resultsp, timeout)
 	struct rpc_msg msg;
 	enum clnt_stat status;
 	struct rpc_err error;
+
+	_DIAGASSERT(h != NULL);
 
 	if (clp == 0)
 		return (RPC_FAILED);

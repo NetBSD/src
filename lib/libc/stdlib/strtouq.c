@@ -1,4 +1,4 @@
-/*	$NetBSD: strtouq.c,v 1.11 1999/08/17 04:02:34 mycroft Exp $	*/
+/*	$NetBSD: strtouq.c,v 1.12 1999/09/16 11:45:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,13 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)strtouq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtouq.c,v 1.11 1999/08/17 04:02:34 mycroft Exp $");
+__RCSID("$NetBSD: strtouq.c,v 1.12 1999/09/16 11:45:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -70,6 +71,15 @@ _strtouq(nptr, endptr, base)
 	u_quad_t acc, cutoff;
 	int c;
 	int neg, any, cutlim;
+
+	_DIAGASSERT(nptr != NULL);
+	/* endptr may be NULL */
+#ifdef _DIAGNOSTIC
+	if (nptr == NULL) {
+		errno = EFAULT;
+		return ((u_quad_t)0);
+	}
+#endif
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */

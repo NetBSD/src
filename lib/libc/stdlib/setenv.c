@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.15 1998/11/15 17:13:51 christos Exp $	*/
+/*	$NetBSD: setenv.c,v 1.16 1999/09/16 11:45:36 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,11 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)setenv.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: setenv.c,v 1.15 1998/11/15 17:13:51 christos Exp $");
+__RCSID("$NetBSD: setenv.c,v 1.16 1999/09/16 11:45:36 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include "local.h"
@@ -73,6 +76,15 @@ setenv(name, value, rewrite)
 	char *c;
 	const char *cc;
 	int l_value, offset;
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(value != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || value == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if (*value == '=')			/* no `=' in value */
 		++value;
@@ -139,6 +151,12 @@ unsetenv(name)
 	extern char **environ;
 	char **p;
 	int offset;
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return;
+#endif
 
 	rwlock_wrlock(&__environ_lock);
 	while (__findenv(name, &offset))	/* if set multiple times */

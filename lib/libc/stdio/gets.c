@@ -1,4 +1,4 @@
-/*	$NetBSD: gets.c,v 1.11 1998/11/20 14:49:19 kleink Exp $	*/
+/*	$NetBSD: gets.c,v 1.12 1999/09/16 11:45:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)gets.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gets.c,v 1.11 1998/11/20 14:49:19 kleink Exp $");
+__RCSID("$NetBSD: gets.c,v 1.12 1999/09/16 11:45:28 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include "reentrant.h"
 
@@ -56,6 +58,14 @@ gets(buf)
 {
 	int c;
 	char *s;
+
+	_DIAGASSERT(buf != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
 
 	FLOCKFILE(stdin);
 	for (s = buf; (c = getchar_unlocked()) != '\n'; ) {

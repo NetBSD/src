@@ -1,4 +1,4 @@
-/*	$NetBSD: fprintf.c,v 1.6 1997/07/13 20:15:00 christos Exp $	*/
+/*	$NetBSD: fprintf.c,v 1.7 1999/09/16 11:45:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)fprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fprintf.c,v 1.6 1997/07/13 20:15:00 christos Exp $");
+__RCSID("$NetBSD: fprintf.c,v 1.7 1999/09/16 11:45:27 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #if __STDC__
 #include <stdarg.h>
@@ -64,6 +66,19 @@ fprintf(fp, fmt, va_alist)
 {
 	int ret;
 	va_list ap;
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(fmt != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (fmt == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 #if __STDC__
 	va_start(ap, fmt);

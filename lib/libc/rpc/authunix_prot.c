@@ -1,4 +1,4 @@
-/*	$NetBSD: authunix_prot.c,v 1.9 1999/01/31 20:45:31 christos Exp $	*/
+/*	$NetBSD: authunix_prot.c,v 1.10 1999/09/16 11:45:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)authunix_prot.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)authunix_prot.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: authunix_prot.c,v 1.9 1999/01/31 20:45:31 christos Exp $");
+__RCSID("$NetBSD: authunix_prot.c,v 1.10 1999/09/16 11:45:22 lukem Exp $");
 #endif
 #endif
 
@@ -47,6 +47,8 @@ __RCSID("$NetBSD: authunix_prot.c,v 1.9 1999/01/31 20:45:31 christos Exp $");
  */
 
 #include "namespace.h"
+
+#include <assert.h>
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
@@ -65,6 +67,13 @@ xdr_authunix_parms(xdrs, p)
 	XDR *xdrs;
 	struct authunix_parms *p;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(p != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || p == NULL)
+		return (FALSE);
+#endif
 
 	if (xdr_u_long(xdrs, &(p->aup_time))
 	    && xdr_string(xdrs, &(p->aup_machname), MAX_MACHINE_NAME)

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_ntop.c,v 1.7 1998/01/06 05:01:20 perry Exp $	*/
+/*	$NetBSD: inet_net_ntop.c,v 1.8 1999/09/16 11:45:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_ntop.c,v 8.2 1996/08/08 06:54:44 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.7 1998/01/06 05:01:20 perry Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.8 1999/09/16 11:45:13 lukem Exp $");
 #endif
 #endif
 
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: inet_net_ntop.c,v 1.7 1998/01/06 05:01:20 perry Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -68,6 +69,16 @@ inet_net_ntop(af, src, bits, dst, size)
 	char *dst;
 	size_t size;
 {
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+#ifdef _DIAGNOSTIC
+	if (src == NULL || dst == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
+
 	switch (af) {
 	case AF_INET:
 		return (inet_net_ntop_ipv4(src, bits, dst, size));
@@ -101,6 +112,9 @@ inet_net_ntop_ipv4(src, bits, dst, size)
 	char *t;
 	u_int m;
 	int b;
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
 
 	if (bits < 0 || bits > 32) {
 		errno = EINVAL;

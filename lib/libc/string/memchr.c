@@ -1,4 +1,4 @@
-/*	$NetBSD: memchr.c,v 1.9 1998/03/26 23:53:36 cgd Exp $	*/
+/*	$NetBSD: memchr.c,v 1.10 1999/09/16 11:45:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,15 +41,17 @@
 #if 0
 static char sccsid[] = "@(#)memchr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memchr.c,v 1.9 1998/03/26 23:53:36 cgd Exp $");
+__RCSID("$NetBSD: memchr.c,v 1.10 1999/09/16 11:45:40 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <assert.h>
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
-#define	NULL	((char *)0)
+#define _DIAGASSERT(x)	(void)0
+#define	NULL		((char *)0)
 #endif
 
 void *
@@ -58,6 +60,12 @@ memchr(s, c, n)
 	unsigned char c;
 	size_t n;
 {
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL)
+		return (NULL);
+#endif
+
 	if (n != 0) {
 		const unsigned char *p = s;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rthdr.c,v 1.2 1999/07/04 00:43:44 itojun Exp $	*/
+/*	$NetBSD: rthdr.c,v 1.3 1999/09/16 11:45:19 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,6 +36,7 @@
 #include <netinet/in.h>
 #include <netinet/ip6.h>
 
+#include <assert.h>
 #include <string.h>
 #include <stdio.h>
 
@@ -62,8 +63,17 @@ inet6_rthdr_init(bp, type)
     void *bp;
     int type;
 {
-    register struct cmsghdr *ch = (struct cmsghdr *)bp;
-    register struct ip6_rthdr *rthdr = (struct ip6_rthdr *)(ch + 1);
+    register struct cmsghdr *ch;
+    register struct ip6_rthdr *rthdr;
+
+    _DIAGASSERT(bp != NULL);
+#ifdef _DIAGNOSTIC
+    if (bp == NULL)
+	return(NULL);
+#endif
+
+    ch = (struct cmsghdr *)bp;
+    rthdr = (struct ip6_rthdr *)(ch + 1);
 
     ch->cmsg_level = IPPROTO_IPV6;
     ch->cmsg_type = IPV6_RTHDR;
@@ -88,7 +98,16 @@ inet6_rthdr_add(cmsg, addr, flags)
     const struct in6_addr *addr;
     u_int flags;
 {
-    register struct ip6_rthdr *rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    register struct ip6_rthdr *rthdr;
+
+    _DIAGASSERT(cmsg != NULL);
+    _DIAGASSERT(addr != NULL);
+#ifdef _DIAGNOSTIC
+    if (cmsg == NULL || addr == NULL)
+	return (-1);
+#endif
+
+    rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
     switch(rthdr->ip6r_type) {
      case IPV6_RTHDR_TYPE_0:
@@ -135,7 +154,15 @@ inet6_rthdr_lasthop(cmsg, flags)
     struct cmsghdr *cmsg;
     unsigned int flags;
 {
-    register struct ip6_rthdr *rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    register struct ip6_rthdr *rthdr;
+
+    _DIAGASSERT(cmsg != NULL);
+#ifdef _DIAGNOSTIC
+    if (cmsg == NULL)
+	return (-1);
+#endif
+
+    rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
     switch(rthdr->ip6r_type) {
      case IPV6_RTHDR_TYPE_0:
@@ -189,7 +216,15 @@ int
 inet6_rthdr_segments(cmsg)
     const struct cmsghdr *cmsg;
 {
-    register struct ip6_rthdr *rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    register struct ip6_rthdr *rthdr;
+
+    _DIAGASSERT(cmsg != NULL);
+#ifdef _DIAGNOSTIC
+    if (cmsg == NULL)
+	return (-1);
+#endif
+
+    rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:
@@ -221,7 +256,15 @@ inet6_rthdr_getaddr(cmsg, index)
     struct cmsghdr *cmsg;
     int index;
 {
-    register struct ip6_rthdr *rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    register struct ip6_rthdr *rthdr;
+
+    _DIAGASSERT(cmsg != NULL);
+#ifdef _DIAGNOSTIC
+    if (cmsg == NULL)
+	return (NULL);
+#endif
+
+    rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:
@@ -260,7 +303,15 @@ inet6_rthdr_getflags(cmsg, index)
     const struct cmsghdr *cmsg;
     int index;
 {
-    register struct ip6_rthdr *rthdr = (struct ip6_rthdr *)(cmsg + 1);
+    register struct ip6_rthdr *rthdr;
+
+    _DIAGASSERT(cmsg != NULL);
+#ifdef _DIAGNOSTIC
+    if (cmsg == NULL)
+	return (-1);
+#endif
+
+    rthdr = (struct ip6_rthdr *)(cmsg + 1);
 
     switch(rthdr->ip6r_type) {
     case IPV6_RTHDR_TYPE_0:

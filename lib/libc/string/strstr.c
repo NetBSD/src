@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.8 1998/11/15 17:21:49 christos Exp $	*/
+/*	$NetBSD: strstr.c,v 1.9 1999/09/16 11:45:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.8 1998/11/15 17:21:49 christos Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.9 1999/09/16 11:45:43 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <string.h>
 
 /*
@@ -56,6 +57,13 @@ strstr(s, find)
 {
 	char c, sc;
 	size_t len;
+
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(find != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL || find == NULL)
+		return (NULL);
+#endif
 
 	if ((c = *find++) != 0) {
 		len = strlen(find);

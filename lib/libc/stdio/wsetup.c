@@ -1,4 +1,4 @@
-/*	$NetBSD: wsetup.c,v 1.7 1998/02/03 18:41:25 perry Exp $	*/
+/*	$NetBSD: wsetup.c,v 1.8 1999/09/16 11:45:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)wsetup.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: wsetup.c,v 1.7 1998/02/03 18:41:25 perry Exp $");
+__RCSID("$NetBSD: wsetup.c,v 1.8 1999/09/16 11:45:32 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
@@ -58,6 +60,15 @@ int
 __swsetup(fp)
 	FILE *fp;
 {
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
+
 	/* make sure stdio is set up */
 	if (!__sdidinit)
 		__sinit();

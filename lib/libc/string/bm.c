@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.c,v 1.7 1998/02/03 18:49:11 perry Exp $	*/
+/*	$NetBSD: bm.c,v 1.8 1999/09/16 11:45:38 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94";
 #else
-__RCSID("$NetBSD: bm.c,v 1.7 1998/02/03 18:49:11 perry Exp $");
+__RCSID("$NetBSD: bm.c,v 1.8 1999/09/16 11:45:38 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS && not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 
+#include <assert.h>
 #include <bm.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -114,6 +115,15 @@ bm_comp(pb, len, freq)
 	int sv_errno;
 	bm_pat *pat;
 
+	_DIAGASSERT(pb != NULL);
+	/* freq may be NULL */
+#ifdef _DIAGNOSTIC
+	if (pb == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
+
 	if (len == 0) {
 		errno = EINVAL;
 		return (NULL);
@@ -163,6 +173,13 @@ void
 bm_free(pat)
 	bm_pat *pat;
 {
+
+	_DIAGASSERT(pat != NULL);
+#ifdef _DIAGNOSTIC
+	if (pat == NULL)
+		return;
+#endif
+
 	if (pat->pat != NULL)
 		free(pat->pat);
 	if (pat->delta != NULL)
@@ -179,6 +196,13 @@ bm_exec(pat, base, n)
 	u_char *e, *ep, *p, *q, *s;
 	size_t *d0, k, md2, n1, ro;
 	int rc;
+
+	_DIAGASSERT(pat != NULL);
+	_DIAGASSERT(base != NULL);
+#ifdef _DIAGNOSTIC
+	if (pat == NULL || base == NULL)
+		return (NULL);
+#endif
 
 	if (n == 0)
 		return (NULL);

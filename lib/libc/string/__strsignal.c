@@ -1,4 +1,4 @@
-/*	$NetBSD: __strsignal.c,v 1.17 1998/11/30 20:43:53 thorpej Exp $	*/
+/*	$NetBSD: __strsignal.c,v 1.18 1999/09/16 11:45:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)strerror.c	5.6 (Berkeley) 5/4/91";
 #else
-__RCSID("$NetBSD: __strsignal.c,v 1.17 1998/11/30 20:43:53 thorpej Exp $");
+__RCSID("$NetBSD: __strsignal.c,v 1.18 1999/09/16 11:45:38 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: __strsignal.c,v 1.17 1998/11/30 20:43:53 thorpej Exp $");
 #include <nl_types.h>
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <signal.h>
 #include <string.h>
@@ -66,6 +67,12 @@ __strsignal(num, buf, buflen)
 #ifdef NLS
 	nl_catd catd ;
 	catd = catopen("libc", 0);
+#endif
+
+	_DIAGASSERT(buf != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL)
+		return (NULL);
 #endif
 
 	signum = num;				/* convert to unsigned */

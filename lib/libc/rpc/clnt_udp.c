@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_udp.c,v 1.18 1999/05/03 15:32:13 christos Exp $	*/
+/*	$NetBSD: clnt_udp.c,v 1.19 1999/09/16 11:45:23 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_udp.c 1.39 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_udp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_udp.c,v 1.18 1999/05/03 15:32:13 christos Exp $");
+__RCSID("$NetBSD: clnt_udp.c,v 1.19 1999/09/16 11:45:23 lukem Exp $");
 #endif
 #endif
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: clnt_udp.c,v 1.18 1999/05/03 15:32:13 christos Exp $");
 #include <sys/poll.h>
 #include <sys/socket.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
@@ -140,6 +141,16 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	struct timeval now;
 	struct rpc_msg call_msg;
 	static u_int32_t disrupt;
+
+	_DIAGASSERT(raddr != NULL);
+	_DIAGASSERT(sockp != NULL);
+#ifdef _DIAGNOSTIC
+	if (raddr == NULL || sockp == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = EFAULT;
+		return (NULL);
+	}
+#endif
 
 	if (disrupt == 0)
 		disrupt = (u_int32_t)(long)raddr;
@@ -244,14 +255,13 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	caddr_t		resultsp;	/* pointer to results */
 	struct timeval	utimeout;	/* seconds to wait before giving up */
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu;
 	XDR *xdrs;
 	size_t outlen;
 	int inlen;
 	socklen_t fromlen;
 	struct pollfd fd;
-	int milliseconds = (int)((cu->cu_wait.tv_sec * 1000) +
-	    (cu->cu_wait.tv_usec / 1000));
+	int milliseconds;
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
@@ -259,6 +269,12 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	bool_t ok;
 	int nrefreshes = 2;	/* number of times to refresh cred */
 	struct timeval timeout;
+
+	_DIAGASSERT(cl != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
+	milliseconds = (int)((cu->cu_wait.tv_sec * 1000) +
+	    (cu->cu_wait.tv_usec / 1000));
 
 	if (cu->cu_total.tv_usec == -1) {
 		timeout = utimeout;     /* use supplied timeout */
@@ -406,7 +422,12 @@ clntudp_geterr(cl, errp)
 	CLIENT *cl;
 	struct rpc_err *errp;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu;
+
+	_DIAGASSERT(cl != NULL);
+	_DIAGASSERT(errp != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
 
 	*errp = cu->cu_error;
 }
@@ -418,8 +439,13 @@ clntudp_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
-	XDR *xdrs = &(cu->cu_outxdrs);
+	struct cu_data *cu;
+	XDR *xdrs;
+
+	_DIAGASSERT(cl != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
+	xdrs = &(cu->cu_outxdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
@@ -438,8 +464,13 @@ clntudp_control(cl, request, info)
 	u_int request;
 	char *info;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu;
 	void *infop = info;
+
+	_DIAGASSERT(cl != NULL);
+	_DIAGASSERT(info != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
 
 	switch (request) {
 	case CLSET_TIMEOUT:
@@ -467,7 +498,11 @@ static void
 clntudp_destroy(cl)
 	CLIENT *cl;
 {
-	struct cu_data *cu = (struct cu_data *)cl->cl_private;
+	struct cu_data *cu;
+
+	_DIAGASSERT(cl != NULL);
+
+	cu = (struct cu_data *)cl->cl_private;
 
 	if (cu->cu_closeit && cu->cu_sock != -1) {
 		(void)close(cu->cu_sock);

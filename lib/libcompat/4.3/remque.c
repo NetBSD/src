@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: remque.c,v 1.6 1999/07/02 15:16:41 simonb Exp $");
+__RCSID("$NetBSD: remque.c,v 1.7 1999/09/16 11:45:47 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <search.h>
 
 struct qelem {
@@ -43,6 +44,13 @@ remque(element)
 	void *element;
 {
 	struct qelem *e = (struct qelem *) element;
+
+	_DIAGASSERT(e != 0);
+#ifdef _DIAGNOSTIC
+	if (e == 0)
+		return;
+#endif
+
 	e->q_forw->q_back = e->q_back;
 	e->q_back->q_forw = e->q_forw;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.22 1998/11/15 17:19:53 christos Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.23 1999/09/16 11:45:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vfscanf.c,v 1.22 1998/11/15 17:19:53 christos Exp $");
+__RCSID("$NetBSD: vfscanf.c,v 1.23 1999/09/16 11:45:31 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -54,6 +57,7 @@ __RCSID("$NetBSD: vfscanf.c,v 1.22 1998/11/15 17:19:53 christos Exp $");
 #else
 #include <varargs.h>
 #endif
+
 #include "local.h"
 
 #ifdef FLOATING_POINT
@@ -128,6 +132,19 @@ __svfscanf(fp, fmt0, ap)
 	/* `basefix' is used to avoid `if' tests in the integer scanner */
 	static const short basefix[17] =
 		{ 10, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+
+	_DIAGASSERT(fp != NULL);
+	_DIAGASSERT(fmt0 != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+	if (fmt0 == NULL) {
+		errno = EFAULT;
+		return (EOF);
+	}
+#endif
 
 	nassigned = 0;
 	nread = 0;
@@ -680,6 +697,9 @@ __sccl(tab, fmt)
 	const u_char *fmt;
 {
 	int c, n, v;
+
+	_DIAGASSERT(tab != NULL);
+	_DIAGASSERT(fmt != NULL);
 
 	/* first `clear' the whole table */
 	c = *fmt++;		/* first char hat => negated scanset */

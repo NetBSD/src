@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.21 1999/05/03 15:32:13 christos Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.22 1999/09/16 11:45:24 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_rmt.c,v 1.21 1999/05/03 15:32:13 christos Exp $");
+__RCSID("$NetBSD: pmap_rmt.c,v 1.22 1999/09/16 11:45:24 lukem Exp $");
 #endif
 #endif
 
@@ -58,6 +58,7 @@ __RCSID("$NetBSD: pmap_rmt.c,v 1.21 1999/05/03 15:32:13 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
@@ -105,6 +106,15 @@ pmap_rmtcall(addr, prog, vers, proc, xdrargs, argsp, xdrres, resp, tout,
 	struct rmtcallres r;
 	enum clnt_stat stat;
 
+	_DIAGASSERT(addr != NULL);
+	_DIAGASSERT(port_ptr != NULL);
+#ifdef _DIAGNOSTIC
+	if (addr == NULL || port_ptr == NULL) {
+		errno = EFAULT;
+		return (RPC_SYSTEMERROR);
+	}
+#endif
+
 	addr->sin_port = htons(PMAPPORT);
 	client = clntudp_create(addr, PMAPPROG, PMAPVERS, timeout, &sock);
 	if (client != (CLIENT *)NULL) {
@@ -139,6 +149,13 @@ xdr_rmtcall_args(xdrs, cap)
 {
 	u_int lenposition, argposition, position;
 
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(cap != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || cap == NULL)
+		return (FALSE);
+#endif
+
 	if (xdr_u_long(xdrs, &(cap->prog)) &&
 	    xdr_u_long(xdrs, &(cap->vers)) &&
 	    xdr_u_long(xdrs, &(cap->proc))) {
@@ -170,6 +187,13 @@ xdr_rmtcallres(xdrs, crp)
 {
 	caddr_t port_ptr;
 
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(crp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || crp == NULL)
+		return (FALSE);
+#endif
+
 	port_ptr = (caddr_t)(void *)crp->port_ptr;
 	if (xdr_reference(xdrs, &port_ptr, sizeof (u_long),
 	    (xdrproc_t)xdr_u_long) && xdr_u_long(xdrs, &crp->resultslen)) {
@@ -197,6 +221,9 @@ getbroadcastnets(addrs, sock, buf)
 	struct sockaddr_in *sin;
         char *cp, *cplim;
         int i = 0;
+
+	_DIAGASSERT(addrs != NULL);
+	_DIAGASSERT(buf != NULL);
 
         ifc.ifc_len = UDPMSGSIZE;
         ifc.ifc_buf = buf;

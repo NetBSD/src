@@ -1,4 +1,4 @@
-/*	$NetBSD: lcong48.c,v 1.4 1998/01/09 03:15:37 perry Exp $	*/
+/*	$NetBSD: lcong48.c,v 1.5 1999/09/16 11:45:34 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -14,6 +14,9 @@
  */
 
 #include "namespace.h"
+
+#include <assert.h>
+
 #include "rand48.h"
 
 #ifdef __weak_alias
@@ -23,6 +26,12 @@ __weak_alias(lcong48,_lcong48);
 void
 lcong48(unsigned short p[7])
 {
+	_DIAGASSERT(p != NULL);
+#ifdef _DIAGNOSTIC
+	if (p == NULL)
+		return;
+#endif
+
 	__rand48_seed[0] = p[0];
 	__rand48_seed[1] = p[1];
 	__rand48_seed[2] = p[2];

@@ -1,4 +1,4 @@
-/*	$NetBSD: xdryp.c,v 1.22 1999/01/31 20:46:12 christos Exp $	*/
+/*	$NetBSD: xdryp.c,v 1.23 1999/09/16 11:45:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: xdryp.c,v 1.22 1999/01/31 20:46:12 christos Exp $");
+__RCSID("$NetBSD: xdryp.c,v 1.23 1999/09/16 11:45:45 lukem Exp $");
 #endif
 
 /*
@@ -49,13 +49,16 @@ __RCSID("$NetBSD: xdryp.c,v 1.22 1999/01/31 20:46:12 christos Exp $");
  */
 
 #include "namespace.h"
+
 #include <sys/param.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+
+#include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp_prot.h>
@@ -102,6 +105,14 @@ xdr_domainname(xdrs, objp)
 	XDR *xdrs;
 	char *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_string(xdrs, &objp, YPMAXDOMAIN);
 }
 
@@ -113,6 +124,14 @@ xdr_peername(xdrs, objp)
 	XDR *xdrs;
 	char *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_string(xdrs, &objp, YPMAXPEER);
 }
 
@@ -124,6 +143,14 @@ xdr_mapname(xdrs, objp)
 	XDR *xdrs;
 	char *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_string(xdrs, &objp, YPMAXMAP);
 }
 
@@ -132,6 +159,14 @@ xdr_ypdomain_wrap_string(xdrs, objp)
 	XDR *xdrs;
 	char **objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_string(xdrs, objp, YPMAXDOMAIN);
 }
 
@@ -140,6 +175,14 @@ xdr_ypmap_wrap_string(xdrs, objp)
 	XDR *xdrs;
 	char **objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_string(xdrs, objp, YPMAXMAP);
 }
 
@@ -148,6 +191,14 @@ xdr_ypowner_wrap_string(xdrs, objp)
 	XDR *xdrs;
 	char **objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_string(xdrs, objp, YPMAXPEER);
 }
 
@@ -156,6 +207,14 @@ xdr_datum(xdrs, objp)
 	XDR *xdrs;
 	datum *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_bytes(xdrs, (char **)&objp->dptr,
 	    (u_int *)&objp->dsize, YPMAXRECORD);
 }
@@ -165,6 +224,14 @@ xdr_ypreq_key(xdrs, objp)
 	XDR *xdrs;
 	struct ypreq_key *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
 
@@ -182,6 +249,14 @@ xdr_ypreq_nokey(xdrs, objp)
 	XDR *xdrs;
 	struct ypreq_nokey *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
 
@@ -196,6 +271,14 @@ xdr_yp_inaddr(xdrs, objp)
 	XDR *xdrs;
 	struct in_addr *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_opaque(xdrs, (caddr_t)(void *)&objp->s_addr,
 	    sizeof objp->s_addr);
 }
@@ -205,6 +288,14 @@ xdr_ypbind_binding(xdrs, objp)
 	XDR *xdrs;
 	struct ypbind_binding *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_yp_inaddr(xdrs, &objp->ypbind_binding_addr))
 		return FALSE;
 
@@ -220,6 +311,14 @@ xdr_ypbind_resptype(xdrs, objp)
 	XDR *xdrs;
 	enum ypbind_resptype *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_enum(xdrs, (enum_t *)objp);
 }
 
@@ -228,6 +327,14 @@ xdr_ypstat(xdrs, objp)
 	XDR *xdrs;
 	enum ypbind_resptype *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_enum(xdrs, (enum_t *)objp);
 }
 
@@ -236,6 +343,14 @@ xdr_ypbind_resp(xdrs, objp)
 	XDR *xdrs;
 	struct ypbind_resp *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypbind_resptype(xdrs, &objp->ypbind_status))
 		return FALSE;
 
@@ -259,6 +374,14 @@ xdr_ypresp_val(xdrs, objp)
 	XDR *xdrs;
 	struct ypresp_val *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
@@ -273,7 +396,16 @@ xdr_ypbind_setdom(xdrs, objp)
 	XDR *xdrs;
 	struct ypbind_setdom *objp;
 {
-	char *cp = objp->ypsetdom_domain;
+	char *cp;
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
+	cp = objp->ypsetdom_domain;
 
 	if (!xdr_ypdomain_wrap_string(xdrs, &cp))
 		return FALSE;
@@ -292,6 +424,14 @@ xdr_ypresp_key_val(xdrs, objp)
 	XDR *xdrs;
 	struct ypresp_key_val *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
@@ -312,6 +452,13 @@ xdr_ypall(xdrs, incallback)
 	struct ypresp_key_val out;
 	char key[YPMAXRECORD], val[YPMAXRECORD];
 	bool_t more, status;
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(incallback != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || incallback == NULL)
+		return FALSE;
+#endif
 
 	/*
 	 * Set up key/val struct to be used during the transaction.
@@ -355,6 +502,14 @@ xdr_ypresp_master(xdrs, objp)
 	XDR *xdrs;
 	struct ypresp_master *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
@@ -369,6 +524,14 @@ xdr_ypmaplist_str(xdrs, objp)
 	XDR *xdrs;
 	char *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	return xdr_string(xdrs, &objp, YPMAXMAP+1);
 }
 
@@ -377,6 +540,14 @@ xdr_ypmaplist(xdrs, objp)
 	XDR *xdrs;
 	struct ypmaplist *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypmaplist_str(xdrs, objp->ypml_name))
 		return FALSE;
 
@@ -392,6 +563,14 @@ xdr_ypresp_maplist(xdrs, objp)
 	XDR *xdrs;
 	struct ypresp_maplist *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
@@ -407,6 +586,14 @@ xdr_ypresp_order(xdrs, objp)
 	XDR *xdrs;
 	struct ypresp_order *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypstat(xdrs, (enum ypbind_resptype *)&objp->status))
 		return FALSE;
 
@@ -421,6 +608,14 @@ xdr_ypreq_xfr(xdrs, objp)
 	XDR *xdrs;
 	struct ypreq_xfr *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypmap_parms(xdrs, &objp->map_parms))
 		return FALSE;
 
@@ -441,6 +636,14 @@ xdr_ypmap_parms(xdrs, objp)
 	XDR *xdrs;
 	struct ypmap_parms *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_ypdomain_wrap_string(xdrs, (char **)&objp->domain))
 		return FALSE;
 
@@ -461,6 +664,14 @@ xdr_yppushresp_xfr(xdrs, objp)
 	XDR *xdrs;
 	struct yppushresp_xfr *objp;
 {
+
+	_DIAGASSERT(xdrs != NULL);
+	_DIAGASSERT(objp != NULL);
+#ifdef _DIAGNOSTIC
+	if (xdrs == NULL || objp == NULL)
+		return FALSE;
+#endif
+
 	if (!xdr_u_int(xdrs, &objp->transid))
 		return FALSE;
 

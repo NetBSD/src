@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.11 1998/11/13 15:49:29 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.12 1999/09/16 11:45:07 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,14 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: vis.c,v 1.11 1998/11/13 15:49:29 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.12 1999/09/16 11:45:07 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
-#include <limits.h>
+
+#include <assert.h>
 #include <ctype.h>
+#include <limits.h>
+#include <stdio.h>
 #include <vis.h>
 
 #ifdef __weak_alias
@@ -65,6 +68,13 @@ vis(dst, c, flag, nextc)
 	int c, nextc;
 	int flag;
 {
+
+	_DIAGASSERT(dst != NULL);
+#ifdef _DIAGNOSTIC
+	if (dst == NULL)
+		return (NULL);
+#endif
+
 	if (((u_int)c <= UCHAR_MAX && isascii(c) && isgraph(c)) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
 	   ((flag & VIS_TAB) == 0 && c == '\t') ||
@@ -172,6 +182,13 @@ strvis(dst, src, flag)
 	char c;
 	char *start;
 
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+#ifdef _DIAGNOSTIC
+	if (dst == NULL || src == NULL)
+		return (0);
+#endif
+
 	for (start = dst; (c = *src) != '\0';)
 		dst = vis(dst, c, flag, *++src);
 	*dst = '\0';
@@ -187,6 +204,13 @@ strvisx(dst, src, len, flag)
 {
 	char c;
 	char *start;
+
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+#ifdef _DIAGNOSTIC
+	if (dst == NULL || src == NULL)
+		return (0);
+#endif
 
 	for (start = dst; len > 1; len--) {
 		c = *src;

@@ -1,4 +1,4 @@
-/*	$NetBSD: opendisk.c,v 1.4 1997/09/30 17:13:50 phil Exp $	*/
+/*	$NetBSD: opendisk.c,v 1.5 1999/09/16 11:45:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,11 +38,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: opendisk.c,v 1.4 1997/09/30 17:13:50 phil Exp $");
+__RCSID("$NetBSD: opendisk.c,v 1.5 1999/09/16 11:45:51 lukem Exp $");
 #endif
 
 #include <sys/param.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <util.h>
@@ -59,6 +60,13 @@ opendisk(path, flags, buf, buflen, iscooked)
 	int	iscooked;
 {
 	int f, rawpart;
+
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
+#endif
 
 	if (buf == NULL) {
 		errno = EFAULT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetnamadr.c,v 1.16 1999/05/04 15:11:42 kleink Exp $	*/
+/*	$NetBSD: getnetnamadr.c,v 1.17 1999/09/16 11:45:12 lukem Exp $	*/
 
 /* Copyright (c) 1993 Carlos Leandro and Rui Salgueiro
  *	Dep. Matematica Universidade de Coimbra, Portugal, Europe
@@ -47,7 +47,7 @@ static char sccsid[] = "@(#)getnetbyaddr.c	8.1 (Berkeley) 6/4/93";
 static char sccsid_[] = "from getnetnamadr.c	1.4 (Coimbra) 93/06/03";
 static char rcsid[] = "Id: getnetnamadr.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetnamadr.c,v 1.16 1999/05/04 15:11:42 kleink Exp $");
+__RCSID("$NetBSD: getnetnamadr.c,v 1.17 1999/09/16 11:45:12 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: getnetnamadr.c,v 1.16 1999/05/04 15:11:42 kleink Exp $");
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
@@ -87,10 +88,6 @@ __weak_alias(getnetbyname,_getnetbyname);
 
 extern int h_errno;
 extern int _net_stayopen;
-
-#if defined(mips) && defined(SYSTYPE_BSD43)
-extern int errno;
-#endif
 
 #define BYADDR 0
 #define BYNAME 1
@@ -138,7 +135,6 @@ getnetanswer(answer, anslen, net_i)
 	int anslen;
 	int net_i;
 {
-
 	HEADER *hp;
 	u_char *cp;
 	int n;
@@ -147,6 +143,8 @@ getnetanswer(answer, anslen, net_i)
 	char aux1[30], aux2[30], ans[30], *in, *st, *pauxt, *bp, **ap,
 		*paux1 = &aux1[0], *paux2 = &aux2[0], flag = 0;
 	static	char netbuf[PACKETSZ];
+
+	_DIAGASSERT(answer != NULL);
 
 	/*
 	 * find first satisfactory answer
@@ -256,6 +254,8 @@ _files_getnetbyaddr(rv, cb_data, ap)
 	unsigned long net;
 	int type;
 
+	_DIAGASSERT(rv != NULL);
+
 	net = va_arg(ap, unsigned long);
 	type = va_arg(ap, int);
 
@@ -288,6 +288,8 @@ _dns_getnetbyaddr(rv, cb_data, ap)
 	struct netent *np;
 	unsigned long net;
 	int type;
+
+	_DIAGASSERT(rv != NULL);
 
 	net = va_arg(ap, unsigned long);
 	type = va_arg(ap, int);
@@ -381,6 +383,8 @@ _files_getnetbyname(rv, cb_data, ap)
 	char **cp;
 	const char *name;
 
+	_DIAGASSERT(rv != NULL);
+
 	name = va_arg(ap, const char *);
 	setnetent(_net_stayopen);
 	while ((p = getnetent()) != NULL) {
@@ -413,6 +417,8 @@ _dns_getnetbyname(rv, cb_data, ap)
 	char qbuf[MAXDNAME];
 	struct netent *np;
 	const char *net;
+
+	_DIAGASSERT(rv != NULL);
 
 	net = va_arg(ap, const char *);
 	strcpy(&qbuf[0], net);
@@ -447,6 +453,12 @@ getnetbyname(net)
 		{ 0 }
 	};
 
+	_DIAGASSERT(net != NULL);
+#ifdef _DIAGNOSTIC
+	if (net == NULL)
+		return NULL;
+#endif
+
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
@@ -474,6 +486,8 @@ _yp_getnetbyaddr(rv, cb_data, ap)
 	unsigned int netbr[4];
 	unsigned long net, net2;
 	int type, r;
+
+	_DIAGASSERT(rv != NULL);
 
 	net = va_arg(ap, unsigned long);
 	type = va_arg(ap, int);
@@ -533,6 +547,8 @@ _yp_getnetbyname(rv, cb_data, ap)
 	const char *name;
 	int r;
 
+	_DIAGASSERT(rv != NULL);
+
 	name = va_arg(ap, const char *);
 
 	if (!__ypdomain) {
@@ -561,6 +577,12 @@ _ypnetent(line)
 	char *line;
 {
 	char *cp, *p, **q;
+
+	_DIAGASSERT(line != NULL);
+#ifdef _DIAGNOSTIC
+	if (line == NULL)
+		return (NULL);
+#endif
 
 	net_entry.n_name = line;
 	cp = strpbrk(line, " \t");

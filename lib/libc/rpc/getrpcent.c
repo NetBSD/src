@@ -1,4 +1,4 @@
-/*	$NetBSD: getrpcent.c,v 1.14 1999/04/19 21:56:01 kleink Exp $	*/
+/*	$NetBSD: getrpcent.c,v 1.15 1999/09/16 11:45:23 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char *sccsid = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: getrpcent.c,v 1.14 1999/04/19 21:56:01 kleink Exp $");
+__RCSID("$NetBSD: getrpcent.c,v 1.15 1999/09/16 11:45:23 lukem Exp $");
 #endif
 #endif
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: getrpcent.c,v 1.14 1999/04/19 21:56:01 kleink Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <netdb.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,6 +118,12 @@ getrpcbyname(name)
 	struct rpcent *rpc;
 	char **rp;
 
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (NULL);
+#endif
+
 	setrpcent(0);
 	while ((rpc = getrpcent()) != NULL) {
 		if (strcmp(rpc->r_name, name) == 0)
@@ -180,6 +187,8 @@ interpret(val, len)
 	struct rpcdata *d = _rpcdata();
 	char *p;
 	char *cp, **q;
+
+	_DIAGASSERT(val != NULL);
 
 	if (d == 0)
 		return (0);

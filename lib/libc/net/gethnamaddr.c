@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.24 1999/08/09 15:00:14 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.25 1999/09/16 11:45:11 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,25 +61,25 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.24 1999/08/09 15:00:14 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.25 1999/09/16 11:45:11 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(_LIBC)
 #include "namespace.h"
 #endif
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
-#include <stdio.h>
-#include <netdb.h>
-#include <resolv.h>
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
+#include <netdb.h>
+#include <resolv.h>
+#include <stdio.h>
 #include <syslog.h>
 
 #ifdef __STDC__
@@ -195,6 +195,9 @@ dprintf(msg, num)
 	char *msg;
 	int num;
 {
+
+	_DIAGASSERT(msg != NULL);
+
 	if (_res.options & RES_DEBUG) {
 		int save = errno;
 
@@ -213,9 +216,9 @@ getanswer(answer, anslen, qname, qtype)
 	const char *qname;
 	int qtype;
 {
-	register const HEADER *hp;
-	register const u_char *cp;
-	register int n;
+	const HEADER *hp;
+	const u_char *cp;
+	int n;
 	const u_char *eom;
 	char *bp, **ap, **hap;
 	int type, class, buflen, ancount, qdcount;
@@ -224,6 +227,9 @@ getanswer(answer, anslen, qname, qtype)
 	char tbuf[MAXDNAME];
 	const char *tname;
 	int (*name_ok) __P((const char *));
+
+	_DIAGASSERT(answer != NULL);
+	_DIAGASSERT(qname != NULL);
 
 	tname = qname;
 	host.h_name = NULL;
@@ -416,7 +422,7 @@ getanswer(answer, anslen, qname, qtype)
 				continue;
 			}
 			if (!haveanswer) {
-				register int nn;
+				int nn;
 
 				host.h_name = bp;
 				nn = strlen(bp) + 1;	/* for the \0 */
@@ -487,6 +493,15 @@ gethostbyname(name)
 {
 	struct hostent *hp;
 
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL) {
+		errno = EFAULT;
+		h_errno = NETDB_INTERNAL;
+		return (NULL);
+	}
+#endif
+
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		h_errno = NETDB_INTERNAL;
 		return (NULL);
@@ -514,6 +529,15 @@ gethostbyname2(name, af)
 		NS_NIS_CB(_yp_gethtbyname, NULL)
 		{ 0 }
 	};
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL) {
+		errno = EFAULT;
+		h_errno = NETDB_INTERNAL;
+		return (NULL);
+	}
+#endif
 
 	switch (af) {
 	case AF_INET:
@@ -633,6 +657,15 @@ gethostbyaddr(addr, len, af)
 		{ 0 }
 	};
 	
+	_DIAGASSERT(addr != NULL);
+#ifdef _DIAGNOSTIC
+	if (addr == NULL) {
+		errno = EFAULT;
+		h_errno = NETDB_INTERNAL;
+		return (NULL);
+	}
+#endif
+
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (IN6_IS_ADDR_V4MAPPED((struct in6_addr *)uaddr) ||
 	     IN6_IS_ADDR_V4COMPAT((struct in6_addr *)uaddr))) {
@@ -692,7 +725,7 @@ struct hostent *
 _gethtent()
 {
 	char *p;
-	register char *cp, **q;
+	char *cp, **q;
 	int af, len;
 
 	if (!hostf && !(hostf = fopen(_PATH_HOSTS, "r" ))) {
@@ -769,6 +802,8 @@ _gethtbyname(rv, cb_data, ap)
 	const char *name;
 	int len, af;
 
+	_DIAGASSERT(rv != NULL);
+
 	name = va_arg(ap, char *);
 	len = va_arg(ap, int);
 	af = va_arg(ap, int);
@@ -795,10 +830,12 @@ _gethtbyname2(name, af)
 	const char *name;
 	int af;
 {
-	register struct hostent *p;
-	register char *tmpbuf, *ptr, **cp;
-	register int num;
-	register size_t len;
+	struct hostent *p;
+	char *tmpbuf, *ptr, **cp;
+	int num;
+	size_t len;
+
+	_DIAGASSERT(name != NULL);
 
 	_sethtent(0);
 	ptr = tmpbuf = NULL;
@@ -814,8 +851,8 @@ _gethtbyname2(name, af)
 		}
 
 		if (num == 0) {
-			register size_t bufsize;
-			register char *src;
+			size_t bufsize;
+			char *src;
 
 			bufsize = strlen(p->h_name) + 2 +
 				  MAXADDRS * p->h_length +
@@ -886,9 +923,11 @@ _gethtbyaddr(rv, cb_data, ap)
 	void	*cb_data;
 	va_list	 ap;
 {
-	register struct hostent *p;
+	struct hostent *p;
 	const unsigned char *addr;
 	int len, af;
+
+	_DIAGASSERT(rv != NULL);
 
 	addr = va_arg(ap, unsigned char *);
 	len = va_arg(ap, int);
@@ -920,6 +959,9 @@ map_v4v6_address(src, dst)
 	char tmp[INADDRSZ];
 	int i;
 
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+
 	/* Stash a temporary copy so our caller can update in place. */
 	(void)memcpy(tmp, src, INADDRSZ);
 	/* Mark this ipv6 addr as a mapped ipv4. */
@@ -938,6 +980,10 @@ map_v4v6_hostent(hp, bpp, lenp)
 	int *lenp;
 {
 	char **ap;
+
+	_DIAGASSERT(hp != NULL);
+	_DIAGASSERT(bpp != NULL);
+	_DIAGASSERT(lenp != NULL);
 
 	if (hp->h_addrtype != AF_INET || hp->h_length != INADDRSZ)
 		return;
@@ -970,6 +1016,8 @@ addrsort(ap, num)
 	char **p;
 	short aval[MAXADDRS];
 	int needsort = 0;
+
+	_DIAGASSERT(ap != NULL);
 
 	p = ap;
 	for (i = 0; i < num; i++, p++) {
@@ -1007,6 +1055,7 @@ addrsort(ap, num)
 #endif
 
 #if defined(BSD43_BSD43_NFS) || defined(sun)
+/* XXX: should we remove this cruft? - lukem */
 /* some libc's out there are bound internally to these names (UMIPS) */
 void
 ht_sethostent(stayopen)
@@ -1069,6 +1118,8 @@ _dns_gethtbyname(rv, cb_data, ap)
 	const char *name;
 	int af;
 
+	_DIAGASSERT(rv != NULL);
+
 	name = va_arg(ap, char *);
 	/* NOSTRICT skip len */(void)va_arg(ap, int);
 	af = va_arg(ap, int);
@@ -1114,6 +1165,8 @@ _dns_gethtbyaddr(rv, cb_data, ap)
 	struct hostent *hp;
 	const unsigned char *uaddr;
 	int len, af;
+
+	_DIAGASSERT(rv != NULL);
 
 	uaddr = va_arg(ap, unsigned char *);
 	len = va_arg(ap, int);
@@ -1185,6 +1238,8 @@ _yphostent(line, af)
 	char **hap;
 	struct in_addr *buf;
 	int more;
+
+	_DIAGASSERT(line != NULL);
 
 	host.h_name = NULL;
 	host.h_addr_list = h_addr_ptrs;
@@ -1265,6 +1320,8 @@ _yp_gethtbyaddr(rv, cb_data, ap)
 	const unsigned char *uaddr;
 	int af;
 
+	_DIAGASSERT(rv != NULL);
+
 	uaddr = va_arg(ap, unsigned char *);
 	/* NOSTRICT skip len */(void)va_arg(ap, int);
 	af = va_arg(ap, int);
@@ -1310,6 +1367,8 @@ _yp_gethtbyname(rv, cb_data, ap)
 	int __ypcurrentlen, r;
 	const char *name;
 	int af;
+
+	_DIAGASSERT(rv != NULL);
 
 	name = va_arg(ap, char *);
 	/* NOSTRICT skip len */(void)va_arg(ap, int);

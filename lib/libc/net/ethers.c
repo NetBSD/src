@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.14 1998/11/13 15:46:53 christos Exp $	*/
+/*	$NetBSD: ethers.c,v 1.15 1999/09/16 11:45:11 lukem Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -8,17 +8,20 @@
  */
 
 #include "namespace.h"
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/socket.h>
+
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <netinet/in.h>
-#include <sys/param.h>
-#include <paths.h>
+
+#include <assert.h>
 #include <errno.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef YP
 #include <rpcsvc/ypclnt.h>
 #endif
@@ -41,6 +44,12 @@ ether_ntoa(e)
 {
 	static char a[18];
 
+	_DIAGASSERT(e != NULL);
+#ifdef _DIAGNOSTIC
+	if (e == NULL)
+		return NULL;
+#endif
+
 	snprintf(a, sizeof a, "%02x:%02x:%02x:%02x:%02x:%02x",
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
@@ -54,6 +63,12 @@ ether_aton(s)
 {
 	static struct ether_addr n;
 	u_int i[6];
+
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL)
+		return NULL;
+#endif
 
 	if (sscanf(s, " %x:%x:%x:%x:%x:%x ", &i[0], &i[1],
 	    &i[2], &i[3], &i[4], &i[5]) == 6) {
@@ -77,11 +92,21 @@ ether_ntohost(hostname, e)
 	char *p;
 	size_t len;
 	struct ether_addr try;
-
 #ifdef YP
 	char trybuf[sizeof "xx:xx:xx:xx:xx:xx"];
 	int trylen;
+#endif
 
+	_DIAGASSERT(hostname != NULL);
+	_DIAGASSERT(e != NULL);
+#ifdef _DIAGNOSTIC
+	if (hostname == NULL || e == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+#endif
+
+#ifdef YP
 	trylen = snprintf(trybuf, sizeof trybuf, "%x:%x:%x:%x:%x:%x", 
 	    e->ether_addr_octet[0], e->ether_addr_octet[1],
 	    e->ether_addr_octet[2], e->ether_addr_octet[3],
@@ -139,6 +164,15 @@ ether_hostton(hostname, e)
 	int hostlen = strlen(hostname);
 #endif
 
+	_DIAGASSERT(hostname != NULL);
+	_DIAGASSERT(e != NULL);
+#ifdef _DIAGNOSTIC
+	if (hostname == NULL || e == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+#endif
+
 	f = fopen(_PATH_ETHERS, "r");
 	if (f==NULL)
 		return -1;
@@ -186,6 +220,16 @@ ether_line(l, e, hostname)
 	u_int i[6];
 	static char buf[sizeof " %x:%x:%x:%x:%x:%x %s\\n" + 21];
 		/* XXX: 21 == strlen (ASCII representation of 2^64) */
+
+	_DIAGASSERT(l != NULL);
+	_DIAGASSERT(e != NULL);
+	_DIAGASSERT(hostname != NULL);
+#ifdef _DIAGNOSTIC
+	if (l == NULL || e == NULL || hostname == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+#endif
 
 	if (! buf[0])
 		snprintf(buf, sizeof buf, " %%x:%%x:%%x:%%x:%%x:%%x %%%ds\\n",

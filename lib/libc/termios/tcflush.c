@@ -1,4 +1,4 @@
-/*	$NetBSD: tcflush.c,v 1.5 1999/02/12 15:04:01 kleink Exp $	*/
+/*	$NetBSD: tcflush.c,v 1.6 1999/09/16 11:45:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,15 +38,17 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcflush.c,v 1.5 1999/02/12 15:04:01 kleink Exp $");
+__RCSID("$NetBSD: tcflush.c,v 1.6 1999/09/16 11:45:44 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/ioctl.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <termios.h>
-#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(tcflush,_tcflush);
@@ -57,6 +59,14 @@ tcflush(fd, which)
 	int fd, which;
 {
 	int com;
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
 
 	switch (which) {
 	case TCIFLUSH:

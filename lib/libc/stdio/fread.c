@@ -1,4 +1,4 @@
-/*	$NetBSD: fread.c,v 1.9 1998/02/03 18:41:12 perry Exp $	*/
+/*	$NetBSD: fread.c,v 1.10 1999/09/16 11:45:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)fread.c	8.2 (Berkeley) 12/11/93";
 #else
-__RCSID("$NetBSD: fread.c,v 1.9 1998/02/03 18:41:12 perry Exp $");
+__RCSID("$NetBSD: fread.c,v 1.10 1999/09/16 11:45:27 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include "local.h"
@@ -60,6 +62,19 @@ fread(buf, size, count, fp)
 	char *p;
 	int r;
 	size_t total;
+
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL) {
+		errno = EFAULT;
+		return (0);
+	}
+	if (fp == NULL) {
+		errno = EBADF;
+		return (0);
+	}
+#endif
 
 	/*
 	 * The ANSI standard requires a return value of 0 for a count

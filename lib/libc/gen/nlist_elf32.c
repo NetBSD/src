@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.13 1999/06/17 21:15:52 thorpej Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.14 1999/09/16 11:45:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,6 +41,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -87,6 +88,19 @@ ELFNAMEEND(__fdnlist)(fd, list)
 #endif
 	size_t i, nsyms;
 	int rv, nent;
+
+	_DIAGASSERT(fd != -1);
+	_DIAGASSERT(list != NULL);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (list == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	rv = -1;
 

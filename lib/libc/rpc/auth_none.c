@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_none.c,v 1.11 1999/01/20 11:37:34 lukem Exp $	*/
+/*	$NetBSD: auth_none.c,v 1.12 1999/09/16 11:45:21 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_none.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_none.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_none.c,v 1.11 1999/01/20 11:37:34 lukem Exp $");
+__RCSID("$NetBSD: auth_none.c,v 1.12 1999/09/16 11:45:21 lukem Exp $");
 #endif
 #endif
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: auth_none.c,v 1.11 1999/01/20 11:37:34 lukem Exp $");
 
 #include "namespace.h"
 
+#include <assert.h>
 #include <stdlib.h>
 
 #include <rpc/types.h>
@@ -119,6 +120,8 @@ authnone_marshal(client, xdrs)
 	XDR *xdrs;
 {
 	struct authnone_private *ap = authnone_private;
+
+	_DIAGASSERT(xdrs != NULL);
 
 	if (ap == 0)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.11 1999/07/02 15:16:41 simonb Exp $	*/
+/*	$NetBSD: rexec.c,v 1.12 1999/09/16 11:45:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rexec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: rexec.c,v 1.11 1999/07/02 15:16:41 simonb Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.12 1999/09/16 11:45:47 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,12 +47,13 @@ __RCSID("$NetBSD: rexec.c,v 1.11 1999/07/02 15:16:41 simonb Exp $");
 
 #include <netinet/in.h>
 
-#include <stdio.h>
-#include <netdb.h>
-#include <string.h>
-#include <errno.h>
-#include <unistd.h>
+#include <assert.h>
 #include <err.h>
+#include <errno.h>
+#include <netdb.h>
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 int	rexecoptions;
 
@@ -74,6 +75,16 @@ rexec(ahost, rport, name, pass, cmd, fd2p)
 	unsigned int timo = 1;
 	int s, s3;
 	char c;
+
+	_DIAGASSERT(ahost != NULL);
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(pass != NULL);
+	_DIAGASSERT(cmd != NULL);
+	/* fd2p may be NULL */
+#ifdef _DIAGNOSTIC
+	if (ahost == NULL || name == NULL || pass == NULL || cmd == NULL)
+		return (-1);
+#endif
 
 	hp = gethostbyname(*ahost);
 	if (hp == 0) {

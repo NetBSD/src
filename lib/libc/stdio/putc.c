@@ -1,4 +1,4 @@
-/*	$NetBSD: putc.c,v 1.7 1998/01/19 07:38:51 jtc Exp $	*/
+/*	$NetBSD: putc.c,v 1.8 1999/09/16 11:45:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,12 @@
 #if 0
 static char sccsid[] = "@(#)putc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putc.c,v 1.7 1998/01/19 07:38:51 jtc Exp $");
+__RCSID("$NetBSD: putc.c,v 1.8 1999/09/16 11:45:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include "reentrant.h"
 
@@ -61,6 +63,14 @@ putc(c, fp)
 {
 	int r;
 
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
+
 	FLOCKFILE(fp);
 	r = __sputc(c, fp);
 	FUNLOCKFILE(fp);
@@ -72,5 +82,14 @@ putc_unlocked(c, fp)
 	int c;
 	FILE *fp;
 {
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
+
 	return (__sputc(c, fp));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: login_tty.c,v 1.7 1999/01/11 23:10:26 kleink Exp $	*/
+/*	$NetBSD: login_tty.c,v 1.8 1999/09/16 11:45:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,12 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login_tty.c,v 1.7 1999/01/11 23:10:26 kleink Exp $");
+__RCSID("$NetBSD: login_tty.c,v 1.8 1999/09/16 11:45:50 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -51,6 +54,15 @@ int
 login_tty(fd)
 	int fd;
 {
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
+
 	(void) setsid();
 	if (ioctl(fd, TIOCSCTTY, (char *)NULL) == -1)
 		return (-1);

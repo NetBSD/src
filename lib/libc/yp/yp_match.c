@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.12 1999/01/31 20:46:12 christos Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.13 1999/09/16 11:45:45 lukem Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,13 +33,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.12 1999/01/31 20:46:12 christos Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.13 1999/09/16 11:45:45 lukem Exp $");
 #endif
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
@@ -80,6 +83,10 @@ ypmatch_add(map, key, keylen, val, vallen)
 {
 	struct ypmatch_ent *ep;
 	time_t t;
+
+	_DIAGASSERT(map != NULL);
+	_DIAGASSERT(key != NULL);
+	_DIAGASSERT(val != NULL);
 
 	(void)time(&t);
 
@@ -145,6 +152,10 @@ ypmatch_find(map, key, keylen, val, vallen)
 	struct ypmatch_ent *ep;
 	time_t          t;
 
+	_DIAGASSERT(map != NULL);
+	_DIAGASSERT(key != NULL);
+	_DIAGASSERT(val != NULL);
+
 	if (ypmc == NULL)
 		return 0;
 
@@ -182,7 +193,7 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	struct ypreq_key yprk;
 	int r, nerrs = 0;
 
-	if (outval == NULL)
+	if (outval == NULL || outvallen == NULL)
 		return YPERR_BADARGS;
 	*outval = NULL;
 	*outvallen = 0;

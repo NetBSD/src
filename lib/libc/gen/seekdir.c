@@ -1,4 +1,4 @@
-/*	$NetBSD: seekdir.c,v 1.6 1997/07/21 14:07:28 jtc Exp $	*/
+/*	$NetBSD: seekdir.c,v 1.7 1999/09/16 11:45:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)seekdir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: seekdir.c,v 1.6 1997/07/21 14:07:28 jtc Exp $");
+__RCSID("$NetBSD: seekdir.c,v 1.7 1999/09/16 11:45:04 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
+
 #include <dirent.h>
 
 #ifdef __weak_alias
@@ -59,6 +60,11 @@ seekdir(dirp, loc)
 	DIR *dirp;
 	long loc;
 {
+
+#ifdef _DIAGNOSTIC
+	if (dirp == NULL)
+		return;
+#endif
 
 	__seekdir(dirp, loc);
 }

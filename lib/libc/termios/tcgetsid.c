@@ -1,4 +1,4 @@
-/*	$NetBSD: tcgetsid.c,v 1.2 1998/02/15 02:41:40 thorpej Exp $	*/
+/*	$NetBSD: tcgetsid.c,v 1.3 1999/09/16 11:45:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,13 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcgetsid.c,v 1.2 1998/02/15 02:41:40 thorpej Exp $");
+__RCSID("$NetBSD: tcgetsid.c,v 1.3 1999/09/16 11:45:45 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/ioctl.h>
+
+#include <assert.h>
+#include <errno.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -57,6 +60,14 @@ tcgetsid(fd)
 	int fd;
 {
 	int s;
+
+	_DIAGASSERT(fd != -1);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+#endif
 
 	if (ioctl(fd, TIOCGSID, &s) < 0)
 		return ((pid_t)-1);

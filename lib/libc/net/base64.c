@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.4 1998/11/13 15:46:52 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.5 1999/09/16 11:45:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -44,9 +44,8 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: base64.c,v 1.4 1998/11/13 15:46:52 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.5 1999/09/16 11:45:11 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
-
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,6 +54,7 @@ __RCSID("$NetBSD: base64.c,v 1.4 1998/11/13 15:46:52 christos Exp $");
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <resolv.h>
 #include <stdio.h>
@@ -147,6 +147,13 @@ b64_ntop(src, srclength, target, targsize)
 	u_char output[4];
 	int i;
 
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(target != NULL);
+#ifdef _DIAGNOSTIC
+	if (src == NULL || target == NULL)
+		return (-1);
+#endif
+
 	while (2 < srclength) {
 		input[0] = *src++;
 		input[1] = *src++;
@@ -218,6 +225,13 @@ b64_pton(src, target, targsize)
 {
 	int tarindex, state, ch;
 	char *pos;
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(target != NULL);
+#ifdef _DIAGNOSTIC
+	if (src == NULL || target == NULL)
+		return (-1);
+#endif
 
 	state = 0;
 	tarindex = 0;

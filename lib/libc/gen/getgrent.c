@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.36 1999/04/25 13:39:41 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.37 1999/09/16 11:44:58 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.36 1999/04/25 13:39:41 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.37 1999/09/16 11:44:58 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: getgrent.c,v 1.36 1999/04/25 13:39:41 lukem Exp $");
 
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <grp.h>
 #include <limits.h>
@@ -128,6 +129,12 @@ getgrnam(name)
 	const char *name;
 {
 	int rval;
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL)
+		return (NULL);
+#endif
 
 	if (!start_gr())
 		return NULL;
@@ -433,6 +440,8 @@ _bad_grscan(rv, cb_data, ap)
 {
 	static int warned;
 
+	_DIAGASSERT(cb_data != NULL);
+
 	if (!warned) {
 		syslog(LOG_ERR,
 			"nsswitch.conf group_compat database can't use '%s'",
@@ -467,6 +476,8 @@ __grscancompat(search, gid, name)
 		{ NSSRC_NIS, 	NS_SUCCESS },
 		{ 0 }
 	};
+
+	_DIAGASSERT(name != NULL);
 
 	return (nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, "grscancompat",
 	    defaultnis, search, gid, name));
@@ -586,6 +597,8 @@ grscan(search, gid, name)
 		{ 0 }
 	};
 
+	/* name may be NULL if search is nonzero */
+
 	r = nsdispatch(NULL, dtab, NSDB_GROUP, "grscan", compatsrc,
 	    search, gid, name);
 	return (r == NS_SUCCESS) ? 1 : 0;
@@ -600,6 +613,8 @@ matchline(search, gid, name)
 	unsigned long	id;
 	__aconst char	**m;
 	char		*cp, *bp, *ep;
+
+	/* name may be NULL if search is nonzero */
 
 	if (line[0] == '+')
 		return 0;	/* sanity check to prevent recursion */

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.4 1999/07/02 15:46:53 simonb Exp $	*/
+/*	$NetBSD: parse.c,v 1.5 1999/09/16 11:45:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@netbsd.org>
@@ -26,6 +26,7 @@
  * SUCH DAMAGE.
  */
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -54,6 +55,9 @@ static int min(int x, int y) { return x < y ? x : y; }
 static void
 hid_clear_local(hid_item_t *c)
 {
+
+	_DIAGASSERT(c != NULL);
+
 	c->usage = 0;
 	c->usage_minimum = 0;
 	c->usage_maximum = 0;
@@ -71,6 +75,12 @@ hid_start_parse(report_desc_t d, int kindset)
 {
 	struct hid_data *s;
 
+	_DIAGASSERT(d != NULL);
+#ifdef _DIAGNOSTIC
+	if (d == NULL)
+		return (0);
+#endif
+
 	s = malloc(sizeof *s);
 	memset(s, 0, sizeof *s);
 	s->start = s->p = d->data;
@@ -82,6 +92,13 @@ hid_start_parse(report_desc_t d, int kindset)
 void
 hid_end_parse(hid_data_t s)
 {
+
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL)
+		return;
+#endif
+
 	while (s->cur.next) {
 		hid_item_t *hi = s->cur.next->next;
 		free(s->cur.next);
@@ -93,13 +110,22 @@ hid_end_parse(hid_data_t s)
 int
 hid_get_item(hid_data_t s, hid_item_t *h)
 {
-	hid_item_t *c = &s->cur;
+	hid_item_t *c;
 	unsigned int bTag = 0, bType = 0, bSize;
 	unsigned char *data;
 	int dval;
 	unsigned char *p;
 	hid_item_t *hi;
 	int i;
+
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(h != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL || h == NULL)
+		return (-1);
+#endif
+
+	c = &s->cur;
 
  top:
 	if (s->multimax) {
@@ -341,6 +367,13 @@ hid_report_size(report_desc_t r, enum hid_kind k, int *idp)
 	hid_item_t h;
 	int size, id;
 
+	_DIAGASSERT(r != NULL);
+	/* idp may be NULL */
+#ifdef _DIAGNOSTIC
+	if (r == NULL)
+		return (0);
+#endif
+
 	id = 0;
 	if (idp)
 		*idp = 0;
@@ -365,6 +398,13 @@ hid_locate(desc, u, k, h)
 	hid_item_t *h;
 {
 	hid_data_t d;
+
+	_DIAGASSERT(desc != NULL);
+	_DIAGASSERT(h != NULL);
+#ifdef _DIAGNOSTIC
+	if (desc == NULL || h == NULL)
+		return (0);
+#endif
 
 	for (d = hid_start_parse(desc, 1<<k); hid_get_item(d, h); ) {
 		if (h->kind == k && !(h->flags & HIO_CONST) && h->usage == u) {

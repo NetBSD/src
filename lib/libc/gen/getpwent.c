@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.44 1999/04/27 06:08:58 ross Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.45 1999/09/16 11:45:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,24 +39,27 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.44 1999/04/27 06:08:58 ross Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.45 1999/09/16 11:45:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
-#include <fcntl.h>
+
+#include <assert.h>
 #include <db.h>
-#include <syslog.h>
-#include <pwd.h>
-#include <utmp.h>
 #include <errno.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <netgroup.h>
 #include <nsswitch.h>
+#include <pwd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <syslog.h>
+#include <unistd.h>
+#include <utmp.h>
+
 #ifdef HESIOD
 #include <hesiod.h>
 #endif
@@ -154,6 +157,8 @@ __pwexclude_add(name)
 	DBT key;
 	DBT data;
 
+	_DIAGASSERT(name != NULL);
+
 	/* initialize the exclusion table if needed. */
 	if(__pwexclude == (DB *)NULL) {
 		__pwexclude = dbopen(NULL, O_RDWR, 600, DB_HASH, NULL);
@@ -186,6 +191,8 @@ __pwexclude_is(name)
 {
 	DBT key;
 	DBT data;
+
+	_DIAGASSERT(name != NULL);
 
 	if(__pwexclude == (DB *)NULL)
 		return 0;	/* nothing excluded */
@@ -334,6 +341,9 @@ __pwparse(pw, s)
 {
 	static char adjunctpw[YPMAXRECORD + 2];
 	int flags, maptype;
+
+	_DIAGASSERT(pw != NULL);
+	_DIAGASSERT(s != NULL);
 
 	maptype = __ypmaptype();
 	flags = _PASSWORD_NOWARN;
@@ -667,6 +677,9 @@ _bad_getpw(rv, cb_data, ap)
 	va_list	 ap;
 {
 	static int warned;
+
+	_DIAGASSERT(cb_data != NULL);
+
 	if (!warned) {
 		syslog(LOG_ERR,
 			"nsswitch.conf passwd_compat database can't use '%s'",
@@ -707,6 +720,7 @@ __getpwcompat(type, uid, name)
 		return nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "getpwcompat",
 		    defaultnis, type);
 	case _PW_KEYBYNAME:
+		_DIAGASSERT(name != NULL);
 		return nsdispatch(NULL, dtab, NSDB_PASSWD_COMPAT, "getpwcompat",
 		    defaultnis, type, name);
 	case _PW_KEYBYUID:
@@ -1156,6 +1170,8 @@ __hashpw(key)
 	static u_int max;
 	static char *buf;
 	DBT data;
+
+	_DIAGASSERT(key != NULL);
 
 	switch ((_pw_db->get)(_pw_db, key, &data, 0)) {
 	case 0:

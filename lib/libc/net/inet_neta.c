@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_neta.c,v 1.8 1998/11/13 15:46:54 christos Exp $	*/
+/*	$NetBSD: inet_neta.c,v 1.9 1999/09/16 11:45:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_neta.c,v 8.2 1996/08/08 06:54:44 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_neta.c,v 1.8 1998/11/13 15:46:54 christos Exp $");
+__RCSID("$NetBSD: inet_neta.c,v 1.9 1999/09/16 11:45:14 lukem Exp $");
 #endif
 #endif
 
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: inet_neta.c,v 1.8 1998/11/13 15:46:54 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -65,6 +66,14 @@ inet_neta(src, dst, size)
 {
 	char *odst = dst;
 	char *tp;
+
+	_DIAGASSERT(dst != NULL);
+#ifdef _DIAGNOSTIC
+	if (dst == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
 
 	while (src & 0xffffffff) {
 		u_char b = (u_char)((src & 0xff000000) >> 24);

@@ -1,4 +1,4 @@
-/*	$NetBSD: erand48.c,v 1.4 1998/01/09 03:15:36 perry Exp $	*/
+/*	$NetBSD: erand48.c,v 1.5 1999/09/16 11:45:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -14,6 +14,9 @@
  */
 
 #include "namespace.h"
+
+#include <assert.h>
+
 #include "rand48.h"
 
 #ifdef __weak_alias
@@ -23,6 +26,13 @@ __weak_alias(erand48,_erand48);
 double
 erand48(unsigned short xseed[3])
 {
+
+	_DIAGASSERT(xseed != NULL);
+#ifdef _DIAGNOSTIC
+	if (xseed == NULL)
+		return ((double)0);
+#endif
+
 	__dorand48(xseed);
 	return ldexp((double) xseed[0], -48) +
 	       ldexp((double) xseed[1], -32) +

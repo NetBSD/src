@@ -1,4 +1,4 @@
-/*	$NetBSD: uname.c,v 1.5 1998/08/18 23:52:31 thorpej Exp $	*/
+/*	$NetBSD: uname.c,v 1.6 1999/09/16 11:45:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)uname.c	8.1 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: uname.c,v 1.5 1998/08/18 23:52:31 thorpej Exp $");
+__RCSID("$NetBSD: uname.c,v 1.6 1999/09/16 11:45:06 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,6 +46,9 @@ __RCSID("$NetBSD: uname.c,v 1.5 1998/08/18 23:52:31 thorpej Exp $");
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/utsname.h>
+
+#include <assert.h>
+#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(uname,_uname);
@@ -60,6 +63,14 @@ uname(name)
 	char *p;
 
 	rval = 0;
+
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	mib[0] = CTL_KERN;
 	mib[1] = KERN_OSTYPE;

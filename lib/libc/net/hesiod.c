@@ -1,4 +1,4 @@
-/*	$NetBSD: hesiod.c,v 1.9 1999/02/11 06:16:38 simonb Exp $	*/
+/*	$NetBSD: hesiod.c,v 1.10 1999/09/16 11:45:13 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -52,7 +52,7 @@ __IDSTRING(rcsid_hesiod_p_h,
     "#Id: hesiod_p.h,v 1.1 1996/12/08 21:39:37 ghudson Exp #");
 __IDSTRING(rcsid_hescompat_c,
     "#Id: hescompat.c,v 1.1.2.1 1996/12/16 08:37:45 ghudson Exp #");
-__RCSID("$NetBSD: hesiod.c,v 1.9 1999/02/11 06:16:38 simonb Exp $");
+__RCSID("$NetBSD: hesiod.c,v 1.10 1999/09/16 11:45:13 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: hesiod.c,v 1.9 1999/02/11 06:16:38 simonb Exp $");
 #include <netinet/in.h>
 #include <arpa/nameser.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <hesiod.h>
@@ -107,6 +108,15 @@ hesiod_init(context)
 {
 	struct hesiod_p	*ctx;
 	const char	*p, *configname;
+	int serrno;
+
+	_DIAGASSERT(context != NULL);
+#ifdef _DIAGNOSTIC
+	if (context == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	ctx = malloc(sizeof(struct hesiod_p));
 	if (ctx) {
@@ -137,12 +147,14 @@ hesiod_init(context)
 	} else
 		errno = ENOMEM;
 
+	serrno = errno;
 	if (ctx->lhs)
 		free(ctx->lhs);
 	if (ctx->rhs)
 		free(ctx->rhs);
 	if (ctx)
 		free(ctx);
+	errno = serrno;
 	return -1;
 }
 
@@ -155,6 +167,12 @@ hesiod_end(context)
 	void	*context;
 {
 	struct hesiod_p *ctx = (struct hesiod_p *) context;
+
+	_DIAGASSERT(context != NULL);
+#ifdef _DIAGNOSTIC
+	if (context == NULL)
+		return;
+#endif
 
 	free(ctx->rhs);
 	if (ctx->lhs)
@@ -174,6 +192,14 @@ hesiod_to_bind(void *context, const char *name, const char *type)
 	char		 bindname[MAXDNAME], *p, *ret, **rhs_list = NULL;
 	const char	*rhs;
 	int		 len;
+
+	_DIAGASSERT(context != NULL);
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(type != NULL);
+#ifdef _DIAGNOSTIC
+	if (context == NULL || name == NULL || type == NULL)
+		return (NULL);
+#endif
 
 	strcpy(bindname, name);
 
@@ -247,6 +273,14 @@ hesiod_resolve(context, name, type)
 	struct hesiod_p	*ctx = (struct hesiod_p *) context;
 	char		*bindname, **retvec;
 
+	_DIAGASSERT(context != NULL);
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(type != NULL);
+#ifdef _DIAGNOSTIC
+	if (context == NULL || name == NULL || type == NULL)
+		return (NULL);
+#endif
+
 	bindname = hesiod_to_bind(context, name, type);
 	if (!bindname)
 		return NULL;
@@ -266,6 +300,12 @@ hesiod_free_list(context, list)
 	char	**list;
 {
 	char  **p;
+
+	_DIAGASSERT(context != NULL);
+#ifdef _DIAGNOSTIC
+	if (context == NULL)
+		return;
+#endif
 
 	if (list == NULL)
 		return;
@@ -289,6 +329,9 @@ read_config_file(ctx, filename)
 	char	 buf[MAXDNAME + 7];
 	int	 n;
 	FILE	*fp;
+
+	_DIAGASSERT(ctx != NULL);
+	_DIAGASSERT(filename != NULL);
 
 		/* Set default query classes. */
 	ctx->classes[0] = C_IN;
@@ -382,6 +425,8 @@ get_txt_records(qclass, name)
 	unsigned char	 qbuf[PACKETSZ], abuf[MAX_HESRESP], *p, *eom, *eor;
 	char		*dst, **list;
 	int		 ancount, qdcount, i, j, n, skip, type, class, len;
+
+	_DIAGASSERT(name != NULL);
 
 		/* Make sure the resolver is initialized. */
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1)
@@ -512,6 +557,14 @@ hes_to_bind(name, type)
 	const char	*type;
 {
 	static	char	*bindname;
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(type != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || type == NULL)
+		return (NULL);
+#endif
+
 	if (init_context() < 0)
 		return NULL;
 	if (bindname)
@@ -528,6 +581,13 @@ hes_resolve(name, type)
 	const char	*type;
 {
 	static char	**list;
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(type != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || type == NULL)
+		return (NULL);
+#endif
 
 	if (init_context() < 0)
 		return NULL;
@@ -583,6 +643,7 @@ translate_errors()
 	case EMSGSIZE:
 		errval = HES_ER_NET;
 		break;
+	case EFAULT:
 	case ENOMEM:
 	default:
 		/* Not a good match, but the best we can do. */

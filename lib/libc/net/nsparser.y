@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.4 1999/07/02 15:27:09 kleink Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.5 1999/09/16 11:45:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -39,10 +39,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsparser.y,v 1.4 1999/07/02 15:27:09 kleink Exp $");
+__RCSID("$NetBSD: nsparser.y,v 1.5 1999/09/16 11:45:17 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <err.h>
 #define _NS_PRIVATE
 #include <nsswitch.h>
@@ -151,6 +153,8 @@ _nsaddsrctomap(elem)
 	int		i, lineno;
 	extern int	_nsyylineno;
 	extern char *	_nsyytext;
+
+	_DIAGASSERT(elem != NULL);
 
 	lineno = _nsyylineno - (*_nsyytext == '\n' ? 1 : 0);
 	if (curdbt.srclistsize > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: heapsort.c,v 1.9 1998/02/03 18:44:16 perry Exp $	*/
+/*	$NetBSD: heapsort.c,v 1.10 1999/09/16 11:45:34 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,12 +41,14 @@
 #if 0
 static char sccsid[] = "from: @(#)heapsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: heapsort.c,v 1.9 1998/02/03 18:44:16 perry Exp $");
+__RCSID("$NetBSD: heapsort.c,v 1.10 1999/09/16 11:45:34 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 
@@ -158,6 +160,15 @@ heapsort(vbase, nmemb, size, compar)
 	int cnt, i, j, l;
 	char tmp, *tmp1, *tmp2;
 	char *base, *k, *p, *t;
+
+	_DIAGASSERT(vbase != NULL);
+	_DIAGASSERT(compar != NULL);
+#ifdef _DIAGNOSTIC
+	if (vbase == NULL || compar == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if (nmemb <= 1)
 		return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.26 1999/07/04 03:52:55 itojun Exp $	*/
+/*	$NetBSD: res_init.c,v 1.27 1999/09/16 11:45:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "Id: res_init.c,v 8.8 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.26 1999/07/04 03:52:55 itojun Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.27 1999/09/16 11:45:18 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,13 +72,15 @@ __RCSID("$NetBSD: res_init.c,v 1.26 1999/07/04 03:52:55 itojun Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <netdb.h>
 #include <resolv.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <netdb.h>
+#include <unistd.h>
 
 #if defined(_LIBC) && defined(__weak_alias)
 __weak_alias(res_init,_res_init);
@@ -488,6 +490,9 @@ res_setoptions(options, source)
 {
 	char *cp = options;
 	int i;
+
+	_DIAGASSERT(options != NULL);
+	_DIAGASSERT(source != NULL);
 
 #ifdef DEBUG
 	if (_res.options & RES_DEBUG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: tgoto.c,v 1.14 1999/08/16 08:34:33 blymn Exp $	*/
+/*	$NetBSD: tgoto.c,v 1.15 1999/09/16 11:45:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tgoto.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tgoto.c,v 1.14 1999/08/16 08:34:33 blymn Exp $");
+__RCSID("$NetBSD: tgoto.c,v 1.15 1999/09/16 11:45:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,8 @@ t_goto(info, CM, destcol, destline, buffer, limit)
 	size_t count = MAXRETURNSIZE;
 	int oncol = 0;
 	int which = destline;
+
+	/* CM is checked below */
 
         if (info != NULL)
         {

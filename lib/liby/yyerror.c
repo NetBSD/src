@@ -36,10 +36,11 @@
 #if 0
 static char sccsid[] = "@(#)yyerror.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: yyerror.c,v 1.5 1998/01/22 07:02:53 perry Exp $");
+__RCSID("$NetBSD: yyerror.c,v 1.6 1999/09/16 11:45:52 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <assert.h>
 #include <stdio.h>
 
 int yyerror __P((char *));
@@ -48,6 +49,13 @@ int
 yyerror(msg)
 	char *msg;
 {
+
+	_DIAGASSERT(msg != NULL);
+#ifdef _DIAGNOSTIC
+	if (msg == NULL)
+		msg = "ERROR: yyerror() called with msg == NULL";
+#endif
+
 	(void)fprintf(stderr, "%s\n", msg);
 	return(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.6 1998/01/06 05:01:22 perry Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.7 1999/09/16 11:45:14 lukem Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,7 +21,7 @@
 #if 0
 static char rcsid[] = "Id: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.6 1998/01/06 05:01:22 perry Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.7 1999/09/16 11:45:14 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -32,10 +32,12 @@ __RCSID("$NetBSD: inet_ntop.c,v 1.6 1998/01/06 05:01:22 perry Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
-#include <stdlib.h>
-#include <string.h>
+
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __weak_alias
 __weak_alias(inet_ntop,_inet_ntop);
@@ -70,6 +72,16 @@ inet_ntop(af, src, dst, size)
 	char *dst;
 	size_t size;
 {
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+#ifdef _DIAGNOSTIC
+	if (src == NULL || dst == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
+
 	switch (af) {
 	case AF_INET:
 		return (inet_ntop4(src, dst, size));
@@ -102,6 +114,9 @@ inet_ntop4(src, dst, size)
 	static const char fmt[] = "%u.%u.%u.%u";
 	char tmp[sizeof "255.255.255.255"];
 
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+
 	if (SPRINTF((tmp, fmt, src[0], src[1], src[2], src[3])) > size) {
 		errno = ENOSPC;
 		return (NULL);
@@ -133,6 +148,9 @@ inet_ntop6(src, dst, size)
 	struct { int base, len; } best, cur;
 	u_int words[IN6ADDRSZ / INT16SZ];
 	int i;
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
 
 	/*
 	 * Preprocess:

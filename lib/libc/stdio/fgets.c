@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.10 1998/11/15 17:15:18 christos Exp $	*/
+/*	$NetBSD: fgets.c,v 1.11 1999/09/16 11:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.10 1998/11/15 17:15:18 christos Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.11 1999/09/16 11:45:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include "local.h"
@@ -65,7 +66,13 @@ fgets(buf, n, fp)
 	char *s;
 	unsigned char *p, *t;
 
-	if (n <= 0)		/* sanity check */
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || fp == NULL)
+		return (NULL);
+#endif
+	if (n <= 0)					/* sanity check */
 		return (NULL);
 
 	FLOCKFILE(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: twalk.c,v 1.1 1999/02/22 10:33:16 christos Exp $	*/
+/*	$NetBSD: twalk.c,v 1.2 1999/09/16 11:45:37 lukem Exp $	*/
 
 /*
  * Tree search generalized from Knuth (6.2.2) Algorithm T just like
@@ -13,9 +13,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: twalk.c,v 1.1 1999/02/22 10:33:16 christos Exp $");
+__RCSID("$NetBSD: twalk.c,v 1.2 1999/09/16 11:45:37 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #define _SEARCH_PRIVATE
 #include <search.h>
 #include <stdlib.h>
@@ -30,6 +31,9 @@ trecurse(root, action, level)
 	void (*action) __P((const void *, VISIT, int));
 	int level;
 {
+	_DIAGASSERT(root != NULL);
+	_DIAGASSERT(action != NULL);
+
 	if (root->llink == NULL && root->rlink == NULL)
 		(*action)(root, leaf, level);
 	else {

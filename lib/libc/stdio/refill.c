@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.9 1998/02/03 18:41:19 perry Exp $	*/
+/*	$NetBSD: refill.c,v 1.10 1999/09/16 11:45:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refill.c,v 1.9 1998/02/03 18:41:19 perry Exp $");
+__RCSID("$NetBSD: refill.c,v 1.10 1999/09/16 11:45:29 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -61,6 +62,9 @@ static int
 lflush(fp)
 	FILE *fp;
 {
+
+	_DIAGASSERT(fp != NULL);
+
 	if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR))
 		return (__sflush(fp));
 	return (0);
@@ -74,6 +78,14 @@ int
 __srefill(fp)
 	FILE *fp;
 {
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL) {
+		errno = EBADF;
+		return (EOF);
+	}
+#endif
 
 	/* make sure stdio is set up */
 	if (!__sdidinit)

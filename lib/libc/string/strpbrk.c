@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.8 1998/11/15 17:21:49 christos Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.9 1999/09/16 11:45:42 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)strpbrk.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strpbrk.c,v 1.8 1998/11/15 17:21:49 christos Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.9 1999/09/16 11:45:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <string.h>
 
 /*
@@ -53,6 +54,13 @@ strpbrk(s1, s2)
 {
 	const char *scanp;
 	int c, sc;
+
+	_DIAGASSERT(s1 != NULL);
+	_DIAGASSERT(s2 != NULL);
+#ifdef _DIAGNOSTIC
+	if (s1 == NULL || s2 == NULL)
+		return (NULL);
+#endif
 
 	while ((c = *s1++) != 0) {
 		for (scanp = s2; (sc = *scanp++) != 0;)

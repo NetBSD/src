@@ -1,4 +1,4 @@
-/*	$NetBSD: catopen.c,v 1.15 1999/08/17 04:00:51 mycroft Exp $	*/
+/*	$NetBSD: catopen.c,v 1.16 1999/09/16 11:45:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,16 +39,17 @@
 #define _NLS_PRIVATE
 
 #include "namespace.h"
-#include <limits.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
-#include <unistd.h>
+
+#include <assert.h>
 #include <fcntl.h>
+#include <limits.h>
 #include <nl_types.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 #define NLS_DEFAULT_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L"
 #define NLS_DEFAULT_LANG "C"
@@ -141,6 +142,8 @@ load_msgcat(path)
 	nl_catd catd;
 	void *data;
 	int fd;
+
+	_DIAGASSERT(path != NULL);
 
 	if ((fd = open(path, O_RDONLY)) == -1)
 		return (nl_catd)-1;

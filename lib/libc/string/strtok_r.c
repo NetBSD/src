@@ -1,4 +1,4 @@
-/*	$NetBSD: strtok_r.c,v 1.5 1998/11/15 17:21:49 christos Exp $	*/
+/*	$NetBSD: strtok_r.c,v 1.6 1999/09/16 11:45:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -38,11 +38,13 @@
 #if 0
 static char *sccsid = "@(#)strtok.c	5.8 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: strtok_r.c,v 1.5 1998/11/15 17:21:49 christos Exp $");
+__RCSID("$NetBSD: strtok_r.c,v 1.6 1999/09/16 11:45:43 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#include <assert.h>
 #include <string.h>
 
 #ifdef __weak_alias
@@ -58,6 +60,14 @@ strtok_r(s, delim, lasts)
 	const char *spanp;
 	int c, sc;
 	char *tok;
+
+	/* s may be NULL */
+	_DIAGASSERT(delim != NULL);
+	_DIAGASSERT(lasts != NULL);
+#ifdef _DIAGNOSTIC
+	if (delim == NULL || lasts == NULL)
+		return (NULL);
+#endif
 
 	if (s == NULL && (s = *lasts) == NULL)
 		return (NULL);

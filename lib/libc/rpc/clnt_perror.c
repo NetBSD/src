@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.17 1999/05/03 15:26:49 christos Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.18 1999/09/16 11:45:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_perror.c,v 1.17 1999/05/03 15:26:49 christos Exp $");
+__RCSID("$NetBSD: clnt_perror.c,v 1.18 1999/09/16 11:45:22 lukem Exp $");
 #endif
 #endif
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: clnt_perror.c,v 1.17 1999/05/03 15:26:49 christos Exp $");
  */
 #include "namespace.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,10 +92,18 @@ clnt_sperror(rpch, s)
 {
 	struct rpc_err e;
 	char *err;
-	char *str = _buf();
+	char *str;
 	char *strstart = str;
 	size_t len = buflen, i;
 
+	_DIAGASSERT(rpch != NULL);
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (rpch == NULL || s == NULL)
+		return (NULL);
+#endif
+
+	str = _buf();
 	if (str == 0)
 		return (0);
 	CLNT_GETERR(rpch, &e);
@@ -176,6 +185,14 @@ clnt_perror(rpch, s)
 	CLIENT *rpch;
 	char *s;
 {
+
+	_DIAGASSERT(rpch != NULL);
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (rpch == NULL || s == NULL)
+		return;
+#endif
+
 	(void) fprintf(stderr, "%s\n", clnt_sperror(rpch,s));
 }
 
@@ -229,9 +246,16 @@ char *
 clnt_spcreateerror(s)
 	char *s;
 {
-	char *str = _buf();
+	char *str;
 	size_t len = buflen, i;
 
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL)
+		return (NULL);
+#endif
+
+	str = _buf();
 	if (str == 0)
 		return(0);
 	i = snprintf(str, len, "%s: ", s);
@@ -275,6 +299,13 @@ void
 clnt_pcreateerror(s)
 	char *s;
 {
+
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL)
+		return;
+#endif
+
 	(void) fprintf(stderr, "%s\n", clnt_spcreateerror(s));
 }
 

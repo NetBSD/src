@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.12 1998/11/13 12:31:51 christos Exp $	*/
+/*	$NetBSD: readdir.c,v 1.13 1999/09/16 11:45:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,14 +38,16 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.12 1998/11/13 12:31:51 christos Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.13 1999/09/16 11:45:03 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
-#include <unistd.h>
+
 #include <dirent.h>
+#include <errno.h>
+#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(readdir,_readdir);
@@ -59,6 +61,13 @@ readdir(dirp)
 	DIR *dirp;
 {
 	struct dirent *dp;
+
+#ifdef _DIAGNOSTIC
+	if (dirp == NULL) {
+		errno = EBADF;
+		return (NULL);
+	}
+#endif
 
 	for (;;) {
 		if (dirp->dd_loc >= dirp->dd_size) {

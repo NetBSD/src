@@ -28,9 +28,10 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: insque.c,v 1.6 1999/07/02 15:16:41 simonb Exp $");
+__RCSID("$NetBSD: insque.c,v 1.7 1999/09/16 11:45:47 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <search.h>
 
 struct qelem {
@@ -45,6 +46,13 @@ insque(entry, pred)
 {
 	struct qelem *e = (struct qelem *) entry;
 	struct qelem *p = (struct qelem *) pred;
+
+	_DIAGASSERT(e != 0);
+	_DIAGASSERT(p != 0);
+#ifdef _DIAGNOSTIC
+	if (e == 0 || p == 0)
+		return;
+#endif
 
 	e->q_forw = p->q_forw;
 	e->q_back = p;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.11 1999/08/16 08:34:33 blymn Exp $	*/
+/*	$NetBSD: tputs.c,v 1.12 1999/09/16 11:45:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.11 1999/08/16 08:34:33 blymn Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.12 1999/09/16 11:45:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
+#include <assert.h>
 #include <ctype.h>
 #include <termcap.h>
 #include <stdio.h>
@@ -113,6 +114,12 @@ tputs(cp, affcnt, outc)
 {
 	int i = 0;
 	int mspc10;
+
+	_DIAGASSERT(outc != 0);
+#ifdef _DIAGNOSTIC
+	if (outc == 0)
+		return;
+#endif
 
 	if (cp == 0)
 		return;

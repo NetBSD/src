@@ -1,4 +1,4 @@
-/*	$NetBSD: rmtlib.c,v 1.11 1999/07/02 15:41:46 simonb Exp $	*/
+/*	$NetBSD: rmtlib.c,v 1.12 1999/09/16 11:45:49 lukem Exp $	*/
 
 /*
  *	rmt --- remote tape emulator subroutines
@@ -30,26 +30,26 @@
 #define RMTIOCTL	1
 /* #define USE_REXEC	1 */	/* rexec code courtesy of Dan Kegel, srs!dan */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <signal.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #ifdef RMTIOCTL
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
 #endif
 
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
 #ifdef USE_REXEC
 #include <netdb.h>
 #endif
-
-#include <errno.h>
-#include <sys/stat.h>
-
-#include <fcntl.h>
-#include <unistd.h>
 
 #define __RMTLIB_PRIVATE
 #include <rmt.h>		/* get prototypes for remapped functions */
@@ -113,6 +113,8 @@ command(fildes, buf)
 {
 	int blen;
 	void (*pstat) __P((int));
+
+	_DIAGASSERT(buf != NULL);
 
 /*
  *	save current pipe status and try to make the request
@@ -237,6 +239,9 @@ _rmt_rexec(host, user)
 {
 	struct servent *rexecserv;
 
+	_DIAGASSERT(host != NULL);
+	/* user may be NULL */
+
 	rexecserv = getservbyname("exec", "tcp");
 	if (NULL == rexecserv) {
 		fprintf (stderr, "? exec/tcp: service not available.");
@@ -272,6 +277,8 @@ _rmt_open(path, oflag, mode)
 	char device[BUFMAGIC];
 	char login[BUFMAGIC];
 	char *sys, *dev, *user;
+
+	_DIAGASSERT(path != NULL);
 
 	sys = system;
 	dev = device;
@@ -445,6 +452,8 @@ _rmt_read(fildes, buf, nbyte)
 	int rc, i;
 	char buffer[BUFMAGIC];
 
+	_DIAGASSERT(buf != NULL);
+
 	(void)snprintf(buffer, sizeof buffer, "R%d\n", nbyte);
 	if (command(fildes, buffer) == -1 || (rc = status(fildes)) == -1)
 		return(-1);
@@ -477,6 +486,8 @@ _rmt_write(fildes, buf, nbyte)
 {
 	char buffer[BUFMAGIC];
 	void (*pstat) __P((int));
+
+	_DIAGASSERT(buf != NULL);
 
 	(void)snprintf(buffer, sizeof buffer, "W%d\n", nbyte);
 	if (command(fildes, buffer) == -1)
@@ -532,6 +543,8 @@ _rmt_ioctl(fildes, op, arg)
 	char c;
 	int rc, cnt;
 	char buffer[BUFMAGIC];
+
+	_DIAGASSERT(arg != NULL);
 
 /*
  *	MTIOCOP is the easy one. nothing is transfered in binary
@@ -647,6 +660,9 @@ static int
 remdev(path)
 	const char *path;
 {
+
+	_DIAGASSERT(path != NULL);
+
 	if ((path = strchr (path, ':')) != NULL)
 	{
 		if (strncmp (path + 1, "/dev/", 5) == 0)
@@ -688,6 +704,14 @@ rmtopen(va_alist)
 	mode = va_arg(ap, mode_t);
 	va_end(ap);
 
+	_DIAGASSERT(path != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
+#endif
+
 	if (remdev (path))
 	{
 		fd = _rmt_open (path, oflag, mode);
@@ -710,6 +734,15 @@ rmtaccess(path, amode)
 	const char *path;
 	int amode;
 {
+
+	_DIAGASSERT(path != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
+#endif
+
 	if (remdev (path))
 	{
 		return (0);		/* Let /etc/rmt find out */
@@ -743,6 +776,15 @@ rmtread(fildes, buf, nbyte)
 	void *buf;
 	size_t nbyte;
 {
+
+	_DIAGASSERT(buf != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	if (isrmt (fildes))
 	{
 		return (_rmt_read (fildes - REM_BIAS, buf, nbyte));
@@ -764,6 +806,15 @@ rmtwrite(fildes, buf, nbyte)
 	const void *buf;
 	size_t nbyte;
 {
+
+	_DIAGASSERT(buf != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	if (isrmt (fildes))
 	{
 		return (_rmt_write (fildes - REM_BIAS, buf, nbyte));
@@ -841,6 +892,8 @@ rmtioctl(va_alist)
 	arg = va_arg(ap, char *);
 	va_end(ap);
 
+	/* XXX: arg may be NULL ? */
+
 	if (isrmt (fildes))
 	{
 #ifdef RMTIOCTL
@@ -886,6 +939,15 @@ rmtfstat(fildes, buf)
 	int fildes;
 	struct stat *buf;
 {
+
+	_DIAGASSERT(buf != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	if (isrmt (fildes))
 	{
 		errno = EOPNOTSUPP;
@@ -907,6 +969,20 @@ rmtstat(path, buf)
 	const char *path;
 	struct stat *buf;
 {
+
+	_DIAGASSERT(path != NULL);
+	_DIAGASSERT(buf != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
+	if (buf == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	if (remdev (path))
 	{
 		errno = EOPNOTSUPP;
@@ -929,6 +1005,15 @@ rmtcreat(path, mode)
 	const char *path;
 	mode_t mode;
 {
+
+	_DIAGASSERT(path != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
+#endif
+
 	if (remdev (path))
 	{
 		return (rmtopen (path, 1 | O_CREAT, mode));
@@ -966,6 +1051,8 @@ rmtfcntl(va_alist)
 	arg = va_arg(ap, void *);
 	va_end(ap);
 
+	/* XXX: arg may be NULL ? */
+
 	if (isrmt (fd))
 	{
 		errno = EOPNOTSUPP;
@@ -1001,6 +1088,20 @@ rmtlstat(path, buf)
 	const char *path;
 	struct stat *buf;
 {
+
+	_DIAGASSERT(path != NULL);
+	_DIAGASSERT(buf != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (-1);
+	}
+	if (buf == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
+
 	if (remdev (path))
 	{
 		errno = EOPNOTSUPP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.9 1999/08/03 21:43:13 wrstuden Exp $	*/
+/*	$NetBSD: strmode.c,v 1.10 1999/09/16 11:45:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,12 +38,14 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.9 1999/08/03 21:43:13 wrstuden Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.10 1999/09/16 11:45:42 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include <assert.h>
 #include <unistd.h>
 
 void
@@ -51,6 +53,13 @@ strmode(mode, p)
 	mode_t mode;
 	char *p;
 {
+
+	_DIAGASSERT(p != NULL);
+#ifdef _DIAGNOSTIC
+	if (p == NULL)
+		return;
+#endif
+
 	 /* print type */
 	switch (mode & S_IFMT) {
 	case S_IFDIR:			/* directory */

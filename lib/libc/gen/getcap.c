@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.29 1999/03/29 09:27:29 abs Exp $	*/
+/*	$NetBSD: getcap.c,v 1.30 1999/09/16 11:44:57 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,12 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.29 1999/03/29 09:27:29 abs Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.30 1999/09/16 11:44:57 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+
+#include <assert.h>
 #include <ctype.h>
 #include <db.h>
 #include <errno.h>	
@@ -156,6 +158,13 @@ cgetcap(buf, cap, type)
 	char *bp;
 	const char *cp;
 
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(cap != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || cap == NULL)
+		return (NULL);
+#endif
+
 	bp = buf;
 	for (;;) {
 		/*
@@ -208,6 +217,16 @@ cgetent(buf, db_array, name)
 {
 	size_t dummy;
 
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(db_array != NULL);
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || db_array == NULL || name == NULL) {
+		errno = EFAULT;
+		return (-2);
+	}
+#endif
+
 	return (getent(buf, &dummy, db_array, -1, name, 0, NULL));
 }
 
@@ -244,6 +263,13 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 	int tc_not_resolved;
 	char pbuf[_POSIX_PATH_MAX];
 	
+	_DIAGASSERT(cap != NULL);
+	_DIAGASSERT(len != NULL);
+	_DIAGASSERT(db_array != NULL);
+	/* fd may be -1 */
+	_DIAGASSERT(name != NULL);
+	/* nfield may be NULL */
+
 	/*
 	 * Return with ``loop detected'' error if we've recursed more than
 	 * MAX_RECURSION times.
@@ -303,7 +329,10 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 				cbuf = malloc(clen + 1);
 				memmove(cbuf, record, clen + 1);
 				if (capdbp->close(capdbp) < 0) {
+					int serrno = errno;
+
 					free(cbuf);
+					errno = serrno;
 					return (-2);
 				}
 				*len = clen;
@@ -355,7 +384,10 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 						if (myfd)
 							(void)close(fd);
 						if (n < 0) {
+							int serrno = errno;
+
 							free(record);
+							errno = serrno;
 							return (-2);
 						} else {
 							fd = -1;
@@ -415,9 +447,9 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 					newsize = r_end - record + BFRAG;
 					record = realloc(record, newsize);
 					if (record == NULL) {
-						errno = ENOMEM;
 						if (myfd)
 							(void)close(fd);
+						errno = ENOMEM;
 						return (-2);
 					}
 					r_end = record + newsize;
@@ -557,10 +589,10 @@ tc_exp:	{
 				tcposend = tcend - record;
 				record = realloc(record, newsize);
 				if (record == NULL) {
-					errno = ENOMEM;
 					if (myfd)
 						(void)close(fd);
 					free(icap);
+					errno = ENOMEM;
 					return (-2);
 				}
 				r_end = record + newsize;
@@ -615,6 +647,10 @@ cdbget(capdbp, bp, name)
 	DBT key;
 	DBT data;
 
+	_DIAGASSERT(capdbp != NULL);
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(name != NULL);
+
 	/* LINTED key is not modified */
 	key.data = (char *)name;
 	key.size = strlen(name);
@@ -649,6 +685,13 @@ cgetmatch(buf, name)
 	const char *buf, *name;
 {
 	const char *np, *bp;
+
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(name != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || name == NULL)
+		return (-1);
+#endif
 
 	/*
 	 * Start search at beginning of record.
@@ -686,6 +729,16 @@ int
 cgetfirst(buf, db_array)
 	char **buf, **db_array;
 {
+
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(db_array != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || db_array == NULL) {
+		errno = EFAULT;
+		return (-2);
+	}
+#endif
+
 	(void)cgetclose();
 	return (cgetnext(buf, db_array));
 }
@@ -721,6 +774,15 @@ cgetnext(bp, db_array)
 	int status, done;
 	char *cp, *line, *rp, *np, buf[BSIZE], nbuf[BSIZE];
 	size_t dummy;
+
+	_DIAGASSERT(bp != NULL);
+	_DIAGASSERT(db_array != NULL);
+#ifdef _DIAGNOSTIC
+	if (bp == NULL || db_array == NULL) {
+		errno = EFAULT;
+		return (-2);
+	}
+#endif
 
 	if (dbp == NULL)
 		dbp = db_array;
@@ -853,6 +915,16 @@ cgetstr(buf, cap, str)
 	int len;
 	char *mem;
 
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(cap != NULL);
+	_DIAGASSERT(str != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || cap == NULL || str == NULL) {
+		errno = EFAULT;
+		return (-2);
+	}
+#endif
+
 	/*
 	 * Find string capability cap
 	 */
@@ -980,6 +1052,16 @@ cgetustr(buf, cap, str)
 	int len;
 	char *mem;
 
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(cap != NULL);
+	_DIAGASSERT(str != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || cap == NULL || str == NULL) {
+		errno = EFAULT;
+		return (-2);
+	}
+#endif
+
 	/*
 	 * Find string capability cap
 	 */
@@ -1050,6 +1132,14 @@ cgetnum(buf, cap, num)
 	int base, digit;
 	const char *bp;
 
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(cap != NULL);
+	_DIAGASSERT(num != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || cap == NULL || num == NULL)
+		return (-1);
+#endif
+
 	/*
 	 * Find numeric capability cap
 	 */
@@ -1111,7 +1201,10 @@ nfcmp(nf, rec)
 {
 	char *cp, tmp;
 	int ret;
-	
+
+	_DIAGASSERT(nf != NULL);
+	_DIAGASSERT(rec != NULL);
+
 	for (cp = rec; *cp != ':'; cp++)
 		;
 	

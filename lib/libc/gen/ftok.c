@@ -1,4 +1,4 @@
-/*	$NetBSD: ftok.c,v 1.6 1998/11/12 16:15:17 christos Exp $	*/
+/*	$NetBSD: ftok.c,v 1.7 1999/09/16 11:44:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -29,13 +29,16 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ftok.c,v 1.6 1998/11/12 16:15:17 christos Exp $");
+__RCSID("$NetBSD: ftok.c,v 1.7 1999/09/16 11:44:57 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/ipc.h>
+
+#include <assert.h>
+#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(ftok,_ftok);
@@ -47,6 +50,14 @@ ftok(path, id)
 	int id;
 {
 	struct stat st;
+
+	_DIAGASSERT(path != NULL);
+#ifdef _DIAGNOSTIC
+	if (path == NULL || *path == '\0') {
+		errno = ENOENT;
+		return (key_t)-1;
+	}
+#endif
 
 	if (stat(path, &st) < 0)
 		return (key_t)-1;

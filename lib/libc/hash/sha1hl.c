@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1hl.c,v 1.2 1999/05/03 15:00:40 christos Exp $	*/
+/*	$NetBSD: sha1hl.c,v 1.3 1999/09/16 11:45:07 lukem Exp $	*/
 /* sha1hl.c
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -16,13 +16,14 @@
 #include <sys/uio.h>
 #include <sys/sha1.h>
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <assert.h>
 #include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1hl.c,v 1.2 1999/05/03 15:00:40 christos Exp $");
+__RCSID("$NetBSD: sha1hl.c,v 1.3 1999/09/16 11:45:07 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__weak_alias)
@@ -41,6 +42,13 @@ SHA1End(ctx, buf)
     char *p = buf;
     u_char digest[20];
     static const char hex[]="0123456789abcdef";
+
+    _DIAGASSERT(ctx != NULL);
+    /* buf may be NULL */
+#ifdef _DIAGNOSTIC
+    if (ctx == NULL)
+	return NULL;
+#endif
 
     if (p == NULL && (p = malloc(41)) == NULL)
 	return 0;
@@ -63,6 +71,13 @@ SHA1File (filename, buf)
     SHA1_CTX ctx;
     int fd, num, oerrno;
 
+    _DIAGASSERT(filename != NULL);
+    /* XXX: buf may be NULL ? */
+#ifdef _DIAGNOSTIC
+    if (filename == NULL || *filename == '\0')
+	return(0);
+#endif
+
     SHA1Init(&ctx);
 
     if ((fd = open(filename,O_RDONLY)) < 0)
@@ -84,6 +99,13 @@ SHA1Data (data, len, buf)
     char *buf;
 {
     SHA1_CTX ctx;
+
+    _DIAGASSERT(data != NULL);
+    /* XXX: buf may be NULL ? */
+#ifdef _DIAGNOSTIC
+    if (data == NULL)
+	return NULL;
+#endif
 
     SHA1Init(&ctx);
     SHA1Update(&ctx, data, len);

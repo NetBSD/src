@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.11 1998/02/03 18:41:07 perry Exp $	*/
+/*	$NetBSD: fflush.c,v 1.12 1999/09/16 11:45:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.11 1998/02/03 18:41:07 perry Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.12 1999/09/16 11:45:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include "local.h"
@@ -85,6 +86,12 @@ __sflush(fp)
 {
 	unsigned char *p;
 	int n, t;
+
+	_DIAGASSERT(fp != NULL);
+#ifdef _DIAGNOSTIC
+	if (fp == NULL)
+		return (0);
+#endif
 
 	t = fp->_flags;
 	if ((t & __SWR) == 0)

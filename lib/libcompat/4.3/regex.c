@@ -46,7 +46,7 @@
 #if 0
 static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
 #else
-__RCSID("$NetBSD: regex.c,v 1.9 1999/05/04 17:11:01 christos Exp $");
+__RCSID("$NetBSD: regex.c,v 1.10 1999/09/16 11:45:47 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: regex.c,v 1.9 1999/05/04 17:11:01 christos Exp $");
 #ifdef __lint__
 #define __compat_regerror __compat43_regerror
 #endif
+#include <assert.h>
 #include <regexp.h>
 #include <re_comp.h>
 #include <string.h>
@@ -86,6 +87,11 @@ re_exec(s)
 {
 	int rc;
 
+#ifdef _DIAGNOSTIC
+	if (s == NULL || *s == '\0')
+		return (-1);
+#endif
+
 	re_goterr = 0;
 	rc = regexec(re_regexp, s);
 	return (re_goterr ? -1 : rc);
@@ -95,6 +101,13 @@ void
 regerror(s)
 	const char *s;
 {
+
+	_DIAGASSERT(s != NULL);
+#ifdef _DIAGNOSTIC
+	if (s == NULL)
+		s = "ERROR: regerror() called with NULL pointer";
+#endif
+
 	re_goterr = 1;
 	if (re_errstr)
 		free(re_errstr);

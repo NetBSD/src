@@ -1,4 +1,4 @@
-/*	$NetBSD: times.c,v 1.8 1998/03/30 14:36:00 kleink Exp $	*/
+/*	$NetBSD: times.c,v 1.9 1999/09/16 11:45:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)times.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: times.c,v 1.8 1998/03/30 14:36:00 kleink Exp $");
+__RCSID("$NetBSD: times.c,v 1.9 1999/09/16 11:45:05 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: times.c,v 1.8 1998/03/30 14:36:00 kleink Exp $");
 #include <sys/times.h>
 #include <sys/resource.h>
 
+#include <assert.h>
+#include <errno.h>
 #include <time.h>
 
 #ifdef __weak_alias
@@ -66,6 +68,14 @@ times(tp)
 {
 	struct rusage ru;
 	struct timeval t;
+
+	_DIAGASSERT(tp != NULL);
+#ifdef _DIAGNOSTIC
+	if (tp == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if (getrusage(RUSAGE_SELF, &ru) < 0)
 		return ((clock_t)-1);

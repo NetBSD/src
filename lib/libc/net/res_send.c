@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.20 1999/08/17 03:58:39 mycroft Exp $	*/
+/*	$NetBSD: res_send.c,v 1.21 1999/09/16 11:45:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.20 1999/08/17 03:58:39 mycroft Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.21 1999/09/16 11:45:19 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,10 +87,12 @@ __RCSID("$NetBSD: res_send.c,v 1.20 1999/08/17 03:58:39 mycroft Exp $");
 #include <arpa/nameser.h>
 #include <arpa/inet.h>
 
-#include <stdio.h>
-#include <netdb.h>
+#include <assert.h>
 #include <errno.h>
+#include <netdb.h>
 #include <resolv.h>
+#include <stdio.h>
+
 #if defined(BSD) && (BSD >= 199306)
 # include <stdlib.h>
 # include <string.h>
@@ -206,7 +208,13 @@ res_isourserver(inp)
 #else /* INET6 */
 	struct sockaddr_in ina;
 #endif /* INET6 */
-	register int ns, ret;
+	int ns, ret;
+
+	_DIAGASSERT(inp != NULL);
+#ifdef _DIAGNOSTIC
+	if (inp == NULL)
+		return (0);
+#endif
 
 #ifdef INET6
 	ret = 0;
@@ -242,7 +250,7 @@ res_isourserver(inp)
 	ina = *inp;
 	ret = 0;
 	for (ns = 0;  ns < _res.nscount;  ns++) {
-		register const struct sockaddr_in *srv = &_res.nsaddr_list[ns];
+		const struct sockaddr_in *srv = &_res.nsaddr_list[ns];
 
 		if (srv->sin_family == ina.sin_family &&
 		    srv->sin_port == ina.sin_port &&
@@ -269,15 +277,23 @@ res_isourserver(inp)
 int
 res_nameinquery(name, type, class, buf, eom)
 	const char *name;
-	register int type, class;
+	int type, class;
 	const u_char *buf, *eom;
 {
-	register const u_char *cp = buf + HFIXEDSZ;
+	const u_char *cp = buf + HFIXEDSZ;
 	int qdcount = ntohs(((const HEADER*)(const void *)buf)->qdcount);
+
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(eom != NULL);
+#ifdef _DIAGNOSTIC
+	if (name == NULL || buf == NULL || eom == NULL)
+		return (-1);
+#endif
 
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
-		register int n, ttype, tclass;
+		int n, ttype, tclass;
 
 		n = dn_expand(buf, eom, cp, tname, sizeof tname);
 		if (n < 0)
@@ -309,14 +325,23 @@ res_queriesmatch(buf1, eom1, buf2, eom2)
 	const u_char *buf1, *eom1;
 	const u_char *buf2, *eom2;
 {
-	register const u_char *cp = buf1 + HFIXEDSZ;
+	const u_char *cp = buf1 + HFIXEDSZ;
 	int qdcount = ntohs(((const HEADER *)(const void *)buf1)->qdcount);
+
+	_DIAGASSERT(buf1 != NULL);
+	_DIAGASSERT(eom1 != NULL);
+	_DIAGASSERT(buf2 != NULL);
+	_DIAGASSERT(eom2 != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf1 == NULL || eom1 == NULL || buf2 == NULL || eom2 == NULL)
+		return (-1);
+#endif
 
 	if (qdcount != ntohs(((const HEADER *)(const void *)buf2)->qdcount))
 		return (0);
 	while (qdcount-- > 0) {
 		char tname[MAXDNAME+1];
-		register int n, ttype, tclass;
+		int n, ttype, tclass;
 
 		n = dn_expand(buf1, eom1, cp, tname, sizeof tname);
 		if (n < 0)
@@ -340,8 +365,17 @@ res_send(buf, buflen, ans, anssiz)
 	const HEADER *hp = (const HEADER *)(const void *)buf;
 	HEADER *anhp = (HEADER *)(void *)ans;
 	int gotsomewhere, connreset, terrno, try, v_circuit, resplen, ns;
-	register int n;
+	int n;
 	u_int badns;	/* XXX NSMAX can't exceed #/bits in this var */
+
+	_DIAGASSERT(buf != NULL);
+	_DIAGASSERT(ans != NULL);
+#ifdef _DIAGNOSTIC
+	if (buf == NULL || ans == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if ((_res.options & RES_INIT) == 0 && res_init() == -1) {
 		/* errno should have been set by res_init() in this case. */
@@ -862,6 +896,7 @@ res_close()
 }
 
 #ifdef ultrix
+/* XXX: remove this cruft? - lukem */
 /* ultrix 4.0 had some icky packaging in its libc.a.  alias for it here.
  * there is more gunk of this kind over in res_debug.c.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.12 1998/12/08 13:41:43 drochner Exp $	*/
+/*	$NetBSD: regexec.c,v 1.13 1999/09/16 11:45:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.12 1998/12/08 13:41:43 drochner Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.13 1999/09/16 11:45:21 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,12 +57,14 @@ __RCSID("$NetBSD: regexec.c,v 1.12 1998/12/08 13:41:43 drochner Exp $");
  */
 #include "namespace.h"
 #include <sys/types.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <limits.h>
+#include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
-#include <ctype.h>
-#include <regex.h>
 
 #ifdef __weak_alias
 __weak_alias(regexec,_regexec);
@@ -176,6 +178,13 @@ int eflags;
 #	define	GOODFLAGS(f)	(f)
 #else
 #	define	GOODFLAGS(f)	((f)&(REG_NOTBOL|REG_NOTEOL|REG_STARTEND))
+#endif
+
+	_DIAGASSERT(preg != NULL);
+	_DIAGASSERT(string != NULL);
+#ifdef _DIAGNOSTIC
+	if (preg == NULL || string == NULL)
+		return (REG_INVARG);
 #endif
 
 	if (preg->re_magic != MAGIC1 || g->magic != MAGIC2)

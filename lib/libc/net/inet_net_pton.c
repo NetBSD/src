@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_net_pton.c,v 1.8 1998/11/13 15:46:54 christos Exp $	*/
+/*	$NetBSD: inet_net_pton.c,v 1.9 1999/09/16 11:45:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_net_pton.c,v 8.3 1996/11/11 06:36:52 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_net_pton.c,v 1.8 1998/11/13 15:46:54 christos Exp $");
+__RCSID("$NetBSD: inet_net_pton.c,v 1.9 1999/09/16 11:45:13 lukem Exp $");
 #endif
 #endif
 
@@ -72,6 +72,16 @@ inet_net_pton(af, src, dst, size)
 	void *dst;
 	size_t size;
 {
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
+#ifdef _DIAGNOSTIC
+	if (src == NULL || dst == NULL) {
+		errno = EFAULT;
+		return (NULL);
+	}
+#endif
+
 	switch (af) {
 	case AF_INET:
 		return (inet_net_pton_ipv4(src, dst, size));
@@ -108,6 +118,9 @@ inet_net_pton_ipv4(src, dst, size)
 		digits[] = "0123456789";
 	int n, ch, tmp, dirty, bits;
 	const u_char *odst = dst;
+
+	_DIAGASSERT(src != NULL);
+	_DIAGASSERT(dst != NULL);
 
 	ch = *src++;
 	if (ch == '0' && (src[0] == 'x' || src[0] == 'X')

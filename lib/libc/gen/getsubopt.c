@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.8 1998/02/03 18:23:46 perry Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.9 1999/09/16 11:45:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,14 +38,16 @@
 #if 0
 static char *sccsid = "@(#)getsubopt.c	5.2 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: getsubopt.c,v 1.8 1998/02/03 18:23:46 perry Exp $");
+__RCSID("$NetBSD: getsubopt.c,v 1.9 1999/09/16 11:45:00 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <unistd.h>
+
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #ifdef __weak_alias
 __weak_alias(getsubopt,_getsubopt);
@@ -66,6 +68,14 @@ getsubopt(optionp, tokens, valuep)
 {
 	int cnt;
 	char *p;
+
+	_DIAGASSERT(optionp != NULL);
+	_DIAGASSERT(tokens != NULL);
+	_DIAGASSERT(valuep != NULL);
+#ifdef _DIAGNOSTIC
+	if (tokens == NULL || valuep == NULL)
+		return (-1);
+#endif
 
 	suboptarg = *valuep = NULL;
 

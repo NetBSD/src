@@ -1,4 +1,4 @@
-/*	$NetBSD: ifname.c,v 1.3 1999/07/04 00:43:43 itojun Exp $	*/
+/*	$NetBSD: ifname.c,v 1.4 1999/09/16 11:45:13 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,6 +39,8 @@
 #include <net/if.h>
 #include <net/route.h>
 #include <net/if_dl.h>
+
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +56,16 @@ if_nametoindex(ifname)
 	struct if_nameindex *iff = if_nameindex(), *ifx;
 	int ret;
 
-	if (iff == NULL) return 0;
+	_DIAGASSERT(ifname != NULL);
+#ifdef _DIAGNOSTIC
+	if (ifname == NULL) {
+		errno = EFAULT;
+		return 0;
+	}
+#endif
+
+	if (iff == NULL)
+		return 0;
 	ifx = iff;
 	while (ifx->if_name != NULL) {
 		if (strcmp(ifx->if_name, ifname) == 0) {
@@ -77,7 +88,16 @@ if_indextoname(ifindex, ifname)
 	struct if_nameindex *iff = if_nameindex(), *ifx;
 	char *cp, *dp;
 
-	if (iff == NULL) return NULL;
+	_DIAGASSERT(ifname != NULL);
+#ifdef _DIAGNOSTIC
+	if (ifname == NULL) {
+		errno = EFAULT;
+		return 0;
+	}
+#endif
+
+	if (iff == NULL)
+		return NULL;
 	ifx = iff;
 	while (ifx->if_index != 0) {
 		if (ifx->if_index == ifindex) {
@@ -204,8 +224,16 @@ if_nameindex()
 	return ret;
 }
 
-void if_freenameindex(ptr)
+void
+if_freenameindex(ptr)
 	struct if_nameindex *ptr;
 {
+
+	_DIAGASSERT(ptr != NULL);
+#ifdef _DIAGNOSTIC
+	if (ptr == NULL)
+		return;
+#endif
+
 	free(ptr);
 }

@@ -30,9 +30,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: gtty.c,v 1.2 1997/10/09 10:20:16 lukem Exp $");
+__RCSID("$NetBSD: gtty.c,v 1.3 1999/09/16 11:45:46 lukem Exp $");
 #endif /* not lint */
 
+#include <assert.h>
+#include <errno.h>
 #include <sgtty.h>
 
 /*
@@ -45,6 +47,19 @@ gtty(fd, tty)
 	int fd;
 	struct sgttyb *tty;
 {
+
+	_DIAGASSERT(fd != -1);
+	_DIAGASSERT(tty != 0);
+#ifdef _DIAGNOSTIC
+	if (fd == -1) {
+		errno = EBADF;
+		return (-1);
+	}
+	if (tty == 0) {
+		errno = EINVAL;
+		return (-1);
+	}
+#endif
 
 	return (ioctl(fd, TIOCGETP, tty));
 }

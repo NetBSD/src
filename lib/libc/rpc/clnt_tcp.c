@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.18 1999/03/25 01:16:10 lukem Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.19 1999/09/16 11:45:22 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_tcp.c,v 1.18 1999/03/25 01:16:10 lukem Exp $");
+__RCSID("$NetBSD: clnt_tcp.c,v 1.19 1999/09/16 11:45:22 lukem Exp $");
 #endif
 #endif
  
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: clnt_tcp.c,v 1.18 1999/03/25 01:16:10 lukem Exp $");
 #include <sys/poll.h>
 #include <sys/socket.h>
 
+#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <netdb.h>
@@ -148,6 +149,15 @@ clnttcp_create(raddr, prog, vers, sockp, sendsz, recvsz)
 	struct timeval now;
 	struct rpc_msg call_msg;
 	static u_int32_t disrupt;
+
+	_DIAGASSERT(sockp != NULL);
+#ifdef _DIAGNOSTIC
+	if (sockp == NULL) {
+		rpc_createerr.cf_stat = RPC_SYSTEMERROR;
+		rpc_createerr.cf_error.re_errno = EFAULT;
+		return (NULL);
+	}
+#endif
 
 	if (disrupt == 0)
 		disrupt = (u_int32_t)(long)raddr;
@@ -266,13 +276,19 @@ clnttcp_call(h, proc, xdr_args, args_ptr, xdr_results, results_ptr, timeout)
 	caddr_t results_ptr;
 	struct timeval timeout;
 {
-	struct ct_data *ct = (struct ct_data *) h->cl_private;
-	XDR *xdrs = &(ct->ct_xdrs);
+	struct ct_data *ct;
+	XDR *xdrs;
 	struct rpc_msg reply_msg;
 	u_long x_id;
-	u_int32_t *msg_x_id = &ct->ct_u.ct_mcalli;
+	u_int32_t *msg_x_id;
 	bool_t shipnow;
 	int refreshes = 2;
+
+	_DIAGASSERT(h != NULL);
+
+	ct = (struct ct_data *) h->cl_private;
+	xdrs = &(ct->ct_xdrs);
+	msg_x_id = &ct->ct_u.ct_mcalli;
 
 	if (!ct->ct_waitset) {
 		ct->ct_wait = timeout;
@@ -360,8 +376,12 @@ clnttcp_geterr(h, errp)
 	CLIENT *h;
 	struct rpc_err *errp;
 {
-	struct ct_data *ct = (struct ct_data *) h->cl_private;
+	struct ct_data *ct;
 
+	_DIAGASSERT(h != NULL);
+	_DIAGASSERT(errp != NULL);
+
+	ct = (struct ct_data *) h->cl_private;
 	*errp = ct->ct_error;
 }
 
@@ -371,8 +391,13 @@ clnttcp_freeres(cl, xdr_res, res_ptr)
 	xdrproc_t xdr_res;
 	caddr_t res_ptr;
 {
-	struct ct_data *ct = (struct ct_data *)cl->cl_private;
-	XDR *xdrs = &(ct->ct_xdrs);
+	struct ct_data *ct;
+	XDR *xdrs;
+
+	_DIAGASSERT(cl != NULL);
+
+	ct = (struct ct_data *)cl->cl_private;
+	xdrs = &(ct->ct_xdrs);
 
 	xdrs->x_op = XDR_FREE;
 	return ((*xdr_res)(xdrs, res_ptr));
@@ -391,8 +416,13 @@ clnttcp_control(cl, request, info)
 	u_int request;
 	char *info;
 {
-	struct ct_data *ct = (struct ct_data *)cl->cl_private;
+	struct ct_data *ct;
 	void *infop = info;
+
+	_DIAGASSERT(cl != NULL);
+	_DIAGASSERT(info != NULL);
+
+	ct = (struct ct_data *)cl->cl_private;
 
 	switch (request) {
 	case CLSET_TIMEOUT:
@@ -416,7 +446,11 @@ static void
 clnttcp_destroy(h)
 	CLIENT *h;
 {
-	struct ct_data *ct = (struct ct_data *) h->cl_private;
+	struct ct_data *ct;
+
+	_DIAGASSERT(h != NULL);
+
+	ct = (struct ct_data *) h->cl_private;
 
 	if (ct->ct_closeit && ct->ct_sock != -1) {
 		(void)close(ct->ct_sock);

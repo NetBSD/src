@@ -1,4 +1,4 @@
-/*	$NetBSD: merge.c,v 1.7 1998/11/15 17:13:51 christos Exp $	*/
+/*	$NetBSD: merge.c,v 1.8 1999/09/16 11:45:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
 #else
-__RCSID("$NetBSD: merge.c,v 1.7 1998/11/15 17:13:51 christos Exp $");
+__RCSID("$NetBSD: merge.c,v 1.8 1999/09/16 11:45:35 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: merge.c,v 1.7 1998/11/15 17:13:51 christos Exp $");
 #include "namespace.h"
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -121,6 +122,15 @@ mergesort(base, nmemb, size, cmp)
 	int big, iflag;
 	u_char *f1, *f2, *t, *b, *tp2, *q, *l1, *l2;
 	u_char *list2, *list1, *p2, *p, *last, **p1;
+
+	_DIAGASSERT(base != NULL);
+	_DIAGASSERT(cmp != NULL);
+#ifdef _DIAGNOSTIC
+	if (base == NULL || cmp == NULL) {
+		errno = EFAULT;
+		return (-1);
+	}
+#endif
 
 	if (size < PSIZE / 2) {		/* Pointers must fit into 2 * size. */
 		errno = EINVAL;
@@ -277,6 +287,8 @@ COPY:	    			b = t;
  * when THRESHOLD/2 pairs compare with same sense.  (Only used when NATURAL
  * is defined.  Otherwise simple pairwise merging is used.)
  */
+
+/* XXX: shouldn't this function be static? - lukem 990810 */
 void
 setup(list1, list2, n, size, cmp)
 	size_t n, size;
@@ -285,6 +297,10 @@ setup(list1, list2, n, size, cmp)
 {
 	int i, length, size2, tmp, sense;
 	u_char *f1, *f2, *s, *l2, *last, *p2;
+
+	_DIAGASSERT(cmp != NULL);
+	_DIAGASSERT(list1 != NULL);
+	_DIAGASSERT(list2 != NULL);
 
 	size2 = size*2;
 	if (n <= 5) {
@@ -359,6 +375,9 @@ insertionsort(a, n, size, cmp)
 {
 	u_char *ai, *s, *t, *u, tmp;
 	int i;
+
+	_DIAGASSERT(a != NULL);
+	_DIAGASSERT(cmp != NULL);
 
 	for (ai = a+size; --n >= 1; ai += size)
 		for (t = ai; t > a; t -= size) {
