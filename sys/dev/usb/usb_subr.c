@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.42 1999/08/29 19:41:27 thorpej Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.43 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,14 +77,14 @@ char *usbd_get_string __P((usbd_device_handle, int, char *));
 int usbd_getnewaddr __P((usbd_bus_handle bus));
 int usbd_print __P((void *aux, const char *pnp));
 #if defined(__NetBSD__)
-int usbd_submatch __P((bdevice *, struct cfdata *cf, void *));
+int usbd_submatch __P((device_ptr_t, struct cfdata *cf, void *));
 #elif defined(__OpenBSD__)
-int usbd_submatch __P((bdevice *, void *, void *));
+int usbd_submatch __P((device_ptr_t, void *, void *));
 #endif
 void usbd_free_iface_data __P((usbd_device_handle dev, int ifcno));
 void usbd_kill_pipe __P((usbd_pipe_handle));
 usbd_status usbd_probe_and_attach 
-	__P((bdevice *parent, usbd_device_handle dev, int port, int addr));
+	__P((device_ptr_t parent, usbd_device_handle dev, int port, int addr));
 
 
 #ifdef USBVERBOSE
@@ -718,7 +718,7 @@ usbd_getnewaddr(bus)
 
 usbd_status
 usbd_probe_and_attach(parent, dev, port, addr)
-	bdevice *parent;
+	device_ptr_t parent;
 	usbd_device_handle dev;
 	int port;
 	int addr;
@@ -726,7 +726,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ddesc;
 	int r, found, i, confi, nifaces;
-	bdevice *dv;
+	device_ptr_t dv;
 	usbd_interface_handle ifaces[256]; /* 256 is the absolute max */
 
 #if defined(__FreeBSD__)
@@ -734,7 +734,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	 * XXX uaa is a static var. Not a problem as it _should_ be used only
 	 * during probe and attach. Should be changed however.
 	 */
-	bdevice bdev;
+	device_t bdev;
 	bdev = device_add_child(*parent, NULL, -1, &uaa);
 	if (!bdev) {
 	    printf("%s: Device creation failed\n", USBDEVNAME(dev->bus->bdev));
@@ -775,11 +775,11 @@ usbd_probe_and_attach(parent, dev, port, addr)
 		if (r != USBD_NORMAL_COMPLETION) {
 #ifdef USB_DEBUG
 			DPRINTF(("%s: port %d, set config at addr %d failed, "
-				 "error=%s\n", USBDEVNAME(*parent), port,
+				 "error=%s\n", USBDEVPTRNAME(parent), port,
 				 addr, usbd_errstr(r)));
 #else
 			printf("%s: port %d, set config at addr %d failed\n",
-			       USBDEVNAME(*parent), port, addr);
+			       USBDEVPTRNAME(parent), port, addr);
 #endif
 #if defined(__FreeBSD__)
 			device_delete_child(*parent, bdev);
@@ -864,7 +864,7 @@ usbd_probe_and_attach(parent, dev, port, addr)
  */
 usbd_status
 usbd_new_device(parent, bus, depth, lowspeed, port, up)
-	bdevice *parent;
+	device_ptr_t parent;
 	usbd_bus_handle bus;
 	int depth;
 	int lowspeed;

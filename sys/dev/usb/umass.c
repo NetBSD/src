@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.11 1999/09/04 22:26:12 augustss Exp $	*/
+/*	$NetBSD: umass.c,v 1.12 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ int umassdebug = /* UDMASS_SCSI|UDMASS_BULK|UDMASS_USB */ 0;
 #endif
 
 typedef struct umass_softc {
-	bdevice			sc_dev;		/* base device */
+	USBBASEDEVICE		sc_dev;		/* base device */
 	usbd_interface_handle	sc_iface;	/* the interface we use */
 
 	u_int8_t		sc_bulkout;	/* bulk-out Endpoint Address */
@@ -141,7 +141,7 @@ typedef struct umass_softc {
 	struct scsipi_link	sc_link;	/* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
 
-	bdevice			*sc_child;	/* child device, for detach */
+	device_ptr_t		sc_child;	/* child device, for detach */
 
 	char			sc_dying;
 } umass_softc_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.19 1999/09/04 22:26:12 augustss Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.20 1999/09/05 19:32:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ int	ulptdebug = 0;
 #define LPS_MASK        (LPS_SELECT|LPS_NERR|LPS_NOPAPER)
 
 struct ulpt_softc {
-	bdevice sc_dev;
+	USBBASEDEVICE sc_dev;
 	usbd_device_handle sc_udev;	/* device */
 	usbd_interface_handle sc_iface;	/* interface */
 	int sc_ifaceno;
@@ -221,7 +221,7 @@ USB_ATTACH(ulpt)
 
 int
 ulpt_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
@@ -240,7 +240,7 @@ ulpt_activate(self, act)
 
 int
 ulpt_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	struct ulpt_softc *sc = (struct ulpt_softc *)self;
@@ -257,7 +257,7 @@ ulpt_detach(self, flags)
 	if (--sc->sc_refcnt >= 0) {
 		/* There is noone to wake, aborting the pipe is enough */
 		/* Wait for processes to go away. */
-		usb_detach_wait(&sc->sc_dev);
+		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
 	splx(s);
 
@@ -453,7 +453,7 @@ ulptwrite(dev, uio, flags)
 	sc->sc_refcnt++;
 	error = ulpt_do_write(sc, uio, flags);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 

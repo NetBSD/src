@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.21 1999/09/04 22:26:11 augustss Exp $	*/
+/*	$NetBSD: ugen.c,v 1.22 1999/09/05 19:32:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@ struct ugen_endpoint {
 #define	UGEN_BBSIZE	1024
 
 struct ugen_softc {
-	bdevice sc_dev;		/* base device */
+	USBBASEDEVICE sc_dev;		/* base device */
 	usbd_device_handle sc_udev;
 
 	char sc_is_open[USB_MAX_ENDPOINTS];
@@ -407,7 +407,9 @@ ugen_do_read(sc, endpt, uio, flag)
 	int error = 0;
 	u_char buffer[UGEN_CHUNK];
 
+#ifdef __NetBSD__
 	DPRINTFN(5, ("ugenread: %d:%d\n", sc->sc_dev.dv_unit, endpt));
+#endif
 	if (sc->sc_dying)
 		return (EIO);
 
@@ -507,7 +509,7 @@ ugenread(dev, uio, flag)
 	sc->sc_refcnt++;
 	error = ugen_do_read(sc, endpt, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 
@@ -581,13 +583,13 @@ ugenwrite(dev, uio, flag)
 	sc->sc_refcnt++;
 	error = ugen_do_write(sc, endpt, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 
 int
 ugen_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;
@@ -606,7 +608,7 @@ ugen_activate(self, act)
 
 int
 ugen_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	struct ugen_softc *sc = (struct ugen_softc *)self;
@@ -633,7 +635,7 @@ ugen_detach(self, flags)
 		for (i = 0; i < USB_MAX_ENDPOINTS; i++)
 			wakeup(&sc->sc_endpoints[i][IN]);
 		/* Wait for processes to go away. */
-		usb_detach_wait(&sc->sc_dev);
+		usb_detach_wait(USBDEV(sc->sc_dev));
 	}
 	splx(s);
 
@@ -1077,7 +1079,7 @@ ugenioctl(dev, cmd, addr, flag, p)
 	sc->sc_refcnt++;
 	error = ugen_do_ioctl(sc, endpt, cmd, addr, flag, p);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 

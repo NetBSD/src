@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.23 1999/09/04 22:26:12 augustss Exp $	*/
+/*	$NetBSD: uhid.c,v 1.24 1999/09/05 19:32:18 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ int	uhiddebug = 0;
 #endif
 
 struct uhid_softc {
-	bdevice sc_dev;			/* base device */
+	USBBASEDEVICE sc_dev;			/* base device */
 	usbd_interface_handle sc_iface;	/* interface */
 	usbd_pipe_handle sc_intrpipe;	/* interrupt pipe */
 	int sc_ep_addr;
@@ -239,7 +239,7 @@ USB_ATTACH(uhid)
 
 int
 uhid_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
@@ -258,7 +258,7 @@ uhid_activate(self, act)
 
 int
 uhid_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	struct uhid_softc *sc = (struct uhid_softc *)self;
@@ -277,7 +277,7 @@ uhid_detach(self, flags)
 			/* Wake everyone */
 			wakeup(&sc->sc_q);
 			/* Wait for processes to go away. */
-			usb_detach_wait(&sc->sc_dev);
+			usb_detach_wait(USBDEV(sc->sc_dev));
 		}
 		splx(s);
 	}
@@ -484,7 +484,7 @@ uhidread(dev, uio, flag)
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 
@@ -536,7 +536,7 @@ uhidwrite(dev, uio, flag)
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 
@@ -628,7 +628,7 @@ uhidioctl(dev, cmd, addr, flag, p)
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
 	if (--sc->sc_refcnt < 0)
-		usb_detach_wakeup(&sc->sc_dev);
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
 

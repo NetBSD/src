@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_port.h,v 1.9 1999/08/17 16:06:21 augustss Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.10 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,16 +42,18 @@
  * Macro's to cope with the differences between operating systems.
  */
 
+#if defined(__NetBSD__)
 /*
  * NetBSD
  */
 
-#if defined(__NetBSD__)
 #include "opt_usbverbose.h"
 
+typedef struct device *device_ptr_t;
+#define USBBASEDEVICE struct device
+#define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
-
-typedef struct device bdevice;			/* base device */
+#define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
@@ -131,9 +133,11 @@ __CONCAT(dname,_attach)(parent, self, aux) \
 #define	uhidpoll		uhidselect
 #define	ugenpoll		ugenselect
 
+typedef struct device device_ptr_t;
+#define USBBASEDEVICE struct device
+#define USBDEV(bdev) (&(bdev))
 #define USBDEVNAME(bdev) ((bdev).dv_xname)
-
-typedef struct device bdevice;			/* base device */
+#define USBDEVPTRNAME(bdevptr) ((bdevptr)->dv_xname)
 
 #define usb_timeout(f, d, t, h) timeout((f), (d), (t))
 #define usb_untimeout(f, d, h) untimeout((f), (d))
@@ -204,12 +208,11 @@ __CONCAT(dname,_attach)(parent, self, aux) \
  */
 
 #include "opt_usb.h"
-/* 
- * The following is not a type def to avoid error messages
- * because of includes in the wrong order.
- */
-#define bdevice device_t
-#define USBDEVNAME(bdev) usbd_devname(&bdev)
+
+#define USBBASEDEVICE device_t
+#define USBDEV(bdev) (bdev)
+#define USBDEVNAME(bdev) usbd_devname(bdev)
+#define USBDEVPTRNAME(bdev) usbd_devname(bdev)
 
 /* XXX Change this when FreeBSD has memset
  */

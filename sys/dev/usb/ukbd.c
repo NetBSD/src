@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.42 1999/09/04 22:26:12 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.43 1999/09/05 19:32:18 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,7 +167,7 @@ static u_int8_t ukbd_trtab[256] = {
 #define MAXKEYS (NMOD+2*NKEYCODE)
 
 struct ukbd_softc {
-	bdevice		sc_dev;		/* base device */
+	USBBASEDEVICE	sc_dev;		/* base device */
 	usbd_interface_handle sc_iface;	/* interface */
 	usbd_pipe_handle sc_intrpipe;	/* interrupt pipe */
 	int sc_ep_addr;
@@ -390,7 +390,7 @@ ukbd_enable(v, on)
 
 int
 ukbd_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;
@@ -409,7 +409,7 @@ ukbd_activate(self, act)
 
 int
 ukbd_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	struct ukbd_softc *sc = (struct ukbd_softc *)self;

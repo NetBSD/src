@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.18 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.19 1999/09/05 19:32:19 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ int	ohcidebug;
 #define USBUNIT(dev) (minor(dev))
 
 struct usb_softc {
-	bdevice sc_dev;			/* base device */
+	USBBASEDEVICE sc_dev;		/* base device */
 	usbd_bus_handle sc_bus;		/* USB controller */
 	struct usbd_port sc_port;	/* dummy port for root hub */
 	char sc_running;
@@ -156,7 +156,7 @@ USB_ATTACH(usb)
 	sc->sc_running = 1;
 	sc->sc_bus->use_polling = 1;
 	sc->sc_port.power = USB_MAX_POWER;
-	r = usbd_new_device(&sc->sc_dev, sc->sc_bus, 0,0,0, &sc->sc_port);
+	r = usbd_new_device(USBDEV(sc->sc_dev), sc->sc_bus, 0,0,0, &sc->sc_port);
 
 	if (r == USBD_NORMAL_COMPLETION) {
 		dev = sc->sc_port.device;
@@ -448,7 +448,7 @@ usb_needs_explore(bus)
 
 int
 usb_activate(self, act)
-	bdevice *self;
+	device_ptr_t self;
 	enum devact act;
 {
 	panic("usb_activate\n");
@@ -457,7 +457,7 @@ usb_activate(self, act)
 
 int
 usb_detach(self, flags)
-	bdevice *self;
+	device_ptr_t self;
 	int flags;
 {
 	panic("usb_detach\n");
