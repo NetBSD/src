@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.34 1997/09/16 14:19:03 lukem Exp $	*/
+/*	$NetBSD: savecore.c,v 1.35 1998/02/18 01:24:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.34 1997/09/16 14:19:03 lukem Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.35 1998/02/18 01:24:08 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -614,6 +614,10 @@ check_space()
 	struct stat st;
 	struct statfs fsbuf;
 	char buf[100], path[MAXPATHLEN];
+
+#ifdef __GNUC__
+	(void) &minfree;
+#endif
 
 	tkernel = kernel ? kernel : _PATH_UNIX;
 	if (stat(tkernel, &st) < 0) {
