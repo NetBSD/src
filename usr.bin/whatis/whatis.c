@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.6 1997/10/20 03:17:47 lukem Exp $	*/
+/*	$NetBSD: whatis.c,v 1.7 1997/10/20 23:03:02 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.6 1997/10/20 03:17:47 lukem Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.7 1997/10/20 23:03:02 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,8 +126,9 @@ main(argc, argv)
 			if (glob(ep->s, GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
 			    NULL, &pg) != 0)
 				err(1, "glob");
-			for (p = pg.gl_pathv; *p; p++)
-				whatis(argv, *p, 0);
+			if (pg.gl_pathc)
+				for (p = pg.gl_pathv; *p; p++)
+					whatis(argv, *p, 0);
 			globfree(&pg);
 		}
 	}
