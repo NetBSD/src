@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 1995/07/06 03:39:38 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.9.18.1 1997/11/05 04:39:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,9 @@ typedef	short			  int16_t;
 typedef	unsigned short		u_int16_t;
 typedef	int			  int32_t;
 typedef	unsigned int		u_int32_t;
+/* LONGLONG */
 typedef	long long		  int64_t;
+/* LONGLONG */
 typedef	unsigned long long	u_int64_t;
 
 typedef int32_t			register_t;
