@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.25 2002/10/14 13:43:16 wiz Exp $
+.\" $NetBSD: bus_dma.9,v 1.26 2003/01/28 01:07:51 kent Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -677,6 +677,13 @@ Coherency between memory and the device is controlled with a different flag.
 See the description of the
 .Fn bus_dmamap_load
 function.
+.It Dv BUS_DMA_NOCACHE
+This flag is a
+.Em hint
+to machine-dependent code.
+If possible, map the unchached memory.
+This flag may be useful in the case that the memory cache causes unexpected
+behavior of the device.
 .El
 .El
 .Pp
@@ -741,6 +748,10 @@ It is not safe to wait (sleep) for resources during this call.
 These flags are placeholders, and may be used by busses to provide
 bus-dependent functionality.
 .It Dv BUS_DMA_COHERENT
+See
+.Fn bus_dmamem_map
+above for a description of this flag.
+.It Dv BUS_DMA_NOCACHE
 See
 .Fn bus_dmamem_map
 above for a description of this flag.

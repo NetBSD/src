@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.2 2002/09/16 02:12:30 chs Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2003/01/28 01:08:04 kent Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -506,6 +506,7 @@ do {									\
 #define	BUS_DMA_BUS4		0x080
 #define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
+#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
