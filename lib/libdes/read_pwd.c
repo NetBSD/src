@@ -56,13 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-#if !defined(MSDOS) && !defined(VMS) && !defined(WIN32) && !defined(VXWORKS)
-#include <openssl/opensslconf.h>
-#ifdef OPENSSL_UNISTD
-# include OPENSSL_UNISTD
-#else
-# include <unistd.h>
-#endif
+#include <unistd.h>
 /* If unistd.h defines _POSIX_VERSION, we conclude that we
  * are on a POSIX system and have sigaction and termios. */
 #if defined(_POSIX_VERSION)
@@ -72,7 +66,6 @@
 # define TERMIOS
 # endif
 
-#endif
 #endif
 
 /* #define SIGACTION */ /* Define this if you have sigaction() */
@@ -85,7 +78,6 @@
 
 /* 06-Apr-92 Luke Brennan    Support for VMS */
 #include "des_locl.h"
-#include "cryptlib.h"
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>

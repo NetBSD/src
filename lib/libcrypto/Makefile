@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2003/07/14 13:49:21 itojun Exp $
+#	$NetBSD: Makefile,v 1.33 2003/07/23 05:20:26 itojun Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -88,8 +88,6 @@ INCS+=	mdc2.h
 
 INCSDIR=/usr/include/openssl
 
-SYMLINKS+= openssl/des.h /usr/include/des.h
-
 # this rebuilds the `srcs.inc' and the .inc files it reads.
 # note that the resulting `srcs.inc' file needs to be modified
 # to deal with our MKCRYPTO_* configuration variables.
@@ -98,42 +96,5 @@ update_inc:
 	(cd ${.CURDIR}; find ${OPENSSLSRC}/crypto \
 	    -name Makefile.ssl | \
 	    perl ${OPENSSLSRC}/extsrcs.pl 2> srcs.inc )
-
-SYMLINKS+=	libcrypto.a ${LIBDIR}/libdes.a
-
-.if ${MKPROFILE} != "no"
-SYMLINKS+=	libcrypto_p.a ${LIBDIR}/libdes_p.a
-.endif
-
-.if ${MKPIC} != "no"
-
-DES_SHLIB_MAJOR != cd ${NETBSDSRCDIR}/lib/libdes && ${MAKE} -B print-shlib-major
-DES_SHLIB_MINOR != cd ${NETBSDSRCDIR}/lib/libdes && ${MAKE} -B print-shlib-minor
-
-.if ${MKPICINSTALL} != "no"
-SYMLINKS+=	libcrypto_pic.a ${LIBDIR}/libdes_pic.a
-.endif
-
-.if exists(${.CURDIR}/shlib_version)
-SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		${_LIBSODIR}/libdes.so.${DES_SHLIB_MAJOR}.${DES_SHLIB_MINOR}
-.if ${_LIBSODIR} != ${LIBDIR}
-SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
-		${LIBDIR}/libdes.so.${DES_SHLIB_MAJOR}.${DES_SHLIB_MINOR}
-.endif
-
-.if (${OBJECT_FMT} == "ELF")
-SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR} \
-		${_LIBSODIR}/libdes.so.${DES_SHLIB_MAJOR}
-SYMLINKS+=	libcrypto.so ${_LIBSODIR}/libdes.so
-.if ${_LIBSODIR} != ${LIBDIR}
-SYMLINKS+=	libcrypto.so.${SHLIB_MAJOR} \
-		${LIBDIR}/libdes.so.${DES_SHLIB_MAJOR}
-SYMLINKS+=	libcrypto.so ${LIBDIR}/libdes.so
-.endif
-.endif
-.endif	# exists shlib_version
-
-.endif  # ${MKPIC} != "no"
 
 .include <bsd.lib.mk>

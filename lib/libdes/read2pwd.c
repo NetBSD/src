@@ -57,7 +57,6 @@
  */
 
 #include "des_locl.h"
-#include <openssl/crypto.h>
 
 int des_read_password(des_cblock *key, const char *prompt, int verify)
 	{
