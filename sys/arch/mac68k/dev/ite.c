@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.50 1999/04/21 06:00:07 scottr Exp $	*/
+/*	$NetBSD: ite.c,v 1.51 1999/07/08 18:05:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -939,7 +939,8 @@ itematch(parent, cf, aux)
 
 	if (strcmp(ga->ga_name, "ite"))
 		return 0;
-	pa = pmap_extract(pmap_kernel(), (vaddr_t)(gm->fbbase + gm->fboff));
+	(void) pmap_extract(pmap_kernel(),
+	    (vaddr_t)(gm->fbbase + gm->fboff), &pa);
 
 	if (pa != mac68k_vidphys) {
 		if (pa < 0xf9000000 || pa > 0xfeffffff)

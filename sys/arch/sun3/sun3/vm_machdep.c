@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.53 1999/05/26 22:19:39 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.54 1999/07/08 18:11:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -313,17 +313,18 @@ pagemove(from, to, len)
 	vaddr_t fva = (vaddr_t)from;
 	vaddr_t tva = (vaddr_t)to;
 	paddr_t pa;
+	boolean_t rv;
 
 #ifdef DEBUG
 	if (len & CLOFSET)
 		panic("pagemove");
 #endif
 	while (len > 0) {
-		pa = pmap_extract(kpmap, fva);
+		rv = pmap_extract(kpmap, fva, &pa);
 #ifdef DEBUG
-		if (pa == 0)
+		if (rv == FALSE)
 			panic("pagemove 2");
-		if (pmap_extract(kpmap, tva) != 0)
+		if (pmap_extract(kpmap, tva, NULL) == TRUE)
 			panic("pagemove 3");
 #endif
 		/* pmap_remove does the necessary cache flush.*/
@@ -368,8 +369,7 @@ vmapbuf(bp, len)
 	upmap = vm_map_pmap(&bp->b_proc->p_vmspace->vm_map);
 	kpmap = vm_map_pmap(kernel_map);
 	do {
-		pa = pmap_extract(upmap, uva);
-		if (pa == 0)
+		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
 #ifdef	HAVECACHE
 		/* Flush write-back cache on old mappings. */

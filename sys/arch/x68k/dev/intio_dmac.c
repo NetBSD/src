@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.4 1999/03/24 14:07:38 minoura Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.5 1999/07/08 18:11:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -146,8 +146,8 @@ dmac_init_channels(sc)
 		sc->sc_channels[i].ch_channel = i;
 		sc->sc_channels[i].ch_name[0] = 0;
 		sc->sc_channels[i].ch_softc = &sc->sc_dev;
-		sc->sc_channels[i].ch_map =
-		  (void*) pmap_extract (pmap, (vaddr_t) &dmac_map[i]);
+		(void) pmap_extract(pmap, (vaddr_t) &dmac_map[i],
+		   (paddr_t *) &sc->sc_channels[i].ch_map);
 		bus_space_subregion(sc->sc_bst, sc->sc_bht,
 				    DMAC_CHAN_SIZE*i, DMAC_CHAN_SIZE,
 				    &sc->sc_channels[i].ch_bht);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.51 1999/05/26 22:19:39 thorpej Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.52 1999/07/08 18:11:02 thorpej Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -310,8 +310,7 @@ vmapbuf(bp, len)
 	tmap = vm_map_pmap(phys_map);
 	len = len >> VAX_PGSHIFT;
 	while (len--) {
-		pa = pmap_extract(fmap, faddr);
-		if (pa == 0)
+		if (pmap_extract(fmap, faddr, &pa) == FALSE)
 			panic("vmapbuf: null page frame for %x", (u_int)faddr);
 
 		pmap_enter(tmap, taddr, pa & ~(VAX_NBPG - 1),
