@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.7 2002/11/30 03:10:56 lukem Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.8 2004/01/05 23:23:38 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -92,7 +92,7 @@ static void
 usage()
 {
 
-	(void) fprintf(stderr, "Usage: %s [-o <filename>] <description>\n",
+	(void) fprintf(stderr, "usage: %s [-o <filename>] <description>\n",
 	    getprogname());
 	exit(1);
 }

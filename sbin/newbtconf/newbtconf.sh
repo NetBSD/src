@@ -3,9 +3,9 @@
 # Setup a new config directory
 #
 if [ $# -lt 1 ] ; then
-	echo "Usage: $0 <newconfig> [<baseconfig>]"
-	echo "Usage: $0 init"
-	echo "Usage: $0 revert"
+	echo "usage: $0 <newconfig> [<baseconfig>]"
+	echo "usage: $0 init"
+	echo "usage: $0 revert"
 	exit 1;
 fi
 dir=$1

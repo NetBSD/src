@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.73 2003/08/07 10:04:36 agc Exp $	*/
+/*	$NetBSD: ping.c,v 1.74 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.73 2003/08/07 10:04:36 agc Exp $");
+__RCSID("$NetBSD: ping.c,v 1.74 2004/01/05 23:23:33 jmmv Exp $");
 #endif
 
 #include <stdio.h>
@@ -1830,7 +1830,7 @@ usage(void)
 #define IPSECOPT	""
 #endif /*IPSEC*/
 
-	(void)fprintf(stderr, "Usage: \n"
+	(void)fprintf(stderr, "usage: \n"
 	    "%s [-adDfLnoPqQrRv] [-c count] [-g gateway] [-h host]"
 	    " [-i interval] [-I addr]\n"
 	    "     [-l preload] [-p pattern] [-s size] [-t tos] [-T ttl]"

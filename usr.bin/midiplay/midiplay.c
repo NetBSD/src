@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.21 2003/10/16 07:05:16 itojun Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.21 2003/10/16 07:05:16 itojun Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.22 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 
 
@@ -138,7 +138,7 @@ u_char sample[] = {
 void
 usage(void)
 {
-	printf("Usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] "
+	printf("usage: %s [-d unit] [-f file] [-l] [-m] [-p pgm] [-q] "
 	       "[-t tempo] [-v] [-x] [file ...]\n",
 		getprogname());
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2003/08/07 11:16:09 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.21 2003/08/07 11:16:09 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ tninit(void)
 	void
 usage()
 {
-	fprintf(stderr, "Usage: %s %s%s%s%s\n",
+	fprintf(stderr, "usage: %s %s%s%s%s\n",
 	    prompt,
 #ifdef	AUTHENTICATION
 	    "[-4] [-6] [-8] [-E] [-K] [-L] [-N] [-S tos] [-X atype] [-a] [-c] [-d]",

@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.8 2001/10/29 17:58:19 drochner Exp $ */
+/* $NetBSD: wsfontload.c,v 1.9 2004/01/05 23:23:39 jmmv Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -82,7 +82,7 @@ usage()
 {
 
 	(void)fprintf(stderr,
-		"Usage: %s [-f wsdev] [-w width] [-h height] [-e encoding]"
+		"usage: %s [-f wsdev] [-w width] [-h height] [-e encoding]"
 		" [-N name] [-b] [-B] [fontfile]\n",
 		      getprogname());
 	exit(1);

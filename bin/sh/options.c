@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.35 2003/08/07 09:05:36 agc Exp $	*/
+/*	$NetBSD: options.c,v 1.36 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.35 2003/08/07 09:05:36 agc Exp $");
+__RCSID("$NetBSD: options.c,v 1.36 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -378,7 +378,7 @@ getoptscmd(int argc, char **argv)
 	char **optbase;
 
 	if (argc < 3)
-		error("Usage: getopts optstring var [arg]");
+		error("usage: getopts optstring var [arg]");
 	else if (argc == 3)
 		optbase = shellparam.p;
 	else

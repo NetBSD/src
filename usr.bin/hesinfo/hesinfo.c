@@ -1,4 +1,4 @@
-/*	$NetBSD: hesinfo.c,v 1.2 2001/02/19 23:03:47 cgd Exp $	*/
+/*	$NetBSD: hesinfo.c,v 1.3 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /* Copyright 1988, 1996 by the Massachusetts Institute of Technology.
  *
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "#Id: hesinfo.c,v 1.8 1996/12/08 21:29:54 ghudson Exp #";
 #else
-__RCSID("$NetBSD: hesinfo.c,v 1.2 2001/02/19 23:03:47 cgd Exp $");
+__RCSID("$NetBSD: hesinfo.c,v 1.3 2004/01/05 23:23:34 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ main(argc, argv)
 		}
 	}
 	if (argc - optind != 2 || errflg) {
-		fprintf(stderr, "Usage: %s [-bl] name type\n", getprogname());
+		fprintf(stderr, "usage: %s [-bl] name type\n", getprogname());
 		fprintf(stderr, "\t-l selects long format\n");
 		fprintf(stderr, "\t-b also does hes_to_bind conversion\n");
 		exit(2);

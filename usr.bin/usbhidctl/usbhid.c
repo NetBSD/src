@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhid.c,v 1.23 2003/06/23 13:05:54 agc Exp $ */
+/*      $NetBSD: usbhid.c,v 1.24 2004/01/05 23:23:37 jmmv Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhid.c,v 1.23 2003/06/23 13:05:54 agc Exp $");
+__RCSID("$NetBSD: usbhid.c,v 1.24 2004/01/05 23:23:37 jmmv Exp $");
 #endif
 
 #include <sys/types.h>
@@ -763,7 +763,7 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "Usage: %s -f device [-t tablefile] [-l] [-v] -a\n",
+	fprintf(stderr, "usage: %s -f device [-t tablefile] [-l] [-v] -a\n",
 	    progname);
 	fprintf(stderr, "       %s -f device [-t tablefile] [-v] -r\n",
 	    progname);

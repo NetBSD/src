@@ -1,4 +1,4 @@
-/*	$NetBSD: man.c,v 1.30 2003/08/07 11:15:10 agc Exp $	*/
+/*	$NetBSD: man.c,v 1.31 2004/01/05 23:23:36 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994, 1995\n\
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-__RCSID("$NetBSD: man.c,v 1.30 2003/08/07 11:15:10 agc Exp $");
+__RCSID("$NetBSD: man.c,v 1.31 2004/01/05 23:23:36 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -802,7 +802,7 @@ static void
 usage()
 {
 
-	(void)fprintf(stderr, "Usage: %s [-achw] [-C file] [-M path] [-m path]"
+	(void)fprintf(stderr, "usage: %s [-achw] [-C file] [-M path] [-m path]"
 	    "[-S srch] [[-s] section] title ...\n", getprogname());
 	exit(1);
 }

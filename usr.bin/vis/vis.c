@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.8 2003/08/07 11:17:09 agc Exp $	*/
+/*	$NetBSD: vis.c,v 1.9 2004/01/05 23:23:37 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: vis.c,v 1.8 2003/08/07 11:17:09 agc Exp $");
+__RCSID("$NetBSD: vis.c,v 1.9 2004/01/05 23:23:37 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -111,7 +111,7 @@ main(argc, argv)
 		case '?':
 		default:
 			fprintf(stderr, 
-		    "Usage: vis [-nwctsobf] [-e extra] [-F foldwidth]\n");
+		    "usage: vis [-nwctsobf] [-e extra] [-F foldwidth]\n");
 			exit(1);
 		}
 	argc -= optind;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gcore.c,v 1.6 2003/04/18 03:21:00 lukem Exp $	*/
+/*	$NetBSD: gcore.c,v 1.7 2004/01/05 23:23:34 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gcore.c,v 1.6 2003/04/18 03:21:00 lukem Exp $");
+__RCSID("$NetBSD: gcore.c,v 1.7 2004/01/05 23:23:34 jmmv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,7 @@ static void usage(void) __attribute__((__noreturn__));
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s <pid> [<pid> ...]\n", getprogname());
+	(void)fprintf(stderr, "usage: %s <pid> [<pid> ...]\n", getprogname());
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbrlabel.c,v 1.23 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: mbrlabel.c,v 1.24 2004/01/05 23:23:33 jmmv Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mbrlabel.c,v 1.23 2003/10/08 04:25:44 lukem Exp $");
+__RCSID("$NetBSD: mbrlabel.c,v 1.24 2004/01/05 23:23:33 jmmv Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -233,7 +233,7 @@ getparts(int sd, u_int32_t off, u_int32_t extoff, int verbose)
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-fqrw] rawdisk\n", getprogname());
+	fprintf(stderr, "usage: %s [-fqrw] rawdisk\n", getprogname());
 	exit(1);
 }
 

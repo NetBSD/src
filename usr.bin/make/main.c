@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.95 2003/12/18 22:36:18 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.96 2004/01/05 23:23:35 jmmv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: main.c,v 1.95 2003/12/18 22:36:18 jmc Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.96 2004/01/05 23:23:35 jmmv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.95 2003/12/18 22:36:18 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.96 2004/01/05 23:23:35 jmmv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1621,7 +1621,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-"Usage: %s [-Beiknqrst] [-D variable] [-d flags] [-f makefile]\n\
+"usage: %s [-Beiknqrst] [-D variable] [-d flags] [-f makefile]\n\
             [-I directory] [-j max_jobs] [-m directory] [-V variable]\n\
             [variable=value] [target ...]\n", progname);
 	exit(2);

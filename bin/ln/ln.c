@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $ */
+/* $NetBSD: ln.c,v 1.28 2004/01/05 23:23:32 jmmv Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.27 2004/01/04 16:04:18 jschauma Exp $");
+__RCSID("$NetBSD: ln.c,v 1.28 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "Usage:\t%s [-fhns] file1 file2\n\t%s [-fhnsv] file ... directory\n",
+	    "usage:\t%s [-fhns] file1 file2\n\t%s [-fhnsv] file ... directory\n",
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */

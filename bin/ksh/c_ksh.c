@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.9 2003/08/25 13:23:59 wiz Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.10 2004/01/05 23:23:32 jmmv Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.9 2003/08/25 13:23:59 wiz Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.10 2004/01/05 23:23:32 jmmv Exp $");
 #endif
 
 #include "sh.h"
@@ -1225,7 +1225,7 @@ c_kill(wp)
 	}
 	if ((lflag && t) || (!wp[i] && !lflag)) {
 		shf_fprintf(shl_out,
-"Usage: kill [ -s signame | -signum | -signame ] {pid|job}...\n\
+"usage: kill [ -s signame | -signum | -signame ] {pid|job}...\n\
        kill -l [exit_status]\n"
 			);
 		bi_errorf(null);
