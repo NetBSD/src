@@ -292,8 +292,6 @@ nbsd_thread_unsuspend(void)
 
   for (i = 0; i < nsusp; i++)
     {
-      td_thread_info_t ti;
-      td_thr_info(susp[i], &ti);
       val = td_thr_resume(susp[i]);
       if (val != 0)
 	error ("nbsd_thread_unsuspend: td_thr_resume(%p): %s", susp[i],
