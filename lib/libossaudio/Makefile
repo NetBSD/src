@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1998/04/13 14:18:45 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2003/11/18 22:42:04 grant Exp $
 
 LIB=	ossaudio
 MAN=	ossaudio.3
@@ -11,4 +11,3 @@ INCS=	soundcard.h
 INCSDIR=/usr/include
 
 .include <bsd.lib.mk>
-
