@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.53 1998/02/27 23:54:16 pk Exp $
+#	$NetBSD: files.isa,v 1.54 1998/03/22 04:38:42 enami Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -172,6 +172,18 @@ file	dev/isa/if_ep_isa.c		ep_isa
 device	fe: ether, ifnet, arp
 attach	fe at isa
 file	dev/isa/if_fe.c			fe
+
+# Allied Telesis MB8695-based boards
+# (Allied Telesis AT1700)
+device	ate: arp, ether, ifnet, mb86960
+attach	ate at isa
+file	dev/isa/if_ate.c		ate
+
+# Fujitsu MB86960-based boards
+# (Fujitsu FMV-180 series)
+device	fmv: arp, ether, ifnet, mb86960
+attach	fmv at isa
+file	dev/isa/if_fmv.c		fmv
 
 # HP Lan Ethernet controllers
 # XXX currently broken
