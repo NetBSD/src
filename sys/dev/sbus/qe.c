@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.19 2001/11/13 06:58:17 lukem Exp $	*/
+/*	$NetBSD: qe.c,v 1.20 2002/03/06 19:10:58 frueauf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.19 2001/11/13 06:58:17 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.20 2002/03/06 19:10:58 frueauf Exp $");
 
 #define QEDEBUG
 
@@ -286,7 +286,6 @@ qeattach(parent, self, aux)
 			self->dv_xname, error);
 		return;
 	}
-	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Map DMA buffer in CPU addressable space */
 	if ((error = bus_dmamem_map(dmatag, &seg, rseg, size,
@@ -308,6 +307,7 @@ qeattach(parent, self, aux)
 		bus_dmamem_free(dmatag, &seg, rseg);
 		return;
 	}
+	sc->sc_rb.rb_dmabase = sc->sc_dmamap->dm_segs[0].ds_addr;
 
 	/* Initialize media properties */
 	ifmedia_init(&sc->sc_ifmedia, 0, qe_ifmedia_upd, qe_ifmedia_sts);
