@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 1998/10/12 22:02:43 is Exp $	*/
+/*	$NetBSD: bus.h,v 1.7 1998/11/07 22:44:36 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -82,8 +82,8 @@ bsrm(bus_space_read_multi_1, u_int8_t);
 bswm(bus_space_write_multi_1, u_int8_t);
 bsrm(bus_space_read_region_1, u_int8_t);
 bswm(bus_space_write_region_1, u_int8_t);
-bsrm(bus_space_read_stream_1, u_int8_t);
-bswm(bus_space_write_stream_1, u_int8_t);
+bsrm(bus_space_read_region_stream_1, u_int8_t);
+bswm(bus_space_write_region_stream_1, u_int8_t);
 bssr(bus_space_set_region_1, u_int8_t);
 bscr(bus_space_copy_region_1, u_int8_t);
 
@@ -110,8 +110,8 @@ struct amiga_bus_space_methods {
 	bswm(*bswm2, u_int16_t);
 	bsrm(*bsrr2, u_int16_t);
 	bswm(*bswr2, u_int16_t);
-	bsrm(*bsrs2, u_int16_t);
-	bswm(*bsws2, u_int16_t);
+	bsrm(*bsrrs2, u_int16_t);
+	bswm(*bswrs2, u_int16_t);
 	bssr(*bssr2, u_int16_t);
 	bscr(*bscr2, u_int16_t);
 
@@ -214,7 +214,7 @@ bus_space_copy_region_1(t, srch, srco, dsth, dsto, c)
 }
 
 extern __inline__ void
-bus_space_read_stream_1(t, h, o, a, c)
+bus_space_read_region_stream_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	bus_size_t		o, c;
@@ -225,7 +225,7 @@ bus_space_read_stream_1(t, h, o, a, c)
 }
 
 extern __inline__ void
-bus_space_write_stream_1(t, h, o, a, c)
+bus_space_write_region_stream_1(t, h, o, a, c)
 	bus_space_tag_t		t;
 	bus_space_handle_t	h;
 	bus_size_t		o, c;
@@ -254,11 +254,11 @@ bus_space_write_stream_1(t, h, o, a, c)
 #define bus_space_write_region_2(t, h, o, p, c) \
 	((t)->absm->bswr2)((t), (h), (o), (p), (c))
 
-#define bus_space_read_stream_2(t, h, o, p, c) \
-	((t)->absm->bsrs2)((t), (h), (o), (p), (c))
+#define bus_space_read_region_stream_2(t, h, o, p, c) \
+	((t)->absm->bsrrs2)((t), (h), (o), (p), (c))
 
-#define bus_space_write_stream_2(t, h, o, p, c) \
-	((t)->absm->bsws2)((t), (h), (o), (p), (c))
+#define bus_space_write_region_stream_2(t, h, o, p, c) \
+	((t)->absm->bswrs2)((t), (h), (o), (p), (c))
 	
 #define bus_space_set_region_2(t, h, o, v, c) \
 	((t)->absm->bssr2)((t), (h), (o), (v), (c))
