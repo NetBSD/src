@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.20 1995/06/01 21:35:58 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.21 1995/06/04 04:35:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -123,6 +123,8 @@ in_socktrim(ap)
 }
 
 int	in_interfaces;		/* number of external internet interfaces */
+#define	satosin(sa)	((struct sockaddr_in *)(sa))
+#define	sintosa(sin)	((struct sockaddr *)(sin))
 
 /*
  * Generic internet control operations (ioctl's).
@@ -193,11 +195,9 @@ in_control(so, cmd, data, ifp)
 				ifa->ifa_next = (struct ifaddr *) ia;
 			} else
 				ifp->if_addrlist = (struct ifaddr *) ia;
-			ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
-			ia->ia_ifa.ifa_dstaddr
-					= (struct sockaddr *)&ia->ia_dstaddr;
-			ia->ia_ifa.ifa_netmask
-					= (struct sockaddr *)&ia->ia_sockmask;
+			ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
+			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
+			ia->ia_ifa.ifa_netmask = sintosa(&ia->ia_sockmask);
 			ia->ia_sockmask.sin_len = 8;
 			if (ifp->if_flags & IFF_BROADCAST) {
 				ia->ia_broadaddr.sin_len = sizeof(ia->ia_addr);
@@ -225,40 +225,39 @@ in_control(so, cmd, data, ifp)
 	switch (cmd) {
 
 	case SIOCGIFADDR:
-		*((struct sockaddr_in *)&ifr->ifr_addr) = ia->ia_addr;
+		*satosin(&ifr->ifr_addr) = ia->ia_addr;
 		break;
 
 	case SIOCGIFBRDADDR:
 		if ((ifp->if_flags & IFF_BROADCAST) == 0)
 			return (EINVAL);
-		*((struct sockaddr_in *)&ifr->ifr_dstaddr) = ia->ia_broadaddr;
+		*satosin(&ifr->ifr_dstaddr) = ia->ia_broadaddr;
 		break;
 
 	case SIOCGIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
-		*((struct sockaddr_in *)&ifr->ifr_dstaddr) = ia->ia_dstaddr;
+		*satosin(&ifr->ifr_dstaddr) = ia->ia_dstaddr;
 		break;
 
 	case SIOCGIFNETMASK:
-		*((struct sockaddr_in *)&ifr->ifr_addr) = ia->ia_sockmask;
+		*satosin(&ifr->ifr_addr) = ia->ia_sockmask;
 		break;
 
 	case SIOCSIFDSTADDR:
 		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
 			return (EINVAL);
 		oldaddr = ia->ia_dstaddr;
-		ia->ia_dstaddr = *(struct sockaddr_in *)&ifr->ifr_dstaddr;
+		ia->ia_dstaddr = *satosin(&ifr->ifr_dstaddr);
 		if (ifp->if_ioctl && (error = (*ifp->if_ioctl)
 					(ifp, SIOCSIFDSTADDR, (caddr_t)ia))) {
 			ia->ia_dstaddr = oldaddr;
 			return (error);
 		}
 		if (ia->ia_flags & IFA_ROUTE) {
-			ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&oldaddr;
+			ia->ia_ifa.ifa_dstaddr = sintosa(&oldaddr);
 			rtinit(&(ia->ia_ifa), (int)RTM_DELETE, RTF_HOST);
-			ia->ia_ifa.ifa_dstaddr =
-					(struct sockaddr *)&ia->ia_dstaddr;
+			ia->ia_ifa.ifa_dstaddr = sintosa(&ia->ia_dstaddr);
 			rtinit(&(ia->ia_ifa), (int)RTM_ADD, RTF_HOST|RTF_UP);
 		}
 		break;
@@ -266,12 +265,11 @@ in_control(so, cmd, data, ifp)
 	case SIOCSIFBRDADDR:
 		if ((ifp->if_flags & IFF_BROADCAST) == 0)
 			return (EINVAL);
-		ia->ia_broadaddr = *(struct sockaddr_in *)&ifr->ifr_broadaddr;
+		ia->ia_broadaddr = *satosin(&ifr->ifr_broadaddr);
 		break;
 
 	case SIOCSIFADDR:
-		return (in_ifinit(ifp, ia,
-		    (struct sockaddr_in *) &ifr->ifr_addr, 1));
+		return (in_ifinit(ifp, ia, satosin(&ifr->ifr_addr), 1));
 
 	case SIOCSIFNETMASK:
 		ia->ia_subnetmask = ia->ia_sockmask.sin_addr.s_addr =
@@ -399,9 +397,9 @@ in_ifinit(ifp, ia, sin, scrub)
 	}
 	splx(s);
 	if (scrub) {
-		ia->ia_ifa.ifa_addr = (struct sockaddr *)&oldaddr;
+		ia->ia_ifa.ifa_addr = sintosa(&oldaddr);
 		in_ifscrub(ifp, ia);
-		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
+		ia->ia_ifa.ifa_addr = sintosa(&ia->ia_addr);
 	}
 	if (IN_CLASSA(i))
 		ia->ia_netmask = IN_CLASSA_NET;
@@ -539,8 +537,8 @@ in_addmulti(ap, ifp)
 		 * Ask the network driver to update its multicast reception
 		 * filter appropriately for the new address.
 		 */
-		((struct sockaddr_in *)&ifr.ifr_addr)->sin_family = AF_INET;
-		((struct sockaddr_in *)&ifr.ifr_addr)->sin_addr = *ap;
+		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+		satosin(&ifr.ifr_addr)->sin_addr = *ap;
 		if ((ifp->if_ioctl == NULL) ||
 		    (*ifp->if_ioctl)(ifp, SIOCADDMULTI,(caddr_t)&ifr) != 0) {
 			ia->ia_multiaddrs = inm->inm_next;
@@ -586,9 +584,8 @@ in_delmulti(inm)
 		 * Notify the network driver to update its multicast reception
 		 * filter.
 		 */
-		((struct sockaddr_in *)&(ifr.ifr_addr))->sin_family = AF_INET;
-		((struct sockaddr_in *)&(ifr.ifr_addr))->sin_addr =
-								inm->inm_addr;
+		satosin(&ifr.ifr_addr)->sin_family = AF_INET;
+		satosin(&ifr.ifr_addr)->sin_addr = inm->inm_addr;
 		(*inm->inm_ifp->if_ioctl)(inm->inm_ifp, SIOCDELMULTI,
 							     (caddr_t)&ifr);
 		free(inm, M_IPMADDR);
