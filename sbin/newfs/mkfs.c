@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.57 2001/10/14 01:38:53 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.58 2001/12/13 06:31:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.57 2001/10/14 01:38:53 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.58 2001/12/13 06:31:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,6 +199,11 @@ mkfs(struct partition *pp, const char *fsys, int fi, int fo)
 	if (sblock.fs_bsize < MINBSIZE) {
 		printf("block size %d is too small, minimum is %d\n",
 		    sblock.fs_bsize, MINBSIZE);
+		exit(19);
+	}
+	if (sblock.fs_bsize > MAXBSIZE) {
+		printf("block size %d is too large, maximum is %d\n",
+		    sblock.fs_bsize, MAXBSIZE);
 		exit(19);
 	}
 	if (sblock.fs_bsize < sblock.fs_fsize) {
