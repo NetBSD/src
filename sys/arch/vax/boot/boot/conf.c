@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 1999/03/06 16:36:05 ragge Exp $ */
+/*	$NetBSD: conf.c,v 1.1.2.1 2000/03/01 12:38:58 he Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,8 +59,9 @@ struct	devsw devsw[]={
 	SADEV("ra",rastrategy, raopen, nullsys, noioctl),
 	SADEV("mt",tmscpstrategy, tmscpopen, nullsys, noioctl),
         SADEV("rom",romstrategy, romopen, nullsys, noioctl),
-        SADEV("rd",mfmstrategy, mfmopen, nullsys, noioctl),
-        SADEV("sd",nullsys, nullsys, nullsys, noioctl),
+/*        SADEV("rd",mfmstrategy, mfmopen, nullsys, noioctl), */
+        SADEV("rd",romstrategy, romopen, nullsys, noioctl),
+        SADEV("sd",romstrategy, romopen, nullsys, noioctl),
 	SADEV("st",nullsys, nullsys, nullsys, noioctl),
 	SADEV("le",netstrategy, netopen, netclose, noioctl), /* LANCE */
         SADEV("ze",netstrategy, netopen, netclose, noioctl), /* SGEC */

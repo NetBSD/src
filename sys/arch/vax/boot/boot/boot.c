@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 1999/04/01 20:40:07 ragge Exp $ */
+/*	$NetBSD: boot.c,v 1.2.2.1 2000/03/01 12:38:57 he Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -143,11 +143,14 @@ start:		printf("> ");
 				d = index(c, ' ');
 				if (d) {
 					*d++ = 0;
+					while (*d == ' ')
+						d++;
 					if (*d != '-')
 						goto fail;
 				}
 			}
 
+			if (d) {
 			while (*++d) {
 				if (*d == 'a')
 					howto |= RB_ASKNAME;
@@ -160,8 +163,10 @@ start:		printf("> ");
 					rawread++;
 #endif
 				else {
-fail:				printf("usage: boot [filename] [-asd]\n");
+fail:						printf(
+					"usage: boot [filename] [-asd]\n");
 					goto start;
+					}
 				}
 			}
 		} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.1.2.1 1999/06/24 22:57:14 cgd Exp $	*/
+/*	$NetBSD: md.h,v 1.1.2.2 2000/03/01 12:38:49 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,7 +42,7 @@
 /* Constants and defines */
 
 /* Megs required for a full X installation. */
-#define XNEEDMB 35	/* XXXTHORPEJ */
+#define XNEEDMB 25	/* 1.4.1 (abs) */
 
 /*
  * Default filesets to fetch and install during installation
