@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.24 2002/04/25 20:05:10 bouyer Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.25 2002/04/29 15:45:05 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.24 2002/04/25 20:05:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.25 2002/04/29 15:45:05 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,6 @@ siop_setuptables(siop_cmd)
 		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 0);
 	else
 		siop_cmd->siop_tables->msg_out[0] = MSG_IDENTIFY(lun, 1);
-	siop_cmd->siop_tables->t_msgout.count= htole32(1);
 	if (xs->xs_tag_type != 0) {
 		if ((sc->targets[target]->flags & TARF_TAG) == 0) {
 			scsipi_printaddr(xs->xs_periph);
@@ -268,9 +267,9 @@ siop_setuptables(siop_cmd)
 		 * different one
 		 */
 		siop_cmd->siop_tables->msg_out[2] = siop_cmd->tag;
-		siop_cmd->siop_tables->t_msgout.count = htole32(3);
 		msgoffset = 3;
 	}
+	siop_cmd->siop_tables->t_msgout.count= htole32(msgoffset);
 	if (sc->targets[target]->status == TARST_ASYNC) {
 		if (sc->targets[target]->flags & TARF_DT) {
 			sc->targets[target]->status = TARST_PPR_NEG;
@@ -544,6 +543,7 @@ siop_sdtr_neg(siop_cmd)
 				    ~(SXFER_MO_MASK << 8);
 				sc->targets[target]->id |=
 				    (offset & SXFER_MO_MASK) << 8;
+				sc->targets[target]->id &= ~0xff; /* scntl4 */
 				goto end;
 			}
 		}
@@ -558,6 +558,7 @@ reject:
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
 		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
 		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
+		sc->targets[target]->id &= ~0xff; /* scntl4 */
 		siop_target->offset = siop_target->period = 0;
 	} else { /* target initiated sync neg */
 #ifdef DEBUG
@@ -594,6 +595,7 @@ reject:
 				    ~(SXFER_MO_MASK << 8);
 				sc->targets[target]->id |=
 				    (offset & SXFER_MO_MASK) << 8;
+				sc->targets[target]->id &= ~0xff; /* scntl4 */
 				siop_sdtr_msg(siop_cmd, 0, sync, offset);
 				send_msgout = 1;
 				goto end;
@@ -604,6 +606,7 @@ async:
 		sc->targets[target]->id &= ~(SCNTL3_SCF_MASK << 24);
 		sc->targets[target]->id &= ~(SCNTL3_ULTRA << 24);
 		sc->targets[target]->id &= ~(SXFER_MO_MASK << 8);
+		sc->targets[target]->id &= ~0xff; /* scntl4 */
 		siop_sdtr_msg(siop_cmd, 0, 0, 0);
 		send_msgout = 1;
 	}
