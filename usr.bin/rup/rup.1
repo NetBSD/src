@@ -1,4 +1,4 @@
-.\"	$NetBSD: rup.1,v 1.14 2001/12/01 16:43:23 wiz Exp $
+.\"	$NetBSD: rup.1,v 1.15 2001/12/08 19:13:08 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -71,7 +71,7 @@ daemon must be running on the remote host for this command to
 work.
 .Nm
 uses an RPC protocol defined in /usr/include/rpcsvc/rstat.x.
-.Sh EXAMPLE
+.Sh EXAMPLES
 .Bd -unfilled -offset indent -compact
 example% rup otherhost
 otherhost      up 6 days, 16:45,  load average: 0.20, 0.23, 0.18
@@ -90,7 +90,7 @@ excessively congested, or the
 daemon has terminated on the remote host.
 .It rup: RPC: Port mapper failure - RPC: Timed out
 The remote host is not running the portmapper (see
-.Xr rpcbind 8 ),
+.Xr rpcbind 8 ) ,
 and cannot accommodate any RPC-based services.  The host may be down.
 .El
 .Sh SEE ALSO
