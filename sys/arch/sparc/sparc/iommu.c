@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.49 2000/07/04 14:05:34 pk Exp $ */
+/*	$NetBSD: iommu.c,v 1.50 2000/07/22 21:23:05 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -475,7 +475,7 @@ if ((int)sc->sc_dvmacur + len > 0)
 
 
 /*
- * IOMMU DMA map functions
+ * IOMMU DMA map functions.
  */
 int
 iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
@@ -522,9 +522,6 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 {
 	bus_size_t sgsize;
 	u_long align, voff;
-#if 0
-	u_long ex_start, ex_end;
-#endif
 	int s, error;
 	int pagesz = PAGE_SIZE;
 
@@ -556,7 +553,7 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 }
 
 /*
- * IOMMU DMA map functions.
+ * Prepare buffer for DMA transfer.
  */
 int
 iommu_dmamap_load(t, map, buf, buflen, p, flags)
