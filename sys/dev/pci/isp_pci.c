@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.29 1998/09/08 07:16:46 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.30 1998/09/17 23:10:20 mjacob Exp $ */
 /*
  * PCI specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -490,7 +490,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	    NULL, xs->flags & SCSI_NOSLEEP ? BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error) {
 		XS_SETERR(xs, HBA_BOTCH);
-		return (error);
+		return (CMD_COMPLETE);
 	}
 
 	segcnt = dmap->dm_nsegs;
@@ -524,7 +524,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 			       isp->isp_name);
 			bus_dmamap_unload(pci->pci_dmat, dmap);
 			XS_SETERR(xs, HBA_BOTCH);
-			return (EFBIG);
+			return (CMD_COMPLETE);
 		}
 		rq->req_header.rqs_entry_count++;
 		bzero((void *)crq, sizeof (*crq));
@@ -542,14 +542,14 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 
 dmasync:
 	bus_dmamap_sync(pci->pci_dmat, dmap, 0, dmap->dm_mapsize,
-	    xs->flags & SCSI_DATA_IN ?
-	    BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	    (xs->flags & SCSI_DATA_IN) ?  BUS_DMASYNC_PREREAD :
+	    BUS_DMASYNC_PREWRITE);
 
 mbxsync:
 
 	bus_dmamap_sync(pci->pci_dmat, pci->pci_rquest_dmap, 0,
 	    pci->pci_rquest_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
-	return (0);
+	return (CMD_QUEUED);
 }
 
 static int
