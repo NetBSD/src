@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vnode_pager.c	8.1 (Berkeley) 6/11/93
- *	$Id: vnode_pager.c,v 1.6 1994/01/07 18:12:12 mycroft Exp $
+ *	$Id: vnode_pager.c,v 1.6.2.1 1994/03/18 05:46:43 cgd Exp $
  */
 
 /*
@@ -59,7 +59,7 @@
 #include <vm/vm_page.h>
 #include <vm/vnode_pager.h>
 
-queue_head_t	vnode_pager_list;	/* list of managed vnodes */
+struct pagerlst	vnode_pager_list;	/* list of managed vnodes */
 
 #ifdef DEBUG
 int	vpagerdebug = 0x00;
@@ -99,7 +99,7 @@ vnode_pager_init()
 	if (vpagerdebug & VDB_FOLLOW)
 		printf("vnode_pager_init()\n");
 #endif
-	queue_init(&vnode_pager_list);
+	TAILQ_INIT(&vnode_pager_list);
 }
 
 /*
@@ -167,7 +167,7 @@ vnode_pager_alloc(handle, size, prot, foff)
 		vnp->vnp_flags = 0;
 		vnp->vnp_vp = vp;
 		vnp->vnp_size = vattr.va_size;
-		queue_enter(&vnode_pager_list, pager, vm_pager_t, pg_list);
+		TAILQ_INSERT_TAIL(&vnode_pager_list, pager, pg_list);
 		pager->pg_handle = handle;
 		pager->pg_type = PG_VNODE;
 		pager->pg_ops = &vnodepagerops;
@@ -212,7 +212,7 @@ vnode_pager_dealloc(pager)
 #endif
 		vrele(vp);
 	}
-	queue_remove(&vnode_pager_list, pager, vm_pager_t, pg_list);
+	TAILQ_REMOVE(&vnode_pager_list, pager, pg_list);
 	free((caddr_t)vnp, M_VMPGDATA);
 	free((caddr_t)pager, M_VMPAGER);
 }
@@ -375,17 +375,16 @@ vnode_pager_umount(mp)
 	register vm_pager_t pager, npager;
 	struct vnode *vp;
 
-	pager = (vm_pager_t) queue_first(&vnode_pager_list);
-	while (!queue_end(&vnode_pager_list, (queue_entry_t)pager)) {
+	for (pager = vnode_pager_list.tqh_first; pager != NULL;
+	    pager = npager){
 		/*
 		 * Save the next pointer now since uncaching may
 		 * terminate the object and render pager invalid
 		 */
+		npager = pager->pg_list.tqe_next;
 		vp = ((vn_pager_t)pager->pg_data)->vnp_vp;
-		npager = (vm_pager_t) queue_next(&pager->pg_list);
 		if (mp == (struct mount *)0 || vp->v_mount == mp)
 			(void) vnode_pager_uncache(vp);
-		pager = npager;
 	}
 }
 

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_object.h,v 1.9 1994/03/17 02:52:25 cgd Exp $
+ *	$Id: vm_object.h,v 1.9.2.1 1994/03/18 05:46:24 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -70,6 +70,7 @@
  *	Virtual memory object module definitions.
  */
 
+#include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
 /*
@@ -79,8 +80,8 @@
  */
 
 struct vm_object {
-	queue_chain_t		memq;		/* Resident memory */
-	queue_chain_t		object_list;	/* list of all objects */
+	struct pglist		memq;		/* Resident memory */
+	TAILQ_ENTRY(vm_object)	object_list;	/* list of all objects */
 	simple_lock_data_t	Lock;		/* Synchronization */
 	int			ref_count;	/* How many refs?? */
 	vm_size_t		size;		/* Object size */
@@ -96,26 +97,32 @@ struct vm_object {
 						/* Paging (in or out) - don't
 						   collapse or destroy */
 	u_short			flags;		/* object flags; see below */
-	queue_chain_t		cached_list;	/* for persistence */
+	TAILQ_ENTRY(vm_object)	cached_list;	/* for persistence */
 };
-
-/* Object flags */
+/*
+ * Flags
+ */
 #define OBJ_CANPERSIST		0x0001	/* allow to persist */
 #define OBJ_INTERNAL		0x0002	/* internally created object */
+#define OBJ_ACTIVE		0x0004	/* used to mark active objects */
+
+TAILQ_HEAD(vm_object_hash_head, vm_object_hash_entry);
 
 struct vm_object_hash_entry {
-	queue_chain_t		hash_links;	/* hash chain links */
-	vm_object_t		object;		/* object we represent */
+	TAILQ_ENTRY(vm_object_hash_entry)  hash_links;	/* hash chain links */
+	vm_object_t			   object;	/* object represented */
 };
 
 typedef struct vm_object_hash_entry	*vm_object_hash_entry_t;
 
 #ifdef	KERNEL
-queue_head_t	vm_object_cached_list;	/* list of objects persisting */
+TAILQ_HEAD(object_q, vm_object);
+
+struct object_q	vm_object_cached_list;	/* list of objects persisting */
 int		vm_object_cached;	/* size of cached list */
 simple_lock_data_t	vm_cache_lock;	/* lock for object cache */
 
-queue_head_t	vm_object_list;		/* list of allocated objects */
+struct object_q	vm_object_list;		/* list of allocated objects */
 long		vm_object_count;	/* count of all objects */
 simple_lock_data_t	vm_object_list_lock;
 					/* lock for object list and count */

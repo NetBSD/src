@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.h	7.4 (Berkeley) 5/7/91
- *	$Id: pmap.h,v 1.5 1993/08/29 12:12:20 brezak Exp $
+ *	$Id: pmap.h,v 1.5.4.1 1994/03/18 05:45:53 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -63,18 +63,29 @@
  * rights to redistribute these changes.
  */
 
-#ifndef _VM_PMAP_H_
-#define _VM_PMAP_H_
-
 /*
  *	Machine address mapping definitions -- machine-independent
  *	section.  [For machine-dependent section, see "machine/pmap.h".]
  */
 
+#ifndef	_PMAP_VM_
+#define	_PMAP_VM_
+
+/*
+ * Each machine dependent implementation is expected to
+ * keep certain statistics.  They may do this anyway they
+ * so choose, but are expected to return the statistics
+ * in the following structure.
+ */
+struct pmap_statistics {
+	long		resident_count;	/* # of pages mapped (total)*/
+	long		wired_count;	/* # of pages wired */
+};
+typedef struct pmap_statistics	*pmap_statistics_t;
+
 #include <machine/pmap.h>
 
 #ifdef KERNEL
-
 /*
  * Currently this option is used on the i386 to be able to handle the
  * memory from 0-640k and 1M+.
@@ -168,4 +179,4 @@ boolean_t	pmap_access();
 extern pmap_t	kernel_pmap;
 #endif
 
-#endif /* !_VM_PMAP_H_ */
+#endif /* _PMAP_VM_ */

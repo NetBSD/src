@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.h	7.3 (Berkeley) 4/21/91
- *	$Id: vm_page.h,v 1.9 1994/03/17 02:52:29 cgd Exp $
+ *	$Id: vm_page.h,v 1.9.2.1 1994/03/18 05:46:35 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -95,19 +95,21 @@
  *	queues (P).
  */
 
+TAILQ_HEAD(pglist, vm_page);
+
 struct vm_page {
-	queue_chain_t	pageq;		/* queue info for FIFO
-					 * queue or free list (P) */
-	queue_chain_t	hashq;		/* hash table links (O)*/
-	queue_chain_t	listq;		/* all pages in same object (O)*/
+	TAILQ_ENTRY(vm_page)	pageq;		/* queue info for FIFO
+						 * queue or free list (P) */
+	TAILQ_ENTRY(vm_page)	hashq;		/* hash table links (O)*/
+	TAILQ_ENTRY(vm_page)	listq;		/* pages in same object (O)*/
 
-	vm_object_t	object;		/* which object am I in (O,P)*/
-	vm_offset_t	offset;		/* offset into that object (O,P) */
+	vm_object_t		object;		/* which object am I in (O,P)*/
+	vm_offset_t		offset;		/* offset into object (O,P) */
 
-	u_short		wire_count;	/* number wired down maps use me? (P) */
-	u_short		flags;		/* flags; see below */
+	u_short			wire_count;	/* wired down maps refs (P) */
+	u_short			flags;		/* see below */
 
-	vm_offset_t	phys_addr;	/* physical address of page */
+	vm_offset_t		phys_addr;	/* physical address of page */
 };
 
 /*
@@ -172,11 +174,11 @@ struct vm_page {
  */
 
 extern
-queue_head_t	vm_page_queue_free;	/* memory free queue */
+struct pglist	vm_page_queue_free;	/* memory free queue */
 extern
-queue_head_t	vm_page_queue_active;	/* active memory queue */
+struct pglist	vm_page_queue_active;	/* active memory queue */
 extern
-queue_head_t	vm_page_queue_inactive;	/* inactive memory queue */
+struct pglist	vm_page_queue_inactive;	/* inactive memory queue */
 
 extern
 vm_page_t	vm_page_array;		/* First resident page in table */

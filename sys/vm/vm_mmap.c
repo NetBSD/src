@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.18 1994/01/08 04:22:40 mycroft Exp $
+ *	$Id: vm_mmap.c,v 1.18.2.1 1994/03/18 05:46:12 cgd Exp $
  */
 
 /*
@@ -57,7 +57,6 @@
 #include <vm/vm.h>
 #include <vm/vm_pager.h>
 #include <vm/vm_prot.h>
-#include <vm/vm_statistics.h>
 #include <vm/vm_user.h>
 
 #ifdef DEBUG
@@ -826,12 +825,19 @@ vm_allocate_with_pager(map, addr, size, fitit, pager, poffset, internal)
 	 *	it.
 	 */
 	object = vm_object_lookup(pager);
-	vm_stat.lookups++;
+	cnt.v_lookups++;
 	if (object == NULL) {
 		object = vm_object_allocate(size);
-		vm_object_enter(object, pager);
+		/*
+		 * From Mike Hibler: "unnamed anonymous objects should never
+		 * be on the hash list ... For now you can just change
+		 * vm_allocate_with_pager to not do vm_object_enter if this
+		 * is an internal object ..."
+		 */
+		if (!internal)
+			vm_object_enter(object, pager);
 	} else
-		vm_stat.hits++;
+		cnt.v_hits++;
 	if (internal)
 		object->flags |= OBJ_INTERNAL;
 	else

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_page.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_page.c,v 1.12 1994/03/17 02:52:27 cgd Exp $
+ *	$Id: vm_page.c,v 1.12.2.1 1994/03/18 05:46:29 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -91,18 +91,19 @@ vm_offset_t	virtual_space_start;
 vm_offset_t	virtual_space_end;
 #endif /* MACHINE_NONCONTIG */
 
-queue_head_t	*vm_page_buckets;		/* Array of buckets */
+struct pglist	*vm_page_buckets;		/* Array of buckets */
 int		vm_page_bucket_count = 0;	/* How big is array? */
 int		vm_page_hash_mask;		/* Mask for hash function */
 simple_lock_data_t	bucket_lock;		/* lock for all buckets XXX */
 
+/* XXX XXX XXX */
 vm_size_t	page_size  = 4096;
 vm_size_t	page_mask  = 4095;
 int		page_shift = 12;
 
-queue_head_t	vm_page_queue_free;
-queue_head_t	vm_page_queue_active;
-queue_head_t	vm_page_queue_inactive;
+struct pglist	vm_page_queue_free;
+struct pglist	vm_page_queue_active;
+struct pglist	vm_page_queue_inactive;
 simple_lock_data_t	vm_page_queue_lock;
 simple_lock_data_t	vm_page_queue_free_lock;
 
@@ -169,6 +170,7 @@ vm_page_bootstrap(startp, endp)
 	vm_offset_t	*endp;
 {
 	int			i;
+	register struct pglist	*bucket;
 	
 	extern	vm_offset_t	kentry_data;
 	extern	vm_size_t	kentry_data_size;
@@ -186,9 +188,9 @@ vm_page_bootstrap(startp, endp)
 	 *	the active queue and the inactive queue.
 	 */
 
-	queue_init(&vm_page_queue_free);
-	queue_init(&vm_page_queue_active);
-	queue_init(&vm_page_queue_inactive);
+	TAILQ_INIT(&vm_page_queue_free);
+	TAILQ_INIT(&vm_page_queue_active);
+	TAILQ_INIT(&vm_page_queue_inactive);
 
 	/*
 	 *	Pre-allocate maps and map entries that cannot be dynamically
@@ -235,15 +237,15 @@ vm_page_bootstrap(startp, endp)
 
 	vm_page_hash_mask = vm_page_bucket_count - 1;
 
-	vm_page_buckets = (queue_t)
-		pmap_steal_memory(vm_page_bucket_count * sizeof(*vm_page_buckets));
-	
-	for (i = 0; i < vm_page_bucket_count; i++) {
-		register queue_head_t *bucket = &vm_page_buckets[i];
-		
-		queue_init(bucket);
+	vm_page_buckets = (struct pglist *)
+	    pmap_steal_memory(vm_page_bucket_count * sizeof(*vm_page_buckets));
+        bucket = vm_page_buckets;
+         
+	for (i = vm_page_bucket_count; i--;) {
+		TAILQ_INIT(bucket);
+		bucket++;
 	}
-		
+
 	simple_lock_init(&bucket_lock);
 
 	/*
@@ -281,14 +283,13 @@ vm_page_startup(start, end, vaddr)
 	vm_offset_t		end;
 	register vm_offset_t	vaddr;
 {
-	register vm_offset_t	mapped;
 	register vm_page_t	m;
-	register queue_t	bucket;
+	register vm_offset_t	mapped;
+	register struct pglist	*bucket;
 	vm_size_t		npages;
 	register vm_offset_t	new_start;
 	int			i;
 	vm_offset_t		pa;
-
 	extern	vm_offset_t	kentry_data;
 	extern	vm_size_t	kentry_data_size;
 
@@ -305,9 +306,9 @@ vm_page_startup(start, end, vaddr)
 	 *	the active queue and the inactive queue.
 	 */
 
-	queue_init(&vm_page_queue_free);
-	queue_init(&vm_page_queue_active);
-	queue_init(&vm_page_queue_inactive);
+	TAILQ_INIT(&vm_page_queue_free);
+	TAILQ_INIT(&vm_page_queue_active);
+	TAILQ_INIT(&vm_page_queue_inactive);
 
 	/*
 	 *	Allocate (and initialize) the hash table buckets.
@@ -320,8 +321,7 @@ vm_page_startup(start, end, vaddr)
 	 *		This computation can be tweaked if desired.
 	 */
 
-	vm_page_buckets = (queue_t) vaddr;
-	bucket = vm_page_buckets;
+	vm_page_buckets = (struct pglist *) vaddr;
 	if (vm_page_bucket_count == 0) {
 		vm_page_bucket_count = 1;
 		while (vm_page_bucket_count < atop(end - start))
@@ -334,7 +334,7 @@ vm_page_startup(start, end, vaddr)
 	 *	Validate these addresses.
 	 */
 
-	new_start = round_page(((queue_t)start) + vm_page_bucket_count);
+	new_start = round_page(((struct pglist *)start) + vm_page_bucket_count);
 	mapped = vaddr;
 	vaddr = pmap_map(mapped, start, new_start,
 			VM_PROT_READ|VM_PROT_WRITE);
@@ -342,8 +342,9 @@ vm_page_startup(start, end, vaddr)
 	bzero((caddr_t) mapped, vaddr - mapped);
 	mapped = vaddr;
 
+	bucket = vm_page_buckets;
 	for (i = vm_page_bucket_count; i--;) {
-		queue_init(bucket);
+		TAILQ_INIT(bucket);
 		bucket++;
 	}
 
@@ -423,7 +424,7 @@ vm_page_startup(start, end, vaddr)
 	pa = first_phys_addr;
 	while (npages--) {
 		m->phys_addr = pa;
-		queue_enter(&vm_page_queue_free, m, vm_page_t, pageq);
+		TAILQ_INSERT_TAIL(&vm_page_queue_free, m, pageq);
 		m++;
 		pa += PAGE_SIZE;
 	}
@@ -568,7 +569,7 @@ vm_page_insert(mem, object, offset)
 	register vm_object_t	object;
 	register vm_offset_t	offset;
 {
-	register queue_t	bucket;
+	register struct pglist	*bucket;
 	int			spl;
 
 	VM_PAGE_CHECK(mem);
@@ -590,7 +591,7 @@ vm_page_insert(mem, object, offset)
 	bucket = &vm_page_buckets[vm_page_hash(object, offset)];
 	spl = splimp();
 	simple_lock(&bucket_lock);
-	queue_enter(bucket, mem, vm_page_t, hashq);
+	TAILQ_INSERT_TAIL(bucket, mem, hashq);
 	simple_unlock(&bucket_lock);
 	(void) splx(spl);
 
@@ -598,7 +599,7 @@ vm_page_insert(mem, object, offset)
 	 *	Now link into the object's list of backed pages.
 	 */
 
-	queue_enter(&object->memq, mem, vm_page_t, listq);
+	TAILQ_INSERT_TAIL(&object->memq, mem, listq);
 	mem->flags |= PG_TABLED;
 
 	/*
@@ -621,7 +622,7 @@ void
 vm_page_remove(mem)
 	register vm_page_t	mem;
 {
-	register queue_t	bucket;
+	register struct pglist	*bucket;
 	int			spl;
 
 	VM_PAGE_CHECK(mem);
@@ -636,7 +637,7 @@ vm_page_remove(mem)
 	bucket = &vm_page_buckets[vm_page_hash(mem->object, mem->offset)];
 	spl = splimp();
 	simple_lock(&bucket_lock);
-	queue_remove(bucket, mem, vm_page_t, hashq);
+	TAILQ_REMOVE(bucket, mem, hashq);
 	simple_unlock(&bucket_lock);
 	(void) splx(spl);
 
@@ -644,7 +645,7 @@ vm_page_remove(mem)
 	 *	Now remove from the object's list of backed pages.
 	 */
 
-	queue_remove(&mem->object->memq, mem, vm_page_t, listq);
+	TAILQ_REMOVE(&mem->object->memq, mem, listq);
 
 	/*
 	 *	And show that the object has one fewer resident
@@ -670,7 +671,7 @@ vm_page_lookup(object, offset)
 	register vm_offset_t	offset;
 {
 	register vm_page_t	mem;
-	register queue_t	bucket;
+	register struct pglist	*bucket;
 	int			spl;
 
 	/*
@@ -681,15 +682,13 @@ vm_page_lookup(object, offset)
 
 	spl = splimp();
 	simple_lock(&bucket_lock);
-	mem = (vm_page_t) queue_first(bucket);
-	while (!queue_end(bucket, (queue_entry_t) mem)) {
+	for (mem = bucket->tqh_first; mem != NULL; mem = mem->hashq.tqe_next) {
 		VM_PAGE_CHECK(mem);
 		if ((mem->object == object) && (mem->offset == offset)) {
 			simple_unlock(&bucket_lock);
 			splx(spl);
 			return(mem);
 		}
-		mem = (vm_page_t) queue_next(&mem->hashq);
 	}
 
 	simple_unlock(&bucket_lock);
@@ -747,13 +746,14 @@ vm_page_alloc(object, offset)
 		splx(spl);
 		return(NULL);
 	}
-	if (queue_empty(&vm_page_queue_free)) {
+	if (vm_page_queue_free.tqh_first == NULL) {
 		simple_unlock(&vm_page_queue_free_lock);
 		splx(spl);
 		return(NULL);
 	}
 
-	queue_remove_first(&vm_page_queue_free, mem, vm_page_t, pageq);
+	mem = vm_page_queue_free.tqh_first;
+	TAILQ_REMOVE(&vm_page_queue_free, mem, pageq);
 
 	vm_page_free_count--;
 	simple_unlock(&vm_page_queue_free_lock);
@@ -793,13 +793,13 @@ vm_page_free(mem)
 {
 	vm_page_remove(mem);
 	if (mem->flags & PG_ACTIVE) {
-		queue_remove(&vm_page_queue_active, mem, vm_page_t, pageq);
+		TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
 		mem->flags &= ~PG_ACTIVE;
 		vm_page_active_count--;
 	}
 
 	if (mem->flags & PG_INACTIVE) {
-		queue_remove(&vm_page_queue_inactive, mem, vm_page_t, pageq);
+		TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
 		mem->flags &= ~PG_INACTIVE;
 		vm_page_inactive_count--;
 	}
@@ -809,7 +809,7 @@ vm_page_free(mem)
 
 		spl = splimp();
 		simple_lock(&vm_page_queue_free_lock);
-		queue_enter(&vm_page_queue_free, mem, vm_page_t, pageq);
+		TAILQ_INSERT_TAIL(&vm_page_queue_free, mem, pageq);
 
 		vm_page_free_count++;
 		simple_unlock(&vm_page_queue_free_lock);
@@ -834,14 +834,12 @@ vm_page_wire(mem)
 
 	if (mem->wire_count == 0) {
 		if (mem->flags & PG_ACTIVE) {
-			queue_remove(&vm_page_queue_active, mem, vm_page_t,
-						pageq);
+			TAILQ_REMOVE(&vm_page_queue_active, mem, pageq);
 			vm_page_active_count--;
 			mem->flags &= ~PG_ACTIVE;
 		}
 		if (mem->flags & PG_INACTIVE) {
-			queue_remove(&vm_page_queue_inactive, mem, vm_page_t,
-						pageq);
+			TAILQ_REMOVE(&vm_page_queue_inactive, mem, pageq);
 			vm_page_inactive_count--;
 			mem->flags &= ~PG_INACTIVE;
 		}
@@ -866,7 +864,7 @@ vm_page_unwire(mem)
 
 	mem->wire_count--;
 	if (mem->wire_count == 0) {
-		queue_enter(&vm_page_queue_active, mem, vm_page_t, pageq);
+		TAILQ_INSERT_TAIL(&vm_page_queue_active, mem, pageq);
 		vm_page_active_count++;
 		mem->flags |= PG_ACTIVE;
 		vm_page_wire_count--;
@@ -901,11 +899,11 @@ vm_page_deactivate(m)
 	if (!(m->flags & PG_INACTIVE) && m->wire_count == 0) {
 		pmap_clear_reference(VM_PAGE_TO_PHYS(m));
 		if (m->flags & PG_ACTIVE) {
-			queue_remove(&vm_page_queue_active, m, vm_page_t, pageq);
+			TAILQ_REMOVE(&vm_page_queue_active, m, pageq);
 			m->flags &= ~PG_ACTIVE;
 			vm_page_active_count--;
 		}
-		queue_enter(&vm_page_queue_inactive, m, vm_page_t, pageq);
+		TAILQ_INSERT_TAIL(&vm_page_queue_inactive, m, pageq);
 		m->flags |= PG_INACTIVE;
 		vm_page_inactive_count++;
 		if (pmap_is_modified(VM_PAGE_TO_PHYS(m)))
@@ -931,8 +929,7 @@ vm_page_activate(m)
 	VM_PAGE_CHECK(m);
 
 	if (m->flags & PG_INACTIVE) {
-		queue_remove(&vm_page_queue_inactive, m, vm_page_t,
-						pageq);
+		TAILQ_REMOVE(&vm_page_queue_inactive, m, pageq);
 		vm_page_inactive_count--;
 		m->flags &= ~PG_INACTIVE;
 	}
@@ -940,7 +937,7 @@ vm_page_activate(m)
 		if (m->flags & PG_ACTIVE)
 			panic("vm_page_activate: already active");
 
-		queue_enter(&vm_page_queue_active, m, vm_page_t, pageq);
+		TAILQ_INSERT_TAIL(&vm_page_queue_active, m, pageq);
 		m->flags |= PG_ACTIVE;
 		vm_page_active_count++;
 	}

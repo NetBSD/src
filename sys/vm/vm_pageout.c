@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_pageout.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_pageout.c,v 1.10 1994/03/17 02:52:36 cgd Exp $
+ *	$Id: vm_pageout.c,v 1.10.2.1 1994/03/18 05:46:37 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -89,7 +89,7 @@ int	vm_page_pagesfreed;		/* Pages freed by page daemon */
 void
 vm_pageout_scan()
 {
-	register vm_page_t	m;
+	register vm_page_t	m, next;
 	register int		page_shortage;
 	register int		s;
 	register int		pages_freed;
@@ -132,45 +132,43 @@ vm_pageout_scan()
 	 */
 
 	pages_freed = 0;
-	m = (vm_page_t) queue_first(&vm_page_queue_inactive);
-	while (!queue_end(&vm_page_queue_inactive, (queue_entry_t) m)) {
-		vm_page_t	next;
-
+	for (m = vm_page_queue_inactive.tqh_first; m != NULL; m = next) {
 		s = splimp();
 		simple_lock(&vm_page_queue_free_lock);
 		free = vm_page_free_count;
 		simple_unlock(&vm_page_queue_free_lock);
 		splx(s);
-
 		if (free >= vm_page_free_target)
 			break;
 
+		cnt.v_scan++;
+		next = m->pageq.tqe_next;
+
+		/*
+		 * If the page has been referenced, move it back to the
+		 * active queue.
+		 */
+		if (pmap_is_referenced(VM_PAGE_TO_PHYS(m))) {
+			vm_page_activate(m);
+			cnt.v_reactivated++;
+			continue;
+		}
+
 		if (m->flags & PG_CLEAN) {
-			next = (vm_page_t) queue_next(&m->pageq);
-			if (pmap_is_referenced(VM_PAGE_TO_PHYS(m))) {
-				vm_page_activate(m);
-				vm_stat.reactivations++;
-			}
-			else {
-				register vm_object_t	object;
-				object = m->object;
-				if (!vm_object_lock_try(object)) {
-					/*
-					 *	Can't lock object -
-					 *	skip page.
-					 */
-					m = next;
-					continue;
-				}
+			register vm_object_t	object;
+
+			object = m->object;
+			if (vm_object_lock_try(object)) {
 				pmap_page_protect(VM_PAGE_TO_PHYS(m),
 						  VM_PROT_NONE);
 				vm_page_free(m);	/* will dequeue */
 				pages_freed++;
+				cnt.v_dfree++;
 				vm_object_unlock(object);
 			}
-			m = next;
+			continue;
 		}
-		else {
+		{
 			/*
 			 *	If a page is dirty, then it is either
 			 *	being washed (but not yet cleaned)
@@ -206,14 +204,13 @@ vm_pageout_scan()
 					 *	Skip page if we can't lock
 					 *	its object
 					 */
-					m = (vm_page_t) queue_next(&m->pageq);
 					continue;
 				}
 
 				pmap_page_protect(VM_PAGE_TO_PHYS(m),
 						  VM_PROT_NONE);
 				m->flags |= PG_BUSY;
-				vm_stat.pageouts++;
+				cnt.v_pgpgout++;
 
 				/*
 				 *	Try to collapse the object before
@@ -258,7 +255,6 @@ vm_pageout_scan()
 					VM_PAGER_FAIL;
 				vm_object_lock(object);
 				vm_page_lock_queues();
-				next = (vm_page_t) queue_next(&m->pageq);
 
 				switch (pageout_status) {
 				case VM_PAGER_OK:
@@ -305,8 +301,6 @@ vm_pageout_scan()
 				vm_object_unlock(object);
 				m = next;
 			}
-			else
-				m = (vm_page_t) queue_next(&m->pageq);
 		}
 	}
 	
@@ -327,10 +321,8 @@ vm_pageout_scan()
 		 *	Move some more pages from active to inactive.
 		 */
 
-		if (queue_empty(&vm_page_queue_active)) {
+		if ((m = vm_page_queue_active.tqh_first) == NULL)
 			break;
-		}
-		m = (vm_page_t) queue_first(&vm_page_queue_active);
 		vm_page_deactivate(m);
 		page_shortage--;
 	}
