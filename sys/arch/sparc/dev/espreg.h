@@ -1,4 +1,4 @@
-/*	$NetBSD: espreg.h,v 1.5 1995/01/07 05:17:15 mycroft Exp $ */
+/*	$NetBSD: espreg.h,v 1.6 1995/08/29 20:05:22 pk Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -130,7 +130,7 @@
 #define	ESP_TEST	0x28		/* WO - Test (Chip Test Only)	*/
 
 #define	ESP_CFG2	0x2c		/* RW - Configuration #2	*/
-#define	 ESPCFG2_RSVD	0xe0		/*	reserved		*/
+#define	 ESPCFG2_RSVD	0xa0		/*	reserved		*/
 #define  ESPCFG2_FE	0x40		/* 	Features Enable		*/
 #define  ESPCFG2_DREQ	0x10		/* 	DREQ High Impedance	*/
 #define  ESPCFG2_SCSI2	0x08		/* 	SCSI-2 Enable		*/
@@ -140,6 +140,7 @@
 
 /* Config #3 only on 53C9X */
 #define	ESP_CFG3	0x30		/* RW - Configuration #3	*/
+#define	 ESPCFG3_RSVD	0xe0		/*	reserved		*/
 #define  ESPCFG3_IDM	0x10		/*	ID Message Res Check	*/
 #define  ESPCFG3_QTE	0x08		/*	Queue Tag Enable	*/
 #define  ESPCFG3_CDB	0x04		/*	CDB 10-bytes OK		*/
