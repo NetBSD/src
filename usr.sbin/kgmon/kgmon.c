@@ -1,4 +1,4 @@
-/*	$NetBSD: kgmon.c,v 1.13 2003/08/07 11:25:22 agc Exp $	*/
+/*	$NetBSD: kgmon.c,v 1.14 2004/11/17 13:32:16 hira Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kgmon.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: kgmon.c,v 1.13 2003/08/07 11:25:22 agc Exp $");
+__RCSID("$NetBSD: kgmon.c,v 1.14 2004/11/17 13:32:16 hira Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,8 @@ main(int argc, char **argv)
 
 		default:
 			(void)fprintf(stderr,
-			    "usage: kgmon [-bhrp] [-M core] [-N system]\n");
+			    "usage: %s [-bdhrp] [-M core] [-N system]\n",
+			    getprogname());
 			exit(1);
 		}
 	}
