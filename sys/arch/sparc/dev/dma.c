@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.6 1994/11/23 07:02:09 deraadt Exp $ */
+/*	$NetBSD: dma.c,v 1.7 1994/11/25 23:12:44 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -353,10 +353,8 @@ dmaintr(sc)
 	*sc->sc_dmaaddr += trans;
 
 	if (*sc->sc_dmalen ||
-	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase) {
-		DMACSR(sc) &= ~D_EN_DMA;
+	    sc->sc_esp->sc_phase != sc->sc_esp->sc_prevphase)
 		return 0;
-	}
 
 	/* and again */
 	dma_start(sc, sc->sc_dmaaddr, sc->sc_dmalen, DMACSR(sc) & D_WRITE);
