@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.148 1999/07/04 20:07:52 fvdl Exp $
+# $NetBSD: mi,v 1.149 1999/07/08 03:06:02 wrstuden Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -519,6 +519,7 @@
 ./usr/include/miscfs/fifofs/fifo.h
 ./usr/include/miscfs/genfs
 ./usr/include/miscfs/genfs/genfs.h
+./usr/include/miscfs/genfs/layer.h
 ./usr/include/miscfs/kernfs
 ./usr/include/miscfs/kernfs/kernfs.h
 ./usr/include/miscfs/nullfs
