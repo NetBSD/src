@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.15 1995/07/05 08:36:37 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.16 1995/08/21 03:27:05 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -66,7 +66,7 @@ static int prot_array[]={ PG_NONE, PG_RO,   PG_RW,   PG_RW,
 			  PG_RO,   PG_RO,   PG_RW,   PG_RW };
     
 static int kernel_prot[]={ PG_NONE, PG_KR, PG_KW, PG_KW,
-				PG_RO,PG_KR,PG_KW,PG_KW};
+				PG_RO,PG_KR,PG_KW,PG_URKW};
 
 static pv_entry_t   pv_head =NULL;
 static unsigned int pv_count=0;
@@ -125,6 +125,10 @@ pmap_bootstrap()
 	if (cpu_type == VAX_630)
 		pend -= 8 * NBPG;       /* Avoid console scratchpad */
 #endif
+#if VAX650
+	if (cpu_type == VAX_650)
+		pend -= 64 * NBPG;
+#endif
 /* These are virt only */
 	vmmap = ROUND_PAGE(pv_table + (pend / PAGE_SIZE));
 	(u_int)Numem = vmmap + NBPG * 2;
@@ -154,7 +158,7 @@ pmap_bootstrap()
 	pmap_map(0x80000000,0,2*NBPG,VM_PROT_READ|VM_PROT_WRITE);
 #ifdef DDB
 	pmap_map(0x80000400,2*NBPG,(vm_offset_t)(&etext),
-	    VM_PROT_READ|VM_PROT_WRITE);
+	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 #else
 	pmap_map(0x80000400,2*NBPG,(vm_offset_t)(&etext),VM_PROT_EXECUTE);
 #endif
