@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.1 2004/11/11 01:43:25 christos Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.1 2004/11/11 19:25:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1 2004/11/11 01:43:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1 2004/11/11 19:25:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1 2004/11/11 01:43:25 christos Exp
 #include <sys/file.h>
 #include <sys/errno.h>
 
-#include <miscfs/ptyfs/ptyfs.h>
+#include <fs/ptyfs/ptyfs.h>
 
 int ptyfs_lkmentry(struct lkm_table *, int, int);
 
