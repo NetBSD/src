@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 1995/09/12 07:43:58 jonathan Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 1995/09/18 03:04:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,12 @@ bdev_decl(vnd);
 bdev_decl(sw);
 #include "rz.h"
 bdev_decl(rz);
+#include "tz.h"
+bdev_decl(tz);
+#include "sd.h"
+bdev_decl(sd);
+#include "st.h"
+bdev_decl(st);
 #include "ccd.h"
 bdev_decl(ccd);
 
@@ -76,11 +82,11 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 15: tmscp */
 	bdev_notdef(),			/* 16: cs */
 	bdev_notdef(),			/* 17: md */
-	bdev_notdef(),			/* 18: st */
-	bdev_notdef(),			/* 19: sd */
-	bdev_notdef(),			/* 20: tz */
-	bdev_disk_init(NRZ,rz),		/* 21: SCSI disk */
-	bdev_notdef(),			/* 22: ?? */
+	bdev_tape_init(NST,st),		/* 18: st */
+	bdev_disk_init(NSD,sd),		/* 19: sd */
+	bdev_tape_init(NTZ, tz),	/* 20: tz */
+	bdev_disk_init(NRZ,rz),		/* 21: ?? SCSI disk */ /*XXX*/
+	bdev_disk_init(NRZ,rz),		/* 22: ?? old SCSI disk */ /*XXX*/
 	bdev_notdef(),			/* 23: mscp */
 	bdev_disk_init(NCCD,ccd),	/* 24: concatenated disk driver */
 };
@@ -113,8 +119,9 @@ cdev_decl(pts);
 cdev_decl(ptc);
 cdev_decl(log);
 cdev_decl(fd);
-#include "tz.h"
 cdev_decl(tz);
+cdev_decl(sd);
+cdev_decl(st);
 cdev_decl(vnd);
 cdev_decl(ccd);
 #include "bpfilter.h"
@@ -126,6 +133,7 @@ cdev_decl(dc);
 #include "scc.h"
 cdev_decl(scc);
 cdev_decl(rz);
+cdev_decl(tz);
 #include "rcons.h"
 cdev_decl(rcons);
 #include "fb.h"
@@ -200,8 +208,8 @@ struct cdevsw	cdevsw[] =
 	cdev_mm_init(1,mm),	/* 43: errlog (VMS-lookalike puke) */
 	cdev_notdef(),		/* 44: dmb */
 	cdev_notdef(),		/* 45:  vax ss, mips scc */
-	cdev_notdef(),		/* 46: st */
-	cdev_notdef(),		/* 47: sd */
+	cdev_tape_init(NST,st),	/* 46: st */
+	cdev_disk_init(NSD,sd),	/* 47: sd */
 	cdev_notdef(),		/* 48: Ultrix /dev/trace */
 	cdev_notdef(),		/* 49: sm (sysV shm?) */
 	cdev_notdef(),		/* 50 sg */
@@ -209,7 +217,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),		/* 52: its */
 	cdev_notdef(),		/* 53: nodev */
 	cdev_notdef(),		/* 54: nodev */
-	cdev_notdef(),		/* 55: tz */
+	cdev_tape_init(NTZ,tz),	/* 55: ultrix-compatible scsi tape (tz) */
 	cdev_disk_init(NRZ,rz), /* 56: rz scsi, Ultrix gross coupling to PrestoServe driver */
 	cdev_notdef(),		/* 57: nodev */
 	cdev_notdef(),		/* 58: fc */
@@ -327,7 +335,7 @@ static int chrtoblktbl[] =  {
 	/* 44 */	NODEV,
 	/* 45 */	NODEV,
 	/* 46 */	NODEV,
-	/* 47 */	NODEV,
+	/* 47 */	19,		/* sd */
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
@@ -336,7 +344,7 @@ static int chrtoblktbl[] =  {
 	/* 53 */	NODEV,
 	/* 54 */	NODEV,
 	/* 55 */	NODEV,
-	/* 56 */	21,
+	/* 56 */	21,		/* 19 */ /* XXX rz, remapped to sd */
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
 	/* 59 */	NODEV,

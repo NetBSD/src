@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.7 1995/09/13 19:35:59 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.8 1995/09/18 03:04:55 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -835,5 +835,16 @@ tzstrategy(bp)
 		tzstart(unit);
 	}
 	splx(s);
+}
+
+/*
+ * Non-interrupt driven, non-dma dump routine.
+ */
+int
+tzdump(dev)
+	dev_t dev;
+{
+	/* Not implemented. */
+	return (ENXIO);
 }
 #endif
