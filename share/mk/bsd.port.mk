@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.42 1998/01/30 13:53:53 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.43 1998/02/02 08:11:49 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -457,10 +457,6 @@ BUILD_COOKIE?=		${WRKDIR}/.build_done
 PATCH_COOKIE?=		${WRKDIR}/.patch_done
 PACKAGE_COOKIE?=	${WRKDIR}/.package_done
 
-# How to do nothing.  Override if you, for some strange reason, would rather
-# do something.
-DO_NADA?=		/usr/bin/true
-
 # Miscellaneous overridable commands:
 GMAKE?=			gmake
 XMKMF?=			xmkmf -a
@@ -633,9 +629,14 @@ SED?=		/usr/bin/sed
 SETENV?=	/usr/bin/env
 SH?=		/bin/sh
 TR?=		/usr/bin/tr
+TRUE?=		/usr/bin/true
 
 # Used to print all the '===>' style prompts - override this to turn them off.
 ECHO_MSG?=		${ECHO}
+
+# How to do nothing.  Override if you, for some strange reason, would rather
+# do something.
+DO_NADA?=		${TRUE}
 
 ALL_TARGET?=		all
 INSTALL_TARGET?=	install
@@ -1871,7 +1872,7 @@ fake-pkg: ${PLIST}
 		if [ -f ${PKGDIR}/MESSAGE ]; then \
 			${CP} ${PKGDIR}/MESSAGE ${PKG_DBDIR}/${PKGNAME}/+DISPLAY; \
 		fi; \
-		for dep in `make package-depends ECHO_MSG=/usr/bin/true | sort -u`; do \
+		for dep in `make package-depends ECHO_MSG=${TRUE} | sort -u`; do \
 			if [ -d ${PKG_DBDIR}/$$dep ]; then \
 				if ! ${GREP} ^${PKGNAME}$$ ${PKG_DBDIR}/$$dep/+REQUIRED_BY \
 					>/dev/null 2>&1; then \
