@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.21 1999/11/23 01:48:13 augustss Exp $
+.\"	$NetBSD: pci.4,v 1.22 1999/12/11 23:10:15 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -151,6 +151,8 @@ device interface.
 .Pp
 .Ss Audio devices
 .Bl -tag -width speaker -offset indent
+.It clcs
+Cirrus Logic CS4280 sound device.
 .It eap
 Ensoniq AudioPCI sound device.
 .It eso
@@ -196,6 +198,7 @@ USB UHCI host controller
 .Xr intro 4 ,
 .Xr ahc 4 ,
 .Xr bha 4 ,
+.Xr clcs 4 ,
 .Xr cy 4 ,
 .Xr de 4 ,
 .Xr eap 4 ,
