@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.buildboot,v 1.5 2003/04/20 14:37:59 bjh21 Exp $
+#	$NetBSD: Makefile.buildboot,v 1.6 2003/09/21 06:28:37 matt Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -22,6 +22,7 @@ CPPFLAGS+=	-D_STANDALONE -DHIMEM=0x28000
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-I${.CURDIR}/../lib
 CFLAGS=		-O2
+CFLAGS+=	-ffreestanding
 CFLAGS+=	-Wall -Wstrict-prototypes -Wmissing-prototypes
 
 .if !make(obj) && !make(clean) && !make(cleandir)
