@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.8 2001/06/04 15:34:16 ragge Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.9 2001/06/04 21:37:11 ragge Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -221,6 +221,11 @@ cpu_handle_ipi()
 		case IPI_TBIA:
 			mtpr(0, PR_TBIA);
 			break;
+		case IPI_DDB:
+			Debugger();
+			break;
+		default:
+			panic("cpu_handle_ipi: bad bit %x\n", bitno);
 		}
 	}
 }
