@@ -1,4 +1,4 @@
-.\"	$NetBSD: pdisk.8,v 1.12 2003/03/03 07:35:45 wiz Exp $
+.\"	$NetBSD: pdisk.8,v 1.13 2003/04/24 03:34:34 dbj Exp $
 .Dd February 18, 2003
 .Os
 .Dt PDISK 8
@@ -147,20 +147,22 @@ or
 .Sq g
 to indicate the size in kilobytes, megabytes, or gigabytes respectively.
 (These are powers of 1024, of course, not powers of 1000.)
-The last argument is the name of the partition.
+The third argument is the name of the partition.
 This can be a single word without quotes, or a string surrounded by
 single or double quotes.
-The type of the created partition is the correct type for a
-.Nx
-root partition.
+The type of the created partition will be Apple_UNIX_SVR2, which is
+the correct type for use with
+.Nx .
+This command will prompt for the unix filesystem slice to set
+in the Block Zero Block bits.
 .Pp
 The
 .Ic C
 command is similar to the
 .Ic c
 command, with the addition of a partition type argument after the
-other arguments.  The Block Zero Block magic bits are not set using
-this method.
+other arguments.  Choosing a type of Apple_UNIX_SVR2 will prompt for
+the unix filesystem slice to set in the Block Zero Block bits.
 .Pp
 The
 .Ic i
@@ -181,6 +183,12 @@ The
 The index numbers are constrained to be a contiguous sequence.
 .Pp
 The
+.Ic t
+(change partition type) command allows the type of a partition to be
+changed.  Changing the type to Apple_UNIX_SVR2 will prompt for the
+unix filesystem slice to set in the Block Zero Block bits.
+.Pp
+The
 .Ic w
 (write) command writes the partition map out.
 .\"but there is currently a bug in the interaction between MkLinux and Mach
@@ -190,6 +198,7 @@ In order to use the new partition map you must reboot.
 .Xr fdisk 8 ,
 .Xr newfs 8
 .Sh HISTORY
+
 The
 .Nm
 utility was originally developed for MkLinux.
@@ -208,10 +217,3 @@ of any other filesystem types.
 The
 .Fl -logical
 option has not been heavily tested.
-.Pp
-When creating a standard
-.Nx
-partition,
-.Nm
-should prompt for the filesystem type to fill in the
-Block Zero Block magic bits.

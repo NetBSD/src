@@ -61,6 +61,7 @@
 #include "io.h"
 #include "partition_map.h"
 #include "pathname.h"
+#include "hfs_misc.h"
 #include "errors.h"
 #include "dump.h"
 #include "validate.h"
@@ -117,6 +118,7 @@ static int first_get = 1;
 // Forward declarations
 //
 void do_change_map_size(partition_map_header *map);
+void do_update_dpme(partition_map *entry);
 void do_create_partition(partition_map_header *map, int get_type);
 void do_delete_partition(partition_map_header *map);
 void do_display_block(partition_map_header *map, char *alt_name);
@@ -641,6 +643,25 @@ finis:
     close_partition_map(map);
 }
 
+void
+do_update_dpme(partition_map *entry)
+{
+    int slice = 0;
+    if (!entry) return;
+    dpme_init_flags(entry->data);
+    entry->HFS_name = get_HFS_name(entry, &entry->HFS_kind);
+    if (istrncmp(entry->data->dpme_type, kUnixType, DPISTRLEN) == 0) {
+	printf("Available partition slices for %s:\n",entry->data->dpme_type);
+	printf("  a   root partition\n");
+	printf("  b   swap partition\n");
+	printf("  c   do not set any bzb bits\n");
+	printf("  g   user partition\n");
+	printf("Other lettered values will create user partitions\n");
+	get_command("Select a slice for default bzb values: ",0,&slice);
+    }
+    bzb_init_slice((BZB *)entry->data->dpme_bzb,slice);
+    entry->the_map->changed = 1;
+}
 
 void
 do_create_partition(partition_map_header *map, int get_type)
@@ -696,6 +717,7 @@ do_create_partition(partition_map_header *map, int get_type)
 	}
 #endif
     }
+    do_update_dpme(find_entry_by_base(base,map));
 xit2:
     if (type_name)
         free(type_name);
@@ -833,6 +855,7 @@ do_change_type(partition_map_header *map)
     }
 
     strncpy(entry->data->dpme_type, type, DPISTRLEN);
+    do_update_dpme(entry);
     map->changed = 1;
 
 out:

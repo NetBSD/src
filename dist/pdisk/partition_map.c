@@ -726,34 +726,70 @@ create_data(const char *name, const char *dptype, u32 base, u32 length)
 	strncpy(data->dpme_type, dptype, DPISTRLEN);
 	data->dpme_lblock_start = 0;
 	data->dpme_lblocks = data->dpme_pblocks;
-	memset(data->dpme_bzb,0,sizeof(data->dpme_bzb));
-	/* if this function was explicitly invoked with the kUnixType constant,
-	 * then make a default unix root partition with appropriate
-	 * bzb magic set.
-	 */
-	if (dptype == kUnixType) {
-	    BZB *bp = (BZB *)data->dpme_bzb;
-	    bp->bzb_magic = BZBMAGIC;
-	    bp->bzb_inode = 1;
-	    bp->bzb_type = FST;
-	    bzb_root_set(bp,1);
-	    bzb_usr_set(bp,1);
-	}
-	if (strcmp(data->dpme_type, kHFSType) == 0) { /* XXX this is gross, fix it! */
-	    data->dpme_flags = APPLE_HFS_FLAGS_VALUE;
-	}
-	else {
-	    dpme_writable_set(data, 1);
-	    dpme_readable_set(data, 1);
-	    dpme_bootable_set(data, 0);
-	    dpme_in_use_set(data, 0);
-	    dpme_allocated_set(data, 1);
-	    dpme_valid_set(data, 1);
-	}
+	dpme_init_flags(data);
     }
     return data;
 }
 
+void
+dpme_init_flags(DPME *data)
+{
+    if (istrncmp(data->dpme_type, kHFSType, DPISTRLEN) == 0) { /* XXX this is gross, fix it! */
+	data->dpme_flags = APPLE_HFS_FLAGS_VALUE;
+    }
+    else {
+	dpme_writable_set(data, 1);
+	dpme_readable_set(data, 1);
+	dpme_bootable_set(data, 0);
+	dpme_in_use_set(data, 0);
+	dpme_allocated_set(data, 1);
+	dpme_valid_set(data, 1);
+    }
+}
+
+/* These bits are appropriate for Apple_UNIX_SVR2 partitions
+ * used by NetBSD.  They may be ok for A/UX, but have not been
+ * tested.
+ */
+void
+bzb_init_slice(BZB *bp, int slice)
+{
+    memset(bp,0,sizeof(BZB));
+    if ((slice >= 'A') && (slice <= 'Z')) {
+	slice += 'a' - 'A';
+    }
+    if ((slice != 0) && ((slice < 'a') || (slice > 'z'))) {
+	error(-1,"Bad bzb slice");
+	slice = 0;
+    }
+    switch (slice) {
+    case 0:
+    case 'c':
+	return;
+    case 'a':
+	bp->bzb_type = FST;
+	strcpy(bp->bzb_mount_point,"/");
+	bp->bzb_inode = 1;
+	bzb_root_set(bp,1);
+	bzb_usr_set(bp,1);
+	break;
+    case 'b':
+	bp->bzb_type = FSTSFS;
+	strcpy(bp->bzb_mount_point,"(swap)");
+	break;
+    case 'g':
+	strcpy(bp->bzb_mount_point,"/usr");
+	/* Fall through */
+    default:
+	bp->bzb_type = FST;
+	bp->bzb_inode = 1;
+	bzb_usr_set(bp,1);
+	break;
+    }
+    bzb_slice_set(bp,0);  // XXX NetBSD disksubr.c ignores slice
+    //	bzb_slice_set(bp,slice-'a'+1);
+    bp->bzb_magic = BZBMAGIC;
+}
 
 void
 renumber_disk_addresses(partition_map_header *map)
@@ -1087,6 +1123,21 @@ find_entry_by_type(const char *type_name, partition_map_header *map)
     cur = map->base_order;
     while (cur != NULL) {
 	if (istrncmp(cur->data->dpme_type, type_name, DPISTRLEN) == 0) {
+	    break;
+	}
+	cur = cur->next_by_base;
+    }
+    return cur;
+}
+
+partition_map *
+find_entry_by_base(u32 base, partition_map_header *map)
+{
+    partition_map * cur;
+
+    cur = map->base_order;
+    while (cur != NULL) {
+	if (cur->data->dpme_pblock_start == base) {
 	    break;
 	}
 	cur = cur->next_by_base;
