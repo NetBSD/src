@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.16 1995/10/14 20:24:20 christos Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.17 1996/06/13 18:33:54 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -108,9 +108,10 @@ svr4_copyargs(pack, arginfo, stack, argp)
 }
 
 int
-svr4_elf_probe(p, epp, itp, pos)
+svr4_elf_probe(p, epp, eh, itp, pos)
 	struct proc *p;
 	struct exec_package *epp;
+	Elf32_Ehdr *eh;
 	char *itp;
 	u_long *pos;
 {
