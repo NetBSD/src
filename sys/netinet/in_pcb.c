@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.39 1997/10/14 00:52:49 matt Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.40 1997/11/20 04:53:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -185,6 +185,8 @@ noname:
 			if (!in_pcblookup_port(table, inp->inp_laddr,
 			    htons(lport), wild))
 				goto found;
+		if (!in_nullhost(inp->inp_laddr))
+			inp->inp_laddr.s_addr = INADDR_ANY;
 		return (EAGAIN);
 	found:
 		table->inpt_lastport = lport;
@@ -210,6 +212,7 @@ in_pcbconnect(v, nam)
 	struct in_ifaddr *ia;
 	struct sockaddr_in *ifaddr = NULL;
 	register struct sockaddr_in *sin = mtod(nam, struct sockaddr_in *);
+	int error;
 
 	if (nam->m_len != sizeof (*sin))
 		return (EINVAL);
@@ -315,9 +318,18 @@ in_pcbconnect(v, nam)
 	    inp->inp_lport) != 0)
 		return (EADDRINUSE);
 	if (in_nullhost(inp->inp_laddr)) {
-		if (inp->inp_lport == 0)
-			(void)in_pcbbind(inp, (struct mbuf *)0,
+		if (inp->inp_lport == 0) {
+			error = in_pcbbind(inp, (struct mbuf *)0,
 			    (struct proc *)0);
+			/*
+			 * This used to ignore the return value
+			 * completely, but we need to check for
+			 * ephemeral port shortage.
+			 * XXX Should we check for other errors, too?
+			 */
+			if (error == EAGAIN)
+				return (error);
+		}
 		inp->inp_laddr = ifaddr->sin_addr;
 	}
 	inp->inp_faddr = sin->sin_addr;
