@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.40 1998/03/29 22:10:32 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.41 1998/03/31 21:05:05 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -118,63 +118,15 @@
 
 #include <sparc/dev/btreg.h>
 #include <sparc/dev/btvar.h>
-#include <sparc/dev/cgsixreg.h>
 #include <sparc/dev/sbusvar.h>
+#include <sparc/dev/cgsixreg.h>
+#include <sparc/dev/cgsixvar.h>
 #include <sparc/dev/pfourreg.h>
 
-union cursor_cmap {		/* colormap, like bt_cmap, but tiny */
-	u_char	cm_map[2][3];	/* 2 R/G/B entries */
-	u_int	cm_chip[2];	/* 2 chip equivalents */
-};
-
-struct cg6_cursor {		/* cg6 hardware cursor status */
-	short	cc_enable;		/* cursor is enabled */
-	struct	fbcurpos cc_pos;	/* position */
-	struct	fbcurpos cc_hot;	/* hot-spot */
-	struct	fbcurpos cc_size;	/* size of mask & image fields */
-	u_int	cc_bits[2][32];		/* space for mask & image bits */
-	union	cursor_cmap cc_color;	/* cursor colormap */
-};
-
-/* per-display variables */
-struct cgsix_softc {
-	struct device	sc_dev;		/* base device */
-	struct sbusdev	sc_sd;		/* sbus device */
-	struct fbdevice	sc_fb;		/* frame buffer device */
-	bus_space_tag_t	sc_bustag;
-	bus_type_t	sc_btype;	/* phys address description */
-	bus_addr_t	sc_paddr;	/* for device mmap() */
-
-	volatile struct bt_regs *sc_bt;		/* Brooktree registers */
-	volatile int *sc_fhc;			/* FHC register */
-	volatile struct cg6_thc *sc_thc;	/* THC registers */
-	volatile struct cg6_tec_xxx *sc_tec;	/* TEC registers */
-	short	sc_fhcrev;		/* hardware rev */
-	short	sc_blanked;		/* true if blanked */
-	struct	cg6_cursor sc_cursor;	/* software cursor info */
-	union	bt_cmap sc_cmap;	/* Brooktree color map */
-};
-
-/* autoconfiguration driver */
-static int	cgsixmatch_sbus __P((struct device *, struct cfdata *, void *));
-static int	cgsixmatch_obio __P((struct device *, struct cfdata *, void *));
-static void	cgsixattach_sbus __P((struct device *, struct device *, void *));
-static void	cgsixattach_obio __P((struct device *, struct device *, void *));
 static void	cg6_unblank __P((struct device *));
-static int	cg6_pfour_probe __P((void *, void *));
-static void	cg6attach __P((struct cgsix_softc *, char *, int, int));
 
 /* cdevsw prototypes */
 cdev_decl(cgsix);
-
-struct cfattach cgsix_sbus_ca = {
-	sizeof(struct cgsix_softc), cgsixmatch_sbus, cgsixattach_sbus
-};
-
-struct cfattach cgsix_obio_ca = {
-	sizeof(struct cgsix_softc), cgsixmatch_obio, cgsixattach_obio
-};
-
 
 extern struct cfdriver cgsix_cd;
 
@@ -190,11 +142,7 @@ static struct fbdriver cg6_fbdriver = {
  */
 #ifdef RASTERCONSOLE
 int cgsix_use_rasterconsole = 0;
-#else
-#define cgsix_use_rasterconsole 0
 #endif
-
-extern int fbnode;
 
 static void cg6_reset __P((struct cgsix_softc *));
 static void cg6_loadcmap __P((struct cgsix_softc *, int, int));
@@ -202,261 +150,6 @@ static void cg6_loadomap __P((struct cgsix_softc *));
 static void cg6_setcursor __P((struct cgsix_softc *));/* set position */
 static void cg6_loadcursor __P((struct cgsix_softc *));/* set shape */
 
-/*
- * Match a cgsix.
- */
-int
-cgsixmatch_sbus(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	struct sbus_attach_args *sa = aux;
-
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
-}
-
-int
-cgsixmatch_obio(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	union obio_attach_args *uoba = aux;
-	struct obio4_attach_args *oba;
-
-	if (uoba->uoba_isobio4 == 0)
-		return (0);
-
-	oba = &uoba->uoba_oba4;
-	return (bus_space_probe(oba->oba_bustag, 0,
-				oba->oba_paddr + CGSIX_FHC_OFFSET,
-				4,	/* probe size */
-				0,	/* offset */
-				0,	/* flags */
-				cg6_pfour_probe, NULL));
-}
-
-int
-cg6_pfour_probe(vaddr, arg)
-	void *vaddr;
-	void *arg;
-{
-
-	return (fb_pfour_id(vaddr) == PFOUR_ID_FASTCOLOR);
-}
-
-
-/*
- * Attach a display.
- */
-void
-cgsixattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct cgsix_softc *sc = (struct cgsix_softc *)self;
-	struct sbus_attach_args *sa = aux;
-	struct fbdevice *fb = &sc->sc_fb;
-	int node, isconsole;
-	char *name;
-	bus_space_handle_t bh;
-	extern struct tty *fbconstty;
-
-	/* Remember cookies for cgsix_mmap() */
-	sc->sc_bustag = sa->sa_bustag;
-	sc->sc_btype = (bus_type_t)sa->sa_slot;
-	sc->sc_paddr = (bus_addr_t)sa->sa_offset;
-
-	node = sa->sa_node;
-
-	fb->fb_driver = &cg6_fbdriver;
-	fb->fb_device = &sc->sc_dev;
-	fb->fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
-	fb->fb_type.fb_depth = 8;
-
-	fb_setsize_obp(fb, fb->fb_type.fb_depth, 1152, 900, node);
-
-	/*
-	 * Dunno what the PROM has mapped, though obviously it must have
-	 * the video RAM mapped.  Just map what we care about for ourselves
-	 * (the FHC, THC, and Brooktree registers).
-	 */
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset + CGSIX_BT_OFFSET,
-			 sizeof(*sc->sc_bt),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map brooktree registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_bt = (struct bt_regs *)bh;
-
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset + CGSIX_FHC_OFFSET,
-			 sizeof(*sc->sc_fhc),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map FHC registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_fhc = (int *)bh;
-
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset + CGSIX_THC_OFFSET,
-			 sizeof(*sc->sc_thc),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map THC registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_thc = (struct cg6_thc *)bh;
-
-	if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-			 sa->sa_offset + CGSIX_TEC_OFFSET,
-			 sizeof(*sc->sc_tec),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map TEC registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_tec = (struct cg6_tec_xxx *)bh;
-
-	sbus_establish(&sc->sc_sd, &sc->sc_dev);
-	name = getpropstring(node, "model");
-
-	isconsole = node == fbnode && fbconstty != NULL;
-	if (isconsole && cgsix_use_rasterconsole) {
-		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
-				 sa->sa_offset + CGSIX_RAM_OFFSET,
-				 ramsize,
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
-			printf("%s: cannot map pixels\n", self->dv_xname);
-			return;
-		}
-		sc->sc_fb.fb_pixels = (caddr_t)bh;
-	}
-
-	cg6attach(sc, name, isconsole, node == fbnode);
-
-}
-
-void
-cgsixattach_obio(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct cgsix_softc *sc = (struct cgsix_softc *)self;
-	union obio_attach_args *uoba = aux;
-	struct obio4_attach_args *oba;
-	struct eeprom *eep = (struct eeprom *)eeprom_va;
-	struct fbdevice *fb = &sc->sc_fb;
-	bus_space_handle_t bh;
-	int constype, isconsole;
-	char *name;
-	extern struct tty *fbconstty;
-
-	if (uoba->uoba_isobio4 == 0) {
-		cgsixattach_sbus(parent, self, aux);
-		return;
-	}
-
-	oba = &uoba->uoba_oba4;
-
-	/* Remember cookies for cgsix_mmap() */
-	sc->sc_bustag = oba->oba_bustag;
-	sc->sc_btype = (bus_type_t)0;
-	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
-
-	fb->fb_driver = &cg6_fbdriver;
-	fb->fb_device = &sc->sc_dev;
-	fb->fb_type.fb_type = FBTYPE_SUNFAST_COLOR;
-	fb->fb_flags = sc->sc_dev.dv_cfdata->cf_flags & FB_USERMASK;
-	fb->fb_type.fb_depth = 8;
-
-	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
-
-	/*
-	 * Dunno what the PROM has mapped, though obviously it must have
-	 * the video RAM mapped.  Just map what we care about for ourselves
-	 * (the FHC, THC, and Brooktree registers).
-	 */
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 CGSIX_BT_OFFSET,
-			 sizeof(*sc->sc_bt),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map brooktree registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_bt = (struct bt_regs *)bh;
-
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 CGSIX_FHC_OFFSET,
-			 sizeof(*sc->sc_fhc),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map FHC registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_fhc = (int *)bh;
-
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 CGSIX_THC_OFFSET,
-			 sizeof(*sc->sc_thc),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map THC registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_thc = (struct cg6_thc *)bh;
-
-	if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-			 CGSIX_TEC_OFFSET,
-			 sizeof(*sc->sc_tec),
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
-		printf("%s: cannot map TEC registers\n", self->dv_xname);
-		return;
-	}
-	sc->sc_tec = (struct cg6_tec_xxx *)bh;
-
-
-	if (fb_pfour_id((void *)sc->sc_fhc) == PFOUR_ID_FASTCOLOR) {
-		fb->fb_flags |= FB_PFOUR;
-		name = "cgsix/p4";
-	} else
-		name = "cgsix";
-
-	constype = (fb->fb_flags & FB_PFOUR) ? EE_CONS_P4OPT : EE_CONS_COLOR;
-
-	/*
-	 * Assume this is the console if there's no eeprom info
-	 * to be found.
-	 */
-	if (eep == NULL || eep->eeConsole == constype)
-		isconsole = (fbconstty != NULL);
-	else
-		isconsole = 0;
-
-	if (isconsole && cgsix_use_rasterconsole) {
-		int ramsize = fb->fb_type.fb_height * fb->fb_linebytes;
-		if (obio_bus_map(oba->oba_bustag, oba->oba_paddr,
-				 CGSIX_RAM_OFFSET,
-				 ramsize,
-				 BUS_SPACE_MAP_LINEAR,
-				 0, &bh) != 0) {
-			printf("%s: cannot map pixels\n", self->dv_xname);
-			return;
-		}
-		sc->sc_fb.fb_pixels = (caddr_t)bh;
-	}
-
-	cg6attach(sc, name, isconsole, 1);
-}
 
 void
 cg6attach(sc, name, isconsole, isfb)
@@ -468,6 +161,8 @@ cg6attach(sc, name, isconsole, isfb)
 	int i;
 	volatile struct bt_regs *bt = sc->sc_bt;
 	struct fbdevice *fb = &sc->sc_fb;
+
+	fb->fb_driver = &cg6_fbdriver;
 
 	/* Don't have to map the pfour register on the cgsix. */
 	fb->fb_pfour = NULL;
