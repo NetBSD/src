@@ -1,10 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.11 1999/01/14 18:45:45 castor Exp $	*/
-
-/*
- * Architecture name.
- */
-#define	_MACHINE_ARCH	mips
-#define	MACHINE_ARCH	"mips"
+/*	$NetBSD: mips_param.h,v 1.12 1999/02/09 17:15:52 tv Exp $	*/
 
 /*
  * NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE.
