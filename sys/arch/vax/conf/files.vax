@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.40 1998/08/10 14:48:53 ragge Exp $
+#       $NetBSD: files.vax,v 1.41 1998/10/06 04:04:31 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -8,30 +8,30 @@ maxpartitions 8
 
 maxusers 8 32 64
 
-device	backplane { }
-attach	backplane at root
+device	mainbus { }
+attach	mainbus at root
 
 device	sbi { tr=-1 }
-attach	sbi at backplane
+attach	sbi at mainbus
 file	arch/vax/vax/sbi.c		sbi needs-flag
 
 device	cmi { tr=-1 }
-attach	cmi at backplane
+attach	cmi at mainbus
 
 device	bi { node=-1 }
-attach	bi at backplane
+attach	bi at mainbus
 file	arch/vax/bi/bi.c		bi needs-flag
 
 device	vsbus { }
-attach	vsbus at backplane
+attach	vsbus at mainbus
 file	arch/vax/vsa/vsbus.c		vsbus
 
 device	cpu
-attach	cpu at backplane with cpu_backplane
+attach	cpu at mainbus with cpu_mainbus
 attach	cpu at bi with cpu_bi
 
 device	mem
-attach	mem at backplane with mem_backplane
+attach	mem at mainbus with mem_mainbus
 attach	mem at bi with mem_bi
 attach	mem at sbi with mem_sbi
 attach	mem at cmi with mem_cmi
@@ -64,7 +64,7 @@ attach	kdb at bi
 file	arch/vax/bi/kdb.c		kdb
 
 device	uba { csr }
-attach	uba at backplane with uba_backplane
+attach	uba at mainbus with uba_mainbus
 attach	uba at sbi with uba_sbi
 attach	uba at cmi with uba_cmi
 attach	uba at bi with uba_bi
@@ -113,7 +113,7 @@ file	arch/vax/vsa/dz_vsbus.c		dz_vsbus
 # RD-type disks at VS2000's onboard MFM-controller
 device	hdc { drive = -1 }
 attach	hdc at vsbus
-file	arch/vax/vsa/hdc9224.c		ry | rd needs-flag
+file	arch/vax/vsa/hdc9224.c		ry | hdc | rd needs-flag
 
 device	rd: disk
 attach	rd at hdc
@@ -302,7 +302,7 @@ file	arch/vax/uba/dh.c		dh needs-flag
 # These are general files needed for compilation.
 file	dev/cons.c
 file	dev/cninit.c
-file	dev/clock_subr.c		vax8200|vax410|vax43|vax630
+file	dev/clock_subr.c		vax8200|vax410|vax43|vax630|vax46
 file	arch/vax/vax/locore.c
 file	arch/vax/vax/mem.c
 file	arch/vax/vax/clock.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.34 1998/03/21 10:24:29 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.35 1998/10/06 04:04:31 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -388,7 +388,7 @@ void	qba_attach __P((struct device *, struct device *, void *));
 void	qba_beforescan __P((struct uba_softc*));
 void	qba_init __P((struct uba_softc*));
 
-struct	cfattach uba_backplane_ca = {
+struct	cfattach uba_mainbus_ca = {
 	sizeof(struct uba_softc), qba_match, qba_attach
 };
 
