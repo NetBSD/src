@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.84 2004/03/24 18:11:09 atatat Exp $ */
+/*	$NetBSD: sysctl.c,v 1.85 2004/03/25 19:36:27 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.84 2004/03/24 18:11:09 atatat Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.85 2004/03/25 19:36:27 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,12 +146,9 @@ static void getdesc(int *, u_int, struct sysctlnode *);
 static void sysctlerror(int);
 
 /*
- * unexported from some place else (XXX tbd)
+ * "borrowed" from libc:sysctlgetmibinfo.c
  */
-int learn_tree(int *, u_int, struct sysctlnode *);
-int sysctlbyname(const char *, void *, size_t *, void *, size_t);
-int sysctlgetmibinfo(const char *, int *, u_int *,
-		     char *, size_t *, struct sysctlnode **, int);
+int __learn_tree(int *, u_int, struct sysctlnode *);
 
 /*
  * "handlers"
@@ -607,7 +604,7 @@ print_tree(int *name, u_int namelen, struct sysctlnode *pnode, u_int type,
 
 	switch (type) {
 	case CTLTYPE_NODE: {
-		learn_tree(name, namelen, pnode);
+		__learn_tree(name, namelen, pnode);
 		node = pnode->sysctl_child;
 		if (node == NULL) {
 			if (p != NULL)
