@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.1.2.9 2002/04/02 00:15:59 nathanw Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.1.2.10 2002/06/20 23:54:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/lock.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/types.h>
 #include <sys/ucontext.h>
