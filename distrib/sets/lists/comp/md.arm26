@@ -1,7 +1,8 @@
-# $NetBSD: md.arm26,v 1.5 2001/01/18 21:49:50 bjh21 Exp $
+# $NetBSD: md.arm26,v 1.6 2001/01/22 22:12:51 bjh21 Exp $
 ./usr/include/arm			comp-c-include
 ./usr/include/arm/ansi.h		comp-c-include
 ./usr/include/arm/aout_machdep.h	comp-c-include
+./usr/include/arm/armreg.h		comp-c-include
 ./usr/include/arm/asm.h			comp-c-include
 ./usr/include/arm/bswap.h		comp-c-include
 ./usr/include/arm/cdefs.h		comp-c-include
@@ -25,7 +26,6 @@
 ./usr/include/arm26			comp-c-include
 ./usr/include/arm26/ansi.h		comp-c-include
 ./usr/include/arm26/aout_machdep.h	comp-c-include
-./usr/include/arm26/armreg.h		comp-c-include
 ./usr/include/arm26/asm.h		comp-c-include
 ./usr/include/arm26/boot.h		comp-c-include
 ./usr/include/arm26/bswap.h		comp-c-include
