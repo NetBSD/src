@@ -50,7 +50,6 @@ obj:
 
 clean cleandir:
 	rm -f ${DOC}.* [eE]rrs mklog ${CLEANFILES}
-	rm -rf obj
 
 FILES?=	${SRCS}
 install:
