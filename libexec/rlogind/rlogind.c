@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogind.c,v 1.18 1998/08/29 17:31:56 tsarna Exp $	*/
+/*	$NetBSD: rlogind.c,v 1.19 1999/12/31 08:01:26 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1989, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogind.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: rlogind.c,v 1.18 1998/08/29 17:31:56 tsarna Exp $");
+__RCSID("$NetBSD: rlogind.c,v 1.19 1999/12/31 08:01:26 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ doit(f, fromp)
 		fatal(STDERR_FILENO, _PATH_LOGIN, 1);
 		/*NOTREACHED*/
 	}
-		ioctl(f, FIONBIO, &on);
+	ioctl(f, FIONBIO, &on);
 	ioctl(master, FIONBIO, &on);
 	ioctl(master, TIOCPKT, &on);
 	signal(SIGCHLD, cleanup);
