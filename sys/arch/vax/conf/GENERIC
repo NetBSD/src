@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.85 2001/01/28 21:01:52 ragge Exp $
+#	$NetBSD: GENERIC,v 1.86 2001/02/04 20:36:26 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.85 $"
+#ident 		"GENERIC-$Revision: 1.86 $"
 
 # Here are all different supported CPU types listed.
 #options 	"VAX8800"	# VAX 8500, 8530, 8550, 8700, 8800
@@ -18,13 +18,13 @@ options 	"VAX630"	# MV II
 options 	"VAX650"	# MV III, 3300, 3400, 3500, 3600, 3800, 3900
 options 	"VAX660"	# VAX 4000/200
 options 	"VAX670"	# VAX 4000/300
-options 	"VAX680"	# VAX 4000/500
+options 	"VAX680"	# VAX 4000/[45]00
 options 	"VAX410"	# VS 2000
 options 	"VAX43"		# VS 3100/76
 options 	"VAX46"		# VS 4000/60
 options 	"VAX48"		# VS 4000 VLC
 options 	"VAX49"		# VS 4000/90
-options 	"VAX53"		# VAX 4000/105A
+options 	"VAX53"		# VAX 4000/10[058], MicroVAX 3100/m96
 
 # Max users on system; this is just a hint
 maxusers	8
@@ -126,11 +126,11 @@ ibus0		at mainbus0		# All MicroVAX
 le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
 ze0		at vsbus0 csr 0x20008000 # SGEC ethernet
 dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
-dz0		at vsbus0 csr 0x25000000 # VS4000/90 serial line
+dz0		at vsbus0 csr 0x25000000 # VS4000/90 and 4000/10x serial line
 si0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
-asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
-asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
 si1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
+asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
+asc0		at vsbus0 csr 0x26000080 # VS4000/90 and 4000/10x SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
@@ -142,8 +142,6 @@ rd*		at hdc0 drive?		# RD5x disks
 uba0		at ibus0 		# Qbus adapter
 ze0		at ibus0 		# SGEC on-board ethernet
 le0		at ibus0		# LANCE ethernet (MV3400)
-dz0		at ibus0		# VAX 4000/105A serial lines
-#asc0		at ibus0		# VAX 4000/105A SCSI-ctlr
 #shac0		at ibus0 		# DSSI controller
 
 # Devices connected at VAXBI

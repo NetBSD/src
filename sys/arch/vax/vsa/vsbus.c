@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.30 2000/11/21 05:49:08 chs Exp $ */
+/*	$NetBSD: vsbus.c,v 1.31 2001/02/04 20:36:34 ragge Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -120,6 +120,11 @@ vsbus_match(parent, cf, aux)
 	struct cfdata	*cf;
 	void	*aux;
 {
+#if VAX53
+	/* Kludge: VAX53 is... special */
+	if (vax_boardtype == VAX_BTYP_53 && (int)aux == 1)
+		return 1; /* Hack */
+#endif
 	if (vax_bustype == VAX_VSBUS)
 		return 1;
 	return 0;
@@ -138,7 +143,8 @@ vsbus_attach(parent, self, aux)
 	sc->sc_dmatag = vsbus_bus_dma_tag;
 
 	switch (vax_boardtype) {
-#if VAX49
+#if VAX49 || VAX53
+	case VAX_BTYP_53:
 	case VAX_BTYP_49:
 		sc->sc_vsregs = vax_map_physmem(0x25c00000, 1);
 		sc->sc_intreq = (char *)sc->sc_vsregs + 12;
@@ -248,7 +254,7 @@ vsbus_search(parent, cf, aux)
 	return 0;
 
 fail:
-	printf("%s%d at %s csr %x %s\n",
+	printf("%s%d at %s csr 0x%x %s\n",
 	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 forgetit:

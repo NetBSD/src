@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.15 2001/01/28 19:26:34 ragge Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.16 2001/02/04 20:36:33 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,6 +59,7 @@
 #include "ioconf.h"
 #include "dzkbd.h"
 #include "dzms.h"
+#include "opt_cputype.h"
 
 #if NDZKBD > 0 || NDZMS > 0
 #include <dev/dec/dzkbdvar.h>
@@ -123,6 +124,12 @@ dz_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct ss_dz *dzP;
 	short i;
 
+#if VAX53
+	if (vax_boardtype == VAX_BTYP_53)
+		if (cf->cf_loc[0] != 0x25000000)
+			return 0; /* Ugly */
+#endif
+
 	dzP = (struct ss_dz *)va->va_addr;
 	i = dzP->tcr;
 	dzP->csr = DZ_CSR_MSE|DZ_CSR_TXIE;
@@ -144,12 +151,15 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 #if NDZKBD > 0 || NDZMS > 0
 	struct dzkm_attach_args daa;
 #endif
+	int s;
 
 	/* 
 	 * XXX - This is evil and ugly, but...
 	 * due to the nature of how bus_space_* works on VAX, this will
 	 * be perfectly good until everything is converted.
 	 */
+	if (dz_regs == 0) /* This isn't console */
+		dz_regs = vax_map_physmem(va->va_paddr, 1);
 	sc->sc_ioh = dz_regs;
 	sc->sc_dr.dr_csr = 0;
 	sc->sc_dr.dr_rbuf = 4;
@@ -170,6 +180,7 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n%s: 4 lines", self->dv_xname);
 
 	dzattach(sc, NULL);
+	DELAY(10000);
 
 #if NDZKBD > 0
 	/* Don't change speed if this is the console */
@@ -187,8 +198,10 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	daa.daa_flags = 0;
 	config_found(self, &daa, dz_print);
 #endif
+	s = spltty();
 	dzrint(sc);
 	dzxint(sc);
+	splx(s);
 }
 
 int
@@ -233,6 +246,7 @@ dzcnprobe(struct consdev *cndev)
 		break;
 
 	case VAX_BTYP_49:
+	case VAX_BTYP_53:
 		ioaddr = 0x25000000;
 		diagcons = 3;
 		break;

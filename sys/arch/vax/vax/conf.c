@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.51 2001/01/28 21:01:53 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.52 2001/02/04 20:36:32 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -174,7 +174,6 @@ smgcngetc(dev_t dev)
 
 cons_decl(gen);
 cons_decl(dz);
-cons_decl(idz);
 cons_decl(qd);
 cons_decl(smg);
 #include "qv.h"
@@ -188,11 +187,8 @@ struct	consdev constab[]={
 #else
 #define NGEN	0
 #endif
-#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49
+#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49 || VAX53
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
-#endif
-#if VAX53
-	cons_init(idz),	/* DZ11-like serial console on VAX/MicroVAX */
 #endif
 #if VAX650 || VAX630
 #if NQV

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.67 2000/07/26 11:44:26 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.68 2001/02/04 20:36:28 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -60,6 +60,7 @@
 #include <dev/bi/bireg.h>
 
 #include "locators.h"
+#include "opt_cputype.h"
 
 void	gencnslask __P((void));
 
@@ -149,6 +150,12 @@ mainbus_attach(parent, self, hej)
 	 * Maybe should have this as master instead of mainbus.
 	 */
 	config_found(self, NULL, mainbus_print);
+
+#if VAX53
+	/* Kludge: To have two master buses */
+	if (vax_boardtype == VAX_BTYP_53)
+		config_found(self, (void *)1, mainbus_print);
+#endif
 
 	if (dep_call->cpu_subconf)
 		(*dep_call->cpu_subconf)(self);
