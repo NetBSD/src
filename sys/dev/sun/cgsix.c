@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.19 2005/02/27 00:27:49 perry Exp $ */
+/*	$NetBSD: cgsix.c,v 1.20 2005/03/03 12:11:49 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.19 2005/02/27 00:27:49 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.20 2005/03/03 12:11:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.19 2005/02/27 00:27:49 perry Exp $");
 #include <dev/rasops/rasops.h>
 
 #include "opt_wsemul.h"
+#include "rasops_glue.h"
 
 static void	cg6_unblank(struct device *);
 
@@ -291,6 +292,7 @@ int cgsix_use_rasterconsole = 1;
 		/*EMPTY*/;						\
 } while (0)
 
+#if NWSDISPLAY
 static void cg6_ras_init(struct cgsix_softc *);
 static void cg6_ras_copyrows(void *, int, int, int);
 static void cg6_ras_copycols(void *, int, int, int, int);
@@ -520,6 +522,7 @@ cg6_ras_do_cursor(struct rasops_info *ri)
 	CG6_DRAW_WAIT(fbc);
 	CG6_DRAIN(fbc);
 }
+#endif
 
 void
 cg6attach(sc, name, isconsole)
@@ -528,9 +531,11 @@ cg6attach(sc, name, isconsole)
 	int isconsole;
 {
 	struct fbdevice *fb = &sc->sc_fb;
+#if NWSDISPLAY
 	struct wsemuldisplaydev_attach_args aa;
 	struct rasops_info *ri = &fb->fb_rinfo;
 	unsigned long defattr;
+#endif
 
 	fb->fb_driver = &cg6_fbdriver;
 
@@ -574,7 +579,8 @@ cg6attach(sc, name, isconsole)
 
 	fb_attach(&sc->sc_fb, isconsole);
 
-/* setup rasops and so on for wsdisplay */
+#if NWSDISPLAY
+	/* setup rasops and so on for wsdisplay */
 	wsfont_init();
 	/* fill in rasops_info */
 	ri->ri_hw=sc;
@@ -626,6 +632,7 @@ cg6attach(sc, name, isconsole)
 	printf("\n");
 
 	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+#endif
 
 }
 
