@@ -1,6 +1,7 @@
-/*	$NetBSD: ite_cc.c,v 1.6 1996/04/18 08:52:02 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.7 1996/09/16 06:43:41 leo Exp $	*/
 
 /*
+ * Copyright (c) 1996 Leo Weppelman
  * Copyright (c) 1994 Christian E. Hopps
  * All rights reserved.
  *
@@ -30,21 +31,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "grf.h"
-#if NGRF > 0
+#include "grfcc.h"
+#if NGRFCC > 0
 
 #include <sys/param.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-#include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/termios.h>
 #include <sys/malloc.h>
+#include <sys/device.h>
 #include <dev/cons.h>
 #include <machine/cpu.h>
+#include <atari/atari/device.h>
 #include <atari/dev/itevar.h>
 #include <atari/dev/iteioctl.h>
 #include <atari/dev/grfioctl.h>
@@ -77,8 +79,6 @@ typedef struct ite_priv ipriv_t;
  * the VM-system is brought up. We setup for a 1280x960 monitor with
  * an 8x8 font.
  */
-extern int	atari_realconfig;
-
 #define	CONS_MAXROW	120	/* Max. number of rows on console	*/
 #define	CONS_MAXCOL	160	/* Max. number of columns on console	*/
 static u_short	con_columns[CONS_MAXCOL];
@@ -106,6 +106,194 @@ int ite_default_y      = 0;	/* def topedge offset	*/
 int ite_default_width  = 640;	/* def width		*/
 int ite_default_depth  = 1;	/* def depth		*/
 int ite_default_height = 400;	/* def height		*/
+
+/*
+ * grfcc config stuff
+ */
+void grfccattach __P((struct device *, struct device *, void *));
+int  grfccmatch __P((struct device *, void *, void *));
+int  grfccprint __P((void *, const char *));
+
+struct cfattach grfcc_ca = {
+	sizeof(struct grf_softc), grfccmatch, grfccattach
+};
+
+struct cfdriver grfcc_cd = {
+	NULL, "grfcc", DV_DULL
+};
+
+/*
+ * only used in console init.
+ */
+static struct cfdata *cfdata_grf   = NULL;
+
+/*
+ * Probe functions we can use:
+ */
+#ifdef TT_VIDEO
+void	tt_probe_video __P((MODES *));
+#endif /* TT_VIDEO */
+#ifdef FALCON_VIDEO
+void	falcon_probe_video __P((MODES *));
+#endif /* FALCON_VIDEO */
+
+int
+grfccmatch(pdp, match, auxp)
+struct device	*pdp;
+void	*match, *auxp;
+{
+	static int	must_probe = 1;
+	grf_auxp_t	*grf_auxp = auxp;
+	struct cfdata	*cfp = match;
+
+	if (must_probe) {
+		/*
+		 * Check if the layers we depend on exist
+		 */
+		if (!(machineid & (ATARI_TT|ATARI_FALCON)))
+			return (0);
+#ifdef TT_VIDEO
+		if ((machineid & ATARI_TT) && !grfabs_probe(&tt_probe_video))
+			return (0);
+#endif /* TT_VIDEO */
+#ifdef FALCON_VIDEO
+		if ((machineid & ATARI_FALCON)
+		    && !grfabs_probe(&falcon_probe_video))
+			return (0);
+#endif /* FALCON_VIDEO */
+
+		viewprobe();
+		must_probe = 0;
+	}
+
+	if (atari_realconfig == 0) {
+		/*
+		 * Early console init. Only match unit 0.
+		 */
+		if (cfp->cf_unit != 0)
+			return(0);
+		if (viewopen(0, 0, 0, NULL))
+			return(0);
+		cfdata_grf = cfp;
+		return (1);
+	}
+
+	/*
+	 * Normal config. When we are called directly from the grfbus,
+	 * we only match unit 0. The attach function will call us for
+	 * the other configured units.
+	 */
+	if (grf_auxp->from_bus_match && (cfp->cf_unit != 0))
+		return (0);
+
+	if (!grf_auxp->from_bus_match && (grf_auxp->unit != cfp->cf_unit))
+		return (0);
+
+	/*
+	 * Final constraint: each grf needs a view....
+	 */
+	if((cfdata_grf == NULL) || (cfp->cf_unit != 0)) {
+	    if(viewopen(cfp->cf_unit, 0, 0, NULL))
+		return(0);
+	}
+	return(1);
+}
+
+/*
+ * attach: initialize the grf-structure and try to attach an ite to us.
+ * note  : dp is NULL during early console init.
+ */
+void
+grfccattach(pdp, dp, auxp)
+struct device	*pdp, *dp;
+void		*auxp;
+{
+	static struct grf_softc		congrf;
+	       grf_auxp_t		*grf_bus_auxp = auxp;
+	       grf_auxp_t		grf_auxp;
+	       struct grf_softc		*gp;
+	       int			maj;
+
+	/*
+	 * find our major device number 
+	 */
+	for(maj = 0; maj < nchrdev; maj++)
+		if (cdevsw[maj].d_open == grfopen)
+			break;
+
+	/*
+	 * Handle exeption case: early console init
+	 */
+	if(dp == NULL) {
+		congrf.g_unit    = 0;
+		congrf.g_itedev  = (dev_t)-1;
+		congrf.g_grfdev  = makedev(maj, 0);
+		congrf.g_flags   = GF_ALIVE;
+		congrf.g_mode    = grf_mode;
+		congrf.g_conpri  = grfcc_cnprobe();
+		congrf.g_viewdev = congrf.g_unit;
+		grfcc_iteinit(&congrf);
+		grf_viewsync(&congrf);
+
+		/* Attach console ite */
+		atari_config_found(cfdata_grf, NULL, &congrf, grfccprint);
+		return;
+	}
+
+	gp = (struct grf_softc *)dp;
+	gp->g_unit = gp->g_device.dv_unit;
+	grfsp[gp->g_unit] = gp;
+
+	if((cfdata_grf != NULL) && (gp->g_unit == 0)) {
+		/*
+		 * We inited earlier just copy the info, take care
+		 * not to copy the device struct though.
+		 */
+		bcopy(&congrf.g_display, &gp->g_display,
+			(char *)&gp[1] - (char *)&gp->g_display);
+	}
+	else {
+		gp->g_grfdev  = makedev(maj, gp->g_unit);
+		gp->g_itedev  = (dev_t)-1;
+		gp->g_flags   = GF_ALIVE;
+		gp->g_mode    = grf_mode;
+		gp->g_conpri  = 0;
+		gp->g_viewdev = gp->g_unit;
+		grfcc_iteinit(gp);
+		grf_viewsync(gp);
+	}
+
+	printf(": width %d height %d", gp->g_display.gd_dwidth,
+		    gp->g_display.gd_dheight);
+	if(gp->g_display.gd_colors == 2)
+		printf(" monochrome\n");
+	else printf(" colors %d\n", gp->g_display.gd_colors);
+	
+	/*
+	 * try and attach an ite
+	 */
+	config_found(dp, gp, grfccprint);
+
+	/*
+	 * If attaching unit 0, go ahead and 'find' the rest of us
+	 */
+	if (gp->g_unit == 0) {
+		grf_auxp.from_bus_match = 0;
+		for (grf_auxp.unit=1; grf_auxp.unit < NGRFCC; grf_auxp.unit++) {
+		    config_found(pdp, (void*)&grf_auxp, grf_bus_auxp->busprint);
+		}
+	}
+}
+
+int
+grfccprint(auxp, pnp)
+void		*auxp;
+const char	*pnp;
+{
+	if(pnp)
+		printf("ite at %s", pnp);
+	return(UNCONF);
+}
 
 /*
  * called from grf_cc to return console priority
@@ -664,4 +852,4 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height, sho
 }
 #else
 #error Must be defined
-#endif /* NGRF */
+#endif /* NGRFCC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.6 1996/03/10 11:42:38 leo Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.7 1996/09/16 06:43:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -32,8 +32,6 @@
 
 #ifndef _GRFABS_REG_H
 #define _GRFABS_REG_H
-
-#include <atari/dev/grfabs_fal.h>
 
 struct point {
     long	x;
@@ -92,6 +90,9 @@ struct bitmap {
     u_short	depth;		/* depth of bitmap.			*/
     u_char	*plane;		/* plane data for bitmap.		*/
     u_char	*hw_address;	/* mappable bitplane pointer.		*/
+    u_char	*regs;		/* where the registers are		*/
+    u_char	*hw_regs;	/* mappable registers			*/
+    u_short	reg_size;	/* size of the register area		*/
 };
 
 /*
@@ -134,28 +135,6 @@ enum colormap_type {
 #define MAKE_MONO_ENTRY(x)	((x) ? 1 : 0)
 #define MAKE_GREY_ENTRY(l)	(l & 0xff)
 
-#define CM_L2TT(v) \
-    (((0x000f0000 & (v)) >> 8) | ((0x00000f00 & (v)) >> 4) |\
-      (0x0000000f & (v)))
-#define CM_TT2L(v) \
-    ((((0x00000f00 & (v)) * 0xff / 0xf) << 8) |\
-     (((0x000000f0 & (v)) * 0xff / 0xf) << 4) |\
-       (0x0000000f & (v)) * 0xff / 0xf)
-#define CM_L2FAL(v) \
-    (((0x003f0000 & (v)) << 10) | ((0x00003f00 & (v)) << 10) |\
-      (0x0000003f & (v)) << 2)
-#define CM_FAL2L(v) \
-    (((((0xfc000000 & (v)) >> 10) * 0xff / 0x3f) & 0x00ff0000) |\
-     ((((0x00fc0000 & (v)) >> 10) * 0xff / 0x3f) & 0x0000ff00) |\
-       ((0x000000fc & (v)) >>  2) * 0xff / 0x3f)
-#define CM_L2ST(v) \
-    (((0x000e0000 & (v)) >> 9) | ((0x00000e00 & (v)) >> 5) |\
-      (0x0000000e & (v)) >> 1)
-#define CM_ST2L(v) \
-    (((((0x00000700 & (v)) * 0xff / 0x7) << 8) & 0x00ff0000) |\
-     ((((0x00000070 & (v)) * 0xff / 0x7) << 4) & 0x0000ff00) |\
-        (0x00000007 & (v)) * 0xff / 0x7)
-
 struct grfabs_sw {
 	void	 (*display_view) __P((view_t*));
 	view_t	* (*alloc_view) __P((dmode_t *, dimen_t *, u_char));
@@ -170,20 +149,10 @@ struct display_mode {
     u_char			*name;		/* logical name for mode. */
     dimen_t			size;		/* screen size		  */
     u_char			depth;		/* screen depth		  */
-    union {
-	u_short			tt_reg;		/* video mode register tt */
-	struct {
-	    u_short		fal_mode;	/* falcon mode		  */
-	    struct videl	*fal_regs;	/* videl register values  */
-	} fal_vid;
-    } video_mode;
+    void			*data;		/* opaque driver data	  */
     struct grfabs_sw		*grfabs_funcs;	/* hardware switch table  */
     view_t			*current_view;	/* view displaying me	  */
 };
-
-#define vm_reg		video_mode.tt_reg
-#define vm_mode		video_mode.fal_vid.fal_mode
-#define vm_regs		video_mode.fal_vid.fal_regs
 
 /*
  * Definition of available graphic mode list.
@@ -203,6 +172,11 @@ typedef LIST_HEAD(modelist, display_mode) MODES;
 
 
 /*
+ * Prototype for the probe function
+ */
+typedef void (*grf_probe_t) __P((MODES *));
+
+/*
  * Common variables
  */
 extern view_t		gra_con_view;
@@ -213,13 +187,7 @@ extern u_long		gra_def_color16[16];
 /*
  * Prototypes:
  */
-#ifdef FALCON_VIDEO
-void	falcon_probe_video __P((MODES *));
-#endif /* FALCON_VIDEO */
-#ifdef TT_VIDEO
-void	tt_probe_video __P((MODES *));
-#endif /* TT_VIDEO */
-
+int	grfabs_probe __P((grf_probe_t));
 view_t	*grf_alloc_view __P((dmode_t *d, dimen_t *dim, u_char depth));
 dmode_t	*grf_get_best_mode __P((dimen_t *dim, u_char depth));
 void	grf_display_view __P((view_t *v));
