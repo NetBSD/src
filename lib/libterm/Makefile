@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.10 (Berkeley) 6/1/90
-#	$Id: Makefile,v 1.3 1993/08/01 05:39:54 mycroft Exp $
+#	$Id: Makefile,v 1.4 1993/11/05 05:01:56 cgd Exp $
 
 LIB=	termcap
 CFLAGS+=-DCM_N -DCM_GT -DCM_B -DCM_D
@@ -14,3 +14,8 @@ LINKS+=	${LIBDIR}/libtermcap_p.a ${LIBDIR}/libtermlib_p.a
 .endif
 
 .include <bsd.lib.mk>
+
+.if !defined(NOPIC) && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
+LINKS+=	${LIBDIR}/lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	${LIBDIR}/libtermlib.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+.endif
