@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.69 2004/11/16 05:59:32 itojun Exp $	*/
+/*	$NetBSD: fstat.c,v 1.70 2004/12/12 22:41:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.69 2004/11/16 05:59:32 itojun Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.70 2004/12/12 22:41:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -442,6 +442,10 @@ vfilestat(vp, fsp)
 			break;
 		case VT_NTFS:
 			if (!ntfs_filestat(vp, fsp))
+				badtype = "error";
+			break;
+		case VT_PTYFS:
+			if (!ptyfs_filestat(vp, fsp))
 				badtype = "error";
 			break;
 		case VT_NULL:
@@ -1086,8 +1090,9 @@ getftype(v_type)
 }
 
 void
-usage()
+usage(void)
 {
-	errx(1,
- "usage: fstat [-fnv] [-p pid] [-u user] [-N system] [-M core] [file ...]\n");
+	(void)fprintf(stderr, "Usage: %s [-fnv] [-p pid] [-u user] "
+	    "[-N system] [-M core] [file ...]\n", getprogname());
+	exit(1);
 }
