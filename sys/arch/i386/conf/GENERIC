@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.152.2.2 1998/06/06 12:40:52 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.152.2.3 1998/06/09 13:04:22 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -11,7 +11,7 @@ maxusers	32		# estimated number of users
 options 	I386_CPU
 options 	I486_CPU
 options 	I586_CPU
-options 	I686_CPU	
+options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
@@ -181,6 +181,8 @@ pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 # ISA Plug-and-Play bus support
 isapnp0	at isa?
 
+# ISA Plug-and-Play PCMCIA controllers
+pcic*	at isapnp?
 
 # Coprocessor Support
 
@@ -418,7 +420,7 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # Audio support
 audio*	at aria?
-audio*  at eap?
+audio*	at eap?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
