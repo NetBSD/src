@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.30 1994/04/15 10:51:28 deraadt Exp $
+ *	$Id: if_ep.c,v 1.31 1994/04/16 09:53:45 deraadt Exp $
  */
 
 #include "bpfilter.h"
@@ -85,6 +85,7 @@ struct ep_softc {
 	int	last_mb;		/* Last mbuf.			*/
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	caddr_t bpf;			/* BPF  "magic cookie"		*/
+	char	bus32bit;		/* 32bit access possible */
 };
 
 static int epprobe();
@@ -116,19 +117,22 @@ static struct epcard {
 	u_short	port;
 	u_short	irq;
 	char	available;
+	char	bus32bit;
 } epcards[MAXEPCARDS];
 static int nepcards;
 
 static void
-epaddcard(p, i)
+epaddcard(p, i, mode)
 	short p;
 	u_short i;
+	char mode;
 {
 	if (nepcards >= sizeof(epcards)/sizeof(epcards[0]))
 		return;
 	epcards[nepcards].port = p;
 	epcards[nepcards].irq = 1 << ((i == 2) ? 9 : i);
 	epcards[nepcards].available = 1;
+	epcards[nepcards].bus32bit = mode;
 	nepcards++;
 }
 	
@@ -168,7 +172,7 @@ epprobe(parent, self, aux)
 			k = (k & 0x1f) * 0x10 + 0x200;
 			k2 = inw(port + EP_W0_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(port, k2);
+			epaddcard(port, k2, 0);
 		}
 
 		/* find all isa cards */
@@ -196,7 +200,7 @@ epprobe(parent, self, aux)
 
 			k2 = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
 			k2 >>= 12;
-			epaddcard(k, k2);
+			epaddcard(k, k2, 0);
 
 			/* so card will not respond to contention again */
 			outb(ELINK_ID_PORT, TAG_ADAPTER_0 + 1);
@@ -253,6 +257,7 @@ epprobe(parent, self, aux)
 
 good:
 	epcards[i].available = 0;
+	sc->bus32bit = epcards[i].bus32bit;
 	ia->ia_iobase = epcards[i].port;
 	ia->ia_irq = epcards[i].irq;
 	ia->ia_iosize = 0x10;
@@ -523,10 +528,19 @@ startagain:
 	outw(BASE + EP_W1_TX_PIO_WR_1, 0xffff);	/* Second dword meaningless */
 
 	for (top = m; m != 0; m = m->m_next) {
-		outsw(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t), m->m_len/2);
-		if (m->m_len & 1)
-			outb(BASE + EP_W1_TX_PIO_WR_1,
-			    *(mtod(m, caddr_t) + m->m_len - 1));
+		if (sc->bus32bit) {
+			outsl(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t),
+			    m->m_len/4);
+			if (m->m_len & 3)
+				outsb(BASE + EP_W1_TX_PIO_WR_1,
+				    mtod(m, caddr_t) + m->m_len/4,
+				    m->m_len & 3);
+		} else {
+			outsw(BASE + EP_W1_TX_PIO_WR_1, mtod(m, caddr_t), m->m_len/2);
+			if (m->m_len & 1)
+				outb(BASE + EP_W1_TX_PIO_WR_1,
+				    *(mtod(m, caddr_t) + m->m_len - 1));
+		}
 	}
 	while (pad--)
 		outb(BASE + EP_W1_TX_PIO_WR_1, 0);	/* Padding */
@@ -770,11 +784,22 @@ epread(sc)
 			mcur->m_next = m;
 			lenthisone = min(totlen, M_TRAILINGSPACE(m));
 		}
-		insw(BASE + EP_W1_RX_PIO_RD_1, mtod(m, caddr_t) + m->m_len,
-		    lenthisone / 2);
-		m->m_len += lenthisone;
-		if (lenthisone & 1)
-			*(mtod(m, caddr_t) + m->m_len - 1) = inb(BASE + EP_W1_RX_PIO_RD_1);
+		if (sc->bus32bit) {
+			insl(BASE + EP_W1_RX_PIO_RD_1, mtod(m, caddr_t) + m->m_len,
+			    lenthisone / 4);
+			m->m_len += (lenthisone & ~3);
+			if (lenthisone & 3)
+				insb(BASE + EP_W1_RX_PIO_RD_1,
+				    mtod(m, caddr_t) + m->m_len,
+				    lenthisone & 3);
+			m->m_len += (lenthisone & 3);
+		} else {
+			insw(BASE + EP_W1_RX_PIO_RD_1, mtod(m, caddr_t) + m->m_len,
+			    lenthisone / 2);
+			m->m_len += lenthisone;
+			if (lenthisone & 1)
+				*(mtod(m, caddr_t) + m->m_len - 1) = inb(BASE + EP_W1_RX_PIO_RD_1);
+		}
 		totlen -= lenthisone;
 	}
 	if (off) {
