@@ -37,64 +37,58 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
-	/*.asciz "from: @(#)bcmp.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: memcmp.S,v 1.3 1993/12/06 23:08:46 mycroft Exp $"
+	/*.asciz "from: @(#)bzero.s	5.1 (Berkeley) 5/12/90"*/
+	.asciz "$Id: memset.S,v 1.1 1993/12/06 23:08:48 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
-
-/* memcmp(s1, s2, n) */
 
 #include "DEFS.h"
 
 /*
- * This is probably not the best we can do, but it is still 2-10 times
+ * This is probably not the best we can do, but it is still much
  * faster than the C version in the portable gen directory.
  *
  * Things that might help:
- *	- longword align when possible (only on the 68020)
+ *	- unroll the longword loop (might not be good for a 68020)
+ *	- longword, as opposed to word, align when possible (only on the 68020)
  *	- use nested DBcc instructions or use one and limit size to 64K
  */
-ENTRY(memcmp)
-	movl	sp@(4),a0	/* string 1 */
-	movl	sp@(8),a1	/* string 2 */
-	movl	sp@(12),d0	/* length */
-	jeq	bcdone		/* if zero, nothing to do */
+ENTRY(memset)
+	movl	d2,sp@-
+	movl	sp@(8),a0	/* destination */
+	movb	sp@(15),d2	/* character */
+	movl	sp@(16),d0	/* count */
+	jeq	bzdone		/* nothing to do */
 	movl	a0,d1
-	btst	#0,d1		/* string 1 address odd? */
-	jeq	bceven		/* no, skip alignment */
-	cmpmb	a0@+,a1@+	/* yes, compare a byte */
-	jne	bcnoteq		/* not equal, return non-zero */
+	btst	#0,d1		/* address odd? */
+	jeq	bzeven		/* no, skip alignment */
+	movb	d2,a0@+		/* set one byte */
 	subql	#1,d0		/* adjust count */
-	jeq	bcdone		/* count 0, reutrn zero */
-bceven:
-	movl	a1,d1
-	btst	#0,d1		/* string 2 address odd? */
-	jne	bcbloop		/* yes, no hope for alignment, compare bytes */
-	movl	d0,d1		/* no, both even */
-	lsrl	#2,d1		/* convert count to longword count */
-	jeq	bcbloop		/* count 0, skip longword loop */
-bclloop:
-	cmpml	a0@+,a1@+	/* compare a longword */
-	jne	bcnoteql	/* not equal, return non-zero */
+	jeq	bzdone		/* if zero, all done */
+bzeven:
+	movl	d0,d1
+	lsrl	#2,d1		/* convert to longword count */
+	cmpl	#4,d1
+	jl	bzbloop		/* too small to be worthwhile */
+	clrl	d1		/* replicate byte to fill longword */
+	movb	d2,d1
+	lsll	#8,d1
+	orl	d1,d2
+	movw	d2,d1
+	lsll	#16,d1
+	orl	d1,d2
+	movl	d0,d1
+	lsrl	#2,d1		/* recalculate longword count */
+bzlloop:
+	movl	d2,a0@+		/* set one longword */
 	subql	#1,d1		/* adjust count */
-	jne	bclloop		/* still more, keep comparing */
+	jne	bzlloop		/* still more, keep going */
 	andl	#3,d0		/* what remains */
-	jeq	bcdone		/* nothing, all done */
-bcbloop:
-	cmpmb	a0@+,a1@+	/* compare a byte */
-	jne	bcnoteq		/* not equal, return non-zero */
+	jeq	bzdone		/* nothing, all done */
+bzbloop:
+	movb	d2,a0@+		/* set one byte */
 	subql	#1,d0		/* adjust count */
-	jne	bcbloop		/* still more, keep going */
-	rts
-bcnoteql:
-	subql	#4,a0
-	subql	#4,a1
-	movl	#4,d0
-	jra	bcbloop
-bcnoteq:
-	clrl	d0
-	clrl	d1
-	movb	a0@-,d0
-	movb	a1@-,d1
-	subql	d1,d0
-bcdone:
+	jne	bzbloop		/* still more, keep going */
+bzdone:
+	movl	sp@(8),d0	/* return destination */
+	movl	sp@+,d2
 	rts
