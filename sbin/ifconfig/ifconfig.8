@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.32.4.7 2000/08/13 17:52:42 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.32.4.8 2000/12/31 17:57:36 jhawk Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -70,6 +70,8 @@
 .Nm ""
 .Fl s
 .Ar interface
+.Nm ""
+.Fl C
 .Sh DESCRIPTION
 .Nm
 is used to assign an address
@@ -343,6 +345,10 @@ IPv4/IPv6 header.
 Unconfigure the physical source and destination address for IP tunnel
 interfaces previously configured with
 .Cm tunnel .
+.It Cm create
+Create the specified network pseudo-device.
+.It Cm destroy
+Destroy the specified network pseudo-device.
 .It Cm pltime Ar n
 (inet6 only)
 Set preferred lifetime for the address.
@@ -440,6 +446,12 @@ with all other flags and commands, except for
 (only list interfaces that may be connected),
 .Fl b
 (only list broadcast interfaces).
+.Pp
+The
+.Fl C
+flag may be used to list all of the interface cloners available on
+the system, with no additional information.  Use of this flag is
+mutually exclusive with all other flags and commands.
 .Pp
 Only the super-user may modify the configuration of a network interface.
 .Sh DIAGNOSTICS
