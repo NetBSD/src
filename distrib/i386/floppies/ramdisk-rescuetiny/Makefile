@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/11/01 07:57:58 garbled Exp $
+#	$NetBSD: Makefile,v 1.4 2000/12/17 09:57:49 jmc Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -55,7 +55,7 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c! ${CRUNCHCONF}
 	${CRUNCHGEN} -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
