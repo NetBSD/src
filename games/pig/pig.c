@@ -1,3 +1,5 @@
+/*	$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +40,11 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)pig.c	8.1 (Berkeley) 5/31/93";
+#else
+static char rcsid[] = "$NetBSD: pig.c,v 1.2 1995/03/23 08:41:40 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/types.h>
