@@ -1,11 +1,11 @@
-/*	$NetBSD: resumecontext.c,v 1.1.2.1 2001/11/20 07:59:05 wdk Exp $	*/
+/*	$NetBSD: resumecontext.c,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $	*/
 
-/*
+/*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Wayne Knowles
+ * by Klaus Klein.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,18 +38,19 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: resumecontext.c,v 1.1.2.1 2001/11/20 07:59:05 wdk Exp $");
+__RCSID("$NetBSD: resumecontext.c,v 1.1.2.2 2001/11/21 08:52:41 wdk Exp $");
 #endif
 
 #include "namespace.h"
 #include <ucontext.h>
 #include "extern.h"
 
-void _resumecontext(void)
+void
+_resumecontext()
 {
-	ucontext_t uc;
+	ucontext_t uct;
 
-	getcontext(&uc);
-	setcontext(uc.uc_link);
+	(void)getcontext(&uct);
+	(void)setcontext(uct.uc_link);
 	/* NOTREACHED */
 }
