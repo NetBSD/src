@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_pci.c,v 1.11 2001/01/20 02:15:02 thorpej Exp $	*/
+/*	$NetBSD: cy_pci.c,v 1.12 2001/01/20 02:26:39 thorpej Exp $	*/
 
 /*
  * cy_pci.c
@@ -147,8 +147,7 @@ cy_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/* attach the hardware */
-	cy_attach(parent, self, aux);
+	cy_attach(sc);
 
 	plx_ver = bus_space_read_1(sc->sc_memt, sc->sc_bsh, CY_PLX_VER) & 0x0f;
 

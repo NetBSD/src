@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.18 2001/01/20 02:24:16 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.19 2001/01/20 02:26:39 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -159,10 +159,9 @@ cy_find(struct cy_softc *sc)
 }
 
 void
-cy_attach(struct device *parent, struct device *self, void *aux)
+cy_attach(struct cy_softc *sc)
 {
-	int  port, cy_chip, num_chips, cdu, chip;
-	struct cy_softc *sc = (void *) self;
+	int port, cy_chip, num_chips, cdu, chip;
 	int cy_clock;
 
 	num_chips = sc->sc_nchips;

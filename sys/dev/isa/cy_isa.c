@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.11 2001/01/20 02:15:01 thorpej Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.12 2001/01/20 02:26:39 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -88,7 +88,7 @@ cy_isa_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	cy_attach(parent, self, aux);
+	cy_attach(sc);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
 	    IST_EDGE, IPL_TTY, cy_intr, sc);
