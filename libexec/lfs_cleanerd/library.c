@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.21.2.2 2001/06/29 03:56:45 perseant Exp $	*/
+/*	$NetBSD: library.c,v 1.21.2.3 2001/06/30 01:28:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.21.2.2 2001/06/29 03:56:45 perseant Exp $");
+__RCSID("$NetBSD: library.c,v 1.21.2.3 2001/06/30 01:28:31 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,6 +187,9 @@ get_superblock (FS_INFO *fsp, struct lfs *sbp)
 	/* Compatibility */
 	if (sbp->lfs_version < 2) {
 		sbp->lfs_sumsize = LFS_V1_SUMMARY_SIZE;
+		sbp->lfs_ibsize = sbp->lfs_bsize;
+		sbp->lfs_start = sbp->lfs_sboffs[0];
+		sbp->lfs_tstamp = sbp->lfs_otstamp;
 	}
 
 	return (0);
@@ -479,7 +482,10 @@ add_blocks (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 			bip->bi_inode = fip->fi_ino;
 			bip->bi_lbn = *dp;
 			bip->bi_daddr = psegaddr;
-			bip->bi_segcreate = (time_t)(sp->ss_create);
+			if (lfsp->lfs_version == 1) 
+				bip->bi_segcreate = (time_t)(sp->ss_ident);
+			else
+				bip->bi_segcreate = (time_t)(sp->ss_create);
 			bip->bi_bp = bp;
 			bip->bi_version = ifp->if_version;
 
@@ -549,7 +555,10 @@ add_inodes (FS_INFO *fsp, BLOCK_INFO *bip, int *countp, SEGSUM *sp,
 		bp->bi_inode = inum;
 		bp->bi_daddr = *daddrp;
 		bp->bi_bp = di;
-		bp->bi_segcreate = sp->ss_create;
+		if (lfsp->lfs_version == 1) 
+			bp->bi_segcreate = sp->ss_ident;
+		else
+			bp->bi_segcreate = sp->ss_create;
 		bp->bi_size = i; /* XXX KS - kludge */
 
 		if (inum == LFS_IFILE_INUM) {

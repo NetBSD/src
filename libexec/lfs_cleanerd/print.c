@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9.2.2 2001/06/29 03:56:46 perseant Exp $	*/
+/*	$NetBSD: print.c,v 1.9.2.3 2001/06/30 01:28:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.9.2.2 2001/06/29 03:56:46 perseant Exp $");
+__RCSID("$NetBSD: print.c,v 1.9.2.3 2001/06/30 01:28:31 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,9 @@ dump_summary(struct lfs *lfsp, SEGSUM *sp, u_long flags, daddr_t **iaddrp, daddr
 			"ninos    ", sp->ss_ninos,
 			"sumsum   ", sp->ss_sumsum,
 			"datasum  ", sp->ss_datasum );
-		syslog(LOG_DEBUG, "\tcreate   %s", ctime((time_t *)&sp->ss_create));
+		syslog(LOG_DEBUG, "\tcreate   %s", ctime(
+			(lfsp->lfs_version == 1 ? (time_t *)&sp->ss_ident : 
+			(time_t *)&sp->ss_create)));
 	}
 
 	numblocks = (sp->ss_ninos + INOPB(lfsp) - 1) / INOPB(lfsp);

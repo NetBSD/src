@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.10.2.1 2001/06/27 03:49:41 perseant Exp $	 */
+/* $NetBSD: inode.c,v 1.10.2.2 2001/06/30 01:28:30 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -553,10 +553,16 @@ iblock(struct inodesc * idesc, long ilevel, u_int64_t isize)
 int
 chkrange(daddr_t blk, int cnt)
 {
-	if (blk < btodb(LFS_LABELPAD+LFS_SBPAD)) {
+	if (blk < sntoda(&sblock, 0)) {
 		return (1);
 	}
-	if (blk > fsbtodb(&sblock, maxfsblock)) {
+	if (blk > maxfsblock) {
+		return (1);
+	}
+	if (blk + cnt < sntoda(&sblock, 0)) {
+		return (1);
+	}
+	if (blk + cnt > maxfsblock) {
 		return (1);
 	}
 	return (0);

@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.8.2.1 2001/06/27 03:49:41 perseant Exp $	 */
+/* $NetBSD: setup.c,v 1.8.2.2 2001/06/30 01:28:30 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -308,8 +308,11 @@ setup(const char *dev)
 		/* printf("fsbtodb(fs,1) = %lu\n",fsbtodb(&sblock,1)); */
 	}
 	/* Compatibility */
-	if (sblock.lfs_version == 1)
+	if (sblock.lfs_version == 1) {
 		sblock.lfs_sumsize = LFS_V1_SUMMARY_SIZE;
+		sblock.lfs_ibsize = sblock.lfs_bsize;
+		sblock.lfs_start = sblock.lfs_sboffs[0];
+	}
 	initbarea(&iblk);
 	iblk.b_un.b_buf = malloc(sblock.lfs_ibsize);
 	if (bread(fsreadfd, (char *)iblk.b_un.b_buf, idaddr,
