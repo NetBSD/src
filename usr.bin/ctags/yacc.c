@@ -1,4 +1,4 @@
-/*	$NetBSD: yacc.c,v 1.4 1997/10/18 13:19:04 lukem Exp $	*/
+/*	$NetBSD: yacc.c,v 1.5 2001/05/03 22:25:00 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)yacc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yacc.c,v 1.4 1997/10/18 13:19:04 lukem Exp $");
+__RCSID("$NetBSD: yacc.c,v 1.5 2001/05/03 22:25:00 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ y_entries()
 			break;
 		case '/':
 			if (GETC(==, '*'))
-				skip_comment();
+				skip_comment('*');
 			else
 				(void)ungetc(c, inf);
 			break;

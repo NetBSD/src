@@ -1,4 +1,4 @@
-/*	$NetBSD: C.c,v 1.7 1999/06/05 19:04:23 ross Exp $	*/
+/*	$NetBSD: C.c,v 1.8 2001/05/03 22:25:00 ross Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)C.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: C.c,v 1.7 1999/06/05 19:04:23 ross Exp $");
+__RCSID("$NetBSD: C.c,v 1.8 2001/05/03 22:25:00 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,10 @@ c_entries()
 		 */
 		case '/':
 			if (GETC(==, '*')) {
-				skip_comment();
+				skip_comment(c);
+				continue;
+			} else if (c == '/') {
+				skip_comment(c);
 				continue;
 			}
 			(void)ungetc(c, inf);
@@ -275,7 +278,9 @@ func_entry()
 		case '/':
 			/* skip comments */
 			if (GETC(==, '*'))
-				skip_comment();
+				skip_comment(c);
+			else if (c == '/')
+				skip_comment(c);
 			break;
 		case '(':
 			level++;
@@ -330,7 +335,9 @@ fnd:
 		if (intoken(c) || c == '{')
 			break;
 		if (c == '/' && GETC(==, '*'))
-			skip_comment();
+			skip_comment(c);
+		else if (c == '/')
+			skip_comment(c);
 		else {				/* don't ever "read" '/' */
 			(void)ungetc(c, inf);
 			return (NO);
@@ -449,7 +456,7 @@ str_entry(c)
  *	skip over comment
  */
 void
-skip_comment()
+skip_comment(int commenttype)
 {
 	int	c;			/* character read */
 	int	star;			/* '*' flag */
@@ -461,10 +468,18 @@ skip_comment()
 			star = YES;
 			break;
 		case '/':
-			if (star)
+			if (commenttype == '*' && star)
 				return;
 			break;
 		case '\n':
+			if (commenttype == '/') {
+				/*
+				 * we don't really parse C, so sometimes it
+				 * is necessary to see the newline
+				 */
+				ungetc(c, inf);
+				return;
+			}
 			SETLINE;
 			/*FALLTHROUGH*/
 		default:
@@ -528,7 +543,10 @@ skip_key(key)
 		case '/':
 			/* skip comments */
 			if (GETC(==, '*')) {
-				skip_comment();
+				skip_comment(c);
+				break;
+			} else if (c == '/') {
+				skip_comment(c);
 				break;
 			}
 			(void)ungetc(c, inf);
