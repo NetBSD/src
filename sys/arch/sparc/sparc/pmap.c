@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 1997/09/20 18:14:01 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.99 1997/09/25 07:31:28 fair Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -2530,7 +2530,7 @@ pv_flushcache(pv)
  * At last, pmap code.
  */
 
-#if defined(SUN4) && defined(SUN4C)
+#if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
 int nptesg;
 #endif
 
