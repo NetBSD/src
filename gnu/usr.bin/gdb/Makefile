@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 1999/09/25 05:27:42 enami Exp $
+#	$NetBSD: Makefile,v 1.34 1999/09/25 13:13:42 enami Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -29,7 +29,7 @@ TEXINFO=	gdb.info gdbint.info stabs.info
 INFOFLAGS=	-I${DIST}/gdb/doc -I${.CURDIR} -I${DIST}/readline/doc
 
 # This exists only for easy comparison with the GNU Makefile.
-COMMON_SRCS = version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
+COMMON_SRCS= version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
 	source.c values.c eval.c valops.c valarith.c valprint.c printcmd.c \
 	symtab.c symfile.c symmisc.c infcmd.c infrun.c command.c \
 	expprint.c environ.c gdbtypes.c copying.c ${DEPFILES} \
@@ -44,13 +44,14 @@ COMMON_SRCS = version.c blockframe.c breakpoint.c findvar.c stack.c thread.c \
 	c-valprint.c cp-valprint.c ch-valprint.c f-valprint.c m2-valprint.c \
 	nlmread.c serial.c mdebugread.c os9kread.c top.c utils.c
 YYSRCS= c-exp.y f-exp.y jv-exp.y m2-exp.y
-REMOTE_SRCS = remote.c dcache.c remote-utils.c tracepoint.c
-DEPFILES = ${TDEPFILES.${MACHINE_ARCH}} ${XDEPFILES} ${SER_HARDWIRE} ${NATDEPFILES} \
-	   ${REMOTE_SRCS} ${SIM_SRCS}
+REMOTE_SRCS= remote.c dcache.c remote-utils.c tracepoint.c
+DEPFILES= ${TDEPFILES.${MACHINE_ARCH}} ${XDEPFILES} ${SER_HARDWIRE} \
+	${NATDEPFILES} ${REMOTE_SRCS} ${SIM_SRCS}
 
 XDEPFILES= ser-tcp.c
-SER_HARDWIRE = ser-unix.c
-NATDEPFILES= infptrace.c inftarg.c fork-child.c corelow.c ${NATDEPFILES.${MACHINE_ARCH}}
+SER_HARDWIRE= ser-unix.c
+NATDEPFILES= infptrace.c inftarg.c fork-child.c corelow.c \
+	${NATDEPFILES.${MACHINE_ARCH}}
 .if (${MACHINE_ARCH} != "arm32") && (${MACHINE_ARCH} != "powerpc")
 NATDEPFILES+= kcore-nbsd.c
 .endif
