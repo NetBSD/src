@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.102 2003/12/10 12:06:25 agc Exp $	*/
+/*	$NetBSD: exec.h,v 1.103 2004/02/06 08:02:59 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ typedef int (*exec_makecmds_fcn) __P((struct proc *, struct exec_package *));
 
 struct execsw {
 	u_int	es_hdrsz;		/* size of header for this format */
-	exec_makecmds_fcn es_check;	/* function to check exec format */
+	exec_makecmds_fcn es_makecmds;	/* function to setup vmcmds */
 	union {				/* probe function */
 		int (*elf_probe_func) __P((struct proc *,
 			struct exec_package *, void *, char *, vaddr_t *));
