@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.29 2004/04/22 00:17:13 itojun Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.30 2004/08/21 22:02:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.29 2004/04/22 00:17:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.30 2004/08/21 22:02:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,21 +57,21 @@ __KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.29 2004/04/22 00:17:13 itojun Exp $
 
 #define SCANJET_RETRIES 4
 
-int scanjet_get_params __P((struct ss_softc *));
-int scanjet_set_params __P((struct ss_softc *, struct scan_io *));
-int scanjet_trigger_scanner __P((struct ss_softc *));
-int scanjet_read __P((struct ss_softc *, struct buf *));
+static int	scanjet_get_params(struct ss_softc *);
+static int	scanjet_set_params(struct ss_softc *, struct scan_io *);
+static int	scanjet_trigger_scanner(struct ss_softc *);
+static int	scanjet_read(struct ss_softc *, struct buf *);
 
 /* only used internally */
-int scanjet_ctl_write __P((struct ss_softc *, char *, u_int));
-int scanjet_ctl_read __P((struct ss_softc *, char *, u_int));
-int scanjet_set_window __P((struct ss_softc *));
-int scanjet_compute_sizes __P((struct ss_softc *));
+static int	scanjet_ctl_write(struct ss_softc *, char *, u_int);
+static int	scanjet_ctl_read(struct ss_softc *, char *, u_int);
+static int	scanjet_set_window(struct ss_softc *);
+static int	scanjet_compute_sizes(struct ss_softc *);
 
 /*
  * structure for the special handlers
  */
-struct ss_special scanjet_special = {
+static struct ss_special scanjet_special = {
 	scanjet_set_params,
 	scanjet_trigger_scanner,
 	scanjet_get_params,
@@ -86,9 +86,7 @@ struct ss_special scanjet_special = {
  * scanjet_attach: attach special functions to ss
  */
 void
-scanjet_attach(ss, sa)
-	struct ss_softc *ss;
-	struct scsipibus_attach_args *sa;
+scanjet_attach(struct ss_softc *ss, struct scsipibus_attach_args *sa)
 {
 	int error;
 
@@ -154,9 +152,8 @@ scanjet_attach(ss, sa)
 	printf("\n");
 }
 
-int
-scanjet_get_params(ss)
-	struct ss_softc *ss;
+static int
+scanjet_get_params(struct ss_softc *ss)
 {
 
 	return (0);
@@ -167,10 +164,8 @@ scanjet_get_params(ss)
  * but don't send the command to the scanner in case the user wants
  * to change parameters by more than one call
  */
-int
-scanjet_set_params(ss, sio)
-	struct ss_softc *ss;
-	struct scan_io *sio;
+static int
+scanjet_set_params(struct ss_softc *ss, struct scan_io *sio)
 {
 	int error;
 
@@ -232,9 +227,8 @@ scanjet_set_params(ss, sio)
  * this includes sending the mode- and window-data,
  * and starting the scanner
  */
-int
-scanjet_trigger_scanner(ss)
-	struct ss_softc *ss;
+static int
+scanjet_trigger_scanner(struct ss_softc *ss)
 {
 	char escape_codes[20];
 	int error;
@@ -261,10 +255,8 @@ scanjet_trigger_scanner(ss)
 	return (0);
 }
 
-int
-scanjet_read(ss, bp)
-	struct ss_softc *ss;
-	struct buf *bp;
+static int
+scanjet_read(struct ss_softc *ss, struct buf *bp)
 {
 	struct scsi_rw_scanner cmd;
 	struct scsipi_periph *periph = ss->sc_periph;
@@ -305,11 +297,8 @@ scanjet_read(ss, bp)
 /*
  * Do a synchronous write.  Used to send control messages.
  */
-int 
-scanjet_ctl_write(ss, buf, size)
-	struct ss_softc *ss;
-	char *buf;
-	u_int size;
+static int 
+scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
 {
 	struct scsi_rw_scanner cmd;
 	int flags;
@@ -331,11 +320,8 @@ scanjet_ctl_write(ss, buf, size)
 /*
  * Do a synchronous read.  Used to read responses to control messages.
  */
-int
-scanjet_ctl_read(ss, buf, size)
-	struct ss_softc *ss;
-	char *buf;
-	u_int size;
+static int
+scanjet_ctl_read(struct ss_softc *ss, char *buf, u_int size)
 {
 	struct scsi_rw_scanner cmd;
 	int flags;
@@ -355,7 +341,8 @@ scanjet_ctl_read(ss, buf, size)
 
 
 #ifdef SCANJETDEBUG
-static void show_es(char *es)
+static void
+show_es(char *es)
 {
 	char *p = es;
 	while (*p) {
@@ -372,9 +359,8 @@ static void show_es(char *es)
 /* 
  * simulate SCSI_SET_WINDOW for ScanJets
  */
-int
-scanjet_set_window(ss)
-	struct ss_softc *ss;
+static int
+scanjet_set_window(struct ss_softc *ss)
 {
 	char escape_codes[128], *p, *ep;
 
@@ -437,9 +423,8 @@ scanjet_set_window(ss)
 	return (scanjet_ctl_write(ss, escape_codes, p - escape_codes));
 }
 
-int
-scanjet_compute_sizes(ss)
-	struct ss_softc *ss;
+static int
+scanjet_compute_sizes(struct ss_softc *ss)
 {
 	int error;
 	static const char *wfail = "%s: interrogate write failed\n";
