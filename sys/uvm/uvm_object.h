@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.6 1999/03/25 18:48:53 mrg Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.7 1999/05/25 00:09:01 thorpej Exp $	*/
 
 /*
  *
@@ -66,5 +66,7 @@ struct uvm_object {
  * allows us to decide which type of unmapping we want to do.
  */
 #define UVM_OBJ_KERN	(-2)
+
+#define	UVM_OBJ_IS_KERN_OBJECT(uobj)	((uobj)->uo_refs == UVM_OBJ_KERN)
 
 #endif /* _UVM_UVM_OBJECT_H_ */
