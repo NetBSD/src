@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.117 2000/02/08 00:21:23 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.118 2000/02/08 23:36:27 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3136,8 +3136,9 @@ usr.sbin/user/user.c				1.11
 
 sys/msdosfs/msdosfs_vnops.c			1.91
 
-  Purge appropriate name cache entry on file removal.  Should fix
-  MI part of PR#8037.
+  When renaming a file, make sure apporpriate vnode cache entry is
+  purged if a file system entry is removed.  Should fix MI part of
+  PR#8037.
 
 distrib/miniroot/install.sub			1.32
 
@@ -3243,6 +3244,9 @@ sys/arch/alpha/pci/ciavar.h			patch
 sys/arch/sparc/dev/fd.c				patch
 sys/arch/sparc/dev/fdreg.h			patch
 sys/arch/sparc/dev/fdvar.h			patch
+sys/arch/sparc/sparc/auxreg.h			1.8
+sys/arch/sparc/sparc/bsd_fdintr.s		patch
+sys/arch/sparc/sparc/genassym.cf		patch
 
   Fix several problems:
    o Floppy driver dislikes being accessed with no floppy inserted
@@ -3294,3 +3298,44 @@ distrib/notes/common/donations			patch
 distrib/notes/common/contents			patch
 
   We are going to distribute X11 code based on XFree86 3.3.6.
+
+sys/dev/ic/smc83c170.c				1.26 via patch
+
+  Don't rely on the receive descriptor's BCAST/MCAST status bits.
+  Instead, test the Ethernet destination address to see if it's
+  multicast.
+
+share/man/man4/ioat.4				1.2
+
+  Fix references to driver to use ``ioat'' and not ``ioat66''.
+
+sys/dev/ic/Makefile				patch
+
+  Install dptreg.h and dptvar.h.
+
+sys/dev/ic/com.c				1.167-1.168
+
+  Properly catch PPS signals on DCD transitions, even if DCD is
+  otherwise ignored.
+
+sys/dev/pcmcia/if_ep_pcmcia.c			1.23-1.24
+sys/dev/pcmcia/pcmcia_cis_quirks.c		1.4-1.5
+sys/dev/pcmcia/pcmciadevs			1.42,1.49
+sys/dev/pcmcia/pcmciadevs.h			regenerate
+sys/dev/pcmcia/pcmciadevs_data.h		regenerate
+
+  Add support for 3Com/Megaherz 10/100 Ethernet Modem combined
+  card (3CCFEM556BI and 3CXEM556B-INT).  Should fix PR#8331 and
+  PR#8188.
+
+distrib/notes/i386/hardware			1.57
+share/man/man4/tl.4				1.7
+
+  The dual-port Compaq Netelligent is not ``untested'' anymore.
+
+lib/libc/locale/setlocale.c			1.17
+
+  When setlocale() is called with LC_ALL, try to initialize every
+  locale category even if the initialization for some of them fails.
+  Fixes problem where e.g. LC_CTYPE category won't be initialized
+  if the locale doesn't implement the LC_COLLATE category.
