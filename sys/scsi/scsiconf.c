@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.22 1995/01/12 10:25:44 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.23 1995/01/16 21:13:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -350,17 +350,15 @@ scsi_probedev(scsi, target, lun)
 	/*
 	 * Ask the device what it is
 	 */
-#ifdef	SCSIDEBUG
+#ifdef SCSIDEBUG
 	if (target == DEBUGTARGET && lun == DEBUGLUN)
 		sc_link->flags |= DEBUGLEVEL;
-	else
-		sc_link->flags &= ~(SDEV_DB1 | SDEV_DB2 | SDEV_DB3 | SDEV_DB4);
-#endif	/* SCSIDEBUG */
+#endif /* SCSIDEBUG */
 
 	(void) scsi_test_unit_ready(sc_link,
 	    SCSI_AUTOCONF | SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
 
-#ifdef	SCSI_2_DEF
+#ifdef SCSI_2_DEF
 	/* some devices need to be told to go to SCSI2 */
 	/* However some just explode if you tell them this.. leave it out */
 	scsi_change_def(sc_link, SCSI_AUTOCONF | SCSI_SILENT);
