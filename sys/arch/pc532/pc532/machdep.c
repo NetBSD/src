@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 1996/11/07 07:18:23 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 1996/11/24 13:35:18 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -241,8 +241,10 @@ cpu_startup()
 	 * Tell the VM system that writing to kernel text isn't allowed.
 	 * If we don't, we might end up COW'ing the text segment!
 	 */
-	if (vm_map_protect(kernel_map, NBPG, ns532_round_page(&kernel_text),
-	    VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
+	if (vm_map_protect(kernel_map,
+			   ns532_round_page(&kernel_text),
+			   ns532_round_page(&etext),
+			   VM_PROT_READ|VM_PROT_EXECUTE, TRUE) != KERN_SUCCESS)
 		panic("can't protect kernel text");
 
 	/*
