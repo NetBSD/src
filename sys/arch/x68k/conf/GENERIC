@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.85 2002/11/22 12:21:06 wiz Exp $
+# $NetBSD: GENERIC,v 1.86 2002/12/01 09:00:35 isaki Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.85 $"
+#ident 		"GENERIC-$Revision: 1.86 $"
 
 maxusers	8
 
@@ -285,6 +285,9 @@ neptune0 at intio0 addr 0xece000 intr 249	# Neptune-X
 neptune1 at intio0 addr 0xece400 intr 249	# Neptune-X at alt. addr.
 ne*	at neptune? addr 0x300			# NE2000 or clone
 
+## Bank memory disk
+bmd*	at intio0 addr 0xece3f0		# Nereid
+bmd*	at intio0 addr 0xecebf0		# Nereid
 
 ## MII/PHY support for USB ethernet
 #acphy*	at mii? phy ?
