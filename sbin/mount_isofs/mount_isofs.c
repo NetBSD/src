@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: mount_isofs.c,v 1.7 1993/09/07 15:40:30 ws Exp $";
+static char rcsid[] = "$Id: mount_isofs.c,v 1.8 1993/10/20 19:53:36 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -23,14 +23,14 @@ char **argv;
 	char *dir;
 	struct iso_args args;
 	int c;
-	int opts = 0;
+	int opts = 0, mntflags = 0;
 
 	argc--;
 	argv++;
 	while (argc > 2) {
 		if (!strcmp("-F", argv[0])) {
 			argc--; argv++;
-			opts |= atoi(argv[0]);
+			mntflags |= atoi(argv[0]);
 			argc--; argv++;
 		} else if (!strcmp(argv[0], "-norrip")) {
 			opts |= ISOFSMNT_NORRIP;
@@ -51,7 +51,7 @@ char **argv;
 	args.fspec = dev;
 	args.flags = opts;
 
-	if (mount (MOUNT_ISOFS, dir, MNT_RDONLY, &args) < 0) {
+	if (mount (MOUNT_ISOFS, dir, mntflags, &args) < 0) {
 		perror ("mount");
 		exit (1);
 	}
