@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.6 1997/07/25 16:46:35 perry Exp $	*/
+/*	$NetBSD: output.c,v 1.7 2000/06/07 23:54:17 explorer Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-__RCSID("$NetBSD: output.c,v 1.6 1997/07/25 16:46:35 perry Exp $");
+__RCSID("$NetBSD: output.c,v 1.7 2000/06/07 23:54:17 explorer Exp $");
 #endif
 #endif /* not lint */
 
@@ -970,7 +970,7 @@ output_debug()
     symnam[0] = "end-of-file";
 
     if (!rflag) ++outline;
-    fprintf(output_file, "#if YYDEBUG\nchar *%sname[] = {", symbol_prefix);
+    fprintf(output_file, "#if YYDEBUG\nconst char *%sname[] = {", symbol_prefix);
     j = 80;
     for (i = 0; i <= max; ++i)
     {
@@ -1096,7 +1096,7 @@ output_debug()
     FREE(symnam);
 
     if (!rflag) ++outline;
-    fprintf(output_file, "char *%srule[] = {\n", symbol_prefix);
+    fprintf(output_file, "const char *%srule[] = {\n", symbol_prefix);
     for (i = 2; i < nrules; ++i)
     {
 	fprintf(output_file, "\"%s :", symbol_name[rlhs[i]]);
