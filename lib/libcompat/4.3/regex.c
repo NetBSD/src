@@ -41,9 +41,13 @@
  * but most programs should be fine.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
-static char rcsid[] = "$Id: regex.c,v 1.6 1996/03/21 03:11:13 jtc Exp $";
+#if 0
+static char sccsid[] = "from: @(#)regex.c	5.1 (Berkeley) 3/29/92";*/
+#else
+__RCSID("$NetBSD: regex.c,v 1.7 1997/10/09 10:20:51 lukem Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -51,6 +55,7 @@ static char rcsid[] = "$Id: regex.c,v 1.6 1996/03/21 03:11:13 jtc Exp $";
 #include <regexp.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 static regexp *re_regexp;
 static int re_goterr;

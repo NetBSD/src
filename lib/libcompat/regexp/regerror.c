@@ -1,5 +1,6 @@
+#include <sys/cdefs.h>
 #ifndef lint
-static char *rcsid = "$Id: regerror.c,v 1.3 1993/08/26 00:45:33 jtc Exp $";
+__RCSID("$NetBSD: regerror.c,v 1.4 1997/10/09 10:21:11 lukem Exp $");
 #endif /* not lint */
 
 #include <regexp.h>

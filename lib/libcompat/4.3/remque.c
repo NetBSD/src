@@ -26,8 +26,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$Id: remque.c,v 1.4 1993/10/21 21:08:57 jtc Exp $";
+__RCSID("$NetBSD: remque.c,v 1.5 1997/10/09 10:20:54 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <search.h>
