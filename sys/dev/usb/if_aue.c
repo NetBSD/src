@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.63 2001/07/16 18:33:13 augustss Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.64 2001/07/19 09:40:40 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -217,6 +217,7 @@ Static const struct aue_type aue_devs[] = {
 
 USB_DECLARE_DRIVER(aue);
 
+Static void aue_reset_pegasus_II(struct aue_softc *sc);
 Static const struct aue_type *aue_lookup(u_int16_t vendor, u_int16_t product);
 Static int aue_tx_list_init(struct aue_softc *);
 Static int aue_rx_list_init(struct aue_softc *);
