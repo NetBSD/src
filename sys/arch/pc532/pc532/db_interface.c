@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.2 1994/10/26 08:24:57 cgd Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.3 1995/04/10 13:15:43 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -247,7 +247,7 @@ db_write_bytes(addr, size, data, task)
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
 	    addr <= (vm_offset_t)&etext)
 	{
-		ptep0 = pmap_pte(kernel_pmap, addr);
+		ptep0 = pmap_pte(pmap_kernel(), addr);
 		oldmap0 = *ptep0;
 		*ptep0 |= NS532_PTE_WRITE;
 		
@@ -255,7 +255,7 @@ db_write_bytes(addr, size, data, task)
 		if (ns532_trunc_page(addr) != addr1) {
 			/* data crosses a page boundary */
 			
-			ptep1 = pmap_pte(kernel_pmap, addr1);
+			ptep1 = pmap_pte(pmap_kernel(), addr1);
 			oldmap1 = *ptep1;
 			*ptep1 |= NS532_PTE_WRITE;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 1994/10/26 07:26:07 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18 1995/04/10 13:11:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -176,16 +176,16 @@ pagemove(from, to, size)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(kernel_pmap, (vm_offset_t)from);
+		pa = pmap_extract(pmap_kernel(), (vm_offset_t)from);
 #ifdef DEBUG
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(kernel_pmap, (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
 			panic("pagemove 3");
 #endif
-		pmap_remove(kernel_pmap,
+		pmap_remove(pmap_kernel(),
 			    (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
-		pmap_enter(kernel_pmap,
+		pmap_enter(pmap_kernel(),
 			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
@@ -252,7 +252,7 @@ kvtop(addr)
 {
 	vm_offset_t va;
 
-	va = pmap_extract(kernel_pmap, (vm_offset_t)addr);
+	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
 	if (va == 0)
 		panic("kvtop: zero page frame");
 	return((int)va);
@@ -350,7 +350,7 @@ mappedcopyin(fromp, top, count)
 		if (upa == 0)
 			panic("mappedcopyin");
 		len = min(count, PAGE_SIZE-off);
-		pmap_enter(kernel_pmap, kva, upa, VM_PROT_READ, TRUE);
+		pmap_enter(pmap_kernel(), kva, upa, VM_PROT_READ, TRUE);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage(kva, top);
 		else
@@ -360,7 +360,7 @@ mappedcopyin(fromp, top, count)
 		count -= len;
 		off = 0;
 	}
-	pmap_remove(kernel_pmap, kva, kva+PAGE_SIZE);
+	pmap_remove(pmap_kernel(), kva, kva+PAGE_SIZE);
 	return (0);
 }
 
@@ -392,7 +392,7 @@ mappedcopyout(fromp, top, count)
 		if (upa == 0)
 			panic("mappedcopyout");
 		len = min(count, PAGE_SIZE-off);
-		pmap_enter(kernel_pmap, kva, upa,
+		pmap_enter(pmap_kernel(), kva, upa,
 			   VM_PROT_READ|VM_PROT_WRITE, TRUE);
 		if (len == PAGE_SIZE && alignable && off == 0)
 			copypage(fromp, kva);
@@ -403,7 +403,7 @@ mappedcopyout(fromp, top, count)
 		count -= len;
 		off = 0;
 	}
-	pmap_remove(kernel_pmap, kva, kva+PAGE_SIZE);
+	pmap_remove(pmap_kernel(), kva, kva+PAGE_SIZE);
 	return (0);
 }
 #endif
