@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.1 1997/11/01 22:56:28 pk Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.2 1997/12/01 23:25:40 pk Exp $	*/
 
 /*
  *
@@ -56,8 +56,8 @@ struct xd_iorq {
 	int blockno;			/* starting block no for this xfer */
 	int sectcnt;			/* number of sectors in xfer */
 	char *dbuf;			/* KVA of data buffer (advances) */
-	char *dbufbase;			/* base of dbuf */
 	struct buf *buf;		/* for NORM */
+	bus_dmamap_t dmamap;		/* DMA I/O handle */
 };
 
 /*
@@ -142,6 +142,7 @@ struct xdc_softc {
 	struct xd_softc *sc_drives[XDC_MAXDEV]; /* drives on this controller */
 	int ipl;			/* interrupt level */
 	int vector;			/* interrupt vector */
+	bus_dma_tag_t dmatag;		/* Bus DMA tag */
 
 	struct xd_iorq *reqs;		/* i/o requests */
 	struct xd_iopb *iopbase;	/* iopb base addr (maps iopb->iorq) */

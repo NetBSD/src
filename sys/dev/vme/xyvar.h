@@ -1,4 +1,4 @@
-/*	$NetBSD: xyvar.h,v 1.1 1997/11/02 23:09:26 pk Exp $	*/
+/*	$NetBSD: xyvar.h,v 1.2 1997/12/01 23:25:37 pk Exp $	*/
 
 /*
  *
@@ -56,8 +56,8 @@ struct xy_iorq {
   int blockno;                      /* starting block no for this xfer */
   int sectcnt;                      /* number of sectors in xfer */
   char *dbuf;                       /* KVA of data buffer (advances) */
-  char *dbufbase;                   /* base of dbuf */
   struct buf *buf;                  /* for NORM */
+  bus_dmamap_t dmamap;		    /* DMA I/O handle */
 };
 
 /*
@@ -138,27 +138,28 @@ struct xy_softc {
  */
 
 struct xyc_softc {
-  struct device sc_dev;            /* device struct, reqd by autoconf */
-  struct intrhand sc_ih;           /* interrupt info */
-  struct evcnt sc_intrcnt;         /* event counter (for vmstat -i) */
+	struct device sc_dev;            /* device struct, reqd by autoconf */
+	struct intrhand sc_ih;           /* interrupt info */
+	struct evcnt sc_intrcnt;         /* event counter (for vmstat -i) */
 
-  struct xyc *xyc;                 /* vaddr of vme registers */
+	struct xyc *xyc;                 /* vaddr of vme registers */
 
-  struct xy_softc *sc_drives[XYC_MAXDEV];   /* drives on this controller */
-  int ipl;                         /* interrupt level */
-  int vector;                      /* interrupt vector */
+	struct xy_softc *sc_drives[XYC_MAXDEV]; /* drives on this controller */
+	int ipl;                         /* interrupt level */
+	int vector;                      /* interrupt vector */
+	bus_dma_tag_t dmatag;	 	 /* Bus DMA tag */
 
-  struct xy_iorq *reqs;            /* i/o requests */
-  struct xy_iopb *iopbase;         /* iopb base addr (maps iopb->iorq) */
-  struct xy_iopb *dvmaiopb;        /* iopb base in DVMA space, not kvm */
+	struct xy_iorq *reqs;            /* i/o requests */
+	struct xy_iopb *iopbase;         /* iopb base addr (maps iopb->iorq) */
+	struct xy_iopb *dvmaiopb;        /* iopb base in DVMA space, not kvm */
 
-  struct xy_iorq *ciorq;	   /* controller's iorq */
-  struct xy_iopb *ciopb;	   /* controller's iopb */
+	struct xy_iorq *ciorq;		 /* controller's iorq */
+	struct xy_iopb *ciopb;		 /* controller's iopb */
 
-  int xy_hand;			   /* hand */
-  struct xy_iorq *xy_chain[XYC_MAXIOPB];
+	int xy_hand;			 /* hand */
+	struct xy_iorq *xy_chain[XYC_MAXIOPB];
 				   /* current chain */
-  int no_ols;			   /* disable overlap seek for stupid 450s */
+	int no_ols;		   /* disable overlap seek for stupid 450s */
 };
 
 /*
