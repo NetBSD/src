@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.c,v 1.7 1998/02/04 21:51:44 thorpej Exp $	*/
+/*	$NetBSD: cron.c,v 1.8 1998/07/09 18:35:10 msaitoh Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: cron.c,v 2.11 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: cron.c,v 1.7 1998/02/04 21:51:44 thorpej Exp $");
+__RCSID("$NetBSD: cron.c,v 1.8 1998/07/09 18:35:10 msaitoh Exp $");
 #endif
 #endif
 
@@ -245,7 +245,9 @@ cron_sleep() {
 
 #ifdef USE_SIGCHLD
 static void
-sigchld_handler(x) {
+sigchld_handler(x)
+	int x;
+{
 	WAIT_T		waiter;
 	PID_T		pid;
 
@@ -275,7 +277,9 @@ sigchld_handler(x) {
 
 
 static void
-sighup_handler(x) {
+sighup_handler(x)
+	int x;
+{
 	log_close();
 }
 

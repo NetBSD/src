@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.22 1998/07/07 13:20:12 fvdl Exp $	*/
+/*	$NetBSD: commands.c,v 1.23 1998/07/09 18:34:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.22 1998/07/07 13:20:12 fvdl Exp $");
+__RCSID("$NetBSD: commands.c,v 1.23 1998/07/09 18:34:02 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1870,6 +1870,7 @@ env_list(d1, d2)
 	unsigned char *
 env_default(init, welldefined)
 	int init;
+	int welldefined;
 {
 	static struct env_lst *nep = NULL;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_bsd.c,v 1.12 1998/02/27 10:44:14 christos Exp $	*/
+/*	$NetBSD: sys_bsd.c,v 1.13 1998/07/09 18:34:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 from: static char sccsid[] = "@(#)sys_bsd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: sys_bsd.c,v 1.12 1998/02/27 10:44:14 christos Exp $");
+__RCSID("$NetBSD: sys_bsd.c,v 1.13 1998/07/09 18:34:02 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -989,6 +989,7 @@ sys_telnet_init()
 
     int
 process_rings(netin, netout, netex, ttyin, ttyout, poll)
+	int netin, netout, netex, ttyin, ttyout;
     int poll;		/* If 0, then block until something to do */
 {
     register int c;

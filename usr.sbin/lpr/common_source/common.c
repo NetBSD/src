@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.13 1998/07/06 07:03:28 mrg Exp $	*/
+/*	$NetBSD: common.c,v 1.14 1998/07/09 18:35:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.13 1998/07/06 07:03:28 mrg Exp $");
+__RCSID("$NetBSD: common.c,v 1.14 1998/07/09 18:35:35 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -351,6 +351,7 @@ checkremote()
 /* sleep n milliseconds */
 void
 delay(n)
+	int n;
 {
 	struct timeval tdelay;
 
