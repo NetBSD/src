@@ -1,14 +1,21 @@
-#       $NetBSD: Makefile,v 1.24 1997/05/29 01:14:31 jeremy Exp $
+#       $NetBSD: Makefile,v 1.25 1997/08/12 07:29:22 mikel Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
-MAN=	access.9 arp.9 copy.9 cpu_reboot.9 ctxsw.9 \
-	disk.9 disklabel.9 doshutdownhooks.9 ethersubr.9\
-	extent.9 fetch.9 inittodr.9 intro.9 log.9 malloc.9 panic.9 pfil.9 \
-	physio.9 psignal.9 resettodr.9 shutdownhook_establish.9 sleep.9 spl.9 \
+MAN=	access.9 arp.9 busdma.9 copy.9 cpu_reboot.9 ctxsw.9 \
+	disk.9 disklabel.9 doshutdownhooks.9 ethersubr.9 extent.9 \
+	fetch.9 inittodr.9 intro.9 log.9 malloc.9 panic.9 pfil.9 physio.9 \
+	psignal.9 resettodr.9 shutdownhook_establish.9 sleep.9 spl.9 \
 	store.9 time.9 timeout.9 vslock.9
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
+MLINKS+=busdma.9 bus_dmamap_create.9 busdma.9 bus_dmamap_destroy.9 \
+	busdma.9 bus_dmamap_load.9 busdma.9 bus_dmamap_load_mbuf.9 \
+	busdma.9 bus_dmamap_load_uio.9 busdma.9 bus_dmamap_load_raw.9 \
+	busdma.9 bus_dmamap_unload.9 busdma.9 bus_dmamap_sync.9 \
+	busdma.9 bus_dmamem_alloc.9 busdma.9 bus_dmamem_free.9 \
+	busdma.9 bus_dmamem_map.9 busdma.9 bus_dmamem_unmap.9 \
+	busdma.9 bus_dmamem_mmap.9
 MLINKS+=copy.9 copyin.9 copy.9 copyout.9 copy.9 copystr.9 \
 	copy.9 copyinstr.9 copy.9 copyoutstr.9
 MLINKS+=ctxsw.9 cpu_switch.9 ctxsw.9 mi_switch.9
