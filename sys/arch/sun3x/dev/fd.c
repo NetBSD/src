@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 1997/04/25 18:55:05 gwr Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 1997/05/24 00:09:49 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -278,7 +278,7 @@ fdcmatch(parent, match, aux)
 {
 	struct confargs *ca = aux;
 
-	if (bus_peek(ca->ca_bustype, ca->ca_paddr, 1) == -1)
+	if (bus_peek(ca->ca_bustype, ca->ca_paddr, sizeof(u_char)) == -1)
 		return (0);
 
 	return (1);
@@ -1176,17 +1176,6 @@ loop:
 		/* specify command */
 		OUT_FDC(fdc, NE7CMD_SPECIFY, SEEKTIMEDOUT);
 		OUT_FDC(fdc, fd->sc_type->steprate, SEEKTIMEDOUT);
-		/*
-		 * The '|1' in the following statement turns on the 'Non-DMA' bit
-		 * specifier in the last byte of the SPECIFY command as described in the
-		 * datasheet I have.  This is necessary for the driver to work on the
-		 * sun3x, because the system will not respond to the chip's requests
-		 * for DMA; there is no hardware on the motherboard to support it.
-		 * By enabling this bit, we will force the chip to interrupt when its
-		 * FIFO is full, at which point the interrupt handler will empty it and
-		 * continue.  This is ``pseudo-DMA''.
-		 * -J
-		 */
 		OUT_FDC(fdc, 6|1, SEEKTIMEDOUT);	/* XXX head load time == 6ms */
 
 		fdc->sc_istate = ISTATE_SENSEI;
@@ -1207,6 +1196,17 @@ loop:
 
 	case DOIO:
 	doio:
+#ifdef	NOTYET
+		/* Check to see if the disk has changed */
+		if (fdc->sc_reg_dir & FDI_DCHG) {
+			/*
+			 * The disk in the drive has changed since
+			 * the last transfer.  We need to see if its geometry
+			 * has changed.
+			 */
+		}
+#endif	/* NOTYET */
+
 		if (finfo)
 			fd->sc_skip = (char *)&(finfo->fd_formb_cylno(0)) -
 				      (char *)finfo;
@@ -1883,7 +1883,7 @@ fd_do_eject(fdc, unit)
 	FCR_REG_SYNC();
 }
 
-#ifdef MEMORY_DISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS_sun3x_not_yet
 int	fd_read_md_image __P((size_t *, caddr_t *));
 #endif
 
@@ -1903,7 +1903,7 @@ fd_mountroot_hook(dev)
 			break;
 		}
 	}
-#ifdef MEMORY_DISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS_sun3x_not_yet
 	{
 	extern int (*md_read_image) __P((size_t *, caddr_t *));
 	md_read_image = fd_read_md_image;
@@ -1911,7 +1911,7 @@ fd_mountroot_hook(dev)
 #endif
 }
 
-#ifdef MEMORY_DISK_HOOKS
+#ifdef MEMORY_DISK_HOOKS_sun3x_not_yet
 
 #define FDMICROROOTSIZE ((2*18*80) << DEV_BSHIFT)
 
