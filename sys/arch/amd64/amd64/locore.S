@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.2 2003/04/26 19:34:45 fvdl Exp $	*/
+/*	$NetBSD: locore.S,v 1.3 2003/05/13 08:33:58 fvdl Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -758,7 +758,7 @@ NENTRY(switch_error3)
 #endif /* DIAGNOSTIC */
 
 /*
- * void cpu_switch(struct proc *)
+ * int cpu_switch(struct proc *)
  * Find a runnable process and switch to it.  Wait if necessary.  If the new
  * lwp is the same as the old one, we short-circuit the context save and
  * restore.
@@ -939,7 +939,7 @@ switch_resume:
 	SET_CURLWP(%r12,%rcx)
 
 	/* Skip context switch if same lwp. */
-	movl	$1,%eax
+	movl	$1,%ebx
 	cmpq	%r12,%r13
 	je	switch_return
 
@@ -1037,7 +1037,7 @@ switch_restored:
 	je	1f
 	movq	%rax,TF_RIP(%rbx)
 1:
-	xor	%rax,%rax
+	xor	%rbx,%rbx
 
 switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)     
@@ -1047,6 +1047,8 @@ switch_return:
 	movl	$IPL_NONE,%edi
 	call	_C_LABEL(Xspllower)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+
+	movl	%ebx,%eax
 
 	popq	%r15
 	popq	%r14
