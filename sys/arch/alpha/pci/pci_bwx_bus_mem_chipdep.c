@@ -1,7 +1,7 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.8 2000/02/25 00:45:05 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.9 2000/02/26 18:53:13 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -99,6 +99,8 @@ int		__C(CHIP,_mem_subregion) __P((void *, bus_space_handle_t,
 
 int		__C(CHIP,_mem_translate) __P((void *, bus_addr_t, bus_size_t,
 		    int, struct alpha_bus_space_translation *));
+int		__C(CHIP,_mem_get_window) __P((void *, int,
+		    struct alpha_bus_space_translation *));
 
 /* allocation/deallocation */
 int		__C(CHIP,_mem_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -228,6 +230,7 @@ __C(CHIP,_bus_mem_init)(t, v)
 	t->abs_subregion =	__C(CHIP,_mem_subregion);
 
 	t->abs_translate =	__C(CHIP,_mem_translate);
+	t->abs_get_window =	__C(CHIP,_mem_get_window);
 
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_mem_alloc);
@@ -308,6 +311,32 @@ __C(CHIP,_mem_translate)(v, memaddr, memlen, flags, abst)
 
 	/* XXX */
 	return (EOPNOTSUPP);
+}
+
+int
+__C(CHIP,_mem_get_window)(v, window, abst)
+	void *v;
+	int window;
+	struct alpha_bus_space_translation *abst;
+{
+
+	switch (window) {
+	case 0:
+		abst->abst_bus_start = 0;
+		abst->abst_bus_end = 0xffffffffUL;
+		abst->abst_sys_start = CHIP_MEM_SYS_START(v);
+		abst->abst_sys_end = CHIP_MEM_SYS_START(v) + abst->abst_bus_end;
+		abst->abst_addr_shift = 0;
+		abst->abst_size_shift = 0;
+		abst->abst_flags = ABST_DENSE|ABST_BWX;
+		break;
+
+	default:
+		panic(__S(__C(CHIP,_mem_get_window)) ": invalid window %d",
+		    window);
+	}
+
+	return (0);
 }
 
 int

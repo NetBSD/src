@@ -1,4 +1,4 @@
-/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.29 2000/02/25 00:45:05 thorpej Exp $ */
+/* $NetBSD: pci_swiz_bus_io_chipdep.c,v 1.30 2000/02/26 18:53:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -97,6 +97,8 @@ int		__C(CHIP,_io_subregion) __P((void *, bus_space_handle_t,
 
 int		__C(CHIP,_io_translate) __P((void *, bus_addr_t, bus_size_t,
 		    int, struct alpha_bus_space_translation *));
+int		__C(CHIP,_io_get_window) __P((void *, int,
+		    struct alpha_bus_space_translation *));
 
 /* allocation/deallocation */
 int		__C(CHIP,_io_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -234,6 +236,7 @@ __C(CHIP,_bus_io_init)(t, v)
 	t->abs_subregion =	__C(CHIP,_io_subregion);
 
 	t->abs_translate =	__C(CHIP,_io_translate);
+	t->abs_get_window =	__C(CHIP,_io_get_window);
 
 	/* allocation/deallocation */
 	t->abs_alloc =		__C(CHIP,_io_alloc);
@@ -344,30 +347,16 @@ __C(CHIP,_io_translate)(v, ioaddr, iolen, flags, abst)
 
 #ifdef CHIP_IO_W1_BUS_START
 	if (ioaddr >= CHIP_IO_W1_BUS_START(v) &&
-	    ioend <= CHIP_IO_W1_BUS_END(v)) {
-		abst->abst_bus_start = CHIP_IO_W1_BUS_START(v);
-		abst->abst_bus_end = CHIP_IO_W1_BUS_END(v);
-		abst->abst_sys_start = CHIP_IO_W1_SYS_START(v);
-		abst->abst_sys_end = CHIP_IO_W1_SYS_END(v);
-		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
-		abst->abst_size_shift = CHIP_SIZE_SHIFT;
-		abst->abst_flags = 0;
-		return (0);
-	}
+	    ioend <= CHIP_IO_W1_BUS_END(v))
+		return (__C(CHIP,_io_get_window)(v, 0, abst));
 #endif
+
 #ifdef CHIP_IO_W2_BUS_START
 	if (ioaddr >= CHIP_IO_W2_BUS_START(v) &&
-	    ioend <= CHIP_IO_W2_BUS_END(v)) {
-		abst->abst_bus_start = CHIP_IO_W2_BUS_START(v);
-		abst->abst_bus_end = CHIP_IO_W2_BUS_END(v);
-		abst->abst_sys_start = CHIP_IO_W2_SYS_START(v);
-		abst->abst_sys_end = CHIP_IO_W2_SYS_END(v);
-		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
-		abst->abst_size_shift = CHIP_SIZE_SHIFT;
-		abst->abst_flags = 0;
-		return (0);
-	}
+	    ioend <= CHIP_IO_W2_BUS_END(v))
+		return (__C(CHIP,_io_get_window)(v, 1, abst));
 #endif
+
 #ifdef EXTENT_DEBUG
 	printf("\n");
 #ifdef CHIP_IO_W1_BUS_START
@@ -383,6 +372,46 @@ __C(CHIP,_io_translate)(v, ioaddr, iolen, flags, abst)
 #endif /* EXTENT_DEBUG */
 	/* No translation. */
 	return (EINVAL);
+}
+
+int
+__C(CHIP,_io_get_window)(v, window, abst)
+	void *v;
+	int window;
+	struct alpha_bus_space_translation *abst;
+{
+
+	switch (window) {
+#ifdef CHIP_IO_W1_BUS_START
+	case 0:
+		abst->abst_bus_start = CHIP_IO_W1_BUS_START(v);
+		abst->abst_bus_end = CHIP_IO_W1_BUS_END(v);
+		abst->abst_sys_start = CHIP_IO_W1_SYS_START(v);
+		abst->abst_sys_end = CHIP_IO_W1_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		break;
+#endif
+
+#ifdef CHIP_IO_W2_BUS_START
+	case 1:
+		abst->abst_bus_start = CHIP_IO_W2_BUS_START(v);
+		abst->abst_bus_end = CHIP_IO_W2_BUS_END(v);
+		abst->abst_sys_start = CHIP_IO_W2_SYS_START(v);
+		abst->abst_sys_end = CHIP_IO_W2_SYS_END(v);
+		abst->abst_addr_shift = CHIP_ADDR_SHIFT;
+		abst->abst_size_shift = CHIP_SIZE_SHIFT;
+		abst->abst_flags = 0;
+		break;
+#endif
+
+	default:
+		panic(__S(__C(CHIP,_io_get_window)) ": invalid window %d",
+		    window);
+	}
+
+	return (0);
 }
 
 int
