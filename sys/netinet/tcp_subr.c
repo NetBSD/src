@@ -395,6 +395,9 @@ tcp_ctlinput(cmd, sa, ip)
 		return;
 	if (ip) {
 		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		/* Ignore forged ICMP_UNREACH with dport==0 and sport==0. */
+		if (!th->th_dport || !th->th_sport)
+			return;
 		in_pcbnotify(&tcb, sa, th->th_dport, ip->ip_src, th->th_sport,
 			cmd, notify);
 	} else
