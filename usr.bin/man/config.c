@@ -77,8 +77,6 @@ config(fname)
 		err(1, "%s", fname);
 	TAILQ_INIT(&head);
 	for (lcnt = 1; (p = fgetline(cfp, &len)) != NULL; ++lcnt) {
-		if (!len)			/* Skip empty lines. */
-			continue;
 		if (p[len - 1] != '\n') {	/* Skip corrupted lines. */
 			warnx("%s: line %d corrupted", fname, lcnt);
 			continue;
