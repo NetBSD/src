@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2000/03/24 21:30:59 soren Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2000/03/24 23:06:04 soren Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,6 +44,22 @@
 /*
  * Exported definitions unique to NetBSD/mips cpu support.
  */
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
+#define CPU_ROOT_DEVICE		3	/* string: root device name */
+#define CPU_MAXID		4	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
+	{ "root_device", CTLTYPE_STRING }, \
+}
+
 
 #ifdef _KERNEL
 #ifndef _LOCORE
