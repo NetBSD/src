@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.9 1997/11/03 22:36:41 cgd Exp $	*/
+/*	$NetBSD: err.c,v 1.10 1998/02/22 15:40:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: err.c,v 1.9 1997/11/03 22:36:41 cgd Exp $";
+__RCSID("$NetBSD");
 #endif
 
 /* number of errors found */

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs2.h,v 1.4 1997/11/03 22:36:56 cgd Exp $	*/
+/*	$NetBSD: externs2.h,v 1.5 1998/02/22 15:40:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -53,6 +53,7 @@ extern	int	Fflag;
 extern	void	_inithash __P((hte_t ***));
 extern	hte_t	*_hsearch __P((hte_t **, const char *, int));
 extern	void	_forall __P((hte_t **, void (*)(hte_t *)));
+extern	void	_destroyhash __P((hte_t	**));
 
 #define	inithash()	_inithash(NULL);
 #define	hsearch(a, b)	_hsearch(NULL, (a), (b))
