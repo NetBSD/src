@@ -44,8 +44,7 @@
 	 *  ws@tools.de     (Wolfgang Solfrank, TooLs GmbH) +49-228-985800
 	 */
 
-ENTRY(memmove)
-ALTENTRY(memcpy)
+TWOENTRY(memmove,memcpy)
 	pushl	%esi
 	pushl	%edi
 	movl	12(%esp),%edi
