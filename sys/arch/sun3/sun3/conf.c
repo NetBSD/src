@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 1995/04/07 02:58:49 gwr Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 1995/04/08 04:42:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -523,7 +523,7 @@ decl_mmap(bw2map);
 
 /* CG2 frame buffer (/dev/cgtwo) */
 #include "cgtwo.h"
-#if NCGFOUR > 0
+#if NCGTWO > 0
 decl_open(cg2open);
 decl_close(cg2close);
 decl_ioctl(cg2ioctl);
