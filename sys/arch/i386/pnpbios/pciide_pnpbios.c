@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.3 2000/04/01 20:17:12 soren Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.4 2001/11/15 07:03:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -28,6 +28,9 @@
 /*
  * Handle the weird "almost PCI" IDE on Toshiba Porteges.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.4 2001/11/15 07:03:35 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

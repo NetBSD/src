@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.130 2001/09/15 20:36:33 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.131 2001/11/15 07:03:30 lukem Exp $	*/
 
 /*
  *
@@ -58,6 +58,9 @@
  *     done by Alessandro Forin (CMU/Mach) and Chris Demetriou
  *     (NetBSD/alpha).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2001/11/15 07:03:30 lukem Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.2 2001/01/21 04:55:48 thorpej Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.3 2001/11/15 07:03:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -36,6 +36,9 @@
  *
  *	@(#)npx.c	7.2 (Berkeley) 5/12/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.3 2001/11/15 07:03:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
