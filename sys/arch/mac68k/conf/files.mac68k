@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.88.2.4 1999/05/16 22:38:08 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.88.2.5 1999/05/22 09:39:22 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -67,6 +67,8 @@ file	arch/mac68k/nubus/grf_nubus.c	macvid
 device	macfb: wsemuldisplaydev, wsrasteremulops
 attach	macfb at grfbus
 file	arch/mac68k/dev/macfb.c		macfb needs-flag
+
+file	arch/mac68k/dev/maccons.c	akbd & macfb
 
 device	ae: ifnet, ether, arp, dp8390nic
 attach	ae at nubus with ae_nubus
