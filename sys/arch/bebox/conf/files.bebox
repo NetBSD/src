@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.40 2003/10/24 18:21:52 matt Exp $
+#	$NetBSD: files.bebox,v 1.41 2004/02/14 14:33:28 bjh21 Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -90,7 +90,7 @@ define pckbcport { [irq = -1], [port = -1] }
 # PC console support a la "pccons"
 device	pc: tty, pckbcport
 attach	pc at isa
-device	pcconskbd
+device	pcconskbd: pckbc_machdep_cnattach
 attach	pcconskbd at pckbc
 file	arch/bebox/isa/pccons.c		pc | pcconskbd needs-flag
 
