@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.13 2001/06/24 05:34:07 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.14 2002/02/11 18:04:24 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -148,6 +148,25 @@ void	delay __P((int));
 #define SH3_PHYS_TO_P1SEG(x)	((unsigned)(x) | SH3_P1SEG_BASE)
 #define SH3_PHYS_TO_P2SEG(x)	((unsigned)(x) | SH3_P2SEG_BASE)
 #define SH3_P1SEG_TO_P2SEG(x)	((unsigned)(x) | SH3_P1234SEG_SIZE)
+
+/* run on P2 */
+#define RUN_P2								\
+do {									\
+	u_int32_t p;							\
+	p = (u_int32_t)&&P2;						\
+	goto *(u_int32_t *)(p | 0x20000000);				\
+ P2:									\
+} while (/*CONSTCOND*/0)
+
+/* run on P1 */
+#define RUN_P1								\
+do {									\
+	u_int32_t p;							\
+	p = (u_int32_t)&&P1;						\
+	__asm__ __volatile__("nop;nop;nop;nop;nop;nop;nop;nop");	\
+	goto *(u_int32_t *)(p & ~0x20000000);				\
+ P1:									\
+} while (/*CONSTCOND*/0)
 
 /*
  * pull in #defines for kinds of processors
