@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.55 2002/02/12 03:28:20 simonb Exp $	*/
+/*	$NetBSD: fstat.c,v 1.56 2002/10/23 22:37:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.55 2002/02/12 03:28:20 simonb Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.56 2002/10/23 22:37:11 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,6 +161,7 @@ int	nfs_filestat __P((struct vnode *, struct filestat *));
 static const char *inet6_addrstr __P((struct in6_addr *));
 #endif
 void	socktrans __P((struct socket *, int));
+void	kqueuetrans __P((void *, int));
 int	ufs_filestat __P((struct vnode *, struct filestat *));
 void	usage __P((void));
 char   *vfilestat __P((struct vnode *, struct filestat *));
@@ -398,6 +399,10 @@ ftrans (fp, i)
 	case DTYPE_PIPE:
 		if (checkfile == 0)
 			ptrans(&file, (struct pipe *)file.f_data, i);
+		break;
+	case DTYPE_KQUEUE:
+		if (checkfile == 0)
+			kqueuetrans((void *)file.f_data, i);
 		break;
 	default:
 		dprintf("unknown file type %d for file %d of pid %d",
@@ -947,6 +952,17 @@ ptrans(fp, cpipe, i)
 	return;
 bad:
 	printf("* error\n");
+}
+
+void
+kqueuetrans(kq, i)
+	void *kq;
+	int i;
+{
+
+	PREFIX(i);
+	printf("* kqueue %lx", (long)kq);
+	printf("\n");
 }
 
 /*
