@@ -7,24 +7,23 @@ LIST:ts="onetwothreefourfivesix"
 LIST:ts:S/two/2/="one2threefourfivesix"
 LIST:S/two/2/:ts="one2threefourfivesix"
 LIST:ts/:S/two/2/="one/2/three/four/five/six"
-LIST:ts\n="one
+Pretend the '/' in '/n' etc. below are back-slashes.
+LIST:ts/n="one
 two
 three
 four
 five
 six"
-LIST:ts\t="one	two	three	four	five	six"
-LIST:ts\012:tu="ONE
+LIST:ts/t="one	two	three	four	five	six"
+LIST:ts/012:tu="ONE
 TWO
 THREE
 FOUR
 FIVE
 SIX"
 make: Bad modifier `:tx' for LIST
-make: Unclosed substitution for LIST (/ missing)
 LIST:tx="}"
 make: Bad modifier `:ts\a' for LIST
-make: Unclosed substitution for LIST (/ missing)
-LIST:ts\a:tu="\a:tu}"
+LIST:ts/a:tu="\a:tu}"
 FU_mod-ts="a/b/cool"
 FU_mod-ts:ts:T="cool" == cool?
