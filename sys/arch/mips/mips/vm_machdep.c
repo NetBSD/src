@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.20 1997/06/18 04:51:17 jonathan Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.21 1997/06/19 06:34:16 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,6 @@
 extern struct proc *fpcurproc;			/* trap.c */
 
 extern void savefpregs __P((struct proc *));
-extern void switch_exit __P((struct proc *));
 
 extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
 
@@ -85,7 +84,8 @@ cpu_fork(p1, p2)
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
 
 #ifdef MIPS3
-	mips3_HitFlushDCache((vm_offset_t)p2->p_addr, UPAGES * NBPG);
+	if (CPUISMIPS3)
+		mips3_HitFlushDCache((vm_offset_t)p2->p_addr, UPAGES * NBPG);
 #endif
 
 	/* XXX save pte mask outside loop ? */
@@ -237,7 +237,7 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 #ifdef MIPS3
-	if(((int)from & machCacheAliasMask) != ((int)to & machCacheAliasMask)) {
+	if(((int)from & mips_CacheAliasMask) != ((int)to & mips_CacheAliasMask)) {
 		mips3_HitFlushDCache((vm_offset_t)from, size);
 	}
 #endif
