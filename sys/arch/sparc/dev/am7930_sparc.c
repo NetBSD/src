@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930_sparc.c,v 1.16 1997/03/13 02:19:40 mycroft Exp $	*/
+/*	$NetBSD: am7930_sparc.c,v 1.17 1997/03/20 16:51:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -210,9 +210,8 @@ u_long	amd7930_get_in_sr __P((void *));
 int	amd7930_set_out_sr __P((void *, u_long));
 u_long	amd7930_get_out_sr __P((void *));
 int	amd7930_query_encoding __P((void *, struct audio_encoding *));
-int	amd7930_set_encoding __P((void *, u_int));
+int	amd7930_set_format __P((void *, u_int, u_int));
 int	amd7930_get_encoding __P((void *));
-int	amd7930_set_precision __P((void *, u_int));
 int	amd7930_get_precision __P((void *));
 int	amd7930_set_channels __P((void *, int));
 int	amd7930_get_channels __P((void *));
@@ -246,9 +245,8 @@ struct audio_hw_if sa_hw_if = {
 	amd7930_set_out_sr,
 	amd7930_get_out_sr,
 	amd7930_query_encoding,
-	amd7930_set_encoding,
+	amd7930_set_format,
 	amd7930_get_encoding,
-	amd7930_set_precision,
 	amd7930_get_precision,
 	amd7930_set_channels,
 	amd7930_get_channels,
@@ -468,11 +466,14 @@ amd7930_query_encoding(addr, fp)
 }
 
 int
-amd7930_set_encoding(addr, enc)
+amd7930_set_format(addr, encoding, precision)
 	void *addr;
-	u_int enc;
+	u_int encoding, precision;
 {
-	if (enc != AUDIO_ENCODING_ULAW)
+
+	if (encoding != AUDIO_ENCODING_ULAW)
+		return(EINVAL);
+	if (precision != 8)
 		return(EINVAL);
 
 	return(0);		/* no other encoding supported by amd chip */
@@ -483,17 +484,6 @@ amd7930_get_encoding(addr)
 	void *addr;
 {
 	return(AUDIO_ENCODING_ULAW);
-}
-
-int
-amd7930_set_precision(addr, prec)
-	void *addr;
-	u_int prec;
-{
-	if (prec != 8)
-		return(EINVAL);
-
-	return(0);		/* no other precision supported by amd chip */
 }
 
 int
