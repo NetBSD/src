@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.10 1998/08/22 11:47:45 pk Exp $	*/
+/*	$NetBSD: xy.c,v 1.11 1999/03/05 10:38:16 pk Exp $	*/
 
 /*
  *
@@ -80,7 +80,9 @@
 #include <machine/bus.h>
 #include <machine/conf.h>
 
+#if defined(__sparc__) || defined(__sun3__)
 #include <dev/sun/disklabel.h>
+#endif
 
 #include <dev/vme/vmevar.h>
 #include <dev/vme/xyreg.h>
@@ -231,7 +233,9 @@ xygetdisklabel(xy, b)
 	void *b;
 {
 	char *err;
+#if defined(__sparc__) || defined(__sun3__)
 	struct sun_disklabel *sdl;
+#endif
 
 	/* We already have the label data in `b'; setup for dummy strategy */
 	xy_labeldata = b;
@@ -247,11 +251,14 @@ xygetdisklabel(xy, b)
 		return(XY_ERR_FAIL);
 	}
 
+#if defined(__sparc__) || defined(__sun3__)
 	/* Ok, we have the label; fill in `pcyl' if there's SunOS magic */
 	sdl = (struct sun_disklabel *)xy->sc_dk.dk_cpulabel->cd_block;
-	if (sdl->sl_magic == SUN_DKMAGIC)
+	if (sdl->sl_magic == SUN_DKMAGIC) {
 		xy->pcyl = sdl->sl_pcylinders;
-	else {
+	} else
+#endif
+	{
 		printf("%s: WARNING: no `pcyl' in disk label.\n",
 			xy->sc_dev.dv_xname);
 		xy->pcyl = xy->sc_dk.dk_label->d_ncylinders +
