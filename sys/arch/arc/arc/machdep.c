@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.52 2001/03/30 16:32:02 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53 2001/04/12 19:21:20 thorpej Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -242,7 +242,7 @@ struct splvec	splvec = {			/* XXX will go XXX */
 	MIPS_INT_MASK_SPLHIGH, /* splbio */
 	MIPS_INT_MASK_SPLHIGH, /* splnet */
 	MIPS_INT_MASK_SPLHIGH, /* spltty */
-	MIPS_INT_MASK_SPLHIGH, /* splimp */
+	MIPS_INT_MASK_SPLHIGH, /* splvm */
 	MIPS_INT_MASK_SPLHIGH, /* splclock */
 	MIPS_INT_MASK_SPLHIGH, /* splstatclock */
 };
@@ -324,7 +324,7 @@ mach_init(argc, argv, envv)
 		 */
 		splvec.splnet = MIPS_INT_MASK_SPL3;
 		splvec.splbio = MIPS_INT_MASK_SPL3;
-		splvec.splimp = MIPS_INT_MASK_SPL3;
+		splvec.splvm = MIPS_INT_MASK_SPL3;
 		splvec.spltty = MIPS_INT_MASK_SPL3;
 		splvec.splclock = MIPS_INT_MASK_SPL5;
 		splvec.splstatclock = MIPS_INT_MASK_SPL5;
@@ -406,7 +406,7 @@ mach_init(argc, argv, envv)
 		 */
 		splvec.splnet = MIPS_INT_MASK_SPL2;
 		splvec.splbio = MIPS_INT_MASK_SPL2;
-		splvec.splimp = MIPS_INT_MASK_SPL2;
+		splvec.splvm = MIPS_INT_MASK_SPL2;
 		splvec.spltty = MIPS_INT_MASK_SPL2;
 		splvec.splclock = MIPS_INT_MASK_SPL5;
 		splvec.splstatclock = MIPS_INT_MASK_SPL5;
