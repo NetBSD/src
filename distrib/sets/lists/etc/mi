@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.86 2001/06/23 19:37:43 itojun Exp $
+# $NetBSD: mi,v 1.87 2001/09/04 18:11:22 martin Exp $
 ./.cshrc				etc-util-etc
 ./.profile				etc-util-etc
 ./dev/MAKEDEV.local			etc-sys-etc
@@ -83,6 +83,7 @@
 ./etc/rc.d/dhcpd			etc-dhcpd-rc
 ./etc/rc.d/dhcrelay			etc-dhcpd-rc
 ./etc/rc.d/dmesg			etc-sys-rc
+./etc/rc.d/downinterfaces		etc-sys-rc
 ./etc/rc.d/fsck				etc-sys-rc
 ./etc/rc.d/inetd			etc-net-rc
 ./etc/rc.d/ipfilter			etc-ipf-rc
