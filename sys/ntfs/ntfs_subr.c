@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.2 1999/05/06 15:43:19 christos Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.3 1999/05/18 00:22:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -99,7 +99,8 @@ ntfs_ntvattrget(
 	struct attr_attrlist *aalp;
 	struct attr_attrlist *nextaalp;
 	caddr_t         alpool;
-	int             len, namelen;
+	int             namelen;
+	size_t		len;
 
 	*vapp = NULL;
 
