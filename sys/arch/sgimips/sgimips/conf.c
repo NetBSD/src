@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.16 2002/04/23 06:48:47 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.17 2002/05/21 06:35:08 manu Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,6 +209,7 @@ struct cdevsw cdevsw[] =
 	cdev_irix_usema_init(1,irix_usema),	/* 62: IRIX usema emulator */
 #else
 	cdev_notdef(),			/* 61: */
+	cdev_notdef(),			/* 62: */
 #endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
@@ -293,6 +294,7 @@ static int chrtoblktbl[] = {
 	/* 59 */	NODEV,
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
+	/* 62 */	NODEV,
 };
 
 dev_t
