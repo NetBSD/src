@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/08/14 11:02:03 tv Exp $
+#	$NetBSD: Makefile,v 1.2 2001/09/21 23:00:36 tv Exp $
 
 .include <bsd.own.mk>	# for TOOLDIR
 
@@ -59,6 +59,7 @@ toolchain.install:
 		PATH="${TOOLDIR}/bin:$$PATH" \
 		${MAKE} install-binutils install-gas install-ld install-gcc \
 		LEX=true BISON=true
+	mv ${TOOLDIR}/bin/cpp ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-cpp
 
 toolchain.clean:
 	rm -rf toolchain*
