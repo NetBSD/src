@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.1 2000/12/24 06:39:02 augustss Exp $	*/
+/*	$NetBSD: ehcivar.h,v 1.2 2001/11/06 03:16:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ typedef struct ehci_softc {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_size_t sc_size;
+	u_int sc_offs;			/* offset to operational regs */
 
 	char sc_vendor[16];		/* vendor string for root hub */
 	int sc_id_vendor;		/* vendor ID for root hub */
@@ -50,6 +51,13 @@ typedef struct ehci_softc {
 
 	device_ptr_t sc_child;		/* /dev/usb# device */
 } ehci_softc_t;
+
+#define EOREAD1(sc, a) bus_space_read_1((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
+#define EOREAD2(sc, a) bus_space_read_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
+#define EOREAD4(sc, a) bus_space_read_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a))
+#define EOWRITE1(sc, a, x) bus_space_write_1((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
+#define EOWRITE2(sc, a, x) bus_space_write_2((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
+#define EOWRITE4(sc, a, x) bus_space_write_4((sc)->iot, (sc)->ioh, (sc)->sc_offs+(a), (x))
 
 usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
