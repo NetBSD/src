@@ -14,6 +14,7 @@ static char sccsid[] = "@(#) inetcf.c 1.6 96/02/11 17:01:29";
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 extern int errno;
 extern void exit();
