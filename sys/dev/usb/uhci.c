@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.99 2000/03/27 08:01:09 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.100 2000/03/27 09:41:36 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -1905,18 +1905,24 @@ uhci_abort_unlink_qh(upipe)
 	switch (UE_GET_XFERTYPE(upipe->pipe.endpoint->edesc->bmAttributes)) {
 	case UE_CONTROL:
 #if 0
+/* At the moment the done routine removes the QH */
 		sqh = upipe->u.ctl.sqh;
 		pqh = uhci_find_prev_qh(sc->sc_ctl_start, sqh);
 		pqh->qh.qh_hlink = sqh->qh.qh_hlink;
 #endif
 		break;
+#ifdef DIAGNOSTIC
 	case UE_ISOCHRONOUS:
 		printf("uhci_abort_unlink_qh: iso\n");
 		break;
+#endif
 	case UE_BULK:
+#if 0
+/* At the moment the done routine removes the QH */
 		sqh = upipe->u.bulk.sqh;
 		pqh = uhci_find_prev_qh(sc->sc_bulk_start, sqh);
 		pqh->qh.qh_hlink = sqh->qh.qh_hlink;
+#endif
 		break;
 	case UE_INTERRUPT:
 		npoll = upipe->u.intr.npoll;
@@ -1942,19 +1948,24 @@ uhci_abort_relink_qh(upipe)
 	switch (UE_GET_XFERTYPE(upipe->pipe.endpoint->edesc->bmAttributes)) {
 	case UE_CONTROL:
 #if 0
+/* At the moment the done routine removes the QH */
 		sqh = upipe->u.ctl.sqh;
 		pqh = uhci_find_prev_qh(sc->sc_ctl_start, sqh);
 		pqh->qh.qh_hlink = htole32(sqh->physaddr | UHCI_PTR_Q);
 #endif
 		break;
+#ifdef DIAGNOSTIC
 	case UE_ISOCHRONOUS:
 		printf("uhci_abort_relink_qh: iso\n");
 		break;
+#endif
 	case UE_BULK:
+#if 0
+/* At the moment the done routine removes the QH */
 		sqh = upipe->u.bulk.sqh;
 		pqh = uhci_find_prev_qh(sc->sc_bulk_start, sqh);
 		pqh->qh.qh_hlink = htole32(sqh->physaddr | UHCI_PTR_Q);
-		break;
+#endif
 		break;
 	case UE_INTERRUPT:
 		npoll = upipe->u.intr.npoll;
@@ -2725,7 +2736,6 @@ uhci_device_ctrl_done(xfer)
 		panic("uhci_ctrl_done: not a request\n");
 #endif
 
-DPRINTF(("uhci_device_ctrl_done xfer=%p ii=%p\n", xfer, ii));
 	uhci_del_intr_info(ii);	/* remove from active list */
 
 	uhci_remove_ctrl(sc, upipe->u.ctl.sqh);
