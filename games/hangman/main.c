@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 1997/10/11 01:16:35 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.5 1998/09/11 13:42:03 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.4 1997/10/11 01:16:35 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 1998/09/11 13:42:03 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: main.c,v 1.4 1997/10/11 01:16:35 lukem Exp $");
  * This game written by Ken Arnold.
  */
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(void)
 {
 	initscr();
 	signal(SIGINT, die);
