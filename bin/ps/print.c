@@ -33,7 +33,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)print.c	5.9 (Berkeley) 7/1/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.4 1993/06/01 01:38:28 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/bin/ps/print.c,v 1.5 1993/06/01 02:33:35 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ command(k, v, next)
 			(void) printf("%s", k->ki_args);
 		} else {
 			register int left = termwidth - (totwidth - v->width);
-			register char *cp = k->ki_args;
+			register char *cp;
 
 			if (left < 1) /* already wrapped, just use std width */
 				left = v->width;
@@ -106,6 +106,7 @@ command(k, v, next)
 				if (--left >= 0)
 					putchar(' ');
 			}
+			cp = k->ki_args;
 			while (--left >= 0 && *cp)
 				(void) putchar(*cp++);
 		}
