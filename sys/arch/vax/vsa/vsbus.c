@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.22 2000/03/04 07:27:50 matt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.23 2000/03/08 23:50:51 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -145,7 +145,9 @@ vsbus_attach(parent, self, aux)
 		sc->sc_intreq = (char *)temp + 12;
 		sc->sc_intclr = (char *)temp + 12;
 		sc->sc_intmsk = (char *)temp + 8;
-		vsbus_dma_init(sc);
+#if 0
+		vsbus_dma_init(sc);	/* not yet */
+#endif
 		break;
 #endif
 
