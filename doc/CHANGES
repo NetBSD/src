@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.58 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.59 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -212,3 +212,5 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	build system: Users and groups for the build are now obtained from
 	    src/etc instead of the host systems' passwd(5) and group(5)
 	    databases.  [lukem 20021219]
+	sunlabel(8): Now enabled by default.  Manipulates SunOS disklabels. 
+		[lukem 20021221]
