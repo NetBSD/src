@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2001/05/01 20:35:19 matt Exp $
+#	$NetBSD: Makefile,v 1.10 2001/06/21 22:57:25 eeh Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,6 @@ CPPFLAGS+=-DNLIST_AOUT
 CPPFLAGS+=-DNLIST_ELF32
 .elif	${MACHINE_ARCH} == "i386" || \
 	${MACHINE_ARCH} == "m68k" || \
-	${MACHINE_ARCH} == "sparc" || \
 	${MACHINE_ARCH} == "vax" || \
 	${MACHINE_CPU} == "arm"
 CPPFLAGS+=-DNLIST_ELF32
@@ -26,6 +25,11 @@ CPPFLAGS+=-DNLIST_AOUT
 .elif	${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 CPPFLAGS+=-DNLIST_COFF
 CPPFLAGS+=-DNLIST_ELF32
+.elif   ${MACHINE_ARCH} == "sparc" ||
+	${MACHINE_ARCH} == "sparc64" 
+CPPFLAGS+=-DNLIST_ELF64
+CPPFLAGS+=-DNLIST_ELF32
+CPPFLAGS+=-DNLIST_AOUT
 .else
 CPPFLAGS+=-DNLIST_AOUT
 #CPPFLAGS+=-DNLIST_ECOFF
