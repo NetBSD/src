@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:24:04 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/04/21 20:23:59 bjh21 Exp $
 
 PROG=		clonetest
 NOMAN=		# defined
 COPTS+=		-g
 WARNS?=		1
 
-regress:
+regress: ${PROG}
 	@if ./clonetest; then \
 		echo PASSED; \
 	else \
