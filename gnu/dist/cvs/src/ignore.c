@@ -33,8 +33,9 @@ static int ign_size;			/* This many slots available (plus
 static int ign_hold = -1;		/* Index where first "temporary" item
 					 * is held */
 
+extern const char *cvsDir;
 const char *ign_default = ". .. core RCSLOG tags TAGS RCS SCCS .make.state\
- .nse_depinfo #* .#* cvslog.* ,* CVS CVS.adm .del-* *.a *.olb *.o *.obj\
+ .nse_depinfo #* .#* cvslog.* ,* CVS.adm .del-* *.a *.olb *.o *.obj\
  *.so *.Z *~ *.old *.elc *.ln *.bak *.BAK *.orig *.rej *.exe _$* *$";
 
 #define IGN_GROW 16			/* grow the list by 16 elements at a
@@ -61,6 +62,7 @@ ign_setup ()
     /* Start with default list and special case */
     tmp = xstrdup (ign_default);
     ign_add (tmp, 0);
+    ign_add (xstrdup(cvsDir), 0);
     free (tmp);
 
 #ifdef CLIENT_SUPPORT
