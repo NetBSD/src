@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.71.2.2 2001/11/04 03:38:48 shin Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.71.2.3 2001/11/11 03:52:00 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1683,7 +1683,7 @@ XLEAF(mips3_VCEI)	/* XXXX */
 	sll	k1, k1, 5			# [14..12] <---
 	or	k0, k0, k1
 	or	k0, MIPS_KSEG0_START		# physical K0SEG address
-	lw	k1, _C_LABEL(mips_L2CacheLSize)
+	lw	k1, _C_LABEL(mips_sdcache_line_size)
 	beq	k1, zero, 2f			# XXX needed?
 	subu	k1, zero, k1
 	and	k0, k0, k1			# align to L2CacheLSize
@@ -2153,8 +2153,8 @@ LEAF_NOPROFILE(mips3_TBIA)
 	
 #ifndef MIPS3_5900
 LEAF(mips3_FetchIcache)
-	lw	t1, mips_L1ICacheSize
-	lw	t2, mips_L1ICacheLSize
+	lw	t1, mips_picache_size
+	lw	t2, mips_picache_line_size
 	li	v0, 0
 	li	t0, MIPS_KSEG0_START
 	addu	t3, t1, t0
@@ -2172,8 +2172,8 @@ LEAF(mips3_FetchIcache)
 END(mips3_FetchIcache)
 
 LEAF(mips3_FetchDcache)
-	lw	t1, mips_L1DCacheSize
-	lw	t2, mips_L1DCacheLSize
+	lw	t1, mips_pdcache_size
+	lw	t2, mips_pdcache_line_size
 	li	v0, 0
 	li	t0, MIPS_KSEG0_START
 	addu	t3, t1, t0
