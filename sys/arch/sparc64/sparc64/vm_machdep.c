@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.2 2001/12/08 04:22:23 thorpej Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.3 2002/01/03 06:42:37 petrov Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -50,6 +50,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/core.h>
@@ -68,10 +69,12 @@
 
 #include <sparc64/sparc64/cache.h>
 
+#if 0
 /* XXX These are in sbusvar.h, but including that would be problematical */
 struct sbus_softc *sbus0;
 void    sbus_enter __P((struct sbus_softc *, vaddr_t va, int64_t pa, int flags));
 void    sbus_remove __P((struct sbus_softc *, vaddr_t va, int len));
+#endif
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -220,18 +223,17 @@ char cpu_forkname[] = "cpu_lwp_fork()";
  * accordingly.
  */
 void
-cpu_lwp_fork(p1, p2, stack, stacksize, func, arg)
-	register struct proc *p1, *p2;
+cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
+	register struct lwp *l1, *l2;
 	void *stack;
 	size_t stacksize;
 	void (*func) __P((void *));
 	void *arg;
 {
-	struct pcb *opcb = &p1->p_addr->u_pcb;
-	struct pcb *npcb = &p2->p_addr->u_pcb;
+	struct pcb *opcb = &l1->l_addr->u_pcb;
+	struct pcb *npcb = &l2->l_addr->u_pcb;
 	struct trapframe *tf2;
 	struct rwindow *rp;
-	extern struct proc proc0;
 
 	/*
 	 * Save all user registers to p1's stack or, in the case of
@@ -247,7 +249,7 @@ cpu_lwp_fork(p1, p2, stack, stacksize, func, arg)
 #ifdef NOTDEF_DEBUG
 	printf("cpu_lwp_fork()\n");
 #endif
-	if (p1 == curproc) {
+	if (l1 == curproc) {
 		write_user_windows();
 
 		/*
@@ -258,7 +260,7 @@ cpu_lwp_fork(p1, p2, stack, stacksize, func, arg)
 		opcb->pcb_cwp = getcwp();
 	}
 #ifdef DIAGNOSTIC
-	else if (p1 != &proc0)
+	else if (l1 != &lwp0)
 		panic("cpu_lwp_fork: curproc");
 #endif
 #ifdef DEBUG
@@ -268,24 +270,24 @@ cpu_lwp_fork(p1, p2, stack, stacksize, func, arg)
 	opcb->lastcall = NULL;
 #endif
 	bcopy((caddr_t)opcb, (caddr_t)npcb, sizeof(struct pcb));
-       	if (p1->p_md.md_fpstate) {
-		if (p1 == fpproc) {
-			savefpstate(p1->p_md.md_fpstate);
+       	if (l1->l_md.md_fpstate) {
+		if (l1 == fpproc) {
+			savefpstate(l1->l_md.md_fpstate);
 			fpproc = NULL;
 		}
-		p2->p_md.md_fpstate = malloc(sizeof(struct fpstate64),
+		l2->l_md.md_fpstate = malloc(sizeof(struct fpstate64),
 		    M_SUBPROC, M_WAITOK);
-		bcopy(p1->p_md.md_fpstate, p2->p_md.md_fpstate,
+		bcopy(l1->l_md.md_fpstate, l2->l_md.md_fpstate,
 		    sizeof(struct fpstate64));
 	} else
-		p2->p_md.md_fpstate = NULL;
+		l2->l_md.md_fpstate = NULL;
 
 	/*
 	 * Setup (kernel) stack frame that will by-pass the child
 	 * out of the kernel. (The trap frame invariably resides at
 	 * the tippity-top of the u. area.)
 	 */
-	tf2 = p2->p_md.md_tf = (struct trapframe *)
+	tf2 = l2->l_md.md_tf = (struct trapframe *)
 			((long)npcb + USPACE - sizeof(*tf2));
 
 	/* Copy parent's trapframe */
@@ -323,7 +325,7 @@ cpu_lwp_fork(p1, p2, stack, stacksize, func, arg)
 	npcb->pcb_pc = (long)proc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 	/* Need to create a %tstate if we're forking from proc0 */
-	if (p1 == &proc0)
+	if (l1 == &lwp0)
 		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
 
@@ -340,6 +342,27 @@ cpu_lwp_fork(p1, p2, stack, stacksize, func, arg)
 #endif
 }
 
+void
+cpu_setfunc(l, func, arg)
+	struct lwp *l;
+	void (*func) __P((void *));
+	void *arg;
+{
+#if 0
+	struct user *up = l->l_addr;
+
+	up->u_pcb.pcb_context[0] =
+	    (u_int64_t)func;			/* s0: pc */
+	up->u_pcb.pcb_context[1] =
+	    (u_int64_t)exception_return;	/* s1: ra */
+	up->u_pcb.pcb_context[2] =
+	    (u_int64_t)arg;			/* s2: arg */
+	up->u_pcb.pcb_context[7] =
+	    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
+	up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
+#endif
+}	
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -349,19 +372,25 @@ cpu_lwp_fork(p1, p2, stack, stacksize, func, arg)
  * run.
  */
 void
-cpu_exit(p)
-	struct proc *p;
+cpu_exit(l, proc)
+	struct lwp *l;
+	int proc;
 {
 	register struct fpstate64 *fs;
 
-	if ((fs = p->p_md.md_fpstate) != NULL) {
-		if (p == fpproc) {
+	if ((fs = l->l_md.md_fpstate) != NULL) {
+		if (l == fpproc) {
 			savefpstate(fs);
 			fpproc = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
 	}
-	switchexit(p);
+
+	/* XXX splhigh(); */
+	if (proc)
+		switchexit(l);
+	else
+		switch_lwp_exit(l);
 	/* NOTREACHED */
 }
 
@@ -370,8 +399,8 @@ cpu_exit(p)
  * (should this be defined elsewhere?  machdep.c?)
  */
 int
-cpu_coredump(p, vp, cred, chdr)
-	struct proc *p;
+cpu_coredump(l, vp, cred, chdr)
+	struct lwp *l;
 	struct vnode *vp;
 	struct ucred *cred;
 	struct core *chdr;
@@ -385,13 +414,13 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(md_core);
 
-	md_core.md_tf = *p->p_md.md_tf;
-	if (p->p_md.md_fpstate) {
-		if (p == fpproc) {
-			savefpstate(p->p_md.md_fpstate);
+	md_core.md_tf = *l->l_md.md_tf;
+	if (l->l_md.md_fpstate) {
+		if (l == fpproc) {
+			savefpstate(l->l_md.md_fpstate);
 			fpproc = NULL;
 		}
-		md_core.md_fpstate = *p->p_md.md_fpstate;
+		md_core.md_fpstate = *l->l_md.md_fpstate;
 	} else
 		bzero((caddr_t)&md_core.md_fpstate, 
 		      sizeof(md_core.md_fpstate));
@@ -401,13 +430,13 @@ cpu_coredump(p, vp, cred, chdr)
 	cseg.c_size = chdr->c_cpusize;
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&cseg, chdr->c_seghdrsize,
 	    (off_t)chdr->c_hdrsize, UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l->l_proc);
 	if (error)
 		return error;
 
 	error = vn_rdwr(UIO_WRITE, vp, (caddr_t)&md_core, sizeof(md_core),
 	    (off_t)(chdr->c_hdrsize + chdr->c_seghdrsize), UIO_SYSSPACE,
-	    IO_NODELOCKED|IO_UNIT, cred, NULL, p);
+	    IO_NODELOCKED|IO_UNIT, cred, NULL, l->l_proc);
 	if (!error)
 		chdr->c_nseg++;
 

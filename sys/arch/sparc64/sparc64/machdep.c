@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.2 2001/11/17 12:24:20 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.112.4.3 2002/01/03 06:42:36 petrov Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -89,8 +89,10 @@
 #include <sys/extent.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/user.h>
+#include <sys/savar.h>
 #include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/device.h>
@@ -236,7 +238,7 @@ cpu_startup()
 	pmapdebug = 0;
 #endif
 
-	proc0.p_addr = proc0paddr;
+	lwp0.l_addr = proc0paddr;
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -350,15 +352,16 @@ cpu_startup()
 
 /* ARGSUSED */
 void
-setregs(p, pack, stack)
-	struct proc *p;
+setregs(l, pack, stack)
+	struct lwp *l;
 	struct exec_package *pack;
 	vaddr_t stack;
 {
-	register struct trapframe64 *tf = p->p_md.md_tf;
+	register struct trapframe64 *tf = l->l_md.md_tf;
 	register struct fpstate64 *fs;
 	register int64_t tstate;
 	int pstate = PSTATE_USER;
+	struct proc *p = l->l_proc;
 #ifdef __arch64__
 	Elf_Ehdr *eh = pack->ep_hdr;
 #endif
@@ -394,18 +397,18 @@ setregs(p, pack, stack)
 	tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 		((pstate)<<TSTATE_PSTATE_SHIFT) | 
 		(tf->tf_tstate & TSTATE_CWP);
-	if ((fs = p->p_md.md_fpstate) != NULL) {
+	if ((fs = l->l_md.md_fpstate) != NULL) {
 		/*
 		 * We hold an FPU state.  If we own *the* FPU chip state
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == fpproc) {
+		if (l == fpproc) {
 			savefpstate(fs);
 			fpproc = NULL;
 		}
 		free((void *)fs, M_SUBPROC);
-		p->p_md.md_fpstate = NULL;
+		l->l_md.md_fpstate = NULL;
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
@@ -507,7 +510,8 @@ sendsig(catcher, sig, mask, code)
 	sigset_t *mask;
 	u_long code;
 {
-	struct proc *p = curproc;
+	struct lwp  *l = curproc;
+	struct proc *p = l->l_proc;
 	struct sigframe *fp;
 	struct trapframe64 *tf;
 	vaddr_t addr; 
@@ -518,7 +522,7 @@ sendsig(catcher, sig, mask, code)
 	struct sigframe sf;
 	int onstack;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	oldsp = (struct rwindow *)(u_long)(tf->tf_out[6] + STACK_OFFSET);
 
 	/*
@@ -603,7 +607,7 @@ sendsig(catcher, sig, mask, code)
 		   fp, &(((struct rwindow *)newsp)->rw_in[6]),
 		   (void *)(unsigned long)tf->tf_out[6]);
 #endif
-	if (rwindow_save(p) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
+	if (rwindow_save(l) || copyout((caddr_t)&sf, (caddr_t)fp, sizeof sf) || 
 #ifdef NOT_DEBUG
 	    copyin(oldsp, &tmpwin, sizeof(tmpwin)) || copyout(&tmpwin, newsp, sizeof(tmpwin)) ||
 #endif
@@ -620,7 +624,7 @@ sendsig(catcher, sig, mask, code)
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 		/* NOTREACHED */
 	}
 
@@ -667,11 +671,12 @@ sendsig(catcher, sig, mask, code)
  */
 /* ARGSUSED */
 int
-sys___sigreturn14(p, v, retval)
-	register struct proc *p;
+sys___sigreturn14(l, v, retval)
+	register struct lwp *l;
 	void *v;
 	register_t *retval;
 {
+	struct proc *p = l->l_proc;
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
@@ -681,14 +686,14 @@ sys___sigreturn14(p, v, retval)
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(p)) {
+	if (rwindow_save(l)) {
 #ifdef DEBUG
 		printf("sigreturn14: rwindow_save(%p) failed, sending SIGILL\n", p);
 #ifdef DDB
 		if (sigdebug & SDB_DDB) Debugger();
 #endif
 #endif
-		sigexit(p, SIGILL);
+		sigexit(l, SIGILL);
 	}
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW) {
@@ -714,7 +719,7 @@ sys___sigreturn14(p, v, retval)
 #endif
 	scp = &sc;
 
-	tf = p->p_md.md_tf;
+	tf = l->l_md.md_tf;
 	/*
 	 * Only the icc bits in the psr are used, so it need not be
 	 * verified.  pc and npc must be multiples of 4.  This is all
@@ -790,12 +795,11 @@ cpu_reboot(howto, user_boot_string)
 #endif
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		extern struct proc proc0;
 		extern int sparc_clock_time_is_ok;
 
 		/* XXX protect against curproc->p_stats.foo refs in sync() */
 		if (curproc == NULL)
-			curproc = &proc0;
+			curproc = &lwp0;
 		waittime = 0;
 		vfs_shutdown();
 
@@ -1979,19 +1983,20 @@ struct sparc_bus_space_tag mainbus_space_tag = {
 	sparc_mainbus_intr_establish	/* bus_intr_establish */
 };
 
+
 void
-cpu_getmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
 	mcontext_t *mcp;
 	unsigned int *flags;
 {
 	__greg_t *gr = mcp->__gregs;
-	const struct trapframe64 *tf = p->p_md.md_tf;
+	const struct trapframe64 *tf = l->l_md.md_tf;
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
 	write_user_windows();
-	if (rwindow_save(p))
-		sigexit(p, SIGILL);
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
 
 	/* For now: Erase any random indicators for optional state. */
 	(void)memset(mcp, '0', sizeof (*mcp));
@@ -2032,7 +2037,7 @@ cpu_getmcontext(p, mcp, flags)
 
 
 	/* Save FP register context, if any. */
-	if (p->p_md.md_fpstate != NULL) {
+	if (l->l_md.md_fpstate != NULL) {
 		struct fpstate fs, *fsp;
 		__fpregset_t *fpr = &mcp->__fpregs;
 
@@ -2042,11 +2047,11 @@ cpu_getmcontext(p, mcp, flags)
 		 * with it later when it becomes necessary.
 		 * Otherwise, get it from the process's save area.
 		 */
-		if (p == fpproc) {
+		if (l == fpproc) {
 			fsp = &fs;
 			savefpstate(fsp);
 		} else {
-			fsp = p->p_md.md_fpstate;
+			fsp = l->l_md.md_fpstate;
 		}
 		memcpy(&fpr->__fpu_fr, fsp->fs_regs, sizeof (fpr->__fpu_fr));
 		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
@@ -2064,18 +2069,18 @@ cpu_getmcontext(p, mcp, flags)
 }
 
 int
-cpu_setmcontext(p, mcp, flags)
-	struct proc *p;
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
 	const mcontext_t *mcp;
 	unsigned int flags;
 {
 	__greg_t *gr = mcp->__gregs;
-	struct trapframe64 *tf = p->p_md.md_tf;
+	struct trapframe64 *tf = l->l_md.md_tf;
 
 	/* First ensure consistent stack state (see sendsig). */
 	write_user_windows();
-	if (rwindow_save(p))
-		sigexit(p, SIGILL);
+	if (rwindow_save(l))
+		sigexit(l, SIGILL);
 
 	if ((flags & _UC_CPU) != 0) {
 		/*
@@ -2136,16 +2141,16 @@ cpu_setmcontext(p, mcp, flags)
 		 * XXX Should we really activate the supplied FPU context
 		 * XXX immediately or just fault it in later?
 		 */
-		if ((fsp = p->p_md.md_fpstate) == NULL) {
+		if ((fsp = l->l_md.md_fpstate) == NULL) {
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
-			p->p_md.md_fpstate = fsp;
-		} else if (p == fpproc) {
+			l->l_md.md_fpstate = fsp;
+		} else if (l == fpproc) {
 			/* Drop the live context on the floor. */
 			savefpstate(fsp);
 			reload = 1;
 		}
 		/* Note: sizeof fpr->__fpu_fr <= sizeof fsp->fs_regs. */
-		memcpy(fsp->fs_regs, fpr->__fpu_fr, sizeof (fpr->__fpu_fr));
+		memcpy(fsp->fs_regs, &fpr->__fpu_fr, sizeof (fpr->__fpu_fr));
 		fsp->fs_fsr = mcp->__fpregs.__fpu_fsr;
 		fsp->fs_qsize = 0;
 
@@ -2164,4 +2169,66 @@ cpu_setmcontext(p, mcp, flags)
 	/* XXX mcp->__asrs */
 
 	return (0);
+}
+
+
+/* Save the user-level ucontext_t on the LWP's own stack. */
+ucontext_t *
+cpu_stashcontext(l)
+	struct lwp *l;
+{
+	ucontext_t u, *up = &u;
+#if 0
+	void *stack;
+	unsigned long usp;
+
+	/* XXX if there's a better, general way to get the USP of
+	 * an LWP that might or might not be curproc, I'd like to know
+	 * about it.
+	 */
+	if (l == curproc)
+		usp = alpha_pal_rdusp();
+	else
+		usp = l->l_addr->u_pcb.pcb_hw.apcb_usp;
+
+	stack = (void *)(usp - sizeof(ucontext_t));
+
+	getucontext(l, &u);
+	up = stack;
+
+		if (copyout(&u, stack, sizeof(ucontext_t)) != 0) {
+		/* Copying onto the stack didn't work. Die. */
+#ifdef DIAGNOSTIC
+		printf("cpu_stashcontext: couldn't copyout context of %d.%d\n",
+		    l->l_proc->p_pid, l->l_lid);
+#endif
+		sigexit(l, SIGILL);
+		/* NOTREACHED */
+	}
+#endif
+	return up;
+}
+
+void 
+cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+#if 0
+	struct proc *p = l->l_proc;
+       	struct trapframe *tf;
+
+	extern char sigcode[], upcallcode[];
+
+	tf = l->l_md.md_tf;
+
+	tf->tf_regs[FRAME_PC] = ((u_int64_t)p->p_sigctx.ps_sigcode) +
+	    ((u_int64_t)upcallcode - (u_int64_t)sigcode);
+	tf->tf_regs[FRAME_A0] = type;
+	tf->tf_regs[FRAME_A1] = (u_int64_t)sas;
+	tf->tf_regs[FRAME_A2] = nevents;
+	tf->tf_regs[FRAME_A3] = ninterrupted;
+	tf->tf_regs[FRAME_A4] = (u_int64_t)ap;
+	tf->tf_regs[FRAME_T12] = (u_int64_t)upcall;  /* t12 is pv */
+	alpha_pal_wrusp((unsigned long)sp);
+#endif
 }
