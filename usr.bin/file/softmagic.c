@@ -34,7 +34,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Id: softmagic.c,v 1.8 1995/04/30 19:39:41 christos Exp $";
+	"@(#)$Id: softmagic.c,v 1.9 1995/05/21 00:13:32 christos Exp $";
 #endif	/* lint */
 
 static int match	__P((unsigned char *, int));
@@ -287,18 +287,18 @@ struct magic *m;
 int nbytes;
 {
 	long offset = m->offset;
-	long diff = nbytes - (offset + sizeof(union VALUETYPE));
-	if (diff >= 0)
+
+	if (offset + sizeof(union VALUETYPE) <= nbytes)
 		memcpy(p, s + offset, sizeof(union VALUETYPE));
 	else {
-		/* Not enough space; zeropad */
-		long have = sizeof(union VALUETYPE) + diff;
+		/*
+		 * the usefulness of padding with zeroes eludes me, it
+		 * might even cause problems
+		 */
+		long have = nbytes - offset;
+		memset(p, 0, sizeof(union VALUETYPE));
 		if (have > 0)
 			memcpy(p, s + offset, have);
-		else
-			have = 0;
-
-		memset(p + have, 0, sizeof(union VALUETYPE) - have);
 	}
 
 
