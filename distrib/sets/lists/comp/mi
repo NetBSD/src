@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.751 2005/01/02 17:34:43 thorpej Exp $
+#	$NetBSD: mi,v 1.752 2005/01/03 06:00:13 lukem Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -1663,6 +1663,8 @@
 ./usr/lib/libsm.a				comp-obsolete		obsolete
 ./usr/lib/libss.a				comp-krb5-lib		kerberos
 ./usr/lib/libss_p.a				comp-krb5-proflib	kerberos,profile
+./usr/lib/libssh.a				comp-c-lib		crypto
+./usr/lib/libssh_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libssl.a				comp-c-lib		crypto
 ./usr/lib/libssl_p.a				comp-c-proflib		profile,crypto
 ./usr/lib/libstdc++.a				comp-cxx-lib
@@ -1724,6 +1726,7 @@
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lskey.ln		comp-c-lintlib		lint,skey
 ./usr/libdata/lint/llib-lsm.ln			comp-obsolete		obsolete
+./usr/libdata/lint/llib-lssh.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lssl.ln			comp-c-lintlib		lint,crypto
 ./usr/libdata/lint/llib-lstdc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ltelnet.ln		comp-obsolete		obsolete
