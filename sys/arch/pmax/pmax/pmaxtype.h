@@ -1,4 +1,4 @@
-/*	$NetBSD: pmaxtype.h,v 1.8 1998/09/11 00:06:12 nisimura Exp $	*/
+/*	$NetBSD: pmaxtype.h,v 1.8.2.1 1998/10/15 02:16:32 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
 #define	DS_3MAX		0x2	/* DECstation 5000/200 */
 #define	DS_3MIN		0x3	/* DECstation 5000/1xx */
 #define	DS_3MAXPLUS	0x4	/* DECstation 5000/240 */
-#define	DS_ISIS		0x5	/* DECsystem 5800 */
+#define	DS_LSIS		0x5	/* DECsystem 5800 */
 #define	DS_MIPSFAIR	0x6	/* DECsystem 5400 */
 #define	DS_MAXINE	0x7	/* Personal DECstation 5000/xx */
 #define	DS_MIPSFAIR2	0xb	/* DECsystem 5500 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 1998/05/22 21:14:04 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.4.1 1998/10/15 02:16:29 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,8 +45,7 @@
 #include <sys/systm.h>
 #include <sys/map.h>
 
-#include <mips/cpuregs.h>
-
+#include <machine/cpu.h>
 #include <machine/bus.h>
 
 /* ARGSUSED */

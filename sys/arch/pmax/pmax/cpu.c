@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.10 1998/01/12 20:12:38 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.10.4.1 1998/10/15 02:16:30 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -41,11 +41,9 @@ static void	cpuattach(struct device *, struct device *, void *);
 struct cfattach cpu_ca = {
 	sizeof (struct device), cpumatch, cpuattach
 };
-
 extern struct cfdriver cpu_cd;
 
 extern void cpu_identify __P((void));
-
 
 static int
 cpumatch(parent, cf, aux)
@@ -54,7 +52,6 @@ cpumatch(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-
 
 	/* make sure that we're looking for a CPU. */
 	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0) {
@@ -69,8 +66,7 @@ cpuattach(parent, dev, aux)
 	struct device *dev;
 	void *aux;
 {
-
-	printf(": ");
+	printf("\n");
 
 	cpu_identify();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.9 1998/09/21 23:02:49 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.9.2.1 1998/10/15 02:16:28 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,6 @@
 #include <uvm/uvm_extern.h>
 #endif
 
-#include <mips/cpuregs.h>
 #include <mips/locore.h>
 
 #define _PMAX_BUS_DMA_PRIVATE
