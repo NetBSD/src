@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_clock.c,v 1.10 1996/10/15 21:35:23 mark Exp $ */
+/* $NetBSD: iomd_clock.c,v 1.11 1997/01/06 04:47:53 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -259,7 +259,7 @@ need_proftick(p)
 }
 
 
-static inline int
+static __inline int
 yeartoday(year)
 	int year;
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.8 1996/11/23 03:37:38 mark Exp $ */
+/* $NetBSD: pms.c,v 1.9 1997/01/06 04:47:58 mark Exp $ */
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -115,7 +115,7 @@ struct cfdriver	pms_cd = {
 
 #define	PMSUNIT(dev)	(minor(dev))
 
-static inline void
+static __inline void
 pms_flush()
 {
 	int n = 1000;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.11 1996/10/14 23:42:17 mark Exp $ */
+/* $NetBSD: if_ie.c,v 1.12 1997/01/06 04:48:01 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1074,7 +1074,7 @@ command_and_wait(sc, cmd, pscb, pcmd, ocmd, scmd, mask)
 	PWriteShort(sc->sc_ram + IE_COFF2POFF(ptr) +	\
 	       (offsetof(type, member)), dest );
 
-static inline int
+static __inline int
 ie_buflen(sc, head)
 	struct ie_softc *sc;
 	int head;
@@ -1087,7 +1087,7 @@ ie_buflen(sc, head)
 	return(actual & (IE_RXBUF_SIZE | (IE_RXBUF_SIZE-1))) ;
 }
 
-static inline int
+static __inline int
 ie_packet_len(sc)
 	struct ie_softc *sc;
 {

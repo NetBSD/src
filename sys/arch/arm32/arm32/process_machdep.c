@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.4 1996/10/16 19:32:26 ws Exp $ */
+/* $NetBSD: process_machdep.c,v 1.5 1997/01/06 04:47:55 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -77,7 +77,7 @@
 
 #include <machine/reg.h>
 
-static inline struct trapframe *
+static __inline struct trapframe *
 process_frame(p)
 	struct proc *p;
 {
@@ -86,7 +86,7 @@ process_frame(p)
 }
 
 #ifndef ARMFPE
-static inline struct fpe_sp_state *
+static __inline struct fpe_sp_state *
 process_fpframe(p)
 	struct proc *p;
 {

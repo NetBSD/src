@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.13 1996/10/30 01:50:01 mark Exp $ */
+/* $NetBSD: if_eh.c,v 1.14 1997/01/06 04:48:00 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -692,7 +692,7 @@ eh_transmit_command(sc)
 
 /* We musn't fail */
 
-inline void
+__inline void
 eh_ensure_dma_ok(sc)
 	struct eh_softc *sc;
 {
@@ -713,7 +713,7 @@ eh_ensure_dma_ok(sc)
 	SetReg(EH_COMMAND, 0x22);
 }
 
-inline int
+__inline int
 eh_ensure_dma_completed(sc, type)
 	struct eh_softc *sc;
 	int type;

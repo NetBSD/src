@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.16 1997/01/01 23:32:41 pk Exp $	*/
+/*	$NetBSD: fd.c,v 1.17 1997/01/06 04:47:57 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -474,7 +474,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	}
 }
 
-inline struct fd_type *
+__inline struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
