@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.21 2001/12/24 20:52:09 wiz Exp $ */
+/* $NetBSD: scan.l,v 1.22 2002/01/03 04:25:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan.l,v 1.21 2001/12/24 20:52:09 wiz Exp $");
+__RCSID("$NetBSD: scan.l,v 1.22 2002/01/03 04:25:15 thorpej Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1010,6 +1010,7 @@ directive(void)
 /*
  * Handle lint comments. Following comments are currently understood:
  *	ARGSUSEDn
+ *	BITFIELDTYPE
  *	CONSTCOND CONSTANTCOND CONSTANTCONDITION
  *	FALLTHRU FALLTHROUGH
  *	LINTLIBRARY
@@ -1033,6 +1034,7 @@ comment(void)
 		void	(*func)(int);
 	} keywtab[] = {
 		{ "ARGSUSED",		1,	argsused	},
+		{ "BITFIELDTYPE",	0,	bitfieldtype	},
 		{ "CONSTCOND",		0,	constcond	},
 		{ "CONSTANTCOND",	0,	constcond	},
 		{ "CONSTANTCONDITION",	0,	constcond	},
