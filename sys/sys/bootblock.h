@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.19 2003/10/27 16:48:08 cl Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.20 2003/11/13 08:17:12 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@
 #define	MBR_BS_EXTINT13	0x02	/* Set by fdisk if LBA needed (deprecated) */
 #define	MBR_BS_READ_LBA	0x04	/* Force LBA reads - even for low numbers */
 #define	MBR_BS_EXTLBA	0x08	/* Extended ptn capable (LBA reads) */
-#define	MBR_BS_NEWMBR	0x80	/* New code: menu user 1..9 for ptns */
+#define	MBR_BS_NEWMBR	0x80	/* New code: menu uses 1..9 for ptns */
 
 #if !defined(__ASSEMBLER__)					/* { */
 
@@ -491,6 +491,51 @@ struct apple_blockzeroblock {
 #define	APPLE_BZB_TYPESWAP	3
 #define	APPLE_BZB_ROOTFS	0x8000
 #define	APPLE_BZB_USRFS		0x4000
+
+/* ------------------------------------------
+ * hp300
+ *
+ */
+
+/* volume header for "LIF" format volumes */
+
+struct	hp300_lifvol {
+	int16_t	vol_id;
+	char	vol_label[6];
+	int32_t	vol_addr;
+	int16_t	vol_oct;
+	int16_t	vol_dummy;
+	int32_t	vol_dirsize;
+	int16_t	vol_version;
+	int16_t	vol_zero;
+	int32_t	vol_huh1;
+	int32_t	vol_huh2;
+	int32_t	vol_length;
+};
+
+/* LIF directory entry format */
+
+struct	hp300_lifdir {
+	char	dir_name[10];
+	int16_t	dir_type;
+	int32_t	dir_addr;
+	int32_t	dir_length;
+	char	dir_toc[6];
+	int16_t	dir_flag;
+	int32_t	dir_exec;
+};
+
+/* load header for boot rom */
+struct hp300_load {
+	int32_t address;
+	int32_t count;
+};
+
+#define HP300_VOL_ID		-32768
+#define HP300_VOL_OCT		4096
+#define	HP300_DIR_TYPE		-5822
+#define HP300_DIR_FLAG		0x8001	/* dont ask me! */
+#define	HP300_SECTSIZE		256
 
 /* ------------------------------------------
  * x86
