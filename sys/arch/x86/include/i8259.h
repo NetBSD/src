@@ -1,4 +1,4 @@
-/*	$NetBSD: i8259.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: i8259.h,v 1.2 2003/03/03 22:17:15 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -128,16 +128,16 @@ extern void i8259_reinit(void);
 #ifdef ICU_HARDWARE_MASK
 
 #define	i8259_asm_mask(num) \
-	movb	CVAR(i8259_imen) + IRQ_BYTE(num),%al			;\
+	movb	CVAROFF(i8259_imen, IRQ_BYTE(num)),%al			;\
 	orb	$IRQ_BIT(num),%al					;\
-	movb	%al,CVAR(i8259_imen) + IRQ_BYTE(num)			;\
+	movb	%al,CVAROFF(i8259_imen, IRQ_BYTE(num))			;\
 	MASKDELAY							;\
 	outb	%al,$(ICUADDR+1)
 #define	i8259_asm_unmask(num) \
 	cli								;\
-	movb	CVAR(i8259_imen) + IRQ_BYTE(num),%al			;\
+	movb	CVAROFF(i8259_imen, IRQ_BYTE(num)),%al			;\
 	andb	$~IRQ_BIT(num),%al					;\
-	movb	%al,CVAR(i8259_imen) + IRQ_BYTE(num)			;\
+	movb	%al,CVAROFF(i8259_imen, IRQ_BYTE(num))			;\
 	MASKDELAY							;\
 	outb	%al,$(ICUADDR+1)					;\
 	sti
