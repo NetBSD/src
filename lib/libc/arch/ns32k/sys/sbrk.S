@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.7 2000/06/26 06:25:43 kleink Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.8 2003/11/11 19:18:14 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,7 +24,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: sbrk.S,v 1.7 2000/06/26 06:25:43 kleink Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.8 2003/11/11 19:18:14 simonb Exp $")
+#endif
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
 #endif
 
 ASDATA_D(curbrk, _C_LABEL(end))

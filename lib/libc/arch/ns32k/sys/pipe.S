@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.S,v 1.5 2000/10/02 14:51:57 kleink Exp $	*/
+/*	$NetBSD: pipe.S,v 1.6 2003/11/11 19:18:14 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,7 +24,11 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: pipe.S,v 1.5 2000/10/02 14:51:57 kleink Exp $")
+	RCSID("$NetBSD: pipe.S,v 1.6 2003/11/11 19:18:14 simonb Exp $")
+#endif
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(pipe, _pipe)
 #endif
 
 _SYSCALL(_pipe,pipe)
