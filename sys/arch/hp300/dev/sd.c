@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.24 1996/10/06 00:14:15 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.25 1996/10/11 00:11:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -268,48 +268,48 @@ sdident(sc, hd, verbose)
 	case 1:
 	case 2:
 		if (verbose) {
-			printf(": <%s, %s, %s>", vendor, product, revision);
+			kprintf(": <%s, %s, %s>", vendor, product, revision);
 			if (inqbuf.version == 2)
-				printf(" (SCSI-2)");
+				kprintf(" (SCSI-2)");
 		}
 		break;
 	default:
 		if (verbose)
-			printf(": type 0x%x, qual 0x%x, ver %d",
+			kprintf(": type 0x%x, qual 0x%x, ver %d",
 			       inqbuf.type, inqbuf.qual, inqbuf.version);
 		break;
 	}
 	if (verbose)
-		printf("\n");
+		kprintf("\n");
 
 	if (verbose) {
 		/*
 		 * Print out some additional information.
 		 */
-		printf("%s: ", hd->hp_xname);
+		kprintf("%s: ", hd->hp_xname);
 		switch (inqbuf.type) {
 		case 4:	
-			printf("WORM, ");
+			kprintf("WORM, ");
 			break;
 
 		case 5:
-			printf("CD-ROM, ");
+			kprintf("CD-ROM, ");
 			break;
 
 		case 7:
-			printf("Magneto-optical, ");
+			kprintf("Magneto-optical, ");
 			break;
 
 		default:
-			printf("%d cylinders, %d heads, ",
+			kprintf("%d cylinders, %d heads, ",
 			    sc->sc_cyls, sc->sc_heads);
 		}
 
 		if (sc->sc_blks)
-			printf("%d blocks, %d bytes/block\n",
+			kprintf("%d blocks, %d bytes/block\n",
 			    sc->sc_blks >> sc->sc_bshift, sc->sc_blksize);
 		else
-			printf("drive empty\n");
+			kprintf("drive empty\n");
 	}
 
 	scsi_delay(0);
@@ -327,7 +327,7 @@ sdmatch(hd)
 
 	/* XXX set up external name */
 	bzero(sc->sc_xname, sizeof(sc->sc_xname));
-	sprintf(sc->sc_xname, "sd%d", hd->hp_unit);
+	ksprintf(sc->sc_xname, "sd%d", hd->hp_unit);
 
 	/* Initialize the disk structure. */
 	bzero(&sc->sc_dkdev, sizeof(sc->sc_dkdev));
@@ -429,7 +429,7 @@ sdgetcapacity(sc, hd, dev)
 		if (i != STS_CHECKCOND || (sc->sc_flags & SDF_RMEDIA) == 0) {
 #ifdef DEBUG
 			if (sddebug & SDB_CAPACITY)
-				printf("%s: read_capacity returns %d\n",
+				kprintf("%s: read_capacity returns %d\n",
 				       hd->hp_xname, i);
 #endif
 			free(capbuf, M_DEVBUF);
@@ -443,7 +443,7 @@ sdgetcapacity(sc, hd, dev)
 		sc->sc_bshift = 0;
 #ifdef DEBUG
 		if (sddebug & SDB_CAPACITY)
-			printf("%s: removable media not present\n",
+			kprintf("%s: removable media not present\n",
 			       hd->hp_xname);
 #endif
 		free(capbuf, M_DEVBUF);
@@ -459,7 +459,7 @@ sdgetcapacity(sc, hd, dev)
 
 	if (sc->sc_blksize != DEV_BSIZE) {
 		if (sc->sc_blksize < DEV_BSIZE) {
-			printf("%s: need at least %d byte blocks - %s\n",
+			kprintf("%s: need at least %d byte blocks - %s\n",
 			    hd->hp_xname, DEV_BSIZE, "drive ignored");
 			return (-1);
 		}
@@ -469,7 +469,7 @@ sdgetcapacity(sc, hd, dev)
 	}
 #ifdef DEBUG
 	if (sddebug & SDB_CAPACITY)
-		printf("%s: blks=%d, blksize=%d, bshift=%d\n", hd->hp_xname,
+		kprintf("%s: blks=%d, blksize=%d, bshift=%d\n", hd->hp_xname,
 		       sc->sc_blks, sc->sc_blksize, sc->sc_bshift);
 #endif
 	sdgetgeom(sc, hd);
@@ -555,15 +555,15 @@ sdgetinfo(dev)
 	}
 
 	pi = lp->d_partitions;
-	printf("%s: WARNING: %s, ", sc->sc_hd->hp_xname, msg);
+	kprintf("%s: WARNING: %s, ", sc->sc_hd->hp_xname, msg);
 #ifdef COMPAT_NOLABEL
 	if (usedefault) {
-		printf("using old default partitioning\n");
+		kprintf("using old default partitioning\n");
 		sdmakedisklabel(unit, lp);
 		return(0);
 	}
 #endif
-	printf("defining `c' partition as entire disk\n");
+	kprintf("defining `c' partition as entire disk\n");
 	pi[2].p_size = sc->sc_blks;
 	/* XXX reset other info since readdisklabel screws with it */
 	lp->d_npartitions = 3;
@@ -680,7 +680,7 @@ sdlblkstrat(bp, bsize)
 	addr = bp->b_un.b_addr;
 #ifdef DEBUG
 	if (sddebug & SDB_PARTIAL)
-		printf("sdlblkstrat: bp %x flags %x bn %x resid %x addr %x\n",
+		kprintf("sdlblkstrat: bp %x flags %x bn %x resid %x addr %x\n",
 		       bp, bp->b_flags, bn, resid, addr);
 #endif
 
@@ -697,7 +697,7 @@ sdlblkstrat(bp, bsize)
 			cbp->b_bcount = bsize;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
-				printf(" readahead: bn %x cnt %x off %x addr %x\n",
+				kprintf(" readahead: bn %x cnt %x off %x addr %x\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 			sdstrategy(cbp);
@@ -714,7 +714,7 @@ sdlblkstrat(bp, bsize)
 			bcopy(addr, &cbuf[boff], count);
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
-				printf(" writeback: bn %x cnt %x off %x addr %x\n",
+				kprintf(" writeback: bn %x cnt %x off %x addr %x\n",
 				       cbp->b_blkno, count, boff, addr);
 #endif
 		} else {
@@ -724,7 +724,7 @@ sdlblkstrat(bp, bsize)
 			cbp->b_bcount = count;
 #ifdef DEBUG
 			if (sddebug & SDB_PARTIAL)
-				printf(" fulltrans: bn %x cnt %x addr %x\n",
+				kprintf(" fulltrans: bn %x cnt %x addr %x\n",
 				       cbp->b_blkno, count, addr);
 #endif
 		}
@@ -742,7 +742,7 @@ done:
 		addr += count;
 #ifdef DEBUG
 		if (sddebug & SDB_PARTIAL)
-			printf(" done: bn %x resid %x addr %x\n",
+			kprintf(" done: bn %x resid %x addr %x\n",
 			       bn, resid, addr);
 #endif
 	}
@@ -852,12 +852,12 @@ sderror(unit, sc, hp, stat)
 				   sc->sc_punit, sdsense[unit].sense,
 				   sizeof(sdsense[unit].sense));
 		sp = (struct scsi_xsense *)sdsense[unit].sense;
-		printf("%s: scsi sense class %d, code %d", hp->hp_xname,
+		kprintf("%s: scsi sense class %d, code %d", hp->hp_xname,
 			sp->class, sp->code);
 		if (sp->class == 7) {
-			printf(", key %d", sp->key);
+			kprintf(", key %d", sp->key);
 			if (sp->valid)
-				printf(", blk %d", *(int *)&sp->info1);
+				kprintf(", blk %d", *(int *)&sp->info1);
 			switch (sp->key) {
 			/* no sense, try again */
 			case 0:
@@ -886,7 +886,7 @@ sderror(unit, sc, hp, stat)
 				break;
 			}
 		}
-		printf("\n");
+		kprintf("\n");
 	}
 	return(cond);
 }
@@ -982,7 +982,7 @@ sdgo(unit)
 		pad = (bp->b_bcount & (sc->sc_blksize - 1)) != 0;
 #ifdef DEBUG
 		if (pad)
-			printf("%s: partial block xfer -- %x bytes\n",
+			kprintf("%s: partial block xfer -- %x bytes\n",
 			       sc->sc_hd->hp_xname, bp->b_bcount);
 #endif
 		sdstats[unit].sdtransfers++;
@@ -1000,7 +1000,7 @@ sdgo(unit)
 	}
 #ifdef DEBUG
 	if (sddebug & SDB_ERROR)
-		printf("%s: sdstart: %s adr %d blk %d len %d ecnt %d\n",
+		kprintf("%s: sdstart: %s adr %d blk %d len %d ecnt %d\n",
 		       sc->sc_hd->hp_xname,
 		       bp->b_flags & B_READ? "read" : "write",
 		       bp->b_un.b_addr, bp->b_cylin, bp->b_bcount,
@@ -1023,7 +1023,7 @@ sdintr(arg, stat)
 	int cond;
 	
 	if (bp == NULL) {
-		printf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
+		kprintf("%s: bp == NULL\n", sc->sc_hd->hp_xname);
 		return;
 	}
 
@@ -1032,7 +1032,7 @@ sdintr(arg, stat)
 	if (stat) {
 #ifdef DEBUG
 		if (sddebug & SDB_ERROR)
-			printf("%s: sdintr: bad scsi status 0x%x\n",
+			kprintf("%s: sdintr: bad scsi status 0x%x\n",
 				sc->sc_hd->hp_xname, stat);
 #endif
 		cond = sderror(unit, sc, hp, stat);
@@ -1040,7 +1040,7 @@ sdintr(arg, stat)
 			if (cond < 0 && sdtab[unit].b_errcnt++ < SDRETRY) {
 #ifdef DEBUG
 				if (sddebug & SDB_ERROR)
-					printf("%s: retry #%d\n",
+					kprintf("%s: retry #%d\n",
 					    sc->sc_hd->hp_xname,
 					    sdtab[unit].b_errcnt);
 #endif
@@ -1287,12 +1287,12 @@ sddump(dev, blkno, va, size)
 		stat = scsi_tt_write(hp->hp_ctlr, hp->hp_slave, sc->sc_punit,
 		    va, nwrt * sectorsize, blkno, 0);
 		if (stat) {
-			printf("\nsddump: scsi write error 0x%x\n", stat);
+			kprintf("\nsddump: scsi write error 0x%x\n", stat);
 			return (EIO);
 		}
 #else /* SD_DUMP_NOT_TRUSTED */
 		/* Lets just talk about it first. */
-		printf("%s: dump addr %p, blk %d\n", hp->hp_xname,
+		kprintf("%s: dump addr %p, blk %d\n", hp->hp_xname,
 		    va, blkno);
 		delay(500 * 1000);	/* half a second */
 #endif /* SD_DUMP_NOT_TRUSTED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21 1996/06/18 05:55:02 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.22 1996/10/11 00:09:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -298,7 +298,7 @@ void		*aux;
 	cs->cs_unit  = 1;
 	cs->cs_zc    = &addr->zs_chan[ZS_CHAN_B];
 
-	printf(": serial2 on channel a and modem2 on channel b\n");
+	kprintf(": serial2 on channel a and modem2 on channel b\n");
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.9 1996/08/27 21:55:21 cgd Exp $	*/
+/*	$NetBSD: fd.c,v 1.10 1996/10/11 00:07:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -297,7 +297,7 @@ fdprint(aux, fdc)
 	register struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
-		printf(" drive %d", fa->fa_drive);
+		kprintf(" drive %d", fa->fa_drive);
 	return QUIET;
 }
 
@@ -316,7 +316,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
-	printf("\n");
+	kprintf("\n");
 
 /*#ifdef NEWCONFIG
 	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
@@ -390,10 +390,10 @@ fdprobe(parent, match, aux)
 #ifdef FD_DEBUG
 	{
 		int i;
-		printf("fdprobe: status");
+		kprintf("fdprobe: status");
 		for (i = 0; i < n; i++)
-			printf(" %x", fdc->sc_status[i]);
-		printf("\n");
+			kprintf(" %x", fdc->sc_status[i]);
+		kprintf("\n");
 	}
 #endif
 	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
@@ -421,10 +421,10 @@ fdattach(parent, self, aux)
 	/* XXX Allow `flags' to override device type? */
 
 	if (type)
-		printf(": %s %d cyl, %d head, %d sec\n", type->name,
+		kprintf(": %s %d cyl, %d head, %d sec\n", type->name,
 		    type->tracks, type->heads, type->sectrac);
 	else
-		printf(": density unknown\n");
+		kprintf(": density unknown\n");
 
 	fd->sc_cylin = -1;
 	fd->sc_drive = drive;
@@ -464,7 +464,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 	case 0x10 :
 		return &fd_types[0];
 	default:
-		printf("%s: drive %d: unknown device type 0x%x\n",
+		kprintf("%s: drive %d: unknown device type 0x%x\n",
 		    fdc, drive, type);
 		return NULL;
 	}
@@ -491,7 +491,7 @@ fdstrategy(bp)
 	int sz;
  	int s;
 
-/*	printf("fdstrategy: bp=%08x\n", bp);*/
+/*	kprintf("fdstrategy: bp=%08x\n", bp);*/
 
 	/* Valid unit, controller, and request? */
 	if (unit >= fd_cd.cd_ndevs ||
@@ -527,7 +527,7 @@ fdstrategy(bp)
  	bp->b_cylin = bp->b_blkno / (FDC_BSIZE / DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
-	printf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
+	kprintf("fdstrategy: b_blkno %d b_bcount %d blkno %d cylin %d sz %d\n",
 	    bp->b_blkno, bp->b_bcount, fd->sc_blkno, bp->b_cylin, sz);
 #endif
 
@@ -543,7 +543,7 @@ fdstrategy(bp)
 	else {
 		struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 		if (fdc->sc_state == DEVIDLE) {
-			printf("fdstrategy: controller inactive\n");
+			kprintf("fdstrategy: controller inactive\n");
 			fdcstart(fdc);
 		}
 	}
@@ -565,7 +565,7 @@ fdstart(fd)
 	struct fdc_softc *fdc = (void *)fd->sc_dev.dv_parent;
 	int active = fdc->sc_drives.tqh_first != 0;
 
-/*	printf("fdstart:\n");*/
+/*	kprintf("fdstart:\n");*/
 
 	/* Link into controller queue. */
 	fd->sc_q.b_active = 1;
@@ -604,7 +604,7 @@ fdfinish(fd, bp)
 	fd->sc_skip = 0;
 	fd->sc_q.b_actf = bp->b_actf;
 
-/*	printf("fdfinish: fd=%08x buf=%08x busy=%d\n", (u_int)fd, (u_int)bp, fd->sc_dk.dk_busy);*/
+/*	kprintf("fdfinish: fd=%08x buf=%08x busy=%d\n", (u_int)fd, (u_int)bp, fd->sc_dk.dk_busy);*/
 
 	disk_unbusy(&fd->sc_dk, (bp->b_bcount - bp->b_resid));
 
@@ -773,7 +773,7 @@ fdcstart(fdc)
 	/* only got here if controller's drive queue was inactive; should
 	   be in idle state */
 	if (fdc->sc_state != DEVIDLE) {
-		printf("fdcstart: not idle\n");
+		kprintf("fdcstart: not idle\n");
 		return;
 	}
 #endif
@@ -795,19 +795,19 @@ fdcstatus(dv, n, s)
 		n = 2;
 	}
 
-	printf("%s: %s", dv->dv_xname, s);
+	kprintf("%s: %s", dv->dv_xname, s);
 
 	switch (n) {
 	case 0:
-		printf("\n");
+		kprintf("\n");
 		break;
 	case 2:
-		printf(" (st0 %b cyl %d)\n",
+		kprintf(" (st0 %b cyl %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1]);
 		break;
 	case 7:
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -815,7 +815,7 @@ fdcstatus(dv, n, s)
 		break;
 #ifdef DIAGNOSTIC
 	default:
-		printf("\nfdcstatus: weird size");
+		kprintf("\nfdcstatus: weird size");
 		break;
 #endif
 	}
@@ -950,7 +950,7 @@ loop:
 		{int block;
 		 block = (fd->sc_cylin * type->heads + head) * type->sectrac + sec;
 		 if (block != fd->sc_blkno) {
-			 printf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
+			 kprintf("fdcintr: block %d != blkno %d\n", block, fd->sc_blkno);
 #ifdef DDB
 			 Debugger();
 #endif
@@ -979,7 +979,7 @@ loop:
 
 		outb(iobase + fdctl, type->rate);
 #ifdef FD_DEBUG
-		printf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
+		kprintf("fdcintr: %s drive %d track %d head %d sec %d nblks %d\n",
 		    read ? "read" : "write", fd->sc_drive, fd->sc_cylin, head,
 		    sec, nblks);
 #endif
@@ -1030,7 +1030,7 @@ loop:
 		if (fiq_release(&fiqhandler) == -1)
 			panic("Cannot release FIQ vector\n");
 /*		if (fiqhandler.fh_r13)
-			printf("fiqloops=%d\n", fiqhandler.fh_r13);*/
+			kprintf("fiqloops=%d\n", fiqhandler.fh_r13);*/
 	case SEEKTIMEDOUT:
 	case RECALTIMEDOUT:
 	case RESETTIMEDOUT:
@@ -1048,11 +1048,11 @@ loop:
 		if (fiq_release(&fiqhandler) == -1)
 			panic("Cannot release FIQ vector\n");
 /*		if (fiqhandler.fh_r13)
-			printf("fiqloops=%d\n", fiqhandler.fh_r13);*/
+			kprintf("fiqloops=%d\n", fiqhandler.fh_r13);*/
 #ifdef FD_DEBUG
 			fdcstatus(&fd->sc_dev, 7, bp->b_flags & B_READ ?
 			    "read failed" : "write failed");
-			printf("blkno %d nblks %d\n",
+			kprintf("blkno %d nblks %d\n",
 			    fd->sc_blkno, fd->sc_nblks);
 #endif
 			fdcretry(fdc);
@@ -1068,11 +1068,11 @@ loop:
 		if (fiq_release(&fiqhandler) == -1)
 			panic("Cannot release FIQ vector\n");
 /*		if (fiqhandler.fh_r13)
-			printf("fiqloops=%d\n", fiqhandler.fh_r13);*/
+			kprintf("fiqloops=%d\n", fiqhandler.fh_r13);*/
 		if (fdc->sc_errors) {
 /*			diskerr(bp, "fd", "soft error", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-			printf("\n");*/
+			kprintf("\n");*/
 			fdc->sc_errors = 0;
 		}
 		fd->sc_blkno += fd->sc_nblks;
@@ -1082,7 +1082,7 @@ loop:
 			bp->b_cylin = fd->sc_blkno / fd->sc_type->seccyl;
 			goto doseek;
 		}
-/*		printf("IOCOMPLETE:calling fdfinish fd=%08x bp=%08x blkno=%d\n", (u_int)fd, (u_int)bp, fd->sc_blkno);*/
+/*		kprintf("IOCOMPLETE:calling fdfinish fd=%08x bp=%08x blkno=%d\n", (u_int)fd, (u_int)bp, fd->sc_blkno);*/
 		fdfinish(fd, bp);
 		goto loop;
 
@@ -1176,7 +1176,7 @@ fdcretry(fdc)
 	default:
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
 		    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
-		printf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
+		kprintf(" (st0 %b st1 %b st2 %b cyl %d head %d sec %d)\n",
 		    fdc->sc_status[0], NE7_ST0BITS,
 		    fdc->sc_status[1], NE7_ST1BITS,
 		    fdc->sc_status[2], NE7_ST2BITS,
@@ -1289,13 +1289,13 @@ load_ramdisc_from_floppy(rd, dev)
 	floppysize = fd_types[type].size << (fd_types[type].secsize + 7);
         
 	if (rd->rd_size < floppysize) {
-		printf("Ramdisc not big enough for floppy image\n");
+		kprintf("Ramdisc not big enough for floppy image\n");
 		return(EINVAL);
 	}
 
 /* We have the ramdisk ! */
 
-	printf("Loading ramdisc : %4dK ", 0);
+	kprintf("Loading ramdisc : %4dK ", 0);
 
 /* obtain a buffer */
 
@@ -1309,14 +1309,14 @@ load_ramdisc_from_floppy(rd, dev)
 
 	if (fdopen(bp->b_dev, 0) != 0) {
 		brelse(bp);		
-		printf("Cannot open floppy device\n");
+		kprintf("Cannot open floppy device\n");
 			return(EINVAL);
 	}
 
 	for (loop = 0;
 	    loop < (floppysize / DEV_BSIZE / fd_types[type].sectrac);
 	    ++loop) {
-		printf("\x08\x08\x08\x08\x08\x08%4dK ",
+		kprintf("\x08\x08\x08\x08\x08\x08%4dK ",
 		    loop * fd_types[type].sectrac * DEV_BSIZE / 1024);
 		bp->b_blkno = loop * fd_types[type].sectrac;
 		bp->b_bcount = fd_types[type].sectrac * DEV_BSIZE;
@@ -1332,7 +1332,7 @@ load_ramdisc_from_floppy(rd, dev)
 		    + loop * fd_types[type].sectrac * DEV_BSIZE,
 		    fd_types[type].sectrac * DEV_BSIZE);
 	}
-	printf("\x08\x08\x08\x08\x08\x08%4dK done\n",
+	kprintf("\x08\x08\x08\x08\x08\x08%4dK done\n",
 	    loop * fd_types[type].sectrac * DEV_BSIZE / 1024);
         
 	fdclose(bp->b_dev, 0);

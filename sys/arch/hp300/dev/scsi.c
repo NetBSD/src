@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.10 1996/05/18 23:57:03 thorpej Exp $	*/
+/*	$NetBSD: scsi.c,v 1.11 1996/10/11 00:11:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -123,10 +123,10 @@ scsiabort(target, hs, hd, where)
 	int startlen;	/* XXX - kludge till I understand whats *supposed* to happen */
 	u_char junk;
 
-	printf("%s: ", hs->sc_hc->hp_xname);
+	kprintf("%s: ", hs->sc_hc->hp_xname);
 	if (target != -1)
-		printf("targ %d ", target);
-	printf("abort from %s: phase=0x%x, ssts=0x%x, ints=0x%x\n",
+		kprintf("targ %d ", target);
+	kprintf("abort from %s: phase=0x%x, ssts=0x%x, ints=0x%x\n",
 		where, hd->scsi_psns, hd->scsi_ssts, hd->scsi_ints);
 
 	hd->scsi_ints = hd->scsi_ints;
@@ -147,7 +147,7 @@ scsiabort(target, hs, hd, where)
 				goto out;
 			DELAY(1);
 			if (--maxtries == 0) {
-				printf("-- scsiabort gave up after 1000 tries (startlen = %d len = %d)\n",
+				kprintf("-- scsiabort gave up after 1000 tries (startlen = %d len = %d)\n",
 					startlen, len);
 				goto out2;
 			}
@@ -181,7 +181,7 @@ out:
 	 * Either way, reset the card & the SPC.
 	 */
 	if (len < 0 && hs)
-		printf("%s: abort failed.  phase=0x%x, ssts=0x%x\n",
+		kprintf("%s: abort failed.  phase=0x%x, ssts=0x%x\n",
 			hs->sc_hc->hp_xname, hd->scsi_psns, hd->scsi_ssts);
 
 	if (! ((junk = hd->scsi_ints) & INTS_RESEL)) {
@@ -270,25 +270,25 @@ scsiattach(hc)
 	/*
 	 * Print information about what we've found.
 	 */
-	printf(":");
+	kprintf(":");
 	if (hs->sc_flags & SCSI_DMA32)
-		printf(" 32 bit dma, ");
+		kprintf(" 32 bit dma, ");
 
 	switch (hs->sc_sync) {
 	case 0:
-		printf("async");
+		kprintf("async");
 		break;
 
 	case (TMOD_SYNC | 0x3e):
-		printf("250ns sync");
+		kprintf("250ns sync");
 		break;
 
 	case (TMOD_SYNC | 0x5e):
-		printf("375ns sync");
+		kprintf("375ns sync");
 		break;
 
 	case (TMOD_SYNC | 0x7d):
-		printf("500ns sync");
+		kprintf("500ns sync");
 		break;
 
 	default:
@@ -296,9 +296,9 @@ scsiattach(hc)
 	}
 
 	if ((hd->scsi_hconf & HCONF_PARITY) == 0)
-		printf(", no parity");
+		kprintf(", no parity");
 
-	printf(", scsi id %d\n", hs->sc_scsiid);
+	kprintf(", scsi id %d\n", hs->sc_scsiid);
 
 	/*
 	 * XXX scale initialization wait according to CPU speed.
@@ -388,54 +388,54 @@ scsierror(hs, hd, ints)
 	int unit = hs->sc_hc->hp_unit;
 	char *sep = "";
 
-	printf("%s: ", hs->sc_hc->hp_xname);
+	kprintf("%s: ", hs->sc_hc->hp_xname);
 	if (ints & INTS_RST) {
 		DELAY(100);
 		if (hd->scsi_hconf & HCONF_SD)
-			printf("spurious RST interrupt");
+			kprintf("spurious RST interrupt");
 		else
-			printf("hardware error - check fuse");
+			kprintf("hardware error - check fuse");
 		sep = ", ";
 	}
 	if ((ints & INTS_HARD_ERR) || hd->scsi_serr) {
 		if (hd->scsi_serr & SERR_SCSI_PAR) {
-			printf("%sparity err", sep);
+			kprintf("%sparity err", sep);
 			sep = ", ";
 		}
 		if (hd->scsi_serr & SERR_SPC_PAR) {
-			printf("%sSPC parity err", sep);
+			kprintf("%sSPC parity err", sep);
 			sep = ", ";
 		}
 		if (hd->scsi_serr & SERR_TC_PAR) {
-			printf("%sTC parity err", sep);
+			kprintf("%sTC parity err", sep);
 			sep = ", ";
 		}
 		if (hd->scsi_serr & SERR_PHASE_ERR) {
-			printf("%sphase err", sep);
+			kprintf("%sphase err", sep);
 			sep = ", ";
 		}
 		if (hd->scsi_serr & SERR_SHORT_XFR) {
-			printf("%ssync short transfer err", sep);
+			kprintf("%ssync short transfer err", sep);
 			sep = ", ";
 		}
 		if (hd->scsi_serr & SERR_OFFSET) {
-			printf("%ssync offset error", sep);
+			kprintf("%ssync offset error", sep);
 			sep = ", ";
 		}
 	}
 	if (ints & INTS_TIMEOUT)
-		printf("%sSPC select timeout error", sep);
+		kprintf("%sSPC select timeout error", sep);
 	if (ints & INTS_SRV_REQ)
-		printf("%sspurious SRV_REQ interrupt", sep);
+		kprintf("%sspurious SRV_REQ interrupt", sep);
 	if (ints & INTS_CMD_DONE)
-		printf("%sspurious CMD_DONE interrupt", sep);
+		kprintf("%sspurious CMD_DONE interrupt", sep);
 	if (ints & INTS_DISCON)
-		printf("%sspurious disconnect interrupt", sep);
+		kprintf("%sspurious disconnect interrupt", sep);
 	if (ints & INTS_RESEL)
-		printf("%sspurious reselect interrupt", sep);
+		kprintf("%sspurious reselect interrupt", sep);
 	if (ints & INTS_SEL)
-		printf("%sspurious select interrupt", sep);
-	printf("\n");
+		kprintf("%sspurious select interrupt", sep);
+	kprintf("\n");
 }
 
 static int
@@ -492,7 +492,7 @@ ixfer_start(hd, len, phase, wait)
 		if (hd->scsi_ints || --wait < 0) {
 #ifdef DEBUG
 			if (scsi_debug)
-				printf("ixfer_start fail: i%x, w%d\n",
+				kprintf("ixfer_start fail: i%x, w%d\n",
 				       hd->scsi_ints, wait);
 #endif
 			HIST(ixstart_wait, wait)
@@ -517,7 +517,7 @@ ixfer_out(hd, len, buf)
 			if (hd->scsi_ints || --wait < 0) {
 #ifdef DEBUG
 				if (scsi_debug)
-					printf("ixfer_out fail: l%d i%x w%d\n",
+					kprintf("ixfer_out fail: l%d i%x w%d\n",
 					       len, hd->scsi_ints, wait);
 #endif
 				HIST(ixout_wait, wait)
@@ -548,7 +548,7 @@ ixfer_in(hd, len, buf)
 				}
 #ifdef DEBUG
 				if (scsi_debug)
-					printf("ixfer_in fail: l%d i%x w%d\n",
+					kprintf("ixfer_in fail: l%d i%x w%d\n",
 					       len, hd->scsi_ints, wait);
 #endif
 				HIST(ixin_wait, wait)
@@ -719,7 +719,7 @@ scsiicmd(hs, target, cbuf, clen, buf, len, xferphase)
 			goto out;
 
 		default:
-			printf("%s: unexpected phase %d in icmd from %d\n",
+			kprintf("%s: unexpected phase %d in icmd from %d\n",
 				hs->sc_hc->hp_xname, phase, target);
 			goto abort;
 		}
@@ -778,7 +778,7 @@ finishxfer(hs, hd, target)
 			if (--wait < 0) {
 #ifdef DEBUG
 				if (scsi_debug)
-					printf("finishxfer fail: ssts %x\n",
+					kprintf("finishxfer fail: ssts %x\n",
 					       hd->scsi_ssts);
 #endif
 				HIST(fxfr_wait, wait)
@@ -824,7 +824,7 @@ finishxfer(hs, hd, target)
 			return;
 
 		default:
-			printf("%s: unexpected phase %d in finishxfer from %d\n",
+			kprintf("%s: unexpected phase %d in finishxfer from %d\n",
 				hs->sc_hc->hp_xname, phase, target);
 			goto abort;
 		}
@@ -1047,7 +1047,7 @@ scsigo(ctlr, slave, unit, bp, cdb, pad)
 			goto out;
 
 		default:
-			printf("%s: unexpected phase %d in go from %d\n",
+			kprintf("%s: unexpected phase %d in go from %d\n",
 				hs->sc_hc->hp_xname, phase, slave);
 			goto abort;
 		}
@@ -1124,7 +1124,7 @@ out:
 #ifdef DEBUG
 		hs->sc_flags |= SCSI_PAD;
 		if (i & 1)
-			printf("%s: odd byte count: %d bytes @ %d\n",
+			kprintf("%s: odd byte count: %d bytes @ %d\n",
 				hs->sc_hc->hp_xname, i, bp->b_cylin);
 #endif
 	} else
@@ -1153,7 +1153,7 @@ scsidone(unit)
 
 #ifdef DEBUG
 	if (scsi_debug)
-		printf("%s: done called!\n", scsi_softc[unit].sc_hc->hp_xname);
+		kprintf("%s: done called!\n", scsi_softc[unit].sc_hc->hp_xname);
 #endif
 	/* dma operation is done -- turn off card dma */
 	hd->scsi_csr &=~ (CSR_DE1|CSR_DE0);
@@ -1241,7 +1241,7 @@ scsi_tt_oddio(ctlr, slave, unit, buf, len, b_flags, freedma)
 #ifdef DEBUG
 	if (freedma && (hs->sc_flags & SCSI_HAVEDMA) == 0 ||
 	    !freedma && (hs->sc_flags & SCSI_HAVEDMA))
-		printf("oddio: freedma (%d) inconsistency (flags=%x)\n",
+		kprintf("oddio: freedma (%d) inconsistency (flags=%x)\n",
 		       freedma, hs->sc_flags);
 #endif
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 1996/09/25 15:03:20 leo Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 1996/10/11 00:08:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -184,7 +184,7 @@ cpu_startup()
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf(version);
+	kprintf(version);
 	identifycpu();
 
 	for (i = memsize = 0; i < NMEM_SEGS; i++) {
@@ -192,7 +192,7 @@ cpu_startup()
 			break;
 		memsize += boot_segs[i].end - boot_segs[i].start;
 	}
-	printf("real  mem = %ld (%ld pages)\n", memsize, memsize/NBPG);
+	kprintf("real  mem = %ld (%ld pages)\n", memsize, memsize/NBPG);
 
 	/*
 	 * Allocate space for system data structures.
@@ -342,9 +342,9 @@ again:
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	printf("avail mem = %ld (%ld pages)\n", ptoa(cnt.v_free_count),
+	kprintf("avail mem = %ld (%ld pages)\n", ptoa(cnt.v_free_count),
 	    ptoa(cnt.v_free_count)/NBPG);
-	printf("using %d buffers containing %d bytes of memory\n",
+	kprintf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 	
 	/*
@@ -423,8 +423,8 @@ identifycpu()
 		cpu = "m68020";
 		mmu = " m68851 MMU";
 	}
-	sprintf(cpu_model, "%s (%s CPU%s%s FPU)", mach, cpu, mmu, fpu);
-	printf("%s\n", cpu_model);
+	ksprintf(cpu_model, "%s (%s CPU%s%s FPU)", mach, cpu, mmu, fpu);
+	kprintf("%s\n", cpu_model);
 }
 
 /*
@@ -509,7 +509,7 @@ sendsig(catcher, sig, mask, code)
 	extern char sigcode[], esigcode[];
 
 
-/*printf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
+/*kprintf("sendsig %d %d %x %x %x\n", p->p_pid, sig, mask, code, catcher);*/
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
@@ -533,13 +533,13 @@ sendsig(catcher, sig, mask, code)
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
+		kprintf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
 	if (useracc((caddr_t)fp, sizeof(struct sigframe), B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-			printf("sendsig(%d): useracc failed on sig %d\n",
+			kprintf("sendsig(%d): useracc failed on sig %d\n",
 			       p->p_pid, sig);
 #endif
 		/*
@@ -595,7 +595,7 @@ sendsig(catcher, sig, mask, code)
 		frame->f_format = frame->f_vector = 0;
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
-			printf("sendsig(%d): copy out %d of frame %d\n",
+			kprintf("sendsig(%d): copy out %d of frame %d\n",
 			       p->p_pid, exframesize[ft], ft);
 #endif
 	}
@@ -605,7 +605,7 @@ sendsig(catcher, sig, mask, code)
 	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kfp->sf_state.ss_fpstate)
-		printf("sendsig(%d): copy out FP state (%x) to %x\n",
+		kprintf("sendsig(%d): copy out FP state (%x) to %x\n",
 		       p->p_pid, *(u_int *)&kfp->sf_state.ss_fpstate,
 		       &kfp->sf_state.ss_fpstate);
 #endif
@@ -623,7 +623,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
+		kprintf("sendsig(%d): sig %d scp %x fp %x sc_sp %x sc_ap %x\n",
 		       p->p_pid, sig, kfp->sf_scp, fp,
 		       kfp->sf_sc.sc_sp, kfp->sf_sc.sc_ap);
 #endif
@@ -633,7 +633,7 @@ sendsig(catcher, sig, mask, code)
 	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sendsig(%d): sig %d returns\n",
+		kprintf("sendsig(%d): sig %d returns\n",
 		       p->p_pid, sig);
 #endif
 	free((caddr_t)kfp, M_TEMP);
@@ -669,7 +669,7 @@ sys_sigreturn(p, v, retval)
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
+		kprintf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
 		return(EINVAL);
@@ -709,7 +709,7 @@ sys_sigreturn(p, v, retval)
 	flags = fuword((caddr_t)rf);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
-		printf("sigreturn(%d): sc_ap %x flags %x\n",
+		kprintf("sigreturn(%d): sc_ap %x flags %x\n",
 		       p->p_pid, rf, flags);
 #endif
 	/*
@@ -721,7 +721,7 @@ sys_sigreturn(p, v, retval)
 		return (EJUSTRETURN);
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
-		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
+		kprintf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, &flags, scp->sc_sp, SCARG(uap,sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
@@ -750,7 +750,7 @@ sys_sigreturn(p, v, retval)
 		bcopy((caddr_t)&tstate.ss_frame.F_u, (caddr_t)&frame->F_u, sz);
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
-			printf("sigreturn(%d): copy in %d of frame type %d\n",
+			kprintf("sigreturn(%d): copy in %d of frame type %d\n",
 			       p->p_pid, sz, tstate.ss_frame.f_format);
 #endif
 	}
@@ -761,12 +761,12 @@ sys_sigreturn(p, v, retval)
 		m68881_restore(&tstate.ss_fpstate);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&tstate.ss_fpstate)
-		printf("sigreturn(%d): copied in FP state (%x) at %x\n",
+		kprintf("sigreturn(%d): copied in FP state (%x) at %x\n",
 		       p->p_pid, *(u_int *)&tstate.ss_fpstate,
 		       &tstate.ss_fpstate);
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
-		printf("sigreturn(%d): returns\n", p->p_pid);
+		kprintf("sigreturn(%d): returns\n", p->p_pid);
 #endif
 	return (EJUSTRETURN);
 }
@@ -810,7 +810,7 @@ boot(howto, bootstr)
 
 	splhigh();			/* extreme priority */
 	if(howto & RB_HALT) {
-		printf("halted\n\n");
+		kprintf("halted\n\n");
 		asm("	stop	#0x2700");
 	}
 	else {
@@ -897,10 +897,10 @@ dumpsys()
 		dumpconf();
 	if (dumplo < 0)
 		return;
-	printf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
+	kprintf("\ndumping to dev %x, offset %ld\n", dumpdev, dumplo);
 
 #if defined(DDB) || defined(PANICWAIT)
-	printf("Do you want to dump memory? [y]");
+	kprintf("Do you want to dump memory? [y]");
 	cnputc(i = cngetc());
 	switch (i) {
 		case 'n':
@@ -919,7 +919,7 @@ dumpsys()
 	dump     = bdevsw[major(dumpdev)].d_dump;
 	nbytes   = dumpsize * NBPG;
 
-	printf("dump ");
+	kprintf("dump ");
 
 	error = cpu_dump(dump, &blkno);
 	if (!error) {
@@ -937,7 +937,7 @@ dumpsys()
 		 */
 		n = nbytes - i;
 		if (n && (n % (1024*1024)) == 0)
-			printf("%d ", n / (1024 * 1024));
+			kprintf("%d ", n / (1024 * 1024));
 
 		/*
 		 * Limit transfer to BYTES_PER_DUMP
@@ -962,26 +962,26 @@ dumpsys()
 	switch (error) {
 
 	case ENXIO:
-		printf("device bad\n");
+		kprintf("device bad\n");
 		break;
 
 	case EFAULT:
-		printf("device not ready\n");
+		kprintf("device not ready\n");
 		break;
 
 	case EINVAL:
-		printf("area improper\n");
+		kprintf("area improper\n");
 		break;
 
 	case EIO:
-		printf("i/o error\n");
+		kprintf("i/o error\n");
 		break;
 
 	default:
-		printf("succeeded\n");
+		kprintf("succeeded\n");
 		break;
 	}
-	printf("\n\n");
+	kprintf("\n\n");
 	delay(5000000);		/* 5 seconds */
 }
 
@@ -1024,7 +1024,7 @@ u_short evec;
 {
 	static int	prev_evec;
 
-	printf("unexpected trap (vector offset %x) from %x\n",evec & 0xFFF, pc);
+	kprintf("unexpected trap (vector offset %x) from %x\n",evec & 0xFFF, pc);
 
 	if(prev_evec == evec) {
 		delay(1000000);
@@ -1037,7 +1037,7 @@ straymfpint(pc, evec)
 int		pc;
 u_short	evec;
 {
-	printf("unexpected mfp-interrupt (vector offset %x) from %x\n",
+	kprintf("unexpected mfp-interrupt (vector offset %x) from %x\n",
 	       evec & 0xFFF, pc);
 }
 
@@ -1262,7 +1262,7 @@ static void call_sicallbacks()
 #ifdef DIAGNOSTIC
 	if (ncbd) {
 #ifdef DEBUG
-		printf("call_sicallback: %d more dynamic structures\n", ncbd);
+		kprintf("call_sicallback: %d more dynamic structures\n", ncbd);
 #endif
 		ncbd = 0;
 	}
@@ -1297,26 +1297,26 @@ regdump(fp, sbytes)
 		return;
 	s = splhigh();
 	doingdump = 1;
-	printf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(fp->f_pc, 8));
-	printf("ps = %s, ", hexstr(fp->f_sr, 4));
-	printf("sfc = %s, ", hexstr(getsfc(), 4));
-	printf("dfc = %s\n", hexstr(getdfc(), 4));
-	printf("Registers:\n     ");
+	kprintf("pid = %d, pc = %s, ", curproc->p_pid, hexstr(fp->f_pc, 8));
+	kprintf("ps = %s, ", hexstr(fp->f_sr, 4));
+	kprintf("sfc = %s, ", hexstr(getsfc(), 4));
+	kprintf("dfc = %s\n", hexstr(getdfc(), 4));
+	kprintf("Registers:\n     ");
 	for (i = 0; i < 8; i++)
-		printf("        %d", i);
-	printf("\ndreg:");
+		kprintf("        %d", i);
+	kprintf("\ndreg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i], 8));
-	printf("\nareg:");
+		kprintf(" %s", hexstr(fp->f_regs[i], 8));
+	kprintf("\nareg:");
 	for (i = 0; i < 8; i++)
-		printf(" %s", hexstr(fp->f_regs[i+8], 8));
+		kprintf(" %s", hexstr(fp->f_regs[i+8], 8));
 	if (sbytes > 0) {
 		if (fp->f_sr & PSL_S) {
-			printf("\n\nKernel stack (%s):",
+			kprintf("\n\nKernel stack (%s):",
 			       hexstr((int)(((int *)&fp)-1), 8));
 			dumpmem(((int *)&fp)-1, sbytes, 0);
 		} else {
-			printf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
+			kprintf("\n\nUser stack (%s):", hexstr(fp->f_regs[SP], 8));
 			dumpmem((int *)fp->f_regs[SP], sbytes, 1);
 		}
 	}
@@ -1335,9 +1335,9 @@ dumpmem(ptr, sz, ustack)
 
 	for (i = 0; i < sz; i++) {
 		if ((i & 7) == 0)
-			printf("\n%s: ", hexstr((int)ptr, 6));
+			kprintf("\n%s: ", hexstr((int)ptr, 6));
 		else
-			printf(" ");
+			kprintf(" ");
 		if (ustack == 1) {
 			if ((val = fuword(ptr++)) == -1)
 				break;
@@ -1347,9 +1347,9 @@ dumpmem(ptr, sz, ustack)
 				break;
 			val = *ptr++;
 		}
-		printf("%s", hexstr(val, 8));
+		kprintf("%s", hexstr(val, 8));
 	}
-	printf("\n");
+	kprintf("\n");
 }
 
 static char *

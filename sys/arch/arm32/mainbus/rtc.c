@@ -1,4 +1,4 @@
-/* $NetBSD: rtc.c,v 1.2 1996/04/26 22:02:03 mark Exp $ */
+/* $NetBSD: rtc.c,v 1.3 1996/10/11 00:07:28 christos Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -250,7 +250,7 @@ rtcattach(parent, self, aux)
 
 	sc->sc_flags |= RTC_BROKEN;
 	if ((ib->ib_addr & IIC_PCF8583_MASK) == IIC_PCF8583_ADDR) {
-		printf(": PCF8583");
+		kprintf(": PCF8583");
 
 		buff[0] = 0;
 
@@ -260,26 +260,26 @@ rtcattach(parent, self, aux)
 		if (iic_control(RTC_Read, buff, 1))
 			return;
 
-		printf(" clock base ");
+		kprintf(" clock base ");
 		switch (buff[0] & 0x30) {
 		case 0x00:
-			printf("32.768KHz");
+			kprintf("32.768KHz");
 			break;
 		case 0x10:
-			printf("50Hz");
+			kprintf("50Hz");
 			break;
 		case 0x20:
-			printf("event");
+			kprintf("event");
 			break;
 		case 0x30:
-			printf("test mode");
+			kprintf("test mode");
 			break;
 		}
 
 		if (buff[0] & 0x80)
-			printf(" stopped");
+			kprintf(" stopped");
 		if (buff[0] & 0x04)
-			printf(" alarm enabled");
+			kprintf(" alarm enabled");
 		sc->sc_flags &= ~RTC_BROKEN;
 	}
 
@@ -292,7 +292,7 @@ rtcattach(parent, self, aux)
 
 	inittodr(0);
 
-	printf("\n");
+	kprintf("\n");
 }
 
 

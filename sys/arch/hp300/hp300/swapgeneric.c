@@ -1,4 +1,4 @@
-/*	$NetBSD: swapgeneric.c,v 1.12 1995/09/24 02:18:11 thorpej Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.13 1996/10/11 00:11:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -130,21 +130,21 @@ setconf()
 	if (boothowto & RB_ASKNAME) {
 		char name[128];
 retry:
-		printf("root device? ");
+		kprintf("root device? ");
 		gets(name);
 		for (gc = genericconf; gc->gc_driver; gc++)
 			if (gc->gc_name[0] == name[0] &&
 			    gc->gc_name[1] == name[1])
 				goto gotit;
-		printf("use one of:");
+		kprintf("use one of:");
 		for (gc = genericconf; gc->gc_driver; gc++)
-			printf(" %s?", gc->gc_name);
-		printf("\n");
+			kprintf(" %s?", gc->gc_name);
+		kprintf("\n");
 		goto retry;
 gotit:
 		cp = &name[1];
 		if (*++cp < '0' || *cp > '9') {
-			printf("bad/missing unit number\n");
+			kprintf("bad/missing unit number\n");
 			goto retry;
 		}
 		while (*cp >= '0' && *cp <= '9')
@@ -158,7 +158,7 @@ gotit:
 			 * Tell nfs_mountroot if it's a network interface.
 			 */
 			bzero(nfsbootdevname_buf, sizeof(nfsbootdevname_buf));
-			sprintf(nfsbootdevname_buf, "%s%d", gc->gc_name, unit);
+			ksprintf(nfsbootdevname_buf, "%s%d", gc->gc_name, unit);
 			nfsbootdevname = nfsbootdevname_buf;
 		}
 #endif /* NFSCLIENT */
@@ -172,12 +172,12 @@ gotit:
 				continue;
 			if (hd->hp_unit == 0 && hd->hp_driver ==
 			    (struct driver *)gc->gc_driver) {
-				printf("root on %s0\n", hd->hp_driver->d_name);
+				kprintf("root on %s0\n", hd->hp_driver->d_name);
 				goto found;
 			}
 		}
 	}
-	printf("No suitable root, halting.\n");
+	kprintf("No suitable root, halting.\n");
 	asm("stop #0x2700");
 found:
 	if (gc->gc_root != NODEV)
@@ -241,7 +241,7 @@ static int
 no_mountroot()
 {
 
-	printf("root/swap configuration error, halting.\n");
+	kprintf("root/swap configuration error, halting.\n");
 	asm("stop #0x2700");
 	/* NOTREACHED */
 }

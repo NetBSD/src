@@ -1,4 +1,4 @@
-/* $NetBSD: kbd.c,v 1.11 1996/08/09 10:30:23 mrg Exp $ */
+/* $NetBSD: kbd.c,v 1.12 1996/10/11 00:07:22 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -682,7 +682,7 @@ kbdprobe(parent, match, aux)
 		return(1);
 		break;
 	default:
-		printf("kbd: Unknown IOMD id=%04x", id);
+		kprintf("kbd: Unknown IOMD id=%04x", id);
 		break;
 	}
 
@@ -702,9 +702,9 @@ kbdattach(parent, self, aux)
 
 	error = kbdreset();
 	if (error == 1)
-		printf(": Cannot enable keyboard");
+		kprintf(": Cannot enable keyboard");
 	else if (error == 2)
-		printf(": No keyboard present");
+		kprintf(": No keyboard present");
 
 	sc->sc_iobase = mb->mb_iobase;
 
@@ -715,7 +715,7 @@ kbdattach(parent, self, aux)
 	if (irq_claim(IRQ_KBDRX, &sc->sc_ih))
 		panic("Cannot claim IRQ for kbd%d\n", sc->sc_device.dv_unit);
 
-	printf("\n");
+	kprintf("\n");
 }
 
 
@@ -941,7 +941,7 @@ kbdcmd(cmd)
 			delay(200);
 		}
 		if (i == 0)
-			printf("kbd: transmit not ready\n");
+			kprintf("kbd: transmit not ready\n");
 
 		outb(IOMD_KBDDAT, cmd);
 		delay(200);
@@ -968,7 +968,7 @@ kbdcmd(cmd)
 		if (retry)
 			kbd_flush_input();
 	}
-	printf("kbd: command failed, cmd = %02x, status = %02x\n", cmd, c);
+	kprintf("kbd: command failed, cmd = %02x, status = %02x\n", cmd, c);
 	return(1);
 }
 
@@ -1106,7 +1106,7 @@ getkey_polled()
 			up = (code & 0x100);
 			key = code & 0xff;
 
-/*			printf("code=%04x mod=%04x\n", code, modifiers);*/
+/*			kprintf("code=%04x mod=%04x\n", code, modifiers);*/
 
 /* By default we use the main keycode lookup table */
 
@@ -1227,7 +1227,7 @@ int
 PollKeyboard(code)
 	int code;
 {
-/*	printf("%02x.", code);*/
+/*	kprintf("%02x.", code);*/
 
 /*
  * Set the keyup flag if this is the release code.
@@ -1248,7 +1248,7 @@ PollKeyboard(code)
 /* If it is a resend code note it down */
 
 	if (code == KBR_RESEND) {
-		printf("kbd:resend\n");
+		kprintf("kbd:resend\n");
 		kbd_resend = 1;
 		return(0);
 	}
@@ -1256,7 +1256,7 @@ PollKeyboard(code)
 /* If it is an ack code note it down */
 
 	if (code == KBR_ACK) {
-/*		printf("kbd:ack\n");*/
+/*		kprintf("kbd:ack\n");*/
 		kbd_ack = 1;
 		return(0);
 	}
@@ -1282,7 +1282,7 @@ PollKeyboard(code)
 		return(0);
 	}
 
-/*	printf("%02x:%02x.", code, flags);*/
+/*	kprintf("%02x:%02x.", code, flags);*/
 
 /* Mark the code appropriately if it is part of an E0 sequence */
 
@@ -1411,7 +1411,7 @@ kbddecodekey(sc, code)
 /*	if (key == 0) {
 		char err[80];
 
-		sprintf(err, "\n\rUnknown keycode %04x\n\r", code);
+		ksprintf(err, "\n\rUnknown keycode %04x\n\r", code);
 		dprintf(err);
  
 	}*/
@@ -1477,16 +1477,16 @@ kbddecodekey(sc, code)
 					break;
 #endif
 				case 0x21b:
-					printf("Kernel interruption\n");
+					kprintf("Kernel interruption\n");
 					boot(RB_HALT, NULL);
 					break;
 				case 0x209:
-					printf("Kernel interruption - nosync\n");
+					kprintf("Kernel interruption - nosync\n");
 					boot(RB_NOSYNC | RB_HALT, NULL);
 					break;
 	
 				default:
-					printf("Special key %04x\n", key);
+					kprintf("Special key %04x\n", key);
 					break;
 				}
 		} else {

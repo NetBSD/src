@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.9 1996/07/05 19:22:21 leo Exp $	*/
+/*	$NetBSD: dma.c,v 1.10 1996/10/11 00:09:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -169,7 +169,7 @@ int	*lock_stat;
 	if((req = dma_active.tqh_first) == NULL)
 		panic("st_dmafree: empty active queue\n");
 	if(req->softc != softc)
-		printf("Caller of st_dmafree is not lock-owner!\n");
+		kprintf("Caller of st_dmafree is not lock-owner!\n");
 
 	/*
 	 * Clear lock status, move request from active to free queue.
@@ -215,7 +215,7 @@ int	sr;	/* sr at time of interrupt */
 			spl0();
 		}
 	}
-	else printf("DMA interrupt discarded\n");
+	else kprintf("DMA interrupt discarded\n");
 }
 
 /*
