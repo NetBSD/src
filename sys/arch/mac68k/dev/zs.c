@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.13 1997/06/15 20:34:15 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -803,6 +803,7 @@ zs_abort(zst)
 	/* If we time out, turn off the abort ability! */
 	}
 
-	/* XXX - Always available, but may be the PROM monitor. */
+#ifdef DDB
 	Debugger();
+#endif
 }
