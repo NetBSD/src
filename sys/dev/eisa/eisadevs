@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.8 1996/05/20 00:52:53 thorpej Exp $
+$NetBSD: eisadevs,v 1.9 1996/07/25 20:22:16 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -39,6 +39,8 @@ vendor ADP		Adaptec
 vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
+vendor FSI		FORE Systems
+vendor INT		Intel
 vendor TCM		3Com
 vendor USC		UltraStor
 
@@ -69,6 +71,14 @@ product DEC 3001	DEFEA FDDI Controller
 product DEC 3002	DEFEA FDDI Controller
 product DEC 3003	DEFEA FDDI Controller
 product DEC 3004	DEFEA FDDI Controller
+
+/* FORE Systems products */
+product FSI 2001	ESA-200 ATM
+product FSI 2002	ESA-200A ATM
+product FSI 2003	ESA-200E ATM
+
+/* Intel products */
+product INT 1010	EtherExpress 32 Flash Ethernet
 
 /* 3Com products */
 product TCM 5091	3C509 Ethernet
