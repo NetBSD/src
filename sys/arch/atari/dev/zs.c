@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.20 1996/05/15 07:29:08 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.20.4.1 1996/06/18 06:19:50 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -336,10 +336,11 @@ struct proc	*p;
 
 	tp = cs->cs_ttyp;
 	if(tp == NULL) {
-		cs->cs_ttyp  = tp = ttymalloc();
-		tp->t_dev    = dev;
-		tp->t_oproc  = zsstart;
-		tp->t_param  = zsparam;
+		cs->cs_ttyp = tp = ttymalloc();
+		tty_attach(tp);
+		tp->t_dev   = dev;
+		tp->t_oproc = zsstart;
+		tp->t_param = zsparam;
 	}
 
 	s  = spltty();
