@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.34 2004/03/06 23:53:31 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.35 2004/03/07 02:25:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.34 2004/03/06 23:53:31 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.35 2004/03/07 02:25:36 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -898,13 +898,9 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 
 	/* s=start, e=end, s=stripe, a=access, f=failed, su=stripe unit */
 	RF_RaidAddr_t sosAddr, sosEndAddr, eosStartAddr, eosAddr;
-
-	RF_SectorCount_t numSect[2], numParitySect;
 	RF_PhysDiskAddr_t *pda;
-	char   *rdBuf, *bufP;
 	int     foundit, i;
 
-	bufP = NULL;
 	foundit = 0;
 	/* first compute the following raid addresses: start of stripe,
 	 * (sosAddr) MIN(start of access, start of failed SU),   (sosEndAddr)
@@ -924,61 +920,32 @@ rf_GenerateFailedAccessASMs(RF_Raid_t *raidPtr, RF_AccessStripeMap_t *asmap,
 	/* walk through the PDAs and range-restrict each SU to the region of
 	 * the SU touched on the failed PDA.  also compute total data buffer
 	 * space requirements in this step.  Ignore the parity for now. */
+	/* Also count nodes to find out how many bufs need to be xored together */
+	(*nXorBufs) = 1;	/* in read case, 1 is for parity.  In write
+				 * case, 1 is for failed data */
 
-	numSect[0] = numSect[1] = 0;
 	if (new_asm_h[0]) {
 		new_asm_h[0]->next = dag_h->asmList;
 		dag_h->asmList = new_asm_h[0];
 		for (pda = new_asm_h[0]->stripeMap->physInfo; pda; pda = pda->next) {
 			rf_RangeRestrictPDA(raidPtr, failedPDA, pda, RF_RESTRICT_NOBUFFER, 0);
-			numSect[0] += pda->numSector;
+			pda->bufPtr = rf_AllocBuffer(raidPtr, pda, allocList);
 		}
+		(*nXorBufs) += new_asm_h[0]->stripeMap->numStripeUnitsAccessed;
 	}
 	if (new_asm_h[1]) {
 		new_asm_h[1]->next = dag_h->asmList;
 		dag_h->asmList = new_asm_h[1];
 		for (pda = new_asm_h[1]->stripeMap->physInfo; pda; pda = pda->next) {
 			rf_RangeRestrictPDA(raidPtr, failedPDA, pda, RF_RESTRICT_NOBUFFER, 0);
-			numSect[1] += pda->numSector;
-		}
-	}
-	numParitySect = failedPDA->numSector;
-
-	/* allocate buffer space for the data & parity we have to read to
-	 * recover from the failure */
-
-	if (numSect[0] + numSect[1] + ((rpBufPtr) ? numParitySect : 0)) {	/* don't allocate parity
-										 * buf if not needed */
-		RF_MallocAndAdd(rdBuf, rf_RaidAddressToByte(raidPtr, numSect[0] + numSect[1] + numParitySect), (char *), allocList);
-		bufP = rdBuf;
-#if RF_DEBUG_DAG
-		if (rf_degDagDebug)
-			printf("Newly allocated buffer (%d bytes) is 0x%lx\n",
-			    (int) rf_RaidAddressToByte(raidPtr, numSect[0] + numSect[1] + numParitySect), (unsigned long) bufP);
-#endif
-	}
-	/* now walk through the pdas one last time and assign buffer pointers
-	 * (ugh!).  Again, ignore the parity.  also, count nodes to find out
-	 * how many bufs need to be xored together */
-	(*nXorBufs) = 1;	/* in read case, 1 is for parity.  In write
-				 * case, 1 is for failed data */
-	if (new_asm_h[0]) {
-		for (pda = new_asm_h[0]->stripeMap->physInfo; pda; pda = pda->next) {
-			pda->bufPtr = bufP;
-			bufP += rf_RaidAddressToByte(raidPtr, pda->numSector);
-		}
-		*nXorBufs += new_asm_h[0]->stripeMap->numStripeUnitsAccessed;
-	}
-	if (new_asm_h[1]) {
-		for (pda = new_asm_h[1]->stripeMap->physInfo; pda; pda = pda->next) {
-			pda->bufPtr = bufP;
-			bufP += rf_RaidAddressToByte(raidPtr, pda->numSector);
+			pda->bufPtr = rf_AllocBuffer(raidPtr, pda, allocList);
 		}
 		(*nXorBufs) += new_asm_h[1]->stripeMap->numStripeUnitsAccessed;
 	}
-	if (rpBufPtr)
-		*rpBufPtr = bufP;	/* the rest of the buffer is for
-					 * parity */
+	
+	/* allocate a buffer for parity */
+	if (rpBufPtr) 
+		*rpBufPtr = rf_AllocBuffer(raidPtr, failedPDA, allocList);
 
 	/* the last step is to figure out how many more distinct buffers need
 	 * to get xor'd to produce the missing unit.  there's one for each
