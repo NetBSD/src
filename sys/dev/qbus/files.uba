@@ -1,4 +1,4 @@
-#	$NetBSD: files.uba,v 1.6 1999/06/20 18:09:22 ragge Exp $
+#	$NetBSD: files.uba,v 1.7 2000/04/22 16:46:45 ragge Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
@@ -49,3 +49,10 @@ file	dev/qbus/qd.c				qd needs-count
 
 # Fontfile for DEC framebuffers, soon to die in favour for MI fontfiles.
 file	dev/qbus/qfont.c			qfont
+
+# RL01/02 disk controller
+device	rlc { drive=-1 }
+attach	rlc at uba
+device	rl: disk
+attach	rl at rlc
+file	dev/qbus/rl.c				rl | rlc needs-flag
