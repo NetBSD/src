@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.89 2000/10/31 14:01:33 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.90 2000/10/31 15:00:39 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1871,3 +1871,7 @@ usr.sbin/tcpdump/util.c				1.8
   Change from sprintf() to snprintf() where we may print externally
   supplied data of unknown length.  Also fix an endianness problem
   in print-atalk.c.
+
+lib/libc/net/hesiod.c				1.15
+
+  If setuid, ignore environment variables.
