@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: target.c,v 1.1 1994/01/28 12:40:58 pk Exp $
+	$Id: target.c,v 1.2 1994/05/17 14:01:51 pk Exp $
 */
 
 #include "defs.h"
@@ -752,7 +752,11 @@ find_core_target ()
   for (t = target_structs; t < target_structs + target_struct_size;
        ++t)
     {
+#ifdef KERNEL_DEBUG
+      if ((*t)->to_stratum == (kernel_debugging ? kcore_stratum : core_stratum))
+#else
       if ((*t)->to_stratum == core_stratum)
+#endif
 	{
 	  runable = *t;
 	  ++count;
