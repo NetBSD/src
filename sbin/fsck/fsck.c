@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.4 1996/09/27 22:38:40 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.5 1996/09/28 19:21:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -38,7 +38,7 @@
  *
  */
 
-static char rcsid[] = "$NetBSD: fsck.c,v 1.4 1996/09/27 22:38:40 christos Exp $";
+static char rcsid[] = "$NetBSD: fsck.c,v 1.5 1996/09/28 19:21:41 christos Exp $";
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -73,7 +73,8 @@ static int flags = 0;
 
 int main __P((int, char *[]));
 
-static int checkfs __P((const char *, const char *, const char *, void *));
+static int checkfs __P((const char *, const char *, const char *, void *,
+    pid_t *));
 static int selected __P((const char *));
 static void addoption __P((char *));
 static const char *getoptions __P((const char *));
@@ -199,11 +200,11 @@ isok(fs)
 
 
 static int
-checkfs(vfstype, spec, mntpt, ap)
+checkfs(vfstype, spec, mntpt, ap, pidp)
 	const char *vfstype, *spec, *mntpt;
-	void *ap;
+	void *auxarg;
+	pid_t *pidp;
 {
-	pid_t *pidp = ap;
 	/* List of directories containing fsck_xxx subcommands. */
 	static const char *edirs[] = {
 		_PATH_SBIN,
