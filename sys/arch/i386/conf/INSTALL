@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.44 1997/08/19 23:49:49 augustss Exp $
+#	$NetBSD: INSTALL,v 1.45 1997/08/20 18:41:08 mjacob Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -100,6 +100,7 @@ config		netbsd	root on ? type ?
 
 #options 	EISAVERBOSE	# verbose EISA device messages
 #options 	PCIVERBOSE	# verbose PCI device messages
+#options	SCSIVERBOSE	# Verbose SCSI errors
 
 mainbus0 at root
 
