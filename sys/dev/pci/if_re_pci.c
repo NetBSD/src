@@ -111,7 +111,7 @@ re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 
 	t = re_devs;
 
-	while(t->rtk_name != NULL) {
+	while (t->rtk_name != NULL) {
 		if ((PCI_VENDOR(pa->pa_id) == t->rtk_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->rtk_did)) {
 
@@ -122,7 +122,7 @@ re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 			if (pci_mapreg_map(pa, RTK_PCI_LOIO,
 			    PCI_MAPREG_TYPE_IO, 0, &rtk_btag,
 			    &rtk_bhandle, NULL, &bsize)) {
-				printf("can't map i/o space\n");
+				aprint_error("can't map i/o space\n");
 				return 0;
 			}
 			hwrev = bus_space_read_4(rtk_btag, rtk_bhandle,
@@ -140,12 +140,6 @@ re_pci_probe(struct device *parent, struct cfdata *match, void *aux)
 static void
 re_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-#if 0
-	u_char			eaddr[ETHER_ADDR_LEN];
-	u_int16_t		val;
-	struct rtk_hwrev	*hw_rev;
-	int 	i, addr_len;
-#endif
 	struct re_pci_softc	*psc = (void *)self;
 	struct rtk_softc	*sc = &psc->sc_rtk;
 	struct pci_attach_args 	*pa = aux;
@@ -156,36 +150,40 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct rtk_hwrev	*hw_rev;
 	int			hwrev;
 	int			error = 0;
+	int			pmreg;
 	pcireg_t		command;
 	bus_size_t		bsize;
 
 
-#if 0 /*ndef BURN_BRIDGES*/
 	/*
 	 * Handle power management nonsense.
 	 */
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
+		command = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR);
+		if (command & RTK_PSTATE_MASK) {
+			u_int32_t		iobase, membase, irq;
 
-	if (pci_get_powerstate(dev) != PCI_POWERSTATE_D0) {
-		u_int32_t		iobase, membase, irq;
+			/* Save important PCI config data. */
+			iobase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOIO);
+			membase = pci_conf_read(pc, pa->pa_tag, RTK_PCI_LOMEM);
+			irq = pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
 
-		/* Save important PCI config data. */
-		iobase = pci_read_config(dev, RTK_PCI_LOIO, 4);
-		membase = pci_read_config(dev, RTK_PCI_LOMEM, 4);
-		irq = pci_read_config(dev, RTK_PCI_INTLINE, 4);
+			/* Reset the power state. */
+			aprint_normal("%s: chip is is in D%d power mode "
+		    	    "-- setting to D0\n", sc->sc_dev.dv_xname,
+		    	    command & RTK_PSTATE_MASK);
 
-		/* Reset the power state. */
-		printf("%s: chip is is in D%d power mode "
-		    "-- setting to D0\n", unit,
-		    pci_get_powerstate(dev));
+			command &= ~RTK_PSTATE_MASK;
+			pci_conf_write(pc, pa->pa_tag,
+			    pmreg + PCI_PMCSR, command);
 
-		pci_set_powerstate(dev, PCI_POWERSTATE_D0);
-
-		/* Restore PCI config data. */
-		pci_write_config(dev, RTK_PCI_LOIO, iobase, 4);
-		pci_write_config(dev, RTK_PCI_LOMEM, membase, 4);
-		pci_write_config(dev, RTK_PCI_INTLINE, irq, 4);
+			/* Restore PCI config data. */
+			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOIO, iobase);
+			pci_conf_write(pc, pa->pa_tag, RTK_PCI_LOMEM, membase);
+			pci_conf_write(pc, pa->pa_tag, PCI_INTERRUPT_REG, irq);
+		}
 	}
-#endif
+
 	/*
 	 * Map control/status registers.
 	 */
@@ -196,20 +194,20 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef RE_USEIOSPACE
 	if (pci_mapreg_map(pa, RTK_PCI_LOIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, &bsize)) {
-		printf("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 #else
 	if (pci_mapreg_map(pa, RTK_PCI_LOMEM, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->rtk_btag, &sc->rtk_bhandle, NULL, &bsize)) {
-		printf("%s: can't map mem space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map mem space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 #endif
 	t = re_devs;
 	hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
 
-	while(t->rtk_name != NULL) {
+	while (t->rtk_name != NULL) {
 		if ((PCI_VENDOR(pa->pa_id) == t->rtk_vid) &&
 		    (PCI_PRODUCT(pa->pa_id) == t->rtk_did)) {
 
@@ -218,6 +216,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 		}
 		t++;
 	}
+	aprint_normal(": %s\n", t->rtk_name);
 
 	hw_rev = re_hwrevs;
 	hwrev = CSR_READ_4(sc, RTK_TXCFG) & RTK_TXCFG_HWREV;
@@ -240,17 +239,18 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		aprint_error("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
@@ -275,8 +275,7 @@ re_pci_attach(struct device *parent, struct device *self, void *aux)
 			psc->sc_ih = NULL;
 		}
 
-		if (bsize) {
+		if (bsize)
 			bus_space_unmap(sc->rtk_btag, sc->rtk_bhandle, bsize);
-		}
 	}
 }
