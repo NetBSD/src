@@ -1,4 +1,4 @@
-/*	$NetBSD: mmap.c,v 1.15 2003/10/07 00:17:09 thorpej Exp $	*/
+/*	$NetBSD: mmap.c,v 1.16 2003/11/29 19:09:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -162,7 +162,7 @@ main(argc, argv)
 
 	printf("    CHECKING RESIDENCY\n");
 
-	if (check_residency(addr, npgs) != 128) {
+	if (check_residency(addr, npgs) != npgs) {
 		printf("    RESIDENCY CHECK FAILED!\n");
 		ecode = 1;
 	}
