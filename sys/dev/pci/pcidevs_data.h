@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.86 1998/09/18 04:30:52 mark Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.87 1998/09/18 10:51:16 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.80 1998/09/18 04:30:10 mark Exp 
+ *	NetBSD: pcidevs,v 1.81 1998/09/18 10:49:11 drochner Exp 
  */
 
 /*
@@ -316,6 +316,30 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "AHA-2944 Ultra",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_2940U2,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AHA-2940 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7890,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7890/1",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3940U2,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AHA-3940 Ultra2",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_7896,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7896/7",
+	},
+	{
 	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_1200A,
 	    0,
 	    "Advanced System Products",
@@ -476,6 +500,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Bit3 Computer Corp.",
 	    "PCI-VME Interface Mod. 617",
+	},
+	{
+	    PCI_VENDOR_BIT3, PCI_PRODUCT_BIT3_PCIVME2706,
+	    0,
+	    "Bit3 Computer Corp.",
+	    "PCI-VME Interface Mod. 2706",
 	},
 	{
 	    PCI_VENDOR_BROOKTREE, PCI_PRODUCT_BROOKTREE_BT848,
@@ -1402,6 +1432,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "5000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_NEWBRIDGE, PCI_PRODUCT_NEWBRIDGE_CA91CX42,
+	    0,
+	    "Newbridge Microsystems / Tundra Semiconductor",
+	    "Universe VME bridge",
+	},
+	{
 	    PCI_VENDOR_NS, PCI_PRODUCT_NS_DP83810,
 	    0,
 	    "National Semiconductor",
@@ -1456,16 +1492,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "53c875",
 	},
 	{
-	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
-	    0,
-	    "NEC",
-	    "PowerVR PCX2",
-	},
-	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PE_GNIC,
 	    0,
 	    "Symbios Logic",
 	    "Packet Engines G-NIC Ethernet",
+	},
+	{
+	    PCI_VENDOR_NEC, PCI_PRODUCT_NEC_POWERVR2,
+	    0,
+	    "NEC",
+	    "PowerVR PCX2",
 	},
 	{
 	    PCI_VENDOR_NEXGEN, PCI_PRODUCT_NEXGEN_NX82C501,
@@ -3696,7 +3732,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_NEWBRIDGE, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Newbridge Microsystems",
+	    "Newbridge Microsystems / Tundra Semiconductor",
 	    NULL,
 	},
 	{
@@ -5203,6 +5239,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ADP, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Adaptec",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ADP2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Adaptec (2nd PCI Vendor ID)",
 	    NULL,
 	},
 	{
