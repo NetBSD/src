@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 1997/07/26 19:46:40 mhitch Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 1997/08/09 06:06:37 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -477,6 +477,10 @@ syscall(status, cause, opc, frame)
 	size_t code, numsys, nsaved, argsiz;
 	struct sysent *callp;
 
+	/* XXX: why not in locore glue? */
+	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
+		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
+
 #ifdef DEBUG
 	trp->status = status;
 	trp->cause = cause;
@@ -490,9 +494,6 @@ syscall(status, cause, opc, frame)
 #endif
 
 	cnt.v_syscall++;
-
-	if (status & ((CPUISMIPS3) ? MIPS_SR_INT_IE : MIPS1_SR_INT_ENA_PREV))
-		splx(MIPS_SR_INT_IE | (status & MIPS_HARD_INT_MASK));
 
 	sticks = p->p_sticks;
 	if (DELAYBRANCH(cause))
@@ -782,8 +783,9 @@ trap(status, cause, vaddr, opc, frame)
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef VMFAULT_TRACE
 		printf(
-		"vm_fault(%p (pmap %p), %p (%p), %p, %d) -> %p at pc %p\n",
-		map, vm->vm_map.pmap, va, vaddr, ftype, FALSE, rv, opc);
+		"vm_fault(%p (pmap %p), %lx (0x%x), %d, %d) -> %d at pc %p\n",
+		    map, vm->vm_map.pmap, va, vaddr, ftype, FALSE, rv,
+		    (void*)opc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
