@@ -1,11 +1,9 @@
-/*	$NetBSD: linux.h,v 1.1.1.1 1999/12/11 22:24:07 veego Exp $	*/
+/*	$NetBSD: linux.h,v 1.1.1.2 2002/01/24 08:18:32 martti Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)linux.h	1.1 8/19/95
  */
