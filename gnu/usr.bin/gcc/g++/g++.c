@@ -422,7 +422,7 @@ main (argc, argv)
      is.  If they ran us as /usr/local/bin/g++, then we will look
      for /usr/local/bin/gcc; similarly, if they just ran us as `g++',
      we'll just look for `gcc'.  */
-  if (p != argv[0])
+  if (p != argv[0] && *gcc != '/')
     {
       *--p = '\0';
       gcc = (char *) malloc ((strlen (argv[0]) + 1 + strlen (GCC_NAME) + 1)
