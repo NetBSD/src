@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360var.h,v 1.8 2001/04/25 17:53:31 bouyer Exp $	*/
+/*	$NetBSD: aic6360var.h,v 1.9 2001/04/30 03:45:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -185,13 +185,24 @@ struct aic_softc {
 #define AIC_SHOWSTART	0x20
 #define AIC_DOBREAK	0x40
 extern int aic_debug; /* AIC_SHOWSTART|AIC_SHOWMISC|AIC_SHOWTRACE; */
-#define	AIC_PRINT(b, s)	do {if ((aic_debug & (b)) != 0) printf s;} while (0)
-#define	AIC_BREAK()	do {if ((aic_debug & AIC_DOBREAK) != 0) Debugger();} while (0)
-#define	AIC_ASSERT(x)	do {if (x) {} else {printf("%s at line %d: assertion failed\n", sc->sc_dev.dv_xname, __LINE__); Debugger();}} while (0)
+#define	AIC_PRINT(b, s)	do { \
+				if ((aic_debug & (b)) != 0) \
+					printf s; \
+			} while (/* CONSTCOND */ 0)
+#define	AIC_BREAK()	do { \
+				if ((aic_debug & AIC_DOBREAK) != 0) \
+					Debugger(); \
+		    	} while (/* CONSTCOND */ 0)
+#define	AIC_ASSERT(x)	do { \
+			if (! (x)) { \
+				printf("%s at line %d: assertion failed\n", \
+				    sc->sc_dev.dv_xname, __LINE__); \
+				Debugger(); \
+			} } while (/* CONSTCOND */ 0)
 #else
-#define	AIC_PRINT(b, s)
-#define	AIC_BREAK()
-#define	AIC_ASSERT(x)
+#define	AIC_PRINT(b, s)	/* NOTHING */
+#define	AIC_BREAK()	/* NOTHING */
+#define	AIC_ASSERT(x)	/* NOTHING */
 #endif
 
 #define AIC_ACBS(s)	AIC_PRINT(AIC_SHOWACBS, s)
