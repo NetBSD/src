@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.11 2003/08/07 10:04:22 agc Exp $	 */
+/* $NetBSD: dir.c,v 1.12 2003/10/03 12:23:22 yamt Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -173,7 +173,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		if (idesc->id_fix == IGNORE)
 			return (0);
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
-		bread(vp, idesc->id_blkno, blksiz, NOCRED, &bp);
+		bread(vp, idesc->id_lblkno, blksiz, NOCRED, &bp);
 		dp = (struct direct *) (bp->b_data + idesc->id_loc);
 		dp->d_reclen = DIRBLKSIZ;
 		dp->d_ino = 0;
@@ -211,7 +211,7 @@ dpok:
 		if (idesc->id_fix == IGNORE)
 			return 0;
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
-		bread(vp, idesc->id_blkno, blksiz, NOCRED, &bp);
+		bread(vp, idesc->id_lblkno, blksiz, NOCRED, &bp);
 		dp = (struct direct *) (bp->b_data + dploc);
 		dp->d_reclen += size;
 		if (fix)
