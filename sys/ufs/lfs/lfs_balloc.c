@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.50 2005/02/26 22:32:20 perry Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.51 2005/03/02 21:16:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.50 2005/02/26 22:32:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.51 2005/03/02 21:16:09 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -165,10 +165,6 @@ lfs_balloc(void *v)
 	if (bpp)
 		*bpp = NULL;
 
-	/* Bomb out immediately if there's no space left */
-	if (fs->lfs_bfree <= 0)
-		return ENOSPC;
-
 	/* Check for block beyond end of file and fragment extension needed. */
 	lastblock = lblkno(fs, ip->i_size);
 	if (lastblock < NDADDR && lastblock < lbn) {
@@ -203,6 +199,8 @@ lfs_balloc(void *v)
 			/* Brand new block or fragment */
 			frags = numfrags(fs, nsize);
 			bb = fragstofsb(fs, frags);
+			if (!ISSPACE(fs, bb, ap->a_cred))
+				return ENOSPC;
 			if (bpp) {
 				*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 				bp->b_blkno = UNWRITTEN;
