@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.11 2003/01/16 15:52:53 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.12 2003/01/20 22:25:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -218,34 +218,40 @@ Lsh5_resvec_vector_panic:
  *
  * RESVEC Offset: 0x100
  *        Length: 0x100
+ *
+ * We have to handle these as regular synchronous exceptions since a BRK
+ * instruction from userland results one of these.
+ *
+ * Trouble is, we're now running with the MMU disabled, so we do the minimum
+ * necessary to re-enable the MMU before jumping to the regular synchronous
+ * exception handler.
  */
 Lsh5_resvec_vector_dbg_general:
 	getcon	usr, r24		/* Stash USR somewhere safe for now */
-	putcon	r15, kcr1
-	LEA(_C_LABEL(sh5_panic_stack) - (0x40000000-(USPACE-SZ_TRAPFRAME)), r15)
-	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r24	/* Save USR */
-	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
-	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
-	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
-	getcon	kcr1, r0
-	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
-	gettr	tr0, r0
-	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
-	getcon	ssr, r0
-	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save SSR */
-	getcon	spc, r0
-	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save SPC */
-	getcon	expevt, r0
-	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save EXPEVT */
-	getcon	intevt, r0
-	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
-	getcon	tea, r0
-	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
-	getcon	tra, r0
-	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
-	movi	1, r2
-	pta/l	Lsh5_event_panic, tr0
-	blink	tr0, r63
+	putcon	r0, kcr1		/* Save r0 */
+	getcon	spc, r0			/* Fetch PC at point of exception */
+	putcon	r0, pspc		/* Make it available to real handler */
+	getcon	ssr, r0			/* Fetch SR at point of exception */
+	putcon	r0, pssr		/* Make it available to real handler */
+	getcon	vbr, r0
+	addi	r0, 0x101, r0		/* The real Synchronous Exc. handler */
+	putcon	r0, spc
+	getcon	sr, r0			/* Arrange to set SR.MMU */
+	shlli	r0, 32, r0
+	byterev	r0, r0			/* This trick avoids the need to have */
+	ori	r0, 0x80, r0		/* another register available to load */
+	byterev	r0, r0			/* a 32-bit constant into. */
+	shlri	r0, 32, r0
+	putcon	r0, ssr
+	getcon	kcr1, r0		/* Restore r0 */
+	putcon	r24, usr		/* Restore USR */
+	synco
+	rte				/* Enable the MMU and jump to handler */
+	nop
+	nop
+	nop
+	nop
+	nop
 
 	.space	(0x100 - (. - Lsh5_resvec_vector_dbg_general))
 
@@ -255,32 +261,39 @@ Lsh5_resvec_vector_dbg_general:
  *
  * RESVEC Offset: 0x200
  *        Length: 0x200
+ *
+ * Deal with these the same way as above.
  */
 Lsh5_resvec_vector_debugint:
 	getcon	usr, r24		/* Stash USR somewhere safe for now */
-	putcon	r15, kcr1
-	LEA(_C_LABEL(sh5_panic_stack) - (0x40000000-(USPACE-SZ_TRAPFRAME)), r15)
-	st.q	r15, SFO(SF_USR,SZ_TRAPFRAME), r24	/* Save USR */
-	st.q	r15, IFO(IF_R0,SZ_TRAPFRAME), r0	/* Save r0 */
-	st.q	r15, IFO(IF_R1,SZ_TRAPFRAME), r1	/* Save r1 */
-	st.q	r15, IFO(IF_R2,SZ_TRAPFRAME), r2	/* Save r2 */
-	getcon	kcr1, r0
-	st.q	r15, IFO(IF_R15,SZ_TRAPFRAME), r0	/* Save r15 */
-	gettr	tr0, r0
-	st.q	r15, IFO(IF_TR0,SZ_TRAPFRAME), r0	/* Save tr0 */
-	getcon	ssr, r0
-	st.q	r15, SFO(SF_SSR,SZ_TRAPFRAME), r0	/* Save SSR */
-	getcon	spc, r0
-	st.q	r15, SFO(SF_SPC,SZ_TRAPFRAME), r0	/* Save SPC */
-	getcon	expevt, r0
-	st.q	r15, SFO(SF_EXPEVT, SZ_TRAPFRAME), r0	/* Save EXPEVT */
-	getcon	intevt, r0
-	st.q	r15, SFO(SF_INTEVT, SZ_TRAPFRAME), r0	/* Save INTEVT */
-	getcon	tea, r0
-	st.q	r15, SFO(SF_TEA, SZ_TRAPFRAME), r0	/* Save TEA */
-	getcon	tra, r0
-	st.q	r15, SFO(SF_TRA, SZ_TRAPFRAME), r0	/* Save TRA */
-	movi	2, r2
+	putcon	r0, kcr1		/* Save r0 */
+	getcon	spc, r0			/* Fetch PC at point of exception */
+	putcon	r0, pspc		/* Make it available to real handler */
+	getcon	ssr, r0			/* Fetch SR at point of exception */
+	putcon	r0, pssr		/* Make it available to real handler */
+	getcon	vbr, r0
+	addi	r0, 0x1ff, r0
+	addi	r0, 0x1ff, r0
+	addi	r0, 0x1ff, r0
+	addi	r0, 0x004, r0		/* The real Asynchronous Exc. handler */
+	putcon	r0, spc
+	getcon	sr, r0			/* Arrange to set SR.MMU */
+	shlli	r0, 32, r0
+	byterev	r0, r0			/* This trick avoids the need to have */
+	ori	r0, 0x80, r0		/* another register available to load */
+	byterev	r0, r0			/* a 32-bit constant into. */
+	shlri	r0, 32, r0
+	putcon	r0, ssr
+	getcon	kcr1, r0		/* Restore r0 */
+	putcon	r24, usr		/* Restore USR */
+	synco
+	rte				/* Enable the MMU and jump to handler */
+	nop
+	nop
+	nop
+	nop
+	nop
+
 
 
 /******************************************************************************
