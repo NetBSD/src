@@ -1,4 +1,4 @@
-/*	$NetBSD: ncrsc_pcctwo.c,v 1.4 2000/03/18 22:33:03 scw Exp $ */
+/*	$NetBSD: ncrsc_pcctwo.c,v 1.4.4.1 2000/10/17 19:49:44 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -169,10 +169,7 @@ ncrsc_pcctwo_attach(parent, self, args)
 	siopinitialize(sc);
 
 	/* Hook the chip's interrupt */
-	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR, 0);
 	pcctwointr_establish(PCCTWOV_SCSI, ncrsc_pcctwo_intr, pa->pa_ipl, sc);
-	pcc2_reg_write(sys_pcctwo, PCC2REG_SCSI_ICSR,
-	    pa->pa_ipl | PCCTWO_ICR_IEN);
 
 	/*
 	 * Attach all scsi units on us, watching for boot device
