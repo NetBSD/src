@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.22 2003/05/05 04:34:48 igy Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.23 2003/05/17 23:47:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.22 2003/05/05 04:34:48 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.23 2003/05/17 23:47:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -323,8 +323,10 @@ initarm(void *arg)
          */
 	consinit();
 
+#ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (IXM1200) booting ...\n");
+#endif
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -355,7 +357,9 @@ initarm(void *arg)
                                 symbolsize = sh->sh_offset + sh->sh_size;
         }
 #endif
+#ifdef VERBOSE_INIT_ARM
 	printf("kernsize=0x%x\n", kerneldatasize);
+#endif
 	kerneldatasize += symbolsize;
 	kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) + PAGE_SIZE * 8;
 
@@ -557,7 +561,9 @@ initarm(void *arg)
 
 	ixp12x0_pmap_io_reg(l1pagetable);
 
+#ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
+#endif
 
 	/*
 	 * Map the Dcache Flush page.
@@ -607,7 +613,9 @@ initarm(void *arg)
 	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
 	 * of the stack memory.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf("init subsystems: stacks ");
+#endif
 
 	set_stackptr(PSR_IRQ32_MODE,
 	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
@@ -629,34 +637,49 @@ initarm(void *arg)
 	 * Initialisation of the vetcors will just panic on a data abort.
 	 * This just fills in a slighly better one.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf("vectors ");
+#endif
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
+#ifdef VERBOSE_INIT_ARM
 	printf("\ndata_abort_handler_address = %08x\n", data_abort_handler_address);
 	printf("prefetch_abort_handler_address = %08x\n", prefetch_abort_handler_address);
 	printf("undefined_handler_address = %08x\n", undefined_handler_address);
+#endif
 
 	/* Initialise the undefined instruction handlers */
+#ifdef VERBOSE_INIT_ARM
 	printf("undefined ");
+#endif
 	undefined_init();
 
 	/* Load memory into UVM. */
+#ifdef VERBOSE_INIT_ARM
 	printf("page ");
+#endif
 	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
 	/* Boot strap pmap telling it where the kernel page table is */
+#ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
+#endif
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Setup the IRQ system */
+#ifdef VERBOSE_INIT_ARM
 	printf("irq ");
+#endif
 	ixp12x0_intr_init();
+
+#ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
+#endif
 
 #ifdef VERBOSE_INIT_ARM
 	printf("freestart = 0x%08lx, free_pages = %d (0x%x)\n",
@@ -666,11 +689,15 @@ initarm(void *arg)
 #endif
 
 	consinit();
+#ifdef VERBOSE_INIT_ARM
 	printf("consinit \n");
+#endif
 
 	ixdp_ixp12x0_cc_setup();
 
+#ifdef VERBOSE_INIT_ARM
 	printf("bootstrap done.\n");
+#endif
 
 #ifdef IPKDB
 	/* Initialise ipkdb */

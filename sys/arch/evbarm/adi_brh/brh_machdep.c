@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.10 2003/05/03 18:25:31 thorpej Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.11 2003/05/17 23:46:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -227,10 +227,6 @@ int comcnunit = CONUNIT;
 void
 cpu_reboot(int howto, char *bootstr)
 {
-#ifdef DIAGNOSTIC
-	/* info */
-	printf("boot: howto=%08x curproc=%p\n", howto, curproc);
-#endif
 
 	/*
 	 * If we are still cold then hit the air brakes
@@ -407,8 +403,10 @@ initarm(void *arg)
 	 */
 	consinit();
 
+#ifdef VERBOSE_INIT_ARM
 	/* Talk to the user */
 	printf("\nNetBSD/evbarm (ADI BRH) booting ...\n");
+#endif
 
 	/* Calibrate the delay loop. */
 	becc_calibrate_delay();
@@ -437,7 +435,9 @@ initarm(void *arg)
 	memstart = 0xc0000000UL;
 	memsize = (128UL * 1024 * 1024);
 
+#ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system ...\n");
+#endif
 
 	/* Fake bootconfig structure for the benefit of pmap.c */
 	/* XXX must make the memory description h/w independant */
@@ -463,9 +463,11 @@ initarm(void *arg)
 	physical_freestart = 0xc0009000UL;
 	physical_freeend = 0xc0200000UL;
 
+#ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
 	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
+#endif
 
 	/*
 	 * Okay, the kernel starts 2MB in from the bottom of physical
@@ -762,7 +764,9 @@ initarm(void *arg)
 	 * Since the ARM stacks use STMFD etc. we must set r13 to the top end
 	 * of the stack memory.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf("init subsystems: stacks ");
+#endif
 
 	set_stackptr(PSR_IRQ32_MODE,
 	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
@@ -780,31 +784,43 @@ initarm(void *arg)
 	 * Initialisation of the vectors will just panic on a data abort.
 	 * This just fills in a slighly better one.
 	 */
+#ifdef VERBOSE_INIT_ARM
 	printf("vectors ");
+#endif
 	data_abort_handler_address = (u_int)data_abort_handler;
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 
 	/* Initialise the undefined instruction handlers */
+#ifdef VERBOSE_INIT_ARM
 	printf("undefined ");
+#endif
 	undefined_init();
 
 	/* Load memory into UVM. */
+#ifdef VERBOSE_INIT_ARM
 	printf("page ");
+#endif
 	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	uvm_page_physload(atop(physical_freestart), atop(physical_freeend),
 	    atop(physical_freestart), atop(physical_freeend),
 	    VM_FREELIST_DEFAULT);
 
 	/* Boot strap pmap telling it where the kernel page table is */
+#ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
+#endif
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Setup the IRQ system */
+#ifdef VERBOSE_INIT_ARM
 	printf("irq ");
+#endif
 	becc_intr_init();
+#ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
+#endif
 
 #ifdef IPKDB
 	/* Initialise ipkdb */
