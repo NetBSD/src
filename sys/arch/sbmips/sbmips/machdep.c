@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2002/06/01 16:12:01 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.6 2002/06/01 16:14:23 simonb Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -227,12 +227,10 @@ mach_init(long fwhandle, long magic, long bootdata, long reserved)
 	 */
 	mips_vector_init();
 
-#if 0
-*(unsigned long long *)0xb0020440 = 3;
-#endif
-
+#ifdef DEBUG
 	printf("fwhandle=%08X magic=%08X bootdata=%08X reserved=%08X\n",
 	    (u_int)fwhandle, (u_int)magic, (u_int)bootdata, (u_int)reserved);
+#endif
 
 	if (magic == BOOTINFO_MAGIC) {
 		int idx;
