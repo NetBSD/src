@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.31 1997/06/12 17:59:13 mrg Exp $	*/
+/*	$NetBSD: malloc.h,v 1.32 1998/01/08 11:36:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -128,6 +128,8 @@
 #define	M_NFSBIGFH	74	/* NFS big filehandle */
 #define M_EXT2FSNODE	75	/* EXT2FS vnode private part */
 #define M_VMSWAP	76	/* VM swap structures */
+#define M_VMPAGE	77	/* VM page structures */
+#define M_VMPBUCKET	78	/* VM page buckets */
 #define	M_TEMP		84	/* misc temporary data buffers */
 #define	M_LAST		85	/* Must be last type + 1 */
 
@@ -209,8 +211,13 @@
 	"NFS bigfh",	/* 74 M_NFSBIGFH */ \
 	"EXT2FS node",  /* 75 M_EXT2FSNODE */ \
 	"VM swap",	/* 76 M_VMSWAP */ \
-	NULL, NULL, NULL, NULL, \
-	NULL, NULL, NULL, \
+	"VM page",	/* 77 M_VMPAGE */ \
+	"VM page bucket", /* 78 M_VMPBUCKET */ \
+	NULL,		/* 79 */ \
+	NULL,		/* 80 */ \
+	NULL,		/* 81 */ \
+	NULL,		/* 82 */ \
+	NULL,		/* 83 */ \
 	"temp",		/* 84 M_TEMP */ \
 }
 
