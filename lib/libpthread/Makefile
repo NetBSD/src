@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/07/18 22:33:45 nathanw Exp $
+#	$NetBSD: Makefile,v 1.19 2003/07/24 07:50:24 wiz Exp $
 #
 
 WARNS=	2
@@ -62,7 +62,8 @@ SRCS+=	pthread_switch.S _context_u.S
 SRCS+= pthread_md.c
 .endif
 
-MAN+=	pthread_attr.3 \
+MAN+=	pthread.3 \
+	pthread_attr.3 \
 	pthread_barrier_destroy.3 pthread_barrier_init.3 \
 	pthread_barrier_wait.3 pthread_barrierattr.3 \
 	pthread_cancel.3 pthread_cleanup_push.3 \
