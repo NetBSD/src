@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.322 2000/04/10 07:58:18 haya Exp $
+#	$NetBSD: GENERIC,v 1.323 2000/04/13 11:20:06 joda Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.322 $"
+#ident 		"GENERIC-$Revision: 1.323 $"
 
 maxusers	32		# estimated number of users
 
@@ -313,6 +313,9 @@ com*	at pcmcia? function ?		# Modems and serial cards
 
 pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
 com*	at pcmcom? slave ?		# ...and the slave devices
+
+# CardBus serial interfaces
+#com*	at cardbus? function ?		# Modems and serial cards
 
 # ISA serial interfaces
 #options 	COM_HAYESP		# adds Hayes ESP serial board support
