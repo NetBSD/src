@@ -1,3 +1,5 @@
+/*	$NetBSD: fpsetmask.S,v 1.5 1995/12/13 19:36:18 thorpej Exp $	*/
+
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
  * Public Domain.

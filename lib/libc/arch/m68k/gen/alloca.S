@@ -1,3 +1,5 @@
+/*	$NetBSD: alloca.S,v 1.2 1995/12/13 19:35:47 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -35,15 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include "DEFS.h"
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-	/*.asciz "from: @(#)alloca.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: alloca.S,v 1.1 1993/11/25 23:36:50 paulus Exp $"
+#if 0
+	RCSID("from: @(#)alloca.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: alloca.S,v 1.2 1995/12/13 19:35:47 thorpej Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /* like alloc, but automatic free in return */
-
-#include "DEFS.h"
 
 ENTRY(alloca)
 	movl	sp@,a0		/* save return addr */
