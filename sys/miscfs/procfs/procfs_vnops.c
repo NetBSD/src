@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.96 2003/04/10 21:53:34 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.97 2003/04/17 18:08:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.96 2003/04/10 21:53:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.97 2003/04/17 18:08:28 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,10 @@ static int procfs_validfile_linux __P((struct proc *, struct mount *));
  * process-specific sub-directories.  It is
  * used in procfs_lookup and procfs_readdir
  */
-const struct proc_target {
+static const struct proc_target {
 	u_char	pt_type;
 	u_char	pt_namlen;
-	char	*pt_name;
+	const char	*pt_name;
 	pfstype	pt_pfstype;
 	int	(*pt_valid) __P((struct proc *, struct mount *));
 } proc_targets[] = {
@@ -110,13 +110,13 @@ const struct proc_target {
 #endif
 #undef N
 };
-static int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
+static const int nproc_targets = sizeof(proc_targets) / sizeof(proc_targets[0]);
 
 /*
  * List of files in the root directory. Note: the validate function will
  * be called with p == NULL for these ones.
  */
-struct proc_target proc_root_targets[] = {
+static const struct proc_target proc_root_targets[] = {
 #define N(s) sizeof(s)-1, s
 	/*	  name		    type	    validp */
 	{ DT_REG, N("meminfo"),     Pmeminfo,        procfs_validfile_linux },
@@ -124,7 +124,7 @@ struct proc_target proc_root_targets[] = {
 	{ DT_REG, N("uptime"),      Puptime,         procfs_validfile_linux },
 #undef N
 };
-static int nproc_root_targets =
+static const int nproc_root_targets =
     sizeof(proc_root_targets) / sizeof(proc_root_targets[0]);
 
 int	procfs_lookup	__P((void *));
