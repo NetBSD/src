@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.16 2000/03/07 01:08:47 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.17 2000/03/10 06:55:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -112,9 +112,13 @@ struct tulip_cardbus_softc {
 	/* CardBus-specific goo. */
 	void	*sc_ih;			/* interrupt handle */
 	cardbus_devfunc_t sc_ct;	/* our CardBus devfuncs */
+	cardbustag_t sc_tag;		/* our CardBus tag */
 	int	sc_csr;			/* CSR bits */
-	bus_size_t sc_mapsize;		/* the size of mapped bus space region */
-	int	sc_attached;
+	bus_size_t sc_mapsize;		/* the size of mapped bus space
+					   region */
+	int	sc_attached;		/* device is attached */
+					/* product info */
+	const struct tulip_cardbus_product *sc_product;
 };
 
 int	tlp_cardbus_match __P((struct device *, struct cfdata *, void *));
@@ -142,6 +146,8 @@ const struct tulip_cardbus_product {
 	{ 0,				0,
 	  TULIP_CHIP_INVALID,		0 },
 };
+
+void	tlp_cardbus_wakeup __P((struct tulip_cardbus_softc *));
 
 void	tlp_cardbus_x3201_reset __P((struct tulip_softc *));
 
@@ -197,6 +203,7 @@ tlp_cardbus_attach(parent, self, aux)
 	sc->sc_devno = ca->ca_device;
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
+	csc->sc_tag = ca->ca_tag;
 
 	tcp = tlp_cardbus_lookup(ca);
 	if (tcp == NULL) {
@@ -204,6 +211,7 @@ tlp_cardbus_attach(parent, self, aux)
 		panic("tlp_cardbus_attach: impossible");
 	}
 	sc->sc_chip = tcp->tcp_chip;
+	csc->sc_product = tcp;
 
 	/*
 	 * By default, Tulip registers are 8 bytes long (4 bytes
@@ -230,52 +238,9 @@ tlp_cardbus_attach(parent, self, aux)
 	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 	/*
-	 * Check to see if the device is in power-save mode, and
-	 * bring it out if necessary.
+	 * Bring the chip out of power-save mode.
 	 */
-	switch (sc->sc_chip) {
-	case TULIP_CHIP_21142:
-	case TULIP_CHIP_21143:
-	case TULIP_CHIP_X3201_3:
-		/*
-		 * Clear the "sleep mode" bit in the CFDA register.
-		 */
-		reg = cardbus_conf_read(cc, cf, ca->ca_tag, TULIP_PCI_CFDA);
-		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
-			cardbus_conf_write(cc, cf, ca->ca_tag, TULIP_PCI_CFDA,
-			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
-		break;
-
-	default:
-		/* Nothing. */
-	}
-
-	if (cardbus_get_capability(cc, cf, ca->ca_tag, PCI_CAP_PWRMGMT, 0, 0)) {
-		if (tcp->tcp_pmreg == 0) {
-			printf("%s: don't know location of PMCSR for this "
-			    "chip\n", sc->sc_dev.dv_xname);
-			return;
-		}
-		reg = cardbus_conf_read(cc, cf, ca->ca_tag,
-		    tcp->tcp_pmreg) & 0x03;
-#if 1 /* XXX Probably not right for CardBus. */
-		if (reg == 3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake up from power state D3\n",
-			    sc->sc_dev.dv_xname);
-			return;
-		}
-#endif
-		if (reg != 0) {
-			printf("%s: waking up from power state D%d\n",
-			    sc->sc_dev.dv_xname, reg);
-			cardbus_conf_write(cc, cf, ca->ca_tag,
-			    tcp->tcp_pmreg, 0);
-		}
-	}
+	tlp_cardbus_wakeup(csc);
 
 	/*
 	 * Map the device.
@@ -450,6 +415,67 @@ tlp_cardbus_detach(self, flags)
 	    csc->sc_mapsize);
 
 	return (0);
+}
+
+void
+tlp_cardbus_wakeup(csc)
+	struct tulip_cardbus_softc *csc;
+{
+	struct tulip_softc *sc = &csc->sc_tulip;
+	const struct tulip_cardbus_product *tcp = csc->sc_product;
+	cardbus_devfunc_t ct = csc->sc_ct;
+	cardbus_chipset_tag_t cc = ct->ct_cc;
+	cardbus_function_tag_t cf = ct->ct_cf;
+	pcireg_t reg;
+
+	/*
+	 * Check to see if the device is in power-save mode, and
+	 * bring it out if necessary.
+	 */
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+	case TULIP_CHIP_X3201_3:
+		/*
+		 * Clear the "sleep mode" bit in the CFDA register.
+		 */
+		reg = cardbus_conf_read(cc, cf, csc->sc_tag, TULIP_PCI_CFDA);
+		if (reg & (CFDA_SLEEP|CFDA_SNOOZE))
+			cardbus_conf_write(cc, cf, csc->sc_tag, TULIP_PCI_CFDA,
+			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
+		break;
+
+	default:
+		/* Nothing. */
+	}
+
+	if (cardbus_get_capability(cc, cf, csc->sc_tag,
+	    PCI_CAP_PWRMGMT, 0, 0)) {
+		if (tcp->tcp_pmreg == 0) {
+			printf("%s: don't know location of PMCSR for this "
+			    "chip\n", sc->sc_dev.dv_xname);
+			return;
+		}
+		reg = cardbus_conf_read(cc, cf, csc->sc_tag,
+		    tcp->tcp_pmreg) & 0x03;
+#if 1 /* XXX Probably not right for CardBus. */
+		if (reg == 3) {
+			/*
+			 * The card has lost all configuration data in
+			 * this state, so punt.
+			 */
+			printf("%s: unable to wake up from power state D3\n",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+#endif
+		if (reg != 0) {
+			printf("%s: waking up from power state D%d\n",
+			    sc->sc_dev.dv_xname, reg);
+			cardbus_conf_write(cc, cf, csc->sc_tag,
+			    tcp->tcp_pmreg, 0);
+		}
+	}
 }
 
 void
