@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.38 1999/04/14 12:47:27 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.39 1999/04/15 12:25:54 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,6 +175,8 @@ run_makedev()
 {
 	char *owd;
 
+	wclear(stdscr);
+	wrefresh(stdscr);
 	msg_display(MSG_makedev);
 	sleep (1);
 
