@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2002/02/27 21:55:44 scw Exp $
+#	$NetBSD: Makefile,v 1.3 2002/08/07 05:15:39 briggs Exp $
 
 KDIR=	/sys/arch/mvmeppc/include
 INCSDIR= /usr/include/mvmeppc
@@ -15,8 +15,8 @@ INCS=   ansi.h aout_machdep.h asm.h \
 	kcore.h kgdb.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pio.h pmap.h powerpc.h proc.h profile.h psl.h pte.h \
-	ptrace.h \
+	param.h pcb.h pio.h pmap.h pmc.h powerpc.h \
+	proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \

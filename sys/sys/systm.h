@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.146 2002/07/20 03:58:25 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.147 2002/08/07 05:16:28 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -265,6 +265,7 @@ void	cpu_initclocks __P((void));
 
 void	startprofclock __P((struct proc *));
 void	stopprofclock __P((struct proc *));
+void	proftick __P((struct clockframe *));
 void	setstatclockrate __P((int));
 
 /*

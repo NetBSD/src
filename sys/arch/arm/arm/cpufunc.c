@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.49 2002/07/22 18:17:42 briggs Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.50 2002/08/07 05:14:56 briggs Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -47,9 +47,11 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
+#include "opt_perfctrs.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/pmc.h>
 #include <sys/systm.h>
 #include <machine/cpu.h>
 #include <machine/bootconfig.h>
@@ -72,6 +74,10 @@
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 #include <arm/xscale/xscalereg.h>
+#endif
+
+#if defined(PERFCTRS)
+struct arm_pmc_funcs *arm_pmc;
 #endif
 
 /* PRIMARY CACHE VARIABLES */
@@ -955,6 +961,9 @@ set_cpufuncs()
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
 
 		cpufuncs = xscale_cpufuncs;
+#if defined(PERFCTRS)
+		xscale_pmu_init();
+#endif
 
 		/*
 		 * i80200 errata: Step-A0 and A1 have a bug where
@@ -990,6 +999,9 @@ set_cpufuncs()
 			       PMNC_CC_IF));
 
 		cpufuncs = xscale_cpufuncs;
+#if defined(PERFCTRS)
+		xscale_pmu_init();
+#endif
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
@@ -1001,6 +1013,9 @@ set_cpufuncs()
 	if (cputype == CPU_ID_PXA250A || cputype == CPU_ID_PXA210A ||
 	    cputype == CPU_ID_PXA250B || cputype == CPU_ID_PXA210B) {
 		cpufuncs = xscale_cpufuncs;
+#if defined(PERFCTRS)
+		xscale_pmu_init();
+#endif
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.109 2002/07/02 20:27:46 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.110 2002/08/07 05:16:25 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,13 +78,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.109 2002/07/02 20:27:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.110 2002/08/07 05:16:25 briggs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
+#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.109 2002/07/02 20:27:46 yamt Exp $"
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/pmc.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
@@ -854,11 +856,27 @@ mi_switch(struct proc *p)
 #endif
 
 	/*
+	 * If we are using h/w performance counters, save context.
+	 */
+#if PERFCTRS
+	if (PMC_ENABLED(p))
+		pmc_save_context(p);
+#endif
+
+	/*
 	 * Pick a new current process and switch to it.  When we
 	 * run again, we'll return back here.
 	 */
 	uvmexp.swtch++;
 	cpu_switch(p);
+
+	/*
+	 * If we are using h/w performance counters, restore context.
+	 */
+#if PERFCTRS
+	if (PMC_ENABLED(p))
+		pmc_restore_context(p);
+#endif
 
 	/*
 	 * Make sure that MD code released the scheduler lock before

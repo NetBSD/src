@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 2002/08/06 17:44:35 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18 2002/08/07 05:14:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -45,6 +45,7 @@
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
+#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +53,7 @@
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
+#include <sys/pmc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/syslog.h>
@@ -124,6 +126,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		/* Sync the PCB before we copy it. */
 		savectx(curpcb);
 	}
+#endif
+
+#if defined(PERFCTRS)
+	if (PMC_ENABLED(p1))
+		pmc_md_fork(p1, p2);
 #endif
 
 	/* Copy the pcb */

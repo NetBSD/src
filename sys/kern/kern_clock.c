@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.79 2002/03/17 11:10:43 simonb Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.80 2002/08/07 05:16:22 briggs Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,10 +78,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.79 2002/03/17 11:10:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.80 2002/08/07 05:16:22 briggs Exp $");
 
 #include "opt_callout.h"
 #include "opt_ntp.h"
+#include "opt_perfctrs.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,6 +321,7 @@ long clock_cpu = 0;		/* CPU clock adjust */
 
 int	stathz;
 int	profhz;
+int	profsrc;
 int	schedhz;
 int	profprocs;
 int	softclock_running;		/* 1 => softclock() is running */
@@ -1296,6 +1298,10 @@ startprofclock(struct proc *p)
 
 	if ((p->p_flag & P_PROFIL) == 0) {
 		p->p_flag |= P_PROFIL;
+		/*
+		 * This is only necessary if using the clock as the
+		 * profiling source.
+		 */
 		if (++profprocs == 1 && stathz != 0)
 			psdiv = psratio;
 	}
@@ -1310,10 +1316,52 @@ stopprofclock(struct proc *p)
 
 	if (p->p_flag & P_PROFIL) {
 		p->p_flag &= ~P_PROFIL;
+		/*
+		 * This is only necessary if using the clock as the
+		 * profiling source.
+		 */
 		if (--profprocs == 0 && stathz != 0)
 			psdiv = 1;
 	}
 }
+
+#if defined(PERFCTRS)
+/*
+ * Independent profiling "tick" in case we're using a separate
+ * clock or profiling event source.  Currently, that's just
+ * performance counters--hence the wrapper.
+ */
+void
+proftick(struct clockframe *frame)
+{
+#ifdef GPROF
+        struct gmonparam *g;    
+        intptr_t i;     
+#endif
+	struct proc *p;
+
+	p = curproc;
+	if (CLKF_USERMODE(frame)) {
+		if (p->p_flag & P_PROFIL)
+			addupc_intr(p, CLKF_PC(frame));
+	} else {
+#ifdef GPROF
+		g = &_gmonparam;
+		if (g->state == GMON_PROF_ON) {
+			i = CLKF_PC(frame) - g->lowpc;
+			if (i < g->textsize) {
+				i /= HISTFRACTION * sizeof(*g->kcount);
+				g->kcount[i]++;
+			}
+		}
+#endif
+#ifdef PROC_PC 
+                if (p && p->p_flag & P_PROFIL)
+                        addupc_intr(p, PROC_PC(p));
+#endif  
+	}
+}
+#endif
 
 /*
  * Statistics clock.  Grab profile sample, and if divider reaches 0,
@@ -1345,7 +1393,7 @@ statclock(struct clockframe *frame)
 	}
 	p = curproc;
 	if (CLKF_USERMODE(frame)) {
-		if (p->p_flag & P_PROFIL)
+		if (p->p_flag & P_PROFIL && profsrc == PROFSRC_CLOCK)
 			addupc_intr(p, CLKF_PC(frame));
 		if (--spc->spc_pscnt > 0)
 			return;
@@ -1364,7 +1412,7 @@ statclock(struct clockframe *frame)
 		 * Kernel statistics are just like addupc_intr, only easier.
 		 */
 		g = &_gmonparam;
-		if (g->state == GMON_PROF_ON) {
+		if (profsrc == PROFSRC_CLOCK && g->state == GMON_PROF_ON) {
 			i = CLKF_PC(frame) - g->lowpc;
 			if (i < g->textsize) {
 				i /= HISTFRACTION * sizeof(*g->kcount);
@@ -1373,7 +1421,7 @@ statclock(struct clockframe *frame)
 		}
 #endif
 #ifdef PROC_PC
-		if (p && p->p_flag & P_PROFIL)
+		if (p && profsrc == PROFSRC_CLOCK && p->p_flag & P_PROFIL)
 			addupc_intr(p, PROC_PC(p));
 #endif
 		if (--spc->spc_pscnt > 0)

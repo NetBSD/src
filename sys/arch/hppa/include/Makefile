@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/06/05 01:04:21 fredette Exp $
+#	$NetBSD: Makefile,v 1.2 2002/08/07 05:15:25 briggs Exp $
 
 KDIR=	/sys/arch/hppa/include
 INCSDIR= /usr/include/hppa
@@ -14,7 +14,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h reloc.h \
 	setjmp.h signal.h som.h spinlock.h stdarg.h \
 	trap.h types.h \
