@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.39 2000/10/03 03:13:04 sato Exp $
+#	$NetBSD: files.hpcmips,v 1.40 2000/10/04 13:53:54 uch Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -337,7 +337,7 @@ file arch/hpcmips/isa/plumisa_machdep.c	plumisab
 
 # OHCI USB controller
 attach	ohci at plumif with plumohci
-file	arch/hpcmips/dev/plumohci.c	plumohci
+file	arch/hpcmips/dev/plumohci.c	plumohci	needs-flag
 
 #device txisab: isabus
 #attach txisab at txcsbus

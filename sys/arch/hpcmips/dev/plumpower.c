@@ -1,30 +1,41 @@
-/*	$NetBSD: plumpower.c,v 1.4 2000/03/25 15:08:26 uch Exp $ */
+/*	$NetBSD: plumpower.c,v 1.5 2000/10/04 13:53:55 uch Exp $ */
 
-/*
- * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #undef PLUMPOWERDEBUG
 #include "opt_tx39_debug.h"
 
@@ -50,8 +61,8 @@ int	plumpower_debug = 1;
 #define DPRINTFN(n, arg)
 #endif
 
-int	plumpower_match __P((struct device*, struct cfdata*, void*));
-void	plumpower_attach __P((struct device*, struct device*, void*));
+int	plumpower_match(struct device *, struct cfdata *, void *);
+void	plumpower_attach(struct device *, struct device *, void *);
 
 struct plumpower_softc {
 	struct	device		sc_dev;
@@ -64,22 +75,18 @@ struct cfattach plumpower_ca = {
 	sizeof(struct plumpower_softc), plumpower_match, plumpower_attach
 };
 
-void	plumpower_dump __P((struct plumpower_softc*));
+#ifdef PLUMPOWERDEBUG
+static void	plumpower_dump(struct plumpower_softc *);
+#endif
 
 int
-plumpower_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+plumpower_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 2; /* 1st attach group */
 }
 
 void
-plumpower_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+plumpower_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct plum_attach_args *pa = aux;
 	struct plumpower_softc *sc = (void*)self;
@@ -102,7 +109,6 @@ plumpower_attach(parent, self, aux)
 			PLUM_POWER_PWRCONT_REG, 0);
 	plum_conf_write(sc->sc_regt, sc->sc_regh, 
 			PLUM_POWER_CLKCONT_REG, 0);
-	delay(300 * 1000);
 
 	/* enable MCS interface from TX3922 */
 	plum_conf_write(sc->sc_regt, sc->sc_regh, PLUM_POWER_INPENA_REG,
@@ -110,8 +116,7 @@ plumpower_attach(parent, self, aux)
 }
 
 void
-plum_power_ioreset(pc)
-	plum_chipset_tag_t pc;
+plum_power_ioreset(plum_chipset_tag_t pc)
 {
 	struct plumpower_softc *sc = pc->pc_powert;	
 	bus_space_tag_t regt = sc->sc_regt;
@@ -120,15 +125,11 @@ plum_power_ioreset(pc)
 	plum_conf_write(regt, regh, PLUM_POWER_RESETC_REG,
 			PLUM_POWER_RESETC_IO5CL1 |
 			PLUM_POWER_RESETC_IO5CL1);
-	delay(100*1000);
 	plum_conf_write(regt, regh, PLUM_POWER_RESETC_REG, 0);
-	delay(100*1000);	
 }
 
 void*
-plum_power_establish(pc, src)
-	plum_chipset_tag_t pc;
-	int src;
+plum_power_establish(plum_chipset_tag_t pc, int src)
 {
 	struct plumpower_softc *sc = pc->pc_powert;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -147,7 +148,6 @@ plum_power_establish(pc, src)
 		pwrreg |= PLUM_POWER_PWRCONT_LCDDSP;
 		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
 		pwrreg |= PLUM_POWER_PWRCONT_LCDOE;
-		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
 		break;
 	case PLUM_PWR_BKL:
 		pwrreg |= PLUM_POWER_PWRCONT_BKLIGHT;
@@ -159,7 +159,6 @@ plum_power_establish(pc, src)
 		/* supply power */
 		pwrreg |= PLUM_POWER_PWRCONT_IO5PWR;
 		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
-		delay(300*1000);
 
 		/* output enable & supply clock */
 		pwrreg |= PLUM_POWER_PWRCONT_IO5OE;
@@ -179,16 +178,11 @@ plum_power_establish(pc, src)
 		pwrreg |= PLUM_POWER_PWRCONT_USBEN;
 		/* supply clock to the USB host controller */
 		clkreg |= PLUM_POWER_CLKCONT_USBCLK1;
-#if 1
 		/* 
 		 * clock supply is adaptively controlled by hardware 
 		 * (recommended)
 		 */
 		clkreg &= ~PLUM_POWER_CLKCONT_USBCLK2; 
-#else
-		/* clock is always supplied while USBCLK=1 */
-		clkreg |= PLUM_POWER_CLKCONT_USBCLK2; 
-#endif
 		break;
 	case PLUM_PWR_SM:
 		clkreg |= PLUM_POWER_CLKCONT_SMCLK;
@@ -202,10 +196,7 @@ plum_power_establish(pc, src)
 	}
 
 	plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
-	delay(300*1000);
-
 	plum_conf_write(regt, regh, PLUM_POWER_CLKCONT_REG, clkreg);
-	delay(300*1000);	
 #ifdef PLUMPOWERDEBUG
 	plumpower_dump(sc);
 #endif
@@ -213,9 +204,7 @@ plum_power_establish(pc, src)
 }
 
 void
-plum_power_disestablish(pc, ph)
-	plum_chipset_tag_t pc;
-	int ph;
+plum_power_disestablish(plum_chipset_tag_t pc, int ph)
 {
 	struct plumpower_softc *sc = pc->pc_powert;
 	bus_space_tag_t regt = sc->sc_regt;
@@ -230,9 +219,11 @@ plum_power_disestablish(pc, ph)
 	default:
 		panic("plum_power_disestablish: unknown power source");
 	case PLUM_PWR_LCD:
-		pwrreg &= ~(PLUM_POWER_PWRCONT_LCDOE |
-			    PLUM_POWER_PWRCONT_LCDPWR |
-			    PLUM_POWER_PWRCONT_LCDDSP);
+		pwrreg &= ~PLUM_POWER_PWRCONT_LCDOE;
+		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
+		pwrreg &= ~PLUM_POWER_PWRCONT_LCDDSP;
+		plum_conf_write(regt, regh, PLUM_POWER_PWRCONT_REG, pwrreg);
+		pwrreg &= ~PLUM_POWER_PWRCONT_LCDPWR;
 		break;
 	case PLUM_PWR_BKL:
 		pwrreg &= ~PLUM_POWER_PWRCONT_BKLIGHT;
@@ -274,12 +265,11 @@ plum_power_disestablish(pc, ph)
 #endif
 }
 
+#ifdef PLUMPOWERDEBUG
 #define ISPOWERSUPPLY(r, m) __is_set_print(r, PLUM_POWER_PWRCONT_##m, #m)
 #define ISCLOCKSUPPLY(r, m) __is_set_print(r, PLUM_POWER_CLKCONT_##m, #m)
-
-void
-plumpower_dump(sc)
-	struct plumpower_softc *sc;
+static void
+plumpower_dump(struct plumpower_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -314,5 +304,5 @@ plumpower_dump(sc)
 	       reg & PLUM_POWER_RESETC_IO5CL1 ? "CLRH" : "");
 	printf("\n");
 }
-
+#endif /* PLUMPOWERDEBUG */
 

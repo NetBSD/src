@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm.c,v 1.3 2000/07/30 04:41:15 takemura Exp $	*/
+/*	$NetBSD: hpcapm.c,v 1.4 2000/10/04 13:53:55 uch Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -43,6 +43,11 @@
 #if NVRIP > 0
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vr_asm.h>
+#endif
+
+#include "opt_tx39xx.h"
+#ifdef TX39XX
+#include <hpcmips/tx/tx39var.h> /* suspend CPU */
 #endif
 
 #define HPCAPMDEBUG
@@ -250,6 +255,9 @@ hpcapm_set_powstate(scx, devid, powstat)
 			splhigh();
 			vrip_intr_resume();
 		}
+#endif /* NVRIP > 0 */
+#ifdef TX39XX
+		tx39power_suspend_cpu();
 #endif
 		config_hook_call(CONFIG_HOOK_PMEVENT, 
 				 CONFIG_HOOK_PMEVENT_HARDPOWER,

@@ -1,7 +1,11 @@
-/*	$NetBSD: plumvideo.c,v 1.13 2000/06/29 08:17:59 mrg Exp $ */
+/*	$NetBSD: plumvideo.c,v 1.14 2000/10/04 13:53:55 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 UCHIYAMA Yasushi.  All rights reserved.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,23 +15,30 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
-#define PLUMVIDEODEBUG
 
+#define PLUMVIDEODEBUG
 #include "opt_tx39_debug.h"
+#include "plumohci.h" /* Plum2 OHCI shared memory allocated on V-RAM */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +52,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/config_hook.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/dev/plumvar.h>
@@ -72,6 +84,8 @@ struct plumvideo_softc {
 	tx_chipset_tag_t sc_tc;
 	plum_chipset_tag_t sc_pc;
 
+	void *sc_powerhook;	/* power management hook */
+
 	/* control register */
 	bus_space_tag_t sc_regt;
 	bus_space_handle_t sc_regh;
@@ -90,11 +104,11 @@ struct plumvideo_softc {
 	struct hpcfb_dspconf sc_dspconf;
 };
 
-int	plumvideo_match __P((struct device*, struct cfdata*, void*));
-void	plumvideo_attach __P((struct device*, struct device*, void*));
+int	plumvideo_match(struct device*, struct cfdata*, void*);
+void	plumvideo_attach(struct device*, struct device*, void*);
 
-int	plumvideo_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-paddr_t	plumvideo_mmap __P((void *, off_t, int));
+int	plumvideo_ioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	plumvideo_mmap(void *, off_t, int);
 
 struct cfattach plumvideo_ca = {
 	sizeof(struct plumvideo_softc), plumvideo_match, plumvideo_attach
@@ -104,28 +118,27 @@ struct hpcfb_accessops plumvideo_ha = {
 	plumvideo_ioctl, plumvideo_mmap
 };
 
-int	plumvideo_init __P((struct plumvideo_softc*));
-void	plumvideo_hpcfbinit __P((struct plumvideo_softc *));
+int	plumvideo_power(void *, int, long, void *);
 
-void	plumvideo_clut_default __P((struct plumvideo_softc *));
-void	plumvideo_clut_set __P((struct plumvideo_softc *, u_int32_t *, int,
-				int));
-void	plumvideo_clut_get __P((struct plumvideo_softc *, u_int32_t *, int,
-				int));
-void	__plumvideo_clut_access __P((struct plumvideo_softc *,
-				     void (*) __P((bus_space_tag_t,
-						   bus_space_handle_t))));
-static void _flush_cache __P((void)) __attribute__((__unused__)); /* !!! */
+int	plumvideo_init(struct plumvideo_softc *, int *);
+void	plumvideo_hpcfbinit(struct plumvideo_softc *, int);
+
+void	plumvideo_clut_default(struct plumvideo_softc *);
+void	plumvideo_clut_set(struct plumvideo_softc *, u_int32_t *, int, int);
+void	plumvideo_clut_get(struct plumvideo_softc *, u_int32_t *, int, int);
+void	__plumvideo_clut_access(struct plumvideo_softc *,
+				void (*)(bus_space_tag_t, bus_space_handle_t));
+static void _flush_cache(void) __attribute__((__unused__)); /* !!! */
 
 #ifdef PLUMVIDEODEBUG
-void	plumvideo_dump __P((struct plumvideo_softc*));
+void	plumvideo_dump(struct plumvideo_softc*);
 #endif
 
+#define ON	1
+#define OFF	0
+
 int
-plumvideo_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+plumvideo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	/*
 	 * VRAM area also uses as UHOSTC shared RAM.
@@ -134,71 +147,54 @@ plumvideo_match(parent, cf, aux)
 }
 
 void
-plumvideo_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+plumvideo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct plum_attach_args *pa = aux;
 	struct plumvideo_softc *sc = (void*)self;
 	struct hpcfb_attach_args ha;
-	int console;
+	int console, reverse_flag;
 
 	sc->sc_pc	= pa->pa_pc;
 	sc->sc_regt	= pa->pa_regt;
 	sc->sc_fbiot = sc->sc_clutiot = sc->sc_bitbltt  = pa->pa_iot;
 
 	printf(": ");
-	/*
-	 * map register area
-	 */
+
+	/* map register area */
 	if (bus_space_map(sc->sc_regt, PLUM_VIDEO_REGBASE, 
 			  PLUM_VIDEO_REGSIZE, 0, &sc->sc_regh)) {
-		printf(": register map failed\n");
+		printf("register map failed\n");
 		return;
 	}
 
-	/*
-	 * Power control
-	 */
+	/* power control */
 #ifndef PLUMVIDEODEBUG
-	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL) {
-		/* LCD power on and display off */
-		plum_power_disestablish(sc->sc_pc, PLUM_PWR_LCD);
-		/* power off V-RAM */
-		plum_power_disestablish(sc->sc_pc, PLUM_PWR_EXTPW2);
-		/* power off LCD */
-		plum_power_disestablish(sc->sc_pc, PLUM_PWR_EXTPW1);
-		/* power off RAMDAC */
-		plum_power_disestablish(sc->sc_pc, PLUM_PWR_EXTPW0);
-		/* back-light off */
-		plum_power_disestablish(sc->sc_pc, PLUM_PWR_BKL);
-	} else 
+	if (bootinfo->bi_cnuse & BI_CNUSE_SERIAL)
+		plumvideo_power(sc, 0, 0, (void *)PWR_SUSPEND);
+	else 
 #endif
-	{
-		/* LCD power on and display on */
-		plum_power_establish(sc->sc_pc, PLUM_PWR_LCD);
-		/* supply power to V-RAM */
-		plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW2);
-		/* supply power to LCD */
-		plum_power_establish(sc->sc_pc, PLUM_PWR_EXTPW1);
-		/* back-light on */
-		plum_power_establish(sc->sc_pc, PLUM_PWR_BKL);
-	}
-
+		plumvideo_power(sc, 0, 0, (void *)PWR_RESUME);
+	/* Add a hard power hook to power saving */
+	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
+				       CONFIG_HOOK_PMEVENT_HARDPOWER,
+				       CONFIG_HOOK_SHARE,
+				       plumvideo_power, sc);
+	if (sc->sc_powerhook == 0)
+		printf("WARNING unable to establish hard power hook");
+	
 	/* 
 	 *  Initialize LCD controller
 	 *	map V-RAM area.
 	 *	reinstall bootinfo structure.
 	 *	some OHCI shared-buffer hack. XXX
 	 */
-	if (plumvideo_init(sc) != 0)
+	if (plumvideo_init(sc, &reverse_flag) != 0)
 		return;
 
 	printf("\n");
 
 	/* Attach frame buffer device */
-	plumvideo_hpcfbinit(sc);
+	plumvideo_hpcfbinit(sc, reverse_flag);
 
 #ifdef PLUMVIDEODEBUG
 	if (plumvideo_debug > 1)
@@ -227,8 +223,7 @@ plumvideo_attach(parent, self, aux)
 }
 
 void
-plumvideo_hpcfbinit(sc)
-	struct plumvideo_softc *sc;
+plumvideo_hpcfbinit(struct plumvideo_softc *sc, int reverse_flag)
 {
 	struct hpcfb_fbconf *fb = &sc->sc_fbconf;
 	struct video_chip *chip = &sc->sc_chip;
@@ -257,6 +252,8 @@ plumvideo_hpcfbinit(sc)
 	fb->hf_access_flags |= HPCFB_ACCESS_BYTE;
 	fb->hf_access_flags |= HPCFB_ACCESS_WORD;
 	fb->hf_access_flags |= HPCFB_ACCESS_DWORD;
+	if (reverse_flag)
+		fb->hf_access_flags |= HPCFB_ACCESS_REVERSE;
 
 	switch (depth) {
 	default:
@@ -297,15 +294,24 @@ plumvideo_hpcfbinit(sc)
 }
 
 int
-plumvideo_init(sc)
-	struct plumvideo_softc *sc;
+plumvideo_init(struct plumvideo_softc *sc, int *reverse)
 {
+	struct {
+		int reverse, normal;
+	} ctype[] = {
+		{ BIFB_D2_M2L_3,	BIFB_D2_M2L_0	},
+		{ BIFB_D2_M2L_3x2,	BIFB_D2_M2L_0x2	},
+		{ BIFB_D8_FF,		BIFB_D8_00	},
+		{ BIFB_D16_FFFF,	BIFB_D16_0000,	},
+		{ -1, -1 } /* terminator */
+	}, *ctypep;
+	struct video_chip *chip = &sc->sc_chip;
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
 	plumreg_t reg;
 	size_t vram_size;
 	int bpp, width, height, vram_pitch;
-	struct video_chip *chip = &sc->sc_chip;
+	u_int16_t fbtype;
 
 	chip->vc_v = sc->sc_pc->pc_tc;
 #if notyet
@@ -319,17 +325,32 @@ plumvideo_init(sc)
 	}
 #endif
 	reg = plum_conf_read(regt, regh, PLUM_VIDEO_PLGMD_REG);
+	
+	/* check reverse color */
+	fbtype = bootinfo->fb_type;
+	for (ctypep = ctype; ctypep->normal != -1 ;  ctypep++) {
+		if (fbtype == ctypep->normal) {
+			*reverse = 0;
+			goto fbtype_found;
+		} else if (fbtype == ctypep->reverse) {
+			*reverse = 1;
+			goto fbtype_found;
+		}
+	}
+	printf(": unknown frame buffer type 0x%04x. attach failed.\n", fbtype);
+	return (1);
+ fbtype_found:
+
 	switch (reg & PLUM_VIDEO_PLGMD_GMODE_MASK) {
 	case PLUM_VIDEO_PLGMD_16BPP:		
-#ifdef PLUM_BIG_OHCI_BUFFER
-		printf("(16bpp disabled) ");
+#if NPLUMOHCI > 0 /* reserve V-RAM for USB OHCI */
 		/* FALLTHROUGH */
-#else /* PLUM_BIG_OHCI_BUFFER */
+#else
 		bpp = 16;
 		break;
-#endif /* PLUM_BIG_OHCI_BUFFER */
+#endif
 	default:
-		bootinfo->fb_type = BIFB_D8_FF; /* over ride */
+		bootinfo->fb_type = *reverse ? BIFB_D8_FF : BIFB_D8_00;
 		reg &= ~PLUM_VIDEO_PLGMD_GMODE_MASK;
 		plum_conf_write(regt, regh, PLUM_VIDEO_PLGMD_REG, reg);
 		reg |= PLUM_VIDEO_PLGMD_8BPP;
@@ -357,14 +378,12 @@ plumvideo_init(sc)
 	/*
 	 * set line byte length to bootinfo and LCD controller.
 	 */
-	bootinfo->fb_line_bytes = (width * bpp) / NBBY;
-
-	vram_pitch = width / (8 / bpp);
+	vram_pitch = bootinfo->fb_line_bytes = (width * bpp) / NBBY;
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT1_REG, vram_pitch);
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLPIT2_REG,
 			vram_pitch & PLUM_VIDEO_PLPIT2_MASK);
 	plum_conf_write(regt, regh, PLUM_VIDEO_PLOFS_REG, vram_pitch);
-
+	
 	/*
 	 * boot messages and map CLUT(if any).
 	 */
@@ -416,12 +435,7 @@ plumvideo_init(sc)
 }
 
 int
-plumvideo_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+plumvideo_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct plumvideo_softc *sc = (struct plumvideo_softc *)v;
 	struct hpcfb_fbconf *fbconf;
@@ -551,10 +565,7 @@ plumvideo_ioctl(v, cmd, data, flag, p)
 }
 
 paddr_t
-plumvideo_mmap(ctx, offset, prot)
-	void *ctx;
-	off_t offset;
-	int prot;
+plumvideo_mmap(void *ctx, off_t offset, int prot)
 {
 	struct plumvideo_softc *sc = (struct plumvideo_softc *)ctx;
 
@@ -567,13 +578,11 @@ plumvideo_mmap(ctx, offset, prot)
 }
 
 void
-plumvideo_clut_get(sc, rgb, beg, cnt)
-	struct plumvideo_softc *sc;
-	u_int32_t *rgb;
-	int beg, cnt;
+plumvideo_clut_get(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
+		   int cnt)
 {
-	static void __plumvideo_clut_get __P((bus_space_tag_t,
-					      bus_space_handle_t));
+	static void __plumvideo_clut_get(bus_space_tag_t,
+					      bus_space_handle_t);
 	static void __plumvideo_clut_get(iot, ioh)
 		bus_space_tag_t iot;
 		bus_space_handle_t ioh;
@@ -593,13 +602,11 @@ plumvideo_clut_get(sc, rgb, beg, cnt)
 }
 
 void
-plumvideo_clut_set(sc, rgb, beg, cnt)
-	struct plumvideo_softc *sc;
-	u_int32_t *rgb;
-	int beg, cnt;
+plumvideo_clut_set(struct plumvideo_softc *sc, u_int32_t *rgb, int beg,
+		   int cnt)
 {
-	static void __plumvideo_clut_set __P((bus_space_tag_t,
-					      bus_space_handle_t));
+	static void __plumvideo_clut_set(bus_space_tag_t,
+					      bus_space_handle_t);
 	static void __plumvideo_clut_set(iot, ioh)
 		bus_space_tag_t iot;
 		bus_space_handle_t ioh;
@@ -619,11 +626,10 @@ plumvideo_clut_set(sc, rgb, beg, cnt)
 }
 
 void
-plumvideo_clut_default(sc)
-	struct plumvideo_softc *sc;
+plumvideo_clut_default(struct plumvideo_softc *sc)
 {
-	static void __plumvideo_clut_default __P((bus_space_tag_t,
-						  bus_space_handle_t));
+	static void __plumvideo_clut_default(bus_space_tag_t,
+						  bus_space_handle_t);
 	static void __plumvideo_clut_default(iot, ioh)
 		bus_space_tag_t iot;
 		bus_space_handle_t ioh;
@@ -668,9 +674,8 @@ plumvideo_clut_default(sc)
 }
 
 void
-__plumvideo_clut_access(sc, palette_func)
-	struct plumvideo_softc *sc;
-	void (*palette_func) __P((bus_space_tag_t, bus_space_handle_t));
+__plumvideo_clut_access(struct plumvideo_softc *sc, void (*palette_func)
+			(bus_space_tag_t, bus_space_handle_t))
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;
@@ -713,10 +718,45 @@ _flush_cache()
 	MachFlushCache();
 }
 
+int
+plumvideo_power(void *ctx, int type, long id, void *msg)
+{
+	struct plumvideo_softc *sc = ctx;
+	plum_chipset_tag_t pc = sc->sc_pc;
+	bus_space_tag_t regt = sc->sc_regt;
+	bus_space_handle_t regh = sc->sc_regh;
+	int why = (int)msg;
+
+	switch (why) {
+	case PWR_RESUME:
+		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
+		/* power on */
+		/* LCD power on and display on */
+		plum_power_establish(pc, PLUM_PWR_LCD);
+		/* back-light on */
+		plum_power_establish(pc, PLUM_PWR_BKL);
+		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
+				PLUM_VIDEO_PLLUM_MAX);
+		break;
+	case PWR_SUSPEND:
+		/* FALLTHROUGH */
+	case PWR_STANDBY:
+		DPRINTF(("%s: OFF\n", sc->sc_dev.dv_xname));
+		/* back-light off */
+		plum_conf_write(regt, regh, PLUM_VIDEO_PLLUM_REG,
+				PLUM_VIDEO_PLLUM_MIN);
+		plum_power_disestablish(pc, PLUM_PWR_BKL);
+		/* power down */
+		plum_power_disestablish(pc, PLUM_PWR_LCD);
+		break;
+	}
+
+	return 0;
+}
+
 #ifdef PLUMVIDEODEBUG
 void
-plumvideo_dump(sc)
-	struct plumvideo_softc *sc;
+plumvideo_dump(struct plumvideo_softc *sc)
 {
 	bus_space_tag_t regt = sc->sc_regt;
 	bus_space_handle_t regh = sc->sc_regh;

@@ -1,30 +1,41 @@
-/*	$NetBSD: tx39icu.c,v 1.8 2000/07/20 03:44:46 deberg Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.9 2000/10/04 13:53:55 uch Exp $ */
 
-/*
- * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "opt_tx39_debug.h"
 #include "opt_use_poll.h"
 #include "opt_tx39icudebug.h"
@@ -191,21 +202,22 @@ tx39icu_attach(parent, self, aux)
 	struct txsim_attach_args *ta = aux;
 	struct tx39icu_softc *sc = (void*)self;
 	tx_chipset_tag_t tc = ta->ta_tc;
-	txreg_t reg;
+	txreg_t reg, *regs;
 	int i;
 	
 	printf("\n");
 	sc->sc_tc = ta->ta_tc;
 
-	sc->sc_regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
-	sc->sc_regs[1] = tx_conf_read(tc, TX39_INTRSTATUS1_REG);
-	sc->sc_regs[2] = tx_conf_read(tc, TX39_INTRSTATUS2_REG);
-	sc->sc_regs[3] = tx_conf_read(tc, TX39_INTRSTATUS3_REG);
-	sc->sc_regs[4] = tx_conf_read(tc, TX39_INTRSTATUS4_REG);
-	sc->sc_regs[5] = tx_conf_read(tc, TX39_INTRSTATUS5_REG);
+	regs = sc->sc_regs;
+	regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
+	regs[1] = tx_conf_read(tc, TX39_INTRSTATUS1_REG);
+	regs[2] = tx_conf_read(tc, TX39_INTRSTATUS2_REG);
+	regs[3] = tx_conf_read(tc, TX39_INTRSTATUS3_REG);
+	regs[4] = tx_conf_read(tc, TX39_INTRSTATUS4_REG);
+	regs[5] = tx_conf_read(tc, TX39_INTRSTATUS5_REG);
 #ifdef TX392X
-	sc->sc_regs[7] = tx_conf_read(tc, TX39_INTRSTATUS7_REG);
-	sc->sc_regs[8] = tx_conf_read(tc, TX39_INTRSTATUS8_REG);
+	regs[7] = tx_conf_read(tc, TX39_INTRSTATUS7_REG);
+	regs[8] = tx_conf_read(tc, TX39_INTRSTATUS8_REG);
 #endif
 #ifdef TX39ICUDEBUG
 	printf("\t[Windows CE setting]\n");
@@ -274,7 +286,7 @@ tx39icu_intr(status, cause, pc, ipending)
 {
 	struct tx39icu_softc *sc;
 	tx_chipset_tag_t tc;
-	txreg_t reg, pend;
+	txreg_t reg, pend, *regs;
 	int i, j;
 
 	tc = tx_conf_get_tag();
@@ -282,15 +294,16 @@ tx39icu_intr(status, cause, pc, ipending)
 	/*
 	 * Read regsiter ASAP
 	 */
-	sc->sc_regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
-	sc->sc_regs[1] = tx_conf_read(tc, TX39_INTRSTATUS1_REG);
-	sc->sc_regs[2] = tx_conf_read(tc, TX39_INTRSTATUS2_REG);
-	sc->sc_regs[3] = tx_conf_read(tc, TX39_INTRSTATUS3_REG);
-	sc->sc_regs[4] = tx_conf_read(tc, TX39_INTRSTATUS4_REG);
-	sc->sc_regs[5] = tx_conf_read(tc, TX39_INTRSTATUS5_REG);
+	regs = sc->sc_regs;
+	regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
+	regs[1] = tx_conf_read(tc, TX39_INTRSTATUS1_REG);
+	regs[2] = tx_conf_read(tc, TX39_INTRSTATUS2_REG);
+	regs[3] = tx_conf_read(tc, TX39_INTRSTATUS3_REG);
+	regs[4] = tx_conf_read(tc, TX39_INTRSTATUS4_REG);
+	regs[5] = tx_conf_read(tc, TX39_INTRSTATUS5_REG);
 #ifdef TX392X
-	sc->sc_regs[7] = tx_conf_read(tc, TX39_INTRSTATUS7_REG);
-	sc->sc_regs[8] = tx_conf_read(tc, TX39_INTRSTATUS8_REG);
+	regs[7] = tx_conf_read(tc, TX39_INTRSTATUS7_REG);
+	regs[8] = tx_conf_read(tc, TX39_INTRSTATUS8_REG);
 #endif
 
 #ifdef TX39ICUDEBUG
