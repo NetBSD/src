@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.102 2000/07/26 13:53:34 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.103 2000/07/29 08:20:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.102 2000/07/26 13:53:34 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.103 2000/07/29 08:20:02 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -579,7 +579,7 @@ user(const char *name)
 
 #ifdef SKEY
 	if (skey_haskey(name) == 0) {
-		char *myskey;
+		const char *myskey;
 
 		myskey = skey_keyinfo(name);
 		reply(331, "Password [%s] required for %s.",
