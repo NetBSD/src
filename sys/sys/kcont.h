@@ -1,4 +1,4 @@
-/* $NetBSD: */
+/* $NetBSD: kcont.h,v 1.3 2004/03/25 23:02:58 enami Exp $ */
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,20 +37,23 @@
  * All rights reserved.
  */
 
+#ifndef _SYS_KCONT_H_
+#define	_SYS_KCONT_H_
+
 #include <sys/queue.h>
 
 /*
  * kcont -- Continuation-passing for BSD kernels.
- * 
+ *
  * This module defines structures that implement a
  * continuation-passing model in C which can be used as a
- * ``callback''-like  alternative to using  a process context to
+ * ``callback''-like alternative to using a process context to
  * tsleep() on an object address, waiting for some event or status
  * change on that object.  Since ANSI C provides neither
  * lexically-nested functions nor heap allocation of activation
  * records, we implement a continuation as a struct containing:
  * 1. A function pointer, pointing to the continuation.
- * 2. A object pointer: the object being "slept" upon. 
+ * 2. A object pointer: the object being "slept" upon.
  * 3. An argument pointer: a pointer to private storage containing
  *    other arguments to the continuation function, including any
  *    additional state beyond the "slept-upon" object.
@@ -59,63 +62,63 @@
 typedef struct kc {
 	SIMPLEQ_ENTRY(kc) kc_next;	/* next kc in object's callback list */
 
-	void (*kc_fn) (void * /*obj*/, void * /*env_arg*/, int /* status*/);
+	void (*kc_fn) (void * /*obj*/, void * /*env_arg*/, int /*status*/);
 
-	void * kc_env_arg;	/* caller-supplied continuation argument */
-	void * kc_obj;		/* saved object, used for deferred calls */
-	int kc_status;		/* saved status, used for  deferred calls */
-  	ushort kc_ipl;		/* IPL at which to call kc_func */
+	void *kc_env_arg;	/* caller-supplied continuation argument */
+	void *kc_obj;		/* saved object, used for deferred calls */
+	int kc_status;		/* saved status, used for deferred calls */
+	ushort kc_ipl;		/* IPL at which to call kc_func */
 	ushort kc_flags;	/* Flags, private to kcont implementation */
 } kc_t;
 
 /* kc_flags values. */
-#define KC_AUTOFREE 0x01	/* This struct kc * was malloc'ed by
-				 * the kcont module; free it immediately 
+#define	KC_AUTOFREE 0x01	/* This struct kc * was malloc'ed by
+				 * the kcont module; free it immediately
 				 * after calling the continuation function.
 				 */
-#define KC_DEFERRED 0x02	/* Deferral has already saved object, status */
+#define	KC_DEFERRED 0x02	/* Deferral has already saved object, status */
 
 /* kcont IPL values. */
-#define KC_IPL_DEFER_PROCESS	0x00	/* Hand off continuation fn to a
+#define	KC_IPL_DEFER_PROCESS	0x00	/* Hand off continuation fn to a
 					 * full process context (kthread).
 					 */
 
-#define KC_IPL_DEFER_SOFTCLOCK	0x01
-#define KC_IPL_DEFER_SOFTNET	0x02	/* run continuation in an
+#define	KC_IPL_DEFER_SOFTCLOCK	0x01
+#define	KC_IPL_DEFER_SOFTNET	0x02	/* Run continuation in an
 					 * IPL_SOFTNET software callout. */
-#define KC_IPL_DEFER_SOFTSERIAL	0x03
+#define	KC_IPL_DEFER_SOFTSERIAL	0x03
 
-#define KC_IPL_IMMED	0x10	/*
+#define	KC_IPL_IMMED	0x10	/*
 				 * Execute continuation fn immediately,
 				 * in the context of the object event,
-				 * with no completion. Continuation
+				 * with no completion.  Continuation
 				 * assumed to be very quick.
 				 */
 
 /*
  * Head of a list of pending continuations.
  * For example, for continuation-based buffer I/O,
- * add a kcq_t to  struct buf, and pass a struct kc *
+ * add a kcq_t to struct buf, and pass a struct kc *
  * down through VFS and strategy layers.
  */
-typedef SIMPLEQ_HEAD(kcqueue, kc)  kcq_t;
-		    
+typedef SIMPLEQ_HEAD(kcqueue, kc) kcq_t;
+
 
 /*
  * Prepare a struct kc continuation using caller-supplied memory
  */
-struct kc * kcont(struct kc *,
-	    void (* /*fn*/) __P((void* /*obj*/, void */*arg*/, int /*sts*/)),
-	    void * /*env_arg*/, int /* continue_ipl*/);
+struct kc *kcont(struct kc *,
+	    void (* /*fn*/)(void * /*obj*/, void */*arg*/, int /*sts*/),
+	    void * /*env_arg*/, int /*continue_ipl*/);
 
-/* 
+/*
  * Prepare a struct kc continuation using malloc'ed memory.
  * The malloc'ed memory will be automatically freed after the continuation
  * is finally called.
  */
 struct kc *kcont_malloc(int /*allocmflags*/,
-	    void (* /*fn*/) __P((void * /*obj*/, void */*arg*/, int /*sts*/)),
-	    void * /*env_arg*/, int /* continue_ipl*/);
+	    void (* /*fn*/)(void * /*obj*/, void */*arg*/, int /*sts*/),
+	    void * /*env_arg*/, int /*continue_ipl*/);
 
 
 /*
@@ -124,14 +127,14 @@ struct kc *kcont_malloc(int /*allocmflags*/,
  * Caller must supply the preallocated kcont (possibly via kcont_malloc()).
  */
 void	kcont_defer(struct kc * /*kc*/, void * /*obj*/,
-		    int /*status*/);
+	    int /*status*/);
 /*
  * Use a kcont to defer execution from the current context to some
- * lower interrupt priority. Space is malloc'ed and freed as for
- * kcont_malloc().Deprecated; use kcont_defer(0 and kcont_malloc().
+ * lower interrupt priority.  Space is malloc'ed and freed as for
+ * kcont_malloc().  Deprecated; use kcont_defer() and kcont_malloc().
  */
-void  kcont_defer_malloc(int, /* mallocflags */
-	    void (* /*fn*/) __P((void* /*obj*/, void */*arg*/, int /*sts*/)),
+void	kcont_defer_malloc(int, /* mallocflags */
+	    void (* /*fn*/)(void * /*obj*/, void */*arg*/, int /*sts*/),
 	    void * /*obj*/,
 	    void * /*env_arg*/, int /*status*/, int /*continue_ipl*/);
 
@@ -139,26 +142,26 @@ void  kcont_defer_malloc(int, /* mallocflags */
  * Enqueue a struct kc * into the kc_queue* field of some kernel struct.
  * The struct kc * argument is typically passed as an argument to
  * a function which requests an asynchronous operation on that kernel object.
- * When the operation completes, or the  object otherwise decides to
- * invoke a  wakeup() on itself, all continuations on the object's
- * kcqueue will be called, either immediately or if a  continuation 
+ * When the operation completes, or the object otherwise decides to
+ * invoke a wakeup() on itself, all continuations on the object's
+ * kcqueue will be called, either immediately or if a continuation
  * requested it) after deferring to a kc_queue * served at
- *  software-interrupt priority.
+ * software-interrupt priority.
  */
 void	kcont_enqueue(kcq_t * /*kcqueue*/, struct kc * /*kc*/);
 
 
 /*
  * Execute (or defer) all continuations on an object's kcqueue
- * when  an asynchronous operation completes. Runs through the
+ * when an asynchronous operation completes.  Runs through the
  * struct kc_queue * of struct kcs, either running the continuations
  * with the given object and status; or saving the object and status
  * and deferring the kconts to a software-interrupt priority kc_queue.
  */
-void	kcont_run __P((kcq_t * /*kcq*/, void * /*obj*/,
-	    int /*status*/, int /*cur_ipl*/));
+void	kcont_run(kcq_t * /*kcq*/, void * /*obj*/,
+	    int /*status*/, int /*cur_ipl*/);
 
 
 /* Initialize kcont framework at boot time. */
-void	kcont_init __P((void));
-
+void	kcont_init(void);
+#endif /* !_SYS_KCONT_H_ */
