@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.14 2000/11/22 16:15:44 nonaka Exp $
+#	$NetBSD: GENERIC,v 1.15 2000/12/19 10:42:06 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.14 $"
+#ident		"GENERIC-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -385,6 +385,7 @@ pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		2	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		2	# 6to4 IPv6 over IPv4 encapsulation
+pseudo-device	vlan			# IEEE 802.1q encapsulation
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
