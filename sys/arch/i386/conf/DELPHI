@@ -1,4 +1,4 @@
-#	$NetBSD: DELPHI,v 1.18 2002/06/17 05:14:12 lukem Exp $
+#	$NetBSD: DELPHI,v 1.19 2002/06/25 03:12:05 lukem Exp $
 #
 #	DELPHI -- one of thorpej@zembu.com's devel machines
 #
@@ -7,7 +7,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"DELPHI-$Revision: 1.18 $"
+ident 		"DELPHI-$Revision: 1.19 $"
 
 maxusers	64		# estimated number of users
 
@@ -385,21 +385,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 #adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
-#scsibus* at adv?
-#scsibus* at adw?
-#scsibus* at aha?
-#scsibus* at ahb?
-scsibus* at ahc?
-#scsibus* at aic?
-#scsibus* at bha?
-#scsibus* at dpt?
-#scsibus* at isp?
-#scsibus* at nca?
-#scsibus* at ncr?
-#scsibus* at pcscp?
-#scsibus* at sea?
-#scsibus* at uha?
-#scsibus* at wds?
+scsibus* at scsi?
 
 # SCSI devices
 #sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -445,8 +431,7 @@ pciide* at pci? dev ? function ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-#atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -607,7 +592,6 @@ nsphy*	at mii? phy ?			# NS83840 PHYs
 
 # USB Mass Storage
 #umass*	at uhub? port ? configuration ? interface ?
-#scsibus* at umass? channel ?
 
 # USB audio
 #uaudio*	at uhub? port ? configuration ?
@@ -680,22 +664,7 @@ eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 #opl*	at ym?
 
 # Audio support
-#audio*	at aria?
-#audio*	at clcs?
-audio*	at eap?
-#audio*	at eso?
-#audio*	at ess?
-#audio*	at fms?
-#audio*	at gus?
-#audio*	at guspnp?
-#audio*	at pas?
-#audio*	at sb?
-#audio*	at sbl?
-#audio*	at sp?
-#audio*	at sv?
-#audio*	at uaudio?
-#audio*	at wss?
-#audio*	at ym?
+audio*	at audiobus?
 
 # MPU 401 UARTs
 #mpu*	at isa? port 0x330 irq 9	# MPU401 or compatible card
@@ -705,11 +674,7 @@ audio*	at eap?
 #mpu*	at ym?
 
 # MIDI support
-midi*	at eap?			# 137[01] MIDI port
-#midi*	at mpu?			# MPU 401
-#midi*	at opl?			# OPL FM synth
-#midi*	at pcppi?		# MIDI interface to the PC speaker
-#midi*	at sb?			# SB1 MIDI port
+midi*	at midibus?
 
 # The spkr driver provides a simple tone interface to the built in speaker.
 spkr0	at pcppi?		# PC speaker

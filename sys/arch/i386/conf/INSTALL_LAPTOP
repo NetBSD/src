@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.31 2002/06/24 16:14:14 lukem Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.32 2002/06/25 03:12:09 lukem Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -328,8 +328,7 @@ ahc* 	at cardbus? dev ? function ?	# Adaptec ADP-1480
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 
 # SCSI bus support
-scsibus* at ahc?
-scsibus* at aic?
+scsibus* at scsi?
 
 # SCSI devices
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
@@ -374,8 +373,7 @@ wd*	at wdc? channel ? drive ? flags 0x0000
 wd*	at pciide? channel ? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at wdc? channel ?
-atapibus* at pciide? channel ?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.
@@ -473,8 +471,6 @@ uhid*	at uhidev? reportid ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
-atapibus* at umass? channel ?
-scsibus* at umass? channel ?
 
 # USB Ethernet adapters
 aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
