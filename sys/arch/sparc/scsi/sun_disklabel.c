@@ -42,7 +42,7 @@
  *	@(#)sun_disklabel.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: sun_disklabel.c,v 1.5 92/06/17 07:04:12 torek Exp
- * $Id: sun_disklabel.c,v 1.1 1993/11/14 10:47:08 deraadt Exp $
+ * $Id: sun_disklabel.c,v 1.2 1993/11/14 10:47:54 deraadt Exp $
  */
 
 /*
@@ -55,7 +55,7 @@
 #include <sys/disk.h>
 #include <sys/ioctl.h>
 
-#include <sparc/sunos/sun_disklabel.h>
+#include <sparc/scsi/sun_disklabel.h>
 
 /*
  * Take a sector (cp) containing a SunOS disk label and set lp to a BSD
