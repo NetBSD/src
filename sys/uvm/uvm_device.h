@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.4 1998/02/10 02:34:29 perry Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.5 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -54,10 +54,10 @@
  */
 
 struct uvm_device {
-  struct uvm_object u_obj;	/* the actual VM object */
-  int u_flags;			/* flags [LOCKED BY UDV_LOCK!] */
-  dev_t u_device;		/* our device */
-  LIST_ENTRY(uvm_device) u_list; /* list of device objects */
+	struct uvm_object u_obj;	/* the actual VM object */
+	int u_flags;			/* flags [LOCKED BY UDV_LOCK!] */
+	dev_t u_device;		/* our device */
+	LIST_ENTRY(uvm_device) u_list; /* list of device objects */
 };
 
 /*

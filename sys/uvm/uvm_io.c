@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_io.c,v 1.3 1998/02/07 11:08:43 mrg Exp $	*/
+/*	$NetBSD: uvm_io.c,v 1.4 1998/03/09 00:58:57 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -69,98 +69,98 @@
  *    while we are working.
  */
 
-int uvm_io(map, uio)
-
-vm_map_t map;
-struct uio *uio;
-
+int
+uvm_io(map, uio)
+	vm_map_t map;
+	struct uio *uio;
 {
-  vm_offset_t baseva, endva, pageoffset, kva;
-  vm_size_t chunksz, togo, sz;
-  vm_map_entry_t dead_entries;
-  int error;
+	vm_offset_t baseva, endva, pageoffset, kva;
+	vm_size_t chunksz, togo, sz;
+	vm_map_entry_t dead_entries;
+	int error;
 
-  /*
-   * step 0: sanity checks and set up for copy loop.  start with a
-   * large chunk size.  if we have trouble finding vm space we will
-   * reduce it.
-   */
+	/*
+	 * step 0: sanity checks and set up for copy loop.  start with a
+	 * large chunk size.  if we have trouble finding vm space we will
+	 * reduce it.
+	 */
 
-  if (uio->uio_resid == 0)
-    return(0);
-  togo = uio->uio_resid;
+	if (uio->uio_resid == 0)
+		return(0);
+	togo = uio->uio_resid;
 
-  baseva = (vm_offset_t) uio->uio_offset;
-  endva = baseva + (togo - 1);
+	baseva = (vm_offset_t) uio->uio_offset;
+	endva = baseva + (togo - 1);
 
-  if (endva < baseva)   /* wrap around? */
-    return(EIO);
+	if (endva < baseva)   /* wrap around? */
+		return(EIO);
 
-  if (baseva >= VM_MAXUSER_ADDRESS)
-    return(0);
-  if (endva >= VM_MAXUSER_ADDRESS)
-    togo = togo - (endva - VM_MAXUSER_ADDRESS + 1); /* EOF truncate */
-  pageoffset = baseva & PAGE_MASK;
-  baseva = trunc_page(baseva);
-  chunksz = min(round_page(togo + pageoffset), MAXBSIZE);
-  error = 0;
+	if (baseva >= VM_MAXUSER_ADDRESS)
+		return(0);
+	if (endva >= VM_MAXUSER_ADDRESS)
+		/* EOF truncate */
+		togo = togo - (endva - VM_MAXUSER_ADDRESS + 1);
+	pageoffset = baseva & PAGE_MASK;
+	baseva = trunc_page(baseva);
+	chunksz = min(round_page(togo + pageoffset), MAXBSIZE);
+	error = 0;
 
-  /*
-   * step 1: main loop...  while we've got data to move
-   */
+	/*
+	 * step 1: main loop...  while we've got data to move
+	 */
 
-  for (/*null*/; togo > 0 ; pageoffset = 0) {
+	for (/*null*/; togo > 0 ; pageoffset = 0) {
 
-    /*
-     * step 2: extract mappings from the map into kernel_map
-     */
+		/*
+		 * step 2: extract mappings from the map into kernel_map
+		 */
 
-    error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
+		error = uvm_map_extract(map, baseva, chunksz, kernel_map, &kva,
 			    UVM_EXTRACT_QREF | UVM_EXTRACT_CONTIG | 
 			    UVM_EXTRACT_FIXPROT);
-    if (error) {
+		if (error) {
 
-      /* retry with a smaller chunk... */
-      if (error == ENOMEM && chunksz > PAGE_SIZE) {
-	chunksz = trunc_page(chunksz / 2);
-	if (chunksz < PAGE_SIZE)
-	  chunksz = PAGE_SIZE;
-	continue;
-      }
+			/* retry with a smaller chunk... */
+			if (error == ENOMEM && chunksz > PAGE_SIZE) {
+				chunksz = trunc_page(chunksz / 2);
+				if (chunksz < PAGE_SIZE)
+					chunksz = PAGE_SIZE;
+				continue;
+			}
 
-      break;
-    }
+			break;
+		}
 
-    /*
-     * step 3: move a chunk of data
-     */
+		/*
+		 * step 3: move a chunk of data
+		 */
 
-    sz = chunksz - pageoffset;
-    if (sz > togo)
-      sz = togo;
-    error = uiomove((caddr_t) (kva + pageoffset), sz, uio);
-    if (error)
-      break;
-    togo -= sz;
-    baseva += chunksz;
+		sz = chunksz - pageoffset;
+		if (sz > togo)
+			sz = togo;
+		error = uiomove((caddr_t) (kva + pageoffset), sz, uio);
+		if (error)
+			break;
+		togo -= sz;
+		baseva += chunksz;
 
 
-    /*
-     * step 4: unmap the area of kernel memory
-     */
+		/*
+		 * step 4: unmap the area of kernel memory
+		 */
 
-    vm_map_lock(kernel_map);
-    (void) uvm_unmap_remove(kernel_map, kva, kva+chunksz, 1, &dead_entries);
-    vm_map_unlock(kernel_map);
+		vm_map_lock(kernel_map);
+		(void)uvm_unmap_remove(kernel_map, kva, kva+chunksz, 1,
+		    &dead_entries);
+		vm_map_unlock(kernel_map);
 
-    if (dead_entries != NULL)
-      uvm_unmap_detach(dead_entries, AMAP_REFALL);
+		if (dead_entries != NULL)
+			uvm_unmap_detach(dead_entries, AMAP_REFALL);
+	}
 
-  }
+	/*
+	 * done
+	 */
 
-  /*
-   * done
-   */
-
-  return(error);
+	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.6 1998/02/10 14:12:11 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.7 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -163,9 +163,9 @@
  */
 
 struct uvm_advice {
-  int advice;
-  int nback;
-  int nforw;
+	int advice;
+	int nback;
+	int nforw;
 };
 
 /*
@@ -175,9 +175,9 @@ struct uvm_advice {
  */
 
 static struct uvm_advice uvmadvice[] = {
-  { MADV_NORMAL, 3, 4 },
-  { MADV_RANDOM, 0, 0 },
-  { MADV_SEQUENTIAL, 8, 7},
+	{ MADV_NORMAL, 3, 4 },
+	{ MADV_RANDOM, 0, 0 },
+	{ MADV_SEQUENTIAL, 8, 7},
 };
 
 #define UVM_MAXRANGE 16	/* must be max() of nback+nforw+1 */
@@ -199,30 +199,29 @@ static __inline void uvmfault_anonflush __P((struct vm_anon **, int));
  * => does not have to deactivate page if it is busy
  */
 
-static __inline void uvmfault_anonflush(anons, n)
-
-struct vm_anon **anons;
-int n;
-
+static __inline void
+uvmfault_anonflush(anons, n)
+	struct vm_anon **anons;
+	int n;
 {
-  int lcv;
-  struct vm_page *pg;
-  
-  for (lcv = 0 ; lcv < n ; lcv++) {
-    if (anons[lcv] == NULL)
-      continue;
-    simple_lock(&anons[lcv]->an_lock);
-    pg = anons[lcv]->u.an_page;
-    if (pg && (pg->flags & PG_BUSY) == 0 && pg->loan_count == 0) {
-      uvm_lock_pageq();
-      if (pg->wire_count == 0) {
-        pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
-        uvm_pagedeactivate(pg);
-      }
-      uvm_unlock_pageq();
-    }
-    simple_unlock(&anons[lcv]->an_lock);
-  }
+	int lcv;
+	struct vm_page *pg;
+	
+	for (lcv = 0 ; lcv < n ; lcv++) {
+		if (anons[lcv] == NULL)
+			continue;
+		simple_lock(&anons[lcv]->an_lock);
+		pg = anons[lcv]->u.an_page;
+		if (pg && (pg->flags & PG_BUSY) == 0 && pg->loan_count == 0) {
+			uvm_lock_pageq();
+			if (pg->wire_count == 0) {
+				pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE);
+				uvm_pagedeactivate(pg);
+			}
+			uvm_unlock_pageq();
+		}
+		simple_unlock(&anons[lcv]->an_lock);
+	}
 }
 
 /*
@@ -237,51 +236,50 @@ int n;
  * => if we are out of RAM we sleep (waiting for more)
  */
 
-static void uvmfault_amapcopy(ufi)
-
-struct uvm_faultinfo *ufi;
-
+static void
+uvmfault_amapcopy(ufi)
+	struct uvm_faultinfo *ufi;
 {
 
-  /*
-   * while we haven't done the job
-   */
+	/*
+	 * while we haven't done the job
+	 */
 
-  while (1) {
+	while (1) {
 
-    /*
-     * no mapping?  give up.
-     */
+		/*
+		 * no mapping?  give up.
+		 */
 
-    if (uvmfault_lookup(ufi, TRUE) == FALSE)
-      return;
+		if (uvmfault_lookup(ufi, TRUE) == FALSE)
+			return;
 
-    /*
-     * copy if needed.
-     */
+		/*
+		 * copy if needed.
+		 */
 
-    if (UVM_ET_ISNEEDSCOPY(ufi->entry))
-      amap_copy(ufi->map, ufi->entry, M_NOWAIT, TRUE, ufi->rvaddr, 
+		if (UVM_ET_ISNEEDSCOPY(ufi->entry))
+			amap_copy(ufi->map, ufi->entry, M_NOWAIT, TRUE, ufi->rvaddr, 
 		ufi->rvaddr + 1);
 
-    /*
-     * didn't work?  must be out of RAM.   unlock and sleep.
-     */
+		/*
+		 * didn't work?  must be out of RAM.   unlock and sleep.
+		 */
 
-    if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
-      uvmfault_unlockmaps(ufi, TRUE);
-      uvm_wait("fltamapcopy");
-      continue;
-    }
+		if (UVM_ET_ISNEEDSCOPY(ufi->entry)) {
+			uvmfault_unlockmaps(ufi, TRUE);
+			uvm_wait("fltamapcopy");
+			continue;
+		}
 
-    /*
-     * got it!   unlock and return.
-     */
-    
-    uvmfault_unlockmaps(ufi, TRUE);
-    return;
-  }
-  /*NOTREACHED*/
+		/*
+		 * got it!   unlock and return.
+		 */
+		
+		uvmfault_unlockmaps(ufi, TRUE);
+		return;
+	}
+	/*NOTREACHED*/
 }
 
 /*
@@ -301,210 +299,234 @@ struct uvm_faultinfo *ufi;
  */
 
 int uvmfault_anonget(ufi, amap, anon)
-
-struct uvm_faultinfo *ufi;
-struct vm_amap *amap;
-struct vm_anon *anon;
-
+	struct uvm_faultinfo *ufi;
+	struct vm_amap *amap;
+	struct vm_anon *anon;
 {
-  boolean_t we_own;	/* we own anon's page? */
-  boolean_t locked;	/* did we relock? */
-  struct vm_page *pg;
-  int result;
-  UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
+	boolean_t we_own;	/* we own anon's page? */
+	boolean_t locked;	/* did we relock? */
+	struct vm_page *pg;
+	int result;
+	UVMHIST_FUNC("uvmfault_anonget"); UVMHIST_CALLED(maphist);
 
-  result = 0;		/* XXX shut up gcc */
-  uvmexp.fltanget++;	/* XXXDCD should this go here or below? */
+	result = 0;		/* XXX shut up gcc */
+	uvmexp.fltanget++;	/* XXXDCD should this go here or below? */
 
-  /* 
-   * loop until we get it, or fail.
-   */
-
-  while (1) {
-
-    we_own = FALSE;		/* TRUE if we set PG_BUSY on a page */
-    pg = anon->u.an_page;
-
-    /*
-     * if there is a resident page and it is loaned, then anon may not
-     * own it.   call out to uvm_anon_lockpage() to ensure the real owner 
-     * of the page has been identified and locked.
-     */
-
-    if (pg && pg->loan_count)
-        pg = uvm_anon_lockloanpg(anon);
-
-    /*
-     * page there?   make sure it is not busy/released.
-     */
-
-    if (pg) {
-
-      /*
-       * at this point, if the page has a uobject [meaning we have it on
-       * loan], then that uobject is locked by us!   if the page is busy,
-       * we drop all the locks (including uobject) and try again.
-       */
-
-      if ((pg->flags & (PG_BUSY|PG_RELEASED)) == 0) {
-        UVMHIST_LOG(maphist, "<- OK",0,0,0,0);
-	return(VM_PAGER_OK);
-      }
-      pg->flags |= PG_WANTED;
-      uvmexp.fltpgwait++;
-
-      /* the last unlock must be an atomic unlock+wait on the owner of page */
-      if (pg->uobject) {	/* owner is uobject ? */
-        uvmfault_unlockall(ufi, amap, NULL, anon);
-        UVMHIST_LOG(maphist, " unlock+wait on uobj",0,0,0,0);
-        UVM_UNLOCK_AND_WAIT(pg, &pg->uobject->vmobjlock, FALSE, "anonget1",0);
-      } else {
-        /* anon owns page */
-        uvmfault_unlockall(ufi, amap, NULL, NULL);
-        UVMHIST_LOG(maphist, " unlock+wait on anon",0,0,0,0);
-        UVM_UNLOCK_AND_WAIT(pg,&anon->an_lock,0,"anonget2",0);
-      }
-      /* ready to relock and try again */
-
-    } else {
-    
-      /*
-       * no page, we must try and bring it in.
-       */
-      pg = uvm_pagealloc(NULL, 0, anon);
-
-      if (pg == NULL) {		/* out of RAM.  */
-
-	uvmfault_unlockall(ufi, amap, NULL, anon);
-	uvmexp.fltnoram++;
-        UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,0,0,0);
-	uvm_wait("flt_noram1");
-	/* ready to relock and try again */
-
-      } else {
-	
-	we_own = TRUE;			/* we set the PG_BUSY bit */
-	uvmfault_unlockall(ufi, amap, NULL, anon);
-
-	/*
-	 * we are passing a PG_BUSY+PG_FAKE+PG_CLEAN page into the
-	 * uvm_swap_get function with all data structures unlocked.
-	 */
-	uvmexp.pageins++;
-	result = uvm_swap_get(pg, anon->an_swslot, PGO_SYNCIO);
-
-	/*
-	 * we clean up after the i/o below in the "we_own" case
-	 */
-	/* ready to relock and try again */
-      }
-
-    }
-
-    /*
-     * now relock and try again
-     */
-
-    locked = uvmfault_relock(ufi);
-    if (locked) {
-      simple_lock(&amap->am_l);
-    }
-    if (locked || we_own)
-      simple_lock(&anon->an_lock);
-
-    /*
-     * if we own the page (i.e. we set PG_BUSY), then we need to clean 
-     * up after the I/O. there are three cases to consider:
-     *   [1] page released during I/O: free anon and ReFault.
-     *   [2] I/O not OK.   free the page and cause the fault to fail.
-     *   [3] I/O OK!   activate the page and sync with the non-we_own
-     *		case (i.e. drop anon lock if not locked).
-     */
-    
-    if (we_own) {
-
-      if (pg->flags & PG_WANTED) {
-	thread_wakeup(pg);		/* still holding object lock */
-      }
-      pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);	/* un-busy! */
-      UVM_PAGE_OWN(pg, NULL);
-
-      /* 
-       * if we were RELEASED during I/O, then our anon is no longer
-       * part of an amap.   we need to free the anon and try again.
-       */
-      if (pg->flags & PG_RELEASED) {
-        pmap_page_protect(PMAP_PGARG(pg), VM_PROT_NONE); /* to be safe */
-	uvm_anfree(anon);	/* frees page for us */
-	if (locked)
-	  uvmfault_unlockall(ufi, amap, NULL, NULL);
-	uvmexp.fltpgrele++;
-        UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-	return(VM_PAGER_REFAULT);		/* refault! */
-      }
-
-      if (result != VM_PAGER_OK) {
-#ifdef DIAGNOSTIC
-	if (result == VM_PAGER_PEND)
-	  panic("uvmfault_anonget: got PENDING for non-async I/O");
-#endif
-	/* remove page from anon */
-	anon->u.an_page = NULL;
 	/* 
-	 * note: page was never !PG_BUSY, so it can't be mapped and thus
-	 * no need to pmap_page_protect it...
+	 * loop until we get it, or fail.
 	 */
-        uvm_lock_pageq();
-	uvm_pagefree(pg);
-        uvm_unlock_pageq();
 
- 	if (locked)
-	  uvmfault_unlockall(ufi, amap, NULL, anon);
-	else
-	  simple_unlock(&anon->an_lock);
-        UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
-	return(VM_PAGER_ERROR);
-      }
-      
-      /* must be OK, clear modify (already PG_CLEAN) and activate */
-      pmap_clear_modify(PMAP_PGARG(pg));
-      uvm_lock_pageq();
-      uvm_pageactivate(pg);
-      uvm_unlock_pageq();
-      if (!locked)
-	simple_unlock(&anon->an_lock);
-    }
+	while (1) {
 
-    /*
-     * we were not able to relock.   restart fault.
-     */
+		we_own = FALSE;		/* TRUE if we set PG_BUSY on a page */
+		pg = anon->u.an_page;
 
-    if (!locked) {
-      UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-      return(VM_PAGER_REFAULT);
-    }
+		/*
+		 * if there is a resident page and it is loaned, then anon
+		 * may not own it.   call out to uvm_anon_lockpage() to ensure
+		 * the real owner of the page has been identified and locked.
+		 */
 
-    /*
-     * verify no one has touched the amap and moved the anon on us.
-     */
+		if (pg && pg->loan_count)
+				pg = uvm_anon_lockloanpg(anon);
 
-    if (amap_lookup(&ufi->entry->aref, 
+		/*
+		 * page there?   make sure it is not busy/released.
+		 */
+
+		if (pg) {
+
+			/*
+			 * at this point, if the page has a uobject [meaning
+			 * we have it on loan], then that uobject is locked
+			 * by us!   if the page is busy, we drop all the
+			 * locks (including uobject) and try again.
+			 */
+
+			if ((pg->flags & (PG_BUSY|PG_RELEASED)) == 0) {
+				UVMHIST_LOG(maphist, "<- OK",0,0,0,0);
+				return(VM_PAGER_OK);
+			}
+			pg->flags |= PG_WANTED;
+			uvmexp.fltpgwait++;
+
+			/*
+			 * the last unlock must be an atomic unlock+wait on
+			 * the owner of page
+			 */
+			if (pg->uobject) {	/* owner is uobject ? */
+				uvmfault_unlockall(ufi, amap, NULL, anon);
+				UVMHIST_LOG(maphist, " unlock+wait on uobj",0,
+				    0,0,0);
+				UVM_UNLOCK_AND_WAIT(pg,
+				    &pg->uobject->vmobjlock,
+				    FALSE, "anonget1",0);
+			} else {
+				/* anon owns page */
+				uvmfault_unlockall(ufi, amap, NULL, NULL);
+				UVMHIST_LOG(maphist, " unlock+wait on anon",0,
+				    0,0,0);
+				UVM_UNLOCK_AND_WAIT(pg,&anon->an_lock,0,
+				    "anonget2",0);
+			}
+			/* ready to relock and try again */
+
+		} else {
+		
+			/*
+			 * no page, we must try and bring it in.
+			 */
+			pg = uvm_pagealloc(NULL, 0, anon);
+
+			if (pg == NULL) {		/* out of RAM.  */
+
+				uvmfault_unlockall(ufi, amap, NULL, anon);
+				uvmexp.fltnoram++;
+				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
+				    0,0,0);
+				uvm_wait("flt_noram1");
+				/* ready to relock and try again */
+
+			} else {
+	
+				/* we set the PG_BUSY bit */
+				we_own = TRUE;	
+				uvmfault_unlockall(ufi, amap, NULL, anon);
+
+				/*
+				 * we are passing a PG_BUSY+PG_FAKE+PG_CLEAN
+				 * page into the uvm_swap_get function with
+				 * all data structures unlocked.
+				 */
+				uvmexp.pageins++;
+				result = uvm_swap_get(pg, anon->an_swslot,
+				    PGO_SYNCIO);
+
+				/*
+				 * we clean up after the i/o below in the
+				 * "we_own" case
+				 */
+				/* ready to relock and try again */
+			}
+		}
+
+		/*
+		 * now relock and try again
+		 */
+
+		locked = uvmfault_relock(ufi);
+		if (locked) {
+			simple_lock(&amap->am_l);
+		}
+		if (locked || we_own)
+			simple_lock(&anon->an_lock);
+
+		/*
+		 * if we own the page (i.e. we set PG_BUSY), then we need
+		 * to clean up after the I/O. there are three cases to
+		 * consider:
+		 *   [1] page released during I/O: free anon and ReFault.
+		 *   [2] I/O not OK.   free the page and cause the fault 
+		 *       to fail.
+		 *   [3] I/O OK!   activate the page and sync with the
+		 *       non-we_own case (i.e. drop anon lock if not locked).
+		 */
+		
+		if (we_own) {
+
+			if (pg->flags & PG_WANTED) {
+				/* still holding object lock */
+				thread_wakeup(pg);	
+			}
+			/* un-busy! */
+			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+			UVM_PAGE_OWN(pg, NULL);
+
+			/* 
+			 * if we were RELEASED during I/O, then our anon is
+			 * no longer part of an amap.   we need to free the
+			 * anon and try again.
+			 */
+			if (pg->flags & PG_RELEASED) {
+				pmap_page_protect(PMAP_PGARG(pg),
+				    VM_PROT_NONE); /* to be safe */
+				uvm_anfree(anon);	/* frees page for us */
+				if (locked)
+				  uvmfault_unlockall(ufi, amap, NULL, NULL);
+				uvmexp.fltpgrele++;
+				UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
+				return(VM_PAGER_REFAULT);	/* refault! */
+			}
+
+			if (result != VM_PAGER_OK) {
+#ifdef DIAGNOSTIC
+				if (result == VM_PAGER_PEND)
+		panic("uvmfault_anonget: got PENDING for non-async I/O");
+#endif
+				/* remove page from anon */
+				anon->u.an_page = NULL;
+
+				/* 
+				 * note: page was never !PG_BUSY, so it
+				 * can't be mapped and thus no need to
+				 * pmap_page_protect it...
+				 */
+				uvm_lock_pageq();
+				uvm_pagefree(pg);
+				uvm_unlock_pageq();
+
+				if (locked)
+					uvmfault_unlockall(ufi, amap, NULL,
+					    anon);
+				else
+					simple_unlock(&anon->an_lock);
+				UVMHIST_LOG(maphist, "<- ERROR", 0,0,0,0);
+				return(VM_PAGER_ERROR);
+			}
+			
+			/*
+			 * must be OK, clear modify (already PG_CLEAN)
+			 * and activate
+			 */
+			pmap_clear_modify(PMAP_PGARG(pg));
+			uvm_lock_pageq();
+			uvm_pageactivate(pg);
+			uvm_unlock_pageq();
+			if (!locked)
+				simple_unlock(&anon->an_lock);
+		}
+
+		/*
+		 * we were not able to relock.   restart fault.
+		 */
+
+		if (!locked) {
+			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
+			return(VM_PAGER_REFAULT);
+		}
+
+		/*
+		 * verify no one has touched the amap and moved the anon on us.
+		 */
+
+		if (amap_lookup(&ufi->entry->aref, 
 		    ufi->rvaddr - ufi->entry->start) != anon) {
-      
-      uvmfault_unlockall(ufi, amap, NULL, anon);
-      UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
-      return(VM_PAGER_REFAULT);
-    }
-      
-    /*
-     * try it again! 
-     */
+			
+			uvmfault_unlockall(ufi, amap, NULL, anon);
+			UVMHIST_LOG(maphist, "<- REFAULT", 0,0,0,0);
+			return(VM_PAGER_REFAULT);
+		}
+			
+		/*
+		 * try it again! 
+		 */
 
-    uvmexp.fltanretry++;
-    continue;
-  } /* while (1) */
+		uvmexp.fltanretry++;
+		continue;
 
-  /*NOTREACHED*/
+	} /* while (1) */
+
+	/*NOTREACHED*/
 }
 
 /*
@@ -522,1022 +544,1112 @@ struct vm_anon *anon;
  *	the map locked off during I/O.
  */
 
-int uvm_fault(orig_map, vaddr, fault_type, access_type)
-
-vm_map_t orig_map;
-vm_offset_t vaddr;
-vm_fault_t fault_type;
-vm_prot_t access_type;
-
+int
+uvm_fault(orig_map, vaddr, fault_type, access_type)
+	vm_map_t orig_map;
+	vm_offset_t vaddr;
+	vm_fault_t fault_type;
+	vm_prot_t access_type;
 {
-  struct uvm_faultinfo ufi;
-  vm_prot_t enter_prot;
-  boolean_t wired, narrow, promote, locked, shadowed;
-  int npages, nback, nforw, centeridx, result, lcv, gotpages;
-  vm_offset_t orig_startva, startva, objaddr, currva, pa, offset;
-  struct vm_amap *amap;
-  struct uvm_object *uobj;
-  struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
-  struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
-  UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
+	struct uvm_faultinfo ufi;
+	vm_prot_t enter_prot;
+	boolean_t wired, narrow, promote, locked, shadowed;
+	int npages, nback, nforw, centeridx, result, lcv, gotpages;
+	vm_offset_t orig_startva, startva, objaddr, currva, pa, offset;
+	struct vm_amap *amap;
+	struct uvm_object *uobj;
+	struct vm_anon *anons_store[UVM_MAXRANGE], **anons, *anon, *oanon;
+	struct vm_page *pages[UVM_MAXRANGE], *pg, *uobjpage;
+	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
-  UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, ft=%d, at=%d)",
+	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, ft=%d, at=%d)",
 	      orig_map, vaddr, fault_type, access_type);
 
-  anon = NULL; /* XXX: shut up gcc */
+	anon = NULL; /* XXX: shut up gcc */
 
-  uvmexp.faults++;	/* XXX: locking? */
+	uvmexp.faults++;	/* XXX: locking? */
 
-  /*
-   * init the IN parameters in the ufi
-   */
+	/*
+	 * init the IN parameters in the ufi
+	 */
 
-  ufi.orig_map = orig_map;
-  ufi.orig_rvaddr = trunc_page(vaddr);
-  ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
-  if (fault_type == VM_FAULT_WIRE)
-    narrow = TRUE;		/* don't look for neighborhood pages on wire */
-  else
-    narrow = FALSE;		/* normal fault */
+	ufi.orig_map = orig_map;
+	ufi.orig_rvaddr = trunc_page(vaddr);
+	ufi.orig_size = PAGE_SIZE;	/* can't get any smaller than this */
+	if (fault_type == VM_FAULT_WIRE)
+		narrow = TRUE;		/* don't look for neighborhood
+					 * pages on wire */
+	else
+		narrow = FALSE;		/* normal fault */
 
-  /*
-   * "goto ReFault" means restart the page fault from ground zero.
-   */
+	/*
+	 * "goto ReFault" means restart the page fault from ground zero.
+	 */
 ReFault:
 
-  /*
-   * lookup and lock the maps
-   */
+	/*
+	 * lookup and lock the maps
+	 */
 
-  if (uvmfault_lookup(&ufi, FALSE) == FALSE) {
-    UVMHIST_LOG(maphist, "<- no mapping @ 0x%x", vaddr, 0,0,0);
-    return(KERN_INVALID_ADDRESS);
-  }
-  /* locked: maps(read) */
+	if (uvmfault_lookup(&ufi, FALSE) == FALSE) {
+		UVMHIST_LOG(maphist, "<- no mapping @ 0x%x", vaddr, 0,0,0);
+		return(KERN_INVALID_ADDRESS);
+	}
+	/* locked: maps(read) */
 
-  /*
-   * check protection
-   */
+	/*
+	 * check protection
+	 */
 
-  if ((ufi.entry->protection & access_type) != access_type) {
-    UVMHIST_LOG(maphist, "<- protection failure (prot=0x%x, access=0x%x)",
-                ufi.entry->protection, access_type, 0, 0);
-    uvmfault_unlockmaps(&ufi, FALSE);
-    return(KERN_PROTECTION_FAILURE);
-  }
+	if ((ufi.entry->protection & access_type) != access_type) {
+		UVMHIST_LOG(maphist,
+		    "<- protection failure (prot=0x%x, access=0x%x)",
+		    ufi.entry->protection, access_type, 0, 0);
+		uvmfault_unlockmaps(&ufi, FALSE);
+		return(KERN_PROTECTION_FAILURE);
+	}
 
-  /*
-   * "enter_prot" is the protection we want to enter the page in at.
-   * for certain pages (e.g. copy-on-write pages) this protection can
-   * be more strict than ufi.entry->protection.
-   * "wired" means either the entry is wired or we are fault-wiring the pg.
-   */
+	/*
+	 * "enter_prot" is the protection we want to enter the page in at.
+	 * for certain pages (e.g. copy-on-write pages) this protection can
+	 * be more strict than ufi.entry->protection.  "wired" means either
+	 * the entry is wired or we are fault-wiring the pg.
+	 */
 
-  enter_prot = ufi.entry->protection;
-  wired = (ufi.entry->wired_count != 0) || (fault_type == VM_FAULT_WIRE);
-  if (wired)
-    access_type = enter_prot; /* full access for wired */
+	enter_prot = ufi.entry->protection;
+	wired = (ufi.entry->wired_count != 0) || (fault_type == VM_FAULT_WIRE);
+	if (wired)
+		access_type = enter_prot; /* full access for wired */
 
-  /*
-   * handle "needs_copy" case.   if we need to copy the amap we will
-   * have to drop our readlock and relock it with a write lock.  (we
-   * need a write lock to change anything in a map entry [e.g. needs_copy]).
-   */
+	/*
+	 * handle "needs_copy" case.   if we need to copy the amap we will
+	 * have to drop our readlock and relock it with a write lock.  (we
+	 * need a write lock to change anything in a map entry [e.g.
+	 * needs_copy]).
+	 */
 
-  if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
-    if ((access_type & VM_PROT_WRITE) || (ufi.entry->object.uvm_obj == NULL)) {
+	if (UVM_ET_ISNEEDSCOPY(ufi.entry)) {
+		if ((access_type & VM_PROT_WRITE) ||
+		    (ufi.entry->object.uvm_obj == NULL)) {
+			/* need to clear */
+			UVMHIST_LOG(maphist,
+			    "  need to clear needs_copy and refault",0,0,0,0);
+			uvmfault_unlockmaps(&ufi, FALSE);
+			uvmfault_amapcopy(&ufi);
+			uvmexp.fltamcopy++;
+			goto ReFault;
 
-      /* need to clear */
-      UVMHIST_LOG(maphist, "  need to clear needs_copy and refault",0,0,0,0);
-      uvmfault_unlockmaps(&ufi, FALSE);
-      uvmfault_amapcopy(&ufi);
-      uvmexp.fltamcopy++;
-      goto ReFault;
+		} else {
 
-    } else {
+			/*
+			 * ensure that we pmap_enter page R/O since
+			 * needs_copy is still true
+			 */
+			enter_prot = enter_prot & ~VM_PROT_WRITE; 
 
-      /* ensure that we pmap_enter page R/O since needs_copy is still true */
-      enter_prot = enter_prot & ~VM_PROT_WRITE; 
+		}
+	}
 
-    }
-  }
+	/*
+	 * identify the players
+	 */
 
-  /*
-   * identify the players
-   */
+	amap = ufi.entry->aref.ar_amap;	/* top layer */
+	uobj = ufi.entry->object.uvm_obj;	/* bottom layer */
 
-  amap = ufi.entry->aref.ar_amap;	/* top layer */
-  uobj = ufi.entry->object.uvm_obj;	/* bottom layer */
+	/*
+	 * check for a case 0 fault.  if nothing backing the entry then
+	 * error now.
+	 */
 
-  /*
-   * check for a case 0 fault.  if nothing backing the entry then error now.
-   */
+	if (amap == NULL && uobj == NULL) {
+		uvmfault_unlockmaps(&ufi, FALSE);
+		UVMHIST_LOG(maphist,"<- no backing store, no overlay",0,0,0,0);
+		return(KERN_INVALID_ADDRESS);
+	}
 
-  if (amap == NULL && uobj == NULL) {
-    uvmfault_unlockmaps(&ufi, FALSE);
-    UVMHIST_LOG(maphist,"<- no backing store, no overlay",0,0,0,0);
-    return(KERN_INVALID_ADDRESS);
-  }
+	/*
+	 * establish range of interest based on advice from mapper
+	 * and then clip to fit map entry.   note that we only want
+	 * to do this the first time through the fault.   if we 
+	 * ReFault we will disable this by setting "narrow" to true.
+	 */
 
-  /*
-   * establish range of interest based on advice from mapper
-   * and then clip to fit map entry.   note that we only want
-   * to do this the first time through the fault.   if we 
-   * ReFault we will disable this by setting "narrow" to true.
-   */
+	if (narrow == FALSE) {
 
-  if (narrow == FALSE) {
-
-    /* wide fault (!narrow) */
+		/* wide fault (!narrow) */
 #ifdef DIAGNOSTIC
-    if (uvmadvice[ufi.entry->advice].advice != ufi.entry->advice)
-      panic("fault: advice mismatch!");
+		if (uvmadvice[ufi.entry->advice].advice != ufi.entry->advice)
+			panic("fault: advice mismatch!");
 #endif
-    nback = min(uvmadvice[ufi.entry->advice].nback,
+		nback = min(uvmadvice[ufi.entry->advice].nback,
 		(ufi.rvaddr - ufi.entry->start) / PAGE_SIZE);
-    startva = ufi.rvaddr - (nback * PAGE_SIZE);
-    orig_startva = ufi.orig_rvaddr - (nback * PAGE_SIZE);
-    nforw = min(uvmadvice[ufi.entry->advice].nforw,
+		startva = ufi.rvaddr - (nback * PAGE_SIZE);
+		orig_startva = ufi.orig_rvaddr - (nback * PAGE_SIZE);
+		nforw = min(uvmadvice[ufi.entry->advice].nforw,
 		((ufi.entry->end - ufi.rvaddr) / PAGE_SIZE) - 1);
-    /* note: "-1" because we don't want to count the faulting page as forw */
-    npages = nback + nforw + 1;
-    centeridx = nback;
+		/*
+		 * note: "-1" because we don't want to count the
+		 * faulting page as forw
+		 */
+		npages = nback + nforw + 1;
+		centeridx = nback;
 
-    narrow = FALSE;	/* ensure only once per-fault */
+		narrow = FALSE;	/* ensure only once per-fault */
 
-  } else {
-    
-    /* narrow fault! */
-    nback = nforw = 0;
-    startva = ufi.rvaddr;
-    orig_startva = ufi.orig_rvaddr;
-    npages = 1;
-    centeridx = 0;
+	} else {
+		
+		/* narrow fault! */
+		nback = nforw = 0;
+		startva = ufi.rvaddr;
+		orig_startva = ufi.orig_rvaddr;
+		npages = 1;
+		centeridx = 0;
 
-  }
+	}
 
-  /* locked: maps(read) */
-  UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, orig_startva=0x%x",
+	/* locked: maps(read) */
+	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, orig_startva=0x%x",
 	narrow, nback, nforw, orig_startva);
-  UVMHIST_LOG(maphist, "  entry=0x%x, amap=0x%x, obj=0x%x", ufi.entry,
+	UVMHIST_LOG(maphist, "  entry=0x%x, amap=0x%x, obj=0x%x", ufi.entry,
 	amap, uobj, 0);
-#if 0
-/* TEST TEST TEST ONLY ... DELETE  */
-{/*XXXCDC:DBG*/
-vm_map_t map = ufi.map;
-UVMHIST_LOG(maphist, "  startva=0x%x, entrystart=0x%x", startva,
-	ufi.entry->start,0,0); /*XXXCDC: tmp */
-uvm_map_print(map, 1);
-}/*XXXCDC:DBG*/
-#endif
 
-  /*
-   * if we've got an amap, lock it and extract current anons.
-   */
+	/*
+	 * if we've got an amap, lock it and extract current anons.
+	 */
 
-  if (amap) {
-    simple_lock(&amap->am_l);
-    anons = anons_store;
-    amap_lookups(&ufi.entry->aref, startva - ufi.entry->start, anons, npages);
-  } else {
-    anons = NULL;	/* to be safe */
-  }
+	if (amap) {
+		simple_lock(&amap->am_l);
+		anons = anons_store;
+		amap_lookups(&ufi.entry->aref, startva - ufi.entry->start,
+		    anons, npages);
+	} else {
+		anons = NULL;	/* to be safe */
+	}
 
-  /* locked: maps(read), amap(if there) */
+	/* locked: maps(read), amap(if there) */
 
-  /*
-   * for MADV_SEQUENTIAL mappings we want to deactivate the back pages
-   * now and then forget about them (for the rest of the fault).
-   */
+	/*
+	 * for MADV_SEQUENTIAL mappings we want to deactivate the back pages
+	 * now and then forget about them (for the rest of the fault).
+	 */
 
-  if (ufi.entry->advice == MADV_SEQUENTIAL) {
+	if (ufi.entry->advice == MADV_SEQUENTIAL) {
 
-    UVMHIST_LOG(maphist, "  MADV_SEQUENTIAL: flushing backpages",0,0,0,0);
-    /* flush back-page anons? */
-    if (amap) 
-      uvmfault_anonflush(anons, nback);
+		UVMHIST_LOG(maphist, "  MADV_SEQUENTIAL: flushing backpages",
+		    0,0,0,0);
+		/* flush back-page anons? */
+		if (amap) 
+			uvmfault_anonflush(anons, nback);
 
-    /* flush object? */
-    if (uobj) {
-      objaddr = (startva - ufi.entry->start) + ufi.entry->offset;
-      simple_lock(&uobj->vmobjlock);
-      (void) uobj->pgops->pgo_flush(uobj, objaddr, objaddr + 
+		/* flush object? */
+		if (uobj) {
+			objaddr =
+			    (startva - ufi.entry->start) + ufi.entry->offset;
+			simple_lock(&uobj->vmobjlock);
+			(void) uobj->pgops->pgo_flush(uobj, objaddr, objaddr + 
 				    (nback * PAGE_SIZE), PGO_DEACTIVATE);
-      simple_unlock(&uobj->vmobjlock);
-    }
+			simple_unlock(&uobj->vmobjlock);
+		}
 
-    /* now forget about the backpages */
-    if (amap)
-      anons += nback;
-    startva = startva + (nback * PAGE_SIZE);
-    orig_startva = orig_startva + (nback * PAGE_SIZE);
-    npages -= nback;
-    nback = centeridx = 0;
-  }
+		/* now forget about the backpages */
+		if (amap)
+			anons += nback;
+		startva = startva + (nback * PAGE_SIZE);
+		orig_startva = orig_startva + (nback * PAGE_SIZE);
+		npages -= nback;
+		nback = centeridx = 0;
+	}
 
-  /* locked: maps(read), amap(if there) */
+	/* locked: maps(read), amap(if there) */
 
-  /*
-   * map in the backpages and frontpages we found in the amap in hopes
-   * of preventing future faults.    we also init the pages[] array as
-   * we go.
-   */
+	/*
+	 * map in the backpages and frontpages we found in the amap in hopes
+	 * of preventing future faults.    we also init the pages[] array as
+	 * we go.
+	 */
 
-  currva = orig_startva;
-  shadowed = FALSE;
-  for (lcv = 0 ; lcv < npages ; lcv++, currva += PAGE_SIZE) {
+	currva = orig_startva;
+	shadowed = FALSE;
+	for (lcv = 0 ; lcv < npages ; lcv++, currva += PAGE_SIZE) {
 
-    /*
-     * dont play with VAs that are already mapped (except for center)
-     * XXX: return value of pmap_extract disallows PA 0
-     */
-    if (lcv != centeridx) {
-      pa = pmap_extract(ufi.orig_map->pmap, currva);
-      if (pa != NULL) {
-        pages[lcv] = PGO_DONTCARE;
-        continue;
-      }
-    }
+		/*
+		 * dont play with VAs that are already mapped
+		 * *except for center)
+		 * XXX: return value of pmap_extract disallows PA 0
+		 */
+		if (lcv != centeridx) {
+			pa = pmap_extract(ufi.orig_map->pmap, currva);
+			if (pa != NULL) {
+				pages[lcv] = PGO_DONTCARE;
+				continue;
+			}
+		}
 
-    /*
-     * unmapped or center page.   check if any anon at this level.
-     */
-    if (amap == NULL || anons[lcv] == NULL) {
-      pages[lcv] = NULL;
-      continue;
-    }
+		/*
+		 * unmapped or center page.   check if any anon at this level.
+		 */
+		if (amap == NULL || anons[lcv] == NULL) {
+			pages[lcv] = NULL;
+			continue;
+		}
 
-    /*
-     * check for present page and map if possible.   re-activate it.
-     */
+		/*
+		 * check for present page and map if possible.   re-activate it.
+		 */
 
-    pages[lcv] = PGO_DONTCARE;
-    if (lcv == centeridx) {		/* save center for later! */
-      shadowed = TRUE;
-      continue;
-    }
-    anon = anons[lcv];
-    simple_lock(&anon->an_lock);
-    /* ignore loaned pages */
-    if (anon->u.an_page && anon->u.an_page->loan_count == 0 &&
-	(anon->u.an_page->flags & (PG_RELEASED|PG_BUSY)) == 0) {
-      uvm_lock_pageq();
-      uvm_pageactivate(anon->u.an_page);	/* reactivate */
-      uvm_unlock_pageq();
-      UVMHIST_LOG(maphist, "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
-	ufi.orig_map->pmap, currva, anon->u.an_page, 0);
-      uvmexp.fltnamap++;
-      pmap_enter(ufi.orig_map->pmap, currva, VM_PAGE_TO_PHYS(anon->u.an_page),
-		 (anon->an_ref > 1) ? VM_PROT_READ : enter_prot, 
-		 (ufi.entry->wired_count != 0));
-    }
-    simple_unlock(&anon->an_lock);
-  }
+		pages[lcv] = PGO_DONTCARE;
+		if (lcv == centeridx) {		/* save center for later! */
+			shadowed = TRUE;
+			continue;
+		}
+		anon = anons[lcv];
+		simple_lock(&anon->an_lock);
+		/* ignore loaned pages */
+		if (anon->u.an_page && anon->u.an_page->loan_count == 0 &&
+			(anon->u.an_page->flags & (PG_RELEASED|PG_BUSY)) == 0) {
+			uvm_lock_pageq();
+			uvm_pageactivate(anon->u.an_page);	/* reactivate */
+			uvm_unlock_pageq();
+			UVMHIST_LOG(maphist,
+			    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
+			    ufi.orig_map->pmap, currva, anon->u.an_page, 0);
+			uvmexp.fltnamap++;
+			pmap_enter(ufi.orig_map->pmap, currva,
+			    VM_PAGE_TO_PHYS(anon->u.an_page),
+			    (anon->an_ref > 1) ? VM_PROT_READ : enter_prot, 
+			    (ufi.entry->wired_count != 0));
+		}
+		simple_unlock(&anon->an_lock);
+	}
 
-  /* locked: maps(read), amap(if there) */
-  /* (shadowed == TRUE) if there is an anon at the faulting address */
-  UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed, 
+	/* locked: maps(read), amap(if there) */
+	/* (shadowed == TRUE) if there is an anon at the faulting address */
+	UVMHIST_LOG(maphist, "  shadowed=%d, will_get=%d", shadowed, 
 	(uobj && shadowed == FALSE),0,0);
 
-  /*
-   * note that if we are really short of RAM we could sleep in the above
-   * call to pmap_enter with everything locked.   bad?
-   * XXXCDC: this is fixed in PMAP_NEW (no sleep alloc's in pmap)
-   */
-  
-  /*
-   * if the desired page is not shadowed by the amap and we have a
-   * backing object, then we check to see if the backing object would
-   * prefer to handle the fault itself (rather than letting us do it
-   * with the usual pgo_get hook).  the backing object signals this by
-   * providing a pgo_fault routine.
-   *
-   * note: pgo_fault can obtain the correct VA for pmap_enter by using:
-   *    real_va = [ ufi->orig_rvaddr + (startva - ufi->rvaddr)]
-   */
+	/*
+	 * note that if we are really short of RAM we could sleep in the above
+	 * call to pmap_enter with everything locked.   bad?
+	 * XXXCDC: this is fixed in PMAP_NEW (no sleep alloc's in pmap)
+	 */
+	
+	/*
+	 * if the desired page is not shadowed by the amap and we have a
+	 * backing object, then we check to see if the backing object would
+	 * prefer to handle the fault itself (rather than letting us do it
+	 * with the usual pgo_get hook).  the backing object signals this by
+	 * providing a pgo_fault routine.
+	 *
+	 * note: pgo_fault can obtain the correct VA for pmap_enter by using:
+	 *    real_va = [ ufi->orig_rvaddr + (startva - ufi->rvaddr)]
+	 */
 
-  if (uobj && shadowed == FALSE && uobj->pgops->pgo_fault != NULL) {
+	if (uobj && shadowed == FALSE && uobj->pgops->pgo_fault != NULL) {
 
-    simple_lock(&uobj->vmobjlock);
+		simple_lock(&uobj->vmobjlock);
 
-    /* locked: maps(read), amap (if there), uobj */
-    result = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
+		/* locked: maps(read), amap (if there), uobj */
+		result = uobj->pgops->pgo_fault(&ufi, startva, pages, npages,
 				    centeridx, fault_type, access_type,
 				    PGO_LOCKED);
-    /* locked: nothing, pgo_fault has unlocked everything */
+		/* locked: nothing, pgo_fault has unlocked everything */
 
-    if (result == VM_PAGER_OK)
-      return(KERN_SUCCESS);           /* pgo_fault did pmap enter */
-    else if (result == VM_PAGER_REFAULT)
-      goto ReFault;                   /* try again! */
-    else
-      return(KERN_PROTECTION_FAILURE);
-  }
+		if (result == VM_PAGER_OK)
+			return(KERN_SUCCESS);	/* pgo_fault did pmap enter */
+		else if (result == VM_PAGER_REFAULT)
+			goto ReFault;		/* try again! */
+		else
+			return(KERN_PROTECTION_FAILURE);
+	}
 
-  /*
-   * now, if the desired page is not shadowed by the amap and we have
-   * a backing object that does not have a special fault routine, then
-   * we ask (with pgo_get) the object for resident pages that we care
-   * about and attempt to map them in.  we do not let pgo_get block
-   * (PGO_LOCKED).
-   *
-   * ("get" has the option of doing a pmap_enter for us)
-   */
+	/*
+	 * now, if the desired page is not shadowed by the amap and we have
+	 * a backing object that does not have a special fault routine, then
+	 * we ask (with pgo_get) the object for resident pages that we care
+	 * about and attempt to map them in.  we do not let pgo_get block
+	 * (PGO_LOCKED).
+	 *
+	 * ("get" has the option of doing a pmap_enter for us)
+	 */
 
-  if (uobj && shadowed == FALSE) {
-    simple_lock(&uobj->vmobjlock);
+	if (uobj && shadowed == FALSE) {
+		simple_lock(&uobj->vmobjlock);
 
-    /* locked (!shadowed): maps(read), amap (if there), uobj */
-    /* the following call to pgo_get does _not_ change locking state */
+		/* locked (!shadowed): maps(read), amap (if there), uobj */
+		/*
+		 * the following call to pgo_get does _not_ change locking state
+		 */
 
-    uvmexp.fltlget++;
-    gotpages = npages;
-    result = uobj->pgops->pgo_get(uobj, ufi.entry->offset +
+		uvmexp.fltlget++;
+		gotpages = npages;
+		result = uobj->pgops->pgo_get(uobj, ufi.entry->offset +
 				(startva - ufi.entry->start),
 				pages, &gotpages, centeridx,
 				UVM_ET_ISCOPYONWRITE(ufi.entry) ?
 				VM_PROT_READ : access_type,
 				ufi.entry->advice, PGO_LOCKED);
 
-    /*
-     * check for pages to map, if we got any
-     */
+		/*
+		 * check for pages to map, if we got any
+		 */
 
-    uobjpage = NULL;
+		uobjpage = NULL;
 
-    if (gotpages) {
-      currva = orig_startva;
-      for (lcv = 0 ; lcv < npages ; lcv++, currva += PAGE_SIZE) {
+		if (gotpages) {
+			currva = orig_startva;
+			for (lcv = 0 ; lcv < npages ;
+			    lcv++, currva += PAGE_SIZE) {
 
-        if (pages[lcv] == NULL || pages[lcv] == PGO_DONTCARE)
-	  continue;
+				if (pages[lcv] == NULL ||
+				    pages[lcv] == PGO_DONTCARE)
+					continue;
 
 #ifdef DIAGNOSTIC
-        /*
-         * pager sanity check: pgo_get with PGO_LOCKED should never 
-         * return a released page to us.
-         */
-        if (pages[lcv]->flags & PG_RELEASED) 
-	  panic("uvm_fault: pgo_get PGO_LOCKED gave us a RELEASED page");
+					/*
+					 * pager sanity check: pgo_get with
+					 * PGO_LOCKED should never return a
+					 * released page to us.
+					 */
+					if (pages[lcv]->flags & PG_RELEASED) 
+		panic("uvm_fault: pgo_get PGO_LOCKED gave us a RELEASED page");
 #endif
 
-        /*
-         * if center page is resident and not PG_BUSY|PG_RELEASED
-         * then pgo_get made it PG_BUSY for us and gave us a handle 
-         * to it.   remember this page as "uobjpage." (for later use).
-         */
+					/*
+					 * if center page is resident and not
+					 * PG_BUSY|PG_RELEASED then pgo_get
+					 * made it PG_BUSY for us and gave
+					 * us a handle to it.   remember this
+					 * page as "uobjpage." (for later use).
+					 */
 
-        if (lcv == centeridx) {
-	  uobjpage = pages[lcv];
-	  UVMHIST_LOG(maphist, "  got uobjpage (0x%x) with locked get", 
-		  uobjpage, 0,0,0);
-	  continue;
-        }
+					if (lcv == centeridx) {
+						uobjpage = pages[lcv];
+	UVMHIST_LOG(maphist, "  got uobjpage (0x%x) with locked get", 
+					    uobjpage, 0,0,0);
+						continue;
+				}
 	
-        /* 
-         * note: calling pgo_get with locked data structures returns us
-         * pages which are neither busy nor released, so we don't need to
-         * check for this.   we can just directly enter the page (after
-         * moving it to the head of the active queue [useful?]).
-         */
+				/* 
+				 * note: calling pgo_get with locked data
+				 * structures returns us pages which are
+				 * neither busy nor released, so we don't
+				 * need to check for this.   we can just
+				 * directly enter the page (after moving it
+				 * to the head of the active queue [useful?]).
+				 */
 
-        uvm_lock_pageq();
-        uvm_pageactivate(pages[lcv]);	/* reactivate */
-        uvm_unlock_pageq();
-        UVMHIST_LOG(maphist, "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
-	  ufi.orig_map->pmap, currva, pages[lcv], 0);
-        uvmexp.fltnomap++;
-        pmap_enter(ufi.orig_map->pmap, currva, VM_PAGE_TO_PHYS(pages[lcv]),
-	   UVM_ET_ISCOPYONWRITE(ufi.entry) ?  VM_PROT_READ : enter_prot, wired);
+				uvm_lock_pageq();
+				uvm_pageactivate(pages[lcv]);	/* reactivate */
+				uvm_unlock_pageq();
+				UVMHIST_LOG(maphist,
+				  "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+				  ufi.orig_map->pmap, currva, pages[lcv], 0);
+				uvmexp.fltnomap++;
+				pmap_enter(ufi.orig_map->pmap, currva,
+				    VM_PAGE_TO_PHYS(pages[lcv]),
+				    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
+				    VM_PROT_READ : enter_prot, wired);
 
-        /* 
-         * NOTE: page can't be PG_WANTED or PG_RELEASED because we've held 
-         * the lock the whole time we've had the handle.
-         */
-        pages[lcv]->flags &= ~(PG_BUSY);		/* un-busy! */
-        UVM_PAGE_OWN(pages[lcv], NULL);
+				/* 
+				 * NOTE: page can't be PG_WANTED or PG_RELEASED
+				 * because we've held the lock the whole time
+				 * we've had the handle.
+				 */
+				pages[lcv]->flags &= ~(PG_BUSY); /* un-busy! */
+				UVM_PAGE_OWN(pages[lcv], NULL);
 	 
-        /* done! */
-      }	/* for "lcv" loop */
-    }   /* "gotpages" != 0 */
+				/* done! */
+			}	/* for "lcv" loop */
+		}   /* "gotpages" != 0 */
 
-    /* note: object still _locked_ */
-  } else {
-    
-    uobjpage = NULL;
+		/* note: object still _locked_ */
+	} else {
+		
+		uobjpage = NULL;
 
-  }
-
-  /* locked (shadowed): maps(read), amap */
-  /* locked (!shadowed): maps(read), amap(if there), 
-     uobj(if !null), uobjpage(if !null) */
-
-  /*
-   * note that at this point we are done with any front or back pages.
-   * we are now going to focus on the center page (i.e. the one we've
-   * faulted on).  if we have faulted on the top (anon) layer
-   * [i.e. case 1], then the anon we want is anons[centeridx] (we have
-   * not touched it yet).  if we have faulted on the bottom (uobj)
-   * layer [i.e. case 2] and the page was both present and available,
-   * then we've got a pointer to it as "uobjpage" and we've already
-   * made it BUSY and tmpwired it.
-   */
-
-  /*
-   * there are four possible cases we must address: 1A, 1B, 2A, and 2B
-   */
-
-  /*
-   * redirect case 2: if we are not shadowed, go to case 2.
-   */
-
-  if (shadowed == FALSE) 
-    goto Case2;
-
-  /* locked: maps(read), amap */
-
-  /*
-   * handle case 1: fault on an anon in our amap
-   */
-
-  anon = anons[centeridx];
-  UVMHIST_LOG(maphist, "  case 1 fault: anon=0x%x", anon, 0,0,0);
-  simple_lock(&anon->an_lock);
-
-  /* locked: maps(read), amap, anon */
-
-  /*
-   * no matter if we have case 1A or case 1B we are going to need to
-   * have the anon's memory resident.   ensure that now.
-   */
-
-  /*
-   * let uvmfault_anonget do the dirty work.   if it fails (!OK) it will
-   * unlock for us.   if it is OK, locks are still valid and locked.
-   * also, if it is OK, then the anon's page is on the queues.
-   * if the page is on loan from a uvm_object, then anonget will
-   * lock that object for us if it does not fail.
-   */
-
-  result = uvmfault_anonget(&ufi, amap, anon);
-
-  if (result == VM_PAGER_REFAULT)
-    goto ReFault;
-
-  if (result == VM_PAGER_AGAIN) {
-    tsleep((caddr_t)&lbolt, PVM, "fltagain1", 0);
-    goto ReFault;
-  }
-
-  if (result != VM_PAGER_OK)
-    return(KERN_PROTECTION_FAILURE);		/* XXX??? */
-
-  /*
-   * uobj is non null if the page is on loan from an object (i.e. uobj)
-   */
-
-  uobj = anon->u.an_page->uobject;	/* locked by anonget if !NULL */
-
-  /* locked: maps(read), amap, anon, uobj(if one) */
-
-  /*
-   * special handling for loaned pages 
-   */
-  if (anon->u.an_page->loan_count) {
-
-    if ((access_type & VM_PROT_WRITE) == 0) {
-      
-      /*
-       * for read faults on loaned pages we just cap the protection
-       * at read-only.
-       */
-
-      enter_prot = enter_prot & ~VM_PROT_WRITE;
-
-    } else {
-      /*
-       * note that we can't allow writes into a loaned page!
-       *
-       * if we have a write fault on a loaned page in an anon then we
-       * need to look at the anon's ref count.  if it is greater than
-       * one then we are going to do a normal copy-on-write fault into
-       * a new anon (this is not a problem).  however, if the
-       * reference count is one (a case where we would normally allow
-       * a write directly to the page) then we need to kill the loan
-       * before we continue.
-       */
-
-      if (anon->an_ref == 1) {		/* >1 case is already ok */
-
-	/* get new un-owned replacement page */
-	pg = uvm_pagealloc(NULL, 0, NULL);
-	if (pg == NULL) {
-	  uvmfault_unlockall(&ufi, amap, uobj, anon);
-	  uvm_wait("flt_noram2");
-	  goto ReFault;
 	}
 
-	/* copy data, kill loan, and drop uobj lock (if any) */
-	uvm_pagecopy(anon->u.an_page, pg);		  /* copy old -> new */
-	/* force reload */
-	pmap_page_protect(PMAP_PGARG(anon->u.an_page), VM_PROT_NONE); 
-	uvm_lock_pageq();				  /* KILL loan */
-        if (uobj)
-	  anon->u.an_page->loan_count--;		/* if we were loaning */
-	anon->u.an_page->uanon = NULL;
-	anon->u.an_page->pqflags &= ~PQ_ANON;		/* in case we owned */
-	uvm_unlock_pageq();
-	if (uobj) {
-	  simple_unlock(&uobj->vmobjlock);
-	  uobj = NULL;
+	/* locked (shadowed): maps(read), amap */
+	/* locked (!shadowed): maps(read), amap(if there), 
+		 uobj(if !null), uobjpage(if !null) */
+
+	/*
+	 * note that at this point we are done with any front or back pages.
+	 * we are now going to focus on the center page (i.e. the one we've
+	 * faulted on).  if we have faulted on the top (anon) layer
+	 * [i.e. case 1], then the anon we want is anons[centeridx] (we have
+	 * not touched it yet).  if we have faulted on the bottom (uobj)
+	 * layer [i.e. case 2] and the page was both present and available,
+	 * then we've got a pointer to it as "uobjpage" and we've already
+	 * made it BUSY and tmpwired it.
+	 */
+
+	/*
+	 * there are four possible cases we must address: 1A, 1B, 2A, and 2B
+	 */
+
+	/*
+	 * redirect case 2: if we are not shadowed, go to case 2.
+	 */
+
+	if (shadowed == FALSE) 
+		goto Case2;
+
+	/* locked: maps(read), amap */
+
+	/*
+	 * handle case 1: fault on an anon in our amap
+	 */
+
+	anon = anons[centeridx];
+	UVMHIST_LOG(maphist, "  case 1 fault: anon=0x%x", anon, 0,0,0);
+	simple_lock(&anon->an_lock);
+
+	/* locked: maps(read), amap, anon */
+
+	/*
+	 * no matter if we have case 1A or case 1B we are going to need to
+	 * have the anon's memory resident.   ensure that now.
+	 */
+
+	/*
+	 * let uvmfault_anonget do the dirty work.   if it fails (!OK) it will
+	 * unlock for us.   if it is OK, locks are still valid and locked.
+	 * also, if it is OK, then the anon's page is on the queues.
+	 * if the page is on loan from a uvm_object, then anonget will
+	 * lock that object for us if it does not fail.
+	 */
+
+	result = uvmfault_anonget(&ufi, amap, anon);
+
+	if (result == VM_PAGER_REFAULT)
+		goto ReFault;
+
+	if (result == VM_PAGER_AGAIN) {
+		tsleep((caddr_t)&lbolt, PVM, "fltagain1", 0);
+		goto ReFault;
 	}
-	
-	/* install new page in anon */
-	anon->u.an_page = pg;
-	pg->uanon = anon;
-	pg->pqflags |= PQ_ANON;
-        pg->flags &= ~(PG_BUSY|PG_FAKE);
-        UVM_PAGE_OWN(pg, NULL);
-    
-	/* done! */
-      }     /* ref == 1 */
-    }       /* write fault */
-  }         /* loan count */
 
-  /*
-   * if we are case 1B then we will need to allocate a new blank
-   * anon to transfer the data into.   note that we have a lock
-   * on anon, so no one can busy or release the page until we are done.
-   * also note that the ref count can't drop to zero here because
-   * it is > 1 and we are only dropping one ref.
-   *
-   * in the (hopefully very rare) case that we are out of RAM we 
-   * will unlock, wait for more RAM, and refault.    
-   *
-   * if we are out of anon VM we kill the process (XXX: could wait?).
-   */
+	if (result != VM_PAGER_OK)
+		return(KERN_PROTECTION_FAILURE);		/* XXX??? */
 
-  if ((access_type & VM_PROT_WRITE) != 0 && anon->an_ref > 1) {
+	/*
+	 * uobj is non null if the page is on loan from an object (i.e. uobj)
+	 */
 
-    UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
-    uvmexp.flt_acow++;
-    oanon = anon;		/* oanon = old, locked anon */
-    anon = uvm_analloc();
-    if (anon)
-      pg = uvm_pagealloc(NULL, 0, anon);
+	uobj = anon->u.an_page->uobject;	/* locked by anonget if !NULL */
+
+	/* locked: maps(read), amap, anon, uobj(if one) */
+
+	/*
+	 * special handling for loaned pages 
+	 */
+	if (anon->u.an_page->loan_count) {
+
+		if ((access_type & VM_PROT_WRITE) == 0) {
+			
+			/*
+			 * for read faults on loaned pages we just cap the
+			 * protection at read-only.
+			 */
+
+			enter_prot = enter_prot & ~VM_PROT_WRITE;
+
+		} else {
+			/*
+			 * note that we can't allow writes into a loaned page!
+			 *
+			 * if we have a write fault on a loaned page in an
+			 * anon then we need to look at the anon's ref count.
+			 * if it is greater than one then we are going to do
+			 * a normal copy-on-write fault into a new anon (this
+			 * is not a problem).  however, if the reference count
+			 * is one (a case where we would normally allow a
+			 * write directly to the page) then we need to kill
+			 * the loan before we continue.
+			 */
+
+			/* >1 case is already ok */
+			if (anon->an_ref == 1) {
+
+				/* get new un-owned replacement page */
+				pg = uvm_pagealloc(NULL, 0, NULL);
+				if (pg == NULL) {
+					uvmfault_unlockall(&ufi, amap, uobj,
+					    anon);
+					uvm_wait("flt_noram2");
+					goto ReFault;
+				}
+
+				/*
+				 * copy data, kill loan, and drop uobj lock
+				 * (if any)
+				 */
+				/* copy old -> new */
+				uvm_pagecopy(anon->u.an_page, pg);
+
+				/* force reload */
+				pmap_page_protect(PMAP_PGARG(anon->u.an_page),
+				    VM_PROT_NONE); 
+				uvm_lock_pageq();	  /* KILL loan */
+				if (uobj)
+					/* if we were loaning */
+					anon->u.an_page->loan_count--;
+				anon->u.an_page->uanon = NULL;
+				/* in case we owned */
+				anon->u.an_page->pqflags &= ~PQ_ANON;
+				uvm_unlock_pageq();
+				if (uobj) {
+					simple_unlock(&uobj->vmobjlock);
+					uobj = NULL;
+				}
+
+				/* install new page in anon */
+				anon->u.an_page = pg;
+				pg->uanon = anon;
+				pg->pqflags |= PQ_ANON;
+				pg->flags &= ~(PG_BUSY|PG_FAKE);
+				UVM_PAGE_OWN(pg, NULL);
+
+				/* done! */
+			}     /* ref == 1 */
+		}       /* write fault */
+	}         /* loan count */
+
+	/*
+	 * if we are case 1B then we will need to allocate a new blank
+	 * anon to transfer the data into.   note that we have a lock
+	 * on anon, so no one can busy or release the page until we are done.
+	 * also note that the ref count can't drop to zero here because
+	 * it is > 1 and we are only dropping one ref.
+	 *
+	 * in the (hopefully very rare) case that we are out of RAM we 
+	 * will unlock, wait for more RAM, and refault.    
+	 *
+	 * if we are out of anon VM we kill the process (XXX: could wait?).
+	 */
+
+	if ((access_type & VM_PROT_WRITE) != 0 && anon->an_ref > 1) {
+
+		UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
+		uvmexp.flt_acow++;
+		oanon = anon;		/* oanon = old, locked anon */
+		anon = uvm_analloc();
+		if (anon)
+			pg = uvm_pagealloc(NULL, 0, anon);
 #if defined(sparc)
-    else
-      pg = NULL; /* XXX: shut up gcc unused var warning on sparc */
+		else
+			pg = NULL; /* XXX: gcc */
 #endif
 
-    /* check for out of RAM */
-    if (anon == NULL || pg == NULL) {
-      if (anon)
-	uvm_anfree(anon);
-      uvmfault_unlockall(&ufi, amap, uobj, oanon);
-      if (anon == NULL) {
-	UVMHIST_LOG(maphist, "<- failed.  out of VM",0,0,0,0);
-	uvmexp.fltnoanon++;
-	return(KERN_RESOURCE_SHORTAGE); /* XXX: OUT OF VM, ??? */
-      }
-      uvmexp.fltnoram++;
-      uvm_wait("flt_noram3");	/* out of RAM, wait for more */
-      goto ReFault;
-    }
+		/* check for out of RAM */
+		if (anon == NULL || pg == NULL) {
+			if (anon)
+				uvm_anfree(anon);
+			uvmfault_unlockall(&ufi, amap, uobj, oanon);
+			if (anon == NULL) {
+				UVMHIST_LOG(maphist,
+				    "<- failed.  out of VM",0,0,0,0);
+				uvmexp.fltnoanon++;
+				/* XXX: OUT OF VM, ??? */
+				return(KERN_RESOURCE_SHORTAGE);
+			}
+			uvmexp.fltnoram++;
+			uvm_wait("flt_noram3");	/* out of RAM, wait for more */
+			goto ReFault;
+		}
 
-    /* got all resources, replace anon with nanon */
+		/* got all resources, replace anon with nanon */
 
-    uvm_pagecopy(oanon->u.an_page, pg);	/* pg now !PG_CLEAN */
-    pg->flags &= ~(PG_BUSY|PG_FAKE);	/* un-busy! new page */
-    UVM_PAGE_OWN(pg, NULL);
-    amap_add(&ufi.entry->aref, ufi.rvaddr - ufi.entry->start, anon, 1);
-    oanon->an_ref--;   /* deref: can not drop to zero here by defn! */
-       
-    /*
-     * note: oanon still locked.   anon is _not_ locked, but we have
-     * the sole references to in from amap which _is_ locked.   thus,
-     * no one can get at it until we are done with it.
-     */
+		uvm_pagecopy(oanon->u.an_page, pg);	/* pg now !PG_CLEAN */
+		pg->flags &= ~(PG_BUSY|PG_FAKE);	/* un-busy! new page */
+		UVM_PAGE_OWN(pg, NULL);
+		amap_add(&ufi.entry->aref, ufi.rvaddr - ufi.entry->start,
+		    anon, 1);
 
-  } else {
-    
-    uvmexp.flt_anon++;
-    oanon = anon;		/* old, locked anon is same as anon */
-    pg = anon->u.an_page;
-    if (anon->an_ref > 1)     /* never allow writes to ref > 1 anons */
-      enter_prot = enter_prot & ~VM_PROT_WRITE;
+		/* deref: can not drop to zero here by defn! */
+		oanon->an_ref--;
+			 
+		/*
+		 * note: oanon still locked.   anon is _not_ locked, but we
+		 * have the sole references to in from amap which _is_ locked.
+		 * thus, no one can get at it until we are done with it.
+		 */
 
-  }
+	} else {
+		
+		uvmexp.flt_anon++;
+		oanon = anon;		/* old, locked anon is same as anon */
+		pg = anon->u.an_page;
+		if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
+			enter_prot = enter_prot & ~VM_PROT_WRITE;
 
-  /* locked: maps(read), amap, anon */
+	}
 
-  /*
-   * now map the page in ...
-   * XXX: old fault unlocks object before pmap_enter.  this seems
-   * suspect since some other thread could blast the page out from
-   * under us between the unlock and the pmap_enter.
-   */
+	/* locked: maps(read), amap, anon */
 
-  UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
-    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, 0);
-  pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	     enter_prot, wired);
+	/*
+	 * now map the page in ...
+	 * XXX: old fault unlocks object before pmap_enter.  this seems
+	 * suspect since some other thread could blast the page out from
+	 * under us between the unlock and the pmap_enter.
+	 */
 
-  /*
-   * ... and update the page queues.
-   */
+	UVMHIST_LOG(maphist, "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x",
+	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, 0);
+	pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
+	    enter_prot, wired);
 
-  uvm_lock_pageq();
+	/*
+	 * ... and update the page queues.
+	 */
 
-  if (fault_type == VM_FAULT_WIRE) {
+	uvm_lock_pageq();
 
-      uvm_pagewire(pg, FALSE);
+	if (fault_type == VM_FAULT_WIRE) {
+		uvm_pagewire(pg, FALSE);
+	} else {
+		/*
+		 * tmpwire page to remove from q's if we didn't just allocate it
+		 */
+		if (anon == oanon)
+			uvm_pagewire(pg, TRUE);
 
-  } else {
-    
-    /* tmpwire page to remove from q's if we didn't just allocate it */
-    if (anon == oanon)
-      uvm_pagewire(pg, TRUE);
+		/* activate it */
+		uvm_pageactivate(pg);
 
-    /* activate it */
-    uvm_pageactivate(pg);
+	}
 
-  }
+	uvm_unlock_pageq();
 
-  uvm_unlock_pageq();
+	/*
+	 * done case 1!  finish up by unlocking everything and returning success
+	 */
 
-  /*
-   * done case 1!  finish up by unlocking everything and returning success
-   */
-
-  uvmfault_unlockall(&ufi, amap, uobj, oanon);
-  return(KERN_SUCCESS);
+	uvmfault_unlockall(&ufi, amap, uobj, oanon);
+	return(KERN_SUCCESS);
 
 
 Case2:
-  /*
-   * handle case 2: faulting on backing object or zero fill
-   */
+	/*
+	 * handle case 2: faulting on backing object or zero fill
+	 */
 
-  /* locked: maps(read), amap(if there), uobj(if !null), uobjpage(if !null) */
+	/*
+	 * locked:
+	 * maps(read), amap(if there), uobj(if !null), uobjpage(if !null)
+	 */
 
-  /*
-   * note that uobjpage can not be PGO_DONTCARE at this point.  we now
-   * set uobjpage to PGO_DONTCARE if we are doing a zero fill.  if we
-   * have a backing object, check and see if we are going to promote
-   * the data up to an anon during the fault.
-   */
+	/*
+	 * note that uobjpage can not be PGO_DONTCARE at this point.  we now
+	 * set uobjpage to PGO_DONTCARE if we are doing a zero fill.  if we
+	 * have a backing object, check and see if we are going to promote
+	 * the data up to an anon during the fault.
+	 */
 
-  if (uobj == NULL) {
-    uobjpage = PGO_DONTCARE;	
-    promote = TRUE;		/* always need anon here */
-  } else {
-    /* assert(uobjpage != PGO_DONTCARE) */
-    promote = (access_type & VM_PROT_WRITE) && UVM_ET_ISCOPYONWRITE(ufi.entry);
-  }
-  UVMHIST_LOG(maphist, "  case 2 fault: promote=%d, zfill=%d",
+	if (uobj == NULL) {
+		uobjpage = PGO_DONTCARE;	
+		promote = TRUE;		/* always need anon here */
+	} else {
+		/* assert(uobjpage != PGO_DONTCARE) */
+		promote = (access_type & VM_PROT_WRITE) &&
+		     UVM_ET_ISCOPYONWRITE(ufi.entry);
+	}
+	UVMHIST_LOG(maphist, "  case 2 fault: promote=%d, zfill=%d",
 	promote, (uobj == NULL), 0,0);
 
-  /*
-   * if uobjpage is null, then we need to unlock and ask the pager to 
-   * get the data for us.   once we have the data, we need to reverify
-   * the state the world.   we are currently not holding any resources.
-   */
+	/*
+	 * if uobjpage is null, then we need to unlock and ask the pager to 
+	 * get the data for us.   once we have the data, we need to reverify
+	 * the state the world.   we are currently not holding any resources.
+	 */
 
-  if (uobjpage == NULL) {
-    
-    /* locked: maps(read), amap(if there), uobj */
-    uvmfault_unlockall(&ufi, amap, NULL, NULL);
-    /* locked: uobj */
+	if (uobjpage == NULL) {
+		
+		/* locked: maps(read), amap(if there), uobj */
+		uvmfault_unlockall(&ufi, amap, NULL, NULL);
+		/* locked: uobj */
 
-    uvmexp.fltget++;
-    gotpages = 1;
-    result = uobj->pgops->pgo_get(uobj, (ufi.rvaddr - ufi.entry->start) +
-				ufi.entry->offset, &uobjpage, &gotpages,
-				0, UVM_ET_ISCOPYONWRITE(ufi.entry) ?
-				VM_PROT_READ : access_type,
-				ufi.entry->advice, 0);
+		uvmexp.fltget++;
+		gotpages = 1;
+		result = uobj->pgops->pgo_get(uobj,
+		    (ufi.rvaddr - ufi.entry->start) + ufi.entry->offset,
+		    &uobjpage, &gotpages, 0,
+		    UVM_ET_ISCOPYONWRITE(ufi.entry) ?
+			VM_PROT_READ : access_type,
+			ufi.entry->advice, 0);
 
-    /* locked: uobjpage(if result OK) */
-    
-    /*
-     * recover from I/O
-     */
+		/* locked: uobjpage(if result OK) */
+		
+		/*
+		 * recover from I/O
+		 */
 
-    if (result != VM_PAGER_OK) {
-      
+		if (result != VM_PAGER_OK) {
+			
 #ifdef DIAGNOSTIC 
-      if (result == VM_PAGER_PEND)
+			if (result == VM_PAGER_PEND)
 	panic("uvm_fault: pgo_get got PENDing on non-async I/O");
 #endif
 
-      if (result == VM_PAGER_AGAIN) {
+			if (result == VM_PAGER_AGAIN) {
 	UVMHIST_LOG(maphist, "  pgo_get says TRY AGAIN!",0,0,0,0);
-        tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
+	tsleep((caddr_t)&lbolt, PVM, "fltagain2", 0);
 	goto ReFault;
-      }
+			}
 
-      UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)", result, 0,0,0);
-      return(KERN_PROTECTION_FAILURE); /* XXX i/o error */
-    }
+			UVMHIST_LOG(maphist, "<- pgo_get failed (code %d)",
+			    result, 0,0,0);
+			return(KERN_PROTECTION_FAILURE); /* XXX i/o error */
+		}
 
-    /* locked: uobjpage */
+		/* locked: uobjpage */
 
-    /*
-     * re-verify the state of the world by first trying to relock the maps.
-     * always relock the object.
-     */
+		/*
+		 * re-verify the state of the world by first trying to relock
+		 * the maps.  always relock the object.
+		 */
 
-    locked = uvmfault_relock(&ufi);
-    if (locked && amap)
-      simple_lock(&amap->am_l);
-    simple_lock(&uobj->vmobjlock);
-    
-    /* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
-    /* locked(!locked): uobj, uobjpage */
+		locked = uvmfault_relock(&ufi);
+		if (locked && amap)
+			simple_lock(&amap->am_l);
+		simple_lock(&uobj->vmobjlock);
+		
+		/* locked(locked): maps(read), amap(if !null), uobj, uobjpage */
+		/* locked(!locked): uobj, uobjpage */
 
-    /*
-     * verify that the page has not be released and re-verify that amap 
-     * slot is still free.   if there is a problem, we unlock and clean
-     * up.
-     */
+		/*
+		 * verify that the page has not be released and re-verify
+		 * that amap slot is still free.   if there is a problem,
+		 * we unlock and clean up.
+		 */
 
-    if ((uobjpage->flags & PG_RELEASED) != 0 ||
-	(locked && amap && 
-	 amap_lookup(&ufi.entry->aref, ufi.rvaddr - ufi.entry->start))) {
-	
-      if (locked) 
-	uvmfault_unlockall(&ufi, amap, NULL, NULL);
-      locked = FALSE;
-    }
+		if ((uobjpage->flags & PG_RELEASED) != 0 ||
+		    (locked && amap && 
+		    amap_lookup(&ufi.entry->aref,
+		      ufi.rvaddr - ufi.entry->start))) {
+			if (locked) 
+				uvmfault_unlockall(&ufi, amap, NULL, NULL);
+			locked = FALSE;
+		}
 
-    /*
-     * didn't get the lock?   release the page and retry.
-     */
+		/*
+		 * didn't get the lock?   release the page and retry.
+		 */
 
-    if (locked == FALSE) {
+		if (locked == FALSE) {
 
-      UVMHIST_LOG(maphist, "  wasn't able to relock after fault: retry", 
-	0,0,0,0);
-      if (uobjpage->flags & PG_WANTED)
-	thread_wakeup(uobjpage);	/* still holding object lock */
+			UVMHIST_LOG(maphist,
+			    "  wasn't able to relock after fault: retry", 
+			    0,0,0,0);
+			if (uobjpage->flags & PG_WANTED)
+				/* still holding object lock */
+				thread_wakeup(uobjpage);
 
-      if (uobjpage->flags & PG_RELEASED) {
-        uvmexp.fltpgrele++;
+			if (uobjpage->flags & PG_RELEASED) {
+				uvmexp.fltpgrele++;
 #ifdef DIAGNOSTIC
-	if (uobj->pgops->pgo_releasepg == NULL)
-	  panic("uvm_fault: object has no releasepg function");
+				if (uobj->pgops->pgo_releasepg == NULL)
+			panic("uvm_fault: object has no releasepg function");
 #endif
-        if (uobj->pgops->pgo_releasepg(uobjpage,NULL))  /* frees page */
-          simple_unlock(&uobj->vmobjlock);  /* unlock if still alive */
-        goto ReFault;
-      }
+				/* frees page */
+				if (uobj->pgops->pgo_releasepg(uobjpage,NULL))
+					/* unlock if still alive */
+					simple_unlock(&uobj->vmobjlock);
+				goto ReFault;
+			}
 
-      uvm_lock_pageq();
-      uvm_pageactivate(uobjpage);	/* make sure it is in queues */
-      uvm_unlock_pageq();
-      uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-      UVM_PAGE_OWN(uobjpage, NULL);
-      simple_unlock(&uobj->vmobjlock);
-      goto ReFault;
+			uvm_lock_pageq();
+			/* make sure it is in queues */
+			uvm_pageactivate(uobjpage);
 
-    }
+			uvm_unlock_pageq();
+			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
+			UVM_PAGE_OWN(uobjpage, NULL);
+			simple_unlock(&uobj->vmobjlock);
+			goto ReFault;
 
-    /*
-     * we have the data in uobjpage which is PG_BUSY and !PG_RELEASED.
-     * we are holding object lock (so the page can't be released on us).
-     */
+		}
 
-    /* locked: maps(read), amap(if !null), uobj, uobjpage */
+		/*
+		 * we have the data in uobjpage which is PG_BUSY and
+		 * !PG_RELEASED.  we are holding object lock (so the page
+		 * can't be released on us).
+		 */
 
-  }
+		/* locked: maps(read), amap(if !null), uobj, uobjpage */
 
-  /* locked: maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj) */
-  /*
-   * notes:
-   *  - at this point uobjpage can not be NULL
-   *  - at this point uobjpage can not be PG_RELEASED (since we checked
-   *  for it above)
-   *  - at this point uobjpage could be PG_WANTED (handle later)
-   */
-    
-  if (promote == FALSE) {
-
-    /*
-     * we are not promoting.   if the mapping is COW ensure that we
-     * don't give more access than we should (e.g. when doing a read
-     * fault on a COPYONWRITE mapping we want to map the COW page in
-     * R/O even though the entry protection could be R/W).
-     *
-     * set "pg" to the page we want to map in (uobjpage, usually)
-     */
-
-    uvmexp.flt_obj++;
-    if (UVM_ET_ISCOPYONWRITE(ufi.entry))
-      enter_prot = enter_prot & ~VM_PROT_WRITE;
-    pg = uobjpage;		/* map in the actual object */
-
-    /* assert(uobjpage != PGO_DONTCARE) */
-
-    /*
-     * we are faulting directly on the page.   be careful about writing
-     * to loaned pages...
-     */
-    if (uobjpage->loan_count) {
-
-      if ((access_type & VM_PROT_WRITE) == 0) {
-	/* read fault: cap the protection at read-only */
-	enter_prot = enter_prot & ~VM_PROT_WRITE;	/* cap! */
-
-      } else {
-	/* write fault: must break the loan here */
-	pg = uvm_pagealloc(NULL, 0, NULL);	/* alloc new un-owned page */
-	if (pg == NULL) {
-	  /* drop ownership of page, it can't be released */
-	  if (uobjpage->flags & PG_WANTED)
-	    thread_wakeup(uobjpage);
-	  uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
-	  UVM_PAGE_OWN(uobjpage, NULL);
-
-	  uvm_lock_pageq();
-	  uvm_pageactivate(uobjpage); /* activate: we will need it later */
-	  uvm_unlock_pageq();
-	  uvmfault_unlockall(&ufi, amap, uobj, NULL);
-	  UVMHIST_LOG(maphist, "  out of RAM breaking loan, waiting", 0,0,0,0);
-	  uvmexp.fltnoram++;
-	  uvm_wait("flt_noram4");
-	  goto ReFault;
 	}
 
 	/*
-	 * copy the data from the old page to the new one and clear
-	 * the fake/clean flags on the new page (keep it busy).
-	 * force a reload of the old page by clearing it from all
-	 * pmaps.
-	 *
-	 * then lock the page queues to rename the pages.
+	 * locked:
+	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
 	 */
-	uvm_pagecopy(uobjpage, pg);		/* old -> new */
-	pg->flags &= ~(PG_FAKE|PG_CLEAN);
-	pmap_page_protect(PMAP_PGARG(uobjpage), VM_PROT_NONE); 
-	if (uobjpage->flags & PG_WANTED)
-	  thread_wakeup(uobjpage);
-	uobjpage->flags &= ~(PG_WANTED|PG_BUSY);  /* uobj still locked */
-	UVM_PAGE_OWN(uobjpage, NULL);
-
-	uvm_lock_pageq();
-	offset = uobjpage->offset;
-	uvm_pagerealloc(uobjpage, NULL, 0);	/* remove old page */
-	/* at this point we have absolutely no control over uobjpage */
-	uvm_pagerealloc(pg, uobj, offset);	/* install new page */
-	uvm_unlock_pageq();
 
 	/*
-	 * done!  loan is broken and "pg" is PG_BUSY.   it can now
-	 * replace uobjpage.
+	 * notes:
+	 *  - at this point uobjpage can not be NULL
+	 *  - at this point uobjpage can not be PG_RELEASED (since we checked
+	 *  for it above)
+	 *  - at this point uobjpage could be PG_WANTED (handle later)
+	 */
+		
+	if (promote == FALSE) {
+
+		/*
+		 * we are not promoting.   if the mapping is COW ensure that we
+		 * don't give more access than we should (e.g. when doing a read
+		 * fault on a COPYONWRITE mapping we want to map the COW page in
+		 * R/O even though the entry protection could be R/W).
+		 *
+		 * set "pg" to the page we want to map in (uobjpage, usually)
+		 */
+
+		uvmexp.flt_obj++;
+		if (UVM_ET_ISCOPYONWRITE(ufi.entry))
+			enter_prot = enter_prot & ~VM_PROT_WRITE;
+		pg = uobjpage;		/* map in the actual object */
+
+		/* assert(uobjpage != PGO_DONTCARE) */
+
+		/*
+		 * we are faulting directly on the page.   be careful
+		 * about writing to loaned pages...
+		 */
+		if (uobjpage->loan_count) {
+
+			if ((access_type & VM_PROT_WRITE) == 0) {
+				/* read fault: cap the protection at readonly */
+				/* cap! */
+				enter_prot = enter_prot & ~VM_PROT_WRITE;
+			} else {
+				/* write fault: must break the loan here */
+
+				/* alloc new un-owned page */
+				pg = uvm_pagealloc(NULL, 0, NULL);
+
+				if (pg == NULL) {
+					/*
+					 * drop ownership of page, it can't
+					 * be released
+					 * */
+					if (uobjpage->flags & PG_WANTED)
+						thread_wakeup(uobjpage);
+					uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
+					UVM_PAGE_OWN(uobjpage, NULL);
+
+					uvm_lock_pageq();
+					/* activate: we will need it later */
+					uvm_pageactivate(uobjpage);
+
+					uvm_unlock_pageq();
+					uvmfault_unlockall(&ufi, amap, uobj,
+					  NULL);
+					UVMHIST_LOG(maphist,
+					  "  out of RAM breaking loan, waiting",					  0,0,0,0);
+					uvmexp.fltnoram++;
+					uvm_wait("flt_noram4");
+					goto ReFault;
+				}
+
+				/*
+				 * copy the data from the old page to the new
+				 * one and clear the fake/clean flags on the
+				 * new page (keep it busy).  force a reload
+				 * of the old page by clearing it from all
+				 * pmaps.  then lock the page queues to
+				 * rename the pages.
+				 */
+				uvm_pagecopy(uobjpage, pg);	/* old -> new */
+				pg->flags &= ~(PG_FAKE|PG_CLEAN);
+				pmap_page_protect(PMAP_PGARG(uobjpage),
+				    VM_PROT_NONE); 
+				if (uobjpage->flags & PG_WANTED)
+					thread_wakeup(uobjpage);
+				/* uobj still locked */
+				uobjpage->flags &= ~(PG_WANTED|PG_BUSY);
+				UVM_PAGE_OWN(uobjpage, NULL);
+
+				uvm_lock_pageq();
+				offset = uobjpage->offset;
+				/* remove old page */
+				uvm_pagerealloc(uobjpage, NULL, 0);
+
+				/*
+				 * at this point we have absolutely no
+				 * control over uobjpage
+				 */
+				/* install new page */
+				uvm_pagerealloc(pg, uobj, offset);
+				uvm_unlock_pageq();
+
+				/*
+				 * done!  loan is broken and "pg" is
+				 * PG_BUSY.   it can now replace uobjpage.
+				 */
+
+				uobjpage = pg;
+
+			}		/* write fault case */
+		}		/* if loan_count */
+
+	} else {
+		
+		/*
+		 * if we are going to promote the data to an anon we
+		 * allocate a blank anon here and plug it into our amap.
+		 */
+#if DIAGNOSTIC
+		if (amap == NULL)
+			panic("uvm_fault: want to promote data, but no anon");
+#endif
+
+		anon = uvm_analloc();
+		if (anon)
+			pg = uvm_pagealloc(NULL, 0, anon); /* BUSY+CLEAN+FAKE */
+#if defined(sparc)
+		else
+			pg = NULL; /* XXX: gcc */
+#endif
+
+		/*
+		 * out of memory resources?
+		 */
+		if (anon == NULL || pg == NULL) {
+
+			/*
+			 * arg!  must unbusy our page and fail or sleep.
+			 */
+			if (uobjpage != PGO_DONTCARE) {
+				if (uobjpage->flags & PG_WANTED)
+					/* still holding object lock */
+					thread_wakeup(uobjpage);
+
+				uvm_lock_pageq();
+				/* make sure it is in queues */
+				uvm_pageactivate(uobjpage);
+				uvm_unlock_pageq();
+				/* un-busy! (still locked) */
+				uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
+				UVM_PAGE_OWN(uobjpage, NULL);
+			}
+
+			/* unlock and fail ... */
+			uvmfault_unlockall(&ufi, amap, uobj, NULL);
+			if (anon == NULL) {
+				UVMHIST_LOG(maphist, "  promote: out of VM",
+				    0,0,0,0);
+				uvmexp.fltnoanon++;
+				/* XXX: out of VM */
+				return(KERN_RESOURCE_SHORTAGE);
+			}
+			UVMHIST_LOG(maphist, "  out of RAM, waiting for more",
+			    0,0,0,0);
+			uvm_anfree(anon);
+			uvmexp.fltnoram++;
+			uvm_wait("flt_noram5");
+			goto ReFault;
+		}
+
+		/*
+		 * fill in the data
+		 */
+
+		if (uobjpage != PGO_DONTCARE) {
+			uvmexp.flt_prcopy++;
+			/* copy page [pg now dirty] */
+			uvm_pagecopy(uobjpage, pg);
+
+			/*
+			 * promote to shared amap?  make sure all sharing
+			 * procs see it
+			 */
+			if ((amap->am_flags & AMAP_SHARED) != 0) {
+				pmap_page_protect(PMAP_PGARG(uobjpage),
+				    VM_PROT_NONE);
+			}
+			
+			/*
+			 * dispose of uobjpage.  it can't be PG_RELEASED
+			 * since we still hold the object lock.   drop
+			 * handle to uobj as well.
+			 */
+
+			if (uobjpage->flags & PG_WANTED)
+				/* still have the obj lock */
+				thread_wakeup(uobjpage);
+			uobjpage->flags &= ~(PG_BUSY|PG_WANTED);
+			UVM_PAGE_OWN(uobjpage, NULL);
+			uvm_lock_pageq();
+			uvm_pageactivate(uobjpage);	/* put it back */
+			uvm_unlock_pageq();
+			simple_unlock(&uobj->vmobjlock);
+			uobj = NULL;
+			UVMHIST_LOG(maphist,
+			    "  promote uobjpage 0x%x to anon/page 0x%x/0x%x",
+			    uobjpage, anon, pg, 0);
+
+		} else {
+			uvmexp.flt_przero++;
+			uvm_pagezero(pg);	/* zero page [pg now dirty] */
+			UVMHIST_LOG(maphist,"  zero fill anon/page 0x%x/0%x",
+			    anon, pg, 0, 0);
+		}
+
+		amap_add(&ufi.entry->aref, ufi.rvaddr - ufi.entry->start,
+		    anon, 0);
+		
+	}
+
+	/*
+	 * locked:
+	 * maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj)
+	 *
+	 * note: pg is either the uobjpage or the new page in the new anon
 	 */
 
-	uobjpage = pg;
+	/*
+	 * all resources are present.   we can now map it in and free our
+	 * resources.
+	 */
 
-      }		/* write fault case */
-    }		/* if loan_count */
-
-  } else {
-    
-    /*
-     * if we are going to promote the data to an anon we allocate a blank
-     * anon here and plug it into our amap.
-     */
-#if DIAGNOSTIC
-    if (amap == NULL)
-      panic("uvm_fault: want to promote data, but no anon");
-#endif
-
-    anon = uvm_analloc();
-    if (anon)
-      pg = uvm_pagealloc(NULL, 0, anon);	/* BUSY+CLEAN+FAKE */
-#if defined(sparc)
-    else
-      pg = NULL; /* XXX: shutup unused var compiler warning on sparc */
-#endif
-
-    /*
-     * out of memory resources?
-     */
-    if (anon == NULL || pg == NULL) {
-
-      /*
-       * arg!  must unbusy our page and fail or sleep.
-       */
-      if (uobjpage != PGO_DONTCARE) {
-	if (uobjpage->flags & PG_WANTED)
-	  thread_wakeup(uobjpage);	/* still holding object lock */
+	UVMHIST_LOG(maphist,
+	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
+	    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
+	pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
+	    enter_prot, wired);
 
 	uvm_lock_pageq();
-	uvm_pageactivate(uobjpage);	/* make sure it is in queues */
+
+	if (fault_type == VM_FAULT_WIRE) {
+		uvm_pagewire(pg, FALSE);
+	} else {
+		
+		/* activate it */
+		if (pg == uobjpage)
+			/* remove from q's before activating */
+			uvm_pagewire(pg, TRUE);
+		uvm_pageactivate(pg);
+
+	}
+
 	uvm_unlock_pageq();
-	uobjpage->flags &= ~(PG_BUSY|PG_WANTED); /* un-busy! (still locked) */
-        UVM_PAGE_OWN(uobjpage, NULL);
-      }
 
-      /* unlock and fail ... */
-      uvmfault_unlockall(&ufi, amap, uobj, NULL);
-      if (anon == NULL) {
-        UVMHIST_LOG(maphist, "  promote: out of VM", 0,0,0,0);
-        uvmexp.fltnoanon++;
-	return(KERN_RESOURCE_SHORTAGE);	/* XXX: out of VM */
-      }
-      UVMHIST_LOG(maphist, "  out of RAM, waiting for more",0,0,0,0);
-      uvm_anfree(anon);
-      uvmexp.fltnoram++;
-      uvm_wait("flt_noram5");
-      goto ReFault;
-    }
+	if (pg->flags & PG_WANTED)
+		thread_wakeup(pg);		/* lock still held */
 
-    /*
-     * fill in the data
-     */
-
-    if (uobjpage != PGO_DONTCARE) {
-      uvmexp.flt_prcopy++;
-      uvm_pagecopy(uobjpage, pg);	/* copy page [pg now dirty] */
-
-      /* promote to shared amap?  make sure all sharing procs see it */
-      if ((amap->am_flags & AMAP_SHARED) != 0) {
-        pmap_page_protect(PMAP_PGARG(uobjpage), VM_PROT_NONE);
-      }
-      
-      /*
-       * dispose of uobjpage.  it can't be PG_RELEASED since we still hold
-       * the object lock.   drop handle to uobj as well.
-       */
-
-      if (uobjpage->flags & PG_WANTED)
-	thread_wakeup(uobjpage);	/* still have the obj lock */
-      uobjpage->flags &= ~(PG_BUSY|PG_WANTED);		/* un-busy! */
-      UVM_PAGE_OWN(uobjpage, NULL);
-      uvm_lock_pageq();
-      uvm_pageactivate(uobjpage);	/* put it back */
-      uvm_unlock_pageq();
-      simple_unlock(&uobj->vmobjlock);
-      uobj = NULL;
-      UVMHIST_LOG(maphist,"  promote uobjpage 0x%x to anon/page 0x%x/0x%x",
-	uobjpage, anon, pg, 0);
-
-    } else {
-      uvmexp.flt_przero++;
-      uvm_pagezero(pg);			/* zero page [pg now dirty] */
-      UVMHIST_LOG(maphist,"  zero fill anon/page 0x%x/0%x", anon, pg, 0, 0);
-    }
-
-    amap_add(&ufi.entry->aref, ufi.rvaddr - ufi.entry->start, anon, 0);
-    
-  }
-
-  /* locked: maps(read), amap(if !null), uobj(if !null), uobjpage(if uobj) */
-  /* note: pg is either the uobjpage or the new page in the new anon */
-
-  /*
-   * all resources are present.   we can now map it in and free our
-   * resources.
-   */
-
-  UVMHIST_LOG(maphist,"  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
-    ufi.orig_map->pmap, ufi.orig_rvaddr, pg, promote);
-  pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	     enter_prot, wired);
-
-  uvm_lock_pageq();
-
-  if (fault_type == VM_FAULT_WIRE) {
-
-      uvm_pagewire(pg, FALSE);
-
-  } else {
-    
-    /* activate it */
-    if (pg == uobjpage)
-      uvm_pagewire(pg, TRUE);	/* remove from q's before activating */
-    uvm_pageactivate(pg);
-
-  }
-
-  uvm_unlock_pageq();
-
-  if (pg->flags & PG_WANTED)
-    thread_wakeup(pg);		/* lock still held */
-
-  /* 
-   * note that pg can't be PG_RELEASED since we did not drop the object 
-   * lock since the last time we checked.
-   */
+	/* 
+	 * note that pg can't be PG_RELEASED since we did not drop the object 
+	 * lock since the last time we checked.
+	 */
  
-  pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
-  UVM_PAGE_OWN(pg, NULL);
-  uvmfault_unlockall(&ufi, amap, uobj, NULL);
+	pg->flags &= ~(PG_BUSY|PG_FAKE|PG_WANTED);
+	UVM_PAGE_OWN(pg, NULL);
+	uvmfault_unlockall(&ufi, amap, uobj, NULL);
 
-  UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
-  return(KERN_SUCCESS);
+	UVMHIST_LOG(maphist, "<- done (SUCCESS!)",0,0,0,0);
+	return(KERN_SUCCESS);
 }
 
 
@@ -1550,42 +1662,41 @@ Case2:
  *	uvm_map_pageable and fix it.
  */
 
-int uvm_fault_wire(map, start, end)
-
-vm_map_t map;
-vm_offset_t start, end;
-
+int
+uvm_fault_wire(map, start, end)
+	vm_map_t map;
+	vm_offset_t start, end;
 {
-  vm_offset_t va;
-  pmap_t  pmap;
-  int rv;
+	vm_offset_t va;
+	pmap_t  pmap;
+	int rv;
 
-  pmap = vm_map_pmap(map);
+	pmap = vm_map_pmap(map);
 
-  /*
-   * call pmap pageable: this tells the pmap layer to lock down these
-   * page tables.
-   */
+	/*
+	 * call pmap pageable: this tells the pmap layer to lock down these
+	 * page tables.
+	 */
 
-  pmap_pageable(pmap, start, end, FALSE);
+	pmap_pageable(pmap, start, end, FALSE);
 
-  /*
-   * now fault it in page at a time.   if the fault fails then we have
-   * to undo what we have done.   note that in uvm_fault VM_PROT_NONE 
-   * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
-   */
+	/*
+	 * now fault it in page at a time.   if the fault fails then we have
+	 * to undo what we have done.   note that in uvm_fault VM_PROT_NONE 
+	 * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
+	 */
 
-  for (va = start ; va < end ; va += PAGE_SIZE) {
-    rv = uvm_fault(map, va, VM_FAULT_WIRE, VM_PROT_NONE);
-    if (rv) {
-      if (va != start) {
-	uvm_fault_unwire(map->pmap, start, va);
-      }
-      return(rv);
-    }
-  }
+	for (va = start ; va < end ; va += PAGE_SIZE) {
+		rv = uvm_fault(map, va, VM_FAULT_WIRE, VM_PROT_NONE);
+		if (rv) {
+			if (va != start) {
+				uvm_fault_unwire(map->pmap, start, va);
+			}
+			return(rv);
+		}
+	}
 
-  return(KERN_SUCCESS);
+	return(KERN_SUCCESS);
 }
 
 /*
@@ -1594,43 +1705,43 @@ vm_offset_t start, end;
  * => caller holds reference to pmap (via its map)
  */
 
-void uvm_fault_unwire(pmap, start, end)
-
-struct pmap *pmap;
-vm_offset_t start, end;
-
+void
+uvm_fault_unwire(pmap, start, end)
+	struct pmap *pmap;
+	vm_offset_t start, end;
 {
-  vm_offset_t va, pa;
-  struct vm_page *pg;
+	vm_offset_t va, pa;
+	struct vm_page *pg;
 
-  /*
-   * we assume that the area we are unwiring has actually been wired
-   * in the first place.   this means that we should be able to extract
-   * the PAs from the pmap.   we also lock out the page daemon so that
-   * we can call uvm_pageunwire.
-   */
-  
-  uvm_lock_pageq();
+	/*
+	 * we assume that the area we are unwiring has actually been wired
+	 * in the first place.   this means that we should be able to extract
+	 * the PAs from the pmap.   we also lock out the page daemon so that
+	 * we can call uvm_pageunwire.
+	 */
+	
+	uvm_lock_pageq();
 
-  for (va = start; va < end ; va += PAGE_SIZE) {
-    pa = pmap_extract(pmap, va);
+	for (va = start; va < end ; va += PAGE_SIZE) {
+		pa = pmap_extract(pmap, va);
 
-    if (pa == (vm_offset_t) 0) { /* XXX: assumes PA 0 cannot be in map */
-      panic("uvm_fault_unwire: unwiring non-wired memory");
-    }
-    pmap_change_wiring(pmap, va, FALSE);  /* tell the pmap */
-    pg = PHYS_TO_VM_PAGE(pa);
-    if (pg)
-      uvm_pageunwire(pg);
-  }
+		/* XXX: assumes PA 0 cannot be in map */
+		if (pa == (vm_offset_t) 0) {
+			panic("uvm_fault_unwire: unwiring non-wired memory");
+		}
+		pmap_change_wiring(pmap, va, FALSE);  /* tell the pmap */
+		pg = PHYS_TO_VM_PAGE(pa);
+		if (pg)
+			uvm_pageunwire(pg);
+	}
 
-  uvm_unlock_pageq();
+	uvm_unlock_pageq();
 
-  /*
-   * now we call pmap_pageable to let the pmap know that the page tables
-   * in this space no longer need to be wired.
-   */
+	/*
+	 * now we call pmap_pageable to let the pmap know that the page tables
+	 * in this space no longer need to be wired.
+	 */
 
-  pmap_pageable(pmap, start, end, TRUE);
+	pmap_pageable(pmap, start, end, TRUE);
 
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.6 1998/03/01 02:25:28 fvdl Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.7 1998/03/09 00:58:56 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -95,20 +95,20 @@ static int		udv_put __P((struct uvm_object *, vm_page_t *,
  */
 
 struct uvm_pagerops uvm_deviceops = {
-  udv_init,
-  udv_attach,
-  udv_reference,
-  udv_detach,
-  udv_fault,
-  udv_flush,
-  NULL,			/* no get function since we have udv_fault */
-  udv_asyncget,
-  udv_put,
-  NULL,			/* no cluster function */
-  NULL,			/* no put cluster function */
-  NULL,			/* no share protect.   no share maps for us */
-  NULL,			/* no AIO-DONE function since no async i/o */
-  NULL,			/* no releasepg function since no normal pages */
+	udv_init,
+	udv_attach,
+	udv_reference,
+	udv_detach,
+	udv_fault,
+	udv_flush,
+	NULL,		/* no get function since we have udv_fault */
+	udv_asyncget,
+	udv_put,
+	NULL,		/* no cluster function */
+	NULL,		/* no put cluster function */
+	NULL,		/* no share protect.   no share maps for us */
+	NULL,		/* no AIO-DONE function since no async i/o */
+	NULL,		/* no releasepg function since no normal pages */
 };
 
 /*
@@ -121,11 +121,12 @@ struct uvm_pagerops uvm_deviceops = {
  * init pager private data structures.
  */
 
-void udv_init()
-
+void
+udv_init()
 {
-  LIST_INIT(&udv_list);
-  simple_lock_init(&udv_lock);
+
+	LIST_INIT(&udv_list);
+	simple_lock_init(&udv_lock);
 }
 
 /*
@@ -137,131 +138,134 @@ void udv_init()
  * => caller must _not_ already be holding the lock on the uvm_object.
  * => in fact, nothing should be locked so that we can sleep here.
  */
-
-struct uvm_object *udv_attach(arg, accessprot)
-
-void *arg;
-vm_prot_t accessprot;
-
+struct uvm_object *
+udv_attach(arg, accessprot)
+	void *arg;
+	vm_prot_t accessprot;
 {
-  dev_t device = *((dev_t *) arg);
-  struct uvm_device *udv, *lcv;
-  int (*mapfn) __P((dev_t, int, int));
-  UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
+	dev_t device = *((dev_t *) arg);
+	struct uvm_device *udv, *lcv;
+	int (*mapfn) __P((dev_t, int, int));
+	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
 
-  UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
+	UVMHIST_LOG(maphist, "(device=0x%x)", device,0,0,0);
 
-  /*
-   * before we do anything, ensure this device supports mmap
-   */
+	/*
+	 * before we do anything, ensure this device supports mmap
+	 */
 
-  mapfn = cdevsw[major(device)].d_mmap;
-  if (mapfn == NULL ||
-      mapfn == (int (*) __P((dev_t, int, int))) enodev ||
-      mapfn == (int (*) __P((dev_t, int, int))) nullop)
-    return(NULL);
+	mapfn = cdevsw[major(device)].d_mmap;
+	if (mapfn == NULL ||
+			mapfn == (int (*) __P((dev_t, int, int))) enodev ||
+			mapfn == (int (*) __P((dev_t, int, int))) nullop)
+		return(NULL);
 
-  /*
-   * keep looping until we get it
-   */
+	/*
+	 * keep looping until we get it
+	 */
 
-  while (1) {
+	while (1) {
 
-    /*
-     * first, attempt to find it on the main list 
-     */
+		/*
+		 * first, attempt to find it on the main list 
+		 */
 
-    simple_lock(&udv_lock);
-    for (lcv = udv_list.lh_first ; lcv != NULL ; lcv = lcv->u_list.le_next) {
-      if (device == lcv->u_device)
-	break;
-    }
+		simple_lock(&udv_lock);
+		for (lcv = udv_list.lh_first ; lcv != NULL ; lcv = lcv->u_list.le_next) {
+			if (device == lcv->u_device)
+				break;
+		}
 
-    /*
-     * got it on main list.  put a hold on it and unlock udv_lock.
-     */
+		/*
+		 * got it on main list.  put a hold on it and unlock udv_lock.
+		 */
 
-    if (lcv) {
+		if (lcv) {
 
-      /*
-       * if someone else has a hold on it, sleep and start over again.
-       */
+			/*
+			 * if someone else has a hold on it, sleep and start
+			 * over again.
+			 */
 
-      if (lcv->u_flags & UVM_DEVICE_HOLD) {
-	lcv->u_flags |= UVM_DEVICE_WANTED;
-	UVM_UNLOCK_AND_WAIT(lcv, &udv_lock, FALSE, "udv_attach",0);
-	continue;
-      }
+			if (lcv->u_flags & UVM_DEVICE_HOLD) {
+				lcv->u_flags |= UVM_DEVICE_WANTED;
+				UVM_UNLOCK_AND_WAIT(lcv, &udv_lock, FALSE,
+				    "udv_attach",0);
+				continue;
+			}
 
-      lcv->u_flags |= UVM_DEVICE_HOLD;	/* we are now holding it */
-      simple_unlock(&udv_lock);
+			/* we are now holding it */
+			lcv->u_flags |= UVM_DEVICE_HOLD;
+			simple_unlock(&udv_lock);
 
-      /*
-       * bump reference count, unhold, return.
-       */
+			/*
+			 * bump reference count, unhold, return.
+			 */
 
-      simple_lock(&lcv->u_obj.vmobjlock);
-      lcv->u_obj.uo_refs++;
-      simple_unlock(&lcv->u_obj.vmobjlock);
-      
-      simple_lock(&udv_lock);
-      if (lcv->u_flags & UVM_DEVICE_WANTED)
-	wakeup(lcv);
-      lcv->u_flags &= ~(UVM_DEVICE_WANTED|UVM_DEVICE_HOLD);
-      simple_unlock(&udv_lock);
-      return(&lcv->u_obj);
-    }
+			simple_lock(&lcv->u_obj.vmobjlock);
+			lcv->u_obj.uo_refs++;
+			simple_unlock(&lcv->u_obj.vmobjlock);
+			
+			simple_lock(&udv_lock);
+			if (lcv->u_flags & UVM_DEVICE_WANTED)
+				wakeup(lcv);
+			lcv->u_flags &= ~(UVM_DEVICE_WANTED|UVM_DEVICE_HOLD);
+			simple_unlock(&udv_lock);
+			return(&lcv->u_obj);
+		}
 
-    /*
-     * did not find it on main list.   need to malloc a new one.
-     */
+		/*
+		 * did not find it on main list.   need to malloc a new one.
+		 */
 
-    simple_unlock(&udv_lock);
-    /* NOTE: we could sleep in the following malloc() */
-    MALLOC(udv, struct uvm_device *, sizeof(*udv), M_TEMP, M_WAITOK);
-    simple_lock(&udv_lock);
+		simple_unlock(&udv_lock);
+		/* NOTE: we could sleep in the following malloc() */
+		MALLOC(udv, struct uvm_device *, sizeof(*udv), M_TEMP, M_WAITOK);
+		simple_lock(&udv_lock);
 
-    /*
-     * now we have to double check to make sure no one added it to the
-     * list while we were sleeping...
-     */
+		/*
+		 * now we have to double check to make sure no one added it
+		 * to the list while we were sleeping...
+		 */
 
-    for (lcv = udv_list.lh_first ; lcv != NULL ; lcv = lcv->u_list.le_next) {
-      if (device == lcv->u_device)
-	break;
-    }
+		for (lcv = udv_list.lh_first ; lcv != NULL ;
+		    lcv = lcv->u_list.le_next) {
+			if (device == lcv->u_device)
+				break;
+		}
 
-    /*
-     * did we lose a race to someone else?   free our memory and retry.
-     */
+		/*
+		 * did we lose a race to someone else?   free our memory and retry.
+		 */
 
-    if (lcv) {
-      simple_unlock(&udv_lock);
-      FREE(udv, M_TEMP);
-      continue;
-    }
+		if (lcv) {
+			simple_unlock(&udv_lock);
+			FREE(udv, M_TEMP);
+			continue;
+		}
 
-    /*
-     * we have it!   init the data structures, add to list and return.
-     */
+		/*
+		 * we have it!   init the data structures, add to list
+		 * and return.
+		 */
 
-    simple_lock_init(&udv->u_obj.vmobjlock);
-    udv->u_obj.pgops = &uvm_deviceops;
-    TAILQ_INIT(&udv->u_obj.memq);	/* not used, but be safe */
-    udv->u_obj.uo_npages = 0;
-    udv->u_obj.uo_refs = 1;
-    udv->u_flags = 0;
-    udv->u_device = device;
-    LIST_INSERT_HEAD(&udv_list, udv, u_list);
-    simple_unlock(&udv_lock);
+		simple_lock_init(&udv->u_obj.vmobjlock);
+		udv->u_obj.pgops = &uvm_deviceops;
+		TAILQ_INIT(&udv->u_obj.memq);	/* not used, but be safe */
+		udv->u_obj.uo_npages = 0;
+		udv->u_obj.uo_refs = 1;
+		udv->u_flags = 0;
+		udv->u_device = device;
+		LIST_INSERT_HEAD(&udv_list, udv, u_list);
+		simple_unlock(&udv_lock);
 
-    return(&udv->u_obj);
+		return(&udv->u_obj);
 
-  }  /* while(1) loop */
+	}  /* while(1) loop */
 
-  /*NOTREACHED*/
+	/*NOTREACHED*/
 }
-  
+	
 /*
  * udv_reference
  *
@@ -272,19 +276,17 @@ vm_prot_t accessprot;
  * => caller must call with object unlocked.
  */
 
-
-static void udv_reference(uobj)
-
-struct uvm_object *uobj;
-
+static void
+udv_reference(uobj)
+	struct uvm_object *uobj;
 {
-  UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
+	UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
 
-  simple_lock(&uobj->vmobjlock);
-  uobj->uo_refs++;
-  UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)", 
+	simple_lock(&uobj->vmobjlock);
+	uobj->uo_refs++;
+	UVMHIST_LOG(maphist, "<- done (uobj=0x%x, ref = %d)", 
 	uobj, uobj->uo_refs,0,0);
-  simple_unlock(&uobj->vmobjlock);
+	simple_unlock(&uobj->vmobjlock);
 }
 
 /*
@@ -295,67 +297,66 @@ struct uvm_object *uobj;
  * => caller must call with object unlocked and map locked.
  */
 
-static void udv_detach(uobj)
-
-struct uvm_object *uobj;
-
+static void
+udv_detach(uobj)
+	struct uvm_object *uobj;
 {
-  struct uvm_device *udv = (struct uvm_device *) uobj;
-  UVMHIST_FUNC("udv_detach"); UVMHIST_CALLED(maphist);
+	struct uvm_device *udv = (struct uvm_device *) uobj;
+	UVMHIST_FUNC("udv_detach"); UVMHIST_CALLED(maphist);
 
-  /*
-   * loop until done
-   */
+	/*
+	 * loop until done
+	 */
 
-  while (1) {
-    simple_lock(&uobj->vmobjlock);
-    
-    if (uobj->uo_refs > 1) {
-      uobj->uo_refs--;			/* drop ref! */
-      simple_unlock(&uobj->vmobjlock);
-      UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d", 
-		  uobj,uobj->uo_refs,0,0);
-      return;
-    }
+	while (1) {
+		simple_lock(&uobj->vmobjlock);
+		
+		if (uobj->uo_refs > 1) {
+			uobj->uo_refs--;			/* drop ref! */
+			simple_unlock(&uobj->vmobjlock);
+			UVMHIST_LOG(maphist," <- done, uobj=0x%x, ref=%d", 
+				  uobj,uobj->uo_refs,0,0);
+			return;
+		}
 
 #ifdef DIAGNOSTIC
-    if (uobj->uo_npages || uobj->memq.tqh_first)
-      panic("udv_detach: pages in a device object?");
+		if (uobj->uo_npages || uobj->memq.tqh_first)
+			panic("udv_detach: pages in a device object?");
 #endif
 
-    /*
-     * now lock udv_lock
-     */
-    simple_lock(&udv_lock);
+		/*
+		 * now lock udv_lock
+		 */
+		simple_lock(&udv_lock);
 
-    /*
-     * is it being held?   if so, wait until others are done.
-     */
-    if (udv->u_flags & UVM_DEVICE_HOLD) {
+		/*
+		 * is it being held?   if so, wait until others are done.
+		 */
+		if (udv->u_flags & UVM_DEVICE_HOLD) {
 
-      /*
-       * want it
-       */
-      udv->u_flags |= UVM_DEVICE_WANTED;
-      simple_unlock(&uobj->vmobjlock);
-      UVM_UNLOCK_AND_WAIT(udv, &udv_lock, FALSE, "udv_detach",0);
-      continue;
-    }
+			/*
+			 * want it
+			 */
+			udv->u_flags |= UVM_DEVICE_WANTED;
+			simple_unlock(&uobj->vmobjlock);
+			UVM_UNLOCK_AND_WAIT(udv, &udv_lock, FALSE, "udv_detach",0);
+			continue;
+		}
 
-    /*
-     * got it!   nuke it now.
-     */
+		/*
+		 * got it!   nuke it now.
+		 */
 
-    LIST_REMOVE(udv, u_list);
-    if (udv->u_flags & UVM_DEVICE_WANTED)
-      wakeup(udv);
-    FREE(udv, M_TEMP);
-    break;	/* DONE! */
+		LIST_REMOVE(udv, u_list);
+		if (udv->u_flags & UVM_DEVICE_WANTED)
+			wakeup(udv);
+		FREE(udv, M_TEMP);
+		break;	/* DONE! */
 
-  }	/* while (1) loop */
+	}	/* while (1) loop */
 
-  UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
-  return;
+	UVMHIST_LOG(maphist," <- done, freed uobj=0x%x", uobj,0,0,0);
+	return;
 }
 
 
@@ -366,13 +367,12 @@ struct uvm_object *uobj;
  */
 
 static boolean_t udv_flush(uobj, start, stop, flags)
-
-struct uvm_object *uobj;
-vm_offset_t start, stop;
-int flags;
-
+	struct uvm_object *uobj;
+	vm_offset_t start, stop;
+	int flags;
 {
-  return(TRUE);
+
+	return(TRUE);
 }
 
 /*
@@ -391,95 +391,94 @@ int flags;
  * => NOTE: vaddr is the VA of pps[0] in ufi->entry, _NOT_ pps[centeridx]
  */
 
-static int udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type,
-		     access_type, flags)
-
-struct uvm_faultinfo *ufi;
-vm_offset_t vaddr;
-vm_page_t *pps;
-int npages, centeridx, flags;
-vm_fault_t fault_type;
-vm_prot_t access_type;
-
+static int
+udv_fault(ufi, vaddr, pps, npages, centeridx, fault_type, access_type, flags)
+	struct uvm_faultinfo *ufi;
+	vm_offset_t vaddr;
+	vm_page_t *pps;
+	int npages, centeridx, flags;
+	vm_fault_t fault_type;
+	vm_prot_t access_type;
 {
-  struct vm_map_entry *entry = ufi->entry;
-  struct uvm_object *uobj = entry->object.uvm_obj;
-  struct uvm_device *udv = (struct uvm_device *)uobj;
-  vm_offset_t curr_offset, curr_va, paddr;
-  int lcv, retval;
-  dev_t device;
-  int (*mapfn) __P((dev_t, int, int));
-  UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
-  UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
+	struct vm_map_entry *entry = ufi->entry;
+	struct uvm_object *uobj = entry->object.uvm_obj;
+	struct uvm_device *udv = (struct uvm_device *)uobj;
+	vm_offset_t curr_offset, curr_va, paddr;
+	int lcv, retval;
+	dev_t device;
+	int (*mapfn) __P((dev_t, int, int));
+	UVMHIST_FUNC("udv_fault"); UVMHIST_CALLED(maphist);
+	UVMHIST_LOG(maphist,"  flags=%d", flags,0,0,0);
 
-  /*
-   * XXX: !PGO_LOCKED calls are currently not allowed (or used)
-   */
+	/*
+	 * XXX: !PGO_LOCKED calls are currently not allowed (or used)
+	 */
 
-  if ((flags & PGO_LOCKED) == 0)
-    panic("udv_fault: !PGO_LOCKED fault");
+	if ((flags & PGO_LOCKED) == 0)
+		panic("udv_fault: !PGO_LOCKED fault");
 
-  /*
-   * we do not allow device mappings to be mapped copy-on-write
-   * so we kill any attempt to do so here.
-   */
-  
-  if (UVM_ET_ISCOPYONWRITE(entry)) {
-    UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)", 
+	/*
+	 * we do not allow device mappings to be mapped copy-on-write
+	 * so we kill any attempt to do so here.
+	 */
+	
+	if (UVM_ET_ISCOPYONWRITE(entry)) {
+		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%x)", 
 		entry->etype, 0,0,0);
-    uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-    return(VM_PAGER_ERROR);
-  }
+		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+		return(VM_PAGER_ERROR);
+	}
 
-  /*
-   * get device map function.   
-   */
-  device = udv->u_device;
-  mapfn = cdevsw[major(device)].d_mmap;
+	/*
+	 * get device map function.   
+	 */
+	device = udv->u_device;
+	mapfn = cdevsw[major(device)].d_mmap;
 
-  /*
-   * now we must determine the offset in udv to use and the VA to use
-   * for pmap_enter.  note that we always pmap_enter() in the
-   * ufi->orig_map's pmap, but that our ufi->entry may be from some
-   * other map (in the submap/sharemap case).  so we must convert the
-   * VA from ufi->map to ufi->orig_map (note that in many cases these
-   * maps are the same).   note that ufi->orig_rvaddr and ufi->rvaddr
-   * refer to the same physical page.
-   */
-  /* udv offset = (offset from start of entry) + entry's offset */
-  curr_offset = (vaddr - entry->start) + entry->offset;	
-  /* pmap va = orig_va + (offset of vaddr from translated va) */
-  curr_va = ufi->orig_rvaddr + (vaddr - ufi->rvaddr);
-  
-  /*
-   * loop over the page range entering in as needed
-   */
+	/*
+	 * now we must determine the offset in udv to use and the VA to use
+	 * for pmap_enter.  note that we always pmap_enter() in the
+	 * ufi->orig_map's pmap, but that our ufi->entry may be from some
+	 * other map (in the submap/sharemap case).  so we must convert the
+	 * VA from ufi->map to ufi->orig_map (note that in many cases these
+	 * maps are the same).   note that ufi->orig_rvaddr and ufi->rvaddr
+	 * refer to the same physical page.
+	 */
+	/* udv offset = (offset from start of entry) + entry's offset */
+	curr_offset = (vaddr - entry->start) + entry->offset;	
+	/* pmap va = orig_va + (offset of vaddr from translated va) */
+	curr_va = ufi->orig_rvaddr + (vaddr - ufi->rvaddr);
+	
+	/*
+	 * loop over the page range entering in as needed
+	 */
 
-  retval = VM_PAGER_OK;
-  for (lcv = 0 ; lcv < npages ; 
-       lcv++, curr_offset += PAGE_SIZE, curr_va += PAGE_SIZE) {
+	retval = VM_PAGER_OK;
+	for (lcv = 0 ; lcv < npages ; lcv++, curr_offset += PAGE_SIZE,
+	    curr_va += PAGE_SIZE) {
+		if ((flags & PGO_ALLPAGES) == 0 && lcv != centeridx)
+			continue;
 
-    if ((flags & PGO_ALLPAGES) == 0 && lcv != centeridx)
-      continue;
+		if (pps[lcv] == PGO_DONTCARE)
+			continue;
 
-    if (pps[lcv] == PGO_DONTCARE)
-      continue;
+		paddr = pmap_phys_address((*mapfn)(device, (int)curr_offset,
+		    access_type));
 
-    paddr = pmap_phys_address((*mapfn)(device, (int)curr_offset, access_type));
+		if (paddr == -1) {
+			retval = VM_PAGER_ERROR;
+			break;
+		}
 
-    if (paddr == -1) {
-      retval = VM_PAGER_ERROR;
-      break;
-    }
+		UVMHIST_LOG(maphist,
+		    "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
+		    ufi->orig_map->pmap, curr_va, paddr, access_type);
+		pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0);
 
-    UVMHIST_LOG(maphist, "  MAPPING: device: pm=0x%x, va=0x%x, pa=0x%x, at=%d",
-                ufi->orig_map->pmap, curr_va, paddr, access_type);
-    pmap_enter(ufi->orig_map->pmap, curr_va, paddr, access_type, 0);
+	}
 
-  }
-
-  uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
-  return(retval);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, NULL);
+	return(retval);
 }
 
 /*
@@ -489,14 +488,14 @@ vm_prot_t access_type;
  * => a no-op for devices
  */
 
-static int udv_asyncget(uobj, offset, npages)
-
-struct uvm_object *uobj;
-vm_offset_t offset;
-int npages;
-
+static int
+udv_asyncget(uobj, offset, npages)
+	struct uvm_object *uobj;
+	vm_offset_t offset;
+	int npages;
 {
-  return(KERN_SUCCESS);
+
+	return(KERN_SUCCESS);
 }
 
 /*
@@ -506,12 +505,12 @@ int npages;
  *	page structures to "put")
  */
 
-static int udv_put(uobj, pps, npages, flags)
-
-struct uvm_object *uobj;
-struct vm_page **pps;
-int npages, flags;
-
+static int
+udv_put(uobj, pps, npages, flags)
+	struct uvm_object *uobj;
+	struct vm_page **pps;
+	int npages, flags;
 {
-  panic("udv_put: trying to page out to a device!");
+
+	panic("udv_put: trying to page out to a device!");
 }
