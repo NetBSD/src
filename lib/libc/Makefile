@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 1999/02/09 19:30:03 tv Exp $
+#	$NetBSD: Makefile,v 1.83 1999/02/24 15:00:08 drochner Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -21,7 +21,12 @@ LIB=		c
 CPPFLAGS+=	-D_LIBC -DNLS -DYP -DHESIOD -DLIBC_SCCS -DSYSLIBC_SCCS \
 		-D_REENTRANT -I${.CURDIR}/include
 
-ARCHDIR=	${.CURDIR}/arch/${MACHINE_ARCH:S/mipse[bl]/mips/}
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+ARCHSUBDIR=	mips
+.else
+ARCHSUBDIR=	${MACHINE_ARCH}
+.endif
+ARCHDIR=	${.CURDIR}/arch/${ARCHSUBDIR}
 AINC=		-I${ARCHDIR}
 .if defined(DESTDIR)
 AINC+=		-nostdinc -idirafter ${DESTDIR}/usr/include
@@ -85,16 +90,16 @@ copy-to-libkern-machind: ${KSRCS}
 
 copy-to-libkern-machdep: ${KMSRCS}
 .if defined(KMSRCS) && !empty(KMSRCS)
-	cp -p ${.ALLSRC} ${LIBKERN}/arch/${MACHINE_ARCH}
+	cp -p ${.ALLSRC} ${LIBKERN}/arch/${ARCHSUBDIR}
 .endif
 .if defined(KMINCLUDES) && !empty(KMINCLUDES)
-	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/arch/${MACHINE_ARCH})
+	(cd ${.CURDIR} ; cp -p ${KMINCLUDES} ${LIBKERN}/arch/${ARCHSUBDIR})
 .endif
 
 rm-from-libkern:
 	for i in ${KSRCS}; do rm -f ${LIBKERN}/$$i; done
 .if defined(KMSRCS) && !empty(KMSRCS)
-	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${MACHINE_ARCH}/$$i; done
+	for i in ${KMSRCS}; do rm -f ${LIBKERN}/arch/${ARCHSUBDIR}/$$i; done
 .endif
 
 all: ${.OBJDIR}/tags
