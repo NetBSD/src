@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.35 2005/01/06 17:38:29 mycroft Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.36 2005/01/06 17:42:31 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sa.c,v 1.35 2005/01/06 17:38:29 mycroft Exp $");
+__RCSID("$NetBSD: pthread_sa.c,v 1.36 2005/01/06 17:42:31 mycroft Exp $");
 
 #include <err.h>
 #include <errno.h>
@@ -280,7 +280,7 @@ pthread__find_interrupted(int type, struct sa_t *sas[], int ev, int intr,
 			if (victim->pt_spinlocks > 0) {
 				SDPRINTF((" lockholder %d",
 				    victim->pt_spinlocks));
-			} else
+			} else {
 				SDPRINTF((" nonlockholder"));
 			}
 			resume = 1;
