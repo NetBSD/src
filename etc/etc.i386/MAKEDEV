@@ -315,14 +315,14 @@ lkm)
 mms*)
 	unit=`expr $i : 'mms\(.*\)'`
 	rm -f mms$unit
-	mknod mms$unit c 35 `expr $unit '*' 2 + 1`	# non-blocking for X11
+	mknod mms$unit c 35 $unit
 	chown root.wheel mms$unit
 	;;
 
 lms*)
 	unit=`expr $i : 'lms\(.*\)'`
 	rm -f lms$unit
-	mknod lms$unit c 36 `expr $unit '*' 2 + 1`	# non-blocking for X11
+	mknod lms$unit c 36 $unit
 	chown root.wheel lms$unit
 	;;
 
