@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.3 2002/01/04 19:12:31 eeh Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.18.4.4 2002/01/04 22:38:56 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -248,6 +248,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	 */
 	addr = (long)p->p_psstr - szsigcode;
 	tf->tf_global[1] = (long)catcher;
+	addr += 8; /* XXX skip the upcall code */
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
 	tf->tf_out[6] = (u_int64_t)(u_int)(u_long)newsp;
@@ -263,6 +264,45 @@ netbsd32_sendsig(catcher, sig, mask, code)
 		if (sigdebug & SDB_DDB) Debugger();
 	}
 #endif
+}
+
+/*
+ * Set the lwp to begin execution in the upcall handler.  The upcall
+ * handler will then simply call the upcall routine and then exit.
+ *
+ * Because we have a bunch of different signal trampolines, the first
+ * two instructions in the signal trampoline call the upcall handler.
+ * Signal dispatch should skip the first two instructions in the signal
+ * trampolines.
+ */
+void 
+netbsd32_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
+	void *sas, void *ap, void *sp, sa_upcall_t upcall)
+{
+	struct proc *p = l->l_proc;
+       	struct trapframe *tf;
+	vaddr_t addr;
+
+	extern char sigcode[], upcallcode[];
+
+	tf = l->l_md.md_tf;
+
+	addr = (vaddr_t)p->p_sigctx.ps_sigcode;
+
+	/* Jump to the upcall handler */
+	tf->tf_pc = addr;
+	tf->tf_npc = addr + 4;
+
+	/* The upcall itself is in %g1 */
+	tf->tf_global[1] = upcall;  
+
+	tf->tf_out[0] = type;
+	tf->tf_out[1] = sas;
+	tf->tf_out[2] = nevents;
+	tf->tf_out[3] = ninterrupted;
+	tf->tf_out[4] = ap;
+	tf->tf_out[6] = (vaddr_t)sp;
+
 }
 
 #undef DEBUG

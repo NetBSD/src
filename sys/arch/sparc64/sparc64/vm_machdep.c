@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41.4.6 2002/01/04 19:12:33 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.41.4.7 2002/01/04 22:38:59 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -349,20 +349,17 @@ cpu_setfunc(l, func, arg)
 	void (*func) __P((void *));
 	void *arg;
 {
-#if 0
-	struct user *up = l->l_addr;
+	struct pcb *npcb = &l->l_addr->u_pcb;
+	struct rwindow *rp;
 
-	up->u_pcb.pcb_context[0] =
-	    (u_int64_t)func;			/* s0: pc */
-	up->u_pcb.pcb_context[1] =
-	    (u_int64_t)exception_return;	/* s1: ra */
-	up->u_pcb.pcb_context[2] =
-	    (u_int64_t)arg;			/* s2: arg */
-	up->u_pcb.pcb_context[7] =
-	    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
-	up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
-#endif
-	panic("cpu_setfunc");
+
+	/* Construct kernel frame to return to in cpu_switch() */
+	rp = (struct rwindow *)((u_long)npcb + TOPFRAMEOFF);
+	rp->rw_local[0] = (long)func;		/* Function to call */
+	rp->rw_local[1] = (long)arg;		/* and its argument */
+
+	npcb->pcb_pc = (long)proc_trampoline - 8;
+	npcb->pcb_sp = (long)rp - STACK_OFFSET;
 }	
 
 /*
