@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.120 2003/01/12 01:48:56 pk Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.121 2003/01/15 07:12:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.120 2003/01/12 01:48:56 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.121 2003/01/15 07:12:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -920,7 +920,7 @@ rqinit()
 }
 
 static __inline void
-resched_proc(struct proc *p)
+resched_proc(struct proc *p, u_char pri)
 {
 	struct cpu_info *ci;
 
@@ -947,7 +947,7 @@ resched_proc(struct proc *p)
 	 * sched state, which we currently do not do.
 	 */
 	ci = (p->p_cpu != NULL) ? p->p_cpu : curcpu();
-	if (p->p_priority < ci->ci_schedstate.spc_curpriority)
+	if (pri < ci->ci_schedstate.spc_curpriority)
 		need_resched(ci);
 }
 
@@ -996,7 +996,7 @@ setrunnable(struct proc *p)
 	if ((p->p_flag & P_INMEM) == 0)
 		sched_wakeup((caddr_t)&proc0);
 	else
-		resched_proc(p);
+		resched_proc(p, p->p_priority);
 }
 
 /*
@@ -1014,7 +1014,7 @@ resetpriority(struct proc *p)
 	newpriority = PUSER + p->p_estcpu + NICE_WEIGHT * (p->p_nice - NZERO);
 	newpriority = min(newpriority, MAXPRI);
 	p->p_usrpri = newpriority;
-	resched_proc(p);
+	resched_proc(p, p->p_usrpri);
 }
 
 /*
