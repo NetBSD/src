@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.74 2005/03/09 18:53:57 tron Exp $	*/
+/*	$NetBSD: socket.h,v 1.75 2005/03/09 19:02:22 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -73,7 +73,6 @@
  * Data types.
  */
 #include <sys/ansi.h>
-#include <sys/types.h>
 
 #ifndef sa_family_t
 typedef __sa_family_t	sa_family_t;
@@ -362,22 +361,22 @@ struct sockcred {
 }
 
 struct kinfo_pcb {
-	uint64_t	ki_pcbaddr;	/* PTR: pcb addr */
-	uint64_t	ki_ppcbaddr;	/* PTR: ppcb addr */
-	uint64_t	ki_sockaddr;	/* PTR: socket addr */
+	__uint64_t	ki_pcbaddr;	/* PTR: pcb addr */
+	__uint64_t	ki_ppcbaddr;	/* PTR: ppcb addr */
+	__uint64_t	ki_sockaddr;	/* PTR: socket addr */
 
-	uint32_t	ki_family;	/* INT: protocol family */
-	uint32_t	ki_type;	/* INT: socket type */
-	uint32_t	ki_protocol;	/* INT: protocol */
-	uint32_t	ki_pflags;	/* INT: generic protocol flags */
+	__uint32_t	ki_family;	/* INT: protocol family */
+	__uint32_t	ki_type;	/* INT: socket type */
+	__uint32_t	ki_protocol;	/* INT: protocol */
+	__uint32_t	ki_pflags;	/* INT: generic protocol flags */
 
-	uint32_t	ki_sostate;	/* INT: socket state */
-	uint32_t	ki_prstate;	/* INT: protocol state */
-	int32_t		ki_tstate;	/* INT: tcp state */
-	uint32_t	ki_tflags;	/* INT: tcp flags */
+	__uint32_t	ki_sostate;	/* INT: socket state */
+	__uint32_t	ki_prstate;	/* INT: protocol state */
+	__int32_t	ki_tstate;	/* INT: tcp state */
+	__uint32_t	ki_tflags;	/* INT: tcp flags */
 
-	uint64_t	ki_rcvq;	/* U_LONG: receive queue len */
-	uint64_t	ki_sndq;	/* U_LONG: send queue len */
+	__uint64_t	ki_rcvq;	/* U_LONG: receive queue len */
+	__uint64_t	ki_sndq;	/* U_LONG: send queue len */
 
 	union {
 		struct sockaddr	_kis_src; /* STRUCT: local address */
@@ -388,11 +387,11 @@ struct kinfo_pcb {
 		char _kid_pad[256 + 8];		/* pad to max addr length */
 	} ki_d;
 
-	uint64_t	ki_inode;	/* INO_T: fake inode number */
-	uint64_t	ki_vnode;	/* PTR: if associated with file */
-	uint64_t	ki_conn;	/* PTR: control block of peer */
-	uint64_t	ki_refs;	/* PTR: referencing socket */
-	uint64_t	ki_nextref;	/* PTR: link in refs list */
+	__uint64_t	ki_inode;	/* INO_T: fake inode number */
+	__uint64_t	ki_vnode;	/* PTR: if associated with file */
+	__uint64_t	ki_conn;	/* PTR: control block of peer */
+	__uint64_t	ki_refs;	/* PTR: referencing socket */
+	__uint64_t	ki_nextref;	/* PTR: link in refs list */
 };
 
 #define ki_src ki_s._kis_src
