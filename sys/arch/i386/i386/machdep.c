@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 1995/10/12 17:56:36 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.181 1995/10/15 22:09:45 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -267,7 +267,9 @@ cpu_startup()
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
 	tss_alloc(pcb);
+
 	ltr(pcb->pcb_tss_sel);
+	lldt(pcb->pcb_ldt_sel);
 
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
 
