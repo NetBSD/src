@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.105 2003/06/26 00:43:32 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.106 2003/06/30 01:22:51 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.105 2003/06/26 00:43:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.106 2003/06/30 01:22:51 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -586,13 +586,13 @@ skip_ipsec:
 	/*
 	 * Run through list of hooks for output packets.
 	 */
-	if ((error = pfil_run_hooks(&inet_pfil_hook, &m, ifp,
-				    PFIL_OUT)) != 0)
+	if ((error = pfil_run_hooks(&inet_pfil_hook, &m, ifp, PFIL_OUT)) != 0)
 		goto done;
 	if (m == NULL)
 		goto done;
 
 	ip = mtod(m, struct ip *);
+	hlen = ip->ip_hl << 2;
 #endif /* PFIL_HOOKS */
 
 	m->m_pkthdr.csum_flags |= M_CSUM_IPv4;
