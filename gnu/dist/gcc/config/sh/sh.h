@@ -1465,7 +1465,7 @@ extern struct rtx_def *sh_builtin_saveregs ();
    and another.  */
 
 #define REGISTER_MOVE_COST(SRCCLASS, DSTCLASS) \
-  ((DSTCLASS) == PR_REG ? 10		\
+  ((DSTCLASS) == PR_REGS ? 10		\
    : (((DSTCLASS) == FP_REGS && (SRCCLASS) == GENERAL_REGS)		\
       || ((DSTCLASS) == GENERAL_REGS && (SRCCLASS) == FP_REGS)) ? 4	\
    : 1)
