@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_pci.c,v 1.2 1996/09/01 00:20:25 mycroft Exp $	*/
+/*	$NetBSD: bha_pci.c,v 1.3 1996/10/10 19:53:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -116,7 +117,7 @@ bha_pci_attach(parent, self, aux)
 		model = "BusLogic 9xxC SCSI";
 	else
 		model = "unknown model!";
-	printf(": %s\n", model);
+	kprintf(": %s\n", model);
 
 	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize))
 		panic("bha_attach: pci_io_find failed!");
@@ -134,20 +135,20 @@ bha_pci_attach(parent, self, aux)
 
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 	    pa->pa_intrline, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		kprintf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		kprintf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			kprintf(" at %s", intrstr);
+		kprintf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	bha_attach(sc);
 }
