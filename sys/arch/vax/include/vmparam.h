@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2000/03/07 00:05:59 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.33 2000/11/14 19:49:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -45,6 +45,14 @@
 /*
  * Machine dependent constants for VAX.
  */
+
+/*
+ * We use 4K VM pages on the VAX.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	12
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * USRTEXT is the start of the user text/data space, while USRSTACK
