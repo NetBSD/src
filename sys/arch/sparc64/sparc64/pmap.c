@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2000/10/29 23:30:36 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.78 2000/11/02 00:24:05 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1511,6 +1511,7 @@ pmap_growkernel(maxkvaddr)
 	}
 	simple_unlock(&pm->pm_lock);
 	splx(s);
+	return (kbreak);
 }
 #endif
 
