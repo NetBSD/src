@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.1 1996/05/17 21:18:23 chuck Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.2 1999/03/25 23:13:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -36,9 +36,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
-
-#define ETHER_MIN_LEN   64
-#define ETHER_MAX_LEN   1518
 
 #define NTXBUF	1
 #define NRXBUF	16
