@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.101.2.11 2002/10/18 02:45:36 nathanw Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.101.2.12 2002/10/22 18:09:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.11 2002/10/18 02:45:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.101.2.12 2002/10/22 18:09:45 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -169,7 +169,7 @@ nfs_statfs(mp, sbp, p)
 	nfsm_fhtom(vp, v3);
 	nfsm_request(vp, NFSPROC_FSSTAT, p, cred);
 	if (v3)
-		nfsm_postop_attr(vp, retattr);
+		nfsm_postop_attr(vp, retattr, 0);
 	if (error) {
 		if (mrep != NULL)
 			m_free(mrep);
@@ -237,7 +237,7 @@ nfs_fsinfo(nmp, vp, cred, p)
 	nfsm_reqhead(vp, NFSPROC_FSINFO, NFSX_FH(1));
 	nfsm_fhtom(vp, 1);
 	nfsm_request(vp, NFSPROC_FSINFO, p, cred);
-	nfsm_postop_attr(vp, retattr);
+	nfsm_postop_attr(vp, retattr, 0);
 	if (!error) {
 		nfsm_dissect(fsp, struct nfsv3_fsinfo *, NFSX_V3FSINFO);
 		pref = fxdr_unsigned(u_int32_t, fsp->fs_wtpref);
@@ -559,18 +559,29 @@ nfs_mount(mp, path, data, ndp, p)
 	int error;
 	struct nfs_args args;
 	struct mbuf *nam;
+	struct nfsmount *nmp = VFSTONFS(mp);
+	struct sockaddr *sa;
 	struct vnode *vp;
 	char *pth, *hst;
 	size_t len;
 	u_char *nfh;
 
+	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
+	if (error)
+		return (error);
+
 	if (mp->mnt_flag & MNT_GETARGS) {
-		struct nfsmount *nmp = VFSTONFS(mp);
+
 		if (nmp == NULL)
-			return EIO;
+			return (EIO);
+		if (args.addr != NULL) {
+			sa = mtod(nmp->nm_nam, struct sockaddr *);
+			error = copyout(sa, args.addr, sa->sa_len);
+			if (error)
+				return (error);
+		}
 		args.version = NFS_ARGSVERSION;
-		args.addr = NULL;
-		args.addrlen = 0;
+		args.addrlen = sa->sa_len;
 		args.sotype = nmp->nm_sotype;
 		args.proto = nmp->nm_soproto;
 		args.fh = NULL;
@@ -586,12 +597,9 @@ nfs_mount(mp, path, data, ndp, p)
 		args.leaseterm = nmp->nm_leaseterm;
 		args.deadthresh = nmp->nm_deadthresh;
 		args.hostname = NULL;
-		return copyout(&args, data, sizeof(args));
+		return (copyout(&args, data, sizeof(args)));
 	}
 
-	error = copyin(data, (caddr_t)&args, sizeof (struct nfs_args));
-	if (error)
-		return (error);
 	if (args.version != NFS_ARGSVERSION)
 		return (EPROGMISMATCH);
 #ifdef NFS_V2_ONLY
@@ -601,8 +609,6 @@ nfs_mount(mp, path, data, ndp, p)
 		return (EPROGMISMATCH);
 #endif
 	if (mp->mnt_flag & MNT_UPDATE) {
-		struct nfsmount *nmp = VFSTONFS(mp);
-
 		if (nmp == NULL)
 			return (EIO);
 		/*

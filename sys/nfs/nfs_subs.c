@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.92.2.8 2002/08/27 23:48:21 nathanw Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.92.2.9 2002/10/22 18:09:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.92.2.8 2002/08/27 23:48:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.92.2.9 2002/10/22 18:09:43 thorpej Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1527,11 +1527,12 @@ nfs_vfs_done()
  *    copy the attributes to *vaper
  */
 int
-nfsm_loadattrcache(vpp, mdp, dposp, vaper)
+nfsm_loadattrcache(vpp, mdp, dposp, vaper, flags)
 	struct vnode **vpp;
 	struct mbuf **mdp;
 	caddr_t *dposp;
 	struct vattr *vaper;
+	int flags;
 {
 	int32_t t1;
 	caddr_t cp2;
@@ -1544,14 +1545,15 @@ nfsm_loadattrcache(vpp, mdp, dposp, vaper)
 	error = nfsm_disct(mdp, dposp, NFSX_FATTR(v3), t1, &cp2);
 	if (error)
 		return (error);
-	return nfs_loadattrcache(vpp, (struct nfs_fattr *)cp2, vaper);
+	return nfs_loadattrcache(vpp, (struct nfs_fattr *)cp2, vaper, flags);
 }
 
 int
-nfs_loadattrcache(vpp, fp, vaper)
+nfs_loadattrcache(vpp, fp, vaper, flags)
 	struct vnode **vpp;
 	struct nfs_fattr *fp;
 	struct vattr *vaper;
+	int flags;
 {
 	struct vnode *vp = *vpp;
 	struct vattr *vap;
@@ -1699,7 +1701,17 @@ nfs_loadattrcache(vpp, fp, vaper)
 		} else {
 			np->n_size = vap->va_size;
 			if (vap->va_type == VREG) {
-				uvm_vnp_setsize(vp, np->n_size);
+				if ((flags & NAC_NOTRUNC)
+				    && np->n_size < vp->v_size) {
+					/*
+					 * we can't free pages now because
+					 * the pages can be owned by ourselves.
+					 */
+					np->n_flag |= NTRUNCDELAYED;
+				}
+				else {
+					uvm_vnp_setsize(vp, np->n_size);
+				}
 			}
 		}
 	}
@@ -1756,6 +1768,18 @@ nfs_getattrcache(vp, vaper)
 			vaper->va_mtime = np->n_mtim;
 	}
 	return (0);
+}
+
+void
+nfs_delayedtruncate(vp)
+	struct vnode *vp;
+{
+	struct nfsnode *np = VTONFS(vp);
+
+	if (np->n_flag & NTRUNCDELAYED) {
+		np->n_flag &= ~NTRUNCDELAYED;
+		uvm_vnp_setsize(vp, np->n_size);
+	}
 }
 
 /*

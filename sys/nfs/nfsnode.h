@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.32.2.2 2001/09/21 22:36:58 nathanw Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.32.2.3 2002/10/22 18:09:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -173,6 +173,7 @@ struct nfsnode {
 #define	NACC		0x0100	/* Special file accessed */
 #define	NUPD		0x0200	/* Special file updated */
 #define	NCHG		0x0400	/* Special file times changed */
+#define	NTRUNCDELAYED	0x1000	/* Should be truncated later */
 
 /*
  * Convert between nfsnode pointers and vnode pointers
@@ -226,7 +227,7 @@ int	nfs_readlink	__P((void *));
 int	nfs_inactive	__P((void *));
 int	nfs_reclaim	__P((void *));
 #define nfs_lock	genfs_lock
-#define nfs_unlock	genfs_unlock
+int nfs_unlock	__P((void *));
 #define nfs_islocked	genfs_islocked
 int	nfs_bmap	__P((void *));
 int	nfs_strategy	__P((void *));
