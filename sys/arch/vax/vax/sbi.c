@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.16 1998/01/12 20:53:00 thorpej Exp $ */
+/*	$NetBSD: sbi.c,v 1.17 1998/01/24 14:16:19 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -39,7 +39,7 @@
 #include <machine/nexus.h>
 
 static	int sbi_print __P((void *, const char *));
-static	int sbi_match __P((struct device *, void *, void *));
+static	int sbi_match __P((struct device *, struct cfdata *, void *));
 static	void sbi_attach __P((struct device *, struct device *, void*));
 
 int
@@ -66,8 +66,9 @@ sbi_print(aux, name)
 
 int
 sbi_match(parent, cf, aux)
-	struct	device	*parent;
-	void	*cf, *aux;
+	struct device	*parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct bp_conf *bp = aux;
 

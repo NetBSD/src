@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.3 1998/01/12 20:52:46 thorpej Exp $	*/
+/*	$NetBSD: dl.c,v 1.4 1998/01/24 14:16:37 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@ struct dl_softc {
 	struct tty*		sc_tty;
 };
 
-static	int	dl_match __P((struct device *, void *, void *));
+static	int	dl_match __P((struct device *, struct cfdata *, void *));
 static	void	dl_attach __P((struct device *, struct device *, void *));
 static	void	dlrint __P((int));
 static	void	dlxint __P((int));
@@ -136,9 +136,10 @@ extern struct cfdriver dl_cd;
 /* then complete the housecleaning for full operation */
 
 static int
-dl_match (parent, match, aux)
+dl_match (parent, cf, aux)
 	struct device * parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct uba_attach_args *ua = aux;
 	register dlregs *dladdr;

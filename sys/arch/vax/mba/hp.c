@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.17 1998/01/12 20:52:37 thorpej Exp $ */
+/*	$NetBSD: hp.c,v 1.18 1998/01/24 14:16:54 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -75,7 +75,7 @@ struct	hp_softc {
 	int	sc_physnr;		/* Physical disk number */
 };
 
-int     hpmatch __P((struct device *, void *, void *));
+int     hpmatch __P((struct device *, struct cfdata *, void *));
 void    hpattach __P((struct device *, struct device *, void *));
 void	hpstrategy __P((struct buf *));
 void	hpstart __P((struct mba_device *));
@@ -99,11 +99,11 @@ extern struct cfdriver hp_cd;
  * Check if this is a disk drive; done by checking type from mbaattach.
  */
 int
-hpmatch(parent, match, aux)
+hpmatch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	struct	cfdata *cf;
+	void	*aux;
 {
-	struct	cfdata *cf = match;
 	struct	mba_attach_args *ma = aux;
 
 	if (cf->cf_loc[MBACF_DRIVE] != MBACF_DRIVE_DEFAULT &&

@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.31 1998/01/18 22:09:14 ragge Exp $	   */
+/*	$NetBSD: uba.c,v 1.32 1998/01/24 14:16:33 ragge Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
@@ -68,7 +68,7 @@
 
 volatile int rbr, rcvec, svec;
 
-static	void ubascan __P((struct device *, void *));
+static	int ubasearch __P((struct device *, struct cfdata *, void *));
 static	int ubaprint __P((void *, const char *));
 static	void ubastray __P((int));
 static	void ubainitmaps __P((struct uba_softc *));
@@ -81,15 +81,15 @@ extern struct cfdriver uba_cd;
 
 #if defined(DW780) || defined(DW750)
 
-int	dw_match __P((struct device *, void *, void *));
+int	dw_match __P((struct device *, struct cfdata *, void *));
 
 int
-dw_match(parent, vcf, aux)
+dw_match(parent, cf, aux)
 	struct	device *parent;
-	void *vcf, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct cfdata *cf = vcf;
 
 	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
 		return 0;
@@ -383,7 +383,7 @@ dw750_purge(sc, bdp)
  * This driver can only handle map registers up to 1MB due to map info
  * storage, but that should be enough for normal purposes.
  */
-int	qba_match __P((struct device *, void *, void *));
+int	qba_match __P((struct device *, struct cfdata *, void *));
 void	qba_attach __P((struct device *, struct device *, void *));
 void	qba_beforescan __P((struct uba_softc*));
 void	qba_init __P((struct uba_softc*));
@@ -395,7 +395,8 @@ struct	cfattach uba_backplane_ca = {
 int
 qba_match(parent, vcf, aux)
 	struct device *parent;
-	void *vcf, *aux;
+	struct cfdata *vcf;
+	void *aux;
 {
 	struct	bp_conf *bp = aux;
 
@@ -832,7 +833,6 @@ uba_attach(sc, iopagephys)
 	vm_offset_t	mini, maxi;
 	extern	struct	ivec_dsp idsptch;
 
-	uba_cd.cd_indirect = 1; /* XXX */
 	/*
 	 * Set last free interrupt vector for devices with
 	 * programmable interrupt vectors.  Use is to decrement
@@ -890,19 +890,18 @@ uba_attach(sc, iopagephys)
 	/*
 	 * Now start searching for devices.
 	 */
-	config_scan(ubascan,(struct device *)sc);
+	config_search(ubasearch,(struct device *)sc, NULL);
 
 	if (sc->uh_afterscan)
 		(*sc->uh_afterscan)(sc);
 }
 
-void
-ubascan(parent, match)
+int
+ubasearch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct	device *dev = match;
-	struct	cfdata *cf = dev->dv_cfdata;
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;
 	int	i;
@@ -914,7 +913,7 @@ ubascan(parent, match)
 		goto forgetit;
 
 	rcvec = 0x200;
-	i = (*cf->cf_attach->ca_match) (parent, dev, &ua);
+	i = (*cf->cf_attach->ca_match) (parent, cf, &ua);
 
 	if (sc->uh_errchk)
 		if ((*sc->uh_errchk)(sc))
@@ -926,37 +925,38 @@ ubascan(parent, match)
 		goto fail;
 		
 	sc->uh_idsp[rcvec].hoppaddr = ua.ua_ivec;
-	sc->uh_idsp[rcvec].pushlarg = dev->dv_unit;
-	if (ua.ua_reset) { /* device wants ubraeset */
+	sc->uh_idsp[rcvec].pushlarg = cf->cf_unit;
+	if (ua.ua_reset) { /* device wants ubareset */
 		if (sc->uh_resno == 0) {
 			sc->uh_reset = malloc(1024, M_DEVBUF, M_NOWAIT);
 			sc->uh_resarg = (int *)sc->uh_reset + 128;
 		}
 #ifdef DIAGNOSTIC
 		if (sc->uh_resno > 127) {
-			printf("%s: Expand reset table, skipping reset %s\n",
-			    sc->uh_dev.dv_xname, dev->dv_xname);
+			printf("%s: Expand reset table, skipping reset %s%d\n",
+			    sc->uh_dev.dv_xname, cf->cf_driver->cd_name,
+			    cf->cf_unit);
 		} else
 #endif
 		{
-			sc->uh_resarg[sc->uh_resno] = dev->dv_unit;
+			sc->uh_resarg[sc->uh_resno] = cf->cf_unit;
 			sc->uh_reset[sc->uh_resno++] = ua.ua_reset;
 		}
 	}
 	ua.ua_br = rbr;
 	ua.ua_cvec = rcvec;
-	ua.ua_iaddr = dev->dv_cfdata->cf_loc[0];
+	ua.ua_iaddr = cf->cf_loc[0];
 
-	config_attach(parent, dev, &ua, ubaprint);
-	return;
+	config_attach(parent, cf, &ua, ubaprint);
+	return 0;
 
 fail:
-	printf("%s at %s csr %o %s\n", dev->dv_cfdata->cf_driver->cd_name, 
-	    parent->dv_xname, dev->dv_cfdata->cf_loc[0], 
+	printf("%s%d at %s csr %o %s\n", cf->cf_driver->cd_name, cf->cf_unit,
+	    parent->dv_xname, cf->cf_loc[0], 
 	    rcvec ? "didn't interrupt\n" : "zero vector\n");
 
 forgetit:
-	free(dev, M_DEVBUF);
+	return 0;
 }
 
 /*

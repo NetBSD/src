@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.10 1998/01/12 20:52:45 thorpej Exp $	*/
+/*	$NetBSD: dhu.c,v 1.11 1998/01/24 14:16:39 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ static struct speedtab dhuspeedtab[] = {
   {      -1,	-1		}
 };
 
-static int	dhu_match __P((struct device *, void *, void *));
+static int	dhu_match __P((struct device *, struct cfdata *, void *));
 static void	dhu_attach __P((struct device *, struct device *, void *));
 static	void	dhurint __P((int));
 static	void	dhuxint __P((int));
@@ -145,9 +145,10 @@ extern struct cfdriver dhu_cd;
 /* then complete the housecleaning for full operation */
 
 static int
-dhu_match(parent, match, aux)
+dhu_match(parent, cf, aux)
         struct device *parent;
-        void *match, *aux;
+	struct cfdata *cf;
+        void *aux;
 {
 	struct uba_attach_args *ua = aux;
 	register dhuregs *dhuaddr;

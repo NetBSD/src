@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.21 1998/01/12 20:52:57 thorpej Exp $ */
+/*	$NetBSD: ka750.c,v 1.22 1998/01/24 14:16:25 ragge Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -104,7 +104,7 @@ ka750_conf(parent, self, aux)
 	ctuattach();
 }
 
-static int ka750_memmatch __P((struct  device  *, void  *, void *));
+static int ka750_memmatch __P((struct  device  *, struct cfdata  *, void *));
 static void ka750_memenable __P((struct  device  *, struct  device  *, void *));
 
 struct  cfattach mem_cmi_ca = {
@@ -112,12 +112,12 @@ struct  cfattach mem_cmi_ca = {
 };
 
 int
-ka750_memmatch(parent, gcf, aux)
+ka750_memmatch(parent, cf, aux)
         struct  device  *parent;
-        void    *gcf, *aux;
+	struct cfdata *cf;
+        void    *aux;
 {
 	struct  sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct  cfdata  *cf = gcf;
 
         if (cf->cf_loc[SBICF_TR] != sa->nexnum && cf->cf_loc[SBICF_TR] > -1)
                 return 0;
@@ -281,7 +281,7 @@ ka750_steal_pages()
 }
 
 static  int cmi_print __P((void *, const char *));
-static  int cmi_match __P((struct device *, void *, void *));
+static  int cmi_match __P((struct device *, struct cfdata *, void *));
 static  void cmi_attach __P((struct device *, struct device *, void*));
 
 struct  cfattach cmi_ca = {
@@ -306,7 +306,8 @@ cmi_print(aux, name)
 int
 cmi_match(parent, cf, aux)
         struct  device  *parent;
-        void    *cf, *aux;
+	struct cfdata *cf;
+        void    *aux;
 {
         struct bp_conf *bp = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bi.c,v 1.5 1998/01/12 20:52:29 thorpej Exp $ */
+/*	$NetBSD: bi.c,v 1.6 1998/01/24 14:17:09 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -50,7 +50,7 @@
 #include <arch/vax/bi/bireg.h>
 #include <arch/vax/bi/bivar.h>
 
-static int bi_match __P((struct device *, void *, void *));
+static int bi_match __P((struct device *, struct cfdata *, void *));
 static void bi_attach __P((struct device *, struct device *, void*));
 static int bi_print __P((void *, const char *));
 
@@ -103,7 +103,8 @@ bi_print(aux, name)
 int
 bi_match(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *match;
+	void *aux;
 {
 	struct bp_conf *bp = aux;
 

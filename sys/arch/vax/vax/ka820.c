@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.7 1998/01/12 20:52:59 thorpej Exp $	*/
+/*	$NetBSD: ka820.c,v 1.8 1998/01/24 14:16:22 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -66,7 +66,7 @@ struct ka820port *ka820port_ptr;
 struct rx50device *rx50device_ptr;
 void *bi_nodebase;	/* virtual base address for all possible bi nodes */
 
-static int ka820_match __P((struct device *, void *, void *));
+static int ka820_match __P((struct device *, struct cfdata *, void *));
 static void ka820_attach __P((struct device *, struct device *, void*));
 
 struct	cpu_dep ka820_calls = {
@@ -150,11 +150,11 @@ ka820_steal_pages()
 }
 
 int
-ka820_match(parent, match, aux)
+ka820_match(parent, cf, aux)
 	struct device *parent;
-	void	*match, *aux;
+	struct cfdata *cf;
+	void	*aux;
 {
-	struct	cfdata *cf = match;
 	struct bi_attach_args *ba = aux;
 
 	if (ba->ba_node->biic.bi_dtype != BIDT_KA820)
@@ -240,7 +240,7 @@ struct ms820regs {
 #define MS2_INTLVADDR	0x00000100	/* error was in bank 1 (ro) */
 #define MS2_SYN		0x0000007f	/* error syndrome (ro, rw diag) */
 
-static int ms820_match __P((struct device *, void *, void *));
+static int ms820_match __P((struct device *, struct cfdata *, void *));
 static void ms820_attach __P((struct device *, struct device *, void*));
 
 struct mem_bi_softc {
@@ -253,11 +253,11 @@ struct cfattach mem_bi_ca = {
 };
 
 static int
-ms820_match(parent, match, aux)
+ms820_match(parent, cf, aux)
 	struct	device	*parent;
-	void	*match, *aux;
+	struct cfdata *cf;
+	void	*aux;
 {
-	struct	cfdata *cf = match;
 	struct bi_attach_args *ba = aux;
 
 	if (ba->ba_node->biic.bi_dtype != BIDT_MS820)

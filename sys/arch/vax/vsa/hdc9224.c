@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.7 1998/01/12 20:53:03 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.8 1998/01/24 14:16:15 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -178,7 +178,7 @@ struct	hdcsoftc {
 /*
  * Device definition for (new) autoconfiguration.
  */
-int	hdcmatch  __P((struct device *parent, void *cfdata, void *aux));
+int	hdcmatch  __P((struct device *parent, struct cfdata *, void *aux));
 void	hdcattach __P((struct device *parent, struct device *self, void *aux));
 int	hdcprint  __P((void *aux, const char *name));
 
@@ -186,7 +186,7 @@ struct	cfattach hdc_ca = {
 	sizeof(struct hdcsoftc), hdcmatch, hdcattach
 };
 
-int	rdmatch __P((struct device *parent, void *cfdata, void *aux));
+int	rdmatch __P((struct device *parent, struct cfdata *cfdata, void *aux));
 void	rdattach __P((struct device *parent, struct device *self, void *aux));
 int	rdprint __P((void *aux, const char *name));
 void	rdstrategy __P((struct buf *bp));
@@ -218,11 +218,11 @@ void rdgetlabel __P((struct rdsoftc *sc));
  *     is not yet allocated. Thus we do this in hdcattach()...
  */
 int
-hdcmatch(parent, match, aux)
+hdcmatch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	trace(("hdcmatch(0x%x, %d, %s)\n", parent, cf->cf_unit, ca->ca_name));
@@ -322,12 +322,12 @@ hdcattach(parent, self, aux)
  * rdmatch() probes for the existence of a RD-type disk/floppy
  */
 int
-rdmatch(parent, match, aux)
+rdmatch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct hdcsoftc *hdc = (void*)parent;
-	struct cfdata *cf = match;
 	struct hdc_attach_args *ha = aux;
 	int drive = ha->ha_drive;
 	int res;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.12 1998/01/18 22:09:15 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.13 1998/01/24 14:16:50 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -69,7 +69,7 @@ struct	mbaunit mbaunit[] = {
 	{0,		0,	0}
 };
 
-int	mbamatch __P((struct device *, void *, void *));
+int	mbamatch __P((struct device *, struct cfdata *, void *));
 void	mbaattach __P((struct device *, struct device *, void *));
 void	mbaintr __P((int));
 int	mbaprint __P((void *, const char *));
@@ -91,12 +91,12 @@ extern	struct cfdriver mba_cd;
  * Look if this is a massbuss adapter.
  */
 int
-mbamatch(parent, match, aux)
+mbamatch(parent, cf, aux)
 	struct	device *parent;
-	void	*match, *aux;
+	struct  cfdata *cf;
+	void	*aux;
 {
 	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct	cfdata *cf = match;
 
 	if ((cf->cf_loc[0] != sa->nexnum) && (cf->cf_loc[0] > -1 ))
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.5 1998/01/12 20:52:47 thorpej Exp $	*/
+/*	$NetBSD: dz.c,v 1.6 1998/01/24 14:16:35 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ static struct speedtab dzspeedtab[] =
   {      -1,	-1		}
 };
 
-static	int	dz_match __P((struct device *, void *, void *));
+static	int	dz_match __P((struct device *, struct cfdata *, void *));
 static	void	dz_attach __P((struct device *, struct device *, void *));
 static	void	dzrint __P((int));
 static	void	dzxint __P((int));
@@ -142,9 +142,10 @@ static int	dz_timer = 0;	/* true if timer started */
 /* then complete the housecleaning for full operation */
 
 static int
-dz_match (parent, match, aux)
+dz_match (parent, cf, aux)
         struct device *parent;
-        void *match, *aux;
+	struct cfdata *cf;
+        void *aux;
 {
 	struct uba_attach_args *ua = aux;
 	register dzregs *dzaddr;

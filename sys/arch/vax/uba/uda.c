@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.27 1998/01/12 20:52:54 thorpej Exp $	*/
+/*	$NetBSD: uda.c,v 1.28 1998/01/24 14:16:30 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -88,7 +88,7 @@ struct	uda_softc {
 	int	sc_wticks;	/* watchdog timer ticks */
 };
 
-static	int	udamatch __P((struct device *, void *, void *));
+static	int	udamatch __P((struct device *, struct cfdata *, void *));
 static	void	udaattach __P((struct device *, struct device *, void *));
 static	void	udareset __P((int));
 static	void	mtcreset __P((int));
@@ -142,12 +142,12 @@ udaprint(aux, name)
  * Poke at a supposed UDA50 to see if it is there.
  */
 int
-udamatch(parent, match, aux)
-	struct	device *parent;
-	void	*match, *aux;
+udamatch(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct	uba_attach_args *ua = aux;
-	struct	device *dev = match;
 	struct	mscp_softc mi;	/* Nice hack */
 	struct	uba_softc *ubasc;
 	int	tries;
@@ -193,7 +193,7 @@ again:
 #if 0
 	rbr = qbgetpri();
 #endif
-	if (strcmp(dev->dv_cfdata->cf_driver->cd_name, mtc_cd.cd_name)) {
+	if (strcmp(cf->cf_driver->cd_name, mtc_cd.cd_name)) {
 		ua->ua_ivec = udaintr;
 		ua->ua_reset = udareset;
 	} else {

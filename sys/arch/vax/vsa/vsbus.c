@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.8 1998/01/12 20:53:05 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.9 1998/01/24 14:16:11 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -63,7 +63,7 @@
 #define trace(x)
 #define debug(x)
 
-int	vsbus_match	__P((struct device *, void *, void *));
+int	vsbus_match	__P((struct device *, struct cfdata *, void *));
 void	vsbus_attach	__P((struct device *, struct device *, void *));
 int	vsbus_print	__P((void *, const char *));
 
@@ -169,7 +169,7 @@ vsbus_print(aux, name)
 int
 vsbus_match(parent, cf, aux)
 	struct	device	*parent;
-	void	*cf;
+	struct cfdata	*cf;
 	void	*aux;
 {
 	struct bp_conf *bp = aux;
