@@ -1,11 +1,11 @@
-/*	$NetBSD: str.c,v 1.26 2001/03/05 16:48:35 wiz Exp $	*/
+/*	$NetBSD: str.c,v 1.27 2001/03/05 18:12:49 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "Id: str.c,v 1.5 1997/10/08 07:48:21 charnier Exp";
 #else
-__RCSID("$NetBSD: str.c,v 1.26 2001/03/05 16:48:35 wiz Exp $");
+__RCSID("$NetBSD: str.c,v 1.27 2001/03/05 18:12:49 wiz Exp $");
 #endif
 #endif
 
@@ -29,6 +29,7 @@ __RCSID("$NetBSD: str.c,v 1.26 2001/03/05 16:48:35 wiz Exp $");
  *
  */
 
+#include <assert.h>
 #include <err.h>
 #include <fnmatch.h>
 #include "lib.h"
@@ -110,21 +111,8 @@ deweycmp(char *a, deweyop_t op, char *b)
 	int	in_nb = 0;
 	int     cmp;
 
-	if ((a == NULL) || (b == NULL)) {
-		/*
-		 * At least one of the supposed versions is not
-		 * really a version; treat nonexisting versions as
-		 * lowest possible.
-		 */
-		if (a == NULL)
-			cmp = -1;
-		else if (b == NULL)
-			cmp = 1;
-		else
-			cmp = 0;
-
-		return (op == GE) ? cmp >= 0 : (op == GT) ? cmp > 0 : (op == LE) ? cmp <= 0 : cmp < 0;
-	}
+	assert(a != NULL);
+	assert(b != NULL);
 
 	/* Null out 'n' in any "nb" suffixes for initial pass */
 	if ((a_nb = strstr(a, "nb")))
@@ -473,10 +461,17 @@ findbestmatchingname_fn(const char *found, char *best)
 		}
 	}
 
-	if (best == NULL || best[0] == '\0' || deweycmp(found_version, GT, best_version)) {
-		/* found pkg(version) is bigger than current "best"
-		 * version - remember! */
-		strcpy(best, found);
+	if (found_version == NULL) {
+		fprintf(stderr, "'%s' is not a usable package(version)\n",
+			found);
+	} else {
+		/* if best_version==NULL only if best==NULL
+		 * (or best[0]='\0') */
+		if (best == NULL || best[0] == '\0' || deweycmp(found_version, GT, best_version)) {
+			/* found pkg(version) is bigger than current "best"
+			 * version - remember! */
+			strcpy(best, found);
+		}
 	}
 
 	return 0;

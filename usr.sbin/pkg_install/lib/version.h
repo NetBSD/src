@@ -1,8 +1,8 @@
-/*	$NetBSD: version.h,v 1.1 2001/03/05 16:53:14 wiz Exp $	*/
+/*	$NetBSD: version.h,v 1.2 2001/03/05 18:12:49 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: version.h,v 1.1 2001/03/05 16:53:14 wiz Exp $");
+__RCSID("$NetBSD: version.h,v 1.2 2001/03/05 18:12:49 wiz Exp $");
 #endif
 
 /*
@@ -38,6 +38,6 @@ __RCSID("$NetBSD: version.h,v 1.1 2001/03/05 16:53:14 wiz Exp $");
 #ifndef _INST_LIB_VERSION_H_
 #define _INST_LIB_VERSION_H_
 
-#define PKGTOOLS_VERSION "20010305"
+#define PKGTOOLS_VERSION "20010306"
 
 #endif /* _INST_LIB_VERSION_H_ */
