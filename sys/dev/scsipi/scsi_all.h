@@ -1,7 +1,7 @@
-/*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.11 1997/08/27 11:26:30 bouyer Exp $	*/
 
 /*
- * SCSI general  interface description
+ * SCSI-specific insterface description.
  */
 
 /*
@@ -43,19 +43,18 @@
 #define	SCSI_CMD_LUN_MASK	0xe0
 #define	SCSI_CMD_LUN_SHIFT	5
 
+/*
+ * XXX
+ * Actually some SCSI driver expects this structure to be 12 bytes, so
+ * don't change it unless you really know what you are doing
+ */
 
 struct scsi_generic {
 	u_int8_t opcode;
 	u_int8_t bytes[11];
 };
 
-struct scsi_test_unit_ready {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[3];
-	u_int8_t control;
-};
-
+/* XXX Is this a command ? What's its opcode ? */
 struct scsi_send_diag {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -68,22 +67,7 @@ struct scsi_send_diag {
 	u_int8_t control;
 };
 
-struct scsi_sense {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t length;
-	u_int8_t control;
-};
-
-struct scsi_inquiry {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t length;
-	u_int8_t control;
-};
-
+#define SCSI_MODE_SENSE		0x1a
 struct scsi_mode_sense {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -100,6 +84,7 @@ struct scsi_mode_sense {
 	u_int8_t control;
 };
 
+#define	SCSI_MODE_SENSE_BIG		0x54
 struct scsi_mode_sense_big {
 	u_int8_t opcode;
 	u_int8_t byte2;		/* same bits as small version */
@@ -109,6 +94,7 @@ struct scsi_mode_sense_big {
 	u_int8_t control;
 };
 
+#define SCSI_MODE_SELECT		0x15
 struct scsi_mode_select {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -119,6 +105,7 @@ struct scsi_mode_select {
 	u_int8_t control;
 };
 
+#define	SCSI_MODE_SELECT_BIG		0x55
 struct scsi_mode_select_big {
 	u_int8_t opcode;
 	u_int8_t byte2;		/* same bits as small version */
@@ -127,6 +114,7 @@ struct scsi_mode_select_big {
 	u_int8_t control;
 };
 
+#define SCSI_RESERVE      		0x16
 struct scsi_reserve {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -135,6 +123,7 @@ struct scsi_reserve {
 	u_int8_t control;
 };
 
+#define SCSI_RELEASE      		0x17
 struct scsi_release {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -143,16 +132,7 @@ struct scsi_release {
 	u_int8_t control;
 };
 
-struct scsi_prevent {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[2];
-	u_int8_t how;
-	u_int8_t control;
-};
-#define	PR_PREVENT 0x01
-#define PR_ALLOW   0x00
-
+#define	SCSI_CHANGE_DEFINITION	0x40
 struct scsi_changedef {
 	u_int8_t opcode;
 	u_int8_t byte2;
@@ -164,102 +144,6 @@ struct scsi_changedef {
 };
 #define SC_SCSI_1 0x01
 #define SC_SCSI_2 0x03
-
-/*
- * Opcodes
- */
-#define	TEST_UNIT_READY		0x00
-#define REQUEST_SENSE		0x03
-#define INQUIRY			0x12
-#define MODE_SELECT		0x15
-#define MODE_SENSE		0x1a
-#define START_STOP		0x1b
-#define RESERVE      		0x16
-#define RELEASE      		0x17
-#define PREVENT_ALLOW		0x1e
-#define POSITION_TO_ELEMENT	0x2b
-#define	CHANGE_DEFINITION	0x40
-#define	MODE_SENSE_BIG		0x54
-#define	MODE_SELECT_BIG		0x55
-
-/*
- * sense data format
- */
-#define T_DIRECT	0
-#define T_SEQUENTIAL	1
-#define T_PRINTER	2
-#define T_PROCESSOR	3
-#define T_WORM		4
-#define T_CDROM		5
-#define T_SCANNER 	6
-#define T_OPTICAL 	7
-#define T_NODEVICE	0x1F
-
-#define T_CHANGER	8
-#define T_COMM		9
-
-#define T_REMOV		1
-#define	T_FIXED		0
-
-struct scsi_inquiry_data {
-	u_int8_t device;
-#define	SID_TYPE	0x1F
-#define	SID_QUAL	0xE0
-#define	SID_QUAL_LU_OK	0x00
-#define	SID_QUAL_LU_OFFLINE	0x20
-#define	SID_QUAL_RSVD	0x40
-#define	SID_QUAL_BAD_LU	0x60
-	u_int8_t dev_qual2;
-#define	SID_QUAL2	0x7F
-#define	SID_REMOVABLE	0x80
-	u_int8_t version;
-#define SID_ANSII	0x07
-#define SID_ECMA	0x38
-#define SID_ISO		0xC0
-	u_int8_t response_format;
-	u_int8_t additional_length;
-	u_int8_t unused[2];
-	u_int8_t flags;
-#define	SID_SftRe	0x01
-#define	SID_CmdQue	0x02
-#define	SID_Linked	0x08
-#define	SID_Sync	0x10
-#define	SID_WBus16	0x20
-#define	SID_WBus32	0x40
-#define	SID_RelAdr	0x80
-	char	vendor[8];
-	char	product[16];
-	char	revision[4];
-	u_int8_t extra[8];
-};
-
-struct scsi_sense_data_unextended {
-/* 1*/	u_int8_t error_code;
-/* 4*/	u_int8_t block[3];
-};
-
-struct scsi_sense_data {
-/* 1*/	u_int8_t error_code;
-#define	SSD_ERRCODE		0x7F
-#define	SSD_ERRCODE_VALID	0x80
-/* 2*/	u_int8_t segment;
-/* 3*/	u_int8_t flags;
-#define	SSD_KEY		0x0F
-#define	SSD_ILI		0x20
-#define	SSD_EOM		0x40
-#define	SSD_FILEMARK	0x80
-/* 7*/	u_int8_t info[4];
-/* 8*/	u_int8_t extra_len;
-/*12*/	u_int8_t cmd_spec_info[4];
-/*13*/	u_int8_t add_sense_code;
-/*14*/	u_int8_t add_sense_code_qual;
-/*15*/	u_int8_t fru;
-/*16*/	u_int8_t sense_key_spec_1;
-#define	SSD_SCS_VALID	0x80
-/*17*/	u_int8_t sense_key_spec_2;
-/*18*/	u_int8_t sense_key_spec_3;
-/*32*/	u_int8_t extra_bytes[14];
-};
 
 struct scsi_blk_desc {
 	u_int8_t density;

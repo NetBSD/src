@@ -1,4 +1,4 @@
-/*	$NetBSD: ssvar.h,v 1.2 1996/03/30 21:47:11 christos Exp $	*/
+/*	$NetBSD: ssvar.h,v 1.3 1997/08/27 11:27:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -64,7 +64,7 @@ struct ss_softc {
 	int flags;
 #define SSF_TRIGGERED	0x01	/* read operation has been primed */
 #define	SSF_LOADED	0x02	/* parameters loaded */
-	struct scsi_link *sc_link;	/* contains our targ, lun, etc. */
+	struct scsipi_link *sc_link;	/* contains our targ, lun, etc. */
 	struct scan_io sio;
 	struct buf buf_queue;		/* the queue of pending IO operations */
 	u_int quirks;			/* scanner is only mildly twisted */
@@ -79,5 +79,5 @@ struct ss_softc {
 /*
  * define the special attach routines if configured
  */
-void mustek_attach __P((struct ss_softc *, struct scsibus_attach_args *));
-void scanjet_attach __P((struct ss_softc *, struct scsibus_attach_args *));
+void mustek_attach __P((struct ss_softc *, struct scsipibus_attach_args *));
+void scanjet_attach __P((struct ss_softc *, struct scsipibus_attach_args *));
