@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.16 1994/04/15 04:48:23 cgd Exp $
+ *	$Id: vector.s,v 1.17 1994/04/18 22:23:32 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -222,7 +222,7 @@ _Xresume/**/irq_num/**/:						;\
 	movl	_intrhand + (irq_num) * 4,%ebx	/* head of chain */	;\
 	testl	%ebx,%ebx						;\
 	jz	_Xstray/**/irq_num	/* no handlears; we're stray */	;\
-	xorl	%esi,%esi		/* nobody claimed it yet */	;\
+	STRAY_INITIALIZE						;\
 7:	movl	IH_ARG(%ebx),%eax	/* get handler arg */		;\
 	testl	%eax,%eax						;\
 	jnz	4f							;\
@@ -230,13 +230,12 @@ _Xresume/**/irq_num/**/:						;\
 4:	pushl	%eax							;\
 	call	IH_FUN(%ebx)		/* call it */			;\
 	addl	$4,%esp			/* toss the arg */		;\
-	orl	%eax,%esi		/* maybe he claimed it */	;\
+	STRAY_INTEGRATE							;\
 	incl	IH_COUNT(%ebx)		/* count the intrs */		;\
 	movl	IH_NEXT(%ebx),%ebx	/* next handler in chain */	;\
 	testl	%ebx,%ebx						;\
 	jnz	7b							;\
-	testl	%esi,%esi		/* no more handlers */		;\
-	jz	_Xstray/**/irq_num	/* nobody claimed it */		;\
+	STRAY_TEST							;\
 5:	UNMASK(irq_num, icu)		/* unmask it in hardware */	;\
 	INTREXIT			/* lower spl and do ASTs */	;\
 IDTVEC(stray/**/irq_num)						;\
@@ -247,6 +246,20 @@ IDTVEC(stray/**/irq_num)						;\
 IDTVEC(hold/**/irq_num)							;\
 	orb	$IRQ_BIT(irq_num),_ipending + IRQ_BYTE(irq_num)		;\
 	INTRFASTEXIT
+
+#ifdef DEBUG
+#define	STRAY_INITIALIZE \
+	xorl	%esi,%esi		/* nobody claimed it yet */
+#define	STRAY_INTEGRATE \
+	orl	%eax,%esi		/* maybe he claimed it */
+#define	STRAY_TEST \
+	testl	%esi,%esi		/* no more handlers */		;\
+	jz	_Xstray/**/irq_num	/* nobody claimed it */	
+#else
+#define	STRAY_INITIALIZE
+#define	STRAY_INTEGRATE
+#define	STRAY_TEST
+#endif /* DEBUG */
 
 INTR(0, IO_ICU1, ENABLE_ICU1)
 INTR(1, IO_ICU1, ENABLE_ICU1)
