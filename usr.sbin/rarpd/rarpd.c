@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.26 1998/07/13 06:31:31 mrg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.25 1998/04/23 02:48:33 mrg Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.26 1998/07/13 06:31:31 mrg Exp $");
 #endif
 
 
@@ -109,7 +109,7 @@ void	rarperr __P((int, const char *,...));
 #if defined(__NetBSD__)
 #include "mkarp.h"
 #else
-void  update_arptab __P((u_char *, u_long));
+void	update_arptab __P((u_char *, u_long));
 #endif
 
 void	usage __P((void));
@@ -133,7 +133,7 @@ main(argc, argv)
 {
 	extern char *__progname;
 
-	int     op, pid, devnull, f;
+	int     op, pid, devnull;
 	char   *ifname, *hostname;
 
 	/* All error reporting is done through syslogs. */
@@ -193,24 +193,15 @@ main(argc, argv)
 		}
 
 		/* Fade into the background */
-		f = open("/dev/tty", O_RDWR);
-		if (f >= 0) {
-			if (ioctl(f, TIOCNOTTY, 0) < 0) {
-				rarperr(FATAL,
-				    "TIOCNOTTY: %s", strerror(errno));
-				/* NOTREACHED */
-			}
-			(void) close(f);
-		}
-		(void) chdir("/");
-		(void) setpgrp(0, getpid());
+		(void)setsid();
+		(void)chdir("/");
 		devnull = open("/dev/null", O_RDWR);
 		if (devnull >= 0) {
-			(void) dup2(devnull, 0);
-			(void) dup2(devnull, 1);
-			(void) dup2(devnull, 2);
+			(void)dup2(devnull, 0);
+			(void)dup2(devnull, 1);
+			(void)dup2(devnull, 2);
 			if (devnull > 2)
-				(void) close(devnull);
+				(void)close(devnull);
 		}
 	}
 	rarp_loop();
@@ -254,7 +245,7 @@ init_one(ifname)
 void
 init_all()
 {
-	char inbuf[8192];
+	char inbuf[8192*2];
 	struct ifconf ifc;
 	struct ifreq ifreq, *ifr;
 	int fd;
@@ -290,14 +281,14 @@ init_all()
 			continue;
 		init_one(ifr->ifr_name);
 	}
-	(void) close(fd);
+	(void)close(fd);
 }
 
 void
 usage()
 {
-	(void) fprintf(stderr, "usage: rarpd -a [ -d -f ]\n");
-	(void) fprintf(stderr, "       rarpd [ -d -f ] interface\n");
+	(void)fprintf(stderr, "usage: rarpd -a [ -d -f ]\n");
+	(void)fprintf(stderr, "       rarpd [ -d -f ] interface\n");
 	exit(1);
 }
 
@@ -310,7 +301,7 @@ bpf_open()
 
 	/* Go through all the minors and find one that isn't in use. */
 	do {
-		(void) sprintf(device, "/dev/bpf%d", n++);
+		(void)sprintf(device, "/dev/bpf%d", n++);
 		fd = open(device, O_RDWR);
 	} while (fd < 0 && errno == EBUSY);
 
@@ -357,7 +348,8 @@ rarp_open(device)
 		rarperr(FATAL, "BIOCIMMEDIATE: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	(void) strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name);
+	(void)strncpy(ifr.ifr_name, device, sizeof ifr.ifr_name - 1);
+	ifr.ifr_name[sizeof ifr.ifr_name - 1] = '\0';
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
 		if (aflag) {	/* for -a skip non-ethernet interfaces */
 			close(fd);
@@ -515,7 +507,7 @@ rarp_loop()
 			if (cc < 0) {
 				if (errno == EINVAL &&
 				    (lseek(fd, 0, SEEK_CUR) + bufsize) < 0) {
-					(void) lseek(fd, 0, 0);
+					(void)lseek(fd, 0, 0);
 					goto again;
 				}
 				rarperr(FATAL, "read: %s", strerror(errno));
@@ -558,7 +550,7 @@ rarp_bootable(addr)
 	char    ipname[9];
 	static DIR *dd = 0;
 
-	(void) sprintf(ipname, "%08X", addr);
+	(void)sprintf(ipname, "%08X", addr);
 	/* If directory is already open, rewind it.  Otherwise, open it. */
 	if (d = dd)
 		rewinddir(d);
@@ -592,6 +584,7 @@ choose_ipaddr(alist, net, netmask)
 	u_int32_t net;
 	u_int32_t netmask;
 {
+
 	for (; *alist; ++alist) {
 		if ((**alist & netmask) == net)
 			return **alist;
@@ -660,7 +653,7 @@ lookup_eaddr(ifname, eaddr)
 	char *ifname;
 	u_char *eaddr;
 {
-	char inbuf[8192];
+	char inbuf[8192*2];
 	struct ifconf ifc;
 	struct ifreq *ifr;
 	struct sockaddr_dl *sdl;
@@ -720,7 +713,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 		rarperr(FATAL, "socket: %s", strerror(errno));
 		/* NOTREACHED */
 	}
-	(void) strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
+	(void)strncpy(ifr.ifr_name, ifname, sizeof ifr.ifr_name);
 	if (ioctl(fd, SIOCGIFADDR, (char *) &ifr) < 0) {
 		rarperr(FATAL, "SIOCGIFADDR: %s", strerror(errno));
 		/* NOTREACHED */
@@ -737,7 +730,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
 	if (*netmaskp == 0)
 		*netmaskp = ipaddrtonetmask(*addrp);
 
-	(void) close(fd);
+	(void)close(fd);
 }
 /*
  * Poke the kernel arp tables with the ethernet/ip address combinataion
@@ -770,7 +763,7 @@ update_arptab(ep, ipaddr)
 	if (ioctl(s, SIOCSARP, (caddr_t) & request) < 0) {
 		rarperr(NONFATAL, "SIOCSARP: %s", strerror(errno));
 	}
-	(void) close(s);
+	(void)close(s);
 #endif
 }
 #endif
@@ -884,6 +877,7 @@ u_long
 ipaddrtonetmask(addr)
 	u_long  addr;
 {
+
 	if (IN_CLASSA(addr))
 		return IN_CLASSA_NET;
 	if (IN_CLASSB(addr))
@@ -912,6 +906,7 @@ va_dcl
 #endif
 {
 	va_list ap;
+
 #if __STDC__
 	va_start(ap, fmt);
 #else
@@ -919,11 +914,11 @@ va_dcl
 #endif
 	if (dflag) {
 		if (fatal)
-			(void) fprintf(stderr, "rarpd: error: ");
+			(void)fprintf(stderr, "rarpd: error: ");
 		else
-			(void) fprintf(stderr, "rarpd: warning: ");
-		(void) vfprintf(stderr, fmt, ap);
-		(void) fprintf(stderr, "\n");
+			(void)fprintf(stderr, "rarpd: warning: ");
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_ERR, fmt, ap);
 	va_end(ap);
@@ -951,9 +946,9 @@ va_dcl
 	va_start(ap);
 #endif
 	if (dflag) {
-		(void) fprintf(stderr, "rarpd: ");
-		(void) vfprintf(stderr, fmt, ap);
-		(void) fprintf(stderr, "\n");
+		(void)fprintf(stderr, "rarpd: ");
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_WARNING, fmt, ap);
 	va_end(ap);
