@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.53 1999/07/03 09:02:23 cgd Exp $	*/
+/*	$NetBSD: net.c,v 1.54 1999/09/05 16:33:03 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,6 +171,8 @@ static const char *ignored_if_names[] = {
 	"eon",			/* netiso */
 	"gre",			/* net */
 	"ipip",			/* netinet */
+	"gif",			/* netinet6 */
+	"faith",		/* netinet6 */
 	"lo",			/* net */
 #if 0
 	"mdecap",		/* netinet -- never in IF list (?) XXX */
