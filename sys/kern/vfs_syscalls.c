@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.86 1997/04/30 19:29:43 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.87 1997/05/08 10:19:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1560,9 +1560,9 @@ change_owner(vp, uid, gid, p)
 	if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)))
 		goto out;
 
-	/* Clear (VSUID | VSGID) bits: alter va_mode only if necessary. */
-	if (vattr.va_mode & (VSUID | VSGID))
-		newmode = vattr.va_mode & ~(VSUID | VSGID);
+	/* Clear (S_ISUID | S_ISGID) bits: alter va_mode only if necessary. */
+	if (vattr.va_mode & (S_ISUID | S_ISGID))
+		newmode = vattr.va_mode & ~(S_ISUID | S_ISGID);
 
 	VATTR_NULL(&vattr);
 	vattr.va_uid = uid;

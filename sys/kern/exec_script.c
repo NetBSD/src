@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.16 1996/10/13 02:32:29 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.17 1997/05/08 10:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -145,7 +145,7 @@ check_shell:
 	 * MNT_NOSUID and STRC are already taken care of by check_exec,
 	 * so we don't need to worry about them now or later.
 	 */
-	script_sbits = epp->ep_vap->va_mode & (VSUID | VSGID);
+	script_sbits = epp->ep_vap->va_mode & (S_ISUID | S_ISGID);
 	if (script_sbits != 0) {
 		script_uid = epp->ep_vap->va_uid;
 		script_gid = epp->ep_vap->va_gid;
@@ -256,9 +256,9 @@ check_shell:
 		 * handled appropriately
 		 */
 		epp->ep_vap->va_mode |= script_sbits;
-		if (script_sbits & VSUID)
+		if (script_sbits & S_ISUID)
 			epp->ep_vap->va_uid = script_uid;
-		if (script_sbits & VSGID)
+		if (script_sbits & S_ISGID)
 			epp->ep_vap->va_gid = script_gid;
 #endif
 		return (0);
