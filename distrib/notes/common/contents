@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.25 2000/10/29 07:58:59 shin Exp $
+.\"	$NetBSD: contents,v 1.26 2000/10/29 12:20:44 lukem Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,8 +99,8 @@ see below.
 .No \&an image file Pa cdhdtape
 is included for the case where the installer is written to
 a CD, hard drive, or tape.
-This image file is the same for the CD, HD, and tape cases,
-.No but a separate Pa tapeimage/
+This image file is the same for the CD, HD, and tape cases, but a separate
+.Pa tapeimage/
 directory exists to hold a copy of the
 .Pa README No file and to meet the
 .Nx
@@ -110,9 +110,11 @@ standard.
 .No contains a Pa netbsd.gz
 installation kernel; this is the same installer kernel as in all the
 other install
-images, but without the various boot program and filesystem wrappers.
+images, but without the various boot program and file system wrappers.
 It can be netbooted or diskbooted from a previous installation.
-no need to gunzip this image.
+no need to
+.Ic gunzip
+this image.
 .\}
 .
 .if \n[amiga]:\n[hp300]:\n[mvme68k]:\n[sparc]:\n[sparc64]:\n[sun3] \{\
@@ -126,11 +128,15 @@ no need to gunzip this image.
 contains
 .Pa GENERIC.fs ,
 .No a Li GENERIC
-kernel in a bootable filesystem image. This is used in some unusual
+kernel in a bootable file system image. This is used in some unusual
 installations as described in the next section.
 .\}
 .ie r_sparc \{\
-Statically-linked versions of gzip (GNU gzip) and gtar (GNU tar).
+Statically-linked versions of
+.Ic gzip
+(GNU gzip) and
+.Ic gtar
+(GNU tar).
 .\}
 .el \{\
 Miscellaneous \*M installation utilities; see
@@ -199,7 +205,7 @@ a kernel or always boot from floppy.
 .
 .if r_amiga \{\
 .Ss2 Miniroot file system
-The Amiga now uses a single miniroot filesystem for both an initial
+The Amiga now uses a single miniroot file system for both an initial
 installation and for an upgrade. A gzipped version is available, for easier
 downloading. (The gzipped version has the
 .Sy \&.gz
@@ -207,18 +213,24 @@ extension added to
 their names.)
 .(tag miniroot.fs
 .It Pa miniroot.fs
-This file contains a BSD root file system setup to help you
+This file contains a
+.Bx
+root file system setup to help you
 install the rest of
 .Nx
 or to upgrade a previous version of
 .Nx .
-This includes formatting and mounting your root and
-/usr partitions and getting ready to extract (and possibly first
+This includes formatting and mounting your
+.Pa /
+(root) and
+.Pa /usr
+partitions and getting ready to extract (and possibly first
 fetching) the distribution sets. There is enough on this file
 system to allow you to make a SLIP or PPP connection, configure
 an Ethernet, mount an NFS file system or ftp. You can also load
 distribution sets from a SCSI tape or from one of your existing
-AmigaDOS partitions.
+.Tn AmigaDOS
+partitions.
 .tag)
 .\}
 .
@@ -244,20 +256,22 @@ The
 install distribution contains files that can be
 used to install
 .Nx
-onto completely "bare" MVME147 and MVME167
+onto completely
+.Sq bare
+MVME147 and MVME167
 boards. The files
 in the
 .Pa mvme68k/installation
 directories are described below.
 .(tag netbsd-rd.gz
 .It Pa miniroot.gz
-A gzipped copy of the miniroot filesystem.
+A gzipped copy of the miniroot file system.
 This image is to be un-gzipped and copied
 into the swap area of a disk.
 .It Pa netbsd-rd.gz
 A gzipped copy of the
 .Li RAMDISK
-kernel for installing the miniroot filesystem.
+kernel for installing the miniroot file system.
 .It Pa stboot
 A tape boot-block, in the form required to
 allow 1x7-Bug to boot from tape. This is the
@@ -268,7 +282,9 @@ as the second segment of a boot tape.
 .It Pa sboot
 A copy of the MVME147 serial boot program. This is
 necessary if you don't have a tape drive,
-but you _do_ have another system which can
+but you
+.Em do
+have another system which can
 act as a boot and NFS server. This is also
 useful if you are installing a diskless
 .Nx
@@ -283,10 +299,9 @@ directly using 167Bug's builtin TFTP client.
 These files can be used to make a boot tape suitable for installing
 .Nx*M .
 These files can also be used to configure an NFS server
-to support installation "over the network". See the section
-.Sx Getting the
-.Nx
-System onto Useful Media
+to support installation
+.Sq "over the network" . See the section
+.Sx Getting the NetBSD System onto Useful Media
 for instructions on either method.
 .\}
 .
@@ -319,26 +334,27 @@ system to run and be minimally functional. It
 includes shared library support, and excludes
 everything described below.
 .br
-.if r_alpha .Em 22.3 MB gzipped, ? MB uncompressed
-.if r_amiga .Em 15.3 MB gzipped, 42.0 MB uncompressed
-.if r_arc .Em 19.1 MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 18.8 MB gzipped, ? MB uncompressed
-.if r_atari .Em 15.0 MB gzipped, ? MB uncompressed
-.if r_hp300 .Em 15.3 MB gzipped, ? MB uncompressed
-.if r_hpcmips .Em 19.4 MB gzipped, 62.6 MB uncompressed
-.if r_i386 .Em 16.1 MB gzipped, ? MB uncompressed
-.if r_mac68k .Em 15.2 MB gzipped, ? MB uncompressed
-.if r_macppc .Em 16.7 MB gzipped, ? MB uncompressed
-.if r_mvme68k .Em 15.2 MB gzipped, ? MB uncompressed
-.if r_news68k .Em 15.1 MB gzipped, 39.9 MB uncompressed
-.if r_next68k .Em 14.8 MB gzipped, ? MB uncompressed
-.if r_pc532 .Em 15.5 MB gzipped, ? MB uncompressed
-.if r_pmax .Em 19.1 MB gzipped, ? MB uncompressed
-.if r_sparc .Em 17.1 MB gzipped, ? MB uncompressed
-.if r_sparc64 .Em 16.7 MB gzipped, ? MB uncompressed
-.if r_sun3 .Em 14.1 MB gzipped, ? MB uncompressed
-.if r_vax .Em 15.1 MB gzipped, ? MB uncompressed
-.if r_x68k .Em 12.2 MB gzipped, ? MB uncompressed
+.if r_alpha .Em 22.7 MB gzipped, 59.8 MB uncompressed
+.if r_amiga .Em 15.6 MB gzipped, 41.4 MB uncompressed
+.if r_arc .Em 19.5 MB gzipped, 61.4 MB uncompressed
+.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm32 .Em 19.2 MB gzipped, 47.4 MB uncompressed
+.if r_atari .Em 15.3 MB gzipped, 40.7 MB uncompressed
+.if r_hp300 .Em 15.7 MB gzipped, 41.5 MB uncompressed
+.if r_hpcmips .Em 19.5 MB gzipped, 61.4 MB uncompressed
+.if r_i386 .Em 16.4 MB gzipped, 37.9 MB uncompressed
+.if r_mac68k .Em 15.7 MB gzipped, 41.6 MB uncompressed
+.if r_macppc .Em 17.1 MB gzipped, 46.2 MB uncompressed
+.if r_mvme68k .Em 15.5 MB gzipped, 41.2 MB uncompressed
+.if r_news68k .Em 15.6 MB gzipped, 41.3 MB uncompressed
+.if r_next68k .Em 15.1 MB gzipped, 46.0 MB uncompressed
+.if r_pc532 .Em 15.9 MB gzipped, 37.9 MB uncompressed
+.if r_pmax .Em 19.6 MB gzipped, 61.5 MB uncompressed
+.if r_sparc .Em 17.5 MB gzipped, 43.7 MB uncompressed
+.if r_sparc64 .Em 17.1 MB gzipped, 47.0 MB uncompressed
+.if r_sun3 .Em 14.5 MB gzipped, 38.1 MB uncompressed
+.if r_vax .Em 15.5 MB gzipped, 36.0 MB uncompressed
+.if r_x68k .Em 12.5 MB gzipped, 34.0 MB uncompressed
 .
 .It Sy comp
 Things needed for compiling programs. This set
@@ -351,26 +367,27 @@ set). This set also includes the manual pages for
 all of the utilities it contains, as well as the
 system call and library manual pages.
 .br
-.if r_alpha .Em 17.7 MB gzipped, ? MB uncompressed
-.if r_amiga .Em 11.5 MB gzipped, 41.0 MB uncompressed
-.if r_arc .Em 13.6 MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 13.5 MB gzipped, ? MB uncompressed
-.if r_atari .Em 11.3 MB gzipped, ? MB uncompressed
-.if r_hp300 .Em 11.5 MB gzipped, ? MB uncompressed
-.if r_hpcmips .Em 13.7 MB gzipped, 58.6 MB uncompressed
-.if r_i386 .Em 12.2 MB gzipped, ? MB uncompressed
-.if r_mac68k .Em 11.5 MB gzipped, ? MB uncompressed
-.if r_macppc .Em 14.1 MB gzipped, ? MB uncompressed
-.if r_mvme68k .Em 11.5 MB gzipped, ? MB uncompressed
-.if r_news68k .Em 11.4 MB gzipped, 39.1 MB uncompressed
-.if r_next68k .Em 14.0 MB gzipped, ? MB uncompressed
-.if r_pc532 .Em 11.4 MB gzipped, ? MB uncompressed
-.if r_pmax .Em 13.5 MB gzipped, ? MB uncompressed
-.if r_sparc .Em 13.8 MB gzipped, ? MB uncompressed
-.if r_sparc64 .Em 7.6 MB gzipped, ? MB uncompressed
-.if r_sun3 .Em 9.3 MB gzipped, ? MB uncompressed
-.if r_vax .Em 11.7 MB gzipped, ? MB uncompressed
-.if r_x68k .Em 9.2 MB gzipped, ? MB uncompressed
+.if r_alpha .Em 18.1 MB gzipped, 81.2 MB uncompressed
+.if r_amiga .Em 11.8 MB gzipped, 39.5 MB uncompressed
+.if r_arc .Em 13.9 MB gzipped, 59.3 MB uncompressed
+.if r_arm26 .Em ? MB gzipped, ? MB uncompressed
+.if r_arm32 .Em 13.8 MB gzipped, 45.4 MB uncompressed
+.if r_atari .Em 11.6 MB gzipped, 38.9 MB uncompressed
+.if r_hp300 .Em 11.8 MB gzipped, 39.5 MB uncompressed
+.if r_hpcmips .Em 13.8 MB gzipped, 59.4 MB uncompressed
+.if r_i386 .Em 12.4 MB gzipped, 44.8 MB uncompressed
+.if r_mac68k .Em 11.8 MB gzipped, 39.7 MB uncompressed
+.if r_macppc .Em 14.4 MB gzipped, 55.4 MB uncompressed
+.if r_mvme68k .Em 11.8 MB gzipped, 39.5 MB uncompressed
+.if r_news68k .Em 11.8 MB gzipped, 39.5 MB uncompressed
+.if r_next68k .Em 14.3 MB gzipped, 55.1 MB uncompressed
+.if r_pc532 .Em 11.6 MB gzipped, 37.7 MB uncompressed
+.if r_pmax .Em 13.8 MB gzipped, 59.2 MB uncompressed
+.if r_sparc .Em 14.1 MB gzipped, 51.9 MB uncompressed
+.if r_sparc64 .Em 7.8 MB gzipped, 36.2 MB uncompressed
+.if r_sun3 .Em 9.5 MB gzipped, 32.5 MB uncompressed
+.if r_vax .Em 11.9 MB gzipped, 37.9 MB uncompressed
+.if r_x68k .Em 9.4 MB gzipped, 31.8 MB uncompressed
 .
 .It Sy etc
 This distribution set contains the system
@@ -386,53 +403,50 @@ it's recommended that you get a copy of this set and
 upgrade your configuration files by hand.)
 .br
 .\" Not MI, but close enough to the same size on all ports...
-.Em 0.1 MB gzipped, 0.9 MB uncompressed
+.Em 0.1 MB gzipped, 0.6 MB uncompressed
 .
 .It Sy games
 This set includes the games and their manual pages.
 .br
-.\" Shareable across MACHINE_ARCH
-.if r_alpha .Em 3.1 MB gzipped, ? MB uncompressed
+.\" Shareable within MACHINE_ARCH
+.if r_alpha .Em 3.1 MB gzipped, 7.6 MB uncompressed
 .if r_arm26 .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 3.0 MB gzipped, ? MB uncompressed
-.if r_i386 .Em 2.9 MB gzipped, ? MB uncompressed
-.if r_m68k .Em 2.8 MB gzipped, 7.1 MB uncompressed
-.if r_mips .Em 3.0 MB gzipped, 7.9 MB uncompressed
-.if r_pc532 .Em 2.9 MB gzipped, ? MB uncompressed
-.if r_powerpc .Em 2.9 MB gzipped, ? MB uncompressed
+.if r_arm32 .Em 3.0 MB gzipped, 7.5 MB uncompressed
+.if r_i386 .Em 2.9 MB gzipped, 7.0 MB uncompressed
+.if r_m68k .Em 3.0 MB gzipped, 7.4 MB uncompressed
+.if r_mips .Em 3.1 MB gzipped, 8.0 MB uncompressed
+.if r_pc532 .Em 2.9 MB gzipped, 7.2 MB uncompressed
+.if r_powerpc .Em 3.0 MB gzipped, 7.2 MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 2.9 MB gzipped, ? MB uncompressed
-.if r_sparc64 .Em 3.0 MB gzipped, ? MB uncompressed
-.if r_vax .Em 2.9 MB gzipped, ? MB uncompressed
+.if r_sparc .Em 3.0 MB gzipped, 7.2 MB uncompressed
+.if r_sparc64 .Em 3.0 MB gzipped, 7.6 MB uncompressed
+.if r_vax .Em 2.9 MB gzipped, 7.1 MB uncompressed
 .
 .It Sy kern
 This set contains a
 .Nx*M
 \*V
-.Li GENERIC No kernel, named Pa /netbsd .
+.Li GENERIC
+kernel, named
+.Pa /netbsd .
 .No You Em must
 install this distribution set.
 .br
-.if r_alpha .Em 2.0 MB gzipped, ? MB uncompressed
+.if r_alpha .Em 2.1 MB gzipped, 5.0 MB uncompressed
 .if r_amiga .Em 1.1 MB gzipped, 2.4 MB uncompressed
-.if r_arc .Em 1.5 MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 1.0 MB gzipped, ? MB uncompressed
-.if r_atari .Em ? MB gzipped, ? MB uncompressed
-.if r_hp300 .Em 0.7 MB gzipped, ? MB uncompressed
+.if r_arc .Em 1.5 MB gzipped, 3.7 MB uncompressed
+.if r_arm32 .Em 1.1 MB gzipped, 2.3 MB uncompressed
+.if r_hp300 .Em 0.7 MB gzipped, 1.6 MB uncompressed
 .if r_hpcmips .Em 1.0 MB gzipped, 2.6 MB uncompressed
-.if r_i386 .Em 2.2 MB gzipped, ? MB uncompressed
-.if r_mac68k .Em ? MB gzipped, ? MB uncompressed
-.if r_macppc .Em 1.3 MB gzipped, ? MB uncompressed
-.if r_mvme68k .Em 0.7 MB gzipped, ? MB uncompressed
-.if r_news68k .Em 0.9 MB gzipped, 1.8 MB uncompressed
-.if r_next68k .Em ? MB gzipped, ? MB uncompressed
-.if r_pc532 .Em 0.6 MB gzipped, ? MB uncompressed
-.if r_pmax .Em 1.1 MB gzipped, ? MB uncompressed
-.if r_sparc .Em 1.2 MB gzipped, ? MB uncompressed
-.if r_sparc64 .Em ? MB gzipped, ? MB uncompressed
-.if r_sun3 .Em ? MB gzipped, ? MB uncompressed
-.if r_vax .Em 0.7 MB gzipped, ? MB uncompressed
-.if r_x68k .Em 0.9 MB gzipped, ? MB uncompressed
+.if r_i386 .Em 2.2 MB gzipped, 4.7 MB uncompressed
+.if r_macppc .Em 1.3 MB gzipped, 3.1 MB uncompressed
+.if r_mvme68k .Em 0.7 MB gzipped, 1.4 MB uncompressed
+.if r_news68k .Em 0.9 MB gzipped, 1.9 MB uncompressed
+.if r_pc532 .Em 0.6 MB gzipped, 1.2 MB uncompressed
+.if r_pmax .Em 1.1 MB gzipped, 2.8 MB uncompressed
+.if r_sparc .Em 1.2 MB gzipped, 2.8 MB uncompressed
+.if r_vax .Em 0.7 MB gzipped, 1.4 MB uncompressed
+.if r_x68k .Em 0.9 MB gzipped, 2.1 MB uncompressed
 .
 .It Sy man
 This set includes all of the manual pages for the
@@ -443,7 +457,7 @@ Note that it does not include any of the manual pages
 that are included in the other sets.
 .br
 .\" MI
-.Em 5.3 MB gzipped, 21.4 MB uncompressed
+.Em 5.0 MB gzipped, 19.9 MB uncompressed
 .
 .It Sy misc
 This set includes the (rather large) system dictionaries,
@@ -451,7 +465,7 @@ the typesettable document set, and other files from
 .Pa /usr/share .
 .br
 .\" MI
-.Em 2.1 MB gzipped, 7.5 MB uncompressed
+.Em 2.6 MB gzipped, 10.1 MB uncompressed
 .
 .It Sy text
 This set includes
@@ -460,24 +474,24 @@ text processing tools, including
 .Xr groff 1 ,
 all related programs, and their manual pages.
 .br
-.\" Shareable across MACHINE_ARCH
-.if r_alpha .Em 1.4 MB gzipped, ? MB uncompressed
+.\" Shareable within MACHINE_ARCH
+.if r_alpha .Em 1.4 MB gzipped, 5.1 MB uncompressed
 .if r_arm26 .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 1.4 MB gzipped, ? MB uncompressed
-.if r_i386 .Em 1.2 MB gzipped, ? MB uncompressed
-.if r_m68k .Em 1.3 MB gzipped, 4.5 MB uncompressed
-.if r_mips .Em 1.4 MB gzipped, 5.7 MB uncompressed
-.if r_pc532 .Em 1.3 MB gzipped, ? MB uncompressed
-.if r_powerpc .Em 1.2 MB gzipped, ? MB uncompressed
+.if r_arm32 .Em 1.4 MB gzipped, 4.8 MB uncompressed
+.if r_i386 .Em 1.2 MB gzipped, 4.2 MB uncompressed
+.if r_m68k .Em 1.3 MB gzipped, 4.7 MB uncompressed
+.if r_mips .Em 1.3 MB gzipped, 5.3 MB uncompressed
+.if r_pc532 .Em 1.3 MB gzipped, 4.6 MB uncompressed
+.if r_powerpc .Em 1.2 MB gzipped, 4.6 MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 1.3 MB gzipped, ? MB uncompressed
-.if r_sparc64 .Em 1.3 MB gzipped, ? MB uncompressed
-.if r_vax .Em 1.3 MB gzipped, ? MB uncompressed
+.if r_sparc .Em 1.3 MB gzipped, 4.4 MB uncompressed
+.if r_sparc64 .Em 1.3 MB gzipped, 4.6 MB uncompressed
+.if r_vax .Em 1.3 MB gzipped, 4.7 MB uncompressed
 .
 .tag)
 .
 .
-.\"============================ X SETS
+.\" ---------------------------- X SETS
 .Pp
 .Nx
 maintains its own set of sources for the X Window System in order to
@@ -493,78 +507,78 @@ The basic files needed for a complete X
 client environment. This does not include
 the X servers.
 .br
-.\" Shareable across MACHINE_ARCH, except atari
-.if r_alpha .Em 3.6 MB gzipped, ? MB uncompressed
+.\" Shareable within MACHINE_ARCH, except atari
+.if r_alpha .Em 3.6 MB gzipped, 13.7 MB uncompressed
 .if r_arm26 .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 3.2 MB gzipped, ? MB uncompressed
-.if r_i386 .Em 2.7 MB gzipped, ? MB uncompressed
-.if r_atari .Em 2.5 MB gzipped, ? MB uncompressed
-.ie r_m68k .Em 2.5 MB gzipped, 7.9 MB uncompressed
-.if r_mips .Em 3.2 MB gzipped, 11.4 MB uncompressed
+.if r_arm32 .Em 3.2 MB gzipped, 9.5 MB uncompressed
+.if r_i386 .Em 2.7 MB gzipped, 7.9 MB uncompressed
+.if r_atari .Em 2.6 MB gzipped, 8.4 MB uncompressed
+.ie r_m68k .Em 2.6 MB gzipped, 8.2 MB uncompressed
+.if r_mips .Em 3.2 MB gzipped, 11.6 MB uncompressed
 .if r_pc532 .Em ? MB gzipped, ? MB uncompressed
-.if r_powerpc .Em 2.9 MB gzipped, ? MB uncompressed
+.if r_powerpc .Em 2.9 MB gzipped, 8.9 MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 2.7 MB gzipped, ? MB uncompressed
+.if r_sparc .Em 2.8 MB gzipped, 8.2 MB uncompressed
 .if r_sparc64 .Em ? MB gzipped, ? MB uncompressed
-.if r_vax .Em 2.5 MB gzipped, ? MB uncompressed
+.if r_vax .Em 2.5 MB gzipped, 7.3 MB uncompressed
 .
 .It Sy xcomp
 The extra libraries and include files needed to compile X source code.
 .br
-.\" Shareable across MACHINE_ARCH
-.if r_alpha .Em 2.5 MB gzipped, ? MB uncompressed
+.\" Shareable within MACHINE_ARCH
+.if r_alpha .Em 2.6 MB gzipped, 13.9 MB uncompressed
 .if r_arm26 .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 2.0 MB gzipped, ? MB uncompressed
-.if r_i386 .Em 1.8 MB gzipped, ? MB uncompressed
-.if r_m68k .Em 1.6 MB gzipped, 6.8 MB uncompressed
-.if r_mips .Em 2.2 MB gzipped, 9.8 MB uncompressed
+.if r_arm32 .Em 2.1 MB gzipped, 8.2 MB uncompressed
+.if r_i386 .Em 1.8 MB gzipped, 7.9 MB uncompressed
+.if r_m68k .Em 1.7 MB gzipped, 7.2 MB uncompressed
+.if r_mips .Em 2.2 MB gzipped, 10.3 MB uncompressed
 .if r_pc532 .Em ? MB gzipped, ? MB uncompressed
-.if r_powerpc .Em 2.0 MB gzipped, ? MB uncompressed
+.if r_powerppc .Em 2.0 MB gzipped, 8.7 MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 1.8 MB gzipped, ? MB uncompressed
+.if r_sparc .Em 1.8 MB gzipped, 8.3 MB uncompressed
 .if r_sparc64 .Em ? MB gzipped, ? MB uncompressed
-.if r_vax .Em 1.7 MB gzipped, ? MB uncompressed
+.if r_vax .Em 1.6 MB gzipped, 7.0 MB uncompressed
 .
 .It Sy xcontrib
 Programs that were contributed to X.
 .br
-.\" Shareable across MACHINE_ARCH
-.if r_alpha .Em 0.3 MB gzipped, ? MB uncompressed
+.\" Shareable within MACHINE_ARCH
+.if r_alpha .Em 0.2 MB gzipped, 0.8 MB uncompressed
 .if r_arm26 .Em ? MB gzipped, ? MB uncompressed
-.if r_arm32 .Em 0.2 MB gzipped, ? MB uncompressed
-.if r_i386 .Em 0.2 MB gzipped, ? MB uncompressed
+.if r_arm32 .Em 0.2 MB gzipped, 0.7 MB uncompressed
+.if r_i386 .Em 0.2 MB gzipped, 0.5 MB uncompressed
 .if r_m68k .Em 0.2 MB gzipped, 0.7 MB uncompressed
 .if r_mips .Em 0.2 MB gzipped, 0.8 MB uncompressed
 .if r_pc532 .Em ? MB gzipped, ? MB uncompressed
-.if r_powerpc .Em 0.2 MB gzipped, ? MB uncompressed
+.if r_powerpc .Em 0.2 MB gzipped, 0.6 MB uncompressed
 .if r_sh3 .Em ? MB gzipped, ? MB uncompressed
-.if r_sparc .Em 0.2 MB gzipped, ? MB uncompressed
+.if r_sparc .Em 0.2 MB gzipped, 0.6 MB uncompressed
 .if r_sparc64 .Em ? MB gzipped, ? MB uncompressed
-.if r_vax .Em 0.2 MB gzipped, ? MB uncompressed
+.if r_vax .Em 0.2 MB gzipped, 0.6 MB uncompressed
 .
 .It Sy xfont
 Fonts needed by X.
 .br
 .\" MI
-.Em 5.6 MB gzipped, 7.0 MB uncompressed
+.Em 6.2 MB gzipped, 7.5 MB uncompressed
 .
 .
 .if r_alpha \{\
 .It Sy xserver
 .br
-.Em 2.3 MB gzipped, ? MB uncompressed
+.Em 2.3 MB gzipped, 9.2 MB uncompressed
 .\}
 .
 .if r_amiga \{\
 .It Sy xserver
 .br
-.Em 1.6 MB gzipped, 4.0 MB uncompressed
+.Em 1.6 MB gzipped, 3.9 MB uncompressed
 .\}
 .
 .if r_arm32 \{\
 .It Sy xserver
 .br
-.Em 6.6 MB gzipped, ? MB uncompressed
+.Em 6.8 MB gzipped, 17.4 MB uncompressed
 .\}
 .
 .if r_atari \{\
@@ -573,13 +587,12 @@ The Xservers and some programs not shared with the other m68k ports. Please
 consult the X specific section in the atari FAQ as to which server you should
 use.
 .br
-.Em 5.6 MB gzipped, ? MB uncompressed
+.Em 5.7 MB gzipped, 14.1 MB uncompressed
 .\}
 .
 .if r_hpcmips \{\
 .It Sy xserver
-.No The Xhpc
-server which supports 256 and 65536 colors with man pages
+The Xhpc server which supports 256 and 65536 colors, with man pages
 .Em  ( experimental ) .
 .br
 .Em 2.0 MB gzipped, 6.0 MB uncompressed
@@ -590,9 +603,10 @@ server which supports 256 and 65536 colors with man pages
 All XFree86 X servers. Because all of them are
 included, this set is large. However, you will
 only need one of the servers provided in this
-set. (Typically, XF86_SVGA.)
+set. (Typically,
+.Ic XF86_SVGA . )
 .br
-.Em 14.6 MB gzipped, ? MB uncompressed
+.Em 14.9 MB gzipped, 35.2 MB uncompressed
 .\}
 .
 .if r_mac68k \{\
@@ -600,7 +614,7 @@ set. (Typically, XF86_SVGA.)
 The Xmac68k Em monochrome
 server with man pages.
 .br
-.Em 1.4 MB gzipped, ? MB uncompressed
+.Em 1.4 MB gzipped, 3.4 MB uncompressed
 .\}
 .
 .if r_macppc \{\
@@ -608,14 +622,14 @@ server with man pages.
 The Xmacppc
 server which supports 256 colors with man pages.
 .br
-.Em 1.7 MB gzipped, ? MB uncompressed
+.Em 1.7 MB gzipped, 4.6 MB uncompressed
 .\}
 .
 .if r_pmax \{\
 .It Sy xserver
 .No The Xpmax
 server with man page.
-.Em 1.9 MB gzipped, ? MB uncompressed
+.Em 1.9 MB gzipped, 5.8 MB uncompressed
 .\}
 .
 .if r_sparc \{\
@@ -623,12 +637,12 @@ server with man page.
 .No The Xsun, Xsun24, XsunMono and Xprt
 servers with man pages.
 .br
-.Em 3.2 MB gzipped, ? MB uncompressed
+.Em 3.3 MB gzipped, 8.5 MB uncompressed
 .\}
 .
 .if r_sparc64 \{\
 .It Sy xserver
-.No The Xsun, Xsun24, XsunMono and Xprt
+The Xsun, Xsun24, XsunMono and Xprt
 servers with man pages.  The 64-bit X server current has problems with
 pixmaps.
 .br
@@ -640,13 +654,13 @@ pixmaps.
 .No The X68k and Xprt
 servers with man pages and the runtime configuration file.
 .br
-.Em 1.5 MB gzipped, ? MB uncompressed
+.Em 1.5 MB gzipped, 3.6 MB uncompressed
 .\}
 .
 .tag)
 .
 .
-.\"============================ MI DISCUSSION OF BINARY SETS
+.\" ---------------------------- MI DISCUSSION OF BINARY SETS
 .
 .
 .Pp
@@ -669,17 +683,19 @@ form a gzipped tar file.
 .Pp
 The instructions given for extracting the source sets work equally
 well for the binary sets, but it is worth noting that if you use that
-method, the files are /-relative and
-therefore are extracted
+method, the files are
+.Pa / Ns No -relative
+and therefore are extracted
 .Em below
 the current directory. That
 is, if you want to extract the binaries into your system, i.e.
 replace the system binaries with them, you have to run the
-.Ic tar xfp
-command from /.
+.Ic "tar -xpf"
+command from
+.Pa / .
 .
 .
-.\"============================ MD DISCUSSION
+.\" ---------------------------- MD DISCUSSION
 .
 .
 .if r_atari \{\
@@ -698,7 +714,9 @@ There are three atari floppy images to be found in the
 .Pa atari/installation/floppies
 subdirectory of the
 .Nx \*V
-distribution. One of them is a bootable TOS kernel floppy and the other
+distribution. One of them is a bootable
+.Tn TOS
+kernel floppy and the other
 two are installation floppies. They are described in more detail below.
 There are gzipped versions of each available, for easier downloading.
 (The gzipped versions have the
@@ -706,7 +724,9 @@ There are gzipped versions of each available, for easier downloading.
 extension added to their names.)
 .(tag indent
 .It Em Bootable\ Kernel\ floppy
-This TOS disk contains the loadbsd and chg_pid programs
+This
+.Tn TOS
+disk contains the loadbsd and chg_pid programs
 and a kernel. It is setup so that you can insert it
 int your floppy drive, and start the programs from GEM.
 .Pp
@@ -720,16 +740,24 @@ For the Hades, you need the
 floppy (1.44 MB), the kernel is
 .Li HADES .
 .It Em Installation\ floppy:
-This disk contains a BSD root file system setup to help
+This disk contains a
+.Bx
+root file system setup to help
 you install the rest of
 .Nx .
 This includes formatting
-and mounting your root and /usr partitions and getting
+and mounting your
+.Pa /
+(root) and
+.Pa /usr
+partitions and getting
 ready to extract (and possibly first fetching) the distribution
 sets. There is enough on this file system to allow you to
 make a slip connection, configure an ethernet, mount an NFS
 file system or ftp. You can also load distribution sets from
-a SCSI tape or from one of your existing GEMDOS partitions.
+a SCSI tape or from one of your existing
+.Tn GEMDOS
+partitions.
 .Pp
 The floppies meant for 720 KB disks are named
 .Pa miniroot.fs.1 No and Pa miniroot.fs.2 .
@@ -737,44 +765,61 @@ There is also an image for an 1.44 MB disk:
 .Pa miniroot.fs .
 .tag)
 .Pp
-There are also TOS utilities in the
+There are also
+.Tn TOS
+utilities in the
 .Pa atari/installation/misc
 subdirectory, which you will need to get
 .Nx*M
-'up-and-running'.
+up-and-running.
 .(bullet
 The
-.Dq gzip.ttp
-program allows you to uncompress .gz images. The
-usage is "gzip.ttp -d filename.gz".
+.Ic gzip.ttp
+program allows you to uncompress .gz images.
+The usage is:
+.Pp
+.Dl Ic "gzip.ttp -d filename.gz"
 .It
 The
-.Dq rawwrite.ttp
+.Ic rawwrite.ttp
 program allows you to create the installation
 floppy disks from the files in the
 .Pa atari/floppies
 directory.
 .It
-The "aptck.ttp" program reads the partition tables present on a
+The
+.Ic aptck.ttp
+program reads the partition tables present on a
 given disk and tries to interpret then the same way the
 .Nx
-kernel does. If you have a disk on which GEMDOS and
+kernel does. If you have a disk on which
+.Tn GEMDOS
+and
 .Nx
 are to co-exist, It is a good idea to run this before you begin the
 .Nx*M
 installation just to check that the kernel's view
-of the partition tables agree with GEMDOS's view. If you have
+of the partition tables agree with
+.Tn GEMDOS Ns 's
+view. If you have
 more than 3 partitions defined on a disk you will notice that
 the
 .Nx*M
-partition starts one sector after the GEMDOS
+partition starts one sector after the
+.Tn GEMDOS
 partition. This is to allow space for the auxilliary root for
 the 4th and subsequent partitions.
 .It
-The "loadbsd.ttp" program loads the
+The
+.Ic loadbsd.ttp
+program loads the
 .Nx*M
-kernel from TOS
-(or MiNT, MultiTOS, etc.).
+kernel from
+.Tn TOS
+(or
+.Tn MiNT ,
+.Tn MultiTOS ,
+etc.).
 .bullet)
 .\}
 .
@@ -788,7 +833,7 @@ The following are included in the
 .It Pa miniroot/
 .	(tag miniroot.fs.gz
 .	It Pa miniroot.fs.gz
-A copy of the miniroot filesystem.
+A copy of the miniroot file system.
 .	tag)
 .It Pa misc/
 .	(tag miniroot.fs.gz
@@ -838,7 +883,9 @@ distribution tree. These kernels are generally named something like
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
-The Windows CE-based utilities necessary for installing and running
+The
+.Tn "Windows CE" Ns No -based utilities
+necessary for installing and running
 .Nx
 can
 be found in the
@@ -860,7 +907,9 @@ The
 .Nx*M
 boot loader utility. This program is used to boot the
 .Nx
-kernel from within Windows CE (version 2.0 and later).
+kernel from within
+.Tn "Windows CE"
+(version 2.0 and later).
 .br
 .Em 122k
 .It Pa pbsdboot1.exe
@@ -868,12 +917,16 @@ The
 .Nx*M
 boot loader utility. This program is used to boot the
 .Nx
-kernel from within Windows CE (version 1.0).
+kernel from within
+.Tn "Windows CE"
+(version 1.0).
 .br
 .Em 134k
 .tag)
 .Pp
-These files are Windows CE binaries. If you need them,
+These files are
+.Tn "Windows CE
+binaries. If you need them,
 the sources for these utilities are in the
 .Pa src/arch/hpcmips/stand/ directory.
 .\}
@@ -891,7 +944,9 @@ distribution tree. These kernels are generally named something like
 or some other suitable name. Please note that these kernels are simply
 gzipped and are not in tar archives.
 .Pp
-The MacOS-based utilities necessary for installing and running
+The
+.Tn MacOS
+based utilities necessary for installing and running
 .Nx
 can
 be found in the
@@ -907,7 +962,8 @@ The
 .Nx*M
 Booter utility. This program is used to boot the
 .Nx
-kernel from within MacOS.
+kernel from within
+.Tn MacOS .
 .br
 .Em 141 KB archived
 .It Pa Installer.sea.hqx
@@ -964,10 +1020,16 @@ configuration file in
 .
 .if r_sparc \{\
 .(Note
-The distribution cannot be extracted using the SunOS
-.Pa tar
-program so statically-linked SunOS versions of gzip (GNU gzip) and
-gtar (GNU tar) are provided in
+The distribution cannot be extracted using the
+.Tn SunOS
+.Ic tar
+program so statically-linked
+.Tn SunOS
+versions of
+.Ic gzip
+(GNU gzip) and
+.Ic gtar
+(GNU tar) are provided in
 .Pa sparc/installation/misc .
 .Note)
 .\}
@@ -976,7 +1038,7 @@ gtar (GNU tar) are provided in
 .if r_sun3 \{\
 .Pp
 There is a collection of Sun3 and Sun3X kernels in the
-.Pa sun3/binary/kernels
+.Pa \*M/binary/kernels
 subdirectory of the
 .Nx \*V
 distribution.  The ones named
