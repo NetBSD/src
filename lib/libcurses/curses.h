@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.67 2002/08/04 17:08:16 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.68 2002/10/14 16:25:52 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -404,10 +404,6 @@ extern int	 COLOR_PAIRS;		/* Max colour pairs on the screen. */
 	(wmove(w, y, x) == ERR ? ERR : winsch(w, c))
 #define	mvwinstr(w, y, x, s) \
 	(wmove(w, y, x) == ERR ? ERR : winstr(w, s))
-
-#define	getyx(w, y, x)		(y) = getcury(w), (x) = getcurx(w)
-#define	getbegyx(w, y, x)	(y) = getbegy(w), (x) = getbegx(w)
-#define	getmaxyx(w, y, x)	(y) = getmaxy(w), (x) = getmaxx(w)
 
 #else
 /* Use functions not macros... */
