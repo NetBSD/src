@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ct.c	7.3 (Berkeley) 5/4/91
- *	$Id: ct.c,v 1.5 1994/02/06 07:31:06 mycroft Exp $
+ *	$Id: ct.c,v 1.6 1994/02/10 13:59:27 mycroft Exp $
  */
 
 #include "ct.h"
@@ -50,15 +50,15 @@
  *	finish support of 9145
  */
 
-#include "param.h"
-#include "buf.h"
-#include "ioctl.h"
-#include "mtio.h"
-#include "tprintf.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/buf.h>
+#include <sys/ioctl.h>
+#include <sys/mtio.h>
+#include <sys/tprintf.h>
+#include <sys/proc.h>
 
-#include "ctreg.h"
-#include "device.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/ctreg.h>
 
 /* number of eof marks to remember */
 #define EOFS	128
@@ -795,9 +795,12 @@ ctwrite(dev, uio)
 }
 
 /*ARGSUSED*/
-ctioctl(dev, cmd, data, flag)
+ctioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct mtop *op;
 	register int cnt;

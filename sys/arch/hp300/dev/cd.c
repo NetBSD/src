@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cd.c 1.6 90/11/28
  *	from: @(#)cd.c	7.4 (Berkeley) 5/7/91
- *	$Id: cd.c,v 1.3 1994/01/11 17:19:37 mycroft Exp $
+ *	$Id: cd.c,v 1.4 1994/02/10 13:59:25 mycroft Exp $
  */
 
 /*
@@ -46,15 +46,15 @@
 #include "cd.h"
 #if NCD > 0
 
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/dkstat.h"
-#include "sys/buf.h"
-#include "sys/malloc.h"
-#include "sys/conf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/dkstat.h>
+#include <sys/buf.h>
+#include <sys/malloc.h>
+#include <sys/conf.h>
 
-#include "cdvar.h"
+#include <hp300/dev/cdvar.h>
 
 #ifdef DEBUG
 int cddebug = 0x00;
@@ -598,11 +598,12 @@ cdwrite(dev, uio)
 	return(physio(cdstrategy, &cdbuf[unit], dev, B_WRITE, minphys, uio));
 }
 
-cdioctl(dev, cmd, data, flag)
+cdioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	return(EINVAL);
 }

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: st.c 1.8 90/10/14
  *      from: @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.5 1994/02/06 07:24:58 mycroft Exp $
+ *	$Id: st.c,v 1.6 1994/02/10 13:59:47 mycroft Exp $
  */
 
 /*
@@ -75,20 +75,20 @@
 #include "st.h"
 #if NST > 0
 
-#include "param.h"
-#include "systm.h"
-#include "buf.h"
-#include "scsireg.h"
-#include "file.h"
-#include "tty.h"
-#include "proc.h"
-#include "mtio.h"
-#include "ioctl.h"
-#include "kernel.h"
-#include "tprintf.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/buf.h>
+#include <sys/file.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/tty.h>
+#include <sys/mtio.h>
+#include <sys/kernel.h>
+#include <sys/tprintf.h>
 
-#include "device.h"
-#include "stvar.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/scsireg.h>
+#include <hp300/dev/stvar.h>
 
 #define ADD_DELAY
 
@@ -855,11 +855,12 @@ stdump(dev)
 }
 
 /*ARGSUSED*/
-stioctl(dev, cmd, data, flag)
+stioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
 	caddr_t data; 
 	int flag;
+	struct proc *p;
 {
 	register struct st_softc *sc = &st_softc[UNIT(dev)];
 	register int cnt;

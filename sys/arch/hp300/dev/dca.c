@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.11 1994/02/06 01:08:36 mycroft Exp $
+ *	$Id: dca.c,v 1.12 1994/02/10 13:59:28 mycroft Exp $
  */
 
 #include "dca.h"
@@ -40,21 +40,22 @@
  *  98626/98644/internal serial interface
  *  uses National Semiconductor INS8250/NS16550AF UART
  */
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/ioctl.h"
-#include "sys/tty.h"
-#include "sys/proc.h"
-#include "sys/conf.h"
-#include "sys/file.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/syslog.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
 
-#include "device.h"
-#include "dcareg.h"
-#include "machine/cpu.h"
-#include "../hp300/isr.h"
+#include <hp300/dev/device.h>
+#include <hp300/dev/dcareg.h>
+
+#include <machine/cpu.h>
+#include <hp300/hp300/isr.h>
 
 int	dcaprobe();
 struct	driver dcadriver = {
@@ -424,9 +425,12 @@ dcamint(unit, dca)
 	}
 }
 
-dcaioctl(dev, cmd, data, flag)
+dcaioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	int cmd;
 	caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = UNIT(dev);
@@ -434,10 +438,10 @@ dcaioctl(dev, cmd, data, flag)
 	register int error;
  
 	tp = dca_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
