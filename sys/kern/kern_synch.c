@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.128 2003/05/20 13:48:08 simonb Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.129 2003/06/26 02:08:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.128 2003/05/20 13:48:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.129 2003/06/26 02:08:19 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -792,6 +792,12 @@ preempt(int more)
 {
 	struct lwp *l = curlwp;
 	int r, s;
+
+	/* XXX Until the preempt() bug is fixed. */
+	if (more && (l->l_proc->p_flag & P_SA)) {
+		l->l_cpu->ci_schedstate.spc_flags &= ~SPCF_SWITCHCLEAR;
+		return;
+	}
 
 	SCHED_LOCK(s);
 	l->l_priority = l->l_usrpri;
