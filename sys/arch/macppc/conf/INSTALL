@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.1 1998/07/29 05:19:26 tsubai Exp $
+#	$NetBSD: INSTALL,v 1.2 1998/10/14 13:54:09 tsubai Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -32,6 +32,7 @@ options 	NMBCLUSTERS=1024
 options 	NFS_BOOT_DHCP, NFS_BOOT_BOOTPARAM
 
 options 	ZS_TXDMA	# Use dma on zs output
+options 	WSEMUL_VT100	# VT100 / VT220 emulation
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -56,7 +57,16 @@ scsibus* at ahc?
 
 obio0	at pci? dev ? function ?
 nvram0	at obio0			# nvram
+
 adb0	at obio0			# Apple Desktop Bus
+aed*	at adb?				# ADB Event Device
+akbd*	at adb?				# ADB keyboard
+ams*	at adb?				# ADB mouse
+
+ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+wsdisplay* at ofb? console ?
+wskbd*	at akbd? console ?
+
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x00ff		# 53c9x SCSI
 scsibus0 at esp0
@@ -64,10 +74,6 @@ scsibus0 at esp0
 zsc0	at obio0
 zstty0	at zsc0 channel 0
 zstty1	at zsc0 channel 1
-
-grfati0	at pci? dev ? function ?
-grf0	at grfati0
-ite0	at grf0
 
 sd*	at scsibus? target ? lun ?	# SCSI disks
 st*	at scsibus? target ? lun ?	# SCSI tape drives
