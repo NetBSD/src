@@ -29,7 +29,10 @@ Boston, MA 02111-1307, USA.  */
    lex.c for very minor efficiency gains (primarily in function
    inlining).  */
 
+#include "config.h"
 #include "system.h"
+#include "tree.h"
+#include "cp-tree.h"
 
 extern FILE *finput;
 
