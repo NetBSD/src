@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.19 1998/07/05 00:51:09 jonathan Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.20 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -1205,7 +1205,7 @@ void
 sn_get_enaddr(t, h, o, dst)
 	bus_space_tag_t	t;
 	bus_space_handle_t h;
-	vm_offset_t o;
+	bus_size_t o;
 	u_char *dst;
 {
 	int	i, do_bbr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.11 1998/07/08 04:18:53 scottr Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.12 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -793,7 +793,7 @@ u_char
 mc_get_enaddr(t, h, o, dst)
 	bus_space_tag_t t;
 	bus_space_handle_t h;
-	vm_offset_t o;
+	bus_size_t o;
 	u_char *dst;
 {
 	int	i;

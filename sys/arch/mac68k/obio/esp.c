@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.19 1998/11/19 21:46:24 thorpej Exp $	*/
+/*	$NetBSD: esp.c,v 1.20 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -186,7 +186,7 @@ espattach(parent, self, aux)
 	void *aux;
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
-	extern vm_offset_t	SCSIBase;
+	extern vaddr_t		SCSIBase;
 	struct esp_softc	*esc = (void *)self;
 	struct ncr53c9x_softc	*sc = &esc->sc_ncr53c9x;
 	int			quick = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.47 1998/08/12 02:36:38 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.48 1998/12/22 08:47:07 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -68,8 +68,8 @@ extern pt_entry_t *Sysptmap, *Sysmap;
 
 extern int physmem;
 extern int avail_remaining, avail_range, avail_end;
-extern vm_offset_t avail_start, avail_next;
-extern vm_offset_t virtual_avail, virtual_end;
+extern paddr_t avail_start, avail_next;
+extern vaddr_t virtual_avail, virtual_end;
 extern vm_size_t mem_size;
 extern int protection_codes[];
 
@@ -103,6 +103,9 @@ extern caddr_t	ROMBase;
 caddr_t		CADDR1, CADDR2, vmmap;
 extern caddr_t	msgbufaddr;
 
+void	pmap_bootstrap __P((paddr_t, paddr_t));
+void	bootstrap_mac68k __P((int));
+
 /*
  * Bootstrap the VM system.
  *
@@ -115,11 +118,10 @@ extern caddr_t	msgbufaddr;
  */
 void
 pmap_bootstrap(nextpa, firstpa)
-	vm_offset_t nextpa;
-	vm_offset_t firstpa;
+	paddr_t nextpa;
+	paddr_t firstpa;
 {
-	vm_offset_t kstpa, kptpa, vidpa, iiopa, rompa;
-	vm_offset_t kptmpa, lkptpa, p0upa;
+	paddr_t kstpa, kptpa, vidpa, iiopa, rompa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
 	int i;
 	st_entry_t protoste, *ste;
@@ -536,7 +538,7 @@ pmap_bootstrap(nextpa, firstpa)
 	 * Allocate some fixed, special purpose kernel virtual addresses
 	 */
 	{
-		vm_offset_t va = virtual_avail;
+		vaddr_t va = virtual_avail;
 
 		CADDR1 = (caddr_t)va;
 		va += NBPG;
@@ -556,7 +558,7 @@ bootstrap_mac68k(tc)
 {
 	extern void zs_init __P((void));
 	extern int *esym;
-	vm_offset_t nextpa;
+	paddr_t nextpa;
 	caddr_t oldROMBase;
 
 	if (mac68k_machine.do_graybars)

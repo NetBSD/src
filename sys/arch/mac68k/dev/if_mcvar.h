@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.5 1998/07/08 04:16:05 scottr Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.6 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -90,4 +90,4 @@ int	mcsetup __P((struct mc_softc *, u_int8_t *));
 void	mcintr __P((void *arg));
 void	mc_rint __P((struct mc_softc *sc));
 u_char	mc_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
-	    vm_offset_t o, u_char *dst));
+	    bus_size_t o, u_char *dst));

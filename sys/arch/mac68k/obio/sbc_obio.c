@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc_obio.c,v 1.9 1998/11/19 21:46:25 thorpej Exp $	*/
+/*	$NetBSD: sbc_obio.c,v 1.10 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
  * Copyright (C) 1996,1997 Scott Reynolds.  All rights reserved.
@@ -116,7 +116,7 @@ sbc_obio_attach(parent, self, args)
 	struct sbc_softc *sc = (struct sbc_softc *) self;
 	struct ncr5380_softc *ncr_sc = (struct ncr5380_softc *) sc;
 	char bits[64];
-	extern vm_offset_t SCSIBase;
+	extern vaddr_t SCSIBase;
 
 	/* Pull in the options flags. */ 
 	sc->sc_options = ((ncr_sc->sc_dev.dv_cfdata->cf_flags | sbc_options)
@@ -129,14 +129,14 @@ sbc_obio_attach(parent, self, args)
 	switch (current_mac_model->machineid) {
 	case MACH_MACIIFX:	/* Note: the IIfx isn't (yet) supported. */
 		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS_IIFX);
-		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS_IIFX);
-		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_IIFX);
+		sc->sc_drq_addr = (vaddr_t)(SCSIBase + SBC_HSK_OFS_IIFX);
+		sc->sc_nodrq_addr = (vaddr_t)(SCSIBase + SBC_DMA_OFS_IIFX);
 		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
 		break;
 	case MACH_MACPB500:
 		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
-		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS); /*??*/
-		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS_PB500);
+		sc->sc_drq_addr = (vaddr_t)(SCSIBase + SBC_HSK_OFS); /*??*/
+		sc->sc_nodrq_addr = (vaddr_t)(SCSIBase + SBC_DMA_OFS_PB500);
 		sc->sc_options &= ~(SBC_INTR | SBC_RESELECT);
 		break;
 	case MACH_MACPB210:
@@ -147,15 +147,15 @@ sbc_obio_attach(parent, self, args)
 	case MACH_MACPB280C:
 		if (ncr_sc->sc_dev.dv_unit == 1) {
 			sc->sc_regs = (struct sbc_regs *)(0xfee00000 + SBC_REG_OFS_DUO2);
-			sc->sc_drq_addr = (vm_offset_t)(0xfee00000 + SBC_HSK_OFS_DUO2);
-			sc->sc_nodrq_addr = (vm_offset_t)(0xfee00000 + SBC_DMA_OFS_DUO2);
+			sc->sc_drq_addr = (vaddr_t)(0xfee00000 + SBC_HSK_OFS_DUO2);
+			sc->sc_nodrq_addr = (vaddr_t)(0xfee00000 + SBC_DMA_OFS_DUO2);
 			break;
 		}
 		/*FALLTHROUGH*/
 	default:
 		sc->sc_regs = (struct sbc_regs *)(SCSIBase + SBC_REG_OFS);
-		sc->sc_drq_addr = (vm_offset_t)(SCSIBase + SBC_HSK_OFS);
-		sc->sc_nodrq_addr = (vm_offset_t)(SCSIBase + SBC_DMA_OFS);
+		sc->sc_drq_addr = (vaddr_t)(SCSIBase + SBC_HSK_OFS);
+		sc->sc_nodrq_addr = (vaddr_t)(SCSIBase + SBC_DMA_OFS);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.34 1997/08/27 11:23:49 bouyer Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.35 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -119,7 +119,7 @@ struct scsi_5380 {
 	volatile u_char	scsi_5380[8*16]; /* 8 regs, 1 every 16th byte. */
 };
 
-extern vm_offset_t	SCSIBase;
+extern vaddr_t		SCSIBase;
 static volatile u_char	*ncr		= (volatile u_char *) 0x10000;
 static volatile u_char	*ncr_5380_with_drq	= (volatile u_char *)  0x6000;
 static volatile u_char	*ncr_5380_without_drq	= (volatile u_char *) 0x12000;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.57 1998/11/19 15:38:22 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.58 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -381,10 +381,10 @@ grfmap(dev, addrp, p)
 	vn.v_rdev = dev;	/* XXX */
 
 #if defined(UVM)
-	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
 #else
-	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+	error = vm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0);
 #endif
 
@@ -422,10 +422,10 @@ grfunmap(dev, addr, p)
 	size = round_page(gp->sc_grfmode->fbsize);
 
 #if defined(UVM)
-	rv = uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
-	    (vm_offset_t)addr + size);
+	rv = uvm_unmap(&p->p_vmspace->vm_map, (vaddr_t)addr,
+	    (vaddr_t)addr + size);
 #else
-	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vaddr_t)addr, size);
 #endif
 
 	return (rv == KERN_SUCCESS ? 0 : EINVAL);

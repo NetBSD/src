@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.12 1998/05/01 03:42:47 scottr Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.13 1998/12/22 08:47:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -215,4 +215,4 @@ typedef struct sn_softc {
 int	snsetup __P((struct sn_softc *sc, u_int8_t *));
 void	snintr __P((void *));
 void	sn_get_enaddr __P((bus_space_tag_t t, bus_space_handle_t h,
-	    vm_offset_t o, u_char *dst));
+	    bus_size_t o, u_char *dst));

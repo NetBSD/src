@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.32 1998/11/11 06:41:27 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.33 1998/12/22 08:47:07 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -252,24 +252,24 @@ pagemove(from, to, size)
 	caddr_t from, to;
 	size_t size;
 {
-	vm_offset_t pa;
+	paddr_t pa;
 
 #ifdef DEBUG
 	if (size % PAGE_SIZE)
 		panic("pagemove");
 #endif
 	while (size > 0) {
-		pa = pmap_extract(pmap_kernel(), (vm_offset_t) from);
+		pa = pmap_extract(pmap_kernel(), (vaddr_t)from);
 #ifdef DEBUG
 		if (pa == 0)
 			panic("pagemove 2");
-		if (pmap_extract(pmap_kernel(), (vm_offset_t)to) != 0)
+		if (pmap_extract(pmap_kernel(), (vaddr_t)to) != 0)
 			panic("pagemove 3");
 #endif
 		pmap_remove(pmap_kernel(),
-			   (vm_offset_t)from, (vm_offset_t)from + PAGE_SIZE);
+			   (vaddr_t)from, (vaddr_t)from + PAGE_SIZE);
 		pmap_enter(pmap_kernel(),
-			   (vm_offset_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
+			   (vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE, 1);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
@@ -341,12 +341,12 @@ int
 kvtop(addr)
 	caddr_t addr;
 {
-	vm_offset_t va;
+	paddr_t pa;
 
-	va = pmap_extract(pmap_kernel(), (vm_offset_t)addr);
-	if (va == 0)
+	pa = pmap_extract(pmap_kernel(), (vaddr_t)addr);
+	if (pa == 0)
 		panic("kvtop: zero page frame");
-	return((int)va);
+	return((int)pa);
 }
 
 extern vm_map_t phys_map;
@@ -365,16 +365,16 @@ vmapbuf(bp, len)
 	vm_size_t len;
 {
 	struct pmap *upmap, *kpmap;
-	vm_offset_t uva;	/* User VA (map from) */
-	vm_offset_t kva;	/* Kernel VA (new to) */
-	vm_offset_t pa; 	/* physical address */
+	vaddr_t uva;		/* User VA (map from) */
+	vaddr_t kva;		/* Kernel VA (new to) */
+	paddr_t pa;	 	/* physical address */
 	vm_size_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 
 	uva = m68k_trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - uva;
+	off = (vaddr_t)bp->b_data - uva;
 	len = m68k_round_page(off + len);
 #if defined(UVM)
 	kva = uvm_km_valloc_wait(phys_map, len);
@@ -404,14 +404,14 @@ vunmapbuf(bp, len)
 	struct buf *bp;
 	vm_size_t len;
 {
-	vm_offset_t kva;
+	vaddr_t kva;
 	vm_size_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
 	kva = m68k_trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - kva;
+	off = (vaddr_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 
 	/*
