@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1997/05/09 04:46:30 mycroft Exp $
+#	$NetBSD: Makefile,v 1.8 1997/10/18 05:59:21 lukem Exp $
 
 MAN=		nroff.1
 SCRIPTS=	nroff.sh psroff.sh
