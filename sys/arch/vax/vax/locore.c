@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.19 1997/03/15 16:11:25 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.20 1997/03/22 23:02:11 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -182,6 +182,7 @@ start()
 
 		switch (vax_boardtype) {
 #if VAX410
+		case VAX_BTYP_420: /* They are very similar */
 		case VAX_BTYP_410:
 			dep_call = &ka410_calls;
 			vax_confdata = *(int *)(0x20020000);
