@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.1 1999/04/17 21:16:45 ws Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.2 1999/05/05 12:35:54 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -32,6 +32,7 @@
  */
 #include <sys/param.h>
 #if	defined(_KERNEL) || defined(_STANDALONE)
+#include <sys/time.h>
 #include <sys/proc.h>
 #include <vm/vm.h>
 #endif
@@ -44,6 +45,8 @@
 #error "Must know the size of a cache line"
 #endif
 #else
+static void getcachelinesize __P((void));
+
 static int _cachelinesize;
 #define	CACHELINESIZE	_cachelinesize
 
