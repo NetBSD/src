@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)disklabel.h	7.19 (Berkeley) 5/7/91
- *	$Id: disklabel.h,v 1.9 1993/12/07 03:25:12 briggs Exp $
+ *	$Id: disklabel.h,v 1.10 1993/12/23 17:05:41 cgd Exp $
  */
 
 #ifndef _SYS_DISKLABEL_H_
@@ -222,7 +222,8 @@ static char *dktypenames[] = {
 #define	FS_V71K		5		/* V7 with 1K blocks (4.1, 2.9) */
 #define	FS_V8		6		/* Eighth Edition, 4K blocks */
 #define	FS_BSDFFS	7		/* 4.2BSD fast file system */
-#define	FS_MSDOS	8		/* MSDOS file system */
+#define	FS_MSDOS	8		/* MS-DOS file system */
+#define	FS_ISOFS	9		/* ISO-9660 filesystem (cdrom) */
 
 #ifdef	DKTYPENAMES
 static char *fstypenames[] = {
@@ -234,7 +235,8 @@ static char *fstypenames[] = {
 	"4.1BSD",
 	"Eighth Edition",
 	"4.2BSD",
-	"MSDOS",
+	"MS-DOS",
+	"ISO-9660",
 	0
 };
 #define FSMAXTYPES	(sizeof(fstypenames) / sizeof(fstypenames[0]) - 1)
