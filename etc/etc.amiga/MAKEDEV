@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.26 1997/05/31 23:53:02 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.27 1997/06/14 22:43:47 is Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -87,6 +87,7 @@
 #	ss*	SCSI scanner
 #	uk*	SCSI unknown
 #	ch*	SCSI changer
+#	audio*	one unit of the audio device. Unit 0 is custom chip audio.
 #
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
@@ -105,6 +106,7 @@ all)
 	sh MAKEDEV ss0 ch0 uk0 uk1 ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 tun0 tun1 lkm ipl local
+	sh MAKEDEV audio0
 	;;
 
 floppy)
@@ -403,10 +405,21 @@ lkm)
 ipl)
 	rm -f ipl ipnat ipstate
 	mknod ipl c 40 0
+	chown root.wheel ipl
+	chmod 600 ipl
 	mknod ipnat c 40 1
 	mknod ipstate c 40 2
 	chown root.wheel ipl ipnat ipstate
 	chmod 600 ipl ipnat ipstate
+	;;
+
+audio*)
+	unit=${i#audio}
+	rm -f audio$unit sound$unit mixer$unit
+	mknod audio$unit c 41 $(($unit + 128))
+	mknod sound$unit c 41 $unit
+	mknod mixer$unit c 41 $(($unit + 16))
+	chmod 644 audio$unit sound$unit mixer$unit
 	;;
 
 local)
