@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_osm.c,v 1.2 2003/04/21 16:52:07 fvdl Exp $	*/
+/*	$NetBSD: aic79xx_osm.c,v 1.3 2003/04/21 20:05:26 fvdl Exp $	*/
 
 /*
  * Bus independent NetBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -96,6 +96,9 @@ ahd_attach(struct ahd_softc *ahd)
 	ahd->sc_child = config_found((void *)ahd, &ahd->sc_channel, scsiprint);
 
 	ahd_intr_enable(ahd, TRUE);
+
+	if (ahd->flags & AHD_RESET_BUS_A)
+		ahd_reset_channel(ahd, 'A', TRUE);
 
         ahd_unlock(ahd, &s);
 
@@ -271,18 +274,8 @@ ahd_action(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
         struct ahd_softc *ahd;
 	struct ahd_initiator_tinfo *tinfo;
 	struct ahd_tmode_tstate *tstate;
-	int s;
 
 	ahd = (void *)chan->chan_adapter->adapt_dev;
-
-	if (ahd->inited_channels[0] == 0) {
-		if (ahd->flags & AHD_RESET_BUS_A) {
-			s = splbio();
-			ahd_reset_channel(ahd, 'A', TRUE);
-			splx(s);
-		}
-		ahd->inited_channels[0] = 1;
-	}
 
 	switch(req) {
 

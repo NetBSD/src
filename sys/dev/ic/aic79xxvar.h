@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic79xxvar.h,v 1.1 2003/04/21 00:14:52 fvdl Exp $
+ * $Id: aic79xxvar.h,v 1.2 2003/04/21 20:05:26 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic79xx.h#84 $
  *
@@ -1079,7 +1079,6 @@ struct ahd_softc {
 	struct ahd_tmode_tstate  *enabled_targets[AHD_NUM_TARGETS];
 
 	char			  inited_target[AHD_NUM_TARGETS];
-	char			  inited_channels[1];
 
 	/*
 	 * The black hole device responsible for handling requests for
