@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasicvar.h,v 1.2 2000/10/17 08:55:43 nisimura Exp $ */
+/* $NetBSD: zs_ioasicvar.h,v 1.3 2002/09/24 13:23:32 ad Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
  * are the flags.
  */
 #define	ZIP_FLAGS_DCDCTS	0x01	/* channel has DCD and CTS signals */
+#define	ZIP_FLAGS_DTRRTS	0x02	/* channel has DTR and RTS signals */
 
 extern void zs_ioasic_cnattach __P((tc_addr_t, tc_offset_t, int));
 extern int zs_ioasic_lk201_cnattach __P((tc_addr_t, tc_offset_t, int));
