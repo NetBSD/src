@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194 2001/10/01 10:23:37 simonb Exp $
+# $NetBSD: GENERIC,v 1.195 2001/11/04 07:39:41 itohy Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 #
@@ -6,7 +6,7 @@
 
 include	"arch/alpha/conf/std.alpha"
 
-#ident 		"GENERIC-$Revision: 1.194 $"
+#ident 		"GENERIC-$Revision: 1.195 $"
 
 maxusers 32
 
@@ -224,6 +224,7 @@ adw*	at	pci? dev ? function ?		# AdvanSys Wide SCSI
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
 bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 cac*	at	pci? dev ? function ?		# Compaq array controller (untested)
+cmpci*	at	pci? dev ? function ?		# C-Media CMI8338/8738 Audio
 cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 cz*	at	pci? dev ? function ?		# Cyclades-Z (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
@@ -266,15 +267,18 @@ vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 yds*	at	pci? dev ? function ?		# Yamaha DS-1 PCI Audio
 
+audio*	at	cmpci?
 audio*	at	eap?
 audio*	at	eso?
 audio*	at	sv?
 audio*	at	yds?
 
+opl*	at	cmpci? flags 1
 opl*	at	eso?
 #opl*	at	sv?
 opl*	at	yds?
 
+mpu*	at	cmpci?
 mpu*	at	eso?
 mpu*	at	yds?
 
