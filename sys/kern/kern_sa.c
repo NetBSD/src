@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.43 2003/11/17 22:52:09 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.44 2003/11/17 22:57:52 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.43 2003/11/17 22:52:09 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.44 2003/11/17 22:57:52 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -250,7 +250,6 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 			if ((l2 = sast->sast_blocker)) {
 				l2->l_upcallstack = NULL;
 				sast->sast_blocker = NULL;
-				wakeup(&l2->l_upcallstack);
 			}
 			if (SLIST_NEXT(sast, sast_list) != (void *)-1) {
 				count = i;
@@ -440,20 +439,22 @@ sa_preempt(struct lwp *l)
 
 
 /* 
- * Help userspace library resolve locks and critical sections
+ * Help userspace library resolve locks and critical sections:
+ * - return if the unblocked upcall has already been delivered.
+ *   This case is usually already detected in userspace.
  * - recycles the calling LWP and its stack if it was not preempted
- *   and idle the VP until the sa_id LWP unblocks
- * - recycles the to be unblocked LWP if the calling LWP was preempted
- *   and returns control to the userspace library so it can switch to
- *   the blocked thread
- * This is used if a thread blocks because of a pagefault and is in a
- * critical section in the userspace library and the critical section
- * resolving code cannot continue until the blocked thread is unblocked.
- * If the userspace library switches to the blocked thread in the second
- * case, it will either continue (because the pagefault has been handled)
- * or it will pagefault again.  The second pagefault will be detected by
- * the double pagefault code and the VP will idle until the pagefault
- * has been handled.
+ *   and the unblocked upcall was not yet delivered.  Put the sa_id
+ *   LWP on the VP and wait until it unblocks or switch to it if it's
+ *   ready.  There will be no unblocked upcall.
+ * - recycles the blocked LWP if up_preempted == NULL.  This is used
+ *   if the blocked LWP is an idle thread and we don't care for the
+ *   unblocked upcall.
+ * - otherwise, wait for the blocked LWP to get ready.  The unblocked
+ *   upcall is delivered when we return.
+ * This is used if a thread blocks (mostly because of a pagefault) and
+ * is in a critical section in the userspace library and the critical
+ * section resolving code cannot continue until the blocked thread is
+ * unblocked.
  */
 int
 sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
@@ -465,7 +466,7 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 	} */ *uap = v;
 	struct sadata *sa = l->l_proc->p_sa;
 	struct proc *p = l->l_proc;
-	struct lwp *l2;
+	struct lwp *l2, **hp;
 	struct sastack sast;
 	int error, f, s;
 	void *preempted;
@@ -498,79 +499,100 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 			break;
 		}
 	}
+	if (l2 && (l2->l_upcallstack == NULL ||
+		(l2->l_upcallstack->sast_blocker != l2 &&
+		    l2->l_upcallstack->sast_blocker != NULL)))
+		l2 = NULL;
+
 	if (l2 == NULL) {
-		SCHED_UNLOCK(s);
-		return (ESRCH);
-	}
-	if (l2->l_upcallstack->sast_blocker != l2 ||
-		sast.sast_stack.ss_sp != l2->l_upcallstack->sast_stack.ss_sp) {
-		SCHED_UNLOCK(s);
-		return (EINVAL);
-	}
-
-	/*
-	 * upcall not interrupted: (*up_preempted == NULL)
-	 * - lwp ready: (wchan == upcallstacks)
-	 * ==> recycle stack, put lwp on vp,
-	 *     unsleep lwp, make runnable, recycle upcall lwp (=l)
-	 * - lwp not ready:
-	 * ==> recycle stack, put lwp on vp, recycle upcall lwp (=l)
-	 *
-	 * upcall interrupted: (*up_preempted != NULL || up_preempted == NULL)
-	 * ==> recycle upcall lwp
-	 */
-
-	if (preempted != NULL) {
+		/* just return, prevented in userland most of the time */
+		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) unblocked upcall done\n",
+			     p->p_pid, l->l_lid));
+		KDASSERT(preempted != NULL);
+	} else if (preempted == (void *)-1) {
+		/* recycle blocked LWP */
 		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) recycle %d "
 			     "(was %sready) upcall stack %p\n",
 			     p->p_pid, l->l_lid, l2->l_lid, 
-			     (l2->l_wchan == &l2->l_upcallstack) ? "" :
+			     (l2->l_upcallstack->sast_blocker == NULL) ? "" :
 			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
 
-		l2->l_upcallstack->sast_blocker = NULL;
-		if (l2->l_wchan == &l2->l_upcallstack) {
-			unsleep(l2);
-			if (l2->l_stat == LSSLEEP) {
-				l2->l_slptime = 0;
-				l2->l_stat = LSRUN;
-				l2->l_proc->p_nrlwps++;
-				if (l2->l_flag & L_INMEM)
-					setrunqueue(l2);
-				else
-					sched_wakeup((caddr_t)&proc0);
-			}
+		if (l2->l_upcallstack->sast_blocker == NULL) {
+			/*
+			 * l2 is on the wokenq, remove it and put l2
+			 * in the cache
+			 */
+			hp = &sa->sa_wokenq_head;
+			while (*hp != l2)
+				hp = &(*hp)->l_forw;
+			*hp = l2->l_forw;
+			if (sa->sa_wokenq_tailp == &l2->l_forw)
+				sa->sa_wokenq_tailp = hp;
+			l2->l_flag &= ~L_SA_BLOCKING;
+			l2->l_upcallstack = NULL;
+			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
+		} else
+			/* let sa_setwoken put it in the cache */
+			l2->l_upcallstack->sast_blocker = NULL;
+	} else if (preempted != NULL) {
+		/* wait for the blocked LWP to get ready, then return */
+		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) waiting for %d "
+			     "(was %sready) upcall stack %p\n",
+			     p->p_pid, l->l_lid, l2->l_lid, 
+			     (l2->l_upcallstack->sast_blocker == NULL) ? "" :
+			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
+
+		if (l2->l_upcallstack->sast_blocker != NULL) {
+			l2->l_upcallstack->sast_blocker = l;
+			SCHED_UNLOCK(s); /* XXXcl we're still holding
+					  * the kernel lock, is that
+					  * good enough? */
+			SA_LWP_STATE_LOCK(l, f);
+			tsleep((caddr_t) &l2->l_upcallstack, PWAIT,
+			    "saunblock", 0);
+			SA_LWP_STATE_UNLOCK(l, f);
+			if (p->p_flag & P_WEXIT)
+				lwp_exit(l);
+			return(0);
 		}
 	} else {
+		/* recycle calling LWP and resume blocked LWP */
 		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) resuming %d "
 			     "(is %sready) upcall stack %p\n",
 			     p->p_pid, l->l_lid, l2->l_lid, 
-			     (l2->l_wchan == &l2->l_upcallstack) ? "" :
+			     (l2->l_upcallstack->sast_blocker == NULL) ? "" :
 			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
 
 		sa->sa_vp = l2;
 		l2->l_flag &= ~L_SA_BLOCKING;
-		l2->l_upcallstack->sast_blocker = NULL;
 		SLIST_INSERT_HEAD(&sa->sa_stackslist, l2->l_upcallstack,
 		    sast_list);
-		l2->l_upcallstack = NULL;
 
-		if (l2->l_wchan == &l2->l_upcallstack) {
-			unsleep(l2);
-			if (l2->l_stat == LSSLEEP) {
-				l2->l_slptime = 0;
-				l2->l_stat = LSRUN;
-				l2->l_proc->p_nrlwps++;
-				if (l2->l_flag & L_INMEM)
-					setrunqueue(l2);
-				else
-					sched_wakeup((caddr_t)&proc0);
-			}
+		if (l2->l_upcallstack->sast_blocker == NULL) {
+			/*
+			 * l2 is on the wokenq, remove it and
+			 * continue l2
+			 */
+			hp = &sa->sa_wokenq_head;
+			while (*hp != l2)
+				hp = &(*hp)->l_forw;
+			*hp = l2->l_forw;
+			if (sa->sa_wokenq_tailp == &l2->l_forw)
+				sa->sa_wokenq_tailp = hp;
+			l2->l_upcallstack = NULL;
+			setrunnable(l2);
+			PRELE(l2); /* PHOLD from sa_setwoken */
+		} else {
+			/* cleanup l_upcallstack */
+			l2->l_upcallstack->sast_blocker = NULL;
+			l2->l_upcallstack = NULL;
+			l2 = NULL; /* don't continue l2 yet */
 		}
 
 		p->p_nrlwps--;
 		PHOLD(l);
 		sa_putcachelwp(p, l);
-		mi_switch(l, NULL);
+		mi_switch(l, l2);
 		/* mostly NOTREACHED */
 		SCHED_ASSERT_UNLOCKED();
 		splx(s);
@@ -856,6 +878,8 @@ sa_switch(struct lwp *l, int type)
 			return;
 		}
 
+		DPRINTFN(8,("sa_switch(%d.%d) blocked upcall %d, stack %p\n",
+		    p->p_pid, l->l_lid, l2->l_lid, sast->sast_stack.ss_sp));
 		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 		l2->l_flag |= L_SA_UPCALL;
 
@@ -1036,50 +1060,24 @@ sa_unblock_userret(struct lwp *l)
 	DPRINTFN(7,("sa_unblock_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
 
-	while (l->l_upcallstack != NULL) {
-		if (l->l_upcallstack->sast_blocker == NULL) {
-			SCHED_LOCK(s);
-			l->l_flag &= ~(L_SA_UPCALL|L_SA_BLOCKING);
-			l->l_upcallstack = NULL;
-			p->p_nrlwps--;
-			PHOLD(l);
-			sa_putcachelwp(p, l);
-			SA_LWP_STATE_UNLOCK(l, f);
-			mi_switch(l, NULL);
-			/* mostly NOTREACHED */
-			SCHED_ASSERT_UNLOCKED();
-			splx(s);
-			KDASSERT(p->p_flag & P_WEXIT);
-			lwp_exit(l);
-		}
-		if ((l->l_flag & L_SA_BLOCKING) == 0) {
-			l->l_upcallstack->sast_blocker = NULL;
-			l->l_upcallstack = NULL;
-			break;
-		}
-		tsleep((caddr_t) &l->l_upcallstack, PWAIT,
-		    "saunblock", 0);
-		if (p->p_flag & P_WEXIT)
-			lwp_exit(l);
-	}
+	sa_setwoken(l);
+	/* maybe NOTREACHED */
 
-	if (l->l_flag & L_SA_BLOCKING) {
+	SCHED_LOCK(s);
+	if (l != sa->sa_vp) {
 		/* Invoke an "unblocked" upcall */
-
-		sa_setwoken(l);
-		/* maybe NOTREACHED */
-
 		DPRINTFN(8,("sa_unblock_userret(%d.%d) unblocking\n",
 		    p->p_pid, l->l_lid));
 
-		SCHED_ASSERT_UNLOCKED();
-
 		l2 = sa_vp_repossess(l);
+
+		SCHED_UNLOCK(s);
+
 		if (l2 == NULL)
 			lwp_exit(l);
 
-		SCHED_ASSERT_UNLOCKED();
-			
+		PHOLD(l2);
+
 		sau = sadata_upcall_alloc(1);
 		sau->sau_arg = NULL;
 
@@ -1113,13 +1111,14 @@ sa_unblock_userret(struct lwp *l)
 			/* NOTREACHED */
 		}
 
+		SCHED_LOCK(s);
 		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 		l->l_flag |= L_SA_UPCALL;
 		l->l_flag &= ~L_SA_BLOCKING;
-		SCHED_LOCK(s);
-		sa_putcachelwp(p, l2); /* PHOLD from sa_vp_repossess */
-		SCHED_UNLOCK(s);
+		l->l_upcallstack = NULL;
+		sa_putcachelwp(p, l2);
 	}
+	SCHED_UNLOCK(s);
 
 	SA_LWP_STATE_UNLOCK(l, f);
 	KERNEL_PROC_UNLOCK(l);
@@ -1170,7 +1169,6 @@ sa_upcall_userret(struct lwp *l)
 
 		SCHED_UNLOCK(s);
 
-		PHOLD(l2);
 		if (p->p_flag & P_WEXIT)
 			lwp_exit(l);
 
@@ -1201,8 +1199,9 @@ sa_upcall_userret(struct lwp *l)
 		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 
 		l2->l_flag &= ~L_SA_BLOCKING;
+		l2->l_upcallstack = NULL;
 		SCHED_LOCK(s);
-		sa_putcachelwp(p, l2);
+		sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
 	}
 	SCHED_UNLOCK(s);
 
@@ -1314,11 +1313,11 @@ sa_upcall_userret(struct lwp *l)
 			eventq = l2->l_forw;
 			DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking extra %d\n",
 				     p->p_pid, l->l_lid, l2->l_lid));
-			PHOLD(l2);
 			sa_upcall_getstate(&e_ss, l2);
-			l2->l_flag &= ~L_SA_BLOCKING;
 			SCHED_LOCK(s);
-			sa_putcachelwp(p, l2);
+			l2->l_flag &= ~L_SA_BLOCKING;
+			l2->l_upcallstack = NULL;
+			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
 			SCHED_UNLOCK(s);
 			if (copyout(&e_ss.ss_captured.ss_ctx,
 				e_ss.ss_captured.ss_sa.sa_context,
@@ -1399,6 +1398,11 @@ sa_setwoken(struct lwp *l)
 
 	SCHED_LOCK(s);
 
+	if ((l->l_flag & L_SA_BLOCKING) == 0) {
+		SCHED_UNLOCK(s);
+		return;
+	}
+
 	p = l->l_proc;
 	sa = p->p_sa;
 	vp_lwp = sa->sa_vp;
@@ -1408,6 +1412,23 @@ sa_setwoken(struct lwp *l)
 	DPRINTFN(3,("sa_setwoken(%d.%d) woken, flags %x, vp %d\n",
 		     l->l_proc->p_pid, l->l_lid, l->l_flag,
 		     vp_lwp->l_lid));
+
+	if (l->l_upcallstack && l->l_upcallstack->sast_blocker == NULL) {
+		DPRINTFN(11,("sa_setwoken(%d.%d) recycle\n",
+			     l->l_proc->p_pid, l->l_lid));
+		l->l_flag &= ~(L_SA_UPCALL|L_SA_BLOCKING);
+		l->l_flag |= L_SA;
+		l->l_upcallstack = NULL;
+		p->p_nrlwps--;
+		PHOLD(l);
+		sa_putcachelwp(p, l);
+		mi_switch(l, NULL);
+		/* mostly NOTREACHED */
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+		KDASSERT(p->p_flag & P_WEXIT);
+		lwp_exit(l);
+	}
 
 #if notyet
 	if (vp_lwp->l_flag & L_SA_IDLE) {
@@ -1426,6 +1447,7 @@ sa_setwoken(struct lwp *l)
 		     l->l_proc->p_pid, l->l_lid, vp_lwp->l_lid,
 		     vp_lwp->l_stat));
 
+	PHOLD(l);
 	if (sa->sa_wokenq_head == NULL)
 		sa->sa_wokenq_head = l;
 	else
@@ -1482,6 +1504,12 @@ sa_setwoken(struct lwp *l)
 		panic("sa_vp LWP not sleeping/onproc/runnable");
 	}
 
+	if (l->l_upcallstack) {
+		if (l->l_upcallstack->sast_blocker != l)
+			sched_wakeup(&l->l_upcallstack);
+		l->l_upcallstack->sast_blocker = NULL;
+	}
+
 	l->l_stat = LSSUSPENDED;
 	p->p_nrlwps--;
 	mi_switch(l, l2);
@@ -1498,7 +1526,8 @@ sa_vp_repossess(struct lwp *l)
 	struct lwp *l2;
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
-	int s;
+
+	SCHED_ASSERT_LOCKED();
 
 	/*
 	 * Put ourselves on the virtual processor and note that the
@@ -1514,8 +1543,6 @@ sa_vp_repossess(struct lwp *l)
 
 	KDASSERT(l2 != l);
 	if (l2) {
-		PHOLD(l2);
-		SCHED_LOCK(s);
 		switch (l2->l_stat) {
 		case LSRUN:
 			remrunqueue(l2);
@@ -1539,7 +1566,6 @@ sa_vp_repossess(struct lwp *l)
 #endif
 		}
 		l2->l_stat = LSSUSPENDED;
-		SCHED_UNLOCK(s);
 	}
 	return l2;
 }
