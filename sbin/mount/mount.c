@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.73 2004/09/25 03:32:52 thorpej Exp $	*/
+/*	$NetBSD: mount.c,v 1.74 2005/01/31 02:32:35 erh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.73 2004/09/25 03:32:52 thorpej Exp $");
+__RCSID("$NetBSD: mount.c,v 1.74 2005/01/31 02:32:35 erh Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,11 +203,29 @@ main(argc, argv)
 			/* NOTREACHED */
 		}
 
+		/*
+		 * Create a canonical version of the device or mount path
+		 * passed to us.  It's ok for this to fail.  It's also ok
+		 * for the result to be exactly the same as the original.
+		 */
+		char canonical_path_buf[MAXPATHLEN];
+		char *canonical_path;
+		canonical_path = realpath(*argv, canonical_path_buf);
+
 		if (init_flags & MNT_UPDATE) {
-			if ((mntbuf = getmntpt(*argv)) == NULL)
+			/*
+			 * Try lookin up the canonical path first,
+			 * then try exactly what the user entered.
+			 */
+			if ((canonical_path == NULL ||
+			     (mntbuf = getmntpt(canonical_path)) == NULL) &&
+			    (mntbuf = getmntpt(*argv)) == NULL
+			   )
+			{
 				errx(1,
 				    "unknown special file or file system %s.",
 				    *argv);
+			}
 			mntfromname = mntbuf->f_mntfromname;
 			if ((fs = getfsfile(mntbuf->f_mntonname)) != NULL) {
 				if (strcmp(fs->fs_spec, "from_mount") != 0)
@@ -219,19 +237,34 @@ main(argc, argv)
 			fstypename = mntbuf->f_fstypename;
 			mountopts  = NULL;
 		} else {
-			if ((fs = getfsfile(*argv)) == NULL &&
-			    (fs = getfsspec(*argv)) == NULL)
-				errx(1,
-				    "%s: unknown special file or file system.",
-				    *argv);
+			/*
+			 * Try lookin up the canonical path first,
+			 * then try exactly what the user entered.
+			 */
+			if ((fs = getfsfile(canonical_path)) == NULL &&
+			    (fs = getfsspec(canonical_path)) == NULL)
+			{
+				if ((fs = getfsfile(*argv)) == NULL &&
+				    (fs = getfsspec(*argv)) == NULL)
+				{
+					errx(1,
+					    "%s: unknown special file or file system.",
+					    *argv);
+				}
+			}
 			if (BADTYPE(fs->fs_type))
 				errx(1, "%s has unknown file system type.",
 				    *argv);
 			if (strcmp(fs->fs_spec, "from_mount") == 0) {
-				if ((mntbuf = getmntpt(*argv)) == NULL)
+				if ((canonical_path == NULL ||
+				     (mntbuf = getmntpt(canonical_path)) == NULL) &&
+				    (mntbuf = getmntpt(*argv)) == NULL
+				   )
+				{
 					errx(1,
 					    "unknown special file or file system %s.",
 					    *argv);
+				}
 				mntfromname = mntbuf->f_mntfromname;
 			} else
 				mntfromname = fs->fs_spec;
