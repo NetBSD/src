@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.22 1997/04/13 22:05:10 cgd Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.22.2.1 1997/05/13 03:54:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -73,6 +73,7 @@ struct pcibus_attach_args {
 	char		*pba_busname;	/* XXX should be common */
 	bus_space_tag_t pba_iot;	/* pci i/o space tag */
 	bus_space_tag_t pba_memt;	/* pci mem space tag */
+	bus_dma_tag_t pba_dmat;		/* DMA tag */
 	pci_chipset_tag_t pba_pc;
 	int		pba_flags;	/* flags; see below */
 
@@ -92,6 +93,7 @@ struct pcibus_attach_args {
 struct pci_attach_args {
 	bus_space_tag_t pa_iot;		/* pci i/o space tag */
 	bus_space_tag_t pa_memt;	/* pci mem space tag */
+	bus_dma_tag_t pa_dmat;		/* DMA tag */
 	pci_chipset_tag_t pa_pc;
 	int		pa_flags;	/* flags; see below */
 
