@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.67 2001/09/15 20:36:46 chs Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.68 2001/09/28 11:59:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -78,6 +78,7 @@
 #include <sys/sched.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #define UVM_PAGE                /* pull in uvm_page.h functions */
 #include <uvm/uvm.h>
