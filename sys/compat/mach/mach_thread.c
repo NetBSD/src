@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.10 2002/12/27 09:59:27 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.11 2002/12/30 18:44:34 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.10 2002/12/27 09:59:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.11 2002/12/30 18:44:34 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,6 +186,7 @@ mach_copy_right(p1, p2)
 {
 	struct mach_emuldata *med1;
 	struct mach_emuldata *med2;
+	struct mach_right *mr;
 
 	med1 = (struct mach_emuldata *)p1->p_emuldata;
 	med2 = (struct mach_emuldata *)p2->p_emuldata;
@@ -200,8 +201,14 @@ mach_copy_right(p1, p2)
 	if (--med2->med_exception->mp_refcount == 0)
 		mach_port_put(med2->med_exception);
 
-	/* Share ports and rights with the parent */
+	/* 
+	 * Share ports and rights with the parent, bump their reference
+	 * counts so that if p2 deallocates some right, p1 is still able 
+	 * to use it.
+	 */
 	med2->med_right = med1->med_right;
+	LIST_FOREACH(mr, &med2->med_right, mr_list)
+		mr->mr_refcount++;
 
 	med2->med_bootstrap->mp_refcount++;
 	med2->med_kernel->mp_refcount++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.h,v 1.11 2002/12/27 19:57:47 manu Exp $	 */
+/*	$NetBSD: mach_message.h,v 1.12 2002/12/30 18:44:33 manu Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -231,5 +231,8 @@ struct mach_message *mach_message_get(mach_msg_header_t *,
 void mach_message_put(struct mach_message *);
 void mach_message_put_shlocked(struct mach_message *);
 void mach_message_put_exclocked(struct mach_message *);
+#ifdef DEBUG_MACH
+void mach_debug_message(void);
+#endif
 
 #endif /* !_MACH_MESSAGE_H_ */

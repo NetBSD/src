@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.c,v 1.24 2002/12/30 12:46:19 manu Exp $ */
+/*	$NetBSD: mach_port.c,v 1.25 2002/12/30 18:44:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_compat_darwin.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.24 2002/12/30 12:46:19 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.25 2002/12/30 18:44:33 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: mach_port.c,v 1.24 2002/12/30 12:46:19 manu Exp $");
 #include <compat/mach/mach_errno.h>
 #include <compat/mach/mach_syscallargs.h>
 
+#ifdef COMPAT_DARWIN
+#include <compat/darwin/darwin_exec.h>
+#endif
+
 /* Right and port pools, list of all rights and its lock */
 static struct pool mach_port_pool;
 static struct pool mach_right_pool;
@@ -64,6 +70,7 @@ struct lock mach_right_list_lock;
 
 struct mach_port *mach_bootstrap_port;
 struct mach_port *mach_clock_port;
+struct mach_port *mach_saved_bootstrap_port;
 
 int
 mach_sys_reply_port(p, v, retval)
@@ -372,7 +379,8 @@ mach_port_move_member(args)
 		return mach_msg_error(args, EPERM);
 		
 	lockmgr(&mach_right_list_lock, LK_EXCLUSIVE, NULL);
-	/* If it was already in a port set, remove it */
+
+	/* Remove it from an existing port set */
 	if (mrr->mr_sethead != mrr)
 		LIST_REMOVE(mrr, mr_setlist);
 
@@ -405,6 +413,7 @@ mach_port_init(void)
 
 	mach_bootstrap_port = mach_port_get();
 	mach_clock_port = mach_port_get();
+	mach_saved_bootstrap_port = mach_bootstrap_port;
 
 	return;
 }
@@ -483,7 +492,7 @@ mach_right_get(mp, p, type)
 	mr->mr_sethead = mr; 
 	mr->mr_refcount = 1;
 
-	LIST_INIT(&mr->mr_set); /* Usefull only for a right on a port set */
+	LIST_INIT(&mr->mr_set);
 
 	if (mp != NULL)
 		mp->mp_refcount++;
@@ -541,6 +550,9 @@ mach_right_put_exclocked(mr)
 	if (mr->mr_refcount != 0)
 		return;
 
+#ifdef DEBUG_MACH
+	printf("mach_right_put: put right %p, port %p\n", mr, mr->mr_port);
+#endif
 	if (mr->mr_type & MACH_PORT_TYPE_PORT_SET) {
 		while((cmr = LIST_FIRST(&mr->mr_set)) != NULL)
 			mach_right_put_exclocked(cmr);			
@@ -577,7 +589,13 @@ mach_right_check(mr, p, type)
 
 	lockmgr(&mach_right_list_lock, LK_SHARED, NULL);
 
+#ifdef DEBUG_MACH_RIGHT
+	printf("mach_right_check: type = %x, mr = %p\n", type, mr);
+#endif
 	LIST_FOREACH(cmr, &med->med_right, mr_list) {
+#ifdef DEBUG_MACH_RIGHT
+		printf("cmr = %p, cmr->mr_type = %x\n", cmr, cmr->mr_type);
+#endif
 		if (cmr != mr)
 			continue;
 		if (type & cmr->mr_type)
@@ -617,27 +635,51 @@ mach_right_check_all(mr, type)
 
 #ifdef DEBUG_MACH
 void 
-mach_debug_port(p, more)
-	struct proc *p;
-	int more;
+mach_debug_port(void)
 {
+	struct proc *p;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
-	
-	printf("mach_debug_port(%p)\n", p);
+	struct mach_right *mrs;
 
-	med = (struct mach_emuldata *)p->p_emuldata;
-
-	LIST_FOREACH(mr, &med->med_right, mr_list) {
-		printf(" right = %p\n", mr);
-		if (more == 0)
+	LIST_FOREACH(p, &allproc, p_list) {
+		if ((p->p_emul != &emul_mach) &&
+#ifdef COMPAT_DARWIN
+		    (p->p_emul != &emul_darwin) &&
+#endif
+		    1)
 			continue;
-		printf("  port = %p\n", mr->mr_port);
-		printf("    recv = %p\n", mr->mr_port->mp_recv);
-		printf("    count = %d\n", mr->mr_port->mp_count);
-		printf("    refcount = %d\n", mr->mr_port->mp_refcount);
-		printf("  proc = %p\n", mr->mr_p);
-		printf("  type = 0x%x\n\n", mr->mr_type);
+
+		med = p->p_emuldata;
+		LIST_FOREACH(mr, &med->med_right, mr_list) {		
+			if (mr->mr_sethead == mr) {
+				printf("pid %d: %p(%x)=>%p", 
+				    p->p_pid, mr, mr->mr_type, mr->mr_port);
+				if (mr->mr_port != NULL) 
+					printf("[%p]\n", 
+					    mr->mr_port->mp_recv->mr_sethead);
+				else
+					printf("[NULL]\n");
+				
+				continue;
+			}
+
+			/* Port set... */
+			printf("pid %d: set %p(%x) ", 
+			    p->p_pid, mr, mr->mr_type);
+			LIST_FOREACH(mrs, &mr->mr_set, mr_setlist) {
+				printf("%p(%x)=>%p", 
+				    mrs, mrs->mr_type, mrs->mr_port);
+				if (mrs->mr_port != NULL) 
+					printf("[%p]", 
+					    mrs->mr_port->mp_recv->mr_sethead);
+				else
+					printf("[NULL]");
+				
+				printf(" ");
+			}
+			printf("\n");
+		}
 	}
 	return;
 }

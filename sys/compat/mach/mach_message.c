@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.14 2002/12/30 12:41:52 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.15 2002/12/30 18:44:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.14 2002/12/30 12:41:52 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.15 2002/12/30 18:44:33 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
+#include "opt_compat_darwin.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -61,6 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.14 2002/12/30 12:41:52 manu Exp $
 #include <compat/mach/mach_exec.h>
 #include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscallargs.h>
+
+#ifdef COMPAT_DARWIN
+#include <compat/darwin/darwin_exec.h>
+#endif
 
 /* Mach message pool */
 static struct pool mach_message_pool;
@@ -144,6 +149,9 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		rr = (struct mach_right *)sm->msgh_remote_port;
 
 		if (mach_right_check_all(rr, MACH_PORT_TYPE_ALL_RIGHTS) == 0) {
+#ifdef DEBUG_MACH
+			printf("msg id %d: invalid dest\n", sm->msgh_id);
+#endif
 			*retval = MACH_SEND_INVALID_DEST;
 			goto out1;
 		}
@@ -173,7 +181,8 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		med = (struct mach_emuldata *)p->p_emuldata;
 		mp = rr->mr_port;
 		if ((mp == med->med_host) || (mp == med->med_kernel) ||
-		    (mp == mach_clock_port) || (mp == mach_bootstrap_port)) {
+		    (mp == mach_clock_port) || 
+		    (mp == mach_saved_bootstrap_port)) {
 			struct mach_trap_args args;
 			mach_msg_header_t *rm;
 
@@ -235,9 +244,15 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			 */
 			mp = lr->mr_port;
 			(void)mach_message_get(rm, rcv_size, mp);
-#ifdef DEBUG_MACH
-			printf("pid %d: message queued on port %p (id %d)\n", 
-			    p->p_pid, mp, rm->msgh_id);
+#ifdef DEBUG_MACH_MSG
+			printf("pid %d: message queued on port %p (%d) [%p]\n", 
+			    p->p_pid, mp, rm->msgh_id,
+			    mp->mp_recv->mr_sethead);
+			if (sm->msgh_id == 404)
+				printf("*** msg to bootstrap. port = %p, "
+				    "recv = %p [%p]\n", mach_bootstrap_port, 
+				    mach_bootstrap_port->mp_recv,
+				    mach_bootstrap_port->mp_recv->mr_sethead);
 #endif
 			wakeup(mp->mp_recv->mr_sethead);
 out3:			free(sm, M_EMULDATA);
@@ -251,9 +266,10 @@ out3:			free(sm, M_EMULDATA);
 		 	 */
 			mp = rr->mr_port;
 			(void)mach_message_get(sm, send_size, mp);
-#ifdef DEBUG_MACH
-			printf("pid %d: message queued on port %p (%d)\n", 
-			    p->p_pid, mp, sm->msgh_id);
+#ifdef DEBUG_MACH_MSG
+			printf("pid %d: message queued on port %p (%d) [%p]\n", 
+			    p->p_pid, mp, sm->msgh_id, 
+			    mp->mp_recv->mr_sethead);
 #endif
 			wakeup(mp->mp_recv->mr_sethead);
 		}
@@ -334,11 +350,11 @@ out1:
 			 * some or until we get a timeout.
 			 */
 			if (cmr == NULL) {
-#ifdef DEBUG_MACH
-				printf("pid %d: wait on port %p\n", 
-				    p->p_pid, mp);
+#ifdef DEBUG_MACH_MSG
+				printf("pid %d: wait on port %p [%p]\n",
+				    p->p_pid, mp, mr->mr_sethead);
 #endif
-				error = tsleep(mr, PZERO|PCATCH, 
+				error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
 				    "mach_msg", timeout);
 				if ((error == ERESTART) || (error == EINTR)) {
 					*retval = MACH_RCV_INTERRUPTED;
@@ -389,12 +405,13 @@ out1:
 				uprintf("mach_msg_trap: bad receive "
 				    "port/right\n");
 #endif
-#ifdef DEBUG_MACH
-			printf("pid %d: wait on port %p\n", p->p_pid, mp);
+#ifdef DEBUG_MACH_MSG
+			printf("pid %d: wait on port %p [%p]\n", 
+			    p->p_pid, mp, mr->mr_sethead);
 #endif
 			if (mp->mp_count == 0) {
-				error = tsleep(mr, PZERO|PCATCH, "mach_msg", 
-				    timeout);
+				error = tsleep(mr->mr_sethead, PZERO|PCATCH, 
+				    "mach_msg", timeout);
 				if ((error == ERESTART) || (error == EINTR)) {
 					*retval = MACH_RCV_INTERRUPTED;
 					return 0;
@@ -425,7 +442,7 @@ out1:
 		 */
 		lockmgr(&mp->mp_msglock, LK_SHARED, NULL);
 		mm = TAILQ_FIRST(&mp->mp_msglist);
-#ifdef DEBUG_MACH
+#ifdef DEBUG_MACH_MSG
 		printf("pid %d: dequeue message on port %p (id %d)\n", 
 		    p->p_pid, mp, mm->mm_msg->msgh_id);
 #endif
@@ -649,7 +666,7 @@ mach_move_right(bits, msgh, mr, tr, p)
 
 	case MACH_MSG_TYPE_MOVE_SEND:
 		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND);
-		mach_right_put(mr);
+		/* mach_right_put(mr); */
 		break;
 
 	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
@@ -658,7 +675,7 @@ mach_move_right(bits, msgh, mr, tr, p)
 
 	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
 		(void)mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE);
-		mach_right_put(mr);
+		/* mach_right_put(mr); */
 		break;
 
 	case MACH_MSG_TYPE_MOVE_RECEIVE:
@@ -673,3 +690,56 @@ mach_move_right(bits, msgh, mr, tr, p)
 
 	return 0;
 }
+
+#ifdef DEBUG_MACH
+void 
+mach_debug_message(void)
+{
+	struct proc *p;
+	struct mach_emuldata *med;
+	struct mach_right *mr;
+	struct mach_right *mrs;
+	struct mach_port *mp;
+	struct mach_message *mm;
+
+	LIST_FOREACH(p, &allproc, p_list) {
+		if ((p->p_emul != &emul_mach) &&
+#ifdef COMPAT_DARWIN
+		    (p->p_emul != &emul_darwin) &&
+#endif
+		    1)
+			continue;
+
+		med = p->p_emuldata;
+		LIST_FOREACH(mr, &med->med_right, mr_list)
+			if (mr->mr_sethead == mr) {
+				mp = mr->mr_port;
+				if (mp == NULL)
+					continue;
+
+				printf("port %p(%d) ", mp, mp->mp_count);
+
+				TAILQ_FOREACH(mm, &mp->mp_msglist, mm_list)
+					printf("%d ", mm->mm_msg->msgh_id);
+
+				printf("\n");
+				continue;			
+			}
+			/* Port set... */
+			LIST_FOREACH(mrs, &mr->mr_set, mr_setlist) {
+				mp = mrs->mr_port;
+				if (mp == NULL)
+					continue;
+
+				printf("port %p(%d) ", mp, mp->mp_count);
+
+				TAILQ_FOREACH(mm, &mp->mp_msglist, mm_list)
+					printf("%d ", mm->mm_msg->msgh_id);
+
+				printf("\n");
+			}
+	}
+	return;
+}
+
+#endif /* DEBUG_MACH */
