@@ -1,4 +1,4 @@
-/*	$NetBSD: rpckbd_iomd.c,v 1.2 2001/11/27 01:03:53 thorpej Exp $	*/
+/*	$NetBSD: rpckbd_iomd.c,v 1.3 2002/03/23 02:00:26 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,9 +99,10 @@ rpckbd_iomd_attach(parent, self, aux)
 	isconsole = 0;
 #else
 	isconsole = 1;
+#endif
+
 	console_kbd.sc_device = sc->sc_device;
 	sc = &console_kbd;
-#endif
 
 	sc->sc_iot = ka->ka_iot;
 	sc->sc_ioh = ka->ka_ioh;
