@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.24 1999/04/11 04:04:07 chs Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.25 1999/05/05 05:21:13 chs Exp $	*/
 
 /*
  *
@@ -627,7 +627,10 @@ vaddr_t va;
 vsize_t len;
 
 {
+  struct pmap *pm = pmap_kernel();
   pt_entry_t *pte;
+  int s;
+
   len = len / NBPG;
 
   for ( /* null */ ; len ; len--, va += NBPG) {
@@ -645,6 +648,13 @@ vsize_t len;
       pmap_remove(pmap_kernel(), va, va + (len*NBPG)); /* punt ... */
       return;
     }
+
+    s = splimp();
+    simple_lock(&pm->pm_obj.vmobjlock);
+    pm->pm_stats.resident_count--;
+    pm->pm_stats.wired_count--;
+    simple_unlock(&pm->pm_obj.vmobjlock);
+    splx(s);
 
     *pte = 0;		/* zap! */
 #if defined(I386_CPU)
@@ -670,7 +680,17 @@ __inline static void pmap_kremove1(va)
 vaddr_t va;
 
 {
+  struct pmap *pm = pmap_kernel();
   pt_entry_t *pte;
+  int s;
+
+  s = splimp();
+  simple_lock(&pm->pm_obj.vmobjlock);
+  pm->pm_stats.resident_count--;
+  pm->pm_stats.wired_count--;
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
+
   pte = vtopte(va);
   *pte = 0;		/* zap! */
   pmap_update_pg(va);
@@ -687,12 +707,20 @@ struct vm_page **pgs;
 int npgs;
 
 {
+  struct pmap *pm = pmap_kernel();
   pt_entry_t *pte, opte;
-  int lcv;
+  int s, lcv;
   vaddr_t tva;
 #if defined(I386_CPU)
   boolean_t need_update = FALSE;
 #endif
+
+  s = splimp();
+  simple_lock(&pm->pm_obj.vmobjlock);
+  pm->pm_stats.resident_count += npgs;
+  pm->pm_stats.wired_count += npgs;
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
 
   for (lcv = 0 ; lcv < npgs ; lcv++) {
     tva = va + lcv * NBPG;
