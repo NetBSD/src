@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_scsi.c,v 1.34 2003/09/08 06:31:23 mycroft Exp $	*/
+/*	$NetBSD: sd_scsi.c,v 1.35 2003/09/09 06:32:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.34 2003/09/08 06:31:23 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd_scsi.c,v 1.35 2003/09/09 06:32:14 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,8 @@ struct sd_scsibus_mode_sense_data {
 
 static int	sd_scsibus_mode_sense __P((struct sd_softc *,
 		    u_int8_t, void *, size_t, int, int, int *));
+static int	sd_scsibus_mode_select __P((struct sd_softc *,
+		    u_int8_t, void *, size_t, int, int));
 static int	sd_scsibus_get_parms __P((struct sd_softc *,
 		    struct disk_parms *, int));
 static int	sd_scsibus_get_simplifiedparms __P((struct sd_softc *,
@@ -188,13 +190,39 @@ sd_scsibus_mode_sense(sd, byte2, sense, size, page, flags, big)
 	    !(sd->sc_periph->periph_quirks & PQUIRK_NOBIGMODESENSE)) {
 		*big = 1;
 		return scsipi_mode_sense_big(sd->sc_periph, byte2, page, sense,
-		    size, flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
-		    SDRETRIES, 6000);
+		    size + sizeof(struct scsipi_mode_header_big),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 	} else {
 		*big = 0;
 		return scsipi_mode_sense(sd->sc_periph, byte2, page, sense,
-		    size, flags | XS_CTL_SILENT | XS_CTL_DATA_ONSTACK,
-		    SDRETRIES, 6000);
+		    size + sizeof(struct scsipi_mode_header),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+	}
+}
+
+static int
+sd_scsibus_mode_select(sd, byte2, sense, size, flags, big)
+	struct sd_softc *sd;
+	u_int8_t byte2;
+	void *sense;
+	size_t size;
+	int flags, big;
+{
+
+	if (big) {
+		struct scsipi_mode_header_big *header = sense;
+
+		_lto2b(0, header->data_length);
+		return scsipi_mode_select_big(sd->sc_periph, byte2, sense,
+		    size + sizeof(struct scsipi_mode_header_big),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
+	} else {
+		struct scsipi_mode_header *header = sense;
+
+		header->data_length = 0;
+		return scsipi_mode_select(sd->sc_periph, byte2, sense,
+		    size + sizeof(struct scsipi_mode_header),
+		    flags | XS_CTL_DATA_ONSTACK, SDRETRIES, 6000);
 	}
 }
 
@@ -295,7 +323,9 @@ sd_scsibus_get_parms(sd, dp, flags)
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
-	    sizeof(scsipi_sense), 4, flags, &big);
+	    sizeof(scsipi_sense.blk_desc) +
+	    sizeof(scsipi_sense.pages.rigid_geometry), 4,
+	    flags | XS_CTL_SILENT, &big);
 	if (!error) {
 		if (big) {
 			bdesc = (void *)(&scsipi_sense.header.big + 1);
@@ -347,7 +377,9 @@ printf("page 4 ok\n");
 page5:
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
-	    sizeof(scsipi_sense), 5, flags, &big);
+	    sizeof(scsipi_sense.blk_desc) +
+	    sizeof(scsipi_sense.pages.flex_geometry), 5,
+	    flags | XS_CTL_SILENT, &big);
 	if (!error) {
 		if (big) {
 			bdesc = (void *)(&scsipi_sense.header.big + 1);
@@ -392,7 +424,7 @@ printf("page 5 ok\n");
 page0:
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_scsibus_mode_sense(sd, 0, &scsipi_sense,
-	    sizeof(scsipi_sense), 0, flags, &big);
+	    sizeof(scsipi_sense.blk_desc), 0, flags | XS_CTL_SILENT, &big);
 	if (!error) {
 		if (big) {
 			bdesc = (void *)(&scsipi_sense.header.big + 1);
@@ -490,7 +522,7 @@ sd_scsibus_getcache(sd, bitsp)
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_scsibus_mode_sense(sd, SMS_DBD, &scsipi_sense,
-	    sizeof(scsipi_sense), 8, 0, &big);
+	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big);
 	if (error)
 		return (error);
 
@@ -508,7 +540,8 @@ sd_scsibus_getcache(sd, bitsp)
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_scsibus_mode_sense(sd, SMS_DBD, &scsipi_sense,
-	    sizeof(scsipi_sense), SMS_PAGE_CTRL_CHANGEABLE|8, 0, &big);
+	    sizeof(scsipi_sense.pages.caching_params),
+	    SMS_PAGE_CTRL_CHANGEABLE|8, 0, &big);
 	if (error == 0) {
 		if (big)
 			pages = (void *)(&scsipi_sense.header.big + 1);
@@ -543,7 +576,7 @@ sd_scsibus_setcache(sd, bits)
 
 	memset(&scsipi_sense, 0, sizeof(scsipi_sense));
 	error = sd_scsibus_mode_sense(sd, SMS_DBD, &scsipi_sense,
-	    sizeof(scsipi_sense), 8, 0, &big); 
+	    sizeof(scsipi_sense.pages.caching_params), 8, 0, &big); 
 	if (error)
 		return (error);
 
@@ -572,21 +605,7 @@ sd_scsibus_setcache(sd, bits)
 	if (bits & DKCACHE_SAVE)
 		byte2 |= SMS_SP;
 
-	if (big) {
-		_lto2b(0, scsipi_sense.header.big.data_length);
-		return (scsipi_mode_select_big(sd->sc_periph, byte2|SMS_PF,
-		    (void *)&scsipi_sense, sizeof(scsipi_sense.header.big) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    pages->caching_params.pg_length,
-		    /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
-		    SDRETRIES, 10000));
-	} else {
-		scsipi_sense.header.small.data_length = 0;
-		return (scsipi_mode_select(sd->sc_periph, byte2|SMS_PF,
-		    (void *)&scsipi_sense, sizeof(scsipi_sense.header.small) +
-		    sizeof(struct scsipi_mode_page_header) +
-		    pages->caching_params.pg_length,
-		    /* XS_CTL_SILENT | */ XS_CTL_DATA_ONSTACK,
-		    SDRETRIES, 10000));
-	}
+	return (sd_scsibus_mode_select(sd, byte2|SMS_PF, &scsipi_sense,
+	    sizeof(struct scsipi_mode_page_header) +
+	    pages->caching_params.pg_length, 0, big));
 }
