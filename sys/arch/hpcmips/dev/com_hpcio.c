@@ -1,7 +1,7 @@
-/*	$NetBSD: sg2com_vrip.c,v 1.3 2002/01/02 10:09:35 takemura Exp $	*/
+/*	$NetBSD: com_hpcio.c,v 1.1 2002/01/04 14:11:51 takemura Exp $	*/
 
 /*-
- * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
+ * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,55 +35,54 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
-
 #include <sys/termios.h>
 
 #include <machine/intr.h>
 #include <machine/bus.h>
+#include <machine/platid.h>
+#include <machine/platid_mask.h>
 
-#include <hpcmips/vr/vr.h>
-#include <hpcmips/vr/vrcpudef.h>
-#include <hpcmips/vr/vripvar.h>
-#include <hpcmips/vr/sg2comreg.h>
-#include <hpcmips/vr/sg2com_vripvar.h>
+#include <hpcmips/dev/com_hpciovar.h>
 
+#include <dev/hpc/hpciovar.h>
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
 
 #include "locators.h"
 
-#define SG2COM_VRIPDEBUG
-#ifdef SG2COM_VRIPDEBUG
-int	sg2com_vrip_debug = 0;
-#define	DPRINTF(arg) if (sg2com_vrip_debug) printf arg;
-#define	VPRINTF(arg) if (sg2com_vrip_debug || bootverbose) printf arg;
+#define COM_HPCIODEBUG
+#ifdef COM_HPCIODEBUG
+int	com_hpcio_debug = 0;
+#define	DPRINTF(arg...) do { if (com_hpcio_debug) printf(arg); } while (0)
 #else
-#define	DPRINTF(arg)
-#define	VPRINTF(arg) if (bootverbose) printf arg;
+#define	DPRINTF(arg...) do {} while (0)
 #endif
 
-struct sg2com_vrip_softc {
-	struct com_softc	sc_com;
-	struct bus_space_tag	sc_iot;
-};
-static struct bus_space_tag sg2com_vrip_cniotx;
-static bus_space_tag_t sg2com_vrip_cniot = &sg2com_vrip_cniotx;
-static int sg2com_vrip_cniobase;
+#define COM_HPCIO_BYTE_ALIGNMENT	0
+#define COM_HPCIO_HALFWORD_ALIGNMENT	1
 
-static int sg2com_vrip_probe(struct device *, struct cfdata *, void *);
-static void sg2com_vrip_attach(struct device *, struct device *, void *);
-static int sg2com_vrip_common_probe(bus_space_tag_t, int);
-void sg2com_vrip_iot_init(bus_space_tag_t iot, bus_space_tag_t base);
+struct com_hpcio_softc {
+	struct com_softc	hsc_com;
+	struct bus_space_tag	hsc_iot;
+	struct hpcio_chip	*hsc_hc;
+};
+static struct bus_space_tag com_hpcio_cniotx;
+static bus_space_tag_t com_hpcio_cniot = &com_hpcio_cniotx;
+static int com_hpcio_cniobase;
+
+static int com_hpcio_probe(struct device *, struct cfdata *, void *);
+static void com_hpcio_attach(struct device *, struct device *, void *);
+static int com_hpcio_common_probe(bus_space_tag_t, int, int *);
+void com_hpcio_iot_init(bus_space_tag_t iot, bus_space_tag_t base);
 bus_space_protos(bs_notimpl);
 bus_space_protos(bs_through);
-bus_space_protos(sg2com_vrip);
+bus_space_protos(com_hpcio);
 
-struct cfattach sg2com_vrip_ca = {
-	sizeof(struct sg2com_vrip_softc), sg2com_vrip_probe,
-	sg2com_vrip_attach
+struct cfattach com_hpcio_ca = {
+	sizeof(struct com_hpcio_softc), com_hpcio_probe, com_hpcio_attach
 };
 
-struct bus_space_ops sg2com_vrip_bs_ops = {
+struct bus_space_ops com_hpcio_bs_ops = {
 	/* mapping/unmapping */
 	bs_through_bs_map,
 	bs_through_bs_unmap,
@@ -103,7 +102,7 @@ struct bus_space_ops sg2com_vrip_bs_ops = {
 	bs_through_bs_barrier,
 
 	/* read (single) */
-	sg2com_vrip_bs_r_1,
+	com_hpcio_bs_r_1,
 	bs_notimpl_bs_r_2,
 	bs_notimpl_bs_r_4,
 	bs_notimpl_bs_r_8,
@@ -121,13 +120,13 @@ struct bus_space_ops sg2com_vrip_bs_ops = {
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
-	sg2com_vrip_bs_w_1,
+	com_hpcio_bs_w_1,
 	bs_notimpl_bs_w_2,
 	bs_notimpl_bs_w_4,
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */
-	sg2com_vrip_bs_wm_1,
+	com_hpcio_bs_wm_1,
 	bs_notimpl_bs_wm_2,
 	bs_notimpl_bs_wm_4,
 	bs_notimpl_bs_wm_8,
@@ -196,34 +195,46 @@ struct bus_space_ops sg2com_vrip_bs_ops = {
 };
 
 int
-sg2com_vrip_cndb_attach(bus_space_tag_t iot, int iobase, int rate,
+com_hpcio_cndb_attach(bus_space_tag_t iot, int iobase, int rate,
     int frequency, tcflag_t cflag, int kgdb)
 {
+	int alignment;
 
-	DPRINTF(("sg2com_vrip_cndb_attach()\n"));
-	sg2com_vrip_iot_init(sg2com_vrip_cniot, iot);
-	if (!sg2com_vrip_common_probe(sg2com_vrip_cniot, iobase)) {
-		DPRINTF(("sg2com_vrip_cndb_attach(): probe failed\n"));
+	DPRINTF("com_hpcio_cndb_attach()\n");
+	if (!com_hpcio_common_probe(iot, iobase, &alignment)) {
+		DPRINTF("com_hpcio_cndb_attach(): probe failed\n");
 		return (ENOTTY);
 	}
-	sg2com_vrip_cniobase = iobase;
-	DPRINTF(("sg2com_vrip_cndb_attach(): probe succeeded\n"));
+	if (alignment == COM_HPCIO_HALFWORD_ALIGNMENT) {
+		DPRINTF("com_hpcio_cndb_attach(): half word aligned\n");
+		com_hpcio_iot_init(&com_hpcio_cniotx, iot);
+		com_hpcio_cniot = &com_hpcio_cniotx;
+	} else {
+		com_hpcio_cniot = iot;
+	}
+	com_hpcio_cniobase = iobase;
+	DPRINTF("com_hpcio_cndb_attach(): probe succeeded\n");
 #ifdef KGDB
 	if (kgdb)
-		return (com_kgdb_attach(sg2com_vrip_cniot, iobase, rate,
+		return (com_kgdb_attach(com_hpcio_cniot, iobase, rate,
 		    frequency, cflag));
 	else
 #endif
-		return (comcnattach(sg2com_vrip_cniot, iobase, rate,
+		return (comcnattach(com_hpcio_cniot, iobase, rate,
 		    frequency, cflag));
 }
 
 static int
-sg2com_vrip_common_probe(bus_space_tag_t iot, int iobase)
+com_hpcio_common_probe(bus_space_tag_t iot, int iobase, int *alignment)
 {
 	bus_space_handle_t ioh;
+	static struct bus_space_tag tmpiot;
 	int rv;
 
+	/*
+	 * try byte aligned register
+	 */
+	*alignment = COM_HPCIO_BYTE_ALIGNMENT;
 	if (bus_space_map(iot, iobase, 1, 0, &ioh)) {
 		printf(": can't map i/o space\n");
 		return 0;
@@ -231,107 +242,126 @@ sg2com_vrip_common_probe(bus_space_tag_t iot, int iobase)
 	rv = comprobe1(iot, ioh);
 	bus_space_unmap(iot, ioh, 1);
 
+	if (rv != 0)
+		return (rv);
+
+	/*
+	 * try half word aligned register
+	 */
+	*alignment = COM_HPCIO_HALFWORD_ALIGNMENT;
+	com_hpcio_iot_init(&tmpiot, iot);
+	if (bus_space_map(&tmpiot, iobase, 1, 0, &ioh)) {
+		printf(": can't map i/o space\n");
+		return 0;
+	}
+	rv = comprobe1(&tmpiot, ioh);
+	bus_space_unmap(&tmpiot, ioh, 1);
+
 	return (rv);
 }
 
 static int
-sg2com_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
+com_hpcio_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct vrip_attach_args *va = aux;
-	bus_space_tag_t iot = va->va_iot;
-	int res;
-	
-	if (sg2com_vrip_cniot->bs_base == iot &&
-	    sg2com_vrip_cniobase == va->va_addr &&
-	    com_is_console(sg2com_vrip_cniot, va->va_addr, 0)) {
-		/*
-		 *  We have alredy probed.
-		 */
-		res = 1;
-	} else {
-		static struct bus_space_tag tmpiot;
+	struct hpcio_attach_args *haa = aux;
+	bus_space_tag_t iot = haa->haa_iot;
+	int addr, alignment;
 
-		sg2com_vrip_iot_init(&tmpiot, iot);
-		res = sg2com_vrip_common_probe(&tmpiot, va->va_addr);
+	if (cf->cf_loc[HPCIOIFCF_PLATFORM] != HPCIOIFCF_PLATFORM_DEFAULT) {
+		platid_mask_t mask;
+
+		mask = PLATID_DEREF(cf->cf_loc[HPCIOIFCF_PLATFORM]);
+		if (!platid_match(&platid, &mask))
+			return (0); /* platform id didn't match */
 	}
 
-	DPRINTF((res ? ": found COM ports\n" : ": can't probe COM device\n"));
+	if ((addr = cf->cf_loc[HPCIOIFCF_ADDR]) == HPCIOIFCF_ADDR_DEFAULT)
+		return (0); /* address wasn't specified */
 
-	if (res) {
-		va->va_size = COM_NPORTS;
-	}
-
-	return (res);
+	return com_hpcio_common_probe(iot, addr, &alignment);
 }
 
 
 static void
-sg2com_vrip_attach(struct device *parent, struct device *self, void *aux)
+com_hpcio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sg2com_vrip_softc *vsc = (void *)self;
-	struct com_softc *sc = &vsc->sc_com;
-	struct vrip_attach_args *va = aux;
+	struct com_hpcio_softc *hsc = (void *)self;
+	struct com_softc *sc = &hsc->hsc_com;
+	struct hpcio_attach_args *haa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
+	int addr, port, mode, alignment, *loc;
 
-	if (sg2com_vrip_cniot->bs_base == va->va_iot &&
-	    sg2com_vrip_cniobase == va->va_addr &&
-	    com_is_console(sg2com_vrip_cniot, va->va_addr, 0)) {
-		iot = sg2com_vrip_cniot;
+	loc = sc->sc_dev.dv_cfdata->cf_loc;
+	addr = loc[HPCIOIFCF_ADDR];
+	printf(" addr %x", addr);
+	if ((com_hpcio_cniot == haa->haa_iot ||
+	    com_hpcio_cniot->bs_base == haa->haa_iot) &&
+	    com_hpcio_cniobase == addr &&
+	    com_is_console(com_hpcio_cniot, addr, 0)) {
+		iot = com_hpcio_cniot;
+		if (com_hpcio_cniot->bs_base == haa->haa_iot)
+			printf(", half word aligned");
 	} else {
-		iot = &vsc->sc_iot;
-		sg2com_vrip_iot_init(iot, va->va_iot);
+		com_hpcio_common_probe(haa->haa_iot, addr, &alignment);
+		if (alignment == COM_HPCIO_HALFWORD_ALIGNMENT) {
+			printf(", half word aligned");
+			iot = &hsc->hsc_iot;
+			com_hpcio_iot_init(iot, haa->haa_iot);
+		} else {
+			iot = haa->haa_iot;
+		}
 	}
-	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
+	if (bus_space_map(iot, addr, 1, 0, &ioh)) {
 		printf(": can't map bus space\n");
 		return;
 	}
-	sc->sc_iobase = va->va_addr;
+	sc->sc_iobase = addr;
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 
 	sc->enable = NULL;
 	sc->disable = NULL;
 
-	sc->sc_frequency = SG2COM_FREQ;
+	sc->sc_frequency = COM_FREQ;
 	com_attach_subr(sc);
-#if 0
-	vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY, comintr, self);
-#else
-	printf("XXX, sg2com: intrrupt line is unknown\n");
-#endif
+
+	hsc->hsc_hc = (*haa->haa_getchip)(haa->haa_sc, loc[HPCIOIFCF_IOCHIP]);
+	port = loc[HPCIOIFCF_PORT];
+	mode = HPCIO_INTR_LEVEL | HPCIO_INTR_HIGH;
+	hpcio_intr_establish(hsc->hsc_hc, port, mode, comintr, sc);
 }
 
 /*
  * bus stuff (registershalf word aligned)
  */
 void
-sg2com_vrip_iot_init(bus_space_tag_t iot, bus_space_tag_t base)
+com_hpcio_iot_init(bus_space_tag_t iot, bus_space_tag_t base)
 {
 
 	iot->bs_base = base;
-	iot->bs_ops = sg2com_vrip_bs_ops; /* structure assignment */
-	iot->bs_ops.bs_r_1 = sg2com_vrip_bs_r_1;
-	iot->bs_ops.bs_w_1 = sg2com_vrip_bs_w_1;
-	iot->bs_ops.bs_wm_1 = sg2com_vrip_bs_wm_1;
+	iot->bs_ops = com_hpcio_bs_ops; /* structure assignment */
+	iot->bs_ops.bs_r_1 = com_hpcio_bs_r_1;
+	iot->bs_ops.bs_w_1 = com_hpcio_bs_w_1;
+	iot->bs_ops.bs_wm_1 = com_hpcio_bs_wm_1;
 }
 
 u_int8_t
-sg2com_vrip_bs_r_1(bus_space_tag_t t, bus_space_handle_t bsh,
+com_hpcio_bs_r_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset)
 {
 	return bus_space_read_1(t->bs_base, bsh, offset * 2);
 }
 
 void
-sg2com_vrip_bs_w_1(bus_space_tag_t t, bus_space_handle_t bsh,
+com_hpcio_bs_w_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, u_int8_t value)
 {
 	bus_space_write_1(t->bs_base, bsh, offset * 2, value);
 }
 
 void
-sg2com_vrip_bs_wm_1(bus_space_tag_t t, bus_space_handle_t bsh,
+com_hpcio_bs_wm_1(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, const u_int8_t *addr, bus_size_t count)
 {
 	bus_space_write_multi_1(t->bs_base, bsh, offset * 2, addr, count);

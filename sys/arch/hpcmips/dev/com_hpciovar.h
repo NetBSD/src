@@ -1,7 +1,7 @@
-/*	$NetBSD: sg2comreg.h,v 1.1 2001/12/23 13:32:33 takemura Exp $	*/
+/*	$NetBSD: com_hpciovar.h,v 1.1 2002/01/04 14:11:51 takemura Exp $	*/
 
 /*-
- * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
+ * Copyright (c) 2002 TAKEMRUA Shin. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,5 +29,4 @@
  *
  */
 
-#define SG2COM_ADDR	0x0b600000
-#define SG2COM_FREQ	3686400
+int com_hpcio_cndb_attach(bus_space_tag_t, int, int, int, tcflag_t, int);
