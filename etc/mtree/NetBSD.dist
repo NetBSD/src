@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.130 2001/01/05 07:00:31 garbled Exp $
+#	$NetBSD: NetBSD.dist,v 1.131 2001/01/05 21:32:34 jdolecek Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -235,6 +235,11 @@ openssl
 # ./usr/include/protocols
 protocols
 # ./usr/include/protocols
+..
+
+# ./usr/include/readline
+readline
+# ./usr/include/readline
 ..
 
 # ./usr/include/rpc
