@@ -28,6 +28,7 @@ if [ -z "$MACHINE" ]; then OUTPUT_ARCH=${ARCH}; else OUTPUT_ARCH=${ARCH}:${MACHI
 test "$LD_FLAG" = "N" && DATA_ADDR=.
 INTERP=".interp   ${RELOCATING-0} : { *(.interp) 	}"
 PLT=".plt    ${RELOCATING-0} : { *(.plt)	}"
+ELFALIGN=`expr ${ELFSIZE} / 8`
 
 # if this is for an embedded system, don't add SIZEOF_HEADERS.
 if [ -z "$EMBEDDED" ]; then
@@ -148,6 +149,7 @@ SECTIONS
    *(.bss)
    *(COMMON)
   }
+  ${RELOCATING+. = ALIGN(${ELFALIGN});}
   ${RELOCATING+_end = . ;}
   ${RELOCATING+PROVIDE (end = .);}
 
