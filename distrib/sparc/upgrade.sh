@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.1 1995/10/20 16:56:03 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.2 1995/10/31 23:24:33 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -35,7 +35,7 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-VERSION=1.0A
+VERSION=1.1
 ROOTDISK=""				# filled in below
 FILESYSTEMS="/tmp/filesystems"		# used thoughout
 FQDN=""					# domain name
@@ -57,6 +57,25 @@ isin() {
 		shift
 	done
 	return 1
+}
+
+rmel() {
+# remove first argument from list formed by the remaining arguments
+	_a=$1; shift
+	while [ $# != 0 ]; do
+		if [ "$_a" != "$1" ]; then echo "$1"; fi
+		shift
+	done
+}
+
+twiddle()
+{
+	while : ; do
+		sleep 1; echo -n "/";
+		sleep 1; echo -n "-";
+		sleep 1; echo -n "\\";
+		sleep 1; echo -n "|";
+	 done > /dev/tty & echo $!
 }
 
 set_terminal() {
@@ -149,7 +168,8 @@ labelmoredisks() {
 You may label the following disks:
 
 __labelmoredisks_1
-	echo "$_DKDEVS" | grep -v "${ROOTDISK}"
+	_DKDEV=`rmel "${ROOTDISK}"`
+	echo $_DKDEVS
 	echo	""
 	echo -n	"Label which disk? [done] "
 	getresp "done"
@@ -158,10 +178,8 @@ __labelmoredisks_1
 			;;
 
 		*)
-			if echo "$_DKDEVS" | grep -v "${ROOTDISK}" | \
-				grep "^$resp" > /dev/null ; then
-				# XXX CODE ME
-				echo "Yup, it exists."
+			if echo "$_DKDEVS" | grep "^$resp" > /dev/null ; then
+				disklabel -e $resp
 			else
 				echo ""
 				echo "The disk $resp does not exist."
@@ -221,6 +239,9 @@ __configurenetwork_1
 		*)
 			if isin $resp $_IFS ; then
 				_interface_name=$resp
+
+				# remove from list
+				_IFS=`rmel $resp "$_IFS"`
 
 				# Get IP address
 				resp=""		# force one iteration
@@ -631,17 +652,17 @@ __get_timezone_1
 }
 
 echo	""
-echo	"Welcome to the NetBSD ${VERSION} upgrade program."
+echo	"Welcome to the NetBSD/sparc ${VERSION} upgrade program."
 cat << \__welcome_banner_1
 
-This program is designed to help you put NetBSD on your hard disk,
+This program is designed to help you put NetBSD on your disk,
 in a simple and rational way.  You'll be asked several questions,
 and it would probably be useful to have your disk's hardware
 manual, the installation notes, and a calculator handy.
 
-As with anything which modifies your hard disk's contents, this
+As with anything which modifies your disk's contents, this
 program can cause SIGNIFICANT data loss, and you are advised
-to make sure your hard drive is backed up before beginning the
+to make sure your data is backed up before beginning the
 installation process.
 
 Default answers are displyed in brackets after the questions.
@@ -688,7 +709,7 @@ case $rval in
 		cat << \__disklabel_not_present_1
 
 FATAL ERROR: There is no disklabel present on the root disk!  You must
-label the disk with SYS_INST before continuing.
+label the disk before continuing.
 
 __disklabel_not_present_1
 		exit
@@ -698,7 +719,7 @@ __disklabel_not_present_1
 		cat << \__disklabel_corrupted_1
 
 FATAL ERROR: The disklabel on the root disk is corrupted!  You must
-re-label the disk with SYS_INST before continuing.
+re-label the disk before continuing.
 
 __disklabel_corrupted_1
 		exit
@@ -708,8 +729,11 @@ __disklabel_corrupted_1
 		;;
 esac
 
-# Assume partition 'a' of $ROOTDISK is for the root filesystem.
-echo "Your existing root partition must be mounted."
+cat << \__mount_root
+Ready to mount your existing root filesystem. This is normally
+the `a' partition on your boot disk.
+
+__mount_root
 
 while : ; do
 	echo -n	"Root filesystem? [${ROOTDISK}a] "
@@ -814,7 +838,7 @@ fi
 # Ask the user which media to load the distribution from.
 cat << \__install_sets_1
 
-It is now time to extract the installation sets onto the hard disk.
+It is now time to extract the installation sets onto the disk.
 Make sure The sets are either on a local device (i.e. tape, CD-ROM) or on a
 network server.
 
@@ -915,7 +939,9 @@ esac
 (
 	echo -n "Making devices..."
 	cd /mnt/dev
+	pid=`twiddle`
 	sh MAKEDEV all
+	kill $pid
 	echo "done."
 
 	if [ -f /mnt/netbsd ]; then
