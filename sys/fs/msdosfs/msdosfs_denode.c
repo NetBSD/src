@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.4.2.5 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.4.2.6 2004/10/31 07:24:35 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4.2.5 2004/09/21 13:35:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.4.2.6 2004/10/31 07:24:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -636,7 +636,7 @@ msdosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
+		struct lwp *a_l;
 	} */ *ap = v;
 	struct lwp *l = ap->a_l;
 	struct vnode *vp = ap->a_vp;
