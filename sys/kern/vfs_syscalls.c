@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.160 2000/07/09 00:59:03 mycroft Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.161 2000/08/03 20:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1473,7 +1473,7 @@ sys_symlink(p, v, retval)
 	int error;
 	struct nameidata nd;
 
-	MALLOC(path, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
+	path = PNBUF_GET();
 	error = copyinstr(SCARG(uap, path), path, MAXPATHLEN, NULL);
 	if (error)
 		goto out;
@@ -1495,7 +1495,7 @@ sys_symlink(p, v, retval)
 	VOP_LEASE(nd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
 	error = VOP_SYMLINK(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr, path);
 out:
-	FREE(path, M_NAMEI);
+	PNBUF_PUT(path);
 	return (error);
 }
 
@@ -2879,11 +2879,11 @@ out:
 		vrele(fvp);
 	}
 	vrele(tond.ni_startdir);
-	FREE(tond.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(tond.ni_cnd.cn_pnbuf);
 out1:
 	if (fromnd.ni_startdir)
 		vrele(fromnd.ni_startdir);
-	FREE(fromnd.ni_cnd.cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(fromnd.ni_cnd.cn_pnbuf);
 	return (error == -1 ? 0 : error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.28 2000/07/22 15:26:15 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.29 2000/08/03 20:41:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -561,7 +561,7 @@ ext2fs_link(v)
 		ip->i_e2fs_nlink--;
 		ip->i_flag |= IN_CHANGE;
 	}
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 out1:
 	if (dvp != vp)
 		VOP_UNLOCK(vp, 0);
@@ -1089,7 +1089,7 @@ bad:
 	} else
 		*ap->a_vpp = tvp;
 out:
-	FREE(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	return (error);
 }
@@ -1340,7 +1340,7 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 		mode |= IFREG;
 
 	if ((error = VOP_VALLOC(dvp, mode, cnp->cn_cred, &tvp)) != 0) {
-		free(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 		vput(dvp);
 		return (error);
 	}
@@ -1365,7 +1365,7 @@ ext2fs_makeinode(mode, dvp, vpp, cnp)
 	if (error != 0)
 		goto bad;
 	if ((cnp->cn_flags & SAVESTART) == 0)
-		FREE(cnp->cn_pnbuf, M_NAMEI);
+		PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	*vpp = tvp;
 	return (0);
@@ -1375,7 +1375,7 @@ bad:
 	 * Write error occurred trying to update the inode
 	 * or the directory so must deallocate the inode.
 	 */
-	free(cnp->cn_pnbuf, M_NAMEI);
+	PNBUF_PUT(cnp->cn_pnbuf);
 	vput(dvp);
 	ip->i_e2fs_nlink = 0;
 	ip->i_flag |= IN_CHANGE;
