@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.18 2001/05/13 23:25:37 mbw Exp $
+.\"	$NetBSD: xfer,v 1.19 2001/07/22 13:33:59 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@ and
 .Pp
 For the 2-floppy sets (and the CD boot image), utilities to repair
 a badly crashed systems are included. The -small and -tiny images
-have seperate rescue floppy images because of lack of space.
+have separate rescue floppy images because of lack of space.
 .Pp
 If you are using a
 .Ul

@@ -271,7 +271,7 @@ char *strerror PROTO ((int));
 
    The most notable exception is MS-DOS (and consequently, Windows),
    which uses an ASCII Carriage Return followed by a Newline to
-   seperate each line.  Fortunately, MS-DOS C compiler libraries
+   separate each line.  Fortunately, MS-DOS C compiler libraries
    typically hide this from the programmer, returning just a Newline.
 
    Define EOL to be whatever getc() returns for a newline. */
