@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.67 1997/05/24 20:16:17 pk Exp $	*/
+/*	$NetBSD: esp.c,v 1.68 1997/07/19 21:57:01 pk Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -398,6 +398,9 @@ espattach(parent, self, aux)
 
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
+
+	/* Turn on target selection using the `dma' method */
+	ncr53c9x_dmaselect = 1;
 
 	bootpath_store(1, NULL);
 }
