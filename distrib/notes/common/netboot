@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.6 2002/06/08 01:54:02 mbw Exp $
+.\"	$NetBSD: netboot,v 1.7 2002/06/14 11:27:59 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -215,7 +215,8 @@ group {
                 # doesn't resolve to a simple name).
                 #
                 option host-name        "client";
-.if !\n[hp300]:!\n[sparc] \{\ 
+.if !\n[hp300] \{\
+.if !\n[sparc] \{\ 
                 #
                 # Name of the bootloader or kernel
                 # to download via tftp.
@@ -225,6 +226,7 @@ group {
 .\}
 .el .ie \n[next68k] \{\ 
                 filename                "boot";
+.\}
 .\}
 .\}
                 #
