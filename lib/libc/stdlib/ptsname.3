@@ -1,4 +1,4 @@
-.\" $NetBSD: ptsname.3,v 1.1 2004/05/27 02:58:48 christos Exp $
+.\" $NetBSD: ptsname.3,v 1.2 2004/05/28 00:06:51 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,13 +56,13 @@ The
 .Fn ptsname
 function is not re-entrant or thread-safe.
 .Sh RETURN VALUES
-If successful, 
+If successful,
 .Fn ptsname
 returns a pointer to a nul-terminated string containing the pathname
 of the slave pseudo-terminal device. If an error occurs
 .Fn ptsname
-will return 
-.Dv NULL 
+will return
+.Dv NULL
 and
 .Va errno
 is set to indicate the error.
