@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.1 2000/04/09 16:49:57 ragge Exp $ */
+/*	$NetBSD: if_ni.c,v 1.2 2000/04/16 09:55:39 ragge Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -142,9 +142,11 @@ static	int	niioctl __P((struct ifnet *, u_long, caddr_t));
 static	int	ni_add_rxbuf(struct ni_softc *, struct ni_dg *, int);
 static	void	ni_setup __P((struct ni_softc *));
 static	void	nitimeout __P((struct ifnet *));
+static	void	ni_shutdown(void *);
 static	void ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p);
+static	int failtest(struct ni_softc *, int, int, int, char *);
 
-volatile int endwait;	/* Used during autoconfig */
+volatile int endwait, retry;	/* Used during autoconfig */
 
 struct	cfattach ni_ca = {
 	sizeof(struct ni_softc), nimatch, niattach
@@ -199,7 +201,25 @@ ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p)
 
 	if (p)
 		*p = seg.ds_addr;
+	bzero(*v, size);
 }
+
+static int
+failtest(struct ni_softc *sc, int reg, int mask, int test, char *str)
+{
+	int i = 100;
+
+	do {
+		DELAY(100000);
+	} while (((NI_RREG(reg) & mask) != test) && --i);
+
+	if (i == 0) {
+		printf("%s: %s\n", sc->sc_dev.dv_xname, str);
+		return 1;
+	}
+	return 0;
+}
+
 
 /*
  * Interface exists: make available by filling in network interface
@@ -217,7 +237,7 @@ niattach(parent, self, aux)
 	struct ni_msg *msg;
 	struct ni_ptdb *ptdb;
 	caddr_t va;
-	int i, j, res;
+	int i, j, s, res;
 	u_short type;
 
 	type = bus_space_read_2(ba->ba_iot, ba->ba_ioh, BIREG_DTYPE);
@@ -237,7 +257,6 @@ niattach(parent, self, aux)
 	/*
 	 * Zero the newly allocated memory.
 	 */
-	bzero(sc->sc_gvppqb, sizeof(struct ni_gvppqb));
 
 	nipqb->np_veclvl = (ba->ba_ivec << 2) + 2;
 	nipqb->np_node = ba->ba_intcpu;
@@ -269,16 +288,21 @@ niattach(parent, self, aux)
 	/*
 	 * Start init sequence.
 	 */
-	/* Check state */
-	for (i = 0; i < 100; i++) {
-		if ((NI_RREG(NI_PSR) & PSR_STATE) == PSR_UNDEF)
-			break;
-		DELAY(100000);
-	}
-	if (i == 100) {
-		printf(": not undefined state\n");
+
+	/* Reset the node */
+	NI_WREG(BIREG_VAXBICSR, NI_RREG(BIREG_VAXBICSR) | BICSR_NRST);
+	DELAY(500000);
+	i = 20;
+	while ((NI_RREG(BIREG_VAXBICSR) & BICSR_BROKE) && --i)
+		DELAY(500000);
+	if (i == 0) {
+		printf("%s: BROKE bit set after reset\n", sc->sc_dev.dv_xname);
 		return;
 	}
+
+	/* Check state */
+	if (failtest(sc, NI_PSR, PSR_STATE, PSR_UNDEF, "not undefined state"))
+		return;
 
 	/* Clear owner bits */
 	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~PSR_OWN);
@@ -290,15 +314,9 @@ niattach(parent, self, aux)
 		DELAY(100000);
 
 	/* Check state */
-	for (i = 0; i < 100; i++) {
-		if ((NI_RREG(NI_PSR) & PSR_INITED))
-			break;
-		DELAY(100000);
-	}
-	if (i == 100) {
-		printf(": failed initialize\n");
+	if (failtest(sc, NI_PSR, PSR_INITED, PSR_INITED, "failed initialize"))
 		return;
-	}
+
 	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~PSR_OWN);
 
 	WAITREG(NI_PCR, PCR_OWN);
@@ -307,15 +325,9 @@ niattach(parent, self, aux)
 	WAITREG(NI_PSR, PSR_OWN);
 
 	/* Check state */
-	for (i = 0; i < 100; i++) {
-		if ((NI_RREG(NI_PSR) & PSR_STATE) == PSR_ENABLED)
-			break;
-		DELAY(10000);
-	}
-	if (i == 100) {
-		printf(": failed enable\n");
+	if (failtest(sc, NI_PSR, PSR_STATE, PSR_ENABLED, "failed enable"))
 		return;
-	}
+
 	NI_WREG(NI_PSR, NI_RREG(NI_PSR) & ~PSR_OWN);
 
 	/*
@@ -327,9 +339,9 @@ niattach(parent, self, aux)
 #if NBPG < 4096
 #error pagesize too small
 #endif
+	s = splimp();
 	/* Set up message free queue */
 	ni_getpgs(sc, NMSGBUF * 512, &va, 0);
-	bzero(va, NMSGBUF * 512);
 	for (i = 0; i < NMSGBUF; i++) {
 		struct ni_msg *msg;
 
@@ -386,6 +398,8 @@ niattach(parent, self, aux)
 	NI_WREG(NI_PCR, PCR_FREEQNE|PCR_RFREEQ|PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
 
+	splx(s);
+
 	/* Set initial parameters */
 	msg = REMQHI(&fqb->nf_mforw);
 
@@ -395,14 +409,22 @@ niattach(parent, self, aux)
 	msg->nm_opcode2 = NI_WPARAM;
 	((struct ni_param *)&msg->nm_text[0])->np_flags = NP_PAD;
 
-	endwait = 0;
+	endwait = retry = 0;
 	res = INSQTI(msg, &gvp->nc_forw0);
 
-	WAITREG(NI_PCR, PCR_OWN);
+retry:	WAITREG(NI_PCR, PCR_OWN);
 	NI_WREG(NI_PCR, PCR_CMDQNE|PCR_CMDQ0|PCR_OWN);
 	WAITREG(NI_PCR, PCR_OWN);
-	while (endwait == 0)
-		;
+	i = 1000;
+	while (endwait == 0 && --i)
+		DELAY(10000);
+
+	if (endwait == 0) {
+		if (++retry < 3)
+			goto retry;
+		printf("%s: no response to set params\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	/* Clear counters */
 	msg = REMQHI(&fqb->nf_mforw);
@@ -446,6 +468,9 @@ niattach(parent, self, aux)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_enaddr);
+	if (shutdownhook_establish(ni_shutdown, sc) == 0)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    sc->sc_dev.dv_xname);
 
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
@@ -569,6 +594,12 @@ niintr(void *arg)
 	struct ni_bbd *bd;
 	struct mbuf *m;
 	int idx, res;
+
+	if ((NI_RREG(NI_PSR) & PSR_STATE) != PSR_ENABLED)
+		return;
+
+	if ((NI_RREG(NI_PSR) & PSR_ERR))
+		printf("%s: PSR %x\n", sc->sc_dev.dv_xname, NI_RREG(NI_PSR));
 
 	/* Got any response packets?  */
 	while ((NI_RREG(NI_PSR) & PSR_RSQ) && (data = REMQHI(&gvp->nc_forwr))) {
@@ -860,3 +891,20 @@ nitimeout(ifp)
 	niinit(sc);
 #endif
 }
+
+/*
+ * Shutdown hook.  Make sure the interface is stopped at reboot.
+ */
+void
+ni_shutdown(arg)
+	void *arg;
+{
+	struct ni_softc *sc = arg;
+
+        WAITREG(NI_PCR, PCR_OWN);
+        NI_WREG(NI_PCR, PCR_OWN|PCR_SHUTDOWN);
+        WAITREG(NI_PCR, PCR_OWN);
+        WAITREG(NI_PSR, PSR_OWN);
+
+}
+

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nireg.h,v 1.1 2000/04/09 16:49:58 ragge Exp $	*/
+/*	$NetBSD: if_nireg.h,v 1.2 2000/04/16 09:55:39 ragge Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -85,8 +85,10 @@ struct ni_regs {
 #define	PCR_CMDQ1	PCR_DFREEQ
 #define	PCR_CMDQ2	PCR_RFREEQ
 #define	PCR_CMDQ3	PCR_IFREEQ
+#define	PCR_RESTART	11
 #define PCR_FREEQNE	7
 #define PCR_CMDQNE	6
+#define	PCR_SHUTDOWN	4
 #define PCR_ENABLE	2
 #define PCR_INIT	1
 
@@ -98,6 +100,7 @@ struct ni_regs {
 #define PSR_INITED	0x00020000
 #define PSR_UNDEF	0x00010000
 #define PSR_RSQ		0x00000080
+#define	PSR_ERR		0x00000040
 
 /*
  * The DEBNx uses a very wierd (set of) structure(s) to communicate
