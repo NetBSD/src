@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.2 1998/01/09 08:03:22 perry Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.2.10.1 2000/08/11 22:06:19 tshiozak Exp $	*/
 
 /*
  * Written by Gordon W. Ross <gwr@netbsd.org>
@@ -6,6 +6,8 @@
  */
 
 #include <sys/localedef.h>
+#include <stdlib.h>
+#define __SETLOCALE_SOURCE__
 #include <locale.h>
 
 /*
@@ -17,8 +19,10 @@
 
 static char current_locale[32] = { "C" };
 
+size_t __mb_cur_max = 1;
+
 char *
-setlocale(category, locale)
+__setlocale_mb_len_max_32(category, locale)
 	int category;
 	const char *locale;
 {
