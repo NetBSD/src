@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.67 2001/09/28 23:42:17 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.68 2001/10/24 15:31:06 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -432,6 +432,7 @@ ukbd_enable(void *v, int on)
 		/* Disable interrupts. */
 		usbd_abort_pipe(sc->sc_intrpipe);
 		usbd_close_pipe(sc->sc_intrpipe);
+		sc->sc_intrpipe = NULL;
 	}
 	sc->sc_enabled = on;
 
@@ -492,6 +493,13 @@ USB_DETACH(ukbd)
 	/* No need to do reference counting of ukbd, wskbd has all the goo. */
 	if (sc->sc_wskbddev != NULL)
 		rv = config_detach(sc->sc_wskbddev, flags);
+
+	/* The console keyboard does not get a disable call, so check pipe. */
+	if (sc->sc_intrpipe != NULL) {
+		usbd_abort_pipe(sc->sc_intrpipe);
+		usbd_close_pipe(sc->sc_intrpipe);
+		sc->sc_intrpipe = NULL;
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
