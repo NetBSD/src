@@ -3,7 +3,6 @@
 .include <bsd.own.mk>
 
 PROG=	sftp
-BINOWN=	root
 
 BINDIR=	/usr/bin
 MAN=	sftp.1
