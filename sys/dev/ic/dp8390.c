@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.1 1997/04/29 04:32:07 scottr Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.2 1997/04/30 18:09:14 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -223,15 +223,13 @@ dp8390_init(sc)
 	NIC_PUT(regt, regh, ED_P0_CR,
 	    sc->cr_proto | ED_CR_PAGE_0 | ED_CR_STP);
 
-	if (sc->use16bit) {
+	if (sc->dcr_reg & ED_DCR_LS) {
+		NIC_PUT(regt, regh, sc->dcr_reg);
+	} else {
 		/*
 		 * Set FIFO threshold to 8, No auto-init Remote DMA, byte
-		 * order=80x86, word-wide DMA xfers,
+		 * order=80x86, byte-wide DMA xfers,
 		 */
-		NIC_PUT(regt, regh, ED_P0_DCR,
-		    ED_DCR_FT1 | ED_DCR_WTS | ED_DCR_LS);
-	} else {
-		/* Same as above, but byte-wide DMA xfers. */
 		NIC_PUT(regt, regh, ED_P0_DCR, ED_DCR_FT1 | ED_DCR_LS);
 	}
 
