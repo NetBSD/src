@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.5 2003/12/06 22:40:03 bouyer Exp $	*/
+/*	$NetBSD: piixide.c,v 1.6 2003/12/14 01:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -44,7 +44,6 @@ static void piix3_4_setup_channel(struct channel_softc *);
 static u_int32_t piix_setup_idetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static u_int32_t piix_setup_idetim_drvs(struct ata_drive_datas *);
 static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
-static void artisea_chip_map(struct pciide_softc*, struct pci_attach_args *);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 
 static int  piixide_match(struct device *, struct cfdata *, void *);
@@ -120,11 +119,6 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  "Intel 82801EB IDE Controller (ICH5)",
 	  piix_chip_map,
-	},
-	{ PCI_PRODUCT_INTEL_31244,
-	  0,
-	  "Intel 31244 Serial ATA Controller",
-	  artisea_chip_map,
 	},
 	{ PCI_PRODUCT_INTEL_82801EB_SATA,
 	  0,
@@ -638,59 +632,6 @@ piix_setup_sidetim_timings(mode, dma, channel)
 	else 
 		return PIIX_SIDETIM_ISP_SET(piix_isp_pio[mode], channel) |
 		    PIIX_SIDETIM_RTC_SET(piix_rtc_pio[mode], channel);
-}
-
-static void
-artisea_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
-{
-	struct pciide_channel *cp;
-	bus_size_t cmdsize, ctlsize;
-	pcireg_t interface;
-	int channel;
-
-	if (pciide_chipen(sc, pa) == 0)
-		return;
-
-	aprint_normal("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_dev.dv_xname);
-#ifndef PCIIDE_I31244_ENABLEDMA
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_31244 &&
-	    PCI_REVISION(pa->pa_class) == 0) {
-		aprint_normal(" but disabled due to rev. 0");
-		sc->sc_dma_ok = 0;
-	} else
-#endif
-		pciide_mapreg_dma(sc, pa);
-	aprint_normal("\n");
-
-	/*
-	 * XXX Configure LEDs to show activity.
-	 */
-
-	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
-	sc->sc_wdcdev.PIO_cap = 4;
-	if (sc->sc_dma_ok) {
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
-		sc->sc_wdcdev.irqack = pciide_irqack;
-		sc->sc_wdcdev.DMA_cap = 2;
-		sc->sc_wdcdev.UDMA_cap = 6;
-	}
-	sc->sc_wdcdev.set_modes = sata_setup_channel;
-
-	sc->sc_wdcdev.channels = sc->wdc_chanarray;
-	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
-
-	interface = PCI_INTERFACE(pa->pa_class);
-
-	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
-		cp = &sc->pciide_channels[channel];
-		if (pciide_chansetup(sc, channel, interface) == 0)
-			continue;
-		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
-		    pciide_pci_intr);
-	}
 }
 
 static void

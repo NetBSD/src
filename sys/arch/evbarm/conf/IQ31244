@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.11 2003/12/13 23:31:21 thorpej Exp $
+#	$NetBSD: IQ31244,v 1.12 2003/12/14 01:32:01 thorpej Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -165,6 +165,7 @@ pci*		at ppb? bus ?
 # Storage devices
 #
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
+artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
