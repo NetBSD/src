@@ -1,4 +1,4 @@
-/*	$Id: dir.c,v 1.1 1999/03/18 02:02:18 perseant Exp $	*/
+/*	$NetBSD: dir.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993

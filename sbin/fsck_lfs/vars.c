@@ -1,4 +1,5 @@
-/* $Id: vars.c,v 1.1 1999/03/18 02:02:19 perseant Exp $ */
+/*	$NetBSD: vars.c,v 1.2 1999/07/03 19:55:03 kleink Exp $	*/
+
 #include <sys/param.h>
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
