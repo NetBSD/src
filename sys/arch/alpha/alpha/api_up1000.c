@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.3 2000/06/11 01:59:26 sommerfeld Exp $ */
+/* $NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.3 2000/06/11 01:59:26 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.4 2000/06/20 03:48:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ api_up1000_device_register(dev, aux)
 		}
 	}
 
-	if (scsiboot &&
+	if ((ideboot || scsiboot) &&
 	    (!strcmp(cd->cd_name, "sd") ||
 	     !strcmp(cd->cd_name, "st") ||
 	     !strcmp(cd->cd_name, "cd"))) {
