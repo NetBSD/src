@@ -35,7 +35,7 @@
  *
  *	@(#)reg.h	5.5 (Berkeley) 1/18/91
  *
- *	$Id: reg.h,v 1.1.1.1 1993/09/09 23:53:46 phil Exp $
+ *	$Id: reg.h,v 1.2 1993/09/13 07:25:44 phil Exp $
  */
 
 /* Modified for the pc532... 2/1/93 by Phil Nelson
@@ -73,8 +73,8 @@
 /*
  * Registers accessible to ptrace(2) syscall for debugger
  */
-#ifdef IPCREG
 #define	NIPCREG 12
+#ifdef IPCREG
 int ipcreg[NIPCREG] =
   { R0,R1,R2,R3,R4,R5,R6,R7,SP,FP,PC,PSR };
 #endif
