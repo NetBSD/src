@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.161 2004/01/06 21:35:18 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.162 2004/01/18 19:41:06 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2004/01/06 21:35:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2004/01/18 19:41:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1798,9 +1798,7 @@ cpu_getmcontext(l, mcp, flags)
 	unsigned int *flags;
 {
 	__greg_t *gr = mcp->__gregs;
-#ifdef __arch64__
 	__greg_t ras_pc;
-#endif
 	const struct trapframe64 *tf = l->l_md.md_tf;
 
 	/* First ensure consistent stack state (see sendsig). */ /* XXX? */
@@ -1840,15 +1838,14 @@ cpu_getmcontext(l, mcp, flags)
 #if 0 /* not yet supported */
 	gr[_REG_FPRS] = ;
 #endif
+#endif /* __arch64__ */
 
-	/* only sparc64 has RAS support */
 	if ((ras_pc = (__greg_t)ras_lookup(l->l_proc,
 	    (caddr_t) gr[_REG_PC])) != -1) {
 		gr[_REG_PC] = ras_pc;
 		gr[_REG_nPC] = ras_pc + 4;
 	}
 
-#endif /* __arch64__ */
 	*flags |= _UC_CPU;
 
 	mcp->__gwins = NULL;
