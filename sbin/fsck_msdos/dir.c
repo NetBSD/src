@@ -1,9 +1,9 @@
-/*	$NetBSD: dir.c,v 1.10 1997/09/14 14:40:12 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996 Wolfgang Solfrank
+ * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
  * Copyright (c) 1995 Martin Husemann
- * Some structure declaration borrowed from Paul Popelka 
+ * Some structure declaration borrowed from Paul Popelka
  * (paulp@uts.amdahl.com), see /sys/msdosfs/ for reference.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: dir.c,v 1.10 1997/09/14 14:40:12 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.11 1997/10/17 11:19:35 ws Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -117,7 +117,7 @@ static struct dosDirEntry *
 newDosDirEntry()
 {
 	struct dosDirEntry *de;
-	
+
 	if (!(de = freede)) {
 		if (!(de = (struct dosDirEntry *)malloc(sizeof *de)))
 			return 0;
@@ -143,7 +143,7 @@ static struct dirTodoNode *
 newDirTodo()
 {
 	struct dirTodoNode *dt;
-	
+
 	if (!(dt = freedt)) {
 		if (!(dt = (struct dirTodoNode *)malloc(sizeof *dt)))
 			return 0;
@@ -175,7 +175,7 @@ fullpath(dir)
 	static char namebuf[MAXPATHLEN + 1];
 	char *cp, *np;
 	int nl;
-	
+
 	cp = namebuf + sizeof namebuf - 1;
 	*cp = '\0';
 	do {
@@ -225,14 +225,17 @@ static struct dosDirEntry *lostDir;
  * Init internal state for a new directory scan.
  */
 int
-resetDosDirSection(boot)
+resetDosDirSection(boot, fat)
 	struct bootblock *boot;
+	struct fatEntry *fat;
 {
 	int b1, b2;
-	
+	cl_t cl;
+	int ret = FSOK;
+
 	b1 = boot->RootDirEnts * 32;
 	b2 = boot->SecPerClust * boot->BytesPerSec;
-	
+
 	if (!(buffer = malloc(b1 > b2 ? b1 : b2))
 	    || !(delbuf = malloc(b2))
 	    || !(rootDir = newDosDirEntry())) {
@@ -240,7 +243,37 @@ resetDosDirSection(boot)
 		return FSFATAL;
 	}
 	memset(rootDir, 0, sizeof *rootDir);
-	return FSOK;
+	if (boot->flags & FAT32) {
+		if (boot->RootCl < CLUST_FIRST || boot->RootCl >= boot->NumClusters) {
+			pfatal("Root directory starts with cluster out of range(%u)",
+			       boot->RootCl);
+			return FSFATAL;
+		}
+		cl = fat[boot->RootCl].next;
+		if (cl < CLUST_FIRST
+		    || (cl >= CLUST_RSRVD && cl< CLUST_EOFS)
+		    || fat[boot->RootCl].head != boot->RootCl) {
+			if (cl == CLUST_FREE)
+				pwarn("Root directory starts with free cluster\n");
+			else if (cl >= CLUST_RSRVD)
+				pwarn("Root directory starts with cluster marked %s\n",
+				      rsrvdcltype(cl));
+			else {
+				pfatal("Root directory doesn't start a cluster chain");
+				return FSFATAL;
+			}
+			if (ask(1, "Fix")) {
+				fat[boot->RootCl].next = CLUST_FREE;
+				ret = FSFATMOD;
+			} else
+				ret = FSFATAL;
+		}
+
+		fat[boot->RootCl].flags |= FAT_USED;
+		rootDir->head = boot->RootCl;
+	}
+
+	return ret;
 }
 
 /*
@@ -251,7 +284,7 @@ finishDosDirSection()
 {
 	struct dirTodoNode *p, *np;
 	struct dosDirEntry *d, *nd;
-	
+
 	for (p = pendingDirectories; p; p = np) {
 		np = p->next;
 		freeDirTodo(p);
@@ -290,7 +323,7 @@ delete(f, boot, fat, startcl, startoff, endcl, endoff, notlast)
 	u_char *s, *e;
 	off_t off;
 	int clsz = boot->SecPerClust * boot->BytesPerSec;
-	
+
 	s = delbuf + startoff;
 	e = delbuf + clsz;
 	while (startcl >= CLUST_FIRST && startcl < boot->NumClusters) {
@@ -363,7 +396,7 @@ removede(f, boot, fat, start, end, startcl, endcl, curcl, path, type)
 	}
 	return FSERROR;
 }
-	
+
 /*
  * Check an in-memory file entry
  */
@@ -404,7 +437,7 @@ checksize(boot, fat, p, dir)
 		if (ask(1, "Drop superfluous clusters")) {
 			cl_t cl;
 			u_int32_t sz = 0;
-			
+
 			for (cl = dir->head; (sz += boot->ClusterSize) < dir->size;)
 				cl = fat[cl].next;
 			clearchain(boot, fat, fat[cl].next);
@@ -450,14 +483,14 @@ readDosDirSection(f, boot, fat, dir)
 	shortSum = -1;
 	vallfn = invlfn = empty = NULL;
 	do {
-		if (!dir->parent) {
+		if (!(boot->flags & FAT32) && !dir->parent) {
 			last = boot->RootDirEnts * 32;
 			off = boot->ResSectors + boot->FATs * boot->FATsecs;
 		} else {
 			last = boot->SecPerClust * boot->BytesPerSec;
 			off = cl * boot->SecPerClust + boot->ClusterOffset;
 		}
-	
+
 		off *= boot->BytesPerSec;
 		if (lseek(f, off, SEEK_SET) != off
 		    || read(f, buffer, last) != last) {
@@ -473,7 +506,7 @@ readDosDirSection(f, boot, fat, dir)
 				*p = SLOT_EMPTY;
 				continue;
 			}
-			
+
 			if (*p == SLOT_EMPTY || *p == SLOT_DELETED) {
 				if (*p == SLOT_EMPTY) {
 					dir->fsckflags |= DIREMPTY;
@@ -482,7 +515,7 @@ readDosDirSection(f, boot, fat, dir)
 				}
 				continue;
 			}
-			
+
 			if (dir->fsckflags & DIREMPTY) {
 				if (!(dir->fsckflags & DIREMPWARN)) {
 					pwarn("%s has entries after end of directory\n",
@@ -510,7 +543,7 @@ readDosDirSection(f, boot, fat, dir)
 					mod |= FSERROR;
 				empty = NULL;
 			}
-			
+
 			if (p[11] == ATTR_WIN95) {
 				if (*p & LRFIRST) {
 					if (shortSum != -1) {
@@ -587,13 +620,13 @@ readDosDirSection(f, boot, fat, dir)
 			 * This is a standard msdosfs directory entry.
 			 */
 			memset(&dirent, 0, sizeof dirent);
-			
+
 			/*
 			 * it's a short name record, but we need to know
 			 * more, so get the flags first.
 			 */
 			dirent.flags = p[11];
-			
+
 			/*
 			 * Translate from 850 to ISO here		XXX
 			 */
@@ -626,7 +659,7 @@ readDosDirSection(f, boot, fat, dir)
 			dirent.name[k] = '\0';
 			for (k--; k >= 0 && dirent.name[k] == ' '; k--)
 				dirent.name[k] = '\0';
-			
+
 			if (vallfn && shortSum != calcShortSum(p)) {
 				if (!invlfn) {
 					invlfn = vallfn;
@@ -635,12 +668,17 @@ readDosDirSection(f, boot, fat, dir)
 				vallfn = NULL;
 			}
 			dirent.head = p[26] | (p[27] << 8);
+			if (boot->ClustMask == CLUST32_MASK)
+				dirent.head |= (p[20] << 16) | (p[21] << 24);
 			dirent.size = p[28] | (p[29] << 8) | (p[30] << 16) | (p[31] << 24);
 			if (vallfn) {
 				strcpy(dirent.lname, longName);
 				longName[0] = '\0';
 				shortSum = -1;
 			}
+
+			dirent.parent = dir;
+			dirent.next = dir->child;
 
 			if (invlfn) {
 				mod |= k = removede(f, boot, fat,
@@ -655,17 +693,18 @@ readDosDirSection(f, boot, fat, dir)
 					if (k & FSDIRMOD)
 						mod |= THISMOD;
 			}
+
 			vallfn = NULL; /* not used any longer */
 			invlfn = NULL;
-			dirent.parent = dir;
-			dirent.next = dir->child;
-			
+
 			if (dirent.size == 0 && !(dirent.flags & ATTR_DIRECTORY)) {
 				if (dirent.head != 0) {
 					pwarn("%s has clusters, but size 0\n",
 					      fullpath(&dirent));
 					if (ask(1, "Drop allocated clusters")) {
 						p[26] = p[27] = 0;
+						if (boot->ClustMask == CLUST32_MASK)
+							p[20] = p[21] = 0;
 						clearchain(boot, fat, dirent.head);
 						dirent.head = 0;
 						mod |= THISMOD|FSDIRMOD|FSFATMOD;
@@ -690,14 +729,14 @@ readDosDirSection(f, boot, fat, dir)
 					      fullpath(&dirent));
 				else if (dirent.head < CLUST_FIRST
 					 || dirent.head >= boot->NumClusters)
-					pwarn("%s starts with cluster out of range(%d)\n",
+					pwarn("%s starts with cluster out of range(%u)\n",
 					      fullpath(&dirent),
 					      dirent.head);
 				else if (fat[dirent.head].next == CLUST_FREE)
 					pwarn("%s starts with free cluster\n",
 					      fullpath(&dirent));
 				else if (fat[dirent.head].next >= CLUST_RSRVD)
-					pwarn("%s starts with %s cluster\n",
+					pwarn("%s starts with cluster marked %s\n",
 					      fullpath(&dirent),
 					      rsrvdcltype(fat[dirent.head].next));
 				else
@@ -713,22 +752,25 @@ readDosDirSection(f, boot, fat, dir)
 				} else {
 					if (ask(1, "Truncate")) {
 						p[28] = p[29] = p[30] = p[31] = 0;
+						p[26] = p[27] = 0;
+						if (boot->ClustMask == CLUST32_MASK)
+							p[20] = p[21] = 0;
 						dirent.size = 0;
 						mod |= THISMOD|FSDIRMOD;
 					} else
 						mod |= FSERROR;
 				}
 			}
-			
+
 			if (dirent.head >= CLUST_FIRST && dirent.head < boot->NumClusters)
 				fat[dirent.head].flags |= FAT_USED;
-			
+
 			if (dirent.flags & ATTR_DIRECTORY) {
 				/*
 				 * gather more info for directories
 				 */
-				struct dirTodoNode * n;
-				
+				struct dirTodoNode *n;
+
 				if (dirent.size) {
 					pwarn("Directory %s has size != 0\n",
 					      fullpath(&dirent));
@@ -750,6 +792,10 @@ readDosDirSection(f, boot, fat, dir)
 							dirent.head = dir->head;
 							p[26] = (u_char)dirent.head;
 							p[27] = (u_char)(dirent.head >> 8);
+							if (boot->ClustMask == CLUST32_MASK) {
+								p[20] = (u_char)(dirent.head >> 16);
+								p[21] = (u_char)(dirent.head >> 24);
+							}
 							mod |= THISMOD|FSDIRMOD;
 						} else
 							mod |= FSERROR;
@@ -757,21 +803,38 @@ readDosDirSection(f, boot, fat, dir)
 					continue;
 				}
 				if (strcmp(dirent.name, "..") == 0) {
-					if (dir->parent			/* XXX */
-					    && dirent.head != dir->parent->head) {
-						pwarn("`..' entry in %s has incorrect start cluster\n",
-						      fullpath(dir));
-						if (ask(1, "Correct")) {
-							dirent.head = dir->parent->head;
-							p[26] = (u_char)dirent.head;
-							p[27] = (u_char)(dirent.head >> 8);
-							mod |= THISMOD|FSDIRMOD;
-						} else
-							mod |= FSERROR;
-					}
+					if (dir->parent)		/* XXX */
+						if (!dir->parent->parent) {
+							if (dirent.head) {
+								pwarn("`..' entry in %s has non-zero start cluster\n",
+								      fullpath(dir));
+								if (ask(1, "Correct")) {
+									dirent.head = 0;
+									p[26] = p[27] = 0;
+									if (boot->ClustMask == CLUST32_MASK)
+										p[20] = p[21] = 0;
+									mod |= THISMOD|FSDIRMOD;
+								} else
+									mod |= FSERROR;
+							}
+						} else if (dirent.head != dir->parent->head) {
+							pwarn("`..' entry in %s has incorrect start cluster\n",
+							      fullpath(dir));
+							if (ask(1, "Correct")) {
+								dirent.head = dir->parent->head;
+								p[26] = (u_char)dirent.head;
+								p[27] = (u_char)(dirent.head >> 8);
+								if (boot->ClustMask == CLUST32_MASK) {
+									p[20] = (u_char)(dirent.head >> 16);
+									p[21] = (u_char)(dirent.head >> 24);
+								}
+								mod |= THISMOD|FSDIRMOD;
+							} else
+								mod |= FSERROR;
+						}
 					continue;
 				}
-				
+
 				/* create directory tree node */
 				if (!(d = newDosDirEntry())) {
 					perror("No space for directory");
@@ -780,7 +843,7 @@ readDosDirSection(f, boot, fat, dir)
 				memcpy(d, &dirent, sizeof(struct dosDirEntry));
 				/* link it into the tree */
 				dir->child = d;
-				
+
 				/* Enter this directory into the todo list */
 				if (!(n = newDirTodo())) {
 					perror("No space for todo list");
@@ -821,11 +884,11 @@ handleDirTree(dosfs, boot, fat)
 	struct fatEntry *fat;
 {
 	int mod;
-	
+
 	mod = readDosDirSection(dosfs, boot, fat, rootDir);
 	if (mod & FSFATAL)
 		return FSFATAL;
-	
+
 	if (mod & FSFATMOD) {
 		mod &= ~FSFATMOD;
 		mod |= writefat(dosfs, boot, fat); /* delay writing fats?	XXX */
@@ -833,7 +896,7 @@ handleDirTree(dosfs, boot, fat)
 
 	if (mod & FSFATAL)
 		return FSFATAL;
-	
+
 	/*
 	 * process the directory todo list
 	 */
@@ -880,7 +943,10 @@ reconnect(dosfs, boot, fat, head)
 {
 	struct dosDirEntry d;
 	u_char *p;
-	
+
+	if (ask(1, "Reconnect"))
+		return FSERROR;
+
 	if (!lostDir) {
 		for (lostDir = rootDir->child; lostDir; lostDir = lostDir->next) {
 			if (!strcmp(lostDir->name, LOSTDIR))
@@ -924,22 +990,23 @@ reconnect(dosfs, boot, fat, head)
 		p = lfbuf;
 	}
 
-	if (!ask(0, "Reconnect"))
-		return FSERROR;
-
 	boot->NumFiles++;
 	/* Ensure uniqueness of entry here!				XXX */
 	memset(&d, 0, sizeof d);
-	sprintf(d.name, "%d", head);
+	sprintf(d.name, "%u", head);
 	d.flags = 0;
 	d.head = head;
 	d.size = fat[head].length * boot->ClusterSize;
-	
+
 	memset(p, 0, 32);
 	memset(p, ' ', 11);
 	memcpy(p, d.name, strlen(d.name));
 	p[26] = (u_char)d.head;
 	p[27] = (u_char)(d.head >> 8);
+	if (boot->ClustMask == CLUST32_MASK) {
+		p[20] = (u_char)(d.head >> 16);
+		p[21] = (u_char)(d.head >> 24);
+	}
 	p[28] = (u_char)d.size;
 	p[29] = (u_char)(d.size >> 8);
 	p[30] = (u_char)(d.size >> 16);
