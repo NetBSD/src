@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_yds.c,v 1.7 2004/11/08 12:10:22 kent Exp $	*/
+/*	$NetBSD: mpu_yds.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.7 2004/11/08 12:10:22 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_yds.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,8 @@ mpu_yds_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct yds_softc *ysc = (struct yds_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;
+
+	printf("\n");
 
 	sc->ioh = ysc->sc_mpu_ioh;
 	sc->iot = ysc->sc_mpu_iot;

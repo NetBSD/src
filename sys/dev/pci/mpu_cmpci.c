@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_cmpci.c,v 1.6 2003/12/04 13:57:31 keihan Exp $	*/
+/*	$NetBSD: mpu_cmpci.c,v 1.7 2004/12/02 09:50:42 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.6 2003/12/04 13:57:31 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_cmpci.c,v 1.7 2004/12/02 09:50:42 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,8 @@ mpu_cmpci_attach(parent, self, aux)
 {
 	struct cmpci_softc *ysc = (struct cmpci_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;
+
+	printf("\n");
 
 	sc->iot = ysc->sc_iot;
 	sc->ioh = ysc->sc_mpu_ioh;

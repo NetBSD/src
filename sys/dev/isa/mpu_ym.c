@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_ym.c,v 1.7 2003/12/04 13:57:30 keihan Exp $	*/
+/*	$NetBSD: mpu_ym.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.7 2003/12/04 13:57:30 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.8 2004/12/02 09:50:42 xtraeme Exp $");
 
 #define NMPU_YM 1
 
@@ -97,6 +97,8 @@ mpu_ym_attach(parent, self, aux)
 {
 	struct ym_softc *ssc = (struct ym_softc *)parent;
 	struct mpu_softc *sc = (struct mpu_softc *)self;
+
+	printf("\n");
 
 	sc->ioh = ssc->sc_mpu_ioh;
 	sc->iot = ssc->sc_iot;
