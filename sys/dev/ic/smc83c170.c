@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.30 2000/05/12 16:45:43 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.31 2000/05/12 16:57:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1319,14 +1319,14 @@ epic_set_mchash(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	u_int32_t crc, mchash[4];
+	u_int32_t hash, mchash[4];
 
 	/*
 	 * Set up the multicast address filter by passing all multicast
-	 * addresses through a CRC generator, and then using the high-order
+	 * addresses through a CRC generator, and then using the low-order
 	 * 6 bits as an index into the 64 bit multicast hash table (only
 	 * the lower 16 bits of each 32 bit multicast hash register are
-	 * valid).  The high order bit selects the register, while the
+	 * valid).  The high order bits select the register, while the
 	 * rest of the bits select the bit within the register.
 	 */
 
@@ -1354,13 +1354,10 @@ epic_set_mchash(sc)
 			goto allmulti;
 		}
 
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-
-		/* Just want the 6 most significant bits. */
-		crc >>= 26;
+		hash = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
 
 		/* Set the corresponding bit in the hash table. */
-		mchash[crc >> 4] |= 1 << (crc & 0xf);
+		mchash[hash >> 4] |= 1 << (hash & 0xf);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
