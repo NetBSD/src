@@ -1,4 +1,4 @@
-/*	$NetBSD: rshd.c,v 1.10 1997/10/07 10:37:33 mrg Exp $	*/
+/*	$NetBSD: rshd.c,v 1.11 1997/10/08 01:06:53 enami Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1992, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: rshd.c,v 1.10 1997/10/07 10:37:33 mrg Exp $");
+__RCSID("$NetBSD: rshd.c,v 1.11 1997/10/08 01:06:53 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ main(argc, argv)
 	openlog("rshd", LOG_PID | LOG_ODELAY, LOG_DAEMON);
 
 	opterr = 0;
-	while ((ch = getopt(argc, argv, OPTIONS)) != EOF)
+	while ((ch = getopt(argc, argv, OPTIONS)) != -1)
 		switch (ch) {
 		case 'a':
 			check_all = 1;

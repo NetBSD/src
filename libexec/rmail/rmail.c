@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.9 1997/10/07 11:08:54 mrg Exp $	*/
+/*	$NetBSD: rmail.c,v 1.10 1997/10/08 01:05:35 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.9 1997/10/07 11:08:54 mrg Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.10 1997/10/08 01:05:35 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ main(argc, argv)
 	fplen = fptlen = 0;	/* XXX gcc */
 	debug = 0;
 	domain = "UUCP";		/* Default "domain". */
-	while ((ch = getopt(argc, argv, "D:T")) != EOF)
+	while ((ch = getopt(argc, argv, "D:T")) != -1)
 		switch (ch) {
 		case 'T':
 			debug = 1;
