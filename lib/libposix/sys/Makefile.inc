@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 1997/05/30 14:16:59 cjs Exp $
-
-.include <bsd.own.mk>	# for BUILDDIR
+#	$NetBSD: Makefile.inc,v 1.4 1997/05/31 21:21:53 cjs Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
@@ -16,7 +14,7 @@ LOBJS+=	${LPSEUDO}
 
 
 ${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
@@ -25,7 +23,7 @@ ${PPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@rm -f ${.TARGET}.o
 
 ${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
@@ -33,7 +31,7 @@ ${SPSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	    ${AS} ${APICFLAGS} -o ${.TARGET}
 
 ${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
-    ${BUILDDIR}/usr/include/sys/syscall.h
+    ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\n \
 	    PSEUDO(${.PREFIX},${.PREFIX:S/^/posix_/})\n' | \
@@ -41,7 +39,7 @@ ${PSEUDO}: ${.CURDIR}/../libc/arch/${MACHINE_ARCH}/SYS.h \
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-${LPSEUDO}: ${BUILDDIR}/usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
+${LPSEUDO}: ${DESTDIR}/usr/include/sys/syscall.h ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
 	@${.CURDIR}/sys/makelintstub ${.PREFIX:S/posix_//} ${.PREFIX} | \
 	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -

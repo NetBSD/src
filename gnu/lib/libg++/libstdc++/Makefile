@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/05/26 03:56:12 cjs Exp $
+#	$NetBSD: Makefile,v 1.8 1997/05/31 21:21:24 cjs Exp $
 
 LIB=	stdc++
 
@@ -22,12 +22,12 @@ NOLINT=	    nolint
 
 .PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
 
-.include <bsd.lib.mk>
-
 .if (${MACHINE} != "alpha")
-LDADD=	${BULDDIR}/usr/lib/c++rt0.o
-DPADD=	${BULDDIR}/usr/lib/c++rt0.o
+LDADD=	${DESTDIR}/usr/lib/c++rt0.o
+DPADD=	${DESTDIR}/usr/lib/c++rt0.o
 .endif
+
+.include <bsd.lib.mk>
 
 cstrmain.cc: Makefile
 	@echo Creating cstrmain.cc
@@ -136,4 +136,5 @@ stdexcepti.so: stdexcepti.cc
 	@$(COMPILE.cc) $(CPICFLAGS) -frtti $(.IMPSRC) -o $(.TARGET).o
 	@$(LD) -x -r $(.TARGET).o -o $(.TARGET)
 	@rm -f $(.TARGET).o
+
 
