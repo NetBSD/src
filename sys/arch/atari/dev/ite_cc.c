@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.13 1997/07/15 06:48:05 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.14 1998/01/12 18:04:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -117,10 +117,6 @@ int  grfccprint __P((void *, const char *));
 
 struct cfattach grfcc_ca = {
 	sizeof(struct grf_softc), grfccmatch, grfccattach
-};
-
-struct cfdriver grfcc_cd = {
-	NULL, "grfcc", DV_DULL
 };
 
 /*

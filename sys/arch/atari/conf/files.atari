@@ -1,41 +1,41 @@
 #
-#	$NetBSD: files.atari,v 1.44 1997/09/28 20:49:59 is Exp $
+#	$NetBSD: files.atari,v 1.45 1998/01/12 18:04:00 thorpej Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
 
-device	mainbus {}
+device	mainbus class dull {}
 attach	mainbus at root
 
-device	cpu
+device	cpu class cpu
 attach	cpu at mainbus
 
 define	event {}
 file	arch/atari/dev/event.c		event
 
-device	clock
+device	clock class dull
 attach	clock at mainbus
 file	dev/clock_subr.c
 file	arch/atari/dev/clock.c
 
 # keyboard
-device	kbd: event
+device	kbd class dull: event
 attach	kbd at mainbus
 file	arch/atari/dev/kbd.c		kbd needs-flag
 
 # serial port via 68901 (modem1/serial1)
-device	ser:	tty
+device	ser class tty: tty
 attach	ser at mainbus
 file	arch/atari/dev/ser.c		ser needs-flag
 
 # serial port via 85C30 (modem2/serial2)
-device	zs:	tty
+device	zs class tty: tty
 attach	zs at mainbus
 file	arch/atari/dev/zs.c		zs needs-count
 
 # printer
-device lp
+device lp class dull
 attach	lp at mainbus
 file	arch/atari/dev/lpt.c		lp needs-flag
 
@@ -43,22 +43,22 @@ file	arch/atari/dev/lpt.c		lp needs-flag
 file	arch/atari/dev/md_root.c	memory_disk_hooks
 
 # nvram
-device	nvr
+device	nvr class dull
 attach	nvr at mainbus
 file	arch/atari/dev/nvram.c		nvr needs-flag
 
-device	fdc { unit = -1 }
+device	fdc class dull { unit = -1 }
 attach	fdc at mainbus
 
 # TT/Falcon floppy driver
-device	fd
+device	fd class disk
 attach	fd at fdc
 file	arch/atari/dev/fd.c		fd needs-flag
 file	arch/atari/dev/dma.c
 major	{fd = 2}
 
 # Hades floppy driver
-device	hdfd
+device	hdfd class disk
 attach	hdfd at fdc
 file	arch/atari/dev/hdfd.c		hdfd needs-flag
 file	arch/atari/dev/hdfd_intr.s	hdfd
@@ -66,18 +66,18 @@ major	{hdfd = 2}
 
 # IDE driver also called wd driver
 # The problem with calling it wd here is a name clash with the driver in ISA.
-device	idec {[drive = -1], [option = 0]}
+device	idec class dull {[drive = -1], [option = 0]}
 attach	idec at mainbus
-device	ide: disk
+device	ide class disk: disk
 attach	ide at idec
 file	arch/atari/dev/wd.c		idec needs-flag
 major	{ide = 14}
 
 # The generic VME-bus driver
-device	vmebus {}
+device	vmebus class dull {}
 attach	vmebus at mainbus
 
-device	vme {[ioport = -1], [iosize = 0], [mem = -1], [memsiz = 0], [irq = -1] }
+device	vme class dull {[ioport = -1], [iosize = 0], [mem = -1], [memsiz = 0], [irq = -1] }
 attach	vme at vmebus
 file	arch/atari/vme/vme.c		vme
 file	arch/atari/vme/vme_machdep.c	vme
@@ -94,23 +94,23 @@ file	arch/atari/vme/if_le_vme.c	le_vme
 # graphic devices
 define	grfb {}
 
-device	grfbus: grfb
+device	grfbus class dull: grfb
 attach	grfbus at mainbus
 file	arch/atari/dev/grf.c
 
-device	grfcc {}
+device	grfcc class dull {}
 attach	grfcc at grfb
 file	arch/atari/dev/ite_cc.c		grfcc needs-count
 file	arch/atari/dev/grfabs.c		grfcc
 file	arch/atari/dev/grfabs_tt.c	grfcc
 file	arch/atari/dev/grfabs_fal.c	grfcc
 
-device	grfet {}
+device	grfet class dull {}
 attach	grfet at grfb
 file	arch/atari/dev/ite_et.c		grfet needs-count
 file	arch/atari/dev/grfabs_et.c	grfet
 
-device	ite
+device	ite class tty
 attach	ite at grfcc,grfet 
 file	arch/atari/dev/ite.c		ite needs-flag
 file	arch/atari/dev/kbdmap.c		ite
@@ -129,7 +129,7 @@ file	arch/atari/dev/ms.c		mouse needs-count
 #
 file	arch/atari/pci/pci_machdep.c	pci | grfet
 
-device	pcibus
+device	pcibus class dull
 attach	pcibus at mainbus
 
 include "dev/pci/files.pci"
@@ -139,7 +139,7 @@ include "dev/pci/files.pci"
 #
 file	arch/atari/isa/isa_machdep.c	isa
 
-device	isabus
+device	isabus class dull
 attach	isabus at mainbus
 
 include "dev/isa/files.isa"
@@ -152,7 +152,7 @@ major   {cd = 6}
 include "dev/scsipi/files.scsipi"
 
 # ncr 5380 controller
-device	ncrscsi: scsi
+device	ncrscsi class dull: scsi
 attach	ncrscsi at mainbus
 file	arch/atari/dev/atari5380.c	ncrscsi
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.23 1997/06/29 20:30:49 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.24 1998/01/12 18:04:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,9 +141,7 @@ struct cfattach ite_ca = {
 	sizeof(struct ite_softc), itematch, iteattach
 };
 
-struct cfdriver ite_cd = {
-	NULL, "ite", DV_DULL, NULL, 0
-};
+extern struct cfdriver ite_cd;
 
 int
 itematch(pdp, cfp, auxp)

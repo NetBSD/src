@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.11 1997/07/30 15:43:37 leo Exp $ */
+/*	$NetBSD: lpt.c,v 1.12 1998/01/12 18:04:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -129,9 +129,7 @@ struct cfattach lp_ca = {
 	sizeof(struct lpt_softc), lpmatch, lpattach
 };
 
-struct cfdriver lp_cd = {
-	NULL, "lpt", DV_DULL, NULL, 0
-};
+extern struct cfdriver lpt_cd;
 
 /*ARGSUSED*/
 static	int
