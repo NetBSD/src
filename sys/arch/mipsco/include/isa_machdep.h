@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.4 2003/08/07 16:28:35 agc Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.5 2003/10/25 16:33:00 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -168,4 +168,4 @@ void	isa_mem_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 #define	isa_mappage(m, o, p)						\
 	_isa_mappage((m), (o), (p))
 
- endif /* _ISA_MACHDEP_H_ XXX */
+#endif /* _ISA_MACHDEP_H_ XXX */
