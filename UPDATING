@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.61 2002/05/14 23:33:07 itojun Exp $
+$NetBSD: UPDATING,v 1.62 2002/05/18 15:44:18 jdolecek Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -20,7 +20,7 @@ Recent changes:
 
 	sshd:*:16:16::0:0:sshd privsep:/var/empty:/sbin/nologin
 	
-	also /var/empty directory needs to be present (digged as a part of
+	also /var/chroot/sshd directory needs to be present (digged as a part of
 	build process).
 
 20020426:
