@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2003/03/04 07:51:03 matt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2003/04/01 23:52:35 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,6 +33,14 @@
 
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
+
+/*
+ * We use 16K pages on IBM4xx CPUs.  Override the PAGE_* definitions
+ * to be compile-time constants.
+ */
+#define	PAGE_SHIFT	14
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
