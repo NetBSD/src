@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.33 1999/11/13 00:24:38 thorpej Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.34 2000/01/11 06:57:50 chs Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -202,6 +202,7 @@ uvm_km_init(start, end)
 	 */
 
 	/* kernel_object: for pageable anonymous kernel memory */
+	uao_init();
 	uvm.kernel_object = uao_create(VM_MAX_KERNEL_ADDRESS -
 				 VM_MIN_KERNEL_ADDRESS, UAO_FLAG_KERNOBJ);
 
