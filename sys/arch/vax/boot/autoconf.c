@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.10 1997/10/18 23:39:18 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.11 1998/07/01 10:52:11 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,6 +65,12 @@ static int uba630[]={0x20087800};
 static int uio630[]={0x30000000};
 #define qbdev(csr) (((csr) & 017777)-0x10000000)
 static int uda630[]={qbdev(0772150),qbdev(0760334)};
+
+static int uba670[]={0x20040000};
+static int uio670[]={0x20000000};
+static int uda670[]={0x20004030,0x20004230};
+#define qb670dev(csr) (((csr) & 017777)+0x20000000)
+
 /*
  * Autoconf routine is really stupid; but it actually don't
  * need any intelligence. We just assume that all possible
@@ -133,9 +139,19 @@ autoconf()
 		nbi = 1;
 		biaddr = bi8200;
 		bioaddr = bio8200;
+                break;
 
+        case VAX_TYP_RIGEL:     /* we'll assume all Rigels are KA670s for now */
+                nuba = 1;
+                nuda = 2;
+                ubaaddr = uba670;
+                udaaddr = uda670;
+                uioaddr = uio670;
+                tmsaddr = qb670dev(0774500);
+                break;
+
+	case VAX_TYP_MARIAH:
 	case VAX_TYP_SOC:
-	case VAX_TYP_RIGEL:
 		break;
 
 	}

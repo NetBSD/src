@@ -1,4 +1,4 @@
-/*	$NetBSD: edlabel.c,v 1.2 1996/08/02 11:22:11 ragge Exp $ */
+/*	$NetBSD: edlabel.c,v 1.3 1998/07/01 10:52:11 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -36,6 +36,7 @@
 #include "sys/disklabel.h"
 
 #include "lib/libsa/stand.h"
+#include "ufs/ufs/dinode.h"
 #include "ufs/ffs/fs.h"
 
 struct	disklabel dlabel;
