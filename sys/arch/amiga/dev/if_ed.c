@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.34 2000/10/01 23:32:39 thorpej Exp $	*/
+/*	$NetBSD: if_ed.c,v 1.35 2000/11/15 01:02:11 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -270,10 +270,6 @@ ed_zbus_attach(parent, self, aux)
 
 	/* Print additional info when attached. */
 	printf(": address %s\n", ether_sprintf(myaddr));
-
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 
 	sc->sc_isr.isr_intr = edintr;
 	sc->sc_isr.isr_arg = sc;

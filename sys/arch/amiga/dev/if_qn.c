@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.19 2000/10/01 23:32:39 thorpej Exp $	*/
+/*	$NetBSD: if_qn.c,v 1.20 2000/11/15 01:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -255,10 +255,6 @@ qnattach(parent, self, aux)
 
 #ifdef QN_DEBUG
 	printf(": hardware address %s\n", ether_sprintf(myaddr));
-#endif
-
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
 	sc->sc_isr.isr_intr = qnintr;

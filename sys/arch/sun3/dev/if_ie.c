@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.34 2000/10/01 23:32:41 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.35 2000/11/15 01:02:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -367,9 +367,6 @@ ie_attach(sc)
 	/* Attach the interface. */
 	if_attach(ifp);
 	ether_ifattach(ifp, sc->sc_addr);
-#if NBPFILTER > 0
-	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
-#endif
 }
 
 /*

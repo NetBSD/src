@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.80 2000/10/15 19:56:31 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.81 2000/11/15 01:02:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -514,10 +514,6 @@ tlp_attach(sc, enaddr)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, enaddr);
-#if NBPFILTER > 0
-	bpfattach(&sc->sc_ethercom.ec_if.if_bpf, ifp, DLT_EN10MB,
-	    sizeof(struct ether_header));
-#endif
 #if NRND > 0
 	rnd_attach_source(&sc->sc_rnd_source, sc->sc_dev.dv_xname,
 	    RND_TYPE_NET, 0);
@@ -634,9 +630,6 @@ tlp_detach(sc)
 
 #if NRND > 0
 	rnd_detach_source(&sc->sc_rnd_source);
-#endif
-#if NBPFILTER > 0
-	bpfdetach(ifp);
 #endif
 	ether_ifdetach(ifp);
 	if_detach(ifp);
