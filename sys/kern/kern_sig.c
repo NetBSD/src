@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.37 2003/01/09 23:02:03 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.38 2003/01/10 00:04:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.37 2003/01/09 23:02:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.38 2003/01/10 00:04:37 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1134,12 +1134,10 @@ issignal(struct lwp *l)
 			SCHED_LOCK(s);
 		l->l_stat = LSSTOP;
 		p->p_nrlwps--;
-		mi_switch(l, NULL);
-		SCHED_ASSERT_UNLOCKED();
-		if (dolock)
-			splx(s);
+		if (p->p_flag & P_TRACED)
+			goto sigtraceswitch;
 		else
-			dolock = 1;
+			goto sigswitch;
 	}
 	for (;;) {
 		sigpending1(p, &ss);
@@ -1174,6 +1172,7 @@ issignal(struct lwp *l)
 			if (dolock)
 				SCHED_LOCK(s);
 			proc_stop(p);
+		sigtraceswitch:
 			mi_switch(l, NULL);
 			SCHED_ASSERT_UNLOCKED();
 			if (dolock)
@@ -1193,6 +1192,7 @@ issignal(struct lwp *l)
 			 * signals.
 			 */
 			signum = p->p_xstat;
+			p->p_xstat = 0;
 			/*
 			 * `p->p_sigctx.ps_siglist |= mask' is done
 			 * in setrunnable().
@@ -1245,6 +1245,7 @@ issignal(struct lwp *l)
 				if (dolock)
 					SCHED_LOCK(s);
 				proc_stop(p);
+			sigswitch:
 				mi_switch(l, NULL);
 				SCHED_ASSERT_UNLOCKED();
 				if (dolock)
