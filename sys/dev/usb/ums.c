@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.5 1998/07/27 22:34:30 drochner Exp $	*/
+/*	$NetBSD: ums.c,v 1.6 1998/07/28 21:21:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct ums_softc {
 	u_char *sc_ibuf;
 	u_int8_t sc_iid;
 	int sc_isize;
-	struct hid_location sc_loc_x, sc_loc_y, 
+	struct hid_location sc_loc_x, sc_loc_y, sc_loc_z,
 		sc_loc_btn1, sc_loc_btn2, sc_loc_btn3;
 
 	u_char sc_state;	/* mouse driver state */
@@ -218,6 +218,15 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 		printf("%s: mouse has no Y report\n", sc->sc_dev.dv_xname);
 		return;
 	}
+	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
+		       hid_input, &sc->sc_loc_z, &flags) ||
+	    hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
+		       hid_input, &sc->sc_loc_z, &flags)) {
+		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
+			/* Bad Z coord, ignore it */
+			sc->sc_loc_z.size = 0;
+	}
+
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
 		printf("%s: sorry, Y report 0x%04x not supported yet\n",
 		       sc->sc_dev.dv_xname, flags);
@@ -232,6 +241,8 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
 	DPRINTF(("ums_attach: Y  %d/%d\n", 
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
+	DPRINTF(("ums_attach: Z  %d/%d\n", 
+		 sc->sc_loc_z.pos, sc->sc_loc_z.size));
 	DPRINTF(("ums_attach: B1 %d/%d\n", 
 		 sc->sc_loc_btn1.pos,sc->sc_loc_btn1.size));
 	DPRINTF(("ums_attach: B2 %d/%d\n", 
@@ -271,7 +282,7 @@ ums_intr(reqh, addr, status)
 {
 	struct ums_softc *sc = addr;
 	u_char *ibuf;
-	char dx, dy;
+	int dx, dy, dz;
 	u_char buttons;
 
 	DPRINTFN(5, ("ums_intr: sc=%p status=%d\n", sc, status));
@@ -294,6 +305,7 @@ ums_intr(reqh, addr, status)
 	}
 	dx =  hid_get_data(ibuf, &sc->sc_loc_x);
 	dy = -hid_get_data(ibuf, &sc->sc_loc_y);
+	dz =  hid_get_data(ibuf, &sc->sc_loc_z);
 	buttons = 0;
 	if (hid_get_data(ibuf, &sc->sc_loc_btn1)) buttons |= 1 << 0;
 	if (hid_get_data(ibuf, &sc->sc_loc_btn2)) buttons |= 1 << 2;
@@ -302,7 +314,7 @@ ums_intr(reqh, addr, status)
 	if (dx || dy || buttons != sc->sc_buttons) {
 		sc->sc_buttons = buttons;
 		if (sc->sc_wsmousedev)
-			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, 0);
+			wsmouse_input(sc->sc_wsmousedev, buttons, dx, dy, dz);
 	}
 }
 
