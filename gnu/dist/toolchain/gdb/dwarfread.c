@@ -3316,11 +3316,12 @@ decode_modified_type (modifiers, modcount, mtype)
 	  complain (&volatile_ignored, DIE_ID, DIE_NAME);	/* FIXME */
 	  break;
 	default:
-	  if (!(MOD_lo_user <= (unsigned char) modifier
-		&& (unsigned char) modifier <= MOD_hi_user))
-	    {
-	      complain (&unknown_type_modifier, DIE_ID, DIE_NAME, modifier);
-	    }
+	  /* No need to test against MOD_hi_user (0xff); since we're
+	     doing an unsigned 8-bit test, the comparison will always
+	     be true.  */
+	  if ((unsigned char) modifier < MOD_lo_user
+	  /* || (unsigned char) > MOD_hi_user */)
+	    complain (&unknown_type_modifier, DIE_ID, DIE_NAME, modifier);
 	  break;
 	}
     }
