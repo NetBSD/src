@@ -1,4 +1,4 @@
-.\"	$NetBSD: getlogin.2,v 1.12 2002/02/08 01:28:17 ross Exp $
+.\"	$NetBSD: getlogin.2,v 1.13 2002/08/11 11:46:21 yamt Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)getlogin.2	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd August 11, 2002
 .Dt GETLOGIN 2
 .Os
 .Sh NAME
@@ -70,6 +70,53 @@ This call is restricted to the super-user, and
 is normally used only when a new session is being created on behalf
 of the named user
 (for example, at login time, or when a remote shell is invoked).
+.Pp
+.Em NOTE :
+There is only one login name per session.
+.Pp
+It is
+.Em CRITICALLY
+important to ensure that
+.Fn setlogin
+is only ever called after the process has taken adequate steps to ensure
+that it is detached from its parent's session.
+The
+.Em ONLY
+way to do this is via the
+.Fn setsid
+function.
+The
+.Fn daemon
+function calls
+.Fn setsid
+which is an ideal way of detaching from a controlling terminal and
+forking into the background.
+.Pp
+In particular, neither
+.Fn ioctl ttyfd TIOCNOTTY ...\&
+nor
+.Fn setpgrp ...\&
+is sufficient to create a new session.
+.Pp
+Once a parent process has called
+.Fn setsid ,
+it is acceptable for some child of that process to then call
+.Fn setlogin ,
+even though it is not the session leader.
+Beware, however, that
+.Em ALL
+processes in the session will change their login name at the same time,
+even the parent.
+.Pp
+This is different from traditional
+.Ux
+privilege inheritance and as such can be counter-intuitive.
+.Pp
+Since the
+.Fn setlogin
+routine is restricted to the super-user, it is assumed that (like
+all other privileged programs) the programmer has taken adequate
+precautions to prevent security violations.
 .Sh RETURN VALUES
 If a call to
 .Fn getlogin
