@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.4.2.2 2001/05/06 15:12:08 he Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.4.2.3 2001/07/29 20:13:09 he Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -243,7 +243,7 @@ cs4281_attach(parent, self, aux)
 #endif
 	
 	/* Map and establish the interrupt. */
-	if (pci_intr_map(pa, pa->pa_intrtag, pa->pa_intrpin,
+	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
 			 pa->pa_intrline, &ih)) { 
 		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
 		return;
