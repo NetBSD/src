@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.27 1998/12/22 02:51:32 thorpej Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.28 1999/01/11 21:28:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -84,13 +84,14 @@
 #include <netiso/eonvar.h>
 #endif /* EON */
 
-#ifdef MROUTING
-#include <netinet/ip_mroute.h>
-#endif /* MROUTING */
+#include "ipip.h"
+#if NIPIP > 0 || defined(MROUTING)
+#include <netinet/ip_ipip.h>
+#endif /* NIPIP > 0 || MROUTING */
 
 #include "gre.h"
-#if NGRE >0
-#include "ip_gre.h"
+#if NGRE > 0
+#include <netinet/ip_gre.h>
 #endif
 
 extern	struct domain inetdomain;
@@ -121,13 +122,13 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,		icmp_sysctl
 },
-#ifdef MROUTING
+#if NIPIP > 0 || defined(MROUTING)
 { SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
-  mrt_ipip_input,rip_output,	0,		rip_ctloutput,
+  ipip_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,	/* XXX */
   0,		0,		0,		0,
 },
-#endif /* MROUTING */
+#endif /* NIPIP > 0 || MROUTING */
 #if NGRE > 0
 { SOCK_RAW,	&inetdomain,	IPPROTO_GRE,	PR_ATOMIC|PR_ADDR,
   gre_input,	rip_output,	0,		rip_ctloutput,
@@ -139,14 +140,7 @@ struct protosw inetsw[] = {
   rip_usrreq,
   0,		0,		0,		0,
 },
-#ifndef MROUTING
-{ SOCK_RAW,	&inetdomain,	IPPROTO_IPIP,	PR_ATOMIC|PR_ADDR,
-  gre_ipip_input,	rip_output,	0,		rip_ctloutput,
-  rip_usrreq,	/* XXX */
-  0,		0,		0,		0,
-},
-#endif
-#endif
+#endif /* NGRE > 0 */
 { SOCK_RAW,	&inetdomain,	IPPROTO_IGMP,	PR_ATOMIC|PR_ADDR,
   igmp_input,	rip_output,	0,		rip_ctloutput,
   rip_usrreq,
