@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.38 2000/01/08 02:57:24 takemura Exp $	*/
+/*	$NetBSD: ums.c,v 1.39 2000/01/19 00:23:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -422,7 +422,7 @@ ums_enable(v)
 	/* Set up interrupt pipe. */
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
 		  USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, 
-		  sc->sc_ibuf, sc->sc_isize, ums_intr);
+		  sc->sc_ibuf, sc->sc_isize, ums_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		DPRINTF(("ums_enable: usbd_open_pipe_intr failed, error=%d\n",
 			 err));
