@@ -1,8 +1,8 @@
-/*	$NetBSD: nanf_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $	*/
+/*	$NetBSD: nanf_ieee754.c,v 1.2 2003/10/22 23:50:47 kleink Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nanf_ieee754.c,v 1.1 2003/05/12 15:15:16 kleink Exp $");
+__RCSID("$NetBSD: nanf_ieee754.c,v 1.2 2003/10/22 23:50:47 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <math.h>
@@ -15,4 +15,3 @@ const union __float_u __nanf =
 #else
 		{ {    0,    0, 0xc0, 0x7f } };
 #endif
-const union __float_u __nanf2 = {{ 0, 0, 0, 0}};
