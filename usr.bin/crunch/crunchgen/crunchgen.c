@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.39 2002/07/09 12:49:10 pooka Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.40 2002/08/20 01:52:58 lukem Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.39 2002/07/09 12:49:10 pooka Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.40 2002/08/20 01:52:58 lukem Exp $");
 #endif
 
 #if HAVE_CONFIG_H
@@ -494,6 +494,7 @@ void gen_output_cfile(void);
 
 void fillin_program_objs(prog_t *p, char *path);
 void top_makefile_rules(FILE *outmk);
+void bottom_makefile_rules(FILE *outmk);
 void prog_makefile_rules(FILE *outmk, prog_t *p);
 void output_strlst(FILE *outf, strlst_t *lst);
 char *genident(char *str);
@@ -734,6 +735,9 @@ void gen_output_makefile(void)
 
     fprintf(outmk, "\n.include <bsd.prog.mk>\n");
     fprintf(outmk, "\n# ========\n");
+
+    bottom_makefile_rules(outmk);
+
     fclose(outmk);
 }
 
@@ -818,6 +822,8 @@ void top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
+    fprintf(outmk, "NOMAN=\n\n");
+
     fprintf(outmk, "DBG=%s\n", dbg);
     fprintf(outmk, "STRIP?=strip\n");
     fprintf(outmk, "MAKE?=make\n");
@@ -831,7 +837,6 @@ void top_makefile_rules(FILE *outmk)
     for(p = progs; p != NULL; p = p->next)
 	fprintf(outmk, " %s.cro", p->name);
     fprintf(outmk, "\n");
-    fprintf(outmk, "LDSTATIC=-static\n");
     fprintf(outmk, "DPADD+= ${CRUNCHED_OBJS}\n");
     fprintf(outmk, "LDADD+= ${CRUNCHED_OBJS} ");
     output_strlst(outmk, libs);
@@ -842,14 +847,18 @@ void top_makefile_rules(FILE *outmk)
 	fprintf(outmk, " %s_make", p->ident);
     fprintf(outmk, "\n\n");
 
-    fprintf(outmk, "PROG=%s\n", execfname);
-    fprintf(outmk, "MKMAN=no\n\n");
+    fprintf(outmk, "PROG=%s\n\n", execfname);
     
     fprintf(outmk, "all: ${PROG}\n\t${STRIP} ${PROG}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
     fprintf(outmk, "exe: %s\n", execfname);
     fprintf(outmk, "clean:\n\trm -rf %s *.cro *.o *_stub.c ${CRUNCHEDOBJSDIRS}\n",
 	    execfname);
+}
+
+void bottom_makefile_rules(FILE *outmk)
+{
+    fprintf(outmk, "LDSTATIC=-static\n");
 }
 
 
