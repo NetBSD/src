@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.86 2002/10/18 23:26:15 mjacob Exp $ */
+/* $NetBSD: isp_pci.c,v 1.87 2002/11/25 02:16:50 thorpej Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.86 2002/10/18 23:26:15 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.87 2002/11/25 02:16:50 thorpej Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -642,8 +642,8 @@ isp_pci_attach(struct device *parent, struct device *self, void *aux)
 	printf("%s: interrupting at %s\n", isp->isp_name, intrstr);
 
 	if (IS_FC(isp)) {
-		DEFAULT_NODEWWN(isp) = 0x400000007F000002;
-		DEFAULT_PORTWWN(isp) = 0x400000007F000002;
+		DEFAULT_NODEWWN(isp) = 0x400000007F000002ULL;
+		DEFAULT_PORTWWN(isp) = 0x400000007F000002ULL;
 	}
 
 	isp->isp_confopts = self->dv_cfdata->cf_flags;
