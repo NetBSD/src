@@ -38,7 +38,7 @@
  *
  *	%W% (Berkeley) %G%
  *
- * $Id: conf_parse.y,v 1.1.1.1 1997/07/24 21:22:27 christos Exp $
+ * $Id: conf_parse.y,v 1.2 1997/07/24 23:16:24 christos Exp $
  *
  */
 

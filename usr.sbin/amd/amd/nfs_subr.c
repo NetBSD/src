@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1990 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,516 +36,512 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfs_subr.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_subr.c,v 1.3 1994/06/13 20:47:47 mycroft Exp $
+ *      %W% (Berkeley) %G%
+ *
+ * $Id: nfs_subr.c,v 1.4 1997/07/24 23:16:50 christos Exp $
+ *
  */
 
-#include "am.h"
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <amd.h>
 
 /*
  * Convert from UN*X to NFS error code
  */
-#ifdef NFS_ERROR_MAPPING
-NFS_ERROR_MAPPING
-#define nfs_error(e) \
-        ((nfsstat)((e) > NFS_LOMAP && (e) < NFS_HIMAP ? \
-        nfs_errormap[(e) - NFS_LOMAP] : (e)))
-#else
 #define nfs_error(e) ((nfsstat)(e))
-#endif /* NFS_ERROR_MAPPING */
 
-static char *do_readlink P((am_node *mp, int *error_return, struct attrstat **attrpp));
-static char *do_readlink(mp, error_return, attrpp)
-am_node *mp;
-int *error_return;
-struct attrstat **attrpp;
+
+static char *
+do_readlink(am_node *mp, int *error_return, nfsattrstat **attrpp)
 {
-	char *ln;
+  char *ln;
 
-	/*
-	 * If there is a readlink method, then use
-	 * that, otherwise if a link exists use
-	 * that, otherwise use the mount point.
-	 */
-	if (mp->am_mnt->mf_ops->readlink) {
-		int retry = 0;
-		mp = (*mp->am_mnt->mf_ops->readlink)(mp, &retry);
-		if (mp == 0) {
-			*error_return = retry;
-			return 0;
-		}
-		/*reschedule_timeout_mp();*/
-	}
-	if (mp->am_link) {
-		ln = mp->am_link;
-	} else {
-		ln = mp->am_mnt->mf_mount;
-	}
-	if (attrpp)
-		*attrpp = &mp->am_attr;
-	return ln;
-}
+  /*
+   * If there is a readlink method, then use
+   * that, otherwise if a link exists use
+   * that, otherwise use the mount point.
+   */
+  if (mp->am_mnt->mf_ops->readlink) {
+    int retry = 0;
+    mp = (*mp->am_mnt->mf_ops->readlink) (mp, &retry);
+    if (mp == 0) {
+      *error_return = retry;
+      return 0;
+    }
+    /* reschedule_timeout_mp(); */
+  }
 
-/*ARGSUSED*/
-voidp 
-nfsproc_null_2(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
-{
-	static char res;
+  if (mp->am_link) {
+    ln = mp->am_link;
+  } else {
+    ln = mp->am_mnt->mf_mount;
+  }
+  if (attrpp)
+    *attrpp = &mp->am_attr;
 
-	return (voidp) &res;
+  return ln;
 }
 
 
-/*ARGSUSED*/
-struct attrstat *
-nfsproc_getattr_2(argp, rqstp)
-struct nfs_fh *argp;
-struct svc_req *rqstp;
+voidp
+nfsproc_null_2_svc(voidp argp, struct svc_req *rqstp)
 {
-	static struct attrstat res;
-	am_node *mp;
-	int retry;
+  static char res;
+
+  return (voidp) &res;
+}
+
+
+nfsattrstat *
+nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
+{
+  static nfsattrstat res;
+  am_node *mp;
+  int retry;
 
 #ifdef DEBUG
-	Debug(D_TRACE)
-		plog(XLOG_DEBUG, "gettattr:");
+  amuDebug(D_TRACE)
+    plog(XLOG_DEBUG, "getattr:");
 #endif /* DEBUG */
 
-	mp = fh_to_mp2(argp, &retry);
-	if (mp == 0) {
-#ifdef PRECISE_SYMLINKS
-getattr_retry:
-#endif /* PRECISE_SYMLINKS */
-
-		if (retry < 0)
-			return 0;
-		res.status = nfs_error(retry);
-	} else {
-		struct attrstat *attrp = &mp->am_attr;
-#ifdef PRECISE_SYMLINKS
-		if (mp->am_fattr.type == NFLNK) {
-			/*
-			 * Make sure we can read the link,
-			 * and then determine the length.
-			 */
-			char *ln = do_readlink(mp, &retry, &attrp);
-			if (ln == 0)
-				goto getattr_retry;
-		}
-#endif /* PRECISE_SYMLINKS */
-#ifdef DEBUG
-		Debug(D_TRACE)
-			plog(XLOG_DEBUG, "\tstat(%s), size = %d", mp->am_path, attrp->attrstat_u.attributes.size);
-#endif /* DEBUG */
-		mp->am_stats.s_getattr++;
-		return attrp;
-	}
-
-	return &res;
-}
-
-
-/*ARGSUSED*/
-struct attrstat *
-nfsproc_setattr_2(argp, rqstp)
-struct sattrargs *argp;
-struct svc_req *rqstp;
-{
-	static struct attrstat res;
-
-	if (!fh_to_mp(&argp->file))
-		res.status = nfs_error(ESTALE);
-	else
-		res.status = nfs_error(EROFS);
-
-	return &res;
-}
-
-
-/*ARGSUSED*/
-voidp 
-nfsproc_root_2(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
-{
-	static char res;
-
-	return (voidp)&res;
-}
-
-
-/*ARGSUSED*/
-struct diropres *
-nfsproc_lookup_2(argp, rqstp)
-struct diropargs *argp;
-struct svc_req *rqstp;
-{
-	static struct diropres res;
-	am_node *mp;
-	int retry;
+  mp = fh_to_mp2(argp, &retry);
+  if (mp == 0) {
 
 #ifdef DEBUG
-	Debug(D_TRACE)
-		plog(XLOG_DEBUG, "lookup:");
+    amuDebug(D_TRACE)
+      plog(XLOG_DEBUG, "\tretry=%d", retry);
 #endif /* DEBUG */
 
-	mp = fh_to_mp2(&argp->dir, &retry);
-	if (mp == 0) {
-		if (retry < 0)
-			return 0;
-		res.status = nfs_error(retry);
-	} else {
-		int error;
-		am_node *ap;
-#ifdef DEBUG
-		Debug(D_TRACE)
-			plog(XLOG_DEBUG, "\tlookuppn(%s, %s)", mp->am_path, argp->name);
-#endif /* DEBUG */
-		ap = (*mp->am_mnt->mf_ops->lookuppn)(mp, argp->name, &error, VLOOK_CREATE);
-		if (ap == 0) {
-			if (error < 0) {
-#ifdef DEBUG
-				dlog("Not sending RPC reply");
-#endif /* DEBUG */
-				amd_stats.d_drops++;
-				return 0;
-			}
-			res.status = nfs_error(error);
-		} else {
-			mp_to_fh(ap, &res.diropres_u.diropres.file);
-			res.diropres_u.diropres.attributes = ap->am_fattr;
-			res.status = NFS_OK;
-		}
-		mp->am_stats.s_lookup++;
-		/*reschedule_timeout_mp();*/
-	}
-
-	return &res;
-}
-
-
-/*ARGSUSED*/
-struct readlinkres *
-nfsproc_readlink_2(argp, rqstp)
-struct nfs_fh *argp;
-struct svc_req *rqstp;
-{
-	static struct readlinkres res;
-	am_node *mp;
-	int retry;
+    if (retry < 0)
+      return 0;
+    res.ns_status = nfs_error(retry);
+  } else {
+    nfsattrstat *attrp = &mp->am_attr;
 
 #ifdef DEBUG
-	Debug(D_TRACE)
-		plog(XLOG_DEBUG, "readlink:");
+    amuDebug(D_TRACE)
+      plog(XLOG_DEBUG, "\tstat(%s), size = %d", mp->am_path,
+	   attrp->ns_u.ns_attr_u.na_size);
 #endif /* DEBUG */
 
-	mp = fh_to_mp2(argp, &retry);
-	if (mp == 0) {
-readlink_retry:
-		if (retry < 0)
-			return 0;
-		res.status = nfs_error(retry);
-	} else {
-		char *ln = do_readlink(mp, &retry, (struct attrstat **) 0);
-		if (ln == 0)
-			goto readlink_retry;
-		res.status = NFS_OK;
+    mp->am_stats.s_getattr++;
+    return attrp;
+  }
+
+#ifndef MNT2_NFS_OPT_SYMTTL
+  /*
+   * This code is needed to defeat Solaris 2.4's (and newer) symlink values
+   * cache.  It forces the last-modifed time of the symlink to be current.
+   * It is not needed if the O/S has an nfs flag to turn off the
+   * symlink-cache at mount time (such as Irix 5.x and 6.x). -Erez.
+   */
+  if (++res.ns_u.ns_attr_u.na_mtime.nt_useconds == 0)
+    ++res.ns_u.ns_attr_u.na_mtime.nt_seconds;
+#endif /* not MNT2_NFS_OPT_SYMTTL */
+
+  return &res;
+}
+
+
+nfsattrstat *
+nfsproc_setattr_2_svc(nfssattrargs *argp, struct svc_req *rqstp)
+{
+  static nfsattrstat res;
+
+  if (!fh_to_mp(&argp->sag_fhandle))
+    res.ns_status = nfs_error(ESTALE);
+  else
+    res.ns_status = nfs_error(EROFS);
+
+  return &res;
+}
+
+
+voidp
+nfsproc_root_2_svc(voidp argp, struct svc_req *rqstp)
+{
+  static char res;
+
+  return (voidp) &res;
+}
+
+
+nfsdiropres *
+nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
+{
+  static nfsdiropres res;
+  am_node *mp;
+  int retry;
+
 #ifdef DEBUG
-		Debug(D_TRACE)
-			if (ln)
-				plog(XLOG_DEBUG, "\treadlink(%s) = %s", mp->am_path, ln);
+  amuDebug(D_TRACE)
+    plog(XLOG_DEBUG, "lookup:");
 #endif /* DEBUG */
-		res.readlinkres_u.data = ln;
-		mp->am_stats.s_readlink++;
-	}
 
-	return &res;
+  mp = fh_to_mp2(&argp->da_fhandle, &retry);
+  if (mp == 0) {
+    if (retry < 0)
+      return 0;
+    res.dr_status = nfs_error(retry);
+  } else {
+    int error;
+    am_node *ap;
+#ifdef DEBUG
+    amuDebug(D_TRACE)
+      plog(XLOG_DEBUG, "\tlookuppn(%s, %s)", mp->am_path, argp->da_name);
+#endif /* DEBUG */
+    ap = (*mp->am_mnt->mf_ops->lookuppn) (mp, argp->da_name, &error, VLOOK_CREATE);
+    if (ap == 0) {
+      if (error < 0) {
+#ifdef DEBUG
+	dlog("Not sending RPC reply");
+#endif /* DEBUG */
+	amd_stats.d_drops++;
+	return 0;
+      }
+      res.dr_status = nfs_error(error);
+    } else {
+      mp_to_fh(ap, &res.dr_u.dr_drok_u.drok_fhandle);
+      res.dr_u.dr_drok_u.drok_attributes = ap->am_fattr;
+      res.dr_status = NFS_OK;
+    }
+    mp->am_stats.s_lookup++;
+    /* reschedule_timeout_mp(); */
+  }
+
+  return &res;
 }
 
 
-/*ARGSUSED*/
-struct readres *
-nfsproc_read_2(argp, rqstp)
-struct readargs *argp;
-struct svc_req *rqstp;
+void
+quick_reply(am_node *mp, int error)
 {
-	static struct readres res;
+  SVCXPRT *transp = mp->am_transp;
+  nfsdiropres res;
+  bool_t(*xdr_result) () = xdr_diropres;
 
-	bzero((char *)&res, sizeof(res));
+  /*
+   * If there's a transp structure then we can reply to the client's
+   * nfs lookup request.
+   */
+  if (transp) {
+    if (error == 0) {
+      /*
+       * Construct a valid reply to a lookup request.  Same
+       * code as in nfsproc_lookup_2_svc() above.
+       */
+      mp_to_fh(mp, &res.dr_u.dr_drok_u.drok_fhandle);
+      res.dr_u.dr_drok_u.drok_attributes = mp->am_fattr;
+      res.dr_status = NFS_OK;
+    } else
+      /*
+       * Return the error that was passed to us.
+       */
+      res.dr_status = nfs_error(error);
 
-	res.status = nfs_error(EACCES);
+    /*
+     * Send off our reply
+     */
+    if (!svc_sendreply(transp, (XDRPROC_T_TYPE) xdr_result, (SVC_IN_ARG_TYPE) & res))
+      svcerr_systemerr(transp);
 
-	return &res;
+    /*
+     * Free up transp.  It's only used for one reply.
+     */
+    free(transp);
+    mp->am_transp = NULL;
+#ifdef DEBUG
+    dlog("Quick reply sent for %s", mp->am_mnt->mf_mount);
+#endif /* DEBUG */
+  }
 }
 
 
-/*ARGSUSED*/
-voidp 
-nfsproc_writecache_2(argp, rqstp)
-voidp argp;
-struct svc_req *rqstp;
+nfsreadlinkres *
+nfsproc_readlink_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 {
-	static char res;
+  static nfsreadlinkres res;
+  am_node *mp;
+  int retry;
 
-	return (voidp) &res;
+#ifdef DEBUG
+  amuDebug(D_TRACE)
+    plog(XLOG_DEBUG, "readlink:");
+#endif /* DEBUG */
+
+  mp = fh_to_mp2(argp, &retry);
+  if (mp == 0) {
+  readlink_retry:
+    if (retry < 0)
+      return 0;
+    res.rlr_status = nfs_error(retry);
+  } else {
+    char *ln = do_readlink(mp, &retry, (nfsattrstat **) 0);
+    if (ln == 0)
+      goto readlink_retry;
+    res.rlr_status = NFS_OK;
+#ifdef DEBUG
+    amuDebug(D_TRACE)
+      if (ln)
+	plog(XLOG_DEBUG, "\treadlink(%s) = %s", mp->am_path, ln);
+#endif /* DEBUG */
+    res.rlr_u.rlr_data_u = ln;
+    mp->am_stats.s_readlink++;
+  }
+
+  return &res;
 }
 
 
-/*ARGSUSED*/
-struct attrstat *
-nfsproc_write_2(argp, rqstp)
-writeargs *argp;
-struct svc_req *rqstp;
+nfsreadres *
+nfsproc_read_2_svc(nfsreadargs *argp, struct svc_req *rqstp)
 {
-	static struct attrstat res;
+  static nfsreadres res;
 
-	if (!fh_to_mp(&argp->file))
-		res.status = nfs_error(ESTALE);
-	else
-		res.status = nfs_error(EROFS);
+  memset((char *) &res, 0, sizeof(res));
+  res.rr_status = nfs_error(EACCES);
 
-	return &res;
+  return &res;
 }
 
 
-/*ARGSUSED*/
-struct diropres *
-nfsproc_create_2(argp, rqstp)
-createargs *argp;
-struct svc_req *rqstp;
+voidp
+nfsproc_writecache_2_svc(voidp argp, struct svc_req *rqstp)
 {
-	static struct diropres res;
+  static char res;
 
-	if (!fh_to_mp(&argp->where.dir))
-		res.status = nfs_error(ESTALE);
-	else
-		res.status = nfs_error(EROFS);
-
-	return &res;
+  return (voidp) &res;
 }
 
 
-/*ARGSUSED*/
+nfsattrstat *
+nfsproc_write_2_svc(nfswriteargs *argp, struct svc_req *rqstp)
+{
+  static nfsattrstat res;
+
+  if (!fh_to_mp(&argp->wra_fhandle))
+    res.ns_status = nfs_error(ESTALE);
+  else
+    res.ns_status = nfs_error(EROFS);
+
+  return &res;
+}
+
+
+nfsdiropres *
+nfsproc_create_2_svc(nfscreateargs *argp, struct svc_req *rqstp)
+{
+  static nfsdiropres res;
+
+  if (!fh_to_mp(&argp->ca_where.da_fhandle))
+    res.dr_status = nfs_error(ESTALE);
+  else
+    res.dr_status = nfs_error(EROFS);
+
+  return &res;
+}
+
+
 static nfsstat *
-unlink_or_rmdir(argp, rqstp, unlinkp)
-struct diropargs *argp;
-struct svc_req *rqstp;
-int unlinkp;
+unlink_or_rmdir(nfsdiropargs *argp, struct svc_req *rqstp, int unlinkp)
 {
-	static nfsstat res;
-	int retry;
-	/*mntfs *mf;*/
-	am_node *mp = fh_to_mp3(&argp->dir, &retry, VLOOK_DELETE);
-	if (mp == 0) {
-		if (retry < 0)
-			return 0;
-		res = nfs_error(retry);
-		goto out;
-	}
-	/*mf = mp->am_mnt;*/
-	if (mp->am_fattr.type != NFDIR) {
-		res = nfs_error(ENOTDIR);
-		goto out;
-	}
+  static nfsstat res;
+  int retry;
+
+  am_node *mp = fh_to_mp3(&argp->da_fhandle, &retry, VLOOK_DELETE);
+  if (mp == 0) {
+    if (retry < 0)
+      return 0;
+    res = nfs_error(retry);
+    goto out;
+  }
+
+  if (mp->am_fattr.na_type != NFDIR) {
+    res = nfs_error(ENOTDIR);
+    goto out;
+  }
+
 #ifdef DEBUG
-	Debug(D_TRACE)
-		plog(XLOG_DEBUG, "\tremove(%s, %s)", mp->am_path, argp->name);
+  amuDebug(D_TRACE)
+    plog(XLOG_DEBUG, "\tremove(%s, %s)", mp->am_path, argp->da_name);
 #endif /* DEBUG */
-	mp = (*mp->am_mnt->mf_ops->lookuppn)(mp, argp->name, &retry, VLOOK_DELETE);
-	if (mp == 0) {
-		/*
-		 * Ignore retries...
-		 */
-		if (retry < 0)
-			retry = 0;
-		/*
-		 * Usual NFS workaround...
-		 */
-		else if (retry == ENOENT)
-			retry = 0;
-		res = nfs_error(retry);
-	} else {
-		forcibly_timeout_mp(mp);
-		res = NFS_OK;
-	}
+
+  mp = (*mp->am_mnt->mf_ops->lookuppn) (mp, argp->da_name, &retry, VLOOK_DELETE);
+  if (mp == 0) {
+    /*
+     * Ignore retries...
+     */
+    if (retry < 0)
+      retry = 0;
+    /*
+     * Usual NFS workaround...
+     */
+    else if (retry == ENOENT)
+      retry = 0;
+    res = nfs_error(retry);
+  } else {
+    forcibly_timeout_mp(mp);
+    res = NFS_OK;
+  }
 
 out:
-	return &res;
+  return &res;
 }
 
 
-/*ARGSUSED*/
 nfsstat *
-nfsproc_remove_2(argp, rqstp)
-struct diropargs *argp;
-struct svc_req *rqstp;
+nfsproc_remove_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
 {
-	return unlink_or_rmdir(argp, rqstp, TRUE);
+  return unlink_or_rmdir(argp, rqstp, TRUE);
 }
 
-/*ARGSUSED*/
+
 nfsstat *
-nfsproc_rename_2(argp, rqstp)
-renameargs *argp;
-struct svc_req *rqstp;
+nfsproc_rename_2_svc(nfsrenameargs *argp, struct svc_req *rqstp)
 {
-	static nfsstat res;
-	if (!fh_to_mp(&argp->from.dir) || !fh_to_mp(&argp->to.dir))
-		res = nfs_error(ESTALE);
-	/*
-	 * If the kernel is doing clever things with referenced files
-	 * then let it pretend...
-	 */
-	else if (strncmp(argp->to.name, ".nfs", 4) == 0)
-		res = NFS_OK;
-	/*
-	 * otherwise a failure
-	 */
-	else
-		res = nfs_error(EROFS);
-	return &res;
+  static nfsstat res;
+
+  if (!fh_to_mp(&argp->rna_from.da_fhandle) || !fh_to_mp(&argp->rna_to.da_fhandle))
+    res = nfs_error(ESTALE);
+  /*
+   * If the kernel is doing clever things with referenced files
+   * then let it pretend...
+   */
+  else if (strncmp(argp->rna_to.da_name, ".nfs", 4) == 0)
+    res = NFS_OK;
+  /*
+   * otherwise a failure
+   */
+  else
+    res = nfs_error(EROFS);
+
+  return &res;
 }
 
 
-/*ARGSUSED*/
 nfsstat *
-nfsproc_link_2(argp, rqstp)
-linkargs *argp;
-struct svc_req *rqstp;
+nfsproc_link_2_svc(nfslinkargs *argp, struct svc_req *rqstp)
 {
-	static nfsstat res;
-	if (!fh_to_mp(&argp->from) || !fh_to_mp(&argp->to.dir))
-		res = nfs_error(ESTALE);
-	else
-		res = nfs_error(EROFS);
+  static nfsstat res;
 
-	return &res;
+  if (!fh_to_mp(&argp->la_fhandle) || !fh_to_mp(&argp->la_to.da_fhandle))
+    res = nfs_error(ESTALE);
+  else
+    res = nfs_error(EROFS);
+
+  return &res;
 }
 
 
-/*ARGSUSED*/
 nfsstat *
-nfsproc_symlink_2(argp, rqstp)
-symlinkargs *argp;
-struct svc_req *rqstp;
+nfsproc_symlink_2_svc(nfssymlinkargs *argp, struct svc_req *rqstp)
 {
-	static nfsstat res;
-	if (!fh_to_mp(&argp->from.dir))
-		res = nfs_error(ESTALE);
-	else
-		res = nfs_error(EROFS);
+  static nfsstat res;
 
-	return &res;
+  if (!fh_to_mp(&argp->sla_from.da_fhandle))
+    res = nfs_error(ESTALE);
+  else
+    res = nfs_error(EROFS);
+
+  return &res;
 }
 
 
-/*ARGSUSED*/
-struct diropres *
-nfsproc_mkdir_2(argp, rqstp)
-createargs *argp;
-struct svc_req *rqstp;
+nfsdiropres *
+nfsproc_mkdir_2_svc(nfscreateargs *argp, struct svc_req *rqstp)
 {
-	static struct diropres res;
-	if (!fh_to_mp(&argp->where.dir))
-		res.status = nfs_error(ESTALE);
-	else
-		res.status = nfs_error(EROFS);
+  static nfsdiropres res;
 
-	return &res;
+  if (!fh_to_mp(&argp->ca_where.da_fhandle))
+    res.dr_status = nfs_error(ESTALE);
+  else
+    res.dr_status = nfs_error(EROFS);
+
+  return &res;
 }
 
 
-/*ARGSUSED*/
 nfsstat *
-nfsproc_rmdir_2(argp, rqstp)
-struct diropargs *argp;
-struct svc_req *rqstp;
+nfsproc_rmdir_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
 {
-	return unlink_or_rmdir(argp, rqstp, FALSE);
+  return unlink_or_rmdir(argp, rqstp, FALSE);
 }
 
 
-/*ARGSUSED*/
-struct readdirres *
-nfsproc_readdir_2(argp, rqstp)
-readdirargs *argp;
-struct svc_req *rqstp;
+nfsreaddirres *
+nfsproc_readdir_2_svc(nfsreaddirargs *argp, struct svc_req *rqstp)
 {
-	static readdirres res;
-	static entry e_res[MAX_READDIR_ENTRIES];
-	am_node *mp;
-	int retry;
+  static nfsreaddirres res;
+  static nfsentry e_res[MAX_READDIR_ENTRIES];
+  am_node *mp;
+  int retry;
 
 #ifdef DEBUG
-	Debug(D_TRACE)
-		plog(XLOG_DEBUG, "readdir:");
+  amuDebug(D_TRACE)
+    plog(XLOG_DEBUG, "readdir:");
 #endif /* DEBUG */
 
-	mp = fh_to_mp2(&argp->dir, &retry);
-	if (mp == 0) {
-		if (retry < 0)
-			return 0;
-		res.status = nfs_error(retry);
-	} else {
+  mp = fh_to_mp2(&argp->rda_fhandle, &retry);
+  if (mp == 0) {
+    if (retry < 0)
+      return 0;
+    res.rdr_status = nfs_error(retry);
+  } else {
 #ifdef DEBUG
-		Debug(D_TRACE)
-			plog(XLOG_DEBUG, "\treaddir(%s)", mp->am_path);
+    amuDebug(D_TRACE)
+      plog(XLOG_DEBUG, "\treaddir(%s)", mp->am_path);
 #endif /* DEBUG */
-		res.status = nfs_error((*mp->am_mnt->mf_ops->readdir)(mp, argp->cookie,
-					&res.readdirres_u.reply, e_res, argp->count));
-		mp->am_stats.s_readdir++;
-	}
+    res.rdr_status = nfs_error((*mp->am_mnt->mf_ops->readdir)
+			   (mp, argp->rda_cookie,
+			    &res.rdr_u.rdr_reply_u, e_res, argp->rda_count));
+    mp->am_stats.s_readdir++;
+  }
 
-	return &res;
+  return &res;
 }
 
-/*ARGSUSED*/
-struct statfsres *
-nfsproc_statfs_2(argp, rqstp)
-struct nfs_fh *argp;
-struct svc_req *rqstp;
+
+nfsstatfsres *
+nfsproc_statfs_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 {
-	static statfsres res;
-	am_node *mp;
-	int retry;
+  static nfsstatfsres res;
+  am_node *mp;
+  int retry;
 
 #ifdef DEBUG
-	Debug(D_TRACE)
-		plog(XLOG_DEBUG, "statfs:");
+  amuDebug(D_TRACE)
+    plog(XLOG_DEBUG, "statfs:");
 #endif /* DEBUG */
 
-	mp = fh_to_mp2(argp, &retry);
-	if (mp == 0) {
-		if (retry < 0)
-			return 0;
-		res.status = nfs_error(retry);
-	} else {
-		statfsokres *fp;
+  mp = fh_to_mp2(argp, &retry);
+  if (mp == 0) {
+    if (retry < 0)
+      return 0;
+    res.sfr_status = nfs_error(retry);
+  } else {
+    nfsstatfsokres *fp;
 #ifdef DEBUG
-		Debug(D_TRACE)
-			plog(XLOG_DEBUG, "\tstat_fs(%s)", mp->am_path);
+    amuDebug(D_TRACE)
+      plog(XLOG_DEBUG, "\tstat_fs(%s)", mp->am_path);
 #endif /* DEBUG */
-		/*
-		 * just return faked up file system information
-		 */
 
-		fp = &res.statfsres_u.reply;
+    /*
+     * just return faked up file system information
+     */
+    fp = &res.sfr_u.sfr_reply_u;
 
-		fp->tsize = 1024;
-		fp->bsize = 4096;
-#ifdef HAS_EMPTY_AUTOMOUNTS
-		fp->blocks = 0;
-#else
-		fp->blocks = 1;
-#endif
-		fp->bfree = 0;
-		fp->bavail = 0;
+    fp->sfrok_tsize = 1024;
+    fp->sfrok_bsize = 4096;
+    fp->sfrok_blocks = 0; /* set to 1 if you don't want empty automounts */
+    fp->sfrok_bfree = 0;
+    fp->sfrok_bavail = 0;
 
-		res.status = NFS_OK;
-		mp->am_stats.s_statfs++;
-	}
+    res.sfr_status = NFS_OK;
+    mp->am_stats.s_statfs++;
+  }
 
-	return &res;
+  return &res;
 }

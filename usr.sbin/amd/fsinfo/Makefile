@@ -1,33 +1,15 @@
-#	from: @(#)Makefile	8.1 (Berkeley) 6/28/93
-#	$Id: Makefile,v 1.9 1997/05/08 21:12:08 gwr Exp $
+#	$NetBSD: Makefile,v 1.10 1997/07/24 23:18:20 christos Exp $
 
-.include "../config/Makefile.config"
+PROG= fsinfo
+SRCS=	fsi_gram.c fsi_lex.c wr_fstab.c wr_exportfs.c wr_dumpset.c wr_bparam.c \
+wr_atab.c fsinfo.c fsi_util.c fsi_dict.c fsi_analyze.c 
+MAN+= fsinfo.8
+CLEANFILES+=fsi_lex.c fsi_gram.c fsi_gram.h y.tab.h
 
-PROG=	fsinfo
-MAN=	fsinfo.8
-SRCS=	fsinfo.c fsi_gram.c fsi_lex.c \
-	fsi_util.c fsi_analyze.c fsi_dict.c \
-	wr_atab.c wr_bparam.c wr_dumpset.c \
-	wr_exportfs.c wr_fstab.c
-CLEANFILES= \
-	fsi_gram.c y.tab.c fsi_gram.h y.tab.h \
-	fsi_lex.c lex.yy.c y.output
-CFLAGS+=-I.
-CFLAGS+=-I${.CURDIR}/../include
-CFLAGS+=-I${.CURDIR}/../config
-CFLAGS+=-DOS_HDR=\"os-${OS}.h\"
+fsi_lex.o: fsi_gram.h
 
-fsi_lex.o fsinfo.o: fsi_gram.h
-fsi_gram.c fsi_gram.h: ../fsinfo/fsi_gram.y
-	@echo "# expect 2 shift/reduce conflicts"
-	${YACC} -d ${.CURDIR}/fsi_gram.y
-	mv y.tab.c fsi_gram.c
-	mv y.tab.h fsi_gram.h
+fsi_gram.h:	y.tab.h
+	@rm -f ${.TARGET}
+	@cp -p ${.ALLSRC} ${.TARGET}
 
-fsi_lex.c: ../fsinfo/fsi_lex.l
-	${LEX} ${.CURDIR}/fsi_lex.l
-	mv lex.yy.c fsi_lex.c
-
-.PATH: ${.CURDIR}/../config
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>

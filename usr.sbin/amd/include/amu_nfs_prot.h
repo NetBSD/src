@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amu_nfs_prot.h,v 1.1.1.1 1997/07/24 21:20:15 christos Exp $
+ * $Id: amu_nfs_prot.h,v 1.2 1997/07/24 23:18:48 christos Exp $
  *
  */
 

@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
- * Copyright (c) 1989, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1989 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Jan-Simon Pendry at Imperial College, London.
@@ -17,8 +18,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -35,13 +36,19 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fsi_gram.y	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_gram.y,v 1.3 1994/06/13 20:50:13 mycroft Exp $
+ *	%W% (Berkeley) %G%
+ *
+ * $Id: fsi_gram.y,v 1.4 1997/07/24 23:18:25 christos Exp $
+ *
  */
 
 %{
-#include "../fsinfo/fsinfo.h"
-#include <stdio.h>
+#ifdef HAVE_CONFIG_H
+# include <config.h>
+#endif /* HAVE_CONFIG_H */
+#include <am_defs.h>
+#include <fsi_data.h>
+#include <fsinfo.h>
 
 extern qelem *list_of_hosts, *list_of_automounts;
 %}
@@ -53,7 +60,7 @@ extern qelem *list_of_hosts, *list_of_automounts;
 	host *h;
 	qelem *q;
 	char *s;
-	mount *m;
+	fsi_mount *m;
 	fsmount *f;
 }
 
@@ -64,6 +71,7 @@ extern qelem *list_of_hosts, *list_of_automounts;
 %token	tCONFIG
 %token	tDUMPSET
 %token	tEQ
+%token  tNFSEQ
 %token	tEXPORTFS
 %token	tFREQ
 %token	tFROM
@@ -81,6 +89,7 @@ extern qelem *list_of_hosts, *list_of_automounts;
 %token	tOPTS
 %token	tOS
 %token	tPASSNO
+%token        tDIRECT
 %token	tSEL
 %token	<s> tSTR
 
@@ -141,7 +150,7 @@ host_attr_list :
 	| host_attr_list tNETIF tSTR '{' ether_attr '}'
 	  { if ($5) {
 		$5->e_if = $3;
-		$$ = $1; set_host($$, HF_ETHER, $5); }
+		$$ = $1; set_host($$, HF_ETHER, (char *) $5); }
 	  }
 
 	| host_attr_list tCONFIG tSTR
@@ -273,21 +282,34 @@ fs_info_list :
  *
  * name = "volname"	name is a reference to volname
  * name -> "string"	name is a link to "string"
+ * name nfsalias "string"  name is a link to "string", string parsed as NFS
+ *			   pathname.
  * name { ... }		name is an automount tree
  */
 automount_tree :
 	  /* empty */
 	  { $$ = 0; }
 
-	| automount_tree tSTR '=' tSTR
+	| automount_tree tSTR opt_auto_opts '=' tSTR
 	  { automount *a = new_automount($2);
-	    a->a_volname = $4;
+	    a->a_volname = $5;
+	    a->a_opts = $3;
 	    if ($1)
 		$$ = $1;
 	    else
 		$$ = new_que();
 	    ins_que(&a->a_q, $$->q_back);
 	  }
+          | automount_tree tSTR opt_auto_opts tNFSEQ tSTR
+            { automount *a = new_automount($2);
+            a->a_hardwiredfs = $5;
+            a->a_opts = $3;
+            if ($1)
+                $$ = $1;
+            else
+                $$ = new_que();
+            ins_que(&a->a_q, $$->q_back);
+          }
 
 	| automount_tree tSTR tEQ tSTR
 	  { automount *a = new_automount($2);
@@ -299,9 +321,10 @@ automount_tree :
 	    ins_que(&a->a_q, $$->q_back);
 	  }
 
-	| automount_tree tSTR '{' automount_tree '}'
+	| automount_tree tSTR opt_auto_opts '{' automount_tree '}'
 	  { automount *a = new_automount($2);
-	    a->a_mount = $4;
+	    a->a_mount = $5;
+	    a->a_opts = $3;
 	    if ($1)
 		$$ = $1;
 	    else
@@ -370,10 +393,14 @@ list_of_mounts :
  * as "string"		- where to mount, if different from the volname
  * opts "string"	- mount options
  * fstype "type"	- type of filesystem mount, if not nfs
+ * direct             - mount entry, no need to create ad-hoc hosts file
  */
 localinfo_list :
 	  /* empty */
 	  { $$ = new_fsmount(); }
+
+        | localinfo_list tDIRECT
+          { $$ = $1; set_fsmount($$, FM_DIRECT, ""); }
 
 	| localinfo_list tAS tSTR
 	  { $$ = $1; set_fsmount($$, FM_LOCALNAME, $3); }
