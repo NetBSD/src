@@ -1,4 +1,4 @@
-/*	$NetBSD: iop_pci.c,v 1.4 2001/03/20 13:21:00 ad Exp $	*/
+/*	$NetBSD: iop_pci.c,v 1.5 2001/04/01 15:06:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@
 #include <dev/i2o/iopio.h>
 #include <dev/i2o/iopvar.h>
 
-#define	PCI_INTERFACE_I2O_POLLED		0x00
-#define	PCI_INTERFACE_I2O_INTRDRIVEN		0x01
+#define	PCI_INTERFACE_I2O_POLLED	0x00
+#define	PCI_INTERFACE_I2O_INTRDRIVEN	0x01
 
 static void	iop_pci_attach(struct device *, struct device *, void *);
 static int	iop_pci_match(struct device *, struct cfdata *, void *);
@@ -99,7 +99,7 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char *intrstr;
 	pcireg_t reg;
-	int i, flags, rv;
+	int i;
 
 	sc = (struct iop_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -120,24 +120,16 @@ iop_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/*
-	 * Map the register window as uncacheable.
-	 */
-	rv = pci_mapreg_info(pa->pa_pc, pa->pa_tag, i,
-	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-	    &sc->sc_memaddr, &sc->sc_memsize, &flags);
-	if (rv == 0) {
-		flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
-		rv = bus_space_map(pa->pa_memt, sc->sc_memaddr, sc->sc_memsize,
-		    flags, &sc->sc_ioh);
-		sc->sc_iot = pa->pa_memt;
-	}
-	if (rv != 0) {
-		printf("can't map board\n");
+	/* Map the register window. */
+	if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_MEM, 0, &sc->sc_iot,
+	    &sc->sc_ioh, NULL, NULL)) {
+		printf("%s: can't map register window\n", sc->sc_dv.dv_xname);
 		return;
 	}
 
 	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_bus_memt = pa->pa_memt;
+	sc->sc_bus_iot = pa->pa_iot;
 
 	/* Enable the device. */
 	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
