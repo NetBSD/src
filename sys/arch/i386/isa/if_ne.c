@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.10 1993/10/01 22:59:57 mycroft Exp $
+ *	$Id: if_ne.c,v 1.11 1993/10/01 23:07:27 mycroft Exp $
  */
 
 /*
@@ -133,7 +133,7 @@ neprobe(dvp)
 	struct isa_device *dvp;
 {
 	int val, i, s, sum, bytemode = 1, pat;
-	register struct ne_softc *ns = &ne_softc[0];
+	register struct ne_softc *ns = &ne_softc[dvp->id_unit];
 	register nec;
 
 #ifdef lint
