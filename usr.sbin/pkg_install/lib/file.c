@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.39 2000/08/28 15:39:35 hubertf Exp $	*/
+/*	$NetBSD: file.c,v 1.40 2000/10/04 16:01:50 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.39 2000/08/28 15:39:35 hubertf Exp $");
+__RCSID("$NetBSD: file.c,v 1.40 2000/10/04 16:01:50 hubertf Exp $");
 #endif
 #endif
 
@@ -430,7 +430,8 @@ fileFindByPath(char *base, char *fname)
 /*			printf("HF: expandURL('%s')'ing #3\n", url);*//*HF*/
 			rc = expandURL(tmp, url);
 			if (rc >= 0) {
-				printf("fileFindByPath: success, expandURL('%s') returns '%s'\n", url, tmp);
+				if (Verbose)
+					printf("fileFindByPath: success, expandURL('%s') returns '%s'\n", url, tmp);
 				return tmp;
 			}
 
