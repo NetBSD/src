@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.11 2003/02/18 16:42:40 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.12 2003/04/12 06:11:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.11 2003/02/18 16:42:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.12 2003/04/12 06:11:15 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -1390,7 +1390,7 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 				n = (n - Ent_dataout) / 16;
 			else
 				n = (n - Ent_datain) / 16;
-			if (n <= 0 && n > OSIOP_NSG)
+			if (n < 0 || n >= OSIOP_NSG)
 				printf("TEMP invalid %ld\n", n);
 			else {
 				acb->curaddr = ds->data[n].addr;
@@ -1452,10 +1452,12 @@ osiop_checkintr(sc, istat, dstat, sstat0, status)
 			    i < OSIOP_NSG && ds->data[i].count > 0;
 			    i++, j++) {
 #ifdef OSIOP_DEBUG
-			if (osiop_debug & DEBUG_DISC)
-				printf("  chain[%d]: %x/%x -> %x/%x\n", j,
-				    ds->data[j].addr, ds->data[j].count,
-				    ds->data[i].addr, ds->data[i].count);
+				if (osiop_debug & DEBUG_DISC)
+					printf("  chain[%d]: %x/%x -> %x/%x\n",
+					    j, ds->data[j].addr,
+					    ds->data[j].count,
+					    ds->data[i].addr,
+					    ds->data[i].count);
 #endif
 				ds->data[j].addr  = ds->data[i].addr;
 				ds->data[j].count = ds->data[i].count;
