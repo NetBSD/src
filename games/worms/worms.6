@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)worms.6	6.4 (Berkeley) 6/23/90
-.\"	$Id: worms.6,v 1.3 1993/08/05 01:47:21 jtc Exp $
+.\"	$Id: worms.6,v 1.4 1995/01/31 15:54:01 jtc Exp $
 .\"
 .Dd June 23, 1990
 .Dt WORMS 6 
@@ -41,8 +41,8 @@
 .Sh SYNOPSIS
 .Nm worms
 .Op Fl ft
-.Op Fl length Ar #
-.Op Fl number Ar #
+.Op Fl l Ar #
+.Op Fl n Ar #
 .Sh DESCRIPTION
 Brian Horn (cithep!bdh) showed me a
 .Tn TOPS-20
@@ -58,9 +58,11 @@ The options are as follows:
 makes a ``field'' for the worm(s) to eat.
 .It Fl t
 causes each worm to leave a trail behind it.
+.It Fl n Ar #
+start # worms.
+.It Fl l Ar #
+worms are # chars long.
 .El
-.Pp
-You can figure out the rest by yourself.
 .Sh AUTHOR
 Eric P. Scott
 .Sh BUGS
