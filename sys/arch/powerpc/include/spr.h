@@ -96,16 +96,23 @@
 #define	SPI_DBAT7L		0x23f	/* .6. Data BAT Reg 7 Lower */
 #define	SPR_ZPR			0x3b0	/* 4.. Zone Protection Register */
 #define	SPR_PID			0x3b1	/* 4.. Process ID */
+#define	SPR_PMC5		0x3b1	/* .6. Performance Counter Register 5 */
+#define	SPR_PMC6		0x3b2	/* .6. Performance Counter Register 6 */
 #define	SPR_CCR0		0x3b3	/* 4.. Core Configuration Register 0 */
 #define	SPR_IAC3		0x3b4	/* 4.. Instruction Address Compare 3 */
 #define	SPR_IAC4		0x3b5	/* 4.. Instruction Address Compare 4 */
 #define	SPR_DVC1		0x3b6	/* 4.. Data Value Compare 1 */
 #define	SPR_DVC2		0x3b7	/* 4.. Data Value Compare 2 */
 #define	SPR_SGR			0x3b9	/* 4.. Storage Guarded Register */
+#define	SPR_PMC1		0x3b9	/* .6. Performance Counter Register 1 */
 #define	SPR_DCWR		0x3ba	/* 4.. Data Cache Write-through Register */
+#define	SPR_PMC2		0x3ba	/* .6. Performance Counter Register 2 */
 #define	SPR_SLER		0x3bb	/* 4.. Storage Little Endian Register */
+#define	SPR_SIAR		0x3bc	/* .6. Sample Instruction Address Register */
 #define	SPR_SU0R		0x3bc	/* 4.. Storage User-defined 0 Register */
 #define	SPR_DBCR1		0x3bd	/* 4.. Debug Control Register 1 */
+#define	SPR_PMC3		0x3bb	/* .6. Performance Counter Register 3 */
+#define	SPR_PMC4		0x3bc	/* .6. Performance Counter Register 4 */
 #define	SPR_DMISS		0x3d0	/* .68 Data TLB Miss Address Register */
 #define	SPR_DCMP		0x3d1	/* .68 Data TLB Compare Register */
 #define	SPR_HASH1		0x3d2	/* .68 Primary Hash Address Register */
@@ -120,10 +127,13 @@
 #define	  ESR_DIZ		  0x00800000 /* Data/instruction storage interrupt - zone fault */
 #define	  ESR_U0F		  0x00008000 /* Data storage interrupt - U0 fault */
 #define	SPR_IMISS		0x3d4	/* .68 Instruction TLB Miss Address Register */
+#define	SPR_TLBMISS		0x3d4	/* .6. TLB Miss Address Register */
 #define	SPR_DEAR		0x3d5	/* 4.. Data Error Address Register */
 #define	SPR_ICMP		0x3d5	/* .68 Instruction TLB Compare Register */
+#define	SPR_PTEHI		0x3d5	/* .6. Instruction TLB Compare Register */
 #define	SPR_EVPR		0x3d6	/* 4.. Exception Vector Prefix Register */
 #define	SPR_RPA			0x3d6	/* .68 Required Physical Address Register */
+#define	SPR_PTELO		0x3d6	/* .6. Required Physical Address Register */
 #define	SPR_TSR			0x3d8	/* 4.. Timer Status Register */
 #define	  TSR_ENW		  0x80000000 /* Enable Next Watchdog */
 #define	  TSR_WIS		  0x40000000 /* Watchdog Interrupt Status */
@@ -227,6 +237,9 @@
 					     /*     progress (read only). */
 #define	SPR_DCCR		0x3fa	/* 4.. Data Cache Cachability Register */
 #define	SPR_ICCR		0x3fb	/* 4.. Instruction Cache Cachability Register */
+#define	SPR_THRM1		0x3fc	/* .6. Thermal Management Register */
+#define	SPR_THRM2		0x3fd	/* .6. Thermal Management Register */
+#define	SPR_THRM3		0x3fe	/* .6. Thermal Management Register */
 #define	SPR_FPECR		0x3fe	/* .6. Floating-Point Exception Cause Register */
 #define	SPR_PIR			0x3ff	/* .6. Processor Identification Register */
 
