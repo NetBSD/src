@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2001/03/04 16:15:50 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.11 2001/09/22 03:34:20 tv Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ BINMODE= 444
 
 SIZE?= size
 STRIP?= strip
-OBJCOPY?= objcopy
 
 S= ${.CURDIR}/../../../..
 

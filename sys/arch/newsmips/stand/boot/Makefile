@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/02/01 05:25:43 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.9 2001/09/22 03:34:20 tv Exp $
 
 S= ${.CURDIR}/../../../..
 
@@ -8,7 +8,6 @@ MKMAN= no
 STRIPFLAG=
 BINMODE= 444
 
-OBJCOPY?= objcopy
 SIZE?= size
 STRIP?= strip
 

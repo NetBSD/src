@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2001/07/18 05:37:55 matt Exp $
+#	$NetBSD: Makefile,v 1.22 2001/09/22 03:34:19 tv Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -18,7 +18,6 @@ SRCS+=		ofwmagic.S
 MKMAN=		no
 STRIPFLAG=
 BINMODE=	444
-OBJCOPY?=	objcopy
 
 .if !defined(FIXCOFF)
 .ifnmake(print-objdir)

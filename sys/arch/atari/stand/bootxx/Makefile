@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/09/08 16:57:09 thomas Exp $
+#	$NetBSD: Makefile,v 1.9 2001/09/22 03:34:18 tv Exp $
 
 # for OBJECT_FMT
 .include <bsd.own.mk>
@@ -50,7 +50,7 @@ beforeinstall:
 		size ${PROG};					\
 		false;						\
 	 fi;							\
-	objcopy -O binary ${PROG} ${PROG}XX
+	${OBJCOPY} -O binary ${PROG} ${PROG}XX
 	@cat ${PROG}XX /dev/zero | dd of=${PROG}X		\
 			bs=1 count=6656  2>/dev/null
 	@mv -f ${PROG} ${PROG}XX
