@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.29 2000/11/15 01:41:22 enami Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.30 2000/11/15 01:42:53 enami Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -190,7 +190,9 @@ ttyldisc_add(disc, no)
 		for (no = slinesw; no-- > 0;)
 			if (linesw[no] == NULL)
 				break;
-		/* if no == -1 we should realloc linesw. */
+		/* if no == -1 we should realloc linesw, but for now... */
+		if (no == -1)
+			return (-1);
 	}
 
 	/* Need a specific slot */
@@ -228,9 +230,9 @@ ttyldisc_remove(name)
 			
 			if (nlinesw == i + 1) {
 				/* Need to fix up array sizing */
-				while (i && (linesw[i] != NULL))
-					i--;
-				nlinesw = i + i;
+				while (i-- > 0 && linesw[i] == NULL)
+					continue;
+				nlinesw = i + 1;
 			}
 			return (disc);
 		}
