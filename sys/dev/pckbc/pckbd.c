@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.3 1998/04/09 13:09:45 hannken Exp $ */
+/* $NetBSD: pckbd.c,v 1.4 1998/04/16 21:18:46 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -62,6 +62,10 @@
 #include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wskbdmap_mfii.h>
 
+#ifdef __i386__
+#include <sys/kernel.h> /* XXX for hz */
+#endif
+
 #include "locators.h"
 
 struct pckbd_internal {
@@ -107,7 +111,8 @@ void	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
 			int));
 void	pckbd_input __P((void *, int));
 
-static int	pckbd_decode __P((struct pckbd_internal *, u_int *, int *));
+static int	pckbd_decode __P((struct pckbd_internal *, int,
+				  u_int *, int *));
 static int	pckbd_led_encode __P((int));
 static int	pckbd_led_decode __P((int));
 
@@ -284,42 +289,43 @@ pckbdattach(parent, self, aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
-static int pckbd_decode(id, type, data)
+static int pckbd_decode(id, datain, type, dataout)
 	struct pckbd_internal *id;
+	int datain;
 	u_int *type;
-	int *data;
+	int *dataout;
 {
-	if (*data == KBR_EXTENDED0) {
+	if (datain == KBR_EXTENDED0) {
 		id->t_extended = 1;
 		return(0);
-	} else if (*data == KBR_EXTENDED1) {
+	} else if (datain == KBR_EXTENDED1) {
 		id->t_extended1 = 2;
 		return(0);
 	}
 
 	/* process BREAK key (EXT1 1D 45  EXT1 9D C5) map to (unused) code 7F */
-	if (id->t_extended1 == 2 && (*data == 0x1d || *data == 0x9d)) {
+	if (id->t_extended1 == 2 && (datain == 0x1d || datain == 0x9d)) {
 		id->t_extended1 = 1;
 		return(0);
-	} else if (id->t_extended1 == 1 && (*data == 0x45 || *data == 0xc5)) {
+	} else if (id->t_extended1 == 1 && (datain == 0x45 || datain == 0xc5)) {
 		id->t_extended1 = 0;
-		*data = (*data & 0x80) | 0x7f;
+		datain = (datain & 0x80) | 0x7f;
 	} else if (id->t_extended1 > 0) {
 		id->t_extended1 = 0;
 	}
  
 	/* Always ignore typematic keys */
-	if (*data == id->t_lastchar)
+	if (datain == id->t_lastchar)
 		return(0);
-	id->t_lastchar = *data;
+	id->t_lastchar = datain;
 
-	if (*data & 0x80)
+	if (datain & 0x80)
 		*type = WSCONS_EVENT_KEY_UP;
 	else
 		*type = WSCONS_EVENT_KEY_DOWN;
 
 	/* map extended keys to (unused) codes 128-254 */
-	*data = (*data & 0x7f) | (id->t_extended ? 0x80 : 0);
+	*dataout = (datain & 0x7f) | (id->t_extended ? 0x80 : 0);
 
 	id->t_extended = 0;
 	return(1);
@@ -395,10 +401,10 @@ pckbd_input(vsc, data)
 	int data;
 {
 	struct pckbd_softc *sc = vsc;
-	int type;
+	int type, key;
 
-	if (pckbd_decode(sc->id, &type, &data))
-		wskbd_input(sc->sc_wskbddev, type, data);
+	if (pckbd_decode(sc->id, data, &type, &key))
+		wskbd_input(sc->sc_wskbddev, type, key);
 }
 
 int
@@ -411,7 +417,6 @@ pckbd_ioctl(v, cmd, data, flag, p)
 {
 	struct pckbd_internal *t = v;
 
-/* printf("pckdb_ioctl 0x%lx, 0x%lx\n", cmd, WSKBDIO_GTYPE); */
 	switch (cmd) {
 	    case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_PC_XT;
@@ -428,7 +433,16 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		}
 	    case WSKBDIO_GETLEDS:
 		*(int *)data = pckbd_led_decode(t->t_led_state);
-		return(0);
+		return (0);
+	    case WSKBDIO_COMPLEXBELL:
+#define d ((struct wskbd_bell_data *)data)
+		/* keyboard can't beep - use md code */
+#ifdef __i386__
+		sysbeep(d->pitch, d->period * hz / 1000);
+		/* comes in as ms, goes out as ticks; volume ignored */
+#endif
+#undef d
+		return (0);
 	}
 	return -1;
 }
@@ -469,10 +483,11 @@ pckbd_cngetc(v, type, data)
 	int *data;
 {
         struct pckbd_internal *t = v;
+	int val;
 
 	for (;;) {
-		*data = pckbc_poll_data(t->t_kbctag, t->t_kbcslot);
-		if (pckbd_decode(t, type, data))
+		val = pckbc_poll_data(t->t_kbctag, t->t_kbcslot);
+		if ((val != -1) && pckbd_decode(t, val, type, data))
 			return;
 	}
 }
