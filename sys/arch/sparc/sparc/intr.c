@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.10 1996/03/14 21:09:12 christos Exp $ */
+/*	$NetBSD: intr.c,v 1.11 1996/03/16 23:31:40 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -223,7 +223,7 @@ intr_establish(level, ih)
 		if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
 		    tv->tv_instr[1] != I_BA(0, displ) ||
 		    tv->tv_instr[2] != I_RDPSR(I_L0))
-			panic("intr_establish(%d, %x)\n%x %x %x != %x %x %x",
+			panic("intr_establish(%d, %p)\n%x %x %x != %x %x %x",
 			    level, ih,
 			    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
 			    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
@@ -269,7 +269,7 @@ intr_fasttrap(level, vec)
 	if (tv->tv_instr[0] != I_MOVi(I_L3, level) ||
 	    tv->tv_instr[1] != I_BA(0, displ) ||
 	    tv->tv_instr[2] != I_RDPSR(I_L0))
-		panic("intr_fasttrap(%d, %x)\n%x %x %x != %x %x %x",
+		panic("intr_fasttrap(%d, %p)\n%x %x %x != %x %x %x",
 		    level, vec,
 		    tv->tv_instr[0], tv->tv_instr[1], tv->tv_instr[2],
 		    I_MOVi(I_L3, level), I_BA(0, displ), I_RDPSR(I_L0));
