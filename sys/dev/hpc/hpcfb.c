@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.13 2001/08/02 14:40:04 toshii Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.14 2001/08/15 15:16:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: hpcfb.c,v 1.13 2001/08/02 14:40:04 toshii Exp $";
+    "$NetBSD: hpcfb.c,v 1.14 2001/08/15 15:16:53 uch Exp $";
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,16 +457,14 @@ hpcfb_init(struct hpcfb_fbconf *fbconf,	struct hpcfb_devconfig *dc)
 #else
 	ri->ri_flg = RI_CURSOR;
 #endif
-	if (fbconf->hf_order_flags != 0) {
-		if (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) {
+	if (fbconf->hf_order_flags & HPCFB_REVORDER_BYTE) {
 #if BYTE_ORDER == BIG_ENDIAN
-			ri->ri_flg |= RI_BSWAP;
+		ri->ri_flg |= RI_BSWAP;
 #endif
-		} else {
+	} else {
 #if BYTE_ORDER == LITTLE_ENDIAN
-			ri->ri_flg |= RI_BSWAP;
+		ri->ri_flg |= RI_BSWAP;
 #endif
-		}
 	}
 
 	if (rasops_init(ri, HPCFB_MAX_ROW, HPCFB_MAX_COLUMN)) {
