@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.37 2004/11/18 21:23:17 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.38 2004/11/18 23:01:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.37 2004/11/18 21:23:17 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.38 2004/11/18 23:01:31 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -137,6 +137,8 @@ char	ctty[] = _PATH_CONSOLE;
 /*
  * This structure represents the files that will have log
  * copies printed.
+ * We require f_file to be valid if f_type is F_FILE, F_CONSOLE, F_TTY,
+ * or if f_type is F_PIPE and f_pid > 0.
  */
 
 struct filed {
@@ -1210,10 +1212,11 @@ fprintlog(struct filed *f, int flags, char *msg)
 		}
 		if (writev(f->f_file, iov, 7) < 0) {
 			int e = errno;
-			(void) close(f->f_file);
-			if (f->f_un.f_pipe.f_pid > 0)
+			if (f->f_un.f_pipe.f_pid > 0) {
+				(void) close(f->f_file);
 				deadq_enter(f->f_un.f_pipe.f_pid,
 					    f->f_un.f_pipe.f_pname);
+			}
 			f->f_un.f_pipe.f_pid = 0;
 			/*
 			 * If the error was EPIPE, then what is likely
@@ -1236,10 +1239,11 @@ fprintlog(struct filed *f, int flags, char *msg)
 				}
 				if (writev(f->f_file, iov, 7) < 0) {
 					e = errno;
-					(void) close(f->f_file);
-					if (f->f_un.f_pipe.f_pid > 0)
+					if (f->f_un.f_pipe.f_pid > 0) {
+					    (void) close(f->f_file);
 					    deadq_enter(f->f_un.f_pipe.f_pid,
 							f->f_un.f_pipe.f_pname);
+					}
 					f->f_un.f_pipe.f_pid = 0;
 				} else
 					e = 0;
@@ -1544,8 +1548,10 @@ die(struct kevent *ev)
 		/* flush any pending output */
 		if (f->f_prevcount)
 			fprintlog(f, 0, (char *)NULL);
-		if (f->f_type == F_PIPE)
+		if (f->f_type == F_PIPE && f->f_un.f_pipe.f_pid > 0) {
 			(void) close(f->f_file);
+			f->f_un.f_pipe.f_pid = 0;
+		}
 	}
 	errno = 0;
 	if (ev != NULL)
@@ -1600,10 +1606,11 @@ init(struct kevent *ev)
 			(void)close(f->f_file);
 			break;
 		case F_PIPE:
-			(void)close(f->f_file);
-			if (f->f_un.f_pipe.f_pid > 0)
+			if (f->f_un.f_pipe.f_pid > 0) {
+				(void)close(f->f_file);
 				deadq_enter(f->f_un.f_pipe.f_pid,
 					    f->f_un.f_pipe.f_pname);
+			}
 			f->f_un.f_pipe.f_pid = 0;
 			break;
 		case F_FORW:
@@ -2136,9 +2143,10 @@ socksetup(int af)
  * to a FILE *.
  */
 int
-p_open(char *prog, pid_t *pid)
+p_open(char *prog, pid_t *rpid)
 {
 	int pfd[2], nulldesc, i;
+	pid_t pid;
 	char *argv[4];	/* sh -c cmd NULL */
 	char errmsg[200];
 
@@ -2149,7 +2157,7 @@ p_open(char *prog, pid_t *pid)
 		return (-1);
 	}
 
-	switch ((*pid = fork())) {
+	switch ((pid = fork())) {
 	case -1:
 		(void) close(nulldesc);
 		return (-1);
@@ -2196,10 +2204,11 @@ p_open(char *prog, pid_t *pid)
 	if (fcntl(pfd[1], F_SETFL, O_NONBLOCK) == -1) {
 		/* This is bad. */
 		(void) snprintf(errmsg, sizeof(errmsg),
-		    "Warning: cannot change pipd to pid %d to "
-		    "non-blocking.", (int) *pid);
+		    "Warning: cannot change pipe to pid %d to "
+		    "non-blocking.", (int) pid);
 		logerror(errmsg);
 	}
+	*rpid = pid;
 	return (pfd[1]);
 }
 
