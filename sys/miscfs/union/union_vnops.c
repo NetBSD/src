@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.23 1995/05/30 18:52:47 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.24 1995/06/27 00:12:21 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -537,6 +537,17 @@ union_close(ap)
 		--un->un_openl;
 		vp = un->un_lowervp;
 	}
+
+#ifdef	DIAGNOSTIC
+	/*
+	 * We should never encounter a vnode with both upper and
+	 * lower vnodes NULL.
+	 */
+	if (vp == NULLVP) {
+		vprint("empty union vnode", vp);
+		panic("union_close empty vnode");
+	}
+#endif
 
 	ap->a_vp = vp;
 	return (VCALL(vp, VOFFSET(vop_close), ap));
