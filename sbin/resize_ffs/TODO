@@ -6,7 +6,7 @@ release-worthy shape.
 
 TODO list (see TODO file)
 
-* verify it builds on -current, put it into release lists/etc. and src/sbin/Makefile
+* -current; put it into release lists/etc. and src/sbin/Makefile
   (built & tested on 1.6.1)
 * make it ask questions before doing any work (confirm)
 * create regression test suite (see discussions on tech-kern and
