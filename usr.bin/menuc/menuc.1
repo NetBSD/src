@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.16 2003/05/09 08:20:27 wiz Exp $
+.\"	$NetBSD: menuc.1,v 1.17 2003/06/04 19:07:39 dsl Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -372,6 +372,7 @@ struct menudesc {
 #define MC_NOBOX 2
 #define MC_SCROLL 4
 #define MC_NOSHORTCUT 8
+#define MC_NOCLEAR 16
 
 int new_menu (char * title, menu_ent * opts, int numopts,
         int x, int y, int h, int w, int mopt,
