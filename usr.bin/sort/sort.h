@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.h,v 1.7 2001/01/08 18:35:49 jdolecek Exp $	*/
+/*	$NetBSD: sort.h,v 1.8 2001/01/11 14:05:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -131,10 +131,14 @@ struct field {
 	u_char *weights;
 };
 
-union f_handle {
-	int top;
+struct filelist {
 	const char * const * names;
 };
+
+typedef int (*get_func_t) __P((int, int, struct filelist *, int,
+		RECHEADER *, u_char *, struct field *));
+typedef void (*put_func_t) __P((const struct recheader *, FILE *));
+
 extern int PANIC;	/* maximum depth of fsort before fmerge is called */
 extern u_char ascii[NBINS], Rascii[NBINS], Ftable[NBINS], RFtable[NBINS];
 extern u_char alltable[NBINS], dtable[NBINS], itable[NBINS];
