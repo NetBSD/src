@@ -1,4 +1,4 @@
-.\"	$NetBSD: bridge.4,v 1.4 2002/06/08 23:21:36 itojun Exp $
+.\"	$NetBSD: bridge.4,v 1.5 2004/01/31 20:14:11 jdc Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 17, 2001
+.Dd January 4, 2004
 .Dt BRIDGE 4
 .Os
 .Sh NAME
@@ -47,14 +47,15 @@ The
 driver creates a logical link between two or more IEEE 802 networks
 that use the same (or
 .Dq similar enough )
-framing format.  For example, it is possible to bridge Ethernet and
-802.11 networks together, but it is not possible to bridge Ethernet
-and Token Ring together.
+framing format.
+For example, it is possible to bridge Ethernet and 802.11 networks together,
+but it is not possible to bridge Ethernet and Token Ring together.
 .Pp
 To use
 .Nm bridge ,
 the administrator must first create the interface and configure
-the bridge parameters.  The bridge is created using the
+the bridge parameters.
+The bridge is created using the
 .Xr ifconfig 8
 .Sq create
 subcommand.
@@ -67,17 +68,35 @@ A bridge can be used to provide several services, such as a simple
 802.11-to-Ethernet bridge for wireless hosts, and traffic isolation.
 .Pp
 A bridge works like a hub, forwarding traffic from one interface
-to another.  Multicast and broadcast packets are always forwarded
-to all interfaces that are part of the bridge.  For unicast traffic,
-the bridge learns which MAC addresses are associated with which segments
-will forward the traffic selectively.
+to another.
+Multicast and broadcast packets are always forwarded to all
+interfaces that are part of the bridge.
+For unicast traffic, the bridge learns which MAC addresses are associated
+with which interfaces and will forward the traffic selectively.
 .Pp
 The
 .Nm
-driver implements the IEEE 802.1D Spanning Tree protocol (STP).  Spanning
-Tree is used to detect and remove loops in a network topology.
+driver implements the IEEE 802.1D Spanning Tree protocol (STP).
+Spanning Tree is used to detect and remove loops in a network topology.
+.Pp
+Transparent filtering for IP and IPv6 packets can be added with the kernel
+configuration option
+.Cd options BRIDGE_IPF .
+.Pp
+When filtering is enabled, bridged packets will pass through the filter
+inbound on the originating interface and outbound on the appropriate
+interfaces.
+ARP and REVARP packets are forwarded without being filtered and others
+that are not IP nor IPv6 packets are not forwarded when filtering is
+enabled.
+.Pp
+Note that packets to and from the bridging host will be seen by the
+filter on the interface with the appropriate address configured as well
+as on the interface on which the packet arrives or departs.
 .Sh SEE ALSO
-.Xr brconfig 8
+.Xr options 4 ,
+.Xr brconfig 8 ,
+.Xr ipf 8
 .Sh HISTORY
 The
 .Nm
@@ -106,5 +125,4 @@ network devices, with exactly the same interface MTU size as the bridge device.
 The
 .Nm
 driver currently does not support snooping via
-.Xr bpf 4
-or transparent filtering.
+.Xr bpf 4 .
