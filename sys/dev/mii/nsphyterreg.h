@@ -1,7 +1,7 @@
-/*	$NetBSD: nsphyterreg.h,v 1.1 1999/12/07 19:36:37 thorpej Exp $	*/
+/*	$NetBSD: nsphyterreg.h,v 1.2 2001/05/31 20:30:21 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,9 @@
 #define	_DEV_MII_NSPHYTERREG_H_
 
 /*
- * DP83843 registers.
+ * DP83843 registers.  We also have the MacPHYTER (DP83815) internal
+ * PHY register definitions here, since the two are, for our purposes,
+ * compatible.
  */
 
 #define	MII_NSPHYTER_PHYSTS	0x10	/* PHY status */
@@ -60,6 +62,17 @@
 #define	PHYSTS_DUPLEX		0x0004	/* full duplex */
 #define	PHYSTS_SPEED10		0x0002	/* speed == 10Mb/s */
 #define	PHYSTS_LINK		0x0001	/* link up */
+	/* below are the MacPHYTER bits that are different */
+#define	PHYSTS_MP_REL		0x2000	/* receive error latch */
+#define	PHYSTS_MP_POLARITY	0x1000	/* polarity inverted */
+#define	PHYSTS_MP_FCSL		0x0800	/* false carrier sense latch */
+#define	PHYSTS_MP_SIGNAL	0x0400	/* signal detect */
+#define	PHYSTS_MP_DESCRLK	0x0200	/* de-scrambler lock */
+#define	PHYSTS_MP_PGRX		0x0100	/* page received */
+#define	PHYSTS_MP_MIIINTR	0x0080	/* MII interrupt */
+#define	PHYSTS_MP_REMFAULT	0x0040	/* remote fault */
+#define	PHYSTS_MP_JABBER	0x0020	/* jabber detect */
+#define	PHYSTS_MP_NWAYCOMP	0x0010	/* NWAY complete */
 
 
 #define	MII_NSPHYTER_MIPSCR	0x11	/* MII interrupt PHY specific
@@ -72,6 +85,13 @@
 #define	MII_NSPHYTER_MIPGSR	0x12	/* MII interrupt PHY generic
 					   status */
 #define	MIPGSR_MINT		0x8000	/* MII interrupt pending */
+	/* below are MacPHYTER only */
+#define	MIPGSR_MSK_LINK		0x4000	/* mask link status event */
+#define	MIPGSR_MSK_JAB		0x2000	/* mask jabber event */
+#define	MIPGSR_MSK_RF		0x1000	/* mask remote fault event */ 
+#define	MIPGSR_MSK_ANC		0x0800	/* mask auto-neg complete event */
+#define	MIPGSR_MSK_FHF		0x0400	/* mask false carrier half full event */
+#define	MIPGSR_MSK_RHF		0x0200	/* mask rx error half full event */
 
 #define	MII_NSPHYTER_DCR	0x13	/* Disconnect counter */
 
@@ -96,8 +116,16 @@
 #define	PCSR_PME_ERR		0x0004	/* premature end errors */
 #define	PCSR_LINK_ERR		0x0002	/* link errors */
 #define	PCSR_PKT_ERR		0x0001	/* packet errors */
+	/* below are the MacPHYTER bits that are different */
+#define	PCSR_MP_BYP_4B5B	0x1000	/* bypass encoder */
+#define	PCSR_MP_FREE_CLK	0x0800	/* free funning rx clock */
+#define	PCSR_MP_TQ_EN		0x0400	/* enable True Quiet mode */
+#define	PCSR_MP_SD_FORCE_B	0x0200	/* force signal detection */
+#define	PCSR_MP_SD_OPTION	0x0100	/* enhanced signal detection alg. */
+#define	PCSR_MP_NRZI_BYPASS	0x0004	/* NRZI bypass enabled */
 
 
+	/* Not on MacPHYTER */
 #define	MII_NSPHYTER_LBR	0x17	/* loopback and bypass */
 #define	LBR_BP_STRETCH		0x4000	/* bypass LED stretching */
 #define	LBR_BP_4B5B		0x2000	/* bypass encoding/decoding */
@@ -109,6 +137,7 @@
 #define	LBR_10_ENDEC_LB		0x0010	/* 10Mb/s ENDEC loopback */
 
 
+	/* Not on MacPHYTER */
 #define	MII_NSPHYTER_10BTSCR	0x18	/* 10baseT status and control */
 #define	BTSCR_AUI_TPI		0x2000	/* TREX operating mode */
 #define	BTSCR_RX_SERIAL		0x1000	/* 10baseT RX serial mode */
@@ -133,5 +162,23 @@
 #define	PHYCTRL_LED_DUP_MODE	0x0040	/* LED DUP mode */
 #define	PHYCTRL_FX_EN		0x0020	/* Fiber mode enable */
 #define	PHYCTRL_PHYADDR		0x001f	/* PHY address */
+	/* below are the MacPHYTER bits that are different */
+#define	PHYCRTL_MP_PSR_15	0x0800	/* BIST sequence select */
+#define	PHYCTRL_MP_BIST_STAT	0x0400	/* BIST passed */
+#define	PHYCTRL_MP_BIST_START	0x0200	/* start BIST */
+#define	PHYCTRL_MP_BP_STRETCH	0x0100	/* bypass LED stretching */
+#define	PHYCTRL_MP_PAUSE_STS	0x0080	/* pause status */
+
+
+	/* MacPHYTER only */
+#define	MII_MACPHYTER_TBTCTL	0x1a	/* 10baseT Control */
+#define	TBTCTL_LOOPBACK_10_DIS	0x0100	/* loopback 10Mb/s disable */
+#define	TBTCTL_LP_DIS		0x0080	/* link pulse disable */
+#define	TBTCTL_FORCE_LINK_10	0x0040	/* force 10Mb/s link good */
+#define	TBTCTL_FORCE_POL_COR	0x0020	/* force polarity correction */
+#define	TBTCTL_INV_POLARITY	0x0010	/* inverted polarity */
+#define	TBTCTL_AUTOPOL_DIS	0x0008	/* auto-polarity disable */
+#define	TBTCTL_HEARTBEAT_DIS	0x0002	/* heartbeat disable */
+#define	TBTCTL_JABBER_DIS	0x0001	/* jabber disable */
 
 #endif /* _DEV_MII_NSPHYTERREG_H_ */
