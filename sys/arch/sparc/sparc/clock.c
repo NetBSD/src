@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.47 1996/10/13 03:00:29 christos Exp $ */
+/*	$NetBSD: clock.c,v 1.48 1996/10/28 00:20:31 abrown Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -640,8 +640,8 @@ cpu_initclocks()
 		statvar >>= 1;
 
 	if (CPU_ISSUN4M) {
-		timerreg_4m->t_limit = tmr_ustolim(tick);
-		counterreg_4m->t_limit = tmr_ustolim(statint);
+		timerreg_4m->t_limit = tmr_ustolim4m(tick);
+		counterreg_4m->t_limit = tmr_ustolim4m(statint);
 	}
 
 	if (CPU_ISSUN4OR4C) {
@@ -767,7 +767,7 @@ statintr(cap)
 	newint = statmin + r;
 
 	if (CPU_ISSUN4M) {
-		counterreg_4m->t_limit = tmr_ustolim(newint);
+		counterreg_4m->t_limit = tmr_ustolim4m(newint);
 	}
 
 	if (CPU_ISSUN4OR4C) {
