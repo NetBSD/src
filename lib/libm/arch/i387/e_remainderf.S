@@ -7,7 +7,7 @@
 
 #include "abi.h"
 
-RCSID("$NetBSD: e_remainderf.S,v 1.3 2001/06/19 00:26:30 fvdl Exp $")
+RCSID("$NetBSD: e_remainderf.S,v 1.4 2001/06/25 16:47:05 fvdl Exp $")
 
 ENTRY(__ieee754_remainderf)
 	XMM_TWO_ARG_FLOAT_PROLOGUE
@@ -15,7 +15,7 @@ ENTRY(__ieee754_remainderf)
 	flds	ARG_FLOAT_ONE
 1:	fprem1
 	fstsw	%ax
-	btw	$2,%ax
+	btw	$10,%ax
 	jc	1b
 	fstp	%st(1)
 	XMM_FLOAT_EPILOGUE
