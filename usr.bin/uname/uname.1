@@ -1,4 +1,4 @@
-.\"	$NetBSD: uname.1,v 1.6 1997/01/09 20:23:12 tls Exp $
+.\"	$NetBSD: uname.1,v 1.7 1997/10/20 02:16:38 lukem Exp $
 .\"
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)du.1	6.13 (Berkeley) 6/20/91
-.\"	$NetBSD: uname.1,v 1.6 1997/01/09 20:23:12 tls Exp $
+.\"	$NetBSD: uname.1,v 1.7 1997/10/20 02:16:38 lukem Exp $
 .\"
 .Dd January 26, 1994
 .Dt UNAME 1
@@ -41,11 +41,11 @@
 .Nm uname
 .Nd Print operating system name
 .Sh SYNOPSIS
-.Nm uname
+.Nm
 .Op Fl amnsrv
 .Sh DESCRIPTION
 The
-.Nm uname
+.Nm
 utility writes symbols representing one or more system characteristics
 to the standard output.
 .Pp
@@ -70,7 +70,7 @@ print the operating system version.
 .El
 .Pp
 If no options are specified, 
-.Nm uname
+.Nm
 prints the operating system name as if the
 .Fl s
 option had been specified.
@@ -80,7 +80,7 @@ option had been specified.
 .Xr uname 3
 .Sh STANDARDS
 The
-.Nm uname
+.Nm
 utility conforms to
 .St -p1003.2-92 .
 
