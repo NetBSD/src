@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.138 2001/08/30 22:58:30 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.139 2001/09/14 19:18:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -4196,7 +4196,6 @@ ret_from_intr_vector:
  *       IRQ# = %tt - 0x40
  */
 
-	.comm	_C_LABEL(intrhand), 15 * PTRSZ	! intrhand[0..14]; 0 => error
 	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
 #ifdef TRAPS_USE_IG
