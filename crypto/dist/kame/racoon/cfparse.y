@@ -577,7 +577,7 @@ algorithm
 
 			$$ = newsainfoalg();
 			if ($$ == NULL) {
-				yyerror("failed to get algorithm alocation");
+				yyerror("failed to get algorithm allocation");
 				return -1;
 			}
 
