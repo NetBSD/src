@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.24 2000/03/17 01:26:52 fvdl Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.25 2000/03/29 03:43:34 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,6 @@
 #include <sys/stat.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/pool.h>
