@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.30 1998/11/06 23:31:09 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.31 1999/04/03 04:37:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: var.c,v 1.30 1998/11/06 23:31:09 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.31 1999/04/03 04:37:47 gwr Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.30 1998/11/06 23:31:09 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.31 1999/04/03 04:37:47 gwr Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -94,7 +94,7 @@ __RCSID("$NetBSD: var.c,v 1.30 1998/11/06 23:31:09 christos Exp $");
  */
 
 #include    <ctype.h>
-#ifndef MAKE_BOOTSTRAP
+#ifndef NO_REGEX
 #include    <sys/types.h>
 #include    <regex.h>
 #endif
@@ -170,7 +170,7 @@ typedef struct {
     int	    	  flags;
 } VarPattern;
 
-#ifndef MAKE_BOOTSTRAP
+#ifndef NO_REGEX
 typedef struct {
     regex_t	   re;
     int		   nsub;
@@ -193,7 +193,7 @@ static Boolean VarMatch __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarSYSVMatch __P((char *, Boolean, Buffer, ClientData));
 #endif
 static Boolean VarNoMatch __P((char *, Boolean, Buffer, ClientData));
-#ifndef MAKE_BOOTSTRAP
+#ifndef NO_REGEX
 static void VarREError __P((int, regex_t *, const char *));
 static Boolean VarRESubstitute __P((char *, Boolean, Buffer, ClientData));
 #endif
@@ -1068,7 +1068,7 @@ VarSubstitute (word, addSpace, buf, patternp)
     return(TRUE);
 }
 
-#ifndef MAKE_BOOTSTRAP
+#ifndef NO_REGEX
 /*-
  *-----------------------------------------------------------------------
  * VarREError --
@@ -1887,7 +1887,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    }
 		    break;
 		}
-#ifndef MAKE_BOOTSTRAP
+#ifndef NO_REGEX
 		case 'C':
 		{
 		    VarREPattern    pattern;
