@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)main.c	8.1 (Berkeley) 6/6/93
- *	$Id: main.c,v 1.5 1994/06/22 10:44:12 pk Exp $
+ *	$Id: main.c,v 1.6 1995/01/25 03:58:57 cgd Exp $
  */
 
 #ifndef lint
@@ -381,6 +381,7 @@ cfcrosscheck(cf, what, nv)
 	register struct nvlist *nv;
 {
 	register struct devbase *dev;
+	register struct devi *pd;
 	int errs;
 
 	for (errs = 0; nv != NULL; nv = nv->nv_next) {
@@ -392,11 +393,17 @@ cfcrosscheck(cf, what, nv)
 		if (has_instances(dev, STAR) ||
 		    has_instances(dev, minor(nv->nv_int) >> 3))
 			continue;
+		for (pd = allpseudo; pd != NULL; pd = pd->i_next)
+			if (pd->i_base == dev &&
+			    minor(nv->nv_int) >> 3 < dev->d_umax &&
+			    minor(nv->nv_int) >> 3 >= 0)
+				goto loop;
 		(void)fprintf(stderr,
 		    "%s%d: %s says %s on %s, but there's no %s\n",
 		    conffile, cf->cf_lineno,
 		    cf->cf_name, what, nv->nv_str, nv->nv_str);
 		errs++;
+loop:
 	}
 	return (errs);
 }
