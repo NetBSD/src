@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.36 2001/11/15 09:48:28 lukem Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.36.10.1 2002/07/30 02:33:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -71,7 +71,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.36 2001/11/15 09:48:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.36.10.1 2002/07/30 02:33:21 lukem Exp $");
 
 #include "opt_eon.h"
 
@@ -317,7 +317,7 @@ eonrtrequest(cmd, rt, info)
 		el->el_rt = rt;
 		break;
 	}
-	if (info || (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
+	if (info && (gate = info->rti_info[RTAX_GATEWAY]))	/*XXX*/
 		switch (gate->sa_family) {
 		case AF_LINK:
 #define SDL(x) ((struct sockaddr_dl *)x)
