@@ -1,4 +1,4 @@
-/*	$NetBSD: ip32.c,v 1.13 2002/12/28 16:40:48 pooka Exp $	*/
+/*	$NetBSD: ip32.c,v 1.14 2002/12/28 16:44:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -44,6 +44,8 @@
 
 #include <machine/sysconf.h>
 #include <mips/locore.h>
+
+#include <sgimips/dev/crimereg.h>
 
 void	ip32_init(void);
 void	ip32_bus_reset(void);
