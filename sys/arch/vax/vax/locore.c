@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.34 1999/03/09 12:57:58 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.35 1999/03/26 22:04:07 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -139,12 +139,13 @@ start()
 		vax_boardtype = (vax_cputype<<24) | ((vax_siedata>>24)&0xFF);
 
 		switch (vax_boardtype) {
-#if VAX410 || VAX43 || VAX46 || VAX48
+#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49
 		case VAX_BTYP_420: /* They are very similar */
 		case VAX_BTYP_410:
 		case VAX_BTYP_43:
 		case VAX_BTYP_46:
 		case VAX_BTYP_48:
+		case VAX_BTYP_49:
 			vax_confdata = *(int *)(0x20020000);
 			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
 #if VAX410
@@ -164,8 +165,17 @@ start()
 			if (vax_boardtype == VAX_BTYP_48)
 				dep_call = &ka48_calls;
 #endif
-			strcpy(cpu_model, (vax_confdata & 0x80 ?
-			    "MicroVAX " : "VAXstation "));
+#if VAX49
+			if (vax_boardtype == VAX_BTYP_49)
+				dep_call = &ka48_calls;
+#endif
+			if ((dep_call == &ka410_calls ||
+			    dep_call == &ka43_calls) &&
+			    (vax_confdata & 0x80))
+				strcpy(cpu_model, "MicroVAX ");
+			else
+				strcpy(cpu_model, "VAXstation ");
+
 			switch (vax_boardtype) {
 #if VAX410
 			case VAX_BTYP_410:
@@ -184,7 +194,12 @@ start()
 #endif
 #if VAX48
 			case VAX_BTYP_48:
-				strcpy(cpu_model, "VAXstation 4000 VLC");
+				strcat(cpu_model, "4000 VLC");
+				break;
+#endif
+#if VAX49
+			case VAX_BTYP_49:
+				strcat(cpu_model, "4000/90");
 				break;
 #endif
 			default:
@@ -241,6 +256,13 @@ start()
 				strcat(cpu_model, "III");
 				break;
 			}
+			break;
+#endif
+#if VAX670
+		case VAX_BTYP_670:
+			dep_call = &ka650_calls;
+			vax_bustype = VAX_UNIBUS | VAX_CPUBUS;
+			strcpy(cpu_model,"VAX 4000/300");
 			break;
 #endif
 		default:

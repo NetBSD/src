@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.40 1999/03/09 12:57:58 ragge Exp $	*/
+/*	$NetBSD: conf.c,v 1.41 1999/03/26 22:04:07 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -177,7 +177,7 @@ struct	consdev constab[]={
 #else
 #define NGEN	0
 #endif
-#if VAX410 || VAX43 || VAX48
+#if VAX410 || VAX43 || VAX46 || VAX48 || VAX49
 	cons_init(dz),	/* DZ11-like serial console on VAXstations */
 #endif
 #if VAX650 || VAX630
