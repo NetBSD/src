@@ -11,7 +11,7 @@
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
  * 
- * $Id: if_tun.c,v 1.10 1994/02/28 07:16:10 andrew Exp $
+ * $Id: if_tun.c,v 1.11 1994/05/03 23:02:07 deraadt Exp $
  */
 
 #include "tun.h"
@@ -165,8 +165,14 @@ tunclose(dev, flag)
 		s = splimp();
 		if_down(ifp);
 		if (ifp->if_flags & IFF_RUNNING) {
-			rtinit(ifp->if_addrlist, (int)RTM_DELETE,
-			       tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+		    /* find internet addresses and delete routes */
+		    register struct ifaddr *ifa;
+		    for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+			if (ifa->ifa_addr->sa_family == AF_INET) {
+			    rtinit(ifa, (int)RTM_DELETE,
+				   tp->tun_flags & TUN_DSTADDR ? RTF_HOST : 0);
+			}
+		    }
 		}
 		splx(s);
 	}
@@ -189,17 +195,18 @@ tuninit(unit)
 
 	ifp->if_flags |= IFF_UP | IFF_RUNNING;
 
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
-		struct sockaddr_in *si;
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+		if (ifa->ifa_addr->sa_family == AF_INET) {
+		    struct sockaddr_in *si;
 
-		si = (struct sockaddr_in *)ifa->ifa_addr;
-		if (si && si->sin_addr.s_addr)
-			tp->tun_flags |= TUN_IASET;
+		    si = (struct sockaddr_in *)ifa->ifa_addr;
+		    if (si && si->sin_addr.s_addr)
+			    tp->tun_flags |= TUN_IASET;
 
-		si = (struct sockaddr_in *)ifa->ifa_dstaddr;
-		if (si && si->sin_addr.s_addr)
-			tp->tun_flags |= TUN_DSTADDR;
-	}
+		    si = (struct sockaddr_in *)ifa->ifa_dstaddr;
+		    if (si && si->sin_addr.s_addr)
+			    tp->tun_flags |= TUN_DSTADDR;
+		}
 
 	return 0;
 }
@@ -221,11 +228,13 @@ tunioctl(ifp, cmd, data, flag)
 	switch(cmd) {
 	case SIOCSIFADDR:
 		tuninit(ifp->if_unit);
+		TUNDEBUG("%s%d: address set\n",
+			 ifp->if_name, ifp->if_unit);
 		break;
 	case SIOCSIFDSTADDR:
-		tp->tun_flags |= TUN_DSTADDR;
-		TUNDEBUG("%s%d: destination address set\n", ifp->if_name,
-		    ifp->if_unit);
+		tuninit(ifp->if_unit);
+		TUNDEBUG("%s%d: destination address set\n",
+			 ifp->if_name, ifp->if_unit);
 		break;
 	default:
 		error = EINVAL;

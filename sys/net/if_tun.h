@@ -12,7 +12,7 @@
  * operation though.
  * 
  * from: $Header: if_tnreg.h,v 1.1.2.1 1992/07/16 22:39:16 friedl Exp
- * $Id: if_tun.h,v 1.3 1993/12/13 14:27:01 deraadt Exp $
+ * $Id: if_tun.h,v 1.4 1994/05/03 23:02:09 deraadt Exp $
  */
 
 #ifndef _NET_IF_TUN_H_
@@ -25,10 +25,12 @@ struct tun_softc {
 #define	TUN_RCOLL	0x0004
 #define	TUN_IASET	0x0008
 #define	TUN_DSTADDR	0x0010
-#define	TUN_READY	0x0020
 #define	TUN_RWAIT	0x0040
 #define	TUN_ASYNC	0x0080
 #define	TUN_NBIO	0x0100
+
+#define	TUN_READY	(TUN_OPEN | TUN_INITED | TUN_IASET)
+
 	struct	ifnet tun_if;		/* the interface */
 	int	tun_pgrp;		/* the process group - if any */
 	struct	selinfo	tun_rsel;	/* read select */
