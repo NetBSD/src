@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.64 2000/02/27 02:35:33 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.65 2000/03/03 01:46:36 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -133,6 +133,7 @@
 #include <sys/lock.h>
 #include <sys/buf.h>
 #include <sys/user.h>
+#include <sys/reboot.h>
 
 #include "raid.h"
 #include "opt_raid_autoconfig.h"
@@ -152,6 +153,7 @@
 #include "rf_parityscan.h"
 #include "rf_debugprint.h"
 #include "rf_threadstuff.h"
+#include "rf_configure.h"
 
 int     rf_kdebug_level = 0;
 
@@ -266,11 +268,6 @@ static void rf_markalldirty __P((RF_Raid_t *));
 void rf_mountroot_hook __P((struct device *));
 
 struct device *raidrootdev;
-struct cfdata cf_raidrootdev;
-struct cfdriver cfdrv;
-/* XXX these should be moved up */
-#include "rf_configure.h"
-#include <sys/reboot.h>
 
 void rf_ReconThread __P((struct rf_recon_req *));
 /* XXX what I want is: */
@@ -279,7 +276,6 @@ void rf_RewriteParityThread __P((RF_Raid_t *raidPtr));
 void rf_CopybackThread __P((RF_Raid_t *raidPtr));
 void rf_ReconstructInPlaceThread __P((struct rf_recon_req *));
 void rf_buildroothack __P((void *));
-void rf_final_update_component_labels __P((RF_Raid_t *));
 
 RF_AutoConfig_t *rf_find_raid_components __P((void));
 void print_component_label __P((RF_ComponentLabel_t *));
