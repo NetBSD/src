@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.8 2003/05/25 14:08:21 tsutsui Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.9 2003/07/15 01:37:33 lukem Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -39,6 +39,8 @@
  * Platform-specific interrupt support for the MIPS Malta.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9 2003/07/15 01:37:33 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

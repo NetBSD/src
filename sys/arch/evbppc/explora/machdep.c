@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2003/04/26 11:05:12 ragge Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.5 2003/05/25 14:08:20 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.6 2003/07/15 01:37:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2003/07/15 01:37:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
