@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.23 1997/04/07 06:58:18 mikel Exp $	*/
+/*	$NetBSD: if.c,v 1.24 1997/05/22 17:21:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$NetBSD: if.c,v 1.23 1997/04/07 06:58:18 mikel Exp $";
+static char *rcsid = "$NetBSD: if.c,v 1.24 1997/05/22 17:21:27 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -190,9 +190,9 @@ intpr(interval, ifnetaddr)
 				}
 				break;
 			case AF_APPLETALK:
-				printf("atalk:%-12.12s ",
+				printf("atalk:%-7.7s ",
 				       atalk_print(sa,0x10));
-				printf("%-9.9s  ", atalk_print(sa,0x0b));
+				printf("%-17.17s ", atalk_print(sa,0x0b));
 				break;
 			case AF_NS:
 				{
