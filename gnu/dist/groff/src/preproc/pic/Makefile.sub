@@ -26,6 +26,8 @@ HDRS=\
   $(srcdir)/position.h \
   $(srcdir)/text.h
 GRAM=$(srcdir)/pic.y
-YTABC=$(srcdir)/pic.cc
-YTABH=$(srcdir)/pic_tab.h
+YTABC=pic.cc
+YTABH=pic_tab.h
 NAMEPREFIX=$(g)
+
+lex.o: pic.cc
