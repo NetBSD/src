@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71 2002/04/23 12:41:04 kleink Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72 2002/05/13 06:26:45 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -127,8 +127,6 @@ paddr_t bebox_mb_reg;		/* BeBox MotherBoard register */
 
 #define	OFMEMREGIONS	32
 struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
-
-int astpending;
 
 char *bootpath;
 
@@ -374,7 +372,6 @@ mem_regions(mem, avail)
 /*
  * This should probably be in autoconf!				XXX
  */
-int cpu;
 
 void
 install_extint(handler)

@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.16 2001/08/26 02:47:35 matt Exp $	*/
+/*	$NetBSD: extintr.c,v 1.17 2002/05/13 06:26:45 matt Exp $	*/
 /*      $OpenBSD: isabus.c,v 1.1 1997/10/11 11:53:00 pefo Exp $ */
 
 /*-
@@ -59,7 +59,7 @@ extern void comsoft(void);
 #endif
 
 unsigned int imen = 0xffffffff;
-volatile int cpl, ipending, astpending, tickspending;
+volatile int cpl, ipending, tickspending;
 int imask[NIPL];
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
