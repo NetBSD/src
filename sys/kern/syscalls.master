@@ -201,7 +201,7 @@
 152	UNIMPL	0 nosys
 153	UNIMPL	0 nosys
 154	UNIMPL	0 nosys
-#ifdef NFS
+#ifdef NFSSERVER
 155	STD	5 nfssvc
 #else
 155	UNIMPL	0 nosys
@@ -210,7 +210,7 @@
 157	STD	2 statfs
 158	STD	2 fstatfs
 159	UNIMPL	0 nosys
-#ifdef NFS
+#ifdef NFSCLIENT
 160	STD	0 async_daemon
 161	STD	2 getfh
 #else
