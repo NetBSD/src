@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.55 2003/02/26 06:31:19 matt Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.56 2003/03/31 14:43:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.55 2003/02/26 06:31:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.56 2003/03/31 14:43:59 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -791,6 +791,7 @@ nfsrv_zapsock(slp)
 	slp->ns_flag &= ~SLP_ALLFLAGS;
 	fp = slp->ns_fp;
 	if (fp) {
+		simple_lock(&fp->f_slock);
 		FILE_USE(fp);
 		slp->ns_fp = (struct file *)0;
 		so = slp->ns_so;
