@@ -1,4 +1,4 @@
-/*	$NetBSD: vfprintf.c,v 1.24 1998/07/26 12:31:39 mycroft Exp $	*/
+/*	$NetBSD: vfprintf.c,v 1.25 1998/07/26 12:35:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char *sccsid = "@(#)vfprintf.c	5.50 (Berkeley) 12/16/92";
 #else
-__RCSID("$NetBSD: vfprintf.c,v 1.24 1998/07/26 12:31:39 mycroft Exp $");
+__RCSID("$NetBSD: vfprintf.c,v 1.25 1998/07/26 12:35:24 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -224,7 +224,7 @@ vfprintf(fp, fmt0, ap)
 	 * BEWARE, these `goto error' on error, and PAD uses `n'.
 	 */
 #define	PRINT(ptr, len) { \
-	iovp->iov_base = (ptr); \
+	iovp->iov_base = (char *)(ptr); \
 	iovp->iov_len = (len); \
 	uio.uio_resid += (len); \
 	iovp++; \
