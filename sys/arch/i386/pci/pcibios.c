@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.1 1999/11/17 01:16:37 thorpej Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.2 1999/11/17 07:33:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@
 #include <i386/pci/pcibios.h>
 #ifdef PCIBIOS_INTR_FIXUP
 #include <i386/pci/pci_intr_fixup.h>
+#endif
+#ifdef PCIBIOS_BUS_FIXUP
+#include <i386/pci/pci_bus_fixup.h>
 #endif
 
 #include <machine/bios32.h> 
@@ -193,6 +196,13 @@ pcibios_init()
 		 * XXX mask.
 		 */
 	}
+#endif
+
+#ifdef PCIBIOS_BUS_FIXUP
+	pcibios_max_bus = pci_bus_fixup(NULL, 0);
+#ifdef PCIBIOSVERBOSE
+	printf("PCI bus #%d is the last bus\n", pcibios_max_bus);
+#endif
 #endif
 }
 
