@@ -189,16 +189,18 @@ a usable label on it. Use `disklabel -e <disk>' (where <disk> is the
 device name assigned by the NetBSD kernel, e.g. `sd0') to view and
 modify the partition sizes. See the section `Preparing your System for
 NetBSD Installation' above for suggestions about disk partition sizes.
-Make sure all your partitions start and end on cylinder boundaries.
 
-NOTE: if you are installing on a SCSI disk that does *not* have a SunOS
-or NetBSD label on it, you may still be able to use disklabel(8) but you'll
+If you are installing on a SCSI disk that does *not* have a SunOS or
+NetBSD label on it, you may still be able to use disklabel(8) but you'll
 have to create all partitions from scratch. If your disk is listed in
 `/etc/disktab', you may use the entry (which in most cases only defines
 a `c' partition to describe the whole disk) to put an initial label on
-the disk.  DO NOT USE `disklabel -r ...' TO INITIALIZE YOUR DISK LABEL;
-THIS WILL LEAD TO UNPREDICTABLE RESULTS. This deficiency will be fixed
-in a next release.
+the disk. Then proceed with `disklabel -e <disk>' to create a partition
+layout that suits your needs.
+
+NOTE: Because of the built-in compatibility with SunOS-style labels,
+ALWAYS MAKE SURE ALL YOUR PARTITIONS START AND END ON CYLINDER BOUNDARIES.
+
 
 Here follows an example of what you'll see while in the dislabel editor.
 Do not touch any of the parameters except for the `label: ' entry and
