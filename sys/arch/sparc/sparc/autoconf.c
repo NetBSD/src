@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.12 1994/08/20 01:35:20 deraadt Exp $
+ * $Id: autoconf.c,v 1.13 1994/09/18 00:02:02 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -99,8 +99,9 @@ matchbyname(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct confargs *ca = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, *(char **)aux) == 0);
+	return (strcmp(cf->cf_driver->cd_name, ca->ca_ra.ra_name) == 0);
 }
 
 /*
@@ -348,9 +349,9 @@ bootstrap()
  */
 configure()
 {
+	struct confargs oca;
 	register int node;
 	register char *cp;
-	struct romaux ra;
 	void sync_crash();
 
 #if defined(SUN4C) || defined(SUN4M)
@@ -369,9 +370,9 @@ configure()
 		node = 0;
 	}
 #endif
-	ra.ra_node = node;
-	ra.ra_name = cp = "mainbus";
-	if (!config_rootfound(cp, (void *)&ra))
+	oca.ca_ra.ra_node = node;
+	oca.ca_ra.ra_name = cp = "mainbus";
+	if (!config_rootfound(cp, (void *)&oca))
 		panic("mainbus not configured");
 	(void)spl0();
 	if (bootdv)
@@ -420,13 +421,13 @@ mbprint(aux, name)
 	void *aux;
 	char *name;
 {
-	register struct romaux *ra = aux;
+	register struct confargs *ca = aux;
 
 	if (name)
-		printf("%s at %s", ra->ra_name, name);
-	if (ra->ra_paddr)
-		printf(" %saddr 0x%x", ra->ra_iospace ? "io" : "",
-		    (int)ra->ra_paddr);
+		printf("%s at %s", ca->ca_ra.ra_name, name);
+	if (ca->ca_ra.ra_paddr)
+		printf(" %saddr 0x%x", ca->ca_ra.ra_iospace ? "io" : "",
+		    (int)ca->ca_ra.ra_paddr);
 	return (UNCONF);
 }
 
@@ -518,13 +519,13 @@ mainbus_attach(parent, dev, aux)
 	struct device *parent, *dev;
 	void *aux;
 {
+	struct confargs oca, *ca = aux;
 	register int node0, node;
 	register const char *cp, *const *ssp, *sp;
 #define L1A_HACK		/* XXX hack to allow L1-A during autoconf */
 #ifdef L1A_HACK
 	int nzs = 0, audio = 0;
 #endif
-	struct romaux ra;
 	static const char *const special[] = {
 		/* find these first (end with empty string) */
 		"memory-error",	/* as early as convenient, in case of error */
@@ -546,11 +547,11 @@ mainbus_attach(parent, dev, aux)
 	printf("\n");
 
 	/* configure the cpu */
-	node = ((struct romaux *)aux)->ra_node;
-	ra.ra_node = node;
-	ra.ra_name = cp = "cpu";
-	ra.ra_paddr = 0;
-	config_found(dev, (void *)&ra, mbprint);
+	node = ca->ca_ra.ra_node;
+	oca.ca_ra.ra_node = node;
+	oca.ca_ra.ra_name = cp = "cpu";
+	oca.ca_ra.ra_paddr = 0;
+	config_found(dev, (void *)&oca, mbprint);
 
 	/* remember which frame buffer, if any, is to be /dev/fb */
 	fbnode = getpropint(node, "fb", 0);
@@ -562,7 +563,7 @@ mainbus_attach(parent, dev, aux)
 		panic("no options in OPENPROM");
 
 	/* Start at the beginning of the bootpath */
-	ra.ra_bp = bootpath;
+	oca.ca_ra.ra_bp = bootpath;
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -575,8 +576,9 @@ mainbus_attach(parent, dev, aux)
 			printf("could not find %s in OPENPROM\n", sp);
 			panic(sp);
 		}
-		if (!romprop(&ra, sp, node) ||
-		    !config_found(dev, (void *)&ra, mbprint))
+		oca.ca_bustype = BUS_MAIN;
+		if (!romprop(&oca.ca_ra, sp, node) ||
+		    !config_found(dev, (void *)&oca, mbprint))
 			panic(sp);
 	}
 
@@ -590,7 +592,7 @@ mainbus_attach(parent, dev, aux)
 		for (ssp = special; (sp = *ssp) != NULL; ssp++)
 			if (strcmp(cp, sp) == 0)
 				break;
-		if (sp == NULL && romprop(&ra, cp, node)) {
+		if (sp == NULL && romprop(&oca.ca_ra, cp, node)) {
 #ifdef L1A_HACK
 			if (strcmp(cp, "audio") == 0)
 				audio = 1;
@@ -599,7 +601,8 @@ mainbus_attach(parent, dev, aux)
 			if (audio && nzs >= 2)
 				(void) splx(11 << 8);	/* XXX */
 #endif
-			(void) config_found(dev, (void *)&ra, mbprint);
+			oca.ca_bustype = BUS_MAIN;
+			(void) config_found(dev, (void *)&oca, mbprint);
 		}
 	}
 }
@@ -621,6 +624,31 @@ findzs(zs)
 {
 	register int node, addr;
 
+#ifdef SUN4
+#define ZS0_PHYS	0xf1000000
+#define ZS1_PHYS	0xf0000000
+
+	if (cputyp == CPU_SUN4) {
+		void *paddr;
+
+		switch (zs) {
+		case 0:
+			paddr = (void *)ZS0_PHYS;
+			break;
+		case 1:
+			paddr = (void *)ZS1_PHYS;
+			break;
+		default:
+			panic("findzs not on known unit");
+		}
+
+		addr = obio_map(paddr, NBPG);
+		if (addr)
+			return ((void *)addr);
+		goto bail;
+	}
+#endif
+#if defined(SUN4C) || defined(SUN4M)
 	node = firstchild(findroot());
 	while ((node = findnode(node, "zs")) != 0) {
 		if (getpropint(node, "slave", -1) == zs) {
@@ -630,6 +658,8 @@ findzs(zs)
 		}
 		node = nextsibling(node);
 	}
+#endif
+bail:
 	panic("findzs: cannot find zs%d", zs);
 	/* NOTREACHED */
 }
