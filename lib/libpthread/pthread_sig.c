@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.14 2002/10/02 20:16:33 thorpej Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.15 2002/10/14 23:43:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -498,12 +498,9 @@ pthread__signal(pthread_t t, int sig, int code)
 	 */
 	uc = (ucontext_t *)((char *)maskp - 
 	    STACKSPACE - sizeof(ucontext_t));
-	/*
-	 * XXX another system call for getcontext here, due to the
-	 * disagreements about argument registers between
-	 * _getcontext_u() and makecontext().
-	 */
-	getcontext(uc);
+
+	_getcontext_u(uc);
+	uc->uc_flags &= ~UC_USER;
 
 	uc->uc_stack.ss_sp = maskp;
 	uc->uc_stack.ss_size = 0;
