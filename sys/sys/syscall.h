@@ -203,3 +203,4 @@
 #define	SYS_shmctl	229
 #define	SYS_shmdt	230
 #define	SYS_shmget	231
+#define	SYS_MAXSYSCALL	232
