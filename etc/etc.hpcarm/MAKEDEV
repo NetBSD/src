@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.8 2002/10/21 04:14:53 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.9 2002/11/07 18:19:07 jdc Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -689,17 +689,17 @@ isdntrc*)
 	chmod 600 isdntrc$unit
 	;;
 
-clockctl)
-	rm -f clockctl
-	mknod clockctl c 84 0
-	chgrp ntpd clockctl
-	chmod 660 clockctl
-	;;
-
 systrace)
 	rm -f systrace
 	mknod systrace c 85 0
 	chmod 644 systrace
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 94 0
+	chgrp ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 apm)
