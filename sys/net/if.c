@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.85 2001/02/20 15:35:20 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.86 2001/03/03 03:29:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -400,6 +400,14 @@ if_attach(ifp)
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
 
+#ifdef ALTQ
+	ifp->if_snd.altq_type = 0;
+	ifp->if_snd.altq_disc = NULL;
+	ifp->if_snd.altq_flags &= ALTQF_CANTCHANGE;
+	ifp->if_snd.altq_tbr  = NULL;
+	ifp->if_snd.altq_ifp  = ifp;
+#endif
+
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 }
@@ -464,6 +472,13 @@ if_detach(ifp)
 	 * Do an if_down() to give protocols a chance to do something.
 	 */
 	if_down(ifp);
+
+#ifdef ALTQ
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		altq_disable(&ifp->if_snd);
+	if (ALTQ_IS_ATTACHED(&ifp->if_snd))
+		altq_detach(&ifp->if_snd);
+#endif
 
 	if_free_sadl(ifp);
 
