@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.57 2000/05/28 18:17:09 jhawk Exp $	*/
+/*	$NetBSD: bpf.c,v 1.58 2000/07/04 18:46:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -1305,56 +1305,4 @@ bpf_change_type(driverp, dlt, hdrlen)
 	 * performance reasons and to alleviate alignment restrictions).
 	 */
 	bp->bif_hdrlen = BPF_WORDALIGN(hdrlen + SIZEOF_BPF_HDR) - hdrlen;
-}
-
-/* XXX This routine belongs in net/if.c. */
-/*
- * Set/clear promiscuous mode on interface ifp based on the truth value
- * of pswitch.  The calls are reference counted so that only the first
- * "on" request actually has an effect, as does the final "off" request.
- * Results are undefined if the "off" and "on" requests are not matched.
- */
-int
-ifpromisc(ifp, pswitch)
-	struct ifnet *ifp;
-	int pswitch;
-{
-	int pcount, ret;
-	short flags;
-	struct ifreq ifr;
-
-	pcount = ifp->if_pcount;
-	flags = ifp->if_flags;
-	if (pswitch) {
-		/*
-		 * If the device is not configured up, we cannot put it in
-		 * promiscuous mode.
-		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (ENETDOWN);
-		if (ifp->if_pcount++ != 0)
-			return (0);
-		ifp->if_flags |= IFF_PROMISC;
-	} else {
-		if (--ifp->if_pcount > 0)
-			return (0);
-		ifp->if_flags &= ~IFF_PROMISC;
-		/*
-		 * If the device is not configured up, we should not need to
-		 * turn off promiscuous mode (device should have turned it
-		 * off when interface went down; and will look at IFF_PROMISC
-		 * again next time interface comes up).
-		 */
-		if ((ifp->if_flags & IFF_UP) == 0)
-			return (0);
-	}
-	memset((caddr_t)&ifr, 0, sizeof(ifr));
-	ifr.ifr_flags = ifp->if_flags;
-	ret = (*ifp->if_ioctl)(ifp, SIOCSIFFLAGS, (caddr_t)&ifr);
-	/* Restore interface state if not successful */
-	if (ret != 0) {
-		ifp->if_pcount = pcount;
-		ifp->if_flags = flags;
-	}
-	return (ret);
 }
