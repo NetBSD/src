@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.23 2002/10/06 23:34:56 kristerw Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.24 2002/12/26 20:55:30 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -196,6 +196,7 @@ int	bgedebug = 0;
 /* Various chip quirks. */
 #define	BGE_QUIRK_LINK_STATE_BROKEN	0x00000001
 #define	BGE_QUIRK_CSUM_BROKEN		0x00000002
+#define	BGE_QUIRK_ONLY_PHY_1		0x00000004
 
 CFATTACH_DECL(bge, sizeof(struct bge_softc),
     bge_probe, bge_attach, NULL, NULL);
@@ -422,7 +423,7 @@ bge_miibus_readreg(dev, phy, reg)
 
 	ifp = &sc->ethercom.ec_if;
 
-	if (sc->bge_asicrev == BGE_ASICREV_BCM5701_B5 && phy != 1)
+	if (phy != 1 && (sc->bge_quirks & BGE_QUIRK_ONLY_PHY_1))
 		return(0);
 
 	CSR_WRITE_4(sc, BGE_MI_COMM, BGE_MICMD_READ|BGE_MICOMM_BUSY|
@@ -1006,7 +1007,7 @@ bge_setmulti(sc)
 		CSR_WRITE_4(sc, BGE_MAR0 + (i * 4), hashes[i]);
 }
 
-int bge_swapbits[] = {
+const int bge_swapbits[] = {
 	0,
 	BGE_MODECTL_BYTESWAP_DATA,
 	BGE_MODECTL_WORDSWAP_DATA,
@@ -1560,7 +1561,7 @@ static const struct bge_revision {
 	  "BCM5701 B2" },
 
 	{ BGE_ASICREV_BCM5701_B5,
-	  0,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5701 B5" },
 
 	{ BGE_ASICREV_BCM5703_A0,
@@ -1572,7 +1573,7 @@ static const struct bge_revision {
 	  "BCM5703 A1" },
 
 	{ BGE_ASICREV_BCM5703_A2,
-	  0,
+	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5703 A2" },
 
 	{ 0, 0, NULL }
@@ -1624,7 +1625,19 @@ static const struct bge_product {
 	  "Broadcom BCM5700 Gigabit Ethernet" },
 	{ PCI_VENDOR_BROADCOM,
 	  PCI_PRODUCT_BROADCOM_BCM5701,
-	  "Broadcom BCM5700 Gigabit Ethernet" },
+	  "Broadcom BCM5701 Gigabit Ethernet" },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5702,
+	  "Broadcom BCM5702 Gigabit Ethernet" },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5702X,
+	  "Broadcom BCM5702X Gigabit Ethernet" },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5703,
+	  "Broadcom BCM5703 Gigabit Ethernet" },
+	{ PCI_VENDOR_BROADCOM,
+	  PCI_PRODUCT_BROADCOM_BCM5703X,
+	  "Broadcom BCM5703X Gigabit Ethernet" },
 
 	{ PCI_VENDOR_SCHNEIDERKOCH,
 	  PCI_PRODUCT_SCHNEIDERKOCH_SK_9DX1,
@@ -1690,6 +1703,7 @@ bge_attach(parent, self, aux)
 	bus_dma_segment_t	seg;
 	int			rseg;
 	u_int32_t		hwcfg = 0;
+	u_int32_t		mac_addr = 0;
 	u_int32_t		command;
 	struct ifnet		*ifp;
 	caddr_t			kva;
@@ -1772,7 +1786,16 @@ bge_attach(parent, self, aux)
 	/*
 	 * Get station address from the EEPROM.
 	 */
-	if (bge_read_eeprom(sc, (caddr_t)eaddr,
+	mac_addr = bge_readmem_ind(sc, 0x0c14);
+	if ((mac_addr >> 16) == 0x484b) {
+		eaddr[0] = (u_char)(mac_addr >> 8);
+		eaddr[1] = (u_char)(mac_addr >> 0);
+		mac_addr = bge_readmem_ind(sc, 0x0c18);
+		eaddr[2] = (u_char)(mac_addr >> 24);
+		eaddr[3] = (u_char)(mac_addr >> 16);
+		eaddr[4] = (u_char)(mac_addr >> 8);
+		eaddr[5] = (u_char)(mac_addr >> 0);
+	} else if (bge_read_eeprom(sc, (caddr_t)eaddr,
 	    BGE_EE_MAC_OFFSET + 2, ETHER_ADDR_LEN)) {
 		printf("%s: failed to read station address\n",
 		    sc->bge_dev.dv_xname);
