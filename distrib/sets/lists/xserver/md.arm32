@@ -42,6 +42,7 @@
 ./usr/X11R6/lib/X11/doc/README.clkprog
 ./usr/X11R6/lib/X11/doc/README.cyrix
 ./usr/X11R6/lib/X11/doc/README.epson
+./usr/X11R6/lib/X11/doc/README.i740
 ./usr/X11R6/lib/X11/doc/README.mouse
 ./usr/X11R6/lib/X11/doc/README.neo
 ./usr/X11R6/lib/X11/doc/README.rendition
@@ -55,6 +56,7 @@
 ./usr/X11R6/lib/X11/etc/et4000clock.c
 ./usr/X11R6/lib/modules
 ./usr/X11R6/lib/modules/xf86AceCad.so
+./usr/X11R6/lib/modules/xf86Calcomp.so
 ./usr/X11R6/lib/modules/xf86Dial.so
 ./usr/X11R6/lib/modules/xf86Elo.so
 ./usr/X11R6/lib/modules/xf86MuTouch.so
