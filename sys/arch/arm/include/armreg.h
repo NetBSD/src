@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.23 2003/03/18 11:17:31 bsh Exp $	*/
+/*	$NetBSD: armreg.h,v 1.24 2003/05/04 02:00:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -323,8 +323,8 @@
 /*
  * Address of the vector page, low and high versions.
  */
-#define	ARM_VECTORS_LOW		0x00000000
-#define	ARM_VECTORS_HIGH	0xffff0000
+#define	ARM_VECTORS_LOW		0x00000000U
+#define	ARM_VECTORS_HIGH	0xffff0000U
 
 /*
  * ARM Instructions
