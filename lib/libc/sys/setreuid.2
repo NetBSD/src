@@ -1,4 +1,4 @@
-.\"	$NetBSD: setreuid.2,v 1.7 1997/09/20 04:16:42 mikel Exp $
+.\"	$NetBSD: setreuid.2,v 1.8 1998/02/25 22:56:00 perry Exp $
 .\"
 .\" Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
 .\" Copyright (c) 1980, 1991 The Regents of the University of California.
@@ -43,7 +43,7 @@
 .Sh SYNOPSIS
 .Fd #include <unistd.h>
 .Ft int
-.Fn setreuid "int ruid" "int euid"
+.Fn setreuid "uid_t ruid" "uid_t euid"
 .Sh DESCRIPTION
 The real and effective user ID's of the
 current process are set according to the arguments.  If the real user ID
