@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.33 1994/07/18 15:07:18 gwr Exp $
+ *	$Id: pmap.c,v 1.34 1994/07/23 03:43:01 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1952,7 +1952,7 @@ void pmap_enter_kernel(va, pa, prot, wired, pte_proto, mem_type)
 #endif
 	/* Don't try to unlink if in DVMA map. */
 	if (va >= VM_MAX_KERNEL_ADDRESS) {
-		/* also make sure it is non-cached :) *
+		/* also make sure it is non-cached :) */
 		pte_proto |= PG_NC;
 		goto add_pte;
 	}
