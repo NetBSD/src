@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/05/28 21:11:04 nathanw Exp $
+#	$NetBSD: Makefile,v 1.22 2002/06/01 09:37:30 simonb Exp $
 
 # For now, we install the machine and arch includes, and symlink 'machine'
 # to the location of the machine includes (usually).
@@ -29,7 +29,7 @@ SUBDIR+= sun68k
 #	bebox \
 #	cats cesfic cobalt \
 #	dreamcast \
-#	evbarm evbsh3 \
+#	evbarm evbmips evbsh3 \
 #	hp300 hpc hpcarm hpcmips hpcsh \
 #	i386 \
 #	luna68k \
@@ -37,7 +37,7 @@ SUBDIR+= sun68k
 #	netwinder news68k newsmips next68k \
 #	ofppc \
 #	pc532 playstation2 pmax powerpc prep \
-#	sandpoint sgimips sh3 shark sparc sparc64 sun2 sun3 sun68k \
+#	sandpoint sbmips sgimips sh3 shark sparc sparc64 sun2 sun3 sun68k \
 #	vax \
 #	walnut \
 #	x68k x86_64
