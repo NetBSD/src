@@ -118,7 +118,8 @@ void    rewrite_tree(char *unused_ruleset, TOK822 *tree)
      * Strip source route.
      */
     if (tree->head->type == '@'
-	&& (colon = tok822_find_type(tree->head, ':')) != 0)
+	&& (colon = tok822_find_type(tree->head, ':')) != 0
+	&& colon != tree->tail)
 	tok822_free_tree(tok822_sub_keep_after(tree, colon));
 
     /*

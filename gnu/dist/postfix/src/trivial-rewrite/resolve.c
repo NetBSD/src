@@ -97,9 +97,17 @@ void    resolve_addr(char *addr, VSTRING *channel, VSTRING *nexthop,
     /*
      * The address is in internalized (unquoted) form, so we must externalize
      * it first before we can parse it.
+     * 
+     * But practically, we have to look at the unquoted form so that routing
+     * characters like @ remain visible, in order to stop user@domain@domain
+     * relay attempts when forwarding mail to a primary Sendmail MX host.
      */
-    quote_822_local(addr_buf, addr);
-    tree = tok822_scan_addr(vstring_str(addr_buf));
+    if (var_resolve_dequoted) {
+	tree = tok822_scan_addr(addr);
+    } else {
+	quote_822_local(addr_buf, addr);
+	tree = tok822_scan_addr(vstring_str(addr_buf));
+    }
 
     /*
      * Preliminary resolver: strip off all instances of the local domain.

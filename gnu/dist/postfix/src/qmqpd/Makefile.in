@@ -92,6 +92,7 @@ qmqpd.o: ../../include/namadr_list.h
 qmqpd.o: ../../include/match_list.h
 qmqpd.o: ../../include/match_ops.h
 qmqpd.o: ../../include/quote_822_local.h
+qmqpd.o: ../../include/quote_flags.h
 qmqpd.o: ../../include/match_parent_style.h
 qmqpd.o: ../../include/mail_server.h
 qmqpd.o: qmqpd.h

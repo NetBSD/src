@@ -296,16 +296,27 @@ int     smtp_xfer(SMTP_STATE *state)
     int     sndbuffree;
     SOCKOPT_SIZE optlen = sizeof(sndbufsize);
     int     mail_from_rejected;
+    int     space_left = var_smtp_line_limit;
+    int     data_left;
+    char   *data_start;
 
     /*
      * Macros for readability.
      */
-#define REWRITE_ADDRESS(addr) do { \
-	if (*(addr)) { \
-	    quote_821_local(state->scratch, addr); \
-	    smtp_unalias_addr(state->scratch2, vstring_str(state->scratch)); \
-	    myfree(addr); \
-	    addr = mystrdup(vstring_str(state->scratch2)); \
+#define REWRITE_ADDRESS(dst, mid, src) do { \
+	if (*(src)) { \
+	    quote_821_local(mid, src); \
+	    smtp_unalias_addr(dst, vstring_str(mid)); \
+	} else { \
+	    vstring_strcpy(dst, src); \
+	} \
+    } while (0)
+
+#define QUOTE_ADDRESS(dst, src) do { \
+	if (*(src)) { \
+	    quote_821_local(dst, src); \
+	} else { \
+	    vstring_strcpy(dst, src); \
 	} \
     } while (0)
 
@@ -396,11 +407,15 @@ int     smtp_xfer(SMTP_STATE *state)
 	     * Build the MAIL FROM command.
 	     */
 	case SMTP_STATE_MAIL:
-	    if (*request->sender)
-		if (var_disable_dns == 0)
-		    REWRITE_ADDRESS(request->sender);
-	    vstring_sprintf(next_command, "MAIL FROM:<%s>", request->sender);
-	    if (state->features & SMTP_FEATURE_SIZE)
+	    if (var_disable_dns == 0) {
+		REWRITE_ADDRESS(state->scratch, state->scratch2,
+				request->sender);
+	    } else {
+		QUOTE_ADDRESS(state->scratch, request->sender);
+	    }
+	    vstring_sprintf(next_command, "MAIL FROM:<%s>",
+			    vstring_str(state->scratch));
+	    if (state->features & SMTP_FEATURE_SIZE)	/* RFC 1652 */
 		vstring_sprintf_append(next_command, " SIZE=%lu",
 				       request->data_size);
 	    next_state = SMTP_STATE_RCPT;
@@ -412,9 +427,14 @@ int     smtp_xfer(SMTP_STATE *state)
 	     */
 	case SMTP_STATE_RCPT:
 	    rcpt = request->rcpt_list.info + send_rcpt;
-	    if (var_disable_dns == 0)
-		REWRITE_ADDRESS(rcpt->address);
-	    vstring_sprintf(next_command, "RCPT TO:<%s>", rcpt->address);
+	    if (var_disable_dns == 0) {
+		REWRITE_ADDRESS(state->scratch, state->scratch2,
+				rcpt->address);
+	    } else {
+		QUOTE_ADDRESS(state->scratch, rcpt->address);
+	    }
+	    vstring_sprintf(next_command, "RCPT TO:<%s>",
+			    vstring_str(state->scratch));
 	    if ((next_rcpt = send_rcpt + 1) == request->rcpt_list.len)
 		next_state = SMTP_STATE_DATA;
 	    break;
@@ -665,16 +685,38 @@ int     smtp_xfer(SMTP_STATE *state)
 		if (prev_type != REC_TYPE_CONT)
 		    if (vstring_str(state->scratch)[0] == '.')
 			smtp_fputc('.', session->stream);
-		if (var_smtp_break_lines)
-		    rec_type = REC_TYPE_NORM;
-		if (rec_type == REC_TYPE_CONT)
-		    smtp_fwrite(vstring_str(state->scratch),
-				VSTRING_LEN(state->scratch),
-				session->stream);
-		else
-		    smtp_fputs(vstring_str(state->scratch),
-			       VSTRING_LEN(state->scratch),
-			       session->stream);
+
+		/*
+		 * Deal with an impedance mismatch between Postfix queue
+		 * files (record length <= $message_line_length_limit) and
+		 * SMTP (DATA record length <= $smtp_line_length_limit). The
+		 * code below does a little too much work when the SMTP line
+		 * length limit is disabled, but it avoids code duplication,
+		 * and thus, it avoids testing and maintenance problems.
+		 */
+		data_left = VSTRING_LEN(state->scratch);
+		data_start = vstring_str(state->scratch);
+		do {
+		    if (var_smtp_line_limit > 0 && data_left >= space_left) {
+			smtp_fputs(data_start, space_left, session->stream);
+			data_start += space_left;
+			data_left -= space_left;
+			space_left = var_smtp_line_limit;
+			if (data_left > 0 || rec_type == REC_TYPE_CONT) {
+			    smtp_fputc(' ', session->stream);
+			    space_left -= 1;
+			}
+		    } else {
+			if (rec_type == REC_TYPE_CONT) {
+			    smtp_fwrite(data_start, data_left, session->stream);
+			    space_left -= data_left;
+			} else {
+			    smtp_fputs(data_start, data_left, session->stream);
+			    space_left = var_smtp_line_limit;
+			}
+			break;
+		    }
+		} while (data_left > 0);
 		prev_type = rec_type;
 	    }
 
