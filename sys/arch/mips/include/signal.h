@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.10 1998/09/13 10:29:06 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.11 1998/09/14 02:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@ typedef int sig_atomic_t;
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 struct sigcontext13 {
 	int	sc_onstack;	/* sigstack state to restore */
-	sigset13_t sc_mask;	/* signal mask to restore (old style) */
+	int	sc_mask;	/* signal mask to restore (old style) */
 	int	sc_pc;		/* pc at time of signal */
 	int	sc_regs[32];	/* processor regs 0 to 31 */
 	int	mullo, mulhi;	/* mullo and mulhi registers... */
@@ -72,7 +72,7 @@ struct sigcontext13 {
 
 struct sigcontext {
 	int	sc_onstack;	/* sigstack state to restore */
-	sigset13_t __sc_mask13;	/* signal mask to restore (old style) */
+	int	__sc_mask13;	/* signal mask to restore (old style) */
 	int	sc_pc;		/* pc at time of signal */
 	int	sc_regs[32];	/* processor regs 0 to 31 */
 	int	mullo, mulhi;	/* mullo and mulhi registers... */

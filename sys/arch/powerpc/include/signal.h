@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 1998/09/13 09:15:52 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 1998/09/14 02:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -42,14 +42,14 @@ typedef int sig_atomic_t;
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 struct sigcontext13 {
 	int sc_onstack;			/* saved onstack flag */
-	sigset13_t sc_mask;		/* saved signal mask (old style) */
+	int sc_mask;			/* saved signal mask (old style) */
 	struct trapframe sc_frame;	/* saved registers */
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
 struct sigcontext {
 	int sc_onstack;			/* saved onstack flag */
-	sigset13_t __sc_mask13;		/* saved signal mask (old style) */
+	int __sc_mask13;		/* saved signal mask (old style) */
 	struct trapframe sc_frame;	/* saved registers */
 	sigset_t sc_mask;		/* saved signal mask (new style) */
 };
