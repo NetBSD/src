@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.12 1998/06/08 07:04:46 thorpej Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.13 1998/08/15 01:59:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997, 1998 Charles M. Hannum.  All rights reserved.
@@ -115,20 +115,20 @@ bha_eisa_match(parent, match, aux)
 	    strcmp(ea->ea_idstring, "BUS4202"))
 		return (0);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, 0,
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), BHA_ISA_IOSIZE, 0,
 	    &ioh))
 		return (0);
 
 	if (bha_eisa_address(iot, ioh, &port) ||
 	    bus_space_map(iot, port, BHA_ISA_IOSIZE, 0, &ioh2)) {
-		bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
+		bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 		return (0);
 	}
 
 	rv = bha_find(iot, ioh2, NULL);
 
 	bus_space_unmap(iot, ioh2, BHA_ISA_IOSIZE);
-	bus_space_unmap(iot, ioh, EISA_SLOT_SIZE);
+	bus_space_unmap(iot, ioh, BHA_ISA_IOSIZE);
 
 	return (rv);
 }
@@ -159,7 +159,7 @@ bha_eisa_attach(parent, self, aux)
 		model = "unknown model!";
 	printf(": %s\n", model);
 
-	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), EISA_SLOT_SIZE, 0,
+	if (bus_space_map(iot, EISA_SLOT_ADDR(ea->ea_slot), BHA_ISA_IOSIZE, 0,
 	    &ioh))
 		panic("bha_eisa_attach: could not map EISA slot");
 
