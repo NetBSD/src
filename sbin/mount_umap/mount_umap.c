@@ -41,7 +41,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
+/*static char sccsid[] = "from: @(#)mount_umap.c	8.3 (Berkeley) 3/27/94";*/
+static char *rcsid = "$Id: mount_umap.c,v 1.1 1994/06/08 19:28:13 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -189,7 +190,7 @@ main(argc, argv)
 		errx(1, "%s does not belong to root%s", gmapfile, not);
 #endif /* MAPSECURITY */
 
-	if ((fscanf(fp, "%d\n", &gnentries)) != 1)
+	if ((fscanf(gfp, "%d\n", &gnentries)) != 1)
 		errx(1, "nentries not found%s", gmapfile, not);
 	if (gnentries > MAPFILEENTRIES)
 		errx(1,
@@ -199,11 +200,11 @@ main(argc, argv)
 #endif
 
 	for (count = 0; count < gnentries; ++count)
-		if ((fscanf(fp, "%lu %lu\n",
+		if ((fscanf(gfp, "%lu %lu\n",
 		    &(gmapdata[count][0]), &(gmapdata[count][1]))) != 2) {
-			if (ferror(fp))
+			if (ferror(gfp))
 				err(1, "%s%s", gmapfile, not);
-			if (feof(fp))
+			if (feof(gfp))
 				errx(1, "%s: unexpected end-of-file%s",
 				    gmapfile, not);
 			errx(1, "%s: illegal format (line %d)%s",
