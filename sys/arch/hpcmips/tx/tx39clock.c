@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39clock.c,v 1.4 1999/12/23 16:58:48 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.5 2000/01/03 18:24:04 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39icureg.h>
+#include <hpcmips/tx/tx39clockvar.h>
 #include <hpcmips/tx/tx39clockreg.h>
 #include <hpcmips/tx/tx39timerreg.h>
 
@@ -69,6 +70,8 @@ struct txtime {
 struct tx39clock_softc {
 	struct	device sc_dev;
 	tx_chipset_tag_t sc_tc;
+
+	int sc_alarm;
 
 	int sc_enabled;
 	int sc_year;
@@ -111,6 +114,7 @@ tx39clock_attach(parent, self, aux)
 	txreg_t reg;
 
 	tc = sc->sc_tc = ta->ta_tc;
+	tx_conf_register_clock(tc, self);
 
 	/* Reset timer module */
 	tx_conf_write(tc, TX39_TIMERCONTROL_REG, 0);
@@ -243,15 +247,15 @@ __tx39timer_rtcreset(tc)
 	tx_conf_write(tc, TX39_TIMERCONTROL_REG, reg);
 }
 
+
 void
 tx39clock_init(dev)
 	struct device *dev;
 {
-	tx_chipset_tag_t tc;
+	struct tx39clock_softc *sc = (void*)dev;
+	tx_chipset_tag_t tc = sc->sc_tc;
 	txreg_t reg;
 	int pcnt;
-
-	tc = tx_conf_get_tag();
 
 	/* 
 	 * Setup periodic timer (interrupting hz times per second.) 
@@ -331,6 +335,33 @@ tx39clock_set(dev, ct)
 		/* Reset RTC counter */
 		__tx39timer_rtcreset(sc->sc_tc);
 	}
+}
+
+int
+tx39clock_alarm_set(tc, msec)
+	tx_chipset_tag_t tc;
+	int msec;
+{
+	struct tx39clock_softc *sc = tc->tc_clockt;
+
+	sc->sc_alarm = TX39_MSEC2RTC(msec);
+	tx39clock_alarm_refill(tc);
+
+	return 0;
+}
+
+void
+tx39clock_alarm_refill(tc)
+	tx_chipset_tag_t tc;
+{
+	struct tx39clock_softc *sc = tc->tc_clockt;
+	struct txtime t;	
+	
+	__tx39timer_rtcget(&t);
+
+	tx_conf_write(tc, TX39_TIMERALARMHI_REG, t.t_hi); /* XXX */
+	tx_conf_write(tc, TX39_TIMERALARMLO_REG, t.t_lo + sc->sc_alarm);
+
 }
 
 void

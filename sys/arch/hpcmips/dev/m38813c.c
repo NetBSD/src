@@ -1,7 +1,7 @@
-/*	$NetBSD: m38813c.c,v 1.1 1999/12/08 15:51:07 uch Exp $ */
+/*	$NetBSD: m38813c.c,v 1.2 2000/01/03 18:24:03 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000, by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -110,7 +110,7 @@ m38813c_attach(parent, self, aux)
 #ifndef USE_POLL
 #error options USE_POLL requied.
 #endif
-	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 5, IST_EDGE, 
+	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1,
 					      IPL_TTY, m38813c_intr,
 					      sc))) {
 		printf(": can't establish interrupt\n");

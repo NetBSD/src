@@ -1,4 +1,4 @@
-/*	$NetBSD: p7416buf.c,v 1.2 1999/12/08 16:22:10 uch Exp $ */
+/*	$NetBSD: p7416buf.c,v 1.3 2000/01/03 18:24:03 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -120,7 +120,7 @@ p7416buf_attach(parent, self, aux)
 #ifndef USE_POLL
 #error options USE_POLL requied.
 #endif
-	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1, IST_EDGE, 
+	if (!(sc->sc_ih = tx39_poll_establish(sc->sc_tc, 1,
 					      IPL_TTY, p7416buf_intr, 
 					      sc))) {
 		printf(": can't establish interrupt\n");

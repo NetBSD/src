@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39icu.c,v 1.4 1999/12/23 17:24:30 uch Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.5 2000/01/03 18:24:04 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,7 @@
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39icureg.h>
+#include <hpcmips/tx/tx39clockvar.h>
 
 #include <machine/clock_machdep.h>
 #include <machine/cpu.h>
@@ -619,17 +620,19 @@ tx39_intr_dump(sc)
 
 #ifdef USE_POLL
 void*
-tx39_poll_establish(tc, interval, mode, level, ih_fun, ih_arg)
+tx39_poll_establish(tc, interval, level, ih_fun, ih_arg)
 	tx_chipset_tag_t tc;
 	int interval;
-	int mode;  /* Trigger setting. but TX39 handles edge only. */
 	int level; /* XXX not yet */
 	int (*ih_fun) __P((void*));
 	void *ih_arg;
 {
 	struct tx39icu_softc *sc;
 	struct txpoll_entry *p;
-
+	int s;
+	void *ret;
+	
+	s = splhigh();
 	sc = tc->tc_intrt;
 
 	if (!(p = malloc(sizeof(struct txpoll_entry), 
@@ -641,26 +644,28 @@ tx39_poll_establish(tc, interval, mode, level, ih_fun, ih_arg)
 	p->p_fun = ih_fun;
 	p->p_arg = ih_arg;
 	p->p_cnt = interval;
+
 	if (!sc->sc_polling) {
-		/* Hook VSync : TX39_INTRSTATUS1_LCDINT*/
+		tx39clock_alarm_set(tc, 33); /* 33 msec */
+		
 		if (!(sc->sc_poll_ih = 
 		      tx_intr_establish(
-#ifdef TX391X
-			      tc, MAKEINTR(1, TX39_INTRSTATUS1_LCDINT),
-#endif
-#ifdef TX392X
-			      tc, MAKEINTR(5, TX39_INTRSTATUS5_STPTIMERINT),
-#endif
-			      mode, level, tx39_poll_intr, sc)))  {
+			      tc, MAKEINTR(5, TX39_INTRSTATUS5_ALARMINT),
+			      IST_EDGE, level, tx39_poll_intr, sc)))  {
 			printf("tx39_poll_establish: can't hook\n");
+
+			splx(s);
 			return 0;
 		}
 	}
+
 	sc->sc_polling++;
 	p->p_desc = sc->sc_polling;
 	TAILQ_INSERT_TAIL(&sc->sc_p_head, p, p_link);
+	ret = (void*)p->p_desc;
 	
-	return (void*)p->p_desc;
+	splx(s);
+	return ret;
 }
 
 void
@@ -670,7 +675,9 @@ tx39_poll_disestablish(tc, arg)
 {
 	struct tx39icu_softc *sc;
 	struct txpoll_entry *p;
-	int desc;
+	int s, desc;
+
+	s = splhigh();
 	sc = tc->tc_intrt;
 
 	desc = (int)arg;
@@ -681,10 +688,14 @@ tx39_poll_disestablish(tc, arg)
 			break;
 		}
 	}
+
 	if (TAILQ_EMPTY(&sc->sc_p_head)) {
 		sc->sc_polling = 0;
 		tx_intr_disestablish(tc, sc->sc_poll_ih);
 	}
+	
+	splx(s);
+	return;
 }
 
 int
@@ -694,15 +705,29 @@ tx39_poll_intr(arg)
 	struct tx39icu_softc *sc = arg;
 	struct txpoll_entry *p;
 
+	tx39clock_alarm_refill(sc->sc_tc);
+
 	if (!sc->sc_polling) {
 		return 0;
 	}
 	sc->sc_pollcnt++;
 	TAILQ_FOREACH(p, &sc->sc_p_head, p_link) {
 		if (sc->sc_pollcnt % p->p_cnt == 0) {
-			(*p->p_fun)(p->p_arg);
+			if ((*p->p_fun)(p->p_arg) == POLL_END)
+				goto disestablish;
 		}
 	}
+
+	return 0;
+
+ disestablish:
+	TAILQ_REMOVE(&sc->sc_p_head, p, p_link);
+	free(p, M_DEVBUF);
+	if (TAILQ_EMPTY(&sc->sc_p_head)) {
+		sc->sc_polling = 0;
+		tx_intr_disestablish(sc->sc_tc, sc->sc_poll_ih);
+	}
+
 	return 0;
 }
 #endif /* USE_POLL */

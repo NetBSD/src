@@ -1,7 +1,7 @@
-/*	$NetBSD: tx39var.h,v 1.2 1999/12/22 15:35:35 uch Exp $ */
+/*	$NetBSD: tx39var.h,v 1.3 2000/01/03 18:24:05 uch Exp $ */
 
 /*
- * Copyright (c) 1999, by UCHIYAMA Yasushi
+ * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,11 +28,16 @@
 
 struct tx_chipset_tag {
 	void *tc_intrt;  /* interrupt tag */
-	void *tc_powert; /* power/clock tag */
+	void *tc_powert; /* power tag */
+	void *tc_clockt; /* clock/timer tag */
 };
 
 typedef struct tx_chipset_tag* tx_chipset_tag_t;
 typedef u_int32_t txreg_t; 
+
+void	tx_conf_register_intr __P((tx_chipset_tag_t, void*));
+void	tx_conf_register_power __P((tx_chipset_tag_t, void*));
+void	tx_conf_register_clock __P((tx_chipset_tag_t, void*));
 
 /*
  *	TX39 Internal Function Register access
@@ -77,11 +82,13 @@ struct txsim_attach_args {
 #define MAKEINTR(s, b) ((s) * 32 + (ffs(b) - 1))
 void*	tx_intr_establish __P((tx_chipset_tag_t, int, int, int, int (*) __P((void*)),	void*));
 void	tx_intr_disestablish __P((tx_chipset_tag_t, void*));
+
 #ifdef USE_POLL
-void*	tx39_poll_establish __P((tx_chipset_tag_t, int, int, int, int (*) __P((void*)),	void*));
+void*	tx39_poll_establish __P((tx_chipset_tag_t, int, int, int (*) __P((void*)),	void*));
 void	tx39_poll_disestablish __P((tx_chipset_tag_t, void*));
+#define POLL_CONT	0
+#define POLL_END	1
 #endif /* USE_POLL */
-void	tx_conf_register_intr __P((tx_chipset_tag_t, void*));
 
 #ifdef TX39_DEBUG
 extern u_int32_t tx39debugflag, tx39intrvec;
