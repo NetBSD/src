@@ -1,4 +1,4 @@
-/*	$NetBSD: fstab.c,v 1.21 1999/09/20 04:38:59 lukem Exp $	*/
+/*	$NetBSD: fstab.c,v 1.22 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fstab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fstab.c,v 1.21 1999/09/20 04:38:59 lukem Exp $");
+__RCSID("$NetBSD: fstab.c,v 1.22 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,11 +55,11 @@ __RCSID("$NetBSD: fstab.c,v 1.21 1999/09/20 04:38:59 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(endfsent,_endfsent);
-__weak_alias(getfsent,_getfsent);
-__weak_alias(getfsfile,_getfsfile);
-__weak_alias(getfsspec,_getfsspec);
-__weak_alias(setfsent,_setfsent);
+__weak_alias(endfsent,_endfsent)
+__weak_alias(getfsent,_getfsent)
+__weak_alias(getfsfile,_getfsfile)
+__weak_alias(getfsspec,_getfsspec)
+__weak_alias(setfsent,_setfsent)
 #endif
 
 static FILE *_fs_fp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.10 1999/09/20 04:39:25 lukem Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.11 2000/01/22 22:19:19 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.10 1999/09/20 04:39:25 lukem Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.11 2000/01/22 22:19:19 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: fdopen.c,v 1.10 1999/09/20 04:39:25 lukem Exp $");
 #include "local.h"
 
 #ifdef __weak_alias
-__weak_alias(fdopen,_fdopen);
+__weak_alias(fdopen,_fdopen)
 #endif
 
 FILE *

@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetent.c,v 1.12 1998/01/06 05:01:18 perry Exp $	*/
+/*	$NetBSD: getnetent.c,v 1.13 2000/01/22 22:19:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)getnetent.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: getnetent.c,v 8.4 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: getnetent.c,v 1.12 1998/01/06 05:01:18 perry Exp $");
+__RCSID("$NetBSD: getnetent.c,v 1.13 2000/01/22 22:19:14 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: getnetent.c,v 1.12 1998/01/06 05:01:18 perry Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(endnetent,_endnetent);
-__weak_alias(getnetent,_getnetent);
-__weak_alias(setnetent,_setnetent);
+__weak_alias(endnetent,_endnetent)
+__weak_alias(getnetent,_getnetent)
+__weak_alias(setnetent,_setnetent)
 #endif
 
 #define	MAXALIASES	35

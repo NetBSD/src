@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.10 1999/09/20 04:39:02 lukem Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.11 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "@(#)getsubopt.c	5.2 (Berkeley) 2/24/91";
 #else
-__RCSID("$NetBSD: getsubopt.c,v 1.10 1999/09/20 04:39:02 lukem Exp $");
+__RCSID("$NetBSD: getsubopt.c,v 1.11 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: getsubopt.c,v 1.10 1999/09/20 04:39:02 lukem Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(getsubopt,_getsubopt);
+__weak_alias(getsubopt,_getsubopt)
 #endif
 
 /*

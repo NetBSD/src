@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.1 1997/11/02 16:48:29 kleink Exp $	*/
+/*	$NetBSD: dirname.c,v 1.2 2000/01/22 22:19:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dirname.c,v 1.1 1997/11/02 16:48:29 kleink Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.2 2000/01/22 22:19:09 mycroft Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: dirname.c,v 1.1 1997/11/02 16:48:29 kleink Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(dirname,_dirname);
+__weak_alias(dirname,_dirname)
 #endif
 
 

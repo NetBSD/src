@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntoa.c,v 1.7 1998/11/13 15:46:54 christos Exp $	*/
+/*	$NetBSD: inet_ntoa.c,v 1.8 2000/01/22 22:19:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_ntoa.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_ntoa.c,v 1.7 1998/11/13 15:46:54 christos Exp $");
+__RCSID("$NetBSD: inet_ntoa.c,v 1.8 2000/01/22 22:19:16 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,7 +53,7 @@ __RCSID("$NetBSD: inet_ntoa.c,v 1.7 1998/11/13 15:46:54 christos Exp $");
 #include <stdio.h>
 
 #ifdef __weak_alias
-__weak_alias(inet_ntoa,_inet_ntoa);
+__weak_alias(inet_ntoa,_inet_ntoa)
 #endif
 
 char *

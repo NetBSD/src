@@ -1,4 +1,4 @@
-/*	$NetBSD: getpagesize.c,v 1.7 1997/07/21 14:07:11 jtc Exp $	*/
+/*	$NetBSD: getpagesize.c,v 1.8 2000/01/22 22:19:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getpagesize.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getpagesize.c,v 1.7 1997/07/21 14:07:11 jtc Exp $");
+__RCSID("$NetBSD: getpagesize.c,v 1.8 2000/01/22 22:19:11 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: getpagesize.c,v 1.7 1997/07/21 14:07:11 jtc Exp $");
 #include <unistd.h>
 
 #ifdef __weak_alias
-__weak_alias(getpagesize,_getpagesize);
+__weak_alias(getpagesize,_getpagesize)
 #endif
 
 int

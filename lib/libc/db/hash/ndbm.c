@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.c,v 1.15 1998/12/09 12:42:50 christos Exp $	*/
+/*	$NetBSD: ndbm.c,v 1.16 2000/01/22 22:19:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ndbm.c	8.4 (Berkeley) 7/21/94";
 #else
-__RCSID("$NetBSD: ndbm.c,v 1.15 1998/12/09 12:42:50 christos Exp $");
+__RCSID("$NetBSD: ndbm.c,v 1.16 2000/01/22 22:19:08 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,16 +59,16 @@ __RCSID("$NetBSD: ndbm.c,v 1.15 1998/12/09 12:42:50 christos Exp $");
 #include "hash.h"
 
 #ifdef __weak_alias
-__weak_alias(dbm_clearerr,_dbm_clearerr);
-__weak_alias(dbm_close,_dbm_close);
-__weak_alias(dbm_delete,_dbm_delete);
-__weak_alias(dbm_dirfno,_dbm_dirfno);
-__weak_alias(dbm_error,_dbm_error);
-__weak_alias(dbm_fetch,_dbm_fetch);
-__weak_alias(dbm_firstkey,_dbm_firstkey);
-__weak_alias(dbm_nextkey,_dbm_nextkey);
-__weak_alias(dbm_open,_dbm_open);
-__weak_alias(dbm_store,_dbm_store);
+__weak_alias(dbm_clearerr,_dbm_clearerr)
+__weak_alias(dbm_close,_dbm_close)
+__weak_alias(dbm_delete,_dbm_delete)
+__weak_alias(dbm_dirfno,_dbm_dirfno)
+__weak_alias(dbm_error,_dbm_error)
+__weak_alias(dbm_fetch,_dbm_fetch)
+__weak_alias(dbm_firstkey,_dbm_firstkey)
+__weak_alias(dbm_nextkey,_dbm_nextkey)
+__weak_alias(dbm_open,_dbm_open)
+__weak_alias(dbm_store,_dbm_store)
 #endif
 
 /*

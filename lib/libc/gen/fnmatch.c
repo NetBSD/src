@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.16 1999/09/20 04:38:58 lukem Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.17 2000/01/22 22:19:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.16 1999/09/20 04:38:58 lukem Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.17 2000/01/22 22:19:10 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: fnmatch.c,v 1.16 1999/09/20 04:38:58 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(fnmatch,_fnmatch);
+__weak_alias(fnmatch,_fnmatch)
 #endif
 
 #define	EOS	'\0'

@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.c,v 1.9 1999/09/20 04:39:44 lukem Exp $	*/
+/*	$NetBSD: bm.c,v 1.10 2000/01/22 22:19:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94";
 #else
-__RCSID("$NetBSD: bm.c,v 1.9 1999/09/20 04:39:44 lukem Exp $");
+__RCSID("$NetBSD: bm.c,v 1.10 2000/01/22 22:19:20 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS && not lint */
 
@@ -55,9 +55,9 @@ __RCSID("$NetBSD: bm.c,v 1.9 1999/09/20 04:39:44 lukem Exp $");
 #include <string.h>
 
 #ifdef __weak_alias
-__weak_alias(bm_comp,_bm_comp);
-__weak_alias(bm_exec,_bm_exec);
-__weak_alias(bm_free,_bm_free);
+__weak_alias(bm_comp,_bm_comp)
+__weak_alias(bm_exec,_bm_exec)
+__weak_alias(bm_free,_bm_free)
 #endif
 
 /* 
