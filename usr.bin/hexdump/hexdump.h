@@ -1,4 +1,4 @@
-/*	$NetBSD: hexdump.h,v 1.5 1997/10/18 13:54:22 mrg Exp $	*/
+/*	$NetBSD: hexdump.h,v 1.6 2001/02/07 18:32:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -83,11 +83,11 @@ extern int length;			/* max bytes to read */
 extern off_t skip;			/* bytes to skip */
 extern enum _vflag vflag;
 
-void	 add __P((char *));
+void	 add __P((const char *));
 void	 addfile __P((char *));
 void	 badcnt __P((char *));
 void	 badconv __P((char *));
-void	 badfmt __P((char *));
+void	 badfmt __P((const char *));
 void	 badsfmt __P((void));
 void	 bpad __P((PR *));
 void	 conv_c __P((PR *, u_char *));
