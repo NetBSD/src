@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.endian.mk,v 1.8 2004/03/13 13:07:37 skrll Exp $
+#	$NetBSD: bsd.endian.mk,v 1.9 2004/03/14 20:43:20 soren Exp $
 
 .if !defined(_BSD_ENDIAN_MK_)
 _BSD_ENDIAN_MK_=1
@@ -13,7 +13,7 @@ _BSD_ENDIAN_MK_=1
     ${MACHINE_ARCH} == "ns32k" || \
     ${MACHINE_ARCH} == "sh5el" || \
     ${MACHINE_ARCH} == "vax"
-TARGET_ENDIANNESS=	little
+TARGET_ENDIANNESS=	1234
 .elif ${MACHINE_ARCH} == "armeb" || \
       ${MACHINE_ARCH} == "hppa" || \
       ${MACHINE_ARCH} == "m68k" || \
@@ -22,9 +22,7 @@ TARGET_ENDIANNESS=	little
       ${MACHINE_ARCH} == "sh5eb" || \
       ${MACHINE_ARCH} == "sparc" || \
       ${MACHINE_ARCH} == "sparc64"
-TARGET_ENDIANNESS=	big
-.else
-TARGET_ENDIANNESS=	unknown
+TARGET_ENDIANNESS=	4321
 .endif
 
 .endif  # !defined(_BSD_ENDIAN_MK_)
