@@ -444,6 +444,8 @@ BUILDING
      -b        Bootstrap ``make'' and create a nbmake-MACHINE script (see be-
                low).
 
+     -D dest   Set the value of DESTDIR to dest.
+
      -d        Build a full distribution.  This differs from a default build
                in that files will also be installed to /dev, /etc, /root and
                /var.  Note this does not build a ``release''; no release sets
@@ -468,6 +470,8 @@ BUILDING
                or to using the -k option, or that the -t and -k options be
                used together in a single invocation of build.sh.
 
+     -M obj    Set MAKEOBJDIRPREFIX to obj.
+
      -m mach   Set the value of MACHINE to mach.  This will also override any
                value of MACHINE_ARCH in the process environment with a value
                deduced from mach, unless -a is specified.  All cross builds
@@ -478,14 +482,29 @@ BUILDING
                not make any changes.  This is similar in concept to ``make
                -n''.
 
+     -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
+               place the built object files under obj.  For instance, a set-
+               ting of /usr/obj will place build-time files under
+               /usr/obj/bin, /usr/obj/lib, and so forth.
+
      -o        Set the value of MKOBJDIRS to ``no''.
+
+     -R rel    Set the value of RELEASEDIR to rel.  Setting this option will
+               cause build.sh to run ``make release'' instead of ``make
+               build''.
 
      -r        Remove the contents of DESTDIR and TOOLDIR before building
                (provides a clean starting point).  This will skip deleting
                DESTDIR if building on a native system to the root directory.
 
+     -T tools  Set the value of TOOLDIR to tools.  If set, the bootstrap
+               ``make'' will only be rebuilt as needed (when the source files
+               for make(1) change).
+
      -t        Build and install the host tools from src/tools only.  This op-
                tion implies -b.
+
+     -U        Set the UNPRIVED variable.
 
      -u        Set the UPDATE variable.
 
@@ -494,25 +513,6 @@ BUILDING
                tion, specified by wrapper.  This allows, for instance, to
                place the wrapper in PATH automatically.  Note that wrapper is
                the full name of the file, not just a directory name.
-
-     -D dest   Set the value of DESTDIR to dest.
-
-     -M obj    Set MAKEOBJDIRPREFIX to obj.
-
-     -O obj    Create an appropriate transform macro for MAKEOBJDIR that will
-               place the built object files under obj.  For instance, a set-
-               ting of /usr/obj will place build-time files under
-               /usr/obj/bin, /usr/obj/lib, and so forth.
-
-     -R rel    Set the value of RELEASEDIR to rel.  Setting this option will
-               cause build.sh to run ``make release'' instead of ``make
-               build''.
-
-     -T tools  Set the value of TOOLDIR to tools.  If set, the bootstrap
-               ``make'' will only be rebuilt as needed (when the source files
-               for make(1) change).
-
-     -U        Set the UNPRIVED variable.
 
    The "nbmake-MACHINE" wrapper script
      If using the build.sh script to build NetBSD, a nbmake-MACHINE script
@@ -565,4 +565,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         October 21, 2002                              9
+NetBSD                         December 8, 2002                              9
