@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.17 2002/11/22 15:23:37 fvdl Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.18 2003/02/26 22:21:36 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.17 2002/11/22 15:23:37 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.18 2003/02/26 22:21:36 fvdl Exp $");
 
 #include "ioapic.h"
 
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.17 2002/11/22 15:23:37 fvdl Exp $
 #include <sys/device.h>
 #include <sys/extent.h>
 
-#define _I386_BUS_DMA_PRIVATE
+#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <dev/isa/isareg.h>
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.17 2002/11/22 15:23:37 fvdl Exp $
  * EISA doesn't have any special needs; just use the generic versions
  * of these funcions.
  */
-struct i386_bus_dma_tag eisa_bus_dma_tag = {
+struct x86_bus_dma_tag eisa_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,

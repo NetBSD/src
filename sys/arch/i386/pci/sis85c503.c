@@ -1,4 +1,4 @@
-/*	$NetBSD: sis85c503.c,v 1.3 2001/11/15 07:03:35 lukem Exp $	*/
+/*	$NetBSD: sis85c503.c,v 1.4 2003/02/26 22:23:10 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sis85c503.c,v 1.3 2001/11/15 07:03:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sis85c503.c,v 1.4 2003/02/26 22:23:10 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ sis85c503_get_intr(v, clink, irqp)
 	reg = SIS85C503_CFG_PIRQ_REG(reg, clink);
 
 	if (reg & SIS85C503_CFG_PIRQ_ROUTE_DISABLE)
-		*irqp = I386_PCI_INTERRUPT_LINE_NO_CONNECTION;
+		*irqp = X86_PCI_INTERRUPT_LINE_NO_CONNECTION;
 	else
 		*irqp = reg & SIS85C503_CFG_PIRQ_INTR_MASK;
 

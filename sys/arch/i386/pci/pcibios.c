@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.c,v 1.10 2002/10/01 12:57:17 fvdl Exp $	*/
+/*	$NetBSD: pcibios.c,v 1.11 2003/02/26 22:23:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.10 2002/10/01 12:57:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcibios.c,v 1.11 2003/02/26 22:23:09 fvdl Exp $");
 
 #include "opt_pcibios.h"
 
@@ -194,7 +194,7 @@ pcibios_init()
 		/*
 		 * Fixup interrupt routing.
 		 */
-		rv = pci_intr_fixup(NULL, I386_BUS_SPACE_IO, &pciirq);
+		rv = pci_intr_fixup(NULL, X86_BUS_SPACE_IO, &pciirq);
 		switch (rv) {
 		case -1:
 			/* Non-fatal error. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.90 2003/01/17 23:10:33 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.91 2003/02/26 22:23:03 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1998 Charles M. Hannum.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.90 2003/01/17 23:10:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.91 2003/02/26 22:23:03 fvdl Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -686,8 +686,8 @@ npxsave_lwp(struct lwp *l, int save)
 		    oci->ci_dev->dv_xname,
 		    save? "save" : "flush", p));
 
-		i386_send_ipi(oci,
-		    save ? I386_IPI_SYNCH_FPU : I386_IPI_FLUSH_FPU);
+		x86_send_ipi(oci,
+		    save ? X86_IPI_SYNCH_FPU : X86_IPI_FLUSH_FPU);
 
 #ifdef DIAGNOSTIC
 		spincount = 0;

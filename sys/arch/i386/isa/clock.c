@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.78 2003/02/05 12:18:04 nakayama Exp $	*/
+/*	$NetBSD: clock.c,v 1.79 2003/02/26 22:23:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.78 2003/02/05 12:18:04 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.79 2003/02/26 22:23:01 fvdl Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -405,7 +405,7 @@ clockintr(void *arg, struct intrframe frame)
 			cc_microset_time = time;
 			microset_iter = hz - 1;
 #if defined(MULTIPROCESSOR)
-			i386_broadcast_ipi(I386_IPI_MICROSET);
+			x86_broadcast_ipi(X86_IPI_MICROSET);
 #endif
 			cc_microset(ci);
 		}

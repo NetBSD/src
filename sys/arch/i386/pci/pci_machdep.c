@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.50 2002/11/22 15:23:52 fvdl Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.51 2003/02/26 22:23:08 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.50 2002/11/22 15:23:52 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.51 2003/02/26 22:23:08 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.50 2002/11/22 15:23:52 fvdl Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#define _I386_BUS_DMA_PRIVATE
+#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <machine/pio.h>
@@ -161,7 +161,7 @@ struct {
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-struct i386_bus_dma_tag pci_bus_dma_tag = {
+struct x86_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
@@ -524,7 +524,7 @@ pci_intr_map(pa, ihp)
 	 * that the BIOS did its job, we also recognize that as meaning that
 	 * the BIOS has not configured the device.
 	 */
-	if (line == 0 || line == I386_PCI_INTERRUPT_LINE_NO_CONNECTION) {
+	if (line == 0 || line == X86_PCI_INTERRUPT_LINE_NO_CONNECTION) {
 		printf("pci_intr_map: no mapping for pin %c (line=%02x)\n",
 		       '@' + pin, line);
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: opti82c700.c,v 1.3 2001/11/15 07:03:33 lukem Exp $	*/
+/*	$NetBSD: opti82c700.c,v 1.4 2003/02/26 22:23:07 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.3 2001/11/15 07:03:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opti82c700.c,v 1.4 2003/02/26 22:23:07 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ opti82c700_get_intr(v, clink, irqp)
 	val = (reg >> ofs) & FIRESTAR_CFG_PIRQ_MASK;
 
 	*irqp = (val == FIRESTAR_PIRQ_NONE) ?
-	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
+	    X86_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
 
 	return (0);
 }

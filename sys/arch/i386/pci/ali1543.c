@@ -1,4 +1,4 @@
-/*	$NetBSD: ali1543.c,v 1.4 2003/01/20 01:25:04 simonb Exp $	*/
+/*	$NetBSD: ali1543.c,v 1.5 2003/02/26 22:23:06 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -94,7 +94,7 @@
 /* HAYAKAWA Koichi wrote ALi 1543 PCI ICU code basing on VIA82C586 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.4 2003/01/20 01:25:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ali1543.c,v 1.5 2003/02/26 22:23:06 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,7 +204,7 @@ ali1543_get_intr(pciintr_icu_handle_t v, int clink, int *irqp)
 #endif /* DEBUG_1543 */
 	val = ALI1543_PIRQ(reg, clink);
 	*irqp = (val == 0) ?
-	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
+	    X86_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
 
 	return (0);
 }

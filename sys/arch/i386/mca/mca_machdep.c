@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.18 2002/11/22 15:23:51 fvdl Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.19 2003/02/26 22:23:05 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.18 2002/11/22 15:23:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.19 2003/02/26 22:23:05 fvdl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.18 2002/11/22 15:23:51 fvdl Exp $"
 #include <machine/bioscall.h>
 #include <machine/psl.h>
 
-#define _I386_BUS_DMA_PRIVATE
+#define _X86_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 
 #include <dev/isa/isavar.h>
@@ -91,7 +91,7 @@ struct bios_config {
  * Used to encode DMA channel into ISA DMA cookie. We use upper 4 bits of
  * ISA DMA cookie id_flags, it's unused.
  */
-struct i386_isa_dma_cookie {
+struct x86_isa_dma_cookie {
 	int id_flags;
 	/* We don't care about rest */
 };
@@ -124,7 +124,7 @@ static int	_mca_bus_dmamap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
  */
 #define	MCA_DMA_BOUNCE_THRESHOLD	(16 * 1024 * 1024)
 
-struct i386_bus_dma_tag mca_bus_dma_tag = {
+struct x86_bus_dma_tag mca_bus_dma_tag = {
 	MCA_DMA_BOUNCE_THRESHOLD,		/* _bounce_thresh */
 	_isa_bus_dmamap_create,
 	_isa_bus_dmamap_destroy,
@@ -274,7 +274,7 @@ mca_nmi()
  
 	int 	slot, mcanmi=0;
 
-	/* if there is no MCA bus, call i386_nmi() */
+	/* if there is no MCA bus, call x86_nmi() */
 	if (!MCA_system)
 		goto out;
 
@@ -300,7 +300,7 @@ mca_nmi()
    out:
 	if (!mcanmi) {
 		/* no CHCK bits asserted, assume ISA NMI */
-		return (i386_nmi());
+		return (x86_nmi());
 	} else
 		return(0);
 }
@@ -444,7 +444,7 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	bus_size_t len;
 	int ops;
 {
-	struct i386_isa_dma_cookie *cookie;
+	struct x86_isa_dma_cookie *cookie;
 	bus_addr_t phys;
 	bus_size_t cnt;
 	int dmach, mode;
@@ -464,7 +464,7 @@ _mca_bus_dmamap_sync(t, map, offset, len, ops)
 	if (ops != BUS_DMASYNC_PREREAD && ops != BUS_DMASYNC_PREWRITE)
 		return;
 
-	cookie = (struct i386_isa_dma_cookie *)map->_dm_cookie;
+	cookie = (struct x86_isa_dma_cookie *)map->_dm_cookie;
 	dmach = (cookie->id_flags & 0xf0) >> 4;
 
 	phys = map->dm_segs[0].ds_addr;
@@ -532,7 +532,7 @@ mca_dmamap_create(t, size, flags, dmamp, dmach)
 	int dmach;
 {
 	int error;
-	struct i386_isa_dma_cookie *cookie;
+	struct x86_isa_dma_cookie *cookie;
 
 #ifdef DEBUG
 	/* Sanity check */
@@ -556,7 +556,7 @@ mca_dmamap_create(t, size, flags, dmamp, dmach)
 		return (error);
 
 	/* Encode DMA channel */
-	cookie = (struct i386_isa_dma_cookie *) (*dmamp)->_dm_cookie;
+	cookie = (struct x86_isa_dma_cookie *) (*dmamp)->_dm_cookie;
 	cookie->id_flags &= 0x0f;
 	cookie->id_flags |= dmach << 4;
 

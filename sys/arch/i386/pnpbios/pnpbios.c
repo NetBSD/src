@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.34 2003/01/28 22:19:26 wiz Exp $ */
+/* $NetBSD: pnpbios.c,v 1.35 2003/02/26 22:23:11 fvdl Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.34 2003/01/28 22:19:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.35 2003/02/26 22:23:11 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -269,8 +269,8 @@ pnpbios_mapit(addr, len, prot)
 	u_long startpa, pa, endpa;
 	vaddr_t startva, va;
 
-	pa = startpa = i386_trunc_page(addr);
-	endpa = i386_round_page(addr + len);
+	pa = startpa = x86_trunc_page(addr);
+	endpa = x86_round_page(addr + len);
 
 	va = startva = uvm_km_valloc(kernel_map, endpa - startpa);
 	if (!startva)
@@ -1335,8 +1335,8 @@ pnpbios_io_map(pbt, resc, idx, tagp, hdlp)
 	while (idx--)
 		io = SIMPLEQ_NEXT(io, next);
 
-	*tagp = I386_BUS_SPACE_IO;
-	return (i386_memio_map(I386_BUS_SPACE_IO, io->minbase, io->len,
+	*tagp = X86_BUS_SPACE_IO;
+	return (x86_memio_map(X86_BUS_SPACE_IO, io->minbase, io->len,
 			       0, hdlp));
 }
 
@@ -1357,7 +1357,7 @@ pnpbios_io_unmap(pbt, resc, idx, tag, hdl)
 	while (idx--)
 		io = SIMPLEQ_NEXT(io, next);
 
-	i386_memio_unmap(tag, hdl, io->len);
+	x86_memio_unmap(tag, hdl, io->len);
 }
 
 int
@@ -1378,7 +1378,7 @@ pnpbios_getiobase(pbt, resc, idx, tagp, basep)
 		io = SIMPLEQ_NEXT(io, next);
 
 	if (tagp)
-		*tagp = I386_BUS_SPACE_IO;
+		*tagp = X86_BUS_SPACE_IO;
 	if (basep)
 		*basep = io->minbase;
 	return (0);

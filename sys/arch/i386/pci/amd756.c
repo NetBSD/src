@@ -1,4 +1,4 @@
-/*	$NetBSD: amd756.c,v 1.2 2001/11/15 07:03:33 lukem Exp $	*/
+/*	$NetBSD: amd756.c,v 1.3 2003/02/26 22:23:06 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd756.c,v 1.2 2001/11/15 07:03:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd756.c,v 1.3 2003/02/26 22:23:06 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,7 +165,7 @@ amd756_get_intr(v, clink, irqp)
 	reg = AMD756_GET_PIIRQSEL(ph);
 	val = (reg >> (4 * clink)) & 0x0f;
 	*irqp = (val == 0) ?
-	    I386_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
+	    X86_PCI_INTERRUPT_LINE_NO_CONNECTION : val;
 
 	return (0);
 }
