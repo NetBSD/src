@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.11 2004/03/24 17:06:58 drochner Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.12 2005/01/22 07:35:34 tsutsui Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.11 2004/03/24 17:06:58 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.12 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.11 2004/03/24 17:06:58 drochner E
 #define PMS_INTR 7	/* XXX - should be obtained from firmware */
 #define PICA_KBCMDP	(PICA_SYS_KBD + JAZZIO_KBCMDP)
 
-int	pckbc_jazzio_match __P((struct device *, struct cfdata *, void *));
-void	pckbc_jazzio_attach __P((struct device *, struct device *, void *));
-void	pckbc_jazzio_intr_establish __P((struct pckbc_softc *, pckbc_slot_t));
+int	pckbc_jazzio_match(struct device *, struct cfdata *, void *);
+void	pckbc_jazzio_attach(struct device *, struct device *, void *);
+void	pckbc_jazzio_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 struct pckbc_jazzio_softc {
 	struct pckbc_softc sc_pckbc;
@@ -77,16 +77,16 @@ pckbc_jazzio_match(parent, match, aux)
 	int res, ok = 1;
 
 	if (strcmp(ja->ja_name, "I8742") != 0)
-		return (0);
+		return 0;
 
 	if (pckbc_is_console(iot, addr) == 0) {
 		struct pckbc_internal t;
 
 		if (bus_space_map(iot, addr + KBDATAP, 1, 0, &ioh_d))
-			return (0);
+			return 0;
 		if (bus_space_map(iot, PICA_KBCMDP, 1, 0, &ioh_c)) {
 			bus_space_unmap(iot, ioh_d, 1);
-			return (0);
+			return 0;
 		}
 
 		memset(&t, 0, sizeof(t));
@@ -95,7 +95,7 @@ pckbc_jazzio_match(parent, match, aux)
 		t.t_ioh_c = ioh_c;
 
 		/* flush KBC */
-		(void) pckbc_poll_data1(&t, PCKBC_KBD_SLOT);
+		(void)pckbc_poll_data1(&t, PCKBC_KBD_SLOT);
 
 		/* KBC selftest */
 		if (pckbc_send_cmd(iot, ioh_c, KBC_SELFTEST) == 0) {
@@ -112,13 +112,11 @@ pckbc_jazzio_match(parent, match, aux)
 		bus_space_unmap(iot, ioh_c, 1);
 	}
 
-	return (ok);
+	return ok;
 }
 
 void
-pckbc_jazzio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pckbc_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	struct pckbc_jazzio_softc *jsc = (void *)self;
@@ -169,9 +167,7 @@ pckbc_jazzio_attach(parent, self, aux)
 }
 
 void
-pckbc_jazzio_intr_establish(sc, slot)
-	struct pckbc_softc *sc;
-	pckbc_slot_t slot;
+pckbc_jazzio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
 	struct pckbc_jazzio_softc *jsc = (void *) sc;
 

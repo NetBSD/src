@@ -1,4 +1,4 @@
-/* $NetBSD: vga_jazzio.c,v 1.10 2003/07/15 00:04:50 lukem Exp $ */
+/* $NetBSD: vga_jazzio.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $ */
 /* NetBSD: vga_isa.c,v 1.3 1998/06/12 18:45:48 drochner Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.10 2003/07/15 00:04:50 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,10 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: vga_jazzio.c,v 1.10 2003/07/15 00:04:50 lukem Exp $"
 
 #define WSDISPLAY_TYPE_JAZZVGA	WSDISPLAY_TYPE_PCIVGA	/* XXX not really */
 
-int	vga_jazzio_init_tag __P((char*, bus_space_tag_t *, bus_space_tag_t *));
-paddr_t	vga_jazzio_mmap __P((void *, off_t, int));
-int	vga_jazzio_match __P((struct device *, struct cfdata *, void *));
-void	vga_jazzio_attach __P((struct device *, struct device *, void *));
+int	vga_jazzio_init_tag(char*, bus_space_tag_t *, bus_space_tag_t *);
+paddr_t	vga_jazzio_mmap(void *, off_t, int);
+int	vga_jazzio_match(struct device *, struct cfdata *, void *);
+void	vga_jazzio_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(vga_jazzio, sizeof(struct vga_softc),
     vga_jazzio_match, vga_jazzio_attach, NULL, NULL);
@@ -72,15 +72,13 @@ const struct vga_funcs vga_jazzio_funcs = {
 };
 
 int
-vga_jazzio_init_tag(name, iotp, memtp)
-	char *name;
-	bus_space_tag_t *iotp, *memtp;
+vga_jazzio_init_tag(char *name, bus_space_tag_t *iotp, bus_space_tag_t *memtp)
 {
 	static int initialized = 0;
 	static struct arc_bus_space vga_io, vga_mem;
 
 	if (strcmp(name, "ALI_S3") != 0)
-		return(ENXIO);
+		return ENXIO;
 
 	if (!initialized) {
 		initialized = 1;
@@ -109,15 +107,13 @@ vga_jazzio_init_tag(name, iotp, memtp)
 	}
 	*iotp = &vga_io;
 	*memtp = &vga_mem;
-	return (0);
+	return 0;
 }
 
 paddr_t
-vga_jazzio_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
+vga_jazzio_mmap(void *v, off_t offset, int prot)
 {
+
 	if (offset >= 0xa0000 && offset < 0xc0000)
 		return mips_btop(PICA_P_LOCAL_VIDEO + offset);
 	if (offset >= 0x0000 && offset < 0x10000)
@@ -128,30 +124,25 @@ vga_jazzio_mmap(v, offset, prot)
 }
 
 int
-vga_jazzio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+vga_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
 
 	if (vga_jazzio_init_tag(ja->ja_name, &iot, &memt))
-		return (0);
+		return 0;
 
 	if (!vga_is_console(iot, WSDISPLAY_TYPE_JAZZVGA) &&
 	    !vga_common_probe(iot, memt))
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-vga_jazzio_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+vga_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct vga_softc *sc = (void *) self;
+	struct vga_softc *sc = (void *)self;
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot, memt;
 
@@ -163,12 +154,11 @@ vga_jazzio_attach(parent, self, aux)
 }
 
 int
-vga_jazzio_cnattach(name)
-	char *name;
+vga_jazzio_cnattach(char *name)
 {
 	bus_space_tag_t iot, memt;
 
 	if (vga_jazzio_init_tag(name, &iot, &memt))
-		return (ENXIO);
-	return (vga_cnattach(iot, memt, WSDISPLAY_TYPE_JAZZVGA, 1));
+		return ENXIO;
+	return vga_cnattach(iot, memt, WSDISPLAY_TYPE_JAZZVGA, 1);
 }

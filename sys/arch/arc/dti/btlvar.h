@@ -1,4 +1,4 @@
-/*	$NetBSD: btlvar.h,v 1.2 2005/01/15 13:03:40 skrll Exp $	*/
+/*	$NetBSD: btlvar.h,v 1.3 2005/01/22 07:35:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 /* XXX: this kludge really should be replaced by bha with bus_dma for tyne */
 
 struct btl_config {
-	void (*bc_bouncemem) __P((u_int *, u_int *));
-	u_int32_t (*bc_kvtophys) __P((u_int32_t));
-	u_int32_t (*bc_phystokv) __P((u_int32_t));
+	void (*bc_bouncemem)(u_int *, u_int *);
+	uint32_t (*bc_kvtophys)(uint32_t);
+	uint32_t (*bc_phystokv)(uint32_t);
 };
 
 extern struct btl_config *btl_conf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.5 2003/01/19 10:06:12 tsutsui Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.6 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: arcbios.h,v 1.1 1998/01/29 15:06:22 pefo Exp $	*/
 
 /*-
@@ -104,12 +104,12 @@ typedef struct arc_config
 	arc_config_class_t	class;		/* Likely these three all */
 	arc_config_type_t	type;		/* need to be uchar to make */
 	arc_dev_flags_t		flags;		/* the alignment right */
-	u_int16_t		version;
-	u_int16_t		revision;
-	u_int32_t		key;
-	u_int32_t		affinity_mask;
-	u_int32_t		config_data_len;
-	u_int32_t		id_len;
+	uint16_t		version;
+	uint16_t		revision;
+	uint32_t		key;
+	uint32_t		affinity_mask;
+	uint32_t		config_data_len;
+	uint32_t		id_len;
 	char 			*id;
 } arc_config_t;
 
@@ -166,17 +166,17 @@ typedef enum {
 
 typedef struct arc_mem {
 	MEMORYTYPE	Type;		/* Memory chunk type */
-	u_int32_t	BasePage;	/* Page no, first page */
-	u_int32_t	PageCount;	/* Number of pages */
+	uint32_t	BasePage;	/* Page no, first page */
+	uint32_t	PageCount;	/* Number of pages */
 } arc_mem_t;
 
 typedef caddr_t arc_time_t; /* XXX */
 
 typedef struct arc_dsp_stat {
-	u_int16_t	CursorXPosition;
-	u_int16_t	CursorYPosition;
-	u_int16_t	CursorMaxXPosition;
-	u_int16_t	CursorMaxYPosition;
+	uint16_t	CursorXPosition;
+	uint16_t	CursorYPosition;
+	uint16_t	CursorMaxXPosition;
+	uint16_t	CursorMaxYPosition;
 	u_char		ForegroundColor;
 	u_char		BackgroundColor;
 	u_char		HighIntensity;
@@ -185,28 +185,28 @@ typedef struct arc_dsp_stat {
 } arc_dsp_stat_t;
 
 typedef caddr_t arc_dirent_t; /* XXX */
-typedef u_int32_t arc_open_mode_t; /* XXX */
-typedef u_int32_t arc_seek_mode_t; /* XXX */
-typedef u_int32_t arc_mount_t; /* XXX */
+typedef uint32_t arc_open_mode_t; /* XXX */
+typedef uint32_t arc_seek_mode_t; /* XXX */
+typedef uint32_t arc_mount_t; /* XXX */
 
 typedef struct arc_calls
 {
 	arc_status_t (*load)(		/* Load 1 */
 		char *,			/* Image to load */
-		u_int32_t,		/* top address */
-		u_int32_t *,		/* Entry address */
-		u_int32_t *);		/* Low address */
+		uint32_t,		/* top address */
+		uint32_t *,		/* Entry address */
+		uint32_t *);		/* Low address */
 
 	arc_status_t (*invoke)(		/* Invoke 2 */
-		u_int32_t,		/* Entry Address */
-		u_int32_t,		/* Stack Address */
-		u_int32_t,		/* Argc */
+		uint32_t,		/* Entry Address */
+		uint32_t,		/* Stack Address */
+		uint32_t,		/* Argc */
 		char **,		/* argv */
 		char **);		/* envp */
 
 	arc_status_t (*execute)(	/* Execute 3 */
 		char *,			/* Image path */
-		u_int32_t,		/* Argc */
+		uint32_t,		/* Argc */
 		char **,		/* argv */
 		char **);		/* envp */
 
@@ -254,7 +254,7 @@ typedef struct arc_calls
 
 #ifdef arc
 	void (*signal)(			/* Signal 20 */
-		u_int32_t,		/* Signal number */
+		uint32_t,		/* Signal number */
 /**/		caddr_t);		/* Handler */
 #endif
 #ifdef sgi
@@ -263,39 +263,39 @@ typedef struct arc_calls
 
 	arc_time_t *(*get_time)(void);	/* GetTime 21 */
 
-	u_int32_t (*get_relative_time)(void); /* GetRelativeTime 22 */
+	uint32_t (*get_relative_time)(void); /* GetRelativeTime 22 */
 
 	arc_status_t (*get_dir_entry)(	/* GetDirectoryEntry 23 */
-		u_int32_t,		/* FileId */
+		uint32_t,		/* FileId */
 		arc_dirent_t *,		/* Directory entry */
-		u_int32_t,		/* Length */
-		u_int32_t *);		/* Count */
+		uint32_t,		/* Length */
+		uint32_t *);		/* Count */
 
 	arc_status_t (*open)(		/* Open 24 */
 		char *,			/* Path */
 		arc_open_mode_t,	/* Open mode */
-		u_int32_t *);		/* FileId */
+		uint32_t *);		/* FileId */
 
 	arc_status_t (*close)(		/* Close 25 */
-		u_int32_t);		/* FileId */
+		uint32_t);		/* FileId */
 
 	arc_status_t (*read)(		/* Read 26 */
-		u_int32_t,		/* FileId */
+		uint32_t,		/* FileId */
 		caddr_t,		/* Buffer */
-		u_int32_t,		/* Length */
-		u_int32_t *);		/* Count */
+		uint32_t,		/* Length */
+		uint32_t *);		/* Count */
 
 	arc_status_t (*get_read_status)( /* GetReadStatus 27 */
-		u_int32_t);		/* FileId */
+		uint32_t);		/* FileId */
 
 	arc_status_t (*write)(		/* Write 28 */
-		u_int32_t,		/* FileId */
+		uint32_t,		/* FileId */
 		caddr_t,		/* Buffer */
-		u_int32_t,		/* Length */
-		u_int32_t *);		/* Count */
+		uint32_t,		/* Length */
+		uint32_t *);		/* Count */
 
 	arc_status_t (*seek)(		/* Seek 29 */
-		u_int32_t,		/* FileId */
+		uint32_t,		/* FileId */
 		int64_t *,		/* Offset */
 		arc_seek_mode_t); 	/* Mode */
 
@@ -319,11 +319,11 @@ typedef struct arc_calls
 	/* note: the followings don't exist on SGI */
 #ifdef arc
 	arc_status_t (*test_unicode)(	/* TestUnicodeCharacter 36 */
-		u_int32_t,		/* FileId */
-		u_int16_t);		/* UnicodeCharacter */
+		uint32_t,		/* FileId */
+		uint16_t);		/* UnicodeCharacter */
 
 	arc_dsp_stat_t *(*get_display_status)( /* GetDisplayStatus 37 */
-		u_int32_t);		/* FileId */
+		uint32_t);		/* FileId */
 #endif
 } arc_calls_t;
 
@@ -332,21 +332,21 @@ typedef struct arc_calls
 
 typedef struct arc_param_blk
 {
-	u_int32_t	magic;		/* Magic Number */
-	u_int32_t	length;		/* Length of parameter block */
-	u_int16_t	version;	/* ?? */
-	u_int16_t	revision;	/* ?? */
+	uint32_t	magic;		/* Magic Number */
+	uint32_t	length;		/* Length of parameter block */
+	uint16_t	version;	/* ?? */
+	uint16_t	revision;	/* ?? */
 /**/	caddr_t		restart_block;	/* ?? */
 /**/	caddr_t		debug_block;	/* Debugging info -- unused */
 /**/	caddr_t		general_exp_vect; /* ?? */
 /**/	caddr_t		tlb_miss_exp_vect; /* ?? */
-	u_int32_t	firmware_length; /* Size of Firmware jumptable in bytes */
+	uint32_t	firmware_length; /* Size of Firmware jumptable in bytes */
 	arc_calls_t	*firmware_vect;	/* Firmware jumptable */
-	u_int32_t	vendor_length;	/* Size of Vendor specific jumptable */
+	uint32_t	vendor_length;	/* Size of Vendor specific jumptable */
 /**/	caddr_t		vendor_vect;	/* Vendor specific jumptable */
-	u_int32_t	adapter_count;	/* ?? */
-	u_int32_t	adapter0_type;	/* ?? */
-	u_int32_t	adapter0_length; /* ?? */
+	uint32_t	adapter_count;	/* ?? */
+	uint32_t	adapter0_type;	/* ?? */
+	uint32_t	adapter0_length; /* ?? */
 /**/	caddr_t		adapter0_vect;	/* ?? */
 } arc_param_blk_t;
 
@@ -357,12 +357,12 @@ typedef struct arc_param_blk
  * All functions except bios_ident() should be called only if
  *	bios_ident() returns >= 0.
  */
-int bios_ident __P((void));
-void bios_init_console __P((void));
-int bios_configure_memory __P((int *, phys_ram_seg_t *, int *));
-void bios_save_info __P((void));
+int bios_ident(void);
+void bios_init_console(void);
+int bios_configure_memory(int *, phys_ram_seg_t *, int *);
+void bios_save_info(void);
 #ifdef arc
-void bios_display_info __P((int *, int *, int *, int *));
+void bios_display_info(int *, int *, int *, int *);
 #endif
 
 extern char arc_vendor_id[sizeof(((arc_sid_t *)0)->vendor) + 1];

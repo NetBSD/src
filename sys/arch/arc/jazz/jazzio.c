@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzio.c,v 1.12 2003/10/08 18:12:24 tsutsui Exp $	*/
+/*	$NetBSD: jazzio.c,v 1.13 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 /*	NetBSD: tc.c,v 1.2 1995/03/08 00:39:05 cgd Exp 	*/
 
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.12 2003/10/08 18:12:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.13 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: jazzio.c,v 1.12 2003/10/08 18:12:24 tsutsui Exp $");
 #include <arc/jazz/dma.h>
 #include <arc/jazz/pckbc_jazzioreg.h>
 
-void arc_sysreset __P((bus_addr_t, bus_size_t));
+void arc_sysreset(bus_addr_t, bus_size_t);
 
 struct jazzio_softc {
 	struct	device sc_dv;
@@ -70,7 +70,7 @@ extern struct cfdriver jazzio_cd;
 void	jazzio_intr_establish(int, int (*)(void *), void *);
 void	jazzio_intr_disestablish(int);
 int	jazzio_intr(unsigned, struct clockframe *);
-int	jazzio_no_handler __P((void *));
+int	jazzio_no_handler(void *);
 
 /*
  *  Interrupt dispatch table for jazz i/o bus.
@@ -93,25 +93,19 @@ int jazzio_int_mask = 0;	/* jazz i/o interrupt enable mask */
 struct arc_bus_space jazzio_bus;
 
 int
-jazziomatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+jazziomatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct confargs *ca = aux;
 
         /* Make sure that we're looking for a jazzio bus. */
         if (strcmp(ca->ca_name, jazzio_cd.cd_name) != 0)
-                return (0);
+                return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-jazzioattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+jazzioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct jazzio_softc *sc = (struct jazzio_softc *)self;
 	struct jazzio_attach_args ja;
@@ -163,9 +157,7 @@ jazzioattach(parent, self, aux)
 }
 
 int
-jazzioprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+jazzioprint(void *aux, const char *pnp)
 {
 	struct jazzio_attach_args *ja = aux;
 
@@ -174,14 +166,11 @@ jazzioprint(aux, pnp)
 	aprint_normal(" addr 0x%lx", ja->ja_addr);
 	if (ja->ja_intr != -1)
 		aprint_normal(" intr %d", ja->ja_intr);
-	return (UNCONF);
+	return UNCONF;
 }
 
 void
-jazzio_intr_establish(intr, handler, val)
-	int intr;
-	intr_handler_t handler;
-	void *val;
+jazzio_intr_establish(int intr, intr_handler_t handler, void *val)
 {
 	struct jazzio_intrhand *jirp;
 
@@ -203,8 +192,7 @@ jazzio_intr_establish(intr, handler, val)
 }
 
 void
-jazzio_intr_disestablish(intr)
-	int intr;
+jazzio_intr_disestablish(int intr)
 {
 	struct jazzio_intrhand *jirp;
 
@@ -218,8 +206,7 @@ jazzio_intr_disestablish(intr)
 }
 
 int
-jazzio_no_handler(arg)
-	void *arg;
+jazzio_no_handler(void *arg)
 {
 
 	panic("uncaught jazzio interrupt with arg %p", arg);
@@ -229,9 +216,7 @@ jazzio_no_handler(arg)
  *   Handle jazz i/o interrupt.
  */
 int
-jazzio_intr(mask, cf)
-	unsigned mask;
-	struct clockframe *cf;
+jazzio_intr(unsigned mask, struct clockframe *cf)
 {
 	unsigned int vector;
 	struct jazzio_intrhand *jirp;
@@ -241,11 +226,11 @@ jazzio_intr(mask, cf)
 		(*jirp->ih_func)(jirp->ih_arg);
 		jirp->ih_evcnt.ev_count++;
 	}
-	return (~0);  /* Don't reenable */
+	return ~0;  /* Don't reenable */
 }
 
 void
-jazzio_reset()
+jazzio_reset(void)
 {
 
 	arc_sysreset(PICA_SYS_KBD, JAZZIO_KBCMDP);

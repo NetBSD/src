@@ -1,4 +1,4 @@
-/*	$NetBSD: p_acer_pica_61.c,v 1.7 2005/01/01 04:00:25 tsutsui Exp $	*/
+/*	$NetBSD: p_acer_pica_61.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: picabus.c,v 1.11 1999/01/11 05:11:10 millert Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.7 2005/01/01 04:00:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_acer_pica_61.c,v 1.7 2005/01/01 04:00:25 tsutsui E
 
 /* ALI PICA 61 and some MAGNUM? */
 
-void p_acer_pica_61_init __P((void));
+void p_acer_pica_61_init(void);
 
 struct platform platform_acer_pica_61 = {
 	"PICA-61",
@@ -84,8 +84,9 @@ struct pica_dev acer_pica_61_cpu[] = {
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-p_acer_pica_61_init()
+p_acer_pica_61_init(void)
 {
+
 	/*
 	 * PICA-61 has PC-style coherent(?) 128KB L2 cache,
 	 * and mips_L2CachePresent == 0 on this machine.

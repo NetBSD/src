@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11 2003/05/25 14:00:15 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.12 2005/01/22 07:35:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-extern const u_int32_t *ipl_sr_bits;
+extern const uint32_t *ipl_sr_bits;
 
 extern int _splraise(int);
 extern int _spllower(int);

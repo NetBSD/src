@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.38 2004/02/13 11:36:10 wiz Exp $	*/
+/*	$NetBSD: pccons.c,v 1.39 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.38 2004/02/13 11:36:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.39 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -157,21 +157,21 @@ static struct video_state {
 
 static struct callout async_update_ch = CALLOUT_INITIALIZER;
 
-void pc_xmode_on __P((void));
-void pc_xmode_off __P((void));
-static u_char kbc_get8042cmd __P((void));
-int kbd_cmd __P((u_char, u_char));
-static __inline int kbd_wait_output __P((void));
-static __inline int kbd_wait_input __P((void));
-void kbd_flush_input __P((void));
-void set_cursor_shape __P((void));
-void get_cursor_shape __P((void));
-void async_update __P((void));
-void do_async_update __P((u_char));
+void pc_xmode_on(void);
+void pc_xmode_off(void);
+static u_char kbc_get8042cmd(void);
+int kbd_cmd(u_char, u_char);
+static __inline int kbd_wait_output(void);
+static __inline int kbd_wait_input(void);
+void kbd_flush_input(void);
+void set_cursor_shape(void);
+void get_cursor_shape(void);
+void async_update(void);
+void do_async_update(u_char);
 
-void pccnputc __P((dev_t, int c));
-int pccngetc __P((dev_t));
-void pccnpollc __P((dev_t, int));
+void pccnputc(dev_t, int c);
+int pccngetc(dev_t);
+void pccnpollc(dev_t, int);
 
 extern struct cfdriver pc_cd;
 
@@ -191,16 +191,16 @@ const struct cdevsw pc_cdevsw = {
 
 #define	CHR		2
 
-char *sget __P((void));
-void sput __P((u_char *, int));
+char *sget(void);
+void sput(u_char *, int);
 
-void	pcstart __P((struct tty *));
-int	pcparam __P((struct tty *, struct termios *));
-static __inline void wcopy __P((void *, void *, u_int));
-void	pc_context_init __P((bus_space_tag_t, bus_space_tag_t, bus_space_tag_t,
-	    struct pccons_config *));
+void	pcstart(struct tty *);
+int	pcparam(struct tty *, struct termios *);
+static __inline void wcopy(void *, void *, u_int);
+void	pc_context_init(bus_space_tag_t, bus_space_tag_t, bus_space_tag_t,
+	    struct pccons_config *);
 
-extern void fillw __P((int, u_int16_t *, int));
+extern void fillw(int, uint16_t *, int);
 
 #define	KBD_DELAY \
 		DELAY(10);
@@ -215,9 +215,7 @@ extern void fillw __P((int, u_int16_t *, int));
 struct pccons_context pccons_console_context;
 
 void
-kbd_context_init(kbd_iot, config)
-	bus_space_tag_t kbd_iot;
-	struct pccons_config *config;
+kbd_context_init(bus_space_tag_t kbd_iot, struct pccons_config *config)
 {
 	struct pccons_kbd_context *pkc = &pccons_console_context.pc_pkc;
 
@@ -234,9 +232,8 @@ kbd_context_init(kbd_iot, config)
 }
 
 void
-pc_context_init(crt_iot, crt_memt, kbd_iot, config)
-	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
-	struct pccons_config *config;
+pc_context_init(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
+    bus_space_tag_t kbd_iot, struct pccons_config *config)
 {
 	struct pccons_context *pc = &pccons_console_context;
 
@@ -273,27 +270,25 @@ pc_context_init(crt_iot, crt_memt, kbd_iot, config)
  * for stupid VGA cards.  cnt is required to be an even vale.
  */
 static __inline void
-wcopy(src, tgt, cnt)
-	void *src, *tgt;
-	u_int cnt;
+wcopy(void *src, void *tgt, u_int cnt)
 {
-	u_int16_t *from = src;
-	u_int16_t *to = tgt;
+	uint16_t *from = src;
+	uint16_t *to = tgt;
 
 	cnt >>= 1;
 	if (to < from || to >= from + cnt)
-		while(cnt--)
+		while (cnt--)
 			*to++ = *from++;
 	else {
 		to += cnt;
 		from += cnt;
-		while(cnt--)
+		while (cnt--)
 			*--to = *--from;
 	}
 }
 
 static __inline int
-kbd_wait_output()
+kbd_wait_output(void)
 {
 	u_int i;
 
@@ -306,7 +301,7 @@ kbd_wait_output()
 }
 
 static __inline int
-kbd_wait_input()
+kbd_wait_input(void)
 {
 	u_int i;
 
@@ -319,16 +314,16 @@ kbd_wait_input()
 }
 
 void
-kbd_flush_input()
+kbd_flush_input(void)
 {
-	u_char c;
+	uint8_t c;
 
 	while ((c = kbd_cmd_read_1()) & 0x03)
 		if ((c & KBS_DIB) == KBS_DIB) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
 			delay(6);
-			(void) kbd_data_read_1();
+			(void)kbd_data_read_1();
 		}
 }
 
@@ -337,7 +332,7 @@ kbd_flush_input()
  * Get the current command byte.
  */
 static u_char
-kbc_get8042cmd()
+kbc_get8042cmd(void)
 {
 
 	if (!kbd_wait_output())
@@ -354,7 +349,7 @@ kbc_get8042cmd()
  */
 int
 kbc_put8042cmd(val)
-	u_char val;
+	uint8_t val;
 {
 
 	if (!kbd_wait_output())
@@ -370,22 +365,20 @@ kbc_put8042cmd(val)
  * Pass command to keyboard itself
  */
 int
-kbd_cmd(val, polling)
-	u_char val;
-	u_char polling;
+kbd_cmd(uint8_t val, uint8_t polling)
 {
 	u_int retries = 3;
 	u_int i;
 
-	if(!polling) {
+	if (!polling) {
 		i = spltty();
-		if(kb_oq_get == kb_oq_put) {
+		if (kb_oq_get == kb_oq_put) {
 			kbd_data_write_1(val);
 		}
 		kb_oq[kb_oq_put] = val;
 		kb_oq_put = (kb_oq_put + 1) & 7;
 		splx(i);
-		return(1);
+		return 1;
 	}
 	else do {
 		if (!kbd_wait_output())
@@ -393,7 +386,7 @@ kbd_cmd(val, polling)
 		kbd_data_write_1(val);
 		for (i = 100000; i; i--) {
 			if (kbd_cmd_read_1() & KBS_DIB) {
-				u_char c;
+				uint8_t c;
 
 				KBD_DELAY;
 				c = kbd_data_read_1();
@@ -413,8 +406,9 @@ kbd_cmd(val, polling)
 }
 
 void
-set_cursor_shape()
+set_cursor_shape(void)
 {
+
 	crtc_write_1(0, 10);
 	crtc_write_1(1, cursor_shape >> 8);
 	crtc_write_1(0, 11);
@@ -423,8 +417,9 @@ set_cursor_shape()
 }
 
 void
-get_cursor_shape()
+get_cursor_shape(void)
 {
+
 	crtc_write_1(0, 10);
 	cursor_shape = crtc_read_1(1) << 8;
 	crtc_write_1(0, 11);
@@ -444,8 +439,7 @@ get_cursor_shape()
 }
 
 void
-do_async_update(poll)
-	u_char poll;
+do_async_update(uint8_t poll)
 {
 	int pos;
 	static int old_pos = -1;
@@ -485,7 +479,7 @@ do_async_update(poll)
 }
 
 void
-async_update()
+async_update(void)
 {
 
 	if (kernel || polling) {
@@ -505,9 +499,8 @@ async_update()
  * these are both bad jokes
  */
 int
-pccons_common_match(crt_iot, crt_memt, kbd_iot, config)
-	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
-	struct pccons_config *config;
+pccons_common_match(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
+    bus_space_tag_t kbd_iot, struct pccons_config *config)
 {
 	int i;
 
@@ -585,20 +578,17 @@ lose:
 	return 1;
 }
 
-void pccons_common_attach(sc, crt_iot, crt_memt, kbd_iot, config)
-	struct pc_softc *sc;
-	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
-	struct pccons_config *config;
+void pccons_common_attach(struct pc_softc *sc, bus_space_tag_t crt_iot,
+    bus_space_tag_t crt_memt, bus_space_tag_t kbd_iot,
+    struct pccons_config *config)
 {
+
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 }
 
 int
-pcopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pcopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pc_softc *sc;
 	int unit = PCUNIT(dev);
@@ -633,14 +623,11 @@ pcopen(dev, flag, mode, p)
 		return EBUSY;
 	tp->t_state |= TS_CARR_ON;
 
-	return ((*tp->t_linesw->l_open)(dev, tp));
+	return (*tp->t_linesw->l_open)(dev, tp);
 }
 
 int
-pcclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+pcclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -650,53 +637,43 @@ pcclose(dev, flag, mode, p)
 #ifdef notyet /* XXX */
 	ttyfree(tp);
 #endif
-	return(0);
+	return 0;
 }
 
 int
-pcread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pcread(dev_t dev, struct uio *uio, int flag)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_read)(tp, uio, flag));
+	return (*tp->t_linesw->l_read)(tp, uio, flag);
 }
 
 int
-pcwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+pcwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_write)(tp, uio, flag));
+	return (*tp->t_linesw->l_write)(tp, uio, flag);
 }
 
 int
-pcpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+pcpoll(dev_t dev, int events, struct proc *p)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
+	return (*tp->t_linesw->l_poll)(tp, events, p);
 }
 
 struct tty *
-pctty(dev)
-	dev_t dev;
+pctty(dev_t dev)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
-	return (tp);
+	return tp;
 }
 
 /*
@@ -705,12 +682,11 @@ pctty(dev)
  * Catch the character, and see who it goes to.
  */
 int
-pcintr(arg)
-	void *arg;
+pcintr(void *arg)
 {
 	struct pc_softc *sc = arg;
 	struct tty *tp = sc->sc_tty;
-	u_char *cp;
+	uint8_t *cp;
 
 	if ((kbd_cmd_read_1() & KBS_DIB) == 0)
 		return 0;
@@ -729,12 +705,7 @@ pcintr(arg)
 }
 
 int
-pcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+pcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
@@ -815,8 +786,7 @@ pcioctl(dev, cmd, data, flag, p)
 }
 
 void
-pcstart(tp)
-	struct tty *tp;
+pcstart(struct tty *tp)
 {
 	struct clist *cl;
 	int s, len;
@@ -852,9 +822,8 @@ out:
 }
 
 /* ARGSUSED */
-void pccons_common_cnattach(crt_iot, crt_memt, kbd_iot, config)
-	bus_space_tag_t crt_iot, crt_memt, kbd_iot;
-	struct pccons_config *config;
+void pccons_common_cnattach(bus_space_tag_t crt_iot, bus_space_tag_t crt_memt,
+    bus_space_tag_t kbd_iot, struct pccons_config *config)
 {
 	int maj;
 	static struct consdev pccons = {
@@ -878,9 +847,7 @@ void pccons_common_cnattach(crt_iot, crt_memt, kbd_iot, config)
 
 /* ARGSUSED */
 void
-pccnputc(dev, c)
-	dev_t dev;
-	int c;
+pccnputc(dev_t dev, int c)
 {
 	u_char cc, oldkernel = kernel;
 
@@ -896,8 +863,7 @@ pccnputc(dev, c)
 
 /* ARGSUSED */
 int
-pccngetc(dev)
-	dev_t dev;
+pccngetc(dev_t dev)
 {
 	char *cp;
 
@@ -916,9 +882,7 @@ pccngetc(dev)
 }
 
 void
-pccnpollc(dev, on)
-	dev_t dev;
-	int on;
+pccnpollc(dev_t dev, int on)
 {
 
 	polling = on;
@@ -949,9 +913,7 @@ pccnpollc(dev, on)
  * Set line parameters.
  */
 int
-pcparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+pcparam(struct tty *tp, struct termios *t)
 {
 
 	tp->t_ispeed = t->c_ispeed;
@@ -999,9 +961,7 @@ static u_char iso2ibm437[] =
  * `pc3' termcap emulation.
  */
 void
-sput(cp, n)
-	u_char *cp;
-	int n;
+sput(u_char *cp, int n)
 {
 	struct pccons_context *pc = &pccons_console_context;
 	u_char c, scroll = 0;
@@ -1634,7 +1594,7 @@ static pccons_keymap_t	scan_codes[KB_NUM_KEYS] = {
  * Get characters from the keyboard.  If none are present, return NULL.
  */
 char *
-sget()
+sget(void)
 {
 	u_char dt;
 	static u_char extended = 0, shift_state = 0;
@@ -1862,37 +1822,34 @@ loop:
 }
 
 paddr_t
-pcmmap(dev, offset, nprot)
-	dev_t dev;
-	off_t offset;
-	int nprot;
+pcmmap(dev_t dev, off_t offset, int nprot)
 {
 	struct pccons_context *pc = &pccons_console_context;
 	paddr_t pa;
 
 	if (offset >= 0xa0000 && offset < 0xc0000) {
 		if (bus_space_paddr(pc->pc_crt_memt, pc->pc_mono_memh, &pa))
-			return (-1);
+			return -1;
 		pa += offset - pc->pc_config->pc_mono_memaddr;
-		return (mips_btop(pa));
+		return mips_btop(pa);
 	}
 	if (offset >= 0x0000 && offset < 0x10000) {
 		if (bus_space_paddr(pc->pc_crt_iot, pc->pc_mono_ioh, &pa))
-			return (-1);
+			return -1;
 		pa += offset - pc->pc_config->pc_mono_iobase;
-		return (mips_btop(pa));
+		return mips_btop(pa);
 	}
 	if (offset >= 0x40000000 && offset < 0x40800000) {
 		if (bus_space_paddr(pc->pc_crt_memt, pc->pc_mono_memh, &pa))
 			return (-1);
 		pa += offset - 0x40000000 - pc->pc_config->pc_mono_memaddr;
-		return (mips_btop(pa));
+		return mips_btop(pa);
 	}
-	return (-1);
+	return -1;
 }
 
 void
-pc_xmode_on()
+pc_xmode_on(void)
 {
 	if (pc_xmode)
 		return;
@@ -1906,7 +1863,7 @@ pc_xmode_on()
 }
 
 void
-pc_xmode_off()
+pc_xmode_off(void)
 {
 	if (pc_xmode == 0)
 		return;

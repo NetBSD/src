@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_r96.c,v 1.4 2003/07/15 00:04:43 lukem Exp $	*/
+/*	$NetBSD: p_nec_r96.c,v 1.5 2005/01/22 07:35:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_nec_r96.c,v 1.4 2003/07/15 00:04:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_nec_r96.c,v 1.5 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_nec_r96.c,v 1.4 2003/07/15 00:04:43 lukem Exp $");
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
 
-static int p_nec_riscserver_2200_match __P((struct platform *));
+static int p_nec_riscserver_2200_match(struct platform *);
 
 struct platform platform_nec_r96 = {
 	"NEC-R96",
@@ -73,13 +73,13 @@ struct platform platform_nec_riscserver_2200 = {
 };
 
 static int
-p_nec_riscserver_2200_match(p)
-	struct platform *p;
+p_nec_riscserver_2200_match(struct platform *p)
 {
+
 	if (strcmp(arc_id, p->system_id) == 0 &&
 	    (p->vendor_id == NULL || strcmp(arc_vendor_id, p->vendor_id) == 0)
 	    && arc_cpu_l2cache_size == 2 * 1024 * 1024)
-		return (2);
+		return 2;
 
-	return (0);
+	return 0;
 }

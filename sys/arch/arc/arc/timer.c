@@ -1,4 +1,4 @@
-/* $NetBSD: timer.c,v 1.2 2003/08/07 16:26:48 agc Exp $ */
+/* $NetBSD: timer.c,v 1.3 2005/01/22 07:35:33 tsutsui Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.2 2003/08/07 16:26:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.3 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,9 +92,7 @@ const struct timerfns *timerfns;
 int timerinitted;
 
 void
-timerattach(dev, fns)
-	struct device *dev;
-	const struct timerfns *fns;
+timerattach(struct device *dev, const struct timerfns *fns)
 {
 
 	/*
@@ -116,7 +114,7 @@ timerattach(dev, fns)
  * are no other timers available.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	if (timerfns == NULL)
 		panic("cpu_initclocks: no timer attached");
@@ -143,8 +141,7 @@ cpu_initclocks()
  * but that would be a drag.
  */
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* nothing we can do */
@@ -155,8 +152,7 @@ setstatclockrate(newhz)
  * XXX Should be calibrated with the cycle counter.
  */
 void
-delay(n)
-	int n;
+delay(int n)
 {
 
 	DELAY(n);

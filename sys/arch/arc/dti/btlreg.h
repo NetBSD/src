@@ -1,7 +1,7 @@
-/*	$NetBSD: btlreg.h,v 1.5 2004/12/07 14:50:56 thorpej Exp $	*/
+/*	$NetBSD: btlreg.h,v 1.6 2005/01/22 07:35:34 tsutsui Exp $	*/
 
-typedef u_int8_t physaddr[4];
-typedef u_int8_t physlen[4];
+typedef uint8_t physaddr[4];
+typedef uint8_t physlen[4];
 #define	ltophys	_lto4l
 #define	phystol	_4ltol
 

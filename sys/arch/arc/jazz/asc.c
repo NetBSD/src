@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.14 2005/01/22 07:32:05 tsutsui Exp $	*/
+/*	$NetBSD: asc.c,v 1.15 2005/01/22 07:35:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.14 2005/01/22 07:32:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.15 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,10 +110,7 @@ struct ncr53c9x_glue asc_glue = {
  * Match driver based on name
  */
 int
-asc_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+asc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 
@@ -123,10 +120,7 @@ asc_match(parent, match, aux)
 }
 
 void
-asc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+asc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	struct asc_softc *asc = (void *)self;
@@ -237,9 +231,7 @@ asc_attach(parent, self, aux)
  */
 
 u_char
-asc_read_reg(sc, reg)
-	struct ncr53c9x_softc *sc;
-	int reg;
+asc_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -247,10 +239,7 @@ asc_read_reg(sc, reg)
 }
 
 void
-asc_write_reg(sc, reg, val)
-	struct ncr53c9x_softc *sc;
-	int reg;
-	u_char val;
+asc_write_reg(struct ncr53c9x_softc *sc, int reg, u_char val)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -258,16 +247,14 @@ asc_write_reg(sc, reg, val)
 }
 
 int
-asc_dma_isintr(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_isintr(struct ncr53c9x_softc *sc)
 {
 
 	return asc_read_reg(sc, NCR_STAT) & NCRSTAT_INT;
 }
 
 void
-asc_dma_reset(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -277,8 +264,7 @@ asc_dma_reset(sc)
 }
 
 int
-asc_dma_intr(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	int datain, resid, trans;
@@ -372,12 +358,8 @@ asc_dma_intr(sc)
 }
 
 int
-asc_dma_setup(sc, addr, len, datain, dmasize)
-	struct ncr53c9x_softc *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;
-	size_t *dmasize;
+asc_dma_setup(struct ncr53c9x_softc *sc, caddr_t *addr, size_t *len,
+    int datain, size_t *dmasize)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -408,8 +390,7 @@ asc_dma_setup(sc, addr, len, datain, dmasize)
 }
 
 void
-asc_dma_go(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -434,8 +415,7 @@ asc_dma_go(sc)
 }
 
 void
-asc_dma_stop(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 
@@ -449,8 +429,7 @@ asc_dma_stop(sc)
 }
 
 int
-asc_dma_isactive(sc)
-	struct ncr53c9x_softc *sc;
+asc_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 

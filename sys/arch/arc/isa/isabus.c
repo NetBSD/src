@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.26 2004/08/30 15:05:16 drochner Exp $	*/
+/*	$NetBSD: isabus.c,v 1.27 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.26 2004/08/30 15:05:16 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.27 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -159,23 +159,22 @@ int	isabrprint(void *, const char *);
 
 extern struct arc_bus_space arc_bus_io, arc_bus_mem;
 
-void	isabr_attach_hook __P((struct device *, struct device *,
-			struct isabus_attach_args *));
-const struct evcnt *isabr_intr_evcnt __P((isa_chipset_tag_t, int));
-void	*isabr_intr_establish __P((isa_chipset_tag_t, int, int, int,
-			int (*)(void *), void *));
-void	isabr_intr_disestablish __P((isa_chipset_tag_t, void*));
-int	isabr_iointr __P((unsigned int, struct clockframe *));
-void	isabr_initicu __P((void));
-void	intr_calculatemasks __P((void));
-int	fakeintr __P((void *a));
+void	isabr_attach_hook(struct device *, struct device *,
+			struct isabus_attach_args *);
+const struct evcnt *isabr_intr_evcnt(isa_chipset_tag_t, int);
+void	*isabr_intr_establish(isa_chipset_tag_t, int, int, int,
+			int (*)(void *), void *);
+void	isabr_intr_disestablish(isa_chipset_tag_t, void*);
+int	isabr_iointr(unsigned int, struct clockframe *);
+void	isabr_initicu(void);
+void	intr_calculatemasks(void);
+int	fakeintr(void *a);
 
 struct isabr_config *isabr_conf = NULL;
-u_int32_t imask[_IPL_N];	/* XXX */
+uint32_t imask[_IPL_N];	/* XXX */
 
 void
-isabrattach(sc)
-	struct isabr_softc *sc;
+isabrattach(struct isabr_softc *sc)
 {
 	struct isabus_attach_args iba;
 
@@ -209,9 +208,7 @@ isabrattach(sc)
 }
 
 int
-isabrprint(aux, pnp)
-	void *aux;
-	const char *pnp;
+isabrprint(void *aux, const char *pnp)
 {
 
         if (pnp)
@@ -232,9 +229,9 @@ int	imen;
 int	intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
-int fakeintr(a)
-	void *a;
+int fakeintr(void *a)
 {
+
 	return 0;
 }
 
@@ -245,7 +242,7 @@ int fakeintr(a)
  * happen very much anyway.
  */
 void
-intr_calculatemasks()
+intr_calculatemasks(void)
 {
 	int irq, level;
 	struct intrhand *q;
@@ -317,18 +314,15 @@ intr_calculatemasks()
 }
 
 void
-isabr_attach_hook(parent, self, iba)
-	struct device *parent, *self;
-	struct isabus_attach_args *iba;
+isabr_attach_hook(struct device *parent, struct device *self,
+    struct isabus_attach_args *iba)
 {
 
 	/* Nothing to do. */
 }
 
 const struct evcnt *
-isabr_intr_evcnt(ic, irq)
-	isa_chipset_tag_t ic;
-	int irq;
+isabr_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
 
 	/* XXX for now, no evcnt parent reported */
@@ -339,13 +333,8 @@ isabr_intr_evcnt(ic, irq)
  *	Establish a ISA bus interrupt.
  */
 void *
-isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
-        isa_chipset_tag_t ic;
-        int irq;
-        int type;
-        int level;
-        int (*ih_fun) __P((void *));
-        void *ih_arg;
+isabr_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {NULL, fakeintr};
@@ -404,13 +393,11 @@ isabr_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	ih->ih_what = ""; /* XXX - should be eliminated */
 	*p = ih;
 
-	return (ih);
+	return ih;
 }
 
 void
-isabr_intr_disestablish(ic, arg)
-        isa_chipset_tag_t ic;
-        void *arg;
+isabr_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 {
 
 }
@@ -419,9 +406,7 @@ isabr_intr_disestablish(ic, arg)
  *	Process an interrupt from the ISA bus.
  */
 int
-isabr_iointr(mask, cf)
-        unsigned mask;
-        struct clockframe *cf;
+isabr_iointr(unsigned mask, struct clockframe *cf)
 {
 	struct intrhand *ih;
 	int isa_vector;
@@ -433,23 +418,22 @@ isabr_iointr(mask, cf)
 
 	o_imen = imen;
 	imen |= 1 << (isa_vector & (ICU_LEN - 1));
-	if(isa_vector & 0x08) {
+	if (isa_vector & 0x08) {
 		isa_inb(IO_ICU2 + 1);
 		isa_outb(IO_ICU2 + 1, imen >> 8);
 		isa_outb(IO_ICU2, 0x60 + (isa_vector & 7));
 		isa_outb(IO_ICU1, 0x60 + IRQ_SLAVE);
-	}
-	else {
+	} else {
 		isa_inb(IO_ICU1 + 1);
 		isa_outb(IO_ICU1 + 1, imen);
 		isa_outb(IO_ICU1, 0x60 + isa_vector);
 	}
 	ih = intrhand[isa_vector];
-	if(isa_vector == 0) {	/* Clock */	/*XXX*/
+	if (isa_vector == 0) {	/* Clock */	/*XXX*/
 		(*ih->ih_fun)(cf);
 		ih = ih->ih_next;
 	}
-	while(ih) {
+	while (ih) {
 		(*ih->ih_fun)(ih->ih_arg);
 		ih = ih->ih_next;
 	}
@@ -459,7 +443,7 @@ isabr_iointr(mask, cf)
 	isa_outb(IO_ICU1 + 1, imen);
 	isa_outb(IO_ICU2 + 1, imen >> 8);
 
-	return(~0);  /* Dont reenable */
+	return ~0;  /* Dont reenable */
 }
 
 
@@ -467,7 +451,7 @@ isabr_iointr(mask, cf)
  * Initialize the Interrupt controller logic.
  */
 void
-isabr_initicu()
+isabr_initicu(void)
 {
 
 	int i;
@@ -509,8 +493,7 @@ isabr_initicu()
  *	SPEAKER BEEPER...
  */
 void
-sysbeepstop(arg)
-	void *arg;
+sysbeepstop(void *arg)
 {
 	int s;
 
@@ -522,8 +505,7 @@ sysbeepstop(arg)
 }
 
 void
-sysbeep(pitch, period)
-	int pitch, period;
+sysbeep(int pitch, int period)
 {
 	static int last_pitch, last_period;
 	int s;

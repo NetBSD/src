@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.9 2003/12/04 13:05:15 keihan Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.10 2005/01/22 07:35:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.9 2003/12/04 13:05:15 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.10 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ struct mcclock_jazzio_config mcclock_nec_pci_conf = {
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-static const u_int32_t nec_pci_ipl_sr_bits[_IPL_N] = {
+static const uint32_t nec_pci_ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -152,9 +152,7 @@ static const u_int32_t nec_pci_ipl_sr_bits[_IPL_N] = {
 };
 
 static u_int
-mc_nec_pci_read(sc, reg)
-	struct mc146818_softc *sc;
-	u_int reg;
+mc_nec_pci_read(struct mc146818_softc *sc, u_int reg)
 {
 	u_int i, as;
 
@@ -165,9 +163,7 @@ mc_nec_pci_read(sc, reg)
 }
 
 static void
-mc_nec_pci_write(sc, reg, datum)
-	struct mc146818_softc *sc;
-	u_int reg, datum;
+mc_nec_pci_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 	u_int as;
 
@@ -180,7 +176,7 @@ mc_nec_pci_write(sc, reg, datum)
  * chipset-dependent jazzio bus configuration
  */
 
-void jazzio_nec_pci_set_iointr_mask __P((int));
+void jazzio_nec_pci_set_iointr_mask(int);
 
 struct jazzio_config jazzio_nec_pci_conf = {
 	RD94_SYS_INTSTAT1,
@@ -190,8 +186,7 @@ struct jazzio_config jazzio_nec_pci_conf = {
 };
 
 void
-jazzio_nec_pci_set_iointr_mask(mask)
-	int mask;
+jazzio_nec_pci_set_iointr_mask(int mask)
 {
 
 	/* XXX: I don't know why, but firmware does. */
@@ -205,7 +200,7 @@ jazzio_nec_pci_set_iointr_mask(mask)
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-c_nec_pci_init()
+c_nec_pci_init(void)
 {
 
 	/*
@@ -273,7 +268,7 @@ c_nec_pci_init()
  * console initialization
  */
 void
-c_nec_pci_cons_init()
+c_nec_pci_cons_init(void)
 {
 
 	if (!com_console) {

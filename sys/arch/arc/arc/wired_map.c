@@ -1,4 +1,4 @@
-/*	$NetBSD: wired_map.c,v 1.7 2003/07/15 00:04:44 lukem Exp $	*/
+/*	$NetBSD: wired_map.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.7 2003/07/15 00:04:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wired_map.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,27 +55,22 @@ static struct wired_map_entry {
 	vaddr_t	va;
 } wired_map[ARC_TLB_WIRED_ENTRIES];
 
-boolean_t arc_wired_map_paddr_entry __P((paddr_t pa,
-	    vaddr_t *vap, vsize_t *sizep));
-boolean_t arc_wired_map_vaddr_entry __P((vaddr_t va,
-	    paddr_t *pap, vsize_t *sizep));
+boolean_t arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep);
+boolean_t arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep);
 
 static int	nwired;
 static vaddr_t	va_free;
 
 void
-arc_init_wired_map()
+arc_init_wired_map(void)
 {
+
 	nwired = 0;
 	va_free = VA_FREE_START;
 }
 
 void
-arc_enter_wired(va, pa0, pa1, pg_size)
-	vaddr_t va;
-	paddr_t pa0;
-	paddr_t pa1;
-	u_int32_t pg_size;
+arc_enter_wired(vaddr_t va, paddr_t pa0, paddr_t pa1, uint32_t pg_size)
 {
 	struct tlb tlb;
 
@@ -103,8 +98,7 @@ arc_enter_wired(va, pa0, pa1, pg_size)
 	else
 		tlb.tlb_lo1 = mips3_paddr_to_tlbpfn(pa1) | \
 		    MIPS3_PG_IOPAGE(PMAP_CCA_FOR_PA(pa1));
-	mips3_TLBWriteIndexedVPS(MIPS3_TLB_WIRED_UPAGES + nwired,
-	    &tlb);
+	mips3_TLBWriteIndexedVPS(MIPS3_TLB_WIRED_UPAGES + nwired, &tlb);
 
 	if (va_free < va + wired_map[nwired].size * 2) {
 		va_free = va + wired_map[nwired].size * 2;
@@ -114,10 +108,7 @@ arc_enter_wired(va, pa0, pa1, pg_size)
 }
 
 boolean_t
-arc_wired_map_paddr_entry(pa, vap, sizep)
-	paddr_t pa;
-	vaddr_t *vap;
-	vsize_t *sizep;
+arc_wired_map_paddr_entry(paddr_t pa, vaddr_t *vap, vsize_t *sizep)
 {
 	int n = nwired;
 	struct wired_map_entry *entry = wired_map;
@@ -127,24 +118,21 @@ arc_wired_map_paddr_entry(pa, vap, sizep)
 		    pa >= entry->pa0 && pa < entry->pa0 + entry->size) {
 			*vap = entry->va;
 			*sizep = entry->size;
-			return (1);
+			return 1;
 		}
 		if (entry->pa1 != 0 &&
 		    pa >= entry->pa1 && pa < entry->pa1 + entry->size) {
 			*vap = entry->va + entry->size;
 			*sizep = entry->size;
-			return (1);
+			return 1;
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /* XXX: Using tlbp makes this easier... */
 boolean_t
-arc_wired_map_vaddr_entry(va, pap, sizep)
-	vaddr_t va;
-	paddr_t *pap;
-	vsize_t *sizep;
+arc_wired_map_vaddr_entry(vaddr_t va, paddr_t *pap, vsize_t *sizep)
 {
 	int n = nwired;
 	struct wired_map_entry *entry = wired_map;
@@ -157,17 +145,15 @@ arc_wired_map_vaddr_entry(va, pap, sizep)
 			if (pa != 0) {
 				*pap = pa;
 				*sizep = entry->size;
-				return (1);
+				return 1;
 			}
 		}
 	}
-	return (0);
+	return 0;
 }
 
 vaddr_t
-arc_contiguously_wired_mapped(pa, size)
-	paddr_t pa;
-	int size;
+arc_contiguously_wired_mapped(paddr_t pa, int size)
 {
 	paddr_t p;
 	vaddr_t rva, va;
@@ -187,16 +173,14 @@ arc_contiguously_wired_mapped(pa, size)
 		if (size <= 0)
 			break;
 		if (!arc_wired_map_vaddr_entry(va, &p, &vsize) || p != pa)
-			return (0); /* not contiguously wired mapped */
+			return 0; /* not contiguously wired mapped */
 	}
-	return (rva + offset);
+	return rva + offset;
 }
 
 /* Allocate new wired entries */
 vaddr_t
-arc_map_wired(pa, size)
-	paddr_t pa;
-	int size;
+arc_map_wired(paddr_t pa, int size)
 {
 	vaddr_t va, rva;
 	vsize_t off;
@@ -215,7 +199,7 @@ arc_map_wired(pa, size)
 		printf("arc_map_wired(0x%llx, 0x%lx): %d is not enough\n",
 		       pa + off, size - off, ARC_TLB_WIRED_ENTRIES - nwired);
 #endif
-		return (0); /* free wired TLB is not enough */
+		return 0; /* free wired TLB is not enough */
 	}
 
 	while (size > 0) {
@@ -226,21 +210,19 @@ arc_map_wired(pa, size)
 		size -= ARC_WIRED_ENTRY_SIZE;
 	}
 
-	return (rva + off);
+	return rva + off;
 }
 
 boolean_t
-arc_wired_map_extract(va, pap)
-	vaddr_t va;
-	paddr_t *pap;
+arc_wired_map_extract(vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
 	vsize_t size;
 
 	if (arc_wired_map_vaddr_entry(va, &pa, &size)) {
 		*pap = pa + (va & (size - 1));
-		return (1);
+		return 1;
 	} else {
-		return (0);
+		return 0;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.6 2003/08/07 16:26:47 agc Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.6 2003/08/07 16:26:47 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ extern int cpu_int_mask;
  * chipset-dependent timer routine.
  */
 
-int timer_magnum_intr __P((u_int, struct clockframe *));
+int timer_magnum_intr(u_int, struct clockframe *);
 void timer_magnum_init(int);
 
 struct timer_jazzio_config timer_magnum_conf = {
@@ -120,7 +120,7 @@ struct timer_jazzio_config timer_magnum_conf = {
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-static const u_int32_t magnum_ipl_sr_bits[_IPL_N] = {
+static const uint32_t magnum_ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -177,12 +177,11 @@ timer_magnum_intr(mask, cf)
 	/* Re-enable clock interrupts */
 	splx(MIPS_INT_MASK_4 | MIPS_SR_INT_IE);
 
-	return (~MIPS_INT_MASK_4); /* Keep clock interrupts enabled */
+	return ~MIPS_INT_MASK_4; /* Keep clock interrupts enabled */
 }
 
 void
-timer_magnum_init(interval)
-	int interval; /* milliseconds */
+timer_magnum_init(int interval)
 {
 	if (interval <= 0)
 		panic("timer_magnum_init: invalid interval %d", interval);
@@ -197,23 +196,24 @@ timer_magnum_init(interval)
  * chipset-dependent isa bus configuration
  */
 
-int isabr_magnum_intr_status __P((void));
+int isabr_magnum_intr_status(void);
 
 struct isabr_config isabr_magnum_conf = {
 	isabr_magnum_intr_status,
 };
 
 int
-isabr_magnum_intr_status()
+isabr_magnum_intr_status(void)
 {
-	return (in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1));
+
+	return in32(R4030_SYS_ISA_VECTOR) & (ICU_LEN - 1);
 }
 
 /*
  * chipset-dependent jazzio bus configuration
  */
 
-void jazzio_magnum_set_iointr_mask __P((int));
+void jazzio_magnum_set_iointr_mask(int);
 
 struct jazzio_config jazzio_magnum_conf = {
 	PVIS,
@@ -223,9 +223,9 @@ struct jazzio_config jazzio_magnum_conf = {
 };
 
 void
-jazzio_magnum_set_iointr_mask(mask)
-	int mask;
+jazzio_magnum_set_iointr_mask(int mask)
 {
+
 	out16(PICA_SYS_LB_IE, mask);
 }
 
@@ -234,11 +234,10 @@ jazzio_magnum_set_iointr_mask(mask)
  */
 
 void
-c_magnum_set_intr(mask, int_hand, prio)
-	int	mask;
-	int	(*int_hand)(u_int, struct clockframe *);
-	int	prio;
+c_magnum_set_intr(int mask, int	(*int_hand)(u_int, struct clockframe *),
+    int prio)
 {
+
 	arc_set_intr(mask, int_hand, prio);
 
 	/* Update external interrupt mask but don't enable clock. */
@@ -249,8 +248,9 @@ c_magnum_set_intr(mask, int_hand, prio)
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-c_magnum_init()
+c_magnum_init(void)
 {
+
 	/*
 	 * Initialize I/O address offset
 	 */

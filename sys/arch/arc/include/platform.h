@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.3 2003/01/31 22:07:53 tsutsui Exp $	*/
+/*	$NetBSD: platform.h,v 1.4 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp 	*/
 
 /*
@@ -47,17 +47,16 @@ struct platform {
 	/*
 	 * Platform Specific Function Hooks
 	 */
-	int	(*match) __P((struct platform *));
-	void	(*init) __P((void));
-	void	(*cons_init) __P((void));
-	void	(*reset) __P((void));
-	void	(*set_intr) __P((int,
-		    int (*) __P((u_int, struct clockframe *)), int));
+	int	(*match)(struct platform *);
+	void	(*init)(void);
+	void	(*cons_init)(void);
+	void	(*reset)(void);
+	void	(*set_intr)(int, int (*)(u_int, struct clockframe *), int);
 };
 
-int ident_platform __P((void));
-int platform_generic_match __P((struct platform *));
-void platform_nop __P((void));
+int ident_platform(void);
+int platform_generic_match(struct platform *);
+void platform_nop(void);
 
 extern struct platform *platform;
 
@@ -80,26 +79,24 @@ extern struct platform platform_nec_rax94;
 extern struct platform platform_nec_rd94;
 extern struct platform platform_sni_rm200pci;
 
-void c_isa_init __P((void));
-void c_isa_cons_init __P((void));
+void c_isa_init(void);
+void c_isa_cons_init(void);
 
 extern char *c_jazz_eisa_mainbusdevs[];
-void c_jazz_eisa_init __P((void));
-void c_jazz_eisa_cons_init __P((void));
+void c_jazz_eisa_init(void);
+void c_jazz_eisa_cons_init(void);
 
-void c_magnum_set_intr __P((int, int (*) __P((u_int, struct clockframe *)),
-    int));
-void c_magnum_init __P((void));
+void c_magnum_set_intr(int, int (*)(u_int, struct clockframe *), int);
+void c_magnum_init(void);
 
-void c_nec_eisa_init __P((void));
-void c_nec_eisa_cons_init __P((void));
+void c_nec_eisa_init(void);
+void c_nec_eisa_cons_init(void);
 
-void c_nec_jazz_set_intr __P((int, int (*) __P((u_int, struct clockframe *)),
-    int));
-void c_nec_jazz_init __P((void));
+void c_nec_jazz_set_intr(int, int (*)(u_int, struct clockframe *), int);
+void c_nec_jazz_init(void);
 
 extern char *c_nec_pci_mainbusdevs[];
-void c_nec_pci_init __P((void));
-void c_nec_pci_cons_init __P((void));
+void c_nec_pci_init(void);
+void c_nec_pci_cons_init(void);
 
 

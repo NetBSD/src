@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.8 2004/09/14 20:32:48 drochner Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.9 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.8 2004/09/14 20:32:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.9 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,10 +110,7 @@ static void mc_isa_write(struct mc146818_softc *, u_int, u_int);
 int mcclock_isa_conf = 0;
 
 int
-mcclock_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mcclock_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -121,25 +118,25 @@ mcclock_isa_match(parent, match, aux)
 	if (ia->ia_nio < 1 ||
 	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != 0x70))
-		return (0);
+		return 0;
 
 	if (ia->ia_niomem > 0 &&
 	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM))
-		return (0);
+		return 0;
 
 	if (ia->ia_nirq > 0 &&
 	    (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ))
-		return (0);
+		return 0;
 
 	if (ia->ia_ndrq > 0 &&
 	    (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ))
-		return (0);
+		return 0;
 
 	if (!mcclock_isa_conf)
-		return (0);
+		return 0;
 
 	if (bus_space_map(ia->ia_iot, 0x70, 0x02, 0, &ioh))
-		return (0);
+		return 0;
 
 	bus_space_unmap(ia->ia_iot, ioh, 0x02);
 
@@ -151,14 +148,11 @@ mcclock_isa_match(parent, match, aux)
 	ia->ia_nirq = 0;
 	ia->ia_ndrq = 0;
 
-	return (1);
+	return 1;
 }
 
 void
-mcclock_isa_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mc146818_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
@@ -183,9 +177,7 @@ mcclock_isa_attach(parent, self, aux)
 }
 
 u_int
-mc_isa_read(sc, reg)
-	struct mc146818_softc *sc;
-	u_int reg;
+mc_isa_read(struct mc146818_softc *sc, u_int reg)
 {
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, reg);
@@ -193,9 +185,7 @@ mc_isa_read(sc, reg)
 }
 
 void
-mc_isa_write(sc, reg, datum)
-	struct mc146818_softc *sc;
-	u_int reg, datum;
+mc_isa_write(struct mc146818_softc *sc, u_int reg, u_int datum)
 {
 
 	bus_space_write_1(sc->sc_bst, sc->sc_bsh, 0, reg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.7 2003/07/15 00:04:41 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_eisa.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ static void gd54xx_initregs(struct vga_handle *);
  * chipset-dependent isa bus configuration
  */
 
-int isabr_nec_eisa_intr_status __P((void));
+int isabr_nec_eisa_intr_status(void);
 
 struct isabr_config isabr_nec_eisa_conf = {
 	isabr_nec_eisa_intr_status,
@@ -80,7 +80,7 @@ struct isabr_config isabr_nec_eisa_conf = {
  * This is a mask of bits to clear in the SR when we go to a
  * given interrupt priority level.
  */
-static const u_int32_t nec_eisa_ipl_sr_bits[_IPL_N] = {
+static const uint32_t nec_eisa_ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -122,17 +122,17 @@ static const u_int32_t nec_eisa_ipl_sr_bits[_IPL_N] = {
 };
 
 int
-isabr_nec_eisa_intr_status()
+isabr_nec_eisa_intr_status(void)
 {
 
-	return (in32(RD94_SYS_INTSTAT2) & (ICU_LEN - 1));
+	return in32(RD94_SYS_INTSTAT2) & (ICU_LEN - 1);
 }
 
 /*
  * chipset-dependent jazzio bus configuration
  */
 
-void jazzio_nec_eisa_set_iointr_mask __P((int));
+void jazzio_nec_eisa_set_iointr_mask(int);
 
 struct jazzio_config jazzio_nec_eisa_conf = {
 	RD94_SYS_INTSTAT1,
@@ -142,8 +142,7 @@ struct jazzio_config jazzio_nec_eisa_conf = {
 };
 
 void
-jazzio_nec_eisa_set_iointr_mask(mask)
-	int mask;
+jazzio_nec_eisa_set_iointr_mask(int mask)
 {
 
 	out16(RD94_SYS_LB_IE2, mask);
@@ -153,7 +152,7 @@ jazzio_nec_eisa_set_iointr_mask(mask)
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-c_nec_eisa_init()
+c_nec_eisa_init(void)
 {
 
 	/*
@@ -205,7 +204,7 @@ c_nec_eisa_init()
 }
 
 void
-c_nec_eisa_cons_init()
+c_nec_eisa_cons_init(void)
 {
 
 #if NVGA_ISA > 0
@@ -233,7 +232,7 @@ c_nec_eisa_cons_init()
 
 /* values to intialize cirrus GD54xx specific ext registers */
 /* XXX these values are taken from PC XXX */
-static const u_int8_t vga_ts_gd54xx[] = {
+static const uint8_t vga_ts_gd54xx[] = {
 	0x0f,	/* 05: ??? */
 	0x12,	/* 06: enable ext reg (?) */
 	0x00,	/* 07: reset ext sequence (?) */
@@ -264,8 +263,7 @@ static const u_int8_t vga_ts_gd54xx[] = {
 };
 
 static void
-gd54xx_initregs(vh)
-	struct vga_handle *vh;
+gd54xx_initregs(struct vga_handle *vh)
 {
 	int i;
 

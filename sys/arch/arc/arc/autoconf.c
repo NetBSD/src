@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2004/10/23 17:07:38 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2004/10/23 17:07:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ struct bootdev_data {
 	int	partition;
 };
 
-int getpno __P((char **, int *));
+int getpno(char **, int *);
 
 /*
  * The following several variables are related to
@@ -126,7 +126,7 @@ struct bootdev_data *bootdev_data;
  *  This is done at boot time.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	softintr_init();
@@ -144,8 +144,9 @@ int nfs_boot_rfc951 = 1;
 #endif
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
+
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
@@ -163,8 +164,7 @@ struct devmap {
  * (beware for empty scsi id's...)
  */
 void
-makebootdev(cp)
-	char *cp;
+makebootdev(char *cp)
 {
 	int ok, junk;
 	static struct devmap devmap[] = {
@@ -178,7 +178,7 @@ makebootdev(cp)
 
 	/* "scsi()" */
 	while (dp->attachment) {
-		if (strncmp (cp, dp->attachment, strlen(dp->attachment)) == 0)
+		if (strncmp(cp, dp->attachment, strlen(dp->attachment)) == 0)
 			break;
 		dp++;
 	}
@@ -218,9 +218,7 @@ makebootdev(cp)
 }
 
 int
-getpno(cp, np)
-	char **cp;
-	int *np;
+getpno(char **cp, int *np)
 {
 	int val = 0;
 	char *s = *cp;
@@ -249,9 +247,7 @@ getpno(cp, np)
  * Attempt to find the device from which we were booted.
  */
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;

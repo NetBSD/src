@@ -1,4 +1,4 @@
-/*	$NetBSD: jazzdmatlbvar.h,v 1.1 2000/06/09 05:22:23 soda Exp $	*/
+/*	$NetBSD: jazzdmatlbvar.h,v 1.2 2005/01/22 07:35:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -26,13 +26,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-void	jazz_dmatlb_init __P((bus_space_tag_t iot, bus_addr_t ioaddr));
-jazz_dma_pte_t *jazz_dmatlb_alloc __P((int npte, bus_size_t boundary,
-	    int flags, bus_addr_t *addr));
-void	jazz_dmatlb_free __P((bus_addr_t addr, int npte));
-void	jazz_dmatlb_map_va __P((struct proc *p, vaddr_t va, vsize_t size,
-	    jazz_dma_pte_t *dma_pte));
-void	jazz_dmatlb_map_pa __P((paddr_t pa, psize_t size,
-	    jazz_dma_pte_t *dma_pte));
-void	jazz_dmatlb_flush __P((void));
+void	jazz_dmatlb_init(bus_space_tag_t iot, bus_addr_t ioaddr);
+jazz_dma_pte_t *jazz_dmatlb_alloc(int npte, bus_size_t boundary,
+	    int flags, bus_addr_t *addr);
+void	jazz_dmatlb_free(bus_addr_t addr, int npte);
+void	jazz_dmatlb_map_va(struct proc *p, vaddr_t va, vsize_t size,
+	    jazz_dma_pte_t *dma_pte);
+void	jazz_dmatlb_map_pa(paddr_t pa, psize_t size, jazz_dma_pte_t *dma_pte);
+void	jazz_dmatlb_flush(void);
 

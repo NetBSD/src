@@ -1,4 +1,4 @@
-/*	$NetBSD: necpbvar.h,v 1.4 2003/11/01 19:23:52 tsutsui Exp $	*/
+/*	$NetBSD: necpbvar.h,v 1.5 2005/01/22 07:35:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -40,7 +40,7 @@ struct necpb_softc {
 };
 
 struct necpb_intrhand {
-	int	(*ih_func) __P((void *));	/* interrupt handler */
+	int	(*ih_func)(void *);		/* interrupt handler */
 	void	*ih_arg;			/* arg for handler */
 	struct	necpb_intrhand *ih_next;	/* next intrhand chain */
 	int	ih_intn;			/* interrupt channel */
@@ -48,7 +48,7 @@ struct necpb_intrhand {
 	char ih_evname[32];			/* event counter name */
 };
 
-void	necpb_init __P((struct necpb_context *ncp));
+void	necpb_init(struct necpb_context *ncp);
 
 /* for console initialization */
 extern struct necpb_context necpb_main_context;

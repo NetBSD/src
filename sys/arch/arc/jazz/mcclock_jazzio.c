@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazzio.c,v 1.6 2003/10/29 18:17:50 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.6 2003/10/29 18:17:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.7 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,28 +106,22 @@ struct mcclock_jazzio_config *mcclock_jazzio_conf = NULL;
 static int mcclock_jazzio_found = 0;
 
 int
-mcclock_jazzio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+mcclock_jazzio_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 
 	/* make sure that we're looking for this type of device. */
 	if (strcmp(ja->ja_name, "dallas_rtc") != 0)
-		return (0);
+		return 0;
 
 	if (mcclock_jazzio_found)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
-mcclock_jazzio_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+mcclock_jazzio_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mc146818_softc *sc = (void *)self;
 	struct jazzio_attach_args *ja = aux;

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_isa.c,v 1.8 2004/09/14 20:32:48 drochner Exp $	*/
+/*	$NetBSD: timer_isa.c,v 1.9 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_isa.c,v 1.8 2004/09/14 20:32:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_isa.c,v 1.9 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,14 +108,14 @@ struct timer_isa_softc {
 };
 
 /* Definition of the driver for autoconfig. */
-int timer_isa_match __P((struct device *, struct cfdata *, void *));
-void timer_isa_attach __P((struct device *, struct device *, void *));
+int timer_isa_match(struct device *, struct cfdata *, void *);
+void timer_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(timer_isa, sizeof(struct timer_isa_softc),
     timer_isa_match, timer_isa_attach, NULL, NULL);
 
 /* ISA timer access code */
-void timer_isa_init __P((struct device *));
+void timer_isa_init(struct device *);
 
 struct timerfns timerfns_isa = {
 	timer_isa_init
@@ -124,10 +124,7 @@ struct timerfns timerfns_isa = {
 int timer_isa_conf = 0;
 
 int
-timer_isa_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+timer_isa_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -135,26 +132,26 @@ timer_isa_match(parent, match, aux)
 	if (ia->ia_nio < 1 ||
 	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != IO_TIMER1))
-		return (0);
+		return 0;
 
 	if (ia->ia_niomem > 0 &&
 	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM))
-		return (0);
+		return 0;
 
 	if (ia->ia_nirq > 0 &&
 	    (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 	     ia->ia_irq[0].ir_irq != TIMER_IRQ))
-		return (0);
+		return 0;
 
 	if (ia->ia_ndrq > 0 &&
 	    (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ))
-		return (0);
+		return 0;
 
 	if (!timer_isa_conf)
-		return (0);
+		return 0;
 
 	if (bus_space_map(ia->ia_iot, IO_TIMER1, TIMER_IOSIZE, 0, &ioh))
-		return (0);
+		return 0;
 
 	bus_space_unmap(ia->ia_iot, ioh, TIMER_IOSIZE);
 
@@ -166,14 +163,11 @@ timer_isa_match(parent, match, aux)
 	ia->ia_nirq = 0;
 	ia->ia_ndrq = 0;
 
-	return (1);
+	return 1;
 }
 
 void
-timer_isa_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+timer_isa_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct timer_isa_softc *sc = (struct timer_isa_softc *)self;
 	struct isa_attach_args *ia = aux;
@@ -196,8 +190,7 @@ timer_isa_attach(parent, self, aux)
 }
 
 void
-timer_isa_init(self)
-	struct device *self;
+timer_isa_init(struct device *self)
 {
 	struct timer_isa_softc *sc = (struct timer_isa_softc *)self;
 

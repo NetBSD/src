@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.10 2003/08/07 16:26:48 agc Exp $	*/
+/*	$NetBSD: opms.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.10 2003/08/07 16:26:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.11 2005/01/22 07:35:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,14 +143,14 @@ const struct cdevsw opms_cdevsw = {
 	nostop, notty, opmspoll, nommap, opmskqfilter,
 };
 
-static __inline void pms_dev_cmd __P((u_char));
-static __inline void pms_aux_cmd __P((u_char));
-static __inline void pms_pit_cmd __P((u_char));
+static __inline void pms_dev_cmd(uint8_t);
+static __inline void pms_aux_cmd(uint8_t);
+static __inline void pms_pit_cmd(uint8_t);
 
 static __inline void
-pms_dev_cmd(value)
-	u_char value;
+pms_dev_cmd(uint8_t value)
 {
+
 	kbd_flush_input();
 	kbd_cmd_write_1(0xd4);
 	kbd_flush_input();
@@ -158,28 +158,26 @@ pms_dev_cmd(value)
 }
 
 static __inline void
-pms_aux_cmd(value)
-	u_char value;
+pms_aux_cmd(uint8_t value)
 {
+
 	kbd_flush_input();
 	kbd_cmd_write_1(value);
 }
 
 static __inline void
-pms_pit_cmd(value)
-	u_char value;
+pms_pit_cmd(uint8_t value)
 {
+
 	kbd_flush_input();
 	kbd_cmd_write_1(0x60);
 	kbd_flush_input();
 	kbd_data_write_1(value);
 }
 
-int opms_common_match(kbd_iot, config)
-	bus_space_tag_t kbd_iot;
-	struct pccons_config *config;
+int opms_common_match(bus_space_tag_t kbd_iot, struct pccons_config *config)
 {
-	u_char x;
+	uint8_t x;
 
 	kbd_context_init(kbd_iot, config);
 
@@ -195,11 +193,10 @@ int opms_common_match(kbd_iot, config)
 }
 
 void
-opms_common_attach(sc, opms_iot, config)
-	struct opms_softc *sc;
-	bus_space_tag_t opms_iot;
-	struct pccons_config *config;
+opms_common_attach(struct opms_softc *sc, bus_space_tag_t opms_iot,
+    struct pccons_config *config)
 {
+
 	kbd_context_init(opms_iot, config);
 
 	/* Other initialization was done by opmsprobe. */
@@ -207,10 +204,7 @@ opms_common_attach(sc, opms_iot, config)
 }
 
 int
-opmsopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+opmsopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	int unit = PMSUNIT(dev);
 	struct opms_softc *sc;
@@ -248,10 +242,7 @@ opmsopen(dev, flag, mode, p)
 }
 
 int
-opmsclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+opmsclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 
@@ -268,10 +259,7 @@ opmsclose(dev, flag, mode, p)
 }
 
 int
-opmsread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+opmsread(dev_t devf struct uio *uio, int flag)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int s;
@@ -317,12 +305,7 @@ opmsread(dev, uio, flag)
 }
 
 int
-opmsioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr;
-	int flag;
-	struct proc *p;
+opmsioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct mouseinfo info;
@@ -374,8 +357,7 @@ opmsioctl(dev, cmd, addr, flag, p)
 #define PS2MBUTMASK 0x04
 
 int
-opmsintr(arg)
-	void *arg;
+opmsintr(void *arg)
 {
 	struct opms_softc *sc = arg;
 	static int state = 0;
@@ -411,9 +393,10 @@ opmsintr(arg)
 		state = 0;
 
 		buttons = ((buttons & PS2LBUTMASK) << 2) |
-			  ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
+		    ((buttons & (PS2RBUTMASK | PS2MBUTMASK)) >> 1);
 		changed = ((buttons ^ sc->sc_status) & BUTSTATMASK) << 3;
-		sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) | changed;
+		sc->sc_status = buttons | (sc->sc_status & ~BUTSTATMASK) |
+		    changed;
 
 		if (dx || dy || changed) {
 			/* Update accumulated movements. */
@@ -444,10 +427,7 @@ opmsintr(arg)
 }
 
 int
-opmspoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+opmspoll(dev_t dev, int events, struct proc *p)
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	int revents = 0;
@@ -461,7 +441,7 @@ opmspoll(dev, events, p)
 	}
 
 	splx(s);
-	return (revents);
+	return revents;
 }
 
 static void
@@ -481,7 +461,7 @@ filt_opmsread(struct knote *kn, long hint)
 	struct opms_softc *sc = kn->kn_hook;
 
 	kn->kn_data = sc->sc_q.c_cc;
-	return (kn->kn_data > 0);
+	return kn->kn_data > 0;
 }
 
 static const struct filterops opmsread_filtops =
@@ -501,7 +481,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return 1;
 	}
 
 	kn->kn_hook = sc;
@@ -510,5 +490,5 @@ opmskqfilter(dev_t dev, struct knote *kn)
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 
-	return (0);
+	return 0;
 }

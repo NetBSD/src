@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.7 2005/01/15 13:05:45 skrll Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.7 2005/01/15 13:05:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.8 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.7 2005/01/15 13:05:45 skrll Exp $")
 #include <arc/arc/wired_map.h>
 #include <arc/dti/desktech.h>
 
-void arc_sysreset __P((bus_addr_t, bus_size_t));
+void arc_sysreset(bus_addr_t, bus_size_t);
 
 #include "pc.h"
 #if NPC_ISA > 0 || NOPMS_ISA > 0
@@ -114,9 +114,9 @@ char *p_dti_tyne_mainbusdevs[] = {
 	NULL
 };
 
-void p_dti_tyne_init __P((void));
-void p_dti_tyne_cons_init __P((void));
-void p_dti_tyne_reset __P((void));
+void p_dti_tyne_init(void);
+void p_dti_tyne_cons_init(void);
+void p_dti_tyne_reset(void);
 
 struct platform platform_desktech_tyne = {
 	"DESKTECH-TYNE",
@@ -138,7 +138,7 @@ struct platform platform_desktech_tyne = {
  * given interrupt priority level.
  */
 /* XXX see comments in p_dti_tyne_init() */
-static const u_int32_t dti_tyne_ipl_sr_bits[_IPL_N] = {
+static const uint32_t dti_tyne_ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
@@ -193,7 +193,7 @@ static const u_int32_t dti_tyne_ipl_sr_bits[_IPL_N] = {
  * platform-dependent pccons configuration
  */
 
-void pccons_dti_tyne_init __P((void));
+void pccons_dti_tyne_init(void);
 
 struct pccons_config pccons_dti_tyne_conf = {
 	0x3b4, 0xb0000,	/* mono: iobase, memaddr */
@@ -203,8 +203,9 @@ struct pccons_config pccons_dti_tyne_conf = {
 };
 
 void
-pccons_dti_tyne_init()
+pccons_dti_tyne_init(void)
 {
+
 	outb(arc_bus_io.bs_vbase + 0x3ce, 6);	/* Correct video mode */
 	outb(arc_bus_io.bs_vbase + 0x3cf,
 	 inb(arc_bus_io.bs_vbase + 0x3cf) | 0xc);
@@ -218,9 +219,9 @@ pccons_dti_tyne_init()
  * platform-dependent btl configuration
  */
 
-void btl_dti_tyne_bouncemem __P((u_int *, u_int *));
-u_int32_t btl_dti_tyne_kvtophys __P((u_int32_t));
-u_int32_t btl_dti_tyne_phystokv __P((u_int32_t));
+void btl_dti_tyne_bouncemem(u_int *, u_int *);
+uint32_t btl_dti_tyne_kvtophys(uint32_t);
+uint32_t btl_dti_tyne_phystokv(uint32_t);
 
 struct btl_config btl_dti_tyne_conf = {
 	btl_dti_tyne_bouncemem,
@@ -229,25 +230,24 @@ struct btl_config btl_dti_tyne_conf = {
 };
 
 void
-btl_dti_tyne_bouncemem(basep, sizep)
-	u_int *basep, *sizep;
+btl_dti_tyne_bouncemem(u_int *basep, u_int*sizep)
 {
+
 	*basep = TYNE_V_BOUNCE;
 	*sizep = TYNE_S_BOUNCE;
 }
 
-u_int32_t
-btl_dti_tyne_kvtophys(v)
-	u_int32_t v;
+uint32_t
+btl_dti_tyne_kvtophys(uint32_t v)
 {
-	return ((v & 0x7fffff) | 0x800000);
+	return (v & 0x7fffff) | 0x800000;
 }
 
-u_int32_t
-btl_dti_tyne_phystokv(p)
-	u_int32_t p;
+uint32_t
+btl_dti_tyne_phystokv(uint32_t p)
 {
-	return ((p & 0x7fffff) | TYNE_V_BOUNCE);
+
+	return (p & 0x7fffff) | TYNE_V_BOUNCE;
 }
 #endif /* NBTL > 0 */
 
@@ -255,7 +255,7 @@ btl_dti_tyne_phystokv(p)
  * critial i/o space, interrupt, and other chipset related initialization.
  */
 void
-p_dti_tyne_init()
+p_dti_tyne_init(void)
 {
 	/*
 	 * XXX - should be enabled, if tested.
@@ -309,7 +309,8 @@ p_dti_tyne_init()
 }
 
 void
-p_dti_tyne_reset()
+p_dti_tyne_reset(void)
 {
+
 	arc_sysreset(TYNE_V_ISA_IO + IO_KBD, KBCMDP);
 }

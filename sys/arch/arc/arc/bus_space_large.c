@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_large.c,v 1.3 2003/07/15 00:04:40 lukem Exp $	*/
+/*	$NetBSD: bus_space_large.c,v 1.4 2005/01/22 07:35:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.3 2003/07/15 00:04:40 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.4 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,21 +67,18 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_large.c,v 1.3 2003/07/15 00:04:40 lukem Ex
 #include <machine/bus.h>
 #include <arc/arc/wired_map.h>
 
-static int arc_large_bus_space_compose_handle __P((bus_space_tag_t,
-	    bus_addr_t, bus_size_t, int, bus_space_handle_t *));
-static int arc_large_bus_space_dispose_handle __P((bus_space_tag_t,
-	    bus_space_handle_t, bus_size_t));
-static int arc_large_bus_space_paddr __P((bus_space_tag_t,
-	    bus_space_handle_t, paddr_t *));
+static int arc_large_bus_space_compose_handle(bus_space_tag_t, bus_addr_t,
+    bus_size_t, int, bus_space_handle_t *);
+static int arc_large_bus_space_dispose_handle(bus_space_tag_t,
+    bus_space_handle_t, bus_size_t);
+static int arc_large_bus_space_paddr(bus_space_tag_t, bus_space_handle_t,
+    paddr_t *);
 
 void
-arc_large_bus_space_init(bst, name, paddr, start, size)
-	bus_space_tag_t bst;
-	const char *name;
-	paddr_t paddr;
-	bus_addr_t start;
-	bus_size_t size;
+arc_large_bus_space_init(bus_space_tag_t bst, const char *name, paddr_t paddr,
+    bus_addr_t start, bus_size_t size)
 {
+
 	arc_sparse_bus_space_init(bst, name, paddr, start, size);
 	bst->bs_compose_handle = arc_large_bus_space_compose_handle;
 	bst->bs_dispose_handle = arc_large_bus_space_dispose_handle;
@@ -89,12 +86,8 @@ arc_large_bus_space_init(bst, name, paddr, start, size)
 }
 
 static int
-arc_large_bus_space_compose_handle(bst, addr, size, flags, bshp)
-	bus_space_tag_t bst;
-	bus_addr_t addr;
-	bus_size_t size;
-	int flags;
-	bus_space_handle_t *bshp;
+arc_large_bus_space_compose_handle(bus_space_tag_t bst, bus_addr_t addr,
+    bus_size_t size, int flags, bus_space_handle_t *bshp)
 {
 	paddr_t pa;
 	vaddr_t va;
@@ -122,17 +115,15 @@ arc_large_bus_space_compose_handle(bst, addr, size, flags, bshp)
 			    pa, pa + size - 1);
 #endif
 		*bshp = va;
-		return (0);
+		return 0;
 	}
-	return (arc_sparse_bus_space_compose_handle(bst, addr, size, flags,
-	    bshp));
+	return arc_sparse_bus_space_compose_handle(bst, addr, size, flags,
+	    bshp);
 }
 
 static int
-arc_large_bus_space_dispose_handle(bst, bsh, size)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	bus_size_t size;
+arc_large_bus_space_dispose_handle(bus_space_tag_t bst, bus_space_handle_t bsh,
+    bus_size_t size)
 {
 	paddr_t pa;
 
@@ -141,17 +132,16 @@ arc_large_bus_space_dispose_handle(bst, bsh, size)
 	 * since the TLBs might be used for other bus_space region.
 	 */
 	if (arc_wired_map_extract(bsh, &pa))
-		return (0);
-	return (arc_sparse_bus_space_dispose_handle(bst, bsh, size));
+		return 0;
+	return arc_sparse_bus_space_dispose_handle(bst, bsh, size);
 }
 
 static int
-arc_large_bus_space_paddr(bst, bsh, pap)
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-	paddr_t *pap;
+arc_large_bus_space_paddr(bus_space_tag_t bst, bus_space_handle_t bsh,
+    paddr_t *pap)
 {
+
 	if (arc_wired_map_extract(bsh, pap))
-		return (0);
-	return (arc_sparse_bus_space_paddr(bst, bsh, pap));
+		return 0;
+	return arc_sparse_bus_space_paddr(bst, bsh, pap);
 }

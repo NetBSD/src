@@ -1,4 +1,4 @@
-/*	$NetBSD: minidebug.c,v 1.15 2003/08/07 16:26:48 agc Exp $	*/
+/*	$NetBSD: minidebug.c,v 1.16 2005/01/22 07:35:33 tsutsui Exp $	*/
 /*	$OpenBSD: minidebug.c,v 1.2 1998/03/16 09:03:36 pefo Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: minidebug.c,v 1.15 2003/08/07 16:26:48 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: minidebug.c,v 1.16 2005/01/22 07:35:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,29 +138,29 @@ static char *c0_reg[32] = {
 	"c0r24","c0r25","ecc","cacheerr","taglo","taghi","errepc","c0r31"
 };
 
-extern u_int mdbpeek __P((int));
-extern void mdbpoke __P((int, int));
+extern u_int mdbpeek(int);
+extern void mdbpoke(int, int);
 #ifdef __OpenBSD__
-extern void cpu_setwatch __P((int, int));
+extern void cpu_setwatch(int, int);
 #endif
-extern void trapDump __P((char *));
-extern void stacktrace __P((void));
-extern u_int MachEmulateBranch __P((int *, int, int, u_int));
+extern void trapDump(char *);
+extern void stacktrace(void);
+extern u_int MachEmulateBranch(int *, int, int, u_int);
 extern char *trap_type[];
 extern int num_tlbentries;
-static void arc_dump_tlb __P((int,int));
-static void prt_break __P((void));
-static int mdbprintins __P((int, int));
-static void mdbsetsstep __P((void));
-static int mdbclrsstep __P((int));
-static void print_regs __P((void));
-static void break_insert __P((void));
-static void break_restore __P((void));
-static int break_find __P((int));
+static void arc_dump_tlb(int,int);
+static void prt_break(void);
+static int mdbprintins(int, int);
+static void mdbsetsstep(void);
+static int mdbclrsstep(int);
+static void print_regs(void);
+static void break_insert(void);
+static void break_restore(void);
+static int break_find(int);
 
-void set_break __P((int va));
-void del_break __P((int va));
-int mdb __P((int causeReg, int vadr, int p, int kernelmode));
+void set_break(int va);
+void del_break(int va);
+int mdb(int causeReg, int vadr, int p, int kernelmode);
 
 
 struct pcb mdbpcb;
@@ -196,7 +196,7 @@ gethex(u_int *val, u_int dotval)
 		}
 		else if(c == ',') {
 			cnputc(c);
-			return(c);
+			return c;
 		}
 		else if(c == '.') {
 			*val = dotval;
@@ -205,7 +205,7 @@ gethex(u_int *val, u_int dotval)
 	}
 	if(c == '\r')
 		c = '\n';
-	return(c);
+	return c;
 }
 
 static
@@ -216,38 +216,38 @@ void dump(u_int *addr, u_int size)
 	cnt = 0;
 
 	size = (size + 3) / 4;
-	while(size--) {
-		if((cnt++ & 3) == 0)
+	while (size--) {
+		if ((cnt++ & 3) == 0)
 			printf("\n%08x: ",(int)addr);
 		printf("%08x ",*addr++);
 	}
 }
 
 static void
-print_regs()
+print_regs(void)
 {
 	printf("\n");
 	printf("T0-7 %08x %08x %08x %08x %08x %08x %08x %08x\n",
-		mdbpcb.pcb_regs[T0],mdbpcb.pcb_regs[T1],
-		mdbpcb.pcb_regs[T2],mdbpcb.pcb_regs[T3],
-		mdbpcb.pcb_regs[T4],mdbpcb.pcb_regs[T5],
-		mdbpcb.pcb_regs[T6],mdbpcb.pcb_regs[T7]);
+	    mdbpcb.pcb_regs[T0],mdbpcb.pcb_regs[T1],
+	    mdbpcb.pcb_regs[T2],mdbpcb.pcb_regs[T3],
+	    mdbpcb.pcb_regs[T4],mdbpcb.pcb_regs[T5],
+	    mdbpcb.pcb_regs[T6],mdbpcb.pcb_regs[T7]);
 	printf("T8-9 %08x %08x     A0-4 %08x %08x %08x %08x\n",
-		mdbpcb.pcb_regs[T8],mdbpcb.pcb_regs[T9],
-		mdbpcb.pcb_regs[A0],mdbpcb.pcb_regs[A1],
-		mdbpcb.pcb_regs[A2],mdbpcb.pcb_regs[A3]);
+	    mdbpcb.pcb_regs[T8],mdbpcb.pcb_regs[T9],
+	    mdbpcb.pcb_regs[A0],mdbpcb.pcb_regs[A1],
+	    mdbpcb.pcb_regs[A2],mdbpcb.pcb_regs[A3]);
 	printf("S0-7 %08x %08x %08x %08x %08x %08x %08x %08x\n",
-		mdbpcb.pcb_regs[S0],mdbpcb.pcb_regs[S1],
-		mdbpcb.pcb_regs[S2],mdbpcb.pcb_regs[S3],
-		mdbpcb.pcb_regs[S4],mdbpcb.pcb_regs[S5],
-		mdbpcb.pcb_regs[S6],mdbpcb.pcb_regs[S7]);
+	    mdbpcb.pcb_regs[S0],mdbpcb.pcb_regs[S1],
+	    mdbpcb.pcb_regs[S2],mdbpcb.pcb_regs[S3],
+	    mdbpcb.pcb_regs[S4],mdbpcb.pcb_regs[S5],
+	    mdbpcb.pcb_regs[S6],mdbpcb.pcb_regs[S7]);
 	printf("  S8 %08x     V0-1 %08x %08x       GP %08x       SP %08x\n",
-		mdbpcb.pcb_regs[S8],mdbpcb.pcb_regs[V0],
-		mdbpcb.pcb_regs[V1],mdbpcb.pcb_regs[GP],
-		mdbpcb.pcb_regs[SP]);
+	    mdbpcb.pcb_regs[S8],mdbpcb.pcb_regs[V0],
+	    mdbpcb.pcb_regs[V1],mdbpcb.pcb_regs[GP],
+	    mdbpcb.pcb_regs[SP]);
 	printf("  AT %08x       PC %08x       RA %08x       SR %08x",
-		mdbpcb.pcb_regs[AST],mdbpcb.pcb_regs[PC],
-		mdbpcb.pcb_regs[RA],mdbpcb.pcb_regs[SR]);
+	    mdbpcb.pcb_regs[AST],mdbpcb.pcb_regs[PC],
+	    mdbpcb.pcb_regs[RA],mdbpcb.pcb_regs[SR]);
 }
 
 void
@@ -256,8 +256,8 @@ set_break(int va)
 	int i;
 
 	va = va & ~3;
-	for(i = 0; i < MAXBRK; i++) {
-		if(brk_tab[i].addr == 0) {
+	for (i = 0; i < MAXBRK; i++) {
+		if (brk_tab[i].addr == 0) {
 			brk_tab[i].addr = va;
 			brk_tab[i].inst = *(u_int *)va;
 			return;
@@ -272,8 +272,8 @@ del_break(int va)
 	int i;
 
 	va = va & ~3;
-	for(i = 0; i < MAXBRK; i++) {
-		if(brk_tab[i].addr == va) {
+	for (i = 0; i < MAXBRK; i++) {
+		if (brk_tab[i].addr == va) {
 			brk_tab[i].addr = 0;
 			return;
 		}
@@ -282,12 +282,12 @@ del_break(int va)
 }
 
 static void
-break_insert()
+break_insert(void)
 {
 	int i;
 
-	for(i = 0; i < MAXBRK; i++) {
-		if(brk_tab[i].addr != 0) {
+	for (i = 0; i < MAXBRK; i++) {
+		if (brk_tab[i].addr != 0) {
 			brk_tab[i].inst = *(u_int *)brk_tab[i].addr;
 			*(u_int *)brk_tab[i].addr = MIPS_BREAK_BRKPT;
 			mips3_FlushDCache(brk_tab[i].addr,4);
@@ -297,12 +297,12 @@ break_insert()
 }
 
 static void
-break_restore()
+break_restore(void)
 {
 	int i;
 
-	for(i = 0; i < MAXBRK; i++) {
-		if(brk_tab[i].addr != 0) {
+	for (i = 0; i < MAXBRK; i++) {
+		if (brk_tab[i].addr != 0) {
 			*(u_int *)brk_tab[i].addr = brk_tab[i].inst;
 			mips3_FlushDCache(brk_tab[i].addr,4);
 			mips3_FlushICache(brk_tab[i].addr,4);
@@ -316,21 +316,21 @@ break_find(va)
 {
 	int i;
 
-	for(i = 0; i < MAXBRK; i++) {
-		if(brk_tab[i].addr == va) {
-			return(i);
+	for (i = 0; i < MAXBRK; i++) {
+		if (brk_tab[i].addr == va) {
+			return i;
 		}
 	}
-	return(-1);
+	return -1;
 }
 
 void
-prt_break()
+prt_break(void)
 {
 	int i;
 
-	for(i = 0; i < MAXBRK; i++) {
-		if(brk_tab[i].addr != 0) {
+	for (i = 0; i < MAXBRK; i++) {
+		if (brk_tab[i].addr != 0) {
 			printf("\n    %08x\t", brk_tab[i].addr);
 			mdbprintins(brk_tab[i].inst, brk_tab[i].addr);
 		}
@@ -349,9 +349,9 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 	splhigh();
 	cause = (causeReg & MIPS3_CR_EXC_CODE) >> MIPS_CR_EXC_CODE_SHIFT;
 	newaddr = (int)(mdbpcb.pcb_regs[PC]);
-	switch(cause) {
+	switch (cause) {
 	case T_BREAK:
-		if(*(int *)newaddr == MIPS_BREAK_SOVER) {
+		if (*(int *)newaddr == MIPS_BREAK_SOVER) {
 			break_restore();
 			mdbpcb.pcb_regs[PC] += 4;
 			printf("\nStop break (panic)\n# ");
@@ -360,7 +360,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			printf("\n# ");
 			break;
 		}
-		if(*(int *)newaddr == MIPS_BREAK_BRKPT) {
+		if (*(int *)newaddr == MIPS_BREAK_BRKPT) {
 			break_restore();
 			printf("\rBRK %08x\t",newaddr);
 			if(mdbprintins(*(int *)newaddr, newaddr)) {
@@ -371,11 +371,11 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			printf("\n# ");
 			break;
 		}
-		if(mdbclrsstep(causeReg)) {
-			if(ssandrun) { /* Step over bp before free run */
+		if (mdbclrsstep(causeReg)) {
+			if (ssandrun) { /* Step over bp before free run */
 				ssandrun = 0;
 				break_insert();
-				return(TRUE);
+				return TRUE;
 			}
 			printf("\r    %08x\t",newaddr);
 			if(mdbprintins(*(int *)newaddr, newaddr)) {
@@ -393,16 +393,16 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 	ssandrun = 0;
 	break_restore();
 
-	while(1) {
+	while (1) {
 		c = cngetc();
-		switch(c) {
+		switch (c) {
 		case 'T':
 			trapDump("Debugger");
 			break;
 		case 'b':
 			printf("break-");
 			c = cngetc();
-			switch(c) {
+			switch (c) {
 			case 's':
 				printf("set at ");
 				c = gethex(&newaddr, newaddr);
@@ -433,7 +433,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 		case 'I':
 			printf("Instruction at ");
 			c = gethex(&newaddr, newaddr);
-			while(c != '\e') {
+			while (c != '\e') {
 				printf("\n    %08x\t",newaddr);
 				mdbprintins(*(int *)newaddr, newaddr);
 				newaddr += 4;
@@ -450,17 +450,17 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			else {
 				break_insert();
 			}
-			return(TRUE);
+			return TRUE;
 		case 'S':
 			printf("Stack traceback:\n");
 			stacktrace();
-			return(TRUE);
+			return TRUE;
 		case 's':
 			set_break(mdbpcb.pcb_regs[PC] + 8);
-			return(TRUE);
+			return TRUE;
 		case ' ':
 			mdbsetsstep();
-			return(TRUE);
+			return TRUE;
 
 		case 'd':
 			printf("dump ");
@@ -490,7 +490,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 		case 'i':
 			printf("in-");
 			c = cngetc();
-			switch(c) {
+			switch (c) {
 			case 'b':
 				printf("byte ");
 				c = gethex(&newaddr, newaddr);
@@ -521,7 +521,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 		case 'o':
 			printf("out-");
 			c = cngetc();
-			switch(c) {
+			switch (c) {
 			case 'b':
 				printf("byte ");
 				c = gethex(&newaddr, newaddr);
@@ -565,7 +565,7 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 		case 'f':
 			printf("flush-");
 			c = cngetc();
-			switch(c) {
+			switch (c) {
 			case 't':
 				printf("tlb");
 				mips3_TLBFlush(num_tlbentries);
@@ -609,13 +609,13 @@ u_int mdb_ss_addr;
 u_int mdb_ss_instr;
 
 static void
-mdbsetsstep()
+mdbsetsstep(void)
 {
 	u_int va;
 	int *locr0 = mdbpcb.pcb_regs;
 
 	/* compute next address after current location */
-	if(mdbpeek(locr0[PC]) != 0) {
+	if (mdbpeek(locr0[PC]) != 0) {
 		va = MachEmulateBranch(locr0, locr0[PC], 0, mdbpeek(locr0[PC]));
 	}
 	else {
@@ -623,7 +623,7 @@ mdbsetsstep()
 	}
 	if (mdb_ss_addr) {
 		printf("mdbsetsstep: breakpoint already set at %x (va %x)\n",
-			mdb_ss_addr, va);
+		    mdb_ss_addr, va);
 		return;
 	}
 	mdb_ss_addr = va;
@@ -652,12 +652,12 @@ mdbclrsstep(int cr)
 	/* check to be sure its the one we are expecting */
 	va = mdb_ss_addr;
 	if (!va || va != pc)
-		return(FALSE);
+		return FALSE;
 
 	/* read break instruction */
 	instr = mdbpeek(va);
 	if (instr != MIPS_BREAK_SSTEP)
-		return(FALSE);
+		return FALSE;
 
 	if ((int)va < 0) {
 		/* kernel address */
@@ -665,12 +665,12 @@ mdbclrsstep(int cr)
 		mips3_FlushDCache(va,4);
 		mips3_FlushICache(va,4);
 		mdb_ss_addr = 0;
-		return(TRUE);
+		return TRUE;
 	}
 
 	printf("can't clear break at %x\n", va);
 	mdb_ss_addr = 0;
-	return(FALSE);
+	return FALSE;
 }
 
 
@@ -691,8 +691,8 @@ mdbprintins(int ins, int mdbdot)
 		}
 		if (i.RType.func == OP_ADDU && i.RType.rt == 0) {
 			printf("move\t%s,%s",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rs]);
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rs]);
 			break;
 		}
 		printf("%s", spec_name[i.RType.func]);
@@ -707,9 +707,9 @@ mdbprintins(int ins, int mdbdot)
 		case OP_DSRL32:
 		case OP_DSRA32:
 			printf("\t%s,%s,%d",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rt],
-				i.RType.shamt);
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rt],
+			    i.RType.shamt);
 			break;
 
 		case OP_SLLV:
@@ -719,9 +719,9 @@ mdbprintins(int ins, int mdbdot)
 		case OP_DSRLV:
 		case OP_DSRAV:
 			printf("\t%s,%s,%s",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rt],
-				reg_name[i.RType.rs]);
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rt],
+			    reg_name[i.RType.rs]);
 			break;
 
 		case OP_MFHI:
@@ -761,15 +761,15 @@ mdbprintins(int ins, int mdbdot)
 
 		default:
 			printf("\t%s,%s,%s",
-				reg_name[i.RType.rd],
-				reg_name[i.RType.rs],
-				reg_name[i.RType.rt]);
+			    reg_name[i.RType.rd],
+			    reg_name[i.RType.rs],
+			    reg_name[i.RType.rt]);
 		};
 		break;
 
 	case OP_BCOND:
 		printf("%s\t%s,", bcond_name[i.IType.rt],
-			reg_name[i.IType.rs]);
+		    reg_name[i.IType.rs]);
 		goto pr_displ;
 
 	case OP_BLEZ:
@@ -777,7 +777,7 @@ mdbprintins(int ins, int mdbdot)
 	case OP_BGTZ:
 	case OP_BGTZL:
 		printf("%s\t%s,", op_name[i.IType.op],
-			reg_name[i.IType.rs]);
+		    reg_name[i.IType.rs]);
 		goto pr_displ;
 
 	case OP_BEQ:
@@ -790,8 +790,8 @@ mdbprintins(int ins, int mdbdot)
 	case OP_BNE:
 	case OP_BNEL:
 		printf("%s\t%s,%s,", op_name[i.IType.op],
-			reg_name[i.IType.rs],
-			reg_name[i.IType.rt]);
+		    reg_name[i.IType.rs],
+		    reg_name[i.IType.rt]);
 	pr_displ:
 		delay = 1;
 		printf("0x%08x", mdbdot + 4 + ((short)i.IType.imm << 2));
@@ -802,31 +802,31 @@ mdbprintins(int ins, int mdbdot)
 		case OP_BCx:
 		case OP_BCy:
 			printf("bc0%c\t",
-				"ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
 			goto pr_displ;
 
 		case OP_MT:
 			printf("mtc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
 			break;
 
 		case OP_DMT:
 			printf("dmtc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
 			break;
 
 		case OP_MF:
 			printf("mfc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
 			break;
 
 		case OP_DMF:
 			printf("dmfc0\t%s,%s",
-				reg_name[i.RType.rt],
-				c0_reg[i.RType.rd]);
+			    reg_name[i.RType.rt],
+			    c0_reg[i.RType.rd]);
 			break;
 
 		default:
@@ -839,38 +839,38 @@ mdbprintins(int ins, int mdbdot)
 		case OP_BCx:
 		case OP_BCy:
 			printf("bc1%c\t",
-				"ft"[i.RType.rt & COPz_BC_TF_MASK]);
+			    "ft"[i.RType.rt & COPz_BC_TF_MASK]);
 			goto pr_displ;
 
 		case OP_MT:
 			printf("mtc1\t%s,f%d",
-				reg_name[i.RType.rt],
-				i.RType.rd);
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
 			break;
 
 		case OP_MF:
 			printf("mfc1\t%s,f%d",
-				reg_name[i.RType.rt],
-				i.RType.rd);
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
 			break;
 
 		case OP_CT:
 			printf("ctc1\t%s,f%d",
-				reg_name[i.RType.rt],
-				i.RType.rd);
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
 			break;
 
 		case OP_CF:
 			printf("cfc1\t%s,f%d",
-				reg_name[i.RType.rt],
-				i.RType.rd);
+			    reg_name[i.RType.rt],
+			    i.RType.rd);
 			break;
 
 		default:
 			printf("%s.%s\tf%d,f%d,f%d",
-				cop1_name[i.FRType.func],
-				fmt_name[i.FRType.fmt],
-				i.FRType.fd, i.FRType.fs, i.FRType.ft);
+			    cop1_name[i.FRType.func],
+			    fmt_name[i.FRType.fmt],
+			    i.FRType.fd, i.FRType.fs, i.FRType.ft);
 		};
 		break;
 
@@ -884,7 +884,7 @@ mdbprintins(int ins, int mdbdot)
 	case OP_LWC1:
 	case OP_SWC1:
 		printf("%s\tf%d,", op_name[i.IType.op],
-			i.IType.rt);
+		    i.IType.rt);
 		goto loadstore;
 
 	case OP_LB:
@@ -899,32 +899,32 @@ mdbprintins(int ins, int mdbdot)
 	case OP_SW:
 	case OP_SD:
 		printf("%s\t%s,", op_name[i.IType.op],
-			reg_name[i.IType.rt]);
+		    reg_name[i.IType.rt]);
 	loadstore:
 		printf("%d(%s)", (short)i.IType.imm,
-			reg_name[i.IType.rs]);
+		    reg_name[i.IType.rs]);
 		break;
 
 	case OP_ORI:
 	case OP_XORI:
 		if (i.IType.rs == 0) {
 			printf("li\t%s,0x%x",
-				reg_name[i.IType.rt],
-				i.IType.imm);
+			    reg_name[i.IType.rt],
+			    i.IType.imm);
 			break;
 		}
 		/* FALLTHROUGH */
 	case OP_ANDI:
 		printf("%s\t%s,%s,0x%x", op_name[i.IType.op],
-			reg_name[i.IType.rt],
-			reg_name[i.IType.rs],
-			i.IType.imm);
+		    reg_name[i.IType.rt],
+		    reg_name[i.IType.rs],
+		    i.IType.imm);
 		break;
 
 	case OP_LUI:
 		printf("%s\t%s,0x%x", op_name[i.IType.op],
-			reg_name[i.IType.rt],
-			i.IType.imm);
+		    reg_name[i.IType.rt],
+		    i.IType.imm);
 		break;
 
 	case OP_ADDI:
@@ -933,18 +933,18 @@ mdbprintins(int ins, int mdbdot)
 	case OP_DADDIU:
 		if (i.IType.rs == 0) {
  			printf("li\t%s,%d",
-				reg_name[i.IType.rt],
-				(short)i.IType.imm);
+			    reg_name[i.IType.rt],
+			    (short)i.IType.imm);
 			break;
 		}
 		/* FALLTHROUGH */
 	default:
 		printf("%s\t%s,%s,%d", op_name[i.IType.op],
-			reg_name[i.IType.rt],
-			reg_name[i.IType.rs],
-			(short)i.IType.imm);
+		    reg_name[i.IType.rt],
+		    reg_name[i.IType.rs],
+		    (short)i.IType.imm);
 	}
-	return(delay);
+	return delay;
 }
 
 
@@ -959,12 +959,11 @@ arc_dump_tlb(int first,int last)
 
 	tlbno = first;
 
-	while(tlbno <= last) {
+	while (tlbno <= last) {
 		mips3_TLBRead(tlbno, &tlb);
-		if(tlb.tlb_lo0 & MIPS3_PG_V || tlb.tlb_lo1 & MIPS3_PG_V) {
+		if (tlb.tlb_lo0 & MIPS3_PG_V || tlb.tlb_lo1 & MIPS3_PG_V) {
 			printf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
-		}
-		else {
+		} else {
 			printf("TLB*%2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}
 		printf("0=0x%08x ", mips_tlbpfn_to_paddr(tlb.tlb_lo0));
