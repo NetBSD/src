@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.15 1995/06/14 15:19:48 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.16 1995/09/10 03:58:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	5.18 (Berkeley) 2/19/91";
 #else
-static char rcsid[] = "$NetBSD: parse.c,v 1.15 1995/06/14 15:19:48 christos Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.16 1995/09/10 03:58:16 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -1159,60 +1159,71 @@ Parse_IsVar (line)
 {
     register Boolean wasSpace = FALSE;	/* set TRUE if found a space */
     register Boolean haveName = FALSE;	/* Set TRUE if have a variable name */
+    int level = 0;
+#define ISEQOPERATOR(c) \
+	(((c) == '+') || ((c) == ':') || ((c) == '?') || ((c) == '!'))
 
     /*
      * Skip to variable name
      */
-    while ((*line == ' ') || (*line == '\t')) {
-	line++;
-    }
+    for (;(*line == ' ') || (*line == '\t'); line++) 
+	continue;
 
-    while (*line != '=') {
-	if (*line == '\0') {
+    for (; *line != '=' || level != 0; line++)
+	switch (*line) {
+	case '\0':
 	    /*
 	     * end-of-line -- can't be a variable assignment.
 	     */
-	    return (FALSE);
-	} else if ((*line == ' ') || (*line == '\t')) {
+	    return FALSE;
+
+	case ' ':
+	case '\t':
 	    /*
 	     * there can be as much white space as desired so long as there is
 	     * only one word before the operator 
 	     */
 	    wasSpace = TRUE;
-	} else if (wasSpace && haveName) {
-	    /*
-	     * Stop when an = operator is found.
-	     */
-	    if ((*line == '+') || (*line == ':') || (*line == '?') || 
-		(*line == '!')) {
-		break;    
+	    break;
+
+	case '(':
+	case '{':
+	    level++;
+	    break;
+
+	case '}':
+	case ')':
+	    level--;
+	    break;
+		
+	default:
+	    if (wasSpace && haveName) {
+		    if (ISEQOPERATOR(*line)) {
+			/*
+			 * When an = operator [+?!:] is found, the next
+			 * character * must be an = or it ain't a valid
+			 * assignment.
+			 */
+			if (line[1] != '=' && level == 0)
+			    return FALSE;
+			else
+			    return haveName;
+		    }
+		    else {
+			/*
+			 * This is the start of another word, so not assignment.
+			 */
+			return FALSE;
+		    }
 	    }
-
-	    /*
-	     * This is the start of another word, so not assignment.
-	     */
-	    return (FALSE);
-	} else {
-	    haveName = TRUE; 
-	    wasSpace = FALSE;
+	    else {
+		haveName = TRUE; 
+		wasSpace = FALSE;
+	    }
+	    break;
 	}
-	line++;
-    }
 
-    /*
-     * A final check: if we stopped on a +, ?, ! or :, the next character must
-     * be an = or it ain't a valid assignment 
-     */
-    if (((*line == '+') ||
-	 (*line == '?') ||
-	 (*line == ':') ||
-	 (*line == '!')) &&
-	(line[1] != '='))
-    {
-	return (FALSE);
-    } else {
-	return (haveName);
-    }
+    return haveName;
 }
 
 /*-
