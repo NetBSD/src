@@ -1,7 +1,7 @@
-.\"	$NetBSD: ntpd.8,v 1.10 2002/02/08 01:38:52 ross Exp $
+.\"	$NetBSD: ntpd.8,v 1.11 2002/02/21 17:10:15 mason Exp $
 .\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\"
-.Dd March 29, 2000
+.Dd February 21, 2002
 .Dt NTPD 8
 .Os
 .Sh NAME
@@ -13,12 +13,14 @@
 .Op Fl c Ar conffile
 .Op Fl f Ar driftfile
 .Op Fl g
+.Op Fl i Ar chrootdir
 .Op Fl k Ar keyfile
 .Op Fl l Ar logfile
 .Op Fl p Ar pidfile
 .Op Fl r Ar broadcastdelay
 .Op Fl s Ar statsdir
 .Op Fl t Ar key
+.Op Fl u Ar user[:group]
 .Op Fl v Ar variable
 .Op Fl V Ar variable
 .Op Fl x
@@ -112,6 +114,8 @@ Normally, the daemon exits if the offset exceeds a 1000-s sanity
 limit. This option overrides this limit and allows the time to be set to
 any value without restriction; however, this can happen only once. After
 that, the daemon will exit if the limit is exceeded.
+.It Fl i Ar chrootdir
+Specify the path to a directory in which ntpd will run chrooted.
 .It Fl k Ar keyfile
 Specify the name and path of the file containing the NTP
 authentication keys.
@@ -135,6 +139,8 @@ Specify the directory path for files created by the statistics
 facility.
 .It Fl t Ar key
 Add a key number to the trusted key list.
+.It Fl u Ar user[:group]
+Specify user (and optionally group) as which ntpd will run.
 .It Fl v Ar variable
 .It Fl V Ar variable
 Add a system variable listed by default.
@@ -221,17 +227,16 @@ For
 .%T "Miscellaneous Options" ,
 refer to
 .Pa /usr/share/doc/html/ntp/miscopt.htm .
+.Pp
 .Sh FILES
-.Bl -tag -width /etc/ntp.drift -compact
-.It Pa /etc/ntp.conf
-the default name of the configuration file
-.It Pa /etc/ntp.drift
-the default name of the drift file
-.It Pa /etc/ntp.keys
-the default name of the key file
-.El
-.Sh AUTHORS
-David L. Mills \*[Lt]mills@udel.edu\*[Gt]
+.Pa /etc/ntp.conf
+- the default name of the configuration file
+<BR>
+.Pa /etc/ntp.drift
+- the default name of the drift file
+<BR>
+.Pa /etc/ntp.keys
+- the default name of the key file
 .Sh BUGS
 .Nm
 has gotten rather fat. While not huge, it has gotten
@@ -239,3 +244,5 @@ larger than might be desirable for an elevated-priority daemon running
 on a workstation, particularly since many of the fancy features which
 consume the space were designed more with a busy primary server, rather
 than a high stratum workstation, in mind.
+.Sh AUTHOR
+Home David L. Mills <mills@udel.edu> 
