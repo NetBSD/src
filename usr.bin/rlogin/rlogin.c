@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.8.6.1 1996/07/20 00:22:57 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.8 1995/10/05 09:07:22 mycroft Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.8.6.1 1996/07/20 00:22:57 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,9 @@ main(argc, argv)
 	struct termios tty;
 	long omask;
 	int argoff, ch, dflag, one, uid;
-	char *host, *p, *user, term[1024];
+	int i, len, len2;
+	char *host, *p, *user, term[1024] = "network";
+	speed_t ospeed;
 
 	argoff = dflag = 0;
 	one = 1;
@@ -260,10 +262,18 @@ main(argc, argv)
 		exit(1);
 	}
 
-	(void)strcpy(term, (p = getenv("TERM")) ? p : "network");
-	if (tcgetattr(0, &tty) == 0) {
-		(void)strcat(term, "/");
-		(void)sprintf(term + strlen(term), "%d", cfgetospeed(&tty));
+	if (p = getenv("TERM")) {
+		(void)strncpy(term, p, sizeof(term) - 1);
+		term[sizeof(term) - 1] = '\0';
+	}
+	len = strlen(term);
+	if (len < (sizeof(term) - 1) && tcgetattr(0, &tty) == 0) {
+		/* start at 2 to include the / */
+		for (ospeed = i = cfgetospeed(&tty), len2 = 2; i > 9; len2++)
+			i /= 10;
+
+		if (len + len2 < sizeof(term) - 1)
+			(void)snprintf(term + len, len2, "/%d", ospeed);
 	}
 
 	(void)get_window_size(0, &winsize);
@@ -784,6 +794,8 @@ mode(f)
 		tty.c_lflag &= ~(ECHO|ICANON|ISIG|IEXTEN);
 		tty.c_iflag &= ~ICRNL;
 		tty.c_oflag &= ~OPOST;
+		tty.c_cc[VMIN] = 1;
+		tty.c_cc[VTIME] = 0;
 		if (eight) {
 			tty.c_iflag &= IXOFF;
 			tty.c_cflag &= ~(CSIZE|PARENB);
