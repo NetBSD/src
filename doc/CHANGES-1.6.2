@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.78 2003/06/30 02:25:23 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.79 2003/06/30 02:28:46 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -904,3 +904,14 @@ sys/netinet/ip_mroute.c				1.73
 
 	expire mrt if mrt_stall goes empty.  ono@kame
 	[itojun, ticket #1345]
+
+usr.sbin/rpc.lockd/lockd_lock.c			1.19 (via patch)
+
+	We can't keep a reference to the value returned by svc_getrpccaller().
+	Instead malloc() some memory and copy the sockaddr returned there.
+	Fix a bug where after a blocked lock gets granted, the grant message
+	would be sent to the wrong machine (or possibly to a completely bogus
+	address).
+
+	While there, add a NULL check for the return value of another malloc().
+	[bouyer, ticket #1347]
