@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.39 1999/05/23 19:30:30 mycroft Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.40 1999/07/09 06:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -247,17 +247,30 @@ emitobjs(fp)
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
 		len = strlen(oi->oi_path);
-		if (*oi->oi_path != '/')
-			len += 3;
+		if (*oi->oi_path != '/') {
+			len += 3;	/* "$S/" */
+			if (oi->oi_prefix != NULL)
+				len += strlen(oi->oi_prefix) + 1;
+		}
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
 				return (1);
 			sp = '\t';
 			lpos = 7;
 		}
-		if (fprintf(fp, "%c%s%s", sp, *oi->oi_path != '/' ? "$S/" : "",
-		    oi->oi_path) < 0)
-			return (1);
+		if (*oi->oi_path == '/') {
+			if (fprintf(fp, "%c%s", sp, oi->oi_path) < 0)
+				return (1);
+		} else {
+			if (oi->oi_prefix != NULL) {
+				if (fprintf(fp, "%c$S/%s/%s", sp, oi->oi_prefix,
+				    oi->oi_path) < 0)
+					return (1);
+			} else {
+				if (fprintf(fp, "%c$S/%s", sp, oi->oi_path) < 0)
+					return (1);
+			}
+		}
 		lpos += len + 1;
 		sp = ' ';
 	}
@@ -305,17 +318,30 @@ emitfiles(fp, suffix)
 		len = strlen(fpath);
 		if (fpath[len - 1] != suffix)
 			continue;
-		if (*fpath != '/')
+		if (*fpath != '/') {
 			len += 3;	/* "$S/" */
+			if (fi->fi_prefix != NULL)
+				len += strlen(fi->fi_prefix) + 1;
+		}
 		if (lpos + len > 72) {
 			if (fputs(" \\\n", fp) < 0)
 				return (1);
 			sp = '\t';
 			lpos = 7;
 		}
-		if (fprintf(fp, "%c%s%s", sp, *fpath != '/' ? "$S/" : "",
-		    fpath) < 0)
-			return (1);
+		if (*fi->fi_path == '/') {
+			if (fprintf(fp, "%c%s", sp, fi->fi_path) < 0)
+				return (1);
+		} else {
+			if (fi->fi_prefix != NULL) {
+				if (fprintf(fp, "%c$S/%s/%s", sp, fi->fi_prefix,
+				    fi->fi_path) < 0)
+					return (1);
+			} else {
+				if (fprintf(fp, "%c$S/%s", sp, fi->fi_path) < 0)
+					return (1);
+			}
+		}
 		lpos += len + 1;
 		sp = ' ';
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.22 1999/01/21 13:10:09 pk Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.23 1999/07/09 06:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,7 +213,7 @@ locators_print(name, value, arg)
 			 * usable defines, so ignore it.
 			 */
 			return 0;
-		locdup = strdup(name);
+		locdup = estrdup(name);
 		for (cp = locdup; *cp; cp++)
 			if (islower(*cp))
 				*cp = toupper(*cp);
@@ -228,7 +228,7 @@ locators_print(name, value, arg)
 				 * usable defines, so ignore it.
 				 */
 				continue;
-			namedup = strdup(nv->nv_name);
+			namedup = estrdup(nv->nv_name);
 			for (cp = namedup; *cp; cp++)
 				if (islower(*cp))
 					*cp = toupper(*cp);

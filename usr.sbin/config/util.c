@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.7 1998/06/24 11:20:55 jonathan Exp $	*/
+/*	$NetBSD: util.c,v 1.8 1999/07/09 06:44:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,6 +90,20 @@ erealloc(p, size)
 	return (p);
 }
 
+/*
+ * Strdup, with abort on error.
+ */
+char *
+estrdup(p)
+	const char *p;
+{
+	char *cp;
+
+	if ((cp = strdup(p)) == NULL)
+		nomem();
+	return (cp);
+}
+
 static void
 nomem()
 {
@@ -99,16 +113,68 @@ nomem()
 }
 
 /*
+ * Push a prefix onto the prefix stack.
+ */
+void
+prefix_push(path)
+	const char *path;
+{
+	struct prefix *pf;
+	char *cp;
+
+	pf = emalloc(sizeof(struct prefix));
+
+	if (prefixes != NULL) {
+		cp = emalloc(strlen(prefixes->pf_prefix) + 1 +
+		    strlen(path) + 1);
+		(void) sprintf(cp, "%s/%s", prefixes->pf_prefix, path);
+		pf->pf_prefix = intern(cp);
+		free(cp);
+	} else
+		pf->pf_prefix = intern(path);
+
+	pf->pf_next = prefixes;
+	prefixes = pf;
+}
+
+/*
+ * Pop a prefix off the prefix stack.
+ */
+void
+prefix_pop()
+{
+	struct prefix *pf;
+
+	if ((pf = prefixes) == NULL) {
+		error("no prefixes on the stack to pop");
+		return;
+	}
+
+	prefixes = pf->pf_next;
+	free(pf);
+}
+
+/*
  * Prepend the source path to a file name.
  */
 char *
 sourcepath(file)
 	const char *file;
 {
+	size_t len;
 	char *cp;
 
-	cp = emalloc(strlen(srcdir) + 1 + strlen(file) + 1);
-	(void)sprintf(cp, "%s/%s", srcdir, file);
+	len = strlen(srcdir) + 1 + strlen(file) + 1;
+	if (prefixes != NULL)
+		len += strlen(prefixes->pf_prefix) + 1;
+
+	cp = emalloc(len);
+
+	if (prefixes != NULL)
+		(void) sprintf(cp, "%s/%s/%s", srcdir,
+		    prefixes->pf_prefix, file);
+	else
+		(void) sprintf(cp, "%s/%s", srcdir, file);
 	return (cp);
 }
 

@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.26 1999/07/07 00:02:09 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.27 1999/07/09 06:44:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -104,8 +104,8 @@ static	struct nvlist *mk_ns __P((const char *, struct nvlist *));
 %token	AND AT ATTACH BUILD CINCLUDE COMPILE_WITH CONFIG DEFFS DEFINE DEFOPT 
 %token	DEFPARAM DEFFLAG DEFPSEUDO DEVICE DEVCLASS DUMPS ENDFILE XFILE XOBJECT
 %token	FILE_SYSTEM FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
-%token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE
-%token	TYPE WITH NEEDS_COUNT NEEDS_FLAG
+%token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PREFIX PSEUDO_DEVICE ROOT
+%token	SOURCE TYPE WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
 %token	<str> PATHNAME WORD EMPTY
 
@@ -225,6 +225,9 @@ include:
 	INCLUDE WORD			{ (void) include($2, 0, 0); } |
 	CINCLUDE WORD			{ (void) include($2, 0, 1); };
 
+prefix:
+	PREFIX PATHNAME			{ prefix_push($2); } |
+	PREFIX				{ prefix_pop(); };
 
 /*
  * The machine definitions grammar.
@@ -242,6 +245,7 @@ one_def:
 	file |
 	object |
 	include |
+	prefix |
 	DEVCLASS WORD			{ (void)defattr($2, NULL, 1); } |
 	DEFFS fsoptfile_opt deffses	{ deffilesystem($2, $3); } |
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3, 0); } |
