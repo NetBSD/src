@@ -54,7 +54,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$Id: atrun.c,v 1.1 1993/12/05 11:36:38 cgd Exp $";
+static char rcsid[] = "$Id: atrun.c,v 1.2 1995/03/02 22:06:06 cgd Exp $";
 
 /* Local functions */
 static void
@@ -74,10 +74,9 @@ write_string(fd, a)
 }
 
 static void
-run_file(filename, uid, gid)
+run_file(filename, uid)
 	const char *filename;
 	uid_t uid;
-	gid_t gid;
 {
 	/*
 	 * Run a file by by spawning off a process which redirects I/O,
@@ -114,6 +113,10 @@ run_file(filename, uid, gid)
 
 	PRIV_END
 
+	pentry = getpwuid(uid);
+	if (pentry == NULL)
+		perr("UID not in password file!");
+
 	if (stream == NULL)
 		perr("Cannot open input file");
 
@@ -128,11 +131,7 @@ run_file(filename, uid, gid)
 	if (fscanf(stream, "#! /bin/sh\n# mail %8s %d", mailbuf, &send_mail) == 2) {
 		mailname = mailbuf;
 	} else {
-		pentry = getpwuid(uid);
-		if (pentry == NULL)
-			mailname = "root";
-		else
-			mailname = pentry->pw_name;
+		mailname = pentry->pw_name;
 	}
 	fclose(stream);
 	if (chdir(_PATH_ATSPOOL) < 0)
@@ -193,8 +192,11 @@ run_file(filename, uid, gid)
 		    if (queue > 'b')
 			nice(queue - 'b');
 
-		if (setgid(gid) < 0)
-			perr("Cannot change group");
+		if (initgroups(pentry->pw_name, pentry->pw_gid) < 0)
+			perr("Cannot init group list");
+
+		if (setgid(pentry->pw_gid) < 0)
+			perr("Cannot change primary group");
 
 		if (setuid(uid) < 0)
 			perr("Cannot set user id");
@@ -315,7 +317,7 @@ main(argc, argv)
 
 			PRIV_END
 
-			run_file(dirent->d_name, buf.st_uid, buf.st_gid);
+			run_file(dirent->d_name, buf.st_uid);
 		}
 		/* Delete older files */
 		if (older && !(S_IXUSR & buf.st_mode) &&
