@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.16 1997/11/21 20:28:35 tv Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.17 1998/07/11 15:55:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.16 1997/11/21 20:28:35 tv Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.17 1998/07/11 15:55:48 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ pw_error(name, err, eval)
 	char *name;
 	int err, eval;
 {
+
 	if (err)
 		warn("%s", name ? name : "");
 	errx(eval, "YP passwd database unchanged");
@@ -96,6 +97,7 @@ static void
 test_local(username)
 	char *username;
 {
+
 	/*
 	 * Something failed recoverably stating that the YP system couldn't
 	 * find this user.  Look for a local passwd entry, and change that
@@ -175,10 +177,10 @@ yp_passwd(username)
 	yppasswd.newpw.pw_shell	= pw->pw_shell;
 
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
-	if (client==NULL) {
+	if (client == NULL) {
 		warnx("cannot contact yppasswdd on %s:  Reason: %s",
 		    master, yperr_string(YPERR_YPBIND));
-		return(YPERR_YPBIND);
+		return (YPERR_YPBIND);
 	}
 
 	client->cl_auth = authunix_create_default();
@@ -258,9 +260,13 @@ getnewpasswd(pw, old_pass)
 	return(strdup(crypt(buf, salt)));
 }
 
+static char *pwskip __P((char *));
+
 static char *
-pwskip(char *p)
+pwskip(p)
+	char *p;
 {
+
 	while (*p && *p != ':' && *p != '\n')
 		++p;
 	if (*p)
@@ -286,8 +292,8 @@ interpret(pwent, line)
 	pwent->pw_class = "";
 	
 	/* line without colon separators is no good, so ignore it */
-	if(!strchr(p,':'))
-		return(NULL);
+	if (!strchr(p,':'))
+		return (NULL);
 
 	pwent->pw_name = p;
 	p = pwskip(p);
@@ -327,9 +333,10 @@ ypgetpwnam(nam)
 	}
 	val[vallen] = '\0';
 	(void)strncpy(line, val, sizeof(line) - 1);
+	line[sizeof(line) - 1] = '\0';
 	free(val);
 
-	return(interpret(&pwent, line));
+	return (interpret(&pwent, line));
 }
 
 #endif	/* YP */
