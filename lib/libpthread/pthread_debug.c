@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_debug.c,v 1.1.2.9 2002/04/24 05:23:36 nathanw Exp $	*/
+/*	$NetBSD: pthread_debug.c,v 1.1.2.10 2002/05/20 17:52:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ pthread__debuglog_init(int force)
 void
 pthread__debuglog_printf(const char *fmt, ...)
 {
-	static char tmpbuf[200];
+	char tmpbuf[200];
 	long len, cplen, diff1, diff2;
 	va_list ap;
 
