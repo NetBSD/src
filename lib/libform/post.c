@@ -1,4 +1,4 @@
-/*	$NetBSD: post.c,v 1.5 2001/01/21 11:48:29 blymn Exp $	*/
+/*	$NetBSD: post.c,v 1.6 2001/01/22 01:05:34 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -85,8 +85,9 @@ post_form(FORM *form)
 	if ((status = _formi_draw_page(form)) != E_OK)
 		return status;
 
-	pos_form_cursor(form);
 	form->posted = 1;
+	pos_form_cursor(form);
+	
 	return E_OK;
 }
 
