@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.34 2003/08/07 16:32:51 agc Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.35 2005/01/08 03:13:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -188,7 +188,6 @@ int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
 struct ether_multi {
 	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	struct	 ethercom *enm_ec;	/* back pointer to ethercom */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
