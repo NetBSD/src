@@ -562,6 +562,7 @@
 ./usr/include/net/if_ppp.h
 ./usr/include/net/if_pppvar.h
 ./usr/include/net/if_slvar.h
+./usr/include/net/if_sppp.h
 ./usr/include/net/if_stripvar.h
 ./usr/include/net/if_token.h
 ./usr/include/net/if_tun.h
