@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.118 2003/01/28 21:57:44 atatat Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.119 2003/01/29 07:00:37 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.118 2003/01/28 21:57:44 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.119 2003/01/29 07:00:37 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -612,7 +612,6 @@ sunos_sys_mmap(l, v, retval)
 	register_t *retval;
 {
 	struct sunos_sys_mmap_args *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_mmap_args ouap;
 
 	/*

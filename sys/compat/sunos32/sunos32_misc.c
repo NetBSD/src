@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.16 2003/01/28 21:57:45 atatat Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.17 2003/01/29 07:00:38 atatat Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.16 2003/01/28 21:57:45 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.17 2003/01/29 07:00:38 atatat Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -837,7 +837,6 @@ sunos32_sys_mmap(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(netbsd32_long) pos;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
 	struct sys_mmap_args ua;
 	void *rt;
 	int error;

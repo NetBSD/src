@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.100 2003/01/28 21:57:45 atatat Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.101 2003/01/29 07:00:39 atatat Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.100 2003/01/28 21:57:45 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_misc.c,v 1.101 2003/01/29 07:00:39 atatat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,6 @@ svr4_sys_mmap(l, v, retval)
 {
 	struct svr4_sys_mmap_args	*uap = v;
 	struct sys_mmap_args	 mm;
-	void		*rp;
 	/*
          * Verify the arguments.
          */
@@ -554,7 +553,6 @@ svr4_sys_mmap64(l, v, retval)
 {
 	struct svr4_sys_mmap64_args	*uap = v;
 	struct sys_mmap_args	 mm;
-	void		*rp;
 	/*
          * Verify the arguments.
          */
