@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)queue.h	7.3 (Berkeley) 4/21/91
- *	$Id: queue.h,v 1.3 1993/05/20 03:59:14 cgd Exp $
+ *	$Id: queue.h,v 1.4 1993/09/01 15:55:26 glass Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -84,6 +84,7 @@ typedef	struct queue_entry	*queue_entry_t;
 
 #define enqueue(queue,elt)	enqueue_tail(queue, elt)
 #define	dequeue(queue)		dequeue_head(queue)
+#define dequeue_head(queue)     remqueue(queue, queue_first(queue));
 
 #define	enqueue_head(queue,elt)	insque(elt,queue)
 #define	enqueue_tail(queue,elt)	insque(elt,(queue)->prev)
