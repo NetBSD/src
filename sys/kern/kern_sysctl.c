@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.145 2003/09/27 07:58:55 dsl Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.146 2003/09/28 13:24:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.145 2003/09/27 07:58:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.146 2003/09/28 13:24:48 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -1302,7 +1302,7 @@ sysctl_drivers(void *vwhere, size_t *sizep)
 	start = where = vwhere;
 	buflen = *sizep;
 	if (where == NULL) {
-		*sizep = sizeof (int32_t) + max_devsw_convs * sizeof kd;
+		*sizep = max_devsw_convs * sizeof kd;
 		return 0;
 	}
 
@@ -1310,12 +1310,6 @@ sysctl_drivers(void *vwhere, size_t *sizep)
 	 * An array of kinfo_drivers structures
 	 */
 	error = 0;
-	if (buflen >= sizeof (int32_t)) {
-		int32_t l = sizeof kd;
-		error = copyout(&l, where, sizeof (int32_t));
-		where += sizeof (int32_t);
-		buflen -= sizeof (int32_t);
-	}
 	for (i = 0; i < max_devsw_convs; i++) {
 		name = devsw_conv[i].d_name;
 		if (name == NULL)
