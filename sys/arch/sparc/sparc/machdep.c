@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 2003/01/03 11:57:47 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.212 2003/01/03 15:12:02 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -407,18 +407,26 @@ setregs(p, pack, stack)
 	 */
 	psr = tf->tf_psr & (PSR_S | PSR_CWP);
 	if ((fs = p->p_md.md_fpstate) != NULL) {
+		struct cpu_info *cpi;
 		/*
-		 * We hold an FPU state.  If we own *the* FPU chip state
+		 * We hold an FPU state.  If we own *some* FPU chip state
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (p == cpuinfo.fpproc) {
-			savefpstate(fs);
-			cpuinfo.fpproc = NULL;
-		} else if (p->p_md.md_fpumid != -1)
-			panic("setreg: own FPU on module %d; fix this",
-				p->p_md.md_fpumid);
-		p->p_md.md_fpumid = -1;
+		if ((cpi = p->p_md.md_fpu) != NULL) {
+			if (cpi->fpproc != p)
+				panic("FPU(%d): fpproc %p",
+					cpi->ci_cpuid, cpi->fpproc);
+			if (p == cpuinfo.fpproc)
+				savefpstate(fs);
+#if defined(MULTIPROCESSOR)
+			else
+				xcall((xcall_func_t)savefpstate,
+					(int)fs, 0, 0, 0, 1 << cpi->ci_cpuid);
+#endif
+			cpi->fpproc = NULL;
+		}
+		p->p_md.md_fpu = NULL;
 		free((void *)fs, M_SUBPROC);
 		p->p_md.md_fpstate = NULL;
 	}
