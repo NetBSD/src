@@ -1,4 +1,4 @@
-/*	$NetBSD: supextern.h,v 1.4 1997/06/18 15:23:55 christos Exp $	*/
+/*	$NetBSD: supextern.h,v 1.5 1997/10/17 14:16:38 lukem Exp $	*/
 
 
 #ifndef __P
@@ -56,6 +56,7 @@ int runv __P((char *, char **));
 int runp __P((char *, ...));
 int runvp __P((char *, char **));
 int runio __P((char *const[], const char *, const char *, const char *));
+int runiofd __P((char *const[], const int, const int, const int));
 
 /* salloc.c */
 char *salloc __P((char *));
