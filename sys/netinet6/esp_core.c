@@ -1,5 +1,5 @@
-/*	$NetBSD: esp_core.c,v 1.12 2000/10/05 04:49:17 itojun Exp $	*/
-/*	$KAME: esp_core.c,v 1.46 2000/10/05 04:02:57 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.13 2000/11/02 12:25:01 itojun Exp $	*/
+/*	$KAME: esp_core.c,v 1.49 2000/11/02 12:21:20 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -350,9 +350,8 @@ esp_des_blockdecrypt(algo, sav, s, d)
 {
 
 	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(DES_LONG) * 2);
-	des_encrypt((DES_LONG *)d, *(des_key_schedule *)sav->sched,
-	    DES_DECRYPT);
+	des_ecb_encrypt((des_cblock *)s, (des_cblock *)d,
+	    *(des_key_schedule *)sav->sched, DES_DECRYPT);
 	return 0;
 }
 
@@ -365,8 +364,8 @@ esp_des_blockencrypt(algo, sav, s, d)
 {
 
 	/* assumption: d has a good alignment */
-	bcopy(s, d, sizeof(DES_LONG) * 2);
-	des_encrypt((DES_LONG *)d, *(des_key_schedule *)sav->sched,
+	des_ecb_encrypt((des_cblock *)s, (des_cblock *)d,
+	    *(des_key_schedule *)sav->sched,
 	    DES_ENCRYPT);
 	return 0;
 }
@@ -586,9 +585,9 @@ esp_3des_blockdecrypt(algo, sav, s, d)
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
 	bcopy(s, d, sizeof(DES_LONG) * 2);
-	des_encrypt((DES_LONG *)d, p[2], DES_DECRYPT);
-	des_encrypt((DES_LONG *)d, p[1], DES_ENCRYPT);
-	des_encrypt((DES_LONG *)d, p[0], DES_DECRYPT);
+	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d, p[2], DES_DECRYPT);
+	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d, p[1], DES_ENCRYPT);
+	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d, p[0], DES_DECRYPT);
 	return 0;
 }
 
@@ -604,9 +603,9 @@ esp_3des_blockencrypt(algo, sav, s, d)
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
 	bcopy(s, d, sizeof(DES_LONG) * 2);
-	des_encrypt((DES_LONG *)d, p[0], DES_ENCRYPT);
-	des_encrypt((DES_LONG *)d, p[1], DES_DECRYPT);
-	des_encrypt((DES_LONG *)d, p[2], DES_ENCRYPT);
+	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d, p[0], DES_ENCRYPT);
+	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d, p[1], DES_DECRYPT);
+	des_ecb_encrypt((des_cblock *)d, (des_cblock *)d, p[2], DES_ENCRYPT);
 	return 0;
 }
 
