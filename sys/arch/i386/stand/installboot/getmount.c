@@ -1,4 +1,4 @@
-/*	$NetBSD: getmount.c,v 1.5 1998/07/28 20:10:54 drochner Exp $ */
+/*	$NetBSD: getmount.c,v 1.6 2001/07/07 22:57:57 perry Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -80,7 +80,7 @@ dotempmount(bdiskdev)
 		warnx("mkdtemp failed");
 		return (0);
 	}
-	bzero(&data, sizeof(data));
+	memset(&data, 0, sizeof(data));
 	data.fspec = bdiskdev;
 
 	/* this code if FFS only */
