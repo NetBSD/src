@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.52 2003/09/22 02:43:20 jschauma Exp $	*/
+/*	$NetBSD: ls.c,v 1.53 2003/12/26 06:19:19 grant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.52 2003/09/22 02:43:20 jschauma Exp $");
+__RCSID("$NetBSD: ls.c,v 1.53 2003/12/26 06:19:19 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,6 +88,7 @@ int f_column;			/* columnated format */
 int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
 int f_grouponly;		/* long listing without owner */
+int f_humanize;			/* humanize the size field */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */
@@ -135,7 +136,7 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ABCFLRSTWabcdfgiklmnopqrstuwx")) != -1) {
+	while ((ch = getopt(argc, argv, "1ABCFLRSTWabcdfghiklmnopqrstuwx")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C, -l, -m and -x options all override each other so
@@ -222,6 +223,13 @@ ls_main(int argc, char *argv[])
 		case 'k':
 			blocksize = 1024;
 			kflag = 1;
+			break;
+		/*
+		 * The -h option forces all sizes to be measured in bytes.
+		 * It also makes -l suppress -s.
+		 */
+		case 'h':
+			f_humanize = 1;
 			break;
 		case 'n':
 			f_numericonly = 1;
@@ -442,7 +450,7 @@ display(FTSENT *p, FTSENT *list)
 	DISPLAY d;
 	FTSENT *cur;
 	NAMES *np;
-	u_int64_t btotal, maxblock, maxsize;
+	u_int64_t btotal, stotal, maxblock, maxsize;
 	int maxinode, maxnlink, maxmajor, maxminor;
 	int bcfile, entries, flen, glen, ulen, maxflags, maxgroup, maxlen;
 	int maxuser, needstats;
@@ -471,7 +479,7 @@ display(FTSENT *p, FTSENT *list)
 	maxinode = maxnlink = 0;
 	bcfile = 0;
 	maxuser = maxgroup = maxflags = maxlen = 0;
-	btotal = maxblock = maxsize = 0;
+	btotal = stotal = maxblock = maxsize = 0;
 	maxmajor = maxminor = 0;
 	for (cur = list, entries = 0; cur; cur = cur->fts_link) {
 		if (cur->fts_info == FTS_ERR || cur->fts_info == FTS_NS) {
@@ -520,6 +528,7 @@ display(FTSENT *p, FTSENT *list)
 			}
 
 			btotal += sp->st_blocks;
+			stotal += sp->st_size;
 			if (f_longform) {
 				if (f_numericonly ||
 				    (user = user_from_uid(sp->st_uid, 0)) ==
@@ -574,17 +583,24 @@ display(FTSENT *p, FTSENT *list)
 	d.maxlen = maxlen;
 	if (needstats) {
 		d.btotal = btotal;
-		(void)snprintf(buf, sizeof(buf), "%llu",
-		    (long long)howmany(maxblock, blocksize));
-		d.s_block = strlen(buf);
+		d.stotal = stotal;
+		if (!f_humanize) {
+			(void)snprintf(buf, sizeof(buf), "%llu",
+			    (long long)howmany(maxblock, blocksize));
+			d.s_block = strlen(buf);
+		}
 		d.s_flags = maxflags;
 		d.s_group = maxgroup;
 		(void)snprintf(buf, sizeof(buf), "%u", maxinode);
 		d.s_inode = strlen(buf);
 		(void)snprintf(buf, sizeof(buf), "%u", maxnlink);
 		d.s_nlink = strlen(buf);
-		(void)snprintf(buf, sizeof(buf), "%llu", (long long)maxsize);
-		d.s_size = strlen(buf);
+		if (f_humanize) {
+			d.s_size = 4; /* min buffer length for humanize_number */
+		} else {
+			(void)snprintf(buf, sizeof(buf), "%llu", (long long)maxsize);
+			d.s_size = strlen(buf);
+		}
 		d.s_user = maxuser;
 		if (bcfile) {
 			(void)snprintf(buf, sizeof(buf), "%u", maxmajor);
