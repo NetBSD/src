@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.5 2002/09/24 06:37:55 lukem Exp $
+#	$NetBSD: list,v 1.6 2003/03/03 02:09:18 enami Exp $
 
 SRCDIRS	bin
 
@@ -66,8 +66,24 @@ PROG	mbrlabel
 PROG	mknod
 PROG	modload
 PROG	modunload
-PROG	mount		mount_ados mount_cd9660 mount_ext2fs mount_fdesc mount_ffs mount_filecore mount_kernfs mount_lfs mount_msdos mount_nfs mount_ntfs mount_null mount_overlay mount_procfs mount_ufs mount_umap mount_union
+PROG	mount
+PROG	mount_ados
+PROG	mount_cd9660
+PROG	mount_ext2fs
+PROG	mount_fdesc
+PROG	mount_ffs	mount_ufs
+PROG	mount_filecore
+PROG	mount_kernfs
+PROG	mount_lfs
+PROG	mount_msdos
+PROG	mount_nfs
+PROG	mount_ntfs
+PROG	mount_null
+PROG	mount_overlay
 PROG	mount_portal
+PROG	mount_procfs
+PROG	mount_umap
+PROG	mount_union
 PROG	newfs		mount_mfs
 PROG	newfs_lfs
 PROG	newfs_msdos
