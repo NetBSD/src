@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.89 2001/12/18 10:57:22 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.90 2001/12/19 15:20:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.89 2001/12/18 10:57:22 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.90 2001/12/19 15:20:19 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -484,8 +484,6 @@ ffs_reload(mountp, cred, p)
 	if (fs->fs_avgfpdir <= 0)
 		fs->fs_avgfpdir = AFPDIR;
 	if (fs->fs_pendingblocks != 0 || fs->fs_pendinginodes != 0) {
-		printf("%s: reload pending error: blocks %d files %d\n",
-		    fs->fs_fsmnt, fs->fs_pendingblocks, fs->fs_pendinginodes);
 		fs->fs_pendingblocks = 0;
 		fs->fs_pendinginodes = 0;
 	}
