@@ -1,7 +1,8 @@
-/* $NetBSD: pvr.c,v 1.3 2001/01/21 22:46:22 marcus Exp $ */
+/*	$NetBSD: pvr.c,v 1.4 2001/02/01 01:25:56 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2001 Marcus Comstedt
+ * Copyright (c) 2001 Marcus Comstedt.
+ * Copyright (c) 2001 Jason R. Thorpe.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,65 +33,104 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Tohru Nishimura
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.4 2001/02/01 01:25:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/malloc.h>
-#include <sys/conf.h>
+#include <sys/malloc.h> 
+#include <sys/buf.h>
+#include <sys/ioctl.h>
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
-#include <dev/cons.h>
+#include <dev/cons.h> 
+
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplayvar.h> 
+
+#include <dev/wscons/wscons_callbacks.h>
+ 
+#include <dev/rasops/rasops.h>
+#include <dev/wsfont/wsfont.h>
 
 #include <dreamcast/dev/pvrvar.h>
 #include <dreamcast/dev/maple/mkbdvar.h>
-#include <dev/wscons/wsconsio.h>
-
-#include <dev/rcons/raster.h>
-#include <dev/wscons/wscons_raster.h>
-#include <dev/wscons/wsdisplayvar.h>
-#include <dev/wscons/wsconsio.h>
-#include <dev/wscons/wscons_callbacks.h>
 
 #include <sh3/shbvar.h>
 
-#include "wsdisplay.h"
 #include "mkbd.h"
 
-#if NWSDISPLAY > 0
-cdev_decl(wsdisplay);
-#endif
+struct fb_devconfig {
+	vaddr_t dc_vaddr;		/* framebuffer virtual address */
+	vaddr_t dc_paddr;		/* framebuffer physical address */
+	int	dc_wid;			/* width of frame buffer */
+	int	dc_ht;			/* height of frame buffer */
+	int	dc_depth;		/* depth, bits per pixel */
+	int	dc_rowbytes;		/* bytes in a FB scan line */
+	vaddr_t	dc_videobase;		/* base of flat frame buffer */
+	int	dc_blanked;		/* currently has video disabled */
 
-int pvr_match __P((struct device *, struct cfdata *, void *));
-void pvr_attach __P((struct device *, struct device *, void *));
+	struct rasops_info rinfo;
+};
+
+struct pvr_softc {
+	struct device sc_dev;
+	struct fb_devconfig *sc_dc;	/* device configuration */
+	int nscreens;
+};
+
+int	pvr_match(struct device *, struct cfdata *, void *);
+void	pvr_attach(struct device *, struct device *, void *);
 
 struct cfattach pvr_ca = {
-	sizeof(struct pvr_softc), 
-	pvr_match,
-	pvr_attach,
+	sizeof(struct pvr_softc), pvr_match, pvr_attach,
 };
 
+void	pvr_getdevconfig(struct fb_devconfig *);
 
-const struct wsdisplay_emulops pvr_emulops = {
-	rcons_cursor,
-	rcons_mapchar,
-	rcons_putchar,
-	rcons_copycols,
-	rcons_erasecols,
-	rcons_copyrows,
-	rcons_eraserows,
-	rcons_alloc_attr
-};
+struct fb_devconfig pvr_console_dc;
 
-const struct wsscreen_descr pvr_stdscreen = {
-	"52x20", 52, 20,
-	&pvr_emulops,
-	12, 24,
+char pvr_stdscreen_textgeom[32] = { "std" };	/* XXX yuck */
+
+struct wsscreen_descr pvr_stdscreen = {
+	pvr_stdscreen_textgeom, 0, 0,
+	0, /* textops */
+	0, 0,
 	WSSCREEN_WSCOLORS,
 };
 
@@ -99,255 +139,321 @@ const struct wsscreen_descr *_pvr_scrlist[] = {
 };
 
 const struct wsscreen_list pvr_screenlist = {
-	sizeof(_pvr_scrlist) / sizeof(struct wsscreen_descr *),
-	_pvr_scrlist
+	sizeof(_pvr_scrlist) / sizeof(struct wsscreen_descr *), _pvr_scrlist
 };
 
-static int	pvr_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-static paddr_t	pvr_mmap __P((void *, off_t, int));
-static int	pvr_alloc_screen __P((void *, const struct wsscreen_descr *,
-    void **, int *, int *, long *));
-static void	pvr_free_screen __P((void *, void *));
-static int	pvr_show_screen __P((void *, void *, int,
-    void (*)(void *, int, int), void *));
+int	pvrioctl(void *, u_long, caddr_t, int, struct proc *);
+paddr_t	pvrmmap(void *, off_t, int);
 
-static void	pvr_check_cable __P((int *, int *));
-static void	pvr_init_dpy_hardware __P((void));
-
+int	pvr_alloc_screen(void *, const struct wsscreen_descr *,
+	    void **, int *, int *, long *);
+void	pvr_free_screen(void *, void *);
+int	pvr_show_screen(void *, void *, int,
+	    void (*)(void *, int, int), void *);
 
 const struct wsdisplay_accessops pvr_accessops = {
-	pvr_ioctl,
-	pvr_mmap,
+	pvrioctl,
+	pvrmmap,
 	pvr_alloc_screen,
 	pvr_free_screen,
 	pvr_show_screen,
-	0 /* load_font */
+	NULL, /* load_font */
 };
 
+void	pvrinit(struct fb_devconfig *);
+
+int	pvr_is_console;
+
+int
+pvr_match(struct device *parent, struct cfdata *match, void *aux)
+{
+	struct shb_attach_args *sa = aux;
+
+	if (strcmp("pvr", match->cf_driver->cd_name) != 0)
+		return (0);
+
+	sa->ia_iosize = 0; /* 0x1400 */;
+	return (1);
+}
+
+void
+pvr_getdevconfig(struct fb_devconfig *dc)
+{
+	int i, cookie;
+
+	dc->dc_paddr = 0x05000000;
+	dc->dc_vaddr = SH3_PHYS_TO_P2SEG(dc->dc_paddr);
+
+	dc->dc_wid = 640;
+	dc->dc_ht = 480;
+	dc->dc_depth = 16;
+	dc->dc_rowbytes = dc->dc_wid * (dc->dc_depth / 8);
+	dc->dc_videobase = dc->dc_vaddr;
+	dc->dc_blanked = 0;
+
+	/* Clear the screen. */
+	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
+		*(u_int32_t *)(dc->dc_videobase + i) = 0x0;
+
+	/* Initialize the device. */
+	pvrinit(dc);
+
+	dc->rinfo.ri_flg = 0;
+	dc->rinfo.ri_depth = dc->dc_depth;
+	dc->rinfo.ri_bits = (void *) dc->dc_videobase;
+	dc->rinfo.ri_width = dc->dc_wid;
+	dc->rinfo.ri_height = dc->dc_ht;
+	dc->rinfo.ri_stride = dc->dc_rowbytes;
+
+	wsfont_init();
+	/* prefer 8 pixel wide font */
+	if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0);
+	if (cookie <= 0) {
+		printf("pvr: font table is empty\n");
+		return;
+	}
+
+	if (wsfont_lock(cookie, &dc->rinfo.ri_font,
+	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+		printf("pvr: unable to lock font\n");
+		return;
+	}
+	dc->rinfo.ri_wsfcookie = cookie;
+
+	rasops_init(&dc->rinfo, 500, 500);
+
+	/* XXX shouldn't be global */
+	pvr_stdscreen.nrows = dc->rinfo.ri_rows;
+	pvr_stdscreen.ncols = dc->rinfo.ri_cols;
+	pvr_stdscreen.textops = &dc->rinfo.ri_ops;
+	pvr_stdscreen.capabilities = dc->rinfo.ri_caps;
+
+	/* XXX yuck */
+	sprintf(pvr_stdscreen_textgeom, "%dx%d", pvr_stdscreen.ncols,
+	    pvr_stdscreen.nrows);
+}
+
+void
+pvr_attach(struct device *parent, struct device *self, void *aux)
+{
+	struct pvr_softc *sc = (void *) self;
+	struct wsemuldisplaydev_attach_args waa;
+	int console;
+
+	console = pvr_is_console;
+	if (console) {
+		sc->sc_dc = &pvr_console_dc;
+		sc->nscreens = 1;
+	} else {
+		sc->sc_dc = malloc(sizeof(struct fb_devconfig), M_DEVBUF,
+		    M_WAITOK);
+		pvr_getdevconfig(sc->sc_dc);
+	}
+	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
+	    sc->sc_dc->dc_depth);
+
+	/* XXX Colormap initialization? */
+
+	waa.console = console;
+	waa.scrdata = &pvr_screenlist;
+	waa.accessops = &pvr_accessops;
+	waa.accesscookie = sc;
+
+	(void) config_found(self, &waa, wsemuldisplaydevprint);
+}
+
+int
+pvrioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
+{
+	struct pvr_softc *sc = v;
+	struct fb_devconfig *dc = sc->sc_dc;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_DCPVR;
+		return (0);
+
+	case WSDISPLAYIO_GINFO:
+#define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
+		wsd_fbip->height = sc->sc_dc->dc_ht;
+		wsd_fbip->width = sc->sc_dc->dc_wid;
+		wsd_fbip->depth = sc->sc_dc->dc_depth;
+		wsd_fbip->cmsize = 0;	/* XXX Colormap */
+#undef wsd_fbip
+		return (0);
+
+	case WSDISPLAYIO_GETCMAP:
+	case WSDISPLAYIO_PUTCMAP:
+		return (ENOTTY);	/* XXX Colormap */
+
+	case WSDISPLAYIO_SVIDEO:
+		return (ENOTTY);	/* XXX */
+
+	case WSDISPLAYIO_GVIDEO:
+		*(u_int *)data = dc->dc_blanked ?
+		    WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
+		return (0);
+
+	case WSDISPLAYIO_GCURPOS:
+	case WSDISPLAYIO_SCURPOS:
+	case WSDISPLAYIO_GCURMAX:
+	case WSDISPLAYIO_GCURSOR:
+	case WSDISPLAYIO_SCURSOR:
+		return (ENOTTY);	/* XXX */
+	}
+
+	return (ENOTTY);
+}
+
+paddr_t
+pvrmmap(void *v, off_t offset, int prot)
+{
+
+	/*
+	 * XXX This should be easy to support -- just need to define
+	 * XXX offsets for the contol regs, etc.
+	 */
+	return (-1);
+}
+
+int
+pvr_alloc_screen(void *v, const struct wsscreen_descr *type,
+    void **cookiep, int *curxp, int *curyp, long *attrp)
+{
+	struct pvr_softc *sc = v;
+	long defattr;
+
+	if (sc->nscreens > 0)
+		return (ENOMEM);
+
+	*cookiep = &sc->sc_dc->rinfo; /* one and only for now */
+	*curxp = 0;
+	*curyp = 0;
+	(*sc->sc_dc->rinfo.ri_ops.alloc_attr)(&sc->sc_dc->rinfo, 0, 0, 0,
+	    &defattr);
+	*attrp = defattr;
+	sc->nscreens++;
+	return (0);
+}
+
+void
+pvr_free_screen(void *v, void *cookie)
+{
+	struct pvr_softc *sc = v;
+
+	if (sc->sc_dc == &pvr_console_dc)
+		panic("pvr_free_screen: console");
+
+	sc->nscreens--;
+}
+
+int
+pvr_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
+{
+
+	return (0);
+}
 
 static void
-pvr_check_cable(vgamode_p, rgbmode_p)
-	int *vgamode_p;
-	int *rgbmode_p;
+pvr_check_cable(int *vgamode_p, int *rgbmode_p)
 {
-	volatile u_int32_t *porta = (volatile u_int32_t *)0xff80002c;
+	__volatile u_int32_t *porta =
+	    (__volatile u_int32_t *)0xff80002c;
 	u_int16_t v;
 
 	/* PORT8 and PORT9 is input */
 	*porta = (*porta & ~0xf0000) | 0xa0000;
 
 	/* Read PORT8 and PORT9 */
-	v = ((*(volatile u_int16_t *)(porta+1))>>8)&3;
+	v = ((*(__volatile u_int16_t *)(porta + 1)) >> 8) & 3;
 
-	if (! (v&2) )
+	if ((v & 2) == 0)
 		*vgamode_p = *rgbmode_p = 1;
 	else {
 		*vgamode_p = 0;
-		*rgbmode_p = (v&1)? 0 : 1;
+		*rgbmode_p = (v & 1) ? 0 : 1;
 	}
 }
 
-static void
-pvr_init_dpy_hardware()
+void
+pvrinit(struct fb_devconfig *dc)
 {
-	volatile u_int32_t *pvr = (volatile u_int32_t *)0xa05f8000;
+	__volatile u_int32_t *pvr = (__volatile u_int32_t *)
+	    SH3_PHYS_TO_P2SEG(0x005f8000);
 	int display_lines_per_field = 240;
 	int modulo = 1, voffset;
 	int vgamode, rgbmode;
 
 	pvr_check_cable(&vgamode, &rgbmode);
 
-	pvr[8/4] = 0; /* reset */
-	pvr[0x40/4] = 0; /* black border */
+	pvr[8/4] = 0;		/* reset */
+	pvr[0x40/4] = 0;	/* black border */
 
-	if(vgamode) {
-		pvr[0x44/4] = 0x800004; /* 31kHz, RGB565 */
-		pvr[0xd0/4] = 0x100;	  /* video output */
+	if (vgamode) {
+		pvr[0x44/4] = 0x800004;	/* 31kHz, RGB565 */
+		pvr[0xd0/4] = 0x100;	/* video output */
 		display_lines_per_field = 480;
 		voffset = 36;
 	} else {
-		pvr[0x44/4] = 0x000004; /* 15kHz, RGB565 */
+		pvr[0x44/4] = 0x000004;	/* 15kHz, RGB565 */
 		pvr[0xd0/4] = 0x110;	/* video output, NTSC, interlace */
-		modulo += 640*2/4;	/* interlace -> skip every other line */
+		modulo += 640 * 2 / 4;	/* interlace -> skip every other line */
 		voffset = 18;
 	}
 
-	pvr[0x50/4]=0;          /* video base address, long field */
-	pvr[0x54/4]=640*2;	/* video base address, short field */
+	pvr[0x50/4] = 0;	/* video base address, long field */
+	pvr[0x54/4] = 640 * 2;	/* video base address, short field */
 
-	pvr[0x5c/4]=(modulo<<20)|((display_lines_per_field-1)<<10)|(640*2/4-1);
+	pvr[0x5c/4] = (modulo << 20) | ((display_lines_per_field - 1) << 10) |
+	    (640 * 2 / 4 - 1);
 
-	voffset = (voffset<<16) | voffset;
+	voffset = (voffset << 16) | voffset;
 
-	pvr[0xf0/4]=voffset;		/* V start		*/
-	pvr[0xdc/4]=voffset+display_lines_per_field;	/* V border	*/
-	pvr[0xec/4]=164;		/* H start		*/
-	pvr[0xd8/4]=(524<<16)|857;	/* HV counter		*/
-	pvr[0xd4/4]=(126<<16)|837;	/* H border		*/
-	pvr[0xe8/4]=22<<16;
+	pvr[0xf0/4] = voffset;				/* V start */
+	pvr[0xdc/4] = voffset + display_lines_per_field;/* V border */
+	pvr[0xec/4] = 164;				/* H start */
+	pvr[0xd8/4] = (524 << 16) | 857;		/* HV counter */
+	pvr[0xd4/4] = (126 << 16) | 837;		/* H border */
+	pvr[0xe8/4] = 22 << 16;
 
 	/* RGB / composite */
-	*(volatile u_int32_t *)0xa0702c00 = (rgbmode? 0 : 3) << 8;
+	*(__volatile u_int32_t *)
+	    SH3_PHYS_TO_P2SEG(0x00702c00) = (rgbmode ? 0 : 3) << 8;
 
-	pvr[0x44/4] |= 1;  /* display on */
+	pvr[0x44/4] |= 1;	/* display on */
 }
 
+/* Console support. */
 
-
-
-int
-pvr_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	switch (cmd) {
-	case WSDISPLAYIO_GTYPE:
-	case WSDISPLAYIO_GINFO:
-	case WSDISPLAYIO_GCURMAX:
-	case WSDISPLAYIO_GCURPOS:
-	case WSDISPLAYIO_GCURSOR:
-	case WSDISPLAYIO_GETCMAP:
-	case WSDISPLAYIO_GVIDEO:
-	case WSDISPLAYIO_PUTCMAP:
-	case WSDISPLAYIO_SCURPOS:
-	case WSDISPLAYIO_SCURSOR:
-	case WSDISPLAYIO_SVIDEO:
-		/* NONE of these operations are supported. */
-		return ENOTTY;
-	}
-
-	return -1;
-}
-
-static paddr_t
-pvr_mmap(v, offset, prot)
-	void *v;
-	off_t offset;
-	int prot;
-{
-	return (-1);
-}
-
-int
-pvr_alloc_screen(v, type, cookiep, curxp, curyp, defattrp)
-	void *v;
-	const struct wsscreen_descr *type;
-	void **cookiep;
-	int *curxp, *curyp;
-	long *defattrp;
-{
-	return (ENOMEM);
-}
+void	pvrcnprobe(struct consdev *);
+void	pvrcninit(struct consdev *);
 
 void
-pvr_free_screen(v, cookie)
-	void *v;
-	void *cookie;
+pvrcninit(struct consdev *cndev)
 {
-}
+	struct fb_devconfig *dcp = &pvr_console_dc;
+	long defattr;
 
-int
-pvr_show_screen(v, cookie, waitok, cb, cbarg)
-	void *v;
-	void *cookie;
-	int waitok;
-	void (*cb) __P((void *, int, int));
-	void *cbarg;
-{
-	return 0;
-}
+	pvr_getdevconfig(dcp);
+	(*dcp->rinfo.ri_ops.alloc_attr)(&dcp->rinfo, 0, 0, 0, &defattr);
+	wsdisplay_cnattach(&pvr_stdscreen, &dcp->rinfo, 0, 0, defattr);
 
+	pvr_is_console = 1;
 
-int
-pvr_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-  	struct shb_attach_args *sa = aux;
-
-	if(strcmp("pvr", match->cf_driver->cd_name))
-		return 0;
-
-	sa->ia_iosize = 0 /* 0x1400 */;
-	return (1);
-}
-
-void
-pvr_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	struct pvr_softc *sc;
-	struct wsemuldisplaydev_attach_args waa;
-	static int pvr_console_initted = 0;
-
-	sc = (struct pvr_softc *)self;
-
-	printf("\n");
-
-	/* initialize the raster */
-	waa.console = (++pvr_console_initted == 1);
-	waa.scrdata = &pvr_screenlist;
-	waa.accessops = &pvr_accessops;
-	waa.accesscookie = sc;
-
-	config_found(self, &waa, wsemuldisplaydevprint);
-}
-
-
-/* Console stuff */
-
-void pvrcnprobe __P((struct consdev *));
-void pvrcninit __P((struct consdev *));
-
-void
-pvrcninit(cndev)
-	struct	consdev *cndev;
-{
-	static struct rcons rcons;
-	static struct raster raster;
-	struct rcons *rcp;
-	struct raster *rap;
-
-	/* initialize the raster console blitter */
-	rap = &raster;
-	rap->width = 640;
-	rap->height = 480;
-	rap->depth = 16;
-	rap->linelongs = 640*2 / sizeof(u_int32_t);
-	rap->pixels = (void *)0xa5000000;
-
-	bzero(rap->pixels, 640*480*2);
-
-	pvr_init_dpy_hardware();
-
-	rcp = &rcons;
-	rcp->rc_sp = rap;
-	rcp->rc_crow = rcp->rc_ccol = -1;
-	rcp->rc_crowp = &rcp->rc_crow;
-	rcp->rc_ccolp = &rcp->rc_ccol;
-	rcons_init(rcp, 20, 52);
-
-	wsdisplay_cnattach(&pvr_stdscreen, rcp, 0, 0, 0);
 	cn_tab->cn_pri = CN_INTERNAL;
 
 #if NMKBD > 0
-	mkbd_cnattach(); /* Connect keyboard and screen together */
+	mkbd_cnattach();	/* connect keyboard and screen together */
 #endif
 }
 
-
 void
-pvrcnprobe(cndev)
-	struct  consdev *cndev;
+pvrcnprobe(struct consdev *cndev)
 {
 #if NWSDISPLAY > 0
-	int     maj, unit;
+	int maj, unit;
 #endif
 	cndev->cn_dev = NODEV;
 	cndev->cn_pri = CN_NORMAL;
@@ -355,9 +461,8 @@ pvrcnprobe(cndev)
 #if NWSDISPLAY > 0
 	unit = 0;
 	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == wsdisplayopen) {
+		if (cdevsw[maj].d_open == wsdisplayopen)
 			break;
-		}
 	}
 	if (maj != nchrdev) {
 		cndev->cn_pri = CN_INTERNAL;
