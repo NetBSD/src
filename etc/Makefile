@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.225 2002/09/03 00:56:08 wiz Exp $
+#	$NetBSD: Makefile,v 1.226 2002/09/16 02:30:29 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -209,6 +209,8 @@ install-etc-files: check_DESTDIR
 		${DESTDIR}/var/log/sendmail.st
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
 		${DESTDIR}/var/log/wtmp
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+		${DESTDIR}/var/log/wtmpx
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 /dev/null \
 		${DESTDIR}/var/log/xferlog
 	${INSTALL_FILE} -o daemon -g staff -m 664 /dev/null \
