@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.4 1993/08/01 19:24:46 mycroft Exp $
+ *	$Id: machdep.c,v 1.5 1993/08/07 08:54:02 cgd Exp $
  */
 
 #include "param.h"
@@ -208,7 +208,9 @@ again:
 	    (name) = (type *)v; v = (caddr_t)((name)+(num))
 #define	valloclim(name, type, num, lim) \
 	    (name) = (type *)v; v = (caddr_t)((lim) = ((name)+(num)))
+#ifdef notdef
 	valloc(cfree, struct cblock, nclist);
+#endif
 	valloc(callout, struct callout, ncallout);
 	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
@@ -252,6 +254,7 @@ again:
 	 */
 	if ((vm_size_t)(v - firstaddr) != size)
 		panic("startup: table size inconsistency");
+#ifdef notdef
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -289,6 +292,16 @@ again:
  *				 16*NCARGS, TRUE);
  *	NOT CURRENTLY USED -- cgd
  */
+#else /* notdef */
+
+        /*
+         * Allocate a submap for buffer space allocations.
+         */
+        buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+                                 bufpages*NBPG, TRUE);
+
+#endif /* notdef */
+
 	/*
 	 * Allocate a submap for physio
 	 */
