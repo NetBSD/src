@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: SVR4_MAKEDEV,v 1.8 2000/03/03 04:27:17 hubertf Exp $
+#	$NetBSD: SVR4_MAKEDEV,v 1.9 2001/02/10 23:25:51 eeh Exp $
 #
 # Copyright (c) 1995 Christos Zoulas
 # All rights reserved.
@@ -54,7 +54,7 @@ mac68k)		major=44;;
 mvme68k)	major=38;;
 next68k)	major=44;;
 news68k)	major=75;;
-sparc)		major=43;;
+sparc*)		major=43;;
 sun3)		major=83;;
 x68k)		major=42;;
 *)
@@ -162,7 +162,7 @@ wabi)
 	x68k)
 		mknod $i	c 2 2;;	# /dev/null
 	news68k|\
-	sparc|\
+	sparc*|\
 	sun3)
 		mknod $i	c 3 2;;	# /dev/null
 	esac
