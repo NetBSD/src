@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 2001/05/28 16:22:15 thorpej Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.2 2001/06/10 05:26:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -57,7 +57,6 @@ struct clockfns {
 	void	(*cf_init)(struct device *);
 	void	(*cf_get)(struct device *, time_t, struct clocktime *);
 	void	(*cf_set)(struct device *, struct clocktime *);
-	void	(*cf_intrack)(struct device *);
 };
 
 extern struct device *clockdev;

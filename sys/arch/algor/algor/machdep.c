@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2001/06/01 16:00:03 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2001/06/10 05:26:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -160,9 +160,9 @@ struct	user *proc0paddr;
 struct cpu_info cpu_info_store;
 
 /* Maps for VM objects. */
-vm_map_t exec_map = NULL;
-vm_map_t mb_map = NULL;
-vm_map_t phys_map = NULL;
+struct vm_map *exec_map = NULL;
+struct vm_map *mb_map = NULL;
+struct vm_map *phys_map = NULL;
 
 int	physmem;		/* # pages of physical memory */
 int	maxmem;			/* max memory per process */
@@ -187,6 +187,9 @@ mach_init(int argc, char *argv[], char *envp[])
 	char *cp0;
 	caddr_t v;
 	int i;
+
+	/* Disable interrupts. */
+	(void) splhigh();
 
 	/*
 	 * First, find the start and end of the kernel and clear
@@ -221,6 +224,7 @@ mach_init(int argc, char *argv[], char *envp[])
 	    {
 		struct p4032_config *acp = &p4032_configuration;
 		struct vtpbc_config *vt = &vtpbc_configuration; 
+		bus_space_handle_t sh;
 
 		strcpy(cpu_model, "Algorithmics P-4032");
 
@@ -242,9 +246,6 @@ mach_init(int argc, char *argv[], char *envp[])
 
 		led_display('d', 'm', 'a', ' ');
 		algor_p4032_dma_init(acp);
-
-		led_display('i', 'n', 't', 'r');
-		algor_p4032_intr_init(acp);
 #if NCOM > 0
 		/*
 		 * Delay to allow firmware putchars to complete.
@@ -260,11 +261,17 @@ mach_init(int argc, char *argv[], char *envp[])
 #else
 		panic("p4032: not configured to use serial console");
 #endif /* NCOM > 0 */
+
+		led_display('h', 'z', ' ', ' ');
+		bus_space_map(&acp->ac_lociot, P4032_RTC, 2, 0, &sh);
+		algor_p4032_cal_timer(&acp->ac_lociot, sh);
+		bus_space_unmap(&acp->ac_iot, sh, 2);
 	    }
 #elif defined(ALGOR_P5064)
 	    {
 		struct p5064_config *acp = &p5064_configuration;
 		struct vtpbc_config *vt = &vtpbc_configuration;
+		bus_space_handle_t sh;
 
 		strcpy(cpu_model, "Algorithmics P-5064");
 
@@ -283,9 +290,6 @@ mach_init(int argc, char *argv[], char *envp[])
 
 		led_display('d', 'm', 'a', ' ');
 		algor_p5064_dma_init(acp);
-
-		led_display('i', 'n', 't', 'r');
-		algor_p5064_intr_init(acp);
 #if NCOM > 0
 		/*
 		 * Delay to allow firmware putchars to complete.
@@ -301,6 +305,11 @@ mach_init(int argc, char *argv[], char *envp[])
 #else
 		panic("p5064: not configured to use serial console");
 #endif /* NCOM > 0 */
+
+		led_display('h', 'z', ' ', ' ');
+		bus_space_map(&acp->ac_iot, 0x70, 2, 0, &sh);
+		algor_p5064_cal_timer(&acp->ac_iot, sh);
+		bus_space_unmap(&acp->ac_iot, sh, 2);
 	    }
 #elif defined(ALGOR_P6032)
 	    {
