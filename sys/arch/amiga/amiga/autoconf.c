@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1996/04/04 06:25:07 cgd Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 1996/04/21 21:06:49 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -40,7 +40,6 @@
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 
-void configure __P((void));
 void setroot __P((void));
 void swapconf __P((void));
 void mbattach __P((struct device *, struct device *, void *));
@@ -140,7 +139,7 @@ amiga_config_found(pcfp, pdp, auxp, pfn)
  * basically this means start attaching the grfxx's that support 
  * the console. Kinda hacky but it works.
  */
-int
+void
 config_console()
 {	
 	struct cfdata *cf;
@@ -258,18 +257,19 @@ swapconf()
 u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 
 static	char devname[][2] = {
-	0,0,
-	0,0,
-	'f','d',	/* 2 = fd */
-	0,0,
-	's','d',	/* 4 = sd -- new SCSI system */
+	{ 0	,0	},
+	{ 0	,0	},
+	{ 'f'	,'d'	},	/* 2 = fd */
+	{ 0	,0	},
+	{ 's'	,'d'	}	/* 4 = sd -- new SCSI system */
 };
 
 void
 setroot()
 {
 	int majdev, mindev, unit, part, adaptor;
-	dev_t temp, orootdev;
+	dev_t temp = 0;
+	dev_t orootdev;
 	struct swdevt *swp;
 
 	if (boothowto & RB_DFLTROOT ||
