@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.45 2002/12/28 02:35:56 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.46 2002/12/31 15:04:49 pk Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ struct cpu_info {
 	int		mbus;		/* 1 if CPU is on MBus */
 	int		mxcc;		/* 1 if a MBus-level MXCC is present */
 
-	caddr_t		mailbox;	/* VA of CPU's mailbox */
+	vaddr_t		mailbox;	/* VA of CPU's mailbox */
 
 	int		mmu_ncontext;	/* Number of contexts supported */
 	int		mmu_nregion; 	/* Number of regions supported */
@@ -228,8 +228,8 @@ struct cpu_info {
 
 	/* Per processor interrupt mask register (sun4m only) */
 	__volatile struct icr_pi	*intreg_4m;
-#define raise_ipi(cpi)	do {				\
-	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(15);	\
+#define raise_ipi(cpi,lvl)	do {			\
+	(cpi)->intreg_4m->pi_set = PINTR_SINTRLEV(lvl);	\
 } while (0)
 
 	/*
@@ -321,10 +321,15 @@ struct cpu_info {
 	/* Inter-processor message area */
 	struct xpmsg msg;
 
-#if defined(DIAGNOSTIC) || defined(LOCKDEBUG)
+	/* Module Control Registers */
+	/*bus_space_handle_t*/ long ci_mbusport;
+	/*bus_space_handle_t*/ long ci_mxccregs;
+
+	/* DIAGNOSTIC */
 	u_long ci_spin_locks;		/* # of spin locks held */
 	u_long ci_simple_locks;		/* # of simple locks held */
-#endif
+
+	u_int	ci_tt;			/* Last trap (if tracing) */
 };
 
 /*
