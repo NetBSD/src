@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_thread.c,v 1.31 2003/12/20 19:43:17 manu Exp $ */
+/*	$NetBSD: mach_thread.c,v 1.32 2003/12/24 23:22:22 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.31 2003/12/20 19:43:17 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_thread.c,v 1.32 2003/12/24 23:22:22 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -406,6 +406,65 @@ mach_thread_set_state(args)
 
 	rep->rep_retval = 0;
 
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_thread_suspend(args)
+	struct mach_trap_args *args;
+{
+	mach_thread_suspend_request_t *req = args->smsg; 
+	mach_thread_suspend_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
+	struct lwp *tl = args->tl;
+	int error;
+
+	error = lwp_suspend(l, tl);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	rep->rep_retval = native_to_mach_errno[error];
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_thread_resume(args)
+	struct mach_trap_args *args;
+{
+	mach_thread_resume_request_t *req = args->smsg; 
+	mach_thread_resume_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *tl = args->tl;
+
+	lwp_continue(tl);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	rep->rep_retval = 0;
+	mach_set_trailer(rep, *msglen);
+
+	return 0;
+}
+
+int
+mach_thread_abort(args)
+	struct mach_trap_args *args;
+{
+	mach_thread_abort_request_t *req = args->smsg; 
+	mach_thread_abort_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct lwp *tl = args->tl;
+
+	lwp_exit(tl);
+
+	*msglen = sizeof(*rep);
+	mach_set_header(rep, req, *msglen);
+	rep->rep_retval = 0;
 	mach_set_trailer(rep, *msglen);
 
 	return 0;
