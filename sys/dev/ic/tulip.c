@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.10 1999/09/14 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.11 1999/09/17 21:57:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -825,6 +825,13 @@ tlp_intr(arg)
 	int handled = 0, txthresh;
 
 	DPRINTF(sc, ("%s: tlp_intr\n", sc->sc_dev.dv_xname));
+
+	/*
+	 * If the interface isn't running, the interrupt couldn't
+	 * possibly have come from us.
+	 */
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return (0);
 
 	for (;;) {
 		status = TULIP_READ(sc, CSR_STATUS);
