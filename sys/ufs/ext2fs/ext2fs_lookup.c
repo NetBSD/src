@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.9 1998/12/02 10:44:52 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.9.4.1 2000/02/01 23:38:39 he Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -95,17 +95,13 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 {
 	memset(ffsdir, 0, sizeof(struct dirent));
 	ffsdir->d_fileno = fs2h32(e2dir->e2d_ino);
+	/*
+	 * d_namlen is u_int8_t to the rigth thing will happen even with
+	 * filetype
+	 */
 	ffsdir->d_namlen = fs2h16(e2dir->e2d_namlen);
 
 	ffsdir->d_type = DT_UNKNOWN;		/* don't know more here */
-#ifdef DIAGNOSTIC
-	/*
-	 * XXX Rigth now this can't happen, but if one day
-	 * MAXNAMLEN != E2FS_MAXNAMLEN we should handle this more gracefully !
-	 */
-	if (fs2h16(e2dir->e2d_namlen) > MAXNAMLEN)
-		panic("ext2fs: e2dir->e2d_namlen\n");
-#endif
 	strncpy(ffsdir->d_name, e2dir->e2d_name, ffsdir->d_namlen);
 
 	/* Godmar thinks: since e2dir->e2d_reclen can be big and means 
@@ -481,6 +477,9 @@ searchloop:
 		 */
 		if (ep->e2d_ino) {
 			namlen = fs2h16(ep->e2d_namlen);
+			if (VTOI(ap->a_dvp)->i_e2fs->e2fs.e2fs_rev > E2FS_REV0
+			    && (VTOI(ap->a_dvp)->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE) != 0)
+				namlen &= 0xff;
 			if (namlen == cnp->cn_namelen &&
 				!memcmp(cnp->cn_nameptr, ep->e2d_name,
 				(unsigned)namlen)) {
@@ -578,11 +577,11 @@ found:
 	 * Check that directory length properly reflects presence
 	 * of this entry.
 	 */
-	if (entryoffsetinblock + EXT2FS_DIRSIZ(fs2h16(ep->e2d_namlen))
+	if (entryoffsetinblock + EXT2FS_DIRSIZ(namlen)
 		> dp->i_e2fs_size) {
 		ufs_dirbad(dp, dp->i_offset, "i_size too small");
 		dp->i_e2fs_size = entryoffsetinblock +
-			EXT2FS_DIRSIZ(fs2h16(ep->e2d_namlen));
+			EXT2FS_DIRSIZ(namlen);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 
@@ -745,6 +744,9 @@ ext2fs_dirbadentry(dp, de, entryoffsetinblock)
 		int reclen = fs2h16(de->e2d_reclen);
 		int namlen = fs2h16(de->e2d_namlen);
 
+		if (VTOI(dp)->i_e2fs->e2fs.e2fs_rev > E2FS_REV0
+		    && (VTOI(dp)->i_e2fs->e2fs.e2fs_features_incompat & EXT2F_INCOMPAT_FTYPE) != 0)
+			namlen &= 0xff;
 		if (reclen < EXT2FS_DIRSIZ(1)) /* e2d_namlen = 1 */
 				error_msg = "rec_len is smaller than minimal";
 		else if (reclen % 4 != 0)

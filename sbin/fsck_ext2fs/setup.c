@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.10 1999/02/17 13:11:19 bouyer Exp $	*/
+/*	$NetBSD: setup.c,v 1.10.2.1 2000/02/01 23:38:39 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-__RCSID("$NetBSD: setup.c,v 1.10 1999/02/17 13:11:19 bouyer Exp $");
+__RCSID("$NetBSD: setup.c,v 1.10.2.1 2000/02/01 23:38:39 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -301,6 +301,20 @@ readsb(listerr)
 	if (sblock.e2fs.e2fs_log_bsize > 2) {
 		badsb(listerr, "BAD LOG_BSIZE"); return (0);
 	}
+	if (sblock.e2fs.e2fs_rev > E2FS_REV1) {
+		badsb(listerr, "BAD REVISION"); return (0);
+	}
+	if (sblock.e2fs.e2fs_rev > E2FS_REV0) {
+		if (fs2h32(sblk.b_un.b_fs->e2fs_features_incompat) != 0 ||
+		    fs2h32(sblk.b_un.b_fs->e2fs_features_rocompat) != 0) {
+			badsb(listerr, "UNSUPPORTED FEATURE"); return (0);
+		}
+		if (fs2h32(sblk.b_un.b_fs->e2fs_first_ino) != EXT2_FIRSTINO ||
+		    fs2h16(sblk.b_un.b_fs->e2fs_inode_size) != EXT2_DINODE_SIZE) {
+			badsb(listerr, "UNSUPPORTED INDODE SIZE"); return (0);
+		}
+	}
+
 
 	/* compute the dynamic fields of the in-memory sb */
 	/* compute dynamic sb infos */
@@ -364,19 +378,6 @@ readsb(listerr)
 	asblk.b_un.b_fs->e2fs_rgid = sblk.b_un.b_fs->e2fs_rgid;
 	asblk.b_un.b_fs->e2fs_block_group_nr =
 	    sblk.b_un.b_fs->e2fs_block_group_nr;
-	if (sblk.b_un.b_fs->e2fs_features_compat != 0 ||
-	    sblk.b_un.b_fs->e2fs_features_incompat != 0 ||
-	    sblk.b_un.b_fs->e2fs_features_compat_ro != 0) {
-		if (debug) {
-			printf("compat 0x%08x, incompat 0x%08x, compat_ro "
-			    "0x%08x\n",
-			    sblk.b_un.b_fs->e2fs_features_compat,
-			    sblk.b_un.b_fs->e2fs_features_incompat,
-			    sblk.b_un.b_fs->e2fs_features_compat_ro);
-		}
-		badsb(listerr,"UNKNOWN FEATURE BITS IN SUPER BLOCK");
-		return 0;
-	}
 	if (memcmp(sblk.b_un.b_fs, asblk.b_un.b_fs, SBSIZE)) {
 		if (debug) {
 			u_int32_t *nlp, *olp, *endlp;
