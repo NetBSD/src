@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.32 1998/05/02 16:45:31 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.33 1998/06/02 02:14:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -60,7 +60,6 @@ extern long		videobitdepth;
 extern u_long		videosize;
 
 static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static caddr_t	grfiv_phys __P((struct grf_softc *gp));
 static int	grfiv_match __P((struct device *, struct cfdata *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
 
@@ -68,9 +67,9 @@ struct cfattach intvid_ca = {
 	sizeof(struct grfbus_softc), grfiv_match, grfiv_attach
 };
 
-#define QUADRA_DAFB_BASE	0xF9800000
+#define QUADRA_DAFB_BASE	0xf9800000
 #define CIVIC_CONTROL_BASE	0x50036000
-#define VALKYRIE_CONTROL_BASE	0x50f2A000
+#define VALKYRIE_CONTROL_BASE	0x50f2a000
 
 static int
 grfiv_match(parent, cf, aux)
@@ -102,13 +101,6 @@ grfiv_match(parent, cf, aux)
 			found = 0;
 			goto nodafb;
 		}
-
-		sense = (bus_space_read_4(oa->oa_tag, bsh, 0x1C) & 7);
-
-#if 0 /* XXX - fails on Quadras with certain 17" monitors */
-		if (sense == 0)
-			found = 0;
-#endif
 
 		/* Set "Turbo SCSI" configuration to default */
 		bus_space_write_4(oa->oa_tag, bsh, 0x24, 0x1d1); /* ch0 */
@@ -177,6 +169,7 @@ grfiv_attach(parent, self, aux)
 	sc = (struct grfbus_softc *)self;
 
 	sc->card_id = 0;
+	sc->sc_bufpa = (caddr_t)mac68k_vidphys;
 
 	switch (current_mac_model->class) {
 	case MACH_CLASSQ:
@@ -209,7 +202,7 @@ grfiv_attach(parent, self, aux)
 	gm->fboff = mac68k_vidlog & PGOFSET;
 
 	/* Perform common video attachment. */
-	grf_establish(sc, NULL, grfiv_mode, grfiv_phys);
+	grf_establish(sc, NULL, grfiv_mode);
 }
 
 static int
@@ -230,15 +223,4 @@ grfiv_mode(sc, cmd, arg)
 		break;
 	}
 	return EINVAL;
-}
-
-static caddr_t
-grfiv_phys(gp)
-	struct grf_softc *gp;
-{
-	/*
-	 * If we're using IIsi or similar, this will be 0.
-	 * If we're using IIvx or similar, this will be correct.
-	 */
-	return (caddr_t)mac68k_vidphys;
 }

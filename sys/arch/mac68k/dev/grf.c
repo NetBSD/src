@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.52 1998/05/02 16:45:28 scottr Exp $	*/
+/*	$NetBSD: grf.c,v 1.53 1998/06/02 02:14:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,8 +136,8 @@ grfattach(parent, self, aux)
 	sc->sc_slot = ga->ga_slot;
 	sc->sc_tag = ga->ga_tag;
 	sc->sc_handle = ga->ga_handle;
-	sc->sc_mode = ga->ga_mode;
 	sc->sc_phys = ga->ga_phys;
+	sc->sc_mode = ga->ga_mode;
 
 	sc->sc_flags = GF_ALIVE;	/* XXX bogus */
 
@@ -295,7 +295,7 @@ grfmmap(dev, off, prot)
 #endif
 
 	if (off < m68k_round_page(gm->fbsize + gm->fboff))
-		addr = m68k_btop((*gp->sc_phys)(gp) + off);
+		addr = m68k_btop(gp->sc_phys + off);
 	else
 		addr = (-1);	/* XXX bogus */
 
@@ -365,9 +365,8 @@ grfmap(dev, addrp, p)
 		printf("grfmap(%d): addr %p\n", p->p_pid, *addrp);
 #endif
 
-	*addrp = (*gp->sc_phys)(gp);
-	ofs = (u_long)*addrp & PGOFSET;
-	*addrp = (caddr_t)m68k_trunc_page(*addrp);
+	*addrp = (caddr_t)m68k_trunc_page(gp->sc_phys);
+	ofs = (u_long)gp->sc_phys & PGOFSET;
 	len = m68k_round_page(ofs + gm->fboff + gm->fbsize);
 	flags = MAP_SHARED | MAP_FIXED;
 
