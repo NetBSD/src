@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12 1996/05/29 06:25:06 mhitch Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.13 1996/06/15 08:57:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -45,7 +45,7 @@
 #include "kn01.h"
 #include <pmax/pmax/kn01var.h>
 
-#include <tc.h>			/* Is Turbochannel configured? */
+#include "tc.h"			/* Is Turbochannel configured? */
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -140,9 +140,7 @@ mbattach(parent, self, aux)
 	}
 #endif
 
-#if	defined(DS_5000) || defined(DS5000_240) || defined(DS_5000_100) || \
-	defined(DS_5000_25)
-
+#if NTC > 0
 	if (cputype == DS_3MAXPLUS || cputype == DS_3MAX ||
 	    cputype == DS_3MIN || cputype == DS_MAXINE) {
 		/*
@@ -152,7 +150,7 @@ mbattach(parent, self, aux)
 		 */
 		config_tcbus(mb, 0 /* XXX */, mbprint);
 	}
-#endif /*Turbochannel*/
+#endif /* NTC */
 
 	/*
 	 * We haven't yet decided how to handle the PMAX (KN01)
