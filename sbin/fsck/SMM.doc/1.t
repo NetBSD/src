@@ -29,8 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)1.t	8.1 (Berkeley) 6/5/93
-.\"	$Id: 1.t,v 1.1 1994/06/08 19:01:21 mycroft Exp $
+.\"	@(#)1.t	8.1 (Berkeley) 6/5/93
 .\"
 .ds RH Introduction
 .NH
