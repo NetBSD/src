@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.11 2005/02/01 02:03:01 briggs Exp $	*/
+/*	$NetBSD: apm.c,v 1.12 2005/02/01 02:05:10 briggs Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.11 2005/02/01 02:03:01 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.12 2005/02/01 02:05:10 briggs Exp $");
 
 #include "apm.h"
 
@@ -176,7 +176,7 @@ apmmatch(parent, match, aux)
 	    aa->adbaddr != ADBADDR_APM)
 		return 0;
 
-	if (adbHardware != ADB_HW_PB)
+	if (adbHardware != ADB_HW_PMU)
 		return 0;
 
 	return 1;
