@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.426 2002/02/04 08:51:28 thorpej Exp $
+#	$NetBSD: mi,v 1.427 2002/02/11 18:51:55 kleink Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3163,6 +3163,7 @@
 ./usr/share/man/cat9/namei.0		comp-sys-catman
 ./usr/share/man/cat9/panic.0		comp-sys-catman
 ./usr/share/man/cat9/pci.0		comp-sys-catman
+./usr/share/man/cat9/pci_conf_hook.0	comp-sys-catman
 ./usr/share/man/cat9/pci_conf_interrupt.0	comp-sys-catman
 ./usr/share/man/cat9/pci_conf_print.0		comp-sys-catman
 ./usr/share/man/cat9/pci_conf_read.0		comp-sys-catman
@@ -5628,6 +5629,7 @@
 ./usr/share/man/man9/namei.9		comp-sys-man
 ./usr/share/man/man9/panic.9		comp-sys-man
 ./usr/share/man/man9/pci.9		comp-sys-man
+./usr/share/man/man9/pci_conf_hook.9	comp-sys-man
 ./usr/share/man/man9/pci_conf_interrupt.9	comp-sys-man
 ./usr/share/man/man9/pci_conf_print.9		comp-sys-man
 ./usr/share/man/man9/pci_conf_read.9		comp-sys-man
