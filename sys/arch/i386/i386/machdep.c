@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.534 2003/09/06 22:08:14 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.535 2003/09/10 11:39:09 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.534 2003/09/06 22:08:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.535 2003/09/10 11:39:09 drochner Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2412,7 +2412,7 @@ cpu_setmcontext(l, mcp, flags)
 	/* Restore register context, if any. */
 	if ((flags & _UC_CPU) != 0) {
 #ifdef VM86
-		if (tf->tf_eflags & PSL_VM) {
+		if (gr[_REG_EFL] & PSL_VM) {
 			tf->tf_vm86_gs = gr[_REG_GS];
 			tf->tf_vm86_fs = gr[_REG_FS];
 			tf->tf_vm86_es = gr[_REG_ES];
@@ -2435,7 +2435,7 @@ cpu_setmcontext(l, mcp, flags)
 			if (((gr[_REG_EFL] ^ tf->tf_eflags) & PSL_USERSTATIC) ||
 			    !USERMODE(gr[_REG_CS], gr[_REG_EFL])) {
 				printf("cpu_setmcontext error: uc EFL: 0x%08x"
-				    " tf EFL: 0x%08x uc CS: 0x%x",
+				    " tf EFL: 0x%08x uc CS: 0x%x\n",
 				    gr[_REG_EFL], tf->tf_eflags, gr[_REG_CS]);
 				return (EINVAL);
 			}
