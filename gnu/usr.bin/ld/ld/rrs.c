@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.29 1999/02/27 03:31:12 tv Exp $	*/
+/*	$NetBSD: rrs.c,v 1.29.2.1 2000/01/15 16:07:23 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -318,10 +318,7 @@ printf("claim_rrs_reloc: %s in %s\n", sp->name, get_file_name(entry));
 	r->r_address = rp->r_address;
 	r->r_symbolnum = sp->rrs_symbolnum;
 
-	if (link_mode & SYMBOLIC) {
-		if (!sp->defined)
-			warnx("Cannot reduce symbol \"%s\" in %s",
-				sp->name, get_file_name(entry));
+	if (sp->defined && (link_mode & SYMBOLIC)) {
 		RELOC_EXTERN_P(r) = 0;
 		*relocation += sp->value;
 		(void) md_make_reloc(rp, r, RELTYPE_RELATIVE);
@@ -343,15 +340,17 @@ claim_rrs_jmpslot(entry, rp, sp, addend)
 	long			addend;
 {
 	struct relocation_info *r;
+	int	reloc_type = 0;
 
 	if (!(sp->flags & GS_HASJMPSLOT))
 		errx(1, "internal error: "
 			"%s: claim_rrs_jmpslot: %s: no reservation",
-			get_file_name(entry),
-			sp->name);
+			get_file_name(entry), sp->name);
 
-	if (sp->jmpslot_offset != -1)
+	if (sp->jmpslot_offset != -1) {
+		/* This symbol already passed here before. */
 		return rrs_sdt.sdt_plt + sp->jmpslot_offset;
+	}
 
 	sp->jmpslot_offset = current_jmpslot_offset;
 	current_jmpslot_offset += sizeof(jmpslot_t);
@@ -362,20 +361,23 @@ printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %x\n",
 	sp->name, sp->rrs_symbolnum, sp->jmpslot_offset);
 #endif
 
-	if ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL) {
-		if (!sp->defined)
-			warnx("Cannot reduce symbol \"%s\" in %s",
-				sp->name, get_file_name(entry));
-
+	if (sp->defined &&
+	    ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL)) {
+		/* Prebind the symbol. */
 		md_fix_jmpslot( rrs_plt + sp->jmpslot_offset/sizeof(jmpslot_t),
 				rrs_sdt.sdt_plt + sp->jmpslot_offset,
 				sp->value, 0);
+		reloc_type = RELTYPE_RELATIVE;
 		if (rrs_section_type == RRS_PARTIAL || !JMPSLOT_NEEDS_RELOC) {
-			/* PLT is self-contained */
+			/* PLT is self-contained. */
 			discarded_rrs_relocs++;
 			return rrs_sdt.sdt_plt + sp->jmpslot_offset;
 		}
+	} else if (rrs_section_type == RRS_PARTIAL) {
+		warnx("Cannot reduce symbol \"%s\" in %s",
+		      sp->name, get_file_name(entry));
 	} else {
+		/* Bind the symbol later. */
 		md_make_jmpslot(rrs_plt + sp->jmpslot_offset/sizeof(jmpslot_t),
 				sp->jmpslot_offset,
 				claimed_rrs_relocs);
@@ -385,18 +387,10 @@ printf("claim_rrs_jmpslot: %s: %s(%d) -> offset %x\n",
 	 * Install a run-time relocation for this PLT entry.
 	 */
 	r = rrs_next_reloc();
-
-	RELOC_SYMBOL(r) = sp->rrs_symbolnum;
-
 	r->r_address = (long)rrs_sdt.sdt_plt + sp->jmpslot_offset;
-
-	if (link_mode & SYMBOLIC) {
-		RELOC_EXTERN_P(r) = 0;
-		md_make_jmpreloc(rp, r, RELTYPE_RELATIVE);
-	} else {
-		RELOC_EXTERN_P(r) = 1;
-		md_make_jmpreloc(rp, r, 0);
-	}
+	RELOC_SYMBOL(r) = sp->rrs_symbolnum;
+	RELOC_EXTERN_P(r) = !(reloc_type == RELTYPE_RELATIVE);
+	md_make_jmpreloc(rp, r, reloc_type);
 
 	return rrs_sdt.sdt_plt + sp->jmpslot_offset;
 }
@@ -417,9 +411,8 @@ claim_rrs_gotslot(entry, rp, lsp, addend)
 	symbol	*sp = lsp->symbol;
 	int	reloc_type = 0;
 
-	if (sp == NULL) {
+	if (sp == NULL)
 		return 0;
-	}
 
 	if (sp->alias)
 		sp = sp->alias;
@@ -432,8 +425,8 @@ claim_rrs_gotslot(entry, rp, lsp, addend)
 	if (sp->gotslot_offset != -1) {
 #ifdef DIAGNOSTIC
 		if (*GOTP(sp->gotslot_offset) != addend +
-		    ((!(link_mode & SHAREABLE) || (link_mode & SYMBOLIC))
-		       ? sp->value : 0))
+		    (((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL)
+		       && sp->defined ? sp->value : 0))
 			errx(1, "%s: %s: gotslot at %#x is multiple valued, "
 				"*got = %#x, addend = %#x, sp->value = %#x",
 				get_file_name(entry), sp->name,
@@ -444,9 +437,10 @@ claim_rrs_gotslot(entry, rp, lsp, addend)
 		return sp->gotslot_offset;
 	}
 
-	if (current_got_offset == 0)
+	if (current_got_offset == 0) {
 		/* GOT offset 0 is reserved */
 		current_got_offset += sizeof(got_t);
+	}
 
 	if (current_got_offset > max_got_offset)
 		errx(1, "%s: GOT overflow on symbol `%s' at %#x",
@@ -461,47 +455,25 @@ printf("claim_rrs_gotslot: %s(%d,%#x) slot offset %#x, addend %#x\n",
 #endif
 
 	if (sp->defined &&
-	    (!(link_mode & SHAREABLE) || (link_mode & SYMBOLIC))) {
-
-		/*
-		 * Reduce to just a base-relative translation.
-		 */
+	    ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL)) {
+		/* Reduce to just a base-relative translation. */
 #if defined(__arm32__) && 1 /* XXX MAGIC! */
 		*GOTP(sp->gotslot_offset) = sp->value /*+ addend */;
 #else
 		*GOTP(sp->gotslot_offset) = sp->value + addend;
 #endif
 		reloc_type = RELTYPE_RELATIVE;
-
-	} else if ((link_mode & SYMBOLIC) || rrs_section_type == RRS_PARTIAL) {
-		/*
-		 * SYMBOLIC: all symbols must be known.
-		 * RRS_PARTIAL: we don't link against shared objects,
-		 * so again all symbols must be known.
-		 */
+		if (rrs_section_type == RRS_PARTIAL) {
+			/* GOT is self-contained. */
+			discarded_rrs_relocs++;
+			return sp->gotslot_offset;
+		}
+	} else if (rrs_section_type == RRS_PARTIAL) {
 		warnx("Cannot reduce symbol \"%s\" in %s",
 		      sp->name, get_file_name(entry));
-
 	} else {
-
-		/*
-		 * This gotslot will be updated with symbol value at run-time.
-		 */
-
+		/* Bind the symbol later. */
 		*GOTP(sp->gotslot_offset) = addend;
-	}
-
-	if (rrs_section_type == RRS_PARTIAL) {
-		/*
-		 * Base address is known, gotslot should be fully
-		 * relocated by now.
-		 * NOTE: RRS_PARTIAL implies !SHAREABLE.
-		 */
-		if (!sp->defined)
-			warnx("Cannot reduce symbol \"%s\" in %s",
-			      sp->name, get_file_name(entry));
-		discarded_rrs_relocs++;
-		return sp->gotslot_offset;
 	}
 
 	/*
@@ -550,18 +522,21 @@ claim_rrs_internal_gotslot(entry, rp, lsp, addend)
 			get_file_name(entry), RELOC_ADDRESS(rp));
 
 	if (lsp->gotslot_offset != -1) {
-		/* Already claimed */
+#ifdef DIAGNOSTIC
 		if (*GOTP(lsp->gotslot_offset) != addend)
 			errx(1,
 			 "%s: gotslot at %#lx is multiple valued: %#lx vs %#lx",
 			     get_file_name(entry), lsp->gotslot_offset,
 			     *GOTP(lsp->gotslot_offset), addend);
+#endif
+		/* This symbol already passed here before. */
 		return (lsp->gotslot_offset);
 	}
 
-	if (current_got_offset == 0)
+	if (current_got_offset == 0) {
 		/* GOT offset 0 is reserved */
 		current_got_offset += sizeof(got_t);
+	}
 
 	if (current_got_offset > max_got_offset)
 		errx(1, "%s: GOT overflow for relocation at %#x",
@@ -571,16 +546,16 @@ claim_rrs_internal_gotslot(entry, rp, lsp, addend)
 	current_got_offset += sizeof(got_t);
 
 	*GOTP(lsp->gotslot_offset) = addend;
+	if (rrs_section_type == RRS_PARTIAL) {
+		/* GOT is self-contained. */
+		discarded_rrs_relocs++;
+		return lsp->gotslot_offset;
+	}
 
 #ifdef DEBUG
 printf("claim_rrs_internal_gotslot: %s: slot offset %#x, addend = %#x\n",
 	get_file_name(entry), lsp->gotslot_offset, addend);
 #endif
-
-	if (rrs_section_type == RRS_PARTIAL) {
-		discarded_rrs_relocs++;
-		return lsp->gotslot_offset;
-	}
 
 	/*
 	 * Relocation entry needed for this static GOT entry.
@@ -589,6 +564,7 @@ printf("claim_rrs_internal_gotslot: %s: slot offset %#x, addend = %#x\n",
 	r->r_address = got_symbol->value + lsp->gotslot_offset;
 	RELOC_EXTERN_P(r) = 0;
 	md_make_gotreloc(rp, r, RELTYPE_RELATIVE);
+
 	return (lsp->gotslot_offset);
 }
 
