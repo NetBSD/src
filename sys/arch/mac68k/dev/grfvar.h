@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.13 1996/09/14 05:54:53 scottr Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.14 1997/04/01 05:42:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,8 +51,14 @@ struct grfbus_softc {
 	struct	device	sc_dev;
 	nubus_slot	sc_slot;
 
+	bus_space_tag_t		sc_tag;
+	bus_space_handle_t	sc_regh;
+	bus_space_handle_t	sc_fbh;
+
 	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
-	u_int16_t	card_id;	/* DrHW value for nubus cards	*/
+	u_int32_t	card_id;	/* DrHW value for nubus cards	*/
+	u_int32_t	cli_offset;	/* Offset of byte to clear intr */
+					/* for cards where that's suff.  */
 	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
 };
 
