@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.139 2001/09/29 16:53:56 cjep Exp $
+.\"	$NetBSD: main,v 1.140 2001/10/01 12:02:07 martti Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1570,6 +1570,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Klaus Klein Ta Mt kleink@netbsd.org
 .It Ta Wayne Knowles Ta Mt wdk@netbsd.org
 .It Ta John Kohl Ta Mt jtk@netbsd.org
+.It Ta Martti Kuparinen Ta Mt martti@netbsd.org
 .It Ta Kevin Lahey Ta Mt kml@netbsd.org
 .It Ta Johnny C. Lam Ta Mt jlam@netbsd.org
 .It Ta Martin J. Laubach Ta Mt mjl@netbsd.org
