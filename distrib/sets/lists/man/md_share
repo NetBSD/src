@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.91.2.4 2000/09/13 06:48:30 enami Exp $
+# $NetBSD: md_share,v 1.91.2.5 2000/09/26 18:46:09 is Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -244,6 +244,7 @@
 ./usr/share/man/cat8/alpha/setnetbootinfo.0
 ./usr/share/man/cat8/amiga/MAKEDEV.0
 ./usr/share/man/cat8/amiga/binpatch.0
+./usr/share/man/cat8/amiga/boot.0
 ./usr/share/man/cat8/amiga/installboot.0
 ./usr/share/man/cat8/amiga/makedev.0
 ./usr/share/man/cat8/arc/MAKEDEV.0
@@ -576,6 +577,7 @@
 ./usr/share/man/man8/alpha/setnetbootinfo.8
 ./usr/share/man/man8/amiga/MAKEDEV.8
 ./usr/share/man/man8/amiga/binpatch.8
+./usr/share/man/man8/amiga/boot.8
 ./usr/share/man/man8/amiga/installboot.8
 ./usr/share/man/man8/amiga/makedev.8
 ./usr/share/man/man8/arc/MAKEDEV.8
