@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.32 2000/09/13 00:07:56 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.33 2000/11/12 07:58:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -481,6 +481,18 @@ struct segsum {
 		panic("lfs: ifile read");				\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
 }
+
+/* Synchronize the Ifile cleaner info with current avail and bfree */
+#define LFS_SYNC_CLEANERINFO(cip, fs, bp, w) do {                \
+    if ((w) || (cip)->bfree != (fs)->lfs_bfree ||                \
+        (cip)->avail != (fs)->lfs_avail - (fs)->lfs_ravail) {    \
+        printf("update cleaner info at %s:%d\n", __FILE__, __LINE__); \
+	(cip)->bfree = (fs)->lfs_bfree;                          \
+        (cip)->avail = (fs)->lfs_avail - (fs)->lfs_ravail;       \
+	(void) VOP_BWRITE(bp); /* Ifile */                       \
+    } else                                                       \
+	brelse(bp);                                              \
+} while(0)
 
 /* Read in the block with a specific inode from the ifile. */
 #define	LFS_IENTRY(IP, F, IN, BP) {					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.46 2000/10/14 23:22:14 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.47 2000/11/12 07:58:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -287,6 +287,10 @@ lfs_fsync(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	
+	/* Ignore the trickle syncer */
+	if (ap->a_flags & FSYNC_LAZY)
+		return 0;
+
 	return (VOP_UPDATE(ap->a_vp, NULL, NULL,
 			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0));
 }
