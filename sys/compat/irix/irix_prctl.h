@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.h,v 1.7 2002/10/05 23:15:58 manu Exp $ */
+/*	$NetBSD: irix_prctl.h,v 1.8 2002/10/14 21:14:25 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -46,9 +46,25 @@ struct irix_share_group {
 	int isg_refcount;
 };
 
+/*
+ * List of shared vs unshared regions in the VM space. We need to maintain
+ * this for all processes, not only processes belonging to a share group, 
+ * because a process can request a private mapping (MAP_LOCAL option to
+ * mmap(2)) before becoming the member of a share group.
+ */
+struct irix_shared_regions_rec {
+	vaddr_t	isrr_start;
+	vsize_t	isrr_len;
+	int	isrr_shared;	/* shared or not shared */
+#define IRIX_ISRR_SHARED 1
+#define IRIX_ISRR_PRIVATE 0
+	LIST_ENTRY(irix_shared_regions_rec) isrr_list;
+};
+
 int irix_prda_init __P((struct proc *));
 void irix_vm_sync __P((struct proc *));
 int irix_vm_fault __P((struct proc *, vaddr_t, vm_fault_t, vm_prot_t));
+void irix_isrr_insert __P((vaddr_t, vsize_t, int, struct proc *));
 
 /* macro used to wrap irix_vm_sync calls */
 #define IRIX_VM_SYNC(q,cmd)                                                   \
