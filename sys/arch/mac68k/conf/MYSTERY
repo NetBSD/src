@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.8 1996/12/17 07:33:01 scottr Exp $
+#	$NetBSD: MYSTERY,v 1.9 1997/01/13 07:08:51 scottr Exp $
 #
 # SPOT
 
@@ -6,7 +6,7 @@ include "arch/mac68k/conf/std.mac68k"
 
 maxusers	16
 
-makeoptions	COPTS="-O -m68030"
+makeoptions	COPTS="-O2 -m68030"
 options 	MYSTERY
 
 # Standard system options
