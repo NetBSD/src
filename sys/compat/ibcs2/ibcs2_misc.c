@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.28 1997/09/11 23:05:02 mycroft Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.29 1997/10/10 01:43:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -361,7 +361,7 @@ ibcs2_sys_getdents(p, v, retval)
 	struct ibcs2_dirent idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag;
-	u_long *cookiebuf, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -398,13 +398,18 @@ again:
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
-	if ((len = buflen - auio.uio_resid) == 0)
+	if (eofflag || (len = buflen - auio.uio_resid) == 0)
 		goto eof;
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("ibcs2_getdents");
+			panic("ibcs2_getdents: bad reclen");
+		if ((*cookie >> 32) != 0) {
+			compat_offseterr(vp, "ibcs2_getdents");
+			error = EINVAL;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			off = *cookie++;
@@ -476,7 +481,7 @@ ibcs2_sys_read(p, v, retval)
 	} idb;
 	off_t off;			/* true file offset */
 	int buflen, error, eofflag, size;
-	u_long *cookiebuf, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0) {
@@ -518,7 +523,7 @@ again:
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
-	if ((len = buflen - auio.uio_resid) == 0)
+	if (eofflag || (len = buflen - auio.uio_resid) == 0)
 		goto eof;
 	for (cookie = cookiebuf; len > 0 && resid > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
@@ -526,6 +531,10 @@ again:
 		if (reclen & 3)
 			panic("ibcs2_read");
 		off = *cookie++;	/* each entry points to the next */
+		if ((off >> 32) != 0) {
+			error = EINVAL;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			continue;

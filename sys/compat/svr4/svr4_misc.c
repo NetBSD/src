@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.48 1997/09/09 21:14:00 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.49 1997/10/10 01:42:21 fvdl Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -227,7 +227,7 @@ svr4_sys_getdents64(p, v, retval)
 	struct svr4_dirent64 idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
-	u_long *cookiebuf, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -269,14 +269,14 @@ again:
 	inp = buf;
 	outp = (char *) SCARG(uap, dp);
 	resid = SCARG(uap, nbytes);
-	if ((len = buflen - auio.uio_resid) == 0)
+	if (eofflag || (len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("svr4_getdents");
+			panic("svr4_getdents64: bad reclen");
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			off = *cookie++;
@@ -341,7 +341,7 @@ svr4_sys_getdents(p, v, retval)
 	struct svr4_dirent idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
-	u_long *cookiebuf, *cookie;
+	off_t *cookiebuf, *cookie;
 	int ncookies;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
@@ -383,15 +383,20 @@ again:
 	inp = buf;
 	outp = SCARG(uap, buf);
 	resid = SCARG(uap, nbytes);
-	if ((len = buflen - auio.uio_resid) == 0)
+	if (eofflag || (len = buflen - auio.uio_resid) == 0)
 		goto eof;
 
 	for (cookie = cookiebuf; len > 0; len -= reclen) {
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & 3)
-			panic("svr4_getdents");
+			panic("svr4_getdents: bad reclen");
 		off = *cookie++;	/* each entry points to the next */
+		if ((off >> 32) != 0) {
+			compat_offseterr(vp, "svr4_getdents");
+			error = EINVAL;
+			goto out;
+		}
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			continue;
