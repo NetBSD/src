@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.393 2003/03/27 09:56:12 zuntum Exp $
+# $NetBSD: mi,v 1.394 2003/04/04 07:53:09 jdolecek Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -909,6 +909,7 @@
 ./usr/share/examples/racoon		base-netutil-examples
 ./usr/share/examples/rtadvd		base-router-examples
 ./usr/share/examples/supfiles		base-sup-examples
+./usr/share/examples/smbfs		base-sysutil-examples
 ./usr/share/examples/syslogd		base-sysutil-examples
 ./usr/share/examples/veriexecctl	base-sysutil-examples
 ./usr/share/examples/veriexecctl/gen_md5	base-sysutil-examples
