@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.78 1997/04/13 02:37:15 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.79 1997/04/25 01:35:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,6 +47,7 @@
  */
 
 #include "assym.h"
+#include <machine/asm.h>
 
 	.globl	_kernel_text
 _kernel_text:
@@ -97,6 +98,7 @@ _doadump:
 /*
  * Trap/interrupt vector routines
  */
+#include <m68k/m68k/trap_subr.s>
 
 	.globl	_trap, _nofault, _longjmp
 _buserr:
@@ -131,7 +133,7 @@ _addrerr:
 	movl	d0,d1
 	andl	#0x7ffd,d1
 	addql	#1,L60bpe
-	jeq	Lbpedone
+	jeq	_ASM_LABEL(faultstkadjnotrap)
 Lnobpe:
 	movl	d0,sp@			| code is FSLW now.
 | we need to adjust for misaligned addresses
@@ -232,36 +234,15 @@ Lmightnotbemerr:
 	jeq	Lisberr1		| yes, was not WPE, must be bus err
 Lismerr:
 	movl	#T_MMUFLT,sp@-		| show that we are an MMU fault
-	jra	Ltrapnstkadj		| and deal with it
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisaerr:
 	movl	#T_ADDRERR,sp@-		| mark address error
-	jra	Ltrapnstkadj		| and deal with it
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 Lisberr1:
 	clrw	sp@			| re-clear pad word
 Lisberr:
 	movl	#T_BUSERR,sp@-		| mark bus error
-Ltrapnstkadj:
-	jbsr	_trap			| handle the error
-Lbpedone:
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore user SP
-	movl	a0,usp			|   from save area
-	movw	sp@(FR_ADJ),d0		| need to adjust stack?
-	jne	Lstkadj			| yes, go to it
-	moveml	sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,sp			| toss SSP and stkadj
-	jra	rei			| all done
-Lstkadj:
-	lea	sp@(FR_HW),a1		| pointer to HW frame
-	addql	#8,a1			| source pointer
-	movl	a1,a0			| source
-	addw	d0,a0			|  + hole size = dest pointer
-	movl	a1@-,a0@-		| copy
-	movl	a1@-,a0@-		|  8 bytes
-	movl	a0,sp@(FR_SP)		| new SSP
-	moveml	sp@+,#0x7FFF		| restore user registers
-	movl	sp@,sp			| and our SP
-	jra	rei			| all done
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 /*
  * FP exceptions.
@@ -335,84 +316,15 @@ Lfptnull:
 	fmovem	fpsr,sp@-	| push fpsr as code argument
 	frestore a0@		| restore state
 	movl	#T_FPERR,sp@-	| push type arg
-	jra	Ltrapnstkadj	| call trap and deal with stack cleanup
+	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 #else
 	jra	_badtrap	| treat as an unexpected trap
 #endif
 
 /*
- * Coprocessor and format errors can generate mid-instruction stack
- * frames and cause signal delivery hence we need to check for potential
- * stack adjustment.
- */
-_coperr:
-	clrl	sp@-		| stack adjust count
-	moveml	#0xFFFF,sp@-
-	movl	usp,a0		| get and save
-	movl	a0,sp@(FR_SP)	|   the user stack pointer
-	clrl	sp@-		| no VA arg
-	clrl	sp@-		| or code arg
-	movl	#T_COPERR,sp@-	| push trap type
-	jra	Ltrapnstkadj	| call trap and deal with stack adjustments
-
-_fmterr:
-	clrl	sp@-		| stack adjust count
-	moveml	#0xFFFF,sp@-
-	movl	usp,a0		| get and save
-	movl	a0,sp@(FR_SP)	|   the user stack pointer
-	clrl	sp@-		| no VA arg
-	clrl	sp@-		| or code arg
-	movl	#T_FMTERR,sp@-	| push trap type
-	jra	Ltrapnstkadj	| call trap and deal with stack adjustments
-
-/*
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-_illinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_ILLINST,d0
-	jra	fault
-
-_zerodiv:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_ZERODIV,d0
-	jra	fault
-
-_chkinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_CHKINST,d0
-	jra	fault
-
-_trapvinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_TRAPVINST,d0
-	jra	fault
-
-_privinst:
-	clrl	sp@-
-	moveml	#0xFFFF,sp@-
-	moveq	#T_PRIVINST,d0
-	jra	fault
-
-	.globl	fault
-fault:
-	movl	usp,a0			| get and save
-	movl	a0,sp@(FR_SP)		|   the user stack pointer
-	clrl	sp@-			| no VA arg
-	clrl	sp@-			| or code arg
-	movl	d0,sp@-			| push trap type
-	jbsr	_trap			| handle trap
-	lea	sp@(12),sp		| pop value args
-	movl	sp@(FR_SP),a0		| restore
-	movl	a0,usp			|   user SP
-	moveml	sp@+,#0x7FFF		| restore most user regs
-	addql	#8,sp			| pop SP and stack adjust
-	jra	rei			| all done
 
 	.globl	_straytrap
 _badtrap:
@@ -1099,7 +1011,6 @@ _proc_trampoline:
 /*
  * Primitives
  */
-#include <m68k/asm.h>
 
 /*
  * Use common m68k support routines.
