@@ -1,4 +1,4 @@
-.\"	$NetBSD: getdirentries.3,v 1.4.10.3 2002/03/22 20:42:36 nathanw Exp $
+.\"	$NetBSD: getdirentries.3,v 1.4.10.4 2002/08/13 00:59:58 nathanw Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,12 +88,14 @@ Files that are linked by hard links (see
 .Xr link 2 )
 have the same
 .Fa d_fileno .
+If
+.Fa d_fileno
+is zero, the entry refers to a deleted file.
+.Pp
 The
 .Fa d_reclen
 entry is the length, in bytes, of the directory record.
-The
-.Fa d_name
-entry contains a null terminated file name.
+.Pp
 The
 .Fa d_namlen
 entry specifies the length of the file name excluding the null byte.
@@ -102,6 +104,10 @@ Thus the actual size of
 may vary from 1 to
 .Dv MAXNAMELEN
 \&+ 1.
+.Pp
+The
+.Fa d_name
+entry contains a null terminated file name.
 .Pp
 Entries may be separated by extra space.
 The

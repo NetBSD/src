@@ -1,4 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.4.12.1 2002/08/01 03:28:00 nathanw Exp $	*/
+/*	$NetBSD: sigsetjmp.S,v 1.4.12.2 2002/08/13 00:59:49 nathanw Exp $	*/
 
 #include <sys/syscall.h>
 
@@ -6,7 +6,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$NetBSD: sigsetjmp.S,v 1.4.12.1 2002/08/01 03:28:00 nathanw Exp $"
+	.asciz "$NetBSD: sigsetjmp.S,v 1.4.12.2 2002/08/13 00:59:49 nathanw Exp $"
 #endif
 
 ENTRY(sigsetjmp)
@@ -36,7 +36,7 @@ ENTRY(siglongjmp)
 	mr	%r1,%r10
 	or.	%r7,%r7,%r7
 	beq	1f
-	mr	%r4,8
+	mr	%r4,%r8
 	li	%r3,3			# SIG_SETMASK
 	li	%r0,SYS_compat_13_sigprocmask13
 	sc				# assume no error	XXX

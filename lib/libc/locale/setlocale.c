@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.34.2.4 2002/03/22 20:42:18 nathanw Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.34.2.5 2002/08/13 00:59:51 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.34.2.4 2002/03/22 20:42:18 nathanw Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.34.2.5 2002/08/13 00:59:51 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -98,11 +98,6 @@ static char current_categories[_LC_LAST][32] = {
  * The locales we are going to try and load
  */
 static char new_categories[_LC_LAST][32];
-
-/*
- * Backup area to back out changes on failure
- */
-static char saved_categories[_LC_LAST][32];
 
 static char current_locale_string[_LC_LAST * 33];
 char *_PathLocale;
@@ -164,25 +159,30 @@ __setlocale(category, locale)
 				    sizeof(new_categories[i]));
 			}
 		} else {
-			for (i = 1; r[1] == '/'; ++r)
-				;
-			if (!r[1])
-				return (NULL);	/* Hmm, just slashes... */
-			do {
-				len = r - locale > sizeof(new_categories[i]) - 1
-					? sizeof(new_categories[i]) - 1
-					: r - locale;
-				(void)strncpy(new_categories[i++], locale, len);
-				new_categories[i++][len] = 0;
-				locale = r;
-				while (*locale == '/')
-				    ++locale;
-				while (*++r && *r != '/');
-			} while (*locale);
-			while (i < _LC_LAST)
-				(void)strlcpy(new_categories[i],
-				    new_categories[i - 1],
-				    sizeof(new_categories[i]));
+			for (i = 1;;) {
+				_DIAGASSERT(*r == '/' || *r == 0);
+				_DIAGASSERT(*locale != 0);
+				if (*locale == '/')
+					return (NULL);	/* invalid format. */
+				len = r - locale;
+				if (len + 1 > sizeof(new_categories[i]))
+					return (NULL);	/* too long */
+				(void)memcpy(new_categories[i], locale, len);
+				new_categories[i][len] = '\0';
+				if (*r == 0)
+					break;
+				_DIAGASSERT(*r == '/');
+				if (*(locale = ++r) == 0)
+					/* slash followed by NUL */
+					return (NULL);
+				/* skip until NUL or '/' */
+				while (*r && *r != '/')
+					r++;
+				if (++i == _LC_LAST)
+					return (NULL);	/* too many slashes. */
+			}
+			if (i + 1 != _LC_LAST)
+				return (NULL);	/* too few slashes. */
 		}
 	}
 
@@ -191,8 +191,6 @@ __setlocale(category, locale)
 
 	loadlocale_success = 0;
 	for (i = 1; i < _LC_LAST; ++i) {
-		(void)strlcpy(saved_categories[i], current_categories[i],
-		    sizeof(saved_categories[i]));
 		if (loadlocale(i) != NULL)
 			loadlocale_success = 1;
 	}

@@ -1,4 +1,4 @@
-.\"	$NetBSD: malloc.3,v 1.12.6.4 2002/03/22 20:42:30 nathanw Exp $
+.\"	$NetBSD: malloc.3,v 1.12.6.5 2002/08/13 00:59:55 nathanw Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .\"     @(#)malloc.3	8.1 (Berkeley) 6/4/93
 .\"     From FreeBSD: Id: malloc.3,v 1.18 1999/03/28 14:16:04 phk Exp
 .\"
-.Dd August 2, 1999
+.Dd August 11, 2002
 .Dt MALLOC 3
 .Os
 .Sh NAME
@@ -103,7 +103,7 @@ function changes the size of the previously allocated memory referenced by
 .Fa ptr
 to
 .Fa size
-bytes.
+bytes and returns a pointer to the (possibly moved) object.
 The contents of the memory are unchanged up to the lesser of the new and
 old sizes.
 If the new size is larger,
@@ -119,6 +119,30 @@ is NULL, the
 function behaves identically to
 .Fn malloc
 for the specified size.
+.Pp
+When using
+.Fn realloc
+one must be careful to avoid the following idiom:
+.Pp
+.Bd -literal -offset indent
+if ((p = realloc(p, nsize)) == NULL)
+	return NULL;
+.Ed
+.Pp
+In most cases, this will result in a leak of memory.
+As stated earlier, a return value of
+.Dv NULL
+indicates that the old object still remains allocated.
+Better code looks like this:
+.Bd -literal -offset indent
+if ((p2 = realloc(p, nsize)) == NULL) {
+	if (p)
+		free(p);
+	p = NULL;
+	return NULL;
+}
+p = p2;
+.Ed
 .\"XXX".Pp
 .\"XXX"The
 .\"XXX".Fn reallocf
@@ -249,7 +273,10 @@ The
 and
 .Fn calloc
 functions return a pointer to the allocated memory if successful; otherwise
-a NULL pointer is returned.
+a NULL pointer is returned and
+.Va errno
+is set to
+.Er ENOMEM .
 .Pp
 The
 .Fn realloc
@@ -260,7 +287,11 @@ function returns
 a pointer, possibly identical to
 .Fa ptr ,
 to the allocated memory
-if successful; otherwise a NULL pointer is returned, in which case the
+if successful; otherwise a NULL pointer is returned and
+.Va errno
+is set to
+.Er ENOMEM ,
+in which case the
 memory referenced by
 .Fa ptr
 is still available and intact.
@@ -277,6 +308,11 @@ If the environment variable
 .Ev MALLOC_OPTIONS
 is set, the characters it contains will be interpreted as flags to the
 allocation functions.
+.El
+.Sh FILES
+.Bl -tag -width "/etc/malloc.conf"
+.It Pa /etc/malloc.conf
+symbolic link to filename containing option flags
 .El
 .Sh EXAMPLES
 To set a systemwide reduction of cache size, and to dump core whenever

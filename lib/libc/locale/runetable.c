@@ -1,4 +1,4 @@
-/*	$NetBSD: runetable.c,v 1.5.2.3 2002/03/22 20:42:18 nathanw Exp $	*/
+/*	$NetBSD: runetable.c,v 1.5.2.4 2002/08/13 00:59:51 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: runetable.c,v 1.5.2.3 2002/03/22 20:42:18 nathanw Exp $");
+__RCSID("$NetBSD: runetable.c,v 1.5.2.4 2002/08/13 00:59:51 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -266,7 +266,5 @@ _RuneLocale _DefaultRuneLocale = {
 };
 
 _RuneLocale *_CurrentRuneLocale = &_DefaultRuneLocale;
-
-void **_StreamStateTable = NULL;
 
 char	*_PathLocale;
