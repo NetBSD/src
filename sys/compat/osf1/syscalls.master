@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.14 1999/04/23 06:19:51 cgd Exp $
+	$NetBSD: syscalls.master,v 1.15 1999/04/27 17:52:44 cgd Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -188,8 +188,8 @@
 115	OBSOL		vtrace
 116	NOARGS		{ int sys_gettimeofday(struct timeval *tp, \
 			    struct timezone *tzp); }
-; XXX
-117	STD		{ int osf1_sys_getrusage(void); }
+117	STD		{ int osf1_sys_getrusage(int who, \
+			    struct osf1_rusage *rusage); }
 118	NOARGS		{ int sys_getsockopt(int s, int level, int name, \
 			    caddr_t val, int *avalsize); }
 119	UNIMPL
