@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.11 2000/04/23 19:57:14 tsarna Exp $	*/
+/*	$NetBSD: libi386.h,v 1.12 2000/08/31 07:21:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -89,7 +89,7 @@ physaddr_t xmsalloc __P((int));
 
 /* parseutils.c */
 char *gettrailer __P((char*));
-int parseopts __P((char*, int*));
+int parseopts __P((const char*, int*));
 int parseboot __P((char*, char**, int*));
 
 /* menuutils.c */
