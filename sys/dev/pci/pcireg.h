@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.23 2000/01/25 22:30:05 drochner Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.24 2000/04/28 17:12:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -298,6 +298,8 @@ typedef u_int8_t pci_revision_t;
  */
 #define	PCI_MAPREG_START		0x10
 #define	PCI_MAPREG_END			0x28
+#define	PCI_MAPREG_PPB_END		0x18
+#define	PCI_MAPREG_PCB_END		0x14
 
 #define	PCI_MAPREG_TYPE(mr)						\
 	    ((mr) & PCI_MAPREG_TYPE_MASK)
