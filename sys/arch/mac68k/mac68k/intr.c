@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.15 2000/07/02 04:40:38 cgd Exp $	*/
+/*	$NetBSD: intr.c,v 1.16 2000/07/05 07:33:52 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #define	ISRLOC	0x18
 
 static int intr_noint __P((void *));
+void netintr __P((void));
 
 static int ((*intr_func[NISR]) __P((void *))) = {
 	intr_noint,
