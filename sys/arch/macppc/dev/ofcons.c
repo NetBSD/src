@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.1 1998/07/02 18:46:28 tsubai Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.2 1998/07/28 23:43:33 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,11 +64,11 @@ static int stdin, stdout;
 static int ofcmatch __P((struct device *, struct cfdata *, void *));
 static void ofcattach __P((struct device *, struct device *, void *));
 
-struct cfattach ofcons_ca = {
+struct cfattach macofcons_ca = {
 	sizeof(struct ofcons_softc), ofcmatch, ofcattach
 };
 
-extern struct cfdriver ofcons_cd;
+extern struct cfdriver macofcons_cd;
 
 /* For polled ADB mode */
 static int polledkey;
@@ -118,9 +118,9 @@ ofcopen(dev, flag, mode, p)
 	int unit = minor(dev);
 	struct tty *tp;
 	
-	if (unit >= ofcons_cd.cd_ndevs)
+	if (unit >= macofcons_cd.cd_ndevs)
 		return ENXIO;
-	sc = ofcons_cd.cd_devs[unit];
+	sc = macofcons_cd.cd_devs[unit];
 	if (!sc)
 		return ENXIO;
 	if (!(tp = sc->of_tty))
@@ -150,7 +150,7 @@ ofcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
@@ -164,7 +164,7 @@ ofcread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
 	return (*linesw[tp->t_line].l_read)(tp, uio, flag);
@@ -176,7 +176,7 @@ ofcwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	
 	return (*linesw[tp->t_line].l_write)(tp, uio, flag);
@@ -190,7 +190,7 @@ ofcioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 	struct tty *tp = sc->of_tty;
 	int error;
 	
@@ -205,7 +205,7 @@ struct tty *
 ofctty(dev)
 	dev_t dev;
 {
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[minor(dev)];
+	struct ofcons_softc *sc = macofcons_cd.cd_devs[minor(dev)];
 
 	return sc->of_tty;
 }
@@ -377,7 +377,7 @@ kbd_intr(event)
 
 	int key, press, val, state;
 	char str[10], *s;
-	struct ofcons_softc *sc = ofcons_cd.cd_devs[0];
+	struct ofcons_softc *sc = macofcons_cd.cd_devs[0];
 	struct tty *ite_tty = sc->of_tty;
 
 	key = event->u.k.key;

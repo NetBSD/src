@@ -105,3 +105,7 @@ file arch/macppc/dev/grf_subr.c			grf
 device ite: tty
 attach ite at grf
 file arch/macppc/dev/ite.c			ite needs-flag
+
+device macofcons: tty
+attach macofcons at pci
+file arch/macppc/dev/ofcons.c			macofcons needs-flag
