@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.8 1997/05/12 23:36:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -457,15 +457,15 @@ extent_alloc_subregion(ex, substart, subend, size, alignment, boundary,
 		panic("extent_alloc_subregion: NULL extent");
 	if (result == NULL)
 		panic("extent_alloc_subregion: NULL result pointer");
-	if ((substart < ex->ex_start) || (substart >= ex->ex_end) ||
-	    (subend > ex->ex_end) || (subend <= ex->ex_start)) {
+	if ((substart < ex->ex_start) || (substart > ex->ex_end) ||
+	    (subend > ex->ex_end) || (subend < ex->ex_start)) {
   printf("extent_alloc_subregion: extent `%s', ex_start 0x%lx, ex_end 0x%lx\n",
 		    ex->ex_name, ex->ex_start, ex->ex_end);
 		printf("extent_alloc_subregion: substart 0x%lx, subend 0x%lx\n",
 		    substart, subend);
 		panic("extent_alloc_subregion: bad subregion");
 	}
-	if ((size < 1) || (size > ((subend - substart) + 1))) {
+	if ((size < 1) || ((size - 1) > (subend - substart))) {
 		printf("extent_alloc_subregion: extent `%s', size 0x%lx\n",
 		    ex->ex_name, size);
 		panic("extent_alloc_subregion: bad size");
