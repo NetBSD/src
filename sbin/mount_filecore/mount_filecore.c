@@ -1,4 +1,4 @@
-/* $NetBSD: mount_filecore.c,v 1.6 2003/01/06 20:30:31 wiz Exp $ */
+/* $NetBSD: mount_filecore.c,v 1.7 2003/03/22 11:15:49 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998 Andrew McMurry
@@ -62,7 +62,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 
 #include <filecorefs/filecore_mount.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 #include <fattr.h>
 
 static const struct mntopt mopts[] = {

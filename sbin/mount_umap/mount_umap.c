@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_umap.c,v 1.12 2002/09/21 18:43:38 christos Exp $	*/
+/*	$NetBSD: mount_umap.c,v 1.13 2003/03/22 11:15:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.5 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_umap.c,v 1.12 2002/09/21 18:43:38 christos Exp $");
+__RCSID("$NetBSD: mount_umap.c,v 1.13 2003/03/22 11:15:55 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: mount_umap.c,v 1.12 2002/09/21 18:43:38 christos Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include "mntopts.h"
+#include <mntopts.h>
 
 #define ROOTUSER 0
 /*
