@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.13 1998/08/20 16:47:11 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.14 1999/01/01 21:25:03 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -64,6 +64,8 @@ void	kdbprinttrap __P((int, int));
 int	db_active = 0;
 
 extern int qdpolling;
+static	int splsave; /* IPL before entering debugger */
+
 /*
  * DDB is called by either <ESC> - D on keyboard, via a TRACE or
  * BPT trap or from kernel, normally as a result of a panic.
@@ -92,8 +94,9 @@ kdb_trap(frame)
 			ddb_regs.pc = pf->ca_pc;
 			ddb_regs.ap = pf->ca_ap;
 			ddb_regs.sp = (unsigned)pf;
-			ddb_regs.psl = frame->psl & ~0xffe0;
-			ddb_regs.psl = pf->ca_maskpsw & 0xffe0;
+			ddb_regs.psl = frame->psl & ~0x1fffe0;
+			ddb_regs.psl |= pf->ca_maskpsw & 0xffe0;
+			ddb_regs.psl |= (splsave << 16);
 		}
 		break;
 
@@ -175,9 +178,9 @@ db_write_bytes(addr, size, data)
 void
 Debugger()
 {
-	int s = splx(0xe);
+	splsave = splx(0xe);
 	mtpr(0xf, PR_SIRR); /* beg for debugger */
-	splx(s);
+	splx(splsave);
 }
 
 /*
@@ -211,7 +214,49 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
         db_expr_t       count;
         char            *modif;
 {
-	printf("db_stack_trace_cmd - addr %lx, have_addr %x, count %lx, modif %x\n",addr, have_addr, count, (int)modif);
+	extern vaddr_t	proc0paddr, istack;
+	struct proc	*p = curproc;
+        db_expr_t	diff;
+        db_sym_t	sym;
+	vaddr_t		paddr;
+	u_int		*cf, *tcf, abase, loop, i, stackbase;
+        char		*symname;
+ 
+	if (panicstr) {
+		cf = (int *)ddb_regs.sp;
+	} else {
+		printf("Don't know what to do without panic\n");
+		cf = (int *)ddb_regs.fp; /* XXX */
+	}
+	if (p)
+		paddr = (u_int)p->p_addr;
+	else
+		paddr = proc0paddr;
+	stackbase = (ddb_regs.psl & PSL_IS ? istack : paddr);
+	while ((cf[3] > stackbase) && (cf[3] < (stackbase + USPACE))) {
+		diff = INT_MAX;
+		symname = NULL;
+		abase = 0;
+		sym = db_search_symbol(cf[4], DB_STGY_ANY, &diff);
+		db_symbol_values(sym, &symname, 0);
+
+		db_printf("%s+0x%lx(", symname, diff);
+		/* Pass all saved regs */
+		tcf = (int *)cf[3];
+		loop = (tcf[1] >> 16) & 0xfff;
+		while (loop) {
+			if (loop & 1)
+				abase++;
+			loop >>= 1;
+		}
+		if (tcf[5+abase]) {
+			for (i = 0; i < (tcf[5+abase] - 1); i++)
+				db_printf("0x%x,", tcf[6+abase+i]);
+			db_printf("0x%x)\n", tcf[6+abase+i]);
+		} else
+			db_printf("void)\n");
+		cf = (u_int *)cf[3];
+	}
 }
 
 static int ddbescape = 0;
