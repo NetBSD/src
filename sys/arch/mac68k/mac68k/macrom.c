@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.18 1995/10/01 02:29:32 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.19 1996/02/28 04:14:15 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -69,6 +69,9 @@
 u_char mrg_adbstore[512];
 u_char mrg_adbstore2[512];
 u_char mrg_adbstore3[512];
+u_char mrg_ExpandMem[512];			/* 0x1ea Bytes minimum */
+u_char mrg_adbstore4[32];			/* 0x16 bytes was the largest I found yet */
+u_char mrg_adbstore5[80];			/* 0x46 bytes minimum */
 
 caddr_t	mrg_romadbintr = (caddr_t)0x40807002;	/* ROM ADB interrupt */
 caddr_t	mrg_rompmintr = 0;			/* ROM PM (?) interrupt */
@@ -77,11 +80,251 @@ caddr_t mrg_ADBAlternateInit = 0;
 caddr_t mrg_InitEgret = 0;
 caddr_t	mrg_ADBIntrPtr = (caddr_t)0x0;	/* ADB interrupt taken from MacOS vector table*/
 
+caddr_t *rsrc_handle;				/* Variables for ROM resource map */
+caddr_t *rsrc_header;
+u_int32_t nr_of_rsrcs;
+
+
 /*
  * Last straw functions; we didn't set them up, so freak out!
  * When someone sees these called, we can finally go back and
  * bother to implement them.
  */
+
+
+int
+mrg_Delay()
+{
+#define TICK_DURATION 16625
+
+	int result = noErr;
+	u_int32_t ticks;
+
+	asm("	movl	a0, %0"		/* get arguments */
+		:
+		: "g" (ticks));
+
+#if defined(MRG_DEBUG)
+	printf("mrg: mrg_Delay(%d) = %d ms\n", ticks, ticks * 60);
+#endif
+	delay(ticks * TICK_DURATION);
+	return(ticks);	/* The number of ticks since startup should be
+			 * returned here. Until someone finds a need for
+			 * this, we just return the requested number
+			 *  of ticks */
+}
+
+
+int
+is_resource(caddr_t rp)
+{
+	/*  Heuristic to locate resources in the ROM.
+	 *  rp+8 builds a linked list, but where does it start?
+	 */
+	if (    (0x00000000 == ( *((u_int32_t *)  rp   ) & 0x00ffffff))	/* magic numbers */
+	     && (0x00000000 ==   *((u_int32_t *) (rp+0x04)) )		/* magic numbers */
+	     && ( 0 == ( *((u_int32_t *) (rp+0x08)) & 0x0f ) )		/* on paragraph boundary */
+	     && ( 0 == ( *((u_int32_t *) (rp+0x0c)) & 0x0f ) )		/* on paragraph boundary */
+	     && ( 0 == (  ((u_int32_t) rp) & 0x0f )      )		/* on paragraph boundary */
+	     && (256 > ( *((u_int32_t *) (rp+0x0c)) - ((u_int32_t)rp & 0x0fffff)  ))
+									/* point to someplace near rp */
+	   )
+	      return 1;
+	 else return 0;
+}
+
+int
+count_all_resources(caddr_t rombase, u_int32_t romlen)
+{
+	caddr_t romptr;
+	u_int32_t nr_of_rsrcs = 0; 
+
+	for (romptr = rombase + romlen; romptr >= rombase; romptr -= 0x10)
+	{
+	    if (is_resource(romptr))
+	    nr_of_rsrcs++;  
+	}
+	return nr_of_rsrcs;
+}
+
+void
+w_build_resource_list(caddr_t rombase, u_int32_t romlen)
+{
+	caddr_t romptr;
+	u_int32_t rsrc_no = 0;
+#ifdef MRG_DEBUG
+	char rsrc_name[5];
+
+	printf("mrg: Resources found:\n");
+#endif
+	nr_of_rsrcs = count_all_resources(rombase, romlen);
+	if(0 == (rsrc_header = (caddr_t *) malloc(nr_of_rsrcs * sizeof(caddr_t), M_TEMP, M_NOWAIT)))
+	    panic("mrg: Can't malloc memory for rsrc_header list\n");
+	if(0 == (rsrc_handle = (caddr_t *) malloc(nr_of_rsrcs * sizeof(caddr_t), M_TEMP, M_NOWAIT)))
+	    panic("mrg: Can't malloc memory for rsrc_handle list\n");
+
+	for (romptr = rombase + romlen; romptr >= rombase; romptr -= 0x10)
+	{
+	    if (is_resource(romptr))
+		if (rsrc_no < nr_of_rsrcs)
+		{
+		    rsrc_header[rsrc_no] = romptr;
+		    rsrc_handle[rsrc_no] = (caddr_t) (ROMBase + *((u_int32_t *)(romptr + 0x0c)));
+		    rsrc_no++;
+#ifdef MRG_DEBUG
+		    strncpy(rsrc_name, (char *) (romptr + 0x10), 4);
+		    rsrc_name[4] = '\0';
+		    printf("%4s 0x%2x   ", rsrc_name, *((u_int16_t *) (romptr + 0x14)) );
+#endif
+		}  
+	}
+#ifdef MRG_DEBUG  
+	printf("\n");
+#endif
+}
+
+int
+w_count_resources(u_int32_t rsrc_type)
+{
+	u_int32_t rsrc_no = 0;
+	u_int32_t rsrc_count = 0;
+  
+#ifdef MRG_DEBUG
+	char rsrc_name[5];
+
+	strncpy(rsrc_name, (char *) (&rsrc_type), 4);
+	rsrc_name[4] = '\0';
+	printf("mrg: w_count_resources called for resource %4s :  ", rsrc_name);
+#endif
+	while (rsrc_no < nr_of_rsrcs)
+	{
+	    if (rsrc_type == *((u_int32_t *) (rsrc_header[rsrc_no] + 0x10)) )
+	    rsrc_count++;
+	    rsrc_no++;
+	}
+#ifdef MRG_DEBUG
+	printf("found %d resources of requested type!\n", rsrc_count);
+#endif
+	return rsrc_count;
+}
+
+caddr_t *
+w_get_ind_resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
+{
+	u_int32_t rsrc_no = 0;
+
+#ifdef MRG_DEBUG
+	char rsrc_name[5];
+
+	strncpy(rsrc_name, (char *) (&rsrc_type), 4);
+	rsrc_name[4] = '\0';
+	printf("mrg: w_get_int_resource called for resource %4s, no. %d :  ", rsrc_name, rsrc_ind);
+#endif
+
+	while (rsrc_ind > 0)
+	{
+	    while (    (rsrc_no < nr_of_rsrcs)
+		    && (rsrc_type != *((u_int32_t *) (rsrc_header[rsrc_no] + 0x10)) )
+		  )
+	    {
+		rsrc_no++;
+	    }
+	    rsrc_ind--;
+	    rsrc_no++;
+	}
+	rsrc_no--;
+	if (rsrc_no == nr_of_rsrcs)
+	{ /* Error */
+#ifdef MRG_DEBUG
+	    printf("not found!\n");
+#endif
+	    return (caddr_t *) 0;
+	}
+	else
+	{
+#ifdef MRG_DEBUG
+	    printf("found at addr 0x%x -> 0x%x\n", &rsrc_handle[rsrc_no], rsrc_handle[rsrc_no]);
+#endif
+	    return (caddr_t *) &rsrc_handle[rsrc_no];
+	}
+}
+
+
+void
+mrg_VBLQueue()
+{
+#define qLink 0
+#define qType 4
+#define vblAddr 6
+#define vblCount 10
+#define vblPhase 12
+
+	caddr_t vbltask;
+	caddr_t last_vbltask;
+	
+	last_vbltask = (caddr_t) &VBLQueue_head;
+	vbltask = VBLQueue_head;
+	while (0 != vbltask)
+	{
+	    if ( 0 != *((u_int16_t *)(vbltask + vblPhase)) )
+	    {
+		*((u_int16_t *)(vbltask + vblPhase)) -= 1;
+	    } else
+	    {
+		if ( 0 != *((u_int16_t *)(vbltask + vblCount)) )
+		{
+		    *((u_int16_t *)(vbltask + vblCount)) -= 1;
+		} else
+		{
+#if defined(MRG_DEBUG)
+		    printf("mrg: mrg_VBLQueue: calling VBL task at 0x%x with VBLTask block at 0x%x\n",
+			   *((u_int32_t *)(vbltask + vblAddr)), vbltask);
+#endif	      
+		    asm("   movml	#0xfffe, sp@-   /* better save all registers! */
+			    movl	%0, a0
+			    movl	%1, a1
+			    jbsr	a1@
+			    movml	sp@+, #0x7fff"	/* better restore all registers! */
+			    :
+			    : "g" (vbltask), "g" (*((caddr_t)(vbltask + vblAddr))));
+#if defined(MRG_DEBUG)
+		    printf("mrg: mrg_VBLQueue: back from VBL task\n");
+#endif	      
+		    if ( 0 == *((u_int16_t *)(vbltask + vblCount)) )
+		    {
+#if defined(MRG_DEBUG)
+			printf("mrg: mrg_VBLQueue: removing VBLTask block at 0x%x\n",
+			       vbltask);
+#endif	      
+			*((u_int32_t *)(last_vbltask + qLink)) = *((u_int32_t *)(vbltask + qLink));
+			    /* can't free memory from VBLTask block as
+		             * we don't know where it came from */
+			if (vbltask == VBLQueue_tail)
+			{ /* last task of do{}while */
+			    VBLQueue_tail = last_vbltask;
+			}
+		    }
+		}
+	    }
+	    last_vbltask = vbltask;
+	    vbltask = (caddr_t) *((u_int32_t *)(vbltask + qLink));
+	} /* while */
+}
+
+
+void
+mrg_init_stub_1()
+{
+  	asm("movml #0xffff, sp@-");
+	printf("mrg: hit mrg_init_stub_1\n");
+  	asm("movml sp@+, #0xffff");
+}
+
+void
+mrg_init_stub_2()
+{
+	panic("mrg: hit mrg_init_stub_2\n");
+}
 
 void
 mrg_1sec_timer_tick()
@@ -229,6 +472,7 @@ mrg_NewPtr()
 #endif
 		*(u_int32_t *)ptr = numbytes;
 		ptr += 4;
+		bzero(ptr, numbytes); /* NewPtr, Clear ! */
 	}
 
 	asm("	movl	%0, a0" :  : "g" (ptr));
@@ -298,6 +542,11 @@ mrg_PostEvent()
 	return 0;
 }
 
+void
+mrg_StripAddress()
+{
+}
+
 /*
  * trap jump address tables (different per machine?)
  * Can I just use the tables stored in the ROMs?
@@ -313,6 +562,9 @@ caddr_t mrg_OStraps[256] = {
 		(caddr_t)mrg_SetPtrSize,
 		(caddr_t)mrg_GetPtrSize,
 	[0x2f]	(caddr_t)mrg_PostEvent,
+	[0x3b]	(caddr_t)mrg_Delay,	
+	[0x47]	(caddr_t)mrg_SetOSTrapAddress,
+	[0x55]	(caddr_t)mrg_StripAddress,
 	[0x77]	(caddr_t)0x40807778,	/* CountADBs */
 		(caddr_t)0x40807792,	/* GetIndADB */
 		(caddr_t)0x408077be,	/* GetADBInfo */
@@ -327,9 +579,34 @@ caddr_t mrg_OStraps[256] = {
 };
 
 caddr_t mrg_ToolBoxtraps[1024] = {
+	[0x19c] (caddr_t)mrg_CountResources,
+	[0x19d] (caddr_t)mrg_GetIndResource,
 	[0x1a0] (caddr_t)mrg_GetResource,
 	[0x1af] (caddr_t)mrg_ResError,
 };
+
+int
+mrg_SetOSTrapAddress()
+{
+	int result = noErr;
+	u_int trapnumber;
+	u_int trapaddress;
+	u_int32_t trapword;
+
+	asm("	movl	d1, %0
+		movl	d0, %1
+		movl	a0, %2"
+		: "=g" (trapword), "=g" (trapnumber), "=g" (trapaddress));
+
+#if defined(MRG_SHOWTRAPS)
+	printf("mrg: SetOSTrapAddress(Trap: 0x%x, Address: 0x%8x)", trapnumber,
+		trapaddress);
+#endif
+
+	mrg_OStraps[trapnumber] = (caddr_t) trapaddress;	
+
+	return(result);
+}
 
 /*
  * Handle a supervisor mode A-line trap.
@@ -377,6 +654,8 @@ mrg_aline_super(struct frame *frame)
 	trapaddr = mrg_OStraps[trapnum];
 #if defined(MRG_DEBUG)
 	printf(" addr 0x%x\n", trapaddr);
+ 	printf("    got:    d0 = 0x%8x,  a0 = 0x%8x, called from: 0x%8x\n",
+		frame->f_regs[0], frame->f_regs[8], frame->f_pc	);
 #endif
 	if(trapaddr == NULL){
 		printf("unknown %s trap 0x%x, no trap address available\n",
@@ -422,6 +701,8 @@ mrg_aline_super(struct frame *frame)
 	troff();
 #endif
 #if defined(MRG_DEBUG)
+	printf("    result: d0 = 0x%8x,  a0 = 0x%8x\n",
+		d0bucket, a0bucket );
  	printf(" bk");
 #endif
 
@@ -521,6 +802,10 @@ mrg_setvectors(rom)
 		printf("Can't read RTC without it. Using MacOS boot time.\n");
 	}
 
+	mrg_ToolBoxtraps[0x04d] = rom->FixDiv;
+	mrg_ToolBoxtraps[0x068] = rom->FixMul;
+
+
 #if defined(MRG_DEBUG)
 	printf("mrg: ROM adbintr 0x%08x\n", mrg_romadbintr);
 	printf("mrg: ROM pmintr 0x%08x\n", mrg_rompmintr);
@@ -556,7 +841,13 @@ mrg_init()
 	caddr_t *handle;
 	int sizeptr;
 	extern short mrg_ResErr;
-
+	
+	w_build_resource_list(ROMBase, 0x00100000);	/* search one MB */
+	
+	VBLQueue = (u_int16_t) 0;	/* No vertical blanking routines in the queue */
+	VBLQueue_head = (caddr_t) 0;	/*  Let's hope that this init happens
+	VBLQueue_tail = (caddr_t) 0;	 *  before the RTC interrupts are enabled */
+					 
 	if(mrg_romready()){
 		printf("mrg: '%s' rom glue", mrg_romident);
 
@@ -592,6 +883,19 @@ mrg_init()
 	printf("mrg: start init\n");
 #endif
 		/* expected globals */
+	ExpandMem = &mrg_ExpandMem[0];
+	*((u_int16_t *)(mrg_ExpandMem + 0x00) ) = 0x0123;	/* magic (word) */
+	*((u_int32_t *)(mrg_ExpandMem + 0x02) ) = 0x000001ea;	/* Length of table (long) */
+	*((u_int32_t *)(mrg_ExpandMem + 0x1e0)) = (u_int32_t) &mrg_adbstore4[0];
+
+	*((u_int32_t *)(mrg_adbstore4 + 0x8)) = (u_int32_t) mrg_init_stub_1;
+	*((u_int32_t *)(mrg_adbstore4 + 0xc)) = (u_int32_t) mrg_init_stub_2;
+	*((u_int32_t *)(mrg_adbstore4 + 0x4)) = (u_int32_t) &mrg_adbstore5[0];
+
+	*((u_int32_t *)(mrg_adbstore5 + 0x08)) = (u_int32_t) 0x00100000;
+	*((u_int32_t *)(mrg_adbstore5 + 0x0c)) = (u_int32_t) 0x00100000;
+	*((u_int32_t *)(mrg_adbstore5 + 0x16)) = (u_int32_t) 0x00480000;
+
 	ADBBase = &mrg_adbstore[0];
 	ADBState = &mrg_adbstore2[0];
 	ADBYMM = &mrg_adbstore3[0];
@@ -698,8 +1002,16 @@ setup_egret(void)
 			movml	sp@+, a0-a2 "
 			:
 			: "g" (mrg_InitEgret), "g" (ADBState));
+		jEgret = (void (*)) mrg_OStraps[0x92]; /* may have been set in asm() */
 	}
-	else printf("Help ...  No vector for InitEgret!!");
+	else printf("Help ...  No vector for InitEgret!!\n");
+	
+	printf("mrg: ADBIntrVector: 0x%8x,  mrg_ADBIntrVector: 0x%8x\n",
+			(long) mrg_romadbintr,
+			*((long *) 0x19a));
+	printf("mrg: EgretOSTrap: 0x%8x\n",
+			(long) mrg_OStraps[0x92]);
+
 }
 
 void
@@ -734,7 +1046,8 @@ mrg_initadbintr()
 	 * set it up.  If not, just enable the interrupts (only on
 	 * some machines, others are already on from ADBReInit?).
 	 */
-	if ( (HwCfgFlags3 & 0x0e) == 0x06 ) {
+	if (   ((HwCfgFlags3 & 0x0e) == 0x06 )
+	    || ((HwCfgFlags3 & 0x70) == 0x20 )) {
 		if (mac68k_machine.do_graybars)
 			printf("mrg: setup_egret:\n");
 
@@ -774,6 +1087,12 @@ mrg_fixupROMBase(obase, nbase)
 			temp = (u_int) mrg_OStraps[i];
 			temp = (temp - oldbase) + newbase;
 			mrg_OStraps[i] = (caddr_t) temp;
+		}
+	for (i=0 ; i<1024 ; i++)
+		if (IS_ROM_ADDR(mrg_ToolBoxtraps[i])) {
+			temp = (u_int) mrg_ToolBoxtraps[i];
+			temp = (temp - oldbase) + newbase;
+			mrg_ToolBoxtraps[i] = (caddr_t) temp;
 		}
 	p = (u_int32_t *) mrg_adbstore;
 	for (i=0 ; i<512/4 ; i++)
