@@ -1,4 +1,4 @@
-/*	$NetBSD: arc_trap.c,v 1.24 2003/04/27 17:13:01 tsutsui Exp $	*/
+/*	$NetBSD: arc_trap.c,v 1.25 2003/05/25 14:00:11 tsutsui Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -133,15 +133,14 @@ cpu_intr(status, cause, pc, ipending)
 	u_int32_t pc;
 	u_int32_t ipending;		/* pending interrupts & enable mask */
 {
-#if defined(MIPS3) && defined(MIPS_INT_MASK_CLOCK)
-	if ((ipending & MIPS_INT_MASK_CLOCK) && CPUISMIPS3) {
+
+	if (ipending & MIPS_INT_MASK_CLOCK) {
 		/*
 		 *  Writing a value to the Compare register,
 		 *  as a side effect, clears the timer interrupt request.
 		 */
 		mips3_cp0_compare_write(mips3_cp0_count_read());
 	}
-#endif
 
 	uvmexp.intrs++;
 	/* real device interrupt */
@@ -149,30 +148,12 @@ cpu_intr(status, cause, pc, ipending)
 		_splset(arc_hardware_intr(status, cause, pc, ipending));
 	}
 
-#if defined(MIPS1) && defined(INT_MASK_FPU)
-	if ((ipending & INT_MASK_FPU) && CPUISMIPS1) {
-		intrcnt[FPU_INTR]++;
-		if (!USERMODE(status))
-			panic("kernel used FPU: PC %x, CR %x, SR %x",
-			    pc, cause, status);
-#if !defined(SOFTFLOAT)
-		MachFPInterrupt(status, cause, pc, curlwp->l_md.md_regs);
-#endif
-	}
-#endif
+	/* software interrupts */
+	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
+	if (ipending == 0)
+		return;
 
-	/* 'softnet' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_1) {
-		clearsoftnet();
-		uvmexp.softs++;
-		netintr();
-	}
+	_clrsoftintr(ipending);
 
-	/* 'softclock' interrupt */
-	if (ipending & MIPS_SOFT_INT_MASK_0) {
-		clearsoftclock();
-		uvmexp.softs++;
-		intrcnt[SOFTCLOCK_INTR]++;
-		softclock(NULL);
-	}
+	softintr_dispatch(ipending);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_eisa.c,v 1.5 2003/01/31 22:07:52 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_eisa.c,v 1.6 2003/05/25 14:00:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2003 Izumi Tsutsui.
@@ -73,6 +73,51 @@ struct isabr_config isabr_nec_eisa_conf = {
 	isabr_nec_eisa_intr_status,
 };
 
+/*
+ * This is a mask of bits to clear in the SR when we go to a
+ * given interrupt priority level.
+ */
+static const u_int32_t nec_eisa_ipl_sr_bits[_IPL_N] = {
+	0,					/* IPL_NONE */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
+
+	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2,		/* IPL_BIO */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2,		/* IPL_NET */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2,		/* IPL_{TTY,SERIAL} */
+
+	MIPS_SOFT_INT_MASK_0|
+		MIPS_SOFT_INT_MASK_1|
+		MIPS_INT_MASK_0|
+		MIPS_INT_MASK_1|
+		MIPS_INT_MASK_2|
+		MIPS_INT_MASK_3|
+		MIPS_INT_MASK_4|
+		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
+};
+
 int
 isabr_nec_eisa_intr_status()
 {
@@ -131,12 +176,7 @@ c_nec_eisa_init()
 	/*
 	 * Initialize interrupt priority
 	 */
-	splvec.splnet = MIPS_INT_MASK_SPL2;
-	splvec.splbio = MIPS_INT_MASK_SPL2;
-	splvec.splvm = MIPS_INT_MASK_SPL2;
-	splvec.spltty = MIPS_INT_MASK_SPL2;
-	splvec.splclock = MIPS_INT_MASK_SPL5;
-	splvec.splstatclock = MIPS_INT_MASK_SPL5;
+	ipl_sr_bits = nec_eisa_ipl_sr_bits;
 
 	/*
 	 * Disable all interrupts. New masks will be set up
