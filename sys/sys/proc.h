@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.198 2005/03/26 05:12:36 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.199 2005/03/30 17:07:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -292,6 +292,7 @@ struct proc {
 #define	P_FSTRACE	0x00010000 /* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x00020000 /* No zombies if child dies */
 #define	P_32		0x00040000 /* 32-bit process (used on 64-bit kernels) */
+#define	P_CLDSIGIGN	0x00080000 /* Process is ignoring SIGCHLD */
 #define	P_INEXEC	0x00100000 /* Process is exec'ing and can't be traced */
 #define	P_SYSTRACE	0x00200000 /* Process system call tracing active */
 #define	P_CHTRACED	0x00400000 /* Child has been traced & reparented */

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.202 2005/02/26 21:34:55 perry Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.203 2005/03/30 17:07:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.202 2005/02/26 21:34:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.203 2005/03/30 17:07:51 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -361,6 +361,18 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 					p->p_flag |= P_NOCLDWAIT;
 			} else
 				p->p_flag &= ~P_NOCLDWAIT;
+
+			if (nsa->sa_handler == SIG_IGN) {
+				/*
+				 * Paranoia: same as above.
+				 */
+				if (p->p_pid == 1)
+					p->p_flag &= ~P_CLDSIGIGN;
+				else
+					p->p_flag |= P_CLDSIGIGN;
+			} else
+				p->p_flag &= ~P_CLDSIGIGN;
+				
 		}
 		if ((nsa->sa_flags & SA_NODEFER) == 0)
 			sigaddset(&SIGACTION_PS(ps, signum).sa_mask, signum);
