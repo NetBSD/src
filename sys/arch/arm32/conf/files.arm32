@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.96 2001/02/27 17:56:32 bjh21 Exp $
+#	$NetBSD: files.arm32,v 1.97 2001/03/04 05:15:39 matt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -323,21 +323,15 @@ file	arch/arm32/arm32/blockio.S
 file	arch/arm32/arm32/bus_dma.c
 file	arch/arm32/arm32/conf.c
 file	arch/arm32/arm32/cpuswitch.S
-file	arch/arm32/arm32/disksubr.c		disk
-file	arch/arm32/arm32/disksubr_acorn.c	disk
-file	arch/arm32/arm32/disksubr_mbr.c		disk
 file	arch/arm32/arm32/stubs.c
 file	arch/arm32/arm32/exception.S
-file	arch/arm32/arm32/syscall.c
 file	arch/arm32/arm32/ast.c
 file	arch/arm32/arm32/fault.c
 file	arch/arm32/arm32/undefined.c
 file	arch/arm32/arm32/mem.c
 file	arch/arm32/arm32/procfs_machdep.c	procfs
 file	arch/arm32/arm32/machdep.c
-file	arch/arm32/arm32/sys_machdep.c
 file	arch/arm32/arm32/vm_machdep.c
-file	arch/arm32/arm32/pmap.c
 file	arch/arm32/arm32/fusu.S
 file	arch/arm32/arm32/cpufunc.c
 file	arch/arm32/arm32/cpufunc_asm.S
@@ -360,18 +354,12 @@ file	arch/arm32/kshell/kshell_disassem.c	kshell
 file	arch/arm32/kshell/kshell_dumphex.c	kshell
 file	arch/arm32/kshell/kshell_debug.c	kshell
 
-file    dev/cons.c
 file	dev/cninit.c				!footbridge
 
 # ARM FPE
 file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
 file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
 file	arch/arm32/fpe-arm/armfpe.s		armfpe
-
-# DDB
-file	arch/arm32/arm32/db_interface.c		ddb
-file	arch/arm32/arm32/db_trace.c		ddb
-file	arch/arm32/arm32/db_machdep.c		ddb
 
 # RiscPC specific files
 file	arch/arm32/riscpc/rpc_machdep.c		riscpc
