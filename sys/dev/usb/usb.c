@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.75 2002/11/26 18:49:49 christos Exp $	*/
+/*	$NetBSD: usb.c,v 1.76 2002/12/30 02:44:32 dsainty Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.75 2002/11/26 18:49:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.76 2002/12/30 02:44:32 dsainty Exp $");
+
+#include "ohci.h"
+#include "uhci.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,11 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.75 2002/11/26 18:49:49 christos Exp $");
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 int	usbdebug = 0;
-#ifdef UHCI_DEBUG
-int	uhcidebug;
+#if defined(UHCI_DEBUG) && NUHCI > 0
+extern int	uhcidebug;
 #endif
-#ifdef OHCI_DEBUG
-int	ohcidebug;
+#if defined(OHCI_DEBUG) && NOHCI > 0
+extern int	ohcidebug;
 #endif
 /*
  * 0  - do usual exploration
@@ -480,10 +483,10 @@ usbioctl(dev_t devt, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		if (!(flag & FWRITE))
 			return (EBADF);
 		usbdebug  = ((*(int *)data) & 0x000000ff);
-#ifdef UHCI_DEBUG
+#if defined(UHCI_DEBUG) && NUHCI > 0
 		uhcidebug = ((*(int *)data) & 0x0000ff00) >> 8;
 #endif
-#ifdef OHCI_DEBUG
+#if defined(OHCI_DEBUG) && NOHCI > 0
 		ohcidebug = ((*(int *)data) & 0x00ff0000) >> 16;
 #endif
 		break;
