@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.14 1998/02/26 03:13:18 perry Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.15 1998/07/26 19:34:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.14 1998/02/26 03:13:18 perry Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.15 1998/07/26 19:34:10 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -69,7 +69,7 @@ static struct netgroup *_nghead = (struct netgroup *)NULL;
 static struct netgroup *_nglist = (struct netgroup *)NULL;
 static DB *_ng_db;
 
-static int		getstring __P((char **, int, char **));
+static int		getstring __P((char **, int, const char **));
 static struct netgroup	*getnetgroup __P((char **));
 static int		 lookup __P((const char *, char *, char **, int));
 static void		 addgroup __P((char *, StringList *, char *));
@@ -91,7 +91,7 @@ static int
 getstring(pp, del, str)
 	char	**pp;
 	int	  del;
-	char	**str;
+	char	const **str;
 {
 	size_t len;
 	char *sp, *ep, *dp;
@@ -163,10 +163,10 @@ getnetgroup(pp)
 
 baddomain:
 	if (ng->ng_user)
-		free(ng->ng_user);
+		free((char *)ng->ng_user);
 baduser:
 	if (ng->ng_host)
-		free(ng->ng_host);
+		free((char *)ng->ng_host);
 badhost:
 	free(ng);
 	return NULL;
@@ -427,11 +427,11 @@ in_find(ypdom, sl, grp, host, user, domain)
 			/* new netgroup */
 			i = in_check(host, user, domain, ng);
 			if (ng->ng_host != NULL)
-				free(ng->ng_host);
+				free((char *)ng->ng_host);
 			if (ng->ng_user != NULL)
-				free(ng->ng_user);
+				free((char *)ng->ng_user);
 			if (ng->ng_domain != NULL)
-				free(ng->ng_domain);
+				free((char *)ng->ng_domain);
 			free(ng);
 			if (i) {
 				free(line);
@@ -564,11 +564,11 @@ endnetgrent()
 	for (_nglist = _nghead; _nglist != NULL; _nglist = _nghead) {
 		_nghead = _nglist->ng_next;
 		if (_nglist->ng_host != NULL)
-			free(_nglist->ng_host);
+			free((char *)_nglist->ng_host);
 		if (_nglist->ng_user != NULL)
-			free(_nglist->ng_user);
+			free((char *)_nglist->ng_user);
 		if (_nglist->ng_domain != NULL)
-			free(_nglist->ng_domain);
+			free((char *)_nglist->ng_domain);
 		free(_nglist);
 	}
 

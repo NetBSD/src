@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.10 1998/04/01 14:06:12 kleink Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.11 1998/07/26 19:43:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.10 1998/04/01 14:06:12 kleink Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.11 1998/07/26 19:43:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -217,7 +217,7 @@ ls_tty(arcn)
 
 #if __STDC__
 void
-zf_strncpy(char *dest, char *src, int len)
+zf_strncpy(char *dest, const char *src, int len)
 #else
 void
 zf_strncpy(dest, src, len)
@@ -246,7 +246,7 @@ zf_strncpy(dest, src, len)
 
 #if __STDC__
 int
-l_strncpy(char *dest, char *src, int len)
+l_strncpy(char *dest, const char *src, int len)
 #else
 int
 l_strncpy(dest, src, len)

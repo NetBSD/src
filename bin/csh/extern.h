@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1997/07/04 21:24:00 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1998/07/26 19:37:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -330,7 +330,7 @@ int	  s_strncmp __P((Char *, Char *, size_t));
 Char	 *s_strsave __P((Char *));
 Char	 *s_strend __P((Char *));
 Char	 *s_strstr __P((Char *, Char *));
-Char	 *str2short __P((char *));
+Char	 *str2short __P((const char *));
 Char	**blk2short __P((char **));
 char	 *short2str __P((Char *));
 char	**short2blk __P((Char **));
