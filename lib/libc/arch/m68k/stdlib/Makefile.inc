@@ -1,3 +1,3 @@
-#	$NetBSD: Makefile.inc,v 1.1 1997/11/05 22:59:54 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2000/01/16 00:32:32 kleink Exp $
 
-SRCS+=	abs.S div.c labs.c ldiv.c
+SRCS+=	abs.S div.c labs.S ldiv.c
