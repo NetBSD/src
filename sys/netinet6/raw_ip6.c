@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.23.2.1 2001/02/26 22:44:34 he Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.23.2.2 2001/04/06 00:29:21 he Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.28 2000/05/28 23:25:07 itojun Exp $	*/
 
 /*
@@ -479,6 +479,13 @@ rip6_output(m, va_alist)
 		*p = in6_cksum(m, ip6->ip6_nxt, sizeof(*ip6), plen);
 	}
 
+#ifdef IPSEC
+	if (ipsec_setsocket(m, so) != 0) {
+		error = ENOBUFS;
+		goto bad;
+	}
+#endif /*IPSEC*/
+	
 	error = ip6_output(m, optp, &in6p->in6p_route, 0, in6p->in6p_moptions,
 			   &oifp);
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6) {
