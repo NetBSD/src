@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.74 1996/12/22 10:21:13 cgd Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.75 1997/02/10 12:41:19 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1803,8 +1803,10 @@ out:
 		VOP_LEASE(tdvp, p, p->p_ucred, LEASE_WRITE);
 		if (fromnd.ni_dvp != tdvp)
 			VOP_LEASE(fromnd.ni_dvp, p, p->p_ucred, LEASE_WRITE);
-		if (tvp)
+		if (tvp) {
+			(void)vnode_pager_uncache(tvp);
 			VOP_LEASE(tvp, p, p->p_ucred, LEASE_WRITE);
+		}
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
 	} else {
