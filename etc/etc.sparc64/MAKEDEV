@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.19 2001/05/14 09:11:10 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.20 2001/09/15 17:44:47 mrg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -99,7 +99,7 @@ case $i in
 
 all)
 	sh -$- $0 std ttya ttyb ttyc ttyd
-	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4
+	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4 ss0 ch0 uk0 uk1
 	sh -$- $0 wd0 wd1 wd2 wd3 cd0 st0 st1 fd0 md0 md1
 	sh -$- $0 audio0 audio1 audio2 audio3
 	sh -$- $0 pty0 pty1 pty2 pty3 vnd0 vnd1 vnd2 vnd3 audio
@@ -111,6 +111,7 @@ all)
 	sh -$- $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh -$- $0 ipl lkm random local
 	sh -$- $0 isdn
+	sh -$- pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	;;
 floppy|ramdisk)
 	sh -$- $0 std ttya ttyb ttyc ttyd pty0
@@ -478,6 +479,13 @@ i4btrc*)
 	rm -f i4btrc$unit
 	mknod i4btrc$unit c 75 $unit
 	chmod 600 i4btrc$unit
+	;;
+
+pci*)
+	unit=${i#pci};
+	rm -f pci$unit
+	mknod pci$unit c 123 $unit
+	chmod 644 pci$unit
 	;;
 
 local)
