@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.135 2002/10/22 02:53:59 simonb Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.136 2002/10/22 07:22:19 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.135 2002/10/22 02:53:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.136 2002/10/22 07:22:19 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2074,7 +2074,7 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 		/*
 		 * Limit it to the positive range for really old TCP
 		 * implementations.
-		 * Just AND off the tip bit instead of checking if
+		 * Just AND off the top bit instead of checking if
 		 * is set first - saves a branch 50% of the time.
 		 */
 		tcp_iss &= 0x7fffffff;		/* XXX */
