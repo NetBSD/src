@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.4 1997/03/01 09:49:42 matthias Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.5 1997/03/20 12:00:43 matthias Exp $	*/
 
 /* 
  * Mach Operating System
@@ -49,7 +49,11 @@
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
 
-int db_spec_regs();
+struct ns532_frame;
+static void	db_nextframe __P((struct ns532_frame **, db_addr_t *,
+					int *, int));
+static int	db_numargs __P((struct ns532_frame *));
+static int	db_spec_regs __P((struct db_variable *, db_expr_t *, int));
 
 /*
  * Machine register set.
@@ -103,11 +107,6 @@ db_addr_t	db_trap_symbol_value = 0;
 db_addr_t	db_syscall_symbol_value = 0;
 db_addr_t	db_intr_symbol_value = 0;
 boolean_t	db_trace_symbols_found = FALSE;
-
-int db_numargs __P((struct ns532_frame *));
-void db_nextframe __P((struct ns532_frame **, db_addr_t *, int *, int));
-struct insn;
-int db_dasm_ns32k(struct insn *insn, db_addr_t loc);
 
 /*
  * Figure out how many arguments were passed into the frame at "fp".
@@ -195,15 +194,13 @@ db_numargs(fp)
  *   It might be possible to dig out from the next frame up the name
  *   of the function that faulted, but that could get hairy.
  */
-void
+static void
 db_nextframe(fp, ip, argp, is_trap)
 	struct ns532_frame	**fp;		/* in/out */
 	db_addr_t		*ip;		/* out */
 	int			*argp;		/* in */
 	int			is_trap;	/* in */
 {
-	extern char *	trap_type[];
-	extern int	TRAP_TYPES;
 	struct trapframe *tf;
 	struct syscframe *sf;
 
@@ -212,15 +209,15 @@ db_nextframe(fp, ip, argp, is_trap)
 		db_printf("--- interrupt ---\n");
 	case NONE:
 		*ip = (db_addr_t)
-		    db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
+		      db_get_value((int) &(*fp)->f_retaddr, 4, FALSE);
 		*fp = (struct ns532_frame *)
-		    db_get_value((int) &(*fp)->f_frame, 4, FALSE);
+		      db_get_value((int) &(*fp)->f_frame, 4, FALSE);
 		break;
 
 	/* The only argument to trap() or syscall() is the trapframe. */
 	case TRAP:
 		tf = (struct trapframe *)argp;
-		db_printf("--- trap (number %d) ---\n", tf->tf_trapno);
+		db_printf("--- trap (number %ld) ---\n", tf->tf_trapno);
 		*fp = (struct ns532_frame *)tf->tf_regs.r_fp;
 		*ip = (db_addr_t)tf->tf_regs.r_pc;
 		break;
@@ -329,7 +326,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		while (narg) {
 			if (argnp)
 				db_printf("%s=", *argnp++);
-			db_printf("%x", db_get_value((int)argp, 4, FALSE));
+			db_printf("%lx", db_get_value((int)argp, 4, FALSE));
 			argp++;
 			if (--narg != 0)
 				db_printf(",");
@@ -386,76 +383,70 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 
   *********************************************/
 
-int db_spec_regs(vp, valp, what)
+static int
+db_spec_regs(vp, valp, what)
 	struct db_variable *vp;
 	db_expr_t *valp;
 	int what;
 {
 	if (strcmp(vp->name, "intbase") == 0)
-	    if (what == DB_VAR_GET)
-		sprd(intbase, *valp);
-	    else
-		lprd(intbase, *valp);
+		if (what == DB_VAR_GET)
+			sprd(intbase, *valp);
+		else
+			lprd(intbase, *valp);
 	else if (strcmp(vp->name, "ptb") == 0)
-	    if (what == DB_VAR_GET)
-		smr(ptb0, *valp);
-	    else
-		load_ptb(*valp);
+		if (what == DB_VAR_GET)
+			smr(ptb0, *valp);
+		else
+			load_ptb(*valp);
 	else if (strcmp(vp->name, "ivar") == 0)
-	    if (what == DB_VAR_GET)
-		*valp = 0;
-	    else {
-		lmr(ivar0, *valp);
-		lmr(ivar1, *valp);
-	    }
+		if (what == DB_VAR_GET)
+			*valp = 0;
+		else {
+			lmr(ivar0, *valp);
+			lmr(ivar1, *valp);
+		}
 	else if (strcmp(vp->name, "rtear") == 0)
-	    if (what == DB_VAR_GET)
-		smr(tear, *valp);
-	    else
-		lmr(tear, *valp);
+		if (what == DB_VAR_GET)
+			smr(tear, *valp);
+		else
+			lmr(tear, *valp);
 	else if (strcmp(vp->name, "mcr") == 0)
-	    if (what == DB_VAR_GET)
-		smr(mcr, *valp);
-	    else
-		lmr(mcr, *valp);
+		if (what == DB_VAR_GET)
+			smr(mcr, *valp);
+		else
+			lmr(mcr, *valp);
 	else if (strcmp(vp->name, "rmsr") == 0)
-	    if (what == DB_VAR_GET)
-		smr(msr, *valp);
-	    else
-		lmr(msr, *valp);
+		if (what == DB_VAR_GET)
+			smr(msr, *valp);
+		else
+			lmr(msr, *valp);
 	else if (strcmp(vp->name, "dcr") == 0)
-	    if (what == DB_VAR_GET)
-		sprd(dcr, *valp);
-	    else
-		lprd(dcr, *valp);
+		if (what == DB_VAR_GET)
+			sprd(dcr, *valp);
+		else
+			lprd(dcr, *valp);
 	else if (strcmp(vp->name, "dsr") == 0)
-	    if (what == DB_VAR_GET)
-		sprd(dsr, *valp);
-	    else
-		lprd(dsr, *valp);
+		if (what == DB_VAR_GET)
+			sprd(dsr, *valp);
+		else
+			lprd(dsr, *valp);
 	else if (strcmp(vp->name, "car") == 0)
-	    if (what == DB_VAR_GET)
-		sprd(car, *valp);
-	    else
-		lprd(car, *valp);
+		if (what == DB_VAR_GET)
+			sprd(car, *valp);
+		else
+			lprd(car, *valp);
 	else if (strcmp(vp->name, "bpc") == 0)
-	    if (what == DB_VAR_GET)
-		sprd(bpc, *valp);
-	    else
-		lprd(bpc, *valp);
+		if (what == DB_VAR_GET)
+			sprd(bpc, *valp);
+		else
+			lprd(bpc, *valp);
 	else if (strcmp(vp->name, "cfg") == 0)
-	    if (what == DB_VAR_GET)
-		sprd(cfg, *valp);
-	    else
-		lprd(cfg, *valp);
+		if (what == DB_VAR_GET)
+			sprd(cfg, *valp);
+		else
+			lprd(cfg, *valp);
 	else
-	    db_printf("Internal error, unknown register in db_spec_regs");
+		db_printf("Internal error, unknown register in db_spec_regs");
+	return(0);
 }
-
-#ifndef DDB
-void
-Debugger()
-{
-	asm("bpt");
-}
-#endif
