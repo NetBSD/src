@@ -1,4 +1,4 @@
-/*	$NetBSD: lisp.c,v 1.9 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: lisp.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lisp.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: lisp.c,v 1.9 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: lisp.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: lisp.c,v 1.9 2004/06/20 22:20:15 jmc Exp $");
  * just look for (def or (DEF
  */
 void
-l_entries()
+l_entries(void)
 {
 	int	special;
 	char	*cp;

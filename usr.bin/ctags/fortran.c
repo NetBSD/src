@@ -1,4 +1,4 @@
-/*	$NetBSD: fortran.c,v 1.9 2004/06/20 22:20:15 jmc Exp $	*/
+/*	$NetBSD: fortran.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fortran.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: fortran.c,v 1.9 2004/06/20 22:20:15 jmc Exp $");
+__RCSID("$NetBSD: fortran.c,v 1.10 2005/02/17 17:29:58 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,12 +49,12 @@ __RCSID("$NetBSD: fortran.c,v 1.9 2004/06/20 22:20:15 jmc Exp $");
 
 #include "ctags.h"
 
-static void takeprec __P((void));
+static void takeprec(void);
 
 char *lbp;				/* line buffer pointer */
 
 int
-PF_funcs()
+PF_funcs(void)
 {
 	bool	pfcnt;			/* pascal/fortran functions found */
 	char	*cp;
@@ -142,8 +142,7 @@ PF_funcs()
  *	do case-independent strcmp
  */
 int
-cicmp(cp)
-	char	*cp;
+cicmp(const char *cp)
 {
 	int	len;
 	char	*bp;
@@ -159,7 +158,7 @@ cicmp(cp)
 }
 
 static void
-takeprec()
+takeprec(void)
 {
 	for (; isspace((unsigned char)*lbp); ++lbp)
 		continue;
