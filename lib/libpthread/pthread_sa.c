@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sa.c,v 1.2 2003/01/18 10:34:16 thorpej Exp $	*/
+/*	$NetBSD: pthread_sa.c,v 1.3 2003/01/18 18:45:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -147,6 +147,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	case SA_UPCALL_USER:
 		/* We don't send ourselves one of these. */
 	default:
+		/*CONSTCOND*/
 		assert(0);
 	}
 
@@ -207,7 +208,7 @@ pthread__upcall(int type, struct sa_t *sas[], int ev, int intr, void *arg)
 	SDPRINTF(("(up %p) switching to %p (uc: %p pc: %lx)\n", 
 	    self, next, next->pt_uc, pthread__uc_pc(next->pt_uc)));
 	pthread__upcall_switch(self, next);
-	/* NOTREACHED */
+	/*NOTREACHED*//*CONSTCOND*/
 	assert(0);
 }
 
@@ -545,7 +546,7 @@ pthread__recycle_bulk(pthread_t self, pthread_t qhead)
 				printf("Error: recycle_threshold\n");
 				printf("ret: %d  threshold: %d\n",
 				    ret, recycle_threshold);
-
+				/*CONSTCOND*/
 				assert(0);
 			}
 		}
@@ -586,8 +587,10 @@ pthread__sa_recycle(pthread_t old, pthread_t new)
 	if (do_recycle) {
 		ret = sa_stacks(recycle_threshold, recyclable[my_side]);
 		SDPRINTF(("(recycle %p) recycled %d stacks\n", new, recycle_threshold));
-		if (ret != recycle_threshold)
+		if (ret != recycle_threshold) {
+			/*CONSTCOND*/
 			assert(0);
+		}
 	}
 }
 

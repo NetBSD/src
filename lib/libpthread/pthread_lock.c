@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.2 2003/01/18 10:34:15 thorpej Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.3 2003/01/18 18:45:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -149,10 +149,9 @@ pthread__lockprim_init(void)
 	len = sizeof(ncpu);
 	sysctl(mib, 2, &ncpu, &len, NULL, 0);
 
-	if (ncpu == 1 &&
-	    rasctl(pthread__lock_ras_start,
-	    	   (caddr_t)pthread__lock_ras_end -
-	    	   (caddr_t)pthread__lock_ras_start, RAS_INSTALL) == 0) {
+	if (ncpu == 1 && rasctl(pthread__lock_ras_start,
+	    (size_t)(pthread__lock_ras_end - pthread__lock_ras_start),
+	    RAS_INSTALL) == 0) {
 		pthread__lock_ops = &pthread__lock_ops_ras;
 		return;
 	}

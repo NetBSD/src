@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.2 2003/01/18 10:34:16 thorpej Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.3 2003/01/18 18:45:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ pthread_mutex_destroy(pthread_mutex_t *mutex)
 
 	mutex->ptm_magic = _PT_MUTEX_DEAD;
 	if (mutex->ptm_private != NULL &&
-	    mutex->ptm_private != (void *)&mutex_private_default)
+	    mutex->ptm_private != (const void *)&mutex_private_default)
 		free(mutex->ptm_private);
 
 	return 0;
