@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.2 1998/09/14 14:25:38 leo Exp $	*/
+/*	$NetBSD: et4000.c,v 1.3 1999/03/31 10:44:15 leo Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,6 +42,9 @@
  *	Thomas Gerner
  *	Juergen Orscheidt
  * for their help and for code that I could refer to when writing this driver.
+ *
+ * Defining DEBUG_ET4000 will cause the driver to *always* attach.  Use for
+ * debugging register settings.
  */
 
 /*
@@ -67,11 +70,14 @@
 
 /*
  * Allow a 8Kb io-region and a 1MB frame buffer to be mapped. This
- * is more or less required by the XFree server.
+ * is more or less required by the XFree server.  The X server also
+ * requires that the frame buffer be mapped above 0x3fffff.
  */
-#define	REG_MAPPABLE	(8 * 1024)		/* 0x2000 */
-#define	FRAME_MAPPABLE	(1 * 1024 * 1024)	/* 0x100000 */
-#define FRAME_OFFSET	(1 * 1024 * 1024)	/* 0x100000 */
+#define REG_MAPPABLE	(8 * 1024)		/* 0x2000 */
+#define FRAME_MAPPABLE	(1 * 1024 * 1024)	/* 0x100000 */
+#define FRAME_BASE	(4 * 1024 * 1024)	/* 0x400000 */
+#define VGA_MAPPABLE	(128 * 1024)		/* 0x20000 */
+#define VGA_BASE	0xa0000
 
 static int	et_vme_match __P((struct device *, struct cfdata *, void *));
 static void	et_vme_attach __P((struct device *, struct device *, void *));
@@ -277,9 +283,10 @@ et_detect(iot, memt, ioh, memh, memsize)
 #ifdef DEBUG_ET4000
 		printf("et4000: ATC[16] failed (%x != %x)\n",
 		    new, (orig ^ 0x10));
-#endif
+#else
 		et_stop(iot, ioh, &vgabase, &saved);
 		return(0);
+#endif
 	}
 	/* Is the card and ET4000?  Check read/write of CRTC[33] */
 	bus_space_write_1(*iot, *ioh, vgabase + 0x04, 0x33);
@@ -291,14 +298,17 @@ et_detect(iot, memt, ioh, memh, memsize)
 #ifdef DEBUG_ET4000
 		printf("et4000: CRTC[33] failed (%x != %x)\n",
 		    new, (orig ^ 0x0f));
-#endif
+#else
 		et_stop(iot, ioh, &vgabase, &saved);
 		return(0);
+#endif
 	}
 
 	/* Set up video memory so we can read & write it */
 	bus_space_write_1(*iot, *ioh, 0x3c4, 0x04);
-	bus_space_write_1(*iot, *ioh, 0x3c5, 0x0e);
+	bus_space_write_1(*iot, *ioh, 0x3c5, 0x06);
+	bus_space_write_1(*iot, *ioh, 0x3c4, 0x07);
+	bus_space_write_1(*iot, *ioh, 0x3c5, 0xa8);
 	bus_space_write_1(*iot, *ioh, 0x3ce, 0x01);
 	bus_space_write_1(*iot, *ioh, 0x3cf, 0x00);
 	bus_space_write_1(*iot, *ioh, 0x3ce, 0x03);
@@ -313,18 +323,20 @@ et_detect(iot, memt, ioh, memh, memsize)
 	{
 #ifdef DEBUG_ET4000
 		printf("et4000: Video base write/read failed\n");
-#endif
+#else
 		et_stop(iot, ioh, &vgabase, &saved);
 		return(0);
+#endif
 	}
 	bus_space_write_4(*memt, *memh, memsize - 4, TEST_PATTERN);
 	if (bus_space_read_4(*memt, *memh, memsize - 4) != TEST_PATTERN)
 	{
 #ifdef DEBUG_ET4000
 		printf("et4000: Video top write/read failed\n");
-#endif
+#else
 		et_stop(iot, ioh, &vgabase, &saved);
 		return(0);
+#endif
 	}
 
 	et_stop(iot, ioh, &vgabase, &saved);
@@ -435,10 +447,14 @@ etioctl(dev, cmd, data, flags, p)
 		return(0);
 		break;
 	case GRFIOCGINFO:
-		g_display.gd_fbaddr = (caddr_t)sc->sc_maddr;
+		g_display.gd_fbaddr = (caddr_t) (sc->sc_maddr);
 		g_display.gd_fbsize = sc->sc_msize;
-		g_display.gd_regaddr = (caddr_t)sc->sc_iobase;
+		g_display.gd_linbase = FRAME_BASE;
+		g_display.gd_regaddr = (caddr_t) (sc->sc_iobase);
 		g_display.gd_regsize = sc->sc_iosize;
+		g_display.gd_vgaaddr = (caddr_t) (sc->sc_maddr);
+		g_display.gd_vgasize = VGA_MAPPABLE;
+		g_display.gd_vgabase = VGA_BASE;
 		g_display.gd_colors = 16;
 		g_display.gd_planes = 4;
 		g_display.gd_fbwidth = 640;	/* XXX: should be 'unknown' */
@@ -482,11 +498,18 @@ etmmap(dev, offset, prot)
 		return(m68k_btop(sc->sc_iobase + offset));
 
 	/*
-	 * frame buffer
-	 * mapped from offset 0x100000 to 0x1fffff
+	 * VGA memory
+	 * mapped from offset 0xa0000 to 0xc0000
 	 */
-	if (offset >= FRAME_OFFSET && offset < sc->sc_msize + FRAME_OFFSET)
-		return(m68k_btop(sc->sc_maddr + offset - FRAME_OFFSET));
+	if (offset >= VGA_BASE && offset < (VGA_MAPPABLE + VGA_BASE))
+		return(m68k_btop(sc->sc_maddr + offset - VGA_BASE));
+
+	/*
+	 * frame buffer
+	 * mapped from offset 0x400000 to 0x4fffff
+	 */
+	if (offset >= FRAME_BASE && offset < sc->sc_msize + FRAME_BASE)
+		return(m68k_btop(sc->sc_maddr + offset - FRAME_BASE));
 
 	return(-1);
 }
