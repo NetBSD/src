@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.7 2003/01/05 13:07:38 seb Exp $	*/
+/*	$NetBSD: db.c,v 1.8 2003/05/19 00:27:07 seb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.7 2003/01/05 13:07:38 seb Exp $");
+__RCSID("$NetBSD: db.c,v 1.8 2003/05/19 00:27:07 seb Exp $");
 #endif /* not lint */
 
 #include <db.h>
@@ -49,12 +49,8 @@ __RCSID("$NetBSD: db.c,v 1.7 2003/01/05 13:07:38 seb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
-
-/*
- * TODO --
- *   -	add option to strunvis(3) key (& value) from infile ?
- */
 
 typedef enum {
 	F_WRITE		= 1<<0,
@@ -69,6 +65,10 @@ typedef enum {
 	F_CREATENEW	= 1<<20,
 	F_DUPLICATES	= 1<<21,
 	F_REPLACE	= 1<<22,
+	F_ENCODE_KEY	= 1<<23,
+	F_ENCODE_VAL	= 1<<24,
+	F_DECODE_KEY	= 1<<25,
+	F_DECODE_VAL	= 1<<26,
 } flags_t;
 
 int	main(int, char *[]);
@@ -78,11 +78,17 @@ int	db_del(char *);
 int	db_get(char *);
 int	db_put(char *, char *);
 int	parseline(FILE *, const char *, char **, char **);
+int	encode_data(size_t, char *, char **);
+int	decode_data(char *, char **);
+void	parse_encode_decode_arg(const char *, int);
+int	parse_encode_option(char **);
 void	usage(void);
 
-flags_t	 flags;
+flags_t	 flags = 0;
 DB	*db;
 char	*outputsep = "\t";
+int	encflags = 0;
+char	*extra_echars = NULL;
 
 int
 main(int argc, char *argv[])
@@ -104,7 +110,6 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
-	flags = 0;
 	infile = NULL;
 	fieldsep = " ";
 	infp = NULL;
@@ -112,7 +117,8 @@ main(int argc, char *argv[])
 	oi.mode = 0644;
 
 				/* parse arguments */
-	while ( (ch = getopt(argc, argv, "CDdE:F:f:iKm:NO:qRVw")) != -1) {
+	while ( (ch = getopt(argc, argv,
+			     "CDdE:F:f:iKm:NO:qRS:T:U:VwX:")) != -1) {
 		switch (ch) {
 
 		case 'C':
@@ -187,12 +193,37 @@ main(int argc, char *argv[])
 			flags |= F_REPLACE;
 			break;
 
+		case 'S':
+			parse_encode_decode_arg(optarg, 1 /* encode */);
+			if (! (flags & (F_ENCODE_KEY | F_ENCODE_VAL)))
+				errx(1, "Invalid encoding argument `%s'",
+				    optarg);
+			break;
+
+		case 'T':
+			encflags = parse_encode_option(&optarg);
+			if (! encflags)
+				errx(1, "Invalid encoding option `%s'",
+				    optarg);
+			break;
+
+		case 'U':
+			parse_encode_decode_arg(optarg, 0 /* decode */);
+			if (! (flags & (F_DECODE_KEY | F_DECODE_VAL)))
+				errx(1, "Invalid decoding argument `%s'",
+				    optarg);
+			break;
+
 		case 'V':
 			flags |= F_SHOW_VALUE;
 			break;
 
 		case 'w':
 			flags |= F_WRITE;
+			break;
+
+		case 'X':
+			extra_echars = optarg;
 			break;
 
 		default:
@@ -324,12 +355,31 @@ void
 db_print(DBT *key, DBT *val)
 {
 
-	if (flags & F_SHOW_KEY)
-		printf("%.*s", (int)key->size, (char *)key->data);
+	int len;
+	char *data;
+
+	if (flags & F_SHOW_KEY) {
+		if (flags & F_ENCODE_KEY)
+			len = encode_data(key->size - 1, (char *)key->data,
+					 &data);
+		else {
+			len = (int)key->size;
+			data = (char *)key->data;
+		}
+		printf("%.*s", len, data);
+	}
 	if ((flags & F_SHOW_KEY) && (flags & F_SHOW_VALUE))
 		printf("%s", outputsep);
-	if (flags & F_SHOW_VALUE)
-		printf("%.*s", (int)val->size, (char *)val->data);
+	if (flags & F_SHOW_VALUE) {
+		if (flags & F_ENCODE_VAL)
+			len = encode_data(val->size - 1, (char *)val->data,
+					 &data);
+		else {
+			len = (int)val->size;
+			data = (char *)val->data;
+		}	
+		printf("%.*s", len, data);
+	}
 	printf("\n");
 }
 
@@ -347,15 +397,24 @@ db_dump(void)
 }
 
 static void
-db_makekey(DBT *key, char *keystr, int downcase)
+db_makekey(DBT *key, char *keystr, int downcase, int decode)
 {
-	char	*p;
+	char	*p, *ks;
+	int	klen;
 
 	memset(key, 0, sizeof(*key));
-	key->data = keystr;
-	key->size = strlen(keystr) + (flags & F_NO_NUL ? 0 : 1);
+	if (decode) {
+		if ((klen = decode_data(keystr, &ks)) == -1)
+			errx(1, "Invalid escape sequence in `%s'",
+		  	  keystr);
+	} else {
+		klen = strlen(keystr);
+		ks = keystr;
+	}
+	key->data = ks;
+	key->size = klen + (flags & F_NO_NUL ? 0 : 1);
 	if (downcase && flags & F_IGNORECASE) {
-		for (p = keystr; *p; p++)
+		for (p = ks; *p; p++)
 			if (isupper((int)*p))
 				*p = tolower((int)*p);
 	}
@@ -365,58 +424,69 @@ int
 db_del(char *keystr)
 {
 	DBT	key;
+	int	r = 0;
 
-	db_makekey(&key, keystr, 1);
+	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
 	switch (db->del(db, &key, 0)) {
 	case -1:
 		warn("Error deleting key `%s'", keystr);
-		return (1);
+		r = 1;
+		break;
 	case 0:
 		if (! (flags & F_QUIET))
 			printf("Deleted key `%s'\n", keystr);
 		break;
 	case 1:
 		warnx("Key `%s' does not exist", keystr);
-		return (1);
+		r = 1;
+		break;
 	}
-	return (0);
+	if (flags & F_DECODE_KEY)
+		free(key.data);
+	return (r);
 }
 
 int
 db_get(char *keystr)
 {
 	DBT	key, val;
+	int	r = 0;
 
-	db_makekey(&key, keystr, 1);
+	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
 	switch (db->get(db, &key, &val, 0)) {
 	case -1:
 		warn("Error reading key `%s'", keystr);
-		return (1);
+		r = 1;
+		break;
 	case 0:
 		db_print(&key, &val);
 		break;
 	case 1:
 		if (! (flags & F_QUIET)) {
 			warnx("Unknown key `%s'", keystr);
-			return (1);
+			r = 1;
 		}
 		break;
 	}
-	return (0);
+	if (flags & F_DECODE_KEY)
+		free(key.data);
+	return (r);
 }
 
 int
 db_put(char *keystr, char *valstr)
 {
 	DBT	key, val;
+	int	r = 0;
 
-	db_makekey(&key, keystr, 1);
-	db_makekey(&val, valstr, 1);
+	db_makekey(&key, keystr, 1, (flags & F_DECODE_KEY ? 1 : 0));
+	db_makekey(&val, valstr, 0, (flags & F_DECODE_VAL ? 1 : 0));
 	switch (db->put(db, &key, &val,
 	    (flags & F_REPLACE) ? 0 : R_NOOVERWRITE)) {
 	case -1:
 		warn("Error writing key `%s'", keystr);
-		return (1);
+		r = 1;
+		break;
 	case 0:
 		if (! (flags & F_QUIET))
 			printf("Added key `%s'\n", keystr);
@@ -424,9 +494,14 @@ db_put(char *keystr, char *valstr)
 	case 1:
 		if (! (flags & F_QUIET))
 			warnx("Key `%s' already exists", keystr);
-		return (1);
+		r = 1;
+		break;
 	}
-	return (0);
+	if (flags & F_DECODE_KEY)
+		free(key.data);
+	if (flags & F_DECODE_VAL)
+		free(val.data);
+	return (r);
 }
 
 int
@@ -455,15 +530,100 @@ parseline(FILE *fp, const char *sep, char **kp, char **vp)
 	return (1);
 }
 
+int
+encode_data(size_t len, char *data, char **edata)
+{
+	static char	*buf = NULL;
+	static size_t	buflen = 0;
+	size_t		elen;
+
+	elen = 1 + (len * 4);
+	if (elen > buflen) {
+		if ((buf = realloc(buf, elen)) == NULL)
+			err(1, "Cannot allocate encoding buffer");
+		buflen = elen;
+	}
+	*edata = buf;
+	if (extra_echars) {
+		return (strsvisx(buf, data, len, encflags, extra_echars));
+	} else {
+		return (strvisx(buf, data, len, encflags));
+	}
+}
+
+int
+decode_data(char *data, char **ddata)
+{
+	char	*buf;
+
+	if ((buf = malloc(strlen(data) + 1)) == NULL)
+		err(1, "Cannot allocate decoding buffer");
+	*ddata = buf;
+	return (strunvis(buf, data));
+}
+
+void
+parse_encode_decode_arg(const char *arg, int encode)
+{
+	if (! arg[0] || arg[1])
+		return;
+	if (arg[0] == 'k' || arg[0] == 'b') {
+		if (encode)
+			flags |= F_ENCODE_KEY;
+		else
+			flags |= F_DECODE_KEY;
+	}
+	if (arg[0] == 'v' || arg[0] == 'b') {
+		if (encode)
+			flags |= F_ENCODE_VAL;
+		else
+			flags |= F_DECODE_VAL;
+	}
+	return;
+}
+
+int
+parse_encode_option(char **arg)
+{
+	int	r = 0;
+
+	for(; **arg; (*arg)++) {
+		switch (**arg) {
+			case 'b':
+				r |= VIS_NOSLASH;
+				break;
+			case 'c':
+				r |= VIS_CSTYLE;
+				break;
+			case 'o':
+				r |= VIS_OCTAL;
+				break;
+			case 's':
+				r |= VIS_SAFE;
+				break;
+			case 't':
+				r |= VIS_TAB;
+				break;
+			case 'w':
+				r |= VIS_WHITE;
+				break;
+			default:
+				return (0);
+				break;
+		}
+	}
+	return (r);
+}
+
 void
 usage(void)
 {
 	const char *p = getprogname();
 
 	fprintf(stderr,
-    "Usage: %s [-KV] [-Niq] [-E end] [-f inf] [-O str] type dbfile [key [...]]\n"
-    "       %s -d [-Niq] [-E end] [-f inf] type dbfile [key [...]]\n"
-    "       %s -w [-Niq] [-E end] [-f inf] [-CDR] [-F sep] [-m mod]\n"
+    "Usage: %s [-KV] [-Niq] [-S chr] [-T str] [-X str] [-E end] [-f inf] [-O str] type dbfile [key [...]]\n"
+    "       %s -d [-Niq] [-U chr] [-E end] [-f inf] type dbfile [key [...]]\n"
+    "       %s -w [-Niq] [-U chr] [-E end] [-f inf] [-CDR] [-F sep] [-m mod]\n"
     "             type dbfile [key val [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
@@ -479,7 +639,11 @@ usage(void)
 	    "\t-K\tprint key\n"
 	    "\t-N\tdon't NUL terminate key\n"
 	    "\t-R\treplace existing keys\n"
+	    "\t-S chr\titems to strvis(3) encode: 'k'ey, 'v'alue, 'b'oth\n"
+	    "\t-T str\toptions to control -S encoding like vis(1) options\n"
+	    "\t-U chr\titems to strunvis(3) decode: 'k'ey, 'v'alue, 'b'oth\n"
 	    "\t-V\tprint value\n"
+	    "\t-X str\textra characters to encode with -S\n"
 	    "\t-f inf\tfile of keys (read|delete) or keys/vals (write)\n"
 	    "\t-i\tignore case of key by converting to lower case\n"
 	    "\t-m mod\tmode of created database  [default: 0644]\n"
