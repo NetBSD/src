@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)getnetgrent.3	8.1 (Berkeley) 6/4/93
-.\"	$Id: getnetgrent.3,v 1.1.1.1 1994/05/17 13:30:51 mycroft Exp $
+.\"	$Id: getnetgrent.3,v 1.2 1994/12/04 18:12:12 christos Exp $
 .\"
 .Dd June 4, 1993
 .Dt GETNETGRENT 3
@@ -52,10 +52,16 @@
 .Fn endnetgrent void
 .Sh DESCRIPTION
 These functions operate on the netgroup database file
-.Pa /etc/netgroup
+.Pa /etc/netgroup.db
 which is described
 in
 .Xr netgroup 5 .
+If that file does not exist, and the systems supports 
+.Sy NIS,
+then the
+.Sy netgroup 
+.Sy NIS
+databases are used instead.
 The database defines a set of netgroups, each made up of one or more triples:
 .Bd -literal -offset indent
 (host, user, domain)
@@ -115,11 +121,6 @@ netgroup database file
 .El
 .Sh SEE ALSO
 .Fn netgroup 5
-.Sh COMPATIBILITY
-The netgroup members have three string fields to maintain compatibility
-with other vendor implementations, however it is not obvious what use the
-.Sy domain
-string has within BSD.
 .Sh BUGS
 The function
 .Fn getnetgrent
