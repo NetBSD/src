@@ -85,7 +85,11 @@ lang_specific_driver (errfn, in_argc, in_argv, in_added_libraries)
   int need_E = 1;
 
   /* Do we need to insert -no-gcc? */
+#if 0
   int need_no_gcc = 1;
+#endif
+  /* XXX - For NetBSD backwards compatibility */
+  int need_no_gcc = 0;
 
   /* Have we seen an input file? */
   int seen_input = 0;
