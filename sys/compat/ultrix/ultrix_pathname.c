@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_pathname.c,v 1.20 2004/04/21 01:05:37 christos Exp $	*/
+/*	$NetBSD: ultrix_pathname.c,v 1.21 2004/04/21 05:20:27 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.20 2004/04/21 01:05:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_pathname.c,v 1.21 2004/04/21 05:20:27 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,7 +268,7 @@ ultrixstatfs(sp, buf)
 	ssfs.f_bavail = sp->f_bavail;
 	ssfs.f_files = sp->f_files;
 	ssfs.f_ffree = sp->f_ffree;
-	ssfs.f_fsid = sp->f_fsidx.__fsid_val[0];
+	ssfs.f_fsid = sp->f_fsidx;
 	return copyout((caddr_t)&ssfs, buf, sizeof ssfs);
 }
 
@@ -298,8 +298,8 @@ ultrix_sys_statfs(l, v, retval)
 	vrele(nd.ni_vp);
 	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	return ultrixstatvfs(sp, (caddr_t)SCARG(uap, buf));
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
+	return ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
 }
 
 /*
@@ -327,7 +327,7 @@ ultrix_sys_fstatfs(l, v, retval)
 	sp = &mp->mnt_stat;
 	if ((error = VFS_STATVFS(mp, sp, p)) != 0)
 		goto out;
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	error = ultrixstatfs(sp, (caddr_t)SCARG(uap, buf));
  out:
 	FILE_UNUSE(fp, p);
