@@ -52,7 +52,7 @@ ENTRY(sigprocmask)
 	jmp	2f
 1:	movl	(%ecx),%ecx		# fetch indirect  ...
 	movl	%ecx,8(%esp)		# to new mask arg
-2:	movl	$ SYS_sigprocmask , %eax
+2:	movl	$SYS_sigprocmask , %eax
 	LCALL(0x7,0)
 	jb	err
 	movl	12(%esp),%ecx		# fetch old mask requested
