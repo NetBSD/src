@@ -1,15 +1,15 @@
-#	$NetBSD: Makefile.arm32,v 1.3 1996/02/02 02:35:59 mycroft Exp $
-#
+#	$NetBSD: Makefile.arm32,v 1.4 1996/02/02 20:08:48 mycroft Exp $
+
 # Makefile for NetBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
 # Most changes should be made in the machine description
-#	/sys/conf/``machineid''
+#	/sys/arch/i386/conf/``machineid''
 # after which you should do
-#	 config machineid
+#	config machineid
 # Machine generic makefile changes should be made in
-#	/sys/conf/Makefile.``machinetype''
+#	/sys/arch/i386/conf/Makefile.i386
 # after which config should be rerun for all machines of that type.
 #
 # N.B.: NO DEPENDENCIES ON FOLLOWING FLAGS ARE VISIBLE TO MAKEFILE
@@ -21,24 +21,23 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
-AWK?=	awk
-CC?=	cc
-CPP?=	cpp
-LD?=	ld
-TOUCH?=	touch -f -c
-LCC?=	cc
+AS=	as
+AWK=	awk
+CC=	cc
+CPP=	cpp
+LD=	ld
+STRIP=	strip -d
+TOUCH=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
 ARM32=	../..
 
-INCLUDES= -I. -I$S/arch -I$S -I$S/sys
-COPTS=	${INCLUDES} ${IDENT} -D_KERNEL
-CFLAGS=	-O3 -fno-builtin ${DEBUG} ${COPTS} -Darm32
-CFLAGS+=-Werror
-#CFLAGS+=-Wcomment
-#CFLAGS+=-Wmissing-prototypes -Wmissing-declarations
+INCLUDES=	-I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Darm32
+CFLAGS=		${DEBUG} -O2 -Werror
+AFLAGS=		-D_LOCORE
+LINKFLAGS=	-Ttext F0000020 -e start
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -61,16 +60,14 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
 
-NORMAL_C=	${CC} -c ${CFLAGS} ${PROF} $<
-NORMAL_C_C=	${CC} -c ${CFLAGS} ${PROF} ${PARAM} $<
+NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-PROFILE_C=	${CC} -S -c ${CFLAGS} $< ; \
-		sed -e s/_mcount/mcount/ -e s/subrmcount/subr_mcount/ <$*.s | \
-		${AS} -o $@; \
-		rm -f $*.s
+DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
+DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-NORMAL_S=	${CC} -c -D_LOCORE ${CFLAGS} ${PROF} $<
-NORMAL_S_C=	${CC} -c -D_LOCORE ${CFLAGS} ${PROF} ${PARAM} $<
+NORMAL_S=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S_C=	${CC} -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
 %OBJS
 
@@ -83,109 +80,111 @@ NORMAL_S_C=	${CC} -c -D_LOCORE ${CFLAGS} ${PROF} ${PARAM} $<
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
+SYSTEM_OBJ=	locore.o modedefs.o \
+		vnode_if.o param.o ioconf.o ${OBJS} ${LIBKERN} ${LIBCOMPAT}
+SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
+SYSTEM_LD_HEAD=	rm -f $@
+SYSTEM_LD=	@echo ${LD} ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} vers.o
+SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
+
 DEBUG?=
 .if ${DEBUG} == "-g"
-LDX=-X
+LINKFLAGS+=	-X
+SYSTEM_LD_TAIL+=; \
+		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
+		echo ${STRIP} $@; ${STRIP} $@
 .else
-LDX=-x
-.endif
-LDFLAGS= ${LDX} -Ttext f0000020
-SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o modedefs.o ${LIBKERN} \
-		${LIBCOMPAT}
-SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
-SYSTEM_LD_HEAD=	@echo loading $@; rm -f $@
-SYSTEM_LD=	-@echo ${LD} ${LDFLAGS} -o $@ '${SYSTEM_OBJ}' vers.o ${XXX}; \
-		${LD} ${LDFLAGS} -o $@ ${SYSTEM_OBJ} vers.o ${XXX}
-SYSTEM_LD_TAIL=	@size $@; chmod 755 $@; nm -n $@ >$@.map;
-.if ${DEBUG} == "-g"
-SYSTEM_LD_TAIL+=; echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo strip -d $@; strip -d $@
+LINKFLAGS+=	-x
 .endif
 
 %LOAD
 
-newvers: vers.o
-
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
-	sh $S/conf/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
-
-clean::
-	rm -f eddep *netbsd netbsd.gdb tags tags1 vnode_if.[ch] *.[io] \
-		[a-z]*.s Errs errs linterrs makelinks genassym
-
-lint: /tmp param.c
-	@lint -hbxn -DGENERIC -Dvolatile= ${COPTS} ${PARAM} -UKGDB \
-	    ${CFILES} ${ARM32}/arm32/swapgeneric.c \
-	    ioconf.c param.c | \
-	    grep -v 'struct/union .* never defined' | \
-	    grep -v 'possible pointer alignment problem'
-
-locore.o: ${ARM32}/arm32/locore.S assym.h
-	${NORMAL_S}
-
-# depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o: Makefile
-
-# depend of FPE configuration
-vm_machdep.o cpuswitch.o cpu.o: Makefile
-
-# depends of PLIP driver configuration
-lpt.o: Makefile
-
-# depend on maxusers
-assym.h: Makefile
-
 assym.h: genassym
 	./genassym >assym.h
 
-genassym: ${ARM32}/arm32/genassym.c
-	${LCC} ${INCLUDES} ${IDENT} ${PARAM} -Darm32 -o genassym \
-	    ${ARM32}/arm32/genassym.c
+genassym: genassym.o
+	${CC} -o $@ genassym.o
 
-SRCS= ${CFILES} ${SFILES} ${ARM32}/arm32/genassym.c ioconf.c param.c vnode_if.c \
-      ${ARM32}/arm32/makemodes.c
+genassym.o: ${ARM32}/arm32/genassym.c
+	${NORMAL_C_C}
 
-depend: .depend
-.depend: ${SRCS} assym.h
-	mkdepend ${COPTS} ${SRCS}
-	mkdepend -a -p ${COPTS} ${ARM32}/arm32/genassym.c
-
-links:
-	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
-	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
-	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
-	  sort -u | comm -23 - dontlink | \
-	  sed 's,../.*/\(.*.o\),rm -f \1;ln -s ../GENERIC/\1 \1,' > makelinks
-	sh makelinks && rm -f dontlink
-
-tags: depend
-	sh $S/conf/systags.sh
-	rm -f tags1
-	sed -e 's,	../,	,' tags > tags1
-
-ioconf.o: ioconf.c
-	${CC} -c ${CFLAGS} ioconf.c
+vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
+	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${CC} -c ${CFLAGS} ${PARAM} param.c
+	${NORMAL_C_C}
 
-vnode_if.c vnode_if.h: $S/kern/vnode_if.sh $S/kern/vnode_if.src
-	AWK="${AWK}" sh $S/kern/vnode_if.sh $S/kern/vnode_if.src
+ioconf.o: ioconf.c
+	${NORMAL_C}
 
-makemodes: ${ARM32}/arm32/makemodes.c
-	${LCC} ${INCLUDES} ${IDENT} ${PARAM} -o $@ ${ARM32}/arm32/makemodes.c
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+	sh $S/conf/newvers.sh
+	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
+
+
+clean::
+	rm -f eddep *netbsd netbsd.gdb tags vnode_if.[ch] *.[io] [a-z]*.s \
+	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
+
+lint:
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	    ${ARM32}/arm32/Locore.c ${CFILES} ${ARM32}/arm32/swapgeneric.c \
+	    ioconf.c param.c | \
+	    grep -v 'static function .* unused'
+
+tags:
+	@echo "see $S/kern/Makefile for tags"
+
+links:
+	egrep '#if' ${CFILES} | sed -f $S/conf/defines | \
+	  sed -e 's/:.*//' -e 's/\.c/.o/' | sort -u > dontlink
+	echo ${CFILES} | tr -s ' ' '\12' | sed 's/\.c/.o/' | \
+	  sort -u | comm -23 - dontlink | \
+	  sed 's,../.*/\(.*.o\),rm -f \1; ln -s ../GENERIC/\1 \1,' > makelinks
+	sh makelinks && rm -f dontlink
+
+SRCS=	${ARM32}/arm32/locore.S modedefs.c \
+	vnode_if.c param.c ioconf.c ${CFILES} ${SFILES}
+depend: .depend
+.depend: ${SRCS} assym.h vnode_if.h param.c
+	mkdep -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${ARM32}/arm32/locore.S
+	mkdep -a ${CFLAGS} {CPPFLAGS} modedefs.c
+	mkdep -a ${CFLAGS} ${CPPFLAGS} vnode_if.c param.c ioconf.c ${CFILES}
+	mkdep -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ARM32}/arm32/genassym.c
+
+
+# depend on root or device configuration
+autoconf.o conf.o: Makefile
+ 
+# depend on network or filesystem configuration 
+uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on maxusers
+genassym.o machdep.o: Makefile
+
+# depend on CPU configuration 
+cpuswitch.o fault.o machdep.o: Makefile
+
+
+locore.o: ${ARM32}/arm32/locore.S assym.h
+	${NORMAL_S}
 
 modedefs.c: makemodes ${ARM32}/conf/monitors/${MONITOR} Makefile
-	rm -f modedefs.o
 	./makemodes ${ARM32}/conf/monitors/${MONITOR} modedefs.c ${MODES}
 
 modedefs.o: modedefs.c
-	${CC} -c ${CFLAGS} modedefs.c
+	${NORMAL_C}
 
+makemodes: makemodes.o
+	${CC} -o $@ makemodes.o
+
+makemodes.o: ${ARM32}/arm32/makemodes.c
+	${NORMAL_C_C}
 
 %RULES
