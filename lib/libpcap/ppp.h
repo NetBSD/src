@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp.h,v 1.1.1.1 1997/10/03 15:38:55 christos Exp $	*/
+/*	$NetBSD: ppp.h,v 1.2 1999/07/25 00:15:22 itojun Exp $	*/
 
 /* @(#) Header: ppp.h,v 1.7 95/05/04 17:52:46 mccanne Exp  (LBL) */
 /*
@@ -32,6 +32,7 @@
 #define PPP_BRPDU	0x0031	/* Bridging PDU */
 #define PPP_STII	0x0033	/* Stream Protocol (ST-II) */
 #define PPP_VINES	0x0035	/* Banyan Vines */
+#define PPP_IPV6	0x0057	/* Internet Protocol Version 6 */
 
 #define PPP_HELLO	0x0201	/* 802.1d Hello Packets */
 #define PPP_LUXCOM	0x0231	/* Luxcom */
@@ -45,6 +46,7 @@
 #define PPP_IPXCP	0x802b	/* Novell IPX Control Protocol */
 #define PPP_STIICP	0x8033	/* Strean Protocol Control Protocol */
 #define PPP_VINESCP	0x8035	/* Banyan Vines Control Protocol */
+#define PPP_IPV6CP	0x8057	/* IPv6 Control Protocol */
 
 #define PPP_LCP		0xc021	/* Link Control Protocol */
 #define PPP_PAP		0xc023	/* Password Authentication Protocol */
