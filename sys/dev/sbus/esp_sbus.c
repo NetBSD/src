@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.2 1998/08/29 21:43:00 pk Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.3 1998/09/15 20:26:25 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,8 +75,15 @@ struct esp_softc {
 	int	sc_pri;				/* SBUS priority */
 };
 
+/*
+ * Is this esp on the bootpath?
+ * We may get two forms of the bootpath:
+ *	(1) ../sbus@.../esp@<offset>,<slot>/sd@..	(PROM v3 style)
+ *	(2) /sbus0/esp0/sd@..				(PROM v2 style)
+ */
 #define SAME_ESP(sc, bp, sa) \
-	(bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
+	((bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset) || \
+	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 void	espattach_sbus	__P((struct device *, struct device *, void *));
 void	espattach_dma	__P((struct device *, struct device *, void *));
