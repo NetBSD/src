@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $	*/
+/*	$NetBSD: citrus_csmapper.c,v 1.5 2004/12/30 05:01:50 christos Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_csmapper.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_csmapper.c,v 1.5 2004/12/30 05:01:50 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -75,7 +75,7 @@ get32(struct _region *r, u_int32_t *rval)
 	if (_region_size(r) != 4)
 		return EFTYPE;
 
-	memcpy(rval, _region_head(r), 4);
+	memcpy(rval, _region_head(r), (size_t)4);
 	*rval = be32toh(*rval);
 
 	return 0;
