@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.11 1994/02/01 03:35:06 cgd Exp $
+ *	$Id: cons.c,v 1.12 1994/02/16 00:09:39 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ cnioctl(dev, cmd, data, flag, p)
 	 * ioctls on /dev/console, then the console is redirected
 	 * out from under it.
 	 */
-	if (constty != NULL && (cn_tab != NULL || cn_tab->cn_pri != CN_REMOTE))
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
 		return ENXIO;
@@ -209,7 +209,7 @@ cnselect(dev, rw, p)
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	if (constty != NULL && (cn_tab != NULL || cn_tab->cn_pri != CN_REMOTE))
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
 		dev = constty->t_dev;
 	else if (cn_tab == NULL)
 		return ENXIO;
