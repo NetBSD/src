@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_isa.c,v 1.6 2002/01/07 21:47:01 thorpej Exp $	*/
+/*	$NetBSD: joy_isa.c,v 1.1 2002/02/02 18:37:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.6 2002/01/07 21:47:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.1 2002/02/02 18:37:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy_isa.c,v 1.6 2002/01/07 21:47:01 thorpej Exp $");
 
 #include <dev/isa/isavar.h>
 
-#include <i386/isa/joyvar.h>
+#include <dev/ic/joyvar.h>
 
 #define JOY_NPORTS    1
 
