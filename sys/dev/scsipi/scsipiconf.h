@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.8 2000/11/20 09:59:26 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.9 2001/01/15 09:22:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -95,10 +95,12 @@ struct scsipi_generic {
  *
  *	ASYNC_EVENT_XFER_MODE		scsipi_xfer_mode * -- xfer mode
  *					parameters changed for I_T Nexus
+ *	ASYNC_EVENT_RESET		NULL - channel has been reset
  */
 typedef enum {
 	ASYNC_EVENT_MAX_OPENINGS,	/* set max openings on periph */
 	ASYNC_EVENT_XFER_MODE,		/* xfer mode update for I_T */
+	ASYNC_EVENT_RESET,		/* channel reset */
 } scsipi_async_event_t;
 
 /*
@@ -362,7 +364,12 @@ struct scsipi_periph {
 
 	/* Pending scsipi_xfers on this peripherial. */
 	struct scsipi_xfer_queue periph_xferq;
+
 	struct callout periph_callout;
+
+	/* xfer which has a pending CHECK_CONDITION */
+	struct scsipi_xfer *periph_xscheck;
+
 };
 
 /*
@@ -397,6 +404,7 @@ struct scsipi_periph {
 #define	PERIPH_RECOVERING	0x0080	/* periph is recovering */
 #define	PERIPH_RECOVERY_ACTIVE	0x0100	/* a recovery command is active */
 #define PERIPH_KEEP_LABEL	0x0200	/* retain label after 'full' close */
+#define	PERIPH_SENSE		0x0400	/* periph has sense pending */
 
 /* periph_quirks */
 #define	PQUIRK_AUTOSAVE		0x00000001	/* do implicit SAVE POINTERS */
@@ -472,11 +480,9 @@ struct scsipi_xfer {
 		struct  scsipi_sense_data scsi_sense; /* 32 bytes */
 		u_int32_t atapi_sense;
 	} sense;
-	/*
-	 * Believe it or not, Some targets fall on the ground with
-	 * anything but a certain sense length.
-	 */
-	int	req_sense_length;	/* Explicit request sense length */
+
+	struct scsipi_xfer *xs_sensefor;/* we are requesting sense for this */
+					/* xfer */
 
 	u_int8_t status;		/* SCSI status */
 
@@ -527,6 +533,7 @@ struct scsipi_xfer {
 #define	XS_CTL_THAW_PERIPH	0x00080000	/* thaw periph once enqueued */
 #define	XS_CTL_FREEZE_PERIPH	0x00100000	/* freeze periph when done */
 #define XS_CTL_DATA_ONSTACK	0x00200000	/* data is alloc'ed on stack */
+#define XS_CTL_REQSENSE		0x00400000	/* xfer is a request sense */
 
 #define	XS_CTL_TAGMASK	(XS_CTL_SIMPLE_TAG|XS_CTL_ORDERED_TAG|XS_CTL_HEAD_TAG)
 
