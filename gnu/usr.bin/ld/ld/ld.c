@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.70 2000/05/28 01:33:58 matt Exp $	*/
+/*	$NetBSD: ld.c,v 1.70.2.1 2000/10/30 22:56:04 tv Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -88,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.70 2000/05/28 01:33:58 matt Exp $");
+__RCSID("$NetBSD: ld.c,v 1.70.2.1 2000/10/30 22:56:04 tv Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
@@ -2280,7 +2280,7 @@ digest_pass1()
 		}
 		if (sp->def_lsp) {
 #ifdef DEBUG
-printf("pass1: SO definition for %s, type %x in %s at %#x\n",
+printf("pass1: SO definition for %s, type %x in %s at %#lx\n",
 	sp->name, sp->so_defined, get_file_name(sp->def_lsp->entry),
 	sp->def_lsp->nzlist.nz_value);
 #endif
@@ -2406,7 +2406,7 @@ consider_relocation(entry, dataseg)
 			pic_type = RELOC_PIC_TYPE(reloc);
 
 #ifdef DEBUG
-			printf("consider_relocation: baserel symbolnum=%d offset=%#x\n",
+			printf("consider_relocation: baserel symbolnum=%d offset=%#lx\n",
 				reloc->r_symbolnum, lsp->nzlist.nz_value);
 #endif
 
@@ -3182,7 +3182,7 @@ perform_relocation(data, data_size, reloc, nreloc, entry, dataseg)
 					get_file_name(entry));
 
 #ifdef DEBUG
-			printf("perform_relocation: baserel symbolnum=%d addend=%#x offset=%#x\n",
+			printf("perform_relocation: baserel symbolnum=%d addend=%#lx offset=%#lx\n",
 				symindex, addend, lsp->nzlist.nz_value);
 #endif
 
