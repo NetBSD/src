@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.1.2.1 2001/11/17 13:07:52 scw Exp $	*/
+/*	$NetBSD: lwp.h,v 1.1.2.2 2001/11/18 20:04:14 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -53,6 +53,6 @@ struct mdlwp {
 #define MDL_STACKADJ    0x0001  /* frame SP adjusted, might have to
                                    undo when system call returns
                                    ERESTART. */
-#define MDL_FPUSED		0x0002	/* floating point coprocessor used (sun[23]) */
+#define MDL_FPUSED	0x0002	/* floating point coprocessor used (sun[23]) */
 
 #endif /* _M68K_LWP_H */
