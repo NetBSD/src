@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.11 2003/07/06 12:39:41 tron Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.12 2003/07/22 11:59:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.11 2003/07/06 12:39:41 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.12 2003/07/22 11:59:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ agp_intel_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_find_device(&isc->vga_pa, agp_intel_vgamatch) == 0) {
 		aprint_normal(": using generic initialization for Intel AGP\n");
+		aprint_normal("%s", sc->as_dev.dv_xname);
 		isc->chiptype = CHIP_INTEL;
 	}
 
