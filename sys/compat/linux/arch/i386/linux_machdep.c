@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.83 2002/12/06 00:02:59 christos Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.84 2002/12/06 03:37:19 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.83 2002/12/06 00:02:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.84 2002/12/06 03:37:19 junyoung Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -347,7 +347,7 @@ linux_old_sendsig(sig, mask, code)
 		fp = (struct linux_sigframe *)tf->tf_esp;
 	fp--;
 
-	DPRINTF((uprintf("old: onstack = %d, fp = %p sig = %d eip = 0x%x\n",
+	DPRINTF(("old: onstack = %d, fp = %p sig = %d eip = 0x%x\n",
 	    onstack, fp, sig, tf->tf_eip));
 
 	/* Build stack frame for signal trampoline. */
