@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: discover.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: discover.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -144,16 +144,14 @@ isc_result_t interface_initialize (omapi_object_t *ipo,
 void discover_interfaces (state)
 	int state;
 {
-	struct interface_info *tmp, *ip;
+	struct interface_info *tmp;
 	struct interface_info *last, *next;
 	char buf [2048];
 	struct ifconf ic;
 	struct ifreq ifr;
 	int i;
 	int sock;
-	int address_count = 0;
 	struct subnet *subnet;
-	struct shared_network *share;
 	struct sockaddr_in foo;
 	int ir;
 	struct ifreq *tif;
@@ -804,7 +802,6 @@ isc_result_t dhcp_interface_set_value  (omapi_object_t *h,
 {
 	struct interface_info *interface;
 	isc_result_t status;
-	int foo;
 
 	if (h -> type != dhcp_type_interface)
 		return ISC_R_INVALIDARG;
@@ -847,7 +844,6 @@ isc_result_t dhcp_interface_destroy (omapi_object_t *h,
 					 const char *file, int line)
 {
 	struct interface_info *interface;
-	isc_result_t status;
 
 	if (h -> type != dhcp_type_interface)
 		return ISC_R_INVALIDARG;
@@ -877,8 +873,6 @@ isc_result_t dhcp_interface_signal_handler (omapi_object_t *h,
 					    const char *name, va_list ap)
 {
 	struct interface_info *ip, *interface;
-	struct client_config *config;
-	struct client_state *client;
 	isc_result_t status;
 
 	if (h -> type != dhcp_type_interface)

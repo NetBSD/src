@@ -57,7 +57,6 @@ omapi_object_type_t *omapi_type_auth_key;
 
 omapi_object_type_t *omapi_object_types;
 int omapi_object_type_count;
-static int ot_max;
 
 #if defined (DEBUG_MEMORY_LEAKAGE_ON_EXIT)
 void omapi_type_relinquish ()
@@ -303,7 +302,6 @@ isc_result_t omapi_signal (omapi_object_t *handle, const char *name, ...)
 isc_result_t omapi_signal_in (omapi_object_t *handle, const char *name, ...)
 {
 	va_list ap;
-	omapi_object_t *outer;
 	isc_result_t status;
 
 	if (!handle)
@@ -373,7 +371,6 @@ isc_result_t omapi_set_value_str (omapi_object_t *h,
 				  const char *name,
 				  omapi_typed_data_t *value)
 {
-	omapi_object_t *outer;
 	omapi_data_string_t *nds;
 	isc_result_t status;
 
@@ -394,8 +391,6 @@ isc_result_t omapi_set_boolean_value (omapi_object_t *h, omapi_object_t *id,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *n = (omapi_data_string_t *)0;
-	int len;
-	int ip;
 
 	status = omapi_data_string_new (&n, strlen (name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -420,8 +415,6 @@ isc_result_t omapi_set_int_value (omapi_object_t *h, omapi_object_t *id,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *n = (omapi_data_string_t *)0;
-	int len;
-	int ip;
 
 	status = omapi_data_string_new (&n, strlen (name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -446,8 +439,6 @@ isc_result_t omapi_set_object_value (omapi_object_t *h, omapi_object_t *id,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *n = (omapi_data_string_t *)0;
-	int len;
-	int ip;
 
 	status = omapi_data_string_new (&n, strlen (name), MDL);
 	if (status != ISC_R_SUCCESS)
@@ -472,8 +463,6 @@ isc_result_t omapi_set_string_value (omapi_object_t *h, omapi_object_t *id,
 	isc_result_t status;
 	omapi_typed_data_t *tv = (omapi_typed_data_t *)0;
 	omapi_data_string_t *n = (omapi_data_string_t *)0;
-	int len;
-	int ip;
 
 	status = omapi_data_string_new (&n, strlen (name), MDL);
 	if (status != ISC_R_SUCCESS)

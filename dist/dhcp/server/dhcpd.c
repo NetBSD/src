@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcpd.c,v 1.1.1.1 2001/08/03 11:35:41 drochner Exp $ Copyright 1995-2001 Internet Software Consortium.";
+"$Id: dhcpd.c,v 1.2 2002/06/10 00:30:37 itojun Exp $ Copyright 1995-2001 Internet Software Consortium.";
 #endif
 
   static char copyright[] =
@@ -226,9 +226,6 @@ int main (argc, argv, envp)
 	struct interface_info *ip;
 	struct parse *parse;
 	int lose;
-	omapi_object_t *auth;
-	struct tsig_key *key;
-	omapi_typed_data_t *td;
 	int no_dhcpd_conf = 0;
 	int no_dhcpd_db = 0;
 	int no_dhcpd_pid = 0;
@@ -979,7 +976,6 @@ int dhcpd_interface_setup_hook (struct interface_info *ip, struct iaddr *ia)
 	   necessary. */
 	if (!ia) {
 		const char *fnn = "fallback-net";
-		char *s;
 		status = shared_network_allocate (&ip -> shared_network, MDL);
 		if (status != ISC_R_SUCCESS)
 			log_fatal ("No memory for shared subnet: %s",

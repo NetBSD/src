@@ -163,7 +163,6 @@ isc_result_t omapi_protocol_send_message (omapi_object_t *po,
 	omapi_remote_auth_t *ra;
 	omapi_value_t *signature;
 	isc_result_t status;
-	u_int32_t foo;
 	unsigned auth_len;
 
 	if (po -> type != omapi_type_protocol ||
@@ -940,7 +939,6 @@ isc_result_t omapi_protocol_stuff_values (omapi_object_t *c,
 					  omapi_object_t *id,
 					  omapi_object_t *p)
 {
-	int i;
 
 	if (p -> type != omapi_type_protocol)
 		return ISC_R_INVALIDARG;
@@ -1128,7 +1126,6 @@ isc_result_t omapi_protocol_listener_stuff (omapi_object_t *c,
 					    omapi_object_t *id,
 					    omapi_object_t *p)
 {
-	int i;
 
 	if (p -> type != omapi_type_protocol_listener)
 		return ISC_R_INVALIDARG;

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: mdb.c,v 1.1.1.1 2001/08/03 11:35:42 drochner Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: mdb.c,v 1.2 2002/06/10 00:30:37 itojun Exp $ Copyright (c) 1996-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -255,7 +255,6 @@ isc_result_t delete_host (hd, commit)
 	struct host_decl *hp = (struct host_decl *)0;
 	struct host_decl *np = (struct host_decl *)0;
 	struct host_decl *foo;
-	struct executable_statement *esp;
 	int hw_head = 0, uid_head = 1;
 
 	/* Don't need to do it twice. */
@@ -386,7 +385,6 @@ int find_hosts_by_haddr (struct host_decl **hp, int htype,
 			 const unsigned char *haddr, unsigned hlen,
 			 const char *file, int line)
 {
-	struct host_decl *foo;
 	struct hardware h;
 
 	h.hlen = hlen + 1;
@@ -416,7 +414,6 @@ int find_host_for_network (struct subnet **sp, struct host_decl **host,
 			   struct iaddr *addr, struct shared_network *share)
 {
 	int i;
-	struct subnet *subnet;
 	struct iaddr ip_address;
 	struct host_decl *hp;
 	struct data_string fixed_addr;
@@ -464,12 +461,14 @@ void new_address_range (low, high, subnet, pool)
 	struct subnet *subnet;
 	struct pool *pool;
 {
-	struct lease *address_range, *lp, *plp;
+	struct lease *address_range;
 	struct iaddr net;
 	unsigned min, max, i;
 	char lowbuf [16], highbuf [16], netbuf [16];
 	struct shared_network *share = subnet -> shared_network;
+#if !defined (COMPACT_LEASES)
 	isc_result_t status;
+#endif
 	struct lease *lt = (struct lease *)0;
 
 	/* All subnets should have attached shared network structures. */
@@ -756,7 +755,6 @@ void enter_lease (lease)
 	struct lease *lease;
 {
 	struct lease *comp = (struct lease *)0;
-	isc_result_t status;
 
 	if (find_lease_by_ip_addr (&comp, lease -> ip_addr, MDL)) {
 		if (!comp -> pool) {
@@ -806,7 +804,6 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 	int enter_uid = 0;
 	int enter_hwaddr = 0;
 	struct lease *lp, **lq, *prev;
-	TIME lp_next_state;
 
 #if defined (FAILOVER_PROTOCOL)
 	/* We must commit leases before sending updates regarding them
@@ -1444,7 +1441,6 @@ void pool_timer (vpool)
 	void *vpool;
 {
 	struct pool *pool;
-	struct lease *lt = (struct lease *)0;
 	struct lease *next = (struct lease *)0;
 	struct lease *lease = (struct lease *)0;
 	struct lease **lptr [5];
@@ -1952,7 +1948,6 @@ void expire_all_pools ()
 {
 	struct shared_network *s;
 	struct pool *p;
-	struct hash_bucket *hb;
 	int i;
 	struct lease *l;
 	struct lease **lptr [5];

@@ -86,11 +86,9 @@ int main (int argc, char **argv, char **envp)
 	dhcpctl_handle connection;
 	dhcpctl_handle authenticator;
 	dhcpctl_handle oh;
-	dhcpctl_data_string cid, ip_addr;
-	dhcpctl_data_string result, groupname, identifier;
 	struct data_string secret;
 	const char *name = 0, *algorithm = "hmac-md5";
-	int i, j;
+	int i;
 	int port = 7911;
 	const char *server = "127.0.0.1";
 	struct parse *cfile;

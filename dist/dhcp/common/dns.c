@@ -42,7 +42,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dns.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dns.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -137,7 +137,6 @@ struct hash_table *dns_zone_hash;
 isc_result_t find_tsig_key (ns_tsig_key **key, const char *zname,
 			    struct dns_zone *zone)
 {
-	isc_result_t status;
 	ns_tsig_key *tkey;
 
 	if (!zone)
@@ -215,7 +214,6 @@ isc_result_t enter_dns_zone (struct dns_zone *zone)
 
 isc_result_t dns_zone_lookup (struct dns_zone **zone, const char *name)
 {
-	struct dns_zone *tz = (struct dns_zone *)0;
 	int len;
 	char *tname = (char *)0;
 	isc_result_t status;
@@ -251,7 +249,6 @@ int dns_zone_dereference (ptr, file, line)
 	const char *file;
 	int line;
 {
-	int i;
 	struct dns_zone *dns_zone;
 
 	if (!ptr || !*ptr) {
@@ -416,9 +413,7 @@ void repudiate_zone (struct dns_zone **zone)
 void cache_found_zone (ns_class class,
 		       char *zname, struct in_addr *addrs, int naddrs)
 {
-	isc_result_t status = ISC_R_NOTFOUND;
 	struct dns_zone *zone = (struct dns_zone *)0;
-	struct data_string nsaddrs;
 	int ix = strlen (zname);
 
 	if (zname [ix - 1] == '.')

@@ -51,7 +51,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: socket.c,v 1.2 2002/06/02 15:17:18 itojun Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: socket.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -64,7 +64,13 @@ static char copyright[] =
 # endif
 #endif
 
+#if defined (USE_SOCKET_SEND) || defined (USE_SOCKET_FALLBACK)
+#if 0
+#ifndef USE_SOCKET_RECEIVE
 static int once = 0;
+#endif
+#endif
+#endif
 
 /* Reinitializes the specified interface after an address change.   This
    is not required for packet-filter APIs. */

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.1.1.1 2001/08/03 11:35:41 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.2 2002/06/10 00:30:37 itojun Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -337,15 +337,12 @@ int parse_statement (cfile, group, type, host_decl, declaration)
 	enum dhcp_token token;
 	const char *val;
 	struct shared_network *share;
-	char *t, *n;
-	struct expression *expr;
-	struct data_string data;
+	char *n;
 	struct hardware hardware;
 	struct executable_statement *et, *ep;
 	struct option *option;
 	struct option_cache *cache;
 	int lose;
-	struct data_string key_id;
 	int known;
 	isc_result_t status;
 
@@ -912,7 +909,6 @@ void parse_failover_peer (cfile, group, type)
 					    "load balance settings.");
 			if (token != NUMBER) {
 				parse_warn (cfile, "expecting number");
-			      badsplit:
 				skip_to_rbrace (cfile, 1);
 				dhcp_failover_state_dereference (&peer, MDL);
 				return;
@@ -1693,7 +1689,6 @@ int parse_class_declaration (cp, cfile, group, type)
 	char *name;
 	const char *tname;
 	struct executable_statement *stmt = (struct executable_statement *)0;
-	struct expression *expr;
 	int new = 1;
 	isc_result_t status;
 
@@ -2106,7 +2101,6 @@ void parse_subnet_declaration (cfile, share)
 	unsigned char addr [4];
 	unsigned len = sizeof addr;
 	int declaration = 0;
-	struct interface_info *ip;
 	isc_result_t status;
 
 	subnet = (struct subnet *)0;
@@ -2396,8 +2390,6 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 	char tbuf [32];
 	struct lease *lease;
 	struct executable_statement *on;
-	struct expression *exp;
-	struct data_string ds;
 	int lose;
 	TIME t;
 	char *s;
@@ -2813,7 +2805,6 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 
 			token = peek_token (&val, (unsigned *)0, cfile);
 			if (token == STRING) {
-			    unsigned char *tuid;
 			    token = next_token (&val, &buflen, cfile);
 			    binding -> value -> type = binding_data;
 			    binding -> value -> value.data.len = buflen;
@@ -2969,7 +2960,6 @@ void parse_address_range (cfile, group, type, inpool)
 	int dynamic = 0;
 	struct subnet *subnet;
 	struct shared_network *share;
-	struct pool *p;
 	struct pool *pool;
 	isc_result_t status;
 

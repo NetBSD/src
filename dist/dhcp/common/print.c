@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: print.c,v 1.2 2001/08/03 13:07:04 drochner Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: print.c,v 1.3 2002/06/10 00:30:34 itojun Exp $ Copyright (c) 1995-2001 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1020,7 +1020,6 @@ int token_print_indent_concat (FILE *file, int col,  int indent,
 			       const char *suffix, ...)
 {
 	va_list list;
-	char *buf;
 	unsigned len;
 	char *s, *t, *u;
 
@@ -1058,7 +1057,6 @@ int token_indent_data_string (FILE *file, int col, int indent,
 			      struct data_string *data)
 {
 	int i;
-	char *buf;
 	char obuf [3];
 
 	/* See if this is just ASCII. */
