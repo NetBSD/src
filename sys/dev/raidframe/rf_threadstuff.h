@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_threadstuff.h,v 1.6 2000/01/05 02:57:28 oster Exp $	*/
+/*	$NetBSD: rf_threadstuff.h,v 1.7 2000/01/09 01:34:29 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -181,6 +181,6 @@ int
 _rf_create_managed_cond(RF_ShutdownList_t ** listp, int *,
     char *file, int line);
 
-int     rf_cond_init(int *c);	/* XXX need to write?? */
-int     rf_cond_destroy(int *c);/* XXX need to write?? */
+int     rf_cond_init(int *c);
+int     rf_cond_destroy(int *c);
 #endif				/* !_RF__RF_THREADSTUFF_H_ */
