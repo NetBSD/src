@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.280 2004/06/18 09:22:26 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.281 2004/06/18 10:08:47 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3326,7 +3326,7 @@ sys/netinet/ip_nat.c				1.57-1.59
 sys/netinet/ip_nat.h				1.32
 sys/netinet/ip_state.c				1.45
 
-	Fix various bugs in IP Filter including PRs 21334, 24961, 24969,
+	Fix various bugs in IPFilter including PRs 21334, 24961, 24969,
 	24981, 25103, 25122, 25332, 25365, 25441, 25532, 25594, 25622
 	and 25646.
 	[christos, ticket #416]
@@ -4033,4 +4033,17 @@ bin/pax/tar.c					1.54-1.56 via patch
 	Fix PR bin/25934: pax creates broken tar archives if they contain files
 	with multiple hardlinks and at least one filename >=100 chars long.
 	[dillo, ticket #507]
+
+usr.bin/gzip/gzip.c				1.47-1.49
+
+	Fix various bugs in gzip(1) including PRs bin/25824 and bin/25843.
+	[mrg, ticket #508]
+
+usr.sbin/racoon/libpfkey/Makefile		patched by hand
+
+	Backout revision 1.4.2.1 from ticket #505:
+	MKPRIVATELIB was added to current after 2.0 branch. As is this
+	Makefile installs the private libpfkey libs in DESTDIR which breaks
+	the set list.
+	[seb, ticket #509]
 
