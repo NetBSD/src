@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2003/04/11 06:24:59 simonb Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 2003/05/14 10:09:49 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2003/04/11 06:24:59 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2003/05/14 10:09:49 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,8 +335,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map,
 		p = uio->uio_procp;
 #ifdef DIAGNOSTIC
 		if (p == NULL)
-			panic("_bus_dmamap_load_uio: "
-			    "USERSPACE but no proc");
+			panic("_bus_dmamap_load_uio: USERSPACE but no proc");
 #endif
 	}
 
@@ -694,7 +693,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, caddr_t kva, size_t size)
 
 #ifdef DIAGNOSTIC
 	if ((u_long)kva & PGOFSET)
-		panic("_bus_dmamem_unmap");
+		panic("_bus_dmamem_unmap: bad alignment on %p", kva);
 #endif
 
 	/*
