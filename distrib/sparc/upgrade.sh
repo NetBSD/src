@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: upgrade.sh,v 1.2 1995/10/31 23:24:33 pk Exp $
+#	$NetBSD: upgrade.sh,v 1.3 1995/11/01 21:10:41 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe.
 # All rights reserved.
@@ -628,27 +628,53 @@ __install_tape_2
 }
 
 get_timezone() {
+	local _a
 cat << \__get_timezone_1
 
-Select a time zone:
+Select a time zone for your location. Timezones are represented on the
+system by a directory structure rooted in "/usr/share/timezone". Most
+timezones can be selected by entering a token like "MET" or "GMT-6".
+Other zones are grouped by continent, with detailed zone information
+separated by a slash ("/"), e.g. "US/Pacific".
+
+To get a listing of what's available in /usr/share/timezone, enter "?"
+at the first prompt below.
 
 __get_timezone_1
-	ls /usr/share/zoneinfo	#XXX
-	echo	""
 	if [ X$TZ = X ]; then
-		TZ=`ls -l /etc/timezone 2>/dev/null | awk -F/ '{print $NF}'`
+		TZ=`ls -l /etc/timezone 2>/dev/null | awk '{print $NF}' |
+			sed -e 's?/usr/share/timezone/??'`
 	fi
-	echo -n	"What timezone are you in [$TZ]? "
-	getresp "$TZ"
-	case "$resp" in
-	"")
-		echo "Timezone defaults to GMT"
-		TZ="GMT"
-		;;
-	*)
-		TZ="$resp"
-		;;
-	esac
+	while :; do
+		echo -n	"What timezone are you in [$TZ]? "
+		getresp "$TZ"
+		case "$resp" in
+		"")
+			echo "Timezone defaults to GMT"
+			TZ="GMT"
+			break;
+			;;
+		"?")
+			ls /usr/share/zoneinfo
+			;;
+		*)
+			_a=$resp
+			if [ -d /usr/share/zoneinfo/$_a ]; then
+				echo -n "There are several timezones available"
+				echo " within '$_a'"
+				echo -n "Select a sub-timezone: "
+				getresp ""
+				_a=${_a}/${resp}
+			fi
+			if [ -f /usr/share/zoneinfo/$_a ]; then
+				TZ="$_a"
+				echo "You have selected timezone "$_a".
+				break 2
+			fi
+			echo "'/usr/share/zoneinfo/$_a' is not a valid timezone on this system."
+			;;
+		esac
+	done
 }
 
 echo	""
