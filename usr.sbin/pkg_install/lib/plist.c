@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.5 1997/10/17 14:54:47 lukem Exp $	*/
+/*	$NetBSD: plist.c,v 1.6 1997/10/18 11:06:02 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.5 1997/10/17 14:54:47 lukem Exp $");
+__RCSID("$NetBSD: plist.c,v 1.6 1997/10/18 11:06:02 lukem Exp $");
 #endif
 #endif
 
@@ -156,7 +156,7 @@ new_plist_entry(void)
     PackingList ret;
 
     ret = (PackingList)malloc(sizeof(struct _plist));
-    bzero(ret, sizeof(struct _plist));
+    memset(ret, 0, sizeof(struct _plist));
     return ret;
 }
 
@@ -495,7 +495,7 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
     if (!nukedirs)
 	return 0;
     while (cp2) {
-	if ((cp2 = rindex(cp1, '/')) != NULL)
+	if ((cp2 = strrchr(cp1, '/')) != NULL)
 	    *cp2 = '\0';
 	if (!isemptydir(dir))
 	    return 0;

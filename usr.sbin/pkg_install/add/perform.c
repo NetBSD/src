@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.7 1997/10/17 14:53:40 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.8 1997/10/18 11:05:38 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.7 1997/10/17 14:53:40 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.8 1997/10/18 11:05:38 lukem Exp $");
 #endif
 #endif
 
@@ -376,7 +376,7 @@ pkg_do(char *pkg)
 	if (make_hierarchy(LogDir)) {
 	    warnx("can't record package into '%s', you're on your own!",
 		   LogDir);
-	    bzero(LogDir, FILENAME_MAX);
+	    memset(LogDir, 0, FILENAME_MAX);
 	    code = 1;
 	    goto success;	/* close enough for government work */
 	}

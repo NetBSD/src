@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.5 1997/10/17 14:53:52 lukem Exp $	*/
+/*	$NetBSD: perform.c,v 1.6 1997/10/18 11:05:45 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.38 1997/10/13 15:03:51 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.5 1997/10/17 14:53:52 lukem Exp $");
+__RCSID("$NetBSD: perform.c,v 1.6 1997/10/18 11:05:45 lukem Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ pkg_perform(char **pkgs)
     plist.head = plist.tail = NULL;
 
     /* Break the package name into base and desired suffix (if any) */
-    if ((cp = rindex(pkg, '.')) != NULL) {
+    if ((cp = strrchr(pkg, '.')) != NULL) {
 	suffix = cp + 1;
 	*cp = '\0';
     }
@@ -214,7 +214,7 @@ make_dist(char *home, char *pkg, char *suffix, Package *plist)
     args[nargs++] = "-c";
     args[nargs++] = "-f";
     args[nargs++] = tball;
-    if (index(suffix, 'z'))	/* Compress/gzip? */
+    if (strchr(suffix, 'z'))	/* Compress/gzip? */
 	args[nargs++] = "-z";
     if (Dereference)
 	args[nargs++] = "-h";

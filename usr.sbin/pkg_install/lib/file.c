@@ -1,11 +1,11 @@
-/*	$NetBSD: file.c,v 1.6 1997/10/17 14:54:29 lukem Exp $	*/
+/*	$NetBSD: file.c,v 1.7 1997/10/18 11:05:51 lukem Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: file.c,v 1.29 1997/10/08 07:47:54 charnier Exp";
 #else
-__RCSID("$NetBSD: file.c,v 1.6 1997/10/17 14:54:29 lukem Exp $");
+__RCSID("$NetBSD: file.c,v 1.7 1997/10/18 11:05:51 lukem Exp $");
 #endif
 #endif
 
@@ -468,10 +468,10 @@ unpack(char *pkg, char *flist)
      * compressed.
      */
     if (strcmp(pkg, "-")) {
-	cp = rindex(pkg, '.');
+	cp = strrchr(pkg, '.');
 	if (cp) {
 	    strcpy(suffix, cp + 1);
-	    if (index(suffix, 'z') || index(suffix, 'Z'))
+	    if (strchr(suffix, 'z') || strchr(suffix, 'Z'))
 		strcpy(args, "-z");
 	}
     }
