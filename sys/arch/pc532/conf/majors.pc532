@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pc532,v 1.4 2003/04/25 21:11:00 ragge Exp $
+#	$NetBSD: majors.pc532,v 1.5 2003/07/27 14:18:24 itojun Exp $
 #
 # Device majors for pc532
 #
@@ -35,3 +35,4 @@ device-major	clockctl	char 32			clockctl
 device-major	systrace	char 33			systrace
 device-major	cgd		char 34  block 14	cgd
 device-major	ksyms		char 35			ksyms
+device-major	pf		char 36			pf

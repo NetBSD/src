@@ -1,4 +1,4 @@
-#	$NetBSD: majors.algor,v 1.4 2003/04/25 21:10:47 ragge Exp $
+#	$NetBSD: majors.algor,v 1.5 2003/07/27 14:18:15 itojun Exp $
 #
 # Device majors for algor
 #
@@ -67,3 +67,4 @@ device-major	clockctl	char 66			clockctl
 device-major	systrace	char 67			systrace
 device-major	cgd		char 68  block 18	cgd
 device-major	ksyms		char 69			ksyms
+device-major	pf		char 70			pf
