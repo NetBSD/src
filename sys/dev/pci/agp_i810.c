@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.6 2001/09/15 00:25:00 thorpej Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.7 2001/09/15 13:01:45 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -134,6 +134,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	error = agp_map_aperture(&isc->vga_pa, sc);
 	if (error != 0) {
+		printf(": can't map aperture\n");
 		free(isc, M_AGP);
 		return error;
 	}
