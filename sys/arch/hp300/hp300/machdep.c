@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 2002/09/25 19:30:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.163 2002/09/25 20:05:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2002/09/25 19:30:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2002/09/25 20:05:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -415,6 +415,9 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/* Safe to use malloc for extio_ex now. */
+	extio_ex_malloc_safe = 1;
 }
 
 /*
