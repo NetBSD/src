@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.117 2003/02/21 05:37:51 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.118 2003/02/23 08:02:08 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3738,3 +3738,12 @@ share/mk/bsd.own.mk				1.304-1.305
 	[jmc, ticket #1178]
 
 Moved RC2 tag for these last 2 files.
+
+sbin/fsck_ffs/setup.c				1.57
+
+	Only check relevant fields when comparing the superblock to an 
+	alternate superblock. Avoids false positives should fsck_ffs be run 
+	on a filesystem that was created after the UFS2 code has been merged.
+	[fvdl, ticket #1180]
+
+Moved RC2 tag for this file.
