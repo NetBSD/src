@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.14 2003/04/23 19:36:12 nathanw Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.15 2003/05/16 21:28:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.14 2003/04/23 19:36:12 nathanw Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.15 2003/05/16 21:28:26 nathanw Exp $");
 
 #include <errno.h>
 #include <limits.h>
@@ -334,8 +334,12 @@ pthread_mutex_unlock(pthread_mutex_t *mutex)
 		if (!weown)
 			return EPERM;
 	default:
-		pthread__error(EPERM,
-		    "Unlocking mutex owned by another thread", weown);
+		if (__predict_false(!weown)) {
+			pthread__error(EPERM, "Unlocking unlocked mutex",
+			    (mutex->ptm_owner != 0));
+			pthread__error(EPERM,
+			    "Unlocking mutex owned by another thread", weown);
+		}
 		break;
 	}
 
