@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.213 2002/09/18 02:43:54 lukem Exp $
+# $NetBSD: GENERIC,v 1.214 2002/09/24 09:34:39 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -25,7 +25,7 @@ include		"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.213 $"
+#ident 		"GENERIC-$Revision: 1.214 $"
 
 maxusers 32
 
@@ -76,9 +76,10 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 file-system	PROCFS		# Process file system (/proc)
 
 # File system options
-options 	NFSSERVER	# Sun NFS-compatible file system server
+options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
 options 	SOFTDEP		# FFS soft updates support.
+options 	NFSSERVER	# Sun NFS-compatible file system server
 
 # Networking options
 options 	INET		# Internet protocol suite
