@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.2 1994/11/20 20:52:59 deraadt Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.3 1995/02/09 10:34:21 pk Exp $ */
 
 /* 
  * Mach Operating System
@@ -43,17 +43,22 @@
 #include <machine/trap.h>
 #include <machine/reg.h>
 
-#define sparc_saved_state trapframe
 /* end of mangling */
 
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
 
-typedef struct sparc_saved_state db_regs_t;
-db_regs_t	ddb_regs;	/* register state */
-#define	DDB_REGS	(&ddb_regs)
+typedef struct {
+	struct trapframe ddb_tf;
+	struct frame	 ddb_fr;
+} db_regs_t;
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
+db_regs_t		ddb_regs;	/* register state */
+#define	DDB_REGS	(&ddb_regs)
+#define	DDB_TF		(&ddb_regs.ddb_tf)
+#define	DDB_FR		(&ddb_regs.ddb_fr)
+
+#define	PC_REGS(regs)	((db_addr_t)(regs)->ddb_tf.tf_pc)
 
 #define	BKPT_INST	0x91d02001	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
