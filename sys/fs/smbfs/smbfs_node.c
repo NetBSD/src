@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.13 2003/02/25 09:09:31 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.14 2003/02/27 09:14:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.13 2003/02/25 09:09:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.14 2003/02/27 09:14:26 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,12 +319,13 @@ smbfs_attr_cachelookup(struct vnode *vp, struct vattr *va)
 {
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
-	int s, diff;
+	int s;
+	time_t diff;
 
 	s = splclock();
 	diff = mono_time.tv_sec - np->n_attrage;
 	splx(s);
-	if (diff > 2)	/* XXX should be configurable */
+	if (diff > SMBFS_ATTRTIMO)	/* XXX should be configurable */
 		return ENOENT;
 
 	va->va_type = vp->v_type;		/* vnode type (for create) */
