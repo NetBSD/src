@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.13 2002/03/27 01:34:48 thorpej Exp $	*/
+/*	$NetBSD: armreg.h,v 1.14 2002/04/03 19:57:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -206,7 +206,38 @@
 
 /*
  * Post-ARM3 CP15 registers:
+ *
+ *	1	Control register
+ *
+ *	2	Translation Table Base
+ *
+ *	3	Domain Access Control
+ *
+ *	4	Reserved
+ *
+ *	5	Fault Status
+ *
+ *	6	Fault Address
+ *
+ *	7	Cache/write-buffer Control
+ *
+ *	8	TLB Control
+ *
+ *	9	Cache Lockdown
+ *
+ *	10	TLB Lockdown
+ *
+ *	11	Reserved
+ *
+ *	12	Reserved
+ *
+ *	13	Process ID (for FCSE)
+ *
+ *	14	Reserved
+ *
+ *	15	Implementation Dependent
  */
+
 /* Some of the definitions below need cleaning up for V3/V4 architectures */
 
 /* CPU control register (CP15 register 1) */
