@@ -1,4 +1,4 @@
-/*	$NetBSD: tcsendbreak.c,v 1.4 1998/03/31 09:50:01 kleink Exp $	*/
+/*	$NetBSD: tcsendbreak.c,v 1.5 1998/11/15 17:11:48 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termios.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: tcsendbreak.c,v 1.4 1998/03/31 09:50:01 kleink Exp $");
+__RCSID("$NetBSD: tcsendbreak.c,v 1.5 1998/11/15 17:11:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,17 +54,16 @@ __RCSID("$NetBSD: tcsendbreak.c,v 1.4 1998/03/31 09:50:01 kleink Exp $");
 __weak_alias(tcsendbreak,_tcsendbreak);
 #endif
 
+/*ARGSUSED*/
 int
 tcsendbreak(fd, len)
 	int fd, len;
 {
-	struct timeval sleepytime;
+	static const struct timespec sleepytime = { 0, 400000000 };
 
-	sleepytime.tv_sec = 0;
-	sleepytime.tv_usec = 400000;
 	if (ioctl(fd, TIOCSBRK, 0) == -1)
 		return (-1);
-	(void)select(0, 0, 0, 0, &sleepytime);
+	(void)nanosleep(&sleepytime, NULL);
 	if (ioctl(fd, TIOCCBRK, 0) == -1)
 		return (-1);
 	return (0);
