@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.4 1999/04/12 00:24:17 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ kthread_create(func, arg, newpp, fmt, va_alist)
 
 	/* Name it as specified. */
 	va_start(ap, fmt);
-	vsprintf(p2->p_comm, fmt, ap);
+	vsnprintf(p2->p_comm, MAXCOMLEN, fmt, ap);
 	va_end(ap);
 
 	/* Arrange for it to start at the specified function. */
