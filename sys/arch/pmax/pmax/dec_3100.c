@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.5 1998/07/21 17:36:04 drochner Exp $	*/
+/*	$NetBSD: dec_3100.c,v 1.6 1998/09/05 04:11:04 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -93,25 +93,11 @@
 
 #include <pmax/pmax/kn01.h>
 
-
-struct ethercom;
-struct ifmedia;
-struct ifmediareq;
-struct ifnet;
-
-#include <sys/socket.h>		/* struct socket, for... */
-#include <net/if.h>		/* struct if socket, for... */
-#include <net/if_ether.h>	/* ethercom */
-#include <net/if_media.h>	/* ifmedia requests for am7990 */
-#include <dev/ic/lancevar.h>
-#include <dev/ic/am7990var.h>	/* all this to get lance intr */
-
 #include <pmax/ibus/ibusvar.h>
 
 #include "dc_ds.h"
 #include "le_pmax.h"
 #include "sii.h"
-
 
 void		dec_3100_init __P((void));
 void		dec_3100_os_init __P((void));
@@ -225,24 +211,6 @@ dec_3100_enable_intr(slotno, handler, sc, on)
 	}
 }
 
-
-
-/*
- *  The pmax (3100) has no option bus. Each device is wired to
- * a separate interrupt.  For historical reasons, we call interrupt
- * routines directly, if they're enabled.
- */
-
-#if NLE > 0
-int leintr __P((void *));
-#endif
-#if NSII > 0
-int siiintr __P((void *));
-#endif
-#if NDC_DS > 0
-int dcintr __P((void *));
-#endif
-
 /*
  * Handle pmax (DECstation 2100/3100) interrupts.
  */
@@ -253,8 +221,6 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 	unsigned statusReg;
 	unsigned causeReg;
 {
-	extern struct cfdriver sii_cd;		/* XXX XXX XXX */
-	extern struct cfdriver dc_cd;		/* XXX XXX XXX */
 	register volatile struct chiptime *c = 
 	    (volatile struct chiptime *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
 	struct clockframe cf;
@@ -278,7 +244,7 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 #if NSII > 0
 	if (mask & MIPS_INT_MASK_0) {
 		intrcnt[SCSI_INTR]++;
-		siiintr(sii_cd.cd_devs[0]);
+		(*tc_slot_info[3].intr)(tc_slot_info[3].sc);
 	}
 #endif /* NSII */
 
@@ -290,14 +256,14 @@ dec_3100_intr(mask, pc, statusReg, causeReg)
 		 * manipulating if queues should have called splimp(),
 		 * which would mask out MIPS_INT_MASK_1.
 		 */
-		am7990_intr(tc_slot_info[1].sc);
+		(*tc_slot_info[2].intr)(tc_slot_info[2].sc);
 		intrcnt[LANCE_INTR]++;
 	}
 #endif /* NLE_PMAX */
 
 #if NDC_DS > 0
 	if (mask & MIPS_INT_MASK_2) {
-		dcintr(dc_cd.cd_devs[0]);
+		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
 		intrcnt[SERIAL0_INTR]++;
 	}
 #endif /* NDC_DS */
