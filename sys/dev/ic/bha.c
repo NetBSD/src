@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.55 2003/10/31 13:43:15 reinoud Exp $	*/
+/*	$NetBSD: bha.c,v 1.56 2003/10/31 14:26:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.55 2003/10/31 13:43:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bha.c,v 1.56 2003/10/31 14:26:06 reinoud Exp $");
 
 #include "opt_ddb.h"
 
@@ -780,7 +780,7 @@ bha_cmd(iot, ioh, name, icnt, ibuf, ocnt, obuf)
 {
 	int i;
 	int wait;
-	u_char sts = 0;
+	u_char sts;
 	u_char opcode = ibuf[0];
 
 	/*

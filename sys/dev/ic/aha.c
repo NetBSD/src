@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.41 2003/10/31 13:43:15 reinoud Exp $	*/
+/*	$NetBSD: aha.c,v 1.42 2003/10/31 14:26:06 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.41 2003/10/31 13:43:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha.c,v 1.42 2003/10/31 14:26:06 reinoud Exp $");
 
 #include "opt_ddb.h"
 
@@ -147,7 +147,7 @@ aha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	const char *name;
 	int i;
 	int wait;
-	u_char sts = 0;
+	u_char sts;
 	u_char opcode = ibuf[0];
 
 	if (sc != NULL)
