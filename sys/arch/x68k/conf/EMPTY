@@ -1,18 +1,18 @@
-#	$NetBSD: EMPTY,v 1.4 1997/01/31 02:14:21 thorpej Exp $
+#	$NetBSD: EMPTY,v 1.5 1997/05/08 16:39:36 oki Exp $
 
 #
 #	EMPTY
 #
 
 #--- from std.x68k
-#	$NetBSD: EMPTY,v 1.4 1997/01/31 02:14:21 thorpej Exp $
+#	$NetBSD: EMPTY,v 1.5 1997/05/08 16:39:36 oki Exp $
 #
 # standard x68k information
 #
 
 machine x68k m68k
 
-options		MACHINE_NONCONTIG	# Non-contiguous memory support
+options 	MACHINE_NONCONTIG	# Non-contiguous memory support
 
 mainbus0	at root
 
@@ -43,7 +43,7 @@ cd*	at scsibus? target ? lun ?
 maxusers	8
 
 # different CPU types; you must have at least the correct one; REQUIRED
-options		"M68040"
+options 	"M68040"
 
 # set to indicate RTC is offset from GMT
 options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
@@ -61,12 +61,12 @@ options 	FIFO			# FIFOs; RECOMMENDED
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
-options		COMPAT_12
+options 	COMPAT_12
 
 # file system options
 file-system	FFS			# Berkeley fast file system
 
-options		FASTLINKS		# fast symbolic links in FFS
+options 	FASTLINKS		# fast symbolic links in FFS
 
 # networking options
 options 	INET			# IP
@@ -74,7 +74,7 @@ options 	INET			# IP
 # Options specific to this host.
 options 	DEBUG			# extra kernel debugging support
 options 	FPSP			# floating point emulation for MC68040
-options		ITEKANJI		# Kanji display for console
+options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
 options 	"EIOMAPSIZE=0"		# do not map PCI address space
 

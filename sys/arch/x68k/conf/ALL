@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.13 1997/02/25 17:49:46 oki Exp $
+#	$NetBSD: ALL,v 1.14 1997/05/08 16:39:35 oki Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -7,12 +7,12 @@
 # architecture type and name of kernel; REQUIRED
 machine		x68k m68k
 
-options		EXEC_SCRIPT		# Support #!
-options		EXEC_AOUT		# a.out format executables
+options 	EXEC_SCRIPT		# Support #!
+options 	EXEC_AOUT		# a.out format executables
 
 # different CPU types; you must have at least the correct one; REQUIRED
-options		M68030
-options		M68040
+options 	M68030
+options 	M68040
 options 	M68060
 
 # set to indicate RTC is offset from GMT
@@ -43,7 +43,7 @@ options 	COMPAT_44		# compatibility with 4.4BSD binaries
 options 	COMPAT_09		# compatibility with NetBSD 0.9
 options 	COMPAT_10		# compatibility with NetBSD 1.0
 options 	COMPAT_11		# compatibility with NetBSD 1.1
-options		COMPAT_12		# compatibility with NetBSD 1.2
+options 	COMPAT_12		# compatibility with NetBSD 1.2
 options 	COMPAT_M68K4K		# NetBSD/m68k4k binaries
 options 	TCP_COMPAT_42		# compatibility with 4.2BSD TCP/IP
 
