@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 1998/04/26 22:37:21 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.17 1998/06/03 06:33:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -889,6 +889,16 @@ typedef struct i386_bus_dma_segment	bus_dma_segment_t;
  */
 
 struct i386_bus_dma_tag {
+	/*
+	 * The `bounce threshold' is checked while we are loading
+	 * the DMA map.  If the physical address of the segment
+	 * exceeds the threshold, an error will be returned.  The
+	 * caller can then take whatever action is necessary to
+	 * bounce the transfer.  If this value is 0, it will be
+	 * ignored.
+	 */
+	bus_addr_t _bounce_thresh;
+
 	/*
 	 * DMA mapping methods.
 	 */
