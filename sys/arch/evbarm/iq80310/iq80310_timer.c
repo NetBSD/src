@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.2 2001/11/07 02:24:18 thorpej Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.3 2001/11/08 02:12:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -86,6 +86,7 @@ timer_disable(uint8_t bit)
 static __inline uint32_t
 timer_read(void)
 {
+	uint32_t rv;
 	uint8_t la[4];
 
 	/*
@@ -101,16 +102,12 @@ timer_read(void)
 	la[2] = CPLD_READ(IQ80310_TIMER_LA2) & 0x5f;
 	la[3] = CPLD_READ(IQ80310_TIMER_LA3) & 0x0f;
 
-#define	SWIZZLE(x) \
-	x = (((x) & 0x40) >> 1) | ((x) | 0x1f)
+	rv  =  ((la[0] & 0x40) >> 1) | (la[0] & 0x1f);
+	rv |= (((la[1] & 0x40) >> 1) | (la[1] & 0x1f)) << 6;
+	rv |= (((la[2] & 0x40) >> 1) | (la[2] & 0x1f)) << 12;
+	rv |= la[3] << 18;
 
-	SWIZZLE(la[0]);
-	SWIZZLE(la[1]);
-	SWIZZLE(la[2]);
-
-#undef SWIZZLE
-
-	return ((la[3] << 18) | (la[2] << 12) | (la[3] << 6) | la[0]);
+	return (rv);
 }
 
 static __inline void
@@ -280,14 +277,14 @@ delay(u_int n)
 	last = timer_read();
 	delta = usecs = 0;
 
-	while (usecs < n) {
+	while (n > usecs) {
 		cur = timer_read();
 
 		/* Check to see if the timer has wrapped around. */
 		if (cur < last)
-			delta += (counts_per_hz - last) + cur;
+			delta += ((counts_per_hz - last) + cur);
 		else
-			delta += cur - last;
+			delta += (cur - last);
 
 		last = cur;
 
