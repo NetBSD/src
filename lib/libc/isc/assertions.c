@@ -1,4 +1,4 @@
-/*	$NetBSD: assertions.c,v 1.1.1.1 2004/05/20 19:34:32 christos Exp $	*/
+/*	$NetBSD: assertions.c,v 1.2 2004/05/20 19:52:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,13 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(LINT) && !defined(CODECENTER)
+#include <sys/cdefs.h>
+#if !defined(LINT) && !defined(CODECENTER) && !defined(lint)
+#ifdef notdef
 static const char rcsid[] = "Id: assertions.c,v 1.1.206.1 2004/03/09 08:33:39 marka Exp";
+#else
+__RCSID("$NetBSD: assertions.c,v 1.2 2004/05/20 19:52:31 christos Exp $");
+#endif
 #endif
 
 #include "port_before.h"

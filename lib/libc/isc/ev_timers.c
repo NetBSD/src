@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.1.1.1 2004/05/20 19:34:32 christos Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.2 2004/05/20 19:52:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -21,8 +21,13 @@
  * vix 09sep95 [initial]
  */
 
-#if !defined(LINT) && !defined(CODECENTER)
+#include <sys/cdefs.h>
+#if !defined(LINT) && !defined(CODECENTER) && !defined(lint)
+#ifdef notdef
 static const char rcsid[] = "Id: ev_timers.c,v 1.2.2.1.4.5 2004/03/17 02:39:13 marka Exp";
+#else
+__RCSID("$NetBSD: ev_timers.c,v 1.2 2004/05/20 19:52:31 christos Exp $");
+#endif
 #endif
 
 /* Import. */
@@ -45,6 +50,7 @@ static const char rcsid[] = "Id: ev_timers.c,v 1.2.2.1.4.5 2004/03/17 02:39:13 m
 
 /* Forward. */
 
+#ifndef _LIBC
 static int due_sooner(void *, void *);
 static void set_index(void *, int);
 static void free_timer(void *, void *);
@@ -60,6 +66,7 @@ typedef struct {
 	struct timespec	max_idle;
 	evTimer *	timer;
 } idle_timer;
+#endif
 
 /* Public. */
 
@@ -123,12 +130,12 @@ evNowTime() {
 		return (tsnow);
 #endif
 	if (gettimeofday(&now, NULL) < 0)
-		return (evConsTime(0, 0));
+		return (evConsTime(0L, 0L));
 	return (evTimeSpec(now));
 }
 
 struct timespec
-evUTCTime() {
+evUTCTime(void) {
 	struct timeval now;
 #ifdef CLOCK_REALTIME
 	struct timespec tsnow;
@@ -136,16 +143,18 @@ evUTCTime() {
 		return (tsnow);
 #endif
 	if (gettimeofday(&now, NULL) < 0)
-		return (evConsTime(0, 0));
+		return (evConsTime(0L, 0L));
 	return (evTimeSpec(now));
 }
 
+#ifndef _LIBC
 struct timespec
 evLastEventTime(evContext opaqueCtx) {
 	evContext_p *ctx = opaqueCtx.opaque;
 
 	return (ctx->lastEventTime);
 }
+#endif
 
 struct timespec
 evTimeSpec(struct timeval tv) {
@@ -165,6 +174,7 @@ evTimeVal(struct timespec ts) {
 	return (tv);
 }
 
+#ifndef _LIBC
 int
 evSetTimer(evContext opaqueCtx,
 	   evTimerFunc func,
@@ -440,11 +450,11 @@ due_sooner(void *a, void *b) {
 }
 
 static void
-set_index(void *what, int index) {
+set_index(void *what, int idx) {
 	evTimer *timer;
 
 	timer = what;
-	timer->index = index;
+	timer->index = idx;
 }
 
 static void
@@ -490,10 +500,11 @@ idle_timeout(evContext opaqueCtx,
 		 * Setting the interval to zero will cause the timer to
 		 * be cleaned up in evDrop().
 		 */
-		this->timer->inter = evConsTime(0, 0);
+		this->timer->inter = evConsTime(0L, 0L);
 		FREE(this);
 	} else {
 		/* evDrop() will reschedule the timer. */
 		this->timer->inter = evSubTime(this->max_idle, idle);
 	}
 }
+#endif
