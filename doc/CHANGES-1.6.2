@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.207 2003/10/22 03:50:05 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.208 2003/10/22 04:06:02 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2572,3 +2572,15 @@ sys/compat/linux/common/linux_misc.c		1.115
 
 	Don't allow non-page-aligned offsets.
 	[tv, ticket #1426]
+
+src/sys/compat/linux/arch/arm/syscalls.master	1.13
+src/sys/compat/linux/arch/i386/syscalls.master	1.65
+src/sys/compat/linux/arch/m68k/syscalls.master	1.41
+src/sys/compat/linux/arch/mips/syscalls.master	1.11
+src/sys/compat/linux/common/linux_misc.c	1.118 (hand patched)
+src/sys/compat/linux/common/linux_mmap.h	1.15 (hand patched)
+
+	Proper support for mmap2.
+	[tv, ticket #1427]
+
+
