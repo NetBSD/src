@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2000/04/19 15:56:27 tsubai Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 2000/08/22 11:48:23 tsubai Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -281,6 +281,7 @@ static int chrtoblktbl[] = {
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
+	/* 51 */	NODEV,
 };
 
 /*
