@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.18 1995/06/02 18:38:57 mycroft Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.19 1995/06/02 18:49:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -1584,7 +1584,7 @@ nfs_getreq(nd, has_header)
 				nd->nd_cr.cr_groups[i] = fxdr_unsigned(gid_t, *tl++);
 			else
 				tl++;
-		nd->nd_cr.cr_ngroups = (len >= NGROUPS) ? NGROUPS : (len + 1);
+		nd->nd_cr.cr_ngroups = (len > NGROUPS) ? NGROUPS : len;
 	} else if (auth_type == rpc_auth_kerb) {
 		nd->nd_cr.cr_uid = fxdr_unsigned(uid_t, *tl++);
 		nd->nd_authlen = fxdr_unsigned(int, *tl);
