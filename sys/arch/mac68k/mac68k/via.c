@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.53 1996/10/29 05:33:37 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.54 1996/11/02 07:18:53 scottr Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -45,9 +45,6 @@
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/viareg.h>
-
-#include "ncrscsi.h"
-#include "ncr96scsi.h"
 
 static void	via1_noint __P((void *));
 static void	via2_noint __P((void *));
