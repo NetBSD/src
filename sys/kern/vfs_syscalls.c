@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.198 2003/10/15 17:26:38 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.199 2003/10/25 01:18:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.198 2003/10/15 17:26:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.199 2003/10/25 01:18:01 kleink Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -3025,6 +3025,10 @@ sys_fdatasync(l, v, retval)
 	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
+	if ((fp->f_flag & FWRITE) == 0) {
+		FILE_UNUSE(fp, p);
+		return (EBADF);
+	}
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_FSYNC(vp, fp->f_cred, FSYNC_WAIT|FSYNC_DATAONLY, 0, 0, p);
