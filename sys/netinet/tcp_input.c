@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.122.2.13 2002/10/18 02:45:19 nathanw Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.122.2.14 2002/10/22 04:57:25 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.122.2.13 2002/10/18 02:45:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.122.2.14 2002/10/22 04:57:25 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -772,7 +772,6 @@ tcp_input(m, va_alist)
 	struct mbuf *m;
 #endif
 {
-	int proto;
 	struct tcphdr *th;
 	struct ip *ip;
 	struct inpcb *inp;
@@ -787,7 +786,9 @@ tcp_input(m, va_alist)
 	int tiflags;
 	struct socket *so = NULL;
 	int todrop, acked, ourfinisacked, needoutput = 0;
+#ifdef TCP_DEBUG
 	short ostate = 0;
+#endif
 	int iss = 0;
 	u_long tiwin;
 	struct tcp_opt_info opti;
@@ -798,7 +799,7 @@ tcp_input(m, va_alist)
 
 	va_start(ap, m);
 	toff = va_arg(ap, int);
-	proto = va_arg(ap, int);
+	(void)va_arg(ap, int);		/* ignore value, advance ap */
 	va_end(ap);
 
 	tcpstat.tcps_rcvtotal++;
@@ -1245,7 +1246,9 @@ findpcb:
 		}
 
 		if (so->so_options & SO_DEBUG) {
+#ifdef TCP_DEBUG
 			ostate = tp->t_state;
+#endif
 
 			tcp_saveti = NULL;
 			if (iphlen + sizeof(struct tcphdr) > MHLEN)
@@ -1693,7 +1696,7 @@ after_listen:
 			tcp_established(tp);
 			/* Do window scaling on this connection? */
 			if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
-				(TF_RCVD_SCALE|TF_REQ_SCALE)) {
+			    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 				tp->snd_scale = tp->requested_s_scale;
 				tp->rcv_scale = tp->request_r_scale;
 			}
@@ -1964,7 +1967,7 @@ after_listen:
 		tcp_established(tp);
 		/* Do window scaling? */
 		if ((tp->t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
-			(TF_RCVD_SCALE|TF_REQ_SCALE)) {
+		    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
 			tp->snd_scale = tp->requested_s_scale;
 			tp->rcv_scale = tp->request_r_scale;
 		}
@@ -3190,11 +3193,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	 * we also copy the flowinfo from the original pcb
 	 * to the new one.
 	 */
-    {
-	struct inpcb *parentinpcb;
-
-	parentinpcb = (struct inpcb *)so->so_pcb;
-
 	oso = so;
 	so = sonewconn(so, SS_ISCONNECTED);
 	if (so == NULL)
@@ -3212,7 +3210,6 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		break;
 #endif
 	}
-    }
 	switch (src->sa_family) {
 #ifdef INET
 	case AF_INET:
@@ -3351,10 +3348,10 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		tp->request_r_scale = sc->sc_request_r_scale;
 		tp->snd_scale = sc->sc_requested_s_scale;
 		tp->rcv_scale = sc->sc_request_r_scale;
-		tp->t_flags |= TF_RCVD_SCALE;
+		tp->t_flags |= TF_REQ_SCALE|TF_RCVD_SCALE;
 	}
 	if (sc->sc_flags & SCF_TIMESTAMP)
-		tp->t_flags |= TF_RCVD_TSTMP;
+		tp->t_flags |= TF_REQ_TSTMP|TF_RCVD_TSTMP;
 	tp->ts_timebase = sc->sc_timebase;
 
 	tp->t_template = tcp_template(tp);
@@ -3630,7 +3627,8 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	sc->sc_win = win;
 	sc->sc_timebase = tcp_now;	/* see tcp_newtcpcb() */
 	sc->sc_timestamp = tb.ts_recent;
-	if (tcp_do_rfc1323 && (tb.t_flags & TF_RCVD_TSTMP))
+	if ((tb.t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP)) ==
+	    (TF_REQ_TSTMP|TF_RCVD_TSTMP))
 		sc->sc_flags |= SCF_TIMESTAMP;
 	if ((tb.t_flags & (TF_RCVD_SCALE|TF_REQ_SCALE)) ==
 	    (TF_RCVD_SCALE|TF_REQ_SCALE)) {
