@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.45 1998/05/14 00:04:58 kml Exp $	*/
+/*	$NetBSD: if.c,v 1.46 1998/06/25 23:19:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)if.c	8.5 (Berkeley) 1/9/95
  */
+
+#include "opt_compat_linux.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

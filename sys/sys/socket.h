@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.32 1998/06/25 22:49:48 thorpej Exp $	*/
+/*	$NetBSD: socket.h,v 1.33 1998/06/25 23:18:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -386,6 +386,7 @@ __END_DECLS
 #else
 # if !defined(_LKM)
 #  include "opt_compat_freebsd.h"
+#  include "opt_compat_linux.h"
 # endif
 # if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_LINUX) || \
      defined(COMPAT_HPUX) || defined(COMPAT_FREEBSD)
