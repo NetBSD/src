@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.12 1996/11/17 23:58:29 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.13 1996/11/22 04:48:26 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -158,16 +158,17 @@ epconfig(sc, conn)
 	 * threshold value was shifted or not.
 	 */
 	bus_space_write_2(iot, ioh, EP_COMMAND,
-			  SET_TX_AVAIL_THRESH | EP_THRESH_DISABLE ); 
+			  SET_TX_AVAIL_THRESH | EP_LARGEWIN_PROBE ); 
 	GO_WINDOW(5);
 	i = bus_space_read_2(iot, ioh, EP_W5_TX_AVAIL_THRESH);
 	GO_WINDOW(1);
 	switch (i)  {
-	case EP_THRESH_DISABLE:
+	case EP_LARGEWIN_PROBE:
+	case (EP_LARGEWIN_PROBE & EP_LARGEWIN_MASK):
 		sc->ep_pktlenshift = 0;
 		break;
 
-	case (EP_THRESH_DISABLE << 2):
+	case (EP_LARGEWIN_PROBE << 2):
 		sc->ep_pktlenshift = 2;
 		break;
 
