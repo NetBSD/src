@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.6 2002/08/31 09:41:05 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.7 2002/09/01 11:40:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -499,11 +499,11 @@ dump_trapframe(struct trapframe *tf)
 	print_a_reg(" r8", tf->tf_caller.r8, 1);
 
 	print_a_reg(" r9", tf->tf_caller.r9, 0);
-	print_a_reg("r10", tf->tf_callee.r10, 0);
-	print_a_reg("r11", tf->tf_callee.r11, 1);
+	print_a_reg("r10", tf->tf_caller.r10, 0);
+	print_a_reg("r11", tf->tf_caller.r11, 1);
 
-	print_a_reg("r12", tf->tf_callee.r12, 0);
-	print_a_reg("r13", tf->tf_callee.r13, 0);
+	print_a_reg("r12", tf->tf_caller.r12, 0);
+	print_a_reg("r13", tf->tf_caller.r13, 0);
 	print_a_reg("r14", tf->tf_caller.r14, 1);
 
 	print_a_reg("r15", tf->tf_caller.r15, 0);

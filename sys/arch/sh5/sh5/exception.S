@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.8 2002/08/31 09:25:24 scw Exp $	*/
+/*	$NetBSD: exception.S,v 1.9 2002/09/01 11:40:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -249,24 +249,28 @@
  *
  * Note: Assumes r0, r1, r2 and tr0 were saved by _EXCEPTION_ENTRY macro.
  *
- * Note: We have to save r14 here even though it's not a true Caller-Saved
- * register. Basically, C code *will* save the register as part of a
+ * Note: We have to save r10-r14 here even though they're not true Caller-Saved
+ * registers. Basically, C code *will* save the registers as part of a
  * function's prologue. However if the kernel is IPL32, only the low 32-bits
- * of r14 will be saved. This will kind of screw things up should we be called
- * from LP64 user code as assignments in ILP32 will sign-extend to the upper
- * 32-bits regardless.
+ * will be saved (yes, this is how the ABI specifies it should happen). This
+ * will kind of screw things up should we be called from LP64 user code as
+ * assignments in ILP32 will sign-extend to the upper 32-bits regardless.
  *
  * And anyway, we want to fix up r14 so kernel stack traces work.
  */
 #define	_INTR_FRAME_SAVE(sz)						      \
 	st.q	r15, SFO(SF_FLAGS,sz), r63				      ;\
-	st.q	r15, IFO(IF_R3,sz), r3	/* Save r3 - r9 */		      ;\
+	st.q	r15, IFO(IF_R3,sz), r3	/* Save r3 - r13 */		      ;\
 	st.q	r15, IFO(IF_R4,sz), r4					      ;\
 	st.q	r15, IFO(IF_R5,sz), r5					      ;\
 	st.q	r15, IFO(IF_R6,sz), r6					      ;\
 	st.q	r15, IFO(IF_R7,sz), r7					      ;\
 	st.q	r15, IFO(IF_R8,sz), r8					      ;\
 	st.q	r15, IFO(IF_R9,sz), r9					      ;\
+	st.q	r15, IFO(IF_R10,sz), r10				      ;\
+	st.q	r15, IFO(IF_R11,sz), r11				      ;\
+	st.q	r15, IFO(IF_R12,sz), r12				      ;\
+	st.q	r15, IFO(IF_R13,sz), r13				      ;\
 	st.q	r15, IFO(IF_R14,sz), r14/* Save r14 (frame pointer) */	      ;\
 	st.q	r15, IFO(IF_R16,sz), r16/* Save r16 - r23 */		      ;\
 	st.q	r15, IFO(IF_R17,sz), r17				      ;\
@@ -309,13 +313,17 @@
  * Note: Assumes r0, r1, r2 and tr0 will be restored by _EXCEPTION_EXIT macro.
  */
 #define	_INTR_FRAME_RESTORE(sz)						      \
-	ld.q	r15, IFO(IF_R3,sz), r3	/* Restore r3 - r9 */		      ;\
+	ld.q	r15, IFO(IF_R3,sz), r3	/* Restore r3 - r13 */		      ;\
 	ld.q	r15, IFO(IF_R4,sz), r4					      ;\
 	ld.q	r15, IFO(IF_R5,sz), r5					      ;\
 	ld.q	r15, IFO(IF_R6,sz), r6					      ;\
 	ld.q	r15, IFO(IF_R7,sz), r7					      ;\
 	ld.q	r15, IFO(IF_R8,sz), r8					      ;\
 	ld.q	r15, IFO(IF_R9,sz), r9					      ;\
+	ld.q	r15, IFO(IF_R10,sz), r10				      ;\
+	ld.q	r15, IFO(IF_R11,sz), r11				      ;\
+	ld.q	r15, IFO(IF_R12,sz), r12				      ;\
+	ld.q	r15, IFO(IF_R13,sz), r13				      ;\
 	ld.q	r15, IFO(IF_R14,sz), r14/* Restore r14 */		      ;\
 	ld.q	r15, IFO(IF_R16,sz), r16/* Restore r16 - r23 */		      ;\
 	ld.q	r15, IFO(IF_R17,sz), r17				      ;\
@@ -360,10 +368,6 @@
 #define	_TRAP_FRAME_SAVE(sz)						      \
 	movi	SF_FLAGS_CALLEE_SAVED, r0				      ;\
 	st.q	r15, SFO(SF_FLAGS,sz), r0				      ;\
-	st.q	r15, TFO(TF_R10,sz), r10 /* Save r10 - r13 */		      ;\
-	st.q	r15, TFO(TF_R11,sz), r11				      ;\
-	st.q	r15, TFO(TF_R12,sz), r12				      ;\
-	st.q	r15, TFO(TF_R13,sz), r13				      ;\
 	st.q	r15, TFO(TF_R28,sz), r28 /* Save r28 - r35 */		      ;\
 	st.q	r15, TFO(TF_R29,sz), r29				      ;\
 	st.q	r15, TFO(TF_R30,sz), r30				      ;\
@@ -405,10 +409,6 @@
 	pta/u	99f, tr0						      ;\
 	ld.q	r15, SFO(SF_FLAGS,sz), r0				      ;\
 	beq/u	r0, r63, tr0						      ;\
-	ld.q	r15, TFO(TF_R10,sz), r10 /* Restore r10 - r13 */	      ;\
-	ld.q	r15, TFO(TF_R11,sz), r11				      ;\
-	ld.q	r15, TFO(TF_R12,sz), r12				      ;\
-	ld.q	r15, TFO(TF_R13,sz), r13				      ;\
 	ld.q	r15, TFO(TF_R28,sz), r28 /* Restore r28 - r35 */	      ;\
 	ld.q	r15, TFO(TF_R29,sz), r29				      ;\
 	ld.q	r15, TFO(TF_R30,sz), r30				      ;\
@@ -759,7 +759,7 @@ Lsh5_event_panic:
  *
  *   - Save only a very small subset of registers initially.
  *     (Over and above those saved by _INTR_FRAME_SAVE()).
- *     First thoughts on this would be r1, r2-r9, r14, r15, r18, r26, r27
+ *     First thoughts on this would be r1, r2-r14, r15, r18, r26, r27
  *
  *   - Invoke trapa().
  *

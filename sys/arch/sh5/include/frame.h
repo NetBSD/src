@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3 2002/08/29 16:04:10 scw Exp $	*/
+/*	$NetBSD: frame.h,v 1.4 2002/09/01 11:40:54 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -63,10 +63,11 @@ struct stateframe {
 
 /*
  * SH5 ABI Callee-saved registers.
+ *
+ * Note: See comments in <sh5/sh5/exception.S> as to why r10-r14 are NOT
+ * part of the Caller-Saved set.
  */
 struct exc_calleesave {
-	register_t r10; register_t r11; register_t r12; register_t r13;
-
 	register_t r28; register_t r29; register_t r30; register_t r31;
 	register_t r32; register_t r33; register_t r34; register_t r35;
 
@@ -81,7 +82,7 @@ struct exc_calleesave {
 /*
  * SH5 ABI Caller-saved registers
  *
- * Note: See comments in <sh5/sh5/exception.S> as to why r14 is
+ * Note: See comments in <sh5/sh5/exception.S> as to why r10-r14 are
  * part of the Caller-Saved set.
  */
 struct exc_callersave {
@@ -89,9 +90,12 @@ struct exc_callersave {
 	register_t r4;  register_t r5;  register_t r6;  register_t r7;
 	register_t r8;  register_t r9;
 
-	register_t r14; register_t r15; register_t r16; register_t r17;
-	register_t r18; register_t r19; register_t r20; register_t r21;
-	register_t r22; register_t r23;
+	register_t r10; register_t r11; register_t r12; register_t r13;
+	register_t r14;
+
+	register_t r15; register_t r16; register_t r17; register_t r18;
+	register_t r19; register_t r20; register_t r21; register_t r22;
+	register_t r23;
 
 	register_t r25; register_t r26; register_t r27;
 
@@ -157,12 +161,19 @@ struct fpregs {
  * kernel context.
  * This consists of the callee-saved register set, the current kernel
  * stack pointer, the program counter, and the status register.
+ *
+ * Note that due to ABI issues, r10-r13 are not part of exc_calleesave.
+ * However, we still have to save/restore them on a context switch.
  */
 struct switchframe {
 	register_t	sf_pc;			/* Saved program counter */
 	register_t	sf_sr;			/* Status register */
 	register_t	sf_sp;			/* Kernel stack pointer */
 	register_t	sf_fp;			/* Kernel frame pointer */
+	register_t	sf_r10;
+	register_t	sf_r11;
+	register_t	sf_r12;
+	register_t	sf_r13;
 	struct exc_calleesave sf_regs;		/* Saved registers */
 	struct fpregs	sf_fpregs;
 };
