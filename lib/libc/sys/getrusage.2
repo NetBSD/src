@@ -1,4 +1,4 @@
-.\"	$NetBSD: getrusage.2,v 1.9 2001/09/01 02:01:48 simonb Exp $
+.\"	$NetBSD: getrusage.2,v 1.10 2001/09/16 01:39:01 wiz Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,9 +133,9 @@ priority process becoming runnable or because the current process
 exceeded its time slice.
 .El
 .Sh NOTES
-The numbers 
+The numbers
 .Fa ru_inblock
-and 
+and
 .Fa ru_oublock
 account only for real
 I/O; data supplied by the caching mechanism is charged only
