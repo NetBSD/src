@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.79 2002/03/22 09:18:08 takemura Exp $
+#	$NetBSD: files.hpcmips,v 1.80 2002/03/23 09:02:01 hamajima Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -415,3 +415,8 @@ file arch/hpcmips/vr/vrdmaau.c	vrdmaau
 device vrdcu
 attach vrdcu at vripif
 file arch/hpcmips/vr/vrdcu.c	vrdcu
+
+# Audio Interface Unit
+device vraiu: audio
+attach vraiu at vripif
+file arch/hpcmips/vr/vraiu.c	vraiu
