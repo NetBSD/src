@@ -1,10 +1,5 @@
-#	$NetBSD: Makefile,v 1.18 1999/02/02 17:45:02 tv Exp $
+#	$NetBSD: Makefile,v 1.19 1999/02/02 20:46:37 tv Exp $
 
-SUBDIR+= libg2c libgcc libmalloc libobjc libstdc++
-
-# XXX Until our bintuils is upgraded
-.if (${MACHINE_ARCH} != "powerpc")
-# SUBDIR+= bfd
-.endif
+SUBDIR+= bfd libg2c libgcc libmalloc libobjc libstdc++
 
 .include <bsd.subdir.mk>
