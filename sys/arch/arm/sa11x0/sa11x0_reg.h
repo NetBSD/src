@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_reg.h,v 1.1 2001/07/08 23:37:54 rjs Exp $	*/
+/*	$NetBSD: sa11x0_reg.h,v 1.2 2001/07/30 16:08:42 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -48,6 +48,7 @@
 #define SAPPC_BASE		0x90060000	/* Peripheral Pin Controller */
 #define SAUDC_BASE		0x80000000	/* USB Device Controller*/
 #define SACOM3_HW_BASE		0x80050000	/* UART 3  */
+#define SAMCP_BASE		0x80060000	/* MCP Controller */
 #define SASSP_BASE		0x80070000	/* Synchronous serial port */
 
 #define SADMAC_BASE		0xB0000000	/* DMA Controller */
