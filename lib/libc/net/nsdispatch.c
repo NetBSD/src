@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.2 1999/01/15 12:53:24 lukem Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.3 1999/01/16 01:21:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,6 @@
 #include <err.h>
 #include <fcntl.h>
 #define _NS_PRIVATE
-#define _PATH_NS_CONF "/tmp/nsswitch.conf"
 #include <nsswitch.h>
 #include <stdio.h>
 #include <stdlib.h>
