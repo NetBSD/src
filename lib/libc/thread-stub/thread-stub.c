@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.9 2003/07/18 21:44:38 nathanw Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.10 2004/12/06 18:58:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -363,18 +363,10 @@ __libc_thr_once_stub(once_t *o, void (*r)(void))
 int
 __libc_thr_sigsetmask_stub(int h, const sigset_t *s, sigset_t *o)
 {
-	/* LINTED deliberate lack of effect */
-	(void)h;
-	/* LINTED deliberate lack of effect */
-	(void)s;
-	/* LINTED deliberate lack of effect */
-	(void)o;
 
 	CHECK_NOT_THREADED();
 
-	/* XXX just use sigmask(2)?  abort? */
-
-	return (0);
+	return sigprocmask(h, s, o);
 }
 
 thr_t
