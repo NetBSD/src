@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.226 2002/09/16 02:30:29 perry Exp $
+#	$NetBSD: Makefile,v 1.227 2002/09/16 02:35:04 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -79,6 +79,7 @@ INSTALLATION_DIRS=	binary binary/sets binary/kernel installation
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
+UTMPGRP= utmp
 BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	daily.conf dm.conf floppytab ftpchroot ftpusers \
 	gettytab group hosts hosts.lpd inetd.conf lkm.conf \
@@ -215,9 +216,9 @@ install-etc-files: check_DESTDIR
 		${DESTDIR}/var/log/xferlog
 	${INSTALL_FILE} -o daemon -g staff -m 664 /dev/null \
 		${DESTDIR}/var/msgs/bounds
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmp
-	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 /dev/null \
+	${INSTALL_FILE} -o ${BINOWN} -g ${UTMPGRP} -m 664 /dev/null \
 		${DESTDIR}/var/run/utmpx
 	${INSTALL_FILE} -o games -g games -m 664 /dev/null \
 		${DESTDIR}/var/games/atc_scores
