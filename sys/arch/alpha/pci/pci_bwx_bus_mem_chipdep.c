@@ -1,4 +1,4 @@
-/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.4 1998/07/31 04:37:02 thorpej Exp $ */
+/* $NetBSD: pci_bwx_bus_mem_chipdep.c,v 1.5 1998/08/30 23:29:10 cgd Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -519,7 +519,7 @@ __C(__C(CHIP,_mem_read_multi_),BYTES)(v, h, o, a, c)			\
 									\
 	while (c-- > 0) {						\
 		__C(CHIP,_mem_barrier)(v, h, o, sizeof *a,		\
-		    BUS_BARRIER_READ);					\
+		    BUS_SPACE_BARRIER_READ);				\
 		*a++ = __C(__C(CHIP,_mem_read_),BYTES)(v, h, o);	\
 	}								\
 }
@@ -624,7 +624,7 @@ __C(__C(CHIP,_mem_write_multi_),BYTES)(v, h, o, a, c)			\
 	while (c-- > 0) {						\
 		__C(__C(CHIP,_mem_write_),BYTES)(v, h, o, *a++);	\
 		__C(CHIP,_mem_barrier)(v, h, o, sizeof *a,		\
-		    BUS_BARRIER_WRITE);					\
+		    BUS_SPACE_BARRIER_WRITE);				\
 	}								\
 }
 CHIP_mem_write_multi_N(1,u_int8_t)
@@ -663,7 +663,7 @@ __C(__C(CHIP,_mem_set_multi_),BYTES)(v, h, o, val, c)			\
 	while (c-- > 0) {						\
 		__C(__C(CHIP,_mem_write_),BYTES)(v, h, o, val);		\
 		__C(CHIP,_mem_barrier)(v, h, o, sizeof val,		\
-		    BUS_BARRIER_WRITE);					\
+		    BUS_SPACE_BARRIER_WRITE);				\
 	}								\
 }
 CHIP_mem_set_multi_N(1,u_int8_t)
