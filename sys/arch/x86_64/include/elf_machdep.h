@@ -1,6 +1,6 @@
-/*	$NetBSD: elf_machdep.h,v 1.3 2001/12/09 23:05:59 thorpej Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.4 2001/12/28 06:35:19 thorpej Exp $	*/
 
-#define	ELF32_MACHDEP_ENDIANNESS
+#define	ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
 #define	ELF32_MACHDEP_ID_CASES						\
 		case EM_386:						\
 			break;
