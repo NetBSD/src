@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.379 2003/01/27 00:07:19 wiz Exp $
+# $NetBSD: mi,v 1.380 2003/02/16 00:18:59 lukem Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -64,7 +64,6 @@
 ./etc/ssh		base-sys-root
 ./etc/systrace		base-util-root
 ./etc/uucp		base-uucp-root
-./home			base-sys-root
 ./lib			base-sys-root
 ./libexec		base-sys-root
 ./mnt			base-sys-root

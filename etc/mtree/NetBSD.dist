@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.214 2003/01/26 22:17:02 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.215 2003/02/16 00:19:00 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -30,7 +30,6 @@
 ./etc/ssh
 ./etc/systrace
 ./etc/uucp
-./home
 ./lib
 ./libexec
 ./mnt
