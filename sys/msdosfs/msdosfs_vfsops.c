@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.48 1997/10/18 02:54:57 briggs Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.49 1997/11/16 21:47:34 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -345,7 +345,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_mount(): mp %x, pmp %x, inusemap %x\n", mp, pmp, pmp->pm_inusemap);
+	printf("msdosfs_mount(): mp %p, pmp %p, inusemap %p\n", mp, pmp, pmp->pm_inusemap);
 #endif
 	return (0);
 }
@@ -747,16 +747,23 @@ msdosfs_unmount(mp, mntflags, p)
 	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
-	printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
-	    vp->v_flag, vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
-	printf("lastr %d, id %d, mount %08x, op %08x\n",
-	    vp->v_lastr, vp->v_id, vp->v_mount, vp->v_op);
-	printf("freef %08x, freeb %08x, mountf %08x, mountb %08x\n",
-	    vp->v_freef, vp->v_freeb, vp->v_mountf, vp->v_mountb);
-	printf("cleanblkhd %08x, dirtyblkhd %08x, numoutput %d, type %d\n",
-	    vp->v_cleanblkhd, vp->v_dirtyblkhd, vp->v_numoutput, vp->v_type);
-	printf("union %08x, tag %d, data[0] %08x, data[1] %08x\n",
-	    vp->v_socket, vp->v_tag, vp->v_data[0], vp->v_data[1]);
+	printf("flag %08lx, usecount %d, writecount %d, holdcnt %ld\n",
+	    pmp->pm_devvp->v_flag, pmp->pm_devvp->v_usecount, 
+	    pmp->pm_devvp->v_writecount, pmp->pm_devvp->v_holdcnt);
+	printf("lastr %d, id %ld, mount %p, op %p\n",
+	    pmp->pm_devvp->v_lastr, pmp->pm_devvp->v_id, 
+	    pmp->pm_devvp->v_mount, pmp->pm_devvp->v_op);
+/*	printf("freef %08x, freeb %08x, mountf %08x, mountb %08x\n",
+	    pmp->pm_devvp->v_freef, pmp->pm_devvp->v_freeb, 
+	    pmp->pm_devvp->v_mountf, pmp->pm_devvp->v_mountb); */
+	printf("cleanblkhd %p, dirtyblkhd %p, numoutput %ld, type %d\n",
+	    pmp->pm_devvp->v_cleanblkhd.lh_first, 
+	    pmp->pm_devvp->v_dirtyblkhd.lh_first, 
+	    pmp->pm_devvp->v_numoutput, pmp->pm_devvp->v_type);
+	printf("union %p, tag %d, data[0] %08x, data[1] %08x\n",
+	    pmp->pm_devvp->v_socket, pmp->pm_devvp->v_tag, 
+	    ((unsigned int*)pmp->pm_devvp->v_data)[0], 
+	    ((unsigned int*)pmp->pm_devvp->v_data)[1] );
 #endif
 	error = VOP_CLOSE(pmp->pm_devvp,
 	    pmp->pm_flags & MSDOSFSMNT_RONLY ? FREAD : FREAD|FWRITE, NOCRED, p);
@@ -778,7 +785,7 @@ msdosfs_root(mp, vpp)
 	int error;
 
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_root(); mp %08x, pmp %08x, ndep %08x, vp %08x\n",
+	printf("msdosfs_root(); mp %p, pmp %p, ndep %p, vp %p\n",
 	    mp, pmp, ndep, DETOV(ndep));
 #endif
 	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0)

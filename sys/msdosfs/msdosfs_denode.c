@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.24 1997/11/16 21:47:27 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -167,7 +167,7 @@ deget(pmp, dirclust, diroffset, depp)
 	struct buf *bp;
 
 #ifdef MSDOSFS_DEBUG
-	printf("deget(pmp %08x, dirclust %d, diroffset %x, depp %08x)\n",
+	printf("deget(pmp %p, dirclust %ld, diroffset %lx, depp %p)\n",
 	    pmp, dirclust, diroffset, depp);
 #endif
 
@@ -430,7 +430,7 @@ detrunc(dep, length, flags, cred, p)
 	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
 	allerror = deupdat(dep, 1);
 #ifdef MSDOSFS_DEBUG
-	printf("detrunc(): allerror %d, eofentry %d\n",
+	printf("detrunc(): allerror %d, eofentry %ld\n",
 	       allerror, eofentry);
 #endif
 
@@ -543,7 +543,7 @@ msdosfs_reclaim(v)
 	extern int prtactive;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_reclaim(): dep %08x, file %s, refcnt %d\n",
+	printf("msdosfs_reclaim(): dep %p, file %s, refcnt %ld\n",
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
@@ -582,7 +582,7 @@ msdosfs_inactive(v)
 	extern int prtactive;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %08x, de_Name[0] %x\n", dep, dep->de_Name[0]);
+	printf("msdosfs_inactive(): dep %p, de_Name[0] %x\n", dep, dep->de_Name[0]);
 #endif
 
 	if (prtactive && vp->v_usecount != 0)
@@ -613,7 +613,7 @@ msdosfs_inactive(v)
 	 * as empty.  (This may not be necessary for the dos filesystem.)
 	 */
 #ifdef MSDOSFS_DEBUG
-	printf("msdosfs_inactive(): dep %08x, refcnt %d, mntflag %x, MNT_RDONLY %x\n",
+	printf("msdosfs_inactive(): dep %p, refcnt %ld, mntflag %x, MNT_RDONLY %x\n",
 	       dep, dep->de_refcnt, vp->v_mount->mnt_flag, MNT_RDONLY);
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
