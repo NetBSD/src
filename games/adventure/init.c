@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.8 1998/02/03 05:32:13 perry Exp $	*/
+/*	$NetBSD: init.c,v 1.9 1998/08/24 22:07:37 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.8 1998/02/03 05:32:13 perry Exp $");
+__RCSID("$NetBSD: init.c,v 1.9 1998/08/24 22:07:37 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,8 +66,7 @@ int     setbit[16] = {1, 2, 4, 010, 020, 040, 0100, 0200, 0400, 01000, 02000, 04
 
 
 void
-init(command)			/* everything for 1st time run */
-	char   *command;	/* command we were called with */
+init()			/* everything for 1st time run */
 {
 	rdata();		/* read data from orig. file */
 	linkdata();
@@ -228,7 +227,7 @@ trapdel(n)			/* come here if he hits a del */
 void
 startup()
 {
-	demo = Start(0);
+	demo = Start();
 	srand((int) (time((time_t *) NULL)));	/* random seed */
 #if 0
 	srand(371);		/* non-random seed */

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.3 1997/10/11 01:55:27 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.4 1998/08/24 22:07:37 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -39,7 +39,7 @@ void done __P((int));
 int die __P((int));
 
 /* init.c */
-void init __P((char *));
+void init __P((void));
 char   *decr __P((int, int, int, int, int));
 void linkdata __P((void));
 void trapdel __P((int));
@@ -82,11 +82,11 @@ int toting __P((int));
 int here __P((int));
 int at  __P((int));
 int liq2 __P((int));
-int liq __P((int));
+int liq __P((void));
 int liqloc __P((int));
 int bitset __P((int, int));
 int forced __P((int));
-int dark __P((int));
+int dark __P((void));
 int pct __P((int));
 int fdwarf __P((void));
 int march __P((void));
@@ -124,7 +124,7 @@ void prht __P((void));
 /* wizard.c */
 void datime __P((int *, int *));
 void poof __P((void));
-int Start __P((int));
+int Start __P((void));
 int wizard __P((void));
-void ciao __P((char *));
+void ciao __P((void));
 int ran __P((int));
