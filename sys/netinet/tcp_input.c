@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.143 2002/06/09 16:33:43 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.144 2002/06/11 19:39:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.143 2002/06/09 16:33:43 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.144 2002/06/11 19:39:59 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3167,13 +3167,14 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	 */
 	if (inp) {
 		/* copy old policy into new socket's */
-		if (ipsec_copy_policy(sotoinpcb(oso)->inp_sp, inp->inp_sp))
+		if (ipsec_copy_pcbpolicy(sotoinpcb(oso)->inp_sp, inp->inp_sp))
 			printf("tcp_input: could not copy policy\n");
 	}
 #ifdef INET6
 	else if (in6p) {
 		/* copy old policy into new socket's */
-		if (ipsec_copy_policy(sotoin6pcb(oso)->in6p_sp, in6p->in6p_sp))
+		if (ipsec_copy_pcbpolicy(sotoin6pcb(oso)->in6p_sp,
+		    in6p->in6p_sp))
 			printf("tcp_input: could not copy policy\n");
 	}
 #endif
