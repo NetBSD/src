@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.7 1995/03/21 09:03:20 cgd Exp $	*/
+/*	$NetBSD: sem.c,v 1.8 1995/03/21 18:35:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sem.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: sem.c,v 1.7 1995/03/21 09:03:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: sem.c,v 1.8 1995/03/21 18:35:48 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,10 +73,11 @@ execute(t, wanttty, pipein, pipeout)
     struct biltins *bifunc;
     int     pid = 0;
     int     pv[2];
+    sigset_t sigset;
 
-    static sigset_t csigmask;
+    static sigset_t csigset;
 
-    static sigset_t ocsigmask;
+    static sigset_t ocsigset;
     static int onosigchld = 0;
     static int nosigchld = 0;
 
@@ -214,13 +215,15 @@ execute(t, wanttty, pipein, pipeout)
 		 * not die before we can set the process group
 		 */
 		if (wanttty >= 0 && !nosigchld) {
-		    csigmask = sigblock(sigmask(SIGCHLD));
+		    sigemptyset(&sigset);
+		    sigaddset(&sigset, SIGCHLD);
+		    sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
 
 		pid = pfork(t, wanttty);
 		if (pid == 0 && nosigchld) {
-		    (void) sigsetmask(csigmask);
+		    sigprocmask(SIG_SETMASK, &csigset, NULL);
 		    nosigchld = 0;
 		}
 		else if (pid != 0 && (t->t_dflg & F_AMPERSAND))
@@ -230,21 +233,26 @@ execute(t, wanttty, pipein, pipeout)
 	    else {
 		int     ochild, osetintr, ohaderr, odidfds;
 		int     oSHIN, oSHOUT, oSHERR, oOLDSTD, otpgrp;
-		sigset_t omask;
+		sigset_t osigset;
 
 		/*
 		 * Prepare for the vfork by saving everything that the child
 		 * corrupts before it exec's. Note that in some signal
 		 * implementations which keep the signal info in user space
 		 * (e.g. Sun's) it will also be necessary to save and restore
-		 * the current sigvec's for the signals the child touches
+		 * the current sigaction's for the signals the child touches
 		 * before it exec's.
 		 */
 		if (wanttty >= 0 && !nosigchld && !noexec) {
-		    csigmask = sigblock(sigmask(SIGCHLD));
+		    sigemptyset(&sigset);
+		    sigaddset(&sigset, SIGCHLD);
+		    sigprocmask(SIG_BLOCK, &sigset, &csigset);
 		    nosigchld = 1;
 		}
-		omask = sigblock(sigmask(SIGCHLD) | sigmask(SIGINT));
+		sigemptyset(&sigset);
+		sigaddset(&sigset, SIGCHLD);
+		sigaddset(&sigset, SIGINT);
+		sigprocmask(SIG_BLOCK, &sigset, &osigset);
 		ochild = child;
 		osetintr = setintr;
 		ohaderr = haderr;
@@ -254,7 +262,7 @@ execute(t, wanttty, pipein, pipeout)
 		oSHERR = SHERR;
 		oOLDSTD = OLDSTD;
 		otpgrp = tpgrp;
-		ocsigmask = csigmask;
+		ocsigset = csigset;
 		onosigchld = nosigchld;
 		Vsav = Vdp = 0;
 		Vexpath = 0;
@@ -262,7 +270,7 @@ execute(t, wanttty, pipein, pipeout)
 		pid = vfork();
 
 		if (pid < 0) {
-		    (void) sigsetmask(omask);
+		    sigprocmask(SIG_SETMASK, &osigset, NULL);
 		    stderror(ERR_NOPROC);
 		}
 		forked++;
@@ -276,7 +284,7 @@ execute(t, wanttty, pipein, pipeout)
 		    SHERR = oSHERR;
 		    OLDSTD = oOLDSTD;
 		    tpgrp = otpgrp;
-		    csigmask = ocsigmask;
+		    csigset = ocsigset;
 		    nosigchld = onosigchld;
 
 		    xfree((ptr_t) Vsav);
@@ -289,7 +297,7 @@ execute(t, wanttty, pipein, pipeout)
 		    Vt = 0;
 		    /* this is from pfork() */
 		    palloc(pid, t);
-		    (void) sigsetmask(omask);
+		    sigprocmask(SIG_SETMASK, &osigset, NULL);
 		}
 		else {		/* child */
 		    /* this is from pfork() */
@@ -297,7 +305,7 @@ execute(t, wanttty, pipein, pipeout)
 		    bool    ignint = 0;
 
 		    if (nosigchld) {
-			(void) sigsetmask(csigmask);
+		        sigprocmask(SIG_SETMASK, &csigset, NULL);
 			nosigchld = 0;
 		    }
 
@@ -354,7 +362,7 @@ execute(t, wanttty, pipein, pipeout)
 	    }
 	    if ((t->t_dflg & F_PIPEOUT) == 0) {
 		if (nosigchld) {
-		    (void) sigsetmask(csigmask);
+		    sigprocmask(SIG_SETMASK, &csigset, NULL);
 		    nosigchld = 0;
 		}
 		if ((t->t_dflg & F_AMPERSAND) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.6 1995/03/21 09:02:49 cgd Exp $	*/
+/*	$NetBSD: exec.c,v 1.7 1995/03/21 18:35:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.6 1995/03/21 09:02:49 cgd Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.7 1995/03/21 18:35:36 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -122,6 +122,7 @@ doexec(v, t)
     register bool slash;
     register int hashval = 0, hashval1, i;
     Char   *blk[2];
+    sigset_t sigset;
 
     /*
      * Glob the command name. We will search $path even if this does something,
@@ -197,7 +198,8 @@ doexec(v, t)
      * We must do this AFTER any possible forking (like `foo` in glob) so that
      * this shell can still do subprocesses.
      */
-    (void) sigsetmask((sigset_t) 0);
+    sigemptyset(&sigset);
+    sigprocmask(SIG_SETMASK, &sigset, NULL);
     /*
      * If no path, no words in path, or a / in the filename then restrict the
      * command search.
