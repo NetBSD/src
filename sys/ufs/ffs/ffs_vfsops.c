@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.143 2004/04/21 01:05:44 christos Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.144 2004/04/25 16:42:44 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.143 2004/04/21 01:05:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.144 2004/04/25 16:42:44 simonb Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -117,9 +117,12 @@ struct genfs_ops ffs_genfsops = {
 	genfs_gop_write,
 };
 
-struct pool ffs_inode_pool;
-struct pool ffs_dinode1_pool;
-struct pool ffs_dinode2_pool;
+POOL_INIT(ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
+    &pool_allocator_nointr);
+POOL_INIT(ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0, "dino1pl",
+    &pool_allocator_nointr);
+POOL_INIT(ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0, "dino2pl",
+    &pool_allocator_nointr);
 
 static void ffs_oldfscompat_read(struct fs *, struct ufsmount *,
 				   daddr_t);
@@ -1549,13 +1552,6 @@ ffs_init()
 
 	softdep_initialize();
 	ufs_init();
-
-	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0, "ffsinopl",
-	    &pool_allocator_nointr);
-	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
-	    "dino1pl", &pool_allocator_nointr);
-	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
-	    "dino2pl", &pool_allocator_nointr);
 }
 
 void

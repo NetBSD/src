@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.222 2004/04/22 03:47:58 enami Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.223 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.222 2004/04/22 03:47:58 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.223 2004/04/25 16:42:41 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -170,7 +170,8 @@ struct mount *rootfs;
 struct vnode *rootvnode;
 struct device *root_device;			/* root device */
 
-struct pool vnode_pool;				/* memory pool for vnodes */
+POOL_INIT(vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodepl",
+    &pool_allocator_nointr);
 
 MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 
@@ -199,9 +200,6 @@ void printlockedvnodes(void);
 void
 vntblinit()
 {
-
-	pool_init(&vnode_pool, sizeof(struct vnode), 0, 0, 0, "vnodepl",
-	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize the filesystem syncer.

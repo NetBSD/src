@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.93 2004/03/08 22:48:09 dbj Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.94 2004/04/25 16:42:41 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.93 2004/03/08 22:48:09 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.94 2004/04/25 16:42:41 simonb Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -354,6 +354,21 @@ pr_rmpage(struct pool *pp, struct pool_item_header *ph,
 	pp->pr_npagefree++;
 
 	pool_update_curpage(pp);
+}
+
+/*
+ * Initialize all the pools listed in the "pools" link set.
+ */
+void
+link_pool_init(void)
+{
+	__link_set_decl(pools, struct link_pool_init);
+	struct link_pool_init * const *pi;
+
+	__link_set_foreach(pi, pools)
+		pool_init((*pi)->pp, (*pi)->size, (*pi)->align,
+		    (*pi)->align_offset, (*pi)->flags, (*pi)->wchan,
+		    (*pi)->palloc);
 }
 
 /*
