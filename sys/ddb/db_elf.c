@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.12 2000/07/07 21:50:26 jhawk Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.13 2000/07/07 21:55:18 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	 */
 	if (db_add_symbol_table((char *)symtab_start,
 	    (char *)symtab_end, name, (char *)symtab) != -1) {
-		printf("[ preserving %lu bytes of %s ELF symbol table ]\n",
+		printf("[ using %lu bytes of %s ELF symbol table ]\n",
 		    (u_long)roundup(((char *)esymtab - (char *)symtab), 
 				    sizeof(u_long)), name);
 		return (TRUE);
