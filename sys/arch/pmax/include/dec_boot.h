@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_boot.h,v 1.6 1999/10/25 02:29:45 simonb Exp $	*/
+/*	$NetBSD: dec_boot.h,v 1.7 1999/10/29 15:21:13 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@ struct boot_block {
 	int	mode;			/* Mode for boot info. */
 	int	load_addr;		/* Address to start loading. */
 	int	exec_addr;		/* Address to start execing. */
-	struct	boot_map map[1];	/* boot program section(s). */
+	struct	boot_map map[61];	/* boot program section(s). */
 };
 
 #define DEC_BOOT_MAGIC		0x0002757a
