@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.19 2004/02/14 00:00:56 hannken Exp $
+.\"     $NetBSD: vnsubr.9,v 1.20 2004/03/14 22:39:21 cube Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 14, 2004
+.Dd March 14, 2004
 .Dt VNSUBR 9
 .Os
 .Sh NAME
@@ -113,7 +113,7 @@ Common code for block write operations.
 Common code for a vnode close.
 The argument
 .Fa vp
-is the locked vnode of the vnode to close.
+is the unlocked vnode of the vnode to close.
 .Fn vn_close
 simply locks the vnode, invokes the vnode operation
 .Xr VOP_CLOSE 9
