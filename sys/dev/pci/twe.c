@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.54.2.1 2004/05/30 07:10:42 tron Exp $	*/
+/*	$NetBSD: twe.c,v 1.54.2.2 2004/06/05 04:59:21 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.54.2.1 2004/05/30 07:10:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.54.2.2 2004/06/05 04:59:21 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1473,10 +1473,13 @@ twe_ccb_map(struct twe_softc *sc, struct twe_ccb *ccb)
 			tc->tc_args.io.sgl[i].tsg_length = 0;
 		}
 		break;
-#ifdef DEBUG
 	default:
-		panic("twe_ccb_map: oops");
-#endif
+		/*
+		 * In all likelihood, this is a command passed from
+		 * management tools in userspace where no S/G list is
+		 * necessary because no data is being passed.
+		 */
+		break;
 	}
 
 	if ((ccb->ccb_flags & TWE_CCB_DATA_IN) != 0)
