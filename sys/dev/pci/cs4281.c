@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.2 2001/01/22 01:44:56 augustss Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.3 2001/02/07 14:41:11 tacha Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -37,9 +37,8 @@
  * ftp://ftp.alsa-project.org/pub/manuals/cirrus/cs4281tm.pdf
  *
  * TODO:
- *   1: confirm this driver does work :-)
- *   2: midi and FM support
- *   3: ...
+ *   1: midi and FM support
+ *   2: ...
  *
  */
 
@@ -92,6 +91,8 @@ int	cs4281_trigger_output(void *, void *, void *, int, void (*)(void *),
 int	cs4281_trigger_input(void *, void *, void *, int, void (*)(void *),
 			     void *, struct audio_params *);
 
+void    cs4281_reset_codec(void *);
+
 /* Internal functions */
 u_int8_t cs4281_sr2regval(int);
 void	 cs4281_set_dac_rate(struct cs428x_softc *, int );
@@ -101,49 +102,13 @@ int      cs4281_init(struct cs428x_softc *);
 /* Power Management */
 void cs4281_power(int, void *);
 
-#define NOT_SHARED
-
-#ifdef NOT_SHARED
-/* These functions may shared with cs4280.c */
-int  cs4281_open(void *, int);
-void cs4281_close(void *);
-int  cs4281_round_blocksize(void *, int);
-int  cs4281_get_props(void *);
-int  cs4281_attach_codec(void *, struct ac97_codec_if *);
-int  cs4281_read_codec(void *, u_int8_t , u_int16_t *);
-int  cs4281_write_codec(void *, u_int8_t, u_int16_t);
-void cs4281_reset_codec(void *);
-
-int  cs4281_mixer_set_port(void *, mixer_ctrl_t *);
-int  cs4281_mixer_get_port(void *, mixer_ctrl_t *);
-int  cs4281_query_devinfo(void *, mixer_devinfo_t *);
-void *cs4281_malloc(void *, int, size_t, int, int);
-size_t cs4281_round_buffersize(void *, int, size_t);
-void cs4281_free(void *, void *, int);
-paddr_t cs4281_mappage(void *, void *, off_t, int);
-
-/* internal functions */
-int cs4281_allocmem(struct cs428x_softc*, size_t, int, int,
-		    struct cs428x_dma *);
-int cs4281_src_wait(struct cs428x_softc *);
-
-#if defined(CS4281_DEBUG)
-#undef DPRINTF
-#undef DPRINTFN
-#define DPRINTF(x)	    if (cs4281_debug) printf x
-#define DPRINTFN(n,x)	    if (cs4281_debug>(n)) printf x
-int cs4281_debug = 5;
-#endif
-
-#endif /* NOT_SHARED */
-
 struct audio_hw_if cs4281_hw_if = {
-	cs4281_open,
-	cs4281_close,
+	cs428x_open,
+	cs428x_close,
 	NULL,
 	cs4281_query_encoding,
 	cs4281_set_params,
-	cs4281_round_blocksize,
+	cs428x_round_blocksize,
 	NULL,
 	NULL,
 	NULL,
@@ -154,14 +119,14 @@ struct audio_hw_if cs4281_hw_if = {
 	NULL,
 	cs4281_getdev,
 	NULL,
-	cs4281_mixer_set_port,
-	cs4281_mixer_get_port,
-	cs4281_query_devinfo,
-	cs4281_malloc,
-	cs4281_free,
-	cs4281_round_buffersize,
-	cs4281_mappage,
-	cs4281_get_props,
+	cs428x_mixer_set_port,
+	cs428x_mixer_get_port,
+	cs428x_query_devinfo,
+	cs428x_malloc,
+	cs428x_free,
+	cs428x_round_buffersize,
+	cs428x_mappage,
+	cs428x_get_props,
 	cs4281_trigger_output,
 	cs4281_trigger_input,
 };
@@ -220,8 +185,9 @@ cs4281_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	char const *intrstr;
 	pci_intr_handle_t ih;
-	pcireg_t csr;
+	pcireg_t reg;
 	char devinfo[256];
+	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
@@ -242,10 +208,29 @@ cs4281_attach(parent, self, aux)
 
 	sc->sc_dmatag = pa->pa_dmat;
 
+	/*
+	 * Set Power State D0.
+	 * Without do this, 0xffffffff is read from all registers after
+	 * using Windows.
+	 * On my IBM Thinkpad X20, it is set to D3 after using Windows2000.
+	 */
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
+			       &pci_pwrmgmt_cap_reg, 0)) {
+
+		pci_pwrmgmt_csr_reg = pci_pwrmgmt_cap_reg + 4;
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+				    pci_pwrmgmt_csr_reg);
+		if ((reg & PCI_PMCSR_STATE_MASK) != PCI_PMCSR_STATE_D0) {
+			pci_conf_write(pc, pa->pa_tag, pci_pwrmgmt_csr_reg,
+				       (reg & ~PCI_PMCSR_STATE_MASK) |
+				       PCI_PMCSR_STATE_D0);
+		}
+	}
+
 	/* Enable the device (set bus master flag) */
-	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-	    csr | PCI_COMMAND_MASTER_ENABLE);
+	    reg | PCI_COMMAND_MASTER_ENABLE);
 
 #if 0
 	/* LATENCY_TIMER setting */
@@ -290,9 +275,9 @@ cs4281_attach(parent, self, aux)
 	
 	/* AC 97 attachment */
 	sc->host_if.arg = sc;
-	sc->host_if.attach = cs4281_attach_codec;
-	sc->host_if.read   = cs4281_read_codec;
-	sc->host_if.write  = cs4281_write_codec;
+	sc->host_if.attach = cs428x_attach_codec;
+	sc->host_if.read   = cs428x_read_codec;
+	sc->host_if.write  = cs428x_write_codec;
 	sc->host_if.reset  = cs4281_reset_codec;
 	if (ac97_attach(&sc->host_if) != 0) {
 		printf("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
@@ -308,7 +293,6 @@ cs4281_attach(parent, self, aux)
 	sc->sc_powerhook = powerhook_establish(cs4281_power, sc);
 }
 
-
 int
 cs4281_intr(p)
 	void *p;
@@ -316,6 +300,7 @@ cs4281_intr(p)
 	struct cs428x_softc *sc = p;
 	u_int32_t intr, hdsr0, hdsr1;
 	char *empty_dma;
+	int handled = 0;
 
 	hdsr0 = 0;
 	hdsr1 = 0;
@@ -343,6 +328,7 @@ cs4281_intr(p)
 	
 	/* Playback Interrupt */
 	if (intr & HISR_DMA0) {
+		handled = 1;
 		DPRINTF((" PB DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA0),
 			 (int)BA0READ4(sc, CS4281_DCC0)));
 		if (sc->sc_pintr) {
@@ -362,6 +348,7 @@ cs4281_intr(p)
 			sc->sc_pn = sc->sc_ps;
 	}
 	if (intr & HISR_DMA1) {
+		handled = 1;
 		/* copy from dma */
 		DPRINTF((" CP DMA 0x%x(%d)", (int)BA0READ4(sc, CS4281_DCA1),
 			 (int)BA0READ4(sc, CS4281_DCC1)));
@@ -380,7 +367,8 @@ cs4281_intr(p)
 		}
 	}
 	DPRINTF(("\n"));
-	return 1;
+
+	return handled;
 }
 
 int
@@ -548,7 +536,6 @@ cs4281_getdev(addr, retp)
 	*retp = cs4281_device;
 	return 0;
 }
-
 
 int
 cs4281_trigger_output(addr, start, end, blksize, intr, arg, param)
@@ -743,6 +730,145 @@ cs4281_trigger_input(addr, start, end, blksize, intr, arg, param)
 	return 0;
 }
 
+/* Power Hook */
+void
+cs4281_power(why, v)
+	int why;
+	void *v;
+{
+	struct cs428x_softc *sc = (struct cs428x_softc *)v;
+
+	DPRINTF(("%s: cs4281_power why=%d\n", sc->sc_dev.dv_xname, why));
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		sc->sc_suspend = why;
+
+		cs4281_halt_output(sc);
+		cs4281_halt_input(sc);
+		/* should I powerdown here ? */
+		cs428x_write_codec(sc, AC97_REG_POWER, CS4281_POWER_DOWN_ALL);
+		break;
+	case PWR_RESUME:
+		if (sc->sc_suspend == PWR_RESUME) {
+			printf("cs4281_power: odd, resume without suspend.\n");
+			sc->sc_suspend = why;
+			return;
+		}
+		sc->sc_suspend = why;
+		cs4281_init(sc);
+		cs4281_reset_codec(sc);
+
+		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+	}
+}
+
+/* control AC97 codec */
+void
+cs4281_reset_codec(void *addr)
+{
+	struct cs428x_softc *sc;
+	u_int16_t data;
+	u_int32_t dat32;
+	int n;
+
+	sc = addr;
+
+	DPRINTFN(3,("cs4281_reset_codec\n"));
+
+	/* Reset codec */
+	BA0WRITE4(sc, CS428X_ACCTL, 0);
+	delay(50);    /* delay 50us */
+
+	BA0WRITE4(sc, CS4281_SPMC, 0);
+	delay(100);	/* delay 100us */
+	BA0WRITE4(sc, CS4281_SPMC, SPMC_RSTN);
+#if defined(ENABLE_SECONDARY_CODEC)
+	BA0WRITE4(sc, CS4281_SPMC, SPMC_RSTN | SPCM_ASDIN2E);
+	BA0WRITE4(sc, CS4281_SERMC, SERMC_TCID);
+#endif
+	delay(50000);   /* XXX: delay 50ms */
+
+	/* Enable ASYNC generation */
+	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN);
+
+	/* Wait for Codec ready. Linux driver wait 50ms here */
+	n = 0;
+	while((BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY) == 0) {
+		delay(100);
+		if (++n > 1000) {
+			printf("reset_codec: AC97 codec ready timeout\n");
+			return;
+		}
+	}
+#if defined(ENABLE_SECONDARY_CODEC)
+	/* secondary codec ready*/
+	n = 0;
+	while((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
+		delay(100);
+		if (++n > 1000)
+			return;
+	}
+#endif
+	/* Set the serial timing configuration */
+	/* XXX: undocumented but the Linux driver do this */
+	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
+	
+	/* Wait for Codec ready signal */
+	n = 0;
+	do {
+		delay(1000);
+		if (++n > 1000) {
+			printf("%s: Timeout waiting for Codec ready\n",
+			       sc->sc_dev.dv_xname);
+			return;
+		}
+		dat32 = BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY;
+	} while (dat32 == 0);
+
+	/* Enable Valid Frame output on ASDOUT */
+	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN | ACCTL_VFRM);
+	
+	/* Wait until Codec Calibration is finished. Codec register 26h */
+	n = 0;
+	do {
+		delay(1);
+		if (++n > 1000) {
+			printf("%s: Timeout waiting for Codec calibration\n",
+			       sc->sc_dev.dv_xname);
+			return ;
+		}
+		cs428x_read_codec(sc, AC97_REG_POWER, &data);
+	} while ((data & 0x0f) != 0x0f);
+
+	/* Set the serial timing configuration again */
+	/* XXX: undocumented but the Linux driver do this */
+	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
+
+	/* Wait until we've sampled input slots 3 & 4 as valid */
+	n = 0;
+	do {
+		delay(1000);
+		if (++n > 1000) {
+			printf("%s: Timeout waiting for sampled input slots as valid\n",
+			       sc->sc_dev.dv_xname);
+			return;
+		}
+		dat32 = BA0READ4(sc, CS428X_ACISV) & (ACISV_ISV3 | ACISV_ISV4) ;
+	} while (dat32 != (ACISV_ISV3 | ACISV_ISV4));
+	
+	/* Start digital data transfer of audio data to the codec */
+	BA0WRITE4(sc, CS428X_ACOSV, (ACOSV_SLV3 | ACOSV_SLV4));
+}
+
+
+/* Internal functions */
+
 /* convert sample rate to register value */
 u_int8_t
 cs4281_sr2regval(rate)
@@ -781,21 +907,20 @@ cs4281_sr2regval(rate)
 	return retval;
 }
 
-	
-void
-cs4281_set_dac_rate(sc, rate)
-	struct cs428x_softc *sc;
-	int rate;
-{
-	BA0WRITE4(sc, CS4281_DACSR, cs4281_sr2regval(rate));
-}
-
 void
 cs4281_set_adc_rate(sc, rate)
 	struct cs428x_softc *sc;
 	int rate;
 {
 	BA0WRITE4(sc, CS4281_ADCSR, cs4281_sr2regval(rate));
+}
+
+void
+cs4281_set_dac_rate(sc, rate)
+	struct cs428x_softc *sc;
+	int rate;
+{
+	BA0WRITE4(sc, CS4281_DACSR, cs4281_sr2regval(rate));
 }
 
 int
@@ -809,6 +934,15 @@ cs4281_init(sc)
 	/* set "Configuration Write Protect" register to
 	 * 0x4281 to allow to write */
 	BA0WRITE4(sc, CS4281_CWPR, 0x4281);
+
+	/*
+	 * Unset "Full Power-Down bit of Extended PCI Power Management
+	 * Control" register to release the reset state.
+	 */
+	dat32 = BA0READ4(sc, CS4281_EPPMC);
+	if (dat32 & EPPMC_FPDN) {
+		BA0WRITE4(sc, CS4281_EPPMC, dat32 & ~EPPMC_FPDN);
+	}
 
 	/* Start PLL out in known state */
 	BA0WRITE4(sc, CS4281_CLKCR1, 0);
@@ -911,7 +1045,7 @@ cs4281_init(sc)
 			       sc->sc_dev.dv_xname);
 			return -1;
 		}
-		cs4281_read_codec(sc, AC97_REG_POWER, &data);
+		cs428x_read_codec(sc, AC97_REG_POWER, &data);
 	} while ((data & 0x0f) != 0x0f);
 
 	/* Set the serial timing configuration again */
@@ -933,33 +1067,33 @@ cs4281_init(sc)
 	/* Start digital data transfer of audio data to the codec */
 	BA0WRITE4(sc, CS428X_ACOSV, (ACOSV_SLV3 | ACOSV_SLV4));
 	
-	cs4281_write_codec(sc, AC97_REG_HEADPHONE_VOLUME, 0);
-	cs4281_write_codec(sc, AC97_REG_MASTER_VOLUME, 0);
+	cs428x_write_codec(sc, AC97_REG_HEADPHONE_VOLUME, 0);
+	cs428x_write_codec(sc, AC97_REG_MASTER_VOLUME, 0);
 	
 	/* Power on the DAC */
-	cs4281_read_codec(sc, AC97_REG_POWER, &data);
-	cs4281_write_codec(sc, AC97_REG_POWER, data & 0xfdff);
+	cs428x_read_codec(sc, AC97_REG_POWER, &data);
+	cs428x_write_codec(sc, AC97_REG_POWER, data & 0xfdff);
 
 	/* Wait until we sample a DAC ready state.
 	 * Not documented, but Linux driver does.
 	 */
 	for (n = 0; n < 32; ++n) {
 		delay(1000);
-		cs4281_read_codec(sc, AC97_REG_POWER, &data);
+		cs428x_read_codec(sc, AC97_REG_POWER, &data);
 		if (data & 0x02)
 			break;
 	}
 	
 	/* Power on the ADC */
-	cs4281_read_codec(sc, AC97_REG_POWER, &data);
-	cs4281_write_codec(sc, AC97_REG_POWER, data & 0xfeff);
+	cs428x_read_codec(sc, AC97_REG_POWER, &data);
+	cs428x_write_codec(sc, AC97_REG_POWER, data & 0xfeff);
 
 	/* Wait until we sample ADC ready state.
 	 * Not documented, but Linux driver does.
 	 */
 	for (n = 0; n < 32; ++n) {
 		delay(1000);
-		cs4281_read_codec(sc, AC97_REG_POWER, &data);
+		cs428x_read_codec(sc, AC97_REG_POWER, &data);
 		if (data & 0x01)
 			break;
 	}
@@ -1087,465 +1221,3 @@ cs4281_init(sc)
 		  BA0READ4(sc, CS4281_HIMR) & dat32);
 	return 0;
 }
-
-void
-cs4281_power(why, v)
-	int why;
-	void *v;
-{
-	struct cs428x_softc *sc = (struct cs428x_softc *)v;
-
-	DPRINTF(("%s: cs4281_power why=%d\n", sc->sc_dev.dv_xname, why));
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		sc->sc_suspend = why;
-
-		cs4281_halt_output(sc);
-		cs4281_halt_input(sc);
-		/* should I powerdown here ? */
-		cs4281_write_codec(sc, AC97_REG_POWER, CS4281_POWER_DOWN_ALL);
-		break;
-	case PWR_RESUME:
-		if (sc->sc_suspend == PWR_RESUME) {
-			printf("cs4281_power: odd, resume without suspend.\n");
-			sc->sc_suspend = why;
-			return;
-		}
-		sc->sc_suspend = why;
-		cs4281_init(sc);
-		cs4281_reset_codec(sc);
-
-		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-}
-
-void
-cs4281_reset_codec(void *addr)
-{
-	struct cs428x_softc *sc;
-	u_int16_t data;
-	u_int32_t dat32;
-	int n;
-
-	sc = addr;
-
-	DPRINTFN(3,("cs4281_reset_codec\n"));
-
-	/* Reset codec */
-	BA0WRITE4(sc, CS428X_ACCTL, 0);
-	delay(50);    /* delay 50us */
-
-	BA0WRITE4(sc, CS4281_SPMC, 0);
-	delay(100);	/* delay 100us */
-	BA0WRITE4(sc, CS4281_SPMC, SPMC_RSTN);
-#if defined(ENABLE_SECONDARY_CODEC)
-	BA0WRITE4(sc, CS4281_SPMC, SPMC_RSTN | SPCM_ASDIN2E);
-	BA0WRITE4(sc, CS4281_SERMC, SERMC_TCID);
-#endif
-	delay(50000);   /* XXX: delay 50ms */
-
-	/* Enable ASYNC generation */
-	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN);
-
-	/* Wait for Codec ready. Linux driver wait 50ms here */
-	n = 0;
-	while((BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY) == 0) {
-		delay(100);
-		if (++n > 1000) {
-			printf("reset_codec: AC97 codec ready timeout\n");
-			return;
-		}
-	}
-#if defined(ENABLE_SECONDARY_CODEC)
-	/* secondary codec ready*/
-	n = 0;
-	while((BA0READ4(sc, CS4281_ACSTS2) & ACSTS2_CRDY2) == 0) {
-		delay(100);
-		if (++n > 1000)
-			return;
-	}
-#endif
-	/* Set the serial timing configuration */
-	/* XXX: undocumented but the Linux driver do this */
-	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
-	
-	/* Wait for Codec ready signal */
-	n = 0;
-	do {
-		delay(1000);
-		if (++n > 1000) {
-			printf("%s: Timeout waiting for Codec ready\n",
-			       sc->sc_dev.dv_xname);
-			return;
-		}
-		dat32 = BA0READ4(sc, CS428X_ACSTS) & ACSTS_CRDY;
-	} while (dat32 == 0);
-
-	/* Enable Valid Frame output on ASDOUT */
-	BA0WRITE4(sc, CS428X_ACCTL, ACCTL_ESYN | ACCTL_VFRM);
-	
-	/* Wait until Codec Calibration is finished. Codec register 26h */
-	n = 0;
-	do {
-		delay(1);
-		if (++n > 1000) {
-			printf("%s: Timeout waiting for Codec calibration\n",
-			       sc->sc_dev.dv_xname);
-			return ;
-		}
-		cs4281_read_codec(sc, AC97_REG_POWER, &data);
-	} while ((data & 0x0f) != 0x0f);
-
-	/* Set the serial timing configuration again */
-	/* XXX: undocumented but the Linux driver do this */
-	BA0WRITE4(sc, CS4281_SERMC, SERMC_PTCAC97);
-
-	/* Wait until we've sampled input slots 3 & 4 as valid */
-	n = 0;
-	do {
-		delay(1000);
-		if (++n > 1000) {
-			printf("%s: Timeout waiting for sampled input slots as valid\n",
-			       sc->sc_dev.dv_xname);
-			return;
-		}
-		dat32 = BA0READ4(sc, CS428X_ACISV) & (ACISV_ISV3 | ACISV_ISV4) ;
-	} while (dat32 != (ACISV_ISV3 | ACISV_ISV4));
-	
-	/* Start digital data transfer of audio data to the codec */
-	BA0WRITE4(sc, CS428X_ACOSV, (ACOSV_SLV3 | ACOSV_SLV4));
-}
-
-#ifdef NOT_SHARED
-/* From here to last, all functions may shared with cs4280.c */
-
-int
-cs4281_open(void *addr, int flags)
-{
-	return 0;
-}
-
-void
-cs4281_close(void *addr)
-{
-	struct cs428x_softc *sc;
-
-	sc = addr;
-
-	(*sc->halt_output)(sc);
-	(*sc->halt_input)(sc);
-	
-	sc->sc_pintr = 0;
-	sc->sc_rintr = 0;
-}
-
-int
-cs4281_round_blocksize(void *addr, int blk)
-{
-	struct cs428x_softc *sc;
-	int retval;
-	
-	DPRINTFN(5,("cs4281_round_blocksize blk=%d -> ", blk));
-	
-	sc=addr;
-	if (blk < sc->hw_blocksize)
-		retval = sc->hw_blocksize;
-	else
-		retval = blk & -(sc->hw_blocksize);
-
-	DPRINTFN(5,("%d\n", retval));
-
-	return retval;
-}
-
-int
-cs4281_mixer_set_port(void *addr, mixer_ctrl_t *cp)
-{
-	struct cs428x_softc *sc;
-	int val;
-
-	sc = addr;
-	val = sc->codec_if->vtbl->mixer_set_port(sc->codec_if, cp);
-	DPRINTFN(3,("mixer_set_port: val=%d\n", val));
-	return (val);
-}
-
-int
-cs4281_mixer_get_port(void *addr, mixer_ctrl_t *cp)
-{
-	struct cs428x_softc *sc;
-
-	sc = addr;
-	return (sc->codec_if->vtbl->mixer_get_port(sc->codec_if, cp));
-}
-
-
-int
-cs4281_query_devinfo(void *addr, mixer_devinfo_t *dip)
-{
-	struct cs428x_softc *sc;
-
-	sc = addr;
-	return (sc->codec_if->vtbl->query_devinfo(sc->codec_if, dip));
-}
-
-void *
-cs4281_malloc(void *addr, int direction, size_t size, int pool, int flags)
-{
-	struct cs428x_softc *sc;
-	struct cs428x_dma   *p;
-	int error;
-
-	sc = addr;
-
-	p = malloc(sizeof(*p), pool, flags);
-	if (!p)
-		return 0;
-
-	error = cs4281_allocmem(sc, size, pool, flags, p);
-
-	if (error) {
-		free(p, pool);
-		return 0;
-	}
-
-	p->next = sc->sc_dmas;
-	sc->sc_dmas = p;
-	return BUFADDR(p);
-}
-
-
-
-void
-cs4281_free(void *addr, void *ptr, int pool)
-{
-	struct cs428x_softc *sc;
-	struct cs428x_dma **pp, *p;
-
-	sc = addr;
-	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
-		if (BUFADDR(p) == ptr) {
-			bus_dmamap_unload(sc->sc_dmatag, p->map);
-			bus_dmamap_destroy(sc->sc_dmatag, p->map);
-			bus_dmamem_unmap(sc->sc_dmatag, p->addr, p->size);
-			bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-			free(p->dum, pool);
-			*pp = p->next;
-			free(p, pool);
-			return;
-		}
-	}
-}
-
-size_t
-cs4281_round_buffersize(void *addr, int direction, size_t size)
-{
-	/* The real dma buffersize are 4KB for CS4280
-	 * and 64kB/MAX_CHANNELS for CS4281.
-	 * But they are too small for high quality audio,
-	 * let the upper layer(audio) use a larger buffer.
-	 * (originally suggested by Lennart Augustsson.)
-	 */
-	return size;
-}
-
-paddr_t
-cs4281_mappage(void *addr, void *mem, off_t off, int prot)
-{
-	struct cs428x_softc *sc;
-	struct cs428x_dma *p;
-	
-	sc = addr;
-	if (off < 0)
-		return -1;
-
-	for (p = sc->sc_dmas; p && BUFADDR(p) != mem; p = p->next)
-		;
-
-	if (!p) {
-		DPRINTF(("cs4281_mappage: bad buffer address\n"));
-		return -1;
-	}
-
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-			       off, prot, BUS_DMA_WAITOK));
-}
-
-
-int
-cs4281_get_props(void *addr)
-{
-	int retval;
-
-	retval = AUDIO_PROP_INDEPENDENT | AUDIO_PROP_FULLDUPLEX;
-#ifdef MMAP_READY
-	retval |= AUDIO_PROP_MMAP;
-#endif
-	return retval;
-}
-
-/* AC97 */
-int
-cs4281_attach_codec(void *addr, struct ac97_codec_if *codec_if)
-{
-	struct cs428x_softc *sc;
-
-	DPRINTF(("cs4281_attach_codec:\n"));
-	sc = addr;
-	sc->codec_if = codec_if;
-	return 0;
-}
-
-
-int
-cs4281_read_codec(void *addr, u_int8_t ac97_addr, u_int16_t *ac97_data)
-{
-	struct cs428x_softc *sc;
-	u_int32_t acctl;
-	int n;
-
-	sc = addr;
-
-	DPRINTFN(5,("read_codec: add=0x%02x ", ac97_addr));
-	/*
-	 * Make sure that there is not data sitting around from a preivous
-	 * uncompleted access.
-	 */
-	BA0READ4(sc, CS428X_ACSDA);
-
-	/* Set up AC97 control registers. */
-	BA0WRITE4(sc, CS428X_ACCAD, ac97_addr);
-	BA0WRITE4(sc, CS428X_ACCDA, 0);
-
-	acctl = ACCTL_ESYN | ACCTL_VFRM | ACCTL_CRW  | ACCTL_DCV;
-	if ( sc->type == TYPE_CS4280 )
-		acctl |= ACCTL_RSTN;
-	BA0WRITE4(sc, CS428X_ACCTL, acctl);
-
-	if (cs4281_src_wait(sc) < 0) {
-		printf("%s: AC97 read prob. (DCV!=0) for add=0x%0x\n",
-		       sc->sc_dev.dv_xname, ac97_addr);
-		return 1;
-	}
-
-	/* wait for valid status bit is active */
-	n = 0;
-	while ((BA0READ4(sc, CS428X_ACSTS) & ACSTS_VSTS) == 0) {
-		delay(1);
-		while (++n > 1000) {
-			printf("%s: AC97 read fail (VSTS==0) for add=0x%0x\n",
-			       sc->sc_dev.dv_xname, ac97_addr);
-			return 1;
-		}
-	}
-	*ac97_data = BA0READ4(sc, CS428X_ACSDA);
-	DPRINTFN(5,("data=0x%04x\n", *ac97_data));
-	return 0;
-}
-
-int
-cs4281_write_codec(void *addr, u_int8_t ac97_addr, u_int16_t ac97_data)
-{
-	struct cs428x_softc *sc;
-	u_int32_t acctl;
-
-	sc = addr;
-
-	DPRINTFN(5,("write_codec: add=0x%02x  data=0x%04x\n", ac97_addr, ac97_data));
-	BA0WRITE4(sc, CS428X_ACCAD, ac97_addr);
-	BA0WRITE4(sc, CS428X_ACCDA, ac97_data);
-
-	acctl = ACCTL_ESYN | ACCTL_VFRM | ACCTL_DCV;
-	if ( sc->type == TYPE_CS4280 )
-		acctl |= ACCTL_RSTN;
-	BA0WRITE4(sc, CS428X_ACCTL, acctl);
-
-	if (cs4281_src_wait(sc) < 0) {
-		printf("%s: AC97 write fail (DCV!=0) for add=0x%02x data="
-		       "0x%04x\n", sc->sc_dev.dv_xname, ac97_addr, ac97_data);
-		return 1;
-	}
-	return 0;
-}
-
-/* Internal functions */
-int
-cs4281_allocmem(struct cs428x_softc *sc, 
-		size_t size, int pool, int flags,
-		struct cs428x_dma *p)
-{
-	int error;
-	size_t align;
-	
-	align   = sc->dma_align;
-	p->size = sc->dma_size;
-	/* allocate memory for upper audio driver */
-	p->dum  = malloc(size, pool, flags);
-	if (!p->dum)
-		return 1;
-	error = bus_dmamem_alloc(sc->sc_dmatag, p->size, align, 0,
-				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
-				 &p->nsegs, BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: unable to allocate dma. error=%d\n",
-		       sc->sc_dev.dv_xname, error);
-		return error;
-	}
-
-	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
-			       &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
-	if (error) {
-		printf("%s: unable to map dma, error=%d\n",
-		       sc->sc_dev.dv_xname, error);
-		goto free;
-	}
-
-	error = bus_dmamap_create(sc->sc_dmatag, p->size, 1, p->size,
-				  0, BUS_DMA_NOWAIT, &p->map);
-	if (error) {
-		printf("%s: unable to create dma map, error=%d\n",
-		       sc->sc_dev.dv_xname, error);
-		goto unmap;
-	}
-
-	error = bus_dmamap_load(sc->sc_dmatag, p->map, p->addr, p->size, NULL,
-				BUS_DMA_NOWAIT);
-	if (error) {
-		printf("%s: unable to load dma map, error=%d\n",
-		       sc->sc_dev.dv_xname, error);
-		goto destroy;
-	}
-	return 0;
-
-destroy:
-	bus_dmamap_destroy(sc->sc_dmatag, p->map);
-unmap:
-	bus_dmamem_unmap(sc->sc_dmatag, p->addr, p->size);
-free:
-	bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-	return error;
-}
-
-
-int
-cs4281_src_wait(sc)
-	struct cs428x_softc *sc;
-{
-	int n;
-
-	n = 0;
-	while ((BA0READ4(sc, CS428X_ACCTL) & ACCTL_DCV)) {
-		delay(1000);
-		while (++n > 1000)
-			return -1;
-	}
-	return 0;
-}
-
-#endif /* NOT_SHARED */
