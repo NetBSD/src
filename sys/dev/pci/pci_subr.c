@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.23 1998/04/20 14:16:26 drochner Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.24 1998/05/03 19:41:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,6 +40,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <machine/intr.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -320,8 +322,8 @@ pci_conf_print(pc, tag)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 {
-	pcireg_t rval;
-	int reg;
+	pcireg_t rval, mask;
+	int reg, s;
 #ifdef PCIVERBOSE
 	struct pci_knowndev *kdp;
 	static const char on_str[] = "ON", off_str[] = "OFF";
@@ -444,12 +446,28 @@ pci_conf_print(pc, tag)
 	printf("  Cache Line Size: 0x%02x\n", PCI_CACHELINE(rval));
 
 	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+		/*
+		 * Section 6.2.5.1, `Address Maps', tells us that:
+		 *
+		 * 1) The builtin software should have already mapped the
+		 * device in a reasonable way.
+		 *
+		 * 2) A device which wants 2^n bytes of memory will hardwire
+		 * the bottom n bits of the address to 0.  As recommended,
+		 * we write all 1s and see what we get back.
+		 */
+		s = splhigh();
 		rval = pci_conf_read(pc, tag, reg);
+		pci_conf_write(pc, tag, reg, 0xffffffff);
+		mask = pci_conf_read(pc, tag, reg);
+		pci_conf_write(pc, tag, reg, rval);
+		splx(s);
+
 		printf("  Mapping register 0x%02x\n", reg);
 		if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
 			printf("    Base Address: 0x%08x, size 0x%08x, "
 			    "type = mem", PCI_MAPREG_MEM_ADDR(rval),
-			    PCI_MAPREG_MEM_SIZE(rval));
+			    PCI_MAPREG_MEM_SIZE(mask));
 			switch (PCI_MAPREG_MEM_TYPE(rval)) {
 			case PCI_MAPREG_MEM_TYPE_32BIT:
 				printf(", 32-bit");
@@ -469,7 +487,7 @@ pci_conf_print(pc, tag)
 		} else {
 			printf("    Base Address: 0x%08x, size 0x%08x, "
 			    "type = i/o\n", PCI_MAPREG_IO_ADDR(rval),
-			    PCI_MAPREG_IO_SIZE(rval));
+			    PCI_MAPREG_IO_SIZE(mask));
 		}
 	}
 
