@@ -1,4 +1,4 @@
-/*	$NetBSD: md5_dgst_586.S,v 1.1 2000/07/31 19:08:03 thorpej Exp $	*/
+/*	$NetBSD: md5_dgst_586.S,v 1.2 2003/11/12 16:20:27 itojun Exp $	*/
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -729,7 +729,7 @@ L000start:
 	movl	%ecx,		8(%ebp)
 	movl	%edx,		12(%ebp)
 	cmpl	%esi,		%edi
-	jge	L000start
+	jae	L000start
 	popl	%eax
 	popl	%ebx
 	popl	%ebp
