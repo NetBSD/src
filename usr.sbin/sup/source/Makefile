@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.12 1997/06/17 18:56:02 christos Exp $
 # Copyright (c) 1992,1991 Carnegie Mellon University
 # All Rights Reserved.
 # 

@@ -1,3 +1,5 @@
+/*	$NetBSD: time.h,v 1.2 1997/06/17 18:57:08 christos Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.

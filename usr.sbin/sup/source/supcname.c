@@ -1,3 +1,5 @@
+/*	$NetBSD: supcname.c,v 1.4 1997/06/17 18:56:52 christos Exp $	*/
+
 /*
  * Copyright (c) 1992 Carnegie Mellon University
  * All Rights Reserved.
@@ -26,19 +28,6 @@
  * sup client name server interface
  **********************************************************************
  * HISTORY
- * $Log: supcname.c,v $
- * Revision 1.3  1996/12/23 19:42:19  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.2  1995/09/16 19:12:14  glass
- * if the function returns nothing, declare it void
- *
- * Revision 1.1.1.1  1993/05/21 14:52:18  cgd
- * initial import of CMU's SUP to NetBSD
- *
  * Revision 1.4  92/08/11  12:07:32  mrt
  * 	Added copyright.
  * 	[92/08/10            mrt]

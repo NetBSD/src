@@ -1,3 +1,5 @@
+/*	$NetBSD: sysent.h,v 1.2 1997/06/17 18:57:06 christos Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -25,10 +27,6 @@
 /*
  **********************************************************************
  * HISTORY
- * $Log: sysent.h,v $
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
- * initial import of CMU's SUP to NetBSD
- *
  * Revision 2.4  89/12/05  16:02:00  mrt
  * 	Removed include of sys/features.h as it is no longer
  * 	exported or needed.

@@ -1,3 +1,5 @@
+/*	$NetBSD: libc.h,v 1.3 1997/06/17 18:56:18 christos Exp $	*/
+
 /*
  * Copyright (c) 1991 Carnegie Mellon University
  * All Rights Reserved.
@@ -25,16 +27,7 @@
 /*
  **********************************************************************
  * HISTORY
- * $Log: libc.h,v $
- * Revision 1.2  1996/12/23 19:42:05  christos
- * - add missing prototypes.
- * - fix function call inconsistencies
- * - fix int <-> long and pointer conversions
- * It should run now on 64 bit machines...
- *
- * Revision 1.1.1.1  1993/05/21 14:52:17  cgd
- * initial import of CMU's SUP to NetBSD
- *
+
  * Revision 1.7  89/04/03  11:10:45  vanryzin
  * 	Changed definition of qsort for c++ to indicate the procedure
  * 	passed to qsort has parameters.  Since we were unsure if ANSI C
