@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdoc.samples.7,v 1.11 1997/11/24 06:29:16 lukem Exp $
+.\"	$NetBSD: mdoc.samples.7,v 1.12 1997/11/24 12:43:25 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 .\" times and is guaranteed to give a worst case performance
 .\" for an already extremely slow package.
 .\"
-.Dd December 30, 1993
+.Dd November 24, 1997
 .Os
 .Dt MDOC.SAMPLES 7
 .Sh NAME
@@ -2309,8 +2309,8 @@ each list must end with the
 .Ql ".El"
 macro.
 Lists may be nested within themselves and within displays.
-Columns may be used inside of lists, but lists are unproven
-inside of columns.
+The use of columns inside or lists or lists inside of columns
+is unproven.
 .Pp
 In addition, several list attributes may be specified such as
 the width of a tag, the list offset, and compactness
@@ -2542,6 +2542,35 @@ as if the macro name had been supplied as the width.
 However,
 if another item in the list is given with a different callable
 macro name, a new and nested list is assumed.
+.Pp
+.It Fl column
+This list type generates multiple columns.
+The number of columns and the width of each column is determined by
+the arguments to the
+.Fl column
+list.
+Each
+.Ql ".It"
+argument is parsed to make a row, each column within the
+row is a separate argument separated by a tab or the
+.Ql ".Ta"
+macro.
+.El
+The table:
+.Bl -column "String" "Nroff" "Troff" -offset indent
+.It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
+.It Li "<=" Ta \&<\&= Ta \*(<=
+.It Li ">=" Ta \&>\&= Ta \*(>=
+.El
+.Pp
+was produced by:
+.Bd -literal -offset indent
+\&.Bl -column "String" "Nroff" "Troff" -offset indent
+\&.It Sy "String" Ta Sy "Nroff" Ta Sy "Troff"
+\&.It Li "<=" Ta \&<\&= Ta \*(<=
+\&.It Li ">=" Ta \&>\&= Ta \*(>=
+\&.El
+.Ed
 .Sh PREDEFINED STRINGS
 The following strings are predefined as may be used by
 preceding with the troff string interpreting sequence
@@ -2806,6 +2835,15 @@ The method used to prevent header and footer page
 breaks (other than the initial header and footer) when using
 nroff occasionally places an unsightly partially filled line (blank)
 at the would be bottom of the page.
+.Pp
+If the outer-most list definition doesn't have a
+.Fl width
+argument, the
+.Ql ".It"
+elements of inner lists may not work (producing a list where
+each successive element
+.Sq walks
+to the right).
 .Pp
 The list and display macros to not do any keeps
 and certainly should be able to.
