@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_frag.h,v 1.17 2002/01/24 08:23:12 martti Exp $	*/
+/*	$NetBSD: ip_frag.h,v 1.18 2002/09/19 08:09:15 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -6,7 +6,7 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  *
  * @(#)ip_frag.h	1.5 3/24/96
- * Id: ip_frag.h,v 2.4.2.6 2002/01/01 15:09:38 darrenr Exp
+ * Id: ip_frag.h,v 2.4.2.7 2002/07/06 14:17:51 darrenr Exp
  */
 
 #ifndef _NETINET_IP_FRAG_H_
@@ -50,8 +50,8 @@ typedef	struct	ipfrstat {
 extern	int	fr_ipfrttl;
 extern	int	fr_frag_lock;
 extern	ipfrstat_t	*ipfr_fragstats __P((void));
-extern	int	ipfr_newfrag __P((ip_t *, fr_info_t *, u_int));
-extern	int	ipfr_nat_newfrag __P((ip_t *, fr_info_t *, u_int, struct nat *));
+extern	int	ipfr_newfrag __P((ip_t *, fr_info_t *));
+extern	int	ipfr_nat_newfrag __P((ip_t *, fr_info_t *, struct nat *));
 extern	nat_t	*ipfr_nat_knownfrag __P((ip_t *, fr_info_t *));
 extern	frentry_t *ipfr_knownfrag __P((ip_t *, fr_info_t *));
 extern	void	ipfr_forget __P((void *));
