@@ -1,4 +1,4 @@
-/*	$NetBSD: findcons.c,v 1.17 1999/09/03 10:19:40 nisimura Exp $	*/
+/*	$NetBSD: findcons.c,v 1.18 1999/11/15 09:54:41 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.17 1999/09/03 10:19:40 nisimura Exp $$");
+__KERNEL_RCSID(0, "$NetBSD: findcons.c,v 1.18 1999/11/15 09:54:41 nisimura Exp $$");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ integrate int	dtop_kbd	__P((int prom_slot));
 
 integrate int	pm_screen	__P((int prom_slot));
 integrate int	xcfb_screen	__P((int prom_slot));
-integrate int	tc_screen	__P((int prom_slot));
+extern int	tcfb_cnattach	__P((int prom_slot));
 
 integrate int	dc_ds_serial	__P((int prom_slot));
 integrate int	dc_ioasic_serial __P((int prom_slot));
@@ -321,20 +321,6 @@ xcfb_screen(crtslot)
 	return (0);
 }
 
-int
-tc_screen(crtslot)
-	int crtslot;
-{
-#if NTC > 0
-	if (tc_findconsole(crtslot)) {
-		return (1);
-	}
-#endif
-	return 0;
-}
-
-
-
 /*
  * Look for screen.
  */
@@ -358,7 +344,7 @@ find_screen(crtslot)
 	case DS_3MIN:
 	case DS_3MAXPLUS:
 		/* TC option video?*/
-		if (tc_screen(crtslot))
+		if (tcfb_cnattach(crtslot))
 			return(1);
 		break;
 	default:
