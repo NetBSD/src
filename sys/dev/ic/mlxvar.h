@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.5 2001/09/18 18:15:52 wiz Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.6 2002/08/26 15:27:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -149,8 +149,7 @@ struct mlx_softc {
 	int	(*mlx_reset)(struct mlx_softc *);
 
 	int			mlx_max_queuecnt;
-	struct mlx_enquiry2	*mlx_enq2;
-	int			mlx_iftype;
+	struct mlx_cinfo	mlx_ci;
 
 	time_t			mlx_lastpoll;
 	u_int			mlx_lastevent;
@@ -177,7 +176,6 @@ struct mlx_softc {
 #define	MLXF_PERIODIC_CTLR	0x0040	/* periodic check running */
 #define	MLXF_PERIODIC_DRIVE	0x0080	/* periodic check running */
 #define	MLXF_PERIODIC_REBUILD	0x0100	/* periodic check running */
-#define	MLXF_EISA		0x0200	/* EISA board */
 #define	MLXF_RESCANNING		0x0400	/* rescanning drive table */
 
 struct mlx_attach_args {
