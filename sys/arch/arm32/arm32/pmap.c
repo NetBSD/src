@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 1999/03/27 05:12:21 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 1999/03/27 05:57:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -338,7 +338,7 @@ pmap_collect_pv()
 			TAILQ_REMOVE(&pv_page_freelist, pvp, pvp_pgi.pgi_list);
 			TAILQ_INSERT_TAIL(&pv_page_collectlist, pvp,
 			    pvp_pgi.pgi_list);
-			pv_nfree -= pvp->pvp_pgi.pgi_nfree;
+			pv_nfree -= NPVPPG;
 			pvp->pvp_pgi.pgi_nfree = -1;
 		}
 	}
