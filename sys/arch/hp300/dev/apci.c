@@ -1,7 +1,7 @@
-/*	$NetBSD: apci.c,v 1.4 1998/03/28 23:49:06 thorpej Exp $	*/
+/*	$NetBSD: apci.c,v 1.5 1999/07/31 21:14:36 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -153,8 +153,6 @@ int	apcimctl __P((struct apci_softc *, int, int));
 void	apciinit __P((struct apciregs *, int));
 void	apcitimeout __P((void *));
 
-int	apcicheckdca __P((void));
-
 cdev_decl(apci);
 
 #define	APCIUNIT(x)	(minor(x) & 0x7ffff)
@@ -212,16 +210,11 @@ apcimatch(parent, match, aux)
 	case FRODO_APCI_OFFSET(1):
 	case FRODO_APCI_OFFSET(2):
 	case FRODO_APCI_OFFSET(3):
-		break;
-	default:
-		return (0);
+		/* Yup, we exist! */
+		return (1);
 	}
 
-	/* Make sure there's not a DCA in the way. */
-	if (fa->fa_offset == FRODO_APCI_OFFSET(1) && apcicheckdca())
-		return (0);
-
-	return (1);
+	return (0);
 }
 
 void
@@ -875,45 +868,6 @@ apcitimeout(arg)
 	timeout(apcitimeout, sc, hz);
 }
 
-int
-apcicheckdca()
-{
-	caddr_t va;
-	int rv = 0;
-
-	/*
-	 * On systems that also have a dca at select code 9, we
-	 * cannot use the second UART, as it is mapped to select
-	 * code 9 by the firmware.  We check for this by mapping
-	 * select code 9 and checking for a dca.  Yuck.
-	 */
-	va = iomap(dio_scodetopa(9), NBPG);
-	if (va == NULL) {
-		printf("apcicheckdca: can't map scode 9!\n");
-		return (1);	/* Safety. */
-	}
-
-	/* Check for hardware. */
-	if (badaddr(va)) {
-		/* Nothing there, assume APCI. */
-		goto unmap;
-	}
-
-	/* Check DIO ID against DCA IDs. */
-	switch (DIO_ID(va)) {
-	case DIO_DEVICE_ID_DCA0:
-	case DIO_DEVICE_ID_DCA0REM:
-	case DIO_DEVICE_ID_DCA1:
-	case DIO_DEVICE_ID_DCA1REM:
-		rv = 1;
-	}
- unmap:
-	iounmap(va, NBPG);
-
-	return (rv);
-}
-
-
 /*
  * The following routines are required for the APCI to act as the console.
  */
@@ -936,27 +890,22 @@ apcicnprobe(cp)
 	if (conforced)
 		return;
 
-	/* These can only exist on 400-series machines. */
-	switch (machineid) {
-	case HP_400:
-	case HP_425:
-	case HP_433:
-		break;
-
-	default:
+	/*
+	 * The APCI can only be a console on a 425e; on other 4xx
+	 * models, the "first" serial port is mapped to the DCA
+	 * at select code 9.  See frodo.c for the autoconfiguration
+	 * version of this check.
+	 */
+	if (machineid != HP_425 || mmuid != MMUID_425_E)
 		return;
-	}
 
-	/* Make sure a DCA isn't in the way. */
-	if (apcicheckdca() == 0) {
 #ifdef APCI_FORCE_CONSOLE
-		cp->cn_pri = CN_REMOTE;
-		conforced = 1;
-		conscode = -2;			/* XXX */
+	cp->cn_pri = CN_REMOTE;
+	conforced = 1;
+	conscode = -2;			/* XXX */
 #else
-		cp->cn_pri = CN_NORMAL;
+	cp->cn_pri = CN_NORMAL;
 #endif
-	}
 }
 
 /* ARGSUSED */
