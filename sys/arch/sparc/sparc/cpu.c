@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.48 1997/07/07 20:06:46 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.49 1997/07/07 20:43:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -305,6 +305,7 @@ void cpumatch_sun4 __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_sun4c __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_viking __P((struct cpu_softc *, struct module_info *, int));
 void cpumatch_hypersparc __P((struct cpu_softc *, struct module_info *, int));
+void cpumatch_turbosparc __P((struct cpu_softc *, struct module_info *, int));
 
 void getcacheinfo_sun4 __P((struct cpu_softc *, int node));
 void getcacheinfo_sun4c __P((struct cpu_softc *, int node));
@@ -721,7 +722,7 @@ struct module_info module_swift = {		/* UNTESTED */
 	srmmu_vcache_flush_segment,
 	srmmu_vcache_flush_region,
 	srmmu_vcache_flush_context,
-	noop_pcache_flush_line
+	srmmu_pcache_flush_line
 };
 
 void
@@ -745,7 +746,7 @@ struct module_info module_viking = {		/* UNTESTED */
 	noop_vcache_flush_segment,
 	noop_vcache_flush_region,
 	noop_vcache_flush_context,
-	srmmu_pcache_flush_line
+	noop_pcache_flush_line
 };
 
 void
@@ -861,7 +862,7 @@ struct module_info module_cypress = {		/* UNTESTED */
 struct module_info module_turbosparc = {	/* UNTESTED */
 	CPUTYP_MS2,
 	VAC_WRITEBACK,
-	0,
+	cpumatch_turbosparc,
 	getcacheinfo_obp,
 	turbosparc_hotfix,
 	0,
@@ -875,6 +876,41 @@ struct module_info module_turbosparc = {	/* UNTESTED */
 	srmmu_vcache_flush_context,
 	srmmu_pcache_flush_line
 };
+
+void
+cpumatch_turbosparc(sc, mp, node)
+	struct cpu_softc *sc;
+	struct module_info *mp;
+	int	node;
+{
+	int i;
+
+	if (node == 0)
+		return;
+
+	i = getpsr();
+	if (sc->cpu_vers == IU_VERS(i))
+		return;
+
+	/*
+	 * A cloaked Turbosparc: clear any items in cpuinfo that
+	 * might have been set to uS2 versions during bootstrap.
+	 */
+	sc->cpu_name = 0;
+	sc->mmu_ncontext = 0;
+	sc->cpu_type = 0;
+	sc->cacheinfo.c_vactype = 0;
+	sc->hotfix = 0;
+	sc->mmu_enable = 0;
+	sc->cache_enable = 0;
+	sc->get_faultstatus = 0;
+	sc->cache_flush = 0;
+	sc->vcache_flush_page = 0;
+	sc->vcache_flush_segment = 0;
+	sc->vcache_flush_region = 0;
+	sc->vcache_flush_context = 0;
+	sc->pcache_flush_line = 0;
+}
 
 void
 turbosparc_hotfix(sc)
