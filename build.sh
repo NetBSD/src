@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.84 2003/01/23 16:24:08 lukem Exp $
+#	$NetBSD: build.sh,v 1.85 2003/01/24 01:17:52 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -468,11 +468,6 @@ parseoptions()
 			if [ "${arg}" = "" ]; then
 				bomb "Must supply a directory with \`install=...'"
 			fi
-			if [ "${arg}" = "/" ] && \
-			    (	[ "${uname_s}" != "NetBSD" ] || \
-				[ "${uname_m}" != "$MACHINE" ] ); then
-				bomb "'install=${arg}' must != / for cross builds."
-			fi
 			;;
 
 		*)
@@ -675,7 +670,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.84 2003/01/23 16:24:08 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.85 2003/01/24 01:17:52 lukem Exp $
 #
 
 EOF
@@ -805,6 +800,11 @@ main()
 
 		install=*)
 			arg=${op#*=}
+			if [ "${arg}" = "/" ] && \
+			    (	[ "${uname_s}" != "NetBSD" ] || \
+				[ "${uname_m}" != "$MACHINE" ] ); then
+				bomb "'${op}' must != / for cross builds."
+			fi
 			installworld "${arg}"
 			;;
 
