@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.509 2003/02/28 22:06:00 enami Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.510 2003/03/02 00:36:11 salo Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.508 2003/02/28 22:05:00 enami Exp 
+ *	NetBSD: pcidevs,v 1.509 2003/03/02 00:33:10 salo Exp 
  */
 
 /*
@@ -6475,37 +6475,37 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM710,
 	    0,
 	    "Silicon Motion, Inc.",
-	    "Lynx EM",
+	    "LynxEM",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM712,
 	    0,
 	    "Silicon Motion, Inc.",
-	    "Lynx EM+",
+	    "LynxEM+",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM720,
 	    0,
 	    "Silicon Motion, Inc.",
-	    "Lynx 3DM",
+	    "Lynx3DM",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM810,
 	    0,
 	    "Silicon Motion, Inc.",
-	    "Lynx E",
+	    "LynxE",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM811,
 	    0,
 	    "Silicon Motion, Inc.",
-	    "Lynx E",
+	    "LynxE",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM820,
 	    0,
 	    "Silicon Motion, Inc.",
-	    "Lynx 3D",
+	    "Lynx3D",
 	},
 	{
 	    PCI_VENDOR_SILMOTION, PCI_PRODUCT_SILMOTION_SM910,
