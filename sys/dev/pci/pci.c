@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.63 2002/05/16 01:03:05 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.64 2002/05/18 18:14:11 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.63 2002/05/16 01:03:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.64 2002/05/18 18:14:11 sommerfeld Exp $");
 
 #include "opt_pci.h"
 
@@ -294,7 +294,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 		pa.pa_flags &= ~(PCI_FLAGS_MRL_OKAY|
 		    PCI_FLAGS_MRM_OKAY|PCI_FLAGS_MWI_OKAY);
 
-	if (bus == 0) {
+	if (sc->sc_bridgetag == NULL) {
 		pa.pa_intrswiz = 0;
 		pa.pa_intrtag = tag;
 	} else {
