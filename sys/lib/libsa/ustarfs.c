@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.11 1999/09/10 07:22:03 ross Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.12 1999/09/20 11:58:15 ross Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -386,7 +386,6 @@ ustarfs_open(path, f)
 
 	if (*path == '/')
 		++path;
-	e = EINVAL;
 	f->f_fsdata = ustf = alloc(sizeof *ustf);
 	memset(ustf, 0, sizeof *ustf);
 	offset = 0;
@@ -396,17 +395,18 @@ ustarfs_open(path, f)
 	e = init_volzero_sig(f);
 	if (e)
 		return e;
+	e2 = EINVAL;
 	for(;;) {
 		ustf->uas_filestart = offset;
-		e2 = read512block(f, offset, block);
-		if (e2) {
+		e = read512block(f, offset, block);
+		if (e)
+			break;
+		memcpy(&ustf->uas_active, block, sizeof ustf->uas_active);
+		if(strncmp(ustf->uas_active.ust_magic, "ustar", 5)) {
 			e = e2;
 			break;
 		}
-		memcpy(&ustf->uas_active, block, sizeof ustf->uas_active);
-		if(strncmp(ustf->uas_active.ust_magic, "ustar", 5))
-			break;
-		e = ENOENT;	/* it must be an actual ustarfs */
+		e2 = ENOENT;	/* it must be an actual ustarfs */
 		ustf->uas_init_fs = 1;
 		/* if volume metadata is found, use it */
 		if(strncmp(ustf->uas_active.ust_name, metaname,
@@ -420,7 +420,6 @@ ustarfs_open(path, f)
 		if(strncmp(ustf->uas_active.ust_name, path,
 		    sizeof ustf->uas_active.ust_name) == 0) {
 			ustf->uas_filesize = filesize;
-			e = 0;
 			break;
 		}
 		offset += USTAR_NAME_BLOCK + filesize;
