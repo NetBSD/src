@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.26 1997/06/18 22:19:13 pk Exp $	*/
+/*	$NetBSD: rz.c,v 1.27 1997/06/25 11:00:32 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,7 @@ struct	pmax_driver rzdriver = {
 struct	size {
 	u_long	strtblk;
 	u_long	nblocks;
+#define RZ_END ((u_long) -1)
 };
 
 /*
@@ -97,14 +98,15 @@ struct	size {
  * (including the boot area).
  */
 static struct size rzdefaultpart[MAXPARTITIONS] = {
-	{       0,   16384 },	/* A */
-	{   16384,   65536 },	/* B */
-	{       0,       0 },	/* C */
-	{   17408,       0 },	/* D */
-	{  115712,       0 },	/* E */
-	{  218112,       0 },	/* F */
-	{   81920,       0 },	/* G */
-	{  115712,       0 }	/* H */
+	/*   Start     Size         Partition */
+	{       0,   65536 },	/* A -- 32Mbyte root */
+	{   63356,  131072 },	/* B -- 64Mbyte swap */
+	{       0,  RZ_END },	/* C -- entire disk */
+	{  196608,   16384 },	/* D -- 8meg for var or miniroots */
+	{  212992,  409600 },	/* E -- /usr */
+	{  622592,  409600 },	/* F -- /home, alternate /usr */
+	{ 1032912,  RZ_END },	/* G -- F to end of disk */
+	{  196608,  RZ_END }	/* H -- B to end of disk */
 };
 
 extern char *
@@ -848,11 +850,22 @@ rzgetinfo(dev)
 	lp->d_bbsize = BBSIZE;
 	lp->d_sbsize = SBSIZE;
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		lp->d_partitions[i].p_size = rzdefaultpart[i].nblocks;
-		lp->d_partitions[i].p_offset = rzdefaultpart[i].strtblk;
-	}
+		register struct partition *pp = & lp->d_partitions[i];
 
-	lp->d_partitions[RAWPART].p_size = sc->sc_blks;
+		pp->p_size = rzdefaultpart[i].nblocks;
+		pp->p_offset = rzdefaultpart[i].strtblk;
+
+		/*
+		 * Clip end of partition against end of disk.
+		 * If both start and end beyond end of disk, set to zero.
+		 */
+		if (pp->p_offset > sc->sc_blks) {
+			pp->p_size = 0;
+			pp->p_offset = 0;
+		} else if ((pp->p_size + pp->p_offset) > sc->sc_blks)
+			pp->p_size = sc->sc_blks - pp->p_offset;
+	}
+	lp->d_partitions[RAWPART].p_size = sc->sc_blks;	/*XXX redundancy */
 }
 
 int
