@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.11 2001/12/10 10:01:38 kleink Exp $
+.\"	$NetBSD: strftime.3,v 1.12 2001/12/13 22:11:27 kleink Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRFTIME 3
@@ -185,6 +185,9 @@ is replaced by the year with century as a decimal number.
 is replaced by the year without century as a decimal number [00,99].
 .It Cm \&%Z
 is replaced by the time zone name.
+.It Cm \&%z
+is replaced by the offset from ITC in the ISO 8601 format
+.Dq Li [-]hhmm .
 .It Cm %%
 is replaced by
 .Ql % .
