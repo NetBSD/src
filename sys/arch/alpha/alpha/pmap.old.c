@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.61 1998/03/18 22:13:58 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.62 1998/03/18 22:50:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.61 1998/03/18 22:13:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.62 1998/03/18 22:50:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,21 +372,11 @@ void	pmap_pvdump __P((vm_offset_t));
 /*
  * active_pmap:
  *
- *	Check to see if a pmap is active.
+ *	Check to see if a pmap is active on the current processor.
  */
 #define	active_pmap(pm)							\
-	((pm) == pmap_kernel() ||					\
-	 curproc == NULL ||						\
-	 (pm) == curproc->p_vmspace->vm_map.pmap)
-
-/*
- * active_user_pmap:
- *
- *	Check to see if a pmap is an active user pmap.
- */
-#define	active_user_pmap(pm)						\
-	(curproc != NULL &&						\
-	 (pm) != pmap_kernel() && (pm) == curproc->p_vmspace->vm_map.pmap)
+	((pm) == pmap_kernel() ||	/* XXX */			\
+	 ((pm)->pm_cpus & (1UL << alpha_pal_whami())) != 0)
 
 /*
  * PMAP_ACTIVATE:
@@ -2863,8 +2853,13 @@ pmap_create_lev1map(pmap)
 	 * The page table base has changed; if the pmap was active,
 	 * reactivate it.
 	 */
-	if (active_user_pmap(pmap))
+	if (active_pmap(pmap)) {
+#ifdef DIAGNOSTIC
+		if (curproc == NULL || pmap != curproc->p_vmspace->vm_map.pmap)
+			panic("pmap_create_lev1map: active inconsistency");
+#endif
 		PMAP_ACTIVATE(pmap, curproc);
+	}
 }
 
 /*
@@ -2895,8 +2890,13 @@ pmap_destroy_lev1map(pmap)
 	 * The page table base has changed; if the pmap was active,
 	 * reactivate it.
 	 */
-	if (active_user_pmap(pmap))
+	if (active_pmap(pmap)) {
+#ifdef DIAGNOSTIC
+		if (curproc == NULL || pmap != curproc->p_vmspace->vm_map.pmap)
+			panic("pmap_destroy_lev1map: active inconsistency");
+#endif
 		PMAP_ACTIVATE(pmap, curproc);
+	}
 
 	/*
 	 * Clear PT page bookkeeping.
