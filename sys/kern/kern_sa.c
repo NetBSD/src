@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.19 2002/04/02 00:15:59 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.20 2002/04/02 00:31:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -129,7 +129,6 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		memset(s, 0, sizeof(*s));
 		simple_lock_init(&s->sa_lock);
 		s->sa_concurrency = 1;
-		s->sa_preempted = NULL;
 		s->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
 		s->sa_nstackentries = SA_NUMSTACKS;
@@ -759,8 +758,6 @@ debug_print_sa(struct proc *p)
 	    debug_print_lwp(l);
 	sa = p->p_sa;
 	if (sa) {
-		if (sa->sa_preempted)
-			printf("Preempted lwp: %d\n", sa->sa_preempted->l_lid);
 		printf("SAs: %d cached LWPs\n", sa->sa_ncached);
 		LIST_FOREACH(l, &sa->sa_lwpcache, l_sibling)
 		    debug_print_lwp(l);
