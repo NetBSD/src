@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfs_vfsops.c,v 1.5 1993/05/28 16:47:04 cgd Exp $
+ *	$Id: kernfs_vfsops.c,v 1.6 1993/06/07 04:56:39 cgd Exp $
  */
 
 /*
@@ -148,7 +148,7 @@ kernfs_mount(mp, path, data, ndp, p)
 		return (error);
 
 	fmp = (struct kernfs_mount *) malloc(sizeof(struct kernfs_mount),
-				 M_UFSMNT, M_WAITOK);	/* XXX */
+				 M_MISCFSMNT, M_WAITOK);
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
 	VTOKERN(rvp)->kf_kt = &kernfs_targets[KERNFS_TARGET_ROOT];
@@ -235,7 +235,7 @@ kernfs_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the kernfs_mount structure
 	 */
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(mp->mnt_data, M_MISCFSMNT);
 	mp->mnt_data = 0;
 	return 0;
 }
