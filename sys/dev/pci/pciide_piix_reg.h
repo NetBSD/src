@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_piix_reg.h,v 1.1.2.1 1998/06/04 16:53:17 bouyer Exp $	*/
+/*	$NetBSD: pciide_piix_reg.h,v 1.1.2.2 1998/06/10 11:29:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -78,26 +78,25 @@
  * This register must be enabled via the PIIX_IDETIM_SITRE bit
  */
 #define PIIX_SIDETIM 0x44
-#define PIIX_SIDETIM_ISP_MASK(channel) (0x0c << ((channel) * 8))
+#define PIIX_SIDETIM_ISP_MASK(channel) (0x0c << ((channel) * 4))
 #define PIIX_SIDETIM_ISP_SHIFT	2
 #define PIIX_SIDETIM_ISP_SET(x, channel) \
-	(x << (PIIX_SIDETIM_ISP_SHIFT + ((channel) * 8)))
-#define PIIX_SIDETIM_RTC_MASK(channel) (0x03 << ((channel) * 8))
+	(x << (PIIX_SIDETIM_ISP_SHIFT + ((channel) * 4)))
+#define PIIX_SIDETIM_RTC_MASK(channel) (0x03 << ((channel) * 4))
 #define PIIX_SIDETIM_RTC_SHIFT	0
 #define PIIX_SIDETIM_RTC_SET(x, channel) \
-	(x << (PIIX_SIDETIM_RTC_SHIFT + ((channel) * 8)))
+	(x << (PIIX_SIDETIM_RTC_SHIFT + ((channel) * 4)))
 
 /*
- * Ultra DMA/33 control register (PIIX4 only)
+ * Ultra DMA/33 register (PIIX4 only)
  */
-#define PIIX_UDMACTL 0x48
+#define PIIX_UDMAREG 0x48
+/* Control register */
 #define PIIX_UDMACTL_DRV_EN(channel, drive) (0x01 << ((channel) * 2 + (drive)))
-/*
- * Ultra DMA/33 timing regoster (PIIX4 only)
- */
-#define PIIX_UDMATIM 0x4a
+/* Ultra DMA/33 timing register (PIIX4 only) */
+#define PIIX_UDMATIM_SHIFT 16
 #define PIIX_UDMATIM_SET(x, channel, drive) \
-	((x) << ((channel * 8) + (drive * 4)))
+	(((x) << ((channel * 8) + (drive * 4))) << PIIX_UDMATIM_SHIFT)
 /*
  * these tables define the differents values to upload to the
  * ISP and RTC registers for the various PIO and DMA mode
@@ -106,5 +105,5 @@
 static int8_t piix_isp_pio[] = {0x00, 0x00, 0x01, 0x02, 0x02};
 static int8_t piix_rtc_pio[] = {0x00, 0x00, 0x00, 0x01, 0x03};
 static int8_t piix_isp_dma[] = {0x00, 0x02, 0x02};
-static int8_t piix_rtc_dma[] = {0x00, 0x01, 0x03};
+static int8_t piix_rtc_dma[] = {0x00, 0x10, 0x03};
 static int8_t piix4_sct_udma[] = {0x00, 0x01, 0x02};

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.6.2.5 1998/06/09 12:57:40 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.6.2.6 1998/06/10 11:29:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -812,8 +812,11 @@ end:		/*
 			if ((drvp[drive].drive_flags & DRIVE) == 0)
 				continue;
 			if (drvp[drive].drive_flags & DRIVE_DMA) {
-				idetim = PIIX_IDETIM_SET(idetim,
-				    PIIX_IDETIM_DTE(drive), channel);
+				/* Enable fast timing for mode >= 1 */
+				if (mode[drive] >= 1)
+					idetim = PIIX_IDETIM_SET(idetim,
+					    PIIX_IDETIM_DTE(drive) |
+					    PIIX_IDETIM_TIME(drive), channel);
 				idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 				drvp[drive].DMA_mode = mode[drive];
 				drvp[drive].PIO_mode = 0;
@@ -852,13 +855,20 @@ piix3_4_setup_chip(sc, pc, tag)
 	int channel, drive;
 	struct channel_softc *chp;
 	struct ata_drive_datas *drvp;
-	u_int32_t idetim, sidetim, udmactl, udmatim, idedma_ctl;
+	u_int32_t idetim, sidetim, udmareg, idedma_ctl;
 
-	idetim = sidetim = udmactl = udmatim = 0;
+	idetim = sidetim = udmareg = 0;
 
-	WDCDEBUG_PRINT(("piix3_4_setup_chip: old idetim=0x%x, sidetim=0x%x\n",
+	WDCDEBUG_PRINT(("piix3_4_setup_chip: old idetim=0x%x, sidetim=0x%x",
 	    pci_conf_read(pc, tag, PIIX_IDETIM),
 	    pci_conf_read(pc, tag, PIIX_SIDETIM)), DEBUG_PROBE);
+	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
+		WDCDEBUG_PRINT((", udamreg 0x%x",
+		    pci_conf_read(pc, tag, PIIX_UDMAREG)),
+		    DEBUG_PROBE);
+	}
+	WDCDEBUG_PRINT(("\n"), DEBUG_PROBE);
+
 	for (channel = 0; channel < PCIIDE_NUM_CHANNELS; channel++) {
 		chp = &sc->wdc_channels[channel];
 		idedma_ctl = 0;
@@ -882,9 +892,9 @@ piix3_4_setup_chip(sc, pc, tag)
 			    (drvp->drive_flags & DRIVE_UDMA)) {
 				/* use Ultra/DMA */
 				drvp->drive_flags &= ~DRIVE_DMA;
-				udmactl |= PIIX_UDMACTL_DRV_EN(
+				udmareg |= PIIX_UDMACTL_DRV_EN(
 				    channel, drive);
-				udmatim |= PIIX_UDMATIM_SET(
+				udmareg |= PIIX_UDMATIM_SET(
 				    piix4_sct_udma[drvp->UDMA_mode],
 				    channel, drive);
 				printf("%s:%d:%d: using Ultra DMA/33 mode %d\n",
@@ -908,9 +918,14 @@ piix3_4_setup_chip(sc, pc, tag)
 				     channel, drive,
 				     drvp->DMA_mode);
 			}
-			/* Enable DMA only PIO modes may be wrong */
-			idetim = PIIX_IDETIM_SET(idetim,
-			    PIIX_IDETIM_DTE(drive), channel);
+			/* enable fast timings only for mode >= 1 */
+			if (drvp->drive_flags & DRIVE_UDMA ||
+			    drvp->DMA_mode >= 1)
+				/* Enable DMA only PIO modes may be wrong */
+				idetim = PIIX_IDETIM_SET(idetim,
+				    PIIX_IDETIM_DTE(drive) |
+				    PIIX_IDETIM_TIME(drive),
+				    channel);
 			idedma_ctl |= IDEDMA_CTL_DRV_DMA(drive);
 			continue;
 		
@@ -941,11 +956,9 @@ pio:			/* use PIO mode */
 
 	WDCDEBUG_PRINT(("piix3_4_setup_chip: idetim=0x%x, sidetim=0x%x",
 	    idetim, sidetim), DEBUG_PROBE);
-	if (chp->wdc->cap & WDC_CAPABILITY_UDMA) {
-		WDCDEBUG_PRINT((", udmactl=0x%x, udmatim=0x%x", udmactl,
-		    udmatim), DEBUG_PROBE);
-		pci_conf_write(pc, tag, PIIX_UDMACTL, udmactl);
-		pci_conf_write(pc, tag, PIIX_UDMATIM, udmatim);
+	if (sc->sc_wdcdev.cap & WDC_CAPABILITY_UDMA) {
+		WDCDEBUG_PRINT((", udmareg=0x%x", udmareg), DEBUG_PROBE);
+		pci_conf_write(pc, tag, PIIX_UDMAREG, udmareg);
 	}
 	WDCDEBUG_PRINT(("\n"), DEBUG_PROBE);
 	pci_conf_write(pc, tag, PIIX_IDETIM, idetim);
@@ -972,7 +985,7 @@ piix_setup_idetim_timings(mode, dma, channel)
 		    channel);
 }
 
-/* setup PPE, IE and TIME1 field based on PIO mode */
+/* setup PPE, IE and TIME field based on PIO mode */
 static u_int32_t
 piix_setup_idetim_drvs(mode, channel, drive)
 	u_int8_t mode;
@@ -981,11 +994,15 @@ piix_setup_idetim_drvs(mode, channel, drive)
 {
 	u_int32_t ret = 0;
 
+	/* if mode <= 1, use compatible timings only */
+	if (mode <= 1)
+		return 0;
+
 	ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_TIME(drive), channel);
 	/* I didn't read anything about this, it's just a guess */
-	if (mode >= 2) 
+	if (mode >= 3) 
 		ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_IE(drive), channel);
-	if (mode >= 3)
+	if (mode >= 2)
 		ret = PIIX_IDETIM_SET(ret, PIIX_IDETIM_PPE(drive), channel);
 	return ret;
 }
