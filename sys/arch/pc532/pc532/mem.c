@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.22 1999/03/27 00:30:07 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.23 1999/06/17 00:22:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,8 +39,6 @@
  *
  *	@(#)mem.c	8.3 (Berkeley) 1/12/94
  */
-
-#include "opt_pmap_new.h"
 
 /*
  * Memory special file
