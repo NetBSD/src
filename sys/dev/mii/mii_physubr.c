@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.13 2000/02/03 05:38:57 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.14 2000/02/03 06:11:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -77,7 +77,8 @@ mii_phy_setmedia(sc)
 	int bmcr, anar;
 
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		(void) mii_phy_auto(sc, 1);
+		if ((PHY_READ(sc, MII_BMCR) & BMCR_AUTOEN) == 0)
+			(void) mii_phy_auto(sc, 1);
 		return;
 	}
 
