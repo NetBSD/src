@@ -38,7 +38,7 @@
  * from: Utah $Hdr: ite.c 1.28 92/12/20$
  *
  *	from: @(#)ite.c	8.2 (Berkeley) 1/12/94
- *	$Id: ite.c,v 1.3 1994/07/21 06:35:49 lkestel Exp $
+ *	$Id: ite.c,v 1.4 1994/07/30 04:21:47 lkestel Exp $
  */
 
 /*
@@ -67,8 +67,8 @@
 #include <machine/frame.h>
 
 #define KEYBOARD_ARRAY
-#include "keyboard.h"
-#include "adbsys.h"
+#include <machine/keyboard.h>
+#include <machine/adbsys.h>
 
 #include "6x10.h"
 #define CHARWIDTH	6
