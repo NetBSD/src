@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.39 2001/01/28 23:30:45 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.40 2001/02/04 10:55:12 mrg Exp $	*/
 
 /*
  *
@@ -180,6 +180,7 @@ enter:
 	/* got it */
 	for (cva = kva ; size != 0 ; size -= PAGE_SIZE, cva += PAGE_SIZE) {
 		pp = *pps++;
+		KASSERT(pp);
 		KASSERT(pp->flags & PG_BUSY);
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
 		    prot, PMAP_WIRED | ((pp->flags & PG_FAKE) ? prot :
