@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsstat.c,v 1.18 2003/08/07 11:15:22 agc Exp $	*/
+/*	$NetBSD: nfsstat.c,v 1.19 2004/08/26 13:29:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nfsstat.c,v 1.18 2003/08/07 11:15:22 agc Exp $");
+__RCSID("$NetBSD: nfsstat.c,v 1.19 2004/08/26 13:29:05 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,6 +74,28 @@ struct nlist nl[] = {
 	{ "" },
 };
 
+#define	MASK(a)	(1 << NFSPROC_##a)
+#define ALLMASK								\
+	(MASK(GETATTR) | MASK(SETATTR) | MASK(LOOKUP) | MASK(READ) |	\
+	MASK(WRITE) | MASK(RENAME)| MASK(ACCESS) | MASK(READDIR) |	\
+	MASK(READDIRPLUS))
+#define	OTHERMASK	(((1 << NFS_NPROCS) - 1) & ~ALLMASK)
+const struct shortprocs {
+	int mask;
+	const char *name;
+} shortprocs[] = {
+	{MASK(GETATTR),	"Getattr"},
+	{MASK(SETATTR),	"Setattr"},
+	{MASK(LOOKUP),	"Lookup"},
+	{MASK(READ),	"Read"},
+	{MASK(WRITE),	"Write"},
+	{MASK(RENAME),	"Rename"},
+	{MASK(ACCESS),	"Access"},
+	{MASK(READDIR) | MASK(READDIRPLUS), "Readdir"},
+	{OTHERMASK, "Others"},
+};
+
+#define	NSHORTPROC	(sizeof(shortprocs)/sizeof(shortprocs[0]))
 
 void	catchalarm __P((int));
 void	getstats __P((struct nfsstats *));
@@ -390,61 +412,54 @@ void
 sidewaysintpr(interval)
 	u_int interval;
 {
-	struct nfsstats nfsstats, lastst;
+	struct nfsstats nfsstats;
 	int hdrcnt, oldmask;
+	struct stats {
+		int client[NSHORTPROC];
+		int server[NSHORTPROC];
+	} current, last;
 
 	(void)signal(SIGALRM, catchalarm);
 	signalled = 0;
 	(void)alarm(interval);
-	memset((caddr_t)&lastst, 0, sizeof(lastst));
+	memset(&last, 0, sizeof(last));
 
 	for (hdrcnt = 1;;) {
+		int i;
+
 		if (!--hdrcnt) {
 			printhdr();
 			hdrcnt = 20;
 		}
 		getstats(&nfsstats);
-		if (printall || clientinfo)
-			printf("Client: %8d %8d %8d %8d %8d %8d %8d %8d\n",
-			    nfsstats.rpccnt[NFSPROC_GETATTR] -
-			    lastst.rpccnt[NFSPROC_GETATTR],
-			    nfsstats.rpccnt[NFSPROC_LOOKUP] -
-			    lastst.rpccnt[NFSPROC_LOOKUP],
-			    nfsstats.rpccnt[NFSPROC_READLINK] -
-			    lastst.rpccnt[NFSPROC_READLINK],
-			    nfsstats.rpccnt[NFSPROC_READ] -
-			    lastst.rpccnt[NFSPROC_READ],
-			    nfsstats.rpccnt[NFSPROC_WRITE] -
-			    lastst.rpccnt[NFSPROC_WRITE],
-			    nfsstats.rpccnt[NFSPROC_RENAME] -
-			    lastst.rpccnt[NFSPROC_RENAME],
-			    nfsstats.rpccnt[NFSPROC_ACCESS] -
-			    lastst.rpccnt[NFSPROC_ACCESS],
-			    (nfsstats.rpccnt[NFSPROC_READDIR] -
-			    lastst.rpccnt[NFSPROC_READDIR]) +
-			    (nfsstats.rpccnt[NFSPROC_READDIRPLUS] -
-			    lastst.rpccnt[NFSPROC_READDIRPLUS]));
-		if (printall || serverinfo)
-			printf("Server: %8d %8d %8d %8d %8d %8d %8d %8d\n",
-			    nfsstats.srvrpccnt[NFSPROC_GETATTR] -
-			    lastst.srvrpccnt[NFSPROC_GETATTR],
-			    nfsstats.srvrpccnt[NFSPROC_LOOKUP] -
-			    lastst.srvrpccnt[NFSPROC_LOOKUP],
-			    nfsstats.srvrpccnt[NFSPROC_READLINK] -
-			    lastst.srvrpccnt[NFSPROC_READLINK],
-			    nfsstats.srvrpccnt[NFSPROC_READ] -
-			    lastst.srvrpccnt[NFSPROC_READ],
-			    nfsstats.srvrpccnt[NFSPROC_WRITE] -
-			    lastst.srvrpccnt[NFSPROC_WRITE],
-			    nfsstats.srvrpccnt[NFSPROC_RENAME] -
-			    lastst.srvrpccnt[NFSPROC_RENAME],
-			    nfsstats.srvrpccnt[NFSPROC_ACCESS] -
-			    lastst.srvrpccnt[NFSPROC_ACCESS],
-			    (nfsstats.srvrpccnt[NFSPROC_READDIR] -
-			    lastst.srvrpccnt[NFSPROC_READDIR]) +
-			    (nfsstats.srvrpccnt[NFSPROC_READDIRPLUS] -
-			    lastst.srvrpccnt[NFSPROC_READDIRPLUS]));
-		lastst = nfsstats;
+		memset(&current, 0, sizeof(current));
+		for (i = 0; i < NSHORTPROC; i++) {
+			int mask = shortprocs[i].mask;
+			int idx;
+
+			while ((idx = ffs(mask)) != 0) {
+				idx--;
+				mask &= ~(1 << idx);
+				current.client[i] += nfsstats.rpccnt[idx];
+				current.server[i] += nfsstats.srvrpccnt[idx];
+			}
+		}
+
+		if (printall || clientinfo) {
+			printf("Client:");
+			for (i = 0; i < NSHORTPROC; i++)
+				printf(" %7d",
+				    current.client[i] - last.client[i]);
+			printf("\n");
+		}
+		if (printall || serverinfo) {
+			printf("Server:");
+			for (i = 0; i < NSHORTPROC; i++)
+				printf(" %7d",
+				    current.server[i] - last.server[i]);
+			printf("\n");
+		}
+		memcpy(&last, &current, sizeof(last));
 		fflush(stdout);
 		oldmask = sigblock(sigmask(SIGALRM));
 		if (!signalled)
@@ -459,10 +474,12 @@ sidewaysintpr(interval)
 void
 printhdr()
 {
+	int i;
 
-	printf("        %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s %8.8s\n",
-	    "Getattr", "Lookup", "Readlink", "Read", "Write", "Rename",
-	    "Access", "Readdir");
+	printf("        ");
+	for (i = 0; i < NSHORTPROC; i++)
+		printf("%7.7s ", shortprocs[i].name);
+	printf("\n");
 	fflush(stdout);
 }
 
