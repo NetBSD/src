@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_iv.c,v 1.23 1997/08/03 06:25:57 scottr Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.24 1997/08/03 06:42:29 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -60,7 +60,7 @@ extern long		videobitdepth;
 extern u_long		videosize;
 
 static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static caddr_t	grfiv_phys __P((struct grf_softc *gp, vm_offset_t addr));
+static caddr_t	grfiv_phys __P((struct grf_softc *gp));
 static int	grfiv_match __P((struct device *, struct cfdata *, void *));
 static void	grfiv_attach __P((struct device *, struct device *, void *));
 
