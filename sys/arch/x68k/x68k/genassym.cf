@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.11 1999/10/26 00:20:40 itohy Exp $
+#	$NetBSD: genassym.cf,v 1.12 2000/05/14 14:10:10 minoura Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -48,6 +48,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
+include <uvm/uvm.h>
 include <uvm/uvm_extern.h>
 
 ifdef COMPAT_SVR4
@@ -205,6 +206,9 @@ define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 # errno
 define	EFAULT			EFAULT
 define	ENAMETOOLONG		ENAMETOOLONG
+
+# UVM
+define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # SVR4 binary compatibility
 ifdef COMPAT_SVR4
