@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.15 2002/11/21 19:53:41 manu Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.16 2002/11/21 22:01:45 manu Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.15 2002/11/21 19:53:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.16 2002/11/21 22:01:45 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -237,24 +237,20 @@ exec_macho_load_dylinker(struct proc *p, struct exec_package *epp,
 static int
 exec_macho_load_dylib(struct proc *p, struct exec_package *epp,
     struct exec_macho_dylib_command *dy) {
-#ifdef notdef
 	struct exec_macho_emul_arg *emea;
 	const char *name = ((const char *)dy) + dy->dylib.name.offset;
 	char path[MAXPATHLEN];
 	int error;
 	u_long entry;
-#endif
 #ifdef DEBUG_MACHO
 	exec_macho_print_dylib_command(dy);
 #endif
-#ifdef notdef
 	emea = (struct exec_macho_emul_arg *)epp->ep_emul_arg;
 	(void)snprintf(path, sizeof(path), "%s%s", emea->path, name);
 	DPRINTF(("loading library %s\n", path));
 	if ((error = exec_macho_load_file(p, epp, path, &entry,
 	    MACHO_MOH_DYLIB)) != 0)
 		return error;
-#endif
 	return 0;
 }
 
@@ -560,7 +556,6 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 		DPRINTF(("Copyinstr %p failed\n", epp->ep_name));
 		goto bad;
 	}
-	uprintf("PATH: %s\n", emea->filename);
 
 	return exec_macho_setup_stack(p, epp);
 bad:
