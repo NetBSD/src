@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.29 1994/02/16 20:15:18 mycroft Exp $
+ *	$Id: if_ed.c,v 1.30 1994/02/16 20:22:04 mycroft Exp $
  */
 
 #include "ed.h"
@@ -2318,7 +2318,7 @@ ed_getmcaf(ac, af)
 	 * the word.
 	 */
 
-	if (ifp->if_flags & IFF_PROMISC)) {
+	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		af[0] = af[1] = 0xffffffff;
 		return;
