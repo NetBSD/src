@@ -1,4 +1,4 @@
-/*	$NetBSD: n_argred.S,v 1.5 2000/07/14 04:50:58 matt Exp $	*/
+/*	$NetBSD: n_argred.S,v 1.6 2000/07/14 22:26:15 matt Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -123,6 +123,11 @@ done:
 even:
 	rsb
 
+#ifdef __ELF__
+	.section .rodata
+#else
+	.text
+#endif
 	_ALIGN_TEXT
 
 sin_coef:
@@ -267,12 +272,11 @@ twoOverPi:
 table_lookup:
 	muld3	r3,twoOverPi,r0
 	cvtrdl	r0,r0			# n = nearest int to ((2/pi)*|x|) rnded
-	mull3	$8,r0,r5
-	subd2	leading(r5),r3		# p = (|x| - leading n*pi/2) exactly
-	subd3	middle(r5),r3,r1	# q = (p - middle  n*pi/2) rounded
+	subd2	leading[r0],r3		# p = (|x| - leading n*pi/2) exactly
+	subd3	middle[r0],r3,r1	# q = (p - middle  n*pi/2) rounded
 	subd2	r1,r3			# r = (p - q)
-	subd2	middle(r5),r3		# r =  r - middle  n*pi/2
-	subd2	trailing(r5),r3		# r =  r - trailing n*pi/2  rounded
+	subd2	middle[r0],r3		# r =  r - middle  n*pi/2
+	subd2	trailing[r0],r3		# r =  r - trailing n*pi/2  rounded
 /*
  *  If the original argument was negative,
  *  negate the reduce argument and
@@ -294,7 +298,11 @@ abs2:
 /*
  *						p.0
  */
+#ifdef __ELF__
+	.section .rodata
+#else
 	.text
+#endif
 	_ALIGN_TEXT
 /*
  * Only 256 (actually 225) bits of 2/pi are needed for VAX double
@@ -321,6 +329,7 @@ bits2opi:
  *  By uncommenting/commenting the appropriate lines, it will
  *  also serve as a  pi/4  argument reduction code.
  */
+	.text
 
 /*						p.1
  *  Trigred  preforms argument reduction
