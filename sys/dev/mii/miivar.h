@@ -1,4 +1,4 @@
-/*	$NetBSD: miivar.h,v 1.20 2001/03/28 14:13:07 drochner Exp $	*/
+/*	$NetBSD: miivar.h,v 1.21 2001/04/13 11:12:37 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -142,8 +142,9 @@ typedef struct mii_softc mii_softc_t;
 #define	MIIF_NOISOLATE	0x0002		/* do not isolate the PHY */
 #define	MIIF_NOLOOP	0x0004		/* no loopback capability */
 #define	MIIF_DOINGAUTO	0x0008		/* doing autonegotiation (mii_softc) */
+#define MIIF_AUTOTSLEEP	0x0010		/* use tsleep(), not callout() */
 
-#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP)
+#define	MIIF_INHERIT_MASK	(MIIF_NOISOLATE|MIIF_NOLOOP|MIIF_AUTOTSLEEP)
 
 /*
  * Special `locators' passed to mii_attach().  If one of these is not
