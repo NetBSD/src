@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.15 1994/10/26 02:01:49 cgd Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16 1994/12/28 09:03:12 chopps Exp $	*/
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -149,11 +149,16 @@ readdisklabel(dev, strat, lp, clp)
 	 * should be rdb->ncylinders however this is a bogus value 
 	 * sometimes it seems
 	 */
-	lp->d_ncylinders = rbp->highcyl + 1;
+	if (rbp->highcyl == 0)
+		lp->d_ncylinders = rbp->ncylinders;
+	else
+		lp->d_ncylinders = rbp->highcyl + 1;
 	/*
 	 * I also don't trust rdb->secpercyl
 	 */
 	lp->d_secpercyl = min(rbp->secpercyl, lp->d_nsectors * lp->d_ntracks);
+	if (lp->d_secpercyl == 0)
+		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
 #ifdef DIAGNOSTIC
 	if (lp->d_ncylinders != rbp->ncylinders)
 		printf("warning found rdb->ncylinders(%d) != "
@@ -300,7 +305,7 @@ readdisklabel(dev, strat, lp, clp)
 
 		if (lp->d_npartitions <= i)
 			lp->d_npartitions = i + 1;
-		
+
 		pp->p_size = (pbp->e.highcyl - pbp->e.lowcyl + 1)
 		    * lp->d_secpercyl;
 		pp->p_offset = pbp->e.lowcyl * lp->d_secpercyl;
@@ -313,6 +318,14 @@ readdisklabel(dev, strat, lp, clp)
 			pp->p_fsize = 1024;
 			pp->p_frag = 8;	
 			pp->p_cpg = 0;
+		}
+		if (adt.archtype == ADT_AMIGADOS) {
+			/*
+			 * Save reserved blocks at begin in cpg and
+			 *  adjust size by reserved blocks at end
+			 */
+			pp->p_cpg = pbp->e.resvblocks;
+			pp->p_size -= pbp->e.prefac;
 		}
 
 		/*
@@ -413,8 +426,13 @@ bounds_check_with_label(bp, lp, wlabel)
 	long maxsz, sz;
 
 	pp = &lp->d_partitions[DISKPART(bp->b_dev)];
-	maxsz = pp->p_size;
-	sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
+	if (bp->b_flags & B_RAW) {
+		maxsz = pp->p_size * (lp->d_secsize / DEV_BSIZE);
+		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	} else {
+		maxsz = pp->p_size;
+		sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
+	}
 
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		if (bp->b_blkno == maxsz) {
@@ -433,7 +451,10 @@ bounds_check_with_label(bp, lp, wlabel)
 		/* 
 		 * adjust count down
 		 */
-		bp->b_bcount = sz * lp->d_secsize;
+		if (bp->b_flags & B_RAW)
+			bp->b_bcount = sz << DEV_BSHIFT;
+		else
+			bp->b_bcount = sz * lp->d_secsize;
 	}
 
 	/*
@@ -480,6 +501,8 @@ getadostype(dostype)
 	case DOST_NBU:
 		adt.archtype = ADT_NETBSDUSER;
 		return(adt);
+	case DOST_MUFS:
+		/* check for 'muFS'? */
 	case DOST_DOS:
 		adt.archtype = ADT_AMIGADOS;
 		adt.fstype = FS_ADOS;
