@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahb.4,v 1.5 1999/03/16 01:19:14 garbled Exp $
+.\"	$NetBSD: ahb.4,v 1.6 1999/12/17 16:23:20 abs Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -31,15 +31,18 @@
 .Sh SYNOPSIS
 .Cd "ahb0 at eisa? slot ? irq ?"
 .Cd "scsibus* at ahb?"
-.Sh DESCRIPTION
+.Sh HARDWARE
 The
-.Nm ahb 
-driver implements support for the
-.Tn Adaptec
-AHA-1742
-.Tn EISA
-.Tn SCSI
-adapter.
+.Nm
+driver implements support for the following card:
+.Pp
+.Bl -tag -width -offset indent -compact
+.It Tn Adaptec
+AHA-1742 
+.Tn EISA  
+.Tn SCSI  
+adaptor
+.El
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr scsi 4 ,
