@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.39 1998/04/03 08:02:45 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.40 1998/04/07 05:09:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -222,6 +222,7 @@ struct syn_cache {
 #define	SCF_SYNACK_REXMT	0x0001		/* SYN,ACK was retransmitted */
 #define	SCF_TIMESTAMP		0x0002		/* peer will do timestamps */
 
+	struct mbuf *sc_ipopts;			/* IP options */
 	u_int16_t sc_sport;
 	u_int16_t sc_dport;
 	u_int16_t sc_peermaxseg;
