@@ -1,4 +1,4 @@
-/*	$NetBSD: network.c,v 1.10 2002/09/18 19:48:58 mycroft Exp $	*/
+/*	$NetBSD: network.c,v 1.11 2002/09/18 20:57:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)network.c	8.2 (Berkeley) 12/15/93";
 #else
-__RCSID("$NetBSD: network.c,v 1.10 2002/09/18 19:48:58 mycroft Exp $");
+__RCSID("$NetBSD: network.c,v 1.11 2002/09/18 20:57:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ init_network()
     int
 stilloob()
 {
-    struct pollfd set[0];
+    struct pollfd set[1];
     int value;
 
     set[0].fd = net;
