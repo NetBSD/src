@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.18 2003/12/29 16:20:46 bjh21 Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.19 2003/12/29 16:25:30 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.18 2003/12/29 16:20:46 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.19 2003/12/29 16:25:30 bjh21 Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -131,31 +131,31 @@ struct audio_device vidcaudio_device = {
 struct audio_hw_if vidcaudio_hw_if = {
 	vidcaudio_open,
 	vidcaudio_close,
-	0,
+	NULL,
 	vidcaudio_query_encoding,
 	vidcaudio_set_params,
 	vidcaudio_round_blocksize,
-	0,
-	0,
-	0,
+	NULL,
+	NULL,
+	NULL,
 	vidcaudio_start_output,
 	vidcaudio_start_input,
 	vidcaudio_halt_output,
 	vidcaudio_halt_input,
 	vidcaudio_speaker_ctl,
 	vidcaudio_getdev,
-	0,
+	NULL,
 	vidcaudio_set_port,
 	vidcaudio_get_port,
 	vidcaudio_query_devinfo,
-	0,
-	0,
-	0,
-	0,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
 	vidcaudio_get_props,
-	0,
-	0,
-	0,
+	NULL,
+	NULL,
+	NULL,
 };
 
 
