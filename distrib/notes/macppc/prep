@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.37 2003/05/26 17:36:07 yyamano Exp $
+.\"	$NetBSD: prep,v 1.38 2003/06/01 17:41:02 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -95,6 +95,10 @@ Boot into
 for the first time.
 .Pp
 .It
+You may then boot into Open Firmware and set it to always boot your
+favorite operating system.
+.Pp
+.It
 Configure to your preferences, install your favorite packages, and have
 fun with your new
 .Nx*M
@@ -150,12 +154,10 @@ rewrite the BootROM with garbage, rendering your machine unbootable.
 We recommend not doing this.
 .Note)
 .(Note
-The most recent BootROMs available (4.1.7 and later) are
-known to have some problems.
-Some PowerMacintosh users find that their third-party
-RAM has been disabled.
-See the discussion at
-.Lk http://www.macfixit.com/archives/april.01.a.shtml#firm-04-07
+The most recent BootROMs available (4.1.7 and later) are a little picky
+about RAM.  Initially, some PowerMacintosh users found that their
+third-party RAM had been disabled, but the RAM vendors brought their RAM
+up to spec and it hasn't been much of an issue since then.
 .Pp
 There are reports that FirmWare Update 4.1.9 on iMac (Summer 2000) will
 prevent the CD-ROM and the hard drive from operating together.
@@ -319,6 +321,7 @@ system to your
 .Nx*M
 system.
 .Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/comm/term/zterm-101.hqx
+.Lk http://homepage.mac.com/dalverson/zterm/
 .Pp
 See the NetBSD Serial Port Primer for additional help and references:
 .Lk http://www.netbsd.org/Documentation/Hardware/Misc/serial.html
@@ -801,8 +804,8 @@ Unfortunately, Open Firmware is
 .Em not
 able to use the
 .Nx
-file system (FFS), so we must put the bootloader in a location that Open
-Firmware is capable of using.
+file system (FFS) or Apple's new filesystem (UFS), so we must put the
+bootloader in a location that Open Firmware is capable of using.
 .Pp
 Therefore, to boot the
 .Nx
@@ -905,9 +908,12 @@ Only on Open Firmware 2.4 or Open Firmware 3 systems.
 .
 .It
 .Em "ISO9660 CD-ROM file system"
+.
+.It
+.Em "MS-DOS file system"
 .bullet)
 .Pp
-The boot floppy image provided with the distribution sets has a
+The boot floppy images provided with the distribution sets have a
 .Sq "partition zero"
 bootloader and a
 .Nx
@@ -992,7 +998,7 @@ It can then load a
 .Nx
 kernel from the same MS-DOS file system or elsewhere.
 This has only been thoroughly tested on floppy disks,
-but may work on FDISK-formatted hard drives.
+but may work on Zip disks or FDISK-formatted hard drives.
 This does not work for MS-DOS partitions on a hard drive with an Apple
 Partition Map.
 .Pp
@@ -1117,11 +1123,9 @@ then read the rest of this section.
 .It
 .Em "Open Firmware 3"
 .br
-You must have at least one disk that was partitioned using a
-.Tn MacOS
-tool before installing
+You must have at least one disk that was partitioned before running the
 .Nx
-on your system.
+installer.
 .Pp
 This is the drive that will be holding the bootloader,
 .Pa ofwboot.xcf No Ns .
@@ -1138,37 +1142,87 @@ partitioned disk only needs HFS or HFS+ partitions.
 .Pp
 The rest of this section describes how to make a
 single disk dual-bootable which is necessary for machines which have only
-one hard drive (such as the iBook, iMac, PowerBook, and PowerMacintosh Cube
-systems).
+one hard drive (such as the eMac, iBook, iMac, PowerBook, and
+PowerMacintosh Cube systems).
 .bullet)
 .Pp
-Using the
+There are two partitioning tools available for
+.Nx*M ,
+.Xr disklabel 8
+and
+.Xr pdisk 8 .
+The former is used in the 
 .Nx
-installer to install a disklabel or bootloader will
-render your disk unusable by
+.Ic sysinst
+installer, and will render your disk unusable by
 .Tn MacOS .
-Either will also prevent Open Firmware 3 machines from booting.
-You will need to use the installer's
+It will also prevent Open Firmware 3 machines from booting from that disk.
+When running the installer, you will need to use the installer's
 .Dq Re-install sets
-option.
-More information is provided below on this process.
+option to skip
+.Ic disklabel .
+In the meantime, this section describes how to partition your disk.
 .Pp
-There are several contradictory partition numbering schemes.
-You may want to look at the explanation in the FAQ.
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#partitions
+The process is more fully detailed in the Partitioning HOW-TO:
+.Lk http://www.netbsd.org/Ports/macppc/partitioning.html
 .Pp
-Unfortunately, the partitioning tools for
+You can create a partition map with 
+.Xr pdisk 8 ,
+but the disk will not be usable with MacOS 9 and earlier.  If this is a
+concern, you will need to use Apple's Drive Setup or Disk Utility.
+.Pp
+If you are using Apple's Drive Setup tool, make sure you have version
+1.8.1 or later.  This tool only runs under MacOS 9 and earlier.  Drive
+Setup will erase the contents of your drive \(em it does not preserve data
+from any of your partitions.
+.Pp
+Apple's Disk Utility only runs under MacOS X 10.0.0 and later.
+Make sure you click the 
+.Dq "Install Mac OS 9 Disk Drivers"
+checkbox.  Also, keep in mind that Disk Utility does
+.Em not
+create the partitions that
+.Nx*M
+requires.  After creating the initial partition map with Disk Utility, you
+will need to use the
 .Nx
-are not advanced enough to create HFS or HFS+ file systems or a
-partition map that can be shared with
-.Tn MacOS .
-You will need to use the
-.Tn MacOS
-Drive Setup tool (versions 1.8.1 and later are
-known to work) to partition the hard drive you will be using for
-.Nx .
-Drive Setup will erase the contents of your drive -- it does not preserve
-data from any of your partitions.
+.Ic pdisk
+to change the partition types.  Also, Disk Utility will erase the contents
+of your drive \(em it does not preserve data from any of your partitions.
+.Pp
+.Ic pdisk
+is the most flexible (and most difficult to use) partitioning tool
+available.
+It runs on almost all OSes that \*M machines support.  Download it:
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/netbsd-pdisk/
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/macos-utils/pdisk.sea.hqx
+.Pp
+There is built-in help describing how it works.  When it asks you to enter
+the
+.Dq Li "Type of partition" ,
+use 
+.Li Apple_UNIX_SVR2
+for 
+.Nx
+partitions,
+.Li Apple_HFS
+for HFS and HFS+ partitions, and
+.Li Apple_UFS
+for UFS partitions.
+.Pp
+After you've written the partition map with
+.Ic pdisk ,
+you will need to create the filesystems.  Use
+.Xr newfs 8
+and 
+.Xr mount 8
+for 
+.Nx
+filesystems, and 
+.Ic hfstools
+to create and mount HFS filesystems.
+.Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/hfsutils/README.html
+.Pp
 Make the following partitions:
 .(tag "A/UXxUserxandxA/UXxFree1" -offset indent
 .It Em HFS No or Em HFS+
@@ -1221,24 +1275,18 @@ transfer files between
 .Tn MacOS
 and
 .Nx .
-If you think you'll be doing this often, then see the FAQ entry on sharing
-files:
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#disk-sharing
+If would like to create such a partition, then see the Partitioning HOW-TO.
+.Lk http://www.netbsd.org/Ports/macppc/partitioning.html#msdos
 .It Em UFS
 Any size.
 This file system type is not currently supported by
 .Nx*M
-although it might be in the future.
+although it will be in the next major release.
 .Em UFS
 partitions are not readable from
 .Tn MacOS
 versions prior to X 10.0.0.
 .tag)
-.Pp
-If you need further help, there is a partitioning HOW-TO on the
-.Nx
-website:
-.Lk http://www.netbsd.org/Ports/macppc/partitioning.html
 .
 .Ss2 Preparing the Bootable Media
 .
@@ -1284,31 +1332,31 @@ install kernel:
 .Em "Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x"
 .br
 .(bullet -compact
-Booting off an MS-DOS floppy
+Booting off an MS-DOS disk
 .It
 Booting off the
 .Nx
-install floppy
+install floppies
 .It
 Booting off the
 .Nx*M
 install CD-R image
 .It
-Booting off an ISO9660 CD-ROM
+Booting off a custom ISO9660 CD-R
 .It
 Booting over the ethernet
 .It
-Booting the floppy image off a SCSI or IDE drive (not recommended)
+Booting the CD-R image off a SCSI or IDE drive (not recommended)
 .bullet)
 .It
 .Em "Open Firmware 2.4"
 .br
 .(bullet -compact
-Booting off an MS-DOS floppy (may not be supported by Open Firmware 2.4)
+Booting off an MS-DOS disk (may not be supported by Open Firmware 2.4)
 .It
 Booting off the
 .Nx
-install floppy
+install floppies
 .It
 Booting off the
 .Nx*M
@@ -1316,13 +1364,13 @@ install CD-R image
 .It
 Booting off an HFS or HFS+ partition
 .It
-Booting off an ISO9660 CD-ROM
+Booting off a custom ISO9660 CD-R
 .It
-Booting off a Hybrid HFS/ISO9660 CD-ROM
+Booting off a custom Hybrid HFS/ISO9660 CD-R
 .It
 Booting over the ethernet
 .It
-Booting the floppy image off a SCSI or IDE drive (not recommended)
+Booting the CD-R image off a SCSI or IDE drive (not recommended)
 .bullet)
 .It
 .Em "Open Firmware 3"
@@ -1334,7 +1382,7 @@ Booting off the
 .Nx*M
 install CD-R image
 .It
-Booting off a Hybrid HFS/ISO9660 CD-ROM
+Booting off a custom Hybrid HFS/ISO9660 CD-R
 .It
 Booting over the ethernet
 .bullet)
@@ -1346,17 +1394,21 @@ installer
 .Pp
 .(bullet
 .
-.To 2 "Booting off an MS-DOS floppy"
-.Em "Booting off an MS-DOS floppy"
+.To 2 "Booting off an MS-DOS disk"
+.Em "Booting off an MS-DOS disk"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
 .Pp
+Unfortunately, the installation kernel is now too large to fit onto a
+floppy disk, but you can still create a bootable Zip disk with this
+method.
+.Pp
 .(enum
 First, make sure you have done a low-level format on the disk.
-A bad floppy can produce Open Firmware errors similar to other problems.
+A bad disk can produce Open Firmware errors similar to other problems.
 .It
-Mount the floppy on your computer.
+Mount the disk on your computer.
 .(bullet -compact
 Insert it into a Windows or DOS machine.
 .It
@@ -1368,12 +1420,14 @@ versions prior to X 10.0.0
 .It
 Use
 .Xr mount_msdos 8
-on any unix-like machine.
+on any 
+.Ul
+machine.
 .bullet)
 .It
 Copy
 .Pa netbsd-INSTALL.gz No and Pa ofwboot.xcf
-to the floppy.
+to the disk.
 .It
 Rename
 .Pa netbsd-INSTALL.gz No to Pa netbsd.gz ,
@@ -1385,8 +1439,8 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.To 2 "Booting off the NetBSD install floppy"
-.Em "Booting off the" Nx Em "install floppy"
+.To 2 "Booting off the NetBSD install floppies"
+.Em "Booting off the" Nx Em "install floppies"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
@@ -1395,17 +1449,20 @@ Firmware 2.4)
 First, make sure you have done a low-level format on the disk.
 A bad floppy can produce Open Firmware errors similar to other problems.
 .It
-If the boot floppy image is compressed, then you will need to uncompress
-it first.
+If the boot floppy images are compressed, then you will need to uncompress
+them first.
 .It
-Use a tool to write the boot floppy image
-.Pa installation/floppy/boot.fs
-to a floppy disk
+Use a tool to write the boot floppy images
+.Pa installation/floppy/boot1.fs
+and
+.Pa installation/floppy/boot2.fs
+to two floppy disks.
 .Pp
 .(bullet -compact
-.Em "From a UNIX machine"
+.Em "From a" UNIX-like machine
 .(disp
-.No # Ic "dd if=boot.fs of=/dev/rfd0a bs=36k"
+.No # Ic "dd if=boot1.fs of=/dev/rfd0a bs=36k"
+.No # Ic "dd if=boot2.fs of=/dev/rfd0a bs=36k"
 .disp)
 .Pp
 .It
@@ -1421,44 +1478,12 @@ from
 .Lk http://www.duskware.com/rawrite32/
 .Pp
 .It
-.Em "From a MacOS machine"
-.Pp
-Get
-.Ic DiskCopy
-6.3.3 from
-.Lk http://downloAd.info.apple.com/Apple_Support_Area/Apple_Software_Updates/English-North_American/Macintosh/Utilities/Disk_Copy/Disk_Copy_6.3.3.smi.bin
-.Pp
-If you are running a
-.Tn MacOS
-version prior to 9.0, get
-.Lk ftp://ftp.netbsd.org/pub/NetBSD/arch/macppc/macos-utils/MakeDiskCopyFloppyType.hqx
-and un-BinHex it.
-Then, drag the
-.Pa boot.fs
-file onto this application, which will change the type and creator to
-.Pa dimg No and Pa ddsk ,
-which is necessary for DiskCopy to work.
-.(enum
-Open the
-.Sq Utilities
-menu and pick
-.Sq Make Floppy
-.Pp
-.It
-In the dialog box, select
-.Pa boot.fs
-.Pp
-.It
-At the prompt, insert a blank floppy disk
-.enum)
-.Pp
-.It
-.Em "From a MacOS machine (Alternate)"
+.Em "From a MacOS 9 (or earlier) machine"
 .Pp
 Get
 .Ic suntar
 from
-.Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-222.hqx
+.Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-223.hqx
 .(enum
 Open the
 .Sq Preferences
@@ -1472,14 +1497,14 @@ menu and pick
 .Sq "Overwrite Sectors ..."
 .Pp
 .It
-Insert a floppy disk
+Insert the first floppy disk
 .Pp
 .It
 Hit return (i.e. start at sector number zero)
 .Pp
 .It
 Select
-.Pa boot.fs
+.Pa boot1.fs
 and click
 .Dq Open
 .Pp
@@ -1488,6 +1513,9 @@ Open the
 .Sq File
 menu and pick
 .Sq Eject
+.Pp
+.It
+Repeat the process for the second floppy
 .enum)
 .bullet)
 .enum)
@@ -1520,25 +1548,29 @@ Skip forward to
 .Pp
 Go to one of the
 .Nx
-mirror sites and download CD-R image from the
+mirror sites and download CD-R image
+.Pa macppccd.iso
+from the
 .Pa pub/NetBSD/iso
 directory.
 .Lk http://www.netbsd.org/mirrors/#iso
 .Pp
 .(bullet
-.Em "From a UNIX machine"
+.Em "From a UNIX-like machine"
 .Pp
 Get and install cdrecord.
 .Nx
 users should install it from the package collection.
-Other unix systems should get it from the official website:
+Other
+.Ul
+systems should get it from the official website:
 .br
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
 .br
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
 .(disp
-.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c output.iso"
+.No # Ic "cdrecord -v speed=4 dev=/dev/cd1c macppccd.iso"
 .disp)
 .Pp
 You will need to substitute the correct name of the disk image file,
@@ -1571,8 +1603,8 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.To 2 "Booting off an ISO9660 CD-ROM"
-.Em "Booting off an ISO9660 CD-ROM"
+.To 2 "Booting off a custom ISO9660 CD-R"
+.Em "Booting off a custom ISO9660 CD-R"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
@@ -1597,13 +1629,15 @@ You may also place the
 distribution sets on the disk.
 .Pp
 .(bullet
-.Em "From a UNIX machine"
+.Em "From a UNIX-like machine"
 .Pp
 Get and install mkhybrid.
 This is now part of the cdrecord package.
 .Nx
 users should install it from the package collection.
-Other unix systems should get it from the official website:
+Other
+.Ul
+systems should get it from the official website:
 .br
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
 .br
@@ -1665,8 +1699,8 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.To 2 "Booting off a hybrid HFS/ISO9660 CD-ROM"
-.Em "Booting off a hybrid HFS/ISO9660 CD-ROM"
+.To 2 "Booting off a custom hybrid HFS/ISO9660 CD-R"
+.Em "Booting off a custom hybrid HFS/ISO9660 CD-R"
 .br
 (Open Firmware 2.4, Open Firmware 3)
 .Pp
@@ -1694,13 +1728,15 @@ distribution sets on the ISO9660 partition
 only on the HFS partition).
 .Pp
 .(bullet
-.Em "From a UNIX machine"
+.Em "From a UNIX-like machine"
 .Pp
 Get and install mkhybrid.
 This is now part of the cdrecord package.
 .Nx
 users should install it from the package collection.
-Other unix systems should get it from the official website:
+Other
+.Ul
+systems should get it from the official website:
 .Lk ftp://ftp.netbsd.org/pub/NetBSD/packages/pkgsrc/sysutils/cdrecord/README.html
 .Lk http://www.fokus.gmd.de/research/cc/glone/employees/joerg.schilling/private/cdrecord.html
 .Pp
@@ -1795,31 +1831,32 @@ Skip forward to
 .Sx Installing the NetBSD System
 .
 .It
-.To 2 "Booting the floppy image off a SCSI or IDE drive"
-.Em "Booting the floppy image off a SCSI or IDE drive"
+.To 2 "Booting the CD-R image off a SCSI or IDE drive"
+.Em "Booting the CD-R image off a SCSI or IDE drive"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open
 Firmware 2.4)
 .Pp
-If the boot floppy image is compressed, then you will need to uncompress
-it first.
+If the 
+.Nx*M
+CD-R image is compressed, then you will need to uncompress it first.
 .Pp
 Find a spare bootable drive (i.e. SCSI or IDE), and use some tool to write
-the floppy disk image
-.Pa installation/floppy/boot.fs
+the disk image
+.Pa macppccd.iso
 to your spare drive, and boot from that drive.
 For example, you could use a Zip drive, a Jaz drive,
 a Compact Flash drive, or even a spare hard drive.
-The floppy image has a
+The disk image has a
 .Sq "partition zero"
-bootloader which ultimately loads the installation kernel from the FFS
+bootloader which ultimately loads the installation kernel from the ISO
 file system from the disk image.
 .Pp
 .(bullet -compact
-.Em "From a UNIX machine"
+.Em "From a UNIX-like machine (including MacOS X)"
 .Pp
 .(disp
-.No # Ic "dd if=boot.fs of=/dev/rsd0c"
+.No # Ic "dd if=macppccd.iso of=/dev/rsd0c"
 .disp)
 .Pp
 where
@@ -1841,12 +1878,12 @@ Be certain you have selected the correct disk, as it will erase the
 contents.
 .Pp
 .It
-.Em "From a MacOS machine"
+.Em "From a MacOS 9 (or earlier) machine"
 .Pp
 Get
 .Ic suntar
 from
-.Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-222.hqx
+.Lk http://hyperarchive.lcs.mit.edu/HyperArchive/Archive/cmp/suntar-223.hqx
 .(enum
 Open the
 .Sq Preferences
@@ -1879,7 +1916,7 @@ Hit return (i.e. start at sector number zero)
 .Pp
 .It
 Select
-.Pa boot.fs
+.Pa macppccd.iso
 and click
 .Dq Open
 .Pp
