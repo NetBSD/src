@@ -1,4 +1,8 @@
-# $NetBSD: Makefile,v 1.6 2001/12/12 01:48:50 tv Exp $
+# $NetBSD: Makefile,v 1.7 2002/09/18 13:31:54 lukem Exp $
+
+NOLINT=	# defined
+NOPIC=	# defined
+NOPROFILE=# defined
 
 LIB    = omapi
 SRCS   = protocol.c buffer.c alloc.c result.c connection.c errwarn.c \
@@ -7,10 +11,6 @@ SRCS   = protocol.c buffer.c alloc.c result.c connection.c errwarn.c \
 	 toisc.c
 
 DHCPSRCDIR=	omapip
-
-NOLINT=	# defined
-NOPIC=	# defined
-NOPROFILE=# defined
 
 # only needed during build
 libinstall::

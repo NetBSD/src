@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2002/03/05 04:11:53 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2002/09/18 13:31:52 lukem Exp $
+
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 #WARNS=	2
 
@@ -8,10 +12,6 @@ SRCS=	parser.c qop.c qop_blue.c qop_cbq.c qop_cdnr.c qop_conf.c \
 	qop_red.c qop_rio.c qop_wfq.c quip_server.c
 
 CPPFLAGS+= -DALTQ -DINET6
-
-NOLINT=		# defined
-NOPIC=		# defined
-NOPROFILE=	# defined
 
 # only needed during build
 libinstall::

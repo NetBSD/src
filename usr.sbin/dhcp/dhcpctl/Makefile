@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2001/12/12 01:48:50 tv Exp $
-
-LIB    = dhcpctl
-SRCS   = dhcpctl.c callback.c remote.c
+# $NetBSD: Makefile,v 1.4 2002/09/18 13:31:53 lukem Exp $
 
 NOLINT=	# defined
 NOPIC=	# defined
 NOPROFILE=# defined
+
+LIB    = dhcpctl
+SRCS   = dhcpctl.c callback.c remote.c
 
 DHCPSRCDIR=	dhcpctl
 
