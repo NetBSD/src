@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.105 2003/03/17 09:06:40 jdolecek Exp $	*/
+/*	$NetBSD: vnode.h,v 1.106 2003/03/17 09:11:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -439,6 +439,11 @@ extern struct vnodeop_desc	*vnodeop_descs[];
  * Interlock for scanning list of vnodes attached to a mountpoint
  */
 extern struct simplelock	mntvnode_slock;
+
+/*
+ * Union filesystem hook for vn_readdir().
+ */
+extern int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct proc *);
 
 /*
  * This macro is very helpful in defining those offsets in the vdesc struct.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.65 2003/03/16 08:26:48 jdolecek Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.66 2003/03/17 09:11:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.65 2003/03/16 08:26:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.66 2003/03/17 09:11:30 jdolecek Exp $");
 
 #include "fs_union.h"
 
@@ -63,6 +63,10 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.65 2003/03/16 08:26:48 jdolecek Exp 
 
 #ifdef UNION
 #include <fs/union/union.h>
+#endif
+
+#if defined(LKM) || defined(UNION)
+int (*vn_union_readdir_hook) (struct vnode **, struct file *, struct proc *);
 #endif
 
 #ifdef VERIFIED_EXEC
@@ -440,46 +444,17 @@ unionread:
 	if (error)
 		return (error);
 
-#ifdef UNION
-{
-	extern struct vnode *union_dircache __P((struct vnode *));
+#if defined(UNION) || defined(LKM)
+	if (count == auio.uio_resid && vn_union_readdir_hook) {
+		struct vnode *ovp = vp;
 
-	if (count == auio.uio_resid && (vp->v_op == union_vnodeop_p)) {
-		struct vnode *lvp;
-
-		lvp = union_dircache(vp);
-		if (lvp != NULLVP) {
-			struct vattr va;
-
-			/*
-			 * If the directory is opaque,
-			 * then don't show lower entries
-			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
-			if (va.va_flags & OPAQUE) {
-				vput(lvp);
-				lvp = NULL;
-			}
-		}
-		
-		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
-			if (error) {
-				vput(lvp);
-				return (error);
-			}
-			VOP_UNLOCK(lvp, 0);
-			fp->f_data = (caddr_t) lvp;
-			fp->f_offset = 0;
-			error = vn_close(vp, FREAD, fp->f_cred, p);
-			if (error)
-				return (error);
-			vp = lvp;
+		error = (*vn_union_readdir_hook)(&vp, fp, p);
+		if (error)
+			return (error);
+		if (vp != ovp)
 			goto unionread;
-		}
 	}
-}
-#endif /* UNION */
+#endif /* UNION || LKM */
 
 	if (count == auio.uio_resid && (vp->v_flag & VROOT) &&
 	    (vp->v_mount->mnt_flag & MNT_UNION)) {
