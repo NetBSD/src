@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-rhosts.c,v 1.12 2002/12/06 03:39:07 thorpej Exp $	*/
+/*	$NetBSD: auth-rhosts.c,v 1.13 2003/05/17 01:17:08 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -69,7 +69,8 @@ check_rhosts_file(const char *filename, const char *hostname,
 		 * This should be safe because each buffer is as big as the
 		 * whole string, and thus cannot be overwritten.
 		 */
-		switch (sscanf(buf, "%s %s %s", hostbuf, userbuf, dummy)) {
+		switch (sscanf(buf, "%1023s %1023s %1023s", hostbuf, userbuf,
+		    dummy)) {
 		case 0:
 			auth_debug_add("Found empty line in %.100s.", filename);
 			continue;
