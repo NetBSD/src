@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61 2001/12/30 16:41:29 pk Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.62 2001/12/30 18:52:54 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -263,20 +263,16 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (stack != NULL)
 		tf2->tf_out[6] = (u_int)stack + stacksize;
 
-	/* Duplicate efforts of syscall(), but slightly differently */
-	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
-		/* jmp %g2 (or %g7, deprecated) on success */
-		tf2->tf_pc = tf2->tf_global[2];
-	} else {
-		/*
-		 * old system call convention: clear C on success
-		 * note: proc_trampoline() sets a fresh psr when
-		 * returning to user mode.
-		 */
-		/*tf2->tf_psr &= ~PSR_C;   -* success */
-		tf2->tf_pc = tf2->tf_npc;
-	}
-	/* proc_trampoline() will do npc = pc + 4 */
+	/*
+	 * The fork system call always uses the old system call
+	 * convention; clear carry and skip trap instruction as
+	 * in syscall().
+	 * note: proc_trampoline() sets a fresh psr when returning
+	 * to user mode.
+	 */
+	/*tf2->tf_psr &= ~PSR_C;   -* success */
+	tf2->tf_pc = tf2->tf_npc;
+	tf2->tf_npc = tf2->tf_pc + 4;
 
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
@@ -291,7 +287,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	npcb->pcb_sp = (int)rp;
 	npcb->pcb_psr &= ~PSR_CWP;	/* Run in window #0 */
 	npcb->pcb_wim = 1;		/* Fence at window #1 */
-
 }
 
 /*
