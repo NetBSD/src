@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_bmap.c,v 1.4 1997/06/11 10:10:10 bouyer Exp $	*/
+/*	$NetBSD: ufs_bmap.c,v 1.5 1997/07/17 23:40:07 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -232,7 +232,8 @@ ufs_getlbns(vp, bn, ap, nump)
 {
 	long metalbn, realbn;
 	struct ufsmount *ump;
-	int blockcnt, i, numlevels, off;
+	int64_t blockcnt;
+	int i, numlevels, off;
 
 	ump = VFSTOUFS(vp->v_mount);
 	if (nump)
