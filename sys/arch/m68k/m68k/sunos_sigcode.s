@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_sigcode.s,v 1.1 2000/11/26 11:47:25 jdolecek Exp $	*/
+/*	$NetBSD: sunos_sigcode.s,v 1.2 2000/11/26 12:02:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,9 +42,10 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include <machine/asm.h>
+
 /*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
+ * NOTICE: This is typically included in port's locore.s, like so:
  *
  *	#ifdef COMPAT_SUNOS
  *	#include <m68k/m68k/sunos_sigcode.s>
