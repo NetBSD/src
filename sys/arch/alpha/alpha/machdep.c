@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.280 2004/02/13 11:36:09 wiz Exp $ */
+/* $NetBSD: machdep.c,v 1.281 2004/02/14 14:33:28 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280 2004/02/13 11:36:09 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.281 2004/02/14 14:33:28 bjh21 Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -818,27 +818,6 @@ consinit()
 	    pmap_uses_prom_console() ? "" : "not ");
 #endif
 }
-
-#include "pckbc.h"
-#include "pckbd.h"
-#if (NPCKBC > 0) && (NPCKBD == 0)
-
-#include <dev/ic/pckbcvar.h>
-
-/*
- * This is called by the pbkbc driver if no pckbd is configured.
- * On the i386, it is used to glue in the old, deprecated console
- * code.  On the Alpha, it does nothing.
- */
-int
-pckbc_machdep_cnattach(kbctag, kbcslot)
-	pckbc_tag_t kbctag;
-	pckbc_slot_t kbcslot;
-{
-
-	return (ENXIO);
-}
-#endif /* NPCKBC > 0 && NPCKBD == 0 */
 
 void
 cpu_startup()
