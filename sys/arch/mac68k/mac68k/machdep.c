@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 1995/10/07 06:25:48 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 1995/11/14 04:05:49 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -823,6 +823,10 @@ boot(howto)
 			savectx(&dumppcb);
 			dumpsys();
 		}
+
+		/* run any shutdown hooks */
+		doshutdownhooks();
+
 		/*
 		 * Map ROM where the MacOS likes it, so we can reboot,
 		 * hopefully.
