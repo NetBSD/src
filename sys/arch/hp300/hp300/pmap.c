@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 1999/09/12 01:17:04 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 1999/09/16 14:52:06 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1898,7 +1898,7 @@ pmap_clear_modify(pg)
  *	Clear the reference bit on the specified physical page.
  */
 boolean_t
-pmap_clear_reference(pa)
+pmap_clear_reference(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1918,7 +1918,7 @@ pmap_clear_reference(pa)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_referenced(pa)
+pmap_is_referenced(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1940,7 +1940,7 @@ pmap_is_referenced(pa)
  *	by any physical maps.
  */
 boolean_t
-pmap_is_modified(pa)
+pmap_is_modified(pg)
 	struct vm_page *pg;
 {
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
