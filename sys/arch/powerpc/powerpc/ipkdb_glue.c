@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_glue.c,v 1.3 2001/12/23 08:25:27 dbj Exp $	*/
+/*	$NetBSD: ipkdb_glue.c,v 1.4 2003/02/06 23:00:15 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,6 +41,7 @@
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <machine/vmparam.h>
 
 int ipkdbregs[NREG];
 
