@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.127 2001/01/14 20:49:36 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.128 2001/01/26 09:42:49 itojun Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -72,7 +72,7 @@ LIBROKEN?=	${DESTDIR}/usr/lib/libroken.a
 LIBRPCSVC?=	${DESTDIR}/usr/lib/librpcsvc.a
 LIBSKEY?=	${DESTDIR}/usr/lib/libskey.a
 LIBSS?=		${DESTDIR}/usr/lib/libss.a
-LIBSSL?=	${DESTDIR}/usr/lib/liblss.a
+LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
 LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
