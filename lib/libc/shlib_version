@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.115 2002/03/20 16:29:15 tron Exp $
+#	$NetBSD: shlib_version,v 1.116 2002/05/14 13:47:06 kleink Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -7,6 +7,7 @@
 # - md2, md4, md5, rmd160 & sha1 functions should take the same arguments AFAP
 # - libc/gen/assert.c: __{diag,}assert13() -> __{diag,}assert()
 # - libc/gen/timezone.c: remove; __timezone13 -> timezone.
+# - libc/net/getaddrinfo.c, netdb.h: remove __ai_pad0
 #
 major=12
 minor=83
