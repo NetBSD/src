@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.14 1998/06/30 11:59:10 msaitoh Exp $	*/
+/*	$NetBSD: spc.c,v 1.15 1998/07/04 22:18:46 jonathan Exp $	*/
 
 #define	integrate	__inline static
 
@@ -108,6 +108,8 @@
 /*
  * MB89352 SCSI Protocol Controller (SPC) routines.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

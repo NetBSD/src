@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.4 1997/12/06 19:19:07 mhitch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5 1998/07/04 22:18:30 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -25,6 +25,9 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
+
+#include "opt_cputype.h"	/* which mips CPUs do we support? */
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/systm.h>

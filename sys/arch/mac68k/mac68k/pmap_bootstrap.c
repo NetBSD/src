@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.44 1998/06/30 04:16:01 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.45 1998/07/04 22:18:29 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -38,6 +38,8 @@
  *
  *	@(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

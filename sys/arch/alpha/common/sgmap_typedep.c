@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.10 1998/06/04 01:22:52 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.11 1998/07/04 22:18:14 jonathan Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.10 1998/06/04 01:22:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.11 1998/07/04 22:18:14 jonathan Exp $");
+
+#include "opt_ddb.h"
 
 #ifdef SGMAP_LOG
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.14 1998/06/25 21:19:13 thorpej Exp $	*/
+/*	$NetBSD: syscall.c,v 1.15 1998/07/04 22:18:18 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 09/11/94
  */
 
+#include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 

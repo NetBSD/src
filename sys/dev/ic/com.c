@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.144 1998/06/10 12:06:23 jonathan Exp $	*/
+/*	$NetBSD: com.c,v 1.145 1998/07/04 22:18:50 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
@@ -72,6 +72,8 @@
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  */
+
+#include "opt_ddb.h"
 
 #include "rnd.h"
 #if NRND > 0 && defined(RND_COM)

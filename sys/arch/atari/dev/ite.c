@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25 1998/03/25 09:46:09 leo Exp $	*/
+/*	$NetBSD: ite.c,v 1.26 1998/07/04 22:18:21 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,8 @@
  * Supports VT200, a few terminal features will be unavailable until
  * the system actually probes the device (i.e. not after consinit())
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>

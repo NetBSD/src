@@ -1,4 +1,4 @@
-/*	$NetBSD: sbcvar.h,v 1.4 1997/10/10 05:55:07 scottr Exp $	*/
+/*	$NetBSD: sbcvar.h,v 1.5 1998/07/04 22:18:27 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -37,20 +37,6 @@
  * due to the size of the PDMA space.
  */
 #define	MAX_DMA_LEN 0x2000
-
-#ifdef SBC_DEBUG
-# define	SBC_DB_INTR	0x01
-# define	SBC_DB_DMA	0x02
-# define	SBC_DB_REG	0x04
-# define	SBC_DB_BREAK	0x08
-# ifndef DDB
-#  define	Debugger()	printf("Debug: sbc.c:%d\n", __LINE__)
-# endif
-# define	SBC_BREAK \
-		do { if (sbc_debug & SBC_DB_BREAK) Debugger(); } while (0)
-#else
-# define	SBC_BREAK
-#endif
 
 /*
  * This structure is used to keep track of PDMA requests.

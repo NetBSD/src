@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
+/*	$NetBSD: si.c,v 1.2 1998/07/04 22:18:41 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,6 +90,8 @@
  *	Jason R. Thorpe <thorpej@NetBSD.ORG>
  *	December 8, 1995
  */
+
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>

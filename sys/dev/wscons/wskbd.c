@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.9 1998/06/15 17:48:33 drochner Exp $ */
+/* $NetBSD: wskbd.c,v 1.10 1998/07/04 22:18:51 jonathan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wskbd.c,v 1.9 1998/06/15 17:48:33 drochner Exp $";
+    "$NetBSD: wskbd.c,v 1.10 1998/07/04 22:18:51 jonathan Exp $";
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,6 +86,8 @@ static const char _rcsid[] __attribute__ ((unused)) =
  * Keyboard driver (/dev/wskbd*).  Translates incoming bytes to ASCII or
  * to `wscons_events' and passes them up to the appropriate reader.
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/conf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.14 1998/04/03 19:45:12 pk Exp $	*/
+/*	$NetBSD: db_run.c,v 1.15 1998/07/04 22:18:48 jonathan Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,9 @@
 /*
  * Commands to run process.
  */
+
+#include "opt_ddb.h"
+
 #include <sys/param.h>
 #include <sys/proc.h>
 

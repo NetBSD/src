@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 1998/06/25 21:19:18 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 1998/07/04 22:18:38 jonathan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 1998/06/09 00:09:43 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.5 1998/07/04 22:18:22 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -56,6 +56,8 @@
  *  joerg_wunsch@uriah.sax.de (Joerg Wunsch)
  *  dufault@hda.com (Peter Dufault)
  */
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

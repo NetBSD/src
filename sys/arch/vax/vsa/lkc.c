@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.5 1998/06/20 18:42:50 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.6 1998/07/04 22:18:45 jonathan Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,8 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
-
+#include "opt_ddb.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
