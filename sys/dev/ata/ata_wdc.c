@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.25 2000/03/25 21:37:51 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.26 2000/04/01 14:32:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -199,12 +199,13 @@ _wdc_ata_bio_start(chp, xfer)
 		 * that we never get to this point if that's the case.
 		 */
 		/* at this point, we should only be in RECAL state */
-		if (drvp->state != RECAL) {
+		if (drvp->state != RESET) {
 			printf("%s:%d:%d: bad state %d in _wdc_ata_bio_start\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive, drvp->state);
 			panic("_wdc_ata_bio_start: bad state");
 		}
+		drvp->state = RECAL;
 		xfer->c_intr = wdc_ata_ctrl_intr;
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (xfer->drive << 4));
@@ -226,7 +227,6 @@ _wdc_ata_bio_start(chp, xfer)
 		if (drvp->n_xfers <= NXFER)
 			drvp->n_xfers++;
 		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
-		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
 	if (ata_bio->flags & ATA_SINGLE)
 		ata_delay = ATA_DELAY;
@@ -306,7 +306,8 @@ again:
 			    head, sect, nblks, 0);
 			/* start the DMA channel */
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
+			    chp->channel, xfer->drive);
+			chp->ch_flags |= WDCF_DMA_WAIT;
 			/* wait for irq */
 			goto intr;
 		} /* else not DMA */
@@ -389,6 +390,10 @@ intr:	/* Wait for IRQ (either real or polled) */
 	} else {
 		/* Wait for at last 400ns for status bit to be valid */
 		delay(1);
+		if (chp->ch_flags & WDCF_DMA_WAIT) {
+			wdc_dmawait(chp, xfer, ATA_DELAY);
+			chp->ch_flags &= ~WDCF_DMA_WAIT;
+		}
 		wdc_ata_bio_intr(chp, xfer, 0);
 		if ((ata_bio->flags & ATA_ITSDONE) == 0)
 			goto again;
@@ -413,7 +418,6 @@ wdc_ata_bio_intr(chp, xfer, irq)
 	struct ata_bio *ata_bio = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int drv_err;
-	int dma_flags = 0;
 
 	WDCDEBUG_PRINT(("wdc_ata_bio_intr %s:%d:%d\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive),
@@ -426,11 +430,6 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    drvp->state);
 		panic("wdc_ata_bio_intr: bad state\n");
-	}
-
-	if (xfer->c_flags & C_DMA) {
-		dma_flags = (ata_bio->flags & ATA_READ) ?  WDC_DMA_READ : 0;
-		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
 
 	/*
@@ -451,10 +450,8 @@ wdc_ata_bio_intr(chp, xfer, irq)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
-		/* if we were using DMA, turn off DMA channel */
+		/* if we were using DMA, flag a DMA error */
 		if (xfer->c_flags & C_DMA) {
-			(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
 			ata_dmaerr(drvp);
 		}
 		ata_bio->error = TIMEOUT;
@@ -482,8 +479,7 @@ wdc_ata_bio_intr(chp, xfer, irq)
 				drv_err = WDC_ATA_ERR;
 			}
 		}
-		if ((*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-		    chp->channel, xfer->drive, dma_flags) != 0) {
+		if (chp->wdc->dma_status != 0) {
 			if (drv_err != WDC_ATA_ERR) {
 				ata_bio->error = ERR_DMA;
 				drv_err = WDC_ATA_ERR;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.h,v 1.8 1999/10/20 15:22:27 enami Exp $	*/
+/*	$NetBSD: atapiconf.h,v 1.9 2000/04/01 14:32:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -31,18 +31,28 @@
 
 #include <dev/scsipi/scsipiconf.h>
 
-/* drive states stored in ata_drive_datas */
-#define PIOMODE		0
-#define PIOMODE_WAIT	1
-#define DMAMODE		2
-#define DMAMODE_WAIT	3
-#define READY		4
-
 struct atapi_mode_header;
-struct ataparams;
+struct atapibus_softc {
+	struct device sc_dev;
+	struct scsipi_link *adapter_link;	/* proto supplied by adapter */
+	struct scsipi_link **sc_link;		/* dynamically allocated */
+	struct ata_drive_datas *sc_drvs;	/* array supplied by adapter */
+};
 
-int	wdc_atapi_get_params __P((struct scsipi_link *, u_int8_t, int,
-	    struct ataparams *)); 
+/*
+ * We need some more callbacks than in scsipi_adapter. 
+ * So define a new atapi_adapter, we'll cast sc_link->adapter to
+ * atapi_adapter* when we need the extra callback (only in ATAPI code)
+ */
+
+struct atapi_adapter {
+	struct scsipi_adapter _generic;
+	void (*atapi_probedev) __P((struct atapibus_softc *, int));
+};
+
+
+void *	atapi_probedev __P((struct atapibus_softc *, int,
+		struct scsipi_link *, struct scsipibus_attach_args *));
 void	atapi_print_addr __P((struct scsipi_link *));
 int	atapi_interpret_sense __P((struct scsipi_xfer *));
 int	atapi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,

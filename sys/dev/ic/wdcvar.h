@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.23 2000/03/23 08:20:06 enami Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.24 2000/04/01 14:32:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,9 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX for scsipi_adapter */
+/* XXX for atapi_adapter */
 #include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsipiconf.h>
+#include <dev/scsipi/atapiconf.h>
 
 #include <sys/callout.h>
 
@@ -68,6 +68,7 @@ struct channel_softc { /* Per channel data */
 	int ch_flags;
 #define WDCF_ACTIVE   0x01	/* channel is active */
 #define WDCF_IRQ_WAIT 0x10	/* controller is waiting for irq */
+#define WDCF_DMA_WAIT 0x20	/* controller is waiting for DMA */
 	u_int8_t ch_status;         /* copy of status register */
 	u_int8_t ch_error;          /* copy of error register */
 	/* per-drive infos */
@@ -106,17 +107,21 @@ struct wdc_softc { /* Per controller state */
 	/*
 	 * The reference count here is used for both IDE and ATAPI devices.
 	 */
-	struct scsipi_adapter sc_atapi_adapter;
+	struct atapi_adapter sc_atapi_adapter;
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
 	int            (*dma_init) __P((void *, int, int, void *, size_t,
 	                int));
-	void           (*dma_start) __P((void *, int, int, int));
+	void           (*dma_start) __P((void *, int, int));
 	int            (*dma_finish) __P((void *, int, int, int));
-/* flags passed to DMA functions */
+/* flags passed to dma_init */
 #define WDC_DMA_READ 0x01
-#define WDC_DMA_POLL 0x02
+#define WDC_DMA_IRQW 0x02
+	int		dma_status; /* status returned from dma_finish() */
+#define WDC_DMAST_NOIRQ	0x01	/* missing IRQ */
+#define WDC_DMAST_ERR	0x02	/* DMA error */
+#define WDC_DMAST_UNDER	0x04	/* DMA underrun */
 
 	/* if WDC_CAPABILITY_HWLOCK set in 'cap' */
 	int            (*claim_hw) __P((void *, int));
@@ -174,6 +179,7 @@ int   wdcreset	__P((struct channel_softc *, int));
 #define VERBOSE 1 
 #define SILENT 0 /* wdcreset will not print errors */
 int   wdcwait __P((struct channel_softc *, int, int, int));
+int   wdc_dmawait __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdcbit_bucket __P(( struct channel_softc *, int));
 void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
 	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));

@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.15 2000/01/17 00:01:00 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.16 2000/04/01 14:32:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -63,10 +63,22 @@ struct ata_drive_datas {
     u_int8_t DMA_cap; /* supported drive's DMA mode */
     u_int8_t UDMA_cap; /* supported drive's UDMA mode */
     /*
-     * Drive state. This is drive-type (ATA or ATAPI) dependant
+     * Drive state.
      * This is reset to 0 after a channel reset.
      */
     u_int8_t state;
+#define RESET          0
+#define RECAL          1
+#define RECAL_WAIT     2
+#define PIOMODE        3
+#define PIOMODE_WAIT   4
+#define DMAMODE        5
+#define DMAMODE_WAIT   6
+#define GEOMETRY       7
+#define GEOMETRY_WAIT  8
+#define MULTIMODE      9
+#define MULTIMODE_WAIT 10
+#define READY          11
 
     /* numbers of xfers and DMA errs. Used by ata_dmaerr() */
     u_int8_t n_dmaerrs;

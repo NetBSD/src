@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.32 2000/03/23 07:01:43 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.33 2000/04/01 14:32:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -64,9 +64,6 @@
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
-#include <dev/scsipi/scsipi_all.h>
-#include <dev/scsipi/scsipiconf.h>
-#include <dev/scsipi/atapiconf.h>
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -91,6 +88,9 @@ void  wdc_atapi_kill_xfer __P((struct channel_softc *, struct wdc_xfer *));
 int   wdc_atapi_ctrl	 __P((struct channel_softc *, struct wdc_xfer *, int));
 void  wdc_atapi_done	 __P((struct channel_softc *, struct wdc_xfer *));
 void  wdc_atapi_reset	 __P((struct channel_softc *, struct wdc_xfer *));
+int   wdc_atapi_get_params __P((struct scsipi_link *, u_int8_t, int,
+		struct ataparams *));
+void  wdc_atapi_probedev __P(( struct atapibus_softc *, int));
 int   wdc_atapi_send_cmd __P((struct scsipi_xfer *sc_xfer));
 
 #define MAX_SIZE MAXPHYS
@@ -106,8 +106,9 @@ wdc_atapibus_attach(chp)
 	/*
 	 * Fill in the adapter.
 	 */
-	wdc->sc_atapi_adapter.scsipi_cmd = wdc_atapi_send_cmd;
-	wdc->sc_atapi_adapter.scsipi_minphys = wdc_atapi_minphys;
+	wdc->sc_atapi_adapter._generic.scsipi_cmd = wdc_atapi_send_cmd;
+	wdc->sc_atapi_adapter._generic.scsipi_minphys = wdc_atapi_minphys;
+	wdc->sc_atapi_adapter.atapi_probedev = wdc_atapi_probedev;
 
 	memset(&aa_link, 0, sizeof(struct ata_atapi_attach));
 	aa_link.aa_type = T_ATAPI;
@@ -215,6 +216,66 @@ wdc_atapi_get_params(ab_link, drive, flags, id)
 	return COMPLETE;
 }
 
+void
+wdc_atapi_probedev(atapi, target)
+	struct atapibus_softc *atapi;
+	int target;
+{
+	struct scsipi_link *sc_link;
+	struct scsipibus_attach_args sa;
+	struct ataparams ids;
+	struct ataparams *id = &ids;
+	struct ata_drive_datas *drvp = &atapi->sc_drvs[target];
+	char serial_number[21], model[41], firmware_revision[9];
+
+	if (atapi->sc_link[target])
+		return;
+	if (wdc_atapi_get_params(atapi->adapter_link, target,
+	    XS_CTL_POLL|XS_CTL_NOSLEEP, id) == COMPLETE) {
+#ifdef ATAPI_DEBUG_PROBE
+		printf("%s drive %d: cmdsz 0x%x drqtype 0x%x\n",
+		    atapi->sc_dev.dv_xname, target,
+		    id->atap_config & ATAPI_CFG_CMD_MASK,
+		    id->atap_config & ATAPI_CFG_DRQ_MASK);
+#endif
+		/*
+		 * Allocate a device link and try and attach
+		 * a driver to this device.  If we fail, free
+		 * the link.
+		 */
+		sc_link = malloc(sizeof(*sc_link), M_DEVBUF, M_NOWAIT); 
+		if (sc_link == NULL) {
+			printf("%s: can't allocate link for drive %d\n",
+			    atapi->sc_dev.dv_xname, target);
+			return;       
+		}
+		/* fill in the link (IDE-specific part) */
+		*sc_link = *atapi->adapter_link;
+		if ((id->atap_config & ATAPI_CFG_CMD_MASK) == ATAPI_CFG_CMD_16)
+			sc_link->scsipi_atapi.cap |= ACAP_LEN;
+		sc_link->scsipi_atapi.cap |=
+		    (id->atap_config & ATAPI_CFG_DRQ_MASK);
+		sa.sa_sc_link = sc_link;
+		sa.sa_inqbuf.type =  ATAPI_CFG_TYPE(id->atap_config);   
+		sa.sa_inqbuf.removable =
+		    id->atap_config & ATAPI_CFG_REMOV ? T_REMOV : T_FIXED;
+		if (sa.sa_inqbuf.removable)
+			sc_link->flags |= SDEV_REMOVABLE;
+		scsipi_strvis(model, 40, id->atap_model, 40);
+		scsipi_strvis(serial_number, 20, id->atap_serial, 20);  
+		scsipi_strvis(firmware_revision, 8, id->atap_revision, 8);
+		sa.sa_inqbuf.vendor = model;
+		sa.sa_inqbuf.product = serial_number;
+		sa.sa_inqbuf.revision = firmware_revision;
+		sa.sa_inqptr = NULL;  
+		drvp->drv_softc = atapi_probedev(atapi, target, sc_link, &sa);
+		if (drvp->drv_softc) {
+			wdc_probe_caps(drvp);
+			return;
+		}
+	}
+}
+
 int
 wdc_atapi_send_cmd(sc_xfer)
 	struct scsipi_xfer *sc_xfer;
@@ -293,12 +354,13 @@ wdc_atapi_start(chp, xfer)
 		    wdctimeout, chp);
 	/* Do control operations specially. */
 	if (drvp->state < READY) {
-		if (drvp->state != PIOMODE) {
+		if (drvp->state != RESET) {
 			printf("%s:%d:%d: bad state %d in wdc_atapi_start\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
 			    xfer->drive, drvp->state);
 			panic("wdc_atapi_start: bad state");
 		}
+		drvp->state = PIOMODE;
 		wdc_atapi_ctrl(chp, xfer, 0);
 		return;
 	}
@@ -343,6 +405,10 @@ wdc_atapi_start(chp, xfer)
 		while ((sc_xfer->xs_status & XS_STS_DONE) == 0) {
 			/* Wait for at last 400ns for status bit to be valid */
 			DELAY(1);
+			if (chp->ch_flags & WDCF_DMA_WAIT) {
+				wdc_dmawait(chp, xfer, sc_xfer->timeout);
+				chp->ch_flags &= ~WDCF_DMA_WAIT;
+			}
 			wdc_atapi_intr(chp, xfer, 0);
 		}
 	}
@@ -357,7 +423,7 @@ wdc_atapi_intr(chp, xfer, irq)
 	struct scsipi_xfer *sc_xfer = xfer->cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int len, phase, i, retries=0;
-	int ire, dma_err = 0;
+	int ire;
 	int dma_flags = 0;
 	struct scsipi_generic _cmd_reqsense;
 	struct scsipi_sense *cmd_reqsense =
@@ -394,15 +460,17 @@ wdc_atapi_intr(chp, xfer, irq)
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip=%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
-		if (xfer->c_flags & C_DMA)
+		if (xfer->c_flags & C_DMA) {
 			ata_dmaerr(drvp);
+		}
 		sc_xfer->error = XS_TIMEOUT;
 		wdc_atapi_reset(chp, xfer);
 		return 1;
 	}
 	/* If we missed an IRQ and were using DMA, flag it as a DMA error */
-	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA))
+	if ((xfer->c_flags & C_TIMEOU) && (xfer->c_flags & C_DMA)) {
 		ata_dmaerr(drvp);
+	}
 	/* 
 	 * if the request sense command was aborted, report the short sense
 	 * previously recorded, else continue normal processing
@@ -418,12 +486,9 @@ wdc_atapi_intr(chp, xfer, irq)
 		return 1;
 	}
 
-	if (xfer->c_flags & C_DMA) {
+	if (xfer->c_flags & C_DMA)
 		dma_flags = ((sc_xfer->xs_control & XS_CTL_DATA_IN) ||
 		    (xfer->c_flags & C_SENSE)) ?  WDC_DMA_READ : 0;
-		dma_flags |= sc_xfer->xs_control & XS_CTL_POLL ?
-		    WDC_DMA_POLL : 0;
-	}
 again:
 	len = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_lo) +
 	    256 * bus_space_read_1(chp->cmd_iot, chp->cmd_ioh, wd_cyl_hi);
@@ -483,7 +548,8 @@ again:
 		/* Start the DMA channel if necessary */
 		if (xfer->c_flags & C_DMA) {
 			(*chp->wdc->dma_start)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
+			    chp->channel, xfer->drive);
+			chp->ch_flags |= WDCF_DMA_WAIT;
 		}
 
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0) {
@@ -498,8 +564,6 @@ again:
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAOUT\n");
 			if (xfer->c_flags & C_DMA) {
-				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-				    chp->channel, xfer->drive, dma_flags);
 				ata_dmaerr(drvp);
 			}
 			sc_xfer->error = XS_TIMEOUT;
@@ -576,8 +640,6 @@ again:
 		    (xfer->c_flags & C_DMA) != 0) {
 			printf("wdc_atapi_intr: bad data phase DATAIN\n");
 			if (xfer->c_flags & C_DMA) {
-				(*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-				    chp->channel, xfer->drive, dma_flags);
 				ata_dmaerr(drvp);
 			}
 			sc_xfer->error = XS_TIMEOUT;
@@ -649,8 +711,6 @@ again:
 		WDCDEBUG_PRINT(("PHASE_COMPLETED\n"), DEBUG_INTR);
 		/* turn off DMA channel */
 		if (xfer->c_flags & C_DMA) {
-			dma_err = (*chp->wdc->dma_finish)(chp->wdc->dma_arg,
-			    chp->channel, xfer->drive, dma_flags);
 			if (xfer->c_flags & C_SENSE)
 				xfer->c_bcount -=
 				    sizeof(sc_xfer->sense.scsi_sense);
@@ -658,13 +718,16 @@ again:
 				xfer->c_bcount -= sc_xfer->datalen;
 		}
 		if (xfer->c_flags & C_SENSE) {
-			if ((chp->ch_status & WDCS_ERR) || dma_err < 0) {
+			if ((chp->ch_status & WDCS_ERR) ||
+			    (chp->wdc->dma_status &
+				(WDC_DMAST_NOIRQ | WDC_DMAST_ERR))) {
 				/*
 				 * request sense failed ! it's not suppossed
 				 * to be possible
 				 */
-				if (xfer->c_flags & C_DMA)
+				if (xfer->c_flags & C_DMA) {
 					ata_dmaerr(drvp);
+				}
 				sc_xfer->error = XS_RESET;
 				wdc_atapi_reset(chp, xfer);
 				return (1);
@@ -700,7 +763,8 @@ again:
 					wdc_atapi_start(chp, xfer);
 					return 1;
 				}
-			} else if (dma_err < 0) {
+			} else if (chp->wdc->dma_status &
+			    (WDC_DMAST_NOIRQ | WDC_DMAST_ERR)) {
 				ata_dmaerr(drvp);
 				sc_xfer->error = XS_RESET;
 				wdc_atapi_reset(chp, xfer);
@@ -733,8 +797,9 @@ again:
 			sc_xfer->error = XS_SHORTSENSE;
 			sc_xfer->sense.atapi_sense = chp->ch_error;
 		} else {
-			if (xfer->c_flags & C_DMA)
+			if (xfer->c_flags & C_DMA) {
 				ata_dmaerr(drvp);
+			}
 			sc_xfer->error = XS_RESET;
 			wdc_atapi_reset(chp, xfer);
 			return (1);
