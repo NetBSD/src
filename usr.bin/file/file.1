@@ -1,7 +1,7 @@
-.\" $NetBSD: file.1,v 1.25 2002/02/08 01:36:22 ross Exp $
+.\" $NetBSD: file.1,v 1.26 2002/05/18 07:00:44 pooka Exp $
 .\"
 .TH FILE 1 "Copyright but distributable"
-.\" Id: file.man,v 1.39 2001/04/27 22:48:33 christos Exp
+.\" Id: file.man,v 1.41 2002/05/16 18:45:56 christos Exp 
 .SH NAME
 file
 \- determine file type
@@ -27,7 +27,7 @@ file
 .B \-m
 magicfile ]
 .SH DESCRIPTION
-This manual page documents version 3.37 of the
+This manual page documents version 3.38 of the
 .B file
 command.
 .PP
@@ -306,12 +306,15 @@ keep the old magic file around for comparison purposes
 .IR /usr/share/misc/magic.orig ).
 .SH EXAMPLES
 .nf
-$ file file.c file /dev/hda
+$ file file.c file /dev/{wd0a,hda}
 file.c:   C program text
-file:     ELF 32-bit LSB executable, Intel 80386, version 1,
-          dynamically linked, not stripped
-/dev/hda: block special
-
+file:     ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV),
+          dynamically linked (uses shared libs), stripped
+/dev/wd0a: block special (0/0)
+/dev/hda: block special (3/0)
+$ file -s /dev/wd0{b,d}
+/dev/wd0b: data
+/dev/wd0d: x86 boot sector
 $ file -s /dev/hda{,1,2,3,4,5,6,7,8,9,10}
 /dev/hda:   x86 boot sector
 /dev/hda1:  Linux/i386 ext2 filesystem
@@ -325,17 +328,19 @@ $ file -s /dev/hda{,1,2,3,4,5,6,7,8,9,10}
 /dev/hda9:  empty
 /dev/hda10: empty
 
-$ file -i file.c file /dev/hda
+$ file -i file.c file /dev/{wd0a,hda}
 file.c:      text/x-c
-file:        application/x-executable, dynamically linked (uses shared libs), not stripped
+file:        application/x-executable, dynamically linked (uses shared libs),
+not stripped
 /dev/hda:    application/x-not-regular-file
+/dev/wd0a:   application/x-not-regular-file
 
 .fi
 .SH HISTORY
 There has been a
 .B file
-command in every \s-1UNIX\s0 since at least Research Version 6
-(man page dated January 16, 1975).
+command in every \s-1UNIX\s0 since at least Research Version 4
+(man page dated November, 1973).
 The System V version introduced one significant major change:
 the external list of magic number types.
 This slowed the program down slightly but made it a lot more flexible.
