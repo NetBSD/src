@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.8.6.3 1998/05/08 17:33:05 mycroft Exp $	*/
+/*	$NetBSD: bt459.c,v 1.8.6.4 1998/11/07 00:09:11 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.8.6.3 1998/05/08 17:33:05 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.8.6.4 1998/11/07 00:09:11 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,12 +387,13 @@ bt459PosCursor(fi, x, y)
 	fbu->scrInfo.cursor.y = y;		/* position, indep. of mouse */
 
 	/* XXX is this a linear function of x-dimension screen size? */
-	if (fi->fi_type.fb_boardtype == PMAX_FBTYPE_SFB)
-		x += 369;	/* is this correct for rcons on an sfb?? */
-	else
+	if (fi->fi_type.fb_boardtype == PMAX_FBTYPE_SFB) {
+		x += fi->fi_type.fb_width == 1280 ? 369 : 232;
+		y += fi->fi_type.fb_height == 1024 ? 34 : 28;
+	} else {
 		x += 219;	/* correct for a cfb */
-	y += 34;
-
+		y += 34;
+	}
 	
 	bt459_select_reg(regs, BT459_REG_CXLO);
 	regs->addr_reg = x;
