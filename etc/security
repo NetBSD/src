@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.38 1999/04/23 08:20:28 kleink Exp $
+#	$NetBSD: security,v 1.39 1999/07/22 00:47:50 hubertf Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -57,7 +57,7 @@ if checkyesno check_passwd; then
 	awk -v "len=$max_loginlen" '
 	BEGIN {
 		while ( getline < "/etc/shells" > 0 ) {
-			if ($LINE ~ /^\#/ || $LINE ~ /^$/ )
+			if ($0 ~ /^\#/ || $0 ~ /^$/ )
 				continue;
 			shells[$1]++;
 		}
@@ -427,7 +427,7 @@ fi
 if checkyesno check_nfs && [ -f /etc/exports ]; then
 	awk '{
 		# ignore comments and blank lines
-		if ($LINE ~ /^\#/ || $LINE ~ /^$/ )
+		if ($0 ~ /^\#/ || $0 ~ /^$/ )
 			next;
 
 		readonly = 0;
