@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.19 1999/07/16 09:26:59 christos Exp $
+$NetBSD: acronyms,v 1.20 1999/07/16 13:19:32 fvdl Exp $
 
 AFAICT	as far as I can tell
 AFAIK	as far as I know
@@ -36,3 +36,4 @@ UTSL	use the source, Luke
 WTF	{what,where,who,why} the fuck
 WTH	{what,where,who,why} the hell
 YKWIM	you know what I mean
+YMMV	your mileage may vary
