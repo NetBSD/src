@@ -1,4 +1,4 @@
-/*	$NetBSD: dot_init.h,v 1.3 2002/12/06 17:05:14 scw Exp $	*/
+/*	$NetBSD: dot_init.h,v 1.4 2003/03/24 14:32:57 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -70,20 +70,47 @@
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
 /*
- * These must be extern to avoid warnings ("declared static but never defined")
- * However, only the declaration is extern, the actually __asm() defines them
- * as static.
+ * The SH5 toolchain generates a bogus GOT access in _init() if we use
+ * the traditional approach as used by other ports.
+ * Work-around this using a totally gross hack for now.
  */
-#define	INIT_FALLTHRU_DECL void init_fallthru(void)
-#define	FINI_FALLTHRU_DECL void fini_fallthru(void)
+#define	INIT_FALLTHRU_DECL
+#define	FINI_FALLTHRU_DECL
 
-#define	INIT_FALLTHRU()	init_fallthru()
-#define	FINI_FALLTHRU()	fini_fallthru()
+#define	INIT_FALLTHRU()	\
+	__asm __volatile("	addi	r15, -16, r15		\n"\
+			"	st.q	r15, 0, r18		\n"\
+			"	gettr	tr0, r18		\n"\
+			"	st.q	r15, 8, r18		\n"\
+			"	pt/u	init_fallthru, tr0	\n"\
+			"	gettr	tr0, r18		\n"\
+			"	ori	r18, 1, r18		\n"\
+			"	ptabs/l	r18, tr0		\n"\
+			"	blink	tr0, r18		\n"\
+			"	ld.q	r15, 8, r18		\n"\
+			"	ptabs/u	r18, tr0		\n"\
+			"	ld.q	r15, 0, r18		\n"\
+			"	addi	r15, 16, r15")
+#define	FINI_FALLTHRU()	\
+	__asm __volatile("	addi	r15, -16, r15		\n"\
+			"	st.q	r15, 0, r18		\n"\
+			"	gettr	tr0, r18		\n"\
+			"	st.q	r15, 8, r18		\n"\
+			"	pt/u	fini_fallthru, tr0	\n"\
+			"	gettr	tr0, r18		\n"\
+			"	ori	r18, 1, r18		\n"\
+			"	ptabs/l	r18, tr0		\n"\
+			"	blink	tr0, r18		\n"\
+			"	ld.q	r15, 8, r18		\n"\
+			"	ptabs/u	r18, tr0		\n"\
+			"	ld.q	r15, 0, r18		\n"\
+			"	addi	r15, 16, r15")
 
 #define	MD_SECTION_PROLOGUE(sect, entry_pt)		\
 		__asm (					\
 		".section "#sect",\"ax\",@progbits	\n"\
-		".align 4				\n"\
+		".align 5				\n"\
+		".type "#entry_pt",@function		\n"\
 		#entry_pt":				\n"\
 		"	addi	r15, -16, r15		\n"\
 		"	st.q	r15, 0, r14		\n"\
