@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.11 2000/06/22 20:27:55 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.12 2000/06/30 17:10:19 itojun Exp $
 #
 # GENERIC: generic kernel for most machines
 #
 
 include	"arch/pc532/conf/std.pc532"
 
-#ident 		"GENERIC-$Revision: 1.11 $"
+#ident 		"GENERIC-$Revision: 1.12 $"
 
 maxusers	8			# estimated number of users
 
@@ -46,6 +46,7 @@ options 	SOFTDEP         # FFS soft updates support.
 #options 	GATEWAY			# packet forwarding
 options 	INET			# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.48 2000/06/28 15:31:02 minoura Exp $
+#	$NetBSD: GENERIC,v 1.49 2000/06/30 17:10:21 itojun Exp $
 
 #
 #	GENERIC
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"GENERIC-$Revision: 1.48 $"
+#ident 		"GENERIC-$Revision: 1.49 $"
 
 maxusers	8
 
@@ -160,6 +160,7 @@ options 	SOFTDEP         # FFS soft updates support.
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

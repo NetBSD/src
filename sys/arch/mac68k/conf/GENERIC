@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.103 2000/06/22 20:27:53 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.104 2000/06/30 17:10:18 itojun Exp $
 #
 # GENERIC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 maxusers	16		# estimated number of users
 
@@ -91,6 +91,7 @@ options 	NFSSERVER	# Network File System server
 options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

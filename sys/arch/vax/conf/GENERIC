@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.73 2000/06/27 18:50:47 ragge Exp $
+#	$NetBSD: GENERIC,v 1.74 2000/06/30 17:10:21 itojun Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.73 $"
+#ident 		"GENERIC-$Revision: 1.74 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -43,6 +43,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 options		NTP		# NTP kernel support
 options         INET		# IPv4
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

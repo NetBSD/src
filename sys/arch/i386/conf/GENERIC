@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.355 2000/06/22 20:27:52 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.356 2000/06/30 17:10:17 itojun Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.355 $"
+#ident 		"GENERIC-$Revision: 1.356 $"
 
 maxusers	32		# estimated number of users
 
@@ -116,6 +116,7 @@ options 	NFSSERVER	# Network File System server
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

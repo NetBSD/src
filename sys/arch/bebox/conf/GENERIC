@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.29 2000/06/22 20:27:51 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.30 2000/06/30 17:10:16 itojun Exp $
 #
 # First try for BEBOX config file
 #
 
 include "arch/bebox/conf/std.bebox"
 
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -52,6 +52,7 @@ options 	SOFTDEP         # FFS soft updates support.
 
 options 	INET
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

@@ -1,10 +1,10 @@
-#	$NetBSD: GENERIC,v 1.6 2000/06/22 20:27:53 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.7 2000/06/30 17:10:17 itojun Exp $
 #
 #	GENERIC LUNA68K
 #
 include		"arch/luna68k/conf/std.luna68k"
 
-#ident 		"GENERIC-$Revision: 1.6 $"
+#ident 		"GENERIC-$Revision: 1.7 $"
 
 maxusers	8
 
@@ -64,6 +64,7 @@ options	SOFTDEP		# ffs soft updates support
 # Networking options
 options 	INET		# IP prototol stack support
 #options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP securyty (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

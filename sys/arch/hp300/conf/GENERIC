@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.56 2000/06/22 20:27:52 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.57 2000/06/30 17:10:17 itojun Exp $
 #
 # Generic kernel - one size fits all.
 #
@@ -6,7 +6,7 @@
 # Include attributes common to all hp300s
 include "arch/hp300/conf/std.hp300"
 
-#ident 		"GENERIC-$Revision: 1.56 $"
+#ident 		"GENERIC-$Revision: 1.57 $"
 
 # Support for various CPU types
 options 	HP320
@@ -62,6 +62,7 @@ options 	NFS_BOOT_BOOTPARAM # use Sun bootparams for NFS boot
 # Networking options
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP security (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security

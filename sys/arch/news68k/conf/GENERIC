@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC,v 1.9 2000/06/22 20:27:54 fvdl Exp $
+# 	$NetBSD: GENERIC,v 1.10 2000/06/30 17:10:19 itojun Exp $
 
 #	news68k GENERIC config file;
 #
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.9 $"
+#ident 		"GENERIC-$Revision: 1.10 $"
 
 maxusers	8
 
@@ -72,6 +72,7 @@ options	SOFTDEP		# ffs soft updates support
 # Networking options
 options 	INET		# Internet protocols
 options 	INET6		# IPV6
+options 	PULLDOWN_TEST	# use m_pulldown for IPv4/v6 processing
 #options 	IPSEC		# IP security
 #options 	IPSEC_ESP	# IP securyty (encryption part; define w/IPSEC)
 #options 	IPSEC_DEBUG	# debug for IP security
