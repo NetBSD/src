@@ -41,7 +41,7 @@ trace (s, s1, s2)
   fprintf (stderr, s, s1, s2);
 }
 
-/* Value is 1 if hard register REGNO can hold a value of machine-mode MODE. */ 
+/* Value is 1 if hard register REGNO can hold a value of machine-mode MODE. */
 
 int
 hard_regno_mode_ok (regno, mode)
@@ -81,14 +81,14 @@ hard_regno_mode_ok (regno, mode)
 	{
 	  if (regno < 8)
 	    return 1;
-	  else 
+	  else
 	    return 0;
 	}
 
     case DFmode:
     case DCmode:
       if ((regno & 1) == 0)
-	{	
+	{
 	  if (TARGET_32081)
 	    {
 	      if (regno < 16)
@@ -123,7 +123,7 @@ calc_address_cost (operand)
 {
   int i;
   int cost = 0;
-  
+
   if (GET_CODE (operand) == MEM)
     cost += 3;
   if (GET_CODE (operand) == MULT)
@@ -244,7 +244,7 @@ char *
 output_move_double (operands)
      rtx *operands;
 {
-  enum anon1 { REGOP, OFFSOP, POPOP, CNSTOP, RNDOP } optype0, optype1;
+  enum anon1 { REGOP, OFFSOP, PUSHOP, CNSTOP, RNDOP } optype0, optype1;
   rtx latehalf[2];
 
   /* First classify both operands.  */
@@ -254,19 +254,18 @@ output_move_double (operands)
   else if (offsettable_memref_p (operands[0]))
     optype0 = OFFSOP;
   else if (GET_CODE (XEXP (operands[0], 0)) == PRE_DEC)
-    optype0 = POPOP;
+    optype0 = PUSHOP;
   else
     optype0 = RNDOP;
 
   if (REG_P (operands[1]))
     optype1 = REGOP;
-  else if (CONSTANT_ADDRESS_P (operands[1])
-	   || GET_CODE (operands[1]) == CONST_DOUBLE)
+  else if (CONSTANT_P (operands[1]))
     optype1 = CNSTOP;
   else if (offsettable_memref_p (operands[1]))
     optype1 = OFFSOP;
   else if (GET_CODE (XEXP (operands[1], 0)) == PRE_DEC)
-    optype1 = POPOP;
+    optype1 = PUSHOP;
   else
     optype1 = RNDOP;
 
@@ -299,24 +298,74 @@ output_move_double (operands)
     latehalf[1] = adj_offsettable_operand (operands[1], 4);
   else if (optype1 == CNSTOP)
     {
-      if (CONSTANT_ADDRESS_P (operands[1]))
-	latehalf[1] = const0_rtx;
-      else if (GET_CODE (operands[1]) == CONST_DOUBLE)
+      if (GET_CODE (operands[1]) == CONST_DOUBLE)
 	split_double (operands[1], &operands[1], &latehalf[1]);
+      else
+	latehalf[1] = const0_rtx;
     }
   else
     latehalf[1] = operands[1];
 
+  /* If insn is effectively movd N(sp),tos then we will do the
+     high word first.  We should use the adjusted operand 1 (which is N+4(sp))
+     for the low word as well, to compensate for the first decrement of sp.
+     Given this, it doesn't matter which half we do "first".  */
+  if (optype0 == PUSHOP
+      && REGNO (XEXP (XEXP (operands[0], 0), 0)) == STACK_POINTER_REGNUM
+      && reg_overlap_mentioned_p (stack_pointer_rtx, operands[1]))
+    operands[1] = latehalf[1];
+
   /* If one or both operands autodecrementing,
      do the two words, high-numbered first.  */
-
-  if (optype0 == POPOP || optype1 == POPOP)
+  else if (optype0 == PUSHOP || optype1 == PUSHOP)
     {
       output_asm_insn (singlemove_string (latehalf), latehalf);
       return singlemove_string (operands);
     }
 
-  /* Not autodecrementing.  Do the two words, low-numbered first.  */
+  /* If the first move would clobber the source of the second one,
+     do them in the other order.  */
+
+  /* Overlapping registers.  */
+  if (optype0 == REGOP && optype1 == REGOP
+      && REGNO (operands[0]) == REGNO (latehalf[1]))
+    {
+      /* Do that word.  */
+      output_asm_insn (singlemove_string (latehalf), latehalf);
+      /* Do low-numbered word.  */
+      return singlemove_string (operands);
+    }
+  /* Loading into a register which overlaps a register used in the address.  */
+  else if (optype0 == REGOP && optype1 != REGOP
+	   && reg_overlap_mentioned_p (operands[0], operands[1]))
+    {
+      if (reg_mentioned_p (operands[0], XEXP (operands[1], 0))
+	  && reg_mentioned_p (latehalf[0], XEXP (operands[1], 0)))
+	{
+	  /* If both halves of dest are used in the src memory address,
+	     add the two regs and put them in the low reg (operands[0]).
+	     Then it works to load latehalf first.  */
+	  rtx xops[2];
+	  xops[0] = latehalf[0];
+	  xops[1] = operands[0];
+	  output_asm_insn ("addd %0,%1", xops);
+	  operands[1] = gen_rtx (MEM, DImode, operands[0]);
+	  latehalf[1] = adj_offsettable_operand (operands[1], 4);
+	  /* The first half has the overlap, Do the late half first.  */
+	  output_asm_insn (singlemove_string (latehalf), latehalf);
+	  /* Then clobber.  */
+	  return singlemove_string (operands);
+	}
+      if (reg_mentioned_p (operands[0], XEXP (operands[1], 0)))
+	{
+	  /* The first half has the overlap, Do the late half first.  */
+	  output_asm_insn (singlemove_string (latehalf), latehalf);
+	  /* Then clobber.  */
+	  return singlemove_string (operands);
+	}
+    }
+
+  /* Normal case.  Do the two words, low-numbered first.  */
 
   output_asm_insn (singlemove_string (operands), operands);
 
@@ -346,6 +395,46 @@ check_reg (oper, reg)
     }
   return 0;
 }
+
+/* Returns 1 if OP contains a global symbol reference */
+
+int
+global_symbolic_reference_mentioned_p (op, f)
+     rtx op;
+     int f;
+{
+  register char *fmt;
+  register int i;
+
+  if (GET_CODE (op) == SYMBOL_REF)
+    {
+      if (! SYMBOL_REF_FLAG (op))
+	return 1;
+      else
+        return 0;
+    }
+  else if (f && GET_CODE (op) != CONST)
+    return 0;
+
+  fmt = GET_RTX_FORMAT (GET_CODE (op));
+  for (i = GET_RTX_LENGTH (GET_CODE (op)) - 1; i >= 0; i--)
+    {
+      if (fmt[i] == 'E')
+	{
+	  register int j;
+
+	  for (j = XVECLEN (op, i) - 1; j >= 0; j--)
+	    if (global_symbolic_reference_mentioned_p (XVECEXP (op, i, j), 0))
+	      return 1;
+	}
+      else if (fmt[i] == 'e'
+	       && global_symbolic_reference_mentioned_p (XEXP (op, i), 0))
+	return 1;
+    }
+
+  return 0;
+}
+
 
 /* PRINT_OPERAND is defined to call this function,
    which is easier to debug than putting all the code in
@@ -385,7 +474,7 @@ print_operand (file, x, code)
   else if (GET_CODE (x) == CONST_DOUBLE && GET_MODE (x) != DImode)
     {
       if (GET_MODE (x) == DFmode)
-	{ 
+	{
 	  union { double d; int i[2]; } u;
 	  u.i[0] = CONST_DOUBLE_LOW (x); u.i[1] = CONST_DOUBLE_HIGH (x);
 	  PUT_IMMEDIATE_PREFIX(file);
@@ -394,14 +483,14 @@ print_operand (file, x, code)
 	  fprintf (file, "0Dx%08x%08x", u.i[1], u.i[0]);
 #else
 #ifdef ENCORE_ASM
-	  fprintf (file, "0f%.20e", u.d); 
+	  fprintf (file, "0f%.20e", u.d);
 #else
-	  fprintf (file, "0d%.20e", u.d); 
+	  fprintf (file, "0d%.20e", u.d);
 #endif
 #endif
 	}
       else
-	{ 
+	{
 	  union { double d; int i[2]; } u;
 	  u.i[0] = CONST_DOUBLE_LOW (x); u.i[1] = CONST_DOUBLE_HIGH (x);
 	  PUT_IMMEDIATE_PREFIX (file);
@@ -417,7 +506,7 @@ print_operand (file, x, code)
 	    fprintf (file, "0Fx%08x", uu.l);
 	  }
 #else
-	  fprintf (file, "0f%.20e", u.d); 
+	  fprintf (file, "0f%.20e", u.d);
 #endif
 	}
     }
@@ -447,6 +536,7 @@ print_operand_address (file, addr)
   static char scales[] = { 'b', 'w', 'd', 0, 'q', };
   rtx offset, base, indexexp, tmp;
   int scale;
+  extern int flag_pic;
 
   if (GET_CODE (addr) == PRE_DEC || GET_CODE (addr) == POST_DEC)
     {
@@ -510,9 +600,61 @@ print_operand_address (file, addr)
 	case MULT:
 	  indexexp = tmp;
 	  break;
-	case CONST:
-	case CONST_INT:
 	case SYMBOL_REF:
+	  if (flag_pic && ! CONSTANT_POOL_ADDRESS_P (tmp)
+	      && ! SYMBOL_REF_FLAG (tmp))
+	    {
+	      if (base)
+		{
+		  if (indexexp)
+		    abort ();
+		  indexexp = base;
+		}
+	      base = tmp;
+	      break;
+	    }
+	case CONST:
+	  if (flag_pic && GET_CODE (tmp) == CONST)
+	    {
+	      rtx sym, off, tmp1;
+	      tmp1 = XEXP (tmp,0);
+	      if (GET_CODE (tmp1) != PLUS)
+		abort ();
+
+	      sym = XEXP (tmp1,0);
+	      if (GET_CODE (sym) != SYMBOL_REF)
+	        {
+	          off = sym;
+		  sym = XEXP (tmp1,1);
+		}
+	      else
+	        off = XEXP (tmp1,1);
+	      if (GET_CODE (sym) == SYMBOL_REF)
+		{
+		  if (GET_CODE (off) != CONST_INT)
+		    abort ();
+		  if (CONSTANT_POOL_ADDRESS_P (sym)
+		      || SYMBOL_REF_FLAG (sym))
+		    {
+		      SYMBOL_REF_FLAG (tmp) = 1;
+		    }
+		  else
+		    {
+		      if (base)
+			{
+			  if (indexexp)
+			    abort ();
+			  indexexp = base;
+			}
+		      if (offset)
+		        abort ();
+		      base = sym;
+		      offset = off;
+		      break;
+		    }
+		}
+	    }
+	case CONST_INT:
 	case LABEL_REF:
 	  if (offset)
 	    offset = gen_rtx (PLUS, SImode, tmp, offset);
@@ -526,15 +668,20 @@ print_operand_address (file, addr)
   if (! offset)
     offset = const0_rtx;
 
-#ifdef INDEX_RATHER_THAN_BASE
+  if (base
+#ifndef INDEX_RATHER_THAN_BASE
+      && flag_pic
+      && GET_CODE (base) != SYMBOL_REF
+      && GET_CODE (offset) != CONST_INT
+#else
   /* This is a re-implementation of the SEQUENT_ADDRESS_BUG fix.  */
-  if (base && !indexexp && GET_CODE (base) == REG
+#endif
+      && !indexexp && GET_CODE (base) == REG
       && REG_OK_FOR_INDEX_P (base))
     {
       indexexp = base;
-      base = 0;
+      base = NULL;
     }
-#endif
 
   /* now, offset, base and indexexp are set */
   if (! base)
@@ -563,6 +710,13 @@ print_operand_address (file, addr)
       case REG:
 	fprintf (file, "(%s)", reg_names[REGNO (base)]);
 	break;
+      case SYMBOL_REF:
+        if (!flag_pic)
+	  abort ();
+        fprintf (file, "(");
+	output_addr_const (file, base);
+	fprintf (file, "(sb))");
+        break;
       case MEM:
 	addr = XEXP(base,0);
 	base = NULL;
@@ -624,16 +778,32 @@ print_operand_address (file, addr)
 	abort ();
       }
 #ifdef PC_RELATIVE
-  else				/* no base */
-    if (GET_CODE (offset) == LABEL_REF || GET_CODE (offset) == SYMBOL_REF)
-      fprintf (file, "(pc)");
+  else if (GET_CODE (offset) == LABEL_REF
+	   || GET_CODE (offset) == SYMBOL_REF
+	   || GET_CODE (offset) == CONST
+	   || GET_CODE (offset) == PLUS)
+    fprintf (file, "(pc)");
 #endif
 #ifdef BASE_REG_NEEDED		/* this is defined if the assembler always
 			   	   needs a base register */
-    else if (TARGET_SB)
-      fprintf (file, "(sb)");
-    else
-      abort ();
+  else
+    {
+      /* Abs. addresses don't need a base (I think). */
+      if (GET_CODE (offset) != CONST_INT
+#ifndef PC_RELATIVE
+           && GET_CODE (offset) != LABEL_REF
+	   && GET_CODE (offset) != SYMBOL_REF
+	   && GET_CODE (offset) != CONST
+	   && GET_CODE (offset) != PLUS
+#endif
+         )
+        {
+	  if (TARGET_SB)
+	    fprintf (file, "(sb)");
+	  else
+	    abort ();
+        }
+    }
 #endif
   /* now print index if we have one */
   if (indexexp)
@@ -683,7 +853,7 @@ output_shift_insn (operands)
 	      }
 	    if (operands[2] == const1_rtx)
 	      return "movd %1,%0\n\taddd %0,%0";
-	    
+
 	    operands[1] = gen_indexed_expr (const0_rtx, operands[1], operands[2]);
 	    return "addr %a1,%0";
 	  }
@@ -700,7 +870,7 @@ output_shift_insn (operands)
 	     && rtx_equal_p (operands [0], operands[1]))
       {
 	rtx temp = XEXP (operands[1], 0);
-	
+
 	if (GET_CODE (temp) == REG
 	    || (GET_CODE (temp) == PLUS
 		&& GET_CODE (XEXP (temp, 0)) == REG
@@ -709,4 +879,26 @@ output_shift_insn (operands)
       }
     else return "ashd %2,%0";
   return "ashd %2,%0";
+}
+
+char *
+output_move_dconst (n, s)
+	int n; char *s;
+{
+  static char r[32];
+
+  if (n > -9 && n < 8)
+    strcpy(r, "movqd ");
+  else if (n > 0 && n < 256)
+    strcpy(r, "movzbd ");
+  else if (n > 0 && n < 65536)
+    strcpy(r, "movzwd ");
+  else if (n < 0 && n > -129)
+    strcpy(r, "movxbd ");
+  else if (n < 0 && n > -32769)
+    strcpy(r, "movxwd ");
+  else
+    strcpy(r, "movd ");
+  strcat(r, s);
+  return(r);
 }

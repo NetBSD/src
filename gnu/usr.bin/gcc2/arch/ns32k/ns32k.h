@@ -26,7 +26,7 @@ extern enum reg_class secondary_reload_class();
 
 /* Names to predefine in the preprocessor for this target machine.  */
 
-#define CPP_PREDEFINES "-Dns32000 -Dunix"
+#define CPP_PREDEFINES "-Dns32000 -Dunix -Asystem(unix) -Acpu(ns32k) -Amachine(ns32k)"
 
 /* Print subsidiary information on the compiler version in use.  */
 #define TARGET_VERSION fprintf (stderr, " (32000, GAS syntax)");
@@ -103,6 +103,15 @@ extern int target_flags;
     { "nosb", 32},				\
     { "", TARGET_DEFAULT}}
 /* TARGET_DEFAULT is defined in encore.h, pc532.h, etc.  */
+
+/* When we are generating PIC, the sb is used as a pointer
+   to the GOT.  */
+
+#define OVERRIDE_OPTIONS		\
+{					\
+  if (flag_pic) target_flags |= 32;	\
+}
+
 
 /* target machine storage layout */
 
@@ -511,6 +520,11 @@ enum reg_class { NO_REGS, GENERAL_REGS, FLOAT_REGS, GEN_AND_FP_REGS,
  *  .
  *
  * If a frame pointer is not needed we need assembler of the form
+ *
+ *  # Make space on the stack
+ *
+ *  adjspd <local stack space + 4>
+ *
  *  # Save any general purpose registers necessary
  *
  *  save [<general purpose regs to save>]
@@ -519,30 +533,50 @@ enum reg_class { NO_REGS, GENERAL_REGS, FLOAT_REGS, GEN_AND_FP_REGS,
  *  .
  *  .
  */
+#if defined(IMMEDIATE_PREFIX) && IMMEDIATE_PREFIX
+# define ADJSP(FILE, n) \
+        fprintf (FILE, "\tadjspd %c%d\n", IMMEDIATE_PREFIX, (n))
+#else
+# define ADJSP(FILE, n) \
+        fprintf (FILE, "\tadjspd %d\n", (n))
+#endif
 
 #define FUNCTION_PROLOGUE(FILE, SIZE)     \
 { register int regno, g_regs_used = 0;				\
   int used_regs_buf[8], *bufp = used_regs_buf;			\
   int used_fregs_buf[8], *fbufp = used_fregs_buf;		\
   extern char call_used_regs[];					\
+  extern int current_function_uses_pic_offset_table, flag_pic;	\
   MAIN_FUNCTION_PROLOGUE;					\
   for (regno = 0; regno < 8; regno++)				\
     if (regs_ever_live[regno]					\
 	&& ! call_used_regs[regno])				\
-    {								\
-      *bufp++ = regno; g_regs_used++;				\
-    }								\
+      {								\
+        *bufp++ = regno; g_regs_used++;				\
+      }								\
   *bufp = -1;							\
   for (; regno < 16; regno++)					\
-    if (regs_ever_live[regno] && !call_used_regs[regno]) {	\
-      *fbufp++ = regno;						\
-    }								\
+    if (regs_ever_live[regno] && !call_used_regs[regno])	\
+      {								\
+        *fbufp++ = regno;					\
+      }								\
   *fbufp = -1;							\
   bufp = used_regs_buf;						\
   if (frame_pointer_needed)					\
     fprintf (FILE, "\tenter [");				\
-  else if (g_regs_used)						\
-    fprintf (FILE, "\tsave [");					\
+  else								\
+    {								\
+      if (SIZE)							\
+        ADJSP(FILE, SIZE + 4);					\
+      if (g_regs_used && g_regs_used > 4)			\
+        fprintf (FILE, "\tsave [");				\
+      else							\
+	{							\
+	  while (*bufp >= 0)					\
+            fprintf (FILE, "\tmovd r%d,tos\n", *bufp++);	\
+	  g_regs_used = 0;					\
+	}							\
+    }								\
   while (*bufp >= 0)						\
     {								\
       fprintf (FILE, "r%d", *bufp++);				\
@@ -562,6 +596,20 @@ enum reg_class { NO_REGS, GENERAL_REGS, FLOAT_REGS, GEN_AND_FP_REGS,
 	{							\
 	  fprintf (FILE, "\tmovl f%d,tos\n", fbufp[0] - 8);	\
 	  fbufp += 2;						\
+	}							\
+    }								\
+  if (flag_pic && current_function_uses_pic_offset_table)	\
+    {								\
+      fprintf (FILE, "\tsprd sb,tos\n");			\
+      if (TARGET_REGPARM)					\
+	{							\
+	  fprintf (FILE, "\taddr __GLOBAL_OFFSET_TABLE_(pc),tos\n"); \
+	  fprintf (FILE, "\tlprd sb,tos\n");			\
+	}							\
+      else							\
+	{							\
+	  fprintf (FILE, "\taddr __GLOBAL_OFFSET_TABLE_(pc),r0\n"); \
+	  fprintf (FILE, "\tlprd sb,r0\n");			\
 	}							\
     }								\
 }
@@ -610,25 +658,34 @@ enum reg_class { NO_REGS, GENERAL_REGS, FLOAT_REGS, GEN_AND_FP_REGS,
     .
     .
     .
-    restore [<general purpose regs to save>]  */
+    restore [<general purpose regs to save>]
+
+    # reclaim space allocated on stack
+
+    adjspd <-(local stack space + 4)> */
+
 
 #define FUNCTION_EPILOGUE(FILE, SIZE) \
 { register int regno, g_regs_used = 0, f_regs_used = 0;		\
   int used_regs_buf[8], *bufp = used_regs_buf;			\
   int used_fregs_buf[8], *fbufp = used_fregs_buf;		\
   extern char call_used_regs[];					\
+  extern int current_function_uses_pic_offset_table, flag_pic;	\
+  if (flag_pic && current_function_uses_pic_offset_table)	\
+    fprintf (FILE, "\tlprd sb,tos\n");				\
   *fbufp++ = -2;						\
   for (regno = 8; regno < 16; regno++)				\
-    if (regs_ever_live[regno] && !call_used_regs[regno]) {	\
+    if (regs_ever_live[regno] && !call_used_regs[regno])	\
+      {								\
        *fbufp++ = regno; f_regs_used++;				\
-    }								\
+      }								\
   fbufp--;							\
   for (regno = 0; regno < 8; regno++)				\
     if (regs_ever_live[regno]					\
 	&& ! call_used_regs[regno])				\
-    {                                                         	\
-      *bufp++ = regno; g_regs_used++;				\
-    }                                                         	\
+      {                                                        	\
+        *bufp++ = regno; g_regs_used++;				\
+      }                                                        	\
   while (fbufp > used_fregs_buf)				\
     {								\
       if ((*fbufp & 1) && fbufp[0] == fbufp[-1] + 1)		\
@@ -640,8 +697,17 @@ enum reg_class { NO_REGS, GENERAL_REGS, FLOAT_REGS, GEN_AND_FP_REGS,
     }								\
   if (frame_pointer_needed)					\
     fprintf (FILE, "\texit [");					\
-  else if (g_regs_used)						\
-    fprintf (FILE, "\trestore [");				\
+  else								\
+    {								\
+      if (g_regs_used && g_regs_used > 4)			\
+        fprintf (FILE, "\trestore [");				\
+      else							\
+        {							\
+	  while (bufp > used_regs_buf)				\
+            fprintf (FILE, "\tmovd tos,r%d\n", *--bufp);	\
+	  g_regs_used = 0;					\
+        }							\
+    }								\
   while (bufp > used_regs_buf)					\
     {								\
       fprintf (FILE, "r%d", *--bufp);				\
@@ -650,6 +716,8 @@ enum reg_class { NO_REGS, GENERAL_REGS, FLOAT_REGS, GEN_AND_FP_REGS,
     }								\
   if (g_regs_used || frame_pointer_needed)			\
     fprintf (FILE, "]\n");					\
+  if (SIZE && !frame_pointer_needed)				\
+    ADJSP(FILE, -(SIZE + 4));					\
   if (current_function_pops_args)				\
     fprintf (FILE, "\tret %d\n", current_function_pops_args);	\
   else fprintf (FILE, "\tret 0\n"); }
@@ -663,10 +731,14 @@ enum reg_class { NO_REGS, GENERAL_REGS, FLOAT_REGS, GEN_AND_FP_REGS,
 {								\
   int regno;							\
   int offset = -4;						\
+  extern int current_function_uses_pic_offset_table, flag_pic;	\
   for (regno = 0; regno < 16; regno++)				\
     if (regs_ever_live[regno] && ! call_used_regs[regno])	\
       offset += 4;						\
-  (DEPTH) = offset - get_frame_size ();				\
+  if (flag_pic && current_function_uses_pic_offset_table)	\
+    offset += 4;						\
+  (DEPTH) = (offset + get_frame_size ()				\
+	     + (get_frame_size () == 0 ? 0 : 4));		\
 }
 
 
@@ -833,7 +905,10 @@ __transfer_from_trampoline ()		\
    || (GET_CODE (X) == PLUS						\
        && GET_CODE (XEXP (X, 0)) == REG					\
        && REG_OK_FOR_BASE_P (XEXP (X, 0))				\
-       && CONSTANT_ADDRESS_P (XEXP (X, 1))				\
+       && (flag_pic ? 							\
+	     CONSTANT_ADDRESS_NO_LABEL_P (XEXP (X, 1))	 		\
+	   :								\
+	     CONSTANT_ADDRESS_P (XEXP (X, 1))) 				\
        && (GET_CODE (X) != CONST_INT || NS32K_DISPLACEMENT_P (INTVAL (X)))))
 
 /* 1 if integer I will fit in a 4 byte displacement field.
@@ -886,6 +961,7 @@ __transfer_from_trampoline ()		\
 #define GO_IF_INDEXABLE_ADDRESS(X, ADDR) \
 { if (GET_CODE (X) == REG && REG_OK_FOR_BASE_P (X)) goto ADDR;		\
   if (INDIRECTABLE_2_ADDRESS_P (X)) goto ADDR;				\
+  if (INDIRECTABLE_1_ADDRESS_P (X)) goto ADDR;				\
 }
 
 /* 1 if PROD is either a reg times size of mode MODE
@@ -909,10 +985,14 @@ __transfer_from_trampoline ()		\
    ((xfoo2 < 4 && xfoo2 != 2) || xfoo2 == 7))
 
 /* Note that xfoo0, xfoo1, xfoo2 are used in some of the submacros above.  */
-#define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR)  \
+#define GO_IF_LEGITIMATE_ADDRESS(MODE, X, ADDR) \
 { register rtx xfooy, xfoo0, xfoo1;					\
   unsigned xfoo2;							\
+  extern int current_function_uses_pic_offset_table, flag_pic;		\
   xfooy = X;								\
+  if (flag_pic && ! current_function_uses_pic_offset_table		\
+      && global_symbolic_reference_mentioned_p (X, 1))			\
+    current_function_uses_pic_offset_table = 1;				\
   GO_IF_NONINDEXED_ADDRESS (xfooy, ADDR);				\
   if (GET_CODE (xfooy) == PLUS)						\
     {									\
@@ -948,6 +1028,41 @@ __transfer_from_trampoline ()		\
 
 #define LEGITIMIZE_ADDRESS(X,OLDX,MODE,WIN)   {}
 
+/* Nonzero if the constant value X is a legitimate general operand
+   when generating PIC code.  It is given that flag_pic is on and 
+   that X satisfies CONSTANT_P or is a CONST_DOUBLE.  */
+
+extern int current_function_uses_pic_offset_table, flag_pic;
+#define LEGITIMATE_PIC_OPERAND_P(X) \
+  (((! current_function_uses_pic_offset_table			\
+     && global_symbolic_reference_mentioned_p (X, 1))?		\
+      (current_function_uses_pic_offset_table = 1):0		\
+   ), 1)
+
+/* Define this macro if references to a symbol must be treated
+   differently depending on something about the variable or
+   function named by the symbol (such as what section it is in).
+
+   On the ns32k, if using PIC, mark a SYMBOL_REF for a non-global
+   symbol or a code symbol. These symbols are referenced via pc
+   and not via sb. */
+
+#define ENCODE_SECTION_INFO(DECL) \
+do									\
+  {									\
+    extern int flag_pic;						\
+    if (flag_pic)							\
+      {									\
+	rtx rtl = (TREE_CODE_CLASS (TREE_CODE (DECL)) != 'd'		\
+		   ? TREE_CST_RTL (DECL) : DECL_RTL (DECL));		\
+	SYMBOL_REF_FLAG (XEXP (rtl, 0))					\
+	  = (TREE_CODE_CLASS (TREE_CODE (DECL)) != 'd'			\
+	     || TREE_CODE (DECL) == FUNCTION_DECL			\
+	     || ! TREE_PUBLIC (DECL));					\
+      }									\
+  }									\
+while (0)
+
 /* Go to LABEL if ADDR (a legitimate address expression)
    has an effect that depends on the machine mode it is used for.
    On the ns32k, only predecrement and postincrement address depend thus
@@ -959,8 +1074,9 @@ __transfer_from_trampoline ()		\
 
 /* Specify the machine mode that this machine uses
    for the index in the tablejump instruction.
-   Can do SImode, but HI mode is more efficient. */
-#define CASE_VECTOR_MODE HImode
+   HI mode is more efficient but the range is not wide enough for
+   all programs. */
+#define CASE_VECTOR_MODE SImode
 
 /* Define this if the tablejump instruction expects the table
    to contain offsets from the address of the table.
@@ -1274,7 +1390,7 @@ do {									\
 /* This is how to output an element of a case-vector that is relative.  */
 /* ** Notice that the second element is LI format! */
 #define ASM_OUTPUT_ADDR_DIFF_ELT(FILE, VALUE, REL)  \
-  fprintf (FILE, "\t.word L%d-LI%d\n", VALUE, REL)
+  fprintf (FILE, "\t.long L%d-LI%d\n", VALUE, REL)
 
 /* This is how to output an assembler line
    that says to advance the location counter
@@ -1344,6 +1460,7 @@ do {									\
 
 extern char *output_move_double ();
 extern char *output_shift_insn ();
+extern char *output_move_dconst ();
 
 /*
 Local variables:

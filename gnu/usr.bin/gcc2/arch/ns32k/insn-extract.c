@@ -27,6 +27,19 @@ insn_extract (insn)
     case -1:
       fatal_insn_not_found (insn);
 
+    case 236:
+    case 235:
+    case 234:
+    case 233:
+    case 232:
+    case 231:
+#if __GNUC__ > 1 && !defined (bcopy)
+#define bcopy(FROM,TO,COUNT) __builtin_memcpy(TO,FROM,COUNT)
+#endif
+      bcopy (&XVECEXP (pat, 0, 0), ro,
+             sizeof (rtx) * XVECLEN (pat, 0));
+      break;
+
     case 227:
     case 226:
     case 225:
@@ -292,6 +305,9 @@ insn_extract (insn)
       ro[1] = *(ro_loc[1] = &XEXP (XEXP (XEXP (pat, 1), 0), 0));
       break;
 
+    case 230:
+    case 229:
+    case 228:
     case 194:
     case 193:
     case 192:
