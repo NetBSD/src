@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.14 2001/04/07 17:44:15 jhawk Exp $
+.\"	$NetBSD: xfer,v 1.15 2001/04/07 17:44:49 jhawk Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -501,7 +501,7 @@ installation, the IP address of
 .Sy ftp.netbsd.org
 is
 .Li 204.152.184.75
-(as of April, 2001.
+(as of April, 2001).
 .Pp
 Once you have this information, you can proceed to the next
 step in the installation or upgrade process.
