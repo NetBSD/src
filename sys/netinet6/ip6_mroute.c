@@ -1,5 +1,5 @@
-/*	$NetBSD: ip6_mroute.c,v 1.13 2000/08/29 09:19:43 itojun Exp $	*/
-/*	$KAME: ip6_mroute.c,v 1.31 2000/08/23 03:20:05 itojun Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.14 2000/10/19 03:15:48 itojun Exp $	*/
+/*	$KAME: ip6_mroute.c,v 1.33 2000/10/19 02:23:43 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -770,6 +770,7 @@ add_m6fc(mfccp)
 				rt->mf6c_origin     = mfccp->mf6cc_origin;
 				rt->mf6c_mcastgrp   = mfccp->mf6cc_mcastgrp;
 				rt->mf6c_parent     = mfccp->mf6cc_parent;
+				rt->mf6c_ifset	    = mfccp->mf6cc_ifset;
 				/* initialize pkt counters per src-grp */
 				rt->mf6c_pkt_cnt    = 0;
 				rt->mf6c_byte_cnt   = 0;
@@ -793,6 +794,7 @@ add_m6fc(mfccp)
 			rt->mf6c_origin     = mfccp->mf6cc_origin;
 			rt->mf6c_mcastgrp   = mfccp->mf6cc_mcastgrp;
 			rt->mf6c_parent     = mfccp->mf6cc_parent;
+			rt->mf6c_ifset	    = mfccp->mf6cc_ifset;
 			/* initialize pkt counters per src-grp */
 			rt->mf6c_pkt_cnt    = 0;
 			rt->mf6c_byte_cnt   = 0;
@@ -1729,6 +1731,18 @@ pim6_input(mp, offp, proto)
 			    ip6_sprintf(&eip6->ip6_dst),
 			    ntohs(eip6->ip6_plen));
 #endif
+
+		/* verify the version number of the inner packet */
+		if ((eip6->ip6_vfc & IPV6_VERSION_MASK) != IPV6_VERSION) {
+			++pim6stat.pim6s_rcv_badregisters;
+#ifdef MRT6DEBUG
+			log(LOG_DEBUG, "pim6_input: invalid IP version (%d) "
+			    "of the inner packet\n",
+			    (eip6->ip6_vfc & IPV6_VERSION));
+#endif
+			m_freem(m);
+			return(IPPROTO_NONE);
+		}
 	
 		/* verify the inner packet is destined to a mcast group */
 		if (!IN6_IS_ADDR_MULTICAST(&eip6->ip6_dst)) {
