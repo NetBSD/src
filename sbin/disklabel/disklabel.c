@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.127 2004/02/29 21:31:14 itojun Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.128 2004/03/13 22:04:37 dsl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.127 2004/02/29 21:31:14 itojun Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.128 2004/03/13 22:04:37 dsl Exp $");
 #endif
 #endif	/* not lint */
 
@@ -1009,7 +1009,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 			p = dkname;
 		else
 			p++;
-		while (*p && !isdigit(*p))
+		while (*p && !isdigit(*p & 0xff))
 			*np++ = *p++;
 		*np++ = '\0';
 
@@ -1316,6 +1316,73 @@ word(char *cp)
 	return (cp);
 }
 
+#define _CHECKLINE \
+	if (tp == NULL || *tp == '\0') {			\
+		warnx("line %d: too few fields", lineno);	\
+		errors++;					\
+		break;						\
+	}
+
+#define __CHECKLINE \
+	if (*tp == NULL || **tp == '\0') {			\
+		warnx("line %d: too few fields", lineno);	\
+		*tp = _error_;					\
+		return 0;					\
+	}
+
+static char _error_[] = "";
+#define NXTNUM(n)	if ((n = nxtnum(&tp, lineno),0) + tp != _error_) \
+			; else goto error
+#define NXTXNUM(n)	if ((n = nxtxnum(&tp, lp, lineno),0) + tp != _error_) \
+			; else goto error
+
+static unsigned long
+nxtnum(char **tp, int lineno)
+{
+	char *cp;
+	unsigned long v;
+
+	__CHECKLINE
+	errno = 0;
+	v = strtoul(*tp, &cp, 10);
+	if (cp == *tp || errno != 0 || (*cp && !isspace(*cp & 0xff))) {
+		warnx("line %d: syntax error", lineno);
+		*tp = _error_;
+		return 0;
+	}
+	*tp = cp;
+	return v;
+}
+
+static unsigned long
+nxtxnum(char **tp, struct disklabel *lp, int lineno)
+{
+	char	*cp, *ncp;
+	unsigned long n;
+
+	__CHECKLINE
+	errno = 0;
+	cp = *tp;
+	n = strtoul(cp, &ncp, 10);
+	if (ncp != cp && *ncp == '/') {
+		n *= lp->d_secpercyl;
+		cp = ncp + 1;
+		n += strtoul(cp, &ncp, 10) * lp->d_nsectors;
+		if (ncp != cp && *ncp == '/') {
+			cp = ncp + 1;
+			n += strtoul(cp, &ncp, 10);
+		} else
+			ncp = cp;
+	}
+	if (ncp == cp || errno != 0 || (*ncp && !isspace(*ncp & 0xff))) {
+		warnx("line %d: invalid format", lineno);
+		*tp = _error_;
+		return 0;
+	}
+	*tp = ncp;
+	return n;
+}
+
 /*
  * Read an ascii label in from fd f,
  * in the same format as that put out by showinfo() and showpartitions(),
@@ -1329,6 +1396,7 @@ getasciilabel(FILE *f, struct disklabel *lp)
 	char	*cp, *tp, line[BUFSIZ], tbuf[15];
 	int	 lineno, errors;
 	unsigned long v;
+	unsigned int part;
 
 	lineno = 0;
 	errors = 0;
@@ -1521,160 +1589,107 @@ getasciilabel(FILE *f, struct disklabel *lp)
 				lp->d_trkseek = v;
 			continue;
 		}
-		if ('a' <= *cp && *cp <= 'z' && cp[1] == '\0') {
-			unsigned part = *cp - 'a';
-
-			if (part > lp->d_npartitions) {
-				warnx("line %d: bad partition name: %s",
-				    lineno, cp);
-				errors++;
-				continue;
-			}
-			pp = &lp->d_partitions[part];
-
-#define _CHECKLINE \
-	if (tp == NULL || *tp == '\0') {			\
-		warnx("line %d: too few fields", lineno);	\
-		errors++;					\
-		break;						\
-	}
-
-/* cannot use do-while due to the use of "break" in _CHECKLINE */
-#define NXTNUM(n) { \
-	_CHECKLINE						\
-	cp = tp, tp = word(cp);					\
-	if (cp != NULL) {					\
-		if (getulong(cp, &v, UINT32_MAX) != 0) {	\
-			warnx("line %d: syntax error", lineno);	\
-			errors++;				\
-			break;					\
-		}						\
-		(n) = v;					\
-	} else							\
-		(n) = 0;					\
-}
-
-/* cannot use do-while due to the use of "break" in _CHECKLINE */
-#define NXTXNUM(n) { \
-	char	*ptr;							\
-	unsigned long m;						\
-									\
-	_CHECKLINE							\
-	cp = tp, tp = word(cp);						\
-	if (getulong(cp, &m, UINT32_MAX) == 0)				\
-		(n) = m;						\
-	else {								\
-		if (*ptr++ != '/') {					\
-			warnx("line %d: invalid format", lineno);	\
-			errors++;					\
-			break;						\
-		}							\
-		(n) = m * lp->d_secpercyl;				\
-		errno = 0;						\
-		m = strtoul(ptr, &ptr, 10);				\
-		if (!ptr || *ptr++ != '/' || errno == ERANGE) {		\
-			warnx("line %d: invalid format", lineno);	\
-			errors++;					\
-			break;						\
-		}							\
-		(n) += m * lp->d_nsectors;				\
-		if (getulong(ptr, &m, UINT32_MAX) != 0) {		\
-			warnx("line %d: invalid format", lineno);	\
-			errors++;					\
-			break;						\
-		}							\
-		(n) += m;						\
-	}								\
-}
-
-			NXTXNUM(pp->p_size);
-			NXTXNUM(pp->p_offset);
-			/* can't use word() here because of blanks
-			   in fstypenames[] */
-			_CHECKLINE
-			cp = tp;
-			cpp = fstypenames;
-			for (; cpp < &fstypenames[FSMAXTYPES]; cpp++) {
-				s = *cpp;
-				if (s == NULL ||
-					(cp[strlen(s)] != ' ' &&
-					 cp[strlen(s)] != '\t' &&
-					 cp[strlen(s)] != '\0'))
-					continue;
-				if (!memcmp(s, cp, strlen(s))) {
-					pp->p_fstype = cpp - fstypenames;
-					tp += strlen(s);
-					if (*tp == '\0')
-						tp = NULL;
-					else {
-						tp += strspn(tp, " \t");
-						if (*tp == '\0')
-							tp = NULL;
-					}
-					goto gottype;
-				}
-			}
-			tp = word(cp);
-			if (isdigit(*cp)) {
-				if (getulong(cp, &v, UINT8_MAX) != 0) {
-					warnx("line %d: syntax error",
-					    lineno);
-					errors++;
-				}
-			} else
-				v = FSMAXTYPES;
-			if ((unsigned)v >= FSMAXTYPES) {
-				warnx("line %d: warning, unknown"
-				      " filesystem type: %s",
-				    lineno, cp);
-				v = FS_UNUSED;
-			}
-			pp->p_fstype = v;
- gottype:
-			switch (pp->p_fstype) {
-
-			case FS_UNUSED:				/* XXX */
-				NXTNUM(pp->p_fsize);
-				if (pp->p_fsize == 0)
-					break;
-				NXTNUM(v);
-				pp->p_frag = v / pp->p_fsize;
-				break;
-
-			case FS_BSDFFS:
-			case FS_ADOS:
-			case FS_APPLEUFS:
-				NXTNUM(pp->p_fsize);
-				if (pp->p_fsize == 0)
-					break;
-				NXTNUM(v);
-				pp->p_frag = v / pp->p_fsize;
-				NXTNUM(pp->p_cpg);
-				break;
-			case FS_BSDLFS:
-				NXTNUM(pp->p_fsize);
-				if (pp->p_fsize == 0)
-					break;
-				NXTNUM(v);
-				pp->p_frag = v / pp->p_fsize;
-				NXTNUM(pp->p_sgs);
-				break;
-			case FS_EX2FS:
-				NXTNUM(pp->p_fsize);
-				if (pp->p_fsize == 0)
-					break;
-				NXTNUM(v);
-				pp->p_frag = v / pp->p_fsize;
-				break;
-			case FS_ISO9660:
-				NXTNUM(pp->p_cdsession);
-				break;
-			default:
-				break;
-			}
+		if ('a' > *cp || *cp > 'z' || cp[1] != '\0') {
+			warnx("line %d: unknown field: %s", lineno, cp);
+			errors++;
 			continue;
 		}
-		warnx("line %d: unknown field: %s", lineno, cp);
+
+		/* We have a partition entry */
+		part = *cp - 'a';
+
+		if (part > lp->d_npartitions) {
+			warnx("line %d: bad partition name: %s", lineno, cp);
+			errors++;
+			continue;
+		}
+		pp = &lp->d_partitions[part];
+
+		NXTXNUM(pp->p_size);
+		NXTXNUM(pp->p_offset);
+		/* can't use word() here because of blanks in fstypenames[] */
+		tp += strspn(tp, " \t");
+		_CHECKLINE
+		cp = tp;
+		cpp = fstypenames;
+		for (; cpp < &fstypenames[FSMAXTYPES]; cpp++) {
+			s = *cpp;
+			if (s == NULL ||
+				(cp[strlen(s)] != ' ' &&
+				 cp[strlen(s)] != '\t' &&
+				 cp[strlen(s)] != '\0'))
+				continue;
+			if (!memcmp(s, cp, strlen(s))) {
+				pp->p_fstype = cpp - fstypenames;
+				tp += strlen(s);
+				if (*tp == '\0')
+					tp = NULL;
+				else {
+					tp += strspn(tp, " \t");
+					if (*tp == '\0')
+						tp = NULL;
+				}
+				goto gottype;
+			}
+		}
+		tp = word(cp);
+		if (isdigit(*cp & 0xff)) {
+			if (getulong(cp, &v, UINT8_MAX) != 0) {
+				warnx("line %d: syntax error", lineno);
+				errors++;
+			}
+		} else
+			v = FSMAXTYPES;
+		if ((unsigned)v >= FSMAXTYPES) {
+			warnx("line %d: warning, unknown filesystem type: %s",
+			    lineno, cp);
+			v = FS_UNUSED;
+		}
+		pp->p_fstype = v;
+gottype:
+		switch (pp->p_fstype) {
+
+		case FS_UNUSED:				/* XXX */
+			NXTNUM(pp->p_fsize);
+			if (pp->p_fsize == 0)
+				break;
+			NXTNUM(v);
+			pp->p_frag = v / pp->p_fsize;
+			break;
+
+		case FS_BSDFFS:
+		case FS_ADOS:
+		case FS_APPLEUFS:
+			NXTNUM(pp->p_fsize);
+			if (pp->p_fsize == 0)
+				break;
+			NXTNUM(v);
+			pp->p_frag = v / pp->p_fsize;
+			NXTNUM(pp->p_cpg);
+			break;
+		case FS_BSDLFS:
+			NXTNUM(pp->p_fsize);
+			if (pp->p_fsize == 0)
+				break;
+			NXTNUM(v);
+			pp->p_frag = v / pp->p_fsize;
+			NXTNUM(pp->p_sgs);
+			break;
+		case FS_EX2FS:
+			NXTNUM(pp->p_fsize);
+			if (pp->p_fsize == 0)
+				break;
+			NXTNUM(v);
+			pp->p_frag = v / pp->p_fsize;
+			break;
+		case FS_ISO9660:
+			NXTNUM(pp->p_cdsession);
+			break;
+		default:
+			break;
+		}
+		continue;
+ error:
 		errors++;
  next:
 		;
@@ -1891,7 +1906,7 @@ getulong(str, ul, max)
 
 	errno = 0;
 	*ul = strtoul(str, &ep, 10);
-	if (*str == '\0' || !ep || (*ep != '\0' && !isspace(*ep)) ||
+	if (*str == '\0' || !ep || (*ep != '\0' && !isspace(*ep & 0xff)) ||
 	    errno == ERANGE || *ul > max)
 		return ERANGE;
 	else
