@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.62 2002/12/24 12:15:46 manu Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.63 2003/01/22 17:12:41 dsl Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.62 2002/12/24 12:15:46 manu Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.63 2003/01/22 17:12:41 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -642,7 +642,39 @@ parse(char *string, int flags)
 		return;
 	}
 	if (special & DISKINFO) {
+#ifdef CPU_DISKINFO
 		/* Don't know a good way to deal with this i386 specific one */
+		/* OTOH this does pass the info out... */
+		struct disklist *dl = (void *)buf;
+		struct biosdisk_info *bi;
+		struct nativedisk_info *ni;
+		uint i, b, lim;
+		if (!nflag)
+			printf("%s: ", string);
+		lim = dl->dl_nbiosdisks;
+		if (lim > MAX_BIOSDISKS)
+			lim = MAX_BIOSDISKS;
+		for (bi = dl->dl_biosdisks, i = 0; i < lim; bi++, i++)
+			printf("%x:%lld(%d/%d/%d),%x ",
+				bi->bi_dev, bi->bi_lbasecs, bi->bi_cyl,
+				bi->bi_head, bi->bi_sec, bi->bi_flags);
+		lim = dl->dl_nnativedisks;
+		ni = dl->dl_nativedisks;
+		bi = dl->dl_biosdisks;
+		if ((char *)&ni[lim] != (char *)buf + size) {
+			printf("size mismatch\n");
+			return;
+		}
+		for (i = 0; i < lim; ni++, i++) {
+			char sep = ':';
+			printf(" %.*s", (int)sizeof ni->ni_devname,
+				ni->ni_devname);
+			for (b = 0; b < ni->ni_nmatches; sep = ',', b++)
+				printf("%c%x", sep,
+					bi[ni->ni_biosmatches[b]].bi_dev);
+		}
+		printf("\n");
+#endif
 		return;
 	}
 	if (special & CPTIME) {
