@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.61 2002/07/15 16:27:16 ichiro Exp $
+#	$NetBSD: files.arm,v 1.62 2002/08/11 21:19:14 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -60,6 +60,7 @@ file	arch/arm/arm/bus_space_notimpl.S	arm32
 
 file	arch/arm/arm/arm_machdep.c
 file	arch/arm/arm/ast.c
+file	arch/arm/arm/bcopyinout.S
 file	arch/arm/arm/blockio.S
 file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/compat_13_machdep.c	compat_13
@@ -113,7 +114,6 @@ file	arch/arm/arm32/vm_machdep.c		arm32
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32
-file	arch/arm/arm32/bcopyinout.S		arm32
 file	arch/arm/arm32/copystr.S		arm32
 
 # Linux binary compatibility (COMPAT_LINUX)
