@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.69 2002/03/23 09:40:55 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.70 2002/03/23 09:50:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.69 2002/03/23 09:40:55 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.70 2002/03/23 09:50:54 jdolecek Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.69 2002/03/23 09:40:55 jdolecek Exp 
 #include "opt_compat_pecoff.h"
 #include "opt_compat_osf1.h"
 #include "opt_compat_ultrix.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
@@ -86,6 +87,19 @@ int ELF32NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
+
+/*
+ * Compatibility with old ELF binaries without NetBSD note.
+ * Generic ELF executable kernel support was added in NetBSD 1.1.
+ * The NetBSD note was introduced in NetBSD 1.3 together with initial
+ * ELF shared library support.
+ */
+#ifndef EXEC_ELF_NOTELESS
+#  if defined(COMPAT_11) || defined(COMPAT_12)
+#    define EXEC_ELF_NOTELESS		1
+#  endif
+#endif /* !EXEC_ELF_NOTELESS */
+
 #endif /* ELF32 || ELF64 */
 
 #ifdef EXEC_MACHO
@@ -379,7 +393,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf32 },
 #endif
 
-#ifdef EXEC_ELF_NOTELESS
+#if EXEC_ELF_NOTELESS
 	/* Generic Elf32 -- run at NetBSD Elf32 */
 	{ sizeof (Elf32_Ehdr),
 	  exec_elf32_makecmds,
@@ -432,7 +446,7 @@ const struct execsw execsw_builtin[] = {
 	  coredump_elf64 },
 #endif
 
-#ifdef EXEC_ELF_NOTELESS
+#if EXEC_ELF_NOTELESS
 	/* Generic Elf64 -- run at NetBSD Elf64 */
 	{ sizeof (Elf64_Ehdr),
 	  exec_elf64_makecmds,
