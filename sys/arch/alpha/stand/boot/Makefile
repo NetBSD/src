@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 1999/04/05 06:42:14 cgd Exp $
+# $NetBSD: Makefile,v 1.26 1999/04/05 06:56:23 cgd Exp $
 
 PROG = boot
 
@@ -26,7 +26,7 @@ SAMISCMAKEFLAGS= SA_INCLUDE_NET=no SA_USE_CREAD=yes
 .include "../Makefile.bootprogs"
 
 ${PROG}.sym: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
+	sh ${.CURDIR}/../common/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
 	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${PROG}.sym \
 	    ${OBJS} vers.o ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
