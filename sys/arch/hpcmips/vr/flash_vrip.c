@@ -1,4 +1,4 @@
-/* $NetBSD: flash_vrip.c,v 1.3 2003/12/29 12:31:48 igy Exp $ */
+/* $NetBSD: flash_vrip.c,v 1.4 2003/12/29 12:59:54 igy Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.3 2003/12/29 12:31:48 igy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_vrip.c,v 1.4 2003/12/29 12:59:54 igy Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -525,11 +525,14 @@ intel_erase(struct flash_softc *sc, bus_size_t offset)
 		    & I28F128_S_READY)
 			break;
 	}
+	if (i == 0) 
+		status |= FLASH_TIMEOUT; 
 
 	bus_space_write_2(iot, ioh, offset, I28F128_CLEAR_STATUS);
 	bus_space_write_2(iot, ioh, offset, I28F128_RESET);
 
-	return status & (I28F128_S_ERASE_SUSPEND
+	return status & (FLASH_TIMEOUT
+			 | I28F128_S_ERASE_SUSPEND
 			 | I28F128_S_COMSEQ_ERROR
 			 | I28F128_S_ERASE_ERROR
 			 | I28F128_S_BLOCK_LOCKED);
