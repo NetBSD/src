@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.519 2003/04/11 22:02:30 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.520 2003/04/16 19:07:34 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.519 2003/04/11 22:02:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.520 2003/04/16 19:07:34 dsl Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -860,11 +860,6 @@ cpu_reboot(howto, bootstr)
 	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
 		waittime = 0;
 		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		resettodr();
 	}
 
 	/* Disable interrupts. */
