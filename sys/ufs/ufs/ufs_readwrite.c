@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.8 1996/02/09 22:36:11 christos Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -181,6 +181,7 @@ WRITE(v)
 	daddr_t lbn;
 	off_t osize;
 	int blkoffset, error, flags, ioflag, resid, size, xfersize;
+	struct timespec ts;
 
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
@@ -292,8 +293,9 @@ WRITE(v)
 			uio->uio_offset -= resid - uio->uio_resid;
 			uio->uio_resid = resid;
 		}
-	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC))
-		error = VOP_UPDATE(vp, (struct timeval *)&time,
-		    (struct timeval *)&time, 1);
+	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC)) {
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		error = VOP_UPDATE(vp, &ts, &ts, 1);
+	}
 	return (error);
 }
