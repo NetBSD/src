@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.3 1997/12/11 13:08:47 hubertf Exp $
+#	$NetBSD: Makefile,v 1.4 1998/06/06 01:32:06 lukem Exp $
 
-SUBDIR= amd emul supfiles
+SUBDIR= amd emul ftpd supfiles
 
 .include <bsd.subdir.mk>
