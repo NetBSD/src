@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.38 2001/09/10 21:19:26 chris Exp $	*/
+/*	$NetBSD: iommu.c,v 1.39 2001/09/15 06:55:50 eeh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -319,6 +319,25 @@ iommu_enter(is, va, pa, flags)
 		       va, (long)pa, (u_long)IOTSBSLOT(va,is->is_tsbsize), 
 		       (void *)(u_long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 		       (u_long)tte));
+}
+
+
+/*
+ * Find the value of a DVMA address (debug routine).
+ */
+paddr_t
+iommu_extract(is, dva)
+	struct iommu_state *is;
+	vaddr_t dva;
+{
+	int64_t tte = 0;
+	
+	if (dva >= is->is_dvmabase)
+		tte = is->is_tsb[IOTSBSLOT(dva,is->is_tsbsize)];
+
+	if ((tte&IOTTE_V) == 0)
+		return ((paddr_t)-1L);
+	return (tte&IOTTE_PAMASK);
 }
 
 /*
