@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 1998/07/13 06:12:08 mark Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 1998/11/11 06:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -256,6 +256,9 @@ void bootsync		__P((void));
 
 /* strstr.c */
 char *strstr		__P((const char *s1, const char *s2));
+
+/* syscall.c */
+void child_return	__P((void *));
 
 #endif	/* _KERNEL && !_LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.21 1998/09/06 04:25:15 mark Exp $	*/
+/*	$NetBSD: syscall.c,v 1.22 1998/11/11 06:41:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -361,10 +361,13 @@ bad:
 
 
 void
-child_return(p, frame)
-	struct proc *p;
-	struct trapframe *frame;
+child_return(arg)
+	void *arg;
 {
+	struct proc *p = arg;
+	/* See cpu_fork() */
+	struct trapframe *frame = p->p_md.md_regs;
+
 	frame->tf_r0 = 0;
 	frame->tf_spsr &= ~PSR_C_bit;	/* carry bit */	
 
