@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.95 1996/04/04 06:25:22 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.96 1996/04/11 22:15:25 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -476,15 +476,15 @@ pcattach(parent, self, aux)
 	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 
-	sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_TTY, pcintr,
-	    sc);
+	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
+	    IPL_TTY, pcintr, sc);
 
 	/*
 	 * Look for children of the keyboard controller.
 	 * XXX Really should decouple keyboard controller
 	 * from the console code.
 	 */
-	while (config_found(self, NULL, NULL) != NULL)
+	while (config_found(self, ia->ia_ic, NULL) != NULL)	/* XXX */
 		/* will break when no more children */ ;
 }
 

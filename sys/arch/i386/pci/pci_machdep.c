@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.22 1996/03/27 06:49:54 mycroft Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.23 1996/04/11 22:15:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -332,7 +332,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
 
-	return isa_intr_establish(ih, IST_LEVEL, level, func, arg);
+	return isa_intr_establish(NULL, ih, IST_LEVEL, level, func, arg);
 }
 
 void
@@ -341,5 +341,5 @@ pci_intr_disestablish(pc, cookie)
 	void *cookie;
 {
 
-	return isa_intr_disestablish(cookie);
+	return isa_intr_disestablish(NULL, cookie);
 }

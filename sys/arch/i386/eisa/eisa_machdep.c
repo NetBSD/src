@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.1 1996/04/09 23:00:25 cgd Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.2 1996/04/11 22:15:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -112,7 +112,7 @@ eisa_intr_establish(ec, ih, type, level, func, arg)
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
 		panic("eisa_intr_establish: bogus handle 0x%x\n", ih);
 
-	return isa_intr_establish(ih, type, level, func, arg);
+	return isa_intr_establish(NULL, ih, type, level, func, arg);
 }
 
 void
@@ -121,5 +121,5 @@ eisa_intr_disestablish(ec, cookie)
 	void *cookie;
 {
 
-	return isa_intr_disestablish(cookie);
+	return isa_intr_disestablish(NULL, cookie);
 }

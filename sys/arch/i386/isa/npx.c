@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.54 1996/03/17 01:31:18 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.55 1996/04/11 22:15:22 cgd Exp $	*/
 
 #if 0
 #define iprintf(x)	printf x
@@ -329,8 +329,8 @@ npxattach(parent, self, aux)
 	case NPX_INTERRUPT:
 		printf("\n");
 		lcr0(rcr0() & ~CR0_NE);
-		sc->sc_ih = isa_intr_establish(ia->ia_irq, IST_EDGE, IPL_NONE,
-		    npxintr, 0);
+		sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq,
+		    IST_EDGE, IPL_NONE, npxintr, 0);
 		break;
 	case NPX_EXCEPTION:
 		printf(": using exception 16\n");
