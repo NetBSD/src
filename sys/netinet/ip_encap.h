@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.h,v 1.4 2004/04/18 21:00:36 matt Exp $	*/
+/*	$NetBSD: ip_encap.h,v 1.5 2004/08/17 07:05:34 itojun Exp $	*/
 /*	$KAME: ip_encap.h,v 1.7 2000/03/25 07:23:37 sumikawa Exp $	*/
 
 /*
@@ -55,6 +55,7 @@ struct encaptab {
 	void *arg;			/* passed via PACKET_TAG_ENCAP */
 };
 
+void	encap_setkeylen __P((void));
 void	encap_init __P((void));
 void	encap4_input __P((struct mbuf *, ...));
 int	encap6_input __P((struct mbuf **, int *, int));
