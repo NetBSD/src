@@ -1,4 +1,4 @@
-/*	$NetBSD: start.s,v 1.9 1997/02/27 19:43:26 ragge Exp $ */
+/*	$NetBSD: start.s,v 1.10 1997/03/22 12:47:32 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -183,6 +183,7 @@ ENTRY(hoppabort, 0)
 	movl    4(ap),r6
 	movl    8(ap),r11
 	movl    0xc(ap),r10
+	movl	_memsz, r8
 	mnegl	$1, ap		# Hack to figure out boot device.
 	jmp	2(r6)
 #	calls   $0,(r6)

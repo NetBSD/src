@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.8 1997/03/15 13:04:29 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.9 1997/03/22 12:47:32 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -46,8 +46,10 @@ nisse:	.set	nisse,0		# pass -e nisse to ld gives OK start addr
 _start:	.globl	_start
 	nop;nop;		# If we get called by calls, or something
 
+	movl	r8, _memsz	# If we come from disk, save memsize
 	cmpl	ap, $-1		# Check if we are net-booted. XXX - kludge
 	beql	2f		# jump if not
+	ashl	$9,76(r11),_memsz # got memsize from rpb
 	movzbl	102(r11), r10	# Get bootdev from rpb.
 	movzwl	48(r11), r11	# Get howto
 
@@ -75,10 +77,8 @@ _hoppabort: .word 0x0
         movl    8(ap), r11
         movl    0xc(ap), r10
 	movl	16(ap), r9
+	movl	_memsz,r8
         calls   $0,(r6)
 
-# Restart after goodbye
-__rtt:	.globl	__rtt
-	.word 0x0
-	halt
-	jmp	_start
+	.globl	_memsz
+_memsz:	.long	0x0
