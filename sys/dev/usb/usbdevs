@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.296 2003/01/27 00:29:31 wiz Exp $
+$NetBSD: usbdevs,v 1.297 2003/01/29 03:54:05 gehenna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1038,6 +1038,7 @@ product NETCHIP CLIK40		0xa140	Clik! 40
 product NETGEAR EA101		0x1001	Ethernet adapter
 product NETGEAR EA101X		0x1002	Ethernet adapter
 product NETGEAR FA101		0x1020	10/100 Ethernet
+product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
