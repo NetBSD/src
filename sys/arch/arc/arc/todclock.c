@@ -1,4 +1,4 @@
-/* $NetBSD: todclock.c,v 1.2 2001/11/04 14:01:42 tsutsui Exp $ */
+/* $NetBSD: todclock.c,v 1.3 2002/12/06 17:57:28 tsutsui Exp $ */
 /* NetBSD: clock.c,v 1.31 2001/05/27 13:53:24 sommerfeld Exp  */
 
 /*
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.2 2001/11/04 14:01:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.3 2002/12/06 17:57:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.2 2001/11/04 14:01:42 tsutsui Exp $")
 
 #include <arc/arc/todclockvar.h>
 
-#define MINYEAR 2001 /* "today" */
+#define MINYEAR 2002 /* "today" */
 
 struct device *todclockdev;
 const struct todclockfns *todclockfns;
@@ -72,9 +72,9 @@ todclockattach(dev, fns, year_offset)
 	/*
 	 * Just bookkeeping.
 	 */
-
 	if (todclockfns != NULL)
 		panic("todclockattach: multiple todclocks");
+
 	todclockdev = dev;
 	todclockfns = fns;
 	todclock_year_offset = year_offset;
@@ -108,28 +108,28 @@ inittodr(base)
 	if (todclockfns == NULL)
 		panic("inittodr: no real time clock attached");
 
-	if (base < (MINYEAR-1970)*SECYR) {
+	if (base < (MINYEAR - POSIX_BASE_YEAR) * SECYR) {
 		printf("WARNING: preposterous time in file system");
 		/* read the system clock anyway */
-		base = (MINYEAR-1970)*SECYR;
+		base = (MINYEAR - POSIX_BASE_YEAR) * SECYR;
 		badbase = 1;
 	} else
 		badbase = 0;
 
 	(*todclockfns->tcf_get)(todclockdev, base, &ct);
 #ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d", ct.year, ct.mon, ct.day,
-	       ct.hour, ct.min, ct.sec);
+	printf("readclock: %02d/%02d/%02d/%02d/%02d/%02d",
+	    ct.year, ct.mon, ct.day, ct.hour, ct.min, ct.sec);
 #endif
 	todclockinitted = 1;
 
 	year = 1900 + todclock_year_offset + ct.year;
-	if (year < 1970)
+	if (year < POSIX_BASE_YEAR)
 		year += 100;
 	/* simple sanity checks (2037 = time_t overflow) */
 	if (year < MINYEAR || year > 2037 ||
-	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 ||
-	    ct.day > 31 || ct.hour > 23 || ct.min > 59 || ct.sec > 59) {
+	    ct.mon < 1 || ct.mon > 12 || ct.day < 1 || ct.day > 31 ||
+	    ct.hour >= 24 || ct.min >= 60 || ct.sec >= 60) {
 		/*
 		 * Believe the time in the file system for lack of
 		 * anything better, resetting the TODR.
@@ -143,11 +143,11 @@ inittodr(base)
 	}
 
 	dt.dt_year = year;
-	dt.dt_mon = ct.mon;
-	dt.dt_day = ct.day;
+	dt.dt_mon  = ct.mon;
+	dt.dt_day  = ct.day;
 	dt.dt_hour = ct.hour;
-	dt.dt_min = ct.min;
-	dt.dt_sec = ct.sec;
+	dt.dt_min  = ct.min;
+	dt.dt_sec  = ct.sec;
 	time.tv_sec = clock_ymdhms_to_secs(&dt);
 #ifdef DEBUG
 	printf("=>%ld (%ld)\n", time.tv_sec, base);
@@ -167,7 +167,7 @@ inittodr(base)
 		    time.tv_sec < base ? "lost" : "gained",
 		    (long)deltat / SECDAY);
 	}
-bad:
+ bad:
 	printf(" -- CHECK AND RESET THE DATE!\n");
 }
 
@@ -191,14 +191,15 @@ resettodr()
 
 	/* rt clock wants 2 digits */
 	ct.year = (dt.dt_year - todclock_year_offset) % 100;
-	ct.mon = dt.dt_mon;
-	ct.day = dt.dt_day;
+	ct.mon  = dt.dt_mon;
+	ct.day  = dt.dt_day;
 	ct.hour = dt.dt_hour;
-	ct.min = dt.dt_min;
-	ct.sec = dt.dt_sec;
-	ct.dow = dt.dt_wday;
+	ct.min  = dt.dt_min;
+	ct.sec  = dt.dt_sec;
+	ct.dow  = dt.dt_wday;
 #ifdef DEBUG
-	printf("setclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
+	printf("setclock: %02d/%02d/%02d/%02d/%02d/%02d\n",
+	    ct.year, ct.mon, ct.day,
 	       ct.hour, ct.min, ct.sec);
 #endif
 
