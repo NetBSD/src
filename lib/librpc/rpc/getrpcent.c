@@ -1,61 +1,69 @@
-/* @(#)getrpcent.c	2.2 88/07/29 4.0 RPCSRC */
-#if !defined(lint) && defined(SCCSIDS)
-static  char sccsid[] = "@(#)getrpcent.c 1.9 87/08/11  Copyr 1984 Sun Micro";
-#endif
-
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
  * media and as a part of the software program in whole or part.  Users
  * may copy or modify Sun RPC without charge, but are not authorized
  * to license or distribute it to anyone else except as part of a product or
- * program developed by the user.
- * 
+ * program developed by the user or with the express written consent of
+ * Sun Microsystems, Inc.
+ *
  * SUN RPC IS PROVIDED AS IS WITH NO WARRANTIES OF ANY KIND INCLUDING THE
  * WARRANTIES OF DESIGN, MERCHANTIBILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE, OR ARISING FROM A COURSE OF DEALING, USAGE OR TRADE PRACTICE.
- * 
+ *
  * Sun RPC is provided with no support and without any obligation on the
  * part of Sun Microsystems, Inc. to assist in its use, correction,
  * modification or enhancement.
- * 
+ *
  * SUN MICROSYSTEMS, INC. SHALL HAVE NO LIABILITY WITH RESPECT TO THE
  * INFRINGEMENT OF COPYRIGHTS, TRADE SECRETS OR ANY PATENTS BY SUN RPC
  * OR ANY PART THEREOF.
- * 
+ *
  * In no event will Sun Microsystems, Inc. be liable for any lost revenue
  * or profits or other special, indirect and consequential damages, even if
  * Sun has been advised of the possibility of such damages.
- * 
+ *
  * Sun Microsystems, Inc.
  * 2550 Garcia Avenue
  * Mountain View, California  94043
  */
+#if !defined(lint) && defined(SCCSIDS)
+static char sccsid[] = "@(#)getrpcent.c 1.14 91/03/11 Copyr 1984 Sun Micro";
+#endif
 
 /*
- * Copyright (c) 1985 by Sun Microsystems, Inc.
+ * Copyright (c) 1984 by Sun Microsystems, Inc.
  */
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <string.h>
 #include <rpc/rpc.h>
-#include <netdb.h>
-#include <sys/socket.h>
+#ifdef YP
+#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/ypclnt.h>
+#endif
 
 /*
  * Internet version.
  */
 struct rpcdata {
 	FILE	*rpcf;
-	char	*current;
-	int	currentlen;
 	int	stayopen;
 #define	MAXALIASES	35
 	char	*rpc_aliases[MAXALIASES];
 	struct	rpcent rpc;
 	char	line[BUFSIZ+1];
+#ifdef	YP
 	char	*domain;
+	char	*current;
+	int	currentlen;
+#endif
 } *rpcdata, *_rpcdata();
+
+#ifdef	YP
+static int	__yp_nomap = 0;
+#endif	/* YP */
 
 static	struct rpcent *interpret();
 struct	hostent *gethostent();
@@ -82,12 +90,32 @@ getrpcbynumber(number)
 {
 	register struct rpcdata *d = _rpcdata();
 	register struct rpcent *p;
-	int reason;
-	char adrstr[16], *val = NULL;
-	int vallen;
 
 	if (d == 0)
 		return (0);
+#ifdef	YP
+        if (!__yp_nomap && _yp_check(&d->domain)) {
+                sprintf(adrstr, "%d", number);
+                reason = yp_match(d->domain, "rpc.bynumber", adrstr, strlen(adrstr),
+                                  &d->current, &d->currentlen);
+                switch(reason) {
+                case 0:
+                        break;
+                case YPERR_MAP:
+                        __yp_nomap = 1;
+                        goto no_yp;
+                        break;
+                default:
+                        return(0);
+                        break;
+                }
+                d->current[d->currentlen] = '\0';
+                p = interpret(d->current, d->currentlen);
+                (void) free(d->current);
+                return p;
+        }
+no_yp:
+#endif	/* YP */
 	setrpcent(0);
 	while (p = getrpcent()) {
 		if (p->r_number == number)
@@ -105,7 +133,7 @@ getrpcbyname(name)
 	char **rp;
 
 	setrpcent(0);
-	while(rpc = getrpcent()) {
+	while (rpc = getrpcent()) {
 		if (strcmp(rpc->r_name, name) == 0)
 			return (rpc);
 		for (rp = rpc->r_aliases; *rp != NULL; rp++) {
@@ -117,6 +145,7 @@ getrpcbyname(name)
 	return (NULL);
 }
 
+void
 setrpcent(f)
 	int f;
 {
@@ -124,26 +153,40 @@ setrpcent(f)
 
 	if (d == 0)
 		return;
+#ifdef	YP
+        if (!__yp_nomap && _yp_check(NULL)) {
+                if (d->current)
+                        free(d->current);
+                d->current = NULL;
+                d->currentlen = 0;
+                return;
+        }
+        __yp_nomap = 0;
+#endif	/* YP */
 	if (d->rpcf == NULL)
 		d->rpcf = fopen(RPCDB, "r");
 	else
 		rewind(d->rpcf);
-	if (d->current)
-		free(d->current);
-	d->current = NULL;
 	d->stayopen |= f;
 }
 
+void
 endrpcent()
 {
 	register struct rpcdata *d = _rpcdata();
 
 	if (d == 0)
 		return;
-	if (d->current && !d->stayopen) {
-		free(d->current);
-		d->current = NULL;
-	}
+#ifdef	YP
+        if (!__yp_nomap && _yp_check(NULL)) {
+        	if (d->current && !d->stayopen)
+                        free(d->current);
+                d->current = NULL;
+                d->currentlen = 0;
+                return;
+        }
+        __yp_nomap = 0;
+#endif	/* YP */
 	if (d->rpcf && !d->stayopen) {
 		fclose(d->rpcf);
 		d->rpcf = NULL;
@@ -155,59 +198,72 @@ getrpcent()
 {
 	struct rpcent *hp;
 	int reason;
+	register struct rpcdata *d = _rpcdata();
+#ifdef	YP
 	char *key = NULL, *val = NULL;
 	int keylen, vallen;
-	register struct rpcdata *d = _rpcdata();
+#endif
 
 	if (d == 0)
 		return(NULL);
+#ifdef	YP
+        if (!__yp_nomap && _yp_check(&d->domain)) {
+                if (d->current == NULL && d->currentlen == 0) {
+                        reason = yp_first(d->domain, "rpc.bynumber",
+                                          &d->current, &d->currentlen,
+                                          &val, &vallen);
+                } else {
+                        reason = yp_next(d->domain, "rpc.bynumber",
+                                         d->current, d->currentlen,
+                                         &d->current, &d->currentlen,
+                                         &val, &vallen);
+                }
+                switch(reason) {
+                case 0:
+                        break;
+                case YPERR_MAP:
+                        __yp_nomap = 1;
+                        goto no_yp;
+                        break;
+                default:
+                        return(0);
+                        break;
+                }
+                val[vallen] = '\0';
+                hp = interpret(val, vallen);
+                (void) free(val);
+                return hp;
+        }
+no_yp:
+#endif	/* YP */
 	if (d->rpcf == NULL && (d->rpcf = fopen(RPCDB, "r")) == NULL)
 		return (NULL);
-    if (fgets(d->line, BUFSIZ, d->rpcf) == NULL)
+        if (fgets(d->line, BUFSIZ, d->rpcf) == NULL)
 		return (NULL);
-	return interpret(d->line, strlen(d->line));
-}
-
-static char *
-firstwhtspc(s)
-char *s;
-{
-	char *ft, *fs;
-
-	ft = index(s, '\t');
-	fs = index(s, ' ');
-
-	if (ft == NULL)
-		return fs;
-	if (fs == NULL)
-		return ft;
-	
-	return (ft < fs) ? ft : fs;
+	return (interpret(d->line, strlen(d->line)));
 }
 
 static struct rpcent *
 interpret(val, len)
+	char *val;
+	int len;
 {
 	register struct rpcdata *d = _rpcdata();
 	char *p;
 	register char *cp, **q;
 
 	if (d == 0)
-		return;
-	strncpy(d->line, val, len);
+		return (0);
+	(void) strncpy(d->line, val, len);
 	p = d->line;
 	d->line[len] = '\n';
 	if (*p == '#')
 		return (getrpcent());
-	cp = index(p, '#');
+	cp = strpbrk(p, "#\n");
 	if (cp == NULL)
-    {
-		cp = index(p, '\n');
-		if (cp == NULL)
-			return (getrpcent());
-	}
+		return (getrpcent());
 	*cp = '\0';
-	cp = firstwhtspc(p);
+	cp = strpbrk(p, " \t");
 	if (cp == NULL)
 		return (getrpcent());
 	*cp++ = '\0';
@@ -217,22 +273,21 @@ interpret(val, len)
 		cp++;
 	d->rpc.r_number = atoi(cp);
 	q = d->rpc.r_aliases = d->rpc_aliases;
-	p = cp;
-	cp = firstwhtspc(p);
-	if (cp != NULL)
+	cp = strpbrk(cp, " \t");
+	if (cp != NULL) 
 		*cp++ = '\0';
 	while (cp && *cp) {
-		p = cp;
 		if (*cp == ' ' || *cp == '\t') {
 			cp++;
 			continue;
 		}
 		if (q < &(d->rpc_aliases[MAXALIASES - 1]))
 			*q++ = cp;
-		cp = firstwhtspc(p);
+		cp = strpbrk(cp, " \t");
 		if (cp != NULL)
 			*cp++ = '\0';
 	}
 	*q = NULL;
 	return (&d->rpc);
 }
+
