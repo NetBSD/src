@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: subr.c,v 1.2 1994/10/06 15:45:43 mycroft Exp $";
+static char *rcsid = "$Id: subr.c,v 1.3 1995/01/03 07:06:42 glass Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,7 +42,9 @@ static char *rcsid = "$Id: subr.c,v 1.2 1994/10/06 15:45:43 mycroft Exp $";
 #include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/ktrace.h>
+
 #include <stdio.h>
+
 #include "ktrace.h"
 
 getpoints(s)
