@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)bpf.c	7.5 (Berkeley) 7/15/91
- *	$Id: bpf.c,v 1.5.4.1 1993/09/24 08:53:51 mycroft Exp $
+ *	$Id: bpf.c,v 1.5.4.2 1993/10/09 09:53:23 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -114,6 +114,12 @@ static void	bpf_freed();
 static int	bpf_setif();
 static int	bpf_initd();
 static int	bpf_allocbufs();
+
+void
+bpfilterattach(n)
+	int n;
+{
+}
 
 static int
 bpf_movein(uio, linktype, mp, sockp)
