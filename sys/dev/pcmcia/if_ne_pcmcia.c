@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.50 2000/02/02 11:17:32 itojun Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.51 2000/02/02 11:41:58 itojun Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -620,7 +620,7 @@ ne_pcmcia_detach(self, flags)
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)self;
 	int rv;
 
-	rv = ne2000_detach(&psc->sc_ne2000);
+	rv = ne2000_detach(&psc->sc_ne2000, flags);
 	if (rv == 0) {
 		/* Unmap our i/o windows. */
 		pcmcia_io_unmap(psc->sc_pf, psc->sc_asic_io_window);
