@@ -4,7 +4,7 @@ NOOBJ=	noobj
 
 CLEANFILES= mbr msdos5mb.gz
 
-all: mbr msdos5mb.gz
+realall: mbr msdos5mb.gz
 
 mbr: mbr.uu
 	uudecode mbr.uu
