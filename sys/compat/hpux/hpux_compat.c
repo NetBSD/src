@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.49.4.1 2000/07/13 20:15:12 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.49.4.2 2001/06/07 19:55:59 he Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -362,36 +362,6 @@ hpux_sys_writev(p, v, retval)
 		}
 	}
 	return (error);
-}
-
-/*
- * 4.3bsd dup allows dup2 to come in on the same syscall entry
- * and hence allows two arguments.  HP-UX dup has only one arg.
- */
-int
-hpux_sys_dup(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct hpux_sys_dup_args *uap = v;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
-	int fd, error;
-
-	if (((unsigned)SCARG(uap, fd)) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return (EBADF);
-	if ((error = fdalloc(p, 0, &fd)))
-		return (error);
-	fdp->fd_ofiles[fd] = fp;
-	fdp->fd_ofileflags[fd] =
-	    fdp->fd_ofileflags[SCARG(uap, fd)] &~ UF_EXCLOSE;
-	fp->f_count++;
-	if (fd > fdp->fd_lastfile)
-		fdp->fd_lastfile = fd;
-	*retval = fd;
-	return (0);
 }
 
 int
