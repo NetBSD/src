@@ -1,8 +1,8 @@
-# $NetBSD: netbsd-proto.mc,v 1.6 2000/08/25 02:36:23 hubertf Exp $
+# $NetBSD: netbsd-proto.mc,v 1.7 2000/08/25 02:54:29 hubertf Exp $
 
 #
-#  This is the prototype file for a configuration that supports nothing
-#  but basic SMTP connections via TCP, via IPv4 and IPv6.
+#  This is the prototype file for a configuration that supports SMTP
+#  connections via TCP and some commonly required features.
 #
 
 # The path is relative to ${CFDIR}/cf, see Makefile:
