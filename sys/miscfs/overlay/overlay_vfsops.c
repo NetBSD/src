@@ -1,4 +1,4 @@
-/*	$NetBSD: overlay_vfsops.c,v 1.2 2000/03/13 23:52:41 soren Exp $	*/
+/*	$NetBSD: overlay_vfsops.c,v 1.3 2000/03/16 18:08:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 National Aeronautics & Space Administration
@@ -280,6 +280,7 @@ struct vfsops overlay_vfsops = {
 	layerfs_fhtovp,
 	layerfs_vptofh,
 	layerfs_init,
+	layerfs_done,
 	layerfs_sysctl,
 	NULL,				/* vfs_mountroot */
 	layerfs_checkexp,

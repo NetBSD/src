@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.43 2000/01/11 09:04:50 scw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.44 2000/03/16 18:08:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -93,6 +93,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_fhtovp,
 	cd9660_vptofh,
 	cd9660_init,
+	cd9660_done,
 	cd9660_sysctl,
 	cd9660_mountroot,
 	cd9660_check_export,
