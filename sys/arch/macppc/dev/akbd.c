@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.24 2002/06/14 22:43:05 itojun Exp $	*/
+/*	$NetBSD: akbd.c,v 1.25 2002/06/14 22:43:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -511,6 +511,7 @@ kbd_intr(arg)
 	struct akbd_softc *sc = akbd_cd.cd_devs[0];
 
 	key = event->u.k.key;
+
 #ifdef CAPS_IS_CONTROL
 	/*
 	 * Caps lock is weird. The key sequence generated is:
@@ -531,7 +532,6 @@ kbd_intr(arg)
 			shift = 0;
 		}
 	}
-
 #endif
 
 	switch (key) {
