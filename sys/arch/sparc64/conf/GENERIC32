@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.7 2000/09/24 15:59:37 jdolecek Exp $
+# 	$NetBSD: GENERIC32,v 1.8 2000/11/09 00:06:47 eeh Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
-maxusers	32
+maxusers	64
 
 ## System kernel configuration.  See options(4) for more detail.
 
@@ -20,7 +20,7 @@ options 	__ELF__		# we use elf
 
 ## Use a faster console than the PROM's slow drawing routines.  Not needed
 ## for headless (no framebuffer) machines.
-# XXX broken on sparc64
+# XXX borken on sparc64
 #options 	RASTERCONSOLE		# fast rasterop console
 #options 	FONT_GALLANT12x22	# the console font
 #options 	FONT_BOLD8x16		# a somewhat smaller font
@@ -232,29 +232,29 @@ timer*	at mainbus0				# sun4c
 
 ## Zilog 8530 serial chips.  Each has two-channels.
 ## zs0 is ttya and ttyb.  zs1 is the keyboard and mouse.
-zs0	at sbus? slot ? offset ?
-zstty0	at zs0 channel 0	# ttya
-zstty1	at zs0 channel 1	# ttyb
+zs*	at sbus? slot ? offset ?
+zstty*	at zs? channel ?			# ttya
+kbd0	at zstty?
+ms0	at zstty?
 
-zs1	at sbus? slot ? offset ?
-kbd0	at zs1 channel 0	# keyboard
-ms0	at zs1 channel 1	# mouse
+## Old scheme -- deprecated.
+#zs	at sbus? slot ? offset ?
+#kbd0	at zs1 channel 0			# keyboard
+#ms0	at zs1 channel 1			# mouse
 
 ## PCI machines have serial ports:
 ##	Siemens SAB82532 controller: ttya and ttyb (`su'; sab)
 ##	Part of NS PC87332VLJ Super I/O controller: kbd/mouse (`se'; com)
 
 ## These are two SAB82532 controllers
-#sab0	at ebus?			# ttya/ttyb
-#sabtty0	at sab0 channel 0	# ttya
-#sabtty1	at sab0 channel 1	# ttyb
+#sab0	at ebus?				# ttya/ttyb
+#sabtty0	at sab0 channel 0		# ttya
+#sabtty1	at sab0 channel 1		# ttyb
 
 ## Part of a PC87332VLJ?
-#com0	at ebus? addr 0x3083f8		# `com' driver
-#com1	at ebus? addr 0x3062f8		# 
-com*	at ebus?			# `com' driver
-kbd0	at com?			# keyboard
-ms0	at com?			# mouse
+com*	at ebus?				# `com' driver for `su'
+kbd0	at com?					# keyboard
+ms0	at com?					# mouse
 
 #### Disk controllers and disks
 
@@ -265,8 +265,8 @@ ms0	at com?			# mouse
 ## sun4u on-board SCSI, and FSBE/S SBus SCSI cards, an NCR53c94 or
 ## equivalent behind an LSI Logic DMA controller
 
-dma*	at sbus? slot ? offset ?			# SBus
-esp*	at dma? flags 0x0000				# SBus
+dma*	at sbus? slot ? offset ?		# SBus
+esp*	at dma? flags 0x0000			# SBus
 
 scsibus* at esp?
 
@@ -279,7 +279,7 @@ scsibus* at isp?
 #scsibus* at fas?
 
 ## GLM support missing
-siop*	at pci?						# 53C875 "glm" compatible
+siop*	at pci?					# 53C875 "glm" compatible
 scsibus* at siop?
 
 ## These entries find devices on all SCSI busses and assign
@@ -337,20 +337,20 @@ pseudo-device	md	1
 ## directly like the sun4c on-board, one uses the ledma device like the
 ## sun4m on-board, and one uses the lebuffer device.
 
-ledma0		at sbus? slot ? offset ?		# sun4m on-board
-le0		at ledma0				# sun4m on-board
-le*		at sbus? slot ? offset ?		# SBus
-ledma*		at sbus? slot ? offset ?		# SBus
-le*		at ledma?				# SBus
-lebuffer0	at sbus? slot ? offset ?		# SBus
-le0		at lebuffer?				# SBus
-lebuffer*	at sbus? slot ? offset ?		# SBus
-le*		at lebuffer?				# SBus
+ledma0		at sbus? slot ? offset ?	# sun4m on-board
+le0		at ledma0			# sun4m on-board
+le*		at sbus? slot ? offset ?	# SBus
+ledma*		at sbus? slot ? offset ?	# SBus
+le*		at ledma?			# SBus
+lebuffer0	at sbus? slot ? offset ?	# SBus
+le0		at lebuffer?			# SBus
+lebuffer*	at sbus? slot ? offset ?	# SBus
+le*		at lebuffer?			# SBus
 
 ## Happy Meal Ethernet
 hme*		at sbus? slot ? offset ?
-hme*		at pci?	dev ? function ?		# network "hme" compatible
-hme0		at pci2	dev 1 function 1		# U5/U10 on-board
+hme*		at pci?	dev ? function ?	# network "hme" compatible
+hme0		at pci2	dev 1 function 1	# U5/U10 on-board
 
 # MII/PHY support
 # XXX: only nsphy "tested"
@@ -406,7 +406,7 @@ pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 
 ## /dev/audio support (`audiocs' plus `audio')
 ##
-audiocs*	at sbus? slot ? offset ?		# SUNW,CS4231
+audiocs*	at sbus? slot ? offset ?	# SUNW,CS4231
 audio*		at audiocs?
 
 
@@ -415,8 +415,8 @@ audio*		at audiocs?
 ## the P4 entries for "bwtwo" will attach to the overlay plane of the
 ## "cgfour".
 
-#bwtwo0		at sbus? slot ? offset ?		# sun4c and sun4m
-#bwtwo*		at sbus? slot ? offset ?		#
+#bwtwo0		at sbus? slot ? offset ?	# sun4c and sun4m
+#bwtwo*		at sbus? slot ? offset ?
 
 ## Sun "cgthree" Sbus color framebuffer
 #cgthree0	at sbus? slot ? offset ?
@@ -425,10 +425,6 @@ audio*		at audiocs?
 ## Sun "cgsix" accelerated color framebuffer.
 cgsix0		at sbus? slot ? offset ?
 cgsix*		at sbus? slot ? offset ?
-
-## Sun "tcx" accelerated color framebuffer.
-#tcx0		at sbus? slot ? offset ?
-#tcx*		at sbus? slot ? offset ?
 
 ## Sun FFB not supported
 #ffb*		at upa?
