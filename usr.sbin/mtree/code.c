@@ -33,6 +33,8 @@
 
 #include <sys/param.h>
 #include <vis.h>
+#include <fts.h> /* XXX needed for extern.h" */
+#include "extern.h"
 
 #define STRVISFLAG (VIS_CSTYLE | VIS_WHITE)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 1998/10/10 07:50:28 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 1999/11/09 10:16:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,5 +50,7 @@ u_int	 parsekey __P((char *, int *));
 char	*rlink __P((char *));
 NODE	*spec __P((void));
 int	 verify __P((void));
+char	*encode __P((char *, const char *));
+char	*decode __P((char *, const char *));
 
 #include "stat_flags.h"
