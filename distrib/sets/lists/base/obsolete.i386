@@ -1,4 +1,5 @@
-# $NetBSD: obsolete.i386,v 1.9 2001/05/02 13:45:52 jdolecek Exp $
+# $NetBSD: obsolete.i386,v 1.10 2002/04/18 12:56:57 wiz Exp $
+/dev/pms0
 /dev/ttyv1
 /dev/ttyv2
 /dev/ttyv3
