@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.19 1998/12/19 22:12:11 christos Exp $	*/
+/*	$NetBSD: compile.c,v 1.20 2002/01/14 19:37:30 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: compile.c,v 1.19 1998/12/19 22:12:11 christos Exp $");
+__RCSID("$NetBSD: compile.c,v 1.20 2002/01/14 19:37:30 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -172,8 +172,14 @@ compile_stream(link)
 		}
 
 semicolon:	EATSPACE();
-		if (p && (*p == '#' || *p == '\0'))
-			continue;
+		if (p) {
+			if (*p == '#' || *p == '\0')
+				continue;
+			else if (*p == ';') {
+				p++;
+				goto semicolon;
+			}
+		}
 		*link = cmd = xmalloc(sizeof(struct s_command));
 		link = &cmd->next;
 		cmd->nonsel = cmd->inrange = 0;
