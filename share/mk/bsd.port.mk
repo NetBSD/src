@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.55 1998/03/07 21:19:00 hubertf Exp $
+#	$NetBSD: bsd.port.mk,v 1.56 1998/03/08 14:25:52 frueauf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -934,7 +934,7 @@ package:
 .if !defined(__ARCH_OK)
 .MAIN:	all
 
-fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
+fetch fetch-list extract patch configure build install reinstall package checkpatch checksum makesum all:
 	@echo "This port is only for ${ONLY_FOR_ARCHS},"
 	@echo "and you are running ${MACHINE_ARCH}."
 .else
@@ -1843,7 +1843,7 @@ depends-list:
 # a large index.  Format is:
 #
 # distribution-name|port-path|installation-prefix|comment| \
-#  description-file|maintainer|categories|build deps|run deps
+#  description-file|maintainer|categories|build deps|run deps|for arch
 #
 .if !target(describe)
 describe:
@@ -1869,6 +1869,12 @@ describe:
 		ABCD) ;; \
 		*) cd ${.CURDIR} && ${ECHO} -n `make package-depends|sort -u`;; \
 	esac; \
+	${ECHO} -n "|"; \
+	if [ "${ONLY_FOR_ARCHS}" = "" ]; then \
+		${ECHO} -n "any"; \
+	else \
+		${ECHO} -n "${ONLY_FOR_ARCHS}"; \
+	fi; \
 	${ECHO} ""
 .endif
 
