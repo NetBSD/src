@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.696 2005/03/15 00:14:13 uwe Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.697 2005/03/15 16:08:33 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.697 2005/03/15 00:13:16 uwe Exp
+ *	NetBSD: pcidevs,v 1.698 2005/03/15 16:06:38 xtraeme Exp
  */
 
 /*
@@ -8104,6 +8104,10 @@ const struct pci_product pci_products[] = {
 	    "Savage4",
 	},
 	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_PROSAVAGE_KM133,
+	    "ProSavage KM133",
+	},
+	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_VIRGE_MX,
 	    "ViRGE/MX",
 	},
@@ -10044,4 +10048,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1932;
+const int pci_nproducts = 1933;
