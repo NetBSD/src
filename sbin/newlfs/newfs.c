@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $	*/
+/*	$NetBSD: newfs.c,v 1.6 1997/08/01 06:18:29 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.3 (Berkeley) 4/22/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.5 1996/05/16 07:17:50 thorpej Exp $";
+static char rcsid[] = "$NetBSD: newfs.c,v 1.6 1997/08/01 06:18:29 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,9 +117,12 @@ int	unlabeled;
 char	device[MAXPATHLEN];
 char	*progname, *special;
 
+int main __P((int, char **));
 static struct disklabel *getdisklabel __P((char *, int));
 static struct disklabel *debug_readlabel __P((int));
+#ifdef notdef
 static void rewritelabel __P((char *, int, struct disklabel *));
+#endif
 static void usage __P((void));
 
 int
@@ -130,12 +133,11 @@ main(argc, argv)
 	register int ch;
 	register struct partition *pp;
 	register struct disklabel *lp;
-	struct partition oldpartition;
 	struct stat st;
 	int debug, lfs, fsi, fso, segsize, maxpartitions;
 	char *cp, *opstring;
 
-	if (progname = strrchr(*argv, '/'))
+	if ((progname = strrchr(*argv, '/')) != NULL)
 		++progname;
 	else
 		progname = *argv;
@@ -306,8 +308,9 @@ main(argc, argv)
 		(void)printf("%s: %s: not a character-special device\n",
 		    progname, special);
 	cp = strchr(argv[0], '\0') - 1;
-	if (!debug && (cp == 0 || (*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-	    && !isdigit(*cp)))
+	if (!debug
+	    && (cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+	    && !isdigit(*cp))))
 		fatal("%s: can't figure out file system partition", argv[0]);
 
 #ifdef COMPAT
@@ -346,7 +349,7 @@ getdisklabel(s, fd)
 	if (ioctl(fd, DIOCGDINFO, (char *)&lab) < 0) {
 #ifdef COMPAT
 		if (disktype) {
-			struct disklabel *lp, *getdiskbyname();
+			struct disklabel *lp;
 
 			unlabeled++;
 			lp = getdiskbyname(disktype);
@@ -378,6 +381,7 @@ debug_readlabel(fd)
 	return(&lab);
 }
 
+#ifdef notdef
 static void
 rewritelabel(s, fd, lp)
 	char *s;
@@ -429,8 +433,9 @@ rewritelabel(s, fd, lp)
 		}
 		close(cfd);
 	}
-#endif
+#endif /* vax */
 }
+#endif /* notdef */
 
 void
 usage()
