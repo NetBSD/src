@@ -1,4 +1,4 @@
-#	$Id: files.amiga.old,v 1.14 1994/03/27 06:29:20 chopps Exp $
+#	$Id: files.amiga.old,v 1.15 1994/04/05 18:13:22 chopps Exp $
 
 arch/amiga/amiga/amiga_init.c	standard
 arch/amiga/amiga/autoconf.c	standard
@@ -42,6 +42,7 @@ arch/amiga/dev/grf.c		optional grf device-driver
 arch/amiga/dev/grf_cc.c		optional grf view
 arch/amiga/dev/grf_tg.c		optional grf
 arch/amiga/dev/grf_rt.c		optional grf
+arch/amiga/dev/fp.c             optional fp device-driver
 arch/amiga/dev/par.c		optional par device-driver
 arch/amiga/dev/if_le.c		optional le device-driver
 arch/amiga/dev/rtclocka.c	optional rtclocka device-driver
