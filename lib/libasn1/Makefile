@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2001/10/25 07:42:38 thorpej Exp $
+# $NetBSD: Makefile,v 1.17 2001/10/30 09:48:14 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -17,9 +17,9 @@ COMPILE_ET?=	${COMPILEETOBJ}/compile_et
 ASN1COMPILEOBJ!=cd ${.CURDIR}/asn1_compile && ${PRINTOBJDIR}
 ASN1_COMPILE?=	${ASN1COMPILEOBJ}/asn1_compile
 
-.PHONY: asn1_compile
+.PHONY: ${ASN1COMPILEOBJ}/asn1_compile
 
-asn1_compile:
+${ASN1COMPILEOBJ}/asn1_compile:
 	@cd ${.CURDIR}/asn1_compile && ${MAKE}
 .endif
 
@@ -108,7 +108,7 @@ CPPFLAGS+= -I.					\
 
 ${gen_files} krb5_asn1.hx: asn1_files
 
-asn1_files: k5.asn1
+asn1_files: k5.asn1 ${ASN1_COMPILE}
 	${ASN1_COMPILE} ${DIST}/heimdal/lib/asn1/k5.asn1 krb5_asn1
 
 ${SRCS}: krb5_asn1.h
