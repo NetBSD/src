@@ -1,0 +1,50 @@
+Ok this is the current todo list.
+
+There are a number of things that need to be done that I do not
+have time to do and am unlikely to have time to do them in the near
+future. These are currently being left in the hope that users will do them
+instead.
+
+1.  replace netinet/in_cksum.c with an assembly version
+2.  replace netns/ns_chsum.c with an assembly version
+3.  drivers for currently unsupported podules
+4.  replacing the C string functions in libc with assembly ones (work
+    started but not finished)
+5.  porting libpthread to arm32 architecture
+6.  the ARM FPE postproc handler should check need_resched and CURSIG()
+    in the assembly glue and only switch to SVC and do a userret() if
+    required.
+7.  L1 page tables should be freed when a process is swapped out and
+    reallocated when the process is swapped in.
+8.  bcopy() needs optimising.
+9.  cleanup video DRAM support on machine with VRAM
+10. clean up prototype declarations
+11. support reading and writing the rtc device
+12. debug kernel profiling
+13. debug / replace console code
+14. fix FPA probing
+15. optimise ARM FPE glue code
+16. modify wd.c to avoid using the softc in the probe function
+17. fix mainbus configuration code
+18. optimise irq delivery code
+19. improve fiq handling code
+20. Debug kernel linking with the NetBSD linker
+21. Complete hydra support
+22. Debug GCC/arm
+23. PIC support in GCC/arm
+24. Shared libraries
+25. Remove debug.c
+26. Remove stubs.c
+27. Remove kshell/*
+28. Remove postmortem.c
+29. Debug audio drivers
+30. Merge in lmcaudio driver for the RC7500
+31. 16 bit sound driver
+32. Create generic SEEQ8004/8005 driver
+33. Create ea and eb front ends for the generic SEEQ driver
+34. Replace EtherH driver with new version
+35. Merge in Ether2 driver
+36. Add support for the StrongARM
+37. Add support for ARM8 cores and the ARM810
+38. Add 4bbp and LCD support to the console driver
+39. Port GDB.
