@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.13 2001/08/03 05:54:44 thorpej Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.14 2001/10/11 18:02:28 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,26 +82,26 @@ static void __dtors(void) __attribute__((section(".fini")));
 static void
 __ctors()
 {
-	void (**p)(void) = __CTOR_LIST__ + 1;
+	unsigned long i = (unsigned long) __CTOR_LIST__[0];
+	void (**p)(void);
 
-	while (*p)
-		(**p++)();
+	if (i == -1)  {
+		for (i = 1; __CTOR_LIST__[i] != NULL; i++)
+			;
+		i--;
+	}
+	p = __CTOR_LIST__ + i;
+	while (i--)
+		(**p--)();
 }
 
 static void
 __dtors()
 {
-	unsigned long i = (unsigned long) __DTOR_LIST__[0];
-	void (**p)(void);
+	void (**p)(void) = __DTOR_LIST__ + 1;
 
-	if (i == -1)  {
-		for (i = 1; __DTOR_LIST__[i] != NULL; i++)
-			;
-		i--;
-	}
-	p = __DTOR_LIST__ + i;
-	while (i--)
-		(**p--)();
+	while (*p)
+		(**p++)();
 }
 
 void
