@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.40 2001/03/30 23:02:41 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.41 2001/04/01 17:20:09 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -2248,7 +2248,7 @@ lib/libc/hash/sha1.3				1.7
 
   Fix printf format used in example, fixes PR#12496.
 
-sys/sys/shm.h					1.27
+sys/sys/shm.h					1.27-1.28
 
   Pay lip service to old sources and provide SHM_[RW].
   Note that these are not even part of SVID4.
@@ -2262,3 +2262,39 @@ usr.bin/showmount/showmount.c			1.10
 
   Insert tab if the length of the directory is more than 35 bytes,
   to prevent concatenation.
+
+sys/lib/libsa/Makefile				1.44
+sys/arch/i386/stand/biosboot/Makefile		1.34
+sys/arch/i386/stand/biosboot_ser/Makefile	1.6
+
+  Document some SA_* options, in case someone needs to strip down
+  the bootblock to enable or add new features, such as enabling
+  password support.  Addressess PR#12506.
+
+sys/arch/next68k/next68k/pmap_bootstrap.c	1.8
+
+  Initialize the entire pmap table before populating it.
+  Fixes PR#7174.
+
+crypto/dist/openssl/crypto/rand/randfile.c	1.4
+
+  Redo pullup of revision 1.2 differently.  On RAND_file_name(),
+  return /dev/urandom by default.  RAND_{load,write}_file() now
+  takes care of device file case.
+
+sys/arch/macppc/dev/adb.c			1.8
+sys/arch/macppc/dev/adb_direct.c		1.16
+sys/arch/macppc/dev/pm_direct.c			1.12
+sys/arch/macppc/macppc/autoconf.c		1.23
+
+  Fix Keyboard problem of recent PowerBooks (Pismo, PowerBook G4,
+  etc.).
+
+distrib/x68k/floppies/ramdisk.sysinst/dot.profile 1.8
+
+  Correct typo.
+
+sys/kern/vfs_bio.c				1.76
+
+  In bwrite(), when deciding whether to convert sync writes into
+  delayed writes, examine the correct block device.  Fixes PR#12484.
