@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.2 2001/09/19 04:09:56 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.3 2001/09/20 13:54:43 onoe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -770,12 +770,44 @@ ieee80211_end_scan(struct ifnet *ifp)
 	struct ieee80211com *ic = (void *)ifp;
 	struct ieee80211_bss *bs, *nextbs, *selbs;
 	u_int8_t rate;
-	int fail;
+	int i, fail;
 
 	bs = TAILQ_FIRST(&ic->ic_scan);
 	if (bs == NULL) {
 		DPRINTF(("ieee80211_end_scan: no scan candidate\n"));
   notfound:
+		if ((ic->ic_flags & IEEE80211_F_ADHOC) &&
+		    (ic->ic_flags & IEEE80211_F_IBSSON) &&
+		    ic->ic_des_esslen != 0) {
+			bs = &ic->ic_bss;
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: creating ibss\n", ifp->if_xname);
+			ic->ic_flags |= IEEE80211_F_SIBSS;
+			bs->bs_nrate = 0;
+			for (i = 0; i < IEEE80211_RATE_SIZE; i++) {
+				if (ic->ic_sup_rates[i])
+					bs->bs_rates[bs->bs_nrate++] =
+					    ic->ic_sup_rates[i];
+			}
+			memcpy(bs->bs_macaddr, ic->ic_myaddr,
+			    IEEE80211_ADDR_LEN);
+			memcpy(bs->bs_bssid, ic->ic_myaddr, IEEE80211_ADDR_LEN);
+			bs->bs_bssid[0] |= 0x02;	/* local bit for IBSS */
+			bs->bs_esslen = ic->ic_des_esslen;
+			memcpy(bs->bs_essid, ic->ic_des_essid, bs->bs_esslen);
+			bs->bs_rssi = 0;
+			bs->bs_timoff = 0;
+			memset(bs->bs_tstamp, 0, sizeof(bs->bs_tstamp));
+			bs->bs_intval = ic->ic_lintval;
+			bs->bs_capinfo = IEEE80211_CAPINFO_IBSS;
+			if (ic->ic_flags & IEEE80211_F_WEPON)
+				bs->bs_capinfo |= IEEE80211_CAPINFO_PRIVACY;
+			bs->bs_chan = ic->ic_ibss_chan;
+			bs->bs_fhdwell = 200;	/* XXX */
+			bs->bs_fhindex = 1;
+			ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
+			return;
+		}
 		if (ic->ic_flags & IEEE80211_F_ASCAN) {
 			if (ifp->if_flags & IFF_DEBUG)
 				printf("%s: entering passive scan mode\n",
@@ -1395,6 +1427,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 		switch (ostate) {
 		case IEEE80211_S_INIT:
 			ic->ic_flags |= IEEE80211_F_ASCAN;
+			ic->ic_flags &= ~IEEE80211_F_SIBSS;
 			ic->ic_scan_timer = IEEE80211_ASCAN_WAIT;
 			/* use lowest rate */
 			ic->ic_bss.bs_txrate = 0;
@@ -1402,6 +1435,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 			break;
 		case IEEE80211_S_SCAN:
 			/* scan next */
+			ic->ic_flags &= ~IEEE80211_F_SIBSS;
 			if (ic->ic_flags & IEEE80211_F_ASCAN) {
 				if (ic->ic_scan_timer == 0)
 					ic->ic_scan_timer =
@@ -1435,6 +1469,7 @@ ieee80211_new_state(struct ifnet *ifp, enum ieee80211_state nstate, int mgt)
 			}
 			ic->ic_flags |= IEEE80211_F_ASCAN;
 			ic->ic_scan_timer = IEEE80211_ASCAN_WAIT;
+			ic->ic_flags &= ~IEEE80211_F_SIBSS;
 			ieee80211_send_prreq(ic);
 			break;
 		}
