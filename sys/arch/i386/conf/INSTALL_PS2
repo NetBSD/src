@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_PS2,v 1.7 2002/04/02 05:30:42 lukem Exp $
+#	$NetBSD: INSTALL_PS2,v 1.8 2002/07/05 13:40:13 abs Exp $
 #
 #	INSTALL_PS2 - PS/2 Installation kernel.
 #
@@ -13,8 +13,6 @@ options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44M, same as a floppy
-
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # File systems
 file-system 	MFS			# memory file system

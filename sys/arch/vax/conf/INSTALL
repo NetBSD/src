@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.27 2002/06/07 14:48:11 ragge Exp $
+#	$NetBSD: INSTALL,v 1.28 2002/07/05 13:40:18 abs Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -66,7 +66,7 @@ file-system 	CD9660
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 #options 	NFS_BOOT_BOOTP,NFS_BOOT_DHCP	# Use bootp <> dhcp
 #options 	NFS_BOOT_BOOTPARAM	# Use the Sun way for netbooting.
@@ -98,7 +98,8 @@ options 	COMPAT_15
 #options 	LKM
 
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Kernel(s) to compile
 config		netbsd root on ? type ?

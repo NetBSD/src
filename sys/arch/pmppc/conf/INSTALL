@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.3 2002/05/31 10:46:33 augustss Exp $
+#	$NetBSD: INSTALL,v 1.4 2002/07/05 13:40:15 abs Exp $
 #
 #	INSTALL
 #
@@ -34,7 +34,8 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks
@@ -81,6 +82,8 @@ file-system 	NFS		# Network File System client
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
+
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 options 	NFS_BOOT_DHCP	# Support DHCP NFS root
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.19 2002/04/25 15:06:33 atatat Exp $
+# 	$NetBSD: INSTALL,v 1.20 2002/07/05 13:40:14 abs Exp $
 
 #	config for bootable floppy kernel
 #
@@ -30,6 +30,7 @@ options 	MEMORY_DISK_ROOT_SIZE=2880	# 1.44 Megabytes
 #options 	UCONSOLE		# users can redirect console (unsafe)
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger
@@ -62,7 +63,7 @@ file-system	MSDOSFS		# MS-DOS FAT file system
 #options 	QUOTA		# ffs quotas
 #options 	FFS_EI		# ffs endian independant support
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 options 	INET		# Internet protocols

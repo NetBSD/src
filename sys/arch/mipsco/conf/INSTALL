@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.7 2002/04/25 15:06:31 atatat Exp $
+# 	$NetBSD: INSTALL,v 1.8 2002/07/05 13:40:14 abs Exp $
 #
 include		"arch/mipsco/conf/std.mipsco"
 
@@ -14,6 +14,7 @@ options 	MIPS1			# R2000/R3000 support
 options 	HZ=25
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Debugging options
 #options 	DDB			# kernel dynamic debugger
@@ -41,7 +42,7 @@ file-system	CD9660		# ISO 9660 + Rock Ridge file system
 
 # Options for saving space in install kernels
 options 	NFS_V2_ONLY		# Exclude NFS3 and NQNFS
-options 	VNODE_OP_NOINLINE	# Don't inline vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 options 	INET		# Internet protocols

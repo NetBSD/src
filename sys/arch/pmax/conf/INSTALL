@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.45 2002/04/25 15:06:35 atatat Exp $
+# 	$NetBSD: INSTALL,v 1.46 2002/07/05 13:40:15 abs Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -39,8 +39,9 @@ options 	DEC_3MAXPLUS		#  5000/240 (kn03), 5000/260 (kn05)
 #options 	COMPAT_43		# compatibility with 4.3BSD binaries
 #options 	KTRACE			# system call tracing support
 #options 	LKM			# loadable kernel modules
-#options 	USERCONF	# userconf(4) support
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
@@ -54,7 +55,7 @@ file-system 	KERNFS			# kernel data-structure filesystem
 
 # Filesystem options
 #options 	NFS_V2_ONLY		# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE	# Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 
 # Networking options

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.21 2002/04/25 15:06:25 atatat Exp $
+#	$NetBSD: INSTALL,v 1.22 2002/07/05 13:40:11 abs Exp $
 #
 # First try for BEBOX config file
 #
@@ -32,6 +32,7 @@ options 		MEMORY_DISK_ROOT_SIZE=3074	# size of memory disk, in blocks
 #options 	KTRACE
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 #options 	COMPAT_43
@@ -59,7 +60,7 @@ file-system 	KERNFS
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE # Not inlining vnode op calls saves mem
 
 #options 	NFSSERVER
 

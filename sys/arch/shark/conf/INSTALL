@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.6 2002/04/25 15:06:37 atatat Exp $
+#	$NetBSD: INSTALL,v 1.7 2002/07/05 13:40:16 abs Exp $
 #
 #	Shark installation kernel
 #
@@ -61,6 +61,8 @@ file-system	KERNFS		# /kern
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	NFSSERVER
 
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+
 # Networking options
 
 #options 	GATEWAY		# packet forwarding
@@ -120,7 +122,8 @@ options 	INSECURE		# disable kernel securelevel
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 #options 	USERCONF	# userconf(4) support
-options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Development and Debugging options
 

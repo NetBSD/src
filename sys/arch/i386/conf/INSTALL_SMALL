@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.86 2002/06/25 03:12:09 lukem Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.87 2002/07/05 13:40:13 abs Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -71,6 +71,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -121,7 +122,7 @@ file-system 	KERNFS		# /kern
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 #options 	GATEWAY		# packet forwarding

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.20 2002/05/30 16:10:04 nonaka Exp $
+#	$NetBSD: INSTALL,v 1.21 2002/07/05 13:40:16 abs Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -39,13 +39,14 @@ file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
 
 # File system options
-options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 #options 	FFS_EI		# FFS Endian Independant support
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
  				# immutable) behave as system flags.
 
 #options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP

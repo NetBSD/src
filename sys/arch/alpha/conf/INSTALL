@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.64 2002/04/25 15:06:22 atatat Exp $
+# $NetBSD: INSTALL,v 1.65 2002/07/05 13:40:10 abs Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -48,7 +48,7 @@ file-system	KERNFS		# Kernel variable file system (/kern)
 
 # Filesystem options
 #options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
-#options 	VNODE_OP_NOINLINE # Save space by not inlining vnode op calls
+options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
 
 # Networking options
 options 	INET		# Internet protocol suite
@@ -75,6 +75,7 @@ options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 options 	INSECURE		# disable `kernel security level'
 #options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
+options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
