@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.34 2001/06/07 15:37:03 he Exp $
+.\"	$NetBSD: main,v 1.61.2.35 2001/06/10 18:21:28 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -350,6 +350,27 @@ installing pre-built third-party binary packages or the pkgsrc
 system itself, so you will have to manually install packages using
 .Ic pkg_install
 or fetch and extract the pkgsrc.tgz tar file to get started.
+.Pp
+Lastly, it should be noted that the X11 binaries shipped in
+.Nx
+\*V
+is still based on XFree86 version 3.3.6.
+Several newer graphics cards are inadequatly supported
+by that code base, but on the other hand support for several
+older graphics cards is not available in newer XFree86 code.
+.Nx
+is in the process of moving to XFree86 version 4, and is currently
+maintaining both the XFree86 3.3.6 and the XFree86 version 4 code
+in the
+.Sy xsrc
+source set, and you may at compile time pick which sources to
+build and install.
+To ease installation, testing and use of the XFree86 version 4
+code, a binary snapshot based on XFree86
+version 4.0.3 will be made available for at least the i386
+architecture shortly after the release of
+.Nx
+\*V.
 .if \n[FOR_RELEASE] \{\
 .if r_i386 \{
 .Ss New Compatibility Issues Introduced With NetBSD 1.5.1
