@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.25 1996/04/03 09:02:40 mycroft Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.26 1996/04/04 23:56:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -75,6 +75,12 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_dirent.h>
+
+/* linux_misc.c */
+static void bsd_to_linux_wstat __P((int *));
+static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
+int linux_select1 __P((struct proc *, register_t *, int, fd_set *, fd_set *,
+		       fd_set *, struct timeval *));
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -197,9 +203,11 @@ linux_sys_break(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct linux_sys_brk_args /* {
 		syscallarg(char *) nsize;
 	} */ *uap = v;
+#endif
 
 	return ENOSYS;
 }
@@ -220,8 +228,7 @@ linux_sys_brk(p, v, retval)
 	char *nbrk = SCARG(uap, nsize);
 	struct sys_obreak_args oba;
 	struct vmspace *vm = p->p_vmspace;
-	int error = 0;
-	caddr_t oldbrk, newbrk;
+	caddr_t oldbrk;
 
 	oldbrk = vm->vm_daddr + ctob(vm->vm_dsize);
 	/*
@@ -605,7 +612,7 @@ linux_sys_alarm(p, v, retval)
 	struct linux_sys_alarm_args /* {
 		syscallarg(unsigned int) secs;
 	} */ *uap = v;
-	int error, s;
+	int s;
 	struct itimerval *itp, it;
 
 	itp = &p->p_realtimer;
@@ -749,10 +756,10 @@ linux_sys_getdents(p, v, retval)
 	} */ *uap = v;
 	register struct dirent *bdp;
 	struct vnode *vp;
-	caddr_t	inp, buf;	/* BSD-format */
-	int len, reclen;	/* BSD-format */
-	caddr_t outp;		/* Linux-format */
-	int resid, linux_reclen;/* Linux-format */
+	caddr_t	inp, buf;		/* BSD-format */
+	int len, reclen;		/* BSD-format */
+	caddr_t outp;			/* Linux-format */
+	int resid, linux_reclen = 0;	/* Linux-format */
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
@@ -1028,9 +1035,10 @@ linux_sys_getpgid(p, v, retval)
 	} */ *uap = v;
 	struct proc *targp;
 
-	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != p->p_pid)
+	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != p->p_pid) {
 		if ((targp = pfind(SCARG(uap, pid))) == 0)
 			return ESRCH;
+	}
 	else
 		targp = p;
 
