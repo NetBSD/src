@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.5 1998/09/02 11:24:22 leo Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.6 1998/09/15 10:45:11 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ void		*auxp;
 {
 	if(atari_realconfig == 0)
 		return (0);
-	if (strcmp((char *)auxp, "vmebus") || cfp->cf_unit != 0)
+	if (strcmp((char *)auxp, "avmebus") || cfp->cf_unit != 0)
 		return(0);
 	return(machineid & ATARI_FALCON ? 0 : 1);
 }
