@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1985, 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1985, 1989, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,28 +32,15 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)cmdtab.c	5.10 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #endif /* not lint */
 
+#include <stdio.h>
 #include "ftp_var.h"
 
 /*
  * User FTP -- Command Tables.
  */
-int	setascii(), setbell(), setbinary(), setdebug(), setform();
-int	setglob(), sethash(), setmode(), setpeer(), setport();
-int	setprompt(), setstruct();
-int	settenex(), settrace(), settype(), setverbose();
-int	disconnect(), restart(), reget(), syst();
-int	cd(), lcd(), delete(), mdelete(), user();
-int	ls(), mls(), get(), mget(), help(), append(), put(), mput();
-int	quit(), renamefile(), status();
-int	quote(), rmthelp(), shell(), site();
-int	pwd(), makedir(), removedir(), setcr();
-int	account(), doproxy(), reset(), setcase(), setntrans(), setnmap();
-int	setsunique(), setrunique(), cdup(), macdef(), domacro();
-int	sizecmd(), modtime(), newer(), rmtstatus();
-int	do_chmod(), do_umask(), idle();
 
 char	accounthelp[] =	"send account command to remote server";
 char	appendhelp[] =	"append to a file";
@@ -107,6 +94,7 @@ char	rmtstatushelp[]="show status of remote machine";
 char	runiquehelp[] = "toggle store unique for local files";
 char	resethelp[] =	"clear queued command replies";
 char	sendhelp[] =	"send one file";
+char	passivehelp[] =	"enter passive transfer mode";
 char	sitehelp[] =	"send site specific command to remote server\n\t\tTry \"rhelp site\" or \"site help\" for more information";
 char	shellhelp[] =	"escape to the shell";
 char	sizecmdhelp[] = "show size of remote file";
@@ -155,7 +143,7 @@ struct cmd cmdtab[] = {
 	{ "mget",	mgethelp,	1,	1,	1,	mget },
 	{ "mkdir",	mkdirhelp,	0,	1,	1,	makedir },
 	{ "mls",	mlshelp,	1,	1,	1,	mls },
-	{ "mode",	modehelp,	0,	1,	1,	setmode },
+	{ "mode",	modehelp,	0,	1,	1,	setftmode },
 	{ "modtime",	modtimehelp,	0,	1,	1,	modtime },
 	{ "mput",	mputhelp,	1,	1,	1,	mput },
 	{ "newer",	newerhelp,	1,	1,	1,	newer },
@@ -163,6 +151,7 @@ struct cmd cmdtab[] = {
 	{ "nlist",	nlisthelp,	1,	1,	1,	ls },
 	{ "ntrans",	ntranshelp,	0,	0,	1,	setntrans },
 	{ "open",	connecthelp,	0,	0,	1,	setpeer },
+	{ "passive",	passivehelp,	0,	0,	0,	setpassive },
 	{ "prompt",	prompthelp,	0,	0,	0,	setprompt },
 	{ "proxy",	proxyhelp,	0,	0,	1,	doproxy },
 	{ "sendport",	porthelp,	0,	0,	0,	setport },
