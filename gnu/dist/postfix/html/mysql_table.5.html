@@ -1,0 +1,147 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - mysql_table(5) </title>
+</head> <body> <pre>
+MYSQL_TABLE(5)                                     MYSQL_TABLE(5)
+
+<b>NAME</b>
+       mysql_table - Postfix MySQL client configuration
+
+<b>SYNOPSIS</b>
+       <b>postmap -q "</b><i>string</i><b>" <a href="mysql_table.5.html">mysql</a>:/etc/postfix/filename</b>
+
+       <b>postmap -q - <a href="mysql_table.5.html">mysql</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
+
+<b>DESCRIPTION</b>
+       The  Postfix  mail system uses optional tables for address
+       rewriting or mail routing. These tables are usually in <b>dbm</b>
+       or <b>db</b> format.
+
+       Alternatively,  lookup  tables  can  be specified as MySQL
+       databases.  In order to use MySQL lookups, define a  MySQL
+       source as a lookup table in main.cf, for example:
+           <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="mysql_table.5.html">mysql</a>:/etc/mysql-aliases.cf
+
+       The file /etc/postfix/mysql-aliases.cf has the same format
+       as the Postfix main.cf file, and can specify  the  parame-
+       ters described below.
+
+<b>ALTERNATIVE CONFIGURATION</b>
+       For  compatibility with other Postfix lookup tables, MySQL
+       parameters can also be defined in main.cf.  In order to do
+       that,  specify  as  MySQL source a name that doesn't begin
+       with a slash or a dot.  The MySQL parameters will then  be
+       accessible as the name you've given the source in its def-
+       inition, an underscore, and the  name  of  the  parameter.
+       For example, if the map is specified as "<a href="mysql_table.5.html">mysql</a>:<i>mysqlname</i>",
+       the parameter "hosts" below would be defined in main.cf as
+       "<i>mysqlname</i>_hosts".
+
+       Note:  with this form, the passwords for the MySQL sources
+       are written in main.cf, which is normally  world-readable.
+       Support  for this form will be removed in a future Postfix
+       version.
+
+<b>LIST MEMBERSHIP</b>
+       When using SQL to store lists such as $<a href="postconf.5.html#mynetworks">mynetworks</a>, $<a href="postconf.5.html#mydestination">mydes</a>-
+       <a href="postconf.5.html#mydestination">tination</a>,  $<a href="postconf.5.html#relay_domains">relay_domains</a>, $<a href="postconf.5.html#local_recipient_maps">local_recipient_maps</a>, etc., it
+       is important to understand that the table must store  each
+       list  member  as a separate key. The table lookup verifies
+       the *existence* of the  key.  See  "Postfix  lists  versus
+       tables"  in the <a href="DATABASE_README.html">DATABASE_README</a> document for a discussion.
+
+       Do NOT create tables that return the full list of  domains
+       in  $<a href="postconf.5.html#mydestination">mydestination</a> or $<a href="postconf.5.html#relay_domains">relay_domains</a> etc., or IP addresses
+       in $<a href="postconf.5.html#mynetworks">mynetworks</a>.
+
+       DO create tables with each matching item as a key and with
+       an  arbitrary value. With SQL databases it is not uncommon
+       to return the key itself or a constant value.
+
+<b>MYSQL PARAMETERS</b>
+       <b>hosts</b>  The hosts that Postfix will try to connect  to  and
+              query from.  Specify <i>unix:</i> for UNIX domain sockets,
+              <i>inet:</i> for TCP connections (default).  Example:
+                  hosts = host1.some.domain host2.some.domain
+                  hosts = unix:/file/name
+
+              The hosts are tried in random order, with all  con-
+              nections  over  UNIX  domain  sockets  being  tried
+              before those over TCP.  The connections  are  auto-
+              matically  closed  after  being  idle  for  about 1
+              minute, and are  re-opened  as  necessary.  Postfix
+              versions  2.0 and earlier do not randomize the host
+              order.
+
+              NOTE: if you specify localhost as a hostname  (even
+              if you prefix it with <i>inet:</i>), MySQL will connect to
+              the  default  UNIX  domain  socket.   In  order  to
+              instruct MySQL to connect to localhost over TCP you
+              have to specify
+                  hosts = 127.0.0.1
+
+       <b>user, password</b>
+              The user name and password to log  into  the  mysql
+              server.  Example:
+                  user = someone
+                  password = some_password
+
+       <b>dbname</b> The database name on the servers. Example:
+                  dbname = customer_database
+
+       The  following  parameters  are  used  to fill in a SELECT
+       query template of the form:
+           select [<b>select_field</b>] from [<b>table</b>] where
+               [<b>where_field</b>] = '$lookup' [<b>additional_conditions</b>]
+
+       $lookup contains the search string, and is escaped  so  if
+       it contains single quotes or other odd characters, it will
+       not cause a parse error, or worse, a security problem.
+
+       <b>select_field</b>
+              The SQL "select" parameter. Example:
+                  select_field = forw_addr
+
+       <b>table</b>  The SQL "select .. from" table name. Example:
+                  table = mxaliases
+
+       <b>where_field</b>
+              The SQL "select .. where" parameter. Example:
+                  where_field = alias
+
+       <b>additional_conditions</b>
+              Additional conditions to the SQL query. Example:
+                  additional_conditions = and status = 'paid'
+
+<b>SEE ALSO</b>
+       <a href="postmap.1.html">postmap(1)</a>, Postfix lookup table maintenance
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="ldap_table.5.html">ldap_table(5)</a>, LDAP lookup tables
+       <a href="pgsql_table.5.html">pgsql_table(5)</a>, PostgreSQL lookup tables
+
+<b>README FILES</b>
+       <a href="DATABASE_README.html">DATABASE_README</a>, Postfix lookup table overview
+       <a href="MYSQL_README.html">MYSQL_README</a>, Postfix MYSQL client guide
+
+<b>LICENSE</b>
+       The  Secure  Mailer  license must be distributed with this
+       software.
+
+<b>HISTORY</b>
+       MySQL support was introduced with Postfix version 1.0.
+
+<b>AUTHOR(S)</b>
+       Original implementation by:
+       Scott Cotton, Joshua Marcus
+       IC Group, Inc.
+
+       Further enhancements by:
+       Liviu Daia
+       Institute of Mathematics of the Romanian Academy
+       P.O. BOX 1-764
+       RO-014700 Bucharest, ROMANIA
+
+                                                   MYSQL_TABLE(5)
+</pre> </body> </html>

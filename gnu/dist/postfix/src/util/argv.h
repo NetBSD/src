@@ -22,6 +22,7 @@ typedef struct ARGV {
 
 extern ARGV *argv_alloc(int);
 extern void argv_add(ARGV *,...);
+extern void argv_addn(ARGV *,...);
 extern void argv_terminate(ARGV *);
 extern ARGV *argv_free(ARGV *);
 

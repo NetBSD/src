@@ -1,11 +1,17 @@
-<html> <head> </head> <body> <pre>
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+<title> Postfix manual - master(8) </title>
+</head> <body> <pre>
 MASTER(8)                                               MASTER(8)
 
 <b>NAME</b>
        master - Postfix master process
 
 <b>SYNOPSIS</b>
-       <b>master</b> [<b>-Dtv</b>] [<b>-c</b> <i>config_dir</i>] [<b>-e</b> <i>exit_time</i>]
+       <b>master</b> [<b>-Dtv</b>] [<b>-c</b> <i>config</i><b>_</b><i>dir</i>]
+               [<b>-e</b> <i>exit</i><b>_</b><i>time</i>]
 
 <b>DESCRIPTION</b>
        The  <b>master</b> daemon is the resident process that runs Post-
@@ -16,36 +22,37 @@ MASTER(8)                                               MASTER(8)
 
        Postfix  daemons terminate voluntarily, either after being
        idle for a configurable amount of time,  or  after  having
-       serviced  a configurable number of requests. The exception
-       to this rule is the resident Postfix queue manager.
+       serviced  a configurable number of requests. Exceptions to
+       this rule are the resident queue manager and the  resident
+       address verification server.
 
-       The behavior of the <b>master</b> daemon  is  controlled  by  the
-       <b>master.cf</b>  configuration file. The table specifies zero or
-       more servers in the <b>UNIX</b> or <b>INET</b> domain, or  servers  that
-       take  requests  from a FIFO. Precise configuration details
-       are given in the <b>master.cf</b> file, and in the  manual  pages
+       The  behavior  of  the  <b>master</b> daemon is controlled by the
+       <b>master.cf</b> configuration file. The table specifies zero  or
+       more  servers  in the <b>UNIX</b> or <b>INET</b> domain, or servers that
+       take requests from a FIFO. Precise  configuration  details
+       are  given  in the <b>master.cf</b> file, and in the manual pages
        of the respective daemons.
 
        Options:
 
-       <b>-c</b> <i>config_dir</i>
-              Read  the <b>main.cf</b> and <b>master.cf</b> configuration files
-              in the named directory instead of the default  con-
+       <b>-c</b> <i>config</i><b>_</b><i>dir</i>
+              Read the <b>main.cf</b> and <b>master.cf</b> configuration  files
+              in  the named directory instead of the default con-
               figuration directory.
 
-       <b>-e</b> <i>exit_time</i>
-              Terminate  the  master process after <i>exit_time</i> sec-
-              onds. Child processes  terminate  at  their  conve-
+       <b>-e</b> <i>exit</i><b>_</b><i>time</i>
+              Terminate the master process after  <i>exit</i><b>_</b><i>time</i>  sec-
+              onds.  Child  processes  terminate  at their conve-
               nience.
 
-       <b>-D</b>     After  initialization, run a debugger on the master
-              process. The debugging command  is  specified  with
-              the <b>debugger</b><i>_</i><b>command</b> in the <b>main.cf</b> global configu-
+       <b>-D</b>     After initialization, run a debugger on the  master
+              process.  The  debugging  command is specified with
+              the <b><a href="postconf.5.html#debugger_command">debugger_command</a></b> in the <b>main.cf</b> global configu-
               ration file.
 
-       <b>-t</b>     Test mode. Return a zero exit status when the  <b>mas-</b>
-              <b>ter.pid</b>  lock file does not exist or when that file
-              is not locked.  This is evidence  that  the  <b>master</b>
+       <b>-t</b>     Test  mode. Return a zero exit status when the <b>mas-</b>
+              <b>ter.pid</b> lock file does not exist or when that  file
+              is  not  locked.   This is evidence that the <b>master</b>
               daemon is not running.
 
        <b>-v</b>     Enable verbose logging for debugging purposes. This
@@ -54,99 +61,123 @@ MASTER(8)                                               MASTER(8)
 
        Signals:
 
-       <b>SIGHUP</b> Upon  receipt  of a <b>HUP</b> signal (e.g., after <b>postfix</b>
+       <b>SIGHUP</b> Upon receipt of a <b>HUP</b> signal (e.g.,  after  <b>postfix</b>
               <b>reload</b>), the master process re-reads its configura-
-              tion  files. If a service has been removed from the
-              <b>master.cf</b> file, its running  processes  are  termi-
-              nated  immediately.   Otherwise,  running processes
-              are allowed to terminate as soon as is  convenient,
-              so  that  changes  in configuration settings affect
+              tion files. If a service has been removed from  the
+              <b>master.cf</b>  file,  its  running processes are termi-
+              nated immediately.   Otherwise,  running  processes
+              are  allowed to terminate as soon as is convenient,
+              so that changes in  configuration  settings  affect
               only new service requests.
 
        <b>SIGTERM</b>
-              Upon receipt of a <b>TERM</b> signal (e.g., after  <b>postfix</b>
-              <b>abort</b>),  the master process passes the signal on to
+              Upon  receipt of a <b>TERM</b> signal (e.g., after <b>postfix</b>
+              <b>abort</b>), the master process passes the signal on  to
               its child processes and terminates.  This is useful
-              for  an emergency shutdown. Normally one would ter-
-              minate only the master  (<b>postfix</b>  <b>stop</b>)  and  allow
+              for an emergency shutdown. Normally one would  ter-
+              minate  only  the  master  (<b>postfix stop</b>) and allow
               running processes to finish what they are doing.
 
 <b>DIAGNOSTICS</b>
        Problems are reported to <b>syslogd</b>(8).
 
-<b>BUGS</b>
 <b>ENVIRONMENT</b>
-       <b>MAIL</b><i>_</i><b>DEBUG</b>
+       <b>MAIL_DEBUG</b>
               After initialization, start a debugger as specified
-              with the <b>debugger</b><i>_</i><b>command</b>  configuration  parameter
+              with  the  <b><a href="postconf.5.html#debugger_command">debugger_command</a></b> configuration parameter
               in the <b>main.cf</b> configuration file.
 
-       <b>MAIL</b><i>_</i><b>CONFIG</b>
+       <b>MAIL_CONFIG</b>
               Directory with Postfix configuration files.
 
-<b>CONFIGURATION</b> <b>PARAMETERS</b>
-       The  following  <b>main.cf</b> parameters are especially relevant
-       to this program. See the Postfix <b>main.cf</b> file  for  syntax
-       details  and  for  default  values. Use the <b>postfix</b> <b>reload</b>
-       command after a configuration change.
+<b>CONFIGURATION PARAMETERS</b>
+       Unlike most Postfix daemon processes, the <a href="master.8.html">master(8)</a> server
+       does not automatically pick up changes to <b>main.cf</b>. Changes
+       to <b>master.cf</b> are never picked up automatically.   Use  the
+       <b>postfix reload</b> command after a configuration change.
 
-<b>Miscellaneous</b>
-       <b>import</b><i>_</i><b>environment</b>
+<b>RESOURCE AND RATE CONTROLS</b>
+       <b><a href="postconf.5.html#daemon_timeout">daemon_timeout</a> (18000s)</b>
+              How  much time a Postfix daemon process may take to
+              handle a request  before  it  is  terminated  by  a
+              built-in watchdog timer.
 
-       <b>export</b><i>_</i><b>environment</b>
-              Lists of names of environment parameters  that  can
-              be  imported  from  (exported  to) non-Postfix pro-
-              cesses.
+       <b><a href="postconf.5.html#default_process_limit">default_process_limit</a> (100)</b>
+              The  default  maximal  number of Postfix child pro-
+              cesses that provide a given service.
 
-       <b>mail</b><i>_</i><b>owner</b>
-              The owner of the mail queue  and  of  most  Postfix
-              processes.
+       <b><a href="postconf.5.html#max_idle">max_idle</a> (100s)</b>
+              The maximum amount of time  that  an  idle  Postfix
+              daemon  process  waits for the next service request
+              before exiting.
 
-       <b>command</b><i>_</i><b>directory</b>
-              Directory with Postfix support programs.
+       <b><a href="postconf.5.html#max_use">max_use</a> (100)</b>
+              The maximal number of connection requests before  a
+              Postfix daemon process terminates.
 
-       <b>daemon</b><i>_</i><b>directory</b>
-              Directory with Postfix daemon programs.
+       <b><a href="postconf.5.html#service_throttle_time">service_throttle_time</a> (60s)</b>
+              How long the Postfix <a href="master.8.html">master(8)</a> waits before forking
+              a server that appears to be malfunctioning.
 
-       <b>queue</b><i>_</i><b>directory</b>
-              Top-level  directory  of the Postfix queue. This is
-              also the root directory of Postfix daemons that run
-              chrooted.
+<b>MISCELLANEOUS CONTROLS</b>
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of  the  Postfix  main.cf  and
+              master.cf configuration files.
 
-       <b>inet</b><i>_</i><b>interfaces</b>
-              The  network  interface  addresses that this system
-              receives mail on.  You need to stop and start Post-
-              fix when this parameter changes.
+       <b><a href="postconf.5.html#daemon_directory">daemon_directory</a> (see 'postconf -d' output)</b>
+              The  directory  with  Postfix  support programs and
+              daemon programs.
 
-<b>Resource</b> <b>controls</b>
-       <b>default</b><i>_</i><b>process</b><i>_</i><b>limit</b>
-              Default  limit for the number of simultaneous child
-              processes that provide a given service.
+       <b><a href="postconf.5.html#debugger_command">debugger_command</a> (empty)</b>
+              The external command to execute when a Postfix dae-
+              mon program is invoked with the -D option.
 
-       <b>max</b><i>_</i><b>idle</b>
-              Limit the time in  seconds  that  a  child  process
-              waits between service requests.
+       <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
+              The network interface addresses that this mail sys-
+              tem receives mail on.
 
-       <b>max</b><i>_</i><b>use</b>
-              Limit  the  number of service requests handled by a
-              child process.
+       <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
+              The list of environment parameters that  a  Postfix
+              process  will import from a non-Postfix parent pro-
+              cess.
 
-       <b>service</b><i>_</i><b>throttle</b><i>_</i><b>time</b>
-              Time to avoid forking a server that appears  to  be
-              broken.
+       <b><a href="postconf.5.html#mail_owner">mail_owner</a> (postfix)</b>
+              The UNIX system account that owns the Postfix queue
+              and most Postfix daemon processes.
+
+       <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
+              The  process ID of a Postfix command or daemon pro-
+              cess.
+
+       <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
+              The process name of a  Postfix  command  or  daemon
+              process.
+
+       <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
+              The  location of the Postfix top-level queue direc-
+              tory.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (postfix)</b>
+              The mail system name that is prepended to the  pro-
+              cess  name  in  syslog  records,  so  that  "smtpd"
+              becomes, for example, "postfix/smtpd".
 
 <b>FILES</b>
-       /etc/postfix/main.cf: global configuration file.
-       /etc/postfix/master.cf: master process configuration file.
-       /var/spool/postfix/pid/master.pid: master lock file.
+       /etc/postfix/main.cf, global configuration file.
+       /etc/postfix/master.cf, master server configuration file.
+       /var/spool/postfix/pid/master.pid, master lock file.
 
-<b>SEE</b> <b>ALSO</b>
-       <a href="qmgr.8.html">qmgr(8)</a> queue manager
-       <a href="pickup.8.html">pickup(8)</a> local mail pickup
-       syslogd(8) system logging
+<b>SEE ALSO</b>
+       <a href="qmgr.8.html">qmgr(8)</a>, queue manager
+       <a href="verify.8.html">verify(8)</a>, address verification
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       syslogd(8), system logging
 
 <b>LICENSE</b>
-       The  Secure  Mailer  license must be distributed with this
+       The Secure Mailer license must be  distributed  with  this
        software.
 
 <b>AUTHOR(S)</b>

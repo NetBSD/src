@@ -15,6 +15,12 @@
 /*	host_port() splits a string into substrings with the host
 /*	name or address, and the service name or port number.
 /*	The input string is modified.
+/*
+/*	The following input formats are understood:
+/*
+/*	[host]:port, [host]:, [host].
+/*
+/*	host:port, host:, host.
 /* DIAGNOSTICS
 /*	The result is a null pointer in case of success.
 /*	In case of problems the result is a string pointer with

@@ -1,0 +1,501 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "http://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix SASL Howto</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii">
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix SASL Howto</h1>
+
+<hr>
+
+<h2>WARNING WARNING WARNING</h2>
+
+<p> People who go to the trouble of installing Postfix may have
+the expectation that Postfix is more secure than some other mailers.
+The Cyrus SASL library is a lot of code. With SASL authentication
+enabled in the Postfix SMTP client and SMTP server, Postfix becomes
+as secure as other mail systems that use the Cyrus SASL library.
+</p>
+
+<h2><a name="intro">How Postfix uses SASL authentication information</a></h2>
+
+<p> Postfix SASL support (<a href="http://www.faqs.org/rfcs/rfc2554.html">RFC 2554</a>) can be used to authenticate
+remote SMTP clients to the Postfix SMTP server, and to authenticate
+the Postfix SMTP client to a remote SMTP server.  </p>
+
+<p> When receiving mail, Postfix logs the client-provided username,
+authentication method, and sender address to the maillog file, and
+optionally grants mail access via the permit_sasl_authenticated
+UCE restriction. </p>
+
+<p> Postfix does not record the client's SASL authentication
+information in message headers, and does not pass it on via SMTP
+commands when forwarding mail, because it is no-one else's business
+to know the client username and authentication method.  People who
+need to know can find the information in the local Postfix maillog
+file.  Some day, Postfix message headers will be configurable and
+then one can record the SASL username without having to edit C
+code.  </p>
+
+<p>This document covers the following topics: </p>
+
+<ul>
+
+<li><a href="#versions">What SASL versions are supported</a>
+
+<li><a href="#build_sasl">Building the SASL library</a>
+
+<li><a href="#build_postfix">Building Postfix with SASL authentication
+support</a></li>
+
+<li><a href="#server_sasl">Enabling SASL authentication in the
+Postfix SMTP server</a></li>
+
+<li><a href="#server_test">Testing SASL authentication in the
+Postfix SMTP server</a></li>
+
+<li><a href="#debugging">Trouble shooting the SASL internals</a>
+
+<li><a href="#client_sasl">Enabling SASL authentication in the
+Postfix SMTP client</a></li>
+
+<li><a href="#credits">Credits</a>
+
+</ul>
+
+<p> When sending mail, Postfix can look up the server hostname or
+destination domain (the address right-hand part) in a table, and if a
+username/password is found, it will use that username and password
+to authenticate to the server. </p>
+
+<h2><a name="versions">What SASL versions are supported</a></h2>
+
+<p> Postfix+SASL 1.5.5 was seen working on RedHat 6.1 (pwcheck_method
+set to shadow or sasldb), Solaris 2.7 (pwcheck_method set to shadow
+or sasldb), and FreeBSD 3.4 (pwcheck_method set to sasldb).  On
+RedHat 6.1, SASL 1.5.5 insisted on write access to /etc/sasldb.
+Note that this seems to be related to the auto_transition switch
+in SASL. Note also that the Cyrus SASL documentation says that it
+is pointless to enable that if you use "sasldb" for "pwcheck_method".
+Later versions of the SASL 1.5.x series should also work. </p>
+
+<p> Postfix+SASL 2.1.1 appears to work on Mandrake Linux 8.1
+(pwcheck_method set to saslauthd or auxprop).  Note that the
+'auxprop' pwcheck_method replaces the 'sasldb' method from SASL
+1.5.x.  Postfix may need write access to /etc/sasldb2 if you use
+the auto_transition feature, or if you use an authentication
+mechanism such as OTP (one-time passwords) that needs to update
+secrets in the database. </p>
+
+<h2><a name="build_sasl">Building the SASL library</a></h2>
+
+<p> Postfix appears to work with cyrus-sasl-1.5.5 or cyrus-sasl-2.1.1, 
+which are available from: </p>
+
+<blockquote>
+<pre>
+<a href="ftp://ftp.andrew.cmu.edu/pub/cyrus-mail/">ftp://ftp.andrew.cmu.edu/pub/cyrus-mail/</a>.
+</pre>
+</blockquote>
+
+<p> IMPORTANT: if you install the Cyrus SASL libraries as per the
+default, you will have to symlink /usr/lib/sasl -&gt; /usr/local/lib/sasl
+for version 1.5.5 or /usr/lib/sasl2 -&gt; /usr/local/lib/sasl2 for
+version 2.1.1. </p>
+
+<p> Reportedly, Microsoft Internet Explorer version 5 requires the
+non-standard SASL LOGIN authentication method. To enable this
+authentication method, specify ``./configure --enable-login''. </p>
+
+<h2><a name="build_postfix">Building Postfix with SASL authentication
+support</a></h2>
+
+<p> To build Postfix with SASL authentication support, the following
+assumes that the Cyrus SASL include files are in /usr/local/include,
+and that the Cyrus SASL libraries are in /usr/local/lib. </p>
+
+<p> On some systems this generates the necessary Makefile definitions:
+</p>
+
+<dl>
+
+<dt> (for SASL version 1.5.5):
+<dd>
+<pre>
+% make tidy # if you have left-over files from a previous build
+% make makefiles CCARGS="-DUSE_SASL_AUTH -I/usr/local/include" \
+    AUXLIBS="-L/usr/local/lib -lsasl"
+</pre>
+
+<dt> (for SASL version 2.1.1):
+<dd>
+<pre>
+% make tidy # if you have left-over files from a previous build
+% make makefiles CCARGS="-DUSE_SASL_AUTH -I/usr/local/include/sasl" \
+    AUXLIBS="-L/usr/local/lib -lsasl2"
+</pre>
+
+</dl>
+
+<p> On Solaris 2.x you need to specify run-time link information,
+otherwise ld.so will not find the SASL shared library: </p>
+
+<dl>
+
+<dt> (for SASL version 1.5.5):
+<dd>
+<pre>
+% make tidy # if you have left-over files from a previous build
+% make makefiles CCARGS="-DUSE_SASL_AUTH -I/usr/local/include" \
+    AUXLIBS="-L/usr/local/lib -R/usr/local/lib -lsasl"
+</pre>
+
+<dt> (for SASL version 2.1.1):
+<dd>
+<pre>
+% make tidy # if you have left-over files from a previous build
+% make makefiles CCARGS="-DUSE_SASL_AUTH -I/usr/local/include/sasl" \
+    AUXLIBS="-L/usr/local/lib -R/usr/local/lib -lsasl2"
+</pre>
+
+</dl>
+
+<h2><a name="server_sasl">Enabling SASL authentication in the Postfix
+SMTP server</a></h2>
+
+<p> In order to enable SASL support in the SMTP server: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    <a href="postconf.5.html#smtpd_sasl_auth_enable">smtpd_sasl_auth_enable</a> = yes
+</pre>
+</blockquote>
+
+<p> In order to allow mail relaying by authenticated clients: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
+        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> permit_sasl_authenticated ...
+</pre>
+</blockquote>
+
+<p> In /usr/local/lib/sasl/smtpd.conf (SASL version 1.5.5) or
+/usr/local/lib/sasl2/smtpd.conf (SASL version 2.1.1) you need to
+specify how the server should validate client passwords. </p>
+
+<p> In order to authenticate against the UNIX password database, try: </p>
+
+<dl>
+<dt> (SASL version 1.5.5)
+<dd>
+<pre>
+/usr/local/lib/sasl/smtpd.conf:
+    pwcheck_method: pwcheck
+
+</pre>
+
+<dt> (SASL version 2.1.1)
+<dd>
+<pre>
+/usr/local/lib/sasl2/smtpd.conf:
+    pwcheck_method: pwcheck
+</pre>
+
+</dl>
+
+<p> The name of the file in /usr/local/lib/sasl (SASL version 1.5.5)
+or /usr/local/lib/sasl2 (SASL version 2.1.1) used by the SASL
+library for configuration can be set with: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    <a href="postconf.5.html#smtpd_sasl_application_name">smtpd_sasl_application_name</a> = smtpd
+</pre>
+</blockquote>
+
+<p> The pwcheck daemon is contained in the cyrus-sasl source tarball. </p>
+
+<p> IMPORTANT: postfix processes need to have group read+execute
+permission for the /var/pwcheck directory, otherwise authentication
+attempts will fail. </p>
+
+<p> Alternately, in SASL 1.5.26 and later (including 2.1.1), try: </p>
+
+<dl>
+
+<dt> (SASL version 1.5.26)
+<dd>
+<pre>
+/usr/local/lib/sasl/smtpd.conf:
+    pwcheck_method: saslauthd
+</pre>
+
+<dt> (SASL version 2.1.1)
+<dd>
+<pre>
+/usr/local/lib/sasl2/smtpd.conf:
+    pwcheck_method: saslauthd
+</pre>
+
+</dl>
+
+<p> The saslauthd daemon is also contained in the cyrus-sasl source
+tarball.  It is more flexible than the pwcheck daemon, in that it
+can authenticate against PAM and various other sources. To use PAM,
+start saslauthd with "-a pam". </p>
+
+<p> In order to authenticate against SASL's own password database: </p>
+
+<dl>
+<dt> (SASL version 1.5.5)
+<dd>
+<pre>
+/usr/local/lib/sasl/smtpd.conf:
+    pwcheck_method:  sasldb
+</pre>
+
+<dt> (SASL version 2.1.1)
+<dd>
+<pre>
+/usr/local/lib/sasl2/smtpd.conf:
+    pwcheck_method:  auxprop
+</pre>
+
+</dl>
+
+<p> This will use the SASL password file (default: /etc/sasldb in
+version 1.5.5, or /etc/sasldb2 in version 2.1.1), which is maintained
+with the saslpasswd or saslpasswd2 command (part of the Cyrus SASL
+software). On some poorly-supported systems the saslpasswd command needs
+to be run multiple times before it stops complaining.  The Postfix SMTP
+server needs read access to the sasldb file - you may have to play games
+with group access permissions.  With the OTP authentication mechanism,
+the SMTP server also needs write access to /etc/sasldb2 or /etc/sasldb
+(or the back end SQL database, if used). </p>
+
+<p> IMPORTANT: all users must be able to authenticate using ALL
+authentication mechanisms advertised by Postfix, otherwise the
+negotiation might end up with an unsupported mechanism, and
+authentication would fail.  For example if you configure SASL to
+use <i>saslauthd</i> for authentication against PAM (pluggable
+authentication modules), only the PLAIN and LOGIN mechanisms are
+supported and stand a chance to succeed, yet the SASL library would also
+advertise other mechanisms, such as DIGEST-MD5.  This happens because
+those mechanisms are made available by other plugins, and the SASL
+library have no way to know that your only valid authentication source
+is PAM.  Thus you might need to limit the list of mechanisms advertised
+by Postfix.  This is only possible with SASL version 2.1.1 or later:
+</p>
+
+<blockquote>
+<pre>
+/usr/local/lib/sasl2/smtpd.conf:
+    mech_list: plain login
+</pre>
+</blockquote>
+
+<p> For the same reasons you might want to limit the list of plugins
+used for authentication.  With SASL version 1.5.5 your only choice is to
+delete the corresponding libraries from /usr/local/lib/sasl.  With SASL
+version 2.1.1: </p>
+
+<blockquote>
+<pre>
+/usr/local/lib/sasl2/smtpd.conf:
+    pwcheck_method:  auxprop
+    auxprop_plugin:  sql
+</pre>
+</blockquote>
+
+<p> IMPORTANT: To get sasldb running, make sure that you set the SASL
+domain (realm) to a fully qualified domain name. </p>
+
+<p> EXAMPLE: </p>
+
+<dl>
+<dt> (SASL version 1.5.5)
+<dd>
+<pre>
+% saslpasswd -c -u `postconf -h <a href="postconf.5.html#myhostname">myhostname</a>` exampleuser
+</pre>
+
+<dt> (SASL version 2.1.1)
+<dd>
+<pre>
+% saslpasswd2 -c -u `postconf -h <a href="postconf.5.html#myhostname">myhostname</a>` exampleuser
+</pre>
+
+</dl>
+
+<p> You can find out SASL's idea about the realms of the users
+in sasldb with <i>sasldblistusers</i> (SASL version 1.5.5) or
+<i>sasldblistusers2</i> (SASL version 2.1.1). </p>
+
+<p> On the Postfix side, you can have only one realm per smtpd
+instance, and only the users belonging to that realm would be able to
+authenticate.  The Postfix variable <a href="postconf.5.html#smtpd_sasl_local_domain">smtpd_sasl_local_domain</a> controls the
+realm used by smtpd: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    <a href="postconf.5.html#smtpd_sasl_local_domain">smtpd_sasl_local_domain</a> = $<a href="postconf.5.html#myhostname">myhostname</a>
+</pre>
+</blockquote>
+
+<p> To run software chrooted with SASL support is an interesting
+exercise.  It probably is not worth the trouble. </p>
+
+<p> Older Microsoft SMTP client software implements a non-standard
+version of the AUTH protocol syntax, and expects that the SMTP
+server replies to EHLO with "250 AUTH=stuff" instead of "250 AUTH
+stuff".  To accommodate such clients in addition to conformant
+clients, set "<a href="postconf.5.html#broken_sasl_auth_clients">broken_sasl_auth_clients</a> = yes" in the main.cf file.
+</p>
+
+<h2><a name="server_test">Testing SASL authentication in the Postfix
+SMTP server</a></h2>
+
+<p> To test the server side, connect to the SMTP server, and you should
+be able to have a conversation as shown below. Information sent by the
+client is shown in bold font. </p>
+
+<blockquote>
+<pre>
+220 server.host.tld ESMTP Postfix
+<b>EHLO client.host.tld</b>
+250-server.host.tld
+250-PIPELINING
+250-SIZE 10240000
+250-ETRN
+250-AUTH DIGEST-MD5 PLAIN CRAM-MD5
+250 8BITMIME
+<b>AUTH PLAIN dGVzdAB0ZXN0AHRlc3RwYXNz</b>
+235 Authentication successful
+</pre>
+</blockquote>
+
+<p> Instead of dGVzdAB0ZXN0AHRlc3RwYXNz, specify the base64 encoded
+form of username\0username\0password (the \0 is a null byte). The
+example above is for a user named `test' with password `testpass'.
+</p>
+
+<p> In order to generate base64 encoded authentication information
+you can use one of the following commands: </p>
+
+<blockquote>
+<pre>
+% printf 'username\0username\0password' | mmencode 
+</pre>
+</blockquote>
+
+<blockquote>
+<pre>
+% perl -MMIME::Base64 -e \
+    'print encode_base64("username\0username\0password");'
+</pre>
+</blockquote>
+
+<p> The mmencode command is part of the metamail software.
+MIME::Base64 is available from <a href="http://www.cpan.org/">http://www.cpan.org/</a>. </p>
+
+<p> When posting logs of the SASL negotiations to public lists,
+please keep in mind that username/password information is trivial
+to recover from the base64-encoded form. </p>
+
+<h2><a name="debugging">Trouble shooting the SASL internals</a></h2>
+
+<p> In the Cyrus SASL sources you'll find a subdirectory named
+"sample".  Run make there, "su" to the user <i>postfix</i> (or
+whatever your <i><a href="postconf.5.html#mail_owner">mail_owner</a></i> directive is set to):
+
+<blockquote>
+<pre>
+% su postfix
+</pre>
+</blockquote>
+
+<p> then run the resulting sample server and client in separate
+terminals.  Strace / ktrace / truss the server to see what makes
+it unhappy, and fix the problem.  Repeat the previous step until
+you can successfully authenticate with the sample client.  Only
+then get back to Postfix. </p>
+
+<h2><a name="client_sasl">Enabling SASL authentication in the
+Postfix SMTP client</a></h2>
+
+<p> Turn on client-side SASL authentication, and specify a table with
+per-host or per-destination username and password information.
+Postfix first looks up the server hostname; if no entry is found,
+then Postfix looks up the destination domain name (usually, the
+right-hand part of an email address). </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = hash:/etc/postfix/sasl_passwd
+
+/etc/postfix/sasl_passwd:
+    foo.com             username:password
+    bar.com             username
+</pre>
+</blockquote>
+
+<p> Note: some SMTP servers support PLAIN or LOGIN authentication only.
+By default, the Postfix SMTP client does not use authentication
+methods that send plaintext passwords, and defers delivery with
+the following error message:  "Authentication failed: cannot SASL
+authenticate to server". To enable plaintext authentication specify,
+for example: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/main.cf:
+    <a href="postconf.5.html#smtp_sasl_security_options">smtp_sasl_security_options</a> = 
+</pre>
+</blockquote>
+
+<p> The SASL client password file is opened before the SMTP server
+enters the optional chroot jail, so you can keep the file in
+/etc/postfix. </p>
+
+<p> The Postfix SMTP client is backwards compatible with SMTP
+servers that use the non-standard "AUTH=method..." syntax in response
+to the EHLO command; there is no Postfix client configuration needed
+to work around it. </p>
+
+<h2><a name="credits">Credits</a></h2>
+
+<ul>
+
+<li> Postfix SASL support was originally implemented by Till Franke
+of SuSE Rhein/Main AG.
+
+<li> Wietse trimmed down the code to only the bare necessities.
+
+<li> Support for SASL version 2 was contributed by Jason Hoos.
+
+<li> Liviu Daia added <a href="postconf.5.html#smtpd_sasl_application_name">smtpd_sasl_application_name</a>, split
+<a href="postconf.5.html#reject_sender_login_mismatch">reject_sender_login_mismatch</a> into
+<a href="postconf.5.html#reject_authenticated_sender_login_mismatch">reject_authenticated_sender_login_mismatch</a> and
+<a href="postconf.5.html#reject_unauthenticated_sender_login_mismatch">reject_unauthenticated_sender_login_mismatch</a>, and revised the docs.
+
+</ul>
+
+</body>
+
+</html>

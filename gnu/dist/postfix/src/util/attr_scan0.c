@@ -6,7 +6,7 @@
 /* SYNOPSIS
 /*	#include <attr.h>
 /*
-/*	int	attr_scan0(fp, flags, type, name, ...)
+/*	int	attr_scan0(fp, flags, type, name, ..., ATTR_TYPE_END)
 /*	VSTREAM	fp;
 /*	int	flags;
 /*	int	type;
@@ -41,8 +41,9 @@
 /* .in
 /*
 /*	All attribute names and attribute values are sent as null terminated
-/*	strings. Each string must be no longer than 2*var_line_limit
-/*	characters. The formatting rules favor implementations in C.
+/*	strings. Each string must be no longer than 4*var_line_limit
+/*	characters including the terminator.
+/*	These formatting rules favor implementations in C.
 /*
 /*      Normally, attributes must be received in the sequence as specified with
 /*	the attr_scan0() argument list.  The input stream may contain additional
@@ -91,10 +92,12 @@
 /* .IP "ATTR_TYPE_STR (char *, VSTRING *)"
 /*	This argument is followed by an attribute name and a VSTRING pointer.
 /* .IP "ATTR_TYPE_HASH (HTABLE *)"
+/* .IP "ATTR_TYPE_NAMEVAL (NVTABLE *)"
 /*	All further input attributes are processed as string attributes.
 /*	No specific attribute sequence is enforced.
 /*	All attributes up to the attribute list terminator are read,
 /*	but only the first instance of each attribute is stored.
+/*	There can be no more than 1024 attributes in a hash table.
 /* .sp
 /*	The attribute string values are stored in the hash table under
 /*	keys equal to the attribute name (obtained from the input stream).
@@ -106,9 +109,10 @@
 /*	This argument terminates the requested attribute list.
 /* .RE
 /* BUGS
-/*	ATTR_TYPE_HASH accepts attributes with arbitrary names from possibly
-/*	untrusted sources. This is unsafe, unless the resulting table is
-/*	queried only with known to be good attribute names.
+/*	ATTR_TYPE_HASH (ATTR_TYPE_NAMEVAL) accepts attributes with arbitrary
+/*	names from possibly untrusted sources.
+/*	This is unsafe, unless the resulting table is queried only with
+/*	known to be good attribute names.
 /* DIAGNOSTICS
 /*	attr_scan0() and attr_vscan0() return -1 when malformed input is
 /*	detected (string too long, incomplete line, missing end marker).
@@ -156,8 +160,6 @@
 
 static int attr_scan0_string(VSTREAM *fp, VSTRING *plain_buf, const char *context)
 {
-    extern int var_line_limit;		/* XXX */
-    int     limit = var_line_limit * 2;
     int     ch;
 
     if ((ch = vstring_get_null(plain_buf, fp)) == VSTREAM_EOF) {
@@ -167,8 +169,8 @@ static int attr_scan0_string(VSTREAM *fp, VSTRING *plain_buf, const char *contex
 	return (-1);
     }
     if (ch != 0) {
-	msg_warn("string length > %d characters from %s while reading %s",
-		 limit, VSTREAM_PATH(fp), context);
+	msg_warn("unexpected end-of-input from %s while reading %s",
+		 VSTREAM_PATH(fp), context);
 	return (-1);
     }
     if (msg_verbose)
@@ -351,6 +353,10 @@ int     attr_vscan0(VSTREAM *fp, int flags, va_list ap)
 			     STR(name_buf), VSTREAM_PATH(fp));
 		    return (conversions);
 		}
+	    } else if (hash_table->used >= ATTR_HASH_LIMIT) {
+		msg_warn("attribute count exceeds limit %d in input from %s",
+			 ATTR_HASH_LIMIT, VSTREAM_PATH(fp));
+		return (conversions);
 	    } else {
 		htable_enter(hash_table, STR(name_buf),
 			     mystrdup(STR(str_buf)));

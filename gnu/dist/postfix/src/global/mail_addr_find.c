@@ -25,7 +25,7 @@
 /* .IP user
 /*	Look up \fIuser\fR when \fIdomain\fR is equal to $myorigin,
 /*	when \fIdomain\fR matches $mydestination, or when it matches
-/*	$inet_interfaces.
+/*	$inet_interfaces or $proxy_interfaces.
 /* .IP @domain
 /*	Look for an entry that matches the domain specified in \fIaddress\fR.
 /* .PP
@@ -128,7 +128,7 @@ const char *mail_addr_find(MAPS *path, const char *address, char **extp)
 
     /*
      * Try user+foo@$myorigin, user+foo@$mydestination or
-     * user+foo@[$inet_interfaces]. Then try with +foo stripped off.
+     * user+foo@[${proxy,inet}_interfaces]. Then try with +foo stripped off.
      */
     if (result == 0 && dict_errno == 0
 	&& (ratsign = strrchr(full_key, '@')) != 0

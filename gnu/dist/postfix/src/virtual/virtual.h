@@ -68,6 +68,7 @@ typedef struct DELIVER_ATTR {
     char   *sender;			/* taken from envelope */
     char   *orig_rcpt;			/* taken from sender */
     char   *recipient;			/* taken from resolver */
+    long    rcpt_offset;		/* taken from resolver */
     char   *user;			/* recipient lookup handle */
     char   *delivered;			/* for loop detection */
     char   *relay;			/* relay host */
@@ -93,10 +94,14 @@ typedef struct LOCAL_STATE {
  /*
   * Bundle up some often-user attributes.
   */
+#define BOUNCE_FLAGS(request)	DEL_REQ_TRACE_FLAGS((request)->flags)
+
 #define BOUNCE_ATTR(attr)	attr.queue_id, attr.orig_rcpt, attr.recipient, \
-					attr.relay, attr.arrival_time
+					attr.rcpt_offset, attr.relay, \
+					attr.arrival_time
 #define SENT_ATTR(attr)		attr.queue_id, attr.orig_rcpt, attr.recipient, \
-					attr.relay, attr.arrival_time
+					attr.rcpt_offset, attr.relay, \
+					attr.arrival_time
 #define COPY_ATTR(attr)		attr.sender, attr.orig_rcpt, attr.delivered, \
 					attr.fp
 

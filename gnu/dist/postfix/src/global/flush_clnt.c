@@ -6,6 +6,8 @@
 /* SYNOPSIS
 /*	#include <flush_clnt.h>
 /*
+/*	void	flush_init()
+/*
 /*	int	flush_add(site, queue_id)
 /*	const char *site;
 /*	const char *queue_id;
@@ -21,6 +23,9 @@
 /*	This service maintains a cache of what mail is queued. The cache
 /*	is maintained for eligible destinations. A destination is the
 /*	right-hand side of a user@domain email address.
+/*
+/*	flush_init() initializes. It must be called before dropping
+/*	privileges in a daemon process.
 /*
 /*	flush_add() informs the "fast flush" cache manager that mail is
 /*	queued for the specified site with the specified queue ID.
@@ -77,12 +82,24 @@
 
 #include <mail_proto.h>
 #include <mail_flush.h>
-#include <flush_clnt.h>
 #include <mail_params.h>
+#include <domain_list.h>
+#include <match_parent_style.h>
+#include <flush_clnt.h>
 
 /* Application-specific. */
 
 #define STR(x)	vstring_str(x)
+
+static DOMAIN_LIST *flush_domains;
+
+/* flush_init - initialize */
+
+void    flush_init(void)
+{
+    flush_domains = domain_list_init(match_parent_style(VAR_FFLUSH_DOMAINS),
+				     var_fflush_domains);
+}
 
 /* flush_purge - house keeping */
 
@@ -147,9 +164,12 @@ int     flush_send(const char *site)
 	msg_info("%s: site %s", myname, site);
 
     /*
-     * Don't bother the server if the service is turned off.
+     * Don't bother the server if the service is turned off, or if the site
+     * is not eligible.
      */
-    if (*var_fflush_domains == 0)
+    if (flush_domains == 0)
+	msg_panic("missing flush client initialization");
+    if (domain_list_match(flush_domains, site) == 0)
 	status = FLUSH_STAT_DENY;
     else
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,
@@ -174,9 +194,12 @@ int     flush_add(const char *site, const char *queue_id)
 	msg_info("%s: site %s id %s", myname, site, queue_id);
 
     /*
-     * Don't bother the server if the service is turned off.
+     * Don't bother the server if the service is turned off, or if the site
+     * is not eligible.
      */
-    if (*var_fflush_domains == 0)
+    if (flush_domains == 0)
+	msg_panic("missing flush client initialization");
+    if (domain_list_match(flush_domains, site) == 0)
 	status = FLUSH_STAT_DENY;
     else
 	status = mail_command_client(MAIL_CLASS_PUBLIC, var_flush_service,

@@ -88,22 +88,8 @@ void    cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
     int     truncate;
 
     /* Stuff for excluded names. */
-    static HTABLE *masq_except_table = 0;
-    char   *saved_names;
     char   *name;
-    char   *ptr;
     int     excluded;
-
-    /*
-     * First time, build a lookup table for excluded names.
-     */
-    if (*var_masq_exceptions && masq_except_table == 0) {
-	masq_except_table = htable_create(5);
-	ptr = saved_names = mystrdup(var_masq_exceptions);
-	while ((name = mystrtok(&ptr, ", \t\r\n")) != 0)
-	    htable_enter(masq_except_table, lowercase(name), (char *) 0);
-	myfree(saved_names);
-    }
 
     /*
      * Find the domain part.
@@ -116,9 +102,9 @@ void    cleanup_masquerade_external(VSTRING *addr, ARGV *masq_domains)
     /*
      * Don't masquerade excluded names (regardless of domain).
      */
-    if (masq_except_table) {
+    if (*var_masq_exceptions) {
 	name = mystrndup(STR(addr), domain - 1 - STR(addr));
-	excluded = (htable_locate(masq_except_table, lowercase(name)) != 0);
+	excluded = (string_list_match(cleanup_masq_exceptions, lowercase(name)) != 0);
 	myfree(name);
 	if (excluded)
 	    return;
@@ -190,6 +176,7 @@ void    cleanup_masquerade_internal(VSTRING *addr, ARGV *masq_domains)
 #include <vstream.h>
 
 char *var_masq_exceptions;
+STRING_LIST *cleanup_masq_exceptions;
 
 int main(int argc, char **argv)
 {
@@ -200,6 +187,8 @@ int main(int argc, char **argv)
 	msg_fatal("usage: %s exceptions masquerade_list address", argv[0]);
 
     var_masq_exceptions = argv[1];
+    cleanup_masq_exceptions =
+  	string_list_init(MATCH_FLAG_NONE, var_masq_exceptions);
     masq_domains = argv_split(argv[2], " ,\t\r\n");
     addr = vstring_alloc(1);
     if (strchr(argv[3], '@') == 0)

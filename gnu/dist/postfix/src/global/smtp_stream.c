@@ -14,6 +14,9 @@
 /*	VSTREAM *stream;
 /*	const char *format;
 /*
+/*	void	smtp_flush(stream)
+/*	VSTREAM *stream;
+/*
 /*	int	smtp_get(vp, stream, maxlen)
 /*	VSTRING	*vp;
 /*	VSTREAM *stream;
@@ -53,8 +56,10 @@
 /*	The stream is configured to enable exception handling.
 /* .PP
 /*	smtp_printf() formats its arguments and writes the result to
-/*	the named stream, followed by a CR LF pair. The stream is flushed.
+/*	the named stream, followed by a CR LF pair. The stream is NOT flushed.
 /*	Long lines of text are not broken.
+/*
+/*	smtp_flush() flushes the named stream.
 /*
 /*	smtp_get() reads the named stream up to and including
 /*	the next LF character and strips the trailing CR LF. The
@@ -152,6 +157,29 @@ void    smtp_timeout_setup(VSTREAM *stream, int maxtime)
 		    VSTREAM_CTL_END);
 }
 
+/* smtp_flush - flush stream */
+
+void    smtp_flush(VSTREAM *stream)
+{
+    int     err;
+
+    /*
+     * Do the I/O, protected against timeout.
+     */
+    smtp_timeout_reset(stream);
+    err = vstream_fflush(stream);
+    smtp_timeout_detect(stream);
+
+    /*
+     * See if there was a problem.
+     */
+    if (err != 0) {
+	if (msg_verbose)
+	    msg_info("smtp_flush: EOF");
+	vstream_longjmp(stream, SMTP_ERR_EOF);
+    }
+}
+
 /* smtp_vprintf - write one line to SMTP peer */
 
 void    smtp_vprintf(VSTREAM *stream, const char *fmt, va_list ap)
@@ -164,7 +192,7 @@ void    smtp_vprintf(VSTREAM *stream, const char *fmt, va_list ap)
     smtp_timeout_reset(stream);
     vstream_vfprintf(stream, fmt, ap);
     vstream_fputs("\r\n", stream);
-    err = vstream_fflush(stream);
+    err = vstream_ferror(stream);
     smtp_timeout_detect(stream);
 
     /*
