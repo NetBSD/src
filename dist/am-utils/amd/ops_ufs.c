@@ -1,4 +1,4 @@
-/*	$NetBSD: ops_ufs.c,v 1.1.1.6 2003/03/09 01:13:17 christos Exp $	*/
+/*	$NetBSD: ops_ufs.c,v 1.2 2003/03/10 00:01:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Erez Zadok
@@ -63,7 +63,11 @@ static int ufs_umount(am_node *am, mntfs *mf);
  */
 am_ops ufs_ops =
 {
+#ifdef __NetBSD__
+  "ffs",
+#else
   "ufs",
+#endif
   ufs_match,
   0,				/* ufs_init */
   ufs_mount,
