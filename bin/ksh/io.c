@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.2 1997/01/12 19:11:53 tls Exp $	*/
+/*	$NetBSD: io.c,v 1.3 1998/08/19 01:43:22 thorpej Exp $	*/
 
 /*
  * shell buffered IO and formatted output
@@ -227,11 +227,12 @@ savefd(fd, noclose)
 
 	if (fd < FDBASE) {
 		nfd = ksh_dupbase(fd, FDBASE);
-		if (nfd < 0)
+		if (nfd < 0) {
 			if (errno == EBADF)
 				return -1;
 			else
 				errorf("too many files open in shell");
+		}
 		if (!noclose)
 			close(fd);
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.2 1997/01/12 19:11:38 tls Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.3 1998/08/19 01:43:22 thorpej Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1043,13 +1043,15 @@ c_jobs(wp)
 			return 1;
 		}
 	wp += builtin_opt.optind;
-	if (!*wp)
+	if (!*wp) {
 		if (j_jobs((char *) 0, flag, nflag))
 			rv = 1;
-	else
-		for (; *wp; wp++)
+	} else {
+		for (; *wp; wp++) {
 			if (j_jobs(*wp, flag, nflag))
 				rv = 1;
+		}
+	}
 	return rv;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.30 1998/07/28 05:31:25 mycroft Exp $	*/
+/*	$NetBSD: ls.c,v 1.31 1998/08/19 01:44:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.30 1998/07/28 05:31:25 mycroft Exp $");
+__RCSID("$NetBSD: ls.c,v 1.31 1998/08/19 01:44:19 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -581,13 +581,14 @@ mastercmp(a, b)
 	if (b_info == FTS_ERR)
 		return (0);
 
-	if (a_info == FTS_NS || b_info == FTS_NS)
+	if (a_info == FTS_NS || b_info == FTS_NS) {
 		if (b_info != FTS_NS)
 			return (1);
 		else if (a_info != FTS_NS)
 			return (-1);
 		else
 			return (namecmp(*a, *b));
+	}
 
 	if (a_info != b_info && !f_listdir &&
 	    (*a)->fts_level == FTS_ROOTLEVEL) {
