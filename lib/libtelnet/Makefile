@@ -1,16 +1,20 @@
-#	from: @(#)Makefile	5.4 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.3 1993/08/01 05:39:57 mycroft Exp $
+#	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
+#	$Id: Makefile,v 1.4 1994/02/25 02:52:45 cgd Exp $
 
 LIB=	telnet
-SRCS=	genget.c getent.c gettytab.c misc.c
-.if exists(enc_des.c)
-SRCS+=	enc_des.c encrypt.c
-.endif
-.if exists(kerberos.c)
-SRCS+=	kerberos.c auth.c kerberos5.c
-CFLAGS+= -I/usr/include/kerberosIV
-.endif
+SRCS=	auth.c encrypt.c genget.c getent.c misc.c
+#SRCS+=	kerberos.c enc_des.c
+#SRCS+=	kerberos5.c
+#CFLAGS+= -DENCRYPTION -DAUTHENTICATION -DHAS_CGETENT
+#CFLAGS+= -DKRB4 -DDES_ENCRYPTION -I/usr/include/kerberosIV
 
-.PATH:  ${.CURDIR}/../../libexec/getty
+# These are the sources that have encryption stuff in them.
+CRYPT_SRC= auth.c enc-proto.h enc_des.c encrypt.c
+CRYPT_SRC+= encrypt.h kerberos.c kerberos5.c krb4encpwd.c
+CRYPT_SRC+= misc.c spx.c Makefile
+NOCRYPT_DIR=${.CURDIR}/Nocrypt
+
 .include <bsd.lib.mk>
 
+nocrypt:
+	@echo "Encryption code already removed."

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)encrypt.h	5.2 (Berkeley) 3/22/91
- *	$Id: encrypt.h,v 1.2 1993/08/01 18:32:51 mycroft Exp $
+ *	from: @(#)encrypt.h	8.1 (Berkeley) 6/4/93
+ *	$Id: encrypt.h,v 1.3 1994/02/25 02:52:58 cgd Exp $
  */
 
 /*
@@ -54,54 +54,3 @@
  * or implied warranty.
  */
 
-#ifndef	__ENCRYPT__
-#define	__ENCRYPT__
-
-#define	DIR_DECRYPT		1
-#define	DIR_ENCRYPT		2
-
-typedef	unsigned char Block[8];
-typedef unsigned char *BlockT;
-typedef struct { Block _; } Schedule[16];
-
-#define	VALIDKEY(key)	( key[0] | key[1] | key[2] | key[3] | \
-			  key[4] | key[5] | key[6] | key[7])
-
-#define	SAMEKEY(k1, k2)	(!bcmp((void *)k1, (void *)k2, sizeof(Block)))
-
-typedef	struct {
-	short		type;
-	int		length;
-	unsigned char	*data;
-} Session_Key;
-
-#if	!defined(P)
-#ifdef	__STDC__
-#define P(x)	x
-#else
-#define P(x)	()
-#endif
-#endif
-
-typedef struct {
-	char	*name;
-	int	type;
-	void	(*output) P((unsigned char *, int));
-	int	(*input) P((int));
-	void	(*init) P((int));
-	int	(*start) P((int, int));
-	int	(*is) P((unsigned char *, int));
-	int	(*reply) P((unsigned char *, int));
-	void	(*session) P((Session_Key *, int));
-	int	(*keyid) P((int, unsigned char *, int *));
-	void	(*printsub) P((unsigned char *, int, unsigned char *, int));
-} Encryptions;
-
-#define	SK_DES		1	/* Matched Kerberos v5 KEYTYPE_DES */
-
-#include "enc-proto.h"
-
-extern int encrypt_debug_mode;
-extern int (*decrypt_input) P((int));
-extern void (*encrypt_output) P((unsigned char *, int));
-#endif
