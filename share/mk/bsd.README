@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.96 2002/04/16 03:47:32 itojun Exp $
+#	$NetBSD: bsd.README,v 1.97 2002/04/19 03:08:05 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -57,6 +57,16 @@ the tree where the file gets installed.
 The profiled libraries are no longer built in a different directory than
 the regular libraries.  A new suffix, ".po", is used to denote a profiled
 object, and ".so" denotes a shared (position-independent) object.
+
+There are various make variables used during the build.  Basic rule for
+the variable naming scheme is as follows:
+
+MKxxx		Can be set to `no' by a user to disable functionality.
+		Defaults to `yes' (or usually does)
+
+NOxxx		If defined, disables a feature.  Not intended for users,
+		it's to allow Makefiles to disable functionality that
+		they don't support (such as missing man pages).
 
 The following variables that control how things are made/installed that
 are not set by default. These should not be set by Makefiles; they're for
