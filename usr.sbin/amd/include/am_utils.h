@@ -1,7 +1,7 @@
-/*	$NetBSD: am_utils.h,v 1.6 1998/08/08 22:33:36 christos Exp $	*/
+/*	$NetBSD: am_utils.h,v 1.7 1999/02/01 19:05:13 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_utils.h,v 1.1 1996/01/13 23:23:39 ezk Exp ezk 
+ * Id: am_utils.h,v 1.4 1999/01/13 23:31:20 ezk Exp 
  *
  */
 
@@ -160,7 +160,7 @@ extern int umount_fs(char *fs_name, const char *mnttabname);
  */
 #define	FSF_VALID	0x0001	/* Valid information available */
 #define	FSF_DOWN	0x0002	/* This fileserver is thought to be down */
-#define	FSF_ERROR	0x0004	/* Permanent error has occured */
+#define	FSF_ERROR	0x0004	/* Permanent error has occurred */
 #define	FSF_WANT	0x0008	/* Want a wakeup call */
 #define	FSF_PINGING	0x0010	/* Already doing pings */
 #define	FSRV_ISDOWN(fs)	(((fs)->fs_flags & (FSF_DOWN|FSF_VALID)) == (FSF_DOWN|FSF_VALID))
@@ -427,7 +427,7 @@ typedef struct am_stats am_stats;
 struct amd_stats {
   int d_drops;			/* Dropped requests */
   int d_stale;			/* Stale NFS handles */
-  int d_mok;			/* Succesful mounts */
+  int d_mok;			/* Successful mounts */
   int d_merr;			/* Failed mounts */
   int d_uerr;			/* Failed unmounts */
 };
@@ -497,7 +497,7 @@ extern char version[];		/* Version info */
 /*
  * Global variables.
  */
-extern AUTH *nfs_auth;		/* Dummy uthorisation for remote servers */
+extern AUTH *nfs_auth;		/* Dummy authorization for remote servers */
 extern FILE *logfp;		/* Log file */
 extern am_node **exported_ap;	/* List of nodes */
 extern am_node *root_node;	/* Node for "root" */
@@ -505,8 +505,22 @@ extern char *PrimNetName;	/* Name of primary connected network */
 extern char *PrimNetNum;	/* Name of primary connected network */
 extern char *SubsNetName;	/* Name of subsidiary connected network */
 extern char *SubsNetNum;	/* Name of subsidiary connected network */
-extern char *progname;		/* "amd"|"mmd" */
+
+#if 0
+extern char *progname;		/* "amd" */
+#endif
+extern void am_set_progname(char *pn);	/* "amd" */
+extern const char * am_get_progname(void); /* "amd" */
+extern void am_set_hostname(char *hn);
+extern const char * am_get_hostname(void);
+extern pid_t am_set_mypid(void);
+extern pid_t am_mypid;
+
+#if 0
 extern char hostname[];		/* "kiska" */
+extern pid_t mypid;		/* Current process id */
+#endif
+
 extern int first_free_map;	/* First free node */
 extern int foreground;		/* Foreground process */
 extern int immediate_abort;	/* Should close-down unmounts be retried */
@@ -515,7 +529,6 @@ extern int orig_umask;		/* umask() on startup */
 extern int task_notify_todo;	/* Task notifier needs running */
 extern int xlog_level;		/* Logging level */
 extern int xlog_level_init;
-extern pid_t mypid;		/* Current process id */
 extern serv_state amd_state;	/* Should we go now */
 extern struct in_addr myipaddr;	/* (An) IP address of this host */
 extern struct opt_tab xlog_opt[];
@@ -554,6 +567,7 @@ extern int amu_close(int fd);
 extern int background(void);
 extern int bind_resv_port(int, u_short *);
 extern int cmdoption(char *, struct opt_tab *, int *);
+extern int compute_automounter_mount_flags(mntent_t *);
 extern int compute_mount_flags(mntent_t *);
 extern int efs_readdir(am_node *, nfscookie, nfsdirlist *, nfsentry *, int);
 extern int eval_fs_opts(am_opts *, char *, char *, char *, char *, char *);
@@ -567,6 +581,7 @@ extern int make_nfs_auth(void);
 extern int make_rpc_packet(char *, int, u_long, struct rpc_msg *, voidp, XDRPROC_T_TYPE, AUTH *);
 extern int mapc_keyiter(mnt_map *, void(*)(char *, voidp), voidp);
 extern int mapc_search(mnt_map *, char *, char **);
+extern int mapc_type_exists(const char *type);
 extern int mkdirs(char *, int);
 extern int mount_auto_node(char *, voidp);
 extern int mount_automounter(int);
@@ -578,7 +593,7 @@ extern int pickup_rpc_reply(voidp, int, voidp, XDRPROC_T_TYPE);
 extern int root_keyiter(void(*)(char *, voidp), voidp);
 extern int softclock(void);
 extern int switch_option(char *);
-extern int switch_to_logfile(char *);
+extern int switch_to_logfile(char *logfile, int orig_umask);
 extern int timeout(u_int, void (*fn)(voidp), voidp);
 extern int valid_key(char *);
 extern mnt_map *mapc_find(char *, char *, const char *);
@@ -628,7 +643,8 @@ extern void nfs_program_2(struct svc_req *rqstp, SVCXPRT *transp);
 extern void normalize_slash(char *);
 extern void ops_showamfstypes(char *buf);
 extern void ops_showfstypes(char *outbuf);
-extern void plog(int, char *,...);
+extern void plog(int, char *,...)
+     __attribute__ ((__format__ (__printf__, 2, 3)));
 extern void rem_que(qelem *);
 extern void reschedule_timeout_mp(void);
 extern void restart(void);
@@ -853,7 +869,7 @@ extern int amfs_link_fmount(mntfs *mf);
 #endif /* HAVE_AM_FS_LINK */
 
 /*
- * Symbolic-link file syste, which also checks that the target of
+ * Symbolic-link file system, which also checks that the target of
  * the symlink exists.
  * A "filesystem" which is just a symbol link.
  */
@@ -947,9 +963,10 @@ extern void print_nfs_args(const nfs_args_t *nap, u_long nfs_version);
 #endif /* not DEBUG */
 
 extern int debug_flags;		/* Debug options */
-extern int debug_option (char *);
+extern int debug_option (char *opt);
 extern struct opt_tab dbg_opt[];
-extern void dplog(char *fmt, ...);
+extern void dplog(char *fmt, ...)
+     __attribute__ ((__format__ (__printf__, 1, 2)));
 
 /**************************************************************************/
 /*** MISC (stuff left to autoconfiscate)				***/

@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.5 1998/08/08 22:33:28 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1999/02/01 19:05:09 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: conf.c,v 5.2.2.1 1992/02/09 15:08:23 jsp beta 
+ * Id: conf.c,v 1.3 1999/01/10 21:53:44 ezk Exp 
  *
  */
 
@@ -375,7 +375,7 @@ gopt_debug_options(const char *val)
   return 0;
 #else /* not DEBUG */
   fprintf(stderr, "%s: not compiled with DEBUG option -- sorry.\n",
-	  progname);
+	  am_get_progname());
   return 1;
 #endif /* not DEBUG */
 }
@@ -536,6 +536,11 @@ gopt_map_options(const char *val)
 static int
 gopt_map_type(const char *val)
 {
+  /* check if map type exist */
+  if (!mapc_type_exists(val)) {
+    fprintf(stderr, "conf: no such map type \"%s\"\n", val);
+    return 1;
+  }
   gopt.map_type = strdup((char *)val);
   return 0;
 }
@@ -848,6 +853,11 @@ ropt_map_options(const char *val, cf_map_t *cfm)
 static int
 ropt_map_type(const char *val, cf_map_t *cfm)
 {
+  /* check if map type exist */
+  if (!mapc_type_exists(val)) {
+    fprintf(stderr, "conf: no such map type \"%s\"\n", val);
+    return 1;
+  }
   cfm->cfm_type = strdup((char *)val);
   return 0;
 }

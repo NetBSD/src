@@ -1,7 +1,7 @@
-/*	$NetBSD: info_nis.c,v 1.12 1998/08/08 22:33:29 christos Exp $	*/
+/*	$NetBSD: info_nis.c,v 1.13 1999/02/01 19:05:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: info_nis.c,v 5.2.2.1 1992/02/09 15:08:32 jsp beta 
+ * Id: info_nis.c,v 1.3 1999/01/13 23:30:59 ezk Exp 
  *
  */
 
@@ -53,6 +53,7 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amd.h>
+
 
 /*
  * NIS+ servers in NIS compat mode don't have yp_order()
@@ -123,27 +124,20 @@ callback(int status, char *key, int kl, char *val, int vl, char *data)
 
   if (status == YP_TRUE) {
 
-    /*
-     * Add to list of maps
-     */
+    /* add to list of maps */
     char *kp = strnsave(key, kl);
     char *vp = strnsave(val, vl);
+
     (*ncdp->ncd_fn) (ncdp->ncd_m, kp, vp);
 
-    /*
-     * We want more ...
-     */
+    /* we want more ... */
     return FALSE;
 
   } else {
 
-    /*
-     * NOMORE means end of map - otherwise log error
-     */
+    /* NOMORE means end of map - otherwise log error */
     if (status != YP_NOMORE) {
-      /*
-       * Check what went wrong
-       */
+      /* check what went wrong */
       int e = ypprot_err(status);
 
 #ifdef DEBUG
@@ -236,7 +230,7 @@ nis_search(mnt_map *m, char *map, char *key, char **val, time_t *tp)
   YP_ORDER_OUTORDER_TYPE order;
 
   /*
-   * Make sure domain initialised
+   * Make sure domain initialized
    */
   if (!gopt.nis_domain) {
     int error = determine_nis_domain();
@@ -312,7 +306,7 @@ nis_init(mnt_map *m, char *map, time_t *tp)
     has_yp_order = TRUE;
     *tp = (time_t) order;
 #ifdef DEBUG
-    dlog("NIS master for %s@%s has order %d", map, gopt.nis_domain, order);
+    dlog("NIS master for %s@%s has order %lu", map, gopt.nis_domain, (unsigned long) order);
 #endif /* DEBUG */
     break;
   case YPERR_YPERR:
@@ -349,7 +343,7 @@ nis_mtime(mnt_map *m, char *map, time_t *tp)
  * alternate code which avoids a bug in yp_all().  The bug in yp_all() is
  * that it does not close a TCP connection to ypserv, and this ypserv runs
  * out of open filedescriptors, getting into an infinite loop, thus all YP
- * clients enevtually unbind and hang too.
+ * clients eventually unbind and hang too.
  *
  * Systems known to be plagued with this bug:
  *	earlier SunOS 4.x
@@ -381,16 +375,25 @@ am_yp_all(char *indomain, char *inmap, struct ypall_callback *incallback)
 			      incallback->data);
     if (j != FALSE)		/* terminate loop */
       break;
+
+    /*
+     * We have to manually free all char ** arguments to yp_first/yp_next
+     * outval must be freed *before* calling yp_next again, outkey can be
+     * freed as outkey_old *after* the call (this saves one call to
+     * strnsave).
+     */
+    XFREE(outval);
     outkey_old = outkey;
     outkeylen_old = outkeylen;
     i = yp_next(indomain,
 		inmap,
 		outkey_old,
 		outkeylen_old,
-		 &outkey,
+		&outkey,
 		&outkeylen,
 		&outval,
 		&outvallen);
+    XFREE(outkey_old);
   } while (!i);
 #ifdef DEBUG
   if (i) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_subr.c,v 1.8 1998/08/08 22:33:30 christos Exp $	*/
+/*	$NetBSD: nfs_subr.c,v 1.9 1999/02/01 19:05:10 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-1998 Erez Zadok
+ * Copyright (c) 1997-1999 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -19,7 +19,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    must display the following acknowledgment:
  *      This product includes software developed by the University of
  *      California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_subr.c,v 5.2.2.1 1992/02/09 15:08:53 jsp beta 
+ * Id: nfs_subr.c,v 1.3 1999/01/13 23:31:00 ezk Exp 
  *
  */
 
@@ -133,7 +133,7 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 #ifdef DEBUG
     amuDebug(D_TRACE)
       plog(XLOG_DEBUG, "\tstat(%s), size = %d", mp->am_path,
-	   attrp->ns_u.ns_attr_u.na_size);
+	   (int) attrp->ns_u.ns_attr_u.na_size);
 #endif /* DEBUG */
 
     mp->am_stats.s_getattr++;
@@ -143,7 +143,7 @@ nfsproc_getattr_2_svc(am_nfs_fh *argp, struct svc_req *rqstp)
 #ifndef MNT2_NFS_OPT_SYMTTL
   /*
    * This code is needed to defeat Solaris 2.4's (and newer) symlink values
-   * cache.  It forces the last-modifed time of the symlink to be current.
+   * cache.  It forces the last-modified time of the symlink to be current.
    * It is not needed if the O/S has an nfs flag to turn off the
    * symlink-cache at mount time (such as Irix 5.x and 6.x). -Erez.
    */
@@ -213,6 +213,13 @@ nfsproc_lookup_2_svc(nfsdiropargs *argp, struct svc_req *rqstp)
       }
       res.dr_status = nfs_error(error);
     } else {
+      /*
+       * XXX: EXPERIMENTAL! Delay unmount of what was looked up.  This
+       * should reduce the chance for race condition between unmounting an
+       * entry synchronously, and re-mounting it asynchronously.
+       */
+      if (ap->am_ttl < mp->am_ttl)
+ 	ap->am_ttl = mp->am_ttl;
       mp_to_fh(ap, &res.dr_u.dr_drok_u.drok_fhandle);
       res.dr_u.dr_drok_u.drok_attributes = ap->am_fattr;
       res.dr_status = NFS_OK;
