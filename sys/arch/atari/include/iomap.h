@@ -1,4 +1,4 @@
-/*	$NetBSD: iomap.h,v 1.9 2001/04/12 07:17:30 leo Exp $	*/
+/*	$NetBSD: iomap.h,v 1.10 2001/05/28 06:43:20 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -76,10 +76,21 @@ vaddr_t	pci_mem_uncached;	/* KVA base of an uncached PCI mem-page	*/
 #define	ISA_MEMSTART		(0x40000000L)
 #endif	/* defined(_MILANHW_) */
 
+/*
+ * Pre-allocated PCI-memory regions (atari_init.c). We need those in the
+ * boot-stages.
+ * XXX: Can probably be reduced to only PCI_CONF_SIZE (Leo).
+ */
 #define PCI_CONF_SIZE	(4 * NBPG)
 #define PCI_IO_SIZE	(NBPG)
-#define PCI_VGA_SIZE	(32 * 1024)
+#define PCI_MEM_SIZE	(NBPG)
 
+#define	PCI_VGA_SIZE	(32 * 1024) /* XXX Leo: Only used by grfabs_et now. */
+
+/*
+ * See bootm_init()/bootm_alloc() in bus.c for the usage of this pool
+ * of pre-allocated VA-space.
+ */
 #define	BOOTM_VA_POOL	(32 * 8192)	/* Pre-allocated VA-space	*/
 
 #define	AD_RAM		(0x000000L)	/* main memory			*/

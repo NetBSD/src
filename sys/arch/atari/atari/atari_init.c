@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.54 2001/05/14 11:58:30 leo Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.55 2001/05/28 06:43:19 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -298,9 +298,9 @@ char	*esym_addr;		/* Address of kernel '_esym' symbol	*/
 	 * If present, add pci areas
 	 */
 	if (machineid & ATARI_HADES)
-		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_VGA_SIZE);
+		ptextra += btoc(PCI_CONF_SIZE + PCI_IO_SIZE + PCI_MEM_SIZE);
 	if (machineid & ATARI_MILAN)
-		ptextra += btoc(PCI_IO_SIZE + PCI_VGA_SIZE);
+		ptextra += btoc(PCI_IO_SIZE + PCI_MEM_SIZE);
 	ptextra += btoc(BOOTM_VA_POOL);
 
 	/*
@@ -772,8 +772,8 @@ u_int		ptextra;	/* #of additional I/O pte's	*/
 		pci_mem_addr  = ioaddr;
 		/* Provide an uncached PCI address for the MILAN */
 		pci_mem_uncached = ioaddr;
-		ioaddr       += PCI_VGA_SIZE;
-		epg           = &pg[btoc(PCI_VGA_SIZE)];
+		ioaddr       += PCI_MEM_SIZE;
+		epg           = &pg[btoc(PCI_MEM_SIZE)];
 		pg_proto      = PCI_VGA_PHYS | PG_RW | PG_CI | PG_V;
 		while(pg < epg) {
 			*pg++     = pg_proto;
