@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2002/04/22 23:23:05 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.15 2002/04/23 02:39:33 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -26,19 +26,5 @@ CLEANFILES+=	sun68k_bbinfo.h
 
 
 .ifndef HOSTPROG
-# list of MACHINEs to enable the compat symlink /usr/mdec/installboot
-# XXX: eventually this should be done for all machines.
-# XXX: or /usr/mdec/installboot is replaced with a shell script that
-# XXX: tells the user to use /usr/sbin/installboot instead
-#
-COMPATLINKS?=	pmax sun2
-afterinstall:
-.for l in ${COMPATLINKS}
-.if (${MACHINE} == ${l})
-	${INSTALL_SYMLINK} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${BINDIR}/${PROG} ${DESTDIR}/usr/mdec/${PROG}
-.endif
-.endfor
-
 .include <bsd.prog.mk>
 .endif
