@@ -1,77 +1,84 @@
-/*	@(#)ypclnt.h 1.14 90/01/03 Copyr 1990 Sun Microsystems, Inc	*/
-
 /*
- * ypclnt.h
- * This defines the symbols used in the c language
- * interface to the NIS client functions.  A description of this interface
- * can be read in ypclnt(3N).
+ * Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. The name of the author may not be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+ * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
-/*
- * Failure reason codes.  The success condition is indicated by a functional
- * value of "0".
- */
-#define YPERR_BADARGS 1			/* Args to function are bad */
-#define YPERR_RPC 2			/* RPC failure */
-#define YPERR_DOMAIN 3			/* Can't bind to a server which serves
-					 *   this domain. */
-#define YPERR_MAP 4			/* No such map in server's domain */
-#define YPERR_KEY 5			/* No such key in map */
-#define YPERR_YPERR 6			/* Internal NIS server or client
-					 *   interface error */
-#define YPERR_RESRC 7			/* Local resource allocation failure */
-#define YPERR_NOMORE 8			/* No more records in map database */
-#define YPERR_PMAP 9			/* Can't communicate with portmapper */
-#define YPERR_YPBIND 10			/* Can't communicate with ypbind */
-#define YPERR_YPSERV 11			/* Can't communicate with ypserv */
-#define YPERR_NODOM 12			/* Local domain name not set */
-#define YPERR_BADDB 13			/* NIS data base is bad */
-#define YPERR_VERS 14			/* NIS version mismatch */
-#define YPERR_ACCESS 15			/* Access violation */
-#define YPERR_BUSY 16			/* Database is busy */
+#ifndef _YPCLNT_H_
+#define _YPCLNT_H_
+
+#define YPERR_BADARGS	1		/* args to function are bad */
+#define YPERR_RPC	2		/* RPC failure */
+#define YPERR_DOMAIN	3		/* can't bind to a server for domain */
+#define YPERR_MAP	4		/* no such map in server's domain */
+#define YPERR_KEY	5		/* no such key in map */
+#define YPERR_YPERR	6		/* some internal YP server or client error */
+#define YPERR_RESRC	7		/* local resource allocation failure */
+#define YPERR_NOMORE	8		/* no more records in map database */
+#define YPERR_PMAP	9		/* can't communicate with portmapper */
+#define YPERR_YPBIND	10		/* can't communicate with ypbind */
+#define YPERR_YPSERV	11		/* can't communicate with ypserv */
+#define YPERR_NODOM	12		/* local domain name not set */
+#define YPERR_BADDB	13		/* YP data base is bad */
+#define YPERR_VERS	14		/* YP version mismatch */
+#define YPERR_ACCESS	15		/* access violation */
+#define YPERR_BUSY	16		/* database is busy */
 
 /*
  * Types of update operations
  */
-#define YPOP_CHANGE 1			/* change, do not add */
-#define YPOP_INSERT 2			/* add, do not change */
-#define YPOP_DELETE 3			/* delete this entry */
-#define YPOP_STORE  4			/* add, or change */
+#define YPOP_CHANGE	1		/* change, do not add */
+#define YPOP_INSERT	2		/* add, do not change */
+#define YPOP_DELETE	3		/* delete this entry */
+#define YPOP_STORE 	4		/* add, or change */
  
- 
-
-/*           
- * Data definitions
- */
-
-/*
- * struct ypall_callback * is the arg which must be passed to yp_all
- */
-
 struct ypall_callback {
-	int (*foreach)();		/* Return non-0 to stop getting
-					 *  called */
-	char *data;			/* Opaque pointer for use of callback
-					 *   function */
+	int (*foreach)();	/* return non-0 to stop getting called */
+	char *data;		/* opaque pointer for use of callback fn */
 };
 
-/*
- * External NIS client function references. 
- */
-extern int yp_bind();
-extern int _yp_dobind();
-extern void yp_unbind();
-extern int yp_get_default_domain ();
-extern int yp_match ();
-extern int yp_first ();
-extern int yp_next();
-extern int yp_master();
-extern int yp_order();
-extern int yp_all();
-extern int yp_match();
-extern char *yperr_string();
-extern int ypprot_err();
+int	yp_bind		__P((char *dom));
+int	_yp_dobind	__P((char *dom, struct dom_binding **ypdb));
+void	yp_unbind	__P((char *dom));
+int	yp_get_default_domain __P((char **domp));
+int	yp_match 	__P((char *indomain, char *inmap,
+			    const char *inkey, int inkeylen, char **outval,
+			    int *outvallen));
+int	yp_first 	__P((char *indomain, char *inmap,
+			    char **outkey, int *outkeylen, char **outval,
+			    int *outvallen));
+int	yp_next		__P((char *indomain, char *inmap,
+			    char *inkey, int inkeylen, char **outkey,
+			    int *outkeylen, char **outval, int *outvallen));
+int	yp_master	__P((char *indomain, char *inmap, char **outname));
+int	yp_order	__P((char *indomain, char *inmap, int *outorder));
+int	yp_all		__P((char *indomain, char *inmap,
+			    struct ypall_callback *incallback));
+char *	yperr_string	__P((int incode));
+int	ypprot_err	__P((unsigned int incode));
 
-/*
- * Global NIS data structures
- */
+#endif /* _YPCLNT_H_ */
+
