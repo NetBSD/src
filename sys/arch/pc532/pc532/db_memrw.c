@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 1996/10/13 03:30:37 christos Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 1997/03/20 12:00:42 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -44,6 +44,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 
 #include <vm/vm.h>
@@ -53,6 +54,9 @@
 #include <machine/cpufunc.h>
 
 #include <ddb/db_access.h>
+
+static void	set_pte __P((vm_offset_t, pt_entry_t));
+static void	db_write_text __P((vm_offset_t, size_t, char *));
 
 /*
  * Read bytes from kernel address space for debugger.
@@ -131,7 +135,7 @@ db_write_text(addr, size, data)
 		firstpage:
 			oldpte = *(pt_entry_t *)pmap_pte(pmap_kernel(), pgva);
 			if ((oldpte & PG_V) == 0) {
-				printf(" address 0x%x not a valid page\n", dst);
+				printf(" address %p not a valid page\n", dst);
 				return;
 			}
 			tmppte = oldpte | PG_RW;
@@ -166,12 +170,12 @@ db_write_bytes(addr, size, data)
 
 	/* If any part is in kernel text, use db_write_text() */
 	if ((dst < etext) && ((dst + size) > kernel_text)) {
-		db_write_text(dst, size, data);
+		db_write_text((vm_offset_t)dst, size, data);
 		return;
 	}
 
 	if (size == 4) {
-		*((int*)dst) = *((int*)data);
+		*((int *)dst) = *((int *)data);
 		return;
 	}
 
