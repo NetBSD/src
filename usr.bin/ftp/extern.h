@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 1997/02/01 10:44:58 lukem Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 1997/03/13 06:23:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -38,10 +38,10 @@
 struct fd_set;
 
 void    abort_remote __P((FILE *));
-void    abortpt __P(());
-void    abortrecv __P(());
-void    abortsend __P(());
-void    aborthttp __P(());
+void    abortpt __P((int));
+void    abortrecv __P((int));
+void    abortsend __P((int));
+void    aborthttp __P((int));
 void	account __P((int, char **));
 void	alarmtimer __P((int));
 int	another __P((int *, char ***, const char *));
@@ -50,9 +50,9 @@ void	blkfree __P((char **));
 void	cd __P((int, char **));
 void	cdup __P((int, char **));
 void	changetype __P((int, int));
-void	cmdabort __P(());
+void	cmdabort __P((int));
 void	cmdscanner __P((int));
-int	command __P(());
+int	command __P((const char *, ...));
 #ifndef SMALLFTP
 unsigned char complete __P((EditLine *, int));
 #endif /* !SMALLFTP */
@@ -77,16 +77,16 @@ void	help __P((int, char **));
 char   *hookup __P((const char *, int));
 void	idle __P((int, char **));
 int     initconn __P((void));
-void	intr __P(());
+void	intr __P((void));
 void	list_vertical __P((StringList *));
 void	lcd __P((int, char **));
 int	login __P((const char *));
-void	lostpeer __P(());
+void	lostpeer __P((void));
 void	lpwd __P((int, char **));
 void	ls __P((int, char **));
 void	mabort __P((int));
 void	macdef __P((int, char **));
-void	makeargv __P(());
+void	makeargv __P((void));
 void	makedir __P((int, char **));
 void	mdelete __P((int, char **));
 void	mget __P((int, char **));
@@ -95,11 +95,12 @@ void	modtime __P((int, char **));
 void	mput __P((int, char **));
 char   *onoff __P((int));
 void	newer __P((int, char **));
+void	page __P((int, char **));
 void    progressmeter __P((int));
-char   *prompt __P(());
-void	proxabort __P(());
+char   *prompt __P((void));
+void	proxabort __P((int));
 void    proxtrans __P((const char *, const char *, const char *));
-void    psabort __P(());
+void    psabort __P((int));
 void	psummary __P((int));
 void    pswitch __P((int));
 void    ptransfer __P((int));
@@ -111,7 +112,7 @@ void	quote1 __P((const char *, int, char **));
 void    recvrequest __P((const char *, const char *, const char *,
 	    const char *, int));
 void	reget __P((int, char **));
-char   *remglob __P((char **, int));
+char   *remglob __P((char **, int, char **));
 off_t	remotesize __P((const char *, int));
 time_t	remotemodtime __P((const char *, int));
 void	removedir __P((int, char **));
@@ -152,11 +153,11 @@ void	setverbose __P((int, char **));
 void	shell __P((int, char **));
 void	site __P((int, char **));
 void	sizecmd __P((int, char **));
-char   *slurpstring __P(());
+char   *slurpstring __P((void));
 void	status __P((int, char **));
 void	syst __P((int, char **));
 int	togglevar __P((int, char **, int *, const char *));
-void	usage __P(());
+void	usage __P((void));
 void	user __P((int, char **));
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $	*/
+/*	$NetBSD: complete.c,v 1.3 1997/03/13 06:23:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: complete.c,v 1.2 1997/02/01 10:44:57 lukem Exp $";
+static char rcsid[] = "$NetBSD: complete.c,v 1.3 1997/03/13 06:23:13 lukem Exp $";
 #endif /* not lint */
 
 /*
@@ -76,7 +76,7 @@ complete_ambiguous(word, list, words)
 	int list;
 	StringList *words;
 {
-	char insertstr[MAXPATHLEN + 1];
+	char insertstr[MAXPATHLEN];
 	char *lastmatch;
 	int i, j, matchlen, wordlen;
 
@@ -159,7 +159,7 @@ complete_local(word, list)
 	int list;
 {
 	StringList *words;
-	char dir[MAXPATHLEN + 1];
+	char dir[MAXPATHLEN];
 	char *file;
 	DIR *dd;
 	struct dirent *dp;
@@ -213,40 +213,50 @@ complete_remote(word, list)
 	int list;
 {
 	static StringList *dirlist;
-	static char	 lastdir[MAXPATHLEN + 1];
-	static int	 ftpdslashbug;
+	static char	 lastdir[MAXPATHLEN];
 	StringList	*words;
-	char		 dir[MAXPATHLEN + 1];
+	char		 dir[MAXPATHLEN];
 	char		*file, *cp;
-	int		 i, offset;
+	int		 i;
 	unsigned char	 rv;
 
 	char *dummyargv[] = { "complete", dir, NULL };
 
-	offset = 0;
 	if ((file = strrchr(word, '/')) == NULL) {
 		strcpy(dir, ".");
 		file = word;
 	} else {
-		if (file == word)
+		cp = file;
+		while (*cp == '/' && cp > word)
+			cp--;
+		if (cp == word)
 			strcpy(dir, "/");
 		else {
-			offset = file - word;
-			strncpy(dir, word, offset);
-			dir[offset] = '\0';
-			offset++;
+			strncpy(dir, word, cp - word + 1);
+			dir[cp - word + 1] = '\0';
 		}
 		file++;
 	}
 
 	if (dirchange || strcmp(dir, lastdir) != 0) {	/* dir not cached */
+		char *emesg;
+		int dirlen, ftpdslashbug;
+
+		dirlen = strlen(dir);
+		ftpdslashbug = 0;
+		if (strcmp(dir, "/") == 0)
+			ftpdslashbug = 1;
+		else if (strcmp(dir, ".") == 0)
+			dirlen = 0;
+		else
+			dirlen++;
 		if (dirlist != NULL)
 			sl_free(dirlist, 1);
 		dirlist = sl_init();
 
-		ftpdslashbug = 0;
 		mflag = 1;
-		while ((cp = remglob(dummyargv, 0)) != NULL) {
+		emesg = NULL;
+		while ((cp = remglob(dummyargv, 0, &emesg)) != NULL) {
 			char *tcp;
 
 			if (!mflag)
@@ -258,17 +268,19 @@ complete_remote(word, list)
 			/*
 			 * Work around ftpd(1) bug, which puts a // instead
 			 * of / in front of each filename returned by "NLST /".
-			 * Without this, remote completes of / look ugly.
+			 * Without this, remote completes of / don't work.
+			 * However, only do this if the bug is present.
 			 */
-			if (dir[0] == '/' && dir[1] == '\0' &&
-			    cp[0] == '/' && cp[1] == '/') {
-				cp++;
-				ftpdslashbug = 1;
-			}
-			tcp = strdup(cp);
+			if (ftpdslashbug && (cp[dirlen] != '/'))
+				ftpdslashbug = 0;
+			tcp = strdup(cp + dirlen + ftpdslashbug);
 			if (tcp == NULL)
 				errx(1, "Can't allocate memory for remote dir");
 			sl_add(dirlist, tcp);
+		}
+		if (emesg != NULL) {
+			printf("\n%s\n", emesg);
+			return CC_REDISPLAY;
 		}
 		strcpy(lastdir, dir);
 		dirchange = 0;
@@ -277,10 +289,10 @@ complete_remote(word, list)
 	words = sl_init();
 	for (i = 0; i < dirlist->sl_cur; i++) {
 		cp = dirlist->sl_str[i];
-		if (strlen(word) > strlen(cp))
+		if (strlen(file) > strlen(cp))
 			continue;
-		if (strncmp(word, cp, strlen(word)) == 0)
-			sl_add(words, cp + offset + ftpdslashbug);
+		if (strncmp(file, cp, strlen(file)) == 0)
+			sl_add(words, cp);
 	}
 	rv = complete_ambiguous(file, list, words);
 	sl_free(words, 0);
@@ -348,7 +360,7 @@ complete(el, ch)
 		case 'r':			/* remote complete */
 		case 'R':
 			if (!connected) {
-				printf("\nMust be connected to complete\n");
+				puts("\nMust be connected to complete.");
 				return CC_REDISPLAY;
 			}
 			return complete_remote(word, dolist);
