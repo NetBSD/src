@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.7 1996/12/28 23:50:44 pk Exp $	*/
+/* $NetBSD: md_root.c,v 1.8 1997/04/07 00:19:16 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -27,6 +27,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
