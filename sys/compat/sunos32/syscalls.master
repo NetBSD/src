@@ -1,4 +1,4 @@
-;	$NetBSD: syscalls.master,v 1.3 2001/02/05 12:46:19 mrg Exp $
+;	$NetBSD: syscalls.master,v 1.4 2001/02/06 15:41:53 mrg Exp $
 
 ;	from :NetBSD: syscalls.master,v 1.57 2000/12/09 07:10:36 mycroft Exp 
 
@@ -163,7 +163,7 @@
 90	NOARGS		{ int netbsd32_dup2(u_int from, u_int to); }
 91	UNIMPL		getdopt
 92	STD		{ int sunos32_sys_fcntl(int fd, int cmd, netbsd32_voidp arg); }
-93	NOARGS		{ int sys_select(u_int nd, netbsd32_fd_setp_t in, netbsd32_fd_setp_t ou, \
+93	NOARGS		{ int netbsd32_select(u_int nd, netbsd32_fd_setp_t in, netbsd32_fd_setp_t ou, \
 			    netbsd32_fd_setp_t ex, netbsd32_timevalp_t tv); }
 94	UNIMPL		setdopt
 95	NOARGS		{ int netbsd32_fsync(int fd); }
