@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.21 2000/02/09 13:40:42 enami Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.22 2000/02/20 03:48:40 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -229,14 +229,14 @@ sm_pcmcia_attach(parent, self, aux)
 	return;
 
  iomap_failed:
-	/* Disable the device */
-	pcmcia_function_disable(pa->pf);
-
- enable_failed:
 	/* Free our i/o space. */
 	pcmcia_io_free(pa->pf, &psc->sc_pcioh);
 
  ioalloc_failed:
+	/* Disable the device */
+	pcmcia_function_disable(pa->pf);
+
+ enable_failed:
 	psc->sc_io_window = -1;
 }
 
