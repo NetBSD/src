@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.151 2000/11/21 02:26:07 soren Exp $	*/
+/*	$NetBSD: trap.c,v 1.152 2000/12/14 21:24:53 jeffs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2000/11/21 02:26:07 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2000/12/14 21:24:53 jeffs Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -128,7 +128,6 @@ const char *trap_type[] = {
 	"r4000 virtual coherency data",
 };
 
-void userret __P((struct proc *, unsigned, u_quad_t));
 void trap __P((unsigned, unsigned, unsigned, unsigned, struct trapframe *));
 void syscall __P((unsigned, unsigned, unsigned));
 void ast __P((unsigned));
@@ -137,11 +136,8 @@ vaddr_t MachEmulateBranch __P((struct frame *, vaddr_t, unsigned, int));
 extern void MachEmulateFP __P((unsigned));
 extern void MachFPInterrupt __P((unsigned, unsigned, unsigned, struct frame *));
 
-void
-userret(p, pc, sticks)
-	struct proc *p;
-	unsigned pc;
-	u_quad_t sticks;
+static __inline void
+userret(struct proc *p, unsigned pc, u_quad_t sticks)
 {
 	int sig;
 
