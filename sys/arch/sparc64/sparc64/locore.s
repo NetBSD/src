@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.55 2000/04/18 02:12:25 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.56 2000/04/22 22:06:06 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -2709,6 +2709,26 @@ winfixsave:
 	CHKPT(%g2,%g1,0x17)
 !	sir
 #endif
+	!!
+	!! Here we managed to fault trying to access a kernel window
+	!! This is a bug.  Switch to the interrupt stack if we aren't
+	!! there already and then trap into the debugger or panic.
+	!!
+	sethi	%hi(_C_LABEL(eintstack)-BIAS), %g6
+	btst	1, %sp
+	bnz,pt	%icc, 0f
+	 mov	%sp, %g1
+	add	%sp, -BIAS, %g1
+0:
+	or	%g6, %lo(_C_LABEL(eintstack)-BIAS), %g6
+	set	(_C_LABEL(eintstack)-_C_LABEL(intstack)), %g7	! XXXXXXXXXX This assumes kernel addresses are unique from user addresses
+	sub	%g6, %g1, %g2				! Determine if we need to switch to intr stack or not
+	dec	%g7					! Make it into a mask
+	andncc	%g2, %g7, %g0				! XXXXXXXXXX This assumes kernel addresses are unique from user addresses */ \
+	movz	%xcc, %g1, %g6				! Stay on interrupt stack?
+	add	%g6, -CCFSZ, %g6			! Allocate a stack frame
+	mov	%sp, %l6				! XXXXX Save old stack pointer
+	mov	%g6, %sp
 	ta	1; nop					! Enter debugger
 	NOTREACHED
 1:
