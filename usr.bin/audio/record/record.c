@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.4 1999/03/27 18:16:23 mrg Exp $	*/
+/*	$NetBSD: record.c,v 1.5 1999/06/19 05:20:17 itohy Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -97,7 +97,7 @@ main(argc, argv)
 				errx(1, "balance must be between 0 and 63\n");
 			break;
 		case 'C':
-			device = optarg;
+			ctldev = optarg;
 			break;
 		case 'c':
 			decode_int(optarg, &channels);
