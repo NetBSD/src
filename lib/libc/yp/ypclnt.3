@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypclnt.3,v 1.6 1997/05/20 15:25:41 lukem Exp $
+.\"	$NetBSD: ypclnt.3,v 1.7 1997/05/21 06:55:27 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,9 +99,10 @@ If necessary,
 memory will be allocated by the YP client routines using
 .Fn malloc ,
 and the result will be stored in the appropriate output value.
-If the output value after invocation of a YP client routine is not the null
-pointer, then this memory should be freed by the user if there is no
-additional need for the data stored there.
+If the invocation of a YP client routine doesn't return an error,
+and an output value is not the null pointer, then this memory
+should be freed by the user when there is no additional need for
+the data stored there.
 For
 .Pa outkey
 and
