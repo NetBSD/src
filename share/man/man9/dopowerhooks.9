@@ -1,4 +1,4 @@
-.\"	$NetBSD: dopowerhooks.9,v 1.1 1999/12/06 14:50:02 augustss Exp $
+.\"	$NetBSD: dopowerhooks.9,v 1.2 2000/08/06 02:07:15 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,14 +42,16 @@
 .Nd run all power hooks
 .Sh SYNOPSIS
 .Ft void
-.Fn doshutdownhooks "int why"
+.Fn dopowerhooks "int why"
 .Sh DESCRIPTION
 The
 .Fn dopowerhooks
 function invokes all power hooks established using the
 .Xr powerhook_establish 9
-function.  Power hooks are called in reverse order, i.e.,
-the power hook established last will be called first.
+function.
+When power is disappearing the power hooks are called in
+reverse order, i.e., the power hook established last will be called first.
+When power is restored they are called normal order.
 .Pp
 This function is called from the
 .Xr apm 4
