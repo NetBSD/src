@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.49 1994/02/26 19:00:51 mycroft Exp $
+ *	$Id: wd.c,v 1.50 1994/02/26 19:49:25 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -766,16 +766,16 @@ done:
 		/* done with this transfer, with or without error */
 		du->dk_flags &= ~DKFL_SINGLE;
 		wdtab[ctrlr].b_errcnt = 0;
-		du->dk_skip = 0;
 		if (du->dk_bct == 0) {
 			wdtab[ctrlr].b_actf = dp->b_forw;
 			du->dk_skipm = 0;
 			dp->b_active = 0;
 		}
-		dp->b_actf = bp->b_actf;
-		dp->b_errcnt = 0;
 		bp->b_resid = bp->b_bcount - du->dk_skip * DEV_BSIZE;
 		bp->b_flags &= ~B_XXX;
+		du->dk_skip = 0;
+		dp->b_actf = bp->b_actf;
+		dp->b_errcnt = 0;
 		biodone(bp);
 	}
 
@@ -1532,8 +1532,10 @@ wdc_wait(wdc, ctrlr, mask)
 
 	for (;;) {
 		stat = inb(wdc+wd_status);
-		if ((stat & WDCS_BUSY) == 0 && (stat & mask) != 0)
-			break;
+		if ((stat & WDCS_BUSY) == 0)
+			/* XXXX Yuck.  Need to redo this junk. */
+			if (mask == 0 || (stat & mask) != 0)
+				break;
 		DELAY(WDCDELAY);
 		if (++timeout > WDCNDELAY)
 			return -1;
