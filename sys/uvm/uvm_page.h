@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.22 2001/05/01 02:19:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.23 2001/05/01 03:01:18 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -149,8 +149,6 @@ struct vm_page {
 
 /*
  * These are the flags defined for vm_page.
- *
- * Note: PG_FILLED and PG_DIRTY are added for the filesystems.
  */
 
 /*
