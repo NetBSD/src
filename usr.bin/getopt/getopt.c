@@ -1,12 +1,13 @@
-/*	$NetBSD: getopt.c,v 1.5 1998/02/03 03:44:22 perry Exp $	*/
+/*	$NetBSD: getopt.c,v 1.6 2000/07/03 02:51:18 matt Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getopt.c,v 1.5 1998/02/03 03:44:22 perry Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.6 2000/07/03 02:51:18 matt Exp $");
 #endif /* not lint */
 
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 int	main __P((int, char **));

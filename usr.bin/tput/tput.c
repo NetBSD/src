@@ -1,4 +1,4 @@
-/*	$NetBSD: tput.c,v 1.12 2000/04/14 06:11:10 simonb Exp $	*/
+/*	$NetBSD: tput.c,v 1.13 2000/07/03 02:51:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tput.c	8.3 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: tput.c,v 1.12 2000/04/14 06:11:10 simonb Exp $");
+__RCSID("$NetBSD: tput.c,v 1.13 2000/07/03 02:51:36 matt Exp $");
 #endif /* not lint */
 
 #include <termios.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: tput.c,v 1.12 2000/04/14 06:11:10 simonb Exp $");
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <termcap.h>
 #include <unistd.h>
 

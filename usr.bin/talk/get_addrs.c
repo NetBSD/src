@@ -1,4 +1,4 @@
-/*	$NetBSD: get_addrs.c,v 1.5 1998/07/26 22:26:29 mycroft Exp $	*/
+/*	$NetBSD: get_addrs.c,v 1.6 2000/07/03 02:51:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)get_addrs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: get_addrs.c,v 1.5 1998/07/26 22:26:29 mycroft Exp $");
+__RCSID("$NetBSD: get_addrs.c,v 1.6 2000/07/03 02:51:34 matt Exp $");
 #endif /* not lint */
 
 #include "talk.h"
 #include <netdb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include "talk_ctl.h"
 
