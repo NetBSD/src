@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpica,v 1.6 2003/07/08 15:34:32 kochi Exp $
+#	$NetBSD: files.acpica,v 1.7 2003/10/31 20:52:47 mycroft Exp $
 
 file	dev/acpi/acpica/Osd/OsdEnvironment.c		acpi
 file	dev/acpi/acpica/Osd/OsdHardware.c		acpi
@@ -23,6 +23,7 @@ file	dev/acpi/acpica/Subsystem/dbxface.c		acpi & acpi_debug & ddb
 # disassembler/
 file	dev/acpi/acpica/Subsystem/dmbuffer.c		acpi & acpi_debug & ddb
 file	dev/acpi/acpica/Subsystem/dmnames.c		acpi & acpi_debug & ddb
+file	dev/acpi/acpica/Subsystem/dmobject.c		acpi & acpi_debug & ddb
 file	dev/acpi/acpica/Subsystem/dmopcode.c		acpi & acpi_debug & ddb
 file	dev/acpi/acpica/Subsystem/dmresrc.c		acpi & acpi_debug & ddb
 file	dev/acpi/acpica/Subsystem/dmresrcl.c		acpi & acpi_debug & ddb
