@@ -1,4 +1,4 @@
-/*	$NetBSD: bha.c,v 1.7 1996/12/10 21:27:59 thorpej Exp $	*/
+/*	$NetBSD: bha.c,v 1.8 1996/12/20 21:35:10 thorpej Exp $	*/
 
 #undef BHADIAG
 #ifdef DDB
@@ -162,6 +162,7 @@ bha_cmd(iot, ioh, sc, icnt, ibuf, ocnt, obuf)
 	 */
 	switch (opcode) {
 	case BHA_INQUIRE_DEVICES:
+	case BHA_INQUIRE_DEVICES_2:
 		wait = 90 * 20000;
 		break;
 	default:
@@ -284,7 +285,7 @@ bha_attach(sc)
 	sc->sc_link.adapter = &bha_switch;
 	sc->sc_link.device = &bha_dev;
 	sc->sc_link.openings = 4;
-	sc->sc_link.max_target = 7;
+	sc->sc_link.max_target = sc->sc_iswide ? 15 : 7;
 
 	/*
 	 * ask the adapter what subunits are present
@@ -725,7 +726,7 @@ bha_find(iot, ioh, sc)
 	bus_space_handle_t ioh;
 	struct bha_softc *sc;
 {
-	int i;
+	int i, iswide;
 	u_char sts;
 	struct bha_extended_inquire inquire;
 	struct bha_config config;
@@ -816,6 +817,9 @@ bha_find(iot, ioh, sc)
 		return (0);
 	}
 
+	/* Note if we have a wide bus. */
+	iswide = inquire.reply.scsi_flags & BHA_SCSI_WIDE;
+
 	/*
 	 * Assume we have a board at this stage setup dma channel from
 	 * jumpers and save int level
@@ -877,6 +881,7 @@ bha_find(iot, ioh, sc)
 		sc->sc_irq = irq;
 		sc->sc_drq = drq;
 		sc->sc_scsi_dev = config.reply.scsi_dev;
+		sc->sc_iswide = iswide;
 	}
 
 	return (1);
@@ -915,7 +920,7 @@ bha_init(sc)
 	struct bha_setup setup;
 	struct bha_mailbox mailbox;
 	struct bha_period period;
-	int i;
+	int i, rlen;
 
 	/* Enable round-robin scheme - appeared at firmware rev. 3.31. */
 	if (strcmp(sc->sc_firmware, "3.31") >= 0) {
@@ -928,18 +933,36 @@ bha_init(sc)
 		    0, (u_char *)0);
 	}
 
-	/* Inquire Installed Devices (to force synchronous negotiation). */
+	/*
+	 * Inquire installed devices (to force synchronous negotiation).
+	 */
+
+	/*
+	 * Poll targets 0 - 7.
+	 */
 	devices.cmd.opcode = BHA_INQUIRE_DEVICES;
 	bha_cmd(iot, ioh, sc,
 	    sizeof(devices.cmd), (u_char *)&devices.cmd,
 	    sizeof(devices.reply), (u_char *)&devices.reply);
 
+	/*
+	 * Poll targets 8 - 15 if we have a wide bus.
+	 */
+	if (sc->sc_iswide) {
+		devices.cmd.opcode = BHA_INQUIRE_DEVICES_2;
+		bha_cmd(iot, ioh, sc,
+		    sizeof(devices.cmd), (u_char *)&devices.cmd,
+		    sizeof(devices.reply), (u_char *)&devices.reply);
+	}
+
 	/* Obtain setup information from. */
+	rlen = sizeof(setup.reply) +
+	    (sc->sc_iswide ? sizeof(setup.reply_w) : 0);
 	setup.cmd.opcode = BHA_INQUIRE_SETUP;
-	setup.cmd.len = sizeof(setup.reply);
+	setup.cmd.len = rlen;
 	bha_cmd(iot, ioh, sc,
 	    sizeof(setup.cmd), (u_char *)&setup.cmd,
-	    sizeof(setup.reply), (u_char *)&setup.reply);
+	    rlen, (u_char *)&setup.reply);
 
 	printf("%s: %s, %s\n",
 	    sc->sc_dev.dv_xname,
@@ -948,13 +971,20 @@ bha_init(sc)
 
 	for (i = 0; i < 8; i++)
 		period.reply.period[i] = setup.reply.sync[i].period * 5 + 20;
+	if (sc->sc_iswide) {
+		for (i = 0; i < 8; i++)
+			period.reply_w.period[i] =
+			    setup.reply_w.sync[i].period * 5 + 20;
+	}
 
 	if (sc->sc_firmware[0] >= '3') {
+		rlen = sizeof(period.reply) +
+		    (sc->sc_iswide ? sizeof(period.reply_w) : 0);
 		period.cmd.opcode = BHA_INQUIRE_PERIOD;
-		period.cmd.len = sizeof(period.reply);
+		period.cmd.len = rlen;
 		bha_cmd(iot, ioh, sc,
 		    sizeof(period.cmd), (u_char *)&period.cmd,
-		    sizeof(period.reply), (u_char *)&period.reply);
+		    rlen, (u_char *)&period.reply);
 	}
 
 	for (i = 0; i < 8; i++) {
@@ -965,6 +995,18 @@ bha_init(sc)
 		printf("%s targ %d: sync, offset %d, period %dnsec\n",
 		    sc->sc_dev.dv_xname, i,
 		    setup.reply.sync[i].offset, period.reply.period[i] * 10);
+	}
+	if (sc->sc_iswide) {
+		for (i = 0; i < 8; i++) {
+			if (!setup.reply_w.sync[i].valid ||
+			    (!setup.reply_w.sync[i].offset &&
+			     !setup.reply_w.sync[i].period))
+				continue;
+			printf("%s targ %d: sync, offset %d, period %dnsec\n",
+			    sc->sc_dev.dv_xname, i + 8,
+			    setup.reply_w.sync[i].offset,
+			    period.reply_w.period[i] * 10);
+		}
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.4 1996/12/20 06:20:49 jonathan Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.5 1996/12/20 21:35:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -320,28 +320,44 @@ struct bha_devices {
 	} reply;
 };
 
+struct bha_sync {
+	u_char	offset:4;
+	u_char	period:3;
+	u_char	valid:1;
+};
+
+struct bha_setup_reply {
+	u_char  sync_neg:1;
+	u_char  parity:1;
+	u_char	:6;
+	u_char  speed;
+	u_char  bus_on;
+	u_char  bus_off;
+	u_char  num_mbx;
+	u_char  mbx[3];		/*XXX */
+	/* doesn't make sense with 32bit addresses */
+	struct bha_sync sync[8];
+	u_char  disc_sts;
+};
+
+/* additional reply data supplied by wide controlers */
+struct bus_setup_reply_wide {
+	u_char	pad[5];			/* ??? */
+	struct bha_sync sync[8];
+	u_char	disc_sts;
+};
+
 struct bha_setup {
 	struct {
 		u_char	opcode;
 		u_char	len;
 	} cmd;
-	struct {
-		u_char  sync_neg:1;
-		u_char  parity:1;
-		u_char	:6;
-		u_char  speed;
-		u_char  bus_on;
-		u_char  bus_off;
-		u_char  num_mbx;
-		u_char  mbx[3];		/*XXX */
-		/* doesn't make sense with 32bit addresses */
-		struct {
-			u_char  offset:4;
-			u_char  period:3;
-			u_char  valid:1;
-		} sync[8];
-		u_char  disc_sts;
-	} reply;
+	struct bha_setup_reply reply;
+	struct bus_setup_reply_wide reply_w;	/* for wide controllers */
+};
+
+struct bha_period_reply {
+	u_char	period[8];
 };
 
 struct bha_period {
@@ -349,9 +365,8 @@ struct bha_period {
 		u_char	opcode;
 		u_char	len;
 	} cmd;
-	struct {
-		u_char	period[8];
-	} reply;
+	struct bha_period_reply reply;
+	struct bha_period_reply reply_w;	/* for wide controllers */
 };
 
 struct bha_isadisable {
