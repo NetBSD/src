@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.40 2003/07/14 00:52:12 lukem Exp $
+#	$NetBSD: bsd.nls.mk,v 1.41 2003/07/18 08:26:08 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -39,7 +39,7 @@ __nlsinstall: .USE
 .for F in ${NLSALL:O:u}
 _F:=		${DESTDIR}${NLSDIR}/${F:T:R}/${NLSNAME}.cat # installed path
 
-.if !defined(UPDATE)
+.if ${MKUPDATE} == "no"
 ${_F}!		${F} __nlsinstall			# install rule
 .if !defined(BUILD) && !make(all) && !make(${F})
 ${_F}!		.MADE					# no build at install

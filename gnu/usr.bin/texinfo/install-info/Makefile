@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2003/01/17 15:32:24 wiz Exp $
+#	$NetBSD: Makefile,v 1.9 2003/07/18 08:26:03 lukem Exp $
 
 PROG=		install-info
 SRCS=		install-info.c
@@ -8,7 +8,7 @@ SRCS=		install-info.c
 .PATH: ${IDIST}/util ${IDIST}/doc
 
 infodir-meta:
-.if defined(UNPRIVED) && (${MKINFO} != "no")
+.if (${MKUNPRIVED} != "no" && ${MKINFO} != "no")
 	echo "./usr/share/info/dir type=file mode=0644 uname=root gname=wheel" \
 	    | ${METALOG.add}
 .endif
