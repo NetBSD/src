@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.12 2001/01/08 02:03:47 fvdl Exp $	*/
+/*	$NetBSD: fd.c,v 1.13 2001/01/18 20:28:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -178,19 +178,19 @@ struct fd_type {
 	int	rate;		/* transfer speed code */
 	u_char	fillbyte;	/* format fill byte */
 	u_char	interleave;	/* interleave factor (formatting) */
-	char	*name;
+	const char	*name;
 };
 
 #if NMCA > 0
 /* MCA - specific entries */
-struct fd_type mca_fd_types[] = {
+const struct fd_type mca_fd_types[] = {
 	{ 18,2,36,2,0xff,0x0f,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette - XXX try 16ms step rate */
 	{  9,2,18,2,0xff,0x4f,0x2a,0x50,80,1440,1,FDC_250KBPS,0xf6,1, "720KB"    }, /* 3.5 inch 720kB diskette - XXX try 24ms step rate */
 };
 #endif /* NMCA > 0 */
 
 /* The order of entries in the following table is important -- BEWARE! */
-struct fd_type fd_types[] = {
+const struct fd_type fd_types[] = {
 	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_500KBPS,0xf6,1, "1.44MB"    }, /* 1.44MB diskette */
 	{ 15,2,30,2,0xff,0xdf,0x1b,0x54,80,2400,1,FDC_500KBPS,0xf6,1, "1.2MB"    }, /* 1.2 MB AT-diskettes */
 	{  9,2,18,2,0xff,0xdf,0x23,0x50,40, 720,2,FDC_300KBPS,0xf6,1, "360KB/AT" }, /* 360kB in 1.2MB drive */
@@ -205,7 +205,7 @@ struct fd_softc {
 	struct device sc_dev;
 	struct disk sc_dk;
 
-	struct fd_type *sc_deftype;	/* default type descriptor */
+	const struct fd_type *sc_deftype;	/* default type descriptor */
 	struct fd_type *sc_type;	/* current type descriptor */
 	struct fd_type sc_type_copy;	/* copy for fiddling when formatting */
 
@@ -255,7 +255,7 @@ void fdstart __P((struct fd_softc *));
 struct dkdriver fddkdriver = { fdstrategy };
 
 #if defined(i386)
-struct fd_type *fd_nvtotype __P((char *, int, int));
+const struct fd_type *fd_nvtotype __P((char *, int, int));
 #endif /* i386 */
 void fd_set_motor __P((struct fdc_softc *fdc, int reset));
 void fd_motor_off __P((void *arg));
@@ -267,7 +267,7 @@ void fdctimeout __P((void *arg));
 void fdcpseudointr __P((void *arg));
 void fdcretry __P((struct fdc_softc *fdc));
 void fdfinish __P((struct fd_softc *fd, struct buf *bp));
-__inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
+__inline const struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
 
 void	fd_mountroot_hook __P((struct device *));
@@ -277,7 +277,7 @@ void	fd_mountroot_hook __P((struct device *));
  */
 struct fdc_attach_args {
 	int fa_drive;
-	struct fd_type *fa_deftype;
+	const struct fd_type *fa_deftype;
 };
 
 /*
@@ -446,7 +446,7 @@ fdattach(parent, self, aux)
 	struct fdc_softc *fdc = (void *)parent;
 	struct fd_softc *fd = (void *)self;
 	struct fdc_attach_args *fa = aux;
-	struct fd_type *type = fa->fa_deftype;
+	const struct fd_type *type = fa->fa_deftype;
 	int drive = fa->fa_drive;
 
 	callout_init(&fd->sc_motoron_ch);
@@ -492,7 +492,7 @@ fdattach(parent, self, aux)
  * Translate nvram type into internal data structure.  Return NULL for
  * none/unknown/unusable.
  */
-struct fd_type *
+const struct fd_type *
 fd_nvtotype(fdc, nvraminfo, drive)
 	char *fdc;
 	int nvraminfo, drive;
@@ -532,7 +532,7 @@ fd_nvtotype(fdc, nvraminfo, drive)
 }
 #endif /* i386 */
 
-__inline struct fd_type *
+__inline const struct fd_type *
 fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
@@ -790,7 +790,7 @@ fdopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	struct fd_softc *fd;
-	struct fd_type *type;
+	const struct fd_type *type;
 
 	fd = device_lookup(&fd_cd, FDUNIT(dev));
 	if (fd == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.51 2001/01/14 06:54:01 ichiro Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.52 2001/01/18 20:28:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -130,7 +130,7 @@ struct wi_pcmcia_product {
 	int		pp_prism2;	/* prism2 chipset */
 };
 
-static struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
+static const struct wi_pcmcia_product *wi_lookup __P((struct pcmcia_attach_args *pa));
 static int wi_match		__P((struct device *, struct cfdata *, void *));
 static void wi_attach		__P((struct device *, struct device *, void *));
 static int wi_detach		__P((struct device *, int));
@@ -184,7 +184,7 @@ struct cfattach wi_ca = {
 	sizeof(struct wi_softc), wi_match, wi_attach, wi_detach, wi_activate
 };
 
-static struct wi_pcmcia_product wi_pcmcia_products[] = {
+static const struct wi_pcmcia_product wi_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_LUCENT,
 	  PCMCIA_PRODUCT_LUCENT_WAVELAN_IEEE,
 	  PCMCIA_CIS_LUCENT_WAVELAN_IEEE,
@@ -240,11 +240,11 @@ static struct wi_pcmcia_product wi_pcmcia_products[] = {
 	  0 }
 };
 
-static struct wi_pcmcia_product *
+static const struct wi_pcmcia_product *
 wi_lookup(pa)
 	struct pcmcia_attach_args *pa;
 {
-	struct wi_pcmcia_product *pp;
+	const struct wi_pcmcia_product *pp;
 
 	/*
 	 * match by CIS information first
@@ -334,7 +334,7 @@ wi_attach(parent, self, aux)
 	struct wi_softc *sc = (void *) self;
 	struct pcmcia_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct wi_pcmcia_product *pp;
+	const struct wi_pcmcia_product *pp;
 	struct wi_ltv_macaddr	mac;
 	struct wi_ltv_gen	gen;
 	char devinfo[256];

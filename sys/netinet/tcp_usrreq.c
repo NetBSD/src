@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.58 2000/12/11 00:07:48 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.59 2001/01/18 20:28:22 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -929,7 +929,7 @@ tcp_usrclosed(tp)
 	return (tp);
 }
 
-static struct {
+static const struct {
 	 unsigned int valid : 1;
 	 unsigned int rdonly : 1;
 	 int *var;

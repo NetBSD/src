@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.22 2000/12/12 18:00:31 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.23 2001/01/18 20:28:20 jdolecek Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -575,7 +575,7 @@ bail:
 /*
  * FCS lookup table as calculated by genfcstab.
  */
-static u_int16_t fcstab[256] = {
+static const u_int16_t fcstab[256] = {
 	0x0000,	0x1189,	0x2312,	0x329b,	0x4624,	0x57ad,	0x6536,	0x74bf,
 	0x8c48,	0x9dc1,	0xaf5a,	0xbed3,	0xca6c,	0xdbe5,	0xe97e,	0xf8f7,
 	0x1081,	0x0108,	0x3393,	0x221a,	0x56a5,	0x472c,	0x75b7,	0x643e,
@@ -947,7 +947,7 @@ pppgetm(sc)
 /*
  * tty interface receiver interrupt.
  */
-static unsigned paritytab[8] = {
+static const unsigned paritytab[8] = {
     0x96696996, 0x69969669, 0x69969669, 0x96696996,
     0x69969669, 0x96696996, 0x96696996, 0x69969669
 };

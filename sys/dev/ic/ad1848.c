@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.9 1999/11/01 18:12:19 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.10 2001/01/18 20:28:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ int	ad1848debug = 0;
 /*
  * Initial values for the indirect registers of CS4248/AD1848.
  */
-static int ad1848_init_values[] = {
+static const int ad1848_init_values[] = {
     GAIN_12|INPUT_MIC_GAIN_ENABLE,	/* Left Input Control */
     GAIN_12|INPUT_MIC_GAIN_ENABLE,	/* Right Input Control */
     ATTEN_12,				/* Left Aux #1 Input Control */
@@ -432,7 +432,7 @@ ad1848_attach(sc)
 /*
  * Various routines to interface to higher level audio driver
  */
-struct ad1848_mixerinfo {
+const struct ad1848_mixerinfo {
 	int  left_reg;
 	int  right_reg;
 	int  atten_bits;
@@ -507,7 +507,7 @@ ad1848_set_channel_gain(sc, device, gp)
 	int device;
 	struct ad1848_volume *gp;
 {
-	struct ad1848_mixerinfo *info = &mixer_channel_info[device];
+	const struct ad1848_mixerinfo *info = &mixer_channel_info[device];
 	u_char reg;
 	u_int atten;
 
@@ -1207,7 +1207,7 @@ ad1848_set_speed(sc, argp)
 	} speed_struct;
 	u_long arg = *argp;
 
-	static speed_struct speed_table[] =  {
+	static const speed_struct speed_table[] =  {
 		{5510, (0 << 1) | 1},
 		{5510, (0 << 1) | 1},
 		{6620, (7 << 1) | 1},

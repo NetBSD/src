@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.84 2000/11/27 08:39:52 chs Exp $	*/
+/*	$NetBSD: vnode.h,v 1.85 2001/01/18 20:28:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -377,7 +377,7 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
  */
 struct vnodeop_desc {
 	int	vdesc_offset;		/* offset in vector--first for speed */
-	char    *vdesc_name;		/* a readable name for debugging */
+	const char    *vdesc_name;	/* a readable name for debugging */
 	int	vdesc_flags;		/* VDESC_* flags */
 
 	/*
@@ -386,7 +386,7 @@ struct vnodeop_desc {
 	 * they are useful to (for example) transport layers.
 	 * Nameidata is useful because it has a cred in it.
 	 */
-	int	*vdesc_vp_offsets;	/* list ended by VDESC_NO_OFFSET */
+	const int	*vdesc_vp_offsets;	/* list ended by VDESC_NO_OFFSET */
 	int	vdesc_vpp_offset;	/* return vpp location */
 	int	vdesc_cred_offset;	/* cred location, if any */
 	int	vdesc_proc_offset;	/* proc location, if any */
@@ -429,7 +429,7 @@ extern struct simplelock mntvnode_slock;
  * This structure is used to configure the new vnodeops vector.
  */
 struct vnodeopv_entry_desc {
-	struct vnodeop_desc *opve_op;   /* which operation this is */
+	const struct vnodeop_desc *opve_op;   /* which operation this is */
 	int (*opve_impl) __P((void *));	/* code implementing this operation */
 };
 struct vnodeopv_desc {

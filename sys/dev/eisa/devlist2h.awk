@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$NetBSD: devlist2h.awk,v 1.5 1998/01/09 06:46:26 thorpej Exp $
+#	$NetBSD: devlist2h.awk,v 1.6 2001/01/18 20:28:25 jdolecek Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
 # All rights reserved.
@@ -155,7 +155,7 @@ END {
 
 	printf("\n") > dfile
 
-	printf("struct eisa_knowndev eisa_knowndevs[] = {\n") > dfile
+	printf("const struct eisa_knowndev eisa_knowndevs[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    0,\n") > dfile
