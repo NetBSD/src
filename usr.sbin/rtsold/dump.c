@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.7 2002/07/14 00:37:46 wiz Exp $	*/
+/*	$NetBSD: dump.c,v 1.8 2004/01/03 01:40:31 itojun Exp $	*/
 /*	$KAME: dump.c,v 1.10 2002/05/31 10:10:03 itojun Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ void
 rtsold_dump_file(char *dumpfile)
 {
 	if ((fp = fopen(dumpfile, "w")) == NULL) {
-		warnmsg(LOG_WARNING, __FUNCTION__, "open a dump file(%s): %s",
+		warnmsg(LOG_WARNING, __func__, "open a dump file(%s): %s",
 		    dumpfile, strerror(errno));
 		return;
 	}

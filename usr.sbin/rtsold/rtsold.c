@@ -1,5 +1,5 @@
-/*	$NetBSD: rtsold.c,v 1.25 2003/09/06 12:56:43 itojun Exp $	*/
-/*	$KAME: rtsold.c,v 1.55 2002/09/08 01:26:03 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.26 2004/01/03 01:40:32 itojun Exp $	*/
+/*	$KAME: rtsold.c,v 1.77 2004/01/03 01:35:13 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -56,53 +56,64 @@
 
 #include "rtsold.h"
 
+#ifdef __bsdi__
+#define	timeradd(tvp, uvp, vvp)						\
+	do {								\
+		(vvp)->tv_sec = (tvp)->tv_sec + (uvp)->tv_sec;		\
+		(vvp)->tv_usec = (tvp)->tv_usec + (uvp)->tv_usec;	\
+		if ((vvp)->tv_usec >= 1000000) {			\
+			(vvp)->tv_sec++;				\
+			(vvp)->tv_usec -= 1000000;			\
+		}							\
+	} while (/* CONSTCOND */ 0)
+#define	timersub(tvp, uvp, vvp)						\
+	do {								\
+		(vvp)->tv_sec = (tvp)->tv_sec - (uvp)->tv_sec;		\
+		(vvp)->tv_usec = (tvp)->tv_usec - (uvp)->tv_usec;	\
+		if ((vvp)->tv_usec < 0) {				\
+			(vvp)->tv_sec--;				\
+			(vvp)->tv_usec += 1000000;			\
+		}							\
+	} while (/* CONSTCOND */ 0)
+#endif
+
 struct ifinfo *iflist;
 struct timeval tm_max =	{0x7fffffff, 0x7fffffff};
-int aflag = 0;
-int dflag = 0;
 static int log_upto = 999;
 static int fflag = 0;
+
+int aflag = 0;
+int dflag = 0;
 
 /* protocol constatns */
 #define MAX_RTR_SOLICITATION_DELAY	1 /* second */
 #define RTR_SOLICITATION_INTERVAL	4 /* seconds */
 #define MAX_RTR_SOLICITATIONS		3 /* times */
 
-/* implementation dependent constants */
-#define PROBE_INTERVAL 60	/* secondes XXX: should be configurable */
-
-/* utility macros */
-/* a < b */
-#define TIMEVAL_LT(a, b) (((a).tv_sec < (b).tv_sec) ||\
-			  (((a).tv_sec == (b).tv_sec) && \
-			    ((a).tv_usec < (b).tv_usec)))
-
-/* a <= b */
-#define TIMEVAL_LEQ(a, b) (((a).tv_sec < (b).tv_sec) ||\
-			   (((a).tv_sec == (b).tv_sec) &&\
-			    ((a).tv_usec <= (b).tv_usec)))
-
-/* a == b */
-#define TIMEVAL_EQ(a, b) (((a).tv_sec==(b).tv_sec) && ((a).tv_usec==(b).tv_usec))
+/* 
+ * implementation dependent constants in seconds
+ * XXX: should be configurable 
+ */
+#define PROBE_INTERVAL 60
 
 int main __P((int, char **));
 
 /* static variables and functions */
 static int mobile_node = 0;
+#ifndef SMALL
 static int do_dump;
 static char *dumpfilename = "/var/run/rtsold.dump"; /* XXX: should be configurable */
+#endif
 
 #if 0
 static int ifreconfig __P((char *));
 #endif
 static int make_packet __P((struct ifinfo *));
 static struct timeval *rtsol_check_timer __P((void));
-static void TIMEVAL_ADD __P((struct timeval *, struct timeval *,
-	struct timeval *));
-static void TIMEVAL_SUB __P((struct timeval *, struct timeval *,
-	struct timeval *));
 
+#ifndef SMALL
 static void rtsold_set_dump_file __P((int));
+#endif
 static void usage __P((char *));
 
 int
@@ -185,8 +196,10 @@ main(int argc, char **argv)
 	if (getinet6sysctl(IPV6CTL_FORWARDING))
 		warnx("kernel is configured as a router, not a host");
 
+#ifndef SMALL
 	/* initialization to dump internal status to a file */
 	signal(SIGUSR1, rtsold_set_dump_file);
+#endif
 
 	if (!fflag)
 		daemon(0, 0);		/* act as a daemon */
@@ -197,7 +210,7 @@ main(int argc, char **argv)
 	 * uses the socket.
 	 */
 	if ((s = sockopen()) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
+		warnmsg(LOG_ERR, __func__, "failed to open a socket");
 		exit(1);
 		/*NOTREACHED*/
 	}
@@ -208,7 +221,7 @@ main(int argc, char **argv)
 
 #ifdef USE_RTSOCK
 	if ((rtsock = rtsock_open()) < 0) {
-		warnmsg(LOG_ERR, __FUNCTION__, "failed to open a socket");
+		warnmsg(LOG_ERR, __func__, "failed to open a socket");
 		exit(1);
 		/*NOTREACHED*/
 	}
@@ -218,7 +231,7 @@ main(int argc, char **argv)
 
 	/* configuration per interface */
 	if (ifinit()) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "failed to initilizatoin interfaces");
 		exit(1);
 		/*NOTREACHED*/
@@ -227,7 +240,7 @@ main(int argc, char **argv)
 		argv = autoifprobe();
 	while (argv && *argv) {
 		if (ifconfig(*argv)) {
-			warnmsg(LOG_ERR, __FUNCTION__,
+			warnmsg(LOG_ERR, __func__,
 			    "failed to initialize %s", *argv);
 			exit(1);
 			/*NOTREACHED*/
@@ -237,7 +250,7 @@ main(int argc, char **argv)
 
 	/* setup for probing default routers */
 	if (probe_init()) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "failed to setup for probing routers");
 		exit(1);
 		/*NOTREACHED*/
@@ -246,7 +259,7 @@ main(int argc, char **argv)
 	/* dump the current pid */
 	if (!once) {
 		if (pidfile(NULL) < 0) {
-			warnmsg(LOG_ERR, __FUNCTION__,
+			warnmsg(LOG_ERR, __func__,
 			    "failed to open a pid log file: %s",
 			    strerror(errno));
 		}
@@ -255,10 +268,12 @@ main(int argc, char **argv)
 	for (;;) {		/* main loop */
 		int e;
 
+#ifndef SMALL
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
 			rtsold_dump_file(dumpfilename);
 		}
+#endif
 
 		timeout = rtsol_check_timer();
 
@@ -280,7 +295,7 @@ main(int argc, char **argv)
 		e = poll(set, 2, timeout ? (timeout->tv_sec * 1000 + timeout->tv_usec / 1000) : INFTIM);
 		if (e < 1) {
 			if (e < 0 && errno != EINTR) {
-				warnmsg(LOG_ERR, __FUNCTION__, "select: %s",
+				warnmsg(LOG_ERR, __func__, "select: %s",
 				    strerror(errno));
 			}
 			continue;
@@ -307,19 +322,19 @@ ifconfig(char *ifname)
 	int flags;
 
 	if ((sdl = if_nametosdl(ifname)) == NULL) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "failed to get link layer information for %s", ifname);
 		return(-1);
 	}
 	if (find_ifinfo(sdl->sdl_index)) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "interface %s was already configured", ifname);
 		free(sdl);
 		return(-1);
 	}
 
 	if ((ifinfo = malloc(sizeof(*ifinfo))) == NULL) {
-		warnmsg(LOG_ERR, __FUNCTION__, "memory allocation failed");
+		warnmsg(LOG_ERR, __func__, "memory allocation failed");
 		free(sdl);
 		return(-1);
 	}
@@ -440,7 +455,7 @@ make_packet(struct ifinfo *ifinfo)
 	char *buf;
 
 	if ((lladdroptlen = lladdropt_length(ifinfo->sdl)) == 0) {
-		warnmsg(LOG_INFO, __FUNCTION__,
+		warnmsg(LOG_INFO, __func__,
 		    "link-layer address option has null length"
 		    " on %s. Treat as not included.", ifinfo->ifname);
 	}
@@ -449,7 +464,7 @@ make_packet(struct ifinfo *ifinfo)
 
 	/* allocate buffer */
 	if ((buf = malloc(packlen)) == NULL) {
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "memory allocation failed for %s", ifinfo->ifname);
 		return(-1);
 	}
@@ -483,9 +498,9 @@ rtsol_check_timer(void)
 	rtsol_timer = tm_max;
 
 	for (ifinfo = iflist; ifinfo; ifinfo = ifinfo->next) {
-		if (TIMEVAL_LEQ(ifinfo->expire, now)) {
+		if (timercmp(&ifinfo->expire, &now, <=)) {
 			if (dflag > 1)
-				warnmsg(LOG_DEBUG, __FUNCTION__,
+				warnmsg(LOG_DEBUG, __func__,
 				    "timer expiration on %s, "
 				    "state = %d", ifinfo->ifname,
 				    ifinfo->state);
@@ -510,7 +525,7 @@ rtsol_check_timer(void)
 				ifinfo->active = interface_status(ifinfo);
 
 				if (oldstatus != ifinfo->active) {
-					warnmsg(LOG_DEBUG, __FUNCTION__,
+					warnmsg(LOG_DEBUG, __func__,
 					    "%s status is changed"
 					    " from %d to %d",
 					    ifinfo->ifname,
@@ -539,7 +554,7 @@ rtsol_check_timer(void)
 				if (ifinfo->probes < MAX_RTR_SOLICITATIONS)
 					sendpacket(ifinfo);
 				else {
-					warnmsg(LOG_INFO, __FUNCTION__,
+					warnmsg(LOG_INFO, __func__,
 					    "No answer after sending %d RSs",
 					    ifinfo->probes);
 					ifinfo->probes = 0;
@@ -550,21 +565,21 @@ rtsol_check_timer(void)
 			rtsol_timer_update(ifinfo);
 		}
 
-		if (TIMEVAL_LT(ifinfo->expire, rtsol_timer))
+		if (timercmp(&ifinfo->expire, &rtsol_timer, <))
 			rtsol_timer = ifinfo->expire;
 	}
 
-	if (TIMEVAL_EQ(rtsol_timer, tm_max)) {
-		warnmsg(LOG_DEBUG, __FUNCTION__, "there is no timer");
+	if (timercmp(&rtsol_timer, &tm_max, ==)) {
+		warnmsg(LOG_DEBUG, __func__, "there is no timer");
 		return(NULL);
-	} else if (TIMEVAL_LT(rtsol_timer, now))
+	} else if (timercmp(&rtsol_timer, &now, <))
 		/* this may occur when the interval is too small */
 		returnval.tv_sec = returnval.tv_usec = 0;
 	else
-		TIMEVAL_SUB(&rtsol_timer, &now, &returnval);
+		timersub(&rtsol_timer, &now, &returnval);
 
 	if (dflag > 1)
-		warnmsg(LOG_DEBUG, __FUNCTION__, "New timer is %ld.%06ld",
+		warnmsg(LOG_DEBUG, __func__, "New timer is %ld:%08ld",
 		    (long)returnval.tv_sec, (long)returnval.tv_usec);
 
 	return(&returnval);
@@ -616,23 +631,23 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 		}
 		break;
 	default:
-		warnmsg(LOG_ERR, __FUNCTION__,
+		warnmsg(LOG_ERR, __func__,
 		    "illegal interface state(%d) on %s",
 		    ifinfo->state, ifinfo->ifname);
 		return;
 	}
 
 	/* reset the timer */
-	if (TIMEVAL_EQ(ifinfo->timer, tm_max)) {
+	if (timercmp(&ifinfo->timer, &tm_max, ==)) {
 		ifinfo->expire = tm_max;
-		warnmsg(LOG_DEBUG, __FUNCTION__,
+		warnmsg(LOG_DEBUG, __func__,
 		    "stop timer for %s", ifinfo->ifname);
 	} else {
 		gettimeofday(&now, NULL);
-		TIMEVAL_ADD(&now, &ifinfo->timer, &ifinfo->expire);
+		timeradd(&now, &ifinfo->timer, &ifinfo->expire);
 
 		if (dflag > 1)
-			warnmsg(LOG_DEBUG, __FUNCTION__,
+			warnmsg(LOG_DEBUG, __func__,
 			    "set timer for %s to %d:%d", ifinfo->ifname,
 			    (int)ifinfo->timer.tv_sec,
 			    (int)ifinfo->timer.tv_usec);
@@ -644,44 +659,13 @@ rtsol_timer_update(struct ifinfo *ifinfo)
 /* timer related utility functions */
 #define MILLION 1000000
 
-/* result = a + b */
-static void
-TIMEVAL_ADD(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec + b->tv_usec) < MILLION) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec + b->tv_sec;
-	} else {
-		result->tv_usec = l - MILLION;
-		result->tv_sec = a->tv_sec + b->tv_sec + 1;
-	}
-}
-
-/*
- * result = a - b
- * XXX: this function assumes that a >= b.
- */
-void
-TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
-{
-	long l;
-
-	if ((l = a->tv_usec - b->tv_usec) >= 0) {
-		result->tv_usec = l;
-		result->tv_sec = a->tv_sec - b->tv_sec;
-	} else {
-		result->tv_usec = MILLION + l;
-		result->tv_sec = a->tv_sec - b->tv_sec - 1;
-	}
-}
-
+#ifndef SMALL
 static void
 rtsold_set_dump_file(int sig)
 {
 	do_dump = 1;
 }
+#endif
 
 static void
 usage(char *progname)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.4 2003/10/21 02:37:22 fvdl Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.5 2004/01/03 01:40:32 itojun Exp $	*/
 /*	$KAME: rtsock.c,v 1.4 2001/09/19 06:59:41 sakane Exp $	*/
 
 /*
@@ -111,7 +111,7 @@ rtsock_input(int s)
 			break;
 
 		if (dflag > 1) {
-			warnmsg(LOG_INFO, __FUNCTION__,
+			warnmsg(LOG_INFO, __func__,
 			    "rtmsg type %d, len=%lu", rtm->rtm_type,
 			    (u_long)len);
 		}
@@ -120,7 +120,7 @@ rtsock_input(int s)
 			if (rtm->rtm_type != rtsock_dispatch[idx].type)
 				continue;
 			if (rtm->rtm_msglen < rtsock_dispatch[idx].minlen) {
-				warnmsg(LOG_INFO, __FUNCTION__,
+				warnmsg(LOG_INFO, __func__,
 				    "rtmsg type %d too short!", rtm->rtm_type);
 				continue;
 			}
@@ -152,16 +152,16 @@ rtsock_input_ifannounce(int s, struct rt_msghdr *rtm, char *lim)
 		 * we may be able to do a name-based interface match,
 		 * and call ifreconfig() to enable the interface again.
 		 */
-		warnmsg(LOG_INFO, __FUNCTION__,
+		warnmsg(LOG_INFO, __func__,
 		    "interface %s inserted", ifan->ifan_name);
 		break;
 	case IFAN_DEPARTURE:
-		warnmsg(LOG_WARNING, __FUNCTION__,
+		warnmsg(LOG_WARNING, __func__,
 		    "interface %s removed", ifan->ifan_name);
 		ifinfo = find_ifinfo(ifan->ifan_index);
 		if (ifinfo) {
 			if (dflag > 1) {
-				warnmsg(LOG_INFO, __FUNCTION__,
+				warnmsg(LOG_INFO, __func__,
 				    "bring interface %s to DOWN state",
 				    ifan->ifan_name);
 			}
