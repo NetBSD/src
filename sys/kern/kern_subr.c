@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.64 2000/05/08 16:30:59 itojun Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.65 2000/05/10 02:14:41 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -246,6 +246,7 @@ hashdone(hashtbl, type)
 	void *hashtbl;
 	int type;
 {
+
 	free(hashtbl, type);
 }
 
