@@ -19,6 +19,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 options 	CPU_XSCALE_PXA2X0	# Support the XScale core
 #options 	XSCALE_CACHE_WRITE_THROUGH
+#options 	XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 # Architecture options
@@ -109,7 +110,6 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# Verbose SCSI errors
-#options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
 #options 	USERCONF	# userconf(4) support
@@ -129,7 +129,7 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 #options 	SYMTAB_SPACE=200000
 
 config		netbsd		root on ? type ?
-#config		netbsd		root on sm0 type nfs
+config		netbsd-sm0	root on sm0 type nfs
 
 # The main bus device
 mainbus0	at root
@@ -164,38 +164,71 @@ sm0		at obio? addr 0x0c000000 intr 3 	# on-board SMC 91C96
 #options LUBBOCK_SMC91C96_16BIT
 
 # LCD
-#lcd0		at obio?
-#wsdisplay*	at lcd? console ?
-#options 	WSEMUL_VT100		# VT100 / VT220 emulation
+lcd0		at obio?
+wsdisplay*	at lcd? console ?
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
 # SA1111 companion chip
-#sacc0	at obio? addr 0x10000000 intr 1
+sacc0	at obio? addr 0x10000000 intr 1
 
-#sacpcic* at sacc?
-#pcmcia*	at sacpcic?
+sacpcic* at sacc?
+pcmcia*	at sacpcic?
 
-#sackbc0 at sacc0 addr 0x0a00 intr 21
+sackbc0 at sacc0 addr 0x0a00 intr 21
 #sackbc1 at sacc0 addr 0x0c00 intr 18
 
-#pckbd* at sackbc0 slot 0         # slot is bogus but needed.
-#wskbd* 		at pckbd? # console ?
+pckbd* at sackbc0 slot 0         # slot is bogus but needed.
+wskbd* 		at pckbd? # console ?
 #pms* at sackbc1 slot 0
 #wsmouse*	at pms? mux 0
+
+# PCMCIA serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
+pcmcom*	at pcmcia? function ?		# PCMCIA multi-port serial cards
+com*	at pcmcom? slave ?		# ...and the slave devices
+
+# PCMCIA SCSI controllers
+aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
+esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
+
+# SCSI bus support
+scsibus* at scsi?
+
+# SCSI devices
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+st*	at scsibus? target ? lun ?	# SCSI tape drives
+cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+ch*	at scsibus? target ? lun ?	# SCSI autochangers
+ses*	at scsibus? target ? lun ?	# SCSI Enclosure Services devices
+ss*	at scsibus? target ? lun ?	# SCSI scanners
+uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+# PCMCIA IDE controllers and disks
+wdc*	at pcmcia? function ?
+wd*	at wdc?
 
 #
 # Networking devices
 #
-#ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-#ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-#wi*	at pcmcia? function ?
-#awi*	at pcmcia? function ?
+an*	at pcmcia? function ?		# Aironet PC4500/PC4800 (802.11)
+awi*	at pcmcia? function ?		# BayStack 650/660 (802.11FH/DS)
+cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
+sm*	at pcmcia? function ?		# Megahertz Ethernet
+tr*	at pcmcia? function ?		# TROPIC based Token-Ring
+wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
+xi*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 
-# PCMCIA serial interfaces
-#com*	at pcmcia? function ?		# Modems and serial cards
+mhzc*	at pcmcia? function ?		# Megahertz Ethernet/Modem combo cards
+com*	at mhzc?
+sm*	at mhzc?
 
-# PCMCIA IDE controllers and disks
-#wdc*	at pcmcia? function ?
-#wd*	at wdc?
+# PCMCIA audio devices
+#esl*	at pcmcia? function ?			# ESS 1688 AudioDrive
 
 # Pseudo-Devices
 
