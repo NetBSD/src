@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_bswap.c,v 1.27 2003/12/31 19:33:13 dbj Exp $	*/
+/*	$NetBSD: ffs_bswap.c,v 1.28 2004/05/25 14:54:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.27 2003/12/31 19:33:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_bswap.c,v 1.28 2004/05/25 14:54:59 hannken Exp $");
 
 #include <sys/param.h>
 #if defined(_KERNEL)
@@ -92,7 +92,8 @@ ffs_sb_swap(struct fs *o, struct fs *n)
 	/* These fields overlap with the second half of the
 	 * historic FS_42POSTBLFMT postbl table
 	 */
-	/* fs_snapinum[20] - ignore for now */
+	for (i = 0; i < FSMAXSNAP; i++)
+		n->fs_snapinum[i] = bswap32(o->fs_snapinum[i]);
 	n->fs_avgfilesize = bswap32(o->fs_avgfilesize);
 	n->fs_avgfpdir = bswap32(o->fs_avgfpdir);
 	/* fs_sparecon[28] - ignore for now */

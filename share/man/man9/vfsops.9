@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.15 2003/12/04 23:57:44 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.16 2004/05/25 14:54:56 hannken Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 5, 2003
+.Dd May 25, 2004
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -50,7 +50,8 @@
 .Nm VFS_VGET ,
 .Nm VFS_FHTOVP ,
 .Nm VFS_VPTOFH ,
-.Nm VFS_CHECKEXP
+.Nm VFS_CHECKEXP ,
+.Nm VFS_SNAPSHOT
 .Nd kernel file system interface
 .Sh SYNOPSIS
 .In sys/param.h
@@ -82,6 +83,8 @@
 .Ft int
 .Fn VFS_CHECKEXP "struct mount *mp" "struct mbuf *nam" \
 "int *extflagsp" "struct ucred **credanonp"
+.Ft int
+.Fn VFS_SNAPSHOT "struct mount *mp" "struct vnode *vp" "struct timespec *ts"
 .Sh DESCRIPTION
 In a similar fashion to the
 .Xr vnode 9
@@ -124,6 +127,7 @@ void (*vfs_reinit)()	-	Reinitialise file system
 void (*vfs_done)()	-	Cleanup unmounted file system
 int  (*vfs_mountroot)()	-	Mount the root file system
 int  (*vfs_checkexp)()	VFS_CHECKEXP	Check if file system is exported
+int  (*vfs_snapshot)()	VFS_SNAPSHOT	Take a snapshot
 .fi
 .Pp
 Some additional non-function members of the vfsops structure are the
@@ -344,6 +348,21 @@ The file system should call
 .Fn vfs_export_lookup
 with the address of an appropriate netexport structure and the address
 of the client to verify that the client can access this file system.
+.It Fn VFS_SNAPSHOT "mp" "vp" "ts"
+Take a snapshot of the file system specified by the mount structure
+.Fa mp
+and make it accessible through the locked vnode
+.Fa vp .
+The vnode
+.Fa vp
+is unlocked on return.
+If
+.Fa ts
+is not
+.Dv NULL
+it will receive the time this snapshot was taken.
+If the file system does not support this function, it should return
+.Er EOPNOTSUPP .
 .El
 .Sh CODE REFERENCES
 This section describes places within the

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.56 2004/04/21 01:05:46 christos Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.57 2004/05/25 14:55:46 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.56 2004/04/21 01:05:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.57 2004/05/25 14:55:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1032,6 +1032,14 @@ out:
 		error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= IN_CHANGE | IN_UPDATE;
+	/*
+	 * If the last named reference to a snapshot goes away,
+	 * drop its snapshot reference so that it will be reclaimed
+	 * when last open reference goes away.
+	 */
+	if (ip != 0 && (ip->i_flags & SF_SNAPSHOT) != 0 &&
+	    ip->i_ffs_effnlink == 0)
+		ffs_snapgone(ip);
 	return (error);
 }
 
@@ -1071,6 +1079,13 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir, iflags)
 		error = VOP_BWRITE(bp);
 	}
 	dp->i_flag |= iflags;
+	/*
+	 * If the last named reference to a snapshot goes away,
+	 * drop its snapshot reference so that it will be reclaimed
+	 * when last open reference goes away.
+	 */
+	if ((oip->i_flags & SF_SNAPSHOT) != 0 && oip->i_ffs_effnlink == 0)
+		ffs_snapgone(oip);
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.75 2004/04/18 03:30:23 dbj Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.76 2004/05/25 14:54:58 hannken Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.75 2004/04/18 03:30:23 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.76 2004/05/25 14:54:58 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.75 2004/04/18 03:30:23 dbj Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 
+#include <miscfs/specfs/specdev.h>
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/inode.h>
@@ -356,10 +357,11 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	bno = ffs_hashalloc(ip, cg, bpref, request, ffs_alloccg);
 	if (bno > 0) {
 		if (!DOINGSOFTDEP(ITOV(ip)))
-			ffs_blkfree(ip, bprev, (long)osize);
+			ffs_blkfree(fs, ip->i_devvp, bprev, (long)osize,
+			    ip->i_number);
 		if (nsize < request)
-			ffs_blkfree(ip, bno + numfrags(fs, nsize),
-			    (long)(request - nsize));
+			ffs_blkfree(fs, ip->i_devvp, bno + numfrags(fs, nsize),
+			    (long)(request - nsize), ip->i_number);
 		DIP_ADD(ip, blocks, btodb(nsize - osize));
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 		if (bpp != NULL) {
@@ -605,9 +607,9 @@ ffs_reallocblks(v)
 #endif
 	for (blkno = newblk, i = 0; i < len; i++, blkno += fs->fs_frag) {
 		if (!DOINGSOFTDEP(vp))
-			ffs_blkfree(ip,
+			ffs_blkfree(fs, ip->i_devvp,
 			    dbtofsb(fs, buflist->bs_children[i]->b_blkno),
-			    fs->fs_bsize);
+			    fs->fs_bsize, ip->i_number);
 		buflist->bs_children[i]->b_blkno = fsbtodb(fs, blkno);
 #ifdef DEBUG
 		if (!ffs_checkblk(ip,
@@ -1099,6 +1101,7 @@ ffs_fragextend(ip, cg, bprev, osize, nsize)
 	fs->fs_fmod = 1;
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_blkmapdep(bp, fs, bprev);
+	ACTIVECG_CLR(fs, cg);
 	bdwrite(bp);
 	return (bprev);
 }
@@ -1147,6 +1150,7 @@ ffs_alloccg(ip, cg, bpref, size)
 		cgp->cg_time = ufs_rw64(time.tv_sec, needswap);
 	if (size == fs->fs_bsize) {
 		blkno = ffs_alloccgblk(ip, bp, bpref);
+		ACTIVECG_CLR(fs, cg);
 		bdwrite(bp);
 		return (blkno);
 	}
@@ -1179,6 +1183,7 @@ ffs_alloccg(ip, cg, bpref, size)
 		fs->fs_cs(fs, cg).cs_nffree += i;
 		fs->fs_fmod = 1;
 		ufs_add32(cgp->cg_frsum[i], 1, needswap);
+		ACTIVECG_CLR(fs, cg);
 		bdwrite(bp);
 		return (blkno);
 	}
@@ -1205,6 +1210,7 @@ ffs_alloccg(ip, cg, bpref, size)
 	blkno = cg * fs->fs_fpg + bno;
 	if (DOINGSOFTDEP(ITOV(ip)))
 		softdep_setup_blkmapdep(bp, fs, blkno);
+	ACTIVECG_CLR(fs, cg);
 	bdwrite(bp);
 	return blkno;
 }
@@ -1391,6 +1397,7 @@ ffs_clusteralloc(ip, cg, bpref, len)
 	for (i = 0; i < len; i += fs->fs_frag)
 		if ((got = ffs_alloccgblk(ip, bp, bno + i)) != bno + i)
 			panic("ffs_clusteralloc: lost block");
+	ACTIVECG_CLR(fs, cg);
 	bdwrite(bp);
 	return (bno);
 
@@ -1516,6 +1523,7 @@ gotit:
 		cgp->cg_initediblk = ufs_rw32(initediblk, needswap);
 	}
 
+	ACTIVECG_CLR(fs, cg);
 	bdwrite(bp);
 	return (cg * fs->fs_ipg + ipref);
 }
@@ -1528,34 +1536,49 @@ gotit:
  * block reassembly is checked.
  */
 void
-ffs_blkfree(ip, bno, size)
-	struct inode *ip;
+ffs_blkfree(fs, devvp, bno, size, inum)
+	struct fs *fs;
+	struct vnode *devvp;
 	daddr_t bno;
 	long size;
+	ino_t inum;
 {
-	struct fs *fs = ip->i_fs;
 	struct cg *cgp;
 	struct buf *bp;
+	struct ufsmount *ump;
 	int32_t fragno, cgbno;
+	daddr_t cgblkno;
 	int i, error, cg, blk, frags, bbase;
 	u_int8_t *blksfree;
+	dev_t dev;
 	const int needswap = UFS_FSNEEDSWAP(fs);
 
+	cg = dtog(fs, bno);
+	if (VTOI(devvp)->i_flags & SF_SNAPSHOT) {
+		dev = VTOI(devvp)->i_devvp->v_rdev;
+		cgblkno = fragstoblks(fs, cgtod(fs, cg));
+	} else {
+		dev = devvp->v_rdev;
+		ump = VFSTOUFS(devvp->v_specmountpoint);
+		cgblkno = fsbtodb(fs, cgtod(fs, cg));
+		if (TAILQ_FIRST(&ump->um_snapshots) != NULL &&
+		    ffs_snapblkfree(fs, devvp, bno, size, inum))
+			return;
+	}
 	if ((u_int)size > fs->fs_bsize || fragoff(fs, size) != 0 ||
 	    fragnum(fs, bno) + numfrags(fs, size) > fs->fs_frag) {
 		printf("dev = 0x%x, bno = %" PRId64 " bsize = %d, "
 		       "size = %ld, fs = %s\n",
-		    ip->i_dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
+		    dev, bno, fs->fs_bsize, size, fs->fs_fsmnt);
 		panic("blkfree: bad size");
 	}
-	cg = dtog(fs, bno);
+
 	if (bno >= fs->fs_size) {
-		printf("bad block %" PRId64 ", ino %d\n", bno, ip->i_number);
-		ffs_fserr(fs, ip->i_uid, "bad block");
+		printf("bad block %" PRId64 ", ino %d\n", bno, inum);
+		ffs_fserr(fs, inum, "bad block");
 		return;
 	}
-	error = bread(ip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
+	error = bread(devvp, cgblkno, (int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return;
@@ -1574,8 +1597,12 @@ ffs_blkfree(ip, bno, size)
 	if (size == fs->fs_bsize) {
 		fragno = fragstoblks(fs, cgbno);
 		if (!ffs_isfreeblock(fs, blksfree, fragno)) {
+			if (VTOI(devvp)->i_flags & SF_SNAPSHOT) {
+				brelse(bp);
+				return;
+			}
 			printf("dev = 0x%x, block = %" PRId64 ", fs = %s\n",
-			    ip->i_dev, bno, fs->fs_fsmnt);
+			    dev, bno, fs->fs_fsmnt);
 			panic("blkfree: freeing free block");
 		}
 		ffs_setblock(fs, blksfree, fragno);
@@ -1609,7 +1636,7 @@ ffs_blkfree(ip, bno, size)
 			if (isset(blksfree, cgbno + i)) {
 				printf("dev = 0x%x, block = %" PRId64
 				       ", fs = %s\n",
-				    ip->i_dev, bno + i, fs->fs_fsmnt);
+				    dev, bno + i, fs->fs_fsmnt);
 				panic("blkfree: freeing free frag");
 			}
 			setbit(blksfree, cgbno + i);
@@ -1648,6 +1675,7 @@ ffs_blkfree(ip, bno, size)
 		}
 	}
 	fs->fs_fmod = 1;
+	ACTIVECG_CLR(fs, cg);
 	bdwrite(bp);
 }
 
@@ -1744,17 +1772,22 @@ ffs_freefile(v)
 	ino_t ino = ap->a_ino;
 	struct buf *bp;
 	int error, cg;
+	daddr_t cgbno;
 	u_int8_t *inosused;
 #ifdef FFS_EI
 	const int needswap = UFS_FSNEEDSWAP(fs);
 #endif
 
+	cg = ino_to_cg(fs, ino);
+	if (pip->i_flags & SF_SNAPSHOT) {
+		cgbno = fragstoblks(fs, cgtod(fs, cg));
+	} else {
+		cgbno = fsbtodb(fs, cgtod(fs, cg));
+	}
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
 		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 		    pip->i_dev, ino, fs->fs_fsmnt);
-	cg = ino_to_cg(fs, ino);
-	error = bread(pip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),
-		(int)fs->fs_cgsize, NOCRED, &bp);
+	error = bread(pip->i_devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp);
 	if (error) {
 		brelse(bp);
 		return (error);
@@ -1790,6 +1823,44 @@ ffs_freefile(v)
 	fs->fs_fmod = 1;
 	bdwrite(bp);
 	return (0);
+}
+
+/*
+ * Check to see if a file is free.
+ */
+int
+ffs_checkfreefile(fs, devvp, ino)
+	struct fs *fs;
+	struct vnode *devvp;
+	ino_t ino;
+{
+	struct cg *cgp;
+	struct buf *bp;
+	daddr_t cgbno;
+	int ret, cg;
+	u_int8_t *inosused;
+
+	cg = ino_to_cg(fs, ino);
+	if (VTOI(devvp)->i_flags & SF_SNAPSHOT)
+		cgbno = fragstoblks(fs, cgtod(fs, cg));
+	else
+		cgbno = fsbtodb(fs, cgtod(fs, cg));
+	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
+		return 1;
+	if (bread(devvp, cgbno, (int)fs->fs_cgsize, NOCRED, &bp)) {
+		brelse(bp);
+		return 1;
+	}
+	cgp = (struct cg *)bp->b_data;
+	if (!cg_chkmagic(cgp, UFS_FSNEEDSWAP(fs))) {
+		brelse(bp);
+		return 1;
+	}
+	inosused = cg_inosused(cgp, UFS_FSNEEDSWAP(fs));
+	ino %= fs->fs_ipg;
+	ret = isclr(inosused, ino);
+	brelse(bp);
+	return ret;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.25 2004/02/14 00:00:56 hannken Exp $	*/
+/*	$NetBSD: specdev.h,v 1.26 2004/05/25 14:54:58 hannken Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
  */
 struct spec_cow_entry {
 	SLIST_ENTRY(spec_cow_entry) ce_list;
-	void (*ce_func)(void *, struct buf *);
+	int (*ce_func)(void *, struct buf *);
 	void *ce_cookie;
 };
 

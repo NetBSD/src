@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.46 2004/04/26 23:46:22 dbj Exp $	*/
+/*	$NetBSD: inode.c,v 1.47 2004/05/25 14:54:56 hannken Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.46 2004/04/26 23:46:22 dbj Exp $");
+__RCSID("$NetBSD: inode.c,v 1.47 2004/05/25 14:54:56 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ ckinode(dp, idesc)
 			idesc->id_blkno = iswap64(dino.dp2.di_db[i]);
 		else
 			idesc->id_blkno = iswap32(dino.dp1.di_db[i]);
-		if (idesc->id_type == ADDR)
+		if (idesc->id_type != DATA)
 			ret = (*idesc->id_func)(idesc);
 		else
 			ret = dirscan(idesc);
@@ -186,7 +186,7 @@ iblock(idesc, ilevel, isize)
 	char pathbuf[MAXPATHLEN + 1];
 	union dinode *dp;
 
-	if (idesc->id_type == ADDR) {
+	if (idesc->id_type != DATA) {
 		func = idesc->id_func;
 		if (((n = (*func)(idesc)) & KEEPON) == 0)
 			return (n);

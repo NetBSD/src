@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.161 2004/03/29 04:14:04 dyoung Exp $
+#       $NetBSD: Makefile,v 1.162 2004/05/25 14:54:56 hannken Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -257,7 +257,7 @@ MLINKS+=lock.9 simple_lock_init.9 lock.9 simple_lock.9 \
 	lock.9 simple_lock_try.9 lock.9 simple_unlock.9 \
 	lock.9 simple_lock_freecheck.9 lock.9 simple_lock_dump.9  \
 	lock.9 lockinit.9 lock.9 lockmgr.9 \
-	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 \
+	lock.9 lockstatus.9 lock.9 lockmgr_printinfo.9 lock.9 transferlockers.9 \
 	lock.9 spinlockinit.9 lock.9 spinlockmgr.9
 MLINKS+=ltsleep.9 wakeup.9 ltsleep.9 tsleep.9
 MLINKS+=malloc.9 MALLOC.9 malloc.9 realloc.9 malloc.9 free.9 malloc.9 FREE.9
@@ -537,7 +537,8 @@ MLINKS+=vfsops.9 VFS_MOUNT.9 \
 	vfsops.9 VFS_VGET.9 \
 	vfsops.9 VFS_FHTOVP.9 \
 	vfsops.9 VFS_VPTOFH.9 \
-	vfsops.9 VFS_CHECKEXP.9
+	vfsops.9 VFS_CHECKEXP.9 \
+	vfsops.9 VFS_SNAPSHOT.9
 MLINKS+=vfssubr.9 vfs_getnewfsid.9 \
 	vfssubr.9 vfs_getvfs.9 \
 	vfssubr.9 vfs_export.9 \

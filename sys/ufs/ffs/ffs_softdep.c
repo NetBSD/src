@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.58 2004/04/25 16:42:43 simonb Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.59 2004/05/25 14:54:59 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.58 2004/04/25 16:42:43 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.59 2004/05/25 14:54:59 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1707,7 +1707,8 @@ handle_workitem_freefrag(freefrag)
 	tip.i_vnode = &vp;
 	lockinit(&tip.i_gnode.g_glock, PVFS, "fglock", 0, 0);
 	lockmgr(&tip.i_gnode.g_glock, LK_EXCLUSIVE, NULL);
-	ffs_blkfree(&tip, freefrag->ff_blkno, freefrag->ff_fragsize);
+	ffs_blkfree(ump->um_fs, ump->um_devvp, freefrag->ff_blkno,
+	    freefrag->ff_fragsize, tip.i_number);
 	lockmgr(&tip.i_gnode.g_glock, LK_RELEASE, NULL);
 	pool_put(&freefrag_pool, freefrag);
 }
@@ -2492,7 +2493,7 @@ handle_workitem_freeblocks(freeblks)
 		if ((error = indir_trunc(&tip, fsbtodb(fs, bn), level,
 		    baselbns[level], &blocksreleased)) != 0)
 			allerror = error;
-		ffs_blkfree(&tip, bn, fs->fs_bsize);
+		ffs_blkfree(fs, devvp, bn, fs->fs_bsize, tip.i_number);
 		fs->fs_pendingblocks -= nblocks;
 		blocksreleased += nblocks;
 	}
@@ -2503,7 +2504,7 @@ handle_workitem_freeblocks(freeblks)
 		if ((bn = freeblks->fb_dblks[i]) == 0)
 			continue;
 		bsize = blksize(fs, &tip, i);
-		ffs_blkfree(&tip, bn, bsize);
+		ffs_blkfree(fs, devvp, bn, bsize, tip.i_number);
 		fs->fs_pendingblocks -= btodb(bsize);
 		blocksreleased += btodb(bsize);
 	}
@@ -2605,7 +2606,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 			     level - 1, lbn + (i * lbnadd), countp)) != 0)
 				allerror = error;
 		}
-		ffs_blkfree(ip, nb, fs->fs_bsize);
+		ffs_blkfree(fs, ip->i_devvp, nb, fs->fs_bsize, ip->i_number);
 		fs->fs_pendingblocks -= nblocks;
 		*countp += nblocks;
 	}
@@ -3235,6 +3236,13 @@ softdep_releasefile(ip)
 	 */
 	if (ip->i_flag & IN_SPACECOUNTED)
 		return;
+	/*
+	 * We have to deactivate a snapshot otherwise copyonwrites may
+	 * add blocks and the cleanup may remove blocks after we have
+	 * tried to account for them.
+	 */
+	if ((ip->i_flags & SF_SNAPSHOT) != 0)
+		ffs_snapremove(ITOV(ip));
 	/*
 	 * If we are tracking an nlinkdelta, we have to also remember
 	 * whether we accounted for the freed space yet.

@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.121 2004/05/02 12:21:02 pk Exp $	*/
+/*	$NetBSD: mount.h,v 1.122 2004/05/25 14:54:58 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -244,6 +244,8 @@ struct vfsops {
 	int	(*vfs_mountroot) __P((void));
 	int	(*vfs_checkexp) __P((struct mount *, struct mbuf *, int *,
 				    struct ucred **));
+	int	(*vfs_snapshot)	__P((struct mount *, struct vnode *,
+				    struct timespec *));
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
@@ -262,6 +264,7 @@ struct vfsops {
 #define VFS_CHECKEXP(MP, NAM, EXFLG, CRED) \
 	(*(MP)->mnt_op->vfs_checkexp)(MP, NAM, EXFLG, CRED)
 #define	VFS_VPTOFH(VP, FIDP)	  (*(VP)->v_mount->mnt_op->vfs_vptofh)(VP, FIDP)
+#define VFS_SNAPSHOT(MP, VP, TS)  (*(MP)->mnt_op->vfs_snapshot)(MP, VP, TS)
 #endif /* _KERNEL */
 
 #ifdef _KERNEL

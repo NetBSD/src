@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.18 2003/10/27 00:12:41 lukem Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.19 2004/05/25 14:54:55 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.18 2003/10/27 00:12:41 lukem Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.19 2004/05/25 14:54:55 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,10 @@ flags_to_string(u_long flags, const char *def)
 		SAPPEND("arch");
 	if (flags & SF_IMMUTABLE)
 		SAPPEND("schg");
+#ifdef SF_SNAPSHOT
+	if (flags & SF_SNAPSHOT)
+		SAPPEND("snap");
+#endif
 #endif
 	if (prefix == NULL)
 		strlcpy(string, def, sizeof(string));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.62 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.63 2004/05/25 14:54:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.62 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.63 2004/05/25 14:54:59 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -220,6 +220,9 @@ ffs_truncate(v)
 	if (length > fs->fs_maxfilesize)
 		return (EFBIG);
 
+	if ((oip->i_flags & SF_SNAPSHOT) != 0)
+		ffs_snapremove(ovp);
+
 	osize = oip->i_size;
 	ioflag = ap->a_flags;
 	aflag = ioflag & IO_SYNC ? B_SYNC : 0;
@@ -402,7 +405,8 @@ ffs_truncate(v)
 			blocksreleased += count;
 			if (lastiblock[level] < 0) {
 				DIP_ASSIGN(oip, ib[level], 0);
-				ffs_blkfree(oip, bn, fs->fs_bsize);
+				ffs_blkfree(fs, oip->i_devvp, bn, fs->fs_bsize,
+				    oip->i_number);
 				blocksreleased += nblocks;
 			}
 		}
@@ -424,7 +428,7 @@ ffs_truncate(v)
 			continue;
 		DIP_ASSIGN(oip, db[i], 0);
 		bsize = blksize(fs, oip, i);
-		ffs_blkfree(oip, bn, bsize);
+		ffs_blkfree(fs, oip->i_devvp, bn, bsize, oip->i_number);
 		blocksreleased += btodb(bsize);
 	}
 	if (lastblock < 0)
@@ -458,7 +462,8 @@ ffs_truncate(v)
 			 * required for the storage we're keeping.
 			 */
 			bn += numfrags(fs, newspace);
-			ffs_blkfree(oip, bn, oldspace - newspace);
+			ffs_blkfree(fs, oip->i_devvp, bn, oldspace - newspace,
+			    oip->i_number);
 			blocksreleased += btodb(oldspace - newspace);
 		}
 	}
@@ -607,7 +612,7 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 				allerror = error;
 			blocksreleased += blkcount;
 		}
-		ffs_blkfree(ip, nb, fs->fs_bsize);
+		ffs_blkfree(fs, ip->i_devvp, nb, fs->fs_bsize, ip->i_number);
 		blocksreleased += nblocks;
 	}
 

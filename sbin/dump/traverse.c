@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.43 2004/03/24 12:28:51 hannken Exp $	*/
+/*	$NetBSD: traverse.c,v 1.44 2004/05/25 14:54:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.43 2004/03/24 12:28:51 hannken Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.44 2004/05/25 14:54:56 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,8 @@ blockest(union dinode *dp)
 	 *	dump blocks (sizeest vs. blkest in the indirect block
 	 *	calculation).
 	 */
+	if (DIP(dp, flags) & SF_SNAPSHOT)
+		return (1);
 	blkest = howmany(ufs_fragroundup(ufsib,
 	    dbtob((u_int64_t)DIP(dp, blocks))), TP_BSIZE);
 	sizeest = howmany(ufs_fragroundup(ufsib, DIP(dp, size)), TP_BSIZE);
@@ -480,6 +482,14 @@ dumpino(union dinode *dp, ino_t ino)
 		dumpmap(dumpinomap, TS_BITS, ino);
 	}
 	CLRINO(ino, dumpinomap);
+	/*
+	 * Zero out the size of a snapshot so that it will be dumped
+	 * as a zero length file.
+	 */
+	if (DIP(dp, flags) & SF_SNAPSHOT) {
+		DIP(dp, size) = 0;
+		DIP(dp, flags) &= ~SF_SNAPSHOT;
+	}
 	if (!is_ufs2) {
 		if (needswap)
 			ffs_dinode1_swap(&dp->dp1, &spcl.c_dinode);

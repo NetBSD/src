@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.77 2004/05/18 11:59:11 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.78 2004/05/25 14:54:57 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.77 2004/05/18 11:59:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.78 2004/05/25 14:54:57 hannken Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.77 2004/05/18 11:59:11 yamt Exp $");
 void	lock_printf(const char *fmt, ...)
     __attribute__((__format__(__printf__,1,2)));
 
-static int acquire(__volatile struct lock *, int *, int, int, int);
+static int acquire(__volatile struct lock **, int *, int, int, int);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 
@@ -209,10 +209,11 @@ do {									\
  * Acquire a resource.
  */
 static int
-acquire(__volatile struct lock *lkp, int *s, int extflags,
+acquire(__volatile struct lock **lkpp, int *s, int extflags,
     int drain, int wanted)
 {
 	int error;
+	__volatile struct lock *lkp = *lkpp;
 
 	KASSERT(drain || (wanted & LK_WAIT_NONZERO) == 0);
 
@@ -270,6 +271,13 @@ acquire(__volatile struct lock *lkp, int *s, int extflags,
 			if (extflags & LK_SLEEPFAIL) {
 				error = ENOLCK;
 				break;
+			}
+			if (lkp->lk_newlock != NULL) {
+				simple_lock(&lkp->lk_newlock->lk_interlock);
+				simple_unlock(&lkp->lk_interlock);
+				if (lkp->lk_waitcount == 0)
+					wakeup((void *)&lkp->lk_newlock);
+				*lkpp = lkp = lkp->lk_newlock;
 			}
 		}
 	}
@@ -373,6 +381,26 @@ lock_printf(const char *fmt, ...)
 #endif /* LOCKDEBUG */
 
 /*
+ * Transfer any waiting processes from one lock to another.
+ */
+void
+transferlockers(struct lock *from, struct lock *to)
+{
+
+	KASSERT(from != to);
+	KASSERT((from->lk_flags & LK_WAITDRAIN) == 0);
+	if (from->lk_waitcount == 0)
+		return;
+	from->lk_newlock = to;
+	wakeup((void *)from);
+	tsleep((void *)&from->lk_newlock, from->lk_prio, "lkxfer", 0);
+	from->lk_newlock = NULL;
+	from->lk_flags &= ~(LK_WANT_EXCL | LK_WANT_UPGRADE);
+	KASSERT(from->lk_waitcount == 0);
+}
+
+
+/*
  * Initialize a lock; required before use.
  */
 void
@@ -386,6 +414,7 @@ lockinit(struct lock *lkp, int prio, const char *wmesg, int timo, int flags)
 		lkp->lk_cpu = LK_NOCPU;
 	else {
 		lkp->lk_lockholder = LK_NOPROC;
+		lkp->lk_newlock = NULL;
 		lkp->lk_prio = prio;
 		lkp->lk_timo = timo;
 	}
@@ -601,7 +630,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			/*
 			 * Wait for exclusive locks and upgrades to clear.
 			 */
-			error = acquire(lkp, &s, extflags, 0,
+			error = acquire(&lkp, &s, extflags, 0,
 			    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE);
 			if (error)
 				break;
@@ -684,7 +713,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			 * drop to zero, then take exclusive lock.
 			 */
 			lkp->lk_flags |= LK_WANT_UPGRADE;
-			error = acquire(lkp, &s, extflags, 0, LK_SHARE_NONZERO);
+			error = acquire(&lkp, &s, extflags, 0, LK_SHARE_NONZERO);
 			lkp->lk_flags &= ~LK_WANT_UPGRADE;
 			if (error)
 				break;
@@ -744,7 +773,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		/*
 		 * Try to acquire the want_exclusive flag.
 		 */
-		error = acquire(lkp, &s, extflags, 0,
+		error = acquire(&lkp, &s, extflags, 0,
 		    LK_HAVE_EXCL | LK_WANT_EXCL);
 		if (error)
 			break;
@@ -752,7 +781,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 		/*
 		 * Wait for shared locks and upgrades to finish.
 		 */
-		error = acquire(lkp, &s, extflags, 0,
+		error = acquire(&lkp, &s, extflags, 0,
 		    LK_WANT_UPGRADE | LK_SHARE_NONZERO);
 		lkp->lk_flags &= ~LK_WANT_EXCL;
 		if (error)
@@ -830,7 +859,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 			error = EBUSY;
 			break;
 		}
-		error = acquire(lkp, &s, extflags, 1,
+		error = acquire(&lkp, &s, extflags, 1,
 		    LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE |
 		    LK_SHARE_NONZERO | LK_WAIT_NONZERO);
 		if (error)
@@ -956,12 +985,12 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 	/*
 	 * Try to acquire the want_exclusive flag.
 	 */
-	error = acquire(lkp, &s, LK_SPIN, 0, LK_HAVE_EXCL | LK_WANT_EXCL);
+	error = acquire(&lkp, &s, LK_SPIN, 0, LK_HAVE_EXCL | LK_WANT_EXCL);
 	lkp->lk_flags |= LK_WANT_EXCL;
 	/*
 	 * Wait for shared locks and upgrades to finish.
 	 */
-	error = acquire(lkp, &s, LK_SPIN, 0,
+	error = acquire(&lkp, &s, LK_SPIN, 0,
 	    LK_SHARE_NONZERO | LK_WANT_UPGRADE);
 	lkp->lk_flags &= ~LK_WANT_EXCL;
 	lkp->lk_flags |= LK_HAVE_EXCL;

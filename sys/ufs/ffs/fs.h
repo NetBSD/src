@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.43 2004/03/21 18:48:24 dsl Exp $	*/
+/*	$NetBSD: fs.h,v 1.44 2004/05/25 14:54:59 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -174,9 +174,28 @@
 #define	FS_MAXCONTIG	16
 
 /*
- * Unused value currently, FreeBSD compat.
+ * The maximum number of snapshot nodes that can be associated
+ * with each filesystem. This limit affects only the number of
+ * snapshot files that can be recorded within the superblock so
+ * that they can be found when the filesystem is mounted. However,
+ * maintaining too many will slow the filesystem performance, so
+ * having this limit is a good idea.
  */
 #define FSMAXSNAP 20
+
+/*
+ * Used to identify special blocks in snapshots:
+ *
+ * BLK_NOCOPY - A block that was unallocated at the time the snapshot
+ *      was taken, hence does not need to be copied when written.
+ * BLK_SNAP - A block held by another snapshot that is not needed by this
+ *      snapshot. When the other snapshot is freed, the BLK_SNAP entries
+ *      are converted to BLK_NOCOPY. These are needed to allow fsck to
+ *      identify blocks that are in use by other snapshots (which are
+ *      expunged from this snapshot).
+ */
+#define BLK_NOCOPY	((daddr_t)(1))
+#define BLK_SNAP	((daddr_t)(2))
 
 /*
  * MINFREE gives the minimum acceptable percentage of file system
@@ -304,7 +323,7 @@ struct fs {
 	u_int8_t *fs_contigdirs;	/* # of contiguously allocated dirs */
 	struct csum *fs_csp;		/* cg summary info buffer for fs_cs */
 	int32_t	*fs_maxcluster;		/* max cluster in each cyl group */
-	u_int	*fs_active;		/* used by snapshots to track fs */
+	u_char	*fs_active;		/* used by snapshots to track fs */
 	int32_t	 fs_old_cpc;		/* cyl per cycle in postbl */
 /* this area is otherwise allocated unless fs_old_flags & FS_FLAGS_UPDATED */
 	int32_t	 fs_maxbsize;		/* maximum blocking factor permitted */
@@ -401,6 +420,22 @@ struct fs {
  */
 #define	FS_SWAPPED	0x80000000	/* file system is endian swapped */
 #define	FS_INTERNAL	0x80000000	/* mask for internal flags */
+
+/*
+ * Macros to access bits in the fs_active array.
+ */
+#define ACTIVECG_SET(fs, cg)				\
+	do {						\
+		if ((fs)->fs_active != NULL)		\
+			setbit((fs)->fs_active, (cg));	\
+	} while (/*CONSTCOND*/ 0)
+#define ACTIVECG_CLR(fs, cg)				\
+	do {						\
+		if ((fs)->fs_active != NULL)		\
+			clrbit((fs)->fs_active, (cg));	\
+	} while (/*CONSTCOND*/ 0)
+#define ACTIVECG_ISSET(fs, cg)				\
+	((fs)->fs_active != NULL && isset((fs)->fs_active, (cg)))
 
 /*
  * The size of a cylinder group is calculated by CGSIZE. The maximum size

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.17 2004/05/25 04:44:43 atatat Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.18 2004/05/25 14:54:56 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.17 2004/05/25 04:44:43 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.18 2004/05/25 14:54:56 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -131,6 +131,7 @@ struct vfsops msdosfs_vfsops = {
 	NULL,
 	msdosfs_mountroot,
 	msdosfs_checkexp,
+	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	msdosfs_vnodeopv_descs,
 };
 

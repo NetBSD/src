@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.85 2004/01/25 18:06:49 hannken Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.86 2004/05/25 14:54:57 hannken Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.85 2004/01/25 18:06:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.86 2004/05/25 14:54:57 hannken Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -321,7 +321,7 @@ genfs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock));
+	return (lockmgr(vp->v_vnlock, ap->a_flags, &vp->v_interlock));
 }
 
 /*
@@ -336,7 +336,7 @@ genfs_unlock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE,
+	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
 	    &vp->v_interlock));
 }
 
@@ -351,7 +351,7 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockstatus(&vp->v_lock));
+	return (lockstatus(vp->v_vnlock));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.46 2003/11/04 00:00:36 kleink Exp $	*/
+/*	$NetBSD: stat.h,v 1.47 2004/05/25 14:54:58 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -260,6 +260,7 @@ struct stat {
 #define	SF_ARCHIVED	0x00010000	/* file is archived */
 #define	SF_IMMUTABLE	0x00020000	/* file may not be changed */
 #define	SF_APPEND	0x00040000	/* writes to file may only append */
+#define	SF_SNAPSHOT	0x00200000	/* snapshot inode */
 
 #ifdef _KERNEL
 /*
