@@ -1,3 +1,5 @@
+/*	$NetBSD: update.c,v 1.7 1999/06/06 03:39:11 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1987, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -41,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)update.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: update.c,v 1.6 1997/10/17 13:59:42 lukem Exp $");
+__RCSID("$NetBSD: update.c,v 1.7 1999/06/06 03:39:11 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +54,7 @@ __RCSID("$NetBSD: update.c,v 1.6 1997/10/17 13:59:42 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 int	main __P((int, char **));
 void	mysync __P((int));
@@ -90,6 +93,7 @@ main(argc, argv)
 		usage();
 
 	daemon(0, 0);
+	pidfile(NULL);
 
 	sa.sa_handler = mysync;
 	sigemptyset(&sa.sa_mask);
