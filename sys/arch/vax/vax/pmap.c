@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.11 1995/05/05 10:47:39 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.12 1995/05/06 00:08:31 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -109,25 +109,27 @@ pmap_bootstrap()
 	extern	u_int sigcode, esigcode, proc0paddr;
 	struct pmap *p0pmap=&vmspace0.vm_pmap;
 	vm_offset_t	pend=0;
-#define	ROUND_PAGE(x)	(((uint)(x)+PAGE_SIZE-1)& ~(PAGE_SIZE-1))
+#define	ROUND_PAGE(x)	(((uint)(x) + PAGE_SIZE-1)& ~(PAGE_SIZE - 1))
 
  /* These are in phys memory */
-	istack=ROUND_PAGE((uint)Sysmap+SYSPTSIZE*4);
-	(u_int)scratch=istack+ISTACK_SIZE;
-	mtpr(scratch,PR_ISP); /* set interrupt stack pointer */
-	pv_table=(struct pv_entry *)(scratch+NBPG*4);
+	istack = ROUND_PAGE((uint)Sysmap + SYSPTSIZE * 4);
+	(u_int)scratch = istack + ISTACK_SIZE;
+	mtpr(scratch, PR_ISP); /* set interrupt stack pointer */
+	msgbufp = (void *)(scratch + NBPG * 4);
+	(u_int)pv_table = (int)ROUND_PAGE(sizeof(struct msgbuf)) +
+	    (u_int)msgbufp;
 
 /* Count up phys memory */
-	while(!badaddr(pend,4))
-		pend+=NBPG*128;
+	while (!badaddr(pend, 4))
+		pend += NBPG * 128;
 
 #if VAX630
 	if (cpu_type == VAX_630)
 		pend -= 8 * NBPG;       /* Avoid console scratchpad */
 #endif
 /* These are virt only */
-	vmmap=ROUND_PAGE(pv_table+(pend/PAGE_SIZE));
-	(u_int)Numem=vmmap+NBPG*2;
+	vmmap = ROUND_PAGE(pv_table + (pend / PAGE_SIZE));
+	(u_int)Numem = vmmap + NBPG * 2;
 
 	(pt_entry_t *)UMEMmap=kvtopte(Numem);
 	(pt_entry_t *)pte_cmap=kvtopte(vmmap);
@@ -159,7 +161,9 @@ pmap_bootstrap()
 	pmap_map(istack+NBPG,istack+NBPG,(vm_offset_t)scratch,
 		VM_PROT_READ|VM_PROT_WRITE);
 	pmap_map((vm_offset_t)scratch,(vm_offset_t)scratch,
-		(vm_offset_t)pv_table,VM_PROT_READ|VM_PROT_WRITE);
+		(vm_offset_t)msgbufp, VM_PROT_READ|VM_PROT_WRITE);
+        pmap_map((vm_offset_t)msgbufp, (vm_offset_t)msgbufp,
+	    (vm_offset_t)pv_table, VM_PROT_ALL);
 	pmap_map((vm_offset_t)pv_table,(vm_offset_t)pv_table,vmmap,
 		VM_PROT_READ|VM_PROT_WRITE);
 
@@ -207,8 +211,7 @@ pmap_init(s, e)
 	pte_map=kmem_suballoc(kernel_map, &ptemapstart, &ptemapend, 
 		USRPTSIZE*4, TRUE); /* Don't allow paging yet */
 #ifdef DEBUG
-if(startpmapdebug) printf("pmap_init: pte_map ptemapstart %x, ptemapend %x,
-	ptemapsize %x\n", ptemapstart, ptemapend, USRPTSIZE*4);
+if(startpmapdebug) printf("pmap_init: pte_map ptemapstart %x, ptemapend %x, ptemapsize %x\n", ptemapstart, ptemapend, USRPTSIZE*4);
  #endif
 }
 
