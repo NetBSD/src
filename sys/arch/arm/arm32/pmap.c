@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2002/03/24 03:37:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 2002/03/24 04:49:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2002/03/24 03:37:21 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2002/03/24 04:49:16 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -275,8 +275,8 @@ static void pmap_remove_all __P((struct vm_page *));
 
 vsize_t npages;
 
-static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t, boolean_t));
-static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t, boolean_t));
+static struct vm_page	*pmap_alloc_ptp __P((struct pmap *, vaddr_t));
+static struct vm_page	*pmap_get_ptp __P((struct pmap *, vaddr_t));
 __inline static void pmap_clearbit __P((struct vm_page *, unsigned int));
 
 extern paddr_t physical_start;
@@ -2637,10 +2637,12 @@ pmap_enter(pmap, va, pa, prot, flags)
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
 		struct vm_page *ptp;
-		KASSERT(pmap != pmap_kernel()); /* kernel should have pre-grown */
+
+		/* kernel should be pre-grown */
+		KASSERT(pmap != pmap_kernel());
 
 		/* if failure is allowed then don't try too hard */
-		ptp = pmap_get_ptp(pmap, va, flags & PMAP_CANFAIL);
+		ptp = pmap_get_ptp(pmap, va);
 		if (ptp == NULL) {
 			if (flags & PMAP_CANFAIL) {
 				error = ENOMEM;
@@ -3516,18 +3518,6 @@ pmap_procwr(p, va, len)
  */
   
 /*
- * pmap_steal_ptp: Steal a PTP from somewhere else.
- *
- * This is just a placeholder, for now we never steal.
- */
- 
-static struct vm_page *
-pmap_steal_ptp(struct pmap *pmap, vaddr_t va)
-{
-    return (NULL);
-}
-
-/*
  * pmap_get_ptp: get a PTP (if there isn't one, allocate a new one)
  *
  * => pmap should NOT be pmap_kernel()
@@ -3535,30 +3525,30 @@ pmap_steal_ptp(struct pmap *pmap, vaddr_t va)
  */
 
 static struct vm_page *
-pmap_get_ptp(struct pmap *pmap, vaddr_t va, boolean_t just_try)
+pmap_get_ptp(struct pmap *pmap, vaddr_t va)
 {
-    struct vm_page *ptp;
+	struct vm_page *ptp;
 
-    if (pmap_pde_page(pmap_pde(pmap, va))) {
+	if (pmap_pde_page(pmap_pde(pmap, va))) {
 
-	/* valid... check hint (saves us a PA->PG lookup) */
+		/* valid... check hint (saves us a PA->PG lookup) */
 #if 0
-	if (pmap->pm_ptphint &&
-    		((unsigned)pmap_pde(pmap, va) & PG_FRAME) ==
-		VM_PAGE_TO_PHYS(pmap->pm_ptphint))
-	    return (pmap->pm_ptphint);
+		if (pmap->pm_ptphint &&
+		    ((unsigned)pmap_pde(pmap, va) & PG_FRAME) ==
+		    VM_PAGE_TO_PHYS(pmap->pm_ptphint))
+			return (pmap->pm_ptphint);
 #endif
-	ptp = uvm_pagelookup(&pmap->pm_obj, va);
+		ptp = uvm_pagelookup(&pmap->pm_obj, va);
 #ifdef DIAGNOSTIC
-	if (ptp == NULL)
-    	    panic("pmap_get_ptp: unmanaged user PTP");
+		if (ptp == NULL)
+			panic("pmap_get_ptp: unmanaged user PTP");
 #endif
-//	pmap->pm_ptphint = ptp;
-	return(ptp);
-    }
+//		pmap->pm_ptphint = ptp;
+		return(ptp);
+	}
 
-    /* allocate a new PTP (updates ptphint) */
-    return(pmap_alloc_ptp(pmap, va, just_try));
+	/* allocate a new PTP (updates ptphint) */
+	return(pmap_alloc_ptp(pmap, va));
 }
 
 /*
@@ -3571,24 +3561,15 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, boolean_t just_try)
  */
 
 /*__inline */ static struct vm_page *
-pmap_alloc_ptp(struct pmap *pmap, vaddr_t va, boolean_t just_try)
+pmap_alloc_ptp(struct pmap *pmap, vaddr_t va)
 {
 	struct vm_page *ptp;
 
 	ptp = uvm_pagealloc(&pmap->pm_obj, va, NULL,
 		UVM_PGA_USERESERVE|UVM_PGA_ZERO);
-	if (ptp == NULL) {
-	    if (just_try)
+	if (ptp == NULL)
 		return (NULL);
 
-	    ptp = pmap_steal_ptp(pmap, va);
-
-	    if (ptp == NULL)
-		return (NULL);
-	    /* Stole a page, zero it.  */
-	    pmap_zero_page(VM_PAGE_TO_PHYS(ptp));
-	}
-	    
 	/* got one! */
 	ptp->flags &= ~PG_BUSY;	/* never busy */
 	ptp->wire_count = 1;	/* no mappings yet */
@@ -3647,7 +3628,7 @@ pmap_growkernel(maxkvaddr)
 		 * INVOKED WHILE pmap_init() IS RUNNING!
 		 */
 
-		if ((ptp = pmap_alloc_ptp(kpm, (pmap_curmaxkvaddr + 1), FALSE)) == NULL) {
+		if ((ptp = pmap_alloc_ptp(kpm, (pmap_curmaxkvaddr + 1))) == NULL) {
 			panic("pmap_growkernel: alloc ptp failed");
 		}
 
