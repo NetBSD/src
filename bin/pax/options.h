@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.6 1999/11/01 17:13:27 mrg Exp $	*/
+/*	$NetBSD: options.h,v 1.7 2001/10/25 08:51:51 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -82,18 +82,19 @@
 #define	CGF	0x00400000	/* nonstandard extension */
 #define	CHF	0x00800000	/* nonstandard extension */
 #define	CLF	0x01000000	/* nonstandard extension */
-#define	CPF	0x02000000	/* nonstandard extension */
-#define	CTF	0x04000000	/* nonstandard extension */
-#define	CUF	0x08000000	/* nonstandard extension */
-#define	CXF	0x10000000
-#define	CYF	0x20000000	/* nonstandard extension */
-#define	CZF	0x40000000	/* nonstandard extension */
+#define	CMF	0x02000000	/* nonstandard extension */
+#define	CPF	0x04000000	/* nonstandard extension */
+#define	CTF	0x08000000	/* nonstandard extension */
+#define	CUF	0x10000000	/* nonstandard extension */
+#define	CXF	0x20000000
+#define	CYF	0x40000000	/* nonstandard extension */
+#define	CZF	0x80000000	/* nonstandard extension */
 
 /*
  * ascii string indexed by bit position above (alter the above and you must
  * alter this string) used to tell the user what flags caused us to complain
  */
-#define FLGCH	"abcdfiklnoprstuvwxABDEGHLPTUXYZ"
+#define FLGCH	"abcdfiklnoprstuvwxABDEGHLMPTUXYZ"
 
 /*
  * legal pax operation bit patterns
@@ -110,7 +111,7 @@
  * Illegal option flag subsets based on pax operation
  */
 
-#define	BDEXTR	(AF|BF|LF|TF|WF|XF|CBF|CHF|CLF|CPF|CXF)
+#define	BDEXTR	(AF|BF|LF|TF|WF|XF|CBF|CHF|CLF|CMF|CPF|CXF)
 #define	BDARCH	(CF|KF|LF|NF|PF|RF|CDF|CEF|CYF|CZF)
 #define	BDCOPY	(AF|BF|FF|OF|XF|CAF|CBF|CEF)
-#define	BDLIST (AF|BF|IF|KF|LF|OF|PF|RF|TF|UF|WF|XF|CBF|CDF|CHF|CLF|CPF|CXF|CYF|CZF)
+#define	BDLIST (AF|BF|IF|KF|LF|OF|PF|RF|TF|UF|WF|XF|CBF|CDF|CHF|CLF|CMF|CPF|CXF|CYF|CZF)
