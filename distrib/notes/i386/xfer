@@ -1,4 +1,4 @@
-.\" $NetBSD: xfer,v 1.15 1999/01/13 07:30:05 ross Exp $	
+.\" $NetBSD: xfer,v 1.16 1999/02/01 16:16:09 he Exp $	
 .\"(
 .Pp
 Installation is supported from several media types, including:
@@ -16,42 +16,37 @@ DOS floppies
 .Pp
 No matter which installation medium you choose, you'll need to have a
 floppy disk (either 1.2M or 1.44M will work). You'll put the boot
-floppy image ("boot.fs" for 1.44M floppies, "boot-small.fs" for 1.2M
-floppies) onto this disk, which contains software to install or
-upgrade your
+floppy image ("boot1.fs" and "boot2.fs" for 1.44M floppies,
+"boot-tiny.fs" for 1.2M floppies) onto this disk, which contains
+software to install or upgrade your
 .Nx
-system.
-.Pp
-.(Note
-Previous versions of
-.Nx
-used several floppy images,
-including several kernel/boot floppies depending on hardware
-configuration, an install floppy, and an upgrade floppy.
-.Nx \*V
-only requires a single floppy for all tasks.
-.Note)
+system.  Note that the "boot-tiny.fs" image is tailored for "small"
+machines, this install image does not have drivers for PCI, PCMCIA,
+EISA or SCSI (i.e. ISA-only), but can be used on machines with only
+4MB of RAM.
 .Pp
 If you are using a UN*X-like system to write the floppy images to
 disks, you should use the
 .Xr dd
-command to copy the file system image
+command to copy the file system image(s)
 (.fs file) directly to the raw floppy disk. It is suggested that you
 read the
-.Xr dd manual page or ask your system administrator to
-determine the correct set of arguments to use; it will be slightly
-different from system to system, and a comprehensive list of the
-possibilities is beyond the scope of this document.
+.Xr dd 1
+manual page or ask your system administrator to determine the correct
+set of arguments to use; it will be slightly different from system to
+system, and a comprehensive list of the possibilities is beyond the
+scope of this document.
 .Pp
 If you are using
 .Tn DOS
-to write the floppy image to disk, you should use the
+to write the floppy image(s) to floppy disk, you should use the
 .Li rawrite
 utility, provided in the
 .Pa i386/utilities
 directory of the
 .Nx
-distribution. It will write the file system image (.fs file) to disks.
+distribution. It will write a file system image (.fs file) to a floppy
+disk.
 .Pp
 Note that, when installing or upgrading, the floppy can be
 write-protected if you wish. These systems mount ramdisks as their
