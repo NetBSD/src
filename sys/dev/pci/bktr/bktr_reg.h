@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_reg.h,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/*	$NetBSD: bktr_reg.h,v 1.2 2000/05/07 00:24:34 wiz Exp $	*/
 
 /*
  * FreeBSD: src/sys/dev/bktr/bktr_reg.h,v 1.36 1999/10/28 13:58:17 roger Exp
@@ -442,7 +442,7 @@ typedef struct bktr_clip bktr_clip_t;
  * NetBSD >= 1.3H uses vaddr_t instead of vm_offset_t
  */
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 103080000
-typedef vaddr_t	vm_offset_t;
+typedef void *	vm_offset_t;
 #endif
 
 /*
@@ -469,11 +469,6 @@ struct bktr_softc {
     bus_dmamap_t	dm_mem;
     bus_dmamap_t	dm_vbidata;
     bus_dmamap_t	dm_vbibuffer;
-#if __NetBSD_Version__ >= 103080000
-    paddr_t		phys_base;	/* Bt848 register physical address */
-#else
-    vm_offset_t		phys_base;	/* Bt848 register physical address */
-#endif
 #endif
 
 #if defined(__OpenBSD__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bktr_tuner.c,v 1.1.1.1 2000/05/07 00:16:18 wiz Exp $	*/
+/*	$NetBSD: bktr_tuner.c,v 1.2 2000/05/07 00:24:34 wiz Exp $	*/
 
 /* FreeBSD: src/sys/dev/bktr/bktr_tuner.c,v 1.5 2000/01/24 14:00:21 roger Exp */
 
@@ -58,25 +58,28 @@
 #ifdef __FreeBSD__
 #include <machine/clock.h>      /* for DELAY */
 #include <pci/pcivar.h>
-#endif
 
 #if (__FreeBSD_version >=300000)
 #include <machine/bus_memio.h>          /* for bus space */
 #include <machine/bus.h>
 #include <sys/bus.h>
 #endif
+#endif
 
 #ifdef __NetBSD__
-#include <dev/ic/ioctl_meteor.h>	/* NetBSD .h file location */
-#include <dev/ic/ioctl_bt848.h>
+#include <dev/ic/bt8xx.h>	/* NetBSD .h file location */
+#include <dev/pci/bktr/bktr_reg.h>
+#include <dev/pci/bktr/bktr_tuner.h>
+#include <dev/pci/bktr/bktr_card.h>
+#include <dev/pci/bktr/bktr_core.h>
 #else
 #include <machine/ioctl_meteor.h>	/* Traditional .h file location */
 #include <machine/ioctl_bt848.h>        /* extensions to ioctl_meteor.h */
-#endif
 #include <dev/bktr/bktr_reg.h>
 #include <dev/bktr/bktr_tuner.h>
 #include <dev/bktr/bktr_card.h>
 #include <dev/bktr/bktr_core.h>
+#endif
 
 
 
