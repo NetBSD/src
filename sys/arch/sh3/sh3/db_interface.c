@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.10 2002/02/28 01:56:59 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.11 2002/03/02 22:26:27 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,6 +28,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,8 +39,15 @@
 
 #include <machine/cpufunc.h>
 #include <machine/db_machdep.h>
+#include <ddb/db_run.h>
 
 #include <sh3/ubcreg.h>
+
+extern label_t *db_recover;
+extern char *trap_type[];
+extern int trap_types;
+
+#ifndef KGDB
 #include <sh3/cache.h>
 #include <sh3/cache_sh3.h>
 #include <sh3/cache_sh4.h>
@@ -60,19 +68,6 @@ void __db_tlbdump_pfn(u_int32_t);
 void db_cachedump_cmd(db_expr_t, int, db_expr_t, char *);
 void __db_cachedump_sh3(vaddr_t);
 void __db_cachedump_sh4(vaddr_t);
-
-void i_sync_all(db_expr_t, int, db_expr_t, char *);
-void i_sync_range_index(db_expr_t, int, db_expr_t, char *);
-void i_sync_range(db_expr_t, int, db_expr_t, char *);
-void d_wbinv_all(db_expr_t, int, db_expr_t, char *);
-void d_wbinv_range_index(db_expr_t, int, db_expr_t, char *);
-void d_wbinv_range(db_expr_t, int, db_expr_t, char *);
-void d_inv_range(db_expr_t, int, db_expr_t, char *);
-void d_wb_range(db_expr_t, int, db_expr_t, char *);
-
-extern label_t *db_recover;
-extern char *trap_type[];
-extern int trap_types;
 
 const struct db_command db_machine_command_table[] = {
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
@@ -139,6 +134,7 @@ cpu_Debugger()
 
 	__asm__ __volatile__("trapa #0xc3");
 }
+#endif /* !KGDB */
 
 #define M_BSR	0xf000
 #define I_BSR	0xb000
@@ -199,6 +195,7 @@ db_clear_single_step(db_regs_t *regs)
 	regs->tf_ubc = 0;
 }
 
+#ifndef KGDB
 /*
  * MMU
  */
@@ -442,3 +439,4 @@ __db_cachedump_sh4(vaddr_t va)
 }
 #endif /* SH4 */
 #undef ON
+#endif /* !KGDB */

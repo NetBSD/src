@@ -1,7 +1,7 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.5 2002/02/19 17:22:34 uch Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.6 2002/03/02 22:26:27 uch Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +68,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_kgdb.h"
 
 #if defined(DDB)
 #error "Can't build DDB and KGDB together."
@@ -77,21 +76,54 @@
 /*
  * Machine-dependent functions for remote KGDB.  Originally written
  * for NetBSD/pc532 by Matthias Pfaller.  Modified for NetBSD/i386
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe.  Modified for NetBSD/mips by Ethan Solomita.
+ * Modified for NetBSD/sh3 by UCHIYAMA Yasushi.
  */
 
-#include <sys/param.h>
-#include <sys/kgdb.h>
+#include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/reboot.h>
+#include <sys/kgdb.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/pte.h>
-#include <machine/reg.h>
-#include <machine/trap.h>
+#include <sh3/cpu.h>
 
-/* XXX Should be in <machine/pmap.h> */
-pt_entry_t *pmap_pte(pmap_t, vaddr_t);
+#include <machine/db_machdep.h>
+#include <ddb/db_access.h>
+
+/*
+ * Is kva a valid address to access?  This is used by KGDB.
+ */
+static int
+kvacc(vaddr_t kva)
+{
+	pt_entry_t *pte;
+
+	if (kva < SH3_P1SEG_BASE)
+		return (0);
+
+	if (kva < SH3_P2SEG_BASE)
+		return (1);
+	
+	if (kva >= VM_MAX_KERNEL_ADDRESS)
+		return (0);
+
+	/* check kva is kernel virtual. */
+	if ((kva < VM_MIN_KERNEL_ADDRESS) ||
+	    (kva >= VM_MAX_KERNEL_ADDRESS))
+		return (0);
+
+	/* check page which related kva is valid. */
+	pte = kvtopte(kva);
+	if (!(*pte & PG_V))
+		return (0);
+
+	return (1);
+}
 
 /*
  * Determine if the memory at va..(va+len) is valid.
@@ -100,18 +132,15 @@ int
 kgdb_acc(vaddr_t va, size_t len)
 {
 	vaddr_t last_va;
-	pt_entry_t pte;
 
-	last_va = va + len;
+	last_va = va + len + NBPG - 1;
 	va  &= ~PGOFSET;
 	last_va &= ~PGOFSET;
 
-	do {
-		pte = *(pt_entry_t *)pmap_pte(pmap_kernel(), va);
-		if ((pte & PG_V) == 0)
-			return (0);
-		va  += NBPG;
-	} while (va < last_va);
+	for (; va < last_va; va += NBPG) {
+		if (kvacc(va) == 0)
+			return 0;
+	}
 
 	return (1);
 }
@@ -120,41 +149,38 @@ kgdb_acc(vaddr_t va, size_t len)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int
+int 
 kgdb_signal(int type)
 {
+
 	switch (type) {
-	case T_NMI:
-		return (SIGINT);
-
-	case T_ALIGNFLT:
-		return (SIGILL);
-
-	case T_BPTFLT:
-	case T_TRCTRAP:
-		return (SIGTRAP);
-
-	case T_ASTFLT:
-	case T_DOUBLEFLT:
-		return (SIGEMT);
-
-	case T_ARITHTRAP:
-	case T_DIVIDE:
-	case T_OFLOW:
-	case T_DNA:
-	case T_FPOPFLT:
-		return (SIGFPE);
-
-	case T_PRIVINFLT:
-	case T_PROTFLT:
-	case T_PAGEFLT:
-	case T_TSSFLT:
-	case T_SEGNPFLT:
-	case T_STKFLT:
+	case T_TLBMISSR:
+	case T_TLBMISSW:
+	case T_INITPAGEWR:
+	case T_TLBPRIVR:
+	case T_TLBPRIVW:
+	case T_ADDRESSERRR:
+	case T_ADDRESSERRW:
+	case T_TLBMISSR+T_USER:
+	case T_TLBMISSW+T_USER:
+	case T_INITPAGEWR+T_USER:
+	case T_TLBPRIVR+T_USER:
+	case T_TLBPRIVW+T_USER:
+	case T_ADDRESSERRR+T_USER:
+	case T_ADDRESSERRW+T_USER:
 		return (SIGSEGV);
 
-	case T_BOUND:
-		return (SIGURG);
+	case T_TRAP:
+	case T_TRAP+T_USER:
+	case T_USERBREAK:
+	case T_USERBREAK+T_USER:
+		return (SIGTRAP);
+
+	case T_INVALIDISN:
+	case T_INVALIDSLOT:
+	case T_INVALIDISN+T_USER:
+	case T_INVALIDSLOT+T_USER:
+		return (SIGILL);
 
 	default:
 		return (SIGEMT);
@@ -162,34 +188,40 @@ kgdb_signal(int type)
 }
 
 /*
- * Translate the values stored in the kernel regs struct to the format
- * understood by gdb.
+ * Translate the values stored in the db_regs_t struct to the format
+ * understood by gdb. (gdb-5.1.1/gdb/config/sh/tm-sh.h)
  */
 void
 kgdb_getregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
+	u_int32_t r;
 
-	gdb_regs[ 0] = regs->tf_eax;
-	gdb_regs[ 1] = regs->tf_ecx;
-	gdb_regs[ 2] = regs->tf_edx;
-	gdb_regs[ 3] = regs->tf_ebx;
-	gdb_regs[ 5] = regs->tf_ebp;
-	gdb_regs[ 6] = regs->tf_esi;
-	gdb_regs[ 7] = regs->tf_edi;
-	gdb_regs[ 8] = regs->tf_eip;
-	gdb_regs[ 9] = regs->tf_eflags;
-	gdb_regs[10] = regs->tf_cs;
-	gdb_regs[12] = regs->tf_ds;
-	gdb_regs[13] = regs->tf_es;
+	memset(gdb_regs, 0, KGDB_NUMREGS * sizeof(kgdb_reg_t));
+	gdb_regs[ 0] = regs->tf_r0;
+	gdb_regs[ 1] = regs->tf_r1;
+	gdb_regs[ 2] = regs->tf_r2;
+	gdb_regs[ 3] = regs->tf_r3;
+	gdb_regs[ 4] = regs->tf_r4;
+	gdb_regs[ 5] = regs->tf_r5;
+	gdb_regs[ 6] = regs->tf_r6;
+	gdb_regs[ 7] = regs->tf_r7;
+	gdb_regs[ 8] = regs->tf_r8;
+	gdb_regs[ 9] = regs->tf_r9;
+	gdb_regs[10] = regs->tf_r10;
+	gdb_regs[11] = regs->tf_r11;
+	gdb_regs[12] = regs->tf_r12;
+	gdb_regs[13] = regs->tf_r13;
+	gdb_regs[14] = regs->tf_r14;
+	gdb_regs[15] = regs->tf_r15;
+	gdb_regs[16] = regs->tf_spc;
+	gdb_regs[17] = regs->tf_pr;
+	__asm__ __volatile__("stc vbr, %0" : "=r"(r));
+	gdb_regs[19] = r;
+	gdb_regs[20] = regs->tf_mach;
+	gdb_regs[21] = regs->tf_macl;
+	gdb_regs[22] = regs->tf_ssr;
 
-	if (KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
-		/*
-		 * Kernel mode - esp and ss not saved.
-		 */
-		gdb_regs[ 4] = (kgdb_reg_t)&regs->tf_esp; /* kernel stack
-							     pointer */
-		__asm __volatile("movw %%ss,%w0" : "=r" (gdb_regs[11]));
-	}
+	/* How treat register bank 1 ? */
 }
 
 /*
@@ -199,26 +231,28 @@ void
 kgdb_setregs(db_regs_t *regs, kgdb_reg_t *gdb_regs)
 {
 
-	regs->tf_eax    = gdb_regs[ 0];
-	regs->tf_ecx    = gdb_regs[ 1];
-	regs->tf_edx    = gdb_regs[ 2];
-	regs->tf_ebx    = gdb_regs[ 3];
-	regs->tf_ebp    = gdb_regs[ 5];
-	regs->tf_esi    = gdb_regs[ 6];
-	regs->tf_edi    = gdb_regs[ 7];
-	regs->tf_eip    = gdb_regs[ 8];
-	regs->tf_eflags = gdb_regs[ 9];
-	regs->tf_cs     = gdb_regs[10];
-	regs->tf_ds     = gdb_regs[12];
-	regs->tf_es     = gdb_regs[13];
-
-	if (KERNELMODE(regs->tf_cs, regs->tf_eflags) == 0) {
-		/*
-		 * Trapped in user mode - restore esp and ss.
-		 */
-		regs->tf_esp = gdb_regs[ 4];
-		regs->tf_ss  = gdb_regs[11];
-	}
+	regs->tf_r0	= gdb_regs[ 0];
+	regs->tf_r1	= gdb_regs[ 1];
+	regs->tf_r2	= gdb_regs[ 2];
+	regs->tf_r3	= gdb_regs[ 3];
+	regs->tf_r4	= gdb_regs[ 4];
+	regs->tf_r5	= gdb_regs[ 5];
+	regs->tf_r6	= gdb_regs[ 6];
+	regs->tf_r7	= gdb_regs[ 7];
+	regs->tf_r8	= gdb_regs[ 8];
+	regs->tf_r9	= gdb_regs[ 9];
+	regs->tf_r10	= gdb_regs[10];
+	regs->tf_r11	= gdb_regs[11];
+	regs->tf_r12	= gdb_regs[12];
+	regs->tf_r13	= gdb_regs[13];
+	regs->tf_r14	= gdb_regs[14];
+	regs->tf_r15	= gdb_regs[15];
+	regs->tf_spc	= gdb_regs[16];
+	regs->tf_pr	= gdb_regs[17];
+	__asm__ __volatile__("ldc %0, vbr" :: "r"(gdb_regs[19]));
+	regs->tf_mach	= gdb_regs[20];
+	regs->tf_macl	= gdb_regs[21];
+	regs->tf_ssr	= gdb_regs[22];
 }
 
 /*
@@ -229,8 +263,10 @@ void
 kgdb_connect(int verbose)
 {
 
-	if (kgdb_dev < 0)
+	if (kgdb_dev < 0) {
+		printf("kgdb_dev=%d\n", kgdb_dev);
 		return;
+	}
 
 	if (verbose)
 		printf("kgdb waiting...");
@@ -250,6 +286,7 @@ kgdb_connect(int verbose)
 void
 kgdb_panic()
 {
+
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");
 		kgdb_connect(kgdb_active == 0);
