@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_line.c,v 1.4 2001/03/31 11:37:52 aymeric Exp $	*/
+/*	$NetBSD: vs_line.c,v 1.5 2001/05/13 16:59:58 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -43,7 +43,7 @@ int
 vs_line(sp, smp, yp, xp)
 	SCR *sp;
 	SMAP *smp;
-	size_t *xp, *yp;
+	size_t *yp, *xp;
 {
 	CHAR_T *kp;
 	GS *gp;
@@ -56,8 +56,8 @@ vs_line(sp, smp, yp, xp)
 	char *p, *cbp, *ecbp, cbuf[128];
 
 #if defined(DEBUG) && 0
-	TRACE(sp, "vs_line: row %u: line: %u off: %u\n",
-	    smp - HMAP, smp->lno, smp->off);
+	TRACE(sp, "vs_line: row %u: line: %u coff: %u soff: %u\n",
+	    smp - HMAP, smp->lno, smp->coff, smp->soff);
 #endif
 	/*
 	 * If ex modifies the screen after ex output is already on the screen,
