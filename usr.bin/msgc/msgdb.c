@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.13 2003/01/10 20:01:12 christos Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.14 2003/06/04 19:00:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -159,6 +159,8 @@ write_msg_file ()
 			" char *val, size_t max_chars, ...);\n"
 		"void msg_prompt_noecho (msg msg_no, const char *def,"
 			" char *val, size_t max_chars, ...);\n"
+		"void msg_prompt_win (msg, WINDOW *,"
+			" const char *, char *, size_t, ...);\n"
 		"void msg_table_add(msg msg_no,...);\n"
 		"\n"
 		"/* Message names */\n"

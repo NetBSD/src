@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.18 2003/01/10 20:01:12 christos Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.19 2003/06/04 19:00:26 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -78,7 +78,12 @@ int msg_window(WINDOW *window)
 
 const char *msg_string (msg msg_no)
 {
-	return msg_list[(size_t)(intptr_t)msg_no];
+	int m = (intptr_t)msg_no;
+
+	if (m > sizeof msg_list / sizeof msg_list[0])
+		/* guess that we were passed a text string */
+		return msg_no;
+	return msg_list[m];
 }
 
 void msg_clear(void)
@@ -245,6 +250,17 @@ void msg_display_add(msg msg_no, ...)
 	va_end (ap);
 }
 
+static void
+_erase_ch(void)
+{
+	int y, x;
+
+	getyx(msg_win, y, x);
+	x--;
+	wmove(msg_win, y, x);
+	waddch(msg_win, ' ');
+	wmove(msg_win, y, x);
+}
 
 static void
 _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
@@ -252,7 +268,6 @@ _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
 {
 	int ch;
 	int count = 0;
-	int y,x;
 	char *ibuf = alloca(max_chars);
 
 	_msg_vprintf(0, msg, ap);
@@ -268,23 +283,15 @@ _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
 		if (ch == 0x08 || ch == 0x7f) {  /* bs or del */
 			if (count > 0) {
 				count--;
-				if (do_echo) {
-					getyx(msg_win, y, x);
-					x--;
-					wmove(msg_win, y, x);
-					wdelch(msg_win);
-				}
+				if (do_echo)
+					_erase_ch();
 			} else
 				_msg_beep();
 		} else if (ch == 0x15) {	/* ^U; line kill */
 			while (count > 0) {
 				count--;
-				if (do_echo) {
-					getyx(msg_win, y, x);
-					x--;
-					wmove(msg_win, y, x);
-					wdelch(msg_win);
-				}
+				if (do_echo)
+					_erase_ch();
 			}
 		} else if (ch == 0x17) {        /* ^W; word kill */
 			/*
@@ -294,21 +301,13 @@ _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
 			 */
 			while (count > 0 && isspace(ibuf[count - 1])) {
 				count--;
-				if (do_echo) {
-					getyx(msg_win, y, x);
-					x--;
-					wmove(msg_win, y, x);
-					wdelch(msg_win);
-				}
+				if (do_echo)
+					_erase_ch();
 			}
 			while (count > 0 && !isspace(ibuf[count - 1])) {
 				count--;
-				if (do_echo) {
-					getyx(msg_win, y, x);
-					x--;
-					wmove(msg_win, y, x);
-					wdelch(msg_win);
-				}
+				if (do_echo)
+					_erase_ch();
 			}
 		} else if (count < (max_chars - 1) && isprint(ch)) {
 			if (do_echo)
@@ -330,8 +329,7 @@ _msg_vprompt(const char *msg, int do_echo, const char *def, char *val,
 		ibuf[count] = '\0';
 		strcpy(val, ibuf);		/* size known to be OK */
 	} else if (def != NULL && val != def) {
-		strncpy(val, def, max_chars);
-		val[max_chars - 1] = '\0';
+		strlcpy(val, def, max_chars);
 	}
 }
 
@@ -345,6 +343,32 @@ msg_prompt(msg msg_no, const char *def, char *val, size_t max_chars, ...)
 	va_start (ap, max_chars);
 	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
 	va_end (ap);
+}
+
+void
+msg_prompt_win(msg msg_no, WINDOW *win,
+	const char *def, char *val, size_t max_chars, ...)
+{
+	va_list ap;
+	WINDOW *sv_win;
+
+	sv_win = msg_win;
+
+	msg_window(win);
+
+	msg_clear();
+
+	if (getmaxy(win) >= 3) {
+		box(win, 0, 0);
+		wmove(win, 1, 1);
+	}
+
+	va_start (ap, max_chars);
+	_msg_vprompt(msg_string(msg_no), 1, def, val, max_chars, ap);
+	va_end (ap);
+
+	msg_clear();
+	msg_window(sv_win);
 }
 
 void

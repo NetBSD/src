@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.17 2002/09/26 01:26:53 wiz Exp $
+.\"	$NetBSD: msgc.1,v 1.18 2003/06/04 19:00:26 dsl Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -47,6 +47,7 @@
 .Nm msg_display_add ,
 .Nm msg_prompt ,
 .Nm msg_prompt_add ,
+.Nm msg_prompt_win ,
 .Nm msg_prompt_noecho ,
 .Nm msg_table_add
 .Nd simple message list compiler
@@ -74,6 +75,8 @@ msgc
 .Fn msg_prompt  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
 .Ft void
 .Fn msg_prompt_add  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
+.Ft void
+.Fn msg_prompt_win  "msg msg_no" "WINDOW *win" "const char *def" "char *val" "int max_chars" ...
 .Ft void
 .Fn msg_prompt_noecho  "msg msg_no" "const char *def" "char *val" "int max_chars" ...
 .Ft void
@@ -192,5 +195,8 @@ and
 .Fn msg_noecho
 control whether the prompt routine echo or don't echo the input that
 is typed by the user.
+.Pp
+.Fn msg_prompt_win
+uses the specified curses window instead of the default one.
 .Sh AUTHORS
 Philip A. Nelson for Piermont Information Systems Inc.
