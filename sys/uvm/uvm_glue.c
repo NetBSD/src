@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.39 2000/08/12 17:46:25 sommerfeld Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.40 2000/08/21 02:29:32 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -479,9 +479,7 @@ loop:
 		printf("scheduler: no room for pid %d(%s), free %d\n",
 	   p->p_pid, p->p_comm, uvmexp.free);
 #endif
-	(void) splhigh();
 	uvm_wait("schedpwait");
-	(void) spl0();
 #ifdef DEBUG
 	if (swapdebug & SDB_FOLLOW)
 		printf("scheduler: room again, free %d\n", uvmexp.free);
