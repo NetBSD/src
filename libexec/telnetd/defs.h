@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)defs.h	5.10 (Berkeley) 3/1/91
- *	$Id: defs.h,v 1.2 1993/08/01 18:29:25 mycroft Exp $
+ *	$Id: defs.h,v 1.3 1993/08/30 18:50:53 mycroft Exp $
  */
 
 /*
@@ -39,6 +39,7 @@
  */
 #include <sys/types.h>
 #include <sys/param.h>
+
 
 #ifndef	BSD
 # define	BSD 43

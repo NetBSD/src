@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utility.c	5.8 (Berkeley) 3/22/91";*/
-static char rcsid[] = "$Id: utility.c,v 1.2 1993/08/01 18:29:02 mycroft Exp $";
+static char rcsid[] = "$Id: utility.c,v 1.3 1993/08/30 18:50:55 mycroft Exp $";
 #endif /* not lint */
 
 #define PRINTOPTIONS
+#include <sys/utsname.h>
 #include "telnetd.h"
 
 /*
@@ -374,6 +375,7 @@ fatalperror(f, msg)
 }
 
 char editedhost[32];
+struct utsname kerninfo;
 
 	void
 edithost(pat, host)
@@ -382,6 +384,8 @@ edithost(pat, host)
 {
 	register char *res = editedhost;
 	char *strncpy();
+
+	uname(&kerninfo);
 
 	if (!pat)
 		pat = "";
@@ -480,6 +484,19 @@ putf(cp, where)
 
 		case '%':
 			putchr('%');
+			break;
+
+		case 's':
+			puts(kerninfo.sysname);
+
+		case 'm':
+			puts(kerninfo.machine);
+
+		case 'r':
+			puts(kerninfo.release);
+
+		case 'v':
+			puts(kerninfo.version);
 			break;
 		}
 		cp++;
