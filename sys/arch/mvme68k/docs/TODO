@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.4 2001/07/06 20:12:34 scw Exp $
+$NetBSD: TODO,v 1.5 2001/08/12 19:28:28 scw Exp $
 
 NetBSD/mvme68k's "ToDo" List (In no particular order)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -6,7 +6,8 @@ NetBSD/mvme68k's "ToDo" List (In no particular order)
 These are `difficulty' rated on a scale of 1-10, where `1' is easy.
 
 
-1.    Flesh out the "Memory Controller" (memc) driver (3)
+1.    [Partially Done]
+      Flesh out the "Memory Controller" (memc) driver (3)
 
 2.    Enhance the PCC2/MC2 driver to support its "Memory Controller"
       functionality on older MVME1x2 boards. (2)
@@ -15,7 +16,8 @@ These are `difficulty' rated on a scale of 1-10, where `1' is easy.
       (Need to come up with an MI interface for this, since various
       other non-mvme68k SBCs have IP sites too)
 
-4.    Switch over to the MI mk48txx TOD-chip driver (1)
+4.    [DONE]
+      Switch over to the MI mk48txx TOD-chip driver (1)
       (I already have most of this done)
 
 5.    Support for the NVRAM part of the above chips (2)
