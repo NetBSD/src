@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2000/01/23 17:04:06 mycroft Exp $
+#	$NetBSD: Makefile,v 1.3 2000/04/13 14:19:58 tsutsui Exp $
 
 COMMON=	${.CURDIR}/../common
 .ifnmake(print-objdir)
@@ -21,7 +21,7 @@ S= ${.CURDIR}/../../../..
 LDFLAGS= -x -N -Ttext 0
 CFLAGS= -Os -Wall
 
-CPPFLAGS+= -D_STANDALONE -DBOOTXX_DEBUG
+CPPFLAGS+= -D_STANDALONE # -DBOOTXX_DEBUG
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
 AFLAGS= -D_LOCORE
 
