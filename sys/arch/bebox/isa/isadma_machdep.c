@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.14 1999/03/19 04:58:46 cgd Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.15 1999/06/22 02:04:07 sakamoto Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -496,16 +496,16 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 			/*
 			 * Copy the caller's buffer to the bounce buffer.
 			 */
-			bcopy(cookie->id_origbuf + offset,
-			    cookie->id_bouncebuf + offset, len);
+			bcopy((char *)cookie->id_origbuf + offset,
+			    (char *)cookie->id_bouncebuf + offset, len);
 		}
 
 		if (ops & BUS_DMASYNC_POSTREAD) {
 			/*
 			 * Copy the bounce buffer to the caller's buffer.
 			 */
-			bcopy(cookie->id_bouncebuf + offset,
-			    cookie->id_origbuf + offset, len);
+			bcopy((char *)cookie->id_bouncebuf + offset,
+			    (char *)cookie->id_origbuf + offset, len);
 		}
 
 		/*
@@ -527,7 +527,7 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 			 * Copy the caller's buffer to the bounce buffer.
 			 */
 			m_copydata(m0, offset, len,
-			    cookie->id_bouncebuf + offset);
+			    (char *)cookie->id_bouncebuf + offset);
 		}
 
 		if (ops & BUS_DMASYNC_POSTREAD) {
@@ -550,7 +550,7 @@ _isa_bus_dmamap_sync(t, map, offset, len, ops)
 				minlen = len < m->m_len - moff ?
 				    len : m->m_len - moff;
 
-				bcopy(cookie->id_bouncebuf + offset,
+				bcopy((char *)cookie->id_bouncebuf + offset,
 				    mtod(m, caddr_t) + moff, minlen);
 
 				moff = 0;
