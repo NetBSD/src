@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.15 2000/02/04 03:40:00 enami Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.16 2000/02/04 04:54:51 enami Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@ struct cfattach mbe_pcmcia_ca = {
 
 int	mbe_pcmcia_enable __P((struct mb86960_softc *));
 void	mbe_pcmcia_disable __P((struct mb86960_softc *));
+void	mbe_pcmcia_intr_disestablish __P((struct mbe_pcmcia_softc *));
 
 struct mbe_pcmcia_get_enaddr_args {
 	u_int8_t enaddr[ETHER_ADDR_LEN];
@@ -256,11 +257,22 @@ mbe_pcmcia_detach(self, flags)
 	return (0);
 }
 
+void
+mbe_pcmcia_intr_disestablish(psc)
+	struct mbe_pcmcia_softc *psc;
+{
+
+	if (psc->sc_ih != NULL)
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+	psc->sc_ih = NULL;
+}
+
 int
 mbe_pcmcia_enable(sc)
 	struct mb86960_softc *sc;
 {
 	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)sc;
+	int error;
 
 #ifdef DIAGNOSTIC
 	if (psc->sc_ih != NULL) {
@@ -278,7 +290,11 @@ mbe_pcmcia_enable(sc)
 		return (1);
 	}
 
-	return (pcmcia_function_enable(psc->sc_pf));
+	error = pcmcia_function_enable(psc->sc_pf);
+	if (error != 0)
+		mbe_pcmcia_intr_disestablish(psc);
+
+	return (error);
 }
 
 void
@@ -288,10 +304,7 @@ mbe_pcmcia_disable(sc)
 	struct mbe_pcmcia_softc *psc = (struct mbe_pcmcia_softc *)sc;
 
 	pcmcia_function_disable(psc->sc_pf);
-
-	if (psc->sc_ih != NULL)
-		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-	psc->sc_ih = NULL;
+	mbe_pcmcia_intr_disestablish(psc);
 }
 
 int
