@@ -27,7 +27,7 @@
  *	i4b daemon - config file processing
  *	-----------------------------------
  *
- *	$Id: rc_config.c,v 1.11 2002/04/05 15:26:59 martin Exp $ 
+ *	$Id: rc_config.c,v 1.12 2002/04/10 23:35:07 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -42,6 +42,7 @@
 
 #include <sys/callout.h>
 #include <sys/ioctl.h>
+#include <ifaddrs.h>
 
 #include "isdnd.h"
 #include "rc_parse.h"
@@ -60,7 +61,8 @@ static void print_config(void);
 static void parse_valid(char *dt);
 static int lookup_l4_driver(const char *name);
 void init_currrent_cfg_state(void);
-static void set_isppp_auth(void);
+static void set_isppp_auth(struct cfg_entry*);
+static void set_autoupdown(struct cfg_entry*);
 void flush_config(void);
 
 static int nregexpr = 0;
@@ -82,7 +84,6 @@ configure(char *filename, int reread)
 
 	if(reread)
 	{
-		remove_all_cfg_entries();
 		reset_scanner(yyin);
 	}
 	
@@ -158,6 +159,7 @@ init_currrent_cfg_state()
 	current_cfe->cdid = CDID_UNUSED;
 	current_cfe->state = ST_IDLE;
 	current_cfe->aoc_valid = AOC_INVALID;
+	current_cfe->autoupdown = AUTOUPDOWN_YES;
 }
 
 /*---------------------------------------------------------------------------*
@@ -196,29 +198,77 @@ set_config_defaults(void)
 }
 
 static void
-set_isppp_auth()
+set_autoupdown(struct cfg_entry *cep)
+{
+        struct ifaddrs *res = NULL, *p;
+	struct ifreq ifr;
+	int r, s, cnt, in6;
+
+	s = socket(AF_INET, SOCK_DGRAM, 0);
+	memset(&ifr, 0, sizeof ifr);
+	snprintf(ifr.ifr_name, sizeof ifr.ifr_name, "%s%d", cep->usrdevicename, cep->usrdeviceunit);
+	r = ioctl(s, SIOCGIFFLAGS, &ifr);
+
+	/*
+	 * See if this interface has got any valid addresses - if not,
+	 * leave it alone.
+	 */
+	if (r >= 0 && !(ifr.ifr_flags & IFF_UP)) {
+		cnt = in6 = 0;
+		if (getifaddrs(&res) == 0) {
+			for (p = res; p; p = p->ifa_next) {
+				if (p->ifa_addr == NULL)
+					continue;
+				if (p->ifa_addr->sa_family == AF_LINK)
+					continue;
+				if (strcmp(p->ifa_name, ifr.ifr_name) != 0)
+					continue;
+				if (p->ifa_addr->sa_family == AF_INET6)
+					in6 = 1;
+				cnt++;
+			}
+			freeifaddrs(res);
+		}
+
+		if (in6)
+			cnt--;	/* XXX - heuristic to adjust for INET6 local scope */
+
+		/* Ok, we have some addres - so UP the interface */
+		if (cnt > 0) {
+			ifr.ifr_flags |= IFF_UP;
+			r = ioctl(s, SIOCSIFFLAGS, &ifr);
+			if (r >= 0)
+				cep->autoupdown |= AUTOUPDOWN_DONE;
+		}
+	}
+
+	close(s);
+}
+
+static void
+set_isppp_auth(struct cfg_entry *cep)
 {
 	struct spppauthcfg spcfg;
 	int s;
 	int doioctl = 0;
 
-	if(current_cfe->ppp_expect_auth == AUTH_UNDEF 
-	   && current_cfe->ppp_send_auth == AUTH_UNDEF)
+	if(cep->ppp_expect_auth == AUTH_UNDEF 
+	   && cep->ppp_send_auth == AUTH_UNDEF)
 		return;
 
-	if(current_cfe->ppp_expect_auth == AUTH_NONE 
-	   || current_cfe->ppp_send_auth == AUTH_NONE)
+	if(cep->ppp_expect_auth == AUTH_NONE 
+	   || cep->ppp_send_auth == AUTH_NONE)
 		doioctl = 1;
 
-	if ((current_cfe->ppp_expect_auth == AUTH_CHAP 
-	     || current_cfe->ppp_expect_auth == AUTH_PAP)
-	    && current_cfe->ppp_expect_name != NULL
-	    && current_cfe->ppp_expect_password != NULL)
+	if ((cep->ppp_expect_auth == AUTH_CHAP 
+	     || cep->ppp_expect_auth == AUTH_PAP)
+	    && cep->ppp_expect_name != NULL
+	    && cep->ppp_expect_password != NULL)
 		doioctl = 1;
 
-	if ((current_cfe->ppp_send_auth == AUTH_CHAP || current_cfe->ppp_send_auth == AUTH_PAP)
-			&& current_cfe->ppp_send_name != NULL
-			&& current_cfe->ppp_send_password != NULL)
+	if ((cep->ppp_send_auth == AUTH_CHAP || cep->ppp_send_auth == AUTH_PAP)
+			&& cep->ppp_send_name != NULL
+			&& cep->ppp_send_password != NULL)
 		doioctl = 1;
 
 	if(!doioctl)
@@ -226,7 +276,7 @@ set_isppp_auth()
 
 	memset(&spcfg, 0, sizeof spcfg);
 	snprintf(spcfg.ifname, sizeof(spcfg.ifname), "%s%d",
-		current_cfe->usrdevicename, current_cfe->usrdeviceunit);
+		cep->usrdevicename, cep->usrdeviceunit);
 
 	/* use a random AF to create the socket */
 	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -241,47 +291,47 @@ set_isppp_auth()
 		config_error_flag++;
 		return;
 	}
-	if (current_cfe->ppp_expect_auth != AUTH_UNDEF)
+	if (cep->ppp_expect_auth != AUTH_UNDEF)
 	{
-		if(current_cfe->ppp_expect_auth == AUTH_NONE)
+		if(cep->ppp_expect_auth == AUTH_NONE)
 		{
 			spcfg.hisauth = SPPP_AUTHPROTO_NONE;
 		}
-		else if ((current_cfe->ppp_expect_auth == AUTH_CHAP 
-			  || current_cfe->ppp_expect_auth == AUTH_PAP)
-			 && current_cfe->ppp_expect_name != NULL
-			 && current_cfe->ppp_expect_password != NULL)
+		else if ((cep->ppp_expect_auth == AUTH_CHAP 
+			  || cep->ppp_expect_auth == AUTH_PAP)
+			 && cep->ppp_expect_name != NULL
+			 && cep->ppp_expect_password != NULL)
 		{
-			spcfg.hisauth = current_cfe->ppp_expect_auth == AUTH_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
-			spcfg.hisname = current_cfe->ppp_expect_name;
-			spcfg.hisname_length = strlen(current_cfe->ppp_expect_name)+1;
-			spcfg.hissecret = current_cfe->ppp_expect_password;
-			spcfg.hissecret_length = strlen(current_cfe->ppp_expect_password)+1;
+			spcfg.hisauth = cep->ppp_expect_auth == AUTH_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+			spcfg.hisname = cep->ppp_expect_name;
+			spcfg.hisname_length = strlen(cep->ppp_expect_name)+1;
+			spcfg.hissecret = cep->ppp_expect_password;
+			spcfg.hissecret_length = strlen(cep->ppp_expect_password)+1;
 		}
 	}
-	if (current_cfe->ppp_send_auth != AUTH_UNDEF)
+	if (cep->ppp_send_auth != AUTH_UNDEF)
 	{
-		if(current_cfe->ppp_send_auth == AUTH_NONE)
+		if(cep->ppp_send_auth == AUTH_NONE)
 		{
 			spcfg.myauth = SPPP_AUTHPROTO_NONE;
 		}
-		else if ((current_cfe->ppp_send_auth == AUTH_CHAP 
-			  || current_cfe->ppp_send_auth == AUTH_PAP)
-			 && current_cfe->ppp_send_name != NULL
-			 && current_cfe->ppp_send_password != NULL)
+		else if ((cep->ppp_send_auth == AUTH_CHAP 
+			  || cep->ppp_send_auth == AUTH_PAP)
+			 && cep->ppp_send_name != NULL
+			 && cep->ppp_send_password != NULL)
 		{
-			spcfg.myauth = current_cfe->ppp_send_auth == AUTH_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
-			spcfg.myname = current_cfe->ppp_send_name;
-			spcfg.myname_length = strlen(current_cfe->ppp_send_name)+1;
-			spcfg.mysecret = current_cfe->ppp_send_password;
-			spcfg.mysecret_length = strlen(current_cfe->ppp_send_password)+1;
+			spcfg.myauth = cep->ppp_send_auth == AUTH_PAP ? SPPP_AUTHPROTO_PAP : SPPP_AUTHPROTO_CHAP;
+			spcfg.myname = cep->ppp_send_name;
+			spcfg.myname_length = strlen(cep->ppp_send_name)+1;
+			spcfg.mysecret = cep->ppp_send_password;
+			spcfg.mysecret_length = strlen(cep->ppp_send_password)+1;
 
-			if(current_cfe->ppp_auth_flags & AUTH_REQUIRED)
+			if(cep->ppp_auth_flags & AUTH_REQUIRED)
 				spcfg.hisauthflags &= ~SPPP_AUTHFLAG_NOCALLOUT;
 			else
 				spcfg.hisauthflags |= SPPP_AUTHFLAG_NOCALLOUT;
 
-			if(current_cfe->ppp_auth_flags & AUTH_RECHALLENGE)
+			if(cep->ppp_auth_flags & AUTH_RECHALLENGE)
 				spcfg.hisauthflags &= ~SPPP_AUTHFLAG_NORECHALLENGE;
 			else
 				spcfg.hisauthflags |= SPPP_AUTHFLAG_NORECHALLENGE;
@@ -387,6 +437,11 @@ cfg_setval(int keyword)
 		case BUDGETCALLOUTNCALLS:
 			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: budget-calloutncalls = %d", current_cfe->name, yylval.num)));
 			current_cfe->budget_calloutncalls = yylval.num;
+			break;
+
+		case AUTOUPDOWN:
+			current_cfe->autoupdown = yylval.booln;
+			DBGL(DL_RCCF, (log(LL_DBG, "entry %s: autoupdown = %d", current_cfe->name, yylval.booln)));
 			break;
 
 		case BUDGETCALLBACKSFILEROTATE:
@@ -1233,7 +1288,14 @@ check_config(void)
 
 		if(cep->ppp_expect_auth != AUTH_UNDEF 
 		   || cep->ppp_send_auth != AUTH_UNDEF)
-			set_isppp_auth();
+			set_isppp_auth(cep);
+
+		/*
+		 * Only if AUTOUPDOWN_YES is the only bit set, otherwise
+		 * we already have handled this interface.
+		 */
+		if (cep->autoupdown == AUTOUPDOWN_YES)
+			set_autoupdown(cep);
 	}
 	if (error) {
 		log(LL_ERR, "check_config: %d error(s) in configuration file, exit!", error);
@@ -1597,6 +1659,9 @@ print_config(void)
 				fprintf(PFILE, "ppp-auth-rechallenge   = %s\t\t# rechallenge CHAP connections once in a while\n", cep->ppp_auth_flags & AUTH_RECHALLENGE ? "yes" : "no");
 			}
 		}
+
+		if (cep->autoupdown == AUTOUPDOWN_NO)
+			fprintf(PFILE, "autoupdown = no\n");
 
 		{
 			char *s;

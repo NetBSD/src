@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration parser
  *	-----------------------------------------
  *
- *	$Id: rc_parse.y,v 1.2 2002/03/27 13:46:35 martin Exp $ 
+ *	$Id: rc_parse.y,v 1.3 2002/04/10 23:35:07 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -78,6 +78,7 @@ int		saw_system = 0;
 %token		ALIASFNAME
 %token		ALIASING
 %token		ANSWERPROG
+%token		AUTOUPDOWN
 %token		B1PROTOCOL
 %token		BEEPCONNECT
 %token		BUDGETCALLOUTPERIOD
@@ -464,8 +465,9 @@ numkeyword:	  ALERT			{ $$ = ALERT; }
 		| DOWNTRIES		{ $$ = DOWNTRIES; }
 		;
 
-boolkeyword:	  BUDGETCALLBACKSFILEROTATE { $$ = BUDGETCALLBACKSFILEROTATE; }
-                | BUDGETCALLOUTSFILEROTATE  { $$ = BUDGETCALLOUTSFILEROTATE; }
+boolkeyword:	  AUTOUPDOWN		{ $$ = AUTOUPDOWN; }
+                | BUDGETCALLBACKSFILEROTATE { $$ = BUDGETCALLBACKSFILEROTATE; }
+		| BUDGETCALLOUTSFILEROTATE  { $$ = BUDGETCALLOUTSFILEROTATE; }
 		| DIALRANDINCR		{ $$ = DIALRANDINCR; }
 		| PPP_AUTH_RECHALLENGE	{ $$ = PPP_AUTH_RECHALLENGE; }
 		| PPP_AUTH_PARANOID	{ $$ = PPP_AUTH_PARANOID; }

@@ -27,7 +27,7 @@
  *	i4b daemon - main header file
  *	-----------------------------
  *
- *	$Id: isdnd.h,v 1.7 2002/03/30 07:12:41 martin Exp $ 
+ *	$Id: isdnd.h,v 1.8 2002/04/10 23:35:07 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -349,6 +349,11 @@ struct cfg_entry {
 #define DIR_INOUT	0
 #define DIR_INONLY	1
 #define DIR_OUTONLY	2
+
+	int	autoupdown;		/* do we handle interface up/down? */
+#define	AUTOUPDOWN_NO	0
+#define	AUTOUPDOWN_YES	1
+#define	AUTOUPDOWN_DONE	2
 
 	int	budget_callbackperiod;	/* length of a budget period (s)*/
 	int	budget_callbackncalls;	/* call budget for a period	*/
