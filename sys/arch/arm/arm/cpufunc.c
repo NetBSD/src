@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.30 2002/03/09 21:30:57 bjh21 Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.31 2002/03/16 03:38:28 reinoud Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -48,7 +48,6 @@
 #include "opt_compat_netbsd.h"
 #include "opt_cputypes.h"
 #include "opt_cpuoptions.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -779,9 +778,6 @@ set_cpufuncs()
  * when defined should use late aborts
  */
 
-#if defined(DEBUG_FAULT_CORRECTION) && !defined(PMAP_DEBUG)
-#error PMAP_DEBUG must be defined to use DEBUG_FAULT_CORRECTION
-#endif
 
 /*
  * Null abort fixup routine.
@@ -794,11 +790,6 @@ cpufunc_null_fixup(arg)
 	return(ABORT_FIXUP_OK);
 }
 
-#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
-#ifdef DEBUG_FAULT_CORRECTION
-extern int pmap_debug_level;
-#endif
-#endif
 
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
     defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
@@ -859,15 +850,12 @@ early_abort_fixup(arg)
 		int *registers = &frame->tf_r0;
         
 #ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0) {
-			printf("LDM/STM\n");
-			disassemble(fault_pc);
-		}
+		printf("LDM/STM\n");
+		disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		if (fault_instruction & (1 << 21)) {
 #ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("This instruction must be corrected\n");
+			printf("This instruction must be corrected\n");
 #endif	/* DEBUG_FAULT_CORRECTION */
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15)
@@ -879,21 +867,17 @@ early_abort_fixup(arg)
 					++count;
 			}
 #ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0) {
-				printf("%d registers used\n", count);
-				printf("Corrected r%d by %d bytes ", base, count * 4);
-			}
+			printf("%d registers used\n", count);
+			printf("Corrected r%d by %d bytes ", base, count * 4);
 #endif	/* DEBUG_FAULT_CORRECTION */
 			if (fault_instruction & (1 << 23)) {
 #ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("down\n");
+				printf("down\n");
 #endif	/* DEBUG_FAULT_CORRECTION */
 				registers[base] -= count * 4;
 			} else {
 #ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("up\n");
+				printf("up\n");
 #endif	/* DEBUG_FAULT_CORRECTION */
 				registers[base] += count * 4;
 			}
@@ -906,8 +890,7 @@ early_abort_fixup(arg)
 /* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
 
 #ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+		disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 
 /* Only need to fix registers if write back is turned on */
@@ -921,15 +904,13 @@ early_abort_fixup(arg)
 
 			offset = (fault_instruction & 0xff) << 2;
 #ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
+			printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 			if ((fault_instruction & (1 << 23)) != 0)
 				offset = -offset;
 			registers[base] += offset;
 #ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
+			printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000)
@@ -964,6 +945,7 @@ early_abort_fixup(arg)
 	return(ABORT_FIXUP_OK);
 }
 #endif	/* CPU_ARM2/250/3/6/7 */
+
 
 #if (defined(CPU_ARM6) && defined(ARM6_LATE_ABORT)) || defined(CPU_ARM7) || \
 	defined(CPU_ARM7TDMI)
@@ -1021,8 +1003,7 @@ late_abort_fixup(arg)
 
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
 #ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+		disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
@@ -1034,34 +1015,35 @@ late_abort_fixup(arg)
 		int *registers = &frame->tf_r0;
 
 #ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
+		disassemble(fault_pc);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		
 		/* This is for late abort only */
 
 		if ((fault_instruction & (1 << 24)) == 0
-		    || (fault_instruction & (1 << 21)) != 0) {
+		    || (fault_instruction & (1 << 21)) != 0) {	
+/* postindexed ldr/str with no writeback */
+
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
 				return ABORT_FIXUP_FAILED;
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
 #ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("late abt fix: r%d=%08x ", base, registers[base]);
+			printf("late abt fix: r%d=%08x : ", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 			if ((fault_instruction & (1 << 25)) == 0) {
-				/* Immediate offset - easy */                  
+				/* Immediate offset - easy */
+
 				offset = fault_instruction & 0xfff;
 				if ((fault_instruction & (1 << 23)))
 					offset = -offset;
 				registers[base] += offset;
 #ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("imm=%08x ", offset);
+				printf("imm=%08x ", offset);
 #endif	/* DEBUG_FAULT_CORRECTION */
 			} else {
+				/* offset is a shifted register */
 				int shift;
 
 				offset = fault_instruction & 0x0f;
@@ -1072,22 +1054,23 @@ late_abort_fixup(arg)
 				offset = registers[offset];
 
 				if ((fault_instruction & (1 << 4)) == 0)
+					/* shift with amount */
 					shift = (fault_instruction >> 7) & 0x1f;
 				else {
+					/* shift with register */
 					if ((fault_instruction & (1 << 7)) != 0)
+						/* undefined for now so bail out */
 						return ABORT_FIXUP_FAILED;
 					shift = ((fault_instruction >> 8) & 0xf);
 					if (base == shift)
 						return ABORT_FIXUP_FAILED;
 #ifdef DEBUG_FAULT_CORRECTION
-					if (pmap_debug_level >=0)
-						printf("shift reg=%d ", shift);
+					printf("shift reg=%d ", shift);
 #endif	/* DEBUG_FAULT_CORRECTION */
 					shift = registers[shift];
 				}
 #ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("shift=%08x ", shift);
+				printf("shift=%08x ", shift);
 #endif	/* DEBUG_FAULT_CORRECTION */
 				switch (((fault_instruction >> 5) & 0x3)) {
 				case 0 : /* Logical left */
@@ -1101,25 +1084,23 @@ late_abort_fixup(arg)
 					if (shift == 0) shift = 32;
 					offset = (int)(((int)offset) >> shift);
 					break;
-				case 3 : /* Rotate right */
+				case 3 : /* Rotate right (rol or rxx) */
 					return ABORT_FIXUP_FAILED;
+					break;
 				}
 
 #ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("abt: fixed LDR/STR with register offset\n");
+				printf("abt: fixed LDR/STR with register offset\n");
 #endif	/* DEBUG_FAULT_CORRECTION */               
 				if ((fault_instruction & (1 << 23)))
 					offset = -offset;
 #ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("offset=%08x ", offset);
+				printf("offset=%08x ", offset);
 #endif	/* DEBUG_FAULT_CORRECTION */
 				registers[base] += offset;
 			}
 #ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("r%d=%08x\n", base, registers[base]);
+			printf("r%d=%08x\n", base, registers[base]);
 #endif	/* DEBUG_FAULT_CORRECTION */
 		}
 	}
