@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 1996/11/28 03:12:40 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1996/12/06 02:06:52 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.13 1996/11/28 03:12:40 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.14 1996/12/06 02:06:52 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -133,12 +133,7 @@ main(argc, argv)
 			break;
 
 		default:
-			(void)fprintf(stderr,
-			    "usage: %s [-adginptv] [-P port] [host [port]]\n"
-			    "       %s ftp://host[:port]/file\n"
-			    "       %s host:file\n",
-			    __progname, __progname, __progname);
-			exit(1);
+			usage();
 		}
 	}
 	argc -= optind;
@@ -616,6 +611,13 @@ auto_fetch(argc, argv)
 			cp = strchr(host, ':');
 
 		/*
+		 * If cp is NULL, the file wasn't specified
+		 * (URL looked something like ftp://host)
+		 */
+		if (cp == NULL)
+			usage();
+
+		/*
 		 * Extract the file and (if present) directory name.
 		 */
 		*cp++ = '\0';
@@ -628,6 +630,8 @@ auto_fetch(argc, argv)
 			file = dir;
 			dir = NULL;
 		}
+		if (file == NULL || *file == '\0')
+			usage();
 
 		/*
 		 * Set up the connection.
@@ -674,4 +678,15 @@ auto_fetch(argc, argv)
 	}
 
 	return (rval);
+}
+
+void
+usage()
+{
+	(void)fprintf(stderr,
+	    "usage: %s [-adginptv] [-P port] [host [port]]\n"
+	    "       %s ftp://host[:port]/file\n"
+	    "       %s host:file\n",
+	    __progname, __progname, __progname);
+	exit(1);
 }
