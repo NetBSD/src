@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.7 1996/09/16 04:32:28 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.8 1996/09/16 05:24:21 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -678,7 +678,7 @@ zscninit(struct consdev * cp)
 	zs_conschan = (struct zschan *) -1;
 	zs_consunit = chan;
 	zs_hwflags[0][zs_consunit] = ZS_HWFLAG_CONSOLE;
-#ifdef ZS_DDB_BREAK
+#ifdef ZS_CONSOLE_ABORT
 	zs_hwflags[0][zs_consunit] |= ZS_HWFLAG_CONABRT;
 #endif
 	zs_init();
@@ -785,6 +785,9 @@ zs_abort(zst)
 	register volatile struct zschan *zc = zs_conschan;
 	int rr0;
 	register long wait = 0;
+
+	if ((zst->zst_hwflags & ZS_HWFLAG_CONABRT) == 0)
+		return;
 
 	/* Wait for end of break to avoid PROM abort. */
 	/* XXX - Limit the wait? */
