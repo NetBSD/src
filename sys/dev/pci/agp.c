@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.9 2001/09/15 18:03:35 thorpej Exp $	*/
+/*	$NetBSD: agp.c,v 1.10 2001/09/16 18:33:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -502,7 +502,7 @@ agp_generic_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		nseg = (mem->am_size / (contigpages * PAGE_SIZE)) + 1;
 		segs = malloc(nseg * sizeof *segs, M_AGP, M_WAITOK);
 		if (segs == NULL)
-			return NULL;
+			return ENOMEM;
 		if (bus_dmamem_alloc(sc->as_dmat, mem->am_size, PAGE_SIZE, 0,
 				     segs, nseg, &mem->am_nseg,
 				     BUS_DMA_WAITOK) != 0) {
