@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.12 2002/05/02 18:32:45 bjh21 Exp $
+#	$NetBSD: Makefile.image,v 1.13 2002/05/03 14:21:44 lukem Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -47,8 +47,7 @@ ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
 
 ${WORKSPEC}: ${MTREECONF} ${LISTS} ${PARSELISTDEP}
 	-rm -f ${.TARGET} ${.TARGET}.tmp
-	( mtreeconf="${MTREECONF}";	\
-	for i in $${mtreeconf}; do	\
+	( for i in ${MTREECONF}; do	\
 		cat $$i ;		\
 		echo "/unset all" ;	\
 	done ) >> ${.TARGET}.tmp
