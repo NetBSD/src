@@ -1,4 +1,4 @@
-/* $NetBSD: vidcaudio.c,v 1.11 1997/04/29 21:01:51 augustss Exp $ */
+/* $NetBSD: vidcaudio.c,v 1.12 1997/05/07 18:51:33 augustss Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -327,7 +327,9 @@ int vidcaudio_query_encoding ( void *addr, struct audio_encoding *fp )
     {
         case 0:
 	    strcpy (fp->name, "vidc" );
-            fp->format_id = AUDIO_ENCODING_ULAW;
+            fp->encoding = AUDIO_ENCODING_ULAW;
+	    fp->precision = 8;
+	    fp->flags = 0;
             break;
 
 	default:

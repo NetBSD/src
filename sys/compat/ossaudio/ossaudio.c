@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.7 1997/04/06 23:49:32 augustss Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.8 1997/05/07 18:51:37 augustss Exp $	*/
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -124,13 +124,37 @@ oss_ioctl_audio(p, uap, retval)
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 8;
 			tmpinfo.play.encoding =
+			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR;
+			break;
+		case OSS_AFMT_S8:
+			tmpinfo.play.precision =
+			tmpinfo.record.precision = 8;
+			tmpinfo.play.encoding =
 			tmpinfo.record.encoding = AUDIO_ENCODING_LINEAR;
 			break;
 		case OSS_AFMT_S16_LE:
 			tmpinfo.play.precision =
 			tmpinfo.record.precision = 16;
 			tmpinfo.play.encoding =
-			tmpinfo.record.encoding = AUDIO_ENCODING_LINEAR;
+			tmpinfo.record.encoding = AUDIO_ENCODING_LINEAR_LE;
+			break;
+		case OSS_AFMT_S16_BE:
+			tmpinfo.play.precision =
+			tmpinfo.record.precision = 16;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding = AUDIO_ENCODING_LINEAR_BE;
+			break;
+		case OSS_AFMT_U16_LE:
+			tmpinfo.play.precision =
+			tmpinfo.record.precision = 16;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_LE;
+			break;
+		case OSS_AFMT_U16_BE:
+			tmpinfo.play.precision =
+			tmpinfo.record.precision = 16;
+			tmpinfo.play.encoding =
+			tmpinfo.record.encoding = AUDIO_ENCODING_ULINEAR_BE;
 			break;
 		default:
 			return EINVAL;
@@ -148,11 +172,29 @@ oss_ioctl_audio(p, uap, retval)
 		case AUDIO_ENCODING_ALAW:
 			idat = OSS_AFMT_A_LAW;
 			break;
-		case AUDIO_ENCODING_PCM16:
-			idat = OSS_AFMT_S16_LE;
+		case AUDIO_ENCODING_LINEAR_LE:
+			if (tmpinfo.play.precision == 16)
+				idat = OSS_AFMT_S16_LE;
+			else
+				idat = OSS_AFMT_S8;
 			break;
-		case AUDIO_ENCODING_PCM8:
-			idat = OSS_AFMT_U8;
+		case AUDIO_ENCODING_LINEAR_BE:
+			if (tmpinfo.play.precision == 16)
+				idat = OSS_AFMT_S16_BE;
+			else
+				idat = OSS_AFMT_S8;
+			break;
+		case AUDIO_ENCODING_ULINEAR_LE:
+			if (tmpinfo.play.precision == 16)
+				idat = OSS_AFMT_U16_LE;
+			else
+				idat = OSS_AFMT_U8;
+			break;
+		case AUDIO_ENCODING_ULINEAR_BE:
+			if (tmpinfo.play.precision == 16)
+				idat = OSS_AFMT_U16_BE;
+			else
+				idat = OSS_AFMT_U8;
 			break;
 		case AUDIO_ENCODING_ADPCM:
 			idat = OSS_AFMT_IMA_ADPCM;
