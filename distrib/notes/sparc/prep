@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.21 2003/10/21 02:16:34 mbw Exp $
+.\"	$NetBSD: prep,v 1.22 2004/06/12 16:41:14 mbw Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -61,6 +61,14 @@ can't deal well with this.
 .(disp
 .No ok Ic "setenv security-mode none"
 .disp)
+.Pp
+If you are using a serial console, the
+.Nx*M
+installer defaults to using 9600 bps, 8N1 settings.  You may want to 
+configure your system and serial terminal like this prior to booting the 
+installer.  Additionally, a new installation of
+.Nx*M
+will default to these settings as well.
 .Pp
 The OpenBoot PROM 1 machines (SPARCstation/server 1, SPARCstation/server 1+,
 IPC, and SLC) have an odd SCSI quirk you should be aware of.
