@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.21 2000/03/19 21:45:24 thorpej Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.22 2000/03/22 01:35:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -392,8 +392,9 @@ tlp_cardbus_detach(self, flags)
 	/*
 	 * Release bus space and close window.
 	 */
-	Cardbus_mapreg_unmap(ct, csc->sc_bar_reg, sc->sc_st, sc->sc_sh, 
-	    csc->sc_mapsize);
+	if (csc->sc_bar_reg != 0)
+		Cardbus_mapreg_unmap(ct, csc->sc_bar_reg,
+		    sc->sc_st, sc->sc_sh, csc->sc_mapsize);
 
 	return (0);
 }
