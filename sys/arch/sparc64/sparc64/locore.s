@@ -1,11 +1,13 @@
-/*	$NetBSD: locore.s,v 1.54 2000/04/13 18:40:27 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 2000/04/18 02:12:25 eeh Exp $	*/
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
  * Copyright (c) 1996
- * 	The President and Fellows of Harvard College. All rights reserved.
+ * 	The President and Fellows of Harvard College. 
+ *	All rights reserved.
  * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
+ *	The Regents of the University of California. 
+ *	All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
@@ -24,45 +26,47 @@
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
+ *    documentation and/or other materials provided with the 
+ *    distribution.
+ * 3. All advertising materials mentioning features or use of this 
+ *    software must display the following acknowledgement:
  *	This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  *	This product includes software developed by Harvard University.
  *	This product includes software developed by Paul Kranenburg.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 4. Neither the name of the University nor the names of its 
+ *    contributors may be used to endorse or promote products derived 
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' 
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
+ * PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+ * ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+ * DAMAGE.
  *
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
 #undef NO_VCACHE		/* Map w/D$ disabled */
-#define TRAPTRACE		/* Keep history of all traps (may watchdog) */
-#undef FLTRACE			/* Keep history of all page faults only */
+#define TRAPTRACE		/* Keep history of all traps (unsafe) */
+#undef FLTRACE			/* Keep history of all page faults */
 #define TRAPSTATS		/* Count traps */
-#undef TRAPS_USE_IG		/* Use Interrupt Globals for trap handling */
+#undef TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
 #undef LOCKED_PCB		/* Lock current proc's PCB in MMU */
-#define HWREF			/* Handle ref/mod tracking in trap handlers */
-#undef MMUDEBUG			/* Check use of MMU regs during MMU faults */
+#define HWREF			/* Track ref/mod bits in trap handlers */
+#undef MMUDEBUG			/* Check use of regs during MMU faults */
 #define VECTORED_INTERRUPTS	/* Use interrupt vectors */
 #define PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
 #define NEW_FPSTATE
-#define PMAP_PHYS_PAGE		/* Don't use block ld/st for pmap copy/zero */
-#define DCACHE_BUG		/* Clear D$ line before loads from ASI_PHYS */
+#define PMAP_PHYS_PAGE		/* Use phys ASIs for pmap copy/zero */
+#define DCACHE_BUG		/* Flush D$ around ASI_PHYS accesses */
 #define NO_TSB			/* Don't use TSB */
 #undef TICK_IS_TIME		/* Keep %tick synchronized with time */
 	
@@ -149,8 +153,8 @@
 /*
  * GNU assembler does not understand `.empty' directive; Sun assembler
  * gripes about labels without it.  To allow cross-compilation using
- * the Sun assembler, and because .empty directives are useful documentation,
- * we use this trick.
+ * the Sun assembler, and because .empty directives are useful 
+ * documentation, we use this trick.
  */
 #ifdef SUN_AS
 #define	EMPTY	.empty
@@ -298,12 +302,14 @@ _C_LABEL(kgdb_stack):
 	.space	KGDB_STACK_SIZE		! hope this is enough
 #endif
 
+#ifdef DEBUG
 /*
- * This is an emergency stack used when we overflow the normal kernel stack.
+ * This stack is used when we detect kernel stack corruption.
  */
 	.space	USPACE
 	.align	16
 panicstack:
+#endif
 
 /*
  * _cpcb points to the current pcb (and hence u. area).
@@ -330,8 +336,8 @@ _C_LABEL(cputyp):
 	.word	1
 /*
  * _cpumod is the current cpu model, used to distinguish between variants
- * in the Sun4 and Sun4M families. See /sys/arch/sparc64/include/param.h for
- * possible values.
+ * in the Sun4 and Sun4M families. See /sys/arch/sparc64/include/param.h
+ * for possible values.
  */
 	.globl	_C_LABEL(cpumod)
 _C_LABEL(cpumod):
@@ -385,7 +391,8 @@ _C_LABEL(msgbuf) = KERNBASE
  * the window overflow, underflow, and clean window traps which are
  * 32 instructions long, large enough to in-line.
  *
- * The spitfire CPU (Ultra I) has 4 different sets of global registers. (blah blah...)
+ * The spitfire CPU (Ultra I) has 4 different sets of global registers.
+ * (blah blah...)
  *
  * I used to generate these numbers by address arithmetic, but gas's
  * expression evaluator has about as much sense as your average slug
@@ -396,9 +403,9 @@ _C_LABEL(msgbuf) = KERNBASE
  * Hardware interrupt vectors can be `linked'---the linkage is to regular
  * C code---or rewired to fast in-window handlers.  The latter are good
  * for unbuffered hardware like the Zilog serial chip and the AMD audio
- * chip, where many interrupts can be handled trivially with pseudo-DMA or
- * similar.  Only one `fast' interrupt can be used per level, however, and
- * direct and `fast' interrupts are incompatible.  Routines in intr.c
+ * chip, where many interrupts can be handled trivially with pseudo-DMA
+ * or similar.  Only one `fast' interrupt can be used per level, however,
+ * and direct and `fast' interrupts are incompatible.  Routines in intr.c
  * handle setting these, with optional paranoia.
  */
 
@@ -419,57 +426,70 @@ _C_LABEL(msgbuf) = KERNBASE
 	/* regular vectored traps */
 #ifdef DEBUG
 #ifdef TRAPTRACE
-#define TRACEME		sethi %hi(1f), %g1; ba,pt %icc,traceit; or %g1, %lo(1f), %g1; 1:
+#define TRACEME		sethi %hi(1f), %g1; ba,pt %icc,traceit;\
+ or %g1, %lo(1f), %g1; 1:
 #if 0
-#define TRACEWIN	sethi %hi(9f), %l6; ba,pt %icc,traceitwin; or %l6, %lo(9f), %l6; 9:
+#define TRACEWIN	sethi %hi(9f), %l6; ba,pt %icc,traceitwin;\
+ or %l6, %lo(9f), %l6; 9:
 #endif
 #ifdef TRAPS_USE_IG
-#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_AG, %pstate; sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
+#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_AG, %pstate;\
+ sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
 #else
-#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_IG, %pstate; sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
+#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_IG, %pstate;\
+ sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
 #endif	
 #define TRACERELOAD32	ba reload32; nop;
 #define TRACERELOAD64	ba reload64; nop;
 #define TRACEFLT	TRACEME
 #define	VTRAP(type, label) \
-	sethi %hi(label), %g1; ba,pt %icc,traceit; or %g1, %lo(label), %g1; NOTREACHED; TA8
+	sethi %hi(label), %g1; ba,pt %icc,traceit;\
+ or %g1, %lo(label), %g1; NOTREACHED; TA8
 #else
 #define TRACEME
 #define TRACEWIN	TRACEME
 #define TRACERELOAD32
 #define TRACERELOAD64
 #ifdef FLTRACE
-#define TRACEFLT	sethi %hi(1f), %g1; ba,pt %icc,traceit; or %g1, %lo(1f), %g1; 1:
+#define TRACEFLT	sethi %hi(1f), %g1; ba,pt %icc,traceit;\
+ or %g1, %lo(1f), %g1; 1:
 #else
 #define TRACEFLT	TRACEME
 #endif
 #define	VTRAP(type, label) \
-	sethi KERNBASE,%g1; rdpr %tt,%g2; or %g1,0x28,%g1; b label; stx %g2,[%g1]; NOTREACHED; TA8
+	sethi KERNBASE,%g1; rdpr %tt,%g2; or %g1,0x28,%g1; b label;\
+ stx %g2,[%g1]; NOTREACHED; TA8
 #endif
 #else
 #ifdef TRAPTRACE
-#define TRACEME		sethi %hi(1f), %g1; ba,pt %icc,traceit; or %g1, %lo(1f), %g1; 1:
+#define TRACEME		sethi %hi(1f), %g1; ba,pt %icc,traceit;\
+ or %g1, %lo(1f), %g1; 1:
 #if 0
-	/* Can't use this macro 'cause we have no clean registers during a spill */
-#define TRACEWIN	sethi %hi(9f), %l6; ba,pt %icc,traceitwin; or %l6, %lo(9f), %l6; 9:
+/* Can't use this 'cause we have no clean registers during a spill */
+#define TRACEWIN	sethi %hi(9f), %l6; ba,pt %icc,traceitwin;\
+ or %l6, %lo(9f), %l6; 9:
 #endif
 #ifdef TRAPS_USE_IG
-#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_AG, %pstate; sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
+#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_AG, %pstate;\
+ sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
 #else
-#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_IG, %pstate; sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
+#define TRACEWIN	wrpr %g0, PSTATE_KERN|PSTATE_IG, %pstate;\
+ sethi %hi(9f), %g1; ba,pt %icc,traceit; or %g1, %lo(9f), %g1; 9:
 #endif	
 #define TRACERELOAD32	ba reload32; nop;
 #define TRACERELOAD64	ba reload64; nop;
 #define TRACEFLT	TRACEME
 #define	VTRAP(type, label) \
-	sethi %hi(label), %g1; ba,pt %icc,traceit; or %g1, %lo(label), %g1; NOTREACHED; TA8
+	sethi %hi(label), %g1; ba,pt %icc,traceit;\
+ or %g1, %lo(label), %g1; NOTREACHED; TA8
 #else
 #define TRACEME
 #define TRACEWIN	TRACEME
 #define TRACERELOAD32
 #define TRACERELOAD64
 #ifdef FLTRACE
-#define TRACEFLT	sethi %hi(1f), %g1; ba,pt %icc,traceit; or %g1, %lo(1f), %g1; 1:
+#define TRACEFLT	sethi %hi(1f), %g1; ba,pt %icc,traceit;\
+ or %g1, %lo(1f), %g1; 1:
 #else
 #define TRACEFLT	TRACEME
 #endif
@@ -508,10 +528,9 @@ _C_LABEL(msgbuf) = KERNBASE
 #define	BPT_KGDB_EXEC	TRAP(T_KGDB_EXEC)
 #endif
 
-/* special high-speed 1-instruction-shaved-off traps (get nothing in %l3) */
 #define	SYSCALL		VTRAP(0x100, syscall_setup)
 #ifdef notyet
-#define	ZS_INTERRUPT	b zshard; nop; TA8
+#define	ZS_INTERRUPT	ba,a,pt %icc, zshard; nop; TA8
 #else
 #define	ZS_INTERRUPT4U	HARDINT4U(12)
 #endif
@@ -592,7 +611,7 @@ label:	\
 #define SPILLBOTH(label64,label32,as) \
 	TRACEWIN; \
 	andcc	%sp, 1, %g0; \
-	bnz,pt	%xcc, label64+4;	/* See if it's a v9 stack or v8 */ \
+	bnz,pt	%xcc, label64+4;	/* Is it a v9 or v8 stack? */ \
 	 wr	%g0, as, %asi; \
 	ba,pt	%xcc, label32+8; \
 	 srl	%sp, 0, %sp; /* fixup 32-bit pointers */ \
@@ -672,9 +691,6 @@ label:	\
 	.globl	start, _C_LABEL(kernel_text)
 	_C_LABEL(kernel_text) = start		! for kvm_mkdb(8)
 start:
-/*
- * Put sun4u traptable first, since it needs the most stringent aligment (32K)
- */
 	/* Traps from TL=0 -- traps from user mode */
 #define TABLE	user_
 	.globl	_C_LABEL(trapbase)
@@ -682,13 +698,13 @@ _C_LABEL(trapbase):
 	b dostart; nop; TA8	! 000 = reserved -- Use it to boot
 	/* We should not get the next 5 traps */
 	UTRAP(0x001)		! 001 = POR Reset -- ROM should get this
-	UTRAP(0x002)		! 002 = WDR Watchdog -- ROM should get this
+	UTRAP(0x002)		! 002 = WDR -- ROM should get this
 	UTRAP(0x003)		! 003 = XIR -- ROM should get this
 	UTRAP(0x004)		! 004 = SIR -- ROM should get this
 	UTRAP(0x005)		! 005 = RED state exception
 	UTRAP(0x006); UTRAP(0x007)
 	VTRAP(T_INST_EXCEPT, textfault)	! 008 = instr. access exept
-	VTRAP(T_TEXTFAULT, textfault)	! 009 = instr access MMU miss -- no MMU
+	VTRAP(T_TEXTFAULT, textfault)	! 009 = instr access MMU miss
 	VTRAP(T_INST_ERROR, textfault)	! 00a = instr. access err
 	UTRAP(0x00b); UTRAP(0x00c); UTRAP(0x00d); UTRAP(0x00e); UTRAP(0x00f)
 	TRAP(T_ILLINST)			! 010 = illegal instruction
@@ -766,7 +782,7 @@ _C_LABEL(trapbase):
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
 	UTRAP(T_ECCERR)			! We'll implement this one later
-ufast_IMMU_miss:			! 063 = fast instr access MMU miss
+ufast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
 	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
@@ -1039,7 +1055,7 @@ kdatafault:
 	TRAP(T_PA_WATCHPT)		! 061 = physical address data watchpoint
 	TRAP(T_VA_WATCHPT)		! 062 = virtual address data watchpoint
 	UTRAP(T_ECCERR)			! We'll implement this one later
-kfast_IMMU_miss:			! 063 = fast instr access MMU miss
+kfast_IMMU_miss:			! 064 = fast instr access MMU miss
 	TRACEFLT			! DEBUG
 	ldxa	[%g0] ASI_IMMU_8KPTR, %g2	!				Load IMMU 8K TSB pointer
 	ldxa	[%g0] ASI_IMMU, %g1	! Hard coded for unified 8K TSB		Load IMMU tag target register
@@ -2254,30 +2270,9 @@ winfixfill:
 #endif
 	btst	TSTATE_PRIV, %g4			! User mode?
 	and	%g4, CWP, %g5				! %g4 = %cwp of trap
-	wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
-#ifdef NOTDEF_DEBUG
-	set	panicstack, %g5
-	saved
-	save	%g5, -CC64FSZ, %sp
-	GLOBTOLOC
-	rdpr	%wstate, %l0
-	wrpr	%g0, WSTATE_KERN, %wstate
-	set	8f, %o0
-	call	printf
-	 mov	%fp, %o1
-	wrpr	%l0, 0, %wstate
-	LOCTOGLOB
-	restore
-	ba	9f
-	 nop
-8:
-	.asciz	"winfix: fill fixup sp=%p\n"
-	_ALIGN
-9:	
-#endif
-	CHKPT(%g5,%g4,0xd)
-	bz,pt	%icc, datafault				! We were in user mode -- normal fault
-	 wrpr	%g7, 0, %tt
+	wrpr	%g7, 0, %tt
+	bz,a,pt	%icc, datafault				! We were in user mode -- normal fault
+	 wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
 	
 	/* 
 	 * We're in a pickle here.  We were trying to return to user mode
@@ -2300,6 +2295,8 @@ winfixfill:
 	inc	%g7
 	stw	%g7, [%g4]
 #endif
+#if 0 /* Need to switch over to new stuff to fix WDR bug */
+	wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
 	wrpr	%g2, %g0, %tl				! Restore trap level -- we need to reuse it
 	set	return_from_trap, %g4
 	set	CTX_PRIMARY, %g7
@@ -2320,6 +2317,58 @@ winfixfill:
 !	flushw						! DEBUG
 	ba,pt	%icc, datafault
 	 wrpr	%g4, 0, %tnpc
+#else
+	wrpr	%g2, %g0, %tl				! Restore trap level
+	cmp	%g2, 3
+	tne	%icc, 1
+	rdpr	%tt, %g5
+	wrpr	%g0, 1, %tl				! Revert to TL==1 XXX what if this wasn't in rft_user? Oh well.
+	wrpr	%g5, %g0, %tt				! Set trap type correctly
+	CHKPT(%g5,%g7,0xe)
+/*
+ * Here we need to implement the beginning of datafault.
+ * TRAP_SETUP expects to come from either kernel mode or 
+ * user mode with at least one valid register window.  It 
+ * will allocate a trap frame, save the out registers, and
+ * fix the window registers to think we have one user 
+ * register window.
+ *
+ * However, under these circumstances we don't have any 
+ * valid register windows, so we need to clean up the window
+ * registers to prevent garbage from being saved to either
+ * the user stack or the PCB before calling the datafault
+ * handler.
+ *
+ * We could simply jump to datafault if we could somehow
+ * make the handler issue a `saved' instruction immediately
+ * after creating the trapframe.
+ *
+ * The fillowing is duplicated from datafault:
+ */
+	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate	! We need to save volatile stuff to AG regs
+#ifdef TRAPS_USE_IG
+	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! We need to save volatile stuff to AG regs
+#endif
+#ifdef DEBUG
+	set	trapbase, %g7				! debug
+	set	0x20, %g6				! debug
+	stx	%g0, [%g7]				! debug
+	stb	%g6, [%g7 + 0x20]			! debug
+	CHKPT(%g4,%g7,0xf)
+#endif
+	wr	%g0, ASI_DMMU, %asi			! We need to re-load trap info
+	ldxa	[%g0 + TLB_TAG_ACCESS] %asi, %g1	! Get fault address from tag access register
+! 	nop; nop; nop		! Linux sez we need this after reading TAG_ACCESS
+	ldxa	[SFAR] %asi, %g2			! sync virt addr; must be read first
+	ldxa	[SFSR] %asi, %g3			! get sync fault status register
+	stxa	%g0, [SFSR] %asi			! Clear out fault now
+	membar	#Sync					! No real reason for this XXXX
+	
+	TRAP_SETUP(-CC64FSZ-TF_SIZE)
+	saved						! Blow away that one register window we didn't ever use.
+	ba,a,pt	%icc, Ldatafault_internal		! Now we should return directly to user mode
+	 nop
+#endif
 winfixspill:	
 	bne,a,pt	%xcc, datafault				! Was not a spill -- handle it normally
 	 wrpr	%g2, 0, %tl				! Restore trap level for now XXXX
@@ -2510,7 +2559,11 @@ winfixspill:
 	wrpr	%g0, 0, %otherwin
 	or	%lo(2f), %o0, %o0
 	wrpr	%g0, WSTATE_KERN, %wstate
-	set	panicstack-CC64FSZ, %sp
+#ifdef DEBUG
+	set	panicstack-CC64FSZ, %sp			! Use panic stack.
+#else
+	set	estack0-CC64FSZ, %sp			! Overwrite proc 0's stack.
+#endif
 	ta	1; nop					! This helps out traptrace.
 	call	_C_LABEL(panic)				! This needs to be fixed properly but we should panic here
 	 mov	%g1, %o1
@@ -2599,7 +2652,7 @@ winfixsave:
 	dec	%g5					! NWINDOWS-2
 	wrpr	%g5, 0, %cleanwin			! Set cleanwin to max, since we're in-kernel
 	sub	%g5, %g1, %g5				! NWINDOWS-2-%canrestore
-#ifdef TRAPTRACE
+#ifdef xTRAPTRACE
 	wrpr	%g5, 0, %cleanwin			! Force cleanwindow faults
 #endif
 	wrpr	%g5, 0, %cansave
@@ -2654,7 +2707,7 @@ winfixsave:
 	set	0x11, %g6				! debug
 	stb	%g6, [%g7 + 0x20]			! debug
 	CHKPT(%g2,%g1,0x17)
-	sir
+!	sir
 #endif
 	ta	1; nop					! Enter debugger
 	NOTREACHED
@@ -2809,8 +2862,8 @@ datafault:
 	membar	#Sync					! No real reason for this XXXX
 	
 	TRAP_SETUP(-CC64FSZ-TF_SIZE)
+Ldatafault_internal:
 	INCR(_C_LABEL(uvmexp)+V_FAULTS)			! cnt.v_faults++ (clobbers %o0,%o1) should not fault
-
 !	ldx	[%sp + CC64FSZ + STKB + TF_FAULT], %g1		! DEBUG make sure this has not changed
 	mov	%g1, %o5				! Move these to the out regs so we can save the globals
 	mov	%g2, %o1
@@ -2965,11 +3018,7 @@ instr_miss:
 	
 	sethi	%hi(_C_LABEL(ctxbusy)), %g4
 	sllx	%g3, (64-13), %g6			! Mask away address
-#ifdef _LP64
-	ldx	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
-#else
-	lduw	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
-#endif
+	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
 	srlx	%g6, (64-13-3), %g6			! This is now the offset into ctxbusy
 	ldx	[%g4+%g6], %g4				! Load up our page table.
 
@@ -3204,7 +3253,11 @@ slowtrap:
 	cmp	%g7, WSTATE_KERN
 	bnz,pt	%icc, 1f		! User stack -- we'll blow it away
 	 nop
+#ifdef DEBUG
 	set	panicstack, %sp		! Kernel stack corrupt -- use panicstack
+#else
+	set	estack0, %sp		! Kernel stack corrupt -- use estack0
+#endif
 1:	
 	rdpr	%tt, %g4
 	rdpr	%tstate, %g1
@@ -3248,12 +3301,13 @@ Lslowtrap_reenter:
 	clr	%g4
 					
 !	flushw			! DEBUG
+	wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
 	call	_C_LABEL(trap)			! trap(type, pstate, pc, &tf)
-	 wrpr	%g0, PSTATE_INTR, %pstate	! traps on again
+	 nop
 
 !	wrpr	%g0, PSTATE_KERN, %pstate	! traps off again
 	CHKPT(%o1,%o2,3)
-	b	return_from_trap
+	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
 #if 1
@@ -3638,7 +3692,7 @@ return_from_syscall:
 	CHKPT(%o1,%o2,0x32)
 	wrpr	%g0, 0, %tl			! Return to tl==0
 	CHKPT(%o1,%o2,4)
-	b	return_from_trap
+	ba,a,pt	%icc, return_from_trap
 	 nop
 	NOTREACHED
 
@@ -4147,7 +4201,7 @@ intrcmplt:
 	wrpr	%l3, 0, %pil
 	
 	CHKPT(%o1,%o2,5)
-	b	return_from_trap
+	ba,a,pt	%icc, return_from_trap
 	 nop
 
 
@@ -4292,30 +4346,27 @@ return_from_trap:
 	!!
 	!! Let all pending interrupts drain before returning to userland
 	!! 
-	wrpr	%g0, PSTATE_INTR, %pstate
 	bnz,pn	%icc, 1f				! Returning to userland?
 	 nop
+	wrpr	%g0, PSTATE_INTR, %pstate
 	wrpr	%g0, %g0, %pil				! Lower IPL
 1:
 	wrpr	%g0, PSTATE_KERN, %pstate		! Make sure we have normal globals & no IRQs
 	
-	rdpr	%tl, %g1				! Grab a set of trap registers
-	inc	%g1
-	wrpr	%g1, %g0, %tl
-	/* First restore normal globals */
-	ldx	[%sp + CC64FSZ + STKB + TF_G + (1*8)], %g1	! restore g1
-	ldx	[%sp + CC64FSZ + STKB + TF_G + (2*8)], %g2	! restore g2
-	ldx	[%sp + CC64FSZ + STKB + TF_G + (3*8)], %g3	! restore g3
-	ldx	[%sp + CC64FSZ + STKB + TF_G + (4*8)], %g4	! restore g4
-	ldx	[%sp + CC64FSZ + STKB + TF_G + (5*8)], %g5	! restore g5
-	ldx	[%sp + CC64FSZ + STKB + TF_G + (6*8)], %g6	! restore g6
-	ldx	[%sp + CC64FSZ + STKB + TF_G + (7*8)], %g7	! restore g7
-	/* Then switch to alternate globals and load outs */
+	/* Restore normal globals */
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (1*8)], %g1
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (2*8)], %g2
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (3*8)], %g3
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (4*8)], %g4
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (5*8)], %g5
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (6*8)], %g6
+	ldx	[%sp + CC64FSZ + STKB + TF_G + (7*8)], %g7
+	/* Switch to alternate globals and load outs */
 	wrpr	%g0, PSTATE_KERN|PSTATE_AG, %pstate
 #ifdef TRAPS_USE_IG
 	wrpr	%g0, PSTATE_KERN|PSTATE_IG, %pstate	! DEBUG
 #endif
-	ldx	[%sp + CC64FSZ + STKB + TF_O + (0*8)], %i0	! tf.tf_out[0], etc
+	ldx	[%sp + CC64FSZ + STKB + TF_O + (0*8)], %i0
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (1*8)], %i1
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (2*8)], %i2
 	ldx	[%sp + CC64FSZ + STKB + TF_O + (3*8)], %i3
@@ -4357,6 +4408,9 @@ return_from_trap:
  *
  */
 rft_kernel:
+	rdpr	%tl, %g4				! Grab a set of trap registers
+	inc	%g4
+	wrpr	%g4, %g0, %tl
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
@@ -4439,11 +4493,13 @@ rft_wcnt:	.word 0
 rft_user:
 !	sethi	%hi(_C_LABEL(want_ast)), %g7	! (done above)
 	lduw	[%g7 + %lo(_C_LABEL(want_ast))], %g7! want AST trap?
+#if 0
 	/* This is probably necessary */
 	wrpr	%g0, 1, %tl			! Sometimes we get here w/TL=0 (How?)
 	wrpr	%g3, 0, %tnpc
 	wrpr	%g2, 0, %tpc
 	wrpr	%g1, 0, %tstate
+#endif
 	brnz,pn	%g7, softtrap			! yes, re-enter trap with type T_AST
 	 mov	T_AST, %g4
 
@@ -4529,8 +4585,9 @@ rft_user:
 	set	rft_wcnt, %g4	! Keep track of all the windows we restored
 	stw	%g7, [%g4]
 #endif
-	brz,a,pt	%g7, 5f				! No
-	 restore					! This may fault, but we should return here.
+	
+	brz,pt	%g7, 5f					! No
+	 nop
 	dec	%g7					! We can do this now or later.  Move to last entry
 	sll	%g7, 7, %g5				! calculate ptr into rw64 array 8*16 == 128 or 7 bits
 
@@ -4624,13 +4681,31 @@ rft_user:
 	LDPTR	[%g5 + %lo(_C_LABEL(cpcb))], %g5
 	ldub	[%g5 + PCB_NSAVED], %g5		! Any saved reg windows?
 	tst	%g5
-	wrpr	%g0, 0, %tl	! DEBUG
 	tnz	%icc, 1; nop			! Debugger if we still have saved windows
 	bne,a	rft_user			! Try starting over again
 	 sethi	%hi(_C_LABEL(want_ast)), %g7
 #endif
+	/*
+	 * Set up our return trapframe so we can recover if we trap from here
+	 * on in.
+	 */
+	wrpr	%g0, 1, %tl			! Set up the trap state
+	wrpr	%g2, 0, %tpc
+	wrpr	%g3, 0, %tnpc
+	ba,pt	%icc, 6f
+	 wrpr	%g1, %g0, %tstate
 
 5:
+	/*
+	 * Set up our return trapframe so we can recover if we trap from here
+	 * on in.
+	 */
+	wrpr	%g0, 1, %tl			! Set up the trap state
+	wrpr	%g2, 0, %tpc
+	wrpr	%g3, 0, %tnpc
+	wrpr	%g1, %g0, %tstate
+	restore
+6:	
 	CHKPT(%g4,%g7,0xa)
 	rdpr	%canrestore, %g5
 	wrpr	%g5, 0, %cleanwin			! Force cleanup of kernel windows
@@ -4675,11 +4750,9 @@ badregs:
 1:
 #endif
 
+	rdpr	%tstate, %g1
 	rdpr	%cwp, %g7			! Find our cur window
 	andn	%g1, CWP, %g1			! Clear it from %tstate
-	wrpr	%g0, 1, %tl			! Set up the trap state
-	wrpr	%g2, 0, %tpc
-	wrpr	%g3, 0, %tnpc
 	wrpr	%g1, %g7, %tstate		! Set %tstate with %cwp
 	CHKPT(%g4,%g7,0xb)
 
@@ -7545,6 +7618,7 @@ ENTRY(proc_trampoline)
 	GLOBTOLOC
 	call	prom_printf
 	 mov	%g2, %o1
+	LOCTOGLOB
 	set	3f, %o0
 	mov	%g1, %o1
 	mov	%g2, %o2
@@ -7562,8 +7636,8 @@ ENTRY(proc_trampoline)
 	Debugger()
 #endif
 	CHKPT(%o3,%o4,0x35)
-	b	return_from_trap
-	 wrpr	%g0, 1, %tl			! Return to tl==1
+	ba,a,pt	%icc, return_from_trap
+	 nop
 		
 /*
  * {fu,su}{,i}{byte,word}
