@@ -1,5 +1,5 @@
 /*
- *	$Id: ld.h,v 1.18 1995/08/04 21:49:06 pk Exp $
+ *	$Id: ld.h,v 1.19 1996/02/22 00:19:57 pk Exp $
  */
 /*-
  * This code is derived from software copyrighted by the Free Software
@@ -157,8 +157,10 @@ extern int	netzmagic;
 #define RELOC_PIC_TYPE(r)		((r)->r_baserel? \
 						PIC_TYPE_LARGE:PIC_TYPE_NONE)
 
-#define RELOC_INIT_SEGMENT_RELOC(r)
+#endif
 
+#ifndef RELOC_INIT_SEGMENT_RELOC
+#define RELOC_INIT_SEGMENT_RELOC(r)
 #endif
 
 #ifndef MAX_GOTOFF
