@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.17 1999/02/14 19:10:28 christos Exp $	*/
+/*	$NetBSD: wc.c,v 1.18 1999/03/05 22:24:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.17 1999/02/14 19:10:28 christos Exp $");
+__RCSID("$NetBSD: wc.c,v 1.18 1999/03/05 22:24:01 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,11 +71,11 @@ __RCSID("$NetBSD: wc.c,v 1.17 1999/02/14 19:10:28 christos Exp $");
 
 #ifdef NO_QUAD
 typedef u_long wc_count_t;
-# define WCFMT	" %lu"
+# define WCFMT	" %7lu"
 # define WCCAST unsigned long
 #else
 typedef u_quad_t wc_count_t;
-# define WCFMT	" %llu"
+# define WCFMT	" %7llu"
 # define WCCAST	unsigned long long
 #endif
 
