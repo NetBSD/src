@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.5 2001/07/17 01:41:39 toshii Exp $	*/
+/*	$NetBSD: elf.c,v 1.6 2002/12/22 13:50:36 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -238,7 +238,7 @@ scanfile(int fd, caddr_t *start, caddr_t *end, caddr_t *entry, int load)
 	if (pref.load_debug_info) {
 		/*
 		 *  scan section header table
-		 *  to search for debuging information
+		 *  to search for debugging information
 		 */
 		sh_symidx = -1;
 		sh_stridx = -1;
@@ -252,7 +252,7 @@ scanfile(int fd, caddr_t *start, caddr_t *end, caddr_t *entry, int load)
 			}
 		}
 		if (sh_symidx == -1 || sh_stridx == -1) {
-			debug_printf(TEXT("debuging information not found\n"));
+			debug_printf(TEXT("debugging information not found\n"));
 		} else
 		if (load) {
 			Elf_Ehdr dbg_eh;
@@ -332,7 +332,7 @@ scanfile(int fd, caddr_t *start, caddr_t *end, caddr_t *entry, int load)
 			}
 		} else {
 			/*
-			 *  make space for debuging information
+			 *  make space for debugging information
 			 */
 			int dbg_info_size = ROUNDUP(dbg_hdr_size +
 						    shtbl[sh_symidx].sh_size +

@@ -1,4 +1,4 @@
-/*	$NetBSD: scmio.c,v 1.12 2002/09/19 02:49:41 mycroft Exp $	*/
+/*	$NetBSD: scmio.c,v 1.13 2002/12/22 13:50:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -123,7 +123,7 @@
  *	Added crosspatch support.
  *
  * 28-Jun-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
- *	Found error in debuging code for readint().
+ *	Found error in debugging code for readint().
  *
  * 01-Apr-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added code to readdata to "push" data back into the data buffer.
