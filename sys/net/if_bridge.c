@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.16 2003/07/13 08:51:36 jdc Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.17 2003/08/11 15:14:16 itojun Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.16 2003/07/13 08:51:36 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.17 2003/08/11 15:14:16 itojun Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -2004,7 +2004,6 @@ static int bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 		m1 = m2;
 	m_cat(*mp, m1);
 	return 0;
-
 
     bad2:
 	if (snap)
