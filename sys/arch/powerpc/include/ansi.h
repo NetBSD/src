@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.5 1998/04/27 17:39:11 kleink Exp $	*/
+/*	$NetBSD: ansi.h,v 1.6 1998/08/16 17:16:56 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -83,6 +83,7 @@ struct __gnuc_va_list__;  /* forward declaration to prohibit gcc warning XXX */
  * defined for ctype.h.
  */
 #define	_BSD_WCHAR_T_		int		/* wchar_t */
+#define	_BSD_WINT_T_		int		/* wint_t */
 #define	_BSD_RUNE_T_		int		/* rune_t */
 
 #endif	/* _ANSI_H_ */
