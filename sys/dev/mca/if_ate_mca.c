@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate_mca.c,v 1.5 2002/09/28 18:19:09 tsutsui Exp $	*/
+/*	$NetBSD: if_ate_mca.c,v 1.6 2002/09/30 21:36:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.5 2002/09/28 18:19:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate_mca.c,v 1.6 2002/09/30 21:36:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,9 +77,8 @@ struct ate_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-const struct cfattach ate_mca_ca = {
-	sizeof(struct ate_softc), ate_mca_match, ate_mca_attach
-};
+CFATTACH_DECL(ate_mca, sizeof(struct ate_softc),
+    ate_mca_match, ate_mca_attach, NULL, NULL)
 
 static const struct ate_mca_product {
 	u_int32_t	at_prodid;	/* MCA product ID */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aha_isapnp.c,v 1.5 2002/09/27 20:38:59 thorpej Exp $	*/
+/*	$NetBSD: aha_isapnp.c,v 1.6 2002/09/30 21:31:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.5 2002/09/27 20:38:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.6 2002/09/30 21:31:52 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: aha_isapnp.c,v 1.5 2002/09/27 20:38:59 thorpej Exp $
 int	aha_isapnp_probe __P((struct device *, struct cfdata *, void *));
 void	aha_isapnp_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach aha_isapnp_ca = {
-	sizeof(struct aha_softc), aha_isapnp_probe, aha_isapnp_attach
-};
+CFATTACH_DECL(aha_isapnp, sizeof(struct aha_softc),
+    aha_isapnp_probe, aha_isapnp_attach, NULL, NULL)
 
 int
 aha_isapnp_probe(parent, match, aux)

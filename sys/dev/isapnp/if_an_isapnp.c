@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_isapnp.c,v 1.5 2002/09/27 20:39:02 thorpej Exp $	*/
+/*	$NetBSD: if_an_isapnp.c,v 1.6 2002/09/30 21:31:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.5 2002/09/27 20:39:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_isapnp.c,v 1.6 2002/09/30 21:31:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,8 @@ struct an_isapnp_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-const struct cfattach an_isapnp_ca = {
-	sizeof(struct an_isapnp_softc), an_isapnp_match, an_isapnp_attach
-};
+CFATTACH_DECL(an_isapnp, sizeof(struct an_isapnp_softc),
+    an_isapnp_match, an_isapnp_attach, NULL, NULL)
 
 int
 an_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
