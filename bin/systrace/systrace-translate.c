@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace-translate.c,v 1.3 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$NetBSD: systrace-translate.c,v 1.4 2002/08/01 08:47:04 itojun Exp $	*/
 /*	$OpenBSD: systrace-translate.c,v 1.9 2002/07/30 06:07:06 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -43,16 +43,18 @@
 #include <pwd.h>
 #include <err.h>
 
-#ifdef __NetBSD__
-#include "../../sys/compat/linux/common/linux_types.h"
-#include "../../sys/compat/linux/common/linux_fcntl.h"
-#else
+#ifdef __OpenBSD__
 #include "../../sys/compat/linux/linux_types.h"
 #include "../../sys/compat/linux/linux_fcntl.h"
 #endif
 
 #include "intercept.h"
 #include "systrace.h"
+
+#if defined(__NetBSD__) && defined(HAVE_LINUX_FCNTL_H)
+#include "../../sys/compat/linux/common/linux_types.h"
+#include "../../sys/compat/linux/common/linux_fcntl.h"
+#endif
 
 #define FL(w,c)	do { \
 	if (flags & (w)) \
