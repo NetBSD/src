@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2001/06/07 05:29:13 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.104 2001/06/30 12:54:34 ragge Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,6 +30,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
@@ -42,6 +43,7 @@
 #include <sys/user.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/buf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -146,6 +148,56 @@ vaddr_t   virtual_avail, virtual_end; /* Available virtual memory	*/
 struct pv_entry *get_pventry(void);
 void free_pventry(struct pv_entry *);
 void more_pventries(void);
+#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
+
+/*
+ * Calculation of the System Page Table is somewhat a pain, because it
+ * must be in contiguous physical memory and all size calculations must
+ * be done before memory management is turned on.
+ */
+static vsize_t
+calc_kvmsize(void)
+{
+	extern int bufcache;
+	vsize_t kvmsize;
+	int n, s, bp, bc;
+
+	/* All physical memory */
+	kvmsize = avail_end;
+	/* User Page table area. This may be large */
+	kvmsize += (USRPTSIZE * sizeof(struct pte) * maxproc);
+	/* Kernel stacks per process */
+	kvmsize += (USPACE * maxproc);
+	/* kernel malloc arena */
+	kvmsize += (NKMEMPAGES_MAX_DEFAULT * NBPG +
+	    NKMEMPAGES_MAX_DEFAULT * sizeof(struct kmemusage));
+	/* IO device register space */
+	kvmsize += (IOSPSZ * VAX_NBPG);
+	/* Pager allocations */
+	kvmsize += (PAGER_MAP_SIZE + MAXBSIZE);
+	/* Anon pool structures */
+	kvmsize += (physmem * sizeof(struct vm_anon));
+
+	/* allocated buffer space etc... This is a hack */
+	n = nbuf; s = nswbuf; bp = bufpages; bc = bufcache;
+	kvmsize += (int)allocsys(NULL, NULL);
+	/* Buffer space */
+	kvmsize += (MAXBSIZE * nbuf);
+	nbuf = n; nswbuf = s; bufpages = bp; bufcache = bc;
+
+	/* Exec arg space */
+	kvmsize += NCARGS;
+#if VAX46 || VAX48 || VAX49 || VAX53 || VAXANY
+	/* Physmap */
+	kvmsize += VM_PHYS_SIZE;
+#endif
+#ifdef LKM
+	/* LKMs are allocated out of kernel_map */
+#define	MAXLKMSIZ	0x100000	/* XXX */
+	kvmsize += MAXLKMSIZ;
+#endif
+	return kvmsize;
+}
 
 /*
  * pmap_bootstrap().
@@ -160,31 +212,16 @@ pmap_bootstrap()
 	extern	unsigned int etext, proc0paddr;
 	struct pcb *pcb = (struct pcb *)proc0paddr;
 	pmap_t pmap = pmap_kernel();
+	vsize_t kvmsize;
 
 	/* Set logical page size */
 	uvmexp.pagesize = NBPG;
 	uvm_setpagesize();
 
-	/*
-	 * Calculation of the System Page Table is somewhat a pain,
-	 * because it must be in contiguous physical memory and all
-	 * size calculations must be done now.
-	 * Remember: sysptsize is in PTEs and nothing else!
-	 */
 	physmem = btoc(avail_end);
 
-#define USRPTSIZE ((MAXTSIZ + MAXDSIZ + MAXSSIZ + MMAPSPACE) / VAX_NBPG)
-	/* Kernel alloc area */
-	sysptsize = (((0x100000 * maxproc) >> VAX_PGSHIFT) / 4);
-	/* reverse mapping struct */
-	sysptsize += (avail_end >> VAX_PGSHIFT) * 2;
-	/* User Page table area. This may grow big */
-	sysptsize += ((USRPTSIZE * 4) / VAX_NBPG) * maxproc;
-	/* Kernel stacks per process */
-	sysptsize += UPAGES * maxproc;
-	/* IO device register space */
-	sysptsize += IOSPSZ;
-
+	kvmsize = calc_kvmsize();
+	sysptsize = kvmsize >> VAX_PGSHIFT;
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
 	 * The need for kernel virtual memory is linear dependent of the
@@ -261,8 +298,8 @@ pmap_bootstrap()
 
 #if 0 /* Breaks cninit() on some machines */
 	cninit();
-	printf("Sysmap %p, istack %lx, scratch %\n",Sysmap,istack,scratch);
-	printf("etext %p\n", &etext);
+	printf("Sysmap %p, istack %lx, scratch %lx\n",Sysmap,istack,scratch);
+	printf("etext %p, kvmsize %lx\n", &etext, kvmsize);
 	printf("SYSPTSIZE %x\n",sysptsize);
 	printf("pv_table %p, ptemapstart %lx ptemapend %lx\n",
 	    pv_table, ptemapstart, ptemapend);
@@ -313,6 +350,7 @@ pmap_bootstrap()
 	mtpr(sysptsize, PR_SLR);
 	rpb.sbr = mfpr(PR_SBR);
 	rpb.slr = mfpr(PR_SLR);
+	rpb.wait = 0;	/* DDB signal */
 	mtpr(1, PR_MAPEN);
 }
 
