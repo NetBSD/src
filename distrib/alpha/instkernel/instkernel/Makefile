@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/05/11 20:08:01 veego Exp $
+#	$NetBSD: Makefile,v 1.6 1999/06/25 22:32:40 nathanw Exp $
 
 RAMDISK!=cd ${.CURDIR}/../ramdisk; \
 	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
@@ -13,7 +13,7 @@ all:
 	gzip -9f netbsd
 
 clean cleandir distclean:
-	rm -f netbsd
+	rm -f netbsd netbsd.gz
 
 # nothing to do here
 depend includes lint regress tags:
