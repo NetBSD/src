@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.3 2003/05/25 21:46:10 pooka Exp $	*/
+/*	$NetBSD: file.h,v 1.4 2003/09/25 18:08:19 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -34,19 +34,13 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)Id: file.h,v 1.55 2003/05/23 21:31:58 christos Exp
+ * @(#)Id: file.h,v 1.56 2003/09/12 19:07:25 christos Exp
  */
 
 #ifndef __file_h__
 #define __file_h__
 
 #include <sys/cdefs.h>
-
-#ifndef __linux__
-#define _LARGEFILE_SOURCE
-#define _LARGEFILE64_SOURCE 
-#define _FILE_OFFSET_BITS 64
-#endif
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
