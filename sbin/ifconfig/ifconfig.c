@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.101 2001/02/23 19:49:54 christos Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.102 2001/03/01 08:34:10 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.101 2001/02/23 19:49:54 christos Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.102 2001/03/01 08:34:10 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -944,12 +944,13 @@ settunnel(src, dst)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = afp->af_af;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
 
-	if ((ecode = getaddrinfo(src, NULL, NULL, &srcres)) != 0)
+	if ((ecode = getaddrinfo(src, NULL, &hints, &srcres)) != 0)
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
-	if ((ecode = getaddrinfo(dst, NULL, NULL, &dstres)) != 0)  
+	if ((ecode = getaddrinfo(dst, NULL, &hints, &dstres)) != 0)  
 		errx(1, "error in parsing address string: %s",
 		    gai_strerror(ecode));
 
