@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.20 1996/02/27 00:11:14 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.21 1996/02/27 09:10:24 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -202,7 +202,6 @@ cgthreeattach(parent, self, args)
 	    mapiodev(ca->ca_ra.ra_reg, CG3REG_REG,
 		     sizeof(struct fbcontrol), ca->ca_bustype);
 
-printf(" fb ctrl: %x, status %x ", sc->sc_fbc->fbc_ctrl, sc->sc_fbc->fbc_status);
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bustype = ca->ca_bustype;
 
