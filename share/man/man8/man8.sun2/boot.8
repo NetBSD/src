@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.1 2003/04/29 13:00:58 fredette Exp $
+.\"	$NetBSD: boot.8,v 1.2 2003/04/29 13:05:32 wiz Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,8 +38,7 @@
 .Os
 .Sh NAME
 .Nm boot
-.Nd
-system bootstrapping procedures
+.Nd system bootstrapping procedures
 .\" .Sh SYNOPSIS
 .\" .Nm reboot
 .\" .Op Fl n
@@ -56,7 +55,7 @@ as described in
 and unless this fails, the system will resume multi-user operations.
 .Ss Cold starts
 A disk-boot program
-.Pa ( /usr/mdec/ufsboot )
+.Pq Pa /usr/mdec/ufsboot
 will attempt to load
 .Pa netbsd
 from partition A of the boot device,
@@ -64,7 +63,7 @@ which must currently be an
 .Dq sd
 disk.
 Alternatively, network boot program
-.Pa ( /usr/mdec/netboot )
+.Pq Pa /usr/mdec/netboot
 will load
 .Pa netbsd
 from the NFS root as determined by the procedure described in
@@ -88,17 +87,23 @@ Boot the system in verbose mode.
 .El
 .Pp
 Any extra flags or arguments, or the
-.Ar \*[Lt]boot string\*[Gt]
+.Aq Ar boot string
 after the -- separator are passed to the boot PROM.
 Other flags are currently ignored.
 .Pp
-At any time you can break back to the ROM by pressing the `L1' and `a'
+At any time you can break back to the ROM by pressing the
+.Sq L1
+and
+.Sq a
 keys at the same time (if the console is a serial port the same is
-achieved by sending a `break').
+achieved by sending a
+.Sq break ) .
 If you do this accidentally you can continue whatever was in progress
-by typing `c' followed by the return key.
+by typing
+.Sq c
+followed by the return key.
 .Sh FILES
-.Bl -tag -width /usr/mdec/installboot -compact
+.Bl -tag -width /usr/mdec/installbootXX -compact
 .It Pa /netbsd
 system code
 .It Pa /usr/mdec/bootxx
@@ -113,7 +118,7 @@ second-level boot program for UFS disks
 program to install bootxx on a disk
 .El
 .Sh SEE ALSO
-.Xr crash 8 ,
+.\" .Xr crash 8 ,
 .Xr disklabel 8 ,
 .Xr fsck 8 ,
 .Xr halt 8 ,
