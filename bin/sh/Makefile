@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.7 1993/08/09 04:58:18 mycroft Exp $
+#	$Id: Makefile,v 1.8 1993/11/14 15:35:34 cgd Exp $
 
 PROG=	sh
 SRCS=	builtins.c cd.c dirent.c echo.c error.c eval.c exec.c expand.c \
@@ -23,19 +23,19 @@ init.c: mkinit ${SRCS}
 	./mkinit '${CC} -c ${CFLAGS} init.c' ${.ALLSRC}
 	touch ${.TARGET}
 
-mkinit: ${.CURDIR}/mkinit.c
-	${CC} ${CFLAGS} ${LDFLAGS} ${.CURDIR}/mkinit.c -o $@ ${LDADD}
-
 nodes.c nodes.h: mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
 	./mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
-
-mknodes: ${.CURDIR}/mknodes.c
-	${CC} ${CFLAGS} ${LDFLAGS} ${.CURDIR}/mknodes.c -o $@ ${LDADD}
 
 syntax.c syntax.h: mksyntax
 	./mksyntax
 
-mksyntax: ${.CURDIR}/mksyntax.c ${.CURDIR}/parser.h
-	${CC} ${CFLAGS} ${LDFLAGS} ${.CURDIR}/mksyntax.c -o $@ ${LDADD}
-
 .include <bsd.prog.mk>
+
+mkinit: ${LIBCRT0} ${.CURDIR}/mkinit.c ${LIBC} ${DPADD}
+	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} ${.CURDIR}/mkinit.c -o $@ ${LDADD}
+
+mknodes: ${LIBCRT0} ${.CURDIR}/mknodes.c ${LIBC} ${DPADD}
+	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} ${.CURDIR}/mknodes.c -o $@ ${LDADD}
+
+mksyntax: ${LIBCRT0} ${.CURDIR}/mksyntax.c ${.CURDIR}/parser.h ${LIBC} ${DPADD}
+	${CC} ${CFLAGS} ${LDFLAGS} ${LDSTATIC} ${.CURDIR}/mksyntax.c -o $@ ${LDADD}
