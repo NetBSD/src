@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.74 1998/07/27 19:32:42 pk Exp $	*/
+/*	$NetBSD: esp.c,v 1.75 1998/07/29 18:44:23 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -269,8 +269,8 @@ espattach_sbus(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_promvaddr)
-		esc->sc_reg = (volatile u_char *) sa->sa_promvaddr;
+	if (sa->sa_npromvaddrs)
+		esc->sc_reg = (volatile u_char *) sa->sa_promvaddrs[0];
 	else {
 		bus_space_handle_t bh;
 		if (sbus_bus_map(sa->sa_bustag, sa->sa_slot,
@@ -320,8 +320,8 @@ espattach_dma(parent, self, aux)
 	 * Map my registers in, if they aren't already in virtual
 	 * address space.
 	 */
-	if (sa->sa_promvaddr)
-		esc->sc_reg = (volatile u_char *) sa->sa_promvaddr;
+	if (sa->sa_npromvaddrs)
+		esc->sc_reg = (volatile u_char *) sa->sa_promvaddrs[0];
 	else {
 		bus_space_handle_t bh;
 		if (bus_space_map2(sa->sa_bustag,
