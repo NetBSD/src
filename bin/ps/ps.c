@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.46.2.3 2002/04/23 21:59:20 nathanw Exp $	*/
+/*	$NetBSD: ps.c,v 1.46.2.4 2002/04/23 22:00:36 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.46.2.3 2002/04/23 21:59:20 nathanw Exp $");
+__RCSID("$NetBSD: ps.c,v 1.46.2.4 2002/04/23 22:00:36 nathanw Exp $");
 #endif
 #endif /* not lint */
 
@@ -408,7 +408,6 @@ main(argc, argv)
 						OUTPUT(vent, ki, &kl[j], 
 						    WIDTHMODE);
 			}
-			free(kl);
 		}
 	/*
 	 * Print header - AFTER determining process field widths.
@@ -457,7 +456,6 @@ main(argc, argv)
 				}
 			}
 		}
-		free(kl);
 	}
 	exit(eval);
 	/* NOTREACHED */
