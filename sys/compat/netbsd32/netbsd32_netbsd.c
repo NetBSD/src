@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.20 1999/12/30 15:40:45 eeh Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.21 1999/12/31 22:26:21 eeh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -627,7 +627,7 @@ netbsd32_close(p, v, retval)
 	struct sys_close_args ua;
 
 	NETBSD32TO64_UAP(fd);
-	return sys_write(p, &ua, retval);
+	return sys_close(p, &ua, retval);
 }
 
 int
@@ -932,28 +932,58 @@ netbsd32_getfsstat(p, v, retval)
 		syscallarg(netbsd32_long) bufsize;
 		syscallarg(int) flags;
 	} */ *uap = v;
-	struct sys_getfsstat_args ua;
-	struct statfs sb;
-	struct netbsd32_statfs *sb32p;
-	int error;
+	register struct mount *mp, *nmp;
+	register struct statfs *sp;
+	struct netbsd32_statfs sb32;
+	caddr_t sfsp;
+	long count, maxcount, error;
 
-	sb32p = (struct netbsd32_statfs *)(u_long)SCARG(uap, buf);
-	if (sb32p)
-		SCARG(&ua, buf) = &sb;
-	else
-		SCARG(&ua, buf) = NULL;
-	NETBSD32TOX_UAP(bufsize, long);
-	NETBSD32TO64_UAP(flags);
-	error = sys_getfsstat(p, &ua, retval);
-	if (error)
-		return (error);
-
-	if (sb32p) {
-		struct netbsd32_statfs sb32;
-		netbsd32_from_statfs(&sb, &sb32);
-		if (copyout(&sb32, sb32p, sizeof(sb32)))
-			return EFAULT;
+	maxcount = SCARG(uap, bufsize) / sizeof(struct netbsd32_statfs);
+	sfsp = (caddr_t)SCARG(uap, buf);
+	simple_lock(&mountlist_slock);
+	count = 0;
+	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
+		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock)) {
+			nmp = mp->mnt_list.cqe_next;
+			continue;
+		}
+		if (sfsp && count < maxcount) {
+			sp = &mp->mnt_stat;
+			/*
+			 * If MNT_NOWAIT or MNT_LAZY is specified, do not
+			 * refresh the fsstat cache. MNT_WAIT or MNT_LAXY
+			 * overrides MNT_NOWAIT.
+			 */
+			if (SCARG(uap, flags) != MNT_NOWAIT &&
+			    SCARG(uap, flags) != MNT_LAZY &&
+			    (SCARG(uap, flags) == MNT_WAIT ||
+			     SCARG(uap, flags) == 0) &&
+			    (error = VFS_STATFS(mp, sp, p)) != 0) {
+				simple_lock(&mountlist_slock);
+				nmp = mp->mnt_list.cqe_next;
+				vfs_unbusy(mp);
+				continue;
+			}
+			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+			sp->f_oflags = sp->f_flags & 0xffff;
+			netbsd32_from_statfs(sp, &sb32);
+			error = copyout(&sb32, sfsp, sizeof(sb32));
+			if (error) {
+				vfs_unbusy(mp);
+				return (error);
+			}
+			sfsp += sizeof(sb32);
+		}
+		count++;
+		simple_lock(&mountlist_slock);
+		nmp = mp->mnt_list.cqe_next;
+		vfs_unbusy(mp);
 	}
+	simple_unlock(&mountlist_slock);
+	if (sfsp && count > maxcount)
+		*retval = maxcount;
+	else
+		*retval = count;
 	return (0);
 }
 
