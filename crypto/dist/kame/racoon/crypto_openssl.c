@@ -1,4 +1,4 @@
-/*	$KAME: crypto_openssl.c,v 1.84 2004/04/07 01:12:46 sakane Exp $	*/
+/*	$KAME: crypto_openssl.c,v 1.86 2004/06/16 11:55:35 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: crypto_openssl.c,v 1.13 2004/04/12 03:34:06 itojun Exp $");
+__RCSID("$NetBSD: crypto_openssl.c,v 1.14 2004/06/17 03:42:55 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,7 +110,8 @@ typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
  */
 
 #ifdef HAVE_SIGNING_C
-static int cb_check_cert __P((int, X509_STORE_CTX *));
+static int cb_check_cert_local __P((int, X509_STORE_CTX *));
+static int cb_check_cert_remote __P((int, X509_STORE_CTX *));
 static X509 *mem2x509 __P((vchar_t *));
 #endif
 
@@ -231,9 +232,10 @@ eay_cmp_asn1dn(n1, n2)
  * this functions is derived from apps/verify.c in OpenSSL0.9.5
  */
 int
-eay_check_x509cert(cert, CApath)
+eay_check_x509cert(cert, CApath, local)
 	vchar_t *cert;
 	char *CApath;
+	int local;
 {
 	X509_STORE *cert_ctx = NULL;
 	X509_LOOKUP *lookup = NULL;
@@ -255,7 +257,11 @@ eay_check_x509cert(cert, CApath)
 	cert_ctx = X509_STORE_new();
 	if (cert_ctx == NULL)
 		goto end;
-	X509_STORE_set_verify_cb_func(cert_ctx, cb_check_cert);
+
+	if (local)
+		X509_STORE_set_verify_cb_func(cert_ctx, cb_check_cert_local);
+	else
+		X509_STORE_set_verify_cb_func(cert_ctx, cb_check_cert_remote);
 
 	lookup = X509_STORE_add_lookup(cert_ctx, X509_LOOKUP_file());
 	if (lookup == NULL)
@@ -282,6 +288,10 @@ eay_check_x509cert(cert, CApath)
 	if (csc == NULL)
 		goto end;
 	X509_STORE_CTX_init(csc, cert_ctx, x509, NULL);
+#if OPENSSL_VERSION_NUMBER >= 0x00907000L
+	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK);
+	X509_STORE_CTX_set_flags (csc, X509_V_FLAG_CRL_CHECK_ALL);
+#endif
 	error = X509_verify_cert(csc);
 	X509_STORE_CTX_cleanup(csc);
 #else
@@ -308,11 +318,14 @@ end:
 }
 
 /*
- * callback function for verifing certificate.
- * this function is derived from cb() in openssl/apps/s_server.c
+ * Callback function for verifing certificate.
+ * Derived from cb() in openssl/apps/s_server.c
+ *
+ * This one is called for certificates obtained from 
+ * 'peers_certfile' directive.
  */
 static int
-cb_check_cert(ok, ctx)
+cb_check_cert_local(ok, ctx)
 	int ok;
 	X509_STORE_CTX *ctx;
 {
@@ -333,9 +346,8 @@ cb_check_cert(ok, ctx)
 		case X509_V_ERR_CERT_HAS_EXPIRED:
 		case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
 #if OPENSSL_VERSION_NUMBER >= 0x00905100L
-		case X509_V_ERR_INVALID_CA:
-		case X509_V_ERR_PATH_LENGTH_EXCEEDED:
 		case X509_V_ERR_INVALID_PURPOSE:
+		case X509_V_ERR_UNABLE_TO_GET_CRL:
 #endif
 			ok = 1;
 			log_tag = LLV_WARNING;
@@ -343,21 +355,50 @@ cb_check_cert(ok, ctx)
 		default:
 			log_tag = LLV_ERROR;
 		}
-#ifndef EAYDEBUG
 		plog(log_tag, LOCATION, NULL,
 			"%s(%d) at depth:%d SubjectName:%s\n",
 			X509_verify_cert_error_string(ctx->error),
 			ctx->error,
 			ctx->error_depth,
 			buf);
-#else
-		printf("%d: %s(%d) at depth:%d SubjectName:%s\n",
-			log_tag,
+	}
+	ERR_clear_error();
+
+	return ok;
+}
+
+/*
+ * Similar to cb_check_cert_local() but this one is called 
+ * for certificates obtained from the IKE payload.
+ */
+static int
+cb_check_cert_remote(ok, ctx)
+	int ok;
+	X509_STORE_CTX *ctx;
+{
+	char buf[256];
+	int log_tag;
+
+	if (!ok) {
+		X509_NAME_oneline(
+				X509_get_subject_name(ctx->current_cert),
+				buf,
+				256);
+
+		switch (ctx->error) {
+		case X509_V_ERR_UNABLE_TO_GET_CRL:
+			ok = 1;
+			log_tag = LLV_WARNING;
+			break;
+		default:
+			log_tag = LLV_ERROR;
+		}
+		plog(log_tag, LOCATION, NULL,
+			"%s(%d) at depth:%d SubjectName:%s\n",
 			X509_verify_cert_error_string(ctx->error),
 			ctx->error,
 			ctx->error_depth,
 			buf);
-#endif
 	}
 	ERR_clear_error();
 
@@ -396,11 +437,7 @@ eay_get_x509asn1subjectname(cert)
 
    end:
 	if (error) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#else
-		printf("%s\n", eay_strerror());
-#endif
 		if (name) {
 			vfree(name);
 			name = NULL;
@@ -454,10 +491,8 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 
 	/* make sure if the data is terminated by '\0'. */
 	if (gen->d.ia5->data[gen->d.ia5->length] != '\0') {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL,
 			"data is not terminated by '\0'.");
-#endif
 		hexdump(gen->d.ia5->data, gen->d.ia5->length + 1);
 		goto end;
 	}
@@ -478,11 +513,7 @@ eay_get_x509subjectaltname(cert, altname, type, pos)
 			racoon_free(*altname);
 			*altname = NULL;
 		}
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#else
-		printf("%s\n", eay_strerror());
-#endif
 	}
 	if (x509)
 		X509_free(x509);
@@ -534,11 +565,7 @@ eay_get_x509text(cert)
 			racoon_free(text);
 			text = NULL;
 		}
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#else
-		printf("%s\n", eay_strerror());
-#endif
 	}
 	if (bio)
 		BIO_free(bio);
@@ -670,18 +697,14 @@ eay_check_x509sign(source, sig, cert)
 
 	x509 = d2i_X509(NULL, &bp, cert->l);
 	if (x509 == NULL) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#endif
 		return -1;
 	}
 
 	evp = X509_get_pubkey(x509);
 	if (!evp) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL,
 		    "X509_get_pubkey: %s\n", eay_strerror());
-#endif
 		return -1;
 	}
 
@@ -898,18 +921,14 @@ eay_rsa_verify(src, sig, evp)
 	len = RSA_size(evp->pkey.rsa);
 	xbuf = vmalloc(len);
 	if (xbuf == NULL) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#endif
 		EVP_PKEY_free(evp);
 		return -1;
 	}
 
 	len = RSA_public_decrypt(sig->l, sig->v, xbuf->v, evp->pkey.rsa, pad);
-#ifndef EAYDEBUG
 	if (len == 0 || len != src->l)
 		plog(LLV_ERROR, LOCATION, NULL, "%s\n", eay_strerror());
-#endif
 	EVP_PKEY_free(evp);
 	if (len == 0 || len != src->l) {
 		vfree(xbuf);
@@ -1597,12 +1616,8 @@ eay_hmacsha2_512_final(c)
 	(void)racoon_free(c);
 
 	if (SHA512_DIGEST_LENGTH != res->l) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL,
 			"hmac sha2_512 length mismatch %d.\n", res->l);
-#else
-		printf("hmac sha2_512 length mismatch %d.\n", res->l);
-#endif
 		vfree(res);
 		return NULL;
 	}
@@ -1657,12 +1672,8 @@ eay_hmacsha2_384_final(c)
 	(void)racoon_free(c);
 
 	if (SHA384_DIGEST_LENGTH != res->l) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL,
 			"hmac sha2_384 length mismatch %d.\n", res->l);
-#else
-		printf("hmac sha2_384 length mismatch %d.\n", res->l);
-#endif
 		vfree(res);
 		return NULL;
 	}
@@ -1717,12 +1728,8 @@ eay_hmacsha2_256_final(c)
 	(void)racoon_free(c);
 
 	if (SHA256_DIGEST_LENGTH != res->l) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL,
 			"hmac sha2_256 length mismatch %d.\n", res->l);
-#else
-		printf("hmac sha2_256 length mismatch %d.\n", res->l);
-#endif
 		vfree(res);
 		return NULL;
 	}
@@ -1778,12 +1785,8 @@ eay_hmacsha1_final(c)
 	(void)racoon_free(c);
 
 	if (SHA_DIGEST_LENGTH != res->l) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL,
 			"hmac sha1 length mismatch %d.\n", res->l);
-#else
-		printf("hmac sha1 length mismatch %d.\n", res->l);
-#endif
 		vfree(res);
 		return NULL;
 	}
@@ -1838,12 +1841,8 @@ eay_hmacmd5_final(c)
 	(void)racoon_free(c);
 
 	if (MD5_DIGEST_LENGTH != res->l) {
-#ifndef EAYDEBUG
 		plog(LLV_ERROR, LOCATION, NULL,
 			"hmac md5 length mismatch %d.\n", res->l);
-#else
-		printf("hmac md5 length mismatch %d.\n", res->l);
-#endif
 		vfree(res);
 		return NULL;
 	}
