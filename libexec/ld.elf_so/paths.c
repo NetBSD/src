@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.9 1999/12/20 02:43:58 christos Exp $	 */
+/*	$NetBSD: paths.c,v 1.10 2000/01/15 01:03:45 christos Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -216,7 +216,7 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 	hwptr->name = xstrdup(ptr);
 
 	if ((ptr = strsep(&bp, WS)) == NULL) {
-		warnx("missing sysctl variable name");
+		xwarnx("missing sysctl variable name");
 		goto cleanup;
 	}
 
@@ -226,7 +226,7 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 	for (i = 0; (l = strsep(&ptr, ".")) != NULL; i++) {
 
 		if (lists[i] == NULL || i >= RTLD_MAX_CTL) {
-			warnx("sysctl nesting too deep");
+			xwarnx("sysctl nesting too deep");
 			goto cleanup;
 		}
 
@@ -241,7 +241,7 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 			}
 
 			if (lists[i][j].numentries == -1) {
-				warnx("unknown sysctl variable name `%s'", l);
+				xwarnx("unknown sysctl variable name `%s'", l);
 				goto cleanup;
 			}
 
@@ -259,23 +259,23 @@ _rtld_process_mapping(lib_p, bp, ep, dodebug)
 	for (i = 0; (ptr = strsep(&bp, WS)) != NULL; i++) {
 		if (i == RTLD_MAX_ENTRY) {
 no_more:
-			warnx("maximum library entries exceeded `%s'",
+			xwarnx("maximum library entries exceeded `%s'",
 			    hwptr->name);
 			goto cleanup;
 		}
 		if ((key = strsep(&ptr, ":")) == NULL) {
-			warnx("missing sysctl variable value for `%s'",
+			xwarnx("missing sysctl variable value for `%s'",
 			    hwptr->name);
 			goto cleanup;
 		}
 		if ((lib = strsep(&ptr, ":")) == NULL) {
-			warnx("missing sysctl library list for `%s'",
+			xwarnx("missing sysctl library list for `%s'",
 			    hwptr->name);
 			goto cleanup;
 		}
 		for (j = 0; (l = strsep(&lib, ",")) != NULL; j++) {
 			if (j == RTLD_MAX_LIBRARY) {
-				warnx("maximum library entries exceeded `%s'",
+				xwarnx("maximum library entries exceeded `%s'",
 				    hwptr->name);
 				goto cleanup;
 			}
@@ -284,7 +284,7 @@ no_more:
 			hwptr->entry[i].library[j] = xstrdup(l);
 		}
 		if (j == 0) {
-			warnx("No library map entries for `%s/%s'",
+			xwarnx("No library map entries for `%s/%s'",
 				hwptr->name, ptr);
 			goto cleanup;
 		}
@@ -306,7 +306,7 @@ no_more:
 	}
 
 	if (i == 0) {
-		warnx("No library entries for `%s'", hwptr->name);
+		xwarnx("No library entries for `%s'", hwptr->name);
 		goto cleanup;
 	}
 
