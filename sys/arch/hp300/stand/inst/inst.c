@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.4 1997/10/04 17:22:49 thorpej Exp $	*/
+/*	$NetBSD: inst.c,v 1.5 1997/12/15 23:17:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@ int	opendisk __P((char *, char *, int, char, int *));
 void	disklabel_edit __P((struct disklabel *));
 void	disklabel_show __P((struct disklabel *));
 int	disklabel_write __P((char *, int, struct open_file *));
+void	get_fstype __P((struct disklabel *lp, int));
 int	a2int __P((char *));
 
 struct	inst_command {
@@ -290,6 +291,99 @@ informative source.\n\n");
 	else								\
 		lp->d_flags &= ~(flag);
 
+struct fsname_to_type {
+	const char *name;
+	u_int8_t type;
+} n_to_t[] = {
+	{ "unused",	FS_UNUSED },
+	{ "ffs",	FS_BSDFFS },
+	{ "swap",	FS_SWAP },
+	{ "boot",	FS_BOOT },
+	{ NULL,		0 },
+};
+
+void
+get_fstype(lp, partno)
+	struct disklabel *lp;
+	int partno;
+{
+	static int blocksize = 8192;	/* XXX */
+	struct partition *pp = &lp->d_partitions[partno];
+	struct fsname_to_type *np;
+	int fragsize;
+	char line[80], str[80];
+
+	if (pp->p_size == 0) {
+		/*
+		 * No need to bother asking for a zero-sized partition.
+		 */
+		pp->p_fstype = FS_UNUSED;
+		return;
+	}
+
+	/*
+	 * Select a default.
+	 * XXX Should we check what might be in the label already?
+	 */
+	if (partno == 1)
+		strcpy(str, "swap");
+	else if (partno == RAW_PART)
+		strcpy(str, "boot");
+	else
+		strcpy(str, "ffs");
+
+ again:
+	GETSTR("             fstype? [%s] ", str);
+
+	for (np = n_to_t; np->name != NULL; np++)
+		if (strcmp(str, np->name) == 0)
+			break;
+
+	if (np->name == NULL) {
+		printf("Please use one of: ");
+		for (np = n_to_t; np->name != NULL; np++)
+			printf(" %s", np->name);
+		printf(".\n");
+		goto again;
+	}
+
+	pp->p_fstype = np->type;
+
+	if (pp->p_fstype != FS_BSDFFS)
+		return;
+
+	/*
+	 * Get additional information needed for FFS.
+	 */
+ ffs_again:
+	GETNUM("             FFS block size? [%d] ", blocksize);
+	if (blocksize < NBPG || (blocksize % NBPG) != 0) {
+		printf("FFS block size must be a multiple of %d.\n", NBPG);
+		goto ffs_again;
+	}
+
+	fragsize = blocksize / 8;	/* XXX */
+	fragsize = max(fragsize, lp->d_secsize);
+	GETNUM("             FFS fragment size? [%d] ", fragsize);
+	if (fragsize < lp->d_secsize || (fragsize % lp->d_secsize) != 0) {
+		printf("FFS fragment size must be a multiple of sector size"
+		    " (%d).\n", lp->d_secsize);
+		goto ffs_again;
+	}
+	if ((blocksize % fragsize) != 0) {
+		printf("FFS fragment size must be an even divisor of FFS"
+		    " block size (%d).\n", blocksize);
+		goto ffs_again;
+	}
+
+	/*
+	 * XXX Better sanity checking?
+	 */
+
+	pp->p_frag = blocksize / fragsize;
+	pp->p_fsize = fragsize;
+}
+
 void
 disklabel_edit(lp)
 	struct disklabel *lp;
@@ -338,6 +432,7 @@ Enter partition table.  Note, sizes and offsets are in sectors.\n\n");
 		GETNUM2("%c partition: offset? [%d] ", ('a' + i),
 		    lp->d_partitions[i].p_offset);
 		GETNUM("             size? [%d] ", lp->d_partitions[i].p_size);
+		get_fstype(lp, i);
 	}
 
 	/* Perform magic. */
