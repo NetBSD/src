@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.16 1997/01/28 04:21:00 mark Exp $	*/
+/*	$NetBSD: asc.c,v 1.17 1997/07/28 17:56:27 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -173,6 +173,15 @@ ascattach(pdp, dp, auxp)
 	sbic->sc_link.device = &asc_scsidev;
 	sbic->sc_link.openings = 1;	/* was 2 */
 	sbic->sc_link.max_target = 7;
+
+	/* Provide an override for the host id */
+        if (boot_args) {
+        	char *ptr;
+       
+		ptr = strstr(boot_args, "asc.hostid=");
+		if (ptr)
+			sbic->sc_link.adapter_target = (u_int)strtoul(ptr + 11, NULL, 10);
+	}
 
 	printf(" hostid=%d", sbic->sc_link.adapter_target);
 
