@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.2 2001/10/01 09:32:40 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.3 2001/10/08 21:22:14 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -111,3 +111,72 @@ gnu/dist/bfd/coff-sh.c				1.2
 gnu/dist/bfd/elf32-sh.c				1.4
 
   Fix 32-bit immediate reloc bug.
+
+sys/arch/sh3/include/bus.h			1.5
+
+  Add missing macros for 8-bit PCMCIA access.
+
+sys/arch/sh3/include/pmap.h			1.8
+
+  Fix a serious pmap problem with dummy PMAP_{MAP,UNMAP}_POOLPAGE().
+
+sys/arch/sh3/sh3/vm_machdep.c			1.16
+
+  Fix two SH4 issues in cpu_fork().
+
+sys/arch/sh3/sh3/trap.c				1.20,1.27 via patch
+
+  Add missing SH4_PCMCIA cases.  Fixes PR#11441.
+  Fix KERNELMODE macro (check MD bits too).
+
+sys/arch/sh3/include/cpu.h			1.13
+sys/arch/sh3/include/segments.h			1.2
+
+  Fix KERNELMODE macro (check MD bits too).
+
+sys/arch/evbsh3/evbsh3/machdep.c		1.20,1.22-1.24
+
+  Add missing shpcmcia_mem*() for SH4_PCMCIA.
+
+sys/arch/sh3/sh3/in_cksum.S			1.3
+
+  Add missing _C_LABEL().
+
+sys/arch/evbsh3/evbsh3/locore.s			1.27,1.31-1.33 via patch
+
+  Fix LDTLB handling bug, add missing _C_LABEL(), and a small
+  optimization.
+
+sys/arch/mmeye/mmeye/locore.s			1.22
+
+  Fix LDTLB handling bug.
+
+sys/uvm/uvm_map.c				1.104 via patch
+sys/vm/vm_map.h					patch (uvm_map.h 1.30)
+
+  Create a new pool for map entries, allocated from kmem_map instead
+  of kernel_map.  Use this instead of the static map entries when
+  allocating map entries for kernel_map.  This greatly reduces the
+  number of static map entries used, and should eliminate the
+  problems with running out.
+
+usr.sbin/lpr/lpd/lpd.8				patch
+
+  Add missing command name.
+
+sys/arch/mac68k/include/bus.h			1.18
+
+  Define __BUS_SPACE_HAS_STREAM_METHODS since that fits what we
+  have.
+
+sys/kern/uipc_socket.c				1.57
+
+  In soreceive(): do not ignore uiomove() error.  Fixes PR#11692.
+
+bin/sh/expand.c					1.52
+
+  Do not truncate expr > 10 digits.  Fixes PR#13943.
+
+distrib/sun3/common/rd.services			1.2
+
+  Add missing NFS entries; required for mount_nfs.
