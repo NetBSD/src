@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.54 2001/09/10 22:45:46 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.55 2001/09/11 21:03:21 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -221,17 +221,12 @@ tcp_delack(void *arg)
 void
 tcp_slowtimo()
 {
-	static int syn_cache_last = 0;
 	int s;
 
 	s = splsoftnet();
 	tcp_maxidle = tcp_keepcnt * tcp_keepintvl;
 	tcp_iss_seq += TCP_ISSINCR;			/* increment iss */
 	tcp_now++;					/* for timestamps */
-	if (++syn_cache_last >= tcp_syn_cache_interval) {
-		syn_cache_timer();
-		syn_cache_last = 0;
-	}
 	splx(s);
 }
 
