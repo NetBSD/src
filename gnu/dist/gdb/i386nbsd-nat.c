@@ -130,7 +130,8 @@ fetch_kcore_registers (pcb)
    * get the register values out of the sys pcb and
    * store them where `read_register' will find them.
    */
-  if (target_read_memory(pcb->pcb_tss.tss_esp+4, regs, sizeof regs))
+  if (target_read_memory(pcb->pcb_tss.tss_esp+4,
+			 (char *)regs, sizeof(regs)))
     error("Cannot read ebx, esi, and edi.");
   for (i = 0, regno = 0; regno < 3; regno++)
     supply_register(regno, (char *)&i);
