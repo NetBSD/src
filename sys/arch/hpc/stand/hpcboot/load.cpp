@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.1 2001/02/09 18:34:44 uch Exp $	*/
+/*	$NetBSD: load.cpp,v 1.2 2001/03/21 14:06:25 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -199,6 +199,37 @@ Loader::_load_segment(vaddr_t kv, vsize_t memsz, off_t fileofs, size_t filesz)
 		++_n0clr_link;
 	}
 	_kernend = kv + memsz;
+}
+
+void
+Loader::_load_memory(vaddr_t kv, vsize_t memsz, void *data)
+{
+	struct PageTag *pvec;
+	vaddr_t kv_start = kv, v;
+	paddr_t p, pvec_paddr;
+
+	DPRINTF((TEXT("\t->load 0x%08x+0x%08x=0x%08x\n"),
+		 kv, memsz, kv + memsz));
+	if (memsz > _tpsz) {
+		/* XXX failure */
+		return;
+	}
+
+	_opvec_prev = _pvec_prev;
+	_mem->getTaggedPage(v, p, &pvec, pvec_paddr);      
+	memcpy((void *)v, data, memsz);
+	_pvec_prev->src = ptokv(p);
+	_pvec_prev->dst = kv;
+	_pvec_prev->sz = memsz;
+#ifdef PAGE_LINK_DUMP
+	_pvec_prev->next =(u_int32_t)pvec;
+#else
+	_pvec_prev->next = ptokv(pvec_paddr);
+#endif
+	_pvec_prev = pvec;
+
+	_kernend = kv + memsz;
+	++_nload_link;
 }
 
 struct PageTag *

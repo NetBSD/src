@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: load.h,v 1.1 2001/02/09 18:34:44 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: load.h,v 1.2 2001/03/21 14:06:25 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ protected:
 
 	void _load_segment_start(void);
 	void _load_segment(vaddr_t, vsize_t, off_t, size_t);
+	void _load_memory(vaddr_t, vsize_t, void *);
 	void _load_segment_end(void);
 
 public:
