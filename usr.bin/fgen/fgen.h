@@ -1,3 +1,4 @@
+/*	$NetBSD: fgen.h,v 1.3 1999/02/15 04:54:37 hubertf Exp $	*/
 /*
  * fgen.h -- stuff for the fcode tokenizer.
  *
