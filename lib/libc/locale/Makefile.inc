@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.38 2002/03/17 22:14:24 tshiozak Exp $
+#	$NetBSD: Makefile.inc,v 1.39 2002/03/18 06:00:26 tshiozak Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -30,7 +30,10 @@ SRCS+=	___runetype_mb.c ___tolower_mb.c ___toupper_mb.c \
 	iswctype.c multibyte_c90.c multibyte_amd1.c \
 	rune.c runeglue.c runetable.c setrunelocale.c
 .endif
-MAN+=	iswalnum.3 towlower.3
+MAN+=	iswalnum.3 towlower.3 mblen.3 mbrlen.3 mbrtowc.3 mbsinit.3 \
+	mbsrtowcs.3 mbstowcs.3 mbtowc.3 wcrtomb.3 wcsrtombs.3 wcstombs.3 \
+	wctomb.3
+
 
 MLINKS+=iswalnum.3 iswalpha.3 iswalnum.3 iswblank.3 \
 	iswalnum.3 iswcntrl.3 iswalnum.3 iswdigit.3 \
