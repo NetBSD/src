@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.21 2000/06/14 17:24:54 cgd Exp $ */
+/* $NetBSD: crt0.c,v 1.22 2000/07/26 02:11:44 mycroft Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -46,10 +46,10 @@ __start(sp, cleanup, obj, ps_strings)
 	const Obj_Entry *obj;			/* from shared loader */
 	struct ps_strings *ps_strings;
 {
-	long argc;
+	int argc;
 	char **argv, *namep;
 
-	argc = *(long *)sp;
+	argc = *(int *)sp;
 	argv = sp + 1;
 	environ = sp + 2 + argc;		/* 2: argc + NULL ending argv */
 
@@ -84,7 +84,7 @@ __start(sp, cleanup, obj, ps_strings)
  * NOTE: Leave the RCS ID _after_ __start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.21 2000/06/14 17:24:54 cgd Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.22 2000/07/26 02:11:44 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "common.c"
