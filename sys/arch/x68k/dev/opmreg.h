@@ -1,4 +1,4 @@
-/*	$NetBSD: opmreg.h,v 1.1.1.1.24.1 1999/01/31 10:34:26 minoura Exp $	*/
+/*	$NetBSD: opmreg.h,v 1.1.1.1.24.2 1999/02/13 17:52:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -72,7 +72,7 @@ struct opm_voice {
 void adpcm_chgclk	__P((u_char));
 void fdc_force_ready	__P((u_char));
 
-#define OPM_REG		1
-#define OPM_DATA	3
+#define OPM_REG		0
+#define OPM_DATA	1
 
 #endif /* !_OPMREG_H_ */
