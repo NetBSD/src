@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.156 2001/10/03 20:03:29 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.157 2001/10/13 08:25:57 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -123,6 +123,15 @@ static	void bootpath_fake __P((struct bootpath *, char *));
 static	void bootpath_print __P((struct bootpath *));
 static	struct bootpath	*bootpath_store __P((int, struct bootpath *));
 int	find_cpus __P((void));
+
+#ifdef DEBUG
+#define ACDB_BOOTDEV	0x1
+#define	ACDB_PROBE	0x2
+int autoconf_debug = 0;
+#define DPRINTF(l, s)   do { if (autoconf_debug & l) printf s; } while (0)
+#else
+#define DPRINTF(l, s)
+#endif
 
 /*
  * Most configuration on the SPARC is done by matching OPENPROM Forth
@@ -1123,6 +1132,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		const char *cp;
 		struct openprom_addr romreg;
 
+		DPRINTF(ACDB_PROBE, ("Node: %x", node));
 #if defined(SUN4M)
 		if (CPU_ISSUN4M) {	/* skip the CPUs */
 			if (strcmp(PROM_getpropstringA(node, "device_type",
@@ -1132,6 +1142,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		}
 #endif
 		cp = PROM_getpropstringA(node, "name", namebuf, sizeof namebuf);
+		DPRINTF(ACDB_PROBE, (" name %s\n", namebuf));
 		for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
 			if (strcmp(cp, sp) == 0)
 				break;
@@ -1587,18 +1598,30 @@ instance_match(dev, aux, bp)
 	switch (bus_class(dev->dv_parent)) {
 	case BUSCLASS_MAINBUS:
 		ma = aux;
-		if (bp->val[0] == ma->ma_iospace && bp->val[1] == ma->ma_paddr)
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: mainbus device, "
+		    "want space %#x addr %#x have space %#lx addr %#llx\n",
+		    bp->val[0], bp->val[1], ma->ma_iospace, (unsigned long long)ma->ma_paddr));
+		if ((bus_type_t)(u_long)bp->val[0] == ma->ma_iospace &&
+		    (bus_addr_t)(u_long)bp->val[1] == ma->ma_paddr)
 			return (1);
 		break;
 	case BUSCLASS_SBUS:
 		sa = aux;
-		if (bp->val[0] == sa->sa_slot && bp->val[1] == sa->sa_offset)
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: sbus device, "
+		    "want slot %#x offset %#x have slot %#x offset %#x\n",
+		     bp->val[0], bp->val[1], sa->sa_slot, sa->sa_offset));
+		if ((u_int32_t)bp->val[0] == sa->sa_slot &&
+		    (u_int32_t)bp->val[1] == sa->sa_offset)
 			return (1);
 		break;
 	case BUSCLASS_IOMMU:
 		iom = aux;
-		if (bp->val[0] == iom->iom_reg[0].ior_iospace &&
-		    bp->val[1] == iom->iom_reg[0].ior_pa)
+		DPRINTF(ACDB_BOOTDEV, ("instance_match: iommu device, "
+		    "want space %#x pa %#x have space %#x pa %#x\n",
+		     bp->val[0], bp->val[1], iom->iom_reg[0].ior_iospace,
+		     iom->iom_reg[0].ior_pa));
+		if ((u_int32_t)bp->val[0] == iom->iom_reg[0].ior_iospace &&
+		    (u_int32_t)bp->val[1] == iom->iom_reg[0].ior_pa)
 			return (1);
 		break;
 	case BUSCLASS_XDC:
@@ -1610,6 +1633,9 @@ instance_match(dev, aux, bp)
 		 */
 		struct xxxx_attach_args { int driveno; } *aap = aux;
 
+		DPRINTF(ACDB_BOOTDEV,
+		    ("instance_match: x[dy]c device, want drive %#x have %#x\n",
+		     bp->val[0], aap->driveno));
 		if (aap->driveno == bp->val[0])
 			return (1);
 
@@ -1670,12 +1696,15 @@ device_register(dev, aux)
 	 * Translate PROM name in case our drivers are named differently
 	 */
 	bpname = bus_compatible(bp->name);
+	dvname = dev->dv_cfdata->cf_driver->cd_name;
+
+	DPRINTF(ACDB_BOOTDEV,
+	    ("\n%s: device_register: dvname %s(%s) bpname %s(%s)\n",
+	    dev->dv_xname, dvname, dev->dv_xname, bpname, bp->name));
 
 	/* First, match by name */
-	dvname = dev->dv_cfdata->cf_driver->cd_name;
 	if (strcmp(dvname, bpname) != 0)
 		return;
-
 
 	if (bus_class(dev) != BUSCLASS_NONE) {
 		/*
@@ -1698,14 +1727,19 @@ device_register(dev, aux)
 			}
 			booted_device = bp->dev = dev;
 			bootpath_store(1, bp + 1);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found bus controller %s\n",
+			    dev->dv_xname));
 			return;
 		}
-	} else if (strcmp(dvname, "le") == 0) {
+	} else if (strcmp(dvname, "le") == 0 || strcmp(dvname, "hme") == 0 ||
+	    strcmp(dvname, "be") == 0) {
 		/*
-		 * LANCE ethernet device
+		 * LANCE, Happy Meal, or BigMac ethernet device
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found ethernet controller %s\n",
+			    dev->dv_xname));
 			return;
 		}
 	} else if (strcmp(dvname, "sd") == 0 || strcmp(dvname, "cd") == 0) {
@@ -1756,6 +1790,8 @@ device_register(dev, aux)
 		if (periph->periph_target == target &&
 		    periph->periph_lun == lun) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found [cs]d disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 
@@ -1764,6 +1800,8 @@ device_register(dev, aux)
 		/* A Xylogic disk */
 		if (instance_match(dev, aux, bp) != 0) {
 			nail_bootdev(dev, bp);
+			DPRINTF(ACDB_BOOTDEV, ("\t-- found x[dy] disk %s\n",
+			    dev->dv_xname));
 			return;
 		}
 
@@ -1776,6 +1814,8 @@ device_register(dev, aux)
 		 * to the bootpath, so just accept that as the boot device.
 		 */
 		nail_bootdev(dev, bp);
+		DPRINTF(ACDB_BOOTDEV, ("\t-- found floppy drive %s\n",
+		    dev->dv_xname));
 		return;
 	} else {
 		/*
