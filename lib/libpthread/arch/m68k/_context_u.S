@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.2 2001/11/19 20:13:09 scw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.3 2001/11/19 21:46:04 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,9 @@
 	movw	%cc,%a0@(UC_REGS + (_REG_PS * 4) + 2)	;	\
 	moveml	%d2-%d7,%a0@(UC_REGS + (_REG_D2 * 4))	;	\
 	moveml	%a2-%a7,%a0@(UC_REGS + (_REG_A2 * 4))	;	\
-	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))
+	movl	%a1,%a0@(UC_REGS + (_REG_PC * 4))	;	\
+	moveql	#_UC_CPU,%d0				;	\
+	orl	%d0,%a0@(UC_FLAGS)
 
 /*
  * Restore the complete context from the ucontext_t structure pointed
