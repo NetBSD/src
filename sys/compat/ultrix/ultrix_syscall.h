@@ -148,6 +148,7 @@
 #define	ULTRIX_SYS_exportfs	169
 #define	ULTRIX_SYS_uname	179
 #define	ULTRIX_SYS_ustat	183
+#define	ULTRIX_SYS_getmnt	184
 #define	ULTRIX_SYS_sigpending	187
 #define	ULTRIX_SYS_setsid	188
 #define	ULTRIX_SYS_waitpid	189
