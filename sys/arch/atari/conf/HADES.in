@@ -1,0 +1,54 @@
+#
+#	$NetBSD: HADES.in,v 1.1 2001/04/05 12:21:30 leo Exp $
+#
+# Medusa-Hades
+#
+# This configuration file is for a generic Medusa-Hades
+#
+
+#include "GENERIC"
+
+pseudo-device	view	4	# View (graphics mapping)
+#
+# The following sections describe various hardware options.
+#
+
+ncrscsi0	at mainbus0	# NCR5380 SCSI driver
+scsibus0	at ncrscsi0	# SCSI bus
+zs0		at mainbus0	# Serial support through 8530
+nvr0		at mainbus0	# nvram driver
+lp0		at mainbus0	# centronics printer
+grfbus0		at mainbus0	# bitmapped display's
+grfet0		at grfbus0	# et4000/et6000/et6100 consoles
+ite0		at grfet0
+grfet1		at grfbus0
+ite1		at grfet1
+grfet2		at grfbus0
+ite2		at grfet2
+pcibus0		at mainbus0	# PCI-bus
+pci0		at pcibus0
+avmebus0	at mainbus0	# VME bus
+vme0		at avmebus0
+le0		at vme0	irq 5	# Lance ethernet (Riebl/PAM).
+le0		at vme0 irq 4	# Lance ethernet (BVME410).
+et0		at vme0		# Crazy Dots II
+isabus0		at mainbus0	# ISA-bus
+isa0		at isabus0
+wdc0		at mainbus0	# IDE-bus
+wd*		at wdc? channel ? drive ?
+# ATAPI bus support
+atapibus*	at wdc? channel ?
+
+# ATAPI devices
+cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
+
+# SCSI devices
+sd* 	at scsibus? target ? lun ?	# SCSI disk drives
+st* 	at scsibus? target ? lun ?	# SCSI tape drives
+cd* 	at scsibus? target ? lun ?	# SCSI CD-ROM drives
+#ifndef INSTALL_KERNEL
+ch* 	at scsibus? target ? lun ?	# SCSI autochangers
+ss* 	at scsibus? target ? lun ?	# SCSI scanners
+se* 	at scsibus? target ? lun ?	# SCSI ethernet
+uk* 	at scsibus? target ? lun ?	# SCSI unknown
+#endif
