@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.26 2003/02/17 23:48:14 perseant Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.27 2003/03/15 01:10:18 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -93,7 +93,6 @@ void ffs_clusteracct __P((struct fs *, struct cg *, daddr_t, int));
 
 /* ffs_balloc.c */
 int ffs_balloc __P((void *));
-int ffs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
 
 /* ffs_bswap.c */
 void ffs_sb_swap __P((struct fs*, struct fs *));
