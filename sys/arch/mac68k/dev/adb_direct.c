@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.42.4.1 2000/09/21 13:03:11 scottr Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.42.4.2 2000/09/28 19:02:03 scottr Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2103,6 +2103,8 @@ adb_reinit(void)
 	int device;
 	int nonewtimes;		/* times thru loop w/o any new devices */
 
+	adb_setup_hw_type();	/* setup hardware type */
+
 	/* Make sure we are not interrupted while building the table. */
 	/* ints must be on for PB & IOP (at least, for now) */
 	if (adbHardware != ADB_HW_PB && adbHardware != ADB_HW_IOP)
@@ -2123,8 +2125,6 @@ adb_reinit(void)
 		ADBDevTable[i].devType = 0;
 		ADBDevTable[i].origAddr = ADBDevTable[i].currentAddr = 0;
 	}
-
-	adb_setup_hw_type();	/* setup hardware type */
 
 	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
 
