@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.9 2003/06/27 07:39:35 he Exp $ */
+/* $NetBSD: machdep.c,v 1.10 2003/07/04 01:19:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2003/06/27 07:39:35 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2003/07/04 01:19:59 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,7 +119,6 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 
 yamon_env_var *yamon_envp;
 struct pb1000_config pb1000_configuration;
-struct propdb *alchemy_prop_info;
 
 void	mach_init(int, char **, yamon_env_var *, u_long); /* XXX */
 
@@ -435,12 +434,6 @@ cpu_startup(void)
 	 * Set up buffers, so they can be used to read disklabels.
 	 */
 	bufinit();
-
-	/*
-	 * Set up the chip/board properties database.
-	 */
-	if (!(alchemy_prop_info = propdb_create("board info")))
-		panic("Cannot create board info database");
 }
 
 void
