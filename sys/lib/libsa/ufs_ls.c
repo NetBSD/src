@@ -1,8 +1,10 @@
-/*	$NetBSD: ufs.h,v 1.6 1999/04/14 11:32:51 drochner Exp $	*/
+/*	$NetBSD: ufs_ls.c,v 1.1 1999/04/14 11:32:50 drochner Exp $	 */
 
-/*-
+/*
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1996
+ *	Matthias Drochner.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,17 +33,89 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)ufs.h	8.1 (Berkeley) 6/11/93
  */
 
-int	ufs_open __P((char *path, struct open_file *f));
-int	ufs_close __P((struct open_file *f));
-int	ufs_read __P((struct open_file *f, void *buf,
-		size_t size, size_t *resid));
-int	ufs_write __P((struct open_file *f, void *buf,
-		size_t size, size_t *resid));
-off_t	ufs_seek __P((struct open_file *f, off_t offset, int where));
-int	ufs_stat __P((struct open_file *f, struct stat *sb));
 
-void ufs_ls __P((const char *));
+#include <sys/param.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
+
+#include "stand.h"
+#include "ufs.h"
+
+static char    *typestr[] = {
+	"unknown",
+	"FIFO",
+	"CHR",
+	0,
+	"DIR",
+	0,
+	"BLK",
+	0,
+	"REG",
+	0,
+	"LNK",
+	0,
+	"SOCK",
+	0,
+	"WHT"
+};
+
+void 
+ufs_ls(path)
+	const char *path;
+{
+	int             fd;
+	struct stat     sb;
+	size_t          size;
+	char            dirbuf[DIRBLKSIZ];
+
+	fd = open(path, 0);
+	if (fd < 0) {
+		printf("ls: %s\n", strerror(errno));
+		return;
+	}
+	if (fstat(fd, &sb) < 0) {
+		printf("stat: %s\n", strerror(errno));
+		goto out;
+	}
+	if ((sb.st_mode & IFMT) != IFDIR) {
+		printf("%s: %s\n", path, strerror(ENOTDIR));
+		goto out;
+	}
+	while ((size = read(fd, dirbuf, DIRBLKSIZ)) == DIRBLKSIZ) {
+		struct direct  *dp, *edp;
+
+		dp = (struct direct *) dirbuf;
+		edp = (struct direct *) (dirbuf + size);
+
+		while (dp < edp) {
+			if (dp->d_ino != (ino_t) 0) {
+				char           *t;
+
+				if ((dp->d_namlen > MAXNAMLEN + 1) ||
+				    (dp->d_type >
+				      sizeof(typestr) / sizeof(char *) - 1) ||
+				    !(t = typestr[dp->d_type])) {
+					/*
+					 * This does not handle "old"
+					 * filesystems properly. On little
+					 * endian machines, we get a bogus
+					 * type name if the namlen matches a
+					 * valid type identifier. We could
+					 * check if we read namlen "0" and
+					 * handle this case specially, if
+					 * there were a pressing need...
+					 */
+					printf("bad dir entry\n");
+					goto out;
+				}
+				printf("%d: %s (%s)\n", dp->d_ino,
+				       dp->d_name, t);
+			}
+			dp = (struct direct *) ((char *) dp + dp->d_reclen);
+		}
+	}
+out:
+	close(fd);
+}
