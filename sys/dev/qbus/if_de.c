@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.8 2000/12/14 07:15:45 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.9 2001/04/26 19:36:07 ragge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -100,7 +100,6 @@ struct	de_cdata {
 	struct	de_ring dc_xrent[NXMT]; /* transmit ring entrys */
 	struct	de_ring dc_rrent[NRCV]; /* receive ring entrys */
 	struct	de_udbbuf dc_udbbuf;	/* UNIBUS data buffer */
-	char	dc_xbuf[NXMT][ETHER_MAX_LEN];
 	/* end mapped area */
 };
 
@@ -124,11 +123,14 @@ struct	de_softc {
 	bus_space_tag_t sc_iot;
 	bus_addr_t sc_ioh;
 	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_cmap;
+	struct ubinfo sc_ui;
 	struct de_cdata *sc_dedata;	/* Control structure */
 	struct de_cdata *sc_pdedata;	/* Bus-mapped control structure */
 	bus_dmamap_t sc_rcvmap[NRCV];	/* unibus receive maps */
 	struct mbuf *sc_rxmbuf[NRCV];
+	bus_dmamap_t sc_xmtmap[NXMT];
+	struct mbuf *sc_txmbuf[NXMT];
+	char sc_xbuf[NXMT][ETHER_MAX_LEN];
 	int	sc_xindex;		/* UNA index into transmit chain */
 	int	sc_rindex;		/* UNA index into receive chain */
 	int	sc_xfree;		/* index for next transmit buffer */
@@ -175,8 +177,7 @@ deattach(struct device *parent, struct device *self, void *aux)
 	struct de_softc *sc = (struct de_softc *)self;
 	struct ifnet *ifp = &sc->sc_if;
 	u_int8_t myaddr[ETHER_ADDR_LEN];
-	int csr1, rseg, error, i;
-	bus_dma_segment_t seg;
+	int csr1, error, i;
 	char *c;
 
 	sc->sc_iot = ua->ua_iot;
@@ -205,38 +206,13 @@ deattach(struct device *parent, struct device *self, void *aux)
 	DE_WCSR(DE_PCSR0, PCSR0_RSET);
 	dewait(sc, "reset");
 
-	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct de_cdata), NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to allocate control data, error = %d\n",
-		    error);
-		goto fail_0;
+	sc->sc_ui.ui_size = sizeof(struct de_cdata);
+	if ((error = ubmemalloc((struct uba_softc *)parent, &sc->sc_ui, 0))) {
+		printf(": unable to ubmemalloc(), error = %d\n", error);
+		return;
 	}
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct de_cdata), (caddr_t *)&sc->sc_dedata,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf(": unable to map control data, error = %d\n", error);
-		goto fail_1;
-	}
-
-	if ((error = bus_dmamap_create(sc->sc_dmat, sizeof(struct de_cdata),
-	    1, sizeof(struct de_cdata), 0, BUS_DMA_NOWAIT,
-	    &sc->sc_cmap)) != 0) {
-		printf(": unable to create control data DMA map, error = %d\n",
-		    error);
-		goto fail_2;
-	}
-
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap,
-	    sc->sc_dedata, sizeof(struct de_cdata), NULL,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load control data DMA map, error = %d\n",
-		    error);
-		goto fail_3;
-	}
-
-	bzero(sc->sc_dedata, sizeof(struct de_cdata));
-	sc->sc_pdedata = (struct de_cdata *)sc->sc_cmap->dm_segs[0].ds_addr;
+	sc->sc_pdedata = (struct de_cdata *)sc->sc_ui.ui_baddr;
+	sc->sc_dedata = (struct de_cdata *)sc->sc_ui.ui_vaddr;
 
 	/*
 	 * Create receive buffer DMA maps.
@@ -259,6 +235,19 @@ deattach(struct device *parent, struct device *self, void *aux)
 			printf(": unable to allocate or map rx buffer %d\n,"
 			    " error = %d\n", i, error);
 			goto fail_6;
+		}
+	}
+
+	/*
+	 * Pre-allocate the transmit buffers.
+	 */
+	for (i = 0; i < NXMT; i++) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+		    MCLBYTES, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW,
+		    &sc->sc_xmtmap[i]))) {
+			printf(": unable to create tx DMA map %d, error = %d\n",
+			    i, error);
+			goto fail_7;
 		}
 	}
 
@@ -301,6 +290,10 @@ deattach(struct device *parent, struct device *self, void *aux)
 	 * Free any resources we've allocated during the failed attach
 	 * attempt.  Do this in reverse order and fall through.
 	 */
+fail_7:
+	for (i = 0; i < NXMT; i++)
+		if (sc->sc_xmtmap[i] != NULL)
+			bus_dmamap_destroy(sc->sc_dmat, sc->sc_xmtmap[i]);
 fail_6:
 	for (i = 0; i < NRCV; i++) {
 		if (sc->sc_rxmbuf[i] != NULL) {
@@ -313,16 +306,6 @@ fail_5:
 		if (sc->sc_rcvmap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
 	}
-
-fail_3:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
-fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_dedata,
-	    sizeof(struct de_cdata));
-fail_1:
-	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-fail_0:
-	return;
 }
 
 /*
@@ -387,11 +370,8 @@ deinit(struct de_softc *sc)
 	dewait(sc, "wtmode");
 
 	/* set up the receive and transmit ring entries */
-	for (i = 0; i < NXMT; i++) {
+	for (i = 0; i < NXMT; i++)
 		dc->dc_xrent[i].r_flags = 0;
-		dc->dc_xrent[i].r_segbl = LOWORD(&pdc->dc_xbuf[i][0]);
-		dc->dc_xrent[i].r_segbh = HIWORD(&pdc->dc_xbuf[i][0]);
-	}
 
 	for (i = 0; i < NRCV; i++)
 		dc->dc_rrent[i].r_flags = RFLG_OWN;
@@ -417,9 +397,9 @@ destart(struct ifnet *ifp)
 {
 	struct de_softc *sc = ifp->if_softc;
 	struct de_cdata *dc;
-	struct de_ring *rp;
+	struct de_ring *rp, *rp2;
 	struct mbuf *m;
-	int nxmit;
+	int nxmit, buffer, freeb, freeb2;
 
 	/*
 	 * the following test is necessary, since
@@ -433,25 +413,74 @@ destart(struct ifnet *ifp)
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == 0)
 			break;
-		rp = &dc->dc_xrent[sc->sc_xfree];
+		freeb = sc->sc_xfree;
+		rp = &dc->dc_xrent[freeb];
 		if (rp->r_flags & XFLG_OWN)
 			panic("deuna xmit in progress");
-		m_copydata(m, 0, m->m_pkthdr.len, &dc->dc_xbuf[sc->sc_xfree][0]);
-		rp->r_slen = m->m_pkthdr.len;
+
+		/*
+		 * One or two mbufs: DMA out of those mbufs.
+		 * Three or more: copy to the preallocated buffer space.
+		 * XXX - should use bus_dmamap_load_mbuf().
+		 */
 		rp->r_tdrerr = 0;
-		rp->r_flags = XFLG_STP|XFLG_ENP|XFLG_OWN;
+		if (m->m_next == NULL) {
+			bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[freeb],
+			    mtod(m, void *), m->m_len, 0, 0);
+			buffer = sc->sc_xmtmap[freeb]->dm_segs[0].ds_addr;
+			rp->r_slen = m->m_pkthdr.len;
+			rp->r_segbl = LOWORD(buffer);
+			rp->r_segbh = HIWORD(buffer);
+			rp->r_flags = XFLG_STP|XFLG_ENP|XFLG_OWN;
+		} else if (m->m_next->m_next == NULL) {
+			if (nxmit+1 == NXMT) {
+				IF_PREPEND(&ifp->if_snd, m);
+				goto out;
+			}
+			freeb2 = (freeb+1 == NXMT ? 0 : freeb+1);
+			rp2 = &dc->dc_xrent[freeb2];
+			bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[freeb],
+			    mtod(m, void *), m->m_len, 0, 0);
+			buffer = sc->sc_xmtmap[freeb]->dm_segs[0].ds_addr;
+			rp->r_slen = m->m_len;
+			rp->r_segbl = LOWORD(buffer);
+			rp->r_segbh = HIWORD(buffer);
+			bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[freeb2],
+			    mtod(m->m_next, void *), m->m_next->m_len, 0, 0);
+			buffer = sc->sc_xmtmap[freeb2]->dm_segs[0].ds_addr;
+			rp2->r_slen = m->m_next->m_len;
+			rp2->r_segbl = LOWORD(buffer);
+			rp2->r_segbh = HIWORD(buffer);
+			rp2->r_flags = XFLG_ENP|XFLG_OWN;
+			rp->r_flags = XFLG_STP|XFLG_OWN;
+			nxmit++;
+			sc->sc_xfree = freeb2;
+
+		} else {
+			m_copydata(m, 0, m->m_pkthdr.len,
+			    &sc->sc_xbuf[freeb][0]);
+
+			bus_dmamap_load(sc->sc_dmat, sc->sc_xmtmap[freeb],
+			    &sc->sc_xbuf[freeb][0], m->m_pkthdr.len, 0, 0);
+			buffer = sc->sc_xmtmap[freeb]->dm_segs[0].ds_addr;
+			rp->r_segbl = LOWORD(buffer);
+			rp->r_segbh = HIWORD(buffer);
+			rp->r_slen = m->m_pkthdr.len;
+			rp->r_flags = XFLG_STP|XFLG_ENP|XFLG_OWN;
+		}
+
+		sc->sc_txmbuf[sc->sc_xfree] = m;
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		m_freem(m);
 		sc->sc_xfree++;
 		if (sc->sc_xfree == NXMT)
 			sc->sc_xfree = 0;
 	}
-	if (sc->sc_nxmit != nxmit) {
+out:	if (sc->sc_nxmit != nxmit) {
 		sc->sc_nxmit = nxmit;
 		if (ifp->if_flags & IFF_RUNNING)
 			DE_WLOW(PCSR0_INTE|CMD_PDMD);
@@ -492,6 +521,11 @@ deintr(void *arg)
 		rp = &dc->dc_xrent[sc->sc_xindex];
 		if (rp->r_flags & XFLG_OWN)
 			break;
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_xmtmap[sc->sc_xindex]);
+		if (sc->sc_txmbuf[sc->sc_xindex]) {
+			m_freem(sc->sc_txmbuf[sc->sc_xindex]);
+			sc->sc_txmbuf[sc->sc_xindex] = NULL;
+		}
 		sc->sc_if.if_opackets++;
 		/* check for unusual conditions */
 		if (rp->r_flags & (XFLG_ERRS|XFLG_MTCH|XFLG_ONE|XFLG_MORE)) {
