@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.120 2003/10/26 02:00:37 lukem Exp $
+#	$NetBSD: build.sh,v 1.121 2003/10/26 02:17:46 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -493,16 +493,13 @@ parseoptions()
 		-N)
 			eval ${optargcmd}
 			case "${OPTARG}" in
-			0|1)
-				MAKEFLAGS="${MAKEFLAGS} -s"
-				;;
-			2)
+			0|1|2)
+				setmakeenv MAKEVERBOSE "${OPTARG}"
 				;;
 			*)
 				usage "'${OPTARG}' is not a valid value for -N"
 				;;
 			esac
-			setmakeenv MAKEVERBOSE "${OPTARG}"
 			;;
 
 		-n)
@@ -834,7 +831,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.120 2003/10/26 02:00:37 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.121 2003/10/26 02:17:46 lukem Exp $
 #
 
 EOF

@@ -578,14 +578,8 @@ BUILDING
                      sbmips-el     sbmips     mipsel
 
      -N noiselevel
-               Set the ``noisyness'' level of the build Supported values of
-               noiselevel are:
-
-               0    Quiet build.
-
-               1    Operations are described, command lines are suppressed.
-
-               2    Noisy build.  This is the default.
+               Set the ``noisyness'' level of the build, by setting
+               MAKEVERBOSE to noiselevel.
 
      -n        Show the commands that would be executed by build.sh, but do
                not make any changes.  This is similar in concept to ``make
