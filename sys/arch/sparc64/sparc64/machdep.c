@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.162 2004/01/18 19:41:06 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.163 2004/01/19 08:42:20 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2004/01/18 19:41:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2004/01/19 08:42:20 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -489,9 +489,9 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 		break;
 	}
 
-	uc.uc_flags = _UC_SIGMASK
-	    | (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
-	    ? _UC_SETSTACK : _UC_CLRSTACK;
+	uc.uc_flags = _UC_SIGMASK |
+	    ((p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+		? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = NULL;
 	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
