@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.8 2002/12/10 01:09:10 thorpej Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.9 2003/03/04 01:10:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.8 2002/12/10 01:09:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.9 2003/03/04 01:10:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -86,7 +86,7 @@ iopaau_desc_ctor(void *arg, void *object, int flags)
 	 * the descriptor in the software portion of the descriptor
 	 * for quick reference later.
 	 */
-	d->d_pa = vtophys(d) + SYNC_DESC_4_OFFSET;
+	d->d_pa = vtophys((vaddr_t)d) + SYNC_DESC_4_OFFSET;
 	KASSERT((d->d_pa & 31) == 0);
 	return (0);
 }
