@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.20 2003/01/06 13:17:01 wiz Exp $	*/
+/*	$NetBSD: resolv.h,v 1.21 2003/07/09 01:59:34 kristerw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -211,19 +211,19 @@ struct __res_state_ext {
 typedef enum { res_goahead, res_nextns, res_modified, res_done, res_error }
 	res_sendhookact;
 
-typedef res_sendhookact (*res_send_qhook)__P((struct sockaddr_in * const *ns,
-					      const u_char **query,
-					      int *querylen,
-					      u_char *ans,
-					      int anssiz,
-					      int *resplen));
+typedef res_sendhookact (*res_send_qhook)__P((struct sockaddr_in * const *,
+					      const u_char **,
+					      int *,
+					      u_char *,
+					      int,
+					      int *));
 
-typedef res_sendhookact (*res_send_rhook)__P((const struct sockaddr_in *ns,
-					      const u_char *query,
-					      int querylen,
-					      u_char *ans,
-					      int anssiz,
-					      int *resplen));
+typedef res_sendhookact (*res_send_rhook)__P((const struct sockaddr_in *,
+					      const u_char *,
+					      int,
+					      u_char *,
+					      int,
+					      int *));
 
 struct res_sym {
 	int		number;		/* Identifying number, like T_MX */
