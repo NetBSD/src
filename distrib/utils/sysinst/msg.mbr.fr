@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.fr,v 1.4 2003/06/14 12:58:45 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.fr,v 1.5 2003/06/16 20:12:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -189,7 +189,7 @@ message dont_change
 message mbrpart_start_special
 {
   Valeurs spéciales qui peuvent être entrées pour la valeur Début:
- -N: commence à la fin de la parition N
+ -N: commence à la fin de la partition N
   0: commence au début du disque
 }
 
