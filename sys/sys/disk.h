@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.26 2004/10/01 05:16:04 thorpej Exp $	*/
+/*	$NetBSD: disk.h,v 1.27 2004/10/15 07:19:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -315,7 +315,6 @@ extern	int disk_count;			/* number of disks in global disklist */
 
 struct proc;
 
-void	disk_init __P((void));
 void	disk_attach __P((struct disk *));
 void	disk_detach __P((struct disk *));
 void	disk_busy __P((struct disk *));
