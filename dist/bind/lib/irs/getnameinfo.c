@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.3 2002/06/20 11:43:04 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.4 2002/06/28 06:40:52 itojun Exp $	*/
 
 /*
  * Issues to be discussed:
@@ -53,6 +53,10 @@
 #include <stddef.h>
 
 #include <port_after.h>
+
+#ifdef USE_IFNAMELINKID
+#include <net/if.h>
+#endif
 
 /*
  * Note that a_off will be dynamically adjusted so that to be consistent
