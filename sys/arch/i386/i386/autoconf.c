@@ -22,6 +22,7 @@ static	int getstr __P((char *, int));
 static	int findblkmajor __P((struct dkdevice *));
 static	struct dkdevice *getdisk __P((char *, int, int, dev_t *));
 static	struct dkdevice *parsedisk __P((char *, int, int, dev_t *));
+void	findbootdev __P((void));
 
 /*
  * The following several variables are related to
@@ -29,7 +30,6 @@ static	struct dkdevice *parsedisk __P((char *, int, int, dev_t *));
  * the machine.
  */
 int	cold;		/* if 1, still working on cold start */
-int	dkn;		/* number of iostat dk numbers assigned so far */
 
 void
 configure()
@@ -64,7 +64,31 @@ struct	device *bootdv;
 struct	dkdevice *bootdk;
 
 #define	PARTITIONMASK	0x7
-#define	PARTITIONSHIFT	3
+#define	UNITSHIFT	3
+
+void
+findbootdev()
+{
+	register struct dkdevice *dk;
+	register void (*strat)(struct buf *);
+	register int unit;
+	int major;
+
+	major = B_TYPE(bootdev);
+	if (major < 0 || major >= nblkdev)
+		return;
+	strat = bdevsw[major].d_strategy;
+	unit = B_UNIT(bootdev);
+
+	for (dk = dkhead; dk; dk = dk->dk_next) {
+		if (dk->dk_driver->d_strategy == strat &&
+		    dk->dk_device->dv_unit == unit) {
+			bootdk = dk;
+			bootdv = dk->dk_device;
+			return;
+		}
+	}
+}
 
 static int
 findblkmajor(dk)
@@ -123,7 +147,7 @@ parsedisk(str, len, defpart, devp)
 			majdev = findblkmajor(dk);
 			if (majdev < 0)
 				panic("parsedisk");
-			mindev = (dv->dv_unit << PARTITIONSHIFT) + part;
+			mindev = (dv->dv_unit << UNITSHIFT) + part;
 			*devp = makedev(majdev, mindev);
 			return (dk);
 		}
@@ -153,16 +177,19 @@ setroot()
 	extern int (*mountroot)(), nfs_mountroot();
 #endif
 
-	if (boothowto & RB_ASKNAME) {
+	findbootdev();
+	if (boothowto & RB_ASKNAME || !bootdv) {
 		for (;;) {
 			printf("root device");
 			if (bootdv)
 				printf(" (default %s%c)", bootdv->dv_xname,
-					(minor(bootdev) & PARTITIONMASK) + 'a');
+					B_PARTITION(bootdev) + 'a');
 			printf("? ");
 			len = getstr(buf, sizeof(buf));
 			if (bootdv && len == 0) {
-				nrootdev = bootdev;
+				nrootdev = makedev(B_TYPE(bootdev),
+						   B_UNIT(bootdev) << UNITSHIFT
+						   + B_PARTITION(bootdev));
 				break;
 			}
 #ifdef GENERIC
@@ -179,7 +206,7 @@ setroot()
 #endif
 			dk = getdisk(buf, len, 0, &nrootdev);
 			if (dk) {
-				bootdv = dv;
+				bootdk = dk;
 				bootdv = dk->dk_device;
 				break;
 			}
@@ -189,7 +216,7 @@ setroot()
 			len = getstr(buf, sizeof(buf));
 			if (len == 0) {
 				nswapdev = makedev(major(nrootdev),
-				    (minor(nrootdev) & ~ PARTITIONMASK) | 1);
+				    (minor(nrootdev) & ~PARTITIONMASK) | 1);
 				break;
 			}
 			if (getdisk(buf, len, 1, &nswapdev))
@@ -224,7 +251,7 @@ setroot()
 		if (majdev < 0)
 			return;
 		part = 0;
-		mindev = (bootdv->dv_unit << PARTITIONSHIFT) + part;
+		mindev = (bootdv->dv_unit << UNITSHIFT) + part;
 		break;
 #endif
 
