@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1981, 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1981, 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,13 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1981, 1983 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1981, 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)badsect.c	5.9 (Berkeley) 6/1/90";
+static char sccsid[] = "@(#)badsect.c	8.1 (Berkeley) 6/5/93";
 #endif /* not lint */
 
 /*
@@ -54,10 +54,15 @@ static char sccsid[] = "@(#)badsect.c	5.9 (Berkeley) 6/1/90";
 #include <sys/param.h>
 #include <sys/dir.h>
 #include <sys/stat.h>
-#include <ufs/fs.h>
-#include <ufs/dinode.h>
-#include <stdio.h>
+
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
+
+#include <fcntl.h>
 #include <paths.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 union {
 	struct	fs fs;
@@ -76,7 +81,10 @@ long	dev_bsize = 1;
 
 char buf[MAXBSIZE];
 
+void	rdfs __P((daddr_t, int, char *));
+int	chkuse __P((daddr_t, int));
 
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -85,7 +93,6 @@ main(argc, argv)
 	struct stat stbuf, devstat;
 	register struct direct *dp;
 	DIR *dirp;
-	int fd;
 	char name[BUFSIZ];
 
 	if (argc < 3) {
@@ -137,6 +144,7 @@ main(argc, argv)
 	exit(errs);
 }
 
+int
 chkuse(blkno, cnt)
 	daddr_t blkno;
 	int cnt;
@@ -179,19 +187,21 @@ chkuse(blkno, cnt)
 /*
  * read a block from the file system
  */
+void
 rdfs(bno, size, bf)
-	int bno, size;
+	daddr_t bno;
+	int size;
 	char *bf;
 {
 	int n;
 
-	if (lseek(fsi, bno * dev_bsize, 0) < 0) {
+	if (lseek(fsi, (off_t)bno * dev_bsize, SEEK_SET) < 0) {
 		printf("seek error: %ld\n", bno);
 		perror("rdfs");
 		exit(1);
 	}
 	n = read(fsi, bf, size);
-	if(n != size) {
+	if (n != size) {
 		printf("read error: %ld\n", bno);
 		perror("rdfs");
 		exit(1);
