@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.30 2004/05/26 16:28:05 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.31 2004/07/27 12:46:18 atatat Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.30 2004/05/26 16:28:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.31 2004/07/27 12:46:18 atatat Exp $");
 
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
@@ -437,7 +437,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_INT, "msgbufsize",
 		       SYSCTL_DESCR("Size of the kernel message buffer"),
-		       sysctl_msgbuf, 0, &msgbufp->msg_bufs, 0,
+		       sysctl_msgbuf, 0, NULL, 0,
 		       CTL_KERN, KERN_MSGBUFSIZE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -1245,8 +1245,12 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 	}
 
 	switch (rnode->sysctl_num) {
-	case KERN_MSGBUFSIZE:
-		return (sysctl_lookup(SYSCTLFN_CALL(rnode)));
+	case KERN_MSGBUFSIZE: {
+		struct sysctlnode node = *rnode;
+		int msg_bufs = (int)msgbufp->msg_bufs;
+		node.sysctl_data = &msg_bufs;
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
 	case KERN_MSGBUF:
 		break;
 	default:
