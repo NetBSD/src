@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_subr.h,v 1.11 2004/05/20 06:34:26 atatat Exp $	*/
+/*	$NetBSD: smbfs_subr.h,v 1.12 2004/06/05 07:36:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -132,8 +132,6 @@ struct smbfs_fctx {
  */
 int  smbfs_smb_lock(struct smbnode *np, int op, caddr_t id,
 	off_t start, off_t end,	struct smb_cred *scred);
-int  smbfs_smb_statvfs2(struct smb_share *ssp, struct statvfs *sbp,
-	struct smb_cred *scred);
 int  smbfs_smb_statvfs(struct smb_share *ssp, struct statvfs *sbp,
 	struct smb_cred *scred);
 int  smbfs_smb_setfsize(struct smbnode *np, int newsize, struct smb_cred *scred);
