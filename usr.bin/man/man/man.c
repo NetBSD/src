@@ -39,6 +39,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)man.c	5.24 (Berkeley) 7/21/90";
+static char rcsid[] = "$Header: /cvsroot/src/usr.bin/man/man/Attic/man.c,v 1.2 1993/07/26 23:05:36 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -146,9 +147,10 @@ main(argc, argv)
 	}
 
 	for (; *argv; ++argv) {
+		res = 0;
 		if (p_augment)
-			res = manual(p_augment, *argv);
-		res = manual(p_path, *argv);
+			res |= manual(p_augment, *argv);
+		res |= manual(p_path, *argv);
 		if (res || f_where)
 			continue;
 		(void)fprintf(stderr,
@@ -162,11 +164,28 @@ main(argc, argv)
 	exit(0);
 }
 
+int
+find_manual_page (fname, path, name)
+	char *fname;
+	const char *path;
+	const char *name;
+{
+	(void)sprintf(fname, "%s/%s/%s.0", path, machine, name);
+	if (access(fname, R_OK) == 0)
+		return 1;
+
+	(void)sprintf(fname, "%s/%s.0", path, name);
+	if (access(fname, R_OK) == 0)
+		return 1;
+
+	return 0;		
+}
+
 /*
  * manual --
  *	given a path, a directory list and a file name, find a file
- *	that matches; check ${directory}/${dir}/{file name} and
- *	${directory}/${dir}/${machine}/${file name}.
+ *	that matches; check ${directory}/${dir}/${machine}/${file name}
+ *	and ${directory}/${dir}/{file name}.
  */
 manual(path, name)
 	char *path, *name;
@@ -183,28 +202,29 @@ manual(path, name)
 				continue;
 			*end = '\0';
 		}
-		(void)sprintf(fname, "%s/%s.0", path, name);
-		if (access(fname, R_OK)) {
-			(void)sprintf(fname, "%s/%s/%s.0", path, machine, name);
-			if (access(fname, R_OK))
-				continue;
+
+		if (find_manual_page (fname, path, name)) {
+			if (f_where)
+				(void)printf("man: found in %s.\n", fname);
+			else if (f_cat)
+				cat(fname);
+			else if (f_how)
+				how(fname);
+			else
+				add(fname);
+			res = 1;
+
+			if (!f_all) {
+				if (end) *end = ':';
+				break;
+			}
 		}
 
-		if (f_where)
-			(void)printf("man: found in %s.\n", fname);
-		else if (f_cat)
-			cat(fname);
-		else if (f_how)
-			how(fname);
-		else
-			add(fname);
-		if (!f_all)
-			return(1);
-		res = 1;
 		if (!end)
 			break;
 		*end = ':';
 	}
+
 	return(res);
 }
 
