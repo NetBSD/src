@@ -70,7 +70,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.12 2003/01/17 08:11:56 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.13 2003/01/21 03:23:44 itojun Exp $");
 
 #include "opt_mrouting.h"
 #include "opt_inet.h"
@@ -950,7 +950,7 @@ encap_getarg(m)
 	p = NULL;
 	mtag = m_tag_find(m, PACKET_TAG_ENCAP, NULL);
 	if (mtag != NULL) {
-		p = (void *)(mtag + 1);
+		p = *(void **)(mtag + 1);
 		m_tag_delete(m, mtag);
 	}
 	return p;
