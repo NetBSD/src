@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.757 2005/01/24 02:07:24 joff Exp $
+# $NetBSD: mi,v 1.758 2005/02/19 16:55:04 thorpej Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2009,6 +2009,7 @@
 ./usr/share/man/cat8/quotaoff.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/quotaon.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/racoon.0			man-netutil-catman	crypto,.cat
+./usr/share/man/cat8/racoonctl.0		man-netutil-catman	crypto,.cat
 ./usr/share/man/cat8/raidctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/rarpd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/rbootd.0			man-bootserver-catman	.cat
@@ -4200,6 +4201,7 @@
 ./usr/share/man/man8/quotaoff.8			man-sysutil-man		.man
 ./usr/share/man/man8/quotaon.8			man-sysutil-man		.man
 ./usr/share/man/man8/racoon.8			man-netutil-man		crypto,.man
+./usr/share/man/man8/racoonctl.8		man-netutil-man		crypto,.man
 ./usr/share/man/man8/raidctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/rarpd.8			man-bootserver-man	.man
 ./usr/share/man/man8/rbootd.8			man-bootserver-man	.man
