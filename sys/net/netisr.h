@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.23 2000/07/03 02:16:07 cgd Exp $ */
+/* $NetBSD: netisr.h,v 1.24 2001/01/09 05:03:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -60,6 +60,8 @@
 #include "opt_ns.h"
 #include "opt_natm.h" 
 #include "arp.h"
+#include "sl.h"
+#include "strip.h"
 #include "ppp.h"
 #endif /* !defined(_LKM) */
 
@@ -129,6 +131,8 @@
 #define	NETISR_ISDN	26		/* same as AF_E164 */
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
+#define	NETISR_SLIP	29		/* for SLIP processing */
+#define	NETISR_STRIP	30		/* for STRIP processing */
 #define	NETISR_PPP	31		/* for PPP processing */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
