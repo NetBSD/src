@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.61 2005/02/27 00:27:43 perry Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.62 2005/03/19 21:59:56 christos Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.61 2005/02/27 00:27:43 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.62 2005/03/19 21:59:56 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,9 @@ static const struct pcmcia_product wi_pcmcia_products[] = {
 
 	{ PCMCIA_VENDOR_LINKSYS2, PCMCIA_PRODUCT_LINKSYS2_WCF11,
 	  PCMCIA_CIS_LINKSYS2_WCF11 },
+
+	{ PCMCIA_VENDOR_MICROSOFT, PCMCIA_PRODUCT_MICROSOFT_MN_520,
+	  PCMCIA_CIS_MICROSOFT_MN_520 },
 
 	{ PCMCIA_VENDOR_PLANEX, PCMCIA_PRODUCT_PLANEX_GWNS11H,
 	  PCMCIA_CIS_PLANEX_GWNS11H },

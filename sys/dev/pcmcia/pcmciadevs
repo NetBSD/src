@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.208 2005/01/21 20:26:09 imp Exp $
+$NetBSD: pcmciadevs,v 1.209 2005/03/19 21:59:56 christos Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -93,6 +93,7 @@ vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274  The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
 vendor ASUSTEK			0x02aa	Asustek Computer
+vendor MICROSOFT		0x02d2	Microsoft Corporation
 vendor BREEZECOM		0x0a02	BreezeCOM
 vendor NEWMEDIA2		0x10cd	NewMedia
 vendor ACTIONTEC		0x1668	ACTIONTEC
@@ -288,6 +289,9 @@ product MEGAHERTZ2 XJACK	0x0103 Megahertz X-JACK Ethernet
 
 /* Melco Products */
 product MELCO LPC3_TX		0xc1ab Melco LPC3-TX
+
+/* Microsoft Products */
+product	MICROSOFT MN_520	0x0001 Microsoft MN-520 WLAN Card
 
 /* Motorola Products */
 product MOTOROLA POWER144	0x0105 Motorola Power 14.4 Modem
