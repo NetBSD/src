@@ -1,4 +1,4 @@
-.\"	$NetBSD: fnmatch.3,v 1.13 1998/02/05 18:46:17 perry Exp $
+.\"	$NetBSD: fnmatch.3,v 1.13.10.1 2000/07/03 22:29:48 thorpej Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -98,6 +98,8 @@ Additionally, if
 .Dv FNM_PATHNAME
 is set,
 a period is ``leading'' if it immediately follows a slash.
+.It Dv FNM_CASEFOLD
+The pattern is matched in a case-insensitive fashion.
 .El
 .Sh RETURN VALUES
 The
@@ -117,6 +119,11 @@ The
 .Fn fnmatch
 function conforms to
 .St -p1003.2-92 .
+The
+.Dv FNM_CASEFOLD
+flag is a
+.Nx
+extension.
 .Sh HISTORY
 The
 .Fn fnmatch
