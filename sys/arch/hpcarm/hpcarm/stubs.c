@@ -1,4 +1,4 @@
-/*	$NetBSD: stubs.c,v 1.14 2003/03/25 10:41:39 chris Exp $	*/
+/*	$NetBSD: stubs.c,v 1.15 2003/04/02 03:55:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -167,19 +167,19 @@ dumpsys()
 	for (block = 0; block < bootconfig.dramblocks && error == 0; ++block) {
 		addr = bootconfig.dram[block].address;
 		for (;addr < (bootconfig.dram[block].address
-		    + (bootconfig.dram[block].pages * NBPG)); addr += NBPG) {
+		    + (bootconfig.dram[block].pages * PAGE_SIZE)); addr += PAGE_SIZE) {
 		    	if ((len % (1024*1024)) == 0)
 		    		printf("%d ", len / (1024*1024));
 			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ);
 			pmap_update(pmap_kernel());
 
 			error = (*bdev->d_dump)(dumpdev,
-			    blkno, (caddr_t) dumpspace, NBPG);
-			pmap_kremove(dumpspace, NBPG);
+			    blkno, (caddr_t) dumpspace, PAGE_SIZE);
+			pmap_kremove(dumpspace, PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			if (error) break;
-			blkno += btodb(NBPG);
-			len += NBPG;
+			blkno += btodb(PAGE_SIZE);
+			len += PAGE_SIZE;
 		}
 	}
 

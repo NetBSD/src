@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.20 2002/09/27 15:36:05 provos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.21 2003/04/02 03:58:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ hpcmips_init_bus_space(struct bus_space_tag_hpcmips *t,
 		    (unsigned int)t->base, (unsigned int)va, t->size));
 		t->base = va; /* kseg2 addr */
 				
-		for (; pa < endpa; pa += NBPG, va += NBPG) {
+		for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
 			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
 		}
 		pmap_update(pmap_kernel());
@@ -241,7 +241,7 @@ __hpcmips_cacheable(struct bus_space_tag_hpcmips *t, bus_addr_t bpa,
 		
 		mips_dcache_wbinv_range(va, endva - va);
 
-		for (; va < endva; va += NBPG) {
+		for (; va < endva; va += PAGE_SIZE) {
 			pte = kvtopte(va);
 			opte = pte->pt_entry;
 			if (cacheable) {

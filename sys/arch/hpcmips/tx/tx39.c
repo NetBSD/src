@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39.c,v 1.31 2002/01/31 17:56:35 uch Exp $ */
+/*	$NetBSD: tx39.c,v 1.32 2003/04/02 03:58:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -44,12 +44,13 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
+#include <uvm/uvm_extern.h>
+
 #include <mips/cache.h>
 
 #include <machine/locore.h>   /* cpu_id */
 #include <machine/bootinfo.h> /* bootinfo */
 #include <machine/sysconf.h>  /* platform */
-#include <machine/vmparam.h>  /* mem_cluster */
 
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
@@ -206,7 +207,7 @@ tx_find_dram(paddr_t start, paddr_t end)
 	if (MAGIC0 != magic0 || MAGIC1 != magic1)
 		return;
 
-	for (page += NBPG; page < endaddr; page += NBPG) {
+	for (page += PAGE_SIZE; page < endaddr; page += PAGE_SIZE) {
 		if (badaddr(page, 4))
 			return;
 		if (MAGIC0 == magic0 &&
@@ -216,7 +217,7 @@ tx_find_dram(paddr_t start, paddr_t end)
 	}
 
 	/* check for 32MByte memory */
-	page -= NBPG;
+	page -= PAGE_SIZE;
 	MAGIC0 = magic0;
 	MAGIC1 = magic1;
 	wbflush();

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.55 2002/10/05 17:12:09 chs Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.56 2003/04/02 03:55:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -337,7 +337,7 @@ initarm(argc, argv, bi)
 
 	printf("kernsize=0x%x\n", kerneldatasize);
 	kerneldatasize += symbolsize;
-	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
+	kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) + PAGE_SIZE * 8;
 
 	/* parse kernel args */
 	boot_file[0] = '\0';
@@ -390,7 +390,7 @@ initarm(argc, argv, bi)
 	physical_freestart = physical_start
 	    + (KERNEL_TEXT_BASE - KERNEL_BASE) + kerneldatasize;
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address
-	    + bootconfig.dram[bootconfig.dramblocks - 1].pages * NBPG;
+	    + bootconfig.dram[bootconfig.dramblocks - 1].pages * PAGE_SIZE;
 	physical_freeend = physical_end;
 /*	free_pages = bootconfig.drampages;*/
     
@@ -435,15 +435,15 @@ initarm(argc, argv, bi)
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)			\
 	(var).pv_pa = (var).pv_va = freemempos;	\
-	freemempos += (np) * NBPG;
+	freemempos += (np) * PAGE_SIZE;
 #define	alloc_pages(var, np)			\
 	(var) = freemempos;			\
-	freemempos += (np) * NBPG;
+	freemempos += (np) * PAGE_SIZE;
 
 
-	valloc_pages(kernel_l1pt, L1_TABLE_SIZE / NBPG);
+	valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
-		alloc_pages(kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE / NBPG);
+		alloc_pages(kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE / PAGE_SIZE);
 		kernel_pt_table[loop].pv_va = kernel_pt_table[loop].pv_pa;
 	}
 
@@ -455,7 +455,7 @@ initarm(argc, argv, bi)
 	valloc_pages(systempage, 1);
 
 	/* Allocate a page for the page table to map kernel page tables*/
-	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / NBPG);
+	valloc_pages(kernel_ptpt, L2_TABLE_SIZE / PAGE_SIZE);
 
 	/* Allocate stacks for all modes */
 	valloc_pages(irqstack, IRQ_STACK_SIZE);
@@ -470,7 +470,7 @@ initarm(argc, argv, bi)
 	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa, kernelstack.pv_va); 
 #endif
 
-	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / NBPG);
+	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
 
 	/*
 	 * XXX Actually, we only need virtual space and don't need
@@ -488,7 +488,7 @@ initarm(argc, argv, bi)
 	}
 	{
 		vaddr_t dummy;
-		alloc_pages(dummy, CPU_SA110_CACHE_CLEAN_SIZE / NBPG - 1);
+		alloc_pages(dummy, CPU_SA110_CACHE_CLEAN_SIZE / PAGE_SIZE - 1);
 	}
 	sa1_cache_clean_addr = sa1_cc_base;
 	sa1_cache_clean_size = CPU_SA110_CACHE_CLEAN_SIZE / 2;
@@ -561,13 +561,13 @@ initarm(argc, argv, bi)
 
 	/* Map the stack pages */
 	pmap_map_chunk(l1pagetable, irqstack.pv_va, irqstack.pv_pa,
-	    IRQ_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    IRQ_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, abtstack.pv_va, abtstack.pv_pa,
-	    ABT_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    ABT_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, undstack.pv_va, undstack.pv_pa,
-	    UND_STACK_SIZE * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UND_STACK_SIZE * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
-	    UPAGES * NBPG, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
@@ -637,9 +637,12 @@ initarm(argc, argv, bi)
 	 */
 	printf("init subsystems: stacks ");
 
-	set_stackptr(PSR_IRQ32_MODE, irqstack.pv_va + IRQ_STACK_SIZE * NBPG);
-	set_stackptr(PSR_ABT32_MODE, abtstack.pv_va + ABT_STACK_SIZE * NBPG);
-	set_stackptr(PSR_UND32_MODE, undstack.pv_va + UND_STACK_SIZE * NBPG);
+	set_stackptr(PSR_IRQ32_MODE,
+	    irqstack.pv_va + IRQ_STACK_SIZE * PAGE_SIZE);
+	set_stackptr(PSR_ABT32_MODE,
+	    abtstack.pv_va + ABT_STACK_SIZE * PAGE_SIZE);
+	set_stackptr(PSR_UND32_MODE,
+	    undstack.pv_va + UND_STACK_SIZE * PAGE_SIZE);
 #ifdef PMAP_DEBUG
 	if (pmap_debug_level >= 0)
 		printf("kstack V%08lx P%08lx\n", kernelstack.pv_va,
@@ -669,7 +672,7 @@ initarm(argc, argv, bi)
 	setttb(kernel_l1pt.pv_pa);
 
 #ifdef BOOT_DUMP
-	dumppages((char *)0xc0000000, 16 * NBPG);
+	dumppages((char *)0xc0000000, 16 * PAGE_SIZE);
 	dumppages((char *)0xb0100000, 64); /* XXX */
 #endif
 	/* Enable MMU, I-cache, D-cache, write buffer. */
@@ -688,7 +691,7 @@ initarm(argc, argv, bi)
 	uvm_setpagesize();	/* initialize PAGE_SIZE-dependent variables */
 	for (loop = 0; loop < bootconfig.dramblocks; loop++) {
 		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
-		paddr_t end = start + (bootconfig.dram[loop].pages * NBPG);
+		paddr_t end = start + (bootconfig.dram[loop].pages * PAGE_SIZE);
 
 		if (start < physical_freestart)
 			start = physical_freestart;
@@ -795,7 +798,7 @@ rpc_sa110_cc_setup(void)
 	pt_entry_t *pte;
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
-	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
+	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += PAGE_SIZE) {
 		pte = vtopte(sa1_cc_base + loop);
 		*pte = L2_S_PROTO | kaddr |
 		    L2_S_PROT(PTE_KERNEL, VM_PROT_READ) | pte_l2_s_cache_mode;
