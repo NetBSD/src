@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.42 2001/12/14 15:06:13 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2003/05/17 21:18:46 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.42 2001/12/14 15:06:13 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2003/05/17 21:18:46 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ main(int argc, char *argv[])
 	gethostname(hostname, sizeof(hostname));
 	hostname[sizeof(hostname) - 1] = '\0';
 	if (hostname[0] == '\0')
-		strcpy(hostname, "Amnesiac");
+		strlcpy(hostname, "Amnesiac", sizeof(hostname));
 	uname(&kerninfo);
 
 	progname = getprogname();
@@ -247,7 +247,7 @@ main(int argc, char *argv[])
 
 	    if (uugetty)  {
 		chown(ttyn, ttyowner, 0);
-		strcpy(lockfile, _PATH_LOCK);
+		strlcpy(lockfile, _PATH_LOCK, sizeof(lockfile));
 		strlcat(lockfile, argv[2], sizeof(lockfile));
 		/* wait for lockfiles to go away before we try to open */
 		if ( pidlock(lockfile, 0, 0, 0) != 0 )  {
