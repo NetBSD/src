@@ -27,7 +27,7 @@
  *	i4b daemon - dial handling routines
  *	-----------------------------------
  *
- *	$Id: dial.c,v 1.1.1.1 2001/01/06 13:00:13 martin Exp $ 
+ *	$Id: dial.c,v 1.2 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -42,7 +42,7 @@
  *	dial strategy
  *---------------------------------------------------------------------------*/
 void
-select_first_dialno(cfg_entry_t *cep)
+select_first_dialno(struct cfg_entry *cep)
 {
 	int i, j;
 
@@ -105,7 +105,7 @@ select_first_dialno(cfg_entry_t *cep)
  *	select next remote number to dial (last was unsuccesfull)
  *---------------------------------------------------------------------------*/
 void
-select_next_dialno(cfg_entry_t *cep)
+select_next_dialno(struct cfg_entry *cep)
 {
 	if(cep->remote_numbers_count < 1)
 	{
@@ -143,7 +143,7 @@ select_next_dialno(cfg_entry_t *cep)
  *	dial succeded, store this number as the last successful
  *---------------------------------------------------------------------------*/
 void
-select_this_dialno(cfg_entry_t *cep)
+select_this_dialno(struct cfg_entry *cep)
 {
 	cep->remote_numbers[cep->last_remote_number].flag = RNF_SUCC;
 	

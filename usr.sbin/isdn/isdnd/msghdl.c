@@ -27,7 +27,7 @@
  *	i4b daemon - message from kernel handling routines
  *	--------------------------------------------------
  *
- *	$Id: msghdl.c,v 1.3 2002/03/17 20:57:24 martin Exp $ 
+ *	$Id: msghdl.c,v 1.4 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
 void
 msg_connect_ind(msg_connect_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 	char *src_tela = "ERROR-src_tela";
 	char *dst_tela = "ERROR-dst_tela";
 
@@ -127,7 +127,7 @@ msg_connect_ind(msg_connect_ind_t *mp)
 		case REACT_ACCEPT:
 			log(LL_CHD, "%05d %s accepting: incoming call from %s to %s",
 				mp->header.cdid, cep->name, SRC, DST);
-			decr_free_channels(mp->controller);
+			decr_free_channels(find_ctrl_state(mp->controller));
 			next_state(cep, EV_MCI);
 			break;
 
@@ -146,7 +146,7 @@ msg_connect_ind(msg_connect_ind_t *mp)
 			break;
 
 		case REACT_ANSWER:
-			decr_free_channels(mp->controller);
+			decr_free_channels(find_ctrl_state(mp->controller));
 			if(cep->alert)
 			{
 				if(mp->display)
@@ -245,9 +245,8 @@ msg_connect_ind(msg_connect_ind_t *mp)
 void
 msg_connect_active_ind(msg_connect_active_ind_t *mp)
 {
-	cfg_entry_t *cep;
-	char *device;
-	
+	struct cfg_entry *cep;
+
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
 		log(LL_WRN, "msg_connect_active_ind: cdid not found!");
@@ -268,11 +267,9 @@ msg_connect_active_ind(msg_connect_active_ind_t *mp)
 	cep->outbytes = INVALID;
 	cep->hangup = 0;
 
-	device = bdrivername(cep->usrdevicename);
-
 	/* set the B-channel to active */
 
-	if((set_channel_busy(cep->isdncontrollerused, cep->isdnchannelused)) == ERROR)
+	if((set_channel_busy(find_ctrl_state(cep->isdncontrollerused), cep->isdnchannelused)) == ERROR)
 		log(LL_ERR, "msg_connect_active_ind: set_channel_busy failed!");
 
 	if(cep->direction == DIR_OUT)
@@ -280,7 +277,7 @@ msg_connect_active_ind(msg_connect_active_ind_t *mp)
 		log(LL_CHD, "%05d %s outgoing call active (ctl %d, ch %d, %s%d)",
 			cep->cdid, cep->name,
 			cep->isdncontrollerused, cep->isdnchannelused,
-			bdrivername(cep->usrdevicename), cep->usrdeviceunit);
+			cep->usrdevicename, cep->usrdeviceunit);
 
 		if(cep->budget_calltype)
 		{
@@ -310,9 +307,9 @@ msg_connect_active_ind(msg_connect_active_ind_t *mp)
 		log(LL_CHD, "%05d %s incoming call active (ctl %d, ch %d, %s%d)",
 			cep->cdid, cep->name,
 			cep->isdncontrollerused, cep->isdnchannelused,
-			bdrivername(cep->usrdevicename), cep->usrdeviceunit);
+			cep->usrdevicename, cep->usrdeviceunit);
 	}
-	
+
 #ifdef USE_CURSES
 	if(do_fullscreen)
 		display_connect(cep);
@@ -336,7 +333,7 @@ msg_connect_active_ind(msg_connect_active_ind_t *mp)
 void
 msg_proceeding_ind(msg_proceeding_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 	
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -349,7 +346,7 @@ msg_proceeding_ind(msg_proceeding_ind_t *mp)
                                                                                 
 	/* set the B-channels active */
 
-	if((set_channel_busy(cep->isdncontrollerused, cep->isdnchannelused)) == ERROR)
+	if((set_channel_busy(find_ctrl_state(cep->isdncontrollerused), cep->isdnchannelused)) == ERROR)
 		log(LL_ERR, "msg_proceeding_ind: set_channel_busy failed!");
 	
 	log(LL_CHD, "%05d %s outgoing call proceeding (ctl %d, ch %d)",
@@ -363,7 +360,7 @@ msg_proceeding_ind(msg_proceeding_ind_t *mp)
 void
 msg_alert_ind(msg_alert_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 	
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -381,9 +378,9 @@ msg_alert_ind(msg_alert_ind_t *mp)
 void
 msg_l12stat_ind(msg_l12stat_ind_t *ml)
 {
-	if((ml->controller < 0) || (ml->controller >= ncontroller))
-	{
-		log(LL_ERR, "msg_l12stat_ind: invalid controller number [%d]!", ml->controller);
+	struct isdn_ctrl_state * ctrl = find_ctrl_state(ml->controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "msg_l12stat_ind: invalid controller number: %d !", ml->controller);
 		return;
 	}
 
@@ -402,14 +399,14 @@ msg_l12stat_ind(msg_l12stat_ind_t *ml)
 	if(ml->layer == LAYER_ONE)
 	{
 		if(ml->state == LAYER_IDLE)
-			isdn_ctrl_tab[ml->controller].l2stat = ml->state;
-		isdn_ctrl_tab[ml->controller].l1stat = ml->state;
+			ctrl->l2stat = ml->state;
+		ctrl->l1stat = ml->state;
 	}
 	else if(ml->layer == LAYER_TWO)
 	{
 		if(ml->state == LAYER_ACTIVE)
-			isdn_ctrl_tab[ml->controller].l1stat = ml->state;
-		isdn_ctrl_tab[ml->controller].l2stat = ml->state;
+			ctrl->l1stat = ml->state;
+		ctrl->l2stat = ml->state;
 	}
 	else
 	{
@@ -423,8 +420,9 @@ msg_l12stat_ind(msg_l12stat_ind_t *ml)
 void
 msg_teiasg_ind(msg_teiasg_ind_t *mt)
 {
-	if((mt->controller < 0) || (mt->controller >= ncontroller))
-	{
+	struct isdn_ctrl_state *ctrl = find_ctrl_state(mt->controller);
+
+	if (ctrl == NULL) {
 		log(LL_ERR, "msg_teiasg_ind: invalid controller number [%d]!", mt->controller);
 		return;
 	}
@@ -441,7 +439,7 @@ msg_teiasg_ind(msg_teiasg_ind_t *mt)
 	DBGL(DL_CNST, (log(LL_DBG, "msg_teiasg_ind: unit %d, tei = %d",
 		mt->controller, mt->tei)));
 
-	isdn_ctrl_tab[mt->controller].tei = mt->tei;
+	ctrl->tei = mt->tei;
 }
 
 /*---------------------------------------------------------------------------*
@@ -450,39 +448,36 @@ msg_teiasg_ind(msg_teiasg_ind_t *mt)
 void
 msg_pdeact_ind(msg_pdeact_ind_t *md)
 {
-	int i;
-	int ctrl = md->controller;
-	cfg_entry_t *cep;
+	int bri = md->controller;
+	struct cfg_entry *cep;
+	struct isdn_ctrl_state * ctrl = find_ctrl_state(bri);
 
 #ifdef USE_CURSES
 	if(do_fullscreen)
 	{
-		display_l12stat(ctrl, LAYER_ONE, LAYER_IDLE);
-		display_l12stat(ctrl, LAYER_TWO, LAYER_IDLE);
-		display_tei(ctrl, -1);
+		display_l12stat(bri, LAYER_ONE, LAYER_IDLE);
+		display_l12stat(bri, LAYER_TWO, LAYER_IDLE);
+		display_tei(bri, -1);
 	}
 #endif
 #ifdef I4B_EXTERNAL_MONITOR
 	if(do_monitor && accepted)
 	{
-		monitor_evnt_l12stat(ctrl, LAYER_ONE, LAYER_IDLE);
-		monitor_evnt_l12stat(ctrl, LAYER_TWO, LAYER_IDLE);		
-		monitor_evnt_tei(ctrl, -1);
+		monitor_evnt_l12stat(bri, LAYER_ONE, LAYER_IDLE);
+		monitor_evnt_l12stat(bri, LAYER_TWO, LAYER_IDLE);		
+		monitor_evnt_tei(bri, -1);
 	}
 #endif
 
-	DBGL(DL_CNST, (log(LL_DBG, "msg_pdeact_ind: unit %d, persistent deactivation", ctrl)));
+	DBGL(DL_CNST, (log(LL_DBG, "msg_pdeact_ind: BRI %d, persistent deactivation", bri)));
 
-	isdn_ctrl_tab[ctrl].l1stat = LAYER_IDLE;
-	isdn_ctrl_tab[ctrl].l2stat = LAYER_IDLE;
-	isdn_ctrl_tab[ctrl].tei = -1;		
+	ctrl->l1stat = LAYER_IDLE;
+	ctrl->l2stat = LAYER_IDLE;
+	ctrl->tei = -1;		
 	
-	for(i=0; i < nentries; i++)
-	{
-		if((cfg_entry_tab[i].cdid != CDID_UNUSED)	&&
-		   (cfg_entry_tab[i].isdncontrollerused == ctrl))
-		{
-			cep = &cfg_entry_tab[i];
+	for (cep = get_first_cfg_entry(); cep; cep = NEXT_CFE(cep)) {
+		if (cep->cdid != CDID_UNUSED &&
+		    cep->isdncontrollerused == bri) {
 			
 			if(cep->cdid == CDID_RESERVED)
 			{
@@ -587,10 +582,10 @@ msg_pdeact_ind(msg_pdeact_ind_t *md)
 		
 			/* set the B-channel inactive */
 		
-			if((set_channel_idle(cep->isdncontrollerused, cep->isdnchannelused)) == ERROR)
+			if((set_channel_idle(ctrl, cep->isdnchannelused)) == ERROR)
 				log(LL_ERR, "msg_pdeact_ind: set_channel_idle failed!");
 		
-			incr_free_channels(cep->isdncontrollerused);
+			incr_free_channels(ctrl);
 			
 			cep->connect_time = 0;
 
@@ -605,7 +600,7 @@ msg_pdeact_ind(msg_pdeact_ind_t *md)
 void
 msg_negcomplete_ind(msg_negcomplete_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -623,8 +618,7 @@ msg_negcomplete_ind(msg_negcomplete_ind_t *mp)
 void
 msg_ifstatechg_ind(msg_ifstatechg_ind_t *mp)
 {
-	cfg_entry_t *cep;
-	char *device;
+	struct cfg_entry *cep;
 
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -632,8 +626,7 @@ msg_ifstatechg_ind(msg_ifstatechg_ind_t *mp)
 		return;
 	}
 
-	device = bdrivername(cep->usrdevicename);
-	log(LL_DBG, "%s%d: switched to state %d", device, cep->usrdeviceunit, mp->state);
+	log(LL_DBG, "%s%d: switched to state %d", cep->usrdevicename, cep->usrdeviceunit, mp->state);
 }
 
 /*---------------------------------------------------------------------------*
@@ -642,7 +635,8 @@ msg_ifstatechg_ind(msg_ifstatechg_ind_t *mp)
 void
 msg_disconnect_ind(msg_disconnect_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
+	struct isdn_ctrl_state *ctrl;
 
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -657,9 +651,10 @@ msg_disconnect_ind(msg_disconnect_ind_t *mp)
 			mp->header.cdid)));
 		cep->saved_call.cdid = CDID_UNUSED;
 
-		set_channel_idle(cep->saved_call.controller, cep->saved_call.channel);
+		ctrl = find_ctrl_state(cep->saved_call.controller);
+		set_channel_idle(ctrl, cep->saved_call.channel);
 
-		incr_free_channels(cep->saved_call.controller);
+		incr_free_channels(ctrl);
 		return;
 	}
 
@@ -759,9 +754,10 @@ msg_disconnect_ind(msg_disconnect_ind_t *mp)
 
 	/* set the B-channel inactive */
 
-	set_channel_idle(cep->isdncontrollerused, cep->isdnchannelused);
+	ctrl = find_ctrl_state(cep->isdncontrollerused);
+	set_channel_idle(ctrl, cep->isdnchannelused);
 
-	incr_free_channels(cep->isdncontrollerused);
+	incr_free_channels(ctrl);
 	
 	cep->connect_time = 0;			
 
@@ -774,15 +770,15 @@ msg_disconnect_ind(msg_disconnect_ind_t *mp)
 void
 msg_dialout(msg_dialout_ind_t *mp)
 {
-	cfg_entry_t *cep;
-	
-	DBGL(DL_DRVR, (log(LL_DBG, "msg_dialout: dial req from %s, unit %d", bdrivername(mp->driver), mp->driver_unit)));
+	struct cfg_entry *cep;
 
 	if((cep = find_by_device_for_dialout(mp->driver, mp->driver_unit)) == NULL)
 	{
 		DBGL(DL_DRVR, (log(LL_DBG, "msg_dialout: config entry reserved or no match")));
 		return;
 	}
+
+	DBGL(DL_DRVR, (log(LL_DBG, "msg_dialout: dial req from %s%d", cep->usrdevicename, mp->driver_unit)));
 
 	if(cep->inout == DIR_INONLY)
 	{
@@ -826,15 +822,15 @@ msg_dialout(msg_dialout_ind_t *mp)
 void
 msg_dialoutnumber(msg_dialoutnumber_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 	
-	DBGL(DL_DRVR, (log(LL_DBG, "msg_dialoutnumber: dial req from %s, unit %d", bdrivername(mp->driver), mp->driver_unit)));
-
 	if((cep = find_by_device_for_dialoutnumber(mp->driver, mp->driver_unit, mp->cmdlen, mp->cmd)) == NULL)
 	{
 		DBGL(DL_DRVR, (log(LL_DBG, "msg_dialoutnumber: config entry reserved or no match")));
 		return;
 	}
+
+	DBGL(DL_DRVR, (log(LL_DBG, "msg_dialoutnumber: dial req from %s%d", cep->usrdevicename, mp->driver_unit)));
 
 	if(cep->inout == DIR_INONLY)
 	{
@@ -878,7 +874,7 @@ msg_dialoutnumber(msg_dialoutnumber_ind_t *mp)
 void
 msg_drvrdisc_req(msg_drvrdisc_req_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 	
 	DBGL(DL_DRVR, (log(LL_DBG, "msg_drvrdisc_req for call %d", mp->header.cdid)));
 
@@ -896,7 +892,7 @@ msg_drvrdisc_req(msg_drvrdisc_req_t *mp)
 void
 msg_accounting(msg_accounting_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -936,7 +932,7 @@ msg_charging_ind(msg_charging_ind_t *mp)
 		"AOCE",
 		"estimated" };
 		
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -985,7 +981,7 @@ msg_charging_ind(msg_charging_ind_t *mp)
 void
 msg_idle_timeout_ind(msg_idle_timeout_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 	
 	if((cep = get_cep_by_cdid(mp->header.cdid)) == NULL)
 	{
@@ -1034,19 +1030,15 @@ ipapp(char *buf, unsigned long a )
 void
 msg_packet_ind(msg_packet_ind_t *mp)
 {
-	cfg_entry_t *cep;
+	struct cfg_entry *cep;
 	struct ip *ip;
 	u_char *proto_hdr;
 	char tmp[80];
 	char *cptr = tmp;
 	char *name = "???";
-	int i;
 
-	for(i=0; i < nentries; i++)
-	{
-		cep = &cfg_entry_tab[i];    /* ptr to config entry */
-
-		if(cep->usrdevicename == mp->driver &&
+	for (cep = get_first_cfg_entry(); cep; cep = NEXT_CFE(cep)) {
+		if(cep->usrdevice == mp->driver &&
 			cep->usrdeviceunit == mp->driver_unit)
 		{
 			name = cep->name;
@@ -1106,6 +1098,22 @@ msg_packet_ind(msg_packet_ind_t *mp)
 		ntohs( ip->ip_len ), tmp );
 }
 
+/*
+ * A new controller arrived or is gone away
+ */
+void
+msg_ctrl_ev_ind(msg_ctrl_ev_ind_t *mp)
+{
+	log(LL_DMN, "controller %d %s", mp->controller, mp->event?"attached":"detached");
+	if (mp->event) {
+		/* new, add to controller list */
+		init_new_controller(mp->controller);
+	} else {
+		/* controller gone, remove */
+		remove_ctrl_state(mp->controller);
+	}
+}
+
 /*---------------------------------------------------------------------------*
  *	get a cdid from kernel
  *---------------------------------------------------------------------------*/
@@ -1129,7 +1137,7 @@ get_cdid(void)
  *      send message "connect request" to kernel
  *---------------------------------------------------------------------------*/
 int
-sendm_connect_req(cfg_entry_t *cep)
+sendm_connect_req(struct cfg_entry *cep)
 {
         msg_connect_req_t mcr;
         int ret;
@@ -1146,7 +1154,7 @@ sendm_connect_req(cfg_entry_t *cep)
 
 	mcr.bprot = cep->b1protocol;
 
-	mcr.driver = cep->usrdevicename;
+	mcr.driver = cep->usrdevice;
 	mcr.driver_unit = cep->usrdeviceunit;
 
 	/* setup the shorthold data */
@@ -1174,7 +1182,7 @@ sendm_connect_req(cfg_entry_t *cep)
 		error_exit(1, "sendm_connect_req: ioctl I4B_CONNECT_REQ failed: %s", strerror(errno));
 	}
 
-	decr_free_channels(cep->isdncontrollerused);
+	decr_free_channels(find_ctrl_state(cep->isdncontrollerused));
 	
 	log(LL_CHD, "%05d %s dialing out from %s to %s",
 		cep->cdid,
@@ -1189,7 +1197,7 @@ sendm_connect_req(cfg_entry_t *cep)
  *	send message "connect response" to kernel
  *---------------------------------------------------------------------------*/
 int
-sendm_connect_resp(cfg_entry_t *cep, int cdid, int response, cause_t cause)
+sendm_connect_resp(struct cfg_entry *cep, int cdid, int response, cause_t cause)
 {
 	msg_connect_resp_t mcr;
 	int ret;
@@ -1211,7 +1219,7 @@ sendm_connect_resp(cfg_entry_t *cep, int cdid, int response, cause_t cause)
 
 		mcr.bprot = cep->b1protocol;
 
-		mcr.driver = cep->usrdevicename;
+		mcr.driver = cep->usrdevice;
 		mcr.driver_unit = cep->usrdeviceunit;
 
 		mcr.max_idle_time = cep->idle_time_in;
@@ -1231,7 +1239,7 @@ sendm_connect_resp(cfg_entry_t *cep, int cdid, int response, cause_t cause)
  *	send message "disconnect request" to kernel
  *---------------------------------------------------------------------------*/
 int
-sendm_disconnect_req(cfg_entry_t *cep, cause_t cause)
+sendm_disconnect_req(struct cfg_entry *cep, cause_t cause)
 {
 	msg_discon_req_t mcr;
 	int ret = 0;
@@ -1257,7 +1265,7 @@ sendm_disconnect_req(cfg_entry_t *cep, cause_t cause)
  *	send message "alert request" to kernel
  *---------------------------------------------------------------------------*/
 int
-sendm_alert_req(cfg_entry_t *cep)
+sendm_alert_req(struct cfg_entry *cep)
 {
 	msg_alert_req_t mar;
 	int ret;

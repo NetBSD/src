@@ -27,7 +27,7 @@
  *	i4b daemon - curses fullscreen output
  *	-------------------------------------
  *
- *	$Id: curses.c,v 1.1.1.1 2001/01/06 13:00:27 martin Exp $ 
+ *	$Id: curses.c,v 1.2 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -113,7 +113,7 @@ init_screen(void)
 	
 	move(1, 0);
 	/*      01234567890123456789012345678901234567890123456789012345678901234567890123456789 */
-	addstr("c tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
+	addstr("# tei b remote                 iface  dir outbytes   obps inbytes    ibps  units");
 	
 	if(hostname)
 		sprintf(buffer, "----- isdn userland interface state ------------- %s:%d -", hostname, portno);

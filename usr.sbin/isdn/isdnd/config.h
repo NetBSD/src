@@ -27,7 +27,7 @@
  *	i4b daemon - compile time configuration header file
  *	---------------------------------------------------
  *
- *      $Id: config.h,v 1.1.1.1 2001/01/06 13:00:12 martin Exp $ 
+ *      $Id: config.h,v 1.2 2002/03/27 13:46:34 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -41,8 +41,6 @@
 /* general values */
 
 #define UMASK		022		/* file creation perm mask	*/
-#define CFG_ENTRY_MAX	32		/* max no of config entries	*/
-#define ISDN_CTRL_MAX	4		/* max no of controllers	*/
 #define MAX_RE          8               /* max regular expression entries */
 
 /* monitor max values */

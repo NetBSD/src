@@ -30,7 +30,7 @@
  *	i4b daemon - runtime configuration parser
  *	-----------------------------------------
  *
- *	$Id: rc_parse.y,v 1.1.1.1 2001/01/06 13:00:26 martin Exp $ 
+ *	$Id: rc_parse.y,v 1.2 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -58,19 +58,18 @@
 #endif
 
 extern void 	cfg_setval(int keyword);
-extern void	cfg_set_controller_default(void);
+extern void 	init_currrent_cfg_state(void);
 extern void	reset_scanner(FILE *infile);
 extern void 	yyerror(const char *msg);
 extern int	yylex(void);
+extern void	flush_config(void);
 
 extern int	lineno;
 extern char	*yytext;
-extern int	nentries;
+
+extern struct isdn_ctrl_state * cur_ctrl;
 
 int		saw_system = 0;
-int		entrycount = -1;
-int		controllercount = -1;
-
 %}
 
 %token		ACCTALL
@@ -182,6 +181,9 @@ int		controllercount = -1;
 %%
 
 config:		sections
+			{
+				flush_config();
+			}
 		;
 
 sections:	possible_nullentries
@@ -206,9 +208,6 @@ entrysects:	entrysect
 optcontrollersects:
 		controllersects
 		|
-			{
-				cfg_set_controller_default();
-			}
 		;
 
 controllersects:  controllersect
@@ -364,9 +363,8 @@ sysstrkeyword:	  MAILER		{ $$ = MAILER; }
 /* ============= */
 
 entrysect:	ENTRY
-			{ 
-				entrycount++;
-				nentries++;
+			{
+				init_currrent_cfg_state();
 			}
 		entries
 		;
@@ -479,13 +477,18 @@ boolkeyword:	  BUDGETCALLBACKSFILEROTATE { $$ = BUDGETCALLBACKSFILEROTATE; }
 /* ================== */
 
 controllersect:	CONTROLLER
-		{ 
-			controllercount++;
+		{
+			cur_ctrl = NULL;
 		}
 		controllers
 		;
 
-controllers:	controller
+controllers:	controller {
+			if (cur_ctrl)
+				cur_ctrl = NEXT_CTRL(cur_ctrl);
+			else
+				cur_ctrl = get_first_ctrl_state();
+		}
 		| controllers controller
 		;
 
@@ -495,7 +498,7 @@ controller:	strcontroller
 		;
 
 strcontroller:	cstrkeyword '=' STRING '\n'
-			{ 
+			{
 			cfg_setval($1);
 			}
 		| cstrkeyword '=' NUMBERSTR '\n'

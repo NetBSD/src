@@ -33,7 +33,7 @@
  *	i4b daemon - network monitor server module
  *	------------------------------------------
  *
- *	$Id: monitor.c,v 1.3 2002/03/24 20:37:48 martin Exp $
+ *	$Id: monitor.c,v 1.4 2002/03/27 13:46:35 martin Exp $
  *
  * $FreeBSD$
  *
@@ -539,6 +539,9 @@ monitor_handle_connect(int sockfd, int is_local)
 {
 	struct monitor_connection *con;
 	struct monitor_rights *rp;
+	struct isdn_ctrl_state *ctrl;
+	struct cfg_entry *cfe;
+	int n;
 
 #ifndef I4B_NOTCPIP_MONITOR
 	struct sockaddr_in ia;
@@ -547,7 +550,7 @@ monitor_handle_connect(int sockfd, int is_local)
 
 	struct sockaddr_un ua;
 	u_int8_t idata[I4B_MON_IDATA_SIZE];
-	int fd = -1, s, i, r_mask, t_events;
+	int fd = -1, s, r_mask, t_events;
 	char source[FILENAME_MAX];
 
 	/* accept the connection */
@@ -630,8 +633,10 @@ monitor_handle_connect(int sockfd, int is_local)
 	I4B_PREP_CMD(idata, I4B_MON_IDATA_CODE);
 	I4B_PUT_2B(idata, I4B_MON_IDATA_VERSMAJOR, MPROT_VERSION);
 	I4B_PUT_2B(idata, I4B_MON_IDATA_VERSMINOR, MPROT_REL);
-	I4B_PUT_2B(idata, I4B_MON_IDATA_NUMCTRL, ncontroller);
-	I4B_PUT_2B(idata, I4B_MON_IDATA_NUMENTR, nentries);	
+	n = count_ctrl_states();
+	I4B_PUT_2B(idata, I4B_MON_IDATA_NUMCTRL, n);
+	n = count_cfg_entries();
+	I4B_PUT_2B(idata, I4B_MON_IDATA_NUMENTR, n);
 	I4B_PUT_4B(idata, I4B_MON_IDATA_CLACCESS, r_mask);
 
 	if((sock_write(fd, idata, sizeof idata)) == -1)
@@ -639,13 +644,16 @@ monitor_handle_connect(int sockfd, int is_local)
 		log(LL_MER, "monitor_handle_connect: sock_write 1 error - %s", strerror(errno));
 	}
 		
-	for (i = 0; i < ncontroller; i++)
-	{
+	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
 		u_int8_t ictrl[I4B_MON_ICTRL_SIZE];
+		char ctrl_desc[100];
+
+		snprintf(ctrl_desc, sizeof(ctrl_desc), "%s: %s", 
+		    ctrl->device_name, ctrl->controller);
 
 		I4B_PREP_CMD(ictrl, I4B_MON_ICTRL_CODE);
-		I4B_PUT_STR(ictrl, I4B_MON_ICTRL_NAME, isdn_ctrl_tab[i].controller);
-		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_BUSID, 0);
+		I4B_PUT_STR(ictrl, I4B_MON_ICTRL_NAME, ctrl_desc);
+		I4B_PUT_2B(ictrl, I4B_MON_ICTRL_BUSID, ctrl->bri);
 		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_FLAGS, 0);
 		I4B_PUT_4B(ictrl, I4B_MON_ICTRL_NCHAN, 2);
 
@@ -658,14 +666,11 @@ monitor_handle_connect(int sockfd, int is_local)
 
 	/* send device names from entries */
 	
-	for(i=0; i < nentries; i++)	/* walk thru all entries */
-	{
+	for (cfe = get_first_cfg_entry(); cfe; cfe = NEXT_CFE(cfe)) {
 		u_int8_t ictrl[I4B_MON_IDEV_SIZE];
-		cfg_entry_t *p;
 		char nbuf[64];		
-		p = &cfg_entry_tab[i];		/* get ptr to enry */
 
-		snprintf(nbuf, sizeof(nbuf), "%s%d ", bdrivername(p->usrdevicename), p->usrdeviceunit);
+		snprintf(nbuf, sizeof(nbuf), "%s%d ", cfe->usrdevicename, cfe->usrdeviceunit);
 
 		I4B_PREP_CMD(ictrl, I4B_MON_IDEV_CODE);
 /*XXX*/		I4B_PUT_2B(ictrl, I4B_MON_IDEV_STATE, 1);
@@ -682,24 +687,21 @@ monitor_handle_connect(int sockfd, int is_local)
 
 	/* current state of controller(s) */
 	
-	for(i=0; i < ncontroller; i++)
-	{
-		monitor_evnt_tei(i, isdn_ctrl_tab[i].tei);
-		monitor_evnt_l12stat(i, LAYER_ONE, isdn_ctrl_tab[i].l1stat);
-		monitor_evnt_l12stat(i, LAYER_TWO, isdn_ctrl_tab[i].l2stat);
+	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
+		monitor_evnt_tei(ctrl->bri, ctrl->tei);
+		monitor_evnt_l12stat(ctrl->bri, LAYER_ONE, ctrl->l1stat);
+		monitor_evnt_l12stat(ctrl->bri, LAYER_TWO, ctrl->l2stat);
 	}
 
 	/* current state of entries */
 	
-	for(i=0; i < nentries; i++)
-        {
-		cfg_entry_t *cep = &cfg_entry_tab[i];
+	for (cfe = get_first_cfg_entry(); cfe; cfe = NEXT_CFE(cfe)) {
 
-		if(cep->state == ST_CONNECTED)
+		if(cfe->state == ST_CONNECTED)
 		{
-			monitor_evnt_connect(cep);
-			monitor_evnt_acct(cep);
-			monitor_evnt_charge(cep, cep->charge, 1);
+			monitor_evnt_connect(cfe);
+			monitor_evnt_acct(cfe);
+			monitor_evnt_charge(cfe, cfe->charge, 1);
 		}
         }
 
@@ -941,20 +943,20 @@ anybody(int mask)
 static void
 hangup_channel(int controller, int channel, const char *source)
 {
-	cfg_entry_t * cep = NULL;
+	struct cfg_entry * cep = NULL;
+	struct isdn_ctrl_state * ctrl = NULL;
 
-	if(controller < ncontroller)
-	{	
-		if(isdn_ctrl_tab[controller].state != CTRL_UP)
+	ctrl = find_ctrl_state(controller);
+	if (ctrl != NULL) {	
+		if (ctrl->state != CTRL_UP)
 			return;
-		if(isdn_ctrl_tab[controller].stateb1 != CHAN_IDLE)
-		{
+		if (ctrl->stateb1 != CHAN_IDLE) {
 			cep = get_cep_by_cc(controller, 0);
 			if (cep != NULL && cep->isdnchannelused == channel &&
 				cep->isdncontrollerused == controller)
 				goto found;
 		}
-		if(isdn_ctrl_tab[controller].stateb2 != CHAN_IDLE)
+		if (ctrl-> stateb2 != CHAN_IDLE)
 		{
 			cep = get_cep_by_cc(controller, 1);
 			if (cep != NULL && cep->isdnchannelused == channel &&
@@ -1022,7 +1024,7 @@ monitor_evnt_log(int prio, const char * what, const char * msg)
  * by the given config entry.
  *---------------------------------------------------------------------------*/
 void
-monitor_evnt_charge(cfg_entry_t *cep, int units, int estimate)
+monitor_evnt_charge(struct cfg_entry *cep, int units, int estimate)
 {
 	int mask;
 	time_t now;
@@ -1049,7 +1051,7 @@ monitor_evnt_charge(cfg_entry_t *cep, int units, int estimate)
  * Post a connection event
  *---------------------------------------------------------------------------*/
 void
-monitor_evnt_connect(cfg_entry_t *cep)
+monitor_evnt_connect(struct cfg_entry *cep)
 {
 	u_int8_t evnt[I4B_MON_CONNECT_SIZE];
 	char devname[I4B_MAX_MON_STRING];
@@ -1063,7 +1065,7 @@ monitor_evnt_connect(cfg_entry_t *cep)
 
 	time(&now);
 
-	snprintf(devname, sizeof devname, "%s%d", bdrivername(cep->usrdevicename), cep->usrdeviceunit);
+	snprintf(devname, sizeof devname, "%s%d", cep->usrdevicename, cep->usrdeviceunit);
 
 	I4B_PREP_EVNT(evnt, I4B_MON_CONNECT_CODE);
 	I4B_PUT_4B(evnt, I4B_MON_CONNECT_TSTAMP, (long)now);
@@ -1090,7 +1092,7 @@ monitor_evnt_connect(cfg_entry_t *cep)
  * Post a disconnect event
  *---------------------------------------------------------------------------*/
 void
-monitor_evnt_disconnect(cfg_entry_t *cep)
+monitor_evnt_disconnect(struct cfg_entry *cep)
 {
 	u_int8_t evnt[I4B_MON_DISCONNECT_SIZE];
 	int mask;
@@ -1115,7 +1117,7 @@ monitor_evnt_disconnect(cfg_entry_t *cep)
  * Post an up/down event
  *---------------------------------------------------------------------------*/
 void
-monitor_evnt_updown(cfg_entry_t *cep, int up)
+monitor_evnt_updown(struct cfg_entry *cep, int up)
 {
 	u_int8_t evnt[I4B_MON_UPDOWN_SIZE];
 	int mask;
@@ -1186,7 +1188,7 @@ monitor_evnt_tei(int controller, int tei)
  * Post an accounting event
  *---------------------------------------------------------------------------*/
 void
-monitor_evnt_acct(cfg_entry_t *cep)
+monitor_evnt_acct(struct cfg_entry *cep)
 {
 	u_int8_t evnt[I4B_MON_ACCT_SIZE];
 	time_t now;

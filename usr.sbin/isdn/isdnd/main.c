@@ -27,7 +27,7 @@
  *	i4b daemon - main program entry
  *	-------------------------------
  *
- *	$Id: main.c,v 1.2 2001/01/08 07:18:54 martin Exp $ 
+ *	$Id: main.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -708,6 +708,10 @@ isdnrdhdl(void)
 				msg_packet_ind((msg_packet_ind_t *)msg_rd_buf);
 				break;
 
+			case MSG_CONTR_EV_IND:
+				msg_ctrl_ev_ind((msg_ctrl_ev_ind_t *)msg_rd_buf);
+				break;
+
 			default:
 				log(LL_WRN, "ERROR, unknown message received from /dev/isdn (0x%x)", msg_rd_buf[0]);
 				break;
@@ -725,8 +729,6 @@ isdnrdhdl(void)
 void
 rereadconfig(int dummy)
 {
-	extern int entrycount;
-
 	log(LL_DMN, "re-reading configuration file");
 	
 	close_allactive();
@@ -735,9 +737,8 @@ rereadconfig(int dummy)
 	monitor_clear_rights();
 #endif
 
-	entrycount = -1;
-	nentries = 0;
-	
+	remove_all_cfg_entries();
+
 	/* read runtime configuration file and configure ourselves */
 	
 	configure(configfile, 1);

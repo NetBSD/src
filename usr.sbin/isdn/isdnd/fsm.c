@@ -27,7 +27,7 @@
  *	FSM for isdnd
  *	-------------
  *
- *	$Id: fsm.c,v 1.2 2001/09/16 16:34:44 wiz Exp $ 
+ *	$Id: fsm.c,v 1.3 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -90,7 +90,7 @@ static char *event_text[N_EVENTS] = {
  *	illegal state default action
  *---------------------------------------------------------------------------*/	
 static void
-F_ill(cfg_entry_t *cep)
+F_ill(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_ill: Illegal State reached !!!")));
 }
@@ -99,7 +99,7 @@ F_ill(cfg_entry_t *cep)
  *	No change, No action
  *---------------------------------------------------------------------------*/	
 static void
-F_NcNa(cfg_entry_t *cep)
+F_NcNa(struct cfg_entry *cep)
 {
 }
 
@@ -107,7 +107,7 @@ F_NcNa(cfg_entry_t *cep)
  *	incoming CONNECT, accepting call
  *---------------------------------------------------------------------------*/	
 static void
-F_MCI(cfg_entry_t *cep)
+F_MCI(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_MCI: tx SETUP_RESP_ACCEPT")));
 	sendm_connect_resp(cep, cep->cdid, SETUP_RESP_ACCEPT, 0);
@@ -118,7 +118,7 @@ F_MCI(cfg_entry_t *cep)
  *	incoming connect active, call is now active
  *---------------------------------------------------------------------------*/	
 static void
-F_MCAI(cfg_entry_t *cep)
+F_MCAI(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_MCAI: Connection active!")));
 
@@ -135,7 +135,7 @@ F_MCAI(cfg_entry_t *cep)
  *	timeout
  *---------------------------------------------------------------------------*/	
 static void
-F_TIMO(cfg_entry_t *cep)
+F_TIMO(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_TIMO: Timout occurred!")));
 	sendm_disconnect_req(cep, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
@@ -146,7 +146,7 @@ F_TIMO(cfg_entry_t *cep)
  *	incoming disconnect indication
  *---------------------------------------------------------------------------*/	
 static void
-F_IDIS(cfg_entry_t *cep)
+F_IDIS(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_IDIS: disconnect indication")));
 	cep->cdid = CDID_UNUSED;
@@ -156,7 +156,7 @@ F_IDIS(cfg_entry_t *cep)
  *	local disconnect request
  *---------------------------------------------------------------------------*/	
 static void
-F_DRQ(cfg_entry_t *cep)
+F_DRQ(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_DRQ: local disconnect request")));
 	sendm_disconnect_req(cep, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
@@ -166,7 +166,7 @@ F_DRQ(cfg_entry_t *cep)
  *	disconnect indication after local disconnect req
  *---------------------------------------------------------------------------*/	
 static void
-F_MDI(cfg_entry_t *cep)
+F_MDI(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_MDI: disconnect indication, local disconnected")));
 	cep->cdid = CDID_UNUSED;
@@ -176,7 +176,7 @@ F_MDI(cfg_entry_t *cep)
  *	local requested outgoing dial
  *---------------------------------------------------------------------------*/	
 static void
-F_DIAL(cfg_entry_t *cep)
+F_DIAL(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_DIAL: local dial out request")));
 
@@ -194,7 +194,7 @@ F_DIAL(cfg_entry_t *cep)
  *	outgoing dial successfull
  *---------------------------------------------------------------------------*/	
 static void
-F_DOK(cfg_entry_t *cep)
+F_DOK(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_DOK: dial out ok")));
 	select_this_dialno(cep);
@@ -204,7 +204,7 @@ F_DOK(cfg_entry_t *cep)
  *	outgoing dial fail (ST_SUSE !!!)
  *---------------------------------------------------------------------------*/	
 static void
-F_DFL(cfg_entry_t *cep)
+F_DFL(struct cfg_entry *cep)
 {
 	cep->last_release_time = time(NULL);
 	
@@ -270,7 +270,7 @@ F_DFL(cfg_entry_t *cep)
  *	local requested outgoing dial
  *---------------------------------------------------------------------------*/	
 static void
-F_ACBW(cfg_entry_t *cep)
+F_ACBW(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_ACBW: local callback, wait callback recovery time")));
 
@@ -286,7 +286,7 @@ F_ACBW(cfg_entry_t *cep)
  *	active callback dialout retry (ST_SUSE !!!)
  *---------------------------------------------------------------------------*/	
 static void
-F_ACBR(cfg_entry_t *cep)
+F_ACBR(struct cfg_entry *cep)
 {	
 	cep->dial_count++;
 
@@ -341,7 +341,7 @@ F_ACBR(cfg_entry_t *cep)
  *	local requested to send ALERT message
  *---------------------------------------------------------------------------*/	
 static void
-F_ALRT(cfg_entry_t *cep)
+F_ALRT(struct cfg_entry *cep)
 {
 	DBGL(DL_STATE, (log(LL_DBG, "F_ALRT: local send alert request")));
 
@@ -354,7 +354,7 @@ F_ALRT(cfg_entry_t *cep)
  *	isdn daemon state transition table
  *---------------------------------------------------------------------------*/	
 struct state_tab {
-	void(*func)(cfg_entry_t *cep);		/* function to execute */
+	void(*func)(struct cfg_entry *cep);		/* function to execute */
 	int newstate;				/* next state */
 } state_tab[N_EVENTS][N_STATES] = {
 
@@ -381,7 +381,7 @@ struct state_tab {
  *	event handler
  *---------------------------------------------------------------------------*/	
 void
-next_state(cfg_entry_t *cep, int event)
+next_state(struct cfg_entry *cep, int event)
 {
 	int currstate, newstate;
 
@@ -440,7 +440,7 @@ next_state(cfg_entry_t *cep, int event)
  *	return pointer to current state description
  *---------------------------------------------------------------------------*/	
 char *
-printstate(cfg_entry_t *cep)
+printstate(struct cfg_entry *cep)
 {
 	return((char *) state_text[cep->state]);
 }

@@ -27,7 +27,7 @@
  *	i4b daemon - timer/timing support routines
  *	------------------------------------------
  *
- *	$Id: timer.c,v 1.1.1.1 2001/01/06 13:00:26 martin Exp $ 
+ *	$Id: timer.c,v 1.2 2002/03/27 13:46:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -38,15 +38,15 @@
 #include "isdnd.h"
 
 static int hr_callgate(void);
-static void handle_reserved(cfg_entry_t *cep, time_t now);
-static void handle_active(cfg_entry_t *cep, time_t now);
-static void recover_illegal(cfg_entry_t *cep);
+static void handle_reserved(struct cfg_entry *cep, time_t now);
+static void handle_active(struct cfg_entry *cep, time_t now);
+static void recover_illegal(struct cfg_entry *cep);
 
 /*---------------------------------------------------------------------------*
  *	recover from illegal state
  *---------------------------------------------------------------------------*/
 static void
-recover_illegal(cfg_entry_t *cep)
+recover_illegal(struct cfg_entry *cep)
 {
 	log(LL_ERR, "recover_illegal: ERROR, entry %s attempting disconnect!", cep->name);
 	sendm_disconnect_req(cep, (CAUSET_I4B << 8) | CAUSE_I4B_NORMAL);
@@ -59,7 +59,7 @@ recover_illegal(cfg_entry_t *cep)
  *	start the timer
  *---------------------------------------------------------------------------*/
 void
-start_timer(cfg_entry_t *cep, int seconds)
+start_timer(struct cfg_entry *cep, int seconds)
 {
 	cep->timerval = cep->timerremain = seconds;
 }
@@ -68,7 +68,7 @@ start_timer(cfg_entry_t *cep, int seconds)
  *	stop the timer
  *---------------------------------------------------------------------------*/
 void
-stop_timer(cfg_entry_t *cep)
+stop_timer(struct cfg_entry *cep)
 {
 	cep->timerval = cep->timerremain = 0;	
 }
@@ -127,8 +127,7 @@ hr_callgate(void)
 void
 handle_recovery(void)
 {
-	cfg_entry_t *cep = NULL;
-	int i;
+	struct cfg_entry *cep = NULL;
 	time_t now;
 	
 	if(hr_callgate())	/* last call to handle_recovery < 1 sec ? */
@@ -138,9 +137,7 @@ handle_recovery(void)
 	
 	/* walk thru all entries, look for work to do */
 	
-	for(i=0; i < nentries; i++)
-	{
-		cep = &cfg_entry_tab[i];	/* ptr to config entry */
+	for (cep = get_first_cfg_entry(); cep; cep = NEXT_CFE(cep)) {
 	
 		if(cep->budget_callbackperiod && cep->budget_callbackncalls)
 		{
@@ -185,7 +182,7 @@ handle_recovery(void)
  *	timeout, recovery and retry handling for active entry
  *---------------------------------------------------------------------------*/
 static void
-handle_active(cfg_entry_t *cep, time_t now)
+handle_active(struct cfg_entry *cep, time_t now)
 {
 	switch(cep->state)
 	{
@@ -259,7 +256,7 @@ handle_active(cfg_entry_t *cep, time_t now)
  *	timeout, recovery and retry handling for reserved entry
  *---------------------------------------------------------------------------*/
 static void
-handle_reserved(cfg_entry_t *cep, time_t now)
+handle_reserved(struct cfg_entry *cep, time_t now)
 {
 	time_t waittime;
 	
@@ -418,7 +415,7 @@ handle_reserved(cfg_entry_t *cep, time_t now)
 
 			if(now > (cep->went_down_time + cep->downtime))
 			{
-				DBGL(DL_RCVRY, (log(LL_DBG, "handle_reserved: taking %s%d up", bdrivername(cep->usrdevicename), cep->usrdeviceunit)));
+				DBGL(DL_RCVRY, (log(LL_DBG, "handle_reserved: taking %s%d up", cep->usrdevicename, cep->usrdeviceunit)));
 				if_up(cep);
 				cep->state = ST_IDLE;
 				cep->cdid = CDID_UNUSED;

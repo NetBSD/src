@@ -27,7 +27,7 @@
  *	i4b daemon - controller state support routines
  *	----------------------------------------------
  *
- *	$Id: controller.c,v 1.2 2002/03/24 20:37:47 martin Exp $
+ *	$Id: controller.c,v 1.3 2002/03/27 13:46:34 martin Exp $
  *
  * $FreeBSD$
  *
@@ -40,6 +40,27 @@
 static int
 init_controller_state(int controller, const char *devname, const char *cardname, int tei);
 
+/*
+ * add a single controller
+ */
+void
+init_new_controller(int bri)
+{
+	msg_ctrl_info_req_t mcir;
+
+	memset(&mcir, 0, sizeof mcir);
+	mcir.controller = bri;
+		
+	if((ioctl(isdnfd, I4B_CTRL_INFO_REQ, &mcir)) < 0)
+		return;
+
+	if((init_controller_state(bri, mcir.devname, mcir.cardname, mcir.tei)) == ERROR)
+	{
+		log(LL_ERR, "init_new_controller: init_controller_state for controller %d failed", bri);
+		do_exit(1);
+	}
+}
+
 /*---------------------------------------------------------------------------*
  *	init controller state array
  *---------------------------------------------------------------------------*/
@@ -47,25 +68,18 @@ void
 init_controller(void)
 {
 	int i;
-	int max = 1;
+	int max = 0;
 	msg_ctrl_info_req_t mcir;
 	
-	for(i=0; i < max; i++)
+	remove_all_ctrl_state();
+	for(i=0; i <= max; i++)
 	{
 		mcir.controller = i;
 		
 		if((ioctl(isdnfd, I4B_CTRL_INFO_REQ, &mcir)) < 0)
-		{
-			log(LL_ERR, "init_controller: ioctl I4B_CTRL_INFO_REQ failed: %s", strerror(errno));
-			do_exit(1);
-		}
+			continue;
 
-		if(mcir.maxbri < 0)
-		{
-			log(LL_ERR, "init_controller: no ISDN controller found!");
-			do_exit(1);	/* XXX - fix when we handle attach/detach */
-		}
-		ncontroller = max = mcir.maxbri+1;
+		max = mcir.maxbri;
 
 		/* init controller tab */
 
@@ -84,34 +98,37 @@ init_controller(void)
 static int
 init_controller_state(int controller, const char *devname, const char *cardname, int tei)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "init_controller_state: invalid controller number [%d]!", controller);
+	struct isdn_ctrl_state *ctrl;
+
+	ctrl = malloc(sizeof *ctrl);
+	if (ctrl == NULL) {
+		log(LL_ERR, "init_controller_state: out of memory");
 		return(ERROR);
 	}
 	
-	/* init controller tab */
+	/* init controller state entry */
 		
-	memset(isdn_ctrl_tab[controller].device_name, 0, 
-	    sizeof(isdn_ctrl_tab[controller].device_name));
-	strncpy(isdn_ctrl_tab[controller].device_name,
+	memset(ctrl, 0, sizeof *ctrl);
+	strncpy(ctrl->device_name,
 	    devname, 
-	    sizeof(isdn_ctrl_tab[controller].device_name)-1);
-	memset(isdn_ctrl_tab[controller].controller, 0, 
-	    sizeof(isdn_ctrl_tab[controller].controller));
-	strncpy(isdn_ctrl_tab[controller].controller,
+	    sizeof(ctrl->device_name)-1);
+	strncpy(ctrl->controller,
 	    cardname, 
-	    sizeof(isdn_ctrl_tab[controller].controller)-1);
-	isdn_ctrl_tab[controller].present = 1;
-	isdn_ctrl_tab[controller].state = CTRL_UP;
-	isdn_ctrl_tab[controller].stateb1 = CHAN_IDLE;
-	isdn_ctrl_tab[controller].stateb2 = CHAN_IDLE;
-	isdn_ctrl_tab[controller].freechans = MAX_CHANCTRL;
-	isdn_ctrl_tab[controller].tei = tei;
-	isdn_ctrl_tab[controller].l1stat = LAYER_IDLE;
-	isdn_ctrl_tab[controller].l2stat = LAYER_IDLE;
+	    sizeof(ctrl->controller)-1);
+	ctrl->bri = controller;
+	ctrl->protocol = PROTOCOL_DSS1;
+	ctrl->state = CTRL_UP;
+	ctrl->stateb1 = CHAN_IDLE;
+	ctrl->stateb2 = CHAN_IDLE;
+	ctrl->freechans = MAX_CHANCTRL;
+	ctrl->tei = tei;
+	ctrl->l1stat = LAYER_IDLE;
+	ctrl->l2stat = LAYER_IDLE;
 	DBGL(DL_RCCF, (log(LL_DBG, "init_controller_state: controller %d (%s) is %s",
 	   controller, devname, cardname)));
+
+	/* add to list */
+	add_ctrl_state(ctrl);
 
 	return(GOOD);
 }	
@@ -153,13 +170,12 @@ init_active_controller(void)
 void
 init_controller_protocol(void)
 {
-	int controller;
+	struct isdn_ctrl_state *ctrl;
 	msg_prot_ind_t mpi;
 
-	for(controller = 0; controller < ncontroller; controller++)
-	{
-		mpi.controller = controller;
-		mpi.protocol = isdn_ctrl_tab[controller].protocol;
+	for (ctrl = get_first_ctrl_state(); ctrl; ctrl = NEXT_CTRL(ctrl)) {
+		mpi.controller = ctrl->bri;
+		mpi.protocol = ctrl->protocol;
 		
 		if((ioctl(isdnfd, I4B_PROT_IND, &mpi)) < 0)
 		{
@@ -173,23 +189,21 @@ init_controller_protocol(void)
  *	set controller state to UP/DOWN
  *--------------------------------------------------------------------------*/
 int
-set_controller_state(int controller, int state)
+set_controller_state(struct isdn_ctrl_state *ctrl, int state)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "set_controller_state: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "set_controller_state: invalid controller");
 		return(ERROR);
 	}
 
-	if(state == CTRL_UP)
-	{
-		isdn_ctrl_tab[controller].state = CTRL_UP;
-		DBGL(DL_CNST, (log(LL_DBG, "set_controller_state: controller [%d] set UP!", controller)));
+	if (state == CTRL_UP) {
+		ctrl->state = CTRL_UP;
+		DBGL(DL_CNST, (log(LL_DBG, "set_controller_state: controller [%d] set UP!", ctrl->bri)));
 	}
 	else if (state == CTRL_DOWN)
 	{
-		isdn_ctrl_tab[controller].state = CTRL_DOWN;
-		DBGL(DL_CNST, (log(LL_DBG, "set_controller_state: controller [%d] set DOWN!", controller)));
+		ctrl->state = CTRL_DOWN;
+		DBGL(DL_CNST, (log(LL_DBG, "set_controller_state: controller [%d] set DOWN!", ctrl->bri)));
 	}
 	else
 	{
@@ -203,36 +217,34 @@ set_controller_state(int controller, int state)
  *	get controller state
  *--------------------------------------------------------------------------*/
 int
-get_controller_state(int controller)
+get_controller_state(struct isdn_ctrl_state *ctrl)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "set_controller_state: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "set_controller_state: invalid controller");
 		return(ERROR);
 	}
-	return(isdn_ctrl_tab[controller].state);
+	return (ctrl->state);
 }		
 
 /*--------------------------------------------------------------------------*
  *	decrement number of free channels for controller
  *--------------------------------------------------------------------------*/
 int
-decr_free_channels(int controller)
+decr_free_channels(struct isdn_ctrl_state *ctrl)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "decr_free_channels: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "decr_free_channels: invalid controller!");
 		return(ERROR);
 	}
-	if(isdn_ctrl_tab[controller].freechans > 0)
+	if (ctrl->freechans > 0)
 	{
-		(isdn_ctrl_tab[controller].freechans)--;
-		DBGL(DL_CNST, (log(LL_DBG, "decr_free_channels: ctrl %d, now %d chan free", controller, isdn_ctrl_tab[controller].freechans)));
+		ctrl->freechans--;
+		DBGL(DL_CNST, (log(LL_DBG, "decr_free_channels: ctrl %d, now %d chan free", ctrl->bri, ctrl->freechans)));
 		return(GOOD);
 	}
 	else
 	{
-		log(LL_ERR, "decr_free_channels: controller [%d] already 0 free chans!", controller);
+		log(LL_ERR, "decr_free_channels: controller [%d] already 0 free chans!", ctrl->bri);
 		return(ERROR);
 	}
 }		
@@ -241,22 +253,21 @@ decr_free_channels(int controller)
  *	increment number of free channels for controller
  *--------------------------------------------------------------------------*/
 int
-incr_free_channels(int controller)
+incr_free_channels(struct isdn_ctrl_state *ctrl)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "incr_free_channels: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "incr_free_channels: invalid controller!");
 		return(ERROR);
 	}
-	if(isdn_ctrl_tab[controller].freechans < MAX_CHANCTRL)
+	if (ctrl->freechans < MAX_CHANCTRL)
 	{
-		(isdn_ctrl_tab[controller].freechans)++;
-		DBGL(DL_CNST, (log(LL_DBG, "incr_free_channels: ctrl %d, now %d chan free", controller, isdn_ctrl_tab[controller].freechans)));
+		ctrl->freechans++;
+		DBGL(DL_CNST, (log(LL_DBG, "incr_free_channels: ctrl %d, now %d chan free", ctrl->bri, ctrl->freechans)));
 		return(GOOD);
 	}
 	else
 	{
-		log(LL_ERR, "incr_free_channels: controller [%d] already 2 free chans!", controller);
+		log(LL_ERR, "incr_free_channels: controller [%d] already 2 free chans!", ctrl->bri);
 		return(ERROR);
 	}
 }		
@@ -265,57 +276,54 @@ incr_free_channels(int controller)
  *	get number of free channels for controller
  *--------------------------------------------------------------------------*/
 int
-get_free_channels(int controller)
+get_free_channels(struct isdn_ctrl_state *ctrl)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "get_free_channels: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "get_free_channels: invalid controller!");
 		return(ERROR);
 	}
-	DBGL(DL_CNST, (log(LL_DBG, "get_free_channels: ctrl %d, %d chan free", controller, isdn_ctrl_tab[controller].freechans)));
-	return(isdn_ctrl_tab[controller].freechans);
+	DBGL(DL_CNST, (log(LL_DBG, "get_free_channels: ctrl %d, %d chan free", ctrl->bri, ctrl->freechans)));
+	return (ctrl->freechans);
 }		
 	
 /*--------------------------------------------------------------------------*
  *	set channel state to busy
  *--------------------------------------------------------------------------*/
 int
-set_channel_busy(int controller, int channel)
+set_channel_busy(struct isdn_ctrl_state *ctrl, int channel)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "set_channel_busy: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "set_channel_busy: invalid controller");
 		return(ERROR);
 	}
 		
 	switch(channel)
 	{
 		case CHAN_B1:
-			if(isdn_ctrl_tab[controller].stateb1 == CHAN_RUN)
-			{
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B1 already busy!", controller)));
+			if (ctrl->stateb1 == CHAN_RUN) {
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B1 already busy!", ctrl->bri)));
 			}
 			else
 			{
-				isdn_ctrl_tab[controller].stateb1 = CHAN_RUN;
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B1 set to BUSY!", controller)));
+				ctrl->stateb1 = CHAN_RUN;
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B1 set to BUSY!", ctrl->bri)));
 			}
 			break;
 
 		case CHAN_B2:
-			if(isdn_ctrl_tab[controller].stateb2 == CHAN_RUN)
+			if (ctrl->stateb2 == CHAN_RUN)
 			{
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B2 already busy!", controller)));
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B2 already busy!", ctrl->bri)));
 			}
 			else
 			{
-				isdn_ctrl_tab[controller].stateb2 = CHAN_RUN;
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B2 set to BUSY!", controller)));
+				ctrl->stateb2 = CHAN_RUN;
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_busy: controller [%d] channel B2 set to BUSY!", ctrl->bri)));
 			}
 			break;
 
 		default:
-			log(LL_ERR, "set_channel_busy: controller [%d], invalid channel [%d]!", controller, channel);
+			log(LL_ERR, "set_channel_busy: controller [%d], invalid channel [%d]!", ctrl->bri, channel);
 			return(ERROR);
 			break;
 	}
@@ -326,42 +334,35 @@ set_channel_busy(int controller, int channel)
  *	set channel state to idle
  *--------------------------------------------------------------------------*/
 int
-set_channel_idle(int controller, int channel)
+set_channel_idle(struct isdn_ctrl_state *ctrl, int channel)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "set_channel_idle: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "set_channel_idle: invalid controller");
 		return(ERROR);
 	}
 		
 	switch(channel)
 	{
 		case CHAN_B1:
-			if(isdn_ctrl_tab[controller].stateb1 == CHAN_IDLE)
-			{
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B1 already idle!", controller)));
-			}
-			else
-			{
-				isdn_ctrl_tab[controller].stateb1 = CHAN_IDLE;
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B1 set to IDLE!", controller)));
+			if (ctrl->stateb1 == CHAN_IDLE) {
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B1 already idle!", ctrl->bri)));
+			} else {
+				ctrl->stateb1 = CHAN_IDLE;
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B1 set to IDLE!", ctrl->bri)));
 			}
 			break;
 
 		case CHAN_B2:
-			if(isdn_ctrl_tab[controller].stateb2 == CHAN_IDLE)
-			{
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B2 already idle!", controller)));
-			}
-			else
-			{
-				isdn_ctrl_tab[controller].stateb2 = CHAN_IDLE;
-				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B2 set to IDLE!", controller)));
+			if (ctrl->stateb2 == CHAN_IDLE) {
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B2 already idle!", ctrl->bri)));
+			} else {
+				ctrl->stateb2 = CHAN_IDLE;
+				DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d] channel B2 set to IDLE!", ctrl->bri)));
 			}
 			break;
 
 		default:
-			DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d], invalid channel [%d]!", controller, channel)));
+			DBGL(DL_CNST, (log(LL_DBG, "set_channel_idle: controller [%d], invalid channel [%d]!", ctrl->bri, channel)));
 			return(ERROR);
 			break;
 	}
@@ -372,26 +373,25 @@ set_channel_idle(int controller, int channel)
  *	return channel state
  *--------------------------------------------------------------------------*/
 int
-ret_channel_state(int controller, int channel)
+ret_channel_state(struct isdn_ctrl_state *ctrl, int channel)
 {
-	if((controller < 0) || (controller >= ncontroller))
-	{
-		log(LL_ERR, "ret_channel_state: invalid controller number [%d]!", controller);
+	if (ctrl == NULL) {
+		log(LL_ERR, "ret_channel_state: invalid controller!");
 		return(ERROR);
 	}
 		
 	switch(channel)
 	{
 		case CHAN_B1:
-			return(isdn_ctrl_tab[controller].stateb1);
+			return (ctrl->stateb1);
 			break;
 
 		case CHAN_B2:
-			return(isdn_ctrl_tab[controller].stateb2);
+			return (ctrl->stateb2);
 			break;
 
 		default:
-			log(LL_ERR, "ret_channel_state: controller [%d], invalid channel [%d]!", controller, channel);
+			log(LL_ERR, "ret_channel_state: controller [%d], invalid channel [%d]!", ctrl->bri, channel);
 			return(ERROR);
 			break;
 	}
