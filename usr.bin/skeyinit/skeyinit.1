@@ -1,18 +1,18 @@
-.\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
+.\"	$NetBSD: skeyinit.1,v 1.5 1997/10/19 23:24:42 lukem Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
 .Dd 28 October 1993
 .Dt SKEYINIT 1
 .Os NetBSD 4
 .Sh NAME
-.Nm S/key
+.Nm skeyinit
 .Nd change password or add user to S/Key authentication system.
 .Sh SYNOPSIS
-.Nm skeyinit
+.Nm
 .Op Fl s
 .Op Ar user
 .Sh DESCRIPTION
-.Nm skeyinit
+.Nm
 will initialize the system information to allow a user to use
 their S/Key to login.
 You should use a secure login connection to generate
@@ -24,7 +24,7 @@ allows the user to set the seed and count for complete control
 of the parameters.
 To do this run skeyinit in one window and put in your count and seed;
 then run
-.Nm skey
+.Xr skey 1
 in another window to generate the correct 6 english words
 for that count and seed.
 You can then "cut-and-paste" or type the words into the skeyinit window.
@@ -36,6 +36,8 @@ operated on.
 .It Pa /etc/skeykeys
 data base of information for S/Key system.
 .Sh SEE ALSO
-.Xr skey 1
+.Xr skey 1 ,
+.Xr skeyaudit 1 ,
+.Xr skeyinfo 1 ,
 .Sh AUTHORS
 Phil Karn, Neil M. Haller, John S. Walden, Scott Chasin
