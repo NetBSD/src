@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.20 2004/12/09 03:19:56 briggs Exp $	*/
+/*	$NetBSD: obio.c,v 1.21 2005/01/08 03:24:58 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.20 2004/12/09 03:19:56 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.21 2005/01/08 03:24:58 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ obio_match(parent, cf, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE)
 		switch (PCI_PRODUCT(pa->pa_id)) {
-
 		case PCI_PRODUCT_APPLE_GC:
 		case PCI_PRODUCT_APPLE_OHARE:
 		case PCI_PRODUCT_APPLE_HEATHROW:
@@ -96,28 +95,24 @@ obio_attach(parent, self, aux)
 	struct confargs ca;
 	int node, child, namelen;
 	u_int reg[20];
-	int intr[6];
+	int intr[6], parent_intr = 0, parent_nintr = 0;
 	char name[32];
+	char compat[32];
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
-	/* XXX should not use name */
 	case PCI_PRODUCT_APPLE_GC:
-		node = OF_finddevice("/bandit/gc");
-		break;
-
 	case PCI_PRODUCT_APPLE_OHARE:
-		node = OF_finddevice("/bandit/ohare");
-		break;
-
 	case PCI_PRODUCT_APPLE_HEATHROW:
 	case PCI_PRODUCT_APPLE_PADDINGTON:
 	case PCI_PRODUCT_APPLE_KEYLARGO:
 	case PCI_PRODUCT_APPLE_PANGEA_MACIO:
 	case PCI_PRODUCT_APPLE_INTREPID:
-		node = OF_finddevice("mac-io");
+		node = pcidev_to_ofdev(pa->pa_pc, pa->pa_tag);
 		if (node == -1)
-			node = OF_finddevice("/pci/mac-io");
+			node = OF_finddevice("mac-io");
+			if (node == -1)
+				node = OF_finddevice("/pci/mac-io");
 		break;
 
 	default:
@@ -147,10 +142,19 @@ obio_attach(parent, self, aux)
 		out8(ca.ca_baseaddr + 0x006a + 0x03, 0x05); /* unset reset */ 
 	}
 
-	/* Enable CD and microphone sound input. */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
-		out8(ca.ca_baseaddr + 0x37, 0x03);
+	/* Gatwick and Paddington use same product ID */
+	namelen = OF_getprop(node, "compatible", compat, sizeof(compat));
 
+	if (strcmp(compat, "gatwick") == 0) {
+		parent_nintr = OF_getprop(node, "AAPL,interrupts", intr,
+					sizeof(intr));
+		parent_intr = intr[0];
+	} else {
+  		/* Enable CD and microphone sound input. */
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_PADDINGTON)
+			out8(ca.ca_baseaddr + 0x37, 0x03);
+	}
+  
 	for (child = OF_child(node); child; child = OF_peer(child)) {
 		namelen = OF_getprop(child, "name", name, sizeof(name));
 		if (namelen < 0)
@@ -162,13 +166,18 @@ obio_attach(parent, self, aux)
 		ca.ca_name = name;
 		ca.ca_node = child;
 
-		ca.ca_nreg  = OF_getprop(child, "reg", reg, sizeof(reg));
-		ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,
-				sizeof(intr));
-		if (ca.ca_nintr == -1)
-			ca.ca_nintr = OF_getprop(child, "interrupts", intr,
-					sizeof(intr));
+		ca.ca_nreg = OF_getprop(child, "reg", reg, sizeof(reg));
 
+		if (strcmp(compat, "gatwick") != 0) {
+			ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,
+					sizeof(intr));
+			if (ca.ca_nintr == -1)
+				ca.ca_nintr = OF_getprop(child, "interrupts", intr,
+						sizeof(intr));
+		} else {
+			intr[0] = parent_intr;
+			ca.ca_nintr = parent_nintr;
+		}
 		ca.ca_reg = reg;
 		ca.ca_intr = intr;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.82 2004/12/09 02:54:18 briggs Exp $
+#	$NetBSD: INSTALL,v 1.83 2005/01/08 03:24:58 briggs Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -109,7 +109,7 @@ siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 wdc*	at pci? dev ? function ?	# Kauai ATA
-obio0	at pci? dev ? function ?
+obio*	at pci? dev ? function ?
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 
 bmtphy*	at mii? phy ?			# Broadcom BCM5201/BCM5202 PHYs
