@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.59 2000/03/23 07:03:24 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.60 2000/03/30 02:31:59 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -135,8 +135,6 @@
 #endif
 
 int	ifqmaxlen = IFQ_MAXLEN;
-void	if_slowtimo __P((void *arg));
-
 struct	callout if_slowtimo_ch;
 
 #ifdef INET6
@@ -167,14 +165,6 @@ ifinit()
  * Null routines used while an interface is going away.  These routines
  * just return an error.
  */
-int	if_nulloutput __P((struct ifnet *, struct mbuf *,
-	    struct sockaddr *, struct rtentry *));
-void	if_nullinput __P((struct ifnet *, struct mbuf *));
-void	if_nullstart __P((struct ifnet *));
-int	if_nullioctl __P((struct ifnet *, u_long, caddr_t));
-int	if_nullreset __P((struct ifnet *));
-void	if_nullwatchdog __P((struct ifnet *));
-void	if_nulldrain __P((struct ifnet *));
 
 int
 if_nulloutput(ifp, m, so, rt)
