@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.h,v 1.5 2000/02/17 03:12:26 itohy Exp $	*/
+/*	$NetBSD: tables.h,v 1.6 2000/03/21 02:15:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -165,8 +165,13 @@ typedef struct atdir {
  */
 
 typedef struct dirdata {
+#ifdef DIRS_USE_FILE
 	int nlen;	/* length of the directory name (includes \0) */
 	off_t npos;	/* position in file where this dir name starts */
+#else
+	char *name;	/* file name */
+	struct dirdata *next;
+#endif
 	mode_t mode;	/* file mode to restore */
 	time_t mtime;	/* mtime to set */
 	time_t atime;	/* atime to set */

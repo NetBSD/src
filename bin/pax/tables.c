@@ -1,4 +1,4 @@
-/*	$NetBSD: tables.c,v 1.12 2000/02/17 03:12:26 itohy Exp $	*/
+/*	$NetBSD: tables.c,v 1.13 2000/03/21 02:15:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tables.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: tables.c,v 1.12 2000/02/17 03:12:26 itohy Exp $");
+__RCSID("$NetBSD: tables.c,v 1.13 2000/03/21 02:15:24 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,8 +82,10 @@ static FTM **ftab = NULL;	/* file time table for updating arch */
 static NAMT **ntab = NULL;	/* interactive rename storage table */
 static DEVT **dtab = NULL;	/* device/inode mapping tables */
 static ATDIR **atab = NULL;	/* file tree directory time reset table */
+#ifdef DIRS_USE_FILE
 static int dirfd = -1;		/* storage for setting created dir time/mode */
 static u_long dircnt;		/* entries in dir time/mode storage */
+#endif
 static int ffd = -1;		/* tmp file for file time table name storage */
 
 static DEVT *chk_dev __P((dev_t, int));
@@ -1202,6 +1204,10 @@ get_atdir(dev, ino, mtime, atime)
  * then the file name.
  */
 
+#ifndef DIRS_USE_FILE
+static DIRDATA *dirdata_head;
+#endif
+
 /*
  * dir_start()
  *	set up the directory time and file mode storage for directories CREATED
@@ -1218,6 +1224,7 @@ int
 dir_start()
 #endif
 {
+#ifdef DIRS_USE_FILE
 	const char *tmpdir;
 	char template[MAXPATHLEN];
 
@@ -1237,6 +1244,9 @@ dir_start()
 	tty_warn(1, "Unable to create temporary file for directory times: %s",
 	    template);
 	return(-1);
+#else
+	return (0);
+#endif /* DIRS_USE_FILE */
 }
 
 /*
@@ -1264,6 +1274,7 @@ add_dir(name, nlen, psb, frc_mode)
 	int frc_mode;
 #endif
 {
+#ifdef DIRS_USE_FILE
 	DIRDATA dblk;
 
 	if (dirfd < 0)
@@ -1297,6 +1308,28 @@ add_dir(name, nlen, psb, frc_mode)
 	tty_warn(1,
 	    "Unable to store mode and times for created directory: %s",name);
 	return;
+#else
+	DIRDATA *dblk;
+
+	if ((dblk = malloc(sizeof(*dblk))) == NULL ||
+	    (dblk->name = strdup(name)) == NULL) {
+		tty_warn(1,
+		    "Unable to store mode and times for directory: %s",name);
+		if (dblk != NULL)
+			free(dblk);
+		return;
+	}
+
+	dblk->mode = psb->st_mode & 0xffff;
+	dblk->mtime = psb->st_mtime;
+	dblk->atime = psb->st_atime;
+	dblk->fflags = psb->st_flags;
+	dblk->frc_mode = frc_mode;
+
+	dblk->next = dirdata_head;
+	dirdata_head = dblk;
+	return;
+#endif /* DIRS_USE_FILE */
 }
 
 /*
@@ -1313,6 +1346,7 @@ void
 proc_dir()
 #endif
 {
+#ifdef DIRS_USE_FILE
 	char name[PAXPATHLEN+1];
 	DIRDATA dblk;
 	u_long cnt;
@@ -1356,6 +1390,27 @@ proc_dir()
 		tty_warn(1,
 		    "Unable to set mode and times for created directories");
 	return;
+#else
+	DIRDATA *dblk;
+
+	for (dblk = dirdata_head; dblk != NULL; dblk = dirdata_head) {
+		dirdata_head = dblk->next;
+
+		/*
+		 * frc_mode set, make sure we set the file modes even if
+		 * the user didn't ask for it (see file_subs.c for more info)
+		 */
+		if (pmode || dblk->frc_mode)
+			set_pmode(dblk->name, dblk->mode);
+		if (patime || pmtime)
+			set_ftime(dblk->name, dblk->mtime, dblk->atime, 0);
+		if (pfflags)
+			set_chflags(dblk->name, dblk->fflags);
+
+		free(dblk->name);
+		free(dblk);
+	}
+#endif /* DIRS_USE_FILE */
 }
 
 /*
