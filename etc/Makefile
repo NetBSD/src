@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.266 2004/01/04 13:29:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.267 2004/01/04 23:55:11 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -193,7 +193,7 @@ release-info:
 install-release-info: check_DESTDIR release-info
 	${_MKMSG_INSTALL} etc/release-info
 	${ETC_INSTALL_OBJ_FILE} -o ${BINOWN} -g ${BINGRP} -m 444 \
-	    release-info ${DESTDIR}/etc
+	    release-info ${DESTDIR}/etc/release
 
 # install-etc-files --
 #	Install etc (config) files; not performed by "make build"
