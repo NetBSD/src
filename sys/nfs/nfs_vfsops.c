@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.116 2002/09/21 18:08:27 christos Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.117 2002/10/01 15:00:04 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.116 2002/09/21 18:08:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.117 2002/10/01 15:00:04 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -584,6 +584,7 @@ nfs_mount(mp, path, data, ndp, p)
 		args.maxgrouplist = nmp->nm_numgrps;
 		args.readahead = nmp->nm_readahead;
 		args.leaseterm = nmp->nm_leaseterm;
+		args.deadthresh = nmp->nm_deadthresh;
 		args.hostname = NULL;
 		return copyout(&args, data, sizeof(args));
 	}
