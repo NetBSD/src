@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.27.8.10 1997/06/26 22:37:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.27.8.11 1997/06/26 23:19:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -1857,7 +1857,7 @@ syn_cache_insert(sc, prevp, headp)
 	 * Make sure that we don't overflow the per-bucket
 	 * limit or the total cache size limit.
 	 */
-	s = splsoftnet ();
+	s = splsoftnet();
 	if (scp->sch_length >= tcp_syn_bucket_limit) {
 		tcpstat.tcps_sc_bucketoverflow++;
 		sc2 = scp->sch_first;
@@ -1926,7 +1926,7 @@ syn_cache_insert(sc, prevp, headp)
 		sc->sc_timer = tcp_syn_cache_timeo;
 	}
 	scp->sch_timer_sum = tcp_syn_cache_timeo;
-	splx (s);
+	splx(s);
 }
 
 /*
@@ -1941,12 +1941,11 @@ syn_cache_timer(interval)
 {
 	struct syn_cache_head *scp, **pscp;
 	struct syn_cache *sc, *scn;
-	int n;
-	int s;
+	int n, s;
 
 	pscp = &tcp_syn_cache_first;
 	scp = tcp_syn_cache_first;
-	s = splsoftnet ();
+	s = splsoftnet();
 	while (scp) {
 		/*
 		 * Remove any empty hash buckets
@@ -1982,7 +1981,7 @@ syn_cache_timer(interval)
 			scp = scp->sch_headq;
 		}
 	}
-	splx (s);
+	splx(s);
 }
 
 /*
@@ -1996,7 +1995,7 @@ syn_cache_lookup(ti, prevp, headp)
 {
 	struct syn_cache *sc, **prev;
 	struct syn_cache_head *head;
-	u_long hash;
+	u_int32_t hash;
 	int s;
 
 	hash = SYN_HASH(&ti->ti_src, ti->ti_sport, ti->ti_dport);
@@ -2004,7 +2003,7 @@ syn_cache_lookup(ti, prevp, headp)
 	head = &tcp_syn_cache[hash % tcp_syn_cache_size];
 	*headp = head;
 	prev = &head->sch_first;
-	s = splsoftnet ();
+	s = splsoftnet();
         for (sc = head->sch_first; sc; prev = &sc->sc_next, sc = sc->sc_next) {
                 if (sc->sc_hash != hash)
                         continue;
@@ -2017,7 +2016,7 @@ syn_cache_lookup(ti, prevp, headp)
                         return (sc);
 		}
         }
-	splx (s);
+	splx(s);
 	return (NULL);
 }
 
@@ -2042,9 +2041,9 @@ syn_cache_get(so, m)
 	int s;
 
 	ti = mtod(m, struct tcpiphdr *);
-	s = splsoftnet ();
+	s = splsoftnet();
 	if ((sc = syn_cache_lookup(ti, &sc_prev, &head)) == NULL) {
-		splx (s);
+		splx(s);
 		return (NULL);
 	}
 
@@ -2059,13 +2058,13 @@ syn_cache_get(so, m)
 	    SEQ_LEQ(ti->ti_seq, sc->sc_irs) ||
 	    SEQ_GT(ti->ti_seq, sc->sc_irs + 1 + win)) {
 		(void) syn_cache_respond(sc, m, ti, win, 0);
-		splx (s);
+		splx(s);
 		return ((struct socket *)(-1));
 	}
 
 	/* Remove this cache entry */
 	SYN_CACHE_RM(sc, sc_prev, head);
-	splx (s);
+	splx(s);
 
 	/*
 	 * Ok, create the full blown connection, and set things up
@@ -2151,19 +2150,19 @@ syn_cache_reset(ti)
 {
 	struct syn_cache *sc, **sc_prev;
 	struct syn_cache_head *head;
-	int s = splsoftnet ();
+	int s = splsoftnet();
 
 	if ((sc = syn_cache_lookup(ti, &sc_prev, &head)) == NULL) {
-		splx (s);
+		splx(s);
 		return;
 	}
 	if (SEQ_LT(ti->ti_seq,sc->sc_irs) ||
 	    SEQ_GT(ti->ti_seq, sc->sc_irs+1)) {
-		splx (s);
+		splx(s);
 		return;
 	}
 	SYN_CACHE_RM(sc, sc_prev, head);
-	splx (s);
+	splx(s);
 	tcpstat.tcps_sc_reset++;
 	FREE(sc, M_PCB);
 }
@@ -2183,18 +2182,18 @@ syn_cache_unreach(ip, th)
 	ti2.ti_sport = th->th_dport;
 	ti2.ti_dport = th->th_sport;
 
-	s = splsoftnet ();
+	s = splsoftnet();
 	if ((sc = syn_cache_lookup(&ti2, &sc_prev, &head)) == NULL) {
-		splx (s);
+		splx(s);
 		return;
 	}
 	/* If the sequence number != sc_iss, then it's a bogus ICMP msg */
 	if (ntohl (th->th_seq) != sc->sc_iss) {
-		splx (s);
+		splx(s);
 		return;
 	}
 	SYN_CACHE_RM(sc, sc_prev, head);
-	splx (s);
+	splx(s);
 	tcpstat.tcps_sc_unreach++;
 	FREE(sc, M_PCB);
 }
@@ -2252,7 +2251,7 @@ syn_cache_add(so, m, optp, optlen, oi)
 			tcpstat.tcps_sndacks++;
 			tcpstat.tcps_sndtotal++;
 		}
-		return(1);
+		return (1);
 	}
 
 	MALLOC(sc, struct syn_cache *, sizeof(*sc), M_PCB, M_NOWAIT);
