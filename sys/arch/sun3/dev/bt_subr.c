@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_subr.c,v 1.2 1995/04/10 22:12:48 gwr Exp $ */
+/*	$NetBSD: bt_subr.c,v 1.3 2001/09/05 13:27:53 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1993
@@ -64,12 +64,12 @@
  */
 int
 bt_getcmap(p, cm, cmsize)
-	register struct fbcmap *p;
+	struct fbcmap *p;
 	union bt_cmap *cm;
 	int cmsize;
 {
-	register u_int i, start, count;
-	register u_char *cp;
+	u_int i, start, count;
+	u_char *cp;
 
 	start = p->index;
 	count = p->count;
@@ -92,12 +92,12 @@ bt_getcmap(p, cm, cmsize)
  */
 int
 bt_putcmap(p, cm, cmsize)
-	register struct fbcmap *p;
+	struct fbcmap *p;
 	union bt_cmap *cm;
 	int cmsize;
 {
-	register u_int i, start, count;
-	register u_char *cp;
+	u_int i, start, count;
+	u_char *cp;
 
 	start = p->index;
 	count = p->count;
