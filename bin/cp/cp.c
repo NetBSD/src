@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.28 1999/09/05 16:14:43 kleink Exp $	*/
+/*	$NetBSD: cp.c,v 1.29 2000/07/03 03:26:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.28 1999/09/05 16:14:43 kleink Exp $");
+__RCSID("$NetBSD: cp.c,v 1.29 2000/07/03 03:26:17 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: cp.c,v 1.28 1999/09/05 16:14:43 kleink Exp $");
 #include <errno.h>
 #include <fts.h>
 #include <locale.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
