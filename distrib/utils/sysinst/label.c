@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.2 1997/12/05 14:01:02 jonathan Exp $	*/
+/*	$NetBSD: label.c,v 1.3 1997/12/05 14:46:01 simonb Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.2 1997/12/05 14:01:02 jonathan Exp $");
+__RCSID("$NetBSD: label.c,v 1.3 1997/12/05 14:46:01 simonb Exp $");
 #endif
 
 #include <sys/types.h>
@@ -115,7 +115,7 @@ checklabel(partinfo *lp, int nparts, int rawpart, int bsdpart,
 			int jstart, jstop;
 
 			/* skip unused or reserved partitions */
-			if (boringpart(lp, i, rawpart, bsdpart))
+			if (boringpart(lp, j, rawpart, bsdpart))
 				continue;
 
 			jstart = jp[D_OFFSET];
