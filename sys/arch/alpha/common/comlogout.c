@@ -1,4 +1,5 @@
-/* $NetBSD: comlogout.c,v 1.3 2000/03/29 03:43:31 simonb Exp $ */
+/* $NetBSD: comlogout.c,v 1.4 2001/01/03 21:40:25 thorpej Exp $ */
+
 /*
  * Copyright (c) 1998 by Matthew Jacob
  * NASA AMES Research Center.
@@ -30,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.3 2000/03/29 03:43:31 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.4 2001/01/03 21:40:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.3 2000/03/29 03:43:31 simonb Exp $")
 /* (pretty much just structured console printout right now) */
 
 void
-ev5_logout_print(ev5lohdrp, mcucev5p)
-	mc_hdr_ev5 *ev5lohdrp;
-	mc_uc_ev5 *mcucev5p;
+ev5_logout_print(mc_hdr_ev5 *ev5lohdrp, mc_uc_ev5 *mcucev5p)
 {
 	int i;
 	static const char *fmt1 = "        %-30s = 0x%l016x\n";
