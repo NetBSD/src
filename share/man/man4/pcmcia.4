@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.16 2000/05/09 17:59:39 jhawk Exp $
+.\" $NetBSD: pcmcia.4,v 1.16.4.1 2000/09/01 16:14:44 jhawk Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 13, 2000
+.Dd August 29, 2000
 .Dt PCMCIA 4
 .Os
 .Sh NAME
@@ -141,12 +141,17 @@ driver appeared in
 .Sh BUGS
 .Ss IO space conflicts
 .Nx 
-probes the pcmcia IO bus width and uses that information to decide
-where to map PCMCIA IO space. For 10-bit wide cards, 0x300-0x3ff is
+probes the
+.Tn PCMCIA
+IO bus width and uses that information to decide
+where to map
+.Tn PCMCIA
+IO space. For 10-bit wide cards, 0x300-0x3ff is
 used. For 12-bit wide cards, 0x400-0x4ff is used.
 .Pp
 Neither choice is perfect. In the 12-bit case, 0x400 appears to work
-on substantially more devices than 0x300. In the event that pcmcia
+on substantially more devices than 0x300. In the event that
+.Tn PCMCIA
 devices are mapped in 0x400-0xfff and appear to be nonfunctional,
 remapping to 0x300-0x3ff may be appropriate; consult
 .Cd options PCIC_ISA_ALLOC_IOBASE
@@ -161,3 +166,12 @@ Example:
 options PCIC_ISA_ALLOC_IOBASE=0x300
 options PCIC_ISA_ALLOC_IOSIZE=0x0ff
 .Ed
+.Ss Interrupt conflicts
+.Nx
+attempts to probe for available interrupts to assign to
+.Tn PCMCIA
+devices. In some cases, it is not possible to detect
+all interrupts in use; in such cases, use of
+.Cd options PCIC_ISA_INTR_ALLOC_MASK
+may be necessary. See
+.Xr options 4 .

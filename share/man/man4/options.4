@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.109.2.2 2000/07/25 23:08:15 is Exp $
+.\"	$NetBSD: options.4,v 1.109.2.3 2000/09/01 16:14:44 jhawk Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 13, 2000
+.Dd August 29, 2000
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1479,6 +1479,18 @@ Ideally the probed defaults are satisfactory, however in practice
 that is not always the case. See
 .Xr pcmcia 4
 for details.
+.It Cd options PCIC_ISA_INTR_ALLOC_MASK=mask
+Controls the allowable interrupts that may be used for
+.Tn PCMCIA
+devices. This mask is a logical-or of power-of-2s of allowable
+interrupts:
+.Bd -literal -offset 04n
+.Em "IRQ Val      IRQ Val      IRQ Val       IRQ Val"
+ 0  0x0001    4  0x0010    8  0x0100    12  0x1000
+ 1  0x0002    5  0x0020    9  0x0200    13  0x2000
+ 2  0x0004    6  0x0040   10  0x0400    14  0x4000
+ 3  0x0008    7  0x0080   11  0x0800    15  0x8000
+.Ed
 .El
 .Ss m68k-specific Options
 .Bl -ohang
