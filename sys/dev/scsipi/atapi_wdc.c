@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.60 2003/10/15 19:54:32 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.61 2003/10/29 22:05:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.60 2003/10/15 19:54:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.61 2003/10/29 22:05:15 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -420,7 +420,7 @@ wdc_atapi_start(chp, xfer)
 		/* If it's not a polled command, we need the kenrel thread */
 		if ((sc_xfer->xs_control & XS_CTL_POLL) == 0 &&
 		    (chp->ch_flags & WDCF_TH_RUN) == 0) {
-			chp->ch_queue->queue_freese++;
+			chp->ch_queue->queue_freeze++;
 			wakeup(&chp->thread);
 			return;
 		}
