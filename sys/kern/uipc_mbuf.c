@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.20 1997/04/28 17:03:59 mycroft Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.21 1997/06/06 10:51:49 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1991, 1993
@@ -92,8 +92,7 @@ m_clalloc(ncl, nowait)
 	int npg, s;
 
 	npg = ncl * CLSIZE;
-	p = (caddr_t)kmem_malloc(mb_map, ctob(npg),
-	    nowait ? M_NOWAIT : M_WAITOK);
+	p = (caddr_t)kmem_malloc(mb_map, ctob(npg), nowait == 0);
 	if (p == NULL) {
 		s = splclock();
 		curtime = time;
