@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.20 2001/01/20 19:29:05 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.21 2001/01/21 16:55:11 thorpej Exp $	*/
 
 /*
  * cy.c
@@ -747,13 +747,12 @@ cyparam(struct tty *tp, struct termios *t)
  * set/get modem line status
  *
  * bits can be: TIOCM_DTR, TIOCM_RTS, TIOCM_CTS, TIOCM_CD, TIOCM_RI, TIOCM_DSR
- *
  */
 int
 cy_modem_control(struct cy_softc *sc, struct cy_port *cy, int bits, int howto)
 {
-	int s, msvr;
 	struct tty *tp = cy->cy_tty;
+	int s, msvr;
 
 	s = spltty();
 
@@ -761,10 +760,9 @@ cy_modem_control(struct cy_softc *sc, struct cy_port *cy, int bits, int howto)
 	cd_write_reg(sc, cy->cy_chip, CD1400_CAR,
 	    cy->cy_port_num & CD1400_CAR_CHAN);
 
-	/* does not manipulate RTS if it is used for flow control */
+	/* Does not manipulate RTS if it is used for flow control. */
 	switch (howto) {
 	case DMGET:
-		splx(s);
 		bits = 0;
 		if (cy->cy_channel_control & CD1400_CCR_RCVEN)
 			bits |= TIOCM_LE;
@@ -786,14 +784,13 @@ cy_modem_control(struct cy_softc *sc, struct cy_port *cy, int bits, int howto)
 			bits |= TIOCM_CTS;
 		if (msvr & CD1400_MSVR2_CD)
 			bits |= TIOCM_CD;
-		if (msvr & CD1400_MSVR2_DSR)	/* not connected on some
-						 * Cyclom cards? */
+		/* Not connected on some Cyclom-Y boards? */
+		if (msvr & CD1400_MSVR2_DSR)
 			bits |= TIOCM_DSR;
-		if (msvr & CD1400_MSVR2_RI)	/* not connected on Cyclom-8Y
-						 * cards? */
+		/* Not connected on some Cyclom-8Y boards? */
+		if (msvr & CD1400_MSVR2_RI)
 			bits |= TIOCM_RI;
-		splx(s);
-		return bits;
+		break;
 
 	case DMSET:		/* replace old values with new ones */
 		if (cy->cy_clock == CY_CLOCK_60) {
@@ -813,14 +810,16 @@ cy_modem_control(struct cy_softc *sc, struct cy_port *cy, int bits, int howto)
 
 	case DMBIS:		/* set bits */
 		if (cy->cy_clock == CY_CLOCK_60) {
-			if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS) != 0)
+			if (!ISSET(tp->t_cflag, CRTSCTS) &&
+			    (bits & TIOCM_RTS) != 0)
 				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR2,
 				    CD1400_MSVR2_DTR);
 			if (bits & TIOCM_DTR)
 				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
 				    CD1400_MSVR1_RTS);
 		} else {
-			if (!ISSET(tp->t_cflag, CRTSCTS) && (bits & TIOCM_RTS) != 0)
+			if (!ISSET(tp->t_cflag, CRTSCTS) &&
+			    (bits & TIOCM_RTS) != 0)
 				cd_write_reg(sc, cy->cy_chip, CD1400_MSVR1,
 				    CD1400_MSVR1_RTS);
 			if (bits & TIOCM_DTR)
@@ -844,7 +843,7 @@ cy_modem_control(struct cy_softc *sc, struct cy_port *cy, int bits, int howto)
 		break;
 	}
 	splx(s);
-	return 0;
+	return ((howto == DMGET) ? bits : 0);
 }
 
 /*
