@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2003/08/07 16:29:28 agc Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,7 +104,6 @@ extern struct cpu_info cpu_info_store;
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_wait(p)			/* nothing */
 #define	cpu_number()			0
 /*
  * Can't swapout u-area, (__SWAP_BROKEN)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2003/09/27 04:44:42 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58 2004/01/04 11:33:31 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2003/09/27 04:44:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2004/01/04 11:33:31 jdolecek Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -214,19 +214,9 @@ pagemove(caddr_t from, caddr_t to, size_t size)
 	pmap_update(pmap_kernel());
 }
 
-/*
- * cpu_exit is called as the last action during exit.
- *
- * We clean up a little and then call switchexit() with the old proc
- * as an argument.  switchexit() switches to the idle context, schedules
- * the old vmspace and stack to be freed, then selects a new process to
- * run.
- */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
 {
-	/* This is in locore_subr.S */
-	void switch_exit(struct lwp *, void (*)(struct lwp *));
 #if defined(PPC_HAVE_FPU) || defined(ALTIVEC)
 	struct pcb *pcb = &l->l_addr->u_pcb;
 #endif
@@ -240,8 +230,24 @@ cpu_exit(struct lwp *l, int proc)
 		save_vec_lwp(l);
 #endif
 
+}
+
+/*
+ * cpu_exit is called as the last action during exit.
+ *
+ * We clean up a little and then call switchexit() with the old proc
+ * as an argument.  switchexit() switches to the idle context, schedules
+ * the old vmspace and stack to be freed, then selects a new process to
+ * run.
+ */
+void
+cpu_exit(struct lwp *l)
+{
+	/* This is in locore_subr.S */
+	void switch_exit(struct lwp *, void (*)(struct lwp *));
+
 	splsched();
-	switch_exit(l, proc ? exit2 : lwp_exit2);
+	switch_exit(l, lwp_exit2);
 }
 
 /*

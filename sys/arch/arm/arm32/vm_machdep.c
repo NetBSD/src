@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.30 2003/10/23 08:59:10 scw Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.30 2003/10/23 08:59:10 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 2004/01/04 11:33:29 jdolecek Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -225,7 +225,7 @@ cpu_setfunc(struct lwp *l, void (*func)(void *), void *arg)
  */
 
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_lwp_free(struct lwp *l, int proc)
 {
 #ifdef ARMFPE
 	/* Abort any active FP operation and deactivate the context */
@@ -249,10 +249,13 @@ cpu_exit(struct lwp *l, int proc)
 		log(LOG_INFO, "%d bytes of svc stack fill pattern\n", loop);
 	}
 #endif	/* STACKCHECKS */
-	uvmexp.swtch++;
-	switch_exit(l, &lwp0, proc ? exit2 : lwp_exit2);
 }
 
+void
+cpu_exit(struct lwp *l)
+{
+	switch_exit(l, &lwp0, lwp_exit2);
+}
 
 void
 cpu_swapin(l)

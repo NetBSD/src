@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.3 2003/08/07 16:26:35 agc Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.4 2004/01/04 11:33:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.3 2003/08/07 16:26:35 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.4 2004/01/04 11:33:29 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -244,6 +244,17 @@ cpu_swapout(l)
 	fpusave_lwp(l, 1);
 }
 
+void
+cpu_lwp_free(struct lwp *l, int proc)
+{
+	/* If we were using the FPU, forget about it. */
+	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
+		fpusave_lwp(l, 0);
+
+	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
+		mtrr_clean(l->l_proc);
+}
+
 /*
  * cpu_exit is called as the last action during exit.
  *
@@ -252,25 +263,10 @@ cpu_swapout(l)
  * jumps into switch() to wait for another process to wake up.
  */
 void
-cpu_exit(struct lwp *l, int proc)
+cpu_exit(struct lwp *l)
 {
 
-	/* If we were using the FPU, forget about it. */
-	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
-
-	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
-		mtrr_clean(l->l_proc);
-
-	/*
-	 * No need to do user LDT cleanup here; it's handled in
-	 * pmap_destroy().
-	 */
-
-	pmap_deactivate(l);
-
-	uvmexp.swtch++;
-	switch_exit(l, proc ? exit2 : lwp_exit2);
+	switch_exit(l, lwp_exit2);
 }
 
 /*

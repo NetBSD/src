@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2003/12/30 12:33:18 pk Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2004/01/04 11:33:30 jdolecek Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -138,13 +138,13 @@ sendsig(int sig, const sigset_t *mask, u_long code)
 }
 
 void
-cpu_wait(struct lwp *p)
+cpu_lwp_free(struct lwp *l, int proc)
 {
-	panic("cpu_wait");
+	panic("cpu_lwp_free");
 }
 
 void
-cpu_exit(struct lwp *p, int a)
+cpu_exit(struct lwp *l)
 {
 	panic("cpu_exit");
 }
