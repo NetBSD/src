@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.144 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.145 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -370,3 +370,8 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	less: update to less-381.  [mrg 20030414]
 	libc: added slovak language libc message catalog. [salo 20030414]
 	df(1): add -G argument for output in gigabytes [grant 20030416]
+	mpt(4): Added device driver for LSI Fusion-MPT based SCSI and
+		Fibre Channel controllers.  Ported from the FreeBSD "mpt"
+		driver written by Greg Ansley.  Supports the LSI 53c1030
+		Ultra320 SCSI and LSI FC909, FC919, and FC929 Fibre
+		Channel adapters.  [thorpej 20030416]
