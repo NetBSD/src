@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.61 2002/04/03 22:25:04 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.62 2002/04/11 22:44:18 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -2320,7 +2320,7 @@ usr.bin/newsyslog/pathnames.h			1.1-1.2 (new)
 sys/arch/macppc/macppc/machdep.c		1.110 via patch
 
   Make sure I/O BATs are set to be guarded and cache-inhibited, so
-  as to disallow speculative loads within them.  This dould otherwise
+  as to disallow speculative loads within them.  This could otherwise
   cause random Machine Checks on 7450 (G4) based machines.
 
 sys/sys/exec_elf.h				1.41
@@ -2446,13 +2446,13 @@ sys/lib/libz/infcodes.c				1.4
 sys/lib/libz/infcodes.h				1.4
 sys/lib/libz/inffast.c				1.4
 sys/lib/libz/inffast.h				1.4
-sys/lib/libz/inffixed.h				1.4
+sys/lib/libz/inffixed.h				1.2
 sys/lib/libz/inflate.c				1.4
 sys/lib/libz/inftrees.c				1.5
 sys/lib/libz/inftrees.h				1.4
 sys/lib/libz/infutil.c				1.4
 sys/lib/libz/infutil.h				1.4
-sys/lib/libz/uncompr.c				1.4
+sys/lib/libz/uncompr.c				1.2
 sys/lib/libz/zconf.h				1.4
 sys/lib/libz/zlib.h				1.4
 sys/lib/libz/zutil.h				1.10
@@ -2640,6 +2640,7 @@ distrib/notes/common/main			patch
   non-backward-compatible changes in xsrc for arm32.
 
 sys/conf/osrelease.sh				patch
+share/tmac/doc-common				patch
 
   Mark this as NetBSD 1.5.3.
 
@@ -2658,3 +2659,40 @@ sys/arch/mac68k/conf/INSTALLSBC			patch (new)
 etc/etc.mac68k/Makefile.inc			patch
 
   Also build the INSTALLSBC and GENERICSBC kernels.
+
+usr.sbin/mlxctl/main.c				1.4
+
+  Fix ``-a'' option: verify which disks belong to the current
+  controller, and print a more informative message if we did not
+  find any.  Fixes part of PR#14086.
+
+usr.sbin/mlxctl/util.c				1.4
+usr.sbin/mlxctl/cmds.c				1.5
+
+  Sync the firmware version report with mlx.c.  Fixes PR#14155.
+
+share/man/man5/mk.conf.5			1.10 via patch
+
+  Note change of mk.conf.example to bsd.pkg.defaults.mk.
+
+sys/net/if_gif.c				1.22 via patch
+
+  Use an explicitly sized type for DLT_NULL encapsulation.
+  Correct gif address family.
+
+usr.sbin/rtsold/rtsol.c				1.8 via patch
+
+  Initialize sockaddr correctly.
+
+include/rpc/rpcb_prot.x				1.2-1.3
+
+  Change one #ifdef to #if, put token after #endif in comment, and
+  two minor typo fixes.
+
+distrib/notes/common/main			1.167
+
+  Note that agc is not part of core anymore.
+
+distrib/notes/common/postinstall		patch
+
+  Modify PKG_PATH in example so it is suitable for 1.5.3.
