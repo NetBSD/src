@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9 1998/11/24 07:02:10 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.10 1999/01/02 13:03:20 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -58,6 +58,10 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#if (!defined(M68040))
+#error "M68040 is not defined! (check that the generated assym.h is not empty)"
+#endif
+        
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
  * of the kernel text segment (not necessarily the same as kernbase).
