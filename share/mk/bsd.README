@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.65 2000/09/10 19:10:50 jlam Exp $
+#	$NetBSD: bsd.README,v 1.66 2000/09/30 00:23:37 itojun Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -242,15 +242,15 @@ MKCRYPTO_RSA	If set to "no", RSA support will not be built into
 
 NOCRYPTO_RSA	If set, it is equivalent to setting MKCRYPTO_RSA to "no".
 
-MKCRYPTO_IDEA	If set to "no", IDEA support will not be built into
-		the system's cryptography libraries.  Defaults to "yes".
+MKCRYPTO_IDEA	If set to "yes", IDEA support will be built into
+		libcrypto_idea.a.  Defaults to "no".
 
-NOCRYPTO_IDEA	If set, it is equivalent to setting MKCRYPTO_IDEA to "no".
+NOCRYPTO_IDEA	Obsoleted; no effect.
 
-MKCRYPTO_RC5	If set to "no", RC5 support will not be built into
-		the system's cryptography libraries.  Defaults to "yes".
+MKCRYPTO_RC5	If set to "yes", RC5 support will be built into
+		libcrypto_rc5.a.  Defaults to "no".
 
-NOCRYPTO_RC5	If set, it is equivalent to setting MKCRYPTO_RC5 to "no".
+NOCRYPTO_RC5	Obsoleted; no effect.
 
 MKKERBEROS	If set to "no", disables building Kerberos (v4 or v5)
 		support into various system utilities that support it.

@@ -400,7 +400,7 @@ double Time_F(int s)
 	Time_F(START); \
 	for (count=0,run=1; COND(cb); count++) \
 		{ \
-		unsigned long d[2]; \
+		DES_LONG d[2]; \
 		func(d,&(sch[0]),DES_ENCRYPT); \
 		} \
 	tm[index]=Time_F(STOP); \
@@ -448,7 +448,7 @@ int main(int argc, char **argv)
 	count=10;
 	do	{
 		long i;
-		unsigned long data[2];
+		DES_LONG data[2];
 
 		count*=2;
 		Time_F(START);

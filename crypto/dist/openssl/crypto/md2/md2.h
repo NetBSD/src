@@ -67,6 +67,9 @@ extern "C" {
 #error MD2 is disabled.
 #endif
 
+#include <sys/types.h>
+#define	MD2_INT	u_int32_t
+
 #define MD2_DIGEST_LENGTH	16
 #define MD2_BLOCK       	16
 #include <openssl/opensslconf.h> /* MD2_INT */

@@ -59,10 +59,10 @@
 #include <stdlib.h>
 
 #undef c2l
-#define c2l(c,l)	(l =((unsigned long)(*((c)++)))    , \
-			 l|=((unsigned long)(*((c)++)))<< 8L, \
-			 l|=((unsigned long)(*((c)++)))<<16L, \
-			 l|=((unsigned long)(*((c)++)))<<24L)
+#define c2l(c,l)	(l =((RC5_32_INT)(*((c)++)))    , \
+			 l|=((RC5_32_INT)(*((c)++)))<< 8L, \
+			 l|=((RC5_32_INT)(*((c)++)))<<16L, \
+			 l|=((RC5_32_INT)(*((c)++)))<<24L)
 
 /* NOTE - c is not incremented as per c2l */
 #undef c2ln
@@ -70,14 +70,14 @@
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((unsigned long)(*(--(c))))<<24L; \
-			case 7: l2|=((unsigned long)(*(--(c))))<<16L; \
-			case 6: l2|=((unsigned long)(*(--(c))))<< 8L; \
-			case 5: l2|=((unsigned long)(*(--(c))));     \
-			case 4: l1 =((unsigned long)(*(--(c))))<<24L; \
-			case 3: l1|=((unsigned long)(*(--(c))))<<16L; \
-			case 2: l1|=((unsigned long)(*(--(c))))<< 8L; \
-			case 1: l1|=((unsigned long)(*(--(c))));     \
+			case 8: l2 =((RC5_32_INT)(*(--(c))))<<24L; \
+			case 7: l2|=((RC5_32_INT)(*(--(c))))<<16L; \
+			case 6: l2|=((RC5_32_INT)(*(--(c))))<< 8L; \
+			case 5: l2|=((RC5_32_INT)(*(--(c))));     \
+			case 4: l1 =((RC5_32_INT)(*(--(c))))<<24L; \
+			case 3: l1|=((RC5_32_INT)(*(--(c))))<<16L; \
+			case 2: l1|=((RC5_32_INT)(*(--(c))))<< 8L; \
+			case 1: l1|=((RC5_32_INT)(*(--(c))));     \
 				} \
 			}
 
@@ -108,14 +108,14 @@
 			c+=n; \
 			l1=l2=0; \
 			switch (n) { \
-			case 8: l2 =((unsigned long)(*(--(c))))    ; \
-			case 7: l2|=((unsigned long)(*(--(c))))<< 8; \
-			case 6: l2|=((unsigned long)(*(--(c))))<<16; \
-			case 5: l2|=((unsigned long)(*(--(c))))<<24; \
-			case 4: l1 =((unsigned long)(*(--(c))))    ; \
-			case 3: l1|=((unsigned long)(*(--(c))))<< 8; \
-			case 2: l1|=((unsigned long)(*(--(c))))<<16; \
-			case 1: l1|=((unsigned long)(*(--(c))))<<24; \
+			case 8: l2 =((RC5_32_INT)(*(--(c))))    ; \
+			case 7: l2|=((RC5_32_INT)(*(--(c))))<< 8; \
+			case 6: l2|=((RC5_32_INT)(*(--(c))))<<16; \
+			case 5: l2|=((RC5_32_INT)(*(--(c))))<<24; \
+			case 4: l1 =((RC5_32_INT)(*(--(c))))    ; \
+			case 3: l1|=((RC5_32_INT)(*(--(c))))<< 8; \
+			case 2: l1|=((RC5_32_INT)(*(--(c))))<<16; \
+			case 1: l1|=((RC5_32_INT)(*(--(c))))<<24; \
 				} \
 			}
 
@@ -135,10 +135,10 @@
 			}
 
 #undef n2l
-#define n2l(c,l)        (l =((unsigned long)(*((c)++)))<<24L, \
-                         l|=((unsigned long)(*((c)++)))<<16L, \
-                         l|=((unsigned long)(*((c)++)))<< 8L, \
-                         l|=((unsigned long)(*((c)++))))
+#define n2l(c,l)        (l =((RC5_32_INT)(*((c)++)))<<24L, \
+                         l|=((RC5_32_INT)(*((c)++)))<<16L, \
+                         l|=((RC5_32_INT)(*((c)++)))<< 8L, \
+                         l|=((RC5_32_INT)(*((c)++))))
 
 #undef l2n
 #define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24L)&0xff), \

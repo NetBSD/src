@@ -1,4 +1,4 @@
-#	$NetBSD: srcs.inc,v 1.5 2000/07/31 17:04:05 thorpej Exp $
+#	$NetBSD: srcs.inc,v 1.6 2000/09/30 00:23:37 itojun Exp $
 
 CRYPTOINCS=	asn1.inc crypto.inc bf.inc bio.inc bn.inc buffer.inc \
 		cast.inc comp.inc conf.inc des.inc dh.inc dsa.inc \
@@ -11,13 +11,9 @@ CRYPTOINCS=	asn1.inc crypto.inc bf.inc bio.inc bn.inc buffer.inc \
 CRYPTOINCS+=	rsa.inc
 .endif
 
-.if (${MKCRYPTO_IDEA} != "no")
 CRYPTOINCS+=	idea.inc
-.endif
 
-.if (${MKCRYPTO_RC5} != "no")
 CRYPTOINCS+=	rc5.inc
-.endif
 
 .for cryptoinc in ${CRYPTOINCS}
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH:C/mipse[bl]/mips/}/${cryptoinc})

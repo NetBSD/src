@@ -65,10 +65,10 @@ const char *MD5_version="MD5" OPENSSL_VERSION_PTEXT;
 /* Implemented from RFC1321 The MD5 Message-Digest Algorithm
  */
 
-#define INIT_DATA_A (unsigned long)0x67452301L
-#define INIT_DATA_B (unsigned long)0xefcdab89L
-#define INIT_DATA_C (unsigned long)0x98badcfeL
-#define INIT_DATA_D (unsigned long)0x10325476L
+#define INIT_DATA_A (MD5_LONG)0x67452301L
+#define INIT_DATA_B (MD5_LONG)0xefcdab89L
+#define INIT_DATA_C (MD5_LONG)0x98badcfeL
+#define INIT_DATA_D (MD5_LONG)0x10325476L
 
 void MD5_Init(MD5_CTX *c)
 	{
@@ -85,7 +85,7 @@ void MD5_Init(MD5_CTX *c)
 void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 	{
 	const MD5_LONG *X=data;
-	register unsigned long A,B,C,D;
+	register MD5_LONG A,B,C,D;
 	/*
 	 * In case you wonder why A-D are declared as long and not
 	 * as MD5_LONG. Doing so results in slight performance
@@ -192,7 +192,7 @@ void md5_block_host_order (MD5_CTX *c, const void *data, int num)
 void md5_block_data_order (MD5_CTX *c, const void *data_, int num)
 	{
 	const unsigned char *data=data_;
-	register unsigned long A,B,C,D,l;
+	register MD5_LONG A,B,C,D,l;
 	/*
 	 * In case you wonder why A-D are declared as long and not
 	 * as MD5_LONG. Doing so results in slight performance
@@ -209,7 +209,7 @@ void md5_block_data_order (MD5_CTX *c, const void *data_, int num)
 	 */
 #ifndef MD32_XARRAY
 	/* See comment in crypto/sha/sha_locl.h for details. */
-	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+	MD5_LONG	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
 			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 # define X(i)	XX##i
 #else
@@ -303,7 +303,7 @@ void md5_block_data_order (MD5_CTX *c, const void *data_, int num)
 #endif
 
 #ifdef undef
-int printit(unsigned long *l)
+int printit(MD5_LONG *l)
 	{
 	int i,ii;
 

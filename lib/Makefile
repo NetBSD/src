@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2000/08/03 03:53:35 assar Exp $
+#	$NetBSD: Makefile,v 1.64 2000/09/30 00:23:28 itojun Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -21,6 +21,15 @@ SUBDIR+= libroken libvers libcom_err libsl libss libasn1 libkrb5 libhdb \
 # KTH Kerberos 4 libraries
 SUBDIR+= libkrb libkdb libkadm libkafs
 SUBDIR+= libkstream
+
+.if (${MKCRYPTO_IDEA} != "no")
+SUBDIR+= libcrypto_idea
+.endif	# MKCRYPTO_IDEA != no
+
+.if (${MKCRYPTO_RC5} != "no")
+SUBDIR+= libcrypto_rc5
+.endif	# MKCRYPTO_RC5 != no
+
 .endif	# MKCRYPTO != no
 
 SUBDIR+=	libtelnet

@@ -67,21 +67,8 @@ extern "C" {
 #error SHA is disabled.
 #endif
 
-/*
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- * ! SHA_LONG has to be at least 32 bits wide. If it's wider, then !
- * ! SHA_LONG_LOG2 has to be defined along.                        !
- * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- */
-
-#if defined(WIN16) || defined(__LP32__)
-#define SHA_LONG unsigned long
-#elif defined(_CRAY) || defined(__ILP64__)
-#define SHA_LONG unsigned long
-#define SHA_LONG_LOG2 3
-#else
-#define SHA_LONG unsigned int
-#endif
+#include <sys/types.h>
+#define SHA_LONG	u_int32_t
 
 #define SHA_LBLOCK	16
 #define SHA_CBLOCK	(SHA_LBLOCK*4)	/* SHA treats input data as a

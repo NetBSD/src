@@ -62,9 +62,8 @@
 #include <openssl/opensslconf.h>
 #include <openssl/sha.h>
 
-#ifndef SHA_LONG_LOG2
+/* SHA_LONG is u_int32_t, 4 = 2^2 */
 #define SHA_LONG_LOG2	2	/* default to 32 bits */
-#endif
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 
@@ -74,7 +73,7 @@
 #define HASH_CBLOCK             SHA_CBLOCK
 #define HASH_LBLOCK             SHA_LBLOCK
 #define HASH_MAKE_STRING(c,s)   do {	\
-	unsigned long ll;		\
+	SHA_LONG ll;		\
 	ll=(c)->h0; HOST_l2c(ll,(s));	\
 	ll=(c)->h1; HOST_l2c(ll,(s));	\
 	ll=(c)->h2; HOST_l2c(ll,(s));	\
@@ -223,9 +222,9 @@ void HASH_INIT (SHA_CTX *c)
 void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
 	{
 	const SHA_LONG *W=d;
-	register unsigned long A,B,C,D,E,T;
+	register SHA_LONG A,B,C,D,E,T;
 #ifndef MD32_XARRAY
-	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+	SHA_LONG	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
 			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 #else
 	SHA_LONG	XX[16];
@@ -348,9 +347,9 @@ void HASH_BLOCK_HOST_ORDER (SHA_CTX *c, const void *d, int num)
 void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, int num)
 	{
 	const unsigned char *data=p;
-	register unsigned long A,B,C,D,E,T,l;
+	register SHA_LONG A,B,C,D,E,T,l;
 #ifndef MD32_XARRAY
-	unsigned long	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
+	SHA_LONG	XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,
 			XX8, XX9,XX10,XX11,XX12,XX13,XX14,XX15;
 #else
 	SHA_LONG	XX[16];
