@@ -1,7 +1,7 @@
 /*******************************************************************************
  *
  * Module Name: dbstats - Generation and display of ACPI table statistics
- *              $Revision: 1.5 $
+ *              $Revision: 1.6 $
  *
  ******************************************************************************/
 
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.5 2002/06/15 01:47:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbstats.c,v 1.6 2002/06/15 17:59:51 thorpej Exp $");
 
 #include "acpi.h"
 #include "acdebug.h"
@@ -164,7 +164,7 @@ static ARGUMENT_INFO        AcpiDbStatTypes [] =
  *
  ******************************************************************************/
 
-static void
+void
 AcpiDbEnumerateObject (
     ACPI_OPERAND_OBJECT     *ObjDesc)
 {
@@ -257,7 +257,7 @@ AcpiDbEnumerateObject (
  *
  ******************************************************************************/
 
-static ACPI_STATUS
+ACPI_STATUS
 AcpiDbClassifyOneObject (
     ACPI_HANDLE             ObjHandle,
     UINT32                  NestingLevel,
@@ -327,7 +327,7 @@ AcpiDbClassifyOneObject (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiDbCountNamespaceObjects (
     void)
 {
