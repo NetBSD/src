@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.13 1997/04/25 03:40:10 briggs Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.14 1997/05/19 17:23:09 scottr Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -246,7 +246,7 @@ snsetup(sc, lladdr)
 	printf(" address %s\n", ether_sprintf(lladdr));
 
 #ifdef DEBUG
-	printf("%s: buffers: rra=%p cda=0x%x rda=0x%x tda=0x%x\n",
+	printf("%s: buffers: rra=%p cda=%p rda=%p tda=%p\n",
 	    sc->sc_dev.dv_xname, sc->p_rra[0], sc->p_cda,
 	    sc->p_rda[0], sc->mtda[0].mtd_txp);
 #endif
@@ -772,7 +772,7 @@ camdump(sc)
 		ap0 = NIC_GET(sc, SNR_CAP0);
 		printf("%d: ap2=0x%x ap1=0x%x ap0=0x%x\n", i, ap2, ap1, ap0);
 	}
-	printf("CAM enable 0x%lx\n", NIC_GET(sc, SNR_CEP));
+	printf("CAM enable 0x%x\n", NIC_GET(sc, SNR_CEP));
 
 	NIC_PUT(sc, SNR_CR, 0);
 	wbflush();
