@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.3 2000/12/13 19:35:48 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.4 2000/12/13 23:12:20 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -30,3 +30,46 @@ crypto/dist/krb4/lib/krb/extra.c		1.2
 
   Remove overwriting of the old ticket file.  Fix buffer overrun.
   Remove obsolete support for environment variables.
+
+libexec/ftpd/cmds.c				1.9
+libexec/ftpd/version.h				patch
+
+  Fix a one-byte buffer overrun.
+
+sys/netinet/udp_usrreq.c			1.73
+
+  Fix multicast inbound packet processing.  Fixes PR#11629.
+
+sys/dev/wscons/wsdisplay.c			1.43
+
+  Make sure to switch consoles synchronously.
+
+sys/arch/powerpc/powerpc/ofw_machdep.c		1.7
+
+  Make memory probing work correctly with the DIMMs in any order.
+
+distrib/atari/miniroot/install.md		1.14
+
+  Add the X11 sets to MDSETS.
+
+distrib/sets/lists/base/obsolete.mi		1.14
+
+  Add /usr/sbin/gifconfig; we now do "ifconfig tunnel".
+
+usr.sbin/dhcp/common/discover.c			1.9-1.10
+usr.sbin/dhcp/common/bpf.c			1.7
+
+  Fix multiple problems that caused dhcpd to either spin or not
+  respond to queries in a timely fashion.
+
+sys/arch/vax/conf/INSTALL			1.11
+
+  Enable VS4000/90 SCSI controller.
+
+sys/arch/hp300/stand/Makefile.inc		1.11
+
+  Use ``make print-objdir'' to get obj directory correctly.
+
+sys/dev/pci/fms.c				1.8
+
+  Make this build without ``mpu at fms''.
