@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.20 1994/09/19 19:17:54 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.21 1994/09/19 19:28:07 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -612,11 +612,9 @@ msdosfs_sync(mp, waitfor, cred, p)
 {
 	struct vnode *vp;
 	struct denode *dep;
-	struct msdosfsmount *pmp;
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error;
 	int allerror = 0;
-
-	pmp = (struct msdosfsmount *) mp->mnt_data;
 
 	/*
 	 * If we ever switch to not updating all of the fats all the time,
@@ -628,33 +626,36 @@ msdosfs_sync(mp, waitfor, cred, p)
 		else {
 			/* update fats here */
 		}
-
 	/*
-	 * Go thru in memory denodes and write them out along with
-	 * unwritten file blocks.
+	 * Write back each (modified) denode.
 	 */
 loop:
-	for (vp = mp->mnt_vnodelist.lh_first; vp;
-	    vp = vp->v_mntvnodes.le_next) {
-		if (vp->v_mount != mp)	/* not ours anymore	 */
+	for (vp = mp->mnt_vnodelist.lh_first;
+	     vp != NULL;
+	     vp = vp->v_mntvnodes.le_next) {
+		/*
+		 * If the vnode that we are about to sync is no longer
+		 * assoicated with this mount point, start over.
+		 */
+		if (vp->v_mount != mp)
 			goto loop;
-		if (VOP_ISLOCKED(vp))	/* file is busy		 */
+		if (VOP_ISLOCKED(vp))
 			continue;
 		dep = VTODE(vp);
 		if ((dep->de_flag & DE_UPDATE) == 0 &&
 		    vp->v_dirtyblkhd.lh_first == NULL)
 			continue;
-		if (vget(vp, 1))	/* not there anymore?	 */
+		if (vget(vp, 1))
 			goto loop;
 		if (error = VOP_FSYNC(vp, cred, waitfor, p))
 			allerror = error;
-		vput(vp);	/* done with this one	 */
+		vput(vp);
 	}
-
 	/*
-	 * Flush filesystem control info.
+	 * Force stale file system control information to be flushed.
 	 */
-	vflushbuf(pmp->pm_devvp, waitfor == MNT_WAIT ? B_SYNC : 0);
+	if (error = VOP_FSYNC(pmp->pm_devvp, cred, waitfor, p))
+		allerror = error;
 	return allerror;
 }
 
