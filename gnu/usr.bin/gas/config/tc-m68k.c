@@ -690,6 +690,16 @@ register char **ccp;
 				n= (c[3] == 'r' ? 4 : 3);
 				ret = FPC;
 			}
+#ifdef REGISTER_PREFIX
+			else if (has_register_prefix) {
+				/*
+				 * Assume it's just %fp, which is
+				 * an alias for %a6.
+				 */
+				n = 2;
+				ret = ADDR + 6;
+			}
+#endif
 		}
 		break;
 	case 'i':
