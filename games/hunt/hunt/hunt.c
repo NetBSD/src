@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.13 2002/09/20 15:47:19 mycroft Exp $	*/
+/*	$NetBSD: hunt.c,v 1.14 2002/09/20 17:27:57 mycroft Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.13 2002/09/20 15:47:19 mycroft Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.14 2002/09/20 17:27:57 mycroft Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -452,12 +452,6 @@ list_drivers()
 	if (initial)
 		brdc = broadcast_vec(test_socket, (struct sockaddr **) &brdv);
 
-	if (brdc <= 0) {
-		initial = FALSE;
-		test.sin_addr = local_address;
-		goto test_one_host;
-	}
-
 # ifdef SO_BROADCAST
 	/* Sun's will broadcast even though this option can't be set */
 	option = 1;
@@ -479,6 +473,13 @@ list_drivers()
 			leave(1, "sendto");
 			/* NOTREACHED */
 		}
+	}
+	test.sin_addr = local_address;
+	if (sendto(test_socket, (char *) &msg, sizeof msg, 0,
+	    (struct sockaddr *) &test, DAEMON_SIZE) < 0) {
+		warn("sendto");
+		leave(1, "sendto");
+		/* NOTREACHED */
 	}
 # else /* !BROADCAST */
 	/* loop thru all hosts on local net and send msg to them. */
