@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3reg.h,v 1.15 1998/08/15 08:28:22 thorpej Exp $	*/
+/*	$NetBSD: elink3reg.h,v 1.16 1998/08/15 16:47:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Herb Peyerl <hpeyerl@beer.org>
@@ -393,7 +393,7 @@
 #define	CONFIG_AUTOSELECT_SHIFT	(u_short)      8
 
 /*
- * RESET_OPTIONS (Window 4, on Demon/Vortex/Bomerang only)
+ * RESET_OPTIONS (Window 3, on Demon/Vortex/Bomerang only)
  * also mapped to PCI configuration space on PCI adaptors.
  *
  * (same register as  Vortex EP_W3_RESET_OPTIONS, mapped to pci-config space)
