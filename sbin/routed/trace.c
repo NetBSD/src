@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trace.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: trace.c,v 1.8 1994/12/23 13:13:11 cgd Exp $";
+static char *rcsid = "$Id: trace.c,v 1.9 1995/01/30 19:42:24 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -100,7 +100,7 @@ traceon(file)
 
 	if (ftrace != NULL)
 		return;
-	if (stat(file, &stbuf) >= 0 && (stbuf.st_mode & S_IFMT) != S_IFREG)
+	if (stat(file, &stbuf) >= 0 && !S_ISREG(stbuf.st_mode))
 		return;
 	savetracename = file;
 	(void) gettimeofday(&now, (struct timezone *)NULL);

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)newfs.c	8.8 (Berkeley) 4/18/94";*/
-static char *rcsid = "$Id: newfs.c,v 1.14 1994/12/18 05:09:44 cgd Exp $";
+static char *rcsid = "$Id: newfs.c,v 1.15 1995/01/30 19:42:22 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -403,7 +403,7 @@ main(argc, argv)
 			fatal("%s: %s", special, strerror(errno));
 		if (fstat(fsi, &st) < 0)
 			fatal("%s: %s", special, strerror(errno));
-		if ((st.st_mode & S_IFMT) != S_IFCHR && !mfs)
+		if (!S_ISCHR(st.st_mode) && !mfs)
 			printf("%s: %s: not a character-special device\n",
 			    progname, special);
 		cp = strchr(argv[0], '\0') - 1;
