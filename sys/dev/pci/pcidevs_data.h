@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.700 2005/03/16 07:01:07 xtraeme Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.701 2005/03/19 10:28:12 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.701 2005/03/16 06:58:56 xtraeme Exp
+ *	NetBSD: pcidevs,v 1.702 2005/03/19 10:27:52 tron Exp
  */
 
 /*
@@ -2894,6 +2894,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2200S_SUB2M,
 	    "ASR-2200S",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_ASR2410SA,
+	    "ASR-2410SA",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAR2810SA,
@@ -10116,4 +10120,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1950;
+const int pci_nproducts = 1951;
