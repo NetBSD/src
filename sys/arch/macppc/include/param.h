@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 1998/09/03 14:10:56 tsubai Exp $	*/
+/*	$NetBSD: param.h,v 1.4 1999/01/12 10:51:40 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,7 +46,7 @@
 
 #define	ALIGNBYTES		(sizeof(double) - 1)
 #define	ALIGN(p)		(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
-#define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
+#define	ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
 #define	PGSHIFT		12
 #define	NBPG		(1 << PGSHIFT)	/* Page size */
@@ -62,6 +62,10 @@
 
 #define	UPAGES		4
 #define	USPACE		(UPAGES * NBPG)
+
+#ifndef MSGBUFSIZE
+#define	MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
 
 #define	KERNBASE	0x100000
 
