@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.111 1999/09/12 01:16:56 chs Exp $ */
+/* $NetBSD: pmap.c,v 1.112 1999/11/01 20:18:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 1999/09/12 01:16:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 1999/11/01 20:18:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1346,10 +1346,10 @@ pmap_page_protect(pg, prot)
 {
 	struct pv_head *pvh;
 	pv_entry_t pv, nextpv;
-	int s, ps;
 	boolean_t needisync = FALSE;
 	long cpu_id = alpha_pal_whami();
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	int ps;
 
 #ifdef DEBUG
 	if ((pmapdebug & (PDB_FOLLOW|PDB_PROTECT)) ||
@@ -1388,7 +1388,6 @@ pmap_page_protect(pg, prot)
 	pvh = pa_to_pvh(pa);
 	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pvh->pvh_slock);
-	s = splimp();			/* XXX needed? */
 	for (pv = LIST_FIRST(&pvh->pvh_list); pv != NULL; pv = nextpv) {
 		struct pmap *pmap = pv->pv_pmap;
 
@@ -1414,7 +1413,6 @@ pmap_page_protect(pg, prot)
 #endif
 		PMAP_UNLOCK(pmap, ps);
 	}
-	splx(s);
 
 	if (needisync)
 		alpha_pal_imb();
@@ -1716,11 +1714,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	/*
 	 * Enter the mapping into the pv_table if appropriate.
 	 */
-	if (managed) {
-		int s = splimp();	/* XXX needed? */
+	if (managed)
 		pmap_pv_enter(pmap, pa, va, pte, TRUE);
-		splx(s);
-	}
 
 	/*
 	 * Increment counters.
@@ -1736,22 +1731,26 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	npte = ((pa >> PGSHIFT) << PG_SHIFT) | pte_prot(pmap, prot) | PG_V;
 	if (managed) {
 		struct pv_head *pvh = pa_to_pvh(pa);
+		int attrs;
 
 #ifdef DIAGNOSTIC
 		if (access_type & ~prot)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
+		simple_lock(&pvh->pvh_slock);
 		if (access_type & VM_PROT_WRITE)
 			pvh->pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
 		else if (access_type & VM_PROT_ALL)
 			pvh->pvh_attrs |= PGA_REFERENCED;
+		attrs = pvh->pvh_attrs;
+		simple_unlock(&pvh->pvh_slock);
 
 		/*
 		 * Set up referenced/modified emulation for new mapping.
 		 */
-		if ((pvh->pvh_attrs & PGA_REFERENCED) == 0)
+		if ((attrs & PGA_REFERENCED) == 0)
 			npte |= PG_FOR | PG_FOW | PG_FOE;
-		else if ((pvh->pvh_attrs & PGA_MODIFIED) == 0)
+		else if ((attrs & PGA_MODIFIED) == 0)
 			npte |= PG_FOW;
 
 		/*
@@ -2492,7 +2491,6 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id, pvp)
 	struct pv_entry **pvp;
 {
 	paddr_t pa;
-	int s;
 	boolean_t onpv;
 	boolean_t hadasm;
 	boolean_t isactive;
@@ -2570,12 +2568,9 @@ pmap_remove_mapping(pmap, va, pte, dolock, cpu_id, pvp)
 	}
 
 	/*
-	 * Otherwise remove it from the PV table
-	 * (raise IPL since we may be called at interrupt time).
+	 * Remove it from the PV table.
 	 */
-	s = splimp();		/* XXX needed? */
 	pmap_pv_remove(pmap, pa, va, dolock, pvp);
-	splx(s);
 
 	return (needisync);
 }
@@ -2602,7 +2597,7 @@ pmap_changebit(pa, set, mask, cpu_id)
 	vaddr_t va;
 	boolean_t hadasm, isactive;
 	boolean_t needisync = FALSE;
-	int s, ps;
+	int ps;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_BITS)
@@ -2613,7 +2608,6 @@ pmap_changebit(pa, set, mask, cpu_id)
 		return;
 
 	pvh = pa_to_pvh(pa);
-	s = splimp();			/* XXX needed? */
 	/*
 	 * Loop over all current mappings setting/clearing as appropos.
 	 */
@@ -2648,7 +2642,6 @@ pmap_changebit(pa, set, mask, cpu_id)
 		}
 		PMAP_UNLOCK(pv->pv_pmap, ps);
 	}
-	splx(s);
 
 	if (needisync) {
 		alpha_pal_imb();
