@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.40 1999/06/23 10:37:10 mjl Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.41 1999/06/23 10:41:08 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -97,7 +97,7 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_VENDOR_LASAT, PCMCIA_PRODUCT_LASAT_CREDIT_288,
 	    PCMCIA_CIS_LASAT_CREDIT_288,
 	    0,
-	    "",
+	    "Lasat Communications A/S",
 	    "Lasat Credit 288 Modem"	},
 	},
 	{
@@ -553,6 +553,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "I-O DATA",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_LASAT, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Lasat Communications A/S",
 	    NULL,
 	},
 	{
