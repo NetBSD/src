@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.37 2000/12/23 01:38:01 wiz Exp $ */
+/* $NetBSD: ispvar.h,v 1.38 2000/12/28 08:24:17 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -420,6 +420,7 @@ typedef struct ispsoftc {
  */
 #define	ISP_CFG_NORELOAD	0x80	/* don't download f/w */
 #define	ISP_CFG_NONVRAM		0x40	/* ignore NVRAM */
+#define	ISP_CFG_NOINIT		0x20	/* just set defaults- don't init */
 #define	ISP_CFG_FULL_DUPLEX	0x01	/* Full Duplex (Fibre Channel only) */
 #define	ISP_CFG_OWNWWN		0x02	/* override NVRAM wwn */
 #define	ISP_CFG_PORT_PREF	0x0C	/* Mask for Port Prefs (2200 only) */
