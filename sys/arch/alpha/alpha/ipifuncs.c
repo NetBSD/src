@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.28 2001/04/28 06:10:49 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.29 2001/05/01 05:16:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.28 2001/04/28 06:10:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.29 2001/05/01 05:16:44 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -187,15 +187,17 @@ alpha_send_ipi(u_long cpu_id, u_long ipimask)
 void
 alpha_broadcast_ipi(u_long ipimask)
 {
-	u_long i, cpu_id = cpu_number();
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	u_long cpu_id = cpu_number();
 	u_long cpumask;
 
 	cpumask = cpus_running & ~(1UL << cpu_id);
 
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if ((cpumask & (1UL << i)) == 0)
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if ((cpumask & (1UL << ci->ci_cpuid)) == 0)
 			continue;
-		alpha_send_ipi(i, ipimask);
+		alpha_send_ipi(ci->ci_cpuid, ipimask);
 	}
 }
 
@@ -205,17 +207,18 @@ alpha_broadcast_ipi(u_long ipimask)
 void
 alpha_multicast_ipi(u_long cpumask, u_long ipimask)
 {
-	u_long i;
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
 
 	cpumask &= cpus_running;
 	cpumask &= ~(1UL << cpu_number());
 	if (cpumask == 0)
 		return;
 
-	for (i = 0; i < hwrpb->rpb_pcs_cnt; i++) {
-		if ((cpumask & (1UL << i)) == 0)
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if ((cpumask & (1UL << ci->ci_cpuid)) == 0)
 			continue;
-		alpha_send_ipi(i, ipimask);
+		alpha_send_ipi(ci->ci_cpuid, ipimask);
 	}
 }
 
