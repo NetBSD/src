@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.21 2003/08/17 04:55:23 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.22 2003/08/17 22:02:21 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -149,7 +149,13 @@ while [ $# -gt 0 ]; do
 			($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true; echo ${pkg_dbdir}) > ${depot_pkg_dbdir}/$1/+VIEWS
 			$rmprog ${temp}
 			$mkdirprog -p ${pkg_dbdir}/$1
-			(cd ${depot_pkg_dbdir}/$1; $paxprog -rwpe '-s|\./\+VIEWS$||' ./+* ${pkg_dbdir}/$1)
+			#
+			# Copy all of the metadata files except for +VIEWS,
+			# which is only for the depoted package, and
+			# +REQUIRED_BY, which is irrelevant for a package in
+			# a view.
+			#
+			(cd ${depot_pkg_dbdir}/$1; $paxprog -rwpe '-s|\./\+VIEWS$||' '-s|\./\+REQUIRED_BY$||' ./+* ${pkg_dbdir}/$1)
 			$sedprog -e 's|'${depot_pkg_dbdir}/$1'|'${targetdir}'|g' < ${depot_pkg_dbdir}/$1/+CONTENTS > ${pkg_dbdir}/$1/+CONTENTS
 			echo "${depot_pkg_dbdir}/$1" > ${pkg_dbdir}/$1/+DEPOT
 			if [ -f ${pkg_dbdir}/$1/+INSTALL ]; then
@@ -173,6 +179,11 @@ while [ $# -gt 0 ]; do
 		else
 			if [ "${verbose}" = "yes" ]; then
 				echo "Deleting package $1 from $viewstr in ${viewbase}."
+			fi
+			if [ -f ${pkg_dbdir}/$1/+REQUIRED_BY ]; then
+				(echo "pkg_view: package \`$1' is required by other packages:"
+				$sedprog -e 's|^|	|' ${pkg_dbdir}/$1/+REQUIRED_BY) 1>&2
+				exit 1
 			fi
 			if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
 				$chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
