@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.11 2001/09/07 16:06:03 sato Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.12 2001/09/16 05:32:20 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -51,13 +51,13 @@
 #include <hpcmips/vr/bcureg.h>
 #include <hpcmips/vr/bcuvar.h>
 
-static int vrbcu_match __P((struct device *, struct cfdata *, void *));
-static void vrbcu_attach __P((struct device *, struct device *, void *));
+static int vrbcu_match(struct device *, struct cfdata *, void *);
+static void vrbcu_attach(struct device *, struct device *, void *);
 
-static void vrbcu_write __P((struct vrbcu_softc *, int, unsigned short));
-static unsigned short vrbcu_read __P((struct vrbcu_softc *, int));
+static void vrbcu_write(struct vrbcu_softc *, int, unsigned short);
+static unsigned short vrbcu_read(struct vrbcu_softc *, int);
 
-static void vrbcu_dump_regs __P((void));
+static void vrbcu_dump_regs(void);
 
 char	*vr_cpuname=NULL;
 int	vr_major=-1;
@@ -71,44 +71,36 @@ struct cfattach vrbcu_ca = {
 struct vrbcu_softc *the_bcu_sc = NULL;
 
 static inline void
-vrbcu_write(sc, port, val)
-	struct vrbcu_softc *sc;
-	int port;
-	unsigned short val;
+vrbcu_write(struct vrbcu_softc *sc, int port, unsigned short val)
 {
+
 	bus_space_write_2(sc->sc_iot, sc->sc_ioh, port, val);
 }
 
 static inline unsigned short
-vrbcu_read(sc, port)
-	struct vrbcu_softc *sc;
-	int port;
+vrbcu_read(struct vrbcu_softc *sc, int port)
 {
-	return bus_space_read_2(sc->sc_iot, sc->sc_ioh, port);
+
+	return (bus_space_read_2(sc->sc_iot, sc->sc_ioh, port));
 }
 
 static int
-vrbcu_match(parent, cf, aux)
-     struct device *parent;
-     struct cfdata *cf;
-     void *aux;
+vrbcu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	return 2;
+
+	return (2);
 }
 
 static void
-vrbcu_attach(parent, self, aux)
-     struct device *parent;
-     struct device *self;
-     void *aux;
+vrbcu_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	struct vrbcu_softc *sc = (struct vrbcu_softc *)self;
 
 	sc->sc_iot = va->va_iot;
 	bus_space_map(sc->sc_iot, va->va_addr, va->va_size,
-		0, /* no flags */
-		&sc->sc_ioh);
+	    0, /* no flags */
+	    &sc->sc_ioh);
 
 	printf("\n");
 	the_bcu_sc = sc;
@@ -130,8 +122,8 @@ vrbcu_dump_regs()
 	cpuid = vrbcu_vrip_getcpuid();
 #if !defined(ONLY_VR4181) && !defined(ONLY_VR4102)
 	if (cpuid != BCUREVID_FIXRID_4181 
-		&& cpuid <= BCUREVID_RID_4131
-		&& cpuid >= BCUREVID_RID_4111) {
+	    && cpuid <= BCUREVID_RID_4131
+	    && cpuid >= BCUREVID_RID_4111) {
 		spdreg = vrbcu_read(sc, BCUCLKSPEED_REG_W);
 #ifdef VRBCUDEBUG
 		printf("vrbcu: CLKSPEED %x: \n",  spdreg);
@@ -152,7 +144,8 @@ vrbcu_dump_regs()
 	switch (cpuid) {
 #if defined VR4181
 	case BCUREVID_FIXRID_4181:
-		switch ((spdreg&BCU81CLKSPEED_DIVTMASK)>>BCU81CLKSPEED_DIVTSHFT){
+		switch ((spdreg & BCU81CLKSPEED_DIVTMASK) >>
+		    BCU81CLKSPEED_DIVTSHFT){
 		case BCU81CLKSPEED_DIVT1:
 			vtclock = tclock = cpuclock;
 			break;
@@ -188,52 +181,55 @@ vrbcu_dump_regs()
 #endif /* VR4111 */
 #if defined VR4121
 	case BCUREVID_RID_4121:
-		{
-			int vt;
-			tclock = cpuclock / ((spdreg&BCUCLKSPEED_DIVTMASK)>>BCUCLKSPEED_DIVTSHFT);
-			vt = ((spdreg&BCUCLKSPEED_DIVVTMASK)>>BCUCLKSPEED_DIVVTSHFT);
-			if (vt == 0)
-				vtclock = 0; /* XXX */
-			else if (vt < 0x9)
-				vtclock = cpuclock / vt;
-			else
-				vtclock = cpuclock / ((vt - 8)*2+1) * 2;
-		}
-		break;
+	{
+		int vt;
+		tclock = cpuclock / ((spdreg & BCUCLKSPEED_DIVTMASK) >>
+		    BCUCLKSPEED_DIVTSHFT);
+		vt = ((spdreg & BCUCLKSPEED_DIVVTMASK) >>
+		    BCUCLKSPEED_DIVVTSHFT);
+		if (vt == 0)
+			vtclock = 0; /* XXX */
+		else if (vt < 0x9)
+			vtclock = cpuclock / vt;
+		else
+			vtclock = cpuclock / ((vt - 8)*2+1) * 2;
+	}
+	break;
 #endif /* VR4121 */
 #if defined VR4122 || defined VR4131
 	case BCUREVID_RID_4122:
 	case BCUREVID_RID_4131:
-		{
-			int vtdiv;
+	{
+		int vtdiv;
 
-			vtdiv = ((spdreg & BCUCLKSPEED_VTDIVMODE) >>
-			    BCUCLKSPEED_VTDIVSHFT);
-			if (vtdiv == 0 || vtdiv > BCUCLKSPEED_VTDIV6)
-				vtclock = 0; /* XXX */
-			else
-				vtclock = cpuclock / vtdiv;
-			tclock = vtclock /
-			    (((spdreg & BCUCLKSPEED_TDIVMODE) >>
-				BCUCLKSPEED_TDIVSHFT) ? 4 : 2);
-		}
-		break;
+		vtdiv = ((spdreg & BCUCLKSPEED_VTDIVMODE) >>
+		    BCUCLKSPEED_VTDIVSHFT);
+		if (vtdiv == 0 || vtdiv > BCUCLKSPEED_VTDIV6)
+			vtclock = 0; /* XXX */
+		else
+			vtclock = cpuclock / vtdiv;
+		tclock = vtclock /
+		    (((spdreg & BCUCLKSPEED_TDIVMODE) >>
+			BCUCLKSPEED_TDIVSHFT) ? 4 : 2);
+	}
+	break;
 #endif /* VR4122 || VR4131 */
 	default:
 		break;
 	}
 	if (tclock)
 		printf("%s: cpu %d.%03dMHz, bus %d.%03dMHz, ram %d.%03dMHz\n",
-			sc->sc_dev.dv_xname,
-			cpuclock/1000000, (cpuclock%1000000)/1000,
-			tclock/1000000, (tclock%1000000)/1000,
-			vtclock/1000000, (vtclock%1000000)/1000);
+		    sc->sc_dev.dv_xname,
+		    cpuclock/1000000, (cpuclock%1000000)/1000,
+		    tclock/1000000, (tclock%1000000)/1000,
+		    vtclock/1000000, (vtclock%1000000)/1000);
 	else {
 		printf("%s: cpu %d.%03dMHz\n",
-			sc->sc_dev.dv_xname,
-			cpuclock/1000000, (cpuclock%1000000)/1000);
-		printf("%s: UNKNOWN BUS CLOCK SPEED: CPU is UNKNOWN or NOT CONFIGURED\n",
-			sc->sc_dev.dv_xname);
+		    sc->sc_dev.dv_xname,
+		    cpuclock/1000000, (cpuclock%1000000)/1000);
+		printf("%s: UNKNOWN BUS CLOCK SPEED:"
+		    " CPU is UNKNOWN or NOT CONFIGURED\n",
+		    sc->sc_dev.dv_xname);
 	}
 #ifdef VRBCUDEBUG
 	reg = vrbcu_read(sc, BCUCNT1_REG_W);
@@ -241,8 +237,8 @@ vrbcu_dump_regs()
 	bitdisp16(reg);
 #if !defined(ONLY_VR4181)
 	if (cpuid != BCUREVID_FIXRID_4181 
-		&& cpuid <= BCUREVID_RID_4121
-		&& cpuid >= BCUREVID_RID_4102) {
+	    && cpuid <= BCUREVID_RID_4121
+	    && cpuid >= BCUREVID_RID_4102) {
 		reg = vrbcu_read(sc, BCUCNT2_REG_W);
 		printf("vrbcu: CNT2 %x: ",  reg);
 		bitdisp16(reg);
@@ -250,8 +246,8 @@ vrbcu_dump_regs()
 #endif /* !defined ONLY_VR4181 */
 #if !defined(ONLY_VR4181) || !defined(ONLY_VR4122_4131)
 	if (cpuid != BCUREVID_FIXRID_4181
-		&& cpuid <= BCUREVID_RID_4121
-		&& cpuid >= BCUREVID_RID_4102) {
+	    && cpuid <= BCUREVID_RID_4121
+	    && cpuid >= BCUREVID_RID_4102) {
 		reg = vrbcu_read(sc, BCUSPEED_REG_W);
 		printf("vrbcu: SPEED %x: ",  reg);
 		bitdisp16(reg);
@@ -266,8 +262,8 @@ vrbcu_dump_regs()
 #endif /* !defined(ONLY_VR4181) || !defined(ONLY_VR4122_4131) */
 #if !defined(ONLY_VR4181)
 	if (cpuid != BCUREVID_FIXRID_4181 
-		&& cpuid <= BCUREVID_RID_4131
-		&& cpuid >= BCUREVID_RID_4111)
+	    && cpuid <= BCUREVID_RID_4131
+	    && cpuid >= BCUREVID_RID_4111)
 	{
 		reg = vrbcu_read(sc, BCUCNT3_REG_W);
 		printf("vrbcu: CNT3 %x: ",  reg);
@@ -304,13 +300,15 @@ vrbcu_vrip_getcpuid(void)
 	volatile u_int16_t *revreg;
 
 	if (vr_cpuid != -1)
-		return vr_cpuid; 
+		return (vr_cpuid); 
 
 	if (vr_cpuid == -1) {
 		if (VRIP_BCU_ADDR == VR4181_BCU_ADDR)
-			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCU81REVID_REG_W));
+			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
+			    ((VRIP_BCU_ADDR+BCU81REVID_REG_W));
 		else
-			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
+			revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
+			    ((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
 		vr_cpuid = *revreg;
 		vr_cpuid = (vr_cpuid&BCUREVID_RIDMASK)>>BCUREVID_RIDSHFT;
@@ -318,7 +316,7 @@ vrbcu_vrip_getcpuid(void)
 		    && vr_cpuid == BCUREVID_RID_4181) /* conflict vr4101 */
 			vr_cpuid = BCUREVID_FIXRID_4181;
 	}
-	return vr_cpuid;
+	return (vr_cpuid);
 }	
 
 char *
@@ -327,11 +325,12 @@ vrbcu_vrip_getcpuname(void)
 	int cpuid;	
 
 	if (vr_cpuname != NULL)
-		return vr_cpuname;
+		return (vr_cpuname);
 
 	cpuid = vrbcu_vrip_getcpuid();
 	vr_cpuname = cpuname[cpuid];
-	return vr_cpuname;
+
+	return (vr_cpuname);
 }	
 
 
@@ -341,13 +340,15 @@ vrbcu_vrip_getcpumajor(void)
 	volatile u_int16_t *revreg;
 
 	if (vr_major != -1)
-		return vr_major;
+		return (vr_major);
 
-	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
+	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
+	    ((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
 	vr_major = *revreg;
 	vr_major = (vr_major&BCUREVID_MJREVMASK)>>BCUREVID_MJREVSHFT;
-	return vr_major;
+
+	return (vr_major);
 }	
 
 int
@@ -356,13 +357,15 @@ vrbcu_vrip_getcpuminor(void)
 	volatile u_int16_t *revreg;
 
 	if (vr_minor != -1)
-		return vr_minor;
+		return (vr_minor);
 
-	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUREVID_REG_W));
+	revreg = (u_int16_t *)MIPS_PHYS_TO_KSEG1
+	    ((VRIP_BCU_ADDR+BCUREVID_REG_W));
 
 	vr_minor = *revreg;
 	vr_minor = (vr_minor&BCUREVID_MNREVMASK)>>BCUREVID_MNREVSHFT;
-	return vr_minor;
+
+	return (vr_minor);
 }	
 
 #define CLKX	18432000	/* CLKX1,CLKX2: 18.432MHz */
@@ -376,9 +379,13 @@ vrbcu_vrip_getcpuclock(void)
 
 	cpuid = vrbcu_vrip_getcpuid();
 	if (cpuid != BCUREVID_FIXRID_4181 && cpuid >= BCUREVID_RID_4111) {
-		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCUCLKSPEED_REG_W)) & BCUCLKSPEED_CLKSPMASK;
+		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1
+		    ((VRIP_BCU_ADDR+BCUCLKSPEED_REG_W)) &
+		    BCUCLKSPEED_CLKSPMASK;
 	} else if (cpuid == BCUREVID_FIXRID_4181) {
-		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1((VRIP_BCU_ADDR+BCU81CLKSPEED_REG_W)) & BCUCLKSPEED_CLKSPMASK;
+		clksp = *(u_int16_t *)MIPS_PHYS_TO_KSEG1
+		    ((VRIP_BCU_ADDR+BCU81CLKSPEED_REG_W)) &
+		    BCUCLKSPEED_CLKSPMASK;
 	}
 
 	switch (cpuid) {
@@ -422,5 +429,6 @@ vrbcu_vrip_getcpuclock(void)
 		panic("unknown CPU type %d\n", cpuid);
 		break;
 	}
-	return cpuclock;
+
+	return (cpuclock);
 }

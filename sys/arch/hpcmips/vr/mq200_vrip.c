@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_vrip.c,v 1.4 2001/04/18 11:07:27 sato Exp $	*/
+/*	$NetBSD: mq200_vrip.c,v 1.5 2001/09/16 05:32:21 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 Takemura Shin
@@ -53,20 +53,15 @@ struct mq200_vrip_softc {
 	struct mq200_softc	sc_mq200;
 };
 
-static int	mq200_vrip_probe __P((struct device *, struct cfdata *,
-				      void *));
-static void	mq200_vrip_attach __P((struct device *, struct device *,
-				       void *));
+static int	mq200_vrip_probe(struct device *, struct cfdata *, void *);
+static void	mq200_vrip_attach(struct device *, struct device *, void *);
 
 struct cfattach mqvideo_vrip_ca = {
 	sizeof(struct mq200_vrip_softc), mq200_vrip_probe, mq200_vrip_attach
 };
 
 static int
-mq200_vrip_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mq200_vrip_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vrip_attach_args *va = aux;
 	bus_space_handle_t ioh;
@@ -92,9 +87,7 @@ mq200_vrip_probe(parent, cf, aux)
 
 
 static void
-mq200_vrip_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mq200_vrip_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mq200_vrip_softc *vsc = (void *)self;
 	struct mq200_softc *sc = &vsc->sc_mq200;
