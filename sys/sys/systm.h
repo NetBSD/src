@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.141 2002/03/04 02:24:37 simonb Exp $	*/
+/*	$NetBSD: systm.h,v 1.142 2002/03/17 22:19:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -304,6 +304,13 @@ void	domountroothook __P((void));
 void	*exechook_establish __P((void (*)(struct proc *, void *), void *));
 void	exechook_disestablish __P((void *));
 void	doexechooks __P((struct proc *));
+
+/*
+ * Exit hooks. Subsystems may want to do cleanup when a process exits.
+ */
+void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
+void	exithook_disestablish __P((void *));
+void	doexithooks __P((struct proc *));
 
 int	uiomove __P((void *, int, struct uio *));
 
