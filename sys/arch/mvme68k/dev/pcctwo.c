@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.9 2000/12/03 15:37:46 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.10 2001/05/01 07:33:29 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ static struct pcctwo_device pcctwo_devices[] = {
 	{"memc", PCCTWO_MEMC2_OFF},
 	{"clmpcc", PCCTWO_SCC_OFF},
 	{"ie", PCCTWO_IE_OFF},
-	{"ncrsc", PCCTWO_NCRSC_OFF},
+	{"osiop", PCCTWO_NCRSC_OFF},
 	{"lpt", PCCTWO_LPT_OFF},
 	{"nvram", PCCTWO_NVRAM_OFF},
 	{NULL, 0}
