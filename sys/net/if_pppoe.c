@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.2 2001/06/14 05:44:24 itojun Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.3 2001/06/18 12:32:47 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Martin Husemann. All rights reserved.
@@ -294,21 +294,29 @@ static void
 pppoe_input()
 {
 	struct mbuf *m;
-	int idle = 0;
+	int s, disc_done, data_done;
 
-	while (!idle) {
-		idle = 1;
-		if (!IF_IS_EMPTY(&ppoediscinq)) {
+	do {
+		disc_done = 0;
+		data_done = 0;
+		for (;;) {
+			s = splnet();
 			IF_DEQUEUE(&ppoediscinq, m);
-			idle = 0;
+			splx(s);
+			if (m == NULL) break;
+			disc_done = 1;
 			pppoe_disc_input(m);
 		}
-		if (!IF_IS_EMPTY(&ppoeinq)) {
+
+		for (;;) {
+			s = splnet();
 			IF_DEQUEUE(&ppoeinq, m);
-			idle = 0;
+			splx(s);
+			if (m == NULL) break;
+			data_done = 1;
 			pppoe_data_input(m);
 		}
-	}
+	} while (disc_done || data_done);
 }
 
 /* analyze and handle a single received packet while not in session state */
