@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.12 2000/07/15 13:54:45 jdolecek Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.13 2000/07/15 21:40:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.12 2000/07/15 13:54:45 jdolecek Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.13 2000/07/15 21:40:43 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,6 +76,7 @@ const struct mntopt mopts[] = {
 	{ "nrr", 0, ISOFSMNT_NORRIP, 1 },
 	{ "rrip", 1, ISOFSMNT_NORRIP, 1 },
 	{ "joliet", 1, ISOFSMNT_NOJOLIET, 1 },
+	{ "rrcaseins", 0, ISOFSMNT_RRCASEINS, 1 },
 	{ NULL }
 };
 
