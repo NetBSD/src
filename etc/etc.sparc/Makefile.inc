@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2001/11/29 22:46:00 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2002/03/05 19:53:19 thorpej Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -57,9 +57,8 @@ snap_md_post:
 	sh $(TOP)/distrib/sets/makesums -t ${RELEASEDIR}/${dir} '*'
 .endfor
 
-CDBOOTIMAGE!=	cd ${TOP}/distrib/sparc/bootfs; \
-		printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/boot.fs\n" | \
-		${MAKE} -s -f-
+CDBOOTIMAGEDIR!= cd ${TOP}/distrib/sparc/bootfs && ${PRINTOBJDIR}
+CDBOOTIMAGE=	${CDBOOTIMAGEDIR}/boot.fs
 
 iso-image_md_post:
 	mksunbootcd ${RELEASEDIR}/installation/cdrom/netbsd-${MACHINE}.iso \
