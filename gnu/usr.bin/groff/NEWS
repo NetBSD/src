@@ -1,6 +1,73 @@
 This file describes recent user-visible changes in groff.  Bug fixes
 are not described.  There are more details in the man pages.
 
+VERSION 1.10
+============
+
+The directory where data files are installed has been changed from
+/usr/local/lib/groff to /usr/local/share/groff to comply with the
+latest GNU coding standards.
+
+By default groff programs with Unix equivalents are installed with a
+"g" prefix unless there is an existing (non-groff) troff installation.
+
+A new approach is used to make system macro packages available to
+groff.  Instead of simply including /usr/lib/tmac in the list of
+directories searched by groff, the installation process creates for
+each system macro package a wrapper macro package in the groff macro
+directory that references the system macro package.  The groff macro
+packages are now installed with a leading "g" prefix if there is a
+system version of the same macro package, and otherwise without the
+"g" prefix, with the exception that the groff version of -me which is
+always installed as -me.
+
+There is a new device, lj4, for the HP LaserJet 4 (and PCL5
+compatibles).
+
+Groff
+-----
+
+groff has a -S option that prevents the use of unsafe features in pic
+and troff.  This uses a new -S option of pic and the -msafer macros
+for troff.
+
+Troff
+-----
+
+The `blm' request specifies a macro to be invoked when a blank line is
+encountered.
+
+Pic
+---
+
+A -S (safer) option disables the sh command.
+
+Grops
+-----
+
+The -m option enables manual feed.
+
+VERSION 1.09
+============
+
+\(rn will now produce a character that has the traditional metrics,
+and will form corners with \(ul and \(br.  This means that it will not
+align properly with \(sr.  Instead there's a new character
+\[radicalex] which aligns with \(sr; this is used by eqn for doing
+square roots.
+
+Troff
+-----
+
+The `pso' request allows you to read from the standard output of a
+command.
+
+Grops
+-----
+
+The PSPIC macro has options to allow the horizontal alignment of the
+graphic to be specified.
+
 VERSION 1.08
 ============
 
@@ -84,7 +151,7 @@ default device is ps.)
 
 The postprocessor to be used for a particular device is now specified
 by a `postpro' command in the DESC file rather than being compiled
-into groff.  Similarily the command to be used for printing (with the
+into groff.  Similarly the command to be used for printing (with the
 -l option) is now specified by a `print' command in the DESC file.
 
 The groff command no longer specifies eqnchar as an input file for
@@ -106,7 +173,7 @@ The `rchar' request removes a character definition established with `char'.
 Compatibility mode is disabled and the escape character is set to `\'
 while a character definition is being processed.
 
-The `\#' escape sequence is like `\%' except that the terminating
+The `\#' escape sequence is like `\"' except that the terminating
 newline is ignored.
 
 The `shc' request tells troff which character to insert (instead of
@@ -201,7 +268,7 @@ be derived from the $r or $R register.
 The groff -me macros work with -C and (I think) with Unix troff.
 
 For backward compatibility with BSD -me, the \*{ and \*} strings are
-also available as \*[ and \*].  Of course, \*[ will only be useable
+also available as \*[ and \*].  Of course, \*[ will only be usable
 with -C.
 
 The \*T string has been deleted.  Use \*(Tm instead.
@@ -587,7 +654,7 @@ There is a `\C'xxx'' escape sequence equivalent to `\[xxx]'.
 Characters ", ', ), ], *, \(dg are now initially transparent for the purposes
 of end of sentence recognition.
 
-There is an anti-recusion feature in the `char' request, so you can
+There is an anti-recursion feature in the `char' request, so you can
 say `.char \(bu \s+2\(bu\s-2'.
 
 The limit on the number of font positions has been removed.

@@ -1,12 +1,12 @@
+Better selection of paper sizes with -Tps.
+
+Make -Tlj4 work with -X.
+
+Guess man5ext and man7ext variables.
+
 Provide man.sun implementing .TX.
 
-Improve GROFF_PRINT macro in acgroff.m4.
-
-Guess value for `g' variable.
-
-Guess appropriate value for tmac_m and tmac_s
-(if /usr/lib/tmac/tmac.s or /usr/local/lib/groff/tmac/tmac.s exists
-and is not the groff -ms macros then install as -mgs else install as -ms).
+Improve GROFF_PRINT macro in aclocal.m4.
 
 Put all dev* files in a separate subdirectory `font'.
 
@@ -22,3 +22,5 @@ Catch the following error in -me:
 .(z
 .(l C
 .)z
+
+Arrows for next/previous page from R5 xditview.
