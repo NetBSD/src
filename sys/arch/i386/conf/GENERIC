@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.633 2004/10/19 05:44:25 lukem Exp $
+# $NetBSD: GENERIC,v 1.634 2004/10/21 17:12:41 augustss Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.633 $"
+#ident 		"GENERIC-$Revision: 1.634 $"
 
 maxusers	32		# estimated number of users
 
@@ -376,6 +376,9 @@ pci*	at ppb? bus ?
 #options 	PCIBIOS_INTR_GUESS	# see pcibios(4)
 #options 	PCIBIOS_LIBRETTO_FIXUP	# this code makes the Toshiba Libretto
 					# L2/L3 work, but should not be enabled
+					# on anything else.
+#options 	PCIBIOS_SHARP_MM20_FIXUP # this code makes the Sharp MM 20
+					# work, but should not be enabled for
 					# on anything else.
 #options 	PCIINTR_DEBUG		# super-verbose PCI interrupt fixup
 
