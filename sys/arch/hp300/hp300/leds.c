@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.3 1998/08/20 08:33:43 kleink Exp $	*/
+/*	$NetBSD: leds.c,v 1.4 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,7 +60,7 @@ ledinit()
 {
 
 	pmap_enter(pmap_kernel(), (vaddr_t)ledbase, (paddr_t)LED_ADDR,
-		   VM_PROT_READ|VM_PROT_WRITE, TRUE);
+	    VM_PROT_READ|VM_PROT_WRITE, TRUE, VM_PROT_READ|VM_PROT_WRITE);
 	ledaddr = (u_int8_t *) ((long)ledbase | (LED_ADDR & PGOFSET));
 }
 

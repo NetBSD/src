@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 1999/03/24 05:51:08 mrg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 1999/03/26 23:41:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -244,7 +244,8 @@ cpu_startup()
 #else
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), msgbuf_vaddr + i * NBPG,
-		    msgbuf_paddr + i * NBPG, VM_PROT_ALL, TRUE);
+		    msgbuf_paddr + i * NBPG, VM_PROT_READ|VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ|VM_PROT_WRITE);
 #endif
 	initmsgbuf((caddr_t)msgbuf_vaddr, round_page(MSGBUFSIZE));
 
@@ -301,7 +302,8 @@ cpu_startup()
 			pmap_kenter_pgs(curbuf, &pg, 1);
 #else
 			pmap_enter(kernel_map->pmap, curbuf,
-				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
+			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
+			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
 #endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;

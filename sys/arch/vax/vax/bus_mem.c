@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_mem.c,v 1.3 1999/03/24 05:51:16 mrg Exp $ */
+/*	$NetBSD: bus_mem.c,v 1.4 1999/03/26 23:41:38 mycroft Exp $ */
 /*
  * Copyright (c) 1998 Matt Thomas
  * All rights reserved.
@@ -67,7 +67,7 @@ vax_mem_add_mapping(
 
 	for (; pa < endpa; pa += VAX_NBPG, va += VAX_NBPG) {
 		pmap_enter(pmap_kernel(), va, pa,
-		    VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE, 0);
 	}
 
 	return 0;   

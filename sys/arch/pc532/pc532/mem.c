@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 1999/03/24 05:51:09 mrg Exp $	*/
+/*	$NetBSD: mem.c,v 1.21 1999/03/26 23:41:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -96,6 +96,7 @@ mmrw(dev, uio, flags)
 	struct iovec *iov;
 	int error = 0;
 	static int physlock;
+	vm_prot_t prot;
 
 	if (minor(dev) == 0) {
 		/* lock against other uses of shared vmmap */
@@ -121,26 +122,16 @@ mmrw(dev, uio, flags)
 
 /* minor device 0 is physical memory */
 		case 0:
-#if defined(PMAP_NEW)
 			v = uio->uio_offset;
-			pmap_kenter_pa((vaddr_t)vmmap, trunc_page(v),
-			    (uio->uio_rw == UIO_READ) ? VM_PROT_READ :
-			    VM_PROT_ALL);
-			o = uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (int)(NBPG - o));
-			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_kremove((vaddr_t)vmmap, NBPG);
-#else /* PMAP_NEW */
-			v = uio->uio_offset;
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
-			    trunc_page(v), uio->uio_rw == UIO_READ ?
-			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
+			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
+			    VM_PROT_WRITE;
+			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			    trunc_page(v), prot, TRUE, prot);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
 			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
 			    (vaddr_t)vmmap + NBPG);
-#endif /* PMAP_NEW */
 			break;
 
 /* minor device 1 is kernel memory */
