@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.5 2003/04/22 16:48:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.4 2003/04/16 21:44:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.5 2003/04/22 16:48:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,6 +204,13 @@ ntfs_mountroot()
 static void
 ntfs_init()
 {
+#ifdef _LKM
+	malloc_type_attach(M_NTFSMNT);
+	malloc_type_attach(M_NTFSNTNODE);
+	malloc_type_attach(M_NTFSFNODE);
+	malloc_type_attach(M_NTFSDIR);
+	malloc_type_attach(M_NTFSNTHASH);
+#endif
 	ntfs_nthashinit();
 	ntfs_toupper_init();
 }
@@ -218,6 +225,13 @@ static void
 ntfs_done()
 {
 	ntfs_nthashdone();
+#ifdef _LKM
+	malloc_type_detach(M_NTFSMNT);
+	malloc_type_detach(M_NTFSNTNODE);
+	malloc_type_detach(M_NTFSFNODE);
+	malloc_type_detach(M_NTFSDIR);
+	malloc_type_detach(M_NTFSNTHASH);
+#endif
 }
 
 #elif defined(__FreeBSD__)
