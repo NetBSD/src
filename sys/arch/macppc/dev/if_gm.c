@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.10 2000/12/28 22:59:09 sommerfeld Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.11 2001/04/20 01:18:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -398,6 +398,7 @@ next:
 		dp->cmd_hi = 0;
 		__asm __volatile ("sync");
 		dp->cmd = htole32(GMAC_OWN);
+		__asm __volatile ("eieio");	/* force out the OWN bit */
 	}
 	sc->sc_rxlast = i;
 }
