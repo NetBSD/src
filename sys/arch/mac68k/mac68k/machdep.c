@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.266 2001/11/20 03:19:43 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.267 2001/11/20 07:45:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,6 +144,8 @@
 #endif
 #include <mac68k/dev/zs_cons.h>
 
+int symsize, end, *ssym, *esym;
+
 /* The following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
@@ -223,6 +225,9 @@ void	initcpu __P((void));
 int	cpu_dumpsize __P((void));
 int	cpu_dump __P((int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t *));
 void	cpu_init_kcore_hdr __P((void));
+
+void		getenvvars __P((u_long, char *));
+static long	getenv __P((char *));
 
 /* functions called from locore.s */
 void	dumpsys __P((void));
@@ -342,12 +347,8 @@ consinit(void)
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */
-		{
-			extern int end;
-			extern int *esym;
 
-			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-		}
+		ddb_init(symsize, ssym, esym);
 #endif
 
 		if (boothowto & RB_KDB) {
@@ -1053,8 +1054,6 @@ static char *envbuf = NULL;
 /*
  * getenvvars: Grab a few useful variables
  */
-void		getenvvars __P((u_long, char *));
-static long	getenv __P((char *));
 
 void
 getenvvars(flag, buf)
@@ -1064,9 +1063,13 @@ getenvvars(flag, buf)
 	extern u_long bootdev;
 	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
-	extern int *esym;
-	extern int end;
 	int root_scsi_id;
+#ifdef	__ELF__
+	int i;
+	Elf_Ehdr *ehdr;
+	Elf_Shdr *shp;
+	vaddr_t minsym;
+#endif
 
 	/*
 	 * If flag & 0x80000000 == 0, then we're booting with the old booter
@@ -1160,6 +1163,38 @@ getenvvars(flag, buf)
 	HwCfgFlags3 = getenv("HWCFGFLAG3");
  	ADBReInit_JTBL = getenv("ADBREINIT_JTBL");
  	mrg_ADBIntrPtr = (caddr_t)getenv("ADBINTERRUPT");
+
+#ifdef	__ELF__
+	/*
+	 * Check the ELF headers.
+	 */
+
+	ehdr = (void *)getenv("MARK_SYM");
+	if (memcmp(ehdr->e_ident, ELFMAG, SELFMAG) != 0 ||
+	    ehdr->e_ident[EI_CLASS] != ELFCLASS32) {
+		return;
+	}
+
+	/*
+	 * Find the end of the symbols and strings.
+	 */
+
+	minsym = ~0;
+	shp = (Elf_Shdr *)(end + ehdr->e_shoff);
+	for (i = 0; i < ehdr->e_shnum; i++) {
+		if (shp[i].sh_type != SHT_SYMTAB &&
+		    shp[i].sh_type != SHT_STRTAB) {
+			continue;
+		}
+		minsym = MIN(minsym, (vaddr_t)end + shp[i].sh_offset);
+	}
+
+	symsize = 1;
+	ssym = (int *)ehdr;
+#else
+	symsize = *(int *)&end;
+	ssym = ((int *)&end) + 1;
+#endif
 }
 
 static long
