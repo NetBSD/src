@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.35 2001/01/15 22:17:09 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.36 2001/03/05 16:20:33 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.35 2001/01/15 22:17:09 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.36 2001/03/05 16:20:33 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.35 2001/01/15 22:17:09 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.36 2001/03/05 16:20:33 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -213,7 +213,7 @@ Make_OODate (gn)
 	 * always out of date if no children and :: target
 	 * or non-existent.
 	 */
-	oodate = (gn->cmtime == 0 || Arch_LibOODate (gn) || 
+	oodate = (gn->mtime == 0 || Arch_LibOODate (gn) || 
 		  (gn->cmtime == 0 && (gn->type & OP_DOUBLEDEP)));
     } else if (gn->type & OP_JOIN) {
 	/*
