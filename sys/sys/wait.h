@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wait.h	7.17 (Berkeley) 6/19/91
- *	$Id: wait.h,v 1.3 1993/05/20 16:23:59 cgd Exp $
+ *	$Id: wait.h,v 1.4 1993/10/11 18:18:10 jtc Exp $
  */
 
 #ifndef _SYS_WAIT_H_
@@ -150,15 +150,16 @@ union wait {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-struct rusage;	/* forward declaration */
-
 pid_t	wait __P((int *));
 pid_t	waitpid __P((pid_t, int *, int));
+
 #ifndef _POSIX_SOURCE
+struct rusage;	/* forward declaration */
 pid_t	wait3 __P((int *, int, struct rusage *));
 pid_t	wait4 __P((pid_t, int *, int, struct rusage *));
-#endif
+#endif /* !_POSIX_SOURCE */
 __END_DECLS
-#endif
+
+#endif /* !KERNEL */
 
 #endif /* !_SYS_WAIT_H_ */
