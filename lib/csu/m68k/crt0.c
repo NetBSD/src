@@ -1,6 +1,7 @@
-/*	$NetBSD: crt0.c,v 1.15 1996/10/18 05:36:53 thorpej Exp $	*/
+/*	$NetBSD: crt0.c,v 1.16 1996/12/08 00:39:42 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
  *
@@ -32,39 +33,43 @@
 
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: crt0.c,v 1.15 1996/10/18 05:36:53 thorpej Exp $";
+static char rcsid[] = "$NetBSD: crt0.c,v 1.16 1996/12/08 00:39:42 thorpej Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
+
 #include <stdlib.h>
 
 #include "common.h"
 
-extern void	start __P((void)) asm("start");
+extern unsigned char	etext;
+extern unsigned char	eprol asm("eprol");
+extern void		start __P((void)) asm("start");
+
+__asm("
+	.text
+	.align	2
+	.globl	start
+start:
+	movel	a2,___ps_strings
+	movel	sp@,d0
+	lea	sp@(8,d0:l:4),a0
+	lea	sp@(4),a1
+	movel	a0,sp@-
+	movel	a1,sp@-
+	movel	d0,sp@-
+	jsr	___start
+");
 
 void
-start()
+__start(argc, argv, envp)
+	int argc;
+	char *argv[];
+	char *envp[];
 {
-	struct kframe {
-		int	kargc;
-		char	*kargv[1];	/* size depends on kargc */
-		char	kargstr[1];	/* size varies */
-		char	kenvstr[1];	/* size varies */
-	};
-	/*
-	 *	ALL REGISTER VARIABLES!!!
-	 */
-	register struct kframe *kfp;
-	register char **argv, *ap;
+	char *ap;
 
-#ifdef lint
-	kfp = 0;
-	initcode = initcode = 0;
-#else /* not lint */
-	asm("lea a6@(4),%0" : "=r" (kfp));	/* catch it quick */
-#endif /* not lint */
-	argv = &kfp->kargv[0];
-	environ = argv + kfp->kargc + 1;
+	environ = envp;
 
 	if (ap = argv[0])
 		if ((__progname = _strrchr(ap, '/')) == NULL)
@@ -82,33 +87,38 @@ start()
 		__load_rtld(&_DYNAMIC);
 #endif /* DYNAMIC */
 
-asm("eprol:");
-
 #ifdef MCRT0
 	atexit(_mcleanup);
 	monstartup((u_long)&eprol, (u_long)&etext);
-#endif MCRT0
+#endif /* MCRT0 */
 
-asm ("__callmain:");		/* Defined for the benefit of debuggers */
-	exit(main(kfp->kargc, argv, environ));
+__asm("__callmain:");		/* Defined for the benefit of debuggers */
+	exit(main(argc, argv, envp));
 }
 
 #ifdef DYNAMIC
-	asm("	___syscall:");
-	asm("		movel	a7@+,a0");	/* return address */
-	asm("		movel	a7@,d0");	/* syscall number */
-	asm("		movel	a0,a7@");
-	asm("		trap	#0");		/* do system call */
-	asm("		bcc	1f");		/* check error */
-	asm("		moveq	#-1,d0");
-	asm("	1:	movel	a7@,a0");	/* get return address, leave */
-	asm("		jmp	a0@");		/* correct amount on stack */
-
+__asm("
+	.text
+	.align	2
+___syscall:
+	movel	a7@+,a0
+	movel	a7@,d0
+	movel	a0,a7@
+	trap	#0
+	bcs	1f
+	jmp	a0@
+1:
+	moveq	#-1,d0
+	jmp	a0@
+");
 #endif /* DYNAMIC */
 
 #include "common.c"
 
 #ifdef MCRT0
-asm ("	.text");
-asm ("_eprol:");
-#endif
+__asm("
+	.text
+	.align	2
+eprol:
+");
+#endif /* MCRT0 */
