@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.44 2003/11/30 14:36:44 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.45 2004/06/06 06:06:59 christos Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,7 @@
 
 
 /* prototypes */
-
+const char *fdtype = "msdos";
 
 int
 md_get_info(void)
