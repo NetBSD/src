@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 1997/11/01 06:49:52 lukem Exp $ */
+/*	$NetBSD: installboot.c,v 1.3 1997/12/17 21:30:23 scw Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg
@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/disklabel.h>
 
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
@@ -146,6 +147,9 @@ main(argc, argv)
 	/* Write patched proto bootblocks into the superblock */
 	if (protosize > SBSIZE - DEV_BSIZE)
 		errx(1, "proto bootblocks too big");
+
+	/* The primary bootblock needs to be written to the raw partition */
+	dev[strlen(dev) - 1] = 'a' + RAW_PART;
 
 	if ((devfd = open(dev, O_RDWR, 0)) < 0)
 		err(1, "open: %s", dev);
