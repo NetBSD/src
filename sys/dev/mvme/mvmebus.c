@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.8 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.9 2004/06/06 13:34:36 he Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.8 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.9 2004/06/06 13:34:36 he Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -922,7 +922,7 @@ mvmebus_mod_string(addr, len, am, ds)
 	snprintf(mstring, sizeof(mstring),
 	    adrfmt[(am & VME_AM_ADRSIZEMASK) >> VME_AM_ADRSIZESHIFT],
 	    addr, addr + len - 1);
-	strlcat(mstring, dsiz[ds & 0x7], sizeof(mstring, sizeof(mstring)));
+	strlcat(mstring, dsiz[ds & 0x7], sizeof(mstring));
 
 	if (MVMEBUS_AM_HAS_CAP(am)) {
 		if (am & MVMEBUS_AM_CAP_DATA)
