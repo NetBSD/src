@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.7 2002/03/16 16:55:55 martin Exp $
+# $NetBSD: GENERIC_ISDN,v 1.8 2002/03/25 16:39:52 martin Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -49,9 +49,11 @@ isic* at isapnp?
 #---------------------------------------------------------------------
 # Supported PCI cards:
 #
-options 	ISICPCI_ELSA_QS1PCI	# ELSA QuickStep 1000 (PCI Version)
-options 	ISICPCI_AVM_A1		# AVM Fritz!Card (PCI Version)
 isic* at pci?
+
+# AVM Fritz!PCI card
+ifpci* at pci?
+
 #
 #---------------------------------------------------------------------
 # Supported PCMCIA cards:

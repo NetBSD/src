@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.6 2002/03/24 20:35:45 martin Exp $ 
+ *	$Id: hscx.c,v 1.7 2002/03/25 16:39:54 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.6 2002/03/24 20:35:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.7 2002/03/25 16:39:54 martin Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -287,7 +287,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 
 				/* silence detection */
 				
-				if(!(isic_hscx_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
+				if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
 					activity = ACT_RX;
 
 				if(!(IF_QFULL(&chan->rx_queue)))
@@ -377,7 +377,7 @@ isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex
 				
 				if(chan->bprot == BPROT_NONE)
 				{
-					if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
+					if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
 						activity = ACT_TX;
 				}
 				else
