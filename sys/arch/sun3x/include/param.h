@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 1997/09/19 13:55:40 leo Exp $	*/
+/*	$NetBSD: param.h,v 1.9 1997/09/20 12:12:24 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,10 +65,6 @@
 #define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
-
-#ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
-#endif
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
