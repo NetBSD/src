@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 1995/01/18 06:42:56 mellon Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7 1995/05/04 19:48:46 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -172,6 +172,17 @@ configure()
 						drp->d_name, i);
 				tc_slot_info[i].intr = drp->d_intr;
 				tc_slot_info[i].unit = cp->pmax_unit;
+
+				/*
+				 * Only enable interrupts if there is an
+				 * interrupt handler for it. (e.g., PMAG-BA 
+				 * can't disable the vertical retrace interrupt
+				 * and we might want to ignore it).
+				 */
+				printf("autoenable %s pri %d\n",
+					drp->d_name, i);
+				(*tc_enable_interrupt)(i, 1);
+				/*cp->pmax_alive = 1;*/ /*XXX*/
 			}
 			break;
 #endif /* DS5000 */
