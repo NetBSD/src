@@ -46,14 +46,14 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #include <netbsd.h>
 
 /* On the ARM `@' introduces a comment, so we must use something else
-   for .type directives.  */
+   for .type directives.  Most NetBSD platforms use %, but we use #
+   because of some legacy assemblers.  */
 #undef TYPE_OPERAND_FMT
-/* XXX our arm assembler seems to really want # for type specs -- cgd */
 #define TYPE_OPERAND_FMT "#%s"
 
 /* Until they use ELF or something that handles dwarf2 unwinds
    and initialization stuff better.  */
-#undef DWARF2_UNWIND_INFO
+#define DWARF2_UNWIND_INFO 0
 
 /* Some defines for CPP.  arm32 is the NetBSD port name, so we always (only)
    define __arm32__ and __NetBSD__, and add __KPRINTF_ATTRIBUTE__ since
