@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.1.4.7 2002/10/22 04:12:11 thorpej Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.1.4.8 2002/10/25 14:58:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -103,6 +103,7 @@ ASENTRY_NP(irq_entry)
 	mov	r0, sp
 	mov	lr, pc
 	ldr	pc, .Lpmc_dispatch
+.Lpmc_intr_return:
 #endif
 
 	/*
