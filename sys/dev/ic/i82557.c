@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.26 2000/05/12 03:35:57 jhawk Exp $	*/
+/*	$NetBSD: i82557.c,v 1.27 2000/05/19 16:00:30 jhawk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -1370,13 +1370,15 @@ fxp_init(sc)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDCONFIGOFF);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	i = 10000;
+	i = 1000;
 	do {
 		FXP_CDCONFIGSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		DELAY(1);
 	} while ((cbp->cb_status & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
-		printf("%s: dmasync timeout\n", sc->sc_dev.dv_xname);
+		printf("%s at line %d: dmasync timeout\n",
+		    sc->sc_dev.dv_xname, __LINE__);
 		return ETIMEDOUT;
 	}
 
@@ -1400,15 +1402,18 @@ fxp_init(sc)
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->sc_cddma + FXP_CDIASOFF);
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	i = 10000;
+	i = 1000;
 	do {
 		FXP_CDIASSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		DELAY(1);
 	} while ((cb_ias->cb_status & FXP_CB_STATUS_C) == 0 && --i);
 	if (i == 0) {
-		printf("%s: dmasync timeout\n", sc->sc_dev.dv_xname);
+		printf("%s at line %d: dmasync timeout\n",
+		    sc->sc_dev.dv_xname, __LINE__);
 		return ETIMEDOUT;
 	}
+
 	/*
 	 * Initialize the transmit descriptor ring.  txlast is initialized
 	 * to the end of the list so that it will wrap around to the first
@@ -1842,12 +1847,13 @@ fxp_mc_setup(sc)
 	 * Wait until the command unit is not active.  This should never
 	 * happen since nothing is queued, but make sure anyway.
 	 */
-	count = 10000;
+	count = 100;
 	while ((CSR_READ_1(sc, FXP_CSR_SCB_RUSCUS) >> 6) ==
 	    FXP_SCB_CUS_ACTIVE && --count)
-		/* nothing */ ;
+		DELAY(1);
 	if (count == 0) {
-		printf("%s: command queue timeout\n", sc->sc_dev.dv_xname);
+		printf("%s at line %d: command queue timeout\n",
+		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
 
@@ -1859,13 +1865,15 @@ fxp_mc_setup(sc)
 	CSR_WRITE_1(sc, FXP_CSR_SCB_COMMAND, FXP_SCB_COMMAND_CU_START);
 
 	/* ...and wait for it to complete. */
-	count = 10000;
+	count = 1000;
 	do {
 		FXP_CDMCSSYNC(sc,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		DELAY(1);
 	} while ((mcsp->cb_status & FXP_CB_STATUS_C) == 0 && --count);
 	if (count == 0) {
-		printf("%s: dmasync timeout\n", sc->sc_dev.dv_xname);
+		printf("%s at line %d: dmasync timeout\n",
+		    sc->sc_dev.dv_xname, __LINE__);
 		return;
 	}
 }
