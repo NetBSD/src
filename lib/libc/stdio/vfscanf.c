@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfscanf.c	5.7 (Berkeley) 12/14/92";*/
-static char *rcsid = "$Id: vfscanf.c,v 1.6 1993/08/26 00:47:35 jtc Exp $";
+static char *rcsid = "$Id: vfscanf.c,v 1.7 1994/05/22 23:21:44 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -98,7 +98,7 @@ static u_char *__sccl();
 __svfscanf(fp, fmt0, ap)
 	register FILE *fp;
 	char const *fmt0;
-	_VA_LIST_ ap;
+	_BSD_VA_LIST_ ap;
 {
 	register u_char *fmt = (u_char *)fmt0;
 	register int c;		/* character from format, or conversion */
