@@ -1,4 +1,4 @@
-/*	$NetBSD: pio.h,v 1.4 1997/12/11 09:31:00 sakamoto Exp $ */
+/*	$NetBSD: pio.h,v 1.5 1997/12/12 03:08:29 sakamoto Exp $ */
 /*	$OpenBSD: pio.h,v 1.1 1997/10/13 10:53:47 pefo Exp $ */
 
 /*
@@ -173,8 +173,8 @@ __inlrb(a)
 static __inline void
 __outsb(a,s,c)
 	volatile u_int8_t *a;
-	u_int8_t *s;
-	int c;
+	const u_int8_t *s;
+	size_t c;
 {
 	while (c--)
 		*a = *s++;
@@ -184,8 +184,8 @@ __outsb(a,s,c)
 static __inline void
 __outsw(a,s,c)
 	volatile u_int16_t *a;
-	u_int16_t *s;
-	int c;
+	const u_int16_t *s;
+	size_t c;
 {
 	while (c--)
 		*a = *s++;
@@ -195,8 +195,8 @@ __outsw(a,s,c)
 static __inline void
 __outsl(a,s,c)
 	volatile u_int32_t *a;
-	u_int32_t *s;
-	int c;
+	const u_int32_t *s;
+	size_t c;
 {
 	while (c--)
 		*a = *s++;
@@ -206,8 +206,8 @@ __outsl(a,s,c)
 static __inline void
 __outswrb(a,s,c)
 	volatile u_int16_t *a;
-	u_int16_t *s;
-	int c;
+	const u_int16_t *s;
+	size_t c;
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
@@ -219,8 +219,8 @@ __outswrb(a,s,c)
 static __inline void
 __outslrb(a,s,c)
 	volatile u_int32_t *a;
-	u_int32_t *s;
-	int c;
+	const u_int32_t *s;
+	size_t c;
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
@@ -233,7 +233,7 @@ static __inline void
 __insb(a,d,c)
 	volatile u_int8_t *a;
 	u_int8_t *d;
-	int c;
+	size_t c;
 {
 	while (c--)
 		*d++ = *a;
@@ -244,7 +244,7 @@ static __inline void
 __insw(a,d,c)
 	volatile u_int16_t *a;
 	u_int16_t *d;
-	int c;
+	size_t c;
 {
 	while (c--)
 		*d++ = *a;
@@ -255,7 +255,7 @@ static __inline void
 __insl(a,d,c)
 	volatile u_int32_t *a;
 	u_int32_t *d;
-	int c;
+	size_t c;
 {
 	while (c--)
 		*d++ = *a;
@@ -266,7 +266,7 @@ static __inline void
 __inswrb(a,d,c)
 	volatile u_int16_t *a;
 	u_int16_t *d;
-	int c;
+	size_t c;
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
@@ -279,7 +279,7 @@ static __inline void
 __inslrb(a,d,c)
 	volatile u_int32_t *a;
 	u_int32_t *d;
-	int c;
+	size_t c;
 {
 	u_int32_t _p_ = (u_int32_t)a;
 
