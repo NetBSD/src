@@ -1,4 +1,4 @@
-/* $NetBSD: lcareg.h,v 1.5 1997/04/07 01:59:58 cgd Exp $ */
+/* $NetBSD: lcareg.h,v 1.6 1997/06/03 21:54:06 cgd Exp $ */
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -31,8 +31,8 @@
  * 21066 chip registers
  */
 
-#define REGVAL(r)	(*(int32_t *)ALPHA_PHYS_TO_K0SEG(r))
-#define REGVAL64(r)	(*(int64_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define REGVAL(r)	(*(volatile int32_t *)ALPHA_PHYS_TO_K0SEG(r))
+#define REGVAL64(r)	(*(volatile int64_t *)ALPHA_PHYS_TO_K0SEG(r))
 
 /*
  * Base addresses
