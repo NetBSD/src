@@ -1,4 +1,4 @@
-/*	$NetBSD: vsscanf.c,v 1.10 1999/09/20 04:39:35 lukem Exp $	*/
+/*	$NetBSD: vsscanf.c,v 1.10.10.1 2002/01/28 20:51:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vsscanf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsscanf.c,v 1.10 1999/09/20 04:39:35 lukem Exp $");
+__RCSID("$NetBSD: vsscanf.c,v 1.10.10.1 2002/01/28 20:51:15 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: vsscanf.c,v 1.10 1999/09/20 04:39:35 lukem Exp $");
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#include "local.h"
 
 static int eofread __P((void *, char *, int));
 
@@ -69,16 +70,18 @@ vsscanf(str, fmt, ap)
 	_BSD_VA_LIST_ ap;
 {
 	FILE f;
+	struct __sfileext fext;
 
 	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(fmt != NULL);
 
+	_FILEEXT_SETUP(&f, &fext);
 	f._flags = __SRD;
 	/* LINTED we don't touch str */
 	f._bf._base = f._p = (unsigned char *)str;
 	f._bf._size = f._r = strlen(str);
 	f._read = eofread;
-	f._ub._base = NULL;
+	_UB(&f)._base = NULL;
 	f._lb._base = NULL;
 	return (__svfscanf(&f, fmt, ap));
 }

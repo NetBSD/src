@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetround.S,v 1.7 1999/10/25 23:48:10 thorpej Exp $	*/
+/*	$NetBSD: fpgetround.S,v 1.7.8.1 2002/01/28 20:49:52 nathanw Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 6, 1995
@@ -7,7 +7,12 @@
 
 #include <machine/asm.h>
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpgetround, _fpgetround)
+ENTRY(_fpgetround)
+#else
 ENTRY(fpgetround)
+#endif
 	fmovel %fpcr,%d0
 	bfextu %d0{#26:#2},%d0
 	rts

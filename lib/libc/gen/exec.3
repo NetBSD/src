@@ -1,4 +1,4 @@
-.\"	$NetBSD: exec.3,v 1.10.12.1 2001/10/08 20:18:49 nathanw Exp $
+.\"	$NetBSD: exec.3,v 1.10.12.2 2002/01/28 20:50:30 nathanw Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -140,13 +140,13 @@ and
 .Fn execvp
 will duplicate the actions of the shell in searching for an executable file
 if the specified file name does not contain a slash
-.Dq Li /
+.Dq Li \&/
 character.
-The search path is the path specified in the environment by
-.Dq Ev PATH
+The search path is the path specified in the environment by the
+.Ev PATH
 variable.
 If this variable isn't specified, the default path
-.Dq Ev /bin:/usr/bin:
+.Pa /bin:/usr/bin:
 is
 used.
 In addition, certain errors are treated specially.

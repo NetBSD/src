@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.7 1999/01/14 22:48:21 kleink Exp $	*/
+/*	$NetBSD: SYS.h,v 1.7.12.1 2002/01/28 20:50:04 nathanw Exp $	*/
 
 #include <machine/asm.h>
 #include <sys/syscall.h>
@@ -36,3 +36,6 @@
 #define RSYSCALL_NOERROR(x)	PSEUDO_NOERROR(x,x)
 
 #define RSYSCALL(x)		PSEUDO(x,x)
+
+#define	WSYSCALL(weak,strong)	WEAK_ALIAS(weak,strong)		;\
+				PSEUDO(strong,weak)

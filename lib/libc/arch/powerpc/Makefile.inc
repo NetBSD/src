@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.2.10.1 2001/10/08 20:17:52 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.2.10.2 2002/01/28 20:50:03 nathanw Exp $
 
 KMINCLUDES=
-KMSRCS=
+KMSRCS=	arch/powerpc/string/ffs.S
 
 .if (${MKSOFTFLOAT} != "no")
 CPPFLAGS+= -DSOFTFLOAT_NEED_FIXUNS

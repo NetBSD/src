@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.15 1998/12/09 12:42:48 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.15.12.1 2002/01/28 20:50:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)hash.c	8.9 (Berkeley) 6/16/94";
 #else
-__RCSID("$NetBSD: hash.c,v 1.15 1998/12/09 12:42:48 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.15.12.1 2002/01/28 20:50:24 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -220,7 +220,7 @@ __hash_open(file, flags, mode, info, dflags)
 
 #ifdef DEBUG
 	(void)fprintf(stderr,
-"%s\n%s%x\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
+"%s\n%s%p\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
 	    "init_htab:",
 	    "TABLE POINTER   ", hashp,
 	    "BUCKET SIZE     ", hashp->BSIZE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpool.c,v 1.12 2000/01/22 22:19:08 mycroft Exp $	*/
+/*	$NetBSD: mpool.c,v 1.12.6.1 2002/01/28 20:50:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,12 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)mpool.c	8.5 (Berkeley) 7/26/94";
 #else
-__RCSID("$NetBSD: mpool.c,v 1.12 2000/01/22 22:19:08 mycroft Exp $");
+__RCSID("$NetBSD: mpool.c,v 1.12.6.1 2002/01/28 20:50:26 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 

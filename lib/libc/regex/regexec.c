@@ -1,4 +1,4 @@
-/*	$NetBSD: regexec.c,v 1.15 2000/01/22 22:19:17 mycroft Exp $	*/
+/*	$NetBSD: regexec.c,v 1.15.6.1 2002/01/28 20:50:44 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regexec.c,v 1.15 2000/01/22 22:19:17 mycroft Exp $");
+__RCSID("$NetBSD: regexec.c,v 1.15.6.1 2002/01/28 20:50:44 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,10 +130,13 @@ __weak_alias(regexec,_regexec)
 #define	ASSIGN(d, s)	memcpy(d, s, (size_t)m->g->nstates)
 #define	EQ(a, b)	(memcmp(a, b, (size_t)m->g->nstates) == 0)
 #define	STATEVARS	int vn; char *space
-#define	STATESETUP(m, nv) { (m)->space = malloc((size_t)((nv)*(m)->g->nstates)); \
-				if ((m)->space == NULL) return(REG_ESPACE); \
-				(m)->vn = 0; }
-#define	STATETEARDOWN(m)	{ free((m)->space); }
+#define	STATESETUP(m, nv) \
+    if (((m)->space = malloc((size_t)((nv)*(m)->g->nstates))) == NULL) \
+	return(REG_ESPACE); \
+    else \
+	(m)->vn = 0
+
+#define	STATETEARDOWN(m)	{ free((m)->space); m->space = NULL; }
 #define	SETUP(v)	((v) = &m->space[(size_t)(m->vn++ * m->g->nstates)])
 #define	onestate	int
 #define	INIT(o, n)	((o) = (n))

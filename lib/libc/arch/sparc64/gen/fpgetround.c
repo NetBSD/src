@@ -1,11 +1,19 @@
-/*	$NetBSD: fpgetround.c,v 1.1 1998/09/11 04:56:24 eeh Exp $	*/
+/*	$NetBSD: fpgetround.c,v 1.1.12.1 2002/01/28 20:50:18 nathanw Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 10, 1995
  * Public domain.
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <ieeefp.h>
+
+#ifdef __weak_alias
+__weak_alias(fpgetround,_fpgetround)
+#endif
 
 fp_rnd
 fpgetround()

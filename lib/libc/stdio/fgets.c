@@ -1,4 +1,4 @@
-/*	$NetBSD: fgets.c,v 1.13 1999/11/14 18:19:57 explorer Exp $	*/
+/*	$NetBSD: fgets.c,v 1.13.6.1 2002/01/28 20:50:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
 #else
-__RCSID("$NetBSD: fgets.c,v 1.13 1999/11/14 18:19:57 explorer Exp $");
+__RCSID("$NetBSD: fgets.c,v 1.13.6.1 2002/01/28 20:50:53 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,6 +72,7 @@ fgets(buf, n, fp)
 		return (NULL);
 
 	FLOCKFILE(fp);
+	_SET_ORIENTATION(fp, -1);
 	s = buf;
 	n--;			/* leave space for NUL */
 	while (n != 0) {

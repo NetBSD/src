@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_seq.c,v 1.11 1998/12/09 12:42:47 christos Exp $	*/
+/*	$NetBSD: bt_seq.c,v 1.11.12.1 2002/01/28 20:50:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_seq.c	8.7 (Berkeley) 7/20/94";
 #else
-__RCSID("$NetBSD: bt_seq.c,v 1.11 1998/12/09 12:42:47 christos Exp $");
+__RCSID("$NetBSD: bt_seq.c,v 1.11.12.1 2002/01/28 20:50:23 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -252,7 +252,7 @@ __bt_seqadv(t, ep, flags)
 {
 	CURSOR *c;
 	PAGE *h;
-	indx_t index = 0;	/* pacify gcc */
+	indx_t idx = 0;	/* pacify gcc */
 	pgno_t pg;
 	int exact;
 
@@ -290,15 +290,15 @@ __bt_seqadv(t, ep, flags)
 		 */
 		if (F_ISSET(c, CURS_AFTER))
 			goto usecurrent;
-		index = c->pg.index;
-		if (++index == NEXTINDEX(h)) {
+		idx = c->pg.index;
+		if (++idx == NEXTINDEX(h)) {
 			pg = h->nextpg;
 			mpool_put(t->bt_mp, h, 0);
 			if (pg == P_INVALID)
 				return (RET_SPECIAL);
 			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 				return (RET_ERROR);
-			index = 0;
+			idx = 0;
 		}
 		break;
 	case R_PREV:			/* Previous record. */
@@ -313,22 +313,22 @@ usecurrent:		F_CLR(c, CURS_AFTER | CURS_BEFORE);
 			ep->index = c->pg.index;
 			return (RET_SUCCESS);
 		}
-		index = c->pg.index;
-		if (index == 0) {
+		idx = c->pg.index;
+		if (idx == 0) {
 			pg = h->prevpg;
 			mpool_put(t->bt_mp, h, 0);
 			if (pg == P_INVALID)
 				return (RET_SPECIAL);
 			if ((h = mpool_get(t->bt_mp, pg, 0)) == NULL)
 				return (RET_ERROR);
-			index = NEXTINDEX(h) - 1;
+			idx = NEXTINDEX(h) - 1;
 		} else
-			--index;
+			--idx;
 		break;
 	}
 
 	ep->page = h;
-	ep->index = index;
+	ep->index = idx;
 	return (RET_SUCCESS);
 }
 
@@ -445,13 +445,13 @@ __bt_first(t, key, erval, exactp)
  * Parameters:
  *	t:	the tree
  *   pgno:	page number
- *  index:	page index
+ *    idx:	page index
  */
 void
-__bt_setcur(t, pgno, index)
+__bt_setcur(t, pgno, idx)
 	BTREE *t;
 	pgno_t pgno;
-	u_int index;
+	u_int idx;
 {
 	/* Lose any already deleted key. */
 	if (t->bt_cursor.key.data != NULL) {
@@ -463,6 +463,6 @@ __bt_setcur(t, pgno, index)
 
 	/* Update the cursor. */
 	t->bt_cursor.pg.pgno = pgno;
-	t->bt_cursor.pg.index = index;
+	t->bt_cursor.pg.index = idx;
 	F_SET(&t->bt_cursor, CURS_INIT);
 }

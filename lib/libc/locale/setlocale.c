@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.34.2.1 2001/10/08 20:19:55 nathanw Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.34.2.2 2002/01/28 20:50:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.34.2.1 2001/10/08 20:19:55 nathanw Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.34.2.2 2002/01/28 20:50:41 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -224,10 +224,10 @@ currentlocale()
 	for (i = 2; i < _LC_LAST; ++i)
 		if (strcmp(current_categories[1], current_categories[i])) {
 			(void)snprintf(current_locale_string,
-			    sizeof(current_locale_string), "%s/%s/%s/%s/%s",
+			    sizeof(current_locale_string), "%s/%s/%s/%s/%s/%s",
 			    current_categories[1], current_categories[2],
 			    current_categories[3], current_categories[4],
-			    current_categories[5]);
+			    current_categories[5], current_categories[6]);
 			break;
 		}
 	return (current_locale_string);

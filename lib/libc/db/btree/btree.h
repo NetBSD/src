@@ -1,4 +1,4 @@
-/*	$NetBSD: btree.h,v 1.11 1998/12/09 12:42:47 christos Exp $	*/
+/*	$NetBSD: btree.h,v 1.11.12.1 2002/01/28 20:50:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -37,6 +37,10 @@
  *
  *	@(#)btree.h	8.11 (Berkeley) 8/17/94
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 /* Macros to set/clear/test flags. */
 #define	F_SET(p, f)	(p)->flags |= (f)

@@ -1,4 +1,4 @@
-/*	$NetBSD: asprintf.c,v 1.7.6.1 2001/10/08 20:20:46 nathanw Exp $	*/
+/*	$NetBSD: asprintf.c,v 1.7.6.2 2002/01/28 20:50:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: asprintf.c,v 1.7.6.1 2001/10/08 20:20:46 nathanw Exp $");
+__RCSID("$NetBSD: asprintf.c,v 1.7.6.2 2002/01/28 20:50:52 nathanw Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: asprintf.c,v 1.7.6.1 2001/10/08 20:20:46 nathanw Exp $");
 #else
 #include <varargs.h>
 #endif
+#include "local.h"
 
 #ifdef __weak_alias
 __weak_alias(asprintf, _asprintf)
@@ -60,10 +61,12 @@ asprintf(str, fmt, va_alist)
 	int ret;
 	va_list ap;
 	FILE f;
+	struct __sfileext fext;
 	unsigned char *_base;
 
 	_DIAGASSERT(str != NULL);
 
+	_FILEEXT_SETUP(&f, &fext);
 	f._file = -1;
 	f._flags = __SWR | __SSTR | __SALC;
 	f._bf._base = f._p = (unsigned char *)malloc(128);

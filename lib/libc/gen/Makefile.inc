@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.106.2.1 2001/10/08 20:18:39 nathanw Exp $
+#	$NetBSD: Makefile.inc,v 1.106.2.2 2002/01/28 20:50:27 nathanw Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -94,6 +94,7 @@ MLINKS+=popen.3 pclose.3
 MLINKS+=psignal.3 sys_siglist.3 psignal.3 sys_signame.3
 MLINKS+=pwcache.3 user_from_uid.3 pwcache.3 group_from_gid.3
 MLINKS+=pwcache.3 uid_from_user.3 pwcache.3 gid_from_group.3
+MLINKS+=pwcache.3 pwcache_userdb.3 pwcache.3 pwcache_groupdb.3
 MLINKS+=scandir.3 alphasort.3
 MLINKS+=setjmp.3 _longjmp.3 setjmp.3 _setjmp.3 setjmp.3 longjmp.3 \
 	setjmp.3 longjmperror.3 setjmp.3 sigsetjmp.3 setjmp.3 siglongjmp.3

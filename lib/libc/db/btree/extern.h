@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2000/12/20 20:54:01 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.7.2.1 2002/01/28 20:50:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -65,6 +65,7 @@ int	 __ovfl_get __P((BTREE *, void *, size_t *, void **, size_t *));
 int	 __ovfl_put __P((BTREE *, const DBT *, pgno_t *));
 
 #ifdef DEBUG
+void	 __bt_dmpage __P((PAGE *));
 void	 __bt_dnpage __P((DB *, pgno_t));
 void	 __bt_dpage __P((PAGE *));
 void	 __bt_dump __P((DB *));

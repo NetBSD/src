@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.40 2000/12/17 22:09:12 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.40.2.1 2002/01/28 20:50:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.40 2000/12/17 22:09:12 lukem Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.40.2.1 2002/01/28 20:50:32 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,11 +57,7 @@ __RCSID("$NetBSD: getgrent.c,v 1.40 2000/12/17 22:09:12 lukem Exp $");
 #include <string.h>
 #include <syslog.h>
 
-#ifdef __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 #ifdef HESIOD
 #include <hesiod.h>
@@ -90,10 +86,10 @@ static struct group	_gr_group;
 static int		_gr_stayopen;
 static int		_gr_filesdone;
 
-static void grcleanup	__P((void));
-static int grscan	__P((int, gid_t, const char *));
-static int matchline	__P((int, gid_t, const char *));
-static int start_gr	__P((void));
+static void grcleanup(void);
+static int grscan(int, gid_t, const char *);
+static int matchline(int, gid_t, const char *);
+static int start_gr(void);
 
 #define	MAXGRP		200
 #define	MAXLINELENGTH	1024
@@ -117,16 +113,16 @@ static enum _grmode	 __grmode;
 #endif
 
 struct group *
-getgrent()
+getgrent(void)
 {
+
 	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
  		return (NULL);
 	return &_gr_group;
 }
 
 struct group *
-getgrnam(name)
-	const char *name;
+getgrnam(const char *name)
 {
 	int rval;
 
@@ -141,8 +137,7 @@ getgrnam(name)
 }
 
 struct group *
-getgrgid(gid)
-	gid_t gid;
+getgrgid(gid_t gid)
 {
 	int rval;
 
@@ -155,8 +150,9 @@ getgrgid(gid)
 }
 
 void
-grcleanup()
+grcleanup(void)
 {
+
 	_gr_filesdone = 0;
 #ifdef YP
 	if (__ypcurrent)
@@ -173,8 +169,9 @@ grcleanup()
 }
 
 static int
-start_gr()
+start_gr(void)
 {
+
 	grcleanup();
 	if (_gr_fp) {
 		rewind(_gr_fp);
@@ -184,15 +181,16 @@ start_gr()
 }
 
 void
-setgrent()
+setgrent(void)
 {
+
 	(void) setgroupent(0);
 }
 
 int
-setgroupent(stayopen)
-	int stayopen;
+setgroupent(int stayopen)
 {
+
 	if (!start_gr())
 		return 0;
 	_gr_stayopen = stayopen;
@@ -200,8 +198,9 @@ setgroupent(stayopen)
 }
 
 void
-endgrent()
+endgrent(void)
 {
+
 	grcleanup();
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
@@ -210,14 +209,11 @@ endgrent()
 }
 
 
-static int _local_grscan __P((void *, void *, va_list));
+static int _local_grscan(void *, void *, va_list);
 
 /*ARGSUSED*/
 static int
-_local_grscan(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_local_grscan(void *rv, void *cb_data, va_list ap)
 {
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
@@ -246,14 +242,11 @@ _local_grscan(rv, cb_data, ap)
 }
 
 #ifdef HESIOD
-static int _dns_grscan __P((void *, void *, va_list));
+static int _dns_grscan(void *, void *, va_list);
 
 /*ARGSUSED*/
 static int
-_dns_grscan(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_dns_grscan(void *rv, void *cb_data, va_list ap)
 {
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
@@ -307,17 +300,14 @@ _dns_grscan(rv, cb_data, ap)
 	hesiod_end(context);
 	return (r);
 }
-#endif
+#endif	/* HESIOD */
 
 #ifdef YP
-static int _nis_grscan __P((void *, void *, va_list));
+static int _nis_grscan(void *, void *, va_list);
 
 /*ARGSUSED*/
 static int
-_nis_grscan(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_nis_grscan(void *rv, void *cb_data, va_list ap)
 {
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
@@ -419,20 +409,17 @@ _nis_grscan(rv, cb_data, ap)
 	}
 	/* NOTREACHED */
 }
-#endif
+#endif	/* YP */
 
 #ifdef _GROUP_COMPAT
 /*
  * log an error if "files" or "compat" is specified in group_compat database
  */
-static int _bad_grscan __P((void *, void *, va_list));
+static int _bad_grscan(void *, void *, va_list);
 
 /*ARGSUSED*/
 static int
-_bad_grscan(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_bad_grscan(void *rv, void *cb_data, va_list ap)
 {
 	static int warned;
 
@@ -453,13 +440,10 @@ _bad_grscan(rv, cb_data, ap)
  * sense to lookup compat names from 'files' or 'compat'
  */
 
-static int __grscancompat __P((int, gid_t, const char *));
+static int __grscancompat(int, gid_t, const char *);
 
 static int
-__grscancompat(search, gid, name)
-	int		 search;
-	gid_t		 gid;
-	const char	*name;
+__grscancompat(int search, gid_t gid, const char *name)
 {
 	static const ns_dtab dtab[] = {
 		NS_FILES_CB(_bad_grscan, "files")
@@ -478,17 +462,14 @@ __grscancompat(search, gid, name)
 	return (nsdispatch(NULL, dtab, NSDB_GROUP_COMPAT, "grscancompat",
 	    defaultnis, search, gid, name));
 }
-#endif
+#endif	/* GROUP_COMPAT */
 
 
-static int _compat_grscan __P((void *, void *, va_list));
+static int _compat_grscan(void *, void *, va_list);
 
 /*ARGSUSED*/
 static int
-_compat_grscan(rv, cb_data, ap)
-	void	*rv;
-	void	*cb_data;
-	va_list	 ap;
+_compat_grscan(void *rv, void *cb_data, va_list ap)
 {
 	int		 search = va_arg(ap, int);
 	gid_t		 gid = va_arg(ap, gid_t);
@@ -535,7 +516,7 @@ _compat_grscan(rv, cb_data, ap)
 			}
 			continue;
 		}
-#endif /* _GROUP_COMPAT */
+#endif	/* _GROUP_COMPAT */
 
 		if (!fgets(line, sizeof(line), _gr_fp))
 			return NS_NOTFOUND;
@@ -567,7 +548,7 @@ _compat_grscan(rv, cb_data, ap)
 			}
 			continue;
 		}
-#endif /* _GROUP_COMPAT */
+#endif	/* _GROUP_COMPAT */
 		if (matchline(search, gid, name))
 			return NS_SUCCESS;
 	}
@@ -575,10 +556,7 @@ _compat_grscan(rv, cb_data, ap)
 }
 
 static int
-grscan(search, gid, name)
-	int		 search;
-	gid_t		 gid;
-	const char	*name;
+grscan(int search, gid_t gid, const char *name)
 {
 	int		r;
 	static const ns_dtab dtab[] = {
@@ -601,10 +579,7 @@ grscan(search, gid, name)
 }
 
 static int
-matchline(search, gid, name)
-	int		 search;
-	gid_t		 gid;
-	const char	*name;
+matchline(int search, gid_t gid, const char *name)
 {
 	unsigned long	id;
 	__aconst char	**m;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetmask.S,v 1.3 1998/01/09 03:45:05 perry Exp $	*/
+/*	$NetBSD: fpsetmask.S,v 1.3.12.1 2002/01/28 20:49:50 nathanw Exp $	*/
 
 /*
  * Written by Charles M. Hannum, Apr 9, 1995
@@ -7,7 +7,12 @@
 
 #include <machine/asm.h>
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(fpsetmask, _fpsetmask)
+ENTRY(_fpsetmask)
+#else
 ENTRY(fpsetmask)
+#endif
 	subl $4,%esp
 
 	fnstcw (%esp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetround.c,v 1.2 2001/02/08 18:28:08 wiz Exp $	*/
+/*	$NetBSD: fpsetround.c,v 1.2.2.1 2002/01/28 20:50:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -36,8 +36,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
+#include "namespace.h"
+
 #include <sys/types.h>
 #include <ieeefp.h>
+
+#ifdef __weak_alias
+__weak_alias(fpsetround,_fpsetround)
+#endif
 
 fp_rnd
 fpsetround(rnd_dir)

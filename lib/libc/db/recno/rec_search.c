@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_search.c,v 1.9 1997/07/21 14:06:46 jtc Exp $	*/
+/*	$NetBSD: rec_search.c,v 1.9.14.1 2002/01/28 20:50:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rec_search.c	8.4 (Berkeley) 7/14/94";
 #else
-__RCSID("$NetBSD: rec_search.c,v 1.9 1997/07/21 14:06:46 jtc Exp $");
+__RCSID("$NetBSD: rec_search.c,v 1.9.14.1 2002/01/28 20:50:27 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ __rec_search(t, recno, op)
 	recno_t recno;
 	enum SRCHOP op;
 {
-	register indx_t index;
+	register indx_t idx;
 	register PAGE *h;
 	EPGNO *parent;
 	RINTERNAL *r;
@@ -92,23 +92,23 @@ __rec_search(t, recno, op)
 			t->bt_cur.index = recno - total;
 			return (&t->bt_cur);
 		}
-		for (index = 0, top = NEXTINDEX(h);;) {
-			r = GETRINTERNAL(h, index);
-			if (++index == top || total + r->nrecs > recno)
+		for (idx = 0, top = NEXTINDEX(h);;) {
+			r = GETRINTERNAL(h, idx);
+			if (++idx == top || total + r->nrecs > recno)
 				break;
 			total += r->nrecs;
 		}
 
-		BT_PUSH(t, pg, index - 1);
+		BT_PUSH(t, pg, idx - 1);
 		
 		pg = r->pgno;
 		switch (op) {
 		case SDELETE:
-			--GETRINTERNAL(h, (index - 1))->nrecs;
+			--GETRINTERNAL(h, (idx - 1))->nrecs;
 			mpool_put(t->bt_mp, h, MPOOL_DIRTY);
 			break;
 		case SINSERT:
-			++GETRINTERNAL(h, (index - 1))->nrecs;
+			++GETRINTERNAL(h, (idx - 1))->nrecs;
 			mpool_put(t->bt_mp, h, MPOOL_DIRTY);
 			break;
 		case SEARCH:

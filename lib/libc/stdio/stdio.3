@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdio.3,v 1.8.12.1 2001/10/08 20:20:56 nathanw Exp $
+.\"	$NetBSD: stdio.3,v 1.8.12.2 2002/01/28 20:51:09 nathanw Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -227,12 +227,14 @@ fgetc	get next character or word from input stream
 fgetln	get a line from a stream
 fgetpos	reposition a stream
 fgets	get a line from a stream
+fgetwc	get next wide character from input stream
 fileno	check and reset stream status
 fopen	stream open functions
 fprintf	formatted output conversion
 fpurge	flush a stream
 fputc	output a character or word to a stream
 fputs	output a line to a stream
+fputwc	output a wide character to a stream
 fread	binary stream input/output
 freopen	stream open functions
 fropen	open a stream
@@ -241,12 +243,15 @@ fseek	reposition a stream
 fsetpos	reposition a stream
 ftell	reposition a stream
 funopen	open a stream
+fwide	set/get orientation of a stream
 fwopen	open a stream
 fwrite	binary stream input/output
 getc	get next character or word from input stream
 getchar	get next character or word from input stream
 gets	get a line from a stream
 getw	get next character or word from input stream
+getwc	get next wide character from input stream
+getwchar	get next wide character from input stream
 mkstemp	create unique temporary file
 mktemp	create unique temporary file
 perror	system error messages
@@ -255,6 +260,8 @@ putc	output a character or word to a stream
 putchar	output a character or word to a stream
 puts	output a line to a stream
 putw	output a character or word to a stream
+putwc	output a wide character to a stream
+putwchar	output a wide character to a stream
 remove	remove directory entry
 rewind	reposition a stream
 scanf	input format conversion
@@ -272,6 +279,7 @@ tempnam	temporary file routines
 tmpfile	temporary file routines
 tmpnam	temporary file routines
 ungetc	un-get character from input stream
+ungetwc	un-get wide character from input stream
 vfprintf	formatted output conversion
 vfscanf	input format conversion
 vprintf	formatted output conversion

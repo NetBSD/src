@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.1 1998/09/11 04:56:19 eeh Exp $
+#	$NetBSD: Makefile.inc,v 1.1.12.1 2002/01/28 20:50:16 nathanw Exp $
 
 KMINCLUDES= arch/sparc64/SYS.h
 KMSRCS=	bzero.S ffs.S strlen.S htonl.S htons.S \
 	ntohl.S ntohs.S divrem.m4 \
 	_setjmp.S mul.S saveregs.S setjmp.S umul.S
+
+# Some assembler files use v9a extensions.
+AFLAGS+= -Wa,-Av9a
 
 # `source' files built from m4 source
 # the name `div.o' is taken for the ANSI C `div' function, hence sdiv here
