@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.9 2003/06/26 20:47:10 aymeric Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.10 2003/10/08 01:30:40 simonb Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,13 +36,13 @@
 
 #include "ofdev.h"
 
-#include <string.h>
-
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/disklabel_mbr.h>
 
 #include <netinet/in.h>
+
+#include <lib/libkern/libkern.h>
 
 #include <lib/libsa/byteorder.h>
 #include <lib/libsa/ufs.h>
