@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.2 2002/03/20 03:20:10 lukem Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.3 2002/03/20 16:39:39 augustss Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -185,7 +185,6 @@ struct	uvscom_softc {
 #define UVSCOMIBUFSIZE 512
 #define UVSCOMOBUFSIZE 64
 
-Static	int uvscom_activate(device_ptr_t, enum devact);
 Static	usbd_status uvscom_readstat(struct uvscom_softc *);
 Static	usbd_status uvscom_shutdown(struct uvscom_softc *);
 Static	usbd_status uvscom_reset(struct uvscom_softc *);
@@ -425,7 +424,7 @@ USB_DETACH(uvscom)
 	return (rv);
 }
 
-Static int
+int
 uvscom_activate(device_ptr_t self, enum devact act)
 {
 	struct uvscom_softc *sc = (struct uvscom_softc *)self;
