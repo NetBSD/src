@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.62 2004/06/16 15:07:39 christos Exp $
+# $NetBSD: GENERIC,v 1.63 2004/06/18 15:04:04 christos Exp $
 #
 # GENERIC machine description file
 # 
@@ -551,7 +551,6 @@ pseudo-device	bridge			# simple inter-network bridging
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	ptm			# pseudo-terminal multiplexor
 pseudo-device	tb		1	# tablet line discipline
 pseudo-device	sequencer	1	# MIDI sequencer
 pseudo-device	rnd			# /dev/random and in-kernel generator
