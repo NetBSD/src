@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.29.2.3 1999/05/30 15:43:24 chs Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.29.2.4 1999/06/02 05:00:29 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -189,6 +189,7 @@ struct vm_page {
 #define PG_RELEASED	0x1000		/* page released while paging */
 #define	PG_FAULTING	0x2000		/* page is being faulted in */
 #define PG_CLEANCHK	0x4000		/* clean bit has been checked */
+#define PG_RDONLY	0x8000		/* pager says page must be read-only */
 
 #define PQ_FREE		0x0001		/* page is on free list */
 #define PQ_INACTIVE	0x0002		/* page is in inactive list */
