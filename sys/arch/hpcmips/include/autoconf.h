@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1.1.1 1999/09/16 12:23:21 takemura Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2001/09/15 15:04:45 uch Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -30,5 +30,5 @@ struct mainbus_attach_args {
         bus_space_tag_t ma_iot;    
 };
 
-int	badaddr	__P((void *, u_int));
-void	makebootdev __P((char *cp));
+int	badaddr(void *, u_int);
+void	makebootdev(char *);
