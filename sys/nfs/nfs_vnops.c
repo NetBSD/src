@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	8.5 (Berkeley) 2/13/94
- *	$Id: nfs_vnops.c,v 1.32 1994/06/08 11:37:05 mycroft Exp $
+ *	$Id: nfs_vnops.c,v 1.33 1994/06/22 14:01:47 pk Exp $
  */
 
 /*
@@ -2057,8 +2057,8 @@ nfs_strategy(ap)
 	struct proc *p;
 	int error = 0;
 
-	if (bp->b_flags & B_PHYS)
-		panic("nfs physio");
+	if ((bp->b_flags & (B_PHYS|B_ASYNC)) == (B_PHYS|B_ASYNC))
+		panic("nfs physio/async");
 	if (bp->b_flags & B_ASYNC)
 		p = (struct proc *)0;
 	else
