@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.26.2.3 1999/04/09 04:33:22 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.26.2.4 1999/05/30 14:58:53 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -186,9 +186,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	int cg, request, error;
 	ufs_daddr_t bprev, bno;
 
-	if (bpp != NULL) {
-		*bpp = 0;
-	}
 	fs = ip->i_fs;
 #ifdef DIAGNOSTIC
 	if ((u_int)osize > fs->fs_bsize || fragoff(fs, osize) != 0 ||
@@ -240,15 +237,9 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 			memset(bp->b_data + osize, 0, nsize - osize);
 			*bpp = bp;
 		}
-		else {
-			/*
-			 * XXX do page-cache stuff.
-			 * I think we don't need to do anything,
-			 * assuming pages are always zeroed when alloc'd.
-			 */
+		if (blknop != NULL) {
+			*blknop = bno;
 		}
-
-		*blknop = bno;
 		return (0);
 	}
 	/*
@@ -302,20 +293,6 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	bno = (ufs_daddr_t)ffs_hashalloc(ip, cg, (long)bpref, request,
 	    			     ffs_alloccg);
 	if (bno > 0) {
-
-		if (bpp != NULL) {
-			bp->b_blkno = fsbtodb(fs, bno);
-		}
-		else {
-			/*
-			 * re-label cached pages, if any
-			 */
-			uvm_vnp_setpageblknos(ITOV(ip), lblktosize(fs, lbprev),
-					      blkoff(fs, ip->i_ffs_size),
-					      fsbtodb(fs, bno), UFP_NOALLOC,
-					      FALSE);
-		}
-
 #if defined(UVM)
 		(void) uvm_vnp_uncache(ITOV(ip));
 #else
@@ -330,13 +307,15 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
 
 		if (bpp != NULL) {
+			bp->b_blkno = fsbtodb(fs, bno);
 			allocbuf(bp, nsize);
 			bp->b_flags |= B_DONE;
 			memset(bp->b_data + osize, 0, (u_int)nsize - osize);
 			*bpp = bp;
 		}
-
-		*blknop = bno;
+		if (blknop != NULL) {
+			*blknop = bno;
+		}
 		return (0);
 	}
 #ifdef QUOTA
