@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.1 1996/02/15 22:37:20 mark Exp $ */
+/* $NetBSD: db_interface.c,v 1.2 1996/02/22 22:38:48 mark Exp $ */
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -29,7 +29,7 @@
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
  *
- *	$Id: db_interface.c,v 1.1 1996/02/15 22:37:20 mark Exp $
+ *	$Id: db_interface.c,v 1.2 1996/02/22 22:38:48 mark Exp $
  */
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>	/* just for boothowto */
+#include <sys/exec.h>
 #include <setjmp.h>
 
 #include <vm/vm.h>
@@ -240,9 +241,28 @@ db_trapper(addr, inst, frame)
 	return(0);
 }
 
+extern u_int esym;
+extern u_int end;
+
 void
 db_machine_init()
 {
+	struct exec *kernexec = (struct exec *)KERNEL_BASE;
+	u_int *ptr;
+	int len;
+
+/*
+ * The boot loader currently loads the kernel with the a.out header still attached.
+ */
+
+	if (kernexec->a_syms == 0) {
+		printf("(no syms) ");
+	} else {
+		esym = (int)&end + kernexec->a_syms + sizeof(int);
+		len = *((u_int *)esym);
+		esym += (len + (sizeof(u_int) - 1)) & ~(sizeof(u_int) - 1);
+	}
+
 	install_coproc_handler(0, db_trapper);
 	db_machine_commands_install(arm32_db_command_table);
 }
