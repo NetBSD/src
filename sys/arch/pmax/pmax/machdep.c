@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 1996/05/20 23:27:27 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51.2.1 1996/05/30 04:10:39 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,7 +80,6 @@
 
 #include <pmax/stand/dec_prom.h>
 
-#include <pmax/dev/sccreg.h>
 #include <pmax/dev/ascreg.h>
 
 #include <machine/autoconf.h>
@@ -109,11 +108,8 @@
 #include "dc.h"
 #include "dtop.h"
 #include "scc.h"
-#include "le_pmax.h"
+#include "le_ioasic.h"
 #include "asc.h"
-
-#include <pmax/dev/sccvar.h>
-#include <pmax/dev/dcvar.h>
 
 #if NDTOP > 0
 #include <pmax/dev/dtopvar.h>
@@ -1332,11 +1328,14 @@ initcpu()
 	register volatile struct chiptime *c;
 	int i;
 
+#if defined(DS_5000) || defined(DS5000_25) || defined(DS5000_100) || \
+    defined(DS_5000_240)
 	/* Reset after bus errors during probe */
 	if (Mach_reset_addr) {
 		*Mach_reset_addr = 0;
 		wbflush();
 	}
+#endif
 
 	/* clear any pending interrupts */
 	switch (pmax_boardtype) {

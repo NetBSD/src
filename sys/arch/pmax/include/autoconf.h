@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.6 1996/04/14 00:58:21 jonathan Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6.4.1 1996/05/30 04:07:36 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,7 +60,7 @@ generic_intr_establish __P(( void * parent, void * cookie,
 
 
 struct confargs {
-	char	ca_name[8+1];		/* Device name. */
+	char	*ca_name;		/* Device name. */
 	int	ca_slot;		/* Device slot (table entry). */
 	int	ca_offset;		/* Offset into slot. */
 	tc_addr_t ca_addr;		/* Device address. */

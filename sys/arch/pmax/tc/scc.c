@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.11 1996/03/17 22:20:08 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.11.4.1 1996/05/30 04:13:25 mhitch Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -107,7 +107,7 @@
 #include <pmax/pmax/maxine.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/dev/sccreg.h>
-#include <pmax/dev/sccvar.h>	/* XXX */
+#include <pmax/tc/sccvar.h>	/* XXX */
 #endif
 
 #ifdef alpha
@@ -297,12 +297,12 @@ sccmatch(parent, match, aux)
 	void *aux;
 {
 	struct cfdata *cf = match;
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
 	void *sccaddr;
 
 	if (parent->dv_cfdata->cf_driver == &ioasic_cd) {
 		/* Make sure that we're looking for this type of device. */
-		if (!TC_BUS_MATCHNAME(ca, "scc"))
+		if (strncmp(d->iada_modname, "scc", TC_ROM_LLEN))
 			return (0);
 	}
 	else {
@@ -318,7 +318,7 @@ sccmatch(parent, match, aux)
 		return (0);
 
 	/* Get the address, and check it for validity. */
-	sccaddr = (caddr_t)ca->ca_addr;
+	sccaddr = (caddr_t)d->iada_addr;
 #ifdef alpha
 	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
 #endif /*alpha*/
@@ -362,7 +362,7 @@ sccattach(parent, self, aux)
 	void *aux;
 {
 	struct scc_softc *sc = (struct scc_softc *)self;
-	struct confargs *ca = aux;
+	struct ioasicdev_attach_args *d = aux;
 	struct pdma *pdp;
 	struct tty *tp;
 	void *sccaddr;
@@ -384,19 +384,14 @@ sccattach(parent, self, aux)
 		printf("\nattaching scc%d, currently PROM console\n", unit);
 #endif /* defined(DEBUG) && defined(HAVE_RCONS)*/
 
-	sccaddr = (void*)MACH_PHYS_TO_UNCACHED(ca->ca_addr);
+	sccaddr = (void*)MACH_PHYS_TO_UNCACHED(d->iada_addr);
 #ifdef alpha
 	sccaddr = TC_DENSE_TO_SPARSE(sccaddr);
 #endif	/*alpha*/
 
 	/* Register the interrupt handler. */
-#ifdef notyet /*FIXME*/
-	ioasic_intr_establish(parent, ca->ca_cookie, TC_IPL_TTY,
+	ioasic_intr_establish(parent, d->iada_cookie, TC_IPL_TTY,
 		sccintr, (void *)sc);
-#endif /*FIXME*/
-
-	BUS_INTR_ESTABLISH(ca, sccintr, sc);
-
 
 	/* serial console debugging */
 #if defined(DEBUG) && defined(HAVE_RCONS) && 0 /*XXX*/

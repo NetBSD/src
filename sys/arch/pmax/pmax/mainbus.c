@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.11 1996/05/19 01:47:15 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.11.4.1 1996/05/30 04:10:43 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -44,6 +44,8 @@
 
 #include "kn01.h"
 #include <pmax/pmax/kn01var.h>
+
+#include <tc.h>			/* Is Turbochannel configured? */
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -310,6 +312,7 @@ generic_intr_establish(parent, cookie, level, handler, arg)
 {
 	struct device *dev = arg;
 
+#if NTC>0
 	extern struct cfdriver ioasic_cd, tc_cd;
 
 	if (dev->dv_parent->dv_cfdata->cf_driver == &ioasic_cd) {
@@ -319,6 +322,7 @@ generic_intr_establish(parent, cookie, level, handler, arg)
 	if (dev->dv_parent->dv_cfdata->cf_driver == &tc_cd) {
 		tc_intr_establish(parent, cookie, level, handler, arg);
 	} else
+#endif
 	if (dev->dv_parent->dv_cfdata->cf_driver == &mainbus_cd) {
 		kn01_intr_establish(parent, cookie, level, handler, arg);
 	}
