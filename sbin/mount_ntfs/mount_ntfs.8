@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.2 1999/05/06 16:08:55 christos Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.3 1999/08/05 15:45:01 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -119,10 +119,10 @@ files are not supported either.
 .Xr unmount 2 ,
 .Xr fstab 5 ,
 .Xr mount 8
-.Sh CAVEATS
-This utility gives almost only read-only access to NTFS volume. See
-.Sx WRITING
-section.
+.Sh BUGS
+Note that NTFS support is still very experimental on NetBSD and
+should be used with extreme caution. Do not mount NTFS volumes read-write
+unless you are ready to recreate trashed contents.
 .Sh HISTORY
 The
 .Nm
@@ -133,3 +133,8 @@ NTFS kernel implementation,
 .Nm
 and manual were written by
 .An Semen Ustimenko Aq semenu@FreeBSD.org .
+
+NetBSD port by
+.An Christos Zoulas Aq christos@NetBSD.org
+and
+.An Jaromir Dolecek Aq jdolecek@NetBSD.org .
