@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.77 1999/01/11 22:35:06 thorpej Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.78 1999/01/19 21:58:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ next:
 		}
 		ip = mtod(m, struct ip *);
 	}
-	if ((ip->ip_sum = in_cksum(m, hlen)) != 0) {
+	if (in_cksum(m, hlen) != 0) {
 		ipstat.ips_badsum++;
 		goto bad;
 	}

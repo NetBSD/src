@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.45 1999/01/11 22:35:07 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.46 1999/01/19 21:58:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
@@ -164,7 +164,7 @@ udp_input(m, va_alist)
 		bzero(((struct ipovly *)ip)->ih_x1,
 		    sizeof ((struct ipovly *)ip)->ih_x1);
 		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
-		if ((uh->uh_sum = in_cksum(m, len + sizeof (struct ip))) != 0) {
+		if (in_cksum(m, len + sizeof (struct ip)) != 0) {
 			udpstat.udps_badsum++;
 			m_freem(m);
 			return;
