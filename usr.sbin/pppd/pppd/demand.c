@@ -1,4 +1,4 @@
-/*	$NetBSD: demand.c,v 1.7 1998/05/02 14:19:14 christos Exp $	*/
+/*	$NetBSD: demand.c,v 1.8 1999/05/12 18:50:52 thorpej Exp $	*/
 
 /*
  * demand.c - Support routines for demand-dialling.
@@ -24,7 +24,7 @@
 #if 0
 static char rcsid[] = "Id: demand.c,v 1.7 1997/11/27 06:08:26 paulus Exp ";
 #else
-__RCSID("$NetBSD: demand.c,v 1.7 1998/05/02 14:19:14 christos Exp $");
+__RCSID("$NetBSD: demand.c,v 1.8 1999/05/12 18:50:52 thorpej Exp $");
 #endif
 #endif
 
@@ -97,7 +97,8 @@ demand_conf()
     ppp_recv_config(0, PPP_MRU, (u_int32_t) 0, 0, 0);
 
 #ifdef PPP_FILTER
-    set_filters(&pass_filter, &active_filter);
+    set_filters(&pass_filter_in, &pass_filter_out,
+		&active_filter_in, &active_filter_out);
 #endif
 
     /*
@@ -338,8 +339,8 @@ active_packet(p, len)
 	return 0;
     proto = PPP_PROTOCOL(p);
 #ifdef PPP_FILTER
-    if (active_filter.bf_len != 0
-	&& bpf_filter(active_filter.bf_insns, frame, len, len) == 0)
+    if (active_filter_out.bf_len != 0
+	&& bpf_filter(active_filter_out.bf_insns, frame, len, len) == 0)
 	return 0;
 #endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.23 1998/09/02 20:55:55 christos Exp $	*/
+/*	$NetBSD: auth.c,v 1.24 1999/05/12 18:50:52 thorpej Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp ";
 #else
-__RCSID("$NetBSD: auth.c,v 1.23 1998/09/02 20:55:55 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.24 1999/05/12 18:50:52 thorpej Exp $");
 #endif
 #endif
 
@@ -300,7 +300,8 @@ network_phase(unit)
     phase = PHASE_NETWORK;
 #if 0
     if (!demand)
-	set_filters(&pass_filter, &active_filter);
+	set_filters(&pass_filter_in, &pass_filter_out,
+		    &active_filter_int, &active_filter_out);
 #endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         if (protp->protocol < 0xC000 && protp->enabled_flag

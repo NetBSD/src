@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.29 1998/09/04 19:13:06 christos Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.30 1999/05/12 18:50:53 thorpej Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -27,7 +27,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.33 1998/09/04 18:49:16 christos Exp ";
 #else
-__RCSID("$NetBSD: sys-bsd.c,v 1.29 1998/09/04 19:13:06 christos Exp $");
+__RCSID("$NetBSD: sys-bsd.c,v 1.30 1999/05/12 18:50:53 thorpej Exp $");
 #endif
 #endif
 
@@ -838,23 +838,39 @@ get_idle_time(u, ip)
  * set_filters - transfer the pass and active filters to the kernel.
  */
 int
-set_filters(pass, active)
-    struct bpf_program *pass, *active;
+set_filters(pass_in, pass_out, active_in, active_out)
+    struct bpf_program *pass_in, *pass_out, *active_in, *active_out;
 {
     int ret = 1;
 
-    if (pass->bf_len > 0) {
-	if (ioctl(ppp_fd, PPPIOCSPASS, pass) < 0) {
-	    syslog(LOG_ERR, "Couldn't set pass-filter in kernel: %m");
+    if (pass_in->bf_len > 0) {
+	if (ioctl(ppp_fd, PPPIOCSIPASS, pass_in) < 0) {
+	    syslog(LOG_ERR, "Couldn't set pass-filter-in in kernel: %m");
 	    ret = 0;
 	}
     }
-    if (active->bf_len > 0) {
-	if (ioctl(ppp_fd, PPPIOCSACTIVE, active) < 0) {
-	    syslog(LOG_ERR, "Couldn't set active-filter in kernel: %m");
+
+    if (pass_out->bf_len > 0) {
+	if (ioctl(ppp_fd, PPPIOCSOPASS, pass_out) < 0) {
+	    syslog(LOG_ERR, "Couldn't set pass-filter-out in kernel: %m");
 	    ret = 0;
 	}
     }
+
+    if (active_in->bf_len > 0) {
+	if (ioctl(ppp_fd, PPPIOCSIACTIVE, active_in) < 0) {
+	    syslog(LOG_ERR, "Couldn't set active-filter-in in kernel: %m");
+	    ret = 0;
+	}
+    }
+
+    if (active_out->bf_len > 0) {
+	if (ioctl(ppp_fd, PPPIOCSOACTIVE, active_out) < 0) {
+	    syslog(LOG_ERR, "Couldn't set active-filter-out in kernel: %m");
+	    ret = 0;
+	}
+    }
+
     return ret;
 }
 #endif
