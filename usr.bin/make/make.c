@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.42 2002/02/07 16:48:23 pk Exp $	*/
+/*	$NetBSD: make.c,v 1.43 2002/02/18 00:33:40 pk Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: make.c,v 1.42 2002/02/07 16:48:23 pk Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.43 2002/02/18 00:33:40 pk Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.42 2002/02/07 16:48:23 pk Exp $");
+__RCSID("$NetBSD: make.c,v 1.43 2002/02/18 00:33:40 pk Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -371,7 +371,7 @@ MakeFindChild (gnp, pgnp)
  *
  *-----------------------------------------------------------------------
  */
-int
+void
 Make_HandleUse (cgn, pgn)
     register GNode	*cgn;	/* The .USE node */
     register GNode   	*pgn;	/* The target of the .USE node */
@@ -430,21 +430,7 @@ Make_HandleUse (cgn, pgn)
 	}
 
 	pgn->type |= cgn->type & ~(OP_OPMASK|OP_USE|OP_USEBEFORE|OP_TRANSFORM);
-
-	/*
-	 * This child node is now "made", so we decrement the count of
-	 * unmade children in the parent... We also remove the child
-	 * from the parent's list to accurately reflect the number of decent
-	 * children the parent has. This is used by Make_Run to decide
-	 * whether to queue the parent or examine its children...
-	 */
-	if ((cgn->type & (OP_USE|OP_USEBEFORE)) &&
-	    (ln = Lst_Member (pgn->children, (ClientData) cgn)) != NILLNODE) {
-	    Lst_Remove(pgn->children, ln);
-	    pgn->unmade--;
-	}
     }
-    return (0);
 }
 
 static int
@@ -454,12 +440,26 @@ MakeHandleUse (cgnp, pgnp)
 {
     GNode	*cgn = (GNode *) cgnp;
     GNode	*pgn = (GNode *) pgnp;
+    LstNode	ln; 	/* An element in the children list */
 
-    if (cgn->type & OP_MARK)
-	return (0);
-    cgn->type |= OP_MARK;
+    if ((cgn->type & OP_MARK) == 0) {
+	Make_HandleUse(cgn, pgn);
+	cgn->type |= OP_MARK;
+    }
 
-    return Make_HandleUse(cgn, pgn);
+    /*
+     * This child node is now "made", so we decrement the count of
+     * unmade children in the parent... We also remove the child
+     * from the parent's list to accurately reflect the number of decent
+     * children the parent has. This is used by Make_Run to decide
+     * whether to queue the parent or examine its children...
+     */
+    if ((cgn->type & (OP_USE|OP_USEBEFORE)) &&
+	    (ln = Lst_Member (pgn->children, (ClientData) cgn)) != NILLNODE) {
+	Lst_Remove(pgn->children, ln);
+	pgn->unmade--;
+    }
+    return (0);
 }
 
 
