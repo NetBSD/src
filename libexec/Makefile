@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.26 1997/06/23 05:15:44 mrg Exp $
-#	from: @(#)Makefile	5.7 (Berkeley) 4/1/91
+#	$NetBSD: Makefile,v 1.27 1997/10/08 09:07:11 mrg Exp $
+#	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM
 #					# and ECOFF_TOOLCHAIN

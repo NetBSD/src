@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 1997/10/07 11:03:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 1997/10/08 09:07:40 mrg Exp $
 #	from: @(#)Makefile	5.3 (Berkeley) 6/25/90
 
-WARNS?=	1
 CFLAGS+= -DBSDINETD
 PROG=	uucpd
 NOMAN=	noman

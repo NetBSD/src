@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.5 1997/10/07 11:15:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/08 09:07:30 mrg Exp $
 
-WARNS?=	1
 PROG =	rpc.rquotad
 SRCS =	rquotad.c
 MAN  =	rpc.rquotad.8
