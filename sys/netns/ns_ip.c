@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.15 1996/05/07 02:48:08 thorpej Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.16 1996/05/09 22:29:40 scottr Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -49,6 +49,8 @@
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/protosw.h>
+
+#include <machine/cpu.h>	/* XXX for setsoftnet().  This must die. */
 
 #include <net/if.h>
 #include <net/netisr.h>
