@@ -1,4 +1,4 @@
-/*	$NetBSD: uboot.c,v 1.1 1996/06/26 17:44:39 thorpej Exp $	*/
+/*	$NetBSD: uboot.c,v 1.2 1996/10/14 07:33:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -52,7 +52,6 @@ char line[100];
 extern	u_int opendev;
 extern	char *lowram;
 extern	int noconsole;
-extern	int cons_scode;
 
 /*
  * XXX UFS accepts a /, NFS doesn't.
@@ -71,7 +70,7 @@ main()
 
 	printf("\n>> NetBSD UNIFIED BOOT HP9000/%s CPU\n",
 	       getmachineid());
-	printf(">> $NetBSD: uboot.c,v 1.1 1996/06/26 17:44:39 thorpej Exp $\n");
+	printf(">> $NetBSD: uboot.c,v 1.2 1996/10/14 07:33:45 thorpej Exp $\n");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev   = B_TYPE(bootdev);
@@ -140,47 +139,4 @@ getbootdev(howto)
 		}
 	} else
 		printf("\n");
-}
-
-void
-machdep_start_net(entry, howto, loadaddr, ssym, esym)
-	char *entry;
-	int howto;
-	char *loadaddr;
-	char *ssym, *esym;
-{
-
-	asm("movl %0,d7" : : "m" (howto));
-	asm("movl #0,d6");	/* tell setroot we've netbooted */
-	asm("movl %0,d5" : : "m" (cons_scode));
-	asm("movl %0,a5" : : "a" (loadaddr));
-	asm("movl %0,a4" : : "a" (esym));
-	(*((int (*)())entry))();
-}
-
-void
-machdep_start_disk_tape(entry, howto, loadaddr, ssym, esym)
-	char *entry;
-	int howto;
-	char *loadaddr;
-	char *ssym, *esym;
-{
-
-	asm("movl %0,d7" : : "m" (howto));
-	asm("movl %0,d6" : : "m" (opendev));
-	asm("movl %0,d5" : : "m" (cons_scode));
-	asm("movl %0,a5" : : "a" (loadaddr));
-	asm("movl %0,a4" : : "a" (esym));
-	(*((int (*)())entry))();
-}
-
-void
-machdep_start(entry, howto, loadaddr, ssym, esym)
-	char *entry;
-	int howto;
-	char *loadaddr;
-	char *ssym, *esym;
-{
-
-	(*__machdep_start)(entry, howto, loadaddr, ssym, esym);
 }

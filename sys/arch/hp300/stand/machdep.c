@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1994/10/26 07:27:43 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1996/10/14 07:33:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -155,3 +155,19 @@ romputchar(c)
 	}
 }
 #endif
+
+void
+machdep_start(entry, howto, loadaddr, ssym, esym)
+	char *entry;
+	int howto; 
+	char *loadaddr;
+	char *ssym, *esym; 
+{
+
+	asm("movl %0,d7" : : "m" (howto));
+	asm("movl %0,d6" : : "m" (opendev));
+	asm("movl %0,d5" : : "m" (cons_scode));
+	asm("movl %0,a5" : : "a" (loadaddr));
+	asm("movl %0,a4" : : "a" (esym));
+	(*((int (*)())entry))();
+}
