@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.69 2003/06/24 10:02:02 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.70 2003/06/24 10:07:59 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -847,3 +847,17 @@ sys/arch/newsmips/dev/zs_hb.c			1.14
 	This should fix "serial console hiccups on sysinst" problem
 	reported by Mauricio <raub at kudria.com> on port-newsmips.
 	[tsutsui, ticket #1286]
+
+sys/arch/macppc/dev/ofb.c			1.29-1.30, 1.33
+
+	Update OFB_ENABLE_CACHE to search for a empty bat that does not
+	conflict the USER_SR or one of the kernel SRs.
+
+	for ofb_enable_cache, turn on the BAT_M bit as well to prevent
+	the framebuffer from getting scrambled on MP systems.
+
+	Initialize the framebuffer BAT with BAT_G, too.  This marks the region
+	as (G)uarded, protecting it from the processor being too aggressive in
+	reordering and prefetching.  This allows OFB_ENABLE_CACHE to work on my
+	Powerbook G4.
+	[briggs, ticket #1274]
