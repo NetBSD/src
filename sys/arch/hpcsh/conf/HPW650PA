@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.1 2002/02/11 17:32:35 uch Exp $
+#	$NetBSD: HPW650PA,v 1.2 2002/02/13 16:25:35 uch Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -14,6 +14,7 @@ options 	SH7750
 options 	SH4
 
 options		INTERRUPT_MONITOR
+options		HPC_DEBUG_LCD
 
 options 	DDB			# in-kernel debugger
 options 	DIAGNOSTIC		# extra kernel debugging checks
