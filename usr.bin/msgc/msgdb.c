@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.18 2003/07/17 08:33:03 lukem Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.19 2003/09/25 18:32:10 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msgdb.c,v 1.18 2003/07/17 08:33:03 lukem Exp $");
+__RCSID("$NetBSD: msgdb.c,v 1.19 2003/09/25 18:32:10 dsl Exp $");
 #endif
 
 
@@ -173,6 +173,7 @@ write_msg_file ()
 		"void msg_prompt_win (msg, int, int, int, int,"
 			" const char *, char *, size_t, ...);\n"
 		"void msg_table_add(msg msg_no,...);\n"
+		"int msg_row(void);\n"
 		"\n"
 		"/* Message names */\n"
 	      );
