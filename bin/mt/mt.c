@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.23 1997/10/04 12:32:33 hannken Exp $	*/
+/*	$NetBSD: mt.c,v 1.24 1997/10/05 13:07:24 veego Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.23 1997/10/04 12:32:33 hannken Exp $");
+__RCSID("$NetBSD: mt.c,v 1.24 1997/10/05 13:07:24 veego Exp $");
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ main(argc, argv)
 	struct mtop mt_com;
 	int ch, len, mtfd, flags;
 	char *p, *tape;
-	int count, spcl;
+	int count;
 
 	if ((tape = getenv("TAPE")) == NULL)
 		tape = _PATH_DEFTAPE;
