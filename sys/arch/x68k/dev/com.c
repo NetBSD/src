@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.12 1998/07/04 22:18:46 jonathan Exp $	*/
+/*	$NetBSD: com.c,v 1.13 1998/08/04 16:51:51 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -110,7 +110,7 @@ struct com_softc {
 	u_char sc_ibufs[2][COM_IBUFSIZE];
 };
 
-int comprobe __P((struct device *, void *, void *));
+int comprobe __P((struct device *, struct cfdata *, void *));
 void comattach __P((struct device *, struct device *, void *));
 int comprobe1 __P((int));
 int comopen __P((dev_t, int, int, struct proc *));
@@ -273,14 +273,14 @@ comprobeHAYESP(iobase, sc)
 #endif
 
 int
-comprobe(parent, match, aux)
+comprobe(parent, cfp, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cfp;
+	void *aux;
 {
 #if 0
 	struct isa_attach_args *ia = aux;
 #endif
-	struct cfdata *cfp = match;
 	int iobase = (int)&IODEVbase->psx16550;
 
 	if (strcmp(aux, "com") || cfp->cf_unit > 1)

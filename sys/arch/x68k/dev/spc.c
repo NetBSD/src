@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.15 1998/07/04 22:18:46 jonathan Exp $	*/
+/*	$NetBSD: spc.c,v 1.16 1998/08/04 16:51:52 minoura Exp $	*/
 
 #define	integrate	__inline static
 
@@ -347,7 +347,7 @@ int spc_debug = 0x00; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 #define SPC_TRACE(s)	SPC_PRINT(SPC_SHOWTRACE, s)
 #define SPC_START(s)	SPC_PRINT(SPC_SHOWSTART, s)
 
-int	spcmatch	__P((struct device *, void *, void *));
+int	spcmatch	__P((struct device *, struct cfdata *, void *));
 void	spcattach	__P((struct device *, struct device *, void *));
 void	spc_minphys	__P((struct buf *));
 int	spcintr		__P((int));
@@ -408,12 +408,11 @@ struct scsipi_device spc_dev = {
  * returns non-zero value if a controller is found.
  */
 int
-spcmatch(parent, match, aux)
+spcmatch(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct cfdata *cf = match;
-
 	if (strcmp(aux, "spc") || spc_find(cf->cf_unit) == 0)
 		return 0;
 	return 1;
