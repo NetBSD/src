@@ -1,4 +1,4 @@
-/*	$NetBSD: frag6.c,v 1.20 2002/06/09 14:43:11 itojun Exp $	*/
+/*	$NetBSD: frag6.c,v 1.21 2002/09/11 02:41:23 itojun Exp $	*/
 /*	$KAME: frag6.c,v 1.40 2002/05/27 21:40:31 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.20 2002/06/09 14:43:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frag6.c,v 1.21 2002/09/11 02:41:23 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,7 @@ insert:
 	 * Store NXT to the original.
 	 */
 	{
-		char *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
+		u_int8_t *prvnxtp = ip6_get_prevhdr(m, offset); /* XXX */
 		*prvnxtp = nxt;
 	}
 

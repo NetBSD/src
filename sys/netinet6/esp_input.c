@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.24 2002/08/21 23:12:01 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.25 2002/09/11 02:41:23 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.24 2002/08/21 23:12:01 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.25 2002/09/11 02:41:23 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -826,7 +826,7 @@ noreplaycheck:
 		 * we can always compute checksum for AH correctly.
 		 */
 		size_t stripsiz;
-		char *prvnxtp;
+		u_int8_t *prvnxtp;
 
 		/*
 		 * Set the next header field of the previous header correctly.
