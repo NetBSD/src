@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_bitbang.c,v 1.1 1999/11/17 17:47:59 thorpej Exp $	*/
+/*	$NetBSD: mii_bitbang.c,v 1.2 2001/04/30 01:19:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ void	mii_bitbang_sendbits __P((struct device *, mii_bitbang_ops_t,
 do {									\
 	ops->mbo_write(sc, (x));					\
 	delay(1);							\
-} while (0)
+} while (/* CONSTCOND */ 0)
 
 #define	READ		ops->mbo_read(sc)
 
