@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.9 1993/09/19 18:51:55 brezak Exp $
+#	$Id: Makefile.inc,v 1.10 1993/09/29 01:27:10 pk Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/${MACHINE}/sys ${.CURDIR}/sys
@@ -31,9 +31,11 @@ ASM=	accept.o access.o acct.o adjtime.o async_daemon.o bind.o chdir.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o getdomainname.o \
 	setdomainname.o uname.o sysarch.o
 PASM=	${ASM:.o=.po}
+SASM=	${ASM:.o=.so}
 
 PSEUDO=	_exit.o _getlogin.o
 PPSEUDO=${PSEUDO:.o=.po}
+SPSEUDO=${PSEUDO:.o=.so}
 
 OBJS+=	${ASM} ${PSEUDO}
 
@@ -43,6 +45,11 @@ ${PASM}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+${SASM}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 
 ${ASM}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -57,6 +64,11 @@ ${PPSEUDO}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
 	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
 	@${LD} -X -r ${.TARGET}
 	@mv a.out ${.TARGET}
+
+${SPSEUDO}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nPSEUDO(${.PREFIX},${.PREFIX:S/_//})\n' | \
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
 
 ${PSEUDO}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
