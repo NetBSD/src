@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.39 2000/02/09 13:57:06 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.40 2000/04/19 03:26:55 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.39 2000/02/09 13:57:06 itojun Exp $");
+__RCSID("$NetBSD: if.c,v 1.40 2000/04/19 03:26:55 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -384,15 +384,15 @@ intpr(interval, ifnetaddr, pfunc)
 
 #define	MAXIF	100
 struct	iftot {
-	char	ift_name[IFNAMSIZ];	/* interface name */
-	u_long	ift_ip;			/* input packets */
-	u_long	ift_ib;			/* input bytes */
-	u_long	ift_ie;			/* input errors */
-	u_long	ift_op;			/* output packets */
-	u_long	ift_ob;			/* output bytes */
-	u_long	ift_oe;			/* output errors */
-	u_long	ift_co;			/* collisions */
-	int	ift_dr;			/* drops */
+	char ift_name[IFNAMSIZ];	/* interface name */
+	u_quad_t ift_ip;		/* input packets */
+	u_quad_t ift_ib;		/* input bytes */
+	u_quad_t ift_ie;		/* input errors */
+	u_quad_t ift_op;		/* output packets */
+	u_quad_t ift_ob;		/* output bytes */
+	u_quad_t ift_oe;		/* output errors */
+	u_quad_t ift_co;		/* collisions */
+	int ift_dr;			/* drops */
 } iftot[MAXIF];
 
 u_char	signalled;			/* set if alarm goes off "early" */
