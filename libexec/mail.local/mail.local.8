@@ -39,6 +39,7 @@
 .Nd store mail in a mailbox
 .Sh SYNOPSIS
 .Nm mail.local
+.Op Fl l
 .Op Fl f Ar from
 .Ar user ...
 .Sh DESCRIPTION
@@ -52,9 +53,13 @@ The
 must be a valid user name.
 .Pp
 The options are as follows:
-.Bl -tag -width xxxfrom
+.Bl -tag -width xxxxxxx
 .It Fl f Ar from
 Specify the sender's name.
+.It Fl l
+Request that
+.Nm username.lock
+files be used for locking.
 .El
 .Pp
 Individual mail messages in the mailbox are delimited by an empty
@@ -65,7 +70,11 @@ A blank line is appended to each message.
 A greater-than character (``>'') is prepended to any line in the message
 which could be mistaken for a ``From '' delimiter line.
 .Pp
-The mail files are exclusively locked with 
+If the
+.Op Fl l
+flag is specified mailbox locking is done with
+.Nm username.lock
+files. Otherwise, the mailbox is exclusively locked with
 .Xr flock 2
 while mail is appended.
 .Pp
@@ -100,6 +109,6 @@ A superset of
 .Nm mail.local
 (handling mailbox reading as well as mail delivery)
 appeared in
-.At v7 .
+.At v7
 as the program
 .Nm mail .
