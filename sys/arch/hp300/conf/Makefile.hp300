@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.45 1996/12/01 06:12:30 jonathan Exp $
+#	$NetBSD: Makefile.hp300,v 1.46 1997/01/06 08:49:30 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -123,10 +123,12 @@ param.o: param.c Makefile
 ioconf.o: ioconf.c
 	${NORMAL_C}
 
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
+newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 	sh $S/conf/newvers.sh
 	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
 
+# XXX for now
+vers.o: newvers
 
 clean::
 	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
