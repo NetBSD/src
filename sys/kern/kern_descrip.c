@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.78 2001/06/16 08:28:39 jdolecek Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.79 2001/07/01 18:12:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -497,11 +497,14 @@ sys_close(struct proc *p, void *v, register_t *retval)
 	} */ *uap = v;
 	int		fd;
 	struct filedesc	*fdp;
+	struct file	*fp;
 
 	fd = SCARG(uap, fd);
 	fdp = p->p_fd;
-	if ((u_int)fd >= fdp->fd_nfiles)
+
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
+
 	return (fdrelease(p, fd));
 }
 
