@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.21 2000/05/09 06:23:40 thorpej Exp $
+#	$NetBSD: Makefile,v 1.22 2000/05/10 22:39:29 thorpej Exp $
 
-HAVE_GCC29!=	${CXX} --version | egrep "^(2\.9|egcs)" ; echo
+HAVE_GCC29!=	${CXX} --version | egrep "^(2\.9)" ; echo
 
 SUBDIR+= libbfd libmalloc
 
