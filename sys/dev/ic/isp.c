@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.88 2002/02/21 22:32:40 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.89 2002/03/07 00:14:04 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.88 2002/02/21 22:32:40 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.89 2002/03/07 00:14:04 mjacob Exp $");
 
 #ifdef	__NetBSD__
 #include <dev/ic/isp_netbsd.h>
@@ -1281,9 +1281,20 @@ isp_fibre_init(struct ispsoftc *isp)
 	}
 
 #ifndef	ISP_NO_RIO_FC
-	if ((isp->isp_role & ISP_ROLE_TARGET) == 0 &&
-	    ((IS_2100(isp) && ISP_FW_REVX(isp->isp_fwrev) >=
-	    ISP_FW_REV(1, 17, 0)) || IS_2200(isp) || IS_23XX(isp))) {
+	/*
+	 * RIO seems to be enabled in 2100s for fw >= 1.17.0.
+	 *
+	 * I've had some questionable problems with RIO on 2200.
+	 * More specifically, on a 2204 I had problems with RIO
+	 * on a Linux system where I was dropping commands right
+	 * and left. It's not clear to me what the actual problem
+	 * was, but it seems safer to only support this on the
+	 * 23XX cards.
+	 *
+	 * I have it disabled if we support a target mode role for
+	 * reasons I can't now remember.
+	 */
+	if ((isp->isp_role & ISP_ROLE_TARGET) == 0 && IS_23XX(isp)) {
 		icbp->icb_xfwoptions |= ICBXOPT_RIO_16BIT;
 		icbp->icb_racctimer = 4;
 		icbp->icb_idelaytimer = 8;
@@ -3220,8 +3231,17 @@ again:
 				isp->isp_fpcchiwater = rio.req_header.rqs_seqno;
 			continue;
 		} else {
+			/*
+			 * Somebody reachable via isp_handle_other_response
+			 * may have updated the response queue pointers for
+			 * us.
+			 */
+			oop = optr;
 			if (!isp_handle_other_response(isp, type, hp, &optr)) {
 				MEMZERO(hp, QENTRY_LEN);	/* PERF */
+				if (oop != optr) {
+					goto out;
+				}
 				continue;
 			}
 
@@ -3441,7 +3461,7 @@ again:
 	if (nlooked) {
 		WRITE_RESPONSE_QUEUE_OUT_POINTER(isp, optr);
 		/*
-		 * While we're at it, reqad the requst queue out pointer.
+		 * While we're at it, read the requst queue out pointer.
 		 */
 		isp->isp_reqodx = READ_REQUEST_QUEUE_OUT_POINTER(isp);
 		if (isp->isp_rscchiwater < ndone)
@@ -3449,6 +3469,7 @@ again:
 	}
 
 	isp->isp_residx = optr;
+out:
 	for (i = 0; i < ndone; i++) {
 		xs = complist[i];
 		if (xs) {
