@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.22 1998/02/04 15:23:54 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.23 1998/05/20 00:55:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.22 1998/02/04 15:23:54 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.23 1998/05/20 00:55:52 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -49,6 +49,8 @@ __RCSID("$NetBSD: util.c,v 1.22 1998/02/04 15:23:54 christos Exp $");
 #include <err.h>
 #include <fcntl.h>
 #include <glob.h>
+#include <termios.h>
+#include <signal.h>
 #include <limits.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -484,8 +486,12 @@ remotesize(file, noisy)
 		cp = strchr(reply_string, ' ');
 		if (cp != NULL) {
 			cp++;
+#ifdef NO_QUAD
+			size = strtol(cp, &ep, 10);
+#else
 			size = strtoq(cp, &ep, 10);
-			if (*ep != '\0' && !isspace(*ep))
+#endif
+			if (*ep != '\0' && !isspace((unsigned char)*ep))
 				size = -1;
 		}
 	} else if (noisy && debug == 0)
@@ -528,7 +534,11 @@ remotemodtime(file, noisy)
 		if (rtime == -1 && (noisy || debug != 0))
 			printf("Can't convert %s to a time.\n", reply_string);
 		else
+#ifndef __SVR4
 			rtime += timebuf.tm_gmtoff;	/* conv. local -> GMT */
+#else
+			rtime -= timezone;
+#endif
 	} else if (noisy && debug == 0)
 		puts(reply_string);
 	verbose = overbose;
@@ -710,8 +720,12 @@ ptransfer(siginfo)
 		meg = 1;
 	len = 0;
 	len += snprintf(buf + len, sizeof(buf) - len,
-	    "%qd byte%s %s in ", (long long)bytes, bytes == 1 ? "" : "s",
-	    direction);
+#ifndef NO_QUAD
+	    "%qd byte%s %s in ", (long long)bytes,
+#else
+	    "%ld byte%s %s in ", (long)bytes,
+#endif
+	    bytes == 1 ? "" : "s", direction);
 	remaining = (int)elapsed;
 	if (remaining > SECSPERDAY) {
 		int days;
@@ -834,9 +848,10 @@ controlediting()
 	if (editing && el == NULL && hist == NULL) {
 		HistEvent ev;
 
-		el = el_init(__progname, stdin, stdout); /* init editline */
+		el = el_init(__progname, stdin, stdout, stderr);
+		/* init editline */
 		hist = history_init();		/* init the builtin history */
-		history(hist, &ev, H_SETMAXSIZE, 100);/* remember 100 events */
+		history(hist, &ev, H_SETSIZE, 100);/* remember 100 events */
 		el_set(el, EL_HIST, history, hist);	/* use history */
 
 		el_set(el, EL_EDITOR, "emacs");	/* default editor is emacs */
