@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.30 1997/10/16 23:44:16 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.31 1998/02/08 14:06:25 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -75,6 +75,7 @@ bdev_decl(ctu);
 
 #include "ra.h"
 bdev_decl(ra);
+bdev_decl(rx);
 
 #include "up.h"
 bdev_decl(up);
@@ -84,9 +85,6 @@ bdev_decl(ut);
 
 #include "rb.h"
 bdev_decl(idc);
-
-#include "rx.h"
-bdev_decl(rx);
 
 #include "uu.h"
 bdev_decl(uu);
@@ -129,7 +127,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NRA,ra),		/* 9: MSCP disk */
 	bdev_tape_init(NTJ,ut),		/* 10: TU45 */
 	bdev_disk_init(NRB,idc),	/* 11: IDC (RB730) */
-	bdev_disk_init(NRX,rx),		/* 12: RX01/02 on unibus */
+	bdev_disk_init(NRX,rx),		/* 12: RX?? on MSCP */
 	bdev_disk_init(NUU,uu),		/* 13: TU58 on DL11 */
 	bdev_disk_init(NRL,rl),		/* 14: RL01/02 */
 	bdev_tape_init(NMT,mt),		/* 15: MSCP tape */
@@ -391,7 +389,7 @@ struct cdevsw	cdevsw[] =
 	cdev_graph_init(NPS,ps),	/* 27: E/S graphics device */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */
 	cdev_ch_init(NAD,ad),		/* 29: DT A/D converter */
-	cdev_disk_init(NRX,rx),		/* 30: RX01/02 on unibus */
+	cdev_disk_init(NRX,rx),		/* 30: RX?? on MSCP */
 	cdev_graph_init(NIK,ik),	/* 31: Ikonas frame buffer */
 	cdev_disk_init(NRL,rl),		/* 32: RL01/02 on unibus */
 	cdev_log_init(1,log),		/* 33: /dev/klog */

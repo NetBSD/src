@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.4 1997/01/11 11:20:36 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.5 1998/02/08 14:04:06 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -87,7 +87,7 @@ struct	mscp_device {
 	    __P((struct device *, struct buf *));
 	int	(*me_online)	/* drive on line */
 	    __P((struct device *, struct mscp *));
-	int	(*me_gotstatus)	/* got unit status */
+	int	(*me_gotstatus) /* got unit status */
 	    __P((struct device *, struct mscp *));
 	void	(*me_replace)	/* replace done */
 	    __P((struct device *, struct mscp *));
@@ -119,9 +119,9 @@ struct	mscp_attach_args {
 };
 #define MSCPBUS_DISK	001	/* Bus is used for disk mounts */
 #define MSCPBUS_TAPE	002	/* Bus is used for tape mounts */
-#define	MSCPBUS_UDA	004	/* ctlr is disk on unibus/qbus */
-#define	MSCPBUS_KDB	010	/* ctlr is disk on BI */
-#define	MSCPBUS_KLE	020	/* ctlr is tape on unibus/qbus */
+#define MSCPBUS_UDA	004	/* ctlr is disk on unibus/qbus */
+#define MSCPBUS_KDB	010	/* ctlr is disk on BI */
+#define MSCPBUS_KLE	020	/* ctlr is tape on unibus/qbus */
 
 /*
  * Used when going for child devices.
@@ -174,17 +174,17 @@ struct mscp_softc {
 	int	mi_type;
 	short	mi_ivec;		/* Interrupt vector to use */
 	short	mi_ierr;		/* Init err counter */
-	volatile short *mi_ip;        	/* initialisation and polling */
-	volatile short *mi_sa;        	/* status & address (read part) */
-	volatile short *mi_sw;        	/* status & address (write part) */
+	volatile short *mi_ip;		/* initialisation and polling */
+	volatile short *mi_sa;		/* status & address (read part) */
+	volatile short *mi_sw;		/* status & address (write part) */
 	struct	buf *mi_w;		/* While waiting for packets */
 };
 
 /* mi_flags */
-#define	MSC_STARTPOLL	1
-#define	MSC_INSTART	2
-#define	MSC_IGNOREINTR	4
-#define	MSC_READY	8
+#define MSC_STARTPOLL	1
+#define MSC_INSTART	2
+#define MSC_IGNOREINTR	4
+#define MSC_READY	8
 
 /*
  * We have run out of credits when mi_credits is <= MSCP_MINCREDITS.
@@ -229,7 +229,7 @@ struct mscp_softc {
  * queues is `b_forw'; for drive queues, it is `av_forw'.)
  */
 
-#define	MSCP_APPEND(bp, queue, link) {			\
+#define MSCP_APPEND(bp, queue, link) {			\
 	(bp)->link = NULL;				\
 	if ((queue)->link == NULL)			\
 		(queue)->link = (bp);			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.8 1998/01/24 14:16:45 ragge Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.9 1998/02/08 14:03:58 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -57,11 +57,11 @@
 #include "ra.h"
 #include "mt.h"
 
-#define	b_forw	b_hash.le_next
+#define b_forw	b_hash.le_next
 
 int	mscp_match __P((struct device *, struct cfdata *, void *));
 void	mscp_attach __P((struct device *, struct device *, void *));
-void    mscp_start __P((struct  mscp_softc *));
+void	mscp_start __P((struct	mscp_softc *));
 int	mscp_init __P((struct  mscp_softc *));
 void	mscp_initds __P((struct mscp_softc *));
 int	mscp_waitstep __P((struct mscp_softc *, int, int));
@@ -108,7 +108,7 @@ mscp_match(parent, match, aux)
 {
 	struct	mscp_attach_args *ma = aux;
 
-#if NRA
+#if NRA || NRX
 	if (ma->ma_type & MSCPBUS_DISK)
 		return 1;
 #endif
@@ -126,7 +126,7 @@ mscp_attach(parent, self, aux)
 {
 	struct	mscp_attach_args *ma = aux;
 	struct	mscp_softc *mi = (void *)self;
-	volatile struct	mscp *mp;
+	volatile struct mscp *mp;
 	volatile int i;
 	int	timeout, next = 0;
 
@@ -146,12 +146,12 @@ mscp_attach(parent, self, aux)
 	 * Go out to init the bus, so that we can give commands
 	 * to its devices.
 	 */
-        mi->mi_cmd.mri_size = NCMD;
-        mi->mi_cmd.mri_desc = mi->mi_uda->mp_ca.ca_cmddsc;
-        mi->mi_cmd.mri_ring = mi->mi_uda->mp_cmd;
-        mi->mi_rsp.mri_size = NRSP;
-        mi->mi_rsp.mri_desc = mi->mi_uda->mp_ca.ca_rspdsc;
-        mi->mi_rsp.mri_ring = mi->mi_uda->mp_rsp;
+	mi->mi_cmd.mri_size = NCMD;
+	mi->mi_cmd.mri_desc = mi->mi_uda->mp_ca.ca_cmddsc;
+	mi->mi_cmd.mri_ring = mi->mi_uda->mp_cmd;
+	mi->mi_rsp.mri_size = NRSP;
+	mi->mi_rsp.mri_desc = mi->mi_uda->mp_ca.ca_rspdsc;
+	mi->mi_rsp.mri_ring = mi->mi_uda->mp_rsp;
 	mi->mi_actf = (void *)&mi->mi_actf; /* Circular wait queue */
 	mi->mi_actb = (void *)&mi->mi_actf;
 
@@ -206,65 +206,65 @@ gotit:	/*
 	 */
 	switch (mp->mscp_status & M_ST_MASK) {
 
-	case M_ST_SUCCESS:      /* worked */
-	case M_ST_AVAILABLE:    /* found another drive */
-		break;          /* use it */
+	case M_ST_SUCCESS:	/* worked */
+	case M_ST_AVAILABLE:	/* found another drive */
+		break;		/* use it */
 
 	case M_ST_OFFLINE:
 		/*
 		 * Figure out why it is off line.  It may be because
-                 * it is nonexistent, or because it is spun down, or
-                 * for some other reason.
-                 */
-                switch (mp->mscp_status & ~M_ST_MASK) {
+		 * it is nonexistent, or because it is spun down, or
+		 * for some other reason.
+		 */
+		switch (mp->mscp_status & ~M_ST_MASK) {
 
-                case M_OFFLINE_UNKNOWN:
-                        /*
-                         * No such drive, and there are none with
-                         * higher unit numbers either, if we are
-                         * using M_GUM_NEXTUNIT.
-                         */
+		case M_OFFLINE_UNKNOWN:
+			/*
+			 * No such drive, and there are none with
+			 * higher unit numbers either, if we are
+			 * using M_GUM_NEXTUNIT.
+			 */
 			mi->mi_ierr = 3;
-                        return;
+			return;
 
-                case M_OFFLINE_UNMOUNTED:
-                        /*
-                         * The drive is not spun up.  Use it anyway.
-                         *
-                         * N.B.: this seems to be a common occurrance
-                         * after a power failure.  The first attempt
-                         * to bring it on line seems to spin it up
-                         * (and thus takes several minutes).  Perhaps
-                         * we should note here that the on-line may
-                         * take longer than usual.
-                         */
-                        break;
+		case M_OFFLINE_UNMOUNTED:
+			/*
+			 * The drive is not spun up.  Use it anyway.
+			 *
+			 * N.B.: this seems to be a common occurrance
+			 * after a power failure.  The first attempt
+			 * to bring it on line seems to spin it up
+			 * (and thus takes several minutes).  Perhaps
+			 * we should note here that the on-line may
+			 * take longer than usual.
+			 */
+			break;
 
-                default:
-                        /*
-                         * In service, or something else equally unusable.
-                         */
-                        printf("%s: unit %d off line: ", mi->mi_dev.dv_xname,
-                                mp->mscp_unit);
-                        mscp_printevent((struct mscp *)mp);
+		default:
+			/*
+			 * In service, or something else equally unusable.
+			 */
+			printf("%s: unit %d off line: ", mi->mi_dev.dv_xname,
+				mp->mscp_unit);
+			mscp_printevent((struct mscp *)mp);
 			next++;
-                        goto findunit;
-                }
-                break;
+			goto findunit;
+		}
+		break;
 
-        default:
-                printf("%s: unable to get unit status: ", mi->mi_dev.dv_xname);
-                mscp_printevent((struct mscp *)mp);
-                return;
-        }
+	default:
+		printf("%s: unable to get unit status: ", mi->mi_dev.dv_xname);
+		mscp_printevent((struct mscp *)mp);
+		return;
+	}
 
-        /*
-         * If we get a lower number, we have circulated around all
+	/*
+	 * If we get a lower number, we have circulated around all
 	 * devices and are finished, otherwise try to find next unit.
 	 * We shouldn't ever get this, it's a workaround.
-         */
-        if (mp->mscp_unit < next)
-                return;
+	 */
+	if (mp->mscp_unit < next)
+		return;
 
 	next = mp->mscp_unit + 1;
 	goto findunit;
@@ -285,17 +285,17 @@ mscp_init(mi)
 	int	status, count;
 	unsigned int j = 0;
 
-        /*
-         * While we are thinking about it, reset the next command
-         * and response indicies.
-         */
+	/*
+	 * While we are thinking about it, reset the next command
+	 * and response indicies.
+	 */
 	mi->mi_cmd.mri_next = 0;
 	mi->mi_rsp.mri_next = 0;
 
 	mi->mi_flags |= MSC_IGNOREINTR;
 
 	if ((mi->mi_type & MSCPBUS_KDB) == 0)
-		*mi->mi_ip = 0;	/* Kick off */
+		*mi->mi_ip = 0; /* Kick off */
 
 	status = mscp_waitstep(mi, MP_STEP1, MP_STEP1);/* Wait to it wakes up */
 	if (status == 0)
@@ -318,22 +318,22 @@ mscp_init(mi)
 	*mi->mi_sw = (int)&mi->mi_uuda->mp_ca.ca_rspdsc[0] | 
 	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0);
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
-        if (status == 0) {
-                (*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
-                return 1;
-        }
+	if (status == 0) {
+		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
+		return 1;
+	}
 
 	/* step3 */
 	*mi->mi_sw = ((int)&mi->mi_uuda->mp_ca.ca_rspdsc[0]) >> 16;
 	status = mscp_waitstep(mi, STEP3MASK, STEP3GOOD);
-        if (status == 0) { 
-                (*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
-                return 1;
-        }
+	if (status == 0) { 
+		(*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
+		return 1;
+	}
 	i = *mi->mi_sa & 0377;
 	printf(": version %d model %d\n", i & 15, i >> 4);
 
-#define	BURST 4	/* XXX */
+#define BURST 4 /* XXX */
 	if (mi->mi_type & MSCPBUS_UDA) {
 		*mi->mi_sw = MP_GO | (BURST - 1) << 2;
 		printf("%s: DMA burst size set to %d\n", 
@@ -361,15 +361,15 @@ mscp_init(mi)
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
 	i = *mi->mi_ip;
 
-        count = 0;
-        while (count < DELAYTEN) {
-                if (((volatile)mi->mi_flags & MSC_READY) != 0)
-                        break;
+	count = 0;
+	while (count < DELAYTEN) {
+		if (((volatile)mi->mi_flags & MSC_READY) != 0)
+			break;
 		if ((j = *mi->mi_sa) & MP_ERR)
 			goto out;
-                DELAY(10000);
-                count += 1;
-        }
+		DELAY(10000);
+		count += 1;
+	}
 	if (count == DELAYTEN) {
 out:
 		printf("%s: couldn't set ctlr characteristics, sa=%x\n", 
@@ -415,17 +415,17 @@ mscp_intr(mi)
 
 	if (mi->mi_flags & MSC_IGNOREINTR)
 		return;
-        /*
-         * Check for response and command ring transitions.
-         */
-        if (ud->mp_ca.ca_rspint) {
-                ud->mp_ca.ca_rspint = 0;
-                mscp_dorsp(mi);
-        }
-        if (ud->mp_ca.ca_cmdint) {
-                ud->mp_ca.ca_cmdint = 0;
-                MSCP_DOCMD(mi);
-        }
+	/*
+	 * Check for response and command ring transitions.
+	 */
+	if (ud->mp_ca.ca_rspint) {
+		ud->mp_ca.ca_rspint = 0;
+		mscp_dorsp(mi);
+	}
+	if (ud->mp_ca.ca_cmdint) {
+		ud->mp_ca.ca_cmdint = 0;
+		MSCP_DOCMD(mi);
+	}
 
 	/*
 	 * If there are any not-yet-handled requeset, try them now.
@@ -447,6 +447,17 @@ mscp_print(aux, name)
 	void *aux;
 	const char *name;
 {
+	struct drive_attach_args *da = aux;
+	struct	mscp *mp = da->da_mp;
+	int type = mp->mscp_guse.guse_mediaid;
+
+	if (name) {
+		printf("%c%c", MSCP_MID_CHAR(2, type), MSCP_MID_CHAR(1, type));
+		if (MSCP_MID_ECH(0, type))
+			printf("%c", MSCP_MID_CHAR(0, type));
+		printf("%d at %s drive %d", MSCP_MID_NUM(type), name,
+		    mp->mscp_unit);
+	}
 	return UNCONF;
 }
 
@@ -500,9 +511,9 @@ mscp_dgo(mi, buffer, info, bp)
 	volatile int i;
 	struct	mscp *mp;
 
-        /*
-         * Fill in the MSCP packet and move the buffer to the I/O wait queue.
-         */
+	/*
+	 * Fill in the MSCP packet and move the buffer to the I/O wait queue.
+	 */
 	mp = (void *)bp->b_actb;
 
 	mp->mscp_seq.seq_buffer = buffer;
@@ -682,7 +693,7 @@ static char *drive_msgs[] = {
 	"lost rd/wr ready",	/* 4 = Lost R/W Ready Error */
 	"drive clock dropout",	/* 5 = Lost Drive Clock */
 	"lost recvr ready",	/* 6 = Lost Receiver Ready */
-	"drive detected error",	/* 7 = Drive Error */
+	"drive detected error", /* 7 = Drive Error */
 	"ctlr detected pulse or parity",/* 8 = Pulse or Parity Error */
 };
 
@@ -695,7 +706,7 @@ struct code_decode {
 	int	cdc_nsubcodes;
 	char	**cdc_submsgs;
 } code_decode[] = {
-#define	SC(m)	sizeof (m) / sizeof (m[0]), m
+#define SC(m)	sizeof (m) / sizeof (m[0]), m
 	{"success",			SC(succ_msgs)},
 	{"invalid command",		SC(icmd_msgs)},
 	{"command aborted",		0, 0},
