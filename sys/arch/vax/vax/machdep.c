@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.121 2002/02/24 01:04:27 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.122 2002/03/06 13:10:25 tsutsui Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -104,7 +104,6 @@ char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
 caddr_t		msgbufaddr;
 int		physmem;
-int		dumpsize = 0;
 int		*symtab_start;
 int		*symtab_end;
 int		symtab_nsyms;
@@ -244,8 +243,9 @@ cpu_startup()
 #endif
 }
 
+u_int32_t dumpmag = 0x8fca0101;
+int	dumpsize = 0;
 long	dumplo = 0;
-long	dumpmag = 0x8fca0101;
 
 void
 cpu_dumpconf()

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.114 2002/02/14 07:08:15 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.115 2002/03/06 13:10:24 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -860,7 +860,7 @@ haltsys:
 	/*NOTREACHED*/
 }
 
-u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 

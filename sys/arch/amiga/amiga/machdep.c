@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.167 2002/01/28 09:56:46 aymeric Exp $	*/
+/*	$NetBSD: machdep.c,v 1.168 2002/03/06 13:10:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.167 2002/01/28 09:56:46 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.168 2002/03/06 13:10:19 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -573,7 +573,7 @@ cpu_reboot(howto, bootstr)
 }
 
 
-unsigned	dumpmag = 0x8fca0101;	/* magic number for savecore */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 cpu_kcore_hdr_t cpu_kcore_hdr;

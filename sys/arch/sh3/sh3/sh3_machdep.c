@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.30 2002/03/02 22:26:27 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.31 2002/03/06 13:10:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ extern char sh_vector_tlbmiss[], sh_vector_tlbmiss_end[];
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize = 0;		/* pages */
 long	dumplo = 0; 		/* blocks */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.189 2002/02/03 14:10:03 darrenr Exp $ */
+/*	$NetBSD: machdep.c,v 1.190 2002/03/06 13:10:24 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -781,7 +781,7 @@ cpu_reboot(howto, user_boot_string)
 	/*NOTREACHED*/
 }
 
-u_long	dumpmag = 0x8fca0101;	/* magic number for savecore */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
 long	dumplo = 0;
 
