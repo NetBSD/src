@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.4 1997/03/11 05:29:03 mikel Exp $
+.\"	$NetBSD: audio.4,v 1.5 1997/05/07 19:24:25 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -154,8 +154,11 @@ format_ids into the input/output audio_encoding_t argument.
 .Bd -literal
 typedef struct audio_encoding {
 	int index;	/* input: nth encoding */
-	char name[MAX_AUDIO_DEV_LEN];
-	int format_id;
+	char name[MAX_AUDIO_DEV_LEN]; /* name of encoding */
+	int encoding;   /* value for encoding parameter */
+	int precision;  /* value for precision parameter */
+	int flags;
+#define AUDIO_ENCODINGFLAG_EMULATED 1 /* software emulation mode */
 } audio_encoding_t;
 .Ed
 To query
@@ -178,9 +181,9 @@ Get or set audio information as encoded in the audio_info structure.
 typedef struct audio_info {
 	struct	audio_prinfo play;	/* Info for play (output) side */
 	struct	audio_prinfo record;	/* Info for record (input) side */
-	u_int	__spare;
+	u_int	buffersize;             /* total size audio buffer */
 	/* BSD extensions */
-	u_int	blocksize;	/* input blocking threshold */
+	u_int	blocksize;	/* H/W read/write block size */
 	u_int	hiwat;		/* output high water mark */
 	u_int	lowat;		/* output low water mark */
 	u_int	backlog;	/* samples of output backlog to gen. */
@@ -260,6 +263,28 @@ struct audio_prinfo {
 [Note:  many hardware audio drivers require identical playback and
 recording sample rates, sample encodings, and channel counts.  The
 recording information is always set last and will prevail on such hardware.]
+.Pp
+The encoding parameter can have the following values:
+.Bl -tag -width indent -compact
+.It Dv AUDIO_ENCODING_ULAW
+mulaw encoding, 8 bits/sample
+.It Dv AUDIO_ENCODING_ALAW
+alaw encoding, 8 bits/sample
+.It Dv AUDIO_ENCODING_LINEAR
+two's complement signed linear encoding with the platform byte order
+.It Dv AUDIO_ENCODING_ULINEAR
+unsigned linear encoding with the platform byte order
+.It Dv AUDIO_ENCODING_ADPCM
+ADPCM encoding, 8 bits/sample
+.It Dv AUDIO_ENCODING_LINEAR_LE
+two's complement signed linear encoding with little endian byte order
+.It Dv AUDIO_ENCODING_LINEAR_BE
+two's complement signed linear encoding with big endian byte order
+.It Dv AUDIO_ENCODING_ULINEAR_LE
+unsigned linear encoding with little endian byte order
+.It Dv AUDIO_ENCODING_ULINEAR_BE
+unsigned linear encoding with little big byte order
+.El
 .Pp
 The gain and port settings provide simple shortcuts to the richer mixer
 interface described below.  The gain should be in the range
