@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2002/09/04 15:14:46 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2002/09/22 20:52:12 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -66,6 +66,8 @@
 #include <sh5/dev/pbridgereg.h>
 #include <sh5/dev/rtcreg.h>
 #include <sh5/dev/rtcvar.h>
+
+#include <evbsh5/dev/sysfpgavar.h>
 
 #include <evbsh5/evbsh5/machdep.h>
 
@@ -144,8 +146,12 @@ evbsh5_init(void)
 	__cpu_tlbinv_cookie = _sh5_stb1_tlbinv_cookie;
 	__cpu_tlbinv_all = _sh5_stb1_tlbinv_all;
 	__cpu_tlbload = _sh5_stb1_tlbload;
-	__cpu_cache_purge = _sh5_stb1_cache_purge;
-	__cpu_cache_invalidate = _sh5_stb1_cache_invalidate;
+	__cpu_cache_dpurge = _sh5_stb1_cache_dpurge;
+	__cpu_cache_dpurge_iinv = _sh5_stb1_cache_dpurge_iinv;
+	__cpu_cache_dinv = _sh5_stb1_cache_dinv;
+	__cpu_cache_dinv_iinv = _sh5_stb1_cache_dinv_iinv;
+	__cpu_cache_iinv = _sh5_stb1_cache_iinv;
+	__cpu_cache_iinv_all = _sh5_stb1_cache_iinv_all;
 
 #if NDTFCONS > 0
 	dtfbuf = (vaddr_t) &_dtf_buffer;
@@ -176,6 +182,8 @@ evbsh5_init(void)
 #else
 	_sh5_ctc_ticks_per_us = SH5_CPU_SPEED;
 #endif
+
+	boothowto = RB_SINGLE | RB_KDB;
 }
 
 #ifndef SH5_CPU_SPEED
@@ -242,8 +250,6 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[16];
-
-	boothowto = RB_SINGLE;
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -354,4 +360,11 @@ cpu_reboot(int how, char *bootstr)
 void
 device_register(struct device *dev, void *arg)
 {
+}
+
+void
+sh5_nmi_clear(void)
+{
+
+	sysfpga_nmi_clear();
 }
