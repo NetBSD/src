@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.17.2.2 2001/03/27 13:16:26 bouyer Exp $	*/
+/*	$NetBSD: mha.c,v 1.17.2.3 2001/03/29 10:49:45 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -776,6 +776,7 @@ mha_scsi_request(chan, req, arg)
 	case ADAPTER_REQ_SET_XFER_MODE:
 		/* XXX Not supported. */
 		return;
+	}
 }
 
 /*
@@ -2028,7 +2029,7 @@ mha_timeout(arg)
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct mha_softc *sc =
-	    (void*)periph->periph_chan->chan_adapter->adapt_dev;
+	    (void*)periph->periph_channel->chan_adapter->adapt_dev;
 
 	scsipi_printaddr(periph);
 again:
