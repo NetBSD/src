@@ -34,7 +34,7 @@
  *	the "cx" driver for Cronyx's HDLC-in-hardware device).  This driver
  *	is only the glue between sppp and i4b.
  *
- *	$Id: i4b_isppp.c,v 1.2 2001/01/17 00:30:52 thorpej Exp $
+ *	$Id: i4b_isppp.c,v 1.3 2001/01/19 12:44:45 martin Exp $
  *
  * $FreeBSD$
  *
@@ -373,7 +373,7 @@ i4bisppp_ioctl(struct ifnet *ifp, IOCTL_CMD_T cmd, caddr_t data)
 	switch(cmd) {
 	case SIOCSIFFLAGS:
 #if 0 /* never used ??? */
-		x = splimp();
+		x = splnet();
 		if ((ifp->if_flags & IFF_UP) == 0)
 			UNTIMEOUT(i4bisppp_timeout, (void *)sp, sc->sc_ch);
 		splx(x);
@@ -406,7 +406,7 @@ i4bisppp_start(struct ifnet *ifp)
 		return;
 
 	/*
-	 * s = splimp();
+	 * s = splnet();
 	 * ifp->if_flags |= IFF_OACTIVE; // - need to clear this somewhere
 	 * splx(s);
 	 */
@@ -582,7 +582,7 @@ i4bisppp_connect(int unit, void *cdp)
 {
 	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
 	struct sppp *sp = &sc->sc_if_un.scu_sp;
-	int s = splimp();
+	int s = splnet();
 
 	sc->sc_cdp = (call_desc_t *)cdp;
 	sc->sc_state = ST_CONNECTED;
@@ -618,7 +618,7 @@ i4bisppp_disconnect(int unit, void *cdp)
 	struct i4bisppp_softc *sc = &i4bisppp_softc[unit];
 	struct sppp *sp = &sc->sc_if_un.scu_sp;
 
-	int s = splimp();
+	int s = splnet();
 
 	/* new stuff to check that the active channel is being closed */
 	if (cd != sc->sc_cdp)
@@ -738,7 +738,7 @@ i4bisppp_rx_data_rdy(int unit)
 
 #endif /* NBPFILTER > 0  || NBPF > 0 */
 
-	s = splimp();
+	s = splnet();
 
 #ifndef USE_ISPPP
 	sppp_input(&sc->sc_if, m);

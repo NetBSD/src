@@ -27,7 +27,7 @@
  *	i4b_tel.c - device driver for ISDN telephony
  *	--------------------------------------------
  *
- *	$Id: i4b_tel.c,v 1.1.1.1 2001/01/05 12:49:57 martin Exp $
+ *	$Id: i4b_tel.c,v 1.2 2001/01/19 12:44:45 martin Exp $
  *
  * $FreeBSD$
  *
@@ -401,7 +401,7 @@ i4btelclose(dev_t dev, int flag, int fmt, struct proc *p)
 
 	sc = &tel_sc[unit][func];		
 
-	x = splimp();
+	x = splnet();
 	sc->devstate &= ~ST_TONE;		
 	if((func == FUNCTEL) &&
 	   (sc->isdn_linktab != NULL && sc->isdn_linktab->tx_queue != NULL))
@@ -482,7 +482,7 @@ i4btelioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 				break;
 	
 			case I4B_TEL_EMPTYINPUTQUEUE:
-				s = splimp();
+				s = splnet();
 				while((sc->devstate & ST_CONNECTED)	&&
 					(sc->devstate & ST_ISOPEN) 	&&
 					!IF_QEMPTY(sc->isdn_linktab->rx_queue))
@@ -510,7 +510,7 @@ i4btelioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 				struct i4b_tel_tones *tt;
 
 				tt = (struct i4b_tel_tones *)data;
-				s = splimp();
+				s = splnet();
 				while ((sc->devstate & ST_TONE) && 
 				    sc->tones.duration[sc->toneidx] != 0) {
 					if((error = tsleep((caddr_t) &sc->tones,
@@ -574,7 +574,7 @@ i4btelread(dev_t dev, struct uio *uio, int ioflag)
 
 	if(func == FUNCTEL)
 	{
-		s = splimp();
+		s = splnet();
 		while(IF_QEMPTY(sc->isdn_linktab->rx_queue) &&
 			(sc->devstate & ST_ISOPEN)          &&
 			(sc->devstate & ST_CONNECTED))		
@@ -638,7 +638,7 @@ i4btelread(dev_t dev, struct uio *uio, int ioflag)
 	}
 	else if(func == FUNCDIAL)
 	{
-		s = splimp();
+		s = splnet();
 		while((sc->result == 0) && (sc->devstate & ST_ISOPEN))
 		{
 			sc->devstate |= ST_RDWAITDATA;
@@ -694,7 +694,7 @@ i4btelwrite(dev_t dev, struct uio * uio, int ioflag)
 
 	if(func == FUNCTEL)
 	{
-		s = splimp();
+		s = splnet();
 		
 		if(!(sc->devstate & ST_CONNECTED)) {
 			splx(s);
