@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.22 1999/12/11 02:01:18 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.22.4.1 2000/09/28 01:37:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.22 1999/12/11 02:01:18 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.22.4.1 2000/09/28 01:37:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1255,7 +1255,7 @@ init()
 	(void)snprintf(&pxlength[2], sizeof(pxlength) - 2, "%ld", PY);
 	cgetstr(bp, "rm", &RM);
 	if ((s = checkremote()) != NULL)
-		syslog(LOG_WARNING, s);
+		syslog(LOG_WARNING, "%s", s);
 
 	cgetstr(bp, "af", &AF);
 	cgetstr(bp, "of", &OF);
