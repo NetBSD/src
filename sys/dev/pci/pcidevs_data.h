@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.162 1999/09/29 00:07:51 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.163 1999/09/29 00:20:25 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.157 1999/09/29 00:07:15 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.158 1999/09/29 00:19:51 thorpej Exp 
  */
 
 /*
@@ -1334,6 +1334,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Diamond Computer Systems",
 	    "Viper/PCI",
+	},
+	{
+	    PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DFE550TX,
+	    0,
+	    "D-Link Systems",
+	    "DFE-550TX 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DPT, PCI_PRODUCT_DPT_SC_RAID,
@@ -2786,6 +2792,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sun Microsystems",
 	    "UltraSPARC IIi PCI",
+	},
+	{
+	    PCI_VENDOR_SUNDANCETI, PCI_PRODUCT_SUNDANCETI_ST201,
+	    0,
+	    "Sundance Technology",
+	    "ST201 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34,
@@ -6283,6 +6295,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_NETGEAR, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Netgear",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_SUNDANCETI, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Sundance Technology",
 	    NULL,
 	},
 	{
