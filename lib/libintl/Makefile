@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/10/31 10:45:04 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2000/11/02 10:24:48 itojun Exp $
 
 .include <bsd.own.mk>
 
 LIB=	intl
-SRCS=	gettext.c textdomain.c
+SRCS=	gettext.c textdomain.c gettext_dummy.c
 INCS=	libintl.h
 INCSDIR=/usr/include
 
