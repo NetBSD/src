@@ -1,4 +1,4 @@
-/*	$NetBSD: icsphy.c,v 1.13 2000/01/27 16:44:30 thorpej Exp $	*/
+/*	$NetBSD: icsphy.c,v 1.14 2000/02/02 08:05:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -91,8 +91,8 @@ int	icsphymatch __P((struct device *, struct cfdata *, void *));
 void	icsphyattach __P((struct device *, struct device *, void *));
 
 struct cfattach icsphy_ca = {
-	sizeof(struct mii_softc), icsphymatch, icsphyattach, mii_detach,
-	    mii_activate
+	sizeof(struct mii_softc), icsphymatch, icsphyattach, mii_phy_detach,
+	    mii_phy_activate
 };
 
 int	icsphy_service __P((struct mii_softc *, struct mii_data *, int));
@@ -139,7 +139,7 @@ icsphyattach(parent, self, aux)
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
 		printf("no media present");
 	else
-		mii_add_media(sc);
+		mii_phy_add_media(sc);
 	printf("\n");
 }
 

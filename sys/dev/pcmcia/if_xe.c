@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp $	*/
-/*	$NetBSD: if_xe.c,v 1.2 2000/01/09 17:21:38 joda Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.3 2000/02/02 08:05:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -444,7 +444,7 @@ xe_pcmcia_attach(parent, self, aux)
 	    xe_mediastatus);
 	DPRINTF(XED_MII | XED_CONFIG,
 	    ("bmsr %x\n", xe_mdi_read(&sc->sc_dev, 0, 1)));
-	mii_phy_probe(self, &sc->sc_mii, 0xffffffff
+	mii_attach(self, &sc->sc_mii, 0xffffffff
 #ifdef __NetBSD__
 		      ,MII_PHY_ANY, MII_OFFSET_ANY
 #endif
