@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)netdate.c	5.2 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: netdate.c,v 1.5 1993/12/05 13:26:52 deraadt Exp $";
+static char rcsid[] = "$Id: netdate.c,v 1.6 1994/02/03 12:50:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ netsettime(tval)
 	char hostname[MAXHOSTNAMELEN];
 
 	if ((sp = getservbyname("timed", "udp")) == NULL) {
-		(void)fprintf(stderr, "date: udp/timed: unknown service.n");
+		(void)fprintf(stderr, "date: udp/timed: unknown service.\n");
 		return (retval = 2);
 	}
 
