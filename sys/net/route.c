@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.36 2000/03/30 09:45:40 augustss Exp $	*/
+/*	$NetBSD: route.c,v 1.36.4.1 2001/04/05 12:43:22 he Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -136,6 +136,10 @@ struct pool rtentry_pool;	/* pool for rtentry structures */
 struct pool rttimer_pool;	/* pool for rttimer structures */
 
 struct callout rt_timer_ch; /* callout for rt_timer_timer() */
+
+static int rtdeletemsg __P((struct rtentry *));
+static int rtflushclone1 __P((struct radix_node *, void *));
+static void rtflushclone __P((struct radix_node_head *, struct rtentry *));
 
 void
 rtable_init(table)
@@ -351,6 +355,67 @@ out:
 }
 
 /*
+ * Delete a route and generate a message
+ */
+static int
+rtdeletemsg(rt)
+	struct rtentry *rt;
+{
+	int error;
+	struct rt_addrinfo info;
+
+	/*
+	 * Request the new route so that the entry is not actually
+	 * deleted.  That will allow the information being reported to
+	 * be accurate (and consistent with route_output()).
+	 */
+	bzero((caddr_t)&info, sizeof(info));
+	info.rti_info[RTAX_DST] = rt_key(rt);
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	error = rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway, rt_mask(rt),
+	    rt->rt_flags, &rt);
+
+	rt_missmsg(RTM_DELETE, &info, rt->rt_flags, error);
+
+	/* Adjust the refcount */
+	if (error == 0 && rt->rt_refcnt <= 0) {
+		rt->rt_refcnt++;
+		rtfree(rt);
+	}
+	return (error);
+}
+
+static int
+rtflushclone1(rn, arg)
+	struct radix_node *rn;
+	void *arg;
+{
+	struct rtentry *rt, *parent;
+
+	rt = (struct rtentry *)rn;
+	parent = (struct rtentry *)arg;
+	if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent == parent)
+		rtdeletemsg(rt);
+	return 0;
+}
+
+static void
+rtflushclone(rnh, parent)
+	struct radix_node_head *rnh;
+	struct rtentry *parent;
+{
+
+#ifdef DIAGNOSTIC
+	if (!parent || (parent->rt_flags & RTF_CLONING) == 0)
+		panic("rtflushclone: called with a non-cloning route");
+	if (!rnh->rnh_walktree)
+		panic("rtflushclone: no rnh_walktree");
+#endif
+	rnh->rnh_walktree(rnh, rtflushclone1, (void *)parent);
+}
+
+/*
  * Routing table ioctl interface.
  */
 int
@@ -417,7 +482,7 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	struct rtentry **ret_nrt;
 {
 	int s = splsoftnet(); int error = 0;
-	struct rtentry *rt;
+	struct rtentry *rt, *crt;
 	struct radix_node *rn;
 	struct radix_node_head *rnh;
 	struct ifaddr *ifa;
@@ -430,6 +495,13 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 		netmask = 0;
 	switch (req) {
 	case RTM_DELETE:
+		if ((rn = rnh->rnh_lookup(dst, netmask, rnh)) == 0)
+			senderr(ESRCH);
+		rt = (struct rtentry *)rn;
+		if ((rt->rt_flags & RTF_CLONING) != 0) {
+			/* clean up any cloned children */
+			rtflushclone(rnh, rt);
+		}
 		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh)) == 0)
 			senderr(ESRCH);
 		if (rn->rn_flags & (RNF_ACTIVE | RNF_ROOT))
@@ -454,8 +526,11 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 	case RTM_RESOLVE:
 		if (ret_nrt == 0 || (rt = *ret_nrt) == 0)
 			senderr(EINVAL);
+		if ((rt->rt_flags & RTF_CLONING) == 0)
+			senderr(EINVAL);
 		ifa = rt->rt_ifa;
-		flags = rt->rt_flags & ~RTF_CLONING;
+		flags = rt->rt_flags & ~(RTF_CLONING | RTF_STATIC);
+		flags |= RTF_CLONED;
 		gateway = rt->rt_gateway;
 		if ((netmask = rt->rt_genmask) == 0)
 			flags |= RTF_HOST;
@@ -480,20 +555,13 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 			rt_maskedcopy(dst, ndst, netmask);
 		} else
 			Bcopy(dst, ndst, dst->sa_len);
-		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
-					rnh, rt->rt_nodes);
-		if (rn == 0) {
-			if (rt->rt_gwroute)
-				rtfree(rt->rt_gwroute);
-			Free(rt_key(rt));
-			pool_put(&rtentry_pool, rt);
-			senderr(EEXIST);
-		}
 		IFAREF(ifa);
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;
 		if (req == RTM_RESOLVE) {
 			rt->rt_rmx = (*ret_nrt)->rt_rmx; /* copy metrics */
+			rt->rt_parent = *ret_nrt;
+			rt->rt_parent->rt_refcnt++;
 		} else if (rt->rt_rmx.rmx_mtu == 0
 			    && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
 			if (rt->rt_gwroute != NULL) {
@@ -502,11 +570,36 @@ rtrequest(req, dst, gateway, netmask, flags, ret_nrt)
 				rt->rt_rmx.rmx_mtu = ifa->ifa_ifp->if_mtu;
 			}
 		}
+		rn = rnh->rnh_addaddr((caddr_t)ndst, (caddr_t)netmask,
+		    rnh, rt->rt_nodes);
+		if (rn == NULL && (crt = rtalloc1(ndst, 0)) != NULL) {
+			/* overwrite cloned route */
+			if ((crt->rt_flags & RTF_CLONED) != 0) {
+				rtdeletemsg(crt);
+				rn = rnh->rnh_addaddr((caddr_t)ndst,
+				    (caddr_t)netmask, rnh, rt->rt_nodes);
+			}
+			RTFREE(crt);
+		}
+		if (rn == 0) {
+			IFAFREE(ifa);
+			if ((rt->rt_flags & RTF_CLONED) != 0 && rt->rt_parent)
+				rtfree(rt->rt_parent);
+			if (rt->rt_gwroute)
+				rtfree(rt->rt_gwroute);
+			Free(rt_key(rt));
+			pool_put(&rtentry_pool, rt);
+			senderr(EEXIST);
+		}
 		if (ifa->ifa_rtrequest)
 			ifa->ifa_rtrequest(req, rt, SA(ret_nrt ? *ret_nrt : 0));
 		if (ret_nrt) {
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
+		}
+		if ((rt->rt_flags & RTF_CLONING) != 0) {
+			/* clean up any cloned children */
+			rtflushclone(rnh, rt);
 		}
 		break;
 	}
