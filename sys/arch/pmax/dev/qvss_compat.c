@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.19 1999/07/25 22:50:29 ad Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.20 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,7 +67,6 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/select.h>
-#include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/mman.h>

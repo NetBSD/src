@@ -1,4 +1,4 @@
-/*	$NetBSD: bt459.c,v 1.17 1999/04/24 08:01:01 simonb Exp $	*/
+/*	$NetBSD: bt459.c,v 1.18 1999/09/05 11:34:29 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,13 +81,11 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.17 1999/04/24 08:01:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt459.c,v 1.18 1999/09/05 11:34:29 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/select.h>
 
 #include <machine/bus.h>			/*  wbflush() */
 

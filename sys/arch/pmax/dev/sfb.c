@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.32 1999/07/25 22:50:29 ad Exp $	*/
+/*	$NetBSD: sfb.c,v 1.33 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -85,11 +85,9 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>					/* printf() */
-#include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
 #include <dev/tc/tcvar.h>
 
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.38 1999/07/25 22:50:28 ad Exp $	*/
+/*	$NetBSD: mfb.c,v 1.39 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -81,13 +81,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.38 1999/07/25 22:50:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.39 1999/09/05 11:34:30 simonb Exp $");
 
 #include "fb.h"
 #include "mfb.h"
 #if NMFB > 0
 #include <sys/param.h>
-#include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/errno.h>
 #include <sys/device.h>

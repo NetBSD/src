@@ -1,4 +1,4 @@
-/*	$NetBSD: ims332.c,v 1.9 1999/04/24 08:01:04 simonb Exp $	*/
+/*	$NetBSD: ims332.c,v 1.10 1999/09/05 11:34:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1995
@@ -40,12 +40,11 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.9 1999/04/24 08:01:04 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ims332.c,v 1.10 1999/09/05 11:34:30 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/kernel.h>
 #include <sys/errno.h>
 
 #include <machine/fbio.h>
