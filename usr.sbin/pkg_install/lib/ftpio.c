@@ -1,8 +1,8 @@
-/*	$NetBSD: ftpio.c,v 1.20.2.8 2001/03/20 18:13:06 he Exp $	*/
+/*	$NetBSD: ftpio.c,v 1.20.2.9 2001/04/22 18:22:44 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ftpio.c,v 1.20.2.8 2001/03/20 18:13:06 he Exp $");
+__RCSID("$NetBSD: ftpio.c,v 1.20.2.9 2001/04/22 18:22:44 he Exp $");
 #endif
 
 /*
@@ -136,6 +136,8 @@ expect(int fd, const char *str, int *ftprc)
 	rc = select(FD_SETSIZE, &fdset, NULL, NULL, &timeout);
 	switch (rc) {
 	case -1:
+	    if (errno == EINTR)
+		break;
 	    warn("expect: select() failed (probably ftp died because of bad args)");
 	    done = 1;
 	    retval = -1;
