@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.5 2005/02/26 18:10:35 thorpej Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.6 2005/02/26 18:25:28 thorpej Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.5 2005/02/26 18:10:35 thorpej Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.6 2005/02/26 18:25:28 thorpej Exp $");
 #endif
 
 #include <sys/types.h>
@@ -698,6 +698,10 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 
 	krb5_get_init_creds_opt_init(&opts);
 
+	krb5_get_init_creds_opt_set_tkt_life(&opts, 300);
+	krb5_get_init_creds_opt_set_forwardable(&opts, FALSE);
+	krb5_get_init_creds_opt_set_proxiable(&opts, FALSE);
+
 	PAM_LOG("Credentials options initialised");
 
 	/* Get principal name */
@@ -760,27 +764,32 @@ pam_sm_chauthtok(pam_handle_t *pamh, int flags,
 		retval = PAM_BUF_ERR;
 		goto cleanup;
 	}
+
+	krb5_data_zero(&result_code_string);
+	krb5_data_zero(&result_string);
+
 	krbret = krb5_change_password(pam_context, &creds, passdup,
 	    &result_code, &result_code_string, &result_string);
 	free(passdup);
 	if (krbret != 0) {
-		PAM_LOG("Error krb5_change_password(): %s",
+		pam_error(pamh, "Unable to set password: %s",
 		    krb5_get_err_text(pam_context, krbret));
 		retval = PAM_AUTHTOK_ERR;
 		goto cleanup;
 	}
 	if (result_code) {
-		PAM_LOG("Error krb5_change_password(): (result_code)");
+		pam_info(pamh, "%s%s%.*s",
+		    krb5_passwd_result_to_string(pam_context, result_code),
+		    result_string.length > 0 ? ": " : "",
+		    (int)result_string.length,
+		    result_string.length > 0 ? (char *)result_string.data : "");
 		retval = PAM_AUTHTOK_ERR;
-		goto cleanup;
+	} else {
+		PAM_LOG("Password changed");
 	}
 
-	PAM_LOG("Password changed");
-
-	if (result_string.data)
-		free(result_string.data);
-	if (result_code_string.data)
-		free(result_code_string.data);
+	krb5_data_free(&result_string);
+	krb5_data_free(&result_code_string);
 
 cleanup:
 	krb5_free_cred_contents(pam_context, &creds);
