@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.41 1999/10/20 20:42:29 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.42 2000/01/17 04:55:26 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,6 +48,20 @@
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/nexus.h>
+
+#include "opt_vax780.h"
+#include "opt_vax750.h"
+#include "opt_vax8600.h"
+#include "opt_vax8200.h"
+#include "opt_vax410.h"
+#include "opt_vax43.h"
+#include "opt_vax46.h"
+#include "opt_vax48.h"
+#include "opt_vax49.h"
+#include "opt_vax630.h"
+#include "opt_vax650.h"
+#include "opt_vax660.h"
+#include "opt_vax670.h"
 
 void	start __P((void));
 void	main __P((void));
