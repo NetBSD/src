@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.220 2003/06/11 04:56:58 msaitoh Exp $
+#	$NetBSD: bsd.lib.mk,v 1.221 2003/06/27 17:27:11 drochner Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -152,7 +152,7 @@ MKSHLIBOBJS= no
 # Platform-independent linker flags for ELF shared libraries
 .if ${OBJECT_FMT} == "ELF"
 SHLIB_SOVERSION=	${SHLIB_MAJOR}
-SHLIB_SHFLAGS=		-soname lib${LIB}.so.${SHLIB_SOVERSION}
+SHLIB_SHFLAGS=		-Wl,-soname,lib${LIB}.so.${SHLIB_SOVERSION}
 SHLIB_LDSTARTFILE?=	${DESTDIR}/usr/lib/crti.o ${_GCC_CRTBEGINS}
 SHLIB_LDENDFILE?=	${_GCC_CRTENDS} ${DESTDIR}/usr/lib/crtn.o
 .endif
@@ -392,18 +392,15 @@ lib${LIB}.so.${SHLIB_FULLVERSION}: ${SOLIB} ${DPADD} \
 	@echo building shared ${LIB} library \(version ${SHLIB_FULLVERSION}\)
 	@rm -f lib${LIB}.so.${SHLIB_FULLVERSION}
 .if defined(DESTDIR)
-	$(LD) -nostdlib -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
-	    ${SHLIB_LDSTARTFILE} \
-	    --whole-archive ${SOLIB} \
-	    --no-whole-archive ${LDADD} \
-	    -L${DESTDIR}${_LIBSODIR} -L${DESTDIR}${LIBDIR} \
-	    -R${_LIBSODIR} -R${LIBDIR} \
-	    ${SHLIB_LDENDFILE}
+	$(CC) -Wl,-nostdlib -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/ \
+	    -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	    -Wl,--whole-archive ${SOLIB} \
+	    -Wl,--no-whole-archive ${LDADD} \
+	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}${_LIBSODIR} -L${DESTDIR}${LIBDIR} \
+	    -R${_LIBSODIR} -R${LIBDIR}
 .else
-	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
-	    ${SHLIB_LDSTARTFILE} \
-	    --whole-archive ${SOLIB} --no-whole-archive ${LDADD} \
-	    ${SHLIB_LDENDFILE}
+	$(CC) -Wl,-x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
+	    -Wl,--whole-archive ${SOLIB} -Wl,--no-whole-archive ${LDADD}
 .endif
 .if ${OBJECT_FMT} == "ELF"
 #  We don't use INSTALL_SYMLINK here because this is just
