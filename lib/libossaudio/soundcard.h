@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.12 2002/01/11 12:11:09 kleink Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.13 2002/05/27 14:42:15 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -252,6 +252,14 @@
 #define SOUND_MASK_LINE1	(1 << SOUND_MIXER_LINE1)
 #define SOUND_MASK_LINE2	(1 << SOUND_MIXER_LINE2)
 #define SOUND_MASK_LINE3	(1 << SOUND_MIXER_LINE3)
+#define SOUND_MASK_DIGITAL1	(1 << SOUND_MIXER_DIGITAL1)
+#define SOUND_MASK_DIGITAL2	(1 << SOUND_MIXER_DIGITAL2)
+#define SOUND_MASK_DIGITAL3	(1 << SOUND_MIXER_DIGITAL3)
+#define SOUND_MASK_PHONEIN	(1 << SOUND_MIXER_PHONEIN)
+#define SOUND_MASK_PHONEOUT	(1 << SOUND_MIXER_PHONEOUT)
+#define SOUND_MASK_VIDEO	(1 << SOUND_MIXER_VIDEO)
+#define SOUND_MASK_RADIO	(1 << SOUND_MIXER_RADIO)
+#define SOUND_MASK_MONITOR	(1 << SOUND_MIXER_MONITOR)
 
 typedef struct mixer_info {
 	char id[16];
