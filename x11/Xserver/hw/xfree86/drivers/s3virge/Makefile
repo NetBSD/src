@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	s3virge_drv
 MAN=	s3virge.4
@@ -12,8 +10,6 @@ MAN=	s3virge.4
 
 SRCS=	s3v_driver.c s3v_accel.c s3v_dac.c s3v_hwcurs.c s3v_dga.c \
 	s3v_i2c.c s3v_shadow.c s3v_xv.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/s3virge \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

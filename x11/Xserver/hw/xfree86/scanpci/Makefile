@@ -1,17 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 04:53:24 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:07 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	scanpci	
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/scanpci
 SRCS=	xf86ScanPci.c xf86PciIds.h
 
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 SCANPCIOBJDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/hw/xfree86/scanpci && ${PRINTOBJDIR}
 
 #CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/scanpci \

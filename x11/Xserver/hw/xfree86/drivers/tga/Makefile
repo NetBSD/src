@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:11 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	tga_drv
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/tga
 
 SRCS=	tga_driver.c tga_dac.c tga_accel.c BTramdac.c ICS1562.c \
 	BT463ramdac.c tga_cursor.c tga_line.c tga_seg.c IBM561ramdac.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/tga \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

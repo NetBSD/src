@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/05 05:31:12 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:05 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	cirrus_drv
 MAN=	cirrus.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/cirrus
 
 SRCS=	cir_driver.c CirrusClk.c cir_shadow.c cir_dga.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/cirrus \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

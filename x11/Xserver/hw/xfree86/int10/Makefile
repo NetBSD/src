@@ -1,10 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2003/12/23 14:28:20 rtr Exp $
+# $NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=		int10
 
@@ -16,8 +14,6 @@ SRCS=	pci.c xf86int10module.c helper_exec.c helper_mem.c xf86int10.c \
 
 CPPFLAGS+=	-D__DRIVER__ -DFORCE_POST -D_CEXPORT= -DNO_LONG_LONG \
 		-D_X86EMU -D_PC
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \

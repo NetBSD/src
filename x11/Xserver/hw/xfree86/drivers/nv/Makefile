@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/05 03:47:10 soren Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	nv_drv
 MAN=	nv.4
@@ -12,8 +10,6 @@ MAN=	nv.4
 
 SRCS=	nv_driver.c nv_dac.c nv_setup.c nv_cursor.c nv_xaa.c nv_dga.c \
 	nv_shadow.c riva_hw.c nv_video.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nv \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile.mfb,v 1.1 2003/12/21 03:07:01 rtr Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile.mfb,v 1.2 2004/02/07 06:52:07 lukem Exp $
 
 LIB=		mfb
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/mfb
@@ -39,8 +37,6 @@ BUILDSYMLINKS=	mfbline.c mfbseg.c \
 		mfbblt.c mfbbltG.c \
 		mfbtile.c mfbtileC.c \
 		mfbtile.c mfbtileG.c
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/mfb \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \

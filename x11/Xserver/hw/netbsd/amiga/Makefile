@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/25 05:20:02 mhitch Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	amiga
 
@@ -35,8 +33,6 @@ CPPFLAGS.${_FN}=	-DUSE_IMAGE_WRITE -DUSE_FONTCACHE
 .endfor
 
 SRCS+=	${SRCS.s3}
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/amiga \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/amiga/cirrus \

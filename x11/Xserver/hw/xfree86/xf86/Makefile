@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/26 05:14:13 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
 
 .include "../../../Makefile.serverlib"
 
-.include <bsd.own.mk>
 .include <bsd.sys.mk> # for HOST_SH
 
 LIB=	xf86
@@ -17,13 +16,12 @@ SRCS=	xf86Configure.c xf86Bus.c xf86isaBus.c xf86pciBus.c xf86fbBus.c \
 	xf86xv.c xf86xvmc.c xf86cmap.c xf86PM.c xf86Debug.c xf86KbdBSD.c \
 	xf86Xinput.c xisb.c xf86XKB.c xf86RandR.c
 
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
+CLEANFILES+=	xf86Build.h
+xf86Build.h: .PHONY
+	${_MKTARGET_CREATE}
+	echo "#define BUILD_DATE `date +%Y%m%d`" > ${.TARGET}
 
-.PHONY:		xf86includes
-includes:	xf86includes
-
-xf86includes:
-	echo "#define BUILD_DATE `date +%Y%m%d`" > ${XSERVERINCDIR}/xf86Build.h
+xf86Init.o: xf86Build.h
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \
@@ -50,6 +48,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/int10 \
 		-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${X11SRCDIR.xc}/programs/Xserver/randr \
+		-I. \
 		-I${XSERVERINCDIR}
 
 CPPFLAGS+=	${X11FLAGS.EXTENSION} ${X11FLAGS.OS_DEFINES} \

@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:20:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/input
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	dmc_drv
 MAN=	dmc.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/dmc
 
 SRCS=	xf86DMC.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/dmc \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/24 05:51:20 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:07 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	xf86_os
 
@@ -70,8 +68,6 @@ BUILDSYMLINKS=	BUSmemcpy.c CBUSmemcpy.c \
 		SlowBcopy.c CSlowBcopy.c
 
 SRCS=	${SRCS.bsd} ${SRCS.bus} ${SRCS.misc}
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/os-support \

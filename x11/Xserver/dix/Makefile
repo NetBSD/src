@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2004/02/06 11:58:56 rtr Exp $
+#	$NetBSD: Makefile,v 1.8 2004/02/07 06:52:05 lukem Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=		dix
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/dix

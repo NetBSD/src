@@ -1,16 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/10 04:34:33 fredb Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	mac68k
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/mac68k
 SRCS=	mac68kEvent.c mac68kInit.c mac68kKbd.c mac68kKeyMap.c mac68k.h \
 	mac68kMouse.c mac68kMonoScreens.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 # trim fonts / extentions / XSERVERINCDIR if possible
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/mac68k \

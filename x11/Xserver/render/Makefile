@@ -1,16 +1,12 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/30 09:49:29 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/07 06:52:08 lukem Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=		render
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/render
 
 SRCS=		animcur.c filter.c glyph.c miglyph.c miindex.c \
 		mipict.c mirect.c mitrap.c mitri.c picture.c render.c
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/render \
 		-I${X11SRCDIR.xc}/programs/Xserver/include \
