@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.12 2001/11/22 23:24:44 simonb Exp $	*/
+/*	$NetBSD: bim.c,v 1.13 2002/02/26 07:50:30 matthias Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.12 2001/11/22 23:24:44 simonb Exp $");
+__RCSID("$NetBSD: bim.c,v 1.13 2002/02/26 07:50:30 matthias Exp $");
 #endif /* not lint */
 
 /*
@@ -168,7 +168,7 @@ init_images(badmagic)
 	char    badmagic;
 {
 	char    answer[80];
-	int     index;
+	int     idx;
 
 	if (badmagic) {
 		printf("Image information has improper magic number.\n");
@@ -186,9 +186,9 @@ init_images(badmagic)
 	/* Initialize the image table. */
 	im_table->ii_magic = IMAGE_MAGIC;
 	im_table->ii_boot_partition = -1;
-	for (index = 0; index < dk_label->d_npartitions; index++)
-		if (dk_label->d_partitions[index].p_fstype == FS_BOOT) {
-			im_table->ii_boot_partition = index;
+	for (idx = 0; idx < dk_label->d_npartitions; idx++)
+		if (dk_label->d_partitions[idx].p_fstype == FS_BOOT) {
+			im_table->ii_boot_partition = idx;
 			break;
 		}
 	im_table->ii_boot_count = MAXIMAGES;
@@ -282,7 +282,7 @@ copy_bytes(from_fd, from_adr, to_fd, to_adr, number)
 	int     from_fd, from_adr, to_fd, to_adr, number;
 {
 	int     count;
-	int     index;
+	int     idx;
 	char    buffer[BLOCK_SIZE];
 
 	/* Check the parameters. */
@@ -291,15 +291,15 @@ copy_bytes(from_fd, from_adr, to_fd, to_adr, number)
 		return 0;
 	}
 	/* Do the copy. */
-	for (index = 0; index < number; index += BLOCK_SIZE) {
-		count = lseek(from_fd, (off_t) (from_adr + index), SEEK_SET);
-		if (count != from_adr + index) {
+	for (idx = 0; idx < number; idx += BLOCK_SIZE) {
+		count = lseek(from_fd, (off_t) (from_adr + idx), SEEK_SET);
+		if (count != from_adr + idx) {
 			printf("Error in copying (seek from)\n");
 			return 0;
 		}
 		count = read(from_fd, buffer, BLOCK_SIZE);
 		if (count != BLOCK_SIZE) {
-			if (index != number - 1 || count < 0) {
+			if (idx != number - 1 || count < 0) {
 				printf("Error in copying (read from)\n");
 				return 0;
 			} else {
@@ -307,8 +307,8 @@ copy_bytes(from_fd, from_adr, to_fd, to_adr, number)
 					buffer[count++] = 0;
 			}
 		}
-		count = lseek(to_fd, (off_t) (to_adr + index), SEEK_SET);
-		if (count != to_adr + index) {
+		count = lseek(to_fd, (off_t) (to_adr + idx), SEEK_SET);
+		if (count != to_adr + idx) {
 			printf("Error in copying (seek to)\n");
 			return 0;
 		}
@@ -336,7 +336,7 @@ add_image(num, args, syntax)
 				 * to a full block in both text and data. */
 	int     which_image;	/* Which image is to be operated upon. */
 	int     count;		/* read/write counts. */
-	int     index;		/* temporary variable for loops. */
+	int     idx;		/* temporary variable for loops. */
 
 	int     part_size;	/* The total size of the boot partition (in
 				 * bytes). */
@@ -405,8 +405,8 @@ add_image(num, args, syntax)
 	part_size = dk_label->d_partitions[im_table->ii_boot_partition].p_size
 	    * secsize;
 	total_size = 0;
-	for (index = 0; index < im_table->ii_boot_used; index++)
-		total_size = total_size + im_table->ii_images[index].boot_size;
+	for (idx = 0; idx < im_table->ii_boot_used; idx++)
+		total_size = total_size + im_table->ii_images[idx].boot_size;
 
 	/* Calculate other things. */
 	im_size = im_exec.a_text + im_exec.a_data;
@@ -459,7 +459,7 @@ delete_image(num, args, syntax)
 	char   *syntax;
 {
 	int     which_image;	/* Which image is to be operated upon. */
-	int     index;		/* temporary variable for loops. */
+	int     idx;		/* temporary variable for loops. */
 	int     boot_start;	/* Zone number of start of boot partition. */
 	int     del_size;	/* Size of the deleted image. */
 
@@ -470,10 +470,10 @@ delete_image(num, args, syntax)
 	}
 	/* Find the image. */
 	which_image = -1;
-	for (index = which_image; index < im_table->ii_boot_used; index++)
-		if (strcmp(im_table->ii_images[index].boot_name,
+	for (idx = which_image; idx < im_table->ii_boot_used; idx++)
+		if (strcmp(im_table->ii_images[idx].boot_name,
 		    args[1]) == 0) {
-			which_image = index;
+			which_image = idx;
 			break;
 		}
 	if (which_image == -1)
@@ -494,16 +494,16 @@ delete_image(num, args, syntax)
 	    dk_label->d_partitions[im_table->ii_boot_partition].p_offset
 	    * dk_label->d_secsize;
 	del_size = im_table->ii_images[which_image].boot_size;
-	for (index = which_image; index < im_table->ii_boot_used - 1; index++) {
+	for (idx = which_image; idx < im_table->ii_boot_used - 1; idx++) {
 		copy_bytes(
 		    disk_fd,
-		    boot_start + im_table->ii_images[index + 1].boot_address,
+		    boot_start + im_table->ii_images[idx + 1].boot_address,
 		    disk_fd,
-		    boot_start + im_table->ii_images[index + 1].boot_address
+		    boot_start + im_table->ii_images[idx + 1].boot_address
 			- del_size,
-		    im_table->ii_images[index + 1].boot_size);
-		im_table->ii_images[index] = im_table->ii_images[index + 1];
-		im_table->ii_images[index].boot_address -= del_size;
+		    im_table->ii_images[idx + 1].boot_size);
+		im_table->ii_images[idx] = im_table->ii_images[idx + 1];
+		im_table->ii_images[idx].boot_address -= del_size;
 	}
 	im_table->ii_boot_used--;
 	if (which_image == im_table->ii_boot_default)
@@ -583,7 +583,7 @@ main(argc, argv)
 	int     cmdscnt;	/* Number of argument line commands. */
 	char   *argcmds[MAXARGCMDS];
 	char    optchar;
-	int     index;
+	int     idx;
 
 	/* Check the parameters.  */
 	yesmode = 0;
@@ -632,8 +632,8 @@ main(argc, argv)
 	/* do the commands.... */
 	if (cmdscnt > 0) {
 		/* Process the argv commands. */
-		for (index = 0; index < cmdscnt; index++)
-			one_command(argcmds[index]);
+		for (idx = 0; idx < cmdscnt; idx++)
+			one_command(argcmds[idx]);
 	} else {
 		/* Interactive command loop.  */
 		display_part(0, NULL, NULL);
