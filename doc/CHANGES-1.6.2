@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.256 2004/01/08 17:10:41 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.257 2004/01/28 04:45:13 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -3367,3 +3367,7 @@ share/tmac/doc-common                           patched by hand
 
 	Update to 1.6.2_RC4
 
+sys/arch/sun2/include/param.h			patch
+
+	Clips MAXPHYS to 32k on sun2, as needed by the sc driver.
+	[fredette, ticket #1600]
