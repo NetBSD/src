@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.30 2002/10/14 16:20:39 lukem Exp $
+#	$NetBSD: Makefile,v 1.31 2002/10/16 04:00:53 lukem Exp $
 
 SUBDIR=		ramdisk-big ramdisk-small ramdisk-tiny \
-		ramdisk-rescuesmall ramdisk-rescuetiny \
+		ramdisk-rescuetiny \
 		.WAIT \
 		instkernel \
 		.WAIT \
 		bootfloppy bootfloppy-big bootfloppy-com bootfloppy-laptop \
 		bootfloppy-ps2 bootfloppy-small bootfloppy-tiny \
-		rescue-small rescue-tiny
+		rescue-tiny
 
 TARGETS+=	release
 
