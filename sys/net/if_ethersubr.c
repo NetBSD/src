@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.76 2001/04/07 18:01:48 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.77 2001/04/10 21:47:36 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,6 +71,7 @@
 #include "opt_iso.h"
 #include "opt_ns.h"
 #include "opt_gateway.h"
+#include "opt_pfil_hooks.h"
 #include "vlan.h"
 #include "bpfilter.h"
 
@@ -224,12 +225,6 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
-
-	/*
-	 * If the queueing discipline needs packet classification,
-	 * do it before prepending link headers.
-	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 
@@ -477,6 +472,25 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	else
 	 	bcopy(LLADDR(ifp->if_sadl), (caddr_t)eh->ether_shost,
 		    sizeof(eh->ether_shost));
+
+#ifdef PFIL_HOOKS
+	if ((error = pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
+		return (error);
+	if (m == NULL)
+		return (0);
+#endif
+
+#ifdef ALTQ
+	/*
+	 * If ALTQ is enabled on the parent interface, do
+	 * classification; the queueing discipline might not
+	 * require classification, but might require the
+	 * address family/header pointer in the pktattr.
+	 */
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		altq_etherclassify(&ifp->if_snd, m, &pktattr);
+#endif
+
 	mflags = m->m_flags;
 	len = m->m_pkthdr.len;
 	s = splimp();
@@ -625,6 +639,16 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		m_freem(m);
 		return;
 	}
+
+#ifdef PFIL_HOOKS
+	if (pfil_run_hooks(&ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
+		return;
+	if (m == NULL)
+		return;
+
+	eh = mtod(m, struct ether_header *);
+	etype = ntohs(eh->ether_type);
+#endif
 
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
