@@ -1,10 +1,10 @@
-.\"	$NetBSD: packages.7,v 1.28.4.7 2001/01/25 19:49:32 jhawk Exp $
+.\"	$NetBSD: packages.7,v 1.28.4.8 2001/03/30 22:17:32 he Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
 .\"	This file is in the public domain.
 .\"
-.Dd August 30, 1999
+.Dd October 22, 2000
 .Dt PACKAGES 7
 .Os
 .Sh NAME
@@ -88,50 +88,54 @@ make sure patches apply with zero fuzz
 run check-shlibs to see that all binaries will find their 
 shared libs.
 .El
+.It USE_GLX 
+Says that if Mesa is requested, a package should preferably use a
+GLX (hardware-accelerated) version of the Mesa library.
 .El
 .Sh PACKAGE SPECIFIC VARIABLES
 This section documents variables that typically apply to an individual
 package.  Non-Boolean variables without defaults are *mandatory*.
 .Bl -tag -indent XXXXXXXX -width XXXXXXXX
-.It ONLY_FOR_ARCHS
-If set, it lists the values of MACHINE_ARCH (basic
-.Nx
-CPU types) that the package will build under.
-It can be a glob-style wildcard.
-.It NOT_FOR_ARCHS
-If set, it lists the values of MACHINE_ARCH (basic
-.Nx
-CPU types) that the package will not build under.
-It can be a glob-style wildcard.
+.It ONLY_FOR_PLATFORM
+If set, it lists the values of OS triples (OS-version-platform)
+that the package will build under.  It can be a glob-style wildcard.
+.It NOT_FOR_PLATFORM
+If set, it lists the values of OS triples (OS-version-platform)
+that the package will not build under.  It can be a glob-style wildcard.
 .It MAINTAINER
-The e-mail address of the contact person for this package.  The default
-is packages@NetBSD.ORG.
+The e-mail address of the contact person for this package.  The person
+who feels responsible for this package, and who is most likely to look
+at problems or questions regarding this package which have been
+reported with
+.Xr send-pr 1 .
+The right person to contact before making major changes to the
+package.  The default is packages@NetBSD.ORG.
 .It CATEGORIES
 A list of descriptive categories into which this package falls.
+.It COMMENT
+A one-line description of the package (should not include
+the package name).
 .It MASTER_SITES
 Primary location(s) for distribution files if not found locally.
-.It MASTER_SITE_SUBDIR
-Directory that
-.Dq %SUBDIR%
-in MASTER_SITES is replaced by.
 .It PATCH_SITES
 Primary location(s) for distribution patch files (see
 .Dv It PATCHFILES
 below) if not found locally.
-.It PATCH_SITE_SUBDIR
-Directory that
-.Dq %SUBDIR%
-in PATCH_SITES is replaced by.
 .It WRKDIR
 A temporary working directory that gets *clobbered* on clean.  The default is
-.Pa ${.CURDIR}/work .
+.Pa ${.CURDIR}/work
+or
+.Pa ${.CURDIR}/work.${MACHINE_ARCH}
+if
+.Dv OBJMACHINE
+is set.
 .It WRKSRC
 A subdirectory of ${WRKDIR} where the distribution actually
 unpacks to.  The default is
 .Pa ${WRKDIR}/${DISTNAME}
 unless
 .Dv NO_WRKSUBDIR
-is set, in which case simply
+is set, in which case it is simply
 .Pa ${WRKDIR} .
 .It DISTNAME
 Name of package or distribution.
@@ -161,13 +165,6 @@ All of
 .Pa ${DISTFILES}
 and
 .Pa ${PATCHFILES} .
-.It MIRROR_DISTFILE
-Whether the distfile is redistributable without restrictions.
-Defaults to
-.Dq yes ,
-set this to
-.Dq no
-if restrictions exist.
 .It IGNOREFILES
 If some of the
 .Pa ${ALLFILES}
@@ -177,6 +174,15 @@ Name of the package file to create if the
 .Pa ${DISTNAME}
 isn't really relevant for the package.  The default is
 .Pa ${DISTNAME} .
+.It SVR4_PKGNAME	
+Name of the package file to create if the
+.Pa ${PKGNAME}
+isn't unique enough on a SVR4 system. The default is
+.Pa ${PKGNAME}
+which may be shortened when you use gensolpkg. Only add SVR4_PKGNAME if
+.Pa ${PKGNAME}
+does not produce an unique package name on a SVR4 system.
+The lenght of SVR4_PKGNAME is limited to 5 characters.
 .It EXTRACT_ONLY
 If defined, a subset of
 .Pa ${DISTFILES}
@@ -226,15 +232,17 @@ will not be built.
 .It PLIST_SRC	   
 Which file(s) to use to build
 .Pa ${PLIST} .
-Either
-.Pa ${PKGDIR}/PLIST
-or
-.Pa ${PKGDIR}/PLIST-mi
-plus
-.Pa ${PKGDIR}/PLIST-md.shared
-or
-.Pa ${PKGDIR}/PLIST-md.static ,
-if not set otherwise.
+Default is
+.Pa ${PKGDIR}/PLIST .
+.It PLIST_SUBST
+Patterns that get automatically expanded during the PLIST creation.
+Takes arguments of the form
+.Li VARNAME =
+.Dq value
+and subsequently replaces every occurance of
+.Li ${VARNAME}
+with
+.Li value .
 .It INSTALL_FILE
 The name of a script which will be invoked when installing
 binary packages. If there is a file called
@@ -245,17 +253,33 @@ The name of a script which will be invoked when de-installing
 binary packages. If there is a file called
 .Pa ${PKGDIR}/DEINSTALL ,
 that file will be used.
-.It REQ_FILE
-The name of a script that is invoked before installation and de-installation
-to ensure things are available.
-If there is a file called
-.Pa ${PKGDIR}/REQ ,
-that file will be used.
-.It MESSAGE_FILE
+.It MESSAGE
+The name of a file which will be displayed during the installation
+of a package. No substitution according to MESSAGE_SUBST takes
+place. Overrides MESSAGE_SRC. Should not be used.
+.It MESSAGE_SRC
 The name of a file which will be displayed when installing
-binary packages. If there is a file called
+a package. If neither MESSAGE_SRC nor MESSAGE are set, and there
+is a file called
 .Pa ${PKGDIR}/MESSAGE ,
 that file will be used.
+Before displaying the file, substitution according to MESSAGE_SUBST
+takes place.
+.It MESSAGE_SUBST
+This variable takes equations of the form
+.Li VARNAME =
+.Dq value ,
+and replaces all occurrences of
+.Li ${VARNAME}
+in MESSAGE_SRC with
+.Li value .
+By default, substitution is performed for
+.Li LOCALBASE ,
+.Li PKGNAME ,
+.Li PREFIX ,
+.Li X11BASE ,
+and
+.Li X11PREFIX .
 .It NO_BIN_ON_CDROM
 Binaries of this package may not be placed on CDROM.  Set this string to
 .Pa ${RESTRICTED} .
@@ -266,16 +290,6 @@ Binaries of this package may not be made available via ftp.  Set this string to
 Use a dummy (do-nothing) build target.
 .It NO_CONFIGURE
 Use a dummy (do-nothing) configure target.
-.It NO_CDROM	
-Package may not go on CDROM.  Set this string to reason.
-Use of this variable is deprecated in favour of
-.Pa NO_BIN_ON_CDROM
-and
-.Pa NO_SRC_ON_CDROM .
-.It NO_DESCRIBE
-Use a dummy (do-nothing) describe target.
-.It NO_EXTRACT
-Use a dummy (do-nothing) extract target.
 .It NO_INSTALL
 Use a dummy (do-nothing) install target.
 .It NO_PACKAGE
@@ -288,11 +302,10 @@ Distfile(s) of this package may not be placed on CDROM.  Set this string to
 .It NO_SRC_ON_FTP
 Distfile(s) of this package may not be made available via ftp.  Set this string to
 .Pa ${RESTRICTED} .
+If this variable is set, the distfile will not be mirrored by ftp.netbsd.org.
 .It NO_WRKSUBDIR
 Assume package unpacks directly into
 .Pa ${WRKDIR} .
-.It NO_WRKDIR	
-There's no work directory at all; package does this someplace else.
 .It NO_DEPENDS
 Don't verify build of dependencies.
 .It CHECK_SHLIBS
@@ -325,15 +338,10 @@ to manage building of libraries and shared objects, where applicable.
 .It LTCONFIG_OVERRIDE
 If set, override the specified
 .Pa ltconfig
-for using
-.Pa pkglibtool
-instead of the pkg's own
-.Pa libtool .
-.It LIBTOOL_OVERRIDE
-If set, override the specified
+for using the
 .Pa libtool
-with our
-.Pa pkglibtool .
+package instead of the pkg's own
+.Pa libtool .
 .It USE_FORTRAN
 Says that the package uses a fortran compiler for building.
 .It USE_GMAKE	
@@ -348,6 +356,10 @@ for building and running.
 .It USE_IMAKE	
 Says that the package uses
 .Pa imake .
+.It USE_MESA 
+Says that the package uses the Mesa library.  This will include all
+Mesa components that are not included in the installed X11
+distribution.
 .It USE_SSL	
 Says that the package uses a SSL library. The location of the SSL
 installation can be found in
@@ -486,7 +498,7 @@ if you want to fetch all distfiles, even for packages not built due to
 limitation by absent X or Motif.
 .\" XXXmrg -- this shouldn't be documented.  if we want to export the
 .\" feature, give it a different name, or something.
-.It __ARCH_OK    
+.It __PLATFORM_OK    
 Internal variable set if the package is ok to build on this architecture. Set
 to
 .Dq YES
@@ -505,6 +517,14 @@ accordingly.
 .It MASTER_SORT_REGEX
 Similar to MASTER_SORT, but takes a list of regular expressions for
 finer grained control.
+.It OSVERSION_SPECIFIC
+Used to denote packages, such as LKM's, which are tightly bound to a specific
+version of the OS.  Such binary packages are not backwards compatible with 
+other versions of the OS, and should be uploaded to a version specific 
+directory on the FTP.  This variable is not currently used by any of the 
+package system internals, but may be used in the future.  Set this to
+.Dq YES
+to denote such a package.
 .El
 .Sh MOTIF SUPPORT
 This section documents variables related to the use and installation of
@@ -540,10 +560,12 @@ Local package source distributions that are maintained in
 .Sq ftp.netbsd.org:/pub/NetBSD/packages/distfiles/LOCAL_PORTS/ .
 .It Sy MASTER_SITE_PERL_CPAN
 Perl CPAN mirror.
-.It Sy MASTER_SITE_TEX_CTAN
-TeX CTAN mirror.
+.It Sy MASTER_SITE_SOURCEFORGE
+download.sourceforge.net mirror.
 .It Sy MASTER_SITE_SUNSITE
 sunsite.unc.edu mirror.
+.It Sy MASTER_SITE_TEX_CTAN
+TeX CTAN mirror.
 .It Sy MASTER_SITE_XCONTRIB
 X Window System contributed source mirror.
 .El
@@ -563,10 +585,18 @@ target to completely clean up and lose the list of dependent packages.  Use
 with care!
 .It DEPENDS_TARGET
 The target to execute when a package is calling a dependency.  The default
-is
-.Dq install .
+depends on the target that is used:
+.Dq package
+for
+.Dq make package ,
+.Dq update
+for
+.Dq make update ,
+and
+.Dq reinstall
+for all other targets.
 .It NOCLEAN
-If set, prevent the 
+If set, prevent the
 .Dq update
 target from cleaning up after itself.
 .It PKG_VERBOSE
@@ -584,6 +614,18 @@ During update, deinstall each package before calling
 (see the
 .Dq update
 target for more information).
+.It UPDATE_TARGET
+The target to execute for building a package during
+.Dq make update .
+Defaults to
+.Dq install .
+Other good targets are
+.Dq package
+or
+.Dq bin-install .
+Do not set this to
+.Dq update
+or you will get stuck in an endless loop!
 .El
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
@@ -600,7 +642,7 @@ A command to install sharable data.
 .It INSTALL_MAN		
 A command to install manpages (doesn't compress).
 .It INSTALL_PROGRAM_DIR
-Create a directory for storing programs>
+Create a directory for storing programs.
 .It INSTALL_SCRIPT_DIR
 Create a directory for storing scripts.
 .It INSTALL_DATA_DIR	
@@ -689,13 +731,11 @@ Create a README.html file describing the category or package. See
 .Pa ${PKGSRCDIR}/Packages.txt
 for more details.
 .It mirror-distfiles
-Mirror the distfile(s) if they are freely redistributable.  Setting
-.Dv MIRROR_DISTFILE
-to
-.Dq no
-in the package Makefile will override the default
-.Dq yes , and
-the distfile will not be fetched.
+Mirror the distfile(s) if they are freely redistributable. If
+.Dv NO_SRC_ON_FTP
+is set in the package's Makefile (usually to 
+.Pa ${RESTRICTED} )
+then that reason is printed, and the distfile is not mirrored.
 .El
 .Pp
 Default sequence for
