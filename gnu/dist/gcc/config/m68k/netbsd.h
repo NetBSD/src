@@ -61,3 +61,5 @@
    and initialization stuff better.  */
 #define DWARF2_UNWIND_INFO 0
 
+/* NetBSD a.out allows more than 16-bit alignment of elements and data. */
+#define MAX_OFILE_ALIGNMENT 32
