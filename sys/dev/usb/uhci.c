@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.96 2000/03/25 18:02:32 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.97 2000/03/26 21:42:54 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -263,7 +263,7 @@ static void		uhci_dump_td __P((uhci_soft_td_t *));
 static void		uhci_dump_ii __P((uhci_intr_info_t *ii));
 #endif
 
-#define UWRITE1(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
+#define UWRITE1(sc, r, x) bus_space_write_1((sc)->iot, (sc)->ioh, (r), (x))
 #define UWRITE2(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
 #define UWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
 #define UREAD1(sc, r) bus_space_read_1((sc)->iot, (sc)->ioh, (r))
