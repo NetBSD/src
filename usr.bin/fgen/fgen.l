@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.23 2003/11/02 17:40:41 thorpej Exp $	*/
+/*	$NetBSD: fgen.l,v 1.24 2003/12/06 05:15:29 dmcmahill Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -44,7 +44,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.23 2003/11/02 17:40:41 thorpej Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.24 2003/12/06 05:15:29 dmcmahill Exp $");
 #endif
 
 %}
@@ -59,6 +59,7 @@ tail	{white}
 
 %{
 #include <sys/types.h>
+#include <arpa/inet.h>
 
 #include <assert.h>
 #include <err.h>
