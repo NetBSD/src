@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.7 1999/04/27 04:56:18 thorpej Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.8 1999/08/24 17:47:44 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,10 @@ struct mbe_pcmcia_product {
 	  1,				0,
 	  PCMCIA_STR_TDK_LAK_DFL9610 }
 #endif
+
+	{ PCMCIA_VENDOR_CONTEC,		PCMCIA_PRODUCT_CONTEC_CNETPC,
+	  0,				0,
+	  PCMCIA_STR_CONTEC_CNETPC },
 
 	{ PCMCIA_VENDOR_FUJITSU,	PCMCIA_PRODUCT_FUJITSU_LA501,
 	  0,				0x20,
