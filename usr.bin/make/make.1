@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.90 2003/10/09 16:56:06 jdolecek Exp $
+.\"	$NetBSD: make.1,v 1.91 2003/11/07 01:01:46 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd September 10, 2003
+.Dd November 7, 2003
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -330,7 +330,7 @@ Each of the commands in this script
 be preceded by a tab.
 While any target may appear on a dependency line, only one of these
 dependencies may be followed by a creation script, unless the
-.Ql Ic ::
+.Ql Ic \&::
 operator is used.
 .Pp
 If the first or first two characters of the command line are
@@ -347,6 +347,7 @@ causes any non-zero exit status of the command line to be ignored.
 .Sh VARIABLE ASSIGNMENTS
 Variables in make are much like variables in the shell, and, by tradition,
 consist of all upper-case letters.
+.Ss Variable assignment modifiers
 The five operators that can be used to assign values to variables are as
 follows:
 .Bl -tag -width Ds
@@ -389,7 +390,7 @@ the variable is being used.
 Variables in dependency lines are expanded as the line is read.
 Variables in shell commands are expanded when the shell command is
 executed.
-.Pp
+.Ss Variable classes
 The four different classes of variables (in order of increasing precedence)
 are:
 .Bl -tag -width Ds
@@ -459,7 +460,7 @@ These variables are
 and
 .Ql Va .MEMBER .
 .El
-.Pp
+.Ss Additional inbuilt variables
 In addition,
 .Nm
 sets or knows about the following variables:
@@ -532,7 +533,9 @@ as well as the value of any variables named in
 .Ql Va MAKE_PRINT_VAR_ON_ERROR .
 .It Va .newline
 This variable is simply assigned a newline character as its value.
-This allows expansions using the :@ modifier to put a newline between
+This allows expansions using the
+.Cm \&:@
+modifier to put a newline between
 iterations of the loop rather than a space.
 For example, the printing of
 .Ql Va MAKE_PRINT_VAR_ON_ERROR
@@ -585,7 +588,7 @@ for all programs which
 .Nm
 executes.
 .El
-.Pp
+.Ss Variable modifiers
 Variable expansion may be modified to select or modify each word of the
 variable (where a ``word'' is white-space delimited sequence of characters).
 The general format of a variable expansion is as follows:
@@ -597,11 +600,11 @@ special characters.
 The colon may be escaped with a backslash
 .Pq Ql \e .
 .Bl -tag -width EEE
-.It Cm E
+.It Cm \&:E
 Replaces each word in the variable with its suffix.
-.It Cm H
+.It Cm \&:H
 Replaces each word in the variable with everything but the last component.
-.It Cm M Ns Ar pattern
+.It Cm \&:M Ns Ar pattern
 Select only those words that match
 .Ar pattern .
 The standard shell wildcard characters
@@ -613,42 +616,42 @@ may
 be used.
 The wildcard characters may be escaped with a backslash
 .Pq Ql \e .
-.It Cm N Ns Ar pattern
+.It Cm \&:N Ns Ar pattern
 This is identical to
-.Ql Cm M ,
+.Ql Cm \&:M ,
 but selects all words which do not match
 .Ar pattern .
-.It Cm O
+.It Cm \&:O
 Order every word in variable alphabetically.
-.It Cm Q
+.It Cm \&:Q
 Quotes every shell meta-character in the variable, so that it can be passed
 safely through recursive invocations of
 .Nm .
-.It Cm R
+.It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
-.It Cm tl
+.It Cm \&:tl
 Converts variable to lower-case letters.
-.It Cm ts Ar c
+.It Cm \&:ts Ns Ar c
 Words in the variable are normally separated by a space on expansion.
 This modifier sets the separator to the character
 .Ar c .
 If
 .Ar c
 is omitted, then no separator is used.
-.It Cm tu
+.It Cm \&:tu
 Converts variable to upper-case letters.
-.It Cm tW
+.It Cm \&:tW
 Causes the value to be treated as a single word
 (possibly containing embedded white space).
 See also
-.Ql \&:[*] .
-.It Cm tw
+.Ql Cm \&:[*] .
+.It Cm \&:tw
 Causes the value to be treated as a sequence of
 words delimited by white space.
 See also
-.Ql \&:[@] .
+.Ql Cm \&:[@] .
 .Sm off
-.It Cm S No \&/ Ar old_string Xo
+.It Cm \&:S No \&/ Ar old_string Xo
 .No \&/ Ar new_string
 .No \&/ Op Cm 1gW
 .Xc
@@ -706,15 +709,15 @@ of a dollar sign
 .Pq Ql \&$ ,
 not a preceding dollar sign as is usual.
 .Sm off
-.It Cm C No \&/ Ar pattern Xo
+.It Cm \&:C No \&/ Ar pattern Xo
 .No \&/ Ar replacement
 .No \&/ Op Cm 1gW
 .Xc
 .Sm on
 The
-.Cm C
+.Cm \&:C
 modifier is just like the
-.Cm S
+.Cm \&:S
 modifier except that the old and new strings, instead of being
 simple strings, are a regular expression (see
 .Xr regex 3 )
@@ -746,17 +749,19 @@ and
 are orthogonal; the former specifies whether multiple words are
 potentially affected, the latter whether multiple substitutions can
 potentially occur within each affected word.
-.It Cm T
+.It Cm \&:T
 Replaces each word in the variable with its last component.
-.It Cm u
+.It Cm \&:u
 Remove adjacent duplicate words (like
 .Xr uniq 1 ) .
-.It Cm \&? Ar true_string Cm : Ar false_string
+.Sm off
+.It Cm \&:\&? Ar true_string Cm \&: Ar false_string
+.Sm on
 If the variable evaluates to true, return as its value the
 .Ar true_string ,
 otherwise return the
 .Ar false_string .
-.It Ar old_string=new_string
+.It Ar :old_string=new_string
 This is the
 .At V
 style variable substitution.
@@ -776,8 +781,10 @@ is the substring of
 .Ar old_string
 to be replaced in
 .Ar new_string .
-.It Cm @ Ar temp Cm @ Xo
+.Sm off
+.It Cm \&:@ Ar temp Cm @ Xo
 .Ar string Cm @
+.Sm on
 .Xc
 This is the loop expansion mechanism from the OSF Development
 Environment (ODE) make.
@@ -794,7 +801,7 @@ The ODE convention is that
 should start and end with a period.
 For example.
 .Dl ${LINKS:@.LINK.@${LN} ${TARGET} ${.LINK.}@}
-.It Cm U Ar newval
+.It Cm \&:U Ns Ar newval
 If the variable is undefined
 .Ar newval
 is the value.
@@ -804,25 +811,27 @@ It is handy for setting per-target CFLAGS for instance:
 .Dl ${_${.TARGET:T}_CFLAGS:U${DEF_CFLAGS}}
 If a value is only required if the variable is undefined, use:
 .Dl ${VAR:D:Unewval}
-.It Cm D Ar newval
+.It Cm \&:D Ns Ar newval
 If the variable is defined
 .Ar newval
 is the value.
-.It Cm L
+.It Cm \&:L
 The name of the variable is the value.
-.It Cm P
+.It Cm \&:P
 The path of the node which has the same name as the variable
 is the value.
 If no such node exists or its path is null, then the
 name of the variable is used.
-.It Cm \&! Ar cmd Cm \&!
+.Sm off
+.It Cm \&:\&! Ar cmd Cm \&!
+.Sm on
 The output of running
 .Ar cmd
 is the value.
-.It Cm sh
+.It Cm \&:sh
 If the variable is non-empty it is run as a command and the output
 becomes the new value.
-.It Cm \&:= Ar str
+.It Cm \&::= Ns Ar str
 The variable is assigned the value
 .Ar str
 after substitution.
@@ -846,28 +855,28 @@ use_foo: \&.USE
 \&.endfor
 
 .Ed
-The double
-.Cm \&:
+The
+.Ql Cm \&::
 helps avoid false matches with the
 .At V
 style
-.Cm \&=
+.Cm \&:=
 modifier and since substitution always occurs the
-.Cm \&:=
+.Cm \&::=
 form is vaguely appropriate.
-.It Cm \&:?= Ar str
+.It Cm \&::?= Ns Ar str
 As for
-.Cm \&:=
+.Cm \&::=
 but only if the variable does not already have a value.
-.It Cm \&:+= Ar str
+.It Cm \&::+= Ns Ar str
 Append
 .Ar str
 to the variable.
-.It Cm \&:!= Ar cmd
+.It Cm \&::!= Ns Ar cmd
 Assign the output of
 .Ar cmd
 to the variable.
-.It Cm \&[ Ns Ar range Ns Cm \&]
+.It Cm \&:\&[ Ns Ar range Ns Cm \&]
 Selects one or more words from the value,
 or performs other operations related to the way in which the
 value is divided into words.
@@ -880,7 +889,7 @@ causing a value to be treated as a single word
 An empty value, or a value that consists entirely of white-space,
 is treated as a single word.
 For the purposes of the
-.Ql \&:[]
+.Ql Cm \&:[]
 modifier, the words are indexed both forwards using positive integers
 (where index 1 represents the first word),
 and backwards using negative integers
@@ -902,14 +911,15 @@ to
 .Ar end ,
 inclusive.
 For example,
-.Ql \&:[2..-1]
+.Ql Cm \&:[2..-1]
 selects all words from the second word to the last word.
 If
 .Ar start
 is greater than
 .Ar end ,
-then the words are output in reverse order.  For example,
-.Ql \&:[-1..1]
+then the words are output in reverse order.
+For example,
+.Ql Cm \&:[-1..1]
 selects all the words from last to first.
 .\" :[*]
 .It Cm \&*
@@ -920,7 +930,7 @@ in Bourne shell.
 .\" :[0]
 .It 0
 Means the same as
-.Ql \&:[*] .
+.Ql Cm \&:[*] .
 .\" :[*]
 .It Cm \&@
 Causes subsequent modifiers to treat the value as a sequence of words
