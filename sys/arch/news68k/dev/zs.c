@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.13 2003/01/28 12:35:33 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.14 2003/02/10 11:38:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/tty.h>
+#include <sys/lock.h>
 
 #include <machine/cpu.h>
 #include <machine/z8530var.h>

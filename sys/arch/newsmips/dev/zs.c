@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.14 2003/01/01 01:55:42 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.15 2003/02/10 11:38:31 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -50,6 +50,7 @@
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/lock.h>
 
 #include <machine/adrsmap.h>
 #include <machine/cpu.h>
