@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2003/01/08 20:25:12 atatat Exp $ */
+/*	$NetBSD: main.c,v 1.2 2003/01/09 13:05:12 atatat Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2003/01/08 20:25:12 atatat Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2003/01/09 13:05:12 atatat Exp $");
 #endif
 
 #include <sys/param.h>
@@ -129,6 +129,11 @@ main(int argc, char *argv[])
 	char errbuf[_POSIX2_LINE_MAX + 1];
 	struct kinfo_proc2 *kproc;
 	char *kmem, *kernel;
+	gid_t egid;
+
+	egid = getegid();
+	if (setegid(getgid()) == -1)
+		err(1, "failed to reset privileges");
 
 	check_fd(STDIN_FILENO);
 	check_fd(STDOUT_FILENO);
@@ -200,6 +205,14 @@ main(int argc, char *argv[])
 	if (print_all + print_map + print_maps + print_solaris +
 	    print_ddb == 0)
 		print_solaris = 1;
+
+	/* get privs back if it appears to be safe, otherwise toss them */
+	if (kernel == NULL && kmem == NULL)
+		rc = setegid(egid);
+	else
+		rc = setgid(getgid());
+	if (rc == -1)
+		err(1, "failed to reset privileges");
 
 	/* start by opening libkvm */
 	kd = kvm_openfiles(kernel, kmem, NULL, O_RDONLY, errbuf);
