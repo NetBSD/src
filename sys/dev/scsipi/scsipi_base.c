@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.48 2001/06/27 23:14:26 ross Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.49 2001/07/13 20:00:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -2202,26 +2202,25 @@ scsipi_set_xfer_mode(chan, target, immed)
 		if (itperiph != NULL)
 			break;
 	}
-	if (itperiph != NULL)
+	if (itperiph != NULL) {
 		xm.xm_mode = itperiph->periph_cap;
-
-	/*
-	 * Now issue the request to the adapter.
-	 */
-	s = splbio();
-	scsipi_adapter_request(chan, ADAPTER_REQ_SET_XFER_MODE, &xm);
-	splx(s);
-
-	/*
-	 * If we want this to happen immediately, issue a dummy command,
-	 * since most adapters can't really negotiate unless they're
-	 * executing a job.
-	 */
-	if (immed != 0 && itperiph != NULL) {
-		(void) scsipi_test_unit_ready(itperiph,
-		    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
-		    XS_CTL_IGNORE_NOT_READY |
-		    XS_CTL_IGNORE_MEDIA_CHANGE);
+		/*
+		 * Now issue the request to the adapter.
+		 */
+		s = splbio();
+		scsipi_adapter_request(chan, ADAPTER_REQ_SET_XFER_MODE, &xm);
+		splx(s);
+		/*
+		 * If we want this to happen immediately, issue a dummy
+		 * command, since most adapters can't really negotiate unless
+		 * they're executing a job.
+		 */
+		if (immed != 0) {
+			(void) scsipi_test_unit_ready(itperiph,
+			    XS_CTL_DISCOVERY | XS_CTL_IGNORE_ILLEGAL_REQUEST |
+			    XS_CTL_IGNORE_NOT_READY |
+			    XS_CTL_IGNORE_MEDIA_CHANGE);
+		}
 	}
 }
 
