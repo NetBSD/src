@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/04/22 21:13:34 fredette Exp $
+#	$NetBSD: Makefile,v 1.11 2002/05/15 04:07:43 lukem Exp $
 
 LIB=sa
 
@@ -41,7 +41,7 @@ SRC_kern= ashldi3.c ashrdi3.c bcmp.c bzero.c inet_addr.c intoa.c \
 
 SRC_here= clock.c dev_disk.c devopen.c \
 	 gets.c idprom.c netif_sun.c panic.c \
-	 promboot.c promcons.c promdev.c \
+	 promboot.c promcons.c promdev.c putstr.c \
 	 sun2.c sun3.c sun3x.c vers.c xxboot.c
 
 SRCS= ${SRC_net} ${SRC_sa} ${SRC_kern} ${SRC_here}
