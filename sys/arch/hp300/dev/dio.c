@@ -1,4 +1,4 @@
-/*	$NetBSD: dio.c,v 1.22 2003/04/01 20:41:36 thorpej Exp $	*/
+/*	$NetBSD: dio.c,v 1.23 2003/05/24 06:21:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.22 2003/04/01 20:41:36 thorpej Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.23 2003/05/24 06:21:22 gmcgarry Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.22 2003/04/01 20:41:36 thorpej Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <machine/bus.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -64,9 +66,11 @@ __KERNEL_RCSID(0, "$NetBSD: dio.c,v 1.22 2003/04/01 20:41:36 thorpej Exp $");
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/diodevs_data.h>
 
-extern	caddr_t internalhpib;
+#include "locators.h"
+#define        diocf_scode             cf_loc[DIOCF_SCODE]
 
-int	dio_scodesize __P((struct dio_attach_args *));
+
+static int	dio_scodesize __P((struct dio_attach_args *));
 char	*dio_devinfo __P((struct dio_attach_args *, char *, size_t));
 
 int	diomatch __P((struct device *, struct cfdata *, void *));
@@ -100,7 +104,7 @@ dioattach(parent, self, aux)
 {
 	struct dio_attach_args da;
 	caddr_t pa, va;
-	int scode, scmax, didmap, scodesize;
+	int scode, scmax, scodesize;
 
 	printf("\n");
 
@@ -112,31 +116,22 @@ dioattach(parent, self, aux)
 			continue;
 		}
 
-		didmap = 0;
-
 		/*
 		 * Temporarily map the space corresponding to
 		 * the current select code unless:
-		 *	- this is the internal hpib select code,
 		 */
 		pa = dio_scodetopa(scode);
-		if ((scode == 7) && internalhpib)
-			va = internalhpib = (caddr_t)IIOV(pa);
-		else {
-			va = iomap(pa, PAGE_SIZE);
-			if (va == NULL) {
-				printf("%s: can't map scode %d\n",
-				    self->dv_xname, scode);
-				scode++;
-				continue;
-			}
-			didmap = 1;
+                va = iomap(pa, PAGE_SIZE);
+                if (va == NULL) {
+                        printf("%s: can't map scode %d\n",
+                            self->dv_xname, scode);
+                        scode++;
+                        continue;
 		}
 
 		/* Check for hardware. */
 		if (badaddr(va)) {
-			if (didmap)
-				iounmap(va, PAGE_SIZE);
+			iounmap(va, PAGE_SIZE);
 			scode++;
 			continue;
 		}
@@ -145,26 +140,19 @@ dioattach(parent, self, aux)
 		memset(&da, 0, sizeof(da));
 		da.da_bst = HP300_BUS_SPACE_DIO;
 		da.da_scode = scode;
-		/*
-		 * Internal HP-IB doesn't always return a device ID,
-		 * so we rely on the sysflags.
-		 */
-		if ((scode == 7) && internalhpib)
-			da.da_id = DIO_DEVICE_ID_IHPIB;
-		else
-			da.da_id = DIO_ID(va);
 
+		da.da_id = DIO_ID(va);
 		if (DIO_ISFRAMEBUFFER(da.da_id))
 			da.da_secid = DIO_SECID(va);
-
+		da.da_addr = (bus_addr_t)dio_scodetopa(scode);
 		da.da_size = DIO_SIZE(scode, va);
 		scodesize = dio_scodesize(&da);
 		if (DIO_ISDIO(scode))
 			da.da_size *= scodesize;
+		da.da_ipl = DIO_IPL(va);
 
 		/* No longer need the device to be mapped. */
-		if (didmap)
-			iounmap(va, PAGE_SIZE);
+		iounmap(va, PAGE_SIZE);
 
 		/* Attach matching device. */
 		config_found_sm(self, &da, dioprint, diosubmatch);
@@ -198,7 +186,7 @@ dioprint(aux, pnp)
 	if (pnp)
 		aprint_normal("%s at %s",
 		    dio_devinfo(da, buf, sizeof(buf)), pnp);
-	aprint_normal(" scode %d", da->da_scode);
+	aprint_normal(" scode %d ipl %d", da->da_scode, da->da_ipl);
 	return (UNCONF);
 }
 
@@ -211,9 +199,7 @@ dio_scodetopa(scode)
 {
 	u_long rval;
 
-	if (scode == 7 && internalhpib)
-		rval = DIO_IHPIBADDR;
-	else if (DIO_ISDIO(scode))
+	if (DIO_ISDIO(scode))
 		rval = DIO_BASE + (scode * DIO_DEVSIZE);
 	else if (DIO_ISDIOII(scode))
 		rval = DIOII_BASE + ((scode - DIOII_SCBASE) * DIOII_DEVSIZE);
@@ -227,18 +213,11 @@ dio_scodetopa(scode)
  * Return the select code size for this device, defaulting to 1
  * if we don't know what kind of device we have.
  */
-int
+static int
 dio_scodesize(da)
 	struct dio_attach_args *da;
 {
 	int i;
-
-	/*
-	 * Deal with lame internal HP-IB controllers which don't have
-	 * consistent/reliable device ids.
-	 */
-	if (da->da_scode == 7 && internalhpib)
-		return (1);
 
 	/*
 	 * Find the dio_devdata matchind the primary id.
@@ -279,15 +258,6 @@ dio_devinfo(da, buf, buflen)
 #endif
 
 	memset(buf, 0, buflen);
-
-	/*
-	 * Deal with lame internal HP-IB controllers which don't have
-	 * consistent/reliable device ids.
-	 */
-	if (da->da_scode == 7 && internalhpib) {
-		sprintf(buf, DIO_DEVICE_DESC_IHPIB);
-		return (buf);
-	}
 
 #ifdef DIOVERBOSE
 	/*

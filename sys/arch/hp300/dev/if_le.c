@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.52 2002/10/20 05:54:29 gmcgarry Exp $	*/
+/*	$NetBSD: if_le.c,v 1.53 2003/05/24 06:21:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.52 2002/10/20 05:54:29 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.53 2003/05/24 06:21:22 gmcgarry Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -92,7 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.52 2002/10/20 05:54:29 gmcgarry Exp $");
 #include <dev/ic/lancevar.h>
 #include <dev/ic/am7990var.h>
 
-#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 #include <hp300/dev/if_lereg.h>
@@ -202,7 +201,7 @@ leattach(struct device *parent, struct device *self, void *aux)
 	bus_space_tag_t bst = da->da_bst;
 	bus_space_handle_t bsh0, bsh1, bsh2;
 	bus_size_t offset;
-	int i, ipl;
+	int i;
 
 	if (bus_space_map(bst, (bus_addr_t)dio_scodetopa(da->da_scode),
 	    da->da_size, 0, &bsh0)) {
@@ -230,9 +229,6 @@ leattach(struct device *parent, struct device *self, void *aux)
 
 	bus_space_write_1(bst, bsh0, LER0_ID, 0xff);
 	DELAY(100);
-
-	ipl = DIO_IPL((caddr_t)bsh0);			/* XXX */
-	printf(" ipl %d", ipl);
 
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = 0;
@@ -264,7 +260,7 @@ leattach(struct device *parent, struct device *self, void *aux)
 	am7990_config(&lesc->sc_am7990);
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(leintr, sc, ipl, IPL_NET);
+	(void) dio_intr_establish(leintr, sc, da->da_ipl, IPL_NET);
 	bus_space_write_1(bst, bsh0, LER0_STATUS, LE_IE);
 }
 

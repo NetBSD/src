@@ -1,4 +1,4 @@
-/*	$NetBSD: fhpib.c,v 1.25 2003/05/03 18:10:47 wiz Exp $	*/
+/*	$NetBSD: fhpib.c,v 1.26 2003/05/24 06:21:22 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.25 2003/05/03 18:10:47 wiz Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.26 2003/05/24 06:21:22 gmcgarry Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: fhpib.c,v 1.25 2003/05/03 18:10:47 wiz Exp $");
 #include <machine/autoconf.h>
 #include <machine/intr.h>
 
-#include <hp300/dev/dioreg.h>
 #include <hp300/dev/diovar.h>
 #include <hp300/dev/diodevs.h>
 
@@ -181,7 +180,6 @@ fhpibattach(parent, self, aux)
 	struct fhpib_softc *sc = (struct fhpib_softc *)self;
 	struct dio_attach_args *da = aux;
 	struct hpibdev_attach_args ha;
-	int ipl;
 
 	sc->sc_regs = (struct fhpibdevice *)iomap(dio_scodetopa(da->da_scode),
 	    da->da_size);
@@ -190,11 +188,10 @@ fhpibattach(parent, self, aux)
 		return;
 	}
 
-	ipl = DIO_IPL(sc->sc_regs);
-	printf(" ipl %d: %s\n", ipl, DIO_DEVICE_DESC_FHPIB);
+	printf(": %s\n", DIO_DEVICE_DESC_FHPIB);
 
 	/* Establish the interrupt handler. */
-	(void) dio_intr_establish(fhpibintr, sc, ipl, IPL_BIO);
+	(void) dio_intr_establish(fhpibintr, sc, da->da_ipl, IPL_BIO);
 
 	callout_init(&sc->sc_dmadone_ch);
 	callout_init(&sc->sc_ppwatch_ch);
