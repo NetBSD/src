@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.200 2004/07/09 03:19:51 enami Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.201 2004/07/17 19:55:28 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.199 2004/07/09 03:19:20 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.200 2004/07/17 19:55:14 mycroft Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -108,7 +108,6 @@
 #define	PCMCIA_VENDOR_EDIMAX	0x890f	/* Edimax Technology Inc. */
 #define	PCMCIA_VENDOR_COMPEX	0x8a01	/* Compex Corporation */
 #define	PCMCIA_VENDOR_MELCO	0x8a01	/* Melco Corporation */
-#define	PCMCIA_VENDOR_ZONET	0x8a01	/* Zonet Technology Inc. */
 #define	PCMCIA_VENDOR_CONTEC	0xc001	/* Contec */
 #define	PCMCIA_VENDOR_MACNICA	0xc00b	/* MACNICA */
 #define	PCMCIA_VENDOR_ROLAND	0xc00c	/* Roland */
@@ -704,11 +703,6 @@
 #define	PCMCIA_CIS_XIRCOM_CEM56	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_CEM56	0x110b
 #define	PCMCIA_STR_XIRCOM_CEM56	"Xircom CreditCard Ethernet + Modem 56"
-
-/* ZONET */
-#define	PCMCIA_CIS_ZONET_ZEN	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_ZONET_ZEN	0x0100
-#define	PCMCIA_STR_ZONET_ZEN	"Zonet Zen 10/10"
 
 /*
  * Cards we know only by their cis, sorted by name.
