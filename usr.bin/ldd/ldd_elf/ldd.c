@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.8 1999/12/13 09:10:16 christos Exp $	*/
+/*	$NetBSD: ldd.c,v 1.9 2000/07/26 19:39:07 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -125,7 +125,7 @@ main(
 		obj->needed = needed->next;
 		free((void *) needed);
 	    }
-	    (void) munmap(obj->relocbase, obj->mapsize);
+	    (void) munmap(obj->mapbase, obj->mapsize);
 	    free(obj->path);
 	    free(obj);
 	}
