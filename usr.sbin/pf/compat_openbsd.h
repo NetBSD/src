@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_openbsd.h,v 1.2 2005/02/13 22:29:37 yamt Exp $	*/
+/*	$NetBSD: compat_openbsd.h,v 1.3 2005/03/15 16:28:29 peter Exp $	*/
 
 /*-
  * Copyright (c)2004 YAMAMOTO Takashi,
@@ -67,3 +67,29 @@ syslog_r(int pri, struct syslog_data *data, const char *fmt, ...)
  */
 
 #define	TAILQ_END(h)	NULL
+
+
+/*
+ * libc/stdlib/strtonum.c
+ */
+
+#include <limits.h>
+#include <stdlib.h>
+
+static __inline long long
+strtonum(const char *, long long, long long, const char **) __unused;
+
+static __inline long long
+strtonum(const char *numstr, long long minval, long long maxval,
+    const char **errstrp)
+{
+	char *p;
+	long long n;
+
+	n = strtol(numstr, &p, 10);
+	if (*p != '\0' || *numstr == '\0') {
+		*errstrp = "invalid";
+		n = 0;
+	}
+	return (n);
+}
