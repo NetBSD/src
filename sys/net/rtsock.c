@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.55 2002/02/22 17:26:31 christos Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.55.10.1 2003/06/24 09:55:37 grant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.55 2002/02/22 17:26:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.55.10.1 2003/06/24 09:55:37 grant Exp $");
 
 #include "opt_inet.h"
 
@@ -308,6 +308,22 @@ route_output(m, va_alist)
 		}
 		rt = (struct rtentry *)rn;
 		rt->rt_refcnt++;
+		if (rtm->rtm_type != RTM_GET) {/* XXX: too grotty */
+			struct radix_node *rn;
+			extern struct radix_node_head *mask_rnhead;
+
+			if (Bcmp(dst, rt_key(rt), dst->sa_len) != 0)
+				senderr(ESRCH);
+			if (netmask && (rn = rn_search(netmask,
+					    mask_rnhead->rnh_treetop)))
+				netmask = (struct sockaddr *)rn->rn_key;
+			for (rn = rt->rt_nodes; rn; rn = rn->rn_dupedkey)
+				if (netmask == (struct sockaddr *)rn->rn_mask)
+					break;
+			if (rn == 0)
+				senderr(ETOOMANYREFS);
+			rt = (struct rtentry *)rn;
+		}
 
 		switch(rtm->rtm_type) {
 
