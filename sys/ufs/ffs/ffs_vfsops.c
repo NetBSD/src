@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.97 2002/04/01 07:51:58 enami Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.98 2002/04/10 08:05:13 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.97 2002/04/01 07:51:58 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.98 2002/04/10 08:05:13 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -987,7 +987,7 @@ ffs_statfs(mp, sbp, p)
 	sbp->f_bsize = fs->fs_fsize;
 	sbp->f_iosize = fs->fs_bsize;
 	sbp->f_blocks = fs->fs_dsize;
-	sbp->f_bfree = fs->fs_cstotal.cs_nbfree * fs->fs_frag +
+	sbp->f_bfree = blkstofrags(fs, fs->fs_cstotal.cs_nbfree) +
 		fs->fs_cstotal.cs_nffree + dbtofsb(fs, fs->fs_pendingblocks);
 	sbp->f_bavail = (long) (((u_int64_t) fs->fs_dsize * (u_int64_t)
 	    (100 - fs->fs_minfree) / (u_int64_t) 100) -
