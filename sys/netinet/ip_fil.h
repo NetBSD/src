@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.8 1997/03/29 04:39:17 darrenr Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.9 1997/03/29 19:50:51 thorpej Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -8,7 +8,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $Id: ip_fil.h,v 1.8 1997/03/29 04:39:17 darrenr Exp $
+ * $Id: ip_fil.h,v 1.9 1997/03/29 19:50:51 thorpej Exp $
  */
 
 #ifndef	__IP_FIL_H__
@@ -21,6 +21,14 @@
  */
 #define	IPFILTER_LOG	1
 #endif
+
+/*
+ * Pathnames for various IP Filter control devices.  Used by LKM
+ * and userland, so defined here.
+ */
+#define	IPL_NAME	"/dev/ipl"
+#define	IPNAT_NAME	"/dev/ipnat"
+#define	IPSTATE_NAME	"/dev/ipstate"
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
