@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 1997/11/18 21:29:11 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.25 1998/03/30 01:52:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.24 1997/11/18 21:29:11 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 1998/03/30 01:52:02 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ main(argc, argv)
 			alarm(TO);
 		}
 		if (getname()) {
-			register int i;
+			int i;
 
 			oflush();
 			alarm(0);
@@ -385,8 +385,8 @@ main(argc, argv)
 static int
 getname()
 {
-	register int c;
-	register char *np;
+	int c;
+	char *np;
 	char cs;
 
 	/*
@@ -467,9 +467,9 @@ getname()
 
 static void
 putpad(s)
-	register const char *s;
+	const char *s;
 {
-	register pad = 0;
+	int pad = 0;
 	speed_t ospeed = cfgetospeed(&tmode);
 
 	if (isdigit(*s)) {
@@ -505,7 +505,7 @@ putpad(s)
 
 static void
 xputs(s)
-	register const char *s;
+	const char *s;
 {
 	while (*s)
 		putchr(*s++);
@@ -553,7 +553,7 @@ prompt()
 
 static void
 putf(cp)
-	register const char *cp;
+	const char *cp;
 {
 	extern char editedhost[];
 	time_t t;
