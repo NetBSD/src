@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.8 1999/01/08 18:10:35 augustss Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.9 1999/10/21 21:19:57 erh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -57,9 +57,6 @@
 #define	ELFSIZE		DB_ELFSIZE
 
 #include <sys/exec_elf.h>
-
-#define	CONCAT(x,y)	__CONCAT(x,y)
-#define	ELFDEFNAME(x)	CONCAT(ELF,CONCAT(ELFSIZE,CONCAT(_,x)))
 
 static char *db_elf_find_strtab __P((db_symtab_t *));
 
@@ -139,7 +136,7 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 
 	switch (elf->e_machine) {
 
-	ELFDEFNAME(MACHDEP_ID_CASES)
+	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
 		goto badheader;
