@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.387 2003/10/28 07:22:55 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.388 2003/11/03 00:30:34 sekiya Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -696,10 +696,12 @@ USE_${var}?= yes
 .endfor
 
 #
-# Use XFree86 4.x as default version on i386, amd64, macppc, cats and sparc*.
+# Use XFree86 4.x as default version on i386, amd64, macppc, cats, sgimips,
+# and sparc*.
 #
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
+    ${MACHINE} == "sgimips" || \
     ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 USE_XF86_4?=	yes
 .endif
