@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.15.2.1 1994/07/12 21:04:13 cgd Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.15.2.2 1994/07/20 05:22:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -746,6 +746,7 @@ nfs_doio(bp, cr, p)
 		}
 		if (p && (vp->v_flag & VTEXT) &&
 			(((nmp->nm_flag & NFSMNT_NQNFS) &&
+			  NQNFS_CKINVALID(vp, np, NQL_READ) &&
 			  np->n_lrev != np->n_brev) ||
 			 (!(nmp->nm_flag & NFSMNT_NQNFS) &&
 			  np->n_mtime != np->n_vattr.va_mtime.ts_sec))) {
