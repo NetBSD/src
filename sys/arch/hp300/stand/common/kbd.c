@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.1 1997/04/14 19:00:11 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.2 1997/05/12 07:51:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,16 @@ kbdnmi()
 
 	if (selected_kbd != NULL)
 		(*selected_kbd->k_nmi)();
-	printf("\nboot interrupted\n");
+
+	/*
+	 * This is the only reasonable thing to do, unfortunately.
+	 * Simply restarting the boot block by frobbing the stack and
+	 * jumping to begin: doesn't properly reset variables that
+	 * are in the data segment.
+	 */
+	printf("\nboot interrupted, resetting...\n");
+	DELAY(1000000);
+	call_req_reboot();
 }
 
 void
