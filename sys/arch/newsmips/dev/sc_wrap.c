@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.10 1999/09/17 20:04:43 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.11 1999/09/30 23:01:12 thorpej Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -160,7 +160,7 @@ get_scb(sc, flags)
 	s = splbio();
 
 	while ((scb = sc->free_list.tqh_first) == NULL &&
-		(flags & SCSI_NOSLEEP) == 0)
+		(flags & XS_CTL_NOSLEEP) == 0)
 		tsleep(&sc->free_list, PRIBIO, "sc_scb", 0);
 	if (scb) {
 		TAILQ_REMOVE(&sc->free_list, scb, chain);
@@ -180,7 +180,7 @@ sc_scsi_cmd(xs)
 	int flags, s;
 	int chan;
 
-	flags = xs->flags;
+	flags = xs->xs_control;
 	if ((scb = get_scb(sc, flags)) == NULL)
 		return TRY_AGAIN_LATER;
 
@@ -199,7 +199,7 @@ sc_scsi_cmd(xs)
 	sc_sched(sc);
 	splx(s);
 
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		return SUCCESSFULLY_QUEUED;
 
 	chan = sc_link->scsipi_scsi.target;
@@ -269,10 +269,10 @@ start:
 	xs = scb->xs;
 	sc_link = xs->sc_link;
 	chan = sc_link->scsipi_scsi.target;
-	flags = xs->flags;
+	flags = xs->xs_control;
 
 	if (cold)
-		flags |= SCSI_POLL;
+		flags |= XS_CTL_POLL;
 
 	if (sc->inuse[chan]) {
 		scb = scb->chain.tqe_next;
@@ -280,7 +280,7 @@ start:
 	}
 	sc->inuse[chan] = 1;
 
-	if (flags & SCSI_RESET)
+	if (flags & XS_CTL_RESET)
 		printf("SCSI RESET\n");
 
 	lun = sc_link->scsipi_scsi.lun;
@@ -314,7 +314,7 @@ start:
 		scb->sc_map = &sc->sc_map[chan];
 	}
 
-	if ((flags & SCSI_POLL) == 0)
+	if ((flags & XS_CTL_POLL) == 0)
 		ie = SCSI_INTEN;
 
 	if (xs->data)
@@ -344,7 +344,7 @@ sc_done(scb)
 	struct scsipi_link *sc_link = xs->sc_link;
 	struct sc_softc *sc = sc_link->adapter_softc;
 
-	xs->flags |= ITSDONE;
+	xs->xs_status |= XS_STS_DONE;
 	xs->resid = 0;
 	xs->status = 0;
 

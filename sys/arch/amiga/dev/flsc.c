@@ -1,4 +1,4 @@
-/*	$NetBSD: flsc.c,v 1.24 1999/09/25 21:47:10 is Exp $	*/
+/*	$NetBSD: flsc.c,v 1.25 1999/09/30 22:59:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -257,16 +257,16 @@ flsc_write_reg(sc, reg, val)
 		v = NCRCMD_TRANS;
 	}
 	/*
-	 * Can't do synchronous transfers in SCSI_POLL mode:
-	 * If starting SCSI_POLL command, clear defer sync negotiation
-	 * by clearing the T_NEGOTIATE flag.  If starting SCSI_POLL and
+	 * Can't do synchronous transfers in XS_CTL_POLL mode:
+	 * If starting XS_CTL_POLL command, clear defer sync negotiation
+	 * by clearing the T_NEGOTIATE flag.  If starting XS_CTL_POLL and
 	 * the device is currently running synchronous, force another
 	 * T_NEGOTIATE with 0 offset.
 	 */
 	if (reg == NCR_SELID) {
 		ti = &sc->sc_tinfo[
 		    sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
-		if (sc->sc_nexus->xs->flags & SCSI_POLL) {
+		if (sc->sc_nexus->xs->xs_control & XS_CTL_POLL) {
 			if (ti->flags & T_SYNCMODE) {
 				ti->flags ^= T_SYNCMODE | T_NEGOTIATE;
 			} else if (ti->flags & T_NEGOTIATE) {
@@ -286,7 +286,7 @@ flsc_write_reg(sc, reg, val)
 	}
 	if (reg == NCR_CMD && v == NCRCMD_SETATN  &&
 	    sc->sc_flags & NCR_SYNCHNEGO &&
-	     sc->sc_nexus->xs->flags & SCSI_POLL) {
+	     sc->sc_nexus->xs->xs_control & XS_CTL_POLL) {
 		ti = &sc->sc_tinfo[
 		    sc->sc_nexus->xs->sc_link->scsipi_scsi.target];
 		ti->offset = 0;
@@ -508,7 +508,7 @@ flsc_dma_setup(sc, addr, len, datain, dmasize)
 	fsc->sc_pdmalen = len;
 	fsc->sc_datain = datain;
 	fsc->sc_dmasize = *dmasize;
-	if (sc->sc_nexus->xs->flags & SCSI_POLL) {
+	if (sc->sc_nexus->xs->xs_control & XS_CTL_POLL) {
 		/* polling mode, use PIO */
 		*dmasize = fsc->sc_dmasize;
 		NCR_DMA(("pfsc_dma_setup: PIO %p/%d [%d]\n", *addr,
@@ -647,7 +647,7 @@ flsc_dma_go(sc)
 
 	NCR_DMA(("flsc_dma_go: datain %d size %d\n", fsc->sc_datain,
 	    fsc->sc_dmasize));
-	if (sc->sc_nexus->xs->flags & SCSI_POLL) {
+	if (sc->sc_nexus->xs->xs_control & XS_CTL_POLL) {
 		fsc->sc_active = 1;
 		return;
 	} else if (fsc->sc_piomode == 0) {
