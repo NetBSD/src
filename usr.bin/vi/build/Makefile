@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1996/10/18 06:24:12 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1997/01/30 07:29:11 mikel Exp $
 #
 # from: @(#)Makefile.in	8.56 (Berkeley) 5/18/96
 
@@ -28,7 +28,7 @@ SRCS=	cl_bsd.c cl_funcs.c cl_main.c cl_read.c cl_screen.c cl_term.c \
 LINKS=  ${BINDIR}/vi ${BINDIR}/ex ${BINDIR}/vi ${BINDIR}/view
 MLINKS= vi.1 ex.1 vi.1 view.1
 
-.PATH: ${.CURDIR}/../vi ${.CURDIR}/../svi ${.CURDIR}/../ex ${.CURDIR}/../sex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
+.PATH: ${.CURDIR}/../vi ${.CURDIR}/../ex ${.CURDIR}/../cl ${.CURDIR}/../common ${.CURDIR}/../docs/USD.doc/vi.man
 .include <bsd.prog.mk>
 .include "../../Makefile.inc"
 
