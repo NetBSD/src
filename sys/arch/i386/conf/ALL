@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.49 1994/05/09 23:10:40 cgd Exp $
+#	$Id: ALL,v 1.50 1994/05/19 07:17:29 cgd Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -42,10 +42,10 @@ options		KTRACE
 options		FIFO
 
 # System V-like message queues
-options		SYSVMSG
+#options	SYSVMSG
 
 # System V-like semaphores
-options		SYSVSEM
+#options	SYSVSEM
 
 # System V-like memory sharing
 #options	SYSVSHM
