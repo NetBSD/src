@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.14 1999/03/25 21:39:18 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.15 1999/06/01 03:00:40 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -315,6 +315,7 @@ struct lfs {
 	daddr_t   lfs_sbactive;         /* disk address of in-progress sb write */
 #endif
 	struct vnode *lfs_flushvp;      /* vnode being flushed */
+	u_int32_t lfs_diropwait;	/* # procs waiting on dirop flush */
 };
 
 /*
