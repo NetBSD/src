@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.20 1999/02/05 22:13:12 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.21 2000/02/01 04:01:22 danw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,5 +76,7 @@ typedef int32_t			register_t;
 
 /* The x86 does not have strict alignment requirements. */
 #define	__NO_STRICT_ALIGNMENT
+
+#define __HAVE_DEVICE_REGISTER
 
 #endif	/* _MACHTYPES_H_ */

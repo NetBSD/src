@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.14 1998/08/13 02:10:49 eeh Exp $	*/
+/*	$NetBSD: types.h,v 1.15 2000/02/01 04:01:23 danw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -74,5 +74,7 @@ typedef long long                 int64_t;
 typedef unsigned long long      u_int64_t;
 
 typedef int32_t                 register_t;
+
+#define __HAVE_DEVICE_REGISTER
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 1999/11/27 20:05:45 eeh Exp $ */
+/*	$NetBSD: types.h,v 1.11 2000/02/01 04:01:23 danw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,5 +98,7 @@ typedef unsigned long		paddr_t;
 #endif
 typedef paddr_t			psize_t;
 #endif
+
+#define __HAVE_DEVICE_REGISTER
 
 #endif	/* _MACHTYPES_H_ */
