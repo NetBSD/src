@@ -34,4 +34,8 @@ SRCS   = dhcpd.c dhcp.c bootp.c confpars.c db.c
 PROG   = dhcpd
 MAN    = dhcpd.8 dhcpd.conf.5 dhcpd.leases.5
 
+OS_SYSTEM !=	uname -s
+OS_RELEASE !=	uname -r
+CPPFLAGS+=-DOS_VERSION="\"${OS_SYSTEM} ${OS_RELEASE}\""
+
 .include <bsd.prog.mk>
