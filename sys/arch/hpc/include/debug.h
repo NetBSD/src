@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.3 2002/02/13 16:25:33 uch Exp $	*/
+/*	$NetBSD: debug.h,v 1.4 2002/05/03 07:31:24 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -103,9 +103,14 @@ int	DPRINTF_DEBUG = DPRINTF_LEVEL;
 /*
  * debug print utility
  */
-#define dbg_bit_print(a) __dbg_bit_print((a), sizeof(typeof(a)), 0, 0, 0, 1)
+#define DBG_BIT_PRINT_COUNT	(1 << 0)
+#define DBG_BIT_PRINT_QUIET	(1 << 1)
+#define dbg_bit_print(a)						\
+	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, 0, DBG_BIT_PRINT_COUNT)
 #define dbg_bit_print_msg(a, m)						\
-	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, (m), 1)
+	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, (m), DBG_BIT_PRINT_COUNT)
+#define dbg_bit_display(a)						\
+	__dbg_bit_print((a), sizeof(typeof(a)), 0, 0, 0, DBG_BIT_PRINT_QUIET)
 void __dbg_bit_print(u_int32_t, int, int, int, char *, int);
 void dbg_bitmask_print(u_int32_t, u_int32_t, const char *);
 void dbg_draw_line(int);

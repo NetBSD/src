@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.10 2002/04/13 09:29:54 takemura Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.11 2002/05/03 07:31:25 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -1225,7 +1225,7 @@ hd64461video_dump()
 	printf("---[Display Mode Setting]---\n");
 #define	DUMPREG(x)							\
 	r = hd64461_reg_read_2(HD64461_LCD ## x ## _REG16);		\
-	__dbg_bit_print(r, sizeof(u_int16_t), 0, 0, #x, 1)
+	__dbg_bit_print(r, sizeof(u_int16_t), 0, 0, #x, DBG_BIT_PRINT_COUNT)
 	DUMPREG(CBAR);
 	DUMPREG(CLOR);
 	DUMPREG(CCR);
