@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.1.2.1 1997/10/21 08:22:30 mrg Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.1.2.2 1997/11/17 02:07:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -89,10 +89,10 @@
 #if defined(INET)
 #include <netinet/if_inarp.h>
 #endif
+
 #include <machine/bus.h>
-#if defined(__alpha__)
 #include <machine/intr.h>
-#endif
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -117,7 +117,6 @@ struct tl_softc {
 	struct device sc_dev;		/* base device */
 	bus_space_tag_t tl_bustag;
 	bus_space_handle_t tl_bushandle; /* CSR region handle */
-	pci_chipset_tag_t tl_pc;
 	void* tl_ih;
 	struct ethercom tl_ec;
 	u_int8_t tl_enaddr[ETHER_ADDR_LEN];	/* hardware adress */
@@ -155,11 +154,6 @@ struct tl_softc {
 typedef struct tl_softc tl_softc_t;
 typedef u_long ioctl_cmd_t;
 
-#define PCI_VENDORID(x)         ((x) & 0xFFFF)
-#define PCI_CHIPID(x)           (((x) >> 16) & 0xFFFF)
-#define PCI_CONF_READ(r)    pci_conf_read(pa->pa_pc, pa->pa_tag, (r))
-#define PCI_CONF_WRITE(r, v)    pci_conf_write(pa->pa_pc, pa->pa_tag, (r), (v))
-
 #define TL_HR_READ(sc, reg) \
 	bus_space_read_4(sc->tl_bustag, sc->tl_bushandle, (reg))
 #define TL_HR_READ_BYTE(sc, reg) \
@@ -170,7 +164,7 @@ typedef u_long ioctl_cmd_t;
 	bus_space_write_1(sc->tl_bustag, sc->tl_bushandle, (reg), (data))
 #define ETHER_MIN_TX (ETHERMIN + sizeof(struct ether_header))
 
-static int tl_pci_probe __P((struct device *, void *, void *));
+static int tl_pci_match __P((struct device *, void *, void *));
 static void tl_pci_attach __P((struct device *, struct device *, void *));
 static int tl_intr __P((void *));
 
@@ -229,42 +223,100 @@ static __inline u_int8_t netsio_read(sc, bits)
 	tl_softc_t* sc;
 	u_int8_t bits;
 {
-		return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits);
+	return (tl_intreg_read_byte(sc, TL_INT_NET + TL_INT_NetSio) & bits);
 }
 
 struct cfattach tl_ca = {
-	sizeof(tl_softc_t), tl_pci_probe, tl_pci_attach
+	sizeof(tl_softc_t), tl_pci_match, tl_pci_attach
 };
 
 struct cfdriver tl_cd = {
 	0, "tl", DV_IFNET
 };
 
+struct tl_product_desc {
+	u_int32_t tp_product;
+	u_int32_t tp_adapter;
+	const char *tp_desc;
+};
+
+const struct tl_product_desc tl_compaq_products[] = {
+	{ PCI_PRODUCT_COMPAQ_N100TX, COMPAQ_NETLIGENT_10_100,
+	  "Compaq Netelligent 10/100 TX" },
+	{ PCI_PRODUCT_COMPAQ_N10T, COMPAQ_NETLIGENT_10,
+	  "Compaq Netelligent 10 T" },
+	{ PCI_PRODUCT_COMPAQ_IntNF3P, COMPAQ_INT_NETFLEX,
+	  "Compaq Integrated NetFlex 3/P" },
+	{ PCI_PRODUCT_COMPAQ_IntPL100TX, COMPAQ_INT_NETLIGENT_10_100,
+	  "Compaq ProLiant Integrated Netelligent 10/100 TX" },
+	{ PCI_PRODUCT_COMPAQ_DPNet100TX, COMPAQ_DUAL_NETLIGENT_10_100,
+	  "Compaq Dual Port Netelligent 10/100 TX" },
+	{ PCI_PRODUCT_COMPAQ_DP4000, COMPAQ_DSKP4000,
+	  "Compaq Deskpro 4000 5233MMX" },
+	{ PCI_PRODUCT_COMPAQ_NF3P_BNC, COMPAQ_NETFLEX_BNC,
+	  "Compaq NetFlex 3/P w/ BNC" },
+	{ PCI_PRODUCT_COMPAQ_NF3P, COMPAQ_NETFLEX,
+	  "Compaq NetFlex 3/P" },
+	{ 0, 0, NULL },
+};
+
+const struct tl_product_desc tl_ti_products[] = {
+	{ PCI_PRODUCT_TI_TLAN, TI_TLAN,
+	  "Texas Instruments ThunderLAN" },
+	{ 0, 0, NULL },
+};
+
+struct tl_vendor_desc {
+	u_int32_t tv_vendor;
+	const struct tl_product_desc *tv_products;
+};
+
+const struct tl_vendor_desc tl_vendors[] = {
+	{ PCI_VENDOR_COMPAQ, tl_compaq_products },
+	{ PCI_VENDOR_TI, tl_ti_products },
+	{ 0, NULL },
+};
+
+const struct tl_product_desc *tl_lookup_product __P((u_int32_t));
+
+const struct tl_product_desc *
+tl_lookup_product(id)
+	u_int32_t id;
+{
+	const struct tl_product_desc *tp;
+	const struct tl_vendor_desc *tv;
+
+	for (tv = tl_vendors; tv->tv_products != NULL; tv++)
+		if (PCI_VENDOR(id) == tv->tv_vendor)
+			break;
+
+	if ((tp = tv->tv_products) == NULL)
+		return (NULL);
+
+	for (; tp->tp_desc != NULL; tp++)
+		if (PCI_PRODUCT(id) == tp->tp_product)
+			break;
+
+	if (tp->tp_desc == NULL)
+		return (NULL);
+
+	return (tp);
+}
+
 static char *nullbuf;
 
 static int
-tl_pci_probe(parent, match, aux)
+tl_pci_match(parent, match, aux)
 	struct device *parent;
 	void *match;
 	void *aux;
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 
-	if (PCI_VENDORID(pa->pa_id) != PCI_VENDOR_COMPAQ)
-		return 0;
-	switch(PCI_CHIPID(pa->pa_id)) {
-	case PCI_PRODUCT_COMPAQ_N100TX:
-	case PCI_PRODUCT_COMPAQ_N10T:
-	case PCI_PRODUCT_COMPAQ_IntNF3P:
-	case PCI_PRODUCT_COMPAQ_IntPL100TX:
-	case PCI_PRODUCT_COMPAQ_DPNet100TX:
-	case PCI_PRODUCT_COMPAQ_DP4000:
-	case PCI_PRODUCT_COMPAQ_NF3P_BNC:
-	case PCI_PRODUCT_COMPAQ_NF3P:
-		return 1;
-	default:
-		return 0;
-	}
+	if (tl_lookup_product(pa->pa_id) != NULL)
+		return (1);
+
+	return (0);
 }
 
 static void
@@ -275,114 +327,47 @@ tl_pci_attach(parent, self, aux)
 {
 	tl_softc_t *sc = (tl_softc_t *)self;
 	struct pci_attach_args * const pa = (struct pci_attach_args *) aux;
-	/* int unit = sc->tl_dev.dv_unit; */
+	const struct tl_product_desc *tp;
 	struct ifnet * const ifp = &sc->tl_if;
-	u_int32_t cfcs = PCI_CONF_READ(PCI_CFCS);
 	bus_space_tag_t iot, memt;
 	bus_space_handle_t ioh, memh;
 	pci_intr_handle_t intrhandle;
-	const char *model, *intrstr;
-	int i, tmp;
+	const char *intrstr;
+	int i, tmp, ioh_valid, memh_valid;
+	pcireg_t csr;
 
-	sc->tl_pc = pa->pa_pc;
-	cfcs &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
+	printf("\n");
 
-	/* Map and enable the card */
-#if defined(PCI_PREFER_IOSPACE)
-	if (!pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-		&iot, &ioh, NULL, NULL)) {
-		cfcs |= PCI_COMMAND_IO_ENABLE;
-	} else if (!pci_mapreg_map(pa, PCI_CBMA,
-		PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-		0, &memt, &memh, NULL, NULL) == 0) {
-			cfcs |= PCI_COMMAND_MEM_ENABLE;
-		} else {
-			printf("can't map IO nor MEM space\n");
-			return;
-		}
-	if (cfcs & PCI_COMMAND_IO_ENABLE) {
-		sc->tl_bustag = iot, sc->tl_bushandle = ioh;
+	/* Map the card space. */
+	ioh_valid = (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &iot, &ioh, NULL, NULL) == 0);
+	memh_valid = (pci_mapreg_map(pa, PCI_CBMA,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+	    0, &memt, &memh, NULL, NULL) == 0);
+
+	if (memh_valid) {
+		sc->tl_bustag = memt;
+		sc->tl_bushandle = memh;
+	} else if (ioh_valid) {
+		sc->tl_bustag = iot;
+		sc->tl_bushandle = ioh;
 	} else {
-		sc->tl_bustag = memt, sc->tl_bushandle = memh;
-	}
-#else
-	if (!pci_mapreg_map(pa, PCI_CBMA,
-		PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-		0, &memt, &memh, NULL, NULL) == 0) {
-		cfcs |= PCI_COMMAND_MEM_ENABLE;
-	} else if (!pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-		&iot, &ioh, NULL, NULL)) {
-			cfcs |= PCI_COMMAND_IO_ENABLE;
-		} else {
-			printf("can't map MEM nor IO space\n");
-			return;
-		}
-	if (cfcs & PCI_COMMAND_MEM_ENABLE) {
-		sc->tl_bustag = memt; sc->tl_bushandle = memh;
-	} else {
-		sc->tl_bustag = iot; sc->tl_bushandle = ioh;
-	}
-#endif
-
-	cfcs |= PCI_COMMAND_MASTER_ENABLE;
-	PCI_CONF_WRITE(PCI_CFCS, cfcs);
-		
-	switch(PCI_CHIPID(pa->pa_id)) {
-		case PCI_PRODUCT_COMPAQ_N100TX:
-			model = "Compaq Netelligent 10/100 TX";
-			sc->mii.adapter_id = COMPAQ_NETLIGENT_10_100;
-			break;
-		case PCI_PRODUCT_COMPAQ_N10T:
-			model = "Compaq Netelligent 10 T";
-			sc->mii.adapter_id = COMPAQ_NETLIGENT_10;
-			break;
-		case PCI_PRODUCT_COMPAQ_IntNF3P:
-			model = "Compaq Integrated NetFlex 3/P";
-			sc->mii.adapter_id = COMPAQ_INT_NETFLEX;
-			break;
-		case PCI_PRODUCT_COMPAQ_IntPL100TX:
-			model = "Compaq ProLiant Integrated Netelligent 10/100 TX";
-			sc->mii.adapter_id = COMPAQ_INT_NETLIGENT_10_100;
-			break;
-		case PCI_PRODUCT_COMPAQ_DPNet100TX:
-			model = "Compaq Dual Port Netelligent 10/100 TX";
-			sc->mii.adapter_id = COMPAQ_DUAL_NETLIGENT_10_100;
-			break;
-		case PCI_PRODUCT_COMPAQ_DP4000:
-			model = "Compaq Deskpro 4000 5233MMX";
-			sc->mii.adapter_id = COMPAQ_DSKP4000;
-			break;
-		case PCI_PRODUCT_COMPAQ_NF3P_BNC:
-			model = "Compaq NetFlex 3/P w/ BNC";
-			sc->mii.adapter_id = COMPAQ_NETFLEX_BNC;
-			break;
-		case PCI_PRODUCT_COMPAQ_NF3P:
-			model = "Compaq NetFlex 3/P";
-			sc->mii.adapter_id = COMPAQ_NETFLEX;
-			break;
-		default:
-			model = "unknown ThunderLAN board!\n";
-	}
-	printf(": %s\n%s: ",model, sc->sc_dev.dv_xname);
-
-	/* Map and establish interrupts */
-	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
-		pa->pa_intrline, &intrhandle)) {
-		printf("couldn't map interrupt\n");
+		printf("%s: unable to map device registers\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
-	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
-	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
-		tl_intr, sc);
-	if (sc->tl_ih == NULL) {
-		printf("couldn't map interrupt");
-		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
-		return;
-	}
-	printf("interrupting at %s\n", intrstr);
 
+	/* Enable the device. */
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    csr | PCI_COMMAND_MASTER_ENABLE);
+
+	tp = tl_lookup_product(pa->pa_id);
+	if (tp == NULL)
+		panic("tl_pci_attach: impossible");
+
+	printf("%s: %s\n", sc->sc_dev.dv_xname, tp->tp_desc);
+	sc->mii.adapter_id = tp->tp_adapter;
 
 	tl_reset(sc);
 
@@ -401,14 +386,41 @@ tl_pci_attach(parent, self, aux)
 	for (i=0; i<ETHER_ADDR_LEN; i++) {
 		tmp = i2c_eeprom_read(&sc->i2cbus, 0x83 + i);
 		if (tmp < 0) {
-			printf("%s: error reading MAC adress\n", sc->sc_dev.dv_xname);
+			printf("%s: error reading Ethernet adress\n",
+			    sc->sc_dev.dv_xname);
 			return;
 		} else {
 			sc->tl_enaddr[i] = tmp;
 		}
 	}
-	printf("%s: address %s\n", sc->sc_dev.dv_xname,
+	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 		ether_sprintf(sc->tl_enaddr));
+
+	/* Map and establish interrupts */
+	if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
+		pa->pa_intrline, &intrhandle)) {
+		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pa->pa_pc, intrhandle);
+	sc->tl_ih = pci_intr_establish(pa->pa_pc, intrhandle, IPL_NET,
+		tl_intr, sc);
+	if (sc->tl_ih == NULL) {
+		printf("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+	/*
+	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
+	 * doing do could allow DMA to corrupt kernel memory during the
+	 * reboot before the driver initializes.
+	 */
+	(void) shutdownhook_establish(tl_shutdown, sc);
 
 	sc->mii.adapter_softc = sc;
 	sc->mii.mii_setbit = tl_mii_set;
@@ -427,7 +439,6 @@ tl_pci_attach(parent, self, aux)
 
 	bcopy(sc->sc_dev.dv_xname, sc->tl_if.if_xname, IFNAMSIZ);
 	sc->tl_if.if_softc = sc;
-	sc->tl_pc = pa->pa_pc;
 	ifp->if_flags = IFF_BROADCAST|IFF_SIMPLEX|IFF_NOTRAILERS|IFF_MULTICAST;
 	ifp->if_ioctl = tl_ifioctl;
 	ifp->if_start = tl_ifstart;
@@ -440,12 +451,6 @@ tl_pci_attach(parent, self, aux)
 		sizeof(struct ether_header));
 #endif
 	sc->mii.mii_media_active = IFM_NONE;
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	shutdownhook_establish(tl_shutdown, sc);
 }
 
 static void
