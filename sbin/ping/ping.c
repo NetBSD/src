@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.68 2002/09/21 18:33:51 mycroft Exp $	*/
+/*	$NetBSD: ping.c,v 1.69 2002/11/16 14:09:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.68 2002/09/21 18:33:51 mycroft Exp $");
+__RCSID("$NetBSD: ping.c,v 1.69 2002/11/16 14:09:16 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -1783,6 +1783,7 @@ gethost(const char *arg,
 
 	(void)memset(sa, 0, sizeof(*sa));
 	sa->sin_family = AF_INET;
+	sa->sin_len = sizeof(struct sockaddr_in);
 
 	/* If it is an IP address, try to convert it to a name to
 	 * have something nice to display.
@@ -1795,9 +1796,8 @@ gethost(const char *arg,
 				hp = gethostbyaddr((char *)&sa->sin_addr,
 						   sizeof(sa->sin_addr),
 						   AF_INET);
-			(void)strncpy(realname, hp ? hp->h_name : name,
-				      realname_len);
-			realname[realname_len-1] = '\0';
+			(void)strlcpy(realname, hp ? hp->h_name : name,
+			    realname_len);
 		}
 		return;
 	}
@@ -1811,10 +1811,8 @@ gethost(const char *arg,
 
 	(void)memcpy(&sa->sin_addr, hp->h_addr, sizeof(sa->sin_addr));
 
-	if (realname) {
-		(void)strncpy(realname, hp->h_name, realname_len);
-		realname[realname_len-1] = '\0';
-	}
+	if (realname)
+		(void)strlcpy(realname, hp->h_name, realname_len);
 }
 
 
