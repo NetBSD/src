@@ -1,4 +1,4 @@
-/*	$NetBSD: spc_pcmcia.c,v 1.6 2004/08/10 03:54:37 mycroft Exp $	*/
+/*	$NetBSD: spc_pcmcia.c,v 1.7 2004/08/10 06:05:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.6 2004/08/10 03:54:37 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc_pcmcia.c,v 1.7 2004/08/10 06:05:40 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,6 @@ spc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	const struct spc_pcmcia_product *epp;
 	int error;
 
 	aprint_normal("\n");
@@ -177,10 +176,6 @@ spc_pcmcia_attach(parent, self, aux)
 		    error);
 		goto fail;
 	}
-
-	epp = spc_pcmcia_lookup(pa);
-	if (epp == NULL)
-		panic("spc_pcmcia_attach: impossible");
 
 	spc->sc_initiator = 7; /* XXX */
 	spc->sc_adapter.adapt_enable = spc_pcmcia_enable;
