@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100var.h,v 1.8 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: wsemul_vt100var.h,v 1.9 2004/07/28 12:34:05 jmmv Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,6 +33,7 @@ struct wsemul_vt100_emuldata {
 	void *emulcookie;
 	int scrcapabilities;
 	u_int nrows, ncols, crow, ccol;
+	struct wsdisplay_msgattrs msgattrs;
 	long defattr;			/* default attribute */
 
 	long kernattr;			/* attribute for kernel output */
