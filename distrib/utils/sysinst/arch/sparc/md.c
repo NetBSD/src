@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2001/01/07 13:07:59 jdc Exp $	*/
+/*	$NetBSD: md.c,v 1.27 2001/01/14 02:38:22 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -212,10 +212,7 @@ md_cleanup_install(void)
 
 	sprintf(sedcmd, "sed 's/rc_configured=NO/rc_configured=YES/' < %s > %s",
 	    realfrom, realto);
-	if (logging)
-		(void)fprintf(log, "%s\n", sedcmd);
-	if (scripting)
-		(void)fprintf(script, "%s\n", sedcmd);
+	scripting_fprintf(log, "%s\n", sedcmd);
 	do_system(sedcmd);
 
 	run_prog(RUN_FATAL, NULL, "mv -f %s %s", realto, realfrom);
@@ -386,8 +383,7 @@ move_aout_libs()
 	 */
 	if (target_realpath("/emul", prefix) == NULL || stat(prefix, &st) < 0) {
 		strcpy(prefix, target_expand("/emul"));
-		if (scripting)
-			fprintf(script, "mkdir %s\n", prefix);
+		scripting_fprintf(NULl, "mkdir %s\n", prefix);
 		mkdir(prefix, 0755);
 	}
 
@@ -449,4 +445,23 @@ domove:
 	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R6/lib"));
 
 	return n;
+}
+
+void
+md_set_sizemultname()
+{
+
+	set_sizemultname_cyl()
+}
+
+void
+md_set_no_x()
+{
+
+	toggle_getit (8);
+	toggle_getit (9);
+	toggle_getit (10);
+	toggle_getit (11);
+	toggle_getit (12);
+	toggle_getit (13);
 }

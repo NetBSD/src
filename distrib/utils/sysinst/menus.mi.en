@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.44 2000/10/11 23:47:56 fvdl Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.45 2001/01/14 02:38:14 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,9 +105,18 @@ menu ok, title "Hit enter to continue";
 	option "ok", exit;
 
 menu layout, title  "Choose your installation";
-	option "Standard", 	  exit, action { layoutkind = 1; };
+	option "Standard", 	  exit, action { layoutkind = 1; md_set_no_x(); };
 	option "Standard with X", exit, action { layoutkind = 2; };
 	option "Custom", 	  exit, action { layoutkind = 3; };
+	option "Use Existing", 	  exit, action { layoutkind = 4; };
+
+menu layoutparts, exit, title "Choose filesystems";
+	display action { show_cur_filesystems (); };
+	option "swap",		  action { layout_swap = (layout_swap & 1) - 1; };
+	option "/usr",		  action { layout_usr = (layout_usr & 1) - 1; };
+	option "/var",	 	  action { layout_var = (layout_var & 1) - 1; };
+	option "/home",		  action { layout_home = (layout_home & 1) - 1; };
+	option "/tmp (mfs)",	  action { layout_tmp = (layout_tmp & 1) - 1; };
 
 menu sizechoice, title  "Choose your size specifier";
 	option "Megabytes", exit, action 
@@ -131,12 +140,18 @@ menu fspartok, title "Partitions ok?", y=15;
 	option "Change a partition", sub menu editfsparts;
 	option "Partitions are ok", exit;
 
-menu edfspart, title "Change what?", exit, y=15;
+menu edfspart, title "Change what?", exit, y=14;
 	display action  {
 		msg_display (MSG_edfspart, 'a'+editpart);
 		disp_cur_fspart(editpart, 1);
 	};
-	option "FS kind", sub menu  selfskind;
+	option "FS kind", action
+		{
+			if (check_lfs_progs())
+				process_menu (MENU_selfskindlfs);
+			else
+				process_menu (MENU_selfskind);
+		};
 	option "Offset/size", action  
 		{	int start, size;
 			msg_display_add(MSG_defaultunit, multname);
@@ -150,7 +165,7 @@ menu edfspart, title "Change what?", exit, y=15;
 	option "Bsize/Fsize", action 
 		{	char buf[40]; int i;
 
-			if (bsdlabel[editpart].pi_fstype != FS_BSDFFS) {
+			if (!PI_ISBSDFS(&bsdlabel[i])) {
 				msg_display (MSG_not42bsd, 'a'+editpart);
 				process_menu (MENU_ok);
 				return FALSE;
@@ -163,7 +178,7 @@ menu edfspart, title "Change what?", exit, y=15;
 			bsdlabel[editpart].pi_fsize = i;
 		};
 	option "Mount point", action 
-		{	if (bsdlabel[editpart].pi_fstype == FS_BSDFFS ||
+		{	if (PI_ISBSDFS(&bsdlabel[editpart]) ||
 			    bsdlabel[editpart].pi_fstype == FS_MSDOS)
 				msg_prompt_add (MSG_mountpoint, NULL,
 					fsmount[editpart], 20);
@@ -171,6 +186,9 @@ menu edfspart, title "Change what?", exit, y=15;
 				msg_display (MSG_nomount, 'a'+editpart);
 				process_menu (MENU_ok);
 			}
+		};
+	option "Preserve", action 
+		{	preservemount[editpart] = 1 - preservemount[editpart];
 		};
 
 menu selfskind, title "Select the type", y=15;
@@ -193,6 +211,33 @@ menu selfskind, title "Select the type", y=15;
 			{ bsdlabel[editpart].pi_fstype = FS_MSDOS;
 			  bsdlabel[editpart].pi_bsize  = 0;
 			  bsdlabel[editpart].pi_fsize  = 0;
+			};
+
+menu selfskindlfs, title "Select the type", y=15;
+	option "4.2BSD", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_BSDFFS;
+			  bsdlabel[editpart].pi_bsize  = 8192;
+			  bsdlabel[editpart].pi_fsize  = 1024;
+			};
+	option "unused", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_UNUSED;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
+			};
+	option "swap", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_SWAP;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
+			};
+	option "msdos", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_MSDOS;
+			  bsdlabel[editpart].pi_bsize  = 0;
+			  bsdlabel[editpart].pi_fsize  = 0;
+			};
+	option "4.4LFS", exit, action 
+			{ bsdlabel[editpart].pi_fstype = FS_BSDLFS;
+			  bsdlabel[editpart].pi_bsize  = 8192;
+			  bsdlabel[editpart].pi_fsize  = 1024;
 			};
 
 

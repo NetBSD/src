@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.30 2000/12/22 10:12:13 mrg Exp $	*/
+/*	$NetBSD: target.c,v 1.31 2001/01/14 02:38:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.30 2000/12/22 10:12:13 mrg Exp $");
+__RCSID("$NetBSD: target.c,v 1.31 2001/01/14 02:38:15 mrg Exp $");
 #endif
 
 /*
@@ -522,7 +522,7 @@ do_target_chdir(dir, must_succeed)
 		fflush(log);
 	}
 	if (scripting) {
-		fprintf(script, "cd %s\n", tgt_dir);
+		scripting_fprintf(NULL, "cd %s\n", tgt_dir);
 		fflush(script);
 	}
 
@@ -739,8 +739,7 @@ target_test(mode, path)
 	register int result;
 
 	result = !file_mode_match(realpath, mode);
-	if (scripting)
-		(void)fprintf(script, "if [ $? != 0 ]; then echo \"%s does not exist!\"; fi\n", realpath);
+	scripting_fprintf(NULL, "if [ $? != 0 ]; then echo \"%s does not exist!\"; fi\n", realpath);
 
 #if defined(DEBUG)
 	printf("target_test(%s %s) returning %d\n", test, realpath, result);

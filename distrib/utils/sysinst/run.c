@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.33 2000/12/22 10:12:13 mrg Exp $	*/
+/*	$NetBSD: run.c,v 1.34 2001/01/14 02:38:15 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,8 +136,8 @@ script_flip(menudesc *m)
 	(void)time(&tloc);
 	if (scripting == 1) {
 		sprintf(log_text[1], "Scripting: Off");
+		scripting_fprintf(NULL, "# Script ended at: %s\n", asctime(localtime(&tloc)));
 		scripting = 0;
-		fprintf(script, "# Script ended at: %s\n", asctime(localtime(&tloc)));
 		fflush(script);
 		fclose(script);
 	} else {
@@ -145,8 +145,8 @@ script_flip(menudesc *m)
 		if (script != NULL) {
 			sprintf(log_text[1], "Scripting: On");
 			scripting = 1;
-			fprintf(script, "#!/bin/sh\n");
-			fprintf(script, "# Script started at: %s\n",
+			scripting_fprintf(NULL, "#!/bin/sh\n");
+			scripting_fprintf(NULL, "# Script started at: %s\n",
 			    asctime(localtime(&tloc)));
 			fflush(script);		
 		} else {

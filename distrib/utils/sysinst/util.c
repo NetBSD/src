@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.63 2001/01/07 13:07:57 jdc Exp $	*/
+/*	$NetBSD: util.c,v 1.64 2001/01/14 02:38:16 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,6 +48,7 @@
 #include <curses.h>
 #include <errno.h>
 #include <fts.h>
+#include <util.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -970,7 +971,7 @@ set_timezone()
 	int menu_no;
 	menu_ent *tz_menu;
 
-	oldalrm=signal(SIGALRM, timezone_sig);
+	oldalrm = signal(SIGALRM, timezone_sig);
 	alarm(1);
        
 	strncpy(zoneinfo_dir, target_expand("/usr/share/zoneinfo"), STRSIZE);
@@ -1021,9 +1022,8 @@ set_timezone()
 	if (!(tree = fts_open(argv, FTS_LOGICAL, NULL))) {
 		return 1;	/* error - skip timezone setting */
 	}
-	n=0;
-	for (rval=0; (entry = fts_read(tree)) != NULL; ) {
-
+	n = 0;
+	for (rval = 0; (entry = fts_read(tree)) != NULL; ) {
 		stat(entry->fts_accpath, &sb);
 		if (S_ISREG(sb.st_mode)) {
 			tz_menu[n].opt_name = strdup(entry->fts_accpath+skip+1);
@@ -1070,4 +1070,84 @@ set_root_password()
 	if (yesno)
 		run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "passwd -l root");
 	return 0;
+}
+
+void
+scripting_vfprintf(FILE *f, const char *fmt, va_list ap)
+{
+	if (f)
+		(void)vfprintf(f, fmt, ap);
+	if (scripting)
+		(void)vfprintf(script, fmt, ap);
+}
+
+void
+scripting_fprintf(FILE *f, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	scripting_vfprintf(f, fmt, ap);
+	va_end(ap);
+}
+
+void
+add_rc_conf(const char *fmt, ...)
+{
+	FILE *f;
+	va_list ap;
+
+	va_start(ap, fmt);
+	f = target_fopen("/etc/rc.conf", "a");
+	if (f != 0) {
+		scripting_fprintf(NULL, "cat <<EOF >>%s/etc/rc.conf\n",
+		    target_prefix());
+		scripting_vfprintf(f, fmt, ap);
+		fclose(f);
+		scripting_fprintf(NULL, "EOF\n");
+	}
+	va_end(ap);
+}
+
+/*
+ * check that there is at least a / somewhere.
+ */
+int
+check_partitions()
+{
+	int i;
+
+	for (i = 0; i < getmaxpartitions(); i++)
+		if (PI_ISBSDFS(&bsdlabel[i]) &&
+		    fsmount[i][0] == '/' && fsmount[i][1] == '\0')
+			return 1;
+	msg_display(MSG_no_root_fs);
+	getchar();
+	return 0;
+}
+
+void
+set_sizemultname_cyl()
+{
+
+	sizemult = dlcylsize; 
+	multname = msg_string(MSG_cylname);
+}
+
+void
+set_sizemultname_meg()
+{
+
+	sizemult = MEG / sectorsize;
+	multname = msg_string(MSG_megname);
+}
+
+int
+check_lfs_progs()
+{
+
+	return (access("/sbin/dump_lfs", X_OK) == 0 &&
+		access("/sbin/fsck_lfs", X_OK) == 0 &&
+		access("/sbin/mount_lfs", X_OK) == 0 &&
+		access("/sbin/newfs_lfs", X_OK) == 0);
 }

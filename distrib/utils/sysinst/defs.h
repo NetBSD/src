@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.64 2000/12/22 10:12:12 mrg Exp $	*/
+/*	$NetBSD: defs.h,v 1.65 2001/01/14 02:38:14 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -79,6 +79,10 @@
 #define NUMSEC(size,sizemult,cylsize) \
 	((size == -1) ? -1 : (sizemult == 1) ? (size) : \
 	 (((size)*(sizemult)+(cylsize)-1)/(cylsize))*(cylsize))
+
+/* What FS type? */
+#define PI_ISBSDFS(p) ((p)->pi_fstype == FS_BSDLFS || \
+		       (p)->pi_fstype == FS_BSDFFS)
 
 /* Types */
 typedef struct distinfo {
@@ -177,6 +181,9 @@ enum DLTR {A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z};
 #define partition_name(x)	('a' + (x))
 EXTERN partinfo bsdlabel[16];
 EXTERN char fsmount[16][20] INIT({""});
+#define PM_INIT {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+EXTERN int preservemount[16] INIT(PM_INIT);
+#undef PM_INIT
 #define DISKNAME_SIZE 80
 EXTERN char bsddiskname[DISKNAME_SIZE];
 EXTERN char *doessf INIT("");
@@ -267,6 +274,8 @@ int	md_pre_disklabel (void);
 int	md_pre_update (void);
 int	md_update (void);
 void	md_init (void);
+void	md_set_sizemultname (void);
+void	md_set_no_x (void);
 
 /* from main.c */
 void	toplevel (void);
@@ -279,6 +288,9 @@ int	make_filesystems (void);
 int	make_fstab (void);
 int	fsck_disks (void);
 int	set_swap (const char *, partinfo *, int);
+
+/* from disks_lfs.c */
+int	fs_is_lfs (void *);
 
 /* from label.c */
 
@@ -302,6 +314,7 @@ void	set_disk_info (char *);
 
 /* from geom.c */
 int	get_geom (char *, struct disklabel *);
+int	get_real_geom (char *, struct disklabel *);
 
 /* from net.c */
 int	get_via_ftp (void);
@@ -342,6 +355,13 @@ int 	get_and_unpack_sets(msg success_msg, msg failure_msg);
 int	sanity_check (void);
 int	set_timezone (void);
 int	set_root_password (void);
+void	scripting_fprintf(FILE *, const char *, ...);
+void	scripting_vfprintf(FILE *, const char *, va_list);
+void	add_rc_conf(const char *, ...);
+int	check_partitions(void);
+void	set_sizemultname_cyl(void);
+void	set_sizemultname_meg(void);
+int	check_lfs_progs(void);
 
 /* from target.c */
 int	must_mount_root (void);
@@ -371,3 +391,6 @@ int	target_file_exists_p (const char *path);
 int	target_symlink_exists_p (const char *path);
 void	unwind_mounts (void);
 
+/* from bsddisklabel.c */
+void	show_cur_filesystems (void);
+extern int layout_swap, layout_usr, layout_tmp, layout_var, layout_home;

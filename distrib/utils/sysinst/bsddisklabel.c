@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.3 2000/12/22 10:12:12 mrg Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.4 2001/01/14 02:38:13 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,22 @@
 
 int	make_bsd_partitions (void);
 
+void
+show_cur_filesystems()
+{
+
+	msg_display(MSG_cur_fs);
+	msg_table_add(MSG_cur_fs_header);
+	msg_table_add(MSG_cur_fs_row, "/    ", "[X]      (always)");
+	msg_table_add(MSG_cur_fs_row, "swap ", layout_swap ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/usr ", layout_usr ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/var ", layout_var ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/home", layout_home ? "[X]" : "");
+	msg_table_add(MSG_cur_fs_row, "/tmp ", layout_tmp ? "[X]      (mfs)" : "         (mfs)");
+}
+
+int	layout_swap, layout_usr, layout_tmp, layout_var, layout_home;
+
 /*
  * md back-end code for menu-driven BSD disklabel editor.
  */
@@ -50,13 +66,16 @@ int
 make_bsd_partitions(void)
 {
 	int i, part;
+	int freepart;
 	int remain;
 	char isize[20];
 	int maxpart = getmaxpartitions();
+	struct disklabel l;
+	int varsz = 0, swapsz = 0;
 
 	/*
 	 * Initialize global variables that track space used on this disk.
-	 * Standard 4.3BSD 8-partition labels always cover whole disk.
+	 * Standard 4.4BSD 8-partition labels always cover whole disk.
 	 */
 	ptsize = dlsize - ptstart;
 	fsdsize = dlsize;		/* actually means `whole disk' */
@@ -70,13 +89,10 @@ make_bsd_partitions(void)
 		    (1.0*minfsdmb*sectorsize)/MEG+rammb+XNEEDMB);
 	process_menu(MENU_layout);
 
-	if (layoutkind == 3) {
+	if (layoutkind == 3)
 		ask_sizemult(dlcylsize);
-	} else {
-		sizemult = MEG / sectorsize;
-		multname = msg_string(MSG_megname);
-	}
-
+	else
+		md_set_sizemultname();
 
 	/* Build standard partitions */
 	emptylabel(bsdlabel);
@@ -99,37 +115,141 @@ make_bsd_partitions(void)
 
 	switch (layoutkind) {
 	case 1: /* standard: a root, b swap, c "unused", PART_USR /usr */
-	case 2: /* standard X: as above, but with larger swap */
+	case 2: /* standard X: as above, but with larger swap, and more
+		 * space in /usr */
 		partstart = ptstart;
 
+		/*
+		 * Defaults: 
+		 *	root	- always (PART_ROOT)
+		 *	swap	- ask, default (PART_SWAP)
+		 *	/usr	- ask, default (PART_USR)
+		 *	/var	- ask (PART_FIRST_FREE != PART_USR)
+		 *	/home	- ask (PART_FIRST_FREE+1 != PART_USR)
+		 *	/tmp	- ask mfs
+		 */
+		layout_swap = layout_usr = 1;
+		layout_var = layout_home = layout_tmp = 0;
+		freepart = PART_FIRST_FREE;
+		process_menu(MENU_layoutparts);
+
 		/* Root */
-		partsize = NUMSEC(DEFROOTSIZE, MEG/sectorsize, dlcylsize);
+		if (layout_usr == 0 && layout_home == 0) {
+			if (layout_swap) {
+				i = NUMSEC(layoutkind * 2 *
+				    (rammb < DEFSWAPRAM ? DEFSWAPRAM : rammb),
+				    MEG/sectorsize, dlcylsize);
+				swapsz = NUMSEC(i/(MEG/sectorsize)+1,
+				    MEG/sectorsize, dlcylsize);
+			}
+			if (layout_var)
+				varsz = NUMSEC(DEFVARSIZE, MEG/sectorsize,
+				    dlcylsize);
+			partsize = ptsize - swapsz - varsz;
+		} else if (layout_usr)
+			partsize = NUMSEC(DEFROOTSIZE, MEG/sectorsize,
+			    dlcylsize);
+		else if (layoutkind == 2)
+			partsize = NUMSEC(STDNEEDMB + XNEEDMB, MEG/sectorsize,
+			    dlcylsize);
+		else
+			partsize = NUMSEC(STDNEEDMB, MEG/sectorsize, dlcylsize);
+		
 		bsdlabel[PART_ROOT].pi_offset = partstart;
 		bsdlabel[PART_ROOT].pi_size = partsize;
 		bsdlabel[PART_ROOT].pi_bsize = 8192;
 		bsdlabel[PART_ROOT].pi_fsize = 1024;
 		strcpy(fsmount[PART_ROOT], "/");
 		partstart += partsize;
+#if notyet
+		if (partstart > ptsize)
+			error ... 
+#endif
 
 		/* swap */
-		i = NUMSEC(layoutkind * 2 *
-			   (rammb < DEFSWAPRAM ? DEFSWAPRAM : rammb),
-			   MEG/sectorsize, dlcylsize) + partstart;
-		partsize = NUMSEC(i/(MEG/sectorsize)+1, MEG/sectorsize,
-			   dlcylsize) - partstart;
-		bsdlabel[PART_SWAP].pi_fstype = FS_SWAP;
-		bsdlabel[PART_SWAP].pi_offset = partstart;
-		bsdlabel[PART_SWAP].pi_size = partsize;
-		partstart += partsize;
+		if (layout_swap) {
+			if (swapsz)
+				partsize = swapsz;
+			else {
+				i = NUMSEC(layoutkind * 2 *
+				    (rammb < DEFSWAPRAM ? DEFSWAPRAM : rammb),
+				    MEG/sectorsize, dlcylsize) + partstart;
+				partsize = NUMSEC(i/(MEG/sectorsize)+1,
+				    MEG/sectorsize, dlcylsize) - partstart;
+			}
+			bsdlabel[PART_SWAP].pi_fstype = FS_SWAP;
+			bsdlabel[PART_SWAP].pi_offset = partstart;
+			bsdlabel[PART_SWAP].pi_size = partsize;
+			partstart += partsize;
+#if notyet
+			if (partstart > ptsize)
+				error ... 
+#endif
+		}
+
+		/* var */
+		if (layout_var) {
+			if (varsz)
+				partsize = varsz;
+			else
+				partsize = NUMSEC(DEFVARSIZE, MEG/sectorsize,
+				    dlcylsize);
+			bsdlabel[freepart].pi_fstype = FS_BSDFFS;
+			bsdlabel[freepart].pi_offset = partstart;
+			bsdlabel[freepart].pi_size = partsize;
+			bsdlabel[freepart].pi_bsize = 8192;
+			bsdlabel[freepart].pi_fsize = 1024;
+			strcpy(fsmount[freepart++], "/var");
+			if (freepart == PART_USR)
+				freepart++;
+			partstart += partsize;
+#if notyet
+			if (partstart > ptsize)
+				error ... 
+#endif
+		}
 
 		/* /usr */
-		partsize = fsdsize - partstart;
-		bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
-		bsdlabel[PART_USR].pi_offset = partstart;
-		bsdlabel[PART_USR].pi_size = partsize;
-		bsdlabel[PART_USR].pi_bsize = 8192;
-		bsdlabel[PART_USR].pi_fsize = 1024;
-		strcpy(fsmount[PART_USR], "/usr");
+		if (layout_usr) {
+			if (layout_home) {
+				if (layoutkind == 2)
+					partsize = NUMSEC(DEFUSRSIZE + XNEEDMB,
+					    MEG/sectorsize, dlcylsize);
+				else
+					partsize = NUMSEC(DEFUSRSIZE,
+					    MEG/sectorsize, dlcylsize);
+			} else
+				partsize = fsdsize - partstart;
+			bsdlabel[PART_USR].pi_fstype = FS_BSDFFS;
+			bsdlabel[PART_USR].pi_offset = partstart;
+			bsdlabel[PART_USR].pi_size = partsize;
+			bsdlabel[PART_USR].pi_bsize = 8192;
+			bsdlabel[PART_USR].pi_fsize = 1024;
+			strcpy(fsmount[PART_USR], "/usr");
+			partstart += partsize;
+#if notyet
+			if (partstart > ptsize)
+				error ... 
+#endif
+		}
+
+		/* home */
+		if (layout_home) {
+			partsize = fsdsize - partstart;
+			bsdlabel[freepart].pi_fstype = FS_BSDFFS;
+			bsdlabel[freepart].pi_offset = partstart;
+			bsdlabel[freepart].pi_size = partsize;
+			bsdlabel[freepart].pi_bsize = 8192;
+			bsdlabel[freepart].pi_fsize = 1024;
+			strcpy(fsmount[freepart++], "/home");
+			if (freepart == PART_USR)
+				freepart++;
+			partstart += partsize;
+#if notyet
+			if (partstart > ptsize)
+				error ... 
+#endif
+		}
 
 		break;
 
@@ -229,6 +349,30 @@ make_bsd_partitions(void)
 		}
 
 		break;
+
+	case 4: /* use existing disklabel */
+
+		if (get_real_geom(diskdev, &l) == 0) {
+			msg_display(MSG_abort);	/* XXX more informative */
+			return 0;
+		}
+
+		for (i = 0; i < maxpart; i++) {
+#define p l.d_partitions[i]
+			bsdlabel[i].pi_size = p.p_size;
+			bsdlabel[i].pi_offset = p.p_offset;
+			if (i != RAW_PART) {
+				bsdlabel[i].pi_fstype = p.p_fstype;
+				bsdlabel[i].pi_bsize = p.p_fsize * p.p_frag;
+				bsdlabel[i].pi_fsize = p.p_fsize;
+				/* menu to get fsmount[] entry */
+#undef p
+			} else
+				bsdlabel[i].pi_fstype = FS_UNUSED;
+		}
+		msg_display(MSG_postuseexisting);
+		getchar();
+		break;
 	}
 
 	/*
@@ -252,4 +396,3 @@ make_bsd_partitions(void)
 	/* Everything looks OK. */
 	return (1);
 }
-
