@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.18 1994/02/10 08:50:06 cgd Exp $
+#	$Id: Makefile,v 1.19 1994/06/14 04:40:29 cgd Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -18,7 +18,9 @@ regression-tests:
 .endif
 
 afterinstall:
+.ifndef NOMAN
 	(cd share/man && ${MAKE} makedb)
+.endif
 
 build:
 	(cd include && ${MAKE} install)
