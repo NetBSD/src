@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.9 2001/01/12 19:24:42 jdolecek Exp $	*/
+/*	$NetBSD: files.c,v 1.10 2001/01/13 10:07:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: files.c,v 1.9 2001/01/12 19:24:42 jdolecek Exp $");
+__RCSID("$NetBSD: files.c,v 1.10 2001/01/13 10:07:06 jdolecek Exp $");
 __SCCSID("@(#)files.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -291,7 +291,6 @@ seq(fp, line, key)
 		}
 	}
 	if (pos != buf) {
-		warnx("last character not record delimiter");
 		*pos++ = REC_D;
 		line->size = pos - buf;
 		return (0);
