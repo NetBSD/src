@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.104 2002/10/22 00:01:55 fair Exp $	*/
+/*	$NetBSD: elink3.c,v 1.105 2003/01/20 07:25:04 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.104 2002/10/22 00:01:55 fair Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.105 2003/01/20 07:25:04 simonb Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -546,7 +546,7 @@ ep_internalconfig(sc)
 	u_int config0;
 	u_int config1;
 
-	int  ram_size, ram_width, ram_speed, rom_size, ram_split;
+	int  ram_size, ram_width, ram_split;
 	/*
 	 * NVRAM buffer Rx:Tx config names for busmastering cards
 	 * (Demon, Vortex, and later).
@@ -562,8 +562,6 @@ ep_internalconfig(sc)
 
 	ram_size  = (config0 & CONFIG_RAMSIZE) >> CONFIG_RAMSIZE_SHIFT;
 	ram_width = (config0 & CONFIG_RAMWIDTH) >> CONFIG_RAMWIDTH_SHIFT;
-	ram_speed = (config0 & CONFIG_RAMSPEED) >> CONFIG_RAMSPEED_SHIFT;
-	rom_size  = (config0 & CONFIG_ROMSIZE) >> CONFIG_ROMSIZE_SHIFT;
 
 	ram_split  = (config1 & CONFIG_RAMSPLIT) >> CONFIG_RAMSPLIT_SHIFT;
 
