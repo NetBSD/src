@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.10 2003/05/10 16:20:23 uwe Exp $ */
+/*	$NetBSD: igsfb.c,v 1.11 2003/05/11 03:20:09 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Valeriy E. Ushakov
@@ -31,7 +31,7 @@
  * Integraphics Systems IGA 168x and CyberPro series.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.10 2003/05/10 16:20:23 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.11 2003/05/11 03:20:09 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,18 @@ static const struct wsdisplay_accessops igsfb_accessops = {
 	igsfb_alloc_screen,
 	igsfb_free_screen,
 	igsfb_show_screen,
-	NULL /* load_font */
+	NULL,			/* load_font */
+	NULL,			/* pollc */
+	NULL,			/* getwschar */
+	NULL			/* putwschar */
 };
+
+
+/*
+ * acceleration
+ */
+static int	igsfb_make_text_cursor(struct igsfb_devconfig *);
+static void	igsfb_accel_cursor(void *, int, int, int);
 
 
 /*
@@ -139,6 +149,8 @@ igsfb_cnattach_subr(dc)
 
 	igsfb_init_video(dc);
 	igsfb_init_wsdisplay(dc);
+
+	dc->dc_nscreens = 1;
 
 	ri = &dc->dc_ri;
 	(*ri->ri_ops.allocattr)(ri,
@@ -346,7 +358,7 @@ igsfb_init_cmap(dc)
 	/* propagate to the device */
 	igsfb_update_cmap(dc, 0, IGS_CMAP_SIZE);
 
-	/* set overscan color (XXX: use defattr's background) */
+	/* set overscan color (XXX: use defattr's background?) */
 	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_RED,   0);
 	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_GREEN, 0);
 	igs_ext_write(iot, ioh, IGS_EXT_OVERSCAN_BLUE,  0);
@@ -404,13 +416,72 @@ igsfb_init_wsdisplay(dc)
 	ri->ri_wsfcookie = wsfcookie;
 
 
-	/* XXX: TODO: compute term size based on font dimensions. */
+	/* XXX: TODO: compute term size based on font dimensions? */
 	rasops_init(ri, 34, 80);
+
+	/* use the sprite for the text mode cursor */
+	igsfb_make_text_cursor(dc);
+
+	/* the cursor is "busy" while we are in the text mode */
+	dc->dc_hwflags |= IGSFB_HW_TEXT_CURSOR;
+
+	/* propagate sprite data to the device */
+	igsfb_update_cursor(dc, WSDISPLAY_CURSOR_DOSHAPE);
+
+	/* override rasops default method */
+	ri->ri_ops.cursor = igsfb_accel_cursor;
 
 	igsfb_stdscreen.nrows = ri->ri_rows;
 	igsfb_stdscreen.ncols = ri->ri_cols;
 	igsfb_stdscreen.textops = &ri->ri_ops;
 	igsfb_stdscreen.capabilities = ri->ri_caps;
+}
+
+
+/*
+ * Init cursor data in dc_cursor for the accelerated text cursor.
+ */
+static int
+igsfb_make_text_cursor(dc)
+	struct igsfb_devconfig *dc;
+{
+	struct wsdisplay_font *f = dc->dc_ri.ri_font;
+	u_int16_t cc_scan[8];	/* one sprite scanline */
+	u_int16_t s;
+	int w, i;
+
+	KASSERT(f->fontwidth <= IGS_CURSOR_MAX_SIZE);
+	KASSERT(f->fontheight <= IGS_CURSOR_MAX_SIZE);
+
+	w = f->fontwidth;
+	for (i = 0; i < f->stride; ++i) {
+		if (w >= 8) {
+			s = 0xffff; /* all inverted */
+			w -= 8;
+		} else {
+			/* first w pixels inverted, the rest is transparent */
+			s = ~(0x5555 << (w * 2));
+			if (IGSFB_HW_SOFT_BSWAP(dc))
+				s = bswap16(s);
+			w = 0;
+		}
+		cc_scan[i] = s;
+	}
+
+	dc->dc_cursor.cc_size.x = f->fontwidth;
+	dc->dc_cursor.cc_size.y = f->fontheight;
+
+	dc->dc_cursor.cc_hot.x = 0;
+	dc->dc_cursor.cc_hot.y = 0;
+
+	/* init sprite array to be all transparent */
+	memset(dc->dc_cursor.cc_sprite, 0xaa, IGS_CURSOR_DATA_SIZE);
+
+	for (i = 0; i < f->fontheight; ++i)
+		memcpy(&dc->dc_cursor.cc_sprite[i * 8],
+		       cc_scan, f->stride * sizeof(u_int16_t));
+
+	return (0);
 }
 
 
@@ -484,7 +555,12 @@ igsfb_ioctl(v, cmd, data, flag, p)
 {
 	struct igsfb_devconfig *dc = v;
 	struct rasops_info *ri;
+	int cursor_busy;
 	int turnoff;
+
+	/* don't permit cursor ioctls if we use sprite for text cursor */
+	cursor_busy = !dc->dc_mapped
+		&& (dc->dc_hwflags & IGSFB_HW_TEXT_CURSOR);
 
 	switch (cmd) {
 
@@ -500,6 +576,23 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		wsd_fbip->depth = ri->ri_depth;
 		wsd_fbip->cmsize = IGS_CMAP_SIZE;
 #undef wsd_fbip
+		return (0);
+
+	case WSDISPLAYIO_SMODE:
+#define d (*(int *)data)
+		if (d == WSDISPLAYIO_MODE_MAPPED)
+			dc->dc_mapped = 1;
+		else {
+			dc->dc_mapped = 0;
+			/* reinit sprite for text cursor */
+			if (dc->dc_hwflags & IGSFB_HW_TEXT_CURSOR) {
+				igsfb_make_text_cursor(dc);
+				dc->dc_curenb = 0;
+				igsfb_update_cursor(dc,
+					  WSDISPLAY_CURSOR_DOSHAPE
+					| WSDISPLAY_CURSOR_DOCUR);
+			}
+		}
 		return (0);
 
 	case WSDISPLAYIO_GVIDEO:
@@ -527,17 +620,25 @@ igsfb_ioctl(v, cmd, data, flag, p)
 		return (0);
 
 	case WSDISPLAYIO_GCURPOS:
+		if (cursor_busy)
+			return (EBUSY);
 		*(struct wsdisplay_curpos *)data = dc->dc_cursor.cc_pos;
 		return (0);
 
 	case WSDISPLAYIO_SCURPOS:
+		if (cursor_busy)
+			return (EBUSY);
 		igsfb_set_curpos(dc, (struct wsdisplay_curpos *)data);
 		return (0);
 
 	case WSDISPLAYIO_GCURSOR:
+		if (cursor_busy)
+			return (EBUSY);
 		return (igsfb_get_cursor(dc, (struct wsdisplay_cursor *)data));
 
 	case WSDISPLAYIO_SCURSOR:
+		if (cursor_busy)
+			return (EBUSY);
 		return (igsfb_set_cursor(dc, (struct wsdisplay_cursor *)data));
 	}
 
@@ -570,19 +671,24 @@ igsfb_get_cmap(dc, p)
 	struct igsfb_devconfig *dc;
 	struct wsdisplay_cmap *p;
 {
-	u_int index = p->index, count = p->count;
+	u_int index, count;
+	int err;
+
+	index = p->index;
+	count = p->count;
 
 	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
 		return (EINVAL);
 
-	if (!uvm_useracc(p->red, count, B_WRITE) ||
-	    !uvm_useracc(p->green, count, B_WRITE) ||
-	    !uvm_useracc(p->blue, count, B_WRITE))
-		return (EFAULT);
-
-	copyout(&dc->dc_cmap.r[index], p->red, count);
-	copyout(&dc->dc_cmap.g[index], p->green, count);
-	copyout(&dc->dc_cmap.b[index], p->blue, count);
+	err = copyout(&dc->dc_cmap.r[index], p->red, count);
+	if (err)
+		return (err);
+	err = copyout(&dc->dc_cmap.g[index], p->green, count);
+	if (err)
+		return (err);
+	err = copyout(&dc->dc_cmap.b[index], p->blue, count);
+	if (err)
+		return (err);
 
 	return (0);
 }
@@ -597,7 +703,10 @@ igsfb_set_cmap(dc, p)
 	struct igsfb_devconfig *dc;
 	const struct wsdisplay_cmap *p;
 {
-	u_int index = p->index, count = p->count;
+	u_int index, count;
+
+	index = p->index;
+	count = p->count;
 
 	if (index >= IGS_CMAP_SIZE || count > IGS_CMAP_SIZE - index)
 		return (EINVAL);
@@ -611,7 +720,8 @@ igsfb_set_cmap(dc, p)
 	copyin(p->green, &dc->dc_cmap.g[index], count);
 	copyin(p->blue, &dc->dc_cmap.b[index], count);
 
-	igsfb_update_cmap(dc, p->index, p->count);
+	/* propagate changes to the device */
+	igsfb_update_cmap(dc, index, count);
 
 	return (0);
 }
@@ -669,6 +779,7 @@ igsfb_set_curpos(dc, curpos)
 	dc->dc_cursor.cc_pos.x = x;
 	dc->dc_cursor.cc_pos.y = y;
 
+	/* propagate changes to the device */
 	igsfb_update_curpos(dc);
 }
 
@@ -1018,4 +1129,45 @@ igsfb_show_screen(v, cookie, waitok, cb, cbarg)
 
 	/* XXX */
 	return (0);
+}
+
+
+
+/*
+ * Accelerated text mode cursor that uses hardware sprite.
+ */
+static void
+igsfb_accel_cursor(cookie, on, row, col)
+	void *cookie;
+	int on, row, col;
+{
+	struct rasops_info *ri = (struct rasops_info *)cookie;
+	struct igsfb_devconfig *dc = (struct igsfb_devconfig *)ri->ri_hw;
+	struct igs_hwcursor *cc = &dc->dc_cursor;
+	u_int which;
+
+	ri->ri_crow = row;
+	ri->ri_ccol = col;
+
+	which = 0;
+	if (on) {
+		ri->ri_flg |= RI_CURSOR;
+
+		/* only bother to move the cursor if it's visibile */
+		cc->cc_pos.x = ri->ri_xorigin
+			+ ri->ri_ccol * ri->ri_font->fontwidth;
+		cc->cc_pos.y = ri->ri_yorigin
+			+ ri->ri_crow * ri->ri_font->fontheight;
+		which |= WSDISPLAY_CURSOR_DOPOS;
+
+	} else
+		ri->ri_flg &= ~RI_CURSOR;
+
+	if (dc->dc_curenb != on) {
+		dc->dc_curenb = on;
+		which |= WSDISPLAY_CURSOR_DOCUR;
+	}
+
+	/* propagate changes to the device */
+	igsfb_update_cursor(dc, which);
 }
