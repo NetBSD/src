@@ -1,4 +1,4 @@
-/*	$NetBSD: saioctl.h,v 1.2.66.1 2004/08/03 10:53:53 skrll Exp $	*/
+/*	$NetBSD: saioctl.h,v 1.2.66.2 2004/09/18 14:54:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993

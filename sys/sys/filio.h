@@ -1,4 +1,4 @@
-/*	$NetBSD: filio.h,v 1.7.2.1 2004/08/03 10:56:27 skrll Exp $	*/
+/*	$NetBSD: filio.h,v 1.7.2.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994

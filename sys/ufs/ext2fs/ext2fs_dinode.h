@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.8.2.1 2004/08/03 10:56:49 skrll Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.8.2.2 2004/09/18 14:56:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993

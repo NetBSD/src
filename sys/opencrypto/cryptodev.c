@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.10.4.2 2004/08/03 10:56:25 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.10.4.3 2004/09/18 14:56:20 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.2 2004/08/03 10:56:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.10.4.3 2004/09/18 14:56:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,21 +87,21 @@ struct fcrypt {
 
 
 /* Declaration of master device (fd-cloning/ctxt-allocating) entrypoints */
-static int	cryptoopen(dev_t dev, int flag, int mode, struct lwp *l);
+static int	cryptoopen(dev_t dev, int flag, int mode, struct proc *p);
 static int	cryptoread(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptowrite(dev_t dev, struct uio *uio, int ioflag);
-static int	cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l);
-static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
+static int	cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p);
+static int	cryptoselect(dev_t dev, int rw, struct proc *p);
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
 static int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *, int);
 static int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *, int);
-static int	cryptof_ioctl(struct file *, u_long, void*, struct lwp *l);
-static int	cryptof_fcntl(struct file *, u_int, void*, struct lwp *l);
-static int	cryptof_poll(struct file *, int, struct lwp *);
+static int	cryptof_ioctl(struct file *, u_long, void*, struct proc *p);
+static int	cryptof_fcntl(struct file *, u_int, void*, struct proc *p);
+static int	cryptof_poll(struct file *, int, struct proc *);
 static int	cryptof_kqfilter(struct file *, struct knote *);
-static int	cryptof_stat(struct file *, struct stat *, struct lwp *);
-static int	cryptof_close(struct file *, struct lwp *);
+static int	cryptof_stat(struct file *, struct stat *, struct proc *);
+static int	cryptof_close(struct file *, struct proc *);
 
 static struct fileops cryptofops = {
     cryptof_read,
@@ -122,7 +122,7 @@ static struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t
     struct auth_hash *);
 static int	csefree(struct csession *);
 
-static int	cryptodev_op(struct csession *, struct crypt_op *, struct lwp *);
+static int	cryptodev_op(struct csession *, struct crypt_op *, struct proc *);
 static int	cryptodev_key(struct crypt_kop *);
 int	cryptodev_dokey(struct crypt_kop *kop, struct crparam kvp[]);
 
@@ -152,7 +152,7 @@ cryptof_write(struct file *fp, off_t *poff, struct uio *uio,
 
 /* ARGSUSED */
 int
-cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
+cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct proc *p)
 {
 	struct cryptoini cria, crie;
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
@@ -313,7 +313,7 @@ bail:
 		cse = csefind(fcr, cop->ses);
 		if (cse == NULL)
 			return (EINVAL);
-		error = cryptodev_op(cse, cop, l);
+		error = cryptodev_op(cse, cop, p);
 		break;
 	case CIOCKEY:
 		error = cryptodev_key((struct crypt_kop *)data);
@@ -329,13 +329,13 @@ bail:
 
 /* ARGSUSED */
 int
-cryptof_fcntl(struct file *fp, u_int cmd, void *data, struct lwp *l)
+cryptof_fcntl(struct file *fp, u_int cmd, void *data, struct proc *p)
 {
   return (0);
 }
 
 static int
-cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
+cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 {
 	struct cryptop *crp = NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
@@ -352,7 +352,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	cse->uio.uio_resid = 0;
 	cse->uio.uio_segflg = UIO_SYSSPACE;
 	cse->uio.uio_rw = UIO_WRITE;
-	cse->uio.uio_lwp = l;
+	cse->uio.uio_procp = NULL;
 	cse->uio.uio_iov = cse->iovec;
 	bzero(&cse->iovec, sizeof(cse->iovec));
 	cse->uio.uio_iov[0].iov_len = cop->len;
@@ -598,7 +598,7 @@ fail:
 
 /* ARGSUSED */
 static int
-cryptof_poll(struct file *fp, int which, struct lwp *l)
+cryptof_poll(struct file *fp, int which, struct proc *p)
 {
 	return (0);
 }
@@ -614,14 +614,14 @@ cryptof_kqfilter(struct file *fp, struct knote *kn)
 
 /* ARGSUSED */
 static int
-cryptof_stat(struct file *fp, struct stat *sb, struct lwp *l)
+cryptof_stat(struct file *fp, struct stat *sb, struct proc *p)
 {
 	return (EOPNOTSUPP);
 }
 
 /* ARGSUSED */
 static int
-cryptof_close(struct file *fp, struct lwp *l)
+cryptof_close(struct file *fp, struct proc *p)
 {
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
 	struct csession *cse;
@@ -715,7 +715,7 @@ csefree(struct csession *cse)
 }
 
 static int
-cryptoopen(dev_t dev, int flag, int mode, struct lwp *l)
+cryptoopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	if (crypto_usercrypto == 0)
 		return (ENXIO);
@@ -735,7 +735,7 @@ cryptowrite(dev_t dev, struct uio *uio, int ioflag)
 }
 
 static int
-cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
+cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct file *f;
 	struct fcrypt *fcr;
@@ -748,7 +748,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		TAILQ_INIT(&fcr->csessions);
 		fcr->sesn = 0;
 
-		error = falloc(l->l_proc, &f, &fd);
+		error = falloc(p, &f, &fd);
 		if (error) {
 			FREE(fcr, M_XDATA);
 			return (error);
@@ -759,7 +759,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		f->f_data = (caddr_t) fcr;
 		*(u_int32_t *)data = fd;
 		FILE_SET_MATURE(f);
-		FILE_UNUSE(f, l);
+		FILE_UNUSE(f, p);
 		break;
 	default:
 		error = EINVAL;
@@ -769,7 +769,7 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 }
 
 int
-cryptoselect(dev_t dev, int rw, struct lwp *l)
+cryptoselect(dev_t dev, int rw, struct proc *p)
 {
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_pcb.c,v 1.23.10.1 2004/08/03 10:55:43 skrll Exp $	*/
+/*	$NetBSD: tp_pcb.c,v 1.23.10.2 2004/09/18 14:55:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -68,7 +68,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.23.10.1 2004/08/03 10:55:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_pcb.c,v 1.23.10.2 2004/09/18 14:55:52 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"

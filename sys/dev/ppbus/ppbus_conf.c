@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.c,v 1.4.4.2 2004/08/03 10:50:27 skrll Exp $ */
+/* $NetBSD: ppbus_conf.c,v 1.4.4.3 2004/09/18 14:50:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.4.4.2 2004/08/03 10:50:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.4.4.3 2004/09/18 14:50:40 skrll Exp $");
 
 #include "opt_ppbus.h"
 #include "opt_ppbus_1284.h"
@@ -48,13 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: ppbus_conf.c,v 1.4.4.2 2004/08/03 10:50:27 skrll Exp
 #include <dev/ppbus/ppbus_var.h>
 
 /* Probe, attach, and detach functions for ppbus. */
-static int ppbus_probe __P((struct device *, struct cfdata *, void *));
-static void ppbus_attach __P((struct device *, struct device *, void *));
-static int ppbus_detach __P((struct device *, int));
+static int ppbus_probe(struct device *, struct cfdata *, void *);
+static void ppbus_attach(struct device *, struct device *, void *);
+static int ppbus_detach(struct device *, int);
 
 /* Utility function prototypes */
-static int ppbus_print_child(void *, const char *); 
-static int ppbus_search_children(struct device *, struct cfdata *, void *);
+static int ppbus_search_children(struct device *, struct cfdata *,
+				 const locdesc_t *, void *);
 
 
 CFATTACH_DECL(ppbus, sizeof(struct ppbus_softc), ppbus_probe, ppbus_attach,
@@ -62,12 +62,12 @@ CFATTACH_DECL(ppbus, sizeof(struct ppbus_softc), ppbus_probe, ppbus_attach,
 
 /* Probe function for ppbus. */
 static int
-ppbus_probe(struct device * parent, struct cfdata * cf, void * aux)
+ppbus_probe(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct parport_adapter * sc_link = aux;
+	struct parport_adapter *sc_link = aux;
 
 	/* Check adapter for consistency */ 
-	if(
+	if (
 		/* Required methods for all parports */
 		sc_link->parport_io == NULL || 
 		sc_link->parport_exec_microseq == NULL ||
@@ -95,18 +95,17 @@ ppbus_probe(struct device * parent, struct cfdata * cf, void * aux)
 			"probe failed.\n", __func__, parent->dv_xname);
 #endif
 		return 0;
-	}
-	else {
+	} else {
 		return 1;
 	}
 }
 
 /* Attach function for ppbus. */
 static void
-ppbus_attach(struct device * parent, struct device * self, void * aux)
+ppbus_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ppbus_softc * ppbus = (struct ppbus_softc *) self;
-	struct parport_adapter * sc_link = aux;
+	struct ppbus_softc *ppbus = (struct ppbus_softc *)self;
+	struct parport_adapter *sc_link = aux;
 	struct ppbus_attach_args args;
 
 	printf("\n");
@@ -147,16 +146,15 @@ ppbus_attach(struct device * parent, struct device * self, void * aux)
 
 #ifndef DONTPROBE_1284
 	/* detect IEEE1284 compliant devices */
-	if(ppbus_scan_bus(self)) {
+	if (ppbus_scan_bus(self)) {
 		printf("%s: No IEEE1284 device found.\n", self->dv_xname);
-	}
-	else {
+	} else {
 		printf("%s: IEEE1284 device found.\n", self->dv_xname);
 		/* 
 		 * Detect device ID (interrupts must be disabled because we 
 		 * cannot do a ltsleep() to wait for it - no context) 
 		 */
-		if(args.capabilities & PPBUS_HAS_INTR) {
+		if (args.capabilities & PPBUS_HAS_INTR) {
 			int val = 0;
 			if(ppbus_write_ivar(self, PPBUS_IVAR_INTR, &val) != 0) {
 				printf(" <problem initializing interrupt "
@@ -169,45 +167,45 @@ ppbus_attach(struct device * parent, struct device * self, void * aux)
 
 	/* Configure child devices */
 	SLIST_INIT(&(ppbus->sc_childlist_head));
-	config_search(ppbus_search_children, self, &args);
+	config_search_ia(ppbus_search_children, self, "ppbus", &args);
 
 	return;
 }
 
 /* Detach function for ppbus. */
 static int
-ppbus_detach(struct device * self, int flag)
+ppbus_detach(struct device *self, int flag)
 {
 	struct ppbus_softc * ppbus = (struct ppbus_softc *) self;
 	struct ppbus_device_softc * child;
 
-	if(ppbus->sc_dev_ok != PPBUS_OK) {
-		if(!(flag & DETACH_QUIET))
+	if (ppbus->sc_dev_ok != PPBUS_OK) {
+		if (!(flag & DETACH_QUIET))
 			printf("%s: detach called on unattached device.\n", 
 				ppbus->sc_dev.dv_xname);
-		if(!(flag & DETACH_FORCE))
+		if (!(flag & DETACH_FORCE))
 			return 0;
-		if(!(flag & DETACH_QUIET))
+		if (!(flag & DETACH_QUIET))
 			printf("%s: continuing detach (DETACH_FORCE).\n",
 				ppbus->sc_dev.dv_xname);
 	}
 
-	if(lockmgr(&(ppbus->sc_lock), LK_DRAIN, NULL)) {
-		if(!(flag & DETACH_QUIET))
+	if (lockmgr(&(ppbus->sc_lock), LK_DRAIN, NULL)) {
+		if (!(flag & DETACH_QUIET))
 			printf("%s: error while waiting for lock activity to "
 				"end.\n", ppbus->sc_dev.dv_xname);
-		if(!(flag & DETACH_FORCE))
+		if (!(flag & DETACH_FORCE))
 			return 0;
-		if(!(flag & DETACH_QUIET))
+		if (!(flag & DETACH_QUIET))
 			printf("%s: continuing detach (DETACH_FORCE).\n",
 				ppbus->sc_dev.dv_xname);
 	}
 
 	/* Detach children devices */
-	while(!SLIST_EMPTY(&(ppbus->sc_childlist_head))) {
+	while (!SLIST_EMPTY(&(ppbus->sc_childlist_head))) {
 		child = SLIST_FIRST(&(ppbus->sc_childlist_head));
 		config_deactivate((struct device *)child);
-		if(config_detach((struct device *)child, flag)) {
+		if (config_detach((struct device *)child, flag)) {
 			if(!(flag & DETACH_QUIET))
 				printf("%s: error detaching %s.", 
 					ppbus->sc_dev.dv_xname, 
@@ -221,40 +219,25 @@ ppbus_detach(struct device * self, int flag)
 		SLIST_REMOVE_HEAD(&(ppbus->sc_childlist_head), entries);
 	}
 
-	if(!(flag & DETACH_QUIET))
+	if (!(flag & DETACH_QUIET))
 		printf("%s: detached.\n", ppbus->sc_dev.dv_xname);
 	
 	return 1;
 }
 
-
-/* Utility functions */
-
-/* Used by config_found_sm() to print out result of child probe */
-static int 
-ppbus_print_child(void * aux, const char * name)
-{
-	if(name != NULL) {
-		printf("%s: child devices", name);
-		return UNCONF;
-	}
-	else {
-		return QUIET;
-	}
-}
-
 /* Search for children device and add to list */
 static int
-ppbus_search_children(struct device * parent, struct cfdata * cf, void * aux)
+ppbus_search_children(struct device *parent, struct cfdata *cf,
+		      const locdesc_t *ldesc, void *aux)
 {
-	struct ppbus_softc * ppbus = (struct ppbus_softc *) parent;
-	struct ppbus_device_softc * child;
+	struct ppbus_softc *ppbus = (struct ppbus_softc *)parent;
+	struct ppbus_device_softc *child;
 	int rval = 0;
 
-	if(config_match(parent, cf, aux) > 0) {
+	if (config_match(parent, cf, aux) > 0) {
 		child = (struct ppbus_device_softc *) config_attach(parent, 
-			cf, aux, ppbus_print_child);
-		if(child) {
+			cf, aux, NULL);
+		if (child) {
 			SLIST_INSERT_HEAD(&(ppbus->sc_childlist_head), child, 
 				entries);
 			rval = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cltp_usrreq.c,v 1.21.2.2 2004/08/03 10:55:41 skrll Exp $	*/
+/*	$NetBSD: cltp_usrreq.c,v 1.21.2.3 2004/09/18 14:55:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.21.2.2 2004/08/03 10:55:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.21.2.3 2004/09/18 14:55:52 skrll Exp $");
 
 #ifndef CLTPOVAL_SRC		/* XXX -- till files gets changed */
 #include <sys/param.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: cltp_usrreq.c,v 1.21.2.2 2004/08/03 10:55:41 skrll E
 #include <sys/errno.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -282,21 +281,19 @@ u_long          cltp_recvspace = 40 * (1024 + sizeof(struct sockaddr_iso));
 
 /* ARGSUSED */
 int
-cltp_usrreq(so, req, m, nam, control, l)
+cltp_usrreq(so, req, m, nam, control, p)
 	struct socket *so;
 	int req;
 	struct mbuf *m, *nam, *control;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct isopcb *isop;
-	struct proc *p;
 	int s;
 	int error = 0;
 
-	p = l ? l->l_proc : NULL;
 	if (req == PRU_CONTROL)
 		return (iso_control(so, (long)m, (caddr_t)nam,
-		    (struct ifnet *)control, l));
+		    (struct ifnet *)control, p));
 
 	if (req == PRU_PURGEIF) {
 		iso_purgeif((struct ifnet *)control);

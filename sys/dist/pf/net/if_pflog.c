@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.3.2.2 2004/08/03 10:52:23 skrll Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.3.2.3 2004/09/18 14:52:37 skrll Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.11 2003/12/31 11:18:25 cedric Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -210,7 +210,9 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 #if NBPFILTER > 0
 	struct ifnet *ifn;
 	struct pfloghdr hdr;
+#ifndef __NetBSD__
 	struct mbuf m1;
+#endif
 
 	if (kif == NULL || m == NULL || rm == NULL)
 		return (-1);
@@ -246,14 +248,20 @@ pflog_packet(struct pfi_kif *kif, struct mbuf *m, sa_family_t af, u_int8_t dir,
 	}
 #endif /* INET */
 
+#ifndef __NetBSD__
 	m1.m_next = m;
 	m1.m_len = PFLOG_HDRLEN;
 	m1.m_data = (char *) &hdr;
+#endif
 
 	ifn = &(pflogif[0].sc_if);
 
 	if (ifn->if_bpf)
+#ifndef __NetBSD__
 		bpf_mtap(ifn->if_bpf, &m1);
+#else
+		bpf_mtap2(ifn->if_bpf, &hdr, PFLOG_HDRLEN, m);
+#endif
 #endif
 
 	return (0);

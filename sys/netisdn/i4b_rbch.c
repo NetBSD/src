@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.13.6.1 2004/08/03 10:55:40 skrll Exp $
+ *	$Id: i4b_rbch.c,v 1.13.6.2 2004/09/18 14:55:33 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.13.6.1 2004/08/03 10:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.13.6.2 2004/09/18 14:55:33 skrll Exp $");
 
 #include "isdnbchan.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_var.h,v 1.16.10.1 2004/08/03 10:54:35 skrll Exp $	*/
+/*	$NetBSD: pk_var.h,v 1.16.10.2 2004/09/18 14:54:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

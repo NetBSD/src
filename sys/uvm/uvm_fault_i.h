@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.16.6.1 2004/08/03 10:57:06 skrll Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.16.6.2 2004/09/18 14:57:11 skrll Exp $	*/
 
 /*
  *

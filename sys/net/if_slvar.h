@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.24.22.1 2004/08/03 10:54:17 skrll Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.24.22.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

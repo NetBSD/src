@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.4.2.3 2004/08/12 11:42:19 skrll Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.4.2.4 2004/09/18 14:52:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.3 2004/08/12 11:42:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.4.2.4 2004/09/18 14:52:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ filecore_pathconf(v)
 		*ap->a_retval = 1;
 		return (0);
 	case _PC_NAME_MAX:
-		*ap->a_retval = 10;
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_namemax;
 		return (0);
 	case _PC_PATH_MAX:
 		*ap->a_retval = 256;

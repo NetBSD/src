@@ -1,4 +1,4 @@
-/*	$NetBSD: i4b_l3l4.h,v 1.13.10.1 2004/08/03 10:55:40 skrll Exp $	*/
+/*	$NetBSD: i4b_l3l4.h,v 1.13.10.2 2004/09/18 14:55:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 Hellmuth Michaelis. All rights reserved.
@@ -29,7 +29,7 @@
  *	i4b_l3l4.h - layer 3 / layer 4 interface
  *	------------------------------------------
  *
- *	$Id: i4b_l3l4.h,v 1.13.10.1 2004/08/03 10:55:40 skrll Exp $
+ *	$Id: i4b_l3l4.h,v 1.13.10.2 2004/09/18 14:55:33 skrll Exp $
  *
  * $FreeBSD$
  *

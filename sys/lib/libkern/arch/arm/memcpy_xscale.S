@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.1.4.2 2004/08/03 10:53:42 skrll Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.1.4.3 2004/09/18 14:53:53 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.

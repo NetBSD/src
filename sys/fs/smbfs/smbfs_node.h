@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.h,v 1.8.2.1 2004/08/03 10:52:42 skrll Exp $	*/
+/*	$NetBSD: smbfs_node.h,v 1.8.2.2 2004/09/18 14:52:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov

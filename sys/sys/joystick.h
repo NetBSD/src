@@ -1,4 +1,4 @@
-/*	$NetBSD: joystick.h,v 1.1.2.2 2004/08/03 10:56:28 skrll Exp $	*/
+/*	$NetBSD: joystick.h,v 1.1.2.3 2004/09/18 14:56:30 skrll Exp $	*/
 
 #ifndef _JOY_IOCTL_H_
 #define _JOY_IOCTL_H_

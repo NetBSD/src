@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_io.h,v 1.4.4.2 2004/08/03 10:50:27 skrll Exp $ */
+/* $NetBSD: ppbus_io.h,v 1.4.4.3 2004/09/18 14:50:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999 Nicolas Souchu

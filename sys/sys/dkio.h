@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.8.2.1 2004/08/03 10:56:26 skrll Exp $	*/
+/*	$NetBSD: dkio.h,v 1.8.2.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993

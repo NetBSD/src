@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.32.2.1 2004/08/03 10:52:59 skrll Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.32.2.2 2004/09/18 14:53:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.32.2.1 2004/08/03 10:52:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.32.2.2 2004/09/18 14:53:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcilkm_lkm.c,v 1.1.2.2 2004/08/03 10:53:58 skrll Exp $	*/
+/*	$NetBSD: pcilkm_lkm.c,v 1.1.2.3 2004/09/18 14:54:09 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2004 The NetBSD Foundation.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcilkm_lkm.c,v 1.1.2.2 2004/08/03 10:53:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcilkm_lkm.c,v 1.1.2.3 2004/09/18 14:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

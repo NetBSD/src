@@ -1,4 +1,4 @@
-/*	$NetBSD: pmatch.c,v 1.2.16.1 2004/08/03 10:53:31 skrll Exp $	*/
+/*	$NetBSD: pmatch.c,v 1.2.16.2 2004/09/18 14:53:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991 The Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_optnames.h,v 1.8.6.1 2004/08/03 10:50:46 skrll Exp $	*/
+/*	$NetBSD: rf_optnames.h,v 1.8.6.2 2004/09/18 14:50:54 skrll Exp $	*/
 /*
  * rf_optnames.h
  */

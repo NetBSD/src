@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.16.6.1 2004/08/03 10:57:07 skrll Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.16.6.2 2004/09/18 14:57:12 skrll Exp $	*/
 
 /*
  *

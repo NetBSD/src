@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.7 2002/10/02 16:52:23 thorpej Exp $ */
+/* $NetBSD: acemidi.c,v 1.7.6.1 2004/09/18 14:50:39 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.7 2002/10/02 16:52:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.7.6.1 2004/09/18 14:50:39 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -82,7 +82,7 @@ acemidi_attach(struct device *parent, struct device *self, void *aux)
 /*	struct podulebus_attach_args *pa = aux; */
 
 	printf("\n");
-	config_found_sm(self, aux, NULL, NULL);
+	config_found_ia(self, "acemidi", aux, NULL);
 }
 
 static int

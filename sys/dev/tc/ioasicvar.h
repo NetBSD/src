@@ -1,4 +1,4 @@
-/*	$NetBSD: ioasicvar.h,v 1.14.24.2 2004/09/03 12:45:39 skrll Exp $	*/
+/*	$NetBSD: ioasicvar.h,v 1.14.24.3 2004/09/18 14:51:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.

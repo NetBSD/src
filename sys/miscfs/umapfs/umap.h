@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.9.36.1 2004/08/03 10:54:10 skrll Exp $	*/
+/*	$NetBSD: umap.h,v 1.9.36.2 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993

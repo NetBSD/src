@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.20.2.1 2004/08/03 10:51:44 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.20.2.2 2004/09/18 14:51:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.20.2.1 2004/08/03 10:51:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.20.2.2 2004/09/18 14:51:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,8 +326,9 @@ USB_ATTACH(uvisor)
 				}
 			}
 			if (hasin == 1 && hasout == 1)
-				sc->sc_subdevs[i] = config_found_sm(self, &uca,
-				    ucomprint, ucomsubmatch);
+				sc->sc_subdevs[i] = config_found_sm_loc(self,
+					"ucombus", NULL, &uca,
+					ucomprint, ucomsubmatch);
 			else
 				printf("%s: no proper endpoints for port %d (%d,%d)\n",
 				    USBDEVNAME(sc->sc_dev), port, hasin, hasout);
@@ -356,8 +357,8 @@ USB_ATTACH(uvisor)
 				uca.bulkin = port | UE_DIR_IN;
 				uca.bulkout = port | UE_DIR_OUT;
 			}
-			sc->sc_subdevs[i] = config_found_sm(self, &uca,
-			    ucomprint, ucomsubmatch);
+			sc->sc_subdevs[i] = config_found_sm_loc(self, "ucombus",
+				NULL, &uca, ucomprint, ucomsubmatch);
 
 			    
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.1.14.1 2004/08/03 10:51:33 skrll Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.1.14.2 2004/09/18 14:51:46 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.

@@ -1,7 +1,7 @@
-/*	$NetBSD: st_scsi.c,v 1.10.6.1 2004/08/25 06:58:44 skrll Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.10.6.2 2004/09/18 14:51:25 skrll Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.10.6.1 2004/08/25 06:58:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.10.6.2 2004/09/18 14:51:25 skrll Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -69,9 +69,9 @@ __KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.10.6.1 2004/08/25 06:58:44 skrll Exp $
 #include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <dev/scsipi/stvar.h>
-#include <dev/scsipi/scsi_tape.h>
 #include <dev/scsipi/scsi_all.h>
+#include <dev/scsipi/scsi_tape.h>
+#include <dev/scsipi/stvar.h>
 
 static int	st_scsibus_match(struct device *, struct cfdata *, void *);
 static void	st_scsibus_attach(struct device *, struct device *, void *);
@@ -155,8 +155,8 @@ st_scsibus_read_block_limits(struct st_softc *st, int flags)
 	/*
 	 * do the command, update the global values
 	 */
-	error = scsipi_command(periph, (struct scsipi_generic *)&cmd,
-	    sizeof(cmd), (u_char *)&block_limits, sizeof(block_limits),
+	error = scsipi_command(periph, (void *)&cmd, sizeof(cmd),
+	    (void *)&block_limits, sizeof(block_limits),
 	    ST_RETRIES, ST_CTL_TIME, NULL,
 	    flags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error)

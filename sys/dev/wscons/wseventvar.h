@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.7.2.2 2004/08/03 10:52:12 skrll Exp $ */
+/* $NetBSD: wseventvar.h,v 1.7.2.3 2004/09/18 14:52:24 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -104,7 +104,7 @@ struct wseventvar {
 void	wsevent_init(struct wseventvar *);
 void	wsevent_fini(struct wseventvar *);
 int	wsevent_read(struct wseventvar *, struct uio *, int);
-int	wsevent_poll(struct wseventvar *, int, struct lwp *);
+int	wsevent_poll(struct wseventvar *, int, struct proc *);
 int	wsevent_kqfilter(struct wseventvar *ev, struct knote *kn);
 
 /*

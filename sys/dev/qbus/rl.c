@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.21.2.1 2004/08/12 16:17:15 skrll Exp $	*/
+/*	$NetBSD: rl.c,v 1.21.2.2 2004/09/18 14:50:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.1 2004/08/12 16:17:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.21.2.2 2004/09/18 14:50:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -274,7 +274,7 @@ rlattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
+rlopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int part, unit, mask;
 	struct disklabel *dl;
@@ -337,7 +337,7 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 int
-rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
+rlclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	int unit = DISKUNIT(dev);
 	struct rl_softc *rc = rl_cd.cd_devs[unit];
@@ -400,7 +400,7 @@ done:	biodone(bp);
 }
 
 int
-rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+rlioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct rl_softc *rc = rl_cd.cd_devs[DISKUNIT(dev)];
 	struct disklabel *lp = rc->rc_disk.dk_label;

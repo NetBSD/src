@@ -1,4 +1,4 @@
-/*	$NetBSD: slip.h,v 1.7.48.1 2004/08/03 10:54:20 skrll Exp $	*/
+/*	$NetBSD: slip.h,v 1.7.48.2 2004/09/18 14:54:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994

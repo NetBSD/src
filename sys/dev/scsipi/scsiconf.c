@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.207.2.4 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.207.2.5 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.4 2004/08/25 06:58:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.207.2.5 2004/09/18 14:51:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -984,7 +984,7 @@ bad:
 /****** Entry points for user control of the SCSI bus. ******/
 
 static int
-scsibusopen(dev_t dev, int flag, int fmt, struct lwp *l)
+scsibusopen(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct scsibus_softc *sc;
 	int error, unit = minor(dev);
@@ -1005,7 +1005,7 @@ scsibusopen(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 static int
-scsibusclose(dev_t dev, int flag, int fmt, struct lwp *l)
+scsibusclose(dev_t dev, int flag, int fmt, struct proc *p)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 
@@ -1017,7 +1017,7 @@ scsibusclose(dev_t dev, int flag, int fmt, struct lwp *l)
 }
 
 static int
-scsibusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
+scsibusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct scsibus_softc *sc = scsibus_cd.cd_devs[minor(dev)];
 	struct scsipi_channel *chan = sc->sc_channel;
@@ -1063,7 +1063,7 @@ scsibusioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct lwp *l)
 			error = ENOTTY;
 		else
 			error = (*chan->chan_adapter->adapt_ioctl)(chan,
-			    cmd, addr, flag, l->l_proc);
+			    cmd, addr, flag, p);
 		break;
 	}
 

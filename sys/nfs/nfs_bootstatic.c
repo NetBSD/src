@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootstatic.c,v 1.1.4.2 2004/08/03 10:56:17 skrll Exp $	*/
+/*	$NetBSD: nfs_bootstatic.c,v 1.1.4.3 2004/09/18 14:56:20 skrll Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.1.4.2 2004/08/03 10:56:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootstatic.c,v 1.1.4.3 2004/09/18 14:56:20 skrll Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"

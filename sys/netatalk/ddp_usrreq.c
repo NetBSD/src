@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.11.2.2 2004/08/03 10:54:34 skrll Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.11.2.3 2004/09/18 14:54:39 skrll Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.11.2.2 2004/08/03 10:54:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.11.2.3 2004/09/18 14:54:39 skrll Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -73,19 +73,17 @@ struct mowner atalk_tx_mowner = { "atalk", "tx" };
 
 /* ARGSUSED */
 int
-ddp_usrreq(so, req, m, addr, rights, l)
+ddp_usrreq(so, req, m, addr, rights, p)
 	struct socket  *so;
 	int             req;
 	struct mbuf    *m;
 	struct mbuf    *addr;
 	struct mbuf    *rights;
-	struct lwp *l;
-{
 	struct proc    *p;
+{
 	struct ddpcb   *ddp;
 	int             error = 0;
 
-	p = l ? l->l_proc : NULL;
 	ddp = sotoddpcb(so);
 
 	if (req == PRU_CONTROL) {

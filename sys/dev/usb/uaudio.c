@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.67.2.1 2004/08/03 10:51:33 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.67.2.2 2004/09/18 14:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.67.2.1 2004/08/03 10:51:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.67.2.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.6.2.3 2004/08/24 17:57:36 skrll Exp $	*/
+/*	$NetBSD: advnops.c,v 1.6.2.4 2004/09/18 14:52:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.3 2004/08/24 17:57:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.6.2.4 2004/09/18 14:52:37 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -606,7 +606,7 @@ struct adirent {
 	u_short reclen;
 	char    type;
 	char    namlen;
-	char    name[32];	/* maxlen of 30 plus 2 NUL's */
+	char    name[ADMAXNAMELEN+2];	/* maxlen plus 2 NUL's */
 };
 	
 int 
@@ -869,13 +869,13 @@ adosfs_inactive(v)
 		struct proc *a_p;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
-	struct lwp *l = sp->a_l;
+	struct proc *p = sp->a_p;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
 	VOP_UNLOCK(vp, 0);
 	/* XXX this needs to check if file was deleted */
-	vrecycle(vp, NULL, l);
+	vrecycle(vp, NULL, p);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");
@@ -926,26 +926,32 @@ adosfs_pathconf(v)
 		struct vnode *a_vp;
 		int a_name;
 		register_t *a_retval;
-	} */ *sp = v;
+	} */ *ap = v;
 
-	switch (sp->a_name) {
+	switch (ap->a_name) {
 	case _PC_LINK_MAX:
-		*sp->a_retval = LINK_MAX;
+		*ap->a_retval = LINK_MAX;
+		return (0);
+	case _PC_NAME_MAX:
+		*ap->a_retval = ap->a_vp->v_mount->mnt_stat.f_namemax;
+		return (0);
+	case _PC_PATH_MAX:
+		*ap->a_retval = PATH_MAX;
 		return (0);
 	case _PC_PIPE_BUF:
-		*sp->a_retval = PIPE_BUF;
+		*ap->a_retval = PIPE_BUF;
 		return (0);
 	case _PC_CHOWN_RESTRICTED:
-		*sp->a_retval = 1;
+		*ap->a_retval = 1;
 		return (0);
 	case _PC_VDISABLE:
-		*sp->a_retval = _POSIX_VDISABLE;
+		*ap->a_retval = _POSIX_VDISABLE;
 		return (0);
 	case _PC_SYNC_IO:
-		*sp->a_retval = 1;
+		*ap->a_retval = 1;
 		return (0);
 	case _PC_FILESIZEBITS:
-		*sp->a_retval = 32;
+		*ap->a_retval = 32;
 		return (0);
 	default:
 		return (EINVAL);

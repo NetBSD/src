@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.82.2.4 2004/08/25 06:58:58 skrll Exp $	*/
+/*	$NetBSD: bpf.c,v 1.82.2.5 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.4 2004/08/25 06:58:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.82.2.5 2004/09/18 14:54:15 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -366,11 +366,11 @@ bpfilterattach(n)
  */
 /* ARGSUSED */
 int
-bpfopen(dev, flag, mode, l)
+bpfopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct bpf_d *d;
 
@@ -399,11 +399,11 @@ bpfopen(dev, flag, mode, l)
  */
 /* ARGSUSED */
 int
-bpfclose(dev, flag, mode, l)
+bpfclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag;
 	int mode;
-	struct lwp *l;
+	struct proc *p;
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s;
@@ -651,7 +651,7 @@ extern struct bpf_insn *bpf_udp_filter;
  */
 /* ARGSUSED */
 int
-bpfioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
+bpfioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct proc *p)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s, error = 0;
@@ -926,12 +926,12 @@ bpfioctl(dev_t dev, u_long cmd, caddr_t arg, int flag, struct lwp *l)
 
 	case TIOCSPGRP:		/* Process or group to send signals to */
 	case FIOSETOWN:
-		error = fsetown(l->l_proc, &d->bd_pgid, cmd, addr);
+		error = fsetown(p, &d->bd_pgid, cmd, addr);
 		break;
 
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		error = fgetown(l->l_proc, d->bd_pgid, cmd, addr);
+		error = fgetown(p, d->bd_pgid, cmd, addr);
 		break;
 	}
 	return (error);
@@ -1075,7 +1075,7 @@ bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 int
-bpfpoll(dev_t dev, int events, struct lwp *l)
+bpfpoll(dev_t dev, int events, struct proc *p)
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int s = splnet();
@@ -1095,7 +1095,7 @@ bpfpoll(dev_t dev, int events, struct lwp *l)
 			else
 				revents |= events & POLLIN;
 		} else {
-			selrecord(l, &d->bd_sel);
+			selrecord(p, &d->bd_sel);
 			/* Start the read timeout if necessary */
 			if (d->bd_rtout > 0 && d->bd_state == BPF_IDLE) {
 				callout_reset(&d->bd_callout, d->bd_rtout,

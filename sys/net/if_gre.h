@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.10.16.1 2004/08/03 10:54:14 skrll Exp $ */
+/*	$NetBSD: if_gre.h,v 1.10.16.2 2004/09/18 14:54:16 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.

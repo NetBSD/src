@@ -1,7 +1,7 @@
-/*	$NetBSD: scsipi_base.h,v 1.13.2.1 2004/08/25 06:58:43 skrll Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.13.2.2 2004/09/18 14:51:24 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -52,7 +52,7 @@ static __inline struct scsipi_xfer *scsipi_make_xs(struct scsipi_periph *,
  */
 
 static __inline struct scsipi_xfer * __unused
-scsipi_make_xs(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
+scsipi_make_xs(struct scsipi_periph *periph, struct scsipi_generic *cmd,
     int cmdlen, u_char *data_addr, int datalen, int retries, int timeout,
     struct buf *bp, int flags)
 {
@@ -65,7 +65,7 @@ scsipi_make_xs(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
 	 * Fill out the scsipi_xfer structure.  We don't know whose context
 	 * the cmd is in, so copy it.
 	 */
-	memcpy(&xs->cmdstore, scsipi_cmd, cmdlen);
+	memcpy(&xs->cmdstore, cmd, cmdlen);
 	xs->cmd = &xs->cmdstore;
 	xs->cmdlen = cmdlen;
 	xs->data = data_addr;

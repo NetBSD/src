@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_ecoff.c,v 1.22.2.2 2004/08/03 10:52:43 skrll Exp $	*/
+/*	$NetBSD: exec_ecoff.c,v 1.22.2.3 2004/09/18 14:53:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.22.2.2 2004/08/03 10:52:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.22.2.3 2004/09/18 14:53:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: exec_ecoff.c,v 1.22.2.2 2004/08/03 10:52:43 skrll Ex
  * package.
  */
 int
-exec_ecoff_makecmds(struct lwp *l, struct exec_package *epp)
+exec_ecoff_makecmds(struct proc *p, struct exec_package *epp)
 {
 	int error;
 	struct ecoff_exechdr *execp = epp->ep_hdr;
-	struct proc *p = l->l_proc;
 
 	if (epp->ep_hdrvalid < ECOFF_HDR_SIZE)
 		return ENOEXEC;

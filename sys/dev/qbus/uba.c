@@ -1,4 +1,4 @@
-/*	$NetBSD: uba.c,v 1.66.2.1 2004/08/03 10:50:28 skrll Exp $	   */
+/*	$NetBSD: uba.c,v 1.66.2.2 2004/09/18 14:50:40 skrll Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.66.2.1 2004/08/03 10:50:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.66.2.2 2004/09/18 14:50:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -93,7 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: uba.c,v 1.66.2.1 2004/08/03 10:50:28 skrll Exp $");
 
 #include "ioconf.h"
 
-static int ubasearch (struct device *, struct cfdata *, void *);
+static int ubasearch (struct device *, struct cfdata *,
+		      const locdesc_t *, void *);
 static int ubaprint (void *, const char *);
 
 /*
@@ -276,7 +277,7 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 	/*
 	 * Now start searching for devices.
 	 */
-	config_search(ubasearch,(struct device *)sc, NULL);
+	config_search_ia(ubasearch,(struct device *)sc, "uba", NULL);
 
 	if (sc->uh_afterscan)
 		(*sc->uh_afterscan)(sc);
@@ -285,7 +286,8 @@ uba_attach(struct uba_softc *sc, paddr_t iopagephys)
 }
 
 int
-ubasearch(struct device *parent, struct cfdata *cf, void *aux)
+ubasearch(struct device *parent, struct cfdata *cf,
+	  const locdesc_t *ldesc, void *aux)
 {
 	struct	uba_softc *sc = (struct uba_softc *)parent;
 	struct	uba_attach_args ua;

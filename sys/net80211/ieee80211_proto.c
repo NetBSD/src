@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.15.2.3 2004/08/12 11:42:20 skrll Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.15.2.4 2004/09/18 14:54:39 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.8 2004/04/02 20:22:25 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.15.2.3 2004/08/12 11:42:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.15.2.4 2004/09/18 14:54:39 skrll Exp $");
 #endif
 
 /*
@@ -514,7 +514,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int mgt
 			break;
 		case IEEE80211_S_RUN:
 			IEEE80211_SEND_MGMT(ic, ni,
-			    IEEE80211_FC0_SUBTYPE_ASSOC_REQ, 1);
+			    IEEE80211_FC0_SUBTYPE_REASSOC_REQ, 0);
 			break;
 		}
 		break;

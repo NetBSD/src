@@ -1,4 +1,4 @@
-/*	$NetBSD: ukbdmap.c,v 1.11.6.1 2004/08/03 10:51:36 skrll Exp $	*/
+/*	$NetBSD: ukbdmap.c,v 1.11.6.2 2004/09/18 14:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.11.6.1 2004/08/03 10:51:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbdmap.c,v 1.11.6.2 2004/09/18 14:51:46 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -121,10 +121,10 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(72),			KS_Pause,
     KC(73),			KS_Insert,
     KC(74),			KS_Home,
-    KC(75), 			KS_Prior,
+    KC(75), KS_Cmd_ScrollFastUp, KS_Prior,
     KC(76),			KS_Delete,
     KC(77),			KS_End,
-    KC(78), 			KS_Next,
+    KC(78), KS_Cmd_ScrollFastDown, KS_Next,
     KC(79),			KS_Right,
     KC(80),			KS_Left,
     KC(81),			KS_Down,
@@ -137,13 +137,13 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(88),			KS_KP_Enter,
     KC(89), 			KS_KP_End,	KS_KP_1,
     KC(90), 			KS_KP_Down,	KS_KP_2,
-    KC(91), 			KS_KP_Next,	KS_KP_3,
+    KC(91), KS_Cmd_ScrollFastDown, KS_KP_Next,	KS_KP_3,
     KC(92), 			KS_KP_Left,	KS_KP_4,
     KC(93), 			KS_KP_Begin,	KS_KP_5,
     KC(94), 			KS_KP_Right,	KS_KP_6,
     KC(95), 			KS_KP_Home,	KS_KP_7,
     KC(96), 			KS_KP_Up,	KS_KP_8,
-    KC(97), 			KS_KP_Prior,	KS_KP_9,
+    KC(97), KS_Cmd_ScrollFastUp, KS_KP_Prior,	KS_KP_9,
     KC(98), 			KS_KP_Insert,	KS_KP_0,
     KC(99), 			KS_KP_Delete,	KS_KP_Decimal,
     KC(100),			KS_backslash,	KS_bar,

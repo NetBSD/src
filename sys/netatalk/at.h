@@ -1,4 +1,4 @@
-/*	$NetBSD: at.h,v 1.4.24.1 2004/08/03 10:54:34 skrll Exp $	*/
+/*	$NetBSD: at.h,v 1.4.24.2 2004/09/18 14:54:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.

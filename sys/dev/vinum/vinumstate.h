@@ -33,7 +33,7 @@
  * otherwise) arising in any way out of the use of this software, even if
  * advised of the possibility of such damage.
  *
- * $Id: vinumstate.h,v 1.1.1.1.4.2 2004/08/03 10:52:00 skrll Exp $
+ * $Id: vinumstate.h,v 1.1.1.1.4.3 2004/09/18 14:52:13 skrll Exp $
  * $FreeBSD$
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tprintf.h,v 1.13.6.1 2004/08/03 10:56:32 skrll Exp $	*/
+/*	$NetBSD: tprintf.h,v 1.13.6.2 2004/09/18 14:56:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

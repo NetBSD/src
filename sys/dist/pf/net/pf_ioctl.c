@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.9.2.3 2004/08/24 17:14:31 skrll Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.9.2.4 2004/09/18 14:52:37 skrll Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.112 2004/03/22 04:54:18 mcbride Exp $ */
 
 /*
@@ -101,15 +101,15 @@ void			 pfattach(int);
 #ifdef _LKM
 void			 pfdetach(void);
 #endif
-int			 pfopen(dev_t, int, int, struct lwp *);
-int			 pfclose(dev_t, int, int, struct lwp *);
+int			 pfopen(dev_t, int, int, struct proc *);
+int			 pfclose(dev_t, int, int, struct proc *);
 struct pf_pool		*pf_get_pool(char *, char *, u_int32_t,
 			    u_int8_t, u_int8_t, u_int8_t, u_int8_t, u_int8_t);
 int			 pf_get_ruleset_number(u_int8_t);
 void			 pf_init_ruleset(struct pf_ruleset *);
 void			 pf_mv_pool(struct pf_palist *, struct pf_palist *);
 void			 pf_empty_pool(struct pf_palist *);
-int			 pfioctl(dev_t, u_long, caddr_t, int, struct lwp *);
+int			 pfioctl(dev_t, u_long, caddr_t, int, struct proc *);
 #ifdef ALTQ
 int			 pf_begin_altq(u_int32_t *);
 int			 pf_rollback_altq(u_int32_t);
@@ -269,7 +269,7 @@ pfdetach(void)
 #endif
 
 int
-pfopen(dev_t dev, int flags, int fmt, struct lwp *l)
+pfopen(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -277,7 +277,7 @@ pfopen(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 int
-pfclose(dev_t dev, int flags, int fmt, struct lwp *l)
+pfclose(dev_t dev, int flags, int fmt, struct proc *p)
 {
 	if (minor(dev) >= 1)
 		return (ENXIO);
@@ -832,7 +832,7 @@ pf_commit_rules(u_int32_t ticket, int rs_num, char *anchor, char *ruleset)
 }
 
 int
-pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct lwp *l)
+pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	struct pf_pooladdr	*pa = NULL;
 	struct pf_pool		*pool = NULL;
@@ -2761,6 +2761,20 @@ fail:
 int
 pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
+	int error;
+
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by pf code.
+	 * ip hdr (60 bytes) + tcp hdr (60 bytes) should be enough.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, 60 + 60, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
 
 	/*
 	 * If the packet is out-bound, we can't delay checksums
@@ -2787,6 +2801,19 @@ pfil4_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 int
 pfil6_wrapper(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 {
+	int error;
+
+	/*
+	 * ensure that mbufs are writable beforehand
+	 * as it's assumed by pf code.
+	 * XXX inefficient
+	 */
+	error = m_makewritable(mp, 0, M_COPYALL, M_DONTWAIT);
+	if (error) {
+		m_freem(*mp);
+		*mp = NULL;
+		return error;
+	}
 
 	if (pf_test6(dir == PFIL_OUT ? PF_OUT : PF_IN, ifp, mp) != PF_PASS) {
 		m_freem(*mp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.88.2.3 2004/08/24 17:57:40 skrll Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.88.2.4 2004/09/18 14:54:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.88.2.4 2004/09/18 14:54:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -779,7 +780,7 @@ kernfs_access(v)
 	struct vattr va;
 	int error;
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_p)) != 0)
 		return (error);
 
 	return (vaccess(va.va_type, va.va_mode, va.va_uid, va.va_gid,
@@ -1042,7 +1043,7 @@ kernfs_setdirentfileno_kt(struct dirent *d, const struct kern_target *kt,
 		struct vattr va;
 		if ((error = VOP_GETATTR(vp, &va, ap->a_cred,
 		    ap->a_uio->uio_segflg == UIO_USERSPACE ?
-		    ap->a_uio->uio_lwp : &lwp0)) != 0)
+		    ap->a_uio->uio_procp : &proc0)) != 0)
 			return (error);
 		d->d_fileno = va.va_fileid;
 	} else {

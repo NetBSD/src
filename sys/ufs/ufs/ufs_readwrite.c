@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.54.2.3 2004/08/25 06:59:15 skrll Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.54.2.4 2004/09/18 14:56:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.3 2004/08/25 06:59:15 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.4 2004/09/18 14:56:59 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -44,7 +44,6 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.3 2004/08/25 06:59:15 skrll
 #define	WRITE_S			"lfs_write"
 #define	fs_bsize		lfs_bsize
 #define	fs_bmask		lfs_bmask
-#define	fs_maxfilesize		lfs_maxfilesize
 #else
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
 #define	FS			struct fs
@@ -260,7 +259,7 @@ WRITE(void *v)
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, I don't think it matters.
 	 */
-	p = uio->uio_lwp ? uio->uio_lwp->l_proc : NULL;
+	p = uio->uio_procp;
 	if (vp->v_type == VREG && p &&
 	    uio->uio_offset + uio->uio_resid >
 	    p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
@@ -494,7 +493,7 @@ out:
 		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		(void) VOP_TRUNCATE(vp, osize, ioflag & IO_SYNC, ap->a_cred,
-		    uio->uio_lwp);
+		    uio->uio_procp);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if (resid > uio->uio_resid && (ioflag & IO_SYNC) == IO_SYNC)

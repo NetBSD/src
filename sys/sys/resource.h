@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.h,v 1.21.2.1 2004/08/03 10:56:29 skrll Exp $	*/
+/*	$NetBSD: resource.h,v 1.21.2.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993

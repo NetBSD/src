@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.40.2.2 2004/09/03 12:45:55 skrll Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.40.2.3 2004/09/18 14:56:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -80,10 +80,14 @@ struct nfsdircache {
 	off_t		dc_blkcookie;		/* Offset of block we're in */
 	LIST_ENTRY(nfsdircache) dc_hash;	/* Hash chain */
 	TAILQ_ENTRY(nfsdircache) dc_chain;	/* Least recently entered chn */
-	u_int32_t	dc_cookie32;		/* Key for 64<->32 xlate case */
 	daddr_t		dc_blkno;		/* Number of block we're in */
+	u_int32_t	dc_cookie32;		/* Key for 64<->32 xlate case */
 	int		dc_entry;		/* Entry number within block */
+	int		dc_refcnt;		/* Reference count */
+	int		dc_flags;		/* NFSDC_ flags */
 };
+
+#define	NFSDC_INVALID	1
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: at_rmx.c,v 1.2.16.1 2004/08/03 10:54:34 skrll Exp $	*/
+/*	$NetBSD: at_rmx.c,v 1.2.16.2 2004/09/18 14:54:39 skrll Exp $	*/
 
 /*
  * Copyright 1994, 1995 Massachusetts Institute of Technology
@@ -34,7 +34,7 @@
 /* This code generates debugging traces to the radix code */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_rmx.c,v 1.2.16.1 2004/08/03 10:54:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_rmx.c,v 1.2.16.2 2004/09/18 14:54:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

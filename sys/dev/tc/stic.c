@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.24.2.1 2004/08/03 10:51:31 skrll Exp $	*/
+/*	$NetBSD: stic.c,v 1.24.2.2 2004/09/18 14:51:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.24.2.1 2004/08/03 10:51:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.24.2.2 2004/09/18 14:51:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

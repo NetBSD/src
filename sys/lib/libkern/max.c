@@ -1,4 +1,4 @@
-/*	$NetBSD: max.c,v 1.3.64.1 2004/08/03 10:53:31 skrll Exp $	*/
+/*	$NetBSD: max.c,v 1.3.64.2 2004/09/18 14:53:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991 Regents of the University of California.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_auth.h,v 1.10.16.1 2004/08/03 10:54:37 skrll Exp $	*/
+/*	$NetBSD: ip_auth.h,v 1.10.16.2 2004/09/18 14:54:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997-2001 by Darren Reed & Guido Van Rooij.

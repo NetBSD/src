@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.67.2.1 2004/08/03 10:56:30 skrll Exp $	*/
+/*	$NetBSD: socket.h,v 1.67.2.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -133,6 +133,7 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #define SO_RCVTIMEO	0x1006		/* receive timeout */
 #define	SO_ERROR	0x1007		/* get error status and clear */
 #define	SO_TYPE		0x1008		/* get socket type */
+#define	SO_OVERFLOWED	0x1009		/* datagrams: return packets dropped */
 
 /*
  * Structure used for manipulating linger option.

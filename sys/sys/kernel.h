@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.19.2.1 2004/08/03 10:56:28 skrll Exp $	*/
+/*	$NetBSD: kernel.h,v 1.19.2.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

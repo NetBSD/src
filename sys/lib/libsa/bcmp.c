@@ -1,3 +1,3 @@
-/*	$NetBSD: bcmp.c,v 1.3.28.1 2004/08/03 10:53:53 skrll Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.3.28.2 2004/09/18 14:54:01 skrll Exp $	*/
 
 #include "memcmp.c"

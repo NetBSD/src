@@ -1,4 +1,4 @@
-/*	$NetBSD: stdint.h,v 1.2.20.1 2004/08/03 10:56:30 skrll Exp $	*/
+/*	$NetBSD: stdint.h,v 1.2.20.2 2004/09/18 14:56:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
