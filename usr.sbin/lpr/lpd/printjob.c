@@ -1064,6 +1064,7 @@ dofork(action)
 	int action;
 {
 	register int i, pid;
+	struct passwd *pw;
 
 	for (i = 0; i < 20; i++) {
 		if ((pid = fork()) < 0) {
@@ -1073,9 +1074,18 @@ dofork(action)
 		/*
 		 * Child should run as daemon instead of root
 		 */
-		if (pid == 0)
+		if (pid == 0) {
+			pw = getpwuid(DU);
+			if (pw == 0) {
+				syslog(LOG_ERR, "uid %d not in password file",
+				    DU);
+				break;
+			}
+			initgroups(pw->pw_name, pw->pw_gid);
+			setgid(pw->pw_gid);
 			setuid(DU);
-		return(pid);
+		}
+		return (pid);
 	}
 	syslog(LOG_ERR, "can't fork");
 
