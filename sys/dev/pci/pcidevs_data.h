@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.493 2002/12/26 01:52:00 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.494 2002/12/26 20:53:19 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.492 2002/12/26 01:51:27 matt Exp 
+ *	NetBSD: pcidevs,v 1.493 2002/12/26 20:52:58 matt Exp 
  */
 
 /*
@@ -5600,6 +5600,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ProLAN",
 	    "Ethernet",
+	},
+	{
+	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_SATA150TX2PLUS,
+	    0,
+	    "Promise Technology",
+	    "Serial ATA/150 TX2plus Bus Master IDE Accelerator",
 	},
 	{
 	    PCI_VENDOR_PROMISE, PCI_PRODUCT_PROMISE_DC5030,
