@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.73 2001/04/21 05:35:20 tsutsui Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.74 2001/04/21 07:28:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -966,20 +966,17 @@ ncr53c9x_ioctl(link, cmd, arg, flag, p)
 		}
 
 		if ((sp->sa_flags & SC_ACCEL_SYNC) != 0) {
-			/* If this adapter can't do sync; drop it */
-			if (sc->sc_minsync == 0)
-				break;
-
 			/*
-			 * Check whether target is already clamped at
+			 * Check if this adapter can do sync and
+			 * if the target is already clamped at
 			 * non-sync operation on user request.
 			 */
-			if ((ti->flags & T_SYNCHOFF) != 0)
-				break;
-
-			NCR_MISC(("%s: target %d: sync negotiation\n",
-			    sc->sc_dev.dv_xname, sp->sa_target));
-			ti->flags |= T_NEGOTIATE;
+			if (sc->sc_minsync != 0 &&
+			    (ti->flags & T_SYNCHOFF) == 0) {
+				NCR_MISC(("%s: target %d: sync negotiation\n",
+				    sc->sc_dev.dv_xname, sp->sa_target));
+				ti->flags |= T_NEGOTIATE;
+			}
 		}
 
 		if ((sp->sa_flags & SC_ACCEL_TAGS) != 0) {
@@ -988,7 +985,7 @@ ncr53c9x_ioctl(link, cmd, arg, flag, p)
 				link->openings = 255;
 
 				printf("%s: target %d: tags\n",
-				       sc->sc_dev.dv_xname, sp->sa_target);
+				    sc->sc_dev.dv_xname, sp->sa_target);
 			}
 		}
 		break;
