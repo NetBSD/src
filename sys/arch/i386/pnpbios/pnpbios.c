@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.44 2004/09/17 23:59:33 itohy Exp $ */
+/* $NetBSD: pnpbios.c,v 1.45 2005/02/03 20:08:44 perry Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.44 2004/09/17 23:59:33 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.45 2005/02/03 20:08:44 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,64 +106,64 @@ struct pnpbios_softc {
 /* bios calls */
 #if 0
 /* XXX these are not called */
-static int	pnpbios_getapmtable	__P((u_int8_t *tab, size_t *len));
-static int	pnpbios_setnode		__P((int flags, int idx,
-    const u_int8_t *buf, size_t len));
+static int	pnpbios_getapmtable(u_int8_t *tab, size_t *len);
+static int	pnpbios_setnode(int flags, int idx,
+			    const u_int8_t *buf, size_t len);
 #endif
 
-static int	pnpbios_getnode		__P((int flags, int *idxp,
-    u_int8_t *buf, size_t len));
-static int	pnpbios_getnumnodes	__P((int *nump, size_t *sizep));
+static int	pnpbios_getnode(int flags, int *idxp,
+			    u_int8_t *buf, size_t len);
+static int	pnpbios_getnumnodes(int *nump, size_t *sizep);
 
 #ifdef PNPBIOSEVENTS
-static int	pnpbios_getdockinfo	__P((struct pnpdockinfo *di));
+static int	pnpbios_getdockinfo(struct pnpdockinfo *di);
 
-static void	pnpbios_create_event_thread	__P((void *arg));
-static int	pnpbios_getevent		__P((u_int16_t *event));
-static void	pnpbios_event_thread		__P((void *arg));
-static int	pnpbios_sendmessage		__P((int msg));
+static void	pnpbios_create_event_thread(void *arg);
+static int	pnpbios_getevent(u_int16_t *event);
+static void	pnpbios_event_thread(void *arg);
+static int	pnpbios_sendmessage(int msg);
 #endif
 
 /* configuration stuff */
-static caddr_t	pnpbios_mapit		__P((u_long addr, u_long len, 
-    int prot));
-static caddr_t	pnpbios_find		__P((void));
-static int	pnpbios_match		__P((struct device *parent,
-    struct cfdata *match, void *aux));
-static void	pnpbios_attach		__P((struct device *parent,
-    struct device *self, void *aux));
-static void	pnpbios_printres	__P((struct pnpresources *r));
-static int	pnpbios_print		__P((void *aux, const char *pnp));
-static void	pnpbios_id_to_string	__P((u_int32_t pnpid, char *s));
-static int	pnpbios_attachnode	__P((struct pnpbios_softc *sc,
-    int idx, const u_int8_t *buf, size_t len, int matchonly));
+static caddr_t	pnpbios_mapit(u_long addr, u_long len, int prot);
+static caddr_t	pnpbios_find(void);
+static int	pnpbios_match(struct device *parent,
+			    struct cfdata *match, void *aux);
+static void	pnpbios_attach(struct device *parent,
+			    struct device *self, void *aux);
+static void	pnpbios_printres(struct pnpresources *r);
+static int	pnpbios_print(void *aux, const char *pnp);
+static void	pnpbios_id_to_string(u_int32_t pnpid, char *s);
+static int	pnpbios_attachnode(struct pnpbios_softc *sc,
+			    int idx, const u_int8_t *buf,
+			    size_t len, int matchonly);
 
-static int	pnp_scan		__P((const u_int8_t **bufp,
-    size_t maxlen, struct pnpresources *pnpresources, int in_depends));
-static int pnpbios_submatch __P((struct device *, struct cfdata *,
-				 const locdesc_t *, void *));
-extern int	pnpbioscall		__P((int));
+static int	pnp_scan(const u_int8_t **bufp, size_t maxlen,
+			struct pnpresources *pnpresources, int in_depends);
+static int pnpbios_submatch(struct device *, struct cfdata *,
+				 const locdesc_t *, void *);
+extern int	pnpbioscall(int);
 
 static void	pnpbios_enumerate(struct pnpbios_softc *sc);
 #ifdef PNPBIOSEVENTS
-static int	pnpbios_update_dock_status __P((struct pnpbios_softc *sc));
+static int	pnpbios_update_dock_status(struct pnpbios_softc *sc);
 #endif
 
 /* scanning functions */
-static int pnp_compatid __P((struct pnpresources *, const void *, size_t));
-static int pnp_newirq __P((struct pnpresources *, const void *, size_t));
-static int pnp_newdma __P((struct pnpresources *, const void *, size_t));
-static int pnp_newioport __P((struct pnpresources *, const void *, size_t));
-static int pnp_newfixedioport __P((struct pnpresources *, const void *, size_t));
+static int pnp_compatid(struct pnpresources *, const void *, size_t);
+static int pnp_newirq(struct pnpresources *, const void *, size_t);
+static int pnp_newdma(struct pnpresources *, const void *, size_t);
+static int pnp_newioport(struct pnpresources *, const void *, size_t);
+static int pnp_newfixedioport(struct pnpresources *, const void *, size_t);
 #ifdef PNPBIOSDEBUG
-static int pnp_debugdump __P((struct pnpresources *, const void *, size_t));
+static int pnp_debugdump(struct pnpresources *, const void *, size_t);
 #endif
 
 /*
  * small ressource types (beginning with 1)
  */
 static struct{
-	int (*handler) __P((struct pnpresources *, const void *, size_t));
+	int (*handler)(struct pnpresources *, const void *, size_t);
 	int minlen, maxlen;
 } smallrescs[] = {
 	{0, 2, 2}, /* PnP version number */
@@ -206,7 +206,7 @@ struct pnpbios_softc *pnpbios_softc;
 #define PNPBIOS_SIGNATURE ('$' | ('P' << 8) | ('n' << 16) | ('P' << 24))
 
 static caddr_t
-pnpbios_find()
+pnpbios_find(void)
 {
 	caddr_t p, c;
 	u_int8_t cksum;
@@ -240,17 +240,14 @@ pnpbios_find()
 }
 
 int
-pnpbios_probe()
+pnpbios_probe(void)
 {
 
 	return (pnpbios_find() != 0);
 }
 
 static int
-pnpbios_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pnpbios_match(struct device *parent, struct cfdata *match, void *aux)
 {
 
 	/* There can be only one! */
@@ -261,9 +258,7 @@ pnpbios_match(parent, match, aux)
 }
 
 static caddr_t
-pnpbios_mapit(addr, len, prot)
-	u_long addr, len;
-	int prot;
+pnpbios_mapit(u_long addr, u_long len, int prot)
 {
 	u_long startpa, pa, endpa;
 	vaddr_t startva, va;
@@ -282,9 +277,7 @@ pnpbios_mapit(addr, len, prot)
 }
 
 static void
-pnpbios_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+pnpbios_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pnpbios_softc *sc = (struct pnpbios_softc *)self;
 	struct pnpbios_attach_args *paa = aux;
@@ -384,8 +377,7 @@ pnpbios_attach(parent, self, aux)
 }
 
 static void
-pnpbios_enumerate(sc)
-	struct pnpbios_softc *sc;
+pnpbios_enumerate(struct pnpbios_softc *sc)
 {
 	int res, num, i, size, idx, dynidx;
 	struct pnpdevnode *dn;
@@ -467,8 +459,7 @@ pnpbios_enumerate(sc)
 
 #ifdef PNPBIOSEVENTS
 static int
-pnpbios_update_dock_status(sc)
-	struct pnpbios_softc *sc;
+pnpbios_update_dock_status(struct pnpbios_softc *sc)
 {
 	struct pnpdockinfo di;
 	const char *when, *style;
@@ -530,9 +521,7 @@ pnpbios_update_dock_status(sc)
 #endif
 
 static int
-pnpbios_getnumnodes(nump, sizep)
-	int *nump;
-	size_t *sizep;
+pnpbios_getnumnodes(int *nump, size_t *sizep)
 {
 	int res;
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
@@ -554,11 +543,7 @@ pnpbios_getnumnodes(nump, sizep)
 }
 
 static int
-pnpbios_getnode(flags, idxp, buf, len)
-	int flags;
-	int *idxp;
-	u_int8_t *buf;
-	size_t len;
+pnpbios_getnode(int flags, int *idxp, u_int8_t *buf, size_t len)
 {
 	int res;
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
@@ -587,10 +572,7 @@ pnpbios_getnode(flags, idxp, buf, len)
 /* XXX - pnpbios_setnode() is never called. */
 
 static int
-pnpbios_setnode(flags, idx, buf, len)
-	int flags, idx;
-	const u_int8_t *buf;
-	size_t len;
+pnpbios_setnode(int flags, int idx, const u_int8_t *buf, size_t len)
 {
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
 
@@ -609,8 +591,7 @@ pnpbios_setnode(flags, idx, buf, len)
 
 #ifdef PNPBIOSEVENTS
 static int
-pnpbios_getevent(event)
-	u_int16_t *event;
+pnpbios_getevent(u_int16_t *event)
 {
 	int res;
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
@@ -626,8 +607,7 @@ pnpbios_getevent(event)
 }
 
 static int
-pnpbios_sendmessage(msg)
-	int msg;
+pnpbios_sendmessage(int msg)
 {
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
 
@@ -639,8 +619,7 @@ pnpbios_sendmessage(msg)
 }
 
 static int
-pnpbios_getdockinfo(di)
-	struct pnpdockinfo *di;
+pnpbios_getdockinfo(struct pnpdockinfo *di)
 {
 	int res;
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
@@ -661,9 +640,7 @@ pnpbios_getdockinfo(di)
 
 /* XXX we don't support more than PNPBIOS_BUFSIZE - (stacklen + 2) */
 static int
-pnpbios_getapmtable(tab, len)
-	u_int8_t *tab;
-	size_t *len;
+pnpbios_getapmtable(u_int8_t *tab, size_t *len)
 {
 	short *help = (short *)(pnpbios_scratchbuf + PNPBIOS_BUFSIZE);
 	size_t origlen, stacklen;
@@ -696,9 +673,7 @@ pnpbios_getapmtable(tab, len)
 #endif
 
 static void
-pnpbios_id_to_string(pnpid, s)
-	u_int32_t pnpid;
-	char *s;
+pnpbios_id_to_string(u_int32_t pnpid, char *s)
 {
 	static char hex[] = "0123456789ABCDEF";
 	u_int8_t *id;
@@ -715,8 +690,7 @@ pnpbios_id_to_string(pnpid, s)
 }
 
 static void
-pnpbios_printres(r)
-	struct pnpresources *r;
+pnpbios_printres(struct pnpresources *r)
 {
 	struct pnp_mem *mem;
 	struct pnp_io *io;
@@ -766,9 +740,7 @@ pnpbios_printres(r)
 }
 
 static int
-pnpbios_print(aux, pnp)
-	void *aux;
-	const char *pnp;
+pnpbios_print(void *aux, const char *pnp)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -786,9 +758,7 @@ pnpbios_print(aux, pnp)
 }
 
 void
-pnpbios_print_devres(dev, aa)
-	struct device *dev;
-	struct pnpbiosdev_attach_args *aa;
+pnpbios_print_devres(struct device *dev, struct pnpbiosdev_attach_args *aa)
 {
 
 	printf("%s: ", dev->dv_xname);
@@ -797,11 +767,8 @@ pnpbios_print_devres(dev, aa)
 }
 
 static int
-pnpbios_submatch(parent, match, ldesc, aux)
-	struct device *parent;
-	struct cfdata *match;
-	const locdesc_t *ldesc;
-	void *aux;
+pnpbios_submatch(struct device *parent, struct cfdata *match,
+    const locdesc_t *ldesc, void *aux)
 {
 
 	if (match->cf_loc[PNPBIOSCF_INDEX] != PNPBIOSCF_INDEX_DEFAULT &&
@@ -831,12 +798,8 @@ pnpbios_attachchild(struct pnpbios_softc *sc,
 }
 
 static int
-pnpbios_attachnode(sc, idx, buf, len, matchonly)
-	struct pnpbios_softc *sc;
-	int idx;
-	const u_int8_t *buf;
-	size_t len;
-	int matchonly;
+pnpbios_attachnode(struct pnpbios_softc *sc, int idx, const u_int8_t *buf,
+    size_t len, int matchonly)
 {
 	struct pnpdevnode *dn;
 	const u_int8_t *p;
@@ -960,11 +923,8 @@ dump:
 }
 
 static int
-pnp_scan(bufp, maxlen, r, in_depends)
-	const u_int8_t **bufp;
-	size_t maxlen;
-	struct pnpresources *r;
-	int in_depends;
+pnp_scan(const u_int8_t **bufp, size_t maxlen,
+    struct pnpresources *r, int in_depends)
 {
 	const void *start;
 	const u_int8_t *p;
@@ -1174,10 +1134,7 @@ gotmem:
 }
 
 static int
-pnp_newirq(r, vres, len)
-	struct pnpresources *r;
-	const void *vres;
-	size_t len;
+pnp_newirq(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpirqres *res;
 	struct pnp_irq *irq;
@@ -1202,10 +1159,7 @@ pnp_newirq(r, vres, len)
 }
 
 static int
-pnp_newdma(r, vres, len)
-	struct pnpresources *r;
-	const void *vres;
-	size_t len;
+pnp_newdma(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpdmares *res;
 	struct pnp_dma *dma;
@@ -1227,10 +1181,7 @@ pnp_newdma(r, vres, len)
 }
 
 static int
-pnp_newioport(r, vres, len)
-	struct pnpresources *r;
-	const void *vres;
-	size_t len;
+pnp_newioport(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpportres *res;
 	struct pnp_io *io;
@@ -1257,10 +1208,7 @@ pnp_newioport(r, vres, len)
 }
 
 static int
-pnp_newfixedioport(r, vres, len)
-	struct pnpresources *r;
-	const void *vres;
-	size_t len;
+pnp_newfixedioport(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpfixedportres *res;
 	struct pnp_io *io;
@@ -1285,10 +1233,7 @@ pnp_newfixedioport(r, vres, len)
 }
 
 static int
-pnp_compatid(r, vres, len)
-	struct pnpresources *r;
-	const void *vres;
-	size_t len;
+pnp_compatid(struct pnpresources *r, const void *vres, size_t len)
 {
 	const struct pnpcompatres *res;
 	struct pnp_compatid *id;
@@ -1306,10 +1251,7 @@ pnp_compatid(r, vres, len)
 
 #ifdef PNPBIOSDEBUG
 static int
-pnp_debugdump(r, vres, len)
-	struct pnpresources *r;
-	const void *vres;
-	size_t len;
+pnp_debugdump(struct pnpresources *r, const void *vres, size_t len)
 {
 	const u_int8_t *res = vres;
 	int type, i;
@@ -1332,12 +1274,8 @@ pnp_debugdump(r, vres, len)
 #endif
 
 int
-pnpbios_io_map(pbt, resc, idx, tagp, hdlp)
-	pnpbios_tag_t pbt;
-	struct pnpresources *resc;
-	int idx;
-	bus_space_tag_t *tagp;
-	bus_space_handle_t *hdlp;
+pnpbios_io_map(pnpbios_tag_t pbt, struct pnpresources *resc,
+    int idx, bus_space_tag_t *tagp, bus_space_handle_t *hdlp)
 {
 	struct pnp_io *io;
 
@@ -1354,12 +1292,8 @@ pnpbios_io_map(pbt, resc, idx, tagp, hdlp)
 }
 
 void
-pnpbios_io_unmap(pbt, resc, idx, tag, hdl)
-	pnpbios_tag_t pbt;
-	struct pnpresources *resc;
-	int idx;
-	bus_space_tag_t tag;
-	bus_space_handle_t hdl;
+pnpbios_io_unmap(pnpbios_tag_t pbt, struct pnpresources *resc,
+    int idx, bus_space_tag_t tag, bus_space_handle_t hdl)
 {
 	struct pnp_io *io;
 
@@ -1374,12 +1308,8 @@ pnpbios_io_unmap(pbt, resc, idx, tag, hdl)
 }
 
 int
-pnpbios_getiobase(pbt, resc, idx, tagp, basep)
-	pnpbios_tag_t pbt;
-	struct pnpresources *resc;
-	int idx;
-	bus_space_tag_t *tagp;
-	int *basep;
+pnpbios_getiobase(pnpbios_tag_t pbt, struct pnpresources *resc,
+    int idx, bus_space_tag_t *tagp, int *basep)
 {
 	struct pnp_io *io;
 
@@ -1398,11 +1328,8 @@ pnpbios_getiobase(pbt, resc, idx, tagp, basep)
 }
 
 int
-pnpbios_getiosize(pbt, resc, idx, sizep)
-        pnpbios_tag_t pbt;
-        struct pnpresources *resc;
-        int idx;
-        int *sizep;
+pnpbios_getiosize(pnpbios_tag_t pbt, struct pnpresources *resc,
+    int idx, int *sizep)
 {
         struct pnp_io *io;
 
@@ -1418,12 +1345,8 @@ pnpbios_getiosize(pbt, resc, idx, sizep)
 }
 
 void *
-pnpbios_intr_establish(pbt, resc, idx, level, fcn, arg)
-	pnpbios_tag_t pbt;
-	struct pnpresources *resc;
-	int idx, level;
-	int (*fcn) __P((void *));
-	void *arg;
+pnpbios_intr_establish(pnpbios_tag_t pbt, struct pnpresources *resc,
+    int idx, int level, int (*fcn)(void *), void *arg)
 {
 	struct pnp_irq *irq;
 	int irqnum, type;
@@ -1442,12 +1365,8 @@ pnpbios_intr_establish(pbt, resc, idx, level, fcn, arg)
 }
 
 int
-pnpbios_getirqnum(pbt, resc, idx, irqp, istp)
-	pnpbios_tag_t pbt;
-	struct pnpresources *resc;
-	int idx;
-	int *irqp;
-	int *istp;
+pnpbios_getirqnum(pnpbios_tag_t pbt, struct pnpresources *resc,
+    int idx, int *irqp, int *istp)
 {
 	struct pnp_irq *irq;
 
@@ -1466,11 +1385,8 @@ pnpbios_getirqnum(pbt, resc, idx, irqp, istp)
 }
 
 int
-pnpbios_getdmachan(pbt, resc, idx, chanp)
-	pnpbios_tag_t pbt;
-	struct pnpresources *resc;
-	int idx;
-	int *chanp;
+pnpbios_getdmachan(pnpbios_tag_t pbt, struct pnpresources *resc,
+    int idx, int *chanp)
 {
 	struct pnp_dma *dma;
 
@@ -1487,8 +1403,7 @@ pnpbios_getdmachan(pbt, resc, idx, chanp)
 
 #ifdef PNPBIOSEVENTS
 static void
-pnpbios_create_event_thread(arg)
-	void *arg;
+pnpbios_create_event_thread(void *arg)
 {
 	struct pnpbios_softc *sc;
 
@@ -1499,8 +1414,7 @@ pnpbios_create_event_thread(arg)
 }
 
 static void
-pnpbios_event_thread(arg)
-	void *arg;
+pnpbios_event_thread(void *arg)
 {
 	struct pnpbios_softc *sc;
 	u_int16_t event;
