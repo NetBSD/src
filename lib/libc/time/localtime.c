@@ -1,8 +1,13 @@
-/*	$NetBSD: localtime.c,v 1.6 1996/01/20 02:31:04 jtc Exp $	*/
+/*	$NetBSD: localtime.c,v 1.7 1996/09/10 22:04:30 jtc Exp $	*/
+
+/*
+** This file is in the public domain, so clarified as of
+** June 5, 1996 by Arthur David Olson (arthur_david_olson@nih.gov).
+*/
 
 #ifndef lint
 #ifndef NOID
-static char	elsieid[] = "@(#)localtime.c	7.53";
+static char	elsieid[] = "@(#)localtime.c	7.58";
 #endif /* !defined NOID */
 #endif /* !defined lint */
 
@@ -882,6 +887,7 @@ const int			lastditch;
 			sp->ttis[1].tt_gmtoff = -dstoffset;
 			sp->ttis[1].tt_isdst = TRUE;
 			sp->ttis[1].tt_abbrind = stdlen + 1;
+			sp->typecnt = 2;
 		}
 	} else {
 		dstlen = 0;
@@ -1227,7 +1233,8 @@ const time_t * const	timep;
 /*
 ** Adapted from code provided by Robert Elz, who writes:
 **	The "best" way to do mktime I think is based on an idea of Bob
-**	Kridle's (so its said...) from a long time ago. (mtxinu!kridle now).
+**	Kridle's (so its said...) from a long time ago.
+**	[kridle@xinet.com as of 1996-01-16.]
 **	It does a binary search of the time_t space.  Since time_t's are
 **	just 32 bits, its a max of 32 iterations (even at 64 bits it
 **	would still be very reasonable).
@@ -1317,10 +1324,12 @@ int * const		okayp;
 	while (yourtm.tm_mday <= 0) {
 		if (increment_overflow(&yourtm.tm_year, -1))
 			return WRONG;
-		yourtm.tm_mday += year_lengths[isleap(yourtm.tm_year)];
+		i = yourtm.tm_year + (1 < yourtm.tm_mon);
+		yourtm.tm_mday += year_lengths[isleap(i)];
 	}
 	while (yourtm.tm_mday > DAYSPERLYEAR) {
-		yourtm.tm_mday -= year_lengths[isleap(yourtm.tm_year)];
+		i = yourtm.tm_year + (1 < yourtm.tm_mon);
+		yourtm.tm_mday -= year_lengths[isleap(i)];
 		if (increment_overflow(&yourtm.tm_year, 1))
 			return WRONG;
 	}
