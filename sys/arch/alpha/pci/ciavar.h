@@ -1,4 +1,4 @@
-/*	$NetBSD: ciavar.h,v 1.3 1996/04/12 06:08:30 cgd Exp $	*/
+/*	$NetBSD: ciavar.h,v 1.4 1996/06/10 00:03:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -39,6 +39,9 @@
 struct cia_config {
 	struct alpha_bus_chipset cc_bc;
 	struct alpha_pci_chipset cc_pc;
+
+	u_int32_t cc_hae_mem;
+	u_int32_t cc_hae_io;
 };
 
 struct cia_softc {
@@ -50,3 +53,6 @@ struct cia_softc {
 
 void	cia_init __P((struct cia_config *));
 void	cia_pci_init __P((pci_chipset_tag_t, void *));
+
+void	cia_bus_mem_init __P((bus_chipset_tag_t bc, void *memv));
+void	cia_bus_io_init __P((bus_chipset_tag_t bc, void *iov));
