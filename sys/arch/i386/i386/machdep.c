@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.321 1998/09/12 10:48:28 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.322 1998/09/13 01:45:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1093,10 +1093,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	/* NOTREACHED */
 }
 
-#ifdef COMPAT_13
-void native_sigset_to_sigset13 __P((const sigset_t *, sigset13_t *));
-#endif
-
 /*
  * Send an interrupt to process.
  *
@@ -1177,6 +1173,16 @@ sendsig(catcher, sig, mask, code)
 
 	/* Save signal mask. */
 	frame.sf_sc.sc_mask = *mask;
+
+#ifdef COMPAT_13
+	/*
+	 * XXX We always have to save an old style signal mask because
+	 * XXX we might be delivering a signal to a process which will
+	 * XXX escape from the signal in a non-standard way and invoke
+	 * XXX sigreturn() directly.
+	 */
+	native_sigset_to_sigset13(mask, &frame.sf_sc.__sc_mask13);
+#endif
 
 	if (copyout(&frame, fp, sizeof(frame)) != 0) {
 		/*
