@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.26 1998/08/25 20:59:40 ross Exp $	*/
+/*	$NetBSD: su.c,v 1.27 1998/10/14 00:56:48 wsanchez Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.26 1998/08/25 20:59:40 ross Exp $");
+__RCSID("$NetBSD: su.c,v 1.27 1998/10/14 00:56:48 wsanchez Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,9 @@ __RCSID("$NetBSD: su.c,v 1.26 1998/08/25 20:59:40 ross Exp $");
 #include <paths.h>
 #include <pwd.h>
 #include <stdio.h>
+#ifdef SKEY
 #include <skey.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
@@ -214,7 +216,9 @@ main(argc, argv)
 			} else
 #endif
 			if (strcmp(pwd->pw_passwd, crypt(p, pwd->pw_passwd))) {
+#ifdef SKEY
 badlogin:
+#endif
 				fprintf(stderr, "Sorry\n");
 				syslog(LOG_AUTH|LOG_WARNING,
 					"BAD SU %s to %s%s", username,
@@ -321,6 +325,7 @@ badlogin:
 
 	execv(shell, np);
 	err(1, "%s", shell);
+        /* NOTREACHED */
 }
 
 static int
