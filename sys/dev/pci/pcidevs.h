@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.319 2001/03/31 09:08:06 minoura Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.320 2001/04/09 11:52:27 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.313 2001/03/31 09:06:45 minoura Exp 
+ *	NetBSD: pcidevs,v 1.314 2001/04/09 11:51:30 ad Exp 
  */
 
 /*
@@ -1648,6 +1648,7 @@
 
 /* Tekram Technology products (2nd PCI Vendor ID) */
 #define	PCI_PRODUCT_TEKRAM2_DC690C	0x690c		/* DC-690C */
+#define	PCI_PRODUCT_TEKRAM2_DC315	0x0391		/* DC-315/DC-395 */
 
 /* Texas Instruments products */
 #define	PCI_PRODUCT_TI_TLAN	0x0500		/* TLAN */
