@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.36 2002/04/29 19:03:15 yamt Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.37 2002/04/29 19:50:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.36 2002/04/29 19:03:15 yamt Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.37 2002/04/29 19:50:05 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,9 +359,8 @@ clean_loop(FS_INFO *fsp, int nsegs, long options)
 	now = time((time_t *)NULL);
 
 	if(debug > 1) {
-		syslog(LOG_DEBUG, "fsb_per_seg = %lu bfree = %u avail = %d,"
-		       " bfree = %u, ", fsb_per_seg, fsp->fi_cip->bfree,
-		       fsp->fi_cip->avail, fsp->fi_cip->bfree);
+		syslog(LOG_DEBUG, "fsb_per_seg = %lu bfree = %u avail = %d",
+		       fsb_per_seg, fsp->fi_cip->bfree, fsp->fi_cip->avail);
 		syslog(LOG_DEBUG, "clean segs = %d, max_free_segs = %ld",
 		       fsp->fi_cip->clean, max_free_segs);
 	}
