@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.23 1998/11/04 06:41:57 itohy Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.24 1998/12/18 21:12:32 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.21 1998/11/04 06:40:54 itohy Exp 
+ *	NetBSD: pcmciadevs,v 1.22 1998/12/18 21:12:14 thorpej Exp 
  */
 
 /*-
@@ -63,6 +63,7 @@
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_IODATA	0x01bf	/* I-O DATA */
+#define	PCMCIA_VENDOR_COREGA	0xc00f	/* Corega K.K. */
 #define	PCMCIA_VENDOR_HAGIWARASYSCOM	0xc012	/* Hagiwara SYS-COM */
 
 /*
@@ -232,3 +233,6 @@
 #define	PCMCIA_CIS_LINKSYS_ECARD_2	{ "LINKSYS", "E-CARD", NULL, NULL }
 #define	PCMCIA_PRODUCT_LINKSYS_ECARD_2	-1
 #define	PCMCIA_STR_LINKSYS_ECARD_2	"Linksys E-Card"
+#define	PCMCIA_CIS_COREGA_PCC_2	{ "corega K.K.", "corega Ether PCC-T", NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_PCC_2	-1
+#define	PCMCIA_STR_COREGA_PCC_2	"Corega"
