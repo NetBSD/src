@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.67 2003/04/18 01:24:20 simonb Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.68 2003/05/27 09:03:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.67 2003/04/18 01:24:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.68 2003/05/27 09:03:46 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -138,7 +138,7 @@ struct mowner revoked_mowner = { "revoked", "" };
 #endif
 
 /*
- * Initialize the mbuf allcator.
+ * Initialize the mbuf allocator.
  */
 void
 mbinit(void)
