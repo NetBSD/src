@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.65 1995/04/07 22:33:23 fvdl Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.66 1995/04/10 18:28:09 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994 Christopher G. Demetriou
@@ -546,7 +546,7 @@ bad:
 	/* kill any opened file descriptor, if necessary */
 	if (pack.ep_flags & EXEC_HASFD) {
 		pack.ep_flags &= ~EXEC_HASFD;
-		(void) fdclose(p, pack.ep_fd);
+		(void) fdrelease(p, pack.ep_fd);
 	}
 	/* close and put the exec'd file */
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
