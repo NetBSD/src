@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.16 1999/12/05 22:10:57 jdolecek Exp $	*/
+/*	$NetBSD: common.c,v 1.17 2000/01/27 05:39:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.16 1999/12/05 22:10:57 jdolecek Exp $");
+__RCSID("$NetBSD: common.c,v 1.17 2000/01/27 05:39:50 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,60 +128,54 @@ getport(rhost, rport)
 	char *rhost;
 	int rport;
 {
-	struct hostent *hp;
-	struct servent *sp;
-	struct sockaddr_in sin;
+	struct addrinfo hints, *res, *r;
 	u_int timo = 1;
 	int s, lport = IPPORT_RESERVED - 1;
-	int err;
+	int error;
 
 	/*
 	 * Get the host address and port number to connect to.
 	 */
 	if (rhost == NULL)
 		fatal("no remote host to connect to");
-	memset(&sin, 0, sizeof(sin));
-	if (inet_aton(rhost, &sin.sin_addr) == 1)
-		sin.sin_family = AF_INET;
-	else {
-		hp = gethostbyname(rhost);
-		if (hp == NULL)
-			fatal("unknown host %s", rhost);
-		memmove(&sin.sin_addr, hp->h_addr, (size_t)hp->h_length);
-		sin.sin_family = hp->h_addrtype;
-	}
-	if (rport == 0) {
-		sp = getservbyname("printer", "tcp");
-		if (sp == NULL)
-			fatal("printer/tcp: unknown service");
-		sin.sin_port = sp->s_port;
-	} else
-		sin.sin_port = htons(rport);
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM;
+	error = getaddrinfo(rhost, "printer", &hints, &res);
+	if (error)
+		fatal("printer/tcp: %s", gai_strerror(error));
 
 	/*
 	 * Try connecting to the server.
 	 */
+	s = -1;
+	for (r = res; r; r = r->ai_next) {
 retry:
-	seteuid(euid);
-	s = rresvport(&lport);
-	seteuid(uid);
-	if (s < 0)
-		return(-1);
-	if (connect(s, (const struct sockaddr *)&sin, sizeof(sin)) < 0) {
-		err = errno;
-		(void)close(s);
-		errno = err;
-		if (errno == EADDRINUSE) {
-			lport--;
-			goto retry;
-		}
-		if (errno == ECONNREFUSED && timo <= 16) {
-			sleep(timo);
-			timo *= 2;
-			goto retry;
-		}
-		return(-1);
+		seteuid(euid);
+		s = rresvport_af(&lport, r->ai_family);
+		seteuid(uid);
+		if (s < 0)
+			return(-1);
+		if (connect(s, r->ai_addr, r->ai_addrlen) < 0) {
+			error = errno;
+			(void)close(s);
+			s = -1;
+			errno = error;
+			if (errno == EADDRINUSE) {
+				lport--;
+				goto retry;
+			}
+			if (errno == ECONNREFUSED && timo <= 16) {
+				sleep(timo);
+				timo *= 2;
+				goto retry;
+			}
+			continue;
+		} else
+			break;
 	}
+	if (res)
+		freeaddrinfo(res);
 	return(s);
 }
 
@@ -299,45 +293,63 @@ compar(p1, p2)
 /*
  * Figure out whether the local machine is the same
  * as the remote machine (RM) entry (if it exists).
+ *
+ * XXX not really the right way to determine.
  */
 char *
 checkremote()
 {
-	char hname[MAXHOSTNAMELEN + 1];
-	struct hostent *hp;
+	char hname[NI_MAXHOST];
+	struct addrinfo hints, *res;
 	static char errbuf[128];
+	int error;
 
 	remote = 0;	/* assume printer is local */
 	if (RM != NULL) {
 		/* get the official name of the local host */
 		gethostname(hname, sizeof(hname));
 		hname[sizeof(hname)-1] = '\0';
-		hp = gethostbyname(hname);
-		if (hp == (struct hostent *) NULL) {
-		    (void)snprintf(errbuf, sizeof(errbuf),
-			"unable to get official name for local machine %s",
-			hname);
-		    return errbuf;
+
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_CANONNAME;
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		res = NULL;
+		error = getaddrinfo(hname, NULL, &hints, &res);
+		if (error) {
+			(void)snprintf(errbuf, sizeof(errbuf),
+			    "unable to get official name for local machine %s: "
+			    "%s", hname, gai_strerror(error));
+			return errbuf;
 		} else {
-			(void)strncpy(hname, hp->h_name, sizeof(hname) - 1);
+			(void)strncpy(hname, res->ai_canonname,
+			    sizeof(hname) - 1);
 			hname[sizeof(hname) - 1] = '\0';
 		}
+		freeaddrinfo(res);
 
 		/* get the official name of RM */
-		hp = gethostbyname(RM);
-		if (hp == (struct hostent *) NULL) {
-		    (void)snprintf(errbuf, sizeof(errbuf),
-			"unable to get official name for remote machine %s",
-			RM);
-		    return errbuf;
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_CANONNAME;
+		hints.ai_family = PF_UNSPEC;
+		hints.ai_socktype = SOCK_STREAM;
+		res = NULL;
+		error = getaddrinfo(RM, NULL, &hints, &res);
+		if (error) {
+			(void)snprintf(errbuf, sizeof(errbuf),
+			    "unable to get official name for local machine %s: "
+			    "%s", RM, gai_strerror(error));
+			return errbuf;
 		}
 
 		/*
 		 * if the two hosts are not the same,
 		 * then the printer must be remote.
 		 */
-		if (strcasecmp(hname, hp->h_name) != 0)
+		if (strcasecmp(hname, res->ai_canonname) != 0)
 			remote = 1;
+
+		freeaddrinfo(res);
 	}
 	return NULL;
 }
