@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.23 2003/03/17 12:20:27 toshii Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.24 2003/03/17 12:29:09 toshii Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.23 2003/03/17 12:20:27 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.24 2003/03/17 12:29:09 toshii Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1297,9 +1297,13 @@ emuxki_voice_new(struct emuxki_softc *sc, u_int8_t use)
 	sc->lvoice = NULL;
 	splx(s);
 
-	if (!voice)
+	if (!voice) {
 		if (!(voice = malloc(sizeof(*voice), M_DEVBUF, M_WAITOK)))
 			return (NULL);
+	} else if (voice->use != use) 
+		emuxki_voice_dataloc_destroy(voice);
+	else
+		goto skip_initialize;
 
 	voice->sc = sc;
 	voice->state = !EMU_VOICE_STATE_STARTED;
@@ -1318,6 +1322,7 @@ emuxki_voice_new(struct emuxki_softc *sc, u_int8_t use)
 	voice->inthparam = NULL;
 	voice->use = use;
 
+skip_initialize:
 	s = splaudio();
 	LIST_INSERT_HEAD((&sc->voices), voice, next);
 	splx(s);
