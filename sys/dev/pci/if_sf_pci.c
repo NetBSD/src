@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sf_pci.c,v 1.6 2002/10/02 16:51:29 thorpej Exp $	*/
+/*	$NetBSD: if_sf_pci.c,v 1.7 2002/12/23 02:58:37 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.6 2002/10/02 16:51:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sf_pci.c,v 1.7 2002/12/23 02:58:37 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,13 +194,13 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT,
 	    &pmreg, 0)) {
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, pmreg + 4);
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR);
 		switch (reg & PCI_PMCSR_STATE_MASK) {
 		case PCI_PMCSR_STATE_D1:
 		case PCI_PMCSR_STATE_D2:
 			printf(": waking up from power state D%d\n%s",
 			    reg & PCI_PMCSR_STATE_MASK, sc->sc_dev.dv_xname);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + 4,
+			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
 			break;
@@ -208,7 +208,7 @@ sf_pci_attach(struct device *parent, struct device *self, void *aux)
 		case PCI_PMCSR_STATE_D3:
 			printf("%s: unable to wake up from power state D3\n",
 			    sc->sc_dev.dv_xname);
-			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + 4,
+			pci_conf_write(pa->pa_pc, pa->pa_tag, pmreg + PCI_PMCSR,
 			    (reg & ~PCI_PMCSR_STATE_MASK) |
 			    PCI_PMCSR_STATE_D0);
 			return;
