@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.111 1998/09/01 00:23:28 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.112 1998/09/11 12:50:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -774,11 +774,10 @@ ttioctl(tp, cmd, data, flag, p)
 #endif
 		while (isbackground(curproc, tp) &&
 		    p->p_pgrp->pg_jobc && (p->p_flag & P_PPWAIT) == 0 &&
-		    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
-		    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
+		    !sigismember(&p->p_sigignore, SIGTTOU) &&
+		    !sigismember(&p->p_sigmask, SIGTTOU)) {
 			pgsignal(p->p_pgrp, SIGTTOU, 1);
-			error = ttysleep(tp,
-					 &lbolt, TTOPRI | PCATCH, ttybg, 0);
+			error = ttysleep(tp, &lbolt, TTOPRI | PCATCH, ttybg, 0);
 			if (error)
 				return (error);
 		}
@@ -1340,8 +1339,8 @@ loop:	lflag = tp->t_lflag;
 	 * Hang process if it's in the background.
 	 */
 	if (isbackground(p, tp)) {
-		if ((p->p_sigignore & sigmask(SIGTTIN)) ||
-		   (p->p_sigmask & sigmask(SIGTTIN)) ||
+		if (sigismember(&p->p_sigignore, SIGTTIN) ||
+		    sigismember(&p->p_sigmask, SIGTTIN) ||
 		    p->p_flag & P_PPWAIT || p->p_pgrp->pg_jobc == 0)
 			return (EIO);
 		pgsignal(p->p_pgrp, SIGTTIN, 1);
@@ -1520,22 +1519,25 @@ ttycheckoutq(tp, wait)
 	register struct tty *tp;
 	int wait;
 {
-	int hiwat, s, oldsig;
+	int hiwat, s;
+	int error;
 
 	hiwat = tp->t_hiwat;
 	s = spltty();
-	oldsig = wait ? curproc->p_siglist : 0;
 	if (tp->t_outq.c_cc > hiwat + 200)
 		while (tp->t_outq.c_cc > hiwat) {
 			ttstart(tp);
-			if (wait == 0 || curproc->p_siglist != oldsig) {
+			if (wait == 0) {
 				splx(s);
 				return (0);
 			}
 			timeout((void (*)__P((void *)))wakeup,
 			    (void *)&tp->t_outq, hz);
 			SET(tp->t_state, TS_ASLEEP);
-			tsleep(&tp->t_outq, PZERO - 1, "ttckoutq", 0);
+			error = tsleep(&tp->t_outq, (PZERO - 1) | PCATCH,
+			    "ttckoutq", 0);
+			if (error == EINTR)
+				wait = 0;
 		}
 	splx(s);
 	return (1);
@@ -1587,8 +1589,8 @@ loop:
 	p = curproc;
 	if (isbackground(p, tp) &&
 	    ISSET(tp->t_lflag, TOSTOP) && (p->p_flag & P_PPWAIT) == 0 &&
-	    (p->p_sigignore & sigmask(SIGTTOU)) == 0 &&
-	    (p->p_sigmask & sigmask(SIGTTOU)) == 0) {
+	    !sigismember(&p->p_sigignore, SIGTTOU) &&
+	    !sigismember(&p->p_sigmask, SIGTTOU)) {
 		if (p->p_pgrp->pg_jobc == 0) {
 			error = EIO;
 			goto out;

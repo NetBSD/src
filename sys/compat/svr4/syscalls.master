@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.33 1998/06/30 23:31:28 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.34 1998/09/11 12:50:09 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -167,16 +167,18 @@
 93	NOARGS		{ int sys_fchmod(int fd, int mode); }
 94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
 95	STD		{ int svr4_sys_sigprocmask(int how, \
-			    svr4_sigset_t *set, svr4_sigset_t *oset); }
-96	STD		{ int svr4_sys_sigsuspend(svr4_sigset_t *ss); }
+			    const svr4_sigset_t *set, \
+			    svr4_sigset_t *oset); }
+96	STD		{ int svr4_sys_sigsuspend( \
+			    const svr4_sigset_t *set); }
 97	STD		{ int svr4_sys_sigaltstack( \
-			    struct svr4_sigaltstack *nss, \
+			    const struct svr4_sigaltstack *nss, \
 			    struct svr4_sigaltstack *oss); }
 98	STD		{ int svr4_sys_sigaction(int signum, \
-			    struct svr4_sigaction *nsa, \
+			    const struct svr4_sigaction *nsa, \
 			    struct svr4_sigaction *osa); }
 99	STD		{ int svr4_sys_sigpending(int what, \
-			    svr4_sigset_t *mask); }
+			    svr4_sigset_t *set); }
 100	STD		{ int svr4_sys_context(int func, \
 			    struct svr4_ucontext *uc); }
 101	UNIMPL		evsys

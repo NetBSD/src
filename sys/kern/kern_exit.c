@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.56 1998/09/08 23:57:58 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.57 1998/09/11 12:50:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -172,8 +172,9 @@ exit1(p, rv)
 		p->p_flag &= ~P_PPWAIT;
 		wakeup((caddr_t)p->p_pptr);
 	}
-	p->p_sigignore = ~0;
-	p->p_siglist = 0;
+	sigfillset(&p->p_sigignore);
+	sigemptyset(&p->p_siglist);
+	p->p_sigcheck = 0;
 	untimeout(realitexpire, (caddr_t)p);
 
 	/*

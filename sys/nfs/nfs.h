@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.18 1998/08/09 21:19:49 perry Exp $	*/
+/*	$NetBSD: nfs.h,v 1.19 1998/09/11 12:50:12 mycroft Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -255,9 +255,6 @@ struct nfsstats {
 #ifdef _KERNEL
 
 struct uio; struct buf; struct vattr; struct nameidata;	/* XXX */
-
-#define	NFSINT_SIGMASK	(sigmask(SIGINT)|sigmask(SIGTERM)|sigmask(SIGKILL)| \
-			 sigmask(SIGHUP)|sigmask(SIGQUIT))
 
 /*
  * Socket errors ignored for connectionless sockets??

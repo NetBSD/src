@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.52 1998/07/04 22:18:51 jonathan Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.53 1998/09/11 12:50:11 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -394,7 +394,7 @@ resume:
 		if (KTRPOINT(p, KTR_CSW))
 			ktrcsw(p->p_tracep, 0, 0);
 #endif
-		if (p->p_sigacts->ps_sigintr & sigmask(sig))
+		if ((p->p_sigacts->ps_sigact[sig].sa_flags & SA_RESTART) == 0)
 			return (EINTR);
 		return (ERESTART);
 	}
@@ -670,8 +670,10 @@ setrunnable(p)
 		 * If we're being traced (possibly because someone attached us
 		 * while we were stopped), check for a signal from the debugger.
 		 */
-		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0)
-			p->p_siglist |= sigmask(p->p_xstat);
+		if ((p->p_flag & P_TRACED) != 0 && p->p_xstat != 0) {
+			sigaddset(&p->p_siglist, p->p_xstat);
+			p->p_sigcheck = 1;
+		}
 	case SSLEEP:
 		unsleep(p);		/* e.g. when sending signals */
 		break;
