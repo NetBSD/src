@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.18 1997/03/21 01:49:03 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.19 1997/03/21 08:39:40 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -608,7 +608,7 @@ viking_pcache_flush_line(va, pa)
 	extern char *etext;
 
 	i = CACHEINFO.dc_associativity;
-	cmask = CACHEINFO.ic_totalsize - 1;
+	cmask = CACHEINFO.ic_totalsize/i - 1;
 	cshift = CACHEINFO.ic_l2linesize;
 
 	if (i == 0) {
