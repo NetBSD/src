@@ -1,6 +1,8 @@
+/*	$NetBSD: gets.c,v 1.7 1995/02/02 02:09:57 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)gets.c	5.3 (Berkeley) 1/20/91";*/
-static char *rcsid = "$Id: gets.c,v 1.6 1994/07/21 17:13:51 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)gets.c	8.1 (Berkeley) 6/4/93";
+#endif
+static char rcsid[] = "$NetBSD: gets.c,v 1.7 1995/02/02 02:09:57 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>

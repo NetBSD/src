@@ -1,6 +1,8 @@
+/*	$NetBSD: fgets.c,v 1.4 1995/02/02 02:09:13 jtc Exp $	*/
+
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Chris Torek.
@@ -35,8 +37,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)fgets.c	5.4 (Berkeley) 5/4/91";*/
-static char *rcsid = "$Id: fgets.c,v 1.3 1993/08/26 00:46:43 jtc Exp $";
+#if 0
+static char sccsid[] = "@(#)fgets.c	8.2 (Berkeley) 12/22/93";
+#endif
+static char rcsid[] = "$NetBSD: fgets.c,v 1.4 1995/02/02 02:09:13 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -57,12 +61,12 @@ fgets(buf, n, fp)
 	register char *s;
 	register unsigned char *p, *t;
 
-	if (n < 2)		/* sanity check */
+	if (n == 0)		/* sanity check */
 		return (NULL);
 
 	s = buf;
 	n--;			/* leave space for NUL */
-	do {
+	while (n != 0) {
 		/*
 		 * If the buffer is empty, refill it.
 		 */
@@ -90,15 +94,16 @@ fgets(buf, n, fp)
 			len = ++t - p;
 			fp->_r -= len;
 			fp->_p = t;
-			(void) bcopy((void *)p, (void *)s, len);
+			(void)memcpy((void *)s, (void *)p, len);
 			s[len] = 0;
 			return (buf);
 		}
 		fp->_r -= len;
 		fp->_p += len;
-		(void) bcopy((void *)p, (void *)s, len);
+		(void)memcpy((void *)s, (void *)p, len);
 		s += len;
-	} while ((n -= len) != 0);
+		n -= len;
+	}
 	*s = 0;
 	return (buf);
 }
