@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.29 1999/05/19 06:14:15 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.30 1999/05/26 00:32:42 thorpej Exp $	*/
 
 /*
  *
@@ -1691,9 +1691,10 @@ Case2:
  */
 
 int
-uvm_fault_wire(map, start, end)
+uvm_fault_wire(map, start, end, access_type)
 	vm_map_t map;
 	vaddr_t start, end;
+	vm_prot_t access_type;
 {
 	vaddr_t va;
 	pmap_t  pmap;
@@ -1715,7 +1716,7 @@ uvm_fault_wire(map, start, end)
 	 */
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
-		rv = uvm_fault(map, va, VM_FAULT_WIRE, VM_PROT_NONE);
+		rv = uvm_fault(map, va, VM_FAULT_WIRE, access_type);
 		if (rv) {
 			if (va != start) {
 				uvm_fault_unwire(map->pmap, start, va);
