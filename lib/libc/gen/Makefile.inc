@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.13 1993/08/25 02:50:51 brezak Exp $
+#	$Id: Makefile.inc,v 1.14 1993/09/17 19:22:50 phil Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/${MACHINE}/gen ${.CURDIR}/gen ${.CURDIR}/gen/regexp
@@ -33,6 +33,9 @@ SRCS+=	adddf3.s addsf3.s ashlsi3.s ashrsi3.s cmpdf2.s cmpsf2.s divdf3.s \
 .elif (${MACHINE} == "i386")
 SRCS+=	_setjmp.s alloca.s fabs.s ldexp.c modf.s setjmp.s
 SRCS+=	divsi3.s fixdfsi.s fixunsdfsi.s udivsi3.s
+.elif (${MACHINE} == "pc532")
+SRCS+=	__main.c _setjmp.s alloca.s fabs.s frexp.s infinity.c isinf.c
+SRCS+=  ldexp.s modf.s setjmp.s
 .elif (${MACHINE} == "tahoe")
 CFLAGS+=-I/sys
 SRCS+=	_setjmp.s alloca.s fabs.s ldexp.s modf.s setjmp.s

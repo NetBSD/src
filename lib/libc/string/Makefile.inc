@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.6 (Berkeley) 3/5/91
-#	$Id: Makefile.inc,v 1.9 1993/08/01 05:40:37 mycroft Exp $
+#	$Id: Makefile.inc,v 1.10 1993/09/17 19:23:48 phil Exp $
 
 # string sources
 .PATH: ${.CURDIR}/${MACHINE}/string ${.CURDIR}/string
@@ -18,6 +18,12 @@ SRCS+=	bcmp.s bcopy.s bzero.s ffs.s index.s memchr.s memcmp.s memset.s \
 	strncat.c strncmp.s strncpy.c strpbrk.c strsep.c \
 	strspn.c strstr.c
 SRCS+=	memmove.s strchr.s strrchr.s
+.elif (${MACHINE} == "pc532")
+SRCS+=	bcmp.c bcopy.c bzero.c ffs.c index.c memchr.c memcmp.c memset.c \
+	rindex.c strcat.c strcmp.c strcpy.c strcspn.c strlen.c \
+	strncat.c strncmp.c strncpy.c strpbrk.c strsep.c \
+	strspn.c strstr.c
+SRCS+=	memmove.c strchr.c strrchr.c
 .elif (${MACHINE} == "tahoe")
 SRCS+=	bcmp.s bcopy.s bzero.s ffs.s index.c memchr.c memcmp.s memset.c \
 	rindex.c strcat.s strcmp.s strcpy.s strcspn.c strlen.s \
