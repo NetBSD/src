@@ -1,4 +1,4 @@
-/* $NetBSD: multiproc.s,v 1.7 2000/11/18 16:21:37 sommerfeld Exp $ */
+/* $NetBSD: multiproc.s,v 1.8 2000/11/20 20:40:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.7 2000/11/18 16:21:37 sommerfeld Exp $")
+__KERNEL_RCSID(5, "$NetBSD: multiproc.s,v 1.8 2000/11/20 20:40:17 thorpej Exp $")
 
 /*
  * Multiprocessor glue code.
@@ -87,7 +87,7 @@ NESTED_NOPROFILE(cpu_spinup_trampoline,0,0,ra,0,0)
 	mov	s0, a0
 	CALL(cpu_hatch)
 
-#if 0
+#if 1
 	/* Acquire the scheduler lock, and then jump into the idle loop! */
 	CALL(sched_lock_idle)
 	mov	zero, s0		/* no outgoing proc */
