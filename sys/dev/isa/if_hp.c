@@ -405,7 +405,7 @@ hpattach (dvp)
   ifp->if_unit = unit;
   ifp->if_name = hpdriver.name;
   ifp->if_mtu = ETHERMTU;
-  printf (" %s %d-bit, address %s",
+  printf ("hp%d: %s %d-bit ethernet address %s\n", unit,
 	  hp_id (ns->hp_type), ns->ns_mode & DSDC_WTS ? 32 : 16,
 	  ether_sprintf (ns->ns_addr));
   ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
