@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.63 1997/03/24 21:54:20 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.64 1997/03/27 09:10:10 mycroft Exp $
 #	@(#)bsd.prog.mk	5.26 (Berkeley) 6/25/91
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -133,9 +133,6 @@ ${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
 ${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG}
 	${INSTALL} ${COPY} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${.ALLSRC} ${.TARGET}
-.if defined(HIDEGAME)
-	(cd ${DESTDIR}/usr/games; rm -f ${PROG}; ln -s dm ${PROG})
-.endif
 .endif
 
 .if defined(FILES)
