@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 1996/03/25 06:44:22 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 1996/03/31 03:38:45 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -253,7 +253,7 @@ mach_init(argc, argv, code, cv)
 	caddr_t start;
 	extern char edata[], end[];
 	extern char MachUTLBMiss[], MachUTLBMissEnd[];
-	extern char MachException[], MachExceptionEnd[];
+	extern char mips_R2000_exception[], mips_R2000_exceptionEnd[];
 
 	/* clear the BSS segment */
 	v = (caddr_t)pmax_round_page(end);
@@ -364,8 +364,8 @@ mach_init(argc, argv, code, cv)
 		panic("startup: UTLB code too large");
 	bcopy(MachUTLBMiss, (char *)MACH_UTLB_MISS_EXC_VEC,
 		MachUTLBMissEnd - MachUTLBMiss);
-	bcopy(MachException, (char *)MACH_GEN_EXC_VEC,
-		MachExceptionEnd - MachException);
+	bcopy(mips_R2000_exception, (char *)MACH_GEN_EXC_VEC,
+		mips_R2000_exceptionEnd - mips_R2000_exception);
 
 	/*
 	 * Clear out the I and D caches.
