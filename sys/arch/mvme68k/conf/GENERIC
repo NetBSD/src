@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.42 2003/04/26 14:10:09 ragge Exp $
+# $NetBSD: GENERIC,v 1.43 2003/09/22 14:11:21 cl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.42 $"
+#ident 		"GENERIC-$Revision: 1.43 $"
 
 # Boards this kernel supports
 options 	MVME147
@@ -80,7 +80,8 @@ options 	INET6		# IPV6
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
 options 	COMPAT_09, COMPAT_10, COMPAT_11
-options 	COMPAT_12, COMPAT_13, COMPAT_14, COMPAT_15
+options 	COMPAT_12, COMPAT_13, COMPAT_14
+options		COMPAT_15, COMPAT_16
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	COMPAT_LINUX	# compatibility with Linux/m68k binaries

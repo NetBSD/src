@@ -1,4 +1,4 @@
-#	$NetBSD: VME172,v 1.15 2002/09/18 02:44:03 lukem Exp $
+#	$NetBSD: VME172,v 1.16 2003/09/22 14:11:23 cl Exp $
 
 include		"arch/mvme68k/conf/std.mvme68k"
 
@@ -40,7 +40,8 @@ options 	INET
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	COMPAT_AOUT_M68K	# compatibility with NetBSD/m68k a.out
-#options 	COMPAT_15, COMPAT_14, COMPAT_13, COMPAT_12
+#options 	COMPAT_16, COMPAT_15
+#options 	COMPAT_14, COMPAT_13, COMPAT_12
 #options 	COMPAT_SUNOS
 #options 	COMPAT_M68K4K	# compatibility with NetBSD/m68k4k binaries
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.

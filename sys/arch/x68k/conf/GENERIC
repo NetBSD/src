@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2003/08/22 07:52:51 itojun Exp $
+# $NetBSD: GENERIC,v 1.92 2003/09/22 14:11:31 cl Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	8
 
@@ -158,6 +158,8 @@ options 	COMPAT_11	# NetBSD 1.1 binary compatibility
 options 	COMPAT_12	# NetBSD 1.2 binary compatibility
 options 	COMPAT_13	# NetBSD 1.3 binary compatibility
 options 	COMPAT_14	# NetBSD 1.4 binary compatibility
+options 	COMPAT_15	# NetBSD 1.5 binary compatibility
+options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_AOUT_M68K # compatibility with NetBSD/m68k a.out
 #options 	COMPAT_M68K4K	# NetBSD/m68k4k binaries
 #options 	COMPAT_SUNOS	# SunOS 4.x binary compatibility; broken
