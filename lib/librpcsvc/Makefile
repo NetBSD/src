@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.37 2003/01/05 19:24:06 sommerfeld Exp $
+#	$NetBSD: Makefile,v 1.38 2005/01/08 10:02:36 lukem Exp $
 
 NOMAN=		# defined
-NOPIC=		# defined
 
 RPCSRCS=	bootparam_prot.x klm_prot.x mount.x nfs_prot.x\
 		nlm_prot.x rex.x rnusers.x rusers.x rquota.x rstat.x rwall.x\
