@@ -1,4 +1,4 @@
-/*	$NetBSD: extintr.c,v 1.20 2001/01/01 05:01:11 tsubai Exp $	*/
+/*	$NetBSD: extintr.c,v 1.21 2001/01/04 15:01:25 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -675,20 +675,24 @@ do_pending_int()
 
 	/*out32rb(INT_ENABLE_REG, ~imen);*/
 
-	if ((ipending & ~pcpl) & (1 << SIR_CLOCK)) {
-		ipending &= ~(1 << SIR_CLOCK);
-		softclock();
-		intrcnt[CNT_SOFTCLOCK]++;
+softagain:
+	if ((ipending & ~pcpl) & (1 << SIR_SERIAL)) {
+		ipending &= ~(1 << SIR_SERIAL);
+		softserial();
+		intrcnt[CNT_SOFTSERIAL]++;
+		goto softagain;
 	}
 	if ((ipending & ~pcpl) & (1 << SIR_NET)) {
 		ipending &= ~(1 << SIR_NET);
 		softnet();
 		intrcnt[CNT_SOFTNET]++;
+		goto softagain;
 	}
-	if ((ipending & ~pcpl) & (1 << SIR_SERIAL)) {
-		ipending &= ~(1 << SIR_SERIAL);
-		softserial();
-		intrcnt[CNT_SOFTSERIAL]++;
+	if ((ipending & ~pcpl) & (1 << SIR_CLOCK)) {
+		ipending &= ~(1 << SIR_CLOCK);
+		softclock();
+		intrcnt[CNT_SOFTCLOCK]++;
+		goto softagain;
 	}
 	KERNEL_UNLOCK();
 	ipending &= pcpl;
