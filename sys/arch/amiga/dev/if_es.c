@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.30 2002/03/03 18:21:37 mhitch Exp $ */
+/*	$NetBSD: if_es.c,v 1.31 2002/03/06 22:07:39 mhitch Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.30 2002/03/03 18:21:37 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.31 2002/03/06 22:07:39 mhitch Exp $");
 
 #include "bpfilter.h"
 
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.30 2002/03/03 18:21:37 mhitch Exp $");
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 
 #ifdef INET
 #include <netinet/in.h>
@@ -92,6 +93,7 @@ struct	es_softc {
 	struct	device sc_dev;
 	struct	isr sc_isr;
 	struct	ethercom sc_ethercom;	/* common Ethernet structures */
+	struct	ifmedia sc_media;	/* our supported media */
 	void	*sc_base;		/* base address of board */
 	short	sc_iflags;
 	unsigned short sc_intctl;
@@ -127,6 +129,8 @@ void estint(struct es_softc *);
 void esinit(struct es_softc *);
 void esreset(struct es_softc *);
 void esstop(struct es_softc *);
+int esmediachange(struct ifnet *);
+void esmediastatus(struct ifnet *, struct ifmediareq *);
 
 int esmatch(struct device *, struct cfdata *, void *);
 void esattach(struct device *, struct device *, void *);
@@ -188,6 +192,10 @@ esattach(struct device *parent, struct device *self, void *aux)
 	ifp->if_watchdog = eswatchdog;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS |
 	    IFF_MULTICAST;
+
+	ifmedia_init(&sc->sc_media, 0, esmediachange, esmediastatus);
+	ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+	ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 
 	/* Attach the interface. */
 	if_attach(ifp);
@@ -1048,6 +1056,11 @@ esioctl(register struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, command);
+		break;
+
 	default:
 		error = EINVAL;
 	}
@@ -1079,4 +1092,15 @@ eswatchdog(struct ifnet *ifp)
 	++ifp->if_oerrors;
 
 	esreset(sc);
+}
+
+int
+esmediachange(struct ifnet *ifp)
+{
+	return 0;
+}
+
+void
+esmediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
 }
