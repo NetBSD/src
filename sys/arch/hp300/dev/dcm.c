@@ -38,7 +38,7 @@
  * from: $Hdr: dcm.c 1.26 91/01/21$
  *
  *	from: @(#)dcm.c	7.14 (Berkeley) 6/27/91
- *	$Id: dcm.c,v 1.5 1993/05/29 19:41:43 cgd Exp $
+ *	$Id: dcm.c,v 1.6 1993/07/07 11:12:33 deraadt Exp $
  */
 
 /*
@@ -1173,7 +1173,6 @@ dcmcnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(dcmmajor, unit);
-	cp->cn_tp = dcm_tty[unit];
 	switch (dcm_addr[BOARD(unit)]->dcm_rsid) {
 	case DCMID:
 		cp->cn_pri = CN_NORMAL;

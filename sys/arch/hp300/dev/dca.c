@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dca.c	7.12 (Berkeley) 6/27/91
- *	$Id: dca.c,v 1.6 1993/06/06 23:04:42 cgd Exp $
+ *	$Id: dca.c,v 1.7 1993/07/07 11:12:26 deraadt Exp $
  */
 
 #include "dca.h"
@@ -657,7 +657,6 @@ dcacnprobe(cp)
 
 	/* initialize required fields */
 	cp->cn_dev = makedev(dcamajor, unit);
-	cp->cn_tp = dca_tty[unit];
 	switch (dca_addr[unit]->dca_irid) {
 	case DCAID0:
 	case DCAID1:

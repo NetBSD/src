@@ -38,7 +38,7 @@
  * from: Utah $Hdr: cons.h 1.1 90/07/09$
  *
  *	from: @(#)cons.h	7.3 (Berkeley) 11/2/90
- *	$Id: cons.h,v 1.2 1993/05/22 07:57:19 cgd Exp $
+ *	$Id: cons.h,v 1.3 1993/07/07 11:13:08 deraadt Exp $
  */
 
 struct consdev {
@@ -46,7 +46,6 @@ struct consdev {
 	int	(*cn_init)();	/* turn on as console */
 	int	(*cn_getc)();	/* kernel getchar interface */
 	int	(*cn_putc)();	/* kernel putchar interface */
-	struct	tty *cn_tp;	/* tty structure for console device */
 	dev_t	cn_dev;		/* major/minor of device */
 	short	cn_pri;		/* pecking order; the higher the better */
 };
@@ -63,5 +62,4 @@ struct consdev {
 #ifdef KERNEL
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
-extern	struct tty *cn_tty;
 #endif
