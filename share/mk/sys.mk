@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.42 1998/05/22 13:52:52 tv Exp $
+#	$NetBSD: sys.mk,v 1.43 1998/08/22 18:59:40 tv Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 
 unix?=		We run NetBSD.
@@ -84,12 +84,10 @@ YACC.y?=	${YACC} ${YFLAGS}
 	${LINK.c} -o ${.TARGET} ${.IMPSRC} ${LDLIBS}
 .c.o:
 	${COMPILE.c} ${.IMPSRC}
-.if (${MACHINE_ARCH} != "alpha") && (${MACHINE_ARCH} != "arm32")
 .c.a:
 	${COMPILE.c} ${.IMPSRC}
 	${AR} ${ARFLAGS} $@ $*.o
 	rm -f $*.o
-.endif
 .c.ln:
 	${LINT} ${LINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i ${.IMPSRC}
 
