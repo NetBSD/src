@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.51 1997/12/01 17:10:48 pk Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.52 1997/12/02 13:47:37 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -1082,8 +1082,6 @@ sw_reg_strategy(sdp, bp, bn)
 		nbp->vb_buf.b_bcount   = sz;
 		nbp->vb_buf.b_bufsize  = bp->b_bufsize;
 		nbp->vb_buf.b_error    = 0;
-		nbp->vb_buf.b_dev      = vp->v_type == VREG
-						? NODEV : vp->v_rdev;
 		nbp->vb_buf.b_data     = addr;
 		nbp->vb_buf.b_blkno    = nbn + btodb(off);
 		nbp->vb_buf.b_proc     = bp->b_proc;
@@ -1159,12 +1157,12 @@ sw_reg_start(sdp)
 	struct swapdev	*sdp;
 {
 	struct buf	*bp;
-static	int		busy;	/* Recursion control */
 
-	if (busy != 0)
+	if ((sdp->swd_flags & SWF_BUSY) != 0)
+		/* Recursion control */
 		return;
 
-	busy = 1;
+	sdp->swd_flags |= SWF_BUSY;
 
 	while (sdp->swd_tab.b_active < sdp->swd_maxactive) {
 		bp = sdp->swd_tab.b_actf;
@@ -1181,7 +1179,7 @@ static	int		busy;	/* Recursion control */
 			bp->b_vp->v_numoutput++;
 		VOP_STRATEGY(bp);
 	}
-	busy = 0;
+	sdp->swd_flags &= ~SWF_BUSY;
 }
 
 static void

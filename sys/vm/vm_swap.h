@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.h,v 1.5 1997/10/10 05:40:33 mrg Exp $	*/
+/*	$NetBSD: vm_swap.h,v 1.6 1997/12/02 13:47:41 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Matthew R. Green
@@ -48,6 +48,7 @@ struct swapent {
 
 #define SWF_INUSE	0x00000001
 #define SWF_ENABLE	0x00000002
+#define SWF_BUSY	0x00000004
 
 #ifdef _KERNEL
 int sys_swapctl __P((struct proc *, void *, register_t *));
