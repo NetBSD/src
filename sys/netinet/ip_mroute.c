@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.28 1996/06/23 12:12:46 mycroft Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -230,17 +230,17 @@ u_int32_t upcall_data[51];
  * Handle MRT setsockopt commands to modify the multicast routing tables.
  */
 int
-ip_mrouter_set(cmd, so, m)
-	int cmd;
+ip_mrouter_set(so, optname, m)
 	struct socket *so;
+	int optname;
 	struct mbuf **m;
 {
 	int error;
 
-	if (cmd != MRT_INIT && so != ip_mrouter)
-		error = EACCES;
+	if (optname != MRT_INIT && so != ip_mrouter)
+		error = ENOPROTOOPT;
 	else
-		switch (cmd) {
+		switch (optname) {
 		case MRT_INIT:
 			error = ip_mrouter_init(so, *m);
 			break;
@@ -263,7 +263,7 @@ ip_mrouter_set(cmd, so, m)
 			error = set_assert(*m);
 			break;
 		default:
-			error = EOPNOTSUPP;
+			error = ENOPROTOOPT;
 			break;
 		}
 
@@ -276,33 +276,32 @@ ip_mrouter_set(cmd, so, m)
  * Handle MRT getsockopt commands
  */
 int
-ip_mrouter_get(cmd, so, m)
-	int cmd;
+ip_mrouter_get(so, optname, m)
 	struct socket *so;
+	int optname;
 	struct mbuf **m;
 {
-	struct mbuf *mb;
 	int error;
 
 	if (so != ip_mrouter)
-		error = EACCES;
+		error = ENOPROTOOPT;
 	else {
-		*m = mb = m_get(M_WAIT, MT_SOOPTS);
+		*m = m_get(M_WAIT, MT_SOOPTS);
 
-		switch (cmd) {
+		switch (optname) {
 		case MRT_VERSION:
-			error = get_version(mb);
+			error = get_version(*m);
 			break;
 		case MRT_ASSERT:
-			error = get_assert(mb);
+			error = get_assert(*m);
 			break;
 		default:
-			error = EOPNOTSUPP;
+			error = ENOPROTOOPT;
 			break;
 		}
 
 		if (error)
-			m_free(mb);
+			m_free(*m);
 	}
 
 	return (error);
@@ -312,23 +311,27 @@ ip_mrouter_get(cmd, so, m)
  * Handle ioctl commands to obtain information from the cache
  */
 int
-mrt_ioctl(cmd, data)
+mrt_ioctl(so, cmd, data)
+	struct socket *so;
 	u_long cmd;
 	caddr_t data;
 {
 	int error;
 
-	switch (cmd) {
-	case SIOCGETVIFCNT:
-		error = get_vif_cnt((struct sioc_vif_req *)data);
-		break;
-	case SIOCGETSGCNT:
-		error = get_sg_cnt((struct sioc_sg_req *)data);
-		break;
-	default:
+	if (so != ip_mrouter)
 		error = EINVAL;
-		break;
-	}
+	else
+		switch (cmd) {
+		case SIOCGETVIFCNT:
+			error = get_vif_cnt((struct sioc_vif_req *)data);
+			break;
+		case SIOCGETSGCNT:
+			error = get_sg_cnt((struct sioc_sg_req *)data);
+			break;
+		default:
+			error = EINVAL;
+			break;
+		}
 
 	return (error);
 }
