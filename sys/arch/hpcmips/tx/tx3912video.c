@@ -1,7 +1,7 @@
-/*	$NetBSD: tx3912video.c,v 1.25 2002/02/19 14:21:48 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.26 2002/03/06 15:01:06 uch Exp $ */
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,6 +39,7 @@
 #define TX3912VIDEO_DEBUG
 
 #include "hpcfb.h"
+#include "bivideo.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +69,9 @@
 #include <dev/wscons/wsconsio.h>
 #include <dev/hpc/hpcfbvar.h>
 #include <dev/hpc/hpcfbio.h>
+#if NBIVIDEO > 0
+#include <dev/hpc/bivideovar.h>
+#endif
 
 #ifdef TX3912VIDEO_DEBUG
 int	tx3912video_debug = 1;
@@ -196,6 +200,10 @@ tx3912video_attach(struct device *parent, struct device *self, void *aux)
 	ha.ha_dspconflist = &sc->sc_dspconf;
 
 	config_found(self, &ha, hpcfbprint);
+#if NBIVIDEO > 0
+	/* bivideo is no longer need */
+	bivideo_dont_attach = 1;
+#endif /* NBIVIDEO > 0 */
 }
 
 int
