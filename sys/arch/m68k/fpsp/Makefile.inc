@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1997/09/21 17:33:36 is Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1998/09/05 15:15:16 lukem Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -47,7 +47,7 @@ cleanfpsp:		.NOTMAIN __always_make_fpsp
 	@echo cleaning the 68040 FPSP objects
 	@${FPSPMAKE} clean
 
-#cleandir:		.NOTMAIN cleandirfpsp
+#cleandir distclean:	.NOTMAIN cleandirfpsp
 #cleandirfpsp:	.NOTMAIN __always_make_fpsp
 #	@echo cleandiring the 68040 FPSP objects
 #	@${FPSPMAKE} cleandir

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.macppc,v 1.2 1998/05/31 23:25:42 thorpej Exp $
+#	$NetBSD: Makefile.macppc,v 1.3 1998/09/05 15:15:16 lukem Exp $
 #
 # Makefile for NetBSD
 #
@@ -147,7 +147,7 @@ __CLEANDEPEND: .USE
 
 clean: __CLEANKERNEL
 
-cleandir: __CLEANKERNEL __CLEANDEPEND
+cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 
 lint:
 	@lint -hbxncez -Dvolatile= ${CPPFLAGS} -UKGDB \
