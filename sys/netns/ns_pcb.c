@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.7 1995/08/16 00:32:40 mycroft Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.8 1995/08/17 02:57:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -64,7 +64,7 @@ ns_pcballoc(so, head)
 	bzero((caddr_t)nsp, sizeof(*nsp));
 	nsp->nsp_socket = so;
 	insque(nsp, head);
-	so->so_pcb = (caddr_t)nsp;
+	so->so_pcb = nsp;
 	return (0);
 }
 	
