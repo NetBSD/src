@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpd.c	5.40 (Berkeley) 7/2/91";*/
-static char rcsid[] = "$Id: ftpd.c,v 1.3 1993/08/01 18:30:47 mycroft Exp $";
+static char rcsid[] = "$Id: ftpd.c,v 1.4 1994/03/30 02:50:29 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -124,6 +124,11 @@ int	defumask = CMASK;		/* default umask value */
 char	tmpline[7];
 char	hostname[MAXHOSTNAMELEN];
 char	remotehost[MAXHOSTNAMELEN];
+
+#if defined(KERBEROS)
+int notickets = 1;
+char *krbtkfile_env = NULL;
+#endif 
 
 /*
  * Timeout intervals for retrying connections
@@ -437,7 +442,7 @@ end_login()
 pass(passwd)
 	char *passwd;
 {
-	char *xpasswd, *salt;
+	int rval;
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -446,13 +451,25 @@ pass(passwd)
 	askpasswd = 0;
 	if (!guest) {		/* "ftp" is only account allowed no password */
 		if (pw == NULL)
-			salt = "xx";
+			rval = 1;  /* failure below */
 		else
-			salt = pw->pw_passwd;
-		xpasswd = crypt(passwd, salt);
-		/* The strcmp does not catch null passwords! */
-		if (pw == NULL || *pw->pw_passwd == '\0' ||
-		    strcmp(xpasswd, pw->pw_passwd)) {
+#if defined(KERBEROS)
+			rval = klogin(pw, "", hostname, passwd);
+			if (rval == 1)
+#endif
+				/* the strcmp does not catch null passwords! */
+				if (pw == NULL || *pw->pw_passwd == '\0')
+					rval = 1;   /* failure */
+		else
+					rval = strcmp(crypt(passwd, (pw ? pw->pw_passwd : "xx")), 
+						      pw->pw_passwd);
+
+		/*
+		 * If rval == 1, the user failed the authentication check
+		 * above.  If rval == 0, either Kerberos or local authentication
+		 * succeeded.
+		 */
+		if (rval) {
 			reply(530, "Login incorrect.");
 			pw = NULL;
 			if (login_attempts++ >= 5) {
@@ -1187,6 +1204,10 @@ dologout(status)
 	if (logged_in) {
 		(void) seteuid((uid_t)0);
 		logwtmp(ttyline, "", "");
+#if defined(KERBEROS)
+		if (!notickets && krbtkfile_env)
+			unlink(krbtkfile_env);
+#endif
 	}
 	/* beware of flushing buffers after a SIGPIPE */
 	_exit(status);
