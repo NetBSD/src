@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.20 1996/09/07 12:41:15 mycroft Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.21 1996/09/25 03:01:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,7 +84,7 @@ int	portal_setattr	__P((void *));
 #define	portal_ioctl	genfs_badop
 #define	portal_poll	genfs_badop
 #define	portal_mmap	genfs_badop
-#define	portal_fsync	genfs_badop
+#define	portal_fsync	genfs_nullop
 #define	portal_seek	genfs_badop
 #define	portal_remove	genfs_eopnotsupp
 int	portal_link	__P((void *));
