@@ -548,7 +548,8 @@ main(int ac, char **av)
 	 * Initialize "log" output.  Since we are the client all output
 	 * actually goes to stderr.
 	 */
-	log_init(av[0], SYSLOG_LEVEL_INFO, SYSLOG_FACILITY_USER, 1);
+	log_init(av[0], debug_flag ? options.log_level : SYSLOG_LEVEL_INFO,
+	    SYSLOG_FACILITY_USER, 1);
 
 	/* Read per-user configuration file. */
 	snprintf(buf, sizeof buf, "%.100s/%.100s", pw->pw_dir, _PATH_SSH_USER_CONFFILE);
