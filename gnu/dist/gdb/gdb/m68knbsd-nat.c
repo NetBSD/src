@@ -58,7 +58,7 @@ static const int regmap[] =
 static const int fpregmap[] =
 {
   0x00, /* fp0 */
-  0x0c, /* fp1 *
+  0x0c, /* fp1 */
   0x18, /* fp2 */
   0x24, /* fp3 */
   0x30, /* fp4 */
@@ -69,6 +69,8 @@ static const int fpregmap[] =
   0x64, /* fpsr */
   0x68, /* fpiar */
 };
+
+#define FPI_REGNUM 28
 
 /* Determine if PT_GETREGS fetches this register. */
 #define GETREGS_SUPPLIES(regno) \
@@ -102,7 +104,7 @@ fetch_inferior_registers (int regno)
 
   if (regno == -1 || GETREGS_SUPPLIES (regno))
     {
-      ptrace (PT_GETREGS, inferior_pid,
+      ptrace (PT_GETREGS, PIDGET (inferior_ptid),
 	      (PTRACE_ARG3_TYPE) & inferior_registers, 0);
       supply_regs ((char *) &inferior_registers);
       
