@@ -1,3 +1,5 @@
+/*	$NetBSD: fabs.S,v 1.4 1997/07/16 14:37:16 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fabs.s	5.2 (Berkeley) 12/17/90
- *	$Id: fabs.S,v 1.3 1995/12/28 20:03:55 jtc Exp $
  */
 
 #include <machine/asm.h>
-
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: fabs.S,v 1.3 1995/12/28 20:03:55 jtc Exp $"
+	RCSID("$NetBSD: fabs.S,v 1.4 1997/07/16 14:37:16 christos Exp $")
 #endif
 
 ENTRY(fabs)

@@ -1,3 +1,5 @@
+/*	$NetBSD: sigsetjmp.S,v 1.10 1997/07/16 14:37:19 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)setjmp.s	5.1 (Berkeley) 4/23/90"
- *	$Id: sigsetjmp.S,v 1.9 1995/12/28 21:32:28 jtc Exp $
  */
 
 #include <machine/asm.h>
-
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: sigsetjmp.S,v 1.9 1995/12/28 21:32:28 jtc Exp $"
+	RCSID("$NetBSD: sigsetjmp.S,v 1.10 1997/07/16 14:37:19 christos Exp $")
 #endif
 
 ENTRY(sigsetjmp)

@@ -1,3 +1,5 @@
+/*	$NetBSD: sigreturn.S,v 1.4 1997/07/16 14:37:35 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,12 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)sigreturn.s	5.2 (Berkeley) 12/17/90"
- *	$Id: sigreturn.S,v 1.3 1996/11/30 02:31:51 jtc Exp $
  */
 
+#include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	.text
-	.asciz "$Id: sigreturn.S,v 1.3 1996/11/30 02:31:51 jtc Exp $"
+	RCSID("$NetBSD: sigreturn.S,v 1.4 1997/07/16 14:37:35 christos Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"

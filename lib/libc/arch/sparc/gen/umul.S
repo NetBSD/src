@@ -1,3 +1,5 @@
+/*	$NetBSD: umul.S,v 1.3 1997/07/16 14:37:44 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,11 +37,15 @@
  * SUCH DAMAGE.
  *
  * from: Header: umul.s,v 1.4 92/06/25 13:24:05 torek Exp
- * $Id: umul.S,v 1.2 1996/11/16 20:53:23 pk Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)umul.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: umul.S,v 1.3 1997/07/16 14:37:44 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,7 +64,6 @@
  *	bnz	overflow	(or tnz)
  */
 
-#include <machine/asm.h>
 FUNC(.umul)
 	or	%o0, %o1, %o4
 	mov	%o0, %y		! multiplier -> Y

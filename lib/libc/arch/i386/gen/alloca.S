@@ -1,3 +1,5 @@
+/*	$NetBSD: alloca.S,v 1.5 1997/07/16 14:37:14 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,14 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)alloca.s	5.2 (Berkeley) 5/14/90
- *	$Id: alloca.S,v 1.4 1995/12/28 20:03:54 jtc Exp $
  */
 
 #include <machine/asm.h>
-
 #if defined(LIBC_SCCS)
-	.text
-	.asciz "$Id: alloca.S,v 1.4 1995/12/28 20:03:54 jtc Exp $"
+	RCSID("$NetBSD: alloca.S,v 1.5 1997/07/16 14:37:14 christos Exp $")
 #endif
 
 /* like alloc, but automatic automatic free in return */

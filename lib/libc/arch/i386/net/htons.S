@@ -1,3 +1,5 @@
+/*	$NetBSD: htons.S,v 1.5 1997/07/16 14:37:22 christos Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -34,13 +36,11 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)htons.s	5.2 (Berkeley) 12/17/90
- *	$Id: htons.S,v 1.4 1994/03/16 17:34:15 jtc Exp $
  */
 
 #include <machine/asm.h>
-
 #if defined(LIBC_SCCS)
-RCSID("$Id: htons.S,v 1.4 1994/03/16 17:34:15 jtc Exp $")
+	RCSID("$NetBSD: htons.S,v 1.5 1997/07/16 14:37:22 christos Exp $")
 #endif
 
 /* netorder = htons(hostorder) */

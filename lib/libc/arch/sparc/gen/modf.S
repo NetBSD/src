@@ -1,3 +1,5 @@
+/*	$NetBSD: modf.S,v 1.5 1997/07/16 14:37:41 christos Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,14 +37,17 @@
  * SUCH DAMAGE.
  *
  * from: Header: modf.s,v 1.3 92/06/20 00:00:54 torek Exp
- * $Id: modf.S,v 1.4 1996/11/16 20:53:20 pk Exp $
  */
 
+#include <machine/asm.h>
 #if defined(LIBC_SCCS) && !defined(lint)
+#if 0
 	.asciz "@(#)modf.s	8.1 (Berkeley) 6/4/93"
+#else
+	RCSID("$NetBSD: modf.S,v 1.5 1997/07/16 14:37:41 christos Exp $")
+#endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <machine/asm.h>
 #include <machine/fsr.h>
 
 /*
