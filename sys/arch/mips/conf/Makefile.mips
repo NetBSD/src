@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.17 2001/10/05 05:03:27 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.18 2001/10/05 15:14:18 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -69,9 +69,7 @@ LINKFLAGS+=	--oformat elf32-littlemips
 .endif
 STRIPFLAGS=	-g -X -x
 
-.if exists(${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc)
-.include "${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc"
-.endif
+.-include "${THISMIPS}/conf/Makefile.${TARGET_MACHINE}.inc"
 
 %INCLUDES
 
