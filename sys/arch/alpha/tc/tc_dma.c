@@ -1,7 +1,7 @@
-/* $NetBSD: tc_dma.c,v 1.3 1997/09/02 13:20:27 thorpej Exp $ */
+/* $NetBSD: tc_dma.c,v 1.4 1998/01/19 02:53:03 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.3 1997/09/02 13:20:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.4 1998/01/19 02:53:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -48,8 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: tc_dma.c,v 1.3 1997/09/02 13:20:27 thorpej Exp $");
 #include <machine/bus.h>
 
 #include <dev/tc/tcvar.h>
-
-bus_dma_tag_t (*tc_dma_get_tag_func) __P((int));
 
 int	tc_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t, void *,
 	    bus_size_t, struct proc *, int));
