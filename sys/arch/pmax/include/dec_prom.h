@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.10 1999/01/29 12:05:02 simonb Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.11 1999/01/30 00:36:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -330,5 +330,7 @@ typedef struct {
  */
 #define MACH_USE_NON_VOLATILE 	((char *)0xbd0000c0)
 #define MACH_NON_VOLATILE_FLAG	0x02
+
+#define DEC_REX_MAGIC		0x30464354	/* REX Magic number */
 
 #endif /* _DEC_PROM */
