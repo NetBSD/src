@@ -1,4 +1,4 @@
-.\"	$NetBSD: rmail.8,v 1.12 1999/03/22 18:25:46 garbled Exp $
+.\"	$NetBSD: rmail.8,v 1.13 2001/12/20 20:10:35 soren Exp $
 .\"
 .\" Copyright (c) 1983, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -41,6 +41,8 @@
 .Nd handle remote mail received via uucp
 .Sh SYNOPSIS
 .Nm
+.Op Fl T
+.Op Fl D Ar domain
 .Ar user ...
 .Sh DESCRIPTION
 .Nm
@@ -58,6 +60,14 @@ is explicitly designed for use with
 .Xr uucp 1
 and
 .Xr sendmail 8 .
+.Pp
+The following options can be used.   
+.Bl -tag -width indent
+.It Fl T
+Enter debugging mode.
+.It Fl D
+Change domain from default.
+Default is ``UUCP''.
 .Sh SEE ALSO
 .Xr uucp 1 ,
 .Xr mail.local 8 ,

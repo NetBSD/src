@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.28 2001/11/22 00:16:07 jmc Exp $ */
+/* $NetBSD: rm.c,v 1.29 2001/12/20 20:10:34 soren Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.28 2001/11/22 00:16:07 jmc Exp $");
+__RCSID("$NetBSD: rm.c,v 1.29 2001/12/20 20:10:34 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -430,7 +430,8 @@ checkdot(char **argv)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-dfiPRrW] file ...\n", getprogname());
+	(void)fprintf(stderr, "usage: %s [-f|-i] [-dPRrW] file ...\n",
+	    getprogname());
 	exit(1);
 	/* NOTREACHED */
 }
