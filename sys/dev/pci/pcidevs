@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.113.2.3 1999/08/29 20:58:45 he Exp $
+$NetBSD: pcidevs,v 1.113.2.4 1999/10/05 22:10:04 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -499,9 +499,11 @@ vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor TRITECH		0x1292	TriTech Microelectronics
 vendor KOFAX		0x1296	Kofax Image Products
 vendor RISCOM		0x12aa	RISCom
+vendor ALTEON		0x12ae	Alteon
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	STB Systems (2nd PCI Vendor ID)
 vendor LMC		0x1376	LAN Media Corporation
+vendor NETGEAR		0x1385	Netgear
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor 3DLABS		0x3d3d	3D Labs
@@ -528,6 +530,7 @@ vendor INVALID		0xffff	INVALID VENDOR ID
  */
 
 /* 3COM Products */
+product 3COM 3C985	0x0001	3c985 Gigabit Ethernet
 product 3COM 3C590	0x5900	3c590 Ethernet
 product 3COM 3C595TX	0x5950	3c595-TX 10/100 Ethernet
 product 3COM 3C595T4	0x5951	3c595-T4 10/100 Ethernet
@@ -614,6 +617,9 @@ product ADVSYS WIDE	0x2300	ABP-940UW
 
 /* Alliance products */
 product ALLIANCE AT24	0x6424	AT24
+
+/* Alteon products */
+product ALTEON ACENIC	0x0001	ACEnic Gigabit Ethernet
 
 /* AMD products */
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
@@ -953,6 +959,9 @@ product NEC POWERVR2	0x0046	PowerVR PCX2
 /* Neomagic products */
 product NEOMAGIC NMMG128ZV	0x0003	MagicGraph 128ZV
 
+/* Netgear products */
+product NETGEAR GA620	0x620a	GA620 Gigabit Ethernet
+
 /* NexGen products */
 product NEXGEN NX82C501	0x4e78	NX82C501 Host-PCI Bridge
 
@@ -1037,6 +1046,9 @@ product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
 product S3 TRIO3D	0x8904	86C365 Trio3D
 product S3 VIRGE_DX	0x8a01	ViRGE/DX
 product	S3 SONICVIBES	0xca00	SonicVibes
+
+/* SGI products */
+product SGI TIGON	0x0009	Tigon Gigabit Ethernet
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
