@@ -11,7 +11,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: k_tan.c,v 1.3 1994/02/18 02:26:09 jtc Exp $";
+static char rcsid[] = "$Id: k_tan.c,v 1.4 1994/03/03 17:04:25 jtc Exp $";
 #endif
 
 /* __kernel_tan( x, y, k )
@@ -49,6 +49,14 @@ static char rcsid[] = "$Id: k_tan.c,v 1.3 1994/02/18 02:26:09 jtc Exp $";
  */
 
 #include <math.h>
+#include <machine/endian.h>
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define n0	1
+#else
+#define n0	0
+#endif
+
 #ifdef __STDC__
 static const double 
 #else
@@ -81,8 +89,8 @@ T[] =  {
 #endif
 {
 	double z,r,v,w,s;
-	int n0,ix,hx;
-	n0 = ((*(int*)&one)>>29)^1;		/* high word index */
+	int ix,hx;
+
 	hx = *(n0+(int*)&x);	/* high word of x */
 	ix = hx&0x7fffffff;	/* high word of |x| */
 	if(ix<0x3e300000)			/* x < 2**-28 */
