@@ -52,7 +52,7 @@
  *					cleanup, removed ctl-alt-del.
  */
 
-static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.10 1993/04/21 00:04:14 mycroft Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/arch/i386/isa/Attic/pccons.c,v 1.11 1993/04/22 07:56:23 mycroft Exp $";
 
 /*
  * code to work keyboard & display for PC-style console
@@ -453,27 +453,25 @@ pcstart(tp)
 {
 	register struct ringb *rbp;
 	int s, len;
+	char buf[64];
 
 	s = spltty();
 	if (tp->t_state & (TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
 		goto out;
+	tp->t_state |= TS_BUSY;
+	splx(s);
+	/*
+	 * We need to do this outside spl since it could be fairly
+	 * expensive and we don't want our serial ports to overflow.
+	 */
 	rbp = &tp->t_out;
-	while(len = RB_LEN(rbp)) {
-		char buf[64], c, n;
-		if (len > sizeof(buf)) len = sizeof(buf);
-		for (n = 0; n < len; )
-			if (c = getc(rbp))
-				buf[n++] = c;
-			else
-				--len;
-		if (!len) continue;
-		tp->t_state |= TS_BUSY;
-		splx(s);
-		for (n = 0; n < len; )
-			sput(buf[n++], 0);
-		s = spltty();
-		tp->t_state &= ~TS_BUSY;
+	while(len = rb_read(rbp, buf, sizeof(buf))) {
+		int n;
+		for (n = 0; n < len; n++)
+			if (buf[n]) sput(buf[n], 0);
 	}
+	s = spltty();
+	tp->t_state &= ~TS_BUSY;
 	if (RB_LEN(rbp) <= tp->t_lowat) {
 		if (tp->t_state&TS_ASLEEP) {
 			tp->t_state &= ~TS_ASLEEP;
