@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.29 2001/04/05 04:23:56 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.30 2001/04/05 04:37:43 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -446,19 +446,15 @@ Lpushpc:
 	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill %a1)
 	addql	#4,%sp
 Lenab2:
-/* flush TLB and turn on caches */
-	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lnocache0		| yes, cache already on
+	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
+	jeq	Ltbia040		| yes, cache already on
+	pflusha
 	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr			| clear cache(s)
-#if defined(ENABLE_HP_CODE)
-	tstl	_C_LABEL(ectype)
-	jeq	Lnocache0
-	MMUADDR(%a0)
-	orl	#MMU_CEN,%a0@(MMUCMD)	| turn on external cache
-#endif
-Lnocache0:
+	movc	%d0,%cacr		| clear cache(s)
+	jra	Lenab3
+Ltbia040:
+	.word	0xf518
+Lenab3:
 
        	jbsr	_C_LABEL(next68k_init)
         
