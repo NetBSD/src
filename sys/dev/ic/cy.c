@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.2 1996/09/26 19:16:02 thorpej Exp $	*/
+/*	$NetBSD: cy.c,v 1.3 1996/10/10 22:12:15 christos Exp $	*/
 
 /*
  * cy.c
@@ -63,6 +63,8 @@ struct cfdriver cy_cd = {
 static int      cy_open = 0;
 static int      cy_events = 0;
 
+cdev_decl(cy);
+
 /*
  * Common probe routine
  */
@@ -82,7 +84,7 @@ cy_find(sc)
 	bus_mem_write_1(bc, memh, CY_CLEAR_INTR << bustype, 0);
 
 #ifdef CY_DEBUG
-	printf("cy: card reset done\n");
+	kprintf("cy: card reset done\n");
 #endif
 	sc->sc_nchips = 0;
 
@@ -98,7 +100,7 @@ cy_find(sc)
 			chip -= (CY32_ADDR_FIX << bustype);
 
 #ifdef CY_DEBUG
-		printf("%s probe chip %d offset 0x%lx ... ",
+		kprintf("%s probe chip %d offset 0x%lx ... ",
 		    sc->sc_dev.dv_xname, cy_chip, chip);
 #endif
 
@@ -107,7 +109,7 @@ cy_find(sc)
 		if (bus_mem_read_1(bc, memh, chip + 
 		    ((CD1400_CCR << 1) << bustype)) != 0) {
 #ifdef CY_DEBUG
-			printf("not ready for command\n");
+			kprintf("not ready for command\n");
 #endif
 			break;
 		}
@@ -140,7 +142,7 @@ cy_find(sc)
 				break;
 		}
 #ifdef CY_DEBUG
-		printf("firmware version 0x%x\n", firmware_ver);
+		kprintf("firmware version 0x%x\n", firmware_ver);
 #endif
 
 		if ((firmware_ver & 0xf0) != 0x40)
@@ -152,12 +154,12 @@ cy_find(sc)
 
 	if (sc->sc_nchips == 0) {
 #ifdef CY_DEBUG
-		printf("no CD1400s found\n");
+		kprintf("no CD1400s found\n");
 #endif
 		return 0;
 	}
 #ifdef CY_DEBUG
-	printf("found %d CD1400s\n", sc->sc_nchips);
+	kprintf("found %d CD1400s\n", sc->sc_nchips);
 #endif
 
 	return 1;
@@ -168,7 +170,7 @@ cy_attach(parent, self, aux)
 	struct device  *parent, *self;
 	void *aux;
 {
-	int  card, port, cy_chip, num_chips, cdu, chip;
+	int  port, cy_chip, num_chips, cdu, chip;
 	struct cy_softc *sc = (void *) self;
 
 	num_chips = sc->sc_nchips;
@@ -185,7 +187,7 @@ cy_attach(parent, self, aux)
 			chip -= (CY32_ADDR_FIX << sc->sc_bustype);
 
 #ifdef CY_DEBUG
-		printf("attach CD1400 #%d offset 0x%x\n", cy_chip, chip);
+		kprintf("attach CD1400 #%d offset 0x%x\n", cy_chip, chip);
 #endif
 		sc->sc_cd1400_offs[cy_chip] = chip;
 
@@ -200,7 +202,7 @@ cy_attach(parent, self, aux)
 		    (CY_CLOCK / CD1400_PPR_PRESCALER / 1000) + 1);
 
 		for (cdu = 0; cdu < CD1400_NO_OF_CHANNELS; cdu++) {
-			sc->sc_ports[port].cy_port = port;
+			sc->sc_ports[port].cy_port_num = port;
 			sc->sc_ports[port].cy_chip = chip;
 
 			/* should we initialize anything else here? */
@@ -209,7 +211,7 @@ cy_attach(parent, self, aux)
 
 	} /* for(each CD1400 on a card... ) */
 
-	printf(" (%d ports)\n", port);
+	kprintf(" (%d ports)\n", port);
 
 	/* ensure an edge for the next interrupt */
 	bus_mem_write_1(sc->sc_bc, sc->sc_memh,
@@ -233,7 +235,7 @@ cyopen(dev, flag, mode, p)
 	int s, error;
 
 #ifdef CY_DEBUG
-	printf("cy%d open port %d flag 0x%x mode 0x%x\n",
+	kprintf("cy%d open port %d flag 0x%x mode 0x%x\n",
 	    card, port, flag, mode);
 #endif
 
@@ -246,11 +248,11 @@ cyopen(dev, flag, mode, p)
 	if (cy->cy_tty == NULL) {
 		if ((cy->cy_tty = ttymalloc()) == NULL) {
 			splx(s);
-			printf("cy%d: port %d: can't allocate tty\n",
+			kprintf("cy%d: port %d: can't allocate tty\n",
 			    card, port);
 			return ENOMEM;
 		}
-		tty_attach(tp);
+		tty_attach(cy->cy_tty);
 	}
 	splx(s);
 
@@ -282,7 +284,7 @@ cyopen(dev, flag, mode, p)
 		if (cy->cy_ibuf == NULL) {
 			cy->cy_ibuf = malloc(CY_IBUF_SIZE, M_DEVBUF, M_NOWAIT);
 			if (cy->cy_ibuf == NULL) {
-				printf("%s: port %d: can't allocate input buffer\n",
+				kprintf("%s: port %d: can't allocate input buffer\n",
 				       sc->sc_dev.dv_xname, port);
 				splx(s);
 				return ENOMEM;
@@ -371,7 +373,7 @@ cyclose(dev, flag, mode, p)
 	int s;
 
 #ifdef CY_DEBUG
-	printf("%s: close port %d, flag 0x%x, mode 0x%x\n",
+	kprintf("%s: close port %d, flag 0x%x, mode 0x%x\n",
 	    sc->sc_dev.dv_xname, port, flag, mode);
 #endif
 
@@ -414,7 +416,7 @@ cyread(dev, uio, flag)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s: read port %d uio 0x%x flag 0x%x\n",
+	kprintf("%s: read port %d uio 0x%x flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, uio, flag);
 #endif
 
@@ -437,7 +439,7 @@ cywrite(dev, uio, flag)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s: write port %d uio 0x%x flag 0x%x\n",
+	kprintf("%s: write port %d uio 0x%x flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, uio, flag);
 #endif
 
@@ -458,7 +460,7 @@ cytty(dev)
 	struct tty *tp = cy->cy_tty;
 
 #ifdef CY_DEBUG
-	printf("%s: tty port %d tp 0x%x\n", sc->sc_dev.dv_xname, port, tp);
+	kprintf("%s: tty port %d tp 0x%x\n", sc->sc_dev.dv_xname, port, tp);
 #endif
 	return tp;
 }
@@ -482,7 +484,7 @@ cyioctl(dev, cmd, data, flag, p)
 	int error;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d ioctl cmd 0x%x data 0x%x flag 0x%x\n",
+	kprintf("%s: port %d ioctl cmd 0x%x data 0x%x flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, cmd, data, flag);
 #endif
 
@@ -567,7 +569,7 @@ cystart(tp)
 	int s;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d start, tty 0x%x\n", sc->sc_dev.dv_xname, port, tp);
+	kprintf("%s: port %d start, tty 0x%x\n", sc->sc_dev.dv_xname, port, tp);
 #endif
 
 
@@ -611,7 +613,7 @@ cystop(tp, flag)
 	int s;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d stop tty 0x%x flag 0x%x\n",
+	kprintf("%s: port %d stop tty 0x%x flag 0x%x\n",
 	    sc->sc_dev.dv_xname, port, tp, flag);
 #endif
 
@@ -647,9 +649,9 @@ cyparam(tp, t)
 	int s, opt;
 
 #ifdef CY_DEBUG
-	printf("%s: port %d param tty 0x%x termios 0x%x\n",
+	kprintf("%s: port %d param tty 0x%x termios 0x%x\n",
 	    sc->sc_dev.dv_xname, port, tp, t);
-	printf("ispeed %d ospeed %d\n", t->c_ispeed, t->c_ospeed);
+	kprintf("ispeed %d ospeed %d\n", t->c_ispeed, t->c_ospeed);
 #endif
 
 	if (t->c_ospeed != 0 && cy_speed(t->c_ospeed, &o_clk_opt, &obpr) < 0)
@@ -719,7 +721,7 @@ cyparam(tp, t)
 	cd_write_reg(sc, cy->cy_chip, CD1400_COR1, opt);
 
 #ifdef CY_DEBUG
-	printf("cor1 = 0x%x...", opt);
+	kprintf("cor1 = 0x%x...", opt);
 #endif
 
 	/*
@@ -946,7 +948,7 @@ cy_poll(arg)
 				 */
 
 #ifdef CY_DEBUG
-				printf("%s: port %d ttyinput 0x%x\n",
+				kprintf("%s: port %d ttyinput 0x%x\n",
 				    sc->sc_dev.dv_xname, port, chr);
 #endif
 
@@ -1002,7 +1004,7 @@ cy_poll(arg)
 				    CD1400_MSVR2_CD) != 0);
 
 #ifdef CY_DEBUG
-				printf("cy_poll: carrier change "
+				kprintf("cy_poll: carrier change "
 				    "(card %d, port %d, carrier %d)\n",
 				    card, port, carrier);
 #endif
@@ -1067,7 +1069,6 @@ cy_intr(arg)
 {
 	struct cy_softc *sc = arg;
 	struct cy_port *cy;
-	int card = sc->sc_dev.dv_unit;
 	int cy_chip, stat;
 	int int_serviced = 0;
 
@@ -1111,7 +1112,7 @@ cy_intr(arg)
 				    CD1400_RDSR);
 
 #ifdef CY_DEBUG
-				printf("cy%d port %d recv exception, line_stat 0x%x, char 0x%x\n",
+				kprintf("cy%d port %d recv exception, line_stat 0x%x, char 0x%x\n",
 				card, cy->cy_port_num, line_stat, recv_data);
 #endif
 				if (ISSET(line_stat, CD1400_RDSR_OE))
@@ -1133,7 +1134,7 @@ cy_intr(arg)
 				n_chars = cd_read_reg(sc, cy->cy_chip,
 				    CD1400_RDCR);
 #ifdef CY_DEBUG
-				printf("cy%d port %d receive ok %d chars\n",
+				kprintf("cy%d port %d receive ok %d chars\n",
 				    card, cy->cy_port_num, n_chars);
 #endif
 				while (n_chars--) {
@@ -1194,7 +1195,7 @@ cy_intr(arg)
 			modem_stat = cd_read_reg(sc, cy->cy_chip, CD1400_MSVR2);
 
 #ifdef CY_DEBUG
-			printf("cy%d port %d modem line change, new stat 0x%x\n",
+			kprintf("cy%d port %d modem line change, new stat 0x%x\n",
 			       card, cy->cy_port_num, modem_stat);
 #endif
 			if (ISSET((cy->cy_carrier_stat ^ modem_stat), CD1400_MSVR2_CD)) {
@@ -1225,7 +1226,7 @@ cy_intr(arg)
 			cy->cy_tx_int_count++;
 #endif
 #ifdef CY_DEBUG
-			printf("cy%d port %d tx service\n", card, 
+			kprintf("cy%d port %d tx service\n", card, 
 			    cy->cy_port_num);
 #endif
 
@@ -1346,7 +1347,7 @@ cd1400_channel_cmd(sc, cy, cmd)
 	u_int waitcnt = 5 * 8 * 1024;	/* approx 5 ms */
 
 #ifdef CY_DEBUG
-	printf("c1400_channel_cmd cy 0x%x command 0x%x\n", cy, cmd);
+	kprintf("c1400_channel_cmd cy 0x%x command 0x%x\n", cy, cmd);
 #endif
 
 	/* wait until cd1400 is ready to process a new command */
