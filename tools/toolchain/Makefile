@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2003/07/10 10:34:43 lukem Exp $
+#	$NetBSD: Makefile,v 1.28 2003/07/18 16:18:28 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,7 @@ MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q} \
 ALL_TARGET=	all-binutils all-gas all-ld all-gcc
 INSTALL_TARGET=	install-binutils install-gas install-ld install-gcc
 
-.if ${MKCROSSGDB:Uno} == "yes"
+.if ${MKCROSSGDB:Uno} != "no"
 ALL_TARGET+=	all-gdb
 INSTALL_TARGET+=install-gdb
 .endif
