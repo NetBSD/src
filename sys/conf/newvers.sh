@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.35 2003/10/14 16:59:54 christos Exp $
+#	$NetBSD: newvers.sh,v 1.36 2003/10/15 01:28:49 lukem Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -58,6 +58,8 @@ osrelcmd=$(dirname $0)/osrelease.sh
 ost="NetBSD"
 osr=$(sh $osrelcmd)
 
+fullversion="${ost} ${osr} (${id}) #${v}: ${t}\n\t${u}@${h}:${d}\n"
+
 cat << _EOF > vers.c
 /*
  * Automatically generated file from $0
@@ -69,14 +71,10 @@ cat << _EOF > vers.c
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
-#define NETBSDVERSION \
-	"${ost} ${osr} (${id}) #${v}: ${t}\n" \
-	"\t${u}@${h}:${d}\n"
-
 const char ostype[] = "${ost}";
 const char osrelease[] = "${osr}";
-const char sccs[] = "@(#)" NETBSDVERSION;
-const char version[] = NETBSDVERSION;
+const char sccs[] = "@(#)${fullversion}";
+const char version[] = "${fullversion}";
 
 #ifdef notyet
 /*
