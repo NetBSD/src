@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2001/11/25 15:55:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.9 2001/11/25 16:22:50 thorpej Exp $
 
 KDIR=	/sys/arch/dnard/include
 INCSDIR= /usr/include/dnard
@@ -6,7 +6,7 @@ INCSDIR= /usr/include/dnard
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
 	cdefs.h cpu.h \
-	db_machdep.h disklabel.h disklabel_acorn.h \
+	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fp.h frame.h \
 	ieee.h ieeefp.h \
