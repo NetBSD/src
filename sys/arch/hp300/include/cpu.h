@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1997/04/09 20:08:25 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1997/04/14 02:28:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,6 +55,11 @@
 #include <m68k/cpu.h>
 
 /*
+ * Get interrupt glue.
+ */
+#include <machine/intr.h>
+
+/*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
@@ -108,19 +113,6 @@ struct clockframe {
 
 int	astpending;		/* need to trap before returning to user mode */
 int	want_resched;		/* resched() was called */
-
-
-/*
- * simulated software interrupt register
- */
-extern unsigned char ssir;
-
-#define SIR_NET		0x1
-#define SIR_CLOCK	0x2
-
-#define siroff(x)	ssir &= ~(x)
-#define setsoftnet()	ssir |= SIR_NET
-#define setsoftclock()	ssir |= SIR_CLOCK
 
 /*
  * CTL_MACHDEP definitions.

@@ -1,7 +1,7 @@
-/*	$NetBSD: isr.c,v 1.7 1997/04/02 21:58:00 christos Exp $	*/
+/*	$NetBSD: intr.c,v 1.1 1997/04/14 02:28:44 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,17 +40,17 @@
  * Link and dispatch interrupts.
  */
 
+#define _HP300_INTR_H_PRIVATE
+
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 
 #include <net/netisr.h>
 
 #include <machine/cpu.h>
-
-#include <hp300/hp300/isr.h>
+#include <machine/intr.h>
 
 typedef LIST_HEAD(, isr) isr_list_t;
 isr_list_t isr_list[NISR];
@@ -59,17 +59,16 @@ u_short	hp300_bioipl, hp300_netipl, hp300_ttyipl, hp300_impipl;
 
 extern	int intrcnt[];		/* from locore.s */
 
-void	isrcomputeipl __P((void));
+void	intr_computeipl __P((void));
 
 void
-isrinit()
+intr_init()
 {
 	int i;
 
 	/* Initialize the ISR lists. */
-	for (i = 0; i < NISR; ++i) {
+	for (i = 0; i < NISR; ++i)
 		LIST_INIT(&isr_list[i]);
-	}
 
 	/* Default interrupt priorities. */
 	hp300_bioipl = hp300_netipl = hp300_ttyipl = hp300_impipl =
@@ -81,7 +80,7 @@ isrinit()
  * calls.  This doesn't have to be fast.
  */
 void
-isrcomputeipl()
+intr_computeipl()
 {
 	struct isr *isr;
 	int ipl;
@@ -98,25 +97,25 @@ isrcomputeipl()
 			 * if necessary.
 			 */
 			switch (isr->isr_priority) {
-			case ISRPRI_BIO:
+			case IPL_BIO:
 				if (ipl > PSLTOIPL(hp300_bioipl))
 					hp300_bioipl = IPLTOPSL(ipl);
 				break;
 
-			case ISRPRI_NET:
+			case IPL_NET:
 				if (ipl > PSLTOIPL(hp300_netipl))
 					hp300_netipl = IPLTOPSL(ipl);
 				break;
 
-			case ISRPRI_TTY:
-			case ISRPRI_TTYNOBUF:
+			case IPL_TTY:
+			case IPL_TTYNOBUF:
 				if (ipl > PSLTOIPL(hp300_ttyipl))
 					hp300_ttyipl = IPLTOPSL(ipl);
 				break;
 
 			default:
 				printf("priority = %d\n", isr->isr_priority);
-				panic("isrcomputeipl: bad priority");
+				panic("intr_computeipl: bad priority");
 			}
 		}
 	}
@@ -136,7 +135,7 @@ isrcomputeipl()
 }
 
 void
-isrprintlevels()
+intr_printlevels()
 {
 
 #ifdef DEBUG
@@ -154,7 +153,7 @@ isrprintlevels()
  * Called by driver attach functions.
  */
 void *
-isrlink(func, arg, ipl, priority)
+intr_establish(func, arg, ipl, priority)
 	int (*func) __P((void *));
 	void *arg;
 	int ipl;
@@ -164,11 +163,11 @@ isrlink(func, arg, ipl, priority)
 	isr_list_t *list;
 
 	if ((ipl < 0) || (ipl >= NISR))
-		panic("isrlink: bad ipl %d", ipl);
+		panic("intr_establish: bad ipl %d", ipl);
 
 	newisr = (struct isr *)malloc(sizeof(struct isr), M_DEVBUF, M_NOWAIT);
 	if (newisr == NULL)
-		panic("isrlink: can't allocate space for isr");
+		panic("intr_establish: can't allocate space for isr");
 
 	/* Fill in the new entry. */
 	newisr->isr_func = func;
@@ -226,7 +225,7 @@ isrlink(func, arg, ipl, priority)
 
  compute:
 	/* Compute new interrupt levels. */
-	isrcomputeipl();
+	intr_computeipl();
 	return (newisr);
 }
 
@@ -234,14 +233,14 @@ isrlink(func, arg, ipl, priority)
  * Disestablish an interrupt handler.
  */
 void
-isrunlink(arg)
+intr_disestablish(arg)
 	void *arg;
 {
 	struct isr *isr = arg;
 
 	LIST_REMOVE(isr, isr_link);
 	free(isr, M_DEVBUF);
-	isrcomputeipl();
+	intr_computeipl();
 }
 
 /*
@@ -249,7 +248,7 @@ isrunlink(arg)
  * assembly language interrupt routine.
  */
 void
-isrdispatch(evec)
+intr_dispatch(evec)
 	int evec;		/* format | vector offset */
 {
 	struct isr *isr;
@@ -267,9 +266,9 @@ isrdispatch(evec)
 
 	list = &isr_list[ipl];
 	if (list->lh_first == NULL) {
-		printf("intrhand: ipl %d unexpected\n", ipl);
+		printf("intr_dispatch: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
-			panic("isrdispatch: too many unexpected interrupts");
+			panic("intr_dispatch: too many unexpected interrupts");
 		return;
 	}
 
@@ -281,9 +280,9 @@ isrdispatch(evec)
 	if (handled)
 		straycount = 0;
 	else if (++straycount > 50)
-		panic("isrdispatch: too many stray interrupts");
+		panic("intr_dispatch: too many stray interrupts");
 	else
-		printf("isrdispatch: stray level %d interrupt\n", ipl);
+		printf("intr_dispatch: stray level %d interrupt\n", ipl);
 }
 
 /*
