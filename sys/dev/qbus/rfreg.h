@@ -1,4 +1,4 @@
-/*	$NetBSD: rfreg.h,v 1.1 2003/03/23 11:01:16 ragge Exp $	*/
+/*	$NetBSD: rfreg.h,v 1.2 2004/10/06 12:12:42 wiz Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 
 
-/* Registers in Uni/QBus IO space. */
+/* Registers in Uni/QBus I/O space. */
 #define	RX2CS	0	/* Command and Status Register */
 #define	RX2DB	2	/* Data Buffer Register */
 /* RX2DB is depending on context: */
