@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.66 1999/02/22 17:15:30 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.67 1999/03/02 13:40:05 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -884,6 +884,39 @@ static char *prom_inSrc_name[] = {
 	"ttya", "ttyb",
 	"ttyc", "ttyd" };
 
+
+static int get_serial_promdev __P((int));
+
+int
+get_serial_promdev(io)
+	int io;
+{
+	char *prop, *cp, buffer[128];
+	int node;
+
+	node = findroot();
+	prop = (io == 0) ? "stdin-path" : "stdout-path";
+
+	cp = getpropstringA(node, prop, buffer, sizeof buffer);
+
+	/*
+	 * At this point we assume the device path is in the form
+	 *   ....device@x,y:a for ttya and ...device@x,y:b for ttyb, etc.
+	 */
+	while (*cp != 0)
+		cp++;
+	cp -= 2;
+
+	if (cp >= buffer) {
+		/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
+		if (cp[0] == ':' && cp[1] >= 'a' && cp[1] <= 'z')
+			return (PROMDEV_TTYA + (cp[1] - 'a'));
+	}
+
+	printf("Warning: unparseable %s property\n", prop);
+	return (-1);
+}
+
 /*
  * This function replaces sys/dev/cninit.c
  * Determine which device is the console using
@@ -897,9 +930,7 @@ consinit()
 	int channel, zs_unit, zstty_unit;
 	int inSource, outSink;
 	int node;
-	char buffer[128];
 	char *devtype;
-	char *cp;
 	extern int fbnode;
 
 	switch (prom_version()) {
@@ -912,101 +943,50 @@ consinit()
 	case PROM_OBP_V2:
 	case PROM_OBP_V3:
 	case PROM_OPENFIRM:
-		/* We need to probe the PROM device tree */
-		inSource = outSink = -1;
-
-		node = findroot();
-		if (getproplen(node, "stdin-path") >= sizeof(buffer)) {
-			printf("consinit: increase buffer size and recompile\n");
-			goto setup_output;
-		}
-		/* XXX: fix above */
-
-		getpropstringA(node, "stdin-path", buffer, sizeof buffer);
-
 		/*
-		 * Translate the STDIN package instance (`ihandle') -- that
+		 * We need to probe the PROM device tree.
+		 *
+		 * Translate the STDIO package instance (`ihandle') -- that
 		 * the PROM has already opened for us -- to a device tree
 		 * node (i.e. a `phandle'). 
 		 */
 
 		if ((node = prom_instance_to_package(prom_stdin())) == 0) {
-			printf("consinit: bogus stdin path %s.\n", buffer);
-			goto setup_output;
-		}
-		if (prom_node_has_property(node, "keyboard")) {
-			inSource = PROMDEV_KBD;
-			goto setup_output;
-		}
-		if (strcmp(getpropstring(node, "device_type"), "serial") != 0) {
-			/* not a serial, not keyboard. what is it?!? */
+			printf("consinit: cannot convert stdin ihandle\n");
 			inSource = -1;
 			goto setup_output;
 		}
-		/*
-		 * At this point we assume the device path is in the form
-		 *   ....device@x,y:a for ttya and ...device@x,y:b for ttyb.
-		 * If it isn't, we defer to the ROM
-		 */
-		cp = buffer;
-		while (*cp)
-		    cp++;
-		cp -= 2;
-#ifdef DEBUG
-		if (cp < buffer)
-		    panic("consinit: bad stdin path %s",buffer);
-#endif
-		/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
-		if (cp[0]==':' && cp[1] >= 'a' && cp[1] <= 'z')
-			inSource = PROMDEV_TTYA + (cp[1] - 'a');
-		/* else use rom */
-setup_output:
-		node = findroot();
-		if (getproplen(node, "stdout-path") >= sizeof(buffer)) {
-			printf("consinit: increase buffer size and recompile\n");
-			goto setup_console;
+
+		if (prom_node_has_property(node, "keyboard")) {
+			inSource = PROMDEV_KBD;
+		} else if (strcmp(getpropstring(node, "device_type"),
+				  "serial") == 0) {
+			inSource = get_serial_promdev(0);
+		} else {
+			/* not serial, not keyboard. what is it?!? */
+			inSource = -1;
 		}
-		/* XXX: fix above */
 
-		getpropstringA(node, "stdout-path", buffer, sizeof buffer);
-
+setup_output:
 		if ((node = prom_instance_to_package(prom_stdout())) == 0) {
-			printf("consinit: bogus stdout path %s.\n",buffer);
-			goto setup_output;
+			printf("consinit: cannot convert stdout ihandle\n");
+			goto setup_console;
 		}
 		devtype = getpropstring(node, "device_type");
 		if (strcmp(devtype, "display") == 0) {
 			/* frame buffer output */
 			outSink = PROMDEV_SCREEN;
 			fbnode = node;
-		} else if (strcmp(devtype, "serial") != 0) {
+		} else if (strcmp(devtype, "serial") == 0) {
+			outSink = get_serial_promdev(1);
+		} else {
 			/* not screen, not serial. Whatzit? */
 			outSink = -1;
-		} else { /* serial console. which? */
-			/*
-			 * At this point we assume the device path is in the
-			 * form:
-			 * ....device@x,y:a for ttya, etc.
-			 * If it isn't, we defer to the ROM
-			 */
-			cp = buffer;
-			while (*cp)
-			    cp++;
-			cp -= 2;
-#ifdef DEBUG
-			if (cp < buffer)
-				panic("consinit: bad stdout path %s",buffer);
-#endif
-			/* XXX: only allows tty's a->z, assumes PROMDEV_TTYx contig */
-			outSink = (cp[0] == ':' && cp[1] >= 'a' && cp[1] <= 'z')
-				? PROMDEV_TTYA + (cp[1] - 'a')
-				: -1;
 		}
 		break;
 	}
 
 setup_console:
-
 	if (inSource != outSink) {
 		printf("cninit: mismatched PROM output selector\n");
 		printf("inSource=%x; Sink=%x\n", inSource, outSink);
