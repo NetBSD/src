@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.6 1999/01/14 18:45:45 castor Exp $ */
+/* $NetBSD: db_machdep.h,v 1.7 1999/03/23 22:07:06 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -83,11 +83,12 @@ int 	kdb_trap __P((int type, mips_reg_t *));
 void	db_machine_init __P((void));
 
 /*
- * We use ELF symbols in DDB.
+ * Make sure at least one DDB symbol type is defined.
  *
  */
-/* #define	DB_ELF_SYMBOLS */
-#define	DB_AOUT_SYMBOLS */
+#if !(defined(DB_AOUT_SYMBOLS) || defined(DB_ELF_SYMBOLS))
+#error Must define at least one of DB_AOUT_SYMBOLS or DB_ELF_SYMBOLS
+#endif
 
 /*
  * MIPS cpus have no hardware single-step.
