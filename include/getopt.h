@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.h,v 1.5 2003/04/28 23:16:13 bjh21 Exp $	*/
+/*	$NetBSD: getopt.h,v 1.5.2.1 2004/06/22 07:18:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 /*
  * Gnu like getopt_long() and BSD4.4 getsubopt()/optreset extensions
  */
-#if defined(_NETBSD_SOURCE)
+#if defined(_NETBSD_SOURCE) || defined(HAVE_NBTOOL_CONFIG_H)
 #define no_argument        0
 #define required_argument  1
 #define optional_argument  2
@@ -64,7 +64,9 @@ struct option {
 	/* if flag not NULL, value to set *flag to; else return value */
 	int val;
 };
+#endif
 
+#if defined(_NETBSD_SOURCE)
 __BEGIN_DECLS
 int getopt_long __P((int, char * const *, const char *,
     const struct option *, int *));
