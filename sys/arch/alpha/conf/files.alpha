@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.16 1996/05/01 23:22:24 cgd Exp $
+#	$NetBSD: files.alpha,v 1.17 1996/05/07 00:33:35 thorpej Exp $
 #
 # alpha-specific configuration info
 
@@ -98,10 +98,9 @@ file	arch/alpha/tc/esp.c		esp		needs-count
 file	arch/alpha/tc/tcds_dma.c	esp
 
 # Baseboard Lance ethernet.
-device	le: ether, ifnet
 attach	le at ioasic with le_ioasic
 attach	le at tc with le_tc
-file	dev/tc/if_le.c			le
+file	dev/tc/if_le_dec.c		(le_ioasic | le_tc)
 file	dev/tc/if_le_ioasic.c		le_ioasic	needs-flag #for le_iomem
 file	dev/tc/if_le_tc.c		le_tc
 
