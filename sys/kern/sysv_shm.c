@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.28 1995/05/10 16:53:00 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.29 1995/06/05 12:57:07 pk Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -509,7 +509,7 @@ shminit()
 	shm_committed = 0;
 }
 
-#if defined(COMPAT_10) && !defined(alpha)
+#if defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS)
 int
 compat_10_shmsys(p, uap, retval)
 	struct proc *p;
@@ -567,4 +567,4 @@ compat_10_shmsys(p, uap, retval)
 		return (EINVAL);
 	}
 }
-#endif /* defined(COMPAT_10) && !defined(alpha) */
+#endif /* defined(COMPAT_10) && !defined(alpha) || defined(COMPAT_SUNOS) */
