@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.96 2001/12/09 03:07:43 chs Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.97 2002/02/15 16:48:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.96 2001/12/09 03:07:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.97 2002/02/15 16:48:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,7 @@ const int linux_ptrace_request_map[] = {
 
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
+static int linux_to_bsd_limit __P((int));
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -345,8 +346,8 @@ linux_sys_fstatfs(p, v, retval)
 }
 
 char linux_sysname[] = "Linux";
-char linux_release[] = "2.0.38";
-char linux_version[] = "#0 Sun Apr 1 11:11:11 MET 2000";
+char linux_release[] = "2.4.18";
+char linux_version[] = "#13 SMP Thu Feb 14 13:13:13 EST 2002";
 
 /*
  * uname(). Just copy the info from the various strings stored in the
@@ -414,6 +415,45 @@ linux_sys_mmap(p, v, retval)
 	SCARG(&cma,flags) = flags;
 	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(&cma,pad) = 0;
+	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
+
+	return sys_mmap(p, &cma, retval);
+}
+
+/*
+ * Newer type Linux mmap call.
+ */
+int
+linux_sys_mmap2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_mmap2_args /* {
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+	} */ *uap = v;
+	struct sys_mmap_args cma;
+	int flags;
+	
+	flags = 0;
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_SHARED, MAP_SHARED);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_PRIVATE, MAP_PRIVATE);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_FIXED, MAP_FIXED);
+	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_ANON, MAP_ANON);
+	/* XXX XAX ERH: Any other flags here?  There are more defined... */
+
+	SCARG(&cma,addr) = (void *)SCARG(uap, addr);
+	SCARG(&cma,len) = SCARG(uap, len);
+	SCARG(&cma,prot) = SCARG(uap, prot);
+	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
+		SCARG(&cma,prot) |= VM_PROT_READ;
+	SCARG(&cma,flags) = flags;
+	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
 	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
 
 	return sys_mmap(p, &cma, retval);
@@ -1087,31 +1127,6 @@ linux_sys_getfsuid(p, v, retval)
 #endif
 
 int
-linux_sys___sysctl(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys___sysctl_args /* {
-		syscallarg(struct linux___sysctl *) lsp;
-	} */ *uap = v;
-	struct linux___sysctl ls;
-	struct sys___sysctl_args bsa;
-	int error;
-
-	if ((error = copyin(SCARG(uap, lsp), &ls, sizeof ls)))
-		return error;
-	SCARG(&bsa, name) = ls.name;
-	SCARG(&bsa, namelen) = ls.namelen;
-	SCARG(&bsa, old) = ls.old;
-	SCARG(&bsa, oldlenp) = ls.oldlenp;
-	SCARG(&bsa, new) = ls.new;
-	SCARG(&bsa, newlen) = ls.newlen;
-
-	return sys___sysctl(p, &bsa, retval);
-}
-
-int
 linux_sys_setresuid(p, v, retval)
 	struct proc *p;
 	void *v;
@@ -1421,6 +1436,116 @@ linux_sys_sysinfo(p, v, retval)
 	si.mem_unit = 1;
 
 	return (copyout(&si, SCARG(uap, arg), sizeof si));
+}
+
+#define bsd_to_linux_rlimit1(l, b, f) \
+    (l)->f = ((b)->f == RLIM_INFINITY || ((b)->f & 0xffffffff00000000) != 0) ? \
+    LINUX_RLIM_INFINITY : (int32_t)(b)->f
+#define bsd_to_linux_rlimit(l, b) \
+    bsd_to_linux_rlimit1(l, b, rlim_cur); \
+    bsd_to_linux_rlimit1(l, b, rlim_max)
+
+#define linux_to_bsd_rlimit1(b, l, f) \
+    (b)->f = (l)->f == LINUX_RLIM_INFINITY ? RLIM_INFINITY : (b)->f
+#define linux_to_bsd_rlimit(b, l) \
+    linux_to_bsd_rlimit1(b, l, rlim_cur); \
+    linux_to_bsd_rlimit1(b, l, rlim_max)
+
+static int
+linux_to_bsd_limit(lim)
+	int lim;
+{
+	switch (lim) {
+	case LINUX_RLIMIT_CPU:
+		return RLIMIT_CPU;
+	case LINUX_RLIMIT_FSIZE:
+		return RLIMIT_FSIZE;
+	case LINUX_RLIMIT_DATA:
+		return RLIMIT_DATA;
+	case LINUX_RLIMIT_STACK:
+		return RLIMIT_STACK;
+	case LINUX_RLIMIT_CORE:
+		return RLIMIT_CORE;
+	case LINUX_RLIMIT_RSS:
+		return RLIMIT_RSS;
+	case LINUX_RLIMIT_NPROC:
+		return RLIMIT_NPROC;
+	case LINUX_RLIMIT_NOFILE:
+		return RLIMIT_NOFILE;
+	case LINUX_RLIMIT_MEMLOCK:
+		return RLIMIT_MEMLOCK;
+	case LINUX_RLIMIT_AS:
+	case LINUX_RLIMIT_LOCKS:
+		return -EOPNOTSUPP;
+	default:
+		return -EINVAL;
+	}
+}
+
+
+int
+linux_sys_getrlimit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_getrlimit_args /* {
+		syscallarg(int) which;
+		syscallarg(struct orlimit *) rlp;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+	struct sys_getrlimit_args ap;
+	struct rlimit rl;
+	struct orlimit orl;
+	int error;
+
+	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
+	if ((error = SCARG(&ap, which)) < 0)
+		return -error;
+	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	if ((error = sys_getrlimit(p, &ap, retval)) != 0)
+		return error;
+	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
+		return error;
+	bsd_to_linux_rlimit(&orl, &rl);
+	return copyout(&orl, SCARG(uap, rlp), sizeof(orl));
+}
+
+int
+linux_sys_setrlimit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_setrlimit_args /* {
+		syscallarg(int) which;
+		syscallarg(struct orlimit *) rlp;
+	} */ *uap = v;
+	caddr_t sg = stackgap_init(p->p_emul);
+	struct sys_setrlimit_args ap;
+	struct rlimit rl;
+	struct orlimit orl;
+	int error;
+
+	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
+	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	if ((error = SCARG(&ap, which)) < 0)
+		return -error;
+	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)
+		return error;
+	linux_to_bsd_rlimit(&rl, &orl);
+	if ((error = copyout(&rl, SCARG(uap, rlp), sizeof(rl))) != 0)
+		return error;
+	return sys_setrlimit(p, v, retval);
+}
+
+int
+linux_sys_ugetrlimit(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	return linux_sys_getrlimit(p, v, retval);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.12 2002/01/14 23:14:44 bjh21 Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.13 2002/02/15 16:48:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -86,10 +86,10 @@ struct linux_utimbuf {
 
 struct linux___sysctl {
 	int          *name;
-	int           namelen;
-	void         *old;
+	int           nlen;
+	void         *oldval;
 	size_t       *oldlenp;
-	void         *new;
+	void         *newval;
 	size_t        newlen;
 	unsigned long __unused[4];
 };

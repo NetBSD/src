@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2001/11/20 21:37:51 manu Exp $  
+	$NetBSD: syscalls.master,v 1.5 2002/02/15 16:48:01 christos Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -363,17 +363,20 @@
 			    struct linux_sigaltstack *oss); }
 207	UNIMPL		sendfile
 208	UNIMPL
-209	UNIMPL
-210	UNIMPL		mmap2
+/* XXX: wrong? */
+209	NOARGS		{ int linux_sys_ugetrlimit(int which, \
+			    struct rlimit *rlp); }
+210	STD		{ off_t linux_sys_mmap2(void *addr, size_t len, \
+			    int prot, int flags, int fd, off_t offset); }
 211	STD		{ int linux_sys_truncate64(const char *path, \
 			    off_t length); }
 212	UNIMPL		ftruncate64
 213	STD		{ int linux_sys_stat64(const char *path, \
-			     struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 214	STD		{ int linux_sys_lstat64(const char *path, \
-			     struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 215	STD		{ int linux_sys_fstat64(int fd, \
-			     struct linux_stat64 *sp); }
+			    struct linux_stat64 *sp); }
 216	UNIMPL		pivot_root
 217	UNIMPL		mincore
 218	UNIMPL		modvise
