@@ -1,4 +1,4 @@
-/* $NetBSD: bootoptions,v 1.1 1996/10/12 18:24:43 mark Exp $ */
+/* $NetBSD: bootoptions,v 1.2 1996/11/23 03:16:51 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -59,6 +59,7 @@ RiscPC Boot options
   ehbug		Work around the EtherH driver attach bug.
   ascpoll	Use polling mode rather than interrupt mode for the asc
 		driver
+  nbuf=		Specify the number of buffers to use.
 
  Options for StrongARM kernels
 
