@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.45 2002/01/21 14:42:27 wiz Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.45.4.1 2002/03/11 21:28:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.45 2002/01/21 14:42:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.45.4.1 2002/03/11 21:28:55 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -570,10 +570,10 @@ uvmpd_scan_inactive(pglst)
 				simple_unlock(slock);
 
 				/* this page is now only in swap. */
-				simple_lock(&uvm.swap_data_lock);
+				mutex_enter(&uvm.swap_data_mutex);
 				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
 				uvmexp.swpgonly++;
-				simple_unlock(&uvm.swap_data_lock);
+				mutex_exit(&uvm.swap_data_mutex);
 				continue;
 			}
 

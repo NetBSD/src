@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.55 2001/12/31 19:21:38 chs Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.55.4.1 2002/03/11 21:28:55 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.55 2001/12/31 19:21:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.55.4.1 2002/03/11 21:28:55 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -424,10 +424,10 @@ uvm_aio_aiodone(bp)
 		KASSERT(pageout);
 
 		/* these pages are now only in swap. */
-		simple_lock(&uvm.swap_data_lock);
+		mutex_enter(&uvm.swap_data_mutex);
 		KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
 		uvmexp.swpgonly += npages;
-		simple_unlock(&uvm.swap_data_lock);
+		mutex_exit(&uvm.swap_data_mutex);
 		if (error) {
 			uvm_swap_markbad(swslot, npages);
 		}
