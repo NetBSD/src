@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.9 2001/09/03 04:28:52 matt Exp $
+#	$NetBSD: files.cats,v 1.10 2001/09/04 02:59:32 nisimura Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -137,4 +137,5 @@ include "dev/usb/files.usb"
 # Include WSCONS stuff
 include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
 include "dev/pckbc/files.pckbc"
