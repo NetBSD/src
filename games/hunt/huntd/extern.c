@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.2 1997/10/10 16:33:24 lukem Exp $	*/
+/*	$NetBSD: extern.c,v 1.3 2002/09/20 20:54:16 mycroft Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: extern.c,v 1.2 1997/10/10 16:33:24 lukem Exp $");
+__RCSID("$NetBSD: extern.c,v 1.3 2002/09/20 20:54:16 mycroft Exp $");
 #endif /* not lint */
 
 # include	"hunt.h"
@@ -20,10 +20,8 @@ char	Buf[BUFSIZ];			/* general scribbling buffer */
 char	Maze[HEIGHT][WIDTH2];		/* the maze */
 char	Orig_maze[HEIGHT][WIDTH2];	/* the original maze */
 
-fd_set	Fds_mask;			/* mask for the file descriptors */
-fd_set	Have_inp;			/* which file descriptors have input */
+struct	pollfd fdset[3+MAXPL+MAXMON];
 int	Nplayer = 0;			/* number of players */
-int	Num_fds;			/* number of maximum file descriptor */
 int	Socket;				/* main socket */
 int	Status;				/* stat socket */
 int	See_over[NASCII];		/* lookup table for determining whether
