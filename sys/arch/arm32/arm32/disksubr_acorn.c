@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_acorn.c,v 1.2 1998/10/06 01:47:53 mark Exp $	*/
+/*	$NetBSD: disksubr_acorn.c,v 1.3 2000/01/18 19:36:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -70,8 +70,6 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
-
-#define	b_cylin	b_resid
 
 /*
  * static int filecore_checksum(u_char *bootblock)
@@ -172,7 +170,7 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	bp->b_blkno = FILECORE_BOOT_SECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
 	/*
@@ -224,7 +222,7 @@ filecore_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 		bp->b_blkno = cyl * heads * sectors;
 /*		printf("Found RiscIX partition table @ %08x\n",
 		    bp->b_blkno);*/
-		bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+		bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 		bp->b_bcount = lp->d_secsize;
 		bp->b_flags = B_BUSY | B_READ;
 		(*strat)(bp);
@@ -304,7 +302,7 @@ filecore_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	bp->b_blkno = FILECORE_BOOT_SECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	(*strat)(bp);
 
 	/*
