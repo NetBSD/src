@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.47 1995/05/01 13:09:43 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48 1995/05/03 23:05:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -206,12 +206,15 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(cpustate);
 
 #if NNPX > 0
-	if (npxproc != 0)
+	if (npxproc == p)
 		npxsave();
 #endif
 
 	cpustate.regs = *p->p_md.md_regs;
-	cpustate.fpstate = p->p_addr->u_pcb.pcb_savefpu;
+	if (p->p_addr->u_pcb.pcb_flags & PCB_USEDFPU)
+		cpustate.fpstate = p->p_addr->u_pcb.pcb_savefpu;
+	else
+		bzero(&cpustate.fpstate, sizeof(cpustate.fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_I386, CORE_CPU);
 	cseg.c_addr = 0;
