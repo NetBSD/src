@@ -94,9 +94,7 @@ command should be executed each time the aliases file is changed for the
 change to take effect.
 .SH SEE  ALSO
 newaliases(1), 
-dbm(3), 
 dbopen(3), 
-db_open(3), 
 sendmail(8)
 .PP
 .I
@@ -105,12 +103,6 @@ SENDMAIL Installation and Operation Guide.
 .I 
 SENDMAIL An Internetwork Mail Router.
 .SH BUGS
-If you have compiled 
-sendmail 
-with DBM support instead of NEWDB,
-you may have encountered problems in 
-dbm(3) 
-restricting a single alias to about 1000 bytes of information.  
 You can get longer aliases by ``chaining''; that is, make the last name in 
 the alias be a dummy name which is a continuation alias.
 .SH HISTORY
