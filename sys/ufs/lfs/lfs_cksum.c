@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_cksum.c,v 1.20 2002/06/16 00:13:15 perseant Exp $	*/
+/*	$NetBSD: lfs_cksum.c,v 1.21 2003/02/17 23:48:18 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.20 2002/06/16 00:13:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_cksum.c,v 1.21 2003/02/17 23:48:18 perseant Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL

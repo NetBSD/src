@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_vnops.c,v 1.83 2003/02/03 00:32:35 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.84 2003/02/17 23:48:22 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.83 2003/02/03 00:32:35 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.84 2003/02/17 23:48:22 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,18 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.83 2003/02/03 00:32:35 perseant Exp 
 #include <ufs/ufs/ufsmount.h>
 #include <ufs/ufs/ufs_extern.h>
 
+#include <uvm/uvm.h>
+#ifdef LFS_UBC
+# include <uvm/uvm_pmap.h>
+# include <uvm/uvm_stat.h>
+# include <uvm/uvm_pager.h>
+#endif
+
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
+
+extern int lfs_writer_daemon;
+extern int lfs_subsys_pages;
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -121,7 +131,11 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_poll_desc, ufs_poll },			/* poll */
 	{ &vop_kqfilter_desc, genfs_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, ufs_revoke },		/* revoke */
+#ifdef LFS_UBC
+	{ &vop_mmap_desc, lfs_mmap },			/* mmap */
+#else
 	{ &vop_mmap_desc, ufs_mmap },			/* mmap */
+#endif
 	{ &vop_fsync_desc, lfs_fsync },			/* fsync */
 	{ &vop_seek_desc, ufs_seek },			/* seek */
 	{ &vop_remove_desc, lfs_remove },		/* remove */
@@ -150,7 +164,11 @@ const struct vnodeopv_entry_desc lfs_vnodeop_entries[] = {
 	{ &vop_truncate_desc, lfs_truncate },		/* truncate */
 	{ &vop_update_desc, lfs_update },		/* update */
 	{ &vop_bwrite_desc, lfs_bwrite },		/* bwrite */
+#ifdef LFS_UBC
+	{ &vop_getpages_desc, genfs_getpages },		/* getpages */
+#else
 	{ &vop_getpages_desc, lfs_getpages },		/* getpages */
+#endif
 	{ &vop_putpages_desc, lfs_putpages },		/* putpages */
 	{ NULL, NULL }
 };
@@ -293,37 +311,46 @@ lfs_fsync(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
-	int error;
-	
-	/* Ignore the trickle syncer */
-	if (ap->a_flags & FSYNC_LAZY)
+	int error, wait;
+
+  	/*
+	 * Trickle sync checks for need to do a checkpoint after possible
+	 * activity from the pagedaemon.
+  	 */
+	if (ap->a_flags & FSYNC_LAZY) {
+		wakeup(&lfs_writer_daemon);
 		return 0;
-
-	simple_lock(&vp->v_interlock);
-	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
-                    round_page(ap->a_offhi), PGO_CLEANIT | PGO_SYNCIO);
-	if (error)
-		return error;
-	error = VOP_UPDATE(vp, NULL, NULL,
-			   (ap->a_flags & FSYNC_WAIT) != 0 ? UPDATE_WAIT : 0);
-#ifdef DEBUG
-	/*
-	 * If we were called from vinvalbuf and lfs_update
-	 * didn't flush all our buffers, we're in trouble.
-	 */
-	if ((ap->a_flags & FSYNC_WAIT) && LIST_FIRST(&vp->v_dirtyblkhd) != NULL) {
-		struct buf *bp;
-
-		bp = LIST_FIRST(&vp->v_dirtyblkhd);
-		printf("lfs_fsync: ino %d failed to sync", VTOI(vp)->i_number);
-		printf("lfs_fsync: iocount = %d\n", VTOI(vp)->i_lfs->lfs_iocount);
-		printf("lfs_fsync: flags are 0x%x, numoutput=%d\n",
-			VTOI(vp)->i_flag, vp->v_numoutput);
-		printf("lfs_fsync: writecount=%ld\n", vp->v_writecount);
-		printf("lfs_fsync: first bp: %p, flags=0x%lx, lbn=%" PRId64 "\n",
-			bp, bp->b_flags, bp->b_lblkno);
 	}
+
+	wait = (ap->a_flags & FSYNC_WAIT);
+	do {
+#ifdef DEBUG
+  		struct buf *bp;
 #endif
+
+		simple_lock(&vp->v_interlock);
+		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+			     	round_page(ap->a_offhi),
+			     	PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
+		if (error)
+			return error;
+		error = VOP_UPDATE(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
+		if (wait && error == 0 && !VPISEMPTY(vp)) {
+#ifdef DEBUG
+			printf("lfs_fsync: reflushing ino %d\n",
+				VTOI(vp)->i_number);
+			printf("vflags %x iflags %x npages %d\n",
+				vp->v_flag, VTOI(vp)->i_flag,
+				vp->v_uobj.uo_npages);
+			LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs)
+				printf("%" PRId64 " (%lx)", bp->b_lblkno,
+					bp->b_flags);
+			printf("\n");
+#endif
+			VTOI(vp)->i_flag |= IN_MODIFIED;
+		}
+	} while (wait && error == 0 && !VPISEMPTY(vp));
+
 	return error;
 }
 
@@ -361,6 +388,7 @@ lfs_inactive(void *v)
 #define	SET_DIROP2(vp, vp2)	lfs_set_dirop((vp), (vp2))
 static int lfs_set_dirop(struct vnode *, struct vnode *);
 extern int lfs_dirvcount;
+extern int lfs_do_flush;
 
 #define	NRESERVE(fs)	(btofsb(fs, (NIADDR + 3 + (2 * NIADDR + 3)) << fs->lfs_bshift))
 
@@ -383,17 +411,15 @@ lfs_set_dirop(struct vnode *vp, struct vnode *vp2)
 
 	if (fs->lfs_dirops == 0)
 		lfs_check(vp, LFS_UNUSED_LBN, 0);
-	while (fs->lfs_writer || lfs_dirvcount > LFS_MAXDIROP) {
+	while (fs->lfs_writer || lfs_dirvcount > LFS_MAX_DIROP) {
 		if (fs->lfs_writer)
 			tsleep(&fs->lfs_dirops, PRIBIO + 1, "lfs_sdirop", 0);
-		if (lfs_dirvcount > LFS_MAXDIROP && fs->lfs_dirops == 0) {
-                	++fs->lfs_writer;
-                	lfs_flush(fs, 0);
-                	if (--fs->lfs_writer == 0)
-                        	wakeup(&fs->lfs_dirops);
+		if (lfs_dirvcount > LFS_MAX_DIROP && fs->lfs_dirops == 0) {
+			wakeup(&lfs_writer_daemon);
+			preempt(NULL);
 		}
 
-		if (lfs_dirvcount > LFS_MAXDIROP) {		
+		if (lfs_dirvcount > LFS_MAX_DIROP) {
 #ifdef DEBUG_LFS
 			printf("lfs_set_dirop: sleeping with dirops=%d, "
 			       "dirvcount=%d\n", fs->lfs_dirops,
@@ -438,15 +464,19 @@ unreserve:
 }
 
 #define	MARK_VNODE(dvp)  do {                                           \
+	struct inode *_ip = VTOI(dvp);					\
+	struct lfs *_fs = _ip->i_lfs;					\
+									\
         if (!((dvp)->v_flag & VDIROP)) {				\
                 (void)lfs_vref(dvp);					\
 		++lfs_dirvcount;					\
+		TAILQ_INSERT_TAIL(&_fs->lfs_dchainhd, _ip, i_lfs_dchain); \
 	}								\
         (dvp)->v_flag |= VDIROP;					\
-	if (!(VTOI(dvp)->i_flag & IN_ADIROP)) {				\
-		++VTOI(dvp)->i_lfs->lfs_nadirop;			\
+	if (!(_ip->i_flag & IN_ADIROP)) {				\
+		++_fs->lfs_nadirop;					\
 	}								\
-	VTOI(dvp)->i_flag |= IN_ADIROP;					\
+	_ip->i_flag |= IN_ADIROP;					\
 } while (0)
 
 #define UNMARK_VNODE(vp) lfs_unmark_vnode(vp)
@@ -656,22 +686,24 @@ lfs_rmdir(void *v)
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
+	struct vnode *vp;
 	int error;
 
+	vp = ap->a_vp;
 	if ((error = SET_DIROP2(ap->a_dvp, ap->a_vp)) != 0) {
 		vrele(ap->a_dvp);
 		if (ap->a_vp != ap->a_dvp)
 			VOP_UNLOCK(ap->a_dvp, 0);
-		vput(ap->a_vp);
+		vput(vp);
 		return error;
 	}
 	MARK_VNODE(ap->a_dvp);
-	MARK_VNODE(ap->a_vp);
+	MARK_VNODE(vp);
 	error = ufs_rmdir(ap);
 	UNMARK_VNODE(ap->a_dvp);
-	UNMARK_VNODE(ap->a_vp);
+	UNMARK_VNODE(vp);
 
-	SET_ENDOP2(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
+	SET_ENDOP2(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, vp, "rmdir");
 	return (error);
 }
 
@@ -844,7 +876,7 @@ lfs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = fsbtob(fs, (u_quad_t)ip->i_ffs_blocks);
+	vap->va_bytes = fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	return (0);
@@ -964,18 +996,22 @@ lfs_reclaim(void *v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct inode *ip = VTOI(vp);
 	int error;
 
-	KASSERT(VTOI(vp)->i_ffs_nlink == VTOI(vp)->i_ffs_effnlink);
+	KASSERT(ip->i_ffs_nlink == ip->i_ffs_effnlink);
 
-	LFS_CLR_UINO(VTOI(vp), IN_ALLMOD);
+	LFS_CLR_UINO(ip, IN_ALLMOD);
 	if ((error = ufs_reclaim(vp, ap->a_p)))
 		return (error);
+	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
+	ip->inode_ext.lfs = NULL;
 	pool_put(&lfs_inode_pool, vp->v_data);
 	vp->v_data = NULL;
 	return (0);
 }
 
+#ifndef LFS_UBC
 int
 lfs_getpages(void *v)
 {
@@ -1004,3 +1040,645 @@ lfs_putpages(void *v)
 	error = genfs_putpages(v);
 	return error;
 }
+
+#else /* LFS_UBC */
+
+/*
+ * Make sure that for all pages in every block in the given range,
+ * either all are dirty or all are clean.  If any of the pages
+ * we've seen so far are dirty, put the vnode on the paging chain,
+ * and mark it IN_PAGING.
+ */
+static int
+check_dirty(struct lfs *fs, struct vnode *vp,
+	    off_t startoffset, off_t endoffset, off_t blkeof,
+	    int flags)
+{
+        int by_list;
+	struct vm_page *curpg, *pgs[MAXBSIZE / PAGE_SIZE], *pg;
+	struct lwp *l = curlwp ? curlwp : &lwp0;
+	off_t soff;
+	voff_t off;
+	int i, dirty, tdirty, nonexistent, any_dirty;
+	int pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
+
+  top:
+	by_list = (vp->v_uobj.uo_npages <=
+		   ((endoffset - startoffset) >> PAGE_SHIFT) *
+		   UVM_PAGE_HASH_PENALTY);
+	any_dirty = 0;
+
+	if (by_list) {
+		curpg = TAILQ_FIRST(&vp->v_uobj.memq);
+		PHOLD(l);
+	} else {
+		soff = startoffset;
+	}
+	while (by_list || soff < MIN(blkeof, endoffset)) {
+		if (by_list) {
+			if (pages_per_block > 1) {
+				while (curpg && (curpg->offset & fs->lfs_bmask))
+					curpg = TAILQ_NEXT(curpg, listq);
+			}
+			if (curpg == NULL)
+				break;
+			soff = curpg->offset;
+		}
+
+		/*
+		 * Mark all pages in extended range busy; find out if any
+		 * of them are dirty.
+		 */
+		nonexistent = dirty = 0;
+		for (i = 0; i == 0 || i < pages_per_block; i++) {
+			if (by_list && pages_per_block <= 1) {
+				pgs[i] = pg = curpg;
+			} else {
+				off = soff + (i << PAGE_SHIFT);
+				pgs[i] = pg = uvm_pagelookup(&vp->v_uobj, off);
+				if (pg == NULL) {
+					++nonexistent;
+					continue;
+				}
+			}
+			KASSERT(pg != NULL);
+			while (pg->flags & PG_BUSY) {
+				pg->flags |= PG_WANTED;
+				UVM_UNLOCK_AND_WAIT(pg, &vp->v_interlock, 0,
+						    "lfsput", 0);
+				simple_lock(&vp->v_interlock);
+				if (by_list)
+					goto top;
+			}
+			pg->flags |= PG_BUSY;
+			UVM_PAGE_OWN(pg, "lfs_putpages");
+
+			pmap_page_protect(pg, VM_PROT_NONE);
+			tdirty = (pmap_clear_modify(pg) ||
+				  (pg->flags & PG_CLEAN) == 0);
+			dirty += tdirty;
+		}
+		if (pages_per_block > 0 && nonexistent >= pages_per_block) {
+			if (by_list) {
+				curpg = TAILQ_NEXT(curpg, listq);
+			} else {
+				soff += fs->lfs_bsize;
+			}
+			continue;
+		}
+
+		any_dirty += dirty;
+		KASSERT(nonexistent == 0);
+
+		/*
+		 * If any are dirty make all dirty; unbusy them,
+		 * but if we were asked to clean, take them off
+		 * of their queue so the pagedaemon doesn't bother
+		 * us about them while they're on their way to disk.
+		 *
+		 * (XXXUBC the page is now on *no* page queue.)
+		 */
+		for (i = 0; i == 0 || i < pages_per_block; i++) {
+			pg = pgs[i];
+			KASSERT(!((pg->flags & PG_CLEAN) && (pg->flags & PG_DELWRI)));
+			if (dirty) {
+				pg->flags &= ~PG_CLEAN;
+				if (flags & PGO_FREE) {
+					/* XXXUBC need better way to update */
+					lfs_subsys_pages += MIN(1, pages_per_block);
+					uvm_lock_pageq();
+					UVM_PAGE_OWN(pg, NULL);
+					uvm_pagedequeue(pg);
+					/* Suspended write flag */
+					pg->flags |= PG_DELWRI;
+					uvm_unlock_pageq();
+				}
+			} else {
+				UVM_PAGE_OWN(pg, NULL);
+			}
+			if (pg->flags & PG_WANTED)
+				wakeup(pg);
+			pg->flags &= ~(PG_WANTED|PG_BUSY);
+			/* UVM_PAGE_OWN(pg, NULL); */
+		}
+
+		if (by_list) {
+			curpg = TAILQ_NEXT(curpg, listq);
+		} else {
+			soff += MAX(PAGE_SIZE, fs->lfs_bsize);
+		}
+	}
+	if (by_list) {
+		PRELE(l);
+	}
+
+	/*
+	 * If any pages were dirty, mark this inode as "pageout requested",
+	 * and put it on the paging queue.
+	 * XXXUBC locking (check locking on dchainhd too)
+	 */
+#ifdef notyet
+	if (any_dirty) {
+		if (!(ip->i_flags & IN_PAGING)) {
+			ip->i_flags |= IN_PAGING;
+			TAILQ_INSERT_TAIL(&fs->lfs_pchainhd, ip, i_lfs_pchain);
+		}
+	}
+#endif
+	return any_dirty;
+}
+
+/*
+ * lfs_putpages functions like genfs_putpages except that
+ * 
+ * (1) It needs to bounds-check the incoming requests to ensure that
+ *     they are block-aligned; if they are not, expand the range and
+ *     do the right thing in case, e.g., the requested range is clean
+ *     but the expanded range is dirty.
+ * (2) It needs to explicitly send blocks to be written when it is done.
+ *     VOP_PUTPAGES is not ever called with the seglock held, so
+ *     we simply take the seglock and let lfs_segunlock wait for us.
+ *     XXX Actually we can be called with the seglock held, if we have
+ *     XXX to flush a vnode while lfs_markv is in operation.  As of this
+ *     XXX writing we panic in this case.
+ *
+ * Assumptions:
+ *
+ * (1) The caller does not hold any pages in this vnode busy.  If it does,
+ *     there is a danger that when we expand the page range and busy the
+ *     pages we will deadlock.
+ * (2) We are called with vp->v_interlock held; we must return with it
+ *     released.
+ * (3) We don't absolutely have to free pages right away, provided that
+ *     the request does not have PGO_SYNCIO.  When the pagedaemon gives
+ *     us a request with PGO_FREE, we take the pages out of the paging
+ *     queue and wake up the writer, which will handle freeing them for us.
+ *
+ *     We ensure that for any filesystem block, all pages for that
+ *     block are either resident or not, even if those pages are higher
+ *     than EOF; that means that we will be getting requests to free
+ *     "unused" pages above EOF all the time, and should ignore them.
+ */
+
+int
+lfs_putpages(void *v)
+{
+	int error;
+	struct vop_putpages_args /* {
+		struct vnode *a_vp;
+		voff_t a_offlo;
+		voff_t a_offhi;
+		int a_flags;
+	} */ *ap = v;
+	struct vnode *vp;
+	struct inode *ip;
+	struct lfs *fs;
+	struct segment *sp;
+	off_t origoffset, startoffset, endoffset, origendoffset, blkeof;
+	off_t max_endoffset;
+	int pages_per_block;
+	int s, sync, dirty, pagedaemon;
+	UVMHIST_FUNC("lfs_putpages"); UVMHIST_CALLED(ubchist);
+
+	vp = ap->a_vp;
+	ip = VTOI(vp);
+	fs = ip->i_lfs;
+	sync = (ap->a_flags & PGO_SYNCIO);
+	pagedaemon = (curproc == uvm.pagedaemon_proc);
+
+	/* Putpages does nothing for metadata. */
+	if (vp == fs->lfs_ivnode || vp->v_type != VREG) {
+		simple_unlock(&vp->v_interlock);
+		return 0;
+	}
+
+	/*
+	 * If there are no pages, don't do anything.
+	 */
+	if (vp->v_uobj.uo_npages == 0) {
+		s = splbio();
+		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
+		    (vp->v_flag & VONWORKLST)) {
+			vp->v_flag &= ~VONWORKLST;
+			LIST_REMOVE(vp, v_synclist);
+		}
+		splx(s);
+		simple_unlock(&vp->v_interlock);
+		return 0;
+	}
+
+	blkeof = blkroundup(fs, ip->i_ffs_size);
+
+	/*
+	 * Ignore requests to free pages past EOF but in the same block
+	 * as EOF, unless the request is synchronous. (XXX why sync?)
+	 * XXXUBC Make these pages look "active" so the pagedaemon won't
+	 * XXXUBC bother us with them again.
+	 */
+	if (!sync && ap->a_offlo >= ip->i_ffs_size && ap->a_offlo < blkeof) {
+		origoffset = ap->a_offlo;
+		ap->a_offlo = blkeof;
+		if (ap->a_offhi > 0 && ap->a_offhi <= ap->a_offlo) {
+			simple_unlock(&vp->v_interlock);
+			return 0;
+		}
+	}
+
+	/*
+	 * Extend page range to start and end at block boundaries.
+	 * (For the purposes of VOP_PUTPAGES, fragments don't exist.)
+	 */
+	pages_per_block = fs->lfs_bsize >> PAGE_SHIFT;
+        origoffset = ap->a_offlo;
+	origendoffset = ap->a_offhi;
+        startoffset = origoffset & ~(fs->lfs_bmask);
+	max_endoffset = (trunc_page(LLONG_MAX) >> fs->lfs_bshift)
+					       << fs->lfs_bshift;
+
+	if (origendoffset == 0 || ap->a_flags & PGO_ALLPAGES) {
+                endoffset = max_endoffset;
+		origendoffset = endoffset;
+        } else {
+		origendoffset = round_page(ap->a_offhi);
+		endoffset = round_page(blkroundup(fs, origendoffset));
+	}
+
+	KASSERT(startoffset > 0 || endoffset >= startoffset);
+	if (startoffset == endoffset) {
+		/* Nothing to do, why were we called? */
+		simple_unlock(&vp->v_interlock);
+#ifdef DEBUG
+		printf("lfs_putpages: startoffset = endoffset = %" PRId64 "\n",
+			startoffset);
+#endif
+		return 0;
+	}
+
+	ap->a_offlo = startoffset;
+	ap->a_offhi = endoffset;
+
+	if (!(ap->a_flags & PGO_CLEANIT))
+		return genfs_putpages(v);
+
+	/*
+	 * Make sure that all pages in any given block are dirty, or
+	 * none of them are.  Find out if any of the pages we've been
+	 * asked about are dirty.  If none are dirty, send them on
+	 * through genfs_putpages(), albeit with adjusted offsets.
+	 * XXXUBC I am assuming here that they can't be dirtied in
+	 * XXXUBC the meantime, but I bet that's wrong.
+	 */
+	dirty = check_dirty(fs, vp, startoffset, endoffset, blkeof, ap->a_flags);
+	if (!dirty)
+		return genfs_putpages(v);
+		
+	/*
+	 * Dirty and asked to clean.
+	 *
+	 * Pagedaemon can't actually write LFS pages; wake up
+	 * the writer to take care of that.  The writer will
+	 * notice the pager inode queue and act on that.
+	 */
+	if (pagedaemon) {
+		++fs->lfs_pdflush;
+		wakeup(&lfs_writer_daemon);
+		return EWOULDBLOCK;
+	}
+
+	/*
+	 * If this is a file created in a recent dirop, we can't flush its
+	 * inode until the dirop is complete.  Drain dirops, then flush the
+	 * filesystem (taking care of any other pending dirops while we're
+	 * at it).
+	 */
+	if ((ap->a_flags & (PGO_CLEANIT|PGO_LOCKED)) == PGO_CLEANIT &&
+	    (vp->v_flag & VDIROP)) {
+		int locked;
+
+		/* printf("putpages to clean VDIROP, flushing\n"); */
+		while (fs->lfs_dirops > 0) {
+			++fs->lfs_diropwait;
+			tsleep(&fs->lfs_writer, PRIBIO+1, "ppdirop", 0);
+			--fs->lfs_diropwait;
+		}
+		++fs->lfs_writer;
+		locked = VOP_ISLOCKED(vp) && /* XXX */
+			vp->v_lock.lk_lockholder == curproc->p_pid;
+		if (locked)
+			VOP_UNLOCK(vp, 0);
+		simple_unlock(&vp->v_interlock);
+		
+		lfs_flush_fs(fs, sync ? SEGM_SYNC : 0);
+		
+		simple_lock(&vp->v_interlock);
+		if (locked)
+			VOP_LOCK(vp, LK_EXCLUSIVE);
+		if (--fs->lfs_writer == 0)
+			wakeup(&fs->lfs_dirops);
+
+		/* XXX the flush should have taken care of this one too! */
+	}
+
+
+	/*
+	 * This is it.  We are going to write some pages.  From here on
+	 * down it's all just mechanics.
+	 *
+	 * If there are more than one page per block, we don't want to get
+	 * caught locking them backwards; so set PGO_BUSYFAIL to avoid
+	 * deadlocks.  Also, don't let genfs_putpages wait;
+	 * lfs_segunlock will wait for us, if need be.
+	 */
+	ap->a_flags &= ~PGO_SYNCIO;
+	if (pages_per_block > 1)
+		ap->a_flags |= PGO_BUSYFAIL;
+
+	/*
+	 * If we've already got the seglock, flush the node and return.
+	 * The FIP has already been set up for us by lfs_writefile,
+	 * and FIP cleanup and lfs_updatemeta will also be done there,
+	 * unless genfs_putpages returns EDEADLK; then we must flush
+	 * what we have, and correct FIP and segment header accounting.
+	 */
+	if (ap->a_flags & PGO_LOCKED) {
+		sp = fs->lfs_sp;
+		sp->vp = vp;
+
+		/*
+		 * XXXUBC
+		 * There is some danger here that we might run out of
+		 * buffers if we flush too much at once.  If the number
+		 * of dirty buffers is too great, we should cut the range
+		 * down and write in chunks.
+		 */
+		while ((error = genfs_putpages(v)) == EDEADLK) {
+#ifdef DEBUG_LFS
+			printf("lfs_putpages: genfs_putpages returned EDEADLK"
+			       " ino %d off %x (seg %d)\n",
+			       ip->i_number, fs->lfs_offset,
+			       dtosn(fs, fs->lfs_offset));
+#endif
+			/* Write gathered pages */
+                	lfs_updatemeta(sp);
+                	(void) lfs_writeseg(fs, sp);
+ 
+			/* Reinitialize brand new FIP and add us to it */
+			sp->vp = vp;
+                	sp->fip->fi_version = ip->i_ffs_gen;
+                	sp->fip->fi_ino = ip->i_number;
+                	/* Add us to the new segment summary. */
+                	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+                	sp->sum_bytes_left -=
+                        	sizeof(struct finfo) - sizeof(int32_t);
+
+			/* Give the write a chance to complete */
+			simple_unlock(&vp->v_interlock);
+			preempt(NULL);
+			simple_lock(&vp->v_interlock);
+		}
+		return error;
+	}
+
+	/*
+	 * Take the seglock, because we are going to be writing pages.
+	 */
+	if ((error = lfs_seglock(fs, SEGM_PROT | (sync ? SEGM_SYNC : 0))) != 0)
+		return error;
+
+	/*
+	 * VOP_PUTPAGES should not be called while holding the seglock.
+	 * XXX fix lfs_markv, or do this properly.
+	 */
+	KASSERT(fs->lfs_seglock == 1);
+
+	/*
+	 * We assume we're being called with sp->fip pointing at blank space.
+	 * Account for a new FIP in the segment header, and set sp->vp.
+	 * (This should duplicate the setup at the top of lfs_writefile().)
+	 */
+	sp = fs->lfs_sp;
+        if (sp->seg_bytes_left < fs->lfs_bsize ||
+            sp->sum_bytes_left < sizeof(struct finfo))
+                (void) lfs_writeseg(fs, fs->lfs_sp); 
+ 
+        sp->sum_bytes_left -= sizeof(struct finfo) - sizeof(int32_t);
+        ++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+	sp->vp = vp;
+ 
+        if (vp->v_flag & VDIROP)
+                ((SEGSUM *)(sp->segsum))->ss_flags |= (SS_DIROP|SS_CONT);
+ 
+        sp->fip->fi_nblocks = 0;
+        sp->fip->fi_ino = ip->i_number;
+	sp->fip->fi_version = ip->i_ffs_gen;
+
+	/*
+	 * Loop through genfs_putpages until all pages are gathered.
+	 */
+		/*
+		 * There is some danger here that we might run out of
+		 * buffers if we flush too much at once.  If the number
+		 * of dirty buffers is too great, then, cut the range down
+		 * and write in chunks.
+		 *
+		 * XXXUBC this assumes a uniform dirtying of the pages
+		 * XXXUBC across the address space
+		 * XXXXXX do this
+		 */
+	while ((error = genfs_putpages(v)) == EDEADLK) {
+#ifdef DEBUG_LFS
+		printf("lfs_putpages: genfs_putpages returned EDEADLK [2]"
+		       " ino %d off %x (seg %d)\n",
+		       ip->i_number, fs->lfs_offset,
+		       dtosn(fs, fs->lfs_offset));
+#endif
+		/* Write gathered pages */
+               	lfs_updatemeta(sp);
+               	(void) lfs_writeseg(fs, sp);
+ 
+		/*
+		 * Reinitialize brand new FIP and add us to it.
+		 * (This should duplicate the fixup in lfs_gatherpages().)
+		 */
+		sp->vp = vp;
+               	sp->fip->fi_version = ip->i_ffs_gen;
+               	sp->fip->fi_ino = ip->i_number;
+               	/* Add us to the new segment summary. */
+               	++((SEGSUM *)(sp->segsum))->ss_nfinfo;
+               	sp->sum_bytes_left -=
+                       	sizeof(struct finfo) - sizeof(int32_t);
+
+		/* Give the write a chance to complete */
+		simple_unlock(&vp->v_interlock);
+		preempt(NULL);
+		simple_lock(&vp->v_interlock);
+	}
+
+	/*
+	 * Blocks are now gathered into a segment waiting to be written.
+	 * All that's left to do is update metadata, and write them.
+	 */
+	lfs_updatemeta(fs->lfs_sp);
+	fs->lfs_sp->vp = NULL;
+	lfs_writeseg(fs, fs->lfs_sp);
+
+	/*
+	 * Clean up FIP.
+	 * (This should duplicate cleanup at the end of lfs_writefile().)
+	 */
+        if (sp->fip->fi_nblocks != 0) {
+                sp->fip = (FINFO*)((caddr_t)sp->fip + sizeof(struct finfo) +
+			sizeof(int32_t) * (sp->fip->fi_nblocks - 1));
+                sp->start_lbp = &sp->fip->fi_blocks[0];
+        } else {
+                sp->sum_bytes_left += sizeof(FINFO) - sizeof(int32_t);
+                --((SEGSUM *)(sp->segsum))->ss_nfinfo;
+        }
+	/*
+	 * XXX - with the malloc/copy writeseg, the pages are freed by now
+	 * even if we don't wait (e.g. if we hold a nested lock).  This
+	 * will not be true if we stop using malloc/copy.
+	 */
+	KASSERT(fs->lfs_sp->seg_flags & SEGM_PROT);
+	lfs_segunlock(fs);
+
+	/*
+	 * Wait for v_numoutput to drop to zero.  The seglock should
+	 * take care of this, but there is a slight possibility that
+	 * aiodoned might not have got around to our buffers yet.
+	 */
+	if (sync) {
+		int s;
+
+		s = splbio();
+		simple_lock(&global_v_numoutput_slock);
+		while(vp->v_numoutput > 0) {
+#ifdef DEBUG
+			printf("ino %d sleeping on num %d\n",
+				ip->i_number, vp->v_numoutput);
+#endif
+			vp->v_flag |= VBWAIT;
+			simple_unlock(&global_v_numoutput_slock);
+			tsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vn", 0);
+			simple_lock(&global_v_numoutput_slock);
+		}
+		simple_unlock(&global_v_numoutput_slock);
+		splx(s);
+	}
+	return error;
+}
+
+/*
+ * Find out whether the vnode has any blocks or pages waiting to be written.
+ * We used to just check LIST_EMPTY(&vp->v_dirtyblkhd), but there is not
+ * presently as simple a mechanism for the page cache.
+ */
+int
+lfs_checkifempty(struct vnode *vp)
+{
+	struct vm_page *pg;
+	struct buf *bp;
+	int r, s;
+
+	if (vp->v_type != VREG || VTOI(vp)->i_number == LFS_IFILE_INUM)
+		return LIST_EMPTY(&vp->v_dirtyblkhd);
+
+	/*
+	 * For vnodes with pages it is a little more complex.
+	 * Pages that have been written (i.e. are "clean" for our purposes)
+	 * might be in seemingly dirty buffers, so we have to troll
+	 * looking for indirect block buffers as well as pages.
+	 */
+	simple_lock(&vp->v_interlock);
+	s = splbio();
+	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp;
+	     bp = LIST_NEXT(bp, b_vnbufs)) {
+		if (bp->b_lblkno < 0) {
+			splx(s);
+			return 0;
+		}
+	}
+	splx(s);
+	
+	/*
+	 * Run through the page list to find dirty pages.
+	 * Right now I just walk the memq. 
+	 */
+	pg = TAILQ_FIRST(&vp->v_uobj.memq);
+	r = 1;
+	while(pg) {
+		if ((pg->flags & PG_CLEAN) == 0 || pmap_is_modified(pg)) {
+			r = 0;
+			break;
+		}
+		pg = TAILQ_NEXT(pg, listq);
+	}
+#if 0
+	if (r != !(vp->v_flag & VONWORKLST)) {
+		printf("nope, VONWORKLST isn't good enough!\n");
+	}
+#endif
+	simple_unlock(&vp->v_interlock);
+	return r;
+}
+
+/*
+ * Return the last logical file offset that should be written for this file
+ * if we're doing a write that ends at "size".  If writing, we need to know
+ * about sizes on disk, i.e. fragments if there are any; if reading, we need
+ * to know about entire blocks.
+ */
+void
+lfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
+{
+	struct inode *ip = VTOI(vp);
+	struct lfs *fs = ip->i_lfs; 
+	daddr_t olbn, nlbn;
+
+	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
+	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE)) 
+		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
+
+	olbn = lblkno(fs, ip->i_ffs_size);
+	nlbn = lblkno(fs, size);
+        if ((flags & GOP_SIZE_WRITE) && nlbn < NDADDR && olbn <= nlbn) {
+                *eobp = fragroundup(fs, size);
+        } else {
+                *eobp = blkroundup(fs, size);
+        }
+}
+
+#ifdef DEBUG
+void lfs_dump_vop(void *);
+
+void
+lfs_dump_vop(void *v)
+{
+        struct vop_putpages_args /* {
+                struct vnode *a_vp;
+                voff_t a_offlo;
+                voff_t a_offhi;
+                int a_flags;
+        } */ *ap = v;
+
+	vfs_vnode_print(ap->a_vp, 0, printf);
+	lfs_dump_dinode(&VTOI(ap->a_vp)->i_din.ffs_din);
+}
+#endif
+
+int
+lfs_mmap(void *v)
+{
+	struct vop_mmap_args /* {
+        	const struct vnodeop_desc *a_desc;
+        	struct vnode *a_vp;
+        	int a_fflags;
+        	struct ucred *a_cred;
+        	struct proc *a_p;
+	} */ *ap = v;
+
+	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM)
+		return EOPNOTSUPP;
+	return ufs_mmap(v);
+}
+#endif /* LFS_UBC */

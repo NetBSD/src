@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.30 2003/01/24 21:55:30 fvdl Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.31 2003/02/17 23:48:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -167,6 +167,7 @@ void ufs_vinit __P((struct mount *, int (**) __P((void *)),
     int (**) __P((void *)), struct vnode **));
 int ufs_makeinode __P((int, struct vnode *, struct vnode **,
 		       struct componentname *));
+int ufs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
 
 /*
  * Soft dependency function prototypes.

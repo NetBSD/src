@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.106 2003/01/24 21:55:23 fvdl Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.107 2003/02/17 23:48:14 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.106 2003/01/24 21:55:23 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.107 2003/02/17 23:48:14 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -117,7 +117,7 @@ struct vfsops ffs_vfsops = {
 
 struct genfs_ops ffs_genfsops = {
 	ffs_gop_size,
-	ffs_gop_alloc,
+	ufs_gop_alloc,
 	genfs_gop_write,
 };
 

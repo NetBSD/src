@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.60 2003/02/15 18:00:25 drochner Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.61 2003/02/17 23:48:12 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.60 2003/02/15 18:00:25 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.61 2003/02/17 23:48:12 perseant Exp $");
 
 #include "opt_nfs.h"
 
@@ -80,7 +80,7 @@ extern int prtactive;
 
 #define	nfs_hash(x,y)	hash32_buf((x), (y), HASH32_BUF_INIT)
 
-void nfs_gop_size(struct vnode *, off_t, off_t *);
+void nfs_gop_size(struct vnode *, off_t, off_t *, int);
 int nfs_gop_alloc(struct vnode *, off_t, off_t, int, struct ucred *);
 int nfs_gop_write(struct vnode *, struct vm_page **, int, int);
 
@@ -315,8 +315,11 @@ nfs_reclaim(v)
 }
 
 void
-nfs_gop_size(struct vnode *vp, off_t size, off_t *eobp)
+nfs_gop_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 {
+	KASSERT(flags & (GOP_SIZE_READ | GOP_SIZE_WRITE));
+	KASSERT((flags & (GOP_SIZE_READ | GOP_SIZE_WRITE))
+		!= (GOP_SIZE_READ | GOP_SIZE_WRITE));
 	*eobp = MAX(size, vp->v_size);
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.79 2003/01/24 21:55:28 fvdl Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.80 2003/02/17 23:48:20 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.79 2003/01/24 21:55:28 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.80 2003/02/17 23:48:20 perseant Exp $");
 
 #define LFS		/* for prototypes in syscallargs.h */
 
@@ -106,6 +106,9 @@ int clean_inlocked = 0;
 int verbose_debug = 0;
     
 pid_t lfs_cleaner_pid = 0;
+
+extern int lfs_subsys_pages;
+extern struct simplelock lfs_subsys_lock;
 
 /*
  * Definitions for the buffer free lists.
@@ -578,7 +581,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	s = splbio();
 	for (bp = bufqueues[BQ_LOCKED].tqh_first; bp; bp = nbp) {
 		nbp = bp->b_freelist.tqe_next;
-		if (bp->b_flags & B_CALL) {
+		if (LFS_IS_MALLOC_BUF(bp)) {
 			if (bp->b_flags & B_BUSY) { /* not bloody likely */
 				bp->b_flags |= B_WANTED;
 				tsleep(bp, PRIBIO+1, "markv", 0);
@@ -878,15 +881,12 @@ sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 		syscallarg(fsid_t *) fsidp;
 		syscallarg(u_long) segment;
 	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	CLEANERINFO *cip;
-	SEGUSE *sup;
-	struct buf *bp;
-	struct mount *mntp;
 	struct lfs *fs;
+	struct mount *mntp;
 	fsid_t fsid;
 	int error;
 	unsigned long segnum;
+	struct proc *p = l->l_proc;
 	
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
@@ -899,39 +899,44 @@ sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 	fs = VFSTOUFS(mntp)->um_lfs;
 	segnum = SCARG(uap, segment);
 	
-	if (dtosn(fs, fs->lfs_curseg) == segnum)
-		return (EBUSY);
-	
 	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0) 
 		return (error);
-#ifdef LFS_AGGRESSIVE_SEGLOCK
+
 	lfs_seglock(fs, SEGM_PROT);
-#endif
+	error = lfs_do_segclean(fs, segnum);
+	lfs_segunlock(fs);
+	vfs_unbusy(mntp);
+	return error;
+}
+
+/*
+ * Actually mark the segment clean.
+ * Must be called with the segment lock held.
+ */
+int
+lfs_do_segclean(struct lfs *fs, unsigned long segnum)
+{
+	struct buf *bp;
+	CLEANERINFO *cip;
+	SEGUSE *sup;
+	
+	if (dtosn(fs, fs->lfs_curseg) == segnum) {
+		return (EBUSY);
+	}
+	
 	LFS_SEGENTRY(sup, fs, segnum, bp);
 	if (sup->su_nbytes) {
 		printf("lfs_segclean: not cleaning segment %lu: %d live bytes\n",
 			segnum, sup->su_nbytes);
 		brelse(bp);
-#ifdef LFS_AGGRESSIVE_SEGLOCK
-		lfs_segunlock(fs);
-#endif
-		vfs_unbusy(mntp);
 		return (EBUSY);
 	}
 	if (sup->su_flags & SEGUSE_ACTIVE) {
 		brelse(bp);
-#ifdef LFS_AGGRESSIVE_SEGLOCK
-		lfs_segunlock(fs);
-#endif
-		vfs_unbusy(mntp);
 		return (EBUSY);
 	}
 	if (!(sup->su_flags & SEGUSE_DIRTY)) {
 		brelse(bp);
-#ifdef LFS_AGGRESSIVE_SEGLOCK
-		lfs_segunlock(fs);
-#endif
-		vfs_unbusy(mntp);
 		return (EALREADY);
 	}
 	
@@ -948,7 +953,7 @@ sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 	if (fs->lfs_dmeta < 0)
 		fs->lfs_dmeta = 0;
 	sup->su_flags &= ~SEGUSE_DIRTY;
-	(void) LFS_BWRITE_LOG(bp);
+	LFS_WRITESEGENTRY(sup, fs, segnum, bp);
 	
 	LFS_CLEANERINFO(cip, fs, bp);
 	++cip->clean;
@@ -958,10 +963,6 @@ sys_lfs_segclean(struct lwp *l, void *v, register_t *retval)
 	cip->avail = fs->lfs_avail - fs->lfs_ravail;
 	(void) LFS_BWRITE_LOG(bp);
 	wakeup(&fs->lfs_avail);
-#ifdef LFS_AGGRESSIVE_SEGLOCK
-	lfs_segunlock(fs);
-#endif
-	vfs_unbusy(mntp);
 
 	return (0);
 }
@@ -1228,6 +1229,7 @@ lfs_fakebuf_iodone(struct buf *bp)
 
 	if (!(obp->b_flags & (B_DELWRI | B_DONE)))
 		obp->b_flags |= B_INVAL;
+	bp->b_saveaddr = (caddr_t)(VTOI(obp->b_vp)->i_lfs);
 	brelse(obp);
 	lfs_callback(bp);
 }
@@ -1256,11 +1258,10 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 	if (obp == NULL)
 		panic("lfs_fakebuf: getblk failed");
 
-#ifndef ALLOW_VFLUSH_CORRUPTION
-	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, size);
+	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, size, LFS_NB_CLEAN);
 	error = copyin(uaddr, bp->b_data, size);
 	if (error) {
-		lfs_freebuf(bp);
+		lfs_freebuf(fs, bp);
 		return NULL;
 	}
 	bp->b_saveaddr = obp;
@@ -1271,11 +1272,6 @@ lfs_fakebuf(struct lfs *fs, struct vnode *vp, int lbn, size_t size, caddr_t uadd
 	if (obp->b_flags & B_GATHERED)
 		panic("lfs_fakebuf: gathered bp: %p, ino=%u, lbn=%d",
 		    bp, VTOI(vp)->i_number, lbn);
-#endif
-#else
-	bp = lfs_newbuf(VTOI(vp)->i_lfs, vp, lbn, 0);
-	bp->b_flags |= B_INVAL;
-	bp->b_saveaddr = uaddr;
 #endif
 #if 0
 	bp->b_saveaddr = (caddr_t)fs;

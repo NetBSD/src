@@ -1,4 +1,4 @@
-/* $NetBSD: genfs_node.h,v 1.3 2001/12/18 07:49:36 chs Exp $ */
+/* $NetBSD: genfs_node.h,v 1.4 2003/02/17 23:48:10 perseant Exp $ */
 
 /*
  * Copyright (c) 2001 Chuck Silvers.
@@ -36,17 +36,21 @@
 struct vm_page;
 
 struct genfs_ops {
-	void	(*gop_size)(struct vnode *, off_t, off_t *);
+	void	(*gop_size)(struct vnode *, off_t, off_t *, int);
 	int	(*gop_alloc)(struct vnode *, off_t, off_t, int, struct ucred *);
 	int	(*gop_write)(struct vnode *, struct vm_page **, int, int);
 };
 
-#define GOP_SIZE(vp, size, eobp) \
-	(*VTOG(vp)->g_op->gop_size)((vp), (size), (eobp))
+#define GOP_SIZE(vp, size, eobp, flags) \
+	(*VTOG(vp)->g_op->gop_size)((vp), (size), (eobp), (flags))
 #define GOP_ALLOC(vp, off, len, flags, cred) \
 	(*VTOG(vp)->g_op->gop_alloc)((vp), (off), (len), (flags), (cred))
 #define GOP_WRITE(vp, pgs, npages, flags) \
 	(*VTOG(vp)->g_op->gop_write)((vp), (pgs), (npages), (flags))
+
+/* Flags to GOP_SIZE */
+#define GOP_SIZE_READ  0x1	/* Advise how many pages to read/create */
+#define GOP_SIZE_WRITE 0x2	/* Tell how many pages to write */
 
 struct genfs_node {
 	struct genfs_ops	*g_op;		/* ops vector */
@@ -55,7 +59,7 @@ struct genfs_node {
 
 #define VTOG(vp) ((struct genfs_node *)(vp)->v_data)
 
-void	genfs_size(struct vnode *, off_t, off_t *);
+void	genfs_size(struct vnode *, off_t, off_t *, int);
 void	genfs_node_init(struct vnode *, struct genfs_ops *);
 int	genfs_gop_write(struct vnode *, struct vm_page **, int, int);
 int	genfs_compat_gop_write(struct vnode *, struct vm_page **, int, int);

@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.14 2003/01/24 21:55:10 fvdl Exp $	 */
+/* $NetBSD: inode.c,v 1.15 2003/02/17 23:48:09 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997, 1998
@@ -348,8 +348,8 @@ lfs_ginode(ino_t inumber)
 		if (reply("free")) {
 			ifp = lfs_ientry(inumber, &bp);
 			ifp->if_daddr = LFS_UNUSED_DADDR;
-			ifp->if_nextfree = sblock.lfs_free;
-			sblock.lfs_free = inumber;
+			ifp->if_nextfree = sblock.lfs_freehd;
+			sblock.lfs_freehd = inumber;
 			sbdirty();
 			dirty(bp);
 			bp->b_flags &= ~B_INUSE;
@@ -700,8 +700,8 @@ clri(struct inodesc *idesc, char *type, int flag)
 
 		ifp = lfs_ientry(idesc->id_number, &bp);
 		ifp->if_daddr = LFS_UNUSED_DADDR;
-		ifp->if_nextfree = sblock.lfs_free;
-		sblock.lfs_free = idesc->id_number;
+		ifp->if_nextfree = sblock.lfs_freehd;
+		sblock.lfs_freehd = idesc->id_number;
 		sbdirty();
 		dirty(bp);
 		bp->b_flags &= ~B_INUSE;

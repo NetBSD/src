@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.71 2003/02/05 21:38:42 pk Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.72 2003/02/17 23:48:11 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.71 2003/02/05 21:38:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.72 2003/02/17 23:48:11 perseant Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -495,11 +495,11 @@ genfs_getpages(void *v)
 	error = 0;
 	origoffset = ap->a_offset;
 	orignpages = *ap->a_count;
-	GOP_SIZE(vp, vp->v_size, &diskeof);
+	GOP_SIZE(vp, vp->v_size, &diskeof, GOP_SIZE_READ);
 	if (flags & PGO_PASTEOF) {
 		newsize = MAX(vp->v_size,
 		    origoffset + (orignpages << PAGE_SHIFT));
-		GOP_SIZE(vp, newsize, &memeof);
+		GOP_SIZE(vp, newsize, &memeof, GOP_SIZE_READ);
 	} else {
 		memeof = diskeof;
 	}
@@ -1139,8 +1139,13 @@ genfs_putpages(void *v)
 		yield = (l->l_cpu->ci_schedstate.spc_flags &
 		    SPCF_SHOULDYIELD) && !pagedaemon;
 		if (pg->flags & PG_BUSY || yield) {
-			KASSERT(!pagedaemon);
 			UVMHIST_LOG(ubchist, "busy %p", pg,0,0,0);
+			if (flags & PGO_BUSYFAIL && pg->flags & PG_BUSY) {
+				UVMHIST_LOG(ubchist, "busyfail %p", pg, 0,0,0);
+				error = EDEADLK;
+				break;
+			}
+			KASSERT(!pagedaemon);
 			if (by_list) {
 				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
 				UVMHIST_LOG(ubchist, "curmp next %p",
@@ -1381,7 +1386,7 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	UVMHIST_LOG(ubchist, "vp %p pgs %p npages %d flags 0x%x",
 	    vp, pgs, npages, flags);
 
-	GOP_SIZE(vp, vp->v_size, &eof);
+	GOP_SIZE(vp, vp->v_size, &eof, GOP_SIZE_WRITE);
 	if (vp->v_type == VREG) {
 		fs_bshift = vp->v_mount->mnt_fs_bshift;
 		dev_bshift = vp->v_mount->mnt_dev_bshift;
@@ -1523,7 +1528,7 @@ genfs_node_init(struct vnode *vp, struct genfs_ops *ops)
 }
 
 void
-genfs_size(struct vnode *vp, off_t size, off_t *eobp)
+genfs_size(struct vnode *vp, off_t size, off_t *eobp, int flags)
 {
 	int bsize;
 
