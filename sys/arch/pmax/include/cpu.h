@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cpu.h	8.4 (Berkeley) 1/4/94
- *      $Id: cpu.h,v 1.6 1994/05/27 09:00:32 glass Exp $
+ *      $Id: cpu.h,v 1.7 1994/06/02 06:15:03 glass Exp $
  */
 
 #ifndef _CPU_H_
@@ -54,7 +54,6 @@
 
 #define	cpu_exec(p)		(p->p_md.md_ss_addr = 0) /* init single step */
 #define	cpu_wait(p)		/* nothing */
-#define cpu_setstack(p, ap)	(p)->p_md.md_regs[SP] = ap
 #define cpu_set_init_frame(p, fp) /* nothing */
 
 /*
