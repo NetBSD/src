@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.21 1997/07/17 01:52:54 jtk Exp $ */
+/* $NetBSD: podulebus.c,v 1.22 1997/07/31 00:43:28 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -497,6 +497,7 @@ podulebusattach(parent, self, aux)
 	int easi_time;
 	int bit;
 
+#if 0
 	easi_time = ReadByte(IOMD_ECTCR);
 
 	printf(": easi timings=");
@@ -505,7 +506,7 @@ podulebusattach(parent, self, aux)
 			printf("C");
 		else
 			printf("A");
-
+#endif
 	printf("\n");
 
 	/* Ok we need to map in the podulebus */
@@ -626,8 +627,7 @@ matchpodule(pa, manufacturer, product, required_slot)
 	if (pa->pa_podule->attached)
 		panic("podulebus: Podule already attached\n");
 
-	if (pa->pa_podule->manufacturer == manufacturer
-	    && pa->pa_podule->product == product)
+	if (IS_PODULE(pa, manufacturer, product))
 		return(1);
 
 	return(0);
