@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.68 2003/04/02 10:39:30 fvdl Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.69 2003/04/20 19:55:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.68 2003/04/02 10:39:30 fvdl Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.69 2003/04/20 19:55:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -838,6 +838,8 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp1.di_nlink = 2;
 		node.dp1.di_size = sblock.fs_bsize;
 		node.dp1.di_db[0] = alloc(node.dp1.di_size, node.dp1.di_mode);
+		if (node.dp1.di_db[0] == 0)
+			return (0);
 		node.dp1.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp1.di_size));
 		node.dp1.di_uid = geteuid();
@@ -852,6 +854,8 @@ fsinit(time_t utime, mode_t mfsmode, uid_t mfsuid, gid_t mfsgid)
 		node.dp2.di_nlink = 2;
 		node.dp2.di_size = sblock.fs_bsize;
 		node.dp2.di_db[0] = alloc(node.dp2.di_size, node.dp2.di_mode);
+		if (node.dp2.di_db[0] == 0)
+			return (0);
 		node.dp2.di_blocks = btodb(fragroundup(&sblock,
 		    node.dp2.di_size));
 		node.dp2.di_uid = geteuid();
