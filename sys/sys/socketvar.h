@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.25 1997/10/09 12:59:54 mycroft Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.25.2.1 1998/01/29 10:47:24 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -39,6 +39,9 @@
 #define _SYS_SOCKETVAR_H_
 
 #include <sys/select.h>			/* for struct selinfo */
+#include <sys/queue.h>
+
+TAILQ_HEAD(soqhead, socket);
 
 /*
  * Kernel structure per socket.
@@ -65,8 +68,10 @@ struct socket {
  * and limit on number of queued connections for this socket.
  */
 	struct	socket *so_head;	/* back pointer to accept socket */
-	struct	socket *so_q0;		/* queue of partial connections */
-	struct	socket *so_q;		/* queue of incoming connections */
+	struct	soqhead *so_onq;	/* queue (q or q0) that we're on */
+	struct	soqhead so_q0;		/* queue of partial connections */
+	struct	soqhead so_q;		/* queue of incoming connections */
+	TAILQ_ENTRY(socket) so_qe;	/* our queue entry (q or q0) */
 	short	so_q0len;		/* partials on so_q0 */
 	short	so_qlen;		/* number of connections on so_q */
 	short	so_qlimit;		/* max number queued connections */
@@ -222,6 +227,7 @@ int 	soo_close __P((struct file *fp, struct proc *p));
 int	soo_stat __P((struct socket *, struct stat *));
 int	uipc_usrreq __P((struct socket *, int , struct mbuf *,
 	    struct mbuf *, struct mbuf *, struct proc *));
+int	uipc_ctloutput __P((int, struct socket *, int, int, struct mbuf **));
 void	sbappend __P((struct sockbuf *sb, struct mbuf *m));
 int	sbappendaddr __P((struct sockbuf *sb, struct sockaddr *asa,
 	    struct mbuf *m0, struct mbuf *control));
