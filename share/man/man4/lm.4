@@ -1,0 +1,100 @@
+.\"	$NetBSD: lm.4,v 1.1 2000/02/27 00:59:23 groo Exp $
+.\"
+.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Bill Squier.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 26, 2000
+.Dt LM 4
+.Os
+.Sh NAME
+.Nm lm
+.Nd National Semiconductor LM78, LM79 and compatible hardware monitors
+.Sh SYNOPSIS
+.Cd "lm0 at isa? port 0x290"
+.Cd "lm0 at pnpbios0 index ?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the
+.Tn National Semiconductor
+LM series hardware monitors and register compatible chips to be used with
+the
+.Xr envsys 4
+API.
+.Pp
+These devices possess 11 sensors:
+.Bl -column "Sensor" "Units" "Typical" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It Li "IN0" Ta "uV DC" Ta "Core voltage"
+.It Li "IN1" Ta "uV DC" Ta "unknown"
+.It Li "IN2" Ta "uV DC" Ta "+3.3V"
+.It Li "IN3" Ta "uV DC" Ta "+5V"
+.It Li "IN4" Ta "uV DC" Ta "+12V"
+.It Li "IN5" Ta "uV DC" Ta "-12V"
+.It Li "IN6" Ta "uV DC" Ta "-5V"
+.It Li "Temp" Ta "uK" Ta "Motherboard Temperature"
+.It Li "Fan0" Ta "RPM" Ta "Fan"
+.It Li "Fan1" Ta "RPM" Ta "Chassis Fan"
+.It Li "Fan2" Ta "RPM" Ta "Fan"
+.El
+.Pp
+Sensor names as well as nominal RPMs for fans 0 and 1 may be changed
+through the
+.Dv ENVSYS_STREINFO
+.Xr ioctl 2 .
+.Sh HARDWARE
+Chips supported by the
+.Nm
+driver include:
+.Pp
+.Bl -item -offset indent
+.It
+.Tn National Semiconductor
+LM78 and LM78-J
+.It
+.Tn National Semiconductor
+LM79
+.It
+.Tn Winbond
+W83781D and W83782D (untested)
+.El
+.Sh SEE ALSO
+.Xr envsys 4
+.Sh BUGS
+Interrupt support is unimplemented.
+.Sh HISTORY
+The
+.Nm
+device appeared in
+.Nx 1.5 .
