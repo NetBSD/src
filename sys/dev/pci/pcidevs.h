@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.187 1999/12/31 00:12:41 hubertf Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.188 2000/01/05 11:32:43 drochner Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.180 1999/12/30 23:53:42 hubertf Exp 
+ *	NetBSD: pcidevs,v 1.181 2000/01/05 11:32:06 drochner Exp 
  */
 
 /*
@@ -524,6 +524,7 @@
 #define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_NETGEAR	0x1385		/* Netgear */
 #define	PCI_VENDOR_SUNDANCETI	0x13f0		/* Sundance Technology */
+#define	PCI_VENDOR_CMEDIA	0x13f6		/* C-Media Electronics Inc */
 #define	PCI_VENDOR_DELTA	0x1500		/* Delta Electronics */
 #define	PCI_VENDOR_TERRATEC	0x153b		/* TerraTec Electronic */
 #define	PCI_VENDOR_SOLIDUM	0x1588		/* Solidum Systems Corp. */
@@ -574,6 +575,7 @@
 #define	PCI_PRODUCT_3COM_3C905BFX	0x905a		/* 3c905B-FX 10/100 Ethernet */
 #define	PCI_PRODUCT_3COM_3C905CTX	0x9200		/* 3c905C-TX 10/100 Ethernet with mngmt */
 #define	PCI_PRODUCT_3COM_3C980SRV	0x9800		/* 3c980 Server Adapter 10/100 Ethernet */
+#define	PCI_PRODUCT_3COM_3CR990TX97	0x9903		/* 3CR990-TX-97 10/100 Ethernet */
 
 /* 3Dfx Interactive producs */
 #define	PCI_PRODUCT_3DFX_VOODOO	0x0001		/* Voodoo */
@@ -798,7 +800,11 @@
 #define	PCI_PRODUCT_CMDTECH_650A	0x0650		/* PCI0650A */
 #define	PCI_PRODUCT_CMDTECH_670	0x0670		/* USB0670 */
 #define	PCI_PRODUCT_CMDTECH_673	0x0673		/* USB0673 */
-	
+
+/* C-Media products */
+#define	PCI_PRODUCT_CMEDIA_CMI8738	0x0111		/* CMI8738/C3DX PCI Audio Device */
+#define	PCI_PRODUCT_CMEDIA_HSP56	0x0211		/* HSP56 Audiomodem Riser */
+
 /* Cogent Data Technologies products */
 #define	PCI_PRODUCT_COGENT_EM110TX	0x1400		/* EX110TX PCI Fast Ethernet Adapter */
 
@@ -1239,13 +1245,16 @@
 #define	PCI_PRODUCT_SIS_86C202	0x0002		/* 86C202 */
 #define	PCI_PRODUCT_SIS_86C205	0x0005		/* 86C205 */
 #define	PCI_PRODUCT_SIS_85C503	0x0008		/* 85C503 or 5597/5598 ISA bridge */
+#define	PCI_PRODUCT_SIS_600PMC	0x0009		/* 600 Power Mngmt Controller */
 #define	PCI_PRODUCT_SIS_5597_VGA	0x0200		/* 5597/5598 integrated VGA */
 #define	PCI_PRODUCT_SIS_85C501	0x0406		/* 85C501 */
 #define	PCI_PRODUCT_SIS_85C496	0x0496		/* 85C496 */
+#define	PCI_PRODUCT_SIS_530HB	0x0530		/* 530 Host to PCI Bridge */
 #define	PCI_PRODUCT_SIS_85C601	0x0601		/* 85C601 */
 #define	PCI_PRODUCT_SIS_900	0x0900		/* SiS900 10/100 Ethernet */
 #define	PCI_PRODUCT_SIS_5597_IDE	0x5513		/* 5597/5598 IDE controller */
 #define	PCI_PRODUCT_SIS_5597_HB	0x5597		/* 5597/5598 host bridge */
+#define	PCI_PRODUCT_SIS_530VGA	0x6306		/* 530 GUI Accelerator+3D */
 #define	PCI_PRODUCT_SIS_6326	0x6326		/* 6326 AGP VGA */
 #define	PCI_PRODUCT_SIS_5597_USB	0x7001		/* 5597/5598 USB host controller */
 
