@@ -1,5 +1,5 @@
-.\"	$NetBSD: route6d.8,v 1.9 2002/06/02 14:56:47 wiz Exp $
-.\"	$KAME: route6d.8,v 1.8 2000/05/31 17:00:09 itojun Exp $
+.\"	$NetBSD: route6d.8,v 1.10 2002/06/07 16:45:30 itojun Exp $
+.\"	$KAME: route6d.8,v 1.11 2002/06/02 15:00:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
 .\"
@@ -22,7 +22,7 @@
 .Nd RIP6 routing daemon
 .Sh SYNOPSIS
 .Nm route6d
-.Op Fl adDhlqsS
+.Op Fl adDhlnqsS
 .Bk -words
 .Op Fl R Ar routelog
 .Ek
@@ -145,6 +145,9 @@ For example, with
 .Nm
 will accept the default route and routes in the 6bone test address range,
 but no others.
+.\"
+.It Fl n
+Do not update the kernel routing table.
 .\"
 .It Fl N Ar if1[,if2...]
 Do not listen to, or advertise, route from/to interfaces specified by

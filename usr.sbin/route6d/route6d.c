@@ -1,5 +1,5 @@
-/*	$NetBSD: route6d.c,v 1.33 2002/05/29 23:11:13 itojun Exp $	*/
-/*	$KAME: route6d.c,v 1.83 2002/05/29 23:07:33 itojun Exp $	*/
+/*	$NetBSD: route6d.c,v 1.34 2002/06/07 16:45:30 itojun Exp $	*/
+/*	$KAME: route6d.c,v 1.85 2002/06/07 16:39:41 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.33 2002/05/29 23:11:13 itojun Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.34 2002/06/07 16:45:30 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -140,7 +140,9 @@ int	nifc;		/* number of valid ifc's */
 struct	ifc **index2ifc;
 int	nindex2ifc;
 struct	ifc *loopifcp = NULL;	/* pointing to loopback */
-fd_set	sockvec;	/* vector to select() for receiving */
+fd_set	*sockvecp;	/* vector to select() for receiving */
+fd_set	*recvecp;
+int	fdmasks;
 int	rtsock;		/* the routing socket */
 int	ripsock;	/* socket to send/receive RIP datagram */
 int	maxfd;		/* maximum fd for select() */
@@ -430,8 +432,6 @@ main(argc, argv)
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGALRM);
 	while (1) {
-		fd_set	recvec;
-
 		if (seenalrm) {
 			ripalarm();
 			seenalrm = 0;
@@ -448,8 +448,8 @@ main(argc, argv)
 			continue;
 		}
 
-		FD_COPY(&sockvec, &recvec);
-		switch (select(maxfd + 1, &recvec, 0, 0, 0)) {
+		memcpy(recvecp, sockvecp, fdmasks);
+		switch (select(maxfd + 1, recvecp, 0, 0, 0)) {
 		case -1:
 			if (errno != EINTR) {
 				fatal("select");
@@ -459,12 +459,12 @@ main(argc, argv)
 		case 0:
 			continue;
 		default:
-			if (FD_ISSET(ripsock, &recvec)) {
+			if (FD_ISSET(ripsock, recvecp)) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				riprecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
 			}
-			if (FD_ISSET(rtsock, &recvec)) {
+			if (FD_ISSET(rtsock, recvecp)) {
 				sigprocmask(SIG_BLOCK, &mask, &omask);
 				rtrecv();
 				sigprocmask(SIG_SETMASK, &omask, NULL);
@@ -642,12 +642,6 @@ init()
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
 
-#ifdef FD_ZERO
-	FD_ZERO(&sockvec);
-#else
-	memset(&sockvec, 0, sizeof(sockvec));
-#endif
-	FD_SET(ripsock, &sockvec);
 	maxfd = ripsock;
 
 	if (nflag == 0) {
@@ -655,11 +649,24 @@ init()
 			fatal("route socket");
 			/*NOTREACHED*/
 		}
-		FD_SET(rtsock, &sockvec);
 		if (rtsock > maxfd)
 			maxfd = rtsock;
 	} else
 		rtsock = -1;	/*just for safety */
+
+	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
+	if ((sockvecp = malloc(fdmasks)) == NULL) {
+		fatal("malloc");
+		/*NOTREACHED*/
+	}
+	if ((recvecp = malloc(fdmasks)) == NULL) {
+		fatal("malloc");
+		/*NOTREACHED*/
+	}
+	memset(sockvecp, 0, fdmasks);
+	FD_SET(ripsock, sockvecp);
+	if (rtsock >= 0)
+		FD_SET(rtsock, sockvecp);
 }
 
 #define	RIPSIZE(n) \
