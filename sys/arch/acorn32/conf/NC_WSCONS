@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.24 2004/01/22 13:27:07 bjh21 Exp $
+#	$NetBSD: NC_WSCONS,v 1.25 2004/01/25 13:46:59 bjh21 Exp $
 #
 #	NC - with wscons
 #
@@ -222,9 +222,6 @@ lpt*	at pioc? offset 0x0278 irq 0	# Old driver
 #ppbus*	at atppc?
 #lpt*	at ppbus?		# Parallel printer
 #plip*	at ppbus?		# Parallel line IP
-
-# Crude sound device
-beep0	at vidc?
 
 # Audio device
 vidcaudio0	at vidc?
