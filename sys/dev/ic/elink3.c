@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.49 1998/11/17 20:25:00 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.50 1998/11/18 18:34:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1977,6 +1977,34 @@ epdisable(sc)
 		(*sc->disable)(sc);
 		sc->enabled = 0;
 	}
+}
+
+int
+ep_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct ep_softc *sc = (struct ep_softc *)self;
+	int rv = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+#ifdef notyet
+		/* First, kill off the interface. */
+		if_detach(sc->sc_ethercom.ec_if);
+#endif
+
+		/* Now disable the interface. */
+		epdisable(sc);
+		break;
+	}
+	splx(s);
+	return (rv);
 }
 
 void
