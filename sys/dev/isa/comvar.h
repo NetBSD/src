@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.11 1997/07/05 20:52:41 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.11.2.1 1997/07/30 07:05:27 marc Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -98,6 +98,8 @@ struct com_softc {
 			sc_rx_ready;
 
 	volatile u_char sc_heldchange;
+
+	int pcmcia_window;
 };
 
 /* Macros to clear/set/test flags. */

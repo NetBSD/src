@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.32.4.1 1997/07/30 07:05:22 marc Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -76,6 +76,10 @@
 #define ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN   1518
 #define ETHER_ADDR_LEN  6
+
+/* XXX workaround for MGET weirdshit */
+#undef MGET
+#define MGET(m, how, type) (m) = m_get((how), (type))
 
 /*
  * Structure to map  media-present bits in boards to 
@@ -201,15 +205,14 @@ ep_complete_cmd(sc, cmd, arg)
 #endif
 }
 
-
-
 /*
  * Back-end attach and configure.
  */
 void
-epconfig(sc, chipset)
+epconfig(sc, chipset, enaddr)
 	struct ep_softc *sc;
 	u_short chipset;
+	u_int8_t *enaddr;
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_space_tag_t iot = sc->sc_iot;
@@ -226,24 +229,27 @@ epconfig(sc, chipset)
 	 */
 	GO_WINDOW(0);
 
-	/*
-	 * Read the station address from the eeprom
-	 */
-	for (i = 0; i < 3; i++) {
-		u_int16_t x;
-		if (epbusyeeprom(sc))
-			return;		/* XXX why is eeprom busy? */
-		bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
-		    READ_EEPROM | i);
-		if (epbusyeeprom(sc))
-			return;		/* XXX why is eeprom busy? */
-		x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
-		myla[(i << 1)] = x >> 8;
-		myla[(i << 1) + 1] = x;
+	if (enaddr == NULL) {
+		/*
+		 * Read the station address from the eeprom
+		 */
+		for (i = 0; i < 3; i++) {
+			u_int16_t x;
+			if (epbusyeeprom(sc))
+				return;		/* XXX why is eeprom busy? */
+			bus_space_write_2(iot, ioh, EP_W0_EEPROM_COMMAND,
+					  READ_EEPROM | i);
+			if (epbusyeeprom(sc))
+				return;		/* XXX why is eeprom busy? */
+			x = bus_space_read_2(iot, ioh, EP_W0_EEPROM_DATA);
+			myla[(i << 1)] = x >> 8;
+			myla[(i << 1) + 1] = x;
+		}
+		enaddr = myla;
 	}
 
 	printf("%s: MAC address %s\n", sc->sc_dev.dv_xname,
-	    ether_sprintf(myla));
+	    ether_sprintf(enaddr));
 
 	/*
 	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards
@@ -274,9 +280,9 @@ epconfig(sc, chipset)
 		break;
 
 	default:
-		printf("%s: wrote %d to TX_AVAIL_THRESH, read back %d. "
+		printf("%s: wrote 0x%x to TX_AVAIL_THRESH, read back 0x%x. "
 		    "Interface disabled\n",
-		    sc->sc_dev.dv_xname, EP_THRESH_DISABLE, (int) i);
+		    sc->sc_dev.dv_xname, EP_LARGEWIN_PROBE, (int) i);
 		return;
 	}
 
@@ -297,7 +303,7 @@ epconfig(sc, chipset)
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	if_attach(ifp);
-	ether_ifattach(ifp, myla);
+	ether_ifattach(ifp, enaddr);
 
 	/*
 	 * Finish configuration: 
@@ -311,12 +317,13 @@ epconfig(sc, chipset)
 
 	ifmedia_init(&sc->sc_media, 0, ep_media_change, ep_media_status);
 
-	/*
-	 * If we've got an indirect (ISA, PCMCIA?) board, the chipset
-	 * is unknown.  If the board has large-packet support, it's a
-	 * Vortex/Boomerang, otherwise it's a 3c509.
-	 * XXX use eeprom capability word instead?
+	/* 
+	 * If we've got an indirect (ISA) board, the chipset is
+	 * unknown.  If the board has large-packet support, it's a
+	 * Vortex/Boomerang, otherwise it's a 3c509.  XXX use eeprom
+	 * capability word instead?
 	 */
+
 	if (sc->ep_chipset == EP_CHIPSET_UNKNOWN && sc->ep_pktlenshift)  {
 		printf("warning: unknown chipset, possibly 3c515?\n");
 #ifdef notyet
@@ -953,6 +960,12 @@ readcheck:
 			epread(sc);
 		} else {
 			/* Got an interrupt, return so that it gets serviced. */
+#if 0
+			printf("%s: S_INTR_LATCH %04x mask=%04x ipending=%04x (%04x)\n",
+			       sc->sc_dev.dv_xname, status,
+			       cpl, ipending, imask[IPL_NET]);
+#endif
+
 			return;
 		}
 	} else {
@@ -1073,14 +1086,35 @@ epintr(arg)
 	u_int16_t status;
 	int ret = 0;
 
+#if 0
+	printf("%s: intr\n", sc->sc_dev.dv_xname);
+#endif
+
 	for (;;) {
 		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
+#if 0
+		bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
+#endif
 
 		status = bus_space_read_2(iot, ioh, EP_STATUS);
 
 		if ((status & (S_TX_COMPLETE | S_TX_AVAIL |
-			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0)
-			break;
+			       S_RX_COMPLETE | S_CARD_FAILURE)) == 0) {
+			if ((status & S_INTR_LATCH) == 0) {
+#if 0
+				printf("%s: intr latch cleared\n",
+				       sc->sc_dev.dv_xname);
+#endif
+				break;
+			}
+#if 1
+			else {
+				printf("%s: rogue intr %04x mask=%04x ipending=%04x (%04x)\n",
+				       sc->sc_dev.dv_xname, status,
+				       cpl, ipending, imask[IPL_NET]);
+			}
+#endif
+		}
 
 		ret = 1;
 
@@ -1090,7 +1124,25 @@ epintr(arg)
 		 * Due to the i386 interrupt queueing, we may get spurious
 		 * interrupts occasionally.
 		 */
-		bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR | status);
+		bus_space_write_2(iot, ioh, EP_COMMAND, ACK_INTR |
+				  (status & (C_INTR_LATCH |
+					     C_CARD_FAILURE |
+					     C_TX_COMPLETE |
+					     C_TX_AVAIL |
+					     C_RX_COMPLETE |
+					     C_RX_EARLY |
+					     C_INT_RQD |
+					     C_UPD_STATS)));
+
+#if 0
+		status = bus_space_read_2(iot, ioh, EP_STATUS);
+
+		printf("%s: intr%s%s%s%s\n", sc->sc_dev.dv_xname,
+		       (status & S_RX_COMPLETE)?" RX_COMPLETE":"",
+		       (status & S_TX_COMPLETE)?" TX_COMPLETE":"",
+		       (status & S_TX_AVAIL)?" TX_AVAIL":"",
+		       (status & S_CARD_FAILURE)?" CARD_FAILURE":"");
+#endif
 
 		if (status & S_RX_COMPLETE)
 			epread(sc);
