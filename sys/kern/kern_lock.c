@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.34 2000/08/07 21:55:23 thorpej Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.35 2000/08/07 22:10:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -308,6 +308,31 @@ lockstatus(struct lock *lkp)
 	simple_unlock(&lkp->lk_interlock);
 	return (lock_type);
 }
+
+#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
+/*
+ * Make sure no spin locks are held by a CPU that is about
+ * to context switch.
+ */
+void
+spinlock_switchcheck(void)
+{
+	u_long cnt;
+	int s;
+
+	s = splhigh();
+#if defined(MULTIPROCESSOR)
+	cnt = curcpu()->ci_spin_locks;
+#else
+	cnt = spin_locks;
+#endif
+	splx(s);
+
+	if (cnt != 0)
+		panic("spinlock_switchcheck: CPU %lu has %lu spin locks",
+		    (u_long) cpu_number(), cnt);
+}
+#endif /* LOCKDEBUG || DIAGNOSTIC */
 
 /*
  * XXX XXX kludge around another kludge..
