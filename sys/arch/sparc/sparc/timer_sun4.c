@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.3 2002/10/01 18:57:50 thorpej Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.4 2002/10/02 16:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,7 +162,7 @@ timerattach_mainbus(struct device *parent, struct device *self, void *aux)
 }
 
 CFATTACH_DECL(timer_mainbus, sizeof(struct device),
-    timermatch_mainbus, timerattach_mainbus, NULL, NULL)
+    timermatch_mainbus, timerattach_mainbus, NULL, NULL);
 #endif /* SUN4C */
 
 #if defined(SUN4)

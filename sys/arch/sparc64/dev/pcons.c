@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.12 2002/10/01 18:40:07 thorpej Exp $	*/
+/*	$NetBSD: pcons.c,v 1.13 2002/10/02 16:02:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -61,7 +61,7 @@ static int pconsmatch __P((struct device *, struct cfdata *, void *));
 static void pconsattach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(pcons, sizeof(struct pconssoftc),
-    pconsmatch, pconsattach, NULL, NULL)
+    pconsmatch, pconsattach, NULL, NULL);
 
 extern struct cfdriver pcons_cd;
 

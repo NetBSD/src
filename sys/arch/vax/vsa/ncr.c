@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.38 2002/10/01 05:19:04 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.39 2002/10/02 16:02:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ static	void si_dma_stop(struct ncr5380_softc *);
 static	void si_dma_go(void *);
 
 CFATTACH_DECL(si_vsbus, sizeof(struct si_softc),
-    si_vsbus_match, si_vsbus_attach, NULL, NULL)
+    si_vsbus_match, si_vsbus_attach, NULL, NULL);
 
 static int
 si_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)

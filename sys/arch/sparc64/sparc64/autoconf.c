@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.65 2002/10/01 18:40:09 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.66 2002/10/02 16:02:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -755,7 +755,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 }
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
-    mainbus_match, mainbus_attach, NULL, NULL)
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 int
 PROM_getprop(node, name, size, nitem, bufp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_intio.c,v 1.4 2002/10/01 04:43:01 thorpej Exp $	*/
+/*	$NetBSD: if_ne_intio.c,v 1.5 2002/10/02 16:02:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -92,7 +92,7 @@ static int  ne_intio_intr(void *);
 #define ne_intio_softc ne2000_softc
 
 CFATTACH_DECL(ne_intio, sizeof(struct ne_intio_softc),
-    ne_intio_match, ne_intio_attach, NULL, NULL)
+    ne_intio_match, ne_intio_attach, NULL, NULL);
 
 static int
 ne_intio_match(struct device *parent, struct cfdata *cf, void *aux)

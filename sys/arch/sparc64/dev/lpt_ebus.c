@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ebus.c,v 1.15 2002/10/01 18:40:06 thorpej Exp $	*/
+/*	$NetBSD: lpt_ebus.c,v 1.16 2002/10/02 16:02:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -49,7 +49,7 @@ int	lpt_ebus_match __P((struct device *, struct cfdata *, void *));
 void	lpt_ebus_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(lpt_ebus, sizeof(struct lpt_softc),
-    lpt_ebus_match, lpt_ebus_attach, NULL, NULL)
+    lpt_ebus_match, lpt_ebus_attach, NULL, NULL);
 
 #define	ROM_LPT_NAME	"ecpp"
 

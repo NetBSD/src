@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.39 2002/10/01 18:57:51 thorpej Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.40 2002/10/02 16:02:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@ int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
 
 CFATTACH_DECL(cgtwo, sizeof(struct cgtwo_softc),
-    cgtwomatch, cgtwoattach, NULL, NULL)
+    cgtwomatch, cgtwoattach, NULL, NULL);
 
 extern struct cfdriver cgtwo_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.c,v 1.19 2002/10/01 05:32:46 thorpej Exp $	*/
+/*	$NetBSD: intreg.c,v 1.20 2002/10/02 16:02:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ static void intreg_attach __P((struct device *, struct device *, void *));
 static int soft1intr __P((void *));
 
 CFATTACH_DECL(intreg, sizeof(struct intreg_softc),
-    intreg_match, intreg_attach, NULL, NULL)
+    intreg_match, intreg_attach, NULL, NULL);
 
 volatile u_char *interrupt_reg;
 int intreg_attached;

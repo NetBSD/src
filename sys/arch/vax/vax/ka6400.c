@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.3 2002/10/01 05:19:02 thorpej Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.4 2002/10/02 16:02:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -111,7 +111,7 @@ struct ka6400_softc {
 };
 
 CFATTACH_DECL(cpu_xmi, sizeof(struct ka6400_softc),
-    ka6400_match, ka6400_attach, NULL, NULL)
+    ka6400_match, ka6400_attach, NULL, NULL);
 
 static int
 ka6400_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -197,7 +197,7 @@ struct mem_xmi_softc {
 };
 
 CFATTACH_DECL(mem_xmi, sizeof(struct mem_xmi_softc),
-    ms6400_match, ms6400_attach, NULL, NULL)
+    ms6400_match, ms6400_attach, NULL, NULL);
 
 static int
 ms6400_match(struct device *parent, struct cfdata *cf, void *aux)

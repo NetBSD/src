@@ -1,4 +1,4 @@
-/*	$NetBSD: audioamd.c,v 1.11 2002/10/01 18:57:50 thorpej Exp $	*/
+/*	$NetBSD: audioamd.c,v 1.12 2002/10/02 16:02:12 thorpej Exp $	*/
 /*	NetBSD: am7930_sparc.c,v 1.44 1999/03/14 22:29:00 jonathan Exp 	*/
 
 /*
@@ -112,10 +112,10 @@ int	audioamd_sbus_match __P((struct device *, struct cfdata *, void *));
 void	audioamd_attach(struct audioamd_softc *sc, int);
 
 CFATTACH_DECL(audioamd_mainbus, sizeof(struct audioamd_softc),
-    audioamd_mainbus_match, audioamd_mainbus_attach, NULL, NULL)
+    audioamd_mainbus_match, audioamd_mainbus_attach, NULL, NULL);
 
 CFATTACH_DECL(audioamd_sbus, sizeof(struct audioamd_softc),
-    audioamd_sbus_match, audioamd_sbus_attach, NULL, NULL)
+    audioamd_sbus_match, audioamd_sbus_attach, NULL, NULL);
 
 /*
  * Define our interface into the am7930 MI driver.

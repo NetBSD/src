@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.17 2002/10/01 18:57:53 thorpej Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.18 2002/10/02 16:02:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ static int tctrl_apm_record_event __P((struct tctrl_softc *sc,
 static void tctrl_init_lcd __P((void));
 
 CFATTACH_DECL(tctrl, sizeof(struct tctrl_softc),
-    tctrl_match, tctrl_attach, NULL, NULL)
+    tctrl_match, tctrl_attach, NULL, NULL);
 
 extern struct cfdriver tctrl_cd;
 /* XXX wtf is this? see i386/apm.c */

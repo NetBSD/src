@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.23 2002/10/01 05:19:00 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.24 2002/10/02 16:02:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ void	lance_copyfrombuf_gap2 __P((struct lance_softc *, void *, int, int));
 void	lance_zerobuf_gap2 __P((struct lance_softc *, int, int));
 
 CFATTACH_DECL(le_ibus, sizeof(struct le_softc),
-    le_ibus_match, le_ibus_attach, NULL, NULL)
+    le_ibus_match, le_ibus_attach, NULL, NULL);
 
 void
 lewrcsr(ls, port, val)

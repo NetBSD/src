@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuunit.c,v 1.5 2002/10/01 18:57:49 thorpej Exp $	*/
+/*	$NetBSD: cpuunit.c,v 1.6 2002/10/02 16:02:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static int cpuunit_match(struct device *, struct cfdata *, void *);
 static void cpuunit_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpuunit, sizeof(struct cpuunit_softc),
-    cpuunit_match, cpuunit_attach, NULL, NULL)
+    cpuunit_match, cpuunit_attach, NULL, NULL);
 
 static int cpuunit_print(void *, const char *);
 

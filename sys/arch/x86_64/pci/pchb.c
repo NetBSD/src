@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.5 2002/10/01 04:31:19 thorpej Exp $	*/
+/*	$NetBSD: pchb.c,v 1.6 2002/10/02 16:02:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ void	pchbattach __P((struct device *, struct device *, void *));
 int	pchb_print __P((void *, const char *));
 
 CFATTACH_DECL(pchb, sizeof(struct pchb_softc),
-    pchbmatch, pchbattach, NULL, NULL)
+    pchbmatch, pchbattach, NULL, NULL);
 
 int
 pchbmatch(parent, match, aux)

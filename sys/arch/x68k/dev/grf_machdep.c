@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_machdep.c,v 1.14 2002/10/01 04:43:01 thorpej Exp $	*/
+/*	$NetBSD: grf_machdep.c,v 1.15 2002/10/02 16:02:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 University of Utah.
@@ -75,10 +75,10 @@ void grfconfig __P((struct device *));
 int grfinit __P((void *, int));
 
 CFATTACH_DECL(grfbus, sizeof(struct device),
-    grfbusmatch, grfbusattach, NULL, NULL)
+    grfbusmatch, grfbusattach, NULL, NULL);
 
 CFATTACH_DECL(grf, sizeof(struct grf_softc),
-    grfmatch, grfattach, NULL, NULL)
+    grfmatch, grfattach, NULL, NULL);
 
 /*
  * only used in console init.

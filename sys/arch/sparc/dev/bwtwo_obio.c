@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.8 2002/10/01 18:57:50 thorpej Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.9 2002/10/02 16:02:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ static int	bwtwomatch_obio (struct device *, struct cfdata *, void *);
 
 
 CFATTACH_DECL(bwtwo_obio, sizeof(struct bwtwo_softc),
-    bwtwomatch_obio, bwtwoattach_obio, NULL, NULL)
+    bwtwomatch_obio, bwtwoattach_obio, NULL, NULL);
 
 static int	bwtwo_get_video_sun4(struct bwtwo_softc *);
 static void	bwtwo_set_video_sun4(struct bwtwo_softc *, int);

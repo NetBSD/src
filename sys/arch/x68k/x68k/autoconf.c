@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2002/10/01 04:43:09 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2002/10/02 16:02:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -308,7 +308,7 @@ find_dev_byname(name)
  * mainbus driver 
  */
 CFATTACH_DECL(mainbus, sizeof(struct device),
-    mbmatch, mbattach, NULL, NULL)
+    mbmatch, mbattach, NULL, NULL);
 
 int
 mbmatch(pdp, cfp, auxp)

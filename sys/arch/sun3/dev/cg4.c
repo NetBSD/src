@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.27 2002/10/01 05:32:42 thorpej Exp $	*/
+/*	$NetBSD: cg4.c,v 1.28 2002/10/02 16:02:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -119,7 +119,7 @@ static void	cg4attach __P((struct device *, struct device *, void *));
 static int	cg4match __P((struct device *, struct cfdata *, void *));
 
 CFATTACH_DECL(cgfour, sizeof(struct cg4_softc),
-    cg4match, cg4attach, NULL, NULL)
+    cg4match, cg4attach, NULL, NULL);
 
 extern struct cfdriver cgfour_cd;
 

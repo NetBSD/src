@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.15 2002/10/01 05:32:43 thorpej Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.16 2002/10/02 16:02:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ static int  ie_vme_match __P((struct device *, struct cfdata *, void *));
 static void ie_vme_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ie_vme, sizeof(struct ie_softc),
-    ie_vme_match, ie_vme_attach, NULL, NULL)
+    ie_vme_match, ie_vme_attach, NULL, NULL);
 
 static int
 ie_vme_match(parent, cf, args)

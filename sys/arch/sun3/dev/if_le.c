@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.44 2002/10/01 05:32:43 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.45 2002/10/02 16:02:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ static int	le_match __P((struct device *, struct cfdata *, void *));
 static void	le_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(le, sizeof(struct le_softc),
-    le_match, le_attach, NULL, NULL)
+    le_match, le_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"

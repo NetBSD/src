@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.29 2002/10/01 18:57:51 thorpej Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.30 2002/10/02 16:02:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -106,7 +106,7 @@ static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
 static void	cgfourteenunblank(struct device *);
 
 CFATTACH_DECL(cgfourteen, sizeof(struct cgfourteen_softc),
-    cgfourteenmatch, cgfourteenattach, NULL, NULL)
+    cgfourteenmatch, cgfourteenattach, NULL, NULL);
 
 extern struct cfdriver cgfourteen_cd;
 

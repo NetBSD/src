@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.5 2002/10/01 04:43:08 thorpej Exp $	*/
+/*	$NetBSD: xel.c,v 1.6 2002/10/02 16:02:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct xel_softc {
 };
 
 CFATTACH_DECL(xel, sizeof (struct xel_softc),
-    xel_match, xel_attach, NULL, NULL)
+    xel_match, xel_attach, NULL, NULL);
 
 static paddr_t xel_addrs[] = { 0xec0000, 0xec4000, 0xec8000, 0xecc000 };
 

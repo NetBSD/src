@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.7 2002/10/01 18:57:50 thorpej Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.8 2002/10/02 16:02:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ static int bootbus_match(struct device *, struct cfdata *, void *);
 static void bootbus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(bootbus, sizeof(struct bootbus_softc),
-    bootbus_match, bootbus_attach, NULL, NULL)
+    bootbus_match, bootbus_attach, NULL, NULL);
 
 static int bootbus_submatch(struct device *, struct cfdata *, void *);
 static int bootbus_print(void *, const char *);

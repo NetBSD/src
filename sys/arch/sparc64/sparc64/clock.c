@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.52 2002/10/01 18:40:10 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.53 2002/10/02 16:02:21 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,13 +136,13 @@ static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
 
 
 CFATTACH_DECL(clock_sbus, sizeof(struct device),
-    clockmatch_sbus, clockattach_sbus, NULL, NULL)
+    clockmatch_sbus, clockattach_sbus, NULL, NULL);
 
 CFATTACH_DECL(clock_ebus, sizeof(struct device),
-    clockmatch_ebus, clockattach_ebus, NULL, NULL)
+    clockmatch_ebus, clockattach_ebus, NULL, NULL);
 
 CFATTACH_DECL(rtc_ebus, sizeof(struct device),
-    clockmatch_rtc, clockattach_rtc, NULL, NULL)
+    clockmatch_rtc, clockattach_rtc, NULL, NULL);
 
 extern struct cfdriver clock_cd;
 
@@ -156,7 +156,7 @@ static void	timerattach __P((struct device *, struct device *, void *));
 struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 
 CFATTACH_DECL(timer, sizeof(struct device),
-    timermatch, timerattach, NULL, NULL)
+    timermatch, timerattach, NULL, NULL);
 
 int clock_wenable __P((struct todr_chip_handle *, int));
 struct chiptime;

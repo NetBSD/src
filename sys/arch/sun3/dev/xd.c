@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.38 2002/10/01 05:32:44 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.39 2002/10/02 16:02:27 thorpej Exp $	*/
 
 /*
  *
@@ -255,10 +255,10 @@ int	xdgetdisklabel __P((struct xd_softc *, void *));
  */
 
 CFATTACH_DECL(xdc, sizeof(struct xdc_softc),
-    xdcmatch, xdcattach, NULL, NULL)
+    xdcmatch, xdcattach, NULL, NULL);
 
 CFATTACH_DECL(xd, sizeof(struct xd_softc),
-    xdmatch, xdattach, NULL, NULL)
+    xdmatch, xdattach, NULL, NULL);
 
 extern struct cfdriver xd_cd;
 

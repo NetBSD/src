@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.20 2002/10/01 05:32:42 thorpej Exp $	*/
+/*	$NetBSD: cg2.c,v 1.21 2002/10/02 16:02:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -98,7 +98,7 @@ static void	cg2attach __P((struct device *, struct device *, void *));
 static int	cg2match __P((struct device *, struct cfdata *, void *));
 
 CFATTACH_DECL(cgtwo, sizeof(struct cg2_softc),
-    cg2match, cg2attach, NULL, NULL)
+    cg2match, cg2attach, NULL, NULL);
 
 extern struct cfdriver cgtwo_cd;
 

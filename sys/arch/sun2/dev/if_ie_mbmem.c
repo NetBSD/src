@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mbmem.c,v 1.5 2002/10/01 05:39:44 thorpej Exp $	*/
+/*	$NetBSD: if_ie_mbmem.c,v 1.6 2002/10/02 16:02:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles D. Cranor
@@ -244,7 +244,7 @@ struct ie_mbmem_softc {
 };
 
 CFATTACH_DECL(ie_mbmem, sizeof(struct ie_mbmem_softc),
-    ie_mbmem_match, ie_mbmem_attach, NULL, NULL)
+    ie_mbmem_match, ie_mbmem_attach, NULL, NULL);
 
 #define read_iev(sc, reg) \
   bus_space_read_2(sc->ievt, sc->ievh, offsetof(struct iembmem, reg))

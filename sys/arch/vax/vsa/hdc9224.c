@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.22 2002/10/01 05:19:03 thorpej Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.23 2002/10/02 16:02:37 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -182,10 +182,10 @@ static	void hdc_readregs(struct hdcsoftc *);
 static	void hdc_qstart(void *);
  
 CFATTACH_DECL(hdc, sizeof(struct hdcsoftc),
-    hdcmatch, hdcattach, NULL, NULL)
+    hdcmatch, hdcattach, NULL, NULL);
 
 CFATTACH_DECL(rd, sizeof(struct rdsoftc),
-    rdmatch, rdattach, NULL, NULL)
+    rdmatch, rdattach, NULL, NULL);
 
 dev_type_open(rdopen);
 dev_type_close(rdclose);

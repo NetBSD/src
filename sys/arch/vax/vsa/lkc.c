@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.15 2002/10/01 05:19:04 thorpej Exp $ */
+/*	$NetBSD: lkc.c,v 1.16 2002/10/02 16:02:37 thorpej Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -61,7 +61,7 @@ struct  lkc_softc {
 };
 
 CFATTACH_DECL(lkc, sizeof(struct lkc_softc),
-    lkc_match, lkc_attach, NULL, NULL)
+    lkc_match, lkc_attach, NULL, NULL);
 
 int
 lkc_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.42 2002/10/01 18:40:08 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.43 2002/10/02 16:02:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -163,10 +163,10 @@ static int  zs_print __P((void *, const char *name));
 
 /* Do we really need this ? */
 CFATTACH_DECL(zs, sizeof(struct zsc_softc),
-    zs_match_mainbus, zs_attach_mainbus, NULL, NULL)
+    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
 
 CFATTACH_DECL(zs_mainbus, sizeof(struct zsc_softc),
-    zs_match_mainbus, zs_attach_mainbus, NULL, NULL)
+    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
 
 extern struct cfdriver zs_cd;
 extern int stdinnode;

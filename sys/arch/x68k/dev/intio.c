@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.15 2002/10/01 04:43:04 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.16 2002/10/02 16:02:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ static int intio_print __P((void *, const char *));
 static void intio_alloc_system_ports __P((struct intio_softc*));
 
 CFATTACH_DECL(intio, sizeof(struct intio_softc),
-    intio_match, intio_attach, NULL, NULL)
+    intio_match, intio_attach, NULL, NULL);
 
 static struct intio_interrupt_vector {
 	intio_intr_handler_t	iiv_handler;

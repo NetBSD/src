@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.18 2002/10/01 05:32:43 thorpej Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.19 2002/10/02 16:02:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ static int	si_vme_match __P((struct device *, struct cfdata *, void *));
 static void	si_vme_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(si_vmw, sizeof(struct si_softc),
-    si_vme_match, si_vme_attach, NULL, NULL)
+    si_vme_match, si_vme_attach, NULL, NULL);
 
 /*
  * Options for disconnect/reselect, DMA, and interrupts.

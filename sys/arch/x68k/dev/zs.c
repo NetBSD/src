@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21 2002/10/01 04:43:08 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.22 2002/10/02 16:02:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -131,7 +131,7 @@ static void	zs_attach __P((struct device *, struct device *, void *));
 static int  zs_print __P((void *, const char *name));
 
 CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
-    zs_match, zs_attach, NULL, NULL)
+    zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 

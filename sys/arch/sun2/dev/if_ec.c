@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.5 2002/10/01 05:39:44 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.6 2002/10/02 16:02:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ int ec_match __P((struct device *, struct cfdata *, void *));
 void ec_attach __P((struct device *, struct device *, void *));
 
 CFATTACH_DECL(ec, sizeof(struct ec_softc),
-    ec_match, ec_attach, NULL, NULL)
+    ec_match, ec_attach, NULL, NULL);
 
 /*
  * Copy board memory to kernel.
