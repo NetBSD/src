@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.4 2000/12/18 23:41:58 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.5 2000/12/27 23:20:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,9 @@
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/userret.h>
+
 #include <machine/freebsd_machdep.h>
+#include <compat/freebsd/freebsd_syscall.h>
 
 void freebsd_syscall_plain __P((struct trapframe));
 void freebsd_syscall_fancy __P((struct trapframe));
@@ -117,7 +119,7 @@ freebsd_syscall_plain(frame)
 		break;
 	}
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (FREEBSD_SYS_NSYSENT - 1);
 	callp += code;
 	argsize = callp->sy_argsize;
 	if (argsize) {
