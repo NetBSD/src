@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.6 1998/03/01 02:23:30 fvdl Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.7 2000/01/21 23:43:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -44,7 +44,7 @@ struct mfsnode {
 	caddr_t	mfs_baseoff;		/* base of file system in memory */
 	long	mfs_size;		/* size of memory file system */
 	pid_t	mfs_pid;		/* supporting process pid */
-	struct	buf *mfs_buflist;	/* list of I/O requests */
+	struct	buf_queue mfs_buflist;	/* list of I/O requests */
 	long	mfs_spare[4];
 };
 
