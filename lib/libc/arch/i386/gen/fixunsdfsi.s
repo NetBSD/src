@@ -34,18 +34,18 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fixunsdfsi.s	5.1	12/17/90
- *	$Id: fixunsdfsi.s,v 1.3 1993/10/21 01:48:14 jtc Exp $
+ *	$Id: fixunsdfsi.s,v 1.4 1993/10/21 02:03:39 jtc Exp $
  */
-
-#include "SYS.h"
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: fixunsdfsi.s,v 1.3 1993/10/21 01:48:14 jtc Exp $"
+	.asciz "$Id: fixunsdfsi.s,v 1.4 1993/10/21 02:03:39 jtc Exp $"
 #endif
 
-	.globl ___fixunsdfsi
-___fixunsdfsi:
+#include "DEFS.h"
+#include "SYS.h"
+
+ENTRY(__fixunsdfsi)
 	fldl	4(%esp)		/* argument double to accum stack */
 	frndint			/* create integer */
 #ifdef PIC

@@ -34,16 +34,17 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)divsi3.s	5.1 (Berkeley) 5/15/90
- *	$Id: divsi3.s,v 1.2 1993/10/21 01:39:57 jtc Exp $
+ *	$Id: divsi3.s,v 1.3 1993/10/21 02:03:37 jtc Exp $
  */
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$Id: divsi3.s,v 1.2 1993/10/21 01:39:57 jtc Exp $"
+	.asciz "$Id: divsi3.s,v 1.3 1993/10/21 02:03:37 jtc Exp $"
 #endif
 
-	.globl ___divsi3
-___divsi3:
+#include "DEFS.h"
+
+ENTRY(__divsi3)
 	movl 4(%esp),%eax
 	cltd
 	idivl 8(%esp)
