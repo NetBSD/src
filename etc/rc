@@ -1,5 +1,5 @@
 #	from: @(#)rc	8.2 (Berkeley) 3/17/94
-#	$Id: rc,v 1.48 1994/09/16 23:38:01 mycroft Exp $
+#	$Id: rc,v 1.49 1994/11/04 13:27:32 briggs Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -104,8 +104,8 @@ fi
 
 if [ X${amd} = X"YES" -a -d ${amd_dir} -a -r ${amd_master} ]; then
 	echo -n ' amd'
-	amd -l syslog -x error,noinfo,nostats -p > /var/run/amd.pid \
-	    -a ${amd_dir} `cat ${amd_master}`
+	amd -l syslog -x error,noinfo,nostats -p \
+	    -a ${amd_dir} `cat ${amd_master}` > /var/run/amd.pid
 fi
 
 echo '.'
