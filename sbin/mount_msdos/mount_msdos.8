@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: mount_msdos.8,v 1.1 1993/07/20 00:19:09 cgd Exp $
+.\"	$Id: mount_msdos.8,v 1.2 1993/07/30 01:31:49 mycroft Exp $
 .\"
 .Dd July 19, 1993
 .Dt MOUNT_MSDOS 8
@@ -59,7 +59,8 @@ at boot time.
 .Sh CAVEATS
 The
 .Nm msdos
-filesystem only works with MS-DOS version 3.3 filesystems.
+filesystem is not known to work reliably with filesystems created by versions
+of MS-DOS later than version 3.3.
 .Pp
 The limitations on file names imposed by MS-DOS are strange, at best.
 For instance, they are
