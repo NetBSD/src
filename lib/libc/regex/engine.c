@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.c,v 1.6 1997/01/23 14:02:11 mrg Exp $	*/
+/*	$NetBSD: engine.c,v 1.7 1997/07/13 20:03:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -688,6 +688,7 @@ sopno lev;			/* PLUS nesting level */
 	/* "can't happen" */
 	assert(nope);
 	/* NOTREACHED */
+	return NULL;
 }
 
 /*
