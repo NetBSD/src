@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+#	$NetBSD: files.x68k,v 1.2 1996/05/20 14:56:29 oki Exp $
 #
 # new style config file for x68k architecture
 #
@@ -122,6 +122,10 @@ file	arch/x68k/dev/sram.c		sram needs-flag
 pseudo-device pow
 file	arch/x68k/dev/pow.c		pow needs-count
 file	arch/x68k/dev/dma.c		fdc|adpcm
+
+#ramdisk
+pseudo-device rd
+file	dev/ramdisk.c			rd needs-count
 
 include	"../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
