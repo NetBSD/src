@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.17 2004/03/22 10:06:31 pk Exp $	*/
+/*	$NetBSD: machfb.c,v 1.18 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.17 2004/03/22 10:06:31 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machfb.c,v 1.18 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ mach64_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	for (bar = 0; bar < NBARS; bar++) {

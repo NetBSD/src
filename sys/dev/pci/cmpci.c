@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.23 2003/12/06 09:32:22 itohy Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.24 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.23 2003/12/06 09:32:22 itohy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.24 2004/04/23 21:13:06 itojun Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -416,7 +416,7 @@ cmpci_attach(parent, self, aux)
 
 	sc->sc_id = pa->pa_id;
 	sc->sc_class = pa->pa_class;
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(sc->sc_class));
 	switch (PCI_PRODUCT(sc->sc_id)) {

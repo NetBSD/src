@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.31 2004/03/28 09:44:59 nakayama Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.32 2004/04/23 21:13:06 itojun Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.31 2004/03/28 09:44:59 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.32 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,7 +317,7 @@ wi_pci_attach(parent, self, aux)
 	} else {
 		char devinfo[256];
 
-		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 		printf(": %s (rev. 0x%02x)\n", devinfo,
 		       PCI_REVISION(pa->pa_class));
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.14 2003/11/02 22:03:42 he Exp $	*/
+/*	$NetBSD: pcib.c,v 1.15 2004/04/23 21:13:05 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.14 2003/11/02 22:03:42 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.15 2004/04/23 21:13:05 itojun Exp $");
 
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
@@ -160,7 +160,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int i;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 

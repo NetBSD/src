@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.25 2004/04/22 00:17:12 itojun Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.26 2004/04/23 21:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.25 2004/04/22 00:17:12 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.26 2004/04/23 21:13:07 itojun Exp $");
 
 #include "ehci.h"
 
@@ -107,7 +107,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	usbd_status r;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	/* Map I/O registers */

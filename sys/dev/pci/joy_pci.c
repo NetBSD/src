@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_pci.c,v 1.8 2004/04/03 10:51:43 martti Exp $	*/
+/*	$NetBSD: joy_pci.c,v 1.9 2004/04/23 21:13:06 itojun Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.8 2004/04/03 10:51:43 martti Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_pci.c,v 1.9 2004/04/23 21:13:06 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ joy_pci_attach(parent, self, aux)
 	bus_size_t mapsize;
 	int reg;
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
+	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
 	printf(": %s (rev 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
 
 	for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg++)
