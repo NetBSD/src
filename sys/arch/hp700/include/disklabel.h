@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 2004/07/27 22:14:22 jkunz Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.5 2004/07/28 09:17:31 skrll Exp $	*/
 
 /*	$OpenBSD: disklabel.h,v 1.5 2000/07/05 22:37:22 mickey Exp $	*/
 
@@ -41,79 +41,12 @@
 #define	MAXPARTITIONS		16		/* number of partitions */
 #define	RAW_PART		2		/* raw partition: xx?c */
 
-/*
- * volume header for "LIF" format volumes
- */
-struct	lifvol {
-	uint16_t	vol_id;
-	uint8_t		vol_label[6];
-	uint32_t	vol_addr;
-	uint16_t	vol_oct;
-	uint16_t	vol_dummy;
-
-	uint32_t	vol_dirsize;
-	uint16_t	vol_version;
-	uint16_t	vol_zero;
-	uint32_t	vol_number;
-	uint32_t	vol_lastvol;
-
-	uint32_t	vol_length;
-	uint8_t		vol_toc[6];
-	uint8_t		vol_dummy1[198];
-
-	uint32_t	ipl_addr;
-	uint32_t	ipl_size;
-	uint32_t	ipl_entry;
-
-	uint32_t	vol_dummy2;
-};
-
-struct	lifdir {
-	uint8_t		dir_name[10];
-	uint16_t	dir_type;
-	uint32_t	dir_addr;
-	uint32_t	dir_length;
-	uint8_t		dir_toc[6];
-	uint16_t	dir_flag;
-	uint32_t	dir_implement;
-};
-
-struct lif_load {
-	int address;
-	int count;
-};
-
-#define LIF_VOL_ID	0x8000
-#define LIF_VOL_OCT	0x1000
-#define LIF_DIR_SWAP	0x5243
-#define	LIF_DIR_FS	0xcd38
-#define	LIF_DIR_IOMAP	0xcd60
-#define	LIF_DIR_HPUX	0xcd80
-#define	LIF_DIR_ISL	0xce00
-#define	LIF_DIR_PAD	0xcffe
-#define	LIF_DIR_AUTO	0xcfff
-#define	LIF_DIR_EST	0xd001
-#define	LIF_DIR_TYPE	0xe942
-
-#define LIF_DIR_FLAG	0x8001	/* dont ask me! */
-#define	LIF_SECTSIZE	256
-
-#define LIF_NUMDIR	8
-
-#define LIF_VOLSTART	0
-#define LIF_VOLSIZE	sizeof(struct lifvol)
-#define LIF_DIRSTART	2048
-#define LIF_DIRSIZE	(LIF_NUMDIR * sizeof(struct lifdir))
-#define LIF_FILESTART	4096
-
-#define	btolifs(b)	(((b) + (LIF_SECTSIZE - 1)) / LIF_SECTSIZE)
-#define	lifstob(s)	((s) * LIF_SECTSIZE) 
-#define	lifstodb(s)	((s) * LIF_SECTSIZE / DEV_BSIZE)
+#include <sys/bootblock.h>
 
 #include <sys/dkbad.h>
 struct cpu_disklabel {
-	struct lifvol lifvol;
-	struct lifdir lifdir[LIF_NUMDIR];
+	struct hp700_lifvol lifvol;
+	struct hp700_lifdir lifdir[HP700_LIF_NUMDIR];
 	struct dkbad bad;			/* To make wd(4) happy */
 };
 

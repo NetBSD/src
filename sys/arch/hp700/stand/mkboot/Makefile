@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.2 2002/10/23 14:35:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2004/07/28 09:17:31 skrll Exp $
 
 NOMAN=		# defined
 
-HOSTPROG=	mkboot
+PROG=		mkboot
 SRCS=		mkboot.c
 
-.include <bsd.hostprog.mk>
+# We don't use libbfd, but we do use the BFD ELF header files because
+# they are somewhat more portable than NetBSD's own elf.h.
+BFDTOP=	${NETBSDSRCDIR}/gnu/dist/binutils
+
+CPPFLAGS=	-I${BFDTOP}/include
+
+.include <bsd.prog.mk>
