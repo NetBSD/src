@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.4 2002/06/14 03:05:46 itojun Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.5 2002/10/04 02:37:23 itojun Exp $	*/
 
 /*-
  * THE BEER-WARE LICENSE
@@ -12,6 +12,8 @@
  * $FreeBSD: src/sys/libkern/arc4random.c,v 1.9 2001/08/30 12:30:58 bde Exp $
  */
 
+#include "rnd.h"
+
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/param.h>
@@ -21,7 +23,7 @@
 #include <lib/libkern/libkern.h>
 
 #if NRND > 0
-#include <dev/rnd.h>
+#include <sys/rnd.h>
 #endif
 
 #define	ARC4_MAXRUNS 16384
