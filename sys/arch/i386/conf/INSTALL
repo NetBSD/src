@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.59 1997/10/20 20:03:04 perry Exp $
+#	$NetBSD: INSTALL,v 1.60 1997/10/21 06:01:20 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -324,7 +324,7 @@ fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
-tl*	at pci? dev ? function ?	# Thunderland-based Ethernet
+tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
@@ -359,7 +359,7 @@ ne1	at isa? port 0x300 irq 10
 mii*	at tl?
 
 # MII PHY network interfaces
-tlphy*	at mii? dev ?			# Thunderland PHYs
+tlphy*	at mii? dev ?			# ThunderLAN PHYs
 nsphy*	at mii? dev ?			# NS and compatible PHYs
 
 
