@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.24 2000/04/19 13:41:28 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.25 2000/04/19 15:32:28 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.24 2000/04/19 13:41:28 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.25 2000/04/19 15:32:28 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -291,12 +291,10 @@ t_getstr(info, id, area, limit)
 	ids[1] = id[1];
 	ids[2] = '\0';
 
-	if ((ids[0] == 'Z') && (ids[1] == 'Z')) {
-		  /* return info->info address??? */
-	}
-	
 	if ((i = cgetstr(info->info, ids, &s)) < 0) {
 		errno = ENOENT;
+		if (limit != NULL)
+			*limit = 0;
 		return NULL;
 	}
 	
