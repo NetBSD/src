@@ -1,4 +1,4 @@
-.\"	$NetBSD: makewhatis.8,v 1.2 1997/10/20 02:41:18 enami Exp $
+.\"	$NetBSD: makewhatis.8,v 1.3 1997/11/01 15:06:09 mrg Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,11 +63,13 @@ Man pages compressed with
 and
 .Xr gzip 1
 are uncompressed before processing, unformatted man pages
-will be formatted on the fly.
+will be processed by
+.Xr getNAME 8 .
 .Sh BUGS
 .Nm
 should find its search paths using /etc/man.conf
 .Sh SEE ALSO
+.Xr getNAME 8 ,
 .Xr man 1 ,
 .Xr man.conf 5
 .Sh AUTHOR
