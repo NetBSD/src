@@ -1,5 +1,6 @@
-#	$NetBSD: files.powerpc,v 1.15 2001/02/02 06:11:52 briggs Exp $
+#	$NetBSD: files.powerpc,v 1.16 2001/02/04 17:34:11 briggs Exp $
 defopt	altivec
+defopt	openpic
 
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/copyinstr.c
@@ -13,7 +14,7 @@ file	arch/powerpc/powerpc/in_cksum.c
 file	netinet/in4_cksum.c				inet
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/mem.c
-file	arch/powerpc/powerpc/openpic.c
+file	arch/powerpc/powerpc/openpic.c			openpic
 file	arch/powerpc/powerpc/pmap.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/sig_machdep.c
