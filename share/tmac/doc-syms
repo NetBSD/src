@@ -1,4 +1,4 @@
-.\"	$NetBSD: doc-syms,v 1.57 2001/01/05 13:11:00 blymn Exp $
+.\"	$NetBSD: doc-syms,v 1.58 2001/01/05 15:59:30 garbled Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -437,6 +437,7 @@
 .if "\\$1"libarm32" \&ARM32 Architecture Library (libarm32, -larm32)
 .if "\\$1"libi386" \&i386 Architecture Library (libi386, -li386)
 .if "\\$1"libc" \&Standard C Library (libc, -lc)
+.if "\\$1"libcdk" \&Curses Development Kit Library (libcdk, -lcdk)
 .if "\\$1"libcompat" \&Compatibility Library (libcompat, -lcompat)
 .if "\\$1"libcrypt" \&Crypt Library (libcrypt, -lcrypt)
 .if "\\$1"libcurses" \&Curses Library (libcurses, -lcurses)
