@@ -1,4 +1,4 @@
-.\"	$NetBSD: binstall.8,v 1.1 2002/01/06 07:44:11 mrg Exp $
+.\"	$NetBSD: binstall.8,v 1.2 2002/01/06 17:27:05 wiz Exp $
 .\"
 .\" Copyright (c) 2002 Matthew R. Green
 .\" All rights reserved.
@@ -34,12 +34,16 @@
 .Nd install sparc and sparc64 boot blocks
 .Sh SYNOPSIS
 .Nm
-.Op Fl huUvt
+.Op Fl htUuv
 .Op Fl b Ar bootprog
 .Op Fl f Ar filesystem
 .Op Fl m Ar mdec
 .Op Fl i Ar installbootprog
-.Op "net"|"ffs"
+.Oo
+.Dq net
+.Ns \&|
+.Dq ffs
+.Oc
 .Op directory
 .Sh DESCRIPTION
 The
@@ -50,22 +54,11 @@ disk from a
 partition or over the network.  The default type of boot block installed
 is derived from the host system.  If it is an UltraSPARC, the sparc64
 boot blocks will be used, otherwise the SPARC boot blocks will be used.
-.Nm can be forced to prepare a disk for either.
+.Nm
+can be forced to prepare a disk for either.
 .Sh OPTIONS
 The following options are available:
 .Bl -tag -width 123456
-.It Fl h
-Display help.
-.It Fl u
-Install sparc64 (UltraSPARC) boot blocks.
-.It Fl U
-Install sparc (SPARC) boot blocks.
-.It Fl v
-Be verbose.
-.It Fl t
-Test mode; does not run any program.  Implies the
-.Fl t
-option.
 .It Fl b
 Set the second stage boot program to
 .Ar bootprog .
@@ -77,14 +70,10 @@ for sparc64 systems.
 .It Fl f
 Set the path to the filesystem being installed for to
 .Ar filesystem .
-This is otherwise derived from the 
+This is otherwise derived from the
 .Op directory .
-.It Fl m
-Sets the path to the machine dependant directory to
-.Ar mdec .
-This is the directory that both the boot blocks and the
-.Xr installboot 8
-program live.
+.It Fl h
+Display help.
 .It Fl i
 Set the path to the
 .Xr installboot 8
@@ -93,6 +82,22 @@ program to
 This is useful for using
 .Nm
 on non-sparc or sparc64 systems.
+.It Fl m
+Sets the path to the machine dependant directory to
+.Ar mdec .
+This is the directory that both the boot blocks and the
+.Xr installboot 8
+program live.
+.It Fl t
+Test mode; does not run any program.  Implies the
+.Fl v
+option.
+.It Fl U
+Install sparc (SPARC) boot blocks.
+.It Fl u
+Install sparc64 (UltraSPARC) boot blocks.
+.It Fl v
+Be verbose.
 .El
 .Sh SEE ALSO
 .Xr disklabel 8 ,
