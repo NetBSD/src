@@ -1,4 +1,4 @@
-/*	$NetBSD: proc1.c,v 1.2 2002/11/01 09:49:47 jdolecek Exp $	*/
+/*	$NetBSD: proc1.c,v 1.3 2003/02/08 07:47:14 cgd Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@ doevents(void)
 {
 	pid_t ch;
 	int status;
-	char * const argv[] = { "true" };
-	char * const envp[] = { "FOO=BAZ" };
+	char * const argv[] = { "true", NULL };
+	char * const envp[] = { "FOO=BAZ", NULL };
 
 	/* Ensure parent is ready */
 	sleep(1);
