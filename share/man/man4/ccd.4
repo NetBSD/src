@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.6 1996/02/01 20:47:46 thorpej Exp $
+.\"	$NetBSD: ccd.4,v 1.7 1997/01/05 22:53:08 cjs Exp $
 .\"
 .\" Copyright (c) 1994 Jason Downs.
 .\" Copyright (c) 1994, 1995, 1996 Jason R. Thorpe.
@@ -56,7 +56,7 @@ partitions of the disks
 .Pa should not
 be combined.  Each component partition should be offset at least one
 cylinder from the beginning of the component disk.  This avoids potential
-conflicts between the compoent disk's disklabel and the
+conflicts between the component disk's disklabel and the
 .Nm ccd's
 disklabel.  The kernel will only allow component partitions of type FS_BSDFFS.
 .Pp
