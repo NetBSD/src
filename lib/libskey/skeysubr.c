@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.9 1997/06/18 19:18:31 christos Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.10 1997/06/28 01:12:19 christos Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -44,6 +44,7 @@ char *passwd;	/* Password, any length */
 	unsigned int buflen;
 	int i;
 	register int tmp;
+	u_int32_t hash[4];
 	
 	buflen = strlen(seed) + strlen(passwd);
 	if ((buf = (char *)malloc(buflen+1)) == NULL)
@@ -54,19 +55,20 @@ char *passwd;	/* Password, any length */
 	/* Crunch the key through MD4 */
 	sevenbit(buf);
 	MD4Init(&md);
-	MD4Update(&md,(unsigned char *)buf,8*buflen);
+	MD4Update(&md, (unsigned char *) buf, buflen);
+	MD4Final((unsigned char *) hash, &md);
 
 	free(buf);
 
 	/* Fold result from 128 to 64 bits */
-	md.buffer[0] ^= md.buffer[2];
-	md.buffer[1] ^= md.buffer[3];
+	hash[0] ^= hash[2];
+	hash[1] ^= hash[3];
 
 	/* Default (but slow) code that will convert to
 	 * little-endian byte ordering on any machine
 	 */
 	for (i=0; i<2; i++) {
-		tmp = md.buffer[i];
+		tmp = hash[i];
 		*result++ = tmp;
 		tmp >>= 8;
 		*result++ = tmp;
@@ -86,18 +88,20 @@ f(x)
 {
 	MD4_CTX md;
 	register int tmp;
+	u_int32_t hash[4];
 
 	MD4Init(&md);
-	MD4Update(&md,(unsigned char *)x,64);
+	MD4Update(&md, (unsigned char *) x, 8);
+	MD4Final((unsigned char *) hash, &md);
 
 	/* Fold 128 to 64 bits */
-	md.buffer[0] ^= md.buffer[2];
-	md.buffer[1] ^= md.buffer[3];
+	hash[0] ^= hash[2];
+	hash[1] ^= hash[3];
 
 	/* Default (but slow) code that will convert to
 	 * little-endian byte ordering on any machine
 	 */
-	tmp = md.buffer[0];
+	tmp = hash[0];
 	*x++ = tmp;
 	tmp >>= 8;
 	*x++ = tmp;
@@ -106,7 +110,7 @@ f(x)
 	tmp >>= 8;
 	*x++ = tmp;
 
-	tmp = md.buffer[1];
+	tmp = hash[1];
 	*x++ = tmp;
 	tmp >>= 8;
 	*x++ = tmp;
