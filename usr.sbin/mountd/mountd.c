@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.70.2.6 2001/05/01 12:11:56 he Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.70.2.7 2002/02/10 14:07:07 he Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.70.2.6 2001/05/01 12:11:56 he Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.70.2.7 2002/02/10 14:07:07 he Exp $");
 #endif
 #endif				/* not lint */
 
@@ -187,9 +187,9 @@ static int chk_host __P((struct dirlist *, struct sockaddr *, int *, int *));
 static int del_mlist __P((char *, char *, struct sockaddr *));
 static struct dirlist *dirp_search __P((struct dirlist *, char *));
 static int do_mount __P((const char *, size_t, struct exportlist *,
-    struct grouplist *, int, struct ucred *, char *, int, struct statfs *));
+    struct grouplist *, int, struct uucred *, char *, int, struct statfs *));
 static int do_opt __P((const char *, size_t, char **, char **,
-    struct exportlist *, struct grouplist *, int *, int *, struct ucred *));
+    struct exportlist *, struct grouplist *, int *, int *, struct uucred *));
 static struct exportlist *ex_search __P((fsid_t *));
 static int parse_directory __P((const char *, size_t, struct grouplist *,
     int, char *, struct exportlist **, struct statfs *));
@@ -212,7 +212,7 @@ static void hang_dirp __P((struct dirlist *, struct grouplist *,
     struct exportlist *, int));
 static void mntsrv __P((struct svc_req *, SVCXPRT *));
 static void nextfield __P((char **, char **));
-static void parsecred __P((char *, struct ucred *));
+static void parsecred __P((char *, struct uucred *));
 static int put_exlist __P((struct dirlist *, XDR *, struct dirlist *, int *));
 static int scan_tree __P((struct dirlist *, struct sockaddr *));
 static void send_umntall __P((int));
@@ -235,10 +235,10 @@ static struct exportlist *exphead;
 static struct mountlist *mlhead;
 static struct grouplist *grphead;
 static char    *exname;
-static struct ucred def_anon = {
+static struct uucred def_anon = {
 	1,
-	(uid_t) - 2,
-	(gid_t) - 2,
+	(uid_t) -2,
+	(gid_t) -2,
 	0,
 	{}
 };
@@ -917,7 +917,7 @@ get_exportlist(n)
 	struct dirlist *dirhead;
 	struct statfs fsb, *fsp;
 	struct addrinfo *ai;
-	struct ucred anon;
+	struct uucred anon;
 	char *cp, *endcp, *dirp, savedc;
 	int has_host, exflags, got_nondir, dirplen, num, i;
 	FILE *exp_file;
@@ -1651,7 +1651,7 @@ do_opt(line, lineno, cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 	struct grouplist *grp;
 	int *has_hostp;
 	int *exflagsp;
-	struct ucred *cr;
+	struct uucred *cr;
 {
 	char *cpoptarg, *cpoptend;
 	char *cp, *endcp, *cpopt, savedc, savedc2;
@@ -1949,7 +1949,7 @@ do_mount(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 	struct exportlist *ep;
 	struct grouplist *grp;
 	int exflags;
-	struct ucred *anoncrp;
+	struct uucred *anoncrp;
 	char *dirp;
 	int dirplen;
 	struct statfs *fsb;
@@ -2238,7 +2238,7 @@ nextfield(cp, endcp)
 static void
 parsecred(namelist, cr)
 	char *namelist;
-	struct ucred *cr;
+	struct uucred *cr;
 {
 	char *name;
 	int cnt;
@@ -2250,10 +2250,7 @@ parsecred(namelist, cr)
 	/*
 	 * Set up the unprivileged user.
 	 */
-	cr->cr_ref = 1;
-	cr->cr_uid = -2;
-	cr->cr_gid = -2;
-	cr->cr_ngroups = 0;
+	*cr = def_anon;
 	/*
 	 * Get the user's password table entry.
 	 */
