@@ -50,7 +50,7 @@
 # There is some error detection...
 
 BEGIN {
-	split(defines, defns, "[[:space:],]+")
+	split(defines, defns)
 	for (v in defns)
 		deflist[defns[v]] = 1
 	delete defns
@@ -58,7 +58,7 @@ BEGIN {
 	skip = 0
 }
 
-/^\.if\>/ {
+/^\.if/ {
 	nested++
 	else_ok[nested] = 1
 	if (skip)
@@ -74,7 +74,7 @@ BEGIN {
 	next
 }
 
-/^\.else\>/  {
+/^\.else/  {
 	if (!else_ok[nested])
 		exit 1
 	else_ok[nested] = 0
@@ -85,7 +85,7 @@ BEGIN {
 	next
 }
 
-/^\.endif\>/ {
+/^\.endif/ {
 	if (nested == 0)
 		exit 1
 	if (skip == nested)
