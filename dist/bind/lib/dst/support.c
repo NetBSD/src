@@ -1,6 +1,6 @@
-/*	$NetBSD: support.c,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $	*/
+/*	$NetBSD: support.c,v 1.1.1.2 2000/11/10 09:34:41 itojun Exp $	*/
 
-static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/support.c,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind/src/lib/dst/support.c,v 1.8 1999/10/13 16:39:24 vixie Exp";
 
 
 /*
