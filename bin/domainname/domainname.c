@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
- * All rights reserved.
+ * Copyright (c) 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -10,15 +10,19 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
- * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
- * DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
@@ -28,47 +32,61 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: domainname.c,v 1.4 1994/02/23 02:48:29 cgd Exp $";
+static char copyright[] =
+"@(#) Copyright (c) 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
+#ifndef lint
+/*static char sccsid[] = "from: @(#)hostname.c	8.1 (Berkeley) 5/31/93";*/
+static char *rcsid = "$Id: domainname.c,v 1.5 1994/09/22 09:42:49 mycroft Exp $";
+#endif /* not lint */
+
+#include <sys/param.h>
+
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/param.h>
 
-static void usage __P((void));
+void usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	char dom[MAXHOSTNAMELEN];
+	int ch;
+	char domainname[MAXHOSTNAMELEN];
 
-	if( argc>2 ) {
-		usage ();
-		/* NOTREACHED */
-	}
-
-	if( argc==2 ) {
-		if( setdomainname(argv[1], strlen(argv[1])+1) == -1) {
-			perror("setdomainname");
-			exit(1);
+	while ((ch = getopt(argc, argv, "s")) != -1)
+		switch (ch) {
+		case '?':
+		default:
+			usage();
 		}
+	argc -= optind;
+	argv += optind;
+
+	if (argc > 1)
+		usage();
+
+	if (*argv) {
+		if (setdomainname(*argv, strlen(*argv)))
+			err(1, "setdomainname");
 	} else {
-		if( getdomainname(dom, sizeof(dom)) == -1) {
-			perror("getdomainname");
-			exit(1);
-		}
-		printf("%s\n", dom);
+		if (getdomainname(domainname, sizeof(domainname)))
+			err(1, "getdomainname");
+		(void)printf("%s\n", domainname);
 	}
-
 	exit(0);
 }
 
-static void
-usage ()
+void
+usage()
 {
-	(void)fprintf(stderr, "usage: domainname [name-of-domain]\n");
+
+	(void)fprintf(stderr, "usage: domainname [domainname]\n");
 	exit(1);
 }
