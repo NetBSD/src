@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.7 2002/04/02 05:30:40 lukem Exp $
+#	$NetBSD: INTEGRATOR,v 1.8 2002/04/12 08:10:56 gmcgarry Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -118,6 +118,7 @@ options 	PCI_NETBSD_CONFIGURE	# Do not rely on BIOS/whatever to
 					# configure PCI devices
 options 	PCI_CONFIGURE_VERBOSE	# Show PCI config information
 options 	DDB_KEYCODE=0x1d	# Enter ddb on ^]
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.62 2002/02/10 17:36:58 wiz Exp $
+#	$NetBSD: HOMEWORLD,v 1.63 2002/04/12 08:11:02 gmcgarry Exp $
 #	From: GENERIC,v 1.212 1999/01/06 23:30:53 thorpej Exp
 #
 #	HOMEWORLD - TNF mail/gnats
@@ -63,6 +63,7 @@ options 	BUFCACHE=10
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

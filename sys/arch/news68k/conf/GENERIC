@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2002/03/05 13:59:14 wiz Exp $
+# $NetBSD: GENERIC,v 1.32 2002/04/12 08:11:11 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/news68k/conf/std.news68k"
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	8
 
@@ -42,6 +42,7 @@ options 	SYSVSHM			# System V shared memory
 #options 	SHMMAXPGS=1024		# 1024 pages is the default
 options 	LKM			# loadable kernel modules
 #options 	UCONSOLE		# users can redirect console (unsafe)
+#options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options

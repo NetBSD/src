@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.43 2002/03/04 13:24:11 sommerfeld Exp $
+# $NetBSD: GENERIC,v 1.44 2002/04/12 08:11:16 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/prep/conf/std.prep"
 
-#ident		"GENERIC-$Revision: 1.43 $"
+#ident		"GENERIC-$Revision: 1.44 $"
 
 maxusers	32
 
@@ -42,6 +42,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 2002/03/28 15:26:57 uch Exp $
+# $NetBSD: GENERIC,v 1.23 2002/04/12 08:11:00 gmcgarry Exp $
 #
 # GENERIC machine description file
 # 
@@ -60,6 +60,7 @@ options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options 	RTC_OFFSET=-540 # hardware clock is this many mins. west of GMT
 
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+#options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Executable format options

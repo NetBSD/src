@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.13 2002/03/09 23:35:59 chs Exp $
+#	$NetBSD: NATSUMI,v 1.14 2002/04/12 08:11:16 gmcgarry Exp $
 #
 #	for development
 #
@@ -23,6 +23,7 @@ options 	SHMMAXPGS=8192
 
 #options 	LKM		# loadable kernel modules
 
+#options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

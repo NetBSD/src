@@ -1,5 +1,5 @@
 #
-# $NetBSD: ATARITT,v 1.42 2002/01/27 13:56:49 jdolecek Exp $
+# $NetBSD: ATARITT,v 1.43 2002/04/12 08:10:52 gmcgarry Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running makeconf in this directory.
@@ -129,7 +129,8 @@ options 	SYSVSEM			# System V semaphores
 
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	USERCONF		# userconf(4) support
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 #These options enable verbose messages for several subsystems.
 #Warning, these may compile large string tables into the kernel!

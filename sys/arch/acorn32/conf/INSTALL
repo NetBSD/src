@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.8 2002/04/10 20:10:08 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.9 2002/04/12 08:10:46 gmcgarry Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"INSTALL-$Revision: 1.8 $"
+#ident		"INSTALL-$Revision: 1.9 $"
 
 # estimated number of users
 maxusers	32
@@ -125,6 +125,7 @@ options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
+#options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
