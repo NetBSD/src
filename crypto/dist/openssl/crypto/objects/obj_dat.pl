@@ -46,10 +46,28 @@ while (<IN>)
 	next unless /^\#define\s+(\S+)\s+(.*)$/;
 	$v=$1;
 	$d=$2;
+	$d =~ s/^\"//;
+	$d =~ s/\"$//;
 	if ($v =~ /^SN_(.*)$/)
-		{ $sn{$1}=$d; }
+		{
+		if(defined $snames{$d})
+			{
+			print "WARNING: Duplicate short name \"$d\"\n";
+			}
+		else 
+			{ $snames{$d} = "X"; }
+		$sn{$1}=$d;
+		}
 	elsif ($v =~ /^LN_(.*)$/)
-		{ $ln{$1}=$d; }
+		{
+		if(defined $lnames{$d})
+			{
+			print "WARNING: Duplicate long name \"$d\"\n";
+			}
+		else 
+			{ $lnames{$d} = "X"; }
+		$ln{$1}=$d;
+		}
 	elsif ($v =~ /^NID_(.*)$/)
 		{ $nid{$d}=$1; }
 	elsif ($v =~ /^OBJ_(.*)$/)
@@ -78,11 +96,20 @@ for ($i=0; $i<$n; $i++)
 		{
 		$sn=defined($sn{$nid{$i}})?"$sn{$nid{$i}}":"NULL";
 		$ln=defined($ln{$nid{$i}})?"$ln{$nid{$i}}":"NULL";
-		$sn=$ln if ($sn eq "NULL");
-		$ln=$sn if ($ln eq "NULL");
+
+		if ($sn eq "NULL") {
+			$sn=$ln;
+			$sn{$nid{$i}} = $ln;
+		}
+
+		if ($ln eq "NULL") {
+			$ln=$sn;
+			$ln{$nid{$i}} = $sn;
+		}
+			
 		$out ="{";
-		$out.=$sn;
-		$out.=",".$ln;
+		$out.="\"$sn\"";
+		$out.=","."\"$ln\"";
 		$out.=",NID_$nid{$i},";
 		if (defined($obj{$nid{$i}}))
 			{
@@ -117,13 +144,13 @@ for ($i=0; $i<$n; $i++)
 @a=grep(defined($sn{$nid{$_}}),0 .. $n);
 foreach (sort { $sn{$nid{$a}} cmp $sn{$nid{$b}} } @a)
 	{
-	push(@sn,sprintf("&(nid_objs[%2d]),/* $sn{$nid{$_}} */\n",$_));
+	push(@sn,sprintf("&(nid_objs[%2d]),/* \"$sn{$nid{$_}}\" */\n",$_));
 	}
 
 @a=grep(defined($ln{$nid{$_}}),0 .. $n);
 foreach (sort { $ln{$nid{$a}} cmp $ln{$nid{$b}} } @a)
 	{
-	push(@ln,sprintf("&(nid_objs[%2d]),/* $ln{$nid{$_}} */\n",$_));
+	push(@ln,sprintf("&(nid_objs[%2d]),/* \"$ln{$nid{$_}}\" */\n",$_));
 	}
 
 @a=grep(defined($obj{$nid{$_}}),0 .. $n);
@@ -137,7 +164,13 @@ foreach (sort obj_cmp @a)
 	}
 
 print OUT <<'EOF';
-/* lib/obj/obj_dat.h */
+/* crypto/objects/obj_dat.h */
+
+/* THIS FILE IS GENERATED FROM objects.h by obj_dat.pl via the
+ * following command:
+ * perl obj_dat.pl objects.h obj_dat.h
+ */
+
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -193,11 +226,6 @@ print OUT <<'EOF';
  * derivative of this code cannot be changed.  i.e. this code cannot simply be
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
- */
-
-/* THIS FILE IS GENERATED FROM Objects.h by obj_dat.pl via the
- * following command:
- * perl obj_dat.pl objects.h obj_dat.h
  */
 
 EOF

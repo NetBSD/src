@@ -72,9 +72,9 @@
 #endif
 
 #ifdef SO_MAXCONN
-#define MAX_LISTEN  SOMAXCONN
-#elif defined(SO_MAXCONN)
 #define MAX_LISTEN  SO_MAXCONN
+#elif defined(SOMAXCONN)
+#define MAX_LISTEN  SOMAXCONN
 #else
 #define MAX_LISTEN  32
 #endif
@@ -95,8 +95,10 @@ static struct ghbn_cache_st
 	} ghbn_cache[GHBN_NUM];
 
 static int get_ip(const char *str,unsigned char *ip);
+#if 0
 static void ghbn_free(struct hostent *a);
 static struct hostent *ghbn_dup(struct hostent *a);
+#endif
 int BIO_get_host_ip(const char *str, unsigned char *ip)
 	{
 	int i;
@@ -105,17 +107,22 @@ int BIO_get_host_ip(const char *str, unsigned char *ip)
 	struct hostent *he;
 
 	i=get_ip(str,ip);
-	if (i > 0) return(1);
 	if (i < 0)
 		{
 		BIOerr(BIO_F_BIO_GET_HOST_IP,BIO_R_INVALID_IP_ADDRESS);
 		goto err;
 		}
 
-	/* do a gethostbyname */
-	if (!BIO_sock_init())
-		return(0); /* don't generate another error code here */
+	/* At this point, we have something that is most probably correct
+	   in some way, so let's init the socket. */
+	if (BIO_sock_init() != 1)
+		return 0; /* don't generate another error code here */
 
+	/* If the string actually contained an IP address, we need not do
+	   anything more */
+	if (i > 0) return(1);
+
+	/* do a gethostbyname */
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
 	locked = 1;
 	he=BIO_gethostbyname(str);
@@ -261,20 +268,21 @@ long BIO_ghbn_ctrl(int cmd, int iarg, char *parg)
 	return(1);
 	}
 
+#if 0
 static struct hostent *ghbn_dup(struct hostent *a)
 	{
 	struct hostent *ret;
 	int i,j;
 
 	MemCheck_off();
-	ret=(struct hostent *)Malloc(sizeof(struct hostent));
+	ret=(struct hostent *)OPENSSL_malloc(sizeof(struct hostent));
 	if (ret == NULL) return(NULL);
 	memset(ret,0,sizeof(struct hostent));
 
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		;
 	i++;
-	ret->h_aliases = (char **)Malloc(i*sizeof(char *));
+	ret->h_aliases = (char **)OPENSSL_malloc(i*sizeof(char *));
 	if (ret->h_aliases == NULL)
 		goto err;
 	memset(ret->h_aliases, 0, i*sizeof(char *));
@@ -282,25 +290,25 @@ static struct hostent *ghbn_dup(struct hostent *a)
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		;
 	i++;
-	ret->h_addr_list=(char **)Malloc(i*sizeof(char *));
+	ret->h_addr_list=(char **)OPENSSL_malloc(i*sizeof(char *));
 	if (ret->h_addr_list == NULL)
 		goto err;
 	memset(ret->h_addr_list, 0, i*sizeof(char *));
 
 	j=strlen(a->h_name)+1;
-	if ((ret->h_name=Malloc(j)) == NULL) goto err;
+	if ((ret->h_name=OPENSSL_malloc(j)) == NULL) goto err;
 	memcpy((char *)ret->h_name,a->h_name,j);
 	for (i=0; a->h_aliases[i] != NULL; i++)
 		{
 		j=strlen(a->h_aliases[i])+1;
-		if ((ret->h_aliases[i]=Malloc(j)) == NULL) goto err;
+		if ((ret->h_aliases[i]=OPENSSL_malloc(j)) == NULL) goto err;
 		memcpy(ret->h_aliases[i],a->h_aliases[i],j);
 		}
 	ret->h_length=a->h_length;
 	ret->h_addrtype=a->h_addrtype;
 	for (i=0; a->h_addr_list[i] != NULL; i++)
 		{
-		if ((ret->h_addr_list[i]=Malloc(a->h_length)) == NULL)
+		if ((ret->h_addr_list[i]=OPENSSL_malloc(a->h_length)) == NULL)
 			goto err;
 		memcpy(ret->h_addr_list[i],a->h_addr_list[i],a->h_length);
 		}
@@ -325,33 +333,39 @@ static void ghbn_free(struct hostent *a)
 	if (a->h_aliases != NULL)
 		{
 		for (i=0; a->h_aliases[i] != NULL; i++)
-			Free(a->h_aliases[i]);
-		Free(a->h_aliases);
+			OPENSSL_free(a->h_aliases[i]);
+		OPENSSL_free(a->h_aliases);
 		}
 	if (a->h_addr_list != NULL)
 		{
 		for (i=0; a->h_addr_list[i] != NULL; i++)
-			Free(a->h_addr_list[i]);
-		Free(a->h_addr_list);
+			OPENSSL_free(a->h_addr_list[i]);
+		OPENSSL_free(a->h_addr_list);
 		}
-	if (a->h_name != NULL) Free(a->h_name);
-	Free(a);
+	if (a->h_name != NULL) OPENSSL_free(a->h_name);
+	OPENSSL_free(a);
 	}
+#endif
 
 struct hostent *BIO_gethostbyname(const char *name)
 	{
+#if 1
+	/* Caching gethostbyname() results forever is wrong,
+	 * so we have to let the true gethostbyname() worry about this */
+	return gethostbyname(name);
+#else
 	struct hostent *ret;
 	int i,lowi=0,j;
 	unsigned long low= (unsigned long)-1;
 
-/*	return(gethostbyname(name)); */
 
-#if 0 /* It doesn't make sense to use locking here: The function interface
-	   * is not thread-safe, because threads can never be sure when
-	   * some other thread destroys the data they were given a pointer to.
-	   */
+#  if 0
+	/* It doesn't make sense to use locking here: The function interface
+	 * is not thread-safe, because threads can never be sure when
+	 * some other thread destroys the data they were given a pointer to.
+	 */
 	CRYPTO_w_lock(CRYPTO_LOCK_GETHOSTBYNAME);
-#endif
+#  endif
 	j=strlen(name);
 	if (j < 128)
 		{
@@ -379,20 +393,21 @@ struct hostent *BIO_gethostbyname(const char *name)
 		 * parameter is 'char *', instead of 'const char *'
 		 */
 		ret=gethostbyname(
-#ifndef CONST_STRICT
+#  ifndef CONST_STRICT
 		    (char *)
-#endif
+#  endif
 		    name);
 
 		if (ret == NULL)
 			goto end;
 		if (j > 128) /* too big to cache */
 			{
-#if 0 /* If we were trying to make this function thread-safe (which
-	   * is bound to fail), we'd have to give up in this case
-	   * (or allocate more memory). */
+#  if 0
+			/* If we were trying to make this function thread-safe (which
+			 * is bound to fail), we'd have to give up in this case
+			 * (or allocate more memory). */
 			ret = NULL;
-#endif
+#  endif
 			goto end;
 			}
 
@@ -416,11 +431,13 @@ struct hostent *BIO_gethostbyname(const char *name)
 		ghbn_cache[i].order=BIO_ghbn_miss+BIO_ghbn_hits;
 		}
 end:
-#if 0
+#  if 0
 	CRYPTO_w_unlock(CRYPTO_LOCK_GETHOSTBYNAME);
-#endif
+#  endif
 	return(ret);
+#endif
 	}
+
 
 int BIO_sock_init(void)
 	{
@@ -514,15 +531,15 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	{
 	int ret=0;
 	struct sockaddr_in server,client;
-	int s= -1,cs;
+	int s=INVALID_SOCKET,cs;
 	unsigned char ip[4];
 	unsigned short port;
-	char *str,*e;
+	char *str=NULL,*e;
 	const char *h,*p;
 	unsigned long l;
 	int err_num;
 
-	if (!BIO_sock_init()) return(INVALID_SOCKET);
+	if (BIO_sock_init() != 1) return(INVALID_SOCKET);
 
 	if ((str=BUF_strdup(host)) == NULL) return(INVALID_SOCKET);
 
@@ -548,7 +565,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		h="*";
 		}
 
-	if (!BIO_get_port(p,&port)) return(INVALID_SOCKET);
+	if (!BIO_get_port(p,&port)) goto err;
 
 	memset((char *)&server,0,sizeof(server));
 	server.sin_family=AF_INET;
@@ -558,7 +575,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		server.sin_addr.s_addr=INADDR_ANY;
 	else
 		{
-		if (!BIO_get_host_ip(h,&(ip[0]))) return(INVALID_SOCKET);
+                if (!BIO_get_host_ip(h,&(ip[0]))) goto err;
 		l=(unsigned long)
 			((unsigned long)ip[0]<<24L)|
 			((unsigned long)ip[1]<<16L)|
@@ -628,7 +645,7 @@ again:
 		}
 	ret=1;
 err:
-	if (str != NULL) Free(str);
+	if (str != NULL) OPENSSL_free(str);
 	if ((ret == 0) && (s != INVALID_SOCKET))
 		{
 		closesocket(s);
@@ -667,7 +684,7 @@ int BIO_accept(int sock, char **addr)
 	port=ntohs(from.sin_port);
 	if (*addr == NULL)
 		{
-		if ((p=Malloc(24)) == NULL)
+		if ((p=OPENSSL_malloc(24)) == NULL)
 			{
 			BIOerr(BIO_F_BIO_ACCEPT,ERR_R_MALLOC_FAILURE);
 			goto end;

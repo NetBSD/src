@@ -203,7 +203,7 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 	if (s == NULL)
 		return(NULL);
 
-#if defined(THREADS) && !defined(WIN32)
+#if defined(THREADS) && !defined(WIN32) && ! defined(_DARWIN)
 	gmtime_r(&t,&data); /* should return &data, but doesn't on some systems, so we don't even look at the return value */
 	ts=&data;
 #else
@@ -212,10 +212,10 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,
 	p=(char *)s->data;
 	if ((p == NULL) || (s->length < 16))
 		{
-		p=Malloc(20);
+		p=OPENSSL_malloc(20);
 		if (p == NULL) return(NULL);
 		if (s->data != NULL)
-			Free(s->data);
+			OPENSSL_free(s->data);
 		s->data=(unsigned char *)p;
 		}
 
