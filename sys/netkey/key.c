@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.64 2002/05/28 10:11:49 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.65 2002/05/30 05:51:21 itojun Exp $	*/
 /*	$KAME: key.c,v 1.234 2002/05/13 03:21:17 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.64 2002/05/28 10:11:49 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.65 2002/05/30 05:51:21 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -210,10 +210,6 @@ static int ipsec_esp_keymin = 256;
 static int ipsec_esp_auth = 0;
 static int ipsec_ah_keymin = 128;
 
-#ifndef LIST_FOREACH
-#define LIST_FOREACH(elm, head, field)                                     \
-	for (elm = LIST_FIRST(head); elm; elm = LIST_NEXT(elm, field))
-#endif
 #define __LIST_CHAINED(elm) \
 	(!((elm)->chain.le_next == NULL && (elm)->chain.le_prev == NULL))
 #define LIST_INSERT_TAIL(head, elm, type, field) \
