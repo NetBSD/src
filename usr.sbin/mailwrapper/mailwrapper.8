@@ -1,4 +1,4 @@
-.\"	$NetBSD: mailwrapper.8,v 1.5 1999/03/22 18:44:01 garbled Exp $
+.\"	$NetBSD: mailwrapper.8,v 1.6 1999/03/25 16:40:17 is Exp $
 .\"
 .\" Copyright (c) 1998
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -108,40 +108,6 @@ based on configuration information placed in
 .Pa /etc/mailer.conf .
 This permits the administrator to configure which MTA is to be invoked on
 the system at run time. 
-.Pp
-The file
-.Pa /etc/mailer.conf
-contains a series of pairs. The first member of each pair is the name
-of an invoking program which is typically a symbolic link to
-.Pa /usr/sbin/sendmail .
-(On a typical system,
-.Xr newaliases 1
-and
-.Xr mailq 1
-would be set up this way.)
-The second member of each pair is the name of the program to
-actually execute when the first name is invoked. The file may also
-contain comments, denoted by a # mark in the first column of any line.
-.Sh EXAMPLES
-The following is an example of how to set up an
-.Pa /etc/mailer.conf
-for traditional sendmail invocation behavior.
-.Bd -literal
-# Execute the "real" sendmail program, named /usr/libexec/sendmail/sendmail
-sendmail	/usr/libexec/sendmail/sendmail
-send-mail	/usr/libexec/sendmail/sendmail
-mailq		/usr/libexec/sendmail/sendmail
-newaliases	/usr/libexec/sendmail/sendmail
-.Ed
-.Pp
-This example shows how to invoke the fictitious "newmail" program in
-place of sendmail.
-.Bd -literal
-# Execute the "real" sendmail program, named /usr/local/sbin/newmail
-sendmail	/usr/local/sbin/newmail
-mailq		/usr/local/sbin/newmail
-newaliases	/usr/local/sbin/newmail
-.Ed
 .Sh FILES
 Configuration for
 .Nm
@@ -161,6 +127,7 @@ was invoked.
 .Sh SEE ALSO
 .Xr mail 1 ,
 .Xr mailq 1 ,
+.Xr mailer.conf 5 ,
 .Xr newaliases 1 ,
 .Xr sendmail 8 .
 .Sh HISTORY
