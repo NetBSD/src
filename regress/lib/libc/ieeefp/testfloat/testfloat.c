@@ -1,3 +1,4 @@
+/* $NetBSD: testfloat.c,v 1.2 2001/03/13 06:48:56 ross Exp $ */
 
 /*
 ===============================================================================
@@ -42,6 +43,7 @@ static void catchSIGINT( int signalCode )
 
 }
 
+int
 main( int argc, char **argv )
 {
     char *argPtr;
@@ -290,6 +292,6 @@ main( int argc, char **argv )
         }
     }
     exitWithStatus();
-
+    return 0;
 }
 
