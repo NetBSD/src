@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_bmap.c,v 1.6 2001/10/26 05:56:07 lukem Exp $	*/
+/*	$NetBSD: ext2fs_bmap.c,v 1.7 2001/11/06 07:11:29 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -118,7 +118,6 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 	struct buf *bp;
 	struct ufsmount *ump;
 	struct mount *mp;
-	struct vnode *devvp;
 	struct indir a[NIADDR+1], *xap;
 	ufs_daddr_t daddr;
 	long metalbn;
@@ -165,8 +164,6 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 
 	/* Get disk address out of indirect block array */
 	daddr = fs2h32(ip->i_e2fs_blocks[NDADDR + xap->in_off]);
-
-	devvp = VFSTOUFS(vp->v_mount)->um_devvp;
 
 #ifdef DIAGNOSTIC
     if (num > NIADDR + 1 || num < 1) {
