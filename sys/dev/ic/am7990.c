@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.33 1997/04/24 08:05:13 mycroft Exp $	*/
+/*	$NetBSD: am7990.c,v 1.34 1997/04/25 20:14:37 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -413,16 +413,14 @@ am7990_get(sc, boff, totlen)
 {
 	register struct mbuf *m;
 	struct mbuf *top, **mp;
-	int len, pad;
+	int len;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == 0)
 		return (0);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = totlen;
-	pad = ALIGN(sizeof(struct ether_header)) - sizeof(struct ether_header);
-	m->m_data += pad;
-	len = MHLEN - pad;
+	len = MHLEN;
 	top = 0;
 	mp = &top;
 
@@ -442,6 +440,13 @@ am7990_get(sc, boff, totlen)
 				return 0;
 			}
 			len = MCLBYTES;
+		}
+		if (!top) {
+			register int pad =
+			    ALIGN(sizeof(struct ether_header)) -
+			        sizeof(struct ether_header);
+			m->m_data += pad;
+			len -= pad;
 		}
 		m->m_len = len = min(totlen, len);
 		(*sc->sc_copyfrombuf)(sc, mtod(m, caddr_t), boff, len);
