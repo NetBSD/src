@@ -31,32 +31,32 @@
  * SUCH DAMAGE.
  *
  *	@(#)dma.c
- *	$Id: a2091dma.c,v 1.4 1994/02/11 07:01:23 chopps Exp $
+ *	$Id: a2091dma.c,v 1.5 1994/02/13 21:10:20 chopps Exp $
  */
 
 /*
  * A2091 DMA driver
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "kernel.h"
-#include "proc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_statistics.h"
-#include "machine/pmap.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_statistics.h>
+#include <machine/pmap.h>
 
-#include "device.h"
-#include "a2091dmareg.h"
+#include <amiga/dev/device.h>
+#include <amiga/dev/a2091dmareg.h>
 #include "a2091scsi.h"
-#include "dmavar.h"
-#include "scsivar.h"
+#include <amiga/dev/dmavar.h>
+#include <amiga/dev/scsivar.h>
 
-#include "../include/cpu.h"
+#include <machine/cpu.h>
 
 extern void timeout();
 

@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: view.c,v 1.3 1994/01/30 08:28:17 chopps Exp $
+ *	$Id: view.c,v 1.4 1994/02/13 21:11:07 chopps Exp $
  */
 
 /* The view major device is a placeholder device.  It serves
@@ -37,32 +37,29 @@
  * refered to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
 
-#include "param.h"
-#include "proc.h"
-#include "ioctl.h"
-#include "file.h"
-#include "malloc.h"
+#include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/malloc.h>
 
-#include "device.h"
+#include <amiga/dev/device.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
-#include "vm/vm_pager.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
+#include <vm/vm_pager.h>
 
-#include "miscfs/specfs/specdev.h"
-#include "vnode.h"
-#include "mman.h"
+#include <miscfs/specfs/specdev.h>
+#include <sys/vnode.h>
+#include <sys/mman.h>
 
-#include "grf/grf_types.h"
-#include "grf/grf_bitmap.h"
-#include "grf/grf_view.h"
-#include "grf/grf_mode.h"
-#include "grf/grf_monitor.h"
-#include "viewioctl.h"
-#include "viewvar.h"
+#include <amiga/amiga/dlists.h>
+#include <amiga/dev/grfabs_reg.h>
+#include <amiga/dev/viewioctl.h>
+#include <amiga/dev/viewvar.h>
 #include "view.h"
 
 int viewprobe ();
@@ -386,7 +383,7 @@ viewmap(dev, off, prot)
 {
     struct view_softc *vu = &views[minor(dev)];
     bmap_t *bm = vu->view->bitmap;
-    u_byte *bmd_start = bm->hardware_address; 
+    u_char *bmd_start = bm->hardware_address; 
     u_long  bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
 
     if (off >= 0 && off < bmd_size) {

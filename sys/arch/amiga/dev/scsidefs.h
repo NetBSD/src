@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)scsidefs.h	7.3 (Berkeley) 2/5/91
- *	$Id: scsidefs.h,v 1.2 1994/02/11 07:02:10 chopps Exp $
+ *	$Id: scsidefs.h,v 1.3 1994/02/13 21:10:57 chopps Exp $
  */
 
 /*
@@ -353,7 +353,7 @@ struct scsi_cache {
  * Driver ioctl's for various scsi operations.
  */
 #ifndef _IOCTL_
-#include "ioctl.h"
+#include <sys/ioctl.h>
 #endif
 
 /*
