@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.3 1998/07/23 20:34:00 pk Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.4 1998/07/24 20:19:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -321,12 +321,15 @@ pool_init(pp, size, align, ioff, flags, wchan, pagesz, alloc, release, mtype)
 	if (!powerof2(pagesz) || pagesz > PAGE_SIZE)
 		panic("pool_init: page size invalid (%lx)\n", (u_long)pagesz);
 
-	if (alloc == NULL)
+	if (alloc == NULL && release == NULL) {
 		alloc = pool_page_alloc;
-
-	if (release == NULL)
 		release = pool_page_free;
-
+		pagesz = PAGE_SIZE;	/* Rounds to PAGE_SIZE anyhow. */
+	} else if ((alloc != NULL && release != NULL) == 0) {
+		/* If you specifiy one, must specify both. */
+		panic("pool_init: must specify alloc and release together");
+	}
+			
 	if (pagesz == 0)
 		pagesz = PAGE_SIZE;
 
@@ -805,15 +808,12 @@ pool_page_alloc(sz, flags, mtype)
 	int flags;
 	int mtype;
 {
-	vm_offset_t va;
 
 #if defined(UVM)
-	va = uvm_km_kmemalloc(kernel_map, uvm.kernel_object,
-			      (vm_size_t)sz, UVM_KMF_NOWAIT);
-#else   
-	va = kmem_malloc(kmem_map, (vm_size_t)sz, 0);
-#endif                       
-	return ((void *)va);
+	return ((void *)uvm_km_alloc_poolpage());
+#else
+	return ((void *)kmem_alloc_poolpage());
+#endif
 }
 
 static void
@@ -824,9 +824,9 @@ pool_page_free(v, sz, mtype)
 {
 
 #if defined(UVM)
-	uvm_km_free(kernel_map, (vm_offset_t)v, sz);
+	uvm_km_free_poolpage((vm_offset_t)v);
 #else
-	kmem_free(kmem_map, (vm_offset_t)v, sz);
+	kmem_free_poolpage((vm_offset_t)v);
 #endif  
 }
 
