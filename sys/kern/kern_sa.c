@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.25 2003/09/16 15:28:45 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.26 2003/10/01 14:50:06 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.25 2003/09/16 15:28:45 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.26 2003/10/01 14:50:06 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1450,6 +1450,7 @@ sa_vp_donate(struct lwp *l)
 		if(l2->l_flag &  L_SA_WANTS_VP) {
 			SCHED_LOCK(s);
 			
+			p->p_nrlwps--;
 			sa_putcachelwp(p, l);
 			sa->sa_vp = l2;
 			sa->sa_vp_wait_count--;
