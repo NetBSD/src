@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.9 2001/02/23 21:23:46 reinoud Exp $
+#	$NetBSD: files.arm,v 1.10 2001/02/24 21:43:01 reinoud Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -10,6 +10,17 @@ file	netns/ns_cksum.c			ns
 
 # DDB
 file	arch/arm/arm/db_disasm.c		ddb
+
+# mainbus files
+device	mainbus { [base = -1], [dack = -1], [irq = -1] }
+attach	mainbus at root
+file	arch/arm/mainbus/mainbus.c		mainbus & arm32
+file	arch/arm/mainbus/mainbus_io.c		mainbus & arm32
+file	arch/arm/mainbus/mainbus_io_asm.S	mainbus & arm32
+
+device	cpu
+attach	cpu at mainbus
+file	arch/arm/mainbus/cpu.c			cpu & arm32 needs-flag
 
 # files related to debugging
 file	arch/arm/arm/disassem.c
