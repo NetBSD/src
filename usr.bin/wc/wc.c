@@ -1,4 +1,4 @@
-/*	$NetBSD: wc.c,v 1.19 1999/03/05 22:31:06 mycroft Exp $	*/
+/*	$NetBSD: wc.c,v 1.20 1999/03/05 22:52:09 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: wc.c,v 1.19 1999/03/05 22:31:06 mycroft Exp $");
+__RCSID("$NetBSD: wc.c,v 1.20 1999/03/05 22:52:09 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,6 +277,6 @@ print_counts(lines, words, chars, name)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: wc [-clw] [files]\n");
+	(void)fprintf(stderr, "usage: wc [-clw] [file ...]\n");
 	exit(1);
 }
