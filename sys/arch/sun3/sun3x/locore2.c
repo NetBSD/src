@@ -1,11 +1,11 @@
-/*	$NetBSD: locore2.c,v 1.4 1997/01/18 16:17:33 gwr Exp $	*/
+/*	$NetBSD: locore2.c,v 1.5 1997/01/23 22:27:29 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross, and Jeremy Cooper.
+ * by Gordon W. Ross and Jeremy Cooper.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -53,16 +53,14 @@
 #include <machine/pmap.h>
 #include <machine/idprom.h>
 #include <machine/obio.h>
+#include <machine/machdep.h>
 
-#include "vector.h"
-#include "interreg.h"
-#include "machdep.h"
+#include <sun3/sun3/sunmon.h>
+#include <sun3/sun3/interreg.h>
+#include <sun3/sun3/vector.h>
 
 /* This is defined in locore.s */
 extern char kernel_text[];
-
-/* This is set by locore.s with the monitor's root ptr. */
-extern struct mmu_rootptr mon_crp;
 
 /* These are defined by the linker */
 extern char etext[], edata[], end[];
@@ -73,7 +71,6 @@ char *esym;	/* DDB */
  */
 int boothowto = RB_KDB; 	/* XXX - For now... */
 int cold = 1;
-void **old_vector_table;
 
 unsigned char cpu_machine_id = 0;
 char *cpu_string = NULL;
@@ -89,101 +86,8 @@ extern struct pcb *curpcb;
 /* First C code called by locore.s */
 void _bootstrap __P((struct exec));
 
-static void _monitor_hooks __P((void));
 static void _verify_hardware __P((void));
 static void _vm_init __P((struct exec *kehp));
-static void tracedump __P((int));
-static void v_handler __P((int addr, char *str));
-
-
-/*
- * Prepare for running the PROM monitor
- */
-static void
-sun3x_mode_monitor __P((void))
-{
-	/* Disable our level-5 clock. */
-	set_clk_mode(0, IREG_CLOCK_ENAB_5, 0);
-	/* Restore the PROM vector table */
-	setvbr(old_vector_table);
-	/* Enable the PROM NMI clock. */
-	set_clk_mode(IREG_CLOCK_ENAB_7, 0, 1);
-	/* XXX - Disable watchdog action? */
-}
-
-/*
- * Prepare for running the kernel
- */
-static void
-sun3x_mode_kernel __P((void))
-{
-	/* Disable the PROM NMI clock. */
-	set_clk_mode(0, IREG_CLOCK_ENAB_7, 0);
-	/* Restore our own vector table */
-	setvbr((void**)vector_table);
-	/* Enable our level-5 clock. */
-	set_clk_mode(IREG_CLOCK_ENAB_5, 0, 1);
-}
-
-/*
- * This function takes care of restoring enough of the
- * hardware state to allow the PROM to run normally.
- * The PROM needs: NMI enabled, it's own vector table.
- * In case of a temporary "drop into PROM", this will
- * also put our hardware state back into place after
- * the PROM "c" (continue) command is given.
- */
-void sun3x_mon_abort()
-{
-	int s = splhigh();
-
-	sun3x_mode_monitor();
-	mon_printf("kernel stop: enter c to continue or g0 to panic\n");
-	delay(100000);
-
-	/*
-	 * Drop into the PROM in a way that allows a continue.
-	 * That's what the PROM function (romp->abortEntry) is for,
-	 * but that wants to be entered as a trap hander, so just
-	 * stuff it into the PROM interrupt vector for trap zero
-	 * and then do a trap.  Needs PROM vector table in RAM.
-	 */
-	old_vector_table[32] = romVectorPtr->abortEntry;
-	asm(" trap #0 ; _sun3x_mon_continued: nop");
-
-	/* We have continued from a PROM abort! */
-
-	sun3x_mode_kernel();
-	splx(s);
-}
-
-void sun3x_mon_halt()
-{
-	(void) splhigh();
-	sun3x_mode_monitor();
-	loadcrp(&mon_crp);
-	mon_exit_to_mon();
-	/*NOTREACHED*/
-}
-
-/*
- * Caller must pass a string that is in our data segment.
- */
-void sun3x_mon_reboot(bootstring)
-	char *bootstring;
-{
-#ifdef	DIAGNOSTIC
-	if (bootstring > end)
-		bootstring = "?";
-#endif
-
-	(void) splhigh();
-	sun3x_mode_monitor();
-	loadcrp(&mon_crp);
-	mon_reboot(bootstring);
-	mon_exit_to_mon();
-	/*NOTREACHED*/
-}
 
 
 #if defined(DDB) && !defined(SYMTAB_SPACE)
@@ -354,159 +258,6 @@ _verify_hardware()
 		mon_panic("kernel not configured for the Sun 3 model\n");
 }
 
-/*
- * Print out a traceback for the caller - can be called anywhere
- * within the kernel or from the monitor by typing "g4" (for sun-2
- * compatibility) or "w trace".  This causes the monitor to call
- * the v_handler() routine which will call tracedump() for these cases.
- */
-struct funcall_frame {
-	struct funcall_frame *fr_savfp;
-	int fr_savpc;
-	int fr_arg[1];
-};
-/*VARARGS0*/
-static void
-tracedump(x1)
-	int x1;
-{
-	struct funcall_frame *fp = (struct funcall_frame *)(&x1 - 2);
-	u_int stackpage = ((u_int)fp) & ~PGOFSET;
-
-	mon_printf("Begin traceback...fp = %x\n", fp);
-	do {
-		if (fp == fp->fr_savfp) {
-			mon_printf("FP loop at %x", fp);
-			break;
-		}
-		mon_printf("Called from %x, fp=%x, args=%x %x %x %x\n",
-				   fp->fr_savpc, fp->fr_savfp,
-				   fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3]);
-		fp = fp->fr_savfp;
-	} while ( (((u_int)fp) & ~PGOFSET) == stackpage);
-	mon_printf("End traceback...\n");
-}
-
-/*
- * Handler for monitor vector cmd -
- * For now we just implement the old "g0" and "g4"
- * commands and a printf hack.  [lifted from freed cmu mach3 sun3 port]
- */
-static void
-v_handler(addr, str)
-	int addr;
-	char *str;
-{
-
-	switch (*str) {
-	case '\0':
-		/*
-		 * No (non-hex) letter was specified on
-		 * command line, use only the number given
-		 */
-		switch (addr) {
-		case 0:			/* old g0 */
-		case 0xd:		/* 'd'ump short hand */
-			sun3x_mode_kernel();
-			panic("zero");
-			/*NOTREACHED*/
-
-		case 4:			/* old g4 */
-			goto do_trace;
-
-		default:
-			goto err;
-		}
-		break;
-
-	case 'p':			/* 'p'rint string command */
-	case 'P':
-		mon_printf("%s\n", (char *)addr);
-		break;
-
-	case '%':			/* p'%'int anything a la printf */
-		mon_printf(str, addr);
-		mon_printf("\n");
-		break;
-
-	do_trace:
-	case 't':			/* 't'race kernel stack */
-	case 'T':
-		tracedump(addr);
-		break;
-
-	case 'u':			/* d'u'mp hack ('d' look like hex) */
-	case 'U':
-		goto err;
-		break;
-
-	default:
-	err:
-		mon_printf("Don't understand 0x%x '%s'\n", addr, str);
-	}
-}
-
-/*
- * Set the PROM vector handler (for g0, g4, etc.)
- * and set boothowto from the PROM arg strings.
- *
- * Note, args are always:
- * argv[0] = boot_device	(i.e. "sd(0,0,0)")
- * argv[1] = options	(i.e. "-ds" or NULL)
- * argv[2] = NULL
- */
-static void
-_monitor_hooks()
-{
-	MachMonRomVector *romp;
-	MachMonBootParam *bpp;
-	char **argp;
-	char *p;
-
-	romp = romVectorPtr;
-	if (romp->romvecVersion >= 2)
-		*romp->vector_cmd = v_handler;
-
-	/* Set boothowto flags from PROM args. */
-	bpp = *romp->bootParam;
-	argp = bpp->argPtr;
-
-	/* Skip argp[0] (the device string) */
-	argp++;
-
-	/* Have options? */
-	if (*argp == NULL)
-		return;
-	p = *argp;
-	if (*p == '-') {
-		/* yes, parse options */
-#ifdef	DEBUG
-		mon_printf("boot option: %s\n", p);
-#endif
-		for (++p; *p; p++) {
-			switch (*p) {
-			case 'a':
-				boothowto |= RB_ASKNAME;
-				break;
-			case 's':
-				boothowto |= RB_SINGLE;
-				break;
-			case 'd':
-				boothowto |= RB_KDB;
-				break;
-			}
-		}
-		argp++;
-	}
-
-#ifdef	DEBUG
-	/* Have init name? */
-	if (*argp == NULL)
-		return;
-	p = *argp;
-	mon_printf("boot initpath: %s\n", p);
-#endif
-}
 
 /*
  * This is called from locore.s just after the kernel is remapped
@@ -524,7 +275,7 @@ _bootstrap(keh)
 	bzero(edata, end - edata);
 
 	/* set v_handler, get boothowto */
-	_monitor_hooks();
+	sunmon_init();
 
 	/* Find devices we need early (like the IDPROM). */
 	obio_init();
@@ -543,7 +294,6 @@ _bootstrap(keh)
 	 * the interrupt register and disables the NMI clock so
 	 * it will not cause "spurrious level 7" complaints.
 	 */
-	old_vector_table = getvbr();
 	setvbr((void **)vector_table);
 
 	/* Interrupts are enabled later, after autoconfig. */
