@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.4 1998/02/22 15:40:40 christos Exp $	*/
+/*	$NetBSD: main1.c,v 1.5 2000/07/06 01:10:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -36,10 +36,15 @@
 __RCSID("$NetBSD");
 #endif
 
+#define FD_SETSIZE 512	/* more than the total number of error messages */
+#include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <err.h>
+#include <errno.h>
+#include <limits.h>
 
 #include "lint1.h"
 
@@ -71,6 +76,9 @@ int	Fflag;
 
 /* Enable some extensions of gcc */
 int	gflag;
+
+/* Treat warnings as errors */
+int	wflag;
 
 /*
  * Apply a number of heuristic tests to attempt to intuit bugs, improve
@@ -105,6 +113,8 @@ int	vflag = 1;
 /* Complain about structures which are never defined. */
 int	zflag = 1;
 
+fd_set	msgset;
+
 static	void	usage __P((void));
 
 int main __P((int, char *[]));
@@ -115,8 +125,10 @@ main(argc, argv)
 	char	*argv[];
 {
 	int	c;
+	char	*ptr;
 
-	while ((c = getopt(argc, argv, "abcdeghprstuvyzF")) != -1) {
+	FD_ZERO(&msgset);
+	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
 		case 'b':	bflag = 1;	break;
@@ -131,10 +143,35 @@ main(argc, argv)
 		case 's':	sflag = 1;	break;
 		case 't':	tflag = 1;	break;
 		case 'u':	uflag = 0;	break;
+		case 'w':	wflag = 1;	break;
 		case 'v':	vflag = 0;	break;
 		case 'y':	yflag = 1;	break;
 		case 'z':	zflag = 0;	break;
-		case '?':	usage();
+
+		case 'm':
+			msglist();
+			return(0);
+
+		case 'X':
+			for (ptr = strtok(optarg, ","); ptr;
+			    ptr = strtok(NULL, ",")) {
+				char *eptr;
+				long msg = strtol(ptr, &eptr, 0);
+				if ((msg == LONG_MIN || msg == LONG_MAX) &&
+				    errno == ERANGE)
+				    err(1, "invalid error message id '%s'",
+					ptr);
+				if (*eptr || ptr == eptr || msg < 0 ||
+				    msg >= 1024)
+					errx(1, "invalid error message id '%s'",
+					    ptr);
+				FD_SET(msg, &msgset);
+			}
+			break;
+		case '?':
+		default:
+			usage();
+			break;
 		}
 	}
 	argc -= optind;
@@ -173,7 +210,11 @@ main(argc, argv)
 static void
 usage()
 {
-	(void)fprintf(stderr, "usage: lint1 [-abcdeghprstuvyzF] src dest\n");
+	extern char *__progname;
+
+	(void)fprintf(stderr,
+	    "Usage: %s [-abcdeghmprstuvwyzF] [-X <id>[,<id>]... src dest\n",
+	    __progname);
 	exit(1);
 }
 	
