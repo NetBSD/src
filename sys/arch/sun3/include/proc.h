@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 1996/11/25 22:09:11 gwr Exp $	*/
+/*	$NetBSD: proc.h,v 1.8.48.1 2001/11/18 19:38:59 scw Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -35,18 +35,19 @@
  *	from: proc.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _SUN3_PROC_H
+#define _SUN3_PROC_H
+
+#include <m68k/lwp.h>
+
 /*
  * Machine-dependent part of the proc structure for sun3.
  */
 struct mdproc {
-	int	*md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
 };
 
 /* md_flags */
-#define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
-#define	MDP_STACKADJ	0x0002	/* frame SP adjusted, might have to
-				   undo when system call returns
-				   ERESTART. */
 #define	MDP_HPUXTRACE	0x0004	/* being traced by HP-UX process */
 
+#endif /* _SUN3_PROC_H */
