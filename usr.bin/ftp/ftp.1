@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.74 2000/11/15 00:10:59 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.75 2000/11/27 10:19:12 lukem Exp $
 .\"
 .\" Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1988,6 +1988,10 @@ URL requests
 (if not defined, use the standard
 .Tn FTP
 protocol).
+.Pp
+.Em NOTE:
+this is not used for interactive sessions, only for command-line
+fetches.
 .It Ev http_proxy
 URL of
 .Tn HTTP
@@ -2005,6 +2009,10 @@ and
 may be incompatible with other programs that use it
 (such as
 .Xr lynx 1 ).
+.Pp
+.Em NOTE:
+this is not used for interactive sessions, only for command-line
+fetches.
 .It Ev no_proxy
 A space or comma separated list of hosts (or domains) for which
 proxying is not to be used.
