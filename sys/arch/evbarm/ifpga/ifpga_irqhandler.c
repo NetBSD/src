@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_irqhandler.c,v 1.3 2002/09/27 15:35:59 provos Exp $ */
+/*	$NetBSD: ifpga_irqhandler.c,v 1.4 2002/10/06 17:13:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -103,6 +103,8 @@ irq_postinit()
 	/* Enable IRQ's and FIQ's */
 	enable_interrupts(I32_bit | F32_bit);
 }
+
+void stray_irqhandler(void);	/* only called from ifpga_irq.S */
 
 void
 stray_irqhandler()
