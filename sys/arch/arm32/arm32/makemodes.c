@@ -1,4 +1,4 @@
-/* $NetBSD: makemodes.c,v 1.3 1996/03/16 00:13:12 thorpej Exp $ */
+/* $NetBSD: makemodes.c,v 1.4 1996/05/06 00:37:13 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -47,8 +47,13 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 /*#define VERBOSE*/
+
+#ifndef __P
+#define __P(protos)	()
+#endif
 
 #define MAX_MD 100	/* Support up to 100 modes from a file */
 
@@ -67,7 +72,7 @@ int	md;	/* Number of modes defined in the mds array */
 
 void makemode __P((FILE *, int, int, int, int));
 
-int
+void
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -231,7 +236,7 @@ main(argc, argv)
 	fprintf(out_fd, "#include <machine/vidc.h>\n\n");
 	fprintf(out_fd, "char *monitor=\"%s\";\n", monitor);
 	fprintf(out_fd, "int dpms=%d;\n", dpms);
-	fprintf(out_fd, "\n", dpms);
+	fprintf(out_fd, "\n");
 	fprintf(out_fd, "struct vidc_mode vidcmodes[] = {\n");
 
 	loop = 3;
@@ -263,6 +268,7 @@ main(argc, argv)
 	fprintf(out_fd, "};\n");
 	
 	fclose(out_fd);
+	exit(0);
 }
 
 
