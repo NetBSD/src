@@ -5,7 +5,7 @@
  * Sun Microsystems' original <link.h>, so we can provide compatibility
  * with the SunOS 4.x shared library scheme.
  *
- *	$Id: link.h,v 1.1 1993/10/17 00:51:31 pk Exp $
+ *	$Id: link.h,v 1.2 1993/10/22 21:04:19 pk Exp $
  *		(derived from: @(#)link.h 1.6 88/08/19 SMI
  *		Copyright (c) 1987 by Sun Microsystems, Inc.)
  */
@@ -190,6 +190,45 @@ struct crt_ldso {
  */
 #define CRT_VERSION_SUN		1
 #define CRT_VERSION_BSD		2
+
+
+/*
+ * Maximum number of recognized shared object version numbers.
+ */
+#define MAXDEWEY	8
+
+/*
+ * Header of the hints file.
+ */
+struct hints_header {
+	long		hh_magic;
+#define HH_MAGIC	011421044151
+	long		hh_version;	/* Interface version number */
+#define LD_HINTS_VERSION_1	1
+	long		hh_hashtab;	/* Location of hash table */
+	long		hh_nbucket;	/* Number of buckets in hashtab */
+	long		hh_strtab;	/* Location of strings */
+	long		hh_strtab_sz;	/* Size of strings */
+	long		hh_ehints;	/* End of hints (max offset in file) */
+};
+
+#define HH_BADMAG(hdr)	((hdr).hh_magic != HH_MAGIC)
+
+/*
+ * Hash table element in hints file.
+ */
+struct hints_bucket {
+	/* namex and pathx are indices into the string table */
+	int		hi_namex;		/* Library name */
+	int		hi_pathx;		/* Full path */
+	int		hi_dewey[MAXDEWEY];	/* The versions */
+	int		hi_ndewey;		/* Number of version numbers */
+#define hi_major hi_dewey[0]
+#define hi_minor hi_dewey[1]
+	int		hi_next;		/* Next in this bucket */
+};
+
+#define _PATH_LD_HINTS		"/var/run/ld.so.hints"
 
 #endif /* _LINK_H_ */
 
