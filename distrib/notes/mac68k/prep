@@ -18,9 +18,9 @@ Try to pick a drive with a low SCSI ID number, especially if you
 are likely to add or remove drives to your SCSI chain in the
 future.
 
-** NOTE:  be sure you have a reliable backup of any data
-** which you may want to keep.  Repartitioning your hard
-** drive is an excellent way to destroy important data.
+NOTE:  BE SURE YOU HAVE A RELIABLE BACKUP OF ANY DATA WHICH YOU
+MAY WANT TO KEEP.  REPARTITIONING YOUR HARD DRIVE IS AN EXCELLENT
+WAY TO DESTROY IMPORTANT DATA.
 
 Second, decide how you want to set up your partitions.  At
 minimum, you need a partition to hold the NetBSD installation (the
