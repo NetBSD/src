@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.10 2002/11/08 00:13:08 fvdl Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.11 2002/11/12 14:50:23 skrll Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.10 2002/11/08 00:13:08 fvdl Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.11 2002/11/12 14:50:23 skrll Exp $");
 #endif
 #endif
 
@@ -70,11 +70,14 @@ __RCSID("$NetBSD: svc_vc.c,v 1.10 2002/11/08 00:13:08 fvdl Exp $");
 #include <rpc/rpc.h>
 
 #include "rpc_internal.h"
-#include "rpc_internal.h"
 
 #ifdef __weak_alias
 __weak_alias(svc_fd_create,_svc_fd_create)
 __weak_alias(svc_vc_create,_svc_vc_create)
+#endif
+
+#ifdef __REENT
+extern rwlock_t svc_fd_lock;
 #endif
 
 static SVCXPRT *makefd_xprt __P((int, u_int, u_int));
