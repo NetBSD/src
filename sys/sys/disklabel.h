@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.79 2003/01/25 23:17:38 soren Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.80 2003/04/03 22:18:46 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -502,6 +502,7 @@ char	*readdisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 int	 writedisklabel __P((dev_t, void (*)(struct buf *), struct disklabel *,
 	    struct cpu_disklabel *));
 int	 bounds_check_with_label __P((struct buf *, struct disklabel *, int));
+int	 bounds_check_with_mediasize __P((struct buf *, int, u_int64_t));
 #endif
 #endif /* _LOCORE */
 
