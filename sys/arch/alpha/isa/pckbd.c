@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.21 1998/01/12 10:21:08 thorpej Exp $ */
+/* $NetBSD: pckbd.c,v 1.22 1998/01/18 14:51:29 drochner Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.21 1998/01/12 10:21:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.22 1998/01/18 14:51:29 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -70,15 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.21 1998/01/12 10:21:08 thorpej Exp $");
 #include <alpha/wscons/wsconsvar.h>
 #include "wscons.h"
 
-#undef KBDATAP
-#undef KBOUTP
-#undef KBSTATP
-#undef KBCMDP
 #undef PITAUX_PORT
-#define	KBDATAP		0x0	/* kbd data port (I) */
-#define	KBOUTP		0x0	/* kbd data port (O) */
-#define	KBSTATP		0x4	/* kbd controller status port (I) */
-#define	KBCMDP		0x4	/* kbd controller port (O) */
 #define	PITAUX_PORT	0x1	/* port B of PPI */
 
 static volatile u_char ack, nak;	/* Don't ask. */
