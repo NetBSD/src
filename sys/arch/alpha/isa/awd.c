@@ -1,4 +1,4 @@
-/*	$NetBSD: awd.c,v 1.3 1997/04/21 14:47:40 cgd Exp $	*/
+/*	$NetBSD: awd.c,v 1.4 1997/06/18 20:41:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1534,18 +1534,27 @@ wdsize(dev)
 	dev_t dev;
 {
 	struct wd_softc *wd;
-	int part;
+	int part, unit, omask;
 	int size;
-    
-	if (wdopen(dev, 0, S_IFBLK, NULL) != 0)
+
+	unit = WDUNIT(dev);
+	if (unit >= awd_cd.cd_ndevs)
+		return -1;
+	wd = awd_cd.cd_devs[unit];
+	if (wd == 0)
+		return -1;
+
+	part = WDPART(dev);
+	omask = wd->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && wdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	wd = awd_cd.cd_devs[WDUNIT(dev)];
-	part = WDPART(dev);
 	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
 		size = -1;
 	else
 		size = wd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (wdclose(dev, 0, S_IFBLK, NULL) != 0)
+	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	return size;
 }
