@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.26 2003/04/23 04:03:58 uwe Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.27 2004/03/04 19:52:52 abs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.26 2003/04/23 04:03:58 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.27 2004/03/04 19:52:52 abs Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -386,6 +386,31 @@ static const keysym_t pckbd_keydesc_es[] = {
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
+static const keysym_t pckbd_keydesc_pt[] = {
+/*  pos      normal		shifted		altgr		shift-altgr */
+    KC(3),   KS_2,		KS_quotedbl,	KS_at,
+    KC(4),   KS_3,		KS_numbersign,	KS_sterling,
+    KC(5),   KS_4,		KS_dollar,
+    KC(7),   KS_6,		KS_ampersand,
+    KC(8),   KS_7,		KS_slash,	KS_braceleft,
+    KC(9),   KS_8,		KS_parenleft,	KS_bracketleft,
+    KC(10),  KS_9,		KS_parenright,	KS_bracketright,
+    KC(11),  KS_0,		KS_equal,	KS_braceright,
+    KC(12),  KS_apostrophe,	KS_question,
+    KC(13),  KS_less,		KS_greater,
+    KC(26),  KS_plus,		KS_asterisk,
+    KC(27),  KS_dead_acute,	KS_dead_grave,
+    KC(39),  KS_ccedilla,	KS_Ccedilla,
+    KC(40),  KS_masculine,	KS_ordfeminine,
+    KC(41),  KS_backslash,	KS_bar,
+    KC(43),  KS_dead_tilde,	KS_dead_circumflex,
+    KC(51),  KS_comma,		KS_semicolon,
+    KC(52),  KS_period,		KS_colon,
+    KC(53),  KS_minus,		KS_underscore,
+    KC(86),  KS_less,		KS_greater,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
 static const keysym_t pckbd_keydesc_us_declk[] = {
 /*  pos      normal		shifted		altgr		shift-altgr */
     KC(1),	KS_grave,	KS_asciitilde, /* replace escape */
@@ -515,6 +540,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
+	KBD_MAP(KB_PT,			KB_US,	pckbd_keydesc_pt),
 	KBD_NULLMAP(KB_US | KB_MACHDEP,	KB_US),
 	KBD_NULLMAP(KB_DE | KB_MACHDEP,	KB_DE),
 	KBD_NULLMAP(KB_JP | KB_MACHDEP,	KB_JP),
