@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.15 2003/04/26 11:05:10 ragge Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.16 2003/04/28 20:01:29 ragge Exp $ */
 #undef DEBUG_BEFOREMMU
 /*
  * Copyright (c) 2002, 2003
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.15 2003/04/26 11:05:10 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.16 2003/04/28 20:01:29 ragge Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -722,7 +722,7 @@ initarm(void *arg)
 #endif  /* NIPKDB */
 
 #if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_initsymbolsize, ((int *)&end), ((char *)&end) + symbolsize);
+	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 
 #ifdef DDB
