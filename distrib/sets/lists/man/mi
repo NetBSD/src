@@ -423,6 +423,7 @@
 ./usr/share/man/cat5/hosts.0
 ./usr/share/man/cat5/hosts.allow.0
 ./usr/share/man/cat5/hosts.deny.0
+./usr/share/man/cat5/hosts.equiv.0
 ./usr/share/man/cat5/hosts_access.0
 ./usr/share/man/cat5/hosts_options.0
 ./usr/share/man/cat5/ifaliases.0
@@ -455,6 +456,7 @@
 ./usr/share/man/cat5/rcsfile.0
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
+./usr/share/man/cat5/rhosts.0
 ./usr/share/man/cat5/rpc.0
 ./usr/share/man/cat5/securenet.0
 ./usr/share/man/cat5/security.conf.0
@@ -1352,6 +1354,7 @@
 ./usr/share/man/man5/hosts.5
 ./usr/share/man/man5/hosts.allow.5
 ./usr/share/man/man5/hosts.deny.5
+./usr/share/man/man5/hosts.equiv.5
 ./usr/share/man/man5/hosts_access.5
 ./usr/share/man/man5/hosts_options.5
 ./usr/share/man/man5/ifaliases.5
@@ -1384,6 +1387,7 @@
 ./usr/share/man/man5/rcsfile.5
 ./usr/share/man/man5/remote.5
 ./usr/share/man/man5/resolv.conf.5
+./usr/share/man/man5/rhosts.5
 ./usr/share/man/man5/rpc.5
 ./usr/share/man/man5/securenet.5
 ./usr/share/man/man5/security.conf.5
