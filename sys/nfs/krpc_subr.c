@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.14 1996/06/14 22:22:24 cgd Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.15 1996/07/10 18:43:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -329,7 +329,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 		if (timo < MAX_RESEND_DELAY)
 			timo++;
 		else
-			printf("RPC timeout for server 0x%x\n",
+			printf("RPC timeout for server 0x%lx\n",
 			       ntohl(sin->sin_addr.s_addr));
 
 		/*
