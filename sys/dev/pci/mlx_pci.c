@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx_pci.c,v 1.3 2001/05/15 12:49:37 ad Exp $	*/
+/*	$NetBSD: mlx_pci.c,v 1.4 2001/07/26 12:36:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -236,7 +236,7 @@ mlx_pci_attach(struct device *parent, struct device *self, void *aux)
 		if (pci_mapreg_map(pa, memr, PCI_MAPREG_TYPE_MEM, 0,
 		    &mlx->mlx_iot, &mlx->mlx_ioh, NULL, NULL))
 			memr = -1;
-	if (ior != -1)
+	if (memr == -1 && ior != -1)
 		if (pci_mapreg_map(pa, ior, PCI_MAPREG_TYPE_IO, 0,
 		    &mlx->mlx_iot, &mlx->mlx_ioh, NULL, NULL))
 		    	ior = -1;
