@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.15 2002/01/29 10:20:37 tv Exp $	*/
+/*	$NetBSD: util.c,v 1.15.8.1 2002/06/20 13:36:44 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -118,17 +118,17 @@ prefix_push(const char *path)
 
 	pf = emalloc(sizeof(struct prefix));
 
-	if (prefixes != NULL && *path != '/') {
-		cp = emalloc(strlen(prefixes->pf_prefix) + 1 +
+	if (! SLIST_EMPTY(&prefixes) && *path != '/') {
+		cp = emalloc(strlen(SLIST_FIRST(&prefixes)->pf_prefix) + 1 +
 		    strlen(path) + 1);
-		(void) sprintf(cp, "%s/%s", prefixes->pf_prefix, path);
+		(void) sprintf(cp, "%s/%s",
+		    SLIST_FIRST(&prefixes)->pf_prefix, path);
 		pf->pf_prefix = intern(cp);
 		free(cp);
 	} else
 		pf->pf_prefix = intern(path);
 
-	pf->pf_next = prefixes;
-	prefixes = pf;
+	SLIST_INSERT_HEAD(&prefixes, pf, pf_next);
 }
 
 /*
@@ -139,16 +139,14 @@ prefix_pop(void)
 {
 	struct prefix *pf;
 
-	if ((pf = prefixes) == NULL) {
+	if ((pf = SLIST_FIRST(&prefixes)) == NULL) {
 		error("no prefixes on the stack to pop");
 		return;
 	}
 
-	prefixes = pf->pf_next;
-
+	SLIST_REMOVE_HEAD(&prefixes, pf_next);
 	/* Remember this prefix for emitting -I... directives later. */
-	pf->pf_next = allprefixes;
-	allprefixes = pf;
+	SLIST_INSERT_HEAD(&allprefixes, pf, pf_next);
 }
 
 /*
@@ -159,39 +157,41 @@ sourcepath(const char *file)
 {
 	size_t len;
 	char *cp;
+	struct prefix *pf;
 
-	if (prefixes != NULL && *prefixes->pf_prefix == '/')
-		len = strlen(prefixes->pf_prefix) + 1 + strlen(file) + 1;
+	pf = SLIST_EMPTY(&prefixes) ? NULL : SLIST_FIRST(&prefixes);
+	if (pf != NULL && *pf->pf_prefix == '/')
+		len = strlen(pf->pf_prefix) + 1 + strlen(file) + 1;
 	else {
 		len = strlen(srcdir) + 1 + strlen(file) + 1;
-		if (prefixes != NULL)
-			len += strlen(prefixes->pf_prefix) + 1;
+		if (pf != NULL)
+			len += strlen(pf->pf_prefix) + 1;
 	}
 
 	cp = emalloc(len);
 
-	if (prefixes != NULL) {
-		if (*prefixes->pf_prefix == '/')
-			(void) sprintf(cp, "%s/%s", prefixes->pf_prefix, file);
+	if (pf != NULL) {
+		if (*pf->pf_prefix == '/')
+			(void) sprintf(cp, "%s/%s", pf->pf_prefix, file);
 		else
 			(void) sprintf(cp, "%s/%s/%s", srcdir,
-			    prefixes->pf_prefix, file);
+			    pf->pf_prefix, file);
 	} else
 		(void) sprintf(cp, "%s/%s", srcdir, file);
 	return (cp);
 }
 
-static struct nvlist *nvhead;
+static struct nvlist *nvfreelist;
 
 struct nvlist *
 newnv(const char *name, const char *str, void *ptr, int i, struct nvlist *next)
 {
 	struct nvlist *nv;
 
-	if ((nv = nvhead) == NULL)
+	if ((nv = nvfreelist) == NULL)
 		nv = emalloc(sizeof(*nv));
 	else
-		nvhead = nv->nv_next;
+		nvfreelist = nv->nv_next;
 	nv->nv_next = next;
 	nv->nv_name = name;
 	if (ptr == NULL)
@@ -212,8 +212,8 @@ void
 nvfree(struct nvlist *nv)
 {
 
-	nv->nv_next = nvhead;
-	nvhead = nv;
+	nv->nv_next = nvfreelist;
+	nvfreelist = nv;
 }
 
 /*
@@ -226,8 +226,8 @@ nvfreel(struct nvlist *nv)
 
 	for (; nv != NULL; nv = next) {
 		next = nv->nv_next;
-		nv->nv_next = nvhead;
-		nvhead = nv;
+		nv->nv_next = nvfreelist;
+		nvfreelist = nv;
 	}
 }
 

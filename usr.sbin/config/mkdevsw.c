@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.1.2.4 2002/06/05 13:27:11 gehenna Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.1.2.5 2002/06/20 13:36:42 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ emitconv(FILE *fp)
 	if (fputs("\n/* device conversion table */\n"
 		  "struct devsw_conv devsw_conv0[] = {\n", fp) < 0)
 		return (-1);
-	for (dm = fixdevms ; dm != NULL ; dm = dm->dm_next) {
+	TAILQ_FOREACH(dm, &fixdevms, dm_next) {
 		if (fprintf(fp, "\t{ \"%s\", %d, %d },\n", dm->dm_name,
 			    dm->dm_bmajor, dm->dm_cmajor) < 0)
 			return (1);
