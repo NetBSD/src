@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.36 1998/07/10 04:39:04 thorpej Exp $	*/
+/*	$NetBSD: ftp.c,v 1.37 1998/08/03 01:49:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.36 1998/07/10 04:39:04 thorpej Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.37 1998/08/03 01:49:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -895,13 +895,8 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 	if (st.st_blksize > bufsize) {
 		if (buf)
 			(void)free(buf);
-		buf = malloc((unsigned)st.st_blksize);
-		if (buf == NULL) {
-			warn("malloc");
-			bufsize = 0;
-			goto abort;
-		}
 		bufsize = st.st_blksize;
+		buf = xmalloc(bufsize);
 	}
 	if (!S_ISREG(st.st_mode)) {
 		progress = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 1998/06/04 08:28:36 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.32 1998/08/03 01:49:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.31 1998/06/04 08:28:36 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.32 1998/08/03 01:49:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,12 +142,10 @@ main(argc, argv)
 			warnx("unknown $FTPMODE '%s'; using defaults", cp);
 	}
 
-	cp = strrchr(argv[0], '/');
-	cp = (cp == NULL) ? argv[0] : cp + 1;
-	if (strcmp(cp, "pftp") == 0) {
+	if (strcmp(__progname, "pftp") == 0) {
 		passivemode = 1;
 		activefallback = 0;
-	} else if (strcmp(cp, "gate-ftp") == 0)
+	} else if (strcmp(__progname, "gate-ftp") == 0)
 		gatemode = 1;
 
 	gateserver = getenv("FTPSERVER");
