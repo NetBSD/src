@@ -1,5 +1,5 @@
-/*	$NetBSD: ipsec.c,v 1.36 2001/08/05 22:20:44 itojun Exp $	*/
-/*	$KAME: ipsec.c,v 1.102 2001/04/14 16:38:59 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.37 2001/08/06 10:25:01 itojun Exp $	*/
+/*	$KAME: ipsec.c,v 1.124 2001/08/05 07:03:50 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,6 +106,7 @@ int ip4_ah_net_deflev = IPSEC_LEVEL_USE;
 struct secpolicy ip4_def_policy;
 int ip4_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
+static int sp_cachegen = 1;	/* cache generation # */
 
 #ifdef INET6
 struct ipsecstat ipsec6stat;
@@ -118,6 +119,11 @@ int ip6_ipsec_ecn = 0;		/* ECN ignore(-1)/forbidden(0)/allowed(1) */
 
 #endif /* INET6 */
 
+static struct secpolicy *ipsec_checkpcbcache __P((struct mbuf *,
+	struct inpcbpolicy *pcbsp, int));
+static int ipsec_fillpcbcache __P((struct inpcbpolicy *, struct mbuf *,
+	struct secpolicy *, int));
+static int ipsec_invalpcbcache __P((struct inpcbpolicy *, int));
 static int ipsec_setspidx_mbuf
 	__P((struct secpolicyindex *, u_int, u_int, struct mbuf *, int));
 static int ipsec4_setspidx_inpcb __P((struct mbuf *, struct inpcb *pcb));
@@ -157,6 +163,157 @@ static struct mbuf *ipsec_findaux __P((struct mbuf *));
 static void ipsec_optaux __P((struct mbuf *, struct mbuf *));
 
 /*
+ * try to validate and use cached policy on a pcb.
+ */
+static struct secpolicy *
+ipsec_checkpcbcache(m, pcbsp, dir)
+	struct mbuf *m;
+	struct inpcbpolicy *pcbsp;
+	int dir;
+{
+	struct secpolicyindex spidx;
+#if defined(__FreeBSD__) && __FreeBSD__ > 2
+	struct timeval mono_time;
+
+	microtime(&mono_time);
+#endif
+
+	switch (dir) {
+	case IPSEC_DIR_INBOUND:
+	case IPSEC_DIR_OUTBOUND:
+		break;
+	default:
+		return NULL;
+	}
+#ifdef DIAGNOSTIC
+	if (dir >= sizeof(pcbsp->cache)/sizeof(pcbsp->cache[0]))
+		panic("dir too big in ipsec_checkpcbcache");
+#endif
+	/* SPD table change invalidates all the caches */
+	if (pcbsp->cachegen[dir] == 0 || sp_cachegen > pcbsp->cachegen[dir]) {
+		ipsec_invalpcbcache(pcbsp, dir);
+		return NULL;
+	}
+	if (!pcbsp->cache[dir])
+		return NULL;
+	if ((pcbsp->cacheflags & IPSEC_PCBSP_CONNECTED) == 0) {
+		if (!pcbsp->cache[dir])
+			return NULL;
+		if (ipsec_setspidx(m, &spidx, 1) != 0)
+			return NULL;
+		if (bcmp(&pcbsp->cacheidx[dir], &spidx, sizeof(spidx))) {
+			if (!key_cmpspidx_withmask(&pcbsp->cache[dir]->spidx,
+			    &spidx))
+				return NULL;
+			pcbsp->cacheidx[dir] = spidx;
+		}
+	} else {
+		/*
+		 * The pcb is connected, and the L4 code is sure that:
+		 * - outgoing side uses inp_[lf]addr
+		 * - incoming side looks up policy after inpcb lookup
+		 * and address pair is known to be stable.  We do not need
+		 * to generate spidx again, nor check the address match again.
+		 *
+		 * For IPv4/v6 SOCK_STREAM sockets, this assumption holds
+		 * and there are calls to ipsec_pcbconn() from in_pcbconnect().
+		 */
+	}
+
+	pcbsp->cache[dir]->lastused = mono_time.tv_sec;
+	pcbsp->cache[dir]->refcnt++;
+	KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+		printf("DP ipsec_checkpcbcache cause refcnt++:%d SP:%p\n",
+		pcbsp->cache[dir]->refcnt, pcbsp->cache[dir]));
+	return pcbsp->cache[dir];
+}
+
+static int
+ipsec_fillpcbcache(pcbsp, m, sp, dir)
+	struct inpcbpolicy *pcbsp;
+	struct mbuf *m;
+	struct secpolicy *sp;
+	int dir;
+{
+
+	switch (dir) {
+	case IPSEC_DIR_INBOUND:
+	case IPSEC_DIR_OUTBOUND:
+		break;
+	default:
+		return EINVAL;
+	}
+#ifdef DIAGNOSTIC
+	if (dir >= sizeof(pcbsp->cache)/sizeof(pcbsp->cache[0]))
+		panic("dir too big in ipsec_checkpcbcache");
+#endif
+
+	if (pcbsp->cache[dir])
+		key_freesp(pcbsp->cache[dir]);
+	pcbsp->cache[dir] = NULL;
+	if (ipsec_setspidx(m, &pcbsp->cacheidx[dir], 1) != 0) {
+		return EINVAL;
+	}
+	pcbsp->cache[dir] = sp;
+	if (pcbsp->cache[dir]) {
+		pcbsp->cache[dir]->refcnt++;
+		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
+			printf("DP ipsec_fillpcbcache cause refcnt++:%d SP:%p\n",
+			pcbsp->cache[dir]->refcnt, pcbsp->cache[dir]));
+	}
+	pcbsp->cachegen[dir] = sp_cachegen;
+
+	return 0;
+}
+
+static int
+ipsec_invalpcbcache(pcbsp, dir)
+	struct inpcbpolicy *pcbsp;
+	int dir;
+{
+	int i;
+
+	for (i = IPSEC_DIR_INBOUND; i <= IPSEC_DIR_OUTBOUND; i++) {
+		if (dir != IPSEC_DIR_ANY && i != dir)
+			continue;
+		if (pcbsp->cache[i])
+			key_freesp(pcbsp->cache[i]);
+		pcbsp->cache[i] = NULL;
+		pcbsp->cachegen[i] = 0;
+		bzero(&pcbsp->cacheidx[i], sizeof(pcbsp->cacheidx[i]));
+	}
+	return 0;
+}
+
+int
+ipsec_pcbconn(pcbsp)
+	struct inpcbpolicy *pcbsp;
+{
+
+	pcbsp->cacheflags |= IPSEC_PCBSP_CONNECTED;
+	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
+	return 0;
+}
+
+int
+ipsec_pcbdisconn(pcbsp)
+	struct inpcbpolicy *pcbsp;
+{
+
+	pcbsp->cacheflags &= ~IPSEC_PCBSP_CONNECTED;
+	ipsec_invalpcbcache(pcbsp, IPSEC_DIR_ANY);
+	return 0;
+}
+
+int
+ipsec_invalpcbcacheall()
+{
+
+	sp_cachegen++;
+	return 0;
+}
+
+/*
  * For OUTBOUND packet having a socket. Searching SPD for packet,
  * and return a pointer to SP.
  * OUT:	NULL:	no apropreate SP found, the following value is set to error.
@@ -185,6 +342,32 @@ ipsec4_getpolicybysock(m, dir, so, error)
 
 	switch (so->so_proto->pr_domain->dom_family) {
 	case AF_INET:
+		pcbsp = sotoinpcb(so)->inp_sp;
+		break;
+#ifdef INET6
+	case AF_INET6:
+		pcbsp = sotoin6pcb(so)->in6p_sp;
+		break;
+#endif
+	}
+
+	/* if we have a cached entry, and if it is still valid, use it. */
+	ipsecstat.spdcachelookup++;
+	currsp = ipsec_checkpcbcache(m, pcbsp, dir);
+	if (currsp) {
+		*error = 0;
+		return currsp;
+	}
+	ipsecstat.spdcachemiss++;
+
+	/*
+	 * XXX why is it necessary to do this, per-packet?
+	 * we are of course sure that the socket policy do match the packet,
+	 * because policy-on-pcb does not contain selectors, and
+	 * in_pcblookup (inbound) ensures the packet-pcb matching.
+	 */
+	switch (so->so_proto->pr_domain->dom_family) {
+	case AF_INET:
 		/* set spidx in pcb */
 		*error = ipsec4_setspidx_inpcb(m, sotoinpcb(so));
 		break;
@@ -199,16 +382,6 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	}
 	if (*error)
 		return NULL;
-	switch (so->so_proto->pr_domain->dom_family) {
-	case AF_INET:
-		pcbsp = sotoinpcb(so)->inp_sp;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		pcbsp = sotoin6pcb(so)->in6p_sp;
-		break;
-#endif
-	}
 
 	/* sanity check */
 	if (pcbsp == NULL)
@@ -235,6 +408,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_BYPASS:
 			currsp->refcnt++;
 			*error = 0;
+			ipsec_fillpcbcache(pcbsp, m, currsp, dir);
 			return currsp;
 
 		case IPSEC_POLICY_ENTRUST:
@@ -247,6 +421,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 					printf("DP ipsec4_getpolicybysock called "
 					       "to allocate SP:%p\n", kernsp));
 				*error = 0;
+				ipsec_fillpcbcache(pcbsp, m, kernsp, dir);
 				return kernsp;
 			}
 
@@ -260,11 +435,13 @@ ipsec4_getpolicybysock(m, dir, so, error)
 			}
 			ip4_def_policy.refcnt++;
 			*error = 0;
+			ipsec_fillpcbcache(pcbsp, m, &ip4_def_policy, dir);
 			return &ip4_def_policy;
 			
 		case IPSEC_POLICY_IPSEC:
 			currsp->refcnt++;
 			*error = 0;
+			ipsec_fillpcbcache(pcbsp, m, currsp, dir);
 			return currsp;
 
 		default:
@@ -286,6 +463,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 			printf("DP ipsec4_getpolicybysock called "
 			       "to allocate SP:%p\n", kernsp));
 		*error = 0;
+		ipsec_fillpcbcache(pcbsp, m, kernsp, dir);
 		return kernsp;
 	}
 
@@ -308,11 +486,13 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		}
 		ip4_def_policy.refcnt++;
 		*error = 0;
+		ipsec_fillpcbcache(pcbsp, m, &ip4_def_policy, dir);
 		return &ip4_def_policy;
 
 	case IPSEC_POLICY_IPSEC:
 		currsp->refcnt++;
 		*error = 0;
+		ipsec_fillpcbcache(pcbsp, m, currsp, dir);
 		return currsp;
 
 	default:
@@ -415,10 +595,20 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		panic("ipsec6_getpolicybysock: socket domain != inet6\n");
 #endif
 
-	/* set spidx in pcb */
-	ipsec6_setspidx_in6pcb(m, sotoin6pcb(so));
-
 	pcbsp = sotoin6pcb(so)->in6p_sp;
+
+	/* if we have a cached entry, and if it is still valid, use it. */
+	ipsec6stat.spdcachelookup++;
+	currsp = ipsec_checkpcbcache(m, pcbsp, dir);
+	if (currsp) {
+		*error = 0;
+		return currsp;
+	}
+	ipsec6stat.spdcachemiss++;
+
+	/* set spidx in pcb */
+	/* XXX why is it necessary to do this? */
+	ipsec6_setspidx_in6pcb(m, sotoin6pcb(so));
 
 	/* sanity check */
 	if (pcbsp == NULL)
@@ -445,6 +635,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_BYPASS:
 			currsp->refcnt++;
 			*error = 0;
+			ipsec_fillpcbcache(pcbsp, m, currsp, dir);
 			return currsp;
 
 		case IPSEC_POLICY_ENTRUST:
@@ -457,6 +648,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 					printf("DP ipsec6_getpolicybysock called "
 					       "to allocate SP:%p\n", kernsp));
 				*error = 0;
+				ipsec_fillpcbcache(pcbsp, m, kernsp, dir);
 				return kernsp;
 			}
 
@@ -470,11 +662,13 @@ ipsec6_getpolicybysock(m, dir, so, error)
 			}
 			ip6_def_policy.refcnt++;
 			*error = 0;
+			ipsec_fillpcbcache(pcbsp, m, &ip6_def_policy, dir);
 			return &ip6_def_policy;
 			
 		case IPSEC_POLICY_IPSEC:
 			currsp->refcnt++;
 			*error = 0;
+			ipsec_fillpcbcache(pcbsp, m, currsp, dir);
 			return currsp;
 
 		default:
@@ -496,6 +690,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 			printf("DP ipsec6_getpolicybysock called "
 			       "to allocate SP:%p\n", kernsp));
 		*error = 0;
+		ipsec_fillpcbcache(pcbsp, m, kernsp, dir);
 		return kernsp;
 	}
 
@@ -518,11 +713,13 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		}
 		ip6_def_policy.refcnt++;
 		*error = 0;
+		ipsec_fillpcbcache(pcbsp, m, &ip6_def_policy, dir);
 		return &ip6_def_policy;
 
 	case IPSEC_POLICY_IPSEC:
 		currsp->refcnt++;
 		*error = 0;
+		ipsec_fillpcbcache(pcbsp, m, currsp, dir);
 		return currsp;
 
 	default:
@@ -740,6 +937,8 @@ ipsec_setspidx(m, spidx, needport)
 	if (m == NULL)
 		panic("ipsec_setspidx: m == 0 passed.\n");
 
+	bzero(spidx, sizeof(*spidx));
+
 	/*
 	 * validate m->m_pkthdr.len.  we see incorrect length if we
 	 * mistakenly call this function with inconsistent mbuf chain
@@ -867,9 +1066,6 @@ ipsec4_get_ulp(m, spidx, needport)
 			((struct sockaddr_in *)&spidx->dst)->sin_port =
 			    uh.uh_dport;
 			return;
-		case IPPROTO_ICMP:
-			spidx->ul_proto = nxt;
-			return;
 		case IPPROTO_AH:
 			if (m->m_pkthdr.len > off + sizeof(ip6e))
 				return;
@@ -877,8 +1073,10 @@ ipsec4_get_ulp(m, spidx, needport)
 			off += (ip6e.ip6e_len + 2) << 2;
 			nxt = ip6e.ip6e_nxt;
 			break;
-		/* XXX other headers to look at? */
+		case IPPROTO_ICMP:
 		default:
+			/* XXX intermediate headers??? */
+			spidx->ul_proto = nxt;
 			return;
 		}
 	}
@@ -967,9 +1165,9 @@ ipsec6_get_ulp(m, spidx, needport)
 		((struct sockaddr_in6 *)&spidx->dst)->sin6_port = uh.uh_dport;
 		break;
 	case IPPROTO_ICMPV6:
-		spidx->ul_proto = nxt;
-		break;
 	default:
+		/* XXX intermediate headers??? */
+		spidx->ul_proto = nxt;
 		break;
 	}
 }
@@ -1030,6 +1228,7 @@ static void
 ipsec_delpcbpolicy(p)
 	struct inpcbpolicy *p;
 {
+
 	free(p, M_SECA);
 }
 
@@ -1267,6 +1466,7 @@ ipsec4_set_policy(inp, optname, request, len, priv)
 		return EINVAL;
 	}
 
+	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
 	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
 }
 
@@ -1328,6 +1528,8 @@ ipsec4_delete_pcbpolicy(inp)
 		inp->inp_sp->sp_out = NULL;
 	}
 
+	ipsec_invalpcbcache(inp->inp_sp, IPSEC_DIR_ANY);
+
 	ipsec_delpcbpolicy(inp->inp_sp);
 	inp->inp_sp = NULL;
 
@@ -1367,6 +1569,7 @@ ipsec6_set_policy(in6p, optname, request, len, priv)
 		return EINVAL;
 	}
 
+	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
 	return ipsec_set_policy(pcb_sp, optname, request, len, priv);
 }
 
@@ -1426,6 +1629,8 @@ ipsec6_delete_pcbpolicy(in6p)
 		key_freesp(in6p->in6p_sp->sp_out);
 		in6p->in6p_sp->sp_out = NULL;
 	}
+
+	ipsec_invalpcbcache(in6p->in6p_sp, IPSEC_DIR_ANY);
 
 	ipsec_delpcbpolicy(in6p->in6p_sp);
 	in6p->in6p_sp = NULL;
@@ -2638,17 +2843,17 @@ ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
 	struct sockaddr_in6 *sin6;
 
 	if (!state)
-		panic("state == NULL in ipsec6_output");
+		panic("state == NULL in ipsec6_output_trans");
 	if (!state->m)
-		panic("state->m == NULL in ipsec6_output");
+		panic("state->m == NULL in ipsec6_output_trans");
 	if (!nexthdrp)
-		panic("nexthdrp == NULL in ipsec6_output");
+		panic("nexthdrp == NULL in ipsec6_output_trans");
 	if (!mprev)
-		panic("mprev == NULL in ipsec6_output");
+		panic("mprev == NULL in ipsec6_output_trans");
 	if (!sp)
-		panic("sp == NULL in ipsec6_output");
+		panic("sp == NULL in ipsec6_output_trans");
 	if (!tun)
-		panic("tun == NULL in ipsec6_output");
+		panic("tun == NULL in ipsec6_output_trans");
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
 		printf("ipsec6_output_trans: applyed SP\n");
@@ -2709,7 +2914,12 @@ ipsec6_output_trans(state, nexthdrp, mprev, sp, flags, tun)
 			 * XXX: should we restrict the error to TCP packets?
 			 * XXX: should we directly notify sockets via
 			 *      pfctlinputs?
+			 *
+			 * Noone have initialized rcvif until this point,
+			 * so clear it.
 			 */
+			if ((state->m->m_flags & M_PKTHDR) != 0)
+				state->m->m_pkthdr.rcvif = NULL;
 			icmp6_error(state->m, ICMP6_DST_UNREACH,
 				    ICMP6_DST_UNREACH_ADMIN, 0);
 			state->m = NULL; /* icmp6_error freed the mbuf */
@@ -2807,11 +3017,11 @@ ipsec6_output_tunnel(state, sp, flags)
 	int s;
 
 	if (!state)
-		panic("state == NULL in ipsec6_output");
+		panic("state == NULL in ipsec6_output_tunnel");
 	if (!state->m)
-		panic("state->m == NULL in ipsec6_output");
+		panic("state->m == NULL in ipsec6_output_tunnel");
 	if (!sp)
-		panic("sp == NULL in ipsec6_output");
+		panic("sp == NULL in ipsec6_output_tunnel");
 
 	KEYDEBUG(KEYDEBUG_IPSEC_DATA,
 		printf("ipsec6_output_tunnel: applyed SP\n");
@@ -3228,6 +3438,7 @@ ipsec_copypkt(m)
 					MGETHDR(mn, M_DONTWAIT, MT_HEADER);
 					if (mn == NULL)
 						goto fail;
+					mn->m_pkthdr.rcvif = NULL;
 					mm->m_next = mn;
 					mm = mn;
 				}
@@ -3262,7 +3473,7 @@ ipsec_addaux(m)
 		n = m_aux_add(m, AF_INET, IPPROTO_ESP);
 	if (!n)
 		return n;	/* ENOBUFS */
-	n->m_len = sizeof(struct socket *);
+	n->m_len = sizeof(struct ipsecaux);
 	bzero(mtod(n, void *), n->m_len);
 	return n;
 }
@@ -3298,10 +3509,16 @@ ipsec_optaux(m, n)
 	struct mbuf *m;
 	struct mbuf *n;
 {
+	struct ipsecaux *aux;
 
 	if (!n)
 		return;
-	if (n->m_len == sizeof(struct socket *) && !*mtod(n, struct socket **))
+	if (sizeof(*aux) > n->m_len) {
+		ipsec_delaux(m);
+		return;
+	}
+	aux = mtod(n, struct ipsecaux *);
+	if (!aux->so && !aux->sp)
 		ipsec_delaux(m);
 }
 
@@ -3311,6 +3528,7 @@ ipsec_setsocket(m, so)
 	struct socket *so;
 {
 	struct mbuf *n;
+	struct ipsecaux *aux;
 
 	/* if so == NULL, don't insist on getting the aux mbuf */
 	if (so) {
@@ -3319,8 +3537,10 @@ ipsec_setsocket(m, so)
 			return ENOBUFS;
 	} else
 		n = ipsec_findaux(m);
-	if (n && n->m_len >= sizeof(struct socket *))
-		*mtod(n, struct socket **) = so;
+	if (n && n->m_len >= sizeof(*aux)) {
+		aux = mtod(n, struct ipsecaux *);
+		aux->so = so;
+	}
 	ipsec_optaux(m, n);
 	return 0;
 }
@@ -3330,11 +3550,13 @@ ipsec_getsocket(m)
 	struct mbuf *m;
 {
 	struct mbuf *n;
+	struct ipsecaux *aux;
 
 	n = ipsec_findaux(m);
-	if (n && n->m_len >= sizeof(struct socket *))
-		return *mtod(n, struct socket **);
-	else
+	if (n && n->m_len >= sizeof(*aux)) {
+		aux = mtod(n, struct ipsecaux *);
+		return aux->so;
+	} else
 		return NULL;
 }
 
@@ -3345,19 +3567,32 @@ ipsec_addhist(m, proto, spi)
 	u_int32_t spi;
 {
 	struct mbuf *n;
-	struct ipsec_history *p;
+	struct ipsecaux *aux;
 
 	n = ipsec_addaux(m);
 	if (!n)
 		return ENOBUFS;
-	if (M_TRAILINGSPACE(n) < sizeof(*p))
+	if (sizeof(*aux) > n->m_len)
 		return ENOSPC;	/* XXX */
-	p = (struct ipsec_history *)(mtod(n, caddr_t) + n->m_len);
-	n->m_len += sizeof(*p);
-	bzero(p, sizeof(*p));
-	p->ih_proto = proto;
-	p->ih_spi = spi;
+	aux = mtod(n, struct ipsecaux *);
+	aux->hdrs++;
 	return 0;
+}
+
+int
+ipsec_getnhist(m)
+	struct mbuf *m;
+{
+	struct mbuf *n;
+	struct ipsecaux *aux;
+
+	n = ipsec_findaux(m);
+	if (!n)
+		return 0;
+	if (sizeof(*aux) > n->m_len)
+		return 0;
+	aux = mtod(n, struct ipsecaux *);
+	return aux->hdrs;
 }
 
 struct ipsec_history *
@@ -3365,22 +3600,8 @@ ipsec_gethist(m, lenp)
 	struct mbuf *m;
 	int *lenp;
 {
-	struct mbuf *n;
-	int l;
 
-	n = ipsec_findaux(m);
-	if (!n)
-		return NULL;
-	l = n->m_len;
-	if (sizeof(struct socket *) > l)
-		return NULL;
-	if ((l - sizeof(struct socket *)) % sizeof(struct ipsec_history))
-		return NULL;
-	/* XXX does it make more sense to divide by sizeof(ipsec_history)? */
-	if (lenp)
-		*lenp = l - sizeof(struct socket *);
-	return (struct ipsec_history *)
-	    (mtod(n, caddr_t) + sizeof(struct socket *));
+	panic("ipsec_gethist: obsolete API");
 }
 
 void
@@ -3390,8 +3611,8 @@ ipsec_clearhist(m)
 	struct mbuf *n;
 
 	n = ipsec_findaux(m);
-	if ((n) && n->m_len > sizeof(struct socket *))
-		n->m_len = sizeof(struct socket *);
+	if ((n) && n->m_len > sizeof(struct ipsecaux))
+		n->m_len = sizeof(struct ipsecaux); 
 	ipsec_optaux(m, n);
 }
 
@@ -3451,19 +3672,28 @@ ipsec_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			default:
 				return EINVAL;
 			}
+			ipsec_invalpcbcacheall();
 		}
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_def_policy.policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_esp_trans_deflev);
 	case IPSECCTL_DEF_ESP_NETLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_esp_net_deflev);
 	case IPSECCTL_DEF_AH_TRANSLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_ah_trans_deflev);
 	case IPSECCTL_DEF_AH_NETLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip4_ah_net_deflev);
 	case IPSECCTL_AH_CLEARTOS:
@@ -3542,19 +3772,28 @@ ipsec6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 			default:
 				return EINVAL;
 			}
+			ipsec_invalpcbcacheall();
 		}
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip6_def_policy.policy);
 	case IPSECCTL_DEF_ESP_TRANSLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip6_esp_trans_deflev);
 	case IPSECCTL_DEF_ESP_NETLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip6_esp_net_deflev);
 	case IPSECCTL_DEF_AH_TRANSLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip6_ah_trans_deflev);
 	case IPSECCTL_DEF_AH_NETLEV:
+		if (newp != NULL)
+			ipsec_invalpcbcacheall();
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &ip6_ah_net_deflev);
 	case IPSECCTL_ECN:
