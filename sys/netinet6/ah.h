@@ -1,9 +1,10 @@
-/*	$NetBSD: ah.h,v 1.8 2000/01/31 14:19:00 itojun Exp $	*/
+/*	$NetBSD: ah.h,v 1.9 2000/06/02 18:20:15 itojun Exp $	*/
+/*	$KAME: ah.h,v 1.8 2000/05/29 08:05:02 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -69,7 +70,7 @@ struct ah_algorithm {
 	int (*mature) __P((struct secasvar *));
 	int keymin;	/* in bits */
 	int keymax;	/* in bits */
-	void (*init) __P((struct ah_algorithm_state *, struct secasvar *));
+	int (*init) __P((struct ah_algorithm_state *, struct secasvar *));
 	void (*update) __P((struct ah_algorithm_state *, caddr_t, size_t));
 	void (*result) __P((struct ah_algorithm_state *, caddr_t));
 };
@@ -90,15 +91,15 @@ extern int ah_hdrlen __P((struct secasvar *));
 extern size_t ah_hdrsiz __P((struct ipsecrequest *));
 extern void ah4_input __P((struct mbuf *, ...));
 extern int ah4_output __P((struct mbuf *, struct ipsecrequest *));
-extern int ah4_calccksum __P((struct mbuf *, caddr_t,
-				struct ah_algorithm *, struct secasvar *));
+extern int ah4_calccksum __P((struct mbuf *, caddr_t, size_t,
+	struct ah_algorithm *, struct secasvar *));
 
 #ifdef INET6
 extern int ah6_input __P((struct mbuf **, int *, int));
 extern int ah6_output __P((struct mbuf *, u_char *, struct mbuf *,
 	struct ipsecrequest *));
-extern int ah6_calccksum __P((struct mbuf *, caddr_t,
-			      struct ah_algorithm *, struct secasvar *));
+extern int ah6_calccksum __P((struct mbuf *, caddr_t, size_t,
+	struct ah_algorithm *, struct secasvar *));
 #endif /* INET6 */
 
 #endif /*_KERNEL*/
