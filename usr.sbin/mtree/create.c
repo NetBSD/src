@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.36 2001/11/07 08:01:52 lukem Exp $	*/
+/*	$NetBSD: create.c,v 1.37 2001/11/10 14:58:21 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.36 2001/11/07 08:01:52 lukem Exp $");
+__RCSID("$NetBSD: create.c,v 1.37 2001/11/10 14:58:21 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,17 +50,24 @@ __RCSID("$NetBSD: create.c,v 1.36 2001/11/07 08:01:52 lukem Exp $");
 #include <fcntl.h>
 #include <fts.h>
 #include <grp.h>
-#include <md5.h>
 #include <pwd.h>
-#include <rmd160.h>
-#include <sha1.h>
-#include <stdarg.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <vis.h>
+
+#ifndef NO_MD5
+#include <md5.h>
+#endif
+#ifndef NO_RMD160
+#include <rmd160.h>
+#endif
+#ifndef NO_SHA1
+#include <sha1.h>
+#endif
 
 #include "mtree.h"
 #include "extern.h"
@@ -139,8 +146,10 @@ statf(FTSENT *p)
 {
 	u_int32_t len, val;
 	int fd, indent;
-	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
 	const char *name;
+#if !defined(NO_MD5) || !defined(NO_RMD160) || !defined(NO_SHA1)
+	char digestbuf[41];	/* large enough for {MD5,RMD160,SHA1}File() */
+#endif
 
 	strsvis(codebuf, p->fts_name, VISFLAGS, extra);
 	if (S_ISDIR(p->fts_statp->st_mode))
@@ -194,21 +203,27 @@ statf(FTSENT *p)
 		close(fd);
 		output(&indent, "cksum=%lu", (long)val);
 	}
+#ifndef NO_MD5
 	if (keys & F_MD5 && S_ISREG(p->fts_statp->st_mode)) {
 		if (MD5File(p->fts_accpath, digestbuf) == NULL)
 			mtree_err("%s: %s", p->fts_accpath, "MD5File");
 		output(&indent, "md5=%s", digestbuf);
 	}
+#endif	/* ! NO_MD5 */
+#ifndef NO_RMD160
 	if (keys & F_RMD160 && S_ISREG(p->fts_statp->st_mode)) {
 		if (RMD160File(p->fts_accpath, digestbuf) == NULL)
 			mtree_err("%s: %s", p->fts_accpath, "RMD160File");
 		output(&indent, "rmd160=%s", digestbuf);
 	}
+#endif	/* ! NO_RMD160 */
+#ifndef NO_SHA1
 	if (keys & F_SHA1 && S_ISREG(p->fts_statp->st_mode)) {
 		if (SHA1File(p->fts_accpath, digestbuf) == NULL)
 			mtree_err("%s: %s", p->fts_accpath, "SHA1File");
 		output(&indent, "sha1=%s", digestbuf);
 	}
+#endif	/* ! NO_SHA1 */
 	if (keys & F_SLINK &&
 	    (p->fts_info == FTS_SL || p->fts_info == FTS_SLNONE))
 		output(&indent, "link=%s", rlink(p->fts_accpath));
