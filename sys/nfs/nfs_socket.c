@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.103 2004/04/21 01:05:42 christos Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.104 2004/05/10 10:40:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.103 2004/04/21 01:05:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.104 2004/05/10 10:40:42 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -351,8 +351,8 @@ nfs_reconnect(rep)
 	 * on old socket.
 	 */
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
-		if (rp->r_nmp == nmp)
-			rp->r_flags |= R_MUSTRESEND;
+		if (rp->r_nmp == nmp && (rp->r_flags & R_MUSTRESEND) == 0)
+			rp->r_flags |= R_MUSTRESEND | R_REXMITTED;
 	}
 	return (0);
 }
@@ -910,7 +910,7 @@ nfsmout:
  * nb: always frees up mreq mbuf list
  */
 int
-nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
+nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp, rexmitp)
 	struct nfsnode *np;
 	struct mbuf *mrest;
 	int procnum;
@@ -919,6 +919,7 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	struct mbuf **mrp;
 	struct mbuf **mdp;
 	caddr_t *dposp;
+	int *rexmitp;
 {
 	struct mbuf *m, *mrep;
 	struct nfsreq *rep;
@@ -940,6 +941,9 @@ nfs_request(np, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	int nqlflag, cachable;
 	u_quad_t frev;
 #endif
+
+	if (rexmitp != NULL)
+		*rexmitp = 0;
 
 	KASSERT(cred != NULL);
 	nmp = VFSTONFS(np->n_vnode->v_mount);
@@ -1078,6 +1082,16 @@ tryagain:
 	if (rep->r_flags & R_SENT) {
 		rep->r_flags &= ~R_SENT;	/* paranoia */
 		nmp->nm_sent -= NFS_CWNDSCALE;
+	}
+
+	if (rexmitp != NULL) {
+		int rexmit;
+
+		if (nmp->nm_sotype != SOCK_DGRAM)
+			rexmit = (rep->r_flags & R_REXMITTED) != 0;
+		else
+			rexmit = rep->r_rexmit;
+		*rexmitp = rexmit;
 	}
 
 	/*
