@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.29 1993/10/20 23:04:52 cgd Exp $
+#	$Id: ALL,v 1.30 1993/11/02 06:19:46 glass Exp $
 #
 
 # architecture type and name of kernel; REQUIRED
@@ -213,5 +213,6 @@ pseudo-device ppp
 # speaker queue
 pseudo-device speaker
 
-#pseudo-device tb	2	was never ported to 4.4
+# tablet line discipline
+pseudo-device tb
 #pseudo-device tun	missing header files
