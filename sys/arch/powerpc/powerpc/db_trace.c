@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.8 2001/03/29 14:58:08 eeh Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.9 2001/06/06 17:36:03 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -118,7 +118,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		db_addr_t *args = (db_addr_t *)(frame + 8);
 
 		lr = *(db_addr_t *)(frame + 4) - 4;
-		if (lr & 3) {
+		if ((lr & 3) || (lr < 0x10000)) {
 			(*pr)("saved LR(0x%x) is invalid.", lr);
 			break;
 		}
