@@ -1,4 +1,4 @@
-/*	$NetBSD: biosmca.S,v 1.1 2001/05/02 13:41:07 jdolecek Exp $	*/
+/*	$NetBSD: biosmca.S,v 1.2 2001/05/14 22:14:47 jdolecek Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -58,13 +58,18 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define	addr32	.byte 0x67
 #define	data32	.byte 0x66
 
+	.data
+	.globl _C_LABEL(biosmca_ps2model)
+_C_LABEL(biosmca_ps2model):	.long 0
+
+	.text
 /*
 # BIOS call "INT 0x15 Function 0xc0" to read extended sys config info on PS/2
-#	Return:		
-#			%ah = 0x0 on success; err code on failure
-#			%es:%bx = segment:offset of ROM address of sys config
-# Called like
-#	biosmca(&model, &features)
+#	Return:		no return value
+#
+# This function initializes biosmca_ps2model with model number as
+# identified by BIOS, if the machine is a PS/2 box (i.e. has MCA bus
+# instead of ISA).
 */
 ENTRY(biosmca)
 	pushl	%ebp
@@ -74,41 +79,41 @@ ENTRY(biosmca)
 	push	%edx
 	push	%esi
 	push	%edi
+	push	%eax
 
 	call	_C_LABEL(prot_to_real)	# enter real mode
 
+	# zero %cx
 	data32
-	movl    $0xa0, %ax	# set table length to 0
+	xorl	%cx, %cx
+
+	data32
+	xorl	%ax, %ax
 	movb	$0xc0, %ah	# subfunction
 	int	$0x15
-	jc	err
+	jc	back
 
+	# check feature byte 1 if MCA bus present and replaces ISA
 	addr32
-	movl	%es, %cx
+	movb	%es:5(%ebx), %ax
+	andw	$0x02, %ax	# bit 1 set means MCA instead of ISA
+	cmpw	$0x02, %ax	# see also arch/i386/mca/mca_machdep.c
+	jne	back
+	
+	# save model and submodel bytes to %cx
 	addr32
-	movl	%bx, %dx
-	data32
-	movl	%ax, %bx
-	jmp	back
-
-err:
-	data32
-	movb	$0, %bx
+	movb	%es:2(%ebx), %ch	# model (1 byte)
+	addr32
+	movb	%es:3(%ebx), %cl	# submodel (1 byte)
 
 back:
 	data32
 	call	_C_LABEL(real_to_prot) # back to protected mode
 
-	xorl	%eax, %eax
-	movw	%bx, %ax	# return value in %ax
-
 	# save model
-	movl	28(%esp), %ebx
-	movl	%ecx, 0(%ebx)
-	# save bios rev & features
-	movl	32(%esp), %ebx
-	movl	%edx, 0(%ebx)
+	movl	%ecx, _C_LABEL(biosmca_ps2model)
 
+	pop	%eax
 	pop	%edi
 	pop	%esi
 	pop	%edx
