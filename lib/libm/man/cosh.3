@@ -30,22 +30,27 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)cosh.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: cosh.3,v 1.4 1993/10/29 22:57:26 jtc Exp $
+.\"	$Id: cosh.3,v 1.5 1995/03/04 01:36:44 jtc Exp $
 .\"
 .Dd May 2, 1991
 .Dt COSH 3
 .Os
 .Sh NAME
-.Nm cosh
-.Nd hyperbolic cosine function
+.Nm cosh ,
+.Nm coshf
+.Nd hyperbolic cosine functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
 .Fn cosh "double x"
+.Ft float
+.Fn coshf "float x"
 .Sh DESCRIPTION
 The
 .Fn cosh
-function computes the hyperbolic cosine of
+and
+.Fn coshf
+functions compute the hyperbolic cosine of
 .Fa x .
 .Sh RETURN VALUES
 The

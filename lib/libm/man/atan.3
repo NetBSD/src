@@ -30,22 +30,27 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)atan.3	5.1 (Berkeley) 5/2/91
-.\"	$Id: atan.3,v 1.4 1993/10/04 18:07:15 jtc Exp $
+.\"	$Id: atan.3,v 1.5 1995/03/04 01:36:37 jtc Exp $
 .\"
 .Dd May 2, 1991
 .Dt ATAN 3
 .Os
 .Sh NAME
-.Nm atan
+.Nm atan ,
+.Nm atanf
 .Nd arc tangent function of one variable
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
 .Fn atan "double x"
+.Ft float
+.Fn atanf "float x"
 .Sh DESCRIPTION
 The
 .Fn atan
-function computes the principal value of the arc tangent of
+and 
+.Fn atanf
+functions compute the principal value of the arc tangent of
 .Fa x .
 For a discussion of error due to roundoff, see
 .Xr math 3 .

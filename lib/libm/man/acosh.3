@@ -30,22 +30,27 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)acosh.3	5.2 (Berkeley) 5/6/91
-.\"	$Id: acosh.3,v 1.4 1993/10/29 22:57:20 jtc Exp $
+.\"	$Id: acosh.3,v 1.5 1995/03/04 01:36:32 jtc Exp $
 .\"
 .Dd May 6, 1991
 .Dt ACOSH 3
 .Os BSD 4.3
 .Sh NAME
-.Nm acosh
-.Nd inverse hyperbolic cosine function
+.Nm acosh ,
+.Nm acoshf 
+.Nd inverse hyperbolic cosine functions
 .Sh SYNOPSIS
 .Fd #include <math.h>
 .Ft double
 .Fn acosh "double x"
+.Ft float
+.Fn acoshf "float x"
 .Sh DESCRIPTION
 The
 .Fn acosh
-function computes the inverse hyperbolic cosine
+and
+.Fn acoshf
+functions compute the inverse hyperbolic cosine
 of the real
 argument
 .Ar x .
