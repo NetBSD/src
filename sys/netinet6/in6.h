@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.9 2000/01/06 15:46:09 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.10 2000/02/09 00:54:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -63,6 +63,10 @@
  *
  *	@(#)in.h	8.3 (Berkeley) 1/3/94
  */
+
+#ifndef __KAME_NETINET_IN_H_INCLUDED_
+#error "do not include netinet6/in6.h directly, include netinet/in.h"
+#endif
 
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
