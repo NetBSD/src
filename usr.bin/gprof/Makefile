@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.17 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.5 1993/08/23 05:02:37 cgd Exp $
+#	$Id: Makefile,v 1.6 1993/10/01 00:38:38 jtc Exp $
 
 PROG=	gprof
 SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE}.c hertz.c \
@@ -7,14 +7,7 @@ SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE}.c hertz.c \
 CFLAGS+=-I${.CURDIR}/../../lib/csu/${MACHINE}
 
 beforeinstall:
-	@if [ ! -d ${DESTDIR}/usr/share/misc ]; then \
-                /bin/rm -f ${DESTDIR}/usr/share/misc ; \
-                mkdir -p ${DESTDIR}/usr/share/misc ; \
-                chown root.wheel ${DESTDIR}/usr/share/misc ; \
-                chmod 755 ${DESTDIR}/usr/share/misc ; \
-        else \
-                true ; \
-        fi
+	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/share/misc
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 \
 	    ${.CURDIR}/gprof.flat ${.CURDIR}/gprof.callg \
 	    ${DESTDIR}/usr/share/misc
