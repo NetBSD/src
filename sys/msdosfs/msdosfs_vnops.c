@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.18 1994/07/19 11:20:40 ws Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.19 1994/08/09 18:44:12 ws Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -1054,8 +1054,8 @@ msdosfs_rename(ap)
 		/* tddep and fddep point to the same denode here */
 		VOP_LOCK(ap->a_fvp);	/* ap->a_fdvp is already locked */
 		if (error = readep(fddep->de_pmp,
-				   fddep->de_fndclust,
-				   fddep->de_fndoffset,
+				   fdep->de_dirclust,
+				   fdep->de_diroffset,
 				   &bp, &ep)) {
 			VOP_UNLOCK(ap->a_fvp);
 			goto bad;
