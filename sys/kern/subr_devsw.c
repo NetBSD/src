@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.1.2.6 2002/06/05 14:22:14 gehenna Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.1.2.7 2002/06/06 02:46:11 gehenna Exp $	*/
 /*-
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -190,12 +190,12 @@ bdevsw_attach(const char *devname, const struct bdevsw *devsw, int *devmajor)
 		old = max_bdevsws;
 		new = *devmajor + 1;
 
-		newptr = malloc(new * CDEVSW_SIZE, M_DEVBUF, M_NOWAIT);
+		newptr = malloc(new * BDEVSW_SIZE, M_DEVBUF, M_NOWAIT);
 		if (newptr == NULL)
 			return (ENOMEM);
-		memset(newptr + old, 0, (new - old) * CDEVSW_SIZE);
+		memset(newptr + old, 0, (new - old) * BDEVSW_SIZE);
 		if (old != 0) {
-			memcpy(newptr, bdevsw, old * CDEVSW_SIZE);
+			memcpy(newptr, bdevsw, old * BDEVSW_SIZE);
 			if (bdevsw != bdevsw0)
 				free(bdevsw, M_DEVBUF);
 		}
