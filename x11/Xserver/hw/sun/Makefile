@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2004/02/07 06:52:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 2005/01/19 13:13:43 tsutsui Exp $
 
 SUBDIR=	bin/constype bin/kbd_mode
 
@@ -23,7 +23,9 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/sun \
 		-I${X11SRCDIR.xc}/include/extensions \
 		-I${XSERVERINCDIR}
 
-CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
+CPPFLAGS+=	${X11FLAGS.OS_DEFINES} \
+		${X11FLAGS.EXTENSION} \
+		-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
 		-UXF86DRI -UXF86BIGFONT
 
 CPPFLAGS.sunKbd.c=		-Wno-error
