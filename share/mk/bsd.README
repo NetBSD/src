@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.108 2002/12/20 16:05:16 jwise Exp $
+#	$NetBSD: bsd.README,v 1.109 2003/01/05 19:18:52 sommerfeld Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -857,5 +857,25 @@ KERNOBJDIR	Is the kernel build directory.  The kernel GENERIC for
 It is important that Makefiles (such as those under src/distrib) that
 wish to find compiled kernels use bsd.kernobj.mk and ${KERNOBJDIR}
 rather than make assumptions about the location of the compiled kernel.
+
+=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
+
+The include file <bsd.rpc.mk> contains a makefile fragment used to
+construct source files built by rpcgen.
+
+The following macros may be defined in makefiles which include
+<bsd.rpc.mk> in order to control which files get built and how they
+are to be built:
+
+RPC_INCS:	construct .h file from .x file
+RPC_XDRFILES:	construct _xdr.c from .x file 
+		(for marshalling/unmarshalling data types)
+RPC_SVCFILES:	construct _svc.c from .x file
+		(server-side stubs)
+RPC_SVCFLAGS:	Additional flags passed to builds of RPC_SVCFILES.
+
+RPC_XDIR:	Directory containing .x/.h files
+
+
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
