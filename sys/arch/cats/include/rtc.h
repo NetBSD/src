@@ -1,3 +1,3 @@
-/* $NetBSD: rtc.h,v 1.1 2001/06/08 22:23:02 chris Exp $ */
+/*	$NetBSD: rtc.h,v 1.2 2001/11/25 15:55:58 thorpej Exp $	*/
 
 #include <arm/arm32/rtc.h>
