@@ -114,7 +114,6 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
-#include <vm/vm.h>
 #include <sys/user.h>
 
 #include <uvm/uvm.h>

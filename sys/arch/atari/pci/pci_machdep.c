@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.23 2000/06/26 14:20:40 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.24 2000/06/29 08:28:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -39,7 +39,7 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.8 2000/06/26 14:20:40 mrg Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.9 2000/06/29 08:28:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>

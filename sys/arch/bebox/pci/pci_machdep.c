@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.6 2000/06/26 14:20:41 mrg Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.7 2000/06/29 08:22:17 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -49,7 +49,7 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
 #include <machine/pio.h>

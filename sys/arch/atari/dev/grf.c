@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.24 2000/06/26 14:20:40 mrg Exp $	*/
+/*	$NetBSD: grf.c,v 1.25 2000/06/29 08:28:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -60,8 +60,11 @@
 #include <sys/vnode.h>
 #include <sys/mman.h>
 #include <sys/poll.h>
-#include <vm/vm.h>
+
 #include <machine/cpu.h>
+
+#include <uvm/uvm_extern.h>
+
 #include <atari/atari/device.h>
 #include <atari/dev/grfioctl.h>
 #include <atari/dev/grfabs_reg.h>
