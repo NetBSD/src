@@ -2,7 +2,7 @@
 # Distribution kernel (TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.12 2000/03/12 15:28:12 uch Exp $
+#	$NetBSD: TX3912,v 1.13 2000/03/13 18:49:15 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -116,8 +116,9 @@ ucbio*		at	ucb?
 ucbioport*	at	ucbio? platform COMPAQ_C_810 id BTN_LIGHT port 5
 
 # WS console uses SUN or VT100 terminal emulation
-fb*		at	tx3912video?
-wsdisplay*	at	fb?
+bivideo*	at	tx3912video?
+hpcfb*		at	bivideo?
+wsdisplay*	at	hpcfb?
 wskbd*		at	skbd? mux 1
 wsmouse*	at	ucbtp? mux 0
 btnmgr0		at	mainbus0

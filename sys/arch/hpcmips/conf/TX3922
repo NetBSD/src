@@ -2,7 +2,7 @@
 # Distribution kernel (TX3922 based model) kernel config file
 
 #
-#	$NetBSD: TX3922,v 1.9 2000/03/12 15:28:12 uch Exp $
+#	$NetBSD: TX3922,v 1.10 2000/03/13 18:49:15 uch Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -110,8 +110,9 @@ plumpcmcia*	at	plum?
 #include	"arch/hpcmips/conf/usb.plum2"
 
 # WS console uses SUN or VT100 terminal emulation
-fb*		at	plumvideo?
-wsdisplay*	at	fb?
+bivideo*	at	plumvideo?
+hpcfb*		at	bivideo?
+wsdisplay*	at	hpcfb?
 wskbd*		at	skbd? mux 1
 btnmgr0		at	mainbus0
 wskbd*		at	btnmgr0 mux 1
