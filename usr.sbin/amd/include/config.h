@@ -796,6 +796,7 @@
 
 /* Define if your processor stores words with the most significant
    byte first (like Motorola and SPARC, unlike Intel and VAX).  */
+#include <sys/types.h>
 #if BYTE_ORDER == BIG_ENDIAN
 #define WORDS_BIGENDIAN 
 #endif
