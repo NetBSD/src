@@ -1,4 +1,4 @@
-.\"     $NetBSD: an.4,v 1.6 2000/12/19 15:24:28 onoe Exp $
+.\"     $NetBSD: an.4,v 1.7 2001/04/06 09:31:20 onoe Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -38,7 +38,7 @@
 .Sh NAME
 .Nm an
 .Nd
-Aironet 4500/4800 and Cisco 340 series wireless network driver
+Aironet 4500/4800 and Cisco 340/350 series wireless network driver
 .Sh SYNOPSIS
 .Cd "an* at pcmcia? function ?"
 .Cd "an* at pci? dev ? function ?"
@@ -46,13 +46,13 @@ Aironet 4500/4800 and Cisco 340 series wireless network driver
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for Aironet Communications 4500 and 4800
-and Cisco Aironet 340 series
+driver provides support for Aironet Communications 4500/4800
+and Cisco Aironet 340/350 series
 wireless network adapters.
 This includes the ISA, PCI and PCMCIA
 varieties.
 The 4500 series adapters operate at 1 and 2Mbps while
-the 4800 series and 340 series can operate at 1, 2, 5.5 and 11Mbps.
+the 4800 series and 340/350 series can operate at 1, 2, 5.5 and 11Mbps.
 The ISA, PCI
 and PCMCIA devices are all based on the same core PCMCIA modules
 and all have the same programming interface, however unlike the
@@ -111,6 +111,8 @@ Aironet 4500 Series
 Aironet 4800 Series
 .It
 Cisco Aironet 340 Series
+.It
+Cisco Aironet 350 Series
 .Sh DIAGNOSTICS
 .Bl -diag
 .It "an%d: init failed"
