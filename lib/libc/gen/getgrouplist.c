@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrouplist.c,v 1.4 1995/02/25 13:41:09 cgd Exp $	*/
+/*	$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrouplist.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.4 1995/02/25 13:41:09 cgd Exp $";
+static char rcsid[] = "$NetBSD: getgrouplist.c,v 1.5 1995/06/01 22:51:17 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,14 +63,12 @@ getgrouplist(uname, agroup, groups, grpcnt)
 	ret = 0;
 	ngroups = 0;
 	maxgroups = *grpcnt;
+
 	/*
-	 * When installing primary group, duplicate it;
-	 * the first element of groups is the effective gid
-	 * and will be overwritten when a setgid file is executed.
+	 * install primary group
 	 */
 	groups[ngroups++] = agroup;
-	if (maxgroups > 1)
-		groups[ngroups++] = agroup;
+
 	/*
 	 * Scan the group file to find additional groups.
 	 */
