@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.1.2.27 2002/08/02 22:16:35 nathanw Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.1.2.28 2002/08/12 22:39:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -237,13 +237,13 @@ void	pthread_spinlock(pthread_t thread, pthread_spin_t *lock);
 int	pthread_spintrylock(pthread_t thread, pthread_spin_t *lock);
 void	pthread_spinunlock(pthread_t thread, pthread_spin_t *lock);
 
-#include "pthread_md.h"
-
 int	_getcontext_u(ucontext_t *);
 int	_setcontext_u(const ucontext_t *);
 int	_swapcontext_u(ucontext_t *, const ucontext_t *);
 
 void	pthread__testcancel(pthread_t self);
+
+#include "pthread_md.h"
 
 /* Stack location of pointer to a particular thread */
 #define pthread__id(sp) \
