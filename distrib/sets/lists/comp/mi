@@ -1430,6 +1430,7 @@
 ./usr/share/man/cat3/circleq_entry.0
 ./usr/share/man/cat3/circleq_first.0
 ./usr/share/man/cat3/circleq_head.0
+./usr/share/man/cat3/circleq_head_initializer.0
 ./usr/share/man/cat3/circleq_init.0
 ./usr/share/man/cat3/circleq_insert_after.0
 ./usr/share/man/cat3/circleq_insert_before.0
@@ -2473,6 +2474,7 @@
 ./usr/share/man/man3/circleq_entry.3
 ./usr/share/man/man3/circleq_first.3
 ./usr/share/man/man3/circleq_head.3
+./usr/share/man/man3/circleq_head_initializer.3
 ./usr/share/man/man3/circleq_init.3
 ./usr/share/man/man3/circleq_insert_after.3
 ./usr/share/man/man3/circleq_insert_before.3
