@@ -1,8 +1,8 @@
-/*	$NetBSD: main.c,v 1.22 2001/04/14 00:01:28 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2001/04/17 10:42:11 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.22 2001/04/14 00:01:28 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2001/04/17 10:42:11 hubertf Exp $");
 #endif
 
 /*
@@ -116,13 +116,11 @@ check1pkg(const char *pkgdir)
 				dirp = dir;
 			}
 			break;
-		case PLIST_SRC:
-			warnx("@src is deprecated - please send-pr for %s!\n", PkgName);
-			break;
 		case PLIST_IGNORE:
 			p = p->next;
 			break;
 		case PLIST_SHOW_ALL:
+		case PLIST_SRC:
 		case PLIST_CMD:
 		case PLIST_CHMOD:
 		case PLIST_CHOWN:
@@ -228,13 +226,11 @@ rebuild(void)
 					dirp = dir;
 				}
 				break;
-			case PLIST_SRC:
-				warnx("@src is deprecated - please send-pr for %s!\n", PkgName);
-				break;
 			case PLIST_IGNORE:
 				p = p->next;
 				break;
 			case PLIST_SHOW_ALL:
+			case PLIST_SRC:
 			case PLIST_CMD:
 			case PLIST_CHMOD:
 			case PLIST_CHOWN:
