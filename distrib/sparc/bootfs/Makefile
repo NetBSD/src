@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/04/16 04:16:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2000/05/02 07:10:19 sjg Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
@@ -6,8 +6,8 @@ MINIROOT=	${.CURDIR}/../../miniroot
 .include "${TOP}/Makefile.inc"
 
 .include <bsd.own.mk>	# So we use /etc/mk.conf.
-
-KERN?=		${TOP}/../../sys/arch/sparc/compile/INSTALL/netbsd
+.include <bsd.kernobj.mk>
+KERN?=		${KERNOBJDIR}/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
