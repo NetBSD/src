@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.6 2002/04/06 18:08:31 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.7 2002/04/06 22:58:43 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -124,9 +124,9 @@ typedef union irix_irix5_sigval {
 } irix_irix5_sigval_t;
 
 typedef struct irix_irix5_siginfo {
-	irix_app32_int_t 	si_signo;
-	irix_app32_int_t	si_code;
-	irix_app32_int_t	si_errno;
+	irix_app32_int_t 	isi_signo;
+	irix_app32_int_t	isi_code;
+	irix_app32_int_t	isi_errno;
 	union {
 		irix_app32_int_t	si_pad[IRIX_SI_PAD];
 		struct {
@@ -153,12 +153,12 @@ typedef struct irix_irix5_siginfo {
 		union irix_irix5_sigval	__value;
 	} __data;
 } irix_irix5_siginfo_t;
-#define si_pid		__data.__proc.__pid
-#define si_stime	__data.__proc.__pdata.__cld.__stime
-#define si_utime	__data.__proc.__pdata.__cld.__utime
-#define si_status	__data.__proc.__pdata.__cld.__status
-#define si_addr		__data.__fault.__addr;
-#define si_trap
+#define isi_pid		__data.__proc.__pid
+#define isi_stime	__data.__proc.__pdata.__cld.__stime
+#define isi_utime	__data.__proc.__pdata.__cld.__utime
+#define isi_status	__data.__proc.__pdata.__cld.__status
+#define isi_addr	__data.__fault.__addr;
+#define isi_trap
 
 
 #ifdef _KERNEL
