@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.29 1996/05/05 06:17:36 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.30 1996/05/05 06:43:33 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -347,5 +347,11 @@ extern	unsigned long		load_addr;
 
 #define CACHE4_ON	(IC4_ENABLE|DC4_ENABLE)
 #define CACHE4_OFF	0x00000000
+
+__BEGIN_DECLS
+#if defined(COMPAT_SUNOS)
+void	sunos_sendsig __P((sig_t, int, int, u_long));
+#endif
+__END_DECLS
 
 #endif	/* _CPU_MACHINE_ */
