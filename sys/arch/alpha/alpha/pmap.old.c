@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.60 1998/03/18 21:57:03 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.61 1998/03/18 22:13:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.60 1998/03/18 21:57:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.61 1998/03/18 22:13:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1165,7 +1165,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	boolean_t managed;
 	pt_entry_t *pte, npte;
 	vm_offset_t opa;
-	boolean_t wiring_only = FALSE;
+	boolean_t tflush = TRUE;
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_ENTER))
@@ -1267,6 +1267,13 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * new one immediately.
 	 */
 	if (pmap_pte_v(pte) == 0) {
+		/*
+		 * No need to invalidate the TLB in this case; an invalid
+		 * mapping won't be in the TLB, and a previously valid
+		 * mapping would have been flushed when it was invalidated.
+		 */
+		tflush = FALSE;
+
 		if (pmap != pmap_kernel()) {
 			/*
 			 * New mappings gain a reference on the level 3
@@ -1305,7 +1312,11 @@ pmap_enter(pmap, va, pa, prot, wired)
 			 * change.
 			 */
 			if (pmap_pte_prot(pte) == pte_prot(pmap, prot)) {
-				wiring_only = TRUE;
+				/*
+				 * Wiring-only changes only affect software
+				 * PTE bits; no TLB invalidation is necessary.
+				 */
+				tflush = FALSE;
 #ifdef PMAPSTATS
 				enter_stats.wchange++;
 #endif
@@ -1400,7 +1411,7 @@ pmap_enter(pmap, va, pa, prot, wired)
 	 * caches.  Note that this is not necessary for wiring-only
 	 * changes.
 	 */
-	if (wiring_only == FALSE && active_pmap(pmap)) {
+	if (tflush && active_pmap(pmap)) {
 		ALPHA_TBIS(va);
 		if (prot & VM_PROT_EXECUTE)
 			alpha_pal_imb();
