@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.31 1996/10/17 05:26:25 jonathan Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.31.6.1 1997/03/12 14:34:45 is Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -211,7 +211,6 @@ i386_set_ldt(p, args, retval)
 	int error, i, n;
 	struct pcb *pcb = &p->p_addr->u_pcb;
 	int fsslot, gsslot;
-	int s;
 	struct i386_set_ldt_args ua;
 	union descriptor desc;
 
@@ -322,8 +321,6 @@ i386_set_ldt(p, args, retval)
 		}
 	}
 
-	s = splhigh();
-
 	/* Now actually replace the descriptors. */
 	for (i = 0, n = ua.start; i < ua.num; i++, n++) {
 		if ((error = copyin(&ua.desc[i], &desc, sizeof(desc))) != 0)
@@ -335,7 +332,6 @@ i386_set_ldt(p, args, retval)
 	*retval = ua.start;
 
 out:
-	splx(s);
 	return (error);
 }
 #endif	/* USER_LDT */

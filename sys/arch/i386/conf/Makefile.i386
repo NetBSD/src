@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.80 1997/02/04 05:08:34 perry Exp $
+#	$NetBSD: Makefile.i386,v 1.80.4.1 1997/03/12 14:34:38 is Exp $
 
 # Makefile for NetBSD
 #
@@ -42,10 +42,6 @@ AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-z -Ttext F8100000 -e start
 STRIPFLAGS=	-d
 
-HOSTED_CC=	${CC}
-HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
-HOSTED_CFLAGS=	${CFLAGS}
-
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
 .ifndef PROF
@@ -67,8 +63,6 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-
-HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -101,14 +95,9 @@ LINKFLAGS+=	-S
 
 %LOAD
 
-assym.h: genassym
-	./genassym >assym.h
-
-genassym: genassym.o
-	${CC} -o $@ genassym.o
-
-genassym.o: ${I386}/i386/genassym.c
-	${HOSTED_C}
+assym.h: ${I386}/i386/genassym.cf $S/kern/genassym.sh
+	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
+	<${I386}/i386/genassym.cf >assym.h || rm assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -154,8 +143,6 @@ depend: .depend
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${I386}/i386/locore.s
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
-	    ${I386}/i386/genassym.c
 
 
 # depend on root or device configuration

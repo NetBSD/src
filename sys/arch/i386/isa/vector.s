@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.35 1996/11/20 14:09:09 mycroft Exp $	*/
+/*	$NetBSD: vector.s,v 1.35.6.1 1997/03/12 14:34:52 is Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -255,7 +255,7 @@ IDTVEC(resume)
 	.long   _Xresume15
 	/* for soft interrupts */
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.long	_Xsofttty, _Xsoftnet, _Xsoftclock
+	.long	_Xsoftserial, _Xsoftnet, _Xsoftclock
 /* fake interrupts to resume from splx() */
 IDTVEC(recurse)
 	.long   _Xrecurse0, _Xrecurse1, _Xrecurse2, _Xrecurse3, _Xrecurse4
@@ -264,7 +264,7 @@ IDTVEC(recurse)
 	.long   _Xrecurse15
 	/* for soft interrupts */
 	.long	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	.long	_Xsofttty, _Xsoftnet, _Xsoftclock
+	.long	_Xsoftserial, _Xsoftnet, _Xsoftclock
 
 
 /* Old-style vmstat -i interrupt counters.  Should be replaced with evcnts. */
