@@ -31,7 +31,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)less.h	5.9 (Berkeley) 6/1/90
+ *	from: @(#)less.h	5.9 (Berkeley) 6/1/90
+ *	$Id: less.h,v 1.2 1993/11/09 05:09:24 cgd Exp $
  */
 
 #undef	RECOMP
