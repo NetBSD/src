@@ -1,4 +1,4 @@
-/*	$NetBSD: renice.c,v 1.10 2001/09/01 01:57:28 simonb Exp $	*/
+/*	$NetBSD: renice.c,v 1.11 2001/09/01 01:59:42 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -41,10 +41,9 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	8.1 (Berkeley) 6/9/93";*/
-__RCSID("$NetBSD: renice.c,v 1.10 2001/09/01 01:57:28 simonb Exp $");
+__RCSID("$NetBSD: renice.c,v 1.11 2001/09/01 01:59:42 simonb Exp $");
 #endif /* not lint */
 
-#include <sys/types.h>
 #include <sys/resource.h>
 
 #include <err.h>
