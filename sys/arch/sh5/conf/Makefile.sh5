@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.1 2002/07/05 13:31:50 scw Exp $
+#	$NetBSD: Makefile.sh5,v 1.2 2002/07/05 14:02:31 scw Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -42,7 +42,9 @@ AR=		sh5ar
 RANLIB=		sh5ranlib
 SIZE=		sh5size
 CPPFLAGS+=	-D${MACHINE}
-CWARNFLAGS+=	-Wno-parentheses
+DEFWARNINGS=	no
+CWARNFLAGS+=	-Wall -Wno-main -Wpointer-arith -Wno-uninitialized
+CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
 COPTS?=		-O2
 
