@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211.h,v 1.17 2002/09/03 14:54:00 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211.h,v 1.18 2002/09/15 23:27:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -328,6 +328,16 @@ struct ieee80211_auth {
 
 #define	SIOCS80211AUTH		 _IOW('i', 236, struct ieee80211_auth)
 #define	SIOCG80211AUTH		_IOWR('i', 237, struct ieee80211_auth)
+
+#define	SIOCS80211CHANNEL	 _IOW('i', 238, u_int16_t)
+#define	SIOCG80211CHANNEL	_IOWR('i', 239, u_int16_t)
+
+struct ieee80211_bssid {
+	u_int8_t	i_bssid[IEEE80211_ADDR_LEN];
+};
+
+#define	SIOCS80211BSSID		 _IOW('i', 240, struct ieee80211_bssid)
+#define	SIOCG80211BSSID		_IOWR('i', 241, struct ieee80211_bssid)
 
 #ifdef _KERNEL
 
