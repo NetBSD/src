@@ -1,4 +1,4 @@
-/*	$NetBSD: mbmem.c,v 1.11 2002/10/01 05:39:45 thorpej Exp $	*/
+/*	$NetBSD: mbmem.c,v 1.12 2002/10/02 16:02:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ struct mbmem_softc {
 };
 
 CFATTACH_DECL(mbmem, sizeof(struct mbmem_softc),
-    mbmem_match, mbmem_attach, NULL, NULL)
+    mbmem_match, mbmem_attach, NULL, NULL);
 
 static	paddr_t mbmem_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				off_t, int, int));

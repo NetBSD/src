@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix_obio.c,v 1.12 2002/10/01 18:57:51 thorpej Exp $ */
+/*	$NetBSD: cgsix_obio.c,v 1.13 2002/10/02 16:02:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ static void	cgsixattach __P((struct device *, struct device *, void *));
 static int	cg6_pfour_probe __P((void *, void *));
 
 CFATTACH_DECL(cgsix_obio, sizeof(struct cgsix_softc),
-    cgsixmatch, cgsixattach, NULL, NULL)
+    cgsixmatch, cgsixattach, NULL, NULL);
 
 /*
  * Match a cgsix.

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.6 2002/10/01 18:57:51 thorpej Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.7 2002/10/02 16:02:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ static int com_ebus_match(struct device *, struct cfdata *, void *);
 static void com_ebus_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(com_ebus, sizeof(struct com_ebus_softc),
-    com_ebus_match, com_ebus_attach, NULL, NULL)
+    com_ebus_match, com_ebus_attach, NULL, NULL);
 
 static int
 com_ebus_match(parent, cf, aux)

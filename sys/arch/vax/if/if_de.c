@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.38 2002/10/01 05:19:00 thorpej Exp $	*/
+/*	$NetBSD: if_de.c,v 1.39 2002/10/02 16:02:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989 Regents of the University of California.
@@ -157,7 +157,7 @@ void	deintr __P((int));
 
 
 CFATTACH_DECL(de, sizeof(struct de_softc),
-    dematch, deattach, NULL, NULL)
+    dematch, deattach, NULL, NULL);
 
 extern struct cfdriver de_cd;
 
