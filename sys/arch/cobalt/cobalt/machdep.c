@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2000/03/27 01:24:55 nisimura Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2000/03/27 01:51:17 nisimura Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -252,11 +252,17 @@ mach_init(void)
 	uvm_page_physload(atop(first), atop(last), atop(first), atop(last),
 		VM_FREELIST_DEFAULT);
 
+	/*
+	 * Initialize error message buffer (at end of core).
+	 */
 	mips_init_msgbuf();
 
+	/*
+	 * Allocate space for proc0's USPACE
+	 */
 	p0 = (caddr_t)pmap_steal_memory(USPACE, NULL, NULL); 
 	proc0.p_addr = proc0paddr = (struct user *)p0;
-	proc0.p_md.md_regs = (struct frame *)((caddr_t)p0 + USPACE) - 1;
+	proc0.p_md.md_regs = (struct frame *)(p0 + USPACE) - 1;
 	curpcb = &proc0.p_addr->u_pcb;
 	curpcb->pcb_context[11] = MIPS_INT_MASK | MIPS_SR_INT_IE; /* SR */
 
@@ -278,7 +284,6 @@ mach_init(void)
 
 /*
  * Allocate memory for variable-sized tables,
- * initialize CPU, and do autoconfiguration.
  */
 void
 cpu_startup()
@@ -289,8 +294,10 @@ cpu_startup()
 	vsize_t size;
 	char pbuf[9];
 
+	/*
+	 * Good {morning,afternoon,evening,night}.
+	 */
 	printf(version);
-
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("%s memory", pbuf);
 
