@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.52 1998/10/23 22:38:26 is Exp $	*/
+/*	$NetBSD: conf.c,v 1.53 1998/10/23 23:03:02 is Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -103,6 +103,53 @@ dev_decl(filedesc,open);
 #include "rnd.h"
 #include "scsibus.h"
 
+/* open, close, ioctl */
+#define cdev_i4bctl_init(c,n) { \
+      dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+      (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+      (dev_type_stop((*))) enodev, 0, seltrue, \
+      (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write */
+#define       cdev_i4brbch_init(c,n) { \
+      dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+      dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+      (dev_type_stop((*))) enodev, \
+      0, (dev_type_poll((*))) enodev, (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write */
+#define	cdev_i4btel_init(c,n) { \
+      dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+      dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+      (dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+      (dev_type_mmap((*))) enodev, D_TTY }
+
+/* open, close, read, ioctl */
+#define cdev_i4btrc_init(c,n) { \
+      dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+      (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+      (dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+      (dev_type_mmap((*))) enodev }
+
+/* open, close, read, poll, ioctl */
+#define cdev_i4b_init(c,n) { \
+      dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+      (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+      (dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+      (dev_type_mmap((*))) enodev }
+      
+
+#include "i4b.h"
+#include "i4bctl.h"
+#include "i4btrc.h"
+#include "i4brbch.h"
+#include "i4btel.h"
+cdev_decl(i4b);
+cdev_decl(i4bctl);
+cdev_decl(i4btrc);
+cdev_decl(i4brbch);
+cdev_decl(i4btel);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -150,6 +197,20 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 42: random source pseudo-device */
 	cdev_disk_init(NMD,md),		/* 43: memory disk */
 	cdev_scsibus_init(NSCSIBUS,scsibus), /* 44: SCSI bus */
+#ifdef __I4B_IS_INTEGRATED
+ 	/* i4b character devices */
+	cdev_i4b_init(NI4B, i4b),		/* 45: i4b main device */
+	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 46: i4b control device */
+	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 47: i4b raw b-channel */
+	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 48: i4b trace device */
+	cdev_i4btel_init(NI4BTEL, i4btel),	/* 49: i4b phone device */
+#else
+	cdev_lkm_dummy(),		/* 45 */
+	cdev_lkm_dummy(),		/* 46 */
+	cdev_lkm_dummy(),		/* 47 */
+	cdev_lkm_dummy(),		/* 48 */
+	cdev_lkm_dummy(),		/* 49 */
+#endif
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -257,6 +318,11 @@ static int chrtoblktab[] = {
  	/* 42 */	NODEV,
 	/* 43 */	15,		/* md */
 	/* 44 */	NODEV,
+	/* 45 */	NODEV,
+	/* 46 */	NODEV,
+	/* 47 */	NODEV,
+	/* 48 */	NODEV,
+	/* 49 */	NODEV,
 };
 
 /*
