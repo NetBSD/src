@@ -48,6 +48,7 @@ echo '
 
 extern char *const unary_op[];
 extern char *const binary_op[];
+extern char *const andor_op[];
 extern const char op_priority[];
 extern const char op_argflag[];'
 
@@ -66,6 +67,11 @@ echo '      NULL
 
 char *const binary_op[] = {'
 awk '/^[^#]/	{printf "      \"%s\",\n", $2}' binary_op
+echo '      NULL
+};
+
+char *const andor_op[] = {'
+awk '/^[^#]/ && ($3 <= 2)	{printf "      \"%s\",\n", $2}' binary_op
 echo '      NULL
 };
 

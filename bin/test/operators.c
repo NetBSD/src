@@ -2,10 +2,6 @@
  * Operators used in the test command.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: operators.c,v 1.3 1993/09/23 22:51:17 mycroft Exp $";
-#endif /* not lint */
-
 #include <stdio.h>
 #include "operators.h"
 
@@ -47,11 +43,11 @@ char *const binary_op[] = {
 };
 
 char *const andor_op[] = {
-	"-o",
-	"|",
-	"-a",
-	"&",
-	NULL
+      "-o",
+      "|",
+      "-a",
+      "&",
+      NULL
 };
 
 const char op_priority[] = {
