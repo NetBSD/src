@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.137 2002/04/02 20:20:00 jdolecek Exp $	*/
+/*	$NetBSD: proc.h,v 1.137.4.1 2002/07/29 15:37:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -176,9 +176,9 @@ struct proc {
 /*
  * The following fields are all zeroed upon creation in fork.
  */
-#define	p_startzero	p_oppid
+#define	p_startzero	p_opptr
 
-	pid_t		p_oppid;	/* Save parent pid during ptrace. XXX */
+	struct proc	*p_opptr;	/* Save parent during ptrace. */
 	int		p_dupfd;	/* Sideways return value from filedescopen. XXX */
 
 	/* Scheduling */
@@ -296,7 +296,7 @@ struct proc {
 #define	P_32		0x040000 /* 32-bit process (used on 64-bit kernels) */
 #define	P_BIGLOCK	0x080000 /* Process needs kernel "big lock" to run */
 #define	P_INEXEC	0x100000 /* Process is exec'ing and cannot be traced */
-
+#define	P_CHTRACED	0x400000 /* Child has been traced & reparented */
 
 /*
  * Macro to compute the exit signal to be delivered.
