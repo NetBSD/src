@@ -1,4 +1,4 @@
-/*	$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $	*/
+/*	$NetBSD: asa.c,v 1.11 1997/09/20 14:55:00 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993,94 Winning Strategies, Inc.
@@ -30,15 +30,17 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: asa.c,v 1.10 1995/04/21 03:01:41 cgd Exp $";
+__RCSID("$NetBSD: asa.c,v 1.11 1997/09/20 14:55:00 lukem Exp $");
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
 
-static void asa();
+static void asa __P((FILE *));
+int main __P((int, char *[]));
 
 int
 main (argc, argv)
@@ -74,7 +76,8 @@ asa(f)
 	size_t len;
 
 	if ((buf = fgetln (f, &len)) != NULL) {
-		buf[len - 1] = '\0';
+		if (buf[len - 1] == '\n')
+			buf[--len] = '\0';
 		/* special case the first line  */
 		switch (buf[0]) {
 		case '0':
@@ -85,12 +88,13 @@ asa(f)
 			break;
 		}
 
-		if (buf[0] && buf[1]) {
-			fputs (&buf[1], stdout);
+		if (len > 1 && buf[0] && buf[1]) {
+			printf("%.*s", (int)(len - 1), buf + 1);
 		}
 
 		while ((buf = fgetln(f, &len)) != NULL) {
-			buf[len - 1] = '\0';
+			if (buf[len - 1] == '\n')
+				buf[--len] = '\0';
 			switch (buf[0]) {
 			default:
 			case ' ':
@@ -108,8 +112,8 @@ asa(f)
 				break;
 			}
 
-			if (buf[0] && buf[1]) {
-				fputs (&buf[1], stdout);
+			if (len > 1 && buf[0] && buf[1]) {
+				printf("%.*s", (int)(len - 1), buf + 1);
 			}
 		}
 
