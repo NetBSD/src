@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.119 1997/10/30 07:25:32 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.120 1997/11/04 20:33:11 gwr Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -188,7 +188,7 @@ all: ${SRCS} ${_LIBS}
 
 __archivebuild: .USE
 	@rm -f ${.TARGET}
-	@${AR} cq ${.TARGET} `NM=${NM} lorder ${.ALLSRC} | tsort -q`
+	@${AR} cq ${.TARGET} `NM=${NM} ${LORDER} ${.ALLSRC} | ${TSORT}`
 	${RANLIB} ${.TARGET}
 
 __archiveinstall: .USE
