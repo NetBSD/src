@@ -30,6 +30,8 @@ Supported devices include:
 		Buslogic 54x (Adaptec AHA-154x clones)
 		BusLogic 445, 74x, 9xx  (But not the new "FlashPoint" series
 			of BusLogic SCSI adapters)
+		Intel EtherExpress 100 Fast Ethernet adapters
+		Qlogic ISP [12]0x0 SCSI/FibreChannel boards
 		Seagate/Future Domain ISA SCSI adapter cards, including
 			ST01/02
 			Future Domain TMC-885
@@ -48,7 +50,8 @@ Supported devices include:
 					the SYM 8125)
 			Tyan Yorktown
 		Ultrastor 14f, 34f, and (possibly) 24f
-		Western Digital WD7000 SCSI host adapters (ISA cards only)
+		Western Digital WD7000 SCSI and TMC-7000 host adapters
+			(ISA cards only)
 
 	MDA, CGA, VGA, SVGA, and HGC Display Adapters.  (Note that not
 		all of the display adapters NetBSD/i386 can work with
@@ -98,12 +101,17 @@ Supported devices include:
 		Digital EtherWORKS III ISA adapters (DE203/DE204/DE205)
 		Digital DEPCM-BA (PCMCIA) and DE305 (ISA) NE2000-compat. cards
 		BICC Isolan [* and not recently tested]
+		Fujitsu MB86960A/MB86965A based cards:
+			Fujitsu FMV-180 series
+			Allied-Telesis AT1700 series
+			Allied-Telesis RE2000 series
 		Intel EtherExpress 16
 		Intel EtherExpress PRO/10 [*]
+		Novell NE1000, NE2000 (ISA, PCI, PCMCIA, ISA PnP)
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
 		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
-		Novell NE1000, NE2000
-		Texas Intruments ThunderLAN based ethernet board:
+		SMC91C9x-based boards (ISA and PCMCIA)
+		Texas Intruments ThunderLAN based ethernet boards:
 			Compaq Netelligent 10/100 TX
 			Compaq ProLiant Integrated Netelligent 10/100 TX
 			Compaq Netelligent 10 T (untested)
@@ -164,12 +172,10 @@ Hardware the we do NOT currently support, but get many questions
 about:
 	AMD PCscsi SCSI host adapters (though the PCnet portion of the
 					PCnet-SCSI works fine)
-	Intel EtherExpress 100 Fast Ethernet adapters.
 	Multiprocessor Pentium and Pentium Pro systems.  (Though they should
 		run fine using one processor only.)
 	NCR 5380-based SCSI host adapters.
 	PCI WD-7000 SCSI host adapters.
-	PCMCIA ("PC Card") miniature IDE devices
 	QIC-40 and QIC-80 tape drives.  (Those are the tape drives
 		that connect to the floppy disk controller.)
 
@@ -205,8 +211,8 @@ AHA-2X4X or AIC-7XXX-based SCSI host adapters
 		ahc0	any  	any any
 
 Bus Logic BT445, BT74x, or BT9xx SCSI host adapters
-		bt0 	0x330	any	any
-		bt1 	0x334	any	any
+		bha0 	0x330	any	any
+		bha1 	0x334	any	any
 
 Symbios Logic/NCR 53C8xx based PCI SCSI host adapters
 		ncr0	any  	any	any
@@ -232,11 +238,16 @@ SCSI and ATAPI CD-ROMs cd0, cd1, ...
 	master/slave order for ATA(PI). So the first SCSI drive found will
 	be called sd0, the second sd1, and so on ...
 
-SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards, 3c503,
+3Com 3c503 Ethernet cards
+		ec0	0x250	9		iomem 0xd8000
+
 Novell NE1000, or NE2000 Ethernet boards
-		ed0 	0x280	2		iomem 0xd0000
-		ed1 	0x250	2		iomem 0xd8000
-		ed2 	0x300	10		iomem 0xcc000
+		ne0 	0x280	9
+		ne1 	0x300	10
+
+SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards
+		we0	0x280 	9		iomem 0xd0000
+		we1	0x300	10		iomem 0xcc000
 
 3COM 3c509 or 3COM 3c579 Ethernet boards
 		ep0 	any  	any
@@ -249,6 +260,12 @@ AT&T StarLAN 10, EN100, or StarLAN Fiber, 3COM 3c507 or Intel
 EtherExpress 16 Ethernet boards
 		ie0 	0x360	7		iomem 0xd0000
 		ie1 	0x300	10		iomem 0xd0000
+
+Intel EtherExpress PRO 10 ISA
+		iy0	any	any
+
+SMC91C9x based Ethernet cards
+		sm0	0x300	10
 
 PCnet-PCI based Ethernet boards; see above for partial list
 		le0 	any  	any	[you must assign an interrupt in your
