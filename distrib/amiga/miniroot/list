@@ -1,8 +1,9 @@
-#	$NetBSD: list,v 1.6.2.1 1999/07/05 19:19:52 perry Exp $
+#	$NetBSD: list,v 1.6.2.2 1999/07/05 19:34:20 perry Exp $
 
 # Amiga extra's
 LINK	instbin			sbin/mount_ados
 LINK	instbin			sbin/mount_kernfs
+SPECIAL mkdir			kern
 LINK	instbin			usr/bin/printf
 LINK	instbin			usr/bin/vi
 LINK	instbin			usr/sbin/loadkmap
