@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: get_args.c,v 1.1.1.2 1997/07/24 21:20:45 christos Exp $
+ * $Id: get_args.c,v 1.1.1.3 1997/09/22 21:11:50 christos Exp $
  *
  */
 
@@ -59,9 +59,7 @@ char *conf_file = NULL;		/* default amd configuration file */
 char *conf_tag = NULL;		/* default conf file tags to use */
 int usage = 0;
 int use_conf_file = 0;		/* use amd configuration file */
-#ifdef MOUNT_TABLE_ON_FILE
-char *mtab;
-#endif /* MOUNT_TABLE_ON_FILE */
+char *mnttab_file_name = NULL;	/* symbol must be available always */
 #ifdef DEBUG
 int debug_flags = D_AMQ		/* Register AMQ */
 		| D_DAEMON;	/* Enter daemon mode */
@@ -126,7 +124,7 @@ get_args(int c, char *v[])
   int opt_ch;
   FILE *fp = stdin;
 
-  while ((opt_ch = getopt(c, v, "nprvSa:c:d:h:k:l:o:t:w:x:y:C:D:F:T:H")) != EOF)
+  while ((opt_ch = getopt(c, v, "nprvSa:c:d:k:l:o:t:w:x:y:C:D:F:T:H")) != EOF)
 
     switch (opt_ch) {
 
@@ -147,10 +145,6 @@ get_args(int c, char *v[])
 
     case 'd':
       gopt.sub_domain = optarg;
-      break;
-
-    case 'h':
-      plog(XLOG_USER, "-h: option ignored.  HOST_EXEC is not enabled.");
       break;
 
     case 'k':
@@ -229,7 +223,7 @@ get_args(int c, char *v[])
       break;
 
     case 'S':
-      gopt.flags |= CFM_NOSWAP;
+      gopt.flags &= ~CFM_PROCESS_LOCK; /* turn process locking off */
       break;
 
     case 'F':
@@ -309,10 +303,10 @@ get_args(int c, char *v[])
 #ifdef MOUNT_TABLE_ON_FILE
 # ifdef DEBUG
     if (debug_flags & D_MTAB)
-      mtab = DEBUG_MNTTAB;
+      mnttab_file_name = DEBUG_MNTTAB;
     else
 # endif /* DEBUG */
-      mtab = MNTTAB_FILE_NAME;
+      mnttab_file_name = MNTTAB_FILE_NAME;
 #else /* not MOUNT_TABLE_ON_FILE */
 # ifdef DEBUG
     if (debug_flags & D_MTAB)

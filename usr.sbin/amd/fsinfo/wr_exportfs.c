@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: wr_exportfs.c,v 1.1.1.2 1997/07/24 21:23:38 christos Exp $
+ * $Id: wr_exportfs.c,v 1.1.1.3 1997/09/22 21:13:01 christos Exp $
  *
  */
 
@@ -89,7 +89,7 @@ write_exportfs(qelem *q)
   if (exportfs_pref) {
     host *hp;
 
-    show_area_being_processed("write exportfs", 0);
+    show_area_being_processed("write exportfs", 5);
     ITER(hp, host, q) {
       if (hp->h_disk_fs) {
 	FILE *ef = pref_open(exportfs_pref, hp->h_hostname, gen_hdr, hp->h_hostname);

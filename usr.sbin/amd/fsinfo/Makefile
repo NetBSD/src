@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 1997/07/24 21:24:08 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 1997/09/22 21:13:09 christos Exp $
 
 PROG= fsinfo
 SRCS=	fsi_gram.c fsi_lex.c wr_fstab.c wr_exportfs.c wr_dumpset.c wr_bparam.c \
@@ -8,8 +8,9 @@ CLEANFILES+=fsi_lex.c fsi_gram.c fsi_gram.h y.tab.h
 
 fsi_lex.o: fsi_gram.h
 
-fsi_gram.h:	y.tab.h
-	@rm -f ${.TARGET}
-	@cp -p ${.ALLSRC} ${.TARGET}
+fsi_gram.c fsi_gram.h: fsi_gram.y
+	${YACC} -d ${.ALLSRC}
+	mv y.tab.c fsi_gram.c
+	mv y.tab.h fsi_gram.h
 
 .include <bsd.prog.mk>

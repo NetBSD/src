@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mntfs.c,v 1.1.1.2 1997/07/24 21:21:24 christos Exp $
+ * $Id: mntfs.c,v 1.1.1.3 1997/09/22 21:12:01 christos Exp $
  *
  */
 
@@ -168,7 +168,7 @@ find_mntfs(am_ops *ops, am_opts *mo, char *mp, char *info, char *auto_opts, char
 	  mf->mf_private = 0;
 	}
 
-	fs = ops->ffserver ? (*ops->ffserver) (mf) : (fserver *) 0;
+	fs = ops->ffserver ? (*ops->ffserver) (mf) : (fserver *) NULL;
 	if (mf->mf_server)
 	  free_srvr(mf->mf_server);
 	mf->mf_server = fs;

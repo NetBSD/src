@@ -38,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: amq.c,v 1.1.1.2 1997/07/24 21:22:45 christos Exp $
+ * $Id: amq.c,v 1.1.1.3 1997/09/22 21:12:44 christos Exp $
  *
  */
 
@@ -54,7 +54,7 @@ char copyright[] = "\
 @(#)Copyright (c) 1990 The Regents of the University of California.\n\
 @(#)All rights reserved.\n";
 #if __GNUC__ < 2
-static char rcsid[] = "$Id: amq.c,v 1.1.1.2 1997/07/24 21:22:45 christos Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.1.1.3 1997/09/22 21:12:44 christos Exp $";
 static char sccsid[] = "%W% (Berkeley) %G%";
 #endif /* __GNUC__ < 2 */
 #endif /* not lint */
@@ -69,9 +69,11 @@ static char sccsid[] = "%W% (Berkeley) %G%";
 char *progname;
 static int flush_flag;
 static int minfo_flag;
+static int getpid_flag;
 static int unmount_flag;
 static int stats_flag;
 static int getvers_flag;
+static int amd_program_number = AMQ_PROGRAM;
 static char *debug_opts;
 static char *amq_logfile;
 static char *mount_map;
@@ -328,7 +330,7 @@ main(int argc, char *argv[])
   /*
    * Parse arguments
    */
-  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:")) != EOF)
+  while ((opt_ch = getopt(argc, argv, "fh:l:msuvx:D:M:pP:")) != EOF)
     switch (opt_ch) {
     case 'f':
       flush_flag = 1;
@@ -346,6 +348,11 @@ main(int argc, char *argv[])
 
     case 'm':
       minfo_flag = 1;
+      nodefault = 1;
+      break;
+
+    case 'p':
+      getpid_flag = 1;
       nodefault = 1;
       break;
 
@@ -379,6 +386,10 @@ main(int argc, char *argv[])
       nodefault = 1;
       break;
 
+    case 'P':
+      amd_program_number = atoi(optarg);
+      break;
+
     default:
       errs = 1;
       break;
@@ -391,8 +402,9 @@ main(int argc, char *argv[])
   if (errs) {
   show_usage:
     fprintf(stderr, "\
-Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
-\t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts] [-M mapent]\n", progname);
+Usage: %s [-h host] [[-f] [-m] [-p] [-v] [-s]] | [[-u] directory ...]]\n\
+\t[-l logfile|\"syslog\"] [-x log_flags] [-D dbg_opts] [-M mapent]\n\
+\t[-P prognum]\n", progname);
     exit(1);
   }
 #if defined(HAVE_CLUSTER_H) && defined(HAVE_CNODEID) && defined(HAVE_GETCCENT)
@@ -432,9 +444,9 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
   clnt = get_secure_amd_client(server, &tv, &s);
 
   if (clnt == NULL) {
-    clnt = clnt_create(server, AMQ_PROGRAM, AMQ_VERSION, "tcp");
+    clnt = clnt_create(server, amd_program_number, AMQ_VERSION, "tcp");
     if (clnt == 0) {
-      clnt = clnt_create(server, AMQ_PROGRAM, AMQ_VERSION, "udp");
+      clnt = clnt_create(server, amd_program_number, AMQ_VERSION, "udp");
       if (clnt)
 	clnt_control(clnt, CLSET_RETRY_TIMEOUT, (char *) &tv);
     }
@@ -448,7 +460,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 
   /* first check if remote portmapper is up */
   cs = pmap_rmtcall(&server_addr,
-		    AMQ_PROGRAM,
+		    amd_program_number,
 		    AMQ_VERSION,
 		    AMQPROC_NULL,
 		    (XDRPROC_T_TYPE) xdr_void,
@@ -465,11 +477,11 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 
   /* portmapper exists: get remote amd info from it */
   s = RPC_ANYSOCK;
-  clnt = clnttcp_create(&server_addr, AMQ_PROGRAM, AMQ_VERSION, &s, 0, 0);
+  clnt = clnttcp_create(&server_addr, amd_program_number, AMQ_VERSION, &s, 0, 0);
   if (clnt == 0) {
     close(s);
     s = privsock(SOCK_DGRAM);
-    clnt = clntudp_create(&server_addr, AMQ_PROGRAM, AMQ_VERSION, tv, &s);
+    clnt = clntudp_create(&server_addr, amd_program_number, AMQ_VERSION, tv, &s);
   }
   if (clnt == 0) {
     fprintf(stderr, "%s: ", progname);
@@ -495,6 +507,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
       errs = 1;
     }
   }
+
   /*
    * Control logging
    */
@@ -509,6 +522,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
       errs = 1;
     }
   }
+
   /*
    * Control log file
    */
@@ -523,6 +537,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
       errs = 1;
     }
   }
+
   /*
    * Flush map cache
    */
@@ -537,6 +552,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
       errs = 1;
     }
   }
+
   /*
    * Mount info
    */
@@ -555,6 +571,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
       fprintf(stderr, "%s: amd on %s cannot provide mount info\n", progname, server);
     }
   }
+
   /*
    * Mount map
    */
@@ -572,6 +589,7 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
       perror("autmount point");
     }
   }
+
   /*
    * Get Version
    */
@@ -585,6 +603,20 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
       errs = 1;
     }
   }
+
+  /*
+   * Get PID of amd
+   */
+  if (getpid_flag) {
+    int *ip = amqproc_getpid_1((voidp) 0, clnt);
+    if (ip && *ip) {
+      printf("%d\n", *ip);
+    } else {
+      fprintf(stderr, "%s: failed to get PID of amd\n", progname);
+      errs = 1;
+    }
+  }
+
   /*
    * Apply required operation to all remaining arguments
    */
@@ -748,7 +780,7 @@ get_secure_amd_client(char *host, struct timeval *tv, int *sock)
 
     cs = rpcb_rmtcall(pm_nc,
 		      host,
-		      AMQ_PROGRAM,
+		      amd_program_number,
 		      AMQ_VERSION,
 		      AMQPROC_NULL,
 		      (XDRPROC_T_TYPE) xdr_void,
@@ -776,7 +808,7 @@ get_secure_amd_client(char *host, struct timeval *tv, int *sock)
     goto tryudp;
   }
 
-  if (!rpcb_getaddr(AMQ_PROGRAM, AMQ_VERSION, nc, &nb, host)) {
+  if (!rpcb_getaddr(amd_program_number, AMQ_VERSION, nc, &nb, host)) {
     /*
      * don't pring error messages here, since amd might legitimately
      * serve udp only
@@ -795,7 +827,7 @@ get_secure_amd_client(char *host, struct timeval *tv, int *sock)
   if (amq_bind_resv_port(*sock, (u_short *) 0) < 0)
     goto tryudp;
 
-  if ((client = clnt_vc_create(*sock, &nb, AMQ_PROGRAM, AMQ_VERSION, 0, 0))
+  if ((client = clnt_vc_create(*sock, &nb, amd_program_number, AMQ_VERSION, 0, 0))
       == (CLIENT *) NULL) {
     fprintf(stderr, "clnt_vc_create failed");
     t_close(*sock);
@@ -819,7 +851,7 @@ tryudp:
     fprintf(stderr, "getnetconfig for udp failed: %s\n", nc_sperror());
     return NULL;
   }
-  if (!rpcb_getaddr(AMQ_PROGRAM, AMQ_VERSION, nc, &nb, host)) {
+  if (!rpcb_getaddr(amd_program_number, AMQ_VERSION, nc, &nb, host)) {
     fprintf(stderr, "%s\n",
 	    clnt_spcreateerror("couldn't get amd address on udp"));
     return NULL;
@@ -836,7 +868,7 @@ tryudp:
   if (amq_bind_resv_port(*sock, (u_short *) 0) < 0)
     return NULL;
 
-  if ((client = clnt_dg_create(*sock, &nb, AMQ_PROGRAM, AMQ_VERSION, 0, 0))
+  if ((client = clnt_dg_create(*sock, &nb, amd_program_number, AMQ_VERSION, 0, 0))
       == (CLIENT *) NULL) {
     fprintf(stderr, "clnt_dg_create failed\n");
     t_close(*sock);

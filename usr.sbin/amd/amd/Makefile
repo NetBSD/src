@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 1997/07/24 21:22:36 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 1997/09/22 21:12:30 christos Exp $
 
 PROG= amd
 SRCS=	conf_parse.c conf_tok.c srvr_nfs.c srvr_afs.c sched.c rpc_fwd.c \
@@ -13,8 +13,9 @@ CLEANFILES+=conf_tok.c conf_parse.c conf_parse.h y.tab.h
 
 conf_tok.o: conf_parse.h
 
-conf_parse.h:	y.tab.h
-	@rm -f ${.TARGET}
-	@cp -p ${.ALLSRC} ${.TARGET}
+conf_parse.c conf_parse.h: conf_parse.y
+	${YACC} -d ${.ALLSRC}
+	mv y.tab.c conf_parse.c
+	mv y.tab.h conf_parse.h
 
 .include <bsd.prog.mk>
