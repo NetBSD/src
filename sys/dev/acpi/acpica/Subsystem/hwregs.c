@@ -117,7 +117,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.7 2003/03/04 17:25:20 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwregs.c,v 1.8 2003/04/19 16:09:16 tron Exp $");
 
 #define __HWREGS_C__
 
@@ -189,7 +189,7 @@ AcpiHwClearAcpiStatus (void)
         for (i = 0; i < GpeBlock->RegisterCount; i++)
         {
             Status = AcpiHwLowLevelWrite (8, 0xFF,
-                        &GpeBlock->RegisterInfo[i].StatusAddress, (UINT32) i);
+                        &GpeBlock->RegisterInfo[i].StatusAddress, (UINT32) 0);
             if (ACPI_FAILURE (Status))
             {
                 goto UnlockAndExit;
