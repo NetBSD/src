@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.28 1998/07/28 11:41:55 mycroft Exp $	*/
+/*	$NetBSD: jobs.c,v 1.29 1999/02/04 16:17:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.28 1998/07/28 11:41:55 mycroft Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.29 1999/02/04 16:17:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1061,6 +1061,8 @@ until:
 		p = "<";  i = 0;  goto redir;
 	case NFROMFD:
 		p = "<&";  i = 0;  goto redir;
+	case NFROMTO:
+		p = "<>";  i = 0;  goto redir;
 redir:
 		if (n->nfile.fd != i) {
 			s[0] = n->nfile.fd + '0';
