@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.70 2002/04/14 19:55:23 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.71 2002/04/16 07:24:06 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.70 2002/04/14 19:55:23 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.71 2002/04/16 07:24:06 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -527,6 +527,7 @@ void wi_update_stats(sc)
 
 	switch (gen.wi_type) {
 	case WI_INFO_SCAN_RESULTS:
+	case WI_INFO_HOST_SCAN_RESULTS:
 		if (gen.wi_len <= 3) {
 			sc->wi_naps = 0;
 			sc->wi_scanning = 0;
@@ -534,18 +535,29 @@ void wi_update_stats(sc)
 		}
 		switch (sc->sc_firmware_type) {
 		case WI_INTERSIL:
-			naps = 2 * (gen.wi_len - 3) / sizeof(ap2);
+		case WI_SYMBOL:
+			if (sc->sc_firmware_type == WI_INTERSIL) {
+				naps = 2 * (gen.wi_len - 3) / sizeof(ap2);
+				/* Read Header */
+				for(j=0; j < sizeof(ap2_header) / 2; j++)
+					((u_int16_t *)&ap2_header)[j] =
+					    CSR_READ_2(sc, WI_DATA1);
+			} else {	/* WI_SYMBOL */
+				naps = 2 * (gen.wi_len - 1) / (sizeof(ap2) + 6);
+				ap2_header.wi_reason = 0;
+			}
 			naps = naps > MAXAPINFO ? MAXAPINFO : naps;
 			sc->wi_naps = naps;
-			/* Read Header */
-			for(j=0; j < sizeof(ap2_header) / 2; j++)
-				((u_int16_t *)&ap2_header)[j] =
-						CSR_READ_2(sc, WI_DATA1);
 			/* Read Data */
 			for (i=0; i < naps; i++) {
 				for(j=0; j < sizeof(ap2) / 2; j++)
 					((u_int16_t *)&ap2)[j] =
 						CSR_READ_2(sc, WI_DATA1);
+				if (sc->sc_firmware_type == WI_SYMBOL) {
+					/* 3 more words */
+					for (j = 0; j < 3; j++)
+						CSR_READ_2(sc, WI_DATA1);
+				}
 				/* unswap 8 bit data fields: */
 				for(j=0;j<sizeof(ap.wi_bssid)/2;j++)
 					LE16TOH(((u_int16_t *)&ap.wi_bssid[0])[j]);
@@ -596,9 +608,6 @@ void wi_update_stats(sc)
 				       ap.wi_namelen);
 			}
 			break;
-		case WI_SYMBOL:
-			/* unknown */
-			break;
 		}
 		/* Done scanning */
 		sc->wi_scanning = 0;
@@ -645,6 +654,10 @@ void wi_update_stats(sc)
 #ifdef WI_DEBUG
 			printf("WI_INFO_LINK_STAT: status %d\n", t);
 #endif
+			break;
+		}
+		if (sc->sc_firmware_type == WI_SYMBOL && t == 4) {
+			wi_cmd(sc, WI_CMD_INQUIRE, WI_INFO_HOST_SCAN_RESULTS);
 			break;
 		}
 		/*
@@ -699,6 +712,7 @@ void wi_update_stats(sc)
 			break;
 		}
 		}
+
 	default:
 #ifdef WI_DEBUG
 		printf("%s: got info type: 0x%04x len=0x%04x\n",
@@ -1564,10 +1578,25 @@ wi_ioctl(ifp, command, data)
 				break;
 			}
 			if (!sc->wi_scanning) {
-				if (sc->sc_firmware_type != WI_LUCENT) {
+				switch (sc->sc_firmware_type) {
+				case WI_LUCENT:
+					break;
+				case WI_INTERSIL:
 					wreq.wi_type = WI_RID_SCAN_REQ;
 					error = wi_write_record(sc,
 					    (struct wi_ltv_gen *)&wreq);
+					break;
+				case WI_SYMBOL:
+					/*
+					 * XXX only supported on 3.x ?
+					 */
+					wreq.wi_type = WI_RID_BCAST_SCAN_REQ;
+					wreq.wi_val[0] =
+					    BSCAN_BCAST | BSCAN_ONETIME;
+					wreq.wi_len = 2;
+					error = wi_write_record(sc,
+					    (struct wi_ltv_gen *)&wreq);
+					break;
 				}
 				if (!error) {
 					sc->wi_scanning = 1;
