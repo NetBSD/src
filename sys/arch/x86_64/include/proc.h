@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 2003/01/30 02:02:51 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -61,5 +61,6 @@ struct mdproc {
 #define MDP_COMPAT	0x0002	/* x86 compatibility process */
 #define MDP_SYSCALL	0x0004	/* entered kernel via syscall ins */
 #define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */
+#define MDP_IRET	0x0010	/* return via iret, not sysret */
 
 #endif /* _X86_64_PROC_H */
