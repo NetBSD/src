@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.5 1997/01/08 10:18:39 leo Exp $	*/
+/*	$NetBSD: installboot.c,v 1.6 1997/01/08 12:55:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -151,6 +151,7 @@ main (argc, argv)
 			install_fd(dn, &dl);
 			break;
 		case DTYPE_ST506:
+		case DTYPE_ESDI:
 			install_wd(dn, &dl);
 			setNVpref();
 			break;
