@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.44 1998/05/07 18:00:49 kleink Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.45 1998/07/24 20:47:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -163,8 +163,7 @@ shm_delete_mapping(vm, shmmap_s)
 	shmseg = &shmsegs[segnum];
 	size = (shmseg->shm_segsz + CLOFSET) & ~CLOFSET;
 #ifdef UVM
-	result = uvm_deallocate(&vm->vm_map,
-				shmmap_s->va, shmmap_s->va + size);
+	result = uvm_deallocate(&vm->vm_map, shmmap_s->va, size);
 #else
 	result = vm_map_remove(&vm->vm_map,
 			       shmmap_s->va, shmmap_s->va + size);
