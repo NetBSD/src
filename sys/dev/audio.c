@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.156 2002/05/27 17:13:14 gson Exp $	*/
+/*	$NetBSD: audio.c,v 1.157 2002/06/02 02:00:30 gson Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.156 2002/05/27 17:13:14 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.157 2002/06/02 02:00:30 gson Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1896,13 +1896,24 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 	DPRINTF(("audio_poll: events=0x%x mode=%d\n", events, sc->sc_mode));
 
 	if (events & (POLLIN | POLLRDNORM))
-		if ((sc->sc_mode & AUMODE_PLAY) ?
+		/*
+  		 * If half duplex and playing, audio_read() will generate
+		 * silence at the play rate; poll for silence being
+		 * available.  Otherwise, poll for recorded sound.
+		 */
+		if ((!sc->sc_full_duplex && (sc->sc_mode & AUMODE_PLAY)) ?
 		    sc->sc_pr.stamp > sc->sc_wstamp :
 		    sc->sc_rr.used > sc->sc_rr.usedlow)
 			revents |= events & (POLLIN | POLLRDNORM);
 
 	if (events & (POLLOUT | POLLWRNORM))
-		if (sc->sc_mode & AUMODE_RECORD ||
+		/*
+		 * If half duplex and recording, audio_write() will throw
+		 * away play data, which means we are always ready to write.
+		 * Otherwise, poll for play buffer being below its low water
+		 * mark.
+		 */
+		if ((!sc->sc_full_duplex && (sc->sc_mode & AUMODE_RECORD)) ||
 		    sc->sc_pr.used <= sc->sc_pr.usedlow)
 			revents |= events & (POLLOUT | POLLWRNORM);
 
