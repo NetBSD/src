@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.3 2002/10/04 18:28:36 elric Exp $
+#	$NetBSD: majors.vax,v 1.4 2003/01/23 15:07:54 gehenna Exp $
 #
 # Device majors for vax
 #
@@ -79,3 +79,10 @@ device-major	wsmux		char 74			wsmux
 device-major	clockctl	char 75			clockctl
 device-major	systrace	char 76			systrace
 device-major	cgd		char 77  block 26	cgd
+
+#
+# block-device-only devices
+#
+device-major	ht			 block 1	ht
+device-major	ctu			 block 8	ctu
+device-major	uu			 block 13	uu
