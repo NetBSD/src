@@ -1,6 +1,7 @@
-# $NetBSD: md.sun2,v 1.10 2003/12/13 22:02:34 chs Exp $
+# $NetBSD: md.sun2,v 1.11 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/ieeefp.h		comp-c-include
 ./usr/include/sun2		comp-c-include
+./usr/include/sun2/_G_config.h  	comp-obsolete	obsolete
 ./usr/include/sun2/ansi.h	comp-c-include
 ./usr/include/sun2/aout_machdep.h	comp-c-include
 ./usr/include/sun2/asm.h	comp-c-include
@@ -21,12 +22,12 @@
 ./usr/include/sun2/idprom.h	comp-c-include
 ./usr/include/sun2/ieee.h	comp-c-include
 ./usr/include/sun2/ieeefp.h	comp-c-include
-./usr/include/sun2/intr.h	comp-c-include
 ./usr/include/sun2/int_const.h	comp-c-include
 ./usr/include/sun2/int_fmtio.h	comp-c-include
 ./usr/include/sun2/int_limits.h	comp-c-include
 ./usr/include/sun2/int_mwgwtypes.h	comp-c-include
 ./usr/include/sun2/int_types.h	comp-c-include
+./usr/include/sun2/intr.h	comp-c-include
 ./usr/include/sun2/kbd.h	comp-c-include
 ./usr/include/sun2/kbio.h	comp-c-include
 ./usr/include/sun2/kcore.h	comp-c-include
@@ -50,6 +51,7 @@
 ./usr/include/sun2/setjmp.h	comp-c-include
 ./usr/include/sun2/signal.h	comp-c-include
 ./usr/include/sun2/stdarg.h	comp-c-include
+./usr/include/sun2/svr4_machdep.h	comp-obsolete	obsolete
 ./usr/include/sun2/trap.h	comp-c-include
 ./usr/include/sun2/types.h	comp-c-include
 ./usr/include/sun2/varargs.h	comp-c-include

@@ -1,5 +1,6 @@
-# $NetBSD: md.cobalt,v 1.14 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.cobalt,v 1.15 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/cobalt			comp-c-include
+./usr/include/cobalt/_G_config.h	comp-obsolete	obsolete
 ./usr/include/cobalt/ansi.h		comp-c-include
 ./usr/include/cobalt/aout_machdep.h	comp-c-include
 ./usr/include/cobalt/asm.h		comp-c-include
@@ -7,6 +8,7 @@
 ./usr/include/cobalt/bsd-aout.h		comp-c-include
 ./usr/include/cobalt/bswap.h		comp-c-include
 ./usr/include/cobalt/cdefs.h		comp-c-include
+./usr/include/cobalt/conf.h     	comp-obsolete	obsolete
 ./usr/include/cobalt/cpu.h		comp-c-include
 ./usr/include/cobalt/db_machdep.h	comp-c-include
 ./usr/include/cobalt/disklabel.h	comp-c-include

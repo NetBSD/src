@@ -1,16 +1,28 @@
-# $NetBSD: md.amd64,v 1.5 2003/10/08 04:25:43 lukem Exp $
+# $NetBSD: md.amd64,v 1.6 2003/12/29 03:13:25 lukem Exp $
+./dev/lms0				base-obsolete	obsolete
+./dev/mms0				base-obsolete	obsolete
 ./sbin/fdisk				base-sysutil-root
 ./usr/bin/fdformat			base-util-bin
 ./usr/lib/libx86_64.so.0		base-sys-shlib
 ./usr/lib/libx86_64.so.0.0		base-sys-shlib
+./usr/mdec/biosboot			base-obsolete	obsolete
+./usr/mdec/biosboot.sym			base-obsolete	obsolete
+./usr/mdec/biosboot_com0.sym		base-obsolete	obsolete
+./usr/mdec/biosboot_com0_115200.sym	base-obsolete	obsolete
+./usr/mdec/biosboot_com0_38400.sym	base-obsolete	obsolete
+./usr/mdec/biosboot_com0_57600.sym	base-obsolete	obsolete
+./usr/mdec/biosboot_com0_9600.sym	base-obsolete	obsolete
 ./usr/mdec/boot				base-sysutil-bin
+./usr/mdec/bootxx_dosfs			base-obsolete	obsolete
 ./usr/mdec/bootxx_ffsv1			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2			base-sysutil-bin
 ./usr/mdec/bootxx_lfsv1			base-sysutil-bin
 ./usr/mdec/bootxx_lfsv2			base-sysutil-bin
 ./usr/mdec/bootxx_msdos			base-sysutil-bin
+./usr/mdec/bootxx_ufs			base-obsolete	obsolete
 ./usr/mdec/bootxx_ustarfs		base-sysutil-bin
 ./usr/mdec/dosboot.com			base-sysutil-bin
+./usr/mdec/installboot			base-obsolete	obsolete
 ./usr/mdec/mbr				base-sysutil-bin
 ./usr/mdec/mbr_bootsel			base-sysutil-bin
 ./usr/mdec/mbr_ext			base-sysutil-bin

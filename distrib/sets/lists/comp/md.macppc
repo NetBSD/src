@@ -1,5 +1,7 @@
-# $NetBSD: md.macppc,v 1.26 2003/10/21 17:32:35 matt Exp $
+# $NetBSD: md.macppc,v 1.27 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/macppc	comp-c-include
+./usr/include/macppc/_G_config.h	comp-obsolete	obsolete
 ./usr/include/macppc/adbsys.h	comp-c-include
 ./usr/include/macppc/ansi.h	comp-c-include
 ./usr/include/macppc/aout_machdep.h	comp-c-include
@@ -7,9 +9,12 @@
 ./usr/include/macppc/asm.h	comp-c-include
 ./usr/include/macppc/atomic.h	comp-c-include
 ./usr/include/macppc/autoconf.h	comp-c-include
+./usr/include/macppc/bat.h      	comp-obsolete	obsolete
 ./usr/include/macppc/bswap.h	comp-c-include
+./usr/include/macppc/bus.h      	comp-obsolete	obsolete
 ./usr/include/macppc/cdefs.h	comp-c-include
 ./usr/include/macppc/cpu.h	comp-c-include
+./usr/include/macppc/db_machdep.h	comp-obsolete	obsolete
 ./usr/include/macppc/disklabel.h	comp-c-include
 ./usr/include/macppc/elf_machdep.h	comp-c-include
 ./usr/include/macppc/endian.h	comp-c-include
@@ -26,16 +31,20 @@
 ./usr/include/macppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/macppc/int_types.h	comp-c-include
 ./usr/include/macppc/intr.h	comp-c-include
+./usr/include/macppc/ipkdb.h    	comp-obsolete	obsolete
 ./usr/include/macppc/kcore.h	comp-c-include
 ./usr/include/macppc/keyboard.h	comp-c-include
 ./usr/include/macppc/limits.h	comp-c-include
 ./usr/include/macppc/lock.h	comp-c-include
+./usr/include/macppc/machine_type.h	comp-obsolete	obsolete
 ./usr/include/macppc/math.h	comp-c-include
 ./usr/include/macppc/mcontext.h	comp-c-include
 ./usr/include/macppc/param.h	comp-c-include
 ./usr/include/macppc/pcb.h	comp-c-include
+./usr/include/macppc/pio.h      	comp-obsolete	obsolete
 ./usr/include/macppc/pmap.h	comp-c-include
 ./usr/include/macppc/pmc.h	comp-c-include
+./usr/include/macppc/powerpc.h  	comp-obsolete	obsolete
 ./usr/include/macppc/proc.h	comp-c-include
 ./usr/include/macppc/profile.h	comp-c-include
 ./usr/include/macppc/psl.h	comp-c-include
@@ -50,4 +59,4 @@
 ./usr/include/macppc/types.h	comp-c-include
 ./usr/include/macppc/varargs.h	comp-c-include
 ./usr/include/macppc/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include
+./usr/include/macppc/z8530var.h 	comp-obsolete	obsolete

@@ -1,5 +1,6 @@
-# $NetBSD: md.algor,v 1.6 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.algor,v 1.7 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/algor			comp-c-include
+./usr/include/algor/_G_config.h 	comp-obsolete	obsolete
 ./usr/include/algor/ansi.h		comp-c-include
 ./usr/include/algor/aout_machdep.h	comp-c-include
 ./usr/include/algor/asm.h		comp-c-include
@@ -47,6 +48,7 @@
 ./usr/include/algor/regdef.h		comp-c-include
 ./usr/include/algor/regnum.h		comp-c-include
 ./usr/include/algor/reloc.h		comp-c-include
+./usr/include/algor/rnd.h       	comp-obsolete	obsolete
 ./usr/include/algor/setjmp.h		comp-c-include
 ./usr/include/algor/signal.h		comp-c-include
 ./usr/include/algor/stdarg.h		comp-c-include

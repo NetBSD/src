@@ -1,6 +1,0 @@
-# $NetBSD: obsolete.alpha,v 1.9 2003/09/19 08:15:49 mrg Exp $
-./usr/include/alpha/_G_config.h
-./usr/include/alpha/conf.h
-./usr/include/alpha/fbio.h
-./usr/include/alpha/intrcnt.h
-./usr/include/alpha/wsconsio.h 

@@ -1,5 +1,6 @@
-# $NetBSD: md.atari,v 1.48 2003/10/24 18:32:16 mycroft Exp $
+# $NetBSD: md.atari,v 1.49 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/atari			comp-c-include
+./usr/include/atari/_G_config.h 	comp-obsolete	obsolete
 ./usr/include/atari/ahdilabel.h		comp-c-include
 ./usr/include/atari/ansi.h		comp-c-include
 ./usr/include/atari/aout_machdep.h	comp-c-include
@@ -47,6 +48,7 @@
 ./usr/include/atari/setjmp.h		comp-c-include
 ./usr/include/atari/signal.h		comp-c-include
 ./usr/include/atari/stdarg.h		comp-c-include
+./usr/include/atari/svr4_machdep.h	comp-obsolete	obsolete
 ./usr/include/atari/trap.h		comp-c-include
 ./usr/include/atari/types.h		comp-c-include
 ./usr/include/atari/varargs.h		comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.10 2003/12/28 15:45:58 lukem Exp $
+# $NetBSD: mi,v 1.11 2003/12/29 03:13:29 lukem Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -47,6 +47,7 @@
 ./usr/X11R6/bin/texteroids
 ./usr/X11R6/bin/twm
 ./usr/X11R6/bin/ucs2any
+./usr/X11R6/bin/ucs2any.pl		xbase-obsolete	obsolete
 ./usr/X11R6/bin/uxterm
 ./usr/X11R6/bin/x11perf
 ./usr/X11R6/bin/x11perfcomp
@@ -64,6 +65,7 @@
 ./usr/X11R6/bin/xfs
 ./usr/X11R6/bin/xfsinfo
 ./usr/X11R6/bin/xft-config
+./usr/X11R6/bin/xftcache		xbase-obsolete	obsolete
 ./usr/X11R6/bin/xfwp
 ./usr/X11R6/bin/xgamma
 ./usr/X11R6/bin/xhost
@@ -212,6 +214,7 @@
 ./usr/X11R6/lib/X11/XErrorDB
 ./usr/X11R6/lib/X11/XKeysymDB
 ./usr/X11R6/lib/X11/Xcms.txt
+./usr/X11R6/lib/X11/XftConfig		xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/app-defaults
 ./usr/X11R6/lib/X11/app-defaults/Beforelight
 ./usr/X11R6/lib/X11/app-defaults/Bitmap
@@ -257,6 +260,13 @@
 ./usr/X11R6/lib/X11/locale/armscii-8/Compose
 ./usr/X11R6/lib/X11/locale/armscii-8/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/armscii-8/XLC_LOCALE
+./usr/X11R6/lib/X11/locale/common	xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/locale/common/ximcp.so.2	xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/locale/common/xlcDef.so.2	xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/locale/common/xlcUTF8Load.so.2	xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/locale/common/xlibi18n.so.2 xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/locale/common/xlocale.so.2	xbase-obsolete	obsolete
+./usr/X11R6/lib/X11/locale/common/xomGeneric.so.2	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/locale/compose.dir
 ./usr/X11R6/lib/X11/locale/el_GR.UTF-8
 ./usr/X11R6/lib/X11/locale/el_GR.UTF-8/Compose
@@ -396,6 +406,7 @@
 ./usr/X11R6/lib/X11/locale/tatar-cyr
 ./usr/X11R6/lib/X11/locale/tatar-cyr/XI18N_OBJS
 ./usr/X11R6/lib/X11/locale/tatar-cyr/XLC_LOCALE
+./usr/X11R6/lib/X11/locale/tbl_data/tabkoi8-r	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/locale/th_TH
 ./usr/X11R6/lib/X11/locale/th_TH.UTF-8
 ./usr/X11R6/lib/X11/locale/th_TH.UTF-8/XI18N_OBJS
@@ -481,6 +492,7 @@
 ./usr/X11R6/lib/X11/xdm/xdm-config
 ./usr/X11R6/lib/X11/xedit
 ./usr/X11R6/lib/X11/xedit/lisp
+./usr/X11R6/lib/X11/xedit/lisp/fun.lsp	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xedit/lisp/indent.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/lisp.lsp
 ./usr/X11R6/lib/X11/xedit/lisp/progmodes
@@ -856,12 +868,14 @@
 ./usr/X11R6/lib/X11/xkb/types.dir
 ./usr/X11R6/lib/X11/xkb/types/README
 ./usr/X11R6/lib/X11/xkb/types/basic
+./usr/X11R6/lib/X11/xkb/types/cancel	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xkb/types/caps
 ./usr/X11R6/lib/X11/xkb/types/complete
 ./usr/X11R6/lib/X11/xkb/types/default
 ./usr/X11R6/lib/X11/xkb/types/extra
 ./usr/X11R6/lib/X11/xkb/types/iso9995
 ./usr/X11R6/lib/X11/xkb/types/mousekeys
+./usr/X11R6/lib/X11/xkb/types/nocancel	xbase-obsolete	obsolete
 ./usr/X11R6/lib/X11/xkb/types/pc
 ./usr/X11R6/lib/X11/xkb/xkbcomp
 ./usr/X11R6/lib/X11/xsm
@@ -924,6 +938,7 @@
 ./usr/X11R6/man/cat1/xfindproxy.0
 ./usr/X11R6/man/cat1/xfs.0
 ./usr/X11R6/man/cat1/xfsinfo.0
+./usr/X11R6/man/cat1/xftcache.0		xbase-obsolete	obsolete
 ./usr/X11R6/man/cat1/xfwp.0
 ./usr/X11R6/man/cat1/xgamma.0
 ./usr/X11R6/man/cat1/xhost.0

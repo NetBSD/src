@@ -1,3 +1,0 @@
-# $NetBSD: obsolete.atari,v 1.3 2003/10/24 18:32:16 mycroft Exp $
-./usr/include/atari/_G_config.h
-./usr/include/atari/svr4_machdep.h

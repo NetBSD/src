@@ -1,5 +1,7 @@
-# $NetBSD: md.pmax,v 1.51 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.pmax,v 1.52 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/pmax	comp-c-include
+./usr/include/pmax/_G_config.h  	comp-obsolete	obsolete
 ./usr/include/pmax/ansi.h	comp-c-include
 ./usr/include/pmax/aout_machdep.h	comp-c-include
 ./usr/include/pmax/asm.h	comp-c-include
@@ -8,14 +10,18 @@
 ./usr/include/pmax/bswap.h	comp-c-include
 ./usr/include/pmax/bus.h	comp-c-include
 ./usr/include/pmax/cdefs.h	comp-c-include
+./usr/include/pmax/conf.h       	comp-obsolete	obsolete
 ./usr/include/pmax/cpu.h	comp-c-include
 ./usr/include/pmax/db_machdep.h	comp-c-include
 ./usr/include/pmax/dc7085cons.h	comp-c-include
+./usr/include/pmax/dec_boot.h   	comp-obsolete	obsolete
 ./usr/include/pmax/disklabel.h	comp-c-include
 ./usr/include/pmax/ecoff_machdep.h	comp-c-include
+./usr/include/pmax/elf.h        	comp-obsolete	obsolete
 ./usr/include/pmax/elf_machdep.h	comp-c-include
 ./usr/include/pmax/endian.h	comp-c-include
 ./usr/include/pmax/endian_machdep.h	comp-c-include
+./usr/include/pmax/fbio.h       	comp-obsolete	obsolete
 ./usr/include/pmax/fbvar.h	comp-c-include
 ./usr/include/pmax/float.h	comp-c-include
 ./usr/include/pmax/ieee.h	comp-c-include
@@ -56,4 +62,3 @@
 ./usr/include/pmax/types.h	comp-c-include
 ./usr/include/pmax/varargs.h	comp-c-include
 ./usr/include/pmax/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

@@ -1,5 +1,6 @@
-# $NetBSD: md.cesfic,v 1.2 2003/10/25 22:27:27 mycroft Exp $
+# $NetBSD: md.cesfic,v 1.3 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/cesfic			comp-c-include
+./usr/include/cesfic/_G_config.h	comp-obsolete	obsolete
 ./usr/include/cesfic/ansi.h		comp-c-include
 ./usr/include/cesfic/aout_machdep.h	comp-c-include
 ./usr/include/cesfic/asm.h		comp-c-include

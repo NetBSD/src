@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.amiga,v 1.5 2003/01/15 07:32:39 mhitch Exp $
-./usr/mdec/fdboot
-./usr/mdec/installboot
-./usr/mdec/xxboot

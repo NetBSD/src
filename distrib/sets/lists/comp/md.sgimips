@@ -1,6 +1,7 @@
-# $NetBSD: md.sgimips,v 1.6 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.sgimips,v 1.7 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/sgimips			comp-c-include
+./usr/include/sgimips/_G_config.h	comp-obsolete	obsolete
 ./usr/include/sgimips/ansi.h		comp-c-include
 ./usr/include/sgimips/aout_machdep.h	comp-c-include
 ./usr/include/sgimips/asm.h		comp-c-include
@@ -8,6 +9,7 @@
 ./usr/include/sgimips/bsd-aout.h	comp-c-include
 ./usr/include/sgimips/bswap.h		comp-c-include
 ./usr/include/sgimips/cdefs.h		comp-c-include
+./usr/include/sgimips/conf.h    	comp-obsolete	obsolete
 ./usr/include/sgimips/cpu.h		comp-c-include
 ./usr/include/sgimips/db_machdep.h	comp-c-include
 ./usr/include/sgimips/disklabel.h	comp-c-include

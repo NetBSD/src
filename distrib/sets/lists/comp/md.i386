@@ -1,17 +1,19 @@
-# $NetBSD: md.i386,v 1.77 2003/12/05 18:57:40 matt Exp $
+# $NetBSD: md.i386,v 1.78 2003/12/29 03:13:26 lukem Exp $
 ./lib/libm387.so			comp-sys-shlib
 ./usr/include/i386		comp-c-include
+./usr/include/i386/_G_config.h  	comp-obsolete	obsolete
 ./usr/include/i386/ansi.h		comp-c-include
 ./usr/include/i386/aout_machdep.h		comp-c-include
 ./usr/include/i386/apmvar.h		comp-c-include
-./usr/include/i386/atomic.h		comp-c-include
 ./usr/include/i386/asm.h		comp-c-include
+./usr/include/i386/atomic.h		comp-c-include
 ./usr/include/i386/bioscall.h		comp-c-include
 ./usr/include/i386/bootinfo.h		comp-c-include
 ./usr/include/i386/bswap.h		comp-c-include
 ./usr/include/i386/bus.h		comp-c-include
 ./usr/include/i386/byte_swap.h		comp-c-include
 ./usr/include/i386/cdefs.h		comp-c-include
+./usr/include/i386/conf.h       	comp-obsolete	obsolete
 ./usr/include/i386/cpu.h		comp-c-include
 ./usr/include/i386/cpufunc.h		comp-c-include
 ./usr/include/i386/cputypes.h		comp-c-include
@@ -40,6 +42,7 @@
 ./usr/include/i386/lock.h		comp-c-include
 ./usr/include/i386/math.h		comp-c-include
 ./usr/include/i386/mcontext.h		comp-c-include
+./usr/include/i386/mouse.h      	comp-obsolete	obsolete
 ./usr/include/i386/mtrr.h		comp-c-include
 ./usr/include/i386/npx.h		comp-c-include
 ./usr/include/i386/param.h		comp-c-include

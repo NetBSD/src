@@ -1,9 +1,0 @@
-# $NetBSD: obsolete.pmppc,v 1.2 2003/10/24 06:49:37 matt Exp $
-./usr/include/pmppc/_G_config.h
-./usr/include/pmppc/bus.h
-./usr/include/pmppc/cpufunc.h
-./usr/include/pmppc/db_machdep.h
-./usr/include/pmppc/ipkdb.h
-./usr/include/pmppc/kgdb.h
-./usr/include/pmppc/pio.h
-./usr/include/pmppc/powerpc.h

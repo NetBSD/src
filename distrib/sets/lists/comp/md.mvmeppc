@@ -1,13 +1,18 @@
-# $NetBSD: md.mvmeppc,v 1.6 2003/10/24 06:49:37 matt Exp $
+# $NetBSD: md.mvmeppc,v 1.7 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/mvmeppc	comp-c-include
+./usr/include/mvmeppc/_G_config.h	comp-obsolete	obsolete
 ./usr/include/mvmeppc/ansi.h	comp-c-include
 ./usr/include/mvmeppc/aout_machdep.h	comp-c-include
 ./usr/include/mvmeppc/asm.h	comp-c-include
 ./usr/include/mvmeppc/atomic.h	comp-c-include
+./usr/include/mvmeppc/bat.h     	comp-obsolete	obsolete
 ./usr/include/mvmeppc/bootinfo.h	comp-c-include
 ./usr/include/mvmeppc/bswap.h	comp-c-include
+./usr/include/mvmeppc/bus.h     	comp-obsolete	obsolete
 ./usr/include/mvmeppc/cdefs.h	comp-c-include
 ./usr/include/mvmeppc/cpu.h	comp-c-include
+./usr/include/mvmeppc/db_machdep.h	comp-obsolete	obsolete
 ./usr/include/mvmeppc/disklabel.h	comp-c-include
 ./usr/include/mvmeppc/elf_machdep.h	comp-c-include
 ./usr/include/mvmeppc/endian.h	comp-c-include
@@ -23,15 +28,19 @@
 ./usr/include/mvmeppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/mvmeppc/int_types.h	comp-c-include
 ./usr/include/mvmeppc/intr.h	comp-c-include
+./usr/include/mvmeppc/ipkdb.h   	comp-obsolete	obsolete
 ./usr/include/mvmeppc/kcore.h	comp-c-include
+./usr/include/mvmeppc/kgdb.h    	comp-obsolete	obsolete
 ./usr/include/mvmeppc/limits.h	comp-c-include
 ./usr/include/mvmeppc/lock.h	comp-c-include
 ./usr/include/mvmeppc/math.h	comp-c-include
 ./usr/include/mvmeppc/mcontext.h	comp-c-include
 ./usr/include/mvmeppc/param.h	comp-c-include
 ./usr/include/mvmeppc/pcb.h	comp-c-include
+./usr/include/mvmeppc/pio.h     	comp-obsolete	obsolete
 ./usr/include/mvmeppc/pmap.h	comp-c-include
 ./usr/include/mvmeppc/pmc.h	comp-c-include
+./usr/include/mvmeppc/powerpc.h 	comp-obsolete	obsolete
 ./usr/include/mvmeppc/proc.h	comp-c-include
 ./usr/include/mvmeppc/profile.h	comp-c-include
 ./usr/include/mvmeppc/psl.h	comp-c-include
@@ -46,4 +55,3 @@
 ./usr/include/mvmeppc/types.h	comp-c-include
 ./usr/include/mvmeppc/varargs.h	comp-c-include
 ./usr/include/mvmeppc/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

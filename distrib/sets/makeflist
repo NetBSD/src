@@ -1,101 +1,62 @@
 #!/bin/sh
 #
-# $NetBSD: makeflist,v 1.66 2003/12/19 22:25:53 jmc Exp $
+# $NetBSD: makeflist,v 1.67 2003/12/29 03:13:25 lukem Exp $
 #
 # Print out the files in some or all lists.
 # Usage: makeflist [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
 #
 
-# set defaults
-. ./sets.defaults
-
-setd=`pwd`
-nlists=$lists
-xlists="xbase xcomp xcontrib xfont xserver xmisc"
-
 . ./sets.subr
+lists=$nlists
 
-# handle args
-while : ; do
-	case $1 in
-	-b*)
-		lists="$xlists $nlists"
-		;;
-	-x*)
-		lists=$xlists
-		;;
-	-a*)
-		machine_arch=${2}
-		machine_cpu=$(arch_to_cpu ${2})
-		shift
-		;;
-	-m*)
-		machine=$2; shift
-		;;
-	-s*)
-		setd=$2; shift
-		;;
-	-*)
-		cat 1>&2 <<USAGE
-Usage: $0 [-b] [-x] [-a arch] [-m machine] [-s setsdir] [setname ...]
-	-b		make netbsd + x11 lists
-	-x		only make x11 lists
+usage()
+{
+	cat 1>&2 <<USAGE
+Usage: ${0##*/} [-b] [-x] [-o] [-a arch] [-m machine] [-s setsdir]
+		[setname [...]]
+	-b		print netbsd + x11 lists
+	-x		print make x11 lists
+	-o		only match obsolete files
 	-a arch		set arch (e.g, m68k, mipseb, mipsel, powerpc) [$machine_arch]
 	-m machine	set machine (e.g, amiga, i386, macppc) [$machine]
-	-s setsdir	directory to find sets [$setd]
-	[setname ...]	sets to build [$lists]
+	-s setsdir	directory to find sets [$setsdir]
+	[setname [...]]	sets to build [$lists]
 USAGE
-		exit 1
+	exit 1
+}
+
+# handle args
+while getopts bxoa:m:s: ch; do
+	case ${ch} in
+	b)
+		lists="$xlists $nlists"
+		;;
+	x)
+		lists="$xlists"
+		;;
+	o)
+		obsolete=1
+		;;
+	a)
+		machine_arch=${OPTARG}
+		machine_cpu=$(arch_to_cpu ${OPTARG})
+		;;
+	m)
+		machine=${OPTARG}
+		;;
+	s)
+		setsdir=${OPTARG}
 		;;
 	*)
-		break
+		usage
 		;;
 	esac
-	shift
 done
+shift $((${OPTIND} - 1))
 if [ -n "$1" ]; then
 	lists="$@"
 fi
 
-# Determine lib type.
-if [ "$object_fmt" = "ELF" ]; then
-	shlib=elf
-else
-	shlib=aout
-fi
-stlib=$shlib
-
-# Turn off shlibs for some ports.
-if [ "$machine_cpu" = "sh3" -o "$machine_arch" = "m68000" ]; then
-	shlib=no
-fi
-lkm=yes
-# Turn off LKMs for some ports.
-if [ "$machine" = "evbppc" ]; then
-	lkm=no
-fi
-
-# Turn off lintlibs for some ports.
-# Not needed anymore, leave the hook here for future use.
-lintlibs=
-
-# Automatically add XFree86 version specific sets
-for list in $lists
-do
- if [ -z "$_lists" ]
- then
-  _lists=$list
- else
-  _lists="$_lists $list"
- fi
- if [ -d "$setd/lists/$list${x11_version}" ]
- then
-  _lists="$_lists $list${x11_version}"
- fi
-done
-lists=$_lists
-unset _lists
-
 for setname in $lists; do
 	list_set_files $setname
-done | awk -- '/^[^#]/ {print $1}' | sort -u
+done | awk '{print $1}' | sort -u

@@ -1,5 +1,7 @@
-# $NetBSD: md.sparc64,v 1.24 2003/09/19 08:15:48 mrg Exp $
+# $NetBSD: md.sparc64,v 1.25 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/sparc	comp-c-include
+./usr/include/sparc/_G_config.h 	comp-obsolete	obsolete
 ./usr/include/sparc/ansi.h	comp-c-include
 ./usr/include/sparc/aout_machdep.h	comp-c-include
 ./usr/include/sparc/apmvar.h	comp-c-include
@@ -9,6 +11,7 @@
 ./usr/include/sparc/bswap.h	comp-c-include
 ./usr/include/sparc/cdefs.h	comp-c-include
 ./usr/include/sparc/cgtworeg.h	comp-c-include
+./usr/include/sparc/conf.h      	comp-obsolete	obsolete
 ./usr/include/sparc/cpu.h	comp-c-include
 ./usr/include/sparc/cpuconf.h	comp-c-include
 ./usr/include/sparc/disklabel.h	comp-c-include
@@ -16,6 +19,7 @@
 ./usr/include/sparc/elf_machdep.h	comp-c-include
 ./usr/include/sparc/endian.h	comp-c-include
 ./usr/include/sparc/endian_machdep.h	comp-c-include
+./usr/include/sparc/fbio.h      	comp-obsolete	obsolete
 ./usr/include/sparc/float.h	comp-c-include
 ./usr/include/sparc/frame.h	comp-c-include
 ./usr/include/sparc/fsr.h	comp-c-include
@@ -57,6 +61,7 @@
 ./usr/include/sparc/vmparam.h	comp-c-include
 ./usr/include/sparc/vuid_event.h	comp-c-include
 ./usr/include/sparc64	comp-c-include
+./usr/include/sparc64/_G_config.h	comp-obsolete	obsolete
 ./usr/include/sparc64/ansi.h	comp-c-include
 ./usr/include/sparc64/aout_machdep.h	comp-c-include
 ./usr/include/sparc64/asm.h	comp-c-include
@@ -66,6 +71,7 @@
 ./usr/include/sparc64/bus.h	comp-c-include
 ./usr/include/sparc64/cdefs.h	comp-c-include
 ./usr/include/sparc64/cgtworeg.h	comp-c-include
+./usr/include/sparc64/conf.h    	comp-obsolete	obsolete
 ./usr/include/sparc64/cpu.h	comp-c-include
 ./usr/include/sparc64/ctlreg.h	comp-c-include
 ./usr/include/sparc64/db_machdep.h	comp-c-include
@@ -74,6 +80,8 @@
 ./usr/include/sparc64/elf_machdep.h	comp-c-include
 ./usr/include/sparc64/endian.h	comp-c-include
 ./usr/include/sparc64/endian_machdep.h	comp-c-include
+./usr/include/sparc64/fbio.h    	comp-obsolete	obsolete
+./usr/include/sparc64/fbvar.h   	comp-obsolete	obsolete
 ./usr/include/sparc64/float.h	comp-c-include
 ./usr/include/sparc64/frame.h	comp-c-include
 ./usr/include/sparc64/fsr.h	comp-c-include
@@ -117,4 +125,3 @@
 ./usr/include/sparc64/vmparam.h	comp-c-include
 ./usr/include/sparc64/vuid_event.h	comp-c-include
 ./usr/include/sparc64/z8530var.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

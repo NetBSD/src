@@ -1,5 +1,7 @@
-# $NetBSD: md.newsmips,v 1.19 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.newsmips,v 1.20 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/newsmips	comp-c-include
+./usr/include/newsmips/_G_config.h	comp-obsolete	obsolete
 ./usr/include/newsmips/adrsmap.h	comp-c-include
 ./usr/include/newsmips/ansi.h	comp-c-include
 ./usr/include/newsmips/aout_machdep.h	comp-c-include
@@ -8,14 +10,17 @@
 ./usr/include/newsmips/bsd-aout.h	comp-c-include
 ./usr/include/newsmips/bswap.h	comp-c-include
 ./usr/include/newsmips/cdefs.h	comp-c-include
+./usr/include/newsmips/conf.h   	comp-obsolete	obsolete
 ./usr/include/newsmips/cpu.h	comp-c-include
 ./usr/include/newsmips/db_machdep.h	comp-c-include
 ./usr/include/newsmips/disklabel.h	comp-c-include
 ./usr/include/newsmips/ecoff_machdep.h	comp-c-include
+./usr/include/newsmips/elf.h    	comp-obsolete	obsolete
 ./usr/include/newsmips/elf_machdep.h	comp-c-include
 ./usr/include/newsmips/endian.h	comp-c-include
 ./usr/include/newsmips/endian_machdep.h	comp-c-include
 ./usr/include/newsmips/float.h	comp-c-include
+./usr/include/newsmips/framebuf.h	comp-obsolete	obsolete
 ./usr/include/newsmips/ieee.h	comp-c-include
 ./usr/include/newsmips/ieeefp.h	comp-c-include
 ./usr/include/newsmips/int_const.h	comp-c-include
@@ -26,6 +31,7 @@
 ./usr/include/newsmips/intr.h	comp-c-include
 ./usr/include/newsmips/kcore.h	comp-c-include
 ./usr/include/newsmips/kdbparam.h	comp-c-include
+./usr/include/newsmips/keyboard.h	comp-obsolete	obsolete
 ./usr/include/newsmips/limits.h	comp-c-include
 ./usr/include/newsmips/lock.h	comp-c-include
 ./usr/include/newsmips/locore.h	comp-c-include
@@ -33,6 +39,7 @@
 ./usr/include/newsmips/math.h	comp-c-include
 ./usr/include/newsmips/mcontext.h	comp-c-include
 ./usr/include/newsmips/mips_opcode.h	comp-c-include
+./usr/include/newsmips/mouse.h  	comp-obsolete	obsolete
 ./usr/include/newsmips/param.h	comp-c-include
 ./usr/include/newsmips/pcb.h	comp-c-include
 ./usr/include/newsmips/pmap.h	comp-c-include
@@ -54,4 +61,3 @@
 ./usr/include/newsmips/varargs.h	comp-c-include
 ./usr/include/newsmips/vmparam.h	comp-c-include
 ./usr/include/newsmips/z8530var.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

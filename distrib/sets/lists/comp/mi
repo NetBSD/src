@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.648 2003/12/20 20:25:28 lha Exp $
+#	$NetBSD: mi,v 1.649 2003/12/29 03:13:27 lukem Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -23,7 +23,9 @@
 ./usr/bin/gcore			comp-debug-bin
 ./usr/bin/gcov			comp-debug-bin
 ./usr/bin/gdb			comp-debug-bin
+./usr/bin/genclass              	comp-obsolete	obsolete
 ./usr/bin/gettext		comp-c-bin
+./usr/bin/gettextize            	comp-obsolete	obsolete
 ./usr/bin/gprof			comp-debug-bin
 ./usr/bin/ld			comp-util-bin
 ./usr/bin/lex			comp-c-bin
@@ -82,6 +84,10 @@
 ./usr/include/arpa/telnet.h		comp-c-include
 ./usr/include/arpa/tftp.h		comp-c-include
 ./usr/include/assert.h			comp-c-include
+./usr/include/bfd               	comp-obsolete	obsolete
+./usr/include/bfd/ansidecl.h    	comp-obsolete	obsolete
+./usr/include/bfd/bfd.h         	comp-obsolete	obsolete
+./usr/include/bfd/libiberty.h   	comp-obsolete	obsolete
 ./usr/include/bitstring.h		comp-c-include
 ./usr/include/bm.h			comp-c-include
 ./usr/include/bzlib.h			comp-c-include
@@ -129,107 +135,389 @@
 ./usr/include/dev/ata/atareg.h		comp-c-include
 ./usr/include/dev/ata/atavar.h		comp-c-include
 ./usr/include/dev/ata/satareg.h		comp-c-include
+./usr/include/dev/ata/wdvar.h   	comp-obsolete	obsolete
+./usr/include/dev/auconv.h      	comp-obsolete	obsolete
+./usr/include/dev/audio_if.h    	comp-obsolete	obsolete
+./usr/include/dev/audiovar.h    	comp-obsolete	obsolete
 ./usr/include/dev/ccdvar.h		comp-c-include
 ./usr/include/dev/cgdvar.h		comp-c-include
+./usr/include/dev/clock_subr.h  	comp-obsolete	obsolete
+./usr/include/dev/cons.h        	comp-obsolete	obsolete
 ./usr/include/dev/dec			comp-c-include
+./usr/include/dev/dec/clockvar.h	comp-obsolete	obsolete
 ./usr/include/dev/dec/dec_boot.h	comp-c-include
 ./usr/include/dev/dec/lk201.h		comp-c-include
+./usr/include/dev/dec/mcclock_pad32.h	comp-obsolete	obsolete
+./usr/include/dev/dec/mcclockvar.h	comp-obsolete	obsolete
 ./usr/include/dev/dmover		comp-c-include
 ./usr/include/dev/dmover/dmover_io.h	comp-c-include
+./usr/include/dev/eisa          	comp-obsolete	obsolete
+./usr/include/dev/eisa/ahbreg.h 	comp-obsolete	obsolete
+./usr/include/dev/eisa/eisadevs.h	comp-obsolete	obsolete
+./usr/include/dev/eisa/eisadevs_data.h	comp-obsolete	obsolete
+./usr/include/dev/eisa/eisareg.h	comp-obsolete	obsolete
+./usr/include/dev/eisa/eisavar.h	comp-obsolete	obsolete
 ./usr/include/dev/fssvar.h		comp-c-include
 ./usr/include/dev/hpc			comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h		comp-c-include
+./usr/include/dev/i2c           	comp-obsolete	obsolete
+./usr/include/dev/i2c/i2c_bus.h 	comp-obsolete	obsolete
+./usr/include/dev/i2c/i2c_eeprom.h	comp-obsolete	obsolete
 ./usr/include/dev/i2o			comp-c-include
 ./usr/include/dev/i2o/i2o.h		comp-c-include
 ./usr/include/dev/i2o/iopio.h		comp-c-include
+./usr/include/dev/i2o/iopvar.h  	comp-obsolete	obsolete
 ./usr/include/dev/ic			comp-c-include
+./usr/include/dev/ic/ad1848reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ahareg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/ahavar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/aic6360reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/aic6360var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/aic77xxreg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/aic77xxvar.h	comp-obsolete	obsolete
+./usr/include/dev/ic/aic7xxxreg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/aic7xxxvar.h	comp-obsolete	obsolete
+./usr/include/dev/ic/am7930reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/am7990reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/am7990var.h	comp-obsolete	obsolete
 ./usr/include/dev/ic/athioctl.h		comp-c-include
+./usr/include/dev/ic/awictl.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/bhareg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/bhavar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/bt431reg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/bt459reg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/bt463reg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/bt485reg.h 	comp-obsolete	obsolete
 ./usr/include/dev/ic/bt8xx.h		comp-c-include
+./usr/include/dev/ic/cacreg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/cacvar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/cd1190reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/cd1400reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/comreg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/comvar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/cs4231reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/cyreg.h    	comp-obsolete	obsolete
+./usr/include/dev/ic/cyvar.h    	comp-obsolete	obsolete
+./usr/include/dev/ic/dc21040reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/dl10019reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/dp8390reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/dp8390var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/dptreg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/dptvar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/ds.h       	comp-obsolete	obsolete
+./usr/include/dev/ic/elink3reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/elink3var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/hayespreg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/i8042reg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/i82365reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/i82365var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/i8237reg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/i8253reg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/i82586reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/i82586var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/i82595reg.h	comp-obsolete	obsolete
 ./usr/include/dev/ic/icp_ioctl.h	comp-c-include
 ./usr/include/dev/ic/icpreg.h		comp-c-include
+./usr/include/dev/ic/ics2101reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ims332reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/intersil7170.h	comp-obsolete	obsolete
+./usr/include/dev/ic/interwavereg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/interwavevar.h	comp-obsolete	obsolete
 ./usr/include/dev/ic/isp_ioctl.h	comp-c-include
+./usr/include/dev/ic/isp_netbsd.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ispmbox.h  	comp-obsolete	obsolete
+./usr/include/dev/ic/ispreg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/ispvar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/lemacreg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/lemacvar.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/lptreg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/lptvar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/mb86960reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/mb86960var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/mc146818reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/mc68450reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/mc6845reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/midwayreg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/midwayvar.h	comp-obsolete	obsolete
 ./usr/include/dev/ic/mlxio.h		comp-c-include
 ./usr/include/dev/ic/mlxreg.h		comp-c-include
+./usr/include/dev/ic/mlxvar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/ncr5380reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ncr5380var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ncr53c400reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ncr53c9xreg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ncr53c9xvar.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ne2000reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ne2000var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/nec765reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ns16450reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/ns16550reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/opl3sa3.h  	comp-obsolete	obsolete
+./usr/include/dev/ic/opl3sa3reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/pcdisplay.h	comp-obsolete	obsolete
+./usr/include/dev/ic/pcdisplayvar.h	comp-obsolete	obsolete
+./usr/include/dev/ic/pckbcvar.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/pdqreg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/pdqvar.h   	comp-obsolete	obsolete
 ./usr/include/dev/ic/rrunnerreg.h	comp-c-include
 ./usr/include/dev/ic/rrunnervar.h	comp-c-include
+./usr/include/dev/ic/smc83c170reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/smc83c170var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/smc90cx6reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/smc91cxxreg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/smc91cxxvar.h	comp-obsolete	obsolete
+./usr/include/dev/ic/smc93cx6var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/st16650reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/tms320av110reg.h	comp-obsolete	obsolete
+./usr/include/dev/ic/tms320av110var.h	comp-obsolete	obsolete
+./usr/include/dev/ic/uhareg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/uhavar.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/vgareg.h   	comp-obsolete	obsolete
+./usr/include/dev/ic/vgavar.h   	comp-obsolete	obsolete
 ./usr/include/dev/ic/wdcreg.h		comp-c-include
+./usr/include/dev/ic/wdcvar.h   	comp-obsolete	obsolete
 ./usr/include/dev/ic/wi_ieee.h		comp-c-include
+./usr/include/dev/ic/z8530reg.h 	comp-obsolete	obsolete
+./usr/include/dev/ic/z8530sc.h  	comp-obsolete	obsolete
 ./usr/include/dev/ieee1394		comp-c-include
 ./usr/include/dev/ieee1394/fwiso_ioctl.h	comp-c-include
 ./usr/include/dev/ir			comp-c-include
 ./usr/include/dev/ir/irdaio.h		comp-c-include
+./usr/include/dev/irdaio.h      	comp-obsolete	obsolete
 ./usr/include/dev/isa			comp-c-include
+./usr/include/dev/isa/ad1848var.h	comp-obsolete	obsolete
+./usr/include/dev/isa/ahareg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/ariareg.h 	comp-obsolete	obsolete
+./usr/include/dev/isa/btreg.h   	comp-obsolete	obsolete
+./usr/include/dev/isa/com_multi.h	comp-obsolete	obsolete
+./usr/include/dev/isa/comreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/comvar.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/cs4231var.h	comp-obsolete	obsolete
+./usr/include/dev/isa/elink.h   	comp-obsolete	obsolete
+./usr/include/dev/isa/esp_isavar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/espvar.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/gusreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/ics2101var.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_aireg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_ecreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_edreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_efreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_egreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_elreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_epreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_fereg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_ie507.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_ieatt.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_iee16.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_ixreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_levar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/if_wereg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/isadmareg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/isadmavar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/isareg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/isavar.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/lptreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/madreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/mcdreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/pasreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/pcdisplayvar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/pckbcvar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/pcppireg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/pcppivar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/pssreg.h  	comp-obsolete	obsolete
 ./usr/include/dev/isa/satlinkio.h	comp-c-include
+./usr/include/dev/isa/satlinkreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/sbdspvar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/sbreg.h   	comp-obsolete	obsolete
+./usr/include/dev/isa/sbvar.h   	comp-obsolete	obsolete
 ./usr/include/dev/isa/spkrio.h		comp-c-include
+./usr/include/dev/isa/vga_isavar.h	comp-obsolete	obsolete
+./usr/include/dev/isa/wdlink.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/wdreg.h   	comp-obsolete	obsolete
+./usr/include/dev/isa/wdsreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/weaselreg.h	comp-obsolete	obsolete
+./usr/include/dev/isa/wssreg.h  	comp-obsolete	obsolete
+./usr/include/dev/isa/wssvar.h  	comp-obsolete	obsolete
 ./usr/include/dev/isa/wtreg.h		comp-c-include
+./usr/include/dev/isa/ymvar.h   	comp-obsolete	obsolete
+./usr/include/dev/isapnp        	comp-obsolete	obsolete
+./usr/include/dev/isapnp/if_levar.h	comp-obsolete	obsolete
+./usr/include/dev/isapnp/isapnpreg.h	comp-obsolete	obsolete
+./usr/include/dev/isapnp/isapnpvar.h	comp-obsolete	obsolete
 ./usr/include/dev/kttcpio.h		comp-c-include
 ./usr/include/dev/md.h			comp-c-include
+./usr/include/dev/microcode     	comp-obsolete	obsolete
+./usr/include/dev/microcode/aic7xxx	comp-obsolete	obsolete
+./usr/include/dev/microcode/aic7xxx/aic7xxx_reg.h	comp-obsolete	obsolete
+./usr/include/dev/microcode/aic7xxx/aic7xxx_seq.h	comp-obsolete	obsolete
+./usr/include/dev/microcode/isp 	comp-obsolete	obsolete
+./usr/include/dev/microcode/isp/asm_pci.h	comp-obsolete	obsolete
+./usr/include/dev/microcode/isp/asm_sbus.h	comp-obsolete	obsolete
+./usr/include/dev/mii           	comp-obsolete	obsolete
+./usr/include/dev/mii/generic_phy.h	comp-obsolete	obsolete
+./usr/include/dev/mii/icsphyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/inphyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/iophyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/lxtphyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/mii.h     	comp-obsolete	obsolete
+./usr/include/dev/mii/mii_adapter.h	comp-obsolete	obsolete
+./usr/include/dev/mii/mii_adapters_id.h	comp-obsolete	obsolete
+./usr/include/dev/mii/mii_phy.h 	comp-obsolete	obsolete
+./usr/include/dev/mii/miivar.h  	comp-obsolete	obsolete
+./usr/include/dev/mii/nsphyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/nsphyterreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/qsphyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/tlphy.h   	comp-obsolete	obsolete
+./usr/include/dev/mii/tlphyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mii/tlphyvar.h	comp-obsolete	obsolete
+./usr/include/dev/mii/tqphyreg.h	comp-obsolete	obsolete
+./usr/include/dev/mulaw.h       	comp-obsolete	obsolete
+./usr/include/dev/ofisa         	comp-obsolete	obsolete
+./usr/include/dev/ofisa/ofisavar.h	comp-obsolete	obsolete
 ./usr/include/dev/ofw			comp-c-include
+./usr/include/dev/ofw/ofw_pci.h 	comp-obsolete	obsolete
+./usr/include/dev/ofw/openfirm.h	comp-obsolete	obsolete
 ./usr/include/dev/ofw/openfirmio.h	comp-c-include
 ./usr/include/dev/pci			comp-c-include
+./usr/include/dev/pci/if_devar.h	comp-obsolete	obsolete
+./usr/include/dev/pci/if_fxpreg.h	comp-obsolete	obsolete
+./usr/include/dev/pci/if_fxpvar.h	comp-obsolete	obsolete
+./usr/include/dev/pci/if_levar.h	comp-obsolete	obsolete
 ./usr/include/dev/pci/if_lmc_types.h	comp-c-include
 ./usr/include/dev/pci/if_lmcioctl.h	comp-c-include
+./usr/include/dev/pci/if_lmcvar.h	comp-obsolete	obsolete
+./usr/include/dev/pci/if_tlregs.h	comp-obsolete	obsolete
 ./usr/include/dev/pci/mlyio.h		comp-c-include
 ./usr/include/dev/pci/mlyreg.h		comp-c-include
+./usr/include/dev/pci/ncr_reg.h 	comp-obsolete	obsolete
+./usr/include/dev/pci/ncrreg.h  	comp-obsolete	obsolete
 ./usr/include/dev/pci/pcidevs.h		comp-c-include
 ./usr/include/dev/pci/pcidevs_data.h	comp-c-include
+./usr/include/dev/pci/pciidereg.h	comp-obsolete	obsolete
+./usr/include/dev/pci/pciidevar.h	comp-obsolete	obsolete
 ./usr/include/dev/pci/pciio.h		comp-c-include
 ./usr/include/dev/pci/pcireg.h		comp-c-include
+./usr/include/dev/pci/pcivar.h  	comp-obsolete	obsolete
+./usr/include/dev/pci/ppbreg.h  	comp-obsolete	obsolete
 ./usr/include/dev/pci/tgareg.h		comp-c-include
+./usr/include/dev/pci/tgavar.h  	comp-obsolete	obsolete
 ./usr/include/dev/pci/tweio.h		comp-c-include
 ./usr/include/dev/pci/twereg.h		comp-c-include
+./usr/include/dev/pci/vga_pcivar.h	comp-obsolete	obsolete
 ./usr/include/dev/pckbc			comp-c-include
 ./usr/include/dev/pckbc/pckbdreg.h	comp-c-include
+./usr/include/dev/pckbc/pckbdvar.h	comp-obsolete	obsolete
+./usr/include/dev/pckbc/psmreg.h	comp-obsolete	obsolete
 ./usr/include/dev/pcmcia		comp-c-include
 ./usr/include/dev/pcmcia/if_cnwioctl.h	comp-c-include
 ./usr/include/dev/pcmcia/if_rayreg.h	comp-c-include
+./usr/include/dev/pcmcia/if_wi_ieee.h	comp-obsolete	obsolete
+./usr/include/dev/pcmcia/pcmciachip.h	comp-obsolete	obsolete
+./usr/include/dev/pcmcia/pcmciareg.h	comp-obsolete	obsolete
+./usr/include/dev/pcmcia/pcmciavar.h	comp-obsolete	obsolete
 ./usr/include/dev/raidframe		comp-c-include
 ./usr/include/dev/raidframe/raidframeio.h	comp-c-include
 ./usr/include/dev/raidframe/raidframevar.h	comp-c-include
+./usr/include/dev/ramdisk.h     	comp-obsolete	obsolete
+./usr/include/dev/rcons         	comp-obsolete	obsolete
+./usr/include/dev/rcons/raster.h	comp-obsolete	obsolete
+./usr/include/dev/rcons/rcons.h 	comp-obsolete	obsolete
+./usr/include/dev/rcons/rcons_subr.h	comp-obsolete	obsolete
 ./usr/include/dev/sbus			comp-c-include
 ./usr/include/dev/sbus/mbppio.h		comp-c-include
 ./usr/include/dev/scsipi		comp-c-include
+./usr/include/dev/scsipi/atapi_all.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/atapi_cd.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/atapi_disk.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/atapiconf.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/cd_link.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/cdvar.h	comp-obsolete	obsolete
 ./usr/include/dev/scsipi/scsi_all.h		comp-c-include
+./usr/include/dev/scsipi/scsi_cd.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/scsi_changer.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/scsi_ctron_ether.h	comp-obsolete	obsolete
 ./usr/include/dev/scsipi/scsi_disk.h		comp-c-include
+./usr/include/dev/scsipi/scsi_message.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/scsi_scanner.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/scsi_tape.h	comp-obsolete	obsolete
 ./usr/include/dev/scsipi/scsiconf.h		comp-c-include
 ./usr/include/dev/scsipi/scsipi_all.h		comp-c-include
+./usr/include/dev/scsipi/scsipi_base.h	comp-obsolete	obsolete
 ./usr/include/dev/scsipi/scsipi_cd.h		comp-c-include
 ./usr/include/dev/scsipi/scsipi_debug.h		comp-c-include
+./usr/include/dev/scsipi/scsipi_disk.h	comp-obsolete	obsolete
 ./usr/include/dev/scsipi/scsipiconf.h		comp-c-include
+./usr/include/dev/scsipi/sdvar.h	comp-obsolete	obsolete
 ./usr/include/dev/scsipi/ses.h			comp-c-include
+./usr/include/dev/scsipi/ss_mustek.h	comp-obsolete	obsolete
+./usr/include/dev/scsipi/ssvar.h	comp-obsolete	obsolete
 ./usr/include/dev/sun				comp-c-include
 ./usr/include/dev/sun/disklabel.h		comp-c-include
+./usr/include/dev/sun/event_var.h	comp-obsolete	obsolete
 ./usr/include/dev/sun/fbio.h		comp-c-include
 ./usr/include/dev/sun/kbd_reg.h		comp-c-include
+./usr/include/dev/sun/kbd_tables.h	comp-obsolete	obsolete
+./usr/include/dev/sun/kbd_xlate.h	comp-obsolete	obsolete
 ./usr/include/dev/sun/kbio.h		comp-c-include
+./usr/include/dev/sun/sun_boot.h	comp-obsolete	obsolete
 ./usr/include/dev/sun/vuid_event.h	comp-c-include
 ./usr/include/dev/tc			comp-c-include
+./usr/include/dev/tc/ascvar.h   	comp-obsolete	obsolete
+./usr/include/dev/tc/clockvar.h 	comp-obsolete	obsolete
+./usr/include/dev/tc/if_levar.h 	comp-obsolete	obsolete
+./usr/include/dev/tc/ioasicreg.h	comp-obsolete	obsolete
+./usr/include/dev/tc/ioasicvar.h	comp-obsolete	obsolete
 ./usr/include/dev/tc/sfbreg.h		comp-c-include
 ./usr/include/dev/tc/sticio.h		comp-c-include
 ./usr/include/dev/tc/sticreg.h		comp-c-include
+./usr/include/dev/tc/sticvar.h  	comp-obsolete	obsolete
+./usr/include/dev/tc/tcdevs.h   	comp-obsolete	obsolete
+./usr/include/dev/tc/tcdevs_data.h	comp-obsolete	obsolete
+./usr/include/dev/tc/tcdsreg.h  	comp-obsolete	obsolete
+./usr/include/dev/tc/tcdsvar.h  	comp-obsolete	obsolete
+./usr/include/dev/tc/tcreg.h    	comp-obsolete	obsolete
+./usr/include/dev/tc/tcvar.h    	comp-obsolete	obsolete
 ./usr/include/dev/usb			comp-c-include
 ./usr/include/dev/usb/urio.h		comp-c-include
 ./usr/include/dev/usb/usb.h		comp-c-include
+./usr/include/dev/usb/usbcdc.h  	comp-obsolete	obsolete
+./usr/include/dev/usb/usbdevs.h 	comp-obsolete	obsolete
 ./usr/include/dev/usb/usbhid.h		comp-c-include
 ./usr/include/dev/vinum			comp-c-include
 ./usr/include/dev/vinum/request.h	comp-c-include
-./usr/include/dev/vinum/vinumext.h	comp-c-include
-./usr/include/dev/vinum/vinumio.h	comp-c-include
-./usr/include/dev/vinum/vinumobj.h	comp-c-include
-./usr/include/dev/vinum/vinumutil.h	comp-c-include
 ./usr/include/dev/vinum/statetexts.h	comp-c-include
+./usr/include/dev/vinum/vinumext.h	comp-c-include
 ./usr/include/dev/vinum/vinumhdr.h	comp-c-include
+./usr/include/dev/vinum/vinumio.h	comp-c-include
 ./usr/include/dev/vinum/vinumkw.h	comp-c-include
+./usr/include/dev/vinum/vinumobj.h	comp-c-include
 ./usr/include/dev/vinum/vinumstate.h	comp-c-include
+./usr/include/dev/vinum/vinumutil.h	comp-c-include
 ./usr/include/dev/vinum/vinumvar.h	comp-c-include
 ./usr/include/dev/vme			comp-c-include
+./usr/include/dev/vme/vmevar.h  	comp-obsolete	obsolete
+./usr/include/dev/vme/xdreg.h   	comp-obsolete	obsolete
+./usr/include/dev/vme/xdvar.h   	comp-obsolete	obsolete
 ./usr/include/dev/vme/xio.h		comp-c-include
+./usr/include/dev/vme/xyreg.h   	comp-obsolete	obsolete
+./usr/include/dev/vme/xyvar.h   	comp-obsolete	obsolete
+./usr/include/dev/vndioctl.h    	comp-obsolete	obsolete
 ./usr/include/dev/vndvar.h		comp-c-include
+./usr/include/dev/vnioctl.h     	comp-obsolete	obsolete
 ./usr/include/dev/wscons		comp-c-include
+./usr/include/dev/wscons/ascii.h	comp-obsolete	obsolete
+./usr/include/dev/wscons/wscons_callbacks.h	comp-obsolete	obsolete
+./usr/include/dev/wscons/wscons_raster.h	comp-obsolete	obsolete
+./usr/include/dev/wscons/wscons_rfont.h	comp-obsolete	obsolete
 ./usr/include/dev/wscons/wsconsio.h		comp-c-include
 ./usr/include/dev/wscons/wsdisplay_usl_io.h	comp-c-include
+./usr/include/dev/wscons/wsdisplayvar.h	comp-obsolete	obsolete
+./usr/include/dev/wscons/wsemulvar.h	comp-obsolete	obsolete
+./usr/include/dev/wscons/wseventvar.h	comp-obsolete	obsolete
+./usr/include/dev/wscons/wskbdvar.h	comp-obsolete	obsolete
 ./usr/include/dev/wscons/wsksymdef.h		comp-c-include
 ./usr/include/dev/wscons/wsksymvar.h		comp-c-include
+./usr/include/dev/wscons/wsmousevar.h	comp-obsolete	obsolete
 ./usr/include/dirent.h			comp-c-include
 ./usr/include/disktab.h			comp-c-include
 ./usr/include/dlfcn.h			comp-c-include
@@ -245,13 +533,257 @@
 ./usr/include/fmtmsg.h			comp-c-include
 ./usr/include/fnmatch.h			comp-c-include
 ./usr/include/form.h			comp-c-include
+./usr/include/frame.h           	comp-obsolete	obsolete
 ./usr/include/fstab.h			comp-c-include
 ./usr/include/fts.h			comp-c-include
+./usr/include/g++/ACG.h         	comp-obsolete	obsolete
+./usr/include/g++/AllocRing.h   	comp-obsolete	obsolete
+./usr/include/g++/Binomial.h    	comp-obsolete	obsolete
+./usr/include/g++/BitSet.h      	comp-obsolete	obsolete
+./usr/include/g++/BitString.h   	comp-obsolete	obsolete
+./usr/include/g++/Complex.h     	comp-obsolete	obsolete
+./usr/include/g++/CursesW.h     	comp-obsolete	obsolete
+./usr/include/g++/DLList.h      	comp-obsolete	obsolete
+./usr/include/g++/DiscUnif.h    	comp-obsolete	obsolete
+./usr/include/g++/Erlang.h      	comp-obsolete	obsolete
+./usr/include/g++/Fix.h         	comp-obsolete	obsolete
+./usr/include/g++/Fix16.h       	comp-obsolete	obsolete
+./usr/include/g++/Fix24.h       	comp-obsolete	obsolete
+./usr/include/g++/Geom.h        	comp-obsolete	obsolete
+./usr/include/g++/GetOpt.h      	comp-obsolete	obsolete
+./usr/include/g++/HypGeom.h     	comp-obsolete	obsolete
+./usr/include/g++/Incremental.h 	comp-obsolete	obsolete
+./usr/include/g++/Integer.h     	comp-obsolete	obsolete
+./usr/include/g++/LogNorm.h     	comp-obsolete	obsolete
+./usr/include/g++/MLCG.h        	comp-obsolete	obsolete
+./usr/include/g++/NegExp.h      	comp-obsolete	obsolete
+./usr/include/g++/Normal.h      	comp-obsolete	obsolete
+./usr/include/g++/Obstack.h     	comp-obsolete	obsolete
+./usr/include/g++/Pix.h         	comp-obsolete	obsolete
+./usr/include/g++/Poisson.h     	comp-obsolete	obsolete
+./usr/include/g++/RNG.h         	comp-obsolete	obsolete
+./usr/include/g++/Random.h      	comp-obsolete	obsolete
+./usr/include/g++/Rational.h    	comp-obsolete	obsolete
+./usr/include/g++/Regex.h       	comp-obsolete	obsolete
+./usr/include/g++/RndInt.h      	comp-obsolete	obsolete
+./usr/include/g++/SLList.h      	comp-obsolete	obsolete
+./usr/include/g++/SmplHist.h    	comp-obsolete	obsolete
+./usr/include/g++/SmplStat.h    	comp-obsolete	obsolete
+./usr/include/g++/String.h      	comp-obsolete	obsolete
+./usr/include/g++/Uniform.h     	comp-obsolete	obsolete
+./usr/include/g++/Weibull.h     	comp-obsolete	obsolete
+./usr/include/g++/bitdo1.h      	comp-obsolete	obsolete
+./usr/include/g++/bitdo2.h      	comp-obsolete	obsolete
+./usr/include/g++/bitprims.h    	comp-obsolete	obsolete
+./usr/include/g++/bool.h        	comp-obsolete	obsolete
+./usr/include/g++/builtin.h     	comp-obsolete	obsolete
+./usr/include/g++/compare.h     	comp-obsolete	obsolete
+./usr/include/g++/faralloc.h    	comp-obsolete	obsolete
+./usr/include/g++/fdeque.h      	comp-obsolete	obsolete
+./usr/include/g++/flist.h       	comp-obsolete	obsolete
+./usr/include/g++/fmap.h        	comp-obsolete	obsolete
+./usr/include/g++/fmultmap.h    	comp-obsolete	obsolete
+./usr/include/g++/fmultset.h    	comp-obsolete	obsolete
+./usr/include/g++/fset.h        	comp-obsolete	obsolete
+./usr/include/g++/gen           	comp-obsolete	obsolete
+./usr/include/g++/gen/AVLMap.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/AVLMap.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/AVLSet.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/AVLSet.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/AVec.ccP  	comp-obsolete	obsolete
+./usr/include/g++/gen/AVec.hP   	comp-obsolete	obsolete
+./usr/include/g++/gen/BSTSet.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/BSTSet.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/Bag.ccP   	comp-obsolete	obsolete
+./usr/include/g++/gen/Bag.hP    	comp-obsolete	obsolete
+./usr/include/g++/gen/CHBag.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/CHBag.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/CHMap.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/CHMap.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/CHNode.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/CHNode.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/CHSet.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/CHSet.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/DLDeque.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/DLDeque.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/DLList.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/DLList.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/Deque.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/Deque.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/FPQueue.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/FPQueue.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/FPStack.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/FPStack.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/FPlex.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/FPlex.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/List.ccP  	comp-obsolete	obsolete
+./usr/include/g++/gen/List.hP   	comp-obsolete	obsolete
+./usr/include/g++/gen/MPlex.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/MPlex.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/Map.ccP   	comp-obsolete	obsolete
+./usr/include/g++/gen/Map.hP    	comp-obsolete	obsolete
+./usr/include/g++/gen/OSLBag.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/OSLBag.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/OSLSet.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/OSLSet.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/OXPBag.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/OXPBag.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/OXPSet.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/OXPSet.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/PHPQ.ccP  	comp-obsolete	obsolete
+./usr/include/g++/gen/PHPQ.hP   	comp-obsolete	obsolete
+./usr/include/g++/gen/PQ.ccP    	comp-obsolete	obsolete
+./usr/include/g++/gen/PQ.hP     	comp-obsolete	obsolete
+./usr/include/g++/gen/PSList.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/PVec.hP   	comp-obsolete	obsolete
+./usr/include/g++/gen/Plex.ccP  	comp-obsolete	obsolete
+./usr/include/g++/gen/Plex.hP   	comp-obsolete	obsolete
+./usr/include/g++/gen/Queue.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/Queue.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/RAVLMap.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/RAVLMap.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/RPlex.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/RPlex.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/SLBag.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/SLBag.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/SLList.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SLList.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/SLQueue.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SLQueue.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SLSet.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/SLSet.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/SLStack.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SLStack.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/Set.ccP   	comp-obsolete	obsolete
+./usr/include/g++/gen/Set.hP    	comp-obsolete	obsolete
+./usr/include/g++/gen/SkipBag.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SkipBag.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SkipMap.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SkipMap.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SkipSet.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SkipSet.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayBag.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayBag.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayMap.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayMap.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayNode.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayNode.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayPQ.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplayPQ.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplaySet.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/SplaySet.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/Stack.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/Stack.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/VHBag.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/VHBag.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/VHMap.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/VHMap.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/VHSet.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/VHSet.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/VOHSet.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/VOHSet.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/VQueue.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/VQueue.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/VStack.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/VStack.hP 	comp-obsolete	obsolete
+./usr/include/g++/gen/Vec.ccP   	comp-obsolete	obsolete
+./usr/include/g++/gen/Vec.hP    	comp-obsolete	obsolete
+./usr/include/g++/gen/XPBag.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/XPBag.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/XPDeque.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/XPDeque.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/XPPQ.ccP  	comp-obsolete	obsolete
+./usr/include/g++/gen/XPPQ.hP   	comp-obsolete	obsolete
+./usr/include/g++/gen/XPQueue.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/XPQueue.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/XPSet.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/XPSet.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/XPStack.ccP	comp-obsolete	obsolete
+./usr/include/g++/gen/XPStack.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/XPlex.ccP 	comp-obsolete	obsolete
+./usr/include/g++/gen/XPlex.hP  	comp-obsolete	obsolete
+./usr/include/g++/gen/defs.hP   	comp-obsolete	obsolete
+./usr/include/g++/gen/intSList.hP	comp-obsolete	obsolete
+./usr/include/g++/gen/intVec.hP 	comp-obsolete	obsolete
+./usr/include/g++/generic.h     	comp-obsolete	obsolete
+./usr/include/g++/getpagesize.h 	comp-obsolete	obsolete
+./usr/include/g++/hdeque.h      	comp-obsolete	obsolete
+./usr/include/g++/hlist.h       	comp-obsolete	obsolete
+./usr/include/g++/hmap.h        	comp-obsolete	obsolete
+./usr/include/g++/hmultmap.h    	comp-obsolete	obsolete
+./usr/include/g++/hmultset.h    	comp-obsolete	obsolete
+./usr/include/g++/hset.h        	comp-obsolete	obsolete
+./usr/include/g++/hugalloc.h    	comp-obsolete	obsolete
+./usr/include/g++/hvector.h     	comp-obsolete	obsolete
+./usr/include/g++/ioprivate.h   	comp-obsolete	obsolete
+./usr/include/g++/iostdio.h     	comp-obsolete	obsolete
+./usr/include/g++/iostreamP.h   	comp-obsolete	obsolete
+./usr/include/g++/lbvector.h    	comp-obsolete	obsolete
+./usr/include/g++/ldeque.h      	comp-obsolete	obsolete
+./usr/include/g++/libc.h        	comp-obsolete	obsolete
+./usr/include/g++/libioP.h      	comp-obsolete	obsolete
+./usr/include/g++/llist.h       	comp-obsolete	obsolete
+./usr/include/g++/lmap.h        	comp-obsolete	obsolete
+./usr/include/g++/lmultmap.h    	comp-obsolete	obsolete
+./usr/include/g++/lmultset.h    	comp-obsolete	obsolete
+./usr/include/g++/lngalloc.h    	comp-obsolete	obsolete
+./usr/include/g++/lset.h        	comp-obsolete	obsolete
+./usr/include/g++/minmax.h      	comp-obsolete	obsolete
+./usr/include/g++/neralloc.h    	comp-obsolete	obsolete
+./usr/include/g++/nmap.h        	comp-obsolete	obsolete
+./usr/include/g++/nmultmap.h    	comp-obsolete	obsolete
+./usr/include/g++/nmultset.h    	comp-obsolete	obsolete
+./usr/include/g++/nset.h        	comp-obsolete	obsolete
+./usr/include/g++/osfcn.h       	comp-obsolete	obsolete
+./usr/include/g++/projectn.h    	comp-obsolete	obsolete
+./usr/include/g++/random.cc     	comp-obsolete	obsolete
+./usr/include/g++/regex.h       	comp-obsolete	obsolete
+./usr/include/g++/rx.h          	comp-obsolete	obsolete
+./usr/include/g++/std.h         	comp-obsolete	obsolete
+./usr/include/g++/std/bastring_inst.h	comp-obsolete	obsolete
+./usr/include/g++/std/cassert.h 	comp-obsolete	obsolete
+./usr/include/g++/std/cctype.h  	comp-obsolete	obsolete
+./usr/include/g++/std/cerrno.h  	comp-obsolete	obsolete
+./usr/include/g++/std/cfloat.h  	comp-obsolete	obsolete
+./usr/include/g++/std/cinst.h   	comp-obsolete	obsolete
+./usr/include/g++/std/ciso646.h 	comp-obsolete	obsolete
+./usr/include/g++/std/climits.h 	comp-obsolete	obsolete
+./usr/include/g++/std/clocale.h 	comp-obsolete	obsolete
+./usr/include/g++/std/cmath.h   	comp-obsolete	obsolete
+./usr/include/g++/std/complex.h 	comp-obsolete	obsolete
+./usr/include/g++/std/complext_inst.h	comp-obsolete	obsolete
+./usr/include/g++/std/csetjmp.h 	comp-obsolete	obsolete
+./usr/include/g++/std/csignal.h 	comp-obsolete	obsolete
+./usr/include/g++/std/cstdarg.h 	comp-obsolete	obsolete
+./usr/include/g++/std/cstddef.h 	comp-obsolete	obsolete
+./usr/include/g++/std/cstdio.h  	comp-obsolete	obsolete
+./usr/include/g++/std/cstdlib.h 	comp-obsolete	obsolete
+./usr/include/g++/std/cstring.h 	comp-obsolete	obsolete
+./usr/include/g++/std/ctime.h   	comp-obsolete	obsolete
+./usr/include/g++/std/cwchar.h  	comp-obsolete	obsolete
+./usr/include/g++/std/cwctype.h 	comp-obsolete	obsolete
+./usr/include/g++/std/exception.h	comp-obsolete	obsolete
+./usr/include/g++/std/new.h     	comp-obsolete	obsolete
+./usr/include/g++/std/sinst.h   	comp-obsolete	obsolete
+./usr/include/g++/std/stddef.h  	comp-obsolete	obsolete
+./usr/include/g++/std/stdexcept.h	comp-obsolete	obsolete
+./usr/include/g++/std/string.h  	comp-obsolete	obsolete
+./usr/include/g++/std/typeinfo.h	comp-obsolete	obsolete
+./usr/include/g++/stddef        	comp-obsolete	obsolete
+./usr/include/g++/strclass.h    	comp-obsolete	obsolete
+./usr/include/g++/swap.h        	comp-obsolete	obsolete
+./usr/include/g++/sysent.h      	comp-obsolete	obsolete
+./usr/include/g++/tempbuf.cc    	comp-obsolete	obsolete
+./usr/include/g++/tree.cc       	comp-obsolete	obsolete
+./usr/include/g++/typemacros.h  	comp-obsolete	obsolete
+./usr/include/g++/values.h      	comp-obsolete	obsolete
 ./usr/include/getopt.h			comp-c-include
 ./usr/include/glob.h			comp-c-include
 ./usr/include/grp.h			comp-c-include
+./usr/include/gssapi/gssapi.h		comp-krb5-include	kerberos
 ./usr/include/hesiod.h			comp-c-include
 ./usr/include/histedit.h		comp-c-include
+./usr/include/history.h         	comp-obsolete	obsolete
 ./usr/include/iconv.h			comp-c-include
 ./usr/include/ifaddrs.h			comp-c-include
 ./usr/include/inttypes.h		comp-c-include
@@ -264,7 +796,54 @@
 ./usr/include/isofs/cd9660/cd9660_rrip.h	comp-c-include
 ./usr/include/isofs/cd9660/iso.h		comp-c-include
 ./usr/include/isofs/cd9660/iso_rrip.h		comp-c-include
+./usr/include/kadm5/admin.h		comp-krb5-include	kerberos
+./usr/include/kadm5/kadm5-private.h	comp-krb5-include	kerberos
+./usr/include/kadm5/kadm5-protos.h	comp-krb5-include	kerberos
+./usr/include/kadm5/kadm5_err.h		comp-krb5-include	kerberos
+./usr/include/kadm5/private.h		comp-krb5-include	kerberos
 ./usr/include/kerberosIV/des.h		comp-krb4-include
+./usr/include/kerberosIV/kadm.h		comp-krb4-include	kerberos4
+./usr/include/kerberosIV/kadm_err.h	comp-krb4-include	kerberos4
+./usr/include/kerberosIV/kafs.h 	comp-obsolete	obsolete
+./usr/include/kerberosIV/klog.h		comp-krb4-include	kerberos4
+./usr/include/kerberosIV/krb-archaeology.h	comp-krb4-include	kerberos4
+./usr/include/kerberosIV/krb-protos.h	comp-krb4-include	kerberos4
+./usr/include/kerberosIV/krb.h		comp-krb4-include	kerberos4
+./usr/include/kerberosIV/krb_db.h	comp-krb4-include	kerberos4
+./usr/include/kerberosIV/krb_err.h	comp-krb4-include	kerberos4
+./usr/include/kerberosIV/kstream.h	comp-krb4-include	kerberos4
+./usr/include/kerberosIV/ktypes.h	comp-obsolete	obsolete
+./usr/include/kerberosIV/prot.h		comp-krb4-include	kerberos4
+./usr/include/krb5/asn1.h       	comp-obsolete	obsolete
+./usr/include/krb5/asn1_err.h		comp-krb5-include	kerberos
+./usr/include/krb5/base64.h		comp-krb5-include	kerberos
+./usr/include/krb5/com_err.h		comp-krb5-include	kerberos
+./usr/include/krb5/com_right.h		comp-krb5-include	kerberos
+./usr/include/krb5/getarg.h		comp-krb5-include	kerberos
+./usr/include/krb5/hdb-private.h	comp-krb5-include	kerberos
+./usr/include/krb5/hdb-protos.h		comp-krb5-include	kerberos
+./usr/include/krb5/hdb.h		comp-krb5-include	kerberos
+./usr/include/krb5/hdb_asn1.h		comp-krb5-include	kerberos
+./usr/include/krb5/hdb_err.h		comp-krb5-include	kerberos
+./usr/include/krb5/heim_err.h		comp-krb5-include	kerberos
+./usr/include/krb5/k524_err.h		comp-krb5-include	kerberos
+./usr/include/krb5/kadm5_err.h  	comp-obsolete	obsolete
+./usr/include/krb5/kafs.h		comp-krb5-include	kerberos
+./usr/include/krb5/krb5-private.h	comp-krb5-include	kerberos
+./usr/include/krb5/krb5-protos.h	comp-krb5-include	kerberos
+./usr/include/krb5/krb5-types.h 	comp-obsolete	obsolete
+./usr/include/krb5/krb5.h		comp-krb5-include	kerberos
+./usr/include/krb5/krb5_asn1.h		comp-krb5-include	kerberos
+./usr/include/krb5/krb5_err.h		comp-krb5-include	kerberos
+./usr/include/krb5/parse_bytes.h	comp-krb5-include	kerberos
+./usr/include/krb5/parse_time.h		comp-krb5-include	kerberos
+./usr/include/krb5/parse_units.h	comp-krb5-include	kerberos
+./usr/include/krb5/resolve.h		comp-krb5-include	kerberos
+./usr/include/krb5/roken-common.h	comp-krb5-include	kerberos
+./usr/include/krb5/roken.h		comp-krb5-include	kerberos
+./usr/include/krb5/rtbl.h		comp-krb5-include	kerberos
+./usr/include/krb5/sl.h			comp-krb5-include	kerberos
+./usr/include/krb5/ss.h			comp-krb5-include	kerberos
 ./usr/include/kvm.h			comp-c-include
 ./usr/include/langinfo.h		comp-c-include
 ./usr/include/libgen.h			comp-c-include
@@ -287,6 +866,9 @@
 ./usr/include/md5.h			comp-c-include
 ./usr/include/memory.h			comp-c-include
 ./usr/include/menu.h			comp-c-include
+./usr/include/milter            	comp-obsolete	obsolete
+./usr/include/milter/mfapi.h    	comp-obsolete	obsolete
+./usr/include/milter/mfdef.h    	comp-obsolete	obsolete
 ./usr/include/miscfs			comp-c-include
 ./usr/include/miscfs/fdesc		comp-c-include
 ./usr/include/miscfs/fdesc/fdesc.h	comp-c-include
@@ -340,6 +922,7 @@
 ./usr/include/net/if_gre.h		comp-c-include
 ./usr/include/net/if_hippi.h		comp-c-include
 ./usr/include/net/if_ieee1394.h		comp-c-include
+./usr/include/net/if_ieee80211.h	comp-obsolete	obsolete
 ./usr/include/net/if_llc.h		comp-c-include
 ./usr/include/net/if_media.h		comp-c-include
 ./usr/include/net/if_ppp.h		comp-c-include
@@ -394,6 +977,7 @@
 ./usr/include/netgroup.h		comp-c-include
 ./usr/include/netinet/icmp6.h		comp-c-include
 ./usr/include/netinet/icmp_var.h	comp-c-include
+./usr/include/netinet/if_arc.h  	comp-obsolete	obsolete
 ./usr/include/netinet/if_atm.h		comp-c-include
 ./usr/include/netinet/if_ether.h	comp-c-include
 ./usr/include/netinet/if_inarp.h	comp-c-include
@@ -431,11 +1015,13 @@
 ./usr/include/netinet6			comp-c-include
 ./usr/include/netinet6/ah.h		comp-c-include
 ./usr/include/netinet6/esp.h		comp-c-include
+./usr/include/netinet6/icmp6.h  	comp-obsolete	obsolete
 ./usr/include/netinet6/in6.h		comp-c-include
 ./usr/include/netinet6/in6_gif.h	comp-c-include
 ./usr/include/netinet6/in6_ifattach.h	comp-c-include
 ./usr/include/netinet6/in6_pcb.h	comp-c-include
 ./usr/include/netinet6/in6_var.h	comp-c-include
+./usr/include/netinet6/ip6.h    	comp-obsolete	obsolete
 ./usr/include/netinet6/ip6_mroute.h	comp-c-include
 ./usr/include/netinet6/ip6_var.h	comp-c-include
 ./usr/include/netinet6/ip6protosw.h	comp-c-include
@@ -483,12 +1069,14 @@
 ./usr/include/netiso/tp_trace.h		comp-c-include
 ./usr/include/netiso/tp_user.h		comp-c-include
 ./usr/include/netiso/tp_var.h		comp-c-include
+./usr/include/netiso/tuba_table.h	comp-obsolete	obsolete
 ./usr/include/netkey			comp-c-include
 ./usr/include/netkey/key.h		comp-c-include
 ./usr/include/netkey/key_debug.h	comp-c-include
 ./usr/include/netkey/key_var.h		comp-c-include
 ./usr/include/netkey/keydb.h		comp-c-include
 ./usr/include/netkey/keysock.h		comp-c-include
+./usr/include/netkey/keyv2.h    	comp-obsolete	obsolete
 ./usr/include/netnatm/natm.h		comp-c-include
 ./usr/include/netns/idp.h		comp-c-include
 ./usr/include/netns/idp_var.h		comp-c-include
@@ -513,6 +1101,7 @@
 ./usr/include/nfs/nfsproto.h		comp-c-include
 ./usr/include/nfs/nfsrtt.h		comp-c-include
 ./usr/include/nfs/nfsrvcache.h		comp-c-include
+./usr/include/nfs/nfsv2.h       	comp-obsolete	obsolete
 ./usr/include/nfs/nqnfs.h		comp-c-include
 ./usr/include/nfs/rpcv2.h		comp-c-include
 ./usr/include/nfs/xdr_subs.h		comp-c-include
@@ -520,13 +1109,20 @@
 ./usr/include/nlist.h			comp-c-include
 ./usr/include/nsswitch.h		comp-c-include
 ./usr/include/ntfs/ntfs.h		comp-c-include
+./usr/include/ntfs/ntfs_compr.h 	comp-obsolete	obsolete
+./usr/include/ntfs/ntfs_extern.h	comp-obsolete	obsolete
+./usr/include/ntfs/ntfs_ihash.h 	comp-obsolete	obsolete
 ./usr/include/ntfs/ntfs_inode.h		comp-c-include
+./usr/include/ntfs/ntfs_subr.h  	comp-obsolete	obsolete
+./usr/include/ntfs/ntfs_vfsops.h	comp-obsolete	obsolete
 ./usr/include/ntfs/ntfsmount.h		comp-c-include
+./usr/include/null.h            	comp-obsolete	obsolete
 ./usr/include/objc/NXConstStr.h		comp-c-include
 ./usr/include/objc/Object.h		comp-c-include
 ./usr/include/objc/Protocol.h		comp-c-include
 ./usr/include/objc/encoding.h		comp-c-include
 ./usr/include/objc/hash.h		comp-c-include
+./usr/include/objc/list.h       	comp-obsolete	obsolete
 ./usr/include/objc/objc-api.h		comp-c-include
 ./usr/include/objc/objc-list.h		comp-c-include
 ./usr/include/objc/objc.h		comp-c-include
@@ -550,6 +1146,7 @@
 ./usr/include/openssl/dh.h		comp-c-include
 ./usr/include/openssl/dsa.h		comp-c-include
 ./usr/include/openssl/dso.h		comp-c-include
+./usr/include/openssl/e_os.h    	comp-obsolete	obsolete
 ./usr/include/openssl/e_os2.h		comp-c-include
 ./usr/include/openssl/ebcdic.h		comp-c-include
 ./usr/include/openssl/ec.h		comp-c-include
@@ -581,6 +1178,7 @@
 ./usr/include/openssl/rc5.h		comp-c-include
 ./usr/include/openssl/ripemd.h		comp-c-include
 ./usr/include/openssl/rsa.h		comp-c-include
+./usr/include/openssl/rsaref.h  	comp-obsolete	obsolete
 ./usr/include/openssl/safestack.h	comp-c-include
 ./usr/include/openssl/sha.h		comp-c-include
 ./usr/include/openssl/ssl.h		comp-c-include
@@ -616,6 +1214,7 @@
 ./usr/include/ranlib.h			comp-c-include
 ./usr/include/re_comp.h			comp-c-include
 ./usr/include/readline			comp-c-include
+./usr/include/readline.h        	comp-obsolete	obsolete
 ./usr/include/readline/history.h	comp-c-include
 ./usr/include/readline/readline.h	comp-c-include
 ./usr/include/regex.h			comp-c-include
@@ -684,6 +1283,7 @@
 ./usr/include/sha1.h			comp-c-include
 ./usr/include/signal.h			comp-c-include
 ./usr/include/skey.h			comp-c-include
+./usr/include/smbfs             	comp-obsolete	obsolete
 ./usr/include/soundcard.h		comp-c-include
 ./usr/include/stab.h			comp-c-include
 ./usr/include/stdarg.h			comp-c-include
@@ -701,6 +1301,7 @@
 ./usr/include/sys/ataio.h		comp-c-include
 ./usr/include/sys/audioio.h		comp-c-include
 ./usr/include/sys/bootblock.h		comp-c-include
+./usr/include/sys/bootinfo.h    	comp-obsolete	obsolete
 ./usr/include/sys/bswap.h		comp-c-include
 ./usr/include/sys/buf.h			comp-c-include
 ./usr/include/sys/callout.h		comp-c-include
@@ -709,6 +1310,7 @@
 ./usr/include/sys/cdefs_elf.h		comp-c-include
 ./usr/include/sys/cdio.h		comp-c-include
 ./usr/include/sys/chio.h		comp-c-include
+./usr/include/sys/clist.h       	comp-obsolete	obsolete
 ./usr/include/sys/clockctl.h		comp-c-include
 ./usr/include/sys/conf.h		comp-c-include
 ./usr/include/sys/core.h		comp-c-include
@@ -718,9 +1320,11 @@
 ./usr/include/sys/disk.h		comp-c-include
 ./usr/include/sys/disklabel.h		comp-c-include
 ./usr/include/sys/disklabel_acorn.h	comp-c-include
+./usr/include/sys/disklabel_mbr.h	comp-obsolete	obsolete
 ./usr/include/sys/dkbad.h		comp-c-include
 ./usr/include/sys/dkio.h		comp-c-include
 ./usr/include/sys/dkstat.h		comp-c-include
+./usr/include/sys/dmap.h        	comp-obsolete	obsolete
 ./usr/include/sys/domain.h		comp-c-include
 ./usr/include/sys/dvdio.h		comp-c-include
 ./usr/include/sys/endian.h		comp-c-include
@@ -740,7 +1344,9 @@
 ./usr/include/sys/file.h		comp-c-include
 ./usr/include/sys/filedesc.h		comp-c-include
 ./usr/include/sys/filio.h		comp-c-include
+./usr/include/sys/float_ieee.h  	comp-obsolete	obsolete
 ./usr/include/sys/float_ieee754.h	comp-c-include
+./usr/include/sys/fnv_hash.h    	comp-obsolete	obsolete
 ./usr/include/sys/gmon.h		comp-c-include
 ./usr/include/sys/hash.h		comp-c-include
 ./usr/include/sys/ieee754.h		comp-c-include
@@ -750,6 +1356,7 @@
 ./usr/include/sys/ioctl_compat.h	comp-c-include
 ./usr/include/sys/ipc.h			comp-c-include
 ./usr/include/sys/kcore.h		comp-c-include
+./usr/include/sys/kernel.h      	comp-obsolete	obsolete
 ./usr/include/sys/kgdb.h		comp-c-include
 ./usr/include/sys/ksem.h		comp-c-include
 ./usr/include/sys/ksyms.h		comp-c-include
@@ -761,6 +1368,7 @@
 ./usr/include/sys/lwp.h			comp-c-include
 ./usr/include/sys/malloc.h		comp-c-include
 ./usr/include/sys/mallocvar.h		comp-c-include
+./usr/include/sys/map.h         	comp-obsolete	obsolete
 ./usr/include/sys/mbuf.h		comp-c-include
 ./usr/include/sys/md4.h			comp-c-include
 ./usr/include/sys/md5.h			comp-c-include
@@ -839,10 +1447,13 @@
 ./usr/include/sys/user.h		comp-c-include
 ./usr/include/sys/utsname.h		comp-c-include
 ./usr/include/sys/vadvise.h		comp-c-include
+./usr/include/sys/vcmd.h        	comp-obsolete	obsolete
 ./usr/include/sys/verified_exec.h	comp-c-include
+./usr/include/sys/vlimit.h      	comp-obsolete	obsolete
 ./usr/include/sys/vmmeter.h		comp-c-include
 ./usr/include/sys/vnode.h		comp-c-include
 ./usr/include/sys/vnode_if.h		comp-c-include
+./usr/include/sys/vsio.h        	comp-obsolete	obsolete
 ./usr/include/sys/wait.h		comp-c-include
 ./usr/include/sys/wdog.h		comp-c-include
 ./usr/include/sysexits.h		comp-c-include
@@ -865,6 +1476,7 @@
 ./usr/include/ufs/lfs/lfs.h		comp-c-include
 ./usr/include/ufs/lfs/lfs_extern.h	comp-c-include
 ./usr/include/ufs/mfs/mfs_extern.h	comp-c-include
+./usr/include/ufs/mfs/mfsiom.h  	comp-obsolete	obsolete
 ./usr/include/ufs/mfs/mfsnode.h		comp-c-include
 ./usr/include/ufs/ufs/dinode.h		comp-c-include
 ./usr/include/ufs/ufs/dir.h		comp-c-include
@@ -876,6 +1488,7 @@
 ./usr/include/ulimit.h			comp-c-include
 ./usr/include/unctrl.h			comp-c-include
 ./usr/include/unistd.h			comp-c-include
+./usr/include/usb.h             	comp-obsolete	obsolete
 ./usr/include/usbhid.h			comp-c-include
 ./usr/include/util.h			comp-c-include
 ./usr/include/utime.h			comp-c-include
@@ -891,6 +1504,7 @@
 ./usr/include/uvm/uvm_fault.h		comp-c-include
 ./usr/include/uvm/uvm_fault_i.h		comp-c-include
 ./usr/include/uvm/uvm_glue.h		comp-c-include
+./usr/include/uvm/uvm_inherit.h 	comp-obsolete	obsolete
 ./usr/include/uvm/uvm_km.h		comp-c-include
 ./usr/include/uvm/uvm_loan.h		comp-c-include
 ./usr/include/uvm/uvm_map.h		comp-c-include
@@ -907,8 +1521,29 @@
 ./usr/include/uvm/uvm_prot.h		comp-c-include
 ./usr/include/uvm/uvm_stat.h		comp-c-include
 ./usr/include/uvm/uvm_swap.h		comp-c-include
+./usr/include/uvm/uvm_vnode.h   	comp-obsolete	obsolete
 ./usr/include/varargs.h			comp-c-include
 ./usr/include/vis.h			comp-c-include
+./usr/include/vm                	comp-obsolete	obsolete
+./usr/include/vm/device_pager.h 	comp-obsolete	obsolete
+./usr/include/vm/lock.h         	comp-obsolete	obsolete
+./usr/include/vm/pglist.h       	comp-obsolete	obsolete
+./usr/include/vm/pmap.h         	comp-obsolete	obsolete
+./usr/include/vm/swap_pager.h   	comp-obsolete	obsolete
+./usr/include/vm/vm.h           	comp-obsolete	obsolete
+./usr/include/vm/vm_conf.h      	comp-obsolete	obsolete
+./usr/include/vm/vm_extern.h    	comp-obsolete	obsolete
+./usr/include/vm/vm_inherit.h   	comp-obsolete	obsolete
+./usr/include/vm/vm_kern.h      	comp-obsolete	obsolete
+./usr/include/vm/vm_map.h       	comp-obsolete	obsolete
+./usr/include/vm/vm_object.h    	comp-obsolete	obsolete
+./usr/include/vm/vm_page.h      	comp-obsolete	obsolete
+./usr/include/vm/vm_pageout.h   	comp-obsolete	obsolete
+./usr/include/vm/vm_pager.h     	comp-obsolete	obsolete
+./usr/include/vm/vm_param.h     	comp-obsolete	obsolete
+./usr/include/vm/vm_prot.h      	comp-obsolete	obsolete
+./usr/include/vm/vm_swap.h      	comp-obsolete	obsolete
+./usr/include/vm/vnode_pager.h  	comp-obsolete	obsolete
 ./usr/include/wchar.h			comp-c-include
 ./usr/include/wctype.h			comp-c-include
 ./usr/include/zconf.h			comp-c-include
@@ -931,6 +1566,12 @@
 ./usr/lib/i18n/libmapper_serial.a	comp-i18n-lib
 ./usr/lib/i18n/libmapper_std.a	comp-i18n-lib
 ./usr/lib/i18n/libmapper_zone.a	comp-i18n-lib
+./usr/lib/libamu.a              	comp-obsolete	obsolete
+./usr/lib/libamu_p.a            	comp-obsolete	obsolete
+./usr/lib/libamu_pic.a          	comp-obsolete	obsolete
+./usr/lib/libasn1.a		comp-krb5-lib	kerberos
+./usr/lib/libasn1_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libbfd.a              	comp-obsolete	obsolete
 ./usr/lib/libbsdmalloc.a	comp-c-lib
 ./usr/lib/libbsdmalloc_p.a	comp-c-proflib
 ./usr/lib/libbz2.a		comp-c-lib
@@ -939,6 +1580,8 @@
 ./usr/lib/libc_p.a		comp-c-proflib
 ./usr/lib/libcdk.a		comp-c-lib
 ./usr/lib/libcdk_p.a		comp-c-proflib
+./usr/lib/libcom_err.a		comp-krb5-lib	kerberos
+./usr/lib/libcom_err_p.a	comp-krb5-proflib	kerberos
 ./usr/lib/libcompat.a		comp-c-lib
 ./usr/lib/libcompat_p.a		comp-c-proflib
 ./usr/lib/libcrypt.a		comp-c-lib
@@ -957,15 +1600,38 @@
 ./usr/lib/libfl_p.a		comp-c-proflib
 ./usr/lib/libform.a		comp-c-lib
 ./usr/lib/libform_p.a		comp-c-proflib
+./usr/lib/libg++.a              	comp-obsolete	obsolete
+./usr/lib/libg++_p.a            	comp-obsolete	obsolete
+./usr/lib/libg++_pic.a          	comp-obsolete	obsolete
 ./usr/lib/libg2c.a		comp-fortran-lib
 ./usr/lib/libg2c_p.a		comp-fortran-proflib
 ./usr/lib/libgcc.a		comp-c-lib
 ./usr/lib/libgnumalloc.a	comp-c-lib
 ./usr/lib/libgnumalloc_p.a	comp-c-proflib
+./usr/lib/libgssapi.a		comp-krb5-lib	kerberos
+./usr/lib/libgssapi_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libhdb.a		comp-c-lib	kerberos
+./usr/lib/libhdb_p.a		comp-c-proflib	kerberos
 ./usr/lib/libintl.a		comp-c-lib
 ./usr/lib/libintl_p.a		comp-c-proflib
 ./usr/lib/libipsec.a		comp-c-lib
 ./usr/lib/libipsec_p.a		comp-c-proflib
+./usr/lib/libkadm.a		comp-krb4-lib	kerberos4
+./usr/lib/libkadm5clnt.a	comp-krb5-lib	kerberos
+./usr/lib/libkadm5clnt_p.a	comp-krb5-proflib	kerberos
+./usr/lib/libkadm5srv.a		comp-krb5-lib	kerberos
+./usr/lib/libkadm5srv_p.a	comp-krb5-proflib	kerberos
+./usr/lib/libkadm_p.a		comp-krb4-lib	kerberos4
+./usr/lib/libkafs.a		comp-krb5-lib	kerberos
+./usr/lib/libkafs_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libkdb.a		comp-krb4-lib	kerberos4
+./usr/lib/libkdb_p.a		comp-krb4-proflib	kerberos4
+./usr/lib/libkrb.a		comp-krb4-lib	kerberos4
+./usr/lib/libkrb5.a		comp-krb5-lib	kerberos
+./usr/lib/libkrb5_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libkrb_p.a		comp-krb4-proflib	kerberos4
+./usr/lib/libkstream.a		comp-krb4-lib	kerberos4
+./usr/lib/libkstream_p.a	comp-krb4-proflib	kerberos4
 ./usr/lib/libkvm.a		comp-c-lib
 ./usr/lib/libkvm_p.a		comp-c-proflib
 ./usr/lib/libl.a		comp-c-lib
@@ -977,6 +1643,10 @@
 ./usr/lib/libmenu.a		comp-c-lib
 ./usr/lib/libmenu_p.a		comp-c-proflib
 ./usr/lib/libmilter.a		comp-sendmail-lib
+./usr/lib/libntp.a              	comp-obsolete	obsolete
+./usr/lib/libntp.so             	comp-obsolete	obsolete
+./usr/lib/libntp_p.a            	comp-obsolete	obsolete
+./usr/lib/libntp_pic.a          	comp-obsolete	obsolete
 ./usr/lib/libobjc.a		comp-objc-lib
 ./usr/lib/libobjc_p.a		comp-objc-proflib
 ./usr/lib/libossaudio.a		comp-c-lib
@@ -994,20 +1664,34 @@
 ./usr/lib/libresolv.a		comp-c-lib
 ./usr/lib/libresolv_p.a		comp-c-proflib
 ./usr/lib/librmt.a		comp-c-lib
+./usr/lib/libroken.a		comp-krb5-lib	kerberos
+./usr/lib/libroken_p.a		comp-krb5-proflib	kerberos
 ./usr/lib/librpcsvc.a		comp-c-lib
 ./usr/lib/librpcsvc_p.a		comp-c-proflib
 ./usr/lib/librt.a		comp-c-lib
 ./usr/lib/librt_p.a		comp-c-proflib
 ./usr/lib/libskey.a		comp-c-lib
 ./usr/lib/libskey_p.a		comp-c-proflib
+./usr/lib/libsl.a		comp-krb5-lib	kerberos
+./usr/lib/libsl_p.a		comp-krb5-proflib	kerberos
+./usr/lib/libsm.a               	comp-obsolete	obsolete
+./usr/lib/libss.a		comp-krb5-lib	kerberos
+./usr/lib/libss_p.a		comp-krb5-proflib	kerberos
 ./usr/lib/libssl.a		comp-c-lib
 ./usr/lib/libssl_p.a		comp-c-proflib
 ./usr/lib/libstdc++.a		comp-cxx-lib
 ./usr/lib/libstdc++_p.a		comp-cxx-proflib
+./usr/lib/libtelnet.a           	comp-obsolete	obsolete
+./usr/lib/libtelnet.so          	comp-obsolete	obsolete
+./usr/lib/libtelnet_p.a         	comp-obsolete	obsolete
+./usr/lib/libtelnet_pic.a       	comp-obsolete	obsolete
 ./usr/lib/libtermcap.a		comp-c-lib
 ./usr/lib/libtermcap_p.a	comp-c-proflib
 ./usr/lib/libtermlib.a		comp-c-lib
 ./usr/lib/libtermlib_p.a	comp-c-proflib
+./usr/lib/libusb.a              	comp-obsolete	obsolete
+./usr/lib/libusb_p.a            	comp-obsolete	obsolete
+./usr/lib/libusb_pic.a          	comp-obsolete	obsolete
 ./usr/lib/libusbhid.a		comp-c-lib
 ./usr/lib/libusbhid_p.a		comp-c-proflib
 ./usr/lib/libutil.a		comp-c-lib
@@ -1018,15 +1702,156 @@
 ./usr/lib/liby_p.a		comp-c-proflib
 ./usr/lib/libz.a		comp-c-lib
 ./usr/lib/libz_p.a		comp-c-proflib
+./usr/libdata/lint/llib-lbsdmalloc.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lbz2.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lc.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lcompat.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lcrypt.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lcrypto.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lcurses.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-ldes.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-ledit.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lform.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lgnumalloc.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lintl.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lipsec.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lkstream.ln	comp-c-lintlib	lint,kerberos4
+./usr/libdata/lint/llib-lkvm.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-ll.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lmagic.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lmenu.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lmilter.ln	comp-sendmail-lintlib	lint
+./usr/libdata/lint/llib-lntp.ln 	comp-obsolete	obsolete
+./usr/libdata/lint/llib-lossaudio.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lpcap.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lpci.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lposix.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lpthread.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lpthread_dbg.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lresolv.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lrmt.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lrpcsvc.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lrt.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lskey.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lsm.ln  	comp-obsolete	obsolete
+./usr/libdata/lint/llib-lssl.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lstdc.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-ltelnet.ln	comp-obsolete	obsolete
+./usr/libdata/lint/llib-ltermcap.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lusb.ln 	comp-obsolete	obsolete
+./usr/libdata/lint/llib-lusbhid.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lutil.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-lwrap.ln	comp-c-lintlib	lint
+./usr/libdata/lint/llib-ly.ln		comp-c-lintlib	lint
+./usr/libdata/lint/llib-lz.ln		comp-c-lintlib	lint
 ./usr/libexec/cc1			comp-c-bin
 ./usr/libexec/cc1obj			comp-objc-bin
 ./usr/libexec/cc1plus			comp-cxx-bin
+./usr/libexec/collect2          	comp-obsolete	obsolete
 ./usr/libexec/f771			comp-fortran-bin
 ./usr/libexec/lint1			comp-c-bin
 ./usr/libexec/lint2			comp-c-bin
 ./usr/sbin/config			comp-sysutil-sbin
+./usr/sbin/config.new           	comp-obsolete	obsolete
 ./usr/sbin/gspa				comp-util-sbin
+./usr/sbin/gspahextoc           	comp-obsolete	obsolete
 ./usr/sbin/kgmon			comp-debug-sbin
+./usr/share/ldscripts/elf32_sparc.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32_sparc.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32_sparc.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32_sparc.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32_sparc.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32_sparc.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32bmip.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32bmip.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32bmip.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32bmip.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32bmip.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32bmip.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32lmip.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32lmip.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32lmip.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32lmip.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32lmip.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32lmip.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32ppc.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32ppc.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32ppc.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32ppc.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32ppc.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32ppc.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shlunx.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shlunx.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shlunx.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shlunx.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shlunx.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shlunx.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shunx.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shunx.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shunx.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shunx.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shunx.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf32shunx.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64_sparc.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64_sparc.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64_sparc.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64_sparc.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64_sparc.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64_sparc.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64alpha.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64alpha.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64alpha.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64alpha.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64alpha.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf64alpha.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/elf_i386.x	comp-obsolete	obsolete
+./usr/share/ldscripts/elf_i386.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf_i386.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/elf_i386.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/elf_i386.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/elf_i386.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/i386nbsd.x	comp-obsolete	obsolete
+./usr/share/ldscripts/i386nbsd.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/i386nbsd.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/i386nbsd.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/i386nbsd.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelf.x 	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelf.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelf.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelf.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelf.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelf.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelfnbsd.x	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelfnbsd.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelfnbsd.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelfnbsd.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelfnbsd.xs	comp-obsolete	obsolete
+./usr/share/ldscripts/m68kelfnbsd.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/m68knbsd.x	comp-obsolete	obsolete
+./usr/share/ldscripts/m68knbsd.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/m68knbsd.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/m68knbsd.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/m68knbsd.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/shlunx.x  	comp-obsolete	obsolete
+./usr/share/ldscripts/shlunx.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/shlunx.xn 	comp-obsolete	obsolete
+./usr/share/ldscripts/shlunx.xr 	comp-obsolete	obsolete
+./usr/share/ldscripts/shlunx.xu 	comp-obsolete	obsolete
+./usr/share/ldscripts/shunx.x   	comp-obsolete	obsolete
+./usr/share/ldscripts/shunx.xbn 	comp-obsolete	obsolete
+./usr/share/ldscripts/shunx.xn  	comp-obsolete	obsolete
+./usr/share/ldscripts/shunx.xr  	comp-obsolete	obsolete
+./usr/share/ldscripts/shunx.xu  	comp-obsolete	obsolete
+./usr/share/ldscripts/sparcnbsd.x	comp-obsolete	obsolete
+./usr/share/ldscripts/sparcnbsd.xbn	comp-obsolete	obsolete
+./usr/share/ldscripts/sparcnbsd.xn	comp-obsolete	obsolete
+./usr/share/ldscripts/sparcnbsd.xr	comp-obsolete	obsolete
+./usr/share/ldscripts/sparcnbsd.xu	comp-obsolete	obsolete
+./usr/share/ldscripts/sun4.x    	comp-obsolete	obsolete
+./usr/share/ldscripts/sun4.xbn  	comp-obsolete	obsolete
+./usr/share/ldscripts/sun4.xn   	comp-obsolete	obsolete
+./usr/share/ldscripts/sun4.xr   	comp-obsolete	obsolete
+./usr/share/ldscripts/sun4.xu   	comp-obsolete	obsolete
 ./usr/share/locale/da/LC_MESSAGES/gettext.mo		comp-c_locale-da
 ./usr/share/locale/de/LC_MESSAGES/gettext.mo		comp-c_locale-de
 ./usr/share/locale/es/LC_MESSAGES/gettext.mo		comp-c_locale-es
@@ -1056,6 +1881,7 @@
 ./usr/share/man/cat1/f77.0		comp-fortran-catman
 ./usr/share/man/cat1/fgen.0		comp-util-catman
 ./usr/share/man/cat1/flex.0		comp-c-catman
+./usr/share/man/cat1/flexdoc.0  	comp-obsolete	obsolete
 ./usr/share/man/cat1/fort77.0		comp-fortran-catman
 ./usr/share/man/cat1/fpr.0		comp-fortran-catman
 ./usr/share/man/cat1/g++.0		comp-cxx-catman
@@ -1067,10 +1893,23 @@
 ./usr/share/man/cat1/gprof.0		comp-debug-catman
 ./usr/share/man/cat1/ld.0		comp-util-catman
 ./usr/share/man/cat1/lex.0		comp-c-catman
+./usr/share/man/cat1/lexdoc.0   	comp-obsolete	obsolete
 ./usr/share/man/cat1/lint.0		comp-c-catman
 ./usr/share/man/cat1/lorder.0		comp-util-catman
 ./usr/share/man/cat1/menuc.0		comp-c-catman
 ./usr/share/man/cat1/mkstr.0		comp-c-catman
+./usr/share/man/cat1/msg_clear.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_display.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_display_add.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_prompt.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_prompt_add.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_prompt_noecho.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_prompt_win.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_standend.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_standout.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_string.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_table_add.0	comp-obsolete	obsolete
+./usr/share/man/cat1/msg_window.0	comp-obsolete	obsolete
 ./usr/share/man/cat1/msgc.0		comp-c-catman
 ./usr/share/man/cat1/nm.0		comp-util-catman
 ./usr/share/man/cat1/objcopy.0		comp-util-catman
@@ -1104,6 +1943,8 @@
 ./usr/share/man/cat2/access.0		comp-c-catman
 ./usr/share/man/cat2/acct.0		comp-c-catman
 ./usr/share/man/cat2/adjtime.0		comp-c-catman
+./usr/share/man/cat2/arm32_drain_writebuf.0	comp-obsolete	obsolete
+./usr/share/man/cat2/arm32_sync_icache.0	comp-obsolete	obsolete
 ./usr/share/man/cat2/arm_drain_writebuf.0	comp-c-catman
 ./usr/share/man/cat2/arm_sync_icache.0	comp-c-catman
 ./usr/share/man/cat2/bind.0		comp-c-catman
@@ -1145,6 +1986,7 @@
 ./usr/share/man/cat2/futimes.0		comp-c-catman
 ./usr/share/man/cat2/getcontext.0	comp-c-catman
 ./usr/share/man/cat2/getdents.0		comp-c-catman
+./usr/share/man/cat2/getdirentries.0	comp-obsolete	obsolete
 ./usr/share/man/cat2/getegid.0		comp-c-catman
 ./usr/share/man/cat2/geteuid.0		comp-c-catman
 ./usr/share/man/cat2/getfh.0		comp-c-catman
@@ -1291,6 +2133,7 @@
 ./usr/share/man/cat2/stat.0		comp-c-catman
 ./usr/share/man/cat2/statfs.0		comp-c-catman
 ./usr/share/man/cat2/swapctl.0		comp-c-catman
+./usr/share/man/cat2/swapon.0   	comp-obsolete	obsolete
 ./usr/share/man/cat2/symlink.0		comp-c-catman
 ./usr/share/man/cat2/sync.0		comp-c-catman
 ./usr/share/man/cat2/sysarch.0		comp-c-catman
@@ -1331,6 +2174,7 @@
 ./usr/share/man/cat3/BIO_f_ssl.0		comp-c-catman
 ./usr/share/man/cat3/BIO_find_type.0		comp-c-catman
 ./usr/share/man/cat3/BIO_new.0			comp-c-catman
+./usr/share/man/cat3/BIO_new_bio_pair.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/BIO_push.0			comp-c-catman
 ./usr/share/man/cat3/BIO_read.0			comp-c-catman
 ./usr/share/man/cat3/BIO_s_accept.0		comp-c-catman
@@ -1438,6 +2282,7 @@
 ./usr/share/man/cat3/MD5Final.0	comp-c-catman
 ./usr/share/man/cat3/MD5Init.0	comp-c-catman
 ./usr/share/man/cat3/MD5Update.0	comp-c-catman
+./usr/share/man/cat3/MD5_Init.0 	comp-obsolete	obsolete
 ./usr/share/man/cat3/OBJ_nid2obj.0		comp-c-catman
 ./usr/share/man/cat3/OPENSSL_VERSION_NUMBER.0		comp-c-catman
 ./usr/share/man/cat3/OpenSSL_add_all_algorithms.0		comp-c-catman
@@ -1452,6 +2297,7 @@
 ./usr/share/man/cat3/RAND_cleanup.0		comp-c-catman
 ./usr/share/man/cat3/RAND_egd.0		comp-c-catman
 ./usr/share/man/cat3/RAND_load_file.0		comp-c-catman
+./usr/share/man/cat3/RAND_seed.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/RAND_set_rand_method.0		comp-c-catman
 ./usr/share/man/cat3/RB_EMPTY.0	comp-c-catman
 ./usr/share/man/cat3/RB_ENTRY.0	comp-c-catman
@@ -1689,10 +2535,13 @@
 ./usr/share/man/cat3/bitstring.0	comp-c-catman
 ./usr/share/man/cat3/bkgd.0		comp-c-catman
 ./usr/share/man/cat3/bkgdset.0		comp-c-catman
+./usr/share/man/cat3/blowfish.0 	comp-obsolete	obsolete
 ./usr/share/man/cat3/bm.0	comp-c-catman
 ./usr/share/man/cat3/bm_comp.0	comp-c-catman
 ./usr/share/man/cat3/bm_exec.0	comp-c-catman
 ./usr/share/man/cat3/bm_free.0	comp-c-catman
+./usr/share/man/cat3/bn.0       	comp-obsolete	obsolete
+./usr/share/man/cat3/bn_internal.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/border.0		comp-c-catman
 ./usr/share/man/cat3/box.0		comp-c-catman
 ./usr/share/man/cat3/bsearch.0	comp-c-catman
@@ -1703,6 +2552,7 @@
 ./usr/share/man/cat3/bswap64.0	comp-c-catman
 ./usr/share/man/cat3/btowc.0	comp-c-catman
 ./usr/share/man/cat3/btree.0	comp-c-catman
+./usr/share/man/cat3/buffer.0   	comp-obsolete	obsolete
 ./usr/share/man/cat3/byteorder.0	comp-c-catman
 ./usr/share/man/cat3/bzero.0	comp-c-catman
 ./usr/share/man/cat3/cabs.0	comp-c-catman
@@ -1762,6 +2612,20 @@
 ./usr/share/man/cat3/cgetset.0	comp-c-catman
 ./usr/share/man/cat3/cgetstr.0	comp-c-catman
 ./usr/share/man/cat3/cgetustr.0	comp-c-catman
+./usr/share/man/cat3/circleq_empty.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_entry.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_first.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_head_initializer.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_init.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_insert_after.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_insert_before.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_insert_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_insert_tail.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_last.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_next.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_prev.0	comp-obsolete	obsolete
+./usr/share/man/cat3/circleq_remove.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/clear.0		comp-c-catman
 ./usr/share/man/cat3/clearerr.0	comp-c-catman
 ./usr/share/man/cat3/clearok.0		comp-c-catman
@@ -1795,6 +2659,8 @@
 ./usr/share/man/cat3/clrtoeol.0		comp-c-catman
 ./usr/share/man/cat3/color_content.0		comp-c-catman
 ./usr/share/man/cat3/color_set.0		comp-c-catman
+./usr/share/man/cat3/com_err.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/com_err_va.0	comp-krb5-catman	kerberos
 ./usr/share/man/cat3/confstr.0	comp-c-catman
 ./usr/share/man/cat3/copysign.0	comp-c-catman
 ./usr/share/man/cat3/copysignf.0	comp-c-catman
@@ -1911,6 +2777,7 @@
 ./usr/share/man/cat3/des_xcbc_encrypt.0		comp-c-catman
 ./usr/share/man/cat3/devname.0	comp-c-catman
 ./usr/share/man/cat3/dgettext.0		comp-c-catman
+./usr/share/man/cat3/dh.0       	comp-obsolete	obsolete
 ./usr/share/man/cat3/difftime.0	comp-c-catman
 ./usr/share/man/cat3/directory.0	comp-c-catman
 ./usr/share/man/cat3/dirfd.0	comp-c-catman
@@ -1930,6 +2797,7 @@
 ./usr/share/man/cat3/dngettext.0	comp-c-catman
 ./usr/share/man/cat3/doupdate.0		comp-c-catman
 ./usr/share/man/cat3/drand48.0	comp-c-catman
+./usr/share/man/cat3/dsa.0      	comp-obsolete	obsolete
 ./usr/share/man/cat3/dup_field.0	comp-c-catman
 ./usr/share/man/cat3/dupwin.0		comp-c-catman
 ./usr/share/man/cat3/dynamic_field_info.0	comp-c-catman
@@ -1975,6 +2843,8 @@
 ./usr/share/man/cat3/erfcf.0	comp-c-catman
 ./usr/share/man/cat3/erff.0	comp-c-catman
 ./usr/share/man/cat3/err.0	comp-c-catman
+./usr/share/man/cat3/error_message.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/error_table_name.0	comp-krb5-catman	kerberos
 ./usr/share/man/cat3/errx.0	comp-c-catman
 ./usr/share/man/cat3/etext.0	comp-c-catman
 ./usr/share/man/cat3/ether_aton.0	comp-c-catman
@@ -2164,6 +3034,7 @@
 ./usr/share/man/cat3/gethostbyaddr.0	comp-c-catman
 ./usr/share/man/cat3/gethostbyname.0	comp-c-catman
 ./usr/share/man/cat3/gethostbyname2.0	comp-c-catman
+./usr/share/man/cat3/gethostent.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/gethostid.0	comp-c-catman
 ./usr/share/man/cat3/gethostname.0	comp-c-catman
 ./usr/share/man/cat3/getifaddrs.0	comp-c-catman
@@ -2198,6 +3069,7 @@
 ./usr/share/man/cat3/getprotobyname.0	comp-c-catman
 ./usr/share/man/cat3/getprotobynumber.0	comp-c-catman
 ./usr/share/man/cat3/getprotoent.0	comp-c-catman
+./usr/share/man/cat3/getpw.0    	comp-obsolete	obsolete
 ./usr/share/man/cat3/getpwent.0	comp-c-catman
 ./usr/share/man/cat3/getpwnam.0	comp-c-catman
 ./usr/share/man/cat3/getpwuid.0	comp-c-catman
@@ -2234,6 +3106,47 @@
 ./usr/share/man/cat3/gmtime.0	comp-c-catman
 ./usr/share/man/cat3/gmtime_r.0	comp-c-catman
 ./usr/share/man/cat3/group_from_gid.0	comp-c-catman
+./usr/share/man/cat3/gss_accept_sec_context.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_acquire_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_add_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_add_oid_set_member.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_canonicalize_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_compare_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_context_time.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_create_empty_oid_set.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_delete_sec_context.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_display_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_display_status.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_duplicate_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_export_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_export_sec_context.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_get_mic.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_import_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_import_sec_context.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_indicate_mechs.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_init_sec_context.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_inquire_context.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_inquire_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_inquire_cred_by_mech.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_inquire_mechs_for_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_inquire_names_for_mech.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_krb5_compat_des3_mic.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_krb5_copy_ccache.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_process_context_token.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_release_buffer.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_release_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_release_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_release_oid_set.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_seal.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_sign.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_test_oid_set_member.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_unseal.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_unwrap.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_verify.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_verify_mic.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_wrap.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gss_wrap_size_limit.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/gssapi.0 comp-krb5-catman	kerberos
 ./usr/share/man/cat3/gtty.0	comp-c-catman
 ./usr/share/man/cat3/halfdelay.0		comp-c-catman
 ./usr/share/man/cat3/has_colors.0		comp-c-catman
@@ -2266,6 +3179,7 @@
 ./usr/share/man/cat3/history_end.0	comp-c-catman
 ./usr/share/man/cat3/history_init.0	comp-c-catman
 ./usr/share/man/cat3/hline.0		comp-c-catman
+./usr/share/man/cat3/hmac.0     	comp-obsolete	obsolete
 ./usr/share/man/cat3/hosts_access.0	comp-c-catman
 ./usr/share/man/cat3/hosts_ctl.0	comp-c-catman
 ./usr/share/man/cat3/hsearch.0	comp-c-catman
@@ -2320,6 +3234,7 @@
 ./usr/share/man/cat3/inet_ntop.0	comp-c-catman
 ./usr/share/man/cat3/inet_pton.0	comp-c-catman
 ./usr/share/man/cat3/init_color.0		comp-c-catman
+./usr/share/man/cat3/init_error_table.0	comp-krb5-catman	kerberos
 ./usr/share/man/cat3/init_pair.0		comp-c-catman
 ./usr/share/man/cat3/initgroups.0	comp-c-catman
 ./usr/share/man/cat3/initscr.0		comp-c-catman
@@ -2381,10 +3296,225 @@
 ./usr/share/man/cat3/jn.0	comp-c-catman
 ./usr/share/man/cat3/jnf.0	comp-c-catman
 ./usr/share/man/cat3/jrand48.0	comp-c-catman
+./usr/share/man/cat3/kafs.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/kerberos.0 comp-krb4-catman	kerberos4
 ./usr/share/man/cat3/keyname.0		comp-c-catman
 ./usr/share/man/cat3/keypad.0		comp-c-catman
 ./usr/share/man/cat3/killchar.0		comp-c-catman
 ./usr/share/man/cat3/killpg.0	comp-c-catman
+./usr/share/man/cat3/krb5.0				comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_425_conv_principal.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_425_conv_principal_ext.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_524_conv_principal.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_addlog_dest.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_addlog_func.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_addr2sockaddr.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_address.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_address_compare.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_address_order.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_address_search.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_addresses.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_aname_to_localname.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_anyaddr.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_appdefault.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_appdefault_boolean.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_appdefault_string.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_appdefault_time.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_append_addresses.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_free.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_genaddrs.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_getaddrs.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_getflags.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_getkey.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_getlocalsubkey.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_getrcache.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_getremotesubkey.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_getuserkey.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_init.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_initivector.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setaddrs.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setaddrs_from_fd.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setflags.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setivector.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setkey.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setlocalsubkey.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setrcache.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setremotesubkey.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_con_setuserkey.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_context.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_getauthenticator.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_getcksumtype.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_getkeytype.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_getlocalseqnumber.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_getremoteseqnumber.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_setcksumtype.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_setkeytype.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_setlocalseqnumber.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_auth_setremoteseqnumber.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_build_principal.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_build_principal_ext.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_build_principal_va.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_build_principal_va_ext.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_close.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_copy_cache.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_cursor.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_default.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_default_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_destroy.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_end_seq_get.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_gen_new.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_get_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_get_ops.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_get_principal.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_get_type.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_get_version.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_initialize.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_next_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_ops.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_register.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_remove_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_resolve.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_retrieve_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_set_default_name.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_set_flags.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_cc_store_cred.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_ccache.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_checksum_is_collision_proof.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_checksum_is_keyed.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_checksumsize.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_closelog.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_config.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_config_get_bool_default.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_config_get_int_default.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_config_get_string_default.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_config_get_time_default.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_context.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_copy_address.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_copy_addresses.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_copy_data.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_create_checksum.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_crypto_destroy.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_crypto_init.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_data.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_data_alloc.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_data_copy.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_data_free.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_data_realloc.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_data_zero.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_decrypt.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_decrypt_EncryptedData.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_encrypt.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_encrypt_EncryptedData.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_err.0				comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_errx.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_fcc_ops.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_address.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_addresses.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_context.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_data.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_data_contents.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_host_realm.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_krbhst.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_free_principal.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_all_client_addrs.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_all_server_addrs.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_default_realm.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_default_realms.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_host_realm.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_krb524hst.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_krb_admin_hst.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_krb_changepw_hst.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_get_krbhst.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_h_addr2addr.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_h_addr2sockaddr.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_init_context.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_initlog.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_keytab.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_keytab_entry.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_krbhst_format_string.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_krbhst_free.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_krbhst_get_addrinfo.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_krbhst_init.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_krbhst_next.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_krbhst_next_as_string.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_krbhst_reset.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_add_entry.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_close.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_compare.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_copy_entry_contents.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_cursor.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_default.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_default_name.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_end_seq_get.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_free_entry.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_get_entry.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_get_name.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_get_type.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_next_entry.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_ops.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_read_service_key.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_register.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_remove_entry.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_resolve.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kt_start_seq_get.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_kuserok.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_log.0				comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_log_msg.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_make_addrport.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_make_principal.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_max_sockaddr_size.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_mcc_ops.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_openlog.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_parse_address.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_parse_name.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_principal_get_comp_string.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_principal_get_realm.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_print_address.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_set_default_realm.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_set_warn_dest.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_sname_to_principal.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_sock_to_principal.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_sockaddr2address.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_sockaddr2port.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_sockaddr_uninteresting.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_timeofday.0			comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_unparse_name.0	comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_us_timeofday.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_verify_checksum.0		comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_verify_opt_init.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_verify_opt_set_flags.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_verify_opt_set_keytab.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_verify_opt_set_secure.0 comp-krb5-catman	kerberos
+./usr/share/man/cat3/krb5_verify_opt_set_service.0 comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_verify_user.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_verify_user_lrealm.0		comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_verify_user_opt.0 comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_verr.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_verrx.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_vlog.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_vlog_msg.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_vwarn.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_vwarnx.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_warn.0	comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb5_warnx.0			comp-krb5c-catman	kerberos
+./usr/share/man/cat3/krb_ck_repl.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_get_cred.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_get_krbhst.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_get_lrealm.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_get_phost.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_kntoln.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_mk_err.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_mk_priv.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_mk_req.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_mk_safe.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_rd_err.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_rd_priv.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_rd_req.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_rd_safe.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_realmofhost.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_sendauth.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_set_key.0	comp-krb4-catman	kerberos4
+./usr/share/man/cat3/krb_set_tkt_string.0	comp-krb4-catman	kerberos4
 ./usr/share/man/cat3/kvm.0	comp-c-catman
 ./usr/share/man/cat3/kvm_close.0	comp-c-catman
 ./usr/share/man/cat3/kvm_dump.0	comp-c-catman
@@ -2419,7 +3549,9 @@
 ./usr/share/man/cat3/lgammaf.0	comp-c-catman
 ./usr/share/man/cat3/lgammaf_r.0	comp-c-catman
 ./usr/share/man/cat3/lh_stats.0		comp-c-catman
+./usr/share/man/cat3/lhash.0    	comp-obsolete	obsolete
 ./usr/share/man/cat3/libmagic.0		comp-c-catman
+./usr/share/man/cat3/libusb.0   	comp-obsolete	obsolete
 ./usr/share/man/cat3/libusbhid.0	comp-c-catman
 ./usr/share/man/cat3/link_addr.0	comp-c-catman
 ./usr/share/man/cat3/link_field.0	comp-c-catman
@@ -2427,6 +3559,17 @@
 ./usr/share/man/cat3/link_ntoa.0	comp-c-catman
 ./usr/share/man/cat3/linkaddr.0	comp-c-catman
 ./usr/share/man/cat3/linkntoa.0	comp-c-catman
+./usr/share/man/cat3/list_empty.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_entry.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_first.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_head_initializer.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_init.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_insert_after.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_insert_before.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_insert_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_next.0	comp-obsolete	obsolete
+./usr/share/man/cat3/list_remove.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/llabs.0	comp-c-catman
 ./usr/share/man/cat3/lldiv.0	comp-c-catman
 ./usr/share/man/cat3/localeconv.0	comp-c-catman
@@ -2483,6 +3626,7 @@
 ./usr/share/man/cat3/md2.0	comp-c-catman
 ./usr/share/man/cat3/md4.0	comp-c-catman
 ./usr/share/man/cat3/md5.0		comp-c-catman
+./usr/share/man/cat3/mdc2.0     	comp-obsolete	obsolete
 ./usr/share/man/cat3/memccpy.0	comp-c-catman
 ./usr/share/man/cat3/memchr.0	comp-c-catman
 ./usr/share/man/cat3/memcmp.0	comp-c-catman
@@ -2657,8 +3801,8 @@
 ./usr/share/man/cat3/pthread_attr_destroy.0	comp-c-catman
 ./usr/share/man/cat3/pthread_attr_getdetachstate.0	comp-c-catman
 ./usr/share/man/cat3/pthread_attr_init.0	comp-c-catman
-./usr/share/man/cat3/pthread_attr_setdetachstate.0	comp-c-catman
 ./usr/share/man/cat3/pthread_attr_setcreatesuspend_np.0	comp-c-catman
+./usr/share/man/cat3/pthread_attr_setdetachstate.0	comp-c-catman
 ./usr/share/man/cat3/pthread_barierattr_destroy.0	comp-c-catman
 ./usr/share/man/cat3/pthread_barierattr_init.0	comp-c-catman
 ./usr/share/man/cat3/pthread_barrier_destroy.0	comp-c-catman
@@ -2717,12 +3861,12 @@
 ./usr/share/man/cat3/pthread_setcanceltype.0	comp-c-catman
 ./usr/share/man/cat3/pthread_setschedparam.0	comp-c-catman
 ./usr/share/man/cat3/pthread_setspecific.0	comp-c-catman
-./usr/share/man/cat3/pthread_suspend_np.0	comp-c-catman
 ./usr/share/man/cat3/pthread_sigmask.0	comp-c-catman
 ./usr/share/man/cat3/pthread_spin_destroy.0	comp-c-catman
 ./usr/share/man/cat3/pthread_spin_init.0	comp-c-catman
 ./usr/share/man/cat3/pthread_spin_lock.0	comp-c-catman
 ./usr/share/man/cat3/pthread_spin_unlock.0	comp-c-catman
+./usr/share/man/cat3/pthread_suspend_np.0	comp-c-catman
 ./usr/share/man/cat3/pthread_testcancel.0	comp-c-catman
 ./usr/share/man/cat3/putc.0	comp-c-catman
 ./usr/share/man/cat3/putc_unlocked.0	comp-c-catman
@@ -2764,6 +3908,7 @@
 ./usr/share/man/cat3/randomid_delete.0		comp-c-catman
 ./usr/share/man/cat3/randomid_new.0		comp-c-catman
 ./usr/share/man/cat3/raw.0		comp-c-catman
+./usr/share/man/cat3/rc4.0      	comp-obsolete	obsolete
 ./usr/share/man/cat3/rcmd.0	comp-c-catman
 ./usr/share/man/cat3/rcmd_af.0	comp-c-catman
 ./usr/share/man/cat3/re_comp.0	comp-c-catman
@@ -2781,6 +3926,7 @@
 ./usr/share/man/cat3/regexp.0	comp-c-catman
 ./usr/share/man/cat3/regfree.0	comp-c-catman
 ./usr/share/man/cat3/registerrpc.0	comp-c-catman
+./usr/share/man/cat3/regsterrpc.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/remainder.0	comp-c-catman
 ./usr/share/man/cat3/remainderf.0	comp-c-catman
 ./usr/share/man/cat3/remove.0	comp-c-catman
@@ -2792,6 +3938,7 @@
 ./usr/share/man/cat3/res_query.0	comp-c-catman
 ./usr/share/man/cat3/res_search.0	comp-c-catman
 ./usr/share/man/cat3/res_send.0	comp-c-catman
+./usr/share/man/cat3/reset_com_err_hook.0	comp-krb5-catman	kerberos
 ./usr/share/man/cat3/reset_prog_mode.0		comp-c-catman
 ./usr/share/man/cat3/reset_shell_mode.0		comp-c-catman
 ./usr/share/man/cat3/resetty.0		comp-c-catman
@@ -2803,6 +3950,7 @@
 ./usr/share/man/cat3/rindex.0	comp-c-catman
 ./usr/share/man/cat3/rint.0	comp-c-catman
 ./usr/share/man/cat3/rintf.0	comp-c-catman
+./usr/share/man/cat3/ripemd.0   	comp-obsolete	obsolete
 ./usr/share/man/cat3/rmd160.0	comp-c-catman
 ./usr/share/man/cat3/rmtops.0	comp-c-catman
 ./usr/share/man/cat3/rpc.0	comp-c-catman
@@ -2829,6 +3977,7 @@
 ./usr/share/man/cat3/rpcbind.0		comp-c-catman
 ./usr/share/man/cat3/rresvport.0	comp-c-catman
 ./usr/share/man/cat3/rresvport_af.0	comp-c-catman
+./usr/share/man/cat3/rsa.0      	comp-obsolete	obsolete
 ./usr/share/man/cat3/ruserok.0	comp-c-catman
 ./usr/share/man/cat3/savetty.0		comp-c-catman
 ./usr/share/man/cat3/scalb.0	comp-c-catman
@@ -2843,6 +3992,7 @@
 ./usr/share/man/cat3/scroll.0		comp-c-catman
 ./usr/share/man/cat3/scrollok.0		comp-c-catman
 ./usr/share/man/cat3/secure_path.0	comp-c-catman
+./usr/share/man/cat3/securepath.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/seed48.0	comp-c-catman
 ./usr/share/man/cat3/seekdir.0	comp-c-catman
 ./usr/share/man/cat3/sem_close.0	comp-c-catman
@@ -2854,6 +4004,7 @@
 ./usr/share/man/cat3/sem_trywait.0	comp-c-catman
 ./usr/share/man/cat3/sem_unlink.0	comp-c-catman
 ./usr/share/man/cat3/sem_wait.0		comp-c-catman
+./usr/share/man/cat3/set_com_err_hook.0	comp-krb5-catman	kerberos
 ./usr/share/man/cat3/set_current_field.0	comp-c-catman
 ./usr/share/man/cat3/set_field_back.0	comp-c-catman
 ./usr/share/man/cat3/set_field_buffer.0	comp-c-catman
@@ -2888,6 +4039,7 @@
 ./usr/share/man/cat3/setenv.0	comp-c-catman
 ./usr/share/man/cat3/setfsent.0	comp-c-catman
 ./usr/share/man/cat3/setgrent.0	comp-c-catman
+./usr/share/man/cat3/setgrfile.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/setgroupent.0	comp-c-catman
 ./usr/share/man/cat3/sethostent.0	comp-c-catman
 ./usr/share/man/cat3/sethostid.0	comp-c-catman
@@ -2907,6 +4059,9 @@
 ./usr/share/man/cat3/setprogname.0	comp-c-catman
 ./usr/share/man/cat3/setprotoent.0	comp-c-catman
 ./usr/share/man/cat3/setpwent.0	comp-c-catman
+./usr/share/man/cat3/setpwfile.0	comp-obsolete	obsolete
+./usr/share/man/cat3/setregid.0 	comp-obsolete	obsolete
+./usr/share/man/cat3/setreuid.0 	comp-obsolete	obsolete
 ./usr/share/man/cat3/setrgid.0	comp-c-catman
 ./usr/share/man/cat3/setrpcent.0	comp-c-catman
 ./usr/share/man/cat3/setruid.0	comp-c-catman
@@ -2919,6 +4074,7 @@
 ./usr/share/man/cat3/setusershell.0	comp-c-catman
 ./usr/share/man/cat3/setutxent.0	comp-c-catman
 ./usr/share/man/cat3/setvbuf.0	comp-c-catman
+./usr/share/man/cat3/sha.0      	comp-obsolete	obsolete
 ./usr/share/man/cat3/sha1.0	comp-c-catman
 ./usr/share/man/cat3/shquote.0	comp-c-catman
 ./usr/share/man/cat3/shquotev.0	comp-c-catman
@@ -2947,6 +4103,17 @@
 ./usr/share/man/cat3/sigsetmask.0	comp-c-catman
 ./usr/share/man/cat3/sigsetops.0	comp-c-catman
 ./usr/share/man/cat3/sigvec.0	comp-c-catman
+./usr/share/man/cat3/simpleq_empty.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_entry.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_first.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_head_initializer.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_init.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_insert_after.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_insert_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_insert_tail.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_next.0	comp-obsolete	obsolete
+./usr/share/man/cat3/simpleq_remove_head.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/sin.0	comp-c-catman
 ./usr/share/man/cat3/sinf.0	comp-c-catman
 ./usr/share/man/cat3/sinh.0	comp-c-catman
@@ -3047,6 +4214,8 @@
 ./usr/share/man/cat3/svc_freeargs.0	comp-c-catman
 ./usr/share/man/cat3/svc_getargs.0	comp-c-catman
 ./usr/share/man/cat3/svc_getcaller.0	comp-c-catman
+./usr/share/man/cat3/svc_getreg.0	comp-obsolete	obsolete
+./usr/share/man/cat3/svc_getregset.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/svc_getreq_common.0	comp-c-catman
 ./usr/share/man/cat3/svc_getreq_poll.0	comp-c-catman
 ./usr/share/man/cat3/svc_getreqset.0	comp-c-catman
@@ -3090,6 +4259,18 @@
 ./usr/share/man/cat3/t_getstr.0	comp-c-catman
 ./usr/share/man/cat3/t_goto.0	comp-c-catman
 ./usr/share/man/cat3/t_puts.0	comp-c-catman
+./usr/share/man/cat3/tailq_empty.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_entry.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_first.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_head_initializer.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_init.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_insert_after.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_insert_before.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_insert_head.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_insert_tail.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_next.0	comp-obsolete	obsolete
+./usr/share/man/cat3/tailq_remove.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/tan.0	comp-c-catman
 ./usr/share/man/cat3/tanf.0	comp-c-catman
 ./usr/share/man/cat3/tanh.0	comp-c-catman
@@ -3114,6 +4295,7 @@
 ./usr/share/man/cat3/tgetnum.0	comp-c-catman
 ./usr/share/man/cat3/tgetstr.0	comp-c-catman
 ./usr/share/man/cat3/tgoto.0	comp-c-catman
+./usr/share/man/cat3/threads.0  	comp-obsolete	obsolete
 ./usr/share/man/cat3/time.0	comp-c-catman
 ./usr/share/man/cat3/time2posix.0	comp-c-catman
 ./usr/share/man/cat3/timeout.0		comp-c-catman
@@ -3163,6 +4345,7 @@
 ./usr/share/man/cat3/unvis.0	comp-c-catman
 ./usr/share/man/cat3/updlastlogx.0	comp-c-catman
 ./usr/share/man/cat3/updwtmpx.0	comp-c-catman
+./usr/share/man/cat3/usb.0      	comp-obsolete	obsolete
 ./usr/share/man/cat3/usbhid.0	comp-c-catman
 ./usr/share/man/cat3/use_default_colors.0		comp-c-catman
 ./usr/share/man/cat3/user_from_uid.0	comp-c-catman
@@ -3182,6 +4365,7 @@
 ./usr/share/man/cat3/vfprintf.0	comp-c-catman
 ./usr/share/man/cat3/vfscanf.0	comp-c-catman
 ./usr/share/man/cat3/vis.0	comp-c-catman
+./usr/share/man/cat3/vlimit.0   	comp-obsolete	obsolete
 ./usr/share/man/cat3/vline.0		comp-c-catman
 ./usr/share/man/cat3/vprintf.0	comp-c-catman
 ./usr/share/man/cat3/vscanf.0	comp-c-catman
@@ -3189,6 +4373,7 @@
 ./usr/share/man/cat3/vsprintf.0	comp-c-catman
 ./usr/share/man/cat3/vsscanf.0	comp-c-catman
 ./usr/share/man/cat3/vsyslog.0	comp-c-catman
+./usr/share/man/cat3/vtimes.0   	comp-obsolete	obsolete
 ./usr/share/man/cat3/vwarn.0	comp-c-catman
 ./usr/share/man/cat3/vwarnx.0	comp-c-catman
 ./usr/share/man/cat3/waddch.0		comp-c-catman
@@ -3338,6 +4523,7 @@
 ./usr/share/man/cat5/ranlib.0		comp-util-catman
 ./usr/share/man/cat7/operator.0		comp-c-catman
 ./usr/share/man/cat8/config.0		comp-sysutil-catman
+./usr/share/man/cat8/config.new.0	comp-obsolete	obsolete
 ./usr/share/man/cat8/cvsbug.0		comp-cvs-catman
 ./usr/share/man/cat8/kgmon.0		comp-sysutil-catman
 ./usr/share/man/cat9/CALLOUT_INITIALIZER.0	comp-sys-catman
@@ -3452,6 +4638,7 @@
 ./usr/share/man/cat9/VOP_WHITEOUT.0		comp-sys-catman
 ./usr/share/man/cat9/VOP_WRITE.0		comp-sys-catman
 ./usr/share/man/cat9/VREF.0		comp-sys-catman
+./usr/share/man/cat9/access.0   	comp-obsolete	obsolete
 ./usr/share/man/cat9/allocbuf.0			comp-sys-catman
 ./usr/share/man/cat9/altq.0		comp-sys-catman
 ./usr/share/man/cat9/aprint_debug.0	comp-sys-catman
@@ -3546,6 +4733,8 @@
 ./usr/share/man/cat9/cache_purgevfs.0		comp-sys-catman
 ./usr/share/man/cat9/cache_revlookup.0		comp-sys-catman
 ./usr/share/man/cat9/callout.0		comp-sys-catman
+./usr/share/man/cat9/callout_active.0	comp-obsolete	obsolete
+./usr/share/man/cat9/callout_deactivate.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/callout_init.0	comp-sys-catman
 ./usr/share/man/cat9/callout_pending.0	comp-sys-catman
 ./usr/share/man/cat9/callout_reset.0	comp-sys-catman
@@ -3618,6 +4807,7 @@
 ./usr/share/man/cat9/cpu_swapin.0	comp-sys-catman
 ./usr/share/man/cat9/cpu_swapout.0	comp-sys-catman
 ./usr/share/man/cat9/cpu_switch.0		comp-sys-catman
+./usr/share/man/cat9/cpu_sysctl.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/cpu_wait.0	comp-sys-catman
 ./usr/share/man/cat9/crcopy.0		comp-sys-catman
 ./usr/share/man/cat9/crcvt.0		comp-sys-catman
@@ -3646,6 +4836,7 @@
 ./usr/share/man/cat9/disk_attach.0		comp-sys-catman
 ./usr/share/man/cat9/disk_busy.0		comp-sys-catman
 ./usr/share/man/cat9/disk_detach.0		comp-sys-catman
+./usr/share/man/cat9/disk_detatch.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/disk_find.0		comp-sys-catman
 ./usr/share/man/cat9/disk_init.0		comp-sys-catman
 ./usr/share/man/cat9/disk_resetstat.0		comp-sys-catman
@@ -3787,6 +4978,7 @@
 ./usr/share/man/cat9/issignal.0		comp-sys-catman
 ./usr/share/man/cat9/itimerfix.0		comp-sys-catman
 ./usr/share/man/cat9/kcopy.0	comp-sys-catman
+./usr/share/man/cat9/kernacc.0  	comp-obsolete	obsolete
 ./usr/share/man/cat9/kfilter_register.0		comp-sys-catman
 ./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman
 ./usr/share/man/cat9/killproc.0			comp-sys-catman
@@ -3900,6 +5092,7 @@
 ./usr/share/man/cat9/pcmcia_scan_cis.0		comp-sys-catman
 ./usr/share/man/cat9/pfil.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_add_hook.0		comp-sys-catman
+./usr/share/man/cat9/pfil_get_head.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/pfil_head_get.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_head_register.0		comp-sys-catman
 ./usr/share/man/cat9/pfil_head_unregister.0		comp-sys-catman
@@ -3908,8 +5101,8 @@
 ./usr/share/man/cat9/pfil_run_hooks.0		comp-sys-catman
 ./usr/share/man/cat9/pgsignal.0		comp-sys-catman
 ./usr/share/man/cat9/physio.0		comp-sys-catman
-./usr/share/man/cat9/pmatch.0		comp-sys-catman
 ./usr/share/man/cat9/pmap.0		comp-sys-catman
+./usr/share/man/cat9/pmatch.0		comp-sys-catman
 ./usr/share/man/cat9/pmc.0		comp-sys-catman
 ./usr/share/man/cat9/pmc_accumulate.0		comp-sys-catman
 ./usr/share/man/cat9/pmc_alloc_kernel_counter.0		comp-sys-catman
@@ -4020,7 +5213,9 @@
 ./usr/share/man/cat9/simple_lock_freecheck.0	comp-sys-catman
 ./usr/share/man/cat9/simple_lock_init.0	comp-sys-catman
 ./usr/share/man/cat9/simple_lock_try.0	comp-sys-catman
+./usr/share/man/cat9/simple_lock_unlock.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/simple_unlock.0	comp-sys-catman
+./usr/share/man/cat9/sleep.0    	comp-obsolete	obsolete
 ./usr/share/man/cat9/snprintf.0		comp-sys-catman
 ./usr/share/man/cat9/softintr.0		comp-sys-catman
 ./usr/share/man/cat9/softintr_disestablish.0		comp-sys-catman
@@ -4091,6 +5286,7 @@
 ./usr/share/man/cat9/untimeout.0		comp-sys-catman
 ./usr/share/man/cat9/uprintf.0		comp-sys-catman
 ./usr/share/man/cat9/usbdi.0		comp-sys-catman
+./usr/share/man/cat9/useracc.0  	comp-obsolete	obsolete
 ./usr/share/man/cat9/userret.0		comp-sys-catman
 ./usr/share/man/cat9/uvm.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_chgkprot.0		comp-sys-catman
@@ -4129,9 +5325,12 @@
 ./usr/share/man/cat9/uvm_setpagesize.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_swap_init.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_swapin.0		comp-sys-catman
+./usr/share/man/cat9/uvm_sysctl.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/uvm_unloan.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_useracc.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vnp_setsize.0		comp-sys-catman
+./usr/share/man/cat9/uvm_vnp_sync.0	comp-obsolete	obsolete
+./usr/share/man/cat9/uvm_vnp_terminate.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/uvm_vslock.0		comp-sys-catman
 ./usr/share/man/cat9/uvm_vsunlock.0		comp-sys-catman
 ./usr/share/man/cat9/uvmspace_alloc.0		comp-sys-catman
@@ -4166,6 +5365,7 @@
 ./usr/share/man/cat9/vfs_setpublicfs.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_showexport.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_shutdown.0		comp-sys-catman
+./usr/share/man/cat9/vfs_sysctl.0	comp-obsolete	obsolete
 ./usr/share/man/cat9/vfs_unbusy.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_unmountall.0		comp-sys-catman
 ./usr/share/man/cat9/vfs_write_resume.0		comp-sys-catman
@@ -4224,8 +5424,10 @@
 ./usr/share/man/cat9/vrecycle.0		comp-sys-catman
 ./usr/share/man/cat9/vref.0		comp-sys-catman
 ./usr/share/man/cat9/vrele.0		comp-sys-catman
+./usr/share/man/cat9/vslock.0   	comp-obsolete	obsolete
 ./usr/share/man/cat9/vsnprintf.0		comp-sys-catman
 ./usr/share/man/cat9/vsprintf.0		comp-sys-catman
+./usr/share/man/cat9/vsunlock.0 	comp-obsolete	obsolete
 ./usr/share/man/cat9/vtruncbuf.0		comp-sys-catman
 ./usr/share/man/cat9/vwakeup.0		comp-sys-catman
 ./usr/share/man/cat9/wakeup.0		comp-sys-catman
@@ -4289,6 +5491,18 @@
 ./usr/share/man/man1/lorder.1		comp-util-man
 ./usr/share/man/man1/menuc.1		comp-c-man
 ./usr/share/man/man1/mkstr.1		comp-c-man
+./usr/share/man/man1/msg_clear.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_display.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_display_add.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_prompt.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_prompt_add.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_prompt_noecho.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_prompt_win.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_standend.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_standout.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_string.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_table_add.1	comp-obsolete	obsolete
+./usr/share/man/man1/msg_window.1	comp-obsolete	obsolete
 ./usr/share/man/man1/msgc.1		comp-c-man
 ./usr/share/man/man1/nm.1		comp-util-man
 ./usr/share/man/man1/objcopy.1		comp-util-man
@@ -4322,6 +5536,8 @@
 ./usr/share/man/man2/access.2		comp-c-man
 ./usr/share/man/man2/acct.2		comp-c-man
 ./usr/share/man/man2/adjtime.2		comp-c-man
+./usr/share/man/man2/arm32_drain_writebuf.2	comp-obsolete	obsolete
+./usr/share/man/man2/arm32_sync_icache.2	comp-obsolete	obsolete
 ./usr/share/man/man2/arm_drain_writebuf.2	comp-c-man
 ./usr/share/man/man2/arm_sync_icache.2	comp-c-man
 ./usr/share/man/man2/bind.2		comp-c-man
@@ -4549,6 +5765,7 @@
 ./usr/share/man/man3/BIO_f_ssl.3		comp-c-man
 ./usr/share/man/man3/BIO_find_type.3		comp-c-man
 ./usr/share/man/man3/BIO_new.3			comp-c-man
+./usr/share/man/man3/BIO_new_bio_pair.3	comp-obsolete	obsolete
 ./usr/share/man/man3/BIO_push.3			comp-c-man
 ./usr/share/man/man3/BIO_read.3			comp-c-man
 ./usr/share/man/man3/BIO_s_accept.3		comp-c-man
@@ -4656,6 +5873,7 @@
 ./usr/share/man/man3/MD5Final.3		comp-c-man
 ./usr/share/man/man3/MD5Init.3		comp-c-man
 ./usr/share/man/man3/MD5Update.3		comp-c-man
+./usr/share/man/man3/MD5_Init.3 	comp-obsolete	obsolete
 ./usr/share/man/man3/OBJ_nid2obj.3		comp-c-man
 ./usr/share/man/man3/OPENSSL_VERSION_NUMBER.3		comp-c-man
 ./usr/share/man/man3/OpenSSL_add_all_algorithms.3		comp-c-man
@@ -4670,6 +5888,7 @@
 ./usr/share/man/man3/RAND_cleanup.3		comp-c-man
 ./usr/share/man/man3/RAND_egd.3		comp-c-man
 ./usr/share/man/man3/RAND_load_file.3		comp-c-man
+./usr/share/man/man3/RAND_seed.3	comp-obsolete	obsolete
 ./usr/share/man/man3/RAND_set_rand_method.3		comp-c-man
 ./usr/share/man/man3/RB_EMPTY.3	comp-c-man
 ./usr/share/man/man3/RB_ENTRY.3	comp-c-man
@@ -4907,10 +6126,13 @@
 ./usr/share/man/man3/bitstring.3		comp-c-man
 ./usr/share/man/man3/bkgd.3		comp-c-man
 ./usr/share/man/man3/bkgdset.3		comp-c-man
+./usr/share/man/man3/blowfish.3 	comp-obsolete	obsolete
 ./usr/share/man/man3/bm.3		comp-c-man
 ./usr/share/man/man3/bm_comp.3		comp-c-man
 ./usr/share/man/man3/bm_exec.3		comp-c-man
 ./usr/share/man/man3/bm_free.3		comp-c-man
+./usr/share/man/man3/bn.3       	comp-obsolete	obsolete
+./usr/share/man/man3/bn_internal.3	comp-obsolete	obsolete
 ./usr/share/man/man3/border.3		comp-c-man
 ./usr/share/man/man3/box.3		comp-c-man
 ./usr/share/man/man3/bsearch.3		comp-c-man
@@ -4921,6 +6143,7 @@
 ./usr/share/man/man3/bswap64.3		comp-c-man
 ./usr/share/man/man3/btowc.3		comp-c-man
 ./usr/share/man/man3/btree.3		comp-c-man
+./usr/share/man/man3/buffer.3   	comp-obsolete	obsolete
 ./usr/share/man/man3/byteorder.3		comp-c-man
 ./usr/share/man/man3/bzero.3		comp-c-man
 ./usr/share/man/man3/cabs.3		comp-c-man
@@ -4980,6 +6203,20 @@
 ./usr/share/man/man3/cgetset.3		comp-c-man
 ./usr/share/man/man3/cgetstr.3		comp-c-man
 ./usr/share/man/man3/cgetustr.3		comp-c-man
+./usr/share/man/man3/circleq_empty.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_entry.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_first.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_head_initializer.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_init.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_insert_after.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_insert_before.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_insert_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_insert_tail.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_last.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_next.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_prev.3	comp-obsolete	obsolete
+./usr/share/man/man3/circleq_remove.3	comp-obsolete	obsolete
 ./usr/share/man/man3/clear.3		comp-c-man
 ./usr/share/man/man3/clearerr.3		comp-c-man
 ./usr/share/man/man3/clearok.3		comp-c-man
@@ -5013,6 +6250,8 @@
 ./usr/share/man/man3/clrtoeol.3		comp-c-man
 ./usr/share/man/man3/color_content.3		comp-c-man
 ./usr/share/man/man3/color_set.3		comp-c-man
+./usr/share/man/man3/com_err.3		comp-krb5-man	kerberos
+./usr/share/man/man3/com_err_va.3	comp-krb5-man	kerberos
 ./usr/share/man/man3/confstr.3		comp-c-man
 ./usr/share/man/man3/copysign.3		comp-c-man
 ./usr/share/man/man3/copysignf.3		comp-c-man
@@ -5129,6 +6368,7 @@
 ./usr/share/man/man3/des_xcbc_encrypt.3		comp-c-man
 ./usr/share/man/man3/devname.3		comp-c-man
 ./usr/share/man/man3/dgettext.3		comp-c-man
+./usr/share/man/man3/dh.3       	comp-obsolete	obsolete
 ./usr/share/man/man3/difftime.3		comp-c-man
 ./usr/share/man/man3/directory.3		comp-c-man
 ./usr/share/man/man3/dirfd.3		comp-c-man
@@ -5148,6 +6388,7 @@
 ./usr/share/man/man3/dngettext.3	comp-c-man
 ./usr/share/man/man3/doupdate.3		comp-c-man
 ./usr/share/man/man3/drand48.3		comp-c-man
+./usr/share/man/man3/dsa.3      	comp-obsolete	obsolete
 ./usr/share/man/man3/dup_field.3	comp-c-man
 ./usr/share/man/man3/dupwin.3		comp-c-man
 ./usr/share/man/man3/dynamic_field_info.3	comp-c-man
@@ -5193,6 +6434,8 @@
 ./usr/share/man/man3/erfcf.3		comp-c-man
 ./usr/share/man/man3/erff.3		comp-c-man
 ./usr/share/man/man3/err.3		comp-c-man
+./usr/share/man/man3/error_message.3	comp-krb5-man	kerberos
+./usr/share/man/man3/error_table_name.3	comp-krb5-man	kerberos
 ./usr/share/man/man3/errx.3		comp-c-man
 ./usr/share/man/man3/etext.3		comp-c-man
 ./usr/share/man/man3/ether_aton.3		comp-c-man
@@ -5382,6 +6625,7 @@
 ./usr/share/man/man3/gethostbyaddr.3		comp-c-man
 ./usr/share/man/man3/gethostbyname.3		comp-c-man
 ./usr/share/man/man3/gethostbyname2.3		comp-c-man
+./usr/share/man/man3/gethostent.3	comp-obsolete	obsolete
 ./usr/share/man/man3/gethostid.3		comp-c-man
 ./usr/share/man/man3/gethostname.3		comp-c-man
 ./usr/share/man/man3/getifaddrs.3		comp-c-man
@@ -5416,6 +6660,7 @@
 ./usr/share/man/man3/getprotobyname.3		comp-c-man
 ./usr/share/man/man3/getprotobynumber.3		comp-c-man
 ./usr/share/man/man3/getprotoent.3		comp-c-man
+./usr/share/man/man3/getpw.3    	comp-obsolete	obsolete
 ./usr/share/man/man3/getpwent.3		comp-c-man
 ./usr/share/man/man3/getpwnam.3		comp-c-man
 ./usr/share/man/man3/getpwuid.3		comp-c-man
@@ -5452,6 +6697,47 @@
 ./usr/share/man/man3/gmtime.3		comp-c-man
 ./usr/share/man/man3/gmtime_r.3		comp-c-man
 ./usr/share/man/man3/group_from_gid.3		comp-c-man
+./usr/share/man/man3/gss_accept_sec_context.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_acquire_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_add_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_add_oid_set_member.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_canonicalize_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_compare_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_context_time.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_create_empty_oid_set.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_delete_sec_context.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_display_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_display_status.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_duplicate_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_export_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_export_sec_context.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_get_mic.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_import_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_import_sec_context.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_indicate_mechs.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_init_sec_context.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_inquire_context.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_inquire_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_inquire_cred_by_mech.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_inquire_mechs_for_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_inquire_names_for_mech.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_krb5_compat_des3_mic.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_krb5_copy_ccache.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_process_context_token.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_release_buffer.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_release_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_release_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_release_oid_set.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_seal.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_sign.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_test_oid_set_member.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_unseal.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_unwrap.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_verify.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_verify_mic.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_wrap.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gss_wrap_size_limit.3 comp-krb5-man	kerberos
+./usr/share/man/man3/gssapi.3 comp-krb5-man	kerberos
 ./usr/share/man/man3/gtty.3		comp-c-man
 ./usr/share/man/man3/halfdelay.3		comp-c-man
 ./usr/share/man/man3/has_colors.3		comp-c-man
@@ -5484,6 +6770,7 @@
 ./usr/share/man/man3/history_end.3		comp-c-man
 ./usr/share/man/man3/history_init.3		comp-c-man
 ./usr/share/man/man3/hline.3		comp-c-man
+./usr/share/man/man3/hmac.3     	comp-obsolete	obsolete
 ./usr/share/man/man3/hosts_access.3		comp-c-man
 ./usr/share/man/man3/hosts_ctl.3		comp-c-man
 ./usr/share/man/man3/hsearch.3		comp-c-man
@@ -5538,6 +6825,7 @@
 ./usr/share/man/man3/inet_ntop.3		comp-c-man
 ./usr/share/man/man3/inet_pton.3		comp-c-man
 ./usr/share/man/man3/init_color.3		comp-c-man
+./usr/share/man/man3/init_error_table.3		comp-krb5-man	kerberos
 ./usr/share/man/man3/init_pair.3		comp-c-man
 ./usr/share/man/man3/initgroups.3		comp-c-man
 ./usr/share/man/man3/initscr.3		comp-c-man
@@ -5599,10 +6887,225 @@
 ./usr/share/man/man3/jn.3		comp-c-man
 ./usr/share/man/man3/jnf.3		comp-c-man
 ./usr/share/man/man3/jrand48.3		comp-c-man
+./usr/share/man/man3/kafs.3		comp-krb5-man	kerberos
+./usr/share/man/man3/kerberos.3		comp-krb4-man	kerberos4
 ./usr/share/man/man3/keyname.3		comp-c-man
 ./usr/share/man/man3/keypad.3		comp-c-man
 ./usr/share/man/man3/killchar.3		comp-c-man
 ./usr/share/man/man3/killpg.3		comp-c-man
+./usr/share/man/man3/krb5.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_425_conv_principal.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_425_conv_principal_ext.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_524_conv_principal.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_addlog_dest.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_addlog_func.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_addr2sockaddr.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_address.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_address_compare.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_address_order.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_address_search.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_addresses.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_aname_to_localname.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_anyaddr.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_appdefault.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_appdefault_boolean.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_appdefault_string.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_appdefault_time.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_append_addresses.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_free.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_genaddrs.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_getaddrs.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_getflags.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_getkey.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_getlocalsubkey.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_getrcache.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_getremotesubkey.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_getuserkey.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_init.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_initivector.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setaddrs.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setaddrs_from_fd.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setflags.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setivector.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setkey.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setlocalsubkey.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setrcache.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setremotesubkey.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_con_setuserkey.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_context.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_getauthenticator.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_getcksumtype.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_getkeytype.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_getlocalseqnumber.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_getremoteseqnumber.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_setcksumtype.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_setkeytype.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_setlocalseqnumber.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_auth_setremoteseqnumber.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_build_principal.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_build_principal_ext.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_build_principal_va.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_build_principal_va_ext.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_close.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_copy_cache.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_cursor.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_default.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_default_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_destroy.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_end_seq_get.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_gen_new.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_get_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_get_ops.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_get_principal.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_get_type.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_get_version.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_initialize.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_next_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_ops.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_register.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_remove_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_resolve.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_retrieve_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_set_default_name.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_set_flags.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_cc_store_cred.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_ccache.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_checksum_is_collision_proof.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_checksum_is_keyed.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_checksumsize.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_closelog.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_config.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_config_get_bool_default.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_config_get_int_default.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_config_get_string_default.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_config_get_time_default.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_context.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_copy_address.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_copy_addresses.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_copy_data.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_create_checksum.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_crypto_destroy.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_crypto_init.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_data.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_data_alloc.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_data_copy.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_data_free.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_data_realloc.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_data_zero.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_decrypt.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_decrypt_EncryptedData.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_encrypt.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_encrypt_EncryptedData.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_err.3				comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_errx.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_fcc_ops.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_address.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_addresses.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_context.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_data.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_data_contents.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_host_realm.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_krbhst.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_free_principal.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_all_client_addrs.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_all_server_addrs.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_default_realm.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_default_realms.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_host_realm.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_krb524hst.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_krb_admin_hst.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_krb_changepw_hst.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_get_krbhst.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_h_addr2addr.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_h_addr2sockaddr.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_init_context.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_initlog.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_keytab.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_keytab_entry.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_krbhst_format_string.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_krbhst_free.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_krbhst_get_addrinfo.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_krbhst_init.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_krbhst_next.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_krbhst_next_as_string.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_krbhst_reset.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_add_entry.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_close.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_compare.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_copy_entry_contents.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_cursor.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_default.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_default_name.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_end_seq_get.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_free_entry.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_get_entry.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_get_name.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_get_type.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_next_entry.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_ops.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_read_service_key.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_register.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_remove_entry.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_resolve.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kt_start_seq_get.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_kuserok.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_log.3				comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_log_msg.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_make_addrport.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_make_principal.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_max_sockaddr_size.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_mcc_ops.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_openlog.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_parse_address.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_parse_name.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_principal_get_comp_string.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_principal_get_realm.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_print_address.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_set_default_realm.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_set_warn_dest.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_sname_to_principal.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_sock_to_principal.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_sockaddr2address.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_sockaddr2port.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_sockaddr_uninteresting.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_timeofday.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_unparse_name.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_us_timeofday.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_checksum.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_opt_init.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_opt_set_flags.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_opt_set_keytab.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_opt_set_secure.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_opt_set_service.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_user.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_user_lrealm.3		comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verify_user_opt.3 comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verr.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_verrx.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_vlog.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_vlog_msg.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_vwarn.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_vwarnx.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_warn.3	comp-krb5-man	kerberos
+./usr/share/man/man3/krb5_warnx.3			comp-krb5-man	kerberos
+./usr/share/man/man3/krb_ck_repl.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_get_cred.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_get_krbhst.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_get_lrealm.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_get_phost.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_kntoln.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_mk_err.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_mk_priv.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_mk_req.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_mk_safe.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_rd_err.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_rd_priv.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_rd_req.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_rd_safe.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_realmofhost.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_sendauth.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_set_key.3	comp-krb4-man	kerberos4
+./usr/share/man/man3/krb_set_tkt_string.3	comp-krb4-man	kerberos4
 ./usr/share/man/man3/kvm.3		comp-c-man
 ./usr/share/man/man3/kvm_close.3		comp-c-man
 ./usr/share/man/man3/kvm_dump.3		comp-c-man
@@ -5637,7 +7140,9 @@
 ./usr/share/man/man3/lgammaf.3		comp-c-man
 ./usr/share/man/man3/lgammaf_r.3		comp-c-man
 ./usr/share/man/man3/lh_stats.3		comp-c-man
+./usr/share/man/man3/lhash.3    	comp-obsolete	obsolete
 ./usr/share/man/man3/libmagic.3		comp-c-man
+./usr/share/man/man3/libusb.3   	comp-obsolete	obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man
 ./usr/share/man/man3/link_addr.3		comp-c-man
 ./usr/share/man/man3/link_field.3	comp-c-man
@@ -5645,6 +7150,17 @@
 ./usr/share/man/man3/link_ntoa.3		comp-c-man
 ./usr/share/man/man3/linkaddr.3		comp-c-man
 ./usr/share/man/man3/linkntoa.3		comp-c-man
+./usr/share/man/man3/list_empty.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_entry.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_first.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_head_initializer.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_init.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_insert_after.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_insert_before.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_insert_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_next.3	comp-obsolete	obsolete
+./usr/share/man/man3/list_remove.3	comp-obsolete	obsolete
 ./usr/share/man/man3/llabs.3		comp-c-man
 ./usr/share/man/man3/lldiv.3		comp-c-man
 ./usr/share/man/man3/localeconv.3		comp-c-man
@@ -5701,6 +7217,7 @@
 ./usr/share/man/man3/md2.3		comp-c-man
 ./usr/share/man/man3/md4.3		comp-c-man
 ./usr/share/man/man3/md5.3		comp-c-man
+./usr/share/man/man3/mdc2.3     	comp-obsolete	obsolete
 ./usr/share/man/man3/memccpy.3		comp-c-man
 ./usr/share/man/man3/memchr.3		comp-c-man
 ./usr/share/man/man3/memcmp.3		comp-c-man
@@ -5872,10 +7389,10 @@
 ./usr/share/man/man3/pthread.3		comp-c-man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man
 ./usr/share/man/man3/pthread_attr.3	comp-c-man
-./usr/share/man/man3/pthread_attr_setcreatesuspend_np.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_destroy.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_getdetachstate.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_init.3	comp-c-man
+./usr/share/man/man3/pthread_attr_setcreatesuspend_np.3	comp-c-man
 ./usr/share/man/man3/pthread_attr_setdetachstate.3	comp-c-man
 ./usr/share/man/man3/pthread_barierattr_destroy.3	comp-c-man
 ./usr/share/man/man3/pthread_barierattr_init.3	comp-c-man
@@ -5935,12 +7452,12 @@
 ./usr/share/man/man3/pthread_setcanceltype.3	comp-c-man
 ./usr/share/man/man3/pthread_setschedparam.3	comp-c-man
 ./usr/share/man/man3/pthread_setspecific.3	comp-c-man
-./usr/share/man/man3/pthread_suspend_np.3	comp-c-man
 ./usr/share/man/man3/pthread_sigmask.3	comp-c-man
 ./usr/share/man/man3/pthread_spin_destroy.3	comp-c-man
 ./usr/share/man/man3/pthread_spin_init.3	comp-c-man
 ./usr/share/man/man3/pthread_spin_lock.3	comp-c-man
 ./usr/share/man/man3/pthread_spin_unlock.3	comp-c-man
+./usr/share/man/man3/pthread_suspend_np.3	comp-c-man
 ./usr/share/man/man3/pthread_testcancel.3	comp-c-man
 ./usr/share/man/man3/putc.3		comp-c-man
 ./usr/share/man/man3/putc_unlocked.3		comp-c-man
@@ -5982,6 +7499,7 @@
 ./usr/share/man/man3/randomid_delete.3		comp-c-man
 ./usr/share/man/man3/randomid_new.3		comp-c-man
 ./usr/share/man/man3/raw.3		comp-c-man
+./usr/share/man/man3/rc4.3      	comp-obsolete	obsolete
 ./usr/share/man/man3/rcmd.3		comp-c-man
 ./usr/share/man/man3/rcmd_af.3		comp-c-man
 ./usr/share/man/man3/re_comp.3		comp-c-man
@@ -5999,6 +7517,7 @@
 ./usr/share/man/man3/regexp.3		comp-c-man
 ./usr/share/man/man3/regfree.3		comp-c-man
 ./usr/share/man/man3/registerrpc.3		comp-c-man
+./usr/share/man/man3/regsterrpc.3	comp-obsolete	obsolete
 ./usr/share/man/man3/remainder.3		comp-c-man
 ./usr/share/man/man3/remainderf.3		comp-c-man
 ./usr/share/man/man3/remove.3		comp-c-man
@@ -6010,6 +7529,7 @@
 ./usr/share/man/man3/res_query.3		comp-c-man
 ./usr/share/man/man3/res_search.3		comp-c-man
 ./usr/share/man/man3/res_send.3		comp-c-man
+./usr/share/man/man3/reset_com_err_hook.3	comp-krb5-man	kerberos
 ./usr/share/man/man3/reset_prog_mode.3		comp-c-man
 ./usr/share/man/man3/reset_shell_mode.3		comp-c-man
 ./usr/share/man/man3/resetty.3		comp-c-man
@@ -6021,6 +7541,7 @@
 ./usr/share/man/man3/rindex.3		comp-c-man
 ./usr/share/man/man3/rint.3		comp-c-man
 ./usr/share/man/man3/rintf.3		comp-c-man
+./usr/share/man/man3/ripemd.3   	comp-obsolete	obsolete
 ./usr/share/man/man3/rmd160.3	comp-c-man
 ./usr/share/man/man3/rmtops.3		comp-c-man
 ./usr/share/man/man3/rpc.3		comp-c-man
@@ -6047,6 +7568,7 @@
 ./usr/share/man/man3/rpcbind.3	comp-c-man
 ./usr/share/man/man3/rresvport.3		comp-c-man
 ./usr/share/man/man3/rresvport_af.3		comp-c-man
+./usr/share/man/man3/rsa.3      	comp-obsolete	obsolete
 ./usr/share/man/man3/ruserok.3		comp-c-man
 ./usr/share/man/man3/savetty.3		comp-c-man
 ./usr/share/man/man3/scalb.3		comp-c-man
@@ -6061,6 +7583,7 @@
 ./usr/share/man/man3/scroll.3		comp-c-man
 ./usr/share/man/man3/scrollok.3		comp-c-man
 ./usr/share/man/man3/secure_path.3	comp-c-man
+./usr/share/man/man3/securepath.3	comp-obsolete	obsolete
 ./usr/share/man/man3/seed48.3		comp-c-man
 ./usr/share/man/man3/seekdir.3		comp-c-man
 ./usr/share/man/man3/sem_close.3	comp-c-man
@@ -6072,6 +7595,7 @@
 ./usr/share/man/man3/sem_trywait.3	comp-c-man
 ./usr/share/man/man3/sem_unlink.3	comp-c-man
 ./usr/share/man/man3/sem_wait.3		comp-c-man
+./usr/share/man/man3/set_com_err_hook.3	comp-krb5-man	kerberos
 ./usr/share/man/man3/set_current_field.3	comp-c-man
 ./usr/share/man/man3/set_field_back.3	comp-c-man
 ./usr/share/man/man3/set_field_buffer.3	comp-c-man
@@ -6137,6 +7661,7 @@
 ./usr/share/man/man3/setusershell.3		comp-c-man
 ./usr/share/man/man3/setutxent.3		comp-c-man
 ./usr/share/man/man3/setvbuf.3		comp-c-man
+./usr/share/man/man3/sha.3      	comp-obsolete	obsolete
 ./usr/share/man/man3/sha1.3		comp-c-man
 ./usr/share/man/man3/shquote.3		comp-c-man
 ./usr/share/man/man3/shquotev.3		comp-c-man
@@ -6165,6 +7690,17 @@
 ./usr/share/man/man3/sigsetmask.3		comp-c-man
 ./usr/share/man/man3/sigsetops.3		comp-c-man
 ./usr/share/man/man3/sigvec.3		comp-c-man
+./usr/share/man/man3/simpleq_empty.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_entry.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_first.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_head_initializer.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_init.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_insert_after.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_insert_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_insert_tail.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_next.3	comp-obsolete	obsolete
+./usr/share/man/man3/simpleq_remove_head.3	comp-obsolete	obsolete
 ./usr/share/man/man3/sin.3		comp-c-man
 ./usr/share/man/man3/sinf.3		comp-c-man
 ./usr/share/man/man3/sinh.3		comp-c-man
@@ -6265,6 +7801,8 @@
 ./usr/share/man/man3/svc_freeargs.3	comp-c-man
 ./usr/share/man/man3/svc_getargs.3		comp-c-man
 ./usr/share/man/man3/svc_getcaller.3		comp-c-man
+./usr/share/man/man3/svc_getreg.3	comp-obsolete	obsolete
+./usr/share/man/man3/svc_getregset.3	comp-obsolete	obsolete
 ./usr/share/man/man3/svc_getreq_common.3	comp-c-man
 ./usr/share/man/man3/svc_getreq_poll.3	comp-c-man
 ./usr/share/man/man3/svc_getreqset.3	comp-c-man
@@ -6308,6 +7846,18 @@
 ./usr/share/man/man3/t_getstr.3		comp-c-man
 ./usr/share/man/man3/t_goto.3		comp-c-man
 ./usr/share/man/man3/t_puts.3		comp-c-man
+./usr/share/man/man3/tailq_empty.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_entry.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_first.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_head_initializer.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_init.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_insert_after.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_insert_before.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_insert_head.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_insert_tail.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_next.3	comp-obsolete	obsolete
+./usr/share/man/man3/tailq_remove.3	comp-obsolete	obsolete
 ./usr/share/man/man3/tan.3		comp-c-man
 ./usr/share/man/man3/tanf.3		comp-c-man
 ./usr/share/man/man3/tanh.3		comp-c-man
@@ -6332,6 +7882,7 @@
 ./usr/share/man/man3/tgetnum.3		comp-c-man
 ./usr/share/man/man3/tgetstr.3		comp-c-man
 ./usr/share/man/man3/tgoto.3		comp-c-man
+./usr/share/man/man3/threads.3  	comp-obsolete	obsolete
 ./usr/share/man/man3/time.3		comp-c-man
 ./usr/share/man/man3/time2posix.3		comp-c-man
 ./usr/share/man/man3/timeout.3		comp-c-man
@@ -6381,6 +7932,7 @@
 ./usr/share/man/man3/unvis.3		comp-c-man
 ./usr/share/man/man3/updlastlogx.3		comp-c-man
 ./usr/share/man/man3/updwtmpx.3		comp-c-man
+./usr/share/man/man3/usb.3      	comp-obsolete	obsolete
 ./usr/share/man/man3/usbhid.3		comp-c-man
 ./usr/share/man/man3/use_default_colors.3		comp-c-man
 ./usr/share/man/man3/user_from_uid.3		comp-c-man
@@ -6400,6 +7952,7 @@
 ./usr/share/man/man3/vfprintf.3		comp-c-man
 ./usr/share/man/man3/vfscanf.3		comp-c-man
 ./usr/share/man/man3/vis.3		comp-c-man
+./usr/share/man/man3/vlimit.3   	comp-obsolete	obsolete
 ./usr/share/man/man3/vline.3		comp-c-man
 ./usr/share/man/man3/vprintf.3		comp-c-man
 ./usr/share/man/man3/vscanf.3		comp-c-man
@@ -6407,6 +7960,7 @@
 ./usr/share/man/man3/vsprintf.3		comp-c-man
 ./usr/share/man/man3/vsscanf.3		comp-c-man
 ./usr/share/man/man3/vsyslog.3		comp-c-man
+./usr/share/man/man3/vtimes.3   	comp-obsolete	obsolete
 ./usr/share/man/man3/vwarn.3		comp-c-man
 ./usr/share/man/man3/vwarnx.3		comp-c-man
 ./usr/share/man/man3/waddch.3		comp-c-man
@@ -6670,6 +8224,7 @@
 ./usr/share/man/man9/VOP_WHITEOUT.9		comp-sys-man
 ./usr/share/man/man9/VOP_WRITE.9		comp-sys-man
 ./usr/share/man/man9/VREF.9		comp-sys-man
+./usr/share/man/man9/access.9   	comp-obsolete	obsolete
 ./usr/share/man/man9/allocbuf.9			comp-sys-man
 ./usr/share/man/man9/altq.9		comp-sys-man
 ./usr/share/man/man9/aprint_debug.9	comp-sys-man
@@ -6764,6 +8319,8 @@
 ./usr/share/man/man9/cache_purgevfs.9		comp-sys-man
 ./usr/share/man/man9/cache_revlookup.9		comp-sys-man
 ./usr/share/man/man9/callout.9		comp-sys-man
+./usr/share/man/man9/callout_active.9	comp-obsolete	obsolete
+./usr/share/man/man9/callout_deactivate.9	comp-obsolete	obsolete
 ./usr/share/man/man9/callout_init.9	comp-sys-man
 ./usr/share/man/man9/callout_pending.9	comp-sys-man
 ./usr/share/man/man9/callout_reset.9	comp-sys-man
@@ -6836,6 +8393,7 @@
 ./usr/share/man/man9/cpu_swapin.9	comp-sys-man
 ./usr/share/man/man9/cpu_swapout.9	comp-sys-man
 ./usr/share/man/man9/cpu_switch.9		comp-sys-man
+./usr/share/man/man9/cpu_sysctl.9	comp-obsolete	obsolete
 ./usr/share/man/man9/cpu_wait.9	comp-sys-man
 ./usr/share/man/man9/crcopy.9		comp-sys-man
 ./usr/share/man/man9/crcvt.9		comp-sys-man
@@ -6864,6 +8422,7 @@
 ./usr/share/man/man9/disk_attach.9		comp-sys-man
 ./usr/share/man/man9/disk_busy.9		comp-sys-man
 ./usr/share/man/man9/disk_detach.9		comp-sys-man
+./usr/share/man/man9/disk_detatch.9	comp-obsolete	obsolete
 ./usr/share/man/man9/disk_find.9		comp-sys-man
 ./usr/share/man/man9/disk_init.9		comp-sys-man
 ./usr/share/man/man9/disk_resetstat.9		comp-sys-man
@@ -7005,6 +8564,7 @@
 ./usr/share/man/man9/issignal.9			comp-sys-man
 ./usr/share/man/man9/itimerfix.9		comp-sys-man
 ./usr/share/man/man9/kcopy.9	comp-sys-man
+./usr/share/man/man9/kernacc.9  	comp-obsolete	obsolete
 ./usr/share/man/man9/kfilter_register.9		comp-sys-man
 ./usr/share/man/man9/kfilter_unregister.9	comp-sys-man
 ./usr/share/man/man9/killproc.9			comp-sys-man
@@ -7118,6 +8678,7 @@
 ./usr/share/man/man9/pcmcia_scan_cis.9		comp-sys-man
 ./usr/share/man/man9/pfil.9		comp-sys-man
 ./usr/share/man/man9/pfil_add_hook.9		comp-sys-man
+./usr/share/man/man9/pfil_get_head.9	comp-obsolete	obsolete
 ./usr/share/man/man9/pfil_head_get.9		comp-sys-man
 ./usr/share/man/man9/pfil_head_register.9		comp-sys-man
 ./usr/share/man/man9/pfil_head_unregister.9		comp-sys-man
@@ -7126,8 +8687,8 @@
 ./usr/share/man/man9/pfil_run_hooks.9		comp-sys-man
 ./usr/share/man/man9/pgsignal.9		comp-sys-man
 ./usr/share/man/man9/physio.9		comp-sys-man
-./usr/share/man/man9/pmatch.9		comp-sys-man
 ./usr/share/man/man9/pmap.9		comp-sys-man
+./usr/share/man/man9/pmatch.9		comp-sys-man
 ./usr/share/man/man9/pmc.9		comp-sys-man
 ./usr/share/man/man9/pmc_accumulate.9		comp-sys-man
 ./usr/share/man/man9/pmc_alloc_kernel_counter.9		comp-sys-man
@@ -7238,7 +8799,9 @@
 ./usr/share/man/man9/simple_lock_freecheck.9	comp-sys-man
 ./usr/share/man/man9/simple_lock_init.9	comp-sys-man
 ./usr/share/man/man9/simple_lock_try.9	comp-sys-man
+./usr/share/man/man9/simple_lock_unlock.9	comp-obsolete	obsolete
 ./usr/share/man/man9/simple_unlock.9	comp-sys-man
+./usr/share/man/man9/sleep.9    	comp-obsolete	obsolete
 ./usr/share/man/man9/snprintf.9		comp-sys-man
 ./usr/share/man/man9/softintr.9		comp-sys-man
 ./usr/share/man/man9/softintr_disestablish.9		comp-sys-man
@@ -7309,6 +8872,7 @@
 ./usr/share/man/man9/untimeout.9		comp-sys-man
 ./usr/share/man/man9/uprintf.9		comp-sys-man
 ./usr/share/man/man9/usbdi.9		comp-sys-man
+./usr/share/man/man9/useracc.9  	comp-obsolete	obsolete
 ./usr/share/man/man9/userret.9		comp-sys-man
 ./usr/share/man/man9/uvm.9		comp-sys-man
 ./usr/share/man/man9/uvm_chgkprot.9		comp-sys-man
@@ -7347,9 +8911,12 @@
 ./usr/share/man/man9/uvm_setpagesize.9		comp-sys-man
 ./usr/share/man/man9/uvm_swap_init.9		comp-sys-man
 ./usr/share/man/man9/uvm_swapin.9		comp-sys-man
+./usr/share/man/man9/uvm_sysctl.9	comp-obsolete	obsolete
 ./usr/share/man/man9/uvm_unloan.9		comp-sys-man
 ./usr/share/man/man9/uvm_useracc.9		comp-sys-man
 ./usr/share/man/man9/uvm_vnp_setsize.9		comp-sys-man
+./usr/share/man/man9/uvm_vnp_sync.9	comp-obsolete	obsolete
+./usr/share/man/man9/uvm_vnp_terminate.9	comp-obsolete	obsolete
 ./usr/share/man/man9/uvm_vslock.9		comp-sys-man
 ./usr/share/man/man9/uvm_vsunlock.9		comp-sys-man
 ./usr/share/man/man9/uvmspace_alloc.9		comp-sys-man
@@ -7384,6 +8951,7 @@
 ./usr/share/man/man9/vfs_setpublicfs.9		comp-sys-man
 ./usr/share/man/man9/vfs_showexport.9		comp-sys-man
 ./usr/share/man/man9/vfs_shutdown.9		comp-sys-man
+./usr/share/man/man9/vfs_sysctl.9	comp-obsolete	obsolete
 ./usr/share/man/man9/vfs_unbusy.9		comp-sys-man
 ./usr/share/man/man9/vfs_unmountall.9		comp-sys-man
 ./usr/share/man/man9/vfs_write_resume.9		comp-sys-man
@@ -7442,8 +9010,10 @@
 ./usr/share/man/man9/vrecycle.9		comp-sys-man
 ./usr/share/man/man9/vref.9		comp-sys-man
 ./usr/share/man/man9/vrele.9		comp-sys-man
+./usr/share/man/man9/vslock.9   	comp-obsolete	obsolete
 ./usr/share/man/man9/vsnprintf.9		comp-sys-man
 ./usr/share/man/man9/vsprintf.9		comp-sys-man
+./usr/share/man/man9/vsunlock.9 	comp-obsolete	obsolete
 ./usr/share/man/man9/vtruncbuf.9		comp-sys-man
 ./usr/share/man/man9/vwakeup.9		comp-sys-man
 ./usr/share/man/man9/wakeup.9		comp-sys-man
@@ -7475,13 +9045,17 @@
 ./usr/share/man/man9/wsmouse.9		comp-sys-man
 ./usr/share/man/man9/wsmouse_input.9		comp-sys-man
 ./usr/share/man/man9/wsmousedevprint.9		comp-sys-man
+./usr/share/misc/gprof.callg    	comp-obsolete	obsolete
+./usr/share/misc/gprof.flat     	comp-obsolete	obsolete
 ./usr/share/misc/indent.pro		comp-util-share
 ./usr/share/misc/menu_sys.def		comp-c-share
 ./usr/share/misc/msg_sys.def		comp-c-share
 ./usr/share/misc/operator		comp-c-share
 ./usr/share/misc/style			comp-c-share
 ./usr/share/mk/bsd.README		comp-util-share
+./usr/share/mk/bsd.crypto.mk    	comp-obsolete	obsolete
 ./usr/share/mk/bsd.dep.mk		comp-util-share
+./usr/share/mk/bsd.depall.mk    	comp-obsolete	obsolete
 ./usr/share/mk/bsd.doc.mk		comp-util-share
 ./usr/share/mk/bsd.endian.mk		comp-util-share
 ./usr/share/mk/bsd.files.mk		comp-util-share
@@ -7500,6 +9074,8 @@
 ./usr/share/mk/bsd.nls.mk		comp-util-share
 ./usr/share/mk/bsd.obj.mk		comp-util-share
 ./usr/share/mk/bsd.own.mk		comp-util-share
+./usr/share/mk/bsd.port.mk      	comp-obsolete	obsolete
+./usr/share/mk/bsd.port.subdir.mk	comp-obsolete	obsolete
 ./usr/share/mk/bsd.prog.mk		comp-util-share
 ./usr/share/mk/bsd.rpc.mk		comp-util-share
 ./usr/share/mk/bsd.shlib.mk		comp-util-share

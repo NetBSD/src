@@ -1,6 +1,6 @@
 #! /bin/sh --
 #
-#	$NetBSD: checkflist,v 1.23 2003/10/26 14:21:49 dmcmahill Exp $
+#	$NetBSD: checkflist,v 1.24 2003/12/29 03:13:25 lukem Exp $
 #
 # Verify output of makeflist against contents of $DESTDIR.
 
@@ -11,6 +11,7 @@ fi
 
 prog=${0##*/}
 
+: ${HOST_SH=sh}
 : ${MKTEMP=mktemp}
 SDIR=$(${MKTEMP} -d /tmp/${prog}.XXXXXX)
 
@@ -34,41 +35,38 @@ allowextra=false
 allowmissing=false
 
 # handle args
-while : ; do
-	case $1 in
-	-x11)
+while getopts xbM:em ch; do
+	case ${ch} in
+	x)
 		xargs="-x"
 		origin="./etc/X11 ./etc/fonts ./usr/X11R6"
 		;;
-	-both)
+	b)
 		xargs="-b"
 		;;
-	-M)
-		metalog=$2; shift
+	M)
+		metalog=${OPTARG}
 		;;
-	-e)
+	e)
 		allowextra=true
 		;;
-	-m)
+	m)
 		allowmissing=true
 		;;
-	-*)
+	*)
 		cat 1>&2 <<USAGE
-Usage: ${prog} [-x11|-both] [-M metalog] [-e] [-m]
-	-x11		check only x11 lists
-	-both		check netbsd + x11 lists
+Usage: ${prog} [-x|-b] [-M metalog] [-e] [-m]
+	-x		check only x11 lists
+	-b		check netbsd + x11 lists
 	-M metalog	metalog file
 	-e		extra files are not considered an error
 	-m		missing files are not considered an error
 USAGE
 		exit 1
 		;;
-	*)
-		break
-		;;
 	esac
-	shift
 done
+shift $((${OPTIND} - 1))
 
 if [ -n "$metalog" ]; then
 	case "$metalog" in
@@ -83,7 +81,7 @@ if [ -n "$metalog" ]; then
 fi
 
 
-sh makeflist $xargs $dargs > $SDIR/flist
+${HOST_SH} ./makeflist $xargs $dargs > $SDIR/flist
 
 (
 	cd $DESTDIR

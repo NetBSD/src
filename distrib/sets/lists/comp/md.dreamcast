@@ -1,4 +1,4 @@
-# $NetBSD: md.dreamcast,v 1.6 2003/01/18 17:50:23 thorpej Exp $
+# $NetBSD: md.dreamcast,v 1.7 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/dreamcast				comp-c-include
 ./usr/include/dreamcast/_G_config.h		comp-c-include
 ./usr/include/dreamcast/ansi.h			comp-c-include
@@ -8,6 +8,7 @@
 ./usr/include/dreamcast/bus.h			comp-c-include
 ./usr/include/dreamcast/cdefs.h			comp-c-include
 ./usr/include/dreamcast/coff_machdep.h		comp-c-include
+./usr/include/dreamcast/conf.h  	comp-obsolete	obsolete
 ./usr/include/dreamcast/cpu.h			comp-c-include
 ./usr/include/dreamcast/cputypes.h		comp-c-include
 ./usr/include/dreamcast/db_machdep.h		comp-c-include
@@ -23,8 +24,8 @@
 ./usr/include/dreamcast/int_fmtio.h		comp-c-include
 ./usr/include/dreamcast/int_limits.h		comp-c-include
 ./usr/include/dreamcast/int_mwgwtypes.h		comp-c-include
-./usr/include/dreamcast/intr.h			comp-c-include
 ./usr/include/dreamcast/int_types.h		comp-c-include
+./usr/include/dreamcast/intr.h			comp-c-include
 ./usr/include/dreamcast/limits.h		comp-c-include
 ./usr/include/dreamcast/lock.h			comp-c-include
 ./usr/include/dreamcast/math.h			comp-c-include
@@ -42,6 +43,8 @@
 ./usr/include/dreamcast/setjmp.h		comp-c-include
 ./usr/include/dreamcast/signal.h		comp-c-include
 ./usr/include/dreamcast/stdarg.h		comp-c-include
+./usr/include/dreamcast/trap.h  	comp-obsolete	obsolete
 ./usr/include/dreamcast/types.h			comp-c-include
 ./usr/include/dreamcast/varargs.h		comp-c-include
 ./usr/include/dreamcast/vmparam.h		comp-c-include
+./usr/include/sh3/db_disasm.h   	comp-obsolete	obsolete

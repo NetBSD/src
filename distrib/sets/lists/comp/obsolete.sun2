@@ -1,3 +1,0 @@
-# $NetBSD: obsolete.sun2,v 1.5 2003/12/13 22:02:34 chs Exp $
-./usr/include/sun2/_G_config.h
-./usr/include/sun2/svr4_machdep.h

@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.sun3,v 1.4 2003/10/24 18:32:16 mycroft Exp $
-./usr/include/sun3/_G_config.h
-./usr/include/sun3/fbio.h
-./usr/include/sun3/svr4_machdep.h

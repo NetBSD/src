@@ -1,9 +1,12 @@
-# $NetBSD: md.news68k,v 1.18 2003/10/24 18:32:16 mycroft Exp $
+# $NetBSD: md.news68k,v 1.19 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/news68k	comp-c-include
+./usr/include/news68k/_G_config.h	comp-obsolete	obsolete
 ./usr/include/news68k/ansi.h	comp-c-include
 ./usr/include/news68k/aout_machdep.h	comp-c-include
 ./usr/include/news68k/asm.h	comp-c-include
 ./usr/include/news68k/autoconf.h	comp-c-include
+./usr/include/news68k/bbinfo.h  	comp-obsolete	obsolete
 ./usr/include/news68k/bswap.h	comp-c-include
 ./usr/include/news68k/bus.h	comp-c-include
 ./usr/include/news68k/cdefs.h	comp-c-include
@@ -41,8 +44,8 @@
 ./usr/include/news68k/setjmp.h	comp-c-include
 ./usr/include/news68k/signal.h	comp-c-include
 ./usr/include/news68k/stdarg.h	comp-c-include
+./usr/include/news68k/svr4_machdep.h	comp-obsolete	obsolete
 ./usr/include/news68k/trap.h	comp-c-include
 ./usr/include/news68k/types.h	comp-c-include
 ./usr/include/news68k/varargs.h	comp-c-include
 ./usr/include/news68k/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

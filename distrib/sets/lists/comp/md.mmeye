@@ -1,14 +1,18 @@
-# $NetBSD: md.mmeye,v 1.18 2003/01/18 17:50:26 thorpej Exp $
+# $NetBSD: md.mmeye,v 1.19 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/mmeye	comp-c-include
 ./usr/include/mmeye/_G_config.h	comp-c-include
 ./usr/include/mmeye/ansi.h	comp-c-include
 ./usr/include/mmeye/aout_machdep.h	comp-c-include
 ./usr/include/mmeye/asm.h	comp-c-include
+./usr/include/mmeye/bootinfo.h  	comp-obsolete	obsolete
 ./usr/include/mmeye/bswap.h	comp-c-include
 ./usr/include/mmeye/bus.h	comp-c-include
 ./usr/include/mmeye/cdefs.h	comp-c-include
 ./usr/include/mmeye/coff_machdep.h	comp-c-include
+./usr/include/mmeye/conf.h      	comp-obsolete	obsolete
 ./usr/include/mmeye/cpu.h	comp-c-include
+./usr/include/mmeye/cpufunc.h   	comp-obsolete	obsolete
 ./usr/include/mmeye/cputypes.h	comp-c-include
 ./usr/include/mmeye/db_machdep.h	comp-c-include
 ./usr/include/mmeye/disklabel.h	comp-c-include
@@ -26,12 +30,14 @@
 ./usr/include/mmeye/int_types.h	comp-c-include
 ./usr/include/mmeye/intr.h	comp-c-include
 ./usr/include/mmeye/limits.h	comp-c-include
+./usr/include/mmeye/loadfile_machdep.h	comp-obsolete	obsolete
 ./usr/include/mmeye/lock.h	comp-c-include
 ./usr/include/mmeye/math.h	comp-c-include
 ./usr/include/mmeye/mcontext.h	comp-c-include
 ./usr/include/mmeye/mmeye.h	comp-c-include
 ./usr/include/mmeye/param.h	comp-c-include
 ./usr/include/mmeye/pcb.h	comp-c-include
+./usr/include/mmeye/pio.h       	comp-obsolete	obsolete
 ./usr/include/mmeye/pmap.h	comp-c-include
 ./usr/include/mmeye/pmc.h	comp-c-include
 ./usr/include/mmeye/proc.h	comp-c-include
@@ -40,10 +46,13 @@
 ./usr/include/mmeye/pte.h	comp-c-include
 ./usr/include/mmeye/ptrace.h	comp-c-include
 ./usr/include/mmeye/reg.h	comp-c-include
+./usr/include/mmeye/segments.h  	comp-obsolete	obsolete
 ./usr/include/mmeye/setjmp.h	comp-c-include
+./usr/include/mmeye/shbvar.h    	comp-obsolete	obsolete
 ./usr/include/mmeye/signal.h	comp-c-include
 ./usr/include/mmeye/stdarg.h	comp-c-include
+./usr/include/mmeye/trap.h      	comp-obsolete	obsolete
 ./usr/include/mmeye/types.h	comp-c-include
 ./usr/include/mmeye/varargs.h	comp-c-include
 ./usr/include/mmeye/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include
+./usr/include/sh3/db_disasm.h   	comp-obsolete	obsolete

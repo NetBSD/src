@@ -1,8 +1,11 @@
-# $NetBSD: md.amiga,v 1.50 2003/01/15 07:28:09 mhitch Exp $
+# $NetBSD: md.amiga,v 1.51 2003/12/29 03:13:25 lukem Exp $
 ./sbin/binpatch				base-sysutil-root
 ./usr/mdec/boot.amiga			base-sysutil-bin
 ./usr/mdec/bootxx_fd			base-sysutil-bin
 ./usr/mdec/bootxx_ffs			base-sysutil-bin
+./usr/mdec/fdboot			base-obsolete	obsolete
+./usr/mdec/installboot			base-obsolete	obsolete
+./usr/mdec/xxboot			base-obsolete	obsolete
 ./usr/sbin/grfconfig			base-sysutil-bin
 ./usr/sbin/iteconfig			base-sysutil-bin
 ./usr/sbin/loadkmap			base-sysutil-bin

@@ -1,4 +1,0 @@
-# $NetBSD: obsolete.news68k,v 1.4 2003/10/24 18:32:16 mycroft Exp $
-./usr/include/news68k/_G_config.h
-./usr/include/news68k/bbinfo.h
-./usr/include/news68k/svr4_machdep.h

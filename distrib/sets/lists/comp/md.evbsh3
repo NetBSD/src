@@ -1,13 +1,17 @@
-# $NetBSD: md.evbsh3,v 1.19 2003/01/18 17:50:24 thorpej Exp $
+# $NetBSD: md.evbsh3,v 1.20 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/evbsh3	comp-c-include
+./usr/include/evbsh3/_G_config.h	comp-c-include
 ./usr/include/evbsh3/ansi.h	comp-c-include
 ./usr/include/evbsh3/aout_machdep.h	comp-c-include
 ./usr/include/evbsh3/asm.h	comp-c-include
+./usr/include/evbsh3/bootinfo.h 	comp-obsolete	obsolete
 ./usr/include/evbsh3/bswap.h	comp-c-include
 ./usr/include/evbsh3/bus.h	comp-c-include
 ./usr/include/evbsh3/cdefs.h	comp-c-include
 ./usr/include/evbsh3/coff_machdep.h	comp-c-include
+./usr/include/evbsh3/conf.h     	comp-obsolete	obsolete
 ./usr/include/evbsh3/cpu.h	comp-c-include
+./usr/include/evbsh3/cpufunc.h  	comp-obsolete	obsolete
 ./usr/include/evbsh3/cputypes.h	comp-c-include
 ./usr/include/evbsh3/db_machdep.h	comp-c-include
 ./usr/include/evbsh3/disklabel.h	comp-c-include
@@ -28,8 +32,10 @@
 ./usr/include/evbsh3/lock.h	comp-c-include
 ./usr/include/evbsh3/math.h	comp-c-include
 ./usr/include/evbsh3/mcontext.h	comp-c-include
+./usr/include/evbsh3/mmeye.h    	comp-obsolete	obsolete
 ./usr/include/evbsh3/param.h	comp-c-include
 ./usr/include/evbsh3/pcb.h	comp-c-include
+./usr/include/evbsh3/pio.h      	comp-obsolete	obsolete
 ./usr/include/evbsh3/pmap.h	comp-c-include
 ./usr/include/evbsh3/pmc.h	comp-c-include
 ./usr/include/evbsh3/proc.h	comp-c-include
@@ -38,11 +44,14 @@
 ./usr/include/evbsh3/pte.h	comp-c-include
 ./usr/include/evbsh3/ptrace.h	comp-c-include
 ./usr/include/evbsh3/reg.h	comp-c-include
+./usr/include/evbsh3/segments.h 	comp-obsolete	obsolete
 ./usr/include/evbsh3/setjmp.h	comp-c-include
+./usr/include/evbsh3/shbvar.h   	comp-obsolete	obsolete
 ./usr/include/evbsh3/signal.h	comp-c-include
 ./usr/include/evbsh3/stdarg.h	comp-c-include
+./usr/include/evbsh3/trap.h     	comp-obsolete	obsolete
 ./usr/include/evbsh3/types.h	comp-c-include
 ./usr/include/evbsh3/varargs.h	comp-c-include
 ./usr/include/evbsh3/vmparam.h	comp-c-include
-./usr/include/evbsh3/_G_config.h	comp-c-include
 ./usr/include/ieeefp.h		comp-c-include
+./usr/include/sh3/db_disasm.h   	comp-obsolete	obsolete

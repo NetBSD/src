@@ -1,6 +1,0 @@
-# $NetBSD: obsolete.pmax,v 1.7 2003/10/25 22:26:09 mycroft Exp $
-./usr/include/pmax/_G_config.h
-./usr/include/pmax/conf.h
-./usr/include/pmax/dec_boot.h
-./usr/include/pmax/elf.h
-./usr/include/pmax/fbio.h

@@ -1,4 +1,4 @@
-# $NetBSD: md.x68k,v 1.37 2002/01/27 01:09:15 minoura Exp $
+# $NetBSD: md.x68k,v 1.38 2003/12/29 03:13:26 lukem Exp $
 ./usr/bin/bellctrl				base-util-bin
 ./usr/bin/loadfont				base-util-bin
 ./usr/bin/loadkmap				base-util-bin
@@ -9,10 +9,12 @@
 ./usr/mdec/fdboot_ufs				base-sysutil-bin
 ./usr/mdec/fdboot_ustar				base-sysutil-bin
 ./usr/mdec/installboot				base-sysutil-bin
+./usr/mdec/installboot.new		base-obsolete	obsolete
 ./usr/mdec/loadbsd.x				base-sysutil-bin
 ./usr/mdec/mboot				base-sysutil-bin
 ./usr/mdec/newdisk				base-sysutil-bin
 ./usr/mdec/sdboot_ufs				base-sysutil-bin
+./usr/mdec/xxboot			base-obsolete	obsolete
 ./usr/mdec/xxboot_ufs				base-sysutil-bin
 ./usr/sbin/memswitch				base-sysutil-bin
 ./usr/sbin/poffd				base-sysutil-bin

@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.32 2003/09/23 15:17:11 cl Exp $
+# $NetBSD: ad.m68k,v 1.33 2003/12/29 03:13:26 lukem Exp $
 ./usr/bin/elf2aout	comp-sysutil-bin
 ./usr/include/m68k	comp-c-include
 ./usr/include/m68k/ansi.h	comp-c-include
@@ -46,6 +46,7 @@
 ./usr/include/m68k/setjmp.h	comp-c-include
 ./usr/include/m68k/signal.h	comp-c-include
 ./usr/include/m68k/stdarg.h	comp-c-include
+./usr/include/m68k/svr4_machdep.h	comp-obsolete	obsolete
 ./usr/include/m68k/sync_icache.h	comp-c-include
 ./usr/include/m68k/sysctl.h	comp-c-include
 ./usr/include/m68k/trap.h	comp-c-include

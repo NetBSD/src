@@ -1,5 +1,7 @@
-# $NetBSD: md.sbmips,v 1.5 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.sbmips,v 1.6 2003/12/29 03:13:26 lukem Exp $
+./usr/include/ieeefp.h		comp-c-include
 ./usr/include/sbmips	comp-c-include
+./usr/include/sbmips/_G_config.h	comp-obsolete	obsolete
 ./usr/include/sbmips/ansi.h	comp-c-include
 ./usr/include/sbmips/aout_machdep.h	comp-c-include
 ./usr/include/sbmips/asm.h	comp-c-include
@@ -49,4 +51,3 @@
 ./usr/include/sbmips/types.h	comp-c-include
 ./usr/include/sbmips/varargs.h	comp-c-include
 ./usr/include/sbmips/vmparam.h	comp-c-include
-./usr/include/ieeefp.h		comp-c-include

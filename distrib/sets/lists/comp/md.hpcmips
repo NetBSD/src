@@ -1,7 +1,8 @@
-# $NetBSD: md.hpcmips,v 1.18 2003/10/25 22:26:08 mycroft Exp $
+# $NetBSD: md.hpcmips,v 1.19 2003/12/29 03:13:26 lukem Exp $
 ./usr/include/dev/hpc	comp-c-include
 ./usr/include/dev/hpc/hpcfbio.h	comp-c-include
 ./usr/include/hpcmips	comp-c-include
+./usr/include/hpcmips/_G_config.h	comp-obsolete	obsolete
 ./usr/include/hpcmips/ansi.h	comp-c-include
 ./usr/include/hpcmips/aout_machdep.h	comp-c-include
 ./usr/include/hpcmips/apmvar.h	comp-c-include
@@ -16,6 +17,7 @@
 ./usr/include/hpcmips/db_machdep.h	comp-c-include
 ./usr/include/hpcmips/disklabel.h	comp-c-include
 ./usr/include/hpcmips/ecoff_machdep.h	comp-c-include
+./usr/include/hpcmips/elf.h     	comp-obsolete	obsolete
 ./usr/include/hpcmips/elf_machdep.h	comp-c-include
 ./usr/include/hpcmips/endian.h	comp-c-include
 ./usr/include/hpcmips/endian_machdep.h	comp-c-include
