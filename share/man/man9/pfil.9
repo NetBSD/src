@@ -1,4 +1,4 @@
-.\"	$NetBSD: pfil.9,v 1.25 2004/07/25 23:10:49 yamt Exp $
+.\"	$NetBSD: pfil.9,v 1.26 2004/07/27 12:25:36 yamt Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -131,8 +131,12 @@ call me on outgoing packets
 call me on all of the above
 .It PFIL_IFADDR
 call me on interface reconfig (mbuf ** is ioctl #)
-.It PFIL_NEWIF
-call me on interface creation (mbuf ** is ignored)
+.It PFIL_IFNET
+call me on interface attach/detach (mbuf ** is either
+.Dv PFIL_IFNET_ATTACH
+or
+.Dv PFIL_IFNET_DETACH
+)
 .It PFIL_WAITOK
 OK to call malloc with M_WAITOK.
 .El
