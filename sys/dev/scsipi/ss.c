@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.50 2003/09/08 01:27:10 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.51 2004/03/14 00:17:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.50 2003/09/08 01:27:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss.c,v 1.51 2004/03/14 00:17:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ ssminphys(struct buf *bp)
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
 	struct scsipi_periph *periph = ss->sc_periph;
 
-	(*periph->periph_channel->chan_adapter->adapt_minphys)(bp);
+	scsipi_adapter_minphys(periph->periph_channel, bp);
 
 	/*
 	 * trim the transfer further for special devices this is
