@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.96 2000/02/12 18:14:37 thorpej Exp $
+.\"	$NetBSD: options.4,v 1.97 2000/02/12 21:30:51 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1322,6 +1322,11 @@ When you get "can't get KPT page" panics, you should increase
 (if defined), or decrease
 .Dv NKPTADDSHIFT
 by one.
+.It Cd options P5PPC68KBOARD
+Add special support for Phase5 mixed 68k+PPC boards. Currently, this only
+affects rebooting from NetBSD and is only needed on 68040+PPC, not on
+68060+PPC; without this, affected machines will hang after NetBSD has shut
+down and will only restart after a keyboard reset or a power cycle.
 .El
 .Ss atari-specific Options
 .Bl -ohang
