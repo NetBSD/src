@@ -1,5 +1,5 @@
-/*	$NetBSD: raw_ip6.c,v 1.33 2001/07/03 08:06:20 itojun Exp $	*/
-/*	$KAME: raw_ip6.c,v 1.76 2001/04/29 13:45:09 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.34 2001/07/23 19:29:53 itojun Exp $	*/
+/*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -690,6 +690,13 @@ rip6_usrreq(so, req, m, nam, control, p)
 			addr->sin6_scope_id =
 				scope6_addr2default(&addr->sin6_addr);
 #endif
+		/* KAME hack: embed scopeid */
+		if (in6_embedscope(&addr->sin6_addr, addr, in6p, NULL) != 0)
+			return EINVAL;
+#ifndef SCOPEDROUTING
+		addr->sin6_scope_id = 0; /* for ifa_ifwithaddr */
+#endif
+
 		/*
 		 * we don't support mapped address here, it would confuse
 		 * users so reject it
