@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.71 2000/06/28 02:44:07 mrg Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.72 2000/08/03 03:41:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -894,7 +894,7 @@ procfs_readdir(v)
 
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (nproc_targets - i));
-			MALLOC(cookies, off_t *, ncookies * sizeof (off_t),
+			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 		}
@@ -940,7 +940,7 @@ procfs_readdir(v)
 			 * XXX Potentially allocating too much space here,
 			 * but I'm lazy. This loop needs some work.
 			 */
-			MALLOC(cookies, off_t *, ncookies * sizeof (off_t),
+			cookies = malloc(ncookies * sizeof (off_t),
 			    M_TEMP, M_WAITOK);
 			*ap->a_cookies = cookies;
 		}
@@ -1022,7 +1022,7 @@ procfs_readdir(v)
 	if (ap->a_ncookies) {
 		if (error) {
 			if (cookies)
-				FREE(*ap->a_cookies, M_TEMP);
+				free(*ap->a_cookies, M_TEMP);
 			*ap->a_ncookies = 0;
 			*ap->a_cookies = NULL;
 		} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.58 2000/05/27 16:03:56 jdolecek Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.59 2000/08/03 03:39:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -469,8 +469,7 @@ cd9660_readdir(v)
 		idp->cookies = NULL;
 	else {
 		ncookies = uio->uio_resid / 16;
-		MALLOC(cookies, off_t *, ncookies * sizeof(off_t), M_TEMP,
-		    M_WAITOK);
+		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 		idp->cookies = cookies;
 		idp->ncookies = ncookies;
 	}
@@ -591,7 +590,7 @@ cd9660_readdir(v)
 
 	if (ap->a_ncookies != NULL) {
 		if (error)
-			FREE(cookies, M_TEMP);
+			free(cookies, M_TEMP);
 		else {
 			/*
 			 * Work out the number of cookies actually used.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.28 2000/07/30 09:29:28 simonb Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.29 2000/08/03 03:41:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -686,8 +686,7 @@ ntfs_readdir(ap)
 		MALLOC(cookies, u_long *, ncookies * sizeof(u_long),
 		       M_TEMP, M_WAITOK);
 #else /* defined(__NetBSD__) */
-		MALLOC(cookies, off_t *, ncookies * sizeof(off_t),
-		       M_TEMP, M_WAITOK);
+		cookies = malloc(ncookies * sizeof(off_t), M_TEMP, M_WAITOK);
 #endif
 		for (dp = dpStart, cookiep = cookies, i=0;
 		     i < ncookies;
