@@ -1,4 +1,4 @@
-/*	$NetBSD: bhavar.h,v 1.3 1996/10/21 22:34:13 thorpej Exp $	*/
+/*	$NetBSD: bhavar.h,v 1.4 1996/11/05 03:04:33 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -78,3 +78,5 @@ int	bha_find __P((bus_space_tag_t, bus_space_handle_t,
 	    struct bha_softc *));
 void	bha_attach __P((struct bha_softc *));
 int	bha_intr __P((void *));
+
+int	bha_disable_isacompat __P((struct bha_softc *));

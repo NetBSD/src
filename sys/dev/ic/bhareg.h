@@ -1,4 +1,4 @@
-/*	$NetBSD: bhareg.h,v 1.2 1996/09/01 00:54:36 mycroft Exp $	*/
+/*	$NetBSD: bhareg.h,v 1.3 1996/11/05 03:04:31 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -57,6 +57,7 @@ typedef u_int8_t physlen[4];
 #define	BHA_CMD_PORT		1	/* command (wo) */
 #define	BHA_DATA_PORT		1	/* data (ro) */
 #define	BHA_INTR_PORT		2	/* interrupt status (ro) */
+#define	BHA_EXTGEOM_PORT	2	/* extended geometry (ro) */
 
 /*
  * BHA_CTRL bits
@@ -104,6 +105,8 @@ typedef u_int8_t physlen[4];
 #define	BHA_INQUIRE_PERIOD	0x8c	/* Get synchronous period */
 #define BHA_INQUIRE_EXTENDED	0x8d	/* Adapter Setup Inquiry */
 #define	BHA_ROUND_ROBIN		0x8f	/* Enable/Disable(default) round robin */
+#define BHA_MODIFY_IOPORT	0x95	/* change or disable I/O port */
+
 
 /*
  * BHA_INTR bits
@@ -339,6 +342,21 @@ struct bha_period {
 		u_char	period[8];
 	} reply;
 };
+
+struct bha_isadisable {
+	struct {
+		u_char	opcode;
+		u_char	modifier;
+	} cmd;
+};
+
+/*
+ * bha_isadisable.modifier parameters
+ */
+#define BHA_IOMODIFY_330	0x00
+#define BHA_IOMODIFY_334	0x01
+#define BHA_IOMODIFY_DISABLE1	0x06
+#define BHA_IOMODIFY_DISABLE2	0x07
 
 #define INT9	0x01
 #define INT10	0x02
