@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.40 2001/08/15 03:54:53 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.41 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.40 2001/08/15 03:54:53 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.41 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,6 +166,7 @@ main(argc, argv)
 		(void)signal(SIGINT, catch);
 	if (preen)
 		(void)signal(SIGQUIT, catchquit);
+	signal(SIGINFO, infohandler);
 
 	while (argc-- > 0)
 		(void)checkfilesys(blockcheck(*argv++), 0, 0L, 0);

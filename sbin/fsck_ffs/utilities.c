@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.32 2001/09/02 01:58:31 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.33 2002/05/06 03:17:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.32 2001/09/02 01:58:31 lukem Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.33 2002/05/06 03:17:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -682,3 +682,10 @@ swap_cg(o, n)
 			n32[i] = bswap32(o32[i]);
 	}
 }
+
+void
+infohandler(int sig)
+{
+	got_siginfo = 1;
+}
+
