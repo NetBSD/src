@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.3 1995/09/02 06:15:49 jtc Exp $	*/
+/*	$NetBSD: subr.c,v 1.4 1995/09/10 15:55:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: subr.c,v 1.3 1995/09/02 06:15:49 jtc Exp $";
+static char rcsid[] = "$NetBSD: subr.c,v 1.4 1995/09/10 15:55:15 christos Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -333,13 +333,11 @@ wordvbuild(string, r_wordc, r_wordv)
 	char	***r_wordv;
 {
 	reg	char 	*cp;
-		char	*saltedbuffer;
 		char	**wordv;
 		int	wordcount;
 		int	wordindex;
 
-	saltedbuffer = strsave(string);
-	for (wordcount = 0, cp = saltedbuffer; *cp; wordcount++){
+	for (wordcount = 0, cp = string; *cp; wordcount++){
 		while (*cp  && isspace(*cp))
 			cp++;
 		if (*cp == 0)
@@ -348,7 +346,7 @@ wordvbuild(string, r_wordc, r_wordv)
 			cp++;
 	}
 	wordv = (char **)Calloc(wordcount + 1, sizeof (char *));
-	for (cp=saltedbuffer,wordindex=0; wordcount; wordindex++,--wordcount){
+	for (cp=string,wordindex=0; wordcount; wordindex++,--wordcount){
 		while (*cp && isspace(*cp))
 			cp++;
 		if (*cp == 0)
