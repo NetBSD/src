@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.3 2001/04/22 17:22:58 thorpej Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.4 2001/04/22 23:19:26 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -145,7 +145,7 @@ void		 pmap_protect __P((pmap_t,
 		    vaddr_t, vaddr_t, vm_prot_t));
 void		 pmap_reference __P((pmap_t));
 void		 pmap_remove __P((pmap_t, vaddr_t, vaddr_t));
-void		 pmap_update __P((pmap_t));
+void		 pmap_update __P((void));
 void		 pmap_zero_page __P((paddr_t));
 
 void		 pmap_virtual_space __P((vaddr_t *, vaddr_t *));
