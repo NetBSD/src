@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.6 2002/10/02 16:02:45 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.7 2002/11/25 00:28:46 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -117,11 +117,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "pcppi.h"
 #if (NPCPPI > 0)
 #include <dev/isa/pcppivar.h>
-
-#include "mca.h"
-#if NMCA > 0
-#include <machine/mca_machdep.h>	/* for MCA_system */
-#endif
 
 #ifdef CLOCKDEBUG
 int clock_debug = 0;
