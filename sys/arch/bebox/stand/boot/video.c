@@ -1,4 +1,4 @@
-/*	$Id: video.c,v 1.1 1998/10/26 00:45:47 sakamoto Exp $	*/
+/*	$Id: video.c,v 1.2 1998/10/28 02:47:35 sakamoto Exp $	*/
 
 /*-
  * Copyright (C) 1995-1997 Gary Thomas (gdt@linuxppc.org)
@@ -71,8 +71,8 @@ video_init(unsigned char *buffer)
 	struct screen *d = &screen;
 
 	VramBase = buffer;
-	d->fgcolor = 0xff;
-	d->bgcolor = 0x00;
+	d->fgcolor = 0x1f;	/* WHITE */
+	d->bgcolor = 0x00;	/* BLACK */
 	d->row = 0;
 	d->col = 0;
 	d->state = NORMAL;
