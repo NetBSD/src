@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.22 2000/08/17 13:13:28 msaitoh Exp $	*/
+/*	$NetBSD: locore.s,v 1.23 2000/08/30 18:41:16 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997
@@ -39,6 +39,8 @@
  *
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
+
+#include "opt_lockdebug.h"
 
 #include "assym.h"
 
@@ -513,16 +515,33 @@ ENTRY(longjmp)
  */
 
 ENTRY(idle)
-	ECLI
+	/* 
+	 * When we get here, interrupts are off (via ECLI) and
+	 * sched_lock is held.
+	 */
 	STI
+
 	mov.l	XXLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
 	tst	r0, r0
 	bf	sw1
+
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
 	ESTI
 
 	sleep
+
+	ECLI
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_lock, r0
+	jsr	@r0
+	nop
+#endif
 
 	bra	_C_LABEL(idle)
 	nop
@@ -672,6 +691,12 @@ ENTRY(cpu_switch)
 	mov.l	r1, @r0
 #endif
 
+#if defined(LOCKDEBUG)
+	/* Release the sched_lock before processing interrupts. */
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
 	xor	r0, r0
 	mov.l	XXLcpl, r1
 	mov.l	r0, @r1			/* spl0() */
@@ -701,8 +726,15 @@ switch_search:
 	 *   r8  - new process
 	 */
 
-	/* Wait for new process. */
+	/* Lock the scheduler. */
 	ECLI				/* splhigh doesn't do a cli */
+#if defined(LOCKDEBUG)
+	mov.l	Xsched_lock, r0
+	jsr	@r0
+	nop
+#endif
+
+	/* Wait for new process. */
 	mov.l	XXXLwhichqs, r0
 	mov.l	@r0, r0
 	mov	r0, r14
@@ -892,6 +924,15 @@ XL_switch_error:
 	xor	r0, r0
 	mov.l	r0, @r1		/* r8->p_back = 0 */
 
+#if defined(LOCKDEBUG)
+	/*
+	 * Unlock the sched_lock, but leave interrupts off, for now.
+	 */
+	mov.l	Xsched_unlock, r0
+	jsr	@r0
+	nop
+#endif
+
 	/* p->p_cpu initialized in fork1() for single-processor */
 
 	/* Process now running on a processor. */
@@ -1033,6 +1074,10 @@ XXXLcurproc:	.long	_C_LABEL(curproc)
 XL_ConvVtoP:	.long	_ConvVtoP
 XL_KernelSp:	.long	KernelSp
 XL_SHREG_TTB:	.long	SHREG_TTB
+#if defined(LOCKDEBUG)
+Xsched_lock:	.long	_C_LABEL(sched_lock_idle)
+Xsched_unlock:	.long	_C_LABEL(sched_unlock_idle)
+#endif
 /*
  * switch_exit(struct proc *p);
  * Switch to proc0's saved context and deallocate the address space and kernel
