@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 1999/09/17 20:04:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 1999/10/12 00:34:21 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -97,6 +97,7 @@ static void fake_clock_return __P((struct clockframe *, int));
 static void fake_irq_establish __P((int, int, void (*)(void *), void *));
 
 struct machvec machine_interface = {
+	fake_spl,
 	fake_spl,
 	fake_spl,
 	fake_spl,
