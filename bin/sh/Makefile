@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.43 1998/04/19 05:22:08 cgd Exp $
+#	$NetBSD: Makefile,v 1.44 1998/09/12 18:55:07 wrstuden Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 PROG=	sh
@@ -37,6 +37,22 @@ nodes.c nodes.h: mknodes nodetypes nodes.c.pat
 
 syntax.c syntax.h: mksyntax
 	./${.ALLSRC}
+
+mkinit: mkinit.c
+	${HOST_LINK.c} -o mkinit ${.CURDIR}/mkinit.c
+
+mknodes: mknodes.c
+	${HOST_LINK.c} -o mknodes ${.CURDIR}/mknodes.c
+
+.if	(${MACHINE_ARCH} == "powerpc") || \
+	(${MACHINE_ARCH} == "arm32")
+TARGET_CHARFLAG= -DTARGET_CHAR="u_int8_t"
+.else
+TARGET_CHARFLAG= -DTARGET_CHAR="int8_t"
+.endif
+
+mksyntax: mksyntax.c
+	${HOST_LINK.c} ${TARGET_CHARFLAG} -o mksyntax ${.CURDIR}/mksyntax.c
 
 .include <bsd.prog.mk>
 
