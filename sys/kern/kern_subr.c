@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.24 1997/05/25 19:20:30 thorpej Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.25 1997/06/12 17:12:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -351,10 +351,6 @@ domountroothook()
 
 /*
  * Determine the root device and, if instructed to, the root file system.
- *
- * XXX Root and swap must be on the same class of device, (ie. DV_DISK
- * XXX or DV_IFNET) because of how (*mountroot)() is written.
- * XXX That should be fixed.
  */
 
 #include "md.h"
@@ -372,14 +368,12 @@ setroot(bootdv, bootpartition, nam2blk)
 	int bootpartition;
 	struct devnametobdevmaj *nam2blk;
 {
-	struct swdevt *swp;
 	struct device *dv;
 	register int len, i;
-	dev_t nrootdev, nswapdev = NODEV;
+	dev_t nrootdev;
 	char buf[128];
 	const char *rootdevname;
-	dev_t temp;
-	struct device *rootdv, *swapdv = NULL;		/* XXX gcc */
+	struct device *rootdv;
 	struct ifnet *ifp;
 	const char *deffsname;
 	struct vfsops *vops;
@@ -455,9 +449,7 @@ setroot(bootdv, bootpartition, nam2blk)
 				dv = getdisk(buf, len, 1, nam2blk, &nrootdev);
 				if (dv != NULL) {
 					rootdv = dv;
-					swapdv = dv;
-					nswapdev = nrootdev;
-					goto gotswap;
+					break;
 				}
 			}
 			dv = getdisk(buf, len, bootpartition, nam2blk,
@@ -468,60 +460,7 @@ setroot(bootdv, bootpartition, nam2blk)
 			}
 		}
 
-		/*
-		 * Because swap must be on the same device as root,
-		 * for network devices this is easy.
-		 */
-		if (rootdv->dv_class == DV_IFNET) {
-			swapdv = NULL;
-			goto gotswap;
-		}
-
-		for (;;) {
-			printf("swap device (default %s", rootdv->dv_xname);
-			if (rootdv->dv_class == DV_DISK)
-				printf("b");
-			printf("): ");
-			len = getstr(buf, sizeof(buf));
-			if (len == 0) {
-				switch (rootdv->dv_class) {
-				case DV_IFNET:
-					nswapdev = NODEV;
-					break;
-				case DV_DISK:
-					nswapdev = MAKEDISKDEV(major(nrootdev),
-					    DISKUNIT(nrootdev), 1);
-					break;
-				default:
-					break;
-				}
-				swapdv = rootdv;
-				break;
-			}
-			dv = getdisk(buf, len, 1, nam2blk, &nswapdev);
-			if (dv) {
-				if (dv->dv_class == DV_IFNET)
-					nswapdev = NODEV;
-				swapdv = dv;
-				break;
-			}
-		}
- gotswap:
-
-#ifdef MEMORY_DISK_HOOKS
-		/*
-		 * Mustn't swap on a memory disk!
-		 */
-		if (swapdv == &fakemdrootdev) {
-			swapdv = NULL;
-			nswapdev = NODEV;
-		}
-#endif
-
 		rootdev = nrootdev;
-		dumpdev = nswapdev;
-		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
 
 		for (i = 0; i < nvfssw; i++) {
 			if (vfssw[i] != NULL &&
@@ -569,39 +508,23 @@ setroot(bootdv, bootpartition, nam2blk)
 		majdev = findblkmajor(bootdv->dv_xname, nam2blk);
 		if (majdev >= 0) {
 			/*
-			 * Root and swap are on a disk.  `bootpartition'
-			 * is root, partition `b' is swap.
+			 * Root is on a disk.  `bootpartition' is root.
 			 */
-			rootdv = swapdv = bootdv;
+			rootdv = bootdv;
 			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit,
 			    bootpartition);
-			nswapdev = dumpdev =
-			    MAKEDISKDEV(majdev, bootdv->dv_unit, 1);
 		} else {
 			/*
-			 * Root and swap are on a net.
+			 * Root is on the net.
 			 */
-			rootdv = swapdv = bootdv;
-			nswapdev = dumpdev = NODEV;
+			rootdv = bootdv;
 		}
-
-#ifdef MEMORY_DISK_HOOKS
-		/*
-		 * Mustn't swap to a memory disk!
-		 */
-		if (swapdv == &fakemdrootdev) {
-			swapdv = NULL;
-			nswapdev = NODEV;
-		}
-#endif
-
-		swdevt[0].sw_dev = nswapdev;
-		swdevt[1].sw_dev = NODEV;
-
+		/* Initialise dumpdev */
+		dumpdev = NODEV;
 	} else {
 
 		/*
-		 * `root on <dev> swap on <dev> ...'
+		 * `root on <dev> ...'
 		 */
 
 		/*
@@ -625,17 +548,6 @@ setroot(bootdv, bootpartition, nam2blk)
 		}
 		bzero(buf, sizeof(buf));
 		sprintf(buf, "%s%d", rootdevname, DISKUNIT(rootdev));
-
-#ifdef MEMORY_DISK_HOOKS
-		if (strcmp(buf, fakemdrootdev.dv_xname) == 0) {
-			/*
-			 * XXX Must make sure we don't swap
-			 * XXX to a memory disk!
-			 */
-			root_device = &fakemdrootdev;
-			return;
-		}
-#endif
 
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
@@ -663,9 +575,6 @@ setroot(bootdv, bootpartition, nam2blk)
 	case DV_DISK:
 		printf("root on %s%c", rootdv->dv_xname,
 		    DISKPART(rootdev) + 'a');
-		if (nswapdev != NODEV)
-			printf(" swap on %s%c", swapdv->dv_xname,
-			    DISKPART(nswapdev) + 'a');
 		printf("\n");
 		break;
 
@@ -674,29 +583,6 @@ setroot(bootdv, bootpartition, nam2blk)
 		boothowto |= RB_ASKNAME;
 		goto top;
 	}
-
-	/*
-	 * Make the swap partition on the root drive the primary swap.
-	 */
-	temp = NODEV;
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		if (major(rootdev) == major(swp->sw_dev) &&
-		    DISKUNIT(rootdev) == DISKUNIT(swp->sw_dev)) {
-			temp = swdevt[0].sw_dev;
-			swdevt[0].sw_dev = swp->sw_dev;
-			swp->sw_dev = temp;
-			break;
-		}
-	}
-	if (swp->sw_dev == NODEV)
-		return;
-
-	/*
-	 * If dumpdev was the same as the old primary swap device, move
-	 * it to the new primary swap device.
-	 */
-	if (temp == dumpdev)
-		dumpdev = swdevt[0].sw_dev;
 }
 
 static int
@@ -863,33 +749,6 @@ getstr(cp, size)
 			printf("%c", c);
 			++len;
 			*lp++ = c;
-		}
-	}
-}
-
-/*
- * Configure swap space and related parameters.
- * XXX This, and swdevt[] in generial, should go away.
- */
-void
-swapconf()
-{
-	struct swdevt *swp;
-	int nblks, maj; 
-
-	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
-		maj = major(swp->sw_dev);
-
-		if (maj > nblkdev)
-			break;
-		if (bdevsw[maj].d_psize) {
-			nblks = (*bdevsw[maj].d_psize)(swp->sw_dev);
-			if (nblks != -1 &&
-			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
-				swp->sw_nblks = nblks;
-			else
-				swp->sw_nblks = 0;
-			swp->sw_nblks = ctod(dtoc(swp->sw_nblks));
 		}
 	}
 }

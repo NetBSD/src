@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.59 1997/05/27 23:37:41 gwr Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.60 1997/06/12 17:14:54 mrg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -256,8 +256,6 @@ nfs_fsinfo(nmp, vp, cred, p)
  * Mount a remote root fs via. NFS.  It goes like this:
  * - Call nfs_boot_init() to fill in the nfs_diskless struct
  * - build the rootfs mount point and call mountnfs() to do the rest.
- * - hand craft the swap nfs vnode hanging off a fake mount point
- *     (only if swdevt[0].sw_dev == NODEV)
  */
 int
 nfs_mountroot()
@@ -352,7 +350,8 @@ nfs_mountroot()
 	    proc0.p_ucred->cr_groups[i] = ntohl(nd.swap_ucred.cr_groups[i]);
 #endif
 
-	/*
+	/* swap from outside now */
+#if 0
 	 * "Mount" the swap device.
 	 *
 	 * On a "dataless" configuration (swap on disk) we will have:
@@ -403,6 +402,7 @@ nfs_mountroot()
 	printf("swap size: 0x%lx (blocks)\n", n);
 #endif
 	swdevt[0].sw_nblks = n;
+#endif
 
 	return (0);
 }

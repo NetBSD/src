@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.2 1997/06/12 17:14:56 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -156,9 +156,9 @@ ext2fs_mountroot()
 		return (ENODEV);
 	
 	/*
-	 * Get vnodes for swapdev and rootdev.
+	 * Get vnodes for rootdev.
 	 */
-	if (bdevvp(swapdev, &swapdev_vp) || bdevvp(rootdev, &rootvp))
+	if (bdevvp(rootdev, &rootvp))
 		panic("ext2fs_mountroot: can't setup bdevvp's");
 
 	mp = malloc(sizeof(struct mount), M_MOUNT, M_WAITOK);
