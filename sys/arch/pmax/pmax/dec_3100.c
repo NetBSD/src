@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.6.2.3 1998/10/21 11:24:28 nisimura Exp $ */
+/*	$NetBSD: dec_3100.c,v 1.6.2.4 1998/10/23 12:29:52 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,7 +72,7 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.3 1998/10/21 11:24:28 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.4 1998/10/23 12:29:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,8 +176,8 @@ dec_3100_bus_reset()
 
 extern void prom_findcons __P((int *, int *, int *));
 extern int pm_cnattach __P((tc_addr_t));
-extern int dc_cnattach __P((tc_addr_t, int, int, int));
-extern void dc_ws_cnattach __P((tc_addr_t));
+extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void dckbd_cnattach __P((paddr_t));
 
 void
 dec_3100_cons_init()
@@ -190,7 +190,7 @@ dec_3100_cons_init()
 	if (screen > 0) {
 #if NWSDISPLAY > 0
 		pm_cnattach(0x0fc00000 + MIPS_KSEG1_START);
-		dc_ws_cnattach(0x1c000000);
+		dckbd_cnattach(KN01_SYS_DZ);
 		return;
 #else
 		printf("No framebuffer device configured\n");
@@ -204,7 +204,7 @@ dec_3100_cons_init()
 	 */
 	DELAY(160000000 / 9600);        /* XXX */
 
-	if (dc_cnattach(0x1c000000, 3,
+	if (dc_cnattach(KN01_SYS_DZ, 3,
 	    9600, (TTYDEF_CFLAG & ~(CSIZE | PARENB)) | CS8))
 		panic("can't init serial console");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3max.c,v 1.6.2.3 1998/10/21 11:24:29 nisimura Exp $ */
+/*	$NetBSD: dec_3max.c,v 1.6.2.4 1998/10/23 12:29:53 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.3 1998/10/21 11:24:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3max.c,v 1.6.2.4 1998/10/23 12:29:53 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,8 +211,8 @@ dec_3max_bus_reset()
 #include <sys/termios.h>
 
 extern void prom_findcons __P((int *, int *, int *));
-extern int dc_cnattach __P((tc_addr_t, int, int, int));
-extern void dc_ws_cnattach __P((tc_addr_t));
+extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void dckbd_cnattach __P((paddr_t));
 extern int tc_fb_cnattach __P((int));
 
 void
@@ -226,7 +226,7 @@ dec_3max_cons_init()
 	if (screen > 0) {
 #if NWSDISPLAY > 0
 		if (tc_fb_cnattach(crt) > 0) {
-			dc_ws_cnattach(KN02_SYS_DZ);
+			dckbd_cnattach(KN02_SYS_DZ);
 			return;
 		}
 #endif
