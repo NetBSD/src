@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.9 1997/10/29 01:06:55 phil Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.10 1997/10/31 23:00:48 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -194,8 +194,8 @@ message fspart
 
 message fspart_head
 {
-id:      Size    Offset FStype Bsize Fsize Mount point
----      ----    ------ ------ ----- ----- -----------
+id:      Size    Offset       End FStype Bsize Fsize Mount point
+---      ----    ------       --- ------ ----- ----- -----------
 
 }
 
