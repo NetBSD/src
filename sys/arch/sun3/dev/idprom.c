@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.20 1997/10/06 19:58:06 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.21 1997/10/17 03:26:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,25 +57,17 @@
  */
 struct idprom identity_prom;
 
-/*
- * This is called very early during startup to
- * get a copy of the idprom from control space.
- */
+static int idprom_hostid __P((void));
+
 void
 idprom_init()
 {
-	struct idprom *idp;
-	char *dst;
+	u_char *dst;
 	vm_offset_t src;
 	int len, x, xorsum;
-	union {
-		long l;
-		char c[4];
-	} hid;
 
 	/* Copy the IDPROM contents and do the checksum. */
-	idp = &identity_prom;
-	dst = (char*)idp;
+	dst = (u_char *) &identity_prom;
 	src = IDPROM_BASE;
 	len = IDPROM_SIZE;
 	xorsum = 0;	/* calculated as xor of data */
@@ -87,10 +79,23 @@ idprom_init()
 	} while (--len > 0);
 
 	if (xorsum != 0)
-		mon_printf("idprom: bad checksum=%d\n", xorsum);
-	if (idp->idp_format < 1)
-		mon_printf("idprom: bad version=%d\n", idp->idp_format);
+		mon_printf("idprom: bad checksum\n");
+	if (identity_prom.idp_format < 1)
+		mon_printf("idprom: bad version\n");
 
+	hostid = idprom_hostid();
+}
+
+static int
+idprom_hostid()
+{
+	struct idprom *idp;
+	union {
+		long l;
+		char c[4];
+	} hid;
+
+	idp = &identity_prom;
 	/*
 	 * Construct the hostid from the idprom contents.
 	 * This appears to be the way SunOS does it.
@@ -99,19 +104,13 @@ idprom_init()
 	hid.c[1] = idp->idp_serialnum[0];
 	hid.c[2] = idp->idp_serialnum[1];
 	hid.c[3] = idp->idp_serialnum[2];
-	hostid = hid.l;
+	return (hid.l);
 }
 
 void
 idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
-	u_char *src, *dst;
-	int len = 6;
 
-	src = identity_prom.idp_etheraddr;
-	dst = eaddrp;
-
-	do *dst++ = *src++;
-	while (--len > 0);
+	bcopy(identity_prom.idp_etheraddr, eaddrp, 6);
 }

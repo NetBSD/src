@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.2 1997/04/25 18:06:45 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.3 1997/10/17 03:25:05 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -153,7 +153,8 @@ static const int bustype_to_ptetype[4] = {
  *	Try the access using peek_*
  *	Clean up temp. mapping
  */
-int bus_peek(bustype, paddr, sz)
+int
+bus_peek(bustype, paddr, sz)
 	int bustype, paddr, sz;
 {
 	int off, pte, rv;
@@ -194,7 +195,7 @@ int bus_peek(bustype, paddr, sz)
 	/* All mappings in tmp_vpages are non-cached, so no flush. */
 	set_pte(pgva, PG_INVAL);
 
-	return rv;
+	return (rv);
 }
 
 static const int bustype_to_pmaptype[4] = {
@@ -205,22 +206,22 @@ static const int bustype_to_pmaptype[4] = {
 };
 
 void *
-bus_mapin(bustype, paddr, sz)
-	int bustype, paddr, sz;
+bus_mapin(bustype, pa, sz)
+	int bustype, pa, sz;
 {
-	int off, pa, pmt;
 	vm_offset_t va, retval;
+	int off;
 
 	if (bustype & ~3)
 		return (NULL);
 
-	off = paddr & PGOFSET;
-	pa = paddr - off;
+	off = pa & PGOFSET;
+	pa -= off;
 	sz += off;
-	sz = round_page(sz);
+	sz = m68k_round_page(sz);
 
-	pmt = bustype_to_pmaptype[bustype];
-	pmt |= PMAP_NC;	/* non-cached */
+	pa |= bustype_to_pmaptype[bustype];
+	pa |= PMAP_NC;	/* non-cached */
 
 	/* Get some kernel virtual address space. */
 	va = kmem_alloc_wait(kernel_map, sz);
@@ -229,15 +230,16 @@ bus_mapin(bustype, paddr, sz)
 	retval = va + off;
 
 	/* Map it to the specified bus. */
-#if 0	/* XXX */
+#if 0
 	/* This has a problem with wrap-around... */
-	pmap_map((int)va, pa | pmt, pa + sz, VM_PROT_ALL);
+	pmap_map((int)va, pa, pa + sz, VM_PROT_ALL);
 #else
 	do {
-		pmap_enter(pmap_kernel(), va, pa | pmt, VM_PROT_ALL, FALSE);
+		pmap_enter(pmap_kernel(), va, pa, VM_PROT_ALL, FALSE);
 		va += NBPG;
 		pa += NBPG;
-	} while ((sz -= NBPG) > 0);
+		sz -= NBPG;
+	} while (sz > 0);
 #endif
 
 	return ((void*)retval);
