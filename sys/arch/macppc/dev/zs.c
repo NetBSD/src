@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18 2001/07/22 11:29:47 wiz Exp $	*/
+/*	$NetBSD: zs.c,v 1.19 2002/01/06 00:35:11 dbj Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -54,6 +54,7 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +67,9 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <dev/cons.h>
 #include <dev/ofw/openfirm.h>
@@ -80,8 +84,6 @@
 /* Booter flags interface */
 #define ZSMAC_RAW	0x01
 #define ZSMAC_LOCALTALK	0x02
-
-#define	PCLK	(9600 * 384)
 
 #include "zsc.h"	/* get the # of zs chips defined */
 
@@ -98,13 +100,6 @@ int zs_major = 12;
  */
 #define ZSABORT_DELAY 3000000
 
-/* The layout of this is hardware-dependent (padding, order). */
-struct zschan {
-	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
-	u_char		zc_xxx0[15];
-	volatile u_char	zc_data;	/* data */
-	u_char		zc_xxx1[15];
-};
 struct zsdevice {
 	/* Yes, they are backwards. */
 	struct	zschan zs_chan_b;
@@ -907,10 +902,6 @@ void  zs_write_data(cs, val)
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
-static void	zs_putc __P((register volatile struct zschan *, int));
-static int	zs_getc __P((register volatile struct zschan *));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
-
 static int stdin, stdout;
 
 /*
@@ -935,9 +926,10 @@ static int stdin, stdout;
  * Polled input char.
  */
 int
-zs_getc(zc)
-	register volatile struct zschan *zc;
+zs_getc(v)
+	void *v;
 {
+	register volatile struct zschan *zc = v;
 	register int s, c, rr0;
 
 	s = splhigh();
@@ -962,10 +954,11 @@ zs_getc(zc)
  * Polled output char.
  */
 void
-zs_putc(zc, c)
-	register volatile struct zschan *zc;
+zs_putc(v, c)
+	void *v;
 	int c;
 {
+	register volatile struct zschan *zc = v;
 	register int s, rr0;
 	register long wait = 0;
 
@@ -995,7 +988,7 @@ zscngetc(dev)
 	register int c;
 
 	if (zc) {
-		c = zs_getc(zc);
+		c = zs_getc((void *)zc);
 	} else {
 		char ch = 0;
 		OF_read(stdin, &ch, 1);
@@ -1015,7 +1008,7 @@ zscnputc(dev, c)
 	register volatile struct zschan *zc = zs_conschan;
 
 	if (zc) {
-		zs_putc(zc, c);
+		zs_putc((void *)zc, c);
 	} else {
 		char ch = c;
 		OF_write(stdout, &ch, 1);
@@ -1047,7 +1040,9 @@ zs_abort(cs)
 	/* If we time out, turn off the abort ability! */
 	}
 
-#ifdef DDB
+#if defined(KGDB)
+	kgdb_connect(1);
+#elif defined(DDB)
 	Debugger();
 #endif
 }

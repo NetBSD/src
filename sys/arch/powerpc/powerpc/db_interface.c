@@ -1,9 +1,10 @@
-/*	$NetBSD: db_interface.c,v 1.16 2001/12/30 20:53:04 dbj Exp $ */
+/*	$NetBSD: db_interface.c,v 1.17 2002/01/06 00:35:13 dbj Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #define USERACC
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_ppcarch.h"
 
 #include <sys/param.h>
@@ -20,12 +21,20 @@
 #include <uvm/uvm_extern.h>
 #endif
 
+#ifdef DDB
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
+#endif
+
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
+
+#include <dev/ofw/openfirm.h>
 
 int	db_active = 0;
 
@@ -44,11 +53,13 @@ static void db_ppc4xx_useracc(db_expr_t, int, db_expr_t, char *);
 #endif
 #endif /* PPC_IBM4XX */
 
+#ifdef DDB
 void
 cpu_Debugger()
 {
 	ddb_trap();
 }
+#endif
 
 int
 ddb_trap_glue(frame)
@@ -59,8 +70,11 @@ ddb_trap_glue(frame)
 		|| (frame->exc == EXC_PGM
 		    && (frame->srr1 & 0x20000))
 		|| frame->exc == EXC_BPT)) {
-
-		return kdb_trap(frame->exc, frame);
+		int type = frame->exc;
+		if (type == EXC_PGM && (frame->srr1 & 0x20000)) {
+			type = T_BREAKPOINT;
+		}
+		return kdb_trap(type, frame);
 	}
 	return 0;
 }
@@ -72,6 +86,7 @@ kdb_trap(type, v)
 {
 	struct trapframe *frame = v;
 
+#ifdef DDB
 	switch (type) {
 	case T_BREAKPOINT:
 	case -1:
@@ -84,6 +99,7 @@ kdb_trap(type, v)
 			/*NOTREACHED*/
 		}
 	}
+#endif
 
 	/* XXX Should switch to kdb's own stack here. */
 
@@ -100,11 +116,28 @@ kdb_trap(type, v)
 	DDB_REGS->pid = frame->pid;
 #endif
 
+#ifdef DDB
 	db_active++;
 	cnpollc(1);
 	db_trap(type, 0);
 	cnpollc(0);
 	db_active--;
+#elif defined(KGDB)
+	if (!kgdb_trap(type, DDB_REGS))
+		return 0;
+#endif
+
+	/* KGDB isn't smart about advancing PC if we
+	 * take a breakpoint trap after kgdb_active is set.
+	 * Therefore, we help out here.
+	 */
+	if (IS_BREAKPOINT_TRAP(type, 0)) {
+		int bkpt;
+		db_read_bytes(PC_REGS(DDB_REGS),BKPT_SIZE,(void *)&bkpt);
+		if (bkpt== BKPT_INST) {
+			PC_REGS(DDB_REGS) += BKPT_SIZE;
+		}
+	}
 
 	memcpy(frame->fixreg, DDB_REGS->r, 32 * sizeof(u_int32_t));
 	frame->srr0 = DDB_REGS->iar;
