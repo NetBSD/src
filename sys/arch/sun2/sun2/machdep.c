@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2001/06/27 03:16:02 fredette Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2001/09/06 21:38:40 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette.
@@ -982,6 +982,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 	int pagesz = PAGE_SIZE;
 	bus_addr_t dva;
 	pmap_t pmap;
+	int rv;
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
@@ -1042,7 +1043,11 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		/*
 		 * Get the physical address for this page.
 		 */
-		(void) pmap_extract(pmap, va, &pa);
+		rv = pmap_extract(pmap, va, &pa);
+#ifdef	DIAGNOSTIC
+		if (!rv)
+			panic("_bus_dmamap_load: no page");
+#endif	/* DIAGNOSTIC */
 
 		/*
 		 * Compute the segment size, and adjust counts.
@@ -1063,7 +1068,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 
 	/* Make the map truly valid. */
 	map->dm_nsegs = 1;
-	map->dm_mapsize = buflen;
+	map->dm_mapsize = map->dm_segs[0].ds_len;
 
 	return (0);
 }
