@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/02/03 17:09:58 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/03/18 16:40:21 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -40,6 +40,7 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/exec.h>
+#include <sys/extent.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -104,6 +105,7 @@ void comsoft(void);
 void initppc(u_long, u_long, void *);
 void strayintr(int);
 int lcsplx(int);
+void mvmeppc_bus_space_init(void);
 
 
 /*
@@ -178,14 +180,18 @@ initppc(startkernel, endkernel, btinfo)
 	 */
 	oea_init(platform->ext_intr);
 
+	/*
+	 * Init bus_space so consinit can work.
+	 */
+	mvmeppc_bus_space_init();
+
 #ifdef DEBUG
 	/*
-	 * i386 port says, that this shouldn't be here,
-	 * but I really think the console should be initialized
-	 * as early as possible.
+	 * The console should be initialized as early as possible.
 	 */
 	consinit();
 #endif
+
         /*
 	 * Set the page size.
 	 */
@@ -245,7 +251,7 @@ cpu_startup()
 			      : "=r"(msr) : "K"(PSL_EE));
 	}
 
-	mvmeppc_bus_space_init();
+	bus_space_mallocok();
 }
 
 /*
@@ -299,7 +305,7 @@ dokbd:
 #if (NCOM > 0)
 	if (!strcmp(bootinfo.bi_consoledev, "PC16550")) {
 		bus_space_tag_t tag = &mvmeppc_isa_io_bs_tag;
-		bus_addr_t caddr[2] = {0x3f8, 0x2f8};
+		static const bus_addr_t caddr[2] = {0x3f8, 0x2f8};
 		int rv;
 		rv = comcnattach(tag, caddr[bootinfo.bi_consolechan],
 		    bootinfo.bi_consolespeed, COM_FREQ,
@@ -398,12 +404,68 @@ lcsplx(ipl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm __volatile("sync; eieio\n");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = ipl;
 	if (ipending & ~ipl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm __volatile("sync; eieio\n");	/* reorder protect */
 
 	return (oldcpl);
+}
+
+
+struct powerpc_bus_space mvmeppc_isa_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	MVMEPPC_PHYS_BASE_IO,	/* 60x-bus address of ISA I/O Space */
+	0x00000000,		/* Corresponds to ISA-bus I/O address 0x0 */
+	0x00010000,		/* End of ISA-bus I/O address space, +1 */
+};
+
+struct powerpc_bus_space mvmeppc_pci_io_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_IO_TYPE,
+	MVMEPPC_PHYS_BASE_IO,	/* 60x-bus address of PCI I/O Space */
+	0x00000000,		/* Corresponds to PCI-bus I/O address 0x0 */
+	MVMEPPC_PHYS_SIZE_IO,	/* End of PCI-bus I/O address space, +1 */
+};
+
+struct powerpc_bus_space mvmeppc_isa_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	MVMEPPC_PHYS_BASE_MEM,	/* 60x-bus address of ISA Memory Space */
+	0x00000000,		/* Corresponds to ISA-bus Memory addr 0x0 */
+	0x01000000,		/* End of ISA-bus Memory addr space, +1 */
+};
+
+struct powerpc_bus_space mvmeppc_pci_mem_bs_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	MVMEPPC_PHYS_BASE_MEM,	/* 60x-bus address of PCI Memory Space */
+	0x00000000,		/* Corresponds to PCI-bus Memory addr 0x0 */
+	MVMEPPC_PHYS_SIZE_MEM,	/* End of PCI-bus Memory addr space, +1 */
+};
+static char ex_storage[MVMEPPC_BUS_SPACE_NUM_REGIONS][EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+
+
+void
+mvmeppc_bus_space_init(void)
+{
+
+	int error;
+
+	error = bus_space_init(&mvmeppc_pci_io_bs_tag, "bus_io",
+	    ex_storage[MVMEPPC_BUS_SPACE_IO],
+	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_IO]));
+
+	if (extent_alloc_region(mvmeppc_pci_io_bs_tag.pbs_extent,
+	    MVMEPPC_PHYS_RESVD_START_IO, MVMEPPC_PHYS_RESVD_SIZE_IO,
+	    EX_NOWAIT) != 0)
+		panic("mvmeppc_bus_space_init: reserving I/O hole");
+
+	mvmeppc_isa_io_bs_tag.pbs_extent = mvmeppc_pci_io_bs_tag.pbs_extent;
+
+	error = bus_space_init(&mvmeppc_pci_mem_bs_tag, "bus_mem",
+	    ex_storage[MVMEPPC_BUS_SPACE_MEM],
+	    sizeof(ex_storage[MVMEPPC_BUS_SPACE_MEM]));
+
+	mvmeppc_isa_mem_bs_tag.pbs_extent = mvmeppc_pci_mem_bs_tag.pbs_extent;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2003/02/03 17:10:14 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2003/03/18 16:40:25 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -172,3 +172,8 @@ _C_LABEL(sandpoint_reboot):
  * Include common trap / execption code
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Include common pio / bus_space code
+ */
+#include <powerpc/powerpc/pio_subr.S>

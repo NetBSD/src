@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.6 2003/03/05 05:43:44 matt Exp $
+#	$NetBSD: files.mvmeppc,v 1.7 2003/03/18 16:40:20 matt Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -12,15 +12,15 @@ defflag	opt_mvmetype.h		SUPPORT_MVME230X
 defflag	opt_mvmetype.h		SUPPORT_MVME240X
 
 file	arch/mvmeppc/mvmeppc/autoconf.c
-file	arch/mvmeppc/mvmeppc/bus_space.c
 file	arch/mvmeppc/mvmeppc/clock.c
 file	arch/mvmeppc/mvmeppc/disksubr.c		disk
 file	arch/mvmeppc/mvmeppc/extintr.c
 file	arch/mvmeppc/mvmeppc/machdep.c
 file	arch/mvmeppc/mvmeppc/platform.c
 file	arch/mvmeppc/mvmeppc/platform_160x.c	support_mvme160x
-file	arch/powerpc/powerpc/bus_dma.c
 
+file	arch/powerpc/powerpc/bus_dma.c
+file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
 # General files
 file	dev/cons.c

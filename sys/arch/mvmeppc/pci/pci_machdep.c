@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 2002/09/27 15:36:27 provos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 2003/03/18 16:40:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/platform.h>
+
+#include <powerpc/pio.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/pci/pcivar.h>

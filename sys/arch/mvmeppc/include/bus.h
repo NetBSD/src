@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.1 2002/02/27 21:02:14 scw Exp $	*/
+/*	$NetBSD: bus.h,v 1.2 2003/03/18 16:40:20 matt Exp $	*/
 
 /*-
  * Copyright (c) 200e The NetBSD Foundation, Inc.
@@ -58,15 +58,14 @@
 #define	MVMEPPC_BUS_SPACE_MEM		1
 #define	MVMEPPC_BUS_SPACE_NUM_REGIONS	2
 
-#define PHYS_TO_PCI_MEM(x)	((x) | 0x80000000)
-#define PCI_MEM_TO_PHYS(x)	((x) & ~0x80000000)
+#define PHYS_TO_BUS_MEM(t,x)	((x) | 0x80000000)
+#define BUS_MEM_TO_PHYS(t,x)	((x) & ~0x80000000)
 
 #ifdef _KERNEL
-extern void mvmeppc_bus_space_init(void);
-extern const struct powerpc_bus_space mvmeppc_isa_io_bs_tag;
-extern const struct powerpc_bus_space mvmeppc_isa_mem_bs_tag;
-extern const struct powerpc_bus_space mvmeppc_pci_io_bs_tag;
-extern const struct powerpc_bus_space mvmeppc_pci_mem_bs_tag;
+extern struct powerpc_bus_space mvmeppc_isa_io_bs_tag;
+extern struct powerpc_bus_space mvmeppc_isa_mem_bs_tag;
+extern struct powerpc_bus_space mvmeppc_pci_io_bs_tag;
+extern struct powerpc_bus_space mvmeppc_pci_mem_bs_tag;
 #endif
 
 #endif /* _MVMEPPC_BUS_H_ */
