@@ -1,4 +1,4 @@
-/*	$NetBSD: test.c,v 1.17 1997/07/20 21:36:26 christos Exp $	*/
+/*	$NetBSD: test.c,v 1.18 1997/10/19 17:54:18 mycroft Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.17 1997/07/20 21:36:26 christos Exp $");
+__RCSID("$NetBSD: test.c,v 1.18 1997/10/19 17:54:18 mycroft Exp $");
 #endif
 
 #include <sys/types.h>
@@ -346,19 +346,8 @@ filstat(nm, mode)
 	enum token mode;
 {
 	struct stat s;
-	int i;
 
-	if (mode == FILSYM) {
-#ifdef S_IFLNK
-		if (lstat(nm, &s) == 0) {
-			i = S_IFLNK;
-			goto filetype;
-		}
-#endif
-		return 0;
-	}
-
-	if (stat(nm, &s) != 0) 
+	if (mode == FILSYM ? lstat(nm, &s) : stat(nm, &s))
 		return 0;
 
 	switch (mode) {
@@ -371,42 +360,27 @@ filstat(nm, mode)
 	case FILEXIST:
 		return access(nm, F_OK) == 0;
 	case FILREG:
-		i = S_IFREG;
-		goto filetype;
+		return S_ISREG(s.st_mode);
 	case FILDIR:
-		i = S_IFDIR;
-		goto filetype;
+		return S_ISDIR(s.st_mode);
 	case FILCDEV:
-		i = S_IFCHR;
-		goto filetype;
+		return S_ISCHR(s.st_mode);
 	case FILBDEV:
-		i = S_IFBLK;
-		goto filetype;
+		return S_ISBLK(s.st_mode);
 	case FILFIFO:
-#ifdef S_IFIFO
-		i = S_IFIFO;
-		goto filetype;
-#else
-		return 0;
-#endif
+		return S_ISFIFO(s.st_mode);
 	case FILSOCK:
-#ifdef S_IFSOCK
-		i = S_IFSOCK;
-		goto filetype;
-#else
-		return 0;
-#endif
+		return S_ISSOCK(s.st_mode);
+	case FILSYM:
+		return S_ISLNK(s.st_mode);
 	case FILSUID:
-		i = S_ISUID;
-		goto filebit;
+		return (s.st_mode & S_ISUID) != 0;
 	case FILSGID:
-		i = S_ISGID;
-		goto filebit;
+		return (s.st_mode & S_ISGID) != 0;
 	case FILSTCK:
-		i = S_ISVTX;
-		goto filebit;
+		return (s.st_mode & S_ISVTX) != 0;
 	case FILGZ:
-		return s.st_size > 0L;
+		return s.st_size > (off_t)0;
 	case FILUID:
 		return s.st_uid == geteuid();
 	case FILGID:
@@ -414,12 +388,6 @@ filstat(nm, mode)
 	default:
 		return 1;
 	}
-
-filetype:
-	return ((s.st_mode & S_IFMT) == i);
-
-filebit:
-	return ((s.st_mode & i) != 0);
 }
 
 static enum token
