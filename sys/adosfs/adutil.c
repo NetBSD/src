@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: adutil.c,v 1.1 1994/05/11 18:49:13 chopps Exp $
+ *	$Id: adutil.c,v 1.2 1994/06/02 23:42:19 chopps Exp $
  */
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -317,6 +317,10 @@ adosfs_reclaim(vp)
 #endif
 	ap = VTOA(vp);
 	LIST_REMOVE(ap, link);
+	if (vp->v_type == VDIR)
+		free(ap->tab, M_ANODE);
+	else if (vp->v_type == VLNK)
+		free(ap->slinkto, M_ANODE);
 	cache_purge(vp);
 	return(0);
 }
