@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.3 2001/02/08 20:27:24 briggs Exp $
+#	$NetBSD: files.sandpoint,v 1.4 2001/03/12 20:10:06 manu Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -37,6 +37,18 @@ major	{wd = 0}
 #
 file dev/md_root.c   memory_disk_hooks 
 major   {md = 17}
+
+#
+# Compatibility modules
+#
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+# Linux binary compatibility (COMPAT_LINUX)
+include "compat/linux/files.linux"
+include "compat/linux/arch/powerpc/files.linux_powerpc"
+file arch/powerpc/powerpc/linux_sigcode.S        compat_linux
 
 #
 # RAIDframe
