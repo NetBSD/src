@@ -1,11 +1,11 @@
-/*	$NetBSD: pl.c,v 1.19 2000/07/05 20:18:16 hubertf Exp $	*/
+/*	$NetBSD: pl.c,v 1.20 2001/05/18 13:21:38 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: pl.c,v 1.11 1997/10/08 07:46:35 charnier Exp";
 #else
-__RCSID("$NetBSD: pl.c,v 1.19 2000/07/05 20:18:16 hubertf Exp $");
+__RCSID("$NetBSD: pl.c,v 1.20 2001/05/18 13:21:38 agc Exp $");
 #endif
 #endif
 
@@ -120,7 +120,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 	int     dirc;
 
 	/* Open Package Database for writing */
-	if (pkgdb_open(0) == -1) {
+	if (update_pkgdb && pkgdb_open(0) == -1) {
 		cleanup(0);
 		err(1, "can't open pkgdb");
 	}
@@ -146,7 +146,7 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 			 * but as they are present before pkg_create
 			 * starts, it's ok to do this somewhere here
 			 */
-			{
+			if (update_pkgdb) {
 				char   *s, t[FILENAME_MAX];
 
 				(void) snprintf(t, sizeof(t), "%s/%s", cwd, p->name);
@@ -206,7 +206,9 @@ check_list(char *home, package_t *pkg, const char *PkgName)
 		}
 	}
 
-	pkgdb_close();
+	if (update_pkgdb) {
+		pkgdb_close();
+	}
 
 	if (ReorderDirs && dirc > 0) {
 		reorder(pkg, dirc);
