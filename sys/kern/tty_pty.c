@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.45 2000/07/27 17:32:11 mason Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.46 2000/07/28 04:31:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -667,7 +667,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			break;
 
 		case TIOCSIG:
-			sig = (int)*data;
+			sig = (int)(long)*(caddr_t *)data;
 			if (sig <= 0 || sig >= NSIG)
 				return (EINVAL);
 			if (!ISSET(tp->t_lflag, NOFLSH))
