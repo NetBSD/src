@@ -1,4 +1,4 @@
-#	$NetBSD: ZHADUM,v 1.8 1998/06/26 01:54:00 lukem Exp $
+#	$NetBSD: ZHADUM,v 1.9 1998/08/11 00:32:05 thorpej Exp $
 #
 #	ZHADUM -- zhadum.netbsd.org, the new CVS server
 #
@@ -396,13 +396,11 @@ de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
 #we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 #we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
-# MII bus support
-#mii*	at tl?
-
-# MII PHY network interfaces
-#tlphy*	at mii? dev ?			# ThunderLAN PHYs
-#nsphy*	at mii? dev ?			# NS and compatible PHYs
-
+# MII/PHY support
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
 
 # Audio Devices
 

@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.17 1998/06/26 01:53:45 lukem Exp $
+# $NetBSD: INSTALL,v 1.18 1998/08/11 00:28:53 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -21,7 +21,12 @@ options 	DEC_EB164	# EB164:	AlphaPC 164
 options 	DEC_EB64PLUS	# EB64+:	AlphaPC 64, etc.
 options 	DEC_KN20AA	# KN20AA:	AlphaStation 500 and 600
 options 	DEC_KN8AE	# KN8AE:	AlphaServer 8200 and 8400
+options 	DEC_KN300	# KN300:	AlphaServer 4100
 options 	DEC_550		# Miata:	Digital Personal Workstation
+options 	DEC_1000	# Mikasa etc:	Digital AlphaServer 1000
+options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
+options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
+options 	DEC_EB66	# EB66:		21066 Evaluation Board
 
 # File systems
 file-system	FFS		# Fast file system
@@ -44,11 +49,12 @@ options 	COMPAT_12
 options 	COMPAT_13
 
 # Misc. options
-options 	EISAVERBOSE		# recognize "unknown" EISA devices
-options 	PCIVERBOSE		# recognize "unknown" PCI devices
-options 	SCSIVERBOSE		# Verbose SCSI errors
-options 	TCVERBOSE		# recognize "unknown" TC devices
+#options 	EISAVERBOSE		# recognize "unknown" EISA devices
+#options 	PCIVERBOSE		# recognize "unknown" PCI devices
+#options 	SCSIVERBOSE		# Verbose SCSI errors
+#options 	TCVERBOSE		# recognize "unknown" TC devices
 options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
+options 	INSECURE		# disable `kernel security level'
 
 # The Alpha console firmware network boots using the BOOTP
 # protocol, so we ask the NFS code to use BOOTP/DHCP as well,
@@ -72,6 +78,10 @@ kft*	at	tlsb? node ? offset ?
 # Gbus Devices
 mcclock* at	gbus? offset ?
 
+# MCBUS bus support
+mcbus*	at	mainbus0
+mcmem*	at	mcbus? mid ?
+
 # TurboChannel host bus adapter support
 tcasic*	at	mainbus0
 
@@ -94,6 +104,7 @@ apecs*	at	mainbus?
 cia*	at	mainbus?
 lca*	at	mainbus?
 dwlpx*	at	kft?
+mcpcia*	at	mcbus? mid ?
 
 # PCI bus support
 pci*	at	apecs?
@@ -101,6 +112,7 @@ pci*	at	cia?
 pci*	at	lca?
 pci*	at	ppb?
 pci*	at	dwlpx?
+pci*	at	mcpcia?
 
 # PCI devices
 ahc*	at	pci? dev ? function ?		# Adaptec [23]94x, aic78x0 SCSI
@@ -116,7 +128,14 @@ pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 wdc*	at	pciide? channel ?
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
+tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
 vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+
+# MII/PHY support
+inphy*	at	mii? phy ?
+nsphy*	at	mii? phy ?
+qsphy*	at	mii? phy ? 
+tlphy*	at	mii? phy ?
 
 # ISA/EISA bus support
 isa*	at	pceb?
