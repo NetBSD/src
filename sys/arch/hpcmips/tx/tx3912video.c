@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.1 1999/11/20 19:56:31 uch Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.2 1999/11/29 17:21:22 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -26,6 +26,7 @@
  *
  */
 #include "opt_tx39_debug.h"
+#include "fb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,10 +34,17 @@
 #include <sys/extent.h>
 
 #include <machine/bus.h>
+#include <machine/bootinfo.h> /* bootinfo */
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx3912videovar.h>
 #include <hpcmips/tx/tx3912videoreg.h>
+
+#if NFB > 0
+#include <dev/rcons/raster.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <arch/hpcmips/dev/fbvar.h>
+#endif
 
 void tx3912video_framebuffer_init __P((tx_chipset_tag_t, u_int32_t, u_int32_t));
 int  tx3912video_framebuffer_alloc __P((tx_chipset_tag_t, u_int32_t, int, int, int, u_int32_t*, u_int32_t*));
@@ -93,8 +101,15 @@ tx3912video_attach(parent, self, aux)
 	       sc->sc_fbaddr + sc->sc_fbsize);
 
 	/* Attach frame buffer device */
+#if NFB > 0
+	if (!(bootinfo->bi_cnuse & BI_CNUSE_SERIAL)) {
+		if (fb_cnattach(0, 0, 0, 0)) {
+			panic("tx3912video_attach: can't init fb console");
+		}
+	}
 	fba.fba_name = "fb";
 	config_found(self, &fba, tx3912video_print);
+#endif
 }
 
 int
