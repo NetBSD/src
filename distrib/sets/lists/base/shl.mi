@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.290 2005/01/09 11:57:34 dyoung Exp $
+# $NetBSD: shl.mi,v 1.291 2005/01/10 00:20:21 he Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.125				base-sys-shlib
 ./lib/libcrypt.so.0.1				base-sys-shlib
@@ -81,22 +81,22 @@
 ./usr/lib/libutil.so.7.5			base-sys-shlib
 ./usr/lib/libwrap.so.0.2			base-net-shlib
 ./usr/lib/libz.so.0.4				base-sys-shlib
-./usr/lib/security/pam_chroot.so.0		base-sys-shlib
-./usr/lib/security/pam_deny.so.0		base-sys-shlib
-./usr/lib/security/pam_echo.so.0		base-sys-shlib
-./usr/lib/security/pam_exec.so.0		base-sys-shlib
-./usr/lib/security/pam_ftpusers.so.0		base-sys-shlib
-./usr/lib/security/pam_group.so.0		base-sys-shlib
-./usr/lib/security/pam_guest.so.0		base-sys-shlib
-./usr/lib/security/pam_krb5.so.0		base-sys-shlib		kerberos
-./usr/lib/security/pam_ksu.so.0			base-sys-shlib		kerberos
-./usr/lib/security/pam_lastlog.so.0		base-sys-shlib
-./usr/lib/security/pam_login_access.so.0	base-sys-shlib
-./usr/lib/security/pam_nologin.so.0		base-sys-shlib
-./usr/lib/security/pam_permit.so.0		base-sys-shlib
-./usr/lib/security/pam_rhosts.so.0		base-sys-shlib
-./usr/lib/security/pam_rootok.so.0		base-sys-shlib
-./usr/lib/security/pam_securetty.so.0		base-sys-shlib
-./usr/lib/security/pam_self.so.0		base-sys-shlib
-./usr/lib/security/pam_ssh.so.0			base-sys-shlib
-./usr/lib/security/pam_unix.so.0		base-sys-shlib
+./usr/lib/security/pam_chroot.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_deny.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_echo.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_exec.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_ftpusers.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_group.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_guest.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_krb5.so.0		base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_ksu.so.0			base-sys-shlib		kerberos,pam
+./usr/lib/security/pam_lastlog.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_login_access.so.0	base-sys-shlib		pam
+./usr/lib/security/pam_nologin.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_permit.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_rhosts.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_rootok.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_securetty.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_self.so.0		base-sys-shlib		pam
+./usr/lib/security/pam_ssh.so.0			base-sys-shlib		pam
+./usr/lib/security/pam_unix.so.0		base-sys-shlib		pam

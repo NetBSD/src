@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.93 2005/01/03 06:00:12 lukem Exp $
+#	$NetBSD: Makefile,v 1.94 2005/01/10 00:20:21 he Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -73,6 +73,8 @@ SUBDIR+=	libkrb
 SUBDIR+=	.WAIT libssh
 .endif
 
+.if (${MKPAM} != "no")
 SUBDIR+=	.WAIT libpam
+.endif
 
 .include <bsd.subdir.mk>
