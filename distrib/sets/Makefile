@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/02/27 10:51:47 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2002/03/05 03:51:22 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -10,26 +10,6 @@ all:
 #
 
 .include <bsd.own.mk>
-
-#
-# UTILITY TARGETS
-#
-
-check_destdir: .PHONY
-.if !defined(DESTDIR)
-	@echo "DESTDIR must be set"
-	@false
-.else
-	@true
-.endif
-
-check_releasedir: .PHONY
-.if !defined(RELEASEDIR)
-	@echo "RELEASEDIR must be set"
-	@false
-.else
-	@true
-.endif
 
 SETSENV=	DESTDIR=${DESTDIR:Q} \
 		MACHINE=${MACHINE:Q} MACHINE_ARCH=${MACHINE_ARCH:Q} \
@@ -58,7 +38,7 @@ print_x11_version: .PHONY
 .endif
 
 # This target has debugging value only, really.
-makeflist: .PHONY check_destdir
+makeflist: .PHONY check_DESTDIR
 	${SETSENV} sh ${.CURDIR}/makeflist
 
 #
@@ -66,20 +46,20 @@ makeflist: .PHONY check_destdir
 #
 
 .PRECIOUS: checkflist
-checkflist: check_destdir
+checkflist: check_DESTDIR
 	${SETSENV} sh ${.CURDIR}/checkflist
 
-.PRECIOUS: checkflist
-checkflist-x11: check_destdir
+.PRECIOUS: checkflist-x11
+checkflist-x11: check_DESTDIR
 	${SETSENV} sh ${.CURDIR}/checkflist -x11
 
 .PRECIOUS: maketars
-maketars: check_destdir check_releasedir
+maketars: check_DESTDIR check_RELEASEDIR
 	${SETSENV} sh ${.CURDIR}/maketars ${UNPRIVED:D-M ${METALOG}} \
 		-d ${DESTDIR} -t ${RELEASEDIR}/binary/sets
 
 .PRECIOUS: makesums
-makesums: check_releasedir
+makesums: check_RELEASEDIR
 	${SETSENV} sh ${.CURDIR}/makesums -t ${RELEASEDIR}/binary/sets
 
 #

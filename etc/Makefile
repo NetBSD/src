@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.203 2002/03/01 06:22:09 chs Exp $
+#	$NetBSD: Makefile,v 1.204 2002/03/05 03:51:21 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -138,23 +138,7 @@ TARGET_ENDIANNESS=
 obj:
 	mkdir -p ${KERNOBJDIR}
 
-check_destdir: .PHONY
-.if !defined(DESTDIR)
-	@echo "setenv DESTDIR before doing that!"
-	@false
-.else
-	@true
-.endif
-
-check_releasedir: .PHONY
-.if !defined(RELEASEDIR)
-	@echo "setenv RELEASEDIR before doing that!"
-	@false
-.else
-	@true
-.endif
-
-distribution: check_destdir .WAIT distrib-dirs
+distribution: check_DESTDIR .WAIT distrib-dirs
 .if !defined(DISTRIBUTION_DONE)
 .if !defined(INSTALL_DONE)
 	(cd ..; ${MAKE} _DISTRIB= includes)
@@ -163,7 +147,7 @@ distribution: check_destdir .WAIT distrib-dirs
 	${MAKE} install-etc-files
 .endif	# !DISTRIBUTION_DONE
 
-install-etc-files: check_destdir
+install-etc-files: check_DESTDIR
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} ${DESTDIR}/etc
@@ -281,22 +265,22 @@ install-etc-files: check_destdir
 	(cd ../gnu/usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
 .endif
 
-distrib-dirs: check_destdir
+distrib-dirs: check_DESTDIR
 	${INSTALL_DIR} -o root -g wheel -m 755 ${DESTDIR}
 	${MTREE} -def mtree/NetBSD.dist -p ${DESTDIR}/ -U ${UNPRIVED:D-W}
 	rm -f ${DESTDIR}/sys
 	${INSTALL_SYMLINK} -o root -g wheel -m 755 usr/src/sys ${DESTDIR}/sys
 
-release snapshot: check_destdir check_releasedir .WAIT \
+release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
     distribution snap_pre snap_md_pre snap_kern snap_md_post
 	(cd ../distrib/sets; ${MAKE} sets)
 	sh ../distrib/sets/makesums -t ${RELEASEDIR}/binary/kernel '*.gz'
 
 # Standalone target to create a CDROM image after the release
 # was composed. Should be run after "make build" in both src and xsrc
-iso-image: check_destdir check_releasedir .WAIT iso-image_md_post
+iso-image: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_post
 
-iso-image_mi: check_destdir check_releasedir .WAIT iso-image_md_pre
+iso-image_mi: check_DESTDIR check_RELEASEDIR .WAIT iso-image_md_pre
 	@if ${MKISOFS} --version; then \
 		mkdir -p ${RELEASEDIR}/installation/cdrom ; \
 		${MKISOFS} ${MKISOFS_FLAGS} \
@@ -308,14 +292,14 @@ iso-image_mi: check_destdir check_releasedir .WAIT iso-image_md_pre
 	fi
 
 # Setup the $RELEASEDIR to produce a bootable CD image:
-iso-image_md_pre: check_destdir check_releasedir
+iso-image_md_pre: check_DESTDIR check_RELEASEDIR
 # nothing here -- look in the machine-dependent Makefile.inc
 
 # Fixup the  CD-image to be bootable
-iso-image_md_post: check_destdir check_releasedir .WAIT iso-image_mi
+iso-image_md_post: check_DESTDIR check_RELEASEDIR .WAIT iso-image_mi
 # nothing here -- look in the machine-dependent Makefile.inc
 
-snap_pre: check_destdir check_releasedir
+snap_pre: check_DESTDIR check_RELEASEDIR
 # Could be a mount point, ignore the errors
 	-/bin/rm -rf ${RELEASEDIR}
 	${INSTALL} -d -m 755 ${RELEASEDIR}
@@ -357,7 +341,7 @@ GETKERNELAWK=	awk '/^config/ {print $$2; found=1} \
 		END{ if (found == 0) print "netbsd"; }'
 #
 .if !target(snap_kern)
-snap_kern: check_destdir check_releasedir
+snap_kern: check_DESTDIR check_RELEASEDIR
 .if !defined(KERNELS_DONE)						# {
 .for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS} ${BUILD_KERNELS}
 	cd ${KERNCONFDIR} && ${CONFIG} \
@@ -401,10 +385,10 @@ snap_kern: check_destdir check_releasedir
 .endfor # place KERNEL_SETS kernels + EXTRA_KERNELS in binary/kernel/...
 .endif # no target(snap_kern)
 
-snap_md_pre: check_destdir check_releasedir
+snap_md_pre: check_DESTDIR check_RELEASEDIR
 # nothing here -- look in the machine-dependent Makefile.inc
 
-snap_md_post: check_destdir check_releasedir
+snap_md_post: check_DESTDIR check_RELEASEDIR
 # nothing here -- look in the machine-dependent Makefile.inc
 
 .include <bsd.prog.mk>
