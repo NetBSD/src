@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.45 1998/03/21 20:14:14 pk Exp $	*/
+/*	$NetBSD: si.c,v 1.46 1998/03/29 22:10:33 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -284,10 +284,11 @@ sw_match(parent, cf, aux)
 
 	/* Make sure there is something there... */
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       1, /* offset */
-			       1, /* probe size */
-			       NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				1,	/* probe size */
+				1,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.59 1998/03/21 20:34:58 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.60 1998/03/29 22:11:06 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -246,9 +246,11 @@ oclockmatch(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag,
-			       oba->oba_paddr,
-			       0, 1, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				1,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 /* ARGSUSED */
@@ -345,9 +347,11 @@ eeprom_match(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag,
-			       oba->oba_paddr,
-			       0, 1, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				1,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 static void
@@ -416,9 +420,11 @@ clockmatch_obio(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag,
-			       oba->oba_paddr,
-			       0, 1, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				1,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 static struct clockreg *
@@ -607,9 +613,11 @@ timermatch_obio(parent, cf, aux)
 
 	/* Make sure there is something there */
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag,
-			       oba->oba_paddr,
-			       0, 4, NULL, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				4,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				NULL, NULL));
 }
 
 /* ARGSUSED */

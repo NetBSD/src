@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.39 1998/03/23 17:37:04 pk Exp $ */
+/*	$NetBSD: cgsix.c,v 1.40 1998/03/29 22:10:32 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -229,9 +229,12 @@ cgsixmatch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       CGSIX_FHC_OFFSET, 4,
-			       cg6_pfour_probe, NULL));
+	return (bus_space_probe(oba->oba_bustag, 0,
+				oba->oba_paddr + CGSIX_FHC_OFFSET,
+				4,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				cg6_pfour_probe, NULL));
 }
 
 int

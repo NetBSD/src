@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.36 1998/03/21 20:23:38 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.37 1998/03/29 22:10:32 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -203,9 +203,11 @@ bwtwomatch_obio(parent, cf, aux)
 		return (0);
 
 	oba = &uoba->uoba_oba4;
-	return (obio_bus_probe(oba->oba_bustag, oba->oba_paddr,
-			       0, 4,
-			       bwtwo_pfour_probe, cf));
+	return (bus_space_probe(oba->oba_bustag, 0, oba->oba_paddr,
+				4,	/* probe size */
+				0,	/* offset */
+				0,	/* flags */
+				bwtwo_pfour_probe, cf));
 }
 
 int
