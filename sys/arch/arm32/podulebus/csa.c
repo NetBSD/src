@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.5 2000/03/18 16:13:22 mycroft Exp $	*/
+/*	$NetBSD: csa.c,v 1.6 2000/03/18 16:16:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -184,7 +184,8 @@ csa_attach(parent, self, aux)
 	    BOOTOPT_TYPE_INT, &sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 	sc->sc_ncr5380.sc_adapter.scsipi_minphys = minphys;
 
-	printf(" host=%d, using 8 bit PIO", sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
+	printf(" host=%d, using 8 bit PIO",
+	    sc->sc_ncr5380.sc_link.scsipi_scsi.adapter_target);
 
 	sc->sc_irqstatus = (u_char *)pa->pa_podule->slow_base + CSA_INTR_OFFSET;
 	sc->sc_irqmask = CSA_INTR_MASK;
