@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.199 2004/07/09 03:19:20 enami Exp $
+$NetBSD: pcmciadevs,v 1.200 2004/07/17 19:55:14 mycroft Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -101,7 +101,6 @@ vendor DUAL			0x890f	Dual
 vendor EDIMAX			0x890f	Edimax Technology Inc.
 vendor COMPEX			0x8a01	Compex Corporation
 vendor MELCO			0x8a01	Melco Corporation
-vendor ZONET			0x8a01	Zonet Technology Inc.
 vendor CONTEC			0xc001	Contec
 vendor MACNICA			0xc00b	MACNICA
 vendor ROLAND			0xc00c	Roland
@@ -391,9 +390,6 @@ product XIRCOM REM56		0x110a Xircom RealPort Ethernet 10/100 + Modem 56
 product XIRCOM CEM28		0x110b Xircom CreditCard Ethernet + Modem 28
 product XIRCOM CEM33		0x110b Xircom CreditCard Ethernet + Modem 33
 product XIRCOM CEM56		0x110b Xircom CreditCard Ethernet + Modem 56
-
-/* ZONET */
-product ZONET ZEN		0x0100	Zonet Zen 10/10
 
 /*
  * Cards we know only by their cis, sorted by name.
