@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.217 1999/01/30 13:44:25 drochner Exp $
+#	$NetBSD: GENERIC,v 1.218 1999/02/01 01:36:21 cjs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -148,7 +148,7 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
-options 	WSDISPLAY_COMPAT_RAWKBD	# can get raw scancodes
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 # see dev/pckbc/wskbdmap_mfii.c for implemented layouts
 #options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)"
 
