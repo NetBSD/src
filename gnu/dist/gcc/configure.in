@@ -862,6 +862,13 @@ for machine in $build $host $target; do
 		fixincludes=fixinc.wrap
 		tmake_file=i386/t-freebsd
 		;;
+	i[[34567]]86-*-netbsdelf*)
+		tm_file=i386/netbsd-elf.h
+		xm_file=i386/xm-netbsd.h
+		# On NetBSD, the headers are already okay, except for math.h.
+		fixincludes=fixinc.wrap
+		tmake_file=t-netbsd
+		;;
 	i[[34567]]86-*-netbsd*)
 		tm_file=i386/netbsd.h
 		xm_file=i386/xm-netbsd.h
