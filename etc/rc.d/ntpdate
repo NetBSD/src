@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpdate,v 1.12 2003/10/19 13:31:28 fredb Exp $
+# $NetBSD: ntpdate,v 1.13 2003/10/20 16:09:15 fredb Exp $
 #
 
 # PROVIDE: ntpdate
@@ -10,6 +10,7 @@
 
 name="ntpdate"
 rcvar=$name
+command="/usr/sbin/${name}"
 start_cmd="ntpdate_start"
 stop_cmd=":"
 
