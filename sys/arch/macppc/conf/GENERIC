@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.87 2000/12/19 10:42:05 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.88 2000/12/20 12:05:40 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.87 $"
+#ident 		"GENERIC-$Revision: 1.88 $"
 
 maxusers	32
 
@@ -219,6 +219,7 @@ wdc*	at obio? flags 0x1
 wd*	at pciide? channel ? drive ?
 wd*	at wdc? channel ? drive ? flags 0x0000
 
+atapibus* at pciide? channel ?
 atapibus* at wdc? channel ?
 
 cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
