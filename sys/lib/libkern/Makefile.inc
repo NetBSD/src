@@ -1,21 +1,37 @@
-#	$NetBSD: Makefile.inc,v 1.9 1994/12/31 04:26:58 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.10 1995/06/24 20:31:18 christos Exp $
 #
 #	NOTE: $S must correspond to the top of the 'sys' tree
 
 KERNDIR=	$S/lib/libkern
 
-KERNLIBDIR!=cd $(KERNDIR); \
-	printf "xxx:\n\techo \$${.OBJDIR}\n" | $(MAKE) -r -s -f - xxx
+KERNDST=	lib/kern
+KERNREL=	../..
+KERNLIB=	${KERNDST}/libkern.a
+KERNLIB_PROF=	${KERNDST}/libkern_p.a
 
-KERNLIB=	$(KERNLIBDIR)/libkern.a
-KERNLIB_PROF=	$(KERNLIBDIR)/libkern_p.a
-
-$(KERNLIB):		.NOTMAIN __always_make_kernlib
+${KERNLIB}:		.NOTMAIN __always_make_kernlib
 	@echo making sure the kern library is up to date...
-	@(cd $(KERNDIR); $(MAKE) libkern.a)
+	@(cd ${KERNDST} && ${MAKE} -f ${KERNREL}/${KERNDIR}/Makefile \
+	  KERNCC="${CC}" \
+	  KERNCFLAGS="${CFLAGS}" \
+	  KERNREL="${KERNREL}" \
+	  KERNDIR="${KERNDIR}" libkern.a)
 
-$(KERNLIB_PROF):	.NOTMAIN __always_make_kernlib
+${KERNLIB_PROF}:	.NOTMAIN __always_make_kernlib
 	@echo making sure the profiled kern library is up to date...
-	@(cd $(KERNDIR); $(MAKE) libkern_p.a)
+	@(cd ${KERNDST} && ${MAKE} -f ${KERNREL}/${KERNDIR}/Makefile \
+	  KERNCC="${CC}" \
+	  KERNCFLAGS="${CFLAGS}" \
+	  KERNREL="${KERNREL}" \
+	  KERNDIR="${KERNDIR}" libkern_p.a)
+
+clean:: 		.NOTMAIN __always_make_kernlib
+	@echo cleaning the kern library objects
+	@(cd ${KERNDST} && ${MAKE} -f ${KERNREL}/${KERNDIR}/Makefile \
+	  KERNCC="${CC}" \
+	  KERNCFLAGS="${CFLAGS}" \
+	  KERNREL="${KERNREL}" \
+	  KERNDIR="${KERNDIR}" clean)
 
 __always_make_kernlib:	.NOTMAIN
+	@([ -d ${KERNDST} ] || mkdir -p ${KERNDST})
