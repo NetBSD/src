@@ -1,6 +1,7 @@
-/*	$NetBSD: db_interface.c,v 1.4 2001/10/16 02:07:46 msaitoh Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.5 2002/02/08 06:12:01 uch Exp $	*/
 
 /*-
+ * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,10 +48,16 @@
 #include <ddb/ddbvar.h>
 
 void kdb_printtrap(u_int, int);
+void db_tlbdump_cmd(db_expr_t, int, db_expr_t, char *);
 
 extern label_t *db_recover;
 extern char *trap_type[];
 extern int trap_types;
+
+const struct db_command db_machine_command_table[] = {
+	{ "tlb",	db_tlbdump_cmd,		0,	0 },
+	{ 0 }
+};
 
 int db_active;
 
@@ -174,4 +181,134 @@ db_clear_single_step(regs)
 	db_regs_t *regs;
 {
 	regs->tf_ubc = 0;
+}
+
+void
+db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
+{
+#define ON(x, c)	((x) & (c) ? '|' : '.')
+	static const char *pr[] = { ".r", ".w", "rr", "ww" };
+	static const char title[] = 
+	    "   VPN    ASID    PFN     VDCGWtPR  SZ";
+	static const char title2[] = "\t\t\t    (user/kernel)";
+	int i, cpu_is_sh4;
+	u_int32_t r, e, a;
+#ifdef SH4
+	cpu_is_sh4 = 1;
+#else
+	cpu_is_sh4 = 0;
+#endif	
+	if (!cpu_is_sh4) {
+		/* MMU configuration. */
+		r = _reg_read_4(SH3_MMUCR);
+		printf("%s-mode, %s virtual storage mode\n",
+		    r & SH3_MMUCR_IX
+		    ? "ASID + VPN" : "VPN only",
+		    r & SH3_MMUCR_SV ? "single" : "multiple");
+		printf("---TLB DUMP---\n%s\n%s\n", title, title2);
+		for (i = 0; i < SH3_MMU_WAY; i++) {
+			printf(" [way %d]\n", i);
+			for (e = 0; e < SH3_MMU_ENTRY; e++) {
+				/* address/data array common offset. */
+				a = (e << SH3_MMU_VPN_SHIFT) |
+				    (i << SH3_MMU_WAY_SHIFT);
+
+				r = _reg_read_4(SH3_MMUAA | a);
+				printf("0x%08x %3d",
+				    r & SH3_MMUAA_D_VPN_MASK,
+				    r & SH3_MMUAA_D_ASID_MASK);
+				r = _reg_read_4(SH3_MMUDA | a);
+				printf(" 0x%08x %c%c%c%c_ %s %2dK\n",
+				    r & SH3_MMUDA_D_PPN_MASK,
+				    ON(r, SH3_MMUDA_D_V),
+				    ON(r, SH3_MMUDA_D_D),
+				    ON(r, SH3_MMUDA_D_C),
+				    ON(r, SH3_MMUDA_D_SH),
+				    pr[(r & SH3_MMUDA_D_PR_MASK) >>
+					SH3_MMUDA_D_PR_SHIFT],
+				    r & SH3_MMUDA_D_SZ ? 4 : 1);
+			}
+		}
+	} else {
+		/* MMU configuration */
+		r = _reg_read_4(SH4_MMUCR);
+		printf("%s virtual storage mode,  SQ access: (kernel%s)\n",
+		    r & SH3_MMUCR_SV ? "single" : "multiple",
+		    r & SH4_MMUCR_SQMD ? "" : "/user");
+
+		/* Dump ITLB */
+		printf("---ITLB DUMP ---\n%s TC SA\n%s\n", title, title2);
+		for (i = 0; i < 4; i++) {
+			e = i << SH4_ITLB_E_SHIFT;
+			r = _reg_read_4(SH4_ITLB_AA | e);
+			printf("0x%08x %3d",
+			    r & SH4_ITLB_AA_VPN_MASK,
+			    r & SH4_ITLB_AA_ASID_MASK);
+			r = _reg_read_4(SH4_ITLB_DA1 | e);
+			printf(" 0x%08x %c_%c%c_ %s ",
+			    r & SH4_ITLB_DA1_PPN_MASK,
+			    ON(r, SH4_ITLB_DA1_V),
+			    ON(r, SH4_ITLB_DA1_C),
+			    ON(r, SH4_ITLB_DA1_SH),
+			    pr[(r & SH4_ITLB_DA1_PR) >>
+				SH4_UTLB_DA1_PR_SHIFT]);
+			switch (r & SH4_PTEL_SZ_MASK) {
+			case SH4_PTEL_SZ_1K:
+				printf(" 1K");
+				break;
+			case SH4_PTEL_SZ_4K:
+				printf(" 4K");
+				break;
+			case SH4_PTEL_SZ_64K:
+				printf("64K");
+				break;
+			case SH4_PTEL_SZ_1M:
+				printf(" 1M");
+				break;
+			}
+			r = _reg_read_4(SH4_ITLB_DA2 | e);
+			printf(" %c  %d\n",
+			    ON(r, SH4_ITLB_DA2_TC), 
+			    r & SH4_ITLB_DA2_SA_MASK);
+		}
+		/* Dump UTLB */
+		printf("---UTLB DUMP---\n%s TC SA\n%s\n", title, title2);
+		for (i = 0; i < 64; i++) {
+			e = i << SH4_UTLB_E_SHIFT;
+			r = _reg_read_4(SH4_UTLB_AA | e);
+			printf("0x%08x %3d",
+			    r & SH4_UTLB_AA_VPN_MASK,
+			    r & SH4_UTLB_AA_ASID_MASK);
+			r = _reg_read_4(SH4_UTLB_DA1 | e);
+			printf(" 0x%08x %c%c%c%c%c %s ",
+			    r & SH4_UTLB_DA1_PPN_MASK,
+			    ON(r, SH4_UTLB_DA1_V),
+			    ON(r, SH4_UTLB_DA1_D),
+			    ON(r, SH4_UTLB_DA1_C),
+			    ON(r, SH4_UTLB_DA1_SH),
+			    ON(r, SH4_UTLB_DA1_WT),
+			    pr[(r & SH4_UTLB_DA1_PR_MASK) >>
+				SH4_UTLB_DA1_PR_SHIFT]
+			    );
+			switch (r & SH4_PTEL_SZ_MASK) {
+			case SH4_PTEL_SZ_1K:
+				printf(" 1K");
+				break;
+			case SH4_PTEL_SZ_4K:
+				printf(" 4K");
+				break;
+			case SH4_PTEL_SZ_64K:
+				printf("64K");
+				break;
+			case SH4_PTEL_SZ_1M:
+				printf(" 1M");
+				break;
+			}
+			r = _reg_read_4(SH4_UTLB_DA2 | e);
+			printf(" %c  %d\n",
+			    ON(r, SH4_UTLB_DA2_TC),
+			    r & SH4_UTLB_DA2_SA_MASK);
+		}
+	}
+#undef ON
 }
