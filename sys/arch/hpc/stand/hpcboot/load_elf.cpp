@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.4 2001/07/03 20:38:03 uch Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.5 2001/07/08 17:19:02 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -204,9 +204,10 @@ ElfLoader::symbol_block_size()
 	}
 
 	if (_sym_blk.shstr == NULL || _sym_blk.shsym == NULL) {
-		MessageBox(HPC_MENU._root->_window,
-		    TEXT("no symbol and/or strint table in binary"),
-		    TEXT("Information"), 0);
+		if (HPC_PREFERENCE.safety_message)
+			MessageBox(HPC_MENU._root->_window,
+			    TEXT("no symbol and/or string table in binary. (not fatal)"),
+			    TEXT("Information"), 0);
 		free(_sym_blk.header);
 		_sym_blk.header = NULL;
 
