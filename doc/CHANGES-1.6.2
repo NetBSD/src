@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.93 2003/07/02 14:16:49 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.94 2003/07/10 15:45:55 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1039,4 +1039,20 @@ src/sys/netinet/in.c				patch
 
 	Make it compilable.
 	[itojun, ticket #1361]
+
+sys/nfs/nfs_serv.c				1.80
+
+	nfsrv_commit(): return success and don't do anything for requests
+	which starts past the end of the file. This can happen when two
+	clients are writting to the same file.
+	Close PR 21696 by myself, discussed on tech-net in 2003/05 and 2003/06.
+	Issue raised by Chuck Silvers (commit and truncate ops needs to be
+	serialised) still unadressed.
+	[bouyer, ticket #1373]
+
+sys/net/if_spppsubr.c				1.67 (via patch)
+
+	We should use IFQ_DEQUEUE to get packets from the send queue, not
+	IF_DEQUEUE. Hopefully this will fix ALTQ for ISDN and PPPoE interfaces.
+	[martin, ticket #1374]
 
