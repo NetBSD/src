@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.179.2.20 2002/07/29 14:03:29 lukem Exp $
+.\"	$NetBSD: main,v 1.179.2.21 2002/07/30 04:45:09 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1329,10 +1329,6 @@ option to change the version string:
 .disp)
 .
 .It
-.Xr sysctl 8
-pathname changed
-.
-.Pp
 .Xr sysctl 8
 was moved from
 .Pa /usr/sbin/sysctl
