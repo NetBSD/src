@@ -2971,9 +2971,7 @@ load_expression (targreg, exp, pbasereg, poffset, explicit_reloc)
 	/* XXX: Disable this .got minimizing optimization so that we can get
 	   better instruction offset knowledge in the compiler.  This happens
 	   very infrequently anyway.  */
-	/* XXX: This causes addends to be added to ELF_LITERALs, which
-	   do not yet work.  Reverted for NetBSD. */
-	if (0
+	if (1
 	    || (!range_signed_32 (addend)
 		&& (alpha_noat_on || targreg == AXP_REG_AT)))
 	  {
