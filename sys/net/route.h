@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.14 1998/05/02 21:19:03 thorpej Exp $	*/
+/*	$NetBSD: route.h,v 1.15 1998/08/25 04:22:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -258,10 +258,12 @@ struct rttimer_queue {
 
 #ifdef _KERNEL
 #define	RTFREE(rt) \
+do { \
 	if ((rt)->rt_refcnt <= 1) \
 		rtfree(rt); \
 	else \
-		(rt)->rt_refcnt--;
+		(rt)->rt_refcnt--; \
+} while (0)
 
 struct	route_cb route_cb;
 struct	rtstat	rtstat;
