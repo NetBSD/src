@@ -60,6 +60,10 @@
    *getservbyname(const char *, const char *) */
 #undef GETSERVBYNAME_PROTO_COMPATIBLE
 
+/* define if prototype of getsockname is compatible with int getsockname(int,
+   struct sockaddr*, socklen_t*) */
+#undef GETSOCKNAME_PROTO_COMPATIBLE
+
 /* Define if you have the <arpa/ftp.h> header file. */
 #undef HAVE_ARPA_FTP_H
 
@@ -198,6 +202,9 @@
 /* Define if you have the `gai_strerror' function. */
 #undef HAVE_GAI_STRERROR
 
+/* Define if you have the <gdbm/ndbm.h> header file. */
+#undef HAVE_GDBM_NDBM_H
+
 /* Define if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
@@ -228,6 +235,9 @@
 /* Define if you have the `gethostname' function. */
 #undef HAVE_GETHOSTNAME
 
+/* Define if you have the `getifaddrs' function. */
+#undef HAVE_GETIFADDRS
+
 /* Define if you have the `getipnodebyaddr' function. */
 #undef HAVE_GETIPNODEBYADDR
 
@@ -237,7 +247,7 @@
 /* Define if you have the `getlogin' function. */
 #undef HAVE_GETLOGIN
 
-/* Define if you have the `getmsg' function. */
+/* Define if you have a working getmsg. */
 #undef HAVE_GETMSG
 
 /* Define if you have the `getnameinfo' function. */
@@ -301,6 +311,9 @@
 /* define if your system declares h_nerr */
 #undef HAVE_H_NERR_DECLARATION
 
+/* Define if you have the <ifaddrs.h> header file. */
+#undef HAVE_IFADDRS_H
+
 /* Define if you have the `inet_aton' function. */
 #undef HAVE_INET_ATON
 
@@ -337,36 +350,6 @@
 /* Define if you have the `krb_get_our_ip_for_realm' function. */
 #undef HAVE_KRB_GET_OUR_IP_FOR_REALM
 
-/* Define if you have the `bsd' library (-lbsd). */
-#undef HAVE_LIBBSD
-
-/* Define if you have the `dnet' library (-ldnet). */
-#undef HAVE_LIBDNET
-
-/* Define if you have the `dnet_stub' library (-ldnet_stub). */
-#undef HAVE_LIBDNET_STUB
-
-/* Define if you have the `fl' library (-lfl). */
-#undef HAVE_LIBFL
-
-/* Define if you have the `ICE' library (-lICE). */
-#undef HAVE_LIBICE
-
-/* Define if you have the `ipc' library (-lipc). */
-#undef HAVE_LIBIPC
-
-/* Define if you have the `l' library (-ll). */
-#undef HAVE_LIBL
-
-/* Define if you have the `nsl' library (-lnsl). */
-#undef HAVE_LIBNSL
-
-/* Define if you have the `posix' library (-lposix). */
-#undef HAVE_LIBPOSIX
-
-/* Define if you have the `socket' library (-lsocket). */
-#undef HAVE_LIBSOCKET
-
 /* Define if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
@@ -382,20 +365,17 @@
 /* Define if you have the <maillock.h> header file. */
 #undef HAVE_MAILLOCK_H
 
-/* Define if you have the `MD4Init' function. */
-#undef HAVE_MD4INIT
-
 /* Define if you have the `MD4_Init' function. */
 #undef HAVE_MD4_INIT
-
-/* Define if you have the `MD5Init' function. */
-#undef HAVE_MD5INIT
 
 /* Define if you have the `MD5_Init' function. */
 #undef HAVE_MD5_INIT
 
 /* Define if you have the `memmove' function. */
 #undef HAVE_MEMMOVE
+
+/* Define if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
 
 /* Define if you have the `mkstemp' function. */
 #undef HAVE_MKSTEMP
@@ -411,6 +391,9 @@
 
 /* Define if you have the <netinet6/in6.h> header file. */
 #undef HAVE_NETINET6_IN6_H
+
+/* Define if you have the <netinet6/in6_var.h> header file. */
+#undef HAVE_NETINET6_IN6_VAR_H
 
 /* Define if you have the <netinet/in6.h> header file. */
 #undef HAVE_NETINET_IN6_H
@@ -442,6 +425,21 @@
 /* Define if you have the <net/if.h> header file. */
 #undef HAVE_NET_IF_H
 
+/* Define if you have the <openssl/des.h> header file. */
+#undef HAVE_OPENSSL_DES_H
+
+/* Define if you have the <openssl/md4.h> header file. */
+#undef HAVE_OPENSSL_MD4_H
+
+/* Define if you have the <openssl/md5.h> header file. */
+#undef HAVE_OPENSSL_MD5_H
+
+/* Define if you have the <openssl/rc4.h> header file. */
+#undef HAVE_OPENSSL_RC4_H
+
+/* Define if you have the <openssl/sha.h> header file. */
+#undef HAVE_OPENSSL_SHA_H
+
 /* define if your system declares optarg */
 #undef HAVE_OPTARG_DECLARATION
 
@@ -459,6 +457,9 @@
 
 /* Define if you have the <paths.h> header file. */
 #undef HAVE_PATHS_H
+
+/* Define if you have the `pidfile' function. */
+#undef HAVE_PIDFILE
 
 /* Define if you have the <pthread.h> header file. */
 #undef HAVE_PTHREAD_H
@@ -480,6 +481,9 @@
 
 /* Define if you have the `random' function. */
 #undef HAVE_RANDOM
+
+/* Define if you have the `RC4' function. */
+#undef HAVE_RC4
 
 /* Define if you have the `rcmd' function. */
 #undef HAVE_RCMD
@@ -577,9 +581,6 @@
 /* Define if you have the <sgtty.h> header file. */
 #undef HAVE_SGTTY_H
 
-/* Define if you have the `SHA1Init' function. */
-#undef HAVE_SHA1INIT
-
 /* Define if you have the `SHA1_Init' function. */
 #undef HAVE_SHA1_INIT
 
@@ -607,6 +608,9 @@
 /* Define if you have the <standards.h> header file. */
 #undef HAVE_STANDARDS_H
 
+/* Define if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
 /* Define if you have the `strcasecmp' function. */
 #undef HAVE_STRCASECMP
 
@@ -618,6 +622,12 @@
 
 /* Define if you have the `strftime' function. */
 #undef HAVE_STRFTIME
+
+/* Define if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define if you have the <string.h> header file. */
+#undef HAVE_STRING_H
 
 /* Define if you have the `strlcat' function. */
 #undef HAVE_STRLCAT
@@ -652,11 +662,17 @@
 /* Define if you have the `strstr' function. */
 #undef HAVE_STRSTR
 
+/* Define if you have the `strsvis' function. */
+#undef HAVE_STRSVIS
+
 /* Define if you have the `strtok_r' function. */
 #undef HAVE_STRTOK_R
 
 /* Define if the system has the type `struct addrinfo'. */
 #undef HAVE_STRUCT_ADDRINFO
+
+/* Define if the system has the type `struct ifaddrs'. */
+#undef HAVE_STRUCT_IFADDRS
 
 /* Define if the system has the type `struct sockaddr'. */
 #undef HAVE_STRUCT_SOCKADDR
@@ -703,8 +719,20 @@
 /* define if struct winsize is declared in sys/termios.h */
 #undef HAVE_STRUCT_WINSIZE
 
+/* Define if you have the `strunvis' function. */
+#undef HAVE_STRUNVIS
+
 /* Define if you have the `strupr' function. */
 #undef HAVE_STRUPR
+
+/* Define if you have the `strvis' function. */
+#undef HAVE_STRVIS
+
+/* Define if you have the `strvisx' function. */
+#undef HAVE_STRVISX
+
+/* Define if you have the `svis' function. */
+#undef HAVE_SVIS
 
 /* Define if you have the `swab' function. */
 #undef HAVE_SWAB
@@ -871,6 +899,9 @@
 /* Define if you have the `unsetenv' function. */
 #undef HAVE_UNSETENV
 
+/* Define if you have the `unvis' function. */
+#undef HAVE_UNVIS
+
 /* Define if you have the <userconf.h> header file. */
 #undef HAVE_USERCONF_H
 
@@ -900,6 +931,12 @@
 
 /* Define if you have the `vhangup' function. */
 #undef HAVE_VHANGUP
+
+/* Define if you have the `vis' function. */
+#undef HAVE_VIS
+
+/* Define if you have the <vis.h> header file. */
+#undef HAVE_VIS_H
 
 /* define if you have a working vsnprintf */
 #undef HAVE_VSNPRINTF
@@ -1173,6 +1210,10 @@
 #undef HAVE_U_INT16_T
 #undef HAVE_U_INT32_T
 #undef HAVE_U_INT64_T
+#undef HAVE_UINT8_T
+#undef HAVE_UINT16_T
+#undef HAVE_UINT32_T
+#undef HAVE_UINT64_T
 
 #if defined(HAVE_FOUR_VALUED_KRB_PUT_INT) || !defined(KRB4)
 #define KRB_PUT_INT(F, T, L, S) krb_put_int((F), (T), (L), (S))

@@ -1,4 +1,4 @@
-dnl $Id: check-var.m4,v 1.1.1.2 2000/08/02 20:00:28 assar Exp $
+dnl $Id: check-var.m4,v 1.1.1.3 2001/02/11 13:51:51 assar Exp $
 dnl
 dnl rk_CHECK_VAR(variable, includes)
 AC_DEFUN([rk_CHECK_VAR], [
@@ -14,7 +14,7 @@ AC_MSG_RESULT($ac_foo)
 if test "$ac_foo" = yes; then
 	AC_DEFINE_UNQUOTED(AC_TR_CPP(HAVE_[]$1), 1, 
 		[Define if you have the `]$1[' variable.])
-	ifval([$2], AC_CHECK_DECLARATION([$2],[$1]))
+	m4_ifval([$2], AC_CHECK_DECLARATION([$2],[$1]))
 fi
 ])
 

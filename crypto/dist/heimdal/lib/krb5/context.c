@@ -33,15 +33,11 @@
 
 #include "krb5_locl.h"
 
-RCSID("$Id: context.c,v 1.1.1.2 2000/08/02 19:59:25 assar Exp $");
+RCSID("$Id: context.c,v 1.1.1.3 2001/02/11 13:51:43 assar Exp $");
 
 #define INIT_FIELD(C, T, E, D, F)					\
     (C)->E = krb5_config_get_ ## T ## _default ((C), NULL, (D), 	\
 						"libdefaults", F, NULL)
-
-#ifdef KRB4
-extern krb5_kt_ops krb4_fkt_ops;
-#endif
 
 /*
  * Set the list of etypes `ret_etypes' from the configuration variable
@@ -146,10 +142,8 @@ init_context_from_config_file(krb5_context context)
     context->kt_types     = NULL;
     krb5_kt_register (context, &krb5_fkt_ops);
     krb5_kt_register (context, &krb5_mkt_ops);
-#ifdef KRB4
-    krb5_kt_register (context, &krb4_fkt_ops);
-#endif
     krb5_kt_register (context, &krb5_akf_ops);
+    krb5_kt_register (context, &krb4_fkt_ops);
     return 0;
 }
 
@@ -185,8 +179,10 @@ krb5_init_context(krb5_context *context)
 #endif
 
     ret = init_context_from_config_file(p);
-    if(ret)
+    if(ret) {
+	krb5_free_context(p);
 	return ret;
+    }
 
     *context = p;
     return 0;
@@ -219,8 +215,8 @@ default_etypes(krb5_enctype **etype)
     krb5_enctype p[] = {
 	ETYPE_DES3_CBC_SHA1,
 	ETYPE_DES3_CBC_MD5,
-	ETYPE_DES_CBC_MD5,
 	ETYPE_ARCFOUR_HMAC_MD5,
+	ETYPE_DES_CBC_MD5,
 	ETYPE_DES_CBC_MD4,
 	ETYPE_DES_CBC_CRC,
 	ETYPE_NULL

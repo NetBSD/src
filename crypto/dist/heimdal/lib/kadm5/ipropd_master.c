@@ -33,7 +33,7 @@
 
 #include "iprop.h"
 
-RCSID("$Id: ipropd_master.c,v 1.1.1.2 2000/08/02 19:59:19 assar Exp $");
+RCSID("$Id: ipropd_master.c,v 1.1.1.3 2001/02/11 13:51:42 assar Exp $");
 
 static krb5_log_facility *log_facility;
 
@@ -116,7 +116,7 @@ add_slave (krb5_context context, krb5_keytab keytab, slave **root, int fd)
     krb5_principal server;
     krb5_error_code ret;
     slave *s;
-    int addr_len;
+    socklen_t addr_len;
     krb5_ticket *ticket = NULL;
     char hostname[128];
 
@@ -415,12 +415,17 @@ main(int argc, char **argv)
     signal_fd = make_signal_socket (context);
     listen_fd = make_listen_socket (context);
 
+    signal (SIGPIPE, SIG_IGN);
+
     for (;;) {
 	slave *p;
 	fd_set readset;
 	int max_fd = 0;
 	struct timeval to = {30, 0};
 	u_int32_t vers;
+
+	if (signal_fd >= FD_SETSIZE || listen_fd >= FD_SETSIZE)
+	    krb5_errx (context, 1, "fd too large");
 
 	FD_ZERO(&readset);
 	FD_SET(signal_fd, &readset);
@@ -453,7 +458,7 @@ main(int argc, char **argv)
 
 	if (ret && FD_ISSET(signal_fd, &readset)) {
 	    struct sockaddr_un peer_addr;
-	    int peer_len = sizeof(peer_addr);
+	    socklen_t peer_len = sizeof(peer_addr);
 
 	    if(recvfrom(signal_fd, &vers, sizeof(vers), 0,
 			(struct sockaddr *)&peer_addr, &peer_len) < 0) {

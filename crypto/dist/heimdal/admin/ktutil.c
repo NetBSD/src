@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,8 +32,9 @@
  */
 
 #include "ktutil_locl.h"
+#include <err.h>
 
-RCSID("$Id: ktutil.c,v 1.1.1.2 2000/08/02 19:58:04 assar Exp $");
+RCSID("$Id: ktutil.c,v 1.1.1.3 2001/02/11 13:51:10 assar Exp $");
 
 static int help_flag;
 static int version_flag;
@@ -129,7 +130,9 @@ main(int argc, char **argv)
     int optind = 0;
     krb5_error_code ret;
     set_progname(argv[0]);
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
     if(getarg(args, num_args, argc, argv, &optind))
 	usage(1);
     if(help_flag)

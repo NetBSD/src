@@ -33,7 +33,7 @@
 
 #include "iprop.h"
 
-RCSID("$Id: ipropd_slave.c,v 1.1.1.2 2000/08/02 19:59:19 assar Exp $");
+RCSID("$Id: ipropd_slave.c,v 1.1.1.3 2001/02/11 13:51:42 assar Exp $");
 
 static krb5_log_facility *log_facility;
 
@@ -223,7 +223,7 @@ receive (krb5_context context,
 }
 
 static void
-receive_everything (krb5_context context, int *fd,
+receive_everything (krb5_context context, int fd,
 		    kadm5_server_context *server_context,
 		    krb5_auth_context auth_context)
 {
@@ -415,7 +415,7 @@ main(int argc, char **argv)
 		   server_context->log_context.version);
 	    break;
 	case TELL_YOU_EVERYTHING :
-	    receive_everything (context, &master_fd, server_context,
+	    receive_everything (context, master_fd, server_context,
 				auth_context);
 	    break;
 	case NOW_YOU_HAVE :

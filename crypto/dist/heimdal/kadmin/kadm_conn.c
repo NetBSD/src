@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,7 +36,7 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$Id: kadm_conn.c,v 1.1.1.1 2000/08/02 19:58:51 assar Exp $");
+RCSID("$Id: kadm_conn.c,v 1.1.1.2 2001/02/11 13:51:32 assar Exp $");
 
 struct kadm_port {
     char *port;
@@ -123,19 +123,21 @@ static int
 spawn_child(krb5_context context, int *socks, int num_socks, int this_sock)
 {
     int e, i;
-    struct sockaddr sa;
-    size_t sa_size;
+    struct sockaddr_storage __ss;
+    struct sockaddr *sa = (struct sockaddr *)&__ss;
+    socklen_t sa_size = sizeof(__ss);
     int s;
     pid_t pid;
     krb5_address addr;
     char buf[128];
     size_t buf_len;
-    s = accept(socks[this_sock], &sa, &sa_size);
+
+    s = accept(socks[this_sock], sa, &sa_size);
     if(s < 0) {
 	krb5_warn(context, errno, "accept");
 	return 1;
     }
-    e = krb5_sockaddr2address(&sa, &addr);
+    e = krb5_sockaddr2address(sa, &addr);
     if(e)
 	krb5_warn(context, e, "krb5_sockaddr2address");
     else {
@@ -157,6 +159,8 @@ spawn_child(krb5_context context, int *socks, int num_socks, int this_sock)
 	if(s != STDIN_FILENO && s != STDOUT_FILENO)
 	    close(s);
 	return 0;
+    } else {
+	close(s);
     }
     return 1;
 }
@@ -172,6 +176,8 @@ wait_for_connection(krb5_context context,
     FD_ZERO(&orig_read_set);
     
     for(i = 0; i < num_socks; i++) {
+	if (socks[i] >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET(socks[i], &orig_read_set);
 	max_fd = max(max_fd, socks[i]);
     }

@@ -38,9 +38,10 @@
 #ifdef HAVE_ARPA_NAMESER_H
 #include <arpa/nameser.h>
 #endif
+#include <fnmatch.h>
 #include "resolve.h"
 
-RCSID("$Id: principal.c,v 1.1.1.2 2000/08/02 19:59:37 assar Exp $");
+RCSID("$Id: principal.c,v 1.1.1.3 2001/02/11 13:51:45 assar Exp $");
 
 #define princ_num_comp(P) ((P)->name.name_string.len)
 #define princ_type(P) ((P)->name.name_type)
@@ -539,14 +540,37 @@ krb5_realm_compare(krb5_context context,
     return strcmp(princ_realm(princ1), princ_realm(princ2)) == 0;
 }
 
+/*
+ * return TRUE iff princ matches pattern
+ */
+
+krb5_boolean
+krb5_principal_match(krb5_context context,
+		     krb5_const_principal princ,
+		     krb5_const_principal pattern)
+{
+    int i;
+    if(princ_num_comp(princ) != princ_num_comp(pattern))
+	return FALSE;
+    if(fnmatch(princ_realm(pattern), princ_realm(princ), 0) != 0)
+	return FALSE;
+    for(i = 0; i < princ_num_comp(princ); i++){
+	if(fnmatch(princ_ncomp(pattern, i), princ_ncomp(princ, i), 0) != 0)
+	    return FALSE;
+    }
+    return TRUE;
+}
+
+
 struct v4_name_convert {
     const char *from;
     const char *to; 
 } default_v4_name_convert[] = {
-    { "ftp", "ftp" },
-    { "hprop", "hprop" },
-    { "pop", "pop" },
-    { "rcmd", "host" },
+    { "ftp",	"ftp" },
+    { "hprop",	"hprop" },
+    { "pop",	"pop" },
+    { "imap",	"imap" },
+    { "rcmd",	"host" },
     { NULL, NULL }
 };
 
@@ -612,7 +636,7 @@ krb5_425_conv_principal_ext(krb5_context context,
     const char *p;
     krb5_error_code ret;
     krb5_principal pr;
-    char host[128];
+    char host[MAXHOSTNAMELEN];
 
     /* do the following: if the name is found in the
        `v4_name_convert:host' part, is is assumed to be a `host' type
@@ -658,7 +682,17 @@ krb5_425_conv_principal_ext(krb5_context context,
 	    inst = hp->h_name;
 #endif
 	if(inst) {
-	    ret = krb5_make_principal(context, &pr, realm, name, inst, NULL);
+	    char *low_inst = strdup(inst);
+
+	    if (low_inst == NULL) {
+#ifdef USE_RESOLVER
+		dns_free_data(r);
+#endif
+		return ENOMEM;
+	    }
+	    ret = krb5_make_principal(context, &pr, realm, name, low_inst,
+				      NULL);
+	    free (low_inst);
 	    if(ret == 0) {
 		if(func == NULL || (*func)(context, pr)){
 		    *princ = pr;
@@ -897,7 +931,7 @@ krb5_sname_to_principal (krb5_context context,
 			 krb5_principal *ret_princ)
 {
     krb5_error_code ret;
-    char localhost[128];
+    char localhost[MAXHOSTNAMELEN];
     char **realms, *host = NULL;
 	
     if(type != KRB5_NT_SRV_HST && type != KRB5_NT_UNKNOWN)

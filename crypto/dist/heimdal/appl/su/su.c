@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
 
 #include <config.h>
 
-RCSID("$Id: su.c,v 1.1.1.2 2000/08/02 19:58:11 assar Exp $");
+RCSID("$Id: su.c,v 1.1.1.3 2001/02/11 13:51:12 assar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,7 +138,7 @@ krb5_verify(struct passwd *login_info, struct passwd *su_info,
     ret = krb5_init_context (&context);
     if (ret) {
 #if 0
-	warnx("krb5_init_context failed: %u", ret);
+	warnx("krb5_init_context failed: %d", ret);
 #endif
 	return 1;
     }
@@ -206,9 +206,26 @@ krb5_start_session(void)
 
     asprintf(&cc_name, "%s:%s", krb5_cc_get_type(context, ccache2),
 	     krb5_cc_get_name(context, ccache2));
-    setenv("KRB5CCNAME", cc_name, 1);
+    esetenv("KRB5CCNAME", cc_name, 1);
+
+    /* we want to export this even if we don't directly support KRB4 */
+    {
+#ifndef TKT_ROOT
+#define TKT_ROOT "/tmp/tkt"
+#endif
+	int fd;
+	char tkfile[256];
+	strlcpy(tkfile, TKT_ROOT, sizeof(tkfile));
+	strlcat(tkfile, "_XXXXXX", sizeof(tkfile));
+	fd = mkstemp(tkfile);
+	if(fd >= 0) {
+	    close(fd);
+	    esetenv("KRBTKFILE", tkfile, 1);
+	}
+    }
             
 #ifdef KRB4
+    /* convert creds? */
     if(k_hasafs()) {
 	if (k_setpag() == 0)
 	    krb5_afslog(context, ccache2, NULL, NULL);
@@ -229,7 +246,7 @@ verify_unix(struct passwd *su)
     char *pw;
     int r;
     if(su->pw_passwd != NULL && *su->pw_passwd != '\0') {
-	sprintf(prompt, "%s's password: ", su->pw_name);
+	snprintf(prompt, sizeof(prompt), "%s's password: ", su->pw_name);
 	r = des_read_pw_string(pw_buf, sizeof(pw_buf), prompt, 0);
 	if(r != 0)
 	    exit(0);
@@ -359,16 +376,16 @@ main(int argc, char **argv)
 	    if (environ == NULL)
 		err (1, "malloc");
 	    environ[0] = NULL;
-	    setenv ("PATH", _PATH_DEFPATH, 1);
+	    esetenv ("PATH", _PATH_DEFPATH, 1);
 	    if (t)
-		setenv ("TERM", t, 1);
+		esetenv ("TERM", t, 1);
 	    if (chdir (su_info->pw_dir) < 0)
 		errx (1, "no directory");
 	}
 	if (full_login || su_info->pw_uid)
-	    setenv ("USER", su_info->pw_name, 1);
-	setenv("HOME", su_info->pw_dir, 1);
-	setenv("SHELL", shell, 1);
+	    esetenv ("USER", su_info->pw_name, 1);
+	esetenv("HOME", su_info->pw_dir, 1);
+	esetenv("SHELL", shell, 1);
     }
 
     {

@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.2 2000/08/02 20:00:18 assar Exp $
+# $Id: Makefile.am,v 1.1.1.3 2001/02/11 13:51:50 assar Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -7,8 +7,11 @@ YFLAGS = -d
 include_HEADERS = sl.h
 
 lib_LTLIBRARIES = libsl.la libss.la
-libsl_la_LDFLAGS = -version-info 1:0:1
-libss_la_LDFLAGS = -version-info 1:1:1
+libsl_la_LDFLAGS = -version-info 1:1:1
+libss_la_LDFLAGS = -version-info 1:3:1
+
+libsl_la_LIBADD = @LIB_readline@
+libss_la_LIBADD = @LIB_readline@
 
 RENAME_SRC = roken_rename.h strtok_r.c snprintf.c
 
@@ -34,8 +37,8 @@ CLEANFILES = lex.c parse.c parse.h snprintf.c strtok_r.c
 
 $(mk_cmds_OBJECTS): parse.h
 
-LDADD = \
-	$(LIB_roken) \
+LDADD =						\
+	$(LIB_roken)				\
 	$(LEXLIB)
 
 strtok_r.c:

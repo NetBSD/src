@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: changepw.c,v 1.1.1.2 2000/08/02 19:59:24 assar Exp $");
+RCSID("$Id: changepw.c,v 1.1.1.3 2001/02/11 13:51:43 assar Exp $");
 
 static krb5_error_code
 get_kdc_address (krb5_context context,
@@ -140,7 +140,12 @@ out2:
 
 static void
 str2data (krb5_data *d,
-	  char *fmt,
+	  const char *fmt,
+	  ...) __attribute__ ((format (printf, 2, 3)));
+
+static void
+str2data (krb5_data *d,
+	  const char *fmt,
 	  ...)
 {
     va_list args;
@@ -299,6 +304,12 @@ krb5_change_password (krb5_context	context,
 		}
 	    }
 	    
+	    if (sock >= FD_SETSIZE) {
+		ret = ERANGE;
+		close (sock);
+		goto out;
+	    }
+
 	    FD_ZERO(&fdset);
 	    FD_SET(sock, &fdset);
 	    tv.tv_usec = 0;

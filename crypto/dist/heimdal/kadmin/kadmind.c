@@ -33,8 +33,10 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: kadmind.c,v 1.1.1.2 2000/08/02 19:58:52 assar Exp $");
+RCSID("$Id: kadmind.c,v 1.1.1.3 2001/02/11 13:51:33 assar Exp $");
 
+static char *check_library  = NULL;
+static char *check_function = NULL;
 static char *config_file;
 static char *keyfile;
 static char *keytab_str = "HDB:";
@@ -60,6 +62,12 @@ static struct getargs args[] = {
     {	"realm",	'r',	arg_string,   &realm, 
 	"realm to use", "realm" 
     },
+#ifdef HAVE_DLOPEN
+    { "check-library", 0, arg_string, &check_library, 
+      "library to load password check function from", "library" },
+    { "check-function", 0, arg_string, &check_function,
+      "password check function to load", "function" },
+#endif
     {	"debug",	'd',	arg_flag,   &debug_flag, 
 	"enable debugging" 
     },
@@ -80,9 +88,6 @@ usage(int ret)
     exit (ret);
 }
 
-krb5_error_code
-kadmind_loop (krb5_context, krb5_auth_context, krb5_keytab, int);
-
 int
 main(int argc, char **argv)
 {
@@ -95,7 +100,9 @@ main(int argc, char **argv)
 
     set_progname(argv[0]);
 
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
 
     ret = krb5_openlog(context, "kadmind", &logf);
     ret = krb5_set_warn_dest(context, logf);
@@ -132,10 +139,12 @@ main(int argc, char **argv)
     if(ret)
 	krb5_err(context, 1, ret, "krb5_kt_resolve");
 
+    kadm5_setup_passwd_quality_check (context, check_library, check_function);
+
     {
 	int fd = 0;
 	struct sockaddr sa;
-	size_t sa_size;
+	socklen_t sa_size;
 	krb5_auth_context ac = NULL;
 	int debug_port;
 	sa_size = sizeof(sa);
@@ -146,9 +155,10 @@ main(int argc, char **argv)
 	    else
 		debug_port = htons(atoi(port_str));
 	    mini_inetd(debug_port);
-	} else if(getsockname(STDIN_FILENO, &sa, &sa_size) < 0 && 
+	} else if(roken_getsockname(STDIN_FILENO, &sa, &sa_size) < 0 && 
 		   errno == ENOTSOCK) {
 	    parse_ports(context, port_str ? port_str : "+");
+	    pidfile(NULL);
 	    start_server(context);
 	}
 	if(realm)

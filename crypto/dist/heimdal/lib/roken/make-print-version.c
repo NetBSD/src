@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,13 +33,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: make-print-version.c,v 1.1.1.2 2000/08/02 19:59:52 assar Exp $");
+RCSID("$Id: make-print-version.c,v 1.1.1.3 2001/02/11 13:51:46 assar Exp $");
 #endif
 
 #include <stdio.h>
 
 #ifdef KRB5
-extern char *heimdal_version;
+extern const char *heimdal_version;
 #endif
 #ifdef KRB4
 extern char *krb4_version;
