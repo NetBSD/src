@@ -1,6 +1,4 @@
-/*
- * $Id: etc.c,v 1.7 1994/06/10 15:16:04 pk Exp $
- */
+/*	$NetBSD: etc.c,v 1.8 1998/01/05 22:00:50 cgd Exp $	*/
 
 #include <err.h>
 #include <stdlib.h>

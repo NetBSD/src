@@ -1,4 +1,4 @@
-.\"	$NetBSD: ldconfig.8,v 1.7 1997/08/27 06:43:07 thorpej Exp $
+.\"	$NetBSD: ldconfig.8,v 1.8 1998/01/05 22:01:02 cgd Exp $
 .\"
 .\" Copyright (c) 1993,1995 Paul Kranenburg
 .\" All rights reserved.
@@ -112,7 +112,7 @@ Switch on verbose mode.
 .Sh Security
 Special care must be taken when loading shared libraries into the address
 space of
-.Ev set-user-Id
+.Ev set-user-ID
 programs.  Whenever such a program is run,
 .Nm ld.so
 will only load shared libraries from the
@@ -126,7 +126,7 @@ be safely loaded.  It is presumed that the set of directories specified to
 .Nm
 is under control of the system's administrator.
 .Nm ld.so
-further assists set-user-Id programs by erasing the
+further assists set-user-ID programs by erasing the
 .Ev LD_LIBRARY_PATH
 from the environment.
 

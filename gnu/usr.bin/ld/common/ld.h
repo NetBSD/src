@@ -1,6 +1,5 @@
-/*
- *	$Id: ld.h,v 1.19 1996/02/22 00:19:57 pk Exp $
- */
+/*	$NetBSD: ld.h,v 1.20 1998/01/05 22:00:53 cgd Exp $	*/
+
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.

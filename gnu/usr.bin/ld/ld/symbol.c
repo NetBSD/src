@@ -1,5 +1,7 @@
+/*	$NetBSD: symbol.c,v 1.9 1998/01/05 22:00:59 cgd Exp $	*/
+
 /*
- * $Id: symbol.c,v 1.8 1994/06/29 11:18:55 pk Exp $	- symbol table routines
+ *	- symbol table routines
  */
 
 /* Create the symbol table entries for `etext', `edata' and `end'.  */

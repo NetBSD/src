@@ -1,5 +1,7 @@
+/*	$NetBSD: lib.c,v 1.17 1998/01/05 22:00:58 cgd Exp $	*/
+
 /*
- * $Id: lib.c,v 1.16 1995/06/04 21:33:14 pk Exp $	- library routines
+ *	- library routines
  */
 
 #include <sys/param.h>
