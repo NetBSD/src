@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.24 2003/09/06 19:23:21 jdolecek Exp $
+.\" $NetBSD: modload.8,v 1.25 2003/09/06 20:09:26 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -63,13 +63,15 @@ Used to debug
 .Nm
 itself.
 .It Fl f
-This forces load of the module, even if it doesn't match currently
-running kernel. When LKM is loaded, kernel normally checks if the LKM
-is compatible with the running kernel. This option disables this check.
+This forces load of the module, even if it doesn't match the
+currently running kernel.
+When LKM is loaded, the kernel normally checks if the LKM is
+compatible with the running kernel.
+This option disables this check.
 .Em Note
-incompatible LKM can cause system instability, including data loss
-or corruption. Don't use this option unless you are sure what you
-are doing.
+an incompatible LKM can cause system instability, including data
+loss or corruption.
+Don't use this option unless you are sure what you are doing.
 .It Fl n
 Do everything, except calling the module entry point (and any
 post-install program).
