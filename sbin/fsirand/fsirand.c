@@ -1,4 +1,4 @@
-/*	$NetBSD: fsirand.c,v 1.24 2004/03/21 20:12:16 dsl Exp $	*/
+/*	$NetBSD: fsirand.c,v 1.25 2005/01/20 16:02:32 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsirand.c,v 1.24 2004/03/21 20:12:16 dsl Exp $");
+__RCSID("$NetBSD: fsirand.c,v 1.25 2005/01/20 16:02:32 xtraeme Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -68,11 +68,8 @@ static void getsblock(int, const char *, struct fs *);
 static void fixinodes(int, struct fs *, struct disklabel *, int, long);
 static void statussig(int);
 
-int main(int, char *[]);
-
 int	needswap, ino, imax, is_ufs2;
 time_t	tstart;
-
 
 static void
 usage(void)
