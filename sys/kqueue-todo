@@ -1,4 +1,4 @@
-#	$NetBSD: kqueue-todo,v 1.1.2.4 2001/09/08 00:50:03 thorpej Exp $
+#	$NetBSD: kqueue-todo,v 1.1.2.5 2001/09/08 20:53:27 thorpej Exp $
 
 items todo from bill sommerfeld/thorpej:
 	- resolve si_klist (NetBSD) vs. si_note (FreeBSD)
@@ -7,20 +7,8 @@ items todo from bill sommerfeld/thorpej:
 	- rewrite sowakeup()
 	- high-level docco overview of kqueues [c.f jlemon's various papers]
 	- kqfilter entry points for:
-		- bpf
-		- tun
 		- i4b
-		- coda
-		- audio
-		- midi
-		- rnd
-		- sequencer
 		- smb_trantcp
-		- ugen
-		- uhid
-		- usb
-		- uscanner
-		- wsevent
 		- arch/amiga/dev/event.c
 		- arch/arc/dev/opms.c
 		- arch/arm32/dev/kbd.c
@@ -52,7 +40,6 @@ done:
 	- explain fd_knlistsize better
 	- section 9 man page for internal api
 	- use pool for everything (that it can sanely be used for)
-	- kqfilter entry points for:
 
 
 merge in from freebsd:
