@@ -1,10 +1,15 @@
-#	$NetBSD: bsd.own.mk,v 1.208 2001/11/04 01:36:18 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.209 2001/11/05 19:45:25 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
 
 MAKECONF?=	/etc/mk.conf
 .-include "${MAKECONF}"
+
+# NEED_OWN_INSTALL_TARGET is set to "no" by pkgsrc/mk/bsd.pkg.mk to
+# ensure that things defined by <bsd.own.mk> (default targets,
+# INSTALL_FILE, etc.) are not conflicting with bsd.pkg.mk.
+NEED_OWN_INSTALL_TARGET?=	yes
 
 # Temporary; this will become default when all platforms have migrated.
 .if defined(USE_NEW_TOOLCHAIN) && ${USE_NEW_TOOLCHAIN} == "no"
@@ -177,8 +182,10 @@ RENAME?=	-r
 INSTPRIV?=	${UNPRIVILEGED:D-U}
 STRIPFLAG?=	-s
 
+.if ${NEED_OWN_INSTALL_TARGET} == "yes"
 INSTALL_DIR?=	${INSTALL} ${INSTPRIV} -d
 INSTALL_FILE?=	${INSTALL} ${COPY} ${PRESERVE} ${RENAME} ${INSTPRIV}
+.endif
 
 # Define SYS_INCLUDE to indicate whether you want symbolic links to the system
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
@@ -272,10 +279,6 @@ TARGETS+=	all clean cleandir depend dependall includes \
 		install lint obj regress tags beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
 		html installhtml cheanhtml
-
-# set NEED_OWN_INSTALL_TARGET, if it's not already set, to yes
-# this is used by bsd.pkg.mk to stop "install" being defined
-NEED_OWN_INSTALL_TARGET?=	yes
 
 .if ${NEED_OWN_INSTALL_TARGET} == "yes"
 .if !target(install)
