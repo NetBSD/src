@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.22 2003/12/30 22:56:40 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.23 2004/01/01 19:27:36 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -186,7 +186,6 @@ struct RF_Raid_s {
          * Array-quiescence stuff
          */
 	        RF_DECLARE_MUTEX(access_suspend_mutex)
-	        RF_DECLARE_COND(quiescent_cond)
 	RF_IoCount_t accesses_suspended;
 	RF_IoCount_t accs_in_flight;
 	int     access_suspend_release;
@@ -213,7 +212,6 @@ struct RF_Raid_s {
          * Engine thread control
          */
 	        RF_DECLARE_MUTEX(node_queue_mutex)
-	        RF_DECLARE_COND(node_queue_cond)
 	RF_DagNode_t *node_queue;
 	RF_Thread_t parity_rewrite_thread;
 	RF_Thread_t copyback_thread;
