@@ -1,4 +1,4 @@
-.\"     $NetBSD: autoconf.9,v 1.10 2002/04/02 14:14:45 heinz Exp $
+.\"     $NetBSD: autoconf.9,v 1.11 2002/10/05 05:39:35 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,6 +42,7 @@
 .Nm config_search ,
 .Nm config_found_sm ,
 .Nm config_found ,
+.Nm config_match ,
 .Nm config_attach ,
 .Nm config_detach ,
 .Nm config_activate ,
@@ -62,6 +63,8 @@
 "cfmatch_t submatch"
 .Ft struct device *
 .Fn config_found "struct device *parent" "void *aux" "cfprint_t print"
+.Ft int
+.Fn config_match "struct device *parent" "struct cfdata *cf" "void *aux"
 .Ft struct device *
 .Fn config_attach "struct device *parent" "struct cfdata *cf" "void *aux" \
 "cfprint_t print"
@@ -205,6 +208,13 @@ This function is equivalent to calling
 with
 .Fa submatch
 set to NULL and is provided for compatibility with older drivers.
+.It Fn config_match "parent" "cf" "aux"
+Match a device.  Invokes the drivers match function according to the
+configuration table. The
+.Fn config_match
+function returns a nonzero integer indicating the confidence of
+supporting this device and a value of 0 if the driver doesn't support
+the device.
 .It Fn config_attach "parent" "cf" "aux" "print"
 Attach a found device.  Allocates the memory for the
 .Em softc
