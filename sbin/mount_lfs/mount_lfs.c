@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_lfs.c,v 1.21 2005/01/31 05:19:19 erh Exp $	*/
+/*	$NetBSD: mount_lfs.c,v 1.22 2005/02/09 14:31:29 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_lfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_lfs.c,v 1.21 2005/01/31 05:19:19 erh Exp $");
+__RCSID("$NetBSD: mount_lfs.c,v 1.22 2005/02/09 14:31:29 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,30 +69,25 @@ static const struct mntopt mopts[] = {
 	{ NULL }
 };
 
-int		main __P((int, char *[]));
-int		mount_lfs __P((int, char *[]));
-static void	invoke_cleaner __P((char *));
-static void	usage __P((void));
-static void	kill_daemon __P((char *));
-static void	kill_cleaner __P((char *));
+int		mount_lfs(int, char *[]);
+static void	invoke_cleaner(char *);
+static void	usage(void);
+static void	kill_daemon(char *);
+static void	kill_cleaner(char *);
 
 static int short_rds, cleaner_debug, cleaner_bytes;
 static char *nsegs;
 
 #ifndef MOUNT_NOMAIN
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	return mount_lfs(argc, argv);
 }
 #endif
 
 int
-mount_lfs(argc, argv)
-	int argc;
-	char *argv[];
+mount_lfs(int argc, char *argv[])
 {
 	struct ufs_args args;
 	int ch, mntflags, noclean, mntsize, oldflags, i;
@@ -210,8 +205,7 @@ mount_lfs(argc, argv)
 }
 
 static void
-kill_daemon(pidname)
-	char *pidname;
+kill_daemon(char *pidname)
 {
 	FILE *fp;
 	char s[80];
@@ -228,8 +222,7 @@ kill_daemon(pidname)
 }
 
 static void
-kill_cleaner(name)
-	char *name;
+kill_cleaner(char *name)
 {
 	char *pidname;
 	char *cp;
@@ -257,8 +250,7 @@ kill_cleaner(name)
 }
 
 static void
-invoke_cleaner(name)
-	char *name;
+invoke_cleaner(char *name)
 {
 	char *args[6], **ap = args;
 
@@ -282,7 +274,7 @@ invoke_cleaner(name)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 		"usage: %s [-bdns] [-N nsegs] [-o options] special node\n",
