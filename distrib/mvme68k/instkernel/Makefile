@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2002/04/12 05:34:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2002/04/12 13:39:47 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${_SRC_TOP_}/distrib/Makefile.inc"
 
 RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
 RAMDISK=	${RAMDISKDIR}/ramdisk.fs
-TARGETS=	RAMDISK ${RAMDISK}
+MDSETTARGETS=	RAMDISK ${RAMDISK} -
 
 MDSETDIR=	installation/tapeimage
 
