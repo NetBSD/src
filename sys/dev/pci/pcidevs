@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.642 2004/08/04 19:13:06 mycroft Exp $
+$NetBSD: pcidevs,v 1.643 2004/08/04 19:28:52 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -915,7 +915,7 @@ product APPLE UNINORTH_AGP3	0x0034	UniNorth AGP Bridge
 product APPLE UNINORTH5		0x0035	UniNorth Host-PCI Bridge
 product APPLE UNINORTH6		0x0036	UniNorth Host-PCI Bridge
 product APPLE KAUAI		0x003b	Kauai ATA Controller
-product APPLE INTREPID		0x003e	MAC-IO I/O Controller (Intrepid)
+product APPLE INTREPID		0x003e	Intrepid I/O Controller
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -1903,7 +1903,7 @@ product LUCENT LTMODEM_045a	0x045a	LTMODEM
 product LUCENT OR3LP26		0x5400	ORCA FPGA w/32-bit PCI ASIC core
 product LUCENT OR3TP12		0x5401	ORCA FPGA w/64-bit PCI ASIC core
 product LUCENT USBHC		0x5801	USB Host Controller
-product LUCENT FW322_323	0x5811	FW322/323 IEEE 1394 OHCI Controller
+product LUCENT FW322_323	0x5811	FW322/323 IEEE 1394 Host Controller
 
 /* Macronix */
 product MACRONIX MX98713	0x0512	MX98713 (PMAC) 10/100 Ethernet
@@ -2041,11 +2041,11 @@ product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 product NEC USB		0x0035	USB Host Controller
 product NEC VRC4173_CARDU 0x003e VRC4173 PC-Card Unit
 product NEC POWERVR2	0x0046	PowerVR PCX2
-product NEC PD72872	0x0063	uPD72872 IEEE 1394 OHCI Host Controller
+product NEC PD72872	0x0063	uPD72872 IEEE 1394 Host Controller
 product NEC VRC4173_BCU	0x00a5	VRC4173 Bus Control Unit
 product NEC VRC4173_AC97U 0x00a6 VRC4173 AC97 Unit
-product NEC PD72870	0x00cd	uPD72870 IEEE 1394 OHCI Host Controller
-product NEC PD72871	0x00ce	uPD72871 IEEE 1394 OHCI Host Controller
+product NEC PD72870	0x00cd	uPD72870 IEEE 1394 Host Controller
+product NEC PD72871	0x00ce	uPD72871 IEEE 1394 Host Controller
 product NEC PD720100A	0x00e0	USB Host Controller
 product NEC VA26D	0x803c	Versa Pro LX VA26D
 product NEC VERSALX	0x8058	Versa LX
@@ -2503,7 +2503,7 @@ product SOLIDUM PAXWARE1100	0x1100 PAX.ware 1100 dual Gb Classifier Engine
 
 /* Sony products */
 product SONY	CXD1947A	0x8009	CXD1947A IEEE 1394 Host Controller
-product SONY	CXD3222		0x8039	CXD3222 OHCI IEEE 1394 Host Controller
+product SONY	CXD3222		0x8039	CXD3222 IEEE 1394 Host Controller
 product SONY	MEMSTICK	0x808a	Memory Stick I/F Controller
 
 /* Sun Microsystems, Inc. products */
@@ -2563,19 +2563,19 @@ product TEKRAM2	DC315		0x0391	DC-315/DC-395
 product TI	TLAN		0x0500	TLAN
 product TI	TVP4020		0x3d07	TVP4020 Permedia 2
 product TI	TSB12LV21	0x8000	TSB12LV21 IEEE 1394 Host Controller
-product TI	TSB12LV22	0x8009	TSB12LV22 OHCI IEEE 1394 Host Controller
-product TI	PCI4450LYNX	0x8011	PCI4450 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
-product TI	PCI4410LYNX	0x8017	PCI4410 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
-product TI	TSB12LV23	0x8019	TSB12LV23 OHCI IEEE 1394 Host Controller
-product TI	TSB12LV26	0x8020	TSB12LV26 OHCI IEEE 1394 Host Controller
-product TI	TSB43AA22	0x8021	TSB43AA22 OHCI IEEE 1394 Host Controller
-product TI	TSB43AA22A	0x8023	TSB43AA22/A OHCI IEEE 1394 Host Controller
-product TI	TSB43AA23	0x8024	TSB43AA23 OHCI IEEE 1394 Host Controller
-product TI	TSB43AB21	0x8026	TSB43AA21 OHCI IEEE 1394 Host Controller
-product TI	PCI4451LYNX	0x8027	PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
-product TI	PCI4510LYNX	0x8029	PCI4510 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
-product TI	PCI4520LYNX	0x802A	PCI4520 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
-product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge
+product TI	TSB12LV22	0x8009	TSB12LV22 IEEE 1394 Host Controller
+product TI	PCI4450LYNX	0x8011	PCI4450 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
+product TI	PCI4410LYNX	0x8017	PCI4410 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
+product TI	TSB12LV23	0x8019	TSB12LV23 IEEE 1394 Host Controller
+product TI	TSB12LV26	0x8020	TSB12LV26 IEEE 1394 Host Controller
+product TI	TSB43AA22	0x8021	TSB43AA22 IEEE 1394 Host Controller
+product TI	TSB43AA22A	0x8023	TSB43AA22/A IEEE 1394 Host Controller
+product TI	TSB43AA23	0x8024	TSB43AA23 IEEE 1394 Host Controller
+product TI	TSB43AB21	0x8026	TSB43AA21 IEEE 1394 Host Controller
+product TI	PCI4451LYNX	0x8027	PCI4451 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
+product TI	PCI4510LYNX	0x8029	PCI4510 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
+product TI	PCI4520LYNX	0x802A	PCI4520 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
+product TI	PCI7410LYNX	0x802B	PCI7[4-6]10 IEEE 1394 Host Controller w/ PCI-CardBus Bridge
 product TI	ACX100		0x8400	ACX100 802.11b
 product TI	PCI1130		0xac12	PCI1130 PCI-CardBus Bridge
 product TI	PCI1031		0xac13	PCI1031 PCI-PCMCIA Bridge
@@ -2591,14 +2591,14 @@ product TI	PCI1211		0xac1e	PCI1211 PCI-CardBus Bridge
 product TI	PCI1251B	0xac1f	PCI1251B PCI-CardBus Bridge
 product TI	PCI2030		0xac20	PCI2030 PCI-PCI Bridge
 product TI	PCI2050		0xac28	PCI2050 PCI-PCI Bridge
-product TI	PCI4450YENTA	0xac40	PCI4450 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
-product TI	PCI4410YENTA	0xac41	PCI4410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
-product TI	PCI4451YENTA	0xac42	PCI4451 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
-product TI	PCI4510YENTA	0xac44	PCI4510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
-product TI	PCI4520YENTA	0xac46	PCI4520 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
-product TI	PCI7510YENTA	0xac47	PCI7510 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
-product TI	PCI7610YENTA	0xac48	PCI7610 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
-product TI	PCI7410YENTA	0xac49	PCI7410 PCI-CardBus Bridge w/ OHCI IEEE 1394 Controller
+product TI	PCI4450YENTA	0xac40	PCI4450 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
+product TI	PCI4410YENTA	0xac41	PCI4410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
+product TI	PCI4451YENTA	0xac42	PCI4451 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
+product TI	PCI4510YENTA	0xac44	PCI4510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
+product TI	PCI4520YENTA	0xac46	PCI4520 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
+product TI	PCI7510YENTA	0xac47	PCI7510 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
+product TI	PCI7610YENTA	0xac48	PCI7610 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
+product TI	PCI7410YENTA	0xac49	PCI7410 PCI-CardBus Bridge w/ IEEE 1394 Host Controller
 product TI	PCI7610SM	0xac4A	PCI7610 PCI-CardBus Bridge (Smart Card mode)
 product TI	PCI7410SD	0xac4B	PCI7[46]10 PCI-CardBus Bridge (SD/MMC mode)
 product TI	PCI7410MS	0xac4C	PCI7[46]10 PCI-CardBus Bridge (Memory stick mode)
@@ -2710,7 +2710,7 @@ product V3 V960PBC	0x0960	V960PBC	i960 Host-PCI Bridge
 product V3 V96DPC	0xc960	V96DPC	i960 (Dual) Host-PCI Bridge
 
 /* VIA Technologies products, from http://www.via.com.tw/ */
-product VIATECH VT6305		0x0130	VT6305 OHCI IEEE 1394 Controller
+product VIATECH VT6305		0x0130	VT6305 IEEE 1394 Host Controller
 product VIATECH VT8363_HB	0x0305	VT8363 KT133 System Controller
 product VIATECH	VT8371_HB	0x0391	VT8371 (Apollo KX133) Host Bridge
 product VIATECH VT8501_MVP4	0x0501	VT8501 MVP4 System Controller
@@ -2736,7 +2736,7 @@ product VIATECH VT82C595_2	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 product VIATECH VT82C586_PWR	0x3040	VT82C586 (Apollo VP) Power Management Controller
 product VIATECH VT3043		0x3043	VT3043 (Rhine) 10/100 Ethernet
-product VIATECH VT6306		0x3044	VT3606 OHCI IEEE 1394 Controller
+product VIATECH VT6306		0x3044	VT3606 IEEE 1394 Host Controller
 product VIATECH VT82C686A_SMB	0x3057	VT82C686A SMBus Controller
 product VIATECH VT82C686A_AC97	0x3058	VT82C686A AC-97 Audio Controller
 product VIATECH VT8233_AC97	0x3059	VT8233/VT8235 AC-97 Audio Controller
