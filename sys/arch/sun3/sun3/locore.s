@@ -38,7 +38,7 @@ perpmeg:
 	movsb d1, a0@				| establish mapping
 	addql #1, d1			
 	addl #SEG_SIZE, a0
-	cmpl #(MAINMEM_MONMAP / SEG_SIZE), d1	| are we done
+	cmpl #(MAINMEM_MONMAP / NBSEG), d1	| are we done
 	bne perpmeg
 
 
