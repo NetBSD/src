@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mksyntax.c	8.1 (Berkeley) 5/31/93";*/
-static char *rcsid = "$Id: mksyntax.c,v 1.6 1994/06/11 16:12:15 mycroft Exp $";
+static char *rcsid = "$Id: mksyntax.c,v 1.7 1994/06/14 05:49:21 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -208,13 +208,15 @@ main() {
 	add("`", "CBQUOTE");
 	add("$", "CVAR");
 	add("}", "CENDVAR");
-	add("!*?[=~:/", "CCTL");	/* ':/' for tilde - yuck */
+	/* ':/' for tilde expansion, '-' for [a\-x] pattern ranges */
+	add("!*?[=~:/-", "CCTL");
 	print("dqsyntax");
 	init();
 	fputs("\n/* syntax table used when in single quotes */\n", cfile);
 	add("\n", "CNL");
 	add("'", "CENDQUOTE");
-	add("!*?[=~:/", "CCTL");	/* ':/' for tilde - yuck */
+	/* ':/' for tilde expansion, '-' for [a\-x] pattern ranges */
+	add("!*?[=~:/-", "CCTL");
 	print("sqsyntax");
 	init();
 	fputs("\n/* syntax table used when in arithmetic */\n", cfile);
