@@ -39,7 +39,7 @@
  *	from: Utah Hdr: trap.c 1.32 91/04/06
  *	from: @(#)trap.c	7.15 (Berkeley) 8/2/91
  *	trap.c,v 1.3 1993/07/07 07:08:47 cgd Exp
- *	$Id: trap.c,v 1.19 1994/05/10 05:26:18 gwr Exp $
+ *	$Id: trap.c,v 1.20 1994/05/16 16:49:41 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -147,12 +147,12 @@ void userret(p, pc, oticks)
 		 * Since we are curproc, clock will normally just change
 		 * our priority without moving us from one queue to another
 		 * (since the running process is not on a queue.)
-		 * If that happened after we setrq ourselves but before we
-		 * swtch()'ed, we might not be on the queue indicated by
-		 * our priority.
+		 * If that happened after we setrunqueue ourselves but
+		 * before we swtch()'ed, we might not be on the queue
+		 * indicated by our priority.
 		 */
 	        (void) splstatclock();
-		setrq(p);
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		spl0();	/* XXX - Is this right? -gwr */
@@ -438,7 +438,7 @@ copyfault:
 		else
 			ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
-#ifdef DEBUG
+#ifdef DIAGNOSTIC
 		if (map == kernel_map && va == 0) {
 			printf("trap: bad kernel access at %x\n", v);
 			goto dopanic;
