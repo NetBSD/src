@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.112 1999/02/04 11:58:31 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.113 1999/02/07 17:21:09 hubertf Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -145,7 +145,7 @@ TARGETS+=	all clean cleandir depend distclean includes install lint obj \
 		afterinstall realinstall
 
 # set NEED_OWN_INSTALL_TARGET, if it's not already set, to yes
-# this is used by bsd.port.mk to stop "install" being defined
+# this is used by bsd.pkg.mk to stop "install" being defined
 NEED_OWN_INSTALL_TARGET?=	yes
 
 .if (${NEED_OWN_INSTALL_TARGET} == "yes")
