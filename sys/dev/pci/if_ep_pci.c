@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.21 1997/03/30 22:47:09 jonathan Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.22 1997/04/13 19:47:08 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -137,24 +137,16 @@ ep_pci_attach(parent, self, aux)
 	struct ep_softc *sc = (void *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	bus_space_tag_t iot = pa->pa_iot;
-	bus_addr_t iobase;
-	bus_size_t iosize;
 	pci_intr_handle_t ih;
 	char *model;
 	const char *intrstr = NULL;
 
-	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
-		printf(": can't find i/o space\n");
-		return;
-	}
-
-	if (bus_space_map(iot, iobase, iosize, 0, &sc->sc_ioh)) {
+	if (pci_map_register(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+	    &sc->sc_iot, &sc->sc_ioh, NULL, NULL)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
 
-	sc->sc_iot = iot;
 	sc->bustype = EP_BUS_PCI;
 
 	switch (PCI_PRODUCT(pa->pa_id)) {
