@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.58 2001/10/28 10:30:22 augustss Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.59 2001/11/10 17:14:52 augustss Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -37,7 +37,7 @@
 #include "wsdisplay.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.58 2001/10/28 10:30:22 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.59 2001/11/10 17:14:52 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1664,21 +1664,23 @@ wsdisplay_kbdholdscreen(struct device *dev, int hold)
 }
 
 #if NWSKBD > 0
-struct device *
+void
 wsdisplay_set_console_kbd(struct wsevsrc *src)
 {
-	if (wsdisplay_console_device == NULL)
-		return (NULL);
-	/*src->me_dispdv = &wsdisplay_console_device->sc_dv;*/
+	if (wsdisplay_console_device == NULL) {
+		src->me_dispdv = NULL;
+		return;
+	}
 #if NWSMUX > 0
-	if (wsmux_attach_sc(
-		(struct wsmux_softc *)wsdisplay_console_device->sc_input,
-		src))
-		return (NULL);
+	if (wsmux_attach_sc((struct wsmux_softc *)
+			    wsdisplay_console_device->sc_input, src)) {
+		src->me_dispdv = NULL;
+		return;
+	}
 #else
 	wsdisplay_console_device->sc_input = src;
 #endif
-	return (&wsdisplay_console_device->sc_dv);
+	src->me_dispdv = &wsdisplay_console_device->sc_dv;
 }
 #endif /* NWSKBD > 0 */
 
