@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.4 1995/01/10 19:01:00 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.5 1995/05/01 14:14:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -54,9 +54,8 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 struct	sigcontext {
-	int	sc_onstack;		/* sigstack state to restore */
-	int	sc_mask;		/* signal mask to restore */
-
+	int	sc_gs;
+	int	sc_fs;
 	int	sc_es;
 	int	sc_ds;
 	int	sc_edi;
@@ -71,6 +70,9 @@ struct	sigcontext {
 	int	sc_eflags;
 	int	sc_esp;
 	int	sc_ss;
+
+	int	sc_onstack;		/* sigstack state to restore */
+	int	sc_mask;		/* signal mask to restore */
 };
 
 #define sc_sp sc_esp
