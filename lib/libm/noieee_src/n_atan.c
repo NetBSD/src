@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan.c,v 1.3 1999/07/02 15:37:36 simonb Exp $	*/
+/*	$NetBSD: n_atan.c,v 1.3.10.1 2002/06/18 13:37:40 lukem Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,8 +83,8 @@ static char sccsid[] = "@(#)atan.c	8.1 (Berkeley) 6/4/93";
  */
 #include "mathimpl.h"
 
-double atan(x)
-double x;
+double
+atan(double x)
 {
 	double one=1.0;
 	return(atan2(x,one));
