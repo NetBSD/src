@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.9 1999/12/16 04:41:49 jwise Exp $  */
+/*      $NetBSD: ps.c,v 1.10 1999/12/20 17:08:53 jwise Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.9 1999/12/16 04:41:49 jwise Exp $");
+__RCSID("$NetBSD: ps.c,v 1.10 1999/12/20 17:08:53 jwise Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -207,7 +207,7 @@ state2str(kp)
 	if ((flag & P_CONTROLT) && e->e_pgid == e->e_tpgid)
 		*cp++ = '+';
 	*cp = '\0';
-	sprintf(statestr, "%-s",  buf);
+	snprintf(statestr, sizeof(statestr), "%-s",  buf);
 
 	return statestr;
 }
@@ -228,7 +228,7 @@ tty2str(kp)
 		if (strncmp(ttyname, "tty", 3) == 0 ||
 		    strncmp(ttyname, "dty", 3) == 0)
 			ttyname += 3;
-		sprintf(ttystr, "%s%c", ttyname, e->e_flag & EPROC_CTTY ? ' ' : '-');
+		snprintf(ttystr, sizeof(ttystr), "%s%c", ttyname, e->e_flag & EPROC_CTTY ? ' ' : '-');
 	}
 
 	return ttystr;
