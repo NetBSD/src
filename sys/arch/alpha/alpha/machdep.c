@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1995/03/24 15:04:14 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1995/04/22 12:42:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -707,6 +707,11 @@ boot(howto)
 	/* Take a snapshot before clobbering any registers. */
 	if (curproc)
 		savectx(curproc->p_addr, 0);
+
+#ifdef HALTLOOP
+	while (1)
+		;
+#endif
 
 	/* If system is cold, just halt. */
 	if (cold) {
