@@ -43,14 +43,14 @@ typedef union
     a;				/* any format */
     struct
       {
-	signed disp:21;
+	int disp:21;
 	unsigned ra:5;
 	unsigned op_code:6;
       }
     b;				/* branch format */
     struct
       {
-	signed hint:14;
+	int hint:14;
 	unsigned func:2;
 	unsigned rb:5;
 	unsigned ra:5;
@@ -58,7 +58,7 @@ typedef union
       }
     j;				/* jump format */
   }
-Instruction;
+alpha_Instruction;
 
 static Sym indirect_child;
 
@@ -71,14 +71,14 @@ static Sym indirect_child;
  *  potentially call integer division routines, for example.)
  */
 void
-find_call (parent, p_lowpc, p_highpc)
+alpha_find_call (parent, p_lowpc, p_highpc)
      Sym *parent;
      bfd_vma p_lowpc;
      bfd_vma p_highpc;
 {
   static bfd_vma delta = 0;
   bfd_vma dest_pc;
-  Instruction *pc;
+  alpha_Instruction *pc;
   Sym *child;
 
   if (!delta)
@@ -105,8 +105,8 @@ find_call (parent, p_lowpc, p_highpc)
     }
   DBG (CALLDEBUG, printf ("[find_call] %s: 0x%lx to 0x%lx\n",
 			  parent->name, p_lowpc, p_highpc));
-  for (pc = (Instruction *) (p_lowpc + delta);
-       pc < (Instruction *) (p_highpc + delta);
+  for (pc = (alpha_Instruction *) (p_lowpc + delta);
+       pc < (alpha_Instruction *) (p_highpc + delta);
        ++pc)
     {
       switch (pc->a.op_code)

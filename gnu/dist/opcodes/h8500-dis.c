@@ -1,5 +1,5 @@
 /* Disassemble h8500 instructions.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -107,16 +107,16 @@ if (0)  {
   for (opcode = h8500_table; opcode->name; opcode++)
     {
       int byte;
-      int rn;
-      int rd;
-      int rs;
-      int disp;
-      int abs;
-      int imm;
-      int pcrel;
-      int qim;
+      int rn = 0;
+      int rd = 0;
+      int rs = 0;
+      int disp = 0;
+      int abs = 0;
+      int imm = 0;
+      int pcrel = 0;
+      int qim = 0;
       int i;
-      int cr;
+      int cr = 0;
       for (byte = 0; byte < opcode->length; byte++)
 	{
 	  FETCH_DATA (info, buffer + byte + 1);

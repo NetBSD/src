@@ -22,9 +22,13 @@
 #include "hist.h"
 #include "symtab.h"
 
+    /*
+     *        opcode of the `callf' instruction
+     */
+#define	CALL	(0xc0000000)
 
 void
-find_call (parent, p_lowpc, p_highpc)
+sparc_find_call (parent, p_lowpc, p_highpc)
      Sym *parent;
      bfd_vma p_lowpc;
      bfd_vma p_highpc;

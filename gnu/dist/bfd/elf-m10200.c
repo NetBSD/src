@@ -279,7 +279,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_PCREL8:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset);
-      value -= offset;
+      value -= (offset + 1);
       value += addend;
 
       if ((long)value > 0xff || (long)value < -0x100)
@@ -291,7 +291,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_PCREL16:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset);
-      value -= offset;
+      value -= (offset + 2);
       value += addend;
 
       if ((long)value > 0xffff || (long)value < -0x10000)
@@ -303,7 +303,7 @@ mn10200_elf_final_link_relocate (howto, input_bfd, output_bfd,
     case R_MN10200_PCREL24:
       value -= (input_section->output_section->vma
 		+ input_section->output_offset);
-      value -= offset;
+      value -= (offset + 3);
       value += addend;
 
       if ((long)value > 0xffffff || (long)value < -0x1000000)
@@ -586,7 +586,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	    }
 	}
 
-      /* Read the local symbols if we haven't done so already.  */
+      /* Read this BFD's symbols if we haven't done so already.  */
       if (extsyms == NULL)
 	{
 	  /* Get cached copy if it exists.  */
@@ -596,15 +596,13 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	    {
 	      /* Go get them off disk.  */
 	      extsyms = ((Elf32_External_Sym *)
-			 bfd_malloc (symtab_hdr->sh_info
-				     * sizeof (Elf32_External_Sym)));
+			 bfd_malloc (symtab_hdr->sh_size));
 	      if (extsyms == NULL)
 		goto error_return;
 	      free_extsyms = extsyms;
 	      if (bfd_seek (abfd, symtab_hdr->sh_offset, SEEK_SET) != 0
-		  || (bfd_read (extsyms, sizeof (Elf32_External_Sym),
-				symtab_hdr->sh_info, abfd)
-		      != (symtab_hdr->sh_info * sizeof (Elf32_External_Sym))))
+		  || (bfd_read (extsyms, 1, symtab_hdr->sh_size, abfd)
+		      != symtab_hdr->sh_size))
 		goto error_return;
 	    }
 	}
@@ -665,7 +663,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 
 	  /* Deal with pc-relative gunk.  */
 	  value -= (sec->output_section->vma + sec->output_offset);
-	  value -= irel->r_offset;
+	  value -= (irel->r_offset + 3);
 	  value += irel->r_addend;
 
 	  /* See if the value will fit in 16 bits, note the high value is
@@ -701,9 +699,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 	      irel->r_info = ELF32_R_INFO (ELF32_R_SYM (irel->r_info),
 					   R_MN10200_PCREL16);
 
-	      /* The opcode got shorter too, so we have to fix the
-		 addend and offset too!  */
-	      irel->r_addend -= 1;
+	      /* The opcode got shorter too, so we have to fix the offset.  */
 	      irel->r_offset -= 1;
 
 	      /* Delete two bytes of data.  */
@@ -725,7 +721,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 
 	  /* Deal with pc-relative gunk.  */
 	  value -= (sec->output_section->vma + sec->output_offset);
-	  value -= irel->r_offset;
+	  value -= (irel->r_offset + 2);
 	  value += irel->r_addend;
 
 	  /* See if the value will fit in 8 bits, note the high value is
@@ -789,7 +785,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 
 	  /* Deal with pc-relative gunk.  */
 	  value -= (sec->output_section->vma + sec->output_offset);
-	  value -= irel->r_offset;
+	  value -= (irel->r_offset + 1);
 	  value += irel->r_addend;
 
 	  /* Do nothing if this reloc is the last byte in the section.  */
@@ -982,7 +978,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 					       R_MN10200_16);
 
 		  /* The opcode got shorter too, so we have to fix the
-		     addend and offset too!  */
+		     offset.  */
 		  irel->r_offset -= 1;
 
 		  /* Delete two bytes of data.  */
@@ -1038,7 +1034,7 @@ mn10200_elf_relax_section (abfd, sec, link_info, again)
 					       R_MN10200_16);
 
 		  /* The opcode got shorter too, so we have to fix the
-		     addend and offset too!  */
+		     offset.  */
 		  irel->r_offset -= 1;
 
 		  /* Delete two bytes of data.  */
@@ -1250,13 +1246,13 @@ mn10200_elf_relax_delete_bytes (abfd, sec, addr, count)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf32_External_Sym *extsyms;
-  int shndx;
+  int shndx, index;
   bfd_byte *contents;
   Elf_Internal_Rela *irel, *irelend;
   Elf_Internal_Rela *irelalign;
   bfd_vma toaddr;
   Elf32_External_Sym *esym, *esymend;
-  struct elf_link_hash_entry **sym_hash, **sym_hash_end;
+  struct elf_link_hash_entry *sym_hash;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   extsyms = (Elf32_External_Sym *) symtab_hdr->contents;
@@ -1287,7 +1283,7 @@ mn10200_elf_relax_delete_bytes (abfd, sec, addr, count)
 	irel->r_offset -= count;
     }
 
-  /* Adjust all the symbols.  */
+  /* Adjust the local symbols defined in this section.  */
   esym = extsyms;
   esymend = esym + symtab_hdr->sh_info;
   for (; esym < esymend; esym++)
@@ -1305,19 +1301,23 @@ mn10200_elf_relax_delete_bytes (abfd, sec, addr, count)
 	}
     }
 
-  sym_hash = elf_sym_hashes (abfd);
-  sym_hash_end = (sym_hash
-		  + (symtab_hdr->sh_size / sizeof (Elf32_External_Sym)
-		     - symtab_hdr->sh_info));
-  for (; sym_hash < sym_hash_end; sym_hash++)
+  /* Now adjust the global symbols defined in this section.  */
+  esym = extsyms + symtab_hdr->sh_info;
+  esymend = extsyms + (symtab_hdr->sh_size / sizeof (Elf32_External_Sym));
+  for (index = 0; esym < esymend; esym++, index++)
     {
-      if (((*sym_hash)->root.type == bfd_link_hash_defined
-	   || (*sym_hash)->root.type == bfd_link_hash_defweak)
-	  && (*sym_hash)->root.u.def.section == sec
-	  && (*sym_hash)->root.u.def.value > addr
-	  && (*sym_hash)->root.u.def.value < toaddr)
+      Elf_Internal_Sym isym;
+
+      bfd_elf32_swap_symbol_in (abfd, esym, &isym);
+      sym_hash = elf_sym_hashes (abfd)[index];
+      if (isym.st_shndx == shndx
+	  && ((sym_hash)->root.type == bfd_link_hash_defined
+	      || (sym_hash)->root.type == bfd_link_hash_defweak)
+	  && (sym_hash)->root.u.def.section == sec
+	  && (sym_hash)->root.u.def.value > addr
+	  && (sym_hash)->root.u.def.value < toaddr)
 	{
-	  (*sym_hash)->root.u.def.value -= count;
+	  (sym_hash)->root.u.def.value -= count;
 	}
     }
 

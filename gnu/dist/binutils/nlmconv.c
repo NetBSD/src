@@ -1,5 +1,5 @@
 /* nlmconv.c -- NLM conversion program
-   Copyright (C) 1993, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -42,10 +42,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include <sys/file.h>
 #include <assert.h>
 #include <getopt.h>
-
-#ifdef HAVE_VFORK_H
-#include <vfork.h>
-#endif
 
 /* Internal BFD NLM header.  */
 #include "libnlm.h"
@@ -138,7 +134,6 @@ static void default_mangle_relocs PARAMS ((bfd *, asection *, arelent ***,
 					   long *, char *,
 					   bfd_size_type));
 static char *link_inputs PARAMS ((struct string_list *, char *));
-static int pexecute PARAMS ((char *, char *[]));
 
 #ifdef NLMCONV_I386
 static void i386_mangle_relocs PARAMS ((bfd *, asection *, arelent ***,
@@ -191,12 +186,25 @@ main (argc, argv)
   char inlead, outlead;
   boolean gotstart, gotexit, gotcheck;
   struct stat st;
-  FILE *custom_data, *help_data, *message_data, *rpc_data, *shared_data;
-  size_t custom_size, help_size, message_size, module_size, rpc_size;
-  asection *custom_section, *help_section, *message_section, *module_section;
-  asection *rpc_section, *shared_section;
+  FILE *custom_data = NULL;
+  FILE *help_data = NULL;
+  FILE *message_data = NULL;
+  FILE *rpc_data = NULL;
+  FILE *shared_data = NULL;
+  size_t custom_size = 0;
+  size_t help_size = 0;
+  size_t message_size = 0;
+  size_t module_size = 0;
+  size_t rpc_size = 0;
+  asection *custom_section = NULL;
+  asection *help_section = NULL;
+  asection *message_section = NULL;
+  asection *module_section = NULL;
+  asection *rpc_section = NULL;
+  asection *shared_section = NULL;
   bfd *sharedbfd;
-  size_t shared_offset, shared_size;
+  size_t shared_offset = 0;
+  size_t shared_size = 0;
   Nlm_Internal_Fixed_Header sharedhdr;
   int len;
   char *modname;
@@ -839,15 +847,15 @@ main (argc, argv)
 			   program_name, sharelib_file);
 		}
 	      shared_offset = st.st_size;
-	      if (shared_offset > sharedhdr.codeImageOffset)
+	      if (shared_offset > (size_t) sharedhdr.codeImageOffset)
 		shared_offset = sharedhdr.codeImageOffset;
-	      if (shared_offset > sharedhdr.dataImageOffset)
+	      if (shared_offset > (size_t) sharedhdr.dataImageOffset)
 		shared_offset = sharedhdr.dataImageOffset;
-	      if (shared_offset > sharedhdr.relocationFixupOffset)
+	      if (shared_offset > (size_t) sharedhdr.relocationFixupOffset)
 		shared_offset = sharedhdr.relocationFixupOffset;
-	      if (shared_offset > sharedhdr.externalReferencesOffset)
+	      if (shared_offset > (size_t) sharedhdr.externalReferencesOffset)
 		shared_offset = sharedhdr.externalReferencesOffset;
-	      if (shared_offset > sharedhdr.publicsOffset)
+	      if (shared_offset > (size_t) sharedhdr.publicsOffset)
 		shared_offset = sharedhdr.publicsOffset;
 	      shared_size = st.st_size - shared_offset;
 	      shared_section = bfd_make_section (outbfd, ".nlmshared");
@@ -1079,7 +1087,7 @@ main (argc, argv)
   for (modname = nlm_fixed_header (outbfd)->moduleName;
        *modname != '\0';
        modname++)
-    if (islower (*modname))
+    if (islower ((unsigned char) *modname))
       *modname = toupper (*modname);
 
   strncpy (nlm_variable_header (outbfd)->oldThreadName, " LONG",
@@ -1124,7 +1132,7 @@ Usage: %s [-dhV] [-I bfdname] [-O bfdname] [-T header-file] [-l linker]\n\
        [in-file [out-file]]\n",
 	   program_name);
   if (status == 0)
-    fprintf (file, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
+    fprintf (file, "Report bugs to bug-gnu-utils@gnu.org\n");
   exit (status);
 }
 
@@ -1668,7 +1676,7 @@ alpha_mangle_relocs (outbfd, insec, relocs_ptr, reloc_count_ptr, contents,
     {
       register bfd_size_type i;
 
-      for (i = 0; i < old_reloc_count; i++, relocs++)
+      for (i = 0; i < (bfd_size_type) old_reloc_count; i++, relocs++)
 	(*relocs)->address += insec->output_offset;
     }
 }
@@ -2116,6 +2124,8 @@ link_inputs (inputs, ld)
   size_t i;
   int pid;
   int status;
+  char *errfmt;
+  char *errarg;
 
   c = 0;
   for (q = inputs; q != NULL; q = q->next)
@@ -2168,11 +2178,19 @@ link_inputs (inputs, ld)
       fprintf (stderr, "\n");
     }
 
-  pid = pexecute (ld, argv);
-
-  if (waitpid (pid, &status, 0) < 0)
+  pid = pexecute (ld, argv, program_name, (char *) NULL, &errfmt, &errarg,
+		  PEXECUTE_SEARCH | PEXECUTE_ONE);
+  if (pid == -1)
     {
-      perror ("waitpid");
+      fprintf (stderr, "%s: execution of %s failed: ", program_name, ld);
+      fprintf (stderr, errfmt, errarg);
+      unlink (unlink_on_exit);
+      exit (1);
+    }
+
+  if (pwait (pid, &status, 0) < 0)
+    {
+      perror ("pwait");
       unlink (unlink_on_exit);
       exit (1);
     }
@@ -2186,109 +2204,3 @@ link_inputs (inputs, ld)
 
   return unlink_on_exit;
 }
-
-/* Execute a job.  Stolen from gcc.c.  */
-
-#ifndef OS2
-#ifdef __MSDOS__
-
-static int
-pexecute (program, argv)
-     char *program;
-     char *argv[];
-{
-  char *scmd, *rf;
-  FILE *argfile;
-  int i;
-
-  scmd = (char *) xmalloc (strlen (program) + strlen (temp_filename) + 10);
-  rf = scmd + strlen(program) + 2 + el;
-  sprintf (scmd, "%s.exe @%s.gp", program, temp_filename);
-  argfile = fopen (rf, "w");
-  if (argfile == 0)
-    pfatal_with_name (rf);
-
-  for (i=1; argv[i]; i++)
-    {
-      char *cp;
-      for (cp = argv[i]; *cp; cp++)
-	{
-	  if (*cp == '"' || *cp == '\'' || *cp == '\\' || isspace (*cp))
-	    fputc ('\\', argfile);
-	  fputc (*cp, argfile);
-	}
-      fputc ('\n', argfile);
-    }
-  fclose (argfile);
-
-  i = system (scmd);
-
-  remove (rf);
-  
-  if (i == -1)
-    {
-      perror (program);
-      return MIN_FATAL_STATUS << 8;
-    }
-
-  return i << 8;
-}
-
-#else /* not __MSDOS__ */
-
-static int
-pexecute (program, argv)
-     char *program;
-     char *argv[];
-{
-  int pid;
-  int retries, sleep_interval;
-
-  /* Fork a subprocess; wait and retry if it fails.  */
-  sleep_interval = 1;
-  for (retries = 0; retries < 4; retries++)
-    {
-      pid = vfork ();
-      if (pid >= 0)
-	break;
-      sleep (sleep_interval);
-      sleep_interval *= 2;
-    }
-
-  switch (pid)
-    {
-    case -1:
-#ifdef vfork
-      perror ("fork");
-#else
-      perror ("vfork");
-#endif
-      exit (1);
-      /* NOTREACHED */
-      return 0;
-
-    case 0: /* child */
-      /* Exec the program.  */
-      execvp (program, argv);
-      perror (program);
-      exit (1);
-      /* NOTREACHED */
-      return 0;
-
-    default:
-      /* Return child's process number.  */
-      return pid;
-    }
-}
-
-#endif /* not __MSDOS__ */
-#else /* not OS2 */
-
-static int
-pexecute (program, argv)
-     char *program;
-     char *argv[];
-{
-  return spawnvp (1, program, argv);
-}
-#endif /* not OS2 */

@@ -216,12 +216,17 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
 	}
     }
 
+  /* We add s and u so to the short options list so that -s and -u on
+     the command line do not match -static and -unix.  */
+
   opterr = 0;
-  optc = getopt_long_only (argc, argv, "-D:H:KT:z", longopts, &longind);
+  optc = getopt_long_only (argc, argv, "-D:H:KT:zsu", longopts, &longind);
   opterr = prevopterr;
 
   switch (optc)
     {
+    case 's':
+    case 'u':
     default:
       optind = prevoptind;
       return 0;
@@ -361,8 +366,8 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
 				    exp_nameop (NAME, "."),
 				    exp_intop (0xfff)));
 	  t = exp_binop ('&',
-			 exp_binop ('+', t, exp_intop (7)),
-			 exp_intop (~ (bfd_vma) 7));
+			 exp_binop ('+', t, exp_intop (31)),
+			 exp_intop (~ (bfd_vma) 31));
 	  lang_section_start (".data", t);
 	}
       break;
@@ -382,8 +387,8 @@ gld${EMULATION_NAME}_parse_args (argc, argv)
 			 exp_intop (val),
 			 exp_nameop (SIZEOF_HEADERS, NULL));
 	  t = exp_binop ('&',
-			 exp_binop ('+', t, exp_intop (7)),
-			 exp_intop (~ (bfd_vma) 7));
+			 exp_binop ('+', t, exp_intop (31)),
+			 exp_intop (~ (bfd_vma) 31));
 	  lang_section_start (".text", t);
 	}
       break;
@@ -735,7 +740,7 @@ gld${EMULATION_NAME}_read_file (filename, import)
 	      obstack_free (o, obstack_base (o));
 	    }
 	  else if (*s == '(')
-	    einfo ("%F%s%d: #! ([member]) is not supported in import files",
+	    einfo ("%F%s%d: #! ([member]) is not supported in import files\n",
 		   filename, lineno);
 	  else
 	    {

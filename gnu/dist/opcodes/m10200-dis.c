@@ -1,5 +1,5 @@
 /* Disassemble MN10200 instructions.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -33,7 +33,8 @@ print_insn_mn10200 (memaddr, info)
 {
   int status;
   bfd_byte buffer[4];
-  unsigned long insn, extension;
+  unsigned long insn;
+  unsigned long extension = 0;
   unsigned int consume;
 
   /* First figure out how big the opcode is.  */
@@ -240,7 +241,7 @@ disassemble (memaddr, info, insn, extension, size)
 	extra_shift = 0;
 
       if ((op->mask & insn) == op->opcode
-	  && size == mysize)
+	  && size == (unsigned int) mysize)
 	{
 	  const unsigned char *opindex_ptr;
 	  unsigned int nocomma;
@@ -313,7 +314,7 @@ disassemble (memaddr, info, insn, extension, size)
 		}
 
 	      else if ((operand->flags & MN10200_OPERAND_PCREL) != 0)
-		(*info->print_address_func) ((value + memaddr) & 0xffffff, info);
+		(*info->print_address_func) ((value + memaddr + mysize) & 0xffffff, info);
 
 	      else if ((operand->flags & MN10200_OPERAND_MEMADDR) != 0)
 		(*info->print_address_func) (value, info);

@@ -1,5 +1,5 @@
 /* M32R-specific support for 32-bit ELF.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -55,6 +55,9 @@ static boolean m32r_elf_relocate_section
 static boolean m32r_elf_relax_delete_bytes
   PARAMS ((bfd *, asection *, bfd_vma, int));
 #endif
+
+#define NOP_INSN		0x7000
+#define MAKE_PARALLEL(insn)	((insn) | 0x8000)
 
 /* Use REL instead of RELA to save space.
    This only saves space in libraries and object files, but perhaps
@@ -246,13 +249,13 @@ static reloc_howto_type m32r_elf_howto_table[] =
 static bfd_reloc_status_type
 m32r_elf_10_pcrel_reloc (abfd, reloc_entry, symbol, data,
 			 input_section, output_bfd, error_message)
-     bfd *abfd;
-     arelent *reloc_entry;
-     asymbol *symbol;
+     bfd * abfd;
+     arelent * reloc_entry;
+     asymbol * symbol;
      PTR data;
-     asection *input_section;
-     bfd *output_bfd;
-     char **error_message;
+     asection * input_section;
+     bfd * output_bfd;
+     char ** error_message;
 {
   /* This part is from bfd_elf_generic_reloc.  */
   if (output_bfd != (bfd *) NULL
@@ -517,10 +520,6 @@ m32r_elf_sda16_reloc (abfd, reloc_entry, symbol, data,
      bfd *output_bfd;
      char **error_message;
 {
-  bfd_vma sda_base;
-  unsigned long x;
-  reloc_howto_type *howto;
-
   /* This part is from bfd_elf_generic_reloc.  */
   if (output_bfd != (bfd *) NULL
       && (symbol->flags & BSF_SECTION_SYM) == 0
@@ -815,7 +814,6 @@ m32r_elf_relocate_section (output_bfd, info, input_bfd, input_section,
   Elf_Internal_Shdr *symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   struct elf_link_hash_entry **sym_hashes = elf_sym_hashes (input_bfd);
   Elf_Internal_Rela *rel, *relend;
-  bfd *dynobj = elf_hash_table (info)->dynobj;
   /* Assume success.  */
   boolean ret = true;
 
@@ -839,6 +837,7 @@ m32r_elf_relocate_section (output_bfd, info, input_bfd, input_section,
       bfd_reloc_status_type r;
       const char *errmsg = NULL;
 
+      h = NULL;
       r_type = ELF32_R_TYPE (rel->r_info);
       if (r_type < 0 || r_type >= (int) R_M32R_max)
 	{
@@ -928,7 +927,6 @@ m32r_elf_relocate_section (output_bfd, info, input_bfd, input_section,
 	  bfd_vma relocation;
 
 	  /* This is a final link.  */
-	  h = NULL;
 	  sym = NULL;
 	  sec = NULL;
 
@@ -1234,7 +1232,7 @@ m32r_elf_relax_section (abfd, sec, link_info, again)
 	    }
 	}
 
-      /* Read the local symbols if we haven't done so already.  */
+      /* Read this BFD's symbols if we haven't done so already.  */
       if (extsyms == NULL)
 	{
 	  /* Get cached copy if it exists.  */
@@ -1244,15 +1242,13 @@ m32r_elf_relax_section (abfd, sec, link_info, again)
 	    {
 	      /* Go get them off disk.  */
 	      extsyms = ((Elf32_External_Sym *)
-			 bfd_malloc (symtab_hdr->sh_info
-				     * sizeof (Elf32_External_Sym)));
+			 bfd_malloc (symtab_hdr->sh_size));
 	      if (extsyms == NULL)
 		goto error_return;
 	      free_extsyms = extsyms;
 	      if (bfd_seek (abfd, symtab_hdr->sh_offset, SEEK_SET) != 0
-		  || (bfd_read (extsyms, sizeof (Elf32_External_Sym),
-				symtab_hdr->sh_info, abfd)
-		      != (symtab_hdr->sh_info * sizeof (Elf32_External_Sym))))
+		  || (bfd_read (extsyms, 1, symtab_hdr->sh_size, abfd)
+		      != symtab_hdr->sh_size))
 		goto error_return;
 	    }
 	}
@@ -1375,7 +1371,7 @@ m32r_elf_relax_section (abfd, sec, link_info, again)
 	      /* See if there's a nop following the jl.
 		 Also see if we can use a bl8 insn.  */
 	      code = bfd_get_16 (abfd, contents + irel->r_offset + 10);
-	      nop_p = (code & 0x7fff) == 7000;
+	      nop_p = (code & 0x7fff) == NOP_INSN;
 	      bl8_p = pcrel_value >= -0x200 && pcrel_value < 0x200;
 
 	      if (bl8_p)
@@ -1385,9 +1381,9 @@ m32r_elf_relax_section (abfd, sec, link_info, again)
 		     CODE currently must be a nop, but for cleanness we
 		     allow it to be anything).  */
 #ifndef USE_REL /* put in for learning purposes */
-		  code = 0x7e000000 | code;
+		  code = 0x7e000000 | MAKE_PARALLEL (code);
 #else
-		  code = (0x7e000000 + (((addend >> 2) & 0xff) << 16)) | code;
+		  code = (0x7e000000 + (((addend >> 2) & 0xff) << 16)) | MAKE_PARALLEL (code);
 #endif
 		  to_delete = 8;
 		}
@@ -1453,7 +1449,7 @@ m32r_elf_relax_section (abfd, sec, link_info, again)
 	     We don't need to do this in the case of relaxing to ld24,
 	     and the above code sets nop_p so this isn't done.  */
 	  if (! nop_p && to_delete == 4)
-	    bfd_put_16 (abfd, 0x7000, contents + irel->r_offset + 4);
+	    bfd_put_16 (abfd, NOP_INSN, contents + irel->r_offset + 4);
 
 	  /* That will change things, so we should relax again.
 	     Note that this is not required, and it may be slow.  */
@@ -1518,13 +1514,13 @@ m32r_elf_relax_delete_bytes (abfd, sec, addr, count)
 {
   Elf_Internal_Shdr *symtab_hdr;
   Elf32_External_Sym *extsyms;
-  int shndx;
+  int shndx, index;
   bfd_byte *contents;
   Elf_Internal_Rela *irel, *irelend;
   Elf_Internal_Rela *irelalign;
   bfd_vma toaddr;
   Elf32_External_Sym *esym, *esymend;
-  struct elf_link_hash_entry **sym_hash, **sym_hash_end;
+  struct elf_link_hash_entry *sym_hash;
 
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   extsyms = (Elf32_External_Sym *) symtab_hdr->contents;
@@ -1555,7 +1551,7 @@ m32r_elf_relax_delete_bytes (abfd, sec, addr, count)
 	irel->r_offset -= count;
     }
 
-  /* Adjust all the symbols.  */
+  /* Adjust the local symbols defined in this section.  */
   esym = extsyms;
   esymend = esym + symtab_hdr->sh_info;
   for (; esym < esymend; esym++)
@@ -1573,19 +1569,23 @@ m32r_elf_relax_delete_bytes (abfd, sec, addr, count)
 	}
     }
 
-  sym_hash = elf_sym_hashes (abfd);
-  sym_hash_end = (sym_hash
-		  + (symtab_hdr->sh_size / sizeof (Elf32_External_Sym)
-		     - symtab_hdr->sh_info));
-  for (; sym_hash < sym_hash_end; sym_hash++)
+  /* Now adjust the global symbols defined in this section.  */
+  esym = extsyms + symtab_hdr->sh_info;
+  esymend = extsyms + (symtab_hdr->sh_size / sizeof (Elf32_External_Sym));
+  for (index = 0; esym < esymend; esym++, index++)
     {
-      if (((*sym_hash)->root.type == bfd_link_hash_defined
-	   || (*sym_hash)->root.type == bfd_link_hash_defweak)
-	  && (*sym_hash)->root.u.def.section == sec
-	  && (*sym_hash)->root.u.def.value > addr
-	  && (*sym_hash)->root.u.def.value < toaddr)
+      Elf_Internal_Sym isym;
+
+      bfd_elf32_swap_symbol_in (abfd, esym, &isym);
+      sym_hash = elf_sym_hashes (abfd)[index];
+      if (isym.st_shndx == shndx
+	  && ((sym_hash)->root.type == bfd_link_hash_defined
+	      || (sym_hash)->root.type == bfd_link_hash_defweak)
+	  && (sym_hash)->root.u.def.section == sec
+	  && (sym_hash)->root.u.def.value > addr
+	  && (sym_hash)->root.u.def.value < toaddr)
 	{
-	  (*sym_hash)->root.u.def.value -= count;
+	  (sym_hash)->root.u.def.value -= count;
 	}
     }
 
@@ -1732,6 +1732,155 @@ m32r_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
 
 #endif /* #if 0 */
 
+/* Set the right machine number.  */
+static boolean
+m32r_elf_object_p (abfd)
+     bfd *abfd;
+{
+  switch (elf_elfheader (abfd)->e_flags & EF_M32R_ARCH)
+    {
+    default:
+    case E_M32R_ARCH:   (void) bfd_default_set_arch_mach (abfd, bfd_arch_m32r, bfd_mach_m32r); break;
+    }
+  return true;
+}
+
+/* Store the machine number in the flags field.  */
+void
+m32r_elf_final_write_processing (abfd, linker)
+     bfd *   abfd;
+     boolean linker;
+{
+  unsigned long val;
+
+  switch (bfd_get_mach (abfd))
+    {
+    default:
+    case bfd_mach_m32r:  val = E_M32R_ARCH; break;
+    }
+
+  elf_elfheader (abfd)->e_flags &=~ EF_M32R_ARCH;
+  elf_elfheader (abfd)->e_flags |= val;
+}
+
+/* Function to keep M32R specific file flags. */
+boolean
+m32r_elf_set_private_flags (abfd, flags)
+     bfd *    abfd;
+     flagword flags;
+{
+  BFD_ASSERT (!elf_flags_init (abfd)
+	      || elf_elfheader (abfd)->e_flags == flags);
+
+  elf_elfheader (abfd)->e_flags = flags;
+  elf_flags_init (abfd) = true;
+  return true;
+}
+
+/* Copy backend specific data from one object module to another */
+boolean
+m32r_elf_copy_private_bfd_data (ibfd, obfd)
+     bfd * ibfd;
+     bfd * obfd;
+{
+  if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return true;
+
+  BFD_ASSERT (!elf_flags_init (obfd)
+	      || (elf_elfheader (obfd)->e_flags
+		  == elf_elfheader (ibfd)->e_flags));
+
+  elf_gp (obfd) = elf_gp (ibfd);
+  elf_elfheader (obfd)->e_flags = elf_elfheader (ibfd)->e_flags;
+  elf_flags_init (obfd) = true;
+  return true;
+}
+
+/* Merge backend specific data from an object file to the output
+   object file when linking.  */
+boolean
+m32r_elf_merge_private_bfd_data (ibfd, obfd)
+     bfd * ibfd;
+     bfd * obfd;
+{
+  flagword out_flags;
+  flagword in_flags;
+
+  if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+    return true;
+
+  in_flags  = elf_elfheader (ibfd)->e_flags;
+  out_flags = elf_elfheader (obfd)->e_flags;
+
+  if (! elf_flags_init (obfd))
+    {
+      /* If the input is the default architecture then do not
+	 bother setting the flags for the output architecture,
+	 instead allow future merges to do this.  If no future
+	 merges ever set these flags then they will retain their
+	 unitialised values, which surprise surprise, correspond
+	 to the default values.  */
+      if (bfd_get_arch_info (ibfd)->the_default)
+	return true;
+      
+      elf_flags_init (obfd) = true;
+      elf_elfheader (obfd)->e_flags = in_flags;
+
+      if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
+	  && bfd_get_arch_info (obfd)->the_default)
+	{
+	  return bfd_set_arch_mach (obfd, bfd_get_arch (ibfd), bfd_get_mach (ibfd));
+	}
+
+      return true;
+    }
+
+  /* Check flag compatibility.  */
+  if (in_flags == out_flags)
+    return true;
+
+  if ((in_flags & EF_M32R_ARCH) != (out_flags & EF_M32R_ARCH))
+    {
+      if ((in_flags & EF_M32R_ARCH) != E_M32R_ARCH)
+	{
+	  _bfd_error_handler ("%s: Instruction set mismatch with previous modules",
+			      bfd_get_filename (ibfd));
+
+	  bfd_set_error (bfd_error_bad_value);
+	  return false;
+	}
+    }
+
+  return true;
+}
+
+/* Display the flags field */
+static boolean
+m32r_elf_print_private_bfd_data (abfd, ptr)
+     bfd *   abfd;
+     PTR     ptr;
+{
+  FILE * file = (FILE *) ptr;
+  
+  BFD_ASSERT (abfd != NULL && ptr != NULL)
+  
+  fprintf (file, "private flags = %lx", elf_elfheader (abfd)->e_flags);
+  
+  switch (elf_elfheader (abfd)->e_flags & EF_M32R_ARCH)
+    {
+    default:
+    case E_M32R_ARCH:  fprintf (file, ": m32r instructions"); break;
+    }
+  
+  fputc ('\n', file);
+  
+  return true;
+}
+
+
+
 #define ELF_ARCH		bfd_arch_m32r
 #define ELF_MACHINE_CODE	EM_CYGNUS_M32R
 #define ELF_MAXPAGESIZE		0x1000
@@ -1741,12 +1890,10 @@ m32r_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
 
 #define elf_info_to_howto			0
 #define elf_info_to_howto_rel			m32r_info_to_howto_rel
-#define elf_backend_object_p			0
 #define elf_backend_section_from_bfd_section	_bfd_m32r_elf_section_from_bfd_section
 #define elf_backend_symbol_processing		_bfd_m32r_elf_symbol_processing
 #define elf_backend_add_symbol_hook		m32r_elf_add_symbol_hook
 #define elf_backend_relocate_section		m32r_elf_relocate_section
-#define elf_backend_final_write_processing	0
 
 #if 0 /* not yet */
 /* relax support */
@@ -1755,4 +1902,11 @@ m32r_elf_get_relocated_section_contents (output_bfd, link_info, link_order,
 					m32r_elf_get_relocated_section_contents
 #endif
 
+#define elf_backend_object_p			m32r_elf_object_p
+#define elf_backend_final_write_processing 	m32r_elf_final_write_processing
+#define bfd_elf32_bfd_copy_private_bfd_data 	m32r_elf_copy_private_bfd_data
+#define bfd_elf32_bfd_merge_private_bfd_data 	m32r_elf_merge_private_bfd_data
+#define bfd_elf32_bfd_set_private_flags		m32r_elf_set_private_flags
+#define bfd_elf32_bfd_print_private_bfd_data	m32r_elf_print_private_bfd_data
+					
 #include "elf32-target.h"

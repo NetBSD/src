@@ -1,5 +1,5 @@
 /* evax-alpha.c -- BFD back-end for ALPHA EVAX (openVMS/Alpha) files.
-   Copyright 1996, 1997 Free Software Foundation, Inc.
+   Copyright 1996, 1997, 1998 Free Software Foundation, Inc.
    Written by Klaus K"ampf (kkaempf@progis.de)
    of proGIS Softwareentwicklung, Aachen, Germany
 
@@ -513,7 +513,6 @@ evax_close_and_cleanup (abfd)
 {
   asection *sec;
   evax_section *es, *es1;
-  evax_reloc *er, *er1;
   int i;
 
 #if EVAX_DEBUG
@@ -1109,8 +1108,6 @@ evax_get_symbol_info (abfd, symbol, ret)
     ret->type = 'A';
   else if (bfd_is_und_section (sec))
     ret->type = 'U';
-  else if (bfd_is_abs_section (sec))
-    ret->type = 'A';
   else if (bfd_is_ind_section (sec))
     ret->type = 'I';
   else if (bfd_get_section_flags (abfd, sec) & SEC_CODE)
@@ -1576,9 +1573,11 @@ evax_set_arch_mach (abfd, arch, mach)
 #if EVAX_DEBUG
   evax_debug (1, "evax_set_arch_mach(%p, %d, %ld)\n", abfd, arch, mach);
 #endif
-  abfd->arch_info = bfd_scan_arch("alpha");
+  if (arch != bfd_arch_alpha
+      && arch != bfd_arch_unknown)
+    return false;
 
-  return true;
+  return bfd_default_set_arch_mach (abfd, arch, mach);
 }
 
 
