@@ -1,10 +1,8 @@
-;	$NetBSD: named.boot,v 1.3 1997/02/15 10:02:32 mikel Exp $
+;	$NetBSD: named.boot,v 1.4 1998/09/14 05:05:44 marc Exp $
 ;	from @(#)named.boot	8.1 (Berkeley) 6/9/93
 
 ; boot file for secondary name server
 ; Note that there should be one primary entry for each SOA record.
-
-sortlist 128.3.0.0
 
 directory	/etc/namedb
 
