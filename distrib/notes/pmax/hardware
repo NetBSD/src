@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.13 2000/10/29 14:08:09 lukem Exp $
+.\"	$NetBSD: hardware,v 1.14 2003/10/31 16:32:36 drochner Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -56,11 +56,11 @@ DECstation 5000 series TurboChannel video
 .(bullet -compact
 PMAG-DV Personal DECstation baseboard 1024x768 frame buffer
 .It
-PMAG-BA 1024x768 8-bit color frame buffer
+PMAG-B (CX) 1024x768 8-bit color frame buffer
 .It
-PMAGB-BA 1024x768 8-bit color frame buffer
+PMAGB-B (HX or SFB) 1280x1024 8-bit color frame buffer
 .It
-PMAG-AA 1280x1024 four-bit greyscale frame buffer
+PMAG-A (MX) 1280x1024 four-bit greyscale frame buffer
 .It
 PMAG-C (PX) 2D 8-bit accelerated frame buffer.
 .It
