@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.24 2000/11/27 08:40:05 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.25 2000/11/30 11:04:44 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -81,7 +81,6 @@
 
 #include <uvm/uvm.h>
 
-extern u_long uvm_pgcnt_vnode;
 extern struct uvm_pagerops uvm_vnodeops;
 
 /*
@@ -254,7 +253,7 @@ uvm_pageout(void *arg)
 
 		if (uvmexp.free + uvmexp.paging < uvmexp.freetarg ||
 		    uvmexp.inactive < uvmexp.inactarg ||
-		    uvm_pgcnt_vnode >
+		    uvmexp.vnodepages >
 		    (uvmexp.active + uvmexp.inactive + uvmexp.wired +
 		     uvmexp.free) * 13 / 16) {
 			uvmpd_scan();
@@ -421,7 +420,7 @@ uvmpd_scan_inactive(pglst)
 			uvm_unlock_fpageq(s);
 
 			/* XXXUBC */
-			vpgs = uvm_pgcnt_vnode -
+			vpgs = uvmexp.vnodepages -
 				(uvmexp.active + uvmexp.inactive +
 				 uvmexp.wired + uvmexp.free) * 13 / 16;
 

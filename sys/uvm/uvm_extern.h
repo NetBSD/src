@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.54 2000/11/29 09:52:18 simonb Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.55 2000/11/30 11:04:43 simonb Exp $	*/
 
 /*
  *
@@ -254,9 +254,12 @@ struct uvmexp {
 	/* XXX: Adding anything before this line will break binary
 	 *      compatibility with top(1) on NetBSD 1.5.
 	 */
-	int zeropages;	/* number of zero'd pages */
+	int zeropages;		/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
-	int reserve_kernel; /* number of pages reserved for kernel */
+	int reserve_kernel;	/* number of pages reserved for kernel */
+	int anonpages;		/* number of pages used by anon pagers */
+	int vnodepages;		/* number of pages used by vnode page cache */
+	int vtextpages;		/* number of pages used by vtext vnodes */
 
 	/* pageout params */
 	int freemin;    /* min number of free pages */
@@ -267,7 +270,6 @@ struct uvmexp {
 	/* swap */
 	int nswapdev;	/* number of configured swap devices in system */
 	int swpages;	/* number of PAGE_SIZE'ed swap pages */
-	int swpguniq;	/* number of swap pages in use, not also in RAM */
 	int swpginuse;	/* number of swap pages in use */
 	int swpgonly;	/* number of swap pages in use, not also in RAM */
 	int nswget;	/* number of times fault calls uvm_swap_get() */
@@ -331,7 +333,7 @@ struct uvmexp {
 	int pdpageouts;	/* number of times daemon started a pageout */
 	int pdpending;	/* number of times daemon got a pending pagout */
 	int pddeact;	/* number of pages daemon deactivates */
-	
+
 	/* kernel memory objects: managed by uvm_km_kmemalloc() only! */
 	struct uvm_object *kmem_object;
 	struct uvm_object *mb_object;
@@ -361,7 +363,6 @@ struct uvmexp_sysctl {
 	int64_t	wiredmax;
 	int64_t	nswapdev;
 	int64_t	swpages;
-	int64_t	swpguniq;
 	int64_t	swpginuse;
 	int64_t	swpgonly;
 	int64_t	nswget;
@@ -415,6 +416,9 @@ struct uvmexp_sysctl {
 	int64_t	pdpageouts;
 	int64_t	pdpending;
 	int64_t	pddeact;
+	int64_t	anonpages;
+	int64_t	vnodepages;
+	int64_t	vtextpages;
 };
 
 #ifdef _KERNEL
