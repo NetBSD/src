@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.167 2001/07/21 16:56:07 bjh21 Exp $
+#	$NetBSD: bsd.own.mk,v 1.168 2001/07/23 17:13:44 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -116,6 +116,7 @@ NOPIC?=1
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "m68000" || \
+    ${MACHINE_ARCH} == "arm" || \
     ${MACHINE} == "next68k" || \
     ${MACHINE} == "sun3" || \
     ${MACHINE} == "mvme68k" || \
@@ -143,6 +144,7 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 GNU_ARCH.alpha=alpha
 GNU_ARCH.arm26=arm
 GNU_ARCH.arm32=arm
+GNU_ARCH.arm=arm
 GNU_ARCH.i386=i386
 GNU_ARCH.m68k=m68k
 GNU_ARCH.mipseb=mipseb
@@ -160,9 +162,11 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 .if ${OBJECT_FMT} == "ELF" && \
-    (${MACHINE_ARCH} == "i386" || \
+    (${MACHINE_ARCH} == "arm" || \
+     ${MACHINE_ARCH} == "i386" || \
      ${MACHINE_ARCH} == "m68k" || \
-     ${MACHINE_ARCH} == "sparc")
+     ${MACHINE_ARCH} == "sparc" || \
+     ${MACHINE_ARCH} == "vax")
 MACHINE_GNU_PLATFORM?= netbsdelf
 .else
 MACHINE_GNU_PLATFORM?= netbsd
