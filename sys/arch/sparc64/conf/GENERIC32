@@ -1,10 +1,10 @@
-# 	$NetBSD: GENERIC32,v 1.55 2002/11/22 12:21:05 wiz Exp $
+# 	$NetBSD: GENERIC32,v 1.56 2003/02/10 09:26:54 grant Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55 $"
+#ident 		"GENERIC-$Revision: 1.56 $"
 
 maxusers	64
 
@@ -437,6 +437,7 @@ ti*	at pci? dev ? function ?	# Alteon ACEnic gigabit Ethernet UT
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
+wi*	at pci? dev ? function ?	# Lucent/Intersil WaveLAN/IEEE
 
 # MII/PHY support
 # XXX: only nsphy "tested"
