@@ -30,7 +30,7 @@
  *
  *	dpreg.h: definitions for the dp driver.
  *
- *	$Id: scnreg.h,v 1.2 1994/03/08 19:48:20 phil Exp $
+ *	$Id: scnreg.h,v 1.3 1994/04/21 22:31:36 phil Exp $
  */
 
 /* Constants. */
@@ -148,7 +148,7 @@
 
 /* Interrupts on and off. */
 #define tx_ints_off(rs) \
-    { rs->uart->imr_int_bits &=	~(IMR_TX_INT) << (4*rs->a_or_b); \
+    { rs->uart->imr_int_bits &=	~((IMR_TX_INT) << (4*rs->a_or_b)); \
       WR_ADR (u_char, rs->uart->imr_port, rs->uart->imr_int_bits); }
 
 #define tx_ints_on(rs) \
@@ -156,7 +156,7 @@
       WR_ADR (u_char, rs->uart->imr_port, rs->uart->imr_int_bits); }
 
 #define rx_ints_off(rs) \
-    { rs->uart->imr_int_bits &=	~(IMR_RX_INT) << (4*rs->a_or_b); \
+    { rs->uart->imr_int_bits &=	~((IMR_RX_INT) << (4*rs->a_or_b)); \
       WR_ADR (u_char, rs->uart->imr_port, rs->uart->imr_int_bits); }
 
 #define rx_ints_on(rs) \
