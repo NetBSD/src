@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.22 2002/05/21 10:31:11 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.23 2003/05/16 05:12:32 itojun Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.22 2002/05/21 10:31:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.23 2003/05/16 05:12:32 itojun Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -98,11 +98,11 @@ isdn_attach_bri(const char *devname, const char *cardname,
 	memset(new_ctrl, 0, sizeof *new_ctrl);
 	SLIST_INSERT_HEAD(&bri_list, new_ctrl, l3drvq);
 	l = strlen(devname);
-	new_ctrl->devname = malloc(l+1, M_DEVBUF, 0);
-	strcpy(new_ctrl->devname, devname);
+	new_ctrl->devname = malloc(l + 1, M_DEVBUF, 0);
+	strlcpy(new_ctrl->devname, devname, l + 1);
 	l = strlen(cardname);
-	new_ctrl->card_name = malloc(l+1, M_DEVBUF, 0);
-	strcpy(new_ctrl->card_name, cardname);
+	new_ctrl->card_name = malloc(l + 1, M_DEVBUF, 0);
+	strlcpy(new_ctrl->card_name, cardname, l + 1);
 
 	new_ctrl->l3driver = l3driver;
 	new_ctrl->l1_token = l1_token;
@@ -551,19 +551,23 @@ i4b_l4_connect_ind(call_desc_t *cd)
 		cd->dir = DIR_INCOMING;
 
 		if(strlen(cd->dst_telno) > 0)
-			strcpy(mp->dst_telno, cd->dst_telno);
+			strlcpy(mp->dst_telno, cd->dst_telno,
+			    sizeof(mp->dst_telno));
 		else
-			strcpy(mp->dst_telno, TELNO_EMPTY);
+			strlcpy(mp->dst_telno, TELNO_EMPTY,
+			    sizeof(mp->dst_telno));
 
 		if(strlen(cd->src_telno) > 0)
-			strcpy(mp->src_telno, cd->src_telno);
+			strlcpy(mp->src_telno, cd->src_telno,
+			    sizeof(mp->src_telno));
 		else
-			strcpy(mp->src_telno, TELNO_EMPTY);
+			strlcpy(mp->src_telno, TELNO_EMPTY,
+			    sizeof(mp->src_telno));
 		mp->type_plan = cd->type_plan;
 		memcpy(mp->src_subaddr, cd->src_subaddr, sizeof(mp->src_subaddr));
 		memcpy(mp->dest_subaddr, cd->dest_subaddr, sizeof(mp->dest_subaddr));
 			
-		strcpy(mp->display, cd->display);
+		strlcpy(mp->display, cd->display, sizeof(mp->src_telno));
 
 		mp->scr_ind = cd->scr_ind;
 		mp->prs_ind = cd->prs_ind;		
@@ -608,7 +612,8 @@ i4b_l4_connect_active_ind(call_desc_t *cd)
 		mp->controller = cd->bri;
 		mp->channel = cd->channelid;
 		if(cd->datetime[0] != '\0')
-			strcpy(mp->datetime, cd->datetime);
+			strlcpy(mp->datetime, cd->datetime,
+			    sizeof(mp->datetime));
 		else
 			mp->datetime[0] = '\0';
 		i4bputqueue(m);
