@@ -1,4 +1,4 @@
-/*	$NetBSD: dkstats.h,v 1.1 1996/05/10 23:19:28 thorpej Exp $	*/
+/*	$NetBSD: dkstats.h,v 1.2 2000/05/29 11:36:43 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -43,7 +43,7 @@ struct _disk {
 	u_int64_t	 *dk_seek;	/* # of seeks (currently unused). */
 	u_int64_t	 *dk_bytes;	/* # of bytes transfered. */
 	struct timeval	 *dk_time;	/* Time spent in disk i/o. */
-	long	tk_nin;			/* TTY Chars in. */
-	long	tk_nout;		/* TTY Chars out. */
-	long	cp_time[CPUSTATES];	/* System timer ticks. */
+	u_int64_t	  tk_nin;	/* TTY Chars in. */
+	u_int64_t	  tk_nout;	/* TTY Chars out. */
+	u_int64_t	  cp_time[CPUSTATES];	/* System timer ticks. */
 };
