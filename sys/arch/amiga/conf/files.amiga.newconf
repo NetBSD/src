@@ -1,5 +1,5 @@
 #
-#	$Id: files.amiga.newconf,v 1.8 1994/05/29 04:50:04 chopps Exp $
+#	$Id: files.amiga.newconf,v 1.9 1994/06/05 07:43:37 chopps Exp $
 #
 
 maxusers 2 8 64
@@ -73,6 +73,11 @@ file	arch/amiga/dev/ite_rt.c		grfrt ite
 device	zthreebus at mainbus {}
 file	arch/amiga/dev/zthreebus.c	zthreebus
 
+# retina ZIII grf
+device	grfrh at zthreebus: grfbus
+file	arch/amiga/dev/grf_rh.c		grfrh
+file	arch/amiga/dev/ite_rh.c		grfrh ite
+  
 # handle gvp's odd autoconf info..
 device	gvpbus at ztwobus {}
 file	arch/amiga/dev/gvpbus.c		gvpbus
