@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.33 1999/12/15 12:27:26 kleink Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.34 2000/01/25 22:30:04 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -578,7 +578,7 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 	}
 	printf("type: ");
 	if (PCI_MAPREG_TYPE(rval) == PCI_MAPREG_TYPE_MEM) {
-		const char *type, *cache;
+		const char *type, *prefetch;
 
 		switch (PCI_MAPREG_MEM_TYPE(rval)) {
 		case PCI_MAPREG_MEM_TYPE_32BIT:
@@ -594,11 +594,11 @@ pci_conf_print_bar(pc, tag, regs, reg, name)
 			type = "unknown (XXX)";
 			break;
 		}
-		if (PCI_MAPREG_MEM_CACHEABLE(rval))
-			cache = "";
+		if (PCI_MAPREG_MEM_PREFETCHABLE(rval))
+			prefetch = "";
 		else
-			cache = "non";
-		printf("%s %scacheable memory\n", type, cache);
+			prefetch = "non";
+		printf("%s %sprefetchable memory\n", type, prefetch);
 		printf("      base: 0x%08x, size: 0x%08x\n",
 		    PCI_MAPREG_MEM_ADDR(rval),
 		    PCI_MAPREG_MEM_SIZE(mask));
