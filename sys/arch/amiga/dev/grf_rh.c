@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.10 1996/01/28 19:19:05 chopps Exp $	*/
+/*	$NetBSD: grf_rh.c,v 1.11 1996/03/06 20:13:28 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -1444,7 +1444,8 @@ grfrhmatch(pdp, cfp, auxp)
 		if (rhconunit != -1)
 #endif
 			return(0);
-	if (zap->manid != 18260 || zap->prodid != 16)
+	if (zap->manid != 18260 || 
+			(zap->prodid != 16) && (zap->prodid != 19))
 		return(0);
 #ifdef RETINACONSOLE
 	if (amiga_realconfig == 0 || rhconunit != cfp->cf_unit) {
