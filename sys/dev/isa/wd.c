@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.160.2.1 1997/07/01 17:47:13 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.160.2.2 1997/07/17 13:42:46 bouyer Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -125,7 +125,8 @@ wdprobe(parent, match, aux)
 		return 0;
 
 	drive = d_link->drive;
-	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != drive)
+	if (cf->cf_loc[WDCCF_DRIVE] != WDCCF_DRIVE_DEFAULT &&
+		cf->cf_loc[WDCCF_DRIVE] != drive)
 		return 0;
 
 	return 1;

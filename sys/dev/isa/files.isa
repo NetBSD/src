@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.30.2.1 1997/07/01 17:35:26 bouyer Exp $
+#	$NetBSD: files.isa,v 1.30.2.2 1997/07/17 13:42:43 bouyer Exp $
 #
 # Config.new file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -244,3 +244,10 @@ file	dev/isa/wss.c			wss needs-flag
 device	gus: audio, isadma, ics2101, ad1848, mulaw
 attach	gus at isa
 file	dev/isa/gus.c			gus needs-flag
+
+#
+# PlanetConnect satellite receiver driver.
+#
+device satlink: isadma
+attach satlink at isa
+file dev/isa/satlink.c         satlink needs-flag

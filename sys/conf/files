@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.125.2.1 1997/07/01 17:34:47 bouyer Exp $
+#	$NetBSD: files,v 1.125.2.2 1997/07/17 13:42:39 bouyer Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -181,6 +181,7 @@ file kern/kern_exec.c
 file kern/kern_exit.c
 file kern/kern_fork.c
 file kern/kern_ktrace.c			ktrace
+file kern/kern_lock.c
 file kern/kern_lkm.c			lkm
 file kern/kern_ntptime.c
 file kern/kern_malloc.c
@@ -330,7 +331,8 @@ file netinet/tcp_subr.c			inet
 file netinet/tcp_timer.c		inet
 file netinet/tcp_usrreq.c		inet
 file netinet/udp_usrreq.c		inet
-file netinet/ip_fil.c			ipfilter	needs-flag
+file netinet/ip_auth.c			ipfilter    needs-flag
+file netinet/ip_fil.c			ipfilter
 file netinet/fil.c			ipfilter
 file netinet/ip_nat.c			ipfilter
 file netinet/ip_frag.c			ipfilter
@@ -442,7 +444,6 @@ file ufs/ext2fs/ext2fs_subr.c	ext2fs
 file ufs/ext2fs/ext2fs_vfsops.c	ext2fs
 file ufs/ext2fs/ext2fs_vnops.c	ext2fs
 file vm/device_pager.c			devpager
-file vm/kern_lock.c
 file vm/swap_pager.c			swappager
 file vm/vm_fault.c
 file vm/vm_glue.c

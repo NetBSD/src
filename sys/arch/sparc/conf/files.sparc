@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.39.2.1 1997/07/01 17:35:57 bouyer Exp $
+#	$NetBSD: files.sparc,v 1.39.2.2 1997/07/17 13:42:49 bouyer Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -6,7 +6,7 @@
 # maxpartitions must be first item in files.${ARCH}
 maxpartitions 8
 
-maxusers 2 8 64
+maxusers 2 8 1024
 
 device mainbus {}
 attach mainbus at root
