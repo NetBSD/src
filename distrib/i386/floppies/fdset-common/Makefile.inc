@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.13 2000/05/05 20:13:32 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2000/05/05 21:01:35 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -26,15 +26,9 @@ BLOCK8K?=	179
 CLEANFILES+=	netbsd boot ustar.tmp
 
 realall:	netbsd boot
-	@echo Making disk number one
 	tar cvf ${FSTMP} boot netbsd
-	@ echo ''
-	@ls -l ${FSTMP} | (read mode links uid gid size junk;   \
-		disks=$$((($$size / (${DISKSIZE} * 512 - 8 * 1024)) + 1)); \
-                bytes=$$((${DISKSIZE} * 512 * $$disks - $$size));    \
-                echo There are $$bytes \($$(($$bytes / 1024))K\) bytes free\
-                        on disk $$disks.)
-	@ echo ''
+	@echo
+	@echo Making disk number one
 	dd if=/dev/zero of=${IMAGE1} count=${DISKSIZE}
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE1}
 	dd bs=8k seek=1 count=${BLOCK8K} if=${FSTMP} of=${VND_CDEV}
@@ -42,14 +36,13 @@ realall:	netbsd boot
 	@echo "installing new bootblocks"
 	${MDEC}/installboot -b 17 -v -f ${BOOTCODE} ${VND_RDEV}
 	vnconfig -u ${VND_CDEV}
-	:
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
+		disks=$$((($$size / (${DISKSIZE} * 512 - 8 * 1024)) + 1)); \
 		if test $$size -gt $$dksize; then \
-			disks=$$((($$size / (${DISKSIZE} * 512 - 8 * 1024)) \
-				+ 1)); \
 			d=2; \
 			while test $$d -le $$disks; do \
+				echo; \
 				echo Making disk number $$d.; \
 				IMAGE=${BASENAME}$${d}.fs; \
 				PIMAGE=${BASENAME}$$(($$d - 1)).fs; \
@@ -72,7 +65,15 @@ realall:	netbsd boot
 				fi; \
 				d=$$(($$d + 1)); \
 			done; \
-		fi; )
+		else \
+			dd seek=$$(($${size} / 512 + 15)) count=1 \
+				if=/dev/zero of=${IMAGE1}; \
+		fi; \
+		echo; \
+                bytes=$$(($$dksize * $$disks - $$size));    \
+                echo "There are $$bytes ($$(($$bytes / 1024))K) bytes free\
+                        on disk $$disks."; \
+	)
 
 # Let the kernel on the diskette be called "netbsd" although
 # it is compressed.  This is because the boot code will search
