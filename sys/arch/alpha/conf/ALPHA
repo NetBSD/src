@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.92 1999/01/23 16:10:47 drochner Exp $
+# $NetBSD: ALPHA,v 1.93 1999/02/18 20:39:04 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -231,6 +231,7 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
 ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 depca0	at	isa? port 0x300 iomem 0xd0000 iosiz 0x10000 irq 5 	# DEPCA
@@ -292,6 +293,9 @@ atapibus* at	wdc?
 # ATAPI devices
 sd*	at	atapibus? drive ?		# ATAPI disk devices
 cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
+
+# Floppy drives
+fd*	at	fdc? drive ?
 
 # USB bus support
 usb*	at	uhci?
