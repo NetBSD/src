@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.52 1999/07/04 13:27:03 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.53 1999/07/04 15:24:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.52 1999/07/04 13:27:03 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.53 1999/07/04 15:24:35 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -546,7 +546,7 @@ main(int argc, char *argv[])
 		if ((len = ipsec_set_policy(buf, len, policy)) < 0)
 			errx(1, ipsec_strerror());
 		if (setsockopt(s, IPPROTO_IP, IP_IPSEC_POLICY, buf, len) < 0)
-			err(1, NULL);
+			err(1, "ipsec policy cannot be configured");
 		free(buf);
 	}
 	if ((len = ipsec_get_policylen("bypass")) < 0)
