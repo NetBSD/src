@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.104 1997/10/09 23:53:01 explorer Exp $	*/
+/*	$NetBSD: init_main.c,v 1.105 1997/10/10 08:19:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -103,7 +103,7 @@ struct	filedesc0 filedesc0;
 struct	plimit limit0;
 struct	vmspace vmspace0;
 struct	proc *curproc = &proc0;
-struct	proc *initproc, *pageproc;
+struct	proc *initproc;
 
 int	cmask = CMASK;
 extern	struct user *proc0paddr;
@@ -553,7 +553,6 @@ start_pagedaemon(p)
 	/*
 	 * Now in process 2.
 	 */
-	pageproc = p;
 	p->p_flag |= P_INMEM | P_SYSTEM;	/* XXX */
 	bcopy("pagedaemon", curproc->p_comm, sizeof ("pagedaemon"));
 	vm_pageout();
