@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19 2001/04/10 21:33:00 bjh21 Exp $
+# $NetBSD: GENERIC,v 1.20 2001/04/22 00:26:35 bjh21 Exp $
 
 # GENERIC arm26 configuration -- everything I've implemented so far
 
@@ -127,6 +127,7 @@ arcwsmouse0	at arckbd0
 wsmouse0	at arcwsmouse0
 
 ioeb0		at ioc0 bank 5		# I/O Extension Block (A5000)
+latches0	at ioc0 bank 5		# Printer/FDC control latches (Arc)
 
 podulebus0	at ioc0 bank 4		# Expansion card bus
 unixbp0 	at ioc0 bank 6		# Unix Backplane (interrupt routing)

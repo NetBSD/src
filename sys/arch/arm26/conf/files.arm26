@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.27 2001/04/10 21:33:01 bjh21 Exp $
+# $NetBSD: files.arm26,v 1.28 2001/04/22 00:26:35 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -84,9 +84,10 @@ file	arch/arm26/ioc/ioeb.c			ioeb		needs-flag
 device joy
 attach joy at ioeb
 
-# Latches (random internal use) (usually at bank 5 offset 0x18 and 0x40)
-device	latch
-attach	latch at ioc
+# Latches (random internal use) (usually at ioc0 bank 5)
+device	latches
+attach	latches at ioc
+file	arch/arm26/ioc/latches.c		latches
 
 # On-board keyboard interface
 device	arckbd { }
