@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.105 1994/05/07 06:34:04 mycroft Exp $
+ *	$Id: machdep.c,v 1.106 1994/05/19 06:33:49 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -641,36 +641,33 @@ int	waittime = -1;
 struct pcb dumppcb;
 
 void
-boot(arghowto)
-	int arghowto;
+boot(howto)
+	register int howto;
 {
-	register long dummy;		/* r12 is reserved */
-	register int howto;		/* r11 == how to boot */
-	register int devtype;		/* r10 == major of root dev */
 	extern int cold;
 
-	if(cold) {
+	if (cold) {
 		printf("hit reset please");
 		for(;;);
 	}
-	howto = arghowto;
+	boothowto = howto;
 	if ((howto&RB_NOSYNC) == 0 && waittime < 0) {
 		register struct buf *bp;
 		int iter, nbusy;
 
 		waittime = 0;
-		(void) splnet();
+		(void) spl0();
 		printf("syncing disks... ");
 		/*
 		 * Release inodes held by texts before update.
 		 */
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
-		sync((struct proc *)0, (void *)0, (int *)0);
+		sync(&proc0, (void *)0, (int *)0);
+#if 0
 		/*
 		 * Unmount filesystems
 		 */
-#if 0
 		if (panicstr == 0)
 			vfs_unmountall();
 #endif
@@ -693,11 +690,8 @@ boot(arghowto)
 		 * will be out of synch; adjust it now.
 		 */
 		resettodr();
-
-		delay(10000);			/* wait for printf to finish */
 	}
 	splhigh();
-	devtype = major(rootdev);
 	if (howto&RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
@@ -711,10 +705,6 @@ boot(arghowto)
 			/*NOTREACHED*/
 		}
 	}
-#ifdef lint
-	dummy = 0; dummy = dummy;
-	printf("howto %d, devtype %d\n", arghowto, devtype);
-#endif
 	cpu_reset();
 	for(;;) ;
 	/*NOTREACHED*/
