@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_com_io.c,v 1.2 2001/09/10 23:05:19 chris Exp $	*/
+/*	$NetBSD: footbridge_com_io.c,v 1.3 2002/04/12 19:12:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -49,6 +49,7 @@
 /* Proto types for all the bus_space structure functions */
 
 bs_protos(fcomcons);
+bs_protos(generic);
 bs_protos(bs_notimpl);
 
 /* Declare the fcomcons bus space tag */
@@ -78,7 +79,7 @@ struct bus_space fcomcons_bs_tag = {
 	/* read (single) */
 	bs_notimpl_bs_r_1,
 	bs_notimpl_bs_r_2,
-	fcomcons_bs_r_4,
+	generic_bs_r_4,
 	bs_notimpl_bs_r_8,
 
 	/* read multiple */
@@ -96,7 +97,7 @@ struct bus_space fcomcons_bs_tag = {
 	/* write (single) */
 	bs_notimpl_bs_w_1,
 	bs_notimpl_bs_w_2,
-	fcomcons_bs_w_4,
+	generic_bs_w_4,
 	bs_notimpl_bs_w_8,
 
 	/* write multiple */

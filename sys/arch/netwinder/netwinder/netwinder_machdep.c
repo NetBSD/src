@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.30 2002/04/05 16:58:10 thorpej Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.31 2002/04/12 19:12:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -79,11 +79,10 @@
 
 static bus_space_handle_t isa_base = (bus_space_handle_t) DC21285_PCI_IO_VBASE;
 
-u_int8_t footbridge_bs_r_1(void *, bus_space_handle_t, bus_size_t);
-void footbridge_bs_w_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
+bs_protos(generic);
 
-#define	ISA_GETBYTE(r)		footbridge_bs_r_1(0, isa_base, (r))
-#define	ISA_PUTBYTE(r,v)	footbridge_bs_w_1(0, isa_base, (r), (v))
+#define	ISA_GETBYTE(r)		generic_bs_r_1(0, isa_base, (r))
+#define	ISA_PUTBYTE(r,v)	generic_bs_w_1(0, isa_base, (r), (v))
 
 /*
  * Address to call from cpu_reset() to reset the machine.
@@ -832,11 +831,8 @@ consinit(void)
 
 static bus_space_handle_t kcom_base = (bus_space_handle_t) (DC21285_PCI_IO_VBASE + CONCOMADDR);
 
-u_int8_t footbridge_bs_r_1(void *, bus_space_handle_t, bus_size_t);
-void footbridge_bs_w_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
-
-#define	KCOM_GETBYTE(r)		footbridge_bs_r_1(0, kcom_base, (r))
-#define	KCOM_PUTBYTE(r,v)	footbridge_bs_w_1(0, kcom_base, (r), (v))
+#define	KCOM_GETBYTE(r)		generic_bs_r_1(0, kcom_base, (r))
+#define	KCOM_PUTBYTE(r,v)	generic_bs_w_1(0, kcom_base, (r), (v))
 
 static int
 kcomcngetc(dev_t dev)
