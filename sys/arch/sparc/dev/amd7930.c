@@ -1,4 +1,4 @@
-/*	$NetBSD: amd7930.c,v 1.5 1995/12/11 12:43:14 pk Exp $	*/
+/*	$NetBSD: amd7930.c,v 1.6 1996/02/19 10:30:09 pk Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -101,11 +101,11 @@ void	audio_setmap __P((volatile struct amd7930 *, struct mapreg *));
 static void init_amd __P((volatile struct amd7930 *));
 
 /* autoconfiguration driver */
-void	amd9730attach __P((struct device *, struct device *, void *));
-int	amd9730match __P((struct device *, void *, void *));
+void	amd7930attach __P((struct device *, struct device *, void *));
+int	amd7930match __P((struct device *, void *, void *));
 
 struct	cfdriver audiocd = {
-	NULL, "audio", amd9730match, amd9730attach,
+	NULL, "audio", amd7930match, amd7930attach,
 	DV_DULL, sizeof(struct amd7930_softc)
 };
 
@@ -268,7 +268,7 @@ struct audio_hw_if sa_hw_if = {
 /* autoconfig routines */
 
 int
-amd9730match(parent, vcf, aux)
+amd7930match(parent, vcf, aux)
 	struct device *parent;
 	void *vcf, *aux;
 {
@@ -285,7 +285,7 @@ amd9730match(parent, vcf, aux)
  * Audio chip found.
  */
 void
-amd9730attach(parent, self, args)
+amd7930attach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
