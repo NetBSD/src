@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2002/07/04 10:46:21 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2002/07/04 23:32:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -475,18 +475,19 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct trapframe *tf;
 	char *sp;
 	struct sigframe *fp, frame;
 	int onstack;
 	size_t tocopy;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_regs;
 
@@ -519,7 +520,21 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/* Build stack frame for signal trampoline. */
-	frame.sf_ra = (uint64_t) p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		frame.sf_ra = (uint64_t) p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		frame.sf_ra = (uint64_t) ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 
 	/* Save register context. */
 	__asm("movl %%gs,%0" : "=r" (frame.sf_sc.sc_gs));

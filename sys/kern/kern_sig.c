@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.120 2002/03/08 20:48:40 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.121 2002/07/04 23:32:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.120 2002/03/08 20:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.121 2002/07/04 23:32:14 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -169,13 +169,23 @@ sigactsfree(struct proc *p)
 
 int
 sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
-	struct sigaction *osa)
+	struct sigaction *osa, void *tramp, int vers)
 {
 	struct sigacts	*ps;
 	int		prop;
 
 	ps = p->p_sigacts;
 	if (signum <= 0 || signum >= NSIG)
+		return (EINVAL);
+
+	/*
+	 * Trampoline ABI version 0 is reserved for the legacy
+	 * kernel-provided on-stack trampoline.  Conversely, if
+	 * we are using a non-0 ABI version, we must have a
+	 * trampoline.
+	 */
+	if ((vers != 0 && tramp == NULL) ||
+	    (vers == 0 && tramp != NULL))
 		return (EINVAL);
 
 	if (osa)
@@ -191,6 +201,8 @@ sigaction1(struct proc *p, int signum, const struct sigaction *nsa,
 
 		(void) splsched();	/* XXXSMP */
 		SIGACTION_PS(ps, signum) = *nsa;
+		ps->sa_sigdesc[signum].sd_tramp = tramp;
+		ps->sa_sigdesc[signum].sd_vers = vers;
 		sigminusset(&sigcantmask, &SIGACTION_PS(ps, signum).sa_mask);
 		if ((prop & SA_NORESET) != 0)
 			SIGACTION_PS(ps, signum).sa_flags &= ~SA_RESETHAND;
@@ -263,7 +275,40 @@ sys___sigaction14(struct proc *p, void *v, register_t *retval)
 			return (error);
 	}
 	error = sigaction1(p, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0);
+	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
+	    NULL, 0);
+	if (error)
+		return (error);
+	if (SCARG(uap, osa)) {
+		error = copyout(&osa, SCARG(uap, osa), sizeof(osa));
+		if (error)
+			return (error);
+	}
+	return (0);
+}
+
+/* ARGSUSED */
+int
+sys___sigaction_sigtramp(struct proc *p, void *v, register_t *retval)
+{
+	struct sys___sigaction_sigtramp_args /* {
+		syscallarg(int)				signum;
+		syscallarg(const struct sigaction *)	nsa;
+		syscallarg(struct sigaction *)		osa;
+		syscallarg(void *)			tramp;
+		syscallarg(int)				vers;
+	} */ *uap = v;
+	struct sigaction nsa, osa;
+	int error;
+
+	if (SCARG(uap, nsa)) {
+		error = copyin(SCARG(uap, nsa), &nsa, sizeof(nsa));
+		if (error)
+			return (error);
+	}
+	error = sigaction1(p, SCARG(uap, signum),
+	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
+	    SCARG(uap, tramp), SCARG(uap, vers));
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {
@@ -689,8 +734,8 @@ trapsignal(struct proc *p, int signum, u_long code)
 			    SIGACTION_PS(ps, signum).sa_handler,
 			    &p->p_sigctx.ps_sigmask, code);
 #endif
-		(*p->p_emul->e_sendsig)(SIGACTION_PS(ps, signum).sa_handler,
-		    signum, &p->p_sigctx.ps_sigmask, code);
+		(*p->p_emul->e_sendsig)(signum, &p->p_sigctx.ps_sigmask,
+		    code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);
@@ -1242,7 +1287,7 @@ postsig(int signum)
 			p->p_sigctx.ps_code = 0;
 			p->p_sigctx.ps_sig = 0;
 		}
-		(*p->p_emul->e_sendsig)(action, signum, returnmask, code);
+		(*p->p_emul->e_sendsig)(signum, returnmask, code);
 		(void) splsched();	/* XXXSMP */
 		sigplusset(&SIGACTION_PS(ps, signum).sa_mask,
 		    &p->p_sigctx.ps_sigmask);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.8 2002/06/25 01:24:50 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.9 2002/07/04 23:32:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -128,10 +128,11 @@ netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack)
 }
 
 void
-netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
+netbsd32_sendsig(int sig, sigset_t *mask, u_long code)
 {
 	struct proc *p = curproc;
 	struct trapframe *tf;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct netbsd32_sigframe *fp, frame;
 	int onstack;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.8 2002/01/03 06:43:24 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.9 2002/07/04 23:32:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -66,7 +66,7 @@ struct netbsd32_sigcontext13 {
 struct exec_package;
 void netbsd32_setregs (struct proc *p, struct exec_package *pack, u_long stack);
 int netbsd32_sigreturn (struct proc *p, void *v, register_t *retval);
-void netbsd32_sendsig (sig_t catcher, int sig, sigset_t *mask, u_long code);
+void netbsd32_sendsig (int sig, sigset_t *mask, u_long code);
 
 extern char netbsd32_esigcode[], netbsd32_sigcode[];
 

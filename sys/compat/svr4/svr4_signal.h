@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.21 2002/03/31 22:22:49 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.22 2002/07/04 23:32:13 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ void native_to_svr4_sigset __P((const sigset_t *, svr4_sigset_t *));
 void svr4_to_native_sigset __P((const svr4_sigset_t *, sigset_t *));
 void native_to_svr4_sigaltstack __P((const struct sigaltstack *, struct svr4_sigaltstack *));
 void svr4_to_native_sigaltstack __P((const struct svr4_sigaltstack *, struct sigaltstack *));
-void svr4_sendsig __P((sig_t, int, sigset_t *, u_long));
+void svr4_sendsig __P((int, sigset_t *, u_long));
 
 /* sys_context() function codes */
 #define	SVR4_GETCONTEXT		0

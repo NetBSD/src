@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.25 2002/03/31 22:22:47 christos Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.26 2002/07/04 23:32:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.25 2002/03/31 22:22:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.26 2002/07/04 23:32:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,7 +91,7 @@ linux_sys_signal(p, v, retval)
 	sigemptyset(&nbsa.sa_mask);
 	nbsa.sa_flags = SA_RESETHAND | SA_NODEFER;
 	error = sigaction1(p, linux_to_native_signo[sig],
-	    &nbsa, &obsa);
+	    &nbsa, &obsa, NULL, 0);
 	if (error == 0)
 		*retval = (int)obsa.sa_handler;
 	return (error);

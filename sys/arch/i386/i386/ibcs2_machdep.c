@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.19 2002/06/23 22:18:49 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.20 2002/07/04 23:32:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.19 2002/06/23 22:18:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.20 2002/07/04 23:32:04 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -97,8 +97,7 @@ ibcs2_setregs(p, epp, stack)
  * specified pc, psl.
  */
 void
-ibcs2_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+ibcs2_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -108,6 +107,7 @@ ibcs2_sendsig(catcher, sig, mask, code)
 	struct trapframe *tf;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	tf = p->p_md.md_regs;
 

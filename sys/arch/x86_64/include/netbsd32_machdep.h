@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2002/06/25 01:24:49 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3 2002/07/04 23:32:08 thorpej Exp $	*/
 
 #ifndef _MACHINE_NETBSD32_H_
 #define _MACHINE_NETBSD32_H_
@@ -99,7 +99,7 @@ struct fpreg32 {
 struct exec_package;
 void netbsd32_setregs(struct proc *p, struct exec_package *pack, u_long stack);
 int netbsd32_sigreturn(struct proc *p, void *v, register_t *retval);
-void netbsd32_sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code);
+void netbsd32_sendsig(int sig, sigset_t *mask, u_long code);
 
 extern char netbsd32_sigcode[], netbsd32_esigcode[];
 

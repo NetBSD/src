@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.15 2002/03/02 12:28:16 mrg Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.16 2002/07/04 23:32:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -77,8 +77,7 @@ struct sunos_sigframe {
 };
 
 void
-sunos_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sunos_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -88,6 +87,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	register struct trapframe64 *tf;
 	register int addr, onstack; 
 	struct rwindow32 *kwin, *oldsp, *newsp;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sunos_sigframe sf;
 
 	tf = p->p_md.md_tf;

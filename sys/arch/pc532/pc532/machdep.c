@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 2002/03/20 17:59:25 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128 2002/07/04 23:32:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -320,16 +320,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
  * specified pc, psl.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct reg *regs;
 	struct sigframe *fp, frame;
 	int onstack;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	regs = p->p_md.md_regs;
 
@@ -393,10 +394,26 @@ sendsig(catcher, sig, mask, code)
 	}
 
 	/*
-	 * Build context to run handler in.
+	 * Build context to run handler in.  Note the trampoline version
+	 * numbers are coordinated with machine-dependent code in libc.
 	 */
-	regs->r_sp = (int)fp;
-	regs->r_pc = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:
+		regs->r_sp = (int)fp;
+		regs->r_pc = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		regs->r_sp = (int)fp;
+		regs->r_pc = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

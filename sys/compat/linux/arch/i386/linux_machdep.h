@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.21 2002/02/15 16:48:00 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.22 2002/07/04 23:32:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ struct linux_sigframe {
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void linux_sendsig __P((sig_t, int, sigset_t *, u_long));
+void linux_sendsig __P((int, sigset_t *, u_long));
 __END_DECLS
 #endif /* _KERNEL */
 

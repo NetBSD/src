@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.2 2001/11/13 02:09:07 lukem Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.3 2002/07/04 23:32:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.2 2001/11/13 02:09:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.3 2002/07/04 23:32:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,8 @@ netbsd32_sigaction(p, v, retval)
 	}
 	error = sigaction1(p, SCARG(uap, signum), 
 			   SCARG(uap, nsa) ? &nsa : 0, 
-			   SCARG(uap, osa) ? &osa : 0);
+			   SCARG(uap, osa) ? &osa : 0,
+			   NULL, 0);
  
 	if (error)
 		return (error);
@@ -148,7 +149,8 @@ netbsd32___sigaction14(p, v, retval)
 		nsa.sa_flags = sa32.sa_flags;
 	}
 	error = sigaction1(p, SCARG(uap, signum),
-	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0);
+	    SCARG(uap, nsa) ? &nsa : 0, SCARG(uap, osa) ? &osa : 0,
+	    NULL, 0);
 	if (error)
 		return (error);
 	if (SCARG(uap, osa)) {
