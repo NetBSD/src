@@ -1,4 +1,4 @@
-/* $NetBSD: apic.c,v 1.1.2.2 2000/02/21 18:51:00 sommerfeld Exp $ */
+/* $NetBSD: apic.c,v 1.1.2.3 2000/08/18 13:44:43 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
  */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/lock.h>		/* XXX */
 
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
@@ -80,3 +82,19 @@ void apic_format_redir (where1, where2, idx, redirhi, redirlo)
 	printf("\n");
 }
 
+void apic_intlock(void);	/* XXXSMP cleanup */
+void apic_intunlock(void);	/* XXXSMP cleanup */
+
+void
+apic_intlock()
+{
+	KERNEL_LOCK(LK_EXCLUSIVE|LK_CANRECURSE);
+}
+
+void
+apic_intunlock()
+{
+	KERNEL_UNLOCK();
+}
+
+	    
