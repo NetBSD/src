@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.77 2000/09/24 15:59:34 jdolecek Exp $
+#	$NetBSD: GENERIC,v 1.78 2000/09/29 14:45:59 tsutsui Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include		"arch/macppc/conf/std.macppc"
 
-#ident 		"GENERIC-$Revision: 1.77 $"
+#ident 		"GENERIC-$Revision: 1.78 $"
 
 maxusers	32
 
@@ -135,6 +135,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
+sip*	at pci? dev ? function ?	# SiS 900/7016 Ethernet
 adv*	at pci? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
 ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
