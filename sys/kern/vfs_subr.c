@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.93 1998/09/01 03:09:14 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.94 1998/11/13 20:15:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1471,32 +1471,37 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-/*
- * XXX needs work. Old interface (Lite2) used fs type numbers, can't
- * do that anymore. It should work with names. Provide some compat
- * code.
- */
-#ifdef COMPAT_44
 	struct vfsconf vfc;
 	struct vfsops *vfsp;
 
 	/* all sysctl names at this level are at least name and field */
 	if (namelen < 2)
 		return (ENOTDIR);		/* overloaded */
+
+	/* Not generic: goes to file system. */
 	if (name[0] != VFS_GENERIC) {
 		if (name[0] >= nmountcompatnames || name[0] < 0 ||
 		    mountcompatnames[name[0]] == NULL)
 			return (EOPNOTSUPP);
 		vfsp = vfs_getopsbyname(mountcompatnames[name[0]]);
-		if (vfsp == NULL)
-			return (EINVAL);
+		if (vfsp == NULL || vfsp->vfs_sysctl == NULL)
+			return (EOPNOTSUPP);
 		return ((*vfsp->vfs_sysctl)(&name[1], namelen - 1,
 		    oldp, oldlenp, newp, newlen, p));
 	}
+
+	/* The rest are generic vfs sysctls. */
 	switch (name[1]) {
 	case VFS_MAXTYPENUM:
+		/*
+		 * Provided for 4.4BSD-Lite2 compatibility.
+		 */
 		return (sysctl_rdint(oldp, oldlenp, newp, nmountcompatnames));
 	case VFS_CONF:
+		/*
+		 * Special: a node, next is a file system name.
+		 * Provided for 4.4BSD-Lite2 compatibility.
+		 */
 		if (namelen < 3)
 			return (ENOTDIR);	/* overloaded */
 		if (name[2] >= nmountcompatnames || name[2] < 0 ||
@@ -1504,17 +1509,17 @@ vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 			return (EOPNOTSUPP);
 		vfsp = vfs_getopsbyname(mountcompatnames[name[2]]);
 		if (vfsp == NULL)
-			return (EINVAL);
-		vfc.vfc_vfsops = NULL;	/* XXX point to vfsops->vfs_mount? */
+			return (EOPNOTSUPP);
+		vfc.vfc_vfsops = vfsp;
 		strncpy(vfc.vfc_name, vfsp->vfs_name, MFSNAMELEN);
 		vfc.vfc_typenum = name[2];
+		vfc.vfc_refcount = vfsp->vfs_refcount;
 		vfc.vfc_flags = 0;
 		vfc.vfc_mountroot = vfsp->vfs_mountroot;
 		vfc.vfc_next = NULL;
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &vfc,
 		    sizeof(struct vfsconf)));
 	}
-#endif
 	return (EOPNOTSUPP);
 }
 
