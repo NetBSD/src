@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.10.4.1 2000/07/22 15:28:19 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.10.4.2 2000/07/29 17:23:16 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1226,16 +1226,16 @@ rx_done:
 		}
 
 		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, 0);
+#ifndef __GENERIC_SOFT_INTERRUPTS
 		if ( sc->sc_soft_running == 0 ) {
 			sc->sc_soft_running = 1;
-#ifndef __GENERIC_SOFT_INTERRUPTS
 			(sc->sc_softhook)(sc);
 		}
-	} else
-		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, CLMPCC_REOIR_NO_TRANS);
 #else
 		softintr_schedule(sc->sc_softintr_cookie);
 #endif
+	} else
+		clmpcc_wrreg(sc, CLMPCC_REG_REOIR, CLMPCC_REOIR_NO_TRANS);
 
 #ifdef DDB
 	/*
