@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.20 1998/06/30 03:30:56 jonathan Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.21 1998/10/16 14:27:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@ static int emitcnt __P((struct nvlist *));
 static int emitlocs __P((void));
 static int emitopts __P((void));
 static int emitioconfh __P((void));
-static int err __P((const char *, const char *, FILE *));
+static int herr __P((const char *, const char *, FILE *));
 static int locators_print __P((const char *, void *, void *));
 static int defopts_print __P((const char *, void *, void *));
 static char *cntname __P((const char *));
@@ -110,18 +110,15 @@ emitcnt(head)
 	(void)sprintf(nfname, "%s.h", head->nv_name);
 	(void)sprintf(tfname, "tmp_%s", nfname);
 
-	if ((fp = fopen(tfname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    tfname, strerror(errno));
-		return (1);
-	}
+	if ((fp = fopen(tfname, "w")) == NULL)
+		return (herr("open", tfname, NULL));
 
 	for (nv = head; nv != NULL; nv = nv->nv_next)
 		if (fprintcnt(fp, nv) < 0)
-			return (err("writ", tfname, fp));
+			return (herr("writ", tfname, fp));
 
 	if (fclose(fp) == EOF)
-		return (err("clos", tfname, NULL));
+		return (herr("clos", tfname, NULL));
 
 	return (cmphdr(tfname, nfname));
 }
@@ -143,11 +140,8 @@ defopts_print(name, value, arg)
 	FILE *fp;
 
 	(void)sprintf(tfname, "tmp_%s", name);
-	if ((fp = fopen(tfname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    tfname, strerror(errno));
-		return (1);
-	}
+	if ((fp = fopen(tfname, "w")) == NULL)
+		return (herr("open", tfname, NULL));
 
 	for (nv = value; nv != NULL; nv = nv->nv_next) {
 		isfsoption = OPT_FSOPT(nv->nv_name);
@@ -175,12 +169,12 @@ defopts_print(name, value, arg)
 	}
 
 	if (fclose(fp) == EOF)
-		return (err("clos", tfname, NULL));
+		return (herr("clos", tfname, NULL));
 
 	return (cmphdr(tfname, name));
 
  bad:
-	return (err("writ", tfname, fp));
+	return (herr("writ", tfname, fp));
 }
 
 /*
@@ -224,7 +218,7 @@ locators_print(name, value, arg)
 			if (islower(*cp))
 				*cp = toupper(*cp);
 		if (fprintf(fp, "extern const char *%scf_locnames[];\n",
-			    name) < 0)
+		    name) < 0)
 			return 1;
 		for (i = 0, nv = a->a_locs; nv; nv = nv->nv_next, i++) {
 			if (strchr(nv->nv_name, ' ') != NULL ||
@@ -239,12 +233,11 @@ locators_print(name, value, arg)
 				if (islower(*cp))
 					*cp = toupper(*cp);
 			if (fprintf(fp, "#define %sCF_%s %d\n",
-				    locdup, namedup, i) < 0)
+			    locdup, namedup, i) < 0)
 				return 1;
 			if (nv->nv_str &&
-			    fprintf(fp,
-				    "#define %sCF_%s_DEFAULT %s\n",
-				    locdup, namedup, nv->nv_str) < 0)
+			    fprintf(fp, "#define %sCF_%s_DEFAULT %s\n",
+			    locdup, namedup, nv->nv_str) < 0)
 				return 1;
 			free(namedup);
 		}
@@ -266,15 +259,12 @@ emitlocs()
 	FILE *tfp;
 	
 	tfname = "tmp_locators.h";
-	if ((tfp = fopen(tfname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    tfname, strerror(errno));
-		return (1);
-	}
+	if ((tfp = fopen(tfname, "w")) == NULL)
+		return (herr("open", tfname, NULL));
 
 	rval = ht_enumerate(attrtab, locators_print, tfp);
 	if (fclose(tfp) == EOF)
-		return (err("clos", tfname, NULL));
+		return (herr("clos", tfname, NULL));
 	if (rval)
 		return (rval);
 	return (cmphdr(tfname, "locators.h"));
@@ -292,22 +282,19 @@ emitioconfh()
 	struct devbase *d;
 
 	tfname = "tmp_ioconf.h";
-	if ((tfp = fopen(tfname, "w")) == NULL) {
-		(void)fprintf(stderr, "config: cannot write %s: %s\n",
-		    tfname, strerror(errno));
-		return (1);
-	}
+	if ((tfp = fopen(tfname, "w")) == NULL)
+		return (herr("open", tfname, NULL));
 
 	for (d = allbases; d != NULL; d = d->d_next) {
 		if (!devbase_has_instances(d, WILD))
 			continue;
 		if (fprintf(tfp, "extern struct cfdriver %s_cd;\n",
-			    d->d_name) < 0)
+		    d->d_name) < 0)
 			return (1);
 	}
 
 	if (fclose(tfp) == EOF)
-		return (err("clos", tfname, NULL));
+		return (herr("clos", tfname, NULL));
 
 	return (cmphdr(tfname, "ioconf.h"));
 }
@@ -324,7 +311,7 @@ cmphdr(tfname, nfname)
 	FILE *tfp, *nfp;
 
 	if ((tfp = fopen(tfname, "r")) == NULL)
-		return (err("open", tfname, NULL));
+		return (herr("open", tfname, NULL));
 
 	if ((nfp = fopen(nfname, "r")) == NULL)
 		goto moveit;
@@ -354,7 +341,7 @@ cmphdr(tfname, nfname)
 	(void) fclose(nfp);
 	(void) fclose(tfp);
 	if (remove(tfname) == -1)
-		return(err("remov", tfname, NULL));
+		return(herr("remov", tfname, NULL));
 	return (0);
 
  moveit:
@@ -366,18 +353,19 @@ cmphdr(tfname, nfname)
 	if (tfp)
 		(void) fclose(tfp);
 	if (rename(tfname, nfname) == -1)
-		return (err("renam", tfname, NULL));
+		return (herr("renam", tfname, NULL));
 	return (0);
 }
 
 static int
-err(what, fname, fp)
+herr(what, fname, fp)
 	const char *what, *fname;
 	FILE *fp;
 {
+	extern char *__progname;
 
-	(void)fprintf(stderr, "config: error %sing %s: %s\n",
-	    what, fname, strerror(errno));
+	(void)fprintf(stderr, "%s: error %sing %s: %s\n",
+	    __progname, what, fname, strerror(errno));
 	if (fp)
 		(void)fclose(fp);
 	return (1);
