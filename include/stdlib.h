@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)stdlib.h	5.13 (Berkeley) 6/4/91
- *	$Id: stdlib.h,v 1.13 1994/01/25 20:10:11 cgd Exp $
+ *	$Id: stdlib.h,v 1.14 1994/04/14 03:13:54 cgd Exp $
  */
 
 #ifndef _STDLIB_H_
@@ -151,6 +151,7 @@ void	 srandom __P((unsigned));
 int	 putenv __P((const char *));
 int	 setenv __P((const char *, const char *, int));
 void	 unsetenv __P((const char *));
+void	 setproctitle __P((const char *, ...));
 
 double	 drand48 __P((void));
 double	 erand48 __P((unsigned short[3]));
