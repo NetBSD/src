@@ -9,6 +9,10 @@ if [ $# -lt 1 ] ; then
 fi
 dir=$1
 
+FILES="defaultdomain fstab ifconfig.* inetd.conf mrouted.conf \
+	mygate myname netstart nsswitch.conf ntp.conf rbootd.conf \
+	rc.conf rc.conf.d resolv.conf"
+
 if [ $dir = init ] ; then
 	if [ -d /etc/etc.network -o -e /etc/etc/current ] ; then
 		echo "Error: multi-configuration already initialized"
@@ -19,9 +23,7 @@ if [ $dir = init ] ; then
 	mkdir -m 755 $dir
 	ln -s $dir etc.current
 	ln -s $dir etc.default
-	for i in fstab rc.conf netstart mrouted.conf ntp.conf resolv.conf \
-		 nsswitch.conf rbootd.conf inetd.conf ifconfig.* myname \
-		 mygate defaultdomain; do
+	for i in ${FILES}; do
 		if [ -f $i ] ; then
 			mv $i $dir
 			ln -s etc.current/$i .
