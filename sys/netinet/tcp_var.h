@@ -33,6 +33,9 @@
  *	@(#)tcp_var.h	7.10 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_TCP_VAR_H_
+#define _NETINET_TCP_VAR_H_
+
 /*
  * Kernel variables for tcp.
  */
@@ -216,3 +219,5 @@ struct	tcpiphdr *tcp_template();
 struct	tcpcb *tcp_close(), *tcp_drop();
 struct	tcpcb *tcp_timers(), *tcp_disconnect(), *tcp_usrclosed();
 #endif
+
+#endif /* !_NETINET_TCP_VAR_H_ */

@@ -33,6 +33,9 @@
  *	@(#)tcp_seq.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_TCP_SEQ_H_
+#define _NETINET_TCP_SEQ_H_
+
 /*
  * TCP sequence numbers are 32 bit integers operated
  * on with modular arithmetic.  These macros can be
@@ -60,3 +63,5 @@
 #ifdef KERNEL
 tcp_seq	tcp_iss;		/* tcp initial send seq # */
 #endif
+
+#endif /* !_NETINET_TCP_SEQ_H_ */

@@ -38,6 +38,9 @@
  *	@(#)hdlc.h	7.4 (Berkeley) 5/6/91
  */
 
+#ifndef _NETCCITT_HDLC_H_
+#define _NETCCITT_HDLC_H_
+
 #ifndef ORDER4
 #define FALSE   0
 #define TRUE    1
@@ -154,3 +157,5 @@ struct	Hdlc_frame {
 bool	range_check ();
 bool	valid_nr ();
 struct	mbuf *hd_remove ();
+
+#endif /* !_NETCCITT_HDLC_H_ */

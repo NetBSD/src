@@ -32,8 +32,11 @@
  *
  *	@(#)if_slvar.h	7.7 (Berkeley) 5/7/91
  *
- * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.3 1993/03/25 00:27:59 cgd Exp $
+ * $Header: /cvsroot/src/sys/net/if_slvar.h,v 1.4 1993/04/19 03:47:51 mycroft Exp $
  */
+
+#ifndef _NET_IF_SLVAR_H_
+#define _NET_IF_SLVAR_H_
 
 /*
  * Definitions for SLIP interface data structures
@@ -73,3 +76,5 @@ struct sl_softc {
 #define	SLIOCGFLAGS	_IOR('t', 90, int)	/* get configuration flags */
 #define	SLIOCSFLAGS	_IOW('t', 89, int)	/* set configuration flags */
 #define	SLIOCGUNIT	_IOR('t', 88, int)	/* get slip unit number */
+
+#endif /* !_NET_IF_SLVAR_H_ */

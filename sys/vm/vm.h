@@ -33,8 +33,9 @@
  *	@(#)vm.h	7.1 (Berkeley) 5/5/91
  */
 
-#ifndef VM_H
-#define VM_H
+#ifndef _VM_VM_H_
+#define _VM_VM_H_
+
 #include <vm/vm_param.h>
 #include <vm/lock.h>
 #include <vm/queue.h>
@@ -71,4 +72,5 @@ struct	vmspace *vmspace_alloc __P((vm_offset_t min, vm_offset_t max,
 			int pageable));
 struct	vmspace *vmspace_fork __P((struct vmspace *));
 void	vmspace_free __P((struct vmspace *));
-#endif /* VM_H */
+
+#endif /* !_VM_VM_H_ */

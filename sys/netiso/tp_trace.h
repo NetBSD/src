@@ -33,6 +33,9 @@
  *	@(#)tp_trace.h	7.5 (Berkeley) 6/27/91
  */
 
+#ifndef _NETISO_TP_TRACE_H_
+#define _NETISO_TP_TRACE_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,16 +65,12 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_trace.h,v 1.1 1993/04/09 12:01:58 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_trace.h,v 1.2 1993/04/19 03:46:01 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_trace.h,v $
  *
  * 
  * Definitions needed for the protocol trace mechanism.
  */
-
-#ifndef __TP_TRACE__
-#define __TP_TRACE__
-
 
 #define TPPTsendack	1
 #define TPPTgotack	2
@@ -193,6 +192,4 @@ int tp_Tracen = 0;
 
 #endif TPPT
 
-
-
-#endif __TP_TRACE__
+#endif /* !_NETISO_TP_TRACE_H_ */

@@ -33,6 +33,9 @@
  *	@(#)tp_user.h	7.10 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_TP_USER_H_
+#define _NETISO_TP_USER_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,7 +65,7 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_user.h,v 1.1 1993/04/09 12:01:59 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_user.h,v 1.2 1993/04/19 03:46:03 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_user.h,v $
  *
  * These are the values a real-live user ;-) needs. 
@@ -75,9 +78,6 @@ SOFTWARE.
 #include  <sys/types.h>
 #endif KERNEL
 #endif
-
-#ifndef __TP_USER__
-#define __TP_USER__
 
 struct tp_conn_param {
 	/* PER CONNECTION parameters */
@@ -168,5 +168,4 @@ struct tp_disc_reason {
  ***********************end flags******************************
  */
 
-
-#endif __TP_USER__
+#endif /* !_NETISO_TP_USER_H_ */

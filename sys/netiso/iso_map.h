@@ -33,6 +33,9 @@
  *	@(#)iso_map.h	7.3 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_ISO_MAP_H_
+#define _NETISO_ISO_MAP_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -64,3 +67,5 @@ struct maptab {
 	u_char			map_enaddr[6];	/* ethernet address */
 	u_char			map_valid;		/* true if entry is valid */
 };
+
+#endif /* !_NETISO_ISO_MAP_H_ */

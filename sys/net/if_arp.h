@@ -33,6 +33,9 @@
  *	@(#)if_arp.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NET_IF_ARP_H_
+#define _NET_IF_ARP_H_
+
 /*
  * Address Resolution Protocol.
  *
@@ -76,3 +79,5 @@ struct arpreq {
 #define	ATF_PERM	0x04	/* permanent entry */
 #define	ATF_PUBL	0x08	/* publish entry (respond for other host) */
 #define	ATF_USETRAILERS	0x10	/* has requested trailers */
+
+#endif /* !_NET_IF_ARP_H_ */

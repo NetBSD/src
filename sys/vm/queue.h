@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_QUEUE_H_
+#define _VM_QUEUE_H_
+
 /*
  *	Type definitions for generic queues.
  */
-
-#ifndef	_QUEUE_H_
-#define	_QUEUE_H_
 
 struct queue_entry {
 	struct queue_entry	*next;		/* next element */
@@ -130,4 +130,4 @@ typedef	struct queue_entry	*queue_entry_t;
 	queue_remove((h), (e), t, f);				\
 }
 
-#endif	/* !_QUEUE_H_ */
+#endif /* !_VM_QUEUE_H_ */

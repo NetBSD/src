@@ -33,6 +33,9 @@
  *	@(#)clnp_stat.h	7.4 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_CLNP_STAT_H_
+#define _NETISO_CLNP_STAT_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -59,12 +62,8 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
-/* $Header: /cvsroot/src/sys/netiso/Attic/clnp_stat.h,v 1.1 1993/04/09 12:00:57 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/netiso/Attic/clnp_stat.h,v 1.2 1993/04/19 03:45:38 mycroft Exp $ */
 /* $Source: /cvsroot/src/sys/netiso/Attic/clnp_stat.h,v $ */
-
-
-#ifndef __CLNP_STAT__
-#define __CLNP_STAT__
 
 struct clnp_stat {
 	int cns_total;			/* total pkts received */
@@ -100,4 +99,4 @@ struct clnp_stat {
 #endif INCSTAT
 #define INCSTAT(x) clnp_stat./**/x/**/++
 
-#endif __CLNP_STAT__
+#endif /* !_NETISO_CLNP_STAT_H_ */

@@ -62,6 +62,9 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_PAGEOUT_H_
+#define _VM_VM_PAGEOUT_H_
+
 /*
  *	Header file for pageout daemon.
  */
@@ -88,3 +91,5 @@ simple_lock_data_t	vm_pages_needed_lock;
 			thread_sleep((int)&vm_page_free_count, \
 				&vm_pages_needed_lock, FALSE); \
 			}
+
+#endif /* !_VM_VM_PAGEOUT_H_ */

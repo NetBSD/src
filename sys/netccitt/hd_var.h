@@ -38,6 +38,9 @@
  *	@(#)hd_var.h	7.4 (Berkeley) 5/29/91
  */
 
+#ifndef _NETCCITT_HD_VAR_H_
+#define _NETCCITT_HD_VAR_H_
+
 /*
  *
  * hdlc control block
@@ -105,3 +108,5 @@ int	hd_t1;			/* timer T1 value */
 int	hd_t3;			/* RR send timer */
 int	hd_n2;			/* frame retransmission limit */
 #endif
+
+#endif /* !_NETCCITT_HD_VAR_H_ */

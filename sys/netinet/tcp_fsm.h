@@ -33,6 +33,9 @@
  *	@(#)tcp_fsm.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_TCP_FSM_H_
+#define _NETINET_TCP_FSM_H_
+
 /*
  * TCP FSM state definitions.
  * Per RFC793, September, 1981.
@@ -83,3 +86,5 @@ char *tcpstates[] = {
 	"LAST_ACK",	"FIN_WAIT_2",	"TIME_WAIT",
 };
 #endif
+
+#endif /* !_NETINET_TCP_FSM_H_ */

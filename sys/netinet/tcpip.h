@@ -33,6 +33,9 @@
  *	@(#)tcpip.h	7.4 (Berkeley) 6/28/90
  */
 
+#ifndef _NETINET_TCPIP_H_
+#define _NETINET_TCPIP_H_
+
 /*
  * Tcp+ip header, after ip options removed.
  */
@@ -57,3 +60,5 @@ struct tcpiphdr {
 #define	ti_win		ti_t.th_win
 #define	ti_sum		ti_t.th_sum
 #define	ti_urp		ti_t.th_urp
+
+#endif /* !_NETINET_TCPIP_H_ */

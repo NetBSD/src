@@ -33,6 +33,9 @@
  *	@(#)tp_clnp.h	7.3 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_TP_CLNP_H_
+#define _NETISO_TP_CLNP_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -62,16 +65,12 @@ SOFTWARE.
 /* 
  * ARGO TP
  *
- * $Header: /cvsroot/src/sys/netiso/Attic/tp_clnp.h,v 1.1 1993/04/09 12:01:27 cgd Exp $
+ * $Header: /cvsroot/src/sys/netiso/Attic/tp_clnp.h,v 1.2 1993/04/19 03:45:50 mycroft Exp $
  * $Source: /cvsroot/src/sys/netiso/Attic/tp_clnp.h,v $
  *
  * AF_ISO net-dependent structures and include files
  *
  */
-
-
-#ifndef __TP_CLNP__
-#define __TP_CLNP__
 
 #ifndef SOCK_STREAM
 #include "socket.h"
@@ -91,4 +90,4 @@ SOFTWARE.
 struct isopcb tp_isopcb;	
 	/* queue of active inpcbs for tp ; for tp with dod ip */
 
-#endif __TP_CLNP__
+#endif /* !_NETISO_TP_CLNP_H_ */

@@ -38,6 +38,9 @@
  *	@(#)x25err.h	7.2 (Berkeley) 5/11/90
  */
 
+#ifndef _NETCCITT_X25ERR_H_
+#define _NETCCITT_X25ERR_H_
+
 /* 
  *  
  *  X.25 Reset and Clear errors and diagnostics.  These values are 
@@ -62,3 +65,4 @@
 #define EXCNCG		118	/* Clear: network congestion		*/
 #define EXCNOB		119	/* Clear: not obtainable		*/
 
+#endif /* !_NETCCITT_X25ERR_H_ */

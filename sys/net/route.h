@@ -33,6 +33,9 @@
  *	@(#)route.h	7.13 (Berkeley) 4/25/91
  */
 
+#ifndef _NET_ROUTE_H_
+#define _NET_ROUTE_H_
+
 /*
  * Kernel resident routing tables.
  * 
@@ -221,3 +224,5 @@ struct	mbuf *rtnet[RTHASHSIZ];
 struct	rtstat	rtstat;
 struct	rtentry *rtalloc1();
 #endif
+
+#endif /* !_NET_ROUTE_H_ */

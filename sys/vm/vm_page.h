@@ -62,12 +62,12 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _VM_VM_PAGE_H_
+#define _VM_VM_PAGE_H_
+
 /*
  *	Resident memory system definitions.
  */
-
-#ifndef	_VM_PAGE_
-#define	_VM_PAGE_
 
 /*
  *	Management of resident (logical) pages.
@@ -258,4 +258,5 @@ void		vm_set_page_size();
 
 #define vm_page_set_modified(m)	{ (m)->clean = FALSE; }
 #endif	KERNEL
-#endif	_VM_PAGE_
+
+#endif /* !_VM_VM_PAGE_H_ */

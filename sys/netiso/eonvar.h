@@ -33,6 +33,9 @@
  *	@(#)eonvar.h	7.5 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_EONVAR_H_
+#define _NETISO_EONVAR_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -168,3 +171,5 @@ struct eon_llinfo {
 };
 #define el_iphdr el_ei.ei_ip
 #define el_eonhdr el_ei.ei_eh
+
+#endif /* !_NETISO_EONVAR_H_ */

@@ -33,6 +33,9 @@
  *	@(#)esis.h	7.4 (Berkeley) 5/6/91
  */
 
+#ifndef _NETISO_ESIS_H_
+#define _NETISO_ESIS_H_
+
 /***********************************************************
 		Copyright IBM Corporation 1987
 
@@ -60,7 +63,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 /*
- *	$Header: /cvsroot/src/sys/netiso/Attic/esis.h,v 1.1 1993/04/09 12:01:08 cgd Exp $
+ *	$Header: /cvsroot/src/sys/netiso/Attic/esis.h,v 1.2 1993/04/19 03:45:43 mycroft Exp $
  *	$Source: /cvsroot/src/sys/netiso/Attic/esis.h,v $
  */
 
@@ -133,3 +136,5 @@ struct esis_stat {
 #ifdef	KERNEL
 struct esis_stat esis_stat;
 #endif	KERNEL
+
+#endif /* !_NETISO_ESIS_H_ */
