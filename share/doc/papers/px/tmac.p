@@ -31,7 +31,6 @@
 .\"
 .\"	@(#)tmac.p	5.2 (Berkeley) 4/17/91
 .\"
-'if \n(FM=0 'so /usr/lib/tmac/tmac.s
 .if n .nr FM 1.2i
 .if t .tr *\(**=\(eq/\(sl+\(pl
 .bd S B 3
