@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.15 1998/08/25 00:12:16 hubertf Exp $	*/
+/*	$NetBSD: perform.c,v 1.16 1998/08/25 00:54:08 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.15 1998/08/25 00:12:16 hubertf Exp $");
+__RCSID("$NetBSD: perform.c,v 1.16 1998/08/25 00:54:08 hubertf Exp $");
 #endif
 #endif
 
@@ -157,7 +157,7 @@ pkg_do(char *pkg)
 		if (p) {
 		    if (!isdir(p->name) && !Fake) {
 			if (Verbose)
-			    printf("Desired prefix of %s does not exist, creating..\n", p->name);
+			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
 			vsystem("mkdir -p %s", p->name);
 			if (chdir(p->name) == -1) {
 			    warn("unable to change directory to `%s'", p->name);
@@ -320,7 +320,7 @@ pkg_do(char *pkg)
     if (fexists(REQUIRE_FNAME)) {
 	vsystem("chmod +x %s", REQUIRE_FNAME);	/* be sure */
 	if (Verbose)
-	    printf("Running requirements file first for %s..\n", PkgName);
+	    printf("Running requirements file first for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s INSTALL", REQUIRE_FNAME, PkgName)) {
 	    warnx("package %s fails requirements %s", pkg_fullname,
 		   Force ? "installing anyway" : "- not installed");
@@ -335,7 +335,7 @@ pkg_do(char *pkg)
     if (!NoInstall && fexists(INSTALL_FNAME)) {
 	vsystem("chmod +x %s", INSTALL_FNAME);	/* make sure */
 	if (Verbose)
-	    printf("Running install with PRE-INSTALL for %s..\n", PkgName);
+	    printf("Running install with PRE-INSTALL for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s PRE-INSTALL", INSTALL_FNAME, PkgName)) {
 	    warnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
@@ -350,7 +350,7 @@ pkg_do(char *pkg)
 
     if (!Fake && fexists(MTREE_FNAME)) {
 	if (Verbose)
-	    printf("Running mtree for %s..\n", PkgName);
+	    printf("Running mtree for %s.\n", PkgName);
 	p = find_plist(&Plist, PLIST_CWD);
 	if (Verbose)
 	    printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
@@ -364,7 +364,7 @@ pkg_do(char *pkg)
     /* Run the installation script one last time? */
     if (!NoInstall && fexists(INSTALL_FNAME)) {
 	if (Verbose)
-	    printf("Running install with POST-INSTALL for %s..\n", PkgName);
+	    printf("Running install with POST-INSTALL for %s.\n", PkgName);
 	if (!Fake && vsystem("./%s %s POST-INSTALL", INSTALL_FNAME, PkgName)) {
 	    warnx("install script returned error status");
 	    unlink(INSTALL_FNAME);
@@ -389,7 +389,7 @@ pkg_do(char *pkg)
 	}
 	sprintf(LogDir, "%s/%s", (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR, PkgName);
 	if (Verbose)
-	    printf("Attempting to record package into %s..\n", LogDir);
+	    printf("Attempting to record package into %s.\n", LogDir);
 	if (make_hierarchy(LogDir)) {
 	    warnx("can't record package into '%s', you're on your own!",
 		   LogDir);
@@ -503,7 +503,7 @@ cleanup(int signo)
     if (!alreadyCleaning) {
     	alreadyCleaning = 1;
 	if (signo)
-	    printf("Signal %d received, cleaning up..\n", signo);
+	    printf("Signal %d received, cleaning up.\n", signo);
 	if (!Fake && LogDir[0])
 	    vsystem("%s -rf %s", REMOVE_CMD, LogDir);
 	leave_playpen(Home);
