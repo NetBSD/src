@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 2000/01/25 22:13:24 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.18 2000/05/09 22:39:35 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -906,6 +906,9 @@ bus_space_copy_region_8(t, h1, o1, h2, o2, c)
 /* For devices that have a 24-bit address space */
 #define BUS_DMA_24BIT		BUS_DMA_BUS1
 
+/* Internal flag: current DVMA address is equal to the KVA buffer address */
+#define _BUS_DMA_DIRECTMAP	BUS_DMA_BUS2
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -930,7 +933,10 @@ typedef struct sparc_bus_dmamap		*bus_dmamap_t;
 struct sparc_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DVMA address */
 	bus_size_t	ds_len;		/* length of transfer */
-	void		*_ds_mlist;	/* XXX - dmamap_alloc'ed pages */
+	void		*_ds_mlist;	/* page list when dmamem_alloc'ed */
+	vaddr_t		_ds_va;		/* VA when dmamem_map'ed */
+	bus_size_t	_ds_alignment;	/* dmamem_alloc() alignment */
+	bus_size_t	_ds_boundary;	/* dmamem_alloc() boundary */
 };
 typedef struct sparc_bus_dma_segment	bus_dma_segment_t;
 
@@ -1012,7 +1018,7 @@ struct sparc_bus_dma_tag {
  */
 struct sparc_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */
@@ -1044,10 +1050,10 @@ void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
 void	_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int));
 
-int	_bus_dmamem_alloc_common __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	_bus_dmamem_free_common __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
+void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs));
 void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, caddr_t kva,
 	    size_t size));
@@ -1058,6 +1064,8 @@ int	_bus_dmamem_alloc_range __P((bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
 	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags,
 	    vaddr_t low, vaddr_t high));
+
+vaddr_t	_bus_dma_valloc_skewed(size_t, u_long, u_long, u_long);
 #endif /* _SPARC_BUS_DMA_PRIVATE */
 
 #endif /* _SPARC_BUS_H_ */
