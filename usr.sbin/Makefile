@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.51 1995/07/14 07:01:35 cgd Exp $
+#	$Id: Makefile,v 1.52 1995/07/24 04:02:44 jtc Exp $
 
 # not yet done: catman
 
@@ -8,8 +8,8 @@ SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	diskpart edquota gettable htable inetd iostat kgmon \
 	kvm_mkdb lpr map-mbone mrinfo mrouted mtrace mtree named \
 	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
-	rarpd rbootd rdate repquota rmt rpc.bootparamd rwhod \
-	sa sendmail sliplogin slstats spray sysctl \
+	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.pcnfsd \
+	rwhod sa sendmail sliplogin slstats spray sysctl \
 	syslogd tcpdump timed traceroute trpt trsp update vipw vnconfig \
 	ypbind yppoll ypset zdump zic
 

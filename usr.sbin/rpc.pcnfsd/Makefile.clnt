@@ -1,0 +1,35 @@
+#	$Id: Makefile.clnt,v 1.1 1995/07/24 04:02:58 jtc Exp $
+
+#	This Makefile builds a client used for testing.
+
+CFLAGS += -DUSER_CACHE -DWTMP -DUSE_YP
+
+PROG=	clnt.pcnfsd
+SRCS=	pcnfsd_test.c
+NOMAN=	noman
+
+DPADD=	${LIBRPCSVC}
+LDADD=	-lrpcsvc
+
+OBJS= pcnfsd_clnt.o pcnfsd_xdr.o
+
+# Special rules for the generated C code...
+
+pcnfsd_clnt.o : pcnfsd_clnt.c pcnfsd.h
+	$(CC) $(CFLAGS) -c $*.c
+
+pcnfsd_xdr.o : pcnfsd_xdr.c pcnfsd.h
+	$(CC) $(CFLAGS) -c $*.c
+
+pcnfsd_clnt.c: pcnfsd.x
+	rpcgen -l pcnfsd.x -o $@
+
+pcnfsd_xdr.c: pcnfsd.x
+	rpcgen -c pcnfsd.x -o $@
+
+pcnfsd.h: pcnfsd.x
+	rpcgen -h pcnfsd.x -o $@
+
+CLEANFILES += pcnfsd_clnt.c pcnfsd_xdr.c pcnfsd.h
+
+.include <bsd.prog.mk>
