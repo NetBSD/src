@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.31 2000/03/27 16:58:23 kleink Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.32 2000/04/03 07:35:24 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -124,7 +124,6 @@ struct uvm_pagerops uvm_vnodeops = {
 	uvn_put,
 	uvn_cluster,
 	uvm_mk_pcluster, /* use generic version of this: see uvm_pager.c */
-	uvm_shareprot,	 /* !NULL: allow us in share maps */
 	NULL,		 /* AIO-DONE function (not until we have asyncio) */
 	uvn_releasepg,
 };
