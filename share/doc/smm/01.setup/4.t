@@ -312,7 +312,7 @@ then send a hangup signal to the
 .Xr init
 process, by doing
 .DS
-\fB#\fP \fIkill \-1 1\fP
+\fB#\fP \fIkill \-s HUP 1\fP
 .DE
 Terminals can similarly be enabled by changing the status field
 from \fBoff\fP to \fBon\fP and sending a hangup signal to
