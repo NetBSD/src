@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.h,v 1.16 2002/02/15 07:33:53 simonb Exp $	*/
+/*	$NetBSD: db_sym.h,v 1.17 2003/04/16 09:00:30 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -107,7 +107,7 @@ extern unsigned int db_maxoff;		/* like gdb's "max-symbolic-offset" */
 int		db_add_symbol_table(char *, char *, const char *, char *);
 					/* extend the list of symbol tables */
 
-void		db_del_symbol_table(char *);
+void		db_del_symbol_table(const char *);
 					/* remove a symbol table from list */
 
 boolean_t	db_eqname(char *, char *, int);
