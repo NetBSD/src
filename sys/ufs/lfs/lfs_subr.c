@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.39 2003/03/21 06:26:37 perseant Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.40 2003/04/23 07:20:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.39 2003/03/21 06:26:37 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.40 2003/04/23 07:20:38 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -366,7 +366,16 @@ lfs_unmark_dirop(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
+	int doit;
 	extern int lfs_dirvcount;
+
+	simple_lock(&fs->lfs_interlock);
+	doit = !(fs->lfs_flags & LFS_UNDIROP);
+	if (doit)
+		fs->lfs_flags |= LFS_UNDIROP;
+	simple_unlock(&fs->lfs_interlock);
+	if (!doit)
+		return;
 
 	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
 		nip = TAILQ_NEXT(ip, i_lfs_dchain);
@@ -386,6 +395,10 @@ lfs_unmark_dirop(struct lfs *fs)
 			fs->lfs_unlockvp = NULL;
 		}
 	}
+
+	simple_lock(&fs->lfs_interlock);
+	fs->lfs_flags &= ~LFS_UNDIROP;
+	simple_unlock(&fs->lfs_interlock);
 }
 
 static void
@@ -428,6 +441,7 @@ lfs_segunlock(struct lfs *fs)
 	struct segment *sp;
 	unsigned long sync, ckp;
 	struct buf *bp;
+	int do_unmark_dirop = 0;
 	extern int locked_queue_count;
 	extern long locked_queue_bytes;
 	
@@ -435,9 +449,9 @@ lfs_segunlock(struct lfs *fs)
 
 	simple_lock(&fs->lfs_interlock);
 	if (fs->lfs_seglock == 1) {
-		simple_unlock(&fs->lfs_interlock);
 		if ((sp->seg_flags & SEGM_PROT) == 0)
-			lfs_unmark_dirop(fs);
+			do_unmark_dirop = 1;
+		simple_unlock(&fs->lfs_interlock);
 		sync = sp->seg_flags & SEGM_SYNC;
 		ckp = sp->seg_flags & SEGM_CKP;
 		if (sp->bpp != sp->cbpp) {
@@ -521,6 +535,8 @@ lfs_segunlock(struct lfs *fs)
 		}
 		/* Reenable fragment size changes */
 		lockmgr(&fs->lfs_fraglock, LK_RELEASE, 0);
+		if (do_unmark_dirop)
+			lfs_unmark_dirop(fs);
 	} else if (fs->lfs_seglock == 0) {
 		simple_unlock(&fs->lfs_interlock);
 		panic ("Seglock not held");

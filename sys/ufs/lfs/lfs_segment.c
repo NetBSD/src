@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.119 2003/04/02 10:39:41 fvdl Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.120 2003/04/23 07:20:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.119 2003/04/02 10:39:41 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.120 2003/04/23 07:20:38 perseant Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -414,6 +414,16 @@ lfs_vflush(struct vnode *vp)
 		simple_unlock(&fs->lfs_interlock);
 
 	lfs_segunlock(fs);
+
+	/* Wait for these buffers to be recovered by aiodoned */
+	s = splbio();
+	simple_lock(&global_v_numoutput_slock);
+	while (vp->v_numoutput > 0) {
+		ltsleep(&vp->v_numoutput, PRIBIO + 1, "lfs_vf2", 0,
+			&global_v_numoutput_slock);
+	}
+	simple_unlock(&global_v_numoutput_slock);
+	splx(s);
 
 	CLR_FLUSHING(fs,vp);
 	return (0);
@@ -768,8 +778,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		if (!IS_FLUSHING(fs, vp)) {
 			simple_lock(&vp->v_interlock);
 			VOP_PUTPAGES(vp, 0, 0,
-				     PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED |
-				     PGO_BUSYFAIL);
+				     PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED);
 		}
 	}
 
@@ -1080,7 +1089,6 @@ lfs_gatherblock(struct segment *sp, struct buf *bp, int *sptr)
 #endif
 	/* Insert into the buffer list, update the FINFO block. */
 	bp->b_flags |= B_GATHERED;
-	bp->b_flags &= ~B_DONE;
 
 	*sp->cbpp++ = bp;
 	for (j = 0; j < blksinblk; j++)
@@ -1815,7 +1823,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 					newbp);
 #endif
 				*bpp = newbp;
-				bp->b_flags &= ~(B_ERROR | B_GATHERED | B_DONE);
+				bp->b_flags &= ~(B_ERROR | B_GATHERED);
 				if (bp->b_flags & B_CALL) {
 					printf("lfs_writeseg: indir bp should not be B_CALL\n");
 					s = splbio();

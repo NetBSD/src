@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.63 2003/04/09 00:32:54 thorpej Exp $	*/
+/*	$NetBSD: lfs.h,v 1.64 2003/04/23 07:20:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -252,6 +252,17 @@ extern struct lfs_log_entry lfs_log[LFS_LOGLENGTH];
 # define LFS_BWRITE_LOG(bp)		VOP_BWRITE((bp))
 #endif /* _KERNEL */
 	
+#ifdef _KERNEL
+/* Filehandle structure for exported LFSes */
+struct lfid {
+	struct ufid lfid_ufid;
+#define lfid_len lfid_ufid.ufid_len
+#define lfid_ino lfid_ufid.ufid_ino
+#define lfid_gen lfid_ufid.ufid_gen
+	uint32_t lfid_ident;
+};
+#endif /* _KERNEL */
+
 /*
  * "struct inode" associated definitions
  */
@@ -728,6 +739,7 @@ struct lfs {
 #define LFS_NOTYET  0x01
 #define LFS_IFDIRTY 0x02
 #define LFS_WARNED  0x04
+#define LFS_UNDIROP 0x08
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_int16_t lfs_activesb;		/* toggle between superblocks */
 	daddr_t	  lfs_sbactive;		/* disk address of current sb write */
@@ -768,9 +780,9 @@ struct lfs {
 #define INOPF(fs)	((fs)->lfs_inopf)
 
 #define	blksize(fs, ip, lbn) \
-	(((lbn) >= NDADDR || (ip)->i_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
+	(((lbn) >= NDADDR || (ip)->i_ffs1_size >= ((lbn) + 1) << (fs)->lfs_bshift) \
 	    ? (fs)->lfs_bsize \
-	    : (fragroundup(fs, blkoff(fs, (ip)->i_size))))
+	    : (fragroundup(fs, blkoff(fs, (ip)->i_ffs1_size))))
 #define	blkoff(fs, loc)		((int)((loc) & (fs)->lfs_bmask))
 #define fragoff(fs, loc)    /* calculates (loc % fs->lfs_fsize) */ \
     ((int)((loc) & (fs)->lfs_ffmask))
