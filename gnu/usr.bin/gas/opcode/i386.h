@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with GAS; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
    
-/* $Id: i386.h,v 1.1 1993/10/02 21:00:42 pk Exp $ */
+/* $Id: i386.h,v 1.2 1993/10/04 22:53:32 pk Exp $ */
 
 static const template i386_optab[] = {
 
@@ -720,6 +720,14 @@ static const template i386_optab[] = {
 { "repne", 0, 0xf2, _, NoModrm, 0, 0, 0},
 {"repz", 0, 0xf3, _, NoModrm, 0, 0, 0},
 { "repnz", 0, 0xf2, _, NoModrm, 0, 0, 0},
+
+/* 486 extensions */
+{"bswap", 1, 0x0fc8, _, ShortForm, Reg32,0,0 },
+{"xadd", 2, 0x0fc0, _, DW|Modrm, Reg, Reg|Mem, 0 },
+{"cmpxchg", 2, 0x0fb0, _, DW|Modrm, Reg, Reg|Mem, 0 },
+{"invd", 0, 0x0f08, _, NoModrm, 0, 0, 0},
+{"wbinvd", 0, 0x0f09, _, NoModrm, 0, 0, 0},
+{"invlpg", 1, 0x0f01, 7, Modrm, Mem, 0, 0},
 
 {"", 0, 0, 0, 0, 0, 0, 0}	/* sentinal */
 };
