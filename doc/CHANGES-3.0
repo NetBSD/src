@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.6 2005/03/19 18:26:27 jwise Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.7 2005/03/19 22:50:51 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -58,8 +58,12 @@ sys/sys/select.h				1.23
 doc/3DPARTY					1.305
 
 	Update XFree86 Information.
-
 	[tron, ticket #12]
+
+xsrc/Makefile					1.44
+
+	Remove code handling "contrib" directory.
+	[tron, ticket #13]
 
 etc/pam.d/sshd					1.6-1.7
 
@@ -91,3 +95,9 @@ libexec/telnetd/utility.c			1.28
 
 	Handle printing ptyfs pty names.
 	[christos, ticket #25]
+
+sys/dev/cgd_crypto.c				1.4
+
+	Clear freed memory.
+	[dan, ticket #26]
+
