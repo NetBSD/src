@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.13 1997/08/15 02:22:03 mikel Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.14 1997/09/20 18:26:20 pk Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.13 1997/08/15 02:22:03 mikel Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.14 1997/09/20 18:26:20 pk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,7 @@ __RCSID("$NetBSD: kvm_sparc.c,v 1.13 1997/08/15 02:22:03 mikel Exp $");
  */
 
 #include <sys/param.h>
+#include <sys/exec.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
@@ -155,10 +156,12 @@ _kvm_kvatop44c(kd, va, pa)
 	register int vr, vs, pte;
 	cpu_kcore_hdr_t *cpup = kd->cpu_data;
 	struct regmap *rp;
-	struct segmap *sp;
+	struct segmap *sp, *segmaps;
 	int *ptes;
+	int nkreg, nureg;
+	u_long kernbase = cpup->kernbase;
 
-	if (va < KERNBASE)
+	if (va < kernbase)
 		goto err;
 
 	/*
@@ -166,14 +169,18 @@ _kvm_kvatop44c(kd, va, pa)
 	 *	cpu_kcore_hdr_t;
 	 *	[alignment]
 	 *	phys_ram_seg_t[cpup->nmemseg];
+	 *	segmap[cpup->nsegmap];
 	 *	ptes[cpup->npmegs];
 	 */
+	segmaps = (struct segmap *)((long)kd->cpu_data + cpup->segmapoffset);
 	ptes = (int *)((int)kd->cpu_data + cpup->pmegoffset);
+	nkreg = ((int)((-(unsigned)kernbase) / NBPRG));
+	nureg = 256 - nkreg;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 
-	sp = &cpup->segmap_store[(vr-NUREG)*NSEGRG + vs];
+	sp = &segmaps[(vr-nureg)*NSEGRG + vs];
 	if (sp->sg_npte == 0)
 		goto err;
 	if (sp->sg_pmeg == cpup->npmeg - 1) /* =seginval */
@@ -202,9 +209,11 @@ _kvm_kvatop4m(kd, va, pa)
 	int pte;
 	off_t foff;
 	struct regmap *rp;
-	struct segmap *sp;
+	struct segmap *sp, *segmaps;
+	int nkreg, nureg;
+	u_long kernbase = cpup->kernbase;
 
-	if (va < KERNBASE)
+	if (va < kernbase)
 		goto err;
 
 	/*
@@ -212,17 +221,21 @@ _kvm_kvatop4m(kd, va, pa)
 	 *	cpu_kcore_hdr_t;
 	 *	[alignment]
 	 *	phys_ram_seg_t[cpup->nmemseg];
+	 *	segmap[cpup->nsegmap];
 	 */
+	segmaps = (struct segmap *)((long)kd->cpu_data + cpup->segmapoffset);
+	nkreg = ((int)((-(unsigned)kernbase) / NBPRG));
+	nureg = 256 - nkreg;
 
 	vr = VA_VREG(va);
 	vs = VA_VSEG(va);
 
-	sp = &cpup->segmap_store[(vr-NUREG)*NSEGRG + vs];
+	sp = &segmaps[(vr-nureg)*NSEGRG + vs];
 	if (sp->sg_npte == 0)
 		goto err;
 
 	/* XXX - assume page tables in initial kernel DATA or BSS. */
-	foff = _kvm_pa2off(kd, (u_long)&sp->sg_pte[VA_VPG(va)] - KERNBASE);
+	foff = _kvm_pa2off(kd, (u_long)&sp->sg_pte[VA_VPG(va)] - kernbase);
 	if (foff == (off_t)-1)
 		return (0);
 
@@ -289,10 +302,13 @@ int
 _kvm_mdopen(kd)
 	kvm_t	*kd;
 {
+	u_long max_uva;
+	extern struct ps_strings *__ps_strings;
 
-	kd->usrstack = USRSTACK;
-	kd->min_uva = VM_MIN_ADDRESS;
-	kd->max_uva = VM_MAXUSER_ADDRESS;
+	max_uva = (u_long) (__ps_strings + 1);
+	kd->usrstack = max_uva;
+	kd->max_uva  = max_uva;
+	kd->min_uva  = 0;
 
 	return (0);
 }
