@@ -26,7 +26,9 @@ CFLAGS = -g
 CFLAGS = -O2
 CFLAGS =
 
+CC = gcc -Wall -g -Wwrite-strings
 CC = gcc -Wall -g
+CC = /opt/SUNWspro/bin/cc
 CC = /opt/pure/purify/purify cc
 CC = cc
 
@@ -36,11 +38,14 @@ YFLAGS = -d
 
 OFILES = b.o main.o parse.o proctab.o tran.o lib.o run.o lex.o
 
-SOURCE = awk.h ytab.c ytab.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c lib.c run.c tran.c proctab.c missing95.c
+SOURCE = awk.h ytab.c ytab.h proto.h awkgram.y lex.c b.c main.c \
+	maketab.c parse.c lib.c run.c tran.c proctab.c missing95.c
 
-LISTING = awk.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c lib.c run.c tran.c missing95.c
+LISTING = awk.h proto.h awkgram.y lex.c b.c main.c maketab.c parse.c \
+	lib.c run.c tran.c missing95.c
 
-SHIP = README FIXES $(SOURCE) ytab[ch].bak makefile awk.1 buildwin.bat mac.code
+SHIP = README FIXES $(SOURCE) ytab[ch].bak makefile makefile.win \
+	vcvars32.bat buildwin.bat mac.code awk.1
 
 a.out:	ytab.o $(OFILES)
 	$(CC) $(CFLAGS) ytab.o $(OFILES) $(ALLOC)  -lm
@@ -78,4 +83,4 @@ names:
 	@echo $(LISTING)
 
 clean:
-	rm -f a.out *.o maketab # proctab.c
+	rm -f a.out *.o *.obj maketab maketab.exe # proctab.c
