@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 1998/09/06 04:24:18 mark Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21 1999/02/26 12:05:49 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -74,7 +74,7 @@ struct cpu_softc {
 /* Array of cpu structures, one per possible cpu */
 cpu_t cpus[MAX_CPUS];
 
-char cpu_model[48];
+char cpu_model[64];
 volatile int undefined_test;	/* Used for FPA test */
 extern int cpuctrl;		/* cpu control register value */
 
