@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.46 1999/01/20 09:24:06 mycroft Exp $	*/
+/*	$NetBSD: inetd.c,v 1.47 1999/04/11 15:40:58 hwr Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.46 1999/01/20 09:24:06 mycroft Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.47 1999/04/11 15:40:58 hwr Exp $");
 #endif
 #endif /* not lint */
 
@@ -356,6 +356,7 @@ void		bump_nofile __P((void));
 void		inetd_setproctitle __P((char *, int));
 void		initring __P((void));
 long		machtime __P((void));
+int 		port_good_dg __P((struct sockaddr *sa));
 static int	getline __P((int, char *, int));
 int		main __P((int, char *[], char *[]));
 
@@ -391,6 +392,14 @@ struct biltin {
 
 	{ NULL }
 };
+
+/* list of "bad" ports. I.e. ports that are most obviously used for
+ * "cycling packets" denial of service attacks. See /etc/services.
+ * List must end with port number "0".
+ */
+
+u_int16_t bad_ports[] =  { 7, 9, 13, 19, 37, 0};
+
 
 #define NUMINT	(sizeof(intab) / sizeof(struct inent))
 char	*CONFIG = _PATH_INETDCONF;
@@ -1709,7 +1718,8 @@ echo_dg(s, sep)			/* Echo service -- echo data back */
 	size = sizeof(sa);
 	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size)) < 0)
 		return;
-	(void) sendto(s, buffer, i, 0, &sa, sizeof(sa));
+	if (port_good_dg(&sa))
+		(void) sendto(s, buffer, i, 0, &sa, sizeof(sa));
 }
 
 /* ARGSUSED */
@@ -1806,6 +1816,9 @@ chargen_dg(s, sep)		/* Character generator */
 	if (recvfrom(s, text, sizeof(text), 0, &sa, &size) < 0)
 		return;
 
+	if (!port_good_dg(&sa))
+		return;
+
 	if ((len = endring - rs) >= LINESIZ)
 		memmove(text, rs, LINESIZ);
 	else {
@@ -1867,6 +1880,8 @@ machtime_dg(s, sep)
 	size = sizeof(sa);
 	if (recvfrom(s, (char *)&result, sizeof(result), 0, &sa, &size) < 0)
 		return;
+	if (!port_good_dg(&sa))
+		return;
 	result = machtime();
 	(void) sendto(s, (char *) &result, sizeof(result), 0, &sa, sizeof(sa));
 }
@@ -1902,6 +1917,8 @@ daytime_dg(s, sep)		/* Return human-readable time of day */
 
 	size = sizeof(sa);
 	if (recvfrom(s, buffer, sizeof(buffer), 0, &sa, &size) < 0)
+		return;
+	if (!port_good_dg(&sa))
 		return;
 	len = snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clock));
 	(void) sendto(s, buffer, len, 0, &sa, sizeof(sa));
@@ -2222,3 +2239,34 @@ int	ctrl;
 	return (result);
 }
 #endif
+
+/*
+ * check if the port where send data to is one of the obvious ports
+ * that are used for denial of service attacks like two echo ports
+ * just echoing data between them
+ */
+int port_good_dg(struct sockaddr *sa)
+{
+	struct sockaddr_in *sin;
+	u_int16_t port;
+	int i,bad;
+
+	bad=0;
+
+	sin=(struct sockaddr_in *)sa;
+	port=ntohs(sin->sin_port);
+
+	for(i=0;bad_ports[i]!=0;i++)
+		if (port==bad_ports[i]) {
+			bad=1;
+			break;
+		}
+
+	if (bad) {
+		syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
+			inet_ntoa(sin->sin_addr),port);
+		return (0);
+	} else
+		return (1);
+}
+
