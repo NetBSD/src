@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.56 1997/11/12 20:28:42 augustss Exp $	*/
+/*	$NetBSD: sb.c,v 1.57 1998/01/12 09:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -56,10 +56,6 @@
 #include <dev/isa/sbreg.h>
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
-
-struct cfdriver sb_cd = {
-	NULL, "sb", DV_DULL
-};
 
 struct audio_device sb_device = {
 	"SoundBlaster",

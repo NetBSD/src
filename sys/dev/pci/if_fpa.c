@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.23 1997/06/09 01:23:20 thorpej Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.24 1998/01/12 09:40:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -500,10 +500,6 @@ pdq_pci_attach(
 
 struct cfattach fpa_ca = {
     sizeof(pdq_softc_t), pdq_pci_match, pdq_pci_attach
-};
-
-struct cfdriver fpa_cd = {
-    0, "fpa", DV_IFNET
 };
 
 #endif /* __NetBSD__ */

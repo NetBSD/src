@@ -1,4 +1,4 @@
-/*	$NetBSD: boca.c,v 1.27 1997/10/20 18:43:07 thorpej Exp $	*/
+/*	$NetBSD: boca.c,v 1.28 1998/01/12 09:43:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -68,10 +68,6 @@ int bocaprint __P((void *, const char *));
 
 struct cfattach boca_ca = {
 	sizeof(struct boca_softc), bocaprobe, bocaattach,
-};
-
-struct cfdriver boca_cd = {
-	NULL, "boca", DV_TTY
 };
 
 int

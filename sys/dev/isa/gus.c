@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.48 1997/10/19 07:42:26 augustss Exp $	*/
+/*	$NetBSD: gus.c,v 1.49 1998/01/12 09:43:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -442,11 +442,6 @@ void	gusattach __P((struct device *, struct device *, void *));
 struct cfattach gus_ca = {
 	sizeof(struct gus_softc), gusprobe, gusattach,
 };
-
-struct cfdriver gus_cd = {
-	NULL, "gus", DV_DULL
-};
-
 
 /*
  * A mapping from IRQ/DRQ values to the values used in the GUS's internal

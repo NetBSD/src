@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.31 1997/10/21 05:54:28 bouyer Exp $
+#	$NetBSD: files.pci,v 1.32 1998/01/12 09:39:57 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -6,7 +6,7 @@
 
 defopt	PCIVERBOSE
 
-device	pci {[dev = -1], [function = -1]}
+device	pci class dull {[dev = -1], [function = -1]}
 attach	pci at pcibus
 file	dev/pci/pci.c			pci needs-flag
 file	dev/pci/pci_map.c		pci
@@ -29,7 +29,7 @@ attach	isp at pci with isp_pci
 file	dev/pci/isp_pci.c		isp_pci
 
 # Ethernet driver for DC21040-based boards
-device	de: ether, ifnet, arp
+device	de class ifnet: ether, ifnet, arp
 attach	de at pci
 file	dev/pci/if_de.c			de
 
@@ -44,7 +44,7 @@ attach	ep at pci with ep_pci
 file	dev/pci/if_ep_pci.c		ep_pci
 
 # Digital DEFPA PCI FDDI Controller
-device	fpa: pdq, fddi, ifnet, arp
+device	fpa class ifnet: pdq, fddi, ifnet, arp
 attach	fpa at pci
 file	dev/pci/if_fpa.c		fpa
 
@@ -54,12 +54,12 @@ attach	le at pci with le_pci
 file	dev/pci/if_le_pci.c		le_pci
 
 # NCR 53c8xx SCSI chips
-device	ncr: scsi
+device	ncr class dull: scsi
 attach	ncr at pci
 file	dev/pci/ncr.c			ncr
 
 # PCI-PCI bridge chips
-device	ppb: pcibus
+device	ppb class dull: pcibus
 attach	ppb at pci
 file	dev/pci/ppb.c			ppb
 
@@ -68,7 +68,7 @@ attach	cy at pci with cy_pci
 file	dev/pci/cy_pci.c		cy_pci
 
 # Intel EtherExpress PRO 10/100B
-device	fxp: ether, ifnet, arp
+device	fxp class ifnet: ether, ifnet, arp
 attach	fxp at pci 
 file	dev/pci/if_fxp.c		fxp
 
@@ -77,6 +77,6 @@ attach	ne at pci with ne_pci
 file	dev/pci/if_ne_pci.c		ne_pci
 
 # Texas Instruments ThunderLAN Chip.
-device  tl: ether, ifnet, arp, i2c, i2c_eeprom, miibus
+device  tl class ifnet: ether, ifnet, arp, i2c, i2c_eeprom, miibus
 attach  tl at pci
 file    dev/pci/if_tl.c     tl

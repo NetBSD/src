@@ -1,4 +1,5 @@
-/*	$NetBSD: satlink.c,v 1.3 1997/10/19 09:05:09 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.4 1998/01/12 09:43:45 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -107,9 +108,7 @@ struct cfattach satlink_ca = {
 	sizeof(struct satlink_softc), satlinkprobe, satlinkattach
 };
 
-struct cfdriver satlink_cd = {
-	NULL, "satlink", DV_DULL
-};
+extern struct cfdriver satlink_cd;
 
 cdev_decl(satlink);
 

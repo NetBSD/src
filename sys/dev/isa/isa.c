@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.97 1997/08/26 19:27:22 augustss Exp $	*/
+/*	$NetBSD: isa.c,v 1.98 1998/01/12 09:43:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -54,14 +54,6 @@ struct cfattach isa_ca = {
 	sizeof(struct isa_softc), isamatch, isaattach
 };
 
-struct cfdriver isa_cd = {
-#ifdef __BROKEN_INDIRECT_CONFIG
-	NULL, "isa", DV_DULL, 1
-#else
-	NULL, "isa", DV_DULL
-#endif
-};
-
 #ifdef __BROKEN_INDIRECT_CONFIG
 void	isascan __P((struct device *, void *));
 #else
@@ -102,6 +94,12 @@ isaattach(parent, self, aux)
 {
 	struct isa_softc *sc = (struct isa_softc *)self;
 	struct isabus_attach_args *iba = aux;
+
+#ifdef __BROKEN_INDIRECT_CONFIG
+	extern struct cfdriver isa_cd;
+
+	isa_cd.cd_indirect = 1;
+#endif
 
 	isa_attach_hook(parent, self, iba);
 	printf("\n");
