@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.1 1998/09/06 02:20:36 mark Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.2 1999/04/05 07:04:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -298,8 +298,9 @@ irq_release(irq, handler)
 	int loop;
 	irqhandler_t *irqhand;
 	irqhandler_t **prehand;
+#ifdef IRQSTATS
 	extern char *_intrnames;
-
+#endif	/* IRQSTATS */
 	/*
 	 * IRQ_INSTRUCT indicates that we should get the irq number
 	 * from the irq structure
