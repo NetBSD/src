@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.78 2003/10/07 00:17:09 thorpej Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.79 2003/11/29 19:06:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.78 2003/10/07 00:17:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.79 2003/11/29 19:06:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ sys_mincore(l, v, retval)
 
 		if (UVM_ET_ISOBJ(entry)) {
 			KASSERT(!UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj));
-			if (!UVM_OBJ_IS_VNODE(entry->object.uvm_obj)) {
+			if (UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
 					subyte(vec, 1);
