@@ -1037,6 +1037,7 @@
 ./usr/share/man/cat9/uao_create.0
 ./usr/share/man/cat9/uao_detach.0
 ./usr/share/man/cat9/uao_reference.0
+./usr/share/man/cat9/uiomove.0
 ./usr/share/man/cat9/untimeout.0
 ./usr/share/man/cat9/uprintf.0
 ./usr/share/man/cat9/useracc.0
@@ -2116,6 +2117,7 @@
 ./usr/share/man/man9/uao_create.9
 ./usr/share/man/man9/uao_detach.9
 ./usr/share/man/man9/uao_reference.9
+./usr/share/man/man9/uiomove.9
 ./usr/share/man/man9/untimeout.9
 ./usr/share/man/man9/uprintf.9
 ./usr/share/man/man9/useracc.9
