@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.13 2000/10/15 12:46:31 bjh21 Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.14 2000/12/30 13:50:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,11 +50,11 @@
 
 int verbose;
 
-void usage __P((void));
-void usbdev __P((int f, int a, int rec));
-void usbdump __P((int f));
-void dumpone __P((char *name, int f, int addr));
-int main __P((int, char **));
+void usage(void);
+void usbdev(int f, int a, int rec);
+void usbdump(int f);
+void dumpone(char *name, int f, int addr);
+int main(int, char **);
 
 extern char *__progname;
 
@@ -69,10 +69,7 @@ char done[USB_MAX_DEVICES];
 int indent;
 
 void
-usbdev(f, a, rec)
-	int f;
-	int a;
-	int rec;
+usbdev(int f, int a, int rec)
 {
 	struct usb_device_info di;
 	int e, p;
@@ -134,8 +131,7 @@ usbdev(f, a, rec)
 }
 
 void
-usbdump(f)
-	int f;
+usbdump(int f)
 {
 	int a;
 
@@ -146,10 +142,7 @@ usbdump(f)
 }
 
 void
-dumpone(name, f, addr)
-	char *name;
-	int f;
-	int addr;
+dumpone(char *name, int f, int addr)
 {
 	if (verbose)
 		printf("Controller %s:\n", name);
@@ -162,9 +155,7 @@ dumpone(name, f, addr)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
 	int ch, i, f;
 	char buf[50];
