@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2001/01/16 00:33:51 marcus Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2001/01/21 23:38:35 marcus Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,6 +56,8 @@ bdev_decl(ccd);
 bdev_decl(raid);
 #include "md.h"
 bdev_decl(md);
+#include "gdrom.h"
+bdev_decl(gdrom);
 
 struct bdevsw	bdevsw[] =
 {
@@ -78,6 +80,7 @@ struct bdevsw	bdevsw[] =
 	bdev_disk_init(NCCD,ccd),	/* 16: concatenated disk driver */
 	bdev_disk_init(NMD,md),		/* 17: memory disk driver */
 	bdev_disk_init(NRAID,raid),	/* 18: RAIDframe disk driver */
+	bdev_disk_init(NGDROM,gdrom),   /* 19: GDROM */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 
@@ -151,6 +154,8 @@ cdev_decl(wsmouse);
 #include "wsmux.h"
 cdev_decl(wsmux);
 
+cdev_decl(gdrom);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -211,6 +216,7 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMOUSE, wsmouse),       /* 54: mice */
 	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 55: svr4 net pseudo-device */
 	cdev_mouse_init(NWSMUX, wsmux),  /* 56: ws multiplexor */
+	cdev_disk_init(NGDROM,gdrom),	/* 57: GDROM */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
@@ -303,6 +309,13 @@ static int chrtoblktbl[] = {
 	/* 48 */	NODEV,
 	/* 49 */	NODEV,
 	/* 50 */	NODEV,
+	/* 51 */	NODEV,
+	/* 52 */	NODEV,
+	/* 53 */	NODEV,
+	/* 54 */	NODEV,
+	/* 55 */	NODEV,
+	/* 56 */	NODEV,
+	/* 57 */	19,
 };
 
 /*
