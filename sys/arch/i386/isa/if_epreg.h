@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_epreg.h,v 1.5 1994/07/01 23:08:15 deraadt Exp $
+ *	$Id: if_epreg.h,v 1.6 1994/07/21 02:51:58 deraadt Exp $
  */
 
 /*
@@ -286,3 +286,7 @@
 #define ENABLE_UTP			0xc0
 #define DISABLE_UTP			0x0
 #define RX_BYTES_MASK			(u_short) (0x07ff)
+
+#define CHAR1(b1,b2)	(((b1>>2) & 0x1f) | '@')
+#define CHAR2(b1,b2)	(((b1<<3) & 0x18) | ((b2>>5) & 0x07) | '@')
+#define CHAR3(b1,b2)	((b2 & 0x1f) | '@')
