@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.24 1996/02/01 00:18:04 jtc Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.25 1996/06/23 11:10:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1019,7 +1019,7 @@ hpux_sys_setresuid(p, v, retval)
 {
 	struct hpux_sys_setresuid_args *uap = v;
 
-	return (compat_43_sys_setreuid(p, uap, retval));
+	return (sys_setreuid(p, uap, retval));
 }
 
 int
@@ -1030,7 +1030,7 @@ hpux_sys_setresgid(p, v, retval)
 {
 	struct hpux_sys_setresgid_args *uap = v;
 
-	return (compat_43_sys_setregid(p, uap, retval));
+	return (sys_setregid(p, uap, retval));
 }
 
 int
