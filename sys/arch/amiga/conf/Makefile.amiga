@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.19 1994/06/15 19:04:26 chopps Exp $
+#	$Id: Makefile.amiga,v 1.20 1994/07/06 03:56:44 chopps Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -43,6 +43,10 @@ LIBKERN=	${KERNLIB}
 .else
 LIBKERN=	${KERNLIB_PROF}
 .endif
+
+### for the Motorola 68040 Floating Point Software Product
+.include "$S/arch/m68k/fpsp/Makefile.inc"
+
 # compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
@@ -71,7 +75,7 @@ NORMAL_S_C=	${CPP} ${COPTS} ${PARAM} $< | ${AS} -o $@
 #	${SYSTEM_LD_HEAD}
 #	${SYSTEM_LD} swapxxx.o
 #	${SYSTEM_LD_TAIL}
-SYSTEM_OBJ=	locore.o vnode_if.o ${OBJS} param.o ioconf.o ${LIBKERN}
+SYSTEM_OBJ=	locore.o ${FPSP} vnode_if.o ${OBJS} param.o ioconf.o ${LIBKERN}
 SYSTEM_DEP=	Makefile ${SYSTEM_OBJ}
 SYSTEM_LD_HEAD=	rm -f $@
 SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
