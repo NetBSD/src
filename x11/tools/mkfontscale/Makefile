@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2004/03/06 02:55:20 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/03/15 00:39:31 rtr Exp $
 
 NOMAN=		1
 
@@ -47,6 +47,7 @@ SRCS.fontenc=	encparse.c fontenc.c
 HOST_CPPFLAGS+=	-DFONTENC_NO_LIBFONT \
 		${X11FLAGS.THREADLIB} \
 		-DFREETYPE2 -DXFREE86_FT2 \
+		-DFT_CONFIG_OPTION_SYSTEM_ZLIB \
 		-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
 HOST_CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2 \
