@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cd.c,v 1.7 1998/01/09 08:07:43 perry Exp $	*/
+/*	$NetBSD: ex_cd.c,v 1.8 1998/07/26 23:14:40 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -43,7 +43,7 @@ ex_cd(sp, cmdp)
 	struct passwd *pw;
 	ARGS *ap;
 	CDPATH *cdp;
-	char *dir;		/* XXX END OF THE STACK, DON'T TRUST GETCWD. */
+	const char *dir;	/* XXX END OF THE STACK, DON'T TRUST GETCWD. */
 	char buf[MAXPATHLEN * 2];
 
 	/*
