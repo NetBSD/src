@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippi.h,v 1.3 1998/05/17 16:46:29 kml Exp $	*/
+/*	$NetBSD: if_hippi.h,v 1.4 1998/05/29 13:37:39 kleink Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _NETINET_IF_HIPPI_H_
-#define _NETINET_IF_HIPPI_H_
+#ifndef _NET_IF_HIPPI_H_
+#define _NET_IF_HIPPI_H_
 
 #include <net/if_ether.h>
 
@@ -88,4 +88,4 @@ void    hippi_ip_input __P((struct ifnet *, struct mbuf *));
 int     hippi_output __P((struct ifnet *,
 		  struct mbuf *, struct sockaddr *, struct rtentry *)); 
 #endif /* _KERNEL */
-#endif
+#endif /* !_NET_IF_HIPPI_H_ */
