@@ -1,4 +1,4 @@
-/*	$NetBSD: verr.c,v 1.5 2000/12/30 16:27:33 martin Exp $	*/
+/*	$NetBSD: verr.c,v 1.6 2001/02/19 22:22:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: verr.c,v 1.5 2000/12/30 16:27:33 martin Exp $");
+__RCSID("$NetBSD: verr.c,v 1.6 2001/02/19 22:22:16 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -57,8 +57,6 @@ __RCSID("$NetBSD: verr.c,v 1.5 2000/12/30 16:27:33 martin Exp $");
 #include <varargs.h>
 #endif
 
-extern char *__progname;		/* Program name, from crt0. */
-
 #ifdef __weak_alias
 __weak_alias(verr, _verr)
 #endif
@@ -72,7 +70,7 @@ _verr(eval, fmt, ap)
 	int sverrno;
 
 	sverrno = errno;
-	(void)fprintf(stderr, "%s: ", __progname);
+	(void)fprintf(stderr, "%s: ", getprogname());
 	if (fmt != NULL) {
 		(void)vfprintf(stderr, fmt, ap);
 		(void)fprintf(stderr, ": ");

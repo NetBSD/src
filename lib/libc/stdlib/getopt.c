@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.18 2000/12/20 15:59:51 christos Exp $	*/
+/*	$NetBSD: getopt.c,v 1.19 2001/02/19 22:22:17 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getopt.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getopt.c,v 1.18 2000/12/20 15:59:51 christos Exp $");
+__RCSID("$NetBSD: getopt.c,v 1.19 2001/02/19 22:22:17 cgd Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: getopt.c,v 1.18 2000/12/20 15:59:51 christos Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -108,7 +109,8 @@ getopt(nargc, nargv, ostr)
 			++optind;
 		if (opterr && *ostr != ':')
 			(void)fprintf(stderr,
-			    "%s: illegal option -- %c\n", __progname, optopt);
+			    "%s: illegal option -- %c\n", getprogname(),
+			    optopt);
 		return (BADCH);
 	}
 	if (*++oli != ':') {			/* don't need argument */
@@ -126,7 +128,7 @@ getopt(nargc, nargv, ostr)
 			if (opterr)
 				(void)fprintf(stderr,
 				    "%s: option requires an argument -- %c\n",
-				    __progname, optopt);
+				    getprogname(), optopt);
 			return (BADCH);
 		}
 	 	else				/* white space */

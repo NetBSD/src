@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.16 2000/12/20 20:55:23 christos Exp $	*/
+/*	$NetBSD: gmon.c,v 1.17 2001/02/19 22:22:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gmon.c,v 1.16 2000/12/20 20:55:23 christos Exp $");
+__RCSID("$NetBSD: gmon.c,v 1.17 2001/02/19 22:22:16 cgd Exp $");
 #endif
 #endif
 
@@ -55,8 +55,6 @@ __RCSID("$NetBSD: gmon.c,v 1.16 2000/12/20 20:55:23 christos Exp $");
 #include <unistd.h>
 #include <err.h>
 #include "extern.h"
-
-extern char *__progname;
 
 struct gmonparam _gmonparam = { GMON_PROF_OFF };
 
@@ -181,7 +179,8 @@ _mcleanup()
 	moncontrol(0);
 
 	if ((profdir = getenv("PROFDIR")) != NULL) {
-		char *s, *t;
+		const char *s;
+		char *t;
 		pid_t pid;
 		long divisor;
 
@@ -217,7 +216,7 @@ _mcleanup()
 		} while (divisor /= 10);
 		*t++ = '.';
 
-		s = __progname;
+		s = getprogname();
 		while ((*t++ = *s++) != '\0')
 			;
 

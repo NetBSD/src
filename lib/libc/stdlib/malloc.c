@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.35 2001/01/05 22:29:28 jdolecek Exp $	*/
+/*	$NetBSD: malloc.c,v 1.36 2001/02/19 22:22:17 cgd Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -272,13 +272,12 @@ static void *imalloc(size_t size);
 static void ifree(void *ptr);
 static void *irealloc(void *ptr, size_t size);
 
-extern char *__progname;
-
 static void
 wrterror(char *p)
 {
+    const char *progname = getprogname();
     char *q = " error: ";
-    write(STDERR_FILENO, __progname, strlen(__progname));
+    write(STDERR_FILENO, progname, strlen(progname));
     write(STDERR_FILENO, malloc_func, strlen(malloc_func));
     write(STDERR_FILENO, q, strlen(q));
     write(STDERR_FILENO, p, strlen(p));
@@ -289,10 +288,11 @@ wrterror(char *p)
 static void
 wrtwarning(char *p)
 {
+    const char *progname = getprogname();
     char *q = " warning: ";
     if (malloc_abort)
 	wrterror(p);
-    write(STDERR_FILENO, __progname, strlen(__progname));
+    write(STDERR_FILENO, progname, strlen(progname));
     write(STDERR_FILENO, malloc_func, strlen(malloc_func));
     write(STDERR_FILENO, q, strlen(q));
     write(STDERR_FILENO, p, strlen(p));
