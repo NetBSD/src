@@ -1,4 +1,4 @@
-/*	$NetBSD: ls.c,v 1.48 2003/05/11 08:06:01 kleink Exp $	*/
+/*	$NetBSD: ls.c,v 1.49 2003/05/30 00:17:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-__RCSID("$NetBSD: ls.c,v 1.48 2003/05/11 08:06:01 kleink Exp $");
+__RCSID("$NetBSD: ls.c,v 1.49 2003/05/30 00:17:25 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ ls_main(int argc, char *argv[])
 {
 	static char dot[] = ".", *dotav[] = { dot, NULL };
 	struct winsize win;
-	int ch, fts_options, notused;
+	int ch, fts_options;
 	int kflag = 0;
 	const char *p;
 
@@ -283,7 +283,7 @@ ls_main(int argc, char *argv[])
 	/* If -l or -s, figure out block size. */
 	if (f_inode || f_longform || f_size) {
 		if (!kflag)
-			(void)getbsize(&notused, &blocksize);
+			(void)getbsize(NULL, &blocksize);
 		blocksize /= 512;
 	}
 
