@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.77 2003/01/20 22:15:54 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.78 2003/04/02 04:35:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -64,6 +64,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/ctlreg.h>
 #include <machine/pte.h>
@@ -372,7 +374,7 @@ sun4_vcache_flush_context(ctx)
 	cachestats.cs_ncxflush++;
 	p = (char *)0;	/* addresses 0..cacheinfo.c_totalsize will do fine */
 	if (CACHEINFO.c_hwflush) {
-		ls = NBPG;
+		ls = PAGE_SIZE;
 		i = CACHEINFO.c_totalsize >> PGSHIFT;
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_HWFLUSHCTX, 0);
@@ -430,7 +432,7 @@ sun4_vcache_flush_segment(vreg, vseg, ctx)
 	cachestats.cs_nsgflush++;
 	p = (char *)VSTOVA(vreg, vseg);	/* seg..seg+sz rather than 0..sz */
 	if (CACHEINFO.c_hwflush) {
-		ls = NBPG;
+		ls = PAGE_SIZE;
 		i = CACHEINFO.c_totalsize >> PGSHIFT;
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_HWFLUSHSEG, 0);
@@ -463,7 +465,7 @@ sun4_vcache_flush_page(va, ctx)
 	cachestats.cs_npgflush++;
 	p = (char *)va;
 	ls = CACHEINFO.c_linesize;
-	i = NBPG >> CACHEINFO.c_l2linesize;
+	i = PAGE_SIZE >> CACHEINFO.c_l2linesize;
 	for (; --i >= 0; p += ls)
 		sta(p, ASI_FLUSHPG, 0);
 }
@@ -499,7 +501,7 @@ sun4_vcache_flush_page_hw(va, ctx)
  * We choose the best of (context,segment,page) here.
  */
 
-#define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / NBPG)
+#define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
 
 void
 sun4_cache_flush(base, len, ctx)
@@ -543,7 +545,7 @@ sun4_cache_flush(base, len, ctx)
 		/* cache_flush_page, for i pages */
 		p = (char *)((int)base & ~baseoff);
 		if (CACHEINFO.c_hwflush) {
-			for (; --i >= 0; p += NBPG)
+			for (; --i >= 0; p += PAGE_SIZE)
 				sta(p, ASI_HWFLUSHPG, 0);
 		} else {
 			ls = CACHEINFO.c_linesize;
@@ -680,7 +682,7 @@ srmmu_vcache_flush_page(va, ctx)
 	cachestats.cs_npgflush++;
 	p = (char *)va;
 	ls = CACHEINFO.c_linesize;
-	i = NBPG >> CACHEINFO.c_l2linesize;
+	i = PAGE_SIZE >> CACHEINFO.c_l2linesize;
 	octx = getcontext4m();
 	trapoff();
 	setcontext4m(ctx);
@@ -718,7 +720,7 @@ srmmu_cache_flush_all()
  * We choose the best of (context,segment,page) here.
  */
 
-#define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / NBPG)
+#define CACHE_FLUSH_MAGIC	(CACHEINFO.c_totalsize / PAGE_SIZE)
 
 void
 srmmu_cache_flush(base, len, ctx)
@@ -729,7 +731,7 @@ srmmu_cache_flush(base, len, ctx)
 	int i, ls, baseoff;
 	char *p;
 
-	if (len < NBPG) {
+	if (len < PAGE_SIZE) {
 		int octx;
 		/* less than a page, flush just the covered cache lines */
 		ls = CACHEINFO.c_linesize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 2003/01/18 06:45:05 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.223 2003/04/02 04:35:25 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -315,7 +315,7 @@ cpu_startup()
 		 * "base" pages for the rest.
 		 */
 		curbuf = (vaddr_t) buffers + (i * MAXBSIZE);
-		curbufsize = NBPG * ((i < residual) ? (base+1) : base);
+		curbufsize = PAGE_SIZE * ((i < residual) ? (base+1) : base);
 
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
@@ -360,7 +360,7 @@ cpu_startup()
 #endif
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -1148,9 +1148,9 @@ dumpsys()
 
 		if (maddr == 0) {
 			/* Skip first page at physical address 0 */
-			maddr += NBPG;
-			i += NBPG;
-			blkno += btodb(NBPG);
+			maddr += PAGE_SIZE;
+			i += PAGE_SIZE;
+			blkno += btodb(PAGE_SIZE);
 		}
 
 		for (; i < mp->len; i += n) {
@@ -1251,7 +1251,7 @@ oldmon_w_trace(va)
 		uvmexp.softs, uvmexp.faults);
 	write_user_windows();
 
-#define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
+#define round_up(x) (( (x) + (PAGE_SIZE-1) ) & (~(PAGE_SIZE-1)) )
 
 	printf("\nstack trace with sp = 0x%lx\n", va);
 	stop = round_up(va);
