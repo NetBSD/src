@@ -1,4 +1,4 @@
-/*	$NetBSD: testdb.c,v 1.4 1996/10/12 00:51:46 cgd Exp $	*/
+/*	$NetBSD: testdb.c,v 1.5 1997/01/11 06:18:11 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)testdb.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$NetBSD: testdb.c,v 1.4 1996/10/12 00:51:46 cgd Exp $";
+static char *rcsid = "$NetBSD: testdb.c,v 1.5 1997/01/11 06:18:11 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ testdb()
 	rec.size = sizeof(VRS_KEY) - 1;
 	if ((db->get)(db, &rec, &rec, 0))
 		goto close;
-	if (rec.data == 0 || rec.size > sizeof(dbversion))
+	if (rec.data == 0 || rec.size == 0 || rec.size > sizeof(dbversion))
 		goto close;
 	bcopy(rec.data, dbversion, rec.size);
 	dbversionlen = rec.size;
