@@ -1,4 +1,4 @@
-$NetBSD: cardbusdevs,v 1.23 2002/11/11 14:15:48 kanaoka Exp $
+$NetBSD: cardbusdevs,v 1.24 2003/02/01 07:49:33 ichiro Exp $
 
 /*
  * Copyright (C) 1999  Hayakawa Koichi.
@@ -113,6 +113,9 @@ product COREGA CB_TXD	0xa117	FEther CB-TXD 10/100 Ethernet
 product ABOCOM FE2500	0xab02	FE2500 10/100 Ethernet
 product ABOCOM PCM200	0xab03	FE2500 10/100 Ethernet
 product ABOCOM FE2500MX	0xab08	FE2500MX 10/100 Ethernet
+
+/* OEM: AboCom FE2000VX 10/100 Ethernet */
+product ABOCOM FE2000VX	0xab06	IO-DATA CBET100-CL 10/100 Ethernet
 
 /* Planex products */
 product PLANEX FNW_3603_TX 0xab06 FNW-3603-TX 10/100 Ethernet
