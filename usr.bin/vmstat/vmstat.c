@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.96 2002/02/20 07:43:30 enami Exp $ */
+/* $NetBSD: vmstat.c,v 1.97 2002/02/20 07:52:43 enami Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.96 2002/02/20 07:43:30 enami Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.97 2002/02/20 07:52:43 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -1184,6 +1184,8 @@ dopoolcache(struct pool *pp, int verbose)
 			continue;
 		for (pcg_addr = TAILQ_FIRST(&pc->pc_grouplist);
 		    pcg_addr != NULL; pcg_addr = TAILQ_NEXT(pcg, pcg_list)) {
+			deref_kptr(pcg_addr, pcg, sizeof(*pcg),
+			    "pool cache group trashed");
 			printf("\t\tgroup %p: avail %d\n", pcg_addr,
 			    pcg->pcg_avail);
 			for (i = 0; i < PCG_NOBJECTS; i++)
