@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.31 2001/07/29 21:24:57 chs Exp $ */
+/*	$NetBSD: arp.c,v 1.32 2001/10/06 19:09:44 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.31 2001/07/29 21:24:57 chs Exp $");
+__RCSID("$NetBSD: arp.c,v 1.32 2001/10/06 19:09:44 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -511,17 +511,13 @@ void
 sdl_print(sdl)
 	const struct sockaddr_dl *sdl;
 {
-	int i;
-	u_int8_t *p;
+	char hbuf[NI_MAXHOST];
 
-	i = sdl->sdl_alen;
-	p = LLADDR(sdl);
-
-	(void)printf("%02x", *p);
-	while (--i > 0) {
-		putchar(':');
-		(void)printf("%02x", *++p);
-	}
+	if (getnameinfo((struct sockaddr *)sdl, sdl->sdl_len,
+	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST) != 0)
+		printf("<invalid>");
+	else
+		printf("%s", hbuf);
 }
 
 int
