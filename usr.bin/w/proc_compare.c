@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)proc_compare.c	5.4 (Berkeley) 2/7/91";*/
-static char rcsid[] = "$Id: proc_compare.c,v 1.3 1994/05/05 02:08:57 cgd Exp $";
+static char rcsid[] = "$Id: proc_compare.c,v 1.4 1994/05/05 06:38:53 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -87,9 +87,9 @@ proc_compare(p1, p2)
 		/*
 		 * tie - favor one with highest recent cpu utilization
 		 */
-		if (p2->p_cpu > p1->p_cpu)
+		if (p2->p_estcpu > p1->p_estcpu)
 			return (1);
-		if (p1->p_cpu > p2->p_cpu)
+		if (p1->p_estcpu > p2->p_estcpu)
 			return (0);
 		return (p2->p_pid > p1->p_pid);	/* tie - return highest pid */
 	}
