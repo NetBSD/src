@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.4 1996/10/13 03:19:38 christos Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.5 1996/10/21 23:12:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -40,8 +40,10 @@
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 
 #include <i386/isa/icu.h>
+#include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
 
@@ -122,4 +124,32 @@ eisa_intr_disestablish(ec, cookie)
 {
 
 	return isa_intr_disestablish(NULL, cookie);
+}
+
+int
+eisa_mem_alloc(t, size, align, boundary, cacheable, addrp, bahp)
+	bus_space_tag_t t;
+	bus_size_t size, align;
+	bus_addr_t boundary;
+	int cacheable;
+	bus_addr_t *addrp;
+	bus_space_handle_t *bahp;
+{
+	extern struct extent *iomem_ex;
+
+	/*
+	 * Allocate physical address space after the ISA hole.
+	 */
+	return bus_space_alloc(t, IOM_END, iomem_ex->ex_end, size, align,
+	    boundary, cacheable, addrp, bahp);
+}
+
+void
+eisa_mem_free(t, bah, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bah;
+	bus_size_t size;
+{
+
+	bus_space_free(t, bah, size);
 }
