@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.14 1998/02/10 04:54:59 lukem Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.15 1998/02/12 01:57:53 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.14 1998/02/10 04:54:59 lukem Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.15 1998/02/12 01:57:53 lukem Exp $");
 #endif
 #endif
 
@@ -50,12 +50,9 @@ __RCSID("$NetBSD: xdr_float.c,v 1.14 1998/02/10 04:54:59 lukem Exp $");
  */
 
 #include "namespace.h"
-
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/param.h>
-
-#include <stdio.h>
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 
@@ -109,12 +106,12 @@ static struct sgl_limits {
 
 bool_t
 xdr_float(xdrs, fp)
-	XDR *xdrs;
-	float *fp;
+	register XDR *xdrs;
+	register float *fp;
 {
 #ifdef IEEEFP
 	bool_t rv;
-	int32_t tmpl;
+	long tmpl;
 #else
 	struct ieee_single is;
 	struct vax_single vs, *vsp;
@@ -143,7 +140,7 @@ xdr_float(xdrs, fp)
 		is.mantissa = (vs.mantissa1 << 16) | vs.mantissa2;
 	shipit:
 		is.sign = vs.sign;
-		return (XDR_PUTLONG(xdrs, (int32_t *)&is));
+		return (XDR_PUTLONG(xdrs, (long *)&is));
 #endif
 
 	case XDR_DECODE:
@@ -153,7 +150,7 @@ xdr_float(xdrs, fp)
 		return (rv);
 #else
 		vsp = (struct vax_single *)fp;
-		if (!XDR_GETLONG(xdrs, (int32_t *)&is))
+		if (!XDR_GETLONG(xdrs, (long *)&is))
 			return (FALSE);
 		for (i = 0, lim = sgl_limits;
 			i < sizeof(sgl_limits)/sizeof(struct sgl_limits);
@@ -216,18 +213,18 @@ static struct dbl_limits {
 
 bool_t
 xdr_double(xdrs, dp)
-	XDR *xdrs;
+	register XDR *xdrs;
 	double *dp;
 {
 #ifdef IEEEFP
-	int32_t *i32p;
+	register int32_t *i32p;
 	bool_t rv;
-	int32_t tmpl;
+	long tmpl;
 #else
-	int32_t *lp;
+	register long *lp;
 	struct	ieee_double id;
 	struct	vax_double vd;
-	struct dbl_limits *lim;
+	register struct dbl_limits *lim;
 	int i;
 #endif
 
@@ -273,7 +270,7 @@ xdr_double(xdrs, dp)
 				((vd.mantissa4 >> 3) & MASK(13));
 	shipit:
 		id.sign = vd.sign;
-		lp = (int32_t *)&id;
+		lp = (long *)&id;
 		return (XDR_PUTLONG(xdrs, lp++) && XDR_PUTLONG(xdrs, lp));
 #endif
 

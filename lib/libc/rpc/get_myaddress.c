@@ -1,4 +1,4 @@
-/*	$NetBSD: get_myaddress.c,v 1.6 1998/02/10 04:54:33 lukem Exp $	*/
+/*	$NetBSD: get_myaddress.c,v 1.7 1998/02/12 01:57:35 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)get_myaddress.c 1.4 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)get_myaddress.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: get_myaddress.c,v 1.6 1998/02/10 04:54:33 lukem Exp $");
+__RCSID("$NetBSD: get_myaddress.c,v 1.7 1998/02/12 01:57:35 lukem Exp $");
 #endif
 #endif
 
@@ -47,25 +47,65 @@ __RCSID("$NetBSD: get_myaddress.c,v 1.6 1998/02/10 04:54:33 lukem Exp $");
  */
 
 #include "namespace.h"
-
-#include <sys/types.h>
-#include <sys/socket.h>
-
-#include <string.h>
-
 #include <rpc/rpc.h>
+#include <rpc/pmap_prot.h>
+#include <sys/socket.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #ifdef __weak_alias
 __weak_alias(get_myaddress,_get_myaddress);
 #endif
 
+/* 
+ * don't use gethostbyname, which would invoke yellow pages
+ */
 int
 get_myaddress(addr)
 	struct sockaddr_in *addr;
 {
-	memset((void *) addr, 0, sizeof(*addr));
-	addr->sin_family = AF_INET;
-	addr->sin_port = htons(PMAPPORT);
-	addr->sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+	int s;
+	char buf[BUFSIZ];
+	struct ifconf ifc;
+	struct ifreq ifreq, *ifr;
+	int len, slop;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+		return (-1);
+	}
+	ifc.ifc_len = sizeof (buf);
+	ifc.ifc_buf = buf;
+	if (ioctl(s, SIOCGIFCONF, (char *)&ifc) < 0) {
+		(void) close(s);
+		return (-1);
+	}
+	ifr = ifc.ifc_req;
+	for (len = ifc.ifc_len; len; len -= sizeof ifreq) {
+		ifreq = *ifr;
+		if (ioctl(s, SIOCGIFFLAGS, (char *)&ifreq) < 0) {
+			(void) close(s);
+			return (-1);
+		}
+		if ((ifreq.ifr_flags & IFF_UP) &&
+		    ifr->ifr_addr.sa_family == AF_INET) {
+			*addr = *((struct sockaddr_in *)&ifr->ifr_addr);
+			addr->sin_port = htons(PMAPPORT);
+			break;
+		}
+		/*
+		 * Deal with variable length addresses
+		 */
+		slop = ifr->ifr_addr.sa_len - sizeof (struct sockaddr);
+		if (slop > 0) {
+			ifr = (struct ifreq *) ((caddr_t)ifr + slop);
+			len -= slop;
+		}
+		ifr++;
+	}
+	(void) close(s);
 	return (0);
 }

@@ -1,5 +1,5 @@
 .\"	@(#)rpc.3n	2.4 88/08/08 4.0 RPCSRC; from 1.19 88/06/24 SMI
-.\"	$NetBSD: rpc.3,v 1.7 1998/02/10 04:54:44 lukem Exp $
+.\"	$NetBSD: rpc.3,v 1.8 1998/02/12 01:57:42 lukem Exp $
 .\"
 .TH RPC 3N "16 February 1988"
 .SH NAME
@@ -128,11 +128,8 @@ default authentication used by
 .sp .5
 \s-1AUTH\s0 *
 authunix_create(host, uid, gid, len, aup_gids)
-const char *host;
-const uid_t uid;
-const gid_t gid;
-const u_int len;
-const gid_t *aup_gids;
+char *host;
+int uid, gid, len, *aup.gids;
 .fi
 .ft R
 .IP

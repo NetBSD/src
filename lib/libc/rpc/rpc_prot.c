@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.6 1998/02/10 04:54:47 lukem Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.7 1998/02/12 01:57:45 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_prot.c,v 1.6 1998/02/10 04:54:47 lukem Exp $");
+__RCSID("$NetBSD: rpc_prot.c,v 1.7 1998/02/12 01:57:45 lukem Exp $");
 #endif
 #endif
 
@@ -53,9 +53,7 @@ __RCSID("$NetBSD: rpc_prot.c,v 1.6 1998/02/10 04:54:47 lukem Exp $");
  */
 
 #include "namespace.h"
-
 #include <sys/param.h>
-
 #include <rpc/rpc.h>
 
 #ifdef __weak_alias
@@ -80,8 +78,8 @@ struct opaque_auth _null_auth;
  */
 bool_t
 xdr_opaque_auth(xdrs, ap)
-	XDR *xdrs;
-	struct opaque_auth *ap;
+	register XDR *xdrs;
+	register struct opaque_auth *ap;
 {
 
 	if (xdr_enum(xdrs, &(ap->oa_flavor)))
@@ -95,8 +93,8 @@ xdr_opaque_auth(xdrs, ap)
  */
 bool_t
 xdr_des_block(xdrs, blkp)
-	XDR *xdrs;
-	des_block *blkp;
+	register XDR *xdrs;
+	register des_block *blkp;
 {
 	return (xdr_opaque(xdrs, (caddr_t)blkp, sizeof(des_block)));
 }
@@ -108,8 +106,8 @@ xdr_des_block(xdrs, blkp)
  */
 bool_t 
 xdr_accepted_reply(xdrs, ar)
-	XDR *xdrs;   
-	struct accepted_reply *ar;
+	register XDR *xdrs;   
+	register struct accepted_reply *ar;
 {
 
 	/* personalized union, rather than calling xdr_union */
@@ -141,8 +139,8 @@ xdr_accepted_reply(xdrs, ar)
  */
 bool_t 
 xdr_rejected_reply(xdrs, rr)
-	XDR *xdrs;
-	struct rejected_reply *rr;
+	register XDR *xdrs;
+	register struct rejected_reply *rr;
 {
 
 	/* personalized union, rather than calling xdr_union */
@@ -171,8 +169,8 @@ static struct xdr_discrim reply_dscrm[3] = {
  */
 bool_t
 xdr_replymsg(xdrs, rmsg)
-	XDR *xdrs;
-	struct rpc_msg *rmsg;
+	register XDR *xdrs;
+	register struct rpc_msg *rmsg;
 {
 	if (
 	    xdr_u_int32_t(xdrs, &(rmsg->rm_xid)) && 
@@ -191,8 +189,8 @@ xdr_replymsg(xdrs, rmsg)
  */
 bool_t
 xdr_callhdr(xdrs, cmsg)
-	XDR *xdrs;
-	struct rpc_msg *cmsg;
+	register XDR *xdrs;
+	register struct rpc_msg *cmsg;
 {
 
 	cmsg->rm_direction = CALL;
@@ -211,8 +209,8 @@ xdr_callhdr(xdrs, cmsg)
 
 static void
 accepted(acpt_stat, error)
-	enum accept_stat acpt_stat;
-	struct rpc_err *error;
+	register enum accept_stat acpt_stat;
+	register struct rpc_err *error;
 {
 
 	switch (acpt_stat) {
@@ -243,14 +241,14 @@ accepted(acpt_stat, error)
 	}
 	/* something's wrong, but we don't know what ... */
 	error->re_status = RPC_FAILED;
-	error->re_lb.s1 = (u_int32_t)MSG_ACCEPTED;
-	error->re_lb.s2 = (u_int32_t)acpt_stat;
+	error->re_lb.s1 = (long)MSG_ACCEPTED;
+	error->re_lb.s2 = (long)acpt_stat;
 }
 
 static void 
 rejected(rjct_stat, error)
-	enum reject_stat rjct_stat;
-	struct rpc_err *error;
+	register enum reject_stat rjct_stat;
+	register struct rpc_err *error;
 {
 
 	switch (rjct_stat) {
@@ -264,8 +262,8 @@ rejected(rjct_stat, error)
 	}
 	/* something's wrong, but we don't know what ... */
 	error->re_status = RPC_FAILED;
-	error->re_lb.s1 = (u_int32_t)MSG_DENIED;
-	error->re_lb.s2 = (u_int32_t)rjct_stat;
+	error->re_lb.s1 = (long)MSG_DENIED;
+	error->re_lb.s2 = (long)rjct_stat;
 }
 
 /*
@@ -273,8 +271,8 @@ rejected(rjct_stat, error)
  */
 void
 _seterr_reply(msg, error)
-	struct rpc_msg *msg;
-	struct rpc_err *error;
+	register struct rpc_msg *msg;
+	register struct rpc_err *error;
 {
 
 	/* optimized for normal, SUCCESSful case */
@@ -294,7 +292,7 @@ _seterr_reply(msg, error)
 
 	default:
 		error->re_status = RPC_FAILED;
-		error->re_lb.s1 = (u_int32_t)(msg->rm_reply.rp_stat);
+		error->re_lb.s1 = (long)(msg->rm_reply.rp_stat);
 		break;
 	}
 	switch (error->re_status) {

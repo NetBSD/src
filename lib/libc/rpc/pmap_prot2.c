@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_prot2.c,v 1.5 1998/02/10 04:54:42 lukem Exp $	*/
+/*	$NetBSD: pmap_prot2.c,v 1.6 1998/02/12 01:57:41 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_prot2.c 1.3 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_prot2.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_prot2.c,v 1.5 1998/02/10 04:54:42 lukem Exp $");
+__RCSID("$NetBSD: pmap_prot2.c,v 1.6 1998/02/12 01:57:41 lukem Exp $");
 #endif
 #endif
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: pmap_prot2.c,v 1.5 1998/02/10 04:54:42 lukem Exp $");
  */
 
 #include "namespace.h"
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/pmap_prot.h>
@@ -96,8 +95,8 @@ __weak_alias(xdr_pmaplist,_xdr_pmaplist);
  */
 bool_t
 xdr_pmaplist(xdrs, rp)
-	XDR *xdrs;
-	struct pmaplist **rp;
+	register XDR *xdrs;
+	register struct pmaplist **rp;
 {
 	/*
 	 * more_elements is pre-computed in case the direction is
@@ -105,8 +104,8 @@ xdr_pmaplist(xdrs, rp)
 	 * xdr_bool when the direction is XDR_DECODE.
 	 */
 	bool_t more_elements;
-	int freeing = (xdrs->x_op == XDR_FREE);
-	struct pmaplist **next	= NULL; /* pacify gcc */
+	register int freeing = (xdrs->x_op == XDR_FREE);
+	register struct pmaplist **next	= NULL; /* pacify gcc */
 
 	while (TRUE) {
 		more_elements = (bool_t)(*rp != NULL);
@@ -122,7 +121,7 @@ xdr_pmaplist(xdrs, rp)
 		if (freeing)
 			next = &((*rp)->pml_next); 
 		if (! xdr_reference(xdrs, (caddr_t *)rp,
-		    sizeof(struct pmaplist), xdr_pmap))
+		    (u_int)sizeof(struct pmaplist), xdr_pmap))
 			return (FALSE);
 		rp = (freeing) ? next : &((*rp)->pml_next);
 	}
