@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.12 2002/01/22 17:29:36 augustss Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.12.10.1 2003/01/26 10:23:48 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.12 2002/01/22 17:29:36 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.12.10.1 2003/01/26 10:23:48 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		WRITE4(AGP_I810_GTT + (u_int32_t)(offset >> AGP_PAGE_SHIFT) * 4,
 		       i | 3);
 	}
-
+	mem->am_is_bound = 1;
 	return 0;
 }
 
@@ -432,6 +432,6 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 
 	for (i = 0; i < mem->am_size; i += AGP_PAGE_SIZE)
 		WRITE4(AGP_I810_GTT + (i >> AGP_PAGE_SHIFT) * 4, 0);
-
+	mem->am_is_bound = 0;
 	return 0;
 }
