@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.32 1996/04/22 03:57:29 abrown Exp $	*/
+/*	$NetBSD: if_le.c,v 1.33 1996/05/07 01:27:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -66,18 +66,15 @@
 #include <sparc/dev/sbusvar.h>
 #include <sparc/dev/dmareg.h>
 #include <sparc/dev/dmavar.h>
-#include <sparc/dev/if_lereg.h>
-#include <sparc/dev/if_levar.h>
+
 #include <dev/ic/am7990reg.h>
-#define	LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
-#define	LE_SOFTC(unit)	le_cd.cd_devs[unit]
-#define	LE_DELAY(x)	DELAY(x)
+#include <sparc/dev/if_lereg.h>
+#include <sparc/dev/if_levar.h>
 
 int	lematch __P((struct device *, void *, void *));
 void	leattach __P((struct device *, struct device *, void *));
-int	leintr __P((void *));
 
 #if defined(SUN4M)	/* XXX */
 int	myleintr __P((void *));
@@ -87,9 +84,10 @@ int
 myleintr(arg)
 	void	*arg;
 {
-	register struct le_softc *sc = arg;
-	if (sc->sc_dma->sc_regs->csr & D_ERR_PEND)
-		return ledmaintr(sc->sc_dma);
+	register struct le_softc *lesc = arg;
+
+	if (lesc->sc_dma->sc_regs->csr & D_ERR_PEND)
+		return ledmaintr(lesc->sc_dma);
 
 	/*
 	 * XXX There is a bug somewhere in the interrupt code that causes stray
@@ -98,37 +96,36 @@ myleintr(arg)
 	 * interrupts, as they do not in fact correspond to dropped packets.
 	 */
 
-	/* return */ leintr(arg);
+	/* return */ am7990_intr(arg);
 	return 1;
 }
 #endif
-
 
 struct cfattach le_ca = {
 	sizeof(struct le_softc), lematch, leattach
 };
 
-struct	cfdriver le_cd = {
-	NULL, "le", DV_IFNET
-};
+hide void lewrcsr __P((struct am7990_softc *, u_int16_t, u_int16_t));
+hide u_int16_t lerdcsr __P((struct am7990_softc *, u_int16_t));
+hide void lehwinit __P((struct am7990_softc *));
 
-integrate void
+hide void
 lewrcsr(sc, port, val)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port, val;
 {
-	register struct lereg1 *ler1 = sc->sc_r1;
+	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 
 	ler1->ler1_rap = port;
 	ler1->ler1_rdp = val;
 }
 
-integrate u_int16_t
+hide u_int16_t
 lerdcsr(sc, port)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 	u_int16_t port;
 {
-	register struct lereg1 *ler1 = sc->sc_r1;
+	register struct lereg1 *ler1 = ((struct le_softc *)sc)->sc_r1;
 	u_int16_t val;
 
 	ler1->ler1_rap = port;
@@ -136,24 +133,25 @@ lerdcsr(sc, port)
 	return (val);
 }
 
-integrate void
+hide void
 lehwinit(sc)
-	struct le_softc *sc;
+	struct am7990_softc *sc;
 {
 #if defined(SUN4M) 
-	if (CPU_ISSUN4M && sc->sc_dma) {
+	struct le_softc *lesc = (struct le_softc *)sc;
+
+	if (CPU_ISSUN4M && lesc->sc_dma) {
 		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 
 		if (ifp->if_flags & IFF_LINK0)
-			sc->sc_dma->sc_regs->csr |= DE_AUI_TP;
+			lesc->sc_dma->sc_regs->csr |= DE_AUI_TP;
 		else
-			sc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
+			lesc->sc_dma->sc_regs->csr &= ~DE_AUI_TP;
 
 		delay(20000);	/* must not touch le for 20ms */
 	}
 #endif
 }
-	
 
 int
 lematch(parent, match, aux)
@@ -177,7 +175,8 @@ leattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct le_softc *sc = (void *)self;
+	struct le_softc *lesc = (struct le_softc *)self;
+	struct am7990_softc *sc = &lesc->sc_am7990;
 	struct confargs *ca = aux;
 	int pri;
 	struct bootpath *bp;
@@ -187,7 +186,7 @@ leattach(parent, self, aux)
 #endif
 
 	/* XXX the following declarations should be elsewhere */
-	extern void myetheraddr(u_char *);
+	extern void myetheraddr __P((u_char *));
 
 	if (ca->ca_ra.ra_nintr != 1) {
 		printf(": expected 1 interrupt, got %d\n", ca->ca_ra.ra_nintr);
@@ -196,7 +195,7 @@ leattach(parent, self, aux)
 	pri = ca->ca_ra.ra_intr[0].int_pri;
 	printf(" pri %d", pri);
 
-	sc->sc_r1 = (struct lereg1 *)mapiodev(ca->ca_ra.ra_reg, 0,
+	lesc->sc_r1 = (struct lereg1 *)mapiodev(ca->ca_ra.ra_reg, 0,
 					      sizeof(struct lereg1),
 					      ca->ca_bustype);
 	sc->sc_conf3 = LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON;
@@ -216,8 +215,11 @@ leattach(parent, self, aux)
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_arpcom.ac_if.if_name = le_cd.cd_name;
-	leconfig(sc);
+	sc->sc_rdcsr = lerdcsr;
+	sc->sc_wrcsr = lewrcsr;
+	sc->sc_hwinit = lehwinit;
+
+	am7990_config(sc);
 
 	bp = ca->ca_ra.ra_bp;
 	switch (ca->ca_bustype) {
@@ -227,15 +229,15 @@ leattach(parent, self, aux)
 	 (bp->val[0] == -1 && bp->val[1] == sc->sc_dev.dv_unit))
 
 	case BUS_SBUS:
-		sc->sc_sd.sd_reset = (void *)lereset;
+		lesc->sc_sd.sd_reset = (void *)am7990_reset;
 		if (dmachild) {
-			sc->sc_dma = (struct dma_softc *)parent;
-			sc->sc_dma->sc_le = sc;
-			sc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
-			sbus_establish(&sc->sc_sd, parent);
+			lesc->sc_dma = (struct dma_softc *)parent;
+			lesc->sc_dma->sc_le = lesc;
+			lesc->sc_dma->sc_regs->en_bar = laddr & 0xff000000;
+			sbus_establish(&lesc->sc_sd, parent);
 		} else {
-			sc->sc_dma = NULL;
-			sbus_establish(&sc->sc_sd, &sc->sc_dev);
+			lesc->sc_dma = NULL;
+			sbus_establish(&lesc->sc_sd, &sc->sc_dev);
 		}
 
 		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
@@ -251,18 +253,16 @@ leattach(parent, self, aux)
 		break;
 	}
 
-	sc->sc_ih.ih_fun = leintr;
+	lesc->sc_ih.ih_fun = am7990_intr;
 #if defined(SUN4M) /*XXX*/
 	if (CPU_ISSUN4M)
-		sc->sc_ih.ih_fun = myleintr;
+		lesc->sc_ih.ih_fun = myleintr;
 #endif
-	sc->sc_ih.ih_arg = sc;
-	intr_establish(pri, &sc->sc_ih);
+	lesc->sc_ih.ih_arg = sc;
+	intr_establish(pri, &lesc->sc_ih);
 
 	/* now initialize DMA */
-	if (sc->sc_dma) {
-		DMA_ENINTR(sc->sc_dma);
+	if (lesc->sc_dma) {
+		DMA_ENINTR(lesc->sc_dma);
 	}
 }
-
-#include <dev/ic/am7990.c>
