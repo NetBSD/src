@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.28 2003/05/01 14:59:51 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.29 2003/05/01 15:25:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.28 2003/05/01 14:59:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.29 2003/05/01 15:25:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,10 +128,10 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 	if (start < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * allocate locks before acquire simple lock.
@@ -162,7 +162,7 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		break;
 
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	MALLOC(lock, struct lockf *, sizeof(*lock), M_LOCKF, M_WAITOK);
@@ -240,7 +240,7 @@ quit:
 	if (sparelock)
 		FREE(sparelock, M_LOCKF);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -277,7 +277,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		 */
 		if ((lock->lf_flags & F_WAIT) == 0) {
 			FREE(lock, M_LOCKF);
-			return (EAGAIN);
+			return EAGAIN;
 		}
 		/*
 		 * We are blocked. Since flock style locks cover
@@ -310,7 +310,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 				wlwp = waitblock->lf_lwp;
 				if (wlwp == lock->lf_lwp) {
 					FREE(lock, M_LOCKF);
-					return (EDEADLK);
+					return EDEADLK;
 				}
 			}
 			/*
@@ -320,7 +320,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 			 */
 			if (i >= maxlockdepth) {
 				FREE(lock, M_LOCKF);
-				return (EDEADLK);
+				return EDEADLK;
 			}
 		}
 		/*
@@ -362,7 +362,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		}
 		if (error) {
 			FREE(lock, M_LOCKF);
-			return (error);
+			return error;
 		}
 	}
 	/*
@@ -492,7 +492,7 @@ lf_setlock(struct lockf *lock, struct lockf **sparelock,
 		lf_printlist("lf_setlock", lock);
 	}
 #endif /* LOCKF_DEBUG */
-	return (0);
+	return 0;
 }
 
 /*
@@ -510,7 +510,7 @@ lf_clearlock(struct lockf *unlock, struct lockf **sparelock)
 	int ovcase;
 
 	if (lf == NOLOCKF)
-		return (0);
+		return 0;
 #ifdef LOCKF_DEBUG
 	if (unlock->lf_type != F_UNLCK)
 		panic("lf_clearlock: bad type");
@@ -563,7 +563,7 @@ lf_clearlock(struct lockf *unlock, struct lockf **sparelock)
 	if (lockf_debug & 1)
 		lf_printlist("lf_clearlock", unlock);
 #endif /* LOCKF_DEBUG */
-	return (0);
+	return 0;
 }
 
 /*
@@ -595,7 +595,7 @@ lf_getlock(struct lockf *lock, struct flock *fl)
 	} else {
 		fl->l_type = F_UNLCK;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -613,14 +613,14 @@ lf_getblock(struct lockf *lock)
 		 * We've found an overlap, see if it blocks us
 		 */
 		if ((lock->lf_type == F_WRLCK || overlap->lf_type == F_WRLCK))
-			return (overlap);
+			return overlap;
 		/*
 		 * Nope, point to the next one on the list and
 		 * see if it blocks us
 		 */
 		lf = overlap->lf_next;
 	}
-	return (NOLOCKF);
+	return NOLOCKF;
 }
 
 /*
@@ -638,7 +638,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 
 	*overlap = lf;
 	if (lf == NOLOCKF)
-		return (0);
+		return 0;
 #ifdef LOCKF_DEBUG
 	if (lockf_debug & 2)
 		lf_print("lf_findoverlap: looking for overlap in", lock);
@@ -675,7 +675,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 				printf("no overlap\n");
 #endif /* LOCKF_DEBUG */
 			if ((type & SELF) && end != -1 && lf->lf_start > end)
-				return (0);
+				return 0;
 			*prev = &lf->lf_next;
 			*overlap = lf = lf->lf_next;
 			continue;
@@ -686,7 +686,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 			if (lockf_debug & 2)
 				printf("overlap == lock\n");
 #endif /* LOCKF_DEBUG */
-			return (1);
+			return 1;
 		}
 		if ((lf->lf_start <= start) &&
 		    (end != -1) &&
@@ -696,7 +696,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 			if (lockf_debug & 2)
 				printf("overlap contains lock\n");
 #endif /* LOCKF_DEBUG */
-			return (2);
+			return 2;
 		}
 		if (start <= lf->lf_start &&
 		           (end == -1 ||
@@ -706,7 +706,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 			if (lockf_debug & 2)
 				printf("lock contains overlap\n");
 #endif /* LOCKF_DEBUG */
-			return (3);
+			return 3;
 		}
 		if ((lf->lf_start < start) &&
 			((lf->lf_end >= start) || (lf->lf_end == -1))) {
@@ -715,7 +715,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 			if (lockf_debug & 2)
 				printf("overlap starts before lock\n");
 #endif /* LOCKF_DEBUG */
-			return (4);
+			return 4;
 		}
 		if ((lf->lf_start > start) &&
 			(end != -1) &&
@@ -725,11 +725,11 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
 			if (lockf_debug & 2)
 				printf("overlap ends after lock\n");
 #endif /* LOCKF_DEBUG */
-			return (5);
+			return 5;
 		}
 		panic("lf_findoverlap: default");
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -767,7 +767,7 @@ lf_split(struct lockf *lock1, struct lockf *lock2, struct lockf **sparelock)
 	 */
 	splitlock = *sparelock;
 	*sparelock = NULL;
-	memcpy((caddr_t)splitlock, (caddr_t)lock1, sizeof(*splitlock));
+	memcpy(splitlock, lock1, sizeof(*splitlock));
 	splitlock->lf_start = lock2->lf_end + 1;
 	TAILQ_INIT(&splitlock->lf_blkhd);
 	lock1->lf_end = lock2->lf_start - 1;
@@ -795,7 +795,7 @@ lf_wakelock(struct lockf *listhead)
 		if (lockf_debug & 2)
 			lf_print("lf_wakelock: awakening", wakelock);
 #endif
-		wakeup((caddr_t)wakelock);
+		wakeup(wakelock);
 	}
 }
 
