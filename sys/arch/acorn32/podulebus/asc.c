@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.3 2001/11/27 00:53:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -82,7 +82,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/bootconfig.h>		/* asc_poll */
 
 #include <dev/scsipi/scsi_all.h>

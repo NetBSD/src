@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.3 2001/11/27 00:53:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -66,7 +66,7 @@
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <machine/io.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <dev/podulebus/podules.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.1 2001/10/05 22:27:53 reinoud Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.2 2001/11/27 00:53:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/io.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.1 2001/10/05 22:27:55 reinoud Exp $	*/
+/*	$NetBSD: csc.c,v 1.2 2001/11/27 00:53:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 #include <uvm/uvm_extern.h>
 #include <machine/pmap.h>
 #include <machine/io.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/bootconfig.h>
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/sfasreg.h>

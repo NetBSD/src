@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.2 2001/11/22 18:34:33 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.3 2001/11/27 00:53:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/conf.h>
 #include <machine/io.h>
 #include <arm/arm32/katelib.h>

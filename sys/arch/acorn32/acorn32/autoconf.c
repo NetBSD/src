@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2001/10/05 22:27:46 reinoud Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2001/11/27 00:53:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -53,7 +53,7 @@
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <machine/bootconfig.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 
 #include "podulebus.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.7 2001/11/23 21:18:29 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.8 2001/11/27 00:53:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -76,7 +76,7 @@
 #include <machine/bootconfig.h>
 #include <machine/cpu.h>
 #include <machine/io.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <machine/vconsole.h>
 #include <arm/undefined.h>

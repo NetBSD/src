@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.1 2001/10/05 22:27:54 reinoud Exp $	*/
+/*	$NetBSD: amps.c,v 1.2 2001/11/27 00:53:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/io.h>
 #include <machine/bus.h>
 #include <acorn32/podulebus/podulebus.h>
