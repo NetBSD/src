@@ -1,4 +1,4 @@
-/* $NetBSD: bus.c,v 1.6 2001/06/02 10:45:43 bjh21 Exp $ */
+/* $NetBSD: bus.c,v 1.7 2001/06/02 21:31:02 bjh21 Exp $ */
 /*-
  * Copyright (c) 1999, 2000 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: bus.c,v 1.6 2001/06/02 10:45:43 bjh21 Exp $");
+__RCSID("$NetBSD: bus.c,v 1.7 2001/06/02 21:31:02 bjh21 Exp $");
 
 #include <machine/bus.h>
 #include <machine/memcreg.h>
@@ -71,14 +71,6 @@ bus_space_shift(bus_space_tag_t bst, bus_space_handle_t bsh, int shift,
 }
 
 void
-bus_space_read_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-		       bus_size_t offset, u_int8_t *datap, bus_size_t count)
-{
-
-	read_multi_1(bsh + (offset << bst), datap, count);
-}
-
-void
 bus_space_read_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 		       bus_size_t offset, u_int16_t *datap, bus_size_t count)
 {
@@ -86,15 +78,6 @@ bus_space_read_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
 
 	for (i = 0; i < count; i++)
 		datap[i] = bus_space_read_2(bst, bsh, offset);
-}
-
-void
-bus_space_write_multi_1(bus_space_tag_t bst, bus_space_handle_t bsh,
-			bus_size_t offset, u_int8_t const *datap,
-			bus_size_t count)
-{
-
-	write_multi_1(bsh + (offset << bst), datap, count);
 }
 
 void

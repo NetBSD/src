@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.3 2000/12/09 18:47:15 bjh21 Exp $ */
+/* $NetBSD: bus.h,v 1.4 2001/06/02 21:31:02 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -33,6 +33,8 @@
 
 #ifndef _ARM26_BUS_H_
 #define _ARM26_BUS_H_
+
+#include <arm/blockio.h>
 
 /*
  * I believe that there's only one sensible bus space on the Archimedes,
@@ -84,15 +86,15 @@ extern int bus_space_shift(bus_space_tag_t, bus_space_handle_t, int,
     (*(volatile u_int32_t *)((h) + ((o) << (t))) = (v) | ((v) << 16))
 
 /* Bus read multiple operations. */
-extern void bus_space_read_multi_1(bus_space_tag_t, bus_space_handle_t,
-				   bus_size_t, u_int8_t *, bus_size_t);
+#define bus_space_read_multi_1(t, h, o, d, c)				\
+    (read_multi_1((h) + ((o) << (t)), (d), (c)))
 extern void bus_space_read_multi_2(bus_space_tag_t, bus_space_handle_t,
 				   bus_size_t, u_int16_t *, bus_size_t);
 #define bus_space_read_multi_4(t, h, o, d, s) panic("bus_space_read_multi_4")
 
 /* Bus write multiple operations. */
-extern void bus_space_write_multi_1(bus_space_tag_t, bus_space_handle_t,
-				    bus_size_t, u_int8_t const *, bus_size_t);
+#define bus_space_write_multi_1(t, h, o, d, c)				\
+    (write_multi_1((h) + ((o) << (t)), (d), (c)))
 extern void bus_space_write_multi_2(bus_space_tag_t, bus_space_handle_t,
 				    bus_size_t, u_int16_t const *, bus_size_t);
 #define bus_space_write_multi_4(t, h, o, d, s) panic("bus_space_write_multi_4")
