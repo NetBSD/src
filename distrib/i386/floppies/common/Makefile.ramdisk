@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.4 2002/02/08 04:52:42 lukem Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.5 2002/02/25 23:00:59 lukem Exp $
 
 TOP=	${.CURDIR}/..
 
@@ -33,7 +33,7 @@ realall: ${IMAGE}
 HACKSRC=${_SRC_TOP_}/distrib/utils/libhack
 .include "${HACKSRC}/Makefile.inc"
 
-# turn off small gethostby* temporarily
+# Turn off libhack's gethostby*() as it only supports /etc/hosts
 HACKOBJS:=	${HACKOBJS:Ngethost.o}
 
 # This is listed in ramdiskbin.conf but is built here.
