@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.6 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.7 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -108,3 +108,6 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 		[thorpej 20020925]
 	Overhaul device parent matching; now record attributes in
 		a "parent spec" in the kernel. [thorpej 20020925]
+	libcrypto: mdc2 is a patented algorithm, so move it out of libcrypto.
+		if you need mdc2, define MKCRYPTO_MDC2 to get libcrypto_mdc2.a.
+		[itojun 20020926]
