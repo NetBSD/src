@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.102 2000/02/03 22:44:11 cgd Exp $	*/
+/*	$NetBSD: systm.h,v 1.103 2000/02/20 19:32:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -186,7 +186,7 @@ void	ttyprintf __P((struct tty *, const char *, ...))
 
 char	*bitmask_snprintf __P((u_quad_t, const char *, char *, size_t));
 
-int	humanize_number __P((char *, size_t, u_int64_t, const char *));
+int	humanize_number __P((char *, size_t, u_int64_t, const char *, int));
 int	format_bytes __P((char *, size_t, u_int64_t));
 
 void	tablefull __P((const char *));
