@@ -121,6 +121,10 @@ Note that unlike the default mode of \fItcpd\fR, NetBSD \fIinetd\fR
 does not automatically drop these requests; you must explicitly
 drop them in your \fI/etc/hosts.allow\fR or \fI/etc/hosts.deny\fR 
 file.
+.IP "{RBL}.\fIdomain\fR"
+Matches any host whose reversed address appears in the DNS under
+\fIdomain\fR.  The primary such domain used for blocking unsolicited
+commercial e-mail (spam) is `.rbl.maps.vix.com\'.
 .ne 6
 .SH OPERATORS
 .IP EXCEPT
@@ -373,4 +377,4 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
 \" @(#) hosts_access.5 1.20 95/01/30 19:51:46
-\"	$NetBSD: hosts_access.5,v 1.5 1999/01/18 19:39:24 christos Exp $
+\"	$NetBSD: hosts_access.5,v 1.6 1999/01/18 19:45:26 christos Exp $
