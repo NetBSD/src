@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.h,v 1.6 2003/11/03 04:20:28 yamt Exp $	*/
+/*	$NetBSD: tree.h,v 1.7 2004/01/24 21:59:47 dbj Exp $	*/
 /*	$OpenBSD: tree.h,v 1.7 2002/10/17 21:51:54 art Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -288,7 +288,7 @@ void name##_SPLAY_MINMAX(struct name *head, int __comp) \
 	     (x) != NULL;						\
 	     (x) = SPLAY_NEXT(name, head, x))
 
-/* Macros that define a red-back tree */
+/* Macros that define a red-black tree */
 #define RB_HEAD(name, type)						\
 struct name {								\
 	struct type *rbh_root; /* root of the tree */			\
