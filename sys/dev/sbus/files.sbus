@@ -1,4 +1,4 @@
-#	$NetBSD: files.sbus,v 1.1 1998/07/27 19:04:14 pk Exp $
+#	$NetBSD: files.sbus,v 1.2 1998/07/27 23:54:58 pk Exp $
 #
 # Config file and device description for machine-independent SBUS code.
 # Included by ports that need it.
@@ -6,14 +6,26 @@
 device	sbus { slot = -1, offset = -1 }
 #notyet:file	dev/sbus/sbus.c			sbus
 
-device	lebuffer {}
-attach	lebuffer at sbus
-file	dev/sbus/lebuffer.c		lebuffer
-
+# Sbus expander device
 device	xbox {}
 attach	xbox at sbus
 attach	sbus at xbox with sbus_xbox
 file	dev/sbus/xbox.c			xbox
+
+device	lebuffer {}
+attach	lebuffer at sbus
+file	dev/sbus/lebuffer.c		lebuffer
+
+# device definition in sys/conf/files
+attach	le at sbus with le_sbus: le24
+attach	le at lebuffer with le_lebuffer: le24
+file	dev/sbus/if_le.c		le_sbus
+file	dev/sbus/if_le_lebuffer.c	le_lebuffer
+
+# Efficient Networks, Inc. ATM interface
+# device declaration in sys/conf/files
+attach	en at sbus with en_sbus
+file	dev/sbus/if_en.c		en_sbus
 
 #device	qec {}
 #attach	qec at sbus
