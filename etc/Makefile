@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.112.2.5 1999/06/21 03:44:00 perry Exp $
+#	$NetBSD: Makefile,v 1.112.2.6 1999/11/27 16:16:31 he Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -70,7 +70,7 @@ _J= -j${NBUILDJOBS}
 # -rw-r--r--
 BINOWN= root
 BINGRP= wheel
-BIN1+=	aliases bootptab changelist csh.cshrc csh.login \
+BIN1+=	bootptab changelist csh.cshrc csh.login \
 	csh.logout daily daily.conf dm.conf floppytab ftpchroot \
 	ftpusers ftpwelcome gettytab group hosts hosts.lpd \
 	inetd.conf lkm.conf mailer.conf man.conf \
@@ -119,6 +119,7 @@ distribution: distrib-dirs
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 ${BIN1} ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 664 ${BIN2} ${DESTDIR}/etc
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} ${DESTDIR}/etc
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 644 aliases ${DESTDIR}/etc
 	${INSTALL} -c -o root -g wheel -m 600 crontab \
 	    ${DESTDIR}/var/cron/tabs/root
 	${INSTALL} -c -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
@@ -209,6 +210,7 @@ distribution: distrib-dirs
 	(cd ../usr.bin/mail; ${MAKE} distribution)
 .ifndef NO_SENDMAIL
 	(cd ../usr.sbin/sendmail/cf/cf; ${MAKE} distribution)
+	${DESTDIR}/usr/libexec/sendmail/sendmail -C ${DESTDIR}/etc/sendmail.cf -O AliasFile=${DESTDIR}/etc/aliases -bi
 .endif
 .ifdef BUILD_POSTFIX
 	(cd ../usr.sbin/postfix/etc; ${MAKE} distribution)
