@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.20 1997/01/31 02:11:51 thorpej Exp $      */
+/*      $NetBSD: cpu.h,v 1.21 1997/02/12 17:58:57 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -103,7 +103,6 @@ int	ra_getdev __P((int, int, int, struct device **));
 void	configure __P((void));
 void	dumpconf __P((void));
 void	dumpsys __P((void));
-void	findroot __P((void));
 void	swapconf __P((void));
 #ifdef DDB
 int	kdbrint __P((int));
