@@ -1,4 +1,4 @@
-/*	$NetBSD: showmount.c,v 1.8 1997/10/19 23:09:43 lukem Exp $	*/
+/*	$NetBSD: showmount.c,v 1.9 1998/04/02 11:10:52 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -46,13 +46,12 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1995\n\
 #if 0
 static char sccsid[] = "@(#)showmount.c	8.3 (Berkeley) 3/29/95";
 #endif
-__RCSID("$NetBSD: showmount.c,v 1.8 1997/10/19 23:09:43 lukem Exp $");
+__RCSID("$NetBSD: showmount.c,v 1.9 1998/04/02 11:10:52 kleink Exp $");
 #endif not lint
 
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/socket.h>
-#include <sys/socketvar.h>
 
 #include <netdb.h>
 #include <rpc/rpc.h>
