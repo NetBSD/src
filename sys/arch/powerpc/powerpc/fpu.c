@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8 2003/01/18 06:23:33 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.9 2003/03/14 05:37:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -57,13 +57,13 @@ enable_fpu(void)
 	}
 	msr = mfmsr();
         mtmsr((msr & ~PSL_EE) | PSL_FP);
-	asm volatile ("isync");
+	__asm __volatile ("isync");
 	if (ci->ci_fpulwp) {
 		save_fpu_cpu();
 	}
 	KASSERT(ci->ci_fpulwp == NULL);
-	asm volatile ("lfd 0,0(%0); mtfsf 0xff,0" :: "b"(&pcb->pcb_fpu.fpscr));
-	asm ("lfd 0,0(%0);"
+	__asm __volatile ("lfd 0,0(%0); mtfsf 0xff,0" :: "b"(&pcb->pcb_fpu.fpscr));
+	__asm ("lfd 0,0(%0);"
 	     "lfd 1,8(%0);"
 	     "lfd 2,16(%0);"
 	     "lfd 3,24(%0);"
@@ -95,11 +95,11 @@ enable_fpu(void)
 	     "lfd 29,232(%0);"
 	     "lfd 30,240(%0);"
 	     "lfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
-	asm volatile ("isync");
+	__asm __volatile ("isync");
 	tf->srr1 |= PSL_FP;
 	ci->ci_fpulwp = l;
 	pcb->pcb_fpcpu = ci;
-	asm volatile ("sync");
+	__asm __volatile ("sync");
 	mtmsr(msr);
 }
 
@@ -122,7 +122,7 @@ save_fpu_cpu(void)
 		goto out;
 	}
 	pcb = &l->l_addr->u_pcb;
-	asm ("stfd 0,0(%0);"
+	__asm ("stfd 0,0(%0);"
 	     "stfd 1,8(%0);"
 	     "stfd 2,16(%0);"
 	     "stfd 3,24(%0);"
@@ -154,12 +154,12 @@ save_fpu_cpu(void)
 	     "stfd 29,232(%0);"
 	     "stfd 30,240(%0);"
 	     "stfd 31,248(%0)" :: "b"(&pcb->pcb_fpu.fpr[0]));
-	asm volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
-	asm volatile ("sync");
+	__asm __volatile ("mffs 0; stfd 0,0(%0)" :: "b"(&pcb->pcb_fpu.fpscr));
+	__asm __volatile ("sync");
 	pcb->pcb_fpcpu = NULL;
 	ci->ci_fpulwp = NULL;
 	ci->ci_ev_fpusw.ev_count++;
-	asm volatile ("sync");
+	__asm __volatile ("sync");
  out:
 	mtmsr(msr);
 }
