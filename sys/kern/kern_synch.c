@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.87 2000/08/25 01:04:12 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.88 2000/08/26 03:34:37 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -101,6 +101,7 @@
 #include <machine/cpu.h>
 
 int	lbolt;			/* once a second sleep address */
+int	rrticks;		/* number of hardclock ticks per roundrobin() */
 
 /*
  * The global scheduler state.
@@ -114,28 +115,27 @@ struct simplelock sched_lock = SIMPLELOCK_INITIALIZER;
 struct lock kernel_lock;
 #endif
 
-void roundrobin(void *);
 void schedcpu(void *);
 void updatepri(struct proc *);
 void endtsleep(void *);
 
 __inline void awaken(struct proc *);
 
-struct callout roundrobin_ch = CALLOUT_INITIALIZER;
 struct callout schedcpu_ch = CALLOUT_INITIALIZER;
 
 /*
  * Force switch among equal priority processes every 100ms.
+ * Called from hardclock every hz/10 == rrticks hardclock ticks.
  */
 /* ARGSUSED */
 void
-roundrobin(void *arg)
+roundrobin()
 {
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
-	int s;
 
+	spc->spc_rrticks = rrticks;
+	
 	if (curproc != NULL) {
-		s = splstatclock();
 		if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
@@ -145,11 +145,8 @@ roundrobin(void *arg)
 			spc->spc_flags |= SPCF_SHOULDYIELD;
 		} else
 			spc->spc_flags |= SPCF_SEENRR;
-		splx(s);
 	}
-	/* XXXSMP: should need_resched() on all CPUs */
 	need_resched(curcpu());
-	callout_reset(&roundrobin_ch, hz / 10, roundrobin, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.179 2000/08/22 17:28:28 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.180 2000/08/26 03:34:37 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -181,7 +181,6 @@ main(void)
 	struct pdevinit *pdev;
 	int i, s, error;
 	extern struct pdevinit pdevinit[];
-	extern void roundrobin(void *);
 	extern void schedcpu(void *);
 	extern void disk_init(void);
 #if defined(NFSSERVER) || defined(NFS)
@@ -394,7 +393,6 @@ main(void)
 	siginit(p);
 
 	/* Kick off timeout driven events by calling first time. */
-	roundrobin(NULL);
 	schedcpu(NULL);
 
 	/*
