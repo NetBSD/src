@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.31 1997/03/17 13:24:37 leo Exp $
+#	$NetBSD: Makefile.atari,v 1.32 1997/06/02 11:49:02 leo Exp $
 
 # Makefile for NetBSD
 #
@@ -106,7 +106,8 @@ LINKFLAGS+=	-S
 
 assym.h: ${ATARI}/atari/genassym.cf $S/kern/genassym.sh
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
-	< ${ATARI}/atari/genassym.cf >assym.h || rm assym.h
+	< ${ATARI}/atari/genassym.cf >assym.h.tmp && \
+	mv -f assym.h.tmp assym.h
 
 param.c: $S/conf/param.c
 	rm -f param.c
