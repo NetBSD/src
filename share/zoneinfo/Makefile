@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1999/02/13 02:54:36 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 1999/08/21 06:30:12 simonb Exp $
 
 .include <bsd.own.mk>
 
@@ -77,8 +77,11 @@ right_posix: right_only other_two
 .if ${MKSHARE} != "no"
 afterinstall: ${DATA} ${REDO}
 	${ZIC} -y ${YEARISTYPE} -d ${TZDIR} -p ${POSIXRULES}
+.if !defined(UNPRIVILEGED)
 	chown -R ${BINOWN}:${BINGRP} ${TZDIR}
+.endif
 	find ${TZDIR} -type f | xargs chmod a=r
+	find ${TZDIR} -type d | xargs chmod u=rwX,go=rX
 .else
 afterinstall:
 .endif
