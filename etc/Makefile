@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.308 2005/03/24 09:07:17 martin Exp $
+#	$NetBSD: Makefile,v 1.309 2005/03/24 20:23:55 tron Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -340,8 +340,11 @@ OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
 OBSOLETE.files=		base comp etc games man misc text
 .if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xfont
-.if exists(${OBSOLETE.dir}/xserver)
-# not all archs have obsolete files for the xserver set
+.if ${MACHINE_ARCH} == "amd64" ||	\
+    ${MACHINE_ARCH} == "cats" ||	\
+    ${MACHINE_ARCH} == "i386" ||	\
+    ${MACHINE_ARCH} == "macppc" ||	\
+    ${MACHINE_ARCH} == "sgimips"
 OBSOLETE.files+=	xserver
 .endif
 .endif
@@ -616,3 +619,6 @@ clean:
 	-rm -rf ${CDROM.dir} ${CDROM.pathlist} ${OBSOLETE.dir}
 
 .include <bsd.prog.mk>
+
+test:
+	@echo ${OBSOLETE.files}
