@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.1.2.15 1999/11/30 08:49:52 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.1.2.16 1999/12/06 08:52:12 nisimura Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.15 1999/11/30 08:49:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.16 1999/12/06 08:52:12 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,26 +47,26 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.1.2.15 1999/11/30 08:49:52 nisimura Exp
 #include "opt_dec_maxine.h"
 #include "opt_dec_3maxplus.h"
 
-int	ioasicmatch __P((struct device *, struct cfdata *, void *));
-void	ioasicattach __P((struct device *, struct device *, void *));
+static int  ioasicmatch __P((struct device *, struct cfdata *, void *));
+static void ioasicattach __P((struct device *, struct device *, void *));
 
-struct cfattach ioasic_ca = {
+const struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
 };
+
+tc_addr_t ioasic_base;
 
 struct ioasic_dev *ioasic_devs;
 int ioasic_ndevs, builtin_ndevs;
 
-tc_addr_t ioasic_base;
-
-extern struct ioasic_dev xine_ioasic_devs[];
-extern int xine_builtin_ndevs, xine_ioasic_ndevs;
 extern struct ioasic_dev kmin_ioasic_devs[];
 extern int kmin_builtin_ndevs, kmin_ioasic_ndevs;
+extern struct ioasic_dev xine_ioasic_devs[];
+extern int xine_builtin_ndevs, xine_ioasic_ndevs;
 extern struct ioasic_dev kn03_ioasic_devs[];
 extern int kn03_builtin_ndevs, kn03_ioasic_ndevs;
 
-int
+static int
 ioasicmatch(parent, cfdata, aux)
 	struct device *parent;
 	struct cfdata *cfdata;
@@ -84,7 +84,7 @@ ioasicmatch(parent, cfdata, aux)
 	return (1);
 }
 
-void
+static void
 ioasicattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -107,18 +107,18 @@ ioasicattach(parent, self, aux)
 	printf("\n");
 
 	switch (systype) {
-#if defined(DEC_MAXINE)
-	case DS_MAXINE:
-		ioasic_devs = xine_ioasic_devs;
-		ioasic_ndevs = xine_ioasic_ndevs;
-		builtin_ndevs = xine_builtin_ndevs;
-		break;
-#endif
 #if defined(DEC_3MIN)
 	case DS_3MIN:
 		ioasic_devs = kmin_ioasic_devs;
 		ioasic_ndevs = kmin_ioasic_ndevs;
 		builtin_ndevs = kmin_builtin_ndevs;
+		break;
+#endif
+#if defined(DEC_MAXINE)
+	case DS_MAXINE:
+		ioasic_devs = xine_ioasic_devs;
+		ioasic_ndevs = xine_ioasic_ndevs;
+		builtin_ndevs = xine_builtin_ndevs;
 		break;
 #endif
 #if defined(DEC_3MAXPLUS)

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.6.4.16 1999/11/30 08:49:53 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.6.4.17 1999/12/06 08:52:15 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.16 1999/11/30 08:49:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.17 1999/12/06 08:52:15 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,7 +167,7 @@ dec_maxine_init()
 #endif
 
 	/* calibrate cpu_mhz value */
-	mc_cpuspeed((void *)(ioasic_base+IOASIC_SLOT_8_START), MIPS_INT_MASK_1);
+	mc_cpuspeed(ioasic_base+IOASIC_SLOT_8_START, MIPS_INT_MASK_1);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
