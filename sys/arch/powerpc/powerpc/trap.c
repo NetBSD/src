@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.48 2001/06/26 13:00:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.49 2001/06/28 18:33:39 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -67,6 +67,7 @@
 volatile int astpending;
 volatile int want_resched;
 #endif
+extern int intr_depth;
 
 void *syscall = NULL;	/* XXX dummy symbol for emul_netbsd */
 
@@ -98,7 +99,11 @@ trap(frame)
 		KERNEL_PROC_UNLOCK(p);
 		break;
 	case EXC_DSI:
-		{
+		/*
+		 * Only query UVM if no interrupts are active (this applies
+		 * "on-fault" as well.
+		 */
+		if (intr_depth < 0) {
 			struct vm_map *map;
 			vaddr_t va;
 			faultbuf *fb;
@@ -144,11 +149,15 @@ trap(frame)
 				      19 * sizeof(register_t));
 				return;
 			}
-			map = kernel_map;
+		} else {
+			/*
+			 * Make sure err is bogus in interrupt case
+			 */
+			rv = -1;
 		}
-		printf("trap: kernel %s DSI @ %#x by %#x (DSISR %#x)\n",
+		printf("trap: kernel %s DSI @ %#x by %#x (DSISR %#x, err=%d)\n",
 		    (frame->dsisr & DSISR_STORE) ? "write" : "read",
-		    frame->dar, frame->srr0, frame->dsisr);
+		    frame->dar, frame->srr0, frame->dsisr, rv);
 		goto brain_damage2;
 	case EXC_DSI|EXC_USER:
 		KERNEL_PROC_LOCK(p);
