@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 1999/01/31 21:17:27 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1999/02/04 23:25:08 tv Exp $
 
 TARG_CPU_C=	tc-sparc.c
 .if (${OBJECT_FMT} == "ELF")
@@ -8,5 +8,3 @@ CPPFLAGS+=-DDEFAULT_ELF
 OBJ_FORMAT_C=	obj-aout.c
 .endif
 ATOF_TARG_C=	atof-ieee.c
-
-CPPFLAGS+=-DBFD_ASSEMBLER=1
