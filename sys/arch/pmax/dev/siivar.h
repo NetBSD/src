@@ -1,4 +1,4 @@
-/*	$NetBSD: siivar.h,v 1.2 1997/08/27 11:24:14 bouyer Exp $	*/
+/*	$NetBSD: siivar.h,v 1.2.4.1 1998/05/08 06:33:14 mycroft Exp $	*/
 
 #ifndef _SIIVAR_H
 #define _SIIVAR_H
@@ -29,7 +29,7 @@ typedef struct scsi_state {
 #define FIRST_DMA	0x01	/* true if no data DMA started yet */
 #define PARITY_ERR	0x02	/* true if parity error seen */
 
-#define SII_NCMD	7
+#define SII_NCMD	8
 struct siisoftc {
 	struct device sc_dev;		/* us as a device */
 	void *sc_buf;			/* DMA buffer (may be special mem) */
