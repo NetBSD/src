@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_perror.c,v 1.7 1995/04/24 16:34:39 cgd Exp $	*/
+/*	$NetBSD: clnt_perror.c,v 1.8 1996/06/19 20:38:45 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_perror.c 1.15 87/10/07 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_perror.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_perror.c,v 1.7 1995/04/24 16:34:39 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_perror.c,v 1.8 1996/06/19 20:38:45 jtc Exp $";
 #endif
 
 /*
@@ -144,7 +144,6 @@ clnt_sperror(rpch, s)
 		str += strlen(str);
 		break;
 	}
-	(void) sprintf(str, "\n");
 	return(strstart) ;
 }
 
@@ -225,7 +224,6 @@ clnt_spcreateerror(s)
 		(void) strcat(str, strerror(rpc_createerr.cf_error.re_errno));
 		break;
 	}
-	(void) strcat(str, "\n");
 	return (str);
 }
 
