@@ -1,0 +1,146 @@
+#!/bin/sh -
+
+# $NetBSD: MAKEDEV,v 1.1 2002/06/17 10:50:01 drochner Exp $
+
+dialin=0
+dialout=524288
+
+PATH=/sbin:/usr/sbin:/bin:/usr/bin
+umask 77
+
+# Check if we have fdesc mounted
+if [ -d fd ]; then
+	case "`df fd`" in
+	*fdesc*) nofdesc=false;;
+	*) nofdesc=true;;
+	esac
+else
+	nofdesc=true
+fi
+
+makedev()
+{
+
+for i
+do
+
+case $i in
+
+all)
+	makedev std
+	makedev tty0 tty1 pty0
+	makedev bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7
+	makedev lkm random
+	makedev clockctl
+	makedev local
+	;;
+
+std)
+	rm -f console drum mem kmem null zero klog
+	mknod console		c 0 0
+	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
+	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
+	mknod mem		c 2 0	; chmod 640 mem	; chgrp kmem mem
+	mknod null		c 2 2	; chmod 666 null
+	mknod zero		c 2 12	; chmod 666 zero
+	mknod klog		c 6 0	; chmod 600 klog
+	if $nofdesc; then
+		rm -f tty stdin stdout stderr
+		mknod tty	c 1 0	; chmod 666 tty
+		mknod stdin	c 11 0	; chmod 666 stdin
+		mknod stdout	c 11 1	; chmod 666 stdout
+		mknod stderr	c 11 2	; chmod 666 stderr
+	fi
+	;;
+
+
+bpf*|tun*)
+	case $i in
+	bpf*) name=bpf;	unit=${i#bpf};	chr=12;;
+	tun*) name=tun;	unit=${i#tun};	chr=13;;
+	esac
+	rm -f $name$unit
+	mknod $name$unit	c $chr $unit
+	;;
+
+
+pty*)
+	class=${i#pty}
+	name=`echo pqrstuvwxyzPQRST | dd bs=1 count=1 skip=$class 2>/dev/null`
+	case $name in
+	v)	echo "$0: $i: pty unit conflicts with console ttyv0 device."
+		continue;;
+	?)      ;;
+	*)      echo "$0: $i: pty unit must be between 0 and 15"
+	        continue ;;
+	esac
+	rm -f tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	jn=0
+	while [ $jn -lt 62 ]
+	do
+		j=`echo 0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ | dd bs=1 count=1 skip=$jn 2>/dev/null`
+		skip=0
+		if [ $jn -ge 16 ]; then
+			skip=$(($class * 30 + 256 - 16))
+		fi
+		unit=$(($class * 16 + $jn + $skip))
+		mknod tty$name$j c 4 $unit
+		mknod pty$name$j c 5 $unit
+		jn=$(($jn + 1))
+	done
+	chmod 666 tty$name[0-9a-zA-Z] pty$name[0-9a-zA-Z]
+	;;
+
+random)
+	rm -f random urandom
+	mknod random c 21 0
+	mknod urandom c 21 1
+	chmod 444 random
+	chmod 644 urandom
+	;;
+
+tty*)
+	ounit=${i#???}
+	ounit=$(($ounit + 0))
+	if [ $ounit -lt 10 ]; then
+		unit=0$ounit
+		rm -f com$ounit
+	else
+		unit=$ounit
+	fi
+	rm -f tty$unit dty$unit
+	mknod tty$unit c 10 $(($ounit + $dialin ))
+	mknod dty$unit c 10 $(($ounit + $dialout))
+	chown uucp tty$unit dty$unit
+	;;
+
+lkm)
+	rm -f lkm
+	mknod lkm c 14 0
+	chgrp kmem lkm
+	chmod 640 lkm
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 22 0
+	chgrp ntpd clockctl
+	chmod 660 clockctl
+	;;
+
+local)
+	umask 0
+	sh $0.local all
+	umask 77
+	;;
+
+*)
+	echo $i: unknown device
+	;;
+
+esac
+done
+
+}
+
+makedev $*
