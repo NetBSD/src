@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46 2000/04/08 23:06:45 tsarna Exp $
+# $NetBSD: mi,v 1.47 2000/04/15 22:02:15 tsarna Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -94,7 +94,6 @@
 ./etc/rc.d/named
 ./etc/rc.d/network
 ./etc/rc.d/nfsd
-./etc/rc.d/nfsiod
 ./etc/rc.d/nfslocking
 ./etc/rc.d/ntpdate
 ./etc/rc.d/portmap
