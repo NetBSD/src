@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.4 2002/10/14 22:32:52 bjh21 Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.5 2003/03/31 19:52:35 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -333,6 +333,12 @@ Lastpending:
 
 
 #ifdef IRQSTATS
+	.global _C_LABEL(intrnames), _C_LABEL(eintrnames)
+	.global _C_LABEL(eintrcnt)
+_C_LABEL(intrnames): 
+_C_LABEL(eintrnames):
+_C_LABEL(eintrcnt):
+
 	.globl	_C_LABEL(intrcnt), _C_LABEL(sintrcnt)
 
 _C_LABEL(intrcnt):
