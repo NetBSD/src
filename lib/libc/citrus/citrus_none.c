@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_none.c,v 1.3 2002/03/18 10:52:55 yamt Exp $	*/
+/*	$NetBSD: citrus_none.c,v 1.4 2002/03/25 20:47:02 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_none.c,v 1.3 2002/03/18 10:52:55 yamt Exp $");
+__RCSID("$NetBSD: citrus_none.c,v 1.4 2002/03/25 20:47:02 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -240,20 +240,25 @@ _citrus_NONE_ctype_wcsrtombs(void * __restrict cl, char * __restrict s,
 
 	pwcs0 = *pwcs;
 	count = 0;
-	while (n>0) {
+
+	if (s == NULL)
+		n = 1;
+
+	while (n > 0) {
 		if ((*pwcs0 & ~0xFFU) != 0) {
-			*nresult = count;
+			*nresult = (size_t)-1;
 			return (EILSEQ);
 		}
-		if (s != NULL)
+		if (s != NULL) {
 			*s++ = (char)*pwcs0;
+			n--;
+		}
 		if (*pwcs0 == L'\0') {
 			pwcs0 = NULL;
 			break;
 		}
 		count++;
 		pwcs0++;
-		n--;
 	}
 	if (s != NULL)
 		*pwcs = pwcs0;
