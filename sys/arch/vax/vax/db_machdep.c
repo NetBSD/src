@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.12 1998/07/04 22:18:44 jonathan Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.13 1998/08/20 16:47:11 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -155,11 +155,8 @@ db_read_bytes(addr, size, data)
 	register size_t	size;
 	register char	*data;
 {
-	register char	*src;
 
-	src = (char *)addr;
-	while (--size >= 0)
-		*data++ = *src++;
+	bcopy((caddr_t)addr, data, size);
 }
 
 /*
@@ -171,17 +168,16 @@ db_write_bytes(addr, size, data)
 	register size_t	size;
 	register char	*data;
 {
-	register char	*dst;
 
-	dst = (char *)addr;
-	for (;size;size--)
-		*dst++ = *data++;
+	memcpy((caddr_t)addr, data, size);
 }
 
 void
 Debugger()
 {
+	int s = splx(0xe);
 	mtpr(0xf, PR_SIRR); /* beg for debugger */
+	splx(s);
 }
 
 /*
