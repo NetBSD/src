@@ -18,10 +18,9 @@
  * 11-May-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: brk.S,v 1.1 1993/10/07 00:20:51 cgd Exp $
+ *	$Id: brk.S,v 1.2 1994/03/07 23:20:41 phil Exp $
  */
 
-#include <sys/syscall.h>
 #include "SYS.h"
 
 	.globl	_curbrk

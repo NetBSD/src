@@ -18,14 +18,13 @@
  * 29-Apr-92  Johannes Helander (jvh) at Helsinki University of Technology
  *	Created.
  *
- *	$Id: ptrace.S,v 1.1 1993/10/07 00:20:58 cgd Exp $
+ *	$Id: ptrace.S,v 1.2 1994/03/07 23:20:45 phil Exp $
  */
 
 /* 
  * This is included for the NetBSD version!
  */
 
-#include <syscall.h>
 #include "SYS.h"
 
 	.globl	EX(errno)
