@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.12 2003/08/07 11:25:15 agc Exp $	*/
+/*	$NetBSD: defs.h,v 1.13 2003/09/03 18:56:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -394,6 +394,7 @@ TAILQ_HEAD(, objects)	allobjects;	/* list of all kernel object and
 
 SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
 			allprefixes;	/* all prefixes used (after popped) */
+SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 
 struct	devi **packed;		/* arrayified table for packed devi's */
 int	npacked;		/* size of packed table, <= ndevi */
