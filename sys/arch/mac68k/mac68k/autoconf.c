@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56.2.2 2002/05/30 15:33:29 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.56.2.3 2002/06/06 02:59:36 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -117,12 +117,13 @@ findbootdev()
 	struct device *dv;
 	int major, unit, controller;
 	char buf[32];
+	const char *name;
 
 	booted_device = NULL;
 	booted_partition = 0;	/* Assume root is on partition a */
 
 	major = B_TYPE(bootdev);
-	name = devsw_blk2name(B_TYPE(bootdev));
+	name = devsw_blk2name(major);
 	if (name == NULL)
 		return;
 
