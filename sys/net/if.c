@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.81 2001/01/17 00:30:50 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.82 2001/01/17 04:05:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -919,10 +919,10 @@ ifaof_ifpforaddr(addr, ifp)
  * This should be moved to /sys/net/link.c eventually.
  */
 void
-link_rtrequest(cmd, rt, sa)
+link_rtrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 	struct ifaddr *ifa;
 	struct sockaddr *dst;
@@ -936,7 +936,7 @@ link_rtrequest(cmd, rt, sa)
 		rt->rt_ifa = ifa;
 		IFAREF(ifa);
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
-			ifa->ifa_rtrequest(cmd, rt, sa);
+			ifa->ifa_rtrequest(cmd, rt, info);
 	}
 }
 

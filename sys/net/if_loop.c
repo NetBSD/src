@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.35 2001/01/17 00:30:51 thorpej Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.36 2001/01/17 04:05:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -437,10 +437,10 @@ lostart(struct ifnet *ifp)
 
 /* ARGSUSED */
 void
-lortrequest(cmd, rt, sa)
+lortrequest(cmd, rt, info)
 	int cmd;
 	struct rtentry *rt;
-	struct sockaddr *sa;
+	struct rt_addrinfo *info;
 {
 
 	if (rt)
