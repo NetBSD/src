@@ -326,7 +326,8 @@ int f_identifier(expr,explain)
     for (op = opt; op != 0; op = op->op_next)
 	if (opteq(op->op_name, expr->name)) return 1;
     for (dp = dtab; dp != 0; dp = dp->d_next)
-	if (eq(dp->d_name, expr->name)) return 1;
+	if (eq(dp->d_name, expr->name) &&
+	    !(dp->d_type == PSEUDO_DEVICE && dp->d_flags && dp->d_slave == 0)) return 1;
     return 0;
 }
 print_expr(expr)
@@ -407,7 +408,8 @@ read_file(filename, fatal_on_open, override)
     for (;;) {
 	char *str, *kf_name, *read_ahead,*compile_with;
 	extern char *get_word(),*get_quoted_word();
-	int token, optional,driver,needs_count,config_depend, is_dup,filetype;
+	int token,optional,driver,needs_count,config_depend,
+            is_dup,filetype,is_option;
 	struct name_expr *depends_on,*requires;
 	struct file_list *tp,*tmp, *fl,*pf;	
 	enum {BEFORE_FILENAME,BEFORE_SPEC,BEFORE_DEPENDS,PAST_DEPENDS,
@@ -435,10 +437,15 @@ read_file(filename, fatal_on_open, override)
 	optional= driver = config_depend = filetype = needs_count = 0;
 	depends_on = requires = NULL;
 	is_dup = 0;
+	is_option = 0;
 	while ((str != NULL) && (str != (char *)EOF)) {
 	    switch (parse_state) {
 	    case BEFORE_FILENAME: {
 		kf_name = ns(str);
+                if (strncmp(kf_name, "OPTIONS/", 8) == 0) {
+                    kf_name = ns(index(kf_name, '/') + 1);
+                    is_option++;
+                }
 		parse_state = BEFORE_SPEC;
 		break;
 	    }
@@ -499,52 +506,98 @@ read_file(filename, fatal_on_open, override)
 	}
 	if (parse_state == BEFORE_SPEC)
 	    parse_err("filename, but no specification");
-	if (!kf_name)
-	    parse_err("no filename specified");
-	fl = fl_lookup(kf_name);
-	if (fl && !override) {
-	    (void) sprintf(ebuf, "duplicate file name '%s'", kf_name);
-	    parse_err(ebuf);
+	if (is_option) {
+            struct device dev;
+            register struct opt *op;
+            struct opt *lop = 0;
+ 
+            /*
+             *  Allocate a pseudo-device entry which we will insert into
+             *  the device list below.  The flags field is set non-zero to
+             *  indicate an internal entry rather than one generated from
+             *  the configuration file.  The slave field is set to define
+             *  the corresponding symbol as 0 should we fail to find the
+             *  option in the option list.
+             */
+            init_dev(&dev);
+            dev.d_type = PSEUDO_DEVICE;
+            dev.d_name = ns(kf_name);
+            dev.d_slave = 0;
+            dev.d_flags++;
+            for (op=opt; op; lop=op, op=op->op_next) {
+                char *od = raise(ns(kf_name));
+ 
+                /*
+                 *  Found an option which matches the current device
+                 *  dependency identifier.  Set the slave field to
+                 *  define the option in the header file.
+                 */
+                if (strcmp(op->op_name, od) == 0) {
+                    dev.d_slave = 1;
+                    if (lop == 0)
+                        opt = op->op_next;
+                    else
+                        lop->op_next = op->op_next;
+                    free(op);
+                    op = 0;
+                }
+                free(od);
+                if (op == 0)
+                        break;
+            }
+            newdev(&dev);
+            needs_count = 0;
+	    driver = 1;
+            filetype = INVISIBLE;
 	}
-	if ((pf = fl_lookup(kf_name)) &&
-	    (pf->f_type != INVISIBLE || (pf->f_flags | DUPLICATE)))
-	    is_dup = 1;
-	else
-	    is_dup = 0;
-	if (override && ((tmp = fltail_lookup(kf_name)) != 0))
-	    fprintf(stderr, "%s:%dLocal file %s overrides %s.\n",
-		   current_file, current_line, kf_name, tmp->f_fn);
-	if (!optional) {
-	    if (driver)
-		parse_err("'standard' incompatible with 'device-driver'");
-	    if (depends_on && !needs_count)
-		parse_err("'standard' can't have dependencies");
-	}
-	else if (!depends_on) 
-	    parse_err("'optional' requires dependency specification");
-	if (driver) {
-	    if (!is_simple(depends_on))
-		parse_err("device-driver's must have a singular name");
-	    if (eq("profiling-routine", depends_on->name))
-		parse_err("not a valid device-driver name");
-	}
-	if (needs_count) {
-	    if (!is_simple(depends_on))
-		parse_err("needs-count's must have a singular name");
-	    if (eq("profiling-routine", depends_on->name))
-		parse_err("not a valid name for needs-count");
-	}
-	if (is_simple(depends_on) &&
-	    eq("profiling-routine", depends_on->name)) filetype = PROFILING;
-	else if (!optional || depend_check(depends_on,0)) filetype = NORMAL;
-	else filetype = INVISIBLE;
+	else {
+            if (!kf_name)
+                parse_err("no filename specified");
+            fl = fl_lookup(kf_name);
+            if (fl && !override) {
+                (void) sprintf(ebuf, "duplicate file name '%s'", kf_name);
+                parse_err(ebuf);
+            }
+            if ((pf = fl_lookup(kf_name)) &&
+                (pf->f_type != INVISIBLE || (pf->f_flags | DUPLICATE)))
+                is_dup = 1;
+            else
+                is_dup = 0;
+            if (override && ((tmp = fltail_lookup(kf_name)) != 0))
+                    fprintf(stderr, "%s:%dLocal file %s overrides %s.\n",
+                            current_file, current_line, kf_name, tmp->f_fn);
+            if (!optional) {
+                if (driver)
+                    parse_err("'standard' incompatible with 'device-driver'");
+                if (depends_on && !needs_count)
+                    parse_err("'standard' can't have dependencies");
+	    }
+            else if (!depends_on) 
+                parse_err("'optional' requires dependency specification");
+            if (driver) {
+                if (!is_simple(depends_on))
+                    parse_err("device-driver's must have a singular name");
+                if (eq("profiling-routine", depends_on->name))
+                    parse_err("not a valid device-driver name");
+	    }
+            if (needs_count) {
+                if (!is_simple(depends_on))
+                    parse_err("needs-count's must have a singular name");
+                if (eq("profiling-routine", depends_on->name))
+                    parse_err("not a valid name for needs-count");
+	    }
+            if (is_simple(depends_on) &&
+                eq("profiling-routine", depends_on->name)) filetype = PROFILING;
+            else if (!optional || depend_check(depends_on,0)) filetype = NORMAL;
+            else filetype = INVISIBLE;
 
-	if (filetype == NORMAL && requires && !depend_check(requires,0)) {
-	    fprintf(stderr, "%s:%d: requirement expression failed: ",
-		    current_file, current_line);
-	    print_expr(requires);
-	    fprintf(stderr, "\n");
-	    parse_err("requirements not met");
+            if (filetype == NORMAL && requires && !depend_check(requires,0)) {
+                fprintf(stderr, "%s:%d: requirement expression failed: ",
+                        current_file, current_line);
+                print_expr(requires);
+                fprintf(stderr, "\n");
+                parse_err("requirements not met");
+	    }
 	}
 	tp = new_fent();
 	tp->f_fn = kf_name;
