@@ -1,4 +1,4 @@
-/*	$NetBSD: setlogin.S,v 1.3 1998/11/24 11:14:57 tsubai Exp $	*/
+/*	$NetBSD: setlogin.S,v 1.3.14.1 2004/07/23 13:54:39 tron Exp $	*/
 
 #include "SYS.h"
 
@@ -6,16 +6,16 @@
 
 SYSCALL(setlogin)
 #ifdef PIC
-	mflr	10
+	mflr	%r10
 	bl	_GLOBAL_OFFSET_TABLE_@local-4
-	mflr	4
-	lwz	4,_C_LABEL(__logname_valid)@got(4)
-	li	5,0
-	stw	5,0(4)
-	mtlr	10
+	mflr	%r4
+	lwz	%r4,_C_LABEL(__logname_valid)@got(%r4)
+	li	%r5,0
+	stw	%r5,0(%r4)
+	mtlr	%r10
 #else
-	lis	4,_C_LABEL(__logname_valid)@ha
-	li	5,0
-	stw	5,_C_LABEL(__logname_valid)@l(4)
+	lis	%r4,_C_LABEL(__logname_valid)@ha
+	li	%r5,0
+	stw	%r5,_C_LABEL(__logname_valid)@l(%r4)
 #endif
 	blr
