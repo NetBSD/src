@@ -1,4 +1,4 @@
-/*	$NetBSD: printnat.c,v 1.7 2002/05/03 08:27:10 martti Exp $	*/
+/*	$NetBSD: printnat.c,v 1.8 2002/05/30 18:10:31 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -60,7 +60,8 @@ extern	char	*sys_errlist[];
 #endif
 
 #if !defined(lint)
-static const char rcsid[] = "@(#)Id: printnat.c,v 1.1.2.8 2002/04/25 16:44:13 darrenr Exp";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: printnat.c,v 1.1.2.8 2002/04/25 16:44:13 darrenr Exp";
 #endif
 
 

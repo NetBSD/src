@@ -1,4 +1,4 @@
-/*	$NetBSD: ipt.c,v 1.7 2002/05/02 17:11:38 martti Exp $	*/
+/*	$NetBSD: ipt.c,v 1.8 2002/05/30 18:10:28 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -65,8 +65,10 @@
 #include "ipt.h"
 
 #if !defined(lint)
-static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipt.c,v 2.6.2.21 2002/03/26 15:54:40 darrenr Exp";
+static const char sccsid[] __attribute__((__unused__)) =
+    "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
+static const char rcsid[] __attribute__((__unused__)) =
+    "@(#)Id: ipt.c,v 2.6.2.21 2002/03/26 15:54:40 darrenr Exp";
 #endif
 
 extern	char	*optarg;
