@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.28 1999/01/12 00:18:50 lukem Exp $	*/
+/*	$NetBSD: function.c,v 1.29 1999/01/16 13:27:30 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.28 1999/01/12 00:18:50 lukem Exp $");
+__RCSID("$NetBSD: function.c,v 1.29 1999/01/16 13:27:30 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,9 @@ __RCSID("$NetBSD: function.c,v 1.28 1999/01/12 00:18:50 lukem Exp $");
 
 static	long	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_always_true __P((PLAN *, FTSENT *));
+	int	f_amin __P((PLAN *, FTSENT *));
 	int	f_atime __P((PLAN *, FTSENT *));
+	int	f_cmin __P((PLAN *, FTSENT *));
 	int	f_ctime __P((PLAN *, FTSENT *));
 	int	f_exec __P((PLAN *, FTSENT *));
 	int	f_flags __P((PLAN *, FTSENT *));
@@ -89,6 +91,7 @@ static	long	find_parsenum __P((PLAN *, char *, char *, char *));
 	int	f_inum __P((PLAN *, FTSENT *));
 	int	f_links __P((PLAN *, FTSENT *));
 	int	f_ls __P((PLAN *, FTSENT *));
+	int	f_mmin __P((PLAN *, FTSENT *));
 	int	f_mtime __P((PLAN *, FTSENT *));
 	int	f_name __P((PLAN *, FTSENT *));
 	int	f_newer __P((PLAN *, FTSENT *));
@@ -161,6 +164,39 @@ find_parsenum(plan, option, vp, endch)
 		++((p)->t_data);
 
 /*
+ * -amin n functions --
+ *
+ *	True if the difference between the file access time and the
+ *	current time is n 1 minute periods.
+ */
+int
+f_amin(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern time_t now;
+
+	COMPARE((now - entry->fts_statp->st_atime +
+	    SECSPERMIN - 1) / SECSPERMIN, plan->t_data);
+}
+ 
+PLAN *
+c_amin(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *arg = **argvp;
+	PLAN *new;
+
+	(*argvp)++;
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_AMIN, f_amin);
+	new->t_data = find_parsenum(new, "-amin", arg, NULL);
+	TIME_CORRECT(new, N_AMIN);
+	return (new);
+}
+/*
  * -atime n functions --
  *
  *	True if the difference between the file access time and the
@@ -191,6 +227,39 @@ c_atime(argvp, isok)
 	new = palloc(N_ATIME, f_atime);
 	new->t_data = find_parsenum(new, "-atime", arg, NULL);
 	TIME_CORRECT(new, N_ATIME);
+	return (new);
+}
+/*
+ * -cmin n functions --
+ *
+ *	True if the difference between the last change of file
+ *	status information and the current time is n 24 hour periods.
+ */
+int
+f_cmin(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern time_t now;
+
+	COMPARE((now - entry->fts_statp->st_ctime +
+	    SECSPERMIN - 1) / SECSPERMIN, plan->t_data);
+}
+ 
+PLAN *
+c_cmin(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *arg = **argvp;
+	PLAN *new;
+
+	(*argvp)++;
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_CMIN, f_cmin);
+	new->t_data = find_parsenum(new, "-cmin", arg, NULL);
+	TIME_CORRECT(new, N_CMIN);
 	return (new);
 }
 /*
@@ -645,6 +714,39 @@ c_ls(argvp, isok)
 	return (palloc(N_LS, f_ls));
 }
 
+/*
+ * -mmin n functions --
+ *
+ *	True if the difference between the file modification time and the
+ *	current time is n 24 hour periods.
+ */
+int
+f_mmin(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern time_t now;
+
+	COMPARE((now - entry->fts_statp->st_mtime + SECSPERMIN - 1) /
+	    SECSPERMIN, plan->t_data);
+}
+ 
+PLAN *
+c_mmin(argvp, isok)
+	char ***argvp;
+	int isok;
+{
+	char *arg = **argvp;
+	PLAN *new;
+
+	(*argvp)++;
+	ftsoptions &= ~FTS_NOSTAT;
+
+	new = palloc(N_MMIN, f_mmin);
+	new->t_data = find_parsenum(new, "-mmin", arg, NULL);
+	TIME_CORRECT(new, N_MMIN);
+	return (new);
+}
 /*
  * -mtime n functions --
  *
