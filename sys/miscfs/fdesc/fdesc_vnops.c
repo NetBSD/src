@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.40 1997/04/16 22:43:41 fvdl Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.41 1997/05/05 07:13:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -449,7 +449,7 @@ fdesc_attr(fd, vap, cred, p)
 			 * directories can cause loops in the namespace,
 			 * so turn off the 'x' bits to avoid trouble.
 			 */
-			vap->va_mode &= ~((VEXEC)|(VEXEC>>3)|(VEXEC>>6));
+			vap->va_mode &= ~(S_IXUSR|S_IXGRP|S_IXOTH);
 		}
 		break;
 
