@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.53 2003/08/07 09:44:11 agc Exp $	*/
+/*	$NetBSD: stdio.h,v 1.54 2004/04/21 00:05:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -366,6 +366,7 @@ __BEGIN_DECLS
 int	 asprintf __P((char ** __restrict, const char * __restrict, ...))
 	    __attribute__((__format__(__printf__, 2, 3)));
 char	*fgetln __P((FILE * __restrict, size_t * __restrict));
+char	*fgetstr __P((FILE * __restrict, size_t * __restrict, int));
 char	*fparseln(FILE *, size_t *, size_t *, const char[3], int);
 int	 fpurge __P((FILE *));
 void	 setbuffer __P((FILE *, char *, int));
