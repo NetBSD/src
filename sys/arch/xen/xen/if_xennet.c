@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.6 2004/04/24 17:35:28 cl Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.7 2004/04/24 18:55:02 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.6 2004/04/24 17:35:28 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.7 2004/04/24 18:55:02 cl Exp $");
 
 #include "opt_inet.h"
 
@@ -849,23 +849,23 @@ xennet_bootstatic_callback(struct nfs_diskless *nd)
 {
 	struct ifnet *ifp = nd->nd_ifp;
 	struct xennet_softc *sc = (struct xennet_softc *)ifp->if_softc;
-	struct xen_netinfo xi;
+	union xen_cmdline_parseinfo xcp;
 	struct sockaddr_in *sin;
 
-	memset(&xi, 0, sizeof(xi));
-	xi.xi_ifno = sc->sc_ifno;
-	xi.xi_root = nd->nd_root.ndm_host;
-	xen_parse_cmdline(NULL, &xi);
+	memset(&xcp, 0, sizeof(xcp.xcp_netinfo));
+	xcp.xcp_netinfo.xi_ifno = sc->sc_ifno;
+	xcp.xcp_netinfo.xi_root = nd->nd_root.ndm_host;
+	xen_parse_cmdline(XEN_PARSE_NETINFO, &xcp);
 
-	nd->nd_myip.s_addr = ntohl(xi.xi_ip[0]);
-	nd->nd_gwip.s_addr = ntohl(xi.xi_ip[2]);
-	nd->nd_mask.s_addr = ntohl(xi.xi_ip[3]);
+	nd->nd_myip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[0]);
+	nd->nd_gwip.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[2]);
+	nd->nd_mask.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[3]);
 
 	sin = (struct sockaddr_in *) &nd->nd_root.ndm_saddr;
 	memset((caddr_t)sin, 0, sizeof(*sin));
 	sin->sin_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
-	sin->sin_addr.s_addr = ntohl(xi.xi_ip[1]);
+	sin->sin_addr.s_addr = ntohl(xcp.xcp_netinfo.xi_ip[1]);
 
 	return (NFS_BOOTSTATIC_HAS_MYIP|NFS_BOOTSTATIC_HAS_GWIP|
 	    NFS_BOOTSTATIC_HAS_MASK|NFS_BOOTSTATIC_HAS_SERVADDR|

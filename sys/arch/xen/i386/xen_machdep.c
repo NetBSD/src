@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_machdep.c,v 1.2 2004/04/10 23:33:50 cl Exp $	*/
+/*	$NetBSD: xen_machdep.c,v 1.3 2004/04/24 18:55:02 cl Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.2 2004/04/10 23:33:50 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_machdep.c,v 1.3 2004/04/24 18:55:02 cl Exp $");
 
 #include "opt_xen.h"
 
@@ -119,7 +119,7 @@ lgdt(struct region_descriptor *rdp)
 }
 
 void
-xen_parse_cmdline(char *bootdev, struct xen_netinfo *xi)
+xen_parse_cmdline(int what, union xen_cmdline_parseinfo *xcp)
 {
 	char *cmd_line, *opt, *s;
 	int b, i, ipidx = 0;
@@ -127,69 +127,91 @@ xen_parse_cmdline(char *bootdev, struct xen_netinfo *xi)
 
 	cmd_line = xen_start_info.cmd_line;
 
-	if (bootdev)
-		bootdev[0] = 0;
+	switch (what) {
+	case XEN_PARSE_BOOTDEV:
+		xcp->xcp_bootdev[0] = 0;
+		break;
+	case XEN_PARSE_CONSOLE:
+		xcp->xcp_console[0] = 0;
+		break;
+	}
 
 	while (cmd_line && *cmd_line) {
 		opt = cmd_line;
 		cmd_line = strchr(opt, ' ');
-		if (strlen(opt) == 0)
-			continue;
-
 		if (cmd_line)
 			*cmd_line = 0;
 
-		if (bootdev && strncasecmp(opt, "bootdev=", 8) == 0)
-			strncpy(bootdev, opt + 8, 16); /* dv_xname */
+		switch (what) {
+		case XEN_PARSE_BOOTDEV:
+			if (strncasecmp(opt, "bootdev=", 8) == 0)
+				strncpy(xcp->xcp_bootdev, opt + 8,
+				    sizeof(xcp->xcp_console));
+			break;
 
-		if (xi && xi->xi_root && strncasecmp(opt, "nfsroot=", 8) == 0)
-			strncpy(xi->xi_root, opt + 8, MNAMELEN);
+		case XEN_PARSE_NETINFO:
+			if (xcp->xcp_netinfo.xi_root &&
+			    strncasecmp(opt, "nfsroot=", 8) == 0)
+				strncpy(xcp->xcp_netinfo.xi_root, opt + 8,
+				    MNAMELEN);
 
-		if (xi && strncasecmp(opt, "ip=", 3) == 0) {
-			memset(xi_ip, 0, sizeof(xi_ip));
-			opt += 3;
-			while (opt && *opt) {
-				s = opt;
-				opt = strchr(opt, ':');
-				if (opt)
-					*opt = 0;
+			if (strncasecmp(opt, "ip=", 3) == 0) {
+				memset(xi_ip, 0, sizeof(xi_ip));
+				opt += 3;
+				ipidx = 0;
+				while (opt && *opt) {
+					s = opt;
+					opt = strchr(opt, ':');
+					if (opt)
+						*opt = 0;
 
-				switch (ipidx) {
-				case 0:	/* ip */
-				case 1:	/* nfs server */
-				case 2:	/* gw */
-				case 3:	/* mask */
-				case 4:	/* host */
-					if (*s == 0)
-						break;
-					for (i = 0; i < 4; i++) {
-						b = strtoul(s, &s, 10);
-						xi_ip[ipidx] =
-							256 * xi_ip[ipidx] + b;
-						if (*s != '.')
+					switch (ipidx) {
+					case 0:	/* ip */
+					case 1:	/* nfs server */
+					case 2:	/* gw */
+					case 3:	/* mask */
+					case 4:	/* host */
+						if (*s == 0)
 							break;
-						s++;
-					}
-					if (i < 3)
-						xi_ip[ipidx] = 0;
-					break;
-				case 5:	/* interface */
-					if (strncmp(s, "xennet", 6) == 0)
-						s += 6;
-					else if (strncmp(s, "eth", 3) == 0)
-						s += 3;
-					else
+						for (i = 0; i < 4; i++) {
+							b = strtoul(s, &s, 10);
+							xi_ip[ipidx] = b + 256
+								* xi_ip[ipidx];
+							if (*s != '.')
+								break;
+							s++;
+						}
+						if (i < 3)
+							xi_ip[ipidx] = 0;
 						break;
-					if (xi->xi_ifno == strtoul(s, NULL, 10))
-						memcpy(xi->xi_ip, xi_ip,
-						    sizeof(xi->xi_ip));
-					break;
-				}
-				ipidx++;
+					case 5:	/* interface */
+						if (!strncmp(s, "xennet", 6))
+							s += 6;
+						else if (!strncmp(s, "eth", 3))
+							s += 3;
+						else
+							break;
+						if (xcp->xcp_netinfo.xi_ifno
+						    == strtoul(s, NULL, 10))
+							memcpy(xcp->
+							    xcp_netinfo.xi_ip,
+							    xi_ip,
+							    sizeof(xi_ip));
+						break;
+					}
+					ipidx++;
 
-				if (opt)
-					*opt++ = ':';
+					if (opt)
+						*opt++ = ':';
+				}
 			}
+
+		case XEN_PARSE_CONSOLE:
+			if (strncasecmp(opt, "console=", 8) == 0)
+				strncpy(xcp->xcp_console, opt + 8,
+				    sizeof(xcp->xcp_console));
+			break;
+
 		}
 
 		if (cmd_line)
