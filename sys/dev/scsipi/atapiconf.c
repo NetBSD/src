@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.44 2001/12/02 22:44:33 bouyer Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.45 2001/12/02 23:00:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.44 2001/12/02 22:44:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.45 2001/12/02 23:00:34 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.44 2001/12/02 22:44:33 bouyer Exp $"
 #include <sys/proc.h>
 #include <sys/kthread.h>
 
-#include <dev/ata/atavar.h>
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
 #include <dev/scsipi/atapiconf.h>
