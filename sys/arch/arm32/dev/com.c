@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.10 1996/10/13 03:06:11 christos Exp $	*/
+/*	$NetBSD: com.c,v 1.11 1996/10/15 21:00:55 mark Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -35,7 +35,41 @@
  * SUCH DAMAGE.
  *
  *	@(#)com.c	7.5 (Berkeley) 5/16/91
- *	from: com.c,v 1.81 1996/05/05
+ *	from: com.c,v 1.88 1996/10/06
+ */
+
+/*
+ * For KGDBSLIP support: (NOTE: No relationship to KGDBSERIAL!!!)
+ *
+ * Copyright (C) 1996 Frank Lancaster
+ * Copyright (C) 1995 Wolfgang Solfrank.
+ * Copyright (C) 1995 TooLs GmbH.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by TooLs GmbH.
+ * 4. The name of TooLs GmbH may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY TOOLS GMBH ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL TOOLS GMBH BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
@@ -57,9 +91,10 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <machine/irqhandler.h>
 #include <machine/bus.h>
+#include <machine/irqhandler.h>
 #include <machine/io.h>
+
 #include <arm32/mainbus/mainbus.h>
 #include <arm32/mainbus/comreg.h>
 #include <arm32/mainbus/comvar.h>
@@ -67,6 +102,28 @@
 
 #include "com.h"
 
+#if NKGDB_CSLP > 0 || NKGDB_CPPP > 0
+
+#define kgdbinb inb
+#define kgdboutb outb
+
+#include <kgdb/kgdb.h>
+#include <machine/kgdb.h>
+
+static int kgdbprobe __P((void *, void *));
+
+#if NKGDB_CSLP > 0
+struct cfattach kgdb_cslp_ca = {
+	0, kgdb_probe, kgdb_attach
+};
+#endif
+
+#if NKGDB_CPPP > 0
+struct cfattach kgdb_cppp_ca = {
+	0, kgdb_probe, kgdb_attach
+};
+#endif
+#endif
 
 #define	COM_IBUFSIZE	(2 * 512)
 #define	COM_IHIGHWATER	((3 * COM_IBUFSIZE) / 4)
@@ -78,6 +135,7 @@ struct com_softc {
 
 	int sc_overflows;
 	int sc_floods;
+	int sc_failures;
 	int sc_errors;
 
 	int sc_halt;
@@ -86,6 +144,7 @@ struct com_softc {
 
 	bus_chipset_tag_t sc_bc;
 	bus_io_handle_t sc_ioh;
+	bus_io_handle_t sc_hayespioh;
 
 	u_char sc_hwflags;
 #define	COM_HW_NOIEN	0x01
@@ -108,7 +167,7 @@ void	comdiag		__P((void *));
 int	comspeed	__P((long));
 int	comparam	__P((struct tty *, struct termios *));
 void	comstart	__P((struct tty *));
-void	compoll		__P((void *));
+void	comsoft		__P((void *));
 
 /* XXX: These belong elsewhere */
 cdev_decl(com);
@@ -156,7 +215,7 @@ int	commajor;
 int	comsopen = 0;
 int	comevents = 0;
 
-#ifdef KGDB
+#ifdef KGDBSERIAL
 #include <machine/remote-sl.h>
 extern int kgdb_dev;
 extern int kgdb_rate;
@@ -222,27 +281,27 @@ comprobe(parent, match, aux)
 	int iobase, needioh;
 	int rv = 1;
 
-	/*
-	 * XXX should be broken out into functions for isa probe and
-	 * XXX for commulti probe, with a helper function that contains
-	 * XXX most of the interesting stuff.
-	 */
-
-	bc = NULL;
+	bc = NULL; /* mb->mb_bc */
 	iobase = mb->mb_iobase;
 	needioh = 1;
 
 	/* if it's in use as console, it's there. */
 	if (iobase == comconsaddr && !comconsattached)
-		return(1);
+		goto out;
 
-	if (needioh && bus_io_map(bc, iobase, COM_NPORTS, &ioh))
-		return(0);
-
+	if (needioh && bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+		rv = 0;
+		goto out;
+	}
+#if NKGDB_CSLP > 0 || NKGDB_CPPP > 0
+	if (!parent)
+		return(kgdbprobe(match, aux));
+#endif
 	rv = comprobe1(bc, ioh, iobase);
 	if (needioh)
 		bus_io_unmap(bc, ioh, COM_NPORTS);
 
+out:
 	mb->mb_iosize = COM_NPORTS;
 	return (rv);
 }
@@ -258,11 +317,6 @@ comattach(parent, self, aux)
 	bus_io_handle_t ioh;
 	struct mainbus_attach_args *mb = aux;
 
-	/*
-	 * XXX should be broken out into functions for isa attach and
-	 * XXX for commulti attach, with a helper function that contains
-	 * XXX most of the interesting stuff.
-	 */
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 
@@ -270,12 +324,12 @@ comattach(parent, self, aux)
 	 * We're living on an isa.
 	 */
 	iobase = mb->mb_iobase;
-	bc = NULL;
-        if (iobase != comconsaddr) {
-                if (bus_io_map(bc, iobase, COM_NPORTS, &ioh))
+	bc = NULL; /* mb->mb_bc */
+	if (iobase != comconsaddr) {
+		if (bus_io_map(bc, iobase, COM_NPORTS, &ioh))
 			panic("comattach: io mapping failed");
 	} else
-                ioh = comconsioh;
+		ioh = comconsioh;
 
 	sc->sc_bc = bc;
 	sc->sc_ioh = ioh;
@@ -320,8 +374,7 @@ comattach(parent, self, aux)
  		if (irq_claim(mb->mb_irq, &sc->sc_ih))
 			panic("Cannot claim IRQ %d for com%d\n", mb->mb_irq, sc->sc_dev.dv_unit);
 
-
-#ifdef KGDB
+#ifdef KGDBSERIAL
 	if (kgdb_dev == makedev(commajor, unit)) {
 		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
 			kgdb_dev = -1;	/* can't debug over console port */
@@ -366,9 +419,10 @@ comopen(dev, flag, mode, p)
 	if (!sc)
 		return ENXIO;
 
-	if (!sc->sc_tty)
+	if (!sc->sc_tty) {
 		tp = sc->sc_tty = ttymalloc();
-	else
+		tty_attach(tp);
+	} else
 		tp = sc->sc_tty;
 
 	tp->t_oproc = comstart;
@@ -398,7 +452,7 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 		if (comsopen++ == 0)
-			timeout(compoll, NULL, 1);
+			timeout(comsoft, NULL, 1);
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
 		sc->sc_ibufhigh = sc->sc_ibuf + COM_IHIGHWATER;
@@ -510,10 +564,11 @@ comclose(dev, flag, mode, p)
 	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
 		/* XXX perhaps only clear DTR */
 		bus_io_write_1(bc, ioh, com_mcr, 0);
+		bus_io_write_1(bc, ioh, com_fifo, FIFO_RCV_RST | FIFO_XMT_RST);
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 	if (--comsopen == 0)
-		untimeout(compoll, NULL);
+		untimeout(comsoft, NULL);
 	splx(s);
 	ttyclose(tp);
 #ifdef notyet /* XXXX */
@@ -783,7 +838,7 @@ comparam(tp, t)
 		    ISSET(sc->sc_hwflags, COM_HW_FIFO))
 			bus_io_write_1(bc, ioh, com_fifo,
 			    FIFO_ENABLE |
-			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_4));
 	} else
 		bus_io_write_1(bc, ioh, com_lcr, lcr);
 
@@ -911,7 +966,7 @@ comdiag(arg)
 	void *arg;
 {
 	struct com_softc *sc = arg;
-	int overflows, floods;
+	int overflows, floods, failures;
 	int s;
 
 	s = spltty();
@@ -920,16 +975,19 @@ comdiag(arg)
 	sc->sc_overflows = 0;
 	floods = sc->sc_floods;
 	sc->sc_floods = 0;
+	failures = sc->sc_failures;
+	sc->sc_failures = 0;
 	splx(s);
 
-	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf overflow%s\n",
+	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf overflow%s, %d uart failure%s\n",
 	    sc->sc_dev.dv_xname,
 	    overflows, overflows == 1 ? "" : "s",
-	    floods, floods == 1 ? "" : "s");
+	    floods, floods == 1 ? "" : "s",
+	    failures, failures == 1 ? "" : "s");
 }
 
 void
-compoll(arg)
+comsoft(arg)
 	void *arg;
 {
 	int unit;
@@ -1005,7 +1063,7 @@ compoll(arg)
 	}
 
 out:
-	timeout(compoll, NULL, 1);
+	timeout(comsoft, NULL, 1);
 }
 
 int
@@ -1016,7 +1074,7 @@ comintr(arg)
 	bus_chipset_tag_t bc = sc->sc_bc;
 	bus_io_handle_t ioh = sc->sc_ioh;
 	struct tty *tp;
-	u_char lsr, data, msr, delta;
+	u_char iir, lsr, data, msr, delta;
 #ifdef COM_DEBUG
 	int n;
 	struct {
@@ -1026,12 +1084,11 @@ comintr(arg)
 
 #ifdef COM_DEBUG
 	n = 0;
-	if (ISSET(iter[n].iir = bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-		return (0);
-#else
-	if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-		return (0);
+	iter[n].iir =
 #endif
+	iir = bus_io_read_1(bc, ioh, com_iir);
+	if (ISSET(iir, IIR_NOPEND))
+		return (0);
 
 	tp = sc->sc_tty;
 
@@ -1072,11 +1129,13 @@ comintr(arg)
 					    ISSET(tp->t_cflag, CRTSCTS)) {
 						/* XXX */
 						CLR(sc->sc_mcr, MCR_RTS);
-						bus_io_write_1(bc, ioh, com_mcr,
-						    sc->sc_mcr);
+						bus_io_write_1(bc, ioh,
+						    com_mcr, sc->sc_mcr);
 					}
 				}
+#ifdef DDB
 			next:
+#endif
 #ifdef COM_DEBUG
 				if (++n >= 32)
 					goto ohfudge;
@@ -1086,11 +1145,22 @@ comintr(arg)
 			} while (ISSET(lsr, LSR_RXRDY));
 
 			sc->sc_ibufp = p;
-		}
+		} else {
 #ifdef COM_DEBUG
-		else if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
-			printf("weird lsr %02x\n", lsr);
+			if (ISSET(lsr, LSR_BI|LSR_FE|LSR_PE|LSR_OE))
+				printf("weird lsr %02x\n", lsr);
 #endif
+			if ((iir & IIR_IMASK) == IIR_RXRDY) {
+				sc->sc_failures++;
+				if (sc->sc_errors++ == 0)
+					timeout(comdiag, sc, 60 * hz);
+				bus_io_write_1(bc, ioh, com_ier, 0);
+				delay(10);
+				bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
+				iir = IIR_NOPEND;
+				continue;
+			}
+		}
 
 #ifdef COM_DEBUG
 		iter[n].msr =
@@ -1123,13 +1193,13 @@ comintr(arg)
 #ifdef COM_DEBUG
 		if (++n >= 32)
 			goto ohfudge;
-		if (ISSET(iter[n].iir = bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-			return (1);
-#else
-		if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
-			return (1);
+		iter[n].iir =
 #endif
+		iir = bus_io_read_1(bc, ioh, com_iir);
+		if (ISSET(iir, IIR_NOPEND))
+			return (1);
 	}
+
 #ifdef COM_DEBUG
 ohfudge:
 	printf("comintr: too many iterations");
@@ -1143,6 +1213,7 @@ ohfudge:
 	    sc->sc_msr, sc->sc_mcr, sc->sc_lcr, sc->sc_ier);
 	printf("comintr: state %08x cc %d\n", sc->sc_tty->t_state,
 	    sc->sc_tty->t_outq.c_cc);
+	return (1);
 #endif
 }
 
@@ -1217,7 +1288,10 @@ cominit(bc, ioh, rate)
 	bus_io_write_1(bc, ioh, com_dlbh, rate >> 8);
 	bus_io_write_1(bc, ioh, com_lcr, LCR_8BITS);
 	bus_io_write_1(bc, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
-	bus_io_write_1(bc, ioh, com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+	bus_io_write_1(bc, ioh, com_fifo,
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
+	bus_io_write_1(bc, ioh, com_mcr, MCR_DTR | MCR_RTS);
+	DELAY(100);
 	stat = bus_io_read_1(bc, ioh, com_iir);
 	splx(s);
 }
@@ -1253,7 +1327,7 @@ comcnputc(dev, c)
 	u_char stat;
 	register int timo;
 
-#ifdef KGDB
+#ifdef KGDBSERIAL
 	if (dev != kgdb_dev)
 #endif
 	if (comconsinit == 0) {
@@ -1281,3 +1355,109 @@ comcnpollc(dev, on)
 {
 
 }
+
+#if NKGDB_CSLP > 0 || NKGDB_CPPP > 0
+
+/*
+ * This need upgrading to use bus_io_*. However I need to
+ * get this code working first before I change it.
+ */
+ 
+static void
+kgdbstart(kip)
+	struct kgdb_if *kip;
+{
+	int iobase = kip->port;
+	int speed;
+
+	if (!(kip->drvflags&1)) {
+		kip->drvflags |= 1;
+		kgdboutb(iobase + com_lcr, LCR_DLAB);
+		speed = comspeed(kip->speed);
+		kgdboutb(iobase + com_dlbl, speed);
+		kgdboutb(iobase + com_dlbh, speed >> 8);
+		kgdboutb(iobase + com_lcr, LCR_8BITS);
+		kgdboutb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY);
+		kgdboutb(iobase + com_fifo,
+			 FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+		kgdboutb(iobase + com_mcr, MCR_IENABLE | MCR_DTR | MCR_RTS);
+		kgdbinb(iobase + com_iir);
+	}
+}
+
+static void
+kgdbleave(kip)
+	struct kgdb_if *kip;
+{
+	int iobase = kip->port;
+
+	/* wait for draining */
+	while (!(kgdbinb(iobase + com_lsr) & LSR_TXRDY));
+}
+
+static int
+kgdbgetc(kip, poll)
+	struct kgdb_if *kip;
+	int poll;
+{
+	int iobase = kip->port;
+	int stat, c = -1;
+	
+	do {
+		if ((stat = kgdbinb(iobase + com_lsr)) & LSR_RXRDY) {
+			c = (u_char)kgdbinb(iobase + com_data);
+			stat = kgdbinb(iobase + com_iir);
+		}
+	} while (!poll && c == -1);
+	return c;
+}
+
+static void
+kgdbputc(kip, c)
+ 	struct kgdb_if *kip;
+	char c;
+{
+	int iobase = kip->port;
+	
+	while (!(kgdbinb(iobase + com_lsr) & LSR_TXRDY));
+	kgdboutb(iobase + com_data, c);
+}
+
+static int
+kgdbprobe(match, aux)
+	void *match, *aux;
+{
+	struct cfdata *cf = match;
+	struct kgdb_if *kip = aux;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	char *name;
+
+	kip->port = cf->cf_loc[0] + IO_CONF_BASE /* different from i386 */;
+	if (bus_io_map(bc, kip->port, COM_NPORTS, &ioh))
+		return(0);
+
+#ifdef XXXX
+	if (kip->port == IOBASEUNK)
+		/* Not yet supported */
+		return -1;
+#endif
+	kip->bc = bc;
+	kip->ioh = ioh;
+	if (!comprobe1(bc, ioh)) {
+		return -1;
+	}
+
+	kip->speed = kip->cfp->cf_loc[2];
+	kip->name = "COM";
+	kip->start = kgdbstart;
+	kip->leave = kgdbleave;
+	kip->getc = kgdbgetc;
+	kip->putc = kgdbputc;
+	
+	kgdb_serial(kip);
+	
+	printf("done: kip->send=%x\n", kip->send);
+	return 0;
+}
+#endif
