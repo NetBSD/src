@@ -1,4 +1,4 @@
-/*	$NetBSD: iplang_l.l,v 1.1.1.1 1999/12/11 22:24:06 veego Exp $	*/
+/*	$NetBSD: iplang_l.l,v 1.2 1999/12/11 23:47:02 veego Exp $	*/
 
 %{
 /*
@@ -19,7 +19,7 @@
 #include <sys/types.h>
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
-#include "y.tab.h"
+#include "iplang_y.h"
 #include "ip_compat.h"
 #include "ipf.h"
 
