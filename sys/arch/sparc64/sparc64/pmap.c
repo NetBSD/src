@@ -1,8 +1,8 @@
-/*	$NetBSD: pmap.c,v 1.53 2000/05/17 09:12:10 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.54 2000/06/12 23:32:48 eeh Exp $	*/
 #undef NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define HWREF 1 
-#undef BOOT_DEBUG
-#undef BOOT1_DEBUG
+#undef	BOOT_DEBUG
+#undef	BOOT1_DEBUG
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -37,6 +37,7 @@
 #include <sys/systm.h>
 #include <sys/msgbuf.h>
 #include <sys/lock.h>
+#include <sys/pool.h>
 #include <sys/exec.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
@@ -67,6 +68,8 @@
 #define Debugger()
 #define db_printf	printf
 #endif
+
+paddr_t cpu0paddr;/* XXXXXXXXXXXXXXXX */
 
 /*
  * Support for big page sizes.  This maps the page size to the
@@ -189,6 +192,7 @@ typedef struct pv_entry {
 #define PV_SETVA(pv,va) ((pv)->pv_va = (((va)&PV_VAMASK)|(((pv)->pv_va)&PV_MASK)))
 
 pv_entry_t	pv_table;	/* array of entries, one per page */
+static struct pool pv_pool;
 extern void	pmap_remove_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
 extern void	pmap_enter_pv __P((struct pmap *pm, vaddr_t va, paddr_t pa));
 extern void	pmap_page_cache __P((paddr_t pa, int mode));
@@ -211,15 +215,6 @@ pte_t *tsb;
 int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 #define TSBENTS (512<<tsbsize)
 #define	TSBSIZE	(TSBENTS * 16)
-
-/* 
- * And here's the IOMMU TSB stuff, also allocated in pmap_bootstrap.
- */
-int64_t		*iotsb;
-paddr_t		iotsbp;
-int		iotsbsize; /* tsbents = 1024 * 2 ^^ tsbsize */
-#define IOTSBENTS	(1024<<iotsbsize)
-#define IOTSBSIZE	(IOTSBENTS * 8)
 
 struct pmap kernel_pmap_;
 
@@ -554,6 +549,15 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 		/* Make sure all 4MB are mapped */
 		prom_map_phys(ksegp, 4*MEG, kernelstart, -1); 
 	}
+
+	/*
+	 * Allocate a 64MB page for the cpu_info structure now.
+	 */
+	if ((cpu0paddr = prom_alloc_phys(8*NBPG, 8*NBPG)) == 0 ) {
+		prom_printf("Cannot allocate new cpu_info\r\n");
+		OF_exit();
+	}
+
 	/*
 	 * Find out how much RAM we have installed.
 	 */
@@ -717,22 +721,16 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	prom_printf("TSB allocated at %p size %08x\r\n", (void*)tsb,
 	    (int)TSBSIZE);
 #endif
-	/*
-	 * Allocate a single IOMMU TSB so they're all mapped coherently.
-	 */
-	iotsbsize = 0; /* We will only allocate an 8K TSB now */
-	valloc(iotsb, int64_t, IOTSBSIZE);
-	iotsbp = ((vaddr_t)iotsb) - kernelstart + ksegp; 
-	bzero(iotsb, IOTSBSIZE);	/* Invalidate all entries */	
-
 
 	/* initialize pv_list stuff */
 	first_phys_addr = mem->start;
+#if 0
 	valloc(pv_table, struct pv_entry, sizeof(struct pv_entry)*physmem);
 	bzero((caddr_t)pv_table, sizeof(struct pv_entry)*physmem);
 #ifdef BOOT1_DEBUG
 	prom_printf("Allocating pv_table at %lx,%lx\r\n", (u_long)pv_table, 
 		    (u_long)sizeof(struct pv_entry)*physmem);
+#endif
 #endif
 
 #ifdef BOOT1_DEBUG
@@ -1025,7 +1023,67 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	prom_printf("Done inserting PROM mappings into pmap_kernel()\r\n");
 #endif
 
+	/*
+	 * Fix up start of kernel heap.
+	 */
+	vmmap = (caddr_t)(ksegv + 4*MEG); /* Start after our locked TLB entry */
+	/* Let's keep 1 page of redzone after the kernel */
+	vmmap += NBPG;
+	/* Allocate some VAs for u0 */
+	{ 
+		extern vaddr_t u0[2];
+		paddr_t pa;
 
+		u0[0] = vmmap;
+		u0[1] = vmmap + 2*USPACE;
+
+		while (vmmap < u0[1]) {
+			pte_t tte;
+			vaddr_t va = (vaddr_t)vmmap;
+			paddr_t newp;
+
+			pmap_get_page(&pa);
+			prom_map_phys(phys_msgbuf, NBPG, va, -1);
+#ifdef NO_VCACHE
+			tte.data.data = TSB_DATA(0 /* global */,
+				TLB_8K,
+				phys_msgbuf,
+				1 /* priv */,
+				1 /* Write */,
+				1 /* Cacheable */,
+				1 /* ALIAS -- Disable D$ */,
+				1 /* valid */,
+				0 /* IE */);
+#else
+			tte.data.data = TSB_DATA(0 /* global */,
+				TLB_8K,
+				phys_msgbuf,
+				1 /* priv */,
+				1 /* Write */,
+				1 /* Cacheable */,
+				0 /* No ALIAS */,
+				1 /* valid */,
+				0 /* IE */);
+#endif
+			newp = NULL;
+			while (pseg_set(pmap_kernel(), va, tte.data.data, newp)
+				!= NULL) {
+				pmap_get_page(&newp);
+				pmap_zero_page(newp);
+#ifdef DEBUG
+				enter_stats.ptpneeded ++;
+#endif
+#ifdef BOOT1_DEBUG
+				prom_printf(
+					"pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
+					pmap_kernel(), va, (long)tte.data.
+					data, (long)newp);
+				{int i; for (i=0; i<140000000; i++) ;}
+#endif
+			}
+			vmmap += NBPG;
+		}
+	}
 	/*
 	 * Set up bounds of allocatable memory for vmstat et al.
 	 */
@@ -1036,6 +1094,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
+
 }
 
 /*
@@ -1045,12 +1104,93 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 void
 pmap_init()
 {
+	u_int64_t pagesize;
+	u_int64_t pte;
+	vm_page_t m;
+	paddr_t pa;
+	psize_t size;
+	vaddr_t va;
+	struct pglist mlist;
+
 #ifdef NOTDEF_DEBUG
 	prom_printf("pmap_init()\r\n");
 #endif
 	if (PAGE_SIZE != NBPG)
 		panic("pmap_init: CLSIZE!=1");
+
+	size = sizeof(struct pv_entry) * physmem;
+	TAILQ_INIT(&mlist);
+	if (uvm_pglistalloc((psize_t)size, (paddr_t)0, (paddr_t)-1,
+		(paddr_t)NBPG, (paddr_t)0, &mlist, 1, 0) != 0)
+		panic("cpu_start: no memory");
+
+	va = uvm_km_valloc(kernel_map, size);
+	if (va == 0)
+		panic("cpu_start: no memory");
+
+	pv_table = va;
+	m = TAILQ_FIRST(&mlist);
+	pa = VM_PAGE_TO_PHYS(m);
+	pte = TSB_DATA(0 /* global */,
+		pagesize,
+		pa,
+		1 /* priv */,
+		1 /* Write */,
+		1 /* Cacheable */,
+		1 /* ALIAS -- Disable D$ */,
+		1 /* valid */,
+		0 /* IE */);
+
+	/* Map the pages */
+	for (; m != NULL; m = TAILQ_NEXT(m,pageq)) {
+		paddr_t newp;
+		u_int64_t data;
+
+		pa = VM_PAGE_TO_PHYS(m);
+		pmap_zero_page(pa);
+#ifdef NO_VCACHE
+		data = TSB_DATA(0 /* global */, 
+			TLB_8K,
+			pa,
+			1 /* priv */,
+			1 /* Write */,
+			1 /* Cacheable */,
+			1 /* ALIAS -- Disable D$ */,
+			1 /* valid */,
+			0 /* IE */);
+#else
+		data = TSB_DATA(0 /* global */, 
+			TLB_8K,
+			pa,
+			1 /* priv */,
+			1 /* Write */,
+			1 /* Cacheable */,
+			0 /* No ALIAS */,
+			1 /* valid */,
+			0 /* IE */);
+#endif
+		newp = NULL;
+		while (pseg_set(pmap_kernel(), va, data, newp)
+		    != NULL) {
+			pmap_get_page(&newp);
+			pmap_zero_page(newp);
+#ifdef DEBUG
+			enter_stats.ptpneeded ++;
+#endif
+#ifdef BOOT1_DEBUG
+			prom_printf(
+			    "pseg_set: pm=%p va=%p data=%lx newp %lx\r\n", 
+			    pmap_kernel(), va, (long)data, (long)newp);
+			{int i; for (i=0; i<140000000; i++) ;}
+#endif
+		}
+		va += NBPG;
+	}
 	pmap_initialized = 1;
+
+	/* Setup a pool for additional pvlist structures */
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", 0,
+		  NULL, NULL, 0);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
@@ -1066,11 +1206,6 @@ pmap_virtual_space(start, end)
 	/*
 	 * Reserve one segment for kernel virtual memory
 	 */
-	vmmap = (caddr_t)(ksegv + 4*MEG); /* Start after our locked TLB entry */
-#ifdef DIAGNOSTIC
-	/* Let's keep 1 page of redzone after the kernel */
-	vmmap += NBPG;
-#endif
 	/* Reserve two pages for pmap_copy_page && /dev/mem */
 	*start = (vaddr_t)(vmmap + 2*NBPG);
 	*end = VM_MAX_KERNEL_ADDRESS;
@@ -1802,8 +1937,7 @@ pmap_enter(pm, va, pa, prot, flags)
 				       pm, va);
 #endif
 			/* can this cause us to recurse forever? */
-			npv = (pv_entry_t)
-				malloc(sizeof *npv, M_VMPVENT, M_WAITOK);
+			npv = pool_get(&pv_pool, PR_WAITOK);
 			PV_SETVA(npv,va);
 			npv->pv_pmap = pm;
 			npv->pv_next = pv->pv_next;
@@ -2972,7 +3106,7 @@ pmap_page_protect(pg, prot)
 			
 			/* free the pv */
 			pv->pv_next = npv->pv_next;
-			free((caddr_t)npv, M_VMPVENT);
+			pool_put(&pv_pool, npv);
 		}
 
 		pv = firstpv;
@@ -3029,7 +3163,7 @@ pmap_page_protect(pg, prot)
 				/* First save mod/ref bits */
 				npv->pv_va |= (pv->pv_va&PV_MASK);
 				*pv = *npv;
-				free((caddr_t)npv, M_VMPVENT);
+				pool_put(&pv_pool, npv);
 			} else {
 				pv->pv_pmap = NULL;
 				pv->pv_next = NULL;
@@ -3249,8 +3383,7 @@ pmap_enter_pv(pmap, va, pa)
 				pmap, va);
 #endif
 		/* can this cause us to recurse forever? */
-		npv = (pv_entry_t)
-			malloc(sizeof *npv, M_VMPVENT, M_NOWAIT);
+		npv = pool_get(&pv_pool, PR_NOWAIT);
 		if (npv == NULL)
 			panic("pmap_enter: new pv malloc() failed");
 		PV_SETVA(npv, va);
@@ -3311,7 +3444,7 @@ pmap_remove_pv(pmap, va, pa)
 			/* First save mod/ref bits */
 			npv->pv_va |= (pv->pv_va&PV_MASK);
 			*pv = *npv;
-			free((caddr_t)npv, M_VMPVENT);
+			pool_put(&pv_pool, npv);
 		} else {
 			pv->pv_pmap = NULL;
 			pv->pv_next = NULL;
@@ -3352,7 +3485,7 @@ pmap_remove_pv(pmap, va, pa)
 		 * alias that may have occurred.  However, that's a complicated
 		 * operation involving multiple scans of the pv list. 
 		 */
-		free((caddr_t)npv, M_VMPVENT);
+		pool_put(&pv_pool, npv);
 	}
 
 	/* Save ref/mod info */
