@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.2 1995/06/30 02:57:20 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.3 1995/09/16 00:28:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -178,11 +178,8 @@ elf_check_header(eh, type)
 	Elf32_Ehdr *eh;
 	int type;
 {
-#ifdef sparc
-  /* #$%@#$%@#$%! */
-# define memcmp bcmp
-#endif
-	if (memcmp(eh->e_ident, Elf32_e_ident, Elf32_e_siz) != 0)
+
+	if (bcmp(eh->e_ident, Elf32_e_ident, Elf32_e_siz) != 0)
 		return ENOEXEC;
 
 	switch (eh->e_machine) {
