@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.3 1997/11/27 10:17:53 sakamoto Exp $	*/
+/*	$NetBSD: clock.c,v 1.4 1998/01/19 03:47:41 sakamoto Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -35,39 +35,16 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 
+#include <machine/bootinfo.h>
 #include <machine/pio.h>
 
 /*
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
-static u_long ticks_per_sec = 3125000;
-static u_long ns_per_tick = 320;
+static u_long ticks_per_sec;
+static u_long ns_per_tick;
 static long ticks_per_intr;
 static volatile u_long lasttb;
-
-#if 0
-/*
- * For now we let the machine run with boot time, not changing the clock
- * at inittodr at all.
- *
- * We might continue to do this due to setting up the real wall clock with
- * a user level utility in the future.
- */
-/* ARGSUSED */
-void
-inittodr(base)
-	time_t base;
-{
-}
-
-/*
- * Similar to the above
- */
-void
-resettodr()
-{
-}
-#endif 0
 
 void
 decr_intr(frame)
@@ -133,19 +110,19 @@ void
 cpu_initclocks()
 {
 	int msr, scratch;
-	volatile int ticks_per_sec, tmp = 0;
-	
-#if 0
+
 	/*
 	 * Get CPU clock
 	 */
-	asm volatile ("mtdec %0" :: "r"(tmp));
-	findcpuspeed();
-	asm volatile ("mfdec %0" : "=r"(tmp));
-	ticks_per_sec = tmp * hz;
-#endif
-	ticks_per_sec = 8250000;
-
+	{
+		struct btinfo_clock *clockinfo;
+	
+		clockinfo =
+			(struct btinfo_clock *)lookup_bootinfo(BTINFO_CLOCK);
+		if (!clockinfo)
+			panic("not found clock information in bootinfo");
+		ticks_per_sec = clockinfo->ticks_per_sec;
+	}
 	ns_per_tick = 1000000000 / ticks_per_sec;
 	ticks_per_intr = ticks_per_sec / hz;
 	asm volatile ("mftb %0" : "=r"(lasttb));

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1997/12/18 09:07:58 sakamoto Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1998/01/19 03:47:42 sakamoto Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 #include <sys/buf.h>
 #include <sys/callout.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
@@ -56,15 +57,37 @@
 #include <net/netisr.h>
 
 #include <machine/bat.h>
+#include <machine/bootinfo.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 #include <machine/pmap.h>
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 
+#include <dev/cons.h>
+
+#include "pc.h"
+#if (NPC > 0)
+#include <machine/pccons.h>
+#endif
+
+#include "vt.h"
+#if (NVT > 0)
+#include <bebox/isa/pcvt/pcvt_cons.h>
+#endif
+
+#include "com.h"
+#if (NCOM > 0)
+#include <sys/termios.h>
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+#endif
+
 /*
  * Global variables used here and there
  */
+char bootinfo[BOOTINFO_MAXSIZE];
+
 char machine[] = MACHINE;		/* machine */
 char machine_arch[] = MACHINE_ARCH;	/* machine architecture */
 
@@ -93,8 +116,9 @@ void install_extint __P((void (*)(void)));
 int cold = 1;
 
 void
-initppc(startkernel, endkernel, size, args)
-	u_int startkernel, endkernel, size, args;
+initppc(startkernel, endkernel, args, btinfo)
+	u_int startkernel, endkernel, args;
+	void *btinfo;
 {
 	struct machvec *mp;
 	extern trapcode, trapsize;
@@ -116,12 +140,25 @@ initppc(startkernel, endkernel, size, args)
 	int exc, scratch, i;
 
 	/*
+	 * copy bootinfo
+	 */
+	bcopy(btinfo, bootinfo, sizeof (bootinfo));
+
+	/*
 	 * BeBox memory region set
 	 */
-	physmemr[0].start = 0;
-	physmemr[0].size = size & ~PGOFSET;
-	availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
-	availmemr[0].size = size - availmemr[0].start;
+	{
+		struct btinfo_memory *meminfo;
+
+		meminfo =
+			(struct btinfo_memory *)lookup_bootinfo(BTINFO_MEMORY);
+		if (!meminfo)
+			panic("not found memory information in bootinfo");
+		physmemr[0].start = 0;
+		physmemr[0].size = meminfo->memsize & ~PGOFSET;
+		availmemr[0].start = (endkernel + PGOFSET) & ~PGOFSET;
+		availmemr[0].size = meminfo->memsize - availmemr[0].start;
+	}
 
 	/*
 	 * BeBox MotherBoard's Register
@@ -528,18 +565,63 @@ allocsys(v)
 }
 
 /*
+ * lookup_bootinfo:
+ * Look up information in bootinfo of boot loader.
+ */
+void *
+lookup_bootinfo(type)
+	int type;
+{
+	struct btinfo_common *bt;
+	void *help = (void *)bootinfo;
+
+	do {
+		bt = (struct btinfo_common *)help;
+		if (bt->type == type)
+			return (help);
+		help += bt->next;
+	} while (bt->next &&
+		(size_t)help < (size_t)bootinfo + sizeof (bootinfo));
+
+	return (NULL);
+}
+
+/*
  * consinit
  * Initialize system console.
  */
 void
 consinit()
 {
+	struct btinfo_console *consinfo;
 	static int initted;
 	
 	if (initted)
 		return;
 	initted = 1;
-	cninit();		/* XXX temporary */
+
+	consinfo = (struct btinfo_console *)lookup_bootinfo(BTINFO_CONSOLE);
+	if (!consinfo)
+		panic("not found console information in bootinfo");
+
+#if (NPC > 0) || (NVT > 0)
+	if (!strcmp(consinfo->devname, "vga")) {
+		pccnattach();
+		return;
+	}
+#endif
+#if (NCOM > 0)
+	if (!strcmp(consinfo->devname, "com")) {
+		bus_space_tag_t tag = &bebox_bus_io;
+
+		if(comcnattach(tag, consinfo->addr, consinfo->speed, COM_FREQ,
+		    ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8)))
+			panic("can't init serial console");
+
+		return;
+	}
+#endif
+	panic("invalid console device %s", consinfo->devname);
 }
 
 /*
