@@ -660,6 +660,7 @@
 ./usr/share/man/cat8/lastlogin.0
 ./usr/share/man/cat8/ldconfig.0
 ./usr/share/man/cat8/lfs_cleanerd.0
+./usr/share/man/cat8/lmcctl.0
 ./usr/share/man/cat8/lockd.0
 ./usr/share/man/cat8/lpc.0
 ./usr/share/man/cat8/lpd.0
