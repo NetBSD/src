@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.40 1994/11/30 15:45:19 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.41 1994/11/30 22:02:47 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -1546,8 +1546,15 @@ pmap_page_index(pa)
 {
 	u_long idx;
 
+#ifdef	DIAGNOSTIC
 	if (pa < avail_start || pa >= avail_end)
-		panic("pmap_page_index");
+		panic("pmap_page_index: pa=0x%x", pa);
+	if (hole_start && pa >= hole_start) {
+		/* Make sure pa is not in the hole. */
+		if (pa < (hole_start + hole_size))
+			panic("pmap_page_index: pa=0x%x", pa);
+	}
+#endif
 
 	return (sun3_btop(pa));
 }
