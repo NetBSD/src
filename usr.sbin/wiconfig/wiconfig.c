@@ -1,4 +1,4 @@
-/*	$NetBSD: wiconfig.c,v 1.21 2002/03/04 01:24:53 dbj Exp $	*/
+/*	$NetBSD: wiconfig.c,v 1.22 2002/03/04 01:26:58 dbj Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wiconfig.c,v 1.21 2002/03/04 01:24:53 dbj Exp $";
+	"@(#) $Id: wiconfig.c,v 1.22 2002/03/04 01:26:58 dbj Exp $";
 #endif
 
 struct wi_table {
@@ -81,6 +81,7 @@ struct wi_table {
 #define	WI_WORDS		0x03
 #define	WI_HEXBYTES		0x04
 #define	WI_KEYSTRUCT		0x05
+#define	WI_BITS			0x06
 	char *wi_label;			/* label used to print info */
 	int wi_opt;			/* option character to set this */
 	char *wi_desc;
@@ -109,6 +110,7 @@ static void wi_sethex		__P((char *, int, char *));
 static void wi_printwords	__P((struct wi_req *));
 static void wi_printbool	__P((struct wi_req *));
 static void wi_printhex		__P((struct wi_req *));
+static void wi_printbits	__P((struct wi_req *));
 static void wi_dumpinfo		__P((char *));
 static void wi_setkeys		__P((char *, char *, int));
 static void wi_printkeys	__P((struct wi_req *));
@@ -594,6 +596,23 @@ void wi_printhex(wreq)
 	return;
 }
 
+void wi_printbits(wreq)
+	struct wi_req		*wreq;
+{
+	int			i;
+	int bits = le16toh(wreq->wi_val[0]);
+
+	printf("[");
+	for (i = 0; i < 16; i++) {
+		if (bits & 0x1) {
+			printf(" %d", i+1);
+		}
+		bits >>= 1;
+	}
+	printf(" ]");
+	return;
+}
+
 static struct wi_table wi_table[] = {
 	{ WI_RID_SERIALNO, WI_STRING, "NIC serial number:\t\t\t" },
 	{ WI_RID_NODENAME, WI_STRING, "Station name:\t\t\t\t",
@@ -604,7 +623,7 @@ static struct wi_table wi_table[] = {
 	{ WI_RID_DESIRED_SSID, WI_STRING, "Desired netname (SSID):\t\t\t",
 	    'n', "network name" },
 	{ WI_RID_CURRENT_BSSID, WI_HEXBYTES, "Current BSSID:\t\t\t\t" },
-	{ WI_RID_CHANNEL_LIST, WI_WORDS, "Channel list:\t\t\t\t" },
+	{ WI_RID_CHANNEL_LIST, WI_BITS, "Channel list:\t\t\t\t" },
 	{ WI_RID_OWN_CHNL, WI_WORDS, "IBSS channel:\t\t\t\t",
 	    'f', "frequency" },
 	{ WI_RID_CURRENT_CHAN, WI_WORDS, "Current channel:\t\t\t" },
@@ -703,6 +722,9 @@ static void wi_dumpinfo(iface)
 			break;
 		case WI_HEXBYTES:
 			wi_printhex(&wreq);
+			break;
+		case WI_BITS:
+			wi_printbits(&wreq);
 			break;
 		default:
 			break;
