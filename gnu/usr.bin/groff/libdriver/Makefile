@@ -1,16 +1,21 @@
-#	@(#)Makefile	6.2 (Berkeley) 4/30/91
+#	$NetBSD: Makefile,v 1.1.1.2 2001/04/19 14:33:14 wiz Exp $
 
-.include "../Makefile.g++"
+.include "../Makefile.comp"
+
+DIST=		${IDIST}/src/libs/libdriver
+.PATH:		${DIST}
 
 LIB=		driver
-SRCS=		input.cc printer.cc
-GXXFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libgroff \
-		-I$(.CURDIR)/../../../lib/libg++/g++-include
-NOMAN=		noman
-NOPROFILE=	noprofile
+SRCS=		printer.cc input.cc
+# lint step doesn't work, because there are no .ln files here, because
+# we're only compiling c++ files in this dir
+# lint command line is: lint -Cdriver -lc
+MKLINT=		no
+MKMAN=		no
+MKPROFILE=	no
+MKPIC=		no
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
-
-.SUFFIXES: .cc

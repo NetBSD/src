@@ -1,12 +1,7 @@
-#	@(#)Makefile	6.1 (Berkeley) 3/3/91
+#	$NetBSD: Makefile,v 1.1.1.2 2001/04/19 14:33:07 wiz Exp $
 
-#
-# Ugly installation glitch: you MUST be running X11 when building
-# the xditview stuff, since xtotroff queries the local X server to get
-# font information.  Therefore these are not built by default.
-#
-XDEVICES=	devX100 devX100-12 devX75 devX75-12
-
-SUBDIR=		devascii devlatin1 devdvi devps
+# devcp1047 is ignored by tradition
+SUBDIR=	devascii devdvi devhtml devlatin1 devlbp devlj4 devps devutf8 \
+	devX100 devX100-12 devX75 devX75-12
 
 .include <bsd.subdir.mk>

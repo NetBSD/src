@@ -1,46 +1,44 @@
-#	@(#)Makefile.dev	6.2 (Berkeley) 3/16/91
+#	$NetBSD: Makefile.dev,v 1.1.1.2 2001/04/19 14:33:07 wiz Exp $
 
 # Client Makefiles define DEVICE and FONTFILES and provide rules for
 #	individual font files
 
-.include "../../Makefile.fontdir"
-
-DEVICEDIR?=	$(FONTDIR)/dev$(DEVICE)
-FONTOWN?=	bin
-FONTGRP?=	bin
-FONTMODE?=	444
-
 .MAIN: all
 
-all:	$(FONTFILES)
+.include <bsd.own.mk>
 
-.if !target(obj)
-.if defined(NOOBJ)
-obj:
+# XXX -- this depends on ../include/defs.h
+FONTDIR=	/usr/share/groff_font
+
+DEVICEDIR?=	$(FONTDIR)/dev$(DEVICE)
+FONTOWN?=	${FILESOWN}
+FONTGRP?=	${FILESGRP}
+FONTMODE?=	${FILESMODE}
+
+PSPRINT=	lpr
+DVIPRINT=	lpr -d
+BROKEN_SPOOLER_FLAGS=7
+
+.if ${MKSHARE} != "no"
+realall:	$(FONTFILES)
 .else
-obj:
-	@cd ${.CURDIR}; rm -rf obj; \
-	here=`pwd`; dest=/usr/obj/`echo $$here | sed 's,/usr/src/,,'`; \
-	echo "$$here -> $$dest"; ln -s $$dest obj; \
-	if test -d /usr/obj -a ! -d $$dest; then \
-		mkdir -p $$dest; \
-	else \
-		true; \
-	fi;
-.endif
+realall:
 .endif
 
 .if !target(clean)
-CLEANFILES+=	$(FONTFILES)
-
-clean cleandir:
-	-rm -f $(CLEANFILES)
+clean cleandir distclean:
+	-rm -f $(FONTFILES)
+.else
+COPY=	-c
 .endif
 
-.if !target(install)
-install:
-	-for f in $(FONTFILES); do \
-		install -c -o $(FONTOWN) -g $(FONTGRP) -m $(FONTMODE) $$f \
-			$(DESTDIR)$(DEVICEDIR); \
-	done
+.if ${MKSHARE} != "no"
+FILES=${FONTFILES}
+FILESDIR=${DEVICEDIR}
+GENFILES=${FONTFILES:Mgenerate/*}
+.for i in ${GENFILES}
+FILESDIR_$i=${DEVICEDIR}/generate
+.endfor
 .endif
+
+.include <bsd.prog.mk>

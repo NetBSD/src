@@ -1,0 +1,16 @@
+#	$NetBSD: Makefile.comp,v 1.1.1.1 2001/04/19 14:33:07 wiz Exp $
+
+DEFINES= -DHAVE_STDLIB_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DIRENT_H=1 -DHAVE_LIMITS_H=1 -DHAVE_SYS_DIR_H=1 -DHAVE_STRING_H=1 -DHAVE_STRINGS_H=1 -DHAVE_MATH_H=1 -DRET_TYPE_SRAND_IS_VOID=1 -DHAVE_SYS_NERR=1 -DHAVE_SYS_ERRLIST=1 -DHAVE_CC_LIMITS_H=1 -DRETSIGTYPE=void -DHAVE_STRUCT_EXCEPTION=1 -DHAVE_UNISTD_H=1 -DHAVE_GETPAGESIZE=1 -DHAVE_MMAP=1 -DHAVE_FMOD=1 -DHAVE_STRTOL=1 -DHAVE_GETCWD=1 -DHAVE_STRERROR=1 -DHAVE_PUTENV=1 -DHAVE_RENAME=1 -DHAVE_MKSTEMP=1 -DHAVE_STRCASECMP=1 -DHAVE_STRNCASECMP=1 -DHAVE_STRSEP=1 -DHAVE_STRDUP=1 -DSYS_SIGLIST_DECLARED=1
+
+CPPFLAGS+= ${DEFINES} -I${.CURDIR}/../include -I${IDIST}/src/include
+
+# XXX This won't necessarily work if running a parallel make, but does
+# XXX work here because each subdir builds at most one .cc file from a .y.
+YFLAGS+= -d
+.y.cc:
+	$(YACC) $(YFLAGS) $(.IMPSRC)
+	mv y.tab.c $(.PREFIX).cc
+	mv y.tab.h $(.PREFIX).tab.h
+
+.include "../Makefile.path"
+.include "../../Makefile.inc"
