@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.35 2000/03/23 06:36:03 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.36 2000/03/29 14:19:22 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -281,8 +281,12 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
-	if(strcmp("fdc", auxp) || cfp->cf_unit != 0)
+	static int	fdc_matched = 0;
+
+	/* Match only once */
+	if(strcmp("fdc", auxp) || fdc_matched)
 		return(0);
+	fdc_matched = 1;
 	return(1);
 }
 
