@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.3 1996/10/13 01:37:29 christos Exp $	*/
+/*	$NetBSD: uha.c,v 1.4 1996/11/12 20:57:43 mycroft Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -85,9 +85,9 @@
 
 #define KVTOPHYS(x)	vtophys(x)
 
-void uha_reset_mscp __P((struct uha_softc *, struct uha_mscp *));
+integrate void uha_reset_mscp __P((struct uha_softc *, struct uha_mscp *));
 void uha_free_mscp __P((struct uha_softc *, struct uha_mscp *));
-void uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
+integrate void uha_init_mscp __P((struct uha_softc *, struct uha_mscp *));
 struct uha_mscp *uha_get_mscp __P((struct uha_softc *, int));
 void uhaminphys __P((struct buf *));
 int uha_scsi_cmd __P((struct scsi_xfer *));
