@@ -365,7 +365,7 @@ kbd_setmode(int mode)
 		cmd |= COMMAND_PCSCAN;	/*     yes, setup command */
 
 	kbc_8042cmd(CONTR_WRITE);
-	kbc_cmd(cmd);
+	kbd_cmd(cmd);
 	
 #endif /* PCVT_SCANSET > 1 */
 
