@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.24 1999/07/14 09:18:20 drochner Exp $	*/
+/*	$NetBSD: pcib.c,v 1.25 1999/09/20 16:07:45 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -143,6 +143,7 @@ pcibmatch(parent, match, aux)
 			 */
 			return (1);
 		}
+		break;
 	case PCI_VENDOR_SIS:
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_SIS_85C503:
