@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 static char sccsid[] = "@(#)ping.c	5.9 (Berkeley) 5/12/91";
-static char rcsid[] = "$Header: /cvsroot/src/sbin/ping/ping.c,v 1.3 1993/03/23 00:29:48 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sbin/ping/ping.c,v 1.4 1993/07/22 09:49:57 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -495,7 +495,7 @@ pr_pack(buf, cc, from)
 			tp = (struct timeval *)icp->icmp_data;
 #endif
 			tvsub(&tv, tp);
-			triptime = tv.tv_sec * 1000 + (tv.tv_usec / 1000);
+			triptime = tv.tv_sec * 1000000 + tv.tv_usec;
 			tsum += triptime;
 			if (triptime < tmin)
 				tmin = triptime;
@@ -523,7 +523,7 @@ pr_pack(buf, cc, from)
 			   icp->icmp_seq);
 			(void)printf(" ttl=%d", ip->ip_ttl);
 			if (timing)
-				(void)printf(" time=%ld ms", triptime);
+				(void)printf(" time=%.3f ms", triptime / 1000.0);
 			if (dupflag)
 				(void)printf(" (DUP!)");
 			/* check the data */
@@ -708,8 +708,9 @@ finish()
 			    ntransmitted));
 	(void)putchar('\n');
 	if (nreceived && timing)
-		(void)printf("round-trip min/avg/max = %ld/%lu/%ld ms\n",
-		    tmin, tsum / (nreceived + nrepeats), tmax);
+		(void)printf("round-trip min/avg/max = %.3f/%.3f/%.3f ms\n",
+		    tmin / 1000.0, tsum / 1000.0 / (nreceived + nrepeats),
+		    tmax / 1000.0);
 	exit(0);
 }
 
