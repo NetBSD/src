@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.22 1997/11/17 01:57:51 lukem Exp $
+#	$NetBSD: HOMEWORLD,v 1.23 1997/11/23 23:40:45 thorpej Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -94,6 +94,7 @@ config		netbsd	root on sd0a type ffs
 
 #options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
+options 	SCSIVERBOSE	# verbose SCSI messages
 
 mainbus0 at root
 
