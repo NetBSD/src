@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.12 2000/10/18 01:35:45 dogcow Exp $	*/
+/*	$NetBSD: tftp.c,v 1.13 2000/10/22 01:42:15 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.12 2000/10/18 01:35:45 dogcow Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.13 2000/10/22 01:42:15 dogcow Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,8 @@ sendfile(fd, name, mode)
 	struct tftphdr *ap;	   /* data and ack packets */
 	struct tftphdr *dp;
 	int n;
-	volatile unsigned int block, size, convert;
+	volatile unsigned int block;
+	volatile int size, convert;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
 	int fromlen;
@@ -218,7 +219,8 @@ recvfile(fd, name, mode)
 	struct tftphdr *ap;
 	struct tftphdr *dp;
 	int n;
-	volatile unsigned int block, size, firsttrip;
+	volatile unsigned int block;
+	volatile int size, firsttrip;
 	volatile unsigned long amount;
 	struct sockaddr_storage from;
 	int fromlen;
