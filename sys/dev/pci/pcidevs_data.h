@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.489 2002/11/26 18:10:10 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.490 2002/11/26 18:13:29 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.488 2002/11/26 18:09:27 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.489 2002/11/26 18:12:27 thorpej Exp 
  */
 
 /*
@@ -3218,6 +3218,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "IBM",
 	    "PPC 405GP PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_133PCIX,
+	    0,
+	    "IBM",
+	    "133 PCI-X Bridge",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_MPIC2,
