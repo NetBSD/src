@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1997/08/20 01:21:37 jonathan Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 1998/05/06 13:16:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -37,10 +37,14 @@
 #ifdef __mips__
 #define NLIST_ELF32
 #else
+#ifdef __powerpc__
+#define	NLIST_ELF32
+#else
 #define	NLIST_AOUT
 /* #define	NLIST_ECOFF */
 /* #define	NLIST_ELF32 */
 /* #define	NLIST_ELF64 */
+#endif
 #endif
 #endif
 
