@@ -1,4 +1,4 @@
-/*	$NetBSD: passwd.c,v 1.12 1998/06/08 03:12:45 lukem Exp $	*/
+/*	$NetBSD: passwd.c,v 1.13 1998/08/19 00:52:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: passwd.c,v 1.12 1998/06/08 03:12:45 lukem Exp $");
+__RCSID("$NetBSD: passwd.c,v 1.13 1998/08/19 00:52:18 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -313,7 +313,7 @@ pw_copy(ffd, tfd, pw, old_pw)
 			goto err;
 	}
 	/* Only append a new entry if real uid is root! */
-	if (!done) 
+	if (!done) {
 		if (getuid() == 0)
 			(void)fprintf(to, "%s:%s:%d:%d:%s:%ld:%ld:%s:%s:%s\n",
 			    pw->pw_name, pw->pw_passwd, pw->pw_uid, pw->pw_gid,
@@ -322,7 +322,8 @@ pw_copy(ffd, tfd, pw, old_pw)
 			    pw->pw_shell);
 		else
 			warnx("%s: changes not made, no such entry",
-		      	    _PATH_MASTERPASSWD);
+			    _PATH_MASTERPASSWD);
+	}
 
 	if (ferror(to))
 err:		pw_error(NULL, 1, 1);
