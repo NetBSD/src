@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.25 1999/07/23 13:32:28 mrg Exp $
+$NetBSD: acronyms,v 1.26 1999/07/23 13:49:12 hubertf Exp $
 
 AFAICT	as far as I can tell
 AFAICR	as far as I can recall
@@ -28,6 +28,7 @@ IMNSHO	in my not so humble opinion
 ISTR	I seem to recall
 L8R	later
 LOL	laughing out loud
+NFC	no fucking clue
 NIH	not invented here
 OIC	oh, I see
 OTOH	on the other hand
