@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.32.2.4 2001/02/26 22:40:35 he Exp $
+.\"	$NetBSD: rc.conf.5,v 1.32.2.5 2001/04/26 09:34:43 he Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -118,7 +118,7 @@ services are available.
 Usually
 .Pa /var
 is part of this, because it is needed by services such as
-.Xr dhclient 1
+.Xr dhclient 8
 which may be required to get the network operational.
 .It Sy critical_filesystems
 File systems such as
@@ -500,7 +500,7 @@ and passes
 or
 .Sq NO .
 Starts
-.Xr postfix 8
+.Xr postfix 1
 mail system.
 .It Sy lpd
 .Sq YES
