@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)edquota.c	8.3 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: edquota.c,v 1.17 1998/03/30 03:33:05 mrg Exp $");
+__RCSID("$NetBSD: edquota.c,v 1.18 1999/08/16 03:12:31 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -342,7 +342,7 @@ putprivs(id, quotatype, quplist)
 }
 
 /*
- * Take a list of priviledges and get it edited.
+ * Take a list of privileges and get it edited.
  */
 int
 editit(tmpfile)

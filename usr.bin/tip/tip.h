@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.12 1998/12/19 23:00:43 christos Exp $	*/
+/*	$NetBSD: tip.h,v 1.13 1999/08/16 03:02:46 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -177,7 +177,7 @@ typedef
 typedef
 	struct {
 		char	e_char;			/* char to match on */
-		char	e_flags;		/* experimental, priviledged */
+		char	e_flags;		/* experimental, privileged */
 		char	*e_help;		/* help string */
 		void 	(*e_func) __P((char));	/* command */
 	}
@@ -185,7 +185,7 @@ typedef
 
 #define NORM	00		/* normal protection, execute anyone */
 #define EXP	01		/* experimental, mark it with a `*' on help */
-#define PRIV	02		/* priviledged, root execute only */
+#define PRIV	02		/* privileged, root execute only */
 
 extern int	vflag;		/* verbose during reading of .tiprc file */
 extern value_t	vtable[];	/* variable table */

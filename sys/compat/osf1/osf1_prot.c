@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.2 1999/05/05 01:51:35 cgd Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.3 1999/08/16 02:59:24 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -104,10 +104,10 @@ osf1_sys_setgid(p, v, retval)
  * setuid() won't work.
  *
  * Instead, by P1003.1b-1993, setuid() is supposed to work like:
- *	If the process has appropriate [super-user] priviledges, the
+ *	If the process has appropriate [super-user] privileges, the
  *	    setuid() function sets the real user ID, effective user
  *	    ID, and the saved set-user-ID to uid.
- *	If the process does not have appropriate priviledges, but uid
+ *	If the process does not have appropriate privileges, but uid
  *	    is equal to the real user ID or the saved set-user-ID, the
  *	    setuid() function sets the effective user ID to uid; the
  *	    real user ID and saved set-user-ID remain unchanged by
