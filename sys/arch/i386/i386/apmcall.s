@@ -1,4 +1,4 @@
-/*	$NetBSD: apmcall.s,v 1.1 1997/10/14 03:54:18 jtk Exp $ */
+/*	$NetBSD: apmcall.s,v 1.2 1997/10/15 01:21:05 jtk Exp $ */
 /*
  *  Copyright (c) 1997 John T. Kohl
  *  All rights reserved.
@@ -31,9 +31,10 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/apmvar.h>
+#include <machine/bioscall.h>
 
 /*
- * int apmcall(int function, struct apmregs *regs):
+ * int apmcall(int function, struct bioscallregs *regs):
  * 	call the APM protected mode bios function FUNCTION for BIOS selection
  * 	WHICHBIOS.
  *	Fills in *regs with registers as returned by APM.
@@ -63,9 +64,9 @@ NENTRY(apmcall)
 	movb	%cs:8(%ebp),%al
 	movb	$0x53,%ah
 	movl	%cs:12(%ebp),%ebx
-	movw	%cs:APMREG_CX(%ebx),%cx
-	movw	%cs:APMREG_DX(%ebx),%dx
-	movw	%cs:APMREG_BX(%ebx),%bx
+	movw	%cs:BIOSCALLREG_CX(%ebx),%cx
+	movw	%cs:BIOSCALLREG_DX(%ebx),%dx
+	movw	%cs:BIOSCALLREG_BX(%ebx),%bx
 	pushfl
 	cli
 	pushl	%ds
@@ -81,10 +82,10 @@ NENTRY(apmcall)
 	popl	%ds		# see above
 #endif
 	movl	12(%ebp),%esi
-	movw	%ax,APMREG_AX(%esi)
-	movw	%bx,APMREG_BX(%esi)
-	movw	%cx,APMREG_CX(%esi)
-	movw	%dx,APMREG_DX(%esi)
+	movw	%ax,BIOSCALLREG_AX(%esi)
+	movw	%bx,BIOSCALLREG_BX(%esi)
+	movw	%cx,BIOSCALLREG_CX(%esi)
+	movw	%dx,BIOSCALLREG_DX(%esi)
 /* todo: do something with %edi? */
 	movl	$1,%eax
 	cmpl	$0,apmstatus
