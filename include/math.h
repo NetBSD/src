@@ -1,4 +1,4 @@
-/*	$NetBSD: math.h,v 1.29 2004/01/15 19:43:44 kleink Exp $	*/
+/*	$NetBSD: math.h,v 1.30 2004/01/17 01:04:46 uwe Exp $	*/
 
 /*
  * ====================================================
@@ -51,7 +51,7 @@ union __long_double_u {
 	((sizeof (__arg0) == sizeof (float))				\
 	?	__ ## __name ## f (__arg0)				\
 	:	__ ## __name ## d (__arg0))
-#endif /* __HAVE_LONG_DOUBLE
+#endif /* __HAVE_LONG_DOUBLE */
 
 /*
  * ANSI/POSIX
