@@ -1,4 +1,4 @@
-/*	$NetBSD: look_up.c,v 1.4 1997/10/20 00:23:26 lukem Exp $	*/
+/*	$NetBSD: look_up.c,v 1.5 2001/09/27 14:43:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)look_up.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: look_up.c,v 1.4 1997/10/20 00:23:26 lukem Exp $");
+__RCSID("$NetBSD: look_up.c,v 1.5 2001/09/27 14:43:31 christos Exp $");
 #endif /* not lint */
 
 #include "talk.h"
@@ -54,6 +54,7 @@ check_local()
 {
 	CTL_RESPONSE response;
 	CTL_RESPONSE *rp = &response;
+	struct sockaddr addr;
 
 	/* the rest of msg was set up in get_names */
 #ifdef MSG_EOR
@@ -74,9 +75,13 @@ check_local()
 	do {
 		if (rp->addr.sa_family != AF_INET)
 			p_error("Response uses invalid network address");
+
+		(void)memcpy(&addr, &rp->addr.sa_family, sizeof(addr));
+		addr.sa_family = rp->addr.sa_family;
+		addr.sa_len = sizeof(addr);
+
 		errno = 0;
-		if (connect(sockt,
-		    (struct sockaddr *)&rp->addr, sizeof (rp->addr)) != -1)
+		if (connect(sockt, &addr, sizeof(addr)) != -1)
 			return (1);
 	} while (errno == EINTR);
 	if (errno == ECONNREFUSED) {
