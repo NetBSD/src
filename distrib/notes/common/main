@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.177 2002/05/12 22:47:17 kleink Exp $
+.\"	$NetBSD: main,v 1.178 2002/05/13 02:53:07 itojun Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1238,7 +1238,8 @@ and
 are moved from
 .Pa /etc
 to
-.Pa /etc/ssh .
+.Pa /etc/ssh ,
+and filename for the main configuration files are changed.
 .bullet)
 .
 .Pp
