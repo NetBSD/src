@@ -1,0 +1,5 @@
+# Host: Big-endian PowerPC running Darwin.  We mostly treat this
+# like NetBSD.
+
+XDEPFILES= ser-tcp.o
+XM_FILE= xm-nbsd.h
