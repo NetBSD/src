@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.112 2000/07/25 09:56:41 is Exp $
+.\"	$NetBSD: options.4,v 1.113 2000/07/28 21:38:45 castor Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -775,6 +775,11 @@ set to
 What this option allows as far as security is
 concerned, is the ability to safely ensure that the correct script
 is run by the interpreter, as it is passed as an already open file.
+.It Cd options PUCCN
+Enables treating serial ports found on PCI boards
+.Xr puc 4
+as potential console devices.  The method for choosing such a console
+device is port dependent.
 .It Cd options RTC_OFFSET=integer
 The kernel (and typically the hardware battery backed-up clock on
 those machines that have one) keeps time in
