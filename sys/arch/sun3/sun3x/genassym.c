@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.11 1997/05/13 17:25:53 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.12 1997/10/23 02:06:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -199,13 +199,7 @@ main()
 	for (i = 0; i < nassyms; i++) {
 		name = assyms[i].n;
 		val  = assyms[i].v;
-
-		printf("#define\t%s\t", name);
-		/* Hack to make the output easier to verify. */
-		if ((val < 0) || (val > 999))
-			printf("0x%x\n", val);
-		else
-			printf("%d\n", val);
+		printf("#define\t%s\t%d\n", name, val);
 	}
 
 	exit(0);
