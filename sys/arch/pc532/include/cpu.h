@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 1997/03/22 08:29:19 matthias Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 1997/04/01 16:31:14 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -103,10 +103,6 @@ void	configure __P((void));
 /* ieee_handler.c */
 int	ieee_handle_exception __P((struct proc *));
 
-/* machdep.c */
-void	dumpconf __P((void));
-void	softnet __P((void *));
-
 /* locore.s */
 void	delay __P((int));
 struct pcb;
@@ -114,6 +110,13 @@ void	proc_trampoline __P((void));
 int	ram_size __P((void *));
 void	restore_fpu_context __P((struct pcb *));
 void	save_fpu_context __P((struct pcb *));
+
+/* machdep.c */
+void	dumpconf __P((void));
+void	softnet __P((void *));
+
+/* mainbus.c */
+void	icu_init __P((u_char *));
 
 /* trap.c */
 void	child_return __P((struct proc *, struct syscframe frame));
@@ -128,12 +131,14 @@ int kvtop __P((caddr_t));
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_NKPDE		2	/* int: number of kernel PDEs */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define	CPU_IEEE_DISABLE	3	/* int: disable ieee trap handler */
+#define	CPU_MAXID		4	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "nkpde", CTLTYPE_INT }, \
+	{ "ieee_disable", CTLTYPE_INT }, \
 }
 
 #endif /* !_NS532_CPU_H_ */
