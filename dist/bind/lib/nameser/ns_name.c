@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.1.1.1.8.3 2002/07/01 17:15:22 he Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.1.1.1.8.4 2002/11/14 14:40:42 itojun Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -343,6 +343,10 @@ ns_name_ntol(const u_char *src, u_char *dst, size_t dstsiz)
 	dn = dst;
 	eom = dst + dstsiz;
 
+	if (dn >= eom) {
+		errno = EMSGSIZE;
+		return (-1);
+	}
 	while ((n = *cp++) != 0) {
 		if ((n & NS_CMPRSFLGS) == NS_CMPRSFLGS) {
 			/* Some kind of compression pointer. */
