@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.13 2000/04/10 08:11:01 jdolecek Exp $
+.\"	$NetBSD: ktrace.1,v 1.14 2001/05/04 07:09:55 simonb Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,13 +41,13 @@
 .Nd enable kernel process tracing
 .Sh SYNOPSIS
 .Nm
-.Op Fl aCcdi
+.Op Fl aCcdis
 .Op Fl f Ar trfile
 .Op Fl g Ar pgrp
 .Op Fl p Ar pid
 .Op Fl t Ar trstr
 .Nm ""
-.Op Fl adi
+.Op Fl adis
 .Op Fl f Ar trfile
 .Op Fl t Ar trstr
 command
@@ -118,6 +118,8 @@ processes.
 Enable (disable) tracing on the indicated process id (only one
 .Fl p
 flag is permitted).
+.It Fl s
+Write to the trace file with synchronized I/O.
 .It Fl t Ar trstr 
 The string argument represents the kernel trace points, one per letter.
 The following table equates the letters with the tracepoints:
