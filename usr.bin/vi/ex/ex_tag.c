@@ -798,7 +798,8 @@ tagq_free(sp, tqp)
 		CIRCLEQ_REMOVE(&tqp->tagq, tp, q);
 		free(tp);
 	}
-	CIRCLEQ_REMOVE(&exp->tq, tqp, q);
+	if (tqp->q.cqe_next != NULL)
+		CIRCLEQ_REMOVE(&exp->tq, tqp, q);
 	free(tqp);
 	return (0);
 }
