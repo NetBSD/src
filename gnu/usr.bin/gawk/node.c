@@ -23,10 +23,6 @@
  * the Free Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: node.c,v 1.4 1994/02/17 01:22:27 jtc Exp $";
-#endif
-
 #include "awk.h"
 
 extern double strtod();
@@ -126,7 +122,7 @@ register NODE *s;
 {
 	char buf[128];
 	register char *sp = buf;
-	register long num = 0;
+	double val;
 
 #ifdef DEBUG
 	if (s == NULL) cant_happen();
@@ -136,10 +132,43 @@ register NODE *s;
 	if (s->stref != 0) ; /*cant_happen();*/
 #endif
 
-        /* avoids floating point exception in DOS*/
-        if ( s->numbr <= LONG_MAX && s->numbr >= -LONG_MAX)
-		num = (long)s->numbr;
-	if ((AWKNUM) num == s->numbr) {	/* integral value */
+	/* not an integral value, or out of range */
+	if ((val = double_to_int(s->numbr)) != s->numbr
+	    || val < LONG_MIN || val > LONG_MAX) {
+#ifdef GFMT_WORKAROUND
+		NODE *dummy, *r;
+		unsigned short oflags;
+		extern NODE *format_tree P((const char *, int, NODE *));
+		extern NODE **fmt_list;          /* declared in eval.c */
+
+		/* create dummy node for a sole use of format_tree */
+		getnode(dummy);
+		dummy->lnode = s;
+		dummy->rnode = NULL;
+		oflags = s->flags;
+		s->flags |= PERM; /* prevent from freeing by format_tree() */
+		r = format_tree(CONVFMT, fmt_list[CONVFMTidx]->stlen, dummy);
+		s->flags = oflags;
+		s->stfmt = (char)CONVFMTidx;
+		s->stlen = r->stlen;
+		s->stptr = r->stptr;
+		freenode(r);		/* Do not free_temp(r)!  We want */
+		freenode(dummy);	/* to keep s->stptr == r->stpr.  */
+
+		goto no_malloc;
+#else
+		/*
+		 * no need for a "replacement" formatting by gawk,
+		 * just use sprintf
+		 */
+		sprintf(sp, CONVFMT, s->numbr);
+		s->stlen = strlen(sp);
+		s->stfmt = (char)CONVFMTidx;
+#endif /* GFMT_WORKAROUND */
+	} else {
+		/* integral value */
+	        /* force conversion to long only once */
+		register long num = (long) val;
 		if (num < NVAL && num >= 0) {
 			sp = (char *) values[num];
 			s->stlen = 1;
@@ -148,14 +177,11 @@ register NODE *s;
 			s->stlen = strlen(sp);
 		}
 		s->stfmt = -1;
-	} else {
-		NUMTOSTR(sp, CONVFMT, s->numbr);
-		s->stlen = strlen(sp);
-		s->stfmt = (char)CONVFMTidx;
 	}
-	s->stref = 1;
 	emalloc(s->stptr, char *, s->stlen + 2, "force_string");
 	memcpy(s->stptr, sp, s->stlen+1);
+no_malloc:
+	s->stref = 1;
 	s->flags |= STR;
 	return s;
 }
@@ -187,7 +213,8 @@ NODE *n;
 	if (n->type == Node_val && (n->flags & STR)) {
 		r->stref = 1;
 		emalloc(r->stptr, char *, r->stlen + 2, "dupnode");
-		memcpy(r->stptr, n->stptr, r->stlen+1);
+		memcpy(r->stptr, n->stptr, r->stlen);
+		r->stptr[r->stlen] = '\0';
 	}
 	return r;
 }
@@ -290,8 +317,10 @@ more_nodes()
 
 	/* get more nodes and initialize list */
 	emalloc(nextfree, NODE *, NODECHUNK * sizeof(NODE), "newnode");
-	for (np = nextfree; np < &nextfree[NODECHUNK - 1]; np++)
+	for (np = nextfree; np < &nextfree[NODECHUNK - 1]; np++) {
+		np->flags = 0;
 		np->nextp = np + 1;
+	}
 	np->nextp = NULL;
 	np = nextfree;
 	nextfree = nextfree->nextp;
