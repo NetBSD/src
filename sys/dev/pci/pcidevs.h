@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.91 1998/10/01 23:33:25 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.92 1998/10/04 23:52:43 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.84 1998/10/01 23:32:41 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.85 1998/10/04 23:50:05 tron Exp 
  */
 
 /*
@@ -975,6 +975,7 @@
 #define	PCI_PRODUCT_S3_968_2	0x88f2		/* 86C968-2 (\"Vision968\") */
 #define	PCI_PRODUCT_S3_968_3	0x88f3		/* 86C968-3 (\"Vision968\") */
 #define	PCI_PRODUCT_S3_TRIO64V2_DX	0x8901		/* Trio64V2/DX */
+#define	PCI_PRODUCT_S3_VIRGE_DX	0x8a01		/* ViRGE/DX */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
 /* SGS Thomson products */
