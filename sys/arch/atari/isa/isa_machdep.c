@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.15 1999/11/23 14:48:58 leo Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.16 2000/01/19 13:13:14 leo Exp $	*/
 
 /*
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
@@ -85,12 +85,11 @@ void		*auxp;
 {
 	struct isabus_softc *sc = (struct isabus_softc *)dp;
 	struct isabus_attach_args	iba;
-	bus_space_tag_t			leb_alloc_bus_space_tag __P((void));
 
 	iba.iba_busname = "isa";
 	iba.iba_dmat	= BUS_ISA_DMA_TAG;
-	iba.iba_iot     = leb_alloc_bus_space_tag();
-	iba.iba_memt    = leb_alloc_bus_space_tag();
+	iba.iba_iot     = leb_alloc_bus_space_tag(NULL);
+	iba.iba_memt    = leb_alloc_bus_space_tag(NULL);
 	iba.iba_ic	= &sc->sc_chipset;
 	if ((iba.iba_iot == NULL) || (iba.iba_memt == NULL)) {
 		printf("leb_alloc_bus_space_tag failed!\n");
