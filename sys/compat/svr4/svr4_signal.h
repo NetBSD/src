@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.4 1994/11/18 02:53:59 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.5 1995/01/08 21:31:38 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -89,4 +89,35 @@
 typedef struct {
         u_long bits[4];
 } svr4_sigset_t;
+
+struct svr4_sigaction {
+	int		  sa_flags;
+	void		(*sa_handler)();
+	svr4_sigset_t	  sa_mask;
+	int 		  sa_reserved[2];
+};
+
+typedef struct svr4_sigaltstack {
+	char		 *ss_sp;
+	int		  ss_size;
+	int		  ss_flags;
+} svr4_stack_t;
+
+/* sa_flags */
+#define SVR4_SA_ONSTACK		0x00000001
+#define SVR4_SA_RESETHAND	0x00000002
+#define SVR4_SA_RESTART		0x00000004
+#define SVR4_SA_SIGINFO		0x00000008
+#define SVR4_SA_NODEFER		0x00000010
+#define SVR4_SA_NOCLDWAIT	0x00010000	/* No zombies 	*/
+#define SVR4_SA_NOCLDSTOP	0x00020000	/* No jcl	*/
+
+/* ss_flags */
+#define SVR4_SS_ONSTACK		0x00000001
+#define SVR4_SS_DISABLE		0x00000002
+
+int  bsd_to_svr4_signum __P((int));
+void bsd_to_svr4_sigset_t __P((const sigset_t *, svr4_sigset_t *));
+void svr4_to_bsd_sigset_t __P((const svr4_sigset_t *, sigset_t *));
+
 #endif /* !_SVR4_SIGNAL_H_ */
