@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.54 2000/11/18 00:51:29 cgd Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.55 2001/01/18 07:09:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -227,19 +227,32 @@ emitloc(FILE *fp)
 {
 	int i;
 
-	if (locators.used == 0)
-		return (0);
-
-	if (fprintf(fp, "\n/* locators */\n\
+	if (locators.used != 0) {
+		if (fprintf(fp, "\n/* locators */\n\
 static int loc[%d] = {", locators.used) < 0)
-		return (1);
-	for (i = 0; i < locators.used; i++)
-		if (fprintf(fp, "%s%s,", SEP(i, 8), locators.vec[i]) < 0)
 			return (1);
-	if (fprintf(fp,
-		    "\n};\n\nconst char *nullcf_locnames[] = {NULL};\n") < 0)
-		return (1);
-	return ht_enumerate(attrtab, cf_locnames_print, fp);
+		for (i = 0; i < locators.used; i++)
+			if (fprintf(fp, "%s%s,", SEP(i, 8),
+			    locators.vec[i]) < 0)
+				return (1);
+		if (fprintf(fp, "\n};\n") < 0)
+			return (1);
+	} else if (*packed != NULL) {
+		/* We need to have *something*. */
+		if (fprintf(fp, "\n/* locators */\n\
+static int loc[1] = { -1 };\n") < 0)
+			return (1);
+	}
+
+	if (*packed != NULL)
+		if (fprintf(fp,
+		    "\nconst char *nullcf_locnames[] = {NULL};\n") < 0)
+			return (1);
+
+	if (locators.used != 0)
+		return ht_enumerate(attrtab, cf_locnames_print, fp);
+
+	return (0);
 }
 
 /*
