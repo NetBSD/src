@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.c,v 1.1 1997/02/19 23:29:28 gwr Exp $	*/
+/*	$NetBSD: clock_subr.c,v 1.2 1997/02/20 00:32:15 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,14 +65,21 @@ static const int month_days[12] = {
 	31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
-/* Use an inline to make the logic more obvious. */
+/*
+ * This inline avoids some unnecessary modulo operations
+ * as compared with the usual macro:
+ *   ( ((year % 4) == 0 &&
+ *      (year % 100) != 0) ||
+ *     ((year % 400) == 0) )
+ * It is otherwise equivalent.
+ */
 static inline int
 leapyear(year)
 	int year;
 {
 	int rv = 0;
 
-	if ((year % 4) == 0) {
+	if ((year & 3) == 0) {
 		rv = 1;
 		if ((year % 100) == 0) {
 			rv = 0;
