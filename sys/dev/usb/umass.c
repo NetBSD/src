@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.70 2001/12/12 13:23:20 gehenna Exp $	*/
+/*	$NetBSD: umass.c,v 1.71 2001/12/12 14:24:53 gehenna Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.70 2001/12/12 13:23:20 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.71 2001/12/12 14:24:53 gehenna Exp $");
 
 #include "atapibus.h"
 
@@ -342,8 +342,8 @@ umass_match_proto(struct umass_softc *sc, usbd_interface_handle iface,
 		sc->quirks |= NO_TEST_UNIT_READY;
 	}
 
-	if (UGETW(dd->idVendor) == USB_VENDOR_OLYMPUS &&
-	    UGETW(dd->idProduct) == USB_PRODUCT_OLYMPUS_C1) {
+	if (vendor == USB_VENDOR_OLYMPUS &&
+	    product == USB_PRODUCT_OLYMPUS_C1) {
 		/*
 		 * The Olympus C-1 camera uses a different command-status
 		 * signature.
