@@ -1,4 +1,4 @@
-/*	$NetBSD: fpclassify_ieee754.c,v 1.1 2003/10/28 22:05:37 kleink Exp $	*/
+/*	$NetBSD: fpclassifyd_ieee754.c,v 1.1 2003/10/28 22:50:42 kleink Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpclassify_ieee754.c,v 1.1 2003/10/28 22:05:37 kleink Exp $");
+__RCSID("$NetBSD: fpclassifyd_ieee754.c,v 1.1 2003/10/28 22:50:42 kleink Exp $");
 #endif
 
 #include <machine/ieee.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: fpclassify_ieee754.c,v 1.1 2003/10/28 22:05:37 kleink Exp $");
  *          IEEE 754 double-precision version
  */
 int
-__fpclassify(double x)
+__fpclassifyd(double x)
 {
 	union ieee_double_u u;
 
