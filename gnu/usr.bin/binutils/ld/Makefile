@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2002/09/19 03:09:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.10 2003/03/01 13:09:20 mrg Exp $
 
 .include <bsd.own.mk>
 
 TOP=		${NETBSDSRCDIR}/gnu
 DIST=		${TOP}/dist/toolchain
+GNUHOSTDIST=	${DIST}
 
 .include "${.CURDIR}/arch/${MACHINE_ARCH}/defs.mk"
 
@@ -43,7 +44,7 @@ stringify.sed: ${G_STRINGIFY}
 
 .depend: .depend.${f}
 .depend.${f}: ${f}.sh
-	(. ${>:M*.sh} && \
+	(srcdir=${DIST}/ld . ${>:M*.sh} && \
 		if [ x"$$TEMPLATE_NAME" != x ]; then \
 			temp_emul=$$TEMPLATE_NAME.em; \
 		else \
@@ -61,7 +62,7 @@ CLEANFILES+=	.depend.${f} e${f}.c
 
 e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 	unset MACHINE || true; \
-	LIB_PATH=/usr/lib \
+	LIB_PATH=/usr/lib srcdir=${DIST}/ld \
 		sh ${DIST}/ld/genscripts.sh ${DIST}/ld ${LIBDIR} /usr \
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} ${f}
