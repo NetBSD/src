@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pcmcia.c,v 1.23 1999/08/14 13:43:02 tron Exp $	*/
+/*	$NetBSD: if_ep_pcmcia.c,v 1.24 1999/10/11 17:49:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -166,6 +166,10 @@ struct ep_pcmcia_product {
 	{ PCMCIA_PRODUCT_3COM_3C574,		ELINK_CHIPSET_ROADRUNNER,
 	  ELINK_FLAGS_MII,			0,
 	  PCMCIA_STR_3COM_3C574 },
+
+	{ PCMCIA_PRODUCT_3COM_3CCFEM556BI,	ELINK_CHIPSET_ROADRUNNER,
+	  ELINK_FLAGS_MII,			0,
+	  PCMCIA_STR_3COM_3CCFEM556BI },
 
 	{ 0,					0,
 	  0,					0,
@@ -346,6 +350,7 @@ ep_pcmcia_attach(parent, self, aux)
 		 */
 		/* FALLTHROUGH */
 	case PCMCIA_PRODUCT_3COM_3C574:
+	case PCMCIA_PRODUCT_3COM_3CCFEM556BI:
 		/*
 		 * Apparently, some 3c574s do it this way, as well.
 		 */
