@@ -64,12 +64,12 @@
 ./var/cron/log
 ./var/cron/tabs/root
 ./var/db/locate.database
+./var/log/authlog
 ./var/log/lastlog
 ./var/log/lpd-errs
 ./var/log/maillog
 ./var/log/messages
 ./var/log/sendmail.st
-./var/log/secure
 ./var/log/wtmp
 ./var/msgs/bounds
 ./var/run/utmp
