@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 1999/03/13 19:19:03 sommerfe Exp $
+#	$NetBSD: Makefile.inc,v 1.16 1999/03/13 19:58:44 sommerfe Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -37,6 +37,7 @@ all:	netbsd.ram.gz
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
 	newfs -B le -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
+	${MDEC}/installboot -v -f ${MDEC}/biosboot.sym ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
@@ -46,7 +47,6 @@ all:	netbsd.ram.gz
 	@echo "installing new bootblocks"
 	-rm -f ${MOUNT_POINT}/boot
 	umount ${MOUNT_POINT}
-	${MDEC}/installboot -v -f ${MDEC}/biosboot.sym ${VND_RDEV}
 	vnconfig -u ${VND_CDEV}
 
 unconfig:
@@ -58,7 +58,7 @@ netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
 	mdsetimage -v netbsd.tmp ${RAMDISK}
 	${STRIP} netbsd.tmp
-	gzip netbsd.tmp
+	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 
 clean cleandir distclean:
