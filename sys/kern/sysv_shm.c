@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.37 1996/03/16 23:17:13 christos Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.38 1996/09/01 22:53:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -177,6 +177,9 @@ sys_shmdt(p, v, retval)
 	int i;
 
 	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
+	if (shmmap_s == NULL)
+		return EINVAL;
+
 	for (i = 0; i < shminfo.shmseg; i++, shmmap_s++)
 		if (shmmap_s->shmid != -1 &&
 		    shmmap_s->va == (vm_offset_t)SCARG(uap, shmaddr))
@@ -476,6 +479,11 @@ shmfork(p1, p2)
 	size_t size;
 	int i;
 
+	if (p1->p_vmspace->vm_shm == NULL) {
+		p2->p_vmspace->vm_shm = NULL;
+		return;
+	}
+		
 	size = shminfo.shmseg * sizeof(struct shmmap_state);
 	shmmap_s = malloc(size, M_SHM, M_WAITOK);
 	bcopy((caddr_t)p1->p_vmspace->vm_shm, (caddr_t)shmmap_s, size);
@@ -493,6 +501,8 @@ shmexit(p)
 	int i;
 
 	shmmap_s = (struct shmmap_state *)p->p_vmspace->vm_shm;
+	if (shmmap_s == NULL)
+		return;
 	for (i = 0; i < shminfo.shmseg; i++, shmmap_s++)
 		if (shmmap_s->shmid != -1)
 			shm_delete_mapping(p, shmmap_s);
