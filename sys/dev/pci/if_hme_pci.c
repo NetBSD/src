@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hme_pci.c,v 1.7 2001/10/05 17:49:43 thorpej Exp $	*/
+/*	$NetBSD: if_hme_pci.c,v 1.8 2001/10/18 06:29:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -189,30 +189,9 @@ hmeattach_pci(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		return;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
-
-#if 0
-	/*
-	 * Get transfer burst size from PROM and pass it on
-	 * to the back-end driver.
-	 */
-	sbusburst = ((struct sbus_softc *)parent)->sc_burst;
-	if (sbusburst == 0)
-		sbusburst = SBUS_BURST_32 - 1; /* 1->16 */
-
-	burst = PROM_getpropint(node, "burst-sizes", -1);
-	if (burst == -1)
-		/* take SBus burst sizes */
-		burst = sbusburst;
-
-	/* Clamp at parent's burst sizes */
-	burst &= sbusburst;
-
-	/* Translate into plain numerical format */
-	sc->sc_burst =  (burst & SBUS_BURST_32) ? 32 :
-			(burst & SBUS_BURST_16) ? 16 : 0;
-#endif
 
 	sc->sc_burst = 16;	/* XXX */
 
