@@ -1,6 +1,7 @@
-/*	$NetBSD: if_le_vme.c,v 1.8 1998/12/09 08:51:12 leo Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.9 1998/12/10 15:55:25 leo Exp $	*/
 
 /*-
+ * Copyright (c) 1998 maximum entropy.  All rights reserved.
  * Copyright (c) 1997 Leo Weppelman.  All rights reserved.
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -115,6 +116,7 @@ static int probe_addresses __P((bus_space_tag_t *, bus_space_tag_t *,
 				bus_space_handle_t *, bus_space_handle_t *));
 static void riebl_skip_reserved_area __P((struct lance_softc *));
 static int nm93c06_read __P((bus_space_tag_t, bus_space_handle_t, int));
+static int bvme410_probe __P((bus_space_tag_t, bus_space_handle_t));
 static int bvme410_mem_size __P((bus_space_tag_t, u_long));
 static void bvme410_copytobuf __P((struct lance_softc *, void *, int, int));
 static void bvme410_zerobuf __P((struct lance_softc *, int, int));
@@ -205,7 +207,7 @@ le_vme_match(parent, cfp, aux)
 			return (0);
 		}
 		if (le_ap->mem_size == VMECF_MEMSIZ_DEFAULT) {
-			if (bus_space_peek_2(iot, ioh, BVME410_IVEC)) {
+			if (bvme410_probe(iot, ioh)) {
 				bus_space_write_2(iot, ioh, BVME410_BAR, 0x1); /* XXX */
 				le_ap->mem_size = bvme410_mem_size(memt, le_ap->mem_addr);
 			}
@@ -359,7 +361,7 @@ le_vme_attach(parent, self, aux)
 		bus_space_read_1(va->va_iot, ioh, LER_MEME);
 	}
 	else if((le_ap->type_hint & LE_BVME410)
-		&& bus_space_peek_2(va->va_iot, ioh, BVME410_IVEC)) {
+		&& bvme410_probe(va->va_iot, ioh)) {
 		printf("BVME410");
 		lesc->sc_type = LE_BVME410;
 	}
@@ -546,6 +548,29 @@ nm93c06_read(iot, ioh, nm93c06reg)
 }
 
 static int
+bvme410_probe(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	if (!bus_space_peek_2(iot, ioh, BVME410_IVEC))
+		return 0;
+
+	bus_space_write_2(iot, ioh, BVME410_IVEC, 0x0000);
+	if (bus_space_read_2(iot, ioh, BVME410_IVEC) != 0xff00)
+		return 0;
+	
+	bus_space_write_2(iot, ioh, BVME410_IVEC, 0xffff);
+	if (bus_space_read_2(iot, ioh, BVME410_IVEC) != 0xffff)
+		return 0;
+
+	bus_space_write_2(iot, ioh, BVME410_IVEC, 0xa5a5);
+	if (bus_space_read_2(iot, ioh, BVME410_IVEC) != 0xffa5)
+		return 0;
+
+	return 1;
+}
+
+static int
 bvme410_mem_size(memt, mem_addr)
 	bus_space_tag_t memt;
 	u_long mem_addr;
@@ -582,8 +607,9 @@ bvme410_copytobuf(sc, from, boff, len)
 	char *f = (char *) from;
 
 	for (buf += boff; len; buf++,f++,len--)
-		while (*buf != *f)
-			*buf = *f;
+		do {
+ 			*buf = *f;
+		} while (*buf != *f);
 }
 
 static void
@@ -594,7 +620,8 @@ bvme410_zerobuf(sc, boff, len)
 	volatile char *buf = (volatile char *)sc->sc_mem;
 
 	for (buf += boff; len; buf++,len--)
-		while (*buf != '\0')
-			*buf = '\0';
+		do {
+ 			*buf = '\0';
+		} while (*buf != '\0');
 }
 
