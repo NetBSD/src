@@ -39,10 +39,11 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)trpt.c	5.14 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: trpt.c,v 1.2 1993/08/01 17:54:59 mycroft Exp $";
+static char rcsid[] = "$Id: trpt.c,v 1.3 1994/12/23 16:35:50 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #if BSD >= 199103
 #define NEWVM
 #endif
@@ -226,7 +227,7 @@ main(argc, argv)
 	qsort(tcp_pcbs, npcbs, sizeof(caddr_t), numeric);
 	if (jflag) {
 		for (i = 0;;) {
-			printf("%x", (int)tcp_pcbs[i]);
+			printf("%lx", (long)tcp_pcbs[i]);
 			if (++i == npcbs)
 				break;
 			fputs(", ", stdout);
@@ -234,7 +235,7 @@ main(argc, argv)
 		putchar('\n');
 	}
 	else for (i = 0; i < npcbs; i++) {
-		printf("\n%x:\n", (int)tcp_pcbs[i]);
+		printf("\n%lx:\n", (long)tcp_pcbs[i]);
 		dotrace(tcp_pcbs[i]);
 	}
 	exit(0);
