@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.13 1997/06/21 04:18:17 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.14 1997/06/22 03:17:42 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -44,7 +44,7 @@ char	machine_arch[] = MACHINE_ARCH;	/* cpu "architecture" */
 /*
  * MIPS-I (r2000) locore-function vector.
  */
-mips_locore_jumpvec_t R2000_locore_vec =
+mips_locore_jumpvec_t mips1_locore_vec =
 {
 	mips1_ConfigCache,
 	mips1_FlushCache,
@@ -55,7 +55,6 @@ mips_locore_jumpvec_t R2000_locore_vec =
 	mips1_TLBFlush,
 	mips1_TLBFlushAddr,
 	mips1_TLBUpdate,
-	mips1_TLBWriteIndexed,
 	mips1_wbflush,
 	mips1_proc_trampoline,
 	mips1_switch_exit,
@@ -81,7 +80,7 @@ mips1_vector_init()
 	/*
 	 * Copy locore-function vector.
 	 */
-	bcopy(&R2000_locore_vec, &mips_locore_jumpvec,
+	bcopy(&mips1_locore_vec, &mips_locore_jumpvec,
 	      sizeof(mips_locore_jumpvec_t));
 
 	/*
@@ -97,7 +96,7 @@ mips1_vector_init()
 /*
  * MIPS-III (r4000) locore-function vector.
  */
-mips_locore_jumpvec_t R4000_locore_vec =
+mips_locore_jumpvec_t mips3_locore_vec =
 {
 	mips3_ConfigCache,
 	mips3_FlushCache,
@@ -115,7 +114,6 @@ mips_locore_jumpvec_t R4000_locore_vec =
 	mips3_TLBFlush,
 	mips3_TLBFlushAddr,
 	mips3_TLBUpdate,
-	mips3_TLBWriteIndexed,
 	mips3_wbflush,
 	mips3_proc_trampoline,
 	mips3_switch_exit,
@@ -148,7 +146,7 @@ mips3_vector_init()
 	/*
 	 * Copy locore-function vector.
 	 */
-	bcopy(&R4000_locore_vec, &mips_locore_jumpvec,
+	bcopy(&mips3_locore_vec, &mips_locore_jumpvec,
 	      sizeof(mips_locore_jumpvec_t));
 
 	/*
