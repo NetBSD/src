@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.355 2001/05/26 08:10:18 wiz Exp $
+# $NetBSD: mi,v 1.356 2001/05/27 21:21:39 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1161,6 +1161,8 @@
 ./usr/share/man/cat8/diskpart.0			man-sysutil-catman
 ./usr/share/man/cat8/dm.0			man-games-catman
 ./usr/share/man/cat8/dmesg.0			man-sysutil-catman
+./usr/share/man/cat8/dreamcast/MAKEDEV.0	man-sysutil-catman
+./usr/share/man/cat8/dreamcast/makedev.0	man-sysutil-catman
 ./usr/share/man/cat8/dump.0			man-sysutil-catman
 ./usr/share/man/cat8/dump_lfs.0			man-sysutil-catman
 ./usr/share/man/cat8/dumpfs.0			man-sysutil-catman
@@ -2671,6 +2673,8 @@
 ./usr/share/man/man8/diskpart.8			man-sysutil-man
 ./usr/share/man/man8/dm.8			man-games-man
 ./usr/share/man/man8/dmesg.8			man-sysutil-man
+./usr/share/man/man8/dreamcast/MAKEDEV.8	man-sysutil-man
+./usr/share/man/man8/dreamcast/makedev.8	man-sysutil-man
 ./usr/share/man/man8/dump.8			man-sysutil-man
 ./usr/share/man/man8/dump_lfs.8			man-sysutil-man
 ./usr/share/man/man8/dumpfs.8			man-sysutil-man
