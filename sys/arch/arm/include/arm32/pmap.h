@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.73 2003/06/15 17:45:23 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.74 2003/06/15 18:18:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -273,6 +273,7 @@ void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 void	pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
+void	pmap_devmap_register(const struct pmap_devmap *);
 
 /*
  * Special page zero routine for use by the idle loop (no cache cleans). 
