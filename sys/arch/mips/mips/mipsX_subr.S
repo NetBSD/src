@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.6 2002/11/04 18:41:37 thorpej Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.7 2002/11/04 18:45:55 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1752,7 +1752,7 @@ LEAF(MIPSX(TLBRead))
 	mtc0	zero, MIPS_COP_0_STATUS		# Disable interrupts
 	COP0_SYNC
 	nop
-	mfc0	t6, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
+	mfc0	ta2, MIPS_COP_0_TLB_PG_MASK	# save current pgMask
 	nop
 	_MFC0	t0, MIPS_COP_0_TLB_HI		# Get current PID
 
@@ -1767,11 +1767,11 @@ LEAF(MIPSX(TLBRead))
 	nop
 	mfc0	t2, MIPS_COP_0_TLB_PG_MASK	# fetch the pgMask
 	_MFC0	t3, MIPS_COP_0_TLB_HI		# fetch the hi entry
-	_MFC0	t4, MIPS_COP_0_TLB_LO0		# See what we got
-	_MFC0	t5, MIPS_COP_0_TLB_LO1		# See what we got
+	_MFC0	ta0, MIPS_COP_0_TLB_LO0		# See what we got
+	_MFC0	ta1, MIPS_COP_0_TLB_LO1		# See what we got
 	_MTC0	t0, MIPS_COP_0_TLB_HI		# restore PID
 	COP0_SYNC
-	mtc0	t6, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
+	mtc0	ta2, MIPS_COP_0_TLB_PG_MASK	# restore pgMask
 	COP0_SYNC
 	nop
 	nop
@@ -1781,9 +1781,9 @@ LEAF(MIPSX(TLBRead))
 	nop
 	sw	t2, 0(a1)
 	sw	t3, 4(a1)
-	sw	t4, 8(a1)
+	sw	ta0, 8(a1)
 	j	ra
-	sw	t5, 12(a1)
+	sw	ta1, 12(a1)
 END(MIPSX(TLBRead))
 
 #if defined(MIPS3) && !defined(MIPS3_5900)
@@ -2109,7 +2109,7 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set index
 	COP0_SYNC
-	sll	t4, t1, 13			# PAGE_SHIFT + 1
+	sll	ta0, t1, 13			# PAGE_SHIFT + 1
 	nop
 	/* XXX simonb: lose this nop for mips32/64? */
 	nop
@@ -2122,9 +2122,9 @@ LEAF_NOPROFILE(MIPSX(TBIAP))
 	_MFC0	a0, MIPS_COP_0_TLB_LO1
 	and	a0, a0, MIPS3_PG_G		# check to see it has G bit
 	bnez	a0, 2f
-	addu	t4, t4, v0
+	addu	ta0, ta0, v0
 
-	_MTC0	t4, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
 	_MTC0	zero, MIPS_COP_0_TLB_LO0	# zero out entryLo0
 	COP0_SYNC
@@ -2178,9 +2178,9 @@ LEAF_NOPROFILE(MIPSX(TBIA))
 1:
 	mtc0	t1, MIPS_COP_0_TLB_INDEX	# set TLBindex
 	COP0_SYNC
-	sll	t4, t1, 13			# PAGE_SHIFT + 1
-	add	t4, v0, t4
-	_MTC0	t4, MIPS_COP_0_TLB_HI		# make entryHi invalid
+	sll	ta0, t1, 13			# PAGE_SHIFT + 1
+	add	ta0, v0, ta0
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# make entryHi invalid
 	COP0_SYNC
 	nop
 	nop
