@@ -1,4 +1,4 @@
-# $Id: files.hp300.oldconf,v 1.14 1994/06/03 10:51:31 hpeyerl Exp $
+#	$NetBSD: files.hp300.oldconf,v 1.15 1994/10/26 07:23:17 cgd Exp $
 #
 arch/hp300/hp300/autoconf.c		standard
 arch/hp300/hp300/clock.c		standard

@@ -1,3 +1,5 @@
+/*	$NetBSD: iotypes.h,v 1.2 1994/10/26 07:24:24 cgd Exp $	*/
+
 /*
  * Copyright (c) 1991 University of Utah.
  * Copyright (c) 1992, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: iotypes.h 1.1 91/12/12$
  *
- *	from: @(#)iotypes.h	8.1 (Berkeley) 6/10/93
- *	$Id: iotypes.h,v 1.1 1994/05/23 05:59:01 mycroft Exp $
+ *	@(#)iotypes.h	8.1 (Berkeley) 6/10/93
  */
 
 #ifndef _IOTYPES_

@@ -1,5 +1,6 @@
-#	from: @(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
-#	$Id: Makefile.hp300,v 1.19 1994/09/18 00:57:38 mycroft Exp $
+#	$NetBSD: Makefile.hp300,v 1.20 1994/10/26 07:23:13 cgd Exp $
+
+#	@(#)Makefile.hp300	8.2 (Berkeley) 1/23/94
 #
 # Makefile for NetBSD
 #

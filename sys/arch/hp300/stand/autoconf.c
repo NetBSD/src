@@ -1,3 +1,5 @@
+/*	$NetBSD: autoconf.c,v 1.7 1994/10/26 07:27:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -36,9 +38,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: autoconf.c 1.16 92/05/29
- * from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: autoconf.c,v 1.6 1994/09/19 00:23:37 mycroft Exp $
+ *	@(#)autoconf.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <hp300/stand/samachdep.h>

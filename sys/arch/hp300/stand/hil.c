@@ -1,3 +1,5 @@
+/*	$NetBSD: hil.c,v 1.5 1994/10/26 07:27:19 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -36,9 +38,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: hil.c 1.1 89/08/22
- * from: @(#)hil.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: hil.c,v 1.4 1994/01/26 02:38:31 brezak Exp $
+ *	@(#)hil.c	8.1 (Berkeley) 6/10/93
  */
 
 /*

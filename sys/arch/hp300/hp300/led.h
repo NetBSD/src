@@ -1,3 +1,5 @@
+/*	$NetBSD: led.h,v 1.2 1994/10/26 07:25:42 cgd Exp $	*/
+
 /*
  * Copyright (c) 1992 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -37,8 +39,7 @@
  *
  * from: Utah $Hdr: led.h 1.2 92/08/27$
  *
- *	from: @(#)led.h	8.1 (Berkeley) 6/10/93
- *	$Id: led.h,v 1.1 1994/05/23 06:14:54 mycroft Exp $
+ *	@(#)led.h	8.1 (Berkeley) 6/10/93
  */
 
 #define	LED_ADDR	0x1FFFF		/* a ROM address--strange but true */

@@ -1,3 +1,5 @@
+/*	$NetBSD: sd.c,v 1.7 1994/10/26 07:28:00 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -36,9 +38,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah $Hdr: sd.c 1.9 92/12/21$
- * from: @(#)sd.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: sd.c,v 1.6 1994/09/19 00:23:43 mycroft Exp $
+ *	@(#)sd.c	8.1 (Berkeley) 6/10/93
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: cons.c,v 1.6 1994/10/26 07:27:09 cgd Exp $	*/
+
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1990, 1993
@@ -36,9 +38,8 @@
  * SUCH DAMAGE.
  *
  * from: Utah Hdr: cons.c 1.7 92/02/28
- * from: @(#)cons.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: cons.c,v 1.5 1994/02/19 17:55:20 hpeyerl Exp $
+ *	@(#)cons.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>
