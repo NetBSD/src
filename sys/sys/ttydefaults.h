@@ -1,4 +1,4 @@
-/*	$NetBSD: ttydefaults.h,v 1.8 1996/04/09 20:55:45 cgd Exp $	*/
+/*	$NetBSD: ttydefaults.h,v 1.9 1996/09/02 16:27:52 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -49,10 +49,10 @@
 /*
  * Defaults on "first" open.
  */
-#define	TTYDEF_IFLAG	(BRKINT | ISTRIP | ICRNL | IMAXBEL | IXON | IXANY)
+#define	TTYDEF_IFLAG	(BRKINT | ICRNL | IMAXBEL | IXON | IXANY)
 #define TTYDEF_OFLAG	(OPOST | ONLCR | OXTABS)
 #define TTYDEF_LFLAG	(ECHO | ICANON | ISIG | IEXTEN | ECHOE|ECHOKE|ECHOCTL)
-#define TTYDEF_CFLAG	(CREAD | CS7 | PARENB | HUPCL)
+#define TTYDEF_CFLAG	(CREAD | CS8 | HUPCL)
 #define TTYDEF_SPEED	(B9600)
 
 /*
