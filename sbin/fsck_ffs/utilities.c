@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.45 2004/01/15 14:52:04 dbj Exp $	*/
+/*	$NetBSD: utilities.c,v 1.45.2.1 2004/04/27 17:51:23 jdc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.45 2004/01/15 14:52:04 dbj Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.45.2.1 2004/04/27 17:51:23 jdc Exp $");
 #endif
 #endif /* not lint */
 
@@ -679,7 +679,8 @@ sb_oldfscompat_read(struct fs *fs, struct fs **fssave)
 			/* extract the postbl from the unswapped superblock */
 			if (!needswap)
 				ffs_sb_swap(*fssave, *fssave);
-			memmove(postbl, (&(*fssave)->fs_old_postbl_start), n);
+			memmove(postbl, (&(*fssave)->fs_old_postbl_start),
+			    n * sizeof(postbl[0]));
 			if (!needswap)
 				ffs_sb_swap(*fssave, *fssave);
 
@@ -692,7 +693,8 @@ sb_oldfscompat_read(struct fs *fs, struct fs **fssave)
 			 */
 			if (needswap)
 				ffs_sb_swap(*fssave, *fssave);
-			memmove((&(*fssave)->fs_old_postbl_start), postbl, n);
+			memmove((&(*fssave)->fs_old_postbl_start), postbl,
+			    n * sizeof(postbl[0]));
 			if (needswap)
 				ffs_sb_swap(*fssave, *fssave);
 		}
