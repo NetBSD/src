@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named-bootconf.sh,v 1.2 2001/01/27 07:22:00 itojun Exp $
+# $NetBSD: named-bootconf.sh,v 1.2.2.1 2002/06/28 11:28:59 lukem Exp $
 #
 # Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -142,6 +142,11 @@ while read CMD ARGS; do
 				;;
 			no-recursion )
 				echo "	recursion no;" >>$OPTIONFILE
+				;;
+			no-round-robin ) # HP extention
+				echo "	rrset-order {" >>$OPTIONFILE
+				echo "		class ANY type ANY name \"*\" order fixed;" >>$OPTIONFILE
+				echo "	};" >>$OPTIONFILE
 				;;
 			esac
 		done
