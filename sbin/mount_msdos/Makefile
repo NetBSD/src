@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1994/12/22 10:46:08 cgd Exp $
+#	$NetBSD: Makefile,v 1.9 1995/03/18 14:57:35 cgd Exp $
 
 PROG=	mount_msdos
 SRCS=	mount_msdos.c getmntopts.c

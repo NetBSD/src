@@ -1,3 +1,5 @@
+/*	$NetBSD: dumprmt.c,v 1.9 1995/03/18 14:54:59 cgd Exp $	*/
+
 /*-
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dumprmt.c	8.1 (Berkeley) 6/5/93";*/
-static char *rcsid = "$Id: dumprmt.c,v 1.8 1994/09/23 14:27:03 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
+#else
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.9 1995/03/18 14:54:59 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>

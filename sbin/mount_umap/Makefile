@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	8.3 (Berkeley) 3/27/94
-#	$Id: Makefile,v 1.3 1994/12/22 10:46:39 cgd Exp $
+#	$NetBSD: Makefile,v 1.4 1995/03/18 14:58:14 cgd Exp $
+#	@(#)Makefile	8.3 (Berkeley) 3/27/94
 
 PROG=	mount_umap
 SRCS=	mount_umap.c getmntopts.c

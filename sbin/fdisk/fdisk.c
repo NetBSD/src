@@ -1,3 +1,5 @@
+/*	$NetBSD: fdisk.c,v 1.10 1995/03/18 14:55:36 cgd Exp $	*/
+
 /*
  * Mach Operating System
  * Copyright (c) 1992 Carnegie Mellon University
@@ -25,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: fdisk.c,v 1.9 1995/01/13 10:42:02 mycroft Exp $";
+static char rcsid[] = "$NetBSD: fdisk.c,v 1.10 1995/03/18 14:55:36 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

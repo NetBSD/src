@@ -1,3 +1,5 @@
+/*	$NetBSD: fsck.h,v 1.8 1995/03/18 14:55:45 cgd Exp $	*/
+
 /*
  * Copyright (c) 1980, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,8 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fsck.h	8.1 (Berkeley) 6/5/93
- *	$Id: fsck.h,v 1.7 1994/12/05 20:15:49 cgd Exp $
+ *	@(#)fsck.h	8.1 (Berkeley) 6/5/93
  */
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */

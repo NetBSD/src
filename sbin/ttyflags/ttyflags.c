@@ -1,3 +1,5 @@
+/*	$NetBSD: ttyflags.c,v 1.4 1995/03/18 15:01:23 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -35,7 +37,7 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: ttyflags.c,v 1.3 1994/04/19 03:42:54 cgd Exp $";
+static char rcsid[] = "$NetBSD: ttyflags.c,v 1.4 1995/03/18 15:01:23 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

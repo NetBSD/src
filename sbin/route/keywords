@@ -1,5 +1,5 @@
-#	from: @(#)keywords	8.2 (Berkeley) 3/19/94
-#	$Id: keywords,v 1.4 1994/05/13 08:02:18 mycroft Exp $
+#	$NetBSD: keywords,v 1.5 1995/03/18 15:00:11 cgd Exp $
+#	@(#)keywords	8.2 (Berkeley) 3/19/94
 
 add
 blackhole

@@ -1,5 +1,7 @@
 #!/bin/sh -
 #
+#	$NetBSD: fastboot.sh,v 1.5 1995/03/18 14:55:30 cgd Exp $
+#
 # Copyright (c) 1985, 1993
 #	The Regents of the University of California.  All rights reserved.
 #
@@ -31,8 +33,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	from: @(#)fastboot.sh	8.1 (Berkeley) 6/5/93
-#	$Id: fastboot.sh,v 1.4 1994/09/23 01:38:47 mycroft Exp $
+#	@(#)fastboot.sh	8.1 (Berkeley) 6/5/93
 #
 
 cp /dev/null /fastboot

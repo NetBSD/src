@@ -1,3 +1,5 @@
+/*	$NetBSD: tape.c,v 1.16 1995/03/18 14:59:57 cgd Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,8 +39,11 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)tape.c	8.6 (Berkeley) 9/13/94";*/
-static char *rcsid = "$Id: tape.c,v 1.15 1995/02/20 19:43:56 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)tape.c	8.6 (Berkeley) 9/13/94";
+#else
+static char rcsid[] = "$NetBSD: tape.c,v 1.16 1995/03/18 14:59:57 cgd Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
