@@ -134,7 +134,7 @@ long flags;
 		SET(oflag, OXTABS);
 
 	if (ISSET(flags, RAW)) {
-		CLR(iflag, XOFF);
+		iflag &= IXOFF;
 		CLR(lflag, ISIG|ICANON|IEXTEN);
 	}
 
