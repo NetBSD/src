@@ -33,7 +33,7 @@
  *	Fritz!Card pcmcia specific routines for isic driver
  *	---------------------------------------------------
  *
- *	$Id: i4b_avm_fritz_pcmcia.c,v 1.1.1.1 2001/01/05 12:50:21 martin Exp $ 
+ *	$Id: i4b_avm_fritz_pcmcia.c,v 1.2 2001/02/17 11:41:35 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -424,6 +424,7 @@ isic_attach_fritzpcmcia(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry 
 	struct l1_softc *sc = &psc->sc_isic;
 	bus_space_tag_t t;
 	bus_space_handle_t h;
+	int i;
 
 	/* Validate config info */
 	if (cfe->num_memspace != 0)
@@ -433,15 +434,20 @@ isic_attach_fritzpcmcia(struct pcmcia_l1_softc *psc, struct pcmcia_config_entry 
 		printf(": unexpected number of memory spaces %d should be 1\n",
 			cfe->num_iospace);
 
-	/* Allocate pcmcia space - exactly as dictated by the card */
-	if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start, cfe->iospace[0].length,
-			    0, &psc->sc_pcioh))
+	/* Allocate pcmcia space - but don't listen to the card, it's lying
+	   about the size needed! */
+	for (i = 0; i < cfe->num_iospace; i++)
+	    if (pcmcia_io_alloc(pa->pf, cfe->iospace[i].start, cfe->iospace[i].length, 1, &psc->sc_pcioh) == 0)
+	    	break;
+	if (i >= cfe->num_iospace) {
 		printf(": can't allocate i/o space\n");
+		return 0;
+	}
 
-	/* map them */
+	/* map the selected space */
 	if (pcmcia_io_map(pa->pf, ((cfe->flags & PCMCIA_CFE_IO16) ?
 	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_IO8), 0,
-	    cfe->iospace[0].length, &psc->sc_pcioh, &psc->sc_io_window)) {
+	    cfe->iospace[i].length, &psc->sc_pcioh, &psc->sc_io_window)) {
 		printf(": can't map i/o space\n");
 		return 0;
 	}
