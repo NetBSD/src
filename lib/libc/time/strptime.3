@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.12 2002/02/07 07:00:34 ross Exp $
+.\"	$NetBSD: strptime.3,v 1.12.2.1 2004/03/28 22:14:29 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -179,7 +179,8 @@ with \&%C, specifies the year [0,99] within that century.
 .It Cm \&%Y
 the year, including the century (i.e., 1996).
 .It Cm \&%%
-A `%' is written. No argument is converted.
+matches a literal `%'.
+No argument is converted.
 .El
 .Ss Modified conversion specifications
 For compatibility, certain conversion specifications can be modified
