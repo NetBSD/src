@@ -1,4 +1,4 @@
-/*      $NetBSD: n_pow.c,v 1.4 1999/07/02 15:37:37 simonb Exp $ */
+/*      $NetBSD: n_pow.c,v 1.5 2000/07/14 04:51:01 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -125,6 +125,12 @@ static char sccsid[] = "@(#)pow.c	8.1 (Berkeley) 6/4/93";
 const static double zero=0.0, one=1.0, two=2.0, negone= -1.0;
 
 static double pow_P __P((double, double));
+
+float powf(x,y)
+float x,y;
+{
+   return pow((double) x, (double) (y));
+}
 
 double pow(x,y)
 double x,y;
