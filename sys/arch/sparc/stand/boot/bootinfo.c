@@ -1,11 +1,11 @@
-/*	$NetBSD: promdev.h,v 1.6 1999/04/30 09:29:40 christos Exp $ */
+/*	$NetBSD: bootinfo.c,v 1.1 1999/04/30 09:29:40 christos Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Paul Kranenburg.
+ * by Jonathan Stone, Michael Hitch and Simon Burge.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,42 +36,60 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bsd_openprom.h>
+#include <sys/param.h>
+#include <machine/types.h>
+#include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
-struct promdata {
-	int	fd;			/* Openboot descriptor */
-	struct	saioreq *si;		/* Oldmon IO request */
-	int	devtype;		/* Kind of device we're booting from */
-#define DT_BLOCK	1
-#define DT_NET		2
-#define DT_BYTE		3
-	/* Hooks for netif.c */
-	int	(*xmit) __P((struct promdata *, void *, size_t));
-	int	(*recv) __P((struct promdata *, void *, size_t));
-};
+#include "bootinfo.h"
 
-#define DDB_MAGIC0	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
-#define DDB_MAGIC1	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('1') )
-#define DDB_MAGIC2	( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('2') )
+static char *bootinfo = NULL;
+static char *bi_next;
+static int bi_size;
 
-extern time_t	getsecs __P((void));
-extern void	prom_getether __P((int, u_char *));
-extern char	*prom_bootdevice;
-extern int	cputyp, nbpg, pgofset, pgshift;
-extern int	debug;
+u_long
+bi_init(addr)
+	u_long addr;
+{
+	struct btinfo_common *bi;
+	struct btinfo_magic bi_magic;
+	u_long *endp;
 
-/* Note: dvma_*() routines are for "oldmon" machines only */
-extern void	dvma_init __P((void));
-extern char	*dvma_mapin __P((char *, size_t));
-extern char	*dvma_mapout __P((char *, size_t));
-extern char	*dvma_alloc __P((int));
-extern void	dvma_free __P((char *, int));
+	endp = (u_long *)ALIGN(addr);
+	/*
+	 * For the first word we load our end address,
+	 * giving enough space for the bootinfo structure.
+	 */
+	endp[0] = (u_long)((char *)endp + BOOTINFO_SIZE);
+	bootinfo = (char *)ALIGN(&endp[2]);
+	endp[1] = (u_long)bootinfo;
+	bi = (struct btinfo_common *)bootinfo;
+	bi->next = bi->type = 0;
+	bi_next = bootinfo;
+	bi_size = 0;
 
-/* In net.c: */
-extern int	net_open __P((struct promdata *));
-extern int	net_close __P((struct promdata *));
-extern int	net_mountroot __P((void));
+	bi_magic.magic = BOOTINFO_MAGIC;
+	bi_add(&bi_magic, BTINFO_MAGIC, sizeof(bi_magic));
+	return (u_long) endp;
+}
 
-/* In str0.S: */
-extern void	sparc_noop __P((void));
-extern void	*romp;
+void
+bi_add(new, type, size)
+	void *new;
+	int type;
+	size_t size;
+{
+	struct btinfo_common *bi;
+
+	if (bi_size + size > BOOTINFO_SIZE)
+		return;				/* XXX error? */
+
+	bi = new;
+	bi->next = ALIGN(size);
+	bi->type = type;
+	memcpy(bi_next, new, size);
+	bi_next += ALIGN(size);
+
+	bi = (struct btinfo_common *)bi_next;
+	bi->next = bi->type = 0;
+}
