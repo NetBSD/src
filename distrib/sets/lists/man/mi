@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.584 2003/06/01 11:38:16 uwe Exp $
+# $NetBSD: mi,v 1.585 2003/06/02 14:45:09 grant Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -579,6 +579,7 @@
 ./usr/share/man/cat4/cbb.0			man-sys-catman
 ./usr/share/man/cat4/ccd.0			man-sys-catman
 ./usr/share/man/cat4/cd.0			man-sys-catman
+./usr/share/man/cat4/cec.0			man-sys-catman
 ./usr/share/man/cat4/cfb.0			man-sys-catman
 ./usr/share/man/cat4/cgd.0			man-sys-catman
 ./usr/share/man/cat4/ch.0			man-sys-catman
@@ -595,6 +596,7 @@
 ./usr/share/man/cat4/cobalt/intro.0		man-sys-catman
 ./usr/share/man/cat4/com.0			man-sys-catman
 ./usr/share/man/cat4/cs.0			man-sys-catman
+./usr/share/man/cat4/cs80bus.0			man-sys-catman
 ./usr/share/man/cat4/cue.0			man-sys-catman
 ./usr/share/man/cat4/cy.0			man-sys-catman
 ./usr/share/man/cat4/cz.0			man-sys-catman
@@ -662,6 +664,7 @@
 ./usr/share/man/cat4/gif.0			man-sys-catman
 ./usr/share/man/cat4/glxtphy.0			man-sys-catman
 ./usr/share/man/cat4/gphyter.0			man-sys-catman
+./usr/share/man/cat4/gpib.0			man-sys-catman
 ./usr/share/man/cat4/gre.0			man-sys-catman
 ./usr/share/man/cat4/gsip.0			man-sys-catman
 ./usr/share/man/cat4/gus.0			man-sys-catman
@@ -2387,6 +2390,7 @@
 ./usr/share/man/man4/cbb.4			man-sys-man
 ./usr/share/man/man4/ccd.4			man-sys-man
 ./usr/share/man/man4/cd.4			man-sys-man
+./usr/share/man/man4/cec.4			man-sys-man
 ./usr/share/man/man4/cfb.4			man-sys-man
 ./usr/share/man/man4/cgd.4			man-sys-man
 ./usr/share/man/man4/ch.4			man-sys-man
@@ -2403,6 +2407,7 @@
 ./usr/share/man/man4/cobalt/intro.4		man-sys-man
 ./usr/share/man/man4/com.4			man-sys-man
 ./usr/share/man/man4/cs.4			man-sys-man
+./usr/share/man/man4/cs80bus.4			man-sys-man
 ./usr/share/man/man4/cue.4			man-sys-man
 ./usr/share/man/man4/cy.4			man-sys-man
 ./usr/share/man/man4/cz.4			man-sys-man
@@ -2470,6 +2475,7 @@
 ./usr/share/man/man4/gif.4			man-sys-man
 ./usr/share/man/man4/glxtphy.4			man-sys-man
 ./usr/share/man/man4/gphyter.4			man-sys-man
+./usr/share/man/man4/gpib.4			man-sys-man
 ./usr/share/man/man4/gre.4			man-sys-man
 ./usr/share/man/man4/gsip.4			man-sys-man
 ./usr/share/man/man4/gus.4			man-sys-man
