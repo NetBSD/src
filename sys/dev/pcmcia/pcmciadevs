@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.33.2.2 2000/02/08 22:23:24 he Exp $
+$NetBSD: pcmciadevs,v 1.33.2.3 2000/05/11 09:14:18 he Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ vendor MEGAHERTZ2		0x0128	Megahertz Corporation
 vendor ADAPTEC			0x012f	Adaptec Corporation
 vendor LINKSYS			0x0149	Linksys Corporation
 vendor SIMPLETECH		0x014d	Simple Technology
+vendor LUCENT			0x0156	Lucent Technologies
 vendor DAYNA			0x0194	Dayna Corporation
 vendor IODATA			0x01bf	I-O DATA
 vendor COMPEX			0x8a01	Compex Corporation
@@ -124,6 +125,9 @@ product SANDISK SDCFB		0x0401 Sandisk CompactFlash Card
 
 /* Simple Technology Products */
 product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
+/* Simpletech ID also used by Symbol */
+product SIMPLETECH SPECTRUM24 0x801 Symbol Spectrum24 WLAN Adapter
+
 
 /* Socket Communications Products */
 product SOCKET PAGECARD		0x0003 Socket Communications PageCard
@@ -146,6 +150,9 @@ product NEWMEDIA BASICS		0x0019 NewMedia BASICS Ethernet
 product SMC 8016		0x0105 SMC 8016 EtherCard
 
 /* Cards we know only by their cis */
+
+/* Lucent WaveLAN/IEEE */
+product LUCENT WAVELAN_IEEE	0x0002	WaveLAN/IEEE
 vendor PREMAX			-1 	Premax
 vendor PLANET			-1 	Planet
 vendor DLINK			-1 	D-Link
