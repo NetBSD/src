@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.43 2003/02/24 08:42:49 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.44 2003/02/25 23:12:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -245,7 +245,7 @@ int lfs_setattr	 (void *);
 int lfs_close	 (void *);
 int lfsspec_close(void *);
 int lfsfifo_close(void *);
-int lfs_ioctl	 (void *);
+int lfs_fcntl	 (void *);
 int lfs_inactive (void *);
 int lfs_reclaim	 (void *);
 int lfs_write	 (void *);
