@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.46 2001/06/04 01:30:11 itojun Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.47 2001/06/04 08:57:58 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -423,36 +423,14 @@ flush:
 		/* There is another listener, so construct message */
 		rp = sotorawcb(so);
 	}
-	/*
-	 * copy rtm into m.
-	 * XXX is it okay if we omit responses when we are unable to reply?
-	 */
 	if (rtm) {
-		if (rtm->rtm_msglen > MCLBYTES) {
+		m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+		if (m->m_pkthdr.len < rtm->rtm_msglen) {
 			m_freem(m);
 			m = NULL;
-		} else if (m->m_pkthdr.len > rtm->rtm_msglen) {
-			m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
+		} else if (m->m_pkthdr.len > rtm->rtm_msglen)
 			m_adj(m, rtm->rtm_msglen - m->m_pkthdr.len);
-		} else {
-			m_freem(m);
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m && rtm->rtm_msglen > MHLEN) {
-				MCLGET(m, M_DONTWAIT);
-				if ((m->m_flags & M_EXT) == 0) {
-					m_free(m);
-					m = NULL;
-				}
-			}
-			if (m) {
-				m->m_pkthdr.len = m->m_len = rtm->rtm_msglen;
-				m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
-			}
-		}
 		Free(rtm);
-	} else {
-		m_freem(m);
-		m = NULL;
 	}
 	if (rp)
 		rp->rcb_proto.sp_family = 0; /* Avoid us */
@@ -533,71 +511,52 @@ rt_msg1(type, rtinfo, data, datalen)
 	struct mbuf *m;
 	int i;
 	struct sockaddr *sa;
-	int hlen, alen, len, dlen;
+	int len, dlen;
 
-	/* pre-compute length */
+	m = m_gethdr(M_DONTWAIT, MT_DATA);
+	if (m == 0)
+		return (m);
 	switch (type) {
+
 	case RTM_DELADDR:
 	case RTM_NEWADDR:
-		hlen = sizeof(struct ifa_msghdr);
+		len = sizeof(struct ifa_msghdr);
 		break;
 
 #ifdef COMPAT_14
 	case RTM_OIFINFO:
-		hlen = sizeof(struct if_msghdr14);
+		len = sizeof(struct if_msghdr14);
 		break;
 #endif
 
 	case RTM_IFINFO:
-		hlen = sizeof(struct if_msghdr);
+		len = sizeof(struct if_msghdr);
 		break;
 
 	case RTM_IFANNOUNCE:
-		hlen = sizeof(struct if_announcemsghdr);
+		len = sizeof(struct if_announcemsghdr);
 		break;
 
 	default:
-		hlen = sizeof(struct rt_msghdr);
-		break;
+		len = sizeof(struct rt_msghdr);
 	}
-	alen = 0;
-	for (i = 0; i < RTAX_MAX; i++) {
-		if ((sa = rtinfo->rti_info[i]) == NULL)
-			continue;
-		dlen = ROUNDUP(sa->sa_len);
-		alen += dlen;
-	}
-
-	if (hlen > MHLEN || alen > MCLBYTES)
+	if (len > MHLEN + MLEN)
 		panic("rt_msg1: message too long");
-	m = m_gethdr(M_DONTWAIT, MT_DATA);
-	if (!m)
-		return (NULL);
-	m->m_pkthdr.len = hlen;
-	m->m_len = hlen;
-	if (hlen + alen > MHLEN) {
+	else if (len > MHLEN) {
 		m->m_next = m_get(M_DONTWAIT, MT_DATA);
-		if (m->m_next && alen > MLEN) {
-			MCLGET(m->m_next, M_DONTWAIT);
-			if ((m->m_next->m_flags & M_EXT) == 0) {
-				m_freem(m->m_next);
-				m->m_next = NULL;
-			}
-		}
-		if (!m->m_next) {
+		if (m->m_next == NULL) {
 			m_freem(m);
 			return (NULL);
 		}
-		m->m_pkthdr.len += alen;
-		m->m_next->m_len = alen;
-	} else  {
-		m->m_pkthdr.len += alen;
-		m->m_len += alen;
+		m->m_pkthdr.len = len;
+		m->m_len = MHLEN;
+		m->m_next->m_len = len - MHLEN;
+	} else {
+		m->m_pkthdr.len = m->m_len = len;
 	}
-	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.rcvif = 0;
 	m_copyback(m, 0, datalen, data);
 	rtm = mtod(m, struct rt_msghdr *);
-	len = hlen;
 	for (i = 0; i < RTAX_MAX; i++) {
 		if ((sa = rtinfo->rti_info[i]) == NULL)
 			continue;
@@ -605,6 +564,10 @@ rt_msg1(type, rtinfo, data, datalen)
 		dlen = ROUNDUP(sa->sa_len);
 		m_copyback(m, len, dlen, (caddr_t)sa);
 		len += dlen;
+	}
+	if (m->m_pkthdr.len != len) {
+		m_freem(m);
+		return (NULL);
 	}
 	rtm->rtm_msglen = len;
 	rtm->rtm_version = RTM_VERSION;
