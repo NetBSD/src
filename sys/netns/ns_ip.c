@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ip.c,v 1.36 2003/10/03 20:57:29 itojun Exp $	*/
+/*	$NetBSD: ns_ip.c,v 1.37 2003/11/14 15:04:48 itojun Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.36 2003/10/03 20:57:29 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_ip.c,v 1.37 2003/11/14 15:04:48 itojun Exp $");
 
 #include "opt_ns.h"		/* options NSIP, needed by ns_if.h */
 
@@ -382,12 +382,12 @@ nsip_route(m)
 		struct in_ifaddr *ia;
 		struct ifnet *ifp = ro.ro_rt->rt_ifp;
 
-		for (ia = in_ifaddr.tqh_first; ia != 0;
+		for (ia = in_ifaddrhead.tqh_first; ia != 0;
 		    ia = ia->ia_list.tqe_next)
 			if (ia->ia_ifp == ifp)
 				break;
 		if (ia == 0)
-			ia = in_ifaddr.tqh_first;
+			ia = in_ifaddrhead.tqh_first;
 		if (ia == 0) {
 			RTFREE(ro.ro_rt);
 			return (EADDRNOTAVAIL);
