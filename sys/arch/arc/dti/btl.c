@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.16 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: btl.c,v 1.17 2005/01/22 07:44:33 tsutsui Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.16 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btl.c,v 1.17 2005/01/22 07:44:33 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -604,7 +604,7 @@ bt_init_ccb(struct bt_softc *sc, struct bt_ccb *ccb)
 {
 	int hashnum;
 
-	bzero(ccb, sizeof(struct bt_ccb));
+	memset(ccb, 0, sizeof(struct bt_ccb));
 	/*
 	 * put in the phystokv hash table
 	 * Never gets taken out.
@@ -946,7 +946,7 @@ bt_find(struct isa_attach_args *ia, struct bt_softc *sc0
 	 * Check that we actually know how to use this board.
 	 */
 	delay(1000);
-	bzero(&inquire, sizeof inquire);
+	memset(&inquire, 0, sizeof inquire);
 	inquire.cmd.opcode = BT_INQUIRE_EXTENDED;
 	inquire.cmd.len = sizeof(inquire.reply);
 	i = bt_cmd(iobase, sc, sizeof(inquire.cmd), (u_char *)&inquire.cmd,
