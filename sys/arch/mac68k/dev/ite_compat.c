@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.3 2001/01/22 07:31:44 scottr Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.4 2001/05/14 09:27:06 scw Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -189,4 +189,15 @@ iteioctl(dev, cmd, addr, flag, p)
 	}
 
 	return (ENOTTY);
+}
+
+/*ARGSUSED*/
+int
+itepoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	return ite_initted ?
+	    wsdisplaypoll(cn_tab->cn_dev, events, p) : (ENXIO);
 }
