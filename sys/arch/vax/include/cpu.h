@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.42 2000/03/19 14:56:53 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.43 2000/04/22 08:19:49 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -71,7 +71,10 @@ struct	cpu_dep {
 	void	(*cpu_reboot) __P((int)); /* Cpu dependent reboot call */
 	void	(*cpu_clrf) __P((void)); /* Clear cold/warm start flags */
 	void	(*cpu_subconf) __P((struct device *));/*config cpu dep. devs */
+	int     cpu_flags;
 };
+  
+#define	CPU_RAISEIPL	1	/* Must raise IPL until intr is handled */ 
 
 extern struct cpu_dep *dep_call; /* Holds pointer to current CPU struct. */
 
