@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.105 2003/03/17 07:57:13 martin Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.106 2003/03/22 10:35:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.105 2003/03/17 07:57:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.106 2003/03/22 10:35:01 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -327,22 +327,22 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 
 	case F_SETFL:
 		tmp = FFLAGS((long)SCARG(uap, arg)) & FCNTLFLAGS;
-		error = (*fp->f_ops->fo_fcntl)(fp, F_SETFL, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_fcntl)(fp, F_SETFL, &tmp, p);
 		if (error)
 			goto out;
 		fp->f_flag &= ~FCNTLFLAGS;
 		fp->f_flag |= tmp;
 		tmp = fp->f_flag & FNONBLOCK;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &tmp, p);
 		if (error)
 			goto out;
 		tmp = fp->f_flag & FASYNC;
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, &tmp, p);
 		if (error == 0)
 			goto out;
 		fp->f_flag &= ~FNONBLOCK;
 		tmp = 0;
-		(void) (*fp->f_ops->fo_ioctl)(fp, FIONBIO, (caddr_t)&tmp, p);
+		(void) (*fp->f_ops->fo_ioctl)(fp, FIONBIO, &tmp, p);
 		break;
 
 	case F_GETOWN:
@@ -350,8 +350,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			*retval = ((struct socket *)fp->f_data)->so_pgid;
 			goto out;
 		}
-		error = (*fp->f_ops->fo_ioctl)
-			(fp, TIOCGPGRP, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCGPGRP, &tmp, p);
 		*retval = -tmp;
 		break;
 
@@ -371,8 +370,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			}
 			tmp = (long)p1->p_pgrp->pg_id;
 		}
-		error = (*fp->f_ops->fo_ioctl)
-		    (fp, TIOCSPGRP, (caddr_t)&tmp, p);
+		error = (*fp->f_ops->fo_ioctl)(fp, TIOCSPGRP, &tmp, p);
 		break;
 
 	case F_SETLKW:
@@ -386,8 +384,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		}
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,
-		    sizeof(fl));
+		error = copyin(SCARG(uap, arg), &fl, sizeof(fl));
 		if (error)
 			goto out;
 		if (fl.l_whence == SEEK_CUR)
@@ -399,7 +396,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				goto out;
 			}
 			p->p_flag |= P_ADVLOCK;
-			error = VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg);
+			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
 		case F_WRLCK:
@@ -408,12 +405,11 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 				goto out;
 			}
 			p->p_flag |= P_ADVLOCK;
-			error = VOP_ADVLOCK(vp, (caddr_t)p, F_SETLK, &fl, flg);
+			error = VOP_ADVLOCK(vp, p, F_SETLK, &fl, flg);
 			goto out;
 
 		case F_UNLCK:
-			error = VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &fl,
-			    F_POSIX);
+			error = VOP_ADVLOCK(vp, p, F_UNLCK, &fl, F_POSIX);
 			goto out;
 
 		default:
@@ -428,8 +424,7 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 		}
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
-		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,
-		    sizeof(fl));
+		error = copyin(SCARG(uap, arg), &fl, sizeof(fl));
 		if (error)
 			goto out;
 		if (fl.l_whence == SEEK_CUR)
@@ -440,11 +435,10 @@ sys_fcntl(struct lwp *l, void *v, register_t *retval)
 			error = EINVAL;
 			goto out;
 		}
-		error = VOP_ADVLOCK(vp, (caddr_t)p, F_GETLK, &fl, F_POSIX);
+		error = VOP_ADVLOCK(vp, p, F_GETLK, &fl, F_POSIX);
 		if (error)
 			goto out;
-		error = copyout((caddr_t)&fl, (caddr_t)SCARG(uap, arg),
-		    sizeof(fl));
+		error = copyout(&fl, SCARG(uap, arg), sizeof(fl));
 		break;
 
 	default:
@@ -1119,7 +1113,7 @@ closef(struct file *fp, struct proc *p)
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
 		vp = (struct vnode *)fp->f_data;
-		(void) VOP_ADVLOCK(vp, (caddr_t)p, F_UNLCK, &lf, F_POSIX);
+		(void) VOP_ADVLOCK(vp, p, F_UNLCK, &lf, F_POSIX);
 	}
 
 	/*
@@ -1200,7 +1194,7 @@ closef(struct file *fp, struct proc *p)
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
 		vp = (struct vnode *)fp->f_data;
-		(void) VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
+		(void) VOP_ADVLOCK(vp, fp, F_UNLCK, &lf, F_FLOCK);
 	}
 	if (fp->f_ops)
 		error = (*fp->f_ops->fo_close)(fp, p);
@@ -1258,7 +1252,7 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
 	if (how & LOCK_UN) {
 		lf.l_type = F_UNLCK;
 		fp->f_flag &= ~FHASLOCK;
-		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK);
+		error = VOP_ADVLOCK(vp, fp, F_UNLCK, &lf, F_FLOCK);
 		goto out;
 	}
 	if (how & LOCK_EX)
@@ -1271,9 +1265,9 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
 	}
 	fp->f_flag |= FHASLOCK;
 	if (how & LOCK_NB)
-		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK);
+		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, F_FLOCK);
 	else
-		error = VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf,
+		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf,
 		    F_FLOCK|F_WAIT);
  out:
 	FILE_UNUSE(fp, p);
@@ -1397,7 +1391,7 @@ fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
 	struct filedesc	*fdp;
 	int		error;
 	u_int		size;
-	caddr_t		data, memp;
+	void		*data, *memp;
 #define STK_PARAMS	128
 	char		stkbuf[STK_PARAMS];
 
@@ -1417,7 +1411,7 @@ fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
 		return (EINVAL);
 	memp = NULL;
 	if (size > sizeof(stkbuf)) {
-		memp = (caddr_t)malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
+		memp = malloc((u_long)size, M_IOCTLOPS, M_WAITOK);
 		data = memp;
 	} else
 		data = stkbuf;
@@ -1430,7 +1424,7 @@ fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
 				return (error);
 			}
 		} else
-			*(caddr_t *)data = arg;
+			*(void **)data = arg;
 	} else if ((cmd & F_FSOUT) && size)
 		/*
 		 * Zero the buffer so the user always
@@ -1438,7 +1432,7 @@ fcntl_forfs(int fd, struct proc *p, int cmd, void *arg)
 		 */
 		memset(data, 0, size);
 	else if (cmd & F_FSVOID)
-		*(caddr_t *)data = arg;
+		*(void **)data = arg;
 
 
 	error = (*fp->f_ops->fo_fcntl)(fp, cmd, data, p);
@@ -1512,7 +1506,7 @@ fdcheckstd(p)
 				fdremove(p->p_fd, fd);
 				return (error);
 			}
-			fp->f_data = (caddr_t)nd.ni_vp;
+			fp->f_data = nd.ni_vp;
 			fp->f_flag = flags;
 			fp->f_ops = &vnops;
 			fp->f_type = DTYPE_VNODE;
