@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.17 1999/06/20 20:26:42 cgd Exp $	*/
+/*	$NetBSD: run.c,v 1.18 1999/06/21 02:31:17 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -353,21 +353,22 @@ launch_subwin(actionwin, args, win, display)
 					(void)write(master, ibuf, n);
 				for (j=0; j < n; j++) {
 					if (display) {
-						if (ibuf[j] == '\n' || ibuf[j] == '\r') {
-							if (ibuf[j] == '\n') {
-								getyx(actionwin, ycor, xcor);
-								if (ycor + 1 >= actionwin->maxy) {
-									scroll(actionwin);
-									wmove(actionwin, actionwin->maxy - 1, 1);
-								} else
-									wmove(actionwin, ycor + 1, 1);
-								if (logging)
-									fprintf(log, "\n");
-							}
+						getyx(actionwin, ycor, xcor);
+						if (ibuf[j] == '\n') {
+							if (ycor + 1 >= actionwin->maxy) {
+								scroll(actionwin);
+								wmove(actionwin, actionwin->maxy - 1, 1);
+							} else
+								wmove(actionwin, ycor + 1, 1);
+							if (logging)
+								fprintf(log, "\n");
+						} else if (ibuf[j] == '\r') {
+							wmove(actionwin, ycor, 1);
+							if (logging)
+								fprintf(log, "\r");
 						} else {
-							getyx(actionwin, ycor, xcor);
 							if (xcor == 0)
-							wmove(actionwin, ycor, xcor + 1);
+								wmove(actionwin, ycor, xcor + 1);
 							waddch(actionwin, ibuf[j]);
 							wrefresh(actionwin);
 							if (logging) {
