@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.7 1993/12/10 05:10:30 mycroft Exp $
+#	$Id: Makefile,v 1.8 1994/01/28 21:01:20 pk Exp $
 
 PROG=	ld.so
-SRCS=	mdprologue.S rtld.c sbrk.c shlib.c etc.c md.c
+SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c
 NOMAN=	noman
 LDDIR?= $(.CURDIR)/..
 #PICFLAG=-pic
