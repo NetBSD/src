@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.36.2.2 2001/09/26 15:28:23 fvdl Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.36.2.3 2001/09/27 14:48:22 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -296,6 +296,7 @@ genfs_revoke(v)
 			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
 				    vq->v_type != vp->v_type || vp == vq)
+					continue;
 				if ((ap->a_flags & REVOKECLONE) == 0 &&
 				    (vq->v_flag & VCLONED) != 0)
 					continue;
