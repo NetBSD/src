@@ -1,4 +1,4 @@
-/*	$NetBSD: inp.c,v 1.15 2003/07/12 13:47:43 itojun Exp $	*/
+/*	$NetBSD: inp.c,v 1.16 2003/07/12 13:53:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, Larry Wall
@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.15 2003/07/12 13:47:43 itojun Exp $");
+__RCSID("$NetBSD: inp.c,v 1.16 2003/07/12 13:53:08 itojun Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -116,7 +116,10 @@ plan_a(char *filename)
 		 * Leave room in lbuf for the diff command.
 		 */
 		s = lbuf + 20;
+		if (pathlen >= sizeof(lbuf) - 20)
+			fatal("file name too long\n");
 		strncpy(s, filename, pathlen);
+		s[pathlen] = '\0';
 
 #define try(f, a1, a2) (Sprintf(s + pathlen, f, a1, a2), stat(s, &cstat) == 0)
 #define try1(f, a1) (Sprintf(s + pathlen, f, a1), stat(s, &cstat) == 0)
