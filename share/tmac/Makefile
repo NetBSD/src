@@ -1,7 +1,7 @@
 #	@(#)Makefile	6.13 (Berkeley) 3/20/91
 
 BINDIR= /usr/share
-FILES=	tmac.andoc
+FILES=	tmac.andoc tmac.an.old
 MSRCS=  doc doc-ditroff doc-common doc-nroff doc-syms
 LINKS=	${BINDIR}/tmac/tmac.andoc ${BINDIR}/tmac/tmac.an
 NOOBJ=	noobj
