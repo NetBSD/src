@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.17 1997/01/31 01:50:53 thorpej Exp $
+#	$NetBSD: WARPED,v 1.18 1997/02/04 04:32:06 perry Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -87,7 +87,6 @@ options		INET		# IP + ICMP + TCP + UDP
 options         NMBCLUSTERS=2048
 
 config		netbsd	root on sd0a type ffs swap on sd0b and sd1b
-#options	GENERIC
 #options	COMCONSOLE=0,CONADDR=0x3f8,CONUNIT=0,CONSPEED=9600
 
 options 	PCIVERBOSE	# verbose PCI device messages
