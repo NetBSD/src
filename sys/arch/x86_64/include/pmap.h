@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2003/02/23 02:44:44 fvdl Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2003/03/05 23:56:02 fvdl Exp $	*/
 
 /*
  *
@@ -448,6 +448,7 @@ vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
 void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t, int32_t *));
 void	pmap_tlb_shootnow __P((int32_t));
 void	pmap_do_tlb_shootdown __P((struct cpu_info *));
+void	pmap_prealloc_lowmem_ptps __P((void));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
@@ -573,6 +574,11 @@ kvtopte(vaddr_t va)
 
 	return (PTE_BASE + pl1_i(va));
 }
+
+#define pmap_pte_set(p, n)		x86_atomic_testset_u64(p, n)
+#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
+#define pmap_cpu_has_pg_n()		(1)
+#define pmap_cpu_has_invlpg		(1)
 
 paddr_t vtophys __P((vaddr_t));
 vaddr_t	pmap_map __P((vaddr_t, paddr_t, paddr_t, vm_prot_t));

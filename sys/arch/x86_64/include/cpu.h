@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6 2003/01/26 00:05:37 fvdl Exp $	*/
+/*	$NetBSD: cpu.h,v 1.7 2003/03/05 23:56:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,15 +38,10 @@
  *	@(#)cpu.h	5.4 (Berkeley) 5/9/91
  */
 
-/*
- * XXXfvdl plain copy of i386 version, but may change enough in the
- * future to be separate.
- */
-
 #ifndef _X86_64_CPU_H_
 #define _X86_64_CPU_H_
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #endif
@@ -54,22 +49,88 @@
 /*
  * Definitions unique to x86-64 cpu support.
  */
-#include <machine/psl.h>
 #include <machine/frame.h>
 #include <machine/segments.h>
+#include <machine/tss.h>
+#include <machine/intrdefs.h>
 
+#include <sys/device.h>
+#include <sys/lock.h>
 #include <sys/sched.h>
+
 struct cpu_info {
+	struct device *ci_dev;
+	struct cpu_info *ci_self;
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
-	u_int ci_cpuid;
-	u_int ci_flags;
 	struct cpu_info *ci_next;
-	u_long ci_spin_locks;		/* # of spin locks held */
-	u_long ci_simple_locks;		/* # of simple locks held */
+
+	struct lwp *ci_curlwp;
+	struct simplelock ci_slock;
+	u_int ci_cpuid;
+	u_int ci_apicid;
+	u_long ci_spin_locks;
+	u_long ci_simple_locks;
+
 	u_int64_t ci_scratch;
+
+	struct lwp *ci_fpcurlwp;
+	int ci_fpsaving;
+
+	volatile u_int32_t ci_tlb_ipi_mask;
+
+	struct pcb *ci_curpcb;
+	struct pcb *ci_idle_pcb;
+	int ci_idle_tss_sel;
+
+	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+	u_int32_t	ci_ipending;
+	int		ci_ilevel;
+	int		ci_idepth;
+	u_int32_t	ci_imask[NIPL];
+	u_int32_t	ci_iunmask[NIPL];
+
+	paddr_t 	ci_idle_pcb_paddr;
+	u_int		ci_flags;
+	u_int32_t	ci_ipis;
+
+	u_int32_t	ci_feature_flags;
+	u_int32_t	ci_signature;
+	u_int64_t	ci_tsc_freq;
+
+	struct cpu_functions *ci_func;
+	void (*cpu_setup) __P((struct cpu_info *));
+	void (*ci_info) __P((struct cpu_info *));
+
+	int		ci_want_resched;
+	int		ci_astpending;
+	struct trapframe *ci_ddb_regs;
+
+	struct timeval 	ci_cc_time;
+	int64_t		ci_cc_cc;
+	int64_t		ci_cc_ms_delta;
+	int64_t		ci_cc_denom;
+
+	char		*ci_gdt;
+
+	struct x86_64_tss	ci_doubleflt_tss;
+	struct x86_64_tss	ci_ddbipi_tss;
+
+	char *ci_doubleflt_stack;
+	char *ci_ddbipi_stack;
+
+	struct evcnt ci_ipi_events[X86_NIPI];
 };
 
-#define CPUF_RUNNING	0x2000		/* XXX temporary */
+#define CPUF_BSP	0x0001		/* CPU is the original BSP */
+#define CPUF_AP		0x0002		/* CPU is an AP */ 
+#define CPUF_SP		0x0004		/* CPU is only processor */  
+#define CPUF_PRIMARY	0x0008		/* CPU is active primary processor */
+
+#define CPUF_PRESENT	0x1000		/* CPU is present */
+#define CPUF_RUNNING	0x2000		/* CPU is running */
+#define CPUF_PAUSE	0x4000		/* CPU is paused in DDB */
+#define CPUF_GO		0x8000		/* CPU should start running */
+
 
 extern struct cpu_info cpu_info_primary;
 extern struct cpu_info *cpu_info_list;
@@ -77,51 +138,90 @@ extern struct cpu_info *cpu_info_list;
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0, ci = cpu_info_list; \
 					ci != NULL; ci = ci->ci_next
-#define	curcpu()			(&cpu_info_primary)
-#define X86_64_MAXPROCS		1	/* Until MP support is done */
+
+#if defined(MULTIPROCESSOR)
+
+#define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
+
+#define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
+#define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
+#define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
+
+#define curcpu()	({struct cpu_info *ci;                  \
+			asm volatile("movq %%gs:8,%0" : "=r" (ci)); \
+			ci;})
+#define cpu_number()	(curcpu()->ci_cpuid)
+
+#define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
+
+extern struct cpu_info *cpu_info[X86_MAXPROCS];
+
+void cpu_boot_secondary_processors __P((void));
+void cpu_init_idle_pcbs __P((void));    
+
+
+/*      
+ * Preempt the current process if in interrupt from user mode,
+ * or after the current trap/syscall if in system mode.
+ */
+extern void need_resched __P((struct cpu_info *));
+
+#else /* !MULTIPROCESSOR */
+
+#define X86_MAXPROCS		1
+
+#ifdef _KERNEL
+extern struct cpu_info cpu_info_primary;
+
+#define curcpu()		(&cpu_info_primary)
+
+#endif
 
 /*
  * definitions of cpu-dependent requirements
  * referenced in generic code
  */
-#define	cpu_swapin(p)			/* nothing */
-#define	cpu_number()			0
-
-/*
- * Arguments to hardclock, softclock and statclock
- * encapsulate the previous machine state in an opaque
- * clockframe; for now, use generic intrframe.
- *
- * XXX intrframe has a lot of gunk we don't need.
- */
-#define clockframe intrframe
-
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_rflags)
-#define	CLKF_BASEPRI(frame)	((frame)->if_ppl == 0)
-#define	CLKF_PC(frame)		((frame)->if_rip)
-#define	CLKF_INTR(frame)	((frame)->if_ppl & (1 << IPL_TAGINTR))
-
-/*
- * This is used during profiling to integrate system time.  It can safely
- * assume that the process is resident.
- */
-#define	PROC_PC(p)		((p)->p_md.md_regs->tf_rip)
-
-#define aston(p)		((p)->p_md.md_astpending = 1)
+#define	cpu_number()		0
+#define CPU_IS_PRIMARY(ci)	1
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
-extern struct lwp *curlwp;
-#define	need_resched(ci)		\
-do {					\
-	want_resched = 1;		\
-	if (curlwp != NULL)		\
-		aston(curlwp->l_proc);	\
+
+#define need_resched(ci)						\
+do {									\
+	struct cpu_info *__ci = (ci);					\
+	__ci->ci_want_resched = 1;					\
+	if (__ci->ci_curlwp != NULL)					\
+		aston(__ci->ci_curlwp->l_proc);				\
 } while (/*CONSTCOND*/0)
 
+#endif
+
+#define aston(p)	((p)->p_md.md_astpending = 1)
+
+extern u_int32_t cpus_attached;
+
+#define curpcb		curcpu()->ci_curpcb
+#define curlwp		curcpu()->ci_curlwp
+
+/*
+ * Arguments to hardclock, softclock and statclock
+ * encapsulate the previous machine state in an opaque
+ * clockframe; for now, use generic intrframe.
+ */
+#define clockframe intrframe
+
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->if_cs, (frame)->if_rflags)
+#define CLKF_BASEPRI(frame)	(0)
+#define CLKF_PC(frame)		((frame)->if_rip)
+#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1)
+
+/*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
 #define LWP_PC(l)		((l)->l_md.md_regs->tf_rip)
 
 /*
@@ -140,7 +240,14 @@ do {					\
 /*
  * We need a machine-independent name for this.
  */
-#define	DELAY(x)		delay(x)
+extern void (*delay_func) __P((int));
+struct timeval;
+extern void (*microtime_func) __P((struct timeval *));
+
+#define DELAY(x)		(*delay_func)(x)
+#define delay(x)		(*delay_func)(x)
+#define microtime(tv)		(*microtime_func)(tv)
+
 
 /*
  * pull in #defines for kinds of processors
@@ -155,15 +262,27 @@ extern int cpu_id;
 extern char cpu_vendor[];
 extern int cpuid_level;
 
+/* kern_microtime.c */
+
+extern struct timeval cc_microset_time;
+void	cc_microtime __P((struct timeval *));
+void	cc_microset __P((struct cpu_info *));
+
+/* identcpu.c */
+
+void	identifycpu __P((struct cpu_info *));
+void cpu_probe_features __P((struct cpu_info *));
+
 /* machdep.c */
 void	delay __P((int));
 void	dumpconf __P((void));
+int	cpu_maxproc __P((void));
 void	cpu_reset __P((void));
 void	x86_64_proc0_tss_ldt_init __P((void));
 void	x86_64_bufinit __P((void));
+void	x86_64_init_pcb_tss_ldt __P((struct cpu_info *));
 void	cpu_proc_fork __P((struct proc *, struct proc *));
 
-/* locore.s */
 struct region_descriptor;
 void	lgdt __P((struct region_descriptor *));
 void	fillw __P((short, void *, size_t));
@@ -177,19 +296,15 @@ void	child_trampoline __P((void));
 /* clock.c */
 void	initrtclock __P((void));
 void	startrtclock __P((void));
+void	i8254_delay __P((int));
+void	i8254_microtime __P((struct timeval *));
+void	i8254_initclocks __P((void));
+
+void cpu_init_msrs __P((struct cpu_info *));
+
 
 /* vm_machdep.c */
 int kvtop __P((caddr_t));
-
-#if 0	/* XXXfvdl was USER_LDT, need to check if that can be supported */
-/* sys_machdep.h */
-int	i386_get_ldt __P((struct proc *, void *, register_t *));
-int	i386_set_ldt __P((struct proc *, void *, register_t *));
-#endif
-
-/* isa_machdep.c */
-void	isa_defaultirq __P((void));
-int	isa_nmi __P((void));
 
 /* trap.c */
 void	child_return __P((void *));
@@ -198,10 +313,12 @@ void	child_return __P((void *));
 void kgdb_port_init __P((void));
 
 /* bus_machdep.c */
-void x86_64_bus_space_init __P((void));
-void x86_64_bus_space_mallocok __P((void));
+void x86_bus_space_init __P((void));
+void x86_bus_space_mallocok __P((void));
 
 #endif /* _KERNEL */
+
+#include <machine/psl.h>
 
 /* 
  * CTL_MACHDEP definitions.
