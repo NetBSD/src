@@ -1,6 +1,6 @@
 .\" Copyright (c) 2000 Kungliga Tekniska Högskolan
 .\" $Heimdal: krb5_appdefault.3,v 1.7 2002/08/28 15:30:46 joda Exp $
-.\" $NetBSD: krb5_appdefault.3,v 1.6 2002/09/12 13:19:15 joda Exp $
+.\" $NetBSD: krb5_appdefault.3,v 1.7 2003/05/15 20:44:20 lha Exp $
 .Dd July 25, 2000
 .Dt KRB5_APPDEFAULT 3
 .Os
@@ -12,7 +12,7 @@
 .Sh LIBRARY
 Kerberos 5 Library (libkrb5, -lkrb5)
 .Sh SYNOPSIS
-.Fd #include <krb5/krb5.h>
+.In krb5/krb5.h
 .Ft void
 .Fn krb5_appdefault_boolean "krb5_context context" "const char *appname" "krb5_realm realm" "const char *option" "krb5_boolean def_val" "krb5_boolean *ret_val"
 .Ft void

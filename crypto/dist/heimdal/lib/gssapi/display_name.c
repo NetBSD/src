@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: display_name.c,v 1.7 2001/05/11 09:16:46 assar Exp $"
-        "$NetBSD: display_name.c,v 1.2 2002/11/28 11:21:17 elric Exp $");
+        "$NetBSD: display_name.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
 
 OM_uint32 gss_display_name
            (OM_uint32 * minor_status,
@@ -43,32 +43,32 @@ OM_uint32 gss_display_name
             gss_OID * output_name_type
            )
 {
-  krb5_error_code kret;
-  char *buf;
-  size_t len;
+    krb5_error_code kret;
+    char *buf;
+    size_t len;
 
-  GSSAPI_KRB5_INIT_MS(minor_status);
-
-  kret = krb5_unparse_name (gssapi_krb5_context,
-			    input_name,
-			    &buf);
-  if (kret) {
-    *minor_status = kret;
-    gssapi_krb5_set_error_string ();
-    return GSS_S_FAILURE;
-  }
-  len = strlen (buf);
-  output_name_buffer->length = len;
-  output_name_buffer->value  = malloc(len + 1);
-  if (output_name_buffer->value == NULL) {
+    GSSAPI_KRB5_INIT ();
+    kret = krb5_unparse_name (gssapi_krb5_context,
+			      input_name,
+			      &buf);
+    if (kret) {
+	*minor_status = kret;
+	gssapi_krb5_set_error_string ();
+	return GSS_S_FAILURE;
+    }
+    len = strlen (buf);
+    output_name_buffer->length = len;
+    output_name_buffer->value  = malloc(len + 1);
+    if (output_name_buffer->value == NULL) {
+	free (buf);
+	*minor_status = ENOMEM;
+	return GSS_S_FAILURE;
+    }
+    memcpy (output_name_buffer->value, buf, len);
+    ((char *)output_name_buffer->value)[len] = '\0';
     free (buf);
-    *minor_status = ENOMEM;
-    return GSS_S_FAILURE;
-  }
-  memcpy (output_name_buffer->value, buf, len);
-  ((char *)output_name_buffer->value)[len] = '\0';
-  free (buf);
-  if (output_name_type)
-      *output_name_type = GSS_KRB5_NT_PRINCIPAL_NAME;
-  return GSS_S_COMPLETE;
+    if (output_name_type)
+	*output_name_type = GSS_KRB5_NT_PRINCIPAL_NAME;
+    *minor_status = 0;
+    return GSS_S_COMPLETE;
 }

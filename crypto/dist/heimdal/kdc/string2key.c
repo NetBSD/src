@@ -35,7 +35,7 @@
 #include <getarg.h>
 
 __RCSID("$Heimdal: string2key.c,v 1.20 2003/03/25 12:28:52 joda Exp $"
-        "$NetBSD: string2key.c,v 1.1.1.4 2003/05/15 20:28:45 lha Exp $");
+        "$NetBSD: string2key.c,v 1.2 2003/05/15 20:44:13 lha Exp $");
 
 int version5;
 int version4;
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 	if(num == 0)
 	    krb5_errx(context, 1, "there are no encryption types for that keytype");
 	etype = etypes[0];
-	krb5_enctype_to_string(context, etype, &keytype_str);
+	krb5_enctype_to_string(context, etype, (char **)&keytype_str);
 	if(num > 1 && version5)
 	    krb5_warnx(context, "ambiguous keytype, using %s", keytype_str);
     }

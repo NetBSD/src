@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,7 +34,7 @@
 #include "gssapi_locl.h"
 
 __RCSID("$Heimdal: get_mic.c,v 1.19 2001/10/31 13:37:39 nectar Exp $"
-        "$NetBSD: get_mic.c,v 1.6 2002/09/12 13:19:08 joda Exp $");
+        "$NetBSD: get_mic.c,v 1.7 2003/05/15 20:44:16 lha Exp $");
 
 static OM_uint32
 mic_des
@@ -116,6 +116,7 @@ mic_des
   memset (deskey, 0, sizeof(deskey));
   memset (schedule, 0, sizeof(schedule));
   
+  *minor_status = 0;
   return GSS_S_COMPLETE;
 }
 
@@ -140,6 +141,7 @@ mic_des3
   krb5_error_code kret;
   krb5_data encdata;
   char *tmp;
+  char ivec[8];
 
   gssapi_krb5_encap_length (36, &len, &total_len);
 
@@ -220,10 +222,15 @@ mic_des3
       return GSS_S_FAILURE;
   }
 
-  kret = krb5_encrypt (gssapi_krb5_context,
-		       crypto,
-		       KRB5_KU_USAGE_SEQ,
-		       seq, 8, &encdata);
+  if (context_handle->more_flags & COMPAT_OLD_DES3)
+      memset(ivec, 0, 8);
+  else
+      memcpy(ivec, p + 8, 8);
+
+  kret = krb5_encrypt_ivec (gssapi_krb5_context,
+			    crypto,
+			    KRB5_KU_USAGE_SEQ,
+			    seq, 8, &encdata, ivec);
   krb5_crypto_destroy (gssapi_krb5_context, crypto);
   if (kret) {
       free (message_token->value);
@@ -242,6 +249,7 @@ mic_des3
 			       ++seq_number);
   
   free_Checksum (&cksum);
+  *minor_status = 0;
   return GSS_S_COMPLETE;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: gssapi_locl.h,v 1.21 2001/08/29 02:21:09 assar Exp $
-   $NetBSD: gssapi_locl.h,v 1.2 2002/11/28 11:21:17 elric Exp $ */
+   $NetBSD: gssapi_locl.h,v 1.3 2003/05/15 20:44:16 lha Exp $ */
 
 #ifndef GSSAPI_LOCL_H
 #define GSSAPI_LOCL_H
@@ -51,26 +51,13 @@ extern krb5_keytab gssapi_krb5_keytab;
 
 krb5_error_code gssapi_krb5_init (void);
 
-/*
- * we define this as a macro since it must be able to return from the
- * calling function.  It is passed either a ptr to ``minor status'' or NULL.
- */
-
 #define GSSAPI_KRB5_INIT() do {					\
-		if (gssapi_krb5_init())				\
-			return GSS_S_FAILURE;			\
-	} while (0);
-
-#define GSSAPI_KRB5_INIT_MS(_ms) do {				\
-		krb5_error_code kret;				\
-								\
-		kret = gssapi_krb5_init();			\
-		if (kret) {					\
-			if (_ms)				\
-				*_ms = kret;			\
-			return GSS_S_FAILURE;			\
-		}						\
-	} while (0);
+    krb5_error_code kret;					\
+    if((kret = gssapi_krb5_init ()) != 0) {	\
+	*minor_status = kret;					\
+	return GSS_S_FAILURE;					\
+    }								\
+} while (0)
 
 OM_uint32
 gssapi_krb5_create_8003_checksum (
@@ -118,6 +105,14 @@ gssapi_krb5_verify_header(u_char **str,
 			  char *type);
 
 OM_uint32
+gss_verify_mic_internal(OM_uint32 * minor_status,
+			const gss_ctx_id_t context_handle,
+			const gss_buffer_t message_buffer,
+			const gss_buffer_t token_buffer,
+			gss_qop_t * qop_state,
+			char * type);
+
+OM_uint32
 gss_krb5_get_remotekey(const gss_ctx_id_t context_handle,
 		       krb5_keyblock **key);
 
@@ -139,10 +134,16 @@ gss_address_to_krb5addr(OM_uint32 gss_addr_type,
 #define SC_LOCAL_SUBKEY	  0x08
 #define SC_REMOTE_SUBKEY  0x10
 
+int
+gss_oid_equal(const gss_OID a, const gss_OID b);
+
 void
 gssapi_krb5_set_error_string (void);
 
 char *
 gssapi_krb5_get_error_string (void);
+
+OM_uint32
+_gss_DES3_get_mic_compat(OM_uint32 *minor_status, gss_ctx_id_t ctx);
 
 #endif

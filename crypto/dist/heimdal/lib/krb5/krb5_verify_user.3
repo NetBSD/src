@@ -1,6 +1,6 @@
 .\" Copyright (c) 2001 Kungliga Tekniska Högskolan
 .\" $Heimdal: krb5_verify_user.3,v 1.5 2002/08/28 15:30:58 joda Exp $
-.\" $NetBSD: krb5_verify_user.3,v 1.5 2003/01/02 13:00:49 wiz Exp $
+.\" $NetBSD: krb5_verify_user.3,v 1.6 2003/05/15 20:44:22 lha Exp $
 .Dd June 27, 2001
 .Dt KRB5_VERIFY_USER 3
 .Os
@@ -51,13 +51,75 @@ After a successful return, the principal is set to the authenticated
 realm. If the call fails, the principal will not be meaningful, and
 should only be freed with
 .Xr krb5_free_principal 3 .
+.Pp
+.Fn krb5_verify_opt_init
+resets all opt to default values.
+.Pp
+None of the krb5_verify_opt_set function makes a copy of the data
+structure that they are called with. Its up the caller to free them
+after the
+.Fn krb5_verify_user_opt
+is called.
+.Pp
+.Fn krb5_verify_opt_set_ccache
+sets the
+.Fa ccache
+that user of
+.Fa opt
+will use. If not set, the default credential cache will be used.
+.Pp
+.Fn krb5_verify_opt_set_keytab
+sets the
+.Fa keytab
+that user of
+.Fa opt
+will use. If not set, the default keytab will be used.
+.Pp
+.Fn krb5_verify_opt_set_secure
+if
+.Fa secure
+if true, the password verification will require that the ticket will
+be verified against the locally stored service key. If not set,
+default value is true.
+.Pp
+.Fn krb5_verify_opt_set_service
+sets the
+.Fa service
+principal that user of
+.Fa opt
+will use. If not set, the
+.Ql host
+service will be used.
+.Pp
+.Fn krb5_verify_opt_set_flags
+sets
+.Fa flags
+that user of
+.Fa opt
+will use.
+If the flag
+.Dv KRB5_VERIFY_LREALMS
+is used, the
+.Fa principal
+will be modified like
+.Fn krb5_verify_user_lrealm
+modifies it.
+.Pp
+.Fn krb5_verify_user_opt
+function verifies the
+.Fa password
+supplied by a user.
+The principal whose password will be verified is specified in
+.Fa principal .
+Options the to the verification process is pass in in
+.Fa opt .
 .Sh EXAMPLES
 Here is a example program that verifies a password. it uses the
 .Ql host/`hostname`
 service principal in
 .Pa krb5.keytab .
 .Bd -literal
-#include <krb5.h>
+#include <krb5/krb5.h>
 
 int
 main(int argc, char **argv)
@@ -87,6 +149,9 @@ main(int argc, char **argv)
 .Ed
 .Sh SEE ALSO
 .Xr krb5_err 3 ,
+.Xr krb5_cc_gen_new 3 ,
+.Xr krb5_cc_resolve 3 ,
+.Xr krb5_cc_initialize 3 ,
 .Xr krb5_free_principal 3 ,
 .Xr krb5_init_context 3 ,
 .Xr krb5_kt_default 3 ,
