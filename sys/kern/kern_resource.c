@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.65 2002/10/03 04:52:51 itojun Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.66 2002/10/03 04:57:39 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.65 2002/10/03 04:52:51 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.66 2002/10/03 04:57:39 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,7 +251,7 @@ dosetrlimit(p, cred, which, limp)
 	struct plimit *newplim;
 	int error;
 
-	if ((u_int)which >= RLIM_NLIMITS)
+	if (which < 0 || (u_int)which >= RLIM_NLIMITS)
 		return (EINVAL);
 
 	if (limp->rlim_cur < 0 || limp->rlim_max < 0)
