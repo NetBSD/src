@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.5.2.1 2001/08/03 04:13:43 lukem Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.5.2.2 2001/09/07 22:14:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -116,16 +116,16 @@ static struct fileops pipeops = {
 	pipe_read, pipe_write, pipe_ioctl, pipe_poll, pipe_kqfilter,
 	pipe_stat, pipe_close
 };
+#endif /* FreeBSD */
 
 static void	filt_pipedetach(struct knote *kn);
 static int	filt_piperead(struct knote *kn, long hint);
 static int	filt_pipewrite(struct knote *kn, long hint);
 
-static struct filterops pipe_rfiltops =
+static const struct filterops pipe_rfiltops =
 	{ 1, NULL, filt_pipedetach, filt_piperead };
-static struct filterops pipe_wfiltops =
+static const struct filterops pipe_wfiltops =
 	{ 1, NULL, filt_pipedetach, filt_pipewrite };
-#endif /* FreeBSD */
 
 #ifdef __NetBSD__
 static int pipe_read __P((struct file *fp, off_t *offset, struct uio *uio, 
@@ -136,12 +136,13 @@ static int pipe_close __P((struct file *fp, struct proc *p));
 static int pipe_poll __P((struct file *fp, int events, struct proc *p));
 static int pipe_fcntl __P((struct file *fp, u_int com, caddr_t data,
 		struct proc *p));
+static int pipe_kqfilter __P((struct file *fp, struct knote *kn));
 static int pipe_stat __P((struct file *fp, struct stat *sb, struct proc *p));
 static int pipe_ioctl __P((struct file *fp, u_long cmd, caddr_t data, struct proc *p));
 
 static struct fileops pipeops =
     { pipe_read, pipe_write, pipe_ioctl, pipe_fcntl, pipe_poll,
-      pipe_stat, pipe_close };
+      pipe_stat, pipe_close, pipe_kqfilter };
 #endif /* NetBSD */
 
 /*
@@ -517,15 +518,17 @@ pipeselwakeup(selp, sigp)
 #endif
 
 #ifdef __NetBSD__
-	if (sigp && (sigp->pipe_state & PIPE_ASYNC)
-	    && sigp->pipe_pgid != NO_PID){
+	if (sigp && (sigp->pipe_state & PIPE_ASYNC) &&
+	    sigp->pipe_pgid != NO_PID) {
 		struct proc *p;
 
 		if (sigp->pipe_pgid < 0)
 			gsignal(-sigp->pipe_pgid, SIGIO);
-		else if (sigp->pipe_pgid > 0 && (p = pfind(sigp->pipe_pgid)) != 0)
+		else if (sigp->pipe_pgid > 0 &&
+			 (p = pfind(sigp->pipe_pgid)) != NULL)
 			psignal(p, SIGIO);
 	}
+	KNOTE(&selp->pipe_sel.si_klist, 0);
 #endif /* NetBSD */
 }
 
@@ -1675,7 +1678,6 @@ pipeclose(cpipe)
 #endif
 }
 
-#ifdef __FreeBSD__
 /*ARGSUSED*/
 static int
 pipe_kqfilter(struct file *fp, struct knote *kn)
@@ -1695,7 +1697,11 @@ pipe_kqfilter(struct file *fp, struct knote *kn)
 	}
 	kn->kn_hook = (caddr_t)cpipe;
 	
+#ifdef __FreeBSD__
 	SLIST_INSERT_HEAD(&cpipe->pipe_sel.si_note, kn, kn_selnext);
+#else
+	SLIST_INSERT_HEAD(&cpipe->pipe_sel.si_klist, kn, kn_selnext);
+#endif /* __FreeBSD__ */
 	return (0);
 }
 
@@ -1704,7 +1710,11 @@ filt_pipedetach(struct knote *kn)
 {
 	struct pipe *cpipe = (struct pipe *)kn->kn_fp->f_data;
 
+#ifdef __FreeBSD__
 	SLIST_REMOVE(&cpipe->pipe_sel.si_note, kn, knote, kn_selnext);
+#else
+	SLIST_REMOVE(&cpipe->pipe_sel.si_klist, kn, knote, kn_selnext);
+#endif /* __FreeBSD__ */
 }
 
 /*ARGSUSED*/
@@ -1744,7 +1754,6 @@ filt_pipewrite(struct knote *kn, long hint)
 
 	return (kn->kn_data >= PIPE_BUF);
 }
-#endif /* FreeBSD */
 
 #ifdef __NetBSD__
 static int
