@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.271 2002/03/31 02:21:20 shiba Exp $	*/
+/*	$NetBSD: machdep.c,v 1.272 2002/04/27 19:29:09 shiba Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1064,6 +1064,7 @@ getenvvars(flag, buf)
 	extern u_long macos_boottime, MacOSROMBase;
 	extern long macos_gmtbias;
 	int root_scsi_id;
+	u_long root_ata_dev;
 #ifdef	__ELF__
 	int i;
 	Elf_Ehdr *ehdr;
@@ -1120,9 +1121,30 @@ getenvvars(flag, buf)
 	 * bootdev using the SCSI ID passed in via the environment.
 	 */
 	root_scsi_id = getenv("ROOT_SCSI_ID");
+	root_ata_dev = getenv("ROOT_ATA_DEV");
 	if (((mac68k_machine.booter_version < CURRENTBOOTERVER) ||
-	    (flag & 0x40000)) && bootdev == 0)
-		bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
+	    (flag & 0x40000)) && bootdev == 0) {
+		if (root_ata_dev) {
+			/*
+			 * Consider only internal IDE drive.
+			 * Buses(=channel) will be always 0.
+			 * Because 68k Mac has only single channel.
+			 */
+			switch (root_ata_dev) {
+			default: /* fall through */
+			case 0xffffffe0: /* buses,drive = 0,0 */
+			case 0x20: /* buses,drive = 1,0 */
+			case 0x21: /* buses,drive = 1,1 */
+				bootdev = MAKEBOOTDEV(22, 0, 0, 0, 0);
+				break;
+			case 0xffffffe1: /* buses,drive = 0,1 */
+				bootdev = MAKEBOOTDEV(22, 0, 0, 1, 0);
+				break;
+			}
+		} else {
+			bootdev = MAKEBOOTDEV(4, 0, 0, root_scsi_id, 0);
+		}
+	}
 
 	/*
 	 * Booter 1.11.3 and later pass a BOOTHOWTO variable with the

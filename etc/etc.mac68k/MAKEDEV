@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.59 2002/03/13 01:26:58 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.60 2002/04/27 19:29:08 shiba Exp $
 #
 ###########################################################################
 #
@@ -48,6 +48,7 @@
 #	ccd*	concatenated disk driver
 #	md*	memory pseudo-disk devices
 #	fd*	floppy disk drives (3 1/2")
+#	wd*	"winchester" disk drives (ST506,IDE,ESDI,RLL,...)
 #
 # Terminal ports:
 #	ttye*	ite consoles
@@ -107,7 +108,7 @@ do
 case $i in
 
 all)
-	makedev std wscons fd sd0 sd1 sd2 sd3 tty0 tty1 pty0
+	makedev std wscons fd sd0 sd1 sd2 sd3 wd0 wd1 wd2 wd3 tty0 tty1 pty0
 	makedev st0 st1 ch0 cd0 cd1 fd0 fd1 vnd0 vnd1 vnd2 vnd3
 	makedev ccd0 ccd1 ccd2 ccd3 md0 ss0 uk0 uk1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -138,7 +139,7 @@ std)
 
 raminst)
 	makedev std
-	makedev sd0 sd1 sd2 sd3 st0 st1 cd0 cd1 md0
+	makedev sd0 sd1 sd2 sd3 wd0 wd1 wd2 wd3 st0 st1 cd0 cd1 md0
 	makedev adb grf0 grf1 ttye0
 	makedev tty0 tty1 opty
 	;;
@@ -235,12 +236,13 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-sd*|fd*|vnd*|ccd*|raid*)
+sd*|fd*|wd*|vnd*|ccd*|raid*)
 	case $i in
 	ccd*) name=ccd;	unit=${i#ccd};	blk=9;	chr=20;;
 	fd*) name=fd;	unit=${i#fd};	blk=21;	chr=43;;
 	raid*) name=raid; unit=${i#raid}; blk=20; chr=42;;
 	sd*) name=sd;	unit=${i#sd};	blk=4;	chr=13;;
+	wd*) name=wd;	unit=${i#wd};	blk=22;	chr=49;;
 	vnd*) name=vnd;	unit=${i#vnd};	blk=8;	chr=19;;
 	esac
 	rm -f $name$unit? r$name$unit?

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2002/04/25 15:06:30 atatat Exp $
+# $NetBSD: GENERIC,v 1.126 2002/04/27 19:29:08 shiba Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.126 $"
 
 maxusers	16		# estimated number of users
 
@@ -231,6 +231,10 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 se*	at scsibus? target ? lun ?	# SCSI ethernet
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
+
+# IDE controller and devices
+wdc*	at obio? flags 0x1000
+wd*	at wdc? channel ? drive ?
 
 
 # Miscellaneous mass storage devices
