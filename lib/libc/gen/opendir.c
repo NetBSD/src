@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.8 1995/02/25 08:51:28 cgd Exp $	*/
+/*	$NetBSD: opendir.c,v 1.9 1995/06/12 19:38:02 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-static char rcsid[] = "$NetBSD: opendir.c,v 1.8 1995/02/25 08:51:28 cgd Exp $";
+static char rcsid[] = "$NetBSD: opendir.c,v 1.9 1995/06/12 19:38:02 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ __opendir2(name, flags)
 	int incr;
 	int unionstack;
 
-	if ((fd = open(name, O_RDONLY)) == -1)
+	if ((fd = open(name, O_RDONLY | O_NONBLOCK)) == -1)
 		return (NULL);
 	if (fstat(fd, &sb) || !S_ISDIR(sb.st_mode)) {
 		errno = ENOTDIR;
