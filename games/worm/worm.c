@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $	*/
+/*	$NetBSD: worm.c,v 1.8 1997/10/12 02:12:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $";
+__RCSID("$NetBSD: worm.c,v 1.8 1997/10/12 02:12:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $";
 #include <signal.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <unistd.h>
 
 #define newlink() (struct body *) malloc(sizeof (struct body));
 #define HEAD '@'
@@ -81,8 +82,20 @@ int start_len = LENGTH;
 char lastch;
 char outbuf[BUFSIZ];
 
-void leave(), wake(), suspend();
+void	crash __P((void));
+void	display __P((struct body *, char));
+int	main __P((int, char **));
+void	leave __P((int));
+void	life __P((void));
+void	newpos __P((struct body *));
+void	process __P((char));
+void	prize __P((void));
+int	rnd __P((int));
+void	setup __P((void));
+void	suspend __P((int));
+void	wake __P((int));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -132,11 +145,13 @@ main(argc, argv)
 	}
 }
 
+void
 life()
 {
-	register struct body *bp, *np;
-	register int i;
+	struct body *bp, *np;
+	int i;
 
+	np = NULL;
 	head = newlink();
 	head->x = start_len+2;
 	head->y = 12;
@@ -154,36 +169,42 @@ life()
 	tail->prev = NULL;
 }
 
+void
 display(pos, chr)
-struct body *pos;
-char chr;
+	struct body *pos;
+	char chr;
 {
 	wmove(tv, pos->y, pos->x);
 	waddch(tv, chr);
 }
 
 void
-leave()
+leave(dummy)
+	int dummy;
 {
 	endwin();
 	exit(0);
 }
 
 void
-wake()
+wake(dummy)
+	int dummy;
 {
 	signal(SIGALRM, wake);
 	fflush(stdout);
 	process(lastch);
 }
 
+int
 rnd(range)
+	int range;
 {
 	return abs((rand()>>5)+(rand()>>5)) % range;
 }
 
+void
 newpos(bp)
-struct body * bp;
+	struct body * bp;
 {
 	do {
 		bp->y = rnd(LINES-3)+ 2;
@@ -192,6 +213,7 @@ struct body * bp;
 	} while(winch(tv) != ' ');
 }
 
+void
 prize()
 {
 	int value;
@@ -202,10 +224,11 @@ prize()
 	wrefresh(tv);
 }
 
+void
 process(ch)
-char ch;
+	char ch;
 {
-	register int x,y;
+	int x,y;
 	struct body *nh;
 
 	alarm(0);
@@ -222,7 +245,7 @@ char ch;
 		case 'K': y--; running = RUNLEN/2; ch = tolower(ch); break;
 		case 'L': x++; running = RUNLEN; ch = tolower(ch); break;
 		case '\f': setup(); return;
-		case CNTRL('Z'): suspend(); return;
+		case CNTRL('Z'): suspend(0); return;
 		case CNTRL('C'): crash(); return;
 		case CNTRL('D'): crash(); return;
 		default: if (! running) alarm(1);
@@ -265,6 +288,7 @@ char ch;
 		alarm(1);
 }
 
+void
 crash()
 {
 	sleep(2);
@@ -273,14 +297,13 @@ crash()
 	refresh();
 	printf("Well, you ran into something and the game is over.\n");
 	printf("Your final score was %d\n", score);
-	leave();
+	leave(0);
 }
 
 void
-suspend()
+suspend(dummy)
+	int dummy;
 {
-	char *sh;
-
 	move(LINES-1, 0);
 	refresh();
 	endwin();
@@ -292,6 +315,7 @@ suspend()
 	setup();
 }
 
+void
 setup()
 {
 	clear();
