@@ -1,9 +1,9 @@
-#	$NetBSD: rc.lkm,v 1.1 1997/01/05 11:47:53 mrg Exp $
+#	$NetBSD: rc.lkm,v 1.2 1997/07/14 11:55:45 drochner Exp $
 #
 # this script loads any LKM's that are required.
 
 [ -s /etc/lkm.conf ] && (
-	while read path options entry postinstall output; do
+	while read path options entry postinstall output when; do
 		cmd='modload '
 
 		case $path in
@@ -54,6 +54,22 @@
 			cmd="$cmd -o $output"
 			;;
 		esac
+
+		case $when in
+		-)
+			when=BEFORENET
+			;;
+		[A-Z]*)
+			;;
+		*)
+			echo "invalid \"when\" field in /etc/lkm.conf - $path not loaded!"
+			continue
+			;;
+		esac
+
+		if [ $when != $lkmstage ]; then
+			continue
+		fi
 
 		$cmd $path
 	done
