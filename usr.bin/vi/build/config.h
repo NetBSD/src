@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.4 1999/04/17 17:48:23 drochner Exp $	*/
+/*	$NetBSD: config.h,v 1.5 2000/03/17 02:22:27 christos Exp $	*/
 
 /* config.h.  Generated automatically by configure.  */
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -10,7 +10,9 @@
 /* #undef HAVE_DOPRNT */
 
 /* Define if you have a working `mmap' system call.  */
-/* #define HAVE_MMAP 1 */
+#ifdef __SVR4
+#define HAVE_MMAP 1 
+#endif
 
 /* Define if your struct stat has st_blksize.  */
 #define HAVE_ST_BLKSIZE 1
@@ -59,7 +61,9 @@
 /* #undef HAVE_BROKEN_VDISABLE */
 
 /* Define if you have a BSD version of curses. */
+#ifndef __SVR4
 #define HAVE_BSD_CURSES 1
+#endif
 
 /* Define if you have the curses(3) addnstr function. */
 #define HAVE_CURSES_ADDNSTR 1
@@ -77,10 +81,14 @@
 #define HAVE_CURSES_KEYPAD 1
 
 /* Define if you have the curses(3) newterm function. */
-/* #undef HAVE_CURSES_NEWTERM */
+#ifdef __SVR4
+#define HAVE_CURSES_NEWTERM 1
+#endif
 
 /* Define if you have the curses(3) setupterm function. */
-/* #undef HAVE_CURSES_SETUPTERM */
+#ifdef __SVR4
+#define HAVE_CURSES_SETUPTERM 1
+#endif
 
 /* Define if you have the curses(3) tigetstr/tigetnum functions. */
 /* #undef HAVE_CURSES_TIGETSTR */
