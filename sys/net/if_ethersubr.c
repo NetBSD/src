@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.121 2005/03/18 11:11:50 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.122 2005/03/31 15:48:13 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.121 2005/03/18 11:11:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.122 2005/03/31 15:48:13 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -205,7 +205,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct rtentry *rt0)
 {
 	u_int16_t etype = 0;
-	int s, len, error = 0, hdrcmplt = 0;
+	int error = 0, hdrcmplt = 0;
  	u_char esrc[6], edst[6];
 	struct mbuf *m = m0;
 	struct rtentry *rt;
@@ -218,7 +218,6 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 #ifdef NETATALK
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
-	short mflags;
 
 #ifdef MBUFTRACE
 	m_claimm(m, ifp->if_mowner);
@@ -539,26 +538,7 @@ ether_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		altq_etherclassify(&ifp->if_snd, m, &pktattr);
 #endif
 
-	mflags = m->m_flags;
-	len = m->m_pkthdr.len;
-	s = splnet();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
-	if (error) {
-		/* mbuf is already freed */
-		splx(s);
-		return (error);
-	}
-	ifp->if_obytes += len;
-	if (mflags & M_MCAST)
-		ifp->if_omcasts++;
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
-	return (error);
+	return ifq_enqueue(ifp, m ALTQ_COMMA ALTQ_DECL(&pktattr));
 
 bad:
 	if (m)

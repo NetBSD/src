@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.82 2005/02/26 22:45:09 perry Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.83 2005/03/31 15:48:13 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.82 2005/02/26 22:45:09 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.83 2005/03/31 15:48:13 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -689,7 +689,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	struct sppp *sp = (struct sppp *) ifp;
 	struct ppp_header *h = NULL;
 	struct ifqueue *ifq = NULL;		/* XXX */
-	int s, len, rv = 0;
+	int s, error = 0;
 	u_int16_t protocol;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -821,7 +821,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 */
 			protocol = htons(PPP_IP);
 			if (sp->state[IDX_IPCP] != STATE_OPENED)
-				rv = ENETDOWN;
+				error = ENETDOWN;
 		}
 		break;
 #endif
@@ -841,7 +841,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 */
 			protocol = htons(PPP_IPV6);
 			if (sp->state[IDX_IPV6CP] != STATE_OPENED)
-				rv = ENETDOWN;
+				error = ENETDOWN;
 		}
 		break;
 #endif
@@ -887,43 +887,21 @@ nosupport:
 		h->protocol = protocol;
 	}
 
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	len = m->m_pkthdr.len;
-	if (ifq != NULL
-#ifdef ALTQ
-	    && ALTQ_IS_ENABLED(&ifp->if_snd) == 0
-#endif
-	    ) {
-		if (IF_QFULL(ifq)) {
-			IF_DROP(&ifp->if_snd);
-			m_freem(m);
-			if (rv == 0)
-				rv = ENOBUFS;
-		}
-		else
-			IF_ENQUEUE(ifq, m);
-	} else
-		IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, rv);
-	if (rv != 0) {
-		++ifp->if_oerrors;
-		splx(s);
-		return (rv);
+
+	error = ifq_enqueue2(ifp, ifq, m ALTQ_COMMA ALTQ_DECL(&pktattr));
+
+	if (error == 0) {
+		/*
+		 * Count output packets and bytes.
+		 * The packet length includes header + additional hardware
+		 * framing according to RFC 1333.
+		 */
+		if (!(ifp->if_flags & IFF_OACTIVE))
+			(*ifp->if_start)(ifp);
+		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 	}
-
-	if (! (ifp->if_flags & IFF_OACTIVE))
-		(*ifp->if_start)(ifp);
-
-	/*
-	 * Count output packets and bytes.
-	 * The packet length includes header + additional hardware framing
-	 * according to RFC 1333.
-	 */
-	ifp->if_obytes += len + sp->pp_framebytes;
 	splx(s);
-	return (0);
+	return error;
 }
 
 void
