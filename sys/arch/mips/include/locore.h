@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.14 1998/09/11 16:46:31 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.15 1999/01/06 04:11:27 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -64,13 +64,13 @@ extern u_int32_t mips_read_statusreg __P((void));
 
 extern void mips1_ConfigCache  __P((void));
 extern void mips1_FlushCache  __P((void));
-extern void mips1_FlushDCache  __P((vm_offset_t addr, vm_offset_t len));
-extern void mips1_FlushICache  __P((vm_offset_t addr, vm_offset_t len));
+extern void mips1_FlushDCache  __P((vaddr_t addr, vaddr_t len));
+extern void mips1_FlushICache  __P((vaddr_t addr, vaddr_t len));
 extern void mips1_ForceCacheUpdate __P((void));
 extern void mips1_SetPID   __P((int pid));
 extern void mips1_TLBFlush __P((int numtlb));
 extern void mips1_TLBFlushAddr   __P( /* XXX Really pte highpart ? */
-					  (vm_offset_t addr));
+					  (vaddr_t addr));
 extern int mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
 extern void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
 					    u_int low));
@@ -81,14 +81,14 @@ extern void mips1_cpu_switch_resume __P((void));
 
 extern void mips3_ConfigCache __P((void));
 extern void mips3_FlushCache  __P((void));
-extern void mips3_FlushDCache __P((vm_offset_t addr, vm_offset_t len));
-extern void mips3_FlushICache __P((vm_offset_t addr, vm_offset_t len));
+extern void mips3_FlushDCache __P((vaddr_t addr, vaddr_t len));
+extern void mips3_FlushICache __P((vaddr_t addr, vaddr_t len));
 extern void mips3_ForceCacheUpdate __P((void));
-extern void mips3_HitFlushDCache __P((vm_offset_t, int));
+extern void mips3_HitFlushDCache __P((vaddr_t, int));
 extern void mips3_SetPID  __P((int pid));
 extern void mips3_TLBFlush __P((int numtlb));
 extern void mips3_TLBFlushAddr __P( /* XXX Really pte highpart ? */
-					  (vm_offset_t addr));
+					  (vaddr_t addr));
 extern int mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
 struct tlb;
 extern void mips3_TLBRead __P((int, struct tlb *));
@@ -116,12 +116,12 @@ extern void mips3_write_compare __P((u_int32_t));
 typedef struct  {
 	void (*configCache) __P((void));
 	void (*flushCache)  __P((void));
-	void (*flushDCache) __P((vm_offset_t addr, vm_offset_t len));
-	void (*flushICache) __P((vm_offset_t addr, vm_offset_t len));
+	void (*flushDCache) __P((vaddr_t addr, vaddr_t len));
+	void (*flushICache) __P((vaddr_t addr, vaddr_t len));
 	void (*forceCacheUpdate)  __P((void));
 	void (*setTLBpid)  __P((int pid));
 	void (*tlbFlush)  __P((int numtlb));
-	void (*tlbFlushAddr)  __P((vm_offset_t)); /* XXX Really pte highpart ? */
+	void (*tlbFlushAddr)  __P((vaddr_t)); /* XXX Really pte highpart ? */
 	int (*tlbUpdate)  __P((u_int highreg, u_int lowreg));
 	void (*wbflush) __P((void));
 	void (*proc_trampoline) __P((void));
@@ -229,7 +229,6 @@ extern u_int	mips_L1ICacheLSize;
 extern int	mips_L2CachePresent;
 extern u_int	mips_L2CacheLSize;
 extern u_int	mips_CacheAliasMask;
-extern	struct intr_tab intr_tab[];
 
 #ifdef MIPS3
 extern int	mips3_L1TwoWayCache;

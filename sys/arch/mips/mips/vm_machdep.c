@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.31 1998/12/03 06:28:46 nisimura Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.32 1999/01/06 04:11:30 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 1998/12/03 06:28:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.32 1999/01/06 04:11:30 nisimura Exp $");
 
 #include "opt_uvm.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.31 1998/12/03 06:28:46 nisimura Exp
 /* XXX will be declared in mips/include/cpu.h XXX */
 extern struct proc *fpcurproc;
 
-extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
+extern paddr_t kvtophys __P((vaddr_t kva));	/* XXX */
 
 /*
  * cpu_fork() now returns just once.
@@ -94,7 +94,7 @@ cpu_fork(p1, p2)
 
 #ifdef MIPS3
 	if (CPUISMIPS3)
-		mips3_HitFlushDCache((vm_offset_t)p2->p_addr, USPACE);
+		mips3_HitFlushDCache((vaddr_t)p2->p_addr, USPACE);
 #endif
 	
 	if (p1 == fpcurproc)
@@ -251,12 +251,12 @@ pagemove(from, to, size)
 	if (CPUISMIPS3 &&
 	    ((int)from & mips_CacheAliasMask) !=
 	    ((int)to & mips_CacheAliasMask)) {
-		mips3_HitFlushDCache((vm_offset_t)from, size);
+		mips3_HitFlushDCache((vaddr_t)from, size);
 	}
 #endif
 	while (size > 0) {
-		MachTLBFlushAddr((vm_offset_t)from);
-		MachTLBUpdate((vm_offset_t)to, fpte->pt_entry);
+		MachTLBFlushAddr((vaddr_t)from);
+		MachTLBUpdate((vaddr_t)to, fpte->pt_entry);
 		*tpte = *fpte;
 		if (CPUISMIPS3)
 			fpte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
@@ -281,17 +281,18 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off;
+	vaddr_t faddr, taddr;
+	vsize_t off;
 	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
-	register u_int pt_mask;
+	pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
+	u_int pt_mask;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
 	faddr = trunc_page(bp->b_saveaddr = bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 #if defined(UVM)
 	taddr = uvm_km_valloc_wait(phys_map, len);
@@ -323,14 +324,15 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr;
+	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 	addr = trunc_page(bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 #if defined(UVM)
 	uvm_km_free_wakeup(phys_map, addr, len);
@@ -359,11 +361,11 @@ vunmapbuf(bp, len)
  * XXX the double-mapped u-area holding the current process's kernel stack
  * and u-area at a fixed address should be fixed.
  */
-vm_offset_t
-kvtophys(vm_offset_t kva)
+paddr_t
+kvtophys(vaddr_t kva)
 {
 	pt_entry_t *pte;
-	vm_offset_t phys;
+	paddr_t phys;
 
         if (kva >= MIPS_KSEG0_START && kva < MIPS_KSEG1_START)
 	{
