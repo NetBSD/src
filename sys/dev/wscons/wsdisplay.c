@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.18 1999/01/26 14:22:14 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.19 1999/02/08 07:05:51 sommerfe Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$NetBSD: wsdisplay.c,v 1.18 1999/01/26 14:22:14 drochner Exp $";
+    "$NetBSD: wsdisplay.c,v 1.19 1999/02/08 07:05:51 sommerfe Exp $";
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -174,7 +174,7 @@ static int wsdisplayparam __P((struct tty *, struct termios *));
 #define	WSDISPLAYSCREEN(dev)	(minor(dev) & 0xff)
 #define ISWSDISPLAYCTL(dev)	(WSDISPLAYSCREEN(dev) == 255)
 #define WSDISPLAYMINOR(unit, screen)	(((unit) << 8) | (screen))
-#define	WSDISPLAYBURST		(OBUFSIZ - 1)
+#define	WSDISPLAYBURST		OBUFSIZ*4
 
 #define	WSSCREEN_HAS_EMULATOR(scr)	((scr)->scr_dconf->wsemul != NULL)
 #define	WSSCREEN_HAS_TTY(scr)	((scr)->scr_tty != NULL)
