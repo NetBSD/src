@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.11 1996/03/17 00:53:14 thorpej Exp $	*/
+/*	$NetBSD: gus.c,v 1.12 1996/03/31 22:50:11 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@
 #include <dev/ic/ad1848reg.h>
 #include <dev/isa/ics2101var.h>
 #include <dev/isa/ad1848var.h>
+#include <dev/isa/cs4231var.h>
 #include "gusreg.h"
 
 #ifdef AUDIO_DEBUG
