@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.239 2003/02/15 13:30:11 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.240 2003/02/18 13:36:52 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -935,7 +935,7 @@ get_phys_mem()
 	struct memarr *mp;
 	int i;
 
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
+	npmemarr = prom_makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
 
 	for (physmem = 0, mp = pmemarr, i = npmemarr; --i >= 0; mp++)
 		physmem += btoc(mp->len);
