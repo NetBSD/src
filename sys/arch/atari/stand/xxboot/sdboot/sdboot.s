@@ -1,4 +1,4 @@
-/*	$NetBSD: sdboot.s,v 1.1.1.1 1996/02/29 11:36:53 leo Exp $	*/
+/*	$NetBSD: sdboot.s,v 1.2 1996/03/18 21:06:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -69,7 +69,11 @@ main:	lea	pc@(regsav),a0
 	bhis	exit			| membot > MAXBOT
 
 	movl	_memtop:w,d0
-	cmpl	#MINTOP,d0
+	movl	_v_bas_ad:w,d1
+	cmpl	d1,d0
+	blts	0f			| memtop < v_bas_ad
+	movl	d1,d0
+0:	cmpl	#MINTOP,d0
 	blts	exit			| memtop < MINTOP
 
 	andw	#-4,d0
@@ -200,7 +204,7 @@ r0com:	.long	0x0000008a
 
 regsav:	.long	0
 
-fill:	.space	24
+fill:	.space	14
 
 	.ascii	"NetBSD"
 hd_siz:	.long	0
