@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.18 2002/07/06 00:42:27 wiz Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.19 2005/03/30 15:19:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.18 2002/07/06 00:42:27 wiz Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.19 2005/03/30 15:19:10 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -83,9 +83,6 @@ int	lflag;
 
 int	main(int, char *[]);
 void	usage(void);
-
-void	sighandler(int);
-
 
 static
 void _msgout(int level, const char *msg)
@@ -276,12 +273,13 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 	int ch, xcreated = 0, one = 1;
 
+	setprogname(argv[0]);
+
 #ifdef LIBWRAP
 #define	GETOPTSTR	"dfl"
 #else
 #define	GETOPTSTR	"df"
 #endif
-
 	while ((ch = getopt(argc, argv, GETOPTSTR)) != -1) {
 		switch (ch) {
 		case 'd':
@@ -339,8 +337,8 @@ main(int argc, char *argv[])
 
 	ypdb_init();	/* init db stuff */
 
-	sa.sa_handler = sighandler;
-	sa.sa_flags = 0;
+	sa.sa_handler = SIG_IGN;
+	sa.sa_flags = SA_NOCLDWAIT;
 	if (sigemptyset(&sa.sa_mask)) {
 		_msgout(LOG_ERR, "sigemptyset: %m");
 		exit(1);
@@ -449,21 +447,13 @@ main(int argc, char *argv[])
 }
 
 void
-sighandler(int sig)
-{
-
-	/* SIGCHLD */
-	while (wait3((int *)NULL, WNOHANG, (struct rusage *)NULL) > 0);
-}
-
-void
 usage(void)
 {
 
 #ifdef LIBWRAP
-#define	USAGESTR	"usage: %s [-d] [-l]\n"
+#define	USAGESTR	"Usage: %s [-d] [-l]\n"
 #else
-#define	USAGESTR	"usage: %s [-d]\n"
+#define	USAGESTR	"Usage: %s [-d]\n"
 #endif
 
 	fprintf(stderr, USAGESTR, getprogname());
