@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.1 2002/02/25 14:58:08 ad Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.2 2002/09/18 16:51:16 ad Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ struct	dz_softc {
 	u_char		sc_dsr;		/* DSR set bits if no mdm ctrl */
 	struct dz_linestate {
 		struct	dz_softc *dz_sc;	/* backpointer to softc */
-		int		dz_line;	/* sub-driver unit number */
+		int		dz_line;	/* channel number */
 		void		*dz_private;	/* sub-driver data pointer */
 		int		(*dz_catch) __P((void *, int)); /* Fast catch recv */
 		struct	tty *	dz_tty;		/* what we work on */
