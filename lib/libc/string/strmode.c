@@ -1,4 +1,4 @@
-/*	$NetBSD: strmode.c,v 1.8 1998/02/03 18:49:20 perry Exp $	*/
+/*	$NetBSD: strmode.c,v 1.9 1999/08/03 21:43:13 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strmode.c	8.3 (Berkeley) 8/15/94";
 #else
-__RCSID("$NetBSD: strmode.c,v 1.8 1998/02/03 18:49:20 perry Exp $");
+__RCSID("$NetBSD: strmode.c,v 1.9 1999/08/03 21:43:13 wrstuden Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,7 +63,17 @@ strmode(mode, p)
 		*p++ = 'b';
 		break;
 	case S_IFREG:			/* regular */
-		*p++ = '-';
+#ifdef S_ARCH2
+		if ((mode & S_ARCH2) != 0) {
+			*p++ = 'A';
+		} else if ((mode & S_ARCH1) != 0) {
+			*p++ = 'a';
+		} else {
+#endif
+			*p++ = '-';
+#ifdef S_ARCH2
+		}
+#endif
 		break;
 	case S_IFLNK:			/* symbolic link */
 		*p++ = 'l';
