@@ -31,11 +31,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)limits.h	7.2 (Berkeley) 6/28/90
- *	$Id: limits.h,v 1.6 1994/04/10 02:22:12 chopps Exp $
+ *	$Id: limits.h,v 1.7 1994/05/09 12:39:38 chopps Exp $
  */
-#ifndef _M68K_LIMITS_H_
-#define _M68K_LIMITS_H_
-
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
 
@@ -50,18 +47,23 @@
 #define	SHRT_MAX	0x7fff		/* max value for a short */
 #define	SHRT_MIN	(-0x7fff-1)	/* min value for a short */
 
-#define	UINT_MAX	0xffffffff	/* max value for an unsigned int */
+#define	UINT_MAX	0xffffffffU	/* max value for an unsigned int */
 #define	INT_MAX		0x7fffffff	/* max value for an int */
 #define	INT_MIN		(-0x7fffffff-1)	/* min value for an int */
 
-#define	ULONG_MAX	0xffffffff	/* max value for an unsigned long */
-#define	LONG_MAX	0x7fffffff	/* max value for a long */
-#define	LONG_MIN	(-0x7fffffff-1)	/* min value for a long */
+#define	ULONG_MAX	0xffffffffUL	/* max value for an unsigned long */
+#define	LONG_MAX	0x7fffffffL	/* max value for a long */
+#define	LONG_MIN	(-0x7fffffffL-1)	/* min value for a long */
 
-#if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
-#define	UQUAD_MAX	0xffffffffffffffffLL		/* max unsigned quad */
+#if !defined(_ANSI_SOURCE)
+#define SSIZE_MAX	INT_MAX		/* max value for a ssize_t */
+
+#if !defined(_POSIX_SOURCE)
+#define SIZE_T_MAX	UINT_MAX	/* max value for a size_t */
+
+#define	UQUAD_MAX	0xffffffffffffffffULL		/* max unsigned quad */
 #define	QUAD_MAX	0x7fffffffffffffffLL		/* max signed quad */
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
-#endif
 
-#endif /* !_M68K_LIMITS_H_ */
+#endif /* !_POSIX_SOURCE */
+#endif /* !_ANSI_SOURCE */
