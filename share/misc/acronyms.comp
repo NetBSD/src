@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.12 2003/08/30 10:17:45 wiz Exp $
+$NetBSD: acronyms.comp,v 1.13 2003/09/10 03:34:58 jschauma Exp $
 
 ABI	application binary interface
 API	application programming interface
@@ -60,6 +60,8 @@ LDAP	lightweight directory access protocol
 LUN	logical unit number
 MBR	master boot record
 MIPS	million instructions per second
+MTA	Mail Transfer Agent
+MUA	Mail User Agent
 NAT	network address translation
 NIC	network interface card
 NIS	network information service
