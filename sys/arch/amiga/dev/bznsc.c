@@ -1,4 +1,4 @@
-/*	$NetBSD: bznsc.c,v 1.1 1996/10/17 15:42:36 is Exp $	*/
+/*	$NetBSD: bznsc.c,v 1.2 1996/10/19 16:54:14 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -193,8 +193,6 @@ bznscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_bump_sz = NBPG;	/* XXX should be the VM pagesize */
 	sc->sc_softc.sc_bump_pa = 0x0;
 
-	printf(": B%s60\n%s", zap->prodid == 24 ? "20" : "IV/12", dp->dv_xname);
-
 	sfasinitialize((struct sfas_softc *)sc);
 
 	sc->sc_softc.sc_link.adapter_softc  = sc;
@@ -209,7 +207,8 @@ bznscattach(pdp, dp, auxp)
 	add_isr(&sc->sc_softc.sc_isr);
 
 /* We don't want interrupt until we're initialized! */
-
+	printf("\n%s: B%s60\n", dp->dv_xname, 
+	    zap->prodid == 24 ? "20" : "IV/12");
 
 /* attach all scsi units on us */
 	config_found(dp, &sc->sc_softc.sc_link, scsiprint);
