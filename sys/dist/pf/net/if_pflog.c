@@ -1,3 +1,4 @@
+/*	$NetBSD: if_pflog.c,v 1.2 2004/06/22 14:17:07 itojun Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.11 2003/12/31 11:18:25 cedric Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -32,6 +33,10 @@
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_inet.h"
+#endif
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -106,8 +111,12 @@ pflogattach(int npflog)
 		if_alloc_sadl(ifp);
 
 #if NBPFILTER > 0
+#ifdef __OpenBSD__
 		bpfattach(&pflogif[i].sc_if.if_bpf, ifp, DLT_PFLOG,
 			  PFLOG_HDRLEN);
+#else
+		bpfattach(ifp, DLT_PFLOG, PFLOG_HDRLEN);
+#endif
 #endif
 	}
 }
@@ -122,7 +131,11 @@ pflogstart(struct ifnet *ifp)
 	int s;
 
 	for (;;) {
+#ifdef __OpenBSD__
 		s = splimp();
+#else
+		s = splnet();
+#endif
 		IF_DROP(&ifp->if_snd);
 		IF_DEQUEUE(&ifp->if_snd, m);
 		splx(s);
