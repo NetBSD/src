@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.43 1999/08/01 18:05:41 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.44 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -174,7 +174,9 @@ struct sbdsp_softc {
 
 #if NMIDI > 0
 	int	sc_hasmpu;
-	struct	mpu_softc sc_mpu;	/* MPU401 Uart state */
+	struct device *sc_mpudev;
+	bus_space_tag_t sc_mpu_iot;	/* tag */
+	bus_space_handle_t sc_mpu_ioh;	/* handle */
 #endif
 };
 

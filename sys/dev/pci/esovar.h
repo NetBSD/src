@@ -1,4 +1,4 @@
-/*	$NetBSD: esovar.h,v 1.1 1999/07/12 15:13:31 kleink Exp $	*/
+/*	$NetBSD: esovar.h,v 1.2 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -108,7 +108,9 @@ struct eso_softc {
 	bus_space_handle_t	sc_dmac_ioh;
 
 	/* MPU-401 device */
-	struct mpu_softc	sc_mpu;
+	bus_space_tag_t		sc_mpu_iot;
+	bus_space_handle_t	sc_mpu_ioh;
+	struct device		*sc_mpudev;
 
 	/* Game device */
 	bus_space_tag_t		sc_game_iot;
