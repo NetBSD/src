@@ -1,4 +1,4 @@
-/*	$NetBSD: isp.c,v 1.6 1997/06/01 23:42:04 mjacob Exp $	*/
+/*	$NetBSD: isp.c,v 1.7 1997/06/08 06:31:52 thorpej Exp $	*/
 
 /*
  * Machine Independent (well, as best as possible)
@@ -299,7 +299,6 @@ void
 isp_init(isp)
 	struct ispsoftc *isp;
 {
-	vm_offset_t queue_addr;
 	mbreg_t mbs;
 	int s, i, l;
 
@@ -428,18 +427,19 @@ isp_init(isp)
 	}
 
 
-
-	queue_addr =
-	    ISP_MBOXDMASETUP(isp, isp->isp_result, sizeof (isp->isp_result));
-	if (queue_addr == 0) {
+	/*
+	 * Set up DMA for the request and result mailboxes.
+	 */
+	if (ISP_MBOXDMASETUP(isp)) {
 		(void) splx(s);
+		printf("%s: can't setup DMA for mailboxes\n", isp->isp_name);
 		return;
 	}
-		
+
 	mbs.param[0] = MBOX_INIT_RES_QUEUE;
 	mbs.param[1] = RESULT_QUEUE_LEN;
-	mbs.param[2] = (u_int16_t) (queue_addr >> 16);
-	mbs.param[3] = (u_int16_t) (queue_addr & 0xffff);
+	mbs.param[2] = (u_int16_t) (isp->isp_result_dma >> 16);
+	mbs.param[3] = (u_int16_t) (isp->isp_result_dma & 0xffff);
 	mbs.param[4] = 0;
 	mbs.param[5] = 0;
 	(void) isp_mboxcmd(isp, &mbs);
@@ -450,16 +450,10 @@ isp_init(isp)
 	}
 	isp->isp_residx = 0;
 
-	queue_addr =
-	    ISP_MBOXDMASETUP(isp, isp->isp_rquest, sizeof (isp->isp_rquest));
-	if (queue_addr == 0) {
-		(void) splx(s);
-		return;
-	}
 	mbs.param[0] = MBOX_INIT_REQ_QUEUE;
 	mbs.param[1] = RQUEST_QUEUE_LEN;
-	mbs.param[2] = (u_int16_t) (queue_addr >> 16);
-	mbs.param[3] = (u_int16_t) (queue_addr & 0xffff);
+	mbs.param[2] = (u_int16_t) (isp->isp_rquest_dma >> 16);
+	mbs.param[3] = (u_int16_t) (isp->isp_rquest_dma & 0xffff);
 	mbs.param[4] = 0;
 	(void) isp_mboxcmd(isp, &mbs);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
@@ -553,7 +547,7 @@ ispscsicmd(xs)
 	optr = ISP_READ(isp, OUTMAILBOX4);
 	iptr = isp->isp_reqidx;
 
-	req = (ispreq_t *) &isp->isp_rquest[iptr][0];
+	req = (ispreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, iptr);
 	iptr = (iptr + 1) & (RQUEST_QUEUE_LEN - 1);
 	if (iptr == optr) {
 		printf("%s: Request Queue Overflow\n", isp->isp_name);
@@ -580,7 +574,7 @@ ispscsicmd(xs)
 			xs->error = XS_DRIVER_STUFFUP;
 			return (TRY_AGAIN_LATER);
 		}
-		req = (ispreq_t *) &isp->isp_rquest[iptr][0];
+		req = (ispreq_t *) ISP_QUEUE_ENTRY(isp->isp_rquest, iptr);
 		iptr = (iptr + 1) & (RQUEST_QUEUE_LEN - 1);
 	}
 
@@ -726,7 +720,7 @@ isp_intr(arg)
 		ispstatusreq_t *sp;
 		int buddaboom = 0;
 
-		sp = (ispstatusreq_t *) &isp->isp_result[optr][0];
+		sp = (ispstatusreq_t *) ISP_QUEUE_ENTRY(isp->isp_result, optr);
 
 		optr = (optr + 1) & (RESULT_QUEUE_LEN-1);
 		if (sp->req_header.rqs_entry_type != RQSTYPE_RESPONSE) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ispvar.h,v 1.4 1997/04/05 02:48:36 mjacob Exp $	*/
+/*	$NetBSD: ispvar.h,v 1.5 1997/06/08 06:31:53 thorpej Exp $	*/
 
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
@@ -44,8 +44,7 @@ struct ispsoftc;
 struct ispmdvec {
 	u_int16_t	(*dv_rd_reg) __P((struct ispsoftc *, int));
 	void		(*dv_wr_reg) __P((struct ispsoftc *, int, u_int16_t));
-	vm_offset_t	(*dv_mbxdma)
-		__P((struct ispsoftc *, vm_offset_t, u_int32_t));
+	int		(*dv_mbxdma) __P((struct ispsoftc *));
 	int		(*dv_dmaset) __P((struct ispsoftc *,
 		struct scsi_xfer *, ispreq_t *, u_int8_t *, u_int8_t));
 	void		(*dv_dmaclr)
@@ -68,6 +67,9 @@ struct ispmdvec {
 #define	RQUEST_QUEUE_LEN	256
 #define	RESULT_QUEUE_LEN	(RQUEST_QUEUE_LEN >> 3)
 #define	QENTRY_LEN		64
+
+#define	ISP_QUEUE_ENTRY(q, idx)	((q) + ((idx) * QENTRY_LEN))
+#define	ISP_QUEUE_SIZE(n)	((n) * QENTRY_LEN)
 
 /*
  * Soft Structure per host adapter
@@ -124,8 +126,10 @@ struct ispsoftc {
 	/*
 	 * request/result queue
 	 */
-	volatile u_int8_t	isp_rquest[RQUEST_QUEUE_LEN][QENTRY_LEN];
-	volatile u_int8_t	isp_result[RESULT_QUEUE_LEN][QENTRY_LEN];
+	volatile caddr_t	isp_rquest;
+	volatile caddr_t	isp_result;
+	u_int32_t		isp_rquest_dma;
+	u_int32_t		isp_result_dma;
 };
 
 /*
@@ -162,8 +166,8 @@ struct ispsoftc {
 #define	ISP_WRITE(isp, reg, val)	\
 	(*(isp)->isp_mdvec->dv_wr_reg)((isp), (reg), (val))
 
-#define	ISP_MBOXDMASETUP(isp, kva, len)	\
-	(*(isp)->isp_mdvec->dv_mbxdma)((isp), (vm_offset_t) (kva), (len))
+#define	ISP_MBOXDMASETUP(isp)	\
+	(*(isp)->isp_mdvec->dv_mbxdma)((isp))
 
 #define	ISP_DMASETUP(isp, xs, req, iptrp, optr)	\
 	(*(isp)->isp_mdvec->dv_dmaset)((isp), (xs), (req), (iptrp), (optr))
