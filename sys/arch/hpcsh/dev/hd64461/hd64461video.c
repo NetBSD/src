@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.22 2003/11/13 03:09:28 chs Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.23 2003/12/14 02:52:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.22 2003/11/13 03:09:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.23 2003/12/14 02:52:15 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.22 2003/11/13 03:09:28 chs Exp $"
 #include <dev/hpc/hpcfbio.h>
 #include <dev/hpc/video_subr.h>
 
+#include <machine/config_hook.h>
 #include <machine/bootinfo.h>
 
 #ifdef	HD64461VIDEO_DEBUG
@@ -111,6 +113,8 @@ STATIC struct hd64461video_chip {
 	struct hpcfb_fbconf hf;
 	u_int8_t *off_screen_addr;
 	size_t off_screen_size;
+
+	struct callout unblank_ch;
 	int blanked;
 
 	int console;
@@ -133,6 +137,7 @@ STATIC void hd64461video_get_clut(struct hd64461video_chip *, int, int,
     u_int8_t *, u_int8_t *, u_int8_t *);
 STATIC void hd64461video_off(struct hd64461video_chip *vc);
 STATIC void hd64461video_on(struct hd64461video_chip *vc);
+STATIC void hd64461video_display_on(void *);
 
 #if notyet
 STATIC void hd64461video_set_display_mode(struct hd64461video_chip *);
@@ -407,6 +412,7 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	struct hpcfb_fbconf *fbconf;
 	struct hpcfb_dspconf *dspconf;
 	struct wsdisplay_cmap *cmap;
+	struct wsdisplay_param *dispparam;
 	int turnoff;
 	u_int8_t *r, *g, *b;
 	int error;
@@ -429,6 +435,44 @@ hd64461video_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		}
 
 		return (0);
+
+	case WSDISPLAYIO_GETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			dispparam->min = 0;
+			error = config_hook_call(CONFIG_HOOK_GET,
+					CONFIG_HOOK_BRIGHTNESS_MAX,
+					&dispparam->max);
+			if (error == 0)
+				error = config_hook_call(CONFIG_HOOK_GET,
+						CONFIG_HOOK_BRIGHTNESS,
+						&dispparam->curval);
+			if (error == 0)
+				return (0);
+			else
+				return (EINVAL);
+		default:
+			return (EINVAL);
+		}
+		return (0);
+
+	case WSDISPLAYIO_SETPARAM:
+		dispparam = (struct wsdisplay_param*)data;
+		switch (dispparam->param) {
+		case WSDISPLAYIO_PARAM_BRIGHTNESS:
+			error = config_hook_call(CONFIG_HOOK_SET,
+					CONFIG_HOOK_BRIGHTNESS,
+					&dispparam->curval);
+			if (error == 0)
+				return (0);
+			else
+				return (EINVAL);
+		default:
+			return (EINVAL);
+		}
+		return (0);
+
 
 	case WSDISPLAYIO_GETCMAP:
 		cmap = (struct wsdisplay_cmap *)data;
@@ -921,7 +965,8 @@ hd64461video_update_videochip_status(struct hd64461video_chip *hvc)
 		break;
 	}
 
-	hvc->blanked = 0;	/* XXX */
+	callout_init(&hvc->unblank_ch);
+	hvc->blanked = 0;
 
 	width = bootinfo->fb_width;
 	height = bootinfo->fb_height;
@@ -1081,21 +1126,48 @@ hd64461video_off(struct hd64461video_chip *vc)
 {
 	u_int16_t r;
 
+	callout_stop(&vc->unblank_ch);
+
+	/* turn off display in LCDC */
 	r = hd64461_reg_read_2(HD64461_LCDLDR1_REG16);
 	r &= ~HD64461_LCDLDR1_DON;
 	hd64461_reg_write_2(HD64461_LCDLDR1_REG16, r);
+
+	/* turn off the LCD */
+	config_hook_call(CONFIG_HOOK_POWERCONTROL,
+			 CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+			 (void *)0);
 }
 
 void
 hd64461video_on(struct hd64461video_chip *vc)
 {
+	int err;
+
+	/* turn on the LCD */
+	err = config_hook_call(CONFIG_HOOK_POWERCONTROL,
+			       CONFIG_HOOK_POWERCONTROL_LCDLIGHT,
+			       (void *)1);
+
+	if (err == 0)
+		/* let the LCD warm up before turning on the display */
+		callout_reset(&vc->unblank_ch, hz/2,
+			      hd64461video_display_on, vc);
+	else
+		hd64461video_display_on(vc);
+}
+
+void
+hd64461video_display_on(void *arg)
+{
+	/* struct hd64461video_chip *vc = arg; */
 	u_int16_t r;
 
+	/* turn on display in LCDC */
 	r = hd64461_reg_read_2(HD64461_LCDLDR1_REG16);
 	r |= HD64461_LCDLDR1_DON;
 	hd64461_reg_write_2(HD64461_LCDLDR1_REG16, r);
 }
-
 
 #ifdef HD64461VIDEO_DEBUG
 void
