@@ -22,7 +22,7 @@ SOFTWARE.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootpd.c,v 1.10 1998/12/04 18:24:16 abs Exp $");
+__RCSID("$NetBSD: bootpd.c,v 1.11 1999/01/31 10:06:16 mrg Exp $");
 #endif
 
 /*
@@ -826,7 +826,8 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * daemon chroot directory (i.e. /tftpboot).
 	 */
 	if (hp->flags.tftpdir) {
-		strcpy(realpath, hp->tftpdir->string);
+		strncpy(realpath, hp->tftpdir->string, sizeof(realpath) - 1);
+		realpath[sizeof(realpath) - 1] = '\0';
 		clntpath = &realpath[strlen(realpath)];
 	} else {
 		realpath[0] = '\0';
@@ -839,7 +840,19 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	homedir = NULL;
 	bootfile = NULL;
 	if (bp->bp_file[0]) {
+		char	*t;
+
 		homedir = bp->bp_file;
+
+		/* make sure that the file is nul terminated */
+		for (t = homedir; t - homedir < BP_FILE_LEN; t++)
+			if (*t == '\0')
+				break;
+		if (t - homedir < BP_FILE_LEN) {
+			report(LOG_INFO, "requested path length > BP_FILE_LEN  file = \"%s\", nul terminating", homedir;
+			homedir[BP_FILE_LEN - 1] = '\0';
+		}
+			
 		bootfile = strrchr(homedir, '/');
 		if (bootfile) {
 			if (homedir == bootfile)
@@ -869,15 +882,21 @@ HW addr type is IEEE 802.  convert to %s and check again\n",
 	 * Construct bootfile path.
 	 */
 	if (homedir) {
-		if (homedir[0] != '/')
-			strcat(clntpath, "/");
-		strcat(clntpath, homedir);
+		if (homedir[0] != '/') {
+			strncat(realpath, "/", sizeof(realpath) - 1);
+			realpath[sizeof(realpath) - 1] = '\0';
+		}
+		strncat(realpath, homedir, sizeof(realpath) - 1);
+		realpath[sizeof(realpath) - 1] = '\0';
 		homedir = NULL;
 	}
 	if (bootfile) {
-		if (bootfile[0] != '/')
-			strcat(clntpath, "/");
-		strcat(clntpath, bootfile);
+		if (bootfile[0] != '/') {
+			strcat(realpath, "/");
+			realpath[sizeof(realpath) - 1] = '\0';
+		}
+		strcat(realpath, bootfile);
+		realpath[sizeof(realpath) - 1] = '\0';
 		bootfile = NULL;
 	}
 
