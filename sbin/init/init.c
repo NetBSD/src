@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)init.c	6.22 (Berkeley) 6/2/93"; */
-static char rcsid[] = "$Id: init.c,v 1.8 1993/06/18 20:51:49 cgd Exp $";
+static char rcsid[] = "$Id: init.c,v 1.9 1993/06/18 21:16:26 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -71,6 +71,10 @@ static char rcsid[] = "$Id: init.c,v 1.8 1993/06/18 20:51:49 cgd Exp $";
 
 #ifdef SECURE
 #include <pwd.h>
+#endif
+
+#ifndef CONSOLENAME
+#define CONSOLENAME	"console"
 #endif
 
 #include "pathnames.h"
@@ -543,9 +547,9 @@ single_user()
 	sigset_t mask;
 	char *shell = _PATH_BSHELL;
 	char *argv[2];
+	struct passwd *pp;
 #ifdef SECURE
 	struct ttyent *typ;
-	struct passwd *pp;
 	static const char banner[] =
 		"Enter root password, or ^D to go multi-user\n";
 	char *clear, *password;
@@ -563,14 +567,14 @@ single_user()
 		 */
 		setctty(_PATH_CONSOLE);
 
+		pp = getpwnam("root");
 #ifdef SECURE
 		/*
 		 * Check the root password.
 		 * We don't care if the console is 'on' by default;
 		 * it's the only tty that can be 'off' and 'secure'.
 		 */
-		typ = getttynam("console");
-		pp = getpwnam("root");
+		typ = getttynam(CONSOLENAME);
 		if (typ && (typ->ty_status & TTY_SECURE) == 0 && pp) {
 			write(2, banner, sizeof banner - 1);
 			for (;;) {
@@ -585,8 +589,10 @@ single_user()
 			}
 		}
 		endttyent();
-		endpwent();
 #endif /* SECURE */
+		if (pp && pp->pw_shell && (pp->pw_shell[0] != '\0'))
+			shell = pp->pw_shell;
+		endpwent();
 
 #ifdef DEBUGSHELL
 		{
@@ -594,9 +600,13 @@ single_user()
 			int num;
 
 #define	SHREQUEST \
-	"Enter pathname of shell or RETURN for sh: "
+	"Enter pathname of shell or RETURN for "
 			(void)write(STDERR_FILENO,
 			    SHREQUEST, sizeof(SHREQUEST) - 1);
+			(void)write(STDERR_FILENO,
+			    shell, strlen(shell));
+			(void)write(STDERR_FILENO,": ", 2);
+
 			while ((num = read(STDIN_FILENO, cp, 1)) != -1 &&
 			    num != 0 && *cp != '\n' && cp < &altshell[127])
 					cp++;
