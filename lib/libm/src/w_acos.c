@@ -10,8 +10,9 @@
  * ====================================================
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_acos.c,v 1.6 1995/05/10 20:48:26 jtc Exp $";
+__RCSID("$NetBSD: w_acos.c,v 1.7 1997/10/09 11:33:47 lukem Exp $");
 #endif
 
 /*
