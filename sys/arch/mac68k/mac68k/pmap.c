@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 1998/05/24 19:32:45 is Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 1998/05/27 03:58:16 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2458,8 +2458,10 @@ pmap_enter_ptpage(pmap, va)
 		 * is wired; i.e. while it is on a paging queue.
 		 */
 		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_CLEAN;
+#if !defined(UVM)
 #ifdef DEBUG
 		PHYS_TO_VM_PAGE(ptpa)->flags |= PG_PTPAGE;
+#endif
 #endif
 	}
 #if defined(M68040)
