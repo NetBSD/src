@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.83 2003/06/26 00:19:13 itojun Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.84 2003/07/21 07:02:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.83 2003/06/26 00:19:13 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.84 2003/07/21 07:02:35 itojun Exp $");
 
 #include "opt_ipsec.h"
 
@@ -252,6 +252,15 @@ in_pcbbind(v, nam, p)
 	} else if (!in_nullhost(sin->sin_addr)) {
 		sin->sin_port = 0;		/* yech... */
 		INADDR_TO_IA(sin->sin_addr, ia);
+		if (ia == NULL) {
+			TAILQ_FOREACH(ia, &in_ifaddr, ia_list) {
+				if ((ia->ia_ifp->if_flags & IFF_BROADCAST) &&
+				    ia->ia_broadaddr.sin_len == sin->sin_len &&
+				    memcmp(&ia->ia_broadaddr, sin, sin->sin_len) == 0)
+					break;
+
+			}
+		}
 		if (ia == NULL)
 			return (EADDRNOTAVAIL);
 	}
