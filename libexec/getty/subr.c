@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)subr.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: subr.c,v 1.12 1994/08/24 16:39:24 mycroft Exp $";
+static char rcsid[] = "$Id: subr.c,v 1.13 1994/09/05 08:52:52 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -267,6 +267,11 @@ setflags(n)
 	else
 		cflag &= ~HUPCL;
 
+	if (MB)
+		cflag |= MDMBUF;
+	else
+		cflag &= ~MDMBUF;
+
 	if (NL) {
 		iflag |= ICRNL;
 		oflag |= ONLCR;
@@ -280,7 +285,7 @@ setflags(n)
 		if (RW) {
 			iflag = 0;
 			oflag = 0;
-			cflag = CREAD|CS8;
+			BICS(cflag, CSIZE|PARENB|PARODD, CS8);
 			lflag = 0;
 		} else {
 			lflag &= ~ICANON;
@@ -318,11 +323,6 @@ setflags(n)
 
 	if (DX)
 		lflag |= IXANY;
-
-	if (MB)
-		cflag |= MDMBUF;
-	else
-		cflag &= ~MDMBUF;
 
 out:
 	tmode.c_iflag = iflag;
