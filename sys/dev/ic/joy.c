@@ -1,4 +1,4 @@
-/*	$NetBSD: joy.c,v 1.7 2004/07/08 21:57:31 drochner Exp $	*/
+/*	$NetBSD: joy.c,v 1.8 2004/08/03 18:35:21 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1995 Jean-Marc Zucconi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.7 2004/07/08 21:57:31 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.8 2004/08/03 18:35:21 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.7 2004/07/08 21:57:31 drochner Exp $");
 #include <sys/errno.h>
 #include <sys/conf.h>
 #include <sys/event.h>
+#include <sys/vnode.h>
 #include <machine/bus.h>
 
 #include <sys/joystick.h>
@@ -58,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: joy.c,v 1.7 2004/07/08 21:57:31 drochner Exp $");
 
 
 #define JOYPART(d) (minor(d) & 1)
-#define JOYUNIT(d) minor(d) >> 1 & 3
+#define JOYUNIT(d) (minor(d) >> 1)
 
 #ifndef JOY_TIMEOUT
 #define JOY_TIMEOUT   2000	/* 2 milliseconds */
@@ -87,6 +88,21 @@ joyattach(sc)
 	printf("%s: joystick %sconnected\n", sc->sc_dev.dv_xname,
 	    (bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0) & 0x0f) == 0x0f ?
 	    "not " : "");
+}
+
+int
+joydetach(sc, flags)
+	struct joy_softc *sc;
+	int flags;
+{
+	int maj, mn;
+
+	maj = cdevsw_lookup_major(&joy_cdevsw);
+	mn = sc->sc_dev.dv_unit << 1;
+	vdevgone(maj, mn, mn, VCHR);
+	vdevgone(maj, mn + 1, mn + 1, VCHR);
+
+	return (0);
 }
 
 int
