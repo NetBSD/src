@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.2 2001/06/29 23:36:03 thorpej Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.3 2001/06/30 01:05:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -265,8 +265,8 @@ const struct ste_product {
 	{ PCI_VENDOR_SUNDANCETI,	PCI_PRODUCT_SUNDANCETI_ST201,
 	  "Sundance ST-201 10/100 Ethernet" },
 
-	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DFE550TX,
-	  "D-Link DFE-550TX 10/100 Ethernet" },
+	{ PCI_VENDOR_DLINK,		PCI_PRODUCT_DLINK_DL1002,
+	  "D-Link DL-1002 10/100 Ethernet" },
 
 	{ 0,				0,
 	  NULL },
