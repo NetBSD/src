@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.97 2003/09/22 12:54:47 atatat Exp $
+# $NetBSD: obsolete.mi,v 1.98 2003/09/25 18:37:07 dsl Exp $
 ./usr/bin/genclass
 ./usr/bin/gettextize
 ./usr/include/bfd
@@ -711,6 +711,18 @@
 ./usr/share/ldscripts/sun4.xu
 ./usr/share/man/cat1/flexdoc.0
 ./usr/share/man/cat1/lexdoc.0
+./usr/share/man/cat1/msg_clear.0
+./usr/share/man/cat1/msg_display.0
+./usr/share/man/cat1/msg_display_add.0
+./usr/share/man/cat1/msg_prompt.0
+./usr/share/man/cat1/msg_prompt_add.0
+./usr/share/man/cat1/msg_prompt_noecho.0
+./usr/share/man/cat1/msg_prompt_win.0
+./usr/share/man/cat1/msg_standend.0
+./usr/share/man/cat1/msg_standout.0
+./usr/share/man/cat1/msg_string.0
+./usr/share/man/cat1/msg_table_add.0
+./usr/share/man/cat1/msg_window.0
 ./usr/share/man/cat2/arm32_drain_writebuf.0
 ./usr/share/man/cat2/arm32_sync_icache.0
 ./usr/share/man/cat2/getdirentries.0
@@ -809,6 +821,18 @@
 ./usr/share/man/cat9/uvm_vnp_terminate.0
 ./usr/share/man/cat9/vslock.0
 ./usr/share/man/cat9/vsunlock.0
+./usr/share/man/man1/msg_clear.1
+./usr/share/man/man1/msg_display.1
+./usr/share/man/man1/msg_display_add.1
+./usr/share/man/man1/msg_prompt.1
+./usr/share/man/man1/msg_prompt_add.1
+./usr/share/man/man1/msg_prompt_noecho.1
+./usr/share/man/man1/msg_prompt_win.1
+./usr/share/man/man1/msg_standend.1
+./usr/share/man/man1/msg_standout.1
+./usr/share/man/man1/msg_string.1
+./usr/share/man/man1/msg_table_add.1
+./usr/share/man/man1/msg_window.1
 ./usr/share/man/man2/arm32_drain_writebuf.2
 ./usr/share/man/man2/arm32_sync_icache.2
 ./usr/share/man/man3/BIO_new_bio_pair.3

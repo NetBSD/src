@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.621 2003/09/25 18:08:01 thorpej Exp $
+#	$NetBSD: mi,v 1.622 2003/09/25 18:37:07 dsl Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1124,18 +1124,6 @@
 ./usr/share/man/cat1/lorder.0		comp-util-catman
 ./usr/share/man/cat1/menuc.0		comp-c-catman
 ./usr/share/man/cat1/mkstr.0		comp-c-catman
-./usr/share/man/cat1/msg_clear.0	comp-c-catman
-./usr/share/man/cat1/msg_display.0	comp-c-catman
-./usr/share/man/cat1/msg_display_add.0	comp-c-catman
-./usr/share/man/cat1/msg_prompt.0	comp-c-catman
-./usr/share/man/cat1/msg_prompt_add.0	comp-c-catman
-./usr/share/man/cat1/msg_prompt_noecho.0	comp-c-catman
-./usr/share/man/cat1/msg_prompt_win.0	comp-c-catman
-./usr/share/man/cat1/msg_standend.0	comp-c-catman
-./usr/share/man/cat1/msg_standout.0	comp-c-catman
-./usr/share/man/cat1/msg_string.0	comp-c-catman
-./usr/share/man/cat1/msg_table_add.0	comp-c-catman
-./usr/share/man/cat1/msg_window.0	comp-c-catman
 ./usr/share/man/cat1/msgc.0		comp-c-catman
 ./usr/share/man/cat1/nm.0		comp-util-catman
 ./usr/share/man/cat1/objcopy.0		comp-util-catman
@@ -4585,18 +4573,6 @@
 ./usr/share/man/man1/lorder.1		comp-util-man
 ./usr/share/man/man1/menuc.1		comp-c-man
 ./usr/share/man/man1/mkstr.1		comp-c-man
-./usr/share/man/man1/msg_clear.1	comp-c-man
-./usr/share/man/man1/msg_display.1	comp-c-man
-./usr/share/man/man1/msg_display_add.1	comp-c-man
-./usr/share/man/man1/msg_prompt.1	comp-c-man
-./usr/share/man/man1/msg_prompt_add.1	comp-c-man
-./usr/share/man/man1/msg_prompt_noecho.1	comp-c-man
-./usr/share/man/man1/msg_prompt_win.1	comp-c-man
-./usr/share/man/man1/msg_standend.1	comp-c-man
-./usr/share/man/man1/msg_standout.1	comp-c-man
-./usr/share/man/man1/msg_string.1	comp-c-man
-./usr/share/man/man1/msg_table_add.1	comp-c-man
-./usr/share/man/man1/msg_window.1	comp-c-man
 ./usr/share/man/man1/msgc.1		comp-c-man
 ./usr/share/man/man1/nm.1		comp-util-man
 ./usr/share/man/man1/objcopy.1		comp-util-man
