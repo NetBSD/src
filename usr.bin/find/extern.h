@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.12 1999/07/20 01:28:41 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.13 2000/03/10 11:46:04 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -87,4 +87,4 @@ PLAN	*c_not __P((char ***, int));
 PLAN	*c_or __P((char ***, int));
 PLAN	*c_null __P((char ***, int));
 
-extern int ftsoptions, isdeprecated, isdepth, isoutput, isxargs;
+extern int ftsoptions, isdeprecated, isdepth, isoutput, issort, isxargs;

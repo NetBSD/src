@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 1999/04/29 02:23:58 simonb Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2000/03/10 11:46:04 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.11 1999/04/29 02:23:58 simonb Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 2000/03/10 11:46:04 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ int ftsoptions;			/* options for the ftsopen(3) call */
 int isdeprecated;		/* using deprecated syntax */
 int isdepth;			/* do directories on post-order visit */
 int isoutput;			/* user specified output operator */
+int issort;			/* sort directory entries */
 int isxargs;			/* don't permit xargs delimiting chars */
 
 int main __P((int, char **));
@@ -86,7 +87,7 @@ main(argc, argv)
 	p = start = alloca(argc * sizeof (char *));
 
 	ftsoptions = FTS_NOSTAT | FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "HLPXdf:hx")) != EOF)
+	while ((ch = getopt(argc, argv, "HLPXdf:hsx")) != EOF)
 		switch(ch) {
 		case 'H':
 			ftsoptions |= FTS_COMFOLLOW;
@@ -115,6 +116,9 @@ main(argc, argv)
 			ftsoptions &= ~FTS_PHYSICAL;
 			ftsoptions |= FTS_LOGICAL;
 			break;
+		case 's':
+			issort = 1;
+			break;
 		case 'x':
 			ftsoptions |= FTS_XDEV;
 			break;
@@ -123,7 +127,7 @@ main(argc, argv)
 			break;
 		}
 
-	argc -= optind;	
+	argc -= optind;
 	argv += optind;
 
 	/*
