@@ -1,5 +1,5 @@
-.\"	$NetBSD: rpc.rquotad.8,v 1.6 1999/03/22 18:25:46 garbled Exp $
-.\" 
+.\"	$NetBSD: rpc.rquotad.8,v 1.7 2002/01/15 02:25:49 wiz Exp $
+.\"
 .\" Copyright (c) 1994 Theo de Raadt
 .\" All rights reserved.
 .\"
@@ -34,7 +34,7 @@
 .Sh NAME
 .Nm rpc.rquotad ,
 .Nm rquotad
-.Nd remote quota server 
+.Nd remote quota server
 .Sh SYNOPSIS
 .Nm /usr/libexec/rpc.rquotad
 .Sh DESCRIPTION
@@ -42,7 +42,7 @@
 is a
 .Xr rpc 3
 server which returns quotas for a user of a local filesystem
-which is NFS-mounted onto a remote machine. 
+which is NFS-mounted onto a remote machine.
 .Xr quota 1
 uses the results to display user quotas for remote filesystems.
 .Nm
@@ -52,10 +52,10 @@ is normally invoked by
 .Nm
 uses an RPC protocol defined in
 .Pa /usr/include/rpcsvc/rquota.x .
+.Sh SEE ALSO
+.Xr quota 1
 .Sh BUGS
 .Bx 4.4
 and
 .Nx
 support group quotas but the rquota protocol does not.
-.Sh SEE ALSO
-.Xr quota 1
