@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map_i.h,v 1.13 1999/05/26 19:16:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_map_i.h,v 1.14 1999/06/04 23:38:42 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -93,7 +93,10 @@ uvm_map_create(pmap, min, max, flags)
 {
 	vm_map_t result;
 
-	MALLOC(result, vm_map_t, sizeof(struct vm_map), M_VMMAP, M_WAITOK);
+	MALLOC(result, vm_map_t,
+	    (flags & VM_MAP_INTRSAFE) ? sizeof(struct vm_map_intrsafe) :
+					sizeof(struct vm_map),
+	    M_VMMAP, M_WAITOK);
 	uvm_map_setup(result, min, max, flags);
 	result->pmap = pmap;
 	return(result);
@@ -125,6 +128,19 @@ uvm_map_setup(map, min, max, flags)
 	lockinit(&map->lock, PVM, "thrd_sleep", 0, 0);
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
+
+	/*
+	 * If the map is interrupt safe, place it on the list
+	 * of interrupt safe maps, for uvm_fault().
+	 */
+	if (flags & VM_MAP_INTRSAFE) {
+		struct vm_map_intrsafe *vmi = (struct vm_map_intrsafe *)map;
+		int s;
+
+		s = vmi_list_lock();
+		LIST_INSERT_HEAD(&vmi_list, vmi, vmi_list);
+		vmi_list_unlock(s);
+	}
 }
 
 
