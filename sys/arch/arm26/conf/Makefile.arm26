@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm26,v 1.13 2001/11/16 14:46:16 bjh21 Exp $
+#	$NetBSD: Makefile.arm26,v 1.14 2001/11/16 14:53:47 bjh21 Exp $
 
 # Makefile for NetBSD
 #
@@ -67,7 +67,6 @@ LINKFLAGS_NORMAL=	-S
 ##
 ## (7) misc settings
 ##
-KERNLINTFLAGS=	-bceghnxzF
 
 ##
 ## (8) config(8) generated machinery
