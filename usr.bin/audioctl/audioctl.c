@@ -1,4 +1,4 @@
-/*	$NetBSD: audioctl.c,v 1.13 1998/04/27 16:48:59 augustss Exp $	*/
+/*	$NetBSD: audioctl.c,v 1.14 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -338,7 +338,7 @@ main(argc, argv)
 	char *file;
 	char *sep = "=";
     
-	file = getenv("AUDIOCTLUNIT");
+	file = getenv("AUDIOCTLDEVICE");
 	if (file == 0)
 		file = "/dev/audioctl";
 
