@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.2 1999/03/25 02:32:18 nathanw Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.3 1999/03/25 04:45:57 sommerfe Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -452,6 +452,29 @@ int vn_isunder(dvp, rvp, p)
 	else
 		return 0;
 }
+
+/*
+ * Returns true if proc p1's root directory equal to or under p2's
+ * root directory.
+ *
+ * Intended to be used from ptrace/procfs sorts of things.
+ */
+
+int proc_isunder (p1, p2)
+	struct proc *p1;
+	struct proc *p2;
+{
+	struct vnode *r1 = p1->p_fd->fd_rdir;
+	struct vnode *r2 = p2->p_fd->fd_rdir;
+	
+	if (r1 == NULL)
+		return (r2 == NULL);
+	else if (r2 == NULL)
+		return 1;
+	else
+		return vn_isunder(r1, r2, p2);
+}
+
 
 int sys___getcwd(p, v, retval) 
 	struct proc *p;
