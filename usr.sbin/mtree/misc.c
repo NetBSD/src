@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.22 2002/01/31 19:37:16 tv Exp $	*/
+/*	$NetBSD: misc.c,v 1.23 2002/02/19 04:54:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: misc.c,v 1.22 2002/01/31 19:37:16 tv Exp $");
+__RCSID("$NetBSD: misc.c,v 1.23 2002/02/19 04:54:12 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -270,25 +270,18 @@ inotype(u_int type)
 {
 
 	switch (type & S_IFMT) {
-	case F_BLOCK:
 	case S_IFBLK:
 		return ("block");
-	case F_CHAR:
 	case S_IFCHR:
 		return ("char");
-	case F_DIR:
 	case S_IFDIR:
 		return ("dir");
-	case F_FIFO:
 	case S_IFIFO:
 		return ("fifo");
-	case F_FILE:
 	case S_IFREG:
 		return ("file");
-	case F_LINK:
 	case S_IFLNK:
 		return ("link");
-	case F_SOCK:
 	case S_IFSOCK:
 		return ("socket");
 	default:
