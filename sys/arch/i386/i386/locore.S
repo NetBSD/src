@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.25.2.2 2004/09/20 05:57:11 tron Exp $	*/
+/*	$NetBSD: locore.S,v 1.25.2.2.2.1 2005/03/16 11:49:59 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1180,6 +1180,7 @@ ENTRY(copyoutstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%edi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
@@ -1234,6 +1235,7 @@ ENTRY(copyinstr)
 	 */
 	movl	$VM_MAXUSER_ADDRESS,%eax
 	subl	%esi,%eax
+	jc	_C_LABEL(copystr_efault)
 	cmpl	%edx,%eax
 	jae	1f
 	movl	%eax,%edx
