@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1.1.1 1998/03/29 11:34:20 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 1998/03/30 03:07:13 mrg Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -7,7 +7,6 @@ DIST=	$(.CURDIR)/../../../dist/gcc
 COMMON=	$(.CURDIR)/../common
 COMMONOBJ!=cd $(.CURDIR)/../common; \
 	 printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
-
 
 CPPFLAGS+=-I$(.CURDIR) \
 	-I$(COMMON) \
