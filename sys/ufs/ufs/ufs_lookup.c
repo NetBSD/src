@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.43 2003/04/02 10:39:44 fvdl Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.44 2003/05/15 20:25:33 kristerw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.43 2003/04/02 10:39:44 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.44 2003/05/15 20:25:33 kristerw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,7 +449,7 @@ found:
 	if (dp->i_offset + DIRSIZ(FSFMT(vdp), ep, needswap) > dp->i_size) {
 		ufs_dirbad(dp, dp->i_offset, "i_size too small");
 		dp->i_size = dp->i_offset + DIRSIZ(FSFMT(vdp), ep, needswap);
-		DIP(dp, size) = dp->i_size;
+		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 	}
 	brelse(bp);
@@ -771,7 +771,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 			return (error);
 		}
 		dp->i_size = dp->i_offset + dirblksiz;
-		DIP(dp, size) = dp->i_size;
+		DIP_ASSIGN(dp, size, dp->i_size);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(dvp, dp->i_size);
 		dirp->d_reclen = ufs_rw16(dirblksiz, needswap);
@@ -857,7 +857,7 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	 */
 	if (dp->i_offset + dp->i_count > dp->i_size) {
 		dp->i_size = dp->i_offset + dp->i_count;
-		DIP(dp, size) = dp->i_size;
+		DIP_ASSIGN(dp, size, dp->i_size);
 	}
 	/*
 	 * Get the block containing the space for the new directory entry.
@@ -1024,7 +1024,7 @@ out:
 		if (ip) {
 			ip->i_ffs_effnlink--;
 			ip->i_nlink--;
-			DIP(ip, nlink) = ip->i_nlink;
+			DIP_ASSIGN(ip, nlink, ip->i_nlink);
 			ip->i_flag |= IN_CHANGE;
 		}
 		error = VOP_BWRITE(bp);
@@ -1063,7 +1063,7 @@ ufs_dirrewrite(dp, oip, newinum, newtype, isrmdir)
 		bdwrite(bp);
 	} else {
 		oip->i_nlink--;
-		DIP(oip, nlink) = oip->i_nlink;
+		DIP_ASSIGN(oip, nlink, oip->i_nlink);
 		oip->i_flag |= IN_CHANGE;
 		error = VOP_BWRITE(bp);
 	}
