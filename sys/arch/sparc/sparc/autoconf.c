@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.139 2000/06/09 10:47:25 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.139.2.1 2000/08/13 09:09:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -413,10 +413,6 @@ bootpath_build()
 
 		case 'a':
 			boothowto |= RB_ASKNAME;
-			break;
-
-		case 'b':
-			boothowto |= RB_DFLTROOT;
 			break;
 
 		case 'd':	/* kgdb - always on zs	XXX */
