@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/22 16:18:19 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:08 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	shadow
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/miext/${LIB}
@@ -17,8 +15,6 @@ SRCS=	shadow.c shalloc.c shplanar.c shplanar8.c shpacked.c shrotate.c \
 .if defined(X11FLAGS.LOADABLE)
 SRCS+=	shmodule.c
 .endif
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/miext/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/mi \

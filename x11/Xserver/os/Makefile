@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2004/01/10 16:28:29 rtr Exp $
+#	$NetBSD: Makefile,v 1.7 2004/02/07 06:52:08 lukem Exp $
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=		os
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/os
@@ -12,8 +10,6 @@ SRCS=		WaitFor.c access.c connection.c io.c oscolor.c osinit.c \
 		utils.c auth.c mitauth.c secauth.c xdmauth.c xdmcp.c \
 		decompress.c transport.c lbxio.c
 
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/include \
 		-I${XSERVERINCDIR} \

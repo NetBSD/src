@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2004/01/05 13:19:17 rtr Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/07 06:52:05 lukem Exp $
 
 SUBDIR=	bin/constype bin/kbd_mode
 
 .include "../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	sun
 
@@ -12,8 +10,6 @@ LIB=	sun
 SRCS=	sunInit.c sunCfb.c sunCfb24.c sunCursor.c sunFbs.c sunIo.c sunKbd.c \
 	sunMfb.c sunMouse.c sunKeyMap.c sunGX.c sunInExMono.c sunInitExt.c \
 	stubs.c sunInitMono.c sunInitMulti.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/sun \
 		-I${X11SRCDIR.xc}/programs/Xserver \

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/18 05:35:04 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	dec
 
@@ -54,8 +52,6 @@ BUILDSYMLINKS=	tgagc.c tga32gc.c \
 		tgawindow.c tga32window.c
 
 .endif
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/dec \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/dec/sfb \

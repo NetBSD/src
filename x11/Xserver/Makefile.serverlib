@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.serverlib,v 1.4 2004/01/06 12:30:13 mrg Exp $
-
+#	$NetBSD: Makefile.serverlib,v 1.5 2004/02/07 06:52:04 lukem Exp $
 
 NOLINT=         1
 NOPIC=          1
 NOPROFILE=      1
 
+.include <bsd.own.mk>		# for NETBSDSRCDIR
 .include <bsd.endian.mk>
 
 .if ${XMODULEDIR:U} == ""
@@ -20,6 +20,11 @@ X_BYTE_ORDER=0
 .endif
 
 CPPFLAGS+=	${X11FLAGS.SERVER} -DX_BYTE_ORDER=${X_BYTE_ORDER}
+
+.if !defined(XSERVERINCDIR)
+XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
+.MAKEOVERRIDES+=XSERVERINCDIR
+.endif
 
 .if defined(XMODULEDIR)
 CPPFLAGS+=	${X11FLAGS.LOADABLE}

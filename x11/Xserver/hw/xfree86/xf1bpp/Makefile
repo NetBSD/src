@@ -1,10 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2004/01/08 04:20:27 lukem Exp $
+# $NetBSD: Makefile,v 1.2 2004/02/07 06:52:07 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	xf1bpp
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
@@ -17,8 +15,6 @@ SRCS=	maskbits.c mfbbitblt.c mfbbltC.c mfbbltCI.c mfbbltG.c mfbbltO.c \
 	mfbplywhite.c mfbpntwin.c mfbpolypnt.c mfbpushpxl.c mfbscrclse.c \
 	mfbscrinit.c mfbseg.c mfbsetsp.c mfbteblack.c mfbtewhite.c mfbtileC.c \
 	mfbtileG.c mfbwindow.c mfbzerarc.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc} \
 		-I${X11SRCDIR.xc}/include/fonts \

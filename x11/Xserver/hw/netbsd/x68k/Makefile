@@ -1,16 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/07 13:02:27 minoura Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	x68k
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/x68k
 SRCS=	x68kInit.c x68kConfig.c x68kIo.c x68kMouse.c x68kKbd.c x68kKeyMap.c \
 	x68kFb.c x68kGraph.c x68kText.c x68kInEx.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 # trim fonts / extentions / XSERVERINCDIR if possible
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/x68k \

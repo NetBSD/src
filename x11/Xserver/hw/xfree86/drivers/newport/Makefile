@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/08 04:25:34 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	newport_drv	
 MAN=	newport.4
@@ -12,8 +10,6 @@ MAN=	newport.4
 
 SRCS=	newport_driver.c newport_regs.c newport_cmap.c newport_shadow.c \
 	newport_cursor.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/newport \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

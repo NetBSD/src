@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	neomagic_drv
 MAN=	neomagic.4
@@ -12,8 +10,6 @@ MAN=	neomagic.4
 
 SRCS=	neo_driver.c neo_bank.c neo_cursor.c neo_2097.c neo_2070.c \
         neo_2090.c neo_2200.c neo_i2c.c neo_shadow.c neo_dga.c neo_video.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/neomagic \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

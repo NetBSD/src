@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:05 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	ati_drv
 MAN=	ati.4
@@ -13,8 +11,6 @@ MAN=	ati.4
 SRCS=	ati.c atiadapter.c atibus.c atichip.c atiident.c atioption.c \
 	atiprobe.c atividmem.c ativgaio.c atimodule.c radeon_probe.c \
 	r128_probe.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

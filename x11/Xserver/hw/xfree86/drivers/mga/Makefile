@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	mga_drv
 MAN=	mga.4
@@ -19,8 +17,6 @@ BUILDSYMLINKS=	mga_storm.c mga_storm8.c \
 		mga_storm.c mga_storm16.c \
 		mga_storm.c mga_storm24.c \
 		mga_storm.c mga_storm32.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/mga \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/mga/HALlib \

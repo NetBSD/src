@@ -1,16 +1,12 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/10 16:28:29 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	macppc
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/macppc
 SRCS=	macppcFbs.c macppcIo.c macppcKeyMap.c macppcOFB.c macppc.h \
 	macppcInit.c macppcKbd.c macppcMouse.c macppcInEx.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/macppc \
 		-I${X11SRCDIR.xc}/programs/Xserver/mfb \

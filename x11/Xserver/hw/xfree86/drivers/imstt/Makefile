@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile,v 1.1 2004/01/02 06:19:22 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	imstt_drv
 MAN=	imstt.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/imstt
 
 SRCS=	imstt_driver.c imstt_accel.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/imstt \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

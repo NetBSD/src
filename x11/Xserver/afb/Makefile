@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2004/01/13 15:55:14 rtr Exp $
+#	$NetBSD: Makefile,v 1.4 2004/02/07 06:52:04 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	afb
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/${LIB}
@@ -21,8 +19,6 @@ SRCS=	afbbltC.c afbbltX.c afbbltCI.c afbbltO.c afbbltG.c afbtileC.c \
 .if defined(X11FLAGS.LOADABLE)
 SRCS+=	afbmodule.c
 .endif
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/${LIB} \
 		-I${X11SRCDIR.xc}/programs/Xserver/cfb \

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:10 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	atimisc_drv
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati
@@ -15,8 +13,6 @@ SRCS=	atiaccel.c atiadjust.c aticlock.c aticonfig.c aticonsole.c \
         atimode.c atipreinit.c atiprint.c atirgb514.c atiscreen.c atiutil.c \
         ativalid.c atixv.c atibank.c ativga.c atiwonder.c atiwonderio.c \
 	atidga.c atiload.c atimisc.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	nsc_drv
 MAN=	nsc.4
@@ -18,8 +16,6 @@ SRCS=	nsc_driver.c nsc_gx1_driver.c nsc_gx1_dga.c nsc_gx1_accel.c \
 .if ${MACHINE} == "i386"
 SRCS+=	nsc_msr_asm.S
 .endif
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/nsc \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

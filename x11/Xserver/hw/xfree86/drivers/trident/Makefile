@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	trident_drv
 MAN=	trident.4
@@ -14,8 +12,6 @@ SRCS=	trident_driver.c trident_dac.c tridenthelper.c \
 	trident_accel.c trident_i2c.c trident_bank.c \
 	image_accel.c blade_accel.c tvga_dac.c trident_dga.c \
 	trident_shadow.c trident_video.c xp_accel.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/trident \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

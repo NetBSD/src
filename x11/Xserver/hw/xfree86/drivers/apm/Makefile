@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:34 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:05 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	apm_drv
 MAN=	apm.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/apm
 
 SRCS=	apm_accel.c apm_cursor.c apm_dga.c apm_driver.c apm_i2c.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/apm \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

@@ -1,17 +1,13 @@
-#	$NetBSD: Makefile,v 1.2 2003/12/23 14:28:20 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
 .include "../../../Makefile.serverlib"
 
-.include <bsd.own.mk>
-
 LIB=	i2c
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
 
 SRCS=	xf86i2c.c xf86i2cmodule.c
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/X11 \

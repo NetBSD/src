@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:17:35 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	tseng_drv
 MAN=	tseng.4
@@ -13,8 +11,6 @@ MAN=	tseng.4
 SRCS=	tseng_driver.c tseng_ramdac.c tseng_bank.c tseng_clock.c \
 	tseng_accel.c tseng_acl.c tseng_colexp.c tseng_cursor.c \
 	tseng_dpms.c tseng_dga.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/tseng \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

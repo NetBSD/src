@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2003/11/17 05:18:20 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2004/02/07 06:52:07 lukem Exp $
 
 .include "../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=		xnest
 .PATH:		${X11SRCDIR.xc}/programs/Xserver/hw/xnest
@@ -13,8 +11,6 @@ SRCS=		Args.c Color.c Cursor.c Display.c Events.c Font.c \
 		GC.c GCOps.c GetTime.c Handlers.c Init.c Keyboard.c \
 		Pixmap.c Pointer.c Screen.c TestExt.c Visual.c \
 		Window.c miinitext.c stubs.c
-
-XSERVERINCDIR!=	cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xnest \
 		-I${DESTDIR}${X11INCDIR}/X11 \

@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/10 16:28:29 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:05 lukem Exp $
 
 .include "../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 LIB=	hpc
 
@@ -10,8 +8,6 @@ LIB=	hpc
 SRCS=	hpc.h xf86Keymap.h atKeynames.h \
 	hpcFB.c hpcIo.c hpcKeymap.c hpcScreen.c \
 	hpcInit.c hpcKbd.c hpcMouse.c hpcColormap.c hpcInEx.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 # trim fonts / extentions / XSERVERINCDIR if possible
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/netbsd/hpc \

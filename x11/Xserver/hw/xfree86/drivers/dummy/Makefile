@@ -1,17 +1,13 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 14:53:10 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2004/02/07 06:52:05 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
 
-.include <bsd.own.mk>
-
 MODULE=	dummy_drv
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/dummy
 
 SRCS=	dummy_driver.c dummy_cursor.c dummy_dga.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/dummy \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile,v 1.5 2004/01/05 03:48:38 soren Exp $
+#	$NetBSD: Makefile,v 1.6 2004/02/07 06:52:06 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/drivers
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	radeon_drv
 MAN=	radeon.4
@@ -12,8 +10,6 @@ MAN=	radeon.4
 
 SRCS=	radeon_accel.c radeon_cursor.c radeon_dga.c radeon_driver.c \
 	radeon_video.c radeon_misc.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/drivers/ati \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \

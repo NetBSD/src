@@ -1,18 +1,14 @@
-#	$NetBSD: Makefile,v 1.2 2004/01/02 06:20:26 rtr Exp $
+#	$NetBSD: Makefile,v 1.3 2004/02/07 06:52:07 lukem Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules/input
 
 .include "../../../../Makefile.serverlib"
-
-.include <bsd.own.mk>
 
 MODULE=	tek4957_drv
 MAN=	tek4957.4
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/tek4957
 
 SRCS=	xf86Tek4957.c
-
-XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
 CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/input/tek4957 \
 		-I${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/common \
