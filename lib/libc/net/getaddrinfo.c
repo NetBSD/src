@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.48 2000/08/31 17:32:39 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.49 2000/09/23 04:40:19 lukem Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.48 2000/08/31 17:32:39 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.49 2000/09/23 04:40:19 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -122,13 +122,15 @@ __weak_alias(gai_strerror,_gai_strerror)
 #define NO  0
 
 static const char in_addrany[] = { 0, 0, 0, 0 };
+static const char in_loopback[] = { 127, 0, 0, 1 };
+#ifdef INET6
 static const char in6_addrany[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
-static const char in_loopback[] = { 127, 0, 0, 1 };
 static const char in6_loopback[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
 };
+#endif
 
 static const struct afd {
 	int a_af;
