@@ -1,4 +1,4 @@
-/*	$NetBSD: frodo.c,v 1.16 2003/11/17 14:37:59 tsutsui Exp $	*/
+/*	$NetBSD: frodo.c,v 1.16.2.1 2004/04/11 02:57:55 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.16 2003/11/17 14:37:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: frodo.c,v 1.16.2.1 2004/04/11 02:57:55 jmc Exp $");
 
 #define	_HP300_INTR_H_PRIVATE
 
@@ -121,9 +121,9 @@ CFATTACH_DECL(frodo, sizeof(struct frodo_softc),
 
 struct frodo_device frodo_subdevs[] = {
 	{ "dnkbd",	FRODO_APCI_OFFSET(0),	FRODO_INTR_APCI0 },
-	{ "apci",	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
-	{ "apci",	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
-	{ "apci",	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
+	{ "com",	FRODO_APCI_OFFSET(1),	FRODO_INTR_APCI1 },
+	{ "com",	FRODO_APCI_OFFSET(2),	FRODO_INTR_APCI2 },
+	{ "com",	FRODO_APCI_OFFSET(3),	FRODO_INTR_APCI3 },
 	{ NULL,		0,			0 },
 };
 
