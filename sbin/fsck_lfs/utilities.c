@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.7 2001/02/04 21:52:04 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.8 2001/07/13 20:30:19 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -184,7 +184,7 @@ foundit:
 struct bufarea *
 getdatablk(daddr_t blkno, long size)
 {
-	return getddblk(fsbtodb(&sblock, blkno), size);
+	return getddblk(blkno, size);
 }
 
 void
@@ -193,16 +193,18 @@ getdblk(struct bufarea * bp, daddr_t blk, long size)
 	if (bp->b_bno != blk) {
 		flush(fswritefd, bp);
 		diskreads++;
-		bp->b_errs = bread(fsreadfd, bp->b_un.b_buf, blk, size);
+		bp->b_errs = bread(fsreadfd, bp->b_un.b_buf, 
+			fsbtodb(&sblock, blk), size);
 		bp->b_bno = blk;
 		bp->b_size = size;
 	}
 }
 
+
 void
 getblk(struct bufarea * bp, daddr_t blk, long size)
 {
-	getdblk(bp, fsbtodb(&sblock, blk), size);
+	getdblk(bp, blk, size);
 }
 
 void
@@ -251,20 +253,21 @@ ckfini(int markclean)
 		return;
 	}
 	flush(fswritefd, &sblk);
-	if (havesb && sblk.b_bno != LFS_LABELPAD / dev_bsize &&
-	    sblk.b_bno != sblock.lfs_sboffs[0] &&
+	if (havesb && sblk.b_bno != sblock.lfs_sboffs[0] &&
+	    sblk.b_bno != sblock.lfs_sboffs[1] &&
 	    !preen && reply("UPDATE STANDARD SUPERBLOCKS")) {
-		sblk.b_bno = LFS_LABELPAD / dev_bsize;
+		sblk.b_bno = fsbtodb(&sblock, sblock.lfs_sboffs[0]);
 		sbdirty();
 		flush(fswritefd, &sblk);
 	}
 	if (havesb) {
-		if (sblk.b_bno == LFS_LABELPAD / dev_bsize) {
+		if (sblk.b_bno == fsbtodb(&sblock, sblock.lfs_sboffs[0])) {
 			/* Do the first alternate */
-			sblk.b_bno = sblock.lfs_sboffs[1];
+			sblk.b_bno = fsbtodb(&sblock, sblock.lfs_sboffs[1]);
 			sbdirty();
 			flush(fswritefd, &sblk);
-		} else if (sblk.b_bno == sblock.lfs_sboffs[1]) {
+		} else if (sblk.b_bno == 
+			fsbtodb(&sblock, sblock.lfs_sboffs[1])) {
 			/* Do the primary */
 			sblk.b_bno = LFS_LABELPAD / dev_bsize;
 			sbdirty();
@@ -283,7 +286,7 @@ ckfini(int markclean)
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
-	if (markclean && sblock.lfs_clean == 0) {
+	if (markclean && !(sblock.lfs_pflags & LFS_PF_CLEAN)) {
 		/*
 		 * Mark the file system as clean, and sync the superblock.
 		 */
@@ -292,14 +295,16 @@ ckfini(int markclean)
 		else if (!reply("MARK FILE SYSTEM CLEAN"))
 			markclean = 0;
 		if (markclean) {
-			sblock.lfs_clean = 1;
+			sblock.lfs_pflags |= LFS_PF_CLEAN;
 			sbdirty();
 			flush(fswritefd, &sblk);
 			if (sblk.b_bno == LFS_LABELPAD / dev_bsize) {
 				/* Do the first alternate */
-				sblk.b_bno = sblock.lfs_sboffs[0];
+				sblk.b_bno = fsbtodb(&sblock, 
+					sblock.lfs_sboffs[0]);
 				flush(fswritefd, &sblk);
-			} else if (sblk.b_bno == sblock.lfs_sboffs[0]) {
+			} else if (sblk.b_bno == fsbtodb(&sblock, 
+				sblock.lfs_sboffs[0])) {
 				/* Do the primary */
 				sblk.b_bno = LFS_LABELPAD / dev_bsize;
 				flush(fswritefd, &sblk);

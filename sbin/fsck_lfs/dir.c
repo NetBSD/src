@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.4 2000/06/14 18:43:57 perseant Exp $	 */
+/* $NetBSD: dir.c,v 1.5 2001/07/13 20:30:18 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -122,7 +122,7 @@ dirscan(struct inodesc * idesc)
 	    (idesc->id_filesize & (DIRBLKSIZ - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, DIRBLKSIZ);
 	blksiz = idesc->id_numfrags * sblock.lfs_fsize;
-	if (chkrange(idesc->id_blkno, idesc->id_numfrags)) {
+	if (chkrange(idesc->id_blkno, fragstofsb(&sblock, idesc->id_numfrags))) {
 		idesc->id_filesize -= blksiz;
 		return (SKIP);
 	}
@@ -574,9 +574,9 @@ expanddir(struct dinode * dp, char *name)
 	dp->di_db[lastbn + 1] = dp->di_db[lastbn];
 	dp->di_db[lastbn] = newblk;
 	dp->di_size += sblock.lfs_bsize;
-	dp->di_blocks += btodb(sblock.lfs_bsize);
-	bp = getdirblk(dp->di_db[lastbn + 1],
-		       (long)dblksize(&sblock, dp, lastbn + 1));
+	dp->di_blocks += btofsb(&sblock, sblock.lfs_bsize);
+	bp = getdirblk(dp->di_db[lastbn + 1], 
+		(long)dblksize(&sblock, dp, lastbn + 1));
 	if (bp->b_errs)
 		goto bad;
 	memcpy(firstblk, bp->b_un.b_buf, DIRBLKSIZ);
@@ -606,7 +606,7 @@ bad:
 	dp->di_db[lastbn] = dp->di_db[lastbn + 1];
 	dp->di_db[lastbn + 1] = 0;
 	dp->di_size -= sblock.lfs_bsize;
-	dp->di_blocks -= btodb(sblock.lfs_bsize);
+	dp->di_blocks -= btofsb(&sblock, sblock.lfs_bsize);
 	freeblk(newblk, sblock.lfs_frag);
 	return (0);
 }
