@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee.h,v 1.9 2003/10/27 01:11:47 kleink Exp $	*/
+/*	$NetBSD: ieee.h,v 1.10 2003/10/28 21:23:47 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,7 +48,7 @@
 
 #include <sys/ieee754.h>
 
-#ifndef __mc68010__
+#if !defined(__mc68010__) || defined(_KERNEL)
 #define	EXT_EXPBITS	15
 #define	EXT_FRACBITS	64
 
@@ -90,4 +90,4 @@ union ieee_ext_u {
 	struct ieee_ext		extu_ext;
 };
 
-#endif /* !__mc68010__ */
+#endif /* !__mc68010__ || _KERNEL */
