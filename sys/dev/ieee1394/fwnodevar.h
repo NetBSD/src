@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnodevar.h,v 1.3 2001/05/11 06:07:40 jmc Exp $	*/
+/*	$NetBSD: fwnodevar.h,v 1.4 2002/02/27 05:02:25 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,50 +39,6 @@
 #ifndef _DEV_IEEE1394_FWNODEVAR_H
 #define _DEV_IEEE1394_FWNODEVAR_H
 
-struct fwnode_softc;
-
-struct configrom_data {
-	u_int8_t key_type;
-	u_int8_t key_value;
-	u_int8_t key;
-	u_int32_t val;
-	struct configrom_leafdata *leafdata;
-	TAILQ_ENTRY(configrom_data) data;
-};
-
-struct configrom_leafdata {
-	u_int8_t desc_type;
-	u_int32_t spec_id;
-	u_int8_t char_width;
-	u_int16_t char_set;
-	u_int16_t char_lang;
-	u_int32_t datalen;
-	char *text;
-};
-
-struct configrom_dir {
-	TAILQ_HEAD(, configrom_data) data_root;
-	TAILQ_HEAD(, configrom_dir) subdir_root;
-	TAILQ_ENTRY(configrom_dir) dir;
-	struct configrom_dir *parent;
-	u_int8_t dir_type;
-	u_int32_t offset;
-	u_int32_t refs;
-};
-
-struct fwnode_device_cap {
-	int (*dev_print_data)(struct configrom_data *);
-	int (*dev_print_dir)(u_int8_t);
-	void (*dev_init)(struct fwnode_softc *, struct fwnode_device_cap *);
-	void *dev_data;
-	int dev_type;
-	int dev_spec;
-	int dev_info; /* Lun, etc. */
-	int dev_valid;
-	struct device *dev_subdev;
-	TAILQ_ENTRY(fwnode_device_cap) dev_list;
-};
-
 struct fwnode_softc {
 	struct ieee1394_softc sc_sc1394;
 	
@@ -91,9 +47,11 @@ struct fwnode_softc {
 	int (*sc1394_read)(struct ieee1394_abuf *);
 	int (*sc1394_write)(struct ieee1394_abuf *);
 	int (*sc1394_inreg)(struct ieee1394_abuf *, int);
+	int (*sc1394_unreg)(struct ieee1394_abuf *, int);
 	
-	TAILQ_HEAD(, fwnode_device_cap) sc_dev_cap_head;
-	TAILQ_HEAD(, configrom_dir) sc_configrom_root;
+	struct device **sc_children;
+
+	struct p1212_rom *sc_configrom;
 };
 
 #endif /* _DEV_IEEE1394_FWNODEVAR_H */
