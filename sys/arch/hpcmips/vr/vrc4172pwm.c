@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pwm.c,v 1.1 2000/11/11 04:42:09 sato Exp $	*/
+/*	$NetBSD: vrc4172pwm.c,v 1.2 2000/11/11 10:08:12 sato Exp $	*/
 
 /*
  * Copyright (c) 2000 SATO Kazumi. All rights reserved.
@@ -62,7 +62,10 @@ static int vrc4172pwm_event __P((void *, int, long, void *));
 static int vrc4172pwm_pmevent __P((void *, int, long, void *));
 
 static void vrc4172pwm_dumpreg __P((struct vrc4172pwm_softc *));
-static void vrc4172pwm_init_brightness __P((void));
+static void vrc4172pwm_init_brightness __P((struct vr4172pwm_softc *));
+void vrc4172pwm_light __P((struct vr4172pwm_softc *, int));
+int vrc4172pwm_get_brightness __P((struct vr4172pwm_softc *));
+void vrc4172pwm_set_brightness __P((struct vr4172pwm_softc *), int);
 
 
 struct cfattach vrc4172pwm_ca = {
@@ -138,10 +141,23 @@ vrc4172pwmattach(parent, self, aux)
 					CONFIG_HOOK_SHARE,
 					vrc4172pwm_event, sc);
 
-	vr4172pwm_init_brightness();
+	vr4172pwm_init_brightness(sc);
 	this_pwm = sc;
 }
 
+/*
+ *
+ * Initialize PWM brightness parameters
+ *
+ */
+void
+vrc4172pwm_init_brightness(sc)
+{
+	sc->sc_raw_freq = vrc4172pwm_read(sc, VRC2_PWM_LCDFREQ);
+	sc->sc_raw_duty = vrc4172pwm_read(sc, VRC2_PWM_LCDDUTY);
+	sc->sc_param = vrc4172pwm_getparam();
+	sc->sc_brightness = vrc4172pwm_raw_duty2brightness(sc);
+}
 
 /*
  * PWM config hook events 
@@ -159,12 +175,12 @@ vrc4172pwm_event(ctx, type, id, msg)
 
 	if (type == CONFIG_HOOK_POWERCONTROL 
 		&& id == CONFIG_HOOK_POWERCONTROL_LCDLIGHT) {
-		vrc4172pwm_light(why);
+		vrc4172pwm_light(sc, why);
 	} else if (type == CONFIG_HOOK_GET
-		&& id == CONFIG_HOOL_GET_BRIGHTNESS) {
+		&& id == CONFIG_HOOK_GET_BRIGHTNESS) {
 		*(int *)msg = vr4172pwm_get_brightness(sc);
 	} else if (type == CONFIG_HOOK_SET
-		&& id == CONFIG_HOOL_GET_BRIGHTNESS) {
+		&& id == CONFIG_HOOK_GET_BRIGHTNESS) {
 		vr4172pwm_set_brightness(sc, *(int *)msg);
 	} else
 		return 1;
@@ -191,8 +207,61 @@ vrc4172pwm_pmevent(ctx, type, id, msg)
 		return 1;
 		
         switch (why) {
+	case PWR_STANBY:
+	case PWR_SUSPEND:
+		vrc4172pwm_light(sc, 0);
+		break;
+	case PWR_RESUME:
+		vrc4172pwm_light(sc, 1);
+		break;
+	default:
+		return 1;
         }
+
         return (0);
+}
+
+/*
+ *
+ */
+void
+vrc4172pwm_light(sc, on)
+	struct vrc4172pwm_softc *sc;
+	int on;
+{
+	if (on) 
+		vrc4172pwm_write(sc, VRC2_PWM_LCDDUTYEN, VRC2_PWM_LCDEN);
+	else
+		vrc4172pwm_write(sc, VRC2_PWM_LCDDUTYEN, VRC2_PWM_LCDDIS);
+}
+
+/*
+ * set brightness
+ */
+void
+vrc4172pwm_set_brightness(sc, val)
+	struct vrc4172pwm_softc *sc;
+	int val;
+{
+	int raw;
+
+	if (val > VRC2_PWM_MAX_BRIGHTNESS)
+		val = VRC2_PWM_MAX_BRIGHTNESS;
+	if (val > sc->sc_param->max_brightness)
+		val = sc->sc_param->max_brightness;
+	raw = vrc4172pwm_brightness2rawduty(sc, val);
+	vrc4172pwm_write(sc, VRC2_PWM_LCDDUTY, raw);
+	sc->sc_brightness = val;
+}
+
+/*
+ * get brightness
+ */
+int
+vrc4172pwm_set_brightness(sc)
+	struct vrc4172pwm_softc *sc;
+{
+	return sc->sc_brightness;
 }
 
 /*
@@ -211,4 +280,5 @@ vrc4172pwm_dumpreg(sc)
 	printf("vrc4172pwm: lightenable = %d, freq = 0x%x, duty = 0x%x\n",
 		en, freq, duty);
 }
+
 /* end */
