@@ -33,7 +33,7 @@
  *	pci_isic.h - pci bus frontend for i4b_isic driver
  *	-------------------------------------------------
  *
- *	$Id: isic_pci.h,v 1.2 2002/03/24 20:35:53 martin Exp $ 
+ *	$Id: isic_pci.h,v 1.3 2002/03/27 07:39:37 martin Exp $ 
  *
  *      last edit-date: [Wed Mar 10 07:22:08 1999]
  *
@@ -46,6 +46,9 @@ struct pci_isic_softc {
 
 	/* PCI-specific goo */
 	void *sc_ih;				/* interrupt handler */
+	bus_addr_t sc_base;
+	bus_size_t sc_size;
+	pci_chipset_tag_t sc_pc;
 };
 
 extern void isic_attach_Eqs1pp __P((struct pci_isic_softc *psc, struct pci_attach_args *pa));

@@ -27,7 +27,7 @@
  *	i4b_l4mgmt.c - layer 4 calldescriptor management utilites
  *	-----------------------------------------------------------
  *
- *	$Id: i4b_l4mgmt.c,v 1.6 2002/03/24 20:36:02 martin Exp $ 
+ *	$Id: i4b_l4mgmt.c,v 1.7 2002/03/27 07:39:35 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.6 2002/03/24 20:36:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4mgmt.c,v 1.7 2002/03/27 07:39:35 martin Exp $");
 
 #include "isdn.h"
 
@@ -208,6 +208,29 @@ freecd_by_cd(call_desc_t *cd)
 
 	if(i == N_CALL_DESC)
 		panic("freecd_by_cd: ERROR, cd not found, cr = %d\n", cd->cr);
+
+	splx(x);		
+}
+
+/*
+ * BRI is gone, get rid of all CDs for it
+ */
+void free_all_cd_of_bri(int bri)
+{
+	int i;
+	int x = splnet();
+	
+	for(i=0; i < num_call_desc; i++)
+	{
+		if( (call_desc[i].cdid != CDID_UNUSED) &&
+		    call_desc[i].bri == bri) {
+			NDBGL4(L4_MSG, "releasing cd - index=%d cdid=%u cr=%d",
+				i, call_desc[i].cdid, call_desc[i].cr);
+			call_desc[i].cdid = CDID_UNUSED;
+			call_desc[i].bri = -1;
+			break;
+		}
+	}
 
 	splx(x);		
 }

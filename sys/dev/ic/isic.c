@@ -27,14 +27,14 @@
  *	i4b_isic.c - global isic stuff
  *	==============================
  *
- *	$Id: isic.c,v 1.7 2002/03/25 16:39:55 martin Exp $ 
+ *	$Id: isic.c,v 1.8 2002/03/27 07:39:37 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.7 2002/03/25 16:39:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic.c,v 1.8 2002/03/27 07:39:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/ioccom.h>
@@ -89,7 +89,10 @@ int
 isicintr(void *arg)
 {
 	struct isic_softc *sc = arg;
-	
+
+	if (sc->sc_dying)
+		return 0;
+
 	if(sc->sc_ipac == 0)	/* HSCX/ISAC interupt routine */
 	{
 		u_char was_hscx_irq = 0;
@@ -230,5 +233,6 @@ isic_detach_bri(struct isic_softc *sc)
 {
 	isdn_layer2_status_ind(&sc->sc_l2, STI_ATTACH, 0);
 	isdn_detach_bri(sc->sc_l3token);
+	sc->sc_l3token = NULL;
 	return 1;
 }

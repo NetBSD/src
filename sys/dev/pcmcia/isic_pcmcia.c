@@ -33,7 +33,7 @@
  *	isic_pcmcia.c - pcmcia bus frontend for i4b_isic driver
  *	-------------------------------------------------------
  *
- *	$Id: isic_pcmcia.c,v 1.7 2002/03/25 12:07:33 martin Exp $ 
+ *	$Id: isic_pcmcia.c,v 1.8 2002/03/27 07:39:38 martin Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:39:32 2001]
  *
@@ -42,7 +42,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.7 2002/03/25 12:07:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.8 2002/03/27 07:39:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -95,10 +95,11 @@ static void isic_pcmcia_attach __P((struct device *, struct device *, void *));
 static const struct isic_pcmcia_card_entry * find_matching_card __P((struct pcmcia_attach_args *pa));
 static int isic_pcmcia_isdn_attach __P((struct isic_softc *sc, const char*));
 static int isic_pcmcia_detach(struct device *self, int flags);
+static int isic_pcmcia_activate(struct device *self, enum devact act);
 
 struct cfattach isic_pcmcia_ca = {
 	sizeof(struct pcmcia_isic_softc), isic_pcmcia_match, 
-	isic_pcmcia_attach, isic_pcmcia_detach
+	isic_pcmcia_attach, isic_pcmcia_detach, isic_pcmcia_activate
 };
 
 struct isic_pcmcia_card_entry {
@@ -257,9 +258,31 @@ isic_pcmcia_detach(self, flags)
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
 	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-	isic_detach_bri(&psc->sc_isic);
 
 	return (0);
+}
+
+int
+isic_pcmcia_activate(self, act)
+	struct device *self;
+	enum devact act;
+{
+	struct pcmcia_isic_softc *psc = (struct pcmcia_isic_softc *)self;
+	int error = 0, s;
+
+	s = splnet();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		error = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		psc->sc_isic.sc_dying = 1;
+		isic_detach_bri(&psc->sc_isic);
+		break;
+	}
+	splx(s);
+	return (error);
 }
 	
 /*---------------------------------------------------------------------------*
