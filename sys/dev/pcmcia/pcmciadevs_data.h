@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.180 2003/01/16 15:20:18 kanaoka Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.181 2003/03/27 12:20:07 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.178 2002/12/29 12:04:48 jdc Exp 
+ *	NetBSD: pcmciadevs,v 1.179 2003/01/16 15:18:44 kanaoka Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1280,6 +1280,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "I-O DATA",
 	    "IO-DATA CBIDE2/16-bit mode",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_TOSHIBA_CBIDE2,
+	    PCMCIA_CIS_TOSHIBA_CBIDE2,
+	    0,
+	    "",
+	    "TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_IODATA_PCLAT,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.180 2003/01/16 15:20:19 kanaoka Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.181 2003/03/27 12:20:07 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.178 2002/12/29 12:04:48 jdc Exp 
+ *	NetBSD: pcmciadevs,v 1.179 2003/01/16 15:18:44 kanaoka Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -795,6 +795,9 @@
 #define	PCMCIA_CIS_IODATA_CBIDE2	{ "IO DATA", "CBIDE2      ", NULL, NULL }
 #define	PCMCIA_PRODUCT_IODATA_CBIDE2	-1
 #define	PCMCIA_STR_IODATA_CBIDE2	"IO-DATA CBIDE2/16-bit mode"
+#define	PCMCIA_CIS_TOSHIBA_CBIDE2	{ "LOOKMEET", "CBIDE2      ", NULL, NULL }
+#define	PCMCIA_PRODUCT_TOSHIBA_CBIDE2	-1
+#define	PCMCIA_STR_TOSHIBA_CBIDE2	"TOSHIBA PA2673U CBIDE2/16-bit mode (IO-DATA OEM)"
 #define	PCMCIA_CIS_IODATA_PCLAT	{ "I-O DATA", "PCLA", "ETHERNET", NULL }
 #define	PCMCIA_PRODUCT_IODATA_PCLAT	-1
 #define	PCMCIA_STR_IODATA_PCLAT	"IO-DATA PCLA/T"
