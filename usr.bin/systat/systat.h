@@ -1,4 +1,4 @@
-/*	$NetBSD: systat.h,v 1.2 1995/01/20 08:52:14 jtc Exp $	*/
+/*	$NetBSD: systat.h,v 1.3 1997/07/21 07:05:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1992, 1993
@@ -38,15 +38,15 @@
 #include <curses.h>
 
 struct  cmdtab {
-        char    *c_name;		/* command name */
-        void    (*c_refresh)();		/* display refresh */
-        void    (*c_fetch)();		/* sets up data structures */
-        void    (*c_label)();		/* label display */
-	int	(*c_init)();		/* initialize namelist, etc. */
-	WINDOW	*(*c_open)();		/* open display */
-	void	(*c_close)();		/* close display */
-	int	(*c_cmd)();		/* display command interpreter */
-	char	c_flags;		/* see below */
+        char    *c_name;			/* command name */
+        void    (*c_refresh) __P((void));	/* display refresh */
+        void    (*c_fetch) __P((void));		/* sets up data structures */
+        void    (*c_label) __P((void));		/* label display */
+	int	(*c_init) __P((void));		/* initialize namelist, etc. */
+	WINDOW	*(*c_open) __P((void));		/* open display */
+	void	(*c_close) __P((WINDOW *));	/* close display */
+	int	(*c_cmd) __P((char *, char *));	/* display command interpreter*/
+	char	c_flags;			/* see below */
 };
 
 #define	CF_INIT		0x1		/* been initialized */
@@ -60,3 +60,6 @@ struct  cmdtab {
 #define NPTR(indx)  (void *)NVAL((indx))
 #define NREAD(indx, buf, len) kvm_ckread(NPTR((indx)), (buf), (len))
 #define LONG	(sizeof (long))
+
+void dkreadstats __P((void));	/* XXX: from ../vmstat/dkstats.c */
+void dkswap __P((void));	/* XXX: from ../vmstat/dkstats.c */

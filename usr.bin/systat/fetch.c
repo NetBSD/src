@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.2 1995/01/20 08:51:56 jtc Exp $	*/
+/*	$NetBSD: fetch.c,v 1.3 1997/07/21 07:05:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fetch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: fetch.c,v 1.2 1995/01/20 08:51:56 jtc Exp $";
+__RCSID("$NetBSD: fetch.c,v 1.3 1997/07/21 07:05:01 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>

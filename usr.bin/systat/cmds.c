@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.6 1996/12/21 09:16:35 matthias Exp $	*/
+/*	$NetBSD: cmds.c,v 1.7 1997/07/21 07:04:56 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$NetBSD: cmds.c,v 1.6 1996/12/21 09:16:35 matthias Exp $";
+__RCSID("$NetBSD: cmds.c,v 1.7 1997/07/21 07:04:56 mrg Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -160,7 +161,7 @@ lookup(name)
 	longest = 0;
 	nmatches = 0;
 	found = (struct cmdtab *) 0;
-	for (c = cmdtab; p = c->c_name; c++) {
+	for (c = cmdtab; (p = c->c_name); c++) {
 		for (q = name; *q == *p++; q++)
 			if (*q == 0)		/* exact match? */
 				return (c);
