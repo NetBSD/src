@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.8 2001/02/10 23:35:41 eeh Exp $	*/
+/*	$NetBSD: bzero.S,v 1.9 2001/07/04 05:51:06 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1999
@@ -51,7 +51,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.8 2001/02/10 23:35:41 eeh Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.9 2001/07/04 05:51:06 eeh Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -132,9 +132,11 @@ Lbzero_internal:
 	bl,a,pn	%icc, Lbzero_cleanup	! Less than 8 left
 	 dec	8, %o1			! Fixup count -8
 2:
+#if 0
 	!! Now we are 64-bit aligned
 	cmp	%o1, 256		! Use block clear if len > 256
 	bge,pt	%xcc, Lbzero_block	! use block store insns
+#endif	
 	 deccc	8, %o1
 Lbzero_longs:
 	bl,pn	%xcc, Lbzero_cleanup	! Less than 8 bytes left
@@ -186,7 +188,7 @@ Lbzero_small:
 	 inc	%o0
 	ba,a,pt	%icc, Lbzero_done
 	 nop				! XXX spitfire bug?
-	
+#if 0	
 Lbzero_block:
 /*
  * Userland:
@@ -251,3 +253,4 @@ Lbzero_block:
 	addcc	%i1, 56, %i1		! Restore the count
 	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
 	 restore
+#endif
