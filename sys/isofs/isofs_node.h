@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_node.h,v 1.8 1993/10/28 17:38:46 ws Exp $
+ *	$Id: isofs_node.h,v 1.9 1993/12/23 07:37:42 cgd Exp $
  */
 
 
@@ -94,7 +94,7 @@ int isofs_reclaim __P((struct vnode *vp));
 int isofs_lock __P((struct vnode *vp));
 int isofs_unlock __P((struct vnode *vp));
 int isofs_strategy __P((struct buf *bp));
-void isofs_print __P((struct vnode *vp));
+int isofs_print __P((struct vnode *vp));
 int isofs_islocked __P((struct vnode *vp));
 void isofs_defattr __P((struct iso_directory_record *isodir,
 			struct iso_node *inop, struct buf *bp));
