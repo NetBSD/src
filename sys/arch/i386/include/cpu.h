@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.30 2002/02/24 00:17:46 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.31 2002/04/27 14:39:39 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -81,6 +81,8 @@ struct i386_cache_info {
 struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	struct cpu_info *ci_self;	/* self-pointer */
+	void	*ci_tlog_base;		/* Trap log base */
+	int32_t ci_tlog_offset;		/* Trap log current offset */
 	struct schedstate_percpu ci_schedstate; /* scheduler state */
 	struct cpu_info *ci_next;	/* next cpu */
 

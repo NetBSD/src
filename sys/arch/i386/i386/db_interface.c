@@ -1,27 +1,27 @@
-/*	$NetBSD: db_interface.c,v 1.30.2.8 2001/12/29 23:30:59 sommerfeld Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30.2.9 2002/04/27 14:39:34 sommerfeld Exp $	*/
 
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.8 2001/12/29 23:30:59 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30.2.9 2002/04/27 14:39:34 sommerfeld Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,7 +112,7 @@ db_suspend_others(void)
 {
 	int cpu_me = cpu_number();
 	int win;
-	
+
 	if (ddb_vec == 0)
 		return 1;
 
@@ -134,7 +134,7 @@ db_resume_others(void)
 
 	__cpu_simple_lock(&db_lock);
 	ddb_cpu = NOCPU;
-	__cpu_simple_unlock(&db_lock);	
+	__cpu_simple_unlock(&db_lock);
 
 	for (i=0; i<I386_MAXPROCS; i++) {
 		struct cpu_info *ci = cpu_info[i];
@@ -173,7 +173,7 @@ kdb_trap(type, code, regs)
 {
 	int s;
 	db_regs_t dbreg;
-	
+
 	switch (type) {
 	case T_BPTFLT:	/* breakpoint */
 	case T_TRCTRAP:	/* single_step */
@@ -211,7 +211,7 @@ kdb_trap(type, code, regs)
 	ddb_regs.tf_cs &= 0xffff;
 	ddb_regs.tf_ds &= 0xffff;
 	ddb_regs.tf_es &= 0xffff;
-	ddb_regs.tf_fs &= 0xffff;		
+	ddb_regs.tf_fs &= 0xffff;
 	ddb_regs.tf_gs &= 0xffff;
 	ddb_regs.tf_ss &= 0xffff;
 	s = splhigh();
@@ -246,6 +246,10 @@ kdb_trap(type, code, regs)
 		regs->tf_esp    = ddb_regs.tf_esp;
 		regs->tf_ss     = ddb_regs.tf_ss;
 	}
+
+#ifdef TRAPLOG
+	wrmsr(MSR_DEBUGCTLMSR, 0x1);
+#endif
 
 	return (1);
 }
@@ -311,7 +315,7 @@ db_mach_cpu(addr, have_addr, count, modif)
 		cpu_debug_dump();
 		return;
 	}
-	
+
 	if ((addr < 0) || (addr >= I386_MAXPROCS)) {
 		db_printf("%ld: cpu out of range\n", addr);
 		return;

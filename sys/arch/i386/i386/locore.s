@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.29 2001/12/29 23:31:01 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.30 2002/04/27 14:39:35 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -182,6 +182,40 @@
 #error BIOSEXTMEM option deprecated; use REALEXTMEM only if memory size reported by latest boot block is incorrect
 #endif
 
+#ifndef TRAPLOG
+#define TLOG		/**/
+#else
+/*
+ * Fill in trap record
+ */
+#define TLOG						\
+9:							\
+	movl	%fs:CPU_TLOG_OFFSET, %eax;		\
+	movl	%fs:CPU_TLOG_BASE, %ebx;		\
+	addl	$SIZEOF_TREC,%eax;			\
+	andl	$SIZEOF_TLOG-1,%eax;			\
+	addl	%eax,%ebx;				\
+	movl	%eax,%fs:CPU_TLOG_OFFSET;		\
+	movl	%esp,TREC_SP(%ebx);			\
+	movl	$9b,TREC_HPC(%ebx);			\
+	movl	TF_EIP(%esp),%eax;			\
+	movl	%eax,TREC_IPC(%ebx);			\
+	rdtsc			;			\
+	movl	%eax,TREC_TSC(%ebx);			\
+	movl	$MSR_LASTBRANCHFROMIP,%ecx;		\
+	rdmsr			;			\
+	movl	%eax,TREC_LBF(%ebx);			\
+	incl	%ecx		;			\
+	rdmsr			;			\
+	movl	%eax,TREC_LBT(%ebx);			\
+	incl	%ecx		;			\
+	rdmsr			;			\
+	movl	%eax,TREC_IBF(%ebx);			\
+	incl	%ecx		;			\
+	rdmsr			;			\
+	movl	%eax,TREC_IBT(%ebx)
+#endif
+		
 /*
  * These are used on interrupt or trap entry or exit.
  */
@@ -202,7 +236,8 @@
 	pushl	%gs		; \
 	movl	%eax,%gs	; \
 	movl	$GSEL(GCPU_SEL, SEL_KPL),%eax	; \
-	movl	%eax,%fs		
+	movl	%eax,%fs	; \
+	TLOG
 
 #define	INTRFASTEXIT \
 	popl	%gs		; \
