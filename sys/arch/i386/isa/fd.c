@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.23 1993/10/28 20:04:58 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.24 1993/10/28 20:44:31 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -314,6 +314,7 @@ fdprobe(parent, cf, aux)
 	struct fdc_attach_args *fa = aux;
 	struct fdc_softc *fdc;
 	u_short iobase;
+	int n, i;
 
 #define cf_drive cf_loc[0]
 	if (cf->cf_drive != -1 && cf->cf_drive != fa->fa_drive)
@@ -322,24 +323,22 @@ fdprobe(parent, cf, aux)
 
 	fdc = (struct fdc_softc *)parent;
 	iobase = fdc->sc_iobase;
-	/* turn on motor */
-	outb(iobase + fdout, FDO_FRST | FDO_MOEN(fa->fa_drive));
+	/* select drive and turn on motor */
+	outb(iobase + fdout, fa->fa_drive | FDO_FRST | FDO_MOEN(fa->fa_drive));
 	delay(250000);
 	out_fdc(iobase, NE7CMD_RECAL);
 	out_fdc(iobase, fa->fa_drive);
-	delay(2500000);
+	delay(2000000);
 	out_fdc(iobase, NE7CMD_SENSEI);
-#if 0 /* XXXX */
-	if (fdc_result(fdc) != 2)
-		return 0;
-#else
-	{int n, i;
-	 n = fdc_result(fdc);
-	 printf("fdprobe: status");
-	 for (i = 0; i < n; i++)
-		 printf(" %x", fdc->sc_status[i]);
-	 printf("\n");}
+	n = fdc_result(fdc);
+#ifdef DIAGNOSTIC
+	printf("fdprobe: status");
+	for (i = 0; i < n; i++)
+		printf(" %x", fdc->sc_status[i]);
+	printf("\n");
 #endif
+	if (n != 2 || (fdc->sc_status[0] & 0xf8) != 0x20)
+		return 0;
 	/* turn off motor */
 	outb(iobase + fdout, FDO_FRST);
 
@@ -779,6 +778,11 @@ fdcstate(fdc)
 		at_dma(read, bp->b_un.b_addr + fd->sc_skip, nblks * FDC_BSIZE,
 		       fdc->sc_drq);
 		outb(iobase + fdctl, type->rate);
+#ifdef DEBUG
+		printf("fdcstate: %s drive %d track %d head %d sec %d nblks %d\n",
+		       read ? "read" : "write", fd->sc_drive, fd->sc_track, head,
+		       sec, nblks);
+#endif
 		if (read)
 			out_fdc(iobase, NE7CMD_READ);	/* READ */
 		else
