@@ -1,4 +1,4 @@
-/*	$NetBSD: soelim.c,v 1.6 1998/02/03 04:12:24 perry Exp $	*/
+/*	$NetBSD: soelim.c,v 1.7 1999/11/09 15:06:36 drochner Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)soelim.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: soelim.c,v 1.6 1998/02/03 04:12:24 perry Exp $");
+__RCSID("$NetBSD: soelim.c,v 1.7 1999/11/09 15:06:36 drochner Exp $");
 #endif /* not lint */
 
 /*
@@ -101,11 +101,11 @@ addpath(p, dir)
 		p->n += 10;
 		p->list = realloc(p->list, p->n * sizeof(p->list[0]));
 		if (p->list == NULL)
-			err(1, "%s", "");
+			err(1, NULL);
 	}
 
 	if ((p->list[p->c++] = strdup(dir)) == NULL)
-		err(1, "%s", "");
+		err(1, NULL);
 
 	p->list[p->c] = NULL;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.14 1998/12/19 16:01:21 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.15 1999/11/09 15:06:35 drochner Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)util.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: util.c,v 1.14 1998/12/19 16:01:21 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.15 1999/11/09 15:06:35 drochner Exp $");
 #endif
 #endif /* not lint */
 
@@ -206,11 +206,7 @@ enter_person(pw)
 
 	if (db == NULL &&
 	    (db = dbopen(NULL, O_RDWR, 0, DB_BTREE, NULL)) == NULL)
-#ifdef __GNUC__
-		err(1, "%s", "");
-#else
 		err(1, NULL);
-#endif
 
 	key.data = (char *)pw->pw_name;
 	key.size = strlen(pw->pw_name);
@@ -268,11 +264,7 @@ palloc()
 	PERSON *p;
 
 	if ((p = malloc((u_int) sizeof(PERSON))) == NULL)
-#ifdef __GNUC__
-		err(1, "%s", "");
-#else
 		err(1, NULL);
-#endif
 	return(p);
 }
 
@@ -283,11 +275,7 @@ walloc(pn)
 	WHERE *w;
 
 	if ((w = malloc((u_int) sizeof(WHERE))) == NULL)
-#ifdef __GNUC__
-		err(1, "%s", "");
-#else
 		err(1, NULL);
-#endif
 	if (pn->whead == NULL)
 		pn->whead = pn->wtail = w;
 	else {
