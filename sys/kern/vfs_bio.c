@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.66 2000/03/30 09:27:14 augustss Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.67 2000/04/12 11:33:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -573,16 +573,29 @@ brelse(bp)
 		/*
 		 * It has valid data.  Put it on the end of the appropriate
 		 * queue, so that it'll stick around for as long as possible.
+		 * If buf is AGE, but has dependencies, must put it on last
+		 * bufqueue to be scanned, ie LRU. This protects against the
+		 * livelock where BQ_AGE only has buffers with dependencies,
+		 * and we thus never get to the dependent buffers in BQ_LRU.
 		 */
 		if (ISSET(bp->b_flags, B_LOCKED))
 			/* locked in core */
 			bufq = &bufqueues[BQ_LOCKED];
-		else if (ISSET(bp->b_flags, B_AGE))
-			/* stale but valid data */
-			bufq = &bufqueues[BQ_AGE];
-		else
+		else if (!ISSET(bp->b_flags, B_AGE))
 			/* valid data */
 			bufq = &bufqueues[BQ_LRU];
+		else {
+			/* stale but valid data */
+			int has_deps;
+
+			if (LIST_FIRST(&bp->b_dep) != NULL &&
+			    bioops.io_countdeps)
+				has_deps = (*bioops.io_countdeps)(bp, 0);
+			else
+				has_deps = 0;
+			bufq = has_deps ? &bufqueues[BQ_LRU] :
+			    &bufqueues[BQ_AGE];
+		}
 		binstailfree(bp, bufq);
 	}
 
