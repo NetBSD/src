@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.21 2003/10/05 02:00:16 nsmrtks Exp $	*/
+/*	$NetBSD: intio.c,v 1.22 2003/11/01 12:21:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.21 2003/10/05 02:00:16 nsmrtks Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.22 2003/11/01 12:21:14 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,7 +200,7 @@ intio_attach(parent, self, aux)
 	sc->sc_map = extent_create("intiomap",
 				  PHYS_INTIODEV,
 				  PHYS_INTIODEV + 0x400000,
-				  M_DEVBUF, NULL, NULL, EX_NOWAIT);
+				  M_DEVBUF, NULL, 0, EX_NOWAIT);
 	intio_alloc_system_ports (sc);
 
 	sc->sc_bst = &intio_bus;
