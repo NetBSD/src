@@ -1,4 +1,4 @@
-.\"	$NetBSD: install.1,v 1.19 1999/08/16 03:02:46 simonb Exp $
+.\"	$NetBSD: install.1,v 1.20 2000/03/22 18:34:43 garbled Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -236,9 +236,20 @@ utility attempts to prevent moving a file onto itself.
 Installing
 .Pa /dev/null
 creates an empty file.
+.Sh RETURN VALUES
 .Pp
 Upon successful completion a value of 0 is returned.
 Otherwise, a value of 1 is returned.
+.Sh ENVIRONMENT
+.Bl -tag -width Fl
+.It Ev STRIP
+The location for the
+.Xr strip 1
+binary to be used when stripping files with the
+.Fl s
+option.  Defaults to
+.Pa /usr/bin/strip .
+.El
 .Sh SEE ALSO
 .Xr chflags 1 ,
 .Xr chgrp 1 ,
