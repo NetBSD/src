@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.9 1998/04/01 23:05:28 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.10 1998/07/06 01:56:40 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -65,6 +65,8 @@
  * process_set_pc(proc)
  *	Set the process's program counter.
  */
+
+#include "opt_armfpe.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
