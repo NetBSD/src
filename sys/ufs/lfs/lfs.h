@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.56 2003/03/08 22:14:31 perseant Exp $	*/
+/*	$NetBSD: lfs.h,v 1.57 2003/03/11 02:47:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -79,15 +79,9 @@
 #define LFS_IFIND_RETRIES	16
 #define LFS_EAGAIN_FAIL		 /* markv fail with EAGAIN if ino is locked */
 #define LFS_DEBUG_RFW		 /* print roll-forward debugging info */
-#define LFS_NO_PAGEMOVE		 /* Use malloc/copy to write clusters */
-#define LFS_AGGRESSIVE_SEGLOCK
 #define LFS_LOGLENGTH 1024
 
 /* #define DEBUG_LFS */		 /* Intensive debugging of LFS subsystem */
-
-#ifdef LFS_NO_PAGEMOVE
-# define LFS_MALLOC_SUMMARY
-#endif
 
 /*
  * Parameters and generic definitions
