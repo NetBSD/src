@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16 1995/05/01 10:43:01 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.17 1995/05/01 13:13:20 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -244,7 +244,9 @@ i386_set_ldt(p, args, retval)
 		pcb->pcb_ldt = (caddr_t)new_ldt;
 		gdt_segs[GUSERLDT_SEL].ssd_base = (unsigned)new_ldt;
 		gdt_segs[GUSERLDT_SEL].ssd_limit = len - 1;
-		ssdtosd(gdt_segs + GUSERLDT_SEL, &pcb->pcb_ldt_desc);
+		ssdtosd(&gdt_segs[GUSERLDT_SEL], &pcb->pcb_ldt_desc);
+		if (p == curproc)
+			set_user_ldt(pcb);
 #ifdef DEBUG
 		printf("i386_set_ldt(%d): new_ldt=%x\n", p->p_pid, new_ldt);
 #endif
@@ -311,11 +313,8 @@ i386_set_ldt(p, args, retval)
 #endif
 		error = copyin(dp, lp, sizeof(union descriptor));
 	}
-	if (!error) {
+	if (!error)
 		*retval = uap->start;
-		if (p == curproc)
-			set_user_ldt(pcb);
-	}
 
 	splx(s);
 	return (error);
