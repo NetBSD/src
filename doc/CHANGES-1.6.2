@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.111 2003/08/15 19:34:06 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.112 2003/08/16 16:19:15 tron Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1244,4 +1244,32 @@ sys/dev/ata/wd.c				1.256
 	Don't use LBA48 if we don't have to (that is, if the request is inside
 	the first 128GB). Tested by Andreas Johansson.
 	[bouyer, ticket #1370]
+
+sys/dev/pci/pciide.c				1.193 via patch
+
+	Add support for ICH5, from Quentin Garnier in private mail.
+	[bouyer, ticket #1367]
+
+sys/dev/pci/pciide.c				1.194
+sys/dev/pci/pciide_pdc202xx_reg.h		1.10
+
+	Correct setup of General Purpose Register for PDC20265 (Ultra/100) and
+	newer. From Andreas Johansson in private mail.
+	[bouyer, ticket #1369]
+
+distrib/notes/i386/hardware			1.112 via patch
+share/man/man4/pciide.4				1.49 via patch
+
+	Note ICH5 support.
+	[bouyer, ticket #1371]
+
+sys/arch/i386/i386/machdep.c			1.529
+
+	Fix stack location for VM86 processes in the !sigaltstack case.
+	I doubt it makes much sense to use the VM's stack for this, but the
+	old code was doubtless wrong because it potentially overwrote random
+	user memory.
+	(It might be a good idea to use the process' pre-vm86()-call stack,
+	but atm the infrastructure for this is missing.)
+	[drochner, ticket #1415]
 
