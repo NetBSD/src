@@ -1,4 +1,4 @@
-.\" $NetBSD: lpd.8,v 1.6 1996/06/16 22:36:59 pk Exp $
+.\" $NetBSD: lpd.8,v 1.7 1996/09/21 15:57:21 perry Exp $
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -68,6 +68,17 @@ flag causes
 .Nm lpd
 to log valid requests received from the network. This can be useful
 for debugging purposes.
+.It Fl s
+The
+.Fl s
+flag selects ``secure'' mode, in which 
+.Nm lpd
+does not listen on a TCP socket but only takes commands from a UNIX
+domain socket.  This is valuable when the machine on which
+.Nm lpd 
+runs is subject to attack over the network and it is desired that the
+machine be protected from attempts to remotely fill spools and similar
+attacks.
 .It Ar "port#"
 The Internet port number used to rendezvous
 with other processes is normally obtained with
