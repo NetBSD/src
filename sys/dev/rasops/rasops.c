@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.6 1999/05/09 17:50:27 ad Exp $ */
+/*	 $NetBSD: rasops.c,v 1.7 1999/05/15 12:54:53 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.6 1999/05/09 17:50:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.7 1999/05/15 12:54:53 ad Exp $");
 
 #include "rasops_glue.h"
 
@@ -107,10 +107,10 @@ rasops_init(ri, wantrows, wantcols, clear, center)
 		wsfont_init();
 
 		/* Want 8 pixel wide, don't care about aestethics */
-		if ((cookie = wsfont_find(NULL, 8, 0, 0)) < 0)
+		if ((cookie = wsfont_find(NULL, 8, 0, 0)) <= 0)
 			cookie = wsfont_find(NULL, 0, 0, 0);
 
-		if (cookie < 0) {
+		if (cookie <= 0) {
 			printf("rasops_init: font table is empty\n");
 			return (-1);
 		}
