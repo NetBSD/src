@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.108.4.10 2002/12/11 06:12:43 thorpej Exp $	   */
+/*	$NetBSD: pmap.c,v 1.108.4.11 2002/12/30 18:34:58 thorpej Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -622,7 +622,7 @@ rmspace(struct pmap *pm)
 #undef swappable
 #define swappable(l, pm)						\
 	(((l)->l_flag & (P_SYSTEM | L_INMEM | P_WEXIT)) == L_INMEM &&	\
-	((l)->l_holdcnt == 0) && ((l)->l_vmspace->vm_map.pmap != pm))
+	((l)->l_holdcnt == 0) && ((l)->l_proc->p_vmspace->vm_map.pmap != pm))
 
 static int
 pmap_rmproc(struct pmap *pm)
