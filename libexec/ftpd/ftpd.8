@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ftpd.8	6.9 (Berkeley) 3/16/91
-.\"	$Id: ftpd.8,v 1.2 1993/08/01 07:40:20 mycroft Exp $
+.\"	$Id: ftpd.8,v 1.3 1994/04/06 20:49:52 cgd Exp $
 .\"
 .Dd March 16, 1991
 .Dt FTPD 8
@@ -168,7 +168,7 @@ This allows users to utilize the metacharacters
 .Dq Li \&*?[]{}~ .
 .Pp
 .Nm Ftpd
-authenticates users according to three rules. 
+authenticates users according to five rules. 
 .Pp
 .Bl -enum -offset indent
 .It
@@ -183,6 +183,19 @@ The user name must not appear in the file
 .It
 The user must have a standard shell returned by 
 .Xr getusershell 3 .
+.It
+If the user name appears in the file
+.Pa /etc/ftpchroot
+the session's root will be changed to the user's login directory by
+.Xr chroot 2
+as for an
+.Dq anonymous
+or
+.Dq ftp
+account (see next item).  However, the user must still supply a password.
+This feature is intended as a compromise between a fully anonymous account 
+and a fully privileged account.  The account should also be set up as for an
+anonymous account.
 .It
 If the user name is
 .Dq anonymous
