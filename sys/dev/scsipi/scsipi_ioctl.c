@@ -3,16 +3,13 @@
  * Copyright (c) 1992, 1993 HD Associates
  *
  * Berkeley style copyright.  
- *
- *
  */
+
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#define	b_screq av_forw		/* XXX */
-#define	b_sc_link av_back	/* XXX */
 #include <sys/proc.h>
 #include <sys/device.h>
 
@@ -20,6 +17,8 @@
 #include <scsi/scsiconf.h>
 #include <sys/scsiio.h>
 
+#define	b_screq av_forw		/* XXX */
+#define	b_sc_link av_back	/* XXX */
 
 /*
  * We let the user interpret his own sense in the generic scsi world.
@@ -30,59 +29,61 @@
  * the device's queue if such exists.
  */
 #ifndef min
-#define min(A,B) ((A<B) ? A : B )
+#define min(A,B) ((A<B) ? A : B)
 #endif
 
-void scsi_user_done(xs)
-struct	scsi_xfer *xs;
-{
+void scsierr __P((struct buf *, int));
 
-	struct	buf	*bp;
+void
+scsi_user_done(xs)
+	struct scsi_xfer *xs;
+{
+	struct buf *bp;
 	scsireq_t *screq;
 
 	bp = xs->bp;
-	if(!bp) {	/* ALL user requests must have a buf */
+	if (!bp) {	/* ALL user requests must have a buf */
 		sc_print_addr(xs->sc_link);
 		printf("User command with no buf\n");
-		return ;
+		return;
 	}
 	screq = bp->b_screq;
 	if (!screq) {	/* Is it one of ours? (the SCSI_USER bit says it is) */
 		sc_print_addr(xs->sc_link);
 		printf("User command with no request\n");
-		return ;
+		return;
 	}
 
-	SC_DEBUG(xs->sc_link,SDEV_DB2,("user-done\n"));
+	SC_DEBUG(xs->sc_link, SDEV_DB2, ("user-done\n"));
 	screq->retsts = 0;
 	screq->status = xs->status;
 	switch(xs->error) {
-	case	XS_NOERROR:
-		SC_DEBUG(xs->sc_link,SDEV_DB3,("no error\n"));
+	case XS_NOERROR:
+		SC_DEBUG(xs->sc_link, SDEV_DB3, ("no error\n"));
 		screq->datalen_used = xs->datalen - xs->resid; /* probably rubbish */
 		screq->retsts = SCCMD_OK;
 		break;
 
-	case	XS_SENSE:
-		SC_DEBUG(xs->sc_link,SDEV_DB3,("have sense\n"));
-		screq->senselen_used = min(sizeof(xs->sense),SENSEBUFLEN);
-		bcopy(&xs->sense,screq->sense,screq->senselen);
+	case XS_SENSE:
+		SC_DEBUG(xs->sc_link, SDEV_DB3, ("have sense\n"));
+		screq->senselen_used = min(sizeof(xs->sense), SENSEBUFLEN);
+		bcopy(&xs->sense, screq->sense, screq->senselen);
 		screq->retsts = SCCMD_SENSE;
 		break;
 
-	case	XS_DRIVER_STUFFUP:
+	case XS_DRIVER_STUFFUP:
 		sc_print_addr(xs->sc_link);
 		printf("host adapter code inconsistency\n");
 		screq->retsts = SCCMD_UNKNOWN;
 		break;
 
-	case	XS_TIMEOUT:
-		SC_DEBUG(xs->sc_link,SDEV_DB3,("timeout\n"));
+	case XS_TIMEOUT:
+		SC_DEBUG(xs->sc_link, SDEV_DB3, ("timeout\n"));
 		screq->retsts = SCCMD_TIMEOUT;
 		break;
 
-	case	XS_BUSY:
-		SC_DEBUG(xs->sc_link,SDEV_DB3,("busy\n"));
+	case XS_BUSY:
+		SC_DEBUG(xs->sc_link, SDEV_DB3, ("busy\n"));
 		screq->retsts = SCCMD_BUSY;
 		break;
 
@@ -114,24 +115,23 @@ struct	scsi_xfer *xs;
  */
 void scsistrategy(struct buf *bp)
 {
-	errval err;
+	int err;
 	struct	scsi_link *sc_link = bp->b_sc_link;
 	scsireq_t *screq;
 	u_int32	flags = 0;
 	int s;
 
-
-	if(!sc_link) {
+	if (!sc_link) {
 		printf("user_strat: No link pointer\n");
-		scsierr(bp,EINVAL);
+		scsierr(bp, EINVAL);
 		return;
 	}
-	SC_DEBUG(sc_link,SDEV_DB2,("user_strategy\n"));
+	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
 	screq = bp->b_screq;
-	if(!screq) {
+	if (!screq) {
 		sc_print_addr(sc_link);
 		printf("No request block\n");
-		scsierr(bp,EINVAL);
+		scsierr(bp, EINVAL);
 		return;
 	}
 
@@ -157,7 +157,6 @@ void scsistrategy(struct buf *bp)
 		return;
 	}
 
-
 	if (screq->flags & SCCMD_READ)
 		flags |= SCSI_DATA_IN;
 
@@ -169,6 +168,7 @@ void scsistrategy(struct buf *bp)
 
 	if (screq->flags & SCCMD_ESCAPE)
 		flags |= SCSI_ESCAPE;
+
 	err = scsi_scsi_cmd(sc_link,
 			(struct	scsi_generic *)screq->cmd,
 			screq->cmdlen,
@@ -179,22 +179,17 @@ void scsistrategy(struct buf *bp)
 			bp,
 			flags | SCSI_USER);
 
-
-
-	/*because there is a bp, scsi_scsi_cmd will return immediatly*/
-	if (err)
-	{
+	/* because there is a bp, scsi_scsi_cmd will return immediatly */
+	if (err) {
 		scsierr(bp, err);
 		return;
 	}
-	SC_DEBUG(sc_link,SDEV_DB3,("about to  sleep\n"));
+	SC_DEBUG(sc_link, SDEV_DB3, ("about to  sleep\n"));
 	s = splbio();
-	while(!(bp->b_flags & B_DONE))
-	{
-		sleep(bp,PRIBIO);
-	}
+	while (!(bp->b_flags & B_DONE))
+		tsleep(bp, PRIBIO, "scistr", 0);
 	splx(s);
-	SC_DEBUG(sc_link,SDEV_DB3,("back from sleep\n"));
+	SC_DEBUG(sc_link, SDEV_DB3, ("back from sleep\n"));
 	return;
 }
 
@@ -211,14 +206,14 @@ void scsiminphys(struct buf *bp)
  * If user-level type command, we must still be running
  * in the context of the calling process
  */
-errval	scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
+int
+scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
 {
-	errval ret = 0;
+	int error = 0;
 	int phys;
 
-	SC_DEBUG(sc_link,SDEV_DB2,("scsi_do_ioctl(0x%x)\n",cmd));
-	switch(cmd)
-	{
+	SC_DEBUG(sc_link, SDEV_DB2, ("scsi_do_ioctl(0x%x)\n", cmd));
+	switch(cmd) {
 #ifndef __NetBSD__
 		case SCIOCCOMMAND:
 		{
@@ -237,13 +232,13 @@ errval	scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
 			caddr_t	d_addr;
 			int	len;
 
-			if((unsigned int)screq < (unsigned int)0xfe000000)
-			{
-				screq = malloc(sizeof(scsireq_t),M_TEMP,M_WAITOK);
-				bcopy(screq2,screq,sizeof(scsireq_t));
+			if ((unsigned int)screq < KERNBASE) {
+				screq = malloc(sizeof(scsireq_t),
+					       M_TEMP, M_WAITOK);
+				bcopy(screq2, screq, sizeof(scsireq_t));
 			}
-			bp = malloc(sizeof (struct buf),M_TEMP,M_WAITOK);
-			bzero(bp,sizeof(struct buf));
+			bp = malloc(sizeof (struct buf), M_TEMP, M_WAITOK);
+			bzero(bp, sizeof(struct buf));
 			d_addr = screq->databuf;
 			bp->b_bcount = len = screq->datalen;
 			bp->b_screq = screq;
@@ -252,11 +247,11 @@ errval	scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
 				/* have data, translate it. (physio)*/
 #ifdef	__NetBSD__
 #error "dev, mincntfn & uio need defining"
-				ret = physio(scsistrategy, bp, dev, rwflag,
+				error = physio(scsistrategy, bp, dev, rwflag,
 					mincntfn, uio);
 #else
-				ret = physio(scsistrategy,0,bp,0,rwflag,
-						d_addr,&len,curproc);
+				error = physio(scsistrategy, 0, bp, 0, rwflag,
+						d_addr, &len, curproc);
 #endif
 			} else {
 				/* if no data, no need to translate it.. */
@@ -265,13 +260,12 @@ errval	scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
 				bp->b_flags = 0;
 
 				scsistrategy(bp);
-				ret =  bp->b_error;
+				error =  bp->b_error;
 			}
-			free(bp,M_TEMP);
-			if((unsigned int)screq2 < (unsigned int)0xfe000000)
-			{
-				bcopy(screq,screq2,sizeof(scsireq_t));
-				free(screq,M_TEMP);
+			free(bp, M_TEMP);
+			if ((unsigned int)screq2 < KERNBASE) {
+				bcopy(screq, screq2, sizeof(scsireq_t));
+				free(screq, M_TEMP);
 			}
 			break;
 		}
@@ -279,13 +273,17 @@ errval	scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
 		case SCIOCDEBUG:
 		{
 			int level = *((int *)addr);
-			SC_DEBUG(sc_link,SDEV_DB3,("debug set to %d\n",level));
+			SC_DEBUG(sc_link, SDEV_DB3, ("debug set to %d\n", level));
 			sc_link->flags &= ~SDEV_DBX; /*clear debug bits */
-			if(level & 1) sc_link->flags |= SDEV_DB1;
-			if(level & 2) sc_link->flags |= SDEV_DB2;
-			if(level & 4) sc_link->flags |= SDEV_DB3;
-			if(level & 8) sc_link->flags |= SDEV_DB4;
-			ret = 0;
+			if (level & 1)
+				sc_link->flags |= SDEV_DB1;
+			if (level & 2)
+				sc_link->flags |= SDEV_DB2;
+			if (level & 4)
+				sc_link->flags |= SDEV_DB3;
+			if (level & 8)
+				sc_link->flags |= SDEV_DB4;
+			error = 0;
 			break;
 		}
 		case SCIOCREPROBE:
@@ -293,12 +291,12 @@ errval	scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
 			extern int scsibus;
 			struct scsi_addr *sca = (struct scsi_addr *) addr;
 
-			ret = scsi_probe_busses(sca->scbus,sca->target,sca->lun);
+			error = scsi_probe_busses(sca->scbus, sca->target, sca->lun);
 			break;
 		}
 		case SCIOCRECONFIG:
 		case SCIOCDECONFIG:
-			ret = EINVAL;
+			error = EINVAL;
 			break;
 		case SCIOCIDENTIFY:
 		{
@@ -310,20 +308,22 @@ errval	scsi_do_ioctl(struct scsi_link *sc_link, int cmd, caddr_t addr, int f)
 		}
 
 		default:
-			ret = ENOTTY;
+			error = ENOTTY;
 		break;
 	}
 
-	return ret;
+	return error;
 }
 
-scsierr(bp,err)
-struct buf *bp;
-int	err;
+void
+scsierr(bp, error)
+	struct buf *bp;
+	int error;
 {
-		bp->b_flags |= B_ERROR;
-		bp->b_error = err;
-		biodone(bp);
-		return;
+
+	bp->b_flags |= B_ERROR;
+	bp->b_error = error;
+	biodone(bp);
+	return;
 }
 
