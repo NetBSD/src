@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.12 2002/03/18 16:00:58 christos Exp $	*/
+/*	$NetBSD: search.c,v 1.13 2002/11/15 14:32:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)search.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: search.c,v 1.12 2002/03/18 16:00:58 christos Exp $");
+__RCSID("$NetBSD: search.c,v 1.13 2002/11/15 14:32:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -76,7 +76,8 @@ search_init(EditLine *el)
 	el->el_search.patlen = 0;
 	el->el_search.patdir = -1;
 	el->el_search.chacha = '\0';
-	el->el_search.chadir = -1;
+	el->el_search.chadir = CHAR_FWD;
+	el->el_search.chatflg = 0;
 	return (0);
 }
 
@@ -581,69 +582,53 @@ cv_repeat_srch(EditLine *el, int c)
 }
 
 
-/* cv_csearch_back():
- *	Vi character search reverse
+/* cv_csearch():
+ *	Vi character search
  */
 protected el_action_t
-cv_csearch_back(EditLine *el, int ch, int count, int tflag)
+cv_csearch(EditLine *el, int direction, int ch, int count, int tflag)
 {
 	char *cp;
+
+	if (ch == 0)
+		return CC_ERROR;
+
+	if (ch == -1) {
+		char c;
+		if (el_getc(el, &c) != 1)
+			return ed_end_of_file(el, 0);
+		ch = c;
+	}
+
+	/* Save for ';' and ',' commands */
+	el->el_search.chacha = ch;
+	el->el_search.chadir = direction;
+	el->el_search.chatflg = tflag;
 
 	cp = el->el_line.cursor;
 	while (count--) {
 		if (*cp == ch)
-			cp--;
-		while (cp > el->el_line.buffer && *cp != ch)
-			cp--;
+			cp += direction;
+		for (;;cp += direction) {
+			if (cp >= el->el_line.lastchar)
+				return CC_ERROR;
+			if (cp < el->el_line.buffer)
+				return CC_ERROR;
+			if (*cp == ch)
+				break;
+		}
 	}
 
-	if (cp < el->el_line.buffer || (cp == el->el_line.buffer && *cp != ch))
-		return (CC_ERROR);
-
-	if (*cp == ch && tflag)
-		cp++;
+	if (tflag)
+		cp -= direction;
 
 	el->el_line.cursor = cp;
 
-	if (el->el_chared.c_vcmd.action & DELETE) {
-		el->el_line.cursor++;
+	if (el->el_chared.c_vcmd.action != NOP) {
+		if (direction > 0)
+			el->el_line.cursor++;
 		cv_delfini(el);
-		return (CC_REFRESH);
+		return CC_REFRESH;
 	}
-	re_refresh_cursor(el);
-	return (CC_NORM);
-}
-
-
-/* cv_csearch_fwd():
- *	Vi character search forward
- */
-protected el_action_t
-cv_csearch_fwd(EditLine *el, int ch, int count, int tflag)
-{
-	char *cp;
-
-	cp = el->el_line.cursor;
-	while (count--) {
-		if (*cp == ch)
-			cp++;
-		while (cp < el->el_line.lastchar && *cp != ch)
-			cp++;
-	}
-
-	if (cp >= el->el_line.lastchar)
-		return (CC_ERROR);
-
-	if (*cp == ch && tflag)
-		cp--;
-
-	el->el_line.cursor = cp;
-
-	if (el->el_chared.c_vcmd.action & DELETE) {
-		el->el_line.cursor++;
-		cv_delfini(el);
-		return (CC_REFRESH);
-	}
-	re_refresh_cursor(el);
-	return (CC_NORM);
+	return CC_CURSOR;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.22 2002/10/27 21:41:50 christos Exp $	*/
+/*	$NetBSD: read.c,v 1.23 2002/11/15 14:32:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.22 2002/10/27 21:41:50 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.23 2002/11/15 14:32:34 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -236,10 +236,10 @@ el_push(EditLine *el, char *str)
 private int
 read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 {
-	el_action_t cmd = ED_UNASSIGNED;
+	el_action_t cmd;
 	int num;
 
-	while (cmd == ED_UNASSIGNED || cmd == ED_SEQUENCE_LEAD_IN) {
+	do {
 		if ((num = el_getc(el, ch)) != 1)	/* if EOF or error */
 			return (num);
 
@@ -278,7 +278,7 @@ read_getcmd(EditLine *el, el_action_t *cmdnum, char *ch)
 		}
 		if (el->el_map.alt == NULL)
 			el->el_map.current = el->el_map.key;
-	}
+	} while (cmd == ED_SEQUENCE_LEAD_IN);
 	*cmdnum = cmd;
 	return (OKCMD);
 }
@@ -453,7 +453,7 @@ el_gets(EditLine *el, int *nread)
 #endif /* DEBUG_READ */
 			break;
 		}
-		if ((int) cmdnum >= el->el_map.nfunc) {	/* BUG CHECK command */
+		if ((uint)cmdnum >= el->el_map.nfunc) {	/* BUG CHECK command */
 #ifdef DEBUG_EDIT
 			(void) fprintf(el->el_errfile,
 			    "ERROR: illegal command from key 0%o\r\n", ch);
@@ -475,6 +475,19 @@ el_gets(EditLine *el, int *nread)
 				    "Error command = %d\n", cmdnum);
 		}
 #endif /* DEBUG_READ */
+		/* vi redo needs these way down the levels... */
+		el->el_state.thiscmd = cmdnum;
+		el->el_state.thisch = ch;
+		if (el->el_map.type == MAP_VI &&
+		    el->el_map.current == el->el_map.key &&
+		    el->el_chared.c_redo.pos < el->el_chared.c_redo.lim) {
+			if (cmdnum == VI_DELETE_PREV_CHAR &&
+			    el->el_chared.c_redo.pos != el->el_chared.c_redo.buf
+			    && isprint(el->el_chared.c_redo.pos[-1]))
+				el->el_chared.c_redo.pos--;
+			else
+				*el->el_chared.c_redo.pos++ = ch;
+		}
 		retval = (*el->el_map.func[cmdnum]) (el, ch);
 #ifdef DEBUG_READ
 		(void) fprintf(el->el_errfile,
@@ -487,8 +500,6 @@ el_gets(EditLine *el, int *nread)
 		/* use any return value */
 		switch (retval) {
 		case CC_CURSOR:
-			el->el_state.argument = 1;
-			el->el_state.doingarg = 0;
 			re_refresh_cursor(el);
 			break;
 
@@ -498,26 +509,20 @@ el_gets(EditLine *el, int *nread)
 			/* FALLTHROUGH */
 
 		case CC_REFRESH:
-			el->el_state.argument = 1;
-			el->el_state.doingarg = 0;
 			re_refresh(el);
 			break;
 
 		case CC_REFRESH_BEEP:
-			el->el_state.argument = 1;
-			el->el_state.doingarg = 0;
 			re_refresh(el);
 			term_beep(el);
 			break;
 
 		case CC_NORM:	/* normal char */
-			el->el_state.argument = 1;
-			el->el_state.doingarg = 0;
 			break;
 
 		case CC_ARGHACK:	/* Suggested by Rich Salz */
 			/* <rsalz@pineapple.bbn.com> */
-			break;	/* keep going... */
+			continue;	/* keep going... */
 
 		case CC_EOF:	/* end of file typed */
 			num = 0;
@@ -536,8 +541,6 @@ el_gets(EditLine *el, int *nread)
 			re_clear_display(el);	/* reset the display stuff */
 			ch_reset(el);	/* reset the input pointers */
 			re_refresh(el);	/* print the prompt again */
-			el->el_state.argument = 1;
-			el->el_state.doingarg = 0;
 			break;
 
 		case CC_ERROR:
@@ -546,12 +549,13 @@ el_gets(EditLine *el, int *nread)
 			(void) fprintf(el->el_errfile,
 			    "*** editor ERROR ***\r\n\n");
 #endif /* DEBUG_READ */
-			el->el_state.argument = 1;
-			el->el_state.doingarg = 0;
 			term_beep(el);
 			term__flush();
 			break;
 		}
+		el->el_state.argument = 1;
+		el->el_state.doingarg = 0;
+		el->el_chared.c_vcmd.action = NOP;
 	}
 
 	term__flush();		/* flush any buffered output */
