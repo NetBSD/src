@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.12 1994/10/26 07:23:46 cgd Exp $	*/
+/*	$NetBSD: grf.c,v 1.13 1995/04/10 00:58:10 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -177,11 +177,11 @@ grfioctl(dev, cmd, data, flag, p)
 		break;
 
 	case GRFIOCMAP:
-		error = grfmmap(dev, (caddr_t *)data, p);
+		error = grfmap(dev, (caddr_t *)data, p);
 		break;
 
 	case GRFIOCUNMAP:
-		error = grfunmmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(dev, *(caddr_t *)data, p);
 		break;
 
 	default:
@@ -203,7 +203,7 @@ grfselect(dev, rw)
 }
 
 /*ARGSUSED*/
-grfmap(dev, off, prot)
+grfmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
@@ -234,7 +234,7 @@ grfoff(dev)
 	struct grf_softc *gp = &grf_softc[unit];
 	int error;
 
-	(void) grfunmmap(dev, (caddr_t)0, curproc);
+	(void) grfunmap(dev, (caddr_t)0, curproc);
 	error = (*gp->g_sw->gd_mode)(gp,
 				     (dev&GRFOVDEV) ? GM_GRFOVOFF : GM_GRFOFF,
 				     (caddr_t)0);
@@ -311,11 +311,11 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 
 	/* map in control regs and frame buffer */
 	case GCMAP:
-		error = grfmmap(dev, (caddr_t *)data, p);
+		error = grfmap(dev, (caddr_t *)data, p);
 		break;
 
 	case GCUNMAP:
-		error = grfunmmap(dev, *(caddr_t *)data, p);
+		error = grfunmap(dev, *(caddr_t *)data, p);
 		/* XXX: HP-UX uses GCUNMAP to get rid of GCSLOT memory */
 		if (error)
 			error = grflckunmmap(dev, *(caddr_t *)data);
@@ -489,7 +489,7 @@ grfdevno(dev)
 
 #endif	/* COMPAT_HPUX */
 
-grfmmap(dev, addrp, p)
+grfmap(dev, addrp, p)
 	dev_t dev;
 	caddr_t *addrp;
 	struct proc *p;
@@ -502,7 +502,7 @@ grfmmap(dev, addrp, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfmmap(%d): addr %x\n", p->p_pid, *addrp);
+		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
 #endif
 	len = gp->g_display.gd_regsize + gp->g_display.gd_fbsize;
 	flags = MAP_SHARED;
@@ -521,7 +521,7 @@ grfmmap(dev, addrp, p)
 	return(error);
 }
 
-grfunmmap(dev, addr, p)
+grfunmap(dev, addr, p)
 	dev_t dev;
 	caddr_t addr;
 	struct proc *p;
@@ -532,7 +532,7 @@ grfunmmap(dev, addr, p)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_MMAP)
-		printf("grfunmmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
+		printf("grfunmap(%d): dev %x addr %x\n", p->p_pid, dev, addr);
 #endif
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
