@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2002/01/10 16:24:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2002/01/15 00:57:27 wiz Exp $
 
 PROG=	sunlabel
-NOMAN=	# sunlabel.8
+MAN=	sunlabel.8
 
 LDADD+=	-ltermcap -lutil
 DPADD+=	${LIBTERMCAP} ${LIBUTIL}
