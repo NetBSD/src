@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.11 1996/04/12 02:07:23 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.12 1996/07/11 03:47:58 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -197,6 +197,7 @@ dev_t	swapdev = makedev(1, 0);
 /*
  * Returns true if dev is /dev/mem or /dev/kmem.
  */
+int
 iskmemdev(dev)
 	dev_t dev;
 {
@@ -207,6 +208,7 @@ iskmemdev(dev)
 /*
  * Returns true if dev is /dev/zero.
  */
+int
 iszerodev(dev)
 	dev_t dev;
 {
@@ -254,6 +256,7 @@ static int chrtoblktbl[] = {
 /*
  * Convert a character device number to a block device number.
  */
+dev_t
 chrtoblk(dev)
 	dev_t dev;
 {
