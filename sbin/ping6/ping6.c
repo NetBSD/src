@@ -469,7 +469,7 @@ main(argc, argv)
 		if ((len = ipsec_set_policy(buf, len, policy)) < 0)
 			errx(1, ipsec_strerror());
 		if (setsockopt(s, IPPROTO_IPV6, IPV6_IPSEC_POLICY, buf, len) < 0)
-			err(1, "Unable to set IPSec policy");
+			warnx("Unable to set IPSec policy");
 		free(buf);
 	}
 #else
