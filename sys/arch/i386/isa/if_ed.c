@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.8.2.2 1993/10/29 04:37:24 mycroft Exp $
+ * $Id: if_ed.c,v 1.8.2.3 1993/10/29 06:00:05 mycroft Exp $
  */
 
 /*
@@ -1672,10 +1672,13 @@ edintr(aux)
 	 */
 	outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
 
+	if (!(isr = inb(sc->nic_addr + ED_P0_ISR))
+		return 0;
+
 	/*
 	 * loop until there are no more new interrupts
 	 */
-	while (isr = inb(sc->nic_addr + ED_P0_ISR)) {
+	do {
 
 		/*
 		 * reset all the bits that we are 'acknowledging'
@@ -1856,7 +1859,8 @@ edintr(aux)
 			(void) inb(sc->nic_addr + ED_P0_CNTR1);
 			(void) inb(sc->nic_addr + ED_P0_CNTR2);
 		}
-	}
+	} while (isr = inb(sc->nic_addr + ED_P0_ISR));
+	return 1;
 }
  
 /*
@@ -2133,10 +2137,6 @@ ed_get_packet(sc, buf, len)
 	eh->ether_type = ntohs(eh->ether_type);
 
 	ether_input(&sc->arpcom.ac_if, eh, head);
-	{
-		extern unsigned sir, netisr, cpl;
-		printf("edintr: %x %x %x\n", sir, netisr, cpl);
-	}
 	return;
 
 bad:	if (head)
