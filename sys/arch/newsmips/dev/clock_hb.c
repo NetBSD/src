@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.3 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.4 2003/05/09 13:36:39 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -33,9 +33,10 @@
 
 #include <dev/clock_subr.h>
 #include <machine/adrsmap.h>
-#include <machine/autoconf.h>
 #include <newsmips/newsmips/clockvar.h>
 #include <newsmips/newsmips/clockreg.h>
+
+#include <newsmips/dev/hbvar.h>
 
 struct clock_hb_softc {
 	struct device sc_dev;
@@ -62,9 +63,9 @@ clock_hb_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	if (strcmp(ca->ca_name, "mkclock") != 0)
+	if (strcmp(ha->ha_name, "mkclock") != 0)
 		return 0;
 
 	return 1;

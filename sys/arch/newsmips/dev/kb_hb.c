@@ -1,4 +1,4 @@
-/*	$NetBSD: kb_hb.c,v 1.4 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: kb_hb.c,v 1.5 2003/05/09 13:36:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -35,8 +35,9 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsksymvar.h>
 
-#include <machine/autoconf.h>
 #include <machine/adrsmap.h>
+
+#include <newsmips/dev/hbvar.h>
 
 struct kbreg {
 	u_char kb_data;
@@ -90,9 +91,9 @@ kb_hb_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	if (strcmp(ca->ca_name, "kb") == 0)
+	if (strcmp(ha->ha_name, "kb") == 0)
 		return 1;
 
 	return 0;
@@ -104,11 +105,14 @@ kb_hb_attach(parent, self, aux)
 	void *aux;
 {
 	struct kb_hb_softc *sc = (void *)self;
-	volatile struct kbreg *reg = (void *)self->dv_cfdata->cf_addr;
-	int intr = self->dv_cfdata->cf_level;
+	struct hb_attach_args *ha = aux;
+	volatile struct kbreg *reg;
 	volatile int *dipsw = (void *)DIP_SWITCH;
 	struct wskbddev_attach_args aa;
-	int cons = 0;
+	int intr, cons;
+
+	reg = (struct kbreg *)ha->ha_addr;
+	intr = ha->ha_level;
 
 	if (intr == -1)
 		intr = 2;
@@ -118,6 +122,7 @@ kb_hb_attach(parent, self, aux)
 	reg->kb_init = 0xf0;	/* 9600 bps */
 
 	printf(" level %d", intr);
+	cons = 0;
 	if (*dipsw & 7) {
 		cons = 1;
 		printf(" (console)");

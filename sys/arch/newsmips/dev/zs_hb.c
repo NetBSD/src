@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_hb.c,v 1.11 2003/04/26 18:43:20 tsutsui Exp $	*/
+/*	$NetBSD: zs_hb.c,v 1.12 2003/05/09 13:36:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,12 +51,13 @@
 #include <sys/conf.h>
 
 #include <machine/adrsmap.h>
-#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
 #include <dev/ic/z8530reg.h>
+
+#include <newsmips/dev/hbvar.h>
 
 #include "zsc.h"	/* NZSC */
 #define NZS NZSC
@@ -175,13 +176,13 @@ zs_hb_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	if (strcmp(ca->ca_name, "zsc"))
+	if (strcmp(ha->ha_name, "zsc"))
 		return 0;
 
 	/* This returns -1 on a fault (bus error). */
-	if (badaddr((char *)cf->cf_addr, 1))
+	if (hb_badaddr((char *)ha->ha_addr, 1))
 		return 0;
 
 	return 1;
@@ -200,7 +201,7 @@ zs_hb_attach(parent, self, aux)
 	void *aux;
 {
 	struct zsc_softc *zsc = (void *)self;
-	/* struct confargs *ca = aux; */
+	struct hb_attach_args *ha = aux;
 	struct zsc_attach_args zsc_args;
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
@@ -208,8 +209,8 @@ zs_hb_attach(parent, self, aux)
 	static int didintr;
 
 	zs_unit = zsc->zsc_dev.dv_unit;
-	intlevel = zsc->zsc_dev.dv_cfdata->cf_level;
-	zsaddr[zs_unit] = (void *)zsc->zsc_dev.dv_cfdata->cf_addr;
+	intlevel = ha->ha_level;
+	zsaddr[zs_unit] = (void *)ha->ha_addr;
 
 	if (intlevel == -1) {
 #if 0

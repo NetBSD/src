@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.22 2003/05/03 18:10:54 wiz Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.23 2003/05/09 13:36:40 tsutsui Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -20,6 +20,7 @@
 #include <dev/scsipi/scsiconf.h>
 #include <dev/scsipi/scsi_message.h>
 
+#include <newsmips/dev/hbvar.h>
 #include <newsmips/dev/scsireg.h>
 #include <newsmips/dev/dmac_0448.h>
 #include <newsmips/dev/screg_1185.h>
@@ -61,9 +62,9 @@ cxd1185_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	if (strcmp(ca->ca_name, "sc"))
+	if (strcmp(ha->ha_name, "sc"))
 		return 0;
 
 	return 1;
@@ -75,10 +76,11 @@ cxd1185_attach(parent, self, aux)
 	void *aux;
 {
 	struct sc_softc *sc = (void *)self;
+	struct hb_attach_args *ha = aux;
 	struct sc_scb *scb;
 	int i, intlevel;
 
-	intlevel = sc->sc_dev.dv_cfdata->cf_level;
+	intlevel = ha->ha_level;
 	if (intlevel == -1) {
 #if 0
 		printf(": interrupt level not configured\n");

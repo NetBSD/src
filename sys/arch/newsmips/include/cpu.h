@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15 2003/04/26 18:50:18 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.16 2003/05/09 13:36:42 tsutsui Exp $	*/
 
 #ifndef _NEWSMIPS_CPU_H_
 #define _NEWSMIPS_CPU_H_
@@ -15,6 +15,7 @@ extern int systype;
 /* System type dependent initializations. */
 #ifdef news3400
 void news3400_init(void);
+int news3400_badaddr(void *, u_int);
 #endif
 #ifdef news5000
 void news5000_init(void);

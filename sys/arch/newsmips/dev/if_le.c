@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.9 2002/10/02 04:27:52 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.10 2003/05/09 13:36:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@
 #include <netinet/if_inarp.h>
 #endif
 
-#include <machine/autoconf.h>
 #include <machine/cpu.h>
 #include <machine/adrsmap.h>
 
@@ -63,6 +62,8 @@
 #include <dev/ic/lancevar.h>
 #include <dev/ic/am7990reg.h>
 #include <dev/ic/am7990var.h>
+
+#include <newsmips/dev/hbvar.h>
 
 /*
  * LANCE registers.
@@ -134,12 +135,12 @@ le_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	struct confargs *ca = aux;
+	struct hb_attach_args *ha = aux;
 
-	if (strcmp(ca->ca_name, "le"))
+	if (strcmp(ha->ha_name, "le"))
 		return 0;
 
-	if (badaddr((void *)cf->cf_addr, 1))
+	if (hb_badaddr((void *)ha->ha_addr, 1)) /* XXX */
 		return 0;
 
 	return 1;
@@ -152,18 +153,18 @@ le_attach(parent, self, aux)
 {
 	struct le_softc *lesc = (struct le_softc *)self;
 	struct lance_softc *sc = &lesc->sc_am7990.lsc;
-	struct cfdata *cf = self->dv_cfdata;
+	struct hb_attach_args *ha = aux;
 	int intlevel;
 	u_char *p;
 
-	intlevel = cf->cf_level;
+	intlevel = ha->ha_level;
 	if (intlevel == -1) {
 		printf(": interrupt level not configured\n");
 		return;
 	}
 	printf(" level %d", intlevel);
 
-	switch (cf->cf_addr) {
+	switch (ha->ha_addr) {
 
 	case LANCE_PORT:
 		sc->sc_mem = (void *)LANCE_MEMORY;
@@ -183,7 +184,7 @@ le_attach(parent, self, aux)
 		return;
 	}
 
-	lesc->sc_r1 = (void *)cf->cf_addr;
+	lesc->sc_r1 = (void *)ha->ha_addr;
 
 	sc->sc_memsize = 0x4000;	/* 16K */
 	sc->sc_addr = (int)sc->sc_mem & 0x00ffffff;
