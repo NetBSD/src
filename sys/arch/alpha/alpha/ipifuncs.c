@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.16 2000/08/21 02:03:12 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.17 2000/08/26 03:27:44 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.16 2000/08/21 02:03:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17 2000/08/26 03:27:44 thorpej Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -166,6 +166,8 @@ alpha_ipi_tbia(void)
 	/* If we're doing a TBIA, we don't need to do a TBIAP or a SHOOTDOWN. */
 	atomic_clearbits_ulong(&cpu_info[cpu_id].ci_ipis,
 	    ALPHA_IPI_TBIAP|ALPHA_IPI_SHOOTDOWN);
+	
+	pmap_tlb_shootdown_q_drain(cpu_id, TRUE);
 
 	ALPHA_TBIA();
 }
@@ -175,6 +177,8 @@ alpha_ipi_tbiap(void)
 {
 
 	/* Can't clear SHOOTDOWN here; might have PG_ASM mappings. */
+
+	pmap_tlb_shootdown_q_drain(cpu_id, FALSE);
 
 	ALPHA_TBIAP();
 }
