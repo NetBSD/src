@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.394 2001/01/23 01:27:23 ichiro Exp $
+#	$NetBSD: GENERIC,v 1.395 2001/01/23 01:44:38 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.394 $"
+#ident 		"GENERIC-$Revision: 1.395 $"
 
 maxusers	32		# estimated number of users
 
@@ -697,8 +697,8 @@ upl*	at uhub? port ?
 
 # Serial adapters
 # FTDI FT8U100AX serial adapter
-#uftdi*	at uhub? port ?
-#ucom*	at uftdi? portno ?
+uftdi*	at uhub? port ?
+ucom*	at uftdi? portno ?
 
 uplcom*	at uhub? port ?		# I/O DATA USB-RSAQ2 serial adapter
 ucom*	at uplcom? portno ? 
