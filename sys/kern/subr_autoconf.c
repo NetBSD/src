@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.81 2003/01/01 17:06:59 augustss Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.82 2003/01/02 00:12:16 mrg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.81 2003/01/01 17:06:59 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.82 2003/01/02 00:12:16 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,10 +92,10 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.81 2003/01/01 17:06:59 augustss 
 #include <sys/kernel.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
+#include <sys/reboot.h>
 #include <machine/limits.h>
 
 #include "opt_userconf.h"
-#include <sys/reboot.h>
 #ifdef USERCONF
 #include <sys/userconf.h>
 #endif
