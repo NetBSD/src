@@ -1,5 +1,5 @@
-/*char *version_string = "from: @(#)Gnu Awk (gawk) 2.15";*/
-char *version_string = "$Id: version.c,v 1.2 1993/08/01 18:49:02 mycroft Exp $ 2.15";
+/* DO NOT CHANGE VERSION STRING TO USE A REAL SCCS OR RCS ID */
+char *version_string = "@(#)Gnu Awk (gawk) 2.15";
 
 /* 1.02		fixed /= += *= etc to return the new Left Hand Side instead
 		of the Right Hand Side */
@@ -43,5 +43,6 @@ char *version_string = "$Id: version.c,v 1.2 1993/08/01 18:49:02 mycroft Exp $ 2
 /* 2.14		Mostly bug fixes. */
 
 /* 2.15		Bug fixes plus intermixing of command-line source and files,
-		GNU long options, ARGIND, ERRNO and Plan 9 style /dev/ files. */
+		GNU long options, ARGIND, ERRNO and Plan 9 style /dev/ files.
+		`delete array'. OS/2 port added. */
 
