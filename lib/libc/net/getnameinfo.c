@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.16 2000/04/26 16:08:38 itojun Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.17 2000/06/04 08:51:23 itojun Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.38 2000/04/26 15:58:50 itojun Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.16 2000/04/26 16:08:38 itojun Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.17 2000/06/04 08:51:23 itojun Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -108,7 +108,7 @@ static int ip6_sa2str __P((const struct sockaddr_in6 *, char *, size_t, int));
 int
 getnameinfo(sa, salen, host, hostlen, serv, servlen, flags)
 	const struct sockaddr *sa;
-	size_t salen;
+	socklen_t salen;
 	char *host;
 	size_t hostlen;
 	char *serv;
