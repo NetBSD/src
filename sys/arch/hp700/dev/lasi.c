@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.1 2002/06/06 19:48:04 fredette Exp $	*/
+/*	$NetBSD: lasi.c,v 1.2 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -65,7 +65,8 @@ struct lasi_trs {
 
 struct lasi_softc {
 	struct device sc_dev;
-	struct gscbus_ic sc_ic;
+	
+	struct hp700_int_reg sc_int_reg;
 
 	struct lasi_hwr volatile *sc_hw;
 	struct lasi_trs volatile *sc_trs;
@@ -78,7 +79,33 @@ struct cfattach lasi_ca = {
 	sizeof(struct lasi_softc), lasimatch, lasiattach
 };
 
+/*
+ * Before a module is matched, this fixes up its gsc_attach_args.
+ */
+static void lasi_fix_args __P((void *, struct gsc_attach_args *));
+static void
+lasi_fix_args(void *_sc, struct gsc_attach_args *ga)
+{
+	struct lasi_softc *sc = _sc;
+	hppa_hpa_t module_offset;
 
+	/*
+	 * Determine this module's interrupt bit.
+	 */
+	module_offset = ga->ga_hpa - (hppa_hpa_t) sc->sc_trs;
+	ga->ga_irq = HP700CF_IRQ_UNDEF;
+#define LASI_IRQ(off, irq) if (module_offset == off) ga->ga_irq = irq
+	LASI_IRQ(0x2000, 7);	/* lpt */
+	LASI_IRQ(0x4000, 13);	/* harmony */
+	LASI_IRQ(0x4040, 16);	/* harmony telephone0 */
+	LASI_IRQ(0x4060, 17);	/* harmony telephone1 */
+	LASI_IRQ(0x5000, 5);	/* com */
+	LASI_IRQ(0x6000, 9);	/* osiop */
+	LASI_IRQ(0x7000, 8);	/* ie */
+	LASI_IRQ(0x8000, 26);	/* pckbc */
+	LASI_IRQ(0xa000, 20);	/* fdc */
+#undef LASI_IRQ
+}
 
 int
 lasimatch(parent, cf, aux)   
@@ -91,6 +118,10 @@ lasimatch(parent, cf, aux)
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
 	    ca->ca_type.iodc_sv_model != HPPA_BHA_LASI)
 		return 0;
+
+	/* Make sure we have an IRQ. */
+	if (ca->ca_irq == HP700CF_IRQ_UNDEF)
+		ca->ca_irq = hp700_intr_allocate_bit(&int_reg_cpu);
 
 	return 1;
 }
@@ -132,14 +163,17 @@ lasiattach(parent, self, aux)
 	sc->sc_trs->lasi_imr = 0;
 	splx(s);
 
-	sc->sc_ic.gsc_type = gsc_lasi;
-	sc->sc_ic.gsc_dv = sc;
-	hp700_intr_reg_establish(&sc->sc_ic.gsc_int_reg);
-	sc->sc_ic.gsc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
-	sc->sc_ic.gsc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
+	/* Establish the interrupt register. */
+	hp700_intr_reg_establish(&sc->sc_int_reg);
+	sc->sc_int_reg.int_reg_mask = &sc->sc_trs->lasi_imr;
+	sc->sc_int_reg.int_reg_req = &sc->sc_trs->lasi_irr;
 
+	/* Attach the GSC bus. */
 	ga.ga_ca = *ca;	/* clone from us */
 	ga.ga_name = "gsc";
-	ga.ga_ic = &sc->sc_ic;
+	ga.ga_int_reg = &sc->sc_int_reg;
+	ga.ga_fix_args = lasi_fix_args;
+	ga.ga_fix_args_cookie = sc;
+	ga.ga_scsi_target = 7; /* XXX */
 	config_found(self, &ga, gscprint);
 }

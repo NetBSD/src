@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.1 2002/06/06 19:48:07 fredette Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2 2002/08/16 15:02:41 fredette Exp $	*/
 
 /*	$OpenBSD: autoconf.h,v 1.10 2001/05/05 22:33:42 art Exp $	*/
 
@@ -48,8 +48,8 @@ struct confargs {
 	struct pdc_iodc_read *ca_pdc_iodc_read;
 }; 
 
-#define	HPPACF_IRQ_UNDEF	(-2)
-#define	hppacf_irq	cf_loc[0]
+#define	HP700CF_IRQ_UNDEF	(-1)
+#define	hp700cf_irq	cf_loc[0]
 
 /* this is used for hppa_knownmodules table
  * describing known to this port modules,
@@ -64,7 +64,7 @@ struct hppa_mod_info {
 struct device;
 
 const char *hppa_mod_info __P((int, int));
-void	pdc_scanbus __P((struct device *, struct confargs *, int bus, int));
+void	pdc_scanbus __P((struct device *, int bus, int, void (*)(struct device *, struct confargs *)));
 int	mbprint __P((void *, const char *));
 int	mbsubmatch __P((struct device *, struct cfdata *, void *));
 int	clock_intr __P((void *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2002/08/11 19:39:38 fredette Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -86,6 +86,8 @@
 #include <machine/autoconf.h>
 
 #include <hp700/hp700/machdep.h>
+#include <hp700/hp700/intr.h>
+#include <hp700/dev/cpudevs.h>
 
 struct mainbus_softc {
 	struct  device sc_dv;
@@ -1232,6 +1234,16 @@ mbmatch(parent, cf, aux)
 	return 1;
 }
 
+static void
+mb_module_callback(struct device *self, struct confargs *ca)
+{
+	ca->ca_iot = &hppa_bustag;
+	ca->ca_dmatag = &hppa_dmatag;
+	ca->ca_irq = HP700CF_IRQ_UNDEF;
+
+	config_found_sm(self, ca, mbprint, mbsubmatch);
+}
+
 void
 mbattach(parent, self, aux)
 	struct device *parent;
@@ -1267,12 +1279,7 @@ mbattach(parent, self, aux)
 	nca.ca_dmatag = &hppa_dmatag;
 	config_found(self, &nca, mbprint);
 
-	bzero (&nca, sizeof(nca));
-	nca.ca_name = "mainbus";
-	nca.ca_hpa = 0;
-	nca.ca_iot = &hppa_bustag;
-	nca.ca_dmatag = &hppa_dmatag;
-	pdc_scanbus(self, &nca, -1, MAXMODBUS);
+	pdc_scanbus(self, -1, MAXMODBUS, mb_module_callback);
 }
 
 /*
@@ -1301,8 +1308,11 @@ mbprint(aux, pnp)
 		    ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
 	if (ca->ca_hpa) {
 		printf(" hpa %lx", ca->ca_hpa);
-		if (!pnp && ca->ca_irq >= 0)
+		if (!pnp && ca->ca_irq >= 0) {
 			printf(" irq %d", ca->ca_irq);
+			if (ca->ca_type.iodc_type != HPPA_TYPE_BHA)
+				printf(" ipl %d", _hp700_intr_ipl_next());
+		}
 	}
 
 	return (UNCONF);
@@ -1316,15 +1326,13 @@ mbsubmatch(parent, cf, aux)
 {
 	register struct confargs *ca = aux;
 	register int ret;
+	int saved_irq;
 
-	if (ca->ca_irq != HPPACF_IRQ_UNDEF)
-		ret = 0;
-	else {
-		ca->ca_irq = cf->hppacf_irq;
-		if (!(ret = (*cf->cf_attach->ca_match)(parent, cf, aux)))
-			ca->ca_irq = HPPACF_IRQ_UNDEF;
-	}
-
+	saved_irq = ca->ca_irq;
+	if (cf->hp700cf_irq != HP700CF_IRQ_UNDEF)
+		ca->ca_irq = cf->hp700cf_irq;
+	if (!(ret = (*cf->cf_attach->ca_match)(parent, cf, aux)))
+		ca->ca_irq = saved_irq;
 	return ret;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2002/08/14 16:18:11 fredette Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.2 2002/08/14 16:18:11 fredette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3 2002/08/16 15:02:40 fredette Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -111,10 +111,10 @@ static struct hp700_int_bit {
 struct hp700_int_reg int_reg_cpu;
 
 /* Old-style vmstat -i interrupt counters.  Should be replaced with evcnts. */
-const char intrnames[] = "irq0\0irq1\0irq2\0irq3\0irq4\0irq5\0irq6\0irq7\0" \
-	"irq8\0irq9\0irq10\0irq11\0irq12\0irq13\0irq14\0irq15\0" \
-	"irq16\0irq17\0irq18\0irq19\0irq20\0irq21\0irq22\0irq23\0" \
-	"irq24\0irq25\0irq26\0irq27\0irq28\0irq29\0irq30\0irq31\0";
+const char intrnames[] = "ipl0\0ipl1\0ipl2\0ipl3\0ipl4\0ipl5\0ipl6\0ipl7\0" \
+	"ipl8\0ipl9\0ipl10\0ipl11\0ipl12\0ipl13\0ipl14\0ipl15\0" \
+	"ipl16\0ipl17\0ipl18\0ipl19\0ipl20\0ipl21\0ipl22\0ipl23\0" \
+	"ipl24\0ipl25\0ipl26\0ipl27\0ipl28\0ipl29\0ipl30\0ipl31\0";
 const char eintrnames[] = "";
 long intrcnt[HP700_INT_BITS];
 long eintrcnt[1];
@@ -189,6 +189,10 @@ hp700_intr_establish(struct device *dv, int ipl,
 	struct hp700_int_bit *int_bit;
 	int idx;
 	
+	/* Panic on a bad interrupt bit. */
+	if (bit_pos < 0 || bit_pos >= HP700_INT_BITS)
+		panic("hp700_intr_establish: bad interrupt bit");
+
 	/* Panic if this int bit is already handled. */
 	if (int_reg->int_reg_bits_map[31 ^ bit_pos] != INT_REG_BIT_UNUSED)
 		panic("hp700_intr_establish: int already handled\n");
@@ -210,10 +214,8 @@ hp700_intr_establish(struct device *dv, int ipl,
 	/*
 	 * Otherwise, allocate a new bit in the spl.
 	 */
-	for (idx = 0; idx < HP700_INT_BITS; idx++)
-		if (hp700_int_bits[idx].int_bit_reg == NULL) break;
-	if (idx == HP700_INT_BITS)
-		panic("hp700_intr_establish: too many devices");
+	idx = _hp700_intr_ipl_next();
+	int_reg->int_reg_allocatable_bits &= ~(1 << bit_pos);
 	int_reg->int_reg_bits_map[31 ^ bit_pos] = (31 ^ idx);
 	int_bit = hp700_int_bits + idx;
 
@@ -227,6 +229,41 @@ hp700_intr_establish(struct device *dv, int ipl,
 	int_bit->int_bit_arg = arg;
 
 	return (int_bit);
+}
+
+/*
+ * This allocates an interrupt bit within an interrupt register.
+ * It returns the bit position, or -1 if no bits were available.
+ */
+int
+hp700_intr_allocate_bit(struct hp700_int_reg *int_reg)
+{
+	int bit_pos, mask;
+
+	for (bit_pos = 31, mask = (1 << bit_pos);
+	     bit_pos >= 0;
+	     bit_pos--, mask >>= 1)
+		if (int_reg->int_reg_allocatable_bits & mask)
+			break;
+	if (bit_pos >= 0)
+		int_reg->int_reg_allocatable_bits &= ~mask;
+	return (bit_pos);
+}
+
+/*
+ * This returns the next available spl bit.  This is not
+ * intended for wide use.
+ */
+int
+_hp700_intr_ipl_next(void)
+{
+	int idx;
+
+	for (idx = 0; idx < HP700_INT_BITS; idx++)
+		if (hp700_int_bits[idx].int_bit_reg == NULL) break;
+	if (idx == HP700_INT_BITS)
+		panic("_hp700_intr_spl_bit: too many devices");
+	return idx;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_gsc.c,v 1.3 2002/08/11 19:53:41 fredette Exp $	*/
+/*	$NetBSD: if_ie_gsc.c,v 1.4 2002/08/16 15:02:40 fredette Exp $	*/
 
 /*	$OpenBSD: if_ie_gsc.c,v 1.6 2001/01/12 22:57:04 mickey Exp $	*/
 
@@ -574,6 +574,7 @@ ie_gsc_attach(parent, self, aux)
 		      "LASI/i82596CA" :
 		      "i82596DX",
 		      myaddr, ie_gsc_media, IE_NMEDIA, ie_gsc_media[0]);
-	gsc->sc_ih = gsc_intr_establish((struct gsc_softc *)parent, IPL_NET,
-				       ga->ga_irq, i82586_intr,sc,&sc->sc_dev);
+	gsc->sc_ih = hp700_intr_establish(&sc->sc_dev, IPL_NET,
+					  i82586_intr, sc,
+					  ga->ga_int_reg, ga->ga_irq);
 }
