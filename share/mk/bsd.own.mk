@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.66 1998/05/04 05:03:52 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.67 1998/05/05 01:15:05 mrg Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -72,7 +72,8 @@ STRIPFLAG?=	-s
 .if	(${MACHINE} == "alpha") || \
 	(${MACHINE} == "hp300") || \
 	(${MACHINE} == "mac68k") || \
-	(${MACHINE} == "mvme68k")
+	(${MACHINE} == "mvme68k") || \
+	(${MACHINE} == "sparc")
 UVM?=		yes
 .endif
 
@@ -103,6 +104,10 @@ OBJECT_FMT?=ELF
 OBJECT_FMT?=a.out
 .endif
 
+# these systems use UVM by default
+.if (${MACHINE_ARCH} == "sparc")
+UVM=yes
+.endif
 
 # No lint, for now.
 
