@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 1995/06/13 22:11:33 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 1995/06/27 14:36:20 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -677,8 +677,15 @@ zsopen(dev_t dev, int flags, int mode, struct proc *p)
 			break;
 		tp->t_state |= TS_WOPEN;
 		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
-			break;
+		    ttopen, 0)) {
+			if (!(tp->t_state & TS_ISOPEN)) {
+				zs_modem(cs, 0);
+				tp->t_state &= ~TS_WOPEN;
+				ttwakeup(tp);
+			}
+			splx(s);
+			return error;
+		}
 	}
 #ifdef	DEBUG
 	mon_printf("...carrier %s\n",
