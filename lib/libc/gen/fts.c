@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.12.4.1 1996/09/16 18:40:20 jtc Exp $	*/
+/*	$NetBSD: fts.c,v 1.12.4.2 1996/09/16 23:44:12 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: fts.c,v 1.12.4.1 1996/09/16 18:40:20 jtc Exp $";
+static char rcsid[] = "$NetBSD: fts.c,v 1.12.4.2 1996/09/16 23:44:12 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,6 +52,14 @@ static char rcsid[] = "$NetBSD: fts.c,v 1.12.4.1 1996/09/16 18:40:20 jtc Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(fts_children,_fts_children);
+__weak_alias(fts_close,_fts_close);
+__weak_alias(fts_open,_fts_open);
+__weak_alias(fts_read,_fts_read);
+__weak_alias(fts_set,_fts_set);
+#endif
 
 static FTSENT	*fts_alloc __P((FTS *, char *, int));
 static FTSENT	*fts_build __P((FTS *, int));

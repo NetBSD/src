@@ -1,4 +1,4 @@
-/*	$NetBSD: bindresvport.c,v 1.6 1996/03/29 23:00:50 jtc Exp $	*/
+/*	$NetBSD: bindresvport.c,v 1.6.2.1 1996/09/16 23:44:19 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,18 +32,23 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)bindresvport.c 1.8 88/02/08 SMI";*/
 /*static char *sccsid = "from: @(#)bindresvport.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: bindresvport.c,v 1.6 1996/03/29 23:00:50 jtc Exp $";
+static char *rcsid = "$NetBSD: bindresvport.c,v 1.6.2.1 1996/09/16 23:44:19 jtc Exp $";
 #endif
 
 /*
  * Copyright (c) 1987 by Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <string.h>
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+
+#ifdef __weak_alias
+__weak_alias(bindresvport,_bindresvport);
+#endif
 
 /*
  * Bind a socket to a privileged IP port

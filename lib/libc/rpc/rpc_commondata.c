@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_commondata.c,v 1.4 1995/02/25 03:01:54 cgd Exp $	*/
+/*	$NetBSD: rpc_commondata.c,v 1.4.4.1 1996/09/16 23:44:33 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,9 +31,10 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_commondata.c,v 1.4 1995/02/25 03:01:54 cgd Exp $";
+static char *rcsid = "$NetBSD: rpc_commondata.c,v 1.4.4.1 1996/09/16 23:44:33 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 /*
  * This file should only contain common data (global data) that is exported

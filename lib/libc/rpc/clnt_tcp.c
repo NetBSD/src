@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $	*/
+/*	$NetBSD: clnt_tcp.c,v 1.4.4.1 1996/09/16 23:44:23 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.4.4.1 1996/09/16 23:44:23 jtc Exp $";
 #endif
  
 /*
@@ -54,6 +54,7 @@ static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $";
  * Now go hang yourself.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <rpc/rpc.h>
@@ -61,6 +62,10 @@ static char *rcsid = "$NetBSD: clnt_tcp.c,v 1.4 1995/02/25 03:01:41 cgd Exp $";
 #include <netdb.h>
 #include <errno.h>
 #include <rpc/pmap_clnt.h>
+
+#ifdef __weak_alias
+__weak_alias(clnttcp_create,_clnttcp_create);
+#endif
 
 #define MCALL_MSG_SIZE 24
 

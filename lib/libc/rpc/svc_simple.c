@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_simple.c,v 1.5 1996/03/29 23:00:55 jtc Exp $	*/
+/*	$NetBSD: svc_simple.c,v 1.5.2.1 1996/09/16 23:44:40 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_simple.c 1.18 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_simple.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_simple.c,v 1.5 1996/03/29 23:00:55 jtc Exp $";
+static char *rcsid = "$NetBSD: svc_simple.c,v 1.5.2.1 1996/09/16 23:44:40 jtc Exp $";
 #endif
 
 /* 
@@ -42,12 +42,17 @@ static char *rcsid = "$NetBSD: svc_simple.c,v 1.5 1996/03/29 23:00:55 jtc Exp $"
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <netdb.h>
+
+#ifdef __weak_alias
+__weak_alias(registerrpc,_registerrpc);
+#endif
 
 static struct proglst {
 	char *(*p_progname)();

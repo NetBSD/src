@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_clnt.c,v 1.3 1996/01/04 20:06:22 pk Exp $	*/
+/*	$NetBSD: pmap_clnt.c,v 1.3.2.1 1996/09/16 23:44:27 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_clnt.c 1.37 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_clnt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_clnt.c,v 1.3 1996/01/04 20:06:22 pk Exp $";
+static char *rcsid = "$NetBSD: pmap_clnt.c,v 1.3.2.1 1996/09/16 23:44:27 jtc Exp $";
 #endif
 
 /*
@@ -42,9 +42,15 @@ static char *rcsid = "$NetBSD: pmap_clnt.c,v 1.3 1996/01/04 20:06:22 pk Exp $";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
+
+#ifdef __weak_alias
+__weak_alias(pmap_set,_pmap_set);
+__weak_alias(pmap_unset,_pmap_unset);
+#endif
 
 static struct timeval timeout = { 5, 0 };
 static struct timeval tottimeout = { 60, 0 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp $	*/
+/*	$NetBSD: pmap_rmt.c,v 1.6.4.1 1996/09/16 23:44:31 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_rmt.c 1.21 87/08/27 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_rmt.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp $";
+static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.6.4.1 1996/09/16 23:44:31 jtc Exp $";
 #endif
 
 /*
@@ -43,6 +43,7 @@ static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp 
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
@@ -54,6 +55,14 @@ static char *rcsid = "$NetBSD: pmap_rmt.c,v 1.6 1995/06/03 22:37:25 mycroft Exp 
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
+
+#ifdef __weak_alias
+__weak_alias(clnt_broadcast,_clnt_broadcast);
+__weak_alias(pmap_rmtcall,_pmap_rmtcall);
+__weak_alias(xdr_rmtcall_args,_xdr_rmtcall_args);
+__weak_alias(xdr_rmtcallres,_xdr_rmtcallres);
+#endif
+
 #define MAX_BROADCAST_SIZE 1400
 
 static struct timeval timeout = { 3, 0 };
