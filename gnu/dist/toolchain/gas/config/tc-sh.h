@@ -70,6 +70,9 @@ extern boolean sh_fix_adjustable PARAMS ((struct fix *));
 #define TC_FIX_ADJUSTABLE(fixP) obj_fix_adjustable (fixP)
 #endif
 
+#define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)
+extern long md_pcrel_from_section PARAMS ((struct fix *, segT));
+
 #define IGNORE_NONSTANDARD_ESCAPES
 
 #define LISTING_HEADER (!target_big_endian ? "Hitachi Super-H GAS Little Endian" : "Hitachi Super-H GAS Big Endian")
