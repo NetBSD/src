@@ -42,7 +42,11 @@
 
 #ifdef OPENPAM_STATIC_MODULES
 
+#if defined(__FreeBSD__)
 SET_DECLARE(_openpam_static_modules, pam_module_t);
+#elif defined(__NetBSD__)
+__link_set_decl(_openpam_static_modules, pam_module_t);
+#endif
 
 /*
  * OpenPAM internal
@@ -53,16 +57,25 @@ SET_DECLARE(_openpam_static_modules, pam_module_t);
 pam_module_t *
 openpam_static(const char *path)
 {
+#if defined(__FreeBSD__)
 	pam_module_t **module;
 
 	SET_FOREACH(module, _openpam_static_modules) {
 		if (strcmp((*module)->path, path) == 0)
 			return (*module);
 	}
+#elif defined(__NetBSD__)
+	pam_module_t * const *module;
+
+	__link_set_foreach(module, _openpam_static_modules) {
+		if (strcmp((*module)->path, path) == 0)
+			return (*module);
+	}
+#endif
 	return (NULL);
 }
 
-#endif
+#endif /* OPENPAM_STATIC_MODULES */
 
 /*
  * NOPARSE
