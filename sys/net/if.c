@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.56 2000/02/06 16:43:33 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.57 2000/03/06 20:49:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -331,6 +331,11 @@ if_attach(ifp)
 	if (ifp->if_snd.ifq_maxlen == 0)
 	    ifp->if_snd.ifq_maxlen = ifqmaxlen;
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
+
+	ifp->if_link_state = LINK_STATE_UNKNOWN;
+
+	/* Announce the interface. */
+	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
 }
 
 /*
@@ -447,6 +452,9 @@ if_detach(ifp)
 
 	IFAFREE(ifnet_addrs[ifp->if_index]);
 	ifnet_addrs[ifp->if_index] = NULL;
+
+	/* Announce that the interface is gone. */
+	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
 	TAILQ_REMOVE(&ifnet, ifp, if_list);
 
