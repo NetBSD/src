@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.1.1.1 2000/09/28 22:10:14 thorpej Exp $	*/
+ /*	$NetBSD: scp.c,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $	*/
 
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scp.c,v 1.1.1.1 2000/09/28 22:10:14 thorpej Exp $");
+__RCSID("$NetBSD: scp.c,v 1.2 2000/10/05 14:09:08 sommerfeld Exp $");
 #endif
 
 #include "includes.h"
@@ -258,7 +258,8 @@ char *colon(char *);
 void lostconn(int);
 void nospace(void);
 int okname(char *);
-void run_err(const char *,...);
+void run_err(const char *,...)
+     __attribute__((__format__(__printf__,1,2)));
 void verifydir(char *);
 
 struct passwd *pwd;
