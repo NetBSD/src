@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.46 2001/11/02 05:21:51 tv Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.47 2004/01/29 01:48:45 lukem Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -40,14 +40,12 @@ __TARGDIR := ${dir}
 .if ${__TARGDIR} == ".WAIT"
 SUBDIR_${targ} += .WAIT
 .elif !commands(${targ}-${dir})
-.PHONY: ${targ}-${dir}
-${targ}-${dir}: .MAKE __recurse
+${targ}-${dir}: .PHONY .MAKE __recurse
 SUBDIR_${targ} += ${targ}-${dir}
 .endif
 .endfor
 .if defined(__REALSUBDIR)
-.PHONY: subdir-${targ}
-subdir-${targ}: ${SUBDIR_${targ}}
+subdir-${targ}: .PHONY ${SUBDIR_${targ}}
 ${targ}: subdir-${targ}
 .endif
 .endfor
