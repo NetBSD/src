@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.29 2002/05/05 03:02:38 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.30 2002/08/29 14:33:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.29 2002/05/05 03:02:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.30 2002/08/29 14:33:03 martin Exp $");
 
 #define HMEDEBUG
 
@@ -1139,11 +1139,16 @@ hme_mii_statchg(dev)
 	bus_space_write_4(t, mif, HME_MIFI_CFG, v);
 
 	/* Set the MAC Full Duplex bit appropriately */
+	/* Apparently the hme chip is SIMPLEX if working in full duplex mode,
+	   but not otherwise. */
 	v = bus_space_read_4(t, mac, HME_MACI_TXCFG);
-	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0) {
 		v |= HME_MAC_TXCFG_FULLDPLX;
-	else
+		sc->sc_ethercom.ec_if.if_flags |= IFF_SIMPLEX;
+	} else {
 		v &= ~HME_MAC_TXCFG_FULLDPLX;
+		sc->sc_ethercom.ec_if.if_flags &= ~IFF_SIMPLEX;
+	}
 	bus_space_write_4(t, mac, HME_MACI_TXCFG, v);
 
 	/* If an external transceiver is selected, enable its MII drivers */
