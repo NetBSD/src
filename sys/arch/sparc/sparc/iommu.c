@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.66 2002/08/23 02:53:12 thorpej Exp $ */
+/*	$NetBSD: iommu.c,v 1.67 2002/08/25 16:02:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -65,17 +65,15 @@ struct iommu_softc {
 	bus_addr_t	sc_dvmabase;
 	iopte_t		*sc_ptes;
 	int		sc_hasiocache;
-};
-struct	iommu_softc *iommu_sc;/*XXX*/
-int	has_iocache;
-
 /*
  * Note: operations on the extent map are being protected with
  * splhigh(), since we cannot predict at which interrupt priority
  * our clients will run.
  */
-struct extent *iommu_dvmamap;
-
+	struct sparc_bus_dma_tag sc_dmatag;
+	struct extent *sc_dvmamap;
+};
+static int has_iocache;
 
 /* autoconfiguration driver */
 int	iommu_print __P((void *, const char *));
@@ -109,27 +107,9 @@ int	iommu_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			int nsegs, size_t size, caddr_t *kvap, int flags));
 paddr_t	iommu_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
 			int nsegs, off_t off, int prot, int flags));
-int	iommu_dvma_alloc(bus_dmamap_t, vaddr_t, bus_size_t, int,
-			bus_addr_t *, bus_size_t *);
+int	iommu_dvma_alloc(struct iommu_softc *, bus_dmamap_t, vaddr_t,
+			 bus_size_t, int, bus_addr_t *, bus_size_t *);
 
-
-struct sparc_bus_dma_tag iommu_dma_tag = {
-	NULL,
-	iommu_dmamap_create,
-	_bus_dmamap_destroy,
-	iommu_dmamap_load,
-	iommu_dmamap_load_mbuf,
-	iommu_dmamap_load_uio,
-	iommu_dmamap_load_raw,
-	iommu_dmamap_unload,
-	iommu_dmamap_sync,
-
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	iommu_dmamem_map,
-	_bus_dmamem_unmap,
-	iommu_dmamem_mmap
-};
 /*
  * Print the location of some iommu-attached device (called just
  * before attaching that device).  If `iommu' is not NULL, the
@@ -173,6 +153,7 @@ iommu_attach(parent, self, aux)
 #if defined(SUN4M)
 	struct iommu_softc *sc = (struct iommu_softc *)self;
 	struct mainbus_attach_args *ma = aux;
+	struct sparc_bus_dma_tag *dmat = &sc->sc_dmatag;
 	bus_space_handle_t bh;
 	int node;
 	int js1_implicit_iommu;
@@ -183,15 +164,21 @@ iommu_attach(parent, self, aux)
 	struct vm_page *m;
 	vaddr_t va;
 
-	/*
-	 * XXX there is only one iommu, for now -- do not know how to
-	 * address children on others
-	 */
-	if (sc->sc_dev.dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
-	}
-	iommu_sc = sc;
+	dmat->_cookie = sc;
+	dmat->_dmamap_create = iommu_dmamap_create;
+	dmat->_dmamap_destroy = _bus_dmamap_destroy;
+	dmat->_dmamap_load = iommu_dmamap_load;
+	dmat->_dmamap_load_mbuf = iommu_dmamap_load_mbuf;
+	dmat->_dmamap_load_uio = iommu_dmamap_load_uio;
+	dmat->_dmamap_load_raw = iommu_dmamap_load_raw;
+	dmat->_dmamap_unload = iommu_dmamap_unload;
+	dmat->_dmamap_sync = iommu_dmamap_sync;
+
+	dmat->_dmamem_alloc = _bus_dmamem_alloc;
+	dmat->_dmamem_free = _bus_dmamem_free;
+	dmat->_dmamem_map = iommu_dmamem_map;
+	dmat->_dmamem_unmap = _bus_dmamem_unmap;
+	dmat->_dmamem_mmap = iommu_dmamem_mmap;
 
 	/* 
 	 * JS1/OF device tree does not have an iommu node and sbus
@@ -213,12 +200,8 @@ iommu_attach(parent, self, aux)
 	 * XXX struct iommureg is bigger than ra->ra_len; what are the
 	 *     other fields for?
 	 */
-	if (bus_space_map(
-			ma->ma_bustag,
-			ma->ma_paddr,
-			sizeof(struct iommureg),
-			0,
-			&bh) != 0) {
+	if (bus_space_map(ma->ma_bustag, ma->ma_paddr,
+			  sizeof(struct iommureg), 0, &bh) != 0) {
 		printf("iommu_attach: cannot map registers\n");
 		return;
 	}
@@ -297,10 +280,10 @@ iommu_attach(parent, self, aux)
 		sc->sc_pagesize,
 		sc->sc_range >> 20);
 
-	iommu_dvmamap = extent_create("iommudvma",
+	sc->sc_dvmamap = extent_create("iommudvma",
 					IOMMU_DVMA_BASE, IOMMU_DVMA_END,
 					M_DEVBUF, 0, 0, EX_NOWAIT);
-	if (iommu_dvmamap == NULL)
+	if (sc->sc_dvmamap == NULL)
 		panic("iommu: unable to allocate DVMA map");
 
 	/*
@@ -316,7 +299,7 @@ iommu_attach(parent, self, aux)
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
-		ia.iom_dmatag = &iommu_dma_tag;
+		ia.iom_dmatag = &sc->sc_dmatag;
 
 		ia.iom_name = "sbus";
 		ia.iom_node = node;
@@ -338,7 +321,7 @@ iommu_attach(parent, self, aux)
 
 		/* Propagate BUS & DMA tags */
 		ia.iom_bustag = ma->ma_bustag;
-		ia.iom_dmatag = &iommu_dma_tag;
+		ia.iom_dmatag = &sc->sc_dmatag;
 
 		ia.iom_node = node;
 
@@ -412,12 +395,9 @@ iommu_copy_prom_entries(sc)
 }
 #endif
 
-void
-iommu_enter(dva, pa)
-	bus_addr_t dva;
-	paddr_t pa;
+static void
+iommu_enter(struct iommu_softc *sc, bus_addr_t dva, paddr_t pa)
 {
-	struct iommu_softc *sc = iommu_sc;
 	int pte;
 
 	/* This routine relies on the fact that sc->sc_pagesize == PAGE_SIZE */
@@ -435,14 +415,11 @@ iommu_enter(dva, pa)
 }
 
 /*
- * iommu_clear: clears mappings created by iommu_enter
+ * iommu_remove: removes mappings created by iommu_enter
  */
-void
-iommu_remove(dva, len)
-	bus_addr_t dva;
-	bus_size_t len;
+static void
+iommu_remove(struct iommu_softc *sc, bus_addr_t dva, bus_size_t len)
 {
-	struct iommu_softc *sc = iommu_sc;
 	u_int pagesz = sc->sc_pagesize;
 	bus_addr_t base = sc->sc_dvmabase;
 
@@ -526,6 +503,7 @@ iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	int flags;
 	bus_dmamap_t *dmamp;
 {
+	struct iommu_softc *sc = t->_cookie;
 	bus_dmamap_t map;
 	int error;
 
@@ -539,8 +517,8 @@ iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 		map->_dm_ex_end = D24_DVMA_END;
 	} else {
 		/* Enable allocations from the entire map */
-		map->_dm_ex_start = iommu_dvmamap->ex_start;
-		map->_dm_ex_end = iommu_dvmamap->ex_end;
+		map->_dm_ex_start = sc->sc_dvmamap->ex_start;
+		map->_dm_ex_end = sc->sc_dvmamap->ex_end;
 	}
 
 	*dmamp = map;
@@ -551,7 +529,8 @@ iommu_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
  * Internal routine to allocate space in the IOMMU map.
  */
 int
-iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
+iommu_dvma_alloc(sc, map, va, len, flags, dvap, sgsizep)
+	struct iommu_softc *sc;
 	bus_dmamap_t map;
 	vaddr_t va;
 	bus_size_t len;
@@ -578,7 +557,7 @@ iommu_dvma_alloc(map, va, len, flags, dvap, sgsizep)
 	align = dvma_cachealign ? dvma_cachealign : map->_dm_align;
 
 	s = splhigh();
-	error = extent_alloc_subregion1(iommu_dvmamap,
+	error = extent_alloc_subregion1(sc->sc_dvmamap,
 					map->_dm_ex_start, map->_dm_ex_end,
 					sgsize, align, va & (align-1),
 					map->_dm_boundary,
@@ -603,6 +582,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	struct proc *p;
 	int flags;
 {
+	struct iommu_softc *sc = t->_cookie;
 	bus_size_t sgsize;
 	bus_addr_t dva;
 	vaddr_t va = (vaddr_t)buf;
@@ -616,7 +596,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 	map->dm_nsegs = 0;
 
 	/* Allocate IOMMU resources */
-	if ((error = iommu_dvma_alloc(map, va, buflen, flags,
+	if ((error = iommu_dvma_alloc(sc, map, va, buflen, flags,
 					&dva, &sgsize)) != 0)
 		return (error);
 
@@ -643,7 +623,7 @@ iommu_dmamap_load(t, map, buf, buflen, p, flags)
 		 */
 		(void) pmap_extract(pmap, va, &pa);
 
-		iommu_enter(dva, pa);
+		iommu_enter(sc, dva, pa);
 
 		dva += pagesz;
 		va += pagesz;
@@ -694,6 +674,7 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	bus_size_t size;
 	int flags;
 {
+	struct iommu_softc *sc = t->_cookie;
 	struct vm_page *m;
 	paddr_t pa;
 	bus_addr_t dva;
@@ -705,7 +686,7 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 	map->dm_nsegs = 0;
 
 	/* Allocate IOMMU resources */
-	if ((error = iommu_dvma_alloc(map, segs[0]._ds_va, size,
+	if ((error = iommu_dvma_alloc(sc, map, segs[0]._ds_va, size,
 				      flags, &dva, &sgsize)) != 0)
 		return (error);
 
@@ -727,7 +708,7 @@ iommu_dmamap_load_raw(t, map, segs, nsegs, size, flags)
 		if (sgsize == 0)
 			panic("iommu_dmamap_load_raw: size botch");
 		pa = VM_PAGE_TO_PHYS(m);
-		iommu_enter(dva, pa);
+		iommu_enter(sc, dva, pa);
 		dva += pagesz;
 		sgsize -= pagesz;
 	}
@@ -746,6 +727,7 @@ iommu_dmamap_unload(t, map)
 	bus_dma_tag_t t;
 	bus_dmamap_t map;
 {
+	struct iommu_softc *sc = t->_cookie;
 	bus_dma_segment_t *segs = map->dm_segs;
 	int nsegs = map->dm_nsegs;
 	bus_addr_t dva;
@@ -756,9 +738,9 @@ iommu_dmamap_unload(t, map)
 		dva = segs[i].ds_addr & -PAGE_SIZE;
 		len = segs[i]._ds_sgsize;
 
-		iommu_remove(dva, len);
+		iommu_remove(sc, dva, len);
 		s = splhigh();
-		error = extent_free(iommu_dvmamap, dva, len, EX_NOWAIT);
+		error = extent_free(sc->sc_dvmamap, dva, len, EX_NOWAIT);
 		splx(s);
 		if (error != 0)
 			printf("warning: %ld of DVMA space lost\n", (long)len);
