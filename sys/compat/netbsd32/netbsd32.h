@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.24 2003/01/18 08:28:25 thorpej Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.25 2003/10/13 18:55:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -45,6 +45,7 @@
 #include <sys/syscallargs.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/ucontext.h>
 
 /*
  * first, define the basic types we need.
@@ -104,6 +105,8 @@ typedef netbsd32_pointer_t netbsd32_caddrp;
 typedef netbsd32_pointer_t netbsd32_caddr;
 typedef netbsd32_pointer_t netbsd32_gid_tp;
 typedef netbsd32_pointer_t netbsd32_fsid_tp_t;
+typedef netbsd32_pointer_t netbsd32_lwpidp;
+typedef netbsd32_pointer_t netbsd32_ucontextp;
 
 /*
  * now, the compatibility structures and their fake pointer types.
@@ -522,6 +525,9 @@ typedef struct firm_event32 {
 	int	value;		/* VKEY_{UP,DOWN} or locator delta */
 	struct netbsd32_timeval time;
 } Firm_event32;
+
+void netbsd32_si_to_si32(siginfo32_t *, siginfo_t *);
+void netbsd32_si32_to_si(siginfo_t *, siginfo32_t *);
 
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
