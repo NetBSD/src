@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 2003/08/07 16:29:01 agc Exp $	*/
+/*	$NetBSD: clock.c,v 1.27 2004/06/29 08:12:20 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.26 2003/08/07 16:29:01 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.27 2004/06/29 08:12:20 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -140,7 +140,8 @@ void
 setstatclockrate(arg)
 	int arg;
 {
-	printf("setstatclockrate\n");
+
+	/* Nothing */
 }
 
 void
