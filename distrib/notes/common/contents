@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.84 2002/09/02 02:38:58 lukem Exp $
+.\"	$NetBSD: contents,v 1.85 2002/09/07 03:24:52 lukem Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,7 +54,7 @@ conventions for indicating italic and bold display.
 .	(tag kernel/ -compact
 .		It Pa kernel/
 .		(tag netbsd.gz -compact
-.if !\n[atari]:\n[walnut]:\n[sgimips] \{\
+.if !\n[atari]:\n[mac68k]:\n[sgimips]:\n[walnut] \{\
 .			It Pa netbsd-GENERIC.gz
 A gzipped
 .Nx
