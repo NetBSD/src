@@ -45,29 +45,29 @@
 #include <dev/ic/daicvar.h>
 
 /* driver state */
-struct isa_daic_softc {
+struct daic_isa_softc {
 	struct daic sc_daic;		/* MI driver state */
 	void *sc_ih;			/* interrupt handler */
 };
 
 /* local functions */
 #ifdef __BROKEN_INDIRECT_CONFIG
-static int isa_daic_probe __P((struct device *, void *, void *));
+static int daic_isa_probe __P((struct device *, void *, void *));
 #else
-static int isa_daic_probe __P((struct device *, struct cfdata *, void *));
+static int daic_isa_probe __P((struct device *, struct cfdata *, void *));
 #endif
-static void isa_daic_attach __P((struct device *, struct device *, void *));
-static int isa_daic_intr __P((void *));
+static void daic_isa_attach __P((struct device *, struct device *, void *));
+static int daic_isa_intr __P((void *));
 
-struct cfattach isa_daic_ca = {
-	sizeof(struct isa_daic_softc), isa_daic_probe, isa_daic_attach
+struct cfattach daic_isa_ca = {
+	sizeof(struct daic_isa_softc), daic_isa_probe, daic_isa_attach
 };
 
 static int
 #ifdef __BROKEN_INDIRECT_CONFIG
-isa_daic_probe(parent, match, aux)
+daic_isa_probe(parent, match, aux)
 #else
-isa_daic_probe(parent, cf, aux)
+daic_isa_probe(parent, cf, aux)
 #endif
 	struct device *parent;
 #ifdef __BROKEN_INDIRECT_CONFIG
@@ -110,11 +110,11 @@ bad:
 }
 
 static void
-isa_daic_attach(parent, self, aux)
+daic_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct isa_daic_softc *sc = (void *)self;
+	struct daic_isa_softc *sc = (void *)self;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t memt = ia->ia_memt;
 	bus_space_handle_t memh;
@@ -131,16 +131,16 @@ isa_daic_attach(parent, self, aux)
 	daic_attach(self, &sc->sc_daic);
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
-	    IPL_NET, isa_daic_intr, sc);
+	    IPL_NET, daic_isa_intr, sc);
 }
 
 /*
  * Controller interrupt.
  */
 static int
-isa_daic_intr(arg)
+daic_isa_intr(arg)
 	void *arg;
 {
-	struct isa_daic_softc *sc = arg;
+	struct daic_isa_softc *sc = arg;
 	return daic_intr(&sc->sc_daic);
 }
