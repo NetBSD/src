@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.41 2000/05/29 20:13:06 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.42 2000/05/30 01:08:24 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -207,6 +207,7 @@ struct scsipi_link {
 #define ADEV_NOTUR		0x1000	/* no TEST_UNIT_READY command */
 #define ADEV_NODOORLOCK		0x2000	/* device can't lock door */
 #define ADEV_NOSENSE		0x4000	/* device can't handle request sense */
+#define SDEV_ONLYBIG		0x8000	/* only use SCSI_{READ,WRITE}_BIG */
 
 	struct	scsipi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
