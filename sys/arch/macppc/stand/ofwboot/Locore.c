@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.13 2003/04/02 03:04:05 thorpej Exp $	*/
+/*	$NetBSD: Locore.c,v 1.14 2003/04/02 03:16:39 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,13 +58,11 @@ asm(
 "	.text			\n"
 "	.globl	_start		\n"
 "_start:			\n"
-#if 0
 "	sync			\n"
 "	isync			\n"
 "	lis	%r1,stack@ha	\n"
 "	addi	%r1,%r1,stack@l	\n"
 "	addi	%r1,%r1,8192	\n"
-#endif
 "				\n"
 "	mfmsr	%r8		\n"
 "	li	%r0,0		\n"
@@ -115,9 +113,6 @@ startup(vpd, res, openfirm, arg, argl)
 	int argl;
 {
 	extern char etext[], _end[], _edata[];
-	int time = 0x40000000;
-
-	__asm __volatile("mtdec %0" :: "r" (time));
 
 	memset(_edata, 0, (_end - _edata));
 	openfirmware = openfirm;
@@ -620,10 +615,6 @@ setup()
 	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		OF_exit();
-	if (stdout == 0) {
-		/* screen should be console, but it's not open */
-		stdout = OF_open("screen");
-	}
 }
 
 void
