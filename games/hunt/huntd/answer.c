@@ -54,7 +54,7 @@ answer()
 	if (machine == 0)
 		machine = gethostid();
 # endif
-	version = htonl((unsigned long) HUNT_VERSION);
+	version = htonl((u_int32_t) HUNT_VERSION);
 	(void) write(newsock, (char *) &version, LONGLEN);
 	(void) read(newsock, (char *) &uid, LONGLEN);
 	uid = ntohl((unsigned long) uid);
