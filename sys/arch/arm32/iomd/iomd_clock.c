@@ -1,4 +1,4 @@
-/* $NetBSD: iomd_clock.c,v 1.12 1997/01/15 01:28:35 perry Exp $ */
+/* $NetBSD: iomd_clock.c,v 1.13 1997/07/31 01:08:01 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,6 +50,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <dev/clock_subr.h>
 
 #include <machine/katelib.h>
 #include <machine/iomd.h>
@@ -64,8 +65,8 @@
 #endif
 
 #define TIMER0_COUNT 20000		/* 100Hz */
-#define TIMER_FREQUENCY 20000000	/* 2MHz clock */
-#define TICKS_PER_MICROSECOND (TIMER_FREQUENCY / 10000000)
+#define TIMER_FREQUENCY 2000000		/* 2MHz clock */
+#define TICKS_PER_MICROSECOND (TIMER_FREQUENCY / 1000000)
 
 static irqhandler_t clockirq;
 static irqhandler_t statclockirq;
@@ -152,6 +153,8 @@ setstatclockrate(hz)
 void
 cpu_initclocks()
 {
+	int count;
+
 	/*
 	 * Load timer 0 with count down value
 	 * This timer generates 100Hz interrupts for the system clock
@@ -159,8 +162,9 @@ cpu_initclocks()
 
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
 
-	WriteByte(IOMD_T0LOW,  (TIMER0_COUNT >> 0) & 0xff);
-	WriteByte(IOMD_T0HIGH, (TIMER0_COUNT >> 8) & 0xff);
+	count = TIMER_FREQUENCY / hz;
+	WriteByte(IOMD_T0LOW,  (count >> 0) & 0xff);
+	WriteByte(IOMD_T0HIGH, (count >> 8) & 0xff);
 
 	/* reload the counter */
 
@@ -258,22 +262,16 @@ need_proftick(p)
 {
 }
 
+/*
+ * Machine-dependent clock routines.
+ *
+ * Inittodr initializes the time of day hardware which provides
+ * date functions.
+ *
+ * Resettodr restores the time of day hardware after a time change.
+ */
 
-static __inline int
-yeartoday(year)
-	int year;
-{
-	return((year % 4) ? 365 : 366);
-}
-
-                 
-static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 static int timeset = 0;
-
-#define SECPERDAY	(24*60*60)
-#define SECPERNYEAR	(365*SECPERDAY)
-#define SECPER4YEARS	(4*SECPERNYEAR+SECPERDAY)
-#define EPOCHYEAR	1970
 
 /*
  * Write back the time of day to the rtc
@@ -282,60 +280,32 @@ static int timeset = 0;
 void
 resettodr()
 {
+	struct clock_ymdhms dt;
 	int s;
-	time_t year, mon, day, hour, min, sec;
 	rtc_t rtc;
 
 	if (!timeset)
 		return;
 
-	sec = time.tv_sec;
-	sec -= rtc_offset * 60;
-	year = (sec / SECPER4YEARS) * 4;
-	sec %= SECPER4YEARS;
+	/* Convert from secs to ymdhms fields */
+	clock_secs_to_ymdhms(time.tv_sec - (rtc_offset * 60), &dt);
 
-	/* year now hold the number of years rounded down 4 */
-
-	while (sec > (yeartoday(EPOCHYEAR+year) * SECPERDAY)) {
-		sec -= yeartoday(EPOCHYEAR+year)*SECPERDAY;
-		year++;
-	}
-
-	/* year is now a correct offset from the EPOCHYEAR */
-
-	year+=EPOCHYEAR;
-	mon=0;
-	if (yeartoday(year) == 366)
-		month[1]=29;
-	else
-		month[1]=28;
-	while ((sec/SECPERDAY) > month[mon]) {
-		sec -= month[mon]*SECPERDAY;
-		mon++;
-	}
-
-	day = sec / SECPERDAY;
-	sec %= SECPERDAY;
-	hour = sec / 3600;
-	sec %= 3600;
-	min = sec / 60;
-	sec %= 60;
-	rtc.rtc_cen = year / 100;
-	rtc.rtc_year = year % 100;
-	rtc.rtc_mon = mon+1;
-	rtc.rtc_day = day+1;
-	rtc.rtc_hour = hour;
-	rtc.rtc_min = min;
-	rtc.rtc_sec = sec;
-	rtc.rtc_centi =
+	/* Fill out an RTC structure */
+	rtc.rtc_cen = dt.dt_year / 100;
+	rtc.rtc_year = dt.dt_year % 100;
+	rtc.rtc_mon = dt.dt_mon;
+	rtc.rtc_day = dt.dt_day;
+	rtc.rtc_hour = dt.dt_hour;
+	rtc.rtc_min = dt.dt_min;
+	rtc.rtc_sec = dt.dt_sec;
+	rtc.rtc_centi = 0;
 	rtc.rtc_micro = 0;
 
-/*
-	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
+/*	printf("resettod: %d/%d/%d%d %d:%d:%d\n", rtc.rtc_day,
 	    rtc.rtc_mon, rtc.rtc_cen, rtc.rtc_year, rtc.rtc_hour,
-	    rtc.rtc_min, rtc.rtc_sec);
-*/
+	    rtc.rtc_min, rtc.rtc_sec);*/
 
+	/* Pass the time to the todclock device */
 	s = splclock();
 	rtc_write(&rtc);
 	(void)splx(s);
@@ -350,15 +320,14 @@ void
 inittodr(base)
 	time_t base;
 {
-	time_t n;
-	int i, days = 0;
+	struct clock_ymdhms dt;
+	time_t diff;
 	int s;
-	int year;
+	int days;
 	rtc_t rtc;
 
 	/*
-	 * We ignore the suggested time for now and go for the RTC
-	 * clock time stored in the CMOS RAM.
+	 * Get the time from the todclock device
 	 */
 
 	s = splclock();
@@ -369,43 +338,39 @@ inittodr(base)
 
 	(void)splx(s);
 
-	n = rtc.rtc_sec + 60 * rtc.rtc_min + 3600 * rtc.rtc_hour;
-	n += (rtc.rtc_day - 1) * 3600 * 24;
-	year = (rtc.rtc_year + rtc.rtc_cen * 100) - 1900;
+	/* Convert to clock_ymdhms structure */
+	dt.dt_sec = rtc.rtc_sec;
+	dt.dt_min = rtc.rtc_min;
+	dt.dt_hour = rtc.rtc_hour;
+	dt.dt_day = rtc.rtc_day;
+	dt.dt_mon = rtc.rtc_mon;
+	dt.dt_year = rtc.rtc_year + (rtc.rtc_cen * 100);
 
-	if (yeartoday(year) == 366)
-		month[1] = 29;
-	for (i = rtc.rtc_mon - 2; i >= 0; i--)
-		days += month[i];
-	month[1] = 28;
-
-	for (i = 70; i < year; i++)
-		days += yeartoday(i);
-
-	n += days * 3600 * 24;
-
-	n += rtc_offset * 60;
-
-	time.tv_sec = n;
+	/* Convert to seconds */
+	time.tv_sec = clock_ymdhms_to_secs(&dt) + (rtc_offset * 60);
 	time.tv_usec = 0;
 
 	/* timeset is used to ensure the time is valid before a resettodr() */
 
 	timeset = 1;
 
-	/* If the base was 0 then keep quiet */
+	/* If the base was 0 then no time so keep quiet */
 
 	if (base) {
-		printf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
-		    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
-		    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
-		    rtc.rtc_year);
+		printf("inittodr: %02d:%02d:%02d %02d/%02d/%04d\n",
+		    dt.dt_hour, dt.dt_min, dt.dt_sec, dt.dt_day,
+		    dt.dt_mon, dt.dt_year);
 
-		if (n > base + 60) {
-			days = (n - base) / SECPERDAY;
-			printf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
-			    days, ((days == 1) ? 0 : 's'), ((n - base)  / 3600) % 24,
-			    ((n - base) / 60) % 60, (n - base) % 60);
+		diff = time.tv_sec - base;
+		if (diff < 0)
+			diff = - diff;
+
+		if (diff > 60) {
+			days = diff / 86400;
+			printf("Clock has %s %d day%c %ld hours %ld minutes %ld secs\n",
+			    ((time.tv_sec - base) > 0) ? "gained" : "lost", 
+			    days, ((days == 1) ? 0 : 's'), (diff  / 3600) % 24,
+			    (diff / 60) % 60, diff % 60);
 		}
 	}
 }  
