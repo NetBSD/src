@@ -1,4 +1,4 @@
-/* $NetBSD: tcds.c,v 1.5 2002/09/27 15:37:34 provos Exp $ */
+/* $NetBSD: tcds.c,v 1.6 2002/09/27 20:41:58 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.5 2002/09/27 15:37:34 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds.c,v 1.6 2002/09/27 20:41:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -111,7 +111,7 @@ void	tcdsattach __P((struct device *, struct device *, void *));
 int     tcdsprint __P((void *, const char *));
 int	tcdssubmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach tcds_ca = {
+const struct cfattach tcds_ca = {
 	sizeof(struct tcds_softc), tcdsmatch, tcdsattach,
 };
 
