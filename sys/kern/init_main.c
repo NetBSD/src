@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.192 2001/06/16 12:00:02 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.193 2001/07/15 14:36:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -111,7 +111,7 @@
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-const char copyright[] = "\n"
+const char copyright[] =
 "Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001\n"
 "    The NetBSD Foundation, Inc.  All rights reserved.\n"
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
