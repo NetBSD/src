@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.15 2002/10/02 15:45:11 thorpej Exp $	*/
+/*	$NetBSD: beep.c,v 1.15.2.1 2002/10/24 22:33:49 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.15 2002/10/02 15:45:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.15.2.1 2002/10/24 22:33:49 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -99,7 +99,7 @@ dev_type_ioctl(beepioctl);
 
 const struct cdevsw beep_cdevsw = {
 	beepopen, beepclose, noread, nowrite, beepioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 int
