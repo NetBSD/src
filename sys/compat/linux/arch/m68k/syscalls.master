@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.7 1999/05/14 18:43:58 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.8 1999/08/16 19:13:02 tron Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -87,7 +87,7 @@
 22	OBSOL		umount
 23	NOARGS		{ int sys_setuid(uid_t uid); }
 24	NOARGS		{ uid_t sys_getuid(void); }
-25	UNIMPL		stime
+25	STD		{ int linux_sys_stime(linux_time_t *t); }
 26	UNIMPL		ptrace
 27	STD		{ int linux_sys_alarm(unsigned int secs); }
 28	OBSOL		ofstat
