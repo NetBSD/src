@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.119 2003/10/25 03:46:09 lukem Exp $
+#	$NetBSD: build.sh,v 1.120 2003/10/26 02:00:37 lukem Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -703,6 +703,14 @@ validatemakeparams()
 		exit 1
 	fi
 
+	# Normalise MKOBJDIRS, MKUNPRIVED, and MKUPDATE
+	# These may be set as build.sh options or in "mk.conf".
+	# Don't export them as they're only used for tests in build.sh.
+	#
+	MKOBJDIRS=$(getmakevar MKOBJDIRS)
+	MKUNPRIVED=$(getmakevar MKUNPRIVED)
+	MKUPDATE=$(getmakevar MKUPDATE)
+
 	if [ "${MKOBJDIRS}" != "no" ]; then
 		# If setting -M or -O to the root of an obj dir, make sure
 		# the base directory is made before continuing as <bsd.own.mk>
@@ -826,7 +834,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.119 2003/10/25 03:46:09 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.120 2003/10/26 02:00:37 lukem Exp $
 #
 
 EOF
