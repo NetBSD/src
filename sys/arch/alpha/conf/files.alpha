@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.36 1997/01/23 22:50:52 cgd Exp $
+#	$NetBSD: files.alpha,v 1.37 1997/01/31 02:49:57 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -123,6 +123,7 @@ file	dev/tc/if_le_tc.c		le_tc
 
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "dev/isa/files.isa"
+major { wd = 4 }
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
 
