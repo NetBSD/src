@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep.c,v 1.70 1995/02/19 06:13:53 mycroft Exp $	*/
+/*	$NetBSD: if_ep.c,v 1.71 1995/04/11 05:10:26 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@novatel.ca>
@@ -107,8 +107,8 @@ static void epxstat __P((struct ep_softc *));
 static int epstatus __P((struct ep_softc *));
 static void epinit __P((struct ep_softc *));
 static int epioctl __P((struct ifnet *, u_long, caddr_t));
-static int epstart __P((struct ifnet *));
-static int epwatchdog __P((int));
+static void epstart __P((struct ifnet *));
+static void epwatchdog __P((int));
 static void epreset __P((struct ep_softc *));
 static void epread __P((struct ep_softc *));
 static void epmbuffill __P((struct ep_softc *));
@@ -321,12 +321,11 @@ epattach(parent, self, aux)
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
 	ifp->if_name = epcd.cd_name;
-	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
-	ifp->if_output = ether_output;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;
 	ifp->if_watchdog = epwatchdog;
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -456,7 +455,7 @@ epsetlink(sc)
  * Start outputting on the interface.
  * Always called as splimp().
  */
-static int
+static void
 epstart(ifp)
 	struct ifnet *ifp;
 {
@@ -941,15 +940,8 @@ epioctl(ifp, command, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			epinit(sc);	/* before arpwhohas */
-			/*
-			 * See if another station has *our* IP address.
-			 * i.e.: There is an address conflict! If a
-			 * conflict exists, a message is sent to the
-			 * console.
-			 */
-			sc->sc_arpcom.ac_ipaddr = IA_SIN(ifa)->sin_addr;
-			arpwhohas(&sc->sc_arpcom, &IA_SIN(ifa)->sin_addr);
+			epinit(sc);
+			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
 #ifdef NS
@@ -1041,7 +1033,7 @@ epreset(sc)
 	splx(s);
 }
 
-static int
+static void
 epwatchdog(unit)
 	int unit;
 {
