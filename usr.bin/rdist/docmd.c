@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.22 2002/12/06 03:09:28 thorpej Exp $	*/
+/*	$NetBSD: docmd.c,v 1.23 2003/07/12 13:41:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.22 2002/12/06 03:09:28 thorpej Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.23 2003/07/12 13:41:21 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -234,7 +234,10 @@ makeconn(char *rhost)
 		char c = *cp;
 
 		*cp = '\0';
-		strncpy(tuser, rhost, sizeof(tuser)-1);
+		if (strlcpy(tuser, rhost, sizeof(tuser)) >= sizeof(tuser)) {
+			*cp = c;
+			return(0);
+		}
 		*cp = c;
 		rhost = cp + 1;
 		ruser = tuser;
