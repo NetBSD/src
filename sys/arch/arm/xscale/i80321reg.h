@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321reg.h,v 1.10 2003/02/06 03:01:32 briggs Exp $	*/
+/*	$NetBSD: i80321reg.h,v 1.11 2003/07/28 16:53:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -436,6 +436,31 @@
 #define PBIU_MBR0		0x40	/* PBIU Memory-less Boot Reg. 0 */
 #define PBIU_MBR1		0x60	/* PBIU Memory-less Boot Reg. 1 */
 #define PBIU_MBR2		0x64	/* PBIU Memory-less Boot Reg. 2 */
+
+#define	PBIU_PBCR_PBIEN		(1 << 0)
+#define	PBIU_PBCR_PBI100	(1 << 1)
+#define	PBIU_PBCR_PBI66		(2 << 1)
+#define	PBIU_PBCR_PBI33		(3 << 1)
+#define	PBIU_PBCR_PBBEN		(1 << 3)
+
+#define	PBIU_PBARx_WIDTH8	(0 << 0)
+#define	PBIU_PBARx_WIDTH16	(1 << 0)
+#define	PBIU_PBARx_WIDTH32	(2 << 0)
+#define	PBIU_PBARx_ADWAIT4	(0 << 2)
+#define	PBIU_PBARx_ADWAIT8	(1 << 2)
+#define	PBIU_PBARx_ADWAIT12	(2 << 2)
+#define	PBIU_PBARx_ADWAIT16	(3 << 2)
+#define	PBIU_PBARx_ADWAIT20	(4 << 2)
+#define	PBIU_PBARx_RCWAIT1	(0 << 6)
+#define	PBIU_PBARx_RCWAIT4	(1 << 6)
+#define	PBIU_PBARx_RCWAIT8	(2 << 6)
+#define	PBIU_PBARx_RCWAIT12	(3 << 6)
+#define	PBIU_PBARx_RCWAIT16	(4 << 6)
+#define	PBIU_PBARx_RCWAIT20	(5 << 6)
+#define	PBIU_PBARx_FWE		(1 << 9)
+#define	PBIU_BASE_MASK		0xfffff000U
+
+#define	PBIU_PBLRx_SIZE(x)	(~((x) - 1))
 
 /*
  * Messaging Unit
