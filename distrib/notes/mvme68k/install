@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.7.4.2 2000/11/02 23:30:41 tv Exp $
+.\"	$NetBSD: install,v 1.7.4.3 2002/01/05 18:31:21 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,7 +143,7 @@ To reboot using the swap partition after running installboot, first
 use
 .Ic halt ,
 then at the Bug monitor prompt use a command like:
-        	1x7Bug> bo 0,,b:
+        	1x7Bug\*> bo 0,,b:
 
 To view this message again, type:  cat /.welcome
 ssh:
