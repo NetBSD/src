@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.40 2003/12/27 23:57:24 christos Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.41 2004/01/25 02:42:49 sekiya Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.40 2003/12/27 23:57:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.41 2004/01/25 02:42:49 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,6 +223,11 @@ static const struct wi_pcmcia_product {
 	  PCMCIA_PRODUCT_IODATA2_WNB11PCM,
 	  PCMCIA_CIS_IODATA2_WNB11PCM,
 	  PCMCIA_STR_IODATA2_WNB11PCM },
+
+	{ PCMCIA_VENDOR_IODATA2,
+	  PCMCIA_PRODUCT_IODATA2_WCF12,
+	  PCMCIA_CIS_IODATA2_WCF12,
+	  PCMCIA_STR_IODATA2_WCF12 },
 
 	{ PCMCIA_VENDOR_BUFFALO,
 	  PCMCIA_PRODUCT_BUFFALO_WLI_PCM_S11,

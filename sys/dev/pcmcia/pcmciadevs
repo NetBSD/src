@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.191 2003/12/28 06:46:23 itohy Exp $
+$NetBSD: pcmciadevs,v 1.192 2004/01/25 02:42:49 sekiya Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -234,6 +234,7 @@ product INTEL EEPRO100		0x010a Intel EtherExpress PRO/100
 /* I-O DATA */
 product IODATA PCLATE		0x2216 I-O DATA PCLA/TE
 product IODATA2 WNB11PCM	0x0002 I-O DATA WN-B11/PCM
+product IODATA2 WCF12		0x0673 Wireless CF Card
 
 /* Kingston Products */
 product KINGSTON KNE2		0x0100 Kingston KNE-PC2 Ethernet
