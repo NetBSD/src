@@ -1,8 +1,8 @@
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
  * Copyright (c) 1993 Theo de Raadt
- * Copyright (c) 1982, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * (c) UNIX System Laboratories, Inc.
  * All or some portions of this file are derived from material licensed
  * to the University of California by American Telephone and Telegraph
@@ -37,15 +37,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)exec.h	7.5 (Berkeley) 2/15/91
- *	$Id: exec.h,v 1.36 1994/05/17 04:24:58 cgd Exp $
+ *	from: @(#)exec.h	8.3 (Berkeley) 1/21/94
+ *	$Id: exec.h,v 1.37 1994/05/21 07:47:40 cgd Exp $
  */
-
-#ifndef	_SYS_EXEC_H_
-#define	_SYS_EXEC_H_
-
-#include <sys/param.h>
-#include <sys/cdefs.h>
 
 /*
  * Header prepended to each a.out file.
@@ -94,24 +88,26 @@ struct exec {
  */
 #define EX_DYNAMIC	0x20	/* a.out contains run-time link-edit info */
 
+/*
+ * The following structure is found at the top of the user stack of each
+ * user process. The ps program uses it to locate argv and environment
+ * strings. Programs that wish ps to display other information may modify
+ * it; normally ps_argvstr points to the text for argv[0], and ps_nargvstr
+ * is the same as the program's argc. The fields ps_envstr and ps_nenvstr
+ * are the equivalent for the environment.
+ */
+struct ps_strings {
+	char	*ps_argvstr;	/* first of 0 or more argument strings */
+	int	ps_nargvstr;	/* the number of argument strings */
+	char	*ps_envstr;	/* first of 0 or more environment strings */
+	int	ps_nenvstr;	/* the number of environment strings */
+};
 
 /*
- * it's nearly impossible to find out where a process's args are without
- * a hint.  4.4 actually puts pointers in the process address space,
- * above the stack.  this is reasonable, and also allows the process to
- * set its ps-visible arguments easily.
- *
- * PS_STRINGS defines the location of a process's ps_strings structure.
+ * Address of ps_strings structure (in user space).
  */
-
-struct ps_strings {
-	char	*ps_argvstr;       /* the argv strings */
-	int	ps_nargvstr;       /* number of argv strings */
-	char	*ps_envstr;        /* the environment strings */
-	int	ps_nenvstr;        /* number of environment strings */
-};
-#define PS_STRINGS \
-        ((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
+#define	PS_STRINGS \
+	((struct ps_strings *)(USRSTACK - sizeof(struct ps_strings)))
 
 /*
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
@@ -124,6 +120,15 @@ struct ps_strings {
 #else
 #define	STACKGAPLEN	0
 #endif
+
+/*
+ * Arguments to the exec system call.
+ */
+struct execve_args {
+	char	*fname;
+	char	**argp;
+	char	**envp;
+};
 
 /*
  * the following structures allow execve() to put together processes
@@ -249,6 +254,3 @@ extern int	nexecs;
 extern int	exec_maxhdrsz;
 
 #endif /* KERNEL */
-
-#endif /* !_SYS_EXEC_H_ */
-
