@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.31 1996/01/12 22:43:29 thorpej Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.32 1996/01/31 15:16:06 briggs Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles Hannum.  All rights reserved.
@@ -693,6 +693,9 @@ scsi_interpret_sense(xs)
 		case 0x8:	/* BLANK CHECK */
 			error = 0;
 			break;
+		case 0xb:	/* COMMAND ABORTED */
+			error = ERESTART;
+			break;
 		case 0xd:	/* VOLUME OVERFLOW */
 			error = ENOSPC;
 			break;
@@ -714,6 +717,12 @@ scsi_interpret_sense(xs)
 				case 0x8:	/* BLANK CHECK */
 					printf(", requested size: %d (decimal)",
 					    info);
+					break;
+				case 0xb:
+					if (xs->retries)
+						printf(", retrying");
+					printf(", cmd 0x%x, info 0x%x",
+						xs->cmd->opcode, info);
 					break;
 				default:
 					printf(", info = %d (decimal)", info);
