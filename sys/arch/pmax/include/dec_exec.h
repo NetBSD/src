@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_exec.h,v 1.4.2.1 1999/02/24 02:11:10 nisimura Exp $	*/
+/*	$NetBSD: dec_exec.h,v 1.4.2.2 1999/12/06 09:37:15 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -45,7 +45,7 @@
  * Copyright (C) 1989 Digital Equipment Corporation.
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby granted,
- * provided that the above copyright notice appears in all copies.  
+ * provided that the above copyright notice appears in all copies.
  * Digital Equipment Corporation makes no representations about the
  * suitability of this software for any purpose.  It is provided "as is"
  * without express or implied warranty.
@@ -62,8 +62,8 @@ struct coff_exec {
 	u_short	magic;		/* The magic number. */
 
 	u_short	numSections;	/* The number of sections. */
-	long	timeDateStamp;	/* Time and date stamp. */		
-	long	symPtr;		/* File pointer to symbolic header. */	
+	long	timeDateStamp;	/* Time and date stamp. */
+	long	symPtr;		/* File pointer to symbolic header. */
 	long	numSyms;	/* Size of symbolic header. */
 	u_short	optHeader;	/* Size of optional header. */
 	u_short	flags;		/* Flags. */
