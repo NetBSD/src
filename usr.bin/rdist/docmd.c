@@ -1,4 +1,4 @@
-/*	$NetBSD: docmd.c,v 1.23 2003/07/12 13:41:21 itojun Exp $	*/
+/*	$NetBSD: docmd.c,v 1.24 2003/07/23 04:11:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: docmd.c,v 1.23 2003/07/12 13:41:21 itojun Exp $");
+__RCSID("$NetBSD: docmd.c,v 1.24 2003/07/23 04:11:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -335,7 +335,7 @@ lostconn(int signo)
 		}
 
 	if (nr <= 0)
-		(void) strcpy(buf, "lost connection");
+		(void) strlcpy(buf, "lost connection", sizeof(buf));
 
 	if (iamremote)
 		cleanup(0);

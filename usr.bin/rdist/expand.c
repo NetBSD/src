@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.14 2002/06/14 01:18:54 wiz Exp $	*/
+/*	$NetBSD: expand.c,v 1.15 2003/07/23 04:11:12 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: expand.c,v 1.14 2002/06/14 01:18:54 wiz Exp $");
+__RCSID("$NetBSD: expand.c,v 1.15 2003/07/23 04:11:12 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,8 @@ expstr(char *s)
 			*cp1 = '\0';
 			if (pw == NULL || strcmp(pw->pw_name, buf+1) != 0) {
 				if ((pw = getpwnam(buf+1)) == NULL) {
-					strcat(buf, ": unknown user name");
+					strlcat(buf, ": unknown user name",
+					    sizeof(buf));
 					yyerror(buf+1);
 					return;
 				}
@@ -393,8 +394,8 @@ pend:
 doit:
 			savec = *pm;
 			*pm = 0;
-			strcpy(lm, pl);
-			strcat(restbuf, pe + 1);
+			strlcpy(lm, pl, sizeof(restbuf) - (lm - restbuf));
+			strlcat(restbuf, pe + 1, sizeof(restbuf));
 			*pm = savec;
 			if (s == 0) {
 				spathp = pathp;
