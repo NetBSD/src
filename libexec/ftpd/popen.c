@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.8 1997/06/18 19:05:52 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.9 1998/06/08 07:13:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
 #else
-__RCSID("$NetBSD: popen.c,v 1.8 1997/06/18 19:05:52 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.9 1998/06/08 07:13:13 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,17 +61,19 @@ __RCSID("$NetBSD: popen.c,v 1.8 1997/06/18 19:05:52 christos Exp $");
 
 #define INCR	100
 /*
- * Special version of popen which avoids call to shell.  This ensures noone
+ * Special version of popen which avoids call to shell.  This ensures no-one
  * may create a pipe to a hidden program as a side effect of a list or dir
  * command.
+ * If stderrfd != -1, then send stderr of a read command there,
+ * otherwise close stderr.
  */
 static int *pids;
 static int fds;
 
 FILE *
-ftpd_popen(program, type, nostderr)
+ftpd_popen(program, type, stderrfd)
 	char *program, *type;
-	int nostderr;
+	int stderrfd;
 {
 	char *cp;
 	FILE *iop = NULL;
@@ -155,10 +157,10 @@ ftpd_popen(program, type, nostderr)
 				dup2(pdes[1], STDOUT_FILENO);
 				(void)close(pdes[1]);
 			}
-			if (nostderr)
+			if (stderrfd == -1)
 				(void)close(STDERR_FILENO);
-			else		/* stderr too! */
-				dup2(STDOUT_FILENO, STDERR_FILENO);
+			else
+				dup2(stderrfd, STDERR_FILENO);
 			(void)close(pdes[0]);
 		} else {
 			if (pdes[0] != STDIN_FILENO) {
