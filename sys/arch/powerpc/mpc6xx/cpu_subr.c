@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.1 2001/08/26 02:47:39 matt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.2 2001/10/20 08:23:49 billc Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -247,7 +247,6 @@ cpu_identify(char *str, size_t len)
 	for (cp = models; cp->name != NULL; cp++) {
 		if (cp->version == vers)
 			break;
-		cp++;
 	}
 
 	if (str == NULL) {
