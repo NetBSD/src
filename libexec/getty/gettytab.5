@@ -1,4 +1,4 @@
-.\"	$NetBSD: gettytab.5,v 1.25 2000/09/04 06:39:03 garbled Exp $
+.\"	$NetBSD: gettytab.5,v 1.26 2000/12/28 22:18:27 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -95,6 +95,7 @@ table.
 .It "co	bool	false	console - add"
 .Ql \en
 after login prompt
+.It "cs	bool	false	clear screen based on terminal type in /etc/ttys"
 .It "ds	str" Ta So Li ^Y Sc Ta
 .No "delayed suspend character"
 .It "dx	bool	false	set"

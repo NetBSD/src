@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 2000/01/04 13:43:37 ad Exp $	*/
+/*	$NetBSD: init.c,v 1.11 2000/12/28 22:18:27 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)init.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.10 2000/01/04 13:43:37 ad Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 2000/12/28 22:18:27 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -140,5 +140,6 @@ struct	gettyflags gettyflags[] = {
 	{ "dx", 0 },			/* set decctlq */
 	{ "np", 0 },			/* no parity at all (8bit chars) */
 	{ "mb", 0 },			/* do MDMBUF flow control */
+	{ "cs", 0 },			/* clear screen based on term type */
 	{ 0 }
 };

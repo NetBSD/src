@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2000/10/08 16:08:56 bjh21 Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2000/12/28 22:18:27 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2000/10/08 16:08:56 bjh21 Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2000/12/28 22:18:27 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,8 @@ __RCSID("$NetBSD: main.c,v 1.34 2000/10/08 16:08:56 bjh21 Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <limits.h>
+#include <ttyent.h>
+#include <termcap.h>
 
 #include "gettytab.h"
 #include "pathnames.h"
@@ -104,6 +106,7 @@ char	dev[] = _PATH_DEV;
 char	ttyn[32];
 char	lockfile[512];
 uid_t	ttyowner;
+char	*rawttyn;
 
 #define	OBUFSIZ		128
 #define	TABBUFSIZ	512
@@ -138,6 +141,7 @@ char partab[] = {
 
 static void	dingdong __P((int));
 static void	interrupt __P((int));
+static void	clearscreen __P((void));
 void		timeoverrun __P((int));
 
 jmp_buf timeout;
@@ -243,6 +247,7 @@ main(argc, argv)
 	else {
 	    int i;
 
+	    rawttyn = argv[2];
 	    strlcpy(ttyn, dev, sizeof(ttyn));
 	    strlcat(ttyn, argv[2], sizeof(ttyn));
 
@@ -332,6 +337,8 @@ main(argc, argv)
 			tname = portselector();
 			continue;
 		}
+		if (CS)
+			clearscreen();
 		if (CL && *CL)
 			putpad(CL);
 		edithost(HE);
@@ -691,4 +698,33 @@ putf(cp)
 		if (*cp)
 			cp++;
 	}
+}
+
+static void
+clearscreen()
+{
+	struct ttyent *typ;
+	struct tinfo *tinfo;
+	char *buffer = NULL;
+	char *area = NULL;
+	char *cs;
+
+	if (rawttyn == NULL)
+		return;
+
+	typ = getttynam(rawttyn);	
+
+	if ((typ == NULL) || (typ->ty_type == NULL) ||
+	    (typ->ty_type[0] == 0))
+		return;
+
+	if (t_getent(&tinfo, typ->ty_type) <= 0)
+		return;
+
+	cs = t_agetstr(tinfo, "cl", &buffer, &area);
+	if (cs == NULL)
+		return;
+
+	putpad(cs);
+	free(buffer);
 }

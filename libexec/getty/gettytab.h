@@ -1,4 +1,4 @@
-/*	$NetBSD: gettytab.h,v 1.10 2000/01/04 13:43:37 ad Exp $	*/
+/*	$NetBSD: gettytab.h,v 1.11 2000/12/28 22:18:27 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -58,6 +58,10 @@ struct gettyflags {
 	char	value;		/* true/false flag */
 	char	set;		/* we found it */
 };
+
+/*
+ * See init.c for the arrays indexed by these values.
+ */
 
 /*
  * String values.
@@ -163,6 +167,7 @@ struct gettyflags {
 #define DX	gettyflags[20].value
 #define	NP	gettyflags[21].value
 #define	MB	gettyflags[22].value
+#define	CS	gettyflags[23].value
 
 int	getent __P((char *, char *));
 long	getnum __P((char *));
