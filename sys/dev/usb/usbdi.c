@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.13 1998/12/09 00:18:11 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.14 1998/12/10 23:16:48 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1041,7 +1041,8 @@ usbd_do_request(dev, req, data)
 	r = usbd_sync_transfer(reqh);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (reqh->actlen > reqh->length)
-		printf("usbd_do_request: overrun addr=%d type=0x%02x req=0x%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
+		printf("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
+		       "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
 		       dev->address, reqh->request.bmRequestType,
 		       reqh->request.bRequest, UGETW(reqh->request.wValue),
 		       UGETW(reqh->request.wIndex), 
@@ -1060,7 +1061,8 @@ usbd_do_request_async_cb(reqh, priv, status)
 {
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)
 	if (reqh->actlen > reqh->length)
-		printf("usbd_do_request: overrun addr=%d type=0x%02x req=0x%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
+		printf("usbd_do_request: overrun addr=%d type=0x%02x req=0x"
+		       "%02x val=%d index=%d rlen=%d length=%d actlen=%d\n",
 		       reqh->pipe->device->address, 
 		       reqh->request.bmRequestType,
 		       reqh->request.bRequest, UGETW(reqh->request.wValue),
