@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.1 2003/05/25 13:48:00 tsutsui Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2 2003/06/25 05:37:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ softintr_dispatch(ipending)
 				sih->sih_pending = 0;
 			}
 
-			simple_unlock(msi->softintr_slock);
+			simple_unlock(&msi->softintr_slock);
 			splx(s);
 
 			if (sih == NULL)
