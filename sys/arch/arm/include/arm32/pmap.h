@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2001/11/23 17:39:04 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2001/11/23 19:21:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -35,7 +35,7 @@
 
 #ifdef _KERNEL
 
-#include <machine/cpufunc.h>
+#include <arm/cpufunc.h>
 #include <arm/arm32/pte.h>
 #include <uvm/uvm_object.h>
 
