@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.35 2000/06/08 05:52:34 thorpej Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.36 2000/06/18 05:20:27 simonb Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -338,6 +338,7 @@ uvm_exit(p)
 
 	uvmspace_free(p->p_vmspace);
 	uvm_km_free(kernel_map, (vaddr_t)p->p_addr, USPACE);
+	p->p_addr = NULL;
 }
 
 /*
