@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 1997/11/27 10:19:32 sakamoto Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.3 1998/02/03 04:32:17 sakamoto Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,8 +76,8 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
  * BY PORTABLE CODE.
  */
 
-#define	isa_outb(x,y)	outb(bebox_bus_io.bus_base + (x), y)
-#define isa_inb(x)	inb(bebox_bus_io.bus_base + (x))
+#define	isa_outb(x,y)	outb(BEBOX_BUS_SPACE_IO + (x), y)
+#define isa_inb(x)	inb(BEBOX_BUS_SPACE_IO + (x))
 
 extern struct bebox_bus_dma_tag isa_bus_dma_tag;
 

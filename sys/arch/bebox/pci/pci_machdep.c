@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2 1997/11/27 10:20:16 sakamoto Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.3 1998/02/03 04:32:19 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -63,8 +63,8 @@
 #include <bebox/isa/icu.h>
 
 #define	PCI_MODE1_ENABLE	0x80000000UL
-#define	PCI_MODE1_ADDRESS_REG	(bebox_bus_io.bus_base + 0x0cf8)
-#define	PCI_MODE1_DATA_REG	(bebox_bus_io.bus_base + 0x0cfc)
+#define	PCI_MODE1_ADDRESS_REG	(BEBOX_BUS_SPACE_IO + 0x0cf8)
+#define	PCI_MODE1_DATA_REG	(BEBOX_BUS_SPACE_IO + 0x0cfc)
 
 void
 pci_attach_hook(parent, self, pba)
