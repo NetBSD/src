@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.12 2001/05/31 18:46:08 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.13 2001/07/06 19:00:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -157,7 +157,10 @@ static int pcctwo_vec2icsr_1x2[] = {
 	-1
 };
 
-static int pcctwoabortintr(void *);
+static	int pcctwoabortintr(void *);
+void	pcctwosoftintrinit(void);
+static	int pcctwosoftintr(void *);
+static	void pcctwosoftintrassert(void);
 #endif
 
 /* ARGSUSED */
@@ -371,5 +374,54 @@ pcctwoabortintr(void *frame)
 	    pcc2_reg_read(sys_pcctwo, MCCHIPREG_ABORT_ICSR));
 
 	return (nmihand(frame));
+}
+
+void
+pcctwosoftintrinit(void)
+{
+
+	/*
+	 * Since the VMEChip2 is normally used to generate
+	 * software interrupts to the CPU, we have to deal
+	 * with 162/172 boards which have the "No VMEChip2"
+	 * build option.
+	 *
+	 * When such a board is found, the VMEChip2 probe code
+	 * calls this function to implement software interrupts
+	 * the hard way; using tick timer 4 ...
+	 */
+	pcctwointr_establish(MCCHIPV_TIMER4, pcctwosoftintr,
+	    1, sys_pcctwo, &sys_pcctwo->sc_evcnt);
+	pcc2_reg_write(sys_pcctwo, MCCHIPREG_TIMER4_CTRL, 0);
+	pcc2_reg_write32(sys_pcctwo, MCCHIPREG_TIMER4_COMP, 1);
+	pcc2_reg_write32(sys_pcctwo, MCCHIPREG_TIMER4_CNTR, 0);
+	_softintr_chipset_assert = pcctwosoftintrassert;
+}
+
+static int
+pcctwosoftintr(void *arg)
+{
+	struct pcctwo_softc *sc = arg;
+
+	pcc2_reg_write32(sc, MCCHIPREG_TIMER4_CNTR, 0);
+	pcc2_reg_write(sc, MCCHIPREG_TIMER4_CTRL, 0);
+	pcc2_reg_write(sc, MCCHIPREG_TIMER4_ICSR,
+	    PCCTWO_ICR_ICLR | PCCTWO_ICR_IEN | 1);
+
+	softintr_dispatch();
+
+	return (1);
+}
+
+static void
+pcctwosoftintrassert(void)
+{
+
+	/*
+	 * Schedule a timer interrupt to happen in ~1uS.
+	 * This is more than adequate on any available m68k platform
+	 * for simulating software interrupts.
+	 */
+	pcc2_reg_write(sys_pcctwo, MCCHIPREG_TIMER4_CTRL, PCCTWO_TT_CTRL_CEN);
 }
 #endif
