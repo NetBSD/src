@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.10 2000/09/04 07:30:08 kleink Exp $
+.\"	$NetBSD: dd.1,v 1.11 2001/11/25 10:50:06 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd July 28, 1999
+.Dd November 25, 2001
 .Dt DD 1
 .Os
 .Sh NAME
@@ -140,8 +140,11 @@ distinguishing between a partial or complete block being read.
 .It Cm progress= Ns Ar n
 Switch on display of progress if
 .Va n
-is set to ``1'', i.e. a ``.'' is printed for each 
-block written to the output file.
+is set to
+.Dq 1 ,
+i.e. a
+.Dq \&.
+is printed for each block written to the output file.
 .It Xo
 .Cm conv=
 .Ns Cm value Ns Op \&, Cm value \&...
@@ -285,10 +288,24 @@ appended.
 .El
 .Pp
 Where sizes are specified, a decimal number of bytes is expected.
-If the number ends with a ``b'', ``k'', ``m'' or ``w'', the number
-is multiplied by 512, 1024 (1K), 1048576 (1M) or the number of bytes
-in an integer, respectively.
-Two or more numbers may be separated by an ``x'' to indicate a product.
+Two or more numbers may be separated by an
+.Dq x
+to indicate a product.
+Each number may have one of the following optional suffices:
+.Bl -tag -width 3n -offset indent -compact
+.It b
+Block; multiply by 512
+.It k
+Kilo; multiply by 1024 (1 KB)
+.It m
+Mega; multiply by 1048576 (1 MB)
+.It g
+Giga; multiply by 1073741824 (1 GB)
+.It t
+Tera; multiply by 1099511627776 (1 TB)
+.It w
+Word; multiply by the number of bytes in an integer
+.El
 .Pp
 When finished,
 .Nm
@@ -317,9 +334,12 @@ If
 .Nm
 receives a
 .Dv SIGINFO
-(see the ``status'' argument for
-.Xr stty 1 )
-signal, the current input and output block counts will
+signal
+(see the
+.Ic status
+argument for
+.Xr stty 1 ) ,
+the current input and output block counts will
 be written to the standard error output
 in the same format as the standard completion message.
 If
