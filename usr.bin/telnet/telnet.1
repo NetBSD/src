@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.27 2003/08/07 11:16:10 agc Exp $
+.\"	$NetBSD: telnet.1,v 1.28 2003/10/27 19:46:14 heas Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -612,18 +612,23 @@ omits any automatic initialisation of
 options.
 When the port number is preceded by a minus sign,
 the initial option negotiation is done.
+.Pp
 After establishing a connection, the file
 .Pa \&.telnetrc
 in the
-user's home directory is opened.
+user's home directory is read.
 Lines beginning with a # are
 comment lines.
 Blank lines are ignored.
 Lines that begin
 without white space are the start of a machine entry.
-The
-first thing on the line is the name of the machine that is
-being connected to.
+The first thing on such a line is a string identifying the machine
+that is being connected to.
+It may be the hostname or numeric address sepecified as the argument
+.Ar host ,
+the canonical name of that string as determined by
+.Xr getaddrinfo 3 ,
+or the string \*(LqDEFAULT\*(Rq indicating all hosts.
 The rest of the line, and successive
 lines that begin with white space are assumed to be
 .Nm
