@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 2002/06/12 19:13:28 fvdl Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 2002/07/04 10:42:00 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -89,6 +89,7 @@
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/syscall.h>
+#include <sys/reboot.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -216,11 +217,12 @@ trap(frame)
 			printf("unknown trap %ld", (u_long)frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
 		printf("trap type %d code %lx rip %lx cs %lx rflags %lx cr2 "
-		       " %lx cpl %x\n",
+		       " %lx cpl %x rsp %lx\n",
 		    type, frame.tf_err, (u_long)frame.tf_rip, frame.tf_cs,
-		    frame.tf_rflags, rcr2(), cpl);
+		    frame.tf_rflags, rcr2(), cpl, frame.tf_rsp);
 
-		panic("trap");
+		/* panic("trap"); */
+		cpu_reboot(RB_HALT, NULL);
 		/*NOTREACHED*/
 
 	case T_PROTFLT:
