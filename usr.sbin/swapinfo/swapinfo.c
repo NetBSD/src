@@ -4,7 +4,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: swapinfo.c,v 1.4 1993/08/02 17:57:17 mycroft Exp $";
+static char rcsid[] = "$Id: swapinfo.c,v 1.5 1993/11/18 03:00:41 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -28,6 +28,9 @@ static char rcsid[] = "$Id: swapinfo.c,v 1.4 1993/08/02 17:57:17 mycroft Exp $";
 
 extern char *devname __P((int, int));
 void showspace __P((long blocksize));
+
+int showmap;			/* show the contents of the swap map */
+int nosum;			/* don't show totals */
 
 struct nlist syms[] = {
 	{ "_swapmap" },	/* list of free swap areas */
@@ -55,11 +58,19 @@ main(argc, argv)
 	char errbuf[256];
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "kM:N:")) != EOF) {
+	while ((ch = getopt(argc, argv, "kmnM:N:")) != EOF) {
 		switch (ch) {
 
 		case 'k':
 			blocksize = 1024;
+			break;
+
+		case 'm':
+			showmap = 1;
+			break;
+
+		case 'n':
+			nosum = 1;
 			break;
 
 		case 'M':
@@ -107,11 +118,13 @@ showspace(blocksize)
 	long blocksize;
 {
 	int nswap, nswdev, dmmax, nswapmap;
-	int s, e, div, i, avail, nfree, npfree, used;
+	int s, e, div, i, ind, avail, nfree, npfree, used;
 	struct swdevt *sw;
 	long *perdev;
 	struct map *swapmap, *kswapmap;
 	struct mapent *mp;
+
+	div = blocksize / 512;		/* printing routines use this */
 
 	KGET(VM_NSWAP, nswap);
 	KGET(VM_NSWDEV, nswdev);
@@ -130,12 +143,21 @@ showspace(blocksize)
 	if (nswapmap != swapmap->m_limit - (struct mapent *)kswapmap)
 		errx(1, "panic: nswapmap goof");
 
+	if (showmap) {
+		printf("Total number of map entries: %d\n", nswapmap);
+		printf("All offsets and sizes in %d-byte blocks\n",
+		    blocksize);
+		printf("\n");
+		printf("%-8s %10s %10s %10s\n", "Entry", "Size", "Start",
+			"End");
+	}
+
 	/*
 	 * Count up swap space.
 	 */
 	nfree = 0;
 	bzero(perdev, nswdev * sizeof(*perdev));
-	for (mp++; mp->m_addr != 0; mp++) {
+	for (mp++, ind=0; mp->m_addr != 0; mp++, ind++) {
 		s = mp->m_addr;			/* start of swap region */
 		e = mp->m_addr + mp->m_size;	/* end of region */
 		nfree += mp->m_size;
@@ -162,11 +184,20 @@ showspace(blocksize)
 				i = 0;
 			s = bound;
 		}
+
+		if (showmap)
+			printf("%-8d %10d %10d %10d\n", ind, mp->m_size / div,
+			    mp->m_addr / div, (mp->m_addr + mp->m_size) / div);
 	}
+
+	if (nosum)	/* XXX could break later, but rather not indent now */
+		return;
+
+	if (showmap)
+		printf("\n");
 
 	(void)printf("%-10s %4d-blocks %10s %10s %10s\n",
 	    "Device", blocksize, "Used", "Available", "Capacity");
-	div = blocksize / 512;
 	avail = npfree = 0;
 	for (i = 0; i < nswdev; i++) {
 		int xsize, xfree;
