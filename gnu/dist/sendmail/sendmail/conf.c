@@ -315,7 +315,7 @@ setdefaults(e)
 #ifdef HESIOD_INIT
 	HesiodContext = NULL;
 #endif /* HESIOD_INIT */
-#if 0 /*NETINET6*/
+#if NETINET6
 	/* Detect if IPv6 is available at run time */
 	i = socket(AF_INET6, SOCK_STREAM, 0);
 	if (i >= 0)
