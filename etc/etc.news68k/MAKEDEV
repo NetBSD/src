@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.7 2001/12/19 17:58:08 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.8 2001/12/19 18:11:22 wiz Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -66,6 +66,9 @@
 #	ipl	ip filter
 #	random	Random number generator
 #	scsibus* SCSI busses, see scsi(4), scsictl(8)
+#	ss*	SCSI scanner
+#	ch*	SCSI Auto changer
+#	uk*	SCSI unknown
 
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 umask 77
