@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.94 2003/01/28 06:32:03 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.95 2003/01/28 08:46:08 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3442,3 +3442,19 @@ sys/arch/i386/conf/INSTALL			1.196-1.197
 
 	Pullup support for bge device. (Broadcom Gigabit Ethernet)
 	[fvdl, ticket #1126]
+
+sys/dev/pci/agp.c				1.14-1.15
+
+	Only allow the bus_dmamem_alloc() code to sleep if no physically 
+	contigous pages are insisted in.
+	[manu, ticket #1073]
+
+doc/LAST_MINUTE					patched by hand
+
+	Null out in preparation for 1.6.1
+
+sys/conf/osrelease.sh				patched by hand
+share/tmac/doc-common				patched by hand
+sys/sys/param.h					patched by hand
+
+	Update to 1.6.1_RC1
