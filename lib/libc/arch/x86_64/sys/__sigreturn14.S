@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigreturn14.S,v 1.2 2003/08/07 16:42:37 agc Exp $	*/
+/*	$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 19:26:23 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,23 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigreturn14.S,v 1.2 2003/08/07 16:42:37 agc Exp $")
+	RCSID("$NetBSD: __sigreturn14.S,v 1.3 2004/03/26 19:26:23 drochner Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
-#include "SYS.h"
-
-/*
- * We must preserve the state of the registers as the user has set them up.
- */
-#if 0	/* XXXfvdl fix later, but this one is really low priority */
-#ifdef GPROF
-#undef ENTRY
-#define MCOUNT_SYMBOL	__mcount
-#define	ENTRY(x) \
-	.globl _/**/x; _ALIGN_TEXT; _/**/x:  pusha ; \
-	.data; 1:; .long 0; .text; movl $1b,%eax; call MCOUNT_SYMBOL; popa ; nop
-#endif /* GPROF */
-#endif
-
-SYSCALL(__sigreturn14)
-	ret
+/* Nothing here. We don't need NetBSD-1.6 binary compatibility. */
