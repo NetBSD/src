@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.96 2001/10/01 10:22:43 simonb Exp $
+#	$NetBSD: files.pmax,v 1.97 2001/10/01 11:42:18 simonb Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -129,7 +129,7 @@ file	arch/pmax/dev/dtop.c		dtop needs-flag
 #   TC and IOASIC attachment and files in sys/dev/tc/files.tc
 
 attach le at ibus with le_pmax:		le24, le_dec_subr
-file	dev/tc/if_le_ibus.c		le_pmax
+file	arch/pmax/ibus/if_le_ibus.c	le_pmax
 
 
 # Raster operations for rcons. This isn't in the rcons section, since
