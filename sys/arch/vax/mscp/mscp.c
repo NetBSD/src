@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.6 1997/07/04 11:58:20 ragge Exp $	*/
+/*	$NetBSD: mscp.c,v 1.7 1998/02/08 14:03:49 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -51,12 +51,12 @@
 #include <vax/mscp/mscp.h>
 #include <vax/mscp/mscpvar.h>
 
-#define	PCMD	PSWP		/* priority for command packet waits */
+#define PCMD	PSWP		/* priority for command packet waits */
 
 /*
  * During transfers, mapping info is saved in the buffer's b_resid.
  */
-#define	b_info b_resid
+#define b_info b_resid
 
 /*
  * Get a command packet.  Second argument is true iff we are
@@ -68,7 +68,7 @@ mscp_getcp(mi, canwait)
 	register struct mscp_softc *mi;
 	int canwait;
 {
-#define	mri	(&mi->mi_cmd)
+#define mri	(&mi->mi_cmd)
 	register struct mscp *mp;
 	register int i;
 	int s = splbio();
@@ -114,8 +114,8 @@ again:
 	mp->mscp_seq.seq_bytecount = 0;
 	mp->mscp_seq.seq_buffer = 0;
 	mp->mscp_seq.seq_mapbase = 0;
-/*???*/	mp->mscp_sccc.sccc_errlgfl = 0;
-/*???*/	mp->mscp_sccc.sccc_copyspd = 0;
+/*???*/ mp->mscp_sccc.sccc_errlgfl = 0;
+/*???*/ mp->mscp_sccc.sccc_copyspd = 0;
 	return (mp);
 #undef	mri
 }
@@ -238,7 +238,7 @@ loop:
 
 	case M_OP_ONLINE | M_OP_END:
 		/*
-		 * Finished an ON LINE request.  Call the driver to
+		 * Finished an ON LINE request.	 Call the driver to
 		 * find out whether it succeeded.  If so, mark it on
 		 * line.
 		 */
@@ -299,8 +299,8 @@ loop:
 	case M_OP_READ | M_OP_END:
 	case M_OP_WRITE | M_OP_END:
 		/*
-		 * A transfer finished.  Get the buffer, and release its
-		 * map registers via ubadone().  If the command finished
+		 * A transfer finished.	 Get the buffer, and release its
+		 * map registers via ubadone().	 If the command finished
 		 * with an off line or available status, the drive went
 		 * off line (the idiot controller does not tell us until
 		 * it comes back *on* line, or until we try to use it).
@@ -325,7 +325,7 @@ rwend:
 		}
 		/*
 		 * Mark any error-due-to-bad-LBN (via `goto rwend').
-		 * WHAT STATUS WILL THESE HAVE?  IT SURE WOULD BE NICE
+		 * WHAT STATUS WILL THESE HAVE?	 IT SURE WOULD BE NICE
 		 * IF DEC SOLD DOCUMENTATION FOR THEIR OWN CONTROLLERS.
 		 */
 		if (error) {
@@ -413,7 +413,7 @@ unknown:
 
 	/*
 	 * If the drive needs to be put back in the controller queue,
-	 * do that now.  (`bp' below ought to be `dp', but they are all
+	 * do that now.	 (`bp' below ought to be `dp', but they are all
 	 * struct buf *.)  Note that b_active was cleared in the driver;
 	 * we presume that there is something to be done, hence reassert it.
 	 */
@@ -453,7 +453,7 @@ mscp_requeue(mi)
 
 panic("mscp_requeue");
 	/*
-	 * Clear the controller chain.  Mark everything un-busy; we
+	 * Clear the controller chain.	Mark everything un-busy; we
 	 * will soon fix any that are in fact busy.
 	 */
 #ifdef notyet /* XXX */
