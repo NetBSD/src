@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.20 2002/08/12 20:17:37 bjh21 Exp $	*/
+/*	$NetBSD: fault.c,v 1.21 2002/08/12 20:19:04 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,6 +47,8 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.21 2002/08/12 20:19:04 bjh21 Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
