@@ -1,4 +1,4 @@
-/*	$NetBSD: dc_ds.c,v 1.16 2000/02/03 04:19:59 nisimura Exp $	*/
+/*	$NetBSD: dc_ds.c,v 1.16.8.1 2002/10/10 18:35:02 jdolecek Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -35,9 +35,8 @@
 int	dc_ds_match __P((struct device * parent, struct cfdata *match, void *aux));
 void	dc_ds_attach __P((struct device *parent, struct device *self, void *aux));
 
-struct cfattach dc_ds_ca = {
-	sizeof(struct dc_softc), dc_ds_match, dc_ds_attach
-};
+CFATTACH_DECL(dc_ds, sizeof(struct dc_softc),
+    dc_ds_match, dc_ds_attach, NULL, NULL);
 
 
 #if 0

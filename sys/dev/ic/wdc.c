@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.98.2.5 2002/09/06 08:44:40 jdolecek Exp $ */
+/*	$NetBSD: wdc.c,v 1.98.2.6 2002/10/10 18:39:16 jdolecek Exp $ */
 
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.98.2.5 2002/09/06 08:44:40 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.98.2.6 2002/10/10 18:39:16 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -661,7 +661,7 @@ wdcstart(chp)
 	}
 #ifdef DIAGNOSTIC
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) != 0)
-		panic("wdcstart: channel waiting for irq\n");
+		panic("wdcstart: channel waiting for irq");
 #endif
 	if (chp->wdc->cap & WDC_CAPABILITY_HWLOCK)
 		if (!(*chp->wdc->claim_hw)(chp, 0))
@@ -1309,7 +1309,7 @@ wdc_exec_command(drvp, wdc_c)
 #ifdef DIAGNOSTIC
 	if ((wdc_c->flags & AT_POLL) != 0 &&
 	    (wdc_c->flags & AT_DONE) == 0)
-		panic("wdc_exec_command: polled command not done\n");
+		panic("wdc_exec_command: polled command not done");
 #endif
 	if (wdc_c->flags & AT_DONE) {
 		ret = WDC_COMPLETE;

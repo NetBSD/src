@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.10.8.2 2002/01/10 19:50:21 thorpej Exp $ */
+/*	$NetBSD: ms.c,v 1.10.8.3 2002/10/10 18:37:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,19 +134,28 @@ struct ms_softc {
 	struct	evvar ms_events;	/* event queue state */
 } ms_softc;
 
-cdev_decl(ms);
-
 static int ms_match __P((struct device*, struct cfdata*, void*));
 static void ms_attach __P((struct device*, struct device*, void*));
 static void ms_trigger __P((struct zs_chanstate*, int));
 void ms_modem __P((void *));
 
-struct cfattach ms_ca = {
-	sizeof(struct ms_softc), ms_match, ms_attach
-};
+CFATTACH_DECL(ms, sizeof(struct ms_softc),
+    ms_match, ms_attach, NULL, NULL);
 
 extern struct zsops zsops_ms;
 extern struct cfdriver ms_cd;
+
+dev_type_open(msopen);
+dev_type_close(msclose);
+dev_type_read(msread);
+dev_type_ioctl(msioctl);
+dev_type_poll(mspoll);
+dev_type_kqfilter(mskqfilter);
+
+const struct cdevsw ms_cdevsw ={
+	msopen, msclose, msread, nowrite, msioctl,
+	nostop, notty, mspoll, nommap, mskqfilter,
+};
 
 /*
  * ms_match: how is this zs channel configured?
@@ -274,17 +283,6 @@ msread(dev, uio, flags)
 
 	ms = ms_cd.cd_devs[minor(dev)];
 	return (ev_read(&ms->ms_events, uio, flags));
-}
-
-/* this routine should not exist, but is convenient to write here for now */
-int
-mswrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return (EOPNOTSUPP);
 }
 
 int

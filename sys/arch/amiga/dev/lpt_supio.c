@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_supio.c,v 1.6.16.1 2002/02/11 20:07:03 jdolecek Exp $ */
+/*	$NetBSD: lpt_supio.c,v 1.6.16.2 2002/10/10 18:31:30 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_supio.c,v 1.6.16.1 2002/02/11 20:07:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_supio.c,v 1.6.16.2 2002/10/10 18:31:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,8 @@ int lpt_supio_match(struct device *, struct cfdata *, void *);
 void lpt_supio_attach(struct device *, struct device *, void *);
 int lpt_supio_intr(void *p);
 
-struct cfattach lpt_supio_ca = {
-	sizeof(struct lptsupio_softc), lpt_supio_match, lpt_supio_attach
-};
+CFATTACH_DECL(lpt_supio, sizeof(struct lptsupio_softc),
+    lpt_supio_match, lpt_supio_attach, NULL, NULL);
 
 int
 lpt_supio_match(struct device *parent, struct cfdata *match, void *aux)

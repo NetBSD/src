@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.34.4.1 2002/10/10 18:31:12 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.34.4.1 2002/10/10 18:31:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,9 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.34 2000/07/18 06:10:06 thorpej Exp $");
 int	ioasicmatch __P((struct device *, struct cfdata *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
 
-struct cfattach ioasic_ca = {
-	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
-};
+CFATTACH_DECL(ioasic, sizeof(struct ioasic_softc),
+    ioasicmatch, ioasicattach, NULL, NULL);
 
 int	ioasic_intr __P((void *));
 int	ioasic_intrnull __P((void *));
@@ -291,7 +290,7 @@ ioasic_intrnull(val)
 	void *val;
 {
 
-	panic("ioasic_intrnull: uncaught IOASIC intr for cookie %ld\n",
+	panic("ioasic_intrnull: uncaught IOASIC intr for cookie %ld",
 	    (u_long)val);
 }
 

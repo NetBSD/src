@@ -1,4 +1,4 @@
-/* $NetBSD: sbgbus.c,v 1.1.10.2 2002/06/23 17:38:06 jdolecek Exp $ */
+/* $NetBSD: sbgbus.c,v 1.1.10.3 2002/10/10 18:34:08 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -48,9 +48,8 @@ extern struct cfdriver sbgbus_cd;
 static int	sbgbus_match(struct device *, struct cfdata *, void *);
 static void	sbgbus_attach(struct device *, struct device *, void *);
 
-const struct cfattach sbgbus_ca = {
-	sizeof(struct device), sbgbus_match, sbgbus_attach,
-};
+CFATTACH_DECL(sbgbus, sizeof(struct device),
+    sbgbus_match, sbgbus_attach, NULL, NULL);
 
 static int	sbgbussearch(struct device *, struct cfdata *, void *);
 static int	sbgbusprint(void *, const char *);
@@ -150,7 +149,7 @@ sbgbussearch(struct device *parent, struct cfdata *cf, void *aux)
 		}
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &sga) > 0) {
+		if (config_match(parent, cf, &sga) > 0) {
 			config_attach(parent, cf, &sga, sbgbusprint);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.2.2.3 2002/03/16 15:56:11 jdolecek Exp $	*/
+/*	$NetBSD: iic.c,v 1.2.2.4 2002/10/10 18:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,9 +51,9 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <arm/cpufunc.h>
@@ -81,6 +81,14 @@ extern void iic_set_state		__P((int, int));
 extern void iic_delay			__P((int));
 
 extern struct cfdriver iic_cd;
+
+dev_type_open(iicopen);
+dev_type_close(iicclose);
+
+const struct cdevsw iic_cdevsw = {
+	iicopen, iicclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*
  * Main entry to IIC driver.
@@ -276,7 +284,7 @@ iicsearch(parent, cf, aux)
 		iba.ib_aux = NULL;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &iba) > 0) {
+		if (config_match(parent, cf, &iba) > 0) {
 			config_attach(parent, cf, &iba, iicprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
@@ -327,57 +335,6 @@ iicclose(dev, flag, mode, p)
 	sc->sc_flags &= ~IIC_OPEN;
 
 	return(0);
-}
-
-/*
- * No support for device reads, writes or ioctls yet
- */
-
-int
-iicread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-/*	int unit = minor(dev);*/
-/*	struct iic_softc *sc = iic_cd.cd_devs[unit];*/
-
-	return(ENXIO);
-}
-
-
-int
-iicwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
-{
-/*	int unit = minor(dev);*/
-/*	struct iic_softc *sc = iic_cd.cd_devs[unit];*/
-
-	return(ENXIO);
-}
-
-
-int
-iicioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-/*	struct iic_softc *sc = iic_cd.cd_devs[minor(dev)];*/
-
-/*	switch (cmd) {
-	case IICIOC_CONTROL:
-		if (iiccontrol() != 0) {
-			return(EIO);
-		}
-		return(0);
-	}
-*/
-	return(EINVAL);
 }
 
 /* End of iic.c */

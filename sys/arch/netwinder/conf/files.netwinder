@@ -1,4 +1,4 @@
-#	$NetBSD: files.netwinder,v 1.13.2.6 2002/06/23 17:38:40 jdolecek Exp $
+#	$NetBSD: files.netwinder,v 1.13.2.7 2002/10/10 18:34:25 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -37,7 +37,6 @@ include "arch/arm/conf/files.footbridge"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major	{wd = 16}
 
 # ISA DMA glue
 file	arch/arm/footbridge/isa/isadma_machdep.c isadma
@@ -47,10 +46,6 @@ file	arch/arm/footbridge/isa/joy_timer.c	joy
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
-major	{md = 18}
-
-# RAIDframe
-major	{raid = 71}
 
 device	todclock
 attach	todclock at todservice
@@ -61,8 +56,6 @@ file	arch/arm/footbridge/todclock.c		todclock	needs-count
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 24}
-major	{cd = 26}
 
 # Generic MD files
 file	arch/netwinder/netwinder/autoconf.c
@@ -117,3 +110,5 @@ file	arch/netwinder/pci/pcib.c		pcib
 file	arch/netwinder/pci/pciide_machdep.c	pciide
 
 include "dev/pckbc/files.pckbc"
+
+include "arch/arm/conf/majors.arm32"

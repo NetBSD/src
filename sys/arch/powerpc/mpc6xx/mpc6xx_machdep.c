@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.7.2.2 2002/09/06 08:39:22 jdolecek Exp $	*/
+/*	$NetBSD: mpc6xx_machdep.c,v 1.7.2.3 2002/10/10 18:35:21 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -43,7 +43,6 @@
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.34 2001/04/25 17:53:04 bouyer Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.34.2.1 2002/10/10 18:30:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,25 +33,21 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.34 2001/04/25 17:53:04 bouyer Exp $");
-
-#include "opt_new_scc_driver.h"
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.34.2.1 2002/10/10 18:30:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/tcdsvar.h>
 #include <alpha/tc/tc_3000_300.h>
-#ifndef NEW_SCC_DRIVER
-#include <alpha/tc/sccvar.h>
-#endif
 
 #include <machine/z8530var.h>
 #include <dev/tc/zs_ioasicvar.h>
@@ -100,17 +96,6 @@ dec_3000_300_cons_init()
 
 	ctb = (struct ctb *)(((caddr_t)hwrpb) + hwrpb->rpb_ctb_off);
 
-#ifndef NEW_SCC_DRIVER
-	switch (ctb->ctb_term_type) {
-	case CTB_GRAPHICS:
-		alpha_donot_kludge_scc = 1;
-		return;
-	case CTB_PRINTERPORT:
-		return;
-	default:
-		goto badconsole;
-	}
-#else
 	switch (ctb->ctb_term_type) {
 	case CTB_GRAPHICS:
 #if NWSDISPLAY > 0
@@ -149,16 +134,12 @@ dec_3000_300_cons_init()
 		}
 
 	default:
-		goto badconsole;
+		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
+		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
+		panic("consinit: unknown console type %lu",
+		    ctb->ctb_term_type);
+		/* NOTREACHED */
 	}
-#endif
-	return;
-badconsole:
-	printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
-	printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
-
-	panic("consinit: unknown console type %lu\n",
-	    ctb->ctb_term_type);
 }
 
 static void
@@ -172,7 +153,7 @@ dec_3000_300_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;
@@ -193,7 +174,7 @@ dec_3000_300_device_register(dev, aux)
 	 * as the right channel.  then we find the actual scsi
 	 * device we came from.  note: no SCSI LUN support (yet).
 	 */
-	if (scsiboot && (strcmp(cd->cd_name, "tcds") == 0)) {
+	if (scsiboot && (strcmp(name, "tcds") == 0)) {
 		struct tc_attach_args *tcargs = aux;
 
 		if (b->slot != tcargs->ta_slot)
@@ -205,7 +186,7 @@ dec_3000_300_device_register(dev, aux)
 #endif
 	}
 	if (scsiboot && tcdsdev &&
-	    (strcmp(cd->cd_name, "asc") == 0)) {
+	    (strcmp(name, "asc") == 0)) {
 		struct tcdsdev_attach_args *ta = aux;
 
 		if (parent != (struct device *)tcdsdev)
@@ -221,9 +202,9 @@ dec_3000_300_device_register(dev, aux)
 	}
 
 	if (scsiboot && scsidev &&
-	    (strcmp(cd->cd_name, "sd") == 0 ||
-	     strcmp(cd->cd_name, "st") == 0 ||
-	     strcmp(cd->cd_name, "cd") == 0)) {
+	    (strcmp(name, "sd") == 0 ||
+	     strcmp(name, "st") == 0 ||
+	     strcmp(name, "cd") == 0)) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
@@ -236,12 +217,12 @@ dec_3000_300_device_register(dev, aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(cd->cd_name, "sd") &&
-			    strcmp(cd->cd_name, "cd"))
+			if (strcmp(name, "sd") &&
+			    strcmp(name, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(cd->cd_name, "st"))
+			if (strcmp(name, "st"))
 				return;
 			break;
 		default:
@@ -257,8 +238,8 @@ dec_3000_300_device_register(dev, aux)
 	}
 
 	if (netboot) {
-                if (b->slot == 5 && strcmp(cd->cd_name, "le") == 0 &&
-		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "ioasic")
+                if (b->slot == 5 && strcmp(name, "le") == 0 &&
+		    strcmp(parent->dv_cfdata->cf_name, "ioasic")
 		     == 0) {
 			/*
 			 * no need to check ioasic_attach_args, since only

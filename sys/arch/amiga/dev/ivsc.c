@@ -1,4 +1,4 @@
-/*	$NetBSD: ivsc.c,v 1.28.2.1 2002/02/11 20:07:02 jdolecek Exp $ */
+/*	$NetBSD: ivsc.c,v 1.28.2.2 2002/10/10 18:31:30 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ivsc.c,v 1.28.2.1 2002/02/11 20:07:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ivsc.c,v 1.28.2.2 2002/10/10 18:31:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,9 +74,8 @@ extern int sci_data_wait;
 
 int ivsdma_pseudo = 1;		/* 0=off, 1=on */
 
-struct cfattach ivsc_ca = {
-	sizeof(struct sci_softc), ivscmatch, ivscattach
-};
+CFATTACH_DECL(ivsc, sizeof(struct sci_softc),
+    ivscmatch, ivscattach, NULL, NULL);
 
 /*
  * if this is an IVS board

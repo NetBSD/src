@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.33.2.1 2001/09/13 01:14:14 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.33.2.2 2002/10/10 18:34:55 jdolecek Exp $	*/
 
 /*
  *
@@ -366,6 +366,12 @@ boolean_t	pmap_zero_page_uncached __P((paddr_t));
 /*
  * inline functions
  */
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing

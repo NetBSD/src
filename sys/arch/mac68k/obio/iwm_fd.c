@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.11.8.1 2002/09/06 08:37:01 jdolecek Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.11.8.2 2002/10/10 18:33:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -40,6 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #define FSTYPENAMES
 #define DKTYPENAMES
@@ -58,10 +59,6 @@
 
 #include <mac68k/obio/iwmreg.h>
 #include <mac68k/obio/iwm_fdvar.h>
-
-#ifdef _LKM
-#include "iwm_mod.h"
-#endif
 
 /**
  **	Private functions
@@ -190,11 +187,6 @@ static diskZone_t diskZones[] = {
 	{16,  8, 672, 799}
 };
 
-/* disk(9) framework device switch */
-struct dkdriver fd_dkDriver = {
-	fdstrategy
-};
-
 /* Drive format codes/indexes */
 enum {
 	IWM_400K_GCR = 0,
@@ -222,22 +214,7 @@ enum {
  * {device}_cd
  * references all found devices of a type.
  */
-#ifdef _LKM
-
-struct cfdriver iwm_cd = {
-	NULL,			/* Ptr to array of devices found	 */
-	"iwm",			/* Device name string			 */
-	DV_DULL,		/* Device classification		 */
-	0			/* Number of devices found		 */
-};
-struct cfdriver fd_cd = {
-	NULL,
-	"fd",
-	DV_DISK,
-	0
-};
-
-#else /* defined _LKM */
+#ifndef _LKM
 
 extern struct cfdriver iwm_cd;
 extern struct cfdriver fd_cd;
@@ -245,20 +222,33 @@ extern struct cfdriver fd_cd;
 #endif /* defined _LKM */
 
 /* IWM floppy disk controller */
-struct cfattach iwm_ca = {
-	sizeof(iwm_softc_t),	/* Size of device data for malloc()	 */
-	iwm_match,		/* Probe device and return match level	 */
-	iwm_attach		/* Initialize and attach device		 */
-};
+CFATTACH_DECL(iwm, sizeof(iwm_softc_t),
+    iwm_match, iwm_attach, NULL, NULL);
 
 /* Attached floppy disk drives */
-struct cfattach fd_ca = {
-	sizeof(fd_softc_t),
-	fd_match,
-	fd_attach
+CFATTACH_DECL(fd, sizeof(fd_softc_t),
+    fd_match, fd_attach, NULL, NULL);
+
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
 };
 
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
+/* disk(9) framework device switch */
+struct dkdriver fd_dkDriver = {
+	fdstrategy
+};
 
 /***  Configure the IWM controller  ***/
 
@@ -973,31 +963,6 @@ fdioctl(dev, cmd, data, flags, proc)
 		break;
 	}
 	return result;
-}
-
-
-/*
- * fddump -- We don't dump to a floppy disk.
- */
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-	return ENXIO;
-}
-
-
-/*
- * fdsize -- We don't dump to a floppy disk.
- */
-int
-fdsize(dev)
-	dev_t dev;
-{
-	return -1;
 }
 
 

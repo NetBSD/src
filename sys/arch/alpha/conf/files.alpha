@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.140.2.5 2002/06/23 17:34:11 jdolecek Exp $
+# $NetBSD: files.alpha,v 1.140.2.6 2002/10/10 18:30:59 jdolecek Exp $
 #
 # alpha-specific configuration info
 
@@ -32,9 +32,6 @@ defflag		API_UP1000	# EV6		Alpha Processor, Inc. UP1000
 # Miscellaneous CPU-specific option headers
 defflag		FIX_UNALIGNED_VAX_FP
 defflag		ZS_IOASIC_DMA
-
-# XXX Temporary, until integration is finished.
-defflag		NEW_SCC_DRIVER
 
 # realtime clock compatible to OSF/1
 defflag		CLOCK_COMPAT_OSF1
@@ -70,25 +67,15 @@ include "dev/i2o/files.i2o"
 #
 
 include "dev/scsipi/files.scsipi"
-major { cd = 3 }
-major { sd = 8 }
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major { wd = 4 }
 
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
-major { md = 6 }
-
-# RAIDframe
-major { raid = 16 }
-
-# Logical disks
-major { ld = 17 }
 
 # Raster operations
 include "dev/rasops/files.rasops"
@@ -199,11 +186,6 @@ device	pxg: wsemuldisplaydev, stic
 attach	pxg at tc
 file	dev/tc/pxg.c			pxg		needs-flag
 
-# 8530 UARTs
-device	scc: tty
-attach	scc at ioasic
-file	arch/alpha/tc/scc.c		scc		needs-count
-
 # 8530 UARTs using the MI 8530 driver
 device	zsc { channel = -1 }
 attach	zsc at ioasic with zsc_ioasic
@@ -256,7 +238,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-major	{ fd = 0 }
 
 # ISA Plug 'n Play devices
 file	arch/alpha/isa/isapnp_machdep.c	isapnp
@@ -608,3 +589,5 @@ include "dev/usb/files.usb"
 # Machine-independent IEEE 1394 device support
 #
 include "dev/ieee1394/files.ieee1394"
+
+include	"arch/alpha/conf/majors.alpha"

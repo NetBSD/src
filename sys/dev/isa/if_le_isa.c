@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.27.2.2 2002/09/06 08:44:49 jdolecek Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.27.2.3 2002/10/10 18:39:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.27.2.2 2002/09/06 08:44:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.27.2.3 2002/10/10 18:39:39 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,15 +113,17 @@ int le_dummyprobe __P((struct device *, struct cfdata *, void *));
 void le_ne2100_attach __P((struct device *, struct device *, void *));
 void le_bicc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach nele_ca = {
-	sizeof(struct device), ne2100_isa_probe, le_dummyattach
-}, le_nele_ca = {
-	sizeof(struct le_softc), le_dummyprobe, le_ne2100_attach
-}, bicc_ca = {
-	sizeof(struct device), bicc_isa_probe, le_dummyattach
-}, le_bicc_ca = {
-	sizeof(struct le_softc), le_dummyprobe, le_bicc_attach
-};
+CFATTACH_DECL(nele, sizeof(struct device),
+    ne2100_isa_probe, le_dummyattach, NULL, NULL);
+
+CFATTACH_DECL(le_nele, sizeof(struct le_softc),
+    le_dummyprobe, le_ne2100_attach, NULL, NULL);
+
+CFATTACH_DECL(bicc, sizeof(struct device),
+    bicc_isa_probe, le_dummyattach, NULL, NULL);
+
+CFATTACH_DECL(le_bicc, sizeof(struct le_softc),
+    le_dummyprobe, le_bicc_attach, NULL, NULL);
 
 struct le_isa_params {
 	char *name;

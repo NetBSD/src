@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.10.2 2002/06/23 17:36:00 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.10.3 2002/10/10 18:32:31 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -69,9 +69,8 @@ static void	mainbus_attach(struct device *, struct device *, void *);
 static int	mainbus_submatch(struct device *, struct cfdata *, void *);
 static int	mainbus_print(void *, const char *);
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
 int	mainbus_found;
@@ -173,7 +172,7 @@ mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[MAINBUSCF_ADDR] != ma->ma_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

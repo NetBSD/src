@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.20 2001/04/13 23:30:05 thorpej Exp $ */
+/*	$NetBSD: psl.h,v 1.20.2.1 2002/10/10 18:36:37 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -307,7 +307,15 @@ static __inline u_int64_t getver()
 #ifdef SPLDEBUG
 void prom_printf __P((const char *fmt, ...));
 extern int printspl;
-#define SPLPRINT(x)	if(printspl) { int i=10000000; prom_printf x ; while(i--); }
+#define SPLPRINT(x) \
+{ \
+	if (printspl) { \
+		int i = 10000000; \
+		prom_printf x ; \
+		while (i--) \
+			; \
+	} \
+}
 #define	SPL(name, newpil) \
 static __inline int name##X __P((const char*, int)); \
 static __inline int name##X(const char* file, int line) \
@@ -410,19 +418,6 @@ SPLHOLD(splhigh, PIL_HIGH)
 
 /* splx does not have a return value */
 #ifdef SPLDEBUG
-/* Keep gcc happy -- reduce warnings */
-#if 0
-static __inline void splx(newpil)
-	int newpil;
-{
-	int pil;
-
-	__asm __volatile("rdpr %%pil,%0" : "=r" (pil));
-	SPLPRINT(("{%d->%d}", pil, newpil)); \
-	__asm __volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
-}
-#endif
-
 #define	spl0()	spl0X(__FILE__, __LINE__)
 #define	spllowersoftclock() spllowersoftclockX(__FILE__, __LINE__)
 #define	splsoftint()	splsoftintX(__FILE__, __LINE__)
@@ -446,17 +441,20 @@ static __inline void splx(newpil)
 
 static __inline void splxX __P((int, const char*, int));
 static __inline void splxX(newpil, file, line)
-	int newpil, line;
-	const char* file;
+	int newpil;
+	const char *file;
+	int line;
 #else
 static __inline void splx(newpil)
 	int newpil;
 #endif
 {
+#ifdef SPLDEBUG
 	int pil;
 
 	__asm __volatile("rdpr %%pil,%0" : "=r" (pil));
-	SPLPRINT(("{%d->%d}", pil, newpil)); \
+	SPLPRINT(("{%d->%d}", pil, newpil));
+#endif
 	__asm __volatile("wrpr %%g0,%0,%%pil" : : "rn" (newpil));
 }
 #endif /* KERNEL && !_LOCORE */

@@ -1,4 +1,4 @@
-/*	$NetBSD: plumisa_machdep.c,v 1.1.12.1 2002/01/10 19:44:06 thorpej Exp $ */
+/*	$NetBSD: plumisa_machdep.c,v 1.1.12.2 2002/10/10 18:32:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@ struct plumisab_softc {
 	void *sc_ih;
 };
 
-struct cfattach plumisab_ca = {
-	sizeof(struct plumisab_softc), plumisabmatch, plumisabattach
-};
+CFATTACH_DECL(plumisab, sizeof(struct plumisab_softc),
+    plumisabmatch, plumisabattach, NULL, NULL);
 
 int
 plumisabmatch(struct device *parent, struct cfdata *match, void *aux)
@@ -76,7 +75,7 @@ plumisabmatch(struct device *parent, struct cfdata *match, void *aux)
 	struct plumiobus_attach_args *pba = aux;
 	platid_mask_t mask;
     
-	if (strcmp(pba->pba_busname, match->cf_driver->cd_name)) {
+	if (strcmp(pba->pba_busname, match->cf_name)) {
 		return (0);
 	}
 

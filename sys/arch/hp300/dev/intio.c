@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.6.28.2 2002/06/23 17:36:08 jdolecek Exp $	*/
+/*	$NetBSD: intio.c,v 1.6.28.3 2002/10/10 18:32:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.6.28.2 2002/06/23 17:36:08 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.6.28.3 2002/10/10 18:32:39 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,8 @@ int	intiomatch(struct device *, struct cfdata *, void *);
 void	intioattach(struct device *, struct device *, void *);
 int	intioprint(void *, const char *);
 
-const struct cfattach intio_ca = {
-	sizeof(struct device), intiomatch, intioattach
-};
+CFATTACH_DECL(intio, sizeof(struct device),
+    intiomatch, intioattach, NULL, NULL);
 
 #if defined(HP320) || defined(HP330) || defined(HP340) || defined(HP345) || \
     defined(HP350) || defined(HP360) || defined(HP370) || defined(HP375) || \

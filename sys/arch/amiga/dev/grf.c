@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.37.4.4 2002/06/23 17:34:25 jdolecek Exp $ */
+/*	$NetBSD: grf.c,v 1.37.4.5 2002/10/10 18:31:24 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37.4.4 2002/06/23 17:34:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37.4.5 2002/10/10 18:31:24 jdolecek Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37.4.4 2002/06/23 17:34:25 jdolecek Exp $"
 #include <amiga/dev/viewioctl.h>
 
 #include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "view.h"
 #include "grf.h"
@@ -88,11 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.37.4.4 2002/06/23 17:34:25 jdolecek Exp $"
 int grfon(dev_t);
 int grfoff(dev_t);
 int grfsinfo(dev_t, struct grfdyninfo *);
-#ifdef BANKEDDEVPAGER
-int grfbanked_get(dev_t, off_t, int);
-int grfbanked_cur(dev_t);
-int grfbanked_set(dev_t, int);
-#endif
 
 void grfattach(struct device *, struct device *, void *);
 int grfmatch(struct device *, struct cfdata *, void *);
@@ -102,8 +96,19 @@ int grfprint(void *, const char *);
  */
 struct grf_softc *grfsp[NGRF];
 
-struct cfattach grf_ca = {
-	sizeof(struct device), grfmatch, grfattach
+CFATTACH_DECL(grf, sizeof(struct device),
+    grfmatch, grfattach, NULL, NULL);
+
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_poll(grfpoll);
+dev_type_mmap(grfmmap);
+dev_type_kqfilter(grfkqfilter);
+
+const struct cdevsw grf_cdevsw = {
+	grfopen, grfclose, nullread, nullwrite, grfioctl,
+	nostop, notty, grfpoll, grfmmap, grfkqfilter,
 };
 
 /*
@@ -142,9 +147,7 @@ grfattach(struct device *pdp, struct device *dp, void *auxp)
 	/*
 	 * find our major device number
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == grfopen)
-			break;
+	maj = cdevsw_lookup_major(&grf_cdevsw);
 
 	gp->g_grfdev = makedev(maj, gp->g_unit);
 	if (dp != NULL) {
@@ -275,8 +278,11 @@ grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		 * view code if the unit is 0
 		 * XXX
 		 */
-		if (GRFUNIT(dev) == 0)
-			return(viewioctl(dev, cmd, data, flag, p));
+		if (GRFUNIT(dev) == 0) {
+			extern const struct cdevsw view_cdevsw;
+
+			return((*view_cdevsw.d_ioctl)(dev, cmd, data, flag, p));
+		}
 #endif
 		error = EPASSTHROUGH;
 		break;
@@ -324,10 +330,6 @@ grfmmap(dev_t dev, off_t off, int prot)
 	 */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
-#ifdef BANKEDDEVPAGER
-		if (gi->gd_bank_size)
-			off %= gi->gd_bank_size;
-#endif
 		return(((paddr_t)gi->gd_fbaddr + off) >> PGSHIFT);
 	}
 	/* bogus */
@@ -393,46 +395,4 @@ grfsinfo(dev_t dev, struct grfdyninfo *dyninfo)
 	return(error);
 }
 
-#ifdef BANKEDDEVPAGER
-
-int
-grfbanked_get(dev_t dev, off_t off, int prot)
-{
-	struct grf_softc *gp;
-	struct grfinfo *gi;
-	int error, bank;
-
-	gp = grfsp[GRFUNIT(dev)];
-	gi = &gp->g_display;
-
-	off -= gi->gd_regsize;
-	if (off < 0 || off >= gi->gd_fbsize)
-		return -1;
-
-	error = gp->g_mode(gp, GM_GRFGETBANK, &bank, off, prot);
-	return error ? -1 : bank;
-}
-
-int
-grfbanked_cur(dev_t dev)
-{
-	struct grf_softc *gp;
-	int error, bank;
-
-	gp = grfsp[GRFUNIT(dev)];
-
-	error = gp->g_mode(gp, GM_GRFGETCURBANK, &bank, 0, 0);
-	return(error ? -1 : bank);
-}
-
-int
-grfbanked_set(dev_t dev, int bank)
-{
-	struct grf_softc *gp;
-
-	gp = grfsp[GRFUNIT(dev)];
-	return(gp->g_mode(gp, GM_GRFSETBANK, &bank, 0, 0) ? -1 : 0);
-}
-
-#endif /* BANKEDDEVPAGER */
 #endif	/* NGRF > 0 */

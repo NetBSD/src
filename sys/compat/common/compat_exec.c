@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.3.4.1 2002/01/10 19:50:58 thorpej Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.3.4.2 2002/10/10 18:37:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.3.4.1 2002/01/10 19:50:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.3.4.2 2002/10/10 18:37:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ exec_aout_prep_oldzmagic(p, epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.48.2.3 2002/02/11 20:09:52 jdolecek Exp $	*/
+/*	$NetBSD: pas.c,v 1.48.2.4 2002/10/10 18:39:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.48.2.3 2002/02/11 20:09:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.48.2.4 2002/10/10 18:39:47 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,9 +261,8 @@ static	int pasfind __P((struct device *, struct pas_softc *,
 #define PASPROBE  1
 #define PASATTACH 0
 
-struct cfattach pas_ca = {
-	sizeof(struct pas_softc), pasprobe, pasattach
-};
+CFATTACH_DECL(pas, sizeof(struct pas_softc),
+    pasprobe, pasattach, NULL, NULL);
 
 /*
  * Probe / attach routines.

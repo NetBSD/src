@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.9.4.1 2001/09/13 01:14:39 thorpej Exp $	*/
+/*	$NetBSD: consinit.c,v 1.9.4.2 2002/10/10 18:36:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -46,7 +46,6 @@
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
 #include <machine/bsd_openprom.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
@@ -93,10 +92,9 @@ prom_cnprobe(cd)
 {
 #if NPCONS > 0
 	int maj;
+	extern const struct cdevsw pcons_cdevsw;
 
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == pconsopen)
-			break;
+	maj = cdevsw_lookup_major(&pcons_cdevsw);
 	cd->cn_dev = makedev(maj, 0);
 	cd->cn_pri = CN_INTERNAL;
 #endif

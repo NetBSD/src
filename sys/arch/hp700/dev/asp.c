@@ -1,4 +1,4 @@
-/*	$NetBSD: asp.c,v 1.1.2.3 2002/09/06 08:35:12 jdolecek Exp $	*/
+/*	$NetBSD: asp.c,v 1.1.2.4 2002/10/10 18:32:46 jdolecek Exp $	*/
 
 /*	$OpenBSD: asp.c,v 1.5 2000/02/09 05:04:22 mickey Exp $	*/
 
@@ -135,9 +135,8 @@ struct asp_softc {
 int	aspmatch __P((struct device *, struct cfdata *, void *));
 void	aspattach __P((struct device *, struct device *, void *));
 
-struct cfattach asp_ca = {
-	sizeof(struct asp_softc), aspmatch, aspattach
-};
+CFATTACH_DECL(asp, sizeof(struct asp_softc),
+    aspmatch, aspattach, NULL, NULL);
 
 /*
  * Before a module is matched, this fixes up its gsc_attach_args.

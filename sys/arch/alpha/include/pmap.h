@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.51.2.2 2001/09/13 01:12:56 thorpej Exp $ */
+/* $NetBSD: pmap.h,v 1.51.2.3 2002/10/10 18:31:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -157,22 +157,11 @@ typedef struct pv_entry {
 #ifdef _KERNEL
 
 #ifndef _LKM
-#include "opt_new_scc_driver.h"
-#include "opt_dec_3000_300.h"			/* XXX */
-#include "opt_dec_3000_500.h"			/* XXX */
 #include "opt_dec_kn8ae.h"			/* XXX */
 
-#if defined(NEW_SCC_DRIVER)
 #if defined(DEC_KN8AE)
 #define	_PMAP_MAY_USE_PROM_CONSOLE
 #endif
-#else /* ! NEW_SCC_DRIVER */
-#if defined(DEC_3000_300)		\
- || defined(DEC_3000_500)		\
- || defined(DEC_KN8AE) 				/* XXX */
-#define _PMAP_MAY_USE_PROM_CONSOLE		/* XXX */
-#endif						/* XXX */
-#endif /* NEW_SCC_DRIVER */
 
 #if defined(MULTIPROCESSOR)
 struct cpu_info;
@@ -202,6 +191,12 @@ void	pmap_do_tlb_shootdown(struct cpu_info *, struct trapframe *);
 
 #define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
 #define	pmap_update(pmap)		/* nothing (yet) */
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 #define	pmap_is_referenced(pg)						\
 	(((pg)->mdpage.pvh_attrs & PGA_REFERENCED) != 0)

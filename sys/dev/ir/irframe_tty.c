@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.19.4.4 2002/10/02 22:02:26 jdolecek Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.19.4.5 2002/10/10 18:39:26 jdolecek Exp $	*/
 
 /*
  * TODO
@@ -825,11 +825,16 @@ irframet_get_turnarounds(void *h, int *turnarounds)
 void
 irt_ioctl(struct tty *tp, u_long cmd, void *arg)
 {
+	const struct cdevsw *cdev;
 	int error;
 	dev_t dev;
 
 	dev = tp->t_dev;
-	error = cdevsw[major(dev)].d_ioctl(dev, cmd, arg, 0, curproc);
+	cdev = cdevsw_lookup(dev);
+	if (cdev != NULL)
+		error = (*cdev->d_ioctl)(dev, cmd, arg, 0, curproc);
+	else
+		error = ENXIO;
 #ifdef DIAGNOSTIC
 	if (error)
 		printf("irt_ioctl: cmd=0x%08lx error=%d\n", cmd, error);

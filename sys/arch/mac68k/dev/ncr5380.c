@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.47 2001/04/25 17:53:14 bouyer Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.47.2.1 2002/10/10 18:33:46 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -196,10 +196,10 @@ int	ncr_match __P((struct device *, struct cfdata *, void *));
 #define CFNAME(n)	__CONCAT(n,_cd)
 #define CANAME(n)	__CONCAT(n,_ca)
 #define CFSTRING(n)	__STRING(n)
+#define	CFDRNAME(n)	n
 
-struct cfattach CANAME(DRNAME) = {
-	sizeof(struct ncr_softc), ncr_match, ncr_attach
-};
+CFATTACH_DECL(CFDRNAME(DRNAME), sizeof(struct ncr_softc),
+    ncr_match, ncr_attach, NULL, NULL);
 
 extern struct cfdriver CFNAME(DRNAME);
 
@@ -687,7 +687,7 @@ struct ncr_softc *sc;
 #else
 			    if (pdma_ready())
 				return;
-			    panic("Got DMA interrupt without DMA\n");
+			    panic("Got DMA interrupt without DMA");
 #endif
 			}
 			scsi_clr_ipend();

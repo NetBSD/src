@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpcom_ixm.c,v 1.2.2.2 2002/09/06 08:34:12 jdolecek Exp $ */
+/*	$NetBSD: ixpcom_ixm.c,v 1.2.2.3 2002/10/10 18:32:27 jdolecek Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -56,9 +56,8 @@
 static int	ixpcom_ixm_match(struct device *, struct cfdata *, void *);
 static void	ixpcom_ixm_attach(struct device *, struct device *, void *);
 
-struct cfattach ixpcom_ixm_ca = {
-	sizeof(struct ixpcom_softc), ixpcom_ixm_match, ixpcom_ixm_attach
-};
+CFATTACH_DECL(ixpcom_ixm, sizeof(struct ixpcom_softc),
+    ixpcom_ixm_match, ixpcom_ixm_attach, NULL, NULL);
 
 static int
 ixpcom_ixm_match(parent, match, aux)
@@ -66,7 +65,7 @@ ixpcom_ixm_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	if (strcmp(match->cf_driver->cd_name, "ixpcom") == 0)
+	if (strcmp(match->cf_name, "ixpcom") == 0)
 		return 1;
 	return 0;
 }

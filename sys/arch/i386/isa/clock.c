@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.67.2.2 2002/09/06 08:36:28 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.67.2.3 2002/10/10 18:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -90,7 +90,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67.2.2 2002/09/06 08:36:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67.2.3 2002/10/10 18:33:31 jdolecek Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -112,6 +112,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.67.2.2 2002/09/06 08:36:28 jdolecek Exp 
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
 #include <dev/clock_subr.h>
+#include <machine/specialreg.h> 
 
 #include "mca.h"
 #if NMCA > 0
@@ -132,9 +133,8 @@ int clock_debug = 0;
 int sysbeepmatch __P((struct device *, struct cfdata *, void *));
 void sysbeepattach __P((struct device *, struct device *, void *));
 
-struct cfattach sysbeep_ca = {
-	sizeof(struct device), sysbeepmatch, sysbeepattach
-};
+CFATTACH_DECL(sysbeep, sizeof(struct device),
+    sysbeepmatch, sysbeepattach, NULL, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
@@ -150,7 +150,6 @@ void	rtcput __P((mc_todregs *));
 int 	bcdtobin __P((int));
 int	bintobcd __P((int));
 
-static void check_clock_bug __P((void));
 static inline int gettick_broken_latch __P((void));
 
 
@@ -177,35 +176,18 @@ mc146818_write(sc, reg, datum)
 	outb(IO_RTC+1, datum);
 }
 
-static u_long rtclock_tval;
-static int clock_broken_latch = 0;
+u_long rtclock_tval;
+int clock_broken_latch = 0;
 
 #ifdef CLOCK_PARANOIA
 static int ticks[6];
 #endif
-
 /*
  * i8254 latch check routine:
  *     National Geode (formerly Cyrix MediaGX) has a serious bug in
  *     its built-in i8254-compatible clock module.
- *     Set the variable 'clock_broken_latch' to indicate it.
- *     XXX check only cpu_id
+ *     machdep sets the variable 'clock_broken_latch' to indicate it.
  */
-static void
-check_clock_bug()
-{
-	extern int cpu_id;
-
-	switch (cpu_id) {
-	case 0x440:     /* Cyrix MediaGX */
-	case 0x540:     /* GXm */
-		clock_broken_latch = 1;
-		break;
-	default:
-		clock_broken_latch = 0;
-		break;
-	}
-}
 
 int
 gettick_broken_latch()
@@ -300,8 +282,6 @@ initrtclock()
 	outb(IO_TIMER1+TIMER_CNTR0, tval / 256);
 
 	rtclock_tval = tval;
-
-	check_clock_bug();
 }
 
 /*
@@ -409,6 +389,29 @@ clockintr(arg)
 	void *arg;
 {
 	struct clockframe *frame = arg;		/* not strictly necessary */
+#if defined(I586_CPU) || defined(I686_CPU)
+	static int microset_iter; /* call tsc_microset once/sec */
+	struct cpu_info *ci = curcpu();
+	extern struct timeval tsc_time;
+	
+	/*
+	 * If we have a cycle counter, do the microset thing.
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		if (
+#if defined(MULTIPROCESSOR)
+		    CPU_IS_PRIMARY(ci) &&
+#endif
+		    (microset_iter--) == 0) {
+			tsc_time = time;
+			microset_iter = hz-1;
+#if defined(MULTIPROCESSOR)
+			i386_broadcast_ipi(I386_IPI_MICROSET);
+#endif
+			tsc_microset(ci);
+		}
+	}
+#endif
 
 	hardclock(frame);
 
@@ -450,7 +453,7 @@ gettick()
  * Don't rely on this being particularly accurate.
  */
 void
-delay(n)
+i8254_delay(n)
 	int n;
 {
 	int tick, otick;
@@ -564,7 +567,7 @@ sysbeep(pitch, period)
 }
 
 void
-cpu_initclocks()
+i8254_initclocks()
 {
 
 	/*
@@ -747,7 +750,10 @@ inittodr(base)
 	mc_todregs rtclk;
 	struct clock_ymdhms dt;
 	int s;
-
+#if defined(I586_CPU) || defined(I686_CPU)
+	struct cpu_info *ci = curcpu();
+	extern struct timeval tsc_time;
+#endif
 	/*
 	 * We mostly ignore the suggested time (which comes from the
 	 * file system) and go for the RTC clock time stored in the
@@ -811,6 +817,12 @@ inittodr(base)
 	time.tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 #ifdef DEBUG_CLOCK
 	printf("readclock: %ld (%ld)\n", time.tv_sec, base);
+#endif
+#if defined(I586_CPU) || defined(I686_CPU)
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		tsc_time = time;
+		tsc_microset(ci);
+	}
 #endif
 
 	if (base != 0 && base < time.tv_sec - 5*SECYR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26.2.1 2001/08/03 04:11:16 lukem Exp $	*/
+/*	$NetBSD: clock.c,v 1.26.2.2 2002/10/10 18:32:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
 #include <sys/device.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <dev/clock_subr.h>
 
@@ -88,7 +89,6 @@ struct clock_softc {
  */
 #define	RTC_OPEN	1
 
-/* {b,c}devsw[] function prototypes for rtc functions */
 dev_type_open(rtcopen);
 dev_type_close(rtcclose);
 dev_type_read(rtcread);
@@ -97,11 +97,15 @@ dev_type_write(rtcwrite);
 static void	clockattach __P((struct device *, struct device *, void *));
 static int	clockmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach clock_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
-};
+CFATTACH_DECL(clock, sizeof(struct clock_softc),
+    clockmatch, clockattach, NULL, NULL);
 
 extern struct cfdriver clock_cd;
+
+const struct cdevsw rtc_cdevsw = {
+	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 void statintr __P((struct clockframe));
 

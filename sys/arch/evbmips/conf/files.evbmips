@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbmips,v 1.2.8.2 2002/06/23 17:35:47 jdolecek Exp $
+#	$NetBSD: files.evbmips,v 1.2.8.3 2002/10/10 18:32:29 jdolecek Exp $
 
 # maxpartitions must be the first item in files.${ARCH}
 maxpartitions 16
@@ -20,3 +20,5 @@ file	dev/clock_subr.c
 
 # Console glue.
 file	dev/cons.c
+
+include	"arch/evbmips/conf/majors.evbmips"

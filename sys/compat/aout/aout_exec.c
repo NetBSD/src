@@ -1,4 +1,4 @@
-/*	$NetBSD: aout_exec.c,v 1.11.2.1 2002/01/10 19:50:54 thorpej Exp $	*/
+/*	$NetBSD: aout_exec.c,v 1.11.2.2 2002/10/10 18:37:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.11.2.1 2002/01/10 19:50:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.11.2.2 2002/10/10 18:37:50 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: aout_exec.c,v 1.11.2.1 2002/01/10 19:50:54 thorpej E
 #include <sys/signalvar.h>
 
 #include <compat/aout/aout_syscall.h>
- 
+
 extern struct sysent aout_sysent[];
 #ifdef SYSCALL_DEBUG
 extern const char * const aout_syscallnames[];
@@ -90,4 +90,6 @@ struct emul emul_netbsd_aout = {
 #else
 	syscall,
 #endif
+	NULL,
+	NULL,
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: aedvar.h,v 1.2.8.1 2002/06/18 19:28:34 jdolecek Exp $	*/
+/*	$NetBSD: aedvar.h,v 1.2.8.2 2002/10/10 18:33:57 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham

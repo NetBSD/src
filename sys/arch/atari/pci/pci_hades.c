@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.1.4.1 2002/01/10 19:40:04 thorpej Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.1.4.2 2002/10/10 18:32:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -155,7 +155,7 @@ pci_intr_establish(pc, ih, level, ih_fun, ih_arg)
 	iinfo_p = &iinfo[slot];
 
 	if (iinfo_p->ipl > 0)
-	    panic("pci_intr_establish: interrupt was already established\n");
+	    panic("pci_intr_establish: interrupt was already established");
 
 	ihand = intr_establish((slot == 3) ? 23 : 16 + slot, USER_VEC, 0,
 				(hw_ifun_t)iifun, (void *)slot);
@@ -184,7 +184,7 @@ pci_intr_disestablish(pc, cookie)
 	pci_intr_info_t *iinfo_p = (pci_intr_info_t *)cookie;
 
 	if (iinfo->ipl < 0)
-	    panic("pci_intr_disestablish: interrupt was not established\n");
+	    panic("pci_intr_disestablish: interrupt was not established");
 
 	MFP2->mf_imrb &= ~iinfo->imask;
 	MFP2->mf_ierb &= ~iinfo->imask;

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.66.2.3 2002/09/06 08:42:26 jdolecek Exp $     */
+/*	$NetBSD: trap.c,v 1.66.2.4 2002/10/10 18:37:24 jdolecek Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -150,9 +150,11 @@ trap(struct trapframe *frame)
 	u_int	rv, addr, umode;
 	struct	proc *p = curproc;
 	u_quad_t oticks = 0;
+	struct vmspace *vm;
 	struct vm_map *map;
 	vm_prot_t ftype;
-	
+	vsize_t nss;
+
 	uvmexp.traps++;
 	if ((umode = USERMODE(frame))) {
 		type |= T_USER;
@@ -228,10 +230,13 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 		 * bother doing it here.
 		 */
 		addr = trunc_page(frame->code);
-		if ((umode == 0) && (frame->code < 0))
+		if ((umode == 0) && (frame->code < 0)) {
+			vm = NULL;
 			map = kernel_map;
-		else
-			map = &p->p_vmspace->vm_map;
+		} else {
+			vm = p->p_vmspace;
+			map = &vm->vm_map;
+		}
 
 		if (frame->trap & T_WRITE)
 			ftype = VM_PROT_WRITE;
@@ -242,6 +247,21 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			KERNEL_PROC_LOCK(p);
 		else
 			KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+
+		nss = 0;
+		if (map != kernel_map &&
+		    (caddr_t)addr >= vm->vm_maxsaddr &&
+		    (caddr_t)addr < (caddr_t)USRSTACK) {
+			nss = btoc(USRSTACK - addr);
+			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
+				/*
+				 * Set nss to 0, since this case is not
+				 * a "stack extension".
+				 */
+				nss = 0;
+			}
+		}
+
 		rv = uvm_fault(map, addr, 0, ftype);
 		if (rv != 0) {
 			if (umode == 0) {
@@ -260,8 +280,11 @@ if(faultdebug)printf("trap accflt type %lx, code %lx, pc %lx, psl %lx\n",
 			} else {
 				sig = SIGSEGV;
 			}
-		} else
+		} else {
 			trapsig = 0;
+			if (nss != 0 && nss > vm->vm_ssize)
+				vm->vm_ssize = nss;
+		}
 		if (umode) 
 			KERNEL_PROC_UNLOCK(p);
 		else

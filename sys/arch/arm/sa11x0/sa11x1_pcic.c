@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.1.2.2 2002/01/10 19:38:32 thorpej Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.1.2.3 2002/10/10 18:31:56 jdolecek Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,9 +104,8 @@ static struct platid_data sacpcic_platid_table[] = {
 };
 #endif
 
-struct cfattach sacpcic_ca = {
-	sizeof(struct sacpcic_softc), sacpcic_match, sacpcic_attach
-};
+CFATTACH_DECL(sacpcic, sizeof(struct sacpcic_softc),
+    sacpcic_match, sacpcic_attach, NULL, NULL);
 
 static int
 sacpcic_match(parent, cf, aux)
@@ -203,7 +202,7 @@ sacpcic_submatch(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return (*cf->cf_attach->ca_match)(parent, cf, aux);
+	return config_match(parent, cf, aux);
 }
 
 
@@ -238,7 +237,7 @@ sacpcic_read(so, reg)
 		return (bit & cr);
 
 	default:
-		panic("sacpcic_read: bogus register\n");
+		panic("sacpcic_read: bogus register");
 	}
 }
 
@@ -318,7 +317,7 @@ sacpcic_set_power(so, arg)
 		newval = 1;
 		break;
 	default:
-		panic("sacpcic_set_power: bogus arg\n");
+		panic("sacpcic_set_power: bogus arg");
 	}
 
 	s = splbio();
@@ -333,7 +332,7 @@ sacpcic_set_power(so, arg)
 		break;
 	default:
 		splx(s);
-		panic("sacpcic_set_power\n");
+		panic("sacpcic_set_power");
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SACCGPIOA_DVR, newval);
 	splx(s);

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.2.2 2002/09/06 08:34:37 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.2.3 2002/10/10 18:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -35,6 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_sh5_debug.h"
+#include "opt_sh5_cpu.h"
 #include "dtfcons.h"
 
 #include <sys/param.h>
@@ -65,10 +67,14 @@
 #include <sh5/dev/rtcreg.h>
 #include <sh5/dev/rtcvar.h>
 
+#include <evbsh5/dev/sysfpgavar.h>
+
 #include <evbsh5/evbsh5/machdep.h>
 
-
+#ifndef SH5_CPU_SPEED
 static void compute_ctc_tick_per_us(void);
+#endif
+
 struct boot_params evbsh5_bootparams;
 
 struct vm_map *exec_map;
@@ -78,6 +84,8 @@ struct vm_map *phys_map;
 char machine[] = MACHINE;
 
 char cpu_model[128];
+
+#define	EVBSH5_RAM_START_PHYS	0x80000000
 
 /*
  * Physical addresses of important devices on the Cayman board
@@ -106,7 +114,7 @@ evbsh5_memory_init(vaddr_t endkernel, struct mem_region *mr)
 
 	ksize = endkernel - SH5_KSEG0_BASE;
 
-	mr[0].mr_start = 0x80000000 + ksize;
+	mr[0].mr_start = EVBSH5_RAM_START_PHYS + ksize;
 	mr[0].mr_kvastart = SH5_KSEG0_BASE + ksize;
 	mr[0].mr_size = sh5_trunc_page(evbsh5_bootparams.bp_physramsize)- ksize;
 	mr[1].mr_start = 0;
@@ -118,12 +126,18 @@ evbsh5_memory_init(vaddr_t endkernel, struct mem_region *mr)
 void
 evbsh5_init(void)
 {
+	extern char sh5_panic_stack[];
 #if NDTFCONS > 0
 	extern char *_dtf_buffer;
 	extern void _dtf_trap_frob(void);
 	vaddr_t dtfbuf;
 	paddr_t frob_p;
 #endif
+
+	/* XXX: Will need to be revisited for SMP */
+	curcpu()->ci_panicstkphys = EVBSH5_RAM_START_PHYS +
+	    (((uintptr_t)&sh5_panic_stack[0]) - SH5_KSEG0_BASE) +
+	    (USPACE - sizeof(struct trapframe));
 
 	/*
 	 * Fix up the cpu-specific TLB/cache manipulation functions
@@ -132,16 +146,21 @@ evbsh5_init(void)
 	__cpu_tlbinv_cookie = _sh5_stb1_tlbinv_cookie;
 	__cpu_tlbinv_all = _sh5_stb1_tlbinv_all;
 	__cpu_tlbload = _sh5_stb1_tlbload;
-	__cpu_cache_purge = _sh5_stb1_cache_purge;
-	__cpu_cache_invalidate = _sh5_stb1_cache_invalidate;
+	__cpu_cache_dpurge = _sh5_stb1_cache_dpurge;
+	__cpu_cache_dpurge_iinv = _sh5_stb1_cache_dpurge_iinv;
+	__cpu_cache_dinv = _sh5_stb1_cache_dinv;
+	__cpu_cache_dinv_iinv = _sh5_stb1_cache_dinv_iinv;
+	__cpu_cache_iinv = _sh5_stb1_cache_iinv;
+	__cpu_cache_iinv_all = _sh5_stb1_cache_iinv_all;
 
 #if NDTFCONS > 0
 	dtfbuf = (vaddr_t) &_dtf_buffer;
 	frob_p = (paddr_t) (uintptr_t) _dtf_trap_frob;
-	frob_p = 0x80000000 + (frob_p - SH5_KSEG0_BASE);
+	frob_p = EVBSH5_RAM_START_PHYS + (frob_p - SH5_KSEG0_BASE);
 
 	dtf_init(0xc100018, frob_p,
-	    (paddr_t)(0x80000000 + (dtfbuf - SH5_KSEG0_BASE)), dtfbuf);
+	    (paddr_t)(EVBSH5_RAM_START_PHYS + (dtfbuf - SH5_KSEG0_BASE)),
+	    dtfbuf);
 #endif
 
 	/*
@@ -150,20 +169,24 @@ evbsh5_init(void)
 	bus_space_map(&_sh5_bus_space_tag, EVBSH5_PBRIDGE_PHYS_ADDR,
 	    EVBSH5_PBRIDGE_LEN, 0, &_evbsh5_bh_pbridge);
 
+#ifdef notyet
 	/*
 	 * Map the system FPGA/Super IO area
 	 */
 	bus_space_map(&_sh5_bus_space_tag, EVBSH5_SYSFPGA_PHYS_ADDR,
 	    EVBSH5_SYSFPGA_LEN, 0, &_evbsh5_bh_sysfpga);
+#endif
 
-	/*
-	 * Figure out how fast the CPU is
-	 *
-	 * XXX: Should just read the relevant system FPGA bits ...
-	 */
+#ifndef SH5_CPU_SPEED
 	compute_ctc_tick_per_us();
+#else
+	_sh5_ctc_ticks_per_us = SH5_CPU_SPEED;
+#endif
+
+	boothowto = RB_SINGLE | RB_KDB;
 }
 
+#ifndef SH5_CPU_SPEED
 static void
 compute_ctc_tick_per_us(void)
 {
@@ -193,9 +216,13 @@ compute_ctc_tick_per_us(void)
 	 * Fetch the current value of the 128Hz RTC counter and
 	 * add 16 so we can time the loop to pretty much exactly 125mS
 	 */
-	r64cnt = (rtc_read_r64cnt(bt, bh) + 16) & RTC_R64CNT_MASK;
+	r64cnt = rtc_read_r64cnt(bt, bh);
+	while (r64cnt == rtc_read_r64cnt(bt, bh))
+		;
 
 	__asm __volatile("putcon %0, ctc" :: "r"(ctcstart));
+
+	r64cnt = (r64cnt + 17) & RTC_R64CNT_MASK;
 
 	/*
 	 * Wait 125mS
@@ -213,6 +240,7 @@ compute_ctc_tick_per_us(void)
 
 	bus_space_unmap(bt, bh, RTC_REG_SIZE);
 }
+#endif
 
 void
 cpu_startup(void)
@@ -222,8 +250,6 @@ cpu_startup(void)
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[16];
-
-	strcpy(cpu_model, "SuperH SH-5 STB1");
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -295,7 +321,10 @@ cpu_startup(void)
 				 nmbclusters * mclbytes, VM_MAP_INTRSAFE,
 				 FALSE, NULL);
 
-	printf("%s%s\n", version, cpu_model);
+	strcpy(cpu_model, "SuperH SH5");
+
+	printf("%s%s running at %dMHz\n", version, cpu_model,
+	    (u_int)_sh5_ctc_ticks_per_us);
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
@@ -331,4 +360,11 @@ cpu_reboot(int how, char *bootstr)
 void
 device_register(struct device *dev, void *arg)
 {
+}
+
+void
+sh5_nmi_clear(void)
+{
+
+	sysfpga_nmi_clear();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.1 2001/06/14 12:57:14 fredette Exp $	*/
+/*	$NetBSD: idprom.c,v 1.1.2.1 2002/10/10 18:37:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ idprom_init()
 		idprom_init3();
 
 	if (identity_prom.idp_format != 1)
-		panic("idprom: bad version\n");
+		panic("idprom: bad version");
 	cpu_machine_id = identity_prom.idp_machtype;
 }
 
@@ -168,7 +168,7 @@ idprom_init3x()
 		if (idprom_cksum(p) == 0)
 			goto found;
 	}
-	panic("idprom: not found in monitor data\n");
+	panic("idprom: not found in monitor data");
 
 found:
 	printf("idprom: copy found at 0x%x\n", (int)p);

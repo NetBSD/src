@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.161.2.3 2002/09/06 08:36:23 jdolecek Exp $	*/
+/*	$NetBSD: trap.c,v 1.161.2.4 2002/10/10 18:33:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161.2.3 2002/09/06 08:36:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161.2.4 2002/10/10 18:33:26 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -130,6 +130,9 @@ int trapwrite __P((unsigned));
 #endif
 
 #ifdef KVM86
+#ifdef MULTIPROCESSOR
+#error KVM86 needs a rewrite to support MP systems.
+#endif
 #include <machine/kvm86.h>
 #define KVM86MODE (kvm86_incall)
 #else
@@ -189,6 +192,7 @@ trap(frame)
 	int resume;
 	caddr_t onfault;
 	int error;
+	uint32_t cr2;
 
 	uvmexp.traps++;
 
@@ -197,7 +201,7 @@ trap(frame)
 	if (trapdebug) {
 		printf("trap %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
 		    frame.tf_trapno, frame.tf_err, frame.tf_eip, frame.tf_cs,
-		    frame.tf_eflags, rcr2(), cpl);
+		    frame.tf_eflags, rcr2(), lapic_tpr);
 		printf("curproc %p\n", curproc);
 	}
 #endif
@@ -250,8 +254,9 @@ trap(frame)
 		else
 			printf("unknown trap %d", frame.tf_trapno);
 		printf(" in %s mode\n", (type & T_USER) ? "user" : "supervisor");
-		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x cpl %x\n",
-		    type, frame.tf_err, frame.tf_eip, frame.tf_cs, frame.tf_eflags, rcr2(), cpl);
+		printf("trap type %d code %x eip %x cs %x eflags %x cr2 %x imask %x\n",
+		    type, frame.tf_err, frame.tf_eip, frame.tf_cs,
+		    frame.tf_eflags, rcr2(), lapic_tpr);
 
 		panic("trap");
 		/*NOTREACHED*/
@@ -266,6 +271,8 @@ trap(frame)
 	case T_SEGNPFLT:
 	case T_ALIGNFLT:
 	case T_TSSFLT:
+		if (p == NULL)
+			goto we_re_toast;
 		/* Check for copyin/copyout fault. */
 		if (pcb->pcb_onfault != 0) {
 copyefault:
@@ -325,7 +332,7 @@ copyfault:
 		case 0x0f:	/* 0x0f prefix */
 			switch (*(u_char *)(frame.tf_eip+1)) {
 			case 0xa1:		/* popl %fs */
-				vframe = (void *)((int)&frame.tf_esp - 
+				vframe = (void *)((int)&frame.tf_esp -
 				    offsetof(struct trapframe, tf_fs));
 				resume = (int)resume_pop_fs;
 				break;
@@ -357,12 +364,16 @@ copyfault:
 	case T_STKFLT|T_USER:
 	case T_ALIGNFLT|T_USER:
 	case T_NMI|T_USER:
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGBUS, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_PRIVINFLT|T_USER:	/* privileged instruction fault */
 	case T_FPOPFLT|T_USER:		/* coprocessor operand fault */
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGILL, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_ASTFLT|T_USER:		/* Allow process switch */
@@ -372,7 +383,7 @@ copyfault:
 			ADDUPROF(p);
 		}
 		/* Allow a forced task switch. */
-		if (want_resched)
+		if (curcpu()->ci_want_resched) /* XXX CSE me? */
 			preempt(NULL);
 		goto out;
 
@@ -384,12 +395,16 @@ copyfault:
 				goto trace;
 			return;
 		}
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, rv, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 #else
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGKILL, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 #endif
 	}
@@ -397,16 +412,34 @@ copyfault:
 	case T_BOUND|T_USER:
 	case T_OFLOW|T_USER:
 	case T_DIVIDE|T_USER:
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGFPE, type & ~T_USER);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_ARITHTRAP|T_USER:
+		KERNEL_PROC_LOCK(p);
 		(*p->p_emul->e_trapsignal)(p, SIGFPE, frame.tf_err);
+		KERNEL_PROC_UNLOCK(p);
 		goto out;
 
 	case T_PAGEFLT:			/* allow page faults in kernel mode */
 		if (p == 0)
 			goto we_re_toast;
+#ifdef LOCKDEBUG
+		/* If we page-fault while in scheduler, we're doomed. */
+		if (simple_lock_held(&sched_lock))
+			goto we_re_toast;
+#endif
+#ifdef MULTIPROCESSOR
+		/*
+		 * process doing kernel-mode page fault must have
+		 * been running with big lock held
+		 */
+		if ((p->p_flag & P_BIGLOCK) == 0)
+			goto we_re_toast;
+#endif
+
 		/*
 		 * fusubail is used by [fs]uswintr() to prevent page faulting
 		 * from inside the profiling interrupt.
@@ -418,19 +451,25 @@ copyfault:
 		if (frame.tf_err & PGEX_P)
 			goto we_re_toast;
 #endif
-		/* FALLTHROUGH */
+		cr2 = rcr2();
+		KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
+		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
 		register vaddr_t va;
-		register struct vmspace *vm = p->p_vmspace;
+		register struct vmspace *vm;
 		register struct vm_map *map;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
 		unsigned nss;
 
+		cr2 = rcr2();
+		KERNEL_PROC_LOCK(p);
+	faultcommon:
+		vm = p->p_vmspace;
 		if (vm == NULL)
 			goto we_re_toast;
-		pcb->pcb_cr2 = rcr2();
+		pcb->pcb_cr2 = cr2;
 		va = trunc_page((vaddr_t)pcb->pcb_cr2);
 		/*
 		 * It is only a kernel address space fault iff:
@@ -484,8 +523,11 @@ copyfault:
 			if (nss > vm->vm_ssize)
 				vm->vm_ssize = nss;
 
-			if (type == T_PAGEFLT)
+			if (type == T_PAGEFLT) {
+				KERNEL_UNLOCK();
 				return;
+			}
+			KERNEL_PROC_UNLOCK(p);
 			goto out;
 		}
 		if (error == EACCES) {
@@ -493,8 +535,10 @@ copyfault:
 		}
 
 		if (type == T_PAGEFLT) {
-			if (pcb->pcb_onfault != 0)
+			if (pcb->pcb_onfault != 0) {
+				KERNEL_UNLOCK();
 				goto copyfault;
+			}
 			printf("uvm_fault(%p, 0x%lx, 0, %d) -> %x\n",
 			    map, va, ftype, error);
 			goto we_re_toast;
@@ -508,6 +552,10 @@ copyfault:
 		} else {
 			(*p->p_emul->e_trapsignal)(p, SIGSEGV, T_PAGEFLT);
 		}
+		if (type == T_PAGEFLT)
+			KERNEL_UNLOCK();
+		else
+			KERNEL_PROC_UNLOCK(p);
 		break;
 	}
 
@@ -531,7 +579,9 @@ copyfault:
 		 */
 		if ((p->p_nras == 0) ||
 		    (ras_lookup(p, (caddr_t)frame.tf_eip) == (caddr_t)-1)) {
+			KERNEL_PROC_LOCK(p);
 			(*p->p_emul->e_trapsignal)(p, SIGTRAP, type & ~T_USER);
+			KERNEL_PROC_UNLOCK(p);
 		}
 		break;
 
@@ -574,6 +624,10 @@ out:
 }
 
 #if defined(I386_CPU)
+
+#ifdef MULTIPROCESSOR
+/* XXX XXX XXX */
+#endif
 /*
  * Compensate for 386 brain damage (missing URKR)
  */

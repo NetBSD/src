@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.5.2.5 2002/06/23 17:36:55 jdolecek Exp $	*/
+/*	$NetBSD: rtc.c,v 1.5.2.6 2002/10/10 18:33:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -93,9 +93,8 @@ void	vrrtc_attach(struct device *, struct device *, void *);
 int	vrrtc_intr(void*, u_int32_t, u_int32_t);
 void	vrrtc_dump_regs(struct vrrtc_softc *);
 
-struct cfattach vrrtc_ca = {
-	sizeof(struct vrrtc_softc), vrrtc_match, vrrtc_attach
-};
+CFATTACH_DECL(vrrtc, sizeof(struct vrrtc_softc),
+    vrrtc_match, vrrtc_attach, NULL, NULL);
 
 static __inline__ void vrrtc_write(struct vrrtc_softc *, int, u_int16_t);
 static __inline__ u_int16_t vrrtc_read(struct vrrtc_softc *, int);
@@ -161,7 +160,7 @@ vrrtc_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_tclk_cnt_h_reg = RTC_NO_REG_W;
 		sc->sc_tclk_cnt_l_reg = RTC_NO_REG_W;
 	} else {
-		panic("%s: unknown base address 0x%lx\n",
+		panic("%s: unknown base address 0x%lx",
 		    sc->sc_dev.dv_xname, va->va_addr);
 	}
 #endif /* SINGLE_VRIP_BASE */

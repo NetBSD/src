@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpio.c,v 1.6.4.1 2002/02/11 20:06:59 jdolecek Exp $ */
+/*	$NetBSD: gvpio.c,v 1.6.4.2 2002/10/10 18:31:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Ignatios Souvatzis
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.4.1 2002/02/11 20:06:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.4.2 2002/10/10 18:31:27 jdolecek Exp $");
 
 /*
  * GVP I/O Extender
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: gvpio.c,v 1.6.4.1 2002/02/11 20:06:59 jdolecek Exp $
 #include <sys/param.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 #include <machine/intr.h>
 
 #include <amiga/include/cpu.h>
@@ -72,9 +71,8 @@ int gvpioprint(void *auxp, const char *);
 int gvp_com_intr(void *);
 void gvp_com_intr_establish(struct device *, struct gvpcom_int_hdl *);
 
-struct cfattach gvpio_ca = {
-	sizeof(struct gvpio_softc), gvpiomatch, gvpioattach
-};
+CFATTACH_DECL(gvpio, sizeof(struct gvpio_softc),
+    gvpiomatch, gvpioattach, NULL, NULL);
 
 int
 gvpiomatch(struct device *parent, struct cfdata *cfp, void *auxp)

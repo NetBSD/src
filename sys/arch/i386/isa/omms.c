@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.1.24.3 2002/10/02 22:02:24 jdolecek Exp $	*/
+/*	$NetBSD: omms.c,v 1.1.24.4 2002/10/10 18:33:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.1.24.3 2002/10/02 22:02:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.1.24.4 2002/10/10 18:33:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,12 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: omms.c,v 1.1.24.3 2002/10/02 22:02:24 jdolecek Exp $
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/bus.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -76,11 +76,23 @@ int ommsprobe __P((struct device *, struct cfdata *, void *));
 void ommsattach __P((struct device *, struct device *, void *));
 int ommsintr __P((void *));
 
-struct cfattach omms_ca = {
-	sizeof(struct omms_softc), ommsprobe, ommsattach
-};
+CFATTACH_DECL(omms, sizeof(struct omms_softc),
+    ommsprobe, ommsattach, NULL, NULL);
 
 extern struct cfdriver omms_cd;
+
+dev_type_open(mmsopen);
+dev_type_close(mmsclose);
+dev_type_read(mmsread);
+dev_type_ioctl(mmsioctl);
+dev_type_poll(mmspoll);
+dev_type_kqfilter(mmskqfilter);
+
+const struct cdevsw omms_cdevsw = {
+	mmsopen, mmsclose, mmsread, nowrite, mmsioctl,
+	nostop, notty, mmspoll, nommap, mmskqfilter,
+};
+
 
 #define	MMSUNIT(dev)	(minor(dev))
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wdc_upc.c,v 1.2.6.1 2002/01/10 19:55:10 thorpej Exp $ */
+/* $NetBSD: wdc_upc.c,v 1.2.6.2 2002/10/10 18:39:17 jdolecek Exp $ */
 /*-
  * Copyright (c) 2000 Ben Harris
  * All rights reserved.
@@ -28,7 +28,7 @@
 /* This file is part of NetBSD/arm26 -- a port of NetBSD to ARM2/3 machines. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.2.6.1 2002/01/10 19:55:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_upc.c,v 1.2.6.2 2002/10/10 18:39:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,9 +52,8 @@ struct wdc_upc_softc {
 	struct channel_softc sc_channel;
 };
 
-struct cfattach wdc_upc_ca = {
-	sizeof(struct wdc_upc_softc), wdc_upc_match, wdc_upc_attach
-};
+CFATTACH_DECL(wdc_upc, sizeof(struct wdc_upc_softc),
+    wdc_upc_match, wdc_upc_attach, NULL, NULL);
 
 static int
 wdc_upc_match(struct device *parent, struct cfdata *cf, void *aux)

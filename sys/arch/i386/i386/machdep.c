@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.446.2.8 2002/09/06 08:36:16 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.446.2.9 2002/10/10 18:33:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.446.2.8 2002/09/06 08:36:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.446.2.9 2002/10/10 18:33:21 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.446.2.8 2002/09/06 08:36:16 jdolecek E
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
@@ -131,6 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.446.2.8 2002/09/06 08:36:16 jdolecek E
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
+#include <machine/cpuvar.h>
 #include <machine/gdt.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
@@ -173,32 +173,31 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.446.2.8 2002/09/06 08:36:16 jdolecek E
 #include "isa.h"
 #include "isadma.h"
 #include "npx.h"
-#if NNPX > 0
-extern struct proc *npxproc;
-#endif
 
 #include "mca.h"
 #if NMCA > 0
 #include <machine/mca_machdep.h>	/* for mca_busprobe() */
 #endif
 
+#ifdef MULTIPROCESSOR		/* XXX */
+#include <machine/mpbiosvar.h>	/* XXX */
+#endif				/* XXX */
+
 /* the following is used externally (sysctl_hw) */
 char machine[] = "i386";		/* cpu "architecture" */
 char machine_arch[] = "i386";		/* machine == machine_arch */
 
-volatile int cpl, ipending, astpending;
-int imask[NIPL];
+volatile u_int32_t ipending;
 
-int want_resched;			/* resched() was called */
+int imasks[NIPL];
+int iunmask[NIPL];
 
 u_int cpu_serial[3];
 
 char bootinfo[BOOTINFO_MAXSIZE];
 
-/* Our exported CPU info; we have only one right now. */  
+/* Our exported CPU info; we have only one right now. */
 struct cpu_info cpu_info_store;
-
-struct pcb *curpcb;			/* our current running pcb */
 
 struct bi_devmatch *i386_alldisks = NULL;
 int i386_ndisks = 0;
@@ -248,51 +247,93 @@ struct vm_map *phys_map = NULL;
 
 extern	paddr_t avail_start, avail_end;
 
+void (*delay_func) __P((int)) = i8254_delay;
+void (*microtime_func) __P((struct timeval *)) = i8254_microtime;
+void (*initclock_func) __P((void)) = i8254_initclocks;
+
 /*
  * Size of memory segments, before any memory is stolen.
  */
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
-/*
- * The number of CPU cycles in one second.
- */
-u_int64_t cpu_tsc_freq;
-
 int	cpu_dump __P((void));
 int	cpu_dumpsize __P((void));
 u_long	cpu_dump_mempagecnt __P((void));
 void	dumpsys __P((void));
-void	identifycpu __P((struct cpu_info *));
 void	init386 __P((paddr_t));
+void	initgdt __P((union descriptor *));
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void	add_mem_cluster	__P((u_int64_t, u_int64_t, u_int32_t));
 #endif /* !defnied(REALBASEMEM) && !defined(REALEXTMEM) */
 
+static const struct i386_cache_info
+intel_cpuid_cache_info[] = {
+	{ CAI_ITLB, 	0x01,	 4, 32, 4 * 1024 },
+	{ CAI_ITLB2, 	0x02, 0xff,  2, 4 * 1024 * 1024 },
+	{ CAI_DTLB, 	0x03,    4, 64, 4 * 1024 },
+	{ CAI_DTLB2,    0x04,    4,  8, 4 * 1024 * 1024 },
+	{ CAI_ITLB,     0x50, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_ITLB,     0x51, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_ITLB,     0x52, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
+	{ CAI_DTLB,     0x5b, 0xff, 64, 4 * 1024, "4K/4M: 64 entries" },
+	{ CAI_DTLB,     0x5c, 0xff, 64, 4 * 1024, "4K/4M: 128 entries" },
+	{ CAI_DTLB,     0x5d, 0xff, 64, 4 * 1024, "4K/4M: 256 entries" },
+
+	{ CAI_ICACHE,   0x06,  4,        8 * 1024, 32 },
+	{ CAI_ICACHE,   0x08,  4,       16 * 1024, 32 },
+	{ CAI_DCACHE,   0x0a,  2,        8 * 1024, 32 },
+	{ CAI_DCACHE,   0x0c,  4,       16 * 1024, 32 },
+	{ CAI_L2CACHE,  0x40,  0,               0,  0, "not present" },
+	{ CAI_L2CACHE,  0x41,  4,      128 * 1024, 32 },
+	{ CAI_L2CACHE,  0x42,  4,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x43,  4,      512 * 1024, 32 },
+	{ CAI_L2CACHE,  0x44,  4, 1 * 1024 * 1024, 32 },
+	{ CAI_L2CACHE,  0x45,  4, 2 * 1024 * 1024, 32 },
+	{ CAI_DCACHE,   0x66,  4,        8 * 1024, 64 },
+	{ CAI_DCACHE,   0x67,  4,       16 * 1024, 64 },
+	{ CAI_DCACHE,   0x68,  4,  	32 * 1024, 64 },
+	{ CAI_ICACHE,   0x70,  8,       12 * 1024, 64, "12K uOp cache"},
+	{ CAI_ICACHE,   0x71,  8,       16 * 1024, 64, "16K uOp cache"},
+	{ CAI_ICACHE,   0x72,  8,       32 * 1024, 64, "32K uOp cache"},
+	{ CAI_L2CACHE,  0x79,  8,      128 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7a,  8,      256 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7b,  8,      512 * 1024, 64 },
+	{ CAI_L2CACHE,  0x7c,  8, 1 * 1024 * 1024, 64 },
+	{ CAI_L2CACHE,  0x82,  8,      256 * 1024, 32 },
+	{ CAI_L2CACHE,  0x84,  8, 1 * 1024 * 1024, 32 },
+	{ CAI_L2CACHE,  0x85,  8, 2 * 1024 * 1024, 32 },
+	{ 0,               0,  0,	        0,  0 },
+};
+
+static const struct i386_cache_info *
+cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc);
+
 /*
  * Map Brand ID from cpuid instruction to brand name.
  * Source: Intel Processor Identification and the CPUID Instruction, AP-485
  */
-const char * const i386_p3_brand[] = {
-	"",		/* Unsupported */
-	"Celeron",	/* Intel (R) Celeron (TM) processor */
-	"",		/* Intel (R) Pentium (R) III processor */	
-	"Xeon",		/* Intel (R) Pentium (R) III Xeon (TM) processor */
+static const char * const i386_intel_brand[] = {
+	"",		    /* Unsupported */
+	"Celeron",	    /* Intel (R) Celeron (TM) processor */
+	"Pentium III",      /* Intel (R) Pentium (R) III processor */
+	"Pentium III Xeon", /* Intel (R) Pentium (R) III Xeon (TM) processor */
+	"", "", "",	    /* Reserved */
+	"Pentium 4"	    /* Intel (R) Pentium (R) 4 processor */
 };
 
 #ifdef COMPAT_NOMID
 static int exec_nomid	__P((struct proc *, struct exec_package *));
 #endif
 
-void cyrix6x86_cpu_setup __P((void));
-void winchip_cpu_setup __P((void));
-void amd_family5_setup __P((void));
-void transmeta_cpu_setup __P((void));
-static void transmeta_cpu_info __P((int));
+void cyrix6x86_cpu_setup __P((struct cpu_info *));
+void winchip_cpu_setup __P((struct cpu_info *));
+void amd_family5_setup __P((struct cpu_info *));
+void transmeta_cpu_setup __P((struct cpu_info *));
 
-void intel_cpuid_cpu_cacheinfo __P((struct cpu_info *));
-void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
+static void transmeta_cpu_info __P((struct cpu_info *));
+static void amd_cpuid_cpu_cacheinfo __P((struct cpu_info *));
 
 static __inline u_char
 cyrix_read_reg(u_char reg)
@@ -308,21 +349,101 @@ cyrix_write_reg(u_char reg, u_char data)
 	outb(0x23, data);
 }
 
+static char *
+print_cache_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
+{
+	char cbuf[7];
+	struct i386_cache_info *cai = &ci->ci_cinfo[cache_tag];
+
+	if (cai->cai_totalsize == 0)
+		return sep;
+
+	if (sep == NULL)
+		printf("%s: ", ci->ci_dev->dv_xname);
+	else
+		printf("%s", sep);
+	if (name != NULL)
+		printf("%s ", name);
+
+	if (cai->cai_string != NULL) {
+		printf("%s ", cai->cai_string);
+	} else {
+		format_bytes(cbuf, sizeof(cbuf), cai->cai_totalsize);
+		printf("%s %db/line ", cbuf, cai->cai_linesize);
+	}
+	switch (cai->cai_associativity) {
+	case    0:
+		printf("disabled");
+		break;
+	case    1:
+		printf("direct-mapped");
+		break;
+	case 0xff:
+		printf("fully associative");
+		break;
+	default:
+		printf("%d-way", cai->cai_associativity);
+		break;
+	}
+	return ", ";
+}
+
+static char *
+print_tlb_config(struct cpu_info *ci, int cache_tag, char *name, char *sep)
+{
+	char cbuf[7];
+	struct i386_cache_info *cai = &ci->ci_cinfo[cache_tag];
+
+	if (cai->cai_totalsize == 0)
+		return sep;
+
+	if (sep == NULL)
+		printf("%s: ", ci->ci_dev->dv_xname);
+	else
+		printf("%s", sep);
+	if (name != NULL)
+		printf("%s ", name);
+
+	if (cai->cai_string != NULL) {
+		printf("%s", cai->cai_string);
+	} else {
+		format_bytes(cbuf, sizeof(cbuf), cai->cai_linesize);
+		printf("%d %s entries ", cai->cai_totalsize, cbuf);
+		switch (cai->cai_associativity) {
+		case 0:
+			printf("disabled");
+			break;
+		case 1:
+			printf("direct-mapped");
+			break;
+		case 0xff:
+			printf("fully associative");
+			break;
+		default:
+			printf("%d-way", cai->cai_associativity);
+			break;
+		}
+	}
+	return ", ";
+}
+
 /*
  * Machine-dependent startup code
  */
 void
 cpu_startup()
 {
+#if 0
 	struct cpu_info *ci = curcpu();
+#endif
 	caddr_t v;
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
-	char buf[160];				/* about 2 line */
 	char pbuf[9];
-	char cbuf[7];
+#if 0
 	int bigcache, cachesize;
+#endif
 
 	/*
 	 * Initialize error message buffer (et end of core).
@@ -341,143 +462,7 @@ cpu_startup()
 
 	printf("%s", version);
 
-	printf("cpu0: %s", cpu_model);
-	if (cpu_tsc_freq != 0)
-		printf(", %qd.%02qd MHz", (cpu_tsc_freq + 4999) / 1000000,
-		    ((cpu_tsc_freq + 4999) / 10000) % 100);
-	printf("\n");
-
-	if (ci->ci_info)
-		(*ci->ci_info)(0);
-
-	bigcache = cachesize = 0;
-
-	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
-	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
-		printf("cpu0:");
-		if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize) {
-			cachesize = ci->ci_cinfo[CAI_ICACHE].cai_totalsize;
-			format_bytes(cbuf, sizeof(cbuf),
-			    ci->ci_cinfo[CAI_ICACHE].cai_totalsize);
-			printf(" I-cache %s %db/line ", cbuf,
-			    ci->ci_cinfo[CAI_ICACHE].cai_linesize);
-			switch (ci->ci_cinfo[CAI_ICACHE].cai_associativity) {
-			case 0:
-				printf("disabled");
-				cachesize = 0;
-				break;
-			case 1:
-				printf("direct-mapped");
-				break;
-			case ~0:
-				printf("fully associative");
-				/* XXX Don't need any color bins? */
-				break;
-			default:
-				printf("%d-way",
-				    ci->ci_cinfo[CAI_ICACHE].cai_associativity);
-				cachesize /=
-				    ci->ci_cinfo[CAI_ICACHE].cai_associativity;
-				break;
-			}
-		}
-		if (cachesize > bigcache)
-			bigcache = cachesize;
-
-		if (ci->ci_cinfo[CAI_DCACHE].cai_totalsize) {
-			cachesize = ci->ci_cinfo[CAI_DCACHE].cai_totalsize;
-			format_bytes(cbuf, sizeof(cbuf),
-			    ci->ci_cinfo[CAI_DCACHE].cai_totalsize);
-			printf("%sD-cache %s %db/line ",
-			    (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0) ?
-			    ", " : " ",
-			    cbuf, ci->ci_cinfo[CAI_DCACHE].cai_linesize);
-			switch (ci->ci_cinfo[CAI_DCACHE].cai_associativity) {
-			case 0:
-				printf("disabled");
-				cachesize = 0;
-				break;
-			case 1:
-				printf("direct-mapped");
-				break;
-			case ~0:
-				printf("fully associative");
-				/* XXX Don't need any color bins? */
-				break;
-			default:
-				printf("%d-way",
-				    ci->ci_cinfo[CAI_DCACHE].cai_associativity);
-				cachesize /=
-				    ci->ci_cinfo[CAI_DCACHE].cai_associativity;
-				break;
-			}
-		}
-		if (cachesize > bigcache)
-			bigcache = cachesize;
-
-		printf("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize) {
-		cachesize = ci->ci_cinfo[CAI_L2CACHE].cai_totalsize;
-		format_bytes(cbuf, sizeof(cbuf),
-		    ci->ci_cinfo[CAI_L2CACHE].cai_totalsize);
-		printf("cpu0: L2 cache %s %db/line ", cbuf,
-		    ci->ci_cinfo[CAI_L2CACHE].cai_linesize);
-		switch (ci->ci_cinfo[CAI_L2CACHE].cai_associativity) {
-		case 0:
-			printf("disabled");
-			cachesize = 0;
-			break;
-		case 1:
-			printf("direct-mapped");
-			break;
-		case ~0:
-			printf("fully associative");
-			/* XXX Don't need any color bins? */
-			break;
-		default:
-			printf("%d-way",
-			    ci->ci_cinfo[CAI_L2CACHE].cai_associativity);
-			cachesize /=
-			    ci->ci_cinfo[CAI_L2CACHE].cai_associativity;
-			break;
-		}
-		if (cachesize > bigcache)
-			bigcache = cachesize;
-
-		printf("\n");
-	}
-
-	/*
-	 * Know the size of the largest cache on this CPU, re-color
-	 * our pages.
-	 */
-	if (bigcache != 0)
-		uvm_page_recolor(atop(bigcache));
-
-	if ((cpu_feature & CPUID_MASK1) != 0) {
-		bitmask_snprintf(cpu_feature, CPUID_FLAGS1,
-		    buf, sizeof(buf));
-		printf("cpu0: features %s\n", buf);
-	}
-	if ((cpu_feature & CPUID_MASK2) != 0) {
-		bitmask_snprintf(cpu_feature, CPUID_FLAGS2,
-		    buf, sizeof(buf));
-		printf("cpu0: features %s\n", buf);
-	}
-	if ((cpu_feature & CPUID_MASK3) != 0) {
-		bitmask_snprintf(cpu_feature, CPUID_FLAGS3,
-		    buf, sizeof(buf));
-		printf("cpu0: features %s\n", buf);
-	}
-
-	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
-		printf("cpu0: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
-			cpu_serial[0] / 65536, cpu_serial[0] % 65536,
-			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
-			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
-	}
-
+#if 0
 #ifdef MTRR
 	if (cpu_feature & CPUID_MTRR) {
 		mtrr_funcs = &i686_mtrr_funcs;
@@ -498,6 +483,15 @@ cpu_startup()
 		}
 	}
 #endif
+#endif
+
+#ifdef TRAPLOG
+	/*
+	 * Enable recording of branch from/to in MSR's
+	 */
+	wrmsr(MSR_DEBUGCTLMSR, 0x1);
+#endif
+
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
 
@@ -569,7 +563,7 @@ cpu_startup()
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free - bufpages));
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
-	printf("using %u buffers containing %s of memory\n", nbuf, pbuf);
+	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	i386_bus_space_mallocok();
@@ -585,7 +579,38 @@ i386_proc0_tss_ldt_init()
 	int x;
 
 	gdt_init();
-	curpcb = pcb = &proc0.p_addr->u_pcb;
+
+	cpu_info_primary.ci_curpcb = pcb = &proc0.p_addr->u_pcb;
+
+	pcb->pcb_flags = 0;
+	pcb->pcb_tss.tss_ioopt =
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+
+	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
+		pcb->pcb_iomap[x] = 0xffffffff;
+
+	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_cr0 = rcr0();
+	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
+	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
+	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	proc0.p_md.md_tss_sel = tss_alloc(pcb);
+
+	ltr(proc0.p_md.md_tss_sel);
+	lldt(pcb->pcb_ldt_sel);
+}
+
+/*
+ * Set up TSS and LDT for a new PCB.
+ */
+
+void
+i386_init_pcb_tss_ldt(ci)
+	struct cpu_info *ci;
+{
+	int x;
+	struct pcb *pcb = ci->ci_idle_pcb;
+
 	pcb->pcb_flags = 0;
 	pcb->pcb_tss.tss_ioopt =
 	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
@@ -594,14 +619,8 @@ i386_proc0_tss_ldt_init()
 
 	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
 	pcb->pcb_cr0 = rcr0();
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
-	tss_alloc(&proc0);
 
-	ltr(proc0.p_md.md_tss_sel);
-	lldt(pcb->pcb_ldt_sel);
-
-	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	ci->ci_idle_tss_sel = tss_alloc(pcb);
 }
 
 /*
@@ -610,7 +629,7 @@ i386_proc0_tss_ldt_init()
 void
 i386_bufinit()
 {
-	u_int i, base, residual;
+	int i, base, residual;
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
@@ -653,7 +672,7 @@ i386_bufinit()
 	bufinit();
 }
 
-/*  
+/*
  * Info for CTL_HW
  */
 char	cpu_model[120];
@@ -700,7 +719,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"Intel",
 		/* Family 4 */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				"486DX", "486DX", "486SX", "486DX2", "486SL",
 				"486SX2", 0, "486DX2 W/B Enhanced",
@@ -708,7 +727,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"486"		/* Default */
 			},
 			NULL,
-			intel_cpuid_cpu_cacheinfo,
+			NULL,
 			NULL,
 		},
 		/* Family 5 */
@@ -716,14 +735,14 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 			CPUCLASS_586,
 			{
 				"Pentium (P5 A-step)", "Pentium (P5)",
-				"Pentium (P54C)", "Pentium (P24T)", 
+				"Pentium (P54C)", "Pentium (P24T)",
 				"Pentium/MMX", "Pentium", 0,
 				"Pentium (P54C)", "Pentium/MMX (Tillamook)",
 				0, 0, 0, 0, 0, 0, 0,
 				"Pentium"	/* Default */
 			},
 			NULL,
-			intel_cpuid_cpu_cacheinfo,
+			NULL,
 			NULL,
 		},
 		/* Family 6 */
@@ -741,7 +760,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
-			intel_cpuid_cpu_cacheinfo,
+			NULL,
 			NULL,
 		},
 		/* Family > 6 */
@@ -753,7 +772,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium 4"	/* Default */
 			},
 			NULL,
-			intel_cpuid_cpu_cacheinfo,
+			NULL,
 			NULL,
 		} }
 	},
@@ -763,7 +782,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"AMD",
 		/* Family 4 */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, "Am486DX2 W/T",
 				0, 0, 0, "Am486DX2 W/B",
@@ -831,7 +850,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 				"486"		/* Default */
 			},
-			NULL,
+			cyrix6x86_cpu_setup, /* XXX ?? */
 			NULL,
 			NULL,
 		},
@@ -879,7 +898,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"IDT",
 		/* Family 4, IDT never had any of these */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
@@ -932,7 +951,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 		"Transmeta",
 		/* Family 4, Transmeta never had any of these */
 		{ {
-			CPUCLASS_486, 
+			CPUCLASS_486,
 			{
 				0, 0, 0, 0, 0, 0, 0, 0,
 				0, 0, 0, 0, 0, 0, 0, 0,
@@ -981,41 +1000,26 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 	}
 };
 
-static void
-do_cpuid(u_int which, u_int *rv)
-{
-	register u_int eax __asm("%eax") = which;
-
-	__asm __volatile(
-	"	cpuid			;"
-	"	movl	%%eax,0(%2)	;"
-	"	movl	%%ebx,4(%2)	;"
-	"	movl	%%ecx,8(%2)	;"
-	"	movl	%%edx,12(%2)	"
-	: "=a" (eax)
-	: "0" (eax), "S" (rv)
-	: "ebx", "ecx", "edx");
-}
-
-static void
-do_cpuid_serial(u_int *serial)
-{
-	__asm __volatile(
-	"	movl	$1,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%eax,0(%0)	;"
-	"	movl	$3,%%eax	;"
-	"	cpuid			;"
-	"	movl	%%edx,4(%0)	;"
-	"	movl	%%ecx,8(%0)	"
-	: /* no inputs */
-	: "S" (serial)
-	: "eax", "ebx", "ecx", "edx");
-}
-
 void
-cyrix6x86_cpu_setup()
+cyrix6x86_cpu_setup(ci)
+	struct cpu_info *ci;
 {
+	/*
+	 * i8254 latch check routine:
+	 *     National Geode (formerly Cyrix MediaGX) has a serious bug in
+	 *     its built-in i8254-compatible clock module.
+	 *     Set the variable 'clock_broken_latch' to indicate it.
+	 */
+
+	extern int clock_broken_latch;
+
+	switch (ci->ci_signature) {
+	case 0x440:     /* Cyrix MediaGX */
+	case 0x540:     /* GXm */
+		clock_broken_latch = 1;
+		break;
+	}
+
 	/* set up various cyrix registers */
 	/* Enable suspend on halt */
 	cyrix_write_reg(0xc2, cyrix_read_reg(0xc2) | 0x08);
@@ -1029,7 +1033,7 @@ cyrix6x86_cpu_setup()
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, cyrix_read_reg(0xC3) & ~0x10);
 
-	/*	
+	/*
 	 * XXX disable page zero in the idle loop, it seems to
 	 * cause panics on these CPUs.
 	 */
@@ -1037,12 +1041,11 @@ cyrix6x86_cpu_setup()
 }
 
 void
-winchip_cpu_setup()
+winchip_cpu_setup(ci)
+	struct cpu_info *ci;
 {
 #if defined(I586_CPU)
-	extern int cpu_id;
-
-	switch (CPUID2MODEL(cpu_id)) { /* model */
+	switch (CPUID2MODEL(ci->ci_signature)) { /* model */
 	case 4:	/* WinChip C6 */
 		cpu_feature &= ~CPUID_TSC;
 		printf("WARNING: WinChip C6: broken TSC disabled\n");
@@ -1050,12 +1053,129 @@ winchip_cpu_setup()
 #endif
 }
 
-void
-amd_family5_setup(void)
-{
-	extern int cpu_id;
+#define CPUID(code, eax, ebx, ecx, edx) 			\
+	asm ("cpuid"						\
+	    : "=a" (eax), "=b" (ebx), "=c" (ecx), "=d" (edx)	\
+	    : "a" (code));
 
-	switch (CPUID2MODEL(cpu_id)) {
+static void
+cpu_probe_base_features(struct cpu_info *ci)
+{
+	const struct i386_cache_info *cai;
+	u_int descs[4];
+	int iterations, i, j;
+	u_int8_t desc;
+	u_int32_t dummy1, dummy2, miscbytes;
+
+	if (ci->ci_cpuid_level < 0)
+		return;
+
+	CPUID(0, ci->ci_cpuid_level,
+	    ci->ci_vendor[0],
+	    ci->ci_vendor[2],
+	    ci->ci_vendor[1]);
+	ci->ci_vendor[3] = 0;
+
+	if (ci->ci_cpuid_level < 1)
+		return;
+
+	CPUID(1, ci->ci_signature, miscbytes, dummy1, ci->ci_feature_flags);
+
+	/* Brand is low order 8 bits of ebx */
+	ci->ci_brand_id = miscbytes & 0xff;
+
+	/* CLFLUSH line size is next 8 bits */
+	if (ci->ci_feature_flags & CPUID_CFLUSH)
+		ci->ci_cflush_lsize = ((miscbytes >> 8) & 0xff) << 3;
+
+	if (ci->ci_cpuid_level < 2)
+		return;
+
+	/*
+	 * Parse the cache info from `cpuid', if we have it.
+	 * XXX This is kinda ugly, but hey, so is the architecture...
+	 */
+
+	CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+
+	iterations = descs[0] & 0xff;
+	while (iterations-- > 0) {
+		for (i = 0; i < 4; i++) {
+			if (descs[i] & 0x80000000)
+				continue;
+			for (j = 0; j < 4; j++) {
+				if (i == 0 && j == 0)
+					continue;
+				desc = (descs[i] >> (j * 8)) & 0xff;
+				if (desc == 0)
+					continue;
+				cai = cache_info_lookup(intel_cpuid_cache_info,
+				    desc);
+				if (cai != NULL)
+					ci->ci_cinfo[cai->cai_index] = *cai;
+			}
+		}
+		CPUID(2, descs[0], descs[1], descs[2], descs[3]);
+	}
+
+	if (ci->ci_cpuid_level < 3)
+		return;
+
+	/*
+	 * If the processor serial number misfeature is present and supported,
+	 * extract it here.
+	 */
+	if ((ci->ci_feature_flags & CPUID_PN) != 0)
+	{
+		ci->ci_cpu_serial[0] = ci->ci_signature;
+		CPUID(3, dummy1, dummy2,
+		    ci->ci_cpu_serial[2],
+		    ci->ci_cpu_serial[1]);
+	}
+}
+
+void
+cpu_probe_features(struct cpu_info *ci)
+{
+	const struct cpu_cpuid_nameclass *cpup = NULL;
+	int i, max, family;
+
+	cpu_probe_base_features(ci);
+
+	if (ci->ci_cpuid_level < 1)
+		return;
+
+	max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+	for (i = 0; i < max; i++) {
+		if (!strncmp((char *)ci->ci_vendor,
+		    i386_cpuid_cpus[i].cpu_id, 12)) {
+			cpup = &i386_cpuid_cpus[i];
+			break;
+		}
+	}
+
+	if (cpup == NULL)
+		return;
+
+	family = (ci->ci_signature >> 8) & 0xf;
+
+	if (family > CPU_MAXFAMILY) {
+		family = CPU_MAXFAMILY;
+	}
+	i = family - CPU_MINFAMILY;
+
+	if (cpup->cpu_family[i].cpu_probe == NULL)
+		return;
+
+	(*cpup->cpu_family[i].cpu_probe)(ci);
+}
+
+
+void
+amd_family5_setup(struct cpu_info *ci)
+{
+
+	switch (CPUID2MODEL(ci->ci_signature)) {
 	case 0:		/* AMD-K5 Model 0 */
 		/*
 		 * According to the AMD Processor Recognition App Note,
@@ -1106,7 +1226,7 @@ u_int32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
 	{	100,	100,		1},	/* LONGRUN_MODE_MAXFREQUENCY */
 };
 
-static u_int 
+static u_int
 tmx86_get_longrun_mode(void)
 {
 	u_long		eflags;
@@ -1134,25 +1254,25 @@ out:
 	return (mode);
 }
 
-static u_int 
+static u_int
 tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
 {
 	u_long		eflags;
-	u_int		regs[4];
+	u_int		eax, ebx, ecx, edx;
 
 	eflags = read_eflags();
 	disable_intr();
 
-	do_cpuid(0x80860007, regs);
-	*frequency = regs[0];
-	*voltage = regs[1];
-	*percentage = regs[2];
+	CPUID(0x80860007, eax, ebx, ecx, edx);
+	*frequency = eax;
+	*voltage = ebx;
+	*percentage = ecx;
 
 	write_eflags(eflags);
 	return (1);
 }
 
-static u_int 
+static u_int
 tmx86_set_longrun_mode(u_int mode)
 {
 	u_long		eflags;
@@ -1197,49 +1317,62 @@ tmx86_get_longrun_status_all(void)
 
 
 static void
-transmeta_cpu_info(int cpuno)
+transmeta_cpu_info(struct cpu_info *ci)
 {
-	u_int regs[4], nreg = 0;
+	u_int eax, ebx, ecx, edx, nreg = 0;
 
-	do_cpuid(0x80860000, regs);
-	nreg = regs[0];
+	CPUID(0x80860000, eax, ebx, ecx, edx);
+	nreg = eax;
 	if (nreg >= 0x80860001) {
-		do_cpuid(0x80860001, regs);
-		printf("cpu%d: Processor revision %u.%u.%u.%u\n", cpuno,
-		    (regs[1] >> 24) & 0xff,
-		    (regs[1] >> 16) & 0xff,
-		    (regs[1] >> 8) & 0xff,
-		    regs[1] & 0xff);
+		CPUID(0x80860001, eax, ebx, ecx, edx);
+		printf("%s: Processor revision %u.%u.%u.%u\n",
+		    ci->ci_dev->dv_xname,
+		    (ebx >> 24) & 0xff,
+		    (ebx >> 16) & 0xff,
+		    (ebx >> 8) & 0xff,
+		    ebx & 0xff);
 	}
 	if (nreg >= 0x80860002) {
-		do_cpuid(0x80860002, regs);
-		printf("cpu%d: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
-		    cpuno, (regs[1] >> 24) & 0xff,
-		    (regs[1] >> 16) & 0xff,
-		    (regs[1] >> 8) & 0xff,
-		    regs[1] & 0xff,
-		    regs[2]);
+		CPUID(0x80860002, eax, ebx, ecx, edx);
+		printf("%s: Code Morphing Software Rev: %u.%u.%u-%u-%u\n",
+		    ci->ci_dev->dv_xname, (ebx >> 24) & 0xff,
+		    (ebx >> 16) & 0xff,
+		    (ebx >> 8) & 0xff,
+		    ebx & 0xff,
+		    ecx);
 	}
 	if (nreg >= 0x80860006) {
-		char info[65];
-		do_cpuid(0x80860003, (u_int*) &info[0]);
-		do_cpuid(0x80860004, (u_int*) &info[16]);
-		do_cpuid(0x80860005, (u_int*) &info[32]);
-		do_cpuid(0x80860006, (u_int*) &info[48]);
-		info[64] = '\0';
-		printf("cpu%d: %s\n", cpuno, info);
+		union {
+			char text[65];
+			struct
+			{
+				u_int eax;
+				u_int ebx;
+				u_int ecx;
+				u_int edx;
+			} regs[4];
+		} info;
+		int i;
+
+		for (i=0; i<4; i++) {
+			CPUID(0x80860003 + i,
+			    info.regs[i].eax, info.regs[i].ebx,
+			    info.regs[i].ecx, info.regs[i].edx);
+		}
+		info.text[64] = 0;
+		printf("%s: %s\n", ci->ci_dev->dv_xname, info.text);
 	}
 
 	crusoe_longrun = tmx86_get_longrun_mode();
 	tmx86_get_longrun_status(&crusoe_frequency,
 	    &crusoe_voltage, &crusoe_percentage);
-	printf("cpu%d: LongRun mode: %d  <%dMHz %dmV %d%%>\n", cpuno,
+	printf("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n", ci->ci_dev->dv_xname,
 	    crusoe_longrun, crusoe_frequency, crusoe_voltage,
 	    crusoe_percentage);
 }
 
 void
-transmeta_cpu_setup(void)
+transmeta_cpu_setup(struct cpu_info *ci)
 {
 
 	tmx86_has_longrun = 1;
@@ -1249,167 +1382,16 @@ transmeta_cpu_setup(void)
 /* ---------------------------------------------------------------------- */
 
 static const struct i386_cache_info *
-cache_info_lookup(const struct i386_cache_info *cai, int count, u_int8_t desc)
+cache_info_lookup(const struct i386_cache_info *cai, u_int8_t desc)
 {
 	int i;
 
-	for (i = 0; i < count; i++) {
+	for (i = 0; cai[i].cai_desc != 0; i++) {
 		if (cai[i].cai_desc == desc)
 			return (&cai[i]);
 	}
 
 	return (NULL);
-}
-
-static const struct i386_cache_info intel_cpuid_cache_info[] = {
-	{ CAI_ITLB,
-	  0x01,
-	  32,		4,			4 * 1024 },
-	{ CAI_ITLB2,
-	  0x02,
-	  2,		1,			4 * 1024 * 1024 },
-	{ CAI_DTLB,
-	  0x03,
-	  64,		4,			4 * 1024 },
-	{ CAI_DTLB2,
-	  0x04,
-	  8,		4,			4 * 1024 * 1024 },
-	{ CAI_ICACHE,
-	  0x06,
-	  8 * 1024,	4,			32 },
-	{ CAI_ICACHE,
-	  0x08,
-	  16 * 1024,	4,			32 },
-	{ CAI_DCACHE,
-	  0x0a,
-	  8 * 1024,	2,			32 },
-	{ CAI_DCACHE,
-	  0x0c,
-	  16 * 1024,	2,			32 },
-#if 0
-	/*
-	 * Just ignore this entry.  What is actually means is:
-	 *
-	 *	No 2nd-level cacle, or if processor contains a valid
-	 *	2nd-level cache, no 3rd-level cache.
-	 */
-	{ CAI_L2CACHE,
-	  0x40,
-	  0,		1,			0 },
-#endif
-	{ CAI_L2CACHE,
-	  0x41,
-	  128 * 1024,	4,			32 },
-	{ CAI_L2CACHE,
-	  0x42,
-	  256 * 1024,	4,			32 },
-	{ CAI_L2CACHE,
-	  0x43,
-	  512 * 1024,	4,			32 },
-	{ CAI_L2CACHE,
-	  0x44,
-	  1 * 1024 * 1024, 4,			32 },
-	{ CAI_L2CACHE,
-	  0x45,
-	  2 * 1024 * 1024, 4,			32 },
-	/*
-	 * XXX Need a way to represent the following:
-	 *
-	 *	0x50:	ITLB: 4K and 2M/4M, 64 entries
-	 *	0x51:	ITLB: 4K and 2M/4M, 128 entries
-	 *	0x52:	ITLB: 4K and 2M/4M, 285 entries
-	 *	0x5b:	DTLB: 4K and 4M, 64 entries
-	 *	0x5b:	DTLB: 4K and 4M, 128 entries
-	 *	0x5d:	DTLB: 4K and 4M, 256 entries
-	 */
-	{ CAI_DCACHE,
-	  0x66,
-	  8 * 1024,	4,			64 },
-	{ CAI_DCACHE,
-	  0x67,
-	  16 * 1024,	4,			64 },
-	{ CAI_DCACHE,
-	  0x68,
-	  32 * 1024,	4,			64 },
-	/*
-	 * XXX Need a way to represent the following:
-	 *
-	 *	0x70:	Trace cache, 12KuOP, 4-way
-	 *	0x71:	Trace cache, 16KuOP, 4-way
-	 *	0x72:	Trace cache, 32KuOP, 4-way
-	 *
-	 * Do we care?
-	 */
-	{ CAI_L2CACHE,
-	  0x79,
-	  128 * 1024,	8,			64 },
-	{ CAI_L2CACHE,
-	  0x7a,
-	  256 * 1024,	8,			64 },
-	{ CAI_L2CACHE,
-	  0x7b,
-	  512 * 1024,	8,			64 },
-	{ CAI_L2CACHE,
-	  0x7c,
-	  1 * 1024 * 1024, 8,			64 },
-	{ CAI_L2CACHE,
-	  0x82,
-	  256 * 1024,	8,			32 },
-	{ CAI_L2CACHE,
-	  0x83,
-	  512 * 1024,	8,			32 },
-	{ CAI_L2CACHE,
-	  0x84,
-	  1 * 1024 * 1024, 8,			32 },
-	{ CAI_L2CACHE,
-	  0x85,
-	  2 * 1024 * 1024, 8,			32 },
-};
-static const int intel_cpuid_cache_info_count =
-    sizeof(intel_cpuid_cache_info) / sizeof(intel_cpuid_cache_info[0]);
-
-void
-intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
-{
-	const struct i386_cache_info *cai;
-	u_int descs[4];
-	int iterations, i, j;
-	u_int8_t desc;
-
-	/*
-	 * If we have the CFLUSH insn, fetch the CFLUSH line size.
-	 */
-	if (cpu_feature & CPUID_CFLUSH) {
-		do_cpuid(1, descs);
-		ci->ci_cflush_lsize = ((descs[1] >> 8) & 0xff) * 8;
-	}
-
-	/*
-	 * Parse the cache info from `cpuid'.
-	 * XXX This is kinda ugly, but hey, so is the architecture...
-	 */
-
-	do_cpuid(2, descs);
-	iterations = descs[0] & 0xff;
-	while (iterations-- > 0) {
-		for (i = 0; i < 4; i++) {
-			if (descs[i] & 0x80000000)
-				continue;
-			for (j = 0; j < 4; j++) {
-				if (i == 0 && j == 0)
-					continue;
-				desc = (descs[i] >> (j * 8)) & 0xff;
-				cai = cache_info_lookup(intel_cpuid_cache_info,
-				    intel_cpuid_cache_info_count, desc);
-				if (cai != NULL) {
-					memcpy(&ci->ci_cinfo[cai->cai_index],
-					    cai,
-					    sizeof(struct i386_cache_info));
-				}
-			}
-		}
-		do_cpuid(2, descs);
-	}
 }
 
 /*
@@ -1480,7 +1462,7 @@ intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 
 /* L2 TLB 4K pages */
 #define	AMD_L2_EBX_DTLB_ASSOC(x)	(((x) >> 28)  & 0xf)
-#define	AMD_L2_EBX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff) 
+#define	AMD_L2_EBX_DTLB_ENTRIES(x)	(((x) >> 16)  & 0xfff)
 #define	AMD_L2_EBX_IUTLB_ASSOC(x)	(((x) >> 12)  & 0xf)
 #define	AMD_L2_EBX_IUTLB_ENTRIES(x)	( (x)         & 0xfff)
 
@@ -1491,46 +1473,28 @@ intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 #define	AMD_L2_ECX_C_LS(x)		 ( (x)        & 0xff)
 
 static const struct i386_cache_info amd_cpuid_l2cache_assoc_info[] = {
-	{ 0,
-	  0x00,
-	  0,		0,			0 },
-	{ 0,
-	  0x01,
-	  0,		1,			0 },
-	{ 0,
-	  0x02,
-	  0,		2,			0 },
-	{ 0,
-	  0x04,
-	  0,		4,			0 },
-	{ 0,
-	  0x06,
-	  0,		8,			0 },
-	{ 0,
-	  0x08,
-	  0,		16,			0 },
-	{ 0,
-	  0x0f,
-	  0,		~0,			0 },
+	{ 0, 0x01,    1 },
+	{ 0, 0x02,    2 },
+	{ 0, 0x04,    4 },
+	{ 0, 0x06,    8 },
+	{ 0, 0x08,   16 },
+	{ 0, 0x0f, 0xff },
+	{ 0, 0x00,    0 },
 };
-static const int amd_cpuid_l2cache_assoc_info_count =
-    sizeof(amd_cpuid_l2cache_assoc_info) /
-    sizeof(amd_cpuid_l2cache_assoc_info[0]);
 
 void
 amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 {
-	extern int cpu_id;
 	const struct i386_cache_info *cp;
 	struct i386_cache_info *cai;
 	int family, model;
 	u_int descs[4];
 	u_int lfunc;
 
-	family = (cpu_id >> 8) & 15;
+	family = (ci->ci_signature >> 8) & 15;
 	if (family < CPU_MINFAMILY)
 		panic("amd_cpuid_cpu_cacheinfo: strange family value");
-	model = CPUID2MODEL(cpu_id);
+	model = CPUID2MODEL(ci->ci_signature);
 
 	/*
 	 * K5 model 0 has none of this info.
@@ -1541,7 +1505,7 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 	/*
 	 * Determine the largest extended function value.
 	 */
-	do_cpuid(0x80000000, descs);
+	CPUID(0x80000000, descs[0], descs[1], descs[2], descs[3]);
 	lfunc = descs[0];
 
 	/*
@@ -1552,7 +1516,7 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 	}
 
-	do_cpuid(0x80000005, descs);
+	CPUID(0x80000005, descs[0], descs[1], descs[2], descs[3]);
 
 	/*
 	 * K6-III and higher have large page TLBs.
@@ -1577,7 +1541,7 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 	cai = &ci->ci_cinfo[CAI_DTLB];
 	cai->cai_totalsize = AMD_L1_EBX_DTLB_ENTRIES(descs[1]);
 	cai->cai_associativity = AMD_L1_EBX_DTLB_ASSOC(descs[1]);
-	cai->cai_linesize = (4 * 1024);       
+	cai->cai_linesize = (4 * 1024);
 
 	cai = &ci->ci_cinfo[CAI_DCACHE];
 	cai->cai_totalsize = AMD_L1_ECX_DC_SIZE(descs[2]);
@@ -1597,7 +1561,7 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 		return;
 	}
 
-	do_cpuid(0x80000006, descs);
+	CPUID(0x80000006, descs[0], descs[1], descs[2], descs[3]);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
 	cai->cai_totalsize = AMD_L2_ECX_C_SIZE(descs[2]);
@@ -1605,7 +1569,7 @@ amd_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 	cai->cai_linesize = AMD_L2_ECX_C_LS(descs[2]);
 
 	cp = cache_info_lookup(amd_cpuid_l2cache_assoc_info,
-	    amd_cpuid_l2cache_assoc_info_count, cai->cai_associativity);
+	    cai->cai_associativity);
 	if (cp != NULL)
 		cai->cai_associativity = cp->cai_associativity;
 	else
@@ -1620,46 +1584,43 @@ static const char n_lower[] __attribute__((__unused__)) =
 void
 identifycpu(struct cpu_info *ci)
 {
-	extern char cpu_vendor[];
-	extern int cpu_id;
-	extern int cpu_brand_id;
 	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
 	const struct cpu_cpuid_family *cpufam;
-	void (*cpu_setup) __P((void));
-	void (*cpu_cacheinfo) __P((struct cpu_info *));
+	char *cpuname = ci->ci_dev->dv_xname;
+	char buf[1024];
+	char *sep;
 
-	if (cpuid_level == -1) {
+	if (ci->ci_cpuid_level == -1) {
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
 		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
-			panic("unknown cpu type %d\n", cpu);
+			panic("unknown cpu type %d", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
 		vendor = i386_nocpuid_cpus[cpu].cpu_vendor;
 		vendorname = i386_nocpuid_cpus[cpu].cpu_vendorname;
 		class = i386_nocpuid_cpus[cpu].cpu_class;
-		cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
-		cpu_cacheinfo = i386_nocpuid_cpus[cpu].cpu_cacheinfo;
+		ci->cpu_setup = i386_nocpuid_cpus[cpu].cpu_setup;
 		ci->ci_info = i386_nocpuid_cpus[cpu].cpu_info;
 		modifier = "";
 	} else {
 		max = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
-		modif = (cpu_id >> 12) & 3;
-		family = (cpu_id >> 8) & 15;
+		modif = (ci->ci_signature >> 12) & 0x3;
+		family = (ci->ci_signature >> 8) & 0xf;
 		if (family < CPU_MINFAMILY)
 			panic("identifycpu: strange family value");
-		model = CPUID2MODEL(cpu_id);
-		step = cpu_id & 15;
+		model = CPUID2MODEL(ci->ci_signature);
+		step = ci->ci_signature & 0xf;
 #ifdef CPUDEBUG
-		printf("cpu0: family %x model %x step %x\n", family, model,
-			step);
+		printf("%s: family %x model %x step %x\n", cpuname, family,
+			model, step);
 #endif
 
 		for (i = 0; i < max; i++) {
-			if (!strncmp(cpu_vendor,
+			if (!strncmp((char *)ci->ci_vendor,
 			    i386_cpuid_cpus[i].cpu_id, 12)) {
 				cpup = &i386_cpuid_cpus[i];
 				break;
@@ -1668,8 +1629,8 @@ identifycpu(struct cpu_info *ci)
 
 		if (cpup == NULL) {
 			vendor = CPUVENDOR_UNKNOWN;
-			if (cpu_vendor[0] != '\0')
-				vendorname = &cpu_vendor[0];
+			if (ci->ci_vendor[0] != '\0')
+				vendorname = (char *)&ci->ci_vendor[0];
 			else
 				vendorname = "Unknown";
 			if (family > CPU_MAXFAMILY)
@@ -1677,8 +1638,7 @@ identifycpu(struct cpu_info *ci)
 			class = family - 3;
 			modifier = "";
 			name = "";
-			cpu_setup = NULL;
-			cpu_cacheinfo = NULL;
+			ci->cpu_setup = NULL;
 			ci->ci_info = NULL;
 		} else {
 			vendor = cpup->cpu_vendor;
@@ -1692,10 +1652,9 @@ identifycpu(struct cpu_info *ci)
 			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
 			name = cpufam->cpu_models[model];
 			if (name == NULL)
-				name = cpufam->cpu_models[CPU_DEFMODEL];
+			    name = cpufam->cpu_models[CPU_DEFMODEL];
 			class = cpufam->cpu_class;
-			cpu_setup = cpufam->cpu_setup;
-			cpu_cacheinfo = cpufam->cpu_cacheinfo;
+			ci->cpu_setup = cpufam->cpu_setup;
 			ci->ci_info = cpufam->cpu_info;
 
 			/*
@@ -1703,10 +1662,31 @@ identifycpu(struct cpu_info *ci)
 			 * recognize brand by Brand ID value.
 			 */
 			if (vendor == CPUVENDOR_INTEL && family >= 6 &&
-			    model >= 8 && cpu_brand_id && cpu_brand_id <= 3)
-				brand = i386_p3_brand[cpu_brand_id];
+			    model >= 8 && ci->ci_brand_id &&
+			    ci->ci_brand_id < 8)
+				brand = i386_intel_brand[ci->ci_brand_id];
 		}
 	}
+
+	cpu_class = class;
+	ci->ci_cpu_class = class;
+
+#if defined(I586_CPU) || defined(I686_CPU)
+	/*
+	 * If we have a cycle counter, compute the approximate
+	 * CPU speed in MHz.
+	 * XXX this needs to run on the CPU being probed..
+	 */
+	if (ci->ci_feature_flags & CPUID_TSC) {
+		u_int64_t last_tsc;
+
+		last_tsc = rdtsc();
+		delay(100000);
+		ci->ci_tsc_freq = (rdtsc() - last_tsc) * 10;
+		microtime_func = tsc_microtime;
+	}
+	/* XXX end XXX */
+#endif
 
 	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
 	    vendorname,
@@ -1714,21 +1694,67 @@ identifycpu(struct cpu_info *ci)
 	    *name ? " " : "", name,
 	    *brand ? " " : "", brand,
 	    classnames[class]);
+	printf("%s: %s", cpuname, cpu_model);
 
-	cpu_class = class;
+	if (ci->ci_tsc_freq != 0)
+		printf(", %qd.%02qd MHz", (ci->ci_tsc_freq + 4999) / 1000000,
+		    ((ci->ci_tsc_freq + 4999) / 10000) % 100);
+	printf("\n");
 
-	/*
-	 * Get the cache info for this CPU, if we can.
-	 */
-	if (cpu_cacheinfo != NULL)
-		(*cpu_cacheinfo)(ci);
+	if (ci->ci_info)
+		(*ci->ci_info)(ci);
 
-	/*
-	 * If the processor serial number misfeature is present and supported,
-	 * extract it here.
-	 */
-	if (cpuid_level >= 3 && (cpu_feature & CPUID_PN) != 0)
-		do_cpuid_serial(cpu_serial);
+	if (ci->ci_feature_flags) {
+		if ((ci->ci_feature_flags & CPUID_MASK1) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS1,
+			    buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+		if ((ci->ci_feature_flags & CPUID_MASK2) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS2,
+			    buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+		if ((ci->ci_feature_flags & CPUID_MASK3) != 0) {
+			bitmask_snprintf(ci->ci_feature_flags, CPUID_FLAGS3,
+			    buf, sizeof(buf));
+			printf("%s: features %s\n", cpuname, buf);
+		}
+	}
+
+
+	if (ci->ci_cinfo[CAI_ICACHE].cai_totalsize != 0 ||
+	    ci->ci_cinfo[CAI_DCACHE].cai_totalsize != 0) {
+		sep = print_cache_config(ci, CAI_ICACHE, "I-cache", NULL);
+		sep = print_cache_config(ci, CAI_DCACHE, "D-cache", sep);
+		if (sep != NULL)
+			printf("\n");
+	}
+	if (ci->ci_cinfo[CAI_L2CACHE].cai_totalsize != 0) {
+		sep = print_cache_config(ci, CAI_L2CACHE, "L2 cache", NULL);
+		if (sep != NULL)
+			printf("\n");
+	}
+	if (ci->ci_cinfo[CAI_ITLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_ITLB, "ITLB", NULL);
+		sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
+		if (sep != NULL)
+			printf("\n");
+	}
+	if (ci->ci_cinfo[CAI_DTLB].cai_totalsize != 0) {
+		sep = print_tlb_config(ci, CAI_DTLB, "DTLB", NULL);
+		sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
+		if (sep != NULL)
+			printf("\n");
+	}
+
+	if (ci->ci_cpuid_level >= 3 && (ci->ci_feature_flags & CPUID_PN)) {
+		printf("%s: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
+		    cpuname,
+		    ci->ci_cpu_serial[0] / 65536, ci->ci_cpu_serial[0] % 65536,
+		    ci->ci_cpu_serial[1] / 65536, ci->ci_cpu_serial[1] % 65536,
+		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
+	}
 
 	/*
 	 * Now that we have told the user what they have,
@@ -1799,9 +1825,6 @@ identifycpu(struct cpu_info *ci)
 		break;
 	}
 
-	/* configure the CPU if needed */
-	if (cpu_setup != NULL)
-		cpu_setup();
 	if (cpu == CPU_486DLC) {
 #ifndef CYRIX_CACHE_WORKS
 		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
@@ -1814,36 +1837,13 @@ identifycpu(struct cpu_info *ci)
 #endif
 	}
 
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * On a 486 or above, enable ring 0 write protection.
-	 */
-	if (cpu_class >= CPUCLASS_486)
-		lcr0(rcr0() | CR0_WP);
-#endif
-
-#if defined(I586_CPU) || defined(I686_CPU)
-	/*
-	 * If we have a cycle counter, compute the approximate
-	 * CPU speed in MHz.
-	 */
-	if (cpu_feature & CPUID_TSC) {
-		u_int64_t last_tsc;
-
-		last_tsc = rdtsc();
-		delay(100000);
-		cpu_tsc_freq = (rdtsc() - last_tsc) * 10;
-	}
-#endif
-
 #if defined(I686_CPU)
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
 	 */
 	if (cpu_feature & CPUID_FXSR) {
 		i386_use_fxsave = 1;
-		lcr4(rcr4() | CR4_OSFXSR);
-		
+
 		/*
 		 * If we have SSE/SSE2, enable XMM exceptions, and
 		 * notify userland.
@@ -1853,16 +1853,15 @@ identifycpu(struct cpu_info *ci)
 				i386_has_sse = 1;
 			if (cpu_feature & CPUID_SSE2)
 				i386_has_sse2 = 1;
-			lcr4(rcr4() | CR4_OSXMMEXCPT);
 		}
 	} else
 		i386_use_fxsave = 0;
 #endif /* I686_CPU */
 }
 
-/*  
+/*
  * machine dependent system variables.
- */ 
+ */
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	int *name;
@@ -2211,6 +2210,10 @@ cpu_reboot(howto, bootstr)
 haltsys:
 	doshutdownhooks();
 
+#ifdef MULTIPROCESSOR
+	i386_broadcast_ipi(I386_IPI_HALT);
+#endif
+
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #if NACPI > 0
 		delay(500000);
@@ -2298,9 +2301,13 @@ cpu_dump()
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
+	const struct bdevsw *bdev;
 	int i;
 
-	dump = bdevsw[major(dumpdev)].d_dump;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return (ENXIO);
+	dump = bdev->d_dump;
 
 	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
@@ -2341,17 +2348,17 @@ cpu_dump()
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -2399,6 +2406,7 @@ dumpsys()
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
+	const struct bdevsw *bdev;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
 
@@ -2406,6 +2414,10 @@ dumpsys()
 	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
+		return;
+
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
 	/*
@@ -2422,7 +2434,7 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -2439,7 +2451,7 @@ dumpsys()
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	error = 0;
 
 	for (memseg = 0; memseg < mem_cluster_cnt; memseg++) {
@@ -2524,8 +2536,8 @@ setregs(p, pack, stack)
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (npxproc == p)
-		npxdrop();
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p, 0);
 #endif
 
 #ifdef USER_LDT
@@ -2587,6 +2599,21 @@ setgate(gd, func, args, type, dpl)
 }
 
 void
+unsetgate(gd)
+	struct gate_descriptor *gd;
+{
+	gd->gd_p = 0;
+	gd->gd_hioffset = 0;
+	gd->gd_looffset = 0;
+	gd->gd_selector = 0;
+	gd->gd_xx = 0;
+	gd->gd_stkcpy = 0;
+	gd->gd_type = 0;
+	gd->gd_dpl = 0;
+}
+
+
+void
 setregion(rd, base, limit)
 	struct region_descriptor *rd;
 	void *base;
@@ -2630,6 +2657,17 @@ extern vector IDTVEC(mach_trap);
 #endif
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
+
+void cpu_init_idt()
+{
+	struct region_descriptor region;
+#ifdef I586_CPU
+	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
+#else
+	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
+#endif
+        lidt(&region);
+}
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
 void
@@ -2703,9 +2741,41 @@ add_mem_cluster(seg_start, seg_end, type)
 #endif /* !defined(REALBASEMEM) && !defined(REALEXTMEM) */
 
 void
+initgdt(union descriptor *tgdt)
+{
+	struct region_descriptor region;
+	gdt = tgdt;
+	memset(gdt, 0, NGDT*sizeof(*gdt));
+	/* make gdt gates and memory segments */
+	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
+	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMERA, SEL_UPL, 1, 1);
+	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
+	    SDT_MEMRWA, SEL_UPL, 1, 1);
+#ifdef COMPAT_MACH
+	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
+	    SDT_SYS386CGT, SEL_UPL);
+#endif
+#if NBIOSCALL > 0
+	/* bios trampoline GDT entries */
+	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
+	    0);
+	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
+	    0);
+#endif
+	setsegment(&gdt[GCPU_SEL].sd, &cpu_info_primary,
+	    sizeof(struct cpu_info)-1, SDT_MEMRWA, SEL_KPL, 1, 1);
+
+	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
+	lgdt(&region);
+}
+
+void
 init386(first_avail)
 	paddr_t first_avail;
 {
+	union descriptor *tgdt;
 	extern void consinit __P((void));
 	extern struct extent *iomem_ex;
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
@@ -2723,18 +2793,18 @@ init386(first_avail)
 	extern u_char biostramp_image[];
 #endif
 
+	cpu_probe_features(&cpu_info_primary);
+	cpu_feature = cpu_info_primary.ci_feature_flags;
+
 	proc0.p_addr = proc0paddr;
-	curpcb = &proc0.p_addr->u_pcb;
+	cpu_info_primary.ci_curpcb = &proc0.p_addr->u_pcb;
 
 	i386_bus_space_init();
-
 	consinit();	/* XXX SHOULD NOT BE DONE HERE */
-
 	/*
 	 * Initailize PAGE_SIZE-dependent variables.
 	 */
 	uvm_setpagesize();
-
 	/*
 	 * A quick sanity check.
 	 */
@@ -2756,8 +2826,12 @@ init386(first_avail)
 	uvmexp.ncolors = 2;
 
 	/*
-	 * BIOS leaves data in low memory
-	 * and VM system doesn't work with phys 0
+	 * BIOS leaves data in physical page 0
+	 * Even if it didn't, our VM system doesn't like using zero as a
+	 * physical page number.
+	 * We may also need pages in low memory (one each) for secondary CPU
+	 * startup, for BIOS calls, and for ACPI, plus a page table page to map
+	 * them into the first few pages of the kernel's pmap.
 	 */
 	avail_start = PAGE_SIZE;
 
@@ -2772,6 +2846,12 @@ init386(first_avail)
 	realmode_reserved_size += PAGE_SIZE;
 	needs_earlier_install_pte0 = 1;
 #endif
+#ifdef MULTIPROCESSOR						 /* XXX */
+	KASSERT(avail_start == PAGE_SIZE);			 /* XXX */
+	if (realmode_reserved_size < MP_TRAMPOLINE)		 /* XXX */
+		realmode_reserved_size = MP_TRAMPOLINE;		 /* XXX */
+	needs_earlier_install_pte0 = 1;				 /* XXX */
+#endif								 /* XXX */
 #if NACPI > 0
 	/* trampoline code for wake handler */
 	realmode_reserved_size += ptoa(acpi_md_get_npages_of_wakecode()+1);
@@ -2835,7 +2915,7 @@ init386(first_avail)
 			 *   Avoid Compatibility Holes.
 			 * XXX  Holes within memory space that allow access
 			 * XXX to be directed to the PC-compatible frame buffer
-			 * XXX (0xa0000-0xbffff),to adapter ROM space 
+			 * XXX (0xa0000-0xbffff),to adapter ROM space
 			 * XXX (0xc0000-0xdffff), and to system BIOS space
 			 * XXX (0xe0000-0xfffff).
 			 * XXX  Some laptop(for example,Toshiba Satellite2550X)
@@ -2857,7 +2937,6 @@ init386(first_avail)
 		}
 	}
 #endif /* ! REALBASEMEM && ! REALEXTMEM */
-
 	/*
 	 * If the loop above didn't find any valid segment, fall back to
 	 * former code.
@@ -2913,7 +2992,6 @@ init386(first_avail)
 
 		avail_end = IOM_END + trunc_page(KBTOB(biosextmem));
 	}
-
 	/*
 	 * If we have 16M of RAM or less, just put it all on
 	 * the default free list.  Otherwise, put the first
@@ -2968,7 +3046,7 @@ init386(first_avail)
 
 		/* First hunk */
 		if (seg_start != seg_end) {
-			if (seg_start <= (16 * 1024 * 1024) &&
+			if (seg_start < (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				u_int64_t tmp;
 
@@ -3001,7 +3079,7 @@ init386(first_avail)
 
 		/* Second hunk */
 		if (seg_start1 != seg_end1) {
-			if (seg_start1 <= (16 * 1024 * 1024) &&
+			if (seg_start1 < (16 * 1024 * 1024) &&
 			    first16q != VM_FREELIST_DEFAULT) {
 				u_int64_t tmp;
 
@@ -3107,7 +3185,7 @@ init386(first_avail)
 	    panic("cannot steal memory for PT page of bioscall.");
 	}
 	if (biostramp_image_size > PAGE_SIZE)
-	    panic("biostramp_image_size too big: %x vs. %x\n",
+	    panic("biostramp_image_size too big: %x vs. %x",
 		  biostramp_image_size, PAGE_SIZE);
 #endif
 	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
@@ -3159,37 +3237,24 @@ init386(first_avail)
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update(pmap_kernel());
+	memset((void *)idt_vaddr, 0, PAGE_SIZE);
+
 	idt = (union descriptor *)idt_vaddr;
 #ifdef I586_CPU
 	pmap_enter(pmap_kernel(), pentium_idt_vaddr, idt_paddr,
 	    VM_PROT_READ, PMAP_WIRED|VM_PROT_READ);
-	pmap_update(pmap_kernel());
 	pentium_idt = (union descriptor *)pentium_idt_vaddr;
 #endif
+	pmap_update(pmap_kernel());
+
+	tgdt = gdt;
 	gdt = idt + NIDT;
 	ldt = gdt + NGDT;
 
+	memcpy(gdt, tgdt, NGDT*sizeof(*gdt));
 
-	/* make gdt gates and memory segments */
-	setsegment(&gdt[GCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 1, 1);
-	setsegment(&gdt[GDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 1, 1);
 	setsegment(&gdt[GLDT_SEL].sd, ldt, NLDT * sizeof(ldt[0]) - 1,
 	    SDT_SYSLDT, SEL_KPL, 0, 0);
-	setsegment(&gdt[GUCODE_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMERA, SEL_UPL, 1, 1);
-	setsegment(&gdt[GUDATA_SEL].sd, 0, i386_btop(VM_MAXUSER_ADDRESS) - 1,
-	    SDT_MEMRWA, SEL_UPL, 1, 1);
-#ifdef COMPAT_MACH
-	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
-	    SDT_SYS386CGT, SEL_UPL);
-#endif
-#if NBIOSCALL > 0
-	/* bios trampoline GDT entries */
-	setsegment(&gdt[GBIOSCODE_SEL].sd, 0, 0xfffff, SDT_MEMERA, SEL_KPL, 0,
-	    0);
-	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
-	    0);
-#endif
 
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
@@ -3213,6 +3278,9 @@ init386(first_avail)
 
 	setregion(&region, gdt, NGDT * sizeof(gdt[0]) - 1);
 	lgdt(&region);
+
+	cpu_init_idt();
+
 #ifdef I586_CPU
 	setregion(&region, pentium_idt, NIDT * sizeof(idt[0]) - 1);
 #else
@@ -3220,14 +3288,16 @@ init386(first_avail)
 #endif
 	lidt(&region);
 
-
 #ifdef DDB
 	{
 		extern int end;
 		extern int *esym;
 		struct btinfo_symtab *symtab;
 
+		db_machine_init();
+
 		symtab = lookup_bootinfo(BTINFO_SYMTAB);
+
 		if (symtab) {
 			symtab->ssym += KERNBASE;
 			symtab->esym += KERNBASE;
@@ -3267,7 +3337,7 @@ init386(first_avail)
 	/* Initialize software interrupts. */
 	softintr_init();
 
-	splraise(-1);
+	splraise(IPL_SERIAL);	/* XXX MP clean me */
 	enable_intr();
 
 	if (physmem < btoc(2 * 1024 * 1024)) {
@@ -3278,8 +3348,6 @@ init386(first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
-
-	identifycpu(curcpu());
 }
 
 #ifdef COMPAT_NOMID
@@ -3388,11 +3456,21 @@ int type;
 	return(0);
 }
 
+#include <dev/ic/mc146818reg.h>		/* for NVRAM POST */
+#include <i386/isa/nvram.h>		/* for NVRAM POST */
+
 void
 cpu_reset()
 {
 
 	disable_intr();
+
+	/*
+	 * Ensure the NVRAM reset byte contains something vaguely sane.
+	 */
+
+	outb(IO_RTC, NVRAM_RESET);
+	outb(IO_RTC+1, NVRAM_RESET_RST);
 
 	/*
 	 * The keyboard controller has 4 random output pins, one of which is
@@ -3409,7 +3487,7 @@ cpu_reset()
 	 * invalid and causing a fault.
 	 */
 	memset((caddr_t)idt, 0, NIDT * sizeof(idt[0]));
-	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0)); 
+	__asm __volatile("divl %0,%1" : : "q" (0), "a" (0));
 
 #if 0
 	/*
@@ -3417,8 +3495,71 @@ cpu_reset()
 	 * entire address space and doing a TLB flush.
 	 */
 	memset((caddr_t)PTD, 0, PAGE_SIZE);
-	tlbflush(); 
+	tlbflush();
 #endif
 
 	for (;;);
 }
+
+void cpu_initclocks()
+{
+	(*initclock_func)();
+}
+
+#ifdef MULTIPROCESSOR
+void need_resched(struct cpu_info *ci)
+{
+	ci->ci_want_resched = 1;
+	aston(ci);
+}
+#endif
+
+/*
+ * Allocate an IDT vector slot within the given range.
+ * XXX needs locking to avoid MP allocation races.
+ */
+
+int
+idt_vec_alloc (low, high)
+	int low;
+	int high;
+{
+	int vec;
+
+	for (vec=low; vec<=high; vec++)
+		if (idt[vec].gd.gd_p == 0)
+			return vec;
+	return 0;
+}
+
+void idt_vec_set (vec, function)
+	int vec;
+	void (*function) __P((void));
+{
+	setgate (&idt[vec].gd, function, 0, SDT_SYS386IGT, SEL_KPL);
+}
+
+void
+idt_vec_free (vec)
+	int vec;
+{
+	unsetgate(&idt[vec].gd);
+}
+
+#if 0
+extern void xxx_lapic_time(void);
+
+void
+xxx_lapic_time(void)
+{
+	uint64_t before, after;
+	int i, sum;
+
+	before=rdtsc();
+	for (i=0; i<1000000; i++) {
+		sum += lapic_tpr;
+	}
+	after=rdtsc();
+	printf("1000000 lapic_tpr reads: %llx\n", after-before);
+}
+#endif

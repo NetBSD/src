@@ -1,4 +1,4 @@
-/*	$NetBSD: ipaq_atmelgpio.c,v 1.2.2.2 2001/08/03 04:11:32 lukem Exp $	*/
+/*	$NetBSD: ipaq_atmelgpio.c,v 1.2.2.3 2002/10/10 18:32:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
@@ -74,9 +74,8 @@ static	void	atmelgpio_init(struct atmelgpio_softc *);
 static	void	rxtx_data(struct atmelgpio_softc *, int, int,
 			 u_int8_t *, struct atmel_rx *);
 
-struct cfattach atmelgpio_ca = {
-	sizeof(struct atmelgpio_softc), atmelgpio_match, atmelgpio_attach
-};
+CFATTACH_DECL(atmelgpio, sizeof(struct atmelgpio_softc),
+    atmelgpio_match, atmelgpio_attach, NULL, NULL);
 
 static int
 atmelgpio_match(parent, cf, aux)
@@ -138,7 +137,7 @@ atmelgpio_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, atmelgpio_print);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.10.4.3 2002/06/23 17:40:47 jdolecek Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.10.4.4 2002/10/10 18:35:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -308,7 +308,7 @@ exec_coff_prep_zmagic(struct proc *p, struct exec_package *epp,
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

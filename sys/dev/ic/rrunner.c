@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.26.2.6 2002/09/06 08:44:31 jdolecek Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.26.2.7 2002/10/10 18:39:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.26.2.6 2002/09/06 08:44:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.26.2.7 2002/10/10 18:39:10 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.26.2.6 2002/09/06 08:44:31 jdolecek Ex
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -122,12 +123,25 @@ void eshwatchdog __P((struct ifnet *));
 
 /* Routines to support FP operation */
 
-bdev_decl(esh_fp);
-cdev_decl(esh_fp);
-
+dev_type_open(esh_fpopen);
+dev_type_close(esh_fpclose);
+dev_type_read(esh_fpread);
+dev_type_write(esh_fpwrite);
 #ifdef MORE_DONE
-paddr_t esh_fpmmap __P((dev_t, off_t, int));
+dev_type_mmap(esh_fpmmap);
 #endif
+dev_type_strategy(esh_fpstrategy);
+
+const struct cdevsw esh_cdevsw = {
+	esh_fpopen, esh_fpclose, esh_fpread, esh_fpwrite, nullioctl,
+	nostop, notty, nullpoll,
+#ifdef MORE_DONE
+	esh_fpmmap,
+#else
+	nommap,
+#endif
+	nullkqfilter,
+};
 
 /* General routines, not externally visable */
 
@@ -1406,42 +1420,6 @@ done:
 	       bp->b_error);
 #endif
 	biodone(bp);
-}
-
-
-int 
-esh_fpioctl(dev, cmd, data, fflag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int fflag;
-	struct proc *p;
-{
-	return 0;
-}
-
-
-void 
-esh_fpstop(tp, rw)
-	struct tty *tp;
-	int rw;
-{
-}
-
-int 
-esh_fppoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-	return 0;
-}
-
-int
-esh_fpkqfilter(dev_t dev, struct knote *kn)
-{
-
-	return (1);
 }
 
 /*

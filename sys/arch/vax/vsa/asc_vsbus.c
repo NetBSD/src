@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.24 2001/05/16 05:36:56 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.24.2.1 2002/10/10 18:37:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.24 2001/05/16 05:36:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.24.2.1 2002/10/10 18:37:25 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -105,9 +105,8 @@ struct asc_vsbus_softc {
 static int asc_vsbus_match(struct device *, struct cfdata *, void *);
 static void asc_vsbus_attach(struct device *, struct device *, void *);
 
-struct cfattach asc_vsbus_ca = {
-	sizeof(struct asc_vsbus_softc), asc_vsbus_match, asc_vsbus_attach
-};
+CFATTACH_DECL(asc_vsbus, sizeof(struct asc_vsbus_softc),
+    asc_vsbus_match, asc_vsbus_attach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code
@@ -300,7 +299,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
 	sc->sc_minsync = (1000 / sc->sc_freq);
-	sc->sc_maxxfer = 63 * 1024;
+	sc->sc_maxxfer = 64 * 1024;
 
 	printf("\n%s", self->dv_xname);	/* Pretty print */
 

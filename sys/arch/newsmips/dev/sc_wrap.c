@@ -1,4 +1,4 @@
-/*	$NetBSD: sc_wrap.c,v 1.17.2.1 2002/01/10 19:47:00 thorpej Exp $	*/
+/*	$NetBSD: sc_wrap.c,v 1.17.2.2 2002/10/10 18:34:34 jdolecek Exp $	*/
 
 /*
  * This driver is slow!  Need to rewrite.
@@ -31,9 +31,8 @@
 static int cxd1185_match __P((struct device *, struct cfdata *, void *));
 static void cxd1185_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sc_ca = {
-	sizeof(struct sc_softc), cxd1185_match, cxd1185_attach
-};
+CFATTACH_DECL(sc, sizeof(struct sc_softc),
+    cxd1185_match, cxd1185_attach, NULL, NULL);
 
 void cxd1185_init __P((struct sc_softc *));
 static void free_scb __P((struct sc_softc *, struct sc_scb *));

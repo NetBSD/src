@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.2.6.1 2001/08/03 04:10:45 lukem Exp $ */
+/* $NetBSD: jensenio.c,v 1.2.6.2 2002/10/10 18:31:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.2.6.1 2001/08/03 04:10:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.2.6.2 2002/10/10 18:31:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,9 +87,8 @@ const struct jensenio_dev {
 int	jensenio_match(struct device *, struct cfdata *, void *);
 void	jensenio_attach(struct device *, struct device *, void *);
 
-struct cfattach jensenio_ca = {
-	sizeof(struct device), jensenio_match, jensenio_attach
-};
+CFATTACH_DECL(jensenio, sizeof(struct device),
+    jensenio_match, jensenio_attach, NULL, NULL);
 
 int	jensenio_print(void *, const char *);
 int	jensenio_submatch(struct device *, struct cfdata *, void *);
@@ -140,7 +139,7 @@ jensenio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma->ma_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(ma->ma_name, cf->cf_name) != 0)
 		return (0);
 
 	/* There can be only one. */
@@ -230,13 +229,13 @@ jensenio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	 */
 	if (strcmp(ja->ja_name, "eisa") == 0 ||
 	    strcmp(ja->ja_name, "isa") == 0)
-		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return (config_match(parent, cf, aux));
 
 	if (cf->cf_loc[JENSENIOCF_PORT] != JENSENIOCF_PORT_DEFAULT &&
 	    cf->cf_loc[JENSENIOCF_PORT] != ja->ja_ioaddr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

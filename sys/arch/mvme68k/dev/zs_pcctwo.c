@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.4.2.1 2002/03/16 15:58:54 jdolecek Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.4.2.2 2002/10/10 18:34:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -77,9 +77,8 @@
 static int	zsc_pcctwo_match(struct device *, struct cfdata *, void *);
 static void	zsc_pcctwo_attach(struct device *, struct device *, void *);
 
-struct cfattach zsc_pcctwo_ca = {
-	sizeof(struct zsc_softc), zsc_pcctwo_match, zsc_pcctwo_attach
-};
+CFATTACH_DECL(zsc_pcctwo, sizeof(struct zsc_softc),
+    zsc_pcctwo_match, zsc_pcctwo_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -162,13 +161,15 @@ void
 zsc_pcctwocnprobe(cp)
 	struct consdev *cp;
 {
+	extern const struct cdevsw zstty_cdevsw;
+
 	if (machineid != MVME_162 && machineid != MVME_172) {
 		cp->cn_pri = CN_DEAD;
 		return;
 	}
 
 	/* Initialize required fields. */
-	cp->cn_dev = makedev(zs_major, 0);
+	cp->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
 	cp->cn_pri = CN_NORMAL;
 }
 

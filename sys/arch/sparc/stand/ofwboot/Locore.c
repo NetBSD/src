@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.1.8.1 2002/06/23 17:42:01 jdolecek Exp $	*/
+/*	$NetBSD: Locore.c,v 1.1.8.2 2002/10/10 18:36:29 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -407,7 +407,7 @@ OF_chain(virt, size, entry, arg, len)
 			(unsigned long)romp, (unsigned long)romp);
 	}
 	entry(0, arg, len, (unsigned long)romp, (unsigned long)romp);
-	panic("OF_chain: kernel returned!\n");
+	panic("OF_chain: kernel returned!");
 	__asm("ta 2" : :);
 }
 

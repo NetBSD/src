@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio.c,v 1.3 2001/06/19 12:02:56 simonb Exp $	*/
+/*	$NetBSD: gpio.c,v 1.3.2.1 2002/10/10 18:33:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -57,13 +57,11 @@ struct gpio_softc {
 	u_int8_t *sc_port;
 };
 
-struct cfattach gpio_obio_ca = {
-	sizeof(struct gpio_softc), gpio_obio_match, gpio_obio_attach
-};
+CFATTACH_DECL(gpio_obio, sizeof(struct gpio_softc),
+    gpio_obio_match, gpio_obio_attach, NULL, NULL);
 
-struct cfattach gpio_gpio_ca = {
-	sizeof(struct gpio_softc), gpio_gpio_match, gpio_gpio_attach
-};
+CFATTACH_DECL(gpio_gpio, sizeof(struct gpio_softc),
+    gpio_gpio_match, gpio_gpio_attach, NULL, NULL);
 
 extern struct cfdriver gpio_cd;
 

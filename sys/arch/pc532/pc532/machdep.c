@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.123.2.5 2002/09/06 08:38:43 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.123.2.6 2002/10/10 18:34:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -50,7 +50,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/exec.h>
@@ -601,12 +600,17 @@ cpu_dumpsize()
 static int
 cpu_dump()
 {
+	const struct bdevsw *bdev;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	long buf[dbtob(1) / sizeof (long)];
 	kcore_seg_t	*segp;
 	cpu_kcore_hdr_t	*cpuhdrp;
 
-        dump = bdevsw[major(dumpdev)].d_dump;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return;
+
+        dump = bdev->d_dump;
 
 	segp = (kcore_seg_t *)buf;
 	cpuhdrp =
@@ -638,17 +642,17 @@ cpu_dump()
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -691,6 +695,7 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	unsigned bytes, i, n;
 	int maddr, psize;
 	daddr_t blkno;
@@ -698,6 +703,9 @@ dumpsys()
 	int error;
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
 	/*
@@ -714,7 +722,7 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -729,7 +737,7 @@ dumpsys()
 	bytes = ctob(physmem);
 	maddr = 0;
 	blkno = dumplo + cpu_dumpsize();
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	error = 0;
 	for (i = 0; i < bytes; i += n) {
 		/* Print out how many MBs we to go. */
@@ -1033,7 +1041,7 @@ init532()
 	lprd(fp, 0);
 
 	main(curpcb->pcb_onstack);
-	panic("main returned to init532\n");
+	panic("main returned to init532");
 }
 
 /*

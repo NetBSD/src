@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.5.6.1 2002/06/23 17:37:37 jdolecek Exp $ */
+/* $NetBSD: lunaws.c,v 1.5.6.2 2002/10/10 18:33:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.5.6.1 2002/06/23 17:37:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.5.6.2 2002/10/10 18:33:37 jdolecek Exp $");
 
 #include "wsmouse.h"
 
@@ -124,9 +124,8 @@ static int  ws_submatch_kbd __P((struct device *, struct cfdata *, void *));
 static int  ws_submatch_mouse __P((struct device *, struct cfdata *, void *));
 #endif
 
-const struct cfattach ws_ca = {
-	sizeof(struct ws_softc), wsmatch, wsattach
-};
+CFATTACH_DECL(ws, sizeof(struct ws_softc),
+    wsmatch, wsattach, NULL, NULL);
 extern struct cfdriver ws_cd;
 
 extern int  syscngetc __P((dev_t));
@@ -197,9 +196,9 @@ ws_submatch_kbd(parent, cf, aux)
         void *aux;
 {
 
-        if (strcmp(cf->cf_driver->cd_name, "wskbd"))
+        if (strcmp(cf->cf_name, "wskbd"))
                 return (0);
-        return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+        return (config_match(parent, cf, aux));
 }
 
 #if NWSMOUSE > 0
@@ -211,9 +210,9 @@ ws_submatch_mouse(parent, cf, aux)
         void *aux;
 {
 
-        if (strcmp(cf->cf_driver->cd_name, "wsmouse"))
+        if (strcmp(cf->cf_name, "wsmouse"))
                 return (0);
-        return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+        return (config_match(parent, cf, aux));
 }
 
 #endif

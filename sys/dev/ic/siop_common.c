@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.14.2.3 2002/09/06 08:44:34 jdolecek Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.14.2.4 2002/10/10 18:39:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -33,7 +33,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.14.2.3 2002/09/06 08:44:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.14.2.4 2002/10/10 18:39:12 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ siop_common_attach(sc)
 			sc->st_minsync = scf_period[i].period;
 	}
 	if (sc->st_maxsync == 255 || sc->st_minsync == 0)
-		panic("siop: can't find my sync parameters\n");
+		panic("siop: can't find my sync parameters");
 	for (i = 0; i < sizeof(dt_scf_period) / sizeof(dt_scf_period[0]); i++) {
 		if (sc->clock_period != dt_scf_period[i].clock)
 			continue;
@@ -156,7 +156,7 @@ siop_common_attach(sc)
 			sc->dt_minsync = dt_scf_period[i].period;
 	}
 	if (sc->dt_maxsync == 255 || sc->dt_minsync == 0)
-		panic("siop: can't find my sync parameters\n");
+		panic("siop: can't find my sync parameters");
 	return 0;
 }
 
@@ -278,7 +278,7 @@ siop_setuptables(siop_cmd)
 			scsipi_printaddr(xs->xs_periph);
 			printf(": tagged command type %d id %d\n",
 			    siop_cmd->xs->xs_tag_type, siop_cmd->xs->xs_tag_id);
-			panic("tagged command for non-tagging device\n");
+			panic("tagged command for non-tagging device");
 		}
 		siop_cmd->flags |= CMDFL_TAG;
 		siop_cmd->siop_tables->msg_out[1] = siop_cmd->xs->xs_tag_type;

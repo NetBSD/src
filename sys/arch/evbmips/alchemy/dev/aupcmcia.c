@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.1.6.2 2002/09/06 08:34:19 jdolecek Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.1.6.3 2002/10/10 18:32:28 jdolecek Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,9 +45,8 @@
 static int	aupcmcia_match(struct device *, struct cfdata *, void *);
 static void	aupcmcia_attach(struct device *, struct device *, void *);
 
-struct cfattach aupcmcia_ca = {
-	sizeof (struct device), aupcmcia_match, aupcmcia_attach, 
-};
+CFATTACH_DECL(aupcmcia, sizeof (struct device),
+    aupcmcia_match, aupcmcia_attach, NULL, NULL);
 
 int
 aupcmcia_match(struct device *parent, struct cfdata *match, void *aux)
@@ -55,7 +54,7 @@ aupcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 	struct aubus_attach_args *aa = aux;
 
 	return (0);	/* XXX unimplemented! */
-	if (strcmp(aa->aa_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

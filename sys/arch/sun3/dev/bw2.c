@@ -1,4 +1,4 @@
-/*	$NetBSD: bw2.c,v 1.16.4.3 2002/06/28 08:22:30 jdolecek Exp $	*/
+/*	$NetBSD: bw2.c,v 1.16.4.4 2002/10/10 18:37:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,8 +72,6 @@
 #include <sun3/dev/bw2reg.h>
 #include <sun3/dev/p4reg.h>
 
-cdev_decl(bw2);
-
 /* per-display variables */
 struct bw2_softc {
 	struct	device sc_dev;		/* base device */
@@ -88,11 +86,19 @@ struct bw2_softc {
 static void	bw2attach __P((struct device *, struct device *, void *));
 static int	bw2match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach bwtwo_ca = {
-	sizeof(struct bw2_softc), bw2match, bw2attach
-};
+CFATTACH_DECL(bwtwo, sizeof(struct bw2_softc),
+    bw2match, bw2attach, NULL, NULL);
 
 extern struct cfdriver bwtwo_cd;
+
+dev_type_open(bw2open);
+dev_type_ioctl(bw2ioctl);
+dev_type_mmap(bw2mmap);
+
+const struct cdevsw bwtwo_cdevsw = {
+	bw2open, nullclose, noread, nowrite, bw2ioctl,
+	nostop, notty, nopoll, bw2mmap, nokqfilter,
+};
 
 /* XXX we do not handle frame buffer interrupts */
 
@@ -100,7 +106,7 @@ static int bw2gvideo __P((struct fbdevice *, void *));
 static int bw2svideo __P((struct fbdevice *, void *));
 
 static struct fbdriver bw2fbdriver = {
-	bw2open, bw2close, bw2mmap, bw2kqfilter,
+	bw2open, nullclose, bw2mmap, nokqfilter,
 	fb_noioctl,
 	bw2gvideo, bw2svideo,
 	fb_noioctl, fb_noioctl, };
@@ -298,16 +304,6 @@ bw2open(dev, flags, mode, p)
 }
 
 int
-bw2close(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 bw2ioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -344,31 +340,6 @@ bw2mmap(dev, off, prot)
 	 * getting horribly broken behaviour without it.
 	 */
 	return ((sc->sc_phys + off) | PMAP_NC);
-}
-
-static void
-filt_bw2detach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops bw2_filtops =
-	{ 1, NULL, filt_bw2detach, filt_seltrue };
-
-int
-bw2kqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &bw2_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
-	return (0);
 }
 
 /* FBIOGVIDEO: */

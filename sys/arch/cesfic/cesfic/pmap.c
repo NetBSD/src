@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.3.2.5 2002/06/23 17:35:30 jdolecek Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3.2.6 2002/10/10 18:32:15 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -383,7 +383,7 @@ pmap_init()
 #if 0
  bogons:
 #endif
-		panic("pmap_init: bogons in the VM system!\n");
+		panic("pmap_init: bogons in the VM system!");
 	}
 
 	PMAP_DPRINTF(PDB_INIT,
@@ -2672,7 +2672,7 @@ pmap_ptpage_addref(ptpva)
 	pg = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
 #ifdef DEBUG
 	if (!pg)
-		panic("pmap_ptpage_addref(%lx): no page\n", ptpva);
+		panic("pmap_ptpage_addref(%lx): no page", ptpva);
 #endif
 	pg->wire_count++;
 	PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,
@@ -2697,7 +2697,7 @@ pmap_ptpage_delref(ptpva)
 	pg = uvm_pagelookup(uvm.kernel_object, ptpva - vm_map_min(kernel_map));
 #ifdef DEBUG
 	if (!pg)
-		panic("pmap_ptpage_delref(%lx): no page\n", ptpva);
+		panic("pmap_ptpage_delref(%lx): no page", ptpva);
 #endif
 	rv = --pg->wire_count;
 	PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE|PDB_SEGTAB,

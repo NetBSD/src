@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.1 2001/06/13 06:01:53 simonb Exp $	*/
+/*	$NetBSD: todclock.c,v 1.1.2.1 2002/10/10 18:37:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -88,9 +88,8 @@ static struct todclock_softc *todclock_sc = NULL;
 
 /* driver and attach structures */
 
-struct cfattach todclock_ca = {
-	sizeof(struct todclock_softc), todclockmatch, todclockattach
-};
+CFATTACH_DECL(todclock, sizeof(struct todclock_softc),
+    todclockmatch, todclockattach, NULL, NULL);
 
 /*
  * int todclockmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -187,7 +186,7 @@ resettodr(void)
 
 	/* We need a todclock device and should always have one */
 	if (!todclock_sc)
-		panic("resettodr: No todclock device attached\n");
+		panic("resettodr: No todclock device attached");
 
 	/* Abort early if there is not actually an RTC write routine */
 	if (todclock_sc->sc_rtc_write == NULL)
@@ -264,7 +263,7 @@ inittodr(time_t base)
 
 	/* We expect a todclock device */
 	if (!todclock_sc)
-		panic("inittodr: No todclock device attached\n");
+		panic("inittodr: No todclock device attached");
 
 	/* Use the suggested time as a fall back */
 	time.tv_sec = base;

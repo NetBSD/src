@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.7.4.2 2002/06/23 17:43:17 jdolecek Exp $	*/
+/*	$NetBSD: vs.c,v 1.7.4.3 2002/10/10 18:37:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -105,9 +105,8 @@ static inline void vs_set_po(struct vs_softc *sc, u_long);
 
 extern struct cfdata vs_cd;
 
-struct cfattach vs_ca = {
-	sizeof(struct vs_softc), vs_match, vs_attach
-};
+CFATTACH_DECL(vs, sizeof(struct vs_softc),
+    vs_match, vs_attach, NULL, NULL);
 
 static struct audio_hw_if vs_hw_if = {
 	vs_open,

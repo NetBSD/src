@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.15.22.1 2002/03/16 16:00:13 jdolecek Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.15.22.2 2002/10/10 18:37:16 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,7 +40,6 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/socket.h>
 #include <sys/syslog.h>

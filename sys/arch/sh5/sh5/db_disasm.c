@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.7.2.2 2002/09/06 08:40:28 jdolecek Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7.2.3 2002/10/10 18:35:53 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,7 +52,6 @@
 #include <ddb/db_output.h>
 #include <ddb/ddbvar.h>
 
-typedef u_int32_t opcode_t;
 typedef const char *(*format_func_t)(opcode_t, db_addr_t,
     char *, char *, char *);
 
@@ -1456,12 +1455,8 @@ sh5_fmt_xsd16_decode_op(int fmt, int op, int d, db_addr_t loc, char *ops)
 					db_symbol_values(sym, &symname, NULL);
 					if (symname && symname[0] == '/')
 						symname = NULL;
-				} else {
+				} else
 					diff &= ~1;
-#ifdef _ILP32
-					accmovi &= 0xffffffff;
-#endif
-				}
 
 				if ((u_int64_t)accmovi >= 0x100000000) {
 					sprintf(accmovi_str, "0x%08x%08x",

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.4.2 2002/09/06 08:40:15 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.4.3 2002/10/10 18:35:50 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,13 +45,14 @@
 #define	IST_LEVEL	3	/* level-triggered */
 
 /* Interrupt priority levels */
-#define	NIPL		15
+#define	NIPL		16
 #define	_IPL_NSOFT	4
 
 #define	IPL_NONE	0	/* nothing */
 #define	IPL_SOFT	1	/* miscellaneous soft interrupts */
 #define	IPL_SOFTCLOCK	2	/* timeouts */
-#define	IPL_SOFTNET	4	/* protocol stacks */
+#define	IPL_SOFTNET	3	/* protocol stacks */
+/* 4 - 7 available for misc hardware interrupts */
 #define	IPL_BIO		8	/* Block I/O */
 #define	IPL_NET		9	/* Network */
 #define	IPL_SOFTSERIAL	10	/* serial */
@@ -103,6 +104,10 @@ extern void	sh5_intr_init(int, void (*)(void *, u_int, int, int),
 extern struct evcnt _sh5_intr_events[];
 extern void	_cpu_intr_set(u_int);
 extern void	_cpu_intr_resume(u_int);
+
+
+/* Supplied by board-specific code to clear down an NMI source */
+extern void	sh5_nmi_clear(void);
 
 #endif /* !_LOCORE */
 

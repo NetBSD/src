@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbreg.h,v 1.1.8.3 2002/09/06 08:44:19 jdolecek Exp $ */
+/*	$NetBSD: igsfbreg.h,v 1.1.8.4 2002/10/10 18:39:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -62,23 +62,48 @@
 
 
 /*
- * CRTC can be at 0x3b4/0x3b5 or 0x3d4/0x3d5
- * controlled by misc register (r=0x3cc/w=0x3c2).
- */
-#define IGS_CRTC_B_IDX		0x3b4
-#define IGS_CRTC_B_PORT		0x3b5
-#define IGS_CRTC_D_IDX		0x3d4
-#define IGS_CRTC_D_PORT		0x3d5
-
-
-/*
- * We map only 16 bytes of actual IGS registers at 0x3c0..0x3cf.
+ * We map only 32 bytes of actual IGS registers at 0x3c0..0x3df.
  * This macro helps to define register names using their "absolute"
  * locations - it makes matching defines against docs easier.
  */
 #define IGS_REG_BASE		0x3c0
-#define IGS_REG_SIZE		0x010
+#define IGS_REG_SIZE		0x020
 #define IGS_REG_(x)		((x) - IGS_REG_BASE)
+
+
+/*
+ * Attribute controller.  Flip-flop reset by IGS_INPUT_STATUS1 at 0x3da.
+ * We don't bother defining actual registers, we only use them once
+ * during video initialization.
+ */
+#define IGS_ATTR_IDX		IGS_REG_(0x3c0)
+#define IGS_ATTR_PORT		IGS_REG_(0x3c1)
+
+
+/*
+ * Misc output register.  We only use the _W register during video
+ * initialization.
+ */
+#define IGS_MISC_OUTPUT_W	IGS_REG_(0x3c2)
+#define IGS_MISC_OUTPUT_R	IGS_REG_(0x3cc)
+
+
+/*
+ * SEQUENCER.
+ */
+#define IGS_SEQ_IDX		IGS_REG_(0x3c4)
+#define IGS_SEQ_PORT		IGS_REG_(0x3c5)
+
+#define   IGS_SEQ_RESET			0x0
+#define     IGS_SEQ_RESET_ASYNC			0x01
+#define     IGS_SEQ_RESET_SYNC			0x02
+
+
+/* IGS_EXT_SPRITE_CTL/IGS_EXT_SPRITE_DAC_PEL (3cf/56[2]) == 0 */
+#define IGS_PEL_MASK		IGS_REG_(0x3c6)
+
+/* IGS_EXT_SPRITE_CTL/IGS_EXT_SPRITE_DAC_PEL 3cf/56[2] == 1 */
+#define IGS_DAC_CMD		IGS_REG_(0x3c6)
 
 
 /*
@@ -97,10 +122,29 @@
 
 
 /*
- * Indexed access to extended registers.
+ * GRAPHICS CONTROLLER registers.
+ */
+#define IGS_GRFX_IDX		IGS_REG_(0x3ce)
+#define IGS_GRFX_PORT		IGS_REG_(0x3cf)
+
+
+/*
+ * EXTENDED registers.
  */
 #define IGS_EXT_IDX		IGS_REG_(0x3ce)
 #define IGS_EXT_PORT		IGS_REG_(0x3cf)
+
+/* [3..0] -> [19..16] of start addr if IGS_EXT_START_ADDR_ON is set */
+#define   IGS_EXT_START_ADDR		0x10
+#define     IGS_EXT_START_ADDR_ON		0x10
+
+/* overflow 10th bits for severl crtc registers; interlaced mode select */
+#define   IGS_EXT_VOVFL			0x11
+#define     IGS_EXT_VOVFL_INTERLACED		0x20
+
+#define   IGS_EXT_IRQ_CTL		0x12
+#define     IGS_EXT_IRQ_ENABLE			0x01
+
 
 
 /*
@@ -160,14 +204,60 @@
 	  /* bits unrelated to sprite control */
 #define     IGS_EXT_COP_RESET			0x08
 
+/* Extended graphics mode */
+#define   IGS_EXT_GRFX_MODE		0x57
+#define     IGS_EXT_GRFX_MODE_EXT		0x01
+
 /* Overscan R/G/B registers */
 #define   IGS_EXT_OVERSCAN_RED		0x58
 #define   IGS_EXT_OVERSCAN_GREEN	0x59
 #define   IGS_EXT_OVERSCAN_BLUE		0x5a
 
+/* Memory controller */
+#define   IGS_EXT_MEM_CTL0		0x70
+#define   IGS_EXT_MEM_CTL1		0x71
+#define   IGS_EXT_MEM_CTL2		0x72
+
+/*
+ * SEQ miscellaneous: number of SL between CCLK - controls visual depth.
+ * These values are for MODE256 == 1, SRMODE = 1 in GRFX/5 mode register.
+ */
+#define   IGS_EXT_SEQ_MISC		0x77
+#define     IGS_EXT_SEQ_IBM_STD			0
+#define     IGS_EXT_SEQ_8BPP			1 /* 256 indexed */
+#define     IGS_EXT_SEQ_16BPP			2 /* HiColor 16bpp, 5-6-5 */
+#define     IGS_EXT_SEQ_32BPP			3 /* TrueColor 32bpp */
+#define     IGS_EXT_SEQ_24BPP			4 /* TrueColor 24bpp */
+#define     IGS_EXT_SEQ_15BPP			6 /* HiColor 16bpp, 5-5-5 */
+
 /* Hardware cursor data location in linear memory */
 #define   IGS_EXT_SPRITE_DATA_LO	0x7e
 #define   IGS_EXT_SPRITE_DATA_HI	0x7f	/* bits [3..0] */
+
+
+#define   IGS_EXT_VCLK0			0xb0 /* mult */
+#define   IGS_EXT_VCLK1			0xb1 /*  div */
+#define   IGS_EXT_MCLK0			0xb2 /* mult */
+#define   IGS_EXT_MCLK1			0xb3 /*  div */
+
+
+/* ----8<----  end of IGS_EXT registers  ----8<---- */
+
+
+
+/*
+ * CRTC can be at 0x3b4/0x3b5 (mono) or 0x3d4/0x3d5 (color)
+ * controlled by bit 0 in misc output register (r=0x3cc/w=0x3c2).
+ * We forcibly init it to color.
+ */
+#define IGS_CRTC_IDX		IGS_REG_(0x3d4)
+#define IGS_CRTC_PORT		IGS_REG_(0x3d5)
+
+/*
+ * Reading this register resets flip-flop at 0x3c0 (attribute
+ * controller) to address register.
+ */
+#define IGS_INPUT_STATUS1	IGS_REG_(0x3da)
 
 
 

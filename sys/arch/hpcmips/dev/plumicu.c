@@ -1,4 +1,4 @@
-/*	$NetBSD: plumicu.c,v 1.3.10.2 2002/02/11 20:08:05 jdolecek Exp $ */
+/*	$NetBSD: plumicu.c,v 1.3.10.3 2002/10/10 18:32:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -155,9 +155,8 @@ struct plumicu_softc {
 	struct plum_intr_entry  sc_intr[PLUM_INTR_MAX];
 };
 
-struct cfattach plumicu_ca = {
-	sizeof(struct plumicu_softc), plumicu_match, plumicu_attach
-};
+CFATTACH_DECL(plumicu, sizeof(struct plumicu_softc),
+    plumicu_match, plumicu_attach, NULL, NULL);
 
 #ifdef PLUMICUDEBUG
 void plumicu_dump(struct plumicu_softc *);

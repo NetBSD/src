@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.48.2.7 2002/09/06 08:41:24 jdolecek Exp $
+#	$NetBSD: files.sparc64,v 1.48.2.8 2002/10/10 18:36:31 jdolecek Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -158,15 +158,6 @@ file dev/sun/sunms.c			ms needs-flag
 #
 include "dev/scsipi/files.scsipi"
 
-major	{ cd = 18 }
-major	{ fd = 16 }
-major	{ md = 5 }
-major	{ sd = 7 }
-major	{ wd = 12 }
-
-# RAIDframe
-major 	{ raid = 25 }
-
 device cgfourteen
 attach cgfourteen at sbus
 file	arch/sparc64/dev/cgfourteen.c	cgfourteen needs-flag
@@ -188,10 +179,7 @@ file	arch/sparc/fpu/fpu_mul.c
 file	arch/sparc/fpu/fpu_sqrt.c
 file	arch/sparc/fpu/fpu_subr.c
 
-# N.B.: optimizer breaks pmap.c and/or cache.c somehow -- have not
-# identified the exact problem yet.  NOOPT_C suffices for now.
 file	arch/sparc64/sparc64/autoconf.c
-file	arch/sparc64/sparc64/cache.c
 file	arch/sparc64/sparc64/conf.c
 file	arch/sparc64/sparc64/emul.c
 file	arch/sparc64/sparc64/in_cksum.S
@@ -209,9 +197,6 @@ file	arch/sparc64/sparc64/openprom.c
 file	arch/sparc64/sparc64/openfirm.c
 file	arch/sparc64/sparc64/ofw_machdep.c
 file	arch/sparc64/sparc64/pmap.c
-# the following overrides the generic "sys_process.c"
-# commented out by deraadt
-#file	arch/sparc64/sparc64/sys_process.c
 file	arch/sparc64/sparc64/sys_machdep.c
 file	arch/sparc64/sparc64/trap.c
 file	arch/sparc64/sparc64/vm_machdep.c
@@ -220,8 +205,6 @@ file	arch/sparc64/sparc64/disksubr.c
 file	arch/sparc64/sparc64/db_interface.c	ddb | kgdb
 file	arch/sparc64/sparc64/db_trace.c	ddb
 file	arch/sparc64/sparc64/db_disasm.c	ddb
-#file 	ddb/db_aout.c				ddb_aout
-#file	ddb/db_elf.c				ddb
 
 #
 # Raster Console support
@@ -272,3 +255,5 @@ file	arch/sparc64/sparc64/sunos32_machdep.c	compat_sunos & compat_netbsd32
 file	netns/ns_cksum.c		ns
 
 file	dev/md_root.c			memory_disk_hooks
+
+include "arch/sparc64/conf/majors.sparc64"

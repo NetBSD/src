@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_wdog.c,v 1.1.6.2 2002/09/06 08:33:11 jdolecek Exp $	*/
+/*	$NetBSD: i80321_wdog.c,v 1.1.6.3 2002/10/10 18:31:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@ iopwdog_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct iopxs_attach_args *ia = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ia->ia_name) == 0)
+	if (strcmp(cf->cf_name, ia->ia_name) == 0)
 		return (1);
 
 	return (0);
@@ -136,6 +136,5 @@ iopwdog_attach(struct device *parent, struct device *self, void *aux)
 		    sc->sc_dev.dv_xname);
 }
 
-struct cfattach iopwdog_ca = {
-	sizeof(struct iopwdog_softc), iopwdog_match, iopwdog_attach,
-};
+CFATTACH_DECL(iopwdog, sizeof(struct iopwdog_softc),
+    iopwdog_match, iopwdog_attach, NULL, NULL);

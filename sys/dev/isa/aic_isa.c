@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.7.28.1 2002/01/10 19:55:17 thorpej Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.7.28.2 2002/10/10 18:39:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.7.28.1 2002/01/10 19:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic_isa.c,v 1.7.28.2 2002/10/10 18:39:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,8 @@ struct aic_isa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-struct cfattach aic_isa_ca = {
-	sizeof(struct aic_isa_softc), aic_isa_probe, aic_isa_attach
-};
+CFATTACH_DECL(aic_isa, sizeof(struct aic_isa_softc),
+    aic_isa_probe, aic_isa_attach, NULL, NULL);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.11.4.4 2002/09/06 08:42:57 jdolecek Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.11.4.5 2002/10/10 18:37:49 jdolecek Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.4.4 2002/09/06 08:42:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.4.5 2002/10/10 18:37:49 jdolecek Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -89,8 +89,7 @@ struct coda_op_stats coda_vfsopstats[CODA_VFSOPS_SIZE];
 #define MRAK_INT_GEN(op) (coda_vfsopstats[op].gen_intrn++)
 
 extern int coda_nc_initialized;     /* Set if cache has been initialized */
-extern int vc_nb_open __P((dev_t, int, int, struct proc *));
-extern struct cdevsw cdevsw[];    /* For sanity check in coda_mount */
+extern const struct cdevsw vcoda_cdevsw;
 extern const struct vnodeopv_desc coda_vnodeop_opv_desc;
 
 const struct vnodeopv_desc * const coda_vnodeopv_descs[] = {
@@ -156,10 +155,13 @@ coda_mount(vfsp, path, data, ndp, p)
     dev_t dev;
     struct coda_mntinfo *mi;
     struct vnode *rootvp;
+    const struct cdevsw *cdev;
     ViceFid rootfid;
     ViceFid ctlfid;
     int error;
 
+    if (vfsp->mnt_flag & MNT_GETARGS)
+	return 0;
     ENTRY;
 
     coda_vfsopstats_init();
@@ -188,7 +190,8 @@ coda_mount(vfsp, path, data, ndp, p)
     }
     dev = dvp->v_specinfo->si_rdev;
     vrele(dvp);
-    if (major(dev) >= nchrdev || major(dev) < 0) {
+    cdev = cdevsw_lookup(dev);
+    if (cdev == NULL) {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);
     }
@@ -196,7 +199,7 @@ coda_mount(vfsp, path, data, ndp, p)
     /*
      * See if the device table matches our expectations.
      */
-    if (cdevsw[major(dev)].d_open != vc_nb_open)
+    if (cdev != &vcoda_cdevsw)
     {
 	MARK_INT_FAIL(CODA_MOUNT_STATS);
 	return(ENXIO);

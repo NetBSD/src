@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.26.2.3 2002/06/23 17:44:47 jdolecek Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.26.2.4 2002/10/10 18:38:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.26.2.3 2002/06/23 17:44:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.26.2.4 2002/10/10 18:38:11 jdolecek Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -79,6 +79,13 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.26.2.3 2002/06/23 17:44:47 jdolecek E
 #include <compat/svr4/svr4_ioctl.h>
 #include <compat/svr4/svr4_stropts.h>
 #include <compat/svr4/svr4_socket.h>
+
+dev_type_open(svr4_netopen);
+
+const struct cdevsw svr4_net_cdevsw = {
+	svr4_netopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*
  * Device minor numbers

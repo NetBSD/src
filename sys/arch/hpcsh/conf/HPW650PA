@@ -1,4 +1,4 @@
-#	$NetBSD: HPW650PA,v 1.5.4.4 2002/09/06 08:35:44 jdolecek Exp $
+#	$NetBSD: HPW650PA,v 1.5.4.5 2002/10/10 18:33:04 jdolecek Exp $
 #
 #	HITACHI PERSONA HPW650PA
 #
@@ -26,7 +26,7 @@ options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support
 
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Compatibility options

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.34.4.4 2002/09/06 08:40:49 jdolecek Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.34.4.5 2002/10/10 18:36:10 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,6 @@
 #include <dev/vme/vmevar.h>
 
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 #include <machine/cgtworeg.h>
 
 
@@ -95,19 +94,24 @@ static void	cgtwounblank __P((struct device *));
 int		cgtwogetcmap __P((struct cgtwo_softc *, struct fbcmap *));
 int		cgtwoputcmap __P((struct cgtwo_softc *, struct fbcmap *));
 
-/* cdevsw prototypes */
-cdev_decl(cgtwo);
-
-struct cfattach cgtwo_ca = {
-	sizeof(struct cgtwo_softc), cgtwomatch, cgtwoattach
-};
+CFATTACH_DECL(cgtwo, sizeof(struct cgtwo_softc),
+    cgtwomatch, cgtwoattach, NULL, NULL);
 
 extern struct cfdriver cgtwo_cd;
 
+dev_type_open(cgtwoopen);
+dev_type_ioctl(cgtwoioctl);
+dev_type_mmap(cgtwommap);
+
+const struct cdevsw cgtwo_cdevsw = {
+	cgtwoopen, nullclose, noread, nowrite, cgtwoioctl,
+	nostop, notty, nopoll, cgtwommap, nokqfilter,
+};
+
 /* frame buffer generic driver */
 static struct fbdriver cgtwofbdriver = {
-	cgtwounblank, cgtwoopen, cgtwoclose, cgtwoioctl, cgtwopoll, cgtwommap,
-	cgtwokqfilter
+	cgtwounblank, cgtwoopen, nullclose, cgtwoioctl, nopoll, cgtwommap,
+	nokqfilter
 };
 
 /*
@@ -235,16 +239,6 @@ cgtwoopen(dev, flags, mode, p)
 }
 
 int
-cgtwoclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgtwoioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -290,41 +284,6 @@ cgtwoioctl(dev, cmd, data, flags, p)
 	default:
 		return (ENOTTY);
 	}
-	return (0);
-}
-
-int
-cgtwopoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_cgtwodetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cgtwo_filtops =
-	{ 1, NULL, filt_cgtwodetach, filt_seltrue };
-
-int
-cgtwokqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cgtwo_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
 	return (0);
 }
 

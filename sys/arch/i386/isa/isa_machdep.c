@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.51.4.2 2002/09/06 08:36:29 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.51.4.3 2002/10/10 18:33:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.4.2 2002/09/06 08:36:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.4.3 2002/10/10 18:33:32 jdolecek Exp $");
 
 #define ISA_DMA_STATS
 
@@ -101,10 +101,19 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51.4.2 2002/09/06 08:36:29 jdolece
 
 #include <uvm/uvm_extern.h>
 
+#include "ioapic.h"
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
+
 #include "mca.h"
 #if NMCA > 0
 #include <machine/mca_machdep.h>		/* for MCA_system */
 #endif
+
+#include "eisa.h"		/* XXX */
 
 /*
  * ISA can only DMA to 0-16M.
@@ -308,6 +317,7 @@ isa_strayintr(irq)
 }
 
 int intrtype[ICU_LEN], intrmask[ICU_LEN], intrlevel[ICU_LEN];
+int iminlevel[ICU_LEN], imaxlevel[ICU_LEN];
 struct intrhand *intrhand[ICU_LEN];
 
 /*
@@ -327,7 +337,7 @@ intr_calculatemasks()
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int levels = 0;
 		for (q = intrhand[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
+			levels |= 1 << (q->ih_level>>CPSHIFT);
 		intrlevel[irq] = levels;
 		if (levels)
 			unusedirqs &= ~(1 << irq);
@@ -339,64 +349,100 @@ intr_calculatemasks()
 		for (irq = 0; irq < ICU_LEN; irq++)
 			if (intrlevel[irq] & (1 << level))
 				irqs |= 1 << irq;
-		imask[level] = irqs | unusedirqs;
+		imasks[level] = irqs | unusedirqs;
 	}
 
 	/*
 	 * Initialize soft interrupt masks to block themselves.
 	 */
-	imask[IPL_SOFTCLOCK] = 1 << SIR_CLOCK;
-	imask[IPL_SOFTNET] = 1 << SIR_NET;
-	imask[IPL_SOFTSERIAL] = 1 << SIR_SERIAL;
-
+#if 0
+	IMASK(IPL_AST) |= 1 << SIR_AST;
+#endif
+	IMASK(IPL_SOFTCLOCK) |= 1 << SIR_CLOCK;
+	IMASK(IPL_SOFTNET) |= 1 << SIR_NET;
+	IMASK(IPL_SOFTSERIAL) |= 1 << SIR_SERIAL;
+	
+#if 0
 	/*
 	 * IPL_NONE is used for hardware interrupts that are never blocked,
 	 * and do not block anything else.
 	 */
-	imask[IPL_NONE] = 0;
+	IMASK(IPL_NONE) = 0;
+#endif
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
+	 *
+	 * (as a side effect, this also takes care of shared IRQs with
+	 *  different IPL for iunmask below)
 	 */
-	imask[IPL_SOFTCLOCK] |= imask[IPL_NONE];
-	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
-	imask[IPL_BIO] |= imask[IPL_SOFTNET];
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
-	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
+	for (level = 0; level<(NIPL-1); level++)
+		imasks[level+1] |= imasks[level];
+	
+#if 0
+	IMASK(IPL_SOFTCLOCK) |= IMASK(IPL_NONE);
+	IMASK(IPL_SOFTNET) |= IMASK(IPL_SOFTCLOCK);
+	IMASK(IPL_BIO) |= IMASK(IPL_SOFTNET);
+	IMASK(IPL_NET) |= IMASK(IPL_BIO);
+	IMASK(IPL_SOFTSERIAL) |= IMASK(IPL_NET);
+	IMASK(IPL_TTY) |= IMASK(IPL_SOFTSERIAL);
 
 	/*
 	 * There are tty, network and disk drivers that use free() at interrupt
 	 * time, so imp > (tty | net | bio).
 	 */
-	imask[IPL_IMP] |= imask[IPL_TTY];
+	IMASK(IPL_IMP) |= IMASK(IPL_TTY);
 
-	imask[IPL_AUDIO] |= imask[IPL_IMP];
+	IMASK(IPL_AUDIO) |= IMASK(IPL_IMP);
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and disk drivers, clock > imp.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
+	IMASK(IPL_CLOCK) |= IMASK(IPL_AUDIO);
 
 	/*
 	 * IPL_HIGH must block everything that can manipulate a run queue.
 	 */
-	imask[IPL_HIGH] |= imask[IPL_CLOCK];
+	IMASK(IPL_HIGH) |= IMASK(IPL_CLOCK);
 
 	/*
 	 * We need serial drivers to run at the absolute highest priority to
 	 * avoid overruns, so serial > high.
 	 */
-	imask[IPL_SERIAL] |= imask[IPL_HIGH];
+	IMASK(IPL_SERIAL) |= IMASK(IPL_HIGH);
+#endif
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
 		int irqs = 1 << irq;
-		for (q = intrhand[irq]; q; q = q->ih_next)
-			irqs |= imask[q->ih_level];
+		int minlevel = IPL_SERIAL;
+		int maxlevel = 0;
+
+		if (intrhand[irq] == NULL) {
+			maxlevel = minlevel = IPL_SERIAL;
+			irqs = IMASK(IPL_SERIAL);
+		} else {
+			for (q = intrhand[irq]; q; q = q->ih_next) {
+				irqs |= IMASK(q->ih_level);
+				if (q->ih_level > maxlevel)
+					maxlevel = q->ih_level;
+				if (q->ih_level < minlevel)
+					minlevel = q->ih_level;
+			}
+		}
+		if (irqs != IMASK(maxlevel))
+			panic("irq %d level %x mask mismatch: %x vs %x", irq, level, irqs, IMASK(level));
+		
+		imaxlevel[irq] = maxlevel;
+		iminlevel[irq] = minlevel;
 		intrmask[irq] = irqs | (1 << IPL_TAGINTR);
+#if 0
+		printf("irq %d: level %x, mask 0x%x (%x)\n",
+		    irq, imaxlevel[irq], intrmask[irq], IMASK(imaxlevel[irq]));
+#endif
+
 	}
 
 	/* Lastly, determine which IRQs are actually in use. */
@@ -409,6 +455,9 @@ intr_calculatemasks()
 			irqs |= 1 << IRQ_SLAVE;
 		imen = ~irqs;
 	}
+	for (level = 0; level < NIPL; level++)
+		iunmask[level] = ~imasks[level];
+
 }
 
 static int
@@ -517,6 +566,40 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand = {fakeintr};
+#if NIOAPIC > 0
+	struct mp_intr_map *mip = NULL;
+	
+	if (mp_busses != NULL) {
+		int mpspec_pin = irq;
+		int airq;
+		int bus = mp_isa_bus;
+		if (mp_isa_bus != -1) {
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == mpspec_pin) {
+					airq = mip->ioapic_ih | irq;
+					break;
+				}
+			}
+		}
+#if NEISA > 0
+		if (mip == NULL && (mp_eisa_bus != -1)) {
+			bus = mp_eisa_bus;
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == mpspec_pin) {
+					airq = mip->ioapic_ih | irq;
+					break;
+				}
+			}
+		}
+#endif
+		if (mip == NULL)
+			printf("isa_intr_establish: no MP mapping found\n");
+		else
+			return apic_intr_establish (airq, type, level, ih_fun, ih_arg);
+	}
+#endif
 
 #if NMCA > 0
 	/*

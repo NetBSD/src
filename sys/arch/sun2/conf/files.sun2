@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.5.2.2 2002/06/23 17:42:28 jdolecek Exp $
+#	$NetBSD: files.sun2,v 1.5.2.3 2002/10/10 18:36:51 jdolecek Exp $
 
 #
 # sun2-specific configuration info
@@ -177,9 +177,4 @@ file arch/m68k/m68k/linux_trap.c	compat_linux
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
 
-# Major numbers for root/swap device configuration
-major	{xy=3}	# Xylogics 450 and 451
-major	{sd=7}	# SCSI disk
-major	{xd=10}	# Xylogics 7053
-major	{md=13}	# Memory disk (for mini-kernel)
-major	{raid=25} # RAIDframe
+include "arch/sun2/conf/majors.sun2"

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpgavar.h,v 1.2.2.2 2002/09/06 08:34:36 jdolecek Exp $	*/
+/*	$NetBSD: sysfpgavar.h,v 1.2.2.3 2002/10/10 18:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -69,9 +69,32 @@ struct sysfpga_attach_args {
 #define	SYSFPGA_SUPERIO_INUM_IDE	7
 #define	SYSFPGA_SUPERIO_NINTR		8
 
+/*
+ * PCI1 generates the following interrupts
+ */
+#define	SYSFPGA_PCI1_INTA		0
+#define	SYSFPGA_PCI1_INTB		1
+#define	SYSFPGA_PCI1_INTC		2
+#define	SYSFPGA_PCI1_INTD		3
+#define	SYSFPGA_PCI1_NINTR		4
+
+/*
+ * PCI2 generates the following interrupts
+ */
+#define	SYSFPGA_PCI2_INTA		0
+#define	SYSFPGA_PCI2_INTB		1
+#define	SYSFPGA_PCI2_INTC		2
+#define	SYSFPGA_PCI2_INTD		3
+#define	SYSFPGA_PCI2_FAL		4	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_DEG		5	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_INTP		6	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_INTS		7	/* XXX: cPCI form-factor only */
+#define	SYSFPGA_PCI2_NINTR		8
+
 struct evcnt;
 extern struct evcnt *sysfpga_intr_evcnt(int);
 extern void *sysfpga_intr_establish(int, int, int, int (*)(void *), void *);
 extern void sysfpga_intr_disestablish(void *);
+extern void sysfpga_nmi_clear(void);
 
 #endif /* _SH5_SYSFPGAVAR_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.9.4.2 2002/06/23 17:34:15 jdolecek Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.9.4.3 2002/10/10 18:31:09 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.9.4.2 2002/06/23 17:34:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.9.4.3 2002/10/10 18:31:09 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -189,7 +189,7 @@ dec_eb64plus_intr_map(pa, ihp)
 	}
 
 	if (line >= EB64PLUS_MAX_IRQ)
-		panic("dec_eb64plus_intr_map: eb64+ irq too large (%d)\n",
+		panic("dec_eb64plus_intr_map: eb64+ irq too large (%d)",
 		    line);
 
 	*ihp = line;
@@ -204,7 +204,7 @@ dec_eb64plus_intr_string(acv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > EB64PLUS_MAX_IRQ)
-                panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx\n", ih);
+                panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
         sprintf(irqstr, "eb64+ irq %ld", ih);
         return (irqstr);
 }
@@ -216,7 +216,7 @@ dec_eb64plus_intr_evcnt(acv, ih)
 {
 
 	if (ih > EB64PLUS_MAX_IRQ)
-		panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx\n", ih);
+		panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx", ih);
 	return (alpha_shared_intr_evcnt(eb64plus_pci_intr, ih));
 }
 
@@ -230,7 +230,7 @@ dec_eb64plus_intr_establish(acv, ih, level, func, arg)
 	void *cookie;
 
 	if (ih > EB64PLUS_MAX_IRQ)
-		panic("dec_eb64plus_intr_establish: bogus eb64+ IRQ 0x%lx\n",
+		panic("dec_eb64plus_intr_establish: bogus eb64+ IRQ 0x%lx",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(eb64plus_pci_intr, ih, IST_LEVEL,

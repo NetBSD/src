@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1.14.2 2002/06/23 17:41:20 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.1.14.3 2002/10/10 18:36:00 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -559,7 +559,7 @@ cpu_initclocks()
 		hzval = MC_RATE_1024_Hz;
 		break;
 	default:
-		panic("cannot configure hz = %d\n", hz);
+		panic("cannot configure hz = %d", hz);
         }
 	
 	rtcinit(); /* make sure basics are done by now */

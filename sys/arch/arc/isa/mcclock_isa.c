@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.1.4.1 2002/01/10 19:37:43 thorpej Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.1.4.2 2002/10/10 18:31:41 jdolecek Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -61,10 +61,8 @@
 int mcclock_isa_match __P((struct device *, struct cfdata *, void *));
 void mcclock_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mcclock_isa_ca = {
-	sizeof(struct mcclock_softc),
-	mcclock_isa_match, mcclock_isa_attach
-};
+CFATTACH_DECL(mcclock_isa, sizeof(struct mcclock_softc),
+    mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
 /* Deskstation clock access code */
 u_int mc_isa_read __P((struct mcclock_softc *, u_int));

@@ -1,4 +1,4 @@
-/* $NetBSD: aucom_aubus.c,v 1.1.6.2 2002/09/06 08:37:22 jdolecek Exp $ */
+/* $NetBSD: aucom_aubus.c,v 1.1.6.3 2002/10/10 18:34:03 jdolecek Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -56,9 +56,8 @@ struct aucom_aubus_softc {
 static int	aucom_aubus_probe(struct device *, struct cfdata *, void *);
 static void	aucom_aubus_attach(struct device *, struct device *, void *);
 
-struct cfattach aucom_aubus_ca = {
-	sizeof(struct aucom_aubus_softc), aucom_aubus_probe, aucom_aubus_attach
-};
+CFATTACH_DECL(aucom_aubus, sizeof(struct aucom_aubus_softc),
+    aucom_aubus_probe, aucom_aubus_attach, NULL, NULL);
 
 int
 aucom_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
@@ -66,7 +65,7 @@ aucom_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
 	struct aubus_attach_args *aa = aux;
 
 	/* match only aucom devices */
-	if (strcmp(aa->aa_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

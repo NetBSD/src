@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29.2.2 2002/06/23 17:42:10 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.29.2.3 2002/10/10 18:36:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
@@ -90,7 +89,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The Sun provides a 4.9152 MHz clock to the ZS chips.
@@ -164,13 +162,11 @@ static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
 /* Do we really need this ? */
-struct cfattach zs_ca = {
-	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
-};
+CFATTACH_DECL(zs, sizeof(struct zsc_softc),
+    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
 
-struct cfattach zs_mainbus_ca = {
-	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
-};
+CFATTACH_DECL(zs_mainbus, sizeof(struct zsc_softc),
+    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
 
 extern struct cfdriver zs_cd;
 extern int stdinnode;
@@ -201,7 +197,7 @@ zs_match_mainbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
+	if (strcmp(cf->cf_name, sa->sa_name) != 0)
 		return (0);
 
 	return (1);
@@ -291,7 +287,6 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
-		extern struct cfdriver zstty_cd; /* in ioconf.c */
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
@@ -367,7 +362,7 @@ zs_attach(zsc, zsd, pri)
 		 * sunkbd and sunms line disciplines.
 		 */
 		if (child 
-		    && (child->dv_cfdata->cf_driver == &zstty_cd) 
+		    && (!strcmp(child->dv_cfdata->cf_name, "zstty"))
 		    && (PROM_getproplen(zsc->zsc_node, "keyboard") == 0)) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
@@ -406,7 +401,7 @@ zs_attach(zsc, zsd, pri)
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
-		panic("zsattach: could not establish soft interrupt\n");
+		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    zsc->zsc_dev.dv_xname, "intr");
@@ -836,19 +831,19 @@ zs_console_flags(promunit, node, channel)
 	int channel;
 {
 	int cookie, flags = 0;
-	u_int chosen;
+	u_int options;
 	char buf[255];
 
 	/*
 	 * We'll just to the OBP grovelling down here since that's
 	 * the only type of firmware we support.
 	 */
-	chosen = OF_finddevice("/chosen");
+	options = OF_finddevice("/options");
 
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
 	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(chosen, "input-device", buf, sizeof(buf)) != -1) {
+		if (OF_getprop(options, "input-device", buf, sizeof(buf)) != -1) {
 
 			if (!strcmp("ttyb", buf))
 				cookie = 1;
@@ -859,7 +854,7 @@ zs_console_flags(promunit, node, channel)
 	}
 
 	if (node == OF_instance_to_package(OF_stdout())) { 
-		if (OF_getprop(chosen, "output-device", buf, sizeof(buf)) != -1) {
+		if (OF_getprop(options, "output-device", buf, sizeof(buf)) != -1) {
 
 			if (!strcmp("ttyb", buf))
 				cookie = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.26.2.4 2002/09/06 08:44:59 jdolecek Exp $	*/
+/*	$NetBSD: exphy.c,v 1.26.2.5 2002/10/10 18:40:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.26.2.4 2002/09/06 08:44:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.26.2.5 2002/10/10 18:40:06 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,10 +89,8 @@ __KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.26.2.4 2002/09/06 08:44:59 jdolecek Exp 
 int	exphymatch(struct device *, struct cfdata *, void *);
 void	exphyattach(struct device *, struct device *, void *);
 
-struct cfattach exphy_ca = {
-	sizeof(struct mii_softc), exphymatch, exphyattach, mii_phy_detach,
-	    mii_phy_activate
-};
+CFATTACH_DECL(exphy, sizeof(struct mii_softc),
+    exphymatch, exphyattach, mii_phy_detach, mii_phy_activate);
 
 int	exphy_service(struct mii_softc *, struct mii_data *, int);
 void	exphy_reset(struct mii_softc *);
@@ -116,7 +114,7 @@ exphymatch(struct device *parent, struct cfdata *match, void *aux)
 	/*
 	 * Make sure the parent is an `ex'.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ex") != 0)
+	if (strcmp(parent->dv_cfdata->cf_name, "ex") != 0)
 		return (0);
 
 	return (10);

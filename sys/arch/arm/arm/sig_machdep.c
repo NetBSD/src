@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.5.4.5 2002/09/06 08:32:16 jdolecek Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5.4.6 2002/10/10 18:31:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.5.4.5 2002/09/06 08:32:16 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.5.4.6 2002/10/10 18:31:44 jdolecek Exp $");
 
 #include <sys/mount.h>		/* XXX only needed by syscallargs.h */
 #include <sys/proc.h>
@@ -151,9 +151,9 @@ sendsig(int sig, sigset_t *mask, u_long code)
 
 	/*
 	 * Build context to run handler in.  We invoke the handler
-	 * dorectly, only returning via the trampoline.  Note the
+	 * directly, only returning via the trampoline.  Note the
 	 * trampoline version numbers are coordinated with machine-
-	 * depdent code in libc.
+	 * dependent code in libc.
 	 */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 #if 1 /* COMPAT_16 */

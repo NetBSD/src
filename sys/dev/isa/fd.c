@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.18.2.4 2002/09/06 08:44:48 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.18.2.5 2002/10/10 18:39:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.4 2002/09/06 08:44:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.5 2002/10/10 18:39:32 jdolecek Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -166,9 +166,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.18.2.4 2002/09/06 08:44:48 jdolecek Exp $")
 #endif
 
 #endif /* i386 */
-
-bdev_decl(fd);
-cdev_decl(fd);
 
 #define FDUNIT(dev)	(minor(dev) / 8)
 #define FDTYPE(dev)	(minor(dev) % 8)
@@ -272,13 +269,27 @@ void fdattach __P((struct device *, struct device *, void *));
 
 extern struct cfdriver fd_cd;
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach,
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
+
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdgetdisklabel __P((struct fd_softc *));
 int fd_get_parms __P((struct fd_softc *));
-void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
 
 struct dkdriver fddkdriver = { fdstrategy };
@@ -569,7 +580,7 @@ fd_dev_to_type(fd, dev)
 	struct fd_softc *fd;
 	dev_t dev;
 {
-	int type = FDTYPE(dev);
+	u_int type = FDTYPE(dev);
 
 	if (type > (sizeof(fd_types) / sizeof(fd_types[0])))
 		return NULL;
@@ -775,8 +786,8 @@ fdcresult(fdc)
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	u_char i;
-	int j = 100000,
-	    n = 0;
+	u_int j = 100000,
+	      n = 0;
 
 	for (; j; j--) {
 		i = bus_space_read_1(iot, ioh, fdsts) &
@@ -1296,27 +1307,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return -1;
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.15.2.5 2002/09/06 08:39:47 jdolecek Exp $ */
+/* $NetBSD: sci.c,v 1.15.2.6 2002/10/10 18:35:42 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -257,13 +257,24 @@ struct callout sci_soft_ch = CALLOUT_INITIALIZER;
 
 u_int sci_rbuf_size = SCI_RING_SIZE;
 
-struct cfattach sci_ca = {
-	sizeof(struct sci_softc), sci_match, sci_attach
-};
+CFATTACH_DECL(sci, sizeof(struct sci_softc),
+    sci_match, sci_attach, NULL, NULL);
 
 extern struct cfdriver sci_cd;
 
-cdev_decl(sci);
+dev_type_open(sciopen);
+dev_type_close(sciclose);
+dev_type_read(sciread);
+dev_type_write(sciwrite);
+dev_type_ioctl(sciioctl);
+dev_type_stop(scistop);
+dev_type_tty(scitty);
+dev_type_poll(scipoll);
+
+const struct cdevsw sci_cdevsw = {
+	sciopen, sciclose, sciread, sciwrite, sciioctl,
+	scistop, scitty, scipoll, nommap, ttykqfilter, D_TTY
+};
 
 void InitializeSci (unsigned int);
 
@@ -381,7 +392,7 @@ static int
 sci_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "sci")
+	if (strcmp(cfp->cf_name, "sci")
 	    || cfp->cf_unit >= SCI_MAX_UNITS) //XXX __BROKEN_CONFIG_UNIT_USAGE
 		return 0;
 
@@ -1375,9 +1386,7 @@ scicnprobe(cp)
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == sciopen)
-			break;
+	maj = cdevsw_lookup_major(&sci_cdevsw);
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.2.6.2 2002/06/23 17:34:56 jdolecek Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.2.6.3 2002/10/10 18:31:55 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -101,9 +101,8 @@ int max_processes = 64;			/* Default number */
 
 int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
 
-struct cfattach ofbus_root_ca = {
-	sizeof(struct device), ofbus_match, ofbus_attach
-};
+CFATTACH_DECL(ofbus_root, sizeof(struct device),
+    ofbus_match, ofbus_attach, NULL, NULL);
 
 /**************************************************************/
 

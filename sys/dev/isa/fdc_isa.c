@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.2.10.1 2002/01/10 19:55:24 thorpej Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.2.10.2 2002/10/10 18:39:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.2.10.1 2002/01/10 19:55:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.2.10.2 2002/10/10 18:39:32 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -107,9 +107,8 @@ struct fdc_isa_softc {
 	bus_space_handle_t sc_baseioh;	/* base I/O handle */
 };
 
-struct cfattach fdc_isa_ca = {
-	sizeof(struct fdc_isa_softc), fdc_isa_probe, fdc_isa_attach
-};
+CFATTACH_DECL(fdc_isa, sizeof(struct fdc_isa_softc),
+    fdc_isa_probe, fdc_isa_attach, NULL, NULL);
 
 #ifdef NEWCONFIG
 void	fdc_isa_forceintr(void *);

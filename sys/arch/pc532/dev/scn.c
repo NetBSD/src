@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.49.2.3 2002/06/23 17:39:04 jdolecek Exp $ */
+/*	$NetBSD: scn.c,v 1.49.2.4 2002/10/10 18:34:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -64,6 +64,7 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
@@ -71,7 +72,6 @@
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include "scnreg.h"
 #include "scnvar.h"
@@ -83,8 +83,6 @@ int     scnprobe __P((struct device *, struct cfdata *, void *));
 void    scnattach __P((struct device *, struct device *, void *));
 int     scnparam __P((struct tty *, struct termios *));
 void    scnstart __P((struct tty *));
-int     scnopen __P((dev_t, int, int, struct proc *));
-int     scnclose __P((dev_t, int, int, struct proc *));
 void	scncnprobe __P((struct consdev *));
 void	scncninit __P((struct consdev *));
 int     scncngetc __P((dev_t));
@@ -94,9 +92,22 @@ int	scninit __P((dev_t, int));
 void	scncnreinit __P((void *));
 int     scnhwiflow __P((struct tty *, int));
 
-struct cfattach scn_ca = {sizeof(struct scn_softc), scnprobe, scnattach};
+CFATTACH_DECL(scn, sizeof(struct scn_softc),
+    scnprobe, scnattach, NULL, NULL);
 
-extern struct cfdriver scn_cd;
+dev_type_open(scnopen);
+dev_type_close(scnclose);
+dev_type_read(scnread);
+dev_type_write(scnwrite);
+dev_type_ioctl(scnioctl);
+dev_type_stop(scnstop);
+dev_type_tty(scntty);
+dev_type_poll(scnpoll);
+
+const struct cdevsw scn_cdevsw = {
+	scnopen, scnclose, scnread, scnwrite, scnioctl,
+	scnstop, scntty, scnpoll, nommap, ttykqfilter, D_TTY
+};
 
 #ifndef CONSOLE_SPEED
 #define CONSOLE_SPEED TTYDEF_SPEED
@@ -115,7 +126,6 @@ extern struct cfdriver scn_cd;
 int     scnconsole = SCN_CONSOLE;
 int     scndefaultrate = TTYDEF_SPEED;
 int     scnconsrate = CONSOLE_SPEED;
-int     scnmajor;
 
 #define SOFTC(UNIT) scn_cd.cd_devs[(UNIT)]
 
@@ -989,7 +999,9 @@ scnattach(parent, self, aux)
 
 	scn_config(unit, speed, speed, MR1_PNONE | MR1_CS8, MR2_STOP1);
 	if (scnconsole == unit) {
-		shutdownhook_establish(scncnreinit, (void *) makedev(scnmajor, unit));
+		int maj;
+		maj = cdevsw_lookup_major(&scn_cdevsw);
+		shutdownhook_establish(scncnreinit, (void *)makedev(maj, unit));
 		/* Make sure console can do scncngetc */
 		duart_base[DU_OPSET] = (unit & 1) ? (OP_RTSB | OP_DTRB) : (OP_RTSA | OP_DTRA);
 	}
@@ -1008,7 +1020,7 @@ scnattach(parent, self, aux)
 	}
 
 #ifdef KGDB
-	if (kgdb_dev == makedev(scnmajor, unit)) {
+	if (kgdb_dev == makedev(cdevsw_lookup_major(&scn_cdevsw), unit)) {
 		if (scnconsole == unit)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
@@ -1195,7 +1207,7 @@ scnclose(dev, flag, mode, p)
 
 #ifdef KGDB
 	/* do not disable interrupts if debugging */
-	if (kgdb_dev != makedev(scnmajor, unit))
+	if (kgdb_dev != makedev(cdevsw_lookup_major(&scn_cdevsw), unit))
 #endif
 		if ((tp->t_state & TS_ISOPEN) == 0) {
 			scn_rxdisable(sc);
@@ -1916,13 +1928,8 @@ void
 scncnprobe(cp)
 	struct consdev *cp;
 {
-	/* Locate the major number. */
-	for (scnmajor = 0; scnmajor < nchrdev; scnmajor++)
-		if (cdevsw[scnmajor].d_open == scnopen)
-			break;
-
 	/* initialize required fields */
-	cp->cn_dev = makedev(scnmajor, SCN_CONSOLE);
+	cp->cn_dev = makedev(cdevsw_lookup_major(&scn_cdevsw), SCN_CONSOLE);
 	cp->cn_pri = CN_NORMAL;
 }
 

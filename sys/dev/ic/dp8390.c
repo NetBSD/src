@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.46.2.2 2002/01/10 19:54:23 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.46.2.3 2002/10/10 18:38:56 jdolecek Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.46.2.2 2002/01/10 19:54:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.46.2.3 2002/10/10 18:38:56 jdolecek Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -425,7 +425,7 @@ dp8390_xmit(sc)
 		    sc->txb_next_tx, sc->txb_inuse, sc->txb_cnt, sc->txb_new);
 
 	if (sc->txb_inuse == 0)
-		panic("dp8390_xmit: no packets to xmit\n");
+		panic("dp8390_xmit: no packets to xmit");
 #endif
 
 	len = sc->txb_len[sc->txb_next_tx];

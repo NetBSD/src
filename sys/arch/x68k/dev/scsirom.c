@@ -1,4 +1,4 @@
-/*	$NetBSD: scsirom.c,v 1.6 2000/01/16 14:20:57 minoura Exp $	*/
+/*	$NetBSD: scsirom.c,v 1.6.8.1 2002/10/10 18:37:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 NetBSD Foundation, Inc.
@@ -69,9 +69,8 @@ static int scsirom_find __P((struct device *, struct intio_attach_args *));
 static int scsirom_match __P((struct device *, struct cfdata *, void *));
 static void scsirom_attach __P((struct device *, struct device *, void *));
 
-struct cfattach scsirom_ca = {
-	sizeof(struct scsirom_softc), scsirom_match, scsirom_attach
-};
+CFATTACH_DECL(scsirom, sizeof(struct scsirom_softc),
+    scsirom_match, scsirom_attach, NULL, NULL);
 
 static int
 scsirom_find (parent, ia)

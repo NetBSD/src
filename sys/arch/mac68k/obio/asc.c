@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.39.4.2 2002/06/18 19:37:17 jdolecek Exp $	*/
+/*	$NetBSD: asc.c,v 1.39.4.3 2002/10/10 18:33:54 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -107,13 +107,24 @@ static void	asc_intr __P((void *));
 static int	ascmatch __P((struct device *, struct cfdata *, void *));
 static void	ascattach __P((struct device *, struct device *, void *));
 
-cdev_decl(asc);
-
-struct cfattach asc_ca = {
-	sizeof(struct asc_softc), ascmatch, ascattach
-};
+CFATTACH_DECL(asc, sizeof(struct asc_softc),
+    ascmatch, ascattach, NULL, NULL);
 
 extern struct cfdriver asc_cd;
+
+dev_type_open(ascopen);
+dev_type_close(ascclose);
+dev_type_read(ascread);
+dev_type_write(ascwrite);
+dev_type_ioctl(ascioctl);
+dev_type_poll(ascpoll);
+dev_type_mmap(ascmmap);
+dev_type_kqfilter(asckqfilter);
+
+const struct cdevsw asc_cdevsw = {
+	ascopen, ascclose, ascread, ascwrite, ascioctl,
+	nostop, notty, ascpoll, ascmmap, asckqfilter
+};
 
 static int
 ascmatch(parent, cf, aux)

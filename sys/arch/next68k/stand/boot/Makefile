@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9.2.3 2002/09/06 08:38:29 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.9.2.4 2002/10/10 18:34:44 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -48,9 +48,9 @@ LIBS=	${SALIB} ${KERNLIB}
 STRIPFLAG=	# defined
 
 AWKPROG='\
-function x(v) { printf "\\0\\0%o\\0%o\\0%o", (v / 65536) % 256, (v / 256) % 256, v % 256 } \
+function x(v) { printf "\\0\\%o\\%o\\%o", (v / 65536) % 256, (v / 256) % 256, v % 256 } \
 { \
-	printf "\047\\0\\0207\\01\\07"; \
+	printf "\047\\0\\207\\01\\07"; \
 	x($$1); \
 	x($$2); \
 	x($$3); \
@@ -59,9 +59,9 @@ function x(v) { printf "\\0\\0%o\\0%o\\0%o", (v / 65536) % 256, (v / 256) % 256,
 
 ${PROG}: srt0.o ${OBJS} ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} -o $@.elf
-	@${SIZE} $@.elf
-	@${OBJCOPY} -O binary $@.elf $@.raw
-	@(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} | xargs printf ; cat $@.raw) > $@
+	${SIZE} $@.elf
+	${OBJCOPY} -O binary $@.elf $@.raw
+	(${SIZE} $@.elf | tail +2 | awk ${AWKPROG} | xargs printf ; cat $@.raw) > $@
 
 # startup
 

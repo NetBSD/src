@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.9 2001/05/27 06:35:03 chs Exp $	*/
+/*	$NetBSD: iommu.c,v 1.9.2.1 2002/10/10 18:37:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,9 +58,8 @@
 static int  iommu_match __P((struct device *, struct cfdata *, void *));
 static void iommu_attach __P((struct device *, struct device *, void *));
 
-struct cfattach iommu_ca = {
-	sizeof(struct device), iommu_match, iommu_attach
-};
+CFATTACH_DECL(iommu, sizeof(struct device),
+    iommu_match, iommu_attach, NULL, NULL);
 
 static iommu_pde_t *iommu_va;
 

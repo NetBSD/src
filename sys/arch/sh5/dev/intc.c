@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.3.2.2 2002/09/06 08:39:58 jdolecek Exp $	*/
+/*	$NetBSD: intc.c,v 1.3.2.3 2002/10/10 18:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,9 +74,8 @@
 static int intcmatch(struct device *, struct cfdata *, void *);
 static void intcattach(struct device *, struct device *, void *);
 
-struct cfattach intc_ca = {
-	sizeof(struct intc_softc), intcmatch, intcattach
-};
+CFATTACH_DECL(intc, sizeof(struct intc_softc),
+    intcmatch, intcattach, NULL, NULL);
 extern struct cfdriver intc_cd;
 
 static void intc_enable(void *, u_int, int, int);
@@ -174,7 +173,7 @@ intc_enable(void *arg, u_int intevt, int trigger, int level)
 	int s;
 
 	KDASSERT(trigger == IST_LEVEL);
-	KDASSERT(level <= 15 && level > 0);
+	KDASSERT(level > 0 && level < NIPL);
 
 	intevt >>= 5;
 

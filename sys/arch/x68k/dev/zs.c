@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17.22.1 2002/01/10 19:50:22 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.17.22.2 2002/10/10 18:37:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -82,7 +82,6 @@ extern void Debugger __P((void));
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
 int zscn_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * X68k provides a 5.0 MHz clock to the ZS chips.
@@ -131,9 +130,8 @@ static int	zs_match __P((struct device *, struct cfdata *, void *));
 static void	zs_attach __P((struct device *, struct device *, void *));
 static int  zs_print __P((void *, const char *name));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zs_match, zs_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -659,21 +657,18 @@ zscnputc(dev, c)
 	zs_putc(c);
 }
 
-extern int zsopen(dev_t, int, int, struct proc *);
-
 void
 zscnprobe(cd)
 	struct consdev *cd;
 {
 	int maj;
+	extern const struct cdevsw zstty_cdevsw;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == zsopen)
-			break;
+	maj = cdevsw_lookup_major(&zstty_cdevsw);
 	/* XXX: minor number is 0 */
 
-	if (cdevsw[maj].d_open != zsopen)
+	if (maj == -1)
 		cd->cn_pri = CN_DEAD;
 	else {
 #ifdef ZSCONSOLE

@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.10.2.2 2002/01/10 19:49:09 thorpej Exp $ */
+/*	$NetBSD: promdev.c,v 1.10.2.3 2002/10/10 18:36:28 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -724,12 +724,12 @@ oldmon_mapin(physaddr, length, maptype)
 	int i, pa, pte, va;
 
 	if (length > (4*NBPG))
-		panic("oldmon_mapin: length=%d\n", length);
+		panic("oldmon_mapin: length=%d", length);
 
 	for (i = 0; i < oldmon_mapinfo_cnt; i++)
 		if (oldmon_mapinfo[i].maptype == maptype)
 			goto found;
-	panic("oldmon_mapin: invalid maptype %d\n", maptype);
+	panic("oldmon_mapin: invalid maptype %d", maptype);
 
 found:
 	pte = oldmon_mapinfo[i].pgtype;

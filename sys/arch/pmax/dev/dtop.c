@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.56.2.2 2002/06/23 17:39:11 jdolecek Exp $	*/
+/*	$NetBSD: dtop.c,v 1.56.2.3 2002/10/10 18:35:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.2.2 2002/06/23 17:39:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.2.3 2002/10/10 18:35:03 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "rasterconsole.h"
@@ -114,7 +114,6 @@ __KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.56.2.2 2002/06/23 17:39:11 jdolecek Exp $
 #include <dev/tc/ioasicreg.h>
 #include <dev/tc/ioasicvar.h>
 
-#include <machine/conf.h>
 #include <machine/dc7085cons.h>		/*  mdmctl bits same on dtop and dc? */
 
 #include <machine/pmioctl.h>
@@ -227,11 +226,24 @@ static int	dtopmatch __P((struct device * parent, struct cfdata *match, void *au
 static void	dtopattach __P((struct device *parent, struct device *self, void *aux));
 static int	dtopintr __P((void *sc));
 
-struct cfattach dtop_ca = {
-	sizeof(struct dtop_softc), dtopmatch, dtopattach
-};
+CFATTACH_DECL(dtop, sizeof(struct dtop_softc),
+    dtopmatch, dtopattach, NULL, NULL);
 
 extern struct cfdriver dtop_cd;
+
+dev_type_open(dtopopen);
+dev_type_close(dtopclose);
+dev_type_read(dtopread);
+dev_type_write(dtopwrite);
+dev_type_ioctl(dtopioctl);
+dev_type_stop(dtopstop);
+dev_type_tty(dtoptty);
+dev_type_poll(dtoppoll);
+
+const struct cdevsw dtop_cdevsw = {
+	dtopopen, dtopclose, dtopread, dtopwrite, dtopioctl,
+	dtopstop, dtoptty, dtoppoll, nommap, ttykqfilter, D_TTY
+};
 
 /* QVSS-compatible in-kernel X input event parser, pointer tracker */
 void	(*dtopDivertXInput) __P((int));

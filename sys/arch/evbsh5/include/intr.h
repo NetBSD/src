@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.4.2 2002/09/06 08:34:48 jdolecek Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.4.3 2002/10/10 18:32:35 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,6 +41,7 @@
 #include <sh5/intr.h>
 
 #define	IPL_SUPERIO	5	/* SuperIO interrupts at this level */
+#define	IPL_SH5PCI	6	/* PCI1 & PCI2 interrupt at this level */
 
 #define	splsuperio()		splraise(IPL_SUPERIO)
 #define	spllpt()		splsuperio()

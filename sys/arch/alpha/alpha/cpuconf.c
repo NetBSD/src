@@ -1,4 +1,4 @@
-/* $NetBSD: cpuconf.c,v 1.27 2000/06/26 02:42:04 enami Exp $ */
+/* $NetBSD: cpuconf.c,v 1.27.4.1 2002/10/10 18:30:43 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -274,7 +274,7 @@ platform_not_configured()
 	printf("Please build a kernel with \"options %s\" and reboot.\n",
 	    c->option);
 	printf("\n");   
-	panic("platform not configured\n");
+	panic("platform not configured");
 }
 
 void

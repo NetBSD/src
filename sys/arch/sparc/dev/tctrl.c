@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.12.4.5 2002/10/02 22:02:25 jdolecek Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.12.4.6 2002/10/10 18:36:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,9 +64,18 @@
 #include <sparc/dev/tctrlvar.h>
 #include <sparc/sparc/auxiotwo.h>
 
-cdev_decl(tctrl);
-
 extern struct cfdriver tctrl_cd;
+
+dev_type_open(tctrlopen);
+dev_type_close(tctrlclose);
+dev_type_ioctl(tctrlioctl);
+dev_type_poll(tctrlpoll);
+dev_type_kqfilter(tctrlkqfilter);
+
+const struct cdevsw tctrl_cdevsw = {
+	tctrlopen, tctrlclose, noread, nowrite, tctrlioctl,
+	nostop, notty, tctrlpoll, nommap, tctrlkqfilter,
+};
 
 static const char *tctrl_ext_statuses[16] = {
 	"main power available",
@@ -140,9 +149,8 @@ static int tctrl_apm_record_event __P((struct tctrl_softc *sc,
 	u_int event_type));
 static void tctrl_init_lcd __P((void));
 
-struct cfattach tctrl_ca = {
-	sizeof(struct tctrl_softc), tctrl_match, tctrl_attach
-};
+CFATTACH_DECL(tctrl, sizeof(struct tctrl_softc),
+    tctrl_match, tctrl_attach, NULL, NULL);
 
 extern struct cfdriver tctrl_cd;
 /* XXX wtf is this? see i386/apm.c */

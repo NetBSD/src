@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.6 2001/07/07 05:09:43 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.6.2.1 2002/10/10 18:34:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,7 +74,6 @@ extern void Debugger __P((void));
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 1;
 
 /*
  * The news68k machines use three different clocks for the ZS chips.
@@ -148,9 +147,8 @@ static int zs_match __P((struct device *, struct cfdata *, void *));
 static void zs_attach __P((struct device *, struct device *, void *));
 static int zs_print __P((void *, const char *name));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zs_match, zs_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -594,9 +592,10 @@ static void
 zscnprobe(cn)
 	struct consdev *cn;
 {
+	extern const struct cdevsw zstty_cdevsw;
 	extern int tty00_is_console;
 
-	cn->cn_dev = makedev(zs_major, 0);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), 0);
 	if (tty00_is_console)
 		cn->cn_pri = CN_REMOTE;
 	else

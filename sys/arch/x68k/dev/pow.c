@@ -1,4 +1,4 @@
-/*	$NetBSD: pow.c,v 1.8 2000/02/20 16:18:51 minoura Exp $	*/
+/*	$NetBSD: pow.c,v 1.8.8.1 2002/10/10 18:37:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto.
@@ -57,13 +57,20 @@
 
 struct pow_softc pows[NPOW];
 
-cdev_decl(pow);
-
 void powattach __P((int));
 void powintr __P((void));
 static int setalarm __P((struct x68k_alarminfo *));
 
 static void pow_check_switch __P((void*));
+
+dev_type_open(powopen);
+dev_type_close(powclose);
+dev_type_ioctl(powioctl);
+
+const struct cdevsw pow_cdevsw = {
+	powopen, powclose, noread, nowrite, powioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /* ARGSUSED */
 void

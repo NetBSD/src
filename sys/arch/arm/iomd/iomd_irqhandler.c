@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.4.2.3 2002/06/23 17:34:52 jdolecek Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.4.2.4 2002/10/10 18:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -147,9 +147,9 @@ irq_claim(irq, handler)
 #ifdef DIAGNOSTIC
 	/* Sanity check */
 	if (handler == NULL)
-		panic("NULL interrupt handler\n");
+		panic("NULL interrupt handler");
 	if (handler->ih_func == NULL)
-		panic("Interrupt handler does not have a function\n");
+		panic("Interrupt handler does not have a function");
 #endif	/* DIAGNOSTIC */
 
 	/*
@@ -423,7 +423,7 @@ intr_claim(irq, level, name, ih_func, ih_arg)
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (!ih)
-		panic("intr_claim(): Cannot malloc handler memory\n");
+		panic("intr_claim(): Cannot malloc handler memory");
 
 	ih->ih_level = level;
 	ih->ih_name = name;

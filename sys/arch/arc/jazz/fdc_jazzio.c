@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_jazzio.c,v 1.1.4.1 2002/01/10 19:37:44 thorpej Exp $	*/
+/*	$NetBSD: fdc_jazzio.c,v 1.1.4.2 2002/10/10 18:31:42 jdolecek Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -115,9 +115,8 @@ struct fdc_jazzio_softc {
 	struct dma_softc *dma;
 };
 
-struct cfattach fdc_jazzio_ca = {
-	sizeof(struct fdc_jazzio_softc), fdc_jazzio_probe, fdc_jazzio_attach
-};
+CFATTACH_DECL(fdc_jazzio, sizeof(struct fdc_jazzio_softc),
+    fdc_jazzio_probe, fdc_jazzio_attach, NULL, NULL);
 
 #define FDC_NPORT 6
 #define FDC_OFFSET 2 /* Should we use bus_space_subregion() or not? */

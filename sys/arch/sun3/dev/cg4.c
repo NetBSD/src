@@ -1,4 +1,4 @@
-/*	$NetBSD: cg4.c,v 1.21.4.4 2002/09/06 08:42:05 jdolecek Exp $	*/
+/*	$NetBSD: cg4.c,v 1.21.4.5 2002/10/10 18:37:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,8 +90,6 @@ union bt_cmap_u {
 #define CG4_TYPE_A 0	/* AMD DACs */
 #define CG4_TYPE_B 1	/* Brooktree DACs */
 
-cdev_decl(cg4);
-
 #define	CG4_MMAP_SIZE (CG4_OVERLAY_SIZE + CG4_ENABLE_SIZE + CG4_PIXMAP_SIZE)
 
 #define CMAP_SIZE 256
@@ -120,11 +118,19 @@ struct cg4_softc {
 static void	cg4attach __P((struct device *, struct device *, void *));
 static int	cg4match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach cgfour_ca = {
-	sizeof(struct cg4_softc), cg4match, cg4attach
-};
+CFATTACH_DECL(cgfour, sizeof(struct cg4_softc),
+    cg4match, cg4attach, NULL, NULL);
 
 extern struct cfdriver cgfour_cd;
+
+dev_type_open(cg4open);
+dev_type_ioctl(cg4ioctl);
+dev_type_mmap(cg4mmap);
+
+const struct cdevsw cgfour_cdevsw = {
+	cg4open, nullclose, noread, nowrite, cg4ioctl,
+	nostop, notty, nopoll, cg4mmap, nokqfilter,
+};
 
 static int	cg4gattr   __P((struct fbdevice *, void *));
 static int	cg4gvideo  __P((struct fbdevice *, void *));
@@ -141,7 +147,7 @@ static void	cg4b_init   __P((struct cg4_softc *));
 static void	cg4b_ldcmap __P((struct cg4_softc *));
 
 static struct fbdriver cg4_fbdriver = {
-	cg4open, cg4close, cg4mmap, cg4kqfilter, cg4gattr,
+	cg4open, nullclose, cg4mmap, nokqfilter, cg4gattr,
 	cg4gvideo, cg4svideo,
 	cg4getcmap, cg4putcmap };
 
@@ -338,16 +344,6 @@ cg4open(dev, flags, mode, p)
 }
 
 int
-cg4close(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cg4ioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -405,31 +401,6 @@ cg4mmap(dev, off, prot)
 	 * getting horribly broken behaviour without it.
 	 */
 	return ((physbase + off) | PMAP_NC);
-}
-
-static void
-filt_cg4detach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cg4_filtops =
-	{ 1, NULL, filt_cg4detach, filt_seltrue };
-
-int
-cg4kqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cg4_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
-	return (0);
 }
 
 /*

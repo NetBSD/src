@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.62.4.2 2002/06/23 17:37:50 jdolecek Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.62.4.3 2002/10/10 18:33:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -71,9 +71,8 @@ static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
 static int	grfmv_match __P((struct device *, struct cfdata *, void *));
 static void	grfmv_attach __P((struct device *, struct device *, void *));
 
-struct cfattach macvid_ca = {
-	sizeof(struct grfbus_softc), grfmv_match, grfmv_attach
-};
+CFATTACH_DECL(macvid, sizeof(struct grfbus_softc),
+    grfmv_match, grfmv_attach, NULL, NULL);
 
 static void
 load_image_data(data, image)

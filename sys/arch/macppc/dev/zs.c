@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17.2.3 2002/06/23 17:37:54 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.17.2.4 2002/10/10 18:33:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -91,7 +91,6 @@
  * Some warts needed by z8530tty.c -
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * abort detection on console will now timeout after iterating on a loop
@@ -162,9 +161,8 @@ static int	zsc_match __P((struct device *, struct cfdata *, void *));
 static void	zsc_attach __P((struct device *, struct device *, void *));
 static int  zsc_print __P((void *, const char *name));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zsc_match, zsc_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zsc_match, zsc_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -1066,6 +1064,7 @@ zscnprobe(cp)
 	int chosen, pkg;
 	int unit = 0;
 	char name[16];
+	extern const struct cdevsw zstty_cdevsw;
 	
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return;
@@ -1092,7 +1091,7 @@ zscnprobe(cp)
 	if (strcmp(name, "ch-b") == 0)
 		unit = 1;
 
-	cp->cn_dev = makedev(zs_major, unit);
+	cp->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), unit);
 	cp->cn_pri = CN_REMOTE;
 }
 

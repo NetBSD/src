@@ -1,4 +1,4 @@
-/*	$NetBSD: superhyway.c,v 1.1.4.2 2002/09/06 08:40:02 jdolecek Exp $	*/
+/*	$NetBSD: superhyway.c,v 1.1.4.3 2002/10/10 18:35:49 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -56,13 +56,12 @@ static int superhywaymatch(struct device *, struct cfdata *, void *);
 static void superhywayattach(struct device *, struct device *, void *);
 static int superhywayprint(void *, const char *);
 
-struct cfattach superhyway_ca = {
-	sizeof(struct device), superhywaymatch, superhywayattach
-};
+CFATTACH_DECL(superhyway, sizeof(struct device),
+    superhywaymatch, superhywayattach, NULL, NULL);
 extern struct cfdriver superhyway_cd;
 
 static const char *superhyway_devices[] = {
-	"cpu", "pbridge", "emi", "dmac", "femi", "pchb", NULL
+	"cpu", "pbridge", "emi", "dmac", "femi", "sh5pci", NULL
 };
 
 /*ARGSUSED*/

@@ -1,4 +1,4 @@
-/*	$NetBSD: mediabay.c,v 1.3.4.1 2001/08/03 04:11:54 lukem Exp $	*/
+/*	$NetBSD: mediabay.c,v 1.3.4.2 2002/10/10 18:33:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -55,9 +55,8 @@ int mediabay_intr __P((void *));
 void mediabay_create_kthread __P((void *));
 void mediabay_kthread __P((void *));
 
-struct cfattach mediabay_ca = {
-	sizeof(struct mediabay_softc), mediabay_match, mediabay_attach
-};
+CFATTACH_DECL(mediabay, sizeof(struct mediabay_softc),
+    mediabay_match, mediabay_attach, NULL, NULL);
 
 #ifdef MEDIABAY_DEBUG
 # define DPRINTF printf

@@ -1,4 +1,4 @@
-/*	$NetBSD: moxa_isa.c,v 1.1.6.1 2002/01/10 19:55:37 thorpej Exp $	*/
+/*	$NetBSD: moxa_isa.c,v 1.1.6.2 2002/10/10 18:39:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.1.6.1 2002/01/10 19:55:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: moxa_isa.c,v 1.1.6.2 2002/10/10 18:39:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,8 @@ void moxa_isaattach __P((struct device *, struct device *, void *));
 int moxa_isaintr __P((void *));
 int moxa_isaprint __P((void *, const char *));
 
-struct cfattach moxa_isa_ca = {
-	sizeof(struct moxa_isa_softc), moxa_isaprobe, moxa_isaattach
-};
+CFATTACH_DECL(moxa_isa, sizeof(struct moxa_isa_softc),
+    moxa_isaprobe, moxa_isaattach, NULL, NULL);
 
 int
 moxa_isaprobe(parent, self, aux)

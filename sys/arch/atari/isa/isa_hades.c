@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.1 2001/04/24 06:39:48 leo Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.1.4.1 2002/10/10 18:32:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	iinfo_p = &iinfo[slot];
 
 	if (iinfo_p->slot >= 0)
-	    panic("isa_intr_establish: interrupt was already established\n");
+	    panic("isa_intr_establish: interrupt was already established");
 
 	ihand = intr_establish((slot == 0) ? 3 : 15, USER_VEC, 0,
 				(hw_ifun_t)iifun, (void *)slot);
@@ -214,7 +214,7 @@ isa_intr_disestablish(ic, handler)
 	isa_intr_info_t *iinfo_p = (isa_intr_info_t *)handler;
 
 	if (iinfo_p->slot < 0)
-	    panic("isa_intr_disestablish: interrupt was not established\n");
+	    panic("isa_intr_disestablish: interrupt was not established");
 
 	(void) intr_disestablish(iinfo_p->ihand);
 	iinfo_p->slot = -1;

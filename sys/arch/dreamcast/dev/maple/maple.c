@@ -1,4 +1,4 @@
-/*	$NetBSD: maple.c,v 1.8.2.3 2002/06/23 17:35:34 jdolecek Exp $	*/
+/*	$NetBSD: maple.c,v 1.8.2.4 2002/10/10 18:32:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -40,6 +40,7 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -83,32 +84,31 @@ static void	maple_check_responses(struct maple_softc *);
 int	maple_alloc_dma(size_t, vaddr_t *, paddr_t *);
 void	maple_free_dma(paddr_t, size_t);
 
-int	mapleopen(dev_t, int, int, struct proc *);
-int	mapleclose(dev_t, int, int, struct proc *);
 int	maple_internal_ioctl(struct maple_softc *,  int, int, u_long, caddr_t,
 	    int, struct proc *);
-int	mapleioctl(dev_t, u_long, caddr_t, int, struct proc *);
 
 /*
  * Global variables.
  */
 int	maple_polling = 0;	/* Are we polling?  (Debugger mode) */
 
-/*
- * Driver definition.
- */
-struct cfattach maple_ca = {
-	sizeof(struct maple_softc), maplematch, mapleattach
-};
+CFATTACH_DECL(maple, sizeof(struct maple_softc),
+    maplematch, mapleattach, NULL, NULL);
 
 extern struct cfdriver maple_cd;
+
+dev_type_open(mapleopen);
+dev_type_close(mapleclose);
+dev_type_ioctl(mapleioctl);
+
+const struct cdevsw maple_cdevsw = {
+	mapleopen, mapleclose, noread, nowrite, mapleioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 static int
 maplematch(struct device *parent, struct cfdata *cf, void *aux)
 {
-
-	if (strcmp("maple", cf->cf_driver->cd_name))
-		return (0);
 
 	return (1);
 }
@@ -527,7 +527,7 @@ maplesubmatch(struct device *parent, struct cfdata *match, void *aux)
 	    match->cf_loc[MAPLECF_SUBUNIT] != ma->ma_subunit)
 		return (0);
 
-	return ((*match->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 u_int32_t

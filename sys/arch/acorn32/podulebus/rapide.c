@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.2.2.3 2002/06/23 17:33:57 jdolecek Exp $	*/
+/*	$NetBSD: rapide.c,v 1.2.2.4 2002/10/10 18:30:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -125,9 +125,8 @@ void	rapide_attach	__P((struct device *, struct device *, void *));
 void	rapide_shutdown	__P((void *arg));
 int	rapide_intr	__P((void *));
 
-struct cfattach rapide_ca = {
-	sizeof(struct rapide_softc), rapide_probe, rapide_attach
-};
+CFATTACH_DECL(rapide, sizeof(struct rapide_softc),
+    rapide_probe, rapide_attach, NULL, NULL);
 
 /*
  * We have a private bus space tag.
@@ -221,7 +220,7 @@ rapide_attach(parent, self, aux)
 
 	if (bus_space_map(iot, pa->pa_podule->easi_base +
 	    CONTROL_REGISTERS_OFFSET, CONTROL_REGISTER_SPACE, 0, &ctlioh))
-		panic("%s: Cannot map control registers\n", self->dv_xname);
+		panic("%s: Cannot map control registers", self->dv_xname);
 
 	sc->sc_ctlioh = ctlioh;
 	sc->sc_version = bus_space_read_1(iot, ctlioh, VERSION_REGISTER_OFFSET) & VERSION_REGISTER_MASK;
@@ -296,7 +295,7 @@ rapide_attach(parent, self, aux)
 		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
 		ihp->ih_maskbits = rcp->rc_irqmask;
 		if (irq_claim(sc->sc_podule->interrupt, ihp))
-			panic("%s: Cannot claim interrupt %d\n",
+			panic("%s: Cannot claim interrupt %d",
 			    self->dv_xname, sc->sc_podule->interrupt);
 		/* clear any pending interrupts and enable interrupts */
 		sc->sc_intr_enable_mask |= rcp->rc_irqmask;

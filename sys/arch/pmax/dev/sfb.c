@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.37.8.1 2002/01/10 19:47:49 thorpej Exp $	*/
+/*	$NetBSD: sfb.c,v 1.37.8.2 2002/10/10 18:35:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -117,9 +117,8 @@ static void	sfbattach __P((struct device *, struct device *, void *));
 static int	sfbinit __P((struct fbinfo *, caddr_t, int, int));
 static int	sfb_intr __P((void *sc));
 
-struct cfattach sfb_ca = {
-	sizeof(struct fbinfo), sfbmatch, sfbattach
-};
+CFATTACH_DECL(sfb, sizeof(struct fbinfo),
+    sfbmatch, sfbattach, NULL, NULL);
 
 struct fbdriver sfb_driver = {
 	bt459_video_on,

@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.20.2.4 2002/06/23 17:39:50 jdolecek Exp $
+#	$NetBSD: files.prep,v 1.20.2.5 2002/10/10 18:35:24 jdolecek Exp $
 #
 # prep-specific configuration info
 #
@@ -64,26 +64,17 @@ include "dev/i2o/files.i2o"
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 #
 # Memory Disk for install floppy
 #
 file	dev/md_root.c		memory_disk_hooks
-major	{md = 17}
-
-#
-# RAIDframe
-#
-major	{raid = 18}
 
 #
 # System bus types
@@ -131,7 +122,6 @@ file	arch/prep/pci/gten.c		gten needs-flag
 #
 
 include "dev/isa/files.isa"
-major	{mcd = 7}
 file	arch/prep/isa/isa_machdep.c	isa
 file	arch/prep/isa/isadma_machdep.c	isa
 
@@ -179,7 +169,6 @@ file	dev/isa/fdc_isa.c		fdc_isa
 # Floppy disk controller
 device	fd: disk
 attach	fd at fdc
-major	{fd = 2}
 
 # Game adapter (joystick)
 file	arch/prep/isa/joy_timer.c	joy
@@ -212,3 +201,5 @@ file arch/prep/dev/obio.c		obio needs-flag
 
 attach wdc at obio with wdc_obio
 file arch/prep/dev/wdc_obio.c		wdc_obio needs-flag
+
+include "arch/prep/conf/majors.prep"

@@ -1,4 +1,4 @@
-/*	$NetBSD: podulebus_io.c,v 1.1.6.2 2002/01/10 19:36:35 thorpej Exp $	*/
+/*	$NetBSD: podulebus_io.c,v 1.1.6.3 2002/10/10 18:30:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -153,7 +153,7 @@ podulebus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("podulebus_bs_alloc(): Help!\n");
+	panic("podulebus_bs_alloc(): Help!");
 }
 
 
@@ -175,7 +175,7 @@ podulebus_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 
-	panic("podulebus_bs_free(): Help!\n");
+	panic("podulebus_bs_free(): Help!");
 	/* podulebus_bs_unmap() does all that we need to do. */
 /*	podulebus_bs_unmap(t, bsh, size);*/
 }

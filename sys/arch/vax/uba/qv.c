@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.5.2.2 2002/06/23 17:43:04 jdolecek Exp $	*/
+/*	$NetBSD: qv.c,v 1.5.2.3 2002/10/10 18:37:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -137,10 +137,8 @@
 #include "sys/user.h"
 #include "qvioctl.h"
 #include "sys/tty.h"
-#include "sys/map.h"
 #include "sys/buf.h"
 #include "sys/vm.h"
-#include "sys/clist.h"
 #include "sys/file.h"
 #include "sys/uio.h"
 #include "sys/kernel.h"
@@ -176,7 +174,6 @@ extern	struct pte QVmap[][512];
  */
 
 #define QVWAITPRI 	(PZERO+1)
-#define QVSSMAJOR	40
 
 #define QVKEYBOARD 	0	/* minor 0, keyboard/glass tty */
 #define QVPCONS 	1	/* minor 1, console interceptor XXX */
@@ -276,6 +273,20 @@ int	qvstart(), qvputc(),  ttrstrt();
 extern u_short q_key[], q_shift_key[], q_cursor[];
 extern char *q_special[], q_font[];
 
+dev_type_open(qvopen);
+dev_type_close(qvclose);
+dev_type_read(qvread);
+dev_type_write(qvwrite);
+dev_type_ioctl(qvioctl);
+dev_type_stop(qvstop);
+dev_type_poll(qvpoll);
+dev_type_kqfilter(qvkqfilter);
+
+const struct cdevsw qv_cdevsw = {
+	qvopen, qvclose, qvread, qvwrite, qvioctl,
+	qvstop, notty, qvpoll, nommap, qvkqfilter,
+};
+
 /*
  * See if the qvss will interrupt.
  */
@@ -359,8 +370,11 @@ qvattach(ui)
 
 
 /*ARGSUSED*/
-qvopen(dev, flag)
+int
+qvopen(dev, flag, mode, p)
 	dev_t dev;
+	int flag, mode;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit, qv;
@@ -418,12 +432,15 @@ qvopen(dev, flag)
 		qp->ihead = qp->itail = 0;
 		return 0;
 	}
+
+	return (0);
 }
 
 /*
  * Close a QVSS line.
  */
 /*ARGSUSED*/
+int
 qvclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -461,9 +478,11 @@ qvclose(dev, flag, mode, p)
 	return (error);
 }
 
-qvread(dev, uio)
+int
+qvread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp;
 	int unit = minor( dev );
@@ -475,9 +494,11 @@ qvread(dev, uio)
 	return (ENXIO);
 }
 
-qvwrite(dev, uio)
+int
+qvwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	register struct tty *tp;
 	int unit = minor( dev );
@@ -659,9 +680,13 @@ qvkint(qv)
  * Ioctl for QVSS.
  */
 /*ARGSUSED*/
-qvioctl(dev, cmd, data, flag)
+int
+qvioctl(dev, cmd, data, flag, p)
 	dev_t dev;
+	u_long cmd;
 	register caddr_t data;
+	int flag;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
@@ -1262,7 +1287,7 @@ qvcons_init()
         if (!qv_setup(qvaddr, 0, 0))
 		return 0;
 	v_putc = qvputc;
-        consops = &cdevsw[QVSSMAJOR];
+        consops = &qv_cdevsw;
 	return 1;
 }
 /*

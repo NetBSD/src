@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.3 2002/09/06 08:35:17 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.4 2002/10/10 18:32:48 jdolecek Exp $	*/
 
 /*	$OpenBSD: autoconf.c,v 1.15 2001/06/25 00:43:10 mickey Exp $	*/
 
@@ -230,18 +230,19 @@ hp700_led_blinker(arg)
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	extern int dumpsize;
 	int nblks, dumpblks;	/* size of dump area */
 	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bp = bdevsw_lookup(dumpdev);
+	if (bp == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 	dumpblks = cpu_dumpsize();

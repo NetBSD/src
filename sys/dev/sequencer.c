@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.15.8.5 2002/10/02 22:02:29 jdolecek Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.15.8.6 2002/10/10 18:38:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.15.8.5 2002/10/02 22:02:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.15.8.6 2002/10/10 18:38:22 jdolecek Exp $");
 
 #include "sequencer.h"
 
@@ -148,6 +148,20 @@ int midiseq_loadpatch __P((struct midi_dev *, struct sysex_info *,
 			   struct uio *));
 int midiseq_putc __P((struct midi_dev *, int));
 void midiseq_in __P((struct midi_dev *, u_char *, int));
+
+dev_type_open(sequenceropen);
+dev_type_close(sequencerclose);
+dev_type_read(sequencerread);
+dev_type_write(sequencerwrite);
+dev_type_ioctl(sequencerioctl);
+dev_type_poll(sequencerpoll);
+dev_type_kqfilter(sequencerkqfilter);
+
+const struct cdevsw sequencer_cdevsw = {
+	sequenceropen, sequencerclose, sequencerread, sequencerwrite,
+	sequencerioctl, nostop, notty, sequencerpoll, nommap,
+	sequencerkqfilter,
+};
 
 void
 sequencerattach(n)
@@ -1176,13 +1190,14 @@ midiseq_open(unit, flags)
 	int flags;
 {
 	extern struct cfdriver midi_cd;
+	extern const struct cdevsw midi_cdevsw;
 	int error;
 	struct midi_dev *md;
 	struct midi_softc *sc;
 	struct midi_info mi;
 
 	DPRINTFN(2, ("midiseq_open: %d %d\n", unit, flags));
-	error = midiopen(makedev(0, unit), flags, 0, 0);
+	error = (*midi_cdevsw.d_open)(makedev(0, unit), flags, 0, 0);
 	if (error)
 		return (0);
 	sc = midi_cd.cd_devs[unit];
@@ -1205,8 +1220,10 @@ void
 midiseq_close(md)
 	struct midi_dev *md;
 {
+	extern const struct cdevsw midi_cdevsw;
+
 	DPRINTFN(2, ("midiseq_close: %d\n", md->unit));
-	midiclose(makedev(0, md->unit), 0, 0, 0);
+	(*midi_cdevsw.d_close)(makedev(0, md->unit), 0, 0, 0);
 	free(md, M_DEVBUF);
 }
 
@@ -1419,6 +1436,14 @@ midiseq_putc(md, data)
 
 #include "midi.h"
 #if NMIDI == 0
+dev_type_open(midiopen);
+dev_type_close(midiclose);
+
+const struct cdevsw midi_cdevsw = {
+	midiopen, midiclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap,
+};
+
 /*
  * If someone has a sequencer, but no midi devices there will
  * be unresolved references, so we provide little stubs.

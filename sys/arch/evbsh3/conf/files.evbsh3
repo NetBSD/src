@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbsh3,v 1.8.2.3 2002/06/23 17:36:02 jdolecek Exp $
+#	$NetBSD: files.evbsh3,v 1.8.2.4 2002/10/10 18:32:32 jdolecek Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -26,20 +26,15 @@ defparam opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 # Memory Disk for install floppy
 file dev/md_root.c				memory_disk_hooks
-major	{md = 17}
 
 #
 # System bus types
@@ -55,3 +50,5 @@ attach cpu at mainbus
 file	arch/sh3/sh3/cpu.c			cpu
 
 include	"arch/sh3/conf/files.shb"
+
+include "arch/evbsh3/conf/majors.evbsh3"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.2.4.2 2002/09/06 08:32:49 jdolecek Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.2.4.3 2002/10/10 18:31:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -118,9 +118,8 @@ static struct ixpclk_softc *ixpclk_sc = NULL;
 #define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
-struct cfattach ixpclk_ca = {
-	sizeof(struct ixpclk_softc), ixpclk_match, ixpclk_attach
-};
+CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
+    ixpclk_match, ixpclk_attach, NULL, NULL);
 
 #define GET_TIMER_VALUE(sc)	(bus_space_read_4((sc)->sc_iot,		\
 						  (sc)->sc_ioh,		\
@@ -156,7 +155,7 @@ ixpclk_attach(parent, self, aux)
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 0,
 			  &sc->sc_ioh))
-		panic("%s: Cannot map registers\n", self->dv_xname);
+		panic("%s: Cannot map registers", self->dv_xname);
 
 	/* disable all channel and clear interrupt status */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,

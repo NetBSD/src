@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.4.2.2 2002/06/23 17:41:25 jdolecek Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.4.2.3 2002/10/10 18:36:01 jdolecek Exp $	*/
 
 /*
  * Copyright 1998
@@ -58,13 +58,19 @@ struct ofrom_softc {
 int ofromprobe __P((struct device *, struct cfdata *, void *));
 void ofromattach __P((struct device *, struct device *, void *));
 
-struct cfattach ofrom_ca = {
-	sizeof(struct ofrom_softc), ofromprobe, ofromattach
-};
+CFATTACH_DECL(ofrom, sizeof(struct ofrom_softc),
+    ofromprobe, ofromattach, NULL, NULL);
 
 extern struct cfdriver ofrom_cd;
 
-cdev_decl(ofrom);
+dev_type_open(ofromopen);
+dev_type_read(ofromrw);
+dev_type_mmap(ofrommmap);
+
+const struct cdevsw ofrom_cdevsw = {
+	ofromopen, nullclose, ofromrw, ofromrw, noioctl,
+	nostop, notty, nopoll, ofrommmap, nokqfilter,
+};
 
 int
 ofromprobe(parent, cf, aux)
@@ -121,16 +127,6 @@ ofromopen(dev, oflags, devtype, p)
 
 	if (oflags & FWRITE)
 		return (EINVAL);
-
-	return (0);
-}
-
-int
-ofromclose(dev, fflag, devtype, p)
-	dev_t dev;
-	int fflag, devtype;
-	struct proc *p;
-{
 
 	return (0);
 }
@@ -200,18 +196,6 @@ ofromrw(dev, uio, flags)
 	physlock = 0;
 
 	return (error);
-}
-
-int
-ofromioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-
-	return (ENOTTY);
 }
 
 paddr_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39.4.4 2002/06/23 17:42:15 jdolecek Exp $ */
+/*	$NetBSD: clock.c,v 1.39.4.5 2002/10/10 18:36:39 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -135,17 +135,14 @@ static void	clockattach_rtc __P((struct device *, struct device *, void *));
 static void	clockattach __P((int, bus_space_tag_t, bus_space_handle_t));
 
 
-struct cfattach clock_sbus_ca = {
-	sizeof(struct device), clockmatch_sbus, clockattach_sbus
-};
+CFATTACH_DECL(clock_sbus, sizeof(struct device),
+    clockmatch_sbus, clockattach_sbus, NULL, NULL);
 
-struct cfattach clock_ebus_ca = {
-	sizeof(struct device), clockmatch_ebus, clockattach_ebus
-};
+CFATTACH_DECL(clock_ebus, sizeof(struct device),
+    clockmatch_ebus, clockattach_ebus, NULL, NULL);
 
-struct cfattach rtc_ebus_ca = {
-	sizeof(struct device), clockmatch_rtc, clockattach_rtc
-};
+CFATTACH_DECL(rtc_ebus, sizeof(struct device),
+    clockmatch_rtc, clockattach_rtc, NULL, NULL);
 
 extern struct cfdriver clock_cd;
 
@@ -158,9 +155,8 @@ static void	timerattach __P((struct device *, struct device *, void *));
 
 struct timerreg_4u	timerreg_4u;	/* XXX - need more cleanup */
 
-struct cfattach timer_ca = {
-	sizeof(struct device), timermatch, timerattach
-};
+CFATTACH_DECL(timer, sizeof(struct device),
+    timermatch, timerattach, NULL, NULL);
 
 int clock_wenable __P((struct todr_chip_handle *, int));
 struct chiptime;

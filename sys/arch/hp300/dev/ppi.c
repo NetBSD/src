@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.19.8.1 2002/06/23 17:36:09 jdolecek Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19.8.2 2002/10/10 18:32:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.8.1 2002/06/23 17:36:09 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.8.2 2002/10/10 18:32:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,11 +116,21 @@ struct	ppi_softc {
 int	ppimatch __P((struct device *, struct cfdata *, void *));
 void	ppiattach __P((struct device *, struct device *, void *));
 
-struct cfattach ppi_ca = {
-	sizeof(struct ppi_softc), ppimatch, ppiattach
-};
+CFATTACH_DECL(ppi, sizeof(struct ppi_softc),
+    ppimatch, ppiattach, NULL, NULL);
 
 extern struct cfdriver ppi_cd;
+
+dev_type_open(ppiopen);
+dev_type_close(ppiclose);
+dev_type_read(ppiread);
+dev_type_write(ppiwrite);
+dev_type_ioctl(ppiioctl);
+
+const struct cdevsw ppi_cdevsw = {
+	ppiopen, ppiclose, ppiread, ppiwrite, ppiioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 void	ppistart __P((void *));
 void	ppinoop __P((void *));
@@ -129,9 +139,6 @@ void	ppitimo __P((void *));
 int	ppirw __P((dev_t, struct uio *));
 int	ppihztoms __P((int));
 int	ppimstohz __P((int));
-
-bdev_decl(ppi);
-cdev_decl(ppi);
 
 #define UNIT(x)		minor(x)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.11.2.4 2002/06/23 17:35:33 jdolecek Exp $
+#	$NetBSD: files.dreamcast,v 1.11.2.5 2002/10/10 18:32:20 jdolecek Exp $
 
 # maxpartitions must be first item in files.${MACHINE}
 maxpartitions 8
@@ -25,20 +25,15 @@ defparam opt_memsize.h	IOM_ROM_BEGIN IOM_ROM_SIZE IOM_RAM_BEGIN IOM_RAM_SIZE
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 # Memory Disk for install floppy
 file dev/md_root.c				memory_disk_hooks
-major	{md = 17}
 
 #
 # System bus types
@@ -76,7 +71,6 @@ file	arch/dreamcast/dev/pvr.c			pvr	needs-flag
 device	gdrom: disk
 attach	gdrom at shb
 file	arch/dreamcast/dev/gdrom.c			gdrom	needs-flag
-major	{gdrom = 19}
 
 device	g2bus { }
 attach	g2bus at shb
@@ -88,3 +82,5 @@ attach	gapspci at g2bus
 file	arch/dreamcast/dev/g2/gapspci.c			gapspci
 file	arch/dreamcast/dev/g2/gapspci_dma.c		gapspci
 file	arch/dreamcast/dev/g2/gapspci_pci.c		gapspci
+
+include "arch/dreamcast/conf/majors.dreamcast"

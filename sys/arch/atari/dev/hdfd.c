@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.28.2.2 2002/09/06 08:33:25 jdolecek Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.28.2.3 2002/10/10 18:32:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -101,8 +101,7 @@ dev_type_close(fdclose);
 dev_type_read(fdread);
 dev_type_write(fdwrite);
 dev_type_ioctl(fdioctl);
-dev_type_size(fdsize);
-dev_type_dump(fddump);
+dev_type_strategy(fdstrategy);
 
 volatile u_char	*fdio_addr;
 
@@ -172,9 +171,8 @@ int	fdcprobe __P((struct device *, struct cfdata *, void *));
 int	fdprint __P((void *, const char *));
 void	fdcattach __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcprobe, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+    fdcprobe, fdcattach, NULL, NULL);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -249,13 +247,20 @@ struct fd_softc {
 int	fdprobe __P((struct device *, struct cfdata *, void *));
 void	fdattach __P((struct device *, struct device *, void *));
 
-struct cfattach hdfd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
+CFATTACH_DECL(hdfd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
 
 extern struct cfdriver hdfd_cd;
 
-void	fdstrategy __P((struct buf *));
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
 void	fdstart __P((struct fd_softc *));
 
 struct dkdriver fddkdriver = { fdstrategy };
@@ -1287,27 +1292,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return -1;
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
 }
 
 int

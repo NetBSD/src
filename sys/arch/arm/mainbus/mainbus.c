@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.3 2001/06/13 17:52:43 nathanw Exp $ */
+/* $NetBSD: mainbus.c,v 1.3.2.1 2002/10/10 18:31:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -72,9 +72,8 @@ static int  mainbussearch __P((struct device *, struct cfdata *, void *));
 
 /* attach and device structures for the device */
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbusmatch, mainbusattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbusmatch, mainbusattach, NULL, NULL);
 
 /*
  * int mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -150,7 +149,7 @@ mainbussearch(parent, cf, aux)
 		mb.mb_iot = &mainbus_bs_tag;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &mb) > 0) {
+		if (config_match(parent, cf, &mb) > 0) {
 			config_attach(parent, cf, &mb, mainbusprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}

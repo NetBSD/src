@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_io.c,v 1.1.4.3 2002/06/23 17:35:39 jdolecek Exp $ */
+/*	$NetBSD: ifpga_io.c,v 1.1.4.4 2002/10/10 18:32:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Causality Limited
@@ -214,7 +214,7 @@ ifpga_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("ifpga_alloc(): Help!\n");
+	panic("ifpga_alloc(): Help!");
 }
 
 
@@ -248,7 +248,7 @@ ifpga_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 
-	panic("ifpga_free(): Help!\n");
+	panic("ifpga_free(): Help!");
 	/* ifpga_bs_unmap() does all that we need to do. */
 /*	ifpga_bs_unmap(t, bsh, size);*/
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.2.2.4 2002/06/23 17:34:54 jdolecek Exp $	*/
+/*	$NetBSD: console.c,v 1.2.2.5 2002/10/10 18:31:52 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -61,6 +61,7 @@
 #include <dev/cons.h>
 
 #include <arm/iomd/vidc.h>
+#include <arm/iomd/console/console.h>
 #include <machine/vconsole.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bootconfig.h>
@@ -92,7 +93,6 @@ struct vconsole *vconsole_current;
 struct vconsole *vconsole_head;
 struct vconsole *vconsole_default;
 extern struct vconsole *debug_vc;	/* rename this to vconsole_debug */
-int physcon_major=4;
 static char undefined_string[] = "UNDEFINED";
 int lastconsole;
 static int printing=0;
@@ -102,12 +102,25 @@ static int want_switch=-1;
  * Prototypes
  */
 
-int	physcon_switch	__P((u_int /*number*/));
-void	physconstart	__P((struct tty *));
-static	struct vconsole *vconsole_spawn	__P((dev_t , struct vconsole *));
-int	physconparam	__P((struct tty *, struct termios *));
-int	physcon_switchup __P((void));
-int	physcon_switchdown	__P((void));
+int	physcon_switch(u_int);
+void	physconstart(struct tty *);
+void	physconinit(struct consdev *);
+int	physconparam(struct tty *, struct termios *);
+int	physcon_switchup(void);
+int	physcon_switchdown(void);
+char	physcongetchar(void);
+int	physconkbd(int);
+
+void	rpcconsolecnprobe(struct consdev *);
+void	rpcconsolecninit(struct consdev *);
+char	rpcconsolecngetc(dev_t);
+void	rpcconsolecnputc(dev_t, char);
+void	rpcconsolecnpollc(dev_t, int);
+
+struct vconsole *find_vc(dev_t);
+void	vconsole_addcharmap(struct vconsole *);
+static	struct vconsole *vconsole_spawn(dev_t, struct vconsole *);
+void	console_flush(void);
 
 /*
  * Exported variables
@@ -117,6 +130,23 @@ int	physcon_switchdown	__P((void));
 int vconsole_pending=0;
 int vconsole_blankinit=BLANKINIT;
 int vconsole_blankcounter=BLANKINIT;
+
+/*
+ * Device switch
+ */
+dev_type_open(physconopen);
+dev_type_close(physconclose);
+dev_type_read(physconread);
+dev_type_write(physconwrite);
+dev_type_ioctl(physconioctl);
+dev_type_tty(physcontty);
+dev_type_poll(physconpoll);
+dev_type_mmap(physconmmap);
+
+const struct cdevsw physcon_cdevsw = {
+	physconopen, physconclose, physconread, physconwrite, physconioctl,
+	nostop, physcontty, physconpoll, physconmmap, ttykqfilter, D_TTY
+};
 
 /*
  * Now list all my render engines and terminal emulators
@@ -531,22 +561,6 @@ physconpoll(dev, events, p)
 	return ((*tp->t_linesw->l_poll)(tp, events, p));
 }
 
-/* XXXLUKEM (jdolecek) kqueue hooks not tested */
-int
-physconkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
-{
-	register struct tty *tp;
-
-	tp = find_tp(dev);
-	
-	if (tp == NULL)
-		return (0);
-
-	return (ttykqfilter(dev, kn));
-}
-
 struct tty *
 physcontty(dev)
 	dev_t dev;
@@ -559,7 +573,7 @@ int ioctlconsolebug;
 int
 physconioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	int cmd;
+	u_long cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -593,12 +607,16 @@ physconioctl(dev, cmd, data, flag, p)
 		physcon_switch ( lastconsole );
 		return 0;
 	case CONSOLE_CREATE:
-		if ( vconsole_spawn ( makedev ( physcon_major, *(int *)data ),
+	{
+		int maj;
+		maj = cdevsw_lookup_major(&physcon_cdevsw);
+		if ( vconsole_spawn ( makedev ( maj, *(int *)data ),
 		    vconsole_default ) == 0 )
 			return ENOMEM;
 		else
 			return 0;
 		break;
+	}
 
 	case CONSOLE_RENDERTYPE:
 		strncpy ( (char *)data, vc->T_NAME, 20 );
@@ -627,7 +645,8 @@ physconioctl(dev, cmd, data, flag, p)
 		vconsole_new = *vc;
 		vconsole_new.render_engine = &vidcrender;
 		if ( vconsole_spawn_re ( 
-		    makedev ( physcon_major, *(int *)data ),
+		    makedev ( cdevsw_lookup_major(&physcon_cdevsw),
+			      *(int *)data ),
 		    &vconsole_new ) == 0 )
 			return ENOMEM;
 		else
@@ -679,7 +698,8 @@ physconioctl(dev, cmd, data, flag, p)
 		{
 		    struct vconsole *vc_p;	
 
-		    vc_p = find_vc(makedev(physcon_major,*(int*)data));
+		    vc_p = find_vc(makedev(cdevsw_lookup_major(&physcon_cdevsw),
+				   *(int*)data));
 		    if (vc_p==0) return EINVAL;
 		    printf ( "DEBUGPRINT for console %d\n", *(int*)data );
 		    printf ( "flags %08x vtty %01x\n", vc_p->flags, vc_p->vtty );
@@ -801,14 +821,6 @@ physconparam(tp, t)
 	return(0);
 }
 
-void
-physconstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-	/* Nothing necessary */
-}
-
 int
 physconkbd(key)
 	int key;
@@ -893,8 +905,6 @@ physconinit(cp)
 
 	locked=0;
 
-	physcon_major = major(cp->cn_dev);
-
 	/*
 	 * Create the master console
 	 */
@@ -959,6 +969,8 @@ physconinit(cp)
 	vconsole_master->PUTSTRING("\x0c", 1, vconsole_master);
 }
 
+#if CHUQ
+
 /*
  * void physconputstring(char *string, int length)
  *
@@ -972,6 +984,8 @@ physconputstring(string, length)
 {
 	vconsole_current->PUTSTRING(string, length, vconsole_current);
 }
+
+#endif
 
 /*
  * void physcongetchar(void)
@@ -999,10 +1013,7 @@ rpcconsolecnprobe(cp)
  * the device with the open function for the physical console
  */
 
-	for (major = 0; major < nchrdev; ++major) {
-		if (cdevsw[major].d_open == physconopen)
-			break;
-	}
+	major = cdevsw_lookup_major(&physcon_cdevsw);
 
 /* Initialise the required fields */
 
@@ -1014,7 +1025,6 @@ rpcconsolecnprobe(cp)
 char rpc_buf[RPC_BUF_LEN];
 int rpc_buf_ptr = 0;
 static int cnpolling = 0;
-
 #define RPC_BUF_FLUSH	\
 {			\
 	vconsole_current->PUTSTRING(rpc_buf, rpc_buf_ptr, vconsole_current);	\
@@ -1027,6 +1037,7 @@ rpcconsolecninit(cp)
 {
 	physconinit(cp);	/* woo Woo WOO!!!, woo, woo, yes ok bye */
 }
+
 
 void
 rpcconsolecnputc(dev, character)
@@ -1047,6 +1058,8 @@ void
 console_flush()
 RPC_BUF_FLUSH
 
+#if CHUQ
+
 int
 console_switchdown()
 {
@@ -1060,6 +1073,8 @@ console_switchup()
 	physcon_switchup();
 	return 0;
 }
+
+#endif
 
 int
 console_unblank()
@@ -1095,11 +1110,15 @@ console_scrollforward ()
 	return 0;
 }
 
+#if CHUQ
+
 int
 console_switchlast()
 {
 	return (physcon_switch(lastconsole));
 }
+
+#endif
 
 int
 physcon_switchdown()
@@ -1156,7 +1175,7 @@ physcon_switch(number)
 		goto out;
 	}
 
-	vc = find_vc(makedev(physcon_major, number));
+	vc = find_vc(makedev(cdevsw_lookup_major(&physcon_cdevsw), number));
 
 	if (vc == 0) {
 		ret = 1;
@@ -1225,10 +1244,13 @@ rpcconsolecnpollc(dev, on)
 	cnpolling = on;
 }
 
+int rpcprobe(struct device *, struct cfdata *, void *);
+void rpcattach(struct device *, struct device *, void *);
+
 int
 rpcprobe(parent, match, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *match;
 	void *aux;
 {
 	return(1);
@@ -1248,17 +1270,8 @@ rpcattach(parent, self, aux)
 	vconsole_master->R_ATTACH(vconsole_master, parent, self, aux);
 }
 
-/*
-struct cfattach rpc_ca = {
-	sizeof(struct device), rpcprobe, rpcattach
-};
-
-extern struct cfdriver rpc_cd;
-*/
-
-struct cfattach vt_ca = {
-	sizeof(struct device), rpcprobe, rpcattach
-};
+CFATTACH_DECL(vt, sizeof(struct device),
+    rpcprobe, rpcattach, NULL, NULL);
 
 extern struct terminal_emulator vt220;
 

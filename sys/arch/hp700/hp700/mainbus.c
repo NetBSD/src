@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.2.3 2002/09/06 08:35:20 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.4 2002/10/10 18:32:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -98,9 +98,8 @@ struct mainbus_softc {
 int	mbmatch __P((struct device *, struct cfdata *, void *));
 void	mbattach __P((struct device *, struct device *, void *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct mainbus_softc), mbmatch, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct mainbus_softc),
+    mbmatch, mbattach, NULL, NULL);
 
 extern struct cfdriver mainbus_cd;
 
@@ -1352,7 +1351,7 @@ mbsubmatch(parent, cf, aux)
 	saved_irq = ca->ca_irq;
 	if (cf->hp700cf_irq != HP700CF_IRQ_UNDEF)
 		ca->ca_irq = cf->hp700cf_irq;
-	if (!(ret = (*cf->cf_attach->ca_match)(parent, cf, aux)))
+	if (!(ret = config_match(parent, cf, aux)))
 		ca->ca_irq = saved_irq;
 	return ret;
 }

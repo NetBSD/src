@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.6 2001/04/25 17:53:18 bouyer Exp $	*/
+/*	$NetBSD: si.c,v 1.6.2.1 2002/10/10 18:34:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,9 +90,8 @@ void si_dma_poll __P((struct ncr5380_softc *));
 void si_dma_eop __P((struct ncr5380_softc *));
 void si_dma_stop __P((struct ncr5380_softc *));
 
-struct cfattach si_ca = {
-	sizeof(struct si_softc), si_match, si_attach
-};
+CFATTACH_DECL(si, sizeof(struct si_softc),
+    si_match, si_attach, NULL, NULL);
 
 /*
  * Options for disconnect/reselect, DMA, and interrupts.
@@ -237,7 +236,7 @@ si_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("si_dma_alloc: len=0x%x\n", xlen);
+		panic("si_dma_alloc: len=0x%x", xlen);
 
 	/*
 	 * Find free DMA handle.  Guaranteed to find one since we

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39sib.c,v 1.8.2.1 2002/02/11 20:08:11 jdolecek Exp $ */
+/*	$NetBSD: tx39sib.c,v 1.8.2.2 2002/10/10 18:32:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -137,9 +137,8 @@ __inline int	__txsibsf0_ready(tx_chipset_tag_t);
 void	tx39sib_dump(struct tx39sib_softc *);
 #endif
 
-struct cfattach tx39sib_ca = {
-	sizeof(struct tx39sib_softc), tx39sib_match, tx39sib_attach
-};
+CFATTACH_DECL(tx39sib, sizeof(struct tx39sib_softc),
+    tx39sib_match, tx39sib_attach, NULL, NULL);
 
 int
 tx39sib_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -291,7 +290,7 @@ tx39sib_search(struct device *parent, struct cfdata *cf, void *aux)
 	}
 	
 	if (!(sc->sc_attached & (1 << sa.sa_slot)) &&/* not attached slot */
-	    (*cf->cf_attach->ca_match)(parent, cf, &sa)) {
+	    config_match(parent, cf, &sa)) {
 		config_attach(parent, cf, &sa, tx39sib_print);
 		sc->sc_attached |= (1 << sa.sa_slot);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.3.4.4 2002/09/06 08:44:43 jdolecek Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.3.4.5 2002/10/10 18:39:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -236,6 +236,7 @@ struct wi_counters {
 #define WI_RID_WEP_MAPTABLE	0xFC29
 #define WI_RID_CNFAUTHMODE	0xFC2A
 #define WI_RID_ROAMING_MODE	0xFC2D
+#define WI_RID_OWN_BEACON_INT	0xFC33 /* beacon xmit time for BSS creation */
 #define WI_RID_BASIC_RATE	0xFCB3
 #define WI_RID_SUPPORT_RATE	0xFCB4
 
@@ -321,7 +322,7 @@ struct wi_ltv_keys {
 #define WI_RID_CURRENT_BSSID	0xFD42 /* ID of actually connected BSS */
 #define WI_RID_COMMS_QUALITY	0xFD43 /* quality of BSS connection */
 #define WI_RID_CUR_TX_RATE	0xFD44 /* current TX rate */
-#define WI_RID_OWN_BEACON_INT	0xFD45 /* beacon xmit time for BSS creation */
+#define WI_RID_CUR_BEACON_INT	0xFD45 /* current beacon interval */
 #define WI_RID_CUR_SCALE_THRESH	0xFD46 /* actual system scane thresh setting */
 #define WI_RID_PROT_RESP_TIME	0xFD47 /* time to wait for resp to req msg */
 #define WI_RID_SHORT_RTR_LIM	0xFD48 /* max tx attempts for short frames */

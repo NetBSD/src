@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99.2.3 2002/01/10 19:44:49 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.99.2.4 2002/10/10 18:33:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99.2.3 2002/01/10 19:44:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99.2.4 2002/10/10 18:33:26 jdolecek Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_largepages.h"
@@ -72,16 +72,13 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99.2.3 2002/01/10 19:44:49 thorpej 
 #include <machine/mtrr.h>
 
 #include "npx.h"
-#if NNPX > 0
-extern struct proc *npxproc;
-#endif
 
 void	setredzone __P((u_short *, caddr_t));
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the pcb and trap frame, making the child ready to run.
- * 
+ *
  * Rig the child's kernel stack so that it will start out in
  * proc_trampoline() and call child_return() with p2 as an
  * argument. This causes the newly-created child process to go
@@ -110,15 +107,10 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 #if NNPX > 0
 	/*
-	 * If npxproc != p1, then the npx h/w state is irrelevant and the
-	 * state had better already be in the pcb.  This is true for forks
-	 * but not for dumps.
-	 *
-	 * If npxproc == p1, then we have to save the npx h/w state to
-	 * p1's pcb so that we can copy it.
+	 * Save p1's npx h/w state to p1's pcb so that we can copy it.
 	 */
-	if (npxproc == p1)
-		npxsave();
+	if (p1->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p1, 1);
 #endif
 
 	p2->p_md.md_flags = p1->p_md.md_flags;
@@ -146,7 +138,8 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)p2->p_addr + USPACE - 16;
-	tss_alloc(p2);
+
+	p2->p_md.md_tss_sel = tss_alloc(pcb);
 
 	/*
 	 * Copy the trapframe.
@@ -161,7 +154,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 		tf->tf_esp = (u_int)stack + stacksize;
 
 	sf = (struct switchframe *)tf - 1;
-	sf->sf_ppl = 0;
 	sf->sf_esi = (int)func;
 	sf->sf_ebx = (int)arg;
 	sf->sf_eip = (int)proc_trampoline;
@@ -178,8 +170,7 @@ cpu_swapout(p)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	if (npxproc == p)
-		npxsave();
+	npxsave_proc(p, 1);
 #endif
 }
 
@@ -197,8 +188,8 @@ cpu_exit(p)
 
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
-	if (npxproc == p)
-		npxproc = 0;
+	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+		npxsave_proc(p, 0);
 #endif
 
 #ifdef MTRR
@@ -210,6 +201,14 @@ cpu_exit(p)
 	 * No need to do user LDT cleanup here; it's handled in
 	 * pmap_destroy().
 	 */
+
+	/*
+	 * Deactivate the address space before the vmspace is
+	 * freed.  Note that we will continue to run on this
+	 * vmspace's context until the switch to the idle process
+	 * in switch_exit().
+	 */
+	pmap_deactivate(p);
 
 	uvmexp.swtch++;
 	switch_exit(p);
@@ -226,12 +225,12 @@ cpu_wait(p)
 {
 
 	/* Nuke the TSS. */
-	tss_free(p);
+	tss_free(p->p_md.md_tss_sel);
 }
 
 /*
  * Dump the machine specific segment at the start of a core dump.
- */     
+ */
 struct md_core {
 	struct reg intreg;
 	struct fpreg freg;
@@ -312,6 +311,7 @@ pagemove(from, to, size)
 	size_t size;
 {
 	register pt_entry_t *fpte, *tpte, ofpte, otpte;
+	int32_t cpumask = 0;
 
 	if (size & PAGE_MASK)
 		panic("pagemove");
@@ -329,23 +329,17 @@ pagemove(from, to, size)
 		ofpte = *fpte;
 		*tpte++ = *fpte;
 		*fpte++ = 0;
-#if defined(I386_CPU)
-		if (cpu_class != CPUCLASS_386)
-#endif
-		{
-			if (otpte & PG_V)
-				pmap_update_pg((vaddr_t) to);
-			if (ofpte & PG_V)
-				pmap_update_pg((vaddr_t) from);
-		}
+		if (otpte & PG_V)
+			pmap_tlb_shootdown(pmap_kernel(),
+			    (vaddr_t)to, otpte, &cpumask);
+		if (ofpte & PG_V)
+			pmap_tlb_shootdown(pmap_kernel(),
+			    (vaddr_t)from, ofpte, &cpumask);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
-#if defined(I386_CPU)
-	if (cpu_class == CPUCLASS_386)
-		tlbflush();
-#endif
+	pmap_tlb_shootnow(cpumask);
 }
 
 /*
@@ -367,7 +361,7 @@ extern struct vm_map *phys_map;
 /*
  * Map a user I/O request into kernel virtual address space.
  * Note: the pages are already locked by uvm_vslock(), so we
- * do not need to pass an access_type to pmap_enter().   
+ * do not need to pass an access_type to pmap_enter().
  */
 void
 vmapbuf(bp, len)
@@ -389,7 +383,7 @@ vmapbuf(bp, len)
 	 * The region is locked, so we expect that pmap_pte() will return
 	 * non-NULL.
 	 * XXX: unwise to expect this in a multithreaded environment.
-	 * anything can happen to a pmap between the time we lock a 
+	 * anything can happen to a pmap between the time we lock a
 	 * region, release the pmap lock, and then relock it for
 	 * the pmap_extract().
 	 *

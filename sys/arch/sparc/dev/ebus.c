@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.1.4.4 2002/03/16 15:59:46 jdolecek Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.1.4.5 2002/10/10 18:36:10 jdolecek Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -96,10 +96,8 @@ struct ebus_softc {
 int	ebus_match(struct device *, struct cfdata *, void *);
 void	ebus_attach(struct device *, struct device *, void *);
 
-struct cfattach ebus_ca = {
-	sizeof(struct ebus_softc), ebus_match, ebus_attach
-};
-
+CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
+    ebus_match, ebus_attach, NULL, NULL);
 
 int	ebus_setup_attach_args(struct ebus_softc *, int,
 			       struct ebus_attach_args *);

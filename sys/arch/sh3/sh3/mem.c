@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6.2.3 2002/06/23 17:40:51 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.6.2.4 2002/10/10 18:35:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,28 +52,20 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <uvm/uvm_extern.h>
-
-#include <machine/conf.h>
 
 caddr_t zeropage;
 boolean_t __mm_mem_addr(paddr_t);
 
-/*ARGSUSED*/
-int
-mmopen(dev_t dev, int flag, int mode, struct proc *p)
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev_t dev, int flag, int mode, struct proc *p)
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
+};
 
 /*ARGSUSED*/
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5.2.2 2002/09/06 08:40:12 jdolecek Exp $	*/
+/*	$NetBSD: frame.h,v 1.5.2.3 2002/10/10 18:35:50 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -152,7 +152,8 @@ struct trapframe {
  * by the FPRS bits of the USR register, saved in switchframe->sf_usr.
  */
 struct fpregs {
-	register_t	fpscr;
+	u_int32_t	fpscr;
+	u_int32_t	pad;
 	register_t	fp[32];
 };
 

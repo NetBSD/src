@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.3.2.1 2002/03/16 16:00:36 jdolecek Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.3.2.2 2002/10/10 18:38:01 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -170,7 +170,6 @@ struct linux_rt_sigframe
  * LINUX_CONS_MAJOR is from Linux's include/linux/major.h
  */
 #define LINUX_CONS_MAJOR 4  
-#define NETBSD_WSCONS_MAJOR 47
 
 /*
  * Linux ioctl calls for the keyboard.

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_shark_machdep.c,v 1.1.14.2 2002/06/23 17:41:22 jdolecek Exp $	*/
+/*	$NetBSD: isa_shark_machdep.c,v 1.1.14.3 2002/10/10 18:36:00 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -147,6 +147,13 @@ isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 /*
  * Set up an interrupt handler to start being called.
  */
+static const char * const isa_intr_names[16] = {
+	"isa intr  0", "isa intr  1", "isa intr  2", "isa intr  3",
+	"isa intr  4", "isa intr  5", "isa intr  6", "isa intr  7",
+	"isa intr  8", "isa intr  9", "isa intr 10", "isa intr 11",
+	"isa intr 12", "isa intr 13", "isa intr 14", "isa intr 15"
+};
+
 void *
 isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	isa_chipset_tag_t ic;
@@ -175,7 +182,11 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	    ih->ih_func = ih_fun;
 	    ih->ih_arg = ih_arg;
 	    ih->ih_level = level;
-	    ih->ih_name = "isa intr";
+	    if (irq >= 0 &&
+		irq < (sizeof isa_intr_names / sizeof isa_intr_names[0]))
+		    ih->ih_name = isa_intr_names[irq];
+	    else
+		    ih->ih_name = "isa intr";
 
 	    if (irq_claim(irq, ih) == -1)
 		panic("isa_intr_establish: can't install handler");

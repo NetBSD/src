@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39clock.c,v 1.9.2.2 2002/02/11 20:08:10 jdolecek Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.9.2.3 2002/10/10 18:32:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -98,9 +98,8 @@ void	__tx39timer_rtcreset(tx_chipset_tag_t);
 __inline__ void	__tx39timer_rtcget(struct txtime *);
 __inline__ time_t __tx39timer_rtc2sec(struct txtime *);
 
-struct cfattach tx39clock_ca = {
-	sizeof(struct tx39clock_softc), tx39clock_match, tx39clock_attach
-};
+CFATTACH_DECL(tx39clock, sizeof(struct tx39clock_softc),
+    tx39clock_match, tx39clock_attach, NULL, NULL);
 
 int
 tx39clock_match(struct device *parent, struct cfdata *cf, void *aux)

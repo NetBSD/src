@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_ISDN,v 1.4.4.3 2002/06/23 17:37:19 jdolecek Exp $
+# $NetBSD: GENERIC_ISDN,v 1.4.4.4 2002/10/10 18:33:10 jdolecek Exp $
 #
 # GENERIC kernel with all supported ISDN devices and drivers
 
@@ -50,6 +50,9 @@ isic* at isapnp?
 # Supported PCI cards:
 #
 isic* at pci?
+
+# Winbond W6692
+iwic* 	at pci?
 
 # AVM Fritz!PCI card
 ifpci* at pci?

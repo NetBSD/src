@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.2.8.2 2002/06/23 17:46:28 jdolecek Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.2.8.3 2002/10/10 18:39:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.2.8.2 2002/06/23 17:46:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.2.8.3 2002/10/10 18:39:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,8 @@ int	icpsp_match(struct device *, struct cfdata *, void *);
 void	icpsp_scsipi_request(struct scsipi_channel *, scsipi_adapter_req_t,
 			     void *);
 
-struct cfattach icpsp_ca = {
-	sizeof(struct icpsp_softc), icpsp_match, icpsp_attach
-};
+CFATTACH_DECL(icpsp, sizeof(struct icpsp_softc),
+    icpsp_match, icpsp_attach, NULL, NULL);
 
 int
 icpsp_match(struct device *parent, struct cfdata *match, void *aux)
@@ -157,7 +156,7 @@ icpsp_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 
 #if defined(ICP_DEBUG) || defined(SCSIDEBUG)
 		if (xs->cmdlen > sizeof(rc->rc_cdb))
-			panic("%s: CDB too large\n", sc->sc_dv.dv_xname);
+			panic("%s: CDB too large", sc->sc_dv.dv_xname);
 #endif
 
 		/*

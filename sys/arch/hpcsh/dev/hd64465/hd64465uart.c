@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465uart.c,v 1.3.4.3 2002/06/23 17:37:00 jdolecek Exp $	*/
+/*	$NetBSD: hd64465uart.c,v 1.3.4.4 2002/10/10 18:33:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -74,17 +74,14 @@ struct hd64465uart_softc {
 };
 
 /* boot console */
-cdev_decl(com);
 void hd64465uartcnprobe(struct consdev *);
 void hd64465uartcninit(struct consdev *);
 
 STATIC int hd64465uart_match(struct device *, struct cfdata *, void *);
 STATIC void hd64465uart_attach(struct device *, struct device *, void *);
 
-struct cfattach hd64465uart_ca = {
-	sizeof(struct hd64465uart_softc), hd64465uart_match,
-	hd64465uart_attach
-};
+CFATTACH_DECL(hd64465uart, sizeof(struct hd64465uart_softc),
+    hd64465uart_match, hd64465uart_attach, NULL, NULL);
 
 STATIC void hd64465uart_init(void);
 STATIC u_int8_t hd64465uart_read_1(void *, bus_space_handle_t, bus_size_t);
@@ -99,12 +96,11 @@ STATIC void hd64465uart_write_1(void *, bus_space_handle_t, bus_size_t,
 void
 hd64465uartcnprobe(struct consdev *cp)
 {
+	extern struct cdevsw com_cdevsw;
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == comopen)
-			break;
+	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);

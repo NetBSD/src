@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.21.2.2 2002/06/23 17:47:06 jdolecek Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.21.2.3 2002/10/10 18:39:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.21.2.2 2002/06/23 17:47:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.21.2.3 2002/10/10 18:39:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,9 +75,8 @@ struct wdc_isa_softc {
 int	wdc_isa_probe	__P((struct device *, struct cfdata *, void *));
 void	wdc_isa_attach	__P((struct device *, struct device *, void *));
 
-struct cfattach wdc_isa_ca = {
-	sizeof(struct wdc_isa_softc), wdc_isa_probe, wdc_isa_attach
-};
+CFATTACH_DECL(wdc_isa, sizeof(struct wdc_isa_softc),
+    wdc_isa_probe, wdc_isa_attach, NULL, NULL);
 
 static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
 static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));

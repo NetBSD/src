@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.7.2.3 2002/03/16 15:59:01 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.7.2.4 2002/10/10 18:34:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,27 +58,14 @@
 extern u_int lowram;
 static caddr_t devzeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
+};
 
 /*ARGSUSED*/
 int

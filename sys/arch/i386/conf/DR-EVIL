@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.29.2.6 2002/09/06 08:36:01 jdolecek Exp $
+#	$NetBSD: DR-EVIL,v 1.29.2.7 2002/10/10 18:33:09 jdolecek Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3800 laptop used by thorpej@netbsd.org
 #
@@ -193,7 +193,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
-
+cpu0	at mainbus0
 apm0	at mainbus0			# Advanced power management
 options 	APMDEBUG
 

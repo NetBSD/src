@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33.2.5 2002/09/06 08:33:48 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33.2.6 2002/10/10 18:32:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -32,7 +32,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.2.2.2 2002/06/23 17:46:02 jdolecek Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.2.2.3 2002/10/10 18:38:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.2.2.2 2002/06/23 17:46:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.2.2.3 2002/10/10 18:38:39 jdolecek Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -90,7 +90,19 @@ struct tty biconsdev_tty[NBICONSDEV];
 void	biconsdevattach(int);
 static	void biconsdev_output(struct tty *);
 
-cdev_decl(biconsdev);
+dev_type_open(biconsdevopen);
+dev_type_close(biconsdevclose);
+dev_type_read(biconsdevread);
+dev_type_write(biconsdevwrite);
+dev_type_ioctl(biconsdevioctl);
+dev_type_tty(biconsdevtty);
+dev_type_poll(biconsdevpoll);
+
+const struct cdevsw biconsdev_cdevsw = {
+	biconsdevopen, biconsdevclose, biconsdevread, biconsdevwrite,
+	biconsdevioctl, nostop, biconsdevtty, biconsdevpoll, nommap,
+	ttykqfilter, D_TTY
+};
 
 void
 biconsdevattach(int n)
@@ -99,9 +111,7 @@ biconsdevattach(int n)
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == biconsdevopen)
-			break;
+	maj = cdevsw_lookup_major(&biconsdev_cdevsw);
 
 	/* Set up the tty queues now... */
 	clalloc(&tp->t_rawq, 1024, 1);
@@ -240,10 +250,4 @@ biconsdevioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	    EPASSTHROUGH)
 		return (error);
 	return (ttioctl(tp, cmd, data, flag, p));
-}
-
-void
-biconsdevstop(struct tty *tp, int rw)
-{
-
 }

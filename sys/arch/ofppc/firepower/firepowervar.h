@@ -1,4 +1,4 @@
-/*	$NetBSD: firepowervar.h,v 1.1.4.2 2002/01/10 19:47:10 thorpej Exp $	*/
+/*	$NetBSD: firepowervar.h,v 1.1.4.3 2002/10/10 18:34:48 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -73,3 +73,4 @@ void	firepower_bus_mem_init(bus_space_tag_t, void *);
 
 void	firepower_intr_init(void);
 void	firepower_pci_intr_init(pci_chipset_tag_t, void *);
+void	firepower_softintr_init(void);

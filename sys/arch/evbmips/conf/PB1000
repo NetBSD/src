@@ -1,9 +1,9 @@
-#	$NetBSD: PB1000,v 1.1.6.2 2002/09/06 08:34:20 jdolecek Exp $
+#	$NetBSD: PB1000,v 1.1.6.3 2002/10/10 18:32:28 jdolecek Exp $
 
 #include 	"arch/evbmips/conf/std.pb1000.eb"	# big-endian mode
 include 	"arch/evbmips/conf/std.pb1000.el"	# little-endian mode
 
-#ident 		"GENERIC-$Revision: 1.1.6.2 $"
+#ident 		"GENERIC-$Revision: 1.1.6.3 $"
 
 maxusers	32
 
@@ -109,7 +109,6 @@ options         SCSIVERBOSE     # human readable SCSI error messages
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages
 
 options 	NFS_BOOT_DHCP
-## options 	NFS_BOOT_RWSIZE=1024	# XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 
 # Pretty much only one device to use for the root file system.
 #config		netbsd	root on aumac0 type ?

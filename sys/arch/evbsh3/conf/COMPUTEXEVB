@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEXEVB,v 1.10.2.5 2002/09/06 08:34:28 jdolecek Exp $
+#	$NetBSD: COMPUTEXEVB,v 1.10.2.6 2002/10/10 18:32:31 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -43,7 +43,7 @@ options 	FRQCR_VAL	=0x0122
 options 	PFC_SCPCR_VAL	=0x00aa
 
 options 	HZ=50		# clock interrupt generates every 1/HZ sec
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 
 options 	COMPAT_43	# and 4.3BSD
 

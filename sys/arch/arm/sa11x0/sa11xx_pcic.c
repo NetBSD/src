@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.1 2001/07/08 23:37:54 rjs Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.1.2.1 2002/10/10 18:31:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -207,7 +207,7 @@ sapcic_delay(timo, wmesg)
 {
 #ifdef DIAGNOSTIC
 	if (curproc == NULL)
-		panic("sapcic_delay: called in interrupt context\n");
+		panic("sapcic_delay: called in interrupt context");
 #endif
 
 	tsleep(sapcic_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
@@ -277,7 +277,7 @@ sapcic_mem_map(pch, kind, card_addr, size, pmh, offsetp, windowp)
 		pa += SAPCIC_COMMON_OFFSET;
 		break;
 	default:
-		panic("sapcic_mem_map: bogus kind\n");
+		panic("sapcic_mem_map: bogus kind");
 	}
 
 	error = bus_space_map(so->sc->sc_iot, pa, size, 0, &pmh->memh);

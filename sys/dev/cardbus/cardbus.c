@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.35.2.2 2002/06/23 17:45:56 jdolecek Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.35.2.3 2002/10/10 18:38:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.35.2.2 2002/06/23 17:45:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.35.2.3 2002/10/10 18:38:31 jdolecek Exp $");
 
 #include "opt_cardbus.h"
 
@@ -87,9 +87,8 @@ static int cardbus_read_tuples(struct cardbus_attach_args *,
 static void enable_function(struct cardbus_softc *, int, int);
 static void disable_function(struct cardbus_softc *, int);
 
-struct cfattach cardbus_ca = {
-	sizeof(struct cardbus_softc), cardbusmatch, cardbusattach
-};
+CFATTACH_DECL(cardbus, sizeof(struct cardbus_softc),
+    cardbusmatch, cardbusattach, NULL, NULL);
 
 #ifndef __NetBSD_Version__
 struct cfdriver cardbus_cd = {
@@ -103,9 +102,9 @@ cardbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cbslot_attach_args *cba = aux;
 
-	if (strcmp(cba->cba_busname, cf->cf_driver->cd_name)) {
+	if (strcmp(cba->cba_busname, cf->cf_name)) {
 		DPRINTF(("cardbusmatch: busname differs %s <=> %s\n",
-		    cba->cba_busname, cf->cf_driver->cd_name));
+		    cba->cba_busname, cf->cf_name));
 		return (0);
 	}
 
@@ -581,7 +580,7 @@ cardbussubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		return (0);
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

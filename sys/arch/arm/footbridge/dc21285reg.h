@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21285reg.h,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
+/*	$NetBSD: dc21285reg.h,v 1.1.2.1 2002/10/10 18:31:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -309,9 +309,9 @@
 #define	IRQ_DMA_1		0x10
 #define	IRQ_DMA_2		0x11
 #define	IRQ_PCI			0x12
-#define	IRQ_RESERVED1		0x13
-#define	IRQ_RESERVED2		0x14
-#define	IRQ_RESERVED3		0x15
+#define	IRQ_PMCSR		0x13
+#define	IRQ_RESERVED1		0x14
+#define	IRQ_RESERVED2		0x15
 #define	IRQ_BIST		0x16
 #define	IRQ_SERR		0x17
 #define	IRQ_SDRAM_PARITY	0x18

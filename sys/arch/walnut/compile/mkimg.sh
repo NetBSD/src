@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimg.sh,v 1.1.2.2 2002/09/06 08:42:28 jdolecek Exp $
+# $NetBSD: mkimg.sh,v 1.1.2.3 2002/10/10 18:37:27 jdolecek Exp $
 
 # Convert a kernel to an tftp image loadable by the walnut IBM openbios.
 
@@ -21,7 +21,7 @@ size=`/bin/ls -l ${kernel}.bin.$$ | awk '{ printf "%d", ( $5 + 511 ) / 512 }'`
 
 printf "%d\n%d\n0\n%d\n0\n0\n0\n" $start $size $start |
     awk 'BEGIN { printf "\x00\x52\x50\x4f" }
-	//	{
+	{
 		printf "%c", $0 / 256 / 256 / 256 ;
 		printf "%c", $0 / 256 / 256 ;
 		printf "%c", $0 / 256 ;

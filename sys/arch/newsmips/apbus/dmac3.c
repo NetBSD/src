@@ -1,4 +1,4 @@
-/*	$NetBSD: dmac3.c,v 1.1.6.1 2002/01/10 19:46:57 thorpej Exp $	*/
+/*	$NetBSD: dmac3.c,v 1.1.6.2 2002/10/10 18:34:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -69,9 +69,8 @@ void dmac3_attach __P((struct device *, struct device *, void *));
 
 paddr_t kvtophys __P((vaddr_t));
 
-struct cfattach dmac_ca = {
-	sizeof(struct dmac3_softc), dmac3_match, dmac3_attach
-};
+CFATTACH_DECL(dmac, sizeof(struct dmac3_softc),
+    dmac3_match, dmac3_attach, NULL, NULL);
 
 int
 dmac3_match(parent, cf, aux)

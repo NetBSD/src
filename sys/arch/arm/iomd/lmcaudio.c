@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.4.2.4 2002/09/06 08:32:43 jdolecek Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.4.2.5 2002/10/10 18:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -108,9 +108,8 @@ int lmcaudio_rate	__P((int rate));
 void lmcaudio_shutdown	__P((void));
 
 
-struct cfattach lmcaudio_ca = {
-	sizeof(struct lmcaudio_softc), lmcaudio_probe, lmcaudio_attach
-};
+CFATTACH_DECL(lmcaudio, sizeof(struct lmcaudio_softc),
+    lmcaudio_probe, lmcaudio_attach, NULL, NULL);
 
 int curr_rate = 11;
 
@@ -239,7 +238,7 @@ lmcaudio_attach(parent, self, aux)
 	ag.silence = uvm_km_alloc(kernel_map, NBPG);
 	ag.beep = uvm_km_zalloc(kernel_map, NBPG);
 	if (ag.silence == NULL || ag.beep == NULL)
-		panic("lmcaudio: Cannot allocate memory\n");
+		panic("lmcaudio: Cannot allocate memory");
 	memset((char *)ag.silence, 0, NBPG);
 	memcpy((char *)ag.beep, (char *)beep_waveform, sizeof(beep_waveform));
 

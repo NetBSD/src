@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.48.4.3 2002/03/16 15:58:15 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.48.4.4 2002/10/10 18:33:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.48.4.3 2002/03/16 15:58:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.48.4.4 2002/10/10 18:33:23 jdolecek Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -56,14 +56,27 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.48.4.3 2002/03/16 15:58:15 jdolecek Exp $"
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/fcntl.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
-#include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 
+#define	DEV_IO	14		/* iopl for compat_10 */
+
 extern char *vmmap;            /* poor name! */
 caddr_t zeropage;
+
+dev_type_open(mmopen);
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
+
+const struct cdevsw mem_cdevsw = {
+	mmopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
+};
+
 
 /*ARGSUSED*/
 int
@@ -88,17 +101,6 @@ mmopen(dev, flag, mode, p)
 	default:
 		break;
 	}
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
 	return (0);
 }
 

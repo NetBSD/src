@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.4.3 2002/06/23 17:35:16 jdolecek Exp $	*/
+/*	$NetBSD: view.c,v 1.17.4.4 2002/10/10 18:32:04 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -53,8 +53,6 @@
 #include <atari/dev/viewvar.h>
 #include "view.h"
 
-cdev_decl(view);
-
 static void view_display __P((struct view_softc *));
 static void view_remove __P((struct view_softc *));
 static int  view_setsize __P((struct view_softc *, struct view_size *));
@@ -69,6 +67,18 @@ int view_default_y;
 int view_default_width  = 640;
 int view_default_height = 400;
 int view_default_depth  = 1;
+
+dev_type_open(viewopen);
+dev_type_close(viewclose);
+dev_type_ioctl(viewioctl);
+dev_type_poll(viewpoll);
+dev_type_mmap(viewmmap);
+dev_type_kqfilter(viewkqfilter);
+
+const struct cdevsw view_cdevsw = {
+	viewopen, viewclose, nullread, nullwrite, viewioctl,
+	nostop, notty, viewpoll, viewmmap, viewkqfilter,
+};
 
 /* 
  *  functions for probeing.

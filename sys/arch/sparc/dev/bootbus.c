@@ -1,4 +1,4 @@
-/*	$NetBSD: bootbus.c,v 1.3.6.2 2002/09/06 08:40:48 jdolecek Exp $	*/
+/*	$NetBSD: bootbus.c,v 1.3.6.3 2002/10/10 18:36:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -64,9 +64,8 @@ struct bootbus_softc {
 static int bootbus_match(struct device *, struct cfdata *, void *);
 static void bootbus_attach(struct device *, struct device *, void *);
 
-struct cfattach bootbus_ca = {
-	sizeof(struct bootbus_softc), bootbus_match, bootbus_attach,
-};
+CFATTACH_DECL(bootbus, sizeof(struct bootbus_softc),
+    bootbus_match, bootbus_attach, NULL, NULL);
 
 static int bootbus_submatch(struct device *, struct cfdata *, void *);
 static int bootbus_print(void *, const char *);
@@ -80,7 +79,7 @@ bootbus_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cpuunit_attach_args *cpua = aux;
 
-	if (strcmp(cpua->cpua_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(cpua->cpua_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);
@@ -148,7 +147,7 @@ bootbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[BOOTBUSCF_OFFSET] != baa->ba_offset)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

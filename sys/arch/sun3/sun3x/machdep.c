@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.71.2.4 2002/09/06 08:42:13 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.71.2.5 2002/10/10 18:37:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,13 +47,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -573,18 +571,18 @@ long	dumplo = 0; 		/* blocks */
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int devblks;	/* size of dump device in blocks */
 	int dumpblks;	/* size of dump image in blocks */
-	int maj;
 	int (*getsize)__P((dev_t));
 
 	if (dumpdev == NODEV)
 		return;
 
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	getsize = bdevsw[maj].d_psize;
+	getsize = bdev->d_psize;
 	if (getsize == NULL)
 		return;
 	devblks = (*getsize)(dumpdev);
@@ -624,7 +622,7 @@ struct pcb dumppcb;
 void
 dumpsys()
 {
-	struct bdevsw *dsw;
+	const struct bdevsw *dsw;
 	kcore_seg_t *kseg_p;
 	cpu_kcore_hdr_t *chdr_p;
 	struct sun3x_kcore_hdr *sh;
@@ -636,6 +634,9 @@ dumpsys()
 	int error = 0;
 
 	if (dumpdev == NODEV)
+		return;
+	dsw = bdevsw_lookup(dumpdev);
+	if (dsw == NULL || dsw->d_psize == NULL)
 		return;
 
 	/*
@@ -651,7 +652,6 @@ dumpsys()
 	}
 	savectx(&dumppcb);
 
-	dsw = &bdevsw[major(dumpdev)];
 	psize = (*(dsw->d_psize))(dumpdev);
 	if (psize == -1) {
 		printf("dump area unavailable\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.1.2.3 2002/09/06 08:35:18 jdolecek Exp $	*/
+/*	$NetBSD: intr.c,v 1.1.2.4 2002/10/10 18:32:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.3 2002/09/06 08:35:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.1.2.4 2002/10/10 18:32:48 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -195,7 +195,7 @@ hp700_intr_establish(struct device *dv, int ipl,
 
 	/* Panic if this int bit is already handled. */
 	if (int_reg->int_reg_bits_map[31 ^ bit_pos] != INT_REG_BIT_UNUSED)
-		panic("hp700_intr_establish: int already handled\n");
+		panic("hp700_intr_establish: int already handled");
 
 	/*
 	 * If this interrupt bit leads us to another interrupt

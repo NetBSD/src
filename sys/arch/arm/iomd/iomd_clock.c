@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_clock.c,v 1.4.2.4 2002/06/23 17:34:52 jdolecek Exp $	*/
+/*	$NetBSD: iomd_clock.c,v 1.4.2.5 2002/10/10 18:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -84,9 +84,8 @@ static void checkdelay	__P((void));
 int clockhandler	__P((void *));
 int statclockhandler	__P((void *));
 
-struct cfattach clock_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
-};
+CFATTACH_DECL(clock, sizeof(struct clock_softc),
+    clockmatch, clockattach, NULL, NULL);
 
 /*
  * int clockmatch(struct device *parent, void *match, void *aux)
@@ -254,7 +253,7 @@ cpu_initclocks()
 	    clockhandler, 0);
 
 	if (clockirq == NULL)
-		panic("%s: Cannot installer timer 0 IRQ handler\n",
+		panic("%s: Cannot installer timer 0 IRQ handler",
 		    clock_sc->sc_dev.dv_xname);
 
 	if (stathz) {
@@ -262,7 +261,7 @@ cpu_initclocks()
        		statclockirq = intr_claim(IRQ_TIMER1, IPL_CLOCK,
        		    "tmr1 stat clk", statclockhandler, 0);
 		if (statclockirq == NULL)
-			panic("%s: Cannot installer timer 1 IRQ handler\n",
+			panic("%s: Cannot installer timer 1 IRQ handler",
 			    clock_sc->sc_dev.dv_xname);
 	}
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.57.2.3 2002/06/23 17:34:32 jdolecek Exp $ */
+/*	$NetBSD: ser.c,v 1.57.2.4 2002/10/10 18:31:32 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,10 +40,11 @@
  */
 
 #include "opt_amigacons.h"
+#include "opt_ddb.h"
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.57.2.3 2002/06/23 17:34:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.57.2.4 2002/10/10 18:31:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.57.2.3 2002/06/23 17:34:32 jdolecek Exp $"
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/conf.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/serreg.h>
@@ -65,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.57.2.3 2002/06/23 17:34:32 jdolecek Exp $"
 #include <amiga/amiga/cc.h>
 
 #include <dev/cons.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "ser.h"
 #if NSER > 0
@@ -80,11 +79,24 @@ struct ser_softc {
 	struct tty *ser_tty;
 };
 
-struct cfattach ser_ca = {
-	sizeof(struct ser_softc), sermatch, serattach
-};
+CFATTACH_DECL(ser, sizeof(struct ser_softc),
+    sermatch, serattach, NULL, NULL);
 
 extern struct cfdriver ser_cd;
+
+dev_type_open(seropen);
+dev_type_close(serclose);
+dev_type_read(serread);
+dev_type_write(serwrite);
+dev_type_ioctl(serioctl);
+dev_type_stop(serstop);
+dev_type_tty(sertty);
+dev_type_poll(serpoll);
+
+const struct cdevsw ser_cdevsw = {
+	seropen, serclose, serread, serwrite, serioctl,
+	serstop, sertty, serpoll, nommap, ttykqfilter, D_TTY
+};
 
 #ifndef SEROBUF_SIZE
 #define SEROBUF_SIZE 32
@@ -120,7 +132,6 @@ int	serconsole = -1;
 #endif
 int	serconsinit;
 int	serdefaultrate = TTYDEF_SPEED;
-int	sermajor;
 int	serswflags;
 
 struct	vbl_node ser_vbl_node;
@@ -224,7 +235,7 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 	ser_vbl_node.function = (void (*) (void *)) sermint;
 	add_vbl_function(&ser_vbl_node, SER_VBL_PRIORITY, (void *) 0);
 #ifdef KGDB
-	if (kgdb_dev == makedev(sermajor, 0)) {
+	if (kgdb_dev == makedev(cdevsw_lookup_major(&ser_cdevsw), 0)) {
 		if (serconsole == 0)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
@@ -562,6 +573,7 @@ serintr(void)
 void
 sereint(int stat)
 {
+	static int break_in_progress = 0;
 	struct tty *tp;
 	u_char ch;
 	int c;
@@ -572,8 +584,11 @@ sereint(int stat)
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
+		int maj;
+
 		/* we don't care about parity errors */
-		if (kgdb_dev == makedev(sermajor, 0) && c == FRAME_END)
+		maj = cdevsw_lookup_major(&ser_cdevsw);
+		if (kgdb_dev == makedev(maj, 0) && c == FRAME_END)
 			kgdb_connect(0);	/* trap into kgdb */
 #endif
 		return;
@@ -582,12 +597,29 @@ sereint(int stat)
 	/*
 	 * Check for break and (if enabled) parity error.
 	 */
-	if ((stat & 0x1ff) == 0)
-		c |= TTY_FE;
-	else if ((tp->t_cflag & PARENB) &&
-		    (((ch >> 7) + even_parity[ch & 0x7f]
-		    + !!(tp->t_cflag & PARODD)) & 1))
+	if ((stat & 0x1ff) == 0) {
+		if (break_in_progress)
+			return;
+
+		c = TTY_FE;
+		break_in_progress = 1;
+#ifdef DDB
+		if (serconsole == 0) {
+			extern int db_active;
+
+			if (!db_active) {
+				console_debugger();
+				return;
+			}
+		}
+#endif
+	} else {
+		break_in_progress = 0;
+		if ((tp->t_cflag & PARENB) &&
+			(((ch >> 7) + even_parity[ch & 0x7f]
+				+ !!(tp->t_cflag & PARODD)) & 1))
 			c |= TTY_PE;
+	}
 
 	if (stat & SERDATRF_OVRUN)
 		log(LOG_WARNING, "ser0: silo overflow\n");
@@ -887,7 +919,7 @@ serstart(struct tty *tp)
 #ifdef DIAGNOSTIC
 	unit = SERUNIT(tp->t_dev);
 	if (unit)
-		panic("serstart: unit is %d\n", unit);
+		panic("serstart: unit is %d", unit);
 #endif
 
 	s = spltty();
@@ -1026,12 +1058,13 @@ sermctl(dev_t dev, int bits, int how)
 void
 sercnprobe(struct consdev *cp)
 {
-	int unit;
+	int maj, unit;
+#ifdef KGDB
+	extern const struct cdevsw ctty_cdevsw;
+#endif
 
 	/* locate the major number */
-	for (sermajor = 0; sermajor < nchrdev; sermajor++)
-		if (cdevsw[sermajor].d_open == (void *)seropen)
-			break;
+	maj = cdevsw_lookup_major(&ser_cdevsw);
 
 
 	unit = CONUNIT;			/* XXX: ick */
@@ -1039,14 +1072,15 @@ sercnprobe(struct consdev *cp)
 	/*
 	 * initialize required fields
 	 */
-	cp->cn_dev = makedev(sermajor, unit);
+	cp->cn_dev = makedev(maj, unit);
 	if (serconsole == unit)
 		cp->cn_pri = CN_REMOTE;
 	else
 		cp->cn_pri = CN_NORMAL;
 #ifdef KGDB
-	if (major(kgdb_dev) == 1)	/* XXX */
-		kgdb_dev = makedev(sermajor, minor(kgdb_dev));
+	/* XXX */
+	if (cdevsw_lookup(kgdb_dev) == &ctty_cdevsw)
+		kgdb_dev = makedev(maj, minor(kgdb_dev));
 #endif
 }
 
@@ -1087,12 +1121,14 @@ sercngetc(dev_t dev)
 	 */
 	while (((stat = custom.serdatr & 0xffff) & SERDATRF_RBF) == 0)
 		;
+
 	c = stat & 0xff;
 	/*
 	 * clear interrupt
 	 */
 	custom.intreq = INTF_RBF;
 	splx(s);
+
 	return(c);
 }
 

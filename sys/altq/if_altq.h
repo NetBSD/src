@@ -1,4 +1,4 @@
-/*	$NetBSD: if_altq.h,v 1.6.4.1 2002/03/16 15:55:21 jdolecek Exp $	*/
+/*	$NetBSD: if_altq.h,v 1.6.4.2 2002/10/10 18:30:08 jdolecek Exp $	*/
 /*	$KAME: if_altq.h,v 1.7 2002/02/19 06:37:39 kjc Exp $	*/
 
 /*
@@ -29,8 +29,8 @@
 #ifndef _ALTQ_IF_ALTQ_H_
 #define	_ALTQ_IF_ALTQ_H_
 
-#ifdef _KERNEL
-#include <altq/altqconf.h>
+#if defined(_KERNEL_OPT)
+#include "opt_altq_enabled.h"
 #endif
 
 struct altq_pktattr; struct tb_regulator; struct top_cdnr;

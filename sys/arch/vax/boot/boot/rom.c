@@ -1,4 +1,4 @@
-/*	$NetBSD: rom.c,v 1.3.4.1 2002/09/06 08:42:15 jdolecek Exp $ */
+/*	$NetBSD: rom.c,v 1.3.4.2 2002/10/10 18:37:14 jdolecek Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -67,12 +67,6 @@ romopen(struct open_file *f, int adapt, int ctlr, int unit, int part)
 	int err;
 
 	bqo = (void *)bootrpb.iovec;
-
-	if (bootrpb.unit > 0 && (bootrpb.unit % 100) == 0) {
-		printf ("changing bootrpb.unit from %d ", bootrpb.unit);
-		bootrpb.unit /= 100;
-		printf ("to %d\n", bootrpb.unit);
-	}
 
 	bzero(lp, sizeof(struct disklabel));
 	dunit = unit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4122ip.c,v 1.2.8.2 2002/03/16 15:58:01 jdolecek Exp $	*/
+/*	$NetBSD: vr4122ip.c,v 1.2.8.3 2002/10/10 18:33:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -45,9 +45,8 @@
 
 void	vr4122ipattach(struct device *, struct device *, void *);
 
-struct cfattach vr4122ip_ca = {
-	sizeof(struct vrip_softc), vripmatch, vr4122ipattach
-};
+CFATTACH_DECL(vr4122ip, sizeof(struct vrip_softc),
+    vripmatch, vr4122ipattach, NULL, NULL);
 
 static const struct vrip_unit vr4122ip_units[] = {
 	[VRIP_UNIT_PMU] = { "pmu",

@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe.c,v 1.15.4.3 2002/02/11 20:09:51 jdolecek Exp $	*/
+/*	$NetBSD: irframe.c,v 1.15.4.4 2002/10/10 18:39:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,18 @@ int irframedebug = 0;
 #define Static static
 #endif
 
-cdev_decl(irframe);
+dev_type_open(irframeopen);
+dev_type_close(irframeclose);
+dev_type_read(irframeread);
+dev_type_write(irframewrite);
+dev_type_ioctl(irframeioctl);
+dev_type_poll(irframepoll);
+dev_type_kqfilter(irframekqfilter);
+
+const struct cdevsw irframe_cdevsw = {
+	irframeopen, irframeclose, irframeread, irframewrite, irframeioctl,
+	nostop, notty, irframepoll, nommap, irframekqfilter,
+};
 
 int irframe_match(struct device *parent, struct cfdata *match, void *aux);
 void irframe_attach(struct device *parent, struct device *self, void *aux);
@@ -74,17 +85,12 @@ Static int irf_reset_params(struct irframe_softc *sc);
 
 #if NIRFRAME == 0
 /* In case we just have tty attachment. */
-struct cfdriver irframe_cd = {
-	NULL, "irframe", DV_DULL
-};
+CFDRIVER_DECL(irframe, DV_DULL, NULL);
 #endif
 
-struct cfattach irframe_ca = {
-	sizeof(struct irframe_softc), irframe_match, irframe_attach,
-	irframe_detach, irframe_activate
-};
+CFATTACH_DECL(irframe, sizeof(struct irframe_softc),
+    irframe_match, irframe_attach, irframe_detach, irframe_activate);
 
-extern struct cfattach irframe_ca;
 extern struct cfdriver irframe_cd;
 
 #define IRFRAMEUNIT(dev) (minor(dev))
@@ -116,7 +122,7 @@ irframe_attach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_methods->im_set_params == NULL ||
 	    sc->sc_methods->im_get_speeds == NULL ||
 	    sc->sc_methods->im_get_turnarounds == NULL)
-		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
 	(void)sc->sc_methods->im_get_speeds(sc->sc_handle, &speeds);
@@ -166,9 +172,7 @@ irframe_detach(struct device *self, int flags)
 	/* XXX needs reference count */
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == irframeopen)
-			break;
+	maj = cdevsw_lookup_major(&irframe_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
@@ -443,5 +447,5 @@ irframe_dealloc(struct device *dev)
 			return;
 		}
 	}
-	panic("irframe_dealloc: device not found\n");
+	panic("irframe_dealloc: device not found");
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: gscbus.c,v 1.1.2.3 2002/09/06 08:35:16 jdolecek Exp $	*/
+/*	$NetBSD: gscbus.c,v 1.1.2.4 2002/10/10 18:32:47 jdolecek Exp $	*/
 
 /*	$OpenBSD: gscbus.c,v 1.13 2001/08/01 20:32:04 miod Exp $	*/
 
@@ -99,9 +99,8 @@ struct gsc_softc {
 	void *sc_ih;
 };
 
-struct cfattach gsc_ca = {
-	sizeof(struct gsc_softc), gscmatch, gscattach
-};
+CFATTACH_DECL(gsc, sizeof(struct gsc_softc),
+    gscmatch, gscattach, NULL, NULL);
 
 /*
  * pdc_scanbus calls this function back with each module

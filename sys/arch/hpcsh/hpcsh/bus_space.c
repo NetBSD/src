@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.4.2.2 2002/03/16 15:58:07 jdolecek Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4.2.3 2002/10/10 18:33:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -160,7 +160,7 @@ bus_space_create(struct hpcsh_bus_space *hbs, const char *name,
 						M_DEVBUF, 0, 0, EX_NOWAIT);
 		if (hbs->hbs_extent == 0) {
 			panic("%s:: unable to create bus_space for "
-			      "0x%08lx-%#lx\n", __FUNCTION__, addr, size);
+			      "0x%08lx-%#lx", __FUNCTION__, addr, size);
 		}
 	}
 

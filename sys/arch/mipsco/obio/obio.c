@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.2 2000/08/15 04:56:46 wdk Exp $	*/
+/*	$NetBSD: obio.c,v 1.2.6.1 2002/10/10 18:34:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -52,9 +52,8 @@ static int	obio_print __P((void *, const char *));
 static void	obio_intr_establish  __P((bus_space_tag_t, int, int, int,
 					  int (*)(void *), void *));
 
-struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach
-};
+CFATTACH_DECL(obio, sizeof(struct device),
+    obio_match, obio_attach, NULL, NULL);
 
 extern struct cfdriver obio_cd;
 
@@ -107,9 +106,9 @@ obio_search(parent, cf, aux)
 	struct confargs *ca = aux;
 
 	ca->ca_addr = cf->cf_addr;
-	ca->ca_name = cf->cf_driver->cd_name;
+	ca->ca_name = cf->cf_name;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ca) != 0)
+	if (config_match(parent, cf, ca) != 0)
 		config_attach(parent, cf, ca, obio_print);
 
 	return 0;

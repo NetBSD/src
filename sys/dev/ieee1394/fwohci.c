@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.39.2.7 2002/09/06 08:44:45 jdolecek Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.39.2.8 2002/10/10 18:39:23 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.39.2.7 2002/09/06 08:44:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.39.2.8 2002/10/10 18:39:23 jdolecek Exp $");
 
 #define DOUBLEBUF 1
 #define NO_THREAD 1
@@ -3209,9 +3209,9 @@ fwohci_write(struct ieee1394_abuf *ab)
 	}
 
 	if (ab->ab_data && ab->ab_uio) 
-		panic("Can't call with uio and data set\n");
+		panic("Can't call with uio and data set");
 	if ((ab->ab_data == NULL) && (ab->ab_uio == NULL))
-		panic("One of either ab_data or ab_uio must be set\n");
+		panic("One of either ab_data or ab_uio must be set");
 
 	memset(&pkt, 0, sizeof(pkt));
 
@@ -3681,7 +3681,7 @@ fwohci_parse_input(struct fwohci_softc *sc, void *arg, struct fwohci_pkt *pkt)
 		}
 		break;
 	default:
-		panic("Got a callback for a tcode that wasn't requested: %d\n",
+		panic("Got a callback for a tcode that wasn't requested: %d",
 		    ab->ab_tcode);
 		break;
 	}
@@ -3700,7 +3700,7 @@ fwohci_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->fwbuscf_idlo == FWBUS_UNK_IDLO) ||
 	    (cf->fwbuscf_idhi == ntohl(*((u_int32_t *)&fwa->uid[0])) &&
 	    cf->fwbuscf_idlo == ntohl(*((u_int32_t *)&fwa->uid[4]))))
-		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return (config_match(parent, cf, aux));
 	return 0;
 }
 

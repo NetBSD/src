@@ -1,4 +1,4 @@
-/*	$NetBSD: ahsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $ */
+/*	$NetBSD: ahsc.c,v 1.27.2.2 2002/10/10 18:31:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahsc.c,v 1.27.2.2 2002/10/10 18:31:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,9 +76,8 @@ void ahsc_dump(void);
 int	ahsc_dmadebug = 0;
 #endif
 
-struct cfattach ahsc_ca = {
-	sizeof(struct sbic_softc), ahscmatch, ahscattach
-};
+CFATTACH_DECL(ahsc, sizeof(struct sbic_softc),
+    ahscmatch, ahscattach, NULL, NULL);
 
 /*
  * if we are an A3000 we are here.

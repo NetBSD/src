@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.1.2.3 2002/09/06 08:35:15 jdolecek Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.1.2.4 2002/10/10 18:32:46 jdolecek Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.6 2001/09/11 20:05:24 miod Exp $	*/
 
@@ -64,9 +64,8 @@
 int  sti_sgc_probe __P((struct device *, struct cfdata *, void *));
 void sti_sgc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach sti_sgc_ca = {
-	sizeof(struct sti_softc), sti_sgc_probe, sti_sgc_attach
-};
+CFATTACH_DECL(sti_sgc, sizeof(struct sti_softc),
+    sti_sgc_probe, sti_sgc_attach, NULL, NULL);
 
 int
 sti_sgc_probe(parent, match, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.2 2000/02/08 16:17:33 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.2.10.1 2002/10/10 18:34:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 2000 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
 #define cf_systype cf_loc[MAINBUSCF_SYSTYPE]
 
 struct mainbus_attach_args {
-	char	*ma_name;	/* name of bus */
-	int	ma_systype;	/* system type */
+	const char	*ma_name;	/* name of bus */
+	int		ma_systype;	/* system type */
 };
 

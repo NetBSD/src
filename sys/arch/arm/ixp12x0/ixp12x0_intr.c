@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.2.4.2 2002/09/06 08:32:53 jdolecek Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.2.4.3 2002/10/10 18:31:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -159,7 +159,7 @@ ixp12x0_enable_irq(int irq)
 			/* nothing to do */
 			break;
 		default:
-			panic("enable_irq:bad IRQ %d\n", irq);
+			panic("enable_irq:bad IRQ %d", irq);
 		}
 	} else {
 		pci_intr_enabled |= (1U << (irq - SYS_NIRQ));

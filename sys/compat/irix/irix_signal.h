@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.3.4.5 2002/09/06 08:43:07 jdolecek Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.3.4.6 2002/10/10 18:37:57 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -112,6 +112,68 @@ typedef struct irix_ucontext {
 } irix_ucontext_t;
 
 /* From IRIX's <sys/siginfo.h> */
+#define IRIX_ILL_ILLOPC	1
+#define IRIX_ILL_ILLOPN	2
+#define IRIX_ILL_ILLADR	3
+#define IRIX_ILL_ILLTRP	4
+#define IRIX_ILL_PRVOPC	5
+#define IRIX_ILL_PRVREG	6
+#define IRIX_ILL_COPROC	7
+#define IRIX_ILL_BADSTK	8
+
+#define IRIX_FPE_INTDIV	1
+#define IRIX_FPE_INTOVF	2
+#define IRIX_FPE_FLTDIV	3
+#define IRIX_FPE_FLTOVF	4
+#define IRIX_FPE_FLTUND	5
+#define IRIX_FPE_FLTRES	6
+#define IRIX_FPE_FLTINV	7
+#define IRIX_FPE_FLTSUB	8
+
+#define IRIX_SEGV_MAPERR	1
+#define IRIX_SEGV_ACCERR	2
+
+#define IRIX_BUS_ADRALN	1
+#define IRIX_BUS_ADRERR	2
+#define IRIX_BUS_OBJERR	3
+
+#define IRIX_TRAP_BRKPT	1
+#define IRIX_TRAP_TRACE	2
+
+#define IRIX_CLD_EXITED	1
+#define IRIX_CLD_KILLED	2
+#define IRIX_CLD_DUMPED	3
+#define IRIX_CLD_TRAPPED	4
+#define IRIX_CLD_STOPPED	5
+#define IRIX_CLD_CONTINUED	6
+
+#define IRIX_POLL_IN	1
+#define IRIX_POLL_OUT	2
+#define IRIX_POLL_MSG	3
+#define IRIX_POLL_ERR	4
+#define IRIX_POLL_PRI	5
+#define IRIX_POLL_HUP	6
+
+#define IRIX_UME_ECCERR	1
+
+/* From IRIX's <sys/fault.h> */
+#define IRIX_FLTILL     1
+#define IRIX_FLTPRIV    2
+#define IRIX_FLTBPT     3
+#define IRIX_FLTTRACE   4
+#define IRIX_FLTACCESS  5
+#define IRIX_FLTBOUNDS  6
+#define IRIX_FLTIOVF    7
+#define IRIX_FLTIZDIV   8
+#define IRIX_FLTFPE     9
+#define IRIX_FLTSTACK   10
+#define IRIX_FLTPAGE    11
+#define IRIX_FLTPCINVAL 12
+#define IRIX_FLTWATCH   13
+#define IRIX_FLTKWATCH  14
+#define IRIX_FLTSCWATCH 15 
+
+
 #define IRIX_SI_MAXSZ	128
 #define IRIX_SI_PAD	((IRIX_SI_MAXSZ / sizeof(__int32_t)) - 3)
 
@@ -151,11 +213,12 @@ typedef struct irix_irix5_siginfo {
 		union irix_irix5_sigval	__value;
 	} __data;
 } irix_irix5_siginfo_t;
+
 #define isi_pid		__data.__proc.__pid
 #define isi_stime	__data.__proc.__pdata.__cld.__stime
 #define isi_utime	__data.__proc.__pdata.__cld.__utime
 #define isi_status	__data.__proc.__pdata.__cld.__status
-#define isi_addr	__data.__fault.__addr;
+#define isi_addr	__data.__fault.__addr
 #define isi_trap
 
 /* 
@@ -171,8 +234,11 @@ struct irix_sigframe {
 	struct irix_sigcontext *isf_scp;
 	struct irix_ucontext *isf_ucp;
 	union {
-		struct irix_ucontext iuc;	
 		struct irix_sigcontext isc;
+		struct irix_sigcontext_siginfo {
+			struct irix_ucontext	iuc;
+			struct irix_irix5_siginfo 	iis;
+		} iss;
 	} isf_ctx;
 };
 

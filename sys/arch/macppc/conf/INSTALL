@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47.2.7 2002/09/06 08:37:04 jdolecek Exp $
+#	$NetBSD: INSTALL,v 1.47.2.8 2002/10/10 18:33:56 jdolecek Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -22,7 +22,7 @@ options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
@@ -41,6 +41,7 @@ file-system 	MSDOSFS		# MS-DOS file system
 # Filesystem options
 options 	NFS_V2_ONLY	# Exclude NFS3 and NQNFS code to save space
 options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
+options 	APPLE_UFS	# Apple UFS support in FFS
 
 # Networking options
 options 	INET		# IP + ICMP + TCP + UDP
@@ -62,9 +63,11 @@ mainbus* at root
 cpu*	at mainbus?
 bandit*	at mainbus?
 grackle* at mainbus?
+uninorth* at mainbus?
 
 pci*	at bandit? bus ?
 pci*	at grackle? bus ?
+pci*	at uninorth? bus ?
 pci*	at ppb? bus ?
 
 pchb*	at pci? dev ? function ?	# PCI-Host bridges

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.2.2.4 2002/09/06 08:42:34 jdolecek Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.2.2.5 2002/10/10 18:37:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -72,7 +72,7 @@ void pci_machdep_init(void)
 	if (pci_ioh == 0) {
 		pci_iot = 0;
 		if (bus_space_map(pci_iot, IBM405GP_PCIC0_BASE, 8, 0, &pci_ioh)){
-			panic("Cannot map PCI registers\n");
+			panic("Cannot map PCI registers");
 		}
 	}
 }
@@ -196,7 +196,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	static char irqstr[8];		/* 4 + 2 + NUL + sanity */
 
 	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -217,7 +217,7 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 {
 
 	if (ih == 0 || ih >= ICU_LEN)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 
 	return intr_establish(ih, IST_LEVEL, level, func, arg);
 }

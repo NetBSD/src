@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.19.2.6 2002/09/06 08:36:41 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.19.2.7 2002/10/10 18:33:37 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.19.2.6 $"
+#ident 		"GENERIC-$Revision: 1.19.2.7 $"
 
 maxusers	8
 
@@ -45,7 +45,7 @@ options 	KTRACE
 #optoins 	SHMMAXPGS=1024		# 1024 pages is the default
 #options 	LKM			# loadable kernel modules
 #options 	UCONSOLE		# users can redirect console (unsafe)
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options
@@ -107,6 +107,7 @@ options 	INET		# IP prototol stack support
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	NFS_BOOT_DHCP	# superset of BOOTP
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 

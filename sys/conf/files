@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.451.2.9 2002/09/06 08:43:39 jdolecek Exp $
+#	$NetBSD: files,v 1.451.2.10 2002/10/10 18:38:14 jdolecek Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -425,10 +425,8 @@ file	dev/ic/am79c930.c		awi
 
 # Lucent & Intersil WaveLan IEEE (802.11)
 #
-#device wi: arp, wlan, ifnet
-device wi: arp, ifnet
+device wi: arp, wlan, ifnet
 file	dev/ic/wi.c			wi
-file	dev/ic/wi_hostap.c		wi
 
 # 3Com Etherlink-III Ethernet controller
 #
@@ -791,6 +789,7 @@ file	dev/ic/vga_subr.c		vga
 #
 device	igsfb: wsemuldisplaydev, wsrasteremulops, rasops8
 file	dev/ic/igsfb.c			igsfb
+file	dev/ic/igsfb_subr.c		igsfb
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
@@ -1069,6 +1068,7 @@ file	kern/kern_time.c
 file	kern/kern_xxx.c
 file	kern/kgdb_stub.c		kgdb
 file	kern/subr_autoconf.c
+file	kern/subr_devsw.c
 file	kern/subr_disk.c
 file	kern/subr_extent.c
 file	kern/subr_log.c
@@ -1076,7 +1076,6 @@ file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
 file	kern/subr_prop.c
-file	kern/subr_rmap.c
 file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c

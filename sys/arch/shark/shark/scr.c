@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.1.14.2 2002/06/23 17:41:33 jdolecek Exp $	*/
+/*	$NetBSD: scr.c,v 1.1.14.3 2002/10/10 18:36:04 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -128,7 +128,7 @@
     #ifdef DDB
         #define DEBUGGER printf("file = %s, line = %d\n",__FILE__,__LINE__);Debugger()        
     #else
-        #define DEBUGGER panic("file = %s, line = %d\n",__FILE__,__LINE__);
+        #define DEBUGGER panic("file = %s, line = %d",__FILE__,__LINE__);
     #endif
 #else
     #define DEBUGGER
@@ -179,7 +179,7 @@
 #else
     #define ASSERT(f)
     #define TOGGLE_TEST_PIN()
-    //#define INVALID_STATE_CMD(sc,state,cmd)  panic("scr: invalid state/cmd, sc = %X, state = %X, cmd = %X, line = %d\n",sc,state,cmd,__LINE__);
+    //#define INVALID_STATE_CMD(sc,state,cmd)  panic("scr: invalid state/cmd, sc = %X, state = %X, cmd = %X, line = %d",sc,state,cmd,__LINE__);
     #define INVALID_STATE_CMD(sc,state,cmd)  sc->bigTrouble = TRUE;
 
 #endif
@@ -598,14 +598,6 @@ static unsigned char hatStack[HATSTACKSIZE];   /* actual stack used during a FIQ
 int     scrprobe    __P((struct device *, void *, void *));
 void    scrattach   __P((struct device *, struct device *, void *));
 
-/* driver entry points routines */
-int     scropen     __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrclose    __P((dev_t dev, int flag, int mode, struct proc *p));
-int     scrread     __P((dev_t dev, struct uio *uio, int flag));
-int     scrwrite    __P((dev_t dev, struct uio *uio, int flag));
-int     scrioctl    __P((dev_t dev, u_long cmd, caddr_t data, int flag, struct proc  *p));
-void    scrstop     __P((struct tty *tp, int flag));
-
 static void   initStates           __P((struct scr_softc * sc)); 
 
 
@@ -656,19 +648,21 @@ static void scrUntimeout   __P((void (*func)(struct scr_softc*,int), struct scr_
 
 
 
-/* Declare the cdevsw and bdevsw entrypoint routines 
-*/
-cdev_decl(scr);
-bdev_decl(scr);
 
 
-struct cfattach scr_ca =
-{
-        sizeof(struct scr_softc), (cfmatch_t)scrprobe, scrattach
-};
+CFATTACH_DECL(scr, sizeof(struct scr_softc),
+    (cfmatch_t)scrprobe, scrattach, NULL, NULL);
 
 extern struct cfdriver scr_cd;
 
+dev_type_open(scropen);
+dev_type_close(scrclose);
+dev_type_ioctl(scrioctl);
+
+const struct cdevsw scr_cdevsw = {
+	scropen, scrclose, noread, nowrite, scrioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_TTY
+};
 
 /*
 **++
@@ -713,9 +707,9 @@ int scrprobe(parent, match, aux)
     int                     rv = 0;           
 
     KERN_DEBUG (scrdebug, SCRPROBE_DEBUG_INFO,("scrprobe: called, name = %s\n",
-                                               parent->dv_cfdata->cf_driver->cd_name));
+                                               parent->dv_cfdata->cf_name));
 
-    if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisascr") == 0 &&
+    if (strcmp(parent->dv_cfdata->cf_name, "ofisascr") == 0 &&
         devices == 0)
     {
         /* set "devices" to ensure that we respond only once */
@@ -779,7 +773,7 @@ void scrattach(parent, self, aux)
     struct scr_softc       *sc = (void *)self;
 
     printf("\n");
-    if (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisascr"))
+    if (!strcmp(parent->dv_cfdata->cf_name, "ofisascr"))
     {
         KERN_DEBUG (scrdebug, SCRATTACH_DEBUG_INFO,("scrattach: called \n"));
 
@@ -997,214 +991,6 @@ int scrclose(dev, flag, mode, p)
     KERN_DEBUG (scrdebug, SCRCLOSE_DEBUG_INFO,("scrclose exiting\n"));
     return(0);
 }
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      scrwrite
-**
-**      not supported
-**
-**  FORMAL PARAMETERS:
-**      
-**      dev  - input : Device identifier consisting of major and minor numbers.
-**      uio  - input : Pointer to the user I/O information (ie. write data).
-**      flag - input : Information on how the I/O should be done (eg. blocking
-**                     or non-blocking).
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      Returns ENODEV
-**
-**  SIDE EFFECTS:
-**
-**      none
-**--
-*/
-int
-scrwrite(dev, uio, flag)
-dev_t      dev;
-struct uio *uio;
-int        flag;
-{
-    return ENODEV;
-} 
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      scrread
-**
-**      not supported
-**
-**  FORMAL PARAMETERS:
-**      
-**      dev  - input : Device identifier consisting of major and minor numbers.
-**      uio  - input : Pointer to the user I/O information (ie. read buffer).
-**      flag - input : Information on how the I/O should be done (eg. blocking
-**                     or non-blocking).
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      Returns ENODEV
-**
-**  SIDE EFFECTS:
-**
-**      none
-**--
-*/
-int
-scrread(dev, uio, flag)
-dev_t       dev;
-struct uio  *uio;
-int         flag;
-{
-    return ENODEV;
-} 
-
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      scrpoll
-**
-**      not supported
-**
-**  FORMAL PARAMETERS:
-**      
-**      dev  - input : Device identifier consisting of major and minor numbers.
-**      events -input: Events to poll for
-**      p    - input : Process requesting the poll.
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      Returns ENODEV
-**
-**  SIDE EFFECTS:
-**
-**      none
-**--
-*/
-int
-scrpoll(dev, events, p)
-dev_t       dev;
-int         events;
-struct proc *p;
-{
-    return ENODEV;
-} 
-
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**     scrstop
-**
-**     should not be called
-**  
-**  FORMAL PARAMETERS:
-**
-**     tp   - Pointer to our tty structure.
-**     flag - Ignored.
-**
-**  IMPLICIT INPUTS:
-**
-**     none.
-**
-**  IMPLICIT OUTPUTS:
-**
-**     none.
-**
-**  FUNCTION VALUE:
-**
-**     none.
-**
-**  SIDE EFFECTS:
-**
-**     none.
-**--
-*/
-void scrstop(tp, flag)
-    struct tty *tp;
-    int flag;
-{
-    panic("scrstop: not implemented");
-} 
-
-
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**      tty
-**
-**      should not be called
-**
-**  FORMAL PARAMETERS:
-**
-**      dev - input : Device identifier consisting of major and minor numbers.
-**
-**  IMPLICIT INPUTS:
-**
-**
-**  IMPLICIT OUTPUTS:
-**
-**      none
-**
-**  FUNCTION VALUE:
-**
-**      null
-**
-**  SIDE EFFECTS:
-**
-**      none.
-**--
-*/
-struct tty * scrtty(dev)
-    dev_t   dev;
-{
-    panic("scrtty: not implemented");
-    return NULL;
-} 
-
-
-
-
 
 /*
 **++

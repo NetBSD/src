@@ -1,4 +1,4 @@
-/*	$NetBSD: wdsc.c,v 1.21 2001/05/31 18:46:08 scw Exp $	*/
+/*	$NetBSD: wdsc.c,v 1.21.2.1 2002/10/10 18:34:18 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Steve Woodford
@@ -59,9 +59,8 @@
 void    wdsc_pcc_attach __P((struct device *, struct device *, void *));
 int     wdsc_pcc_match  __P((struct device *, struct cfdata *, void *));
 
-struct cfattach wdsc_pcc_ca = {
-	sizeof(struct sbic_softc), wdsc_pcc_match, wdsc_pcc_attach
-};
+CFATTACH_DECL(wdsc_pcc, sizeof(struct sbic_softc),
+    wdsc_pcc_match, wdsc_pcc_attach, NULL, NULL);
 
 extern struct cfdriver wdsc_cd;
 

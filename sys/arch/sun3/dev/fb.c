@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.6.4.2 2002/06/28 08:22:33 jdolecek Exp $ */
+/*	$NetBSD: fb.c,v 1.6.4.3 2002/10/10 18:37:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,15 @@
 #include <sun3/dev/fbvar.h>
 #include <sun3/dev/p4reg.h>
 
-cdev_decl(fb);
+dev_type_open(fbopen);
+dev_type_close(fbclose);
+dev_type_ioctl(fbioctl);
+dev_type_mmap(fbmmap);
+
+const struct cdevsw fb_cdevsw = {
+	fbopen, fbclose, noread, nowrite, fbioctl,
+	nostop, notty, nopoll, fbmmap, nokqfilter,
+};
 
 static struct fbdevice *devfb;
 static int fbpriority;
@@ -121,14 +129,6 @@ fbmmap(dev, off, prot)
 	int prot;
 {
 	return ((*devfb->fb_driver->fbd_mmap)(dev, off, prot));
-}
-
-int
-fbkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
-{
-	return ((*devfb->fb_driver->fbd_kqfilter)(dev, kn));
 }
 
 /*

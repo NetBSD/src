@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8 2001/06/17 00:11:40 cyber Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.2.1 2002/10/10 18:32:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -79,7 +79,7 @@ device_register(dev, aux)
 
 	if ((booted_device == NULL) && (netboot == 0)) {
 		if (dev->dv_class == DV_DISK &&
-		    !strcmp(dev->dv_cfdata->cf_driver->cd_name, "wd")) {
+		    !strcmp(dev->dv_cfdata->cf_name, "wd")) {
 			hd_iterate++;
 			if (hd_iterate == bootunit) {
 				booted_device = dev;

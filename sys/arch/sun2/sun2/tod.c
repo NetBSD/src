@@ -1,4 +1,4 @@
-/*	$NetBSD: tod.c,v 1.3 2001/06/27 02:59:26 fredette Exp $	*/
+/*	$NetBSD: tod.c,v 1.3.2.1 2002/10/10 18:36:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -79,13 +79,11 @@ static int  tod_vme_match __P((struct device *, struct cfdata *, void *args));
 static void tod_vme_attach __P((struct device *, struct device *, void *));
 static void tod_attach __P((struct mm58167_softc *));
 
-struct cfattach tod_obio_ca = {
-	sizeof(struct mm58167_softc), tod_obio_match, tod_obio_attach
-};
+CFATTACH_DECL(tod_obio, sizeof(struct mm58167_softc),
+    tod_obio_match, tod_obio_attach, NULL, NULL);
 
-struct cfattach tod_vme_ca = {
-	sizeof(struct mm58167_softc), tod_vme_match, tod_vme_attach
-};
+CFATTACH_DECL(tod_vme, sizeof(struct mm58167_softc),
+    tod_vme_match, tod_vme_attach, NULL, NULL);
 
 static int
 tod_obio_match(parent, cf, args)

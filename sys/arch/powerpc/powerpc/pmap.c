@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44.2.2 2002/01/10 19:48:07 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44.2.3 2002/10/10 18:35:22 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -956,7 +956,7 @@ pmap_remove_pv(pteidx, va, pa, pte)
 		}
 #ifdef	DIAGNOSTIC
 		else
-			panic("pmap_remove_pv: not on list\n");
+			panic("pmap_remove_pv: not on list");
 #endif
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11.4.5 2002/10/02 22:02:26 jdolecek Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11.4.6 2002/10/10 18:39:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.4.5 2002/10/02 22:02:26 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.11.4.6 2002/10/10 18:39:50 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,13 +104,22 @@ int	satlinkprobe __P((struct device *, struct cfdata *, void *));
 void	satlinkattach __P((struct device *, struct device *, void *));
 void	satlinktimeout __P((void *));
 
-struct cfattach satlink_ca = {
-	sizeof(struct satlink_softc), satlinkprobe, satlinkattach
-};
+CFATTACH_DECL(satlink, sizeof(struct satlink_softc),
+    satlinkprobe, satlinkattach, NULL, NULL);
 
 extern struct cfdriver satlink_cd;
 
-cdev_decl(satlink);
+dev_type_open(satlinkopen);
+dev_type_close(satlinkclose);
+dev_type_read(satlinkread);
+dev_type_ioctl(satlinkioctl);
+dev_type_poll(satlinkpoll);
+dev_type_kqfilter(satlinkkqfilter);
+
+const struct cdevsw satlink_cdevsw = {
+	satlinkopen, satlinkclose, satlinkread, nowrite, satlinkioctl,
+	nostop, notty, satlinkpoll, nommap, satlinkkqfilter,
+};
 
 int
 satlinkprobe(parent, match, aux)
@@ -361,16 +370,6 @@ satlinkread(dev, uio, flags)
 		sc->sc_uptr = 0;
 
 	return (error);
-}
-
-int
-satlinkwrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
-{
-
-	return (ENODEV);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.4 2001/05/14 09:27:06 scw Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.4.2.1 2002/10/10 18:33:46 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -50,8 +50,24 @@
 #include <machine/cpu.h>
 #include <machine/iteioctl.h>
 
-cdev_decl(ite);
-cdev_decl(wsdisplay);
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_poll(itepoll);
+dev_type_kqfilter(itekqfilter);
+
+const struct cdevsw ite_cdevsw = {
+	iteopen, iteclose, iteread, itewrite, iteioctl,
+	nostop, itetty, itepoll, nommap, itekqfilter, D_TTY
+};
+
+#if NWSDISPLAY > 0
+extern const struct cdevsw wsdisplay_cdevsw;
+#endif
+
 void		iteattach __P((int));
 
 static int	ite_initted = 0;
@@ -68,10 +84,8 @@ iteattach(n)
 #if NWSDISPLAY > 0
 	int maj;
 
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
-	KASSERT(maj < nchrdev);
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
+	KASSERT(maj != -1);
 
 	if (maj != major(cn_tab->cn_dev))
 		return;
@@ -114,7 +128,7 @@ iteread(dev, uio, flag)
 	int flag;
 {
 	return ite_initted ?
-	    wsdisplayread(cn_tab->cn_dev, uio, flag) : (ENXIO);
+	    (*wsdisplay_cdevsw.d_read)(cn_tab->cn_dev, uio, flag) : (ENXIO);
 }
 
 /*ARGSUSED*/
@@ -125,7 +139,7 @@ itewrite(dev, uio, flag)
 	int flag;
 {
 	return ite_initted ?
-	    wsdisplaywrite(cn_tab->cn_dev, uio, flag) : (ENXIO);
+	    (*wsdisplay_cdevsw.d_write)(cn_tab->cn_dev, uio, flag) : (ENXIO);
 }
 
 /*ARGSUSED*/
@@ -133,13 +147,7 @@ struct tty *
 itetty(dev)
 	dev_t dev;
 {
-	return ite_initted ? wsdisplaytty(cn_tab->cn_dev) : (NULL);
-}
-
-/*ARGSUSED*/
-void 
-itestop(struct tty *tp, int flag)
-{
+	return ite_initted ? (*wsdisplay_cdevsw.d_tty)(cn_tab->cn_dev) : (NULL);
 }
 
 /*ARGSUSED*/
@@ -185,7 +193,8 @@ iteioctl(dev, cmd, addr, flag, p)
 			return (0);
 		}
 	default:
-		return wsdisplayioctl(cn_tab->cn_dev, cmd, addr, flag, p);
+		return ((*wsdisplay_cdevsw.d_ioctl)(cn_tab->cn_dev, cmd,
+						    addr, flag, p));
 	}
 
 	return (ENOTTY);
@@ -199,5 +208,14 @@ itepoll(dev, events, p)
 	struct proc *p;
 {
 	return ite_initted ?
-	    wsdisplaypoll(cn_tab->cn_dev, events, p) : (ENXIO);
+	    (*wsdisplay_cdevsw.d_poll)(cn_tab->cn_dev, events, p) : (ENXIO);
+}
+
+int
+itekqfilter(dev, kn)
+	dev_t dev;
+	struct knote *kn;
+{
+	return ite_initted ?
+	    (*wsdisplay_cdevsw.d_kqfilter)(cn_tab->cn_dev, kn) : (ENXIO);
 }

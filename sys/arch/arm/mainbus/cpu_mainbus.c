@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.1.6.1 2002/01/10 19:38:30 thorpej Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.1.6.2 2002/10/10 18:31:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -47,9 +47,9 @@
 #include <sys/device.h>
 #include <sys/proc.h>
 #if 0
+#include <sys/conf.h>
 #include <uvm/uvm_extern.h>
 #include <machine/io.h>
-#include <machine/conf.h>
 #endif
 #include <machine/cpu.h>
 #if 0
@@ -94,6 +94,5 @@ cpu_mainbus_attach(parent, self, aux)
 	cpu_attach(self);
 }
 
-struct cfattach cpu_mainbus_ca = {
-	sizeof(struct device), cpu_mainbus_match, cpu_mainbus_attach
-};
+CFATTACH_DECL(cpu_mainbus, sizeof(struct device),
+    cpu_mainbus_match, cpu_mainbus_attach, NULL, NULL);

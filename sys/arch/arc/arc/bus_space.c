@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3.6.1 2001/09/13 01:13:02 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3.6.2 2002/10/10 18:31:36 jdolecek Exp $	*/
 /*	NetBSD: bus_machdep.c,v 1.1 2000/01/26 18:48:00 drochner Exp 	*/
 
 /*-
@@ -232,7 +232,7 @@ arc_bus_space_unmap(bst, bsh, size)
 		/* bus_space_paddr() becomes unavailable after unmapping */
 		err = bus_space_paddr(bst, bsh, &pa);
 		if (err)
-			panic("arc_bus_space_unmap: %s va 0x%qx: error %d\n",
+			panic("arc_bus_space_unmap: %s va 0x%qx: error %d",
 			    bst->bs_name, (unsigned long long) bsh, err);
 		addr = (bus_size_t)(pa - bst->bs_pbase) + bst->bs_start;
 		extent_free(bst->bs_extent, addr, size,

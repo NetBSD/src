@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.8.2.1 2002/06/23 17:37:37 jdolecek Exp $ */
+/* $NetBSD: siotty.c,v 1.8.2.2 2002/10/10 18:33:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8.2.1 2002/06/23 17:37:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.8.2.2 2002/10/10 18:33:38 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -87,7 +87,6 @@ struct siotty_softc {
 };
 
 #include "siotty.h"
-cdev_decl(sio);
 static void siostart __P((struct tty *));
 static int  sioparam __P((struct tty *, struct termios *));
 static void siottyintr __P((int));
@@ -96,10 +95,23 @@ static int  siomctl __P((struct siotty_softc *, int, int));
 static int  siotty_match __P((struct device *, struct cfdata *, void *));
 static void siotty_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach siotty_ca = {
-	sizeof(struct siotty_softc), siotty_match, siotty_attach
-};
+CFATTACH_DECL(siotty, sizeof(struct siotty_softc),
+    siotty_match, siotty_attach, NULL, NULL);
 extern struct cfdriver siotty_cd;
+
+dev_type_open(sioopen);
+dev_type_close(sioclose);
+dev_type_read(sioread);
+dev_type_write(siowrite);
+dev_type_ioctl(sioioctl);
+dev_type_stop(siostop);
+dev_type_tty(siotty);
+dev_type_poll(siopoll);
+
+const struct cdevsw siotty_cdevsw = {
+	sioopen, sioclose, sioread, siowrite, sioioctl,
+	siostop, siotty, siopoll, nommap, ttykqfilter, D_TTY
+};
 
 static int 
 siotty_match(parent, cf, aux)
@@ -587,7 +599,8 @@ syscnattach(channel)
 	struct sioreg *sio;
 	sio = (struct sioreg *)0x51000000 + channel;
 
-	syscons.cn_dev = makedev(7, channel);
+	syscons.cn_dev = makedev(cdevsw_lookup_major(&siotty_cdevsw),
+				 channel);
 	cn_tab = &syscons;
 
 	setsioreg(sio, WR0, WR0_CHANRST);

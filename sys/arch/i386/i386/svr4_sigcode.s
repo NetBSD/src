@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.4.2.2 2002/06/23 17:37:27 jdolecek Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.4.2.3 2002/10/10 18:33:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include "assym.h"
@@ -118,9 +119,10 @@
 	movw	%ax,%es		; \
 	pushl	%fs		; \
 	pushl	%gs		; \
-	movw	%ax,%fs		; \
 	movw	%ax,%gs		; \
-
+	movw	$GSEL(GCPU_SEL, SEL_KPL),%ax	; \
+	movw	%ax,%fs		
+	
 #define	INTRFASTEXIT \
 	popl	%gs		; \
 	popl	%fs		; \
@@ -135,7 +137,18 @@
 	popl	%eax		; \
 	addl	$8,%esp		; \
 	iret
+	
+#define _CONCAT(a,b) a/**/b
 
+#if defined(MULTIPROCESSOR)
+#define CPUVAR(off) %fs:_CONCAT(CPU_INFO_,off)
+#else
+#define CPUVAR(off) _C_LABEL(cpu_info_primary)+_CONCAT(CPU_INFO_,off)
+#endif
+
+#define CHECK_ASTPENDING()		cmpl $0,CPUVAR(ASTPENDING)
+#define CLEAR_ASTPENDING()		movl $0,CPUVAR(ASTPENDING)
+	
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -161,10 +174,10 @@ IDTVEC(svr4_fasttrap)
 	call	_C_LABEL(svr4_fasttrap)
 2:	/* Check for ASTs on exit to user mode. */
 	cli
-	cmpb	$0,_C_LABEL(astpending)
+	CHECK_ASTPENDING()		
 	je	1f
 	/* Always returning to user mode here. */
-	movb	$0,_C_LABEL(astpending)
+	CLEAR_ASTPENDING()
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)

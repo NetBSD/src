@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.214.2.3 2002/09/06 08:43:56 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.214.2.4 2002/10/10 18:38:26 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.214.2.3 2002/09/06 08:43:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.214.2.4 2002/10/10 18:38:26 jdolecek Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -183,11 +183,28 @@ int	wdactivate __P((struct device *, enum devact));
 int	wdprint	__P((void *, char *));
 void	wdperror __P((const struct wd_softc *));
 
-struct cfattach wd_ca = {
-	sizeof(struct wd_softc), wdprobe, wdattach, wddetach, wdactivate
-};
+CFATTACH_DECL(wd, sizeof(struct wd_softc),
+    wdprobe, wdattach, wddetach, wdactivate);
 
 extern struct cfdriver wd_cd;
+
+dev_type_open(wdopen);
+dev_type_close(wdclose);
+dev_type_read(wdread);
+dev_type_write(wdwrite);
+dev_type_ioctl(wdioctl);
+dev_type_strategy(wdstrategy);
+dev_type_dump(wddump);
+dev_type_size(wdsize);
+
+const struct bdevsw wd_bdevsw = {
+	wdopen, wdclose, wdstrategy, wdioctl, wddump, wdsize, D_DISK
+};
+
+const struct cdevsw wd_cdevsw = {
+	wdopen, wdclose, wdread, wdwrite, wdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
 /*
  * Glue necessary to hook WDCIOCCOMMAND into physio
@@ -211,7 +228,6 @@ void	wdioctlstrategy __P((struct buf *));
 
 void  wdgetdefaultlabel __P((struct wd_softc *, struct disklabel *));
 void  wdgetdisklabel	__P((struct wd_softc *));
-void  wdstrategy	__P((struct buf *));
 void  wdstart	__P((void *));
 void  __wdstart	__P((struct wd_softc*, struct buf *));
 void  wdrestart __P((void*));
@@ -220,10 +236,6 @@ void  wd_flushcache __P((struct wd_softc *, int));
 void  wd_shutdown __P((void*));
 
 struct dkdriver wddkdriver = { wdstrategy };
-
-/* XXX: these should go elsewhere */
-cdev_decl(wd);
-bdev_decl(wd);
 
 #ifdef HAS_BAD144_HANDLING
 static void bad144intern __P((struct wd_softc *));
@@ -401,12 +413,8 @@ wddetach(self, flags)
 	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
-	for (bmaj = 0; bmaj < nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == wdopen)
-			break;
-	for (cmaj = 0; cmaj < nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == wdopen)
-			break;
+	bmaj = bdevsw_lookup_major(&wd_bdevsw);
+	cmaj = cdevsw_lookup_major(&wd_cdevsw);
 
 	s = splbio();
 
@@ -1257,10 +1265,6 @@ wddump(dev, blkno, va, size)
 		return (ENXIO);
 
 	part = WDPART(dev);
-
-	/* Make sure it was initialized. */
-	if (wd->drvp->state < READY)
-		return ENXIO;
 
 	/* Convert to disk sectors.  Request must be a multiple of size. */
 	lp = wd->sc_dk.dk_label;

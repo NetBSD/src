@@ -1,4 +1,4 @@
-/*	$NetBSD: nca_isa.c,v 1.7.2.1 2002/01/10 19:55:37 thorpej Exp $	*/
+/*	$NetBSD: nca_isa.c,v 1.7.2.2 2002/10/10 18:39:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.7.2.1 2002/01/10 19:55:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nca_isa.c,v 1.7.2.2 2002/10/10 18:39:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,9 +105,8 @@ int	nca_isa_match __P((struct device *, struct cfdata *, void *));
 void	nca_isa_attach __P((struct device *, struct device *, void *));  
 int	nca_isa_test __P((bus_space_tag_t, bus_space_handle_t, bus_size_t));
 
-struct cfattach nca_isa_ca = {
-	sizeof(struct nca_isa_softc), nca_isa_match, nca_isa_attach
-};
+CFATTACH_DECL(nca_isa, sizeof(struct nca_isa_softc),
+    nca_isa_match, nca_isa_attach, NULL, NULL);
 
 
 /* Supported controller types */

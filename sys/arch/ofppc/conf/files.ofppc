@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.13.2.3 2002/06/23 17:39:02 jdolecek Exp $
+#	$NetBSD: files.ofppc,v 1.13.2.4 2002/10/10 18:34:47 jdolecek Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -46,7 +46,6 @@ file arch/powerpc/powerpc/linux_trap.c		compat_linux
 # Generic OpenFirmware device support
 #
 include "dev/ofw/files.ofw"
-major	{ofdisk = 0}
 
 #
 # I2O device support
@@ -57,24 +56,14 @@ include "dev/i2o/files.i2o"
 # SCSI support
 #
 include "dev/scsipi/files.scsipi"
-major { cd = 3 }
-major { sd = 4 }
 
 #
 # ATA/IDE support
 #
 include "dev/ata/files.ata"
-major { wd = 5 }
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
-major { md = 6 }
-
-# RAIDframe
-major { raid = 2 }
-
-# Logical disks
-major { ld = 17 }
 
 # Raster operations
 include "dev/rasops/files.rasops"
@@ -134,3 +123,5 @@ file	arch/ofppc/firepower/firepower_intr.c	firepower_es | firepower_mx |
 						firepower_lx
 file	arch/ofppc/firepower/firepower_pci.c	firepower_es | firepower_mx |
 						firepower_lx
+
+include "arch/ofppc/conf/majors.ofppc"

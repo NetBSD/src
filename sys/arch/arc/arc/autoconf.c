@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2001/06/13 14:36:34 soda Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.2.1 2002/10/10 18:31:36 jdolecek Exp $	*/
 /*	$OpenBSD: autoconf.c,v 1.9 1997/05/18 13:45:20 pefo Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_name;
 
 	static int found = 0, initted = 0, scsiboot = 0;
 	static struct device *scsibusdev = NULL;
@@ -232,7 +232,7 @@ device_register(dev, aux)
 		initted = 1;
 	}
 
-	if (scsiboot && strcmp(cd->cd_name, "scsibus") == 0) {
+	if (scsiboot && strcmp(name, "scsibus") == 0) {
 		if (dev->dv_unit == b->bus) {
 			scsibusdev = dev;
 #if 0
@@ -242,10 +242,10 @@ device_register(dev, aux)
 		return;
 	}
 
-	if (strcmp(b->dev_type, cd->cd_name) != 0)
+	if (strcmp(b->dev_type, name) != 0)
 		return;
 
-	if (strcmp(cd->cd_name, "sd") == 0) {
+	if (strcmp(name, "sd") == 0) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (scsiboot && scsibusdev && parent == scsibusdev &&

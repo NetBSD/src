@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.14.2.1 2002/03/16 15:58:53 jdolecek Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.14.2.2 2002/10/10 18:34:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -68,9 +68,8 @@
 int vme_pcc_match(struct device *, struct cfdata *, void *);
 void vme_pcc_attach(struct device *, struct device *, void *);
 
-struct cfattach vmepcc_ca = {
-	sizeof(struct vme_pcc_softc), vme_pcc_match, vme_pcc_attach
-};
+CFATTACH_DECL(vmepcc, sizeof(struct vme_pcc_softc),
+    vme_pcc_match, vme_pcc_attach, NULL, NULL);
 
 extern struct cfdriver vmepcc_cd;
 

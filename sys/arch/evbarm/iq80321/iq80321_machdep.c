@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.6.6.3 2002/09/06 08:34:09 jdolecek Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.6.6.4 2002/10/10 18:32:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -489,7 +489,7 @@ initarm(void *arg)
 
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory\n");
+		panic("initarm: Failed to align the kernel page directory");
 
 	/*
 	 * Allocate a page for the system page mapped to V0x00000000

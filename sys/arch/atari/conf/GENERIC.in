@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.6.2.5 2002/09/06 08:33:20 jdolecek Exp $
+#	$NetBSD: GENERIC.in,v 1.6.2.6 2002/10/10 18:31:59 jdolecek Exp $
 #
 # Generic atari
 #
@@ -79,7 +79,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #ifndef INSTALL_KERNEL
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
-#options 	IPFILTER_DEFAULT_BLOCK	# block packages by default
+#options  	IPFILTER_DEFAULT_BLOCK	# block packages by default
 
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 #endif
@@ -161,7 +161,7 @@ options 	SYSVSEM			# System V semaphores
 #
 options 	KTRACE			# Add kernel tracing system call
 options 	DIAGNOSTIC		# Add additional error checking code
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #else /* INSTALL_KERNEL */
 options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.19.28.1 2002/06/23 17:36:08 jdolecek Exp $	*/
+/*	$NetBSD: hpib.c,v 1.19.28.2 2002/10/10 18:32:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.19.28.1 2002/06/23 17:36:08 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.19.28.2 2002/10/10 18:32:39 jdolecek Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,9 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.19.28.1 2002/06/23 17:36:08 jdolecek Exp 
 int	hpibbusmatch __P((struct device *, struct cfdata *, void *));
 void	hpibbusattach __P((struct device *, struct device *, void *));
 
-struct cfattach hpibbus_ca = {
-	sizeof(struct hpibbus_softc), hpibbusmatch, hpibbusattach
-};
+CFATTACH_DECL(hpibbus, sizeof(struct hpibbus_softc),
+    hpibbusmatch, hpibbusattach, NULL, NULL);
 
 extern struct cfdriver hpibbus_cd;
 
@@ -229,7 +228,7 @@ hpibbussearch(parent, cf, aux)
 	/* Make sure this is in a consistent state. */
 	ha->ha_punit = 0;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ha) > 0) {
+	if (config_match(parent, cf, ha) > 0) {
 		/*
 		 * The device probe has succeeded, and filled in
 		 * the punit information.  Make sure the configuration

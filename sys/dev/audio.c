@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.137.2.8 2002/10/02 22:02:29 jdolecek Exp $	*/
+/*	$NetBSD: audio.c,v 1.137.2.9 2002/10/10 18:38:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.8 2002/10/02 22:02:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137.2.9 2002/10/10 18:38:17 jdolecek Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -182,15 +182,26 @@ int	au_set_lr_value(struct audio_softc *, mixer_ctrl_t *,
 			     int, int);
 int	au_portof(struct audio_softc *, char *);
 
+dev_type_open(audioopen);
+dev_type_close(audioclose);
+dev_type_read(audioread);
+dev_type_write(audiowrite);
+dev_type_ioctl(audioioctl);
+dev_type_poll(audiopoll);
+dev_type_mmap(audiommap);
+dev_type_kqfilter(audiokqfilter);
+
+const struct cdevsw audio_cdevsw = {
+	audioopen, audioclose, audioread, audiowrite, audioioctl,
+	nostop, notty, audiopoll, audiommap, audiokqfilter,
+};
 
 /* The default audio mode: 8 kHz mono ulaw */
 struct audio_params audio_default =
 	{ 8000, AUDIO_ENCODING_ULAW, 8, 1, 0, 1, 1 };
 
-struct cfattach audio_ca = {
-	sizeof(struct audio_softc), audioprobe, audioattach,
-	audiodetach, audioactivate
-};
+CFATTACH_DECL(audio, sizeof(struct audio_softc),
+    audioprobe, audioattach, audiodetach, audioactivate);
 
 extern struct cfdriver audio_cd;
 
@@ -336,7 +347,6 @@ audioactivate(struct device *self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;
@@ -373,9 +383,7 @@ audiodetach(struct device *self, int flags)
 	free(sc->sc_rconvbuffer, M_DEVBUF);
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == audioopen)
-			break;
+	maj = cdevsw_lookup_major(&audio_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
@@ -1449,7 +1457,7 @@ audio_fill_silence(struct audio_params *params, u_char *p, int n)
 			n -= nfill - 1;
 		}
 		while (n >= nfill) {
-			int k;
+			int k = nfill;
 			*p++ = auzero0;
 			while (--k > 0)
 				*p++ = auzero1;

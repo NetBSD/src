@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39biu.c,v 1.5.2.1 2002/02/11 20:08:10 jdolecek Exp $ */
+/*	$NetBSD: tx39biu.c,v 1.5.2.2 2002/10/10 18:32:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -76,9 +76,8 @@ struct tx39biu_softc {
 	tx_chipset_tag_t sc_tc;
 };
 
-struct cfattach tx39biu_ca = {
-	sizeof(struct tx39biu_softc), tx39biu_match, tx39biu_attach
-};
+CFATTACH_DECL(tx39biu, sizeof(struct tx39biu_softc),
+    tx39biu_match, tx39biu_attach, NULL, NULL);
 
 int
 tx39biu_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo_obio.c,v 1.4.4.1 2002/03/16 15:59:45 jdolecek Exp $ */
+/*	$NetBSD: bwtwo_obio.c,v 1.4.4.2 2002/10/10 18:36:08 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -101,7 +101,6 @@
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
 #include <machine/ctlreg.h>
-#include <machine/conf.h>
 #include <sparc/sparc/asm.h>
 
 #include <dev/sun/fbio.h>
@@ -116,9 +115,8 @@ static void	bwtwoattach_obio (struct device *, struct device *, void *);
 static int	bwtwomatch_obio (struct device *, struct cfdata *, void *);
 
 
-struct cfattach bwtwo_obio_ca = {
-	sizeof(struct bwtwo_softc), bwtwomatch_obio, bwtwoattach_obio
-};
+CFATTACH_DECL(bwtwo_obio, sizeof(struct bwtwo_softc),
+    bwtwomatch_obio, bwtwoattach_obio, NULL, NULL);
 
 static int	bwtwo_get_video_sun4(struct bwtwo_softc *);
 static void	bwtwo_set_video_sun4(struct bwtwo_softc *, int);

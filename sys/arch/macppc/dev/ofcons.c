@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.7.2.1 2002/06/23 17:37:54 jdolecek Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.7.2.2 2002/10/10 18:33:59 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,11 +64,23 @@ static int stdin, stdout;
 static int ofcmatch __P((struct device *, struct cfdata *, void *));
 static void ofcattach __P((struct device *, struct device *, void *));
 
-struct cfattach macofcons_ca = {
-	sizeof(struct ofcons_softc), ofcmatch, ofcattach
-};
+CFATTACH_DECL(macofcons, sizeof(struct ofcons_softc),
+    ofcmatch, ofcattach, NULL, NULL);
 
 extern struct cfdriver macofcons_cd;
+
+dev_type_open(ofcopen);
+dev_type_close(ofcclose);
+dev_type_read(ofcread);
+dev_type_write(ofcwrite);
+dev_type_ioctl(ofcioctl);
+dev_type_tty(ofctty);
+dev_type_poll(ofcpoll);
+
+const struct cdevsw macofcons_cdevsw = {
+	ofcopen, ofcclose, ofcread, ofcwrite, ofcioctl,
+	nostop, ofctty, ofcpoll, nommap, ttykqfilter, D_TTY
+};
 
 /* For polled ADB mode */
 static int polledkey;
@@ -220,13 +232,6 @@ ofctty(dev)
 	return sc->of_tty;
 }
 
-void
-ofcstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-}
-
 static void
 ofcstart(tp)
 	struct tty *tp;
@@ -302,13 +307,10 @@ ofccnprobe(cd)
 	if (!ofcons_probe())
 		return;
 
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == ofcopen) {
-			cd->cn_dev = makedev(maj, 0);
-			cd->cn_pri = CN_INTERNAL;
-			break;
-		}
-	}
+	maj = cdevsw_lookup_major(&macofcons_cdevsw);
+
+	cd->cn_dev = makedev(maj, 0);
+	cd->cn_pri = CN_INTERNAL;
 }
 
 void

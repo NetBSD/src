@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3.2.2 2002/09/06 08:39:19 jdolecek Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.2.3 2002/10/10 18:35:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,6 +73,12 @@ extern struct pmap kernel_pmap_;
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /*
  * pmap_bootstrap interface

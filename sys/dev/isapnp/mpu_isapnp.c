@@ -1,7 +1,7 @@
-/*	$NetBSD: mpu_isapnp.c,v 1.4.16.1 2002/01/10 19:55:56 thorpej Exp $	*/
+/*	$NetBSD: mpu_isapnp.c,v 1.4.16.2 2002/10/10 18:39:59 jdolecek Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.4.16.1 2002/01/10 19:55:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_isapnp.c,v 1.4.16.2 2002/10/10 18:39:59 jdolecek Exp $");
 
 #include "midi.h"
 
@@ -39,9 +39,8 @@ struct mpu_isapnp_softc {
 	struct mpu_softc sc_mpu;
 };
 
-struct cfattach mpu_isapnp_ca = {
-	sizeof(struct mpu_isapnp_softc), mpu_isapnp_match, mpu_isapnp_attach
-};
+CFATTACH_DECL(mpu_isapnp, sizeof(struct mpu_isapnp_softc),
+    mpu_isapnp_match, mpu_isapnp_attach, NULL, NULL);
 
 int
 mpu_isapnp_match(parent, match, aux)

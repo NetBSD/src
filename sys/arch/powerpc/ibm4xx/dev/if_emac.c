@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.1.2.2 2002/09/06 08:39:07 jdolecek Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.1.2.3 2002/10/10 18:35:17 jdolecek Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -271,9 +271,8 @@ static void	emac_mii_writereg(struct device *, int, int, int);
 
 int		emac_copy_small = 0;
 
-struct cfattach emac_ca = {
-	sizeof(struct emac_softc), emac_match, emac_attach
-};
+CFATTACH_DECL(emac, sizeof(struct emac_softc),
+    emac_match, emac_attach, NULL, NULL);
 
 static int
 emac_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -281,7 +280,7 @@ emac_match(struct device *parent, struct cfdata *cf, void *aux)
 	struct opb_attach_args *oaa = aux;
 
 	/* match only on-chip ethernet devices */
-	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(oaa->opb_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

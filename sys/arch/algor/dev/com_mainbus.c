@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.3.2.1 2002/10/10 18:30:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.3.2.1 2002/10/10 18:30:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,8 @@ int	com_mainbus_match(struct device *, struct cfdata *, void *);
 void	com_mainbus_attach(struct device *, struct device *, void *);
 void	com_mainbus_cleanup(void *);
 
-struct cfattach com_mainbus_ca = {
-	sizeof(struct com_mainbus_softc), com_mainbus_match,
-	    com_mainbus_attach
-};
+CFATTACH_DECL(com_mainbus, sizeof(struct com_mainbus_softc),
+    com_mainbus_match, com_mainbus_attach, NULL, NULL);
 
 int
 com_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
@@ -86,7 +84,7 @@ com_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 	struct mainbus_attach_args *ma = aux;
 
 	/* Always present. */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ma->ma_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

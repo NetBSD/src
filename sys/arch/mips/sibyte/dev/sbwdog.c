@@ -1,4 +1,4 @@
-/* $NetBSD: sbwdog.c,v 1.1.6.2 2002/09/06 08:37:41 jdolecek Exp $ */
+/* $NetBSD: sbwdog.c,v 1.1.6.3 2002/10/10 18:34:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -67,9 +67,8 @@ static void sbwdog_attach(struct device *, struct device *, void *);
 static int sbwdog_tickle(struct sysmon_wdog *);
 static int sbwdog_setmode(struct sysmon_wdog *);
 
-struct cfattach sbwdog_ca = {
-	sizeof(struct sbwdog_softc), sbwdog_match, sbwdog_attach,
-};
+CFATTACH_DECL(sbwdog, sizeof(struct sbwdog_softc),
+    sbwdog_match, sbwdog_attach, NULL, NULL);
 
 #define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))

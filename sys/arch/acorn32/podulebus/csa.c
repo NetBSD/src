@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.2.2.3 2002/06/23 17:33:56 jdolecek Exp $	*/
+/*	$NetBSD: csa.c,v 1.2.2.4 2002/10/10 18:30:28 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,9 +97,8 @@ struct csa_softc {
 	volatile u_char		*sc_data;
 };
 
-struct cfattach csa_ca = {
-	sizeof(struct csa_softc), csa_match, csa_attach
-};
+CFATTACH_DECL(csa, sizeof(struct csa_softc),
+    csa_match, csa_attach, NULL, NULL);
 
 int csa_intr		 __P((void *arg));
 

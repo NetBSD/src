@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.4.2.2 2002/09/06 08:34:34 jdolecek Exp $	*/
+/*	$NetBSD: superio.c,v 1.4.2.3 2002/10/10 18:32:33 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,9 +78,8 @@ static void superioattach(struct device *, struct device *, void *);
 static int superiosubmatch(struct device *, struct cfdata *, void *);
 static int superioprint(void *, const char *);
 
-struct cfattach superio_ca = {
-	sizeof(struct superio_softc), superiomatch, superioattach
-};
+CFATTACH_DECL(superio, sizeof(struct superio_softc),
+    superiomatch, superioattach, NULL, NULL);
 extern struct cfdriver superio_cd;
 
 
@@ -209,8 +208,8 @@ superiosubmatch(struct device *parent, struct cfdata *cf, void *args)
 	 * This works for the isabus_attach_args, as it also has
 	 * a "char *name" as the first member.
 	 */
-	if (strcmp(cf->cf_driver->cd_name, saa->saa_name) == 0)
-		return ((*cf->cf_attach->ca_match)(parent, cf, args));
+	if (strcmp(cf->cf_name, saa->saa_name) == 0)
+		return (config_match(parent, cf, args));
 
 	return (0);
 }
@@ -407,7 +406,8 @@ superio_bs_unmap(void *arg, bus_space_handle_t bh, bus_size_t size)
 	struct superio_softc *sc = arg;
 	bus_addr_t addr = (bus_addr_t)bh;
 
-	extent_free(sc->sc_isaext, addr, size * 4, EX_NOWAIT);
+	if (sc->sc_isaext)
+		extent_free(sc->sc_isaext, addr, size * 4, EX_NOWAIT);
 }
 
 /*ARGSUSED*/
@@ -686,6 +686,7 @@ superio_console_tag(bus_space_tag_t bt, int port,
 		return (-1);
 	}
 
+	superio_bus_space_tag.bs_cookie = &sc;
 	*tp = &superio_bus_space_tag;
 	*ap = base;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_jazzio.c,v 1.1 2000/12/24 09:25:28 ur Exp $	*/
+/*	$NetBSD: com_jazzio.c,v 1.1.6.1 2002/10/10 18:31:42 jdolecek Exp $	*/
 /*	$OpenBSD: com_lbus.c,v 1.7 1998/03/16 09:38:41 pefo Exp $	*/
 /*	NetBSD: com_isa.c,v 1.12 1998/08/15 17:47:17 mycroft Exp 	*/
 
@@ -95,9 +95,8 @@ extern int com_freq;
 int	com_jazzio_probe __P((struct device *, struct cfdata *, void *));
 void	com_jazzio_attach __P((struct device *, struct device *, void *));
 
-struct cfattach com_jazzio_ca = {
-	sizeof(struct com_softc), com_jazzio_probe, com_jazzio_attach
-};
+CFATTACH_DECL(com_jazzio, sizeof(struct com_softc),
+    com_jazzio_probe, com_jazzio_attach, NULL, NULL);
 
 int
 com_jazzio_probe(parent, match, aux)

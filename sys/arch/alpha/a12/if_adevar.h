@@ -1,4 +1,4 @@
-/*	$NetBSD: if_adevar.h,v 1.2 2001/06/13 10:46:00 wiz Exp $	*/
+/*	$NetBSD: if_adevar.h,v 1.2.2.1 2002/10/10 18:30:40 jdolecek Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -899,7 +899,6 @@ arp_ifinit(
 #if defined(__NetBSD__)
 typedef void ifnet_ret_t;
 typedef u_long ioctl_cmd_t;
-extern struct cfattach ade_ca;
 extern struct cfdriver ade_cd;
 #define	TULIP_UNIT_TO_SOFTC(unit)	((tulip_softc_t *) ade_cd.cd_devs[unit])
 #define TULIP_IFP_TO_SOFTC(ifp)         ((tulip_softc_t *)((ifp)->if_softc))

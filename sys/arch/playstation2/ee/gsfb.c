@@ -1,4 +1,4 @@
-/*	$NetBSD: gsfb.c,v 1.1.6.5 2002/09/06 08:38:46 jdolecek Exp $	*/
+/*	$NetBSD: gsfb.c,v 1.1.6.6 2002/10/10 18:35:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -184,9 +184,8 @@ STATIC char _gsfb_debug_buf[80 * 2];
 STATIC int gsfb_match(struct device *, struct cfdata *, void *);
 STATIC void gsfb_attach(struct device *, struct device *, void *);
 
-struct cfattach gsfb_ca = {
-	sizeof(struct device), gsfb_match, gsfb_attach
-};
+CFATTACH_DECL(gsfb, sizeof(struct device),
+    gsfb_match, gsfb_attach, NULL, NULL);
 
 STATIC void gsfb_hwinit(void);
 STATIC int gsfb_swinit(void);

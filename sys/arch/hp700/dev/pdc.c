@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.1.2.3 2002/09/06 08:35:15 jdolecek Exp $	*/
+/*	$NetBSD: pdc.c,v 1.1.2.4 2002/10/10 18:32:46 jdolecek Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -39,10 +39,10 @@
 #include <sys/tty.h>
 #include <sys/user.h>
 #include <sys/callout.h>
+#include <sys/conf.h>
 
 #include <dev/cons.h>
 
-#include <machine/conf.h>
 #include <machine/pdc.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
@@ -66,11 +66,24 @@ int CONADDR;
 int pdcmatch __P((struct device *, struct cfdata *, void*));
 void pdcattach __P((struct device *, struct device *, void *));
 
-struct cfattach pdc_ca = {
-	sizeof(pdcsoftc_t), pdcmatch, pdcattach
-};
+CFATTACH_DECL(pdc, sizeof(pdcsoftc_t),
+    pdcmatch, pdcattach, NULL, NULL);
 
 extern struct cfdriver pdc_cd;
+
+dev_type_open(pdcopen);
+dev_type_close(pdcclose);
+dev_type_read(pdcread);
+dev_type_write(pdcwrite);
+dev_type_ioctl(pdcioctl);
+dev_type_stop(pdcstop);
+dev_type_tty(pdctty);
+dev_type_poll(pdcpoll);
+
+const struct cdevsw pdc_cdevsw = {
+	pdcopen, pdcclose, pdcread, pdcwrite, pdcioctl,
+	pdcstop, pdctty, pdcpoll, nommap, ttykqfilter, D_TTY
+};
 
 void pdcstart __P((struct tty *tp));
 void pdctimeout __P((void *v));

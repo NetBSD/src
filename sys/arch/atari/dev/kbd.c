@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.18.16.1 2001/09/09 19:12:35 thorpej Exp $	*/
+/*	$NetBSD: kbd.c,v 1.18.16.2 2002/10/10 18:32:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -71,7 +71,12 @@ static u_char		kbd_soft  = 0;	/* 1: Softint has been scheduled*/
 static struct kbd_softc kbd_softc;
 
 /* {b,c}devsw[] function prototypes */
-cdev_decl(kbd);
+dev_type_open(kbdopen);
+dev_type_close(kbdclose);
+dev_type_read(kbdread);
+dev_type_ioctl(kbdioctl);
+dev_type_poll(kbdpoll);
+dev_type_kqfilter(kbdkqfilter);
 
 /* Interrupt handler */
 void	kbdintr __P((int));
@@ -83,8 +88,12 @@ static int  kbd_do_modifier __P((u_char));
 static int  kbd_write_poll __P((u_char *, int));
 static void kbd_pkg_start __P((struct kbd_softc *, u_char));
 
-struct cfattach kbd_ca = {
-	sizeof(struct device), kbdmatch, kbdattach
+CFATTACH_DECL(kbd, sizeof(struct device),
+    kbdmatch, kbdattach, NULL, NULL);
+
+const struct cdevsw kbd_cdevsw = {
+	kbdopen, kbdclose, kbdread, nowrite, kbdioctl,
+	nostop, notty, kbdpoll, nommap, kbdkqfilter,
 };
 
 /*ARGSUSED*/

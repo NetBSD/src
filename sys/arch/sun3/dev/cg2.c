@@ -1,4 +1,4 @@
-/*	$NetBSD: cg2.c,v 1.13.4.5 2002/09/06 08:42:05 jdolecek Exp $	*/
+/*	$NetBSD: cg2.c,v 1.13.4.6 2002/10/10 18:37:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,8 +71,6 @@
 
 #include "fbvar.h"
 
-cdev_decl(cg2);
-
 #define	CMSIZE 256
 
 /* offset to and size of mapped part of frame buffer */
@@ -99,11 +97,19 @@ struct cg2_softc {
 static void	cg2attach __P((struct device *, struct device *, void *));
 static int	cg2match __P((struct device *, struct cfdata *, void *));
 
-struct cfattach cgtwo_ca = {
-	sizeof(struct cg2_softc), cg2match, cg2attach
-};
+CFATTACH_DECL(cgtwo, sizeof(struct cg2_softc),
+    cg2match, cg2attach, NULL, NULL);
 
 extern struct cfdriver cgtwo_cd;
+
+dev_type_open(cg2open);
+dev_type_ioctl(cg2ioctl);
+dev_type_mmap(cg2mmap);
+
+const struct cdevsw cgtwo_cdevsw = {
+	cg2open, nullclose, noread, nowrite, cg2ioctl,
+	nostop, notty, nopoll, cg2mmap, nokqfilter,
+};
 
 static int  cg2gattr __P((struct fbdevice *,  void *));
 static int  cg2gvideo __P((struct fbdevice *, void *));
@@ -112,7 +118,7 @@ static int	cg2getcmap __P((struct fbdevice *, void *));
 static int	cg2putcmap __P((struct fbdevice *, void *));
 
 static struct fbdriver cg2fbdriver = {
-	cg2open, cg2close, cg2mmap, cg2kqfilter, cg2gattr,
+	cg2open, nullclose, cg2mmap, nokqfilter, cg2gattr,
 	cg2gvideo, cg2svideo,
 	cg2getcmap, cg2putcmap };
 
@@ -208,16 +214,6 @@ cg2open(dev, flags, mode, p)
 }
 
 int
-cg2close(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cg2ioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -253,31 +249,6 @@ cg2mmap(dev, off, prot)
 	 * getting horribly broken behaviour with it on.
 	 */
 	return ((sc->sc_phys + off) | sc->sc_pmtype);
-}
-
-static void
-filt_cg2detach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cg2_filtops =
-	{ 1, NULL, filt_cg2detach, filt_seltrue };
-
-int
-cg2kqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cg2_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fmv.c,v 1.24.6.1 2002/01/10 19:55:29 thorpej Exp $	*/
+/*	$NetBSD: if_fmv.c,v 1.24.6.2 2002/10/10 18:39:37 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.24.6.1 2002/01/10 19:55:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.24.6.2 2002/10/10 18:39:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_fmv.c,v 1.24.6.1 2002/01/10 19:55:29 thorpej Exp 
 #include <dev/ic/mb86960var.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/if_fereg.h>	/* XXX */
+#include <dev/isa/if_fmvreg.h>
 
 int	fmv_match __P((struct device *, struct cfdata *, void *));
 void	fmv_attach __P((struct device *, struct device *, void *));
@@ -63,15 +63,8 @@ struct fmv_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach fmv_ca = {
-	sizeof(struct fmv_softc), fmv_match, fmv_attach
-};
-
-#if NetBSD <= 199712
-struct cfdriver fmv_cd = {
-	NULL, "fmv", DV_IFNET
-};
-#endif
+CFATTACH_DECL(fmv, sizeof(struct fmv_softc),
+    fmv_match, fmv_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
 	u_char port;	/* Offset from the base I/O address. */
@@ -381,7 +374,7 @@ fmv_attach(parent, self, aux)
 	/*
 	 * Do generic MB86960 attach.
 	 */
-	mb86960_attach(sc, MB86960_TYPE_86960, myea);
+	mb86960_attach(sc, MB86960_TYPE_86965, myea);
 
 	/* Is this really needs to be done here? XXX */
 	/* Turn the "master interrupt control" flag of ASIC on. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.1.6.2 2002/09/06 08:32:53 jdolecek Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.1.6.3 2002/10/10 18:31:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -240,7 +240,7 @@ ixp12x0_mem_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("ixp12x0_mem_bs_alloc(): Help!\n");
+	panic("ixp12x0_mem_bs_alloc(): Help!");
 }
 
 void
@@ -249,7 +249,7 @@ ixp12x0_mem_bs_free(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	panic("ixp12x0_mem_bs_free(): Help!\n");
+	panic("ixp12x0_mem_bs_free(): Help!");
 }
 
 paddr_t
@@ -311,7 +311,7 @@ ixp12x0_io_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("ixp12x0_io_bs_alloc(): Help!\n");
+	panic("ixp12x0_io_bs_alloc(): Help!");
 }
 
 void    
@@ -320,7 +320,7 @@ ixp12x0_io_bs_free(t, bsh, size)
 	bus_space_handle_t bsh;
 	bus_size_t size;
 {
-	panic("ixp12x0_io_bs_free(): Help!\n");
+	panic("ixp12x0_io_bs_free(): Help!");
 }
 
 void *

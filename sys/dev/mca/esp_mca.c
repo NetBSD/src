@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_mca.c,v 1.3.4.2 2002/01/10 19:55:59 thorpej Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.3.4.3 2002/10/10 18:40:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -93,10 +93,8 @@ static int esp_mca_debug = 0;
 static void	esp_mca_attach	__P((struct device *, struct device *, void *));
 static int	esp_mca_match	__P((struct device *, struct cfdata *, void *));
 
-/* Linkup to the rest of the kernel */
-struct cfattach esp_mca_ca = {
-	sizeof(struct esp_softc), esp_mca_match, esp_mca_attach
-};
+CFATTACH_DECL(esp_mca, sizeof(struct esp_softc),
+    esp_mca_match, esp_mca_attach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

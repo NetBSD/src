@@ -1,4 +1,4 @@
-/* $NetBSD: apecs.c,v 1.38.4.1 2002/06/23 17:34:13 jdolecek Exp $ */
+/* $NetBSD: apecs.c,v 1.38.4.2 2002/10/10 18:31:04 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.38.4.1 2002/06/23 17:34:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.38.4.2 2002/10/10 18:31:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,9 +107,8 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.38.4.1 2002/06/23 17:34:13 jdolecek Exp 
 int	apecsmatch __P((struct device *, struct cfdata *, void *));
 void	apecsattach __P((struct device *, struct device *, void *));
 
-struct cfattach apecs_ca = {
-	sizeof(struct apecs_softc), apecsmatch, apecsattach,
-};
+CFATTACH_DECL(apecs, sizeof(struct apecs_softc),
+    apecsmatch, apecsattach, NULL, NULL);
 
 extern struct cfdriver apecs_cd;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.51.4.2 2002/01/10 19:55:48 thorpej Exp $	*/
+/*	$NetBSD: wt.c,v 1.51.4.3 2002/10/10 18:39:54 jdolecek Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.4.2 2002/01/10 19:55:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wt.c,v 1.51.4.3 2002/10/10 18:39:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,9 +147,23 @@ struct wt_softc {
 	struct wtregs regs;
 };
 
-/* XXX: These don't belong here really */
-cdev_decl(wt);
-bdev_decl(wt);
+dev_type_open(wtopen);
+dev_type_close(wtclose);
+dev_type_read(wtread);
+dev_type_write(wtwrite);
+dev_type_ioctl(wtioctl);
+dev_type_strategy(wtstrategy);
+dev_type_dump(wtdump);
+dev_type_size(wtsize);
+
+const struct bdevsw wt_bdevsw = {
+	wtopen, wtclose, wtstrategy, wtioctl, wtdump, wtsize, D_TAPE
+};
+
+const struct cdevsw wt_cdevsw = {
+	wtopen, wtclose, wtread, wtwrite, wtioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+};
 
 int wtwait __P((struct wt_softc *sc, int catch, char *msg));
 int wtcmd __P((struct wt_softc *sc, int cmd));
@@ -169,9 +183,8 @@ int wtprobe __P((struct device *, struct cfdata *, void *));
 void wtattach __P((struct device *, struct device *, void *));
 int wtintr __P((void *sc));
 
-struct cfattach wt_ca = {
-	sizeof(struct wt_softc), wtprobe, wtattach
-};
+CFATTACH_DECL(wt, sizeof(struct wt_softc),
+    wtprobe, wtattach, NULL, NULL);
 
 extern struct cfdriver wt_cd;
 

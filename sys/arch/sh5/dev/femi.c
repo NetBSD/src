@@ -1,4 +1,4 @@
-/*	$NetBSD: femi.c,v 1.2.2.2 2002/09/06 08:39:57 jdolecek Exp $	*/
+/*	$NetBSD: femi.c,v 1.2.2.3 2002/10/10 18:35:48 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -65,9 +65,8 @@ struct femi_softc {
 	bus_addr_t sc_top;
 };
 
-struct cfattach femi_ca = {
-	sizeof(struct femi_softc), femimatch, femiattach
-};
+CFATTACH_DECL(femi, sizeof(struct femi_softc),
+    femimatch, femiattach, NULL, NULL);
 extern struct cfdriver femi_cd;
 
 
@@ -151,7 +150,7 @@ femisubmatch(struct device *dev, struct cfdata *cf, void *arg)
 	fa.fa_offset += sc->sc_base;
 	fa._fa_base = sc->sc_base;
 
-	if ((cf->cf_attach->ca_match)(dev, cf, &fa)) {
+	if (config_match(dev, cf, &fa)) {
 		config_attach(dev, cf, &fa, femiprint);
 		return (1);
 	}

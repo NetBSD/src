@@ -1,4 +1,4 @@
-/* $NetBSD: aubus.c,v 1.1.6.2 2002/09/06 08:37:19 jdolecek Exp $ */
+/* $NetBSD: aubus.c,v 1.1.6.3 2002/10/10 18:34:03 jdolecek Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -157,9 +157,8 @@ static void	aubus_attach(struct device *, struct device *, void *);
 static int	aubus_submatch(struct device *, struct cfdata *, void *);
 static int	aubus_print(void *, const char *);
 
-struct cfattach aubus_ca = {
-	sizeof(struct device), aubus_match, aubus_attach
-};
+CFATTACH_DECL(aubus, sizeof(struct device),
+    aubus_match, aubus_attach, NULL, NULL);
 
 bus_space_tag_t	aubus_st;		/* XXX */
 
@@ -182,7 +181,7 @@ aubus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[AUBUSCF_ADDR] != aa->aa_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.10 1999/04/08 04:46:41 gwr Exp $ */
+/*	$NetBSD: dma.c,v 1.10.22.1 2002/10/10 18:37:01 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -56,9 +56,8 @@
 static int	dmamatch  __P((struct device *, struct cfdata *, void *));
 static void	dmaattach __P((struct device *, struct device *, void *));
 
-struct cfattach dma_ca = {
-	sizeof(struct dma_softc), dmamatch, dmaattach
-};
+CFATTACH_DECL(dma, sizeof(struct dma_softc),
+    dmamatch, dmaattach, NULL, NULL);
 
 extern struct cfdriver dma_cd;
 

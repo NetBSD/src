@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.18 2001/01/16 21:13:09 thomas Exp $ */
+/*	$NetBSD: lpt.c,v 1.18.4.1 2002/10/10 18:32:02 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -127,11 +127,15 @@ int lpthwintr __P((struct lpt_softc *, int));
 static void lpattach __P((struct device *, struct device *, void *));
 static int  lpmatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach lp_ca = {
-	sizeof(struct lpt_softc), lpmatch, lpattach
-};
+CFATTACH_DECL(lp, sizeof(struct lpt_softc),
+    lpmatch, lpattach, NULL, NULL);
 
 extern struct cfdriver lp_cd;
+
+const struct cdevsw lp_cdevsw = {
+	lpopen, lpclose, noread, lpwrite, lpioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*ARGSUSED*/
 static	int

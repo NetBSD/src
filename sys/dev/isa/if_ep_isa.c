@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.27.2.2 2002/01/10 19:55:28 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.27.2.3 2002/10/10 18:39:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.27.2.2 2002/01/10 19:55:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.27.2.3 2002/10/10 18:39:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.27.2.2 2002/01/10 19:55:28 thorpej E
 int ep_isa_probe __P((struct device *, struct cfdata *, void *));
 void ep_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ep_isa_ca = {
-	sizeof(struct ep_softc), ep_isa_probe, ep_isa_attach
-};
+CFATTACH_DECL(ep_isa, sizeof(struct ep_softc),
+    ep_isa_probe, ep_isa_attach, NULL, NULL);
 
 static	void epaddcard __P((int, int, int, int));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.2 2001/04/02 09:54:16 wdk Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.2.4.1 2002/10/10 18:34:10 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,9 +59,8 @@ struct isabus_softc {
 	struct mipsco_isa_chipset sc_isa_ic;
 };
 
-struct cfattach isabus_ca = {
-	sizeof(struct isabus_softc), isabusmatch, isabusattach
-};
+CFATTACH_DECL(isabus, sizeof(struct isabus_softc),
+    isabusmatch, isabusattach, NULL, NULL);
 
 extern struct cfdriver isabus_cd;
 

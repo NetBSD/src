@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.32.2.2 2002/06/23 17:35:17 jdolecek Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.32.2.3 2002/10/10 18:32:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -125,9 +125,8 @@ static void insert_into_list __P((PCI_MEMREG *head, struct pci_memreg *elem));
 static int overlap_pci_areas __P((struct pci_memreg *p,
 	struct pci_memreg *self, u_int addr, u_int size, u_int what));
 
-struct cfattach pcibus_ca = {
-	sizeof(struct device), pcibusmatch, pcibusattach
-};
+CFATTACH_DECL(pcibus, sizeof(struct device),
+    pcibusmatch, pcibusattach, NULL, NULL);
 
 /*
  * We need some static storage to probe pci-busses for VGA cards during
@@ -696,7 +695,7 @@ pci_intr_string(pc, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih == -1)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);

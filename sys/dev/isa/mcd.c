@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.70.4.3 2002/09/06 08:44:50 jdolecek Exp $	*/
+/*	$NetBSD: mcd.c,v 1.70.4.4 2002/10/10 18:39:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.70.4.3 2002/09/06 08:44:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.70.4.4 2002/10/10 18:39:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,11 +156,6 @@ struct mcd_softc {
 	u_char	probe;
 };
 
-/* prototypes */
-/* XXX does not belong here */
-cdev_decl(mcd);
-bdev_decl(mcd);
-
 static int bcd2bin __P((bcd_t));
 static bcd_t bin2bcd __P((int));
 static void hsg2msf __P((int, bcd_t *));
@@ -196,16 +191,32 @@ int mcd_find __P((bus_space_tag_t, bus_space_handle_t, struct mcd_softc *));
 int mcdprobe __P((struct device *, struct cfdata *, void *));
 void mcdattach __P((struct device *, struct device *, void *));
 
-struct cfattach mcd_ca = {
-	sizeof(struct mcd_softc), mcdprobe, mcdattach
-};
+CFATTACH_DECL(mcd, sizeof(struct mcd_softc),
+    mcdprobe, mcdattach, NULL, NULL);
 
 extern struct cfdriver mcd_cd;
+
+dev_type_open(mcdopen);
+dev_type_close(mcdclose);
+dev_type_read(mcdread);
+dev_type_write(mcdwrite);
+dev_type_ioctl(mcdioctl);
+dev_type_strategy(mcdstrategy);
+dev_type_dump(mcddump);
+dev_type_size(mcdsize);
+
+const struct bdevsw mcd_bdevsw = {
+	mcdopen, mcdclose, mcdstrategy, mcdioctl, mcddump, mcdsize, D_DISK
+};
+
+const struct cdevsw mcd_cdevsw = {
+	mcdopen, mcdclose, mcdread, mcdwrite, mcdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
 void	mcdgetdefaultlabel __P((struct mcd_softc *, struct disklabel *));
 void	mcdgetdisklabel __P((struct mcd_softc *));
 int	mcd_get_parms __P((struct mcd_softc *));
-void	mcdstrategy __P((struct buf *));
 void	mcdstart __P((struct mcd_softc *));
 int	mcdlock __P((struct mcd_softc *));
 void	mcdunlock __P((struct mcd_softc *));

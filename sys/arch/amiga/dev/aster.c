@@ -1,4 +1,4 @@
-/*	$NetBSD: aster.c,v 1.14.2.1 2002/02/11 20:06:50 jdolecek Exp $ */
+/*	$NetBSD: aster.c,v 1.14.2.2 2002/10/10 18:31:21 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998,2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.2.1 2002/02/11 20:06:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.2.2 2002/10/10 18:31:21 jdolecek Exp $");
 
 /*
  * zbus ISDN Blaster, ISDN Master driver.
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: aster.c,v 1.14.2.1 2002/02/11 20:06:50 jdolecek Exp 
 #include <sys/param.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 
 #include <amiga/include/cpu.h>
 
@@ -71,9 +70,8 @@ int astermatch(struct device *, struct cfdata *, void *);
 void asterattach(struct device *, struct device *, void *);
 int asterprint(void *auxp, const char *);
 
-struct cfattach aster_ca = {
-	sizeof(struct aster_softc), astermatch, asterattach
-};
+CFATTACH_DECL(aster, sizeof(struct aster_softc),
+    astermatch, asterattach, NULL, NULL);
 
 int
 astermatch(struct device *parent, struct cfdata *cfp, void *auxp)

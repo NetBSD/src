@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.6.42.1 2002/06/17 18:48:25 jdolecek Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.6.42.2 2002/10/10 18:32:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,8 +110,6 @@ struct	grf_softc {
 #define GRFUNIT(d)	((d) & 0x7)
 
 #ifdef _KERNEL
-
-dev_type_open(grfopen);
 
 int  grf_mode __P((struct grf_softc *, int, void *, int, int));
 void grf_viewsync __P((struct grf_softc *));

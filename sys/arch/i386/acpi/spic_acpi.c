@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.1.6.2 2002/09/06 08:35:54 jdolecek Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.1.6.3 2002/10/10 18:33:07 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.1.6.2 2002/09/06 08:35:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.1.6.3 2002/10/10 18:33:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,10 +69,9 @@ struct spic_acpi_softc {
 int	spic_acpi_match(struct device *, struct cfdata *, void *);
 void	spic_acpi_attach(struct device *, struct device *, void *);
 
-struct cfattach spic_acpi_ca = {
-	sizeof(struct spic_acpi_softc), spic_acpi_match, spic_acpi_attach,
-	/* spic_acpi_detach, spic_acpi_activate */
-};
+CFATTACH_DECL(spic_acpi, sizeof(struct spic_acpi_softc),
+    spic_acpi_match, spic_acpi_attach, NULL, NULL);
+
 
 int
 spic_acpi_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.4.2 2002/09/06 08:40:22 jdolecek Exp $	*/
+/*	$NetBSD: types.h,v 1.1.4.3 2002/10/10 18:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -77,6 +77,7 @@ typedef struct label_t {
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_GENERIC_SOFT_INTERRUPTS
 #define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_MD_RUNQUEUE
 
 #ifdef notyet
 #define	__HAVE_AST_PERPROC	/* Not reqd. until we support SMP */

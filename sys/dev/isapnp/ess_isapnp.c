@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_isapnp.c,v 1.6.16.1 2002/01/10 19:55:50 thorpej Exp $	*/
+/*	$NetBSD: ess_isapnp.c,v 1.6.16.2 2002/10/10 18:39:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.6.16.1 2002/01/10 19:55:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.6.16.2 2002/10/10 18:39:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,10 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: ess_isapnp.c,v 1.6.16.1 2002/01/10 19:55:50 thorpej 
 int	ess_isapnp_match __P((struct device *, struct cfdata *, void *));
 void	ess_isapnp_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ess_isapnp_ca = {
-	sizeof(struct ess_softc), ess_isapnp_match, ess_isapnp_attach
-};
-
+CFATTACH_DECL(ess_isapnp, sizeof(struct ess_softc),
+    ess_isapnp_match, ess_isapnp_attach, NULL, NULL);
 
 /*
  * Probe / attach routines.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23.2.5 2002/09/06 08:39:45 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.6 2002/10/10 18:35:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -42,7 +42,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -355,7 +354,7 @@ mach_init(argc, argv, magic, btinfo)
 		break;
 
 	default:
-		panic("IP%d architecture not yet supported\n", mach_type);
+		panic("IP%d architecture not yet supported", mach_type);
 		break;
 	}
 

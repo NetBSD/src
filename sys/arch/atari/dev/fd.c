@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.36.8.2 2002/09/06 08:33:24 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.36.8.3 2002/10/10 18:32:00 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -192,16 +192,12 @@ static short	def_type = 0;		/* Reflects config-switches	*/
 
 typedef void	(*FPV) __P((void *));
 
-/*
- * {b,c}devsw[] function prototypes
- */
 dev_type_open(fdopen);
 dev_type_close(fdclose);
 dev_type_read(fdread);
 dev_type_write(fdwrite);
 dev_type_ioctl(fdioctl);
-dev_type_size(fdsize);
-dev_type_dump(fddump);
+dev_type_strategy(fdstrategy);
 
 /*
  * Private drive functions....
@@ -271,8 +267,16 @@ static int	fdcmatch __P((struct device *, struct cfdata *, void *));
 static int	fdcprint __P((void *, const char *));
 static void	fdcattach __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_ca = {
-	sizeof(struct device), fdcmatch, fdcattach
+CFATTACH_DECL(fdc, sizeof(struct device),
+    fdcmatch, fdcattach, NULL, NULL);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 static int
@@ -354,12 +358,10 @@ const char	*pnp;
 static int	fdmatch __P((struct device *, struct cfdata *, void *));
 static void	fdattach __P((struct device *, struct device *, void *));
 
-       void	fdstrategy __P((struct buf *));
 struct dkdriver fddkdriver = { fdstrategy };
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdmatch, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
@@ -647,29 +649,6 @@ done:
 	biodone(bp);
 }
 
-/*
- * no dumps to floppy disks thank you.
- */
-int
-fddump(dev, blkno, va, size)
-dev_t	dev;
-daddr_t	blkno;
-caddr_t	va;
-size_t	size;
-{
-	return(ENXIO);
-}
-
-/*
- * no dumps to floppy disks thank you.
- */
-int
-fdsize(dev)
-dev_t dev;
-{
-	return(-1);
-}
-
 int
 fdread(dev, uio, flags)
 dev_t		dev;
@@ -819,7 +798,7 @@ int	drive, head, dense;
 			DMA->dma_drvmode = (FDC_HDSET|FDC_HDSIG);
 			break;
 		default:
-			panic("fdselect: unknown density code\n");
+			panic("fdselect: unknown density code");
 	}
 	if(i != selected) {
 		selected = i;

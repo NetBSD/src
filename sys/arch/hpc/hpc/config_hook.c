@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.c,v 1.1.6.3 2002/06/23 17:36:33 jdolecek Exp $	*/
+/*	$NetBSD: config_hook.c,v 1.1.6.4 2002/10/10 18:32:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -224,7 +224,7 @@ config_connect(int type, long id)
 		if (hr->hr_id == id) {
 			if (hr->hr_mode == CONFIG_HOOK_SHARE)
 				panic("config_connect: can't connect with "
-				    "shared hook, type=%d id=%ld\n", type, id);
+				    "shared hook, type=%d id=%ld", type, id);
 			cr->hr_ctx = hr->hr_ctx;
 			cr->hr_func = hr->hr_func;
 			cr->hr_mode = hr->hr_mode;

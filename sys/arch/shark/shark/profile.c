@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.c,v 1.1.14.2 2002/06/23 17:41:32 jdolecek Exp $	*/
+/*	$NetBSD: profile.c,v 1.1.14.3 2002/10/10 18:36:04 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -46,7 +46,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
-#include <sys/map.h>
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
@@ -110,6 +109,15 @@ void profStart(struct profStartInfo *);
 static void profEnter(struct profHashTable * , unsigned int);
 void displayTable(struct profHashTable * );
 
+dev_type_open(profopen);
+dev_type_close(profclose);
+dev_type_read(profread);
+dev_type_ioctl(profioctl);
+
+const struct cdevsw prof_cdevsw = {
+	profopen, profclose, profread, nowrite, profioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 void 
 profilerattach(n)
@@ -218,7 +226,7 @@ profread(dev, uio, flags)
 		}
 		else
 		{
-		    panic("profiler lost buffer\n");
+		    panic("profiler lost buffer");
 		}
 	    }
 	    /* now initialise the backup copy before switching over.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.2.12.2 2002/09/06 08:36:10 jdolecek Exp $	*/
+/*	$NetBSD: bios32.c,v 1.2.12.3 2002/10/10 18:33:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2.12.2 2002/09/06 08:36:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.2.12.3 2002/10/10 18:33:17 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

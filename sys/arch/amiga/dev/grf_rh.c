@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rh.c,v 1.29.22.5 2002/09/06 08:31:50 jdolecek Exp $ */
+/*	$NetBSD: grf_rh.c,v 1.29.22.6 2002/10/10 18:31:26 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -34,7 +34,7 @@
 #include "opt_retina.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.29.22.5 2002/09/06 08:31:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_rh.c,v 1.29.22.6 2002/10/10 18:31:26 jdolecek Exp $");
 
 #include "grfrh.h"
 #if NGRFRH > 0
@@ -732,10 +732,6 @@ rh_load_mon(struct grf_softc *gp, struct MonDef *md)
 	gi->gd_regsize		= LM_OFFSET;
 	gi->gd_fbaddr		= (caddr_t) kvtop (fb);
 	gi->gd_fbsize		= MEMSIZE *1024*1024;
-#ifdef BANKEDDEVPAGER
-	/* we're not using banks NO MORE! */
-	gi->gd_bank_size	= 0;
-#endif
 	gi->gd_colors		= 1 << md->DEP;
 	gi->gd_planes		= md->DEP;
 
@@ -1524,9 +1520,8 @@ void grfrhattach(struct device *, struct device *, void *);
 int  grfrhprint(void *, const char *);
 int  grfrhmatch(struct device *, struct cfdata *, void *);
 
-struct cfattach grfrh_ca = {
-	sizeof(struct grf_softc), grfrhmatch, grfrhattach
-};
+CFATTACH_DECL(grfrh, sizeof(struct grf_softc),
+    grfrhmatch, grfrhattach, NULL, NULL);
 
 static struct cfdata *cfdata;
 
@@ -1732,12 +1727,6 @@ rh_mode(register struct grf_softc *gp, u_long cmd, void *arg, u_long a2,
 		*(int *)arg = rh_mon_max;
 		return(0);
 
-#ifdef BANKEDDEVPAGER
-	    case GM_GRFGETBANK:
-	    case GM_GRFGETCURBANK:
-	    case GM_GRFSETBANK:
-		return(EINVAL);
-#endif
 	    case GM_GRFIOCTL:
 		return(rh_ioctl (gp, a2, arg));
 

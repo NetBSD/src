@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.2.4 2002/09/06 08:35:02 jdolecek Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.2.5 2002/10/10 18:32:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.2.4 2002/09/06 08:35:02 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.2.5 2002/10/10 18:32:42 jdolecek Exp $");
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.2.4 2002/09/06 08:35:02 jdolecek Exp $")
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/conf.h>
 
 #if NRND > 0
 #include <sys/rnd.h>
@@ -108,21 +109,31 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.2.4 2002/09/06 08:35:02 jdolecek Exp $")
 #include <hp300/hp300/leds.h>
 #endif
 
-/*
-extern void disksort();
-extern void biodone();
-extern int physio();
-extern void TBIS();
-*/
-
 int	sdmatch __P((struct device *, struct cfdata *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
 
-struct cfattach sd_ca = {
-	sizeof(struct sd_softc), sdmatch, sdattach
-};
+CFATTACH_DECL(sd, sizeof(struct sd_softc),
+    sdmatch, sdattach, NULL, NULL);
 
 extern struct cfdriver sd_cd;
+
+dev_type_open(sdopen);
+dev_type_close(sdclose);
+dev_type_read(sdread);
+dev_type_write(sdwrite);
+dev_type_ioctl(sdioctl);
+dev_type_strategy(sdstrategy);
+dev_type_dump(sddump);
+dev_type_size(sdsize);
+
+const struct bdevsw sd_bdevsw = {
+	sdopen, sdclose, sdstrategy, sdioctl, sddump, sdsize, D_DISK
+};
+
+const struct cdevsw sd_cdevsw = {
+	sdopen, sdclose, sdread, sdwrite, sdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
 #ifdef DEBUG
 int sddebug = 1;
@@ -158,21 +169,6 @@ static char legal_cmds[256] = {
 /*e0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 /*f0*/	0,  0,  0,  0,  0,  0,  0,  0,    0,  0,  0,  0,  0,  0,  0,  0,
 };
-
-/* bdev_decl(sd); */
-/* cdev_decl(sd); */
-/* XXX we should use macros to do these... */
-int	sdopen __P((dev_t, int, int, struct proc *));
-int	sdclose __P((dev_t, int, int, struct proc *));
-
-int	sdioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	sdread __P((dev_t, struct uio *, int));
-void	sdreset __P((struct sd_softc *));
-int	sdwrite __P((dev_t, struct uio *, int));
-
-void	sdstrategy __P((struct buf *));
-int	sddump __P((dev_t, daddr_t, caddr_t, size_t));
-int	sdsize __P((dev_t));
 
 static int	sderror __P((struct sd_softc *, int));
 static void	sdfinish __P((struct sd_softc *, struct buf *));
@@ -312,14 +308,6 @@ sdattach(parent, self, aux)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
-}
-
-void
-sdreset(sc)
-	struct sd_softc *sc;
-{
-
-	sc->sc_stats.sdresets++;
 }
 
 /*

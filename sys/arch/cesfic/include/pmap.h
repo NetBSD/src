@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3.2.1 2001/09/13 01:13:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.2.2 2002/10/10 18:32:17 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -150,6 +150,12 @@ extern struct pv_entry	*pv_table;	/* array of entries, one per page */
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 #define pmap_update(pmap)		/* nothing (yet) */
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 extern pt_entry_t	*Sysmap;
 extern char		*vmmap;		/* map for mem, dumps, etc. */

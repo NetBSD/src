@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.22.2.2 2002/09/06 08:38:50 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.22.2.3 2002/10/10 18:35:06 jdolecek Exp $
 
 KDIR=	/sys/arch/pmax/include
 INCSDIR= /usr/include/pmax
 
 INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	bswap.h bsd-aout.h bus.h \
-	cdefs.h conf.h cpu.h \
+	cdefs.h cpu.h \
 	db_machdep.h dc7085cons.h disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
 	fbvar.h float.h \

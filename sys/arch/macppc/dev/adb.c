@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.9.2.1 2002/09/06 08:37:05 jdolecek Exp $	*/
+/*	$NetBSD: adb.c,v 1.9.2.2 2002/10/10 18:33:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -69,9 +69,8 @@ int	adb_debug = 0;		/* Output debugging messages */
 /*
  * Driver definition.
  */
-struct cfattach adb_ca = {
-	sizeof(struct adb_softc), adbmatch, adbattach
-};
+CFATTACH_DECL(adb, sizeof(struct adb_softc),
+    adbmatch, adbattach, NULL, NULL);
 
 static int
 adbmatch(parent, cf, aux)

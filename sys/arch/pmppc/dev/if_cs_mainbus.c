@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_mainbus.c,v 1.1.2.2 2002/06/23 17:39:17 jdolecek Exp $	*/
+/*	$NetBSD: if_cs_mainbus.c,v 1.1.2.3 2002/10/10 18:35:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@
 static int	cs_mainbus_match(struct device *, struct cfdata *, void *);
 static void	cs_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach cs_mainbus_ca = {
-	sizeof(struct cs_softc), cs_mainbus_match, cs_mainbus_attach
-};
+CFATTACH_DECL(cs_mainbus, sizeof(struct cs_softc),
+    cs_mainbus_match, cs_mainbus_attach, NULL, NULL);
 
 int
 cs_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -220,20 +219,20 @@ cs_io_write_multi_2(struct cs_softc *sc, bus_size_t offs,
 static u_int16_t
 cs_mem_read_2(struct cs_softc *sc, bus_size_t offs)
 {
-	panic("cs_mem_read_2\n");
+	panic("cs_mem_read_2");
 }
 
 static void
 cs_mem_write_2(struct cs_softc *sc, bus_size_t offs, u_int16_t data)
 {
-	panic("cs_mem_write_2\n");
+	panic("cs_mem_write_2");
 }
 
 static void
 cs_mem_write_region_2(struct cs_softc *sc, bus_size_t offs,
 		      const u_int16_t *buf, bus_size_t cnt)
 {
-	panic("cs_mem_write_region_2\n");
+	panic("cs_mem_write_region_2");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.83.2.3 2002/09/06 08:40:53 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.83.2.4 2002/10/10 18:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,7 +63,6 @@
 #include <machine/bsd_openprom.h>
 #include <machine/autoconf.h>
 #include <machine/intr.h>
-#include <machine/conf.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
 #include <machine/z8530var.h>
@@ -91,7 +90,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The Sun provides a 4.9152 MHz clock to the ZS chips.
@@ -179,21 +177,18 @@ static void zs_attach_obio __P((struct device *, struct device *, void *));
 static int  zs_match_bootbus __P((struct device *, struct cfdata *, void *));
 static void zs_attach_bootbus __P((struct device *, struct device *, void *));
 
-struct cfattach zs_bootbus_ca = {
-	sizeof(struct zsc_softc), zs_match_bootbus, zs_attach_bootbus
-};
+CFATTACH_DECL(zs_bootbus, sizeof(struct zsc_softc),
+    zs_match_bootbus, zs_attach_bootbus, NULL, NULL);
 #endif /* SUN4D */
 
 static void zs_attach __P((struct zsc_softc *, struct zsdevice *, int));
 static int  zs_print __P((void *, const char *name));
 
-struct cfattach zs_mainbus_ca = {
-	sizeof(struct zsc_softc), zs_match_mainbus, zs_attach_mainbus
-};
+CFATTACH_DECL(zs_mainbus, sizeof(struct zsc_softc),
+    zs_match_mainbus, zs_attach_mainbus, NULL, NULL);
 
-struct cfattach zs_obio_ca = {
-	sizeof(struct zsc_softc), zs_match_obio, zs_attach_obio
-};
+CFATTACH_DECL(zs_obio, sizeof(struct zsc_softc),
+    zs_match_obio, zs_attach_obio, NULL, NULL);
 
 extern struct cfdriver zs_cd;
 
@@ -222,7 +217,7 @@ zs_match_mainbus(parent, cf, aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) != 0)
+	if (strcmp(cf->cf_name, ma->ma_name) != 0)
 		return (0);
 
 	return (1);
@@ -240,7 +235,7 @@ zs_match_obio(parent, cf, aux)
 	if (uoba->uoba_isobio4 == 0) {
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 
-		if (strcmp(cf->cf_driver->cd_name, sa->sa_name) != 0)
+		if (strcmp(cf->cf_name, sa->sa_name) != 0)
 			return (0);
 
 		return (1);
@@ -260,7 +255,7 @@ zs_match_bootbus(parent, cf, aux)
 {
 	struct bootbus_attach_args *baa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, baa->ba_name) == 0);
+	return (strcmp(cf->cf_name, baa->ba_name) == 0);
 }
 #endif /* SUN4D */
 

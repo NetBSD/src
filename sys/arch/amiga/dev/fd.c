@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47.4.3 2002/09/06 08:31:46 jdolecek Exp $ */
+/*	$NetBSD: fd.c,v 1.47.4.4 2002/10/10 18:31:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.4.3 2002/09/06 08:31:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.4.4 2002/10/10 18:31:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,14 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.47.4.3 2002/09/06 08:31:46 jdolecek Exp $")
 #include <sys/disk.h>
 #include <sys/dkbad.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "locators.h"
 
@@ -197,7 +195,6 @@ void	fdattach(struct device *, struct device *, void *);
 
 void	fdintr(int);
 void	fdidxintr(void);
-void	fdstrategy(struct buf *);
 int	fdloaddisk(struct fd_softc *);
 void	fdgetdefaultlabel(struct fd_softc *, struct disklabel *, int);
 int	fdgetdisklabel(struct fd_softc *, dev_t);
@@ -227,8 +224,6 @@ u_long	*mfmblkdecode(u_long *, u_long *, u_long *, int);
 u_short	*msblkdecode(u_short *, u_char *, int);
 u_short	*msblkencode(u_short *, u_char *, int, u_short *);
 
-struct dkdriver fddkdriver = { fdstrategy };
-
 /*
  * read size is (nsectors + 1) * mfm secsize + gap bytes + 2 shorts
  * write size is nsectors * mfm secsize + gap bytes + 3 shorts
@@ -244,15 +239,31 @@ struct fdtype fdtype[] = {
 };
 int nfdtype = sizeof(fdtype) / sizeof(*fdtype);
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdmatch, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdmatch, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
-struct cfattach fdc_ca = {
-	sizeof(struct device), fdcmatch, fdcattach
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
 };
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
+struct dkdriver fddkdriver = { fdstrategy };
+
+CFATTACH_DECL(fdc, sizeof(struct device),
+    fdcmatch, fdcattach, NULL, NULL);
 
 /*
  * all hw access through macros, this helps to hide the active low
@@ -589,15 +600,6 @@ fdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	default:
 		return(ENOTTY);
 	}
-}
-
-/*
- * no dumps to floppy disks thank you.
- */
-int
-fdsize(dev_t dev)
-{
-	return(-1);
 }
 
 int
@@ -2152,10 +2154,4 @@ msblkencode(u_short *rp, u_char *cp, int len, u_short *crc)
 		*crc = mycrc;
 
 	return(rp);
-}
-
-int
-fddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
-{
-	return (EINVAL);
 }

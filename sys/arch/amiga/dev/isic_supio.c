@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_supio.c,v 1.7.2.2 2002/06/23 17:34:28 jdolecek Exp $ */
+/*	$NetBSD: isic_supio.c,v 1.7.2.3 2002/10/10 18:31:29 jdolecek Exp $ */
 
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
@@ -47,7 +47,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.2.2 2002/06/23 17:34:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_supio.c,v 1.7.2.3 2002/10/10 18:31:29 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -102,9 +102,8 @@ struct isic_supio_softc {
 	struct bus_space_tag	sc_bst;
 };
 
-struct cfattach isic_supio_ca = {
-	sizeof(struct isic_supio_softc), isic_supio_match, isic_supio_attach
-};
+CFATTACH_DECL(isic_supio, sizeof(struct isic_supio_softc),
+    isic_supio_match, isic_supio_attach, NULL, NULL);
 
 /*
  * Probe card

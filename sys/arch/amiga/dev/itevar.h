@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.14.44.1 2002/02/11 20:07:02 jdolecek Exp $	*/
+/*	$NetBSD: itevar.h,v 1.14.44.2 2002/10/10 18:31:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -197,11 +197,6 @@ void	ite_cnfinish(struct ite_softc *);
 
 /* standard ite device entry points. */
 void	iteinit(dev_t);
-int	iteopen(dev_t, int, int, struct proc *);
-int	iteclose(dev_t, int, int, struct proc *);
-int	iteread(dev_t, struct uio *, int);
-int	itewrite(dev_t, struct uio *, int);
-int	iteioctl(dev_t, u_long, caddr_t, int, struct proc *);
 void	itestart(struct tty *);
 
 /* ite functions */

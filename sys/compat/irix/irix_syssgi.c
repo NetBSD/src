@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.c,v 1.11.4.5 2002/06/23 17:43:58 jdolecek Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.11.4.6 2002/10/10 18:37:57 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.5 2002/06/23 17:43:58 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.6 2002/10/10 18:37:57 jdolecek Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.11.4.5 2002/06/23 17:43:58 jdolece
 
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_signal.h>
+#include <compat/irix/irix_exec.h>
 #include <compat/irix/irix_prctl.h>
 #include <compat/irix/irix_syscall.h>
 #include <compat/irix/irix_syscallargs.h>
@@ -388,12 +389,12 @@ irix_syssgi_mapelf(fd, ph, count, p, retval)
 			vcp = &vcset.evs_cmds[j];
 			if (vcp->ev_flags & VMCMD_RELATIVE) {
 				if (base_vcp == NULL)
-					panic("irix_syssgi_mapelf():  bad vmcmd base\n");
+					panic("irix_syssgi_mapelf():  bad vmcmd base");
 				   
 				vcp->ev_addr += base_vcp->ev_addr;
 			}
-			/* Eventually do it for a whole share group */
-			if ((error = irix_sync_saddr_vmcmd(p, vcp)) != 0)
+			IRIX_VM_SYNC(p, error = (*vcp->ev_proc)(p, vcp));
+			if (error)
 				goto bad;
 		}
 		pht++;

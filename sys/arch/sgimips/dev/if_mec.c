@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mec.c,v 1.5.6.1 2002/03/16 15:59:27 jdolecek Exp $	*/
+/*	$NetBSD: if_mec.c,v 1.5.6.2 2002/10/10 18:35:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -117,9 +117,8 @@ static void	mec_statchg(struct device *);
 static int	mec_mediachange(struct ifnet *);
 static void	mec_mediastatus(struct ifnet *, struct ifmediareq *);
 
-struct cfattach mec_ca = {
-	sizeof(struct mec_softc), mec_match, mec_attach
-};
+CFATTACH_DECL(mec, sizeof(struct mec_softc),
+    mec_match, mec_attach, NULL, NULL);
 
 static int
 mec_match(parent, match, aux)

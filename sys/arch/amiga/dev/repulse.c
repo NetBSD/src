@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.1.4.4 2002/02/11 20:07:04 jdolecek Exp $ */
+/*	$NetBSD: repulse.c,v 1.1.4.5 2002/10/10 18:31:32 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.1.4.4 2002/02/11 20:07:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.1.4.5 2002/10/10 18:31:32 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -233,9 +233,8 @@ struct repulse_softc {
 int repulse_match (struct device *, struct cfdata *, void *);
 void repulse_attach (struct device *, struct device *, void *);
 
-struct cfattach repulse_ca = {
-	sizeof(struct repulse_softc), repulse_match, repulse_attach
-};
+CFATTACH_DECL(repulse, sizeof(struct repulse_softc),
+    repulse_match, repulse_attach, NULL, NULL);
 
 int
 repulse_match(struct device *parent, struct cfdata *cfp, void *aux) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.9.2.1 2002/01/10 19:46:21 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.9.2.2 2002/10/10 18:34:11 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -82,9 +82,8 @@ struct asc_softc {
 static int	ascmatch  (struct device *, struct cfdata *, void *);
 static void	ascattach (struct device *, struct device *, void *);
 
-struct cfattach asc_ca = {
-	sizeof(struct asc_softc), ascmatch, ascattach
-};
+CFATTACH_DECL(asc, sizeof(struct asc_softc),
+    ascmatch, ascattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

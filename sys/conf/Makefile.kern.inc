@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.10.2.5 2002/09/06 08:43:38 jdolecek Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.10.2.6 2002/10/10 18:38:13 jdolecek Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}. There are
@@ -47,7 +47,7 @@ S!=	cd ../../../..; pwd
 INCLUDES?=	-I. ${EXTRA_INCLUDES} -I$S/arch -I$S -nostdinc
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
-COPTS?=		${DEFCOPTS}
+COPTS+=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
@@ -111,7 +111,7 @@ LIBCOMPAT?=	${COMPATLIB_PROF}
 ## Each port should have a corresponding section with settings for
 ## MD_CFILES, MD_SFILES, and MD_OBJS, along with build rules for same.
 ##
-MI_CFILES=ioconf.c param.c
+MI_CFILES=devsw.c ioconf.c param.c
 # the need for a MI_SFILES variable is dubitable at best
 MI_OBJS=${MI_CFILES:S/.c/.o/}
 

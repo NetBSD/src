@@ -1,4 +1,4 @@
-/* $NetBSD: lunafb.c,v 1.6.6.2 2002/09/06 08:36:42 jdolecek Exp $ */
+/* $NetBSD: lunafb.c,v 1.6.6.3 2002/10/10 18:33:37 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.6.6.2 2002/09/06 08:36:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunafb.c,v 1.6.6.3 2002/10/10 18:33:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,8 @@ static const struct wsdisplay_accessops omfb_accessops = {
 static int  omfbmatch __P((struct device *, struct cfdata *, void *));
 static void omfbattach __P((struct device *, struct device *, void *));
 
-const struct cfattach fb_ca = {
-	sizeof(struct omfb_softc), omfbmatch, omfbattach
-};
+CFATTACH_DECL(fb, sizeof(struct omfb_softc),
+    omfbmatch, omfbattach, NULL, NULL);
 extern struct cfdriver fb_cd;
 
 extern int hwplanemask;	/* hardware planemask; retrieved at boot */

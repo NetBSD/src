@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn20aa.c,v 1.41.4.2 2002/06/23 17:34:15 jdolecek Exp $ */
+/* $NetBSD: pci_kn20aa.c,v 1.41.4.3 2002/10/10 18:31:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.41.4.2 2002/06/23 17:34:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn20aa.c,v 1.41.4.3 2002/10/10 18:31:09 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -172,7 +172,7 @@ dec_kn20aa_intr_map(pa, ihp)
 
 	kn20aa_irq += buspin - 1;
 	if (kn20aa_irq > KN20AA_MAX_IRQ)
-		panic("dec_kn20aa_intr_map: kn20aa_irq too large (%d)\n",
+		panic("dec_kn20aa_intr_map: kn20aa_irq too large (%d)",
 		    kn20aa_irq);
 
 	*ihp = kn20aa_irq;
@@ -190,7 +190,7 @@ dec_kn20aa_intr_string(ccv, ih)
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
         if (ih > KN20AA_MAX_IRQ)
-                panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx\n",
+                panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx",
 		    ih);
 
         sprintf(irqstr, "kn20aa irq %ld", ih);
@@ -207,7 +207,7 @@ dec_kn20aa_intr_evcnt(ccv, ih)
 #endif
 
 	if (ih > KN20AA_MAX_IRQ)
-		panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx\n", ih);
+		panic("dec_kn20aa_intr_string: bogus kn20aa IRQ 0x%lx", ih);
 	return (alpha_shared_intr_evcnt(kn20aa_pci_intr, ih));
 }
 
@@ -224,7 +224,7 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg)
 	void *cookie;
 
         if (ih > KN20AA_MAX_IRQ)
-                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%lx\n",
+                panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%lx",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(kn20aa_pci_intr, ih, IST_LEVEL,

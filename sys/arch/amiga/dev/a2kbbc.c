@@ -1,4 +1,4 @@
-/*	$NetBSD: a2kbbc.c,v 1.10.8.1 2002/02/11 20:06:49 jdolecek Exp $ */
+/*	$NetBSD: a2kbbc.c,v 1.10.8.2 2002/10/10 18:31:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.10.8.1 2002/02/11 20:06:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.10.8.2 2002/10/10 18:31:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,9 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: a2kbbc.c,v 1.10.8.1 2002/02/11 20:06:49 jdolecek Exp
 int a2kbbc_match(struct device *, struct cfdata *, void *);
 void a2kbbc_attach(struct device *, struct device *, void *);
 
-struct cfattach a2kbbc_ca = {
-        sizeof(struct device), a2kbbc_match, a2kbbc_attach
-};
+CFATTACH_DECL(a2kbbc, sizeof(struct device),
+    a2kbbc_match, a2kbbc_attach, NULL, NULL);
 
 void *a2kclockaddr;
 int a2kugettod(struct timeval *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.4.4.2 2002/03/16 16:00:51 jdolecek Exp $	*/
+/*	$NetBSD: button.c,v 1.4.4.3 2002/10/10 18:38:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.4.4.2 2002/03/16 16:00:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.4.4.3 2002/10/10 18:38:40 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,8 @@ static void	button_attach(struct device *, struct device *, void *);
 static int	button_intr(void *);
 static int	button_state(void *, int, long, void *);
 
-struct cfattach button_ca = {
-	sizeof(struct button_softc), button_match, button_attach
-};
+CFATTACH_DECL(button, sizeof(struct button_softc),
+    button_match, button_attach, NULL, NULL);
 
 int
 button_match(struct device *parent, struct cfdata *match, void *aux)

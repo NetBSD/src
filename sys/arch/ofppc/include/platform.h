@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.1.6.2 2002/01/10 19:47:12 thorpej Exp $	*/
+/*	$NetBSD: platform.h,v 1.1.6.3 2002/10/10 18:34:49 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -45,6 +45,7 @@
 struct platform {
 	void	(*cons_init)(void);
 	void	(*device_register)(struct device *, void *);
+	void	(*softintr_init)(void);
 };
 
 /*

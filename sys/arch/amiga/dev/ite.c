@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.56.2.2 2002/06/23 17:34:28 jdolecek Exp $ */
+/*	$NetBSD: ite.c,v 1.56.2.3 2002/10/10 18:31:29 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56.2.2 2002/06/23 17:34:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56.2.3 2002/10/10 18:31:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.56.2.2 2002/06/23 17:34:28 jdolecek Exp $"
 #include <machine/cpu.h>	/* for is_draco() */
 
 #include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "grfcc.h"
 #include "ite.h"
@@ -155,11 +154,23 @@ inline static int atoi(const char *);
 inline static int ite_argnum(struct ite_softc *);
 inline static int ite_zargnum(struct ite_softc *);
 
-struct cfattach ite_ca = {
-	sizeof(struct ite_softc), itematch, iteattach
-};
+CFATTACH_DECL(ite, sizeof(struct ite_softc),
+    itematch, iteattach, NULL, NULL);
 
 extern struct cfdriver ite_cd;
+
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_poll(itepoll);
+
+const struct cdevsw ite_cdevsw = {
+	iteopen, iteclose, iteread, itewrite, iteioctl,
+	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
+};
 
 int
 itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
@@ -180,9 +191,7 @@ itematch(struct device *pdp, struct cfdata *cfp, void *auxp)
 	 * during early init we do not have a device pointer
 	 * and thus no unit number.
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
+	maj = cdevsw_lookup_major(&ite_cdevsw);
 	gp->g_itedev = makedev(maj, cfp->cf_unit);
 	return(1);
 }
@@ -522,12 +531,6 @@ struct tty *
 itetty(dev_t dev)
 {
 	return (getitesp(dev)->tp);
-}
-
-void
-itestop(struct tty *tp, int flag)
-{
-
 }
 
 int

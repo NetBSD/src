@@ -1,4 +1,4 @@
-/* $NetBSD: arckbd.c,v 1.2.6.2 2002/06/23 17:33:44 jdolecek Exp $ */
+/* $NetBSD: arckbd.c,v 1.2.6.3 2002/10/10 18:30:13 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: arckbd.c,v 1.2.6.2 2002/06/23 17:33:44 jdolecek Exp $");
+__RCSID("$NetBSD: arckbd.c,v 1.2.6.3 2002/10/10 18:30:13 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -164,9 +164,8 @@ struct arckbd_softc {
 #define AKF_SENTLEDS	0x08
 #define AKF_POLLING	0x10
 
-struct cfattach arckbd_ca = {
-	sizeof(struct arckbd_softc), arckbd_match, arckbd_attach
-};
+CFATTACH_DECL(arckbd, sizeof(struct arckbd_softc),
+    arckbd_match, arckbd_attach, NULL, NULL);
 
 /*
  * Internal devices used because arckbd can't be both a wskbddev and a
@@ -178,15 +177,13 @@ struct cfattach arckbd_ca = {
  */
 
 #if NARCWSKBD > 0
-struct cfattach arcwskbd_ca = {
-	sizeof(struct device), arcwskbd_match, arcwskbd_attach
-};
+CFATTACH_DECL(arcwskbd, sizeof(struct device),
+    arcwskbd_match, arcwskbd_attach, NULL, NULL);
 #endif
 
 #if NARCWSMOUSE > 0
-struct cfattach arcwsmouse_ca = {
-	sizeof(struct device), arcwsmouse_match, arcwsmouse_attach
-};
+CFATTACH_DECL(arcwsmouse, sizeof(struct device),
+    arcwsmouse_match, arcwsmouse_attach, NULL, NULL);
 #endif
 
 struct arckbd_attach_args {

@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.47.4.2 2002/06/23 17:37:49 jdolecek Exp $	*/
+/*	$NetBSD: macrom.c,v 1.47.4.3 2002/10/10 18:33:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -272,7 +272,7 @@ mrg_init_stub_1()
 void
 mrg_init_stub_2()
 {
-	panic("mrg: hit mrg_init_stub_2\n");
+	panic("mrg: hit mrg_init_stub_2");
 }
 
 short
@@ -289,7 +289,7 @@ Count_Resources(u_int32_t rsrc_type)
 	 * Return a Count of all the ROM Resouces of the requested type.
 	 */
 	if (ROMResourceMap == 0)
-		panic("Oops! Need ROM Resource Map ListHead address!\n");
+		panic("Oops! Need ROM Resource Map ListHead address!");
 
 	while (rsrc != 0) {
 #if defined(MRG_DEBUG)
@@ -324,7 +324,7 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 	 * we get more requests than we have space for, we panic.
 	 */
 	if (ROMResourceMap == 0)
-		panic("Oops! Need ROM Resource Map ListHead address!\n");
+		panic("Oops! Need ROM Resource Map ListHead address!");
 
 	while (rsrc != 0) {
 		if (rsrc_type == rsrc->name) {
@@ -337,7 +337,7 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 						ResHndls[i] = (caddr_t)(rsrc->body + ROMBase);
 						return (caddr_t *)&ResHndls[i];
 					}
-				panic("ResHndls table too small!\n");
+				panic("ResHndls table too small!");
 			}
 		}
 		rsrc = rsrc->next == 0 ? 0 : (rsrc_t *)(rsrc->next + ROMBase);
@@ -348,13 +348,13 @@ Get_Ind_Resource(u_int32_t rsrc_type, u_int16_t rsrc_ind)
 void
 mrg_FixDiv()
 {
-	panic("Oops! Need ROM address of _FixDiv for this system!\n");
+	panic("Oops! Need ROM address of _FixDiv for this system!");
 }
 
 void
 mrg_FixMul()
 {
-	panic("Oops! Need ROM address of _FixMul for this system!\n");
+	panic("Oops! Need ROM address of _FixMul for this system!");
 }
 
 void
@@ -377,25 +377,25 @@ mrg_lvl1dtpanic()		/* Lvl1DT stopper */
 void
 mrg_lvl2dtpanic()		/* Lvl2DT stopper */
 {
-	panic("Agh!  I was called from Lvl2DT!!!\n");
+	panic("Agh!  I was called from Lvl2DT!!!");
 }
 
 void
 mrg_jadbprocpanic()	/* JADBProc stopper */
 {
-	panic("Agh!  Called JADBProc!\n");
+	panic("Agh!  Called JADBProc!");
 }
 
 void
 mrg_jswapmmupanic()	/* jSwapMMU stopper */
 {
-	panic("Agh!  Called jSwapMMU!\n");
+	panic("Agh!  Called jSwapMMU!");
 }
 
 void
 mrg_jkybdtaskpanic()	/* JKybdTask stopper */
 {
-	panic("Agh!  Called JKybdTask!\n");
+	panic("Agh!  Called JKybdTask!");
 }
 
 #ifdef MRG_ADB
@@ -465,7 +465,7 @@ void
 mrg_notrap()
 {
 	printf("Aigh!\n");
-	panic("mrg_notrap: We're doomed!\n");
+	panic("mrg_notrap: We're doomed!");
 }
 
 int
@@ -835,7 +835,7 @@ mrg_init()
 			: "=g" (rcnt));
 		printf("mrg: %d are DRVR resources\n", rcnt);
 		if (rcnt == 0)
-			panic("Oops! No DRVR Resources found in ROM\n");
+			panic("Oops! No DRVR Resources found in ROM");
 	}
 #endif
 #if defined(MRG_TEST)
@@ -925,7 +925,7 @@ mrg_init()
   	if (TimeDBRA == 0)
 		TimeDBRA = 0xa3b;		/* BARF default is Mac II */
   	if (ROMBase == 0)
-		panic("ROMBase not set in mrg_init()!\n");
+		panic("ROMBase not set in mrg_init()!");
 
 	strcpy(&FinderName[1], findername);
 	FinderName[0] = (u_char) strlen(findername);

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12.4.1 2001/09/13 01:15:03 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.12.4.2 2002/10/10 18:37:11 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -52,9 +52,8 @@ static void obio_attach __P((struct device *, struct device *, void *));
 static int  obio_print __P((void *, const char *parentname));
 static int	obio_submatch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach
-};
+CFATTACH_DECL(obio, sizeof(struct device),
+    obio_match, obio_attach, NULL, NULL);
 
 static int
 obio_match(parent, cf, aux)
@@ -171,7 +170,6 @@ obio_submatch(parent, cf, aux)
 	void *aux;
 {
 	struct confargs *ca = aux;
-	cfmatch_t submatch;
 
 	/*
 	 * Note that a defaulted address locator can never match
@@ -182,8 +180,8 @@ obio_submatch(parent, cf, aux)
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_paddr == -1)
-		panic("obio_submatch: invalid address for: %s%d\n",
-			cf->cf_driver->cd_name, cf->cf_unit);
+		panic("obio_submatch: invalid address for: %s%d",
+			cf->cf_name, cf->cf_unit);
 #endif
 
 	/*
@@ -204,12 +202,7 @@ obio_submatch(parent, cf, aux)
 	ca->ca_intvec = cf->cf_intvec;
 
 	/* Now call the match function of the potential child. */
-	submatch = cf->cf_attach->ca_match;
-	if (submatch == NULL)
-		panic("obio_submatch: no match function for: %s\n",
-			  cf->cf_driver->cd_name);
-
-	return ((*submatch)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 

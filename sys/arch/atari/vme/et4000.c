@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.5 2000/06/26 04:55:35 simonb Exp $	*/
+/*	$NetBSD: et4000.c,v 1.5.4.1 2002/10/10 18:32:06 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,6 +58,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 #include <atari/vme/vmevar.h>
 
 #include <machine/iomap.h>
@@ -88,13 +89,6 @@ static void	et_stop __P((bus_space_tag_t *, bus_space_handle_t *, int *,
 		    u_char *));
 static int	et_detect __P((bus_space_tag_t *, bus_space_tag_t *,
 		    bus_space_handle_t *, bus_space_handle_t *, u_int));
-
-dev_decl(et,open);
-dev_decl(et,close);
-dev_decl(et,read);
-dev_decl(et,write);
-dev_decl(et,ioctl);
-dev_decl(et,mmap);
 
 int		eton __P((dev_t));
 int		etoff __P((dev_t));
@@ -135,11 +129,22 @@ struct et_softc {
 
 #define ET_SC_FLAGS_INUSE 1
 
-struct cfattach et_ca = {
-	sizeof(struct et_softc), et_vme_match, et_vme_attach
-};
+CFATTACH_DECL(et, sizeof(struct et_softc),
+    et_vme_match, et_vme_attach, NULL, NULL);
 
 extern struct cfdriver et_cd;
+
+dev_type_open(etopen);
+dev_type_close(etclose);
+dev_type_read(etread);
+dev_type_write(etwrite);
+dev_type_ioctl(etioctl);
+dev_type_mmap(etmmap);
+
+const struct cdevsw et_cdevsw = {
+	etopen, etclose, etread, etwrite, etioctl,
+	nostop, notty, nopoll, etmmap, nokqfilter,
+};
 
 /*
  * Look for a ET4000 (Crazy Dots) card on the VME bus.  We might
@@ -355,9 +360,9 @@ et_vme_attach(parent, self, aux)
 	printf("\n");
 
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("et attach: cannot map io area\n");
+		panic("et attach: cannot map io area");
 	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize, 0, &memh))
-		panic("et attach: cannot map mem area\n");
+		panic("et attach: cannot map mem area");
 
 	sc->sc_iot = va->va_iot;
 	sc->sc_ioh = ioh;

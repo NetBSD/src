@@ -1,4 +1,4 @@
-/*	$NetBSD: tx3912video.c,v 1.23.2.3 2002/06/23 17:36:55 jdolecek Exp $ */
+/*	$NetBSD: tx3912video.c,v 1.23.2.4 2002/10/10 18:32:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -115,10 +115,8 @@ void	tx3912video_clut_get(struct tx3912video_softc *, u_int32_t *, int,
 static int __get_color8(int);
 static int __get_color4(int);
 
-struct cfattach tx3912video_ca = {
-	sizeof(struct tx3912video_softc), tx3912video_match, 
-	tx3912video_attach
-};
+CFATTACH_DECL(tx3912video, sizeof(struct tx3912video_softc),
+    tx3912video_match, tx3912video_attach, NULL, NULL);
 
 struct hpcfb_accessops tx3912video_ha = {
 	tx3912video_ioctl, tx3912video_mmap, 0, 0, 0, 0,
@@ -274,7 +272,7 @@ tx3912video_hpcfbinit(sc)
 
 	switch (chip->vc_fbdepth) {
 	default:
-		panic("tx3912video_hpcfbinit: not supported color depth\n");
+		panic("tx3912video_hpcfbinit: not supported color depth");
 		/* NOTREACHED */
 	case 2:
 		fb->hf_class = HPCFB_CLASS_GRAYSCALE;

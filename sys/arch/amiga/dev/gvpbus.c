@@ -1,4 +1,4 @@
-/*	$NetBSD: gvpbus.c,v 1.16.28.1 2002/02/11 20:06:59 jdolecek Exp $ */
+/*	$NetBSD: gvpbus.c,v 1.16.28.2 2002/10/10 18:31:27 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.16.28.1 2002/02/11 20:06:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gvpbus.c,v 1.16.28.2 2002/10/10 18:31:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,9 +46,8 @@ int gvpbusprint(void *auxp, const char *);
 
 extern int sbic_no_dma;		/* Kludge for A1291 - mlh */
 
-struct cfattach gvpbus_ca = {
-	sizeof(struct device), gvpbusmatch, gvpbusattach
-};
+CFATTACH_DECL(gvpbus, sizeof(struct device),
+    gvpbusmatch, gvpbusattach, NULL, NULL);
 
 int
 gvpbusmatch(struct device *pdp, struct cfdata *cfp, void *auxp)

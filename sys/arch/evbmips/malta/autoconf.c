@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.6.2 2002/06/23 17:35:57 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.6.3 2002/10/10 18:32:30 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@ findroot(void)
 		for (dv = alldevs.tqh_first; dv != NULL;
 		     dv = dv->dv_list.tqe_next)
 			if (dv->dv_class == DV_DISK &&
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd"))
+			    !strcmp(dv->dv_cfdata->cf_name, "wd"))
 				    booted_device = dv;
 
 	/*

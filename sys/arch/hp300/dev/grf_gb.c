@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_gb.c,v 1.15.28.2 2002/06/23 17:36:07 jdolecek Exp $	*/
+/*	$NetBSD: grf_gb.c,v 1.15.28.3 2002/10/10 18:32:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.15.28.2 2002/06/23 17:36:07 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_gb.c,v 1.15.28.3 2002/10/10 18:32:38 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -137,13 +137,11 @@ void	gbox_dio_attach __P((struct device *, struct device *, void *));
 
 int	gboxcnattach __P((bus_space_tag_t, bus_addr_t, int));
 
-struct cfattach gbox_intio_ca = {
-	sizeof(struct grfdev_softc), gbox_intio_match, gbox_intio_attach
-};
+CFATTACH_DECL(gbox_intio, sizeof(struct grfdev_softc),
+    gbox_intio_match, gbox_intio_attach, NULL, NULL);
 
-struct cfattach gbox_dio_ca = {
-	sizeof(struct grfdev_softc), gbox_dio_match, gbox_dio_attach
-};
+CFATTACH_DECL(gbox_dio, sizeof(struct grfdev_softc),
+    gbox_dio_match, gbox_dio_attach, NULL, NULL);
 
 /* Gatorbox grf switch */
 struct grfsw gbox_grfsw = {

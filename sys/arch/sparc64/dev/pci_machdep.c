@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.21.2.5 2002/09/06 08:41:26 jdolecek Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.21.2.6 2002/10/10 18:36:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -373,9 +373,25 @@ pci_intr_map(pa, ihp)
 	pci_intr_handle_t *ihp;
 {
 	pcitag_t tag = pa->pa_tag;
+	pcireg_t bhlc, ic;
+	int bus_frequency, val, bus_node;
 	int interrupts;
 	int len, node = PCITAG_NODE(tag);
 	char devtype[30];
+
+	bus_node = OF_parent(node);
+	len = OF_getproplen(bus_node, "clock-frequency");
+	if (len < sizeof(bus_frequency)) {
+		DPRINTF(SPDB_INTMAP,
+			("pci_intr_map: clock-frequency len %d too small\n", len));
+		return (ENODEV);
+	}
+	if (OF_getprop(bus_node, "clock-frequency", (void *)&bus_frequency, 
+		sizeof(bus_frequency)) != len) {
+		DPRINTF(SPDB_INTMAP,
+			("pci_intr_map: could not read bus_frequency\n"));
+		return (ENODEV);
+	}
 
 	len = OF_getproplen(node, "interrupts");
 	if (len < sizeof(interrupts)) {
@@ -401,6 +417,23 @@ pci_intr_map(pa, ihp)
 				interrupts |= INTLEVENCODE(intrmap[len].in_lev);
 				break;
 			}
+	}
+
+	/*
+	 * Initialize the latency timer register for busmaster devices
+	 * to work properly.
+	 *   latency-timer = min-grant * bus-freq / 4  (from FreeBSD)
+	 */
+	ic = pci_conf_read(pa->pa_pc, tag, PCI_INTERRUPT_REG);
+	bus_frequency /= 1000000;
+	val = min(PCI_MIN_GNT(ic) * bus_frequency / 4, 255);
+	if (val > 0) {
+		bhlc = pci_conf_read(pa->pa_pc, tag, PCI_BHLC_REG);
+		if (PCI_LATTIMER(bhlc) < val) {
+			bhlc &= ~(PCI_LATTIMER_MASK << PCI_LATTIMER_SHIFT);
+			bhlc |= (val << PCI_LATTIMER_SHIFT);
+			pci_conf_write(pa->pa_pc, tag, PCI_BHLC_REG, bhlc);
+		}
 	}
 
 	/* XXXX -- we use the ino.  What if there is a valid IGN? */

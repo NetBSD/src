@@ -1,4 +1,4 @@
-/*	$NetBSD: cbsc.c,v 1.12.2.1 2002/02/11 20:06:51 jdolecek Exp $ */
+/*	$NetBSD: cbsc.c,v 1.12.2.2 2002/10/10 18:31:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.12.2.1 2002/02/11 20:06:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cbsc.c,v 1.12.2.2 2002/10/10 18:31:22 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -69,9 +69,8 @@ void	cbscattach(struct device *, struct device *, void *);
 int	cbscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
-struct cfattach cbsc_ca = {
-	sizeof(struct cbsc_softc), cbscmatch, cbscattach
-};
+CFATTACH_DECL(cbsc, sizeof(struct cbsc_softc),
+    cbscmatch, cbscattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

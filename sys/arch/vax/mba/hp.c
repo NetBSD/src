@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.24.6.1 2002/09/06 08:42:19 jdolecek Exp $ */
+/*	$NetBSD: hp.c,v 1.24.6.2 2002/10/10 18:37:18 jdolecek Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,6 +53,7 @@
 #include <sys/syslog.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <machine/bus.h>
 #include <machine/trap.h>
@@ -81,11 +82,25 @@ void    hpattach(struct device *, struct device *, void *);
 void	hpstart(struct mba_device *);
 int	hpattn(struct mba_device *);
 enum	xfer_action hpfinish(struct mba_device *, int, int *);
-bdev_decl(hp);
-cdev_decl(hp);
 
-struct	cfattach hp_ca = {
-	sizeof(struct hp_softc), hpmatch, hpattach
+CFATTACH_DECL(hp, sizeof(struct hp_softc),
+    hpmatch, hpattach, NULL, NULL);
+
+dev_type_open(hpopen);
+dev_type_close(hpclose);
+dev_type_read(hpread);
+dev_type_write(hpwrite);
+dev_type_ioctl(hpioctl);
+dev_type_strategy(hpstrategy);
+dev_type_size(hpsize);
+
+const struct bdevsw hp_bdevsw = {
+	hpopen, hpclose, hpstrategy, hpioctl, nulldump, hpsize, D_DISK
+};
+
+const struct cdevsw hp_cdevsw = {
+	hpopen, hpclose, hpread, hpwrite, hpioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 #define HP_WCSR(reg, val) \
@@ -422,12 +437,6 @@ hpsize(dev_t dev)
 	    (sc->sc_disk.dk_label->d_secsize / DEV_BSIZE);
 
 	return size;
-}
-
-int
-hpdump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
-{
-	return 0;
 }
 
 int

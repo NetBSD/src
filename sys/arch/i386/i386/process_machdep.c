@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.34.2.3 2002/06/23 17:37:27 jdolecek Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.34.2.4 2002/10/10 18:33:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34.2.3 2002/06/23 17:37:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.34.2.4 2002/10/10 18:33:25 jdolecek Exp $");
 
 #include "opt_vm86.h"
 #include "npx.h"
@@ -258,10 +258,7 @@ process_read_fpregs(p, regs)
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
-
-		if (npxproc == p)
-			npxsave();
+		npxsave_proc(p, 1);
 #endif
 	} else {
 		/*
@@ -317,6 +314,10 @@ process_write_regs(p, regs)
 		tf->tf_vm86_es = regs->r_es;
 		tf->tf_vm86_ds = regs->r_ds;
 		set_vflags(p, regs->r_eflags);
+		/*
+		 * Make sure that attempts at system calls from vm86
+		 * mode die horribly.
+		 */
 		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
@@ -333,6 +334,7 @@ process_write_regs(p, regs)
 		tf->tf_es = regs->r_es;
 		tf->tf_ds = regs->r_ds;
 #ifdef VM86
+		/* Restore normal syscall handler */
 		if (tf->tf_eflags & PSL_VM)
 			(*p->p_emul->e_syscall_intern)(p);
 #endif
@@ -362,10 +364,7 @@ process_write_fpregs(p, regs)
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
-
-		if (npxproc == p)
-			npxdrop();
+		npxsave_proc(p, 0);
 #endif
 	} else {
 		p->p_md.md_flags |= MDP_USEDFPU;
@@ -419,10 +418,8 @@ process_machdep_read_xmmregs(struct proc *p, struct xmmregs *regs)
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
-
-		if (npxproc == p)
-			npxsave();
+		if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+			npxsave_proc(p, 1);
 #endif
 	} else {
 		/*
@@ -457,10 +454,9 @@ process_machdep_write_xmmregs(struct proc *p, struct xmmregs *regs)
 
 	if (p->p_md.md_flags & MDP_USEDFPU) {
 #if NNPX > 0
-		extern struct proc *npxproc;
-
-		if (npxproc == p)
-			npxdrop();
+		/* If we were using the FPU, drop it. */
+		if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
+			npxsave_proc(p, 0);
 #endif
 	} else {
 		p->p_md.md_flags |= MDP_USEDFPU;

@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.9.4.2 2002/09/06 08:38:37 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.9.4.3 2002/10/10 18:34:51 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
-FILES=		${PROG}.elf
 SRCS=		Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
 CFLAGS+=	-msoft-float -Wno-main
 #CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
@@ -27,7 +26,7 @@ RELOC=		20000
 
 ENTRY=		_start
 
-CLEANFILES+=	vers.c ${PROG}.elf
+CLEANFILES+=	vers.c
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../../.. -I${.CURDIR}/../../../..
 CPPFLAGS+=	-DRELOC=0x${RELOC}
@@ -59,10 +58,10 @@ LIBSA=		${SALIB}
 .PHONY: vers.c
 vers.c: version
 	sh ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
-	
+
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.elf \
+	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.X \
 	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${OBJCOPY} -O binary ${PROG}.elf ${PROG}
+	mv -f ${PROG}.X ${PROG}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.180.2.6 2002/09/06 08:31:25 jdolecek Exp $ */
+/* $NetBSD: pmap.c,v 1.180.2.7 2002/10/10 18:30:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -148,13 +148,12 @@
  */
 
 #include "opt_lockdebug.h"
-#include "opt_new_scc_driver.h"
 #include "opt_sysv.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180.2.6 2002/09/06 08:31:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.180.2.7 2002/10/10 18:30:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1010,13 +1009,7 @@ int
 pmap_uses_prom_console(void)
 {
 
-#if defined(NEW_SCC_DRIVER)
 	return (cputype == ST_DEC_21000);
-#else
-	return (cputype == ST_DEC_21000
-	    || cputype == ST_DEC_3000_300
-	    || cputype == ST_DEC_3000_500);
-#endif /* NEW_SCC_DRIVER */
 }
 #endif /* _PMAP_MAY_USE_PROM_CONSOLE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.22.2.6 2002/06/23 17:45:01 jdolecek Exp $	*/
+/*	$NetBSD: rnd.c,v 1.22.2.7 2002/10/10 18:38:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.22.2.6 2002/06/23 17:45:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd.c,v 1.22.2.7 2002/10/10 18:38:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -156,7 +156,17 @@ struct callout rnd_callout = CALLOUT_INITIALIZER;
 
 void	rndattach __P((int));
 
-cdev_decl(rnd);
+dev_type_open(rndopen);
+dev_type_read(rndread);
+dev_type_write(rndwrite);
+dev_type_ioctl(rndioctl);
+dev_type_poll(rndpoll);
+dev_type_kqfilter(rndkqfilter);
+
+const struct cdevsw rnd_cdevsw = {
+	rndopen, nullclose, rndread, rndwrite, rndioctl,
+	nostop, notty, rndpoll, nommap, rndkqfilter,
+};
 
 static inline void	rnd_wakeup_readers(void);
 static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t);
@@ -318,13 +328,6 @@ rndopen(dev_t dev, int flags, int ifmt, struct proc *p)
 	}
 
 	return (ENXIO);
-}
-
-int
-rndclose(dev_t dev, int flags, int ifmt, struct proc *p)
-{
-
-	return (0);
 }
 
 int

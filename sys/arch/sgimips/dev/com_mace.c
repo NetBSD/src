@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.1.10.2 2002/03/16 15:59:27 jdolecek Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.1.10.3 2002/10/10 18:35:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -68,9 +68,8 @@ struct com_mace_softc {
 static int	com_mace_match(struct device *, struct cfdata *, void *);
 static void	com_mace_attach(struct device *, struct device *, void *);
 
-struct cfattach com_mace_ca = {
-	sizeof(struct com_mace_softc), com_mace_match, com_mace_attach
-};
+CFATTACH_DECL(com_mace, sizeof(struct com_mace_softc),
+    com_mace_match, com_mace_attach, NULL, NULL);
 
 static int
 com_mace_match(parent, match, aux)

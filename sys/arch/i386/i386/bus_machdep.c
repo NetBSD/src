@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_machdep.c,v 1.9.2.3 2002/06/23 17:37:23 jdolecek Exp $	*/
+/*	$NetBSD: bus_machdep.c,v 1.9.2.4 2002/10/10 18:33:17 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.9.2.3 2002/06/23 17:37:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_machdep.c,v 1.9.2.4 2002/10/10 18:33:17 jdolecek Exp $");
 
 #include "opt_largepages.h"
 
@@ -281,6 +281,7 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va;
 	pt_entry_t *pte;
+	int32_t cpumask = 0;
 
 	pa = i386_trunc_page(bpa);
 	endpa = i386_round_page(bpa + size);
@@ -303,6 +304,15 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * PG_N doesn't exist on 386's, so we assume that
 		 * the mainboard has wired up device space non-cacheable
 		 * on those machines.
+		 *
+		 * Note that it's not necessary to use atomic ops to
+		 * fiddle with the PTE here, because we don't care
+		 * about mod/ref information.
+		 *
+		 * XXX should hand this bit to pmap_kenter_pa to
+		 * save the extra invalidate!
+		 *
+		 * XXX extreme paranoia suggests tlb shootdown belongs here.
 		 */
 		if (cpu_class != CPUCLASS_386) {
 			pte = kvtopte(va);
@@ -310,16 +320,14 @@ i386_mem_add_mapping(bpa, size, cacheable, bshp)
 				*pte &= ~PG_N;
 			else
 				*pte |= PG_N;
-#ifdef LARGEPAGES
-			if (*pte & PG_PS)
-				pmap_update_pg(va & PG_LGFRAME);
-			else
-#endif
-				pmap_update_pg(va);
+			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
+			    &cpumask);
 		}
 	}
+
+	pmap_tlb_shootnow(cpumask);
 	pmap_update(pmap_kernel());
- 
+
 	return 0;
 }
 
@@ -438,7 +446,7 @@ ok:
 	}
 }
 
-void    
+void
 i386_memio_free(t, bsh, size)
 	bus_space_tag_t t;
 	bus_space_handle_t bsh;

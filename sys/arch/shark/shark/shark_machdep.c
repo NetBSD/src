@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.4.6.2 2002/06/23 17:41:35 jdolecek Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.4.6.3 2002/10/10 18:36:05 jdolecek Exp $	*/
 
 /*
  * Copyright 1997
@@ -135,10 +135,8 @@ int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
 extern unsigned int sa1_cache_clean_addr;
 extern unsigned int sa1_cache_clean_size;
 
-struct cfattach ofbus_root_ca = {
-	sizeof(struct device), ofbus_match, ofbus_attach
-};
-
+CFATTACH_DECL(ofbus_root, sizeof(struct device),
+    ofbus_match, ofbus_attach, NULL, NULL);
 
 /*
  *  Exported routines
@@ -289,7 +287,7 @@ initarm(ofw_handle)
 	shark_fiqregs.fr_r13  = 0; /* must set a stack when r9 is set! */
 
 	if (fiq_claim(&shark_fiqhandler))
-		panic("Cannot claim FIQ vector.\n");
+		panic("Cannot claim FIQ vector.");
 
 #ifdef DDB
 	db_machine_init();
@@ -381,7 +379,7 @@ ofw_device_register(struct device *dev, void *aux)
 #endif
 	static char *boot_component;
 	struct ofbus_attach_args *oba;
-	const char *cd_name = dev->dv_cfdata->cf_driver->cd_name;
+	const char *cd_name = dev->dv_cfdata->cf_name;
 	char name[64];
 	int i;
 
@@ -409,12 +407,12 @@ ofw_device_register(struct device *dev, void *aux)
 	} else if (parent == NULL) {
 		return;
 	} else if (parent == dev->dv_parent
-		   && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "ofisa")) {
+		   && !strcmp(parent->dv_cfdata->cf_name, "ofisa")) {
 		struct ofisa_attach_args *aa = aux;
 		oba = &aa->oba;
 #if NWD > 0 || NSD > 0 || NCD > 0
 	} else if (parent == dev->dv_parent
-		   && !strcmp(parent->dv_cfdata->cf_driver->cd_name, "wdc")) {
+		   && !strcmp(parent->dv_cfdata->cf_name, "wdc")) {
 #if NSD > 0 || NCD > 0
 		if (!strcmp(cd_name, "atapibus")) {
 			scsipidev = dev;

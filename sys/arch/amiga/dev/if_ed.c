@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ed.c,v 1.36.2.2 2002/02/11 20:06:59 jdolecek Exp $ */
+/*	$NetBSD: if_ed.c,v 1.36.2.3 2002/10/10 18:31:28 jdolecek Exp $ */
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -19,7 +19,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.36.2.2 2002/02/11 20:06:59 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ed.c,v 1.36.2.3 2002/10/10 18:31:28 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -127,9 +127,8 @@ static inline void word_copy(caddr_t, caddr_t, int);
 struct mbuf *ed_ring_to_mbuf(struct ed_softc *, caddr_t, struct mbuf *,
 					u_short);
 
-struct cfattach ed_zbus_ca = {
-	sizeof(struct ed_softc), ed_zbus_match, ed_zbus_attach
-};
+CFATTACH_DECL(ed_zbus, sizeof(struct ed_softc),
+    ed_zbus_match, ed_zbus_attach, NULL, NULL);
 
 static inline void
 NIC_PUT(struct ed_softc *sc, int off, u_char val)

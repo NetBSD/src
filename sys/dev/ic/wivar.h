@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.4.4.4 2002/09/06 08:44:44 jdolecek Exp $	*/
+/*	$NetBSD: wivar.h,v 1.4.4.5 2002/10/10 18:39:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -36,86 +36,75 @@
  * FreeBSD driver ported to NetBSD by Bill Sommerfeld in the back of the
  * Oslo IETF plenary meeting.
  */
-
-#include <dev/ic/wi_hostap.h>
-
 struct wi_softc	{
 	struct device		sc_dev;
-	struct ethercom		sc_ethercom;
-	struct ifnet		*sc_ifp;
-	void			*sc_ih; /* interrupt handler */
-	int			(*sc_enable) __P((struct wi_softc *));
-	void			(*sc_disable) __P((struct wi_softc *));
+	struct ieee80211com	sc_ic;
+	void			*sc_ih;		/* interrupt handler */
+	int			(*sc_enable)(struct wi_softc *);
+	void			(*sc_disable)(struct wi_softc *);
 
-	int sc_attached;
-	int sc_enabled;
-	int sc_firmware_type;
+	int			sc_attached;
+	int			sc_enabled;
+	int			sc_firmware_type;
 #define	WI_NOTYPE	0
 #define	WI_LUCENT	1
 #define	WI_INTERSIL	2
 #define	WI_SYMBOL	3
-	int sc_pri_firmware_ver;	/* Primary firmware version */
-	int sc_sta_firmware_ver;	/* Station firmware version */
-	int sc_pci;			/* attach to PCI-Bus */
+	int			sc_pri_firmware_ver;	/* Primary firm vers */
+	int			sc_sta_firmware_ver;	/* Station firm vers */
+	int			sc_pci;			/* attach to PCI-Bus */
 
-	bus_space_tag_t		sc_iot;	/* bus cookie */
-	bus_space_handle_t	sc_ioh; /* bus i/o handle */
+	bus_space_tag_t		sc_iot;			/* bus cookie */
+	bus_space_handle_t	sc_ioh;			/* bus i/o handle */
 
-	struct callout		wi_inquire_ch;
-	struct callout		wi_scan_sh;
-
-	u_int8_t		sc_macaddr[ETHER_ADDR_LEN];
-	
 	struct ifmedia		sc_media;
-	int			wi_flags;
-	int			wi_tx_data_id;
-	int			wi_tx_mgmt_id;
-	int			wi_if_flags;
-	u_int16_t		wi_ptype;
-	u_int16_t		wi_portnum;
-	u_int16_t		wi_max_data_len;
-	u_int16_t		wi_rts_thresh;
-	u_int16_t		wi_ap_density;
-	u_int16_t		wi_tx_rate;
-	u_int16_t		wi_create_ibss;
-	u_int16_t		wi_channel;
-	u_int16_t		wi_pm_enabled;
-	u_int16_t		wi_mor_enabled;
-	u_int16_t		wi_max_sleep;
-	u_int16_t		wi_authtype;
-	u_int16_t		wi_roaming;
-	u_int16_t		wi_supprates;
+	caddr_t			sc_drvbpf;
+	int			sc_flags;
+	int			sc_bap_id;
+	int			sc_bap_off;
 
-	struct ieee80211_nwid	wi_nodeid;
-	struct ieee80211_nwid	wi_netid;
-	struct ieee80211_nwid	wi_ibssid;
+	u_int16_t		sc_max_datalen;
+	u_int16_t		sc_rts_thresh;
+	u_int16_t		sc_system_scale;
+	u_int16_t		sc_tx_rate;
+	u_int16_t		sc_cnfauthmode;
+	u_int16_t		sc_roaming_mode;
+	u_int16_t		sc_microwave_oven;
 
-	u_int16_t		wi_txbuf[1596 / 2];
-	int                     wi_use_wep;
-	int                     wi_tx_key;
-	struct wi_ltv_keys      wi_keys;
-	struct wi_counters	wi_stats;
-	u_int16_t		wi_ibss_port;
+	int			sc_nodelen;
+	char			sc_nodename[IEEE80211_NWID_LEN];
 
-	struct wi_apinfo	wi_aps[MAXAPINFO];
-	int 			wi_naps;
-	int			wi_scanning;	/* scan mode */
+	int			sc_buflen;
+#define	WI_NTXBUF	3
+	struct sc_txdesc {
+		int		d_fid;
+		int		d_len;
+	}			sc_txd[WI_NTXBUF];
+	int			sc_txnext;
+	int			sc_txcur;
+	int			sc_tx_timer;
+	int			sc_scan_timer;
 
-	struct wihap_info	wi_hostap_info;
-	u_int32_t		wi_icv;
-	int			wi_icv_flag;
+	struct wi_counters	sc_stats;
+	u_int16_t		sc_ibss_port;
+
+	struct wi_apinfo	sc_aps[MAXAPINFO];
+	int 			sc_naps;
 };
+
+#define	sc_if			sc_ic.ic_if
+
+#define	WI_SCAN_INQWAIT			3	/* wait sec before inquire */
+#define	WI_SCAN_WAIT			5	/* maximum scan wait */
 
 /* Values for wi_flags. */
 #define	WI_FLAGS_ATTACHED		0x0001
 #define	WI_FLAGS_INITIALIZED		0x0002
-#define	WI_FLAGS_HAS_WEP		0x0004
-#define	WI_FLAGS_HAS_IBSS		0x0008
-#define	WI_FLAGS_HAS_CREATE_IBSS	0x0010
-#define	WI_FLAGS_HAS_MOR		0x0020
-#define	WI_FLAGS_HAS_ROAMING		0x0040
-#define	WI_FLAGS_HAS_DIVERSITY		0x0080
-#define	WI_FLAGS_HAS_HOSTAP		0x0100
+#define	WI_FLAGS_HAS_MOR		0x0010
+#define	WI_FLAGS_HAS_ROAMING		0x0020
+#define	WI_FLAGS_HAS_DIVERSITY		0x0040
+#define	WI_FLAGS_HAS_SYSSCALE		0x0080
+#define	WI_FLAGS_BUG_AUTOINC		0x0100
 
 struct wi_card_ident {
 	u_int16_t	card_id;
@@ -123,11 +112,82 @@ struct wi_card_ident {
 	u_int8_t	firm_type;
 };
 
-int	wi_attach __P((struct wi_softc *));
-int	wi_detach __P((struct wi_softc *));
-int	wi_activate __P((struct device *, enum devact));
-int	wi_intr __P((void *arg));
-void	wi_power __P((struct wi_softc *, int));
-void	wi_shutdown __P((struct wi_softc *));
+/*
+ * register space access macros
+ */
+#ifdef WI_AT_BIGENDIAN_BUS_HACK
+	/*
+	 * XXX - ugly hack for sparc bus_space_* macro deficiencies:
+	 *       assume the bus we are accessing is big endian.
+	 */
 
-int	wi_mgmt_xmit(struct wi_softc *, caddr_t, int);
+#define CSR_WRITE_4(sc, reg, val)	\
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg) , htole32(val))
+#define CSR_WRITE_2(sc, reg, val)	\
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), htole16(val))
+#define CSR_WRITE_1(sc, reg, val)	\
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
+
+#define CSR_READ_4(sc, reg)		\
+	le32toh(bus_space_read_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg)))
+#define CSR_READ_2(sc, reg)		\
+	le16toh(bus_space_read_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg)))
+#define CSR_READ_1(sc, reg)		\
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
+
+#else
+
+#define CSR_WRITE_4(sc, reg, val)	\
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg) , val)
+#define CSR_WRITE_2(sc, reg, val)	\
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
+#define CSR_WRITE_1(sc, reg, val)	\
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
+
+#define CSR_READ_4(sc, reg)		\
+	bus_space_read_4(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
+#define CSR_READ_2(sc, reg)		\
+	bus_space_read_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
+#define CSR_READ_1(sc, reg)		\
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
+#endif
+
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_write_stream_2	bus_space_write_2
+#define bus_space_write_multi_stream_2	bus_space_write_multi_2
+#define bus_space_read_stream_2		bus_space_read_2
+#define bus_space_read_multi_stream_2		bus_space_read_multi_2
+#endif
+
+#define CSR_WRITE_STREAM_2(sc, reg, val)	\
+	bus_space_write_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val)
+#define CSR_WRITE_MULTI_STREAM_2(sc, reg, val, count)	\
+	bus_space_write_multi_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), val, count)
+#define CSR_READ_STREAM_2(sc, reg)		\
+	bus_space_read_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg))
+#define CSR_READ_MULTI_STREAM_2(sc, reg, buf, count)		\
+	bus_space_read_multi_stream_2(sc->sc_iot, sc->sc_ioh,	\
+			(sc->sc_pci? reg * 2: reg), buf, count)
+
+
+int	wi_attach(struct wi_softc *);
+int	wi_detach(struct wi_softc *);
+int	wi_activate(struct device *, enum devact);
+int	wi_intr(void *arg);
+void	wi_power(struct wi_softc *, int);
+void	wi_shutdown(struct wi_softc *);

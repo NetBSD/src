@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.h,v 1.2.8.2 2002/09/06 08:36:27 jdolecek Exp $ */
+/* $NetBSD: kvm86.h,v 1.2.8.3 2002/10/10 18:33:29 jdolecek Exp $ */
 
 void kvm86_init(void);
 void kvm86_gpfault(struct trapframe *);

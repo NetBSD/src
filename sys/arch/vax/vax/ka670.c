@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.7 2000/08/09 03:02:54 tv Exp $	*/
+/*	$NetBSD: ka670.c,v 1.7.4.1 2002/10/10 18:37:22 jdolecek Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -56,8 +56,6 @@ static	void ka670_conf __P((void));
 static	int ka670_mchk __P((caddr_t));
 static	void ka670_memerr __P((void));
 static	int ka670_cache_init __P((void));	/* "int mapen" as argument? */
-static	void ka670_halt __P((void));
-static	void ka670_reboot __P((int));
 
 struct	cpu_dep ka670_calls = {
 	0,
@@ -68,8 +66,8 @@ struct	cpu_dep ka670_calls = {
 	generic_clkwrite,
 	8,	/* 8 VUP */
 	2,	/* SCB pages */
-	ka670_halt,
-	ka670_reboot,
+	generic_halt,
+	generic_reboot,
 	0,
 };
 
@@ -141,7 +139,7 @@ ka670_mchk(addr)
 	 */
 	if (mfpr(PR_PCSTS) & KA670_PCS_TRAP2) {
 		printf("TRAP2 (double error) in ka670_mchk.\n");
-		panic("unrecoverable state in ka670_mchk.\n");
+		panic("unrecoverable state in ka670_mchk.");
 		return (-1);
 	}
 	if ((mcf->mc670_code & KA670_MC_RESTART) || 
@@ -215,18 +213,6 @@ ka670_conf()
 	 * init/reset the caches.
 	 */
 	ka670_cache_init();
-}
 
-static void
-ka670_halt()
-{
-	asm("halt");
+	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
 }
-
-static void
-ka670_reboot(arg)
-	int arg;
-{
-	asm("halt");
-}
-

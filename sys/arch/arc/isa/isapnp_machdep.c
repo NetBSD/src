@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp_machdep.c,v 1.3 2000/06/09 05:42:01 soda Exp $	*/
+/*	$NetBSD: isapnp_machdep.c,v 1.3.8.1 2002/10/10 18:31:41 jdolecek Exp $	*/
 /*	$OpenBSD: isapnp_machdep.c,v 1.1 1997/12/27 12:13:11 niklas Exp $	*/
 /*	NetBSD: isapnp_machdep.c,v 1.5 1997/10/04 17:32:30 thorpej Exp 	*/
 
@@ -104,11 +104,11 @@ isapnp_map(sc)
 
 	error = bus_space_map(sc->sc_iot, ISAPNP_ADDR, 1, &sc->sc_addr_ioh);
 	if (error != 0)
-		panic("isapnp_map: ISAPNP_ADDR map error %d\n", error);
+		panic("isapnp_map: ISAPNP_ADDR map error %d", error);
 	error = bus_space_map(sc->sc_iot, ISAPNP_WRDATA, 1,
 	    &sc->sc->sc_wrdata_ioh);
 	if (error != 0)
-		panic("isapnp_map: ISAPNP_WRDATA map error %d\n", error);
+		panic("isapnp_map: ISAPNP_WRDATA map error %d", error);
 	return (0);
 }
 

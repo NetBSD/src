@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44.2.4 2002/09/06 08:38:28 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44.2.5 2002/10/10 18:34:41 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,13 +51,11 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -158,7 +156,6 @@ void	cpu_init_kcore_hdr __P((void));
 /* functions called from locore.s */
 void next68k_init __P((void));
 void straytrap __P((int, u_short));
-void nmihand __P((struct frame));
 
 /*
  * Machine-independent crash dump header info.
@@ -775,18 +772,18 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
@@ -813,6 +810,7 @@ cpu_dumpconf()
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
@@ -830,6 +828,9 @@ dumpsys()
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return;
 	if (dumpsize == 0) {
 		cpu_dumpconf();
 		if (dumpsize == 0)
@@ -837,7 +838,7 @@ dumpsys()
 	}
 	if (dumplo < 0)
 		return;
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	blkno = dumplo;
 
 	printf("\ndumping to dev 0x%x, offset %ld\n", dumpdev, dumplo);
@@ -969,15 +970,15 @@ badaddr(addr, nbytes)
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
  */
-void
+int
 nmihand(frame)
-	struct frame frame;
+	void *frame;
 {
   static int innmihand;	/* simple mutex */
 
   /* Prevent unwanted recursion. */
   if (innmihand)
-    return;
+    return 0;
   innmihand = 1;
   
   printf("Got a NMI");
@@ -1000,6 +1001,8 @@ nmihand(frame)
 	INTR_ENABLE(NEXT_I_NMI);
   
   innmihand = 0;
+
+  return 0;
 }
 
 
