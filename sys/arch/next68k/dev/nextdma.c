@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.24 2001/04/07 11:29:50 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.25 2001/04/07 13:02:55 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -601,6 +601,10 @@ nextdma_intr(arg)
 			
 		} else {
 
+			DPRINTF(("DMA: a shutdown occurred\n"));
+			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE | DMACSR_RESET);
+
+#if 0
 			/* Cleanup incomplete transfers */
 			if (nd->_nd_map) {
 				DPRINTF(("DMA: shutting down with non null map\n"));
@@ -627,10 +631,38 @@ nextdma_intr(arg)
 				nd->_nd_map_cont = 0;
 				nd->_nd_idx_cont = 0;
 			}
+#else
+			/* Do a dma restart */
+			if (!nd->_nd_map && nd->_nd_map_cont) {
+				next_dma_rotate(nd);
+			}
+			if (nd->_nd_map) {
 
-			DPRINTF(("DMA: a shutdown occurred\n"));
-			
-			bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, DMACSR_CLRCOMPLETE | DMACSR_RESET);
+				u_long dmadir;								/* 	DMACSR_SETREAD or DMACSR_SETWRITE */
+				
+				if (state & DMACSR_READ) {
+					dmadir = DMACSR_SETREAD;
+				} else {
+					dmadir = DMACSR_SETWRITE;
+				}
+
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 0);
+				bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
+						DMACSR_INITBUF | DMACSR_RESET | dmadir);
+
+				next_dma_setup_curr_regs(nd);
+				next_dma_setup_cont_regs(nd);
+
+				if ((nd->_nd_map_cont == NULL) && (nd->_nd_idx+1 == nd->_nd_map->dm_nsegs)) {
+					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
+							DMACSR_SETENABLE | dmadir);
+				} else {
+					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
+							DMACSR_SETSUPDATE | DMACSR_SETENABLE | dmadir);
+				}
+				return 1;
+			}
+#endif
 
 			if (nd->nd_shutdown_cb) (*nd->nd_shutdown_cb)(nd->nd_cb_arg);
 			return(1);
