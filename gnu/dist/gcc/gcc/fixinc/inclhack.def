@@ -301,6 +301,14 @@ fix = {
  */
 fix = {
     hackname = AAB_svr4_replace_byteorder;
+    mach     = "*-*-sysv4*";
+    mach     = "i[34567]86-*-sysv5*";
+    mach     = "i[34567]86-*-sco3.2v5*";
+    mach     = "i[34567]86-*-udk*";
+    mach     = "i[34567]86-*-solaris2.[0-4]";
+    mach     = "powerpcle-*-solaris2.[0-4]";
+    mach     = "sparc-*-solaris2.[0-4]";
+    mach     = "i[34567]86-sequent-ptx*";
     files    = sys/byteorder.h;
     replace  = '#ifndef _SYS_BYTEORDER_H
 \#define _SYS_BYTEORDER_H
@@ -1336,6 +1344,25 @@ fix = {
 
     test_text = 'extern int vsnprintf(char *, _hpux_size_t, const char *,'
                                      ' __va__list);';
+};
+
+
+/*
+ *  Fix hpux 11.00 broken snprintf declaration
+ *  (third argument is char *, needs to be const char * to prevent
+ *  spurious warnings with -Wwrite-strings or in C++).
+ */
+fix = {
+    hackname = hpux11_snprintf;
+    files    = stdio.h;
+    select   = '(extern int snprintf *\(char *\*, *(|__|_hpux_)size_t,)'
+                                    ' *(char *\*, *\.\.\.\);)';
+    c_fix     = format;
+    c_fix_arg = '%1 const %3';
+
+    test_text = "extern int snprintf(char *, size_t, char *, ...);\n"
+                "extern int snprintf(char *, __size_t, char *, ...);\n"
+                "extern int snprintf(char *, _hpux_size_t, char *, ...);";
 };
 
 
@@ -2529,8 +2556,8 @@ fix = {
      * instead of va_list.
      * Don't claim to have defined va_list.
      */
-    sed = "s@ va_list @ __gnuc_va_list @\n"
-          "s@ va_list)@ __gnuc_va_list)@\n"
+    sed = "s@[ \t]va_list @ __gnuc_va_list @\n"
+          "s@[ \t]va_list)@ __gnuc_va_list)@\n"
 	  "s@(va_list)&@(__gnuc_va_list)\\&@\n"
           "s@ _VA_LIST_));@ __gnuc_va_list));@\n"
           "s@ __VA_LIST__));@ __gnuc_va_list));@\n"

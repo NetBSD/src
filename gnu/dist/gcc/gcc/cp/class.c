@@ -497,7 +497,7 @@ build_vtbl_ref_1 (instance, idx)
   assemble_external (vtbl);
 
   aref = build_array_ref (vtbl, idx);
-  TREE_CONSTANT (aref) = 1;
+  TREE_CONSTANT (aref) |= TREE_CONSTANT (vtbl) && TREE_CONSTANT (idx);
 
   return aref;
 }
@@ -2204,7 +2204,11 @@ same_signature_p (fndecl, base_fndecl)
   if (DECL_DESTRUCTOR_P (base_fndecl) || DECL_DESTRUCTOR_P (fndecl))
     return 0;
 
-  if (DECL_NAME (fndecl) == DECL_NAME (base_fndecl))
+  if (DECL_NAME (fndecl) == DECL_NAME (base_fndecl)
+      || (DECL_CONV_FN_P (fndecl)
+	  && DECL_CONV_FN_P (base_fndecl)
+	  && same_type_p (DECL_CONV_FN_TYPE (fndecl),
+			  DECL_CONV_FN_TYPE (base_fndecl))))
     {
       tree types, base_types;
       types = TYPE_ARG_TYPES (TREE_TYPE (fndecl));
@@ -2631,7 +2635,8 @@ check_for_override (decl, ctype)
          override a virtual function from a base class.  */
     return;
   if ((DECL_DESTRUCTOR_P (decl)
-       || IDENTIFIER_VIRTUAL_P (DECL_NAME (decl)))
+       || IDENTIFIER_VIRTUAL_P (DECL_NAME (decl))
+       || DECL_CONV_FN_P (decl))
       && look_for_overrides (ctype, decl)
       && !DECL_STATIC_FUNCTION_P (decl))
     /* Set DECL_VINDEX to a value that is neither an INTEGER_CST nor
@@ -4098,6 +4103,9 @@ build_clone (fn, name)
       if (exceptions)
 	TREE_TYPE (clone) = build_exception_variant (TREE_TYPE (clone),
 						     exceptions);
+      TREE_TYPE (clone) 
+	= build_type_attribute_variant (TREE_TYPE (clone),
+					TYPE_ATTRIBUTES (TREE_TYPE (fn)));
     }
 
   /* Copy the function parameters.  But, DECL_ARGUMENTS on a TEMPLATE_DECL
