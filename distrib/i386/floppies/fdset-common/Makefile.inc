@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2000/05/05 21:01:35 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2000/05/05 21:08:01 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -38,7 +38,7 @@ realall:	netbsd boot
 	vnconfig -u ${VND_CDEV}
 	@ls -l ${FSTMP} | (read mode links uid gid size junk; \
 		dksize=$$((${DISKSIZE} * 512 - 8 * 1024)); \
-		disks=$$((($$size / (${DISKSIZE} * 512 - 8 * 1024)) + 1)); \
+		disks=$$(($$size / $$dksize + 1)); \
 		if test $$size -gt $$dksize; then \
 			d=2; \
 			while test $$d -le $$disks; do \
