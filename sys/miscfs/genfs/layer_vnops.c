@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.19 2004/06/16 12:37:01 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.20 2004/06/16 12:39:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -67,7 +67,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.19 2004/06/16 12:37:01 yamt Exp $
+ *	$Id: layer_vnops.c,v 1.20 2004/06/16 12:39:07 yamt Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.19 2004/06/16 12:37:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.20 2004/06/16 12:39:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ layer_bypass(v)
 		struct vnodeop_desc *a_desc;
 		<other random data follows, presumably>
 	} */ *ap = v;
-	int (**our_vnodeop_p) __P((void *)); 
+	int (**our_vnodeop_p) __P((void *));
 	struct vnode **this_vp_p;
 	int error, error1;
 	struct vnode *old_vps[VDESC_MAX_VPS], *vp0;
@@ -303,16 +303,17 @@ layer_bypass(v)
 	 */
 	if (descp->vdesc_vp_offsets == NULL ||
 	    descp->vdesc_vp_offsets[0] == VDESC_NO_OFFSET)
-		panic ("layer_bypass: no vp's in map.\n");
+		panic("%s: no vp's in map.\n", __func__);
 #endif
 
-	vps_p[0] = VOPARG_OFFSETTO(struct vnode**,descp->vdesc_vp_offsets[0],ap);
+	vps_p[0] =
+	    VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[0], ap);
 	vp0 = *vps_p[0];
 	flags = MOUNTTOLAYERMOUNT(vp0->v_mount)->layerm_flags;
 	our_vnodeop_p = vp0->v_op;
 
 	if (flags & LAYERFS_MBYPASSDEBUG)
-		printf ("layer_bypass: %s\n", descp->vdesc_name);
+		printf("%s: %s\n", __func__, descp->vdesc_name);
 
 	/*
 	 * Map the vnodes going in.
@@ -324,7 +325,8 @@ layer_bypass(v)
 		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
 			break;   /* bail out at end of list */
 		vps_p[i] = this_vp_p = 
-			VOPARG_OFFSETTO(struct vnode**,descp->vdesc_vp_offsets[i],ap);
+		    VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[i],
+		    ap);
 		/*
 		 * We're not guaranteed that any but the first vnode
 		 * are of our type.  Check for and don't map any
@@ -388,12 +390,12 @@ layer_bypass(v)
 		if (descp->vdesc_flags & VDESC_VPP_WILLRELE)
 			goto out;
 		vppp = VOPARG_OFFSETTO(struct vnode***,
-				 descp->vdesc_vpp_offset,ap);
+				 descp->vdesc_vpp_offset, ap);
 		/*
 		 * Only vop_lookup, vop_create, vop_makedir, vop_bmap,
 		 * vop_mknod, and vop_symlink return vpp's. vop_bmap
 		 * doesn't call bypass as the lower vpp is fine (we're just
-		 * going to do i/o on it). vop_loookup doesn't call bypass
+		 * going to do i/o on it). vop_lookup doesn't call bypass
 		 * as a lookup on "." would generate a locking error.
 		 * So all the calls which get us here have a locked vpp. :-)
 		 */
