@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.5 2000/06/09 05:30:51 soda Exp $	*/
+/*	$NetBSD: btl.c,v 1.6 2001/06/13 15:09:32 soda Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -73,7 +73,7 @@
 
 #include <dev/isa/isavar.h>
 #include <arc/dti/btlreg.h>
-#include <arc/arc/arctype.h>    /* XXX for cpu types */
+#include <arc/dti/btlvar.h>
 
 #ifndef DDB
 #define Debugger() panic("should call debugger here (bt742a.c)")
@@ -104,10 +104,8 @@ struct bt_mbx {
 	struct bt_mbx_in *tmbi;		/* Target Mail Box in */
 };
 
-#define KVTOPHYS(x)	((cputype == DESKSTATION_TYNE) ? \
-	(((int)(x) & 0x7fffff) | 0x800000) : ((int)(x)))
-#define PHYSTOKV(x)	((cputype == DESKSTATION_TYNE) ? \
-	(((int)(x) & 0x7fffff) | TYNE_V_BOUNCE) : ((int)(x)))
+#define KVTOPHYS(x)	(*btl_conf->bc_kvtophys)((int)(x))
+#define PHYSTOKV(x)	(*btl_conf->bc_phystokv)((int)(x))
 
 struct bt_softc {
 	struct device sc_dev;
@@ -157,10 +155,6 @@ void bt_timeout __P((void *arg));
 void bt_free_buf __P((struct bt_softc *, struct bt_buf *));
 struct bt_buf * bt_get_buf __P((struct bt_softc *, int));
 
-/* XXX static buffer as a kludge.  DMA isn't cache coherent on the rpc44, so 
- * we always use uncached buffers for DMA. */
-static char rpc44_buffer[ TYNE_S_BOUNCE ];
-
 /* the below structure is so we have a default dev struct for out link struct */
 struct scsipi_device bt_dev = {
 	NULL,			/* Use default error handler */
@@ -179,6 +173,8 @@ struct cfattach btl_ca = {
 
 #define BT_RESET_TIMEOUT	2000	/* time to wait for reset (mSec) */
 #define	BT_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
+
+struct btl_config *btl_conf = NULL;
 
 /*
  * bt_cmd(iobase, sc, icnt, ibuf, ocnt, obuf)
@@ -332,6 +328,9 @@ btprobe(parent, match, aux)
 		return 0;
 #endif
 
+	if (btl_conf == NULL)
+		return (0);
+
 	/* See if there is a unit at this location. */
 	if (bt_find(ia, NULL) != 0)
 		return 0;
@@ -365,14 +364,7 @@ btattach(parent, self, aux)
 	/*
 	 * create mbox area
 	 */
-	if (cputype == DESKSTATION_TYNE) {
-		bouncebase = TYNE_V_BOUNCE;
-		bouncesize = TYNE_S_BOUNCE;
-	} else {
-		bouncesize = TYNE_S_BOUNCE; /* Good enough? XXX */
-/*		bouncebase = (u_int) malloc( bouncesize, M_DEVBUF, M_NOWAIT);*/
-		bouncebase = (u_int) rpc44_buffer | 0xa0000000;
-	}
+	(*btl_conf->bc_bouncemem)(&bouncebase, &bouncesize);
 	bouncearea = bouncebase + sizeof(struct bt_mbx);
 	sc->sc_mbx = (struct bt_mbx *)bouncebase;
 
