@@ -1,4 +1,4 @@
-/*	$NetBSD: tmp.c,v 1.4 2000/10/11 19:16:39 thorpej Exp $	*/
+/*	$NetBSD: tmp.c,v 1.5 2000/10/16 21:48:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@
 #include "sort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: tmp.c,v 1.4 2000/10/11 19:16:39 thorpej Exp $");
+__RCSID("$NetBSD: tmp.c,v 1.5 2000/10/16 21:48:15 jdolecek Exp $");
 __SCCSID("@(#)tmp.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -73,9 +73,9 @@ ftmp()
 	sigfillset(&set);
 	(void)sigprocmask(SIG_BLOCK, &set, &oset);
 	if ((fd = mkstemp(path)) < 0)
-		err(2, "%s", path);
+		err(2, "mkstemp(%s)", path);
 	if (!(fp = fdopen(fd, "w+")))
-		err(2, "%s", path);
+		err(2, "fdopen(%s)", path);
 	(void)unlink(path);
 
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
