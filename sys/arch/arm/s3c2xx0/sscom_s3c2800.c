@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom_s3c2800.c,v 1.1 2002/11/20 17:52:52 bsh Exp $ */
+/*	$NetBSD: sscom_s3c2800.c,v 1.2 2003/05/12 07:49:10 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -101,6 +101,7 @@ sscom_match(struct device * parent, struct cfdata * cf, void *aux)
 	return unit == 0 || unit == 1;
 }
 
+#if 0
 int tx_int(void *);
 int rx_int(void *);
 int err_int(void *);
@@ -122,7 +123,7 @@ err_int(void *arg)
 {
 	return sscomintr(arg);
 }
-
+#endif
 
 static void
 sscom_attach(struct device * parent, struct device * self, void *aux)
@@ -148,21 +149,13 @@ sscom_attach(struct device * parent, struct device * self, void *aux)
 	}
 	printf("\n");
 
-#if 0
 	s3c2800_intr_establish(s3c2800_uart_config[unit].tx_int,
-	    IPL_SERIAL, sscomintr, sc);
+	    IPL_SERIAL, IST_LEVEL, sscomintr, sc);
 	s3c2800_intr_establish(s3c2800_uart_config[unit].rx_int,
-	    IPL_SERIAL, sscomintr, sc);
+	    IPL_SERIAL, IST_LEVEL, sscomintr, sc);
 	s3c2800_intr_establish(s3c2800_uart_config[unit].err_int,
-	    IPL_SERIAL, sscomintr, sc);
-#else
-	s3c2800_intr_establish(s3c2800_uart_config[unit].tx_int,
-	    IPL_SERIAL, tx_int, sc);
-	s3c2800_intr_establish(s3c2800_uart_config[unit].rx_int,
-	    IPL_SERIAL, rx_int, sc);
-	s3c2800_intr_establish(s3c2800_uart_config[unit].err_int,
-	    IPL_SERIAL, err_int, sc);
-#endif
+	    IPL_SERIAL, IST_LEVEL, sscomintr, sc);
+
 	sscom_disable_txrxint(sc);
 
 	sscom_attach_subr(sc);

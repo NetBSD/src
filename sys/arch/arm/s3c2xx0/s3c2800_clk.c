@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.2 2003/01/02 22:30:04 thorpej Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.3 2003/05/12 07:49:11 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -303,8 +303,10 @@ cpu_initclocks()
 	    ((prescaler - 1) << 16) | (tc - 1));
 
 
-	s3c2800_intr_establish(S3C2800_INT_TIMER0, IPL_CLOCK, hardintr, 0);
-	s3c2800_intr_establish(S3C2800_INT_TIMER1, IPL_STATCLOCK, statintr, 0);
+	s3c2800_intr_establish(S3C2800_INT_TIMER0, IPL_CLOCK, IST_EDGE, 
+	    hardintr, 0);
+	s3c2800_intr_establish(S3C2800_INT_TIMER1, IPL_STATCLOCK, IST_EDGE,
+	    statintr, 0);
 
 	/* start timers */
 	bus_space_write_4(sc->sc_sx.sc_iot, sc->sc_tmr0_ioh, TIMER_TMCON,
