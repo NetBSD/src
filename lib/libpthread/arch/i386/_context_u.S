@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.6 2002/02/11 20:19:30 nathanw Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.7 2002/03/01 22:44:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,11 @@
 	leal	-4(%edx), %esp				; \
 	ret						; \
 							; \
-1:	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
+1:	movl	UC_FLAGS(%ecx), %eax			; \
+	and	$_UC_FPU, %eax				; \
+	jz	2f					; \
+	frstor	UC_FPREGS(%ecx)				; \
+2:	movl	(UC_REGS + _REG_GS * 4)(%ecx), %gs	; \
 	movl	(UC_REGS + _REG_FS * 4)(%ecx), %fs	; \
 	movl	(UC_REGS + _REG_ES * 4)(%ecx), %es	; \
 	movl	(UC_REGS + _REG_EDI * 4)(%ecx), %edi	; \
