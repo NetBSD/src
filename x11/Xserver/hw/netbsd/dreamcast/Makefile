@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2004/02/09 00:28:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.2.2.1 2004/07/09 18:03:51 tron Exp $
 
 .include "../../../Makefile.serverlib"
 
@@ -22,6 +22,9 @@ CPPFLAGS+=	-I${X11SRCDIR.xc}/programs/Xserver/hw/dreamcast \
 		-I${X11SRCDIR.xc}/include/fonts \
 		-I${X11SRCDIR.xc}/include/extensions \
 		-I${XSERVERINCDIR}
+
+CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
+		-UXF86DRI -UXF86BIGFONT
 
 BUILDSYMLINKS=	../../../mi/miinitext.c dreamcastInEx.c
 
