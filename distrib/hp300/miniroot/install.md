@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.6 1997/10/09 07:25:48 jtc Exp $
+#	$NetBSD: install.md,v 1.7 2002/03/17 05:41:10 gmcgarry Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -447,6 +447,17 @@ md_copy_kernel() {
 	echo -n "Copying kernel..."
 	cp -p /netbsd /mnt/netbsd
 	echo "done."
+
+	cat << __md_copy_kernel_1
+
+The INSTALL kernel from the miniroot has been copied to your root disk.
+It has minimal facilities enabled.  The first thing you should do after
+installation is install an appropriate kernel for your machine (such as
+the GENERIC kernel).
+
+__md_copy_kernel_1
+	echo -n	"Press <return> to continue. "
+	getresp ""
 }
 
 	# Note, while they might not seem machine-dependent, the
