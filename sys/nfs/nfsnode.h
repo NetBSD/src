@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsnode.h	7.12 (Berkeley) 4/16/91
- *	$Id: nfsnode.h,v 1.5.2.1 1993/12/16 23:44:23 pk Exp $
+ *	$Id: nfsnode.h,v 1.5.2.2 1993/12/19 08:39:07 pk Exp $
  */
 
 #ifndef _NFS_NFSNODE_H_
@@ -56,25 +56,15 @@ struct nfsnode {
 	time_t	n_attrstamp;	/* Time stamp (sec) for attributes */
 	struct	vattr n_vattr;	/* Vnode attribute cache */
 	struct	sillyrename *n_sillyrename;	/* Ptr to silly rename struct */
-	u_quad	n_qsize;		/* Current size of file */
+	u_long	n_size;		/* Current size of file */
 	struct lockf *n_lockf; 	/* Locking record of file */
 	time_t	n_mtime;	/* Prev modify time to maintain data cache consistency*/
 	time_t	n_ctime;	/* Prev create time for name cache consistency*/
 	int	n_error;	/* Save write error value */
 	pid_t	n_lockholder;	/* holder of nfsnode lock */
 	pid_t	n_lockwaiter;	/* most recent waiter for nfsnode lock */
-	u_quad	n_qdireofoffset;	/* Dir. EOF offset cache */
+	u_long	n_direofoffset;	/* Dir. EOF offset cache */
 };
-
-#if 1
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define n_size		n_qsize.val[0]
-#define n_direofoffset		n_qdireofoffset.val[0]
-#else /* BYTE_ORDER == BIG_ENDIAN */
-#define n_size		n_qsize.val[1]
-#define n_direofoffset		n_qdireofoffset.val[1]
-#endif
-#endif
 
 #define	n_forw		n_chain[0]
 #define	n_back		n_chain[1]
