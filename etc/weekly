@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.12 1998/09/15 05:06:31 lukem Exp $
+#	$NetBSD: weekly,v 1.13 1999/04/23 08:20:28 kleink Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -65,9 +65,9 @@ echo ""
 if checkyesno rebuild_locatedb && [ -f /var/db/locate.database ]; then
 	echo "Rebuilding locate database:"
 	chmod 644 /var/db/locate.database
-	chown nobody.nobody /var/db/locate.database
+	chown nobody:nobody /var/db/locate.database
 	nice -5 su -m nobody -c /usr/libexec/locate.updatedb 2>/dev/null
-	chown root.wheel /var/db/locate.database
+	chown root:wheel /var/db/locate.database
 else
 	echo "Not rebuilding locate database; no /var/db/locate.database"
 fi
