@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.92 2001/07/14 06:36:01 matt Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.93 2001/07/27 21:19:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,6 +70,7 @@
 #include <sys/tty.h>
 #include <sys/unistd.h>
 #include <sys/vnode.h>
+#include <sys/socketvar.h>
 #define	__SYSCTL_PRIVATE
 #include <sys/sysctl.h>
 #include <sys/lock.h>
@@ -535,7 +536,19 @@ kern_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp,
 		    newp, newlen));
 #endif
 	case KERN_MAXPHYS:
-		return sysctl_rdint(oldp, oldlenp, newp, MAXPHYS);
+		return (sysctl_rdint(oldp, oldlenp, newp, MAXPHYS));
+	case KERN_SBMAX:
+	    {
+		int new_sbmax = sb_max;
+
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &new_sbmax);
+		if (error == 0) {
+			if (new_sbmax < (16 * 1024)) /* sanity */
+				return (EINVAL);
+			sb_max = new_sbmax;
+		}
+		return (error);
+	    }
 	default:
 		return (EOPNOTSUPP);
 	}
