@@ -96,3 +96,4 @@ _szicode:
 #include "copy.s"
 #include "m68k.s"
 #include "signal.s"
+#include "process.s"

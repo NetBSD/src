@@ -38,14 +38,16 @@
 
 #include "../include/cpu.h"
 #include "../include/trap.h"
+#include "../include/pcb.h"
 #include "../include/psl.h"
 #include "../include/control.h"
 #include "../include/param.h"
 #include "../include/memmap.h"
-#include <sys/errno.h>
+#include "sys/errno.h"
 
 main()
 {
+    struct pcb *pcb = (struct pcb *) 0;
     
 				/* 68k isms */
     printf("#define\tPSL_HIGHIPL %d\n", PSL_HIGHIPL);
@@ -63,9 +65,9 @@ main()
 				/* kernel-isms */
     printf("#define\tKERNBASE %d\n",    KERNBASE);
 				/* errno-isms */
-    printf("#define EFAULT %d\n",        EFAULT);
-    printf("#define ENAMETOOLONG %d\n",  ENAMETOOLONG);
-    
+    printf("#define\tEFAULT %d\n",        EFAULT);
+    printf("#define\tENAMETOOLONG %d\n",  ENAMETOOLONG);
+    printf("#define\tPC_ONFAULT %d\n", &pcb->pcb_onfault
 
     exit(0);
 }
