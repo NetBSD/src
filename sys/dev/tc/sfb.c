@@ -1,4 +1,4 @@
-/* $NetBSD: sfb.c,v 1.13 1999/03/24 05:51:21 mrg Exp $ */
+/* $NetBSD: sfb.c,v 1.14 1999/03/29 07:22:02 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.13 1999/03/24 05:51:21 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.14 1999/03/29 07:22:02 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: sfb.c,v 1.13 1999/03/24 05:51:21 mrg Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
-#include <machine/autoconf.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/ic/bt459reg.h>	
