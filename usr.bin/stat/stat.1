@@ -1,4 +1,4 @@
-.\"	$NetBSD: stat.1,v 1.15 2005/01/08 03:46:05 yamt Exp $
+.\"	$NetBSD: stat.1,v 1.16 2005/04/04 13:34:40 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,7 @@ The
 utility displays information about the file pointed to by
 .Ar file .
 Read, write, or execute permissions of the named file are not required, but
-all directories listed in the path name leading to the file must be
+all directories listed in the pathname leading to the file must be
 searchable.
 If no argument is given,
 .Nm
@@ -83,7 +83,7 @@ The options are as follows:
 .Bl -tag -width XFXformatXXX
 .It Fl F
 As in
-.Ic ls ,
+.Xr ls 1 ,
 display a slash
 .Pq Sq /
 immediately after each pathname that is a directory, an
@@ -354,7 +354,7 @@ Device number for character and block device special files.
 .It Cm a , m , c , B
 The time
 .Ar file
-was last accessed or modified, of when the inode was last changed, or
+was last accessed or modified, or when the inode was last changed, or
 the birth time of the inode.
 .It Cm z
 The size of
@@ -373,7 +373,7 @@ Inode generation number.
 .El
 .Pp
 The following four field specifiers are not drawn directly from the
-data in struct stat, but are
+data in struct stat, but are:
 .Bl -tag -width Ds
 .It Cm N
 The name of the file.
