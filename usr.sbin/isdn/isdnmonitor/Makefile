@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2001/01/06 13:00:27 martin Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/10 18:11:07 thorpej Exp $
 
 PROG	=	isdnmonitor
 SRCS	=	main.c curses.c
 MAN8	=	isdnmonitor.8
 
-COPTS	+=	-DDEBUG	# compile debug support
+CPPFLAGS+=	-DDEBUG	# compile debug support
 LDADD   +=      -lcurses
 MAN	=	isdnmonitor.8
 
