@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.9 2001/09/11 23:18:56 wiz Exp $
+.\" $NetBSD: wsdisplay.4,v 1.10 2001/10/13 17:15:33 augustss Exp $
 .Dd March 20, 1999
 .Os
 .Dt WSDISPLAY 4
@@ -22,6 +22,7 @@
 (NeXT display)
 .Cd wsdisplay0 at smg0
 (VAXstation small monochrome display)
+.Cd wsdisplay* at ... kbdmux N
 .Cd options WSDISPLAY_DEFAULTSCREENS=N
 .Sh DESCRIPTION
 The
@@ -53,6 +54,13 @@ influenced.) This way, the console device can be connected to a known
 wsdisplay device instance. (Naturally, only
 .Dq emulating
 display devices are usable as console.)
+.Pp
+The
+.Em kbdmux
+locator in the configuration line refers to the
+.Xr wsmux 4
+that will be used to get keyboard events.  If this locator is -1 no
+mux will be used.
 .Pp
 The logical unit of an independent contents displayed on a display
 (sometimes referred to as
