@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.19 2000/11/10 02:29:44 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.20 2000/11/10 02:31:53 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -411,7 +411,7 @@ static int
 vlan_set_promisc(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
-	int error;
+	int error = 0;
 
 	if ((ifp->if_flags & IFF_PROMISC) != 0) {
 		if ((ifv->ifv_flags & IFVF_PROMISC) == 0) {
