@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.2 1998/03/25 04:13:01 mhitch Exp $	*/
+/*	$NetBSD: reloc.c,v 1.3 1998/11/24 11:34:30 tsubai Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -52,7 +52,7 @@
 #include "debug.h"
 #include "rtld.h"
 
-#ifdef __alpha__
+#if defined(__alpha__) || defined(__powerpc__)
 static int
 _rtld_do_copy_relocation(
     const Obj_Entry *dstobj,
@@ -81,7 +81,7 @@ _rtld_do_copy_relocation(
     memcpy(dstaddr, srcaddr, size);
     return 0;
 }
-#endif /* __alpha__ */
+#endif /* __alpha__ || __powerpc__ */
 
 /*
  * Process the special R_xxx_COPY relocations in the main program.  These
@@ -96,7 +96,7 @@ _rtld_do_copy_relocations(
 {
     assert(dstobj->mainprog);	/* COPY relocations are invalid elsewhere */
 
-#ifdef __alpha__ /* jrs */
+#if defined(__alpha__) || defined(__powerpc__) /* jrs */
     if (dstobj->rel != NULL) {
 	const Elf_Rel *rel;
 	for (rel = dstobj->rel;  rel < dstobj->rellim;  ++rel) {
@@ -255,6 +255,40 @@ _rtld_relocate_nonplt_object(
  
 #endif /* mips */
 
+#ifdef __powerpc__
+    case R_TYPE(32):		/* word32 S + A */
+    case R_TYPE(GLOB_DAT): {	/* word32 S + A */
+	const Elf_Sym *def;
+	const Obj_Entry *defobj;
+	Elf_Addr x;
+
+	def = _rtld_find_symdef(_rtld_objlist, rela->r_info, NULL, obj, &defobj, false);
+	if (def == NULL)
+	    return -1;
+
+	x = (Elf_Addr)(defobj->relocbase + def->st_value + rela->r_addend);
+
+	if (*where != x)
+	    *where = x;
+	break;
+    }
+
+    case R_TYPE(COPY):
+	break;
+
+    case R_TYPE(JMP_SLOT):
+	break;
+
+    case R_TYPE(RELATIVE): {	/* word32 B + A */
+	if (obj == &_rtld_objself && 
+	    *where == (Elf_Addr)obj->relocbase + rela->r_addend)
+	    break;	/* GOT - already done */
+
+	*where = (Elf_Addr)obj->relocbase + rela->r_addend;
+	break;
+    }
+#endif
+
     default: {
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
@@ -282,6 +316,10 @@ _rtld_relocate_plt_object(
     Elf_Addr new_value;
 
     /* Fully resolve procedure addresses now */
+
+#if defined(__powerpc__)
+    return _rtld_reloc_powerpc_plt(obj, rela, bind_now);
+#endif
 
 #if defined(__alpha__)	/* (jrs) */
     if (bind_now || obj->pltgot == NULL) {
@@ -470,6 +508,9 @@ _rtld_relocate_objects(
 	    obj->pltgot[0] = (Elf_Addr) &_rtld_bind_start;
 	    /* XXX only if obj->pltgot[1] & 0x80000000 ?? */
 	    obj->pltgot[1] |= (Elf_Addr) obj;
+#endif
+#if defined(__powerpc__)
+	    _rtld_setup_powerpc_plt(obj);
 #endif
 	}
     }
