@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.12 1996/04/12 06:07:28 cgd Exp $	*/
+/*	$NetBSD: locore.s,v 1.13 1996/05/16 22:54:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -35,6 +35,14 @@
 
 	/* don't reorder instructions; paranoia. */
 	.set noreorder
+	.text
+
+/*
+ * This is for kvm_mkdb, and should be the address of the beginning
+ * of the kernel text segment (not necessarily the same as kernbase).
+ */
+	EXPORT(kernel_text)
+kernel_text:
 
 /*
  * bootstack: a temporary stack, for booting.
@@ -55,7 +63,6 @@ bootstack:
  *
  * All arguments are passed to alpha_init().
  */
-	.text
 NESTED_NOPROFILE(__start,1,0,ra,0,0)
 	br	pv,1f
 1:	SETGP(pv)
