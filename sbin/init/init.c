@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.32 1998/02/20 09:27:20 mycroft Exp $	*/
+/*	$NetBSD: init.c,v 1.33 1998/09/18 22:00:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\n"
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.32 1998/02/20 09:27:20 mycroft Exp $");
+__RCSID("$NetBSD: init.c,v 1.33 1998/09/18 22:00:46 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -306,7 +306,7 @@ handle(va_alist)
 {
 	int sig;
 	struct sigaction sa;
-	int mask_everything;
+	sigset_t mask_everything;
 	va_list ap;
 #ifndef __STDC__
 	sig_t handler;
