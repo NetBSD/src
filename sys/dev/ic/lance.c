@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.23 2001/07/07 05:35:40 thorpej Exp $	*/
+/*	$NetBSD: lance.c,v 1.24 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ lance_config(sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 
 	/* Initialize ifnet structure. */
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = sc->sc_start;
 	ifp->if_ioctl = lance_ioctl;
@@ -712,9 +712,9 @@ lance_copytobuf_contig(sc, from, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 
 	/*
-	 * Just call bcopy() to do the work.
+	 * Just call memcpy() to do the work.
 	 */
-	bcopy(from, buf + boff, len);
+	memcpy(buf + boff, from, len);
 }
 
 void
@@ -726,9 +726,9 @@ lance_copyfrombuf_contig(sc, to, boff, len)
 	volatile caddr_t buf = sc->sc_mem;
 
 	/*
-	 * Just call bcopy() to do the work.
+	 * Just call memcpy() to do the work.
 	 */
-	bcopy(buf + boff, to, len);
+	memcpy(to, buf + boff, len);
 }
 
 void
@@ -860,7 +860,7 @@ lance_copytobuf_gap16(sc, fromv, boff, len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bcopy(from, bptr + boff, xfer);
+		memcpy(bptr + boff, from, xfer);
 		from += xfer;
 		bptr += 32;
 		boff = 0;
@@ -884,7 +884,7 @@ lance_copyfrombuf_gap16(sc, tov, boff, len)
 	boff &= 0xf;
 	xfer = min(len, 16 - boff);
 	while (len > 0) {
-		bcopy(bptr + boff, to, xfer);
+		memcpy(to, bptr + boff, xfer);
 		to += xfer;
 		bptr += 32;
 		boff = 0;
