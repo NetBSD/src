@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.4.4.2 2005/03/19 08:33:26 yamt Exp $      */
+/*      $NetBSD: xbdback.c,v 1.4.4.3 2005/03/19 12:21:12 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -241,7 +241,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 			req->status = BLKIF_BE_STATUS_INTERFACE_CONNECTED;
 			goto end;
 		}
-		ring_addr = uvm_km_alloc(kernel_map, PAGE_SIZE);
+		ring_addr = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
 		if (ring_addr == 0) {
 			req->status = BLKIF_BE_STATUS_OUT_OF_MEMORY;
 			goto end;
@@ -251,7 +252,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		error = pmap_remap_pages(pmap_kernel(), ring_addr,
 		    xbdi->ma_ring, 1, PMAP_WIRED | PMAP_CANFAIL, req->domid);
 		if (error) {
-			uvm_km_free(kernel_map, ring_addr, PAGE_SIZE);
+			uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
+			    UVM_KMF_VAONLY);
 			if (error == ENOMEM)
 				req->status = BLKIF_BE_STATUS_OUT_OF_MEMORY;
 			else if (error == EFAULT)
@@ -287,7 +289,8 @@ xbdback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		unbind_evtchn_to_irq(xbdi->evtchn);
 		ring_addr = (vaddr_t)xbdi->blk_ring;
 		pmap_remove(pmap_kernel(), ring_addr, ring_addr + PAGE_SIZE);
-		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE);
+		uvm_km_free(kernel_map, ring_addr, PAGE_SIZE,
+		    UVM_KMF_VAONLY);
 		req->status = BLKIF_BE_STATUS_OKAY;
 		break;
 	}
