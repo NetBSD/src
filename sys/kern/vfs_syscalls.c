@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.84 1997/04/11 22:03:58 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.85 1997/04/11 22:08:28 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1145,8 +1145,7 @@ sys_lseek(p, v, retval)
 		newoff = fp->f_offset + SCARG(uap, offset);
 		break;
 	case L_XTND:
-		error = VOP_GETATTR((struct vnode *)fp->f_data, &vattr,
-				    cred, p);
+		error = VOP_GETATTR(vp, &vattr, cred, p);
 		if (error)
 			return (error);
 		newoff = SCARG(uap, offset) + vattr.va_size;
