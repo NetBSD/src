@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_maxine.c,v 1.9 1999/04/24 08:01:12 simonb Exp $	*/
+/*	$NetBSD: dec_maxine.c,v 1.10 1999/04/26 09:36:06 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.9 1999/04/24 08:01:12 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.10 1999/04/26 09:36:06 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.9 1999/04/24 08:01:12 simonb Exp $"
 #include <machine/intr.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
-#include <machine/locore.h>		/* wbflush() */
 #include <machine/autoconf.h>		/* intr_arg_t */
 #include <machine/sysconf.h>
 
@@ -120,6 +119,11 @@ int		dec_maxine_intr __P((u_int mask, u_int pc,
 void		dec_maxine_device_register __P((struct device *, void *));
 void		dec_maxine_cons_init __P((void));
 
+
+void kn02ca_wbflush __P((void));
+unsigned kn02ca_clkread __P((void));
+
+extern unsigned (*clkread) __P((void));
 
 /*
  * local declarations
@@ -181,11 +185,22 @@ dec_maxine_os_init()
 		MIPS_PHYS_TO_KSEG1(XINE_SYS_CLOCK);
 	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
 
+	*(volatile u_int *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
+	*(volatile u_int *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
+#if 0
+	*(volatile u_int *)(ioasic_base + IOASIC_SCC0_DECODE) = (0x10|4);
+	*(volatile u_int *)(ioasic_base + IOASIC_DTOP_DECODE) = 10;
+	*(volatile u_int *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
+	*(volatile u_int *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
+#endif
 	/*
 	 * Initialize interrupts.
 	 */
 	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = XINE_IM0;
 	*(u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
+
+	/* MAXINE has 1 microsec. free-running high resolution timer */
+	clkread = kn02ca_clkread;
 }
 
 
@@ -200,10 +215,10 @@ dec_maxine_bus_reset()
 	 */
 
 	*(volatile u_int*)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
-	wbflush();
+	kn02ca_wbflush();
 
 	*(volatile u_int *)IOASIC_REG_INTR(ioasic_base) = 0;
-	wbflush();
+	kn02ca_wbflush();
 }
 
 
@@ -284,7 +299,7 @@ dec_maxine_enable_intr(slotno, handler, sc, on)
 		tc_slot_info[slotno].sc = 0;
 	}
 	*(u_int *)IOASIC_REG_IMSK(ioasic_base) = xine_tc3_imask;
-	wbflush();
+	kn02ca_wbflush();
 }
 
 
@@ -329,7 +344,7 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 	}
 
 	/* If clock interrups were enabled, re-enable them ASAP. */
-	splx(MIPS_SR_INT_ENA_CUR | (statusReg & MIPS_INT_MASK_1));
+	splx(MIPS_SR_INT_IE | (statusReg & MIPS_INT_MASK_1));
 
 	if (mask & MIPS_INT_MASK_3) {
 		intr = *intrp;
@@ -424,6 +439,21 @@ dec_maxine_intr(mask, pc, statusReg, causeReg)
 	}
 	if (mask & MIPS_INT_MASK_2)
 		kn02ba_errintr();
-	return ((statusReg & ~causeReg & MIPS_HARD_INT_MASK) |
-		MIPS_SR_INT_ENA_CUR);
+	return(MIPS_SR_INT_IE | (statusReg & ~causeReg & MIPS_HARD_INT_MASK));
+}
+
+void	
+kn02ca_wbflush()
+{
+	/* read once IOASIC_INTR */
+	__asm __volatile("lw $2,0xbc040120");
+}
+
+unsigned
+kn02ca_clkread()
+{
+	u_int32_t cycles;
+  
+	cycles = *(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_FCTR);
+	return cycles - latched_cycle_cnt;
 }
