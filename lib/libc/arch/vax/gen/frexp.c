@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp.c,v 1.2 1997/07/13 18:45:44 christos Exp $	*/
+/*	$NetBSD: frexp.c,v 1.3 1999/03/10 08:15:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: frexp.c,v 1.2 1997/07/13 18:45:44 christos Exp $");
+__RCSID("$NetBSD: frexp.c,v 1.3 1999/03/10 08:15:44 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,9 +65,9 @@ frexp(value, eptr)
 		u.v = value;
 		*eptr = u.s.u_exp - 128;
 		u.s.u_exp = 128;
-		return(u.v);
+		return (u.v);
 	} else {
 		*eptr = 0;
-		return((double)0);
+		return (0.0);
 	}
 }

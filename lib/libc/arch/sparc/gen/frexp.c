@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp.c,v 1.2 1997/07/13 18:42:29 christos Exp $	*/
+/*	$NetBSD: frexp.c,v 1.3 1999/03/10 08:15:44 mycroft Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -43,13 +43,13 @@
 #if 0
 static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: frexp.c,v 1.2 1997/07/13 18:42:29 christos Exp $");
+__RCSID("$NetBSD: frexp.c,v 1.3 1999/03/10 08:15:44 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <math.h>
 #include <sys/types.h>
 #include <machine/ieee.h>
+#include <math.h>
 
 /*
  * Split the given value into a fraction in the range [0.5, 1.0) and
@@ -80,6 +80,6 @@ frexp(value, eptr)
 		return (u.v);
 	} else {
 		*eptr = 0;
-		return ((double)0);
+		return (0.0);
 	}
 }

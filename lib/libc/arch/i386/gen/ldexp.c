@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.5 1998/08/15 09:36:04 mycroft Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.6 1999/03/10 08:15:43 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,11 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ldexp.c,v 1.5 1998/08/15 09:36:04 mycroft Exp $");
+__RCSID("$NetBSD: ldexp.c,v 1.6 1999/03/10 08:15:43 mycroft Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/types.h>
+#include <machine/ieee.h>
 #include <math.h>
 
 /*
