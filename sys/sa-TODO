@@ -1,4 +1,4 @@
-#	$NetBSD: sa-TODO,v 1.1.2.29 2002/12/30 23:03:37 thorpej Exp $
+#	$NetBSD: sa-TODO,v 1.1.2.30 2002/12/31 02:29:55 thorpej Exp $
 
 Things to do for scheduler activations/LWP code.
 
@@ -13,9 +13,6 @@ Bugs:
 - MD bug: tests/sa1 runs on dreamcast (SH4), but ^C'ing it causes the
   kernel to panic in ltsleep.  Messages on the console about "not enough
   stacks".
-
-- MI/MD bug: The PMC framework does not work with SAs .. at all.  This
-  needs to be straightened out.
 
 - MI bug: systrace has some assumptions about processes that aren't
   true in the LWP/SA universe, and need to be fixed.
