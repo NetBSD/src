@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.42 1995/06/29 10:05:16 cgd Exp $	*/
+/*	$NetBSD: mount.h,v 1.43 1995/10/15 15:33:26 ws Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -372,7 +372,14 @@ struct msdosfs_args {
 	uid_t	uid;		/* uid that owns msdosfs files */
 	gid_t	gid;		/* gid that owns msdosfs files */
 	mode_t	mask;		/* mask to be applied for msdosfs perms */
+	int	flags;		/* see below */
 };
+/*
+ * Msdosfs mount options:
+ */
+#define	MSDOSFSMNT_SHORTNAME	1	/* Force old DOS short names only */
+#define	MSDOSFSMNT_LONGNAME	2	/* Force Win'95 long names */
+#define	MSDOSFSMNT_NOWIN95	4	/* Completely ignore Win95 entries */
 
 /*
  * Arguments to mount amigados filesystems.
