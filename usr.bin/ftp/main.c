@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.75 2000/12/15 02:22:51 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.76 2001/01/09 22:25:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.75 2000/12/15 02:22:51 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.76 2001/01/09 22:25:55 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,6 +127,7 @@ __RCSID("$NetBSD: main.c,v 1.75 2000/12/15 02:22:51 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <locale.h>
 
 #define	GLOBAL		/* force GLOBAL decls in ftp_var.h to be declared */
 #include "ftp_var.h"
@@ -146,6 +147,8 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	char *cp, *ep, *anonuser, *anonpass, *upload_path;
 	int dumbterm, s, len, isupload;
+
+	setlocale(LC_ALL, "");
 
 	ftpport = "ftp";
 	httpport = "http";
