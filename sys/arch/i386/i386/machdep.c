@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221 1997/02/13 00:59:12 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.222 1997/03/03 02:33:41 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -1368,7 +1368,7 @@ init386(first_avail)
 	isa_defaultirq();
 #endif
 
-	splhigh();
+	splraise(-1);
 	enable_intr();
 
 	/*
