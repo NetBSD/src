@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyaction.c,v 1.4 1996/11/22 22:04:25 gwr Exp $	*/
+/*	$NetBSD: ttyaction.c,v 1.5 1996/11/29 18:50:37 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ ttyaction(tty, act, user)
 			/* If we get here, it is an error. */
 			warnx("%s: line %d: exec failed: %s",
 				  actfile, linenum, strerror(errno));
-			exit(1);
+			_exit(1);
 		}
 		/* This is the parent. */
 		err = waitpid(pid, &status, 0);
