@@ -1,4 +1,4 @@
-# $NetBSD: extest.exp,v 1.5 2000/07/02 22:36:50 pk Exp $
+# $NetBSD: extest.exp,v 1.6 2001/08/27 13:35:45 enami Exp $
 # real output must start in line 4
 
 output for test1
@@ -37,3 +37,9 @@ result: 0x8
 extent `test7' (0x0 - 0xb), flags = 0x0
      0x0 - 0x6
      0x8 - 0xb
+output for test8
+result: 0x0
+error: Resource temporarily unavailable
+extent `test8' (0x0 - 0x4f), flags = 0x2
+     0x0 - 0xf
+     0x30 - 0x3f
