@@ -1883,7 +1883,7 @@ char ***vecP;
 #ifdef PIC
 	case 'K':
 		got_offset_size = 4;
-		break;
+		/*FALLTHROUGH*/
 	case 'k':
 		got_symbol = symbol_find_or_make("__GLOBAL_OFFSET_TABLE_");
 		break;
