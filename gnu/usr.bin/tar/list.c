@@ -18,7 +18,7 @@ along with GNU Tar; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #ifndef lint
-static char rcsid[] = "$Id: list.c,v 1.4 1996/03/26 00:48:49 cgd Exp $";
+static char rcsid[] = "$Id: list.c,v 1.5 1997/06/06 07:59:52 jeremy Exp $";
 #endif /* not lint */
 
 /*
@@ -99,6 +99,11 @@ read_and (do_something)
     {
       prev_status = status;
       status = read_header ();
+	/* check if the namelist got emptied during the course of reading */
+	/* the tape, if so stop by setting status to EOF */
+      if ((namelist == NULL) && nlpsfreed) {
+	  status = EOF;
+      }
       switch (status)
 	{
 
