@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.45 1997/05/08 16:53:06 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.46 1997/07/28 23:41:04 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -57,6 +57,7 @@
 #include <sys/mount.h>
 #include <sys/buf.h>
 #include <sys/file.h>
+#include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
@@ -70,8 +71,9 @@
 #include <msdosfs/msdosfsmount.h>
 #include <msdosfs/fat.h>
 
+int msdosfs_mountroot __P((void));
 int msdosfs_mount __P((struct mount *, const char *, void *,
-		       struct nameidata *, struct proc *));
+    struct nameidata *, struct proc *));
 int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
 int msdosfs_root __P((struct mount *, struct vnode **));
@@ -80,11 +82,129 @@ int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
 int msdosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-		        struct vnode **, int *, struct ucred **));
+    struct vnode **, int *, struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
 
 int msdosfs_mountfs __P((struct vnode *, struct mount *, struct proc *,
-			 struct msdosfs_args *));
+    struct msdosfs_args *));
+
+static int update_mp __P((struct mount *, struct msdosfs_args *));
+
+#define ROOTNAME "root_device"
+
+struct vfsops msdosfs_vfsops = {
+	MOUNT_MSDOS,
+	msdosfs_mount,
+	msdosfs_start,
+	msdosfs_unmount,
+	msdosfs_root,
+	msdosfs_quotactl,
+	msdosfs_statfs,
+	msdosfs_sync,
+	msdosfs_vget,
+	msdosfs_fhtovp,
+	msdosfs_vptofh,
+	msdosfs_init,
+	msdosfs_mountroot
+};
+
+static int
+update_mp(mp, argp)
+	struct mount *mp;
+	struct msdosfs_args *argp;
+{
+	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
+	int error;
+
+	pmp->pm_gid = argp->gid;
+	pmp->pm_uid = argp->uid;
+	pmp->pm_mask = argp->mask & ALLPERMS;
+	pmp->pm_flags |= argp->flags & MSDOSFSMNT_MNTOPT;
+
+	/*
+	 * GEMDOS knows nothing (yet) about win95
+	 */
+	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
+		pmp->pm_flags |= MSDOSFSMNT_NOWIN95;
+	
+	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
+		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
+	else if (!(pmp->pm_flags &
+	    (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
+		struct vnode *rootvp;
+		
+		/*
+		 * Try to divine whether to support Win'95 long filenames
+		 */
+		if ((error = msdosfs_root(mp, &rootvp)) != 0)
+			return error;
+		pmp->pm_flags |= findwin95(VTODE(rootvp))
+		    ? MSDOSFSMNT_LONGNAME
+		    : MSDOSFSMNT_SHORTNAME;
+		vput(rootvp);
+	}
+	return 0;
+}
+
+int
+msdosfs_mountroot()
+{
+	register struct mount *mp;
+	extern struct vnode *rootvp;
+	struct proc *p = curproc;	/* XXX */
+	size_t size;
+	int error;
+	struct msdosfs_args args;
+
+	if (root_device->dv_class != DV_DISK)
+		return (ENODEV);
+
+	/*
+	 * Get vnodes for swapdev and rootdev.
+	 */
+	if (bdevvp(rootdev, &rootvp))
+		panic("msdosfs_mountroot: can't setup rootvp");
+
+	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
+	bzero((char *)mp, (u_long)sizeof(struct mount));
+	mp->mnt_op = &msdosfs_vfsops;
+	mp->mnt_flag = 0;
+	LIST_INIT(&mp->mnt_vnodelist);
+
+	args.flags = 0;
+	args.uid = 0;
+	args.gid = 0;
+	args.mask = 0777;
+
+	if ((error = msdosfs_mountfs(rootvp, mp, p, &args)) != 0) {
+		free(mp, M_MOUNT);
+		return (error);
+	}
+
+	if ((error = update_mp(mp, &args)) != 0) {
+		(void)msdosfs_unmount(mp, 0, p);
+		free(mp, M_MOUNT);
+		return (error);
+	}
+
+	if ((error = vfs_lock(mp)) != 0) {
+		(void)msdosfs_unmount(mp, 0, p);
+		free(mp, M_MOUNT);
+		return (error);
+	}
+
+	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
+	mp->mnt_vnodecovered = NULLVP;
+	(void) copystr("/", mp->mnt_stat.f_mntonname, MNAMELEN - 1,
+	    &size);
+	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
+	(void) copystr(ROOTNAME, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
+	    &size);
+	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
+	(void)msdosfs_statfs(mp, &mp->mnt_stat, p);
+	vfs_unlock(mp);
+	return (0);
+}
 
 /*
  * mp - path - addr in user space of mount point (ie /usr or whatever) 
@@ -209,35 +329,12 @@ msdosfs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (error);
 	}
-	pmp = VFSTOMSDOSFS(mp);
-	pmp->pm_gid = args.gid;
-	pmp->pm_uid = args.uid;
-	pmp->pm_mask = args.mask & ALLPERMS;
-	pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
 
-	/*
-	 * GEMDOS knows nothing (yet) about win95
-	 */
-	if (pmp->pm_flags & MSDOSFSMNT_GEMDOSFS)
-		pmp->pm_flags |= MSDOSFSMNT_NOWIN95;
-	
-	if (pmp->pm_flags & MSDOSFSMNT_NOWIN95)
-		pmp->pm_flags |= MSDOSFSMNT_SHORTNAME;
-	else if (!(pmp->pm_flags & (MSDOSFSMNT_SHORTNAME | MSDOSFSMNT_LONGNAME))) {
-		struct vnode *rootvp;
-		
-		/*
-		 * Try to divine whether to support Win'95 long filenames
-		 */
-		if ((error = msdosfs_root(mp, &rootvp)) != 0) {
-			msdosfs_unmount(mp, MNT_FORCE, p);
-			return (error);
-		}
-		pmp->pm_flags |= findwin95(VTODE(rootvp))
-		    ? MSDOSFSMNT_LONGNAME
-		    : MSDOSFSMNT_SHORTNAME;
-		vput(rootvp);
+	if ((error = update_mp(mp, &args)) != 0) {
+		msdosfs_unmount(mp, MNT_FORCE, p);
+		return error;
 	}
+
 	(void) copyinstr(path, mp->mnt_stat.f_mntonname, MNAMELEN - 1, &size);
 	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	(void) copyinstr(args.fspec, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
@@ -762,18 +859,3 @@ msdosfs_vget(mp, ino, vpp)
 
 	return (EOPNOTSUPP);
 }
-
-struct vfsops msdosfs_vfsops = {
-	MOUNT_MSDOS,
-	msdosfs_mount,
-	msdosfs_start,
-	msdosfs_unmount,
-	msdosfs_root,
-	msdosfs_quotactl,
-	msdosfs_statfs,
-	msdosfs_sync,
-	msdosfs_vget,
-	msdosfs_fhtovp,
-	msdosfs_vptofh,
-	msdosfs_init
-};
