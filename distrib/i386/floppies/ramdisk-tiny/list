@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2000/11/16 13:21:06 simonb Exp $
+#	$NetBSD: list,v 1.5 2001/01/24 18:16:43 jmc Exp $
 
 # various files that we need in /etc for the install
 COPY	${CURDIR}/../../../../etc/group		etc/group
@@ -63,7 +63,7 @@ LINK	ramdiskbin			usr/sbin/chroot
 SPECIAL	/bin/rm ramdiskbin
 
 # make some devices
-SPECIAL	cd dev; sh ${CURDIR}/../../../../etc/etc.i386/MAKEDEV ramdisk
+SPECIAL	cd dev; sh ${CURDIR}/../../../../etc/etc.i386/MAKEDEV std md0 fd0 fd1 wd0 wd1 wd2 wd3 cd0 cd1 pty0 ttyv0 
 
 # we need the boot block in /usr/mdec + the MBR copy
 COPY	${DESTDIR}/usr/mdec/biosboot.sym	usr/mdec/biosboot.sym
