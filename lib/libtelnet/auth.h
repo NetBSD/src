@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.6 1998/02/27 10:33:46 christos Exp $	*/
+/*	$NetBSD: auth.h,v 1.7 1998/03/30 22:19:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,5 +77,5 @@ typedef struct XauthP {
 
 #include "auth-proto.h"
 
-extern auth_debug_mode;
+extern int auth_debug_mode;
 #endif
