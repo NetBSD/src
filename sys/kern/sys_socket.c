@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.17 1998/04/25 17:35:18 matt Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.18 1998/06/30 05:33:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -54,10 +54,12 @@ struct	fileops socketops =
 
 /* ARGSUSED */
 int
-soo_read(fp, uio, cred)
+soo_read(fp, offset, uio, cred, flags)
 	struct file *fp;
+	off_t *offset;
 	struct uio *uio;
 	struct ucred *cred;
+	int flags;
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return ((*so->so_receive)(so, (struct mbuf **)0,
@@ -66,10 +68,12 @@ soo_read(fp, uio, cred)
 
 /* ARGSUSED */
 int
-soo_write(fp, uio, cred)
+soo_write(fp, offset, uio, cred, flags)
 	struct file *fp;
+	off_t *offset;
 	struct uio *uio;
 	struct ucred *cred;
+	int flags;
 {
 	struct socket *so = (struct socket *) fp->f_data;
 	return ((*so->so_send)(so, (struct mbuf *)0,

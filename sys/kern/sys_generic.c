@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.37 1998/06/25 21:17:17 thorpej Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.38 1998/06/30 05:33:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -111,8 +111,9 @@ sys_read(p, v, retval)
 	if (KTRPOINT(p, KTR_GENIO))
 		ktriov = aiov;
 #endif
-	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	cnt = auio.uio_resid;
+	error = (*fp->f_ops->fo_read)(fp, &fp->f_offset, &auio, fp->f_cred,
+	    FOF_UPDATE_OFFSET);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -196,7 +197,8 @@ sys_readv(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_read)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_read)(fp, &fp->f_offset, &auio, fp->f_cred,
+	    FOF_UPDATE_OFFSET);
 	if (error)
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -262,8 +264,9 @@ sys_write(p, v, retval)
 	if (KTRPOINT(p, KTR_GENIO))
 		ktriov = aiov;
 #endif
-	cnt = SCARG(uap, nbyte);
-	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	cnt = auio.uio_resid;
+	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio, fp->f_cred,
+	    FOF_UPDATE_OFFSET);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
@@ -350,7 +353,8 @@ sys_writev(p, v, retval)
 	}
 #endif
 	cnt = auio.uio_resid;
-	error = (*fp->f_ops->fo_write)(fp, &auio, fp->f_cred);
+	error = (*fp->f_ops->fo_write)(fp, &fp->f_offset, &auio, fp->f_cred,
+	    FOF_UPDATE_OFFSET);
 	if (error) {
 		if (auio.uio_resid != cnt && (error == ERESTART ||
 		    error == EINTR || error == EWOULDBLOCK))
