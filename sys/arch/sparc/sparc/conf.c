@@ -42,7 +42,7 @@
  *	@(#)conf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: conf.c,v 1.15 93/05/05 09:43:29 torek Exp  (LBL)
- * $Id: conf.c,v 1.6 1993/11/11 23:17:47 deraadt Exp $
+ * $Id: conf.c,v 1.7 1994/02/01 06:01:37 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -52,7 +52,6 @@
 #include <sys/vnode.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/systm.h>
 
 int	rawread		__P((dev_t, struct uio *, int));
 int	rawwrite	__P((dev_t, struct uio *, int));
@@ -67,7 +66,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define	dev_type_stop(n) 	int n __P((struct tty *, int))
 
 /* bdevsw-specific types */
-#define	dev_type_dump(n)	int n __P((dev_t, daddr_t, caddr_t, int))
+#define	dev_type_dump(n)	int n __P((dev_t))
 #define	dev_type_size(n)	int n __P((dev_t))
 
 /* error/nullop functions */

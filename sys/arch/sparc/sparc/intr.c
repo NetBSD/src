@@ -42,7 +42,7 @@
  *	@(#)intr.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: intr.c,v 1.20 92/11/26 03:04:53 torek Exp  (LBL)
- * $Id: intr.c,v 1.2 1993/10/11 02:16:18 deraadt Exp $
+ * $Id: intr.c,v 1.3 1994/02/01 06:01:39 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -138,7 +138,7 @@ soft01intr(fp)
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;
-			softclock();
+			softclock(fp);
 		}
 	}
 	return (1);
