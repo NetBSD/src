@@ -1,4 +1,4 @@
-/* $NetBSD: crt0.c,v 1.22 2004/08/26 21:21:05 thorpej Exp $ */
+/* $NetBSD: crt0.c,v 1.23 2004/08/26 21:21:33 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou
@@ -113,32 +113,7 @@ ___start(char **sp,
  * NOTE: Leave the RCS ID _after_ _start(), in case it gets placed in .text.
  */
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: crt0.c,v 1.22 2004/08/26 21:21:05 thorpej Exp $");
+__RCSID("$NetBSD: crt0.c,v 1.23 2004/08/26 21:21:33 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
-
-/* XXX XXX XXX THIS SHOULD GO AWAY XXX XXX XXX
- * The following allows linking w/o crtbegin.o and crtend.o
- */
-
-extern void	__init __P((void));
-extern void	__fini __P((void));
-
-#ifdef __weak_alias
-__weak_alias(_init, __init);
-__weak_alias(_fini, __fini);
-#else
-asm (" .weak _init; _init = __init");
-asm (" .weak _fini; _fini = __fini");
-#endif
-
-void
-__init()
-{
-}
-
-void
-__fini()
-{
-}
 
 #include "common.c"
