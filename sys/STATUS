@@ -78,7 +78,7 @@ mvme68k		compiles
 
 news68k
 
-newsmips
+newsmips	compiles, sc & spifi works
 
 next68k
 
