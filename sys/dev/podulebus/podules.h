@@ -1,10 +1,10 @@
-/*	$NetBSD: podules.h,v 1.12 2002/11/03 12:59:44 bjh21 Exp $	*/
+/*	$NetBSD: podules.h,v 1.13 2003/01/26 19:35:52 chris Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.14 2002/11/03 12:58:15 bjh21 Exp 
+ *	NetBSD: podules,v 1.15 2003/01/26 19:35:04 chris Exp 
  */
 
 /*
@@ -351,6 +351,7 @@
 #define	PODULE_MIDICONNECT	0x0133		/* Midi-Connect */
 #define	PODULE_ETHERI	0x0139		/* EtherI interface */
 #define	PODULE_SIMTEC_USB	0x0145		/* USB interface */
+#define	PODULE_SIMTEC_NET100	0x0150		/* NET100 interface */
 #define	PODULE_MIDIMAX	0x0200		/* MIDI max */
 #define	PODULE_MMETHERV	0x1234		/* Multi-media/EtherV */
 #define	PODULE_ETHERN	0x5678		/* EtherN interface */

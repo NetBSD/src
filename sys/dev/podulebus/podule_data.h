@@ -1,10 +1,10 @@
-/*	$NetBSD: podule_data.h,v 1.12 2002/11/03 12:59:44 bjh21 Exp $	*/
+/*	$NetBSD: podule_data.h,v 1.13 2003/01/26 19:35:52 chris Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.14 2002/11/03 12:58:15 bjh21 Exp 
+ *	NetBSD: podules,v 1.15 2003/01/26 19:35:04 chris Exp 
  */
 
 /*
@@ -254,6 +254,7 @@ static struct podule_description known_podules[] = {
 	{ PODULE_MIDICONNECT,	"Midi-Connect" },
 	{ PODULE_ETHERI,	"EtherI interface" },
 	{ PODULE_SIMTEC_USB,	"USB interface" },
+	{ PODULE_SIMTEC_NET100,	"NET100 interface" },
 	{ PODULE_MIDIMAX,	"MIDI max" },
 	{ PODULE_MMETHERV,	"Multi-media/EtherV" },
 	{ PODULE_ETHERN,	"EtherN interface" },
