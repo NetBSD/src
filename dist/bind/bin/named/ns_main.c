@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_main.c,v 1.1.1.7 2003/06/03 07:04:35 itojun Exp $	*/
+/*	$NetBSD: ns_main.c,v 1.1.1.8 2003/06/09 13:15:19 itojun Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 static const char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
-static const char rcsid[] = "Id: ns_main.c,v 8.162.6.1 2003/06/02 05:59:55 marka Exp";
+static const char rcsid[] = "Id: ns_main.c,v 8.162.6.2 2003/06/08 22:08:02 marka Exp";
 #endif /* not lint */
 
 /*
@@ -832,8 +832,12 @@ stream_accept(evContext lev, void *uap, int rfd,
 	sp->s_ifp = ifp;
 	INSIST(sizeof sp->s_temp >= INT16SZ);
 	iov = evConsIovec(sp->s_temp, INT16SZ);
-	INSIST_ERR(evRead(lev, rfd, &iov, 1, stream_getlen, sp, &sp->evID_r)
-		   != -1);
+	if (evRead(lev, rfd, &iov, 1, stream_getlen, sp, &sp->evID_r) == -1) {
+		ns_error(ns_log_default, "evRead(fd %d): %s",
+			 rfd, strerror(errno));
+		sq_remove(sp);
+		return;
+	}
 	sp->flags |= STREAM_READ_EV;
 	ns_debug(ns_log_default, 1, "IP/TCP connection from %s (fd %d)",
 		 sin_ntoa(sp->s_from), rfd);
@@ -975,8 +979,12 @@ stream_write(evContext ctx, void *uap, int fd, int evmask) {
 	sp->flags &= ~STREAM_WRITE_EV;
 	sp->s_refcnt = 0;
 	iov = evConsIovec(sp->s_temp, INT16SZ);
-	INSIST_ERR(evRead(ctx, fd, &iov, 1, stream_getlen, sp, &sp->evID_r) !=
-		   -1);
+	if (evRead(ctx, fd, &iov, 1, stream_getlen, sp, &sp->evID_r) == -1) {
+		ns_error(ns_log_default, "evRead(fd %d): %s",
+			 fd, strerror(errno));
+		sq_remove(sp);
+		return;
+	}
 	sp->flags |= STREAM_READ_EV;
 }
 
@@ -1041,9 +1049,12 @@ stream_getlen(evContext lev, void *uap, int fd, int bytes) {
 	iov = evConsIovec(sp->s_buf, (sp->s_size <= sp->s_bufsize) ?
 				     sp->s_size : sp->s_bufsize);
 	if (evRead(lev, sp->s_rfd, &iov, 1, stream_getmsg, sp, &sp->evID_r)
-	    == -1)
-		ns_panic(ns_log_default, 1, "evRead(fd %d): %s",
+	    == -1) {
+		ns_error(ns_log_default, "evRead(fd %d): %s",
 			 sp->s_rfd, strerror(errno));
+		sq_remove(sp);
+		return;
+	}
 	sp->flags |= STREAM_READ_EV;
 }
 
@@ -2238,9 +2249,12 @@ sq_done(struct qstream *sp) {
 	}
 	iov = evConsIovec(sp->s_temp, INT16SZ);
 	if (evRead(ev, sp->s_rfd, &iov, 1, stream_getlen, sp, &sp->evID_r) ==
-	    -1)
-		ns_panic(ns_log_default, 1, "evRead(fd %d): %s",
+	    -1) {
+		ns_error(ns_log_default, "evRead(fd %d): %s",
 			 sp->s_rfd, strerror(errno));
+		sq_remove(sp);
+		return;
+	}
 	sp->flags |= STREAM_READ_EV;
 }
 

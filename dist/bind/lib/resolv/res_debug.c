@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.1.1.6 2003/06/03 07:05:03 itojun Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.1.1.7 2003/06/09 13:16:21 itojun Exp $	*/
 
 /*
  * Copyright (c) 1985
@@ -97,7 +97,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
-static const char rcsid[] = "Id: res_debug.c,v 8.49 2003/01/30 23:32:35 marka Exp";
+static const char rcsid[] = "Id: res_debug.c,v 8.49.6.1 2003/06/04 01:09:43 marka Exp";
 #endif /* LIBC_SCCS and not lint */
 
 #include "port_before.h"
@@ -664,9 +664,11 @@ p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
 	case AF_INET:
 		inet_ntop(AF_INET, &u.sin.sin_addr, ret, sizeof ret);
 		break;
+#ifdef HAS_INET6_STRUCTS
 	case AF_INET6:
 		inet_ntop(AF_INET6, &u.sin6.sin6_addr, ret, sizeof ret);
 		break;
+#endif
 	default:
 		sprintf(ret, "[af%d]", u.sin.sin_family);
 		break;
