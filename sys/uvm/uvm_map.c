@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.3 1998/02/07 11:08:57 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.4 1998/02/07 12:31:32 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -2293,7 +2293,7 @@ int pageable;
   UVMHIST_FUNC("uvmspace_alloc"); UVMHIST_CALLED(maphist);
 
   MALLOC(vm, struct vmspace *, sizeof(struct vmspace), M_VMMAP, M_WAITOK);
-  bzero(vm, (caddr_t) &vm->vm_startcopy - (caddr_t) vm);
+  bzero(vm, sizeof(*vm));
   uvm_map_setup(&vm->vm_map, min, max, pageable);
 #if defined(PMAP_NEW)
   vm->vm_map.pmap = pmap_create();
