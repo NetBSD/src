@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.23.4.8 2002/01/05 18:31:38 he Exp $
+.\"	$NetBSD: install,v 1.23.4.9 2002/02/23 19:25:09 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -364,10 +364,12 @@ is linked to, or a copy of,
 .Pa boot.net
 and is named appropriately for your client
 (in this case, it would be
-.Pa C0A8010A.SUN4C ) .
+.Pa C0A8010A.SUN4C ) ,
+E.g.:
 .Pp
 .Dl # Ic "cp boot.net /tftpboot"
-.Dl # Ic "ln -s /tftpboot/boot.net /tftpboot/C0A8010A.SUN4C"
+.Dl # Ic "cd /tftpboot"
+.Dl # Ic "ln -s boot.net C0A8010A.SUN4C"
 .Pp
 Now, you should edit
 .Pa /etc/inetd.conf
