@@ -1,4 +1,4 @@
-.\"	$NetBSD: mt.1,v 1.25 2000/09/04 07:30:11 kleink Exp $
+.\"	$NetBSD: mt.1,v 1.26 2001/02/03 16:26:45 mason Exp $
 .\"
 .\" Copyright (c) 1981, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,8 +83,10 @@ Only as many characters as are required to uniquely identify a command
 need be specified.
 .Bl -tag -width "eof, weof"
 .It Cm asf
-Absolute space to
-file
+Move forward
+.Ar count 
+files from the beginning of the tape. This is accomplished by a rewind
+followed by fsf
 .Ar count .
 .It Cm eof , weof
 Write
