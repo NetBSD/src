@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_input.c,v 1.38 1997/12/31 03:31:23 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.39 1998/01/05 10:32:03 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_input.c	8.5 (Berkeley) 4/10/94
+ *	@(#)tcp_input.c	8.12 (Berkeley) 5/24/95
  */
 
 /*

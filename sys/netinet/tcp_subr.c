@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_subr.c,v 1.37 1997/12/31 03:31:26 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.38 1998/01/05 10:32:09 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_subr.c	8.1 (Berkeley) 6/10/93
+ *	@(#)tcp_subr.c	8.2 (Berkeley) 5/24/95
  */
 
 #include "rnd.h"

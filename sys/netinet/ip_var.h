@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.23 1998/01/05 09:52:05 lukem Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.24 1998/01/05 10:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ip_var.h	8.1 (Berkeley) 6/10/93
+ *	@(#)ip_var.h	8.2 (Berkeley) 1/9/95
  */
 
 #include <sys/queue.h>

@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_var.h,v 1.32 1997/12/31 03:31:29 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.33 1998/01/05 10:32:14 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1993, 1994
+ * Copyright (c) 1982, 1986, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_var.h	8.3 (Berkeley) 4/10/94
+ *	@(#)tcp_var.h	8.4 (Berkeley) 5/24/95
  */
 
 /*

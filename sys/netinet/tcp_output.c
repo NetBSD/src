@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_output.c,v 1.26 1997/12/31 03:31:25 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.27 1998/01/05 10:32:05 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_output.c	8.3 (Berkeley) 12/30/93
+ *	@(#)tcp_output.c	8.4 (Berkeley) 5/24/95
  */
 
 #include <sys/param.h>

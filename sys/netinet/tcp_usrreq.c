@@ -1,7 +1,7 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.32 1998/01/05 09:12:30 thorpej Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.33 1998/01/05 10:32:12 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1993
+ * Copyright (c) 1982, 1986, 1988, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_usrreq.c	8.2 (Berkeley) 1/3/94
+ *	@(#)tcp_usrreq.c	8.5 (Berkeley) 6/21/95
  */
 
 #include <sys/param.h>

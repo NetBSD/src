@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.27 1997/07/29 09:10:51 is Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.28 1998/01/05 10:31:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_ether.h	8.1 (Berkeley) 6/10/93
+ *	@(#)if_ether.h	8.3 (Berkeley) 5/2/95
  */
 
 

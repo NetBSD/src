@@ -1,7 +1,7 @@
-/*	$NetBSD: udp_usrreq.c,v 1.43 1997/09/12 10:58:31 drochner Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.44 1998/01/05 10:32:16 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988, 1990, 1993
+ * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)udp_usrreq.c	8.4 (Berkeley) 1/21/94
+ *	@(#)udp_usrreq.c	8.6 (Berkeley) 5/23/95
  */
 #include "ipkdb.h"
 
