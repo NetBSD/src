@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tables.c	5.17 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: tables.c,v 1.5 1993/12/18 01:46:22 mycroft Exp $";
+static char rcsid[] = "$Id: tables.c,v 1.6 1993/12/30 10:44:23 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -47,12 +47,6 @@ static char rcsid[] = "$Id: tables.c,v 1.5 1993/12/18 01:46:22 mycroft Exp $";
 #ifndef DEBUG
 #define	DEBUG	0
 #endif
-
-struct sockaddr_in inet_default = {
-#ifdef RTM_ADD
-	sizeof (inet_default),
-#endif
-	AF_INET, INADDR_ANY };
 
 #ifdef RTM_ADD
 #define FIXLEN(s) {if ((s)->sa_len == 0) (s)->sa_len = sizeof *(s);}
@@ -348,6 +342,7 @@ again:
  */
 rtdefault()
 {
+	extern struct sockaddr inet_default;
 
 	rtadd(&inet_default, &inet_default, 1,
 		RTS_CHANGED | RTS_PASSIVE | RTS_INTERNAL);

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)af.h	5.7 (Berkeley) 6/1/90
- *	$Id: af.h,v 1.4 1993/08/01 18:24:45 mycroft Exp $
+ *	$Id: af.h,v 1.5 1993/12/30 10:44:15 cgd Exp $
  */
 
 /*
@@ -62,5 +62,5 @@ struct afhash {
 	u_int	afh_nethash;		/* network based hash */
 };
 
-struct	afswitch afswitch[];		/* table proper */
-int	af_max;				/* number of entries in table */
+extern struct	afswitch afswitch[];	/* table proper */
+extern int	af_max;			/* number of entries in table */

@@ -1,8 +1,8 @@
 #	from: @(#)Makefile	5.16 (Berkeley) 4/26/91
-#	$Id: Makefile,v 1.6 1993/12/18 01:46:20 mycroft Exp $
+#	$Id: Makefile,v 1.7 1993/12/30 10:43:58 cgd Exp $
 
 PROG=	routed
-SRCS=	if.c input.c main.c output.c startup.c tables.c timer.c \
+SRCS=	af.c if.c input.c main.c output.c startup.c tables.c timer.c \
 	trace.c inet.c
 MAN8=	routed.0
 #SUBDIR=	query trace
