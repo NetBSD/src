@@ -1,4 +1,4 @@
-.\"	$NetBSD: skey.1,v 1.16 2001/07/24 23:53:25 lukem Exp $
+.\"	$NetBSD: skey.1,v 1.17 2001/12/08 19:15:32 wiz Exp $
 .\"
 .\"	from: @(#)skey.1	1.1 	10/28/93
 .\"
@@ -52,7 +52,7 @@ can then be used to log into a system.
 The programs that are part of the
 .Em S/Key
 system are:
-.Bl -tag -width skeyaudit...
+.Bl -tag -width skeyauditxxx
 .It Xr skeyinit 1
 used to setup your
 .Em S/Key .
@@ -109,7 +109,7 @@ To output the S/Key list in hexadecimal instead of words,
 use the
 .Fl x
 option.
-.Sh EXAMPLE
+.Sh EXAMPLES
 Initialize generation of one time passwords:
 .Bd -literal -offset indent
 host% skeyinit
@@ -147,10 +147,10 @@ password at the prompt but also the normal one unless the
 flag is given to
 .Xr login 1 .
 .Sh SEE ALSO
+.Xr login 1 ,
 .Xr skeyaudit 1 ,
 .Xr skeyinfo 1 ,
 .Xr skeyinit 1 ,
-.Xr login 1 ,
 .Xr ftpd 8
 .Pp
 .Em RFC2289
