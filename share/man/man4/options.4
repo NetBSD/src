@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.37 1998/01/12 15:45:23 drochner Exp $
+.\"	$NetBSD: options.4,v 1.38 1998/01/18 18:43:54 is Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -966,11 +966,13 @@ option only if the boot block reports the size incorrectly.
 Include support for MC68881/MC68882 emulator.
 .It Cd options FPSP
 Include support for 68040 floating point. 
-.It Cd options M68030,M68040,M68060
+.It Cd options M68020,M68030,M68040,M68060
 Include support for a specific cpu, at least one (the one you are using)
 should be specified.
 .It Cd options M060SP
-Include support for 68060 floating point.
+Include software support for 68060. This provides emulation of unimplemented
+integer instructions as well as emulation of unimplemented floating point 
+instructions and data types and software support for floating point traps.
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
