@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: db_machdep.h,v 1.6 1994/10/09 13:29:11 mycroft Exp $
+ *	$Id: db_machdep.h,v 1.7 1994/10/09 13:31:19 mycroft Exp $
  */
 
 #ifndef	_I386_DB_MACHDEP_H_
@@ -50,7 +50,7 @@ db_regs_t	ddb_regs;	/* register state */
 #define	BKPT_SIZE	(1)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK		(ddb_regs.tf_eip -= BKPT_SIZE)
+#define	FIXUP_PC_AFTER_BREAK		ddb_regs.tf_eip -= BKPT_SIZE;
 
 #define	db_clear_single_step(regs)	((regs)->tf_eflags &= ~PSL_T)
 #define	db_set_single_step(regs)	((regs)->tf_eflags |=  PSL_T)
