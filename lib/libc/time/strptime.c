@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.14 1998/05/05 14:15:32 tv Exp $	*/
+/*	$NetBSD: strptime.c,v 1.15 1998/08/20 13:36:25 veego Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.14 1998/05/05 14:15:32 tv Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.15 1998/08/20 13:36:25 veego Exp $");
 #endif
 
 #include "namespace.h"
@@ -73,7 +73,7 @@ strptime(buf, fmt, tm)
 {
 	char c;
 	const char *bp;
-	int alt_format, i, len, split_year = 0;
+	int alt_format, i, len = 0, split_year = 0;
 
 	bp = buf;
 
