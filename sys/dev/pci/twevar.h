@@ -1,7 +1,7 @@
-/*	$NetBSD: twevar.h,v 1.9 2001/10/10 09:33:36 ad Exp $	*/
+/*	$NetBSD: twevar.h,v 1.10 2002/05/18 20:59:20 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,13 +43,12 @@
 
 #define	TWE_MAX_QUEUECNT	129
 
-/* XXX NBPG */
-#if TWE_SG_SIZE > (((MAXPHYS + NBPG - 1) / NBPG) + 1)
-#define	TWE_MAX_SEGS	(((MAXPHYS + NBPG - 1) / NBPG) + 1)
+#if TWE_SG_SIZE > (((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1)
+#define	TWE_MAX_SEGS	(((MAXPHYS + PAGE_SIZE - 1) / PAGE_SIZE) + 1)
 #else
 #define	TWE_MAX_SEGS	TWE_SG_SIZE
 #endif
-#define	TWE_MAX_XFER	((TWE_MAX_SEGS - 1) * NBPG)
+#define	TWE_MAX_XFER	((TWE_MAX_SEGS - 1) * PAGE_SIZE)
 
 /* Per-controller state. */
 struct twe_softc {
