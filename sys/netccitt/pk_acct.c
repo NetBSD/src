@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_acct.c,v 1.10 1998/03/01 02:24:57 fvdl Exp $	*/
+/*	$NetBSD: pk_acct.c,v 1.11 1998/07/28 20:25:28 mjacob Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -143,6 +143,6 @@ pk_acct(lcp)
 
 	(void) vn_rdwr(UIO_WRITE, vp, (caddr_t)&acbuf, sizeof (acbuf),
 		(off_t)0, UIO_SYSSPACE, IO_UNIT|IO_APPEND,
-		curproc -> p_ucred, (int *)0,
+		curproc -> p_ucred, (size_t *)0,
 		(struct proc *)0);
 }
