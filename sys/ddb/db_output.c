@@ -32,11 +32,11 @@
  *					use spaces instead.
  */
 /*
- * $Id: db_output.c,v 1.3 1993/05/20 03:39:21 cgd Exp $
+ * db_output.c,v 1.3 1993/05/20 03:39:21 cgd Exp
  *
  * HISTORY
- * $Log: db_output.c,v $
- * Revision 1.3  1993/05/20 03:39:21  cgd
+ * db_output.c,v
+ * Revision 1.3  1993/05/20  03:39:21  cgd
  * add explicit rcs id
  *
  * Revision 1.2  1993/03/21  18:08:08  cgd
@@ -85,12 +85,24 @@
  *	don't print trailing spaces.  This avoids most
  *	of the wraparounds.
  */
+
+#ifndef	DB_MAX_LINE
+#define	DB_MAX_LINE		24	/* maximum line */
+#define DB_MAX_WIDTH		80	/* maximum width */
+#endif	DB_MAX_LINE
+
+#define DB_MIN_MAX_WIDTH	20	/* minimum max width */
+#define DB_MIN_MAX_LINE		3	/* minimum max line */
+#define CTRL(c)			((c) & 0xff)
+
 int	db_output_position = 0;		/* output column */
+int	db_output_line = 0;		/* output line number */
 int	db_last_non_space = 0;		/* last non-space character */
 int	db_tab_stop_width = 8;		/* how wide are tab stops? */
 #define	NEXT_TAB(i) \
 	((((i) + db_tab_stop_width) / db_tab_stop_width) * db_tab_stop_width)
-int	db_max_width = 80;		/* output line width */
+int	db_max_line = DB_MAX_LINE;	/* output max lines */
+int	db_max_width = DB_MAX_WIDTH;	/* output line width */
 
 extern void	db_check_interrupt();
 
@@ -119,12 +131,44 @@ db_force_whitespace()
 	db_last_non_space = db_output_position;
 }
 
+static void
+db_more()
+{
+	register  char *p;
+	int quit_output = 0;
+
+	for (p = "--db_more--"; *p; p++)
+	    cnputc(*p);
+	switch(cngetc()) {
+	case ' ':
+	    db_output_line = 0;
+	    break;
+	case 'q':
+	case CTRL('c'):
+	    db_output_line = 0;
+	    quit_output = 1;
+	    break;
+	default:
+	    db_output_line--;
+	    break;
+	}
+	p = "\b\b\b\b\b\b\b\b\b\b\b           \b\b\b\b\b\b\b\b\b\b\b";
+	while (*p)
+	    cnputc(*p++);
+	if (quit_output) {
+	    db_error(0);
+	    /* NOTREACHED */
+	}
+}
+
 /*
  * Output character.  Buffer whitespace.
  */
 db_putchar(c)
 	int	c;		/* character to output */
 {
+	if (db_max_line >= DB_MIN_MAX_LINE && db_output_line >= db_max_line-1)
+	    db_more();
 	if (c > ' ' && c <= '~') {
 	    /*
 	     * Printing character.
@@ -134,6 +178,14 @@ db_putchar(c)
 	    db_force_whitespace();
 	    cnputc(c);
 	    db_output_position++;
+	    if (db_max_width >= DB_MIN_MAX_WIDTH
+		&& db_output_position >= db_max_width-1) {
+		/* auto new line */
+		cnputc('\n');
+		db_output_position = 0;
+		db_last_non_space = 0;
+		db_output_line++;
+	    }
 	    db_last_non_space = db_output_position;
 	}
 	else if (c == '\n') {
@@ -141,6 +193,7 @@ db_putchar(c)
 	    cnputc(c);
 	    db_output_position = 0;
 	    db_last_non_space = 0;
+	    db_output_line++;
 	    db_check_interrupt();
 	}
 	else if (c == '\t') {
@@ -168,16 +221,6 @@ db_print_position()
 }
 
 /*
- * End line if too long.
- */
-void
-db_end_line()
-{
-	if (db_output_position >= db_max_width)
-	    db_printf("\n");
-}
-
-/*
  * Printing
  */
 extern int	db_radix;
@@ -200,6 +243,16 @@ kdbprintf(char *fmt, ...)
 	va_start(listp, fmt);
 	db_printf_guts (fmt, listp);
 	va_end(listp);
+}
+
+/*
+ * End line if too long.
+ */
+void
+db_end_line()
+{
+	if (db_output_position >= db_max_width)
+	    db_printf("\n");
 }
 
 /*

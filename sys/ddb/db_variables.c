@@ -24,11 +24,11 @@
  * rights to redistribute these changes.
  */
 /*
- * $Id: db_variables.c,v 1.2 1993/05/20 03:39:35 cgd Exp $
+ * db_variables.c,v 1.2 1993/05/20 03:39:35 cgd Exp
  *
  * HISTORY
- * $Log: db_variables.c,v $
- * Revision 1.2  1993/05/20 03:39:35  cgd
+ * db_variables.c,v
+ * Revision 1.2  1993/05/20  03:39:35  cgd
  * add explicit rcs id
  *
  * Revision 1.1.1.1  1993/03/21  09:46:27  cgd
@@ -72,12 +72,14 @@ extern unsigned int	db_maxoff;
 extern int	db_radix;
 extern int	db_max_width;
 extern int	db_tab_stop_width;
+extern int	db_max_line;
 
 struct db_variable db_vars[] = {
 	{ "radix",	&db_radix, FCN_NULL },
 	{ "maxoff",	(int *)&db_maxoff, FCN_NULL },
 	{ "maxwidth",	&db_max_width, FCN_NULL },
 	{ "tabstops",	&db_tab_stop_width, FCN_NULL },
+	{ "lines",	&db_max_line, FCN_NULL },
 };
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
 
