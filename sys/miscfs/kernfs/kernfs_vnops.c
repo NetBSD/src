@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.61 1998/08/10 08:11:12 matthias Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.62 1998/08/13 10:06:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -141,7 +141,7 @@ int	kernfs_reclaim	__P((void *));
 int	kernfs_print	__P((void *));
 #define	kernfs_islocked	genfs_noislocked
 int	kernfs_pathconf	__P((void *));
-#define	kernfs_advlock	genfs_eopnotsupp
+#define	kernfs_advlock	genfs_einval
 #define	kernfs_blkatoff	genfs_eopnotsupp
 #define	kernfs_valloc	genfs_eopnotsupp
 #define	kernfs_vfree	genfs_nullop

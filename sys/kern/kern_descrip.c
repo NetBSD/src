@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.53 1998/08/04 04:03:11 perry Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.54 1998/08/13 10:06:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -272,7 +272,7 @@ sys_fcntl(p, v, retval)
 
 	case F_SETLK:
 		if (fp->f_type != DTYPE_VNODE)
-			return (EBADF);
+			return (EINVAL);
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,
@@ -304,7 +304,7 @@ sys_fcntl(p, v, retval)
 
 	case F_GETLK:
 		if (fp->f_type != DTYPE_VNODE)
-			return (EBADF);
+			return (EINVAL);
 		vp = (struct vnode *)fp->f_data;
 		/* Copy in the lock structure */
 		error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&fl,

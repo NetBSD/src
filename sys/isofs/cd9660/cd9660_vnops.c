@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.50 1998/08/10 08:11:11 matthias Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.51 1998/08/13 10:06:32 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -942,7 +942,7 @@ cd9660_setattr(v)
 #define	cd9660_rename	genfs_eopnotsupp
 #define	cd9660_mkdir	genfs_eopnotsupp
 #define	cd9660_rmdir	genfs_eopnotsupp
-#define	cd9660_advlock	genfs_eopnotsupp
+#define	cd9660_advlock	genfs_einval
 #define	cd9660_valloc	genfs_eopnotsupp
 #define	cd9660_vfree	genfs_nullop
 #define	cd9660_truncate	genfs_eopnotsupp
