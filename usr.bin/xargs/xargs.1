@@ -1,5 +1,7 @@
-.\" Copyright (c) 1990 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: xargs.1,v 1.6 1994/11/14 06:51:40 jtc Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" John B. Roll Jr. and the Institute of Electrical and Electronics
@@ -33,34 +35,30 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)xargs.1	5.5 (Berkeley) 6/27/91
-.\"	$Id: xargs.1,v 1.5 1994/01/11 18:49:39 jtc Exp $
+.\"	@(#)xargs.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 27, 1991
+.Dd June 6, 1993
 .Dt XARGS 1
 .Os
 .Sh NAME
 .Nm xargs
-.Nd construct argument list(s) and execute utility.
+.Nd "construct argument list(s) and execute utility"
 .Sh SYNOPSIS
-.Nm xargs 
+.Nm xargs
 .Op Fl t
-.Oo
-.Op Fl x
+.Oo Op Fl x
 .Fl n Ar number
 .Oc
 .Op Fl s Ar size
-.Oo
-.Ar utility
-.Op Ar argument Ar ...
-.Oc
+.Op Ar utility Op Ar arguments ...
 .Sh DESCRIPTION
 The
 .Nm xargs
 utility reads space, tab, newline and end-of-file delimited arguments
 from the standard input and executes the specified
 .Ar utility
-with them as arguments.
+with them as
+arguments.
 .Pp
 The utility and any arguments specified on the command line are given
 to the
@@ -71,8 +69,10 @@ The
 .Ar utility
 is repeatedly executed until standard input is exhausted.
 .Pp
-Spaces, tabs and newlines may be embedded in arguments using single 
-or double quotes or backslashes.
+Spaces, tabs and newlines may be embedded in arguments using single
+(``\ '\ '')
+.Ek
+or double (``"'') quotes or backslashes (``\e'').
 Single quotes escape all non-single quote characters, excluding newlines,
 up to the matching single quote.
 Double quotes escape all non-double quote characters, excluding newlines,
@@ -104,11 +104,13 @@ Set the maximum number of bytes for the command line length provided to
 .Ar utility .
 The sum of the length of the utility name and the arguments passed to
 .Ar utility
-(including NULL terminators) will be less than or equal to this number.
+(including
+.Dv NULL
+terminators) will be less than or equal to this number.
 The current default value for
 .Ar size
-is 
-.Dv ARG_MAX 
+is
+.Dv ARG_MAX
 - 2048.
 .It Fl t
 Echo the command to be executed to standard error immediately before it
@@ -130,6 +132,14 @@ is used.
 Undefined behavior may occur if
 .Ar utility
 reads from the standard input.
+.Pp
+The
+.Nm xargs
+utility exits immediately (without processing any further input) if a
+command line cannot be assembled,
+.Ar utility
+cannot be invoked, an invocation of the utility is terminated by a signal
+or an invocation of the utility exits with a value of 255.
 .Sh DIAGNOSTICS
 .Nm xargs
 exits with one of the following values:
@@ -161,12 +171,13 @@ could not be found.
 .It 1
 Some other error occurred.
 .El
-.Sh "SEE ALSO"
+.Sh SEE ALSO
 .Xr echo 1 ,
 .Xr find 1
 .Sh STANDARDS
+The
 .Nm xargs
-is expected to be
+utility is expected to be
 .St -p1003.2
 compliant.
 .Sh HISTORY
