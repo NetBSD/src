@@ -1,4 +1,4 @@
-/*	$NetBSD: com1.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $	*/
+/*	$NetBSD: com1.c,v 1.9 1999/09/18 19:38:46 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com1.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com1.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $");
+__RCSID("$NetBSD: com1.c,v 1.9 1999/09/18 19:38:46 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -76,7 +76,7 @@ convert(tothis)			/* Converts day to night and vice versa. 	    */
 				 * are added */
 {				/* at dusk, and subtracted at dawn.		 */
 	const struct objs *p;
-	int     i, j;
+	unsigned int     i, j;
 
 	if (tothis == TONIGHT) {
 		for (i = 1; i <= NUMOFROOMS; i++)

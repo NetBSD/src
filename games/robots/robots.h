@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.12 1999/09/12 09:02:22 jsm Exp $	*/
+/*	$NetBSD: robots.h,v 1.13 1999/09/18 19:38:54 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -109,8 +109,10 @@ extern bool	Pattern_roll, Stand_still;
 extern char	Cnt_move, Field[Y_FIELDSIZE][X_FIELDSIZE], Run_ch;
 extern const char *Next_move, *Move_list;
 
-extern int	Count, Level, Num_robots, Num_scrap, Num_scores, Score,
+extern int	Count, Level, Num_robots, Num_scrap, Num_scores,
 		Start_level, Wait_bonus, Num_games;
+
+extern u_int32_t	Score;
 
 extern COORD	Max, Min, My_pos, Robots[], Scrap[];
 

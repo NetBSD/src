@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.7 1999/09/17 20:44:51 jsm Exp $	*/
+/*	$NetBSD: scores.c,v 1.8 1999/09/18 19:38:55 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -202,7 +202,7 @@ savescore(level)
 		 */
 		nscores = checkscores(scores, nscores);
 		rewind(sf);
-		if (fwrite(scores, sizeof(*sp), nscores, sf) != nscores ||
+		if (fwrite(scores, sizeof(*sp), nscores, sf) != (size_t)nscores ||
 		    fflush(sf) == EOF)
 			warnx("error writing %s: %s -- %s\n",
 			    _PATH_SCOREFILE, strerror(errno),

@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.10 1999/09/12 09:02:22 jsm Exp $	*/
+/*	$NetBSD: score.c,v 1.11 1999/09/18 19:38:54 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.10 1999/09/12 09:02:22 jsm Exp $");
+__RCSID("$NetBSD: score.c,v 1.11 1999/09/18 19:38:54 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ score(score_wfd)
 {
 	int			inf = score_wfd;
 	SCORE			*scp;
-	int			uid;
+	u_int32_t		uid;
 	bool			done_show = FALSE;
 
 	Newscore = FALSE;
@@ -134,8 +134,7 @@ score(score_wfd)
 	if (Top[MAXSCORES-1].s_score <= Score) {
 		numscores = 0;
 		for (scp = Top; scp < &Top[MAXSCORES]; scp++)
-			if (scp->s_score < 0 ||
-			    (scp->s_uid == uid && ++numscores == max_uid)) {
+			if ((scp->s_uid == uid && ++numscores == max_uid)) {
 				if (scp->s_score > Score)
 					break;
 				scp->s_score = Score;

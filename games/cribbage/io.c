@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.12 1999/09/08 21:45:26 jsm Exp $	*/
+/*	$NetBSD: io.c,v 1.13 1999/09/18 19:38:48 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: io.c,v 1.12 1999/09/08 21:45:26 jsm Exp $");
+__RCSID("$NetBSD: io.c,v 1.13 1999/09/18 19:38:48 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,7 +498,7 @@ do_wait()
 {
 	static const char prompt[] = {'-', '-', 'M', 'o', 'r', 'e', '-', '-', '\0'};
 
-	if (Mpos + sizeof prompt < MSG_X)
+	if ((int)(Mpos + sizeof prompt) < MSG_X)
 		wmove(Msgwin, Lineno > 0 ? Lineno - 1 : MSG_Y - 1, Mpos);
 	else {
 		mvwaddch(Msgwin, Lineno, 0, ' ');

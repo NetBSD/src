@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1999/09/12 09:02:24 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/09/18 19:38:56 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1999/09/12 09:02:24 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1999/09/18 19:38:56 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,12 +54,13 @@ __RCSID("$NetBSD: main.c,v 1.7 1999/09/12 09:02:24 jsm Exp $");
 #include <unistd.h>
 #include <err.h>
 #include <time.h>
+#include <sys/types.h>
 #include "trek.h"
 #include "getpar.h"
 
 # define	PRIO		00	/* default priority */
 
-int	Mother	= 51 + (51 << 8);
+uid_t	Mother	= 51 + (51 << 8);
 
 /*
 **	 ####  #####    #    ####          #####  ####   #####  #   #

@@ -1,4 +1,4 @@
-/*	$NetBSD: pig.c,v 1.7 1998/09/13 15:27:29 hubertf Exp $	*/
+/*	$NetBSD: pig.c,v 1.8 1999/09/18 19:38:53 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pig.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: pig.c,v 1.7 1998/09/13 15:27:29 hubertf Exp $");
+__RCSID("$NetBSD: pig.c,v 1.8 1999/09/18 19:38:53 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 
 	for (len = 0; (ch = getchar()) != EOF;) {
 		if (isalpha(ch)) {
-			if (len >= sizeof(buf))
+			if ((size_t)len >= sizeof(buf))
 				errx(1, "ate too much!");
 			buf[len++] = ch;
 			continue;

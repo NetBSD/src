@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.c,v 1.6 1999/09/08 21:17:57 jsm Exp $	*/
+/*	$NetBSD: extern.c,v 1.7 1999/09/18 19:38:53 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)extern.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: extern.c,v 1.6 1999/09/08 21:17:57 jsm Exp $");
+__RCSID("$NetBSD: extern.c,v 1.7 1999/09/18 19:38:53 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ int	Num_robots;		/* Number of robots left */
 int	Num_scrap;		/* Number of scrap heaps */
 int	Num_scores;		/* Number of scores posted */
 int	Num_games;		/* Number of games to play */
-int	Score;			/* Current score */
+u_int32_t	Score;		/* Current score */
 int	Start_level = 1;	/* Level on which to start */
 int	Wait_bonus;		/* bonus for waiting */
 

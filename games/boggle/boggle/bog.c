@@ -1,4 +1,4 @@
-/*	$NetBSD: bog.c,v 1.13 1999/09/17 17:07:11 jsm Exp $	*/
+/*	$NetBSD: bog.c,v 1.14 1999/09/18 19:38:48 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)bog.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: bog.c,v 1.13 1999/09/17 17:07:11 jsm Exp $");
+__RCSID("$NetBSD: bog.c,v 1.14 1999/09/18 19:38:48 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -340,7 +340,7 @@ playgame()
 			showstr(buf, 1);
 			continue;
 		}
-		if (strlen(buf) < minlength) {
+		if (strlen(buf) < (size_t)minlength) {
 			badword();
 			continue;
 		}
