@@ -1,4 +1,4 @@
-/*	$NetBSD: msgdb.c,v 1.3 1999/04/25 09:10:07 veego Exp $	*/
+/*	$NetBSD: msgdb.c,v 1.4 1999/06/19 19:25:10 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -140,6 +140,7 @@ write_msg_file ()
 		"#ifndef MSG_DEFS_H\n"
 		"#define MSG_DEFS_H\n"
 		"#include <stdio.h>\n"
+		"#include <stdlib.h>\n"
 		"#include <string.h>\n"
 		"#include <ctype.h>\n"
 		"#include <stdarg.h>\n"
