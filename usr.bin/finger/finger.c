@@ -1,4 +1,4 @@
-/*	$NetBSD: finger.c,v 1.16 2002/08/02 00:10:40 christos Exp $	*/
+/*	$NetBSD: finger.c,v 1.17 2002/08/05 08:04:03 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -56,7 +56,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)finger.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: finger.c,v 1.16 2002/08/02 00:10:40 christos Exp $");
+__RCSID("$NetBSD: finger.c,v 1.17 2002/08/05 08:04:03 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,7 +146,7 @@ main(argc, argv)
 	(void)time(&now);
 	setpassent(1);
 	entries = getutentries(NULL, &ehead);
-	if (!*argv) {
+	if (argc == 0) {
 		/*
 		 * Assign explicit "small" format if no names given and -l
 		 * not selected.  Force the -s BEFORE we get names so proper
@@ -277,7 +277,7 @@ net:
 			continue;
 		enter_where(ep, pn);
 	}
-	if (db)
+	if (db != NULL)
 		for (sflag = R_FIRST;; sflag = R_NEXT) {
 			PERSON *tmp;
 
@@ -290,3 +290,4 @@ net:
 			enter_lastlog(tmp);
 		}
 }
+

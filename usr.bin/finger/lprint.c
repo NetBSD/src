@@ -1,4 +1,4 @@
-/*	$NetBSD: lprint.c,v 1.13 2002/08/02 00:10:40 christos Exp $	*/
+/*	$NetBSD: lprint.c,v 1.14 2002/08/05 08:04:03 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)lprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID( "$NetBSD: lprint.c,v 1.13 2002/08/02 00:10:40 christos Exp $");
+__RCSID( "$NetBSD: lprint.c,v 1.14 2002/08/05 08:04:03 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,6 +92,9 @@ lflag_print()
 	int sflag, r;
 	PERSON *tmp;
 	DBT data, key;
+
+	if (db == NULL)
+		return;
 
 	for (sflag = R_FIRST;; sflag = R_NEXT) {
 		r = (*db->seq)(db, &key, &data, sflag);

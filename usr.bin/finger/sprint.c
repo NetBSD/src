@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.11 2002/08/02 00:10:40 christos Exp $	*/
+/*	$NetBSD: sprint.c,v 1.12 2002/08/05 08:04:03 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.11 2002/08/02 00:10:40 christos Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.12 2002/08/05 08:04:03 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,6 +75,9 @@ sflag_print()
 	char *p;
 	PERSON *tmp;
 	DBT data, key;
+
+	if (db == NULL)
+		return;
 
 	/*
 	 * short format --
