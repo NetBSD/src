@@ -108,95 +108,43 @@ cpu_fork(p1, p2)
 	return (0);
 }
 
-#ifdef notyet
 /*
  * cpu_exit is called as the last action during exit.
  *
- * We change to an inactive address space and a "safe" stack,
- * passing thru an argument to the new stack. Now, safely isolated
- * from the resources we're shedding, we release the address space
- * and any remaining machine-dependent resources, including the
- * memory for the user structure and kernel stack.
- *
- * Next, we assign a dummy context to be written over by swtch,
- * calling it to send this process off to oblivion.
- * [The nullpcb allows us to minimize cost in swtch() by not having
- * a special case].
+ * We clean up a little and then call swtch_exit() with the old proc as an
+ * argument.  swtch_exit() first switches to proc0's context, then does the
+ * vmspace_free() and kmem_free() that we don't do here, and finally jumps
+ * into swtch() to wait for another process to wake up.
  */
-struct proc *swtch_to_inactive();
-
 void
 cpu_exit(p)
 	register struct proc *p;
 {
 	extern int _default_ldt, currentldt;
-	register struct pcb *pcb = &p->p_addr->u_pcb;
-
 #if NNPX > 0
-	npxexit(p);
+	extern struct proc *npxproc;
+	
+	if (npxproc == p)
+		npxexit(p);
 #endif
 
-	/* move to inactive space and stack, passing arg accross */
-	p = swtch_to_inactive(p);
-
-	/* drop per-process resources */
-	vmspace_free(p->p_vmspace);
 #ifdef USER_LDT
-	if (pcb->pcb_ldt) {
-		if (currentldt != _default_ldt)
-			lldt(currentldt = _default_ldt);
-		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-		    (pcb->pcb_ldt_len * sizeof(union descriptor)));
-		pcb->pcb_ldt = NULL;
+	if (p->p_addr->u_pcb.pcb_ldt) {
+		lldt(currentldt = _default_ldt);	/* XXX necessary? */
+		kmem_free(kernel_map, (vm_offset_t)p->p_addr->u_pcb.pcb_ldt,
+		    (p->p_addr->u_pcb.pcb_ldt_len * sizeof(union descriptor)));
 	}
 #endif
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 
-	curproc = 0; /* don't need to save state */
-	splclock();
-	swtch();
-	/* NOTREACHED */
-}
-#else
-void
-cpu_exit(p)
-	register struct proc *p;
-{
-	extern int _default_ldt, currentldt;
-	
-#if NNPX > 0
-	npxexit(p);
-#endif
-
-#ifdef USER_LDT
-	if (p->p_addr->u_pcb.pcb_ldt && (currentldt != _default_ldt))
-		lldt(currentldt = _default_ldt);
-#endif
-
-	curproc = 0; /* don't need to save state */
-	splclock();
-	swtch();
-	panic("cpu_exit: swtch returned");
+	swtch_exit(p);
 }
 
 void
 cpu_wait(p)
 	struct proc *p;
 {
-	struct pcb *pcb = &p->p_addr->u_pcb;
 
-	/* drop per-process resources */
-	vmspace_free(p->p_vmspace);
-#ifdef USER_LDT
-	if (pcb->pcb_ldt) {
-		kmem_free(kernel_map, (vm_offset_t)pcb->pcb_ldt,
-		    (pcb->pcb_ldt_len * sizeof(union descriptor)));
-		pcb->pcb_ldt = NULL;
-	}
-#endif
-	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 }
-#endif
 
 /*
  * Set a red zone in the kernel stack after the u. area.
