@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.142 2002/07/06 23:59:20 gmcgarry Exp $	*/
+/*	$NetBSD: locore.S,v 1.143 2002/08/28 08:34:07 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -475,6 +475,22 @@ cpu_switch_queuescan:
 	nop
 	lw	a0, P_ADDR(s7)			# restore pcb_context pointer.
 #endif /* IPL_ICU_MASK */
+	/*
+	 * Check for restartable atomic sequences (RAS)
+	 */
+	lw	v1, P_NRAS(s7)
+	addu	t0, a0, USPACE - FRAME_SIZ
+	beq	v1, zero, 1f
+	nop
+	move	a0, s7
+	jal	_C_LABEL(ras_lookup)
+	lw	a1, FRAME_EPC(t0)
+	lw	a0, P_ADDR(s7)
+	li	v1, -1
+	beq	v1, v0, 1f
+	addu	t0, a0, USPACE - FRAME_SIZ
+	sw	v0, FRAME_EPC(t0)
+1:
 	REG_PROLOGUE
 	REG_L	v0, U_PCB_CONTEXT+SF_REG_SR(a0)
 	DYNAMIC_STATUS_MASK(v0,ra)		# machine dependent masking
