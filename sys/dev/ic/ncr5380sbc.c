@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.20 1997/03/27 07:30:40 scottr Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.21 1997/04/07 16:28:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -2534,7 +2534,7 @@ ncr5380_show_req(sr)
 #ifdef	SCSIDEBUG
 	show_scsi_xs(xs);
 #else
-	db_printf("xs=0x%x\n", xs);
+	db_printf("xs=%p\n", xs);
 #endif
 }
 
