@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.6 1996/12/11 00:01:58 fvdl Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.7 1997/06/24 23:39:34 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -236,7 +236,7 @@ int nfs_loadattrcache __P((struct vnode **, struct mbuf **, caddr_t *,
 int nfs_getattrcache __P((struct vnode *, struct vattr *));
 int nfs_namei __P((struct nameidata *, fhandle_t *, int, struct nfssvc_sock *,
 		   struct mbuf *, struct mbuf **, caddr_t *, struct vnode **,
-		   struct proc *, int));
+		   struct proc *, int, int));
 void nfsm_adj __P((struct mbuf *, int, int));
 void nfsm_srvwcc __P((struct nfsrv_descript *, int, struct vattr *, int,
 		      struct vattr *, struct mbuf **, char **));
@@ -245,7 +245,10 @@ void nfsm_srvpostopattr __P((struct nfsrv_descript *, int, struct vattr *,
 void nfsm_srvfattr __P((struct nfsrv_descript *, struct vattr *,
 			struct nfs_fattr *));
 int nfsrv_fhtovp __P((fhandle_t *, int, struct vnode **, struct ucred *,
-		      struct nfssvc_sock *, struct mbuf *, int *, int));
+		      struct nfssvc_sock *, struct mbuf *, int *, int, int));
+int nfsrv_setpublicfs __P((struct mount *, struct netexport *,
+			   struct export_args *));
+int nfs_ispublicfh __P((fhandle_t *));
 int netaddr_match __P((int, union nethostaddr *, struct mbuf *));
 nfsuint64 *nfs_getcookie __P((struct nfsnode *, off_t off, int));
 void nfs_invaldir __P((struct vnode *));
