@@ -1,10 +1,12 @@
-.\"	$NetBSD: whatis,v 1.13 2004/06/11 05:18:03 mbw Exp $
+.\"	$NetBSD: whatis,v 1.14 2004/06/12 06:01:42 mbw Exp $
 .
 .Nx \*V
 is the third major release for the \*M!
 .Pp
 Some (but not all!) notable \*M-specific improvements include:
 .(bullet
+Support for a number of new models
+.It
 Support for a native serial driver on non-SBUS machines
 .Pq Em sab
 .It
