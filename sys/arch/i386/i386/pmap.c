@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 1997/11/13 03:25:33 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 1997/11/19 11:11:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -274,7 +274,7 @@ pmap_bootstrap(virtual_start)
 	msgbuf_paddr = avail_end;
 #ifdef I586_CPU
 	if (pentium_trap_fixup) {
-		SYSMAP(vm_offset_t, junk, pentium_trap_vaddr, 2);
+		SYSMAP(vm_offset_t, junk, pentium_trap_vaddr, 1);
 		avail_end -= ctob(1);
 		pentium_trap_paddr = avail_end;
 	}
