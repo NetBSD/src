@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.42 2001/12/02 06:38:51 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.43 2001/12/10 12:11:05 blymn Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.42 2001/12/02 06:38:51 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.43 2001/12/10 12:11:05 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -470,7 +470,7 @@ t_agetstr(struct tinfo *info, const char *id)
 	if (new_size == 0)
 		return NULL;
 
-	if ((tb = info->tbuf) == NULL || (tb->eptr - tb->ptr) < new_size) {
+	if ((tb = info->tbuf) == NULL || (tb->eptr - tb->ptr) < (new_size + 1)) {
 		if (new_size < BSIZE)
 			new_size = BSIZE;
 		else
