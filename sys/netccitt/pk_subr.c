@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_subr.c,v 1.7 1994/06/29 06:37:38 cgd Exp $	*/
+/*	$NetBSD: pk_subr.c,v 1.8 1995/06/13 05:38:55 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -314,8 +314,9 @@ pk_ifwithaddr (sx)
 	register struct x25_ifaddr *ia;
 	char *addr = sx -> x25_addr;
 
-	for (ifp = ifnet; ifp; ifp = ifp -> if_next)
-		for (ifa = ifp -> if_addrlist; ifa; ifa = ifa -> ifa_next)
+	for (ifp = ifnet.tqh_first; ifp != 0; ifp = ifp->if_list.tqe_next)
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+		    ifa = ifa->ifa_list.tqe_next)
 			if (ifa -> ifa_addr -> sa_family == AF_CCITT) {
 				ia = (struct x25_ifaddr *)ifa;
 				if (bcmp (addr, ia -> ia_xc.xc_addr.x25_addr,
