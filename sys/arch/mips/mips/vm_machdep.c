@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 1997/06/19 06:34:16 mhitch Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.22 1997/06/21 04:24:45 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -237,7 +237,9 @@ pagemove(from, to, size)
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
 #ifdef MIPS3
-	if(((int)from & mips_CacheAliasMask) != ((int)to & mips_CacheAliasMask)) {
+	if (CPUISMIPS3 &&
+	    ((int)from & mips_CacheAliasMask) !=
+	    ((int)to & mips_CacheAliasMask)) {
 		mips3_HitFlushDCache((vm_offset_t)from, size);
 	}
 #endif
