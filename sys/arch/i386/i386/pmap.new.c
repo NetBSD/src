@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.c,v 1.6 1998/03/17 22:09:32 chuck Exp $	*/
+/*	$NetBSD: pmap.new.c,v 1.7 1998/03/25 22:49:11 chuck Exp $	*/
 
 /*
  *
@@ -618,6 +618,19 @@ vm_size_t len;
   for ( /* null */ ; len ; len--, va += NBPG) {
 
     pte = vtopte(va);    
+
+    /* 
+     * XXXCDC: we can get PVLIST if the mapping was created by uvm_fault
+     * as part of a pageable kernel mapping.  in that case we need to
+     * update the pvlists, so we punt the problem to the more powerful
+     * (and complex) pmap_remove() function.   this is kind of ugly...
+     * need to rethink this a bit.
+     */
+    if (*pte & PG_PVLIST) {
+      pmap_remove(pmap_kernel(), va, va + (len*NBPG)); /* punt ... */
+      return;
+    }
+
     *pte = 0;		/* zap! */
 #if defined(I386_CPU)
     if (cpu_class != CPUCLASS_386)
