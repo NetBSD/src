@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.65 2003/06/24 09:42:21 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.66 2003/06/24 09:45:16 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -818,3 +818,11 @@ sys/dev/audio.c					1.161
 
 	fix unitialized variable. from simonb. OI
 	[nakayama, ticket #1332]
+
+sys/ufs/ffs/ffs_inode.c				1.52
+
+	Move a brace that is in the wrong position when changes from FreeBSD
+	were added in rev 1.51.  This may fix the "N lost blocks" problem some
+	people have noticed.
+	Reviewed by fvdl.
+	[nakayama, ticket #1333]
