@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.55 1997/12/09 13:32:32 tv Exp $
+#	$NetBSD: DISKLESS,v 1.56 1998/01/14 15:27:43 drochner Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -168,7 +168,7 @@ mms1	at isa? port 0x238 irq 5
 #sea0	at isa? iomem 0xc8000 irq 5
 #scsibus* at sea?
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
+#uha1	at isa? port 0x340 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 #uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 #scsibus* at uha?
 #wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
@@ -199,7 +199,7 @@ mms1	at isa? port 0x238 irq 5
 # note: the wt driver conflicts unpleasantly with ed devices at the
 # same I/O address. The probe reprograms their eeproms. Don't
 # uncomment it unless you are actually using it.
-#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+#wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC and 3C503
 ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
