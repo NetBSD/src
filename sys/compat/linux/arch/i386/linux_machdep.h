@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.24 2002/11/26 18:42:38 christos Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.25 2002/12/06 00:02:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -46,6 +46,40 @@
 /*
  * The Linux sigcontext, pretty much a standard 386 trapframe.
  */
+struct linux_fpreg {
+	uint16_t	mant[4];
+	uint16_t	expo;
+};
+
+struct linux_fpxreg {
+	uint16_t	mant[4];
+	uint16_t	expo;
+	uint16_t	pad[3];
+};
+
+struct linux_xmmreg {
+	uint32_t	reg[4];
+};
+
+struct linux_fpstate {
+	uint32_t	cw;
+	uint32_t	sw;
+	uint32_t	tag;
+	uint32_t	ipoff;
+	uint32_t	cssel;
+	uint32_t	dataoff;
+	uint32_t	datasel;
+	struct linux_fpreg	st[8];
+	uint16_t	status;
+	uint16_t	magic;
+	uint32_t	fxsr_env[6];
+	uint32_t	mxcsr;
+	uint32_t	reserved;
+	struct linux_fpxreg	fxsr_st[8];
+	struct linux_xmmreg	xmm[8];
+	uint32_t	padding[56];
+};
+
 
 struct linux_sigcontext {
 	int	sc_gs;
@@ -67,7 +101,7 @@ struct linux_sigcontext {
 	int	sc_eflags;
 	int	sc_esp_at_signal;
 	int	sc_ss;
-	int	sc_387;
+	struct linux_fpstate *sc_387;
 	/* XXX check this */
 	linux_old_sigset_t sc_mask;
 	int	sc_cr2;
@@ -79,14 +113,19 @@ struct linux_sigcontext {
  * This means that we need to pass the pointer to the handler too.
  * It is appended to the frame to not interfere with the rest of it.
  */
-
-struct linux_sigframe {
+struct linux_rt_sigframe {
 	int	sf_sig;
 	struct	linux_siginfo  *sf_sip;
 	struct	linux_sigcontext *sf_scp;
-	sig_t	sf_handler;
 	struct	linux_siginfo  sf_si;
 	struct	linux_sigcontext sf_sc;
+	sig_t	sf_handler;
+};
+
+struct linux_sigframe {
+	int	sf_sig;
+	struct	linux_sigcontext sf_sc;
+	sig_t	sf_handler;
 };
 
 #ifdef _KERNEL
