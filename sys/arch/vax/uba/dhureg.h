@@ -1,4 +1,4 @@
-/*	$NetBSD: dhureg.h,v 1.1 1996/03/02 13:30:54 ragge Exp $	*/
+/*	$NetBSD: dhureg.h,v 1.2 1996/03/17 22:51:50 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  *
@@ -31,9 +31,18 @@
  * SUCH DAMAGE.
  */
 
+union w_b
+{
+	u_short word;
+	struct {
+		u_char byte_lo;
+		u_char byte_hi;
+	} bytes;
+};
+
 struct DHUregs
 {
-	volatile u_short dhu_csr;	/* Control/Status Register (R/W) */
+	volatile union w_b u_csr;	/* Control/Status Register (R/W) */
 	volatile u_short dhu_rbuf;	/* Receive Buffer (R only) */
 #define dhu_txchar	 dhu_rbuf	/* Transmit Character (W only) */
 	volatile u_short dhu_lpr;	/* Line Parameter Register (R/W) */
@@ -43,6 +52,10 @@ struct DHUregs
 	volatile u_short dhu_tbufad2;	/* Transmit Buffer Address 2 (R/W) */
 	volatile u_short dhu_tbufcnt;	/* Transmit Buffer Count (R/W) */
 };
+
+#define dhu_csr		u_csr.word
+#define dhu_csr_lo	u_csr.bytes.byte_lo
+#define dhu_csr_hi	u_csr.bytes.byte_hi
 
 typedef struct DHUregs dhuregs;
 
@@ -125,13 +138,3 @@ typedef struct DHUregs dhuregs;
 
 #define DHU_TBUFAD2_DMA_START	0000200
 #define DHU_TBUFAD2_TX_ENABLE	0100000
-
-/* Flags used to monitor modem bits */
-
-#define DML_DTR		0002
-#define DML_RTS		0004
-#define DML_BRK		0020
-#define DML_CTS		0040
-#define DML_DCD		0100
-#define DML_RI		0200
-#define DML_DSR		0400

@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.1 1996/03/02 13:30:53 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.2 1996/03/17 22:51:48 ragge Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -64,15 +64,48 @@
 
 #define	NDHULINE 	(NDHU*16)
 
+/*  This is an experiment to try and fake DHU behavior with a DHV.
+ *  The DHV does not have any programmable delay on input silo level
+ * but interrupts immediately when the first character enters.
+ *  This is really kludgy and so I doubt it will stay.  From what could
+ * be measured, doing a timeout() delay reduced the input interrupt
+ * rate by an order of magnitude (from over 700 to at most 30) with
+ * heavy input (e.g. via kermit).  Input performance increased 5% too
+ * as more CPU cycles were available for the application to consume input.
+ */
+
+#define RX_DELAY	0	/* ticks to delay RX intr handling */
+
 struct	dhu_softc
 {
 	dhuregs *	sc_addr;	/* controller reg address */
 	struct	tty *	sc_tty;		/* what we work on */
-	char *		sc_mem;		/* pointers to current tx */
-	char *		sc_end;		/* character and end */
+	unsigned	sc_txaddr;	/* UBA map address to TX buf */
+	u_char		sc_type;	/* controller type, DHU or DHV */
+	u_char		sc_state;	/* to manage TX output status */
+	u_short		sc_cc;		/* character count on TX */
+	u_short		sc_modem;	/* modem bits state */
 };
 
 struct	dhu_softc dhu_softc[NDHULINE];
+
+#define IS_DHU			0	/* cntlr is a DHU */
+#define IS_DHV			1	/* cntlr is a DHV */
+
+#define STATE_IDLE		000	/* no current output in progress */
+#define STATE_DMA_RUNNING	001	/* DMA TX in progress */
+#define STATE_DMA_STOPPED	002	/* DMA TX was aborted */
+#define STATE_TX_ONE_CHAR	004	/* did a single char directly */
+
+/* Flags used to monitor modem bits, make them understood outside driver */
+
+#define DML_DTR		TIOCM_DTR
+#define DML_RTS		TIOCM_RTS
+#define DML_CTS		TIOCM_CTS
+#define DML_DCD		TIOCM_CD
+#define DML_RI		TIOCM_RI
+#define DML_DSR		TIOCM_DSR
+#define DML_BRK		0100000		/* no equivalent, we will mask */
 
 /*  On a stock DHV, channel pairs (0/1, 2/3, etc.) must use */
 /* a baud rate from the same group.  So limiting to B is likely */
@@ -103,19 +136,24 @@ static struct speedtab dhuspeedtab[] =
 static int	dhu_match __P((struct device *, void *, void *));
 static void	dhu_attach __P((struct device *, struct device *, void *));
 
-struct	cfdriver dhucd =
-{
-	NULL, "dhu", dhu_match, dhu_attach, DV_DULL, sizeof(struct device),
+struct	cfdriver dhu_cd = {
+	NULL, "dhu", DV_TTY
 };
 
-static void	dhuintr __P((int));
-static void	 dhurint __P((int));
-static void	 dhuxint __P((int));
+struct	cfattach dhu_ca = {
+	sizeof(struct device), dhu_match, dhu_attach
+};
 
-static void	dhustart __P((struct tty *));
-static int	dhuparam __P((struct tty *, struct termios *));
+static	void	dhurint __P((int));
+static	void	dhuxint __P((int));
 
-static int	dhumctl __P((int, int, int));
+static	void	dhustart __P((struct tty *));
+static	int	dhuparam __P((struct tty *, struct termios *));
+static	int	dhuiflow __P((struct tty *, int));
+
+	int	dhustop __P((struct tty *, int));
+
+static unsigned	dhumctl __P((int, int, int));
 
 /* Autoconfig handles: setup the controller to interrupt, */
 /* then complete the housecleaning for full operation */
@@ -131,12 +169,12 @@ dhu_match (parent, match, aux)
 	register dhuregs *dhuaddr;
 	register int n;
 
-	if ( nunits > NDHU )
+	if (nunits > NDHU)
 		return 0;
 
 	dhuaddr = (dhuregs *) ua->ua_addr;
 
-	/* Reset controller to initialize, enable tx/rx interrupts */
+	/* Reset controller to initialize, enable TX/RX interrupts */
 	/* to catch floating vector info elsewhere when completed */
 
 	dhuaddr->dhu_csr = (DHU_CSR_MASTER_RESET | DHU_CSR_RXIE | DHU_CSR_TXIE);
@@ -145,24 +183,24 @@ dhu_match (parent, match, aux)
 
 	for (n = 0; n < 300; n++) {
 		DELAY(10000);
-		if ( ( dhuaddr->dhu_csr & DHU_CSR_MASTER_RESET ) == 0 )
+		if ((dhuaddr->dhu_csr & DHU_CSR_MASTER_RESET) == 0)
 			break;
 	}
 
 	/* If the RESET did not clear after 3 seconds, */
 	/* the controller must be broken. */
 
-	if ( n >= 300 )
+	if (n >= 300)
 		return 0;
 
 	/* Check whether diagnostic run has signalled a failure. */
 
-	if ( ( dhuaddr->dhu_csr & DHU_CSR_DIAG_FAIL ) != 0 )
+	if ((dhuaddr->dhu_csr & DHU_CSR_DIAG_FAIL) != 0)
 		return 0;
 
-	/* Register the rx interrupt handler and pass unit # as arg */
+	/* Register the RX interrupt handler and pass unit # as arg */
 
-	ua->ua_ivec = dhuintr;
+	ua->ua_ivec = dhurint;
 	ua->ua_iarg = nunits;
 
 	nunits++;
@@ -175,25 +213,24 @@ dhu_attach (parent, self, aux)
         void *aux;
 {
 	register struct uba_attach_args *ua = aux;
-	register struct	uba_softc *sc = (struct uba_softc *)parent;
 	register dhuregs *dhuaddr;
 	register unsigned c;
-	register int n;
+	register int n, m;
 
 	dhuaddr = (dhuregs *) ua->ua_addr;
 
 	/* Process the 8 bytes of diagnostic info put into */
 	/* the FIFO following the master reset operation. */
 
-	printf ("\ndhv:");
+	printf ("\ndhv%d:", self->dv_unit);
 	for (n = 0; n < 8; n++) {
 		c = dhuaddr->dhu_rbuf;
 
-		if ( (c&DHU_DIAG_CODE) == DHU_DIAG_CODE ) {
-			if ( (c&0200) == 0000 )
+		if ((c&DHU_DIAG_CODE) == DHU_DIAG_CODE) {
+			if ((c&0200) == 0000)
 				printf (" rom(%d) version %d",
 					((c>>1)&01), ((c>>2)&037));
-			else if ( ((c>>2)&07) != 0 )
+			else if (((c>>2)&07) != 0)
 				printf (" diag-error(proc%d)=%x",
 					((c>>1)&01), ((c>>2)&07));
 		}
@@ -202,59 +239,69 @@ dhu_attach (parent, self, aux)
 
 	/* Initialize our static softc structure. */
 
-	for (n = 0; n < 8; n++) {
-		dhu_softc[(self->dv_unit<<4)+n].sc_addr = dhuaddr;
-		dhu_softc[(self->dv_unit<<4)+n].sc_tty = ttymalloc();
+	c = dhuaddr->dhu_stat;	/* get flag to distinguish DHU from DHV */
+
+	for (n = 0; n < ((c & DHU_STAT_DHU)? 16: 8); n++) {
+		m = ((self->dv_unit) << 4) + n;
+		dhu_softc[m].sc_addr = dhuaddr;
+		dhu_softc[m].sc_tty = ttymalloc();
+		dhu_softc[m].sc_type = (c & DHU_STAT_DHU)? IS_DHU: IS_DHV;
+		dhu_softc[m].sc_state = STATE_IDLE;
+
+		dhu_softc[m].sc_txaddr = uballoc (parent->dv_unit,
+					dhu_softc[m].sc_tty->t_outq.c_cs,
+					dhu_softc[m].sc_tty->t_outq.c_cn,
+					UBA_CANTWAIT);
 	}
 
-	/* Now stuff tx interrupt handler in place */
+	/* Now stuff TX interrupt handler in place */
 
-	n = ua->ua_cvec + 1;
-	sc->uh_idsp[n].hoppaddr = dhuintr;
-	sc->uh_idsp[n].pushlarg = self->dv_unit;
-
-	return;
-}
-
-/* Using a single interrupt entry point currently, to keep */
-/* CSR reads to a minimum (and avoid losing TX.ACTION signal) */
-
-static void
-dhuintr (cntlr)
-	int cntlr;
-{
-	register dhuregs *dhuaddr;
-	register unsigned csr;
-
-	dhuaddr = dhu_softc[cntlr].sc_addr;
-
-	/*  The DHV manual says TX.ACTION is cleared when */
-	/* the CSR is read, so we've got to be careful. */
-
-	while ((csr = dhuaddr->dhu_csr) & (DHU_CSR_TX_ACTION|
-					DHU_CSR_RX_DATA_AVAIL))
-	{
-		if (csr & DHU_CSR_RX_DATA_AVAIL)
-			dhurint (cntlr);
-
-		if (csr & DHU_CSR_TX_ACTION)
-			dhuxint ((cntlr<<4)|((csr>>8)&017));
-	}
-	/* XXX check for spurious interrupts? */
+	ubasetvec (self, ua->ua_cvec+1, dhuxint);
 	return;
 }
 
 /* Receiver Interrupt */
 
+#if RX_DELAY > 0
+
+static int RXtimeout = 0;
+
 static void
 dhurint (cntlr)
 	int cntlr;
 {
+	static void dhuRXint __P((void *));
+	if (RXtimeout == 0) {
+		RXtimeout = 1;
+		timeout (dhuRXint, (void *)cntlr, RX_DELAY);
+	}
+	return;
+}
+
+static void
+dhuRXint (arg)
+	void * arg;
+{
+
+#else
+
+static void
+dhurint (cntlr)
+	int cntlr;
+{
+
+#endif
 	register dhuregs *dhuaddr;
 	register struct tty *tp;
 	register int cc, unit;
-	register unsigned c;
+	register unsigned c, delta;
 	int overrun = 0;
+#if RX_DELAY > 0
+	int cntlr = (int) arg;
+	int s;
+
+	s = spltty();
+#endif
 
 	dhuaddr = dhu_softc[cntlr].sc_addr;
 
@@ -272,7 +319,7 @@ dhurint (cntlr)
 		/* LINK.TYPE is set so we get modem control FIFO entries */
 
 		if ((c & DHU_DIAG_CODE) == DHU_MODEM_CODE) {
-			c = ( c << 8 );
+			c = (c << 8);
 			/* Do MDMBUF flow control, wakeup sleeping opens */
 			if (c & DHU_STAT_DCD) {
 				if (!(tp->t_state & TS_CARR_ON))
@@ -281,11 +328,26 @@ dhurint (cntlr)
 			else if ((tp->t_state & TS_CARR_ON) &&
 				(*linesw[tp->t_line].l_modem)(tp, 0) == 0)
 					(void) dhumctl (unit, 0, DMSET);
-			return;
+
+			/* Do CRTSCTS flow control */
+			delta = c ^ dhu_softc[unit].sc_modem;
+			dhu_softc[unit].sc_modem = c;
+			if ((delta & DHU_STAT_CTS) &&
+			    (tp->t_state & TS_ISOPEN) &&
+			    (tp->t_cflag & CRTSCTS)) {
+				if (c & DHU_STAT_CTS) {
+					tp->t_state &= ~TS_TTSTOP;
+					ttstart (tp);
+				} else {
+					tp->t_state |= TS_TTSTOP;
+					dhustop (tp, 0);
+				}
+			}
+			continue;
 		}
 
 		if ((c & DHU_RBUF_OVERRUN_ERR) && overrun == 0) {
-			log(LOG_WARNING, "dhv%d,%d: silo overflow\n",
+			log(LOG_WARNING, "dhv(%d,%d): silo overflow\n",
 				cntlr, (c >> 8) & 017);
 			overrun = 1;
 		}
@@ -297,39 +359,46 @@ dhurint (cntlr)
 
 		(*linesw[tp->t_line].l_rint)(cc, tp);
 	}
+#if RX_DELAY > 0
+	RXtimeout = 0;
+	(void) splx(s);
+#endif
 	return;
 }
 
 /* Transmitter Interrupt */
 
 static void
-dhuxint (unit)
-	int unit;
+dhuxint (cntlr)
+	int cntlr;
 {
 	register dhuregs *dhuaddr;
 	register struct dhu_softc *sc;
 	register struct tty *tp;
+	register unsigned csr;
+	register int unit;
+
+	dhuaddr = dhu_softc[cntlr].sc_addr;
+
+	csr = (dhuaddr->dhu_csr_hi) << 8;
+
+	unit = (cntlr<<4)|((csr>>8)&017);
 
 	sc = &dhu_softc[unit];
 
-	/* Using simple character-at-a-time for now. */
-	/* XXX should be checking status of a DMA transfer */
-
-	if (sc->sc_mem < sc->sc_end) {
-		dhuaddr = sc->sc_addr;
-		dhuaddr->dhu_csr = (DHU_CSR_RXIE | DHU_CSR_TXIE | (unit & 017));
-		dhuaddr->dhu_txchar = DHU_TXCHAR_DATA_VALID | *sc->sc_mem++; 
-		return;
-	}
-
 	tp = sc->sc_tty;
+
 	tp->t_state &= ~TS_BUSY;
 	if (tp->t_state & TS_FLUSH)
 		tp->t_state &= ~TS_FLUSH;
 	else {
-		ndflush(&tp->t_outq, sc->sc_mem - (caddr_t) tp->t_outq.c_cf);
-		sc->sc_end = sc->sc_mem = tp->t_outq.c_cf;
+		if (sc->sc_state == STATE_DMA_STOPPED)
+			sc->sc_cc -= dhuaddr->dhu_tbufcnt;
+		ndflush (&tp->t_outq, sc->sc_cc);
+		sc->sc_cc = 0;
 	}
+
+	sc->sc_state = STATE_IDLE;
 
 	if (tp->t_line)
 		(*linesw[tp->t_line].l_start)(tp);
@@ -355,17 +424,20 @@ dhuopen (dev, flag, mode, p)
 	tp = dhu_softc[unit].sc_tty;
 	if (tp == NULL)
 		tp = dhu_softc[unit].sc_tty = ttymalloc();
-	tp->t_oproc = dhustart;
-	tp->t_param = dhuparam;
+	tp->t_oproc   = dhustart;
+	tp->t_param   = dhuparam;
+	tp->t_hwiflow = dhuiflow;
 	tp->t_dev = dev;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 		tp->t_state |= TS_WOPEN;
 		ttychars(tp);
-		tp->t_iflag = TTYDEF_IFLAG;
-		tp->t_oflag = TTYDEF_OFLAG;
-		tp->t_cflag = TTYDEF_CFLAG;
-		tp->t_lflag = TTYDEF_LFLAG;
-		tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
+		if (tp->t_ispeed == 0) {
+			tp->t_iflag = TTYDEF_IFLAG;
+			tp->t_oflag = TTYDEF_OFLAG;
+			tp->t_cflag = TTYDEF_CFLAG;
+			tp->t_lflag = TTYDEF_LFLAG;
+			tp->t_ispeed = tp->t_ospeed = TTYDEF_SPEED;
+		}
 		(void) dhuparam(tp, &tp->t_termios);
 		ttsetwater(tp);
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
@@ -489,45 +561,13 @@ dhuioctl (dev, cmd, data, flag, p)
 		break;
 
 	case TIOCMGET:
-		*(int *)data = dhumctl (unit, 0, DMGET);
+		*(int *)data = (dhumctl (unit, 0, DMGET) & ~DML_BRK);
 		break;
 
 	default:
 		return (ENOTTY);
 	}
 	return (0);
-}
-
-/*ARGSUSED*/
-int
-dhustop (tp, flag)
-	register struct tty *tp;
-{
-#ifdef notyet
-	register dhuregs *dhuaddr;
-#endif
-	register struct dhu_softc *sc;
-	int unit = minor(tp->t_dev);
-	int s;
-
-	s = spltty();
-	if (tp->t_state & TS_BUSY) {
-
-		sc = &dhu_softc[unit];
-#ifdef notyet
-		dhuaddr = sc->sc_addr;
-		dhuaddr->dhu_csr = (DHU_CSR_RXIE | DHU_CSR_TXIE | (unit & 017));
-		dhuaddr->dhu_lnctrl |= DHU_LNCTRL_DMA_ABORT;
-		/* Aborting a DMA operation leaves it restartable. */
-#else
-		sc->sc_end = sc->sc_mem;
-#endif
-
-		if (!(tp->t_state & TS_TTSTOP))
-			tp->t_state |= TS_FLUSH;
-	}
-	(void) splx(s);
-	return 0;
 }
 
 struct tty *
@@ -538,6 +578,38 @@ dhutty (dev)
         return (tp);
 }
 
+/*ARGSUSED*/
+int
+dhustop (tp, flag)
+	register struct tty *tp;
+{
+	register dhuregs *dhuaddr;
+	register struct dhu_softc *sc;
+	int unit = minor(tp->t_dev);
+	int s;
+
+	s = spltty();
+
+	if (tp->t_state & TS_BUSY)
+	{
+		sc = &dhu_softc[unit];
+
+		if (sc->sc_state == STATE_DMA_RUNNING)
+		{
+			sc->sc_state = STATE_DMA_STOPPED;
+
+			dhuaddr = sc->sc_addr;
+			dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | (unit & 017));
+			dhuaddr->dhu_lnctrl |= DHU_LNCTRL_DMA_ABORT;
+		}
+
+		if (!(tp->t_state & TS_TTSTOP))
+			tp->t_state |= TS_FLUSH;
+	}
+	(void) splx(s);
+	return 0;
+}
+
 static void
 dhustart (tp)
 	register struct tty *tp;
@@ -545,6 +617,7 @@ dhustart (tp)
 	register struct dhu_softc *sc;
 	register dhuregs *dhuaddr;
 	register int unit = minor(tp->t_dev);
+	register unsigned addr;
 	register int cc;
 	int s;
 
@@ -567,19 +640,32 @@ dhustart (tp)
 	tp->t_state |= TS_BUSY;
 
 	sc = &dhu_softc[unit];
-	sc->sc_end = sc->sc_mem = tp->t_outq.c_cf;
-	sc->sc_end += cc;
 
-#ifdef notyet
 	dhuaddr = sc->sc_addr;
-	dhuaddr->dhu_csr = ( DHU_CSR_RXIE | DHU_CSR_TXIE | (unit & 017) );
-	/* XXX Still have to actually setup DMA action! */
-#else
-	dhuaddr = sc->sc_addr;
-	dhuaddr->dhu_csr = (DHU_CSR_RXIE | DHU_CSR_TXIE | (unit & 017));
-	dhuaddr->dhu_txchar = DHU_TXCHAR_DATA_VALID | *sc->sc_mem++; 
-#endif
+	dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | (unit & 017));
 
+	sc->sc_cc = cc;
+
+	if (cc == 1)
+	{
+		sc->sc_state = STATE_TX_ONE_CHAR;
+		dhuaddr->dhu_txchar = DHU_TXCHAR_DATA_VALID | *tp->t_outq.c_cf;
+	}
+	else
+	{
+		sc->sc_state = STATE_DMA_RUNNING;
+
+		addr = UBAI_ADDR(sc->sc_txaddr) +
+			(tp->t_outq.c_cf - tp->t_outq.c_cs);
+
+		dhuaddr->dhu_tbufcnt = cc;
+		dhuaddr->dhu_tbufad1 = (addr & 0xffff);
+		dhuaddr->dhu_tbufad2 = ((addr>>16) & 0x3f) |
+					DHU_TBUFAD2_TX_ENABLE;
+
+		dhuaddr->dhu_lnctrl &= ~DHU_LNCTRL_DMA_ABORT;
+		dhuaddr->dhu_tbufad2 |= DHU_TBUFAD2_DMA_START;
+	}
 out:
 	(void) splx(s);
 	return;
@@ -595,7 +681,7 @@ dhuparam (tp, t)
 	int unit = minor(tp->t_dev);
 	int ispeed = ttspeedtab(t->c_ispeed, dhuspeedtab);
 	int ospeed = ttspeedtab(t->c_ospeed, dhuspeedtab);
-	register unsigned lpr;
+	register unsigned lpr, lnctrl;
 	int s;
 
 	/* check requested parameters */
@@ -613,7 +699,7 @@ dhuparam (tp, t)
 
 	s = spltty();
 	dhuaddr = dhu_softc[unit].sc_addr;
-	dhuaddr->dhu_csr = ( DHU_CSR_RXIE | DHU_CSR_TXIE | (unit & 017) );
+	dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | (unit & 017));
 
 	lpr = ((ispeed&017)<<8) | ((ospeed&017)<<12) ;
 
@@ -641,58 +727,90 @@ dhuparam (tp, t)
 
 	dhuaddr->dhu_lpr = lpr;
 
+	dhuaddr->dhu_tbufad2 |= DHU_TBUFAD2_TX_ENABLE;
+
+	lnctrl = dhuaddr->dhu_lnctrl;
+
 	/* Setting LINK.TYPE enables modem signal change interrupts. */
 
-	dhuaddr->dhu_lnctrl  |= (DHU_LNCTRL_RX_ENABLE | DHU_LNCTRL_LINK_TYPE);
-	dhuaddr->dhu_tbufad2 |= DHU_TBUFAD2_TX_ENABLE;
+	lnctrl |= (DHU_LNCTRL_RX_ENABLE | DHU_LNCTRL_LINK_TYPE);
+
+	if (t->c_iflag & IXON)
+		lnctrl |= DHU_LNCTRL_OAUTO;
+	else
+		lnctrl &= ~DHU_LNCTRL_OAUTO;
+
+	if (t->c_iflag & IXOFF)
+		lnctrl |= DHU_LNCTRL_IAUTO;
+	else
+		lnctrl &= ~DHU_LNCTRL_IAUTO;
+
+	dhuaddr->dhu_lnctrl = lnctrl;
+
+	dhu_softc[unit].sc_modem = dhuaddr->dhu_stat;
 
 	(void) splx(s);
 	return (0);
 }
 
 static int
+dhuiflow (tp, flag)
+	struct tty *tp;
+	int flag;
+{
+	int unit = minor(tp->t_dev);
+
+	if (tp->t_cflag & CRTSCTS) {
+		(void) dhumctl (unit, DML_RTS, ((flag)? DMBIC: DMBIS));
+		return (1);
+	}
+	return (0);
+}
+
+static unsigned
 dhumctl (unit, bits, how)
 	int unit, bits, how;
 {
 	register dhuregs *dhuaddr;
-	register unsigned mdmstat;
-	register int mbits;
+	register unsigned status;
+	register unsigned lnctrl;
+	register unsigned mbits;
 	int s;
 
 	s = spltty();
 
 	dhuaddr = dhu_softc[unit].sc_addr;
-	dhuaddr->dhu_csr = ( DHU_CSR_RXIE | DHU_CSR_TXIE | (unit & 017) );
+	dhuaddr->dhu_csr_lo = (DHU_CSR_RXIE | (unit & 017));
 
 	mbits = 0;
 
 	/* external signals as seen from the port */
 
-	mdmstat = dhuaddr->dhu_stat;
+	status = dhuaddr->dhu_stat;
 
-	if (mdmstat & DHU_STAT_CTS)
+	if (status & DHU_STAT_CTS)
 		mbits |= DML_CTS;
 
-	if (mdmstat & DHU_STAT_DCD)
+	if (status & DHU_STAT_DCD)
 		mbits |= DML_DCD;
 
-	if (mdmstat & DHU_STAT_DSR)
+	if (status & DHU_STAT_DSR)
 		mbits |= DML_DSR;
 
-	if (mdmstat & DHU_STAT_RI)
+	if (status & DHU_STAT_RI)
 		mbits |= DML_RI;
 
 	/* internal signals/state delivered to port */
 
-	mdmstat = dhuaddr->dhu_lnctrl;
+	lnctrl = dhuaddr->dhu_lnctrl;
 
-	if (mdmstat & DHU_LNCTRL_RTS)
+	if (lnctrl & DHU_LNCTRL_RTS)
 		mbits |= DML_RTS;
 
-	if (mdmstat & DHU_LNCTRL_DTR)
+	if (lnctrl & DHU_LNCTRL_DTR)
 		mbits |= DML_DTR;
 
-	if (mdmstat & DHU_LNCTRL_BREAK)
+	if (lnctrl & DHU_LNCTRL_BREAK)
 		mbits |= DML_BRK;
 
 	switch (how)
@@ -715,22 +833,24 @@ dhumctl (unit, bits, how)
 	}
 
 	if (mbits & DML_RTS)
-		dhuaddr->dhu_lnctrl |= DHU_LNCTRL_RTS;
+		lnctrl |= DHU_LNCTRL_RTS;
 	else
-		dhuaddr->dhu_lnctrl &= ~DHU_LNCTRL_RTS;
+		lnctrl &= ~DHU_LNCTRL_RTS;
 
 	if (mbits & DML_DTR)
-		dhuaddr->dhu_lnctrl |= DHU_LNCTRL_DTR;
+		lnctrl |= DHU_LNCTRL_DTR;
 	else
-		dhuaddr->dhu_lnctrl &= ~DHU_LNCTRL_DTR;
+		lnctrl &= ~DHU_LNCTRL_DTR;
 
 	if (mbits & DML_BRK)
-		dhuaddr->dhu_lnctrl |= DHU_LNCTRL_BREAK;
+		lnctrl |= DHU_LNCTRL_BREAK;
 	else
-		dhuaddr->dhu_lnctrl &= ~DHU_LNCTRL_BREAK;
+		lnctrl &= ~DHU_LNCTRL_BREAK;
+
+	dhuaddr->dhu_lnctrl = lnctrl;
 
 	(void) splx(s);
 	return (mbits);
 }
 
-#endif	/* #if NTS > 0 */
+#endif	/* #if NDHU > 0 */
