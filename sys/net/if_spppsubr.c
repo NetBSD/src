@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.43 2002/01/21 11:37:29 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.44 2002/02/10 15:17:21 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.43 2002/01/21 11:37:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.44 2002/02/10 15:17:21 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1000,8 +1000,8 @@ sppp_isempty(struct ifnet *ifp)
 	int empty, s;
 
 	s = splnet();
-	empty = !sp->pp_fastq.ifq_head && !sp->pp_cpq.ifq_head &&
-		!sp->pp_if.if_snd.ifq_head;
+	empty = IF_IS_EMPTY(&sp->pp_fastq) && IF_IS_EMPTY(&sp->pp_cpq) &&
+		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
 	splx(s);
 	return (empty);
 }
