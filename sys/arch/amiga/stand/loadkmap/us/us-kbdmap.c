@@ -1,4 +1,6 @@
-/*	$NetBSD: us-kbdmap.c,v 1.4 1996/06/08 15:29:04 is Exp $	*/
+/*	$NetBSD: us-kbdmap.c,v 1.5 2000/09/27 08:28:36 aymeric Exp $	*/
+
+#include <unistd.h>
 
 #include "../../../dev/kbdmap.h"
 
@@ -475,7 +477,10 @@ unsigned char acctable[KBD_NUM_ACC][64] = {
 
 	
 
-main()
+int
+main(void)
 {
-  write (1, &kbdmap, sizeof (kbdmap));
+	write (1, &kbdmap, sizeof (kbdmap));
+
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fr-kbdmap.c,v 1.1 1997/08/06 17:09:38 veego Exp $	*/
+/*	$NetBSD: fr-kbdmap.c,v 1.2 2000/09/27 08:28:36 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild
@@ -36,6 +36,8 @@
  * edelcamp@easynet.fr 970717
  */
 
+#include <unistd.h>
+
 #include "../../../dev/kbdmap.h"
 
 /* define a default keymap. This can be changed by keyboard ioctl's 
@@ -56,7 +58,7 @@ struct kbdmap kbdmap = {
 	{
 	   {	0, '`'	},	/* 0x00 */
 	   {	0, '&'	},
-	   {	0, '\xe9'	},		/* e accent aigu */
+	   {	0, '\xe9'	},		/* e accent aigu (e acute) */
 	   {	0, '"'	},
 	   {	0, '\''	},
 	   {	0, '('	},
@@ -164,7 +166,7 @@ struct kbdmap kbdmap = {
 	   {	0, '8'	},	/* 0x08 */
 	   {	0, '9'	},
 	   {	0, '0'	},
-	   {	0, '\xb0'	},		/* symbole numero */
+	   {	0, '\xb0'	},		/* symbole numero (degree) */
 	   {	0, '_'	},
 	   {	0, '|'	},
 	   {	0, 0	},
@@ -509,7 +511,9 @@ unsigned char acctable[KBD_NUM_ACC][64] = {
 	"`äbcdëfghïjklmnöpqrstüvwxyz{|}~\177"},	/* KBD_ACC_DIER */
 };
 
-main()
-{
-	write(1, &kbdmap, sizeof(kbdmap) );
+int
+main(void) {
+	write(1, &kbdmap, sizeof(kbdmap));
+
+	return 0;
 }
