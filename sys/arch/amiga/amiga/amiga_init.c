@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.23 1994/10/26 02:01:30 cgd Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.24 1994/12/28 08:54:11 chopps Exp $	*/
 
 /* Authors: Markus Wild, Bryan Ford, Niklas Hallqvist 
  *          Michael L. Hitch - initial 68040 support
@@ -29,8 +29,7 @@
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cfdev.h>
 #include <amiga/amiga/memlist.h>
-#include <amiga/dev/ztwobusvar.h>
-#include <amiga/dev/zthreebusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 extern int	machineid, mmutype;
 extern u_int 	lowram;
@@ -42,6 +41,10 @@ extern char *esym;
 
 #ifdef GRF_AGA
 extern u_long aga_enable;
+#endif
+
+#ifdef MACHINE_NONCONTIG
+extern u_long noncontig_enable;
 #endif
 
 /*
@@ -61,6 +64,8 @@ static vm_offset_t z2mem_end;		/* XXX */
 int use_z2_mem = 1;			/* XXX */
 
 u_long boot_fphystart, boot_fphysize, boot_cphysize;
+
+static u_long boot_flags;
 
 void *
 chipmem_steal(amount)
@@ -118,11 +123,11 @@ alloc_z2mem(amount)
  */
 
 void
-start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
+start_c(id, fphystart, fphysize, cphysize, esym_addr, flags)
 	int id;
 	u_int fphystart, fphysize, cphysize;
 	char *esym_addr;
-	u_int AGA_mode;
+	u_int flags;
 {
 	extern char end[];
 	extern void etext();
@@ -142,9 +147,14 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 	machineid = id;
 	chipmem_end = cphysize;
 	esym = esym_addr;
+	boot_flags = flags;
 #ifdef GRF_AGA
-	if (AGA_mode)
+	if (flags & 1)
 		aga_enable |= 1;
+#endif
+#ifdef MACHINE_NONCONTIG
+	if (flags & 2)
+		noncontig_enable = 1;
 #endif
 
 	/* 
@@ -168,7 +178,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 	 * Get ZorroII (16-bit) memory if there is any and it's not where the
 	 * kernel is loaded.
 	 */
-	if (memlist->m_nseg > 0 && memlist->m_nseg < 16) {
+	if (memlist->m_nseg > 0 && memlist->m_nseg < 16 && use_z2_mem) {
 		struct boot_memseg *sp, *esp;
 
 		sp = memlist->m_seg;
@@ -179,21 +189,26 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 				continue;
 			if (sp->ms_start == fphystart)
 				continue;
-			z2mem_start = sp->ms_start;
-			NZTWOMEMPG = sp->ms_size / NBPG;
-			z2mem_end = z2mem_start + sp->ms_size;
+			z2mem_end = sp->ms_start + sp->ms_size;
+			z2mem_start = z2mem_end - MAXPHYS * use_z2_mem;
+			NZTWOMEMPG = (z2mem_end - z2mem_start) / NBPG;
+			if ((z2mem_end - z2mem_start) > sp->ms_size) {
+				NZTWOMEMPG = sp->ms_size / NBPG;
+				z2mem_start = z2mem_end - sp->ms_size;
+			}
 			break;
 		}
 	}
 
 	/*
-	 * look for Z3 boards. For now, no Z3 RAM-extensions are supported,
-	 * just I/O boards
+	 * Scan ConfigDev list and get size of Zorro I/O boards that are
+	 * outside the Zorro II I/O area.
 	 */
-	for (ZTHREEAVAIL = 0, cd = cfdev, ncd = ncfdev; ncd > 0; ncd--, cd++)
-		if ((u_int)cd->addr >= ZTHREEBASE 
-		    && (u_int)cd->addr < ZTHREETOP)
-			ZTHREEAVAIL += amiga_round_page(cd->size);
+	for (ZBUSAVAIL = 0, cd = cfdev, ncd = ncfdev; ncd > 0; ncd--, cd++) {
+		if ((cd->rom.type & 0xe0) == 0x80 ||
+		    ((cd->rom.type & 0xe0) == 0xc0 && !isztwopa(cd->addr)))
+			ZBUSAVAIL += amiga_round_page(cd->size);
+	}
 
 	/*
 	 * update these as soon as possible!
@@ -229,9 +244,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 		 */
 		Sysseg_pa = pstart;
 		Sysseg = vstart;
-		vstart += NBPG * 8;
-		pstart += NBPG * 8;
-		avail -= NBPG * 8;
+		vstart += AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
+		pstart += AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
+		avail -= AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE;
 	} else
 #endif
 	{
@@ -250,9 +265,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 	 */
 	pt = vstart;
 	ptpa = pstart;
-	ptextra = NCHIPMEMPG + NCIAPG + NZTWOROMPG + NZTWOMEMPG;
-	if (ZTHREEAVAIL > 0)
-		ptextra += btoc(ZTHREEAVAIL);
+	ptextra = NCHIPMEMPG + NCIAPG + NZTWOROMPG + NZTWOMEMPG + btoc(ZBUSAVAIL);
 	ptsize = (Sysptsize + howmany(ptextra, NPTEPG)) << PGSHIFT;
 
 	vstart += ptsize;
@@ -271,12 +284,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 	/*
 	 * set Sysmap; mapped after page table pages
 	 */
-#ifdef M68040
-	if (cpu040)
-		Sysmap = (u_int *)(ptsize << 11);
-	else
-#endif
-		Sysmap = (u_int *)(ptsize << (SEGSHIFT - PGSHIFT));
+	Sysmap = (u_int *)(ptsize * NPTEPG);
 
 	/*
 	 * initialize segment table and page table map
@@ -315,7 +323,31 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 			*sg++ = SG_NV;
 			if (pg < (u_int *)(Sysptmap_pa + NBPG))
 				*pg++ = PG_NV;
-		} while (sg < (u_int *)(Sysseg_pa + NBPG * 8));
+		} while (sg < (u_int *)(Sysseg_pa + AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE));
+		/* the end of the last segment (0xFFFC0000) 
+		 * of KVA space is used to map the u-area of
+		 * the current process (u + kernel stack).
+		 */
+		umap_pa  = pstart;
+		/*
+		 * use next available slot
+		 */
+		sg_proto = (pstart + NBPG - AMIGA_040PTSIZE) | SG_RW | SG_V;
+		umap_pa  = pstart;	/* remember for later map entry */
+		/*
+		 * enter the page into the level 2 segment table
+		 */
+		sg = (u_int *)(Sysseg_pa + AMIGA_040RTSIZE / 4 * AMIGA_040STSIZE);
+		while (sg_proto > pstart) {
+			*--sg = sg_proto;
+			sg_proto -= AMIGA_040PTSIZE;
+		}
+		/*
+		 * enter the page into the page table map
+		 */
+		pg_proto = pstart | PG_RW | PG_CI | PG_V;
+		pg = (u_int *) (Sysptmap_pa + 1024);	/*** fix constant ***/
+		*--pg = pg_proto;
 	} else
 #endif /* M68040 */
 	{
@@ -340,53 +372,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 			*sg++ = SG_NV;
 			*pg++ = PG_NV;
 		} while (sg < (u_int *)(Sysseg_pa + AMIGA_STSIZE - 4));
-	}
 
-#ifdef M68040
-	if (cpu040) {
-		/* the end of the last segment (0xFFFC0000) 
-		 * of KVA space is used to map the u-area of
-		 * the current process (u + kernel stack).
-		 */
-		umap_pa  = pstart;
-		/*
-		 * use next available slot
-		 */
-		sg_proto = (pstart + NBPG - AMIGA_040PTSIZE) | SG_RW | SG_V;
-		umap_pa  = pstart;	/* remember for later map entry */
-		/*
-		 * enter the page into the level 2 segment table
-		 */
-		sg = (u_int *)(Sysseg_pa + NBPG * 8);
-		while (sg_proto > pstart) {
-			*--sg = sg_proto;
-			sg_proto -= AMIGA_040PTSIZE;
-		}
-		/*
-		 * enter the page into the page table map
-		 */
-		pg_proto = pstart | PG_RW | PG_CI | PG_V;
-		pg = (u_int *) (Sysptmap_pa + 1024);	/*** fix constant ***/
-		*--pg = pg_proto;
-		/*
-		 * invalidate all pte's (will validate u-area afterwards)
-		 */
-		for (pg = (u_int *) pstart; pg < (u_int *) (pstart + NBPG); )
-			*pg++ = PG_NV;
-		/*
-		 * account for the allocated page
-		 */
-		pstart   += NBPG;
-		vstart   += NBPG;
-		avail    -= NBPG;
-
-		/*
-		 * record KVA at which to access current u-area PTE(s)
-		 */
-		Umap = (u_int)Sysmap + AMIGA_MAX_PTSIZE - UPAGES * 4;
-	} else
-#endif /* M68040 */
-	{
 		/*
 		 * the end of the last segment (0xFF000000) 
 		 * of KVA space is used to map the u-area of
@@ -401,23 +387,23 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 		 */
 		*sg++     = sg_proto;
 		*pg++     = pg_proto;
-		/*
-		 * invalidate all pte's (will validate u-area afterwards)
-		 */
-		for (pg = (u_int *) pstart; pg < (u_int *) (pstart + NBPG); )
-			*pg++ = PG_NV;
-		/*
-		 * account for the allocated page
-		 */
-		pstart   += NBPG;
-		vstart   += NBPG;
-		avail    -= NBPG;
-
-		/*
-		 * record KVA at which to access current u-area PTE(s)
-		 */
-		Umap = (u_int)Sysmap + AMIGA_MAX_PTSIZE - UPAGES * 4;
 	}
+	/*
+	 * invalidate all pte's (will validate u-area afterwards)
+	 */
+	for (pg = (u_int *) pstart; pg < (u_int *) (pstart + NBPG); )
+		*pg++ = PG_NV;
+	/*
+	 * account for the allocated page
+	 */
+	pstart   += NBPG;
+	vstart   += NBPG;
+	avail    -= NBPG;
+
+	/*
+	 * record KVA at which to access current u-area PTE(s)
+	 */
+	Umap = (u_int)Sysmap + AMIGA_MAX_PTSIZE - UPAGES * 4;
   
 	/*
 	 * initialize kernel page table page(s) (assume load at VA 0)
@@ -548,7 +534,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, AGA_mode)
 		CIAADDR   = ZTWOMEMADDR + NZTWOMEMPG * NBPG;
 	}
 	ZTWOROMADDR  = CIAADDR + NCIAPG * NBPG;
-	ZTHREEADDR = ZTWOROMADDR + NZTWOROMPG * NBPG;
+	ZBUSADDR = ZTWOROMADDR + NZTWOROMPG * NBPG;
 	CIAADDR += NBPG/2;		 /* not on 8k boundery :-( */
 	CUSTOMADDR  = ZTWOROMADDR - ZTWOROMBASE + CUSTOMBASE;
 	/*
@@ -888,11 +874,7 @@ kernel_reload_write(uio)
 		    kernel_load_ofs + kernel_image_magic_size(),
 		    kernel_exec.a_entry, boot_fphystart, boot_fphysize,
 		    boot_cphysize, kernel_symbol_esym, eclockfreq,
-#ifdef GRF_AGA
-		    aga_enable);
-#else
-		    0);
-#endif
+		    boot_flags);
 		/*NOTREACHED*/
 	case 3:		/* done loading kernel symbol table */
 		c = *((u_long *)(kernel_image + kernel_load_ofs - 4));
