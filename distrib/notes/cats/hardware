@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.2 2002/06/28 15:26:37 skrll Exp $
+.\"	$NetBSD: hardware,v 1.3 2002/06/29 10:49:51 lukem Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,11 +36,13 @@
 \*V runs on a Chalice CATS systems from and Intel EBSA boards.
 The minimal configuration is said to
 require 8 MB of RAM and 50 MB of disk space, though we do not know of anyone
-running with a system quite this minimal today. To install the entire
-system requires much more disk space (the unpacked binary distribution,
+running with a system quite this minimal today.
+To install the entire system requires much more disk space
+(the unpacked binary distribution,
 without sources, requires at least 65 MB without counting space needed for
 swap space, etc), and to run X or compile the system, more RAM is
-recommended. (8 MB of RAM will actually allow you to run X and/or compile,
+recommended.
+(8 MB of RAM will actually allow you to run X and/or compile,
 but it won't be speedy. Note that until you have around 16 MB of RAM,
 getting more RAM is more important than getting a faster CPU.)
 .
