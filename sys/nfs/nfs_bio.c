@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.56 2000/12/09 22:38:23 chs Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.57 2000/12/13 18:15:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,6 @@
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/trace.h>
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/namei.h>
