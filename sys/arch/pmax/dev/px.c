@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.17 1999/09/24 00:37:52 nisimura Exp $ */
+/* 	$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.17 1999/09/24 00:37:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.18 1999/09/25 14:45:21 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -388,7 +388,7 @@ px_init(fi, slotbase, unit, console)
 		bufpa = MIPS_KSEG0_TO_PHYS(slotbase + PXG_SRAM_OFFSET);
 		pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
 		pxi->pxi_rbuf_phys = bufpa;
-		pxi->pxi_rbuf_size = 128*1024; /* XXX might have 256KB */
+		pxi->pxi_rbuf_size = px_probe_sram(pxi);
 	}
 
 	/* Get a font and lock. If we're not the console, we don't care */
@@ -574,7 +574,7 @@ px_probe_planes(pxi, buf)
 	
 
 /*
- * Figure out how much SRAM the PXG has.
+ * Figure out how much SRAM the PXG has: 128KB or 256KB.
  */
 static int
 px_probe_sram(pxi)
@@ -588,7 +588,7 @@ px_probe_sram(pxi)
 	*a = 4321;
 	*b = 1234;
 	tc_wmb();
-	
+
 	return ((*a == *b) ? 0x20000 : 0x40000);
 }
 
