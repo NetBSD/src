@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mbuf.c,v 1.4 2003/07/26 14:59:11 mrg Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.5 2003/08/10 14:12:43 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -195,7 +195,7 @@ m_getm(struct mbuf *top, size_t len, struct mbuf **mpp)
  */
 #define	MB_PUT(t)	int error; t *p; \
 			if ((error = mb_fit(mbp, sizeof(t), \
-					    (char **)(void *)&p)) != 0) \
+					    (char **)&p)) != 0) \
 				return error
 
 /*
