@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.187 2003/02/05 21:38:42 pk Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.188 2003/02/18 20:37:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.187 2003/02/05 21:38:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.188 2003/02/18 20:37:38 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2795,7 +2795,7 @@ const char vnode_flagbits[] =
 	"\11XLOCK\12XWANT\13BWAIT\14ALIASED"
 	"\15DIROP\16LAYER\17ONWORKLIST\20DIRTY";
 
-const char *vnode_types[] = {
+const char * const vnode_types[] = {
 	"VNON",
 	"VREG",
 	"VDIR",
@@ -2807,7 +2807,7 @@ const char *vnode_types[] = {
 	"VBAD",
 };
 
-const char *vnode_tags[] = {
+const char * const vnode_tags[] = {
 	"VT_NON",
 	"VT_UFS",
 	"VT_NFS",
@@ -2830,7 +2830,8 @@ const char *vnode_tags[] = {
 	"VT_FILECORE",
 	"VT_NTFS",
 	"VT_VFS",
-	"VT_OVERLAY"
+	"VT_OVERLAY",
+	"VT_SMBFS"
 };
 
 void
