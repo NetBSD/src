@@ -22,6 +22,14 @@
 #define	SPR_LR			0x008	/* 468 Link Register */
 #define	SPR_CTR			0x009	/* 468 Count Register */
 #define	SPR_DSISR		0x012	/* .68 DSI exception source */
+#define	  DSISR_DIRECT		  0x80000000 /* Direct-store error exception */
+#define	  DSISR_NOTFOUND	  0x40000000 /* Translation not found */
+#define	  DSISR_PROTECT		  0x08000000 /* Memory access not permitted */
+#define	  DSISR_INVRX		  0x04000000 /* Reserve-indexed insn direct-store access */
+#define	  DSISR_STORE		  0x02000000 /* Store operation */
+#define	  DSISR_DABR		  0x00400000 /* DABR match */
+#define	  DSISR_SEGMENT		  0x00200000 /* XXX; not in 6xx PEM */
+#define	  DSISR_EAR		  0x00100000 /* eciwx/ecowx && EAR[E] == 0 */
 #define	SPR_DAR			0x013	/* .68 Data Address Register */
 #define	SPR_DEC			0x016	/* .68 DECrementer register */
 #define	SPR_SDR1		0x019	/* .68 Page table base address register */
