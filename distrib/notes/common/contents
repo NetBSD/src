@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.3 1999/02/20 16:19:48 scw Exp $
+.\"	$NetBSD: contents,v 1.4 1999/03/18 18:57:18 ross Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -369,6 +369,7 @@ everything described below.
 .br
 .if r_alpha .Em 13M gzipped, 41M uncompressed
 .if r_arm32 .Em 11M gzipped, 28M uncompressed
+.if r_i386 .Em 9.7M gzipped, 25M uncompressed
 .if r_mac68k .Em 8.6M gzipped, 25.1M uncompressed
 .Pp
 .It Sy comp
@@ -384,6 +385,7 @@ system call and library manual pages.
 .br
 .if r_alpha .Em 6M gzipped, 31M uncompressed
 .if r_arm32 .Em 7.5M gzipped, 25M uncompressed
+.if r_i386 .Em 7.1M gzipped, 24.1M uncompressed
 .if r_mac68k .Em 6.2M gzipped, 21.6M uncompressed
 .Pp
 .It Sy etc
@@ -401,6 +403,7 @@ upgrade your configuration files by hand.)
 .br
 .if r_alpha .Em 50K gzipped, 320K uncompressed
 .if r_arm32 .Em 52K gzipped, 310K uncompressed
+.if r_i386 .Em 53K gzipped, 328K uncompressed
 .if r_mac68k .Em 49K gzipped, 288K uncompressed
 .Pp
 .It Sy games
@@ -408,6 +411,7 @@ This set includes the games and their manual pages.
 .br
 .if r_alpha .Em 3M gzipped, 8M uncompressed
 .if r_arm32 .Em 3M gzipped, 7.4M uncompressed
+.if r_i386 .Em 3.0M gzipped, 7.3M uncompressed
 .if r_mac68k .Em 2.8M gzipped, 7.2M uncompressed
 .
 .\" garden variety kern set description
@@ -421,6 +425,7 @@ This set contains a NetBSD/\*m \*V
 install this distribution set.
 .br
 .if r_alpha .Em 1M gzipped, 2M uncompressed
+.if r_i386 .Em 1.1M gzipped, 2.2M uncompressed
 .\}
 .if \n[atari] \{\
 .Pp
@@ -454,19 +459,14 @@ set.
 Note that it does not include any of the manual pages
 that are included in the other sets.
 .br
-.Em 2.5M gzipped, 10M uncompressed
+.Em 2.5M gzipped, 10.6M uncompressed
 .Pp
 .It Sy misc
 This set includes the (rather large) system dictionaries,
 the typesettable document set, and other files from
 .Pa /usr/share .
 .br
-.
-.\" Umm, shouldn't this be the same for all platforms?!
-.
-.if r_alpha .Em 2M gzipped, 9M uncompressed
-.if r_arm32 .Em 2M gzipped, 8M uncompressed
-.if r_mac68k .Em 2.1M gzipped, 7.6M uncompressed
+.Em 2.5M gzipped, 10.6M uncompressed
 .Pp
 .It Sy text
 This set includes NetBSD's text processing tools,
@@ -476,6 +476,7 @@ all related programs, and their manual pages.
 .br
 .if r_alpha .Em 1M gzipped, 4M uncompressed
 .if r_arm32 .Em 1M gzipped, 4M uncompressed
+.if r_i386 .Em 1M gzipped, 3.7M uncompressed
 .if r_mac68k .Em 1.0M gzipped, 3.7M uncompressed
 .El
 .if r_atari \{\
@@ -555,22 +556,35 @@ client environment. This does not include
 the X servers.
 .br
 .if r_hp300 .Em 2.5M gzipped, 7.6M uncompressed
+.if r_i386 .Em 2.5M gzipped, 7.7M uncompressed
 .if r_mac68k .Em 2.34 M gzipped, 7.46M uncompressed
 .It Sy xcomp
 The extra libraries and include files needed to compile X source code.
 .br
 .if r_hp300 .Em 1.7M gzipped, 7.1M uncompressed
+.if r_i386 .Em 1.7M gzipped, 7.3M uncompressed
 .if r_mac68k .Em 1.57M gzipped, 6.38M uncompressed
 .It Sy xcontrib
 Programs that were contributed to X.
 .br
 .if r_hp300 .Em 183k gzipped, 686k uncompressed
+.if r_i386 .Em 183k gzipped, 600k uncompressed
 .if r_mac68k .Em 178K gzipped, 661K uncompressed
 .It Sy xfont
 Fonts needed by X.
 .br
 .Em 5.9M gzipped, 7.3M uncompressed
 .
+.if r_i386 \{\
+.Pp
+.It Sy xserver
+All XFree86 X servers. Because all of them are
+included, this set is large. However, you will
+only need one of the servers provided in this
+set. (Typically, XF86_SVGA.)
+.br
+.Em 12M gzipped, 29M uncompressed
+.\}
 .if r_mac68k \{\
 .Pp
 .It Sy xserver
