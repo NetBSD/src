@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2002/05/02 15:09:45 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2002/12/02 13:18:09 lukem Exp $
 #
 #	etc.mvme68k/Makefile.inc -- mvme68k-specific etc Makefile targets
 #
@@ -11,16 +11,7 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/netboot	\
 			installation/tapeimage
 
-# Tar up extra kernel sets.
-# Build the boot floppies and install them
 snap_md_post:
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-.endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/mvme68k && ${MAKE} release
-	cd ${.CURDIR}/../distrib/miniroot && ${MAKE} release
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	cp -p ${DESTDIR}/usr/mdec/sboot ${RELEASEDIR}/installation/netboot
 	cp -p ${DESTDIR}/usr/mdec/netboot ${RELEASEDIR}/installation/netboot
 	cp -p ${DESTDIR}/usr/mdec/stboot ${RELEASEDIR}/installation/tapeimage

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2002/05/02 15:09:41 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2002/12/02 13:18:05 lukem Exp $
 #
 #	etc.acorn32/Makefile.inc -- acorn32-specific etc Makefile targets
 #
@@ -12,11 +12,5 @@ INSTALLATION_DIRS+=	installation/kernel	\
 
 # Build the release notes and boot floppies and install them
 snap_md_post:
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-.endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/acorn32 && ${MAKE} release
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/installation/kernel '*.gz'
 	${MAKESUMS} -t ${RELEASEDIR}/installation/misc '*.gz'

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2002/10/10 17:09:32 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2002/12/02 13:18:13 lukem Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -16,23 +16,10 @@ MD_INSTALLATION_DIRS=	installation/miniroot	\
 			installation/floppy
 INSTALLATION_DIRS+=	${MD_INSTALLATION_DIRS}
 
-snap_pre_md:
-.ifndef UPDATE
-	cd $(TOP)/distrib && ${MAKE} clean 
-.endif
-
 #
 # Install miniroot images and auxiliary scripts to the release tree
 #
 snap_md_post:
-	# make boot/miniroot images
-	(cd $(TOP)/distrib; ${MAKE})
-
-	# transfer images to release hierarchy
-.for dir in notes miniroot sparc/bootfs sparc/instfs
-	(cd $(TOP)/distrib/$(dir); ${MAKE} release)
-.endfor
-
 	# install boot image in netboot directory
 	cp -p $(DESTDIR)/usr/mdec/boot.net $(RELEASEDIR)/installation/netboot
 

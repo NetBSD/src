@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2002/07/12 02:24:23 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2002/12/02 13:18:11 lukem Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
@@ -9,11 +9,3 @@ BUILD_KERNELS=		INSTALL RAMDISK
 
 INSTALLATION_DIRS+=	installation/diskimage	\
 			installation/netboot
-
-snap_md_post:
-.ifndef UPDATE
-	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
-.endif
-	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
-	cd ${.CURDIR}/../distrib/pmax && ${MAKE} release
-	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
