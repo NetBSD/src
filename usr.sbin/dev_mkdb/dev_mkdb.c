@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_mkdb.c,v 1.16 2001/07/14 14:50:44 manu Exp $	*/
+/*	$NetBSD: dev_mkdb.c,v 1.17 2001/07/15 17:27:32 manu Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)dev_mkdb.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: dev_mkdb.c,v 1.16 2001/07/14 14:50:44 manu Exp $");
+__RCSID("$NetBSD: dev_mkdb.c,v 1.17 2001/07/15 17:27:32 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,6 @@ main(argc, argv)
 		(void)gettimeofday(&tv, NULL);
 		(void)snprintf(q, MAXPATHLEN - (long)(q - dbtmp), 
 			    "%ld.tmp", tv.tv_usec);
-		printf (">>%s<<\n", dbtmp);
 		db = dbopen(dbtmp, O_CREAT|O_EXCL|O_EXLOCK|O_RDWR|O_TRUNC,
 		    S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH, DB_HASH, NULL);
 	} while (!db && (errno == EEXIST));
@@ -178,7 +177,6 @@ main(argc, argv)
 		else
 			continue;
 		bkey.dev = st->st_rdev;
-		printf (">>>%d\n", bkey.dev);
 
 		/*
 		 * Create the data; nul terminate the name so caller doesn't
