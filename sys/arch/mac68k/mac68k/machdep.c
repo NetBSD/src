@@ -72,7 +72,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.11 1994/03/20 00:16:07 briggs Exp $
+ *	$Id: machdep.c,v 1.12 1994/04/18 03:03:05 briggs Exp $
  */
 
 #include <param.h>
@@ -358,7 +358,7 @@ again:
 	for (i = 1; i < ncallout; i++)
 		callout[i-1].c_next = &callout[i];
 
-	printf("avail mem = %d\n", ptoa(vm_page_free_count));
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		nbuf, bufpages * CLBYTES);
 
