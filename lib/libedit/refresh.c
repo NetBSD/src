@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.23 2002/11/15 14:33:53 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.24 2003/03/10 21:18:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.23 2002/11/15 14:33:53 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.24 2003/03/10 21:18:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1070,8 +1070,8 @@ re_fastaddc(EditLine *el)
 		re_fastputc(el, c);
 	} else {
 		re_fastputc(el, '\\');
-		re_fastputc(el, (int)(((((u_int32_t)c) >> 6) & 3) + '0'));
-		re_fastputc(el, (int)(((((u_int32_t)c) >> 3) & 7) + '0'));
+		re_fastputc(el, (int)(((((unsigned int)c) >> 6) & 3) + '0'));
+		re_fastputc(el, (int)(((((unsigned int)c) >> 3) & 7) + '0'));
 		re_fastputc(el, (c & 7) + '0');
 	}
 	term__flush();
