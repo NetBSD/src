@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.19 2002/04/22 07:59:49 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.20 2002/05/13 02:58:19 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.239 2002/03/30 18:51:15 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.240 2002/04/23 22:16:29 djm Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -528,7 +528,8 @@ privsep_preauth_child(void)
 	demote_sensitive_data();
 
 	if ((pw = getpwnam(SSH_PRIVSEP_USER)) == NULL)
-		fatal("%s: no user", SSH_PRIVSEP_USER);
+		fatal("Privilege separation user %s does not exist",
+		    SSH_PRIVSEP_USER);
 	memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
 	endpwent();
 
