@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.2 1997/10/17 21:49:07 gwr Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.3 1997/10/25 18:04:21 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -121,17 +121,23 @@ ie_sebuf_attach(parent, self, args)
 	sc->sc_bzero = bzero;
 
 	/*
-	 * Note: the NCR registers occupy the first 32 bytes
-	 * of space before the buffer pointer passed to us.
-	 * The Ethernet chip actually address space actually
-	 * starts _on_top_of_ those 32 bytes.  Otherwise the
-	 * addressing is a simple 16-bit implementation.
+	 * There is 128K of memory for the i82586 on
+	 * the Sun3/E SCSI/Ethernet board, and the
+	 * "sebuf" driver has mapped it in for us.
+	 * (Fixed in hardware; NOT configurable!)
 	 */
-	sc->sc_iobase = aa->buf - sizeof(struct se_regs);
+	if (aa->blen < SE_IEBUFSIZE)
+		panic("ie_sebuf: bad size");
+	sc->sc_msize = SE_IEBUFSIZE;
 	sc->sc_maddr = aa->buf;
-	sc->sc_msize = aa->blen;
 	sc->sc_reg = aa->regs;
 	regs = (volatile struct ie_regs *) sc->sc_reg;
+
+	/*
+	 * On this hardware, the i82586 address is just
+	 * masked to 17 bits, so sc_iobase == sc_maddr
+	 */
+	sc->sc_iobase = sc->sc_maddr;
 
 	/* Clear the memory. */
 	(sc->sc_bzero)(sc->sc_maddr, sc->sc_msize);
@@ -141,17 +147,17 @@ ie_sebuf_attach(parent, self, args)
 	 * Its location is system-dependent because the
 	 * i82586 reads it from a fixed physical address.
 	 * On this hardware, the i82586 address is just
-	 * masked down to 16 bits, so the SCP is found
+	 * masked down to 17 bits, so the SCP is found
 	 * at the end of the RAM on the VME board.
 	 */
-	off = IE_SCP_ADDR & 0xFFFF;
+	off = IE_SCP_ADDR & (SE_IEBUFSIZE-1);
 	sc->scp = (volatile void *) (sc->sc_iobase + off);
 
 	/*
 	 * The rest of ram is used for buffers, etc.
 	 */
-	sc->buf_area    = sc->sc_maddr;
-	sc->buf_area_sz = sc->sc_msize;
+	sc->buf_area = sc->sc_maddr;
+	sc->buf_area_sz = off;
 
 	/* Set the ethernet address. */
 	idprom_etheraddr(sc->sc_addr);

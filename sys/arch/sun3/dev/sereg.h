@@ -1,4 +1,4 @@
-/*	$NetBSD: sereg.h,v 1.1 1997/10/17 03:39:48 gwr Exp $	*/
+/*	$NetBSD: sereg.h,v 1.2 1997/10/25 18:04:20 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -39,26 +39,25 @@
 /*
  * Sun3/E SCSI/Ethernet board.  This is a VME board with some memory,
  * an Intel Ether, and an NCR5380 SCSI with a cheap DMA engine.
+ * The Sun3/E H/W manual says the ivec2 register is at offset 1E,
+ * but the SunOS sereg.h file has it at offset 1F (more likely).
+ * Perhaps the H/W really implements a short at 1E or something.
  */
 
 /*****************************************************************
  * Register definitions for the SCSI portion.
+ * (size=0x20)
  */
 struct se_regs {
 	u_char			ncrregs[8];
-	/* +0x08 */
 	u_short			unused1;
 	u_short			dma_addr;	/* DMA offset register	*/
 	u_short			unused2;
 	u_short			dma_cntr;	/* DMA count down register */
-	/* +0x10 */
-	u_short			unused3[4];
-	/* +0x18 */
-	u_short			unused7;
+	u_short			unused3[5];
 	u_short			se_csr;		/* control/status register */
 	u_char			unused9[3];
 	u_char			se_ivec;	/* interrupt vector	*/
-	/* +0x20 */
 };
 
 /*
@@ -76,13 +75,14 @@ struct se_regs {
 
 /*****************************************************************
  * Register definitions for the SCSI portion.
+ * (size=0x100)
  */
 struct ie_regs {
 	u_short			ie_pad0;
 	u_short			ie_csr;
 	u_short			ie_pad1[6];
 	u_char			ie_pad2[3];
-	u_char			ie_ivec;			/* interrupt vector */
+	u_char			ie_ivec; /* interrupt vector */
 	u_short			ie_pad3[128-10];
 };
 
@@ -98,13 +98,17 @@ struct ie_regs {
 
 /*****************************************************************
  * Register definitions for the entire SCSI/Ethernet board.
+ * I had the impression that there were overlaps in this map,
+ * which was the reason for existence of the "sebuf" driver.
+ * Now it looks like the "sebuf" driver was unnecessary. XXX
  */
 
-#define SE_NCRBUFSIZE	 0x10000	/* 64k */
-#define SE_IEBUFSIZE	(0x10000 - 0x120)
+#define SE_NCRBUFSIZE	0x10000
+#define SE_IEBUFSIZE	0x20000
 struct sebuf_regs {
 	char	se_scsi_buf[SE_NCRBUFSIZE];
 	struct se_regs se_scsi_regs;
-	char	se_eth_buf[SE_IEBUFSIZE];
+	char	se_pad[0x10000 - 0x120];
 	struct ie_regs se_eth_regs;
+	char	se_eth_buf[SE_IEBUFSIZE];
 };	/* 128KB total */
