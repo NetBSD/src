@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.17 2000/11/03 02:18:50 mbw Exp $
+.\"	$NetBSD: hardware,v 1.18 2002/04/22 01:21:20 mbw Exp $
 .
 .Ss2 Supported machines
 .(bullet -offset indent
@@ -64,11 +64,9 @@ SPARCstation/server 10
 SPARCstation/server 20
 .It
 Voyager
-.It
-JavaStation 1
 .bullet)
 .(Note
-All known MBus modules are supported
+All known SuperSPARC, HyperSPARC, microSPARC, and TurboSPARC CPUs are supported
 .Note)
 .It
 sun4m clones
@@ -95,6 +93,8 @@ Transtec SS5/170
 .It
 Tatung microCOMPstation 5
 .It
+Twinhead TWINstation 5G
+.It
 TWS SuperCOMPstation-20S
 .It
 Tadpole SPARCbook 3 series
@@ -118,9 +118,10 @@ These are supported by the
 sparc64 port.  Refer to
 .Lk http://www.netbsd.org/Ports/sparc64/index.html
 .It
-Solbourne machines
+JavaStation models.  Refer to the NetBSD/sparc JavaStation Support page
+.Lk http://www.netbsd.org/Ports/sparc/javastation.html
 .It
-Other JavaStation models
+Solbourne machines
 .bullet)
 .Pp
 The minimal configuration requires 4 MB of RAM and ~60 MB of disk space.
@@ -158,8 +159,8 @@ emulation
 .It
 .Em tcx ;
 S24 accelerated color framebuffer.
-On-board SPARCstation 4 (8 bpp) and optional on SPARCstation 5 (24 bpp),
-limited to
+On-board SPARCstation 4 (8 bpp), JavaStation-1 (24 bpp), and optional on
+SPARCstation 5 (24 bpp), limited to
 .Em cgthree
 emulation
 .It
@@ -274,10 +275,10 @@ Xylogics 7053 VME/SMD disk controller
 .It
 .Em xy ;
 Xylogics 450/451 VME disk controller
-.bullet)
 .(Note
 VME/IPI disks are not supported
 .Note)
+.bullet)
 .It
 Floppy drives
 .(bullet -compact
@@ -288,6 +289,25 @@ On-board sun4c and sun4m
 .Em sd ;
 SCSI floppy drive, acts as a SCSI drive to kernel.
 found with some SPARCBook 3 machines
+.bullet)
+.It
+.Em nell ; 
+PCMCIA/Cardbus devices using the sbus-to-PCMCIA bridge
+.(bullet -compact
+All 8 bit devices listed in the Machine-independent PCMCIA drivers page
+should work. Very few have been tested with
+.Nx*M .
+There is a byte endian issue which
+currently prevents 16 bit devices from working.
+.Lk http://www.netbsd.org/Hardware/pcmcia.html
+.(Note
+Note: there is a conflict between the 
+.Em audioamd
+device in sun4c and some sun4m models and the 
+.Em nell 
+device. See the FAQ for more information.
+.Lk http://www.netbsd.org/Ports/sparc/faq.html#nell
+.Note)
 .bullet)
 .It
 Serial interfaces
@@ -313,8 +333,8 @@ On-board sun4c and SPARC Classic
 .It
 .Em audiocs ;
 CS4231-based 44 KHz, 16 bit, stereo, PCM.
-On-board SPARCStation 5 and optional on SPARCStation 4
-(does not support audio input)
+On-board SPARCStation 5, JavaStation-1, JavaStation-10,  and optional on
+SPARCStation 4.
 .bullet)
 .It
 Misc cards
@@ -346,7 +366,4 @@ I.e. GS, 24 bpp framebuffer.  Sbus card
 .It
 .Em leo ;
 I.e. ZX and TZX, 24 bpp accelerated framebuffer.  Sbus card
-.It
-.Em nell ;
-Sbus-to-PCMCIA bridge
 .bullet)
