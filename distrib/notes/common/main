@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.253.2.2 2004/06/15 23:14:52 he Exp $
+.\"	$NetBSD: main,v 1.253.2.3 2004/08/25 00:23:02 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1694,10 +1694,14 @@ If you're one of them, and would like to mentioned, tell us!)
 .It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Erik Berls Ta Mt cyber@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
+.It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
-.It Ta Perry Metzger Ta Mt perry@NetBSD.org
+.It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.org
+.It Ta SAITOH Masanobu Ta Mt msaitoh@NetBSD.org
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
-.It Ta Jason Thorpe Ta Mt thorpej@NetBSD.org
+.It Ta Matthias Scheler Ta Mt tron@NetBSD.org
+.It Ta Curt Sampson Ta Mt cjs@NetBSD.org
+.It Ta Jim Wise Ta Mt jwise@NetBSD.org
 .It Ta Ta
 .
 .br_ne 2i
