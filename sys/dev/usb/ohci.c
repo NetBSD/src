@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.8 1998/08/05 10:16:25 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.9 1998/11/21 18:57:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1029,7 +1029,7 @@ ohci_rem_ed(sed, head)
  * When a transfer is completed the TD is added to the done queue by
  * the host controller.  This queue is the processed by software.
  * Unfortunately the queue contains the physical address of the TD
- * and we have no simple way to translate this back a kernel address.
+ * and we have no simple way to translate this back to a kernel address.
  * To make the translation possible (and fast) we use a hash table of
  * TDs currently in the schedule.  The physical address is used as the
  * hash value.
@@ -1172,7 +1172,7 @@ ohci_open(pipe)
 			(dev->lowspeed ? OHCI_ED_SPEED : 0) | 
 			((ed->bmAttributes & UE_XFERTYPE) == UE_ISOCHRONOUS ?
 			 OHCI_ED_FORMAT_ISO : OHCI_ED_FORMAT_GEN) |
-			OHCI_ED_SET_MAXP(UGETW(pipe->endpoint->edesc->wMaxPacketSize));
+			OHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize));
 		sed->ed->ed_headp = sed->ed->ed_tailp = std->physaddr;
 
 		switch (ed->bmAttributes & UE_XFERTYPE) {
@@ -1597,7 +1597,7 @@ void
 ohci_root_ctrl_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* Nothing to do, all transfers are syncronous. */
+	/* Nothing to do, all transfers are synchronous. */
 }
 
 /* Close the root pipe. */

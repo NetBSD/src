@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.9 1998/10/01 19:10:26 matt Exp $	*/
+/*	$NetBSD: ums.c,v 1.10 1998/11/21 18:57:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -209,11 +209,16 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
 		printf("%s: sorry, X report 0x%04x not supported yet\n",
 		       sc->sc_dev.dv_xname, flags);
+
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
 		       hid_input, &sc->sc_loc_y, &flags)) {
 		printf("%s: mouse has no Y report\n", sc->sc_dev.dv_xname);
 		return;
 	}
+	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
+		printf("%s: sorry, Y report 0x%04x not supported yet\n",
+		       sc->sc_dev.dv_xname, flags);
+
 	if (hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Z),
 		       hid_input, &sc->sc_loc_z, &flags) ||
 	    hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_WHEEL),
@@ -223,9 +228,6 @@ bLength=%d bDescriptorType=%d bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketS
 			sc->sc_loc_z.size = 0;
 	}
 
-	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS)
-		printf("%s: sorry, Y report 0x%04x not supported yet\n",
-		       sc->sc_dev.dv_xname, flags);
 	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 1), /* left */
 		   hid_input, &sc->sc_loc_btn1, 0);
 	hid_locate(desc, size, HID_USAGE2(HUP_BUTTON, 2), /* right */

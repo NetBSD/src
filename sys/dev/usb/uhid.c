@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.4 1998/08/20 19:55:07 veego Exp $	*/
+/*	$NetBSD: uhid.c,v 1.5 1998/11/21 18:57:09 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ struct uhid_softc {
 	struct selinfo sc_rsel;
 	u_char sc_state;	/* driver state */
 #define	UHID_OPEN	0x01	/* device is open */
-#define	UHID_ASLP	0x02	/* waiting for mouse data */
+#define	UHID_ASLP	0x02	/* waiting for device data */
 #define UHID_NEEDCLEAR	0x04	/* needs clearing endpoint stall */
 #define UHID_IMMED	0x08	/* return read data immediately */
 	int sc_disconnected;	/* device is gone */
