@@ -1,10 +1,10 @@
-/*	$NetBSD: eisadevs_data.h,v 1.16 1998/01/09 06:46:47 thorpej Exp $	*/
+/*	$NetBSD: eisadevs_data.h,v 1.17 1998/07/01 21:59:21 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp 
+ *	NetBSD: eisadevs,v 1.15 1998/07/01 21:57:32 kleink Exp 
  */
 
 /*
@@ -136,6 +136,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "INP25D0",
+	    EISA_PRODUCT_INP25D0,
+	},
+	{
+	    0,
 	    "INT1010",
 	    EISA_PRODUCT_INT1010,
 	},
@@ -221,6 +226,16 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
+	    "HWP",
+	    "Hewlett-Packard",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "INP",
+	    "Interphase",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
 	    "INT",
 	    "Intel",
 	},
@@ -228,6 +243,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "ETI",
 	    "Microdyne",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "MLX",
+	    "Mylex",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,
