@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.5 1997/04/04 19:02:43 matthias Exp $	*/
+/*	$NetBSD: if_se.c,v 1.6 1997/04/24 02:36:46 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -578,10 +578,13 @@ se_get(sc, data, totlen)
 			}
 			len = MLEN;
 		}
-		if (top && totlen >= MINCLSIZE) {
+		if (totlen >= MINCLSIZE) {
 			MCLGET(m, M_DONTWAIT);
-			if (m->m_flags & M_EXT)
-				len = MCLBYTES;
+			if ((m->m_flags & M_EXT) == 0)
+				m_freem(top);
+				return 0;
+			}
+			len = MCLBYTES;
 		}
 		m->m_len = len = min(totlen, len);
 		bcopy(data, mtod(m, caddr_t), len);
