@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kern_descrip.c	8.6 (Berkeley) 4/19/94
- *	$Id: kern_descrip.c,v 1.19 1994/06/14 10:52:20 chopps Exp $
+ *	$Id: kern_descrip.c,v 1.20 1994/06/16 05:07:32 glass Exp $
  */
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ int nfiles;		/* actual number of open files */
  * System calls on descriptors.
  */
 
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS)
+#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX)
 /* ARGSUSED */
 ogetdtablesize(p, uap, retval)
 	struct proc *p;
