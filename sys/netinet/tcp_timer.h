@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.h,v 1.13 2001/09/10 20:19:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.h,v 1.14 2001/09/10 20:36:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -152,9 +152,12 @@ extern tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS];
 extern int tcp_keepidle;		/* time before keepalive probes begin */
 extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_keepcnt;			/* number of keepalives, 0=infty */
+extern int tcp_maxpersistidle;		/* max idle time in persist */
 extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
+
+void	tcp_timer_init(void);
 #endif
 
 #endif /* _NETINET_TCP_TIMER_H_ */

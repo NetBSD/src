@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.51 2001/09/10 20:15:14 thorpej Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.52 2001/09/10 20:36:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -141,11 +141,15 @@
 #include <netinet/tcp_debug.h>
 #endif
 
-int	tcp_keepidle = TCPTV_KEEP_IDLE;
-int	tcp_keepintvl = TCPTV_KEEPINTVL;
-int	tcp_keepcnt = TCPTV_KEEPCNT;		/* max idle probes */
-int	tcp_maxpersistidle = TCPTV_KEEP_IDLE;	/* max idle time in persist */
-int	tcp_maxidle;
+/*
+ * Various tunable timer parameters.  These are initialized in tcp_init(),
+ * unless they are patched.
+ */
+int	tcp_keepidle = 0;
+int	tcp_keepintvl = 0;
+int	tcp_keepcnt = 0;		/* max idle probes */
+int	tcp_maxpersistidle = 0;		/* max idle time in persist */
+int	tcp_maxidle;			/* computed in tcp_slowtimo() */
 
 /*
  * Time to delay the ACK.  This is initialized in tcp_init(), unless
@@ -164,6 +168,29 @@ tcp_timer_func_t tcp_timer_funcs[TCPT_NTIMERS] = {
 	tcp_timer_keep,
 	tcp_timer_2msl,
 };
+
+/*
+ * Timer state initialization, called from tcp_init().
+ */
+void
+tcp_timer_init(void)
+{
+
+	if (tcp_keepidle == 0)
+		tcp_keepidle = TCPTV_KEEP_IDLE;
+
+	if (tcp_keepintvl == 0)
+		tcp_keepintvl = TCPTV_KEEPINTVL;
+
+	if (tcp_keepcnt == 0)
+		tcp_keepcnt = TCPTV_KEEPCNT;
+
+	if (tcp_maxpersistidle == 0)
+		tcp_maxpersistidle = TCPTV_KEEP_IDLE;
+
+	if (tcp_delack_ticks == 0)
+		tcp_delack_ticks = TCP_DELACK_TICKS;
+}
 
 /*
  * Callout to process delayed ACKs for a TCPCB.

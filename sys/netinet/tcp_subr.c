@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.116 2001/09/10 20:19:54 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.117 2001/09/10 20:36:43 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -240,9 +240,6 @@ tcp_init()
 	tcb6.in6p_next = tcb6.in6p_prev = &tcb6;
 #endif
 
-	if (tcp_delack_ticks == 0)
-		tcp_delack_ticks = TCP_DELACK_TICKS;
-
 	hlen = sizeof(struct ip) + sizeof(struct tcphdr);
 #ifdef INET6
 	if (sizeof(struct ip) < sizeof(struct ip6_hdr))
@@ -259,6 +256,9 @@ tcp_init()
 #ifdef INET6
 	icmp6_mtudisc_callback_register(tcp6_mtudisc_callback);
 #endif
+
+	/* Initialize timer state. */
+	tcp_timer_init();
 
 	/* Initialize the compressed state engine. */
 	syn_cache_init();
