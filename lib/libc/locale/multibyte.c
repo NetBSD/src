@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.4 2000/12/22 06:29:40 itojun Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.5 2000/12/28 05:22:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.4 2000/12/22 06:29:40 itojun Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.5 2000/12/28 05:22:27 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -152,43 +152,49 @@ mblen(s, n)
 }
 
 size_t
+_mbrtowc_rl(pwc, s, n, ps, rl)
+	wchar_t *pwc;
+	const char *s;
+	size_t n;
+	mbstate_t *ps;
+	_RuneLocale *rl;
+{
+	static void *state0 = NULL;
+	static _RuneLocale *rl0 = NULL;
+	void *state = NULL;
+	size_t siz;
+	static mbstate_t ls;
+
+	if (!ps)
+		ps = &ls;
+
+	/* initialize the state */
+	INIT0(state0, rl0, rl);
+	INIT(rl0, state, state0, ps);
+
+	if (!s || !*s) {
+		if (state && ___rune_initstate(rl0))
+			(*___rune_initstate(rl0))(rl0, state);
+		pwc = NULL;
+		s = "";
+		n = 1;
+	}
+
+	siz = (*___mbrtowc(rl0))(rl0, pwc, s, n, state);
+
+	CLEANUP(rl0, state, state0, ps);
+	return siz;
+}
+
+size_t
 mbrtowc(pwc, s, n, ps)
 	wchar_t *pwc;
 	const char *s;
 	size_t n;
 	mbstate_t *ps;
 {
-	char const *e;
-	rune_t r;
-	static void *state0 = NULL;
-	static _RuneLocale *rl0 = NULL;
-	void *state = NULL;
 
-	/* initialize the state */
-	INIT0(state0, rl0, _CurrentRuneLocale);
-	INIT(rl0, state, state0, ps);
-
-	if (s == 0 || *s == 0) {
-		if (!ps)
-			e = s - 1;
-		else {
-			if (state && ___rune_initstate(rl0))
-				(*___rune_initstate(rl0))(rl0, state);
-			e = s;
-		}
-		goto bye;
-	}
-
-	if ((r = (*___sgetrune(rl0))(rl0, s, (unsigned int)n, &e, state)) ==
-	    ___INVALID_RUNE(rl0)) {
-		CLEANUP(rl0, state, state0, ps);
-		return (s - e);
-	}
-	if (pwc)
-		*pwc = r;
-bye:
-	CLEANUP(rl0, state, state0, ps);
-	return (e - s);
+	return _mbrtowc_rl(pwc, s, n, ps, _CurrentRuneLocale);
 }
 
 int
@@ -201,44 +207,46 @@ mbtowc(pwc, s, n)
 }
 
 size_t
+_wcrtomb_rl(s, wchar, ps, rl)
+	char *s;
+	wchar_t wchar;
+	mbstate_t *ps;
+	_RuneLocale *rl;
+{
+	static void *state0 = NULL;
+	static _RuneLocale *rl0 = NULL;
+	void *state = NULL;
+	char buf[MB_LEN_MAX];
+	size_t siz;
+	static mbstate_t ls;
+
+	if (!ps)
+		ps = &ls;
+
+	/* initialize the state */
+	INIT0(state0, rl0, rl);
+	INIT(rl0, state, state0, ps);
+
+	if (!s) {
+		if (state && ___rune_initstate(rl0))
+			(*___rune_initstate(rl0))(rl0, state);
+		s = buf;
+		wchar = 0;
+	}
+
+	siz = (*___wcrtomb(rl0))(rl0, s, MB_LEN_MAX, wchar, state);
+
+	CLEANUP(rl0, state, state0, ps);
+	return siz;
+}
+
+size_t
 wcrtomb(s, wchar, ps)
 	char *s;
 	wchar_t wchar;
 	mbstate_t *ps;
 {
-	char *e;
-	static void *state0 = NULL;
-	static _RuneLocale *rl0 = NULL;
-	void *state = NULL;
-
-	/* initialize the state */
-	INIT0(state0, rl0, _CurrentRuneLocale);
-	INIT(rl0, state, state0, ps);
-
-	if (s == 0) {
-		if (!ps)
-			e = s - 1;
-		else  {
-			if (state && ___rune_initstate(rl0))
-				(*___rune_initstate(rl0))(rl0, state);
-			e = s;
-		}
-		goto bye;
-	}
-
-	if (wchar == 0) {
-		*s = 0;
-		return (1);
-	}
-
-	(*___sputrune(rl0))(rl0, wchar, s, (unsigned int)MB_CUR_MAX, &e, state);
-bye:
-	CLEANUP(rl0, state, state0, ps);
-	if (!e) {
-		errno = EILSEQ;
-		return -1;
-	} else
-		return e - s;
+	return _wcrtomb_rl(s, wchar, ps, _CurrentRuneLocale);
 }
 
 int
@@ -250,18 +258,23 @@ wctomb(s, wchar)
 }
 
 size_t
-_mbsrtowcs_rl(pwcs, s, n, ps, rl)
+_mbsrtowcs_rl(pwcs, s, n, ps0, rl)
 	wchar_t *pwcs;
 	const char **s;
 	size_t n;
-	mbstate_t *ps;
+	mbstate_t *ps0;
 	_RuneLocale *rl;
 {
-	char const *e;
 	int cnt = 0;
 	static void *state0 = NULL;
 	static _RuneLocale *rl0 = NULL;
 	void *state = NULL;
+	size_t siz;
+	static mbstate_t ls;
+	mbstate_t *ps;
+
+	/* XXX what should be done if ps0 == NULL? */
+	ps = ps0 ? ps0 : &ls;
 
 	/* initialize the state */
 	INIT0(state0, rl0, rl);
@@ -287,19 +300,31 @@ _mbsrtowcs_rl(pwcs, s, n, ps, rl)
 			(*___rune_initstate(rl0))(rl0, state);
 	}
 
-	while (n-- > 0) {
-		*pwcs = (*___sgetrune(rl0))(rl0, *s, MB_LEN_MAX, &e, state);
-		if (*pwcs == ___INVALID_RUNE(rl0)) {
+	while (n > 0) {
+		siz = (*___mbrtowc(rl0))(rl0, pwcs, *s, n, state);
+		switch (siz) {
+		case (size_t)-1:
+			errno = EILSEQ;
 			cnt = -1;
 			goto bye;
-		}
-		if (*pwcs++ == 0) {
-                        *s=NULL;
+		case (size_t)-2:
+			(*s)++;
 			break;
-                }
-		*s = e;
-		++cnt;
+		case 0:
+			pwcs++;
+			cnt++;
+			(*s)++;
+			break;
+		default:
+			pwcs++;
+			cnt++;
+			(*s) += siz;
+			break;
+		}
+
+		n--;
 	}
+
 bye:
 	CLEANUP(rl0, state, state0, ps);
 	return (cnt);
@@ -334,11 +359,16 @@ _wcsrtombs_rl(s, pwcs, n, ps, rl)
 	mbstate_t *ps;
 	_RuneLocale *rl;
 {
-	char *e;
 	int cnt = 0;
 	static void *state0 = NULL;
 	static _RuneLocale *rl0 = NULL;
 	void *state = NULL;
+	char buf[MB_LEN_MAX];
+	size_t siz;
+	static mbstate_t ls;
+
+	if (!ps)
+		ps = &ls;
 
 	/* initialize the state */
 	INIT0(state0, rl0, rl);
@@ -365,24 +395,20 @@ _wcsrtombs_rl(s, pwcs, n, ps, rl)
 	}
 
 	while ((int)n - cnt > 0) {
-		if (**pwcs == 0) {
-			*s = 0;
-                        *pwcs = NULL;
+		siz = (*___wcrtomb(rl0))(rl0, buf, sizeof(buf), **pwcs, state);
+		if (siz == (size_t)-1) {
+			errno = EILSEQ;
+			return siz;
+		}
+
+		if (n - cnt < siz)
+			return cnt;
+		memcpy(s, buf, siz);
+		cnt += siz;
+		s += siz;
+		if (!**pwcs)
 			break;
-		}
-		if (!(*___sputrune(rl0))(rl0, *((*pwcs)++), s, (unsigned int)n,
-		    &e, state)) {
-			/* encoding error */
-			cnt = -1;
-			goto bye;
-		}
-		if (!e) {
-			/* too long */
-			goto bye;
-		}
-		*e = '\0';	/*termination*/
-		cnt += e - s;
-		s = e;
+		(*pwcs)++;
 	}
 bye:
 	CLEANUP(rl0, state, state0, ps);
