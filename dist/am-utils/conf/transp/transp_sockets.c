@@ -1,4 +1,4 @@
-/*	$NetBSD: transp_sockets.c,v 1.3 2002/11/29 23:06:23 christos Exp $	*/
+/*	$NetBSD: transp_sockets.c,v 1.4 2002/11/29 23:18:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Erez Zadok
@@ -185,7 +185,7 @@ amu_svc_getcaller(SVCXPRT *xprt)
  * register an RPC server
  */
 int
-amu_svc_register(SVCXPRT *xprt, u_long prognum, u_long versnum, void (*dispatch)(), u_long protocol, struct netconfig *dummy)
+amu_svc_register(SVCXPRT *xprt, u_long prognum, u_long versnum, void (*dispatch)(struct svc_req *rqstp, SVCXPRT *transp), u_long protocol, struct netconfig *dummy)
 {
   return svc_register(xprt, prognum, versnum, dispatch, protocol);
 }
