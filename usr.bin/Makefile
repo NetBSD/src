@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107 1999/09/02 20:48:27 tron Exp $
+#	$NetBSD: Makefile,v 1.108 2000/06/16 16:19:33 thorpej Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 SRCTOP=	..
@@ -26,6 +26,8 @@ SUBDIR=	apply apropos asa at audio banner basename biff \
 	wall wc what whatis whereis which who whois window \
 	write xargs xinstall xlint xstr yacc yes ypcat \
 	ypmatch ypwhich
+
+SUBDIR+= openssl
 
 .if defined(CRYPTOPATH)
 .sinclude "${CRYPTOPATH}/usr.bin/Makefile.frag"
