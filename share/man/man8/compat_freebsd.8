@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_freebsd.8,v 1.10 2001/09/05 23:47:15 wiz Exp $
+.\"	$NetBSD: compat_freebsd.8,v 1.11 2001/09/09 22:15:54 wiz Exp $
 .\"	from: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -350,18 +350,20 @@ For example,
 X server software needs
 .Fx
 .Pa /dev/ttyv0
-for
-.Xr pcvt 4
-ioctls.
-In this case, create a symbolic link from
+for ioctls.  In this case, create a symbolic link from
 .Pa /emul/freebsd/dev/ttyv0
-to
+to a
 .Xr wscons 4
 device file like
-.Pa /dev/ttyE0 ,
-or to similar device file which provides
-.Xr pcvt 4
-ioctls.
+.Pa /dev/ttyE0 .
+You will need to have at least
+.Cd options WSDISPLAY_COMPAT_SYSCONS
+and probably also
+.Cd options WSDISPLAY_COMPAT_USL
+in your kernel (see
+.Xr options 4
+and
+.Xr wscons 4 ) .
 .El
 .Ss Finding the necessary files
 .Em Note :
