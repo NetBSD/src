@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.230 2003/11/14 03:32:55 jmc Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.231 2003/11/14 03:35:51 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -2992,3 +2992,9 @@ distrib/notes/pmax/hardware			1.14
 
 	Fix/complete some framebuffer descriptions, fixes PR#23224
 	[drochner, ticket #1553]
+
+sys/arch/sparc64/include/psl.h			1.24
+
+	Lower PIL_AUD so /dev/audio will not interrupt and interfere with
+	scheduler. Fixes PR#23382.
+	[petrov, ticket #1559]
