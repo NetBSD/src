@@ -1,5 +1,5 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
-/*	$NetBSD: config.h.in,v 1.4 2003/09/25 18:08:18 pooka Exp $	*/
+/*	$NetBSD: config.h.in,v 1.5 2004/03/23 08:40:11 pooka Exp $	*/
 
 /* Autoheader needs me */
 #undef PACKAGE
@@ -62,6 +62,9 @@
 /* The number of bytes in a uint64_t.  */
 #define SIZEOF_UINT64_T 0
 
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -123,6 +126,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <sys/utime.h> header file. */
+#undef HAVE_SYS_UTIME_H
+
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #undef HAVE_SYS_WAIT_H
 
@@ -135,11 +141,17 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the `utime' function. */
+#undef HAVE_UTIME
+
 /* Define to 1 if you have the `utimes' function. */
 #undef HAVE_UTIMES
 
 /* Define to 1 if you have the <utime.h> header file. */
 #undef HAVE_UTIME_H
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
 
 /* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
    */

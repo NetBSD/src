@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.6 2003/10/27 16:22:36 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.7 2004/03/23 08:40:12 pooka Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -29,8 +29,8 @@
  * SUCH DAMAGE.
  */
 
-#include "magic.h"
 #include "file.h"
+#include "magic.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,9 +68,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: magic.c,v 1.15 2003/10/15 01:51:24 christos Exp")
+FILE_RCSID("@(#)Id: magic.c,v 1.19 2004/03/22 20:37:13 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.6 2003/10/27 16:22:36 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.7 2004/03/23 08:40:12 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -246,6 +246,11 @@ magic_file(struct magic_set *ms, const char *inname)
 		if (sb.st_mode & 0111)
 			if (file_printf(ms, "executable, ") == -1)
 				return NULL;
+		if (sb.st_mode & 0100000)
+			if (file_printf(ms, "regular file, ") == -1)
+				return NULL;
+		if (file_printf(ms, "no read permission") == -1)
+			return NULL;
 		return file_getbuffer(ms);
 	}
 
@@ -259,12 +264,15 @@ magic_file(struct magic_set *ms, const char *inname)
 
 	if (nbytes == 0) {
 		if (file_printf(ms, (ms->flags & MAGIC_MIME) ?
-		    "application/x-empty" : "empty") == -1) {
-			(void)close(fd);
-		    goto done;
-		}
+		    "application/x-empty" : "empty") == -1)
+			goto done;
+		goto gotit;
+	} else if (nbytes == 1) {
+		if (file_printf(ms, "very short file (no magic)") == -1)
+			goto done;
+		goto gotit;
 	} else {
-		buf[nbytes++] = '\0';	/* null-terminate it */
+		buf[nbytes] = '\0';	/* null-terminate it */
 #ifdef __EMX__
 		switch (file_os2_apptype(ms, inname, buf, nbytes)) {
 		case -1:
@@ -272,10 +280,10 @@ magic_file(struct magic_set *ms, const char *inname)
 		case 0:
 			break;
 		default:
-			return file_getbuffer(ms);
+			goto gotit;
 		}
 #endif
-		if (file_buffer(ms, buf, (size_t)nbytes - 1) == -1)
+		if (file_buffer(ms, buf, (size_t)nbytes) == -1)
 			goto done;
 #ifdef BUILTIN_ELF
 		if (nbytes > 5) {
@@ -291,7 +299,7 @@ magic_file(struct magic_set *ms, const char *inname)
 		}
 #endif
 	}
-
+gotit:
 	close_and_restore(ms, inname, fd, &sb);
 	return file_getbuffer(ms);
 done:

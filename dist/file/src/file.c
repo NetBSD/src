@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.4 2003/10/27 16:26:51 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.5 2004/03/23 08:40:12 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -36,8 +36,8 @@
  * file - find type of a file or files - main program.
  */
 
-#include "magic.h"
 #include "file.h"
+#include "magic.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,9 +64,14 @@
 #ifdef HAVE_LOCALE_H
 #include <locale.h>
 #endif
+#ifdef HAVE_WCHAR_H
+#include <wchar.h>
+#endif
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>	/* for long options (is this portable?)*/
+#else
+#undef HAVE_GETOPT_LONG
 #endif
 
 #include <netinet/in.h>		/* for byte swapping */
@@ -75,9 +80,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: file.c,v 1.85 2003/10/09 16:29:53 christos Exp")
+FILE_RCSID("@(#)Id: file.c,v 1.92 2004/03/22 21:34:39 christos Exp")
 #else
-__RCSID("$NetBSD: file.c,v 1.4 2003/10/27 16:26:51 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.5 2004/03/23 08:40:12 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -97,8 +102,7 @@ __RCSID("$NetBSD: file.c,v 1.4 2003/10/27 16:26:51 pooka Exp $");
 private int 		/* Global command-line options 		*/
 	bflag = 0,	/* brief output format	 		*/
 	nopad = 0,	/* Don't pad output			*/
-	nobuffer = 0,   /* Do not buffer stdout 		*/
-	kflag = 0;	/* Keep going after the first match	*/
+	nobuffer = 0;   /* Do not buffer stdout 		*/
 
 private const char *magicfile = 0;	/* where the magic is	*/
 private const char *default_magicfile = MAGIC;
@@ -110,7 +114,7 @@ private struct magic_set *magic;
 
 private void unwrap(char *);
 private void usage(void);
-#ifdef HAVE_GETOPT_H
+#ifdef HAVE_GETOPT_LONG
 private void help(void);
 #endif
 #if 0
@@ -233,7 +237,7 @@ main(int argc, char *argv[])
 			flags |= MAGIC_MIME;
 			break;
 		case 'k':
-			kflag = 1;
+			flags |= MAGIC_CONTINUE;
 			break;
 		case 'm':
 			magicfile = optarg;
@@ -309,7 +313,7 @@ main(int argc, char *argv[])
 	else {
 		int i, wid, nw;
 		for (wid = 0, i = optind; i < argc; i++) {
-			nw = strlen(argv[i]);
+			nw = file_mbswidth(argv[i]);
 			if (nw > wid)
 				wid = nw;
 		}
@@ -359,7 +363,7 @@ unwrap(char *fn)
 		}
 
 		while (fgets(buf, MAXPATHLEN, f) != NULL) {
-			cwid = strlen(buf) - 1;
+			cwid = file_mbswidth(buf) - 1;
 			if (cwid > wid)
 				wid = cwid;
 		}
@@ -368,7 +372,7 @@ unwrap(char *fn)
 	}
 
 	while (fgets(buf, MAXPATHLEN, f) != NULL) {
-		buf[strlen(buf)-1] = '\0';
+		buf[file_mbswidth(buf)-1] = '\0';
 		process(buf, wid);
 		if(nobuffer)
 			(void) fflush(stdout);
@@ -385,7 +389,7 @@ process(const char *inname, int wid)
 
 	if (wid > 0 && !bflag)
 		(void) printf("%s%s%*s ", std_in ? "/dev/stdin" : inname,
-		    separator, (int) (nopad ? 0 : (wid - strlen(inname))), "");
+		    separator, (int) (nopad ? 0 : (wid - file_mbswidth(inname))), "");
 
 	type = magic_file(magic, std_in ? NULL : inname);
 	if (type == NULL)
@@ -452,17 +456,51 @@ byteconv2(int from, int same, int big_endian)
 }
 #endif
 
+size_t
+file_mbswidth(const char *s)
+{
+#ifdef HAVE_WCHAR_H
+	size_t bytesconsumed, old_n, n, width = 0;
+	mbstate_t state;
+	wchar_t nextchar;
+	(void)memset(&state, 0, sizeof(mbstate_t));
+	old_n = n = strlen(s);
+
+	while (n > 0) {
+		bytesconsumed = mbrtowc(&nextchar, s, n, &state);
+		if (bytesconsumed == (size_t)(-1) ||
+		    bytesconsumed == (size_t)(-2)) {
+			/* Something went wrong, return something reasonable */
+			return old_n;
+		}
+		if (s[0] == '\n') {
+			/*
+			 * do what strlen() would do, so that caller
+			 * is always right
+			 */
+			width++;
+		} else
+			width += wcwidth(nextchar);
+
+		s += bytesconsumed, n -= bytesconsumed;
+	}
+	return width;
+#else
+	return strlen(s);
+#endif
+}
+
 private void
 usage(void)
 {
 	(void)fprintf(stderr, USAGE, progname, progname);
-#ifdef HAVE_GETOPT_H
+#ifdef HAVE_GETOPT_LONG
 	(void)fputs("Try `file --help' for more information.\n", stderr);
 #endif
 	exit(1);
 }
 
-#ifdef HAVE_GETOPT_H
+#ifdef HAVE_GETOPT_LONG
 private void
 help(void)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.3 2003/10/27 16:22:36 pooka Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.4 2004/03/23 08:40:12 pooka Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -53,9 +53,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)Id: apprentice.c,v 1.69 2003/10/14 19:29:55 christos Exp")
+FILE_RCSID("@(#)Id: apprentice.c,v 1.75 2004/03/22 18:48:56 christos Exp")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.3 2003/10/27 16:22:36 pooka Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.4 2004/03/23 08:40:12 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -79,6 +79,10 @@ __RCSID("$NetBSD: apprentice.c,v 1.3 2003/10/27 16:22:36 pooka Exp $");
 
 #ifndef MAP_FILE
 #define MAP_FILE 0
+#endif
+
+#ifndef MAXPATHLEN
+#define MAXPATHLEN	1024
 #endif
 
 private int getvalue(struct magic_set *ms, struct magic *, char **);
@@ -172,14 +176,14 @@ apprentice_1(struct magic_set *ms, const char *fn, int action,
 		return rv;
 	mapped = rv;
 	     
-	if ((ml = malloc(sizeof(*ml))) == NULL) {
+	if (magic == NULL || nmagic == 0) {
 		file_delmagic(magic, mapped, nmagic);
-		file_oomem(ms);
 		return -1;
 	}
 
-	if (magic == NULL || nmagic == 0) {
+	if ((ml = malloc(sizeof(*ml))) == NULL) {
 		file_delmagic(magic, mapped, nmagic);
+		file_oomem(ms);
 		return -1;
 	}
 
@@ -204,7 +208,7 @@ file_delmagic(struct magic *p, int type, size_t entries)
 	switch (type) {
 	case 2:
 		p--;
-		(void)munmap(p, sizeof(*p) * (entries + 1));
+		(void)munmap((void *)p, sizeof(*p) * (entries + 1));
 		break;
 	case 1:
 		p--;
@@ -275,6 +279,7 @@ file_apprentice(struct magic_set *ms, const char *fn, int action)
 		file_error(ms, 0, "could not find any magic files!");
 		return NULL;
 	}
+	free(mfn);
 	return mlist;
 }
 
@@ -619,7 +624,7 @@ parse(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp, char *l,
 			eatsize(&l);
 		} else {
 			m->mask = 0L;
-			while (!isspace(*++l)) {
+			while (!isspace((unsigned char)*++l)) {
 				switch (*l) {
 				case CHAR_IGNORE_LOWERCASE:
 					m->mask |= STRING_IGNORE_LOWERCASE;
@@ -976,6 +981,10 @@ apprentice_map(struct magic_set *ms, struct magic **magicp, uint32_t *nmagicp,
 		file_error(ms, errno, "cannot stat `%s'", dbname);
 		goto error;
 	}
+	if (st.st_size < 16) {
+		file_error(ms, 0, "file `%s' is too small", dbname);
+		goto error;
+	}
 
 #ifdef QUICK
 	if ((mm = mmap(0, (size_t)st.st_size, PROT_READ|PROT_WRITE,
@@ -1027,7 +1036,7 @@ error:
 		(void)close(fd);
 	if (mm) {
 #ifdef QUICK
-		(void)munmap(mm, (size_t)st.st_size);
+		(void)munmap((void *)mm, (size_t)st.st_size);
 #else
 		free(mm);
 #endif
