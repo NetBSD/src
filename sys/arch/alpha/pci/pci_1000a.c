@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.5 1998/08/01 20:25:12 thorpej Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.6 1998/11/19 02:33:37 ross Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.5 1998/08/01 20:25:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.6 1998/11/19 02:33:37 ross Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -173,7 +173,7 @@ dec_1000a_intr_map(ccv, bustag, buspin, line, ihp)
 		/*  5  */ { 1, 0, 0, 0 },	/* Corelle */
 		/*  6  */ { 10, 0, 0, 0 },	/* Corelle */
 		/*  7  */ IRQNONE,
-		/*  8  */ IRQNONE,
+		/*  8  */ { 1, 0, 0, 0 },	/* isp behind ppb */
 		/*  9  */ IRQNONE,
 		/* 10  */ IRQNONE,
 		/* 11  */ IRQSPLIT(2),
@@ -188,6 +188,8 @@ dec_1000a_intr_map(ccv, bustag, buspin, line, ihp)
 		goto bad;
 	alpha_pci_decompose_tag(pc_tag, bustag, NULL, &device, NULL);
 	if (0 <= device && device < sizeof imrmap / sizeof imrmap[0]) {
+		if (device == 0)
+			printf("dec_1000a_intr_map: ?! UNEXPECTED DEV 0\n");
 		imrbit = imrmap[device][buspin - 1];
 		if (imrbit) {
 			*ihp = IMR2IRQ(imrbit);
