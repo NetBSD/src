@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.100 1997/10/09 00:39:19 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.101 1997/10/10 02:09:30 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -122,12 +122,10 @@ sys_mount(p, v, retval)
 	register struct vnode *vp;
 	register struct mount *mp;
 	int error, flag = 0;
-	struct vfsops *vops;
+	u_long fsindex = 0;
 	char fstypename[MFSNAMELEN];
 	struct vattr va;
 	struct nameidata nd;
-
-	vops = NULL;	/* XXX gcc -Wuninitialized */
 
 	/*
 	 * Get vnode to be covered
@@ -208,8 +206,6 @@ sys_mount(p, v, retval)
 	error = copyinstr(SCARG(uap, type), fstypename, MFSNAMELEN, NULL);
 	if (error) {
 #if defined(COMPAT_09) || defined(COMPAT_43)
-		u_long fsindex;
-
 		/*
 		 * Historically filesystem types were identified by number.
 		 * If we get an integer for the filesystem type instead of a
@@ -233,9 +229,11 @@ sys_mount(p, v, retval)
 	if (!strncmp(fstypename, "ufs", MFSNAMELEN))
 		strncpy(fstypename, "ffs", MFSNAMELEN);
 #endif
-	fstypename[MFSNAMELEN - 1] = '\0';	/* sanity */
-	vops = vfs_getopsbyname(fstypename);
-	if (vops == NULL) {
+	for (fsindex = 0; fsindex < nvfssw; fsindex++)
+		if (vfssw[fsindex] != NULL &&
+		    !strncmp(vfssw[fsindex]->vfs_name, fstypename, MFSNAMELEN))
+			break;
+	if (fsindex >= nvfssw) {
 		vput(vp);
 		return (ENODEV);
 	}
@@ -250,14 +248,14 @@ sys_mount(p, v, retval)
 	mp = (struct mount *)malloc((u_long)sizeof(struct mount),
 		M_MOUNT, M_WAITOK);
 	bzero((char *)mp, (u_long)sizeof(struct mount));
-	mp->mnt_op = vops;
+	mp->mnt_op = vfssw[fsindex];
 	if ((error = vfs_lock(mp)) != 0) {
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
 		return (error);
 	}
 	/* Do this early in case we block later. */
-	vops->vfs_refcount++;
+	vfssw[fsindex]->vfs_refcount++;
 	vp->v_mountedhere = mp;
 	mp->mnt_vnodecovered = vp;
 	mp->mnt_stat.f_owner = p->p_ucred->cr_uid;
@@ -302,7 +300,7 @@ update:
 		error = VFS_START(mp, 0, p);
 	} else {
 		mp->mnt_vnodecovered->v_mountedhere = (struct mount *)0;
-		vops->vfs_refcount--;
+		vfssw[fsindex]->vfs_refcount--;
 		vfs_unlock(mp);
 		free((caddr_t)mp, M_MOUNT);
 		vput(vp);
@@ -2126,105 +2124,26 @@ out:
  * Read a block of directory entries in a file system independent format.
  */
 int
-sys_getdirentries(p, v, retval)
+sys_getdents(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	register struct sys_getdirentries_args /* {
+	register struct sys_getdents_args /* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
-		syscallarg(u_int) count;
-		syscallarg(long *) basep;
+		syscallarg(size_t) count;
 	} */ *uap = v;
-	register struct vnode *vp;
 	struct file *fp;
-	struct uio auio;
-	struct iovec aiov;
-	long loff;
-	int error, eofflag;
+	int error, done;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
-	vp = (struct vnode *)fp->f_data;
-unionread:
-	if (vp->v_type != VDIR)
-		return (EINVAL);
-	aiov.iov_base = SCARG(uap, buf);
-	aiov.iov_len = SCARG(uap, count);
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_rw = UIO_READ;
-	auio.uio_segflg = UIO_USERSPACE;
-	auio.uio_procp = p;
-	auio.uio_resid = SCARG(uap, count);
-	VOP_LOCK(vp);
-	loff = auio.uio_offset = fp->f_offset;
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *)0, 0);
-	fp->f_offset = auio.uio_offset;
-	VOP_UNLOCK(vp);
-	if (error)
-		return (error);
-
-#ifdef UNION
-{
-	extern int (**union_vnodeop_p) __P((void *));
-	extern struct vnode *union_dircache __P((struct vnode *));
-
-	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    (vp->v_op == union_vnodeop_p)) {
-		struct vnode *lvp;
-
-		lvp = union_dircache(vp);
-		if (lvp != NULLVP) {
-			struct vattr va;
-
-			/*
-			 * If the directory is opaque,
-			 * then don't show lower entries
-			 */
-			error = VOP_GETATTR(vp, &va, fp->f_cred, p);
-			if (va.va_flags & OPAQUE) {
-				vput(lvp);
-				lvp = NULL;
-			}
-		}
-		
-		if (lvp != NULLVP) {
-			error = VOP_OPEN(lvp, FREAD, fp->f_cred, p);
-			VOP_UNLOCK(lvp);
-
-			if (error) {
-				vrele(lvp);
-				return (error);
-			}
-			fp->f_data = (caddr_t) lvp;
-			fp->f_offset = 0;
-			error = vn_close(vp, FREAD, fp->f_cred, p);
-			if (error)
-				return (error);
-			vp = lvp;
-			goto unionread;
-		}
-	}
-}
-#endif /* UNION */
-
-	if ((SCARG(uap, count) == auio.uio_resid) &&
-	    (vp->v_flag & VROOT) &&
-	    (vp->v_mount->mnt_flag & MNT_UNION)) {
-		struct vnode *tvp = vp;
-		vp = vp->v_mount->mnt_vnodecovered;
-		VREF(vp);
-		fp->f_data = (caddr_t) vp;
-		fp->f_offset = 0;
-		vrele(tvp);
-		goto unionread;
-	}
-	error = copyout(&loff, SCARG(uap, basep), sizeof(long));
-	*retval = SCARG(uap, count) - auio.uio_resid;
+	error = vn_readdir(fp, SCARG(uap, buf), UIO_USERSPACE,
+			SCARG(uap, count), &done, p, 0, 0);
+	*retval = done;
 	return (error);
 }
 
