@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 1997/06/15 18:18:57 mhitch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.80 1997/06/16 03:29:14 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,7 +89,7 @@
 #include <pmax/dev/ascreg.h>
 
 #include <machine/autoconf.h>
-#include <machine/locore.h>
+#include <mips/locore.h>		/* wbflush() */
 
 #include <pmax/pmax/clockreg.h>
 #include <pmax/pmax/kn01.h>
