@@ -1865,34 +1865,21 @@ roll_up(struct video_state *svsp, int n)
 {
 
 #ifndef PCVT_NOFASTSCROLL
-	if ((svsp->scrr_beg == 0) && (svsp->scrr_len == svsp->screen_rows))
+	if ((svsp->scrr_beg == 0) && (svsp->scrr_len == svsp->screen_rows) &&
+	    ((svsp->screen_rows == svsp->screen_rowsize) || (svsp != vsp)))
 	{
-		if (svsp->Crtat > (Crtat + (svsp->screen_rows - n) *
-		     			   svsp->maxcol))
-		{
-			u_short *Memory = (svsp == vsp) ? Crtat : svsp->Memory;
+		u_short *Memory = (svsp == vsp) ? Crtat : svsp->Memory;
 
+		if (svsp->Crtat > (Memory + (svsp->screen_rows - n) *
+		     			    svsp->maxcol))
+		{
 			bcopy(svsp->Crtat + svsp->maxcol * n, Memory,
 		       	      svsp->maxcol * (svsp->screen_rows - n) * CHR);
-
-			if (svsp->labels_on)
-				bcopy (
-		svsp->Crtat + svsp->maxcol * svsp->screen_rows,
-		Memory + svsp->maxcol * svsp->screen_rows,
-		svsp->maxcol * 3 * CHR);
 
 			svsp->Crtat = Memory;
 		}
 		else
-		{
 			svsp->Crtat += n * svsp->maxcol;
-
-			if (svsp->labels_on)
-				bcopy (
-		svsp->Crtat + svsp->maxcol * (svsp->screen_rows - n),
-		svsp->Crtat + svsp->maxcol * svsp->screen_rows,
-		svsp->maxcol * 3 * CHR);
-		}
 
 		if (svsp == vsp)
 		{
@@ -1926,18 +1913,13 @@ roll_down(struct video_state *svsp, int n)
 {
 
 #ifndef PCVT_NOFASTSCROLL
-	if ((svsp->scrr_beg == 0) && (svsp->scrr_len == svsp->screen_rows))
+	if ((svsp->scrr_beg == 0) && (svsp->scrr_len == svsp->screen_rows) &&
+	    ((svsp->screen_rows == svsp->screen_rowsize) || (svsp != vsp)))
 	{
-		if (svsp->Crtat < (Crtat + n * svsp->maxcol))
+		u_short *Memory = (svsp == vsp) ? Crtat : svsp->Memory;
+
+		if (svsp->Crtat < (Memory + n * svsp->maxcol))
 		{
-			u_short *Memory = (svsp == vsp) ? Crtat : svsp->Memory;
-
-			if (svsp->labels_on)
-				bcopy(
-		svsp->Crtat + svsp->maxcol * svsp->screen_rows,
-		Memory + svsp->maxcol * svsp->screen_rows * 2,
-		svsp->maxcol * 3 * CHR);
-
 			bcopy(svsp->Crtat,
 			      Memory + svsp->maxcol * (svsp->screen_rows + n),
 		       	      svsp->maxcol * (svsp->screen_rows - n) * CHR);
@@ -1945,15 +1927,7 @@ roll_down(struct video_state *svsp, int n)
 			svsp->Crtat = Memory + svsp->maxcol * svsp->screen_rows;
 		}
 		else
-		{
-			if (svsp->labels_on)
-				bcopy (
-		svsp->Crtat + svsp->maxcol * svsp->screen_rows,
-		svsp->Crtat + svsp->maxcol * (svsp->screen_rows - n),
-		svsp->maxcol * 3 * CHR);
-
 			svsp->Crtat -= n * svsp->maxcol;
-		}
 
 		if (svsp == vsp)
 		{
