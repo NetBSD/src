@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8 1998/05/25 20:59:03 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.9 1998/05/25 21:00:32 kleink Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,6 +38,9 @@
  *	@(#)signal.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef	_MIPS_SIGNAL_H_
+#define	_MIPS_SIGNAL_H_
+
 /*
  * Machine-dependent signal definitions
  */
@@ -66,3 +69,4 @@ struct	sigcontext {
 };
 
 #endif	/* !_ANSI_SOURCE && !_POSIX_C_SOURCE && !_XOPEN_SOURCE */
+#endif	/* !_MIPS_SIGNAL_H_ */
