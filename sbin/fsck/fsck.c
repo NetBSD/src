@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.26 2001/06/18 06:28:59 lukem Exp $	*/
+/*	$NetBSD: fsck.c,v 1.27 2001/11/01 07:31:22 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.26 2001/06/18 06:28:59 lukem Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.27 2001/11/01 07:31:22 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -446,7 +446,7 @@ catopt(char **sp, const char *o)
 
 
 static void
-mangle(char *options, int *argcp, const char ***argvp, int *maxargcp)
+mangle(char *opts, int *argcp, const char ***argvp, int *maxargcp)
 {
 	char *p, *s;
 	int argc, maxargc;
@@ -456,7 +456,7 @@ mangle(char *options, int *argcp, const char ***argvp, int *maxargcp)
 	argv = *argvp;
 	maxargc = *maxargcp;
 
-	for (s = options; (p = strsep(&s, ",")) != NULL;) {
+	for (s = opts; (p = strsep(&s, ",")) != NULL;) {
 		/* Always leave space for one more argument and the NULL. */
 		if (argc >= maxargc - 3) {
 			maxargc <<= 1;
