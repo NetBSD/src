@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.66 1998/04/08 23:37:22 tv Exp $
+#	$NetBSD: NetBSD.dist,v 1.67 1998/06/06 01:30:45 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -799,6 +799,11 @@ etc
 ..
 
 # ./usr/share/examples/emul
+..
+
+# ./usr/share/examples/ftpd
+ftpd
+# ./usr/share/examples/ftpd
 ..
 
 # ./usr/share/examples/ipf
