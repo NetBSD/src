@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.9 1995/03/26 09:44:38 glass Exp $	*/
+/*	$NetBSD: compress.c,v 1.9.6.1 1997/01/26 03:20:10 rat Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: compress.c,v 1.9 1995/03/26 09:44:38 glass Exp $";
+static char rcsid[] = "$NetBSD: compress.c,v 1.9.6.1 1997/01/26 03:20:10 rat Exp $";
 #endif
 #endif /* not lint */
 
@@ -139,7 +139,7 @@ main(argc, argv)
 	if (cat == 1 && argc > 1)
 		errx(1, "the -c option permits only a single file argument");
 
-	for (; *argv; ++argv)
+	for (; *argv; ++argv) {
 		switch(style) {
 		case COMPRESS:
 			if (cat) {
@@ -189,6 +189,7 @@ main(argc, argv)
 			}
 			break;
 		}
+	}
 	exit (eval);
 }
 
