@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.112 2003/02/14 22:40:39 he Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.113 2003/02/15 11:21:52 he Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3603,14 +3603,14 @@ sys/arch/arm/arm/bcopyinout.S			1.2-1.6
 	unaligned copying.
 	[chris, ticket #1157]
 
-(RC1 tag synced against everything changed since ticket 1136)
+	(RC1 tag synced against everything changed since ticket 1136)
 
 usr.bin/progress/progress.c			1.6
 
 	Fix a race that can abort a sysinst run. PR#20275
 	[ross, ticket #1158]
 
-(RC1 tag moved on file)
+	(RC1 tag moved on file)
 
 distrib/utils/sysinst/util.c			revert 1.81
 
@@ -3637,9 +3637,10 @@ sys/arch/sparc/sparc/autoconf.c			hand patch
 	Make this compile with DEBUG.
 	[martin, ticket #1163]
 
-(Moved RC1 tag for distrib/utils/sysinst/util.c, share/man/man4/bge.4,
-share/man/man4/Makefile, distrib/sets/lists/man/mi, distrib/sun3/miniroot/list, 
-sys/arch/sparc/sparc/autoconf.c)
+	(Moved RC1 tag for distrib/utils/sysinst/util.c,
+	share/man/man4/bge.4, share/man/man4/Makefile,
+	distrib/sets/lists/man/mi, distrib/sun3/miniroot/list,
+	sys/arch/sparc/sparc/autoconf.c)
 
 share/man/man4/pppoe.4				1.16
 
@@ -3647,7 +3648,7 @@ share/man/man4/pppoe.4				1.16
 	under "http://www.netbsd.org/Documentation/network/pppoe/".
 	[tron, ticket #1164]
 
-(Moved RC1 tag on this file)
+	(Moved RC1 tag on this file)
 
 share/man/man9/Makefile				1.138 (hand patch)
 share/man/man9/access.9				1.10->0 (removed)
@@ -3656,7 +3657,6 @@ distrib/sets/lists/comp/obsolete.mi		1.87 (hand patch)
 
 	Remove leftover pre-UVM manpages
 	[drochner, ticket #1160]
-
 
 distrib/utils/sysinst/net.c			1.83
 
@@ -3670,7 +3670,7 @@ distrib/utils/sysinst/util.c			1.82
 	spinup's that might return EIO on some systems. Fixes PR#20165
 	[grant, ticket #1166]
 
-(Moved RC1 tag for these last 6 files)
+	(Moved RC1 tag for these last 6 files)
 
 sys/arch/acorn32/acorn32/rpc_machdep.c		revert 1.39
 sys/arch/arm/arm32/pmap.c			revert 1.110
@@ -3686,3 +3686,17 @@ sys/arch/shark/ofw/ofw.c			revert 1.18
 	causes instability on the release branch.
 	[rearnsha, ticket #1170]
 
+gnu/dist/toolchain/gcc/config/arm/arm.c		1.10
+
+	Ensure that the scratch register does not overlap our final
+	result register.  Fixes problem that causes Metafont and
+	teTeX to crash.
+	[rearnsha, ticket #1174]
+
+distrib/sets/lists/xbase/md.macppc		1.5
+distrib/sets/lists/xbase4/md.i386		1.1 (new)
+distrib/sets/lists/xbase4/md.macppc		1.1 (new)
+
+	The manual page ``scanpci'' is only included in XFree86 4.x.
+	Fixes PR#20279.
+	[tron, ticket #1173]
