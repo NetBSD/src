@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.12 1999/10/22 10:43:11 mrg Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.13 1999/11/01 01:35:58 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.12 1999/10/22 10:43:11 mrg Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.13 1999/11/01 01:35:58 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,8 @@ file_close(arcn, fd)
 		set_pmode(arcn->name, arcn->sb.st_mode);
 	if (patime || pmtime)
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+	if (pfflags)
+		set_chflags(arcn->name, arcn->sb.st_flags);
 }
 
 /*
@@ -533,6 +535,8 @@ node_creat(arcn)
 
 	if (patime || pmtime)
 		set_ftime(arcn->name, arcn->sb.st_mtime, arcn->sb.st_atime, 0);
+	if (pfflags)
+		set_chflags(arcn->name, arcn->sb.st_flags);
 	return(0);
 }
 
@@ -783,6 +787,26 @@ set_pmode(fnm, mode)
 	mode &= ABITS;
 	if (lchmod(fnm, mode) < 0)
 		syswarn(1, errno, "Could not set permissions on %s", fnm);
+	return;
+}
+
+/*
+ * set_chflags()
+ *	Set 4.4BSD file flags
+ */
+#if __STDC__
+void
+set_chflags(char *fnm, u_int32_t flags)
+#else
+void
+set_pmode(fnm, flags)
+	char *fnm;
+	u_int32_t flags;
+#endif
+{
+	
+	if (chflags(fnm, flags) < 0)
+		syswarn(1, errno, "Could not set file flags on %s", fnm);
 	return;
 }
 
