@@ -1,4 +1,4 @@
-.\"	$NetBSD: dd.1,v 1.7 1998/02/06 05:39:31 perry Exp $
+.\"	$NetBSD: dd.1,v 1.8 1999/07/29 19:03:31 hubertf Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\"
 .\"	@(#)dd.1	8.2 (Berkeley) 1/13/94
 .\"
-.Dd January 13, 1994
+.Dd July 28, 1999
 .Dt DD 1
 .Os
 .Sh NAME
@@ -137,6 +137,11 @@ Otherwise, input data is read and discarded.
 For pipes, the correct number of bytes is read.
 For all other devices, the correct number of blocks is read without
 distinguishing between a partial or complete block being read.
+.It Cm progress= Ns Ar n
+Switch on display of progress if
+.Va n
+is set to ``1'', i.e. a ``.'' is printed for each 
+block written to the output file.
 .It Xo
 .Cm conv=
 .Ns Cm value Ns Op \&, Cm value \&...
