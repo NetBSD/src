@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.16 2002/09/12 20:20:59 mycroft Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.17 2002/09/12 22:56:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
 #include "debug.h"
 
 #ifdef RTLD_DEBUG_ALPHA
-#define	adbg(x)		if (dodebug) xprintf x
+#define	adbg(x)		xprintf x
 #else
 #define	adbg(x)		/* nothing */
 #endif
@@ -165,10 +165,9 @@ _rtld_relocate_nonplt_self(dynp, relocbase)
 }
 
 int
-_rtld_relocate_nonplt_objects(obj, self, dodebug)
+_rtld_relocate_nonplt_objects(obj, self)
 	const Obj_Entry *obj;
 	bool self;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 
@@ -198,7 +197,7 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			    *where + rela->r_addend;
 			if (*where != tmp)
 				*where = tmp;
-			rdbg(dodebug, ("REFQUAD %s in %s --> %p in %s",
+			rdbg(("REFQUAD %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
@@ -212,14 +211,14 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 			    rela->r_addend;
 			if (*where != tmp)
 				*where = tmp;
-			rdbg(dodebug, ("GLOB_DAT %s in %s --> %p in %s",
+			rdbg(("GLOB_DAT %s in %s --> %p in %s",
 			    obj->strtab + obj->symtab[symnum].st_name,
 			    obj->path, (void *)*where, defobj->path));
 			break;
 
 		case R_TYPE(RELATIVE):
 			*where += (Elf_Addr)obj->relocbase;
-			rdbg(dodebug, ("RELATIVE in %s --> %p",
+			rdbg(("RELATIVE in %s --> %p",
 			    obj->path, (void *)*where));
 			break;
 
@@ -236,11 +235,11 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 				    obj->path);
 				return -1;
 			}
-			rdbg(dodebug, ("COPY (avoid in main)"));
+			rdbg(("COPY (avoid in main)"));
 			break;
 
 		default:
-			rdbg(dodebug, ("sym = %lu, type = %lu, offset = %p, "
+			rdbg(("sym = %lu, type = %lu, offset = %p, "
 			    "addend = %p, contents = %p, symbol = %s",
 			    symnum, (u_long)ELF_R_TYPE(rela->r_info),
 			    (void *)rela->r_offset, (void *)rela->r_addend,
@@ -256,9 +255,8 @@ _rtld_relocate_nonplt_objects(obj, self, dodebug)
 }
 
 int
-_rtld_relocate_plt_lazy(obj, dodebug)
+_rtld_relocate_plt_lazy(obj)
 	const Obj_Entry *obj;
-	bool dodebug;
 {
 	const Elf_Rela *rela;
 
@@ -272,19 +270,17 @@ _rtld_relocate_plt_lazy(obj, dodebug)
 
 		/* Just relocate the GOT slots pointing into the PLT */
 		*where += (Elf_Addr)obj->relocbase;
-		rdbg(dodebug, ("fixup !main in %s --> %p", obj->path,
-		    (void *)*where));
+		rdbg(("fixup !main in %s --> %p", obj->path, (void *)*where));
 	}
 
 	return 0;
 }
 
 int
-_rtld_relocate_plt_object(obj, rela, addrp, dodebug)
+_rtld_relocate_plt_object(obj, rela, addrp)
 	const Obj_Entry *obj;
 	const Elf_Rela *rela;
 	caddr_t *addrp;
-	bool dodebug;
 {
 	Elf_Addr *where = (Elf_Addr *)(obj->relocbase + rela->r_offset);
 	Elf_Addr new_value;
@@ -299,7 +295,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 		return -1;
 
 	new_value = (Elf_Addr)(defobj->relocbase + def->st_value);
-	rdbg(dodebug, ("bind now/fixup in %s --> old=%p new=%p",
+	rdbg(("bind now/fixup in %s --> old=%p new=%p",
 	    defobj->strtab + def->st_name, (void *)*where, (void *)new_value));
 
 	if ((stubaddr = *where) != new_value) {
@@ -337,12 +333,12 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 		 * entry format.
 		 */
 		if (obj->pltgot[2] == (Elf_Addr) &_rtld_bind_start_old) {
-			rdbg(dodebug, ("  old PLT format"));
+			rdbg(("  old PLT format"));
 			goto out;
 		}
 
 		delta = new_value - stubaddr;
-		rdbg(dodebug, ("  stubaddr=%p, where-stubaddr=%ld, delta=%ld",
+		rdbg(("  stubaddr=%p, where-stubaddr=%ld, delta=%ld",
 		    (void *)stubaddr, (long)where - (long)stubaddr,
 		    (long)delta));
 		insncnt = 0;
@@ -355,7 +351,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 			 */
 			insn[insncnt++] = 0x08 << 26 | 27 << 21 | 27 << 16 |
 			    (delta & 0xffff);
-			rdbg(dodebug, ("  LDA  $27,%d($27)", (int16_t)delta));
+			rdbg(("  LDA  $27,%d($27)", (int16_t)delta));
 			/*
 			 * Adjust the delta to account for the effects of
 			 * the LDA, including sign-extension.
@@ -368,7 +364,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 				 */
 				insn[insncnt++] = 0x09 << 26 | 27 << 21 |
 				    27 << 16 | ((delta >> 16) & 0xffff);
-				rdbg(dodebug, ("  LDAH $27,%d($27)",
+				rdbg(("  LDAH $27,%d($27)",
 				    (int16_t)(delta >> 16)));
 			}
 		} else {
@@ -387,8 +383,7 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 			 * practice.
 			 */
 			if ((int32_t)delta != delta) {
-				rdbg(dodebug,
-				   ("  PLT stub too far from GOT to relocate"));
+				rdbg(("  PLT stub too far from GOT to relocate"));
 				goto out;
 			}
 			dhigh = delta - (int16_t)delta;
@@ -399,13 +394,13 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 				 */
 				insn[insncnt++] = 0x09 << 26 | 27 << 21 |
 				    27 << 16 | ((dhigh >> 16) & 0xffff);
-				rdbg(dodebug, ("  LDAH $27,%d($27)",
+				rdbg(("  LDAH $27,%d($27)",
 				    (int16_t)(dhigh >> 16)));
 			}
 			/* Build an LDQ to load the GOT entry. */
 			insn[insncnt++] = 0x29 << 26 | 27 << 21 |
 			    27 << 16 | (delta & 0xffff);
-			rdbg(dodebug, ("  LDQ  $27,%d($27)",
+			rdbg(("  LDQ  $27,%d($27)",
 			    (int16_t)delta));
 		}
 
@@ -420,11 +415,11 @@ _rtld_relocate_plt_object(obj, rela, addrp, dodebug)
 		if (-0x100000 <= idisp && idisp < 0x100000) {
 			insn[insncnt++] = 0x30 << 26 | 31 << 21 |
 			    (idisp & 0x1fffff);
-			rdbg(dodebug, ("  BR   $31,%p", (void *)new_value));
+			rdbg(("  BR   $31,%p", (void *)new_value));
 		} else {
 			insn[insncnt++] = 0x1a << 26 | 31 << 21 |
 			    27 << 16 | (idisp & 0x3fff);
-			rdbg(dodebug, ("  JMP  $31,($27),%d",
+			rdbg(("  JMP  $31,($27),%d",
 			    (int)(idisp & 0x3fff)));
 		}
 
