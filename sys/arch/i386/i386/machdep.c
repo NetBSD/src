@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.36 1993/07/07 06:02:26 cgd Exp $
+ *	$Id: machdep.c,v 1.37 1993/07/08 09:55:54 cgd Exp $
  */
 
 #include "npx.h"
@@ -558,6 +558,15 @@ sigreturn(p, uap, retval)
 	regs[sEIP] = scp->sc_pc;
 	regs[sEFLAGS] = scp->sc_ps;
 	return(EJUSTRETURN);
+}
+
+/*
+ * a simple function to make the system panic (and dump a vmcore)
+ * in a predictable fashion
+ */
+void diediedie()
+{
+	panic("because you said to!");
 }
 
 int	waittime = -1;
