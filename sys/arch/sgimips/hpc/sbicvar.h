@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.6 2003/08/07 16:29:26 agc Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.7 2004/01/10 02:55:54 sekiya Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -172,11 +172,11 @@ struct wd33c93_softc {
 	int	sc_minsync;		/* Minimum sync period (4ns units) */
 	int	sc_maxoffset;		/* Maximum sync ofset (bytes) */
 
-	int  (*sc_dmasetup) __P((struct wd33c93_softc *,caddr_t *,
-					    size_t *,int,size_t *));
-	int  (*sc_dmago) __P((struct wd33c93_softc *));
-	void (*sc_dmastop) __P((struct wd33c93_softc *));
-	void (*sc_reset) __P((struct wd33c93_softc *));
+	int  (*sc_dmasetup) (struct wd33c93_softc *, caddr_t *,
+					    size_t *, int, size_t *);
+	int  (*sc_dmago) (struct wd33c93_softc *);
+	void (*sc_dmastop) (struct wd33c93_softc *);
+	void (*sc_reset) (struct wd33c93_softc *);
 };
 
 /* values for sc_flags */
@@ -254,10 +254,10 @@ extern int wd33c93_debug_flags;
 struct buf;
 struct scsipi_xfer;
 
-void wd33c93_minphys __P((struct buf *bp));
-void wd33c93_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void wd33c93_attach __P((struct wd33c93_softc *));
-int  wd33c93_intr __P((struct wd33c93_softc *));
+void wd33c93_minphys (struct buf *);
+void wd33c93_scsi_request (struct scsipi_channel *,
+				scsipi_adapter_req_t, void *);
+void wd33c93_attach (struct wd33c93_softc *);
+int  wd33c93_intr (struct wd33c93_softc *);
 
 #endif /* _SBICVAR_H_ */
