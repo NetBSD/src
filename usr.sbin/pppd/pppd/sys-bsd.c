@@ -1,4 +1,4 @@
-/*	$NetBSD: sys-bsd.c,v 1.17 1997/03/15 18:37:35 is Exp $	*/
+/*	$NetBSD: sys-bsd.c,v 1.18 1997/04/28 04:22:24 mrg Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.27 1997/03/04 03:43:53 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.17 1997/03/15 18:37:35 is Exp $";
+static char rcsid[] = "$NetBSD: sys-bsd.c,v 1.18 1997/04/28 04:22:24 mrg Exp $";
 #endif
 #endif
 
@@ -182,8 +182,7 @@ ppp_available()
 
     no_ppp_msg = "\
 This system lacks kernel support for PPP.  To include PPP support\n\
-in the kernel, please follow the steps detailed in the README.bsd\n\
-file in the ppp-2.2 distribution.\n";
+in the kernel, please read the ppp(4) manual page.\n";
     return ok;
 }
 
