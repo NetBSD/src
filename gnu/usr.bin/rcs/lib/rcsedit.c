@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsedit.c,v 1.6 1996/10/15 07:00:14 veego Exp $	*/
+/*	$NetBSD: rcsedit.c,v 1.7 1996/10/21 07:00:07 veego Exp $	*/
 
 /* RCS stream editor */
 
@@ -38,6 +38,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsedit.c,v $
+ * Revision 1.7  1996/10/21 07:00:07  veego
+ * Fix missing "#ifdef LOCALID" from pr#2876
+ *
  * Revision 1.6  1996/10/15 07:00:14  veego
  * Merge rcs 5.7.
  *
@@ -1056,8 +1059,11 @@ keyreplace(marker, delta, delimstuffed, infile, out, dolog)
                 break;
 	    case Id:
 	    case Header:
+#ifdef LOCALID
+	    case LocalId:
+#endif
 		escape_string(out,
-			marker==Id || RCSv<VERSION(4)
+			marker!=Header || RCSv<VERSION(4)
 			? basefilename(RCSname)
 			: getfullRCSname()
 		);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rcskeep.c,v 1.6 1996/10/15 07:00:21 veego Exp $	*/
+/*	$NetBSD: rcskeep.c,v 1.7 1996/10/21 07:00:08 veego Exp $	*/
 
 /* Extract RCS keyword string values from working files.  */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcskeep.c,v $
+ * Revision 1.7  1996/10/21 07:00:08  veego
+ * Fix missing "#ifdef LOCALID" from pr#2876
+ *
  * Revision 1.6  1996/10/15 07:00:21  veego
  * Merge rcs 5.7.
  *
@@ -197,6 +200,9 @@ getoldkeys(fp)
                 break;
             case Header:
             case Id:
+#ifdef LOCALID
+	    case LocalId:
+#endif
 		if (!(
 		      getval(fp, (struct buf*)0, false) &&
 		      keeprev(fp) &&

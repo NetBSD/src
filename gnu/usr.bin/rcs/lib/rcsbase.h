@@ -1,4 +1,4 @@
-/*	$NetBSD: rcsbase.h,v 1.7 1996/10/15 07:00:11 veego Exp $	*/
+/*	$NetBSD: rcsbase.h,v 1.8 1996/10/21 07:00:06 veego Exp $	*/
 
 /* RCS common definitions and data structures */
 
@@ -33,6 +33,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcsbase.h,v $
+ * Revision 1.8  1996/10/21 07:00:06  veego
+ * Fix missing "#ifdef LOCALID" from pr#2876
+ *
  * Revision 1.7  1996/10/15 07:00:11  veego
  * Merge rcs 5.7.
  *
@@ -435,6 +438,9 @@ struct assoc {
 #define keylength 8 /* max length of any of the above keywords */
 
 enum markers { Nomatch, Author, Date, Header, Id,
+#ifdef LOCALID
+	       LocalId,
+#endif
 	       Locker, Log, Name, RCSfile, Revision, Source, State };
 	/* This must be in the same order as rcskeys.c's Keyword[] array. */
 

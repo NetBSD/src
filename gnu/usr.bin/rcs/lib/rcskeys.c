@@ -1,4 +1,4 @@
-/*	$NetBSD: rcskeys.c,v 1.7 1996/10/15 07:00:22 veego Exp $	*/
+/*	$NetBSD: rcskeys.c,v 1.8 1996/10/21 07:00:09 veego Exp $	*/
 
 /* RCS keyword table and match operation */
 
@@ -31,6 +31,9 @@ Report problems and direct all questions to:
 
 /*
  * $Log: rcskeys.c,v $
+ * Revision 1.8  1996/10/21 07:00:09  veego
+ * Fix missing "#ifdef LOCALID" from pr#2876
+ *
  * Revision 1.7  1996/10/15 07:00:22  veego
  * Merge rcs 5.7.
  *
@@ -76,6 +79,9 @@ char const *const Keyword[] = {
     /* This must be in the same order as rcsbase.h's enum markers type. */
 	0,
 	AUTHOR, DATE, HEADER, IDH,
+#ifdef LOCALID
+	LOCALID,
+#endif
 	LOCKER, LOG, NAME, RCSFILE, REVISION, SOURCE, STATE
 };
 
