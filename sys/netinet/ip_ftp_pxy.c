@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.10 1998/11/22 15:17:19 mrg Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.11 1998/11/22 23:30:36 mrg Exp $	*/
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
@@ -21,6 +21,8 @@ extern	kmutex_t	ipf_rw;
 int ippr_ftp_init __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
 int ippr_ftp_out __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
 int ippr_ftp_in __P((fr_info_t *, ip_t *, ap_session_t *, nat_t *));
+int ippr_ftp_portmsg __P((fr_info_t *, ip_t *, nat_t *nat));
+int ippr_ftp_pasvmsg __P((fr_info_t *, ip_t *, tcphdr_t *, nat_t *));
 u_short ipf_ftp_atoi __P((char **));
 
 
