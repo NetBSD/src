@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.246 2002/01/02 23:48:20 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.247 2002/01/02 23:58:18 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -250,12 +250,6 @@ NOLINT=		# defined
 NOPIC=		# defined
 NOPROFILE=	# defined
 OBJECT_FMT?=	COFF
-.endif
-
-# Profiling and linting is also off on the x86_64 port at the moment.
-# The x86_64 port is incomplete.
-.if ${MACHINE_ARCH} == "x86_64"
-NOLINT=		# defined
 .endif
 
 # The m68000 port is incomplete.
