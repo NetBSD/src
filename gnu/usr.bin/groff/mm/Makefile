@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 1998/09/27 17:22:05 lukem Exp $
+#	$NetBSD: Makefile,v 1.15 1999/01/26 02:49:13 perry Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac
@@ -7,8 +7,12 @@ TMACOWN?=	${FILESOWN}
 TMACGRP?=	${FILESGRP}
 TMACMODE?=	${FILESMODE}
 
+# The Swedish man page is temporarily disabled. We will soon implement
+# a scheme for internationalized man pages and turn it on again.
+#MAN=		groff_mm.7 groff_mmse.7
+#MLINKS= 	groff_mm.7 mm.7 groff_mmse.7 mmse.7
 MAN=		groff_mm.7 groff_mmse.7
-MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
+MLINKS= 	groff_mm.7 mm.7 groff_mmse.7 mmse.7
 
 .if !defined(NOSHARE)
 FILES=		tmac.m
