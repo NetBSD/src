@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.7 2003/11/16 09:02:42 dyoung Exp $	*/
+/*	$NetBSD: dlt.h,v 1.8 2004/06/22 12:50:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -60,6 +60,9 @@
 #define DLT_PPP_BSDOS	14	/* BSD/OS Point-to-point Protocol */
 #define DLT_HIPPI	15	/* HIPPI */
 #define DLT_HDLC	16	/* HDLC framing */
+
+#define DLT_PFSYNC	18	/* Packet filter state syncing */
+#define DLT_PFLOG	117	/* Packet filter logging, by pcap people */
 
 /* NetBSD-specific types */
 #define	DLT_PPP_SERIAL	50	/* PPP over serial (async and sync) */
