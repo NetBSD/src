@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.10 1999/08/30 13:12:51 bouyer Exp $
+.\"	$NetBSD: pciide.4,v 1.11 1999/10/16 20:17:29 kristerw Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -70,9 +70,9 @@ Silicon Integrated System 5597/5598 IDE controller
 .It
 VIA Technologies VT82C586 and VT82C586A IDE Controllers
 .El 
-Some of these contollers are only available in multifunction PCI chips.
+Some of these controllers are only available in multifunction PCI chips.
 .Pp
-The 0x0001 flag force the
+The 0x0001 flag forces the
 .Nm 
 driver to use DMA when there is no explicit DMA mode setting support for
 the controller but DMA is present. If the BIOS didn't set up the controller
