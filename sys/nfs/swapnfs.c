@@ -1,4 +1,4 @@
-/*	$NetBSD: swapnfs.c,v 1.8 1994/06/29 06:42:44 cgd Exp $	*/
+/*	$NetBSD: swapnfs.c,v 1.9 1995/04/30 07:03:13 cgd Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -61,4 +61,3 @@ struct	swdevt swdevt[] = {
 
 extern int nfs_mountroot();
 int (*mountroot)() = nfs_mountroot;
-	
