@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.7 2003/01/18 07:21:14 thorpej Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.8 2003/04/02 22:14:23 he Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.7 2003/01/18 07:21:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.8 2003/04/02 22:14:23 he Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -437,6 +437,6 @@ aoutm68k_stat13_convert(st, ast)
 	ast->st_blksize = st->st_blksize;
 	ast->st_flags = st->st_flags;
 	ast->st_gen = st->st_gen;
-	ast->st_qspare[0] = st->st_qspare[0];
-	ast->st_qspare[1] = st->st_qspare[1];
+	ast->st_qspare[0] = 0;
+	ast->st_qspare[1] = 0;
 }
