@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.17 2000/01/12 05:04:41 mjl Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.18 2000/01/12 05:13:32 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.17 2000/01/12 05:04:41 mjl Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.18 2000/01/12 05:13:32 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,7 +147,9 @@ local_passwd(uname)
 	int pfd, tfd;
 	int min_pw_len = 0;
 	int pw_expiry  = 0;
+#ifdef LOGIN_CAP
 	login_cap_t *lc;
+#endif
 	
 	if (!(pw = getpwnam(uname))) {
 		warnx("unknown user %s", uname);
@@ -166,11 +168,13 @@ local_passwd(uname)
 	/*
 	 * Get class restrictions for this user, then get the new password. 
 	 */
+#ifdef LOGIN_CAP
 	if((lc = login_getclass(pw->pw_class))) {
 		min_pw_len = (int) login_getcapnum(lc, "minpasswordlen", 0, 0);
 		pw_expiry  = (int) login_getcaptime(lc, "passwordtime", 0, 0);
 		login_close(lc);
 	}
+#endif
 
 	pw->pw_passwd = getnewpasswd(pw, min_pw_len);
 	pw->pw_change = pw_expiry ? pw_expiry + time(NULL) : 0;
