@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 1999/09/09 23:24:29 thorpej Exp $	*/
+/* $NetBSD: defs.h,v 1.4 2001/09/13 10:00:44 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEFS_H_
+#define _DEFS_H_
+
 struct element_type {
 	const char	*et_name;	/* name; i.e. "picker, "slot", etc. */
 	int		et_type;	/* type number */
@@ -62,3 +65,5 @@ struct special_word {
 
 /* Environment variable to check for default changer. */
 #define	CHANGER_ENV_VAR		"CHANGER"
+
+#endif /* !_DEFS_H_ */
