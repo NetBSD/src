@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.209 2000/04/19 07:51:20 bouyer Exp $
+$NetBSD: pcidevs,v 1.210 2000/04/22 17:32:02 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -812,6 +812,8 @@ product CMDTECH 670		0x0670	USB0670
 product CMDTECH 673		0x0673	USB0673
 
 /* C-Media products */
+product CMEDIA CMI8338A		0x0100	CMI8338A PCI Audio Device
+product CMEDIA CMI8338B		0x0101	CMI8338B PCI Audio Device
 product CMEDIA CMI8738		0x0111	CMI8738/C3DX PCI Audio Device
 product CMEDIA HSP56		0x0211	HSP56 Audiomodem Riser
 
