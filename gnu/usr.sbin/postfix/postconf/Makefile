@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/12 18:05:44 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2001/03/13 18:13:21 itojun Exp $
 
 # XXX Note we aren't building ../conf/main.cf.default
 # The shipped makefiles construct it using postconf -d after building
@@ -8,7 +8,7 @@
 
 PROG=	postconf
 
-DIST=	${.CURDIR}/../../../dist/postfix/${PROG}
+DIST=	${.CURDIR}/../../../dist/postfix/src/${PROG}
 .PATH:	${DIST}
 
 BINDIR= ${PFIX_SBINDIR}           
