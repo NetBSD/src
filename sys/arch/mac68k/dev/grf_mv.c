@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_mv.c,v 1.34 1997/10/09 01:25:56 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.35 1997/10/25 23:18:01 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -270,6 +270,7 @@ bad:
 		break;
 	case NUBUS_DRHW_FIILX:
 	case NUBUS_DRHW_FIISXDSP:
+	case NUBUS_DRHW_FUTURASX:
 		sc->cli_offset = 0xf05000;
 		sc->cli_value = 0x80;
 		add_nubus_intr(na->slot, grfmv_intr_generic_1, sc);
