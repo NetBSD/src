@@ -1,4 +1,4 @@
-/*	$NetBSD: int_fmtio.h,v 1.2 2002/10/10 09:47:17 scw Exp $	*/
+/*	$NetBSD: int_fmtio.h,v 1.3 2002/12/07 21:37:35 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #define	PRIiFAST64	"lli"	/* int_fast64_t		*/
 #endif
 #define	PRIiMAX		"lli"	/* intmax_t		*/
-#define	PRIiPTR		"i"	/* intptr_t		*/
+#define	PRIiPTR		"li"	/* intptr_t		*/
 
 /* fprintf macros for unsigned integers */
 
