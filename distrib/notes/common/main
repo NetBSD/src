@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.37 2000/09/20 09:40:36 he Exp $
+.\" $NetBSD: main,v 1.6.2.38 2000/10/12 21:52:10 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -228,6 +228,10 @@ are US-embargoed countries.
 See
 .Lk http://www.NetBSD.ORG/Misc/crypto-export.html
 for the full details.
+.It
+An extensive audit of the code (and corresponding fixes) has
+been done to eliminate possible buffer overruns caused by
+possible user-specified format strings.
 .El
 .Pp
 In addition, many bugs have been fixed -- more than 40 problems
@@ -239,6 +243,16 @@ The following are the major known issues with
 .Nx
 1.4.3.
 .Bl -bullet
+.It
+Some of the fixes in
+.Nx
+1.4.3
+required the introduction of a new system call,
+.Xr issetugid 2 .
+This means that you
+.Em will
+have to upgrade the kernel before installing the new user-land
+code.
 .It
 .Tn PCMCIA
 support may require manual adjustment to function properly.
