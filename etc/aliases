@@ -1,4 +1,4 @@
-#	$NetBSD: aliases,v 1.7 1997/02/15 10:02:10 mikel Exp $
+#	$NetBSD: aliases,v 1.8 1997/04/16 01:36:15 mrg Exp $
 #
 #	@(#)aliases	8.2 (Berkeley) 3/5/94
 #
@@ -31,8 +31,8 @@ ftp-bugs:	root
 # dumper:
 # operator:
 
-# trap decode to catch security attacks
-decode:		root
+# don't enable this.
+# decode:	/dev/null
 
 # uncomment this for msgs:
 # msgs: "|/usr/bin/msgs -s"
