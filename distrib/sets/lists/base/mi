@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.117 1999/06/30 06:51:13 augustss Exp $
+# $NetBSD: mi,v 1.118 1999/07/04 20:07:51 fvdl Exp $
 .
 ./altroot
 ./bin
@@ -101,6 +101,7 @@
 ./sbin/newfs_msdos
 ./sbin/nologin
 ./sbin/ping
+./sbin/ping6
 ./sbin/raidctl
 ./sbin/rdump
 ./sbin/reboot
@@ -109,6 +110,7 @@
 ./sbin/route
 ./sbin/routed
 ./sbin/rrestore
+./sbin/rtsol
 ./sbin/savecore
 ./sbin/scsictl
 ./sbin/shutdown
@@ -525,8 +527,10 @@
 ./usr/sbin/eshconfig
 ./usr/sbin/fixmount
 ./usr/sbin/fsinfo
+./usr/sbin/gifconfig
 ./usr/sbin/greconfig
 ./usr/sbin/hlfsd
+./usr/sbin/ifmcstat
 ./usr/sbin/inetd
 ./usr/sbin/iostat
 ./usr/sbin/ipfstat
@@ -567,6 +571,7 @@
 ./usr/sbin/named.reload
 ./usr/sbin/named.restart
 ./usr/sbin/ndc
+./usr/sbin/ndp
 ./usr/sbin/netgroup_mkdb
 ./usr/sbin/nfsd
 ./usr/sbin/nfsiod
@@ -595,17 +600,21 @@
 ./usr/sbin/rdate
 ./usr/sbin/repquota
 ./usr/sbin/revnetgroup
+./usr/sbin/rip6query
 ./usr/sbin/rmt
+./usr/sbin/route6d
 ./usr/sbin/rpc.bootparamd
 ./usr/sbin/rpc.lockd
 ./usr/sbin/rpc.pcnfsd
 ./usr/sbin/rpc.statd
 ./usr/sbin/rpc.yppasswdd
 ./usr/sbin/rtquery
+./usr/sbin/rtadvd
 ./usr/sbin/rwhod
 ./usr/sbin/sa
 ./usr/sbin/screenblank
 ./usr/sbin/sendmail
+./usr/sbin/setkey
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
 ./usr/sbin/spray
@@ -624,6 +633,7 @@
 ./usr/sbin/timed
 ./usr/sbin/timedc
 ./usr/sbin/traceroute
+./usr/sbin/traceroute6
 ./usr/sbin/trpt
 ./usr/sbin/trsp
 ./usr/sbin/update
