@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.170 2000/06/21 06:27:55 thorpej Exp $
+# $NetBSD: mi,v 1.171 2000/06/29 12:03:09 mrg Exp $
 .
 ./altroot
 ./bin
@@ -454,7 +454,7 @@
 ./usr/include/ufs/lfs
 ./usr/include/ufs/mfs
 ./usr/include/ufs/ufs
-./usr/include/vm
+./usr/include/uvm
 ./usr/lib
 ./usr/libdata
 ./usr/libdata/lint
