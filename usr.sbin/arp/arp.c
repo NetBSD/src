@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.28 2001/02/19 23:22:42 cgd Exp $ */
+/*	$NetBSD: arp.c,v 1.29 2001/03/19 19:49:30 fair Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.28 2001/02/19 23:22:42 cgd Exp $");
+__RCSID("$NetBSD: arp.c,v 1.29 2001/03/19 19:49:30 fair Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: arp.c,v 1.28 2001/02/19 23:22:42 cgd Exp $");
 #include <sys/file.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
+#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -85,6 +86,7 @@ __RCSID("$NetBSD: arp.c,v 1.28 2001/02/19 23:22:42 cgd Exp $");
 int	delete __P((const char *, const char *));
 void	dump __P((u_long));
 void	sdl_print __P((const struct sockaddr_dl *));
+int	getifname __P((u_int16_t, char *));
 int	atosdl __P((const char *s, struct sockaddr_dl *sdl));
 int	file __P((char *));
 void	get __P((const char *));
@@ -98,6 +100,11 @@ void	usage __P((void));
 static int pid;
 static int nflag, vflag;
 static int s = -1;
+static int is = -1;
+
+static struct ifconf ifc;
+static char ifconfbuf[8192];
+static char *progname;
 
 int
 main(argc, argv)
@@ -108,6 +115,7 @@ main(argc, argv)
 	int op = 0;
 
 	pid = getpid();
+	progname = ((progname = strrchr(argv[0], '/')) ? progname + 1 : argv[0]);
 
 	while ((ch = getopt(argc, argv, "andsfv")) != -1)
 		switch((char)ch) {
@@ -383,6 +391,7 @@ dump(addr)
 {
 	int mib[6];
 	size_t needed;
+	char ifname[IFNAMSIZ];
 	char *host, *lim, *buf, *next;
 	struct rt_msghdr *rtm;
 	struct sockaddr_inarp *sin;
@@ -427,6 +436,12 @@ dump(addr)
 			sdl_print(sdl);
 		else
 			(void)printf("(incomplete)");
+
+		if (sdl->sdl_index) {
+			if (getifname(sdl->sdl_index, ifname) == 0)
+				printf(" on %s", ifname);
+		}
+
 		if (rtm->rtm_rmx.rmx_expire == 0)
 			(void)printf(" permanent");
 		if (sin->sin_other & SIN_PROXY)
@@ -497,7 +512,6 @@ atosdl(s, sdl)
 void
 usage()
 {
-	const char *progname = getprogname();
 
 	(void)fprintf(stderr, "usage: %s [-n] hostname\n", progname);
 	(void)fprintf(stderr, "usage: %s [-n] -a\n", progname);
@@ -595,4 +609,58 @@ getinetaddr(host, inap)
 	}
 	(void)memcpy(inap, hp->h_addr, sizeof(*inap));
 	return (0);
+}
+
+int
+getifname(ifindex, ifname)
+	u_int16_t ifindex;
+	char* ifname;
+{
+	int i, idx, siz;
+	char ifrbuf[8192];
+	struct ifreq ifreq, *ifr;
+	const struct sockaddr_dl *sdl = NULL;
+
+	if (is < 0) {
+		is = socket(PF_INET, SOCK_DGRAM, 0);
+		if (is < 0)
+			err(1, "socket");
+
+		ifc.ifc_len = sizeof(ifconfbuf);
+		ifc.ifc_buf = ifconfbuf;
+
+		if (ioctl(is, SIOCGIFCONF, &ifc) < 0) {
+			close(is);
+			err(1, "SIOCGIFCONF");
+			is = -1;
+		}
+	}
+
+	ifr = ifc.ifc_req;
+	ifreq.ifr_name[0] = '\0';
+	for (i = 0, idx = 0; i < ifc.ifc_len; ) {
+		ifr = (struct ifreq *)((caddr_t)ifc.ifc_req + i);
+		siz = sizeof(ifr->ifr_name) +
+			(ifr->ifr_addr.sa_len > sizeof(struct sockaddr)
+				? ifr->ifr_addr.sa_len
+				: sizeof(struct sockaddr));
+		i += siz;
+		/* avoid alignment issue */
+		if (sizeof(ifrbuf) < siz)
+			errx(1, "ifr too big");
+
+		memcpy(ifrbuf, ifr, siz);
+		ifr = (struct ifreq *)ifrbuf;
+
+		if (ifr->ifr_addr.sa_family != AF_LINK)
+			continue;
+
+		sdl = (const struct sockaddr_dl *) &ifr->ifr_addr;
+		if (sdl && sdl->sdl_index == ifindex) {
+			(void) strncpy(ifname, ifr->ifr_name, IFNAMSIZ);
+			return 0;
+		}
+	}
+
+	return -1;
 }
