@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.73 1997/04/07 06:09:06 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.74 1997/04/07 06:36:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>

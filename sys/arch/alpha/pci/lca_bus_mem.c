@@ -1,4 +1,4 @@
-/* $NetBSD: lca_bus_mem.c,v 1.2 1997/04/07 05:19:44 cgd Exp $ */
+/* $NetBSD: lca_bus_mem.c,v 1.3 1997/04/07 06:36:58 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -26,6 +26,8 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <machine/options.h>		/* Pull in config options headers */
 
 #include <sys/param.h>
 #include <sys/systm.h>
