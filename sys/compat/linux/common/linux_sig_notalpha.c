@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.17 1998/10/07 22:11:16 erh Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.18 1998/10/07 23:05:09 erh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -144,14 +144,14 @@ linux_sys_sigprocmask(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct linux_sys_rt_sigprocmask_args /* {
+	struct linux_sys_sigprocmask_args /* {
 		syscallarg(int) how;
-		syscallarg(const linux_sigset_t *) set;
-		syscallarg(linux_sigset_t *) oset;
+		syscallarg(const linux_old_sigset_t *) set;
+		syscallarg(linux_old_sigset_t *) oset;
 	} */ *uap = v;
 
 	return(linux_sigprocmask1(p, SCARG(uap, how), 
-				SCARG(uap, set), SCARG(uap, oset));
+				SCARG(uap, set), SCARG(uap, oset)));
 }
 
 /*
