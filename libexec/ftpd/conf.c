@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 2000/07/23 14:40:48 lukem Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 2000/11/15 02:32:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.34 2000/07/23 14:40:48 lukem Exp $");
+__RCSID("$NetBSD: conf.c,v 1.35 2000/11/15 02:32:30 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -871,8 +871,10 @@ count_users(void)
 	pids = NULL;
 	connections = 1;
 
-	if ((fd = open(fn, O_RDWR | O_CREAT | O_EXLOCK, 0600)) == -1)
+	if ((fd = open(fn, O_RDWR | O_CREAT, 0600)) == -1)
 		return;
+	if (lockf(fd, F_TLOCK, 0) == -1)
+		goto cleanup_count;
 	if (fstat(fd, &sb) == -1)
 		goto cleanup_count;
 	if ((pids = malloc(sb.st_size + sizeof(pid_t))) == NULL)
@@ -910,7 +912,8 @@ count_users(void)
 	(void)ftruncate(fd, count);
 
  cleanup_count:
-	(void)flock(fd, LOCK_UN);
+	if (lseek(fd, 0, SEEK_SET) != -1)
+		(void)lockf(fd, F_ULOCK, 0);
 	close(fd);
 	REASSIGN(pids, NULL);
 }
