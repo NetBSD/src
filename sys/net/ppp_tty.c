@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.25 2001/06/14 05:44:25 itojun Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.25.2.1 2001/08/03 04:13:52 lukem Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -207,7 +207,7 @@ pppopen(dev, tp)
 
     sc->sc_ilen = 0;
     sc->sc_m = NULL;
-    bzero(sc->sc_asyncmap, sizeof(sc->sc_asyncmap));
+    memset(sc->sc_asyncmap, 0, sizeof(sc->sc_asyncmap));
     sc->sc_asyncmap[0] = 0xffffffff;
     sc->sc_asyncmap[3] = 0x60000000;
     sc->sc_rasyncmap = 0;

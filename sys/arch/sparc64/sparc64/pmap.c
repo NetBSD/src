@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101.2.1 2001/08/03 04:12:31 lukem Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -68,7 +68,7 @@
 
 paddr_t cpu0paddr;/* XXXXXXXXXXXXXXXX */
 
-extern int64_t asmptechk __P((union sun4u_data* pseg[], int addr)); /* DEBUG XXXXX */
+extern int64_t asmptechk __P((int64_t *pseg[], int addr)); /* DEBUG XXXXX */
 
 #if 0
 static int pseg_check __P((struct pmap*, vaddr_t addr, int64_t tte, paddr_t spare));
@@ -207,7 +207,7 @@ typedef struct pv_entry {
  * vm_page, but that's a long story....)
  * 
  * This architecture has nice, fast traps with lots of space for software bits
- * in the TTE.  To accellerate ref/mod counts we make use of these features.
+ * in the TTE.  To accelerate ref/mod counts we make use of these features.
  *
  * When we map a page initially, we place a TTE in the page table.  It's 
  * inserted with the TLB_W and TLB_ACCESS bits cleared.  If a page is really
@@ -534,6 +534,42 @@ pmap_bootdebug()
 }
 #endif
 
+
+/*
+ * Calculate the correct number of page colors to use.  This should be the
+ * size of the E$/NBPG.  However, different CPUs can have different sized
+ * E$, so we need to take the GCM of the E$ size.
+ */
+static int pmap_calculate_colors __P((void));
+static int 
+pmap_calculate_colors() {
+	int node = 0;
+	int size, assoc, color, maxcolor = 1;
+	char buf[80];
+
+	while ((node = OF_peer(node))) {
+		if ((OF_getprop(node, "device_type", buf, sizeof(buf)) > 0) &&
+			strcmp("cpu", buf) == 0) {
+			/* Found a CPU, get the E$ info. */
+			if (OF_getprop(node,"ecache-size", &size, 
+				sizeof(size)) != sizeof(size)) {
+				printf("pmap_calculate_colors: node %x has "
+					"no ecache-size\n", node);
+				/* If we can't get the E$ size, skip the node */
+				continue;
+			}
+			if (OF_getprop(node, "ecache-associativity", &assoc,
+				sizeof(assoc)) != sizeof(assoc))
+				/* Fake asociativity of 1 */
+				assoc = 1;
+			color = size/assoc/NBPG;
+			if (color > maxcolor)
+				maxcolor = color;
+		}
+	}
+	return (maxcolor);
+}
+
 /*
  * This is called during bootstrap, before the system is really initialized.
  *
@@ -582,7 +618,9 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * set machine page size
 	 */
 	uvmexp.pagesize = NBPG;
+	uvmexp.ncolors = pmap_calculate_colors();
 	uvm_setpagesize();
+
 	/*
 	 * Find out how big the kernel's virtual address
 	 * space is.  The *$#@$ prom loses this info
@@ -688,16 +726,19 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	 * We'll do the data segment up here since we know how big it is.
 	 * We'll do the text segment after we've read in the PROM translations
 	 * so we can figure out its size.
+	 *
+	 * The ctxbusy table takes about 64KB, the TSB up to 32KB, and the
+	 * rest should be less than 1K, so 100KB extra should be plenty.
 	 */
 	kdsize = round_page(ekdata - kdata);
 
 	if ((kdatap & (4*MEG-1)) == 0) {
 		/* We were at a 4MB boundary -- claim the rest */
-		psize_t szdiff = 4*MEG - kdsize;
+		psize_t szdiff = 4*MEG - (kdsize & (4*MEG-1));
 
-		if (kdsize > 3*MEG) {
-			/* We've overflowed, or soon will, get 8MB */
-			szdiff = 8*MEG - kdsize;
+		if (szdiff < 100*KB /* ~100KB slack */ ) {
+			/* We've overflowed, or soon will, get another page */
+			szdiff += 4*MEG;
 		}
 		if (szdiff) {
 			/* Claim the rest of the physical page. */
@@ -726,13 +767,10 @@ remap_data:
 		/* 
 		 * Either we're not at a 4MB boundary or we can't get the rest
 		 * of the 4MB extension.  We need to move the data segment.
+		 * Leave 1MB of extra fiddle space in the calculations.
 		 */
 
-		sz = 4*MEG;
-		if (kdsize > 3*MEG) {
-			/* We've overflowed, or soon will, get 8MB */
-			sz = 8*MEG;
-		}
+		sz = (kdsize + 4*MEG + 100*KB) & ~(4*MEG-1);
 		BDPRINTF(PDB_BOOT1, 
 			 ("Allocating new %lx kernel data at 4MB boundary\r\n",
 			  (u_long)sz));
@@ -1914,6 +1952,9 @@ pmap_kenter_pa(va, pa, prot)
 	struct pmap *pm = pmap_kernel();
 	int i, s;
 
+	ASSERT(va < INTSTACK || va > EINTSTACK);
+	ASSERT(va < kdata || va > ekdata);
+
 	/*
 	 * Construct the TTE.
 	 */
@@ -1929,16 +1970,16 @@ pmap_kenter_pa(va, pa, prot)
 	if (pa & (PMAP_NVC|PMAP_NC)) 
 		enter_stats.ci ++;
 #endif
-	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va);
-	tte.data.data = TSB_DATA(0, PGSZ_8K, pa, pm == pmap_kernel(),
+	tte.tag = TSB_TAG(0,pm->pm_ctx,va);
+	tte.data = TSB_DATA(0, PGSZ_8K, pa, pm == pmap_kernel(),
 				 (VM_PROT_WRITE & prot),
 				 (!(pa & PMAP_NC)), pa & (PMAP_NVC), 1, 0);
 	/* We don't track modification here. */
-	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W|TLB_W; /* HWREF -- XXXX */
-	tte.data.data |= TLB_TSB_LOCK;	/* wired */
-	ASSERT((tte.data.data & TLB_NFO) == 0);
+	if (VM_PROT_WRITE & prot) tte.data |= TLB_REAL_W|TLB_W; /* HWREF -- XXXX */
+	tte.data |= TLB_TSB_LOCK;	/* wired */
+	ASSERT((tte.data & TLB_NFO) == 0);
 	pg = NULL;
-	while ((i = pseg_set(pm, va, tte.data.data, pg)) == 1) {
+	while ((i = pseg_set(pm, va, tte.data, pg)) == 1) {
 		pg = NULL;
 		if (uvm.page_init_done || !uvm_page_physget(&pg)) {
 			struct vm_page *page;
@@ -1972,17 +2013,17 @@ pmap_kenter_pa(va, pa, prot)
 	i = ptelookup_va(va);
 	if( pmapdebug & PDB_ENTER )
 		prom_printf("pmap_kenter_pa: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag.tag>>32), (int)tte.tag.tag, 
-			    (int)(tte.data.data>>32), (int)tte.data.data, 
+			    (int)(tte.tag>>32), (int)tte.tag, 
+			    (int)(tte.data>>32), (int)tte.data, 
 			    i, &tsb[i]);
-	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data.data ) {
+	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data ) {
 		prom_printf("pmap_kenter_pa: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
-			    (int)(tsb[i].tag.tag>>32), (int)tsb[i].tag.tag, 
-			    (int)(tsb[i].data.data>>32), (int)tsb[i].data.data, 
+			    (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
+			    (int)(tsb[i].data>>32), (int)tsb[i].data, 
 			    i, &tsb[i]);
 		prom_printf("with va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag.tag>>32), (int)tte.tag.tag, 
-			    (int)(tte.data.data>>32), (int)tte.data.data, 
+			    (int)(tte.tag>>32), (int)tte.tag, 
+			    (int)(tte.data>>32), (int)tte.data, 
 			    i, &tsb[i]);
 	}
 #endif
@@ -1991,7 +2032,7 @@ pmap_kenter_pa(va, pa, prot)
 	simple_unlock(&pm->pm_lock);
 #endif
 	splx(s);
-	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+	ASSERT((tsb[i].data & TLB_NFO) == 0);
 	/* this is correct */
 	dcache_flush_page(pa);
 }
@@ -2019,6 +2060,9 @@ pmap_kremove(va, size)
 	struct pmap *pm = pmap_kernel();
 	int64_t data;
 	int i, s, flush = 0;
+
+	ASSERT(va < INTSTACK || va > EINTSTACK);
+	ASSERT(va < kdata || va > ekdata);
 
 	s = splvm();
 	simple_lock(&pm->pm_lock);
@@ -2059,8 +2103,8 @@ pmap_kremove(va, size)
 #endif
 			
 			i = ptelookup_va(va);
-			if (tsb[i].tag.tag > 0 
-			    && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,va))
+			if (tsb[i].tag > 0 
+			    && tsb[i].tag == TSB_TAG(0,pm->pm_ctx,va))
 			{
 				/* 
 				 * Invalidate the TSB 
@@ -2068,7 +2112,7 @@ pmap_kremove(va, size)
 				 * While we can invalidate it by clearing the
 				 * valid bit:
 				 *
-				 * ptp->data.data_v = 0;
+				 * ptp->data_v = 0;
 				 *
 				 * it's faster to do store 1 doubleword.
 				 */
@@ -2076,8 +2120,8 @@ pmap_kremove(va, size)
 				if (pmapdebug & PDB_DEMAP)
 					printf(" clearing TSB [%d]\n", i);
 #endif
-				tsb[i].data.data = 0LL; 
-				ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+				tsb[i].data = 0LL; 
+				ASSERT((tsb[i].data & TLB_NFO) == 0);
 				/* Flush the TLB */
 			}
 #ifdef DEBUG
@@ -2119,17 +2163,10 @@ pmap_enter(pm, va, pa, prot, flags)
 	boolean_t wired = (flags & PMAP_WIRED) != 0;
 
 	/*
-	 * Is this part of the permanent 4MB mapping?
+	 * Is this part of the permanent mappings?
 	 */
-#ifdef DIAGNOSTIC
-	if (pm == pmap_kernel() && va >= ktext && 
-		va < roundup(ekdata, 4*MEG)) {
-		prom_printf("pmap_enter: va=%08x pa=%x:%08x in locked TLB\r\n", 
-			    va, (int)(pa>>32), (int)pa);
-		OF_enter();
-		return 0;
-	}
-#endif
+	ASSERT(pm != pmap_kernel() || va < INTSTACK || va > EINTSTACK);
+	ASSERT(pm != pmap_kernel() || va < kdata || va > ekdata);
 
 #ifdef DEBUG
 	/* Trap mapping of page zero */
@@ -2139,22 +2176,16 @@ pmap_enter(pm, va, pa, prot, flags)
 		OF_enter();
 	}
 #endif
-#ifdef NOTDEF_DEBUG
-	if (pa>>32)
-		prom_printf("pmap_enter: va=%08x 64-bit pa=%x:%08x seg=%08x pte=%08x\r\n", 
-			    va, (int)(pa>>32), (int)pa, 
-			    (int)va_to_seg(va), (int)va_to_pte(va));
-#endif
 	/*
 	 * XXXX If a mapping at this address already exists, remove it.
 	 */
 	s = splvm();
 	simple_lock(&pm->pm_lock);
-	if ((tte.data.data = pseg_get(pm, va))<0) {
+	if ((tte.data = pseg_get(pm, va))<0) {
 		simple_unlock(&pm->pm_lock);
 		pmap_remove(pm, va, va+NBPG-1);
 		simple_lock(&pm->pm_lock);
-		tte.data.data = pseg_get(pm, va);
+		tte.data = pseg_get(pm, va);
 	}
 
 	/*
@@ -2168,9 +2199,9 @@ pmap_enter(pm, va, pa, prot, flags)
 			panic("pmap_enter: access_type exceeds prot");
 #endif
 		/* If we don't have the traphandler do it, set the ref/mod bits now */
-		if ((flags & VM_PROT_ALL) || (tte.data.data & TLB_ACCESS))
+		if ((flags & VM_PROT_ALL) || (tte.data & TLB_ACCESS))
 			pv->pv_va |= PV_REF;
-		if (flags & VM_PROT_WRITE || (tte.data.data & (TLB_MODIFY)))
+		if (flags & VM_PROT_WRITE || (tte.data & (TLB_MODIFY)))
 			pv->pv_va |= PV_MOD;
 #ifdef DEBUG
 		enter_stats.managed ++;
@@ -2190,13 +2221,13 @@ pmap_enter(pm, va, pa, prot, flags)
 #endif
 	/*
 	 * Not used any more.
-	tte.tag.tag = TSB_TAG(0,pm->pm_ctx,va);
+	tte.tag = TSB_TAG(0,pm->pm_ctx,va);
 	 */
-	tte.data.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
+	tte.data = TSB_DATA(0, size, pa, pm == pmap_kernel(),
 				 (flags & VM_PROT_WRITE),
 				 (!(pa & PMAP_NC)),aliased,1,(pa & PMAP_LITTLE));
 #ifdef HWREF
-	if (prot & VM_PROT_WRITE) tte.data.data |= TLB_REAL_W;
+	if (prot & VM_PROT_WRITE) tte.data |= TLB_REAL_W;
 #else
 	/* If it needs ref accounting do nothing. */
 	if (!(flags&VM_PROT_READ)) {
@@ -2209,14 +2240,14 @@ pmap_enter(pm, va, pa, prot, flags)
 		return 0;
 	}
 #endif
-	if (wired) tte.data.data |= TLB_TSB_LOCK;
-	ASSERT((tte.data.data & TLB_NFO) == 0);
+	if (wired) tte.data |= TLB_TSB_LOCK;
+	ASSERT((tte.data & TLB_NFO) == 0);
 	pg = NULL;
 #ifdef NOTDEF_DEBUG
 	printf("pmap_enter: inserting %x:%x at %x\n", 
-	       (int)(tte.data.data>>32), (int)tte.data.data, (int)va);
+	       (int)(tte.data>>32), (int)tte.data, (int)va);
 #endif
-	while (pseg_set(pm, va, tte.data.data, pg) == 1) {
+	while (pseg_set(pm, va, tte.data, pg) == 1) {
 		pg = NULL;
 		if (uvm.page_init_done || !uvm_page_physget(&pg)) {
 			struct vm_page *page;
@@ -2242,7 +2273,7 @@ pmap_enter(pm, va, pa, prot, flags)
 #endif
 #ifdef NOTDEF_DEBUG
 	printf("pmap_enter: inserting %x:%x at %x with %x\n", 
-	       (int)(tte.data.data>>32), (int)tte.data.data, (int)va, (int)pg);
+	       (int)(tte.data>>32), (int)tte.data, (int)va, (int)pg);
 #endif
 	}
 
@@ -2254,39 +2285,39 @@ pmap_enter(pm, va, pa, prot, flags)
 #ifdef DEBUG
 	if( pmapdebug & PDB_ENTER )
 		prom_printf("pmap_enter: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag.tag>>32), (int)tte.tag.tag, 
-			    (int)(tte.data.data>>32), (int)tte.data.data, 
+			    (int)(tte.tag>>32), (int)tte.tag, 
+			    (int)(tte.data>>32), (int)tte.data, 
 			    i, &tsb[i]);
-	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data.data ) {
+	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data ) {
 		prom_printf("pmap_enter: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
-			    (int)(tsb[i].tag.tag>>32), (int)tsb[i].tag.tag, 
-			    (int)(tsb[i].data.data>>32), (int)tsb[i].data.data, 
+			    (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
+			    (int)(tsb[i].data>>32), (int)tsb[i].data, 
 			    i, &tsb[i]);
 		prom_printf("with va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
-			    (int)(tte.tag.tag>>32), (int)tte.tag.tag, 
-			    (int)(tte.data.data>>32), (int)tte.data.data, 
+			    (int)(tte.tag>>32), (int)tte.tag, 
+			    (int)(tte.data>>32), (int)tte.data, 
 			    i, &tsb[i]);
 	}
 #endif
 	if (pm->pm_ctx || pm == pmap_kernel()) {
-		if (tsb[i].tag.tag > 0 && 
-		    tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,va)) {
+		if (tsb[i].tag > 0 && 
+		    tsb[i].tag == TSB_TAG(0,pm->pm_ctx,va)) {
 			/* 
 			 * Invalidate the TSB 
 			 * 
 			 * While we can invalidate it by clearing the
 			 * valid bit:
 			 *
-			 * ptp->data.data_v = 0;
+			 * ptp->data_v = 0;
 			 *
 			 * it's faster to do store 1 doubleword.
 			 */
-			tsb[i].data.data = 0LL; 
-			ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+			tsb[i].data = 0LL; 
+			ASSERT((tsb[i].data & TLB_NFO) == 0);
 		}
 		/* Force reload -- protections may be changed */
 		tlb_flush_pte(va, pm->pm_ctx);	
-		ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+		ASSERT((tsb[i].data & TLB_NFO) == 0);
 	}
 	/* this is correct */
 	dcache_flush_page(pa);
@@ -2312,6 +2343,9 @@ pmap_remove(pm, va, endva)
 	 * In here we should check each pseg and if there are no more entries,
 	 * free it.  It's just that linear scans of 8K pages gets expensive.
 	 */
+
+	ASSERT(pm != pmap_kernel() || endva < INTSTACK || va > EINTSTACK);
+	ASSERT(pm != pmap_kernel() || endva < kdata || va > ekdata);
 
 	s = splvm();
 	simple_lock(&pm->pm_lock);
@@ -2362,8 +2396,8 @@ pmap_remove(pm, va, endva)
 #endif
 			if (!pm->pm_ctx && pm != pmap_kernel()) continue;
 			i = ptelookup_va(va);
-			if (tsb[i].tag.tag > 0 
-			    && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,va))
+			if (tsb[i].tag > 0 
+			    && tsb[i].tag == TSB_TAG(0,pm->pm_ctx,va))
 			{
 				/* 
 				 * Invalidate the TSB 
@@ -2371,7 +2405,7 @@ pmap_remove(pm, va, endva)
 				 * While we can invalidate it by clearing the
 				 * valid bit:
 				 *
-				 * ptp->data.data_v = 0;
+				 * ptp->data_v = 0;
 				 *
 				 * it's faster to do store 1 doubleword.
 				 */
@@ -2379,19 +2413,19 @@ pmap_remove(pm, va, endva)
 				if (pmapdebug & PDB_REMOVE)
 					printf(" clearing TSB [%d]\n", i);
 #endif
-				tsb[i].data.data = 0LL; 
-				ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+				tsb[i].data = 0LL; 
+				ASSERT((tsb[i].data & TLB_NFO) == 0);
 				/* Flush the TLB */
 			}
 #ifdef NOTDEF_DEBUG
 			else if (pmapdebug & PDB_REMOVE) {
 				printf("TSB[%d] has ctx %d va %x: ",
 				       i,
-				       TSB_TAG_CTX(tsb[i].tag.tag),
-				       (int)(TSB_TAG_VA(tsb[i].tag.tag)|(i<<13)));
+				       TSB_TAG_CTX(tsb[i].tag),
+				       (int)(TSB_TAG_VA(tsb[i].tag)|(i<<13)));
 				printf("%08x:%08x %08x:%08x\n",
-				       (int)(tsb[i].tag.tag>>32), (int)tsb[i].tag.tag, 
-				       (int)(tsb[i].data.data>>32), (int)tsb[i].data.data);			       
+				       (int)(tsb[i].tag>>32), (int)tsb[i].tag, 
+				       (int)(tsb[i].data>>32), (int)tsb[i].data);			       
 			}
 #endif
 #ifdef DEBUG
@@ -2430,6 +2464,9 @@ pmap_protect(pm, sva, eva, prot)
 	paddr_t pa;
 	int64_t data;
 	
+	ASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
+	ASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
+
 	if (prot & VM_PROT_WRITE) 
 		return;
 
@@ -2489,10 +2526,10 @@ pmap_protect(pm, sva, eva, prot)
 			
 			if (!pm->pm_ctx && pm != pmap_kernel()) continue;
 			i = ptelookup_va(sva);
-			if (tsb[i].tag.tag > 0 
-			    && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,sva)) {
-				tsb[i].data.data = data;
-				ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+			if (tsb[i].tag > 0 
+			    && tsb[i].tag == TSB_TAG(0,pm->pm_ctx,sva)) {
+				tsb[i].data = data;
+				ASSERT((tsb[i].data & TLB_NFO) == 0);
 				
 			}
 			tlb_flush_pte(sva, pm->pm_ctx);
@@ -2756,15 +2793,15 @@ tsb_enter(ctx, va, data)
 
 	i = ptelookup_va(va);
 	s = splvm();
-	pa = tsb[i].data.data&TLB_PA_MASK;
+	pa = tsb[i].data&TLB_PA_MASK;
 	/* 
 	 * If we use fast DMMU access fault handlers to track
 	 * referenced and modified bits, we should save the 
 	 * TSB entry's state here.  Since we don't, we don't.
 	 */
 	/* Do not use global entries */
-	tsb[i].tag.tag = TSB_TAG(0,ctx,va);
-	tsb[i].data.data = data;
+	tsb[i].tag = TSB_TAG(0,ctx,va);
+	tsb[i].data = data;
 	tlb_flush_pte(va, ctx);	/* Force reload -- protections may be changed */
 	splx(s);
 }
@@ -2834,17 +2871,17 @@ pmap_clear_modify(pg)
 			}
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
 				i = ptelookup_va(pv->pv_va&PV_VAMASK);
-				if (tsb[i].tag.tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
-					tsb[i].data.data = /* data */ 0;
-/*
-				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
-*/
+				if (tsb[i].tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
+					tsb[i].data = /* data */ 0;
+				tlb_flush_pte(pv->pv_va&PV_VAMASK, 
+					pv->pv_pmap->pm_ctx);
 			}
 			/* Then clear the mod bit in the pv */
 			if (pv->pv_va & PV_MOD)
 				changed |= 1;
 			pv->pv_va &= ~(PV_MOD);
 			simple_unlock(&pv->pv_pmap->pm_lock);
+			dcache_flush_page(pa);
 		}
 	splx(s);
 	pv_check();
@@ -2927,10 +2964,10 @@ pmap_clear_reference(pg)
 				pv->pv_pmap == pmap_kernel()) {
 				i = ptelookup_va(pv->pv_va&PV_VAMASK);
 				/* Invalidate our TSB entry since ref info is in the PTE */
-				if (tsb[i].tag.tag == 
+				if (tsb[i].tag == 
 					TSB_TAG(0,pv->pv_pmap->pm_ctx,pv->pv_va&
 						PV_VAMASK))
-					tsb[i].data.data = 0;
+					tsb[i].data = 0;
 /*
 				tlb_flush_pte(pv->pv_va&PV_VAMASK, 
 					pv->pv_pmap->pm_ctx);
@@ -3187,8 +3224,8 @@ pmap_page_protect(pg, prot)
 				if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
 					i = ptelookup_va(pv->pv_va&PV_VAMASK);
 					/* since we already know the va for each mapping we don't need to scan the entire TSB */
-					if (tsb[i].tag.tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
-						tsb[i].data.data = /* data */ 0;
+					if (tsb[i].tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
+						tsb[i].data = /* data */ 0;
 					tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
 				}
 				simple_unlock(&pv->pv_pmap->pm_lock);
@@ -3254,8 +3291,8 @@ pmap_page_protect(pg, prot)
 				/* clear the entry in the TSB */
 				i = ptelookup_va(npv->pv_va&PV_VAMASK);
 				/* since we already know the va for each mapping we don't need to scan the entire TSB */
-				if (tsb[i].tag.tag == TSB_TAG(0, npv->pv_pmap->pm_ctx, npv->pv_va&PV_VAMASK))
-					tsb[i].data.data = 0LL;			
+				if (tsb[i].tag == TSB_TAG(0, npv->pv_pmap->pm_ctx, npv->pv_va&PV_VAMASK))
+					tsb[i].data = 0LL;			
 				tlb_flush_pte(npv->pv_va&PV_VAMASK, npv->pv_pmap->pm_ctx);
 			}
 			simple_unlock(&npv->pv_pmap->pm_lock);
@@ -3301,8 +3338,8 @@ pmap_page_protect(pg, prot)
 			if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
 				i = ptelookup_va(pv->pv_va&PV_VAMASK);
 				/* since we already know the va for each mapping we don't need to scan the entire TSB */
-				if (tsb[i].tag.tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
-					tsb[i].data.data = 0LL;			
+				if (tsb[i].tag == TSB_TAG(0, pv->pv_pmap->pm_ctx, pv->pv_va&PV_VAMASK))
+					tsb[i].data = 0LL;			
 				tlb_flush_pte(pv->pv_va&PV_VAMASK, pv->pv_pmap->pm_ctx);
 			}
 			simple_unlock(&pv->pv_pmap->pm_lock);
@@ -3397,8 +3434,8 @@ ctx_alloc(pm)
 #endif
 		/* We gotta steal this context */
 		for (i = 0; i < TSBENTS; i++) {
-			if (TSB_TAG_CTX(tsb[i].tag.tag) == cnum)
-				tsb[i].data.data = 0LL;
+			if (TSB_TAG_CTX(tsb[i].tag) == cnum)
+				tsb[i].data = 0LL;
 		}
 		tlb_flush_ctx(cnum);
 	}
@@ -3720,7 +3757,7 @@ pmap_page_cache(pm, pa, mode)
 			simple_unlock(&pv->pv_pmap->pm_lock);
 		if (pv->pv_pmap->pm_ctx || pv->pv_pmap == pmap_kernel()) {
 			i = ptelookup_va(va);
-			if (tsb[i].tag.tag > 0 && tsb[i].tag.tag == 
+			if (tsb[i].tag > 0 && tsb[i].tag == 
 			    TSB_TAG(0, pv->pv_pmap->pm_ctx, va)) {
 				/* 
 				 * Invalidate the TSB 
@@ -3728,12 +3765,12 @@ pmap_page_cache(pm, pa, mode)
 				 * While we can invalidate it by clearing the
 				 * valid bit:
 				 *
-				 * ptp->data.data_v = 0;
+				 * ptp->data_v = 0;
 				 *
 				 * it's faster to do store 1 doubleword.
 				 */
-				tsb[i].data.data = 0LL; 
-				ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+				tsb[i].data = 0LL; 
+				ASSERT((tsb[i].data & TLB_NFO) == 0);
 			}
 			/* Force reload -- protections may be changed */
 			tlb_flush_pte(va, pv->pv_pmap->pm_ctx);	

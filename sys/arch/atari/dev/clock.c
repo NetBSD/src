@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.26 2001/06/18 11:23:00 wiz Exp $	*/
+/*	$NetBSD: clock.c,v 1.26.2.1 2001/08/03 04:11:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -122,7 +122,7 @@ static int	divisor;	/* Systemclock divisor	*/
 static int	statvar = 32;	/* {stat,prof}clock variance		*/
 static int	statmin;	/* statclock divisor - variance/2	*/
 static int	profmin;	/* profclock divisor - variance/2	*/
-static int	clk2min;	/* current, from above choises		*/
+static int	clk2min;	/* current, from above choices		*/
 #endif
 
 int

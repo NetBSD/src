@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.7 2000/08/20 07:04:59 tsubai Exp $	*/
+/*	$NetBSD: Locore.c,v 1.7.4.1 2001/08/03 04:11:57 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -123,7 +123,7 @@ startup(vpd, res, openfirm, arg, argl)
 {
 	extern char etext[], _end[], _edata[];
 
-	bzero(_edata, (_end - _edata));
+	memset(_edata, 0, (_end - _edata));
 	openfirmware = openfirm;
 	setup();
 	main();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2001/06/10 15:32:57 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.21.2.1 2001/08/03 04:11:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -450,7 +450,7 @@ cpu_spinup()
 	}
 
 	cp = (void *)VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
-	bzero(cp, size);
+	memset(cp, 0, size);
 
 	pcb = (struct pcb *)cp;
 	cp += USPACE;

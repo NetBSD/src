@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.446 2001/06/19 15:54:48 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.446.2.1 2001/08/03 04:11:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@
 #include "opt_cpureset_delay.h"
 #include "opt_compat_svr4.h"
 #include "opt_realmem.h"
+#include "opt_compat_mach.h"	/* need to get the right segment def */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +199,10 @@ int	cpu_class;
 int	i386_fpu_present;
 int	i386_fpu_exception;
 int	i386_fpu_fdivbug;
+
+int	i386_use_fxsave;
+int	i386_has_sse;
+int	i386_has_sse2;
 
 #define	CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 15)
 
@@ -977,9 +982,17 @@ static const struct i386_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_DCACHE,
 	  0x0c,
 	  16 * 1024,	2,			32 },
+#if 0
+	/*
+	 * Just ignore this entry.  What is actually means is:
+	 *
+	 *	No 2nd-level cacle, or if processor contains a valid
+	 *	2nd-level cache, no 3rd-level cache.
+	 */
 	{ CAI_L2CACHE,
 	  0x40,
 	  0,		1,			0 },
+#endif
 	{ CAI_L2CACHE,
 	  0x41,
 	  128 * 1024,	4,			32 },
@@ -995,9 +1008,52 @@ static const struct i386_cache_info intel_cpuid_cache_info[] = {
 	{ CAI_L2CACHE,
 	  0x45,
 	  2 * 1024 * 1024, 4,			32 },
+	/*
+	 * XXX Need a way to represent the following:
+	 *
+	 *	0x50:	ITLB: 4K and 2M/4M, 64 entries
+	 *	0x51:	ITLB: 4K and 2M/4M, 128 entries
+	 *	0x52:	ITLB: 4K and 2M/4M, 285 entries
+	 *	0x5b:	DTLB: 4K and 4M, 64 entries
+	 *	0x5b:	DTLB: 4K and 4M, 128 entries
+	 *	0x5d:	DTLB: 4K and 4M, 256 entries
+	 */
+	{ CAI_DCACHE,
+	  0x66,
+	  8 * 1024,	4,			64 },
+	{ CAI_DCACHE,
+	  0x67,
+	  16 * 1024,	4,			64 },
+	{ CAI_DCACHE,
+	  0x68,
+	  32 * 1024,	4,			64 },
+	/*
+	 * XXX Need a way to represent the following:
+	 *
+	 *	0x70:	Trace cache, 12KuOP, 4-way
+	 *	0x71:	Trace cache, 16KuOP, 4-way
+	 *	0x72:	Trace cache, 32KuOP, 4-way
+	 *
+	 * Do we care?
+	 */
+	{ CAI_L2CACHE,
+	  0x79,
+	  128 * 1024,	8,			64 },
+	{ CAI_L2CACHE,
+	  0x7a,
+	  256 * 1024,	8,			64 },
+	{ CAI_L2CACHE,
+	  0x7b,
+	  512 * 1024,	8,			64 },
+	{ CAI_L2CACHE,
+	  0x7c,
+	  1 * 1024 * 1024, 8,			64 },
 	{ CAI_L2CACHE,
 	  0x82,
 	  256 * 1024,	8,			32 },
+	{ CAI_L2CACHE,
+	  0x83,
+	  512 * 1024,	8,			32 },
 	{ CAI_L2CACHE,
 	  0x84,
 	  1 * 1024 * 1024, 8,			32 },
@@ -1015,6 +1071,14 @@ intel_cpuid_cpu_cacheinfo(struct cpu_info *ci)
 	u_int descs[4];
 	int iterations, i, j;
 	u_int8_t desc;
+
+	/*
+	 * If we have the CFLUSH insn, fetch the CFLUSH line size.
+	 */
+	if (cpu_feature & CPUID_CFLUSH) {
+		do_cpuid(1, descs);
+		ci->ci_cflush_lsize = ((descs[1] >> 8) & 0xff) * 8;
+	}
 
 	/*
 	 * Parse the cache info from `cpuid'.
@@ -1394,6 +1458,31 @@ identifycpu(struct cpu_info *ci)
 		break;
 	}
 
+	/*
+	 * Now plug in optimized versions of various routines we
+	 * might have.
+	 */
+	switch (cpu_class) {
+#if defined(I686_CPU)
+	case CPUCLASS_686:
+		copyout_func = i486_copyout;
+		break;
+#endif
+#if defined(I586_CPU)
+	case CPUCLASS_586:
+		copyout_func = i486_copyout;
+		break;
+#endif
+#if defined(I486_CPU)
+	case CPUCLASS_486:
+		copyout_func = i486_copyout;
+		break;
+#endif
+	default:
+		/* We just inherit the default i386 versions. */
+		break;
+	}
+
 	/* configure the CPU if needed */
 	if (cpu_setup != NULL)
 		cpu_setup();
@@ -1430,6 +1519,29 @@ identifycpu(struct cpu_info *ci)
 		cpu_tsc_freq = (rdtsc() - last_tsc) * 10;
 	}
 #endif
+
+#if defined(I686_CPU)
+	/*
+	 * If we have FXSAVE/FXRESTOR, use them.
+	 */
+	if (cpu_feature & CPUID_FXSR) {
+		i386_use_fxsave = 1;
+		lcr4(rcr4() | CR4_OSFXSR);
+		
+		/*
+		 * If we have SSE/SSE2, enable XMM exceptions, and
+		 * notify userland.
+		 */
+		if (cpu_feature & (CPUID_SSE|CPUID_SSE2)) {
+			if (cpu_feature & CPUID_SSE)
+				i386_has_sse = 1;
+			if (cpu_feature & CPUID_SSE2)
+				i386_has_sse2 = 1;
+			lcr4(rcr4() | CR4_OSXMMEXCPT);
+		}
+	} else
+		i386_use_fxsave = 0;
+#endif /* I686_CPU */
 }
 
 /*  
@@ -1484,6 +1596,13 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_rdstruct(oldp, oldlenp, newp, i386_alldisks,
 		    sizeof (struct disklist) +
 			(i386_ndisks - 1) * sizeof (struct nativedisk_info)));
+	case CPU_OSFXSR:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_use_fxsave));
+	case CPU_SSE:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse));
+	case CPU_SSE2:
+		return (sysctl_rdint(oldp, oldlenp, newp, i386_has_sse2));
+
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -2047,7 +2166,11 @@ setregs(p, pack, stack)
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
 	pcb->pcb_flags = 0;
-	pcb->pcb_savefpu.sv_env.en_cw = __NetBSD_NPXCW__;
+	if (i386_use_fxsave) {
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_cw = __NetBSD_NPXCW__;
+		pcb->pcb_savefpu.sv_xmm.sv_env.en_mxcsr = __INITIAL_MXCSR__;
+	} else
+		pcb->pcb_savefpu.sv_87.sv_env.en_cw = __NetBSD_NPXCW__;
 
 	tf = p->p_md.md_regs;
 	tf->tf_gs = LSEL(LUDATA_SEL, SEL_UPL);
@@ -2134,6 +2257,9 @@ extern vector *IDTVEC(exceptions)[];
 #ifdef COMPAT_SVR4
 extern vector IDTVEC(svr4_fasttrap);
 #endif /* COMPAT_SVR4 */
+#ifdef COMPAT_MACH
+extern vector IDTVEC(mach_trap);
+#endif
 
 #define	KBTOB(x)	((size_t)(x) * 1024UL)
 
@@ -2243,6 +2369,13 @@ init386(first_avail)
 	 */
 	if (PAGE_SIZE != NBPG)
 		panic("init386: PAGE_SIZE != NBPG");
+
+	/*
+	 * Saving SSE registers won't work if the save area isn't
+	 * 16-byte aligned.
+	 */
+	if (offsetof(struct user, u_pcb.pcb_savefpu) & 0xf)
+		panic("init386: pcb_savefpu not 16-byte aligned");
 
 	/*
 	 * Start with 2 color bins -- this is just a guess to get us
@@ -2604,10 +2737,15 @@ init386(first_avail)
 	setsegment(&gdt[GBIOSDATA_SEL].sd, 0, 0xfffff, SDT_MEMRWA, SEL_KPL, 0,
 	    0);
 #endif
+#ifdef GMACHCALLS_SEL
+	setgate(&gdt[GMACHCALLS_SEL].gd, &IDTVEC(mach_trap), 1,
+	    SDT_SYS386CGT, SEL_UPL);
+#endif
 
 	/* make ldt gates and memory segments */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1,
 	    SDT_SYS386CGT, SEL_UPL);
+
 	ldt[LUCODE_SEL] = gdt[GUCODE_SEL];
 	ldt[LUDATA_SEL] = gdt[GUDATA_SEL];
 	ldt[LSOL26CALLS_SEL] = ldt[LBSDICALLS_SEL] = ldt[LSYS5CALLS_SEL];

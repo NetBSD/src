@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.104 2001/07/01 02:13:36 gmcgarry Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.104.2.1 2001/08/03 04:14:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -585,6 +585,8 @@ nfs_mount(mp, path, data, ndp, p)
 		nfs_decode_args(nmp, &args);
 		return (0);
 	}
+	if (args.fhsize < 0 || args.fhsize > NFSX_V3FHMAX)
+		return (EINVAL);
 	error = copyin((caddr_t)args.fh, (caddr_t)nfh, args.fhsize);
 	if (error)
 		return (error);

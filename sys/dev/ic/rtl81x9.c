@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.34 2001/07/07 16:13:50 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.34.2.1 2001/08/03 04:13:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -676,7 +676,7 @@ rtk_attach(sc)
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->recv_dmamap,
 	    sc->rtk_rx_buf, RTK_RXBUFLEN + 16,
-	    NULL, BUS_DMA_NOWAIT)) != 0) {
+	    NULL, BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: can't load recv buffer DMA map, error = %d\n",
 		       sc->sc_dev.dv_xname, error);
 		goto fail_3;
@@ -703,6 +703,9 @@ rtk_attach(sc)
 	 * allocated.
 	 */
 	sc->sc_flags |= RTK_ATTACHED;
+
+	/* Init Early TX threshold. */
+	sc->sc_txthresh = TXTH_256; 
 
 	/* Reset the adapter. */
 	rtk_reset(sc);
@@ -1190,6 +1193,21 @@ STATIC void rtk_txeof(sc)
 			ifp->if_opackets++;
 		else {
 			ifp->if_oerrors++;
+
+			/*
+			 * Increase Early TX threshold if underrun occurred.
+			 * Increase step 64 bytes.
+			 */
+			if (txstat & RTK_TXSTAT_TX_UNDERRUN) {
+				printf("%s: transmit underrun;",
+				    sc->sc_dev.dv_xname);
+				if (sc->sc_txthresh < TXTH_MAX) {
+					sc->sc_txthresh += 2;
+					printf(" new threshold: %d bytes",
+					    sc->sc_txthresh * 32);
+				}
+				printf("\n");
+			}
 			if (txstat & (RTK_TXSTAT_TXABRT|RTK_TXSTAT_OUTOFWIN))
 				CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
 		}
@@ -1274,7 +1292,7 @@ STATIC void rtk_start(ifp)
 		 */
 		if ((mtod(m_head, bus_addr_t) & 3) != 0 ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmamap,
-			m_head, BUS_DMA_NOWAIT) != 0) {
+			m_head, BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 			if (m_new == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -1295,7 +1313,8 @@ STATIC void rtk_start(ifp)
 			m_new->m_pkthdr.len = m_new->m_len =
 			    m_head->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat,
-			    txd->txd_dmamap, m_new, BUS_DMA_NOWAIT);
+			    txd->txd_dmamap, m_new,
+			    BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -1333,7 +1352,7 @@ STATIC void rtk_start(ifp)
 
 		CSR_WRITE_4(sc, txd->txd_txaddr,
 		    txd->txd_dmamap->dm_segs[0].ds_addr);
-		CSR_WRITE_4(sc, txd->txd_txstat, RTK_TX_EARLYTHRESH | len);
+		CSR_WRITE_4(sc, txd->txd_txstat, RTK_TX_THRESH(sc) | len);
 	}
 
 	/*
@@ -1378,6 +1397,8 @@ STATIC int rtk_init(ifp)
 	/* Init TX descriptors. */
 	rtk_list_tx_init(sc);
 
+	/* Init Early TX threshold. */
+	sc->sc_txthresh = TXTH_256;
 	/*
 	 * Enable transmit and receive.
 	 */

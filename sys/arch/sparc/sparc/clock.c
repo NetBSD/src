@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.79 2001/04/09 21:28:50 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.79.2.1 2001/08/03 04:12:20 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -550,16 +550,17 @@ clockattach(node, bt, bh)
 	/* Establish clock write-enable method */
 	todr_handle->todr_setwen = clk_wenable;
 
+#if defined(SUN4)
 	if (CPU_ISSUN4) {
 		idp = &sun4_idprom_store;
-#if defined(SUN4)
 		if (cpuinfo.cpu_type == CPUTYP_4_300 ||
 		    cpuinfo.cpu_type == CPUTYP_4_400) {
 			eeprom_va = (char *)bh;
 			eeprom_nvram = 1;
 		}
+	} else
 #endif
-	} else {
+	{
 	/*
 	 * Location of IDPROM relative to the end of the NVRAM area
 	 */

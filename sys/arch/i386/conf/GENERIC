@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.410 2001/07/08 16:32:18 abs Exp $
+#	$NetBSD: GENERIC,v 1.410.2.1 2001/08/03 04:11:39 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.410 $"
+#ident 		"GENERIC-$Revision: 1.410.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -88,6 +88,8 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#options	COMPAT_MACH	# binary compatibility with Mach binaries
+#options	EXEC_MACHO	# exec MACH-O binaries
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
@@ -150,6 +152,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	I2OVERBOSE	# verbose I2O driver messages
+options		MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -246,6 +249,7 @@ pci*	at ppb? bus ?
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pceb*	at pci? dev ? function ?	# PCI-EISA bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
+pcmb*	at pci?	dev ? function ?	# PCI-MCA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
@@ -262,6 +266,9 @@ isa*	at pcib?
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
 pcmcia*	at tcic? controller ? socket ?
+
+# MCA bus support
+mca0	at mainbus?
 
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
@@ -365,6 +372,8 @@ com2	at isa? port 0x3e8 irq 5
 #moxa0	at isa?	port 0x100 irq 5	# MOXA C168H serial card (experimental)
 #com*	at moxa? slave ?
 
+# MCA serial interfaces
+com*	at mca? slot ?			# 16x50s on comm boards
 
 # Parallel Printer Interfaces
 
@@ -402,8 +411,9 @@ bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
 isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
+mly*	at pci? dev ? function ?	# Mylex AcceleRAID and eXtremeRAID
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
+siop*	at pci? dev ? function ?	# Symbios 53c8xx SCSI
 
 # EISA SCSI controllers
 ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
@@ -441,6 +451,9 @@ wds1	at isa? port 0x358 irq 11 drq 5
 # CardBus SCSI cards
 #ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
+# MCA SCSI cards
+aha*	at mca? slot ?			# Adaptec AHA-1640
+
 # SCSI bus support
 scsibus* at adv?
 scsibus* at adw?
@@ -455,6 +468,7 @@ scsibus* at iha?
 scsibus* at iopsp?
 scsibus* at isp?
 #scsibus* at nca?
+scsibus* at mly?
 scsibus* at pcscp?
 scsibus* at sea?
 scsibus* at siop?
@@ -544,6 +558,10 @@ fd*	at fdc? drive ?			# the drives themselves
 # same I/O address. The probe reprograms their EEPROMs. Don't
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+
+# MCA ESDI devices
+edc*	at mca? slot ?			# IBM ESDI Disk Controllers
+ed*	at edc?
 
 
 # Network Interfaces
@@ -636,6 +654,15 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
 #rtk*	at cardbus? dev ? function ?	# Realtek 8129/8139
 #tlp*	at cardbus? dev ? function ?	# DECchip 21143
+
+# MCA network cards
+elmc*	at mca? slot ?			# 3Com EtherLink/MC (3c523)
+ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
+we*	at mca? slot ?			# WD/SMC Ethernet
+ate*	at mca? slot ?			# Allied Telesis AT1720
+ne*	at mca? slot ?			# Novell NE/2 and clones
+tr*	at mca? slot ?			# IBM Token Ring adapter
+le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs

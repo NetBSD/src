@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.106 2001/06/21 03:07:04 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.106.2.1 2001/08/03 04:13:27 lukem Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -352,7 +352,7 @@ raidattach(num)
 		return;
 	}
 
-	bzero(raid_softc, num * sizeof(struct raid_softc));
+	memset(raid_softc, 0, num * sizeof(struct raid_softc));
 
 	raidrootdev = (struct device *)malloc(num * sizeof(struct device),
 					      M_RAIDFRAME, M_NOWAIT);
@@ -636,6 +636,18 @@ raidclose(dev, flags, fmt, p)
 #endif
 		rf_update_component_labels(raidPtrs[unit],
 						 RF_FINAL_COMPONENT_UPDATE);
+		if (doing_shutdown) {
+			/* last one, and we're going down, so
+			   lights out for this RAID set too. */
+			error = rf_Shutdown(raidPtrs[unit]);
+			pool_destroy(&rs->sc_cbufpool);
+			
+			/* It's no longer initialized... */
+			rs->sc_flags &= ~RAIDF_INITED;
+			
+			/* Detach the disk. */
+			disk_detach(&rs->sc_dkdev);
+		}
 	}
 
 	raidunlock(rs);
@@ -918,7 +930,7 @@ raidioctl(dev, cmd, data, flag, p)
 		 *  there is no stale data left in the case of a 
 		 *  reconfiguration 
 		 */
-		bzero((char *) raidPtr, sizeof(RF_Raid_t));
+		memset((char *) raidPtr, 0, sizeof(RF_Raid_t));
 		raidPtr->raidid = unit;
 
 		retcode = rf_Configure(raidPtr, k_cfg, NULL);
@@ -985,7 +997,7 @@ raidioctl(dev, cmd, data, flag, p)
 		if (clabel == NULL)
 			return (ENOMEM);
 
-		bzero((char *) clabel, sizeof(RF_ComponentLabel_t));
+		memset((char *) clabel, 0, sizeof(RF_ComponentLabel_t));
 		
 		retcode = copyin( *clabel_ptr, clabel, 
 				  sizeof(RF_ComponentLabel_t));
@@ -1184,7 +1196,7 @@ raidioctl(dev, cmd, data, flag, p)
 			  (RF_DeviceConfig_t *));
 		if (d_cfg == NULL)
 			return (ENOMEM);
-		bzero((char *) d_cfg, sizeof(RF_DeviceConfig_t));
+		memset((char *) d_cfg, 0, sizeof(RF_DeviceConfig_t));
 		d_cfg->rows = raidPtr->numRow;
 		d_cfg->cols = raidPtr->numCol;
 		d_cfg->ndevs = raidPtr->numRow * raidPtr->numCol;
@@ -1219,7 +1231,7 @@ raidioctl(dev, cmd, data, flag, p)
 		return (0);
 
 	case RAIDFRAME_RESET_ACCTOTALS:
-		bzero(&raidPtr->acc_totals, sizeof(raidPtr->acc_totals));
+		memset(&raidPtr->acc_totals, 0, sizeof(raidPtr->acc_totals));
 		return (0);
 
 	case RAIDFRAME_GET_ACCTOTALS:
@@ -1732,9 +1744,7 @@ raidstart(raidPtr)
 		retcode = rf_DoAccess(raidPtr, (bp->b_flags & B_READ) ?
 				      RF_IO_TYPE_READ : RF_IO_TYPE_WRITE,
 				      do_async, raid_addr, num_blocks,
-				      bp->b_data, bp, NULL, NULL, 
-				      RF_DAG_NONBLOCKING_IO, NULL, NULL, NULL);
-
+				      bp->b_data, bp, RF_DAG_NONBLOCKING_IO);
 
 		RF_LOCK_MUTEX(raidPtr->mutex);
 	}
@@ -1980,7 +1990,7 @@ raidgetdefaultlabel(raidPtr, rs, lp)
 	struct disklabel *lp;
 {
 	db1_printf(("Building a default label...\n"));
-	bzero(lp, sizeof(*lp));
+	memset(lp, 0, sizeof(*lp));
 
 	/* fabricate a label... */
 	lp->d_secperunit = raidPtr->totalSectors;
@@ -2025,7 +2035,7 @@ raidgetdisklabel(dev)
 
 	db1_printf(("Getting the disklabel...\n"));
 
-	bzero(clp, sizeof(*clp));
+	memset(clp, 0, sizeof(*clp));
 
 	raidPtr = raidPtrs[unit];
 

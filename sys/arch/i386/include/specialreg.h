@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.17 2001/06/19 12:59:15 wiz Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.17.4.1 2001/08/03 04:11:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -91,40 +91,45 @@
  * CPUID "features" bits:
  */
 
-#define CPUID_FPU	0x00000001	/* processor has an FPU? */
-#define CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
-#define CPUID_DE	0x00000004	/* has debugging extension */
-#define CPUID_PSE	0x00000008	/* has page 4MB page size extension */
-#define CPUID_TSC	0x00000010	/* has time stamp counter */
-#define CPUID_MSR	0x00000020	/* has mode specific registers */
-#define CPUID_PAE	0x00000040	/* has phys address extension */
-#define CPUID_MCE	0x00000080	/* has machine check exception */
-#define CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
-#define CPUID_APIC	0x00000200	/* has enabled APIC */
-#define CPUID_B10	0x00000400	/* reserved, MTRR */
-#define CPUID_SEP	0x00000800	/* has SYSENTER/SYSEXIT extension */
-#define CPUID_MTRR	0x00001000	/* has memory type range register */
-#define CPUID_PGE	0x00002000	/* has page global extension */
-#define CPUID_MCA	0x00004000	/* has machine check architecture */
-#define CPUID_CMOV	0x00008000	/* has CMOVcc instruction */
-#define CPUID_FGPAT	0x00010000	/* Page Attribute Table */
-#define CPUID_PSE36	0x00020000	/* 36-bit PSE */
-#define CPUID_PN	0x00040000	/* processor serial number */
-#define CPUID_B19	0x00080000	/* reserved */
-#define CPUID_B20	0x00100000	/* reserved */
-#define CPUID_B21	0x00200000	/* reserved */
-#define CPUID_B22	0x00400000	/* reserved */
-#define CPUID_MMX	0x00800000	/* MMX supported */
-#define CPUID_FXSR	0x01000000	/* fast FP/MMX save/restore */
-#define CPUID_XMM	0x02000000	/* streaming SIMD extensions */
-/* bits 26->31 also reserved. */
+#define	CPUID_FPU	0x00000001	/* processor has an FPU? */
+#define	CPUID_VME	0x00000002	/* has virtual mode (%cr4's VME/PVI) */
+#define	CPUID_DE	0x00000004	/* has debugging extension */
+#define	CPUID_PSE	0x00000008	/* has page 4MB page size extension */
+#define	CPUID_TSC	0x00000010	/* has time stamp counter */
+#define	CPUID_MSR	0x00000020	/* has mode specific registers */
+#define	CPUID_PAE	0x00000040	/* has phys address extension */
+#define	CPUID_MCE	0x00000080	/* has machine check exception */
+#define	CPUID_CX8	0x00000100	/* has CMPXCHG8B instruction */
+#define	CPUID_APIC	0x00000200	/* has enabled APIC */
+#define	CPUID_B10	0x00000400	/* reserved, MTRR */
+#define	CPUID_SEP	0x00000800	/* has SYSENTER/SYSEXIT extension */
+#define	CPUID_MTRR	0x00001000	/* has memory type range register */
+#define	CPUID_PGE	0x00002000	/* has page global extension */
+#define	CPUID_MCA	0x00004000	/* has machine check architecture */
+#define	CPUID_CMOV	0x00008000	/* has CMOVcc instruction */
+#define	CPUID_FGPAT	0x00010000	/* Page Attribute Table */
+#define	CPUID_PSE36	0x00020000	/* 36-bit PSE */
+#define	CPUID_PN	0x00040000	/* processor serial number */
+#define	CPUID_CFLUSH	0x00080000	/* CFLUSH insn supported */
+#define	CPUID_B20	0x00100000	/* reserved */
+#define	CPUID_DS	0x00200000	/* Debug Store */
+#define	CPUID_ACPI	0x00400000	/* ACPI performance modulation regs */
+#define	CPUID_MMX	0x00800000	/* MMX supported */
+#define	CPUID_FXSR	0x01000000	/* fast FP/MMX save/restore */
+#define	CPUID_SSE	0x02000000	/* streaming SIMD extensions */
+#define	CPUID_SSE2	0x04000000	/* streaming SIMD extensions #2 */
+#define	CPUID_SS	0x08000000	/* self-snoop */
+#define	CPUID_B28	0x10000000	/* reserved */
+#define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
+#define	CPUID_B30	0x40000000	/* reserved */
+#define	CPUID_B31	0x80000000	/* reserved */
 
 #define CPUID_FLAGS1	"\20\1FPU\2VME\3DE\4PSE\5TSC\6MSR\7PAE" \
 			    "\10MCE\11CX8\12APIC\13B10\14SEP\15MTRR"
 #define CPUID_MASK1	0x00001fff
-#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21FGPAT\22PSE36\23PN\24B19" \
-			    "\25B20\26B21\27B22\30MMX\31FXSR\32XMM\33B26" \
-			    "\34B27\35B28\36B29\37B30\40B31"
+#define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21FGPAT\22PSE36\23PN\24CFLUSH" \
+			    "\25B20\26DS\27ACPI\30MMX\31FXSR\32SSE\33SSE2" \
+			    "\34SS\35B28\36TM\37B30\40B31"
 #define CPUID_MASK2	0xffffe000
 
 /*
@@ -222,7 +227,7 @@
 
 /*
  * the following four 3-byte registers control the non-cacheable regions.
- * These registers must be written as three seperate bytes.
+ * These registers must be written as three separate bytes.
  *
  * NCRx+0: A31-A24 of starting address
  * NCRx+1: A23-A16 of starting address

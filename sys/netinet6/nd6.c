@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.49 2001/06/29 16:01:47 itojun Exp $	*/
+/*	$NetBSD: nd6.c,v 1.49.2.1 2001/08/03 04:14:00 lukem Exp $	*/
 /*	$KAME: nd6.c,v 1.151 2001/06/19 14:24:41 sumikawa Exp $	*/
 
 /*
@@ -183,6 +183,10 @@ nd6_ifattach(ifp)
 	if (ND.basereachable)
 		return;
 
+#ifdef DIAGNOSTIC
+	if (!ifindex2ifnet[ifp->if_index])
+		panic("nd6_ifattach: ifindex2ifnet is NULL");
+#endif
 	ND.linkmtu = ifindex2ifnet[ifp->if_index]->if_mtu;
 	ND.chlim = IPV6_DEFHLIM;
 	ND.basereachable = REACHABLE_TIME;
@@ -1887,9 +1891,17 @@ nd6_output(ifp, origifp, m0, dst, rt0)
 				goto lookup;
 			if (((rt = rt->rt_gwroute)->rt_flags & RTF_UP) == 0) {
 				rtfree(rt); rt = rt0;
-			lookup: rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
+			lookup:
+				rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
 				if ((rt = rt->rt_gwroute) == 0)
 					senderr(EHOSTUNREACH);
+				/* the "G" test below also prevents rt == rt0 */
+				if ((rt->rt_flags & RTF_GATEWAY) ||
+				    (rt->rt_ifp != ifp)) {
+					rt->rt_refcnt--;
+					rt0->rt_gwroute = 0;
+					senderr(EHOSTUNREACH);
+				}
 			}
 		}
 	}

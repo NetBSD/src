@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_mainbus.c,v 1.1 2001/06/13 06:01:52 simonb Exp $	*/
+/*	$NetBSD: pckbc_mainbus.c,v 1.1.2.1 2001/08/03 04:12:37 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -112,7 +112,7 @@ pckbc_mainbus_attach(struct device *parent, struct device *self, void *aux)
 			panic("pckbc_attach: couldn't map");
 
 		t = malloc(sizeof(struct pckbc_internal), M_DEVBUF, M_WAITOK);
-		bzero(t, sizeof(struct pckbc_internal));
+		memset(t, 0, sizeof(struct pckbc_internal));
 		t->t_iot = iot;
 		t->t_ioh_d = ioh_d;
 		t->t_ioh_c = ioh_c;

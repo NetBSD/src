@@ -1,4 +1,4 @@
-/*	$NetBSD: lmcaudio.c,v 1.30 2001/02/27 20:23:12 reinoud Exp $	*/
+/*	$NetBSD: lmcaudio.c,v 1.30.4.1 2001/08/03 04:11:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -532,7 +532,7 @@ lmcaudio_rate(rate)
 	return(0);
 }
 
-#define PHYS(x, y) pmap_extract(kernel_pmap, ((x)&PG_FRAME), (paddr_t *)(y))
+#define PHYS(x, y) pmap_extract(pmap_kernel(), ((x)&PG_FRAME), (paddr_t *)(y))
 
 /*
  * Program the next buffer to be used

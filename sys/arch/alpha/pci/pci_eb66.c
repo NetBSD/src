@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.9 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.9.4.1 2001/08/03 04:10:48 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.9 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.9.4.1 2001/08/03 04:10:48 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,7 +110,7 @@ struct alpha_shared_intr *eb66_pci_intr;
 bus_space_tag_t eb66_intrgate_iot;
 bus_space_handle_t eb66_intrgate_ioh;
 
-void	eb66_iointr __P((void *framep, unsigned long vec));
+void	eb66_iointr __P((void *arg, unsigned long vec));
 extern void	eb66_intr_enable __P((int irq));  /* pci_eb66_intr.S */
 extern void	eb66_intr_disable __P((int irq)); /* pci_eb66_intr.S */
 
@@ -155,8 +155,6 @@ pci_eb66_pickintr(lcp)
 #if NSIO
 	sio_intr_setup(pc, iot);
 #endif
-
-	set_iointr(eb66_iointr);
 }
 
 int     
@@ -237,8 +235,11 @@ dec_eb66_intr_establish(lcv, ih, level, func, arg)
 	cookie = alpha_shared_intr_establish(eb66_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, "eb66 irq");
 
-	if (cookie != NULL && alpha_shared_intr_isactive(eb66_pci_intr, ih))
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(eb66_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), eb66_iointr, NULL);
 		eb66_intr_enable(ih);
+	}
 	return (cookie);
 }
 
@@ -258,38 +259,27 @@ dec_eb66_intr_disestablish(lcv, cookie)
 		eb66_intr_disable(irq);
 		alpha_shared_intr_set_dfltsharetype(eb66_pci_intr, irq,
 		    IST_NONE);
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
  
 	splx(s);
 }
 
 void
-eb66_iointr(framep, vec)
-	void *framep;
+eb66_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq; 
 
-	if (vec >= 0x900) {
-		if (vec >= 0x900 + (EB66_MAX_IRQ << 4))
-			panic("eb66_iointr: vec 0x%lx out of range\n", vec);
-		irq = (vec - 0x900) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x900);
 
-		if (!alpha_shared_intr_dispatch(eb66_pci_intr, irq)) {
-			alpha_shared_intr_stray(eb66_pci_intr, irq,
-			    "eb66 irq");
-			if (ALPHA_SHARED_INTR_DISABLE(eb66_pci_intr, irq))
-				eb66_intr_disable(irq);
-		}
-		return;
+	if (!alpha_shared_intr_dispatch(eb66_pci_intr, irq)) {
+		alpha_shared_intr_stray(eb66_pci_intr, irq,
+		    "eb66 irq");
+		if (ALPHA_SHARED_INTR_DISABLE(eb66_pci_intr, irq))
+			eb66_intr_disable(irq);
 	}
-#if NSIO
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	}
-#endif
-	panic("eb66_iointr: weird vec 0x%lx\n", vec);
 }
 
 #if 0		/* THIS DOES NOT WORK!  see pci_eb66_intr.S. */

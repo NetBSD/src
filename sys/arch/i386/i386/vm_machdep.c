@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99 2001/06/02 18:09:14 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.99.2.1 2001/08/03 04:11:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -369,7 +369,8 @@ vmapbuf(bp, len)
 
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vmapbuf");
-	faddr = trunc_page((vaddr_t)bp->b_saveaddr = bp->b_data);
+	bp->b_saveaddr = bp->b_data;
+	faddr = trunc_page((vaddr_t)bp->b_saveaddr);
 	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	taddr= uvm_km_valloc_wait(phys_map, len);

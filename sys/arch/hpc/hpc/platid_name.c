@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_name.c,v 1.9 2001/05/16 11:06:27 enami Exp $	*/
+/*	$NetBSD: platid_name.c,v 1.9.2.1 2001/08/03 04:11:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -310,8 +310,16 @@ struct platid_name platid_name_table[] = {
 #ifdef hpcarm
 	{ &platid_mask_MACH_COMPAQ_IPAQ,
 	 TEXT("Compaq iPAQ") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H31XX,
+	 TEXT("Compaq iPAQ H31XX") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H3100,
+	 TEXT("Compaq iPAQ H3100") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H36XX,
+	 TEXT("Compaq iPAQ H36XX") },
 	{ &platid_mask_MACH_COMPAQ_IPAQ_H3600,
 	 TEXT("Compaq iPAQ H3600") },
+	{ &platid_mask_MACH_COMPAQ_IPAQ_H3660,
+	 TEXT("Compaq iPAQ H3660") },
 #endif /* hpcarm */
 #ifdef hpcmips
 	{ &platid_mask_MACH_VICTOR,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.16 2001/06/24 05:00:28 msaitoh Exp $	*/
+/*	$NetBSD: clock.c,v 1.16.2.1 2001/08/03 04:12:19 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -141,6 +141,7 @@ microtime(tvp)
 	struct timeval *tvp;
 {
 	int s = splclock();
+	long diff;
 	static struct timeval lasttime;
 	static u_long numerator = 0;
 	static u_long denominator = 0;

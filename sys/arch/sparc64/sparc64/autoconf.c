@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 2001/05/30 15:24:37 lukem Exp $ */
+/*	$NetBSD: autoconf.c,v 1.48.2.1 2001/08/03 04:12:28 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -121,7 +121,6 @@ struct	bootpath bootpath[8];
 int	nbootpath;
 static	void bootpath_build __P((void));
 static	void bootpath_print __P((struct bootpath *));
-int	search_prom __P((int, char *));
 
 /* Global interrupt mappings for all device types.  Match against the OBP
  * 'device_type' property. 
@@ -133,6 +132,7 @@ struct intrmap intrmap[] = {
 	{ "network",	PIL_NET },
 	{ "display",	PIL_VIDEO },
 	{ "audio",	PIL_AUD },
+	{ "ide",	PIL_SCSI },
 /* The following devices don't have device types: */
 	{ "SUNW,CS4231",	PIL_AUD },
 	{ NULL,		0 }
@@ -140,6 +140,7 @@ struct intrmap intrmap[] = {
 
 #ifdef DEBUG
 #define ACDB_BOOTDEV	0x1
+#define	ACDB_PROBE	0x2
 int autoconf_debug = 0x0;
 #define DPRINTF(l, s)   do { if (autoconf_debug & l) printf s; } while (0)
 #else
@@ -565,7 +566,7 @@ findroot()
 {
 	register int node;
 
-	if ((node = rootnode) == 0 && (node = nextsibling(0)) == 0)
+	if ((node = rootnode) == 0 && (node = OF_peer(0)) == 0)
 		panic("no PROM root device");
 	rootnode = node;
 	return (node);
@@ -583,9 +584,11 @@ findnode(first, name)
 	int node;
 	char buf[32];
 
-	for (node = first; node; node = nextsibling(node))
-		if (strcmp(getpropstringA(node, "name", buf), name) == 0)
+	for (node = first; node; node = OF_peer(node)) {
+		if ((OF_getprop(node, "name", buf, sizeof(buf)) > 0) &&
+			(strcmp(buf, name) == 0))
 			return (node);
+	}
 	return (0);
 }
 
@@ -617,9 +620,9 @@ extern struct sparc_bus_dma_tag mainbus_dma_tag;
 extern struct sparc_bus_space_tag mainbus_space_tag;
 
 	struct mainbus_attach_args ma;
-	char namebuf[32];
+	char buf[32];
 	const char *const *ssp, *sp = NULL;
-	int node0, node;
+	int node0, node, rv;
 
 	static const char *const openboot_special[] = {
 		/* ignore these (end with NULL) */
@@ -637,7 +640,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
-	printf(": %s\n", getpropstringA(findroot(), "name", platform_type));
+	OF_getprop(findroot(), "name", platform_type, sizeof(platform_type));
+	printf(": %s\n", platform_type);
 
 
 	/*
@@ -659,11 +663,12 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	/* the first early device to be configured is the cpu */
 	{
 		/* XXX - what to do on multiprocessor machines? */
-		register const char *cp;
 		
-		for (node = firstchild(node); node; node = nextsibling(node)) {
-			cp = getpropstringA(node, "device_type", namebuf);
-			if (strcmp(cp, "cpu") == 0) {
+		for (node = OF_child(node); node; node = OF_peer(node)) {
+			if (OF_getprop(node, "device_type", 
+				buf, sizeof(buf)) <= 0)
+				continue;
+			if (strcmp(buf, "cpu") == 0) {
 				bzero(&ma, sizeof(ma));
 				ma.ma_bustag = &mainbus_space_tag;
 				ma.ma_dmatag = &mainbus_dma_tag;
@@ -681,7 +686,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	node = findroot();	/* re-init root node */
 
 	/* Find the "options" node */
-	node0 = firstchild(node);
+	node0 = OF_child(node);
 	optionsnode = findnode(node0, "options");
 	if (optionsnode == 0)
 		panic("no options in OPENPROM");
@@ -691,16 +696,17 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	 * PROM entries that are not for devices, or which must be
 	 * done before we get here.
 	 */
-	for (node = node0; node; node = nextsibling(node)) {
-		const char *cp;
+	for (node = node0; node; node = OF_peer(node)) {
+		int portid;
 
-		if (node_has_property(node, "device_type") &&
-		    strcmp(getpropstringA(node, "device_type", namebuf),
-			   "cpu") == 0)
+		DPRINTF(ACDB_PROBE, ("Node: %x", node));
+		if ((OF_getprop(node, "device_type", buf, sizeof(buf)) > 0) &&
+			strcmp(buf, "cpu") == 0)
 			continue;
-		cp = getpropstringA(node, "name", namebuf);
+		OF_getprop(node, "name", buf, sizeof(buf));
+		DPRINTF(ACDB_PROBE, (" name %s\n", buf));
 		for (ssp = openboot_special; (sp = *ssp) != NULL; ssp++)
-			if (strcmp(cp, sp) == 0)
+			if (strcmp(buf, sp) == 0)
 				break;
 		if (sp != NULL)
 			continue; /* an "early" device already configured */
@@ -708,30 +714,64 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		bzero(&ma, sizeof ma);
 		ma.ma_bustag = &mainbus_space_tag;
 		ma.ma_dmatag = &mainbus_dma_tag;
-		ma.ma_name = getpropstringA(node, "name", namebuf);
+		ma.ma_name = buf;
 		ma.ma_node = node;
-		ma.ma_upaid = getpropint(node, "upa-portid", -1);
+		if (OF_getprop(node, "upa-portid", &portid, sizeof(portid)) !=
+			sizeof(portid)) 
+			portid = -1;
+		ma.ma_upaid = portid;
 
 		if (getprop(node, "reg", sizeof(*ma.ma_reg), 
 			     &ma.ma_nreg, (void**)&ma.ma_reg) != 0)
 			continue;
-
-		if (getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
-			     &ma.ma_ninterrupts, (void**)&ma.ma_interrupts) != 0) {
+#ifdef DEBUG
+		if (autoconf_debug & ACDB_PROBE) {
+			if (ma.ma_nreg)
+				printf(" reg %08lx.%08lx\n",
+					(long)ma.ma_reg->ur_paddr, 
+					(long)ma.ma_reg->ur_len);
+			else
+				printf(" no reg\n");
+		}
+#endif
+		rv = getprop(node, "interrupts", sizeof(*ma.ma_interrupts), 
+			&ma.ma_ninterrupts, (void**)&ma.ma_interrupts);
+		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
 			continue;
 		}
-		if (getprop(node, "address", sizeof(*ma.ma_address), 
-			     &ma.ma_naddress, (void**)&ma.ma_address) != 0) {
+#ifdef DEBUG
+		if (autoconf_debug & ACDB_PROBE) {
+			if (ma.ma_interrupts)
+				printf(" interrupts %08x\n", 
+					*ma.ma_interrupts);
+			else
+				printf(" no interrupts\n");
+		}
+#endif
+		rv = getprop(node, "address", sizeof(*ma.ma_address), 
+			&ma.ma_naddress, (void**)&ma.ma_address);
+		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
-			free(ma.ma_interrupts, M_DEVBUF);
+			if (ma.ma_ninterrupts)
+				free(ma.ma_interrupts, M_DEVBUF);
 			continue;
 		}
-
+#ifdef DEBUG
+		if (autoconf_debug & ACDB_PROBE) {
+			if (ma.ma_naddress)
+				printf(" address %08x\n", 
+					*ma.ma_address);
+			else
+				printf(" no address\n");
+		}
+#endif
 		(void) config_found(dev, (void *)&ma, mbprint);
 		free(ma.ma_reg, M_DEVBUF);
-		free(ma.ma_interrupts, M_DEVBUF);
-		free(ma.ma_address, M_DEVBUF);
+		if (ma.ma_ninterrupts)
+			free(ma.ma_interrupts, M_DEVBUF);
+		if (ma.ma_naddress)
+			free(ma.ma_address, M_DEVBUF);
 	}
 	/* Try to attach PROM console */
 	bzero(&ma, sizeof ma);
@@ -754,6 +794,7 @@ getprop(node, name, size, nitem, bufp)
 	void	*buf;
 	long	len;
 
+	*nitem = 0;
 	len = getproplen(node, name);
 	if (len <= 0)
 		return (ENOENT);
@@ -828,13 +869,14 @@ getpropint(node, name, deflt)
 	char *name;
 	int deflt;
 {
-	int intbuf, *ip = &intbuf;
-	int len;
+	int intbuf;
 
-	if (getprop(node, name, sizeof(int), &len, (void **)&ip) != 0)
+	
+
+	if (OF_getprop(node, name, &intbuf, sizeof(intbuf)) != sizeof(intbuf))
 		return (deflt);
 
-	return (*ip);
+	return (intbuf);
 }
 
 /*
@@ -857,47 +899,7 @@ nextsibling(node)
 	return OF_peer(node);
 }
 
-/* The following recursively searches a PROM tree for a given node */
-int
-search_prom(rootnode, name)
-        register int rootnode;
-        register char *name;
-{
-	int rtnnode;
-	int node = rootnode;
-	char buf[32];
-
-	if (node == findroot() ||
-	    !strcmp("hierarchical", getpropstringA(node, "device_type", buf)))
-		node = firstchild(node);
-
-	if (node == 0)
-		panic("search_prom: null node");
-
-	do {
-		if (strcmp(getpropstringA(node, "name", buf), name) == 0)
-			return (node);
-
-		if (node_has_property(node,"device_type") &&
-		    (strcmp(getpropstringA(node, "device_type", buf),
-			     "hierarchical") == 0
-		     || strcmp(getpropstringA(node, "name", buf), "iommu") == 0)
-		    && (rtnnode = search_prom(node, name)) != 0)
-			return (rtnnode);
-
-	} while ((node = nextsibling(node)));
-
-	return (0);
-}
-
 /* The following are used primarily in consinit() */
-
-int
-opennode(path)		/* translate phys. device path to node */
-	register char *path;
-{
-	return OF_open(path);
-}
 
 int
 node_has_property(node, prop)	/* returns 1 if node has given property */
@@ -948,21 +950,6 @@ romgetcursoraddr(rowp, colp)
 	return (*rowp == NULL || *colp == NULL);
 }
 #endif
-
-void
-romhalt()
-{
-	OF_exit();
-	panic("PROM exit failed");
-}
-
-void
-romboot(bootargs)
-	char *bootargs;
-{
-	OF_boot(bootargs);
-	panic("PROM boot failed");
-}
 
 void
 callrom()
@@ -1042,6 +1029,7 @@ static struct {
 	{ "espdma",	BUSCLASS_SBUS },
 	{ "ledma",	BUSCLASS_SBUS },
 	{ "simba",	BUSCLASS_PCI },
+	{ "ppb",	BUSCLASS_PCI },
 	{ "pciide",	BUSCLASS_PCI },
 	{ "siop",	BUSCLASS_PCI },
 	{ "pci",	BUSCLASS_PCI },
@@ -1063,7 +1051,7 @@ static struct {
 	{ "ptisp",	BUSCLASS_NONE,		"isp" },
 	{ "SUNW,fdtwo",	BUSCLASS_NONE,		"fdc" },
 	{ "pci",	BUSCLASS_MAINBUS,	"psycho" },
-	{ "pci",	BUSCLASS_PCI,		"simba" },
+	{ "pci",	BUSCLASS_PCI,		"ppb" },
 	{ "ide",	BUSCLASS_PCI,		"pciide" },
 	{ "disk",	BUSCLASS_NONE,		"wd" },  /* XXX */
 	{ "network",	BUSCLASS_NONE,		"hme" }, /* XXX */

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.13 2000/12/28 22:59:07 sommerfeld Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.13.4.1 2001/08/03 04:10:46 lukem Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.13 2000/12/28 22:59:07 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.13.4.1 2001/08/03 04:10:46 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,7 +111,7 @@ void	dec_1000a_intr_disestablish __P((void *, void *));
 
 struct alpha_shared_intr *dec_1000a_pci_intr;
 
-static void dec_1000a_iointr __P((void *framep, unsigned long vec));
+static void dec_1000a_iointr __P((void *arg, unsigned long vec));
 static void dec_1000a_enable_intr __P((int irq));
 static void dec_1000a_disable_intr __P((int irq));
 static void pci_1000a_imi __P((void));
@@ -157,7 +157,6 @@ pci_1000a_pickintr(core, iot, memt, pc)
 #if NSIO > 0 || NPCEB > 0
 	sio_intr_setup(pc, iot);
 #endif
-	set_iointr(dec_1000a_iointr);
 }
 
 int     
@@ -254,8 +253,10 @@ dec_1000a_intr_establish(ccv, ih, level, func, arg)
 	    level, func, arg, "dec_1000a irq");
 
 	if (cookie != NULL &&
-	    alpha_shared_intr_isactive(dec_1000a_pci_intr, ih))
+	    alpha_shared_intr_firstactive(dec_1000a_pci_intr, ih)) {
+		scb_set(0x900 + SCB_IDXTOVEC(ih), dec_1000a_iointr, NULL);
 		dec_1000a_enable_intr(ih);
+	}
 	return (cookie);
 }
 
@@ -275,6 +276,7 @@ dec_1000a_intr_disestablish(ccv, cookie)
 		dec_1000a_disable_intr(irq);
 		alpha_shared_intr_set_dfltsharetype(dec_1000a_pci_intr, irq,
 		    IST_NONE);
+		scb_free(0x900 + SCB_IDXTOVEC(irq));
 	}
  
 	splx(s);
@@ -287,26 +289,14 @@ dec_1000a_iointr(framep, vec)
 {
 	int irq;
 
-	if (vec >= 0x900) {
-		if (vec >= 0x900 + (PCI_NIRQ << 4))
-			panic("dec_1000a_iointr: vec 0x%lx out of range\n",
-			    vec);
-		irq = (vec - 0x900) >> 4;
-		if (!alpha_shared_intr_dispatch(dec_1000a_pci_intr, irq)) {
-			alpha_shared_intr_stray(dec_1000a_pci_intr, irq,
-			    "dec_1000a irq");
-			if (ALPHA_SHARED_INTR_DISABLE(dec_1000a_pci_intr, irq))
-				dec_1000a_disable_intr(irq);
-		}
-		return;
+	irq = SCB_VECTOIDX(vec - 0x900);
+
+	if (!alpha_shared_intr_dispatch(dec_1000a_pci_intr, irq)) {
+		alpha_shared_intr_stray(dec_1000a_pci_intr, irq,
+		    "dec_1000a irq");
+		if (ALPHA_SHARED_INTR_DISABLE(dec_1000a_pci_intr, irq))
+			dec_1000a_disable_intr(irq);
 	}
-#if NSIO > 0 || NPCEB > 0
-	if (vec >= 0x800) {
-		sio_iointr(framep, vec);
-		return;
-	} 
-#endif
-	panic("dec_1000a_iointr: weird vec 0x%lx\n", vec);
 }
 
 /*

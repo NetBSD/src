@@ -1,4 +1,4 @@
-/*	$NetBSD: disklbl.c,v 1.3 1996/02/09 20:52:06 leo Exp $	*/
+/*	$NetBSD: disklbl.c,v 1.3.44.1 2001/08/03 04:11:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens.
@@ -265,7 +265,7 @@ ahdi_display(dd)
 		for (j = 0; j < dd->nroots; ++j) {
 			u_int	aux = dd->roots[j];
 			if (aux >= p1->start && aux <= p1->end) {
-				printf("FATAL: auxilary root at %u\n", aux);
+				printf("FATAL: auxiliary root at %u\n", aux);
 				rv = 1;
 			}
 		}
@@ -290,7 +290,7 @@ ahdi_display(dd)
 		}
 	}
 
-	printf("\nTotal number of auxilary roots: %u\n", dd->nroots);
+	printf("\nTotal number of auxiliary roots: %u\n", dd->nroots);
 	printf("Total number of partitions    : %u\n", dd->nparts);
 	if (dd->nparts == 0) {
 		printf("* Weird # of partitions (zero) *\n"); rv = 1;

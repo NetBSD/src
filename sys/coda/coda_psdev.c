@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.16 2001/04/16 22:41:09 thorpej Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.16.2.1 2001/08/03 04:12:40 lukem Exp $	*/
 
 /*
  * 
@@ -139,7 +139,7 @@ vc_nb_open(dev, flag, mode, p)
     if (VC_OPEN(vcp))
 	return(EBUSY);
     
-    bzero(&(vcp->vc_selproc), sizeof (struct selinfo));
+    memset(&(vcp->vc_selproc), 0, sizeof (struct selinfo));
     INIT_QUEUE(vcp->vc_requests);
     INIT_QUEUE(vcp->vc_replys);
     MARK_VC_OPEN(vcp);

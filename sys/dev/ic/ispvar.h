@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.46 2001/07/06 16:19:10 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.46.2.1 2001/08/03 04:13:01 lukem Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -599,7 +599,7 @@ void isp_done(XS_T *);
  * and logging out of fabric devices (if one is on a fabric) and then marking
  * the 'loop state' as being ready to now be used for sending commands to
  * devices. Originally fabric name server and local loop scanning were
- * part of this function. It's now been seperated to allow for finer control.
+ * part of this function. It's now been separated to allow for finer control.
  */
 typedef enum {
 	ISPCTL_RESET_BUS,		/* Reset Bus */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.243 2001/07/08 19:33:44 perry Exp $	*/
+/*	$NetBSD: locore.s,v 1.243.2.1 2001/08/03 04:11:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -851,12 +851,47 @@ ENTRY(kcopy)
  */
 
 /*
+ * Default to the lowest-common-denominator.  We will improve it
+ * later.
+ */
+#if defined(I386_CPU)
+#define	DEFAULT_COPYOUT		i386_copyout
+#define	DEFAULT_COPYIN		i386_copyin
+#elif defined(I486_CPU)
+#define	DEFAULT_COPYOUT		i486_copyout
+#define	DEFAULT_COPYIN		i386_copyin
+#elif defined(I586_CPU)
+#define	DEFAULT_COPYOUT		i486_copyout	/* XXX */
+#define	DEFAULT_COPYIN		i386_copyin	/* XXX */
+#elif defined(I686_CPU)
+#define	DEFAULT_COPYOUT		i486_copyout	/* XXX */
+#define	DEFAULT_COPYIN		i386_copyin	/* XXX */
+#endif
+
+	.data
+
+	.globl	_C_LABEL(copyout_func)
+_C_LABEL(copyout_func):
+	.long	_C_LABEL(DEFAULT_COPYOUT)
+
+	.globl	_C_LABEL(copyin_func)
+_C_LABEL(copyin_func):
+	.long	_C_LABEL(DEFAULT_COPYIN)
+
+	.text
+
+/*
  * int copyout(const void *from, void *to, size_t len);
  * Copy len bytes into the user's address space.
  * see copyout(9)
  */
 /* LINTSTUB: Func: int copyout(const void *kaddr, void *uaddr, size_t len) */
 ENTRY(copyout)
+	jmp	*_C_LABEL(copyout_func)
+
+#if defined(I386_CPU)
+/* LINTSTUB: Func: int i386_copyout(const void *kaddr, void *uaddr, size_t len) */
+ENTRY(i386_copyout)
 	pushl	%esi
 	pushl	%edi
 	pushl	$0
@@ -877,12 +912,6 @@ ENTRY(copyout)
 	jc	_C_LABEL(copy_efault)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
-
-#if defined(I386_CPU)
-#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
-	cmpl	$CPUCLASS_386,_C_LABEL(cpu_class)
-	jne	3f
-#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 	testl	%eax,%eax		# anything to do?
 	jz	3f
@@ -928,7 +957,6 @@ ENTRY(copyout)
 	testl	%eax,%eax		# if not ok, return EFAULT
 	jz	4b
 	jmp	_C_LABEL(copy_efault)
-#endif /* I386_CPU */
 
 3:	movl	_C_LABEL(curpcb),%edx
 	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
@@ -949,6 +977,49 @@ ENTRY(copyout)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
+#endif /* I386_CPU */
+
+#if defined(I486_CPU) || defined(I586_CPU) || defined(I686_CPU)
+/* LINTSTUB: Func: int i486_copyout(const void *kaddr, void *uaddr, size_t len) */
+ENTRY(i486_copyout)
+	pushl	%esi
+	pushl	%edi
+	pushl	$0
+	
+	movl	16(%esp),%esi
+	movl	20(%esp),%edi
+	movl	24(%esp),%eax
+
+	/*
+	 * We check that the end of the destination buffer is not past the end
+	 * of the user's address space.
+	 */
+	movl	%edi,%edx
+	addl	%eax,%edx
+	jc	_C_LABEL(copy_efault)
+	cmpl	$VM_MAXUSER_ADDRESS,%edx
+	ja	_C_LABEL(copy_efault)
+
+	movl	_C_LABEL(curpcb),%edx
+	movl	$_C_LABEL(copy_fault),PCB_ONFAULT(%edx)
+
+	/* bcopy(%esi, %edi, %eax); */
+	cld
+	movl	%eax,%ecx
+	shrl	$2,%ecx
+	rep
+	movsl
+	movb	%al,%cl
+	andb	$3,%cl
+	rep
+	movsb
+
+	popl	PCB_ONFAULT(%edx)
+	popl	%edi
+	popl	%esi
+	xorl	%eax,%eax
+	ret
+#endif /* I486_CPU || I586_CPU || I686_CPU */
 
 /*
  * int copyin(const void *from, void *to, size_t len);
@@ -957,6 +1028,12 @@ ENTRY(copyout)
  */
 /* LINTSTUB: Func: int copyin(const void *uaddr, void *kaddr, size_t len) */
 ENTRY(copyin)
+	jmp	*_C_LABEL(copyin_func)
+
+#if defined(I386_CPU) || defined(I486_CPU) || defined(I586_CPU) || \
+    defined(I686_CPU)
+/* LINTSTUB: Func: int i386_copyin(const void *uaddr, void *kaddr, size_t len) */
+ENTRY(i386_copyin)
 	pushl	%esi
 	pushl	%edi
 	movl	_C_LABEL(curpcb),%eax
@@ -978,7 +1055,7 @@ ENTRY(copyin)
 	cmpl	$VM_MAXUSER_ADDRESS,%edx
 	ja	_C_LABEL(copy_efault)
 
-3:	/* bcopy(%esi, %edi, %eax); */
+	/* bcopy(%esi, %edi, %eax); */
 	cld
 	movl	%eax,%ecx
 	shrl	$2,%ecx
@@ -995,6 +1072,7 @@ ENTRY(copyin)
 	popl	%esi
 	xorl	%eax,%eax
 	ret
+#endif /* I386_CPU || I486_CPU || I586_CPU || I686_CPU */
 
 /* LINTSTUB: Ignore */
 ENTRY(copy_efault)
@@ -2063,7 +2141,7 @@ IDTVEC(trap07)
 	pushl	$T_DNA
 	INTRENTRY
 	pushl	_C_LABEL(curproc)
-	call	_C_LABEL(npxdna)
+	call	*_C_LABEL(npxdna_func)
 	addl	$4,%esp
 	testl	%eax,%eax
 	jz	calltrap

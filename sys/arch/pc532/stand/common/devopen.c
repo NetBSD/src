@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.1 1997/05/17 13:56:05 matthias Exp $	*/
+/*	$NetBSD: devopen.c,v 1.1.36.1 2001/08/03 04:12:12 lukem Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -61,7 +61,7 @@ usage()
 {
 	printf("\
 Usage: device(adaptor, controller, drive, partition)file\n\
-       <device><unit><partitonletter>:file\n\
+       <device><unit><partitionletter>:file\n\
 ");
 }
 

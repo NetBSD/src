@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.1 2001/07/06 19:00:13 scw Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.1.2.1 2001/08/03 04:12:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,11 @@
 #include <mvme68k/dev/vme_twovar.h>
 
 /*
+ * Non-zero if there is no VMEChip2 on this board.
+ */
+int vmetwo_not_present;
+
+/*
  * Array of interrupt handlers registered with us for the non-VMEbus
  * vectored interrupts. Eg. ABORT Switch, SYSFAIL etc.
  *
@@ -104,6 +109,7 @@ vmetwo_probe(bus_space_tag_t bt, bus_addr_t offset)
 			 */
 			extern void pcctwosoftintrinit(void);
 			bus_space_unmap(bt, bh, VME2LCSR_SIZE);
+			vmetwo_not_present = 1;
 			pcctwosoftintrinit();
 			return (0);
 		}
@@ -224,6 +230,17 @@ vmetwo_local_isr_trampoline(arg)
 		printf("vmetwo: Spurious local interrupt, vector 0x%x\n", vec);
 
 	return (1);
+}
+
+void
+vmetwo_local_intr_establish(pri, vec, hand, arg, evcnt)
+	int pri, vec;
+	int (*hand)(void *);
+	void *arg;
+	struct evcnt *evcnt;
+{
+
+	vmetwo_intr_establish(vmetwo_sc, pri, pri, vec, 1, hand, arg, evcnt);
 }
 
 /* ARGSUSED */

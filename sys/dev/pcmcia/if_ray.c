@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.27 2000/12/14 06:29:38 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.27.4.1 2001/08/03 04:13:23 lukem Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -193,7 +193,7 @@ struct ray_softc {
 	u_int8_t	sc_mode;	/* current operating mode SC_MODE_xx */
 	u_int8_t	sc_countrycode;	/* current country code */
 	u_int8_t	sc_dcountrycode; /* desired country code */
-	int		sc_havenet;	/* true if we have aquired a network */
+	int		sc_havenet;	/* true if we have acquired a network */
 	bus_size_t	sc_txpad;	/* tib size plus "phy" size */
 	u_int8_t	sc_deftxrate;	/* default transfer rate */
 	u_int8_t	sc_encrypt;
@@ -1388,7 +1388,7 @@ ray_intr_start(sc)
 	}
 
 	/* send it off */
-	RAY_DPRINTF(("%s: ray_start issueing %d \n", sc->sc_xname, firsti));
+	RAY_DPRINTF(("%s: ray_start issuing %d \n", sc->sc_xname, firsti));
 	SRAM_WRITE_1(sc, RAY_SCB_CCSI, firsti);
 	RAY_ECF_START_CMD(sc);
 

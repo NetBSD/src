@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.14 2001/07/07 14:44:45 jdolecek Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.14.2.1 2001/08/03 04:12:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -35,8 +35,6 @@
  *	@(#)uipc_syscalls.c	8.4 (Berkeley) 2/21/94
  */
 
-#define COMPAT_OLDSOCK /* used by <sys/socket.h> */
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
@@ -52,9 +50,22 @@
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
+#include <sys/mbuf.h>		/* for MLEN */
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <compat/common/compat_util.h>
+
+#include <uvm/uvm_extern.h>
+
+/*
+ * Following 4.3 syscalls were not versioned, even through they should
+ * have been:
+ * connect(2), bind(2), sendto(2)
+ */
+
+static int compat_43_sa_put(caddr_t);
 
 int
 compat_43_sys_accept(p, v, retval)
@@ -62,27 +73,20 @@ compat_43_sys_accept(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_accept_args /* {
+	struct compat_43_sys_accept_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) name;
 		syscallarg(int *) anamelen;
 	} */ *uap = v;
 	int error;
 
-	if ((error = sys_accept(p, uap, retval)) != 0)
+	if ((error = sys_accept(p, v, retval)) != 0)
 		return error;
 
-	if (SCARG(uap, name)) {
-		struct sockaddr sa;
+	if (SCARG(uap, name)
+	    && (error = compat_43_sa_put(SCARG(uap, name))))
+		return (error);
 
-		if ((error = copyin(SCARG(uap, name), &sa, sizeof(sa))) != 0)
-			return error;
-
-		((struct osockaddr*) &sa)->sa_family = sa.sa_family;
-
-		if ((error = copyout(&sa, SCARG(uap, name), sizeof(sa))) != 0)
-			return error;
-	}
 	return 0;
 }
 
@@ -92,25 +96,19 @@ compat_43_sys_getpeername(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_getpeername_args /* {
+	struct compat_43_sys_getpeername_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
-	struct sockaddr sa;
 
 	int error;
 
-	if ((error = sys_getpeername(p, uap, retval)) != 0)
+	if ((error = sys_getpeername(p, v, retval)) != 0)
 		return error;
 
-	if ((error = copyin(SCARG(uap, asa), &sa, sizeof(sa))) != 0)
-		return error;
-
-	((struct osockaddr*) &sa)->sa_family = sa.sa_family;
-
-	if ((error = copyout(&sa, SCARG(uap, asa), sizeof(sa))) != 0)
-		return error;
+	if ((error = compat_43_sa_put(SCARG(uap, asa))))
+		return (error);
 
 	return 0;
 }
@@ -121,24 +119,18 @@ compat_43_sys_getsockname(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_getsockname_args /* {
+	struct compat_43_sys_getsockname_args /* {
 		syscallarg(int) fdes;
 		syscallarg(caddr_t) asa;
 		syscallarg(int *) alen;
 	} */ *uap = v;
-	struct sockaddr sa;
 	int error;
 
-	if ((error = sys_getsockname(p, uap, retval)) != 0)
+	if ((error = sys_getsockname(p, v, retval)) != 0)
 		return error;
 
-	if ((error = copyin(SCARG(uap, asa), &sa, sizeof(sa))) != 0)
-		return error;
-
-	((struct osockaddr*) &sa)->sa_family = sa.sa_family;
-
-	if ((error = copyout(&sa, SCARG(uap, asa), sizeof(sa))) != 0)
-		return error;
+	if ((error = compat_43_sa_put(SCARG(uap, asa))))
+		return (error);
 
 	return 0;
 }
@@ -173,7 +165,7 @@ compat_43_sys_recvfrom(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct sys_recvfrom_args /* {
+	struct compat_43_sys_recvfrom_args /* {
 		syscallarg(int) s;
 		syscallarg(caddr_t) buf;
 		syscallarg(size_t) len;
@@ -181,15 +173,20 @@ compat_43_sys_recvfrom(p, v, retval)
 		syscallarg(caddr_t) from;
 		syscallarg(int *) fromlenaddr;
 	} */ *uap = v;
+	int error;
 
-	SCARG(uap, flags) |= MSG_COMPAT;
-	return (sys_recvfrom(p, uap, retval));
+	if ((error = sys_recvfrom(p, v, retval)))
+		return (error);
+
+	if (SCARG(uap, from) && (error = compat_43_sa_put(SCARG(uap, from))))
+		return (error);
+
+	return (0);
 }
 
 /*
- * Old recvmsg.  This code takes advantage of the fact that the old msghdr
- * overlays the new one, missing only the flags, and with the (old) access
- * rights where the control fields are now.
+ * Old recvmsg. Arrange necessary structures, calls generic code and
+ * adjusts results accordingly.
  */
 int
 compat_43_sys_recvmsg(p, v, retval)
@@ -202,37 +199,103 @@ compat_43_sys_recvmsg(p, v, retval)
 		syscallarg(struct omsghdr *) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct omsghdr omsg;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
 
-	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&msg,
+	error = copyin((caddr_t)SCARG(uap, msg), (caddr_t)&omsg,
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
-	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen > IOV_MAX)
+	if ((u_int)omsg.msg_iovlen > UIO_SMALLIOV) {
+		if ((u_int)omsg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
-		MALLOC(iov, struct iovec *,
-		      sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV,
-		      M_WAITOK);
+		iov = malloc(sizeof(struct iovec) * omsg.msg_iovlen,
+		    M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
-	msg.msg_flags = SCARG(uap, flags) | MSG_COMPAT;
-	error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
-	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+	
+	error = copyin((caddr_t)omsg.msg_iov, (caddr_t)iov,
+	    (unsigned)(omsg.msg_iovlen * sizeof (struct iovec)));
 	if (error)
 		goto done;
-	msg.msg_iov = iov;
+
+	msg.msg_name	= omsg.msg_name;
+	msg.msg_namelen = omsg.msg_namelen;
+	msg.msg_iovlen	= omsg.msg_iovlen;
+	msg.msg_iov	= iov;
+	msg.msg_flags	= SCARG(uap, flags);
+
+	/*
+	 * If caller passes accrights, arrange things for generic code to
+	 * DTRT.
+	 */
+	if (omsg.msg_accrights && omsg.msg_accrightslen) {
+		caddr_t sg = stackgap_init(p->p_emul);
+		struct cmsg *ucmsg;
+
+		/* it was this way in 4.4BSD */
+		if ((u_int) omsg.msg_accrightslen > MLEN)
+			return (EINVAL);
+
+		ucmsg = stackgap_alloc(&sg, CMSG_SPACE(omsg.msg_accrightslen));
+		if (ucmsg == NULL)
+			return (EMSGSIZE);
+
+		msg.msg_control = ucmsg;
+		msg.msg_controllen = CMSG_SPACE(omsg.msg_accrightslen);
+	} else {
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+	}
+
 	error = recvit(p, SCARG(uap, s), &msg,
 	    (caddr_t)&SCARG(uap, msg)->msg_namelen, retval);
 
-	if (msg.msg_controllen && error == 0)
-		error = copyout((caddr_t)&msg.msg_controllen,
-		    (caddr_t)&SCARG(uap, msg)->msg_accrightslen, sizeof (int));
+	/*
+	 * If there is any control information and it's SCM_RIGHTS,
+	 * pass it back to the program.
+	 */
+	if (!error && omsg.msg_accrights && msg.msg_controllen > 0) {
+		struct cmsghdr *cmsg;
+
+		/* safe - msg.msg_controllen set by kernel */
+		cmsg = (struct cmsghdr *) malloc(msg.msg_controllen,
+		    M_TEMP, M_WAITOK);
+		
+		error = copyin(msg.msg_control, cmsg, msg.msg_controllen);
+		if (error) {
+			free(cmsg, M_TEMP);
+			return (error);
+		}
+
+		if (cmsg->cmsg_level != SOL_SOCKET
+		    || cmsg->cmsg_type != SCM_RIGHTS
+		    || copyout(CMSG_DATA(cmsg), omsg.msg_accrights,
+			    cmsg->cmsg_len)) {
+			omsg.msg_accrightslen = 0;
+		}
+		 
+		free(cmsg, M_TEMP);
+
+		if (!error) {
+			error = copyout(&cmsg->cmsg_len,
+			    &SCARG(uap, msg)->msg_accrightslen, sizeof(int));
+		}
+	}
+
+	if (!error && omsg.msg_name) {
+		int namelen;
+
+		if ((error = copyin(&SCARG(uap, msg)->msg_namelen, &namelen, sizeof(int)) == 0)
+		    && namelen > 0)
+			error = compat_43_sa_put(omsg.msg_name);
+	}
+
 done:
 	if (iov != aiov)
-		FREE(iov, M_IOV);
+		free(iov, M_IOV);
 	return (error);
 }
 
@@ -260,6 +323,10 @@ compat_43_sys_send(p, v, retval)
 	return (sys_sendto(p, &bsa, retval));
 }
 
+/*
+ * Old sendmsg. Arrange necessary structures, call generic code and
+ * adjust the results accordingly for old code.
+ */
 int
 compat_43_sys_sendmsg(p, v, retval)
 	struct proc *p;
@@ -271,31 +338,133 @@ compat_43_sys_sendmsg(p, v, retval)
 		syscallarg(caddr_t) msg;
 		syscallarg(int) flags;
 	} */ *uap = v;
+	struct omsghdr omsg;
 	struct msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
 	int error;
+	caddr_t sg = stackgap_init(p->p_emul);
 
-	error = copyin(SCARG(uap, msg), (caddr_t)&msg,
+	error = copyin(SCARG(uap, msg), (caddr_t)&omsg,
 	    sizeof (struct omsghdr));
 	if (error)
 		return (error);
-	if ((u_int)msg.msg_iovlen > UIO_SMALLIOV) {
-		if ((u_int)msg.msg_iovlen > IOV_MAX)
+	if ((u_int)omsg.msg_iovlen > UIO_SMALLIOV) {
+		if ((u_int)omsg.msg_iovlen > IOV_MAX)
 			return (EMSGSIZE);
-		MALLOC(iov, struct iovec *,
-		      sizeof(struct iovec) * (u_int)msg.msg_iovlen, M_IOV, 
-		      M_WAITOK);
+		iov = malloc(sizeof(struct iovec) * omsg.msg_iovlen,
+		    M_IOV, M_WAITOK);
 	} else
 		iov = aiov;
-	error = copyin((caddr_t)msg.msg_iov, (caddr_t)iov,
-	    (unsigned)(msg.msg_iovlen * sizeof (struct iovec)));
+	error = copyin((caddr_t)omsg.msg_iov, (caddr_t)iov,
+	    (unsigned)(omsg.msg_iovlen * sizeof (struct iovec)));
 	if (error)
 		goto done;
-	msg.msg_flags = MSG_COMPAT;
-	msg.msg_iov = iov;
+
+	if (omsg.msg_name) {
+		struct osockaddr *osa;
+		struct sockaddr *sa, *usa;
+
+		if ((u_int) omsg.msg_namelen > UCHAR_MAX)
+			return (EINVAL);
+
+		osa = malloc(omsg.msg_namelen, M_TEMP, M_WAITOK);
+
+		if ((error = copyin(omsg.msg_name, osa, omsg.msg_namelen))) {
+			free(osa, M_TEMP);
+			return (error);
+		}
+
+		sa = (struct sockaddr *) osa;
+		sa->sa_family = osa->sa_family;
+		sa->sa_len = omsg.msg_namelen;
+
+		usa = stackgap_alloc(&sg, omsg.msg_namelen);
+		if (!usa) {
+			free(osa, M_TEMP);
+			return (ENOMEM);
+		}
+
+		(void) copyout(sa, usa, omsg.msg_namelen);
+		free(osa, M_TEMP);
+		
+		msg.msg_name = usa;
+		msg.msg_namelen = omsg.msg_namelen;
+	} else {
+		msg.msg_name = NULL;
+		msg.msg_namelen = 0;
+	}
+	msg.msg_iovlen	= omsg.msg_iovlen;
+	msg.msg_iov	= iov;
+	msg.msg_flags	= 0;
+
+	if (omsg.msg_accrights && omsg.msg_accrightslen != 0) {
+		struct cmsghdr *cmsg, *ucmsg;
+
+		/* it was this way in 4.4BSD */
+		if ((u_int) omsg.msg_accrightslen > MLEN)
+			return (EINVAL);
+
+		cmsg = malloc(CMSG_SPACE(omsg.msg_accrightslen), M_TEMP,
+		    M_WAITOK); 
+		cmsg->cmsg_len		= CMSG_SPACE(omsg.msg_accrightslen);
+		cmsg->cmsg_level	= SOL_SOCKET;
+		cmsg->cmsg_type 	= SCM_RIGHTS;
+
+		error = copyin(omsg.msg_accrights, CMSG_DATA(cmsg),
+		    omsg.msg_accrightslen);
+		if (error) {
+			free(cmsg, M_TEMP);
+			return (error);
+		}
+		
+		ucmsg = stackgap_alloc(&sg, CMSG_SPACE(omsg.msg_accrightslen));
+		if (!ucmsg) {
+			free(cmsg, M_TEMP);
+			return (EMSGSIZE);
+		}
+
+		(void) copyout(cmsg, ucmsg, CMSG_SPACE(omsg.msg_accrightslen));
+		free(cmsg, M_TEMP);
+
+		msg.msg_control = ucmsg;
+		msg.msg_controllen = CMSG_SPACE(omsg.msg_accrightslen);
+	} else {
+		msg.msg_control = NULL;
+		msg.msg_controllen = 0;
+	}
+
 	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);
 	return (error);
+}
+
+static int
+compat_43_sa_put(from)
+	caddr_t from;
+{
+	struct osockaddr *osa = (struct osockaddr *) from;
+	struct sockaddr sa;
+	struct osockaddr *kosa;
+	int error, len;
+
+	/*
+	 * Only read/write the sockaddr family and length, the rest is
+	 * not changed.
+	 */
+	len = sizeof(sa.sa_len) + sizeof(sa.sa_family);
+
+	error = copyin((caddr_t) osa, (caddr_t) &sa, len);
+	if (error)
+		return (error);
+
+	/* Note: we convert from sockaddr sa_family to osockaddr one here */
+	kosa = (struct osockaddr *) &sa;
+	kosa->sa_family = sa.sa_family;
+	error = copyout(kosa, osa, len);
+	if (error)
+		return (error);
+
+	return (0);
 }

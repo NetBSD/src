@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn8ae.c,v 1.25 2001/04/25 17:53:05 bouyer Exp $ */
+/* $NetBSD: dec_kn8ae.c,v 1.25.2.1 2001/08/03 04:10:38 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.25 2001/04/25 17:53:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn8ae.c,v 1.25.2.1 2001/08/03 04:10:38 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ kn8ae_mcheck(mces, type, logout, framep)
 
 	get_dwlpx_regs = 0;
 	ptr = NULL;
-	bzero(mcs, sizeof (mcs));
+	memset(mcs, 0, sizeof (mcs));
 
 	hdr = (mc_hdr_ev5 *) logout;
 	mptr = (mc_uc_ev5 *) (logout + sizeof (*hdr));

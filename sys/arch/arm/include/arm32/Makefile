@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2001/06/18 21:37:33 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.4.2.1 2001/08/03 04:11:01 lukem Exp $
 
 KDIR=	/sys/arch/arm/include/arm32
 INCSDIR= /usr/include/arm/arm32
 
-INCS=	katelib.h pcb.h psl.h sysarch.h frame.h param.h pmap.h rtc.h
+INCS=	frame.h katelib.h param.h pcb.h pmap.h psl.h rtc.h
 
 .include <bsd.kinc.mk>

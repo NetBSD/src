@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_exec_elf32.c,v 1.2 2001/02/11 01:10:24 eeh Exp $	 */
+/*	$NetBSD: svr4_32_exec_elf32.c,v 1.2.6.1 2001/08/03 04:12:49 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -72,21 +72,21 @@ int sun_flags = EF_SPARC_SUN_US1|EF_SPARC_32PLUS;
 int sun_hwcap = (AV_SPARC_HWMUL_32x32|AV_SPARC_HWDIV_32x32|AV_SPARC_HWFSMULD);
 
 #if 0
-void *
-svr4_32_copyargs(pack, arginfo, stack, argp)
+int
+svr4_32_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	size_t len;
 	AuxInfo ai[SVR4_32_AUX_ARGSIZ], *a, *platform=NULL, *exec=NULL;
 	struct elf_args *ap;
 	extern char platform_type[32];
+	int error;
 
-	stack = netbsd32_copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return NULL;
+	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
 
 	a = ai;
 
@@ -174,7 +174,7 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 		const char *path = NULL;
 
 		/* Copy out the platform name. */
-		platform->a_v = (u_long)stack + len;
+		platform->a_v = (u_long)(*stackp) + len;
 		/* XXXX extremely inefficient.... */
 		strcpy(ptr, platform_type);
 		ptr += strlen(platform_type) + 1;
@@ -184,7 +184,7 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 			path = pack->ep_ndp->ni_cnd.cn_pnbuf;
 
 			/* Copy out the file we're executing. */
-			exec->a_v = (u_long)stack + len;
+			exec->a_v = (u_long)(*stackp) + len;
 			strcpy(ptr, path);
 			len += strlen(ptr)+1;
 		}
@@ -192,27 +192,27 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 		/* Round to 32-bits */
 		len = (len+7)&~0x7L;
 	}
-	if (copyout(ai, stack, len))
-		return NULL;
-	stack = (caddr_t)stack + len;
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
 
-	return stack;
+	return error;
 }
 #else
-void *
-svr4_32_copyargs(pack, arginfo, stack, argp)
+int
+svr4_32_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	size_t len;
 	AuxInfo ai[SVR4_32_AUX_ARGSIZ], *a;
 	struct elf_args *ap;
+	int error;
 
-	stack = netbsd32_copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return NULL;
+	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
 
 	a = ai;
 
@@ -261,11 +261,11 @@ svr4_32_copyargs(pack, arginfo, stack, argp)
 	a++;
 
 	len = (a - ai) * sizeof(AuxInfo);
-	if (copyout(ai, stack, len))
-		return NULL;
-	stack = (caddr_t)stack + len;
+	if (copyout(ai, *stackp, len))
+		return error;
+	*stackp += len;
 
-	return stack;
+	return 0;
 }
 #endif
 

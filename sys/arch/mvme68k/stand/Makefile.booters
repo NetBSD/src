@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.6 2000/12/07 21:37:51 scw Exp $
+#	$NetBSD: Makefile.booters,v 1.6.4.1 2001/08/03 04:12:05 lukem Exp $
 
 S?=		${.CURDIR}/../../../..
 MDEC_DIR?=	/usr/mdec
@@ -93,6 +93,6 @@ WRTVID=${WRTVID_DIR}/wrtvid
 .PHONY: ${WRTVID}
 ${WRTVID}:
 	@echo making sure the wrtvid is up to date...
-	@(cd ${WRTVID_BOOT_DIR}; ${MAKE})
+	@(cd ${WRTVID_BOOT_DIR}; ${MAKE} dependall)
 
 .endif

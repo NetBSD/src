@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.45 2001/07/06 19:00:12 scw Exp $
+#	$NetBSD: files.mvme68k,v 1.45.2.1 2001/08/03 04:12:02 lukem Exp $
 
 # config file for mvme68k
 
@@ -85,7 +85,7 @@ file arch/mvme68k/dev/clmpcc_pcctwo.c		clmpcc_pcctwo needs-flag
 
 # MVME16x and MVME17x Memory Controller ASICs
 device memc
-attach memc at pcctwo
+attach memc at mainbus
 file arch/mvme68k/dev/memc.c			memc
 
 # Memory disk for boot tape

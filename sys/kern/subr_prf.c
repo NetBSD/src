@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.80 2001/05/30 15:24:25 lukem Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.80.2.1 2001/08/03 04:13:42 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -207,7 +207,7 @@ panic(fmt, va_alist)
 		panicstr = fmt;
 	doing_shutdown = 1;
 
-	if (msgbufp->msg_magic == MSG_MAGIC)
+	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
 		panicstart = msgbufp->msg_bufx;
 	
 	va_start(ap, fmt);
@@ -216,7 +216,7 @@ panic(fmt, va_alist)
 	printf("\n");
 	va_end(ap);
 
-	if (msgbufp->msg_magic == MSG_MAGIC)
+	if (msgbufenabled && msgbufp->msg_magic == MSG_MAGIC)
 		panicend = msgbufp->msg_bufx;
 
 #ifdef IPKDB

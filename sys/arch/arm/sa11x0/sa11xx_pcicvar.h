@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcicvar.h,v 1.1 2001/07/08 23:37:54 rjs Exp $	*/
+/*	$NetBSD: sa11xx_pcicvar.h,v 1.1.2.1 2001/08/03 04:11:03 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -49,10 +49,7 @@ struct sapcic_socket {
 
 	int power_capability;
 
-	/* private data for pcictag functions */
-	struct sa11x0_softc *saip_sc;
-	struct sacc_softc *sacc_sc;
-	void *pddata;
+	void *pcictag_cookie;	/* opaque data for pcictag functions */
 };
 
 struct sapcic_tag {
@@ -67,8 +64,8 @@ struct sapcic_tag {
 
 /* registers and their values */
 #define SAPCIC_STATUS_CARD		0
-#define	SAPCIC_CARD_VALID		1
-#define	SAPCIC_CARD_INVALID		0
+#define SAPCIC_CARD_VALID		1
+#define SAPCIC_CARD_INVALID		0
 #define SAPCIC_STATUS_VS1		1
 #define SAPCIC_STATUS_VS2		2
 #define SAPCIC_STATUS_READY		3

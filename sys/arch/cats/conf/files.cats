@@ -1,4 +1,4 @@
-#	$NetBSD: files.cats,v 1.7 2001/06/20 22:14:34 chris Exp $
+#	$NetBSD: files.cats,v 1.7.2.1 2001/08/03 04:11:22 lukem Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -74,20 +74,6 @@ major   {cd = 26}
 file	arch/cats/cats/autoconf.c
 file	arch/cats/cats/conf.c
 file	arch/cats/cats/cats_machdep.c
-file	arch/arm32/arm32/bus_dma.c
-file	arch/arm32/arm32/cpuswitch.S
-file	arch/arm32/arm32/exception.S
-file	arch/arm32/arm32/fault.c
-file	arch/arm32/arm32/fusu.S
-file	arch/arm32/arm32/intr.c
-file	arch/arm32/arm32/machdep.c
-file	arch/arm32/arm32/mem.c
-file	arch/arm32/arm32/procfs_machdep.c	procfs
-file	arch/arm32/arm32/setcpsr.S
-file	arch/arm32/arm32/setstack.S
-file	arch/arm32/arm32/spl.S
-file	arch/arm32/arm32/stubs.c
-file	arch/arm32/arm32/vm_machdep.c
 
 # library functions
 

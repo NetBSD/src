@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.2 2001/06/18 09:05:05 bouyer Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.2.4.1 2001/08/03 04:13:34 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ st_scsibus_read_block_limits(st, flags)
 	/*
 	 * do a 'Read Block Limits'
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ_BLOCK_LIMITS;
 
 	/*
@@ -232,7 +232,7 @@ st_scsibus_mode_sense(st, flags)
 	    ("%sbuffered\n",
 	    scsipi_sense.header.dev_spec & SMH_DSP_BUFF_MODE ? "" : "un"));
 	if (st->page_0_size)
-		bcopy(scsipi_sense.sense_data, st->sense_data,
+		memcpy(st->sense_data, scsipi_sense.sense_data,
 		    st->page_0_size);
 	periph->periph_flags |= PERIPH_MEDIA_LOADED;
 	return (0);
@@ -272,7 +272,7 @@ st_scsibus_mode_select(st, flags)
 	/*
 	 * Set up for a mode select
 	 */
-	bzero(&scsi_select, scsi_select_len);
+	memset(&scsi_select, 0, scsi_select_len);
 	scsi_select.header.blk_desc_len = sizeof(struct scsi_blk_desc);
 	scsi_select.header.dev_spec &= ~SMH_DSP_BUFF_MODE;
 	scsi_select.blk_desc.density = st->density;
@@ -283,7 +283,7 @@ st_scsibus_mode_select(st, flags)
 	if (st->flags & ST_FIXEDBLOCKS)
 		_lto3b(st->blksize, scsi_select.blk_desc.blklen);
 	if (st->page_0_size)
-		bcopy(st->sense_data, scsi_select.sense_data, st->page_0_size);
+		memcpy(scsi_select.sense_data, st->sense_data, st->page_0_size);
 
 	/*
 	 * do the command
@@ -323,7 +323,7 @@ st_scsibus_cmprss(st, flags, onoff)
 	 * Do the MODE SENSE command...
 	 */
 again:
-	bzero(&scsi_pdata, scsi_dlen);
+	memset(&scsi_pdata, 0, scsi_dlen);
 	error = scsipi_mode_sense(periph, byte2, page,
 	    &scsi_pdata.header, scsi_dlen, flags | XS_CTL_DATA_ONSTACK,
 	    ST_RETRIES, ST_CTL_TIME);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mesh.c,v 1.11 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: mesh.c,v 1.11.2.1 2001/08/03 04:11:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000	Tsubai Masanari.
@@ -192,7 +192,7 @@ mesh_match(parent, cf, aux)
 	if (strcmp(ca->ca_name, "mesh") == 0)
 		return 1;
 
-	bzero(compat, sizeof(compat));
+	memset(compat, 0, sizeof(compat));
 	OF_getprop(ca->ca_node, "compatible", compat, sizeof(compat));
 	if (strcmp(compat, "chrp,mesh0") == 0)
 		return 1;
@@ -1002,7 +1002,7 @@ mesh_scsi_request(chan, req, arg)
 		scb->daddr = (vaddr_t)xs->data;
 		scb->dlen = xs->datalen;
 		scb->resid = xs->datalen;
-		bcopy(xs->cmd, &scb->cmd, xs->cmdlen);
+		memcpy(&scb->cmd, xs->cmd, xs->cmdlen);
 		scb->cmdlen = xs->cmdlen;
 		scb->target = periph->periph_target;
 		sc->sc_imsglen = 0;	/* XXX ? */

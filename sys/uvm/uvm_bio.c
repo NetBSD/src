@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.15 2001/06/13 06:06:19 simonb Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.15.2.1 2001/08/03 04:14:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -153,7 +153,7 @@ ubc_init(void)
 				 M_TEMP, M_NOWAIT);
 	if (ubc_object.umap == NULL)
 		panic("ubc_init: failed to allocate ubc_map");
-	bzero(ubc_object.umap, ubc_nwins * sizeof(struct ubc_map));
+	memset(ubc_object.umap, 0, ubc_nwins * sizeof(struct ubc_map));
 
 	va = (vaddr_t)1L;
 #ifdef PMAP_PREFER

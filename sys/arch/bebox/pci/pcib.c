@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.9 2001/06/06 17:42:31 matt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.9.2.1 2001/08/03 04:11:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ pcib_callback(self)
 	/*
 	 * Attach the ISA bus behind this bridge.
 	 */
-	bzero(&iba, sizeof(iba));
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_busname = "isa";
 	iba.iba_ic = &sc->sc_chipset;
 	iba.iba_iot = &bebox_isa_io_bs_tag;

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.192 2001/06/16 12:00:02 jdolecek Exp $	*/
+/*	$NetBSD: init_main.c,v 1.192.2.1 2001/08/03 04:13:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -111,7 +111,7 @@
 #include <net/if.h>
 #include <net/raw_cb.h>
 
-const char copyright[] = "\n"
+const char copyright[] =
 "Copyright (c) 1996, 1997, 1998, 1999, 2000, 2001\n"
 "    The NetBSD Foundation, Inc.  All rights reserved.\n"
 "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
@@ -325,6 +325,16 @@ main(void)
 #if defined(NFSSERVER) || defined(NFS)
 	nfs_init();			/* initialize server/shared data */
 #endif
+#ifdef NVNODE_IMPLICIT
+	/*
+	 * If maximum number of vnodes in namei vnode cache is not explicitly
+	 * defined in kernel config, adjust the number such as we use roughly
+	 * 0.5% of memory for vnode cache (but not less than NVNODE vnodes).
+	 */
+	usevnodes = (ptoa((unsigned)physmem) / 200) / sizeof(struct vnode);
+	if (usevnodes > desiredvnodes) 
+		desiredvnodes = usevnodes;
+#endif
 	vfsinit();
 
 	/* Configure the system hardware.  This will enable interrupts. */
@@ -503,17 +513,6 @@ main(void)
 	 */
 	start_init_exec = 1;
 	wakeup((void *)&start_init_exec);
-
-#ifdef NVNODE_IMPLICIT
-	/*
-	 * If maximum number of vnodes in namei vnode cache is not explicitly
-	 * defined in kernel config, adjust the number such as we use roughly
-	 * 0.5% of memory for vnode cache (but not less than NVNODE vnodes).
-	 */
-	usevnodes = (ptoa(physmem) / 200) / sizeof(struct vnode);
-	if (usevnodes > desiredvnodes) 
-		desiredvnodes = usevnodes;
-#endif
 
 	/* The scheduler is an infinite loop. */
 	uvm_scheduler();

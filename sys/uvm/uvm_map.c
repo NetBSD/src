@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.99 2001/06/02 18:09:26 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.99.2.1 2001/08/03 04:14:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1004,7 +1004,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 	 * list headed by "first_entry".  once we remove them from the map
 	 * the caller should unlock the map and drop the references to the
 	 * backing objects [c.f. uvm_unmap_detach].  the object is to
-	 * seperate unmapping from reference dropping.  why?
+	 * separate unmapping from reference dropping.  why?
 	 *   [1] the map has to be locked for unmapping
 	 *   [2] the map need not be locked for reference dropping
 	 *   [3] dropping references may trigger pager I/O, and if we hit
@@ -2001,7 +2001,7 @@ uvm_map_pageable(map, start, end, new_pageable, lockflags)
 	entry = start_entry;
 
 	/*
-	 * handle wiring and unwiring seperately.
+	 * handle wiring and unwiring separately.
 	 */
 
 	if (new_pageable) {		/* unwire */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.15 1998/06/25 23:57:34 thorpej Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.15.28.1 2001/08/03 04:11:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -348,7 +348,7 @@ tc_init(gp, scode, addr)
 			gp->g_fbkva = addr + gi->gd_regsize;
 		} else {
 			/*
-			 * For DIO space we need to map the seperate
+			 * For DIO space we need to map the separate
 			 * framebuffer.
 			 */
 			gp->g_regkva = addr;

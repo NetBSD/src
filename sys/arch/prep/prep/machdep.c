@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2001/06/20 15:25:02 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23.2.1 2001/08/03 04:12:17 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -175,7 +175,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	/*
 	 * copy bootinfo
 	 */
-	bcopy(btinfo, bootinfo, sizeof(bootinfo));
+	memcpy(bootinfo, btinfo, sizeof(bootinfo));
 
 	/*
 	 * copy residual data
@@ -190,7 +190,7 @@ initppc(startkernel, endkernel, args, btinfo)
 
 		if (((RESIDUAL *)resinfo->addr != 0) &&
 		    ((RESIDUAL *)resinfo->addr)->ResidualLength != 0) {
-			bcopy(resinfo->addr, &resdata, sizeof(resdata));
+			memcpy(&resdata, resinfo->addr, sizeof(resdata));
 			res = &resdata;
 		} else
 			panic("No residual data.");
@@ -229,7 +229,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	ident_platform();
 
 	proc0.p_addr = proc0paddr;
-	bzero(proc0.p_addr, sizeof *proc0.p_addr);
+	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
 
 	curpcb = &proc0paddr->u_pcb;
 
@@ -300,7 +300,7 @@ initppc(startkernel, endkernel, args, btinfo)
 	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
 		switch (exc) {
 		default:
-			bcopy(&trapcode, (void *)exc, (size_t)&trapsize);
+			memcpy((void *)exc, &trapcode, (size_t)&trapsize);
 			break;
 		case EXC_EXI:
 			/*
@@ -308,31 +308,34 @@ initppc(startkernel, endkernel, args, btinfo)
 			 */
 			break;
 		case EXC_ALI:
-			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
+			memcpy((void *)EXC_ALI, &alitrap, (size_t)&alisize);
 			break;
 		case EXC_DSI:
-			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
+			memcpy((void *)EXC_DSI, &dsitrap, (size_t)&dsisize);
 			break;
 		case EXC_ISI:
-			bcopy(&isitrap, (void *)EXC_ISI, (size_t)&isisize);
+			memcpy((void *)EXC_ISI, &isitrap, (size_t)&isisize);
 			break;
 		case EXC_DECR:
-			bcopy(&decrint, (void *)EXC_DECR, (size_t)&decrsize);
+			memcpy((void *)EXC_DECR, &decrint, (size_t)&decrsize);
 			break;
 		case EXC_IMISS:
-			bcopy(&tlbimiss, (void *)EXC_IMISS, (size_t)&tlbimsize);
+			memcpy((void *)EXC_IMISS, &tlbimiss,
+			    (size_t)&tlbimsize);
 			break;
 		case EXC_DLMISS:
-			bcopy(&tlbdlmiss, (void *)EXC_DLMISS, (size_t)&tlbdlmsize);
+			memcpy((void *)EXC_DLMISS, &tlbdlmiss,
+			    (size_t)&tlbdlmsize);
 			break;
 		case EXC_DSMISS:
-			bcopy(&tlbdsmiss, (void *)EXC_DSMISS, (size_t)&tlbdsmsize);
+			memcpy((void *)EXC_DSMISS, &tlbdsmiss,
+			    (size_t)&tlbdsmsize);
 			break;
 #ifdef DDB
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
-			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
+			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
 			break;
 #endif
 		}
@@ -440,7 +443,7 @@ install_extint(handler)
 	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
-	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
+	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
 	asm volatile ("mtmsr %0" :: "r"(omsr));

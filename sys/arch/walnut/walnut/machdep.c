@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2001/06/22 11:36:05 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2.2.1 2001/08/03 04:12:38 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -176,16 +176,16 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	/* Disable all external interrupts */
 	mtdcr(DCR_UIC0_ER, 0);
 
-	bzero(&_edata, &_end-&_edata); /* Clear BSS area */
+	memset(&_edata, 0, &_end-&_edata); /* Clear BSS area */
 
 	/* Save info block */
 	if (info_block == NULL)
 		/* XXX why isn't r3 set correctly?!?!? */
 		info_block = (void *)0x8e10;		
-	bcopy(info_block, &board_data, sizeof(board_data));
+	memcpy(&board_data, info_block, sizeof(board_data));
 
-	bzero(physmemr, sizeof physmemr);
-	bzero(availmemr, sizeof availmemr);
+	memset(physmemr, 0, sizeof physmemr);
+	memset(availmemr, 0, sizeof availmemr);
 	physmemr[0].start = 0;
 	physmemr[0].size = board_data.mem_size & ~PGOFSET;
 	/* Lower memory reserved by eval board BIOS */
@@ -193,7 +193,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	availmemr[0].size = board_data.mem_size - availmemr[0].start;
 
 	proc0.p_addr = proc0paddr;
-	bzero(proc0.p_addr, sizeof *proc0.p_addr);
+	memset(proc0.p_addr, 0, sizeof *proc0.p_addr);
 
 	curpcb = &proc0paddr->u_pcb;
 
@@ -205,7 +205,7 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	for (exc = EXC_RSVD; exc <= EXC_LAST; exc += 0x100)
 		switch (exc) {
 		default:
-			bcopy(&defaulttrap, (void *)exc, (size_t)&defaultsize);
+			memcpy((void *)exc, &defaulttrap, (size_t)&defaultsize);
 			break;
 		case EXC_EXI:
 			/*
@@ -213,20 +213,20 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 			 */
 			break;
 		case EXC_ALI:
-			bcopy(&alitrap, (void *)EXC_ALI, (size_t)&alisize);
+			memcpy((void *)EXC_ALI, &alitrap, (size_t)&alisize);
 			break;
 		case EXC_DSI:
-			bcopy(&dsitrap, (void *)EXC_DSI, (size_t)&dsisize);
+			memcpy((void *)EXC_DSI, &dsitrap, (size_t)&dsisize);
 			break;
 		case EXC_ISI:
-			bcopy(&isitrap, (void *)EXC_ISI, (size_t)&isisize);
+			memcpy((void *)EXC_ISI, &isitrap, (size_t)&isisize);
 			break;
 		case EXC_ITMISS:
-			bcopy(&tlbimiss4xx, (void *)EXC_ITMISS, 
+			memcpy((void *)EXC_ITMISS, &tlbimiss4xx,
 				(size_t)&tlbim4size);
 			break;
 		case EXC_DTMISS:
-			bcopy(&tlbdmiss4xx, (void *)EXC_DTMISS, 
+			memcpy((void *)EXC_DTMISS, &tlbdmiss4xx,
 				(size_t)&tlbdm4size);
 			break;
 		/* 
@@ -234,24 +234,24 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 		 * are spaced by 0x10 bytes only.. 
 		 */
 		case EXC_PIT:	
-			bcopy(&pitfitwdog, (void *)EXC_PIT, 
+			memcpy((void *)EXC_PIT, &pitfitwdog,
 				(size_t)&pitfitwdogsize);
 			break;
 		case EXC_DEBUG:
-			bcopy(&debugtrap, (void *)EXC_DEBUG, 
+			memcpy((void *)EXC_DEBUG, &debugtrap,
 				(size_t)&debugsize);
 			break;
 		case EXC_DTMISS|EXC_ALI:
                         /* PPC405GP Rev D errata item 51 */	
-			bcopy(&errata51handler, (void *)(EXC_DTMISS|EXC_ALI), 
+			memcpy((void *)(EXC_DTMISS|EXC_ALI), &errata51handler,
 				(size_t)&errata51size);
 			break;
 #if defined(DDB) || defined(IPKDB)
 		case EXC_PGM:
 #if defined(DDB)
-			bcopy(&ddblow, (void *)exc, (size_t)&ddbsize);
+			memcpy((void *)exc, &ddblow, (size_t)&ddbsize);
 #else
-			bcopy(&ipkdblow, (void *)exc, (size_t)&ipkdbsize);
+			memcpy((void *)exc, &ipkdblow, (size_t)&ipkdbsize);
 #endif
 			break;
 #endif /* DDB || IPKDB */
@@ -332,7 +332,7 @@ install_extint(void (*handler)(void))
 	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(omsr), "=r"(msr) : "K"((u_short)~PSL_EE));
 	extint_call = (extint_call & 0xfc000003) | offset;
-	bcopy(&extint, (void *)EXC_EXI, (size_t)&extsize);
+	memcpy((void *)EXC_EXI, &extint, (size_t)&extsize);
 	__syncicache((void *)&extint_call, sizeof extint_call);
 	__syncicache((void *)EXC_EXI, (int)&extsize);
 	asm volatile ("mtmsr %0" :: "r"(omsr));

@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.29 2001/05/01 05:16:44 thorpej Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.29.2.1 2001/08/03 04:10:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.29 2001/05/01 05:16:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.29.2.1 2001/08/03 04:10:39 lukem Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.29 2001/05/01 05:16:44 thorpej Exp $"
 typedef void (*ipifunc_t)(struct cpu_info *, struct trapframe *);
 
 void	alpha_ipi_halt(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_tbia(struct cpu_info *, struct trapframe *);
-void	alpha_ipi_tbiap(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_imb(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_ast(struct cpu_info *, struct trapframe *);
 void	alpha_ipi_synch_fpu(struct cpu_info *, struct trapframe *);
@@ -79,8 +77,6 @@ void	alpha_ipi_pause(struct cpu_info *, struct trapframe *);
 ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 	alpha_ipi_halt,
 	microset,
-	alpha_ipi_tbia,
-	alpha_ipi_tbiap,
 	pmap_do_tlb_shootdown,
 	alpha_ipi_imb,
 	alpha_ipi_ast,
@@ -93,8 +89,6 @@ ipifunc_t ipifuncs[ALPHA_NIPIS] = {
 const char *ipinames[ALPHA_NIPIS] = {
 	"halt ipi",
 	"microset ipi",
-	"tbia ipi",
-	"tbiap ipi",
 	"shootdown ipi",
 	"imb ipi",
 	"ast ipi",
@@ -255,30 +249,6 @@ alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 
 	prom_halt(boothowto & RB_HALT);
 	/* NOTREACHED */
-}
-
-void
-alpha_ipi_tbia(struct cpu_info *ci, struct trapframe *framep)
-{
-
-	/* If we're doing a TBIA, we don't need to do a TBIAP or a SHOOTDOWN. */
-	atomic_clearbits_ulong(&ci->ci_ipis,
-	    ALPHA_IPI_TBIAP|ALPHA_IPI_SHOOTDOWN);
-	
-	pmap_tlb_shootdown_q_drain(ci->ci_cpuid, TRUE);
-
-	ALPHA_TBIA();
-}
-
-void
-alpha_ipi_tbiap(struct cpu_info *ci, struct trapframe *framep)
-{
-
-	/* Can't clear SHOOTDOWN here; might have PG_ASM mappings. */
-
-	pmap_tlb_shootdown_q_drain(ci->ci_cpuid, FALSE);
-
-	ALPHA_TBIAP();
 }
 
 void

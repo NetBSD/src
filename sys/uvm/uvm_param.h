@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_param.h,v 1.10 2001/05/25 04:06:16 chs Exp $	*/
+/*	$NetBSD: uvm_param.h,v 1.10.2.1 2001/08/03 04:14:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -112,8 +112,10 @@ typedef int	boolean_t;
 #define	VM_ANONMIN	6
 #define	VM_VTEXTMIN	7
 #define	VM_VNODEMIN	8
+#define	VM_MAXSLP	9
+#define	VM_USPACE	10
 
-#define	VM_MAXID	9		/* number of valid vm ids */
+#define	VM_MAXID	11		/* number of valid vm ids */
 
 #define	CTL_VM_NAMES { \
 	{ 0, 0 }, \
@@ -125,6 +127,8 @@ typedef int	boolean_t;
 	{ "anonmin", CTLTYPE_INT }, \
 	{ "vtextmin", CTLTYPE_INT }, \
 	{ "vnodemin", CTLTYPE_INT }, \
+	{ "maxslp", CTLTYPE_INT }, \
+	{ "uspace", CTLTYPE_INT }, \
 }
 
 #ifndef ASSEMBLER

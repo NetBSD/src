@@ -1,4 +1,4 @@
-/*	$NetBSD: config_hook.h,v 1.1 2001/01/28 02:52:17 uch Exp $	*/
+/*	$NetBSD: config_hook.h,v 1.1.6.1 2001/08/03 04:11:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -261,10 +261,6 @@ int	config_hook_call __P((int type, long id, void *msg));
 #define CHARGE		CONFIG_HOOK_CHARGE
 #endif /* CONFIG_HOOK_DEFINE_NICKNAME */
 
-#define CONFIG_HOOK_MAXVALUE	1	/* max value, check in this file */
-#define CONFIG_HOOK_VALUEP(p)	((int)(p)>= 0 && (int)(p)<= CONFIG_HOOK_MAXVALUE)
-#define CONFIG_HOOK_PTRP(p)	(!CONFIG_HOOK_VALUEP(p))
-
 /*
  * POWERCONTROL value
  */
@@ -298,12 +294,23 @@ int	config_hook_call __P((int type, long id, void *msg));
  * CONFIG_HOOK_BATTERY event value
  */
 #define CONFIG_HOOK_BATT_CRITICAL	0
-#define CONFIG_HOOK_BATT_20P		1
-#define CONFIG_HOOK_BATT_LOW		2
-#define CONFIG_HOOK_BATT_50P		3
-#define CONFIG_HOOK_BATT_HIGH		4
-#define CONFIG_HOOK_BATT_80P		5
-#define CONFIG_HOOK_BATT_100P		6
-#define CONFIG_HOOK_BATT_UNKNOWN	7
-#define CONFIG_HOOK_BATT_NO_SYSTEM_BATTERY	8
+#define CONFIG_HOOK_BATT_10P		1
+#define CONFIG_HOOK_BATT_20P		2
+#define CONFIG_HOOK_BATT_30P		3
+#define CONFIG_HOOK_BATT_LOW		4
+#define CONFIG_HOOK_BATT_40P		5
+#define CONFIG_HOOK_BATT_50P		6
+#define CONFIG_HOOK_BATT_60P		7
+#define CONFIG_HOOK_BATT_70P		8
+#define CONFIG_HOOK_BATT_HIGH		9
+#define CONFIG_HOOK_BATT_80P		10
+#define CONFIG_HOOK_BATT_90P		11
+#define CONFIG_HOOK_BATT_100P		12
+#define CONFIG_HOOK_BATT_UNKNOWN	13
+#define CONFIG_HOOK_BATT_NO_SYSTEM_BATTERY	14
+
+#define CONFIG_HOOK_MAXVALUE	14	/* max value, check in this file */
+#define CONFIG_HOOK_VALUEP(p)	((int)(p)>= 0 && (int)(p)<= CONFIG_HOOK_MAXVALUE)
+#define CONFIG_HOOK_PTRP(p)	(!CONFIG_HOOK_VALUEP(p))
+
 #endif /* _CONFIG_HOOK_H_ */

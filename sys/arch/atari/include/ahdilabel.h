@@ -1,4 +1,4 @@
-/*	$NetBSD: ahdilabel.h,v 1.2 2001/01/07 21:05:16 leo Exp $	*/
+/*	$NetBSD: ahdilabel.h,v 1.2.4.1 2001/08/03 04:11:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -61,7 +61,7 @@
 #define	AHDI_MAXRPD	4		/* max. # of partition descriptors */
 					/* in an AHDI bootblock (aka root) */
 #define	AHDI_MAXARPD	2		/* max. # of partition descriptors */
-					/* in an AHDI auxilary root sector */
+					/* in an AHDI auxiliary root sector */
 struct ahdi_part {
 	u_int8_t	ap_flg;		/* bit 0 is in-use flag            */
 	u_int8_t	ap_id[3];	/* id: GEM, BGM, XGM, UNX, MIX     */
@@ -86,7 +86,7 @@ struct ahdi_root {
 struct ahdi_ptbl {
 	struct cpu_disklabel	*at_cdl;
 	u_int			at_hdsize;   /* size of volume in blocks   */
-	u_int			at_nroots;   /* # of auxilary root sectors */
+	u_int			at_nroots;   /* # of auxiliary root sectors */
 	u_int			at_nparts;   /* # of AHDI partitions       */
 	struct ahdi_part	at_parts[AHDI_MAXPARTS];
 };

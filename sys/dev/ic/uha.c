@@ -1,4 +1,4 @@
-/*	$NetBSD: uha.c,v 1.28 2001/07/07 16:13:51 thorpej Exp $	*/
+/*	$NetBSD: uha.c,v 1.28.2.1 2001/08/03 04:13:06 lukem Exp $	*/
 
 #undef UHADEBUG
 #ifdef DDB
@@ -493,7 +493,9 @@ uha_scsipi_request(chan, req, arg)
 				error = bus_dmamap_load_uio(dmat,
 				    mscp->dmamap_xfer, (struct uio *)xs->data,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			} else
 #endif /*TFS */
 			{
@@ -501,7 +503,9 @@ uha_scsipi_request(chan, req, arg)
 				    mscp->dmamap_xfer, xs->data, xs->datalen,
 				    NULL,
 				    ((flags & XS_CTL_NOSLEEP) ? BUS_DMA_NOWAIT :
-				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING);
+				     BUS_DMA_WAITOK) | BUS_DMA_STREAMING |
+				     ((flags & XS_CTL_DATA_IN) ? BUS_DMA_READ :
+				      BUS_DMA_WRITE));
 			}
 
 			switch (error) {

@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.7 2001/07/09 05:19:05 toshii Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.7.2.1 2001/08/03 04:11:35 lukem Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -134,7 +134,6 @@ sacpcic_attach(parent, self, aux)
 	for(i = 0; i < 2; i++) {
 		sc->sc_socket[i].sc = (struct sapcic_softc *)sc;
 		sc->sc_socket[i].socket = i;
-		sc->sc_socket[i].saip_sc = NULL;
 		sc->sc_socket[i].pcictag_cookie = psc;
 		sc->sc_socket[i].pcictag = &sacpcic_functions;
 		sc->sc_socket[i].event_thread = NULL;

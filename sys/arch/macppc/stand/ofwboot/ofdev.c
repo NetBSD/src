@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.5 2000/11/14 11:25:35 tsubai Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.5.4.1 2001/08/03 04:11:58 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -301,7 +301,7 @@ devopen(of, name, file)
 #endif
 	if ((handle = OF_open(fname)) == -1)
 		return ENXIO;
-	bzero(&ofdev, sizeof ofdev);
+	memset(&ofdev, 0, sizeof ofdev);
 	ofdev.handle = handle;
 	ofdev.dmabuf = NULL;
 	OF_call_method("dma-alloc", handle, 1, 1, MAXPHYS, &ofdev.dmabuf);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.39 2001/07/07 16:46:35 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.39.2.1 2001/08/03 04:13:16 lukem Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -760,7 +760,7 @@ static int ti_newbuf_std(sc, i, m, dmamap)
 
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
 				mtod(m_new, caddr_t), m_new->m_len, NULL,
-				BUS_DMA_NOWAIT)) != 0) {
+				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: can't load recv map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
 			return (ENOMEM);
@@ -829,7 +829,7 @@ static int ti_newbuf_mini(sc, i, m, dmamap)
 
 		if ((error = bus_dmamap_load(sc->sc_dmat, dmamap,
 				mtod(m_new, caddr_t), m_new->m_len, NULL,
-				BUS_DMA_NOWAIT)) != 0) {
+				BUS_DMA_READ|BUS_DMA_NOWAIT)) != 0) {
 			printf("%s: can't load recv map, error = %d\n",
 			       sc->sc_dev.dv_xname, error);
 			return (ENOMEM);
@@ -2285,7 +2285,8 @@ static int ti_encap_tigon1(sc, m_head, txidx)
 	}
 	dmamap = dma->dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head, 0);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head,
+	    BUS_DMA_WRITE);
 	if (error) {
 		struct mbuf *m;
 		int i = 0;
@@ -2391,7 +2392,8 @@ static int ti_encap_tigon2(sc, m_head, txidx)
 	}
 	dmamap = dma->dmamap;
 
-	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head, 0);
+	error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m_head,
+	    BUS_DMA_WRITE);
 	if (error) {
 		struct mbuf *m;
 		int i = 0;

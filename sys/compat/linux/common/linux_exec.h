@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.15 2001/06/18 02:00:53 christos Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.15.2.1 2001/08/03 04:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -93,8 +93,8 @@ extern const struct emul emul_linux;
 
 void linux_setregs __P((struct proc *, struct exec_package *, u_long));
 int exec_linux_aout_makecmds __P((struct proc *, struct exec_package *));
-void *linux_aout_copyargs __P((struct exec_package *,
-    struct ps_strings *, void *, void *));
+int linux_aout_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 void linux_trapsignal __P((struct proc *, int, u_long));
 
 #ifdef EXEC_ELF32

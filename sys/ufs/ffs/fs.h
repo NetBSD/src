@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.13 2001/02/23 02:25:10 eeh Exp $	*/
+/*	$NetBSD: fs.h,v 1.13.6.1 2001/08/03 04:14:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,11 @@
  *
  *	@(#)fs.h	8.13 (Berkeley) 3/21/95
  */
+
+#ifndef	_UFS_FFS_FS_H_
+#define	_UFS_FFS_FS_H_
+
+#include <ufs/ufs/dinode.h>
 
 /*
  * Each disk drive contains some number of file systems.
@@ -198,8 +203,8 @@ struct fs {
 	int32_t	 fs_npsect;		/* # sectors/track including spares */
 	int32_t	 fs_interleave;		/* hardware sector interleave */
 	int32_t	 fs_trackskew;		/* sector 0 skew, per track */
-	int32_t	 fs_headswitch;		/* head switch time, usec */
-	int32_t	 fs_trkseek;		/* track-to-track seek, usec */
+	int32_t	 fs_headswitch;		/* head switch time, usec (UNUSED) */
+	int32_t	 fs_trkseek;		/* track-to-track seek, usec (UNUSED) */
 /* sizes determined by number of cylinder groups and their sizes */
 	ufs_daddr_t  fs_csaddr;		/* blk addr of cyl grp summary area */
 	int32_t	 fs_cssize;		/* size of cyl grp summary area */
@@ -236,7 +241,7 @@ struct fs {
 	u_int64_t fs_maxfilesize;	/* maximum representable file size */
 	int64_t	 fs_qbmask;		/* ~fs_bmask - for use with quad size */
 	int64_t	 fs_qfmask;		/* ~fs_fmask - for use with quad size */
-	int32_t	 fs_state;		/* validate fs_clean field */
+	int32_t	 fs_state;		/* validate fs_clean field (UNUSED) */
 	int32_t	 fs_postblformat;	/* format of positional layout tables */
 	int32_t	 fs_nrpos;		/* number of rotational positions */
 	int32_t	 fs_postbloff;		/* (u_int16) rotation block list head */
@@ -530,3 +535,5 @@ struct ocg {
  * Number of indirects in a file system block.
  */
 #define	NINDIR(fs)	((fs)->fs_nindir)
+
+#endif /* !_UFS_FFS_FS_H_ */

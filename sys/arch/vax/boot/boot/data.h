@@ -1,4 +1,4 @@
-/*	$NetBSD: data.h,v 1.2 2000/05/20 13:35:07 ragge Exp $ */
+/*	$NetBSD: data.h,v 1.2.8.1 2001/08/03 04:12:35 lukem Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -64,7 +64,7 @@ struct bqo {
 	long  umr_tmpl;       /*  4  UNIBUS map register template */
 	/* offset: 60 */
 	/*
-	 * the rest is unknown / unneccessary ...
+	 * the rest is unknown / unnecessary ...
 	 */
 	long  xxx[6];		/* 24 --	total: 84 bytes */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2001/05/30 15:24:29 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3.2.1 2001/08/03 04:11:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -553,13 +553,13 @@ initSH3(pc)
 	 *	process0 stack, page table area
 	 */
 	p = (char *)avail + (1 + UPAGES) * NBPG + NBPG * (1 + nkpde); /* XXX */
-	bzero(edata, p - edata);
+	memset(edata, 0, p - edata);
 
 	/*
 	 * install trap handler
 	 */
-	bcopy(MonTrap100, Trap100Vec, MonTrap100_end - MonTrap100);
-	bcopy(MonTrap600, Trap600Vec, MonTrap600_end - MonTrap600);
+	memcpy(Trap100Vec, MonTrap100, MonTrap100_end - MonTrap100);
+	memcpy(Trap600Vec, MonTrap600, MonTrap600_end - MonTrap600);
 	__asm ("ldc %0, vbr" :: "r"(VBRINIT));
 
 /*
@@ -602,7 +602,7 @@ initSH3(pc)
 	/* Set TLB miss handler */
 	p = tlbmisshandler_stub;
 	x = tlbmisshandler_stub_end - p;
-	bcopy(p, TLBVECTOR, x);
+	memcpy(TLBVECTOR, p, x);
 
 	/*
 	 * Activate MMU

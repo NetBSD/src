@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.3 1999/02/04 15:41:15 tsubai Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.3.22.1 2001/08/03 04:11:58 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -89,7 +89,7 @@ netif_open(machdep_hint)
 		errno = ENFILE;
 		return -1;
 	}
-	bzero(io, sizeof *io);
+	memset(io, 0, sizeof *io);
 
 	netif_of.nif_devdata = op;
 	io->io_netif = &netif_of;
@@ -174,7 +174,7 @@ netif_put(desc, pkt, len)
 	}
 
 	if (op->dmabuf) {
-		bcopy(pkt, op->dmabuf, sendlen);
+		memcpy(op->dmabuf, pkt, sendlen);
 		pkt = op->dmabuf;
 	}
 	rv = OF_write(op->handle, pkt, sendlen);

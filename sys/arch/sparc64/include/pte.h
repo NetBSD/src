@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 2001/06/21 00:24:22 eeh Exp $ */
+/*	$NetBSD: pte.h,v 1.6.2.1 2001/08/03 04:12:28 lukem Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -77,6 +77,8 @@
  *  we had a 64-bit compiler w/64-bit longs.  Otherwise it's
  *  a real pain to do this in C.
  */
+#if 0
+/* We don't use bitfeilds anyway. */
 struct sun4u_tag_fields {
 	u_int64_t	tag_g:1,	/* global flag */
 		tag_ctxt:15,	/* context for mapping */
@@ -109,6 +111,12 @@ struct sun4u_tte {
 	union sun4u_tag tag;
 	union sun4u_data data;
 };
+#else
+struct sun4u_tte {
+	int64_t tag;
+	int64_t data;
+};
+#endif
 typedef struct sun4u_tte pte_t;
 
 /* Assembly routine to flush a mapping */

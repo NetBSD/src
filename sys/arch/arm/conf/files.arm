@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.33 2001/07/08 23:20:04 rjs Exp $
+#	$NetBSD: files.arm,v 1.33.2.1 2001/08/03 04:11:00 lukem Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -7,8 +7,8 @@ defopt	ARM32
 defopt	opt_progmode.h	PROG26 PROG32
 # CPU types
 defopt	opt_cputypes.h	CPU_ARM2 CPU_ARM250 CPU_ARM3 : PROG26
-defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM7500 CPU_ARM8 
-			CPU_SA110 CPU_SA1100 CPU_SA1110 : PROG32
+defopt	opt_cputypes.h	CPU_ARM6 CPU_ARM7 CPU_ARM7TDMI CPU_ARM8 
+			CPU_SA110 CPU_SA1100 CPU_SA1110 CPU_XSCALE : PROG32
 
 # Floating point emulator
 defopt	ARMFPE
@@ -58,11 +58,25 @@ file	arch/arm/arm/undefined.c
 file	arch/arm/arm/vm_machdep_arm.c
 
 # files common to arm32 implementations
+file	arch/arm/arm32/arm32_machdep.c		arm32
 file	arch/arm/arm32/ast.c			arm32
+file	arch/arm/arm32/bus_dma.c		arm32
 file	arch/arm/arm32/cpu.c			arm32 & cpu
+file	arch/arm/arm32/cpuswitch.S		arm32
+file	arch/arm/arm32/exception.S		arm32
+file	arch/arm/arm32/fault.c			arm32
+file	arch/arm/arm32/fusu.S			arm32
+file	arch/arm/arm32/intr.c			arm32
+file	arch/arm/arm32/mem.c			arm32
 file	arch/arm/arm32/pmap.c			arm32
+file	arch/arm/arm32/procfs_machdep.c		arm32 & procfs
+file	arch/arm/arm32/setcpsr.S		arm32
+file	arch/arm/arm32/setstack.S		arm32
+file	arch/arm/arm32/spl.S			arm32
+file	arch/arm/arm32/stubs.c			arm32
 file	arch/arm/arm32/syscall.c		arm32
 file	arch/arm/arm32/sys_machdep.c		arm32
+file	arch/arm/arm32/vm_machdep.c		arm32
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.15 2000/02/11 21:42:52 leo Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.15.8.1 2001/08/03 04:11:17 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -131,6 +131,7 @@ struct device	*pdp;
 struct cfdata	*cfp;
 void		*auxp;
 {
+	static int	did_consinit = 0;
 	static int	must_probe = 1;
 	grf_auxp_t	*grf_auxp = auxp;
 
@@ -156,22 +157,23 @@ void		*auxp;
 
 	if (atari_realconfig == 0) {
 		/*
-		 * Early console init. Only match unit 0.
+		 * Early console init. Only match first unit.
 		 */
-		if (cfp->cf_unit != 0)
+		if (did_consinit)
 			return(0);
-		if (viewopen(0, 0, 0, NULL))
+		if (viewopen(cfp->cf_unit, 0, 0, NULL))
 			return(0);
 		cfdata_grf = cfp;
+		did_consinit = 1;
 		return (1);
 	}
 
 	/*
 	 * Normal config. When we are called directly from the grfbus,
-	 * we only match unit 0. The attach function will call us for
+	 * we only match the first unit. The attach function will call us for
 	 * the other configured units.
 	 */
-	if (grf_auxp->from_bus_match && (cfp->cf_unit != 0))
+	if (grf_auxp->from_bus_match && (did_consinit > 1))
 		return (0);
 
 	if (!grf_auxp->from_bus_match && (grf_auxp->unit != cfp->cf_unit))
@@ -180,10 +182,11 @@ void		*auxp;
 	/*
 	 * Final constraint: each grf needs a view....
 	 */
-	if((cfdata_grf == NULL) || (cfp->cf_unit != 0)) {
+	if((cfdata_grf == NULL) || (did_consinit > 1)) {
 	    if(viewopen(cfp->cf_unit, 0, 0, NULL))
 		return(0);
 	}
+	did_consinit = 2;
 	return(1);
 }
 
@@ -197,6 +200,7 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	static struct grf_softc		congrf;
+	static int			first_attach = 1;
 	       grf_auxp_t		*grf_bus_auxp = auxp;
 	       grf_auxp_t		grf_auxp;
 	       struct grf_softc		*gp;
@@ -213,9 +217,9 @@ void		*auxp;
 	 * Handle exeption case: early console init
 	 */
 	if(dp == NULL) {
-		congrf.g_unit    = 0;
+		congrf.g_unit    = cfdata_grf->cf_unit;
+		congrf.g_grfdev  = makedev(maj, congrf.g_unit);
 		congrf.g_itedev  = (dev_t)-1;
-		congrf.g_grfdev  = makedev(maj, 0);
 		congrf.g_flags   = GF_ALIVE;
 		congrf.g_mode    = grf_mode;
 		congrf.g_conpri  = grfcc_cnprobe();
@@ -232,7 +236,7 @@ void		*auxp;
 	gp->g_unit = gp->g_device.dv_unit;
 	grfsp[gp->g_unit] = gp;
 
-	if((cfdata_grf != NULL) && (gp->g_unit == 0)) {
+	if((cfdata_grf != NULL) && (gp->g_unit == congrf.g_unit)) {
 		/*
 		 * We inited earlier just copy the info, take care
 		 * not to copy the device struct though.
@@ -263,9 +267,10 @@ void		*auxp;
 	config_found(dp, gp, grfccprint);
 
 	/*
-	 * If attaching unit 0, go ahead and 'find' the rest of us
+	 * If attaching the first unit, go ahead and 'find' the rest of us
 	 */
-	if (gp->g_unit == 0) {
+	if (first_attach) {
+		first_attach = 0;
 		grf_auxp.from_bus_match = 0;
 		for (grf_auxp.unit=1; grf_auxp.unit < NGRFCC; grf_auxp.unit++) {
 		    config_found(pdp, (void*)&grf_auxp, grf_bus_auxp->busprint);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.49 2001/06/12 15:17:19 wiz Exp $ */
+/*	$NetBSD: scn.c,v 1.49.2.1 2001/08/03 04:12:11 lukem Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -1506,7 +1506,7 @@ scnrxintr(arg)
  * (hence the LBL notice on top of this file), DOES NOT require
  * interlocking with interrupt levels!
  *
- * The 44bsd sparc/zs driver reads the ring buffer from a seperate
+ * The 44bsd sparc/zs driver reads the ring buffer from a separate
  * zssoftint, while the SunOS 4.x zs driver appears to use
  * timeout()'s.  timeouts seem to be too slow to deal with high data
  * rates.  I know, I tried them.

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.1 2001/06/13 06:01:48 simonb Exp $	*/
+/*	$NetBSD: pmap.c,v 1.1.2.1 2001/08/03 04:12:13 lukem Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -314,7 +314,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	/*
 	 * Initialize kernel page table.
 	 */
-	bzero(kernmap, KERNMAP_SIZE*sizeof(struct pte));
+	memset(kernmap, 0, KERNMAP_SIZE*sizeof(struct pte));
 	for (i = 0; i < STSZ; i++) {
 		pmap_kernel()->pm_ptbl[i] = (u_int *)(kernmap + i*NBPG);
 	}
@@ -391,8 +391,8 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 		 */
 		if (sz == 0) {
 		empty:
-			bcopy(mp + 1, mp,
-			      (cnt - (mp - avail)) * sizeof *mp);
+			memmove(mp, mp + 1,
+				(cnt - (mp - avail)) * sizeof *mp);
 			cnt--;
 			mp--;
 			continue;
@@ -405,7 +405,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 			if (s < mp1->start)
 				break;
 		if (mp1 < mp) {
-			bcopy(mp1, mp1 + 1, (char *)mp - (char *)mp1);
+			memmove(mp1 + 1, mp1, (char *)mp - (char *)mp1);
 			mp1->start = s;
 			mp1->size = sz;
 		} else {
@@ -434,7 +434,7 @@ pmap_bootstrap(u_int kernelstart, u_int kernelend)
 	msgbuf_paddr = mp->start + mp->size - sz;
 	mp->size -= sz;
 	if (mp->size <= 0)
-		bcopy(mp + 1, mp, (cnt - (mp - avail)) * sizeof *mp);
+		memmove(mp, mp + 1, (cnt - (mp - avail)) * sizeof *mp);
 #endif
 
 	printf("Loading pages\n");
@@ -505,7 +505,7 @@ pmap_init(void)
 	for (i = npgs; --i >= 0;)
 		pv++->pv_pm = NULL;
 	pmap_attrib = (char *)pv;
-	bzero(pv, npgs);
+	memset(pv, 0, npgs);
 
 	pv = pv_table;
 	attr = pmap_attrib;
@@ -553,7 +553,7 @@ pmap_create(void)
 	struct pmap *pm;
 
 	pm = (struct pmap *)malloc(sizeof *pm, M_VMPMAP, M_WAITOK);
-	bzero((caddr_t)pm, sizeof *pm);
+	memset((caddr_t)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	return pm;
 }
@@ -658,7 +658,7 @@ pmap_zero_page(paddr_t pa)
 {
 
 #ifdef NOCACHE
-	bzero((caddr_t)pa, NBPG);
+	memset((caddr_t)pa, 0, NBPG);
 #else
 	int i;
 
@@ -676,7 +676,7 @@ void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 
-	bcopy((caddr_t)src, (caddr_t)dst, NBPG);
+	memcpy((caddr_t)dst, (caddr_t)src, NBPG);
 	dcache_flush_page(dst);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.44 2000/12/01 13:49:35 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.44.4.1 2001/08/03 04:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -66,40 +66,41 @@
 #include <compat/linux/linux_syscallargs.h>
 #include <compat/linux/linux_syscall.h>
 
-void *linux_aout_copyargs __P((struct exec_package *,
-    struct ps_strings *, void *, void *));
+int linux_aout_copyargs __P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 
 static int exec_linux_aout_prep_zmagic __P((struct proc *,
-	struct exec_package *));
+    struct exec_package *));
 static int exec_linux_aout_prep_nmagic __P((struct proc *,
-	struct exec_package *));
+    struct exec_package *));
 static int exec_linux_aout_prep_omagic __P((struct proc *,
-	struct exec_package *));
+    struct exec_package *));
 static int exec_linux_aout_prep_qmagic __P((struct proc *,
-	struct exec_package *));
+    struct exec_package *));
 
-void *
-linux_aout_copyargs(pack, arginfo, stack, argp)
+int
+linux_aout_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
-	char **cpp = stack;
-	char **stk = stack;
+	char **cpp = (char **)*stackp;
+	char **stk = (char **)*stackp;
 	char *dp, *sp;
 	size_t len;
 	void *nullp = NULL;
 	int argc = arginfo->ps_nargvstr;
 	int envc = arginfo->ps_nenvstr;
+	int error;
 
-	if (copyout(&argc, cpp++, sizeof(argc)))
-		return NULL;
+	if ((error = copyout(&argc, cpp++, sizeof(argc))) != 0)
+		return error;
 
 	/* leave room for envp and argv */
 	cpp += 2;
-	if (copyout(&cpp, &stk[1], sizeof (cpp)))
-		return NULL;
+	if ((error = copyout(&cpp, &stk[1], sizeof (cpp))) != 0)
+		return error;
 
 	dp = (char *) (cpp + argc + envc + 2);
 	sp = argp;
@@ -108,27 +109,28 @@ linux_aout_copyargs(pack, arginfo, stack, argp)
 	arginfo->ps_argvstr = cpp; /* remember location of argv for later */
 
 	for (; --argc >= 0; sp += len, dp += len)
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+			return error;
 
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
 
-	if (copyout(&cpp, &stk[2], sizeof (cpp)))
-		return NULL;
+	if ((error = copyout(&cpp, &stk[2], sizeof (cpp))) != 0)
+		return error;
 
 	arginfo->ps_envstr = cpp; /* remember location of envp for later */
 
 	for (; --envc >= 0; sp += len, dp += len)
-		if (copyout(&dp, cpp++, sizeof(dp)) ||
-		    copyoutstr(sp, dp, ARG_MAX, &len))
-			return NULL;
+		if ((error = copyout(&dp, cpp++, sizeof(dp))) != 0 ||
+		    (error = copyoutstr(sp, dp, ARG_MAX, &len)) != 0)
+			return error;
 
-	if (copyout(&nullp, cpp++, sizeof(nullp)))
-		return NULL;
+	if ((error = copyout(&nullp, cpp++, sizeof(nullp))) != 0)
+		return error;
 
-	return cpp;
+	*stackp = (char *)cpp;
+	return 0;
 }
 
 int

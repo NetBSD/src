@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lmc.c,v 1.12 2001/07/07 16:46:35 thorpej Exp $	*/
+/*	$NetBSD: if_lmc.c,v 1.12.2.1 2001/08/03 04:13:15 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -466,8 +466,18 @@ lmc_watchdog(int unit)
 	if (link_status != LMC_LINK_DOWN && !ostatus) {
 		printf(LMC_PRINTF_FMT ": physical link up\n",
 		       LMC_PRINTF_ARGS);
-		if (sc->lmc_flags & LMC_IFUP)
+		if (sc->lmc_flags & LMC_IFUP) {
 			lmc_ifup(sc);
+#if 0 && (defined(__NetBSD__) || defined(__FreeBSD__))
+			if (sc->lmc_if.if_flags & IFF_UP) {
+				struct sppp *sp = &sc->lmc_sppp;
+
+				/* re-connect LCP */
+				(sp->pp_down)(sp);
+				(sp->pp_up)(sp);
+			}
+#endif
+		}
 		sc->lmc_flags |= LMC_MODEMOK;
 		if (sc->lmc_cardtype == LMC_CARDTYPE_DS3 ||
 		    sc->lmc_cardtype == LMC_CARDTYPE_T1)
@@ -553,6 +563,16 @@ lmc_ifup(lmc_softc_t * const sc)
 static void
 lmc_ifdown(lmc_softc_t * const sc)
 {
+
+#if 0 && (defined(__NetBSD__) || defined(__FreeBSD__))
+	if (sc->lmc_if.if_flags & IFF_UP) {
+		struct sppp *sp = &sc->lmc_sppp;
+
+		/* disconnect LCP */
+		(sp->pp_down)(sp);
+	}
+#endif
+
 	sc->lmc_if.if_timer = 0;
 	sc->lmc_flags &= ~LMC_IFUP;
 
@@ -1258,6 +1278,8 @@ lmc_ifstart(struct ifnet * const ifp)
 	if (sc->lmc_flags & LMC_IFUP) {
 		while (sppp_isempty(ifp) == 0) {
 			m = sppp_dequeue(ifp);
+			if (!m)
+				break;
 			if ((m = lmc_txput(sc, m)) != NULL) {
 				IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
 				break;
@@ -1275,8 +1297,9 @@ lmc_ifstart_one(struct ifnet * const ifp)
 
 	if ((sc->lmc_flags & LMC_IFUP) && (sppp_isempty(ifp) == 0)) {
 		m = sppp_dequeue(ifp);
-		if ((m = lmc_txput(sc, m)) != NULL) {
-			IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
+		if (m) {
+			if ((m = lmc_txput(sc, m)) != NULL)
+				IF_PREPEND(&((struct sppp *)ifp)->pp_fastq, m);
 		}
 		LMC_CSR_WRITE(sc, csr_txpoll, 1);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.8 2001/06/12 17:23:13 tsubai Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8.2.1 2001/08/03 04:12:10 lukem Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -173,7 +173,7 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 			case MBR_PTYPE_EXT:
 				if (*pnpart < MAXPARTITIONS) {
 					pp = lp->d_partitions + *pnpart;
-					bzero(pp, sizeof *pp);
+					memset(pp, 0, sizeof *pp);
 					pp->p_size = get_long(&mp->mbrp_size);
 					pp->p_offset = off + get_long(&mp->mbrp_start);
 					++*pnpart;
@@ -197,7 +197,7 @@ mbr_to_label(dev, strat, bno, lp, pnpart, osdep, off)
 			default:
 				if (*pnpart < MAXPARTITIONS) {
 					pp = lp->d_partitions + *pnpart;
-					bzero(pp, sizeof *pp);
+					memset(pp, 0, sizeof *pp);
 					pp->p_size = get_long(&mp->mbrp_size);
 					pp->p_offset = off + get_long(&mp->mbrp_start);
 					++*pnpart;
@@ -317,7 +317,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags |= B_WRITE;
 
-	bcopy((caddr_t)lp, (caddr_t)bp->b_data, sizeof *lp);
+	memcpy((caddr_t)bp->b_data, (caddr_t)lp, sizeof *lp);
 
 	(*strat)(bp);
 	error = biowait(bp);

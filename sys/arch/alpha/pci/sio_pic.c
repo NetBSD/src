@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.29 2000/12/18 21:49:08 thorpej Exp $ */
+/* $NetBSD: sio_pic.c,v 1.29.4.1 2001/08/03 04:10:48 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.29 2000/12/18 21:49:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.29.4.1 2001/08/03 04:10:48 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -484,9 +484,12 @@ sio_intr_establish(v, irq, type, level, fn, arg)
 	cookie = alpha_shared_intr_establish(sio_intr, irq, type, level, fn,
 	    arg, "isa irq");
 
-	if (cookie)
-		sio_setirqstat(irq, alpha_shared_intr_isactive(sio_intr, irq),
+	if (cookie != NULL &&
+	    alpha_shared_intr_firstactive(sio_intr, irq)) {
+		scb_set(0x800 + SCB_IDXTOVEC(irq), sio_iointr, NULL);
+		sio_setirqstat(irq, 1,
 		    alpha_shared_intr_get_sharetype(sio_intr, irq));
+	}
 
 	return (cookie);
 }
@@ -535,19 +538,23 @@ sio_intr_disestablish(v, cookie)
 		}
 		sio_setirqstat(irq, INITIALLY_ENABLED(irq), ist);
 		alpha_shared_intr_set_dfltsharetype(sio_intr, irq, ist);
+
+		/* Release our SCB vector. */
+		scb_free(0x800 + SCB_IDXTOVEC(irq));
 	}
 
 	splx(s);
 }
 
 void
-sio_iointr(framep, vec)
-	void *framep;
+sio_iointr(arg, vec)
+	void *arg;
 	unsigned long vec;
 {
 	int irq;
 
-	irq = (vec - 0x800) >> 4;
+	irq = SCB_VECTOIDX(vec - 0x800);
+
 #ifdef DIAGNOSTIC
 	if (irq > ICU_LEN || irq < 0)
 		panic("sio_iointr: irq out of range (%d)", irq);

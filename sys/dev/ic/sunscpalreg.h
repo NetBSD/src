@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalreg.h,v 1.1 2001/04/20 16:35:22 fredette Exp $	*/
+/*	$NetBSD: sunscpalreg.h,v 1.1.6.1 2001/08/03 04:13:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 #define	SUNSCPAL_ICR_WORD_MODE		0x0004	/* (rw) word mode */
 #define	SUNSCPAL_ICR_DMA_ENABLE		0x0002	/* (rw) enable DMA */
 #define	SUNSCPAL_ICR_INTERRUPT_ENABLE	0x0001	/* (rw) enable interrupts */
+
+#define	SUNSCPAL_ICR_BITS	"\20\1INTEN\2DMAEN\3WM\4PAREN\5RESET\6SEL\7BSY\10PAR\11INPUT\12CMD\13MSG\14REQ\15INTRQ\16ODD\17BUSERR\20PARERR"
 
 /*
  * This chip keeps its DMA count with its bits flipped.  Normally, you

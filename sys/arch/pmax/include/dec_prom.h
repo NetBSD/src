@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.15 2000/01/09 15:34:42 ad Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.15.8.1 2001/08/03 04:12:13 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 typedef struct {
 	int	pagesize;	/* system page size */
-	u_char	*bitmap;	/* bit for each page indicating safe to use */
+	u_char	bitmap[15360];	/* bit for each page indicating safe to use */
 } memmap;
 
 typedef struct {

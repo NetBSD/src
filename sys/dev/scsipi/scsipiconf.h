@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.54 2001/06/26 15:32:02 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.54.2.1 2001/08/03 04:13:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -293,6 +293,10 @@ struct scsipi_channel {
 
 	/* Completed (async) jobs. */
 	struct scsipi_xfer_queue chan_complete;
+
+	/* callback we may have to call from completion thread */
+	void (*chan_callback) __P((struct scsipi_channel *, void *));
+	void *chan_callback_arg;
 };
 
 /* chan_flags */
@@ -300,6 +304,7 @@ struct scsipi_channel {
 #define	SCSIPI_CHAN_OPENINGS	0x02	/* use chan_openings */
 #define	SCSIPI_CHAN_CANGROW	0x04	/* channel can grow resources */
 #define	SCSIPI_CHAN_NOSETTLE	0x08	/* don't wait for devices to settle */
+#define	SCSIPI_CHAN_CALLBACK	0x10	/* has to call chan_callback() */
 
 #define	SCSIPI_CHAN_MAX_PERIPH(chan)					\
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
@@ -641,6 +646,9 @@ void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
 char   *scsipi_decode_sense __P((void *, int));
 #endif
+int	scsipi_thread_call_callback __P((struct scsipi_channel *,
+	    void (*callback) __P((struct scsipi_channel *, void *)),
+	    void *));
 void	scsipi_async_event __P((struct scsipi_channel *,
 	    scsipi_async_event_t, void *));
 int	scsipi_do_ioctl __P((struct scsipi_periph *, dev_t, u_long, caddr_t,
@@ -658,6 +666,7 @@ void	scsipi_remove_periph __P((struct scsipi_channel *,
 	    struct scsipi_periph *));
 struct scsipi_periph *scsipi_lookup_periph __P((struct scsipi_channel *,
 	    int, int));
+int	scsipi_target_detach __P((struct scsipi_channel *, int, int, int));
 
 int	scsipi_adapter_addref __P((struct scsipi_adapter *));
 void	scsipi_adapter_delref __P((struct scsipi_adapter *));

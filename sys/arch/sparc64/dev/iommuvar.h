@@ -1,4 +1,4 @@
-/*	$NetBSD: iommuvar.h,v 1.6 2000/07/07 12:53:29 mrg Exp $	*/
+/*	$NetBSD: iommuvar.h,v 1.6.4.1 2001/08/03 04:12:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -53,7 +53,7 @@ struct iommu_state {
 };
 
 /* interfaces for PCI/SBUS code */
-void	iommu_init __P((char *, struct iommu_state *, int));
+void	iommu_init __P((char *, struct iommu_state *, int, u_int32_t));
 void	iommu_reset __P((struct iommu_state *));
 void    iommu_enter __P((struct iommu_state *, vaddr_t, int64_t, int));
 void    iommu_remove __P((struct iommu_state *, vaddr_t, size_t));

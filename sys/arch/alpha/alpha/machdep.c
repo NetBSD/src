@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.245 2001/06/02 18:09:08 chs Exp $ */
+/* $NetBSD: machdep.c,v 1.245.2.1 2001/08/03 04:10:39 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245 2001/06/02 18:09:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.1 2001/08/03 04:10:39 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,9 @@ alpha_init(pfn, ptb, bim, bip, biv)
 	ALPHA_TBIA();
 	alpha_pal_imb();
 
+	/* Initialize the SCB. */
+	scb_init();
+
 	cpu_id = cpu_number();
 
 #if defined(MULTIPROCESSOR)
@@ -282,10 +285,10 @@ alpha_init(pfn, ptb, bim, bip, biv)
 				bootinfo.hwrpb_size =
 				    ((struct rpb *)HWRPB_ADDR)->rpb_size;
 			}
-			bcopy(v1p->boot_flags, bootinfo.boot_flags,
+			memcpy(bootinfo.boot_flags, v1p->boot_flags,
 			    min(sizeof v1p->boot_flags,
 			      sizeof bootinfo.boot_flags));
-			bcopy(v1p->booted_kernel, bootinfo.booted_kernel,
+			memcpy(bootinfo.booted_kernel, v1p->booted_kernel,
 			    min(sizeof v1p->booted_kernel,
 			      sizeof bootinfo.booted_kernel));
 			/* booted dev not provided in bootinfo */
@@ -1196,7 +1199,7 @@ cpu_dump()
 
 	dump = bdevsw[major(dumpdev)].d_dump;
 
-	bzero(buf, sizeof buf);
+	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
 	cpuhdrp = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*segp))];
 	memsegp = (phys_ram_seg_t *)&buf[ ALIGN(sizeof(*segp)) +
@@ -1541,11 +1544,11 @@ sendsig(catcher, sig, mask, code)
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 1);
 	ksc.sc_ownedfp = p->p_md.md_flags & MDP_FPUSED;
-	bcopy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
+	memcpy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
 	    sizeof(struct fpreg));
 	ksc.sc_fp_control = alpha_read_fp_c(p);
-	bzero(ksc.sc_reserved, sizeof ksc.sc_reserved);		/* XXX */
-	bzero(ksc.sc_xxx, sizeof ksc.sc_xxx);			/* XXX */
+	memset(ksc.sc_reserved, 0, sizeof ksc.sc_reserved);	/* XXX */
+	memset(ksc.sc_xxx, 0, sizeof ksc.sc_xxx);		/* XXX */
 
 	/* Save signal stack. */
 	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -1668,7 +1671,7 @@ sys___sigreturn14(p, v, retval)
 	/* XXX ksc.sc_ownedfp ? */
 	if (p->p_addr->u_pcb.pcb_fpcpu != NULL)
 		fpusave_proc(p, 0);
-	bcopy((struct fpreg *)ksc.sc_fpregs, &p->p_addr->u_pcb.pcb_fp,
+	memcpy(&p->p_addr->u_pcb.pcb_fp, (struct fpreg *)ksc.sc_fpregs,
 	    sizeof(struct fpreg));
 	p->p_addr->u_pcb.pcb_fp.fpr_cr = ksc.sc_fpcr;
 	p->p_md.md_flags = ksc.sc_fp_control & MDP_FP_C;
@@ -1773,9 +1776,9 @@ setregs(p, pack, stack)
 	for (i = 0; i < FRAME_SIZE; i++)
 		tfp->tf_regs[i] = 0xbabefacedeadbeef;
 #else
-	bzero(tfp->tf_regs, FRAME_SIZE * sizeof tfp->tf_regs[0]);
+	memset(tfp->tf_regs, 0, FRAME_SIZE * sizeof tfp->tf_regs[0]);
 #endif
-	bzero(&p->p_addr->u_pcb.pcb_fp, sizeof p->p_addr->u_pcb.pcb_fp);
+	memset(&p->p_addr->u_pcb.pcb_fp, 0, sizeof p->p_addr->u_pcb.pcb_fp);
 	alpha_pal_wrusp(stack);
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.132 2001/07/07 16:34:33 thorpej Exp $
+#	$NetBSD: files.pci,v 1.132.2.1 2001/08/03 04:13:15 lukem Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -54,9 +54,14 @@ file	dev/pci/ld_twe.c		ld_twe
 attach	cac at pci with cac_pci
 file	dev/pci/cac_pci.c		cac_pci
 
-# Mylex RAID controllers
+# Mylex DAC960 RAID controllers
 attach	mlx at pci with mlx_pci
 file	dev/pci/mlx_pci.c		mlx_pci
+
+# Newer Mylex AcceleRAID and eXtremeRAID controllers
+device	mly: scsi
+attach	mly at pci
+file	dev/pci/mly.c			mly			needs-flag
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
@@ -353,6 +358,11 @@ file	dev/pci/if_sip.c		sip
 device	gsip: ether, ifnet, arp, mii, mii_bitbang
 attach	gsip at pci
 file	dev/pci/if_gsip.c		gsip
+
+# Sundance Tech./Tamarack TC9021 Gigabit Ethernet
+device	stge: ether, ifnet, arp, mii, mii_bitbang
+attach	stge at pci
+file	dev/pci/if_stge.c		stge
 
 # Realtek 8129/8139 Ethernet controllers
 attach	rtk at pci with rtk_pci

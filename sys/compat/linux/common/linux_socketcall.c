@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.21 2001/07/04 10:09:24 jdolecek Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.21.2.1 2001/08/03 04:12:44 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 /* The sizes of the arguments.  Used for copyin. */
-int linux_socketcall_argsize[LINUX_MAX_SOCKETCALL+1] = {
+static const int linux_socketcall_argsize[LINUX_MAX_SOCKETCALL+1] = {
 	-1,
 	sizeof(struct linux_sys_socket_args),		/* 1 */
 	sizeof(struct linux_sys_bind_args),

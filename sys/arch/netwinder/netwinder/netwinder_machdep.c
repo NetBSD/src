@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.6 2001/06/19 13:45:56 wiz Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.6.2.1 2001/08/03 04:12:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -345,7 +345,6 @@ initarm(bootinfo)
 	extern int end[];
 	extern int *esym;
 #endif
-	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 
@@ -473,10 +472,7 @@ initarm(bootinfo)
 
 #if 0
 	/* Update the address of the first free 16KB chunk of physical memory */
-	physical_freestart  = KERNEL_TEXT_BASE - KERNEL_BASE;
-        physical_freestart += (kernexec->a_text + (NBPG - 1)) & ~(NBPG - 1);
-        physical_freestart += (kernexec->a_data + (NBPG - 1)) & ~(NBPG - 1);
-        physical_freestart += (kernexec->a_bss  + (NBPG - 1)) & ~(NBPG - 1);
+        physical_freestart = ((uintptr_t) &end + PGOFSET) & ~PGOFSET;
 #if 0
         physical_freestart += (kernexec->a_syms + sizeof(int)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int))
@@ -579,23 +575,25 @@ initarm(bootinfo)
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
 	l2pagetable = kernel_pt_table[KERNEL_PT_KERNEL];
 
-	if (N_GETMAGIC(kernexec[0]) != ZMAGIC)
-		panic("Illegal kernel format\n");
-	else {
 #if 0
+	{
 		u_int logical;
+		extern int etext, end;
+		size_t textsize = (uintptr_t) &etext - KERNEL_TEXT_BASE;
+		size_t totalsize = (uintptr_t) &end - KERNEL_TEXT_BASE;
 
+		/* Round down text size and round up total size
+		 */
+		textsize = textsize & ~PGOFSET;
+		totalsize = (totalsize + PGOFSET) & ~PGOFSET;
 		logical  = map_chunk(0, l2pagetable, KERNEL_BASE,
 		    physical_start, KERNEL_TEXT_BASE - KERNEL_BASE,
 		    AP_KRW, PT_CACHEABLE);
 		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, kernexec->a_text,
-		    AP_KR, PT_CACHEABLE);
-		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, kernexec->a_data,
+		    physical_start + logical, textsize,
 		    AP_KRW, PT_CACHEABLE);
 		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, kernexec->a_bss,
+		    physical_start + logical, totalsize - textsize,
 		    AP_KRW, PT_CACHEABLE);
 #if 0
 		logical += map_chunk(0, l2pagetable, KERNEL_BASE + logical,
@@ -603,11 +601,11 @@ initarm(bootinfo)
 		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
 		    AP_KRW, PT_CACHEABLE);
 #endif
-#else
-		map_section(l1pagetable, 0xf0000000, 0x00000000, 1);
-		map_section(l1pagetable, 0xf0100000, 0x00100000, 1);
-#endif
 	}
+#else
+	map_section(l1pagetable, 0xf0000000, 0x00000000, 1);
+	map_section(l1pagetable, 0xf0100000, 0x00100000, 1);
+#endif
 #if 0
 	/*
 	 * PATCH PATCH ...

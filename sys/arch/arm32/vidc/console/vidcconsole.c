@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.28 2001/02/21 00:53:36 reinoud Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.28.4.1 2001/08/03 04:11:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -102,7 +102,7 @@ vidcconsole_attach(parent, self, aux)
 	struct vidcconsole_softc *vidcconsolesoftc = (void *)self;
 	vidcconsolesoftc->sc_opened=0;
 
-	printf(": refclk=%dMHz %dKB %s\n", (VIDC_FREF / 1000000),
+	printf(": refclk=%dMHz %dKB %s\n", (vidc_fref / 1000000),
 	    videomemory.vidm_size / 1024,
 	    (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) ? "VRAM" : "DRAM");
 }

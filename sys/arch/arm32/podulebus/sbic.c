@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.25 2001/07/08 14:50:05 rearnsha Exp $ */
+/* $NetBSD: sbic.c,v 1.25.2.1 2001/08/03 04:11:12 lukem Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -1004,7 +1004,7 @@ sbicselectbus(struct sbic_softc *dev, sbic_regmap_p regs, u_char target,
 	SET_SBIC_cmd(regs, SBIC_CMD_SEL_ATN);
 
 	/*
-	 * wait for select (merged from seperate function may need
+	 * wait for select (merged from separate function may need
 	 * cleanup)
 	 */
 	WAIT_CIP(regs);

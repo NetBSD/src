@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.94 2001/07/07 05:35:42 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.94.2.1 2001/08/03 04:13:05 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -740,7 +740,7 @@ tlp_start(ifp)
 		 */
 		if ((sc->sc_ntxsegs == 1 && (mtod(m0, bus_addr_t) & 3) != 0) ||
 		    bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
-		      BUS_DMA_NOWAIT) != 0) {
+		      BUS_DMA_WRITE|BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
 				printf("%s: unable to allocate Tx mbuf\n",
@@ -759,7 +759,7 @@ tlp_start(ifp)
 			m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
 			m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
 			error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap,
-			    m, BUS_DMA_NOWAIT);
+			    m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 			if (error) {
 				printf("%s: unable to load Tx buffer, "
 				    "error = %d\n", sc->sc_dev.dv_xname, error);
@@ -1782,7 +1782,8 @@ tlp_init(ifp)
 				tlp_rxdrain(sc);
 				goto out;
 			}
-		}
+		} else
+			TULIP_INIT_RXDESC(sc, i);
 	}
 	sc->sc_rxptr = 0;
 
@@ -2285,7 +2286,8 @@ tlp_add_rxbuf(sc, idx)
 	rxs->rxs_mbuf = m;
 
 	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
-	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
+	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
+	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: can't load rx DMA map %d, error = %d\n",
 		    sc->sc_dev.dv_xname, idx, error);

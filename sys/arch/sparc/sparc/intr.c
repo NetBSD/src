@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.53 2001/07/07 21:23:53 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.53.2.1 2001/08/03 04:12:21 lukem Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -288,7 +288,6 @@ nmi_soft(tf)
 #endif
 		return;
 	    }
-#if 0	/* notyet; see also cpu.c */
 	case XPMSG_FUNC:
 	    {
 		struct xpmsg_func *p = &cpuinfo.msg.u.xpmsg_func;
@@ -296,7 +295,6 @@ nmi_soft(tf)
 		p->retval = (*p->func)(p->arg0, p->arg1, p->arg2, p->arg3); 
 		break;
 	    }
-#endif
 	case XPMSG_VCACHE_FLUSH_PAGE:
 	    {
 		struct xpmsg_flush_page *p = &cpuinfo.msg.u.xpmsg_flush_page;

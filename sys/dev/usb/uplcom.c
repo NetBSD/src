@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.18 2001/05/22 00:43:12 jhawk Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.18.2.1 2001/08/03 04:13:36 lukem Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -79,8 +79,9 @@ int	uplcomdebug = 0;
 #define	UPLCOM_CONFIG_INDEX	0
 #define	UPLCOM_IFACE_INDEX	0
 #define	UPLCOM_SECOND_IFACE_INDEX	1
-#define	UPLCOM_RESET		0
 
+#define	UPLCOM_SET_REQUEST	0x01
+#define	UPLCOM_SET_CRTSCTS	0x41
 #define RSAQ_STATUS_DSR		0x02
 #define RSAQ_STATUS_DCD		0x01
 
@@ -90,6 +91,7 @@ struct	uplcom_softc {
 	usbd_interface_handle	sc_iface;	/* interface */
 	int			sc_iface_number;	/* interface number */
 
+	usbd_interface_handle	sc_intr_iface;	/* interrupt interface */
 	int			sc_intr_number;	/* interrupt number */
 	usbd_pipe_handle	sc_intr_pipe;	/* interrupt pipe */
 	u_char			*sc_intr_buf;	/* interrupt buffer */
@@ -118,6 +120,7 @@ struct	uplcom_softc {
 Static	usbd_status uplcom_reset(struct uplcom_softc *);
 Static	usbd_status uplcom_set_line_coding(struct uplcom_softc *sc,
 					   usb_cdc_line_state_t *state);
+Static	usbd_status uplcom_set_crtscts(struct uplcom_softc *);
 Static	void uplcom_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
 Static	void uplcom_set(void *, int, int, int);
@@ -262,6 +265,9 @@ USB_ATTACH(uplcom)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
+	/* keep interface for interrupt */
+	sc->sc_intr_iface = sc->sc_iface;
+
 	/*
 	 * USB-RSAQ1 has two interface
 	 *
@@ -400,16 +406,15 @@ uplcom_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-
 usbd_status
 uplcom_reset(struct uplcom_softc *sc)
 {
         usb_device_request_t req;
 	usbd_status err;
 
-        req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-        req.bRequest = UPLCOM_RESET;
-        USETW(req.wValue, UPLCOM_RESET);
+        req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+        req.bRequest = UPLCOM_SET_REQUEST;
+        USETW(req.wValue, 0);
         USETW(req.wIndex, sc->sc_iface_number);
         USETW(req.wLength, 0); 
  
@@ -500,6 +505,30 @@ uplcom_break(struct uplcom_softc *sc, int onoff)
 }
 
 usbd_status
+uplcom_set_crtscts(struct uplcom_softc *sc)
+{
+	usb_device_request_t req;
+	usbd_status err;
+
+	DPRINTF(("uplcom_set_crtscts: on\n"));
+
+	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
+	req.bRequest = UPLCOM_SET_REQUEST;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, UPLCOM_SET_CRTSCTS);
+	USETW(req.wLength, 0);
+
+	err = usbd_do_request(sc->sc_udev, &req, 0);
+	if (err) {
+		DPRINTF(("uplcom_set_crtscts: failed, err=%s\n",
+			usbd_errstr(err)));
+		return (err);
+	}
+
+	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status
 uplcom_set_line_coding(struct uplcom_softc *sc, usb_cdc_line_state_t *state)
 {
 	usb_device_request_t req;
@@ -573,6 +602,15 @@ uplcom_param(void *addr, int portno, struct termios *t)
 		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
 		return (EIO);
 	}
+
+	if (ISSET(t->c_cflag, CRTSCTS))
+		uplcom_set_crtscts(sc);
+
+	if (err) {
+		DPRINTF(("uplcom_param: err=%s\n", usbd_errstr(err)));
+		return (EIO);
+	}
+
 	return (0);
 }
 
@@ -590,7 +628,7 @@ uplcom_open(void *addr, int portno)
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_status = 0; /* clear status bit */
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
-		err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_intr_number,
+		err = usbd_open_pipe_intr(sc->sc_intr_iface, sc->sc_intr_number,
 			USBD_SHORT_XFER_OK, &sc->sc_intr_pipe, sc,
 			sc->sc_intr_buf, sc->sc_isize,
 			uplcom_intr, USBD_DEFAULT_INTERVAL);

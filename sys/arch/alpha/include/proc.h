@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.10 2001/04/26 03:10:46 ross Exp $ */
+/* $NetBSD: proc.h,v 1.10.2.1 2001/08/03 04:10:44 lukem Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -59,5 +59,5 @@ struct mdproc {
  * 	C99 API's, the use of the MDP_FP_C bits is defined variously in
  * 	ieeefp.h and fpu.h.
  */
-#define	MDP_FPUSED	0x0001		/* Process used the FPU */
-#define	MDP_FP_C      0x7ffffe		/* Extended FP_C Quadword bits */
+#define	MDP_FPUSED	0x00000001	/* Process used the FPU */
+#define	MDP_FP_C	0x007ffffe	/* Extended FP_C Quadword bits */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.4 2001/02/14 18:21:44 eeh Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.4.4.1 2001/08/03 04:12:47 lukem Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -96,20 +96,20 @@ ELFNAME2(netbsd32,probe)(p, epp, eh, itp, pos)
  * Copy arguments onto the stack in the normal way, but add some
  * extra information in case of dynamic binding.
  */
-void *
-netbsd32_elf32_copyargs(pack, arginfo, stack, argp)
+int
+netbsd32_elf32_copyargs(pack, arginfo, stackp, argp)
 	struct exec_package *pack;
 	struct ps_strings *arginfo;
-	void *stack;
+	char **stackp;
 	void *argp;
 {
 	size_t len;
 	AuxInfo ai[ELF_AUX_ENTRIES], *a;
 	struct elf_args *ap;
+	int error;
 
-	stack = netbsd32_copyargs(pack, arginfo, stack, argp);
-	if (!stack)
-		return NULL;
+	if ((error = netbsd32_copyargs(pack, arginfo, stackp, argp)) != 0)
+		return error;
 
 	a = ai;
 
@@ -156,9 +156,9 @@ netbsd32_elf32_copyargs(pack, arginfo, stack, argp)
 	a++;
 
 	len = (a - ai) * sizeof(AuxInfo);
-	if (copyout(ai, stack, len))
-		return NULL;
-	stack = (caddr_t)stack + len;
+	if ((error = copyout(ai, *stackp, len)) != 0)
+		return error;
+	*stackp += len;
 
-	return stack;
+	return 0;
 }

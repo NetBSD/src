@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.2 2000/09/24 12:32:39 jdolecek Exp $
+$NetBSD: version,v 1.2.6.1 2001/08/03 04:12:35 lukem Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -26,3 +26,4 @@ is taken as the current.
 1.8:	Switch to loadfile instead of exec.  Now we can load a.out or ELF
 	kernels.
 1.9:	Support verbose/quiet boot.
+1.10:	loadfile() update:  ELF symbols no longer need backward seeks.

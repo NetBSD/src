@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/06/27 08:20:45 nisimura Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4.2.1 2001/08/03 04:12:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -97,12 +97,15 @@ cpuattach(parent, dev, aux)
 	}
 	printf("%s: %s (0x%04x) with %s (0x%04x)\n",
 	    dev->dv_xname, cpu_name, cpu_id, fpu_name, fpu_id);
-	if (MIPS_PRID_IMPL(cpu_id) != MIPS_R4000) {
+
+	switch (MIPS_PRID_IMPL(cpu_id)) {
+	default:
 		printf("%s: ", dev->dv_xname);
 		printf("%dKB Instruction, %dKB Data, direct mapped cache\n",
 		    mips_L1ICacheSize/1024, mips_L1DCacheSize/1024);
-	}
-	else {
+		break;
+#ifdef MIPS3
+	case MIPS_R4000:
 		printf("%s: L1 cache: ", dev->dv_xname);
 		printf("%dKB Instruction, %dKB Data, direct mapped\n",
 		    mips_L1ICacheSize/1024, mips_L1DCacheSize/1024);
@@ -115,5 +118,7 @@ cpuattach(parent, dev, aux)
 			    mips_L2CacheSize/1024, mips_L2CacheLSize,
 			    mips_L2CacheMixed ? "mixed" : "separated",
 			    mips_L2CacheIsSnooping? "snooping" : "no snooping");
+		break;
+#endif
 	}
 }

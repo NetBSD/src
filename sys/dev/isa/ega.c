@@ -1,4 +1,4 @@
-/* $NetBSD: ega.c,v 1.5 2000/06/26 04:56:20 simonb Exp $ */
+/* $NetBSD: ega.c,v 1.5.6.1 2001/08/03 04:13:08 lukem Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -910,6 +910,6 @@ ega_copyrows(id, srcrow, dstrow, nrows)
 					nrows * ncols);
 		}
 	} else
-		bcopy(&scr->pcs.mem[srcoff], &scr->pcs.mem[dstoff],
+		memcpy(&scr->pcs.mem[dstoff], &scr->pcs.mem[srcoff],
 		      nrows * ncols * 2);
 }

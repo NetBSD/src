@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.53 2001/05/15 14:57:49 lukem Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.53.2.1 2001/08/03 04:13:09 lukem Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -315,7 +315,7 @@ iyattach(parent, self, aux)
 	
 	iyprobemem(sc);
 
-	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
 	ifp->if_softc = sc;
 	ifp->if_start = iystart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS
@@ -1218,7 +1218,7 @@ iyioctl(ifp, cmd, data)
 				ina->x_host = *(union ns_host *)
 				    LLADDR(ifp->if_sadl);
 			else
-				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
+				memcpy(LLADDR(ifp->if_sadl), ina->x_host.c_host,
 				    ETHER_ADDR_LEN);
 			/* Set new address. */
 			iyinit(sc);
@@ -1438,7 +1438,7 @@ iy_mc_reset(sc)
 		 */
 		ETHER_FIRST_MULTI(step, ecp, enm);
 		while(enm) {
-			if (bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 				ifp->if_flags |= IFF_ALLMULTI;
 				goto setupmulti;
 			}

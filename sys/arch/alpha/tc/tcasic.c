@@ -1,4 +1,4 @@
-/* $NetBSD: tcasic.c,v 1.34 2001/03/04 13:36:20 ad Exp $ */
+/* $NetBSD: tcasic.c,v 1.34.4.1 2001/08/03 04:10:52 lukem Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.34 2001/03/04 13:36:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcasic.c,v 1.34.4.1 2001/08/03 04:10:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,9 @@ tcasicattach(parent, self, aux)
 	tc_dma_init();
 
 	(*intr_setup)();
-	set_iointr(iointr);
+
+	/* They all come in at 0x800. */
+	scb_set(0x800, iointr, NULL);
 
 	config_found(self, &tba, tcasicprint);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.28 2001/05/30 11:57:18 mrg Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.28.4.1 2001/08/03 04:14:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 #include <ufs/lfs/lfs.h>
 #include <ufs/lfs/lfs_extern.h>
 
-int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
+int lfs_fragextend(struct vnode *, int, int, ufs_daddr_t, struct buf **, struct ucred *);
 
 /*
  * Allocate a block, and to inode and filesystem block accounting for it
@@ -110,8 +110,7 @@ int lfs_fragextend __P((struct vnode *, int, int, ufs_daddr_t, struct buf **));
  */
 /* VOP_BWRITE NIADDR+2 times */
 int
-lfs_balloc(v)
-	void *v;
+lfs_balloc(void *v)
 {
 	struct vop_balloc_args /* {
 		struct vnode *a_vp;
@@ -165,7 +164,8 @@ lfs_balloc(v)
 		osize = blksize(fs, ip, lastblock);
 		if (osize < fs->lfs_bsize && osize > 0) {
 			if ((error = lfs_fragextend(vp, osize, fs->lfs_bsize,
-						    lastblock, &bp)))
+						    lastblock, &bp,
+						    ap->a_cred)))
 				return(error);
 			ip->i_ffs_size = (lastblock + 1) * fs->lfs_bsize;
 			uvm_vnp_setsize(vp, ip->i_ffs_size);
@@ -188,7 +188,7 @@ lfs_balloc(v)
 		if (lblktosize(fs, lbn) >= ip->i_ffs_size) {
 			/* Brand new block or fragment */
 			frags = numfrags(fs, nsize);
-			bb = fragstodb(fs, frags);
+			bb = fragstofsb(fs, frags);
 			*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
 			ip->i_lfs_effnblks += bb;
 			ip->i_lfs->lfs_bfree -= bb;
@@ -201,7 +201,8 @@ lfs_balloc(v)
 			} else {
 				/* Extend existing block */
 				if ((error =
-				     lfs_fragextend(vp, osize, nsize, lbn, &bp)))
+				     lfs_fragextend(vp, osize, nsize, lbn, &bp,
+						    ap->a_cred)))
 					return error;
 			}
 			*ap->a_bpp = bp;
@@ -249,7 +250,7 @@ lfs_balloc(v)
 				clrbuf(ibp);
 				ibp->b_blkno = UNWRITTEN;
 			} else if (!(ibp->b_flags & (B_DELWRI | B_DONE))) {
-				ibp->b_blkno = idaddr;
+				ibp->b_blkno = fsbtodb(fs, idaddr);
 				ibp->b_flags |= B_READ;
 				VOP_STRATEGY(ibp);
 				biowait(ibp);
@@ -273,7 +274,7 @@ lfs_balloc(v)
 	/*
 	 * Get the existing block from the cache.
 	 */
-	frags = dbtofrags(fs, bb);
+	frags = fsbtofrags(fs, bb);
 	*ap->a_bpp = bp = getblk(vp, lbn, blksize(fs, ip, lbn), 0, 0);
 	
 	/* 
@@ -331,12 +332,7 @@ lfs_balloc(v)
 
 /* VOP_BWRITE 1 time */
 int
-lfs_fragextend(vp, osize, nsize, lbn, bpp)
-	struct vnode *vp;
-	int osize;
-	int nsize;
-	ufs_daddr_t lbn;
-	struct buf **bpp;
+lfs_fragextend(struct vnode *vp, int osize, int nsize, ufs_daddr_t lbn, struct buf **bpp, struct ucred *cred)
 {
 	struct inode *ip;
 	struct lfs *fs;
@@ -349,7 +345,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
-	bb = (long)fragstodb(fs, numfrags(fs, nsize - osize));
+	bb = (long)fragstofsb(fs, numfrags(fs, nsize - osize));
 	error = 0;
 
 	/*
@@ -359,7 +355,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
     top:
 	lfs_seglock(fs, SEGM_PROT);
 
-	if (!ISSPACE(fs, bb, curproc->p_ucred)) {
+	if (!ISSPACE(fs, bb, cred)) {
 		error = ENOSPC;
 		goto out;
 	}
@@ -368,7 +364,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 		goto out;
 	}
 #ifdef QUOTA
-	if ((error = chkdq(ip, bb, curproc->p_ucred, 0))) {
+	if ((error = chkdq(ip, bb, cred, 0))) {
 		brelse(*bpp);
 		goto out;
 	}
@@ -383,7 +379,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 		if (!lfs_fits(fs, bb)) {
 			brelse(*bpp);
 #ifdef QUOTA
-			chkdq(ip, -bb, curproc->p_ucred, 0);
+			chkdq(ip, -bb, cred, 0);
 #endif
 			lfs_segunlock(fs);
 			lfs_availwait(fs, bb);
@@ -399,7 +395,7 @@ lfs_fragextend(vp, osize, nsize, lbn, bpp)
 	 * is written, so the on-disk live bytes count is always correct.
 	 */
 	if ((*bpp)->b_blkno > 0) {
-		LFS_SEGENTRY(sup, fs, datosn(fs, (*bpp)->b_blkno), ibp);
+		LFS_SEGENTRY(sup, fs, dtosn(fs, dbtofsb(fs, (*bpp)->b_blkno)), ibp);
 		sup->su_nbytes += (nsize - osize);
 		VOP_BWRITE(ibp);
 		ip->i_ffs_blocks += bb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.10 2001/03/10 20:04:30 jdolecek Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.10.2.1 2001/08/03 04:13:08 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -280,7 +280,7 @@ ai_match(parent, cf, aux)
 	 * Fill in just about enough of our local `ai_softc' for
 	 * ai_find_mem_size() to do its job.
 	 */
-	bzero(&asc, sizeof asc);
+	memset(&asc, 0, sizeof asc);
 	asc.sc_regt = iot;
 	asc.sc_regh = ioh;
 

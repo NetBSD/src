@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.6 2001/06/07 13:32:47 wiz Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.6.2.1 2001/08/03 04:13:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -71,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: layer_vnops.c,v 1.6 2001/06/07 13:32:47 wiz Exp $
+ *	$Id: layer_vnops.c,v 1.6.2.1 2001/08/03 04:13:46 lukem Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -393,8 +393,7 @@ layer_bypass(v)
 				 descp->vdesc_vpp_offset,ap);
 		/*
 		 * Only vop_lookup, vop_create, vop_makedir, vop_bmap,
-		 * vop_mknod, and vop_symlink return vpp's. The latter
-		 * two are VPP_WILLRELE, so we won't get here, and vop_bmap
+		 * vop_mknod, and vop_symlink return vpp's. vop_bmap
 		 * doesn't call bypass as the lower vpp is fine (we're just
 		 * going to do i/o on it). vop_loookup doesn't call bypass
 		 * as a lookup on "." would generate a locking error.

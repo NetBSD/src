@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.69 2001/06/14 05:44:24 itojun Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.69.2.1 2001/08/03 04:13:50 lukem Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -272,7 +272,7 @@ pppalloc(pid)
     sc->sc_flags = 0;
     sc->sc_mru = PPP_MRU;
     sc->sc_relinq = NULL;
-    bzero((char *)&sc->sc_stats, sizeof(sc->sc_stats));
+    memset((char *)&sc->sc_stats, 0, sizeof(sc->sc_stats));
 #ifdef VJC
     MALLOC(sc->sc_comp, struct slcompress *, sizeof(struct slcompress),
 	   M_DEVBUF, M_NOWAIT);
@@ -699,7 +699,7 @@ pppsioctl(ifp, cmd, data)
 
     case SIOCGPPPSTATS:
 	psp = &((struct ifpppstatsreq *) data)->stats;
-	bzero(psp, sizeof(*psp));
+	memset(psp, 0, sizeof(*psp));
 	psp->p = sc->sc_stats;
 #if defined(VJC) && !defined(SL_NO_STATS)
 	if (sc->sc_comp) {
@@ -718,7 +718,7 @@ pppsioctl(ifp, cmd, data)
 #ifdef PPP_COMPRESS
     case SIOCGPPPCSTATS:
 	pcp = &((struct ifpppcstatsreq *) data)->stats;
-	bzero(pcp, sizeof(*pcp));
+	memset(pcp, 0, sizeof(*pcp));
 	if (sc->sc_xc_state != NULL)
 	    (*sc->sc_xcomp->comp_stat)(sc->sc_xc_state, &pcp->c);
 	if (sc->sc_rc_state != NULL)

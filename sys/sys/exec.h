@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.79 2001/04/30 01:13:20 lukem Exp $	*/
+/*	$NetBSD: exec.h,v 1.79.2.1 2001/08/03 04:14:04 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -112,13 +112,14 @@ struct execsw {
 			struct exec_package *, void *, char *, vaddr_t *));
 		int (*ecoff_probe_func) __P((struct proc *,
 			struct exec_package *));
+		int (*mach_probe_func) __P((char **));
 	} u;
 	const struct  emul *es_emul;	/* os emulation */
 	int	es_prio;		/* entry priority */
 	int	es_arglen;		/* Extra argument size in words */
 					/* Copy arguments on the new stack */
-	void	*(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
-				    void *, void *));
+	int	(*es_copyargs) __P((struct exec_package *, struct ps_strings *,
+				   char **, void *));
 					/* Set registers before execution */
 	void	(*es_setregs) __P((struct proc *, struct exec_package *,
 				  u_long));
@@ -198,12 +199,14 @@ int	vmcmd_map_pagedvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_readvn	__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_readvn		__P((struct proc *, struct exec_vmcmd *));
 int	vmcmd_map_zero		__P((struct proc *, struct exec_vmcmd *));
-void	*copyargs		__P((struct exec_package *, struct ps_strings *,
-				     void *, void *));
+int	copyargs		__P((struct exec_package *, struct ps_strings *,
+    char **, void *));
 void	setregs			__P((struct proc *, struct exec_package *,
 				     u_long));
 int	check_exec		__P((struct proc *, struct exec_package *));
 int	exec_init		__P((int));
+int	exec_read_from		__P((struct proc *, struct vnode *, u_long off,
+    void *, size_t));
 
 #ifdef LKM
 int	emul_register		__P((const struct emul *, int));

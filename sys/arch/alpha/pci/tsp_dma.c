@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_dma.c,v 1.3 2001/01/03 19:16:00 thorpej Exp $ */
+/* $NetBSD: tsp_dma.c,v 1.3.4.1 2001/08/03 04:10:49 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -108,6 +108,12 @@ void	tsp_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
 
 void	tsp_tlb_invalidate __P((struct tsp_config *));
 
+/*
+ * XXX Need to figure out what this is, if any.  Initialize it to
+ * XXX something that should be safe.
+ */
+#define	TSP_SGMAP_PFTHRESH	256
+
 void
 tsp_dma_init(pcp)
 	struct tsp_config *pcp;
@@ -176,6 +182,7 @@ tsp_dma_init(pcp)
 	t->_next_window = NULL;
 	t->_boundary = 0;
 	t->_sgmap = &pcp->pc_sgmap;
+	t->_pfthresh = TSP_SGMAP_PFTHRESH;
 	t->_get_tag = tsp_dma_get_tag;
 	t->_dmamap_create = alpha_sgmap_dmamap_create;
 	t->_dmamap_destroy = alpha_sgmap_dmamap_destroy;

@@ -1,23 +1,20 @@
-#   $NetBSD: TODO,v 1.4 2000/11/17 19:14:41 perseant Exp $
+#   $NetBSD: TODO,v 1.4.6.1 2001/08/03 04:14:07 lukem Exp $
 
-- If we put an LFS onto a striped disk, we want to be able to specify
-  the segment size to be equal to the stripe size, regardless of whether
-  this is a power of two; also, the first segment should just eat the
-  label pad, like the segments eat the superblocks.  Then, we could
-  neatly lay out the segments along stripe boundaries. [v2]
+- Investigate alternate inode locking strategy: Inode locks are useful
+  for locking against simultaneous changes to inode size (balloc,
+  truncate, write) but because the assignment of disk blocks is also
+  covered by the segment lock, we don't really need to pay attention to
+  the inode lock when writing a segment, right?  If this is true, the
+  locking problem in lfs_{bmapv,markv} goes away and lfs_reserve can go,
+  too.
 
-- Working fsck_lfs.  (Have something that will verify, need something
-  that will fix too.  Really, need a general-purpose external
+- Fully working fsck_lfs.  (Really, need a general-purpose external
   partial-segment writer.)
-
-- Roll-forward agent, *at least* to verify the newer superblock's
-  checkpoint (easy) but also to create a valid checkpoint for
-  post-checkpoint writes (requires an external partial-segment writer).
 
 - Inode blocks are currently the same size as the fs block size; but all
   the ones I've seen are mostly empty, and this will be especially true
   if atime information is kept in the ifile instead of the inode.  Could
-  we shrink the inode block size to 512?  Or parametrize it at fs
+  we shrink the inode block size to DEV_BSIZE?  Or parametrize it at fs
   creation time?
 
 - Get rid of DEV_BSIZE, pay attention to the media block size at mount time.
@@ -27,12 +24,6 @@
 - lfs_vunref_head exists so that vnodes loaded solely for cleaning can
   be put back on the *head* of the vnode free list.  Make sure we
   actually do this, since we now take IN_CLEANING off during segment write.
-
-- Investigate the "unlocked access" in lfs_bmapv, see if we could wait
-  there most of the time?  Are we getting inconsistent data?
-
-- Change the free_lock to be fs-specific, and change the dirvcount to be
-  subsystem-wide.
 
 - The cleaner could be enhanced to be controlled from other processes,
   and possibly perform additional tasks:
@@ -82,25 +73,12 @@
   avoid the problem, and one that reads/writes from the raw disk could
   fix it.
 
-- Overlap the version and nextfree fields in the IFILE
-
-- Change so that only search one sector of inode block file for the
-  inode by using sector addresses in the ifile instead of
-  logical disk addresses.
-
-- Fix the use of the ifile version field to use the generation number instead.
-
 - Need to keep vnode v_numoutput up to date for pending writes?
 
 - If delete a file that's being executed, the version number isn't
   updated, and fsck_lfs has to figure this out; case is the same as if
   have an inode that no directory references, so the file should be
   reattached into lost+found.
-
-- Investigate: should the access time be part of the IFILE:
-        pro: theoretically, saves disk writes
-        con: cacheing inodes should obviate this advantage
-             the IFILE is already humongous
 
 - Currently there's no notion of write error checking.
   + Failed data/inode writes should be rescheduled (kernel level bad blocking).

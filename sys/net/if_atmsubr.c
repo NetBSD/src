@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.29 2001/06/14 05:44:23 itojun Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.29.2.1 2001/08/03 04:13:49 lukem Exp $       */
 
 /*
  *
@@ -379,7 +379,7 @@ pvcsif_alloc()
 	       M_DEVBUF, M_WAITOK);
 	if (pvcsif == NULL)
 		return (NULL);
-	bzero(pvcsif, sizeof(struct pvcsif));
+	memset(pvcsif, 0, sizeof(struct pvcsif));
 
 #ifdef __NetBSD__
 	sprintf(pvcsif->sif_if.if_xname, "pvc%d", pvc_number++);

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.h,v 1.11 2001/04/25 17:53:40 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.h,v 1.11.2.1 2001/08/03 04:13:31 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ scsipi_make_xs(periph, scsipi_cmd, cmdlen, data_addr, datalen,
 	 * Fill out the scsipi_xfer structure.  We don't know whose context
 	 * the cmd is in, so copy it.
 	 */
-	bcopy(scsipi_cmd, &xs->cmdstore, cmdlen);
+	memcpy(&xs->cmdstore, scsipi_cmd, cmdlen);
 	xs->cmd = &xs->cmdstore;
 	xs->cmdlen = cmdlen;
 	xs->data = data_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.51 2001/01/19 01:43:31 manu Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.51.4.1 2001/08/03 04:12:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -104,33 +104,32 @@ ELFNAME2(linux,atexit_signature)(p, epp, eh)
 	
 	int error;
 
-/*
- * load the section header table 
- */
+	/*
+	 * load the section header table 
+	 */
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_shoff, (caddr_t)sh,
-	    shsize);
+	error = exec_read_from(p, epp->ep_vp, eh->e_shoff, sh, shsize);
 	if (error)
 		goto out;
 
-/* 
- * Now let's find the string table. If it does not exists, give up.
- */
+	/* 
+	 * Now let's find the string table. If it does not exists, give up.
+	 */
 	strndx = (int)(eh->e_shstrndx);
-   if (strndx == SHN_UNDEF) {
+	if (strndx == SHN_UNDEF) {
 		error = ENOEXEC;
 		goto out;
 	}
 
-/*
- * strndx is the index in section header table of the string table section
- * get the whole string table in strtable, and then we get access to the names
- * s->sh_name is the offset of the section name in strtable.
- */
+	/*
+	 * strndx is the index in section header table of the string table
+	 * section get the whole string table in strtable, and then we get access to the names
+	 * s->sh_name is the offset of the section name in strtable.
+	 */
 	strtable = malloc(sh[strndx].sh_size, M_TEMP, M_WAITOK);
-	error = ELFNAME(read_from)(p, epp->ep_vp, sh[strndx].sh_offset, 
-			(caddr_t)strtable, sh[strndx].sh_size);
+	error = exec_read_from(p, epp->ep_vp, sh[strndx].sh_offset, strtable,
+	    sh[strndx].sh_size);
 	if (error)
 		goto out;
 
@@ -181,8 +180,7 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 
 	shsize = eh->e_shnum * sizeof(Elf_Shdr);
 	sh = (Elf_Shdr *) malloc(shsize, M_TEMP, M_WAITOK);
-	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_shoff, (caddr_t)sh,
-	    shsize);
+	error = exec_read_from(p, epp->ep_vp, eh->e_shoff, sh, shsize);
 	if (error)
 		goto out;
 
@@ -200,8 +198,8 @@ ELFNAME2(linux,gcc_signature)(p, epp, eh)
 		    s->sh_size < sizeof(signature) - 1)
 			continue;
 
-		error = ELFNAME(read_from)(p, epp->ep_vp, s->sh_offset,
-		    (caddr_t)buf, sizeof(signature) - 1);
+		error = exec_read_from(p, epp->ep_vp, s->sh_offset, buf,
+		    sizeof(signature) - 1);
 		if (error)
 			continue;
 
@@ -238,8 +236,7 @@ ELFNAME2(linux,signature)(p, epp, eh, itp)
 
 	phsize = eh->e_phnum * sizeof(Elf_Phdr);
 	ph = (Elf_Phdr *)malloc(phsize, M_TEMP, M_WAITOK);
-	error = ELFNAME(read_from)(p, epp->ep_vp, eh->e_phoff, (caddr_t)ph,
-	    phsize);
+	error = exec_read_from(p, epp->ep_vp, eh->e_phoff, ph, phsize);
 	if (error)
 		goto out;
 
@@ -254,8 +251,8 @@ ELFNAME2(linux,signature)(p, epp, eh, itp)
 			continue;
 
 		np = (Elf_Nhdr *)malloc(ephp->p_filesz, M_TEMP, M_WAITOK);
-		error = ELFNAME(read_from)(p, epp->ep_vp, ephp->p_offset,
-		    (caddr_t)np, ephp->p_filesz);
+		error = exec_read_from(p, epp->ep_vp, ephp->p_offset, np,
+		    ephp->p_filesz);
 		if (error)
 			goto next;
 

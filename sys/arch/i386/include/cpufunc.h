@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.19 2000/03/28 19:17:29 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.19.10.1 2001/08/03 04:11:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -209,6 +209,18 @@ breakpoint(void)
 {
 	__asm __volatile("int $3");
 }
+
+/*
+ * XXX Maybe these don't belong here...
+ */
+
+extern int (*copyout_func)(const void *, void *, size_t);
+extern int (*copyin_func)(const void *, void *, size_t);
+
+int	i386_copyout(const void *, void *, size_t);
+int	i486_copyout(const void *, void *, size_t);
+
+int	i386_copyin(const void *, void *, size_t);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.16 2001/06/11 01:50:57 wiz Exp $	*/
+/*	$NetBSD: wait.h,v 1.16.2.1 2001/08/03 04:14:06 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -85,7 +85,17 @@
 #define	WALTSIG		0x00000004	/* wait for processes that exit
 					   with an alternate signal (i.e.
 					   not SIGCHLD) */
-#endif
+#define	WALLSIG		0x00000008	/* wait for processes that exit
+					   with any signal, i.e. SIGCHLD
+					   and alternates */
+
+/*
+ * These are the Linux names of some of the above flags, for compatibility
+ * with Linux's clone(2) API.
+ */
+#define	__WCLONE	WALTSIG
+#define	__WALL		WALLSIG
+#endif /* ! _POSIX_SOURCE */
 
 #ifndef _POSIX_SOURCE
 /* POSIX extensions and 4.2/4.3 compatibility: */

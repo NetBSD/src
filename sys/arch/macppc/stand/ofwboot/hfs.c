@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs.c,v 1.1 2000/11/14 11:25:35 tsubai Exp $	*/
+/*	$NetBSD: hfs.c,v 1.1.8.1 2001/08/03 04:11:58 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -45,7 +45,7 @@ hfs_open(path, f)
 
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		return ENXIO;
-	bzero(bootpath, sizeof bootpath);
+	memset(bootpath, 0, sizeof bootpath);
 	OF_getprop(chosen, "bootpath", bootpath, sizeof bootpath);
 	cp = strrchr(bootpath, ',');
 	if (cp == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.60 2001/03/24 02:07:54 christos Exp $ */
+/*	$NetBSD: apm.c,v 1.60.2.1 2001/08/03 04:11:41 lukem Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #endif
 
 #include "opt_apm.h"
+#include "opt_compat_mach.h"	/* Needed to get the right segment def */
 
 #ifdef APM_NOIDLE
 #error APM_NOIDLE option deprecated; use APM_NO_IDLE instead
@@ -149,7 +150,7 @@ static void	apm_disconnect __P((void *));
 #endif
 static int	apm_event_handle __P((struct apm_softc *, struct bioscallregs *));
 static int	apm_get_event __P((struct bioscallregs *));
-static int	apm_get_powstat __P((struct bioscallregs *));
+static int	apm_get_powstat __P((struct bioscallregs *, u_int));
 static void	apm_get_powstate __P((u_int));
 static int	apm_periodic_check __P((struct apm_softc *));
 static void	apm_create_thread __P((void *));
@@ -162,7 +163,7 @@ static void	apm_power_print __P((struct apm_softc *, struct bioscallregs *));
 static void	apm_powmgt_enable __P((int));
 static void	apm_powmgt_engage __P((int, u_int));
 static int	apm_record_event __P((struct apm_softc *, u_int));
-static void	apm_get_capabilities __P((void));
+static void	apm_get_capabilities __P((struct bioscallregs *));
 static void	apm_set_ver __P((struct apm_softc *));
 static void	apm_standby __P((struct apm_softc *));
 static const char *apm_strerror __P((int));
@@ -658,7 +659,7 @@ apm_event_handle(sc, regs)
 
 	case APM_POWER_CHANGE:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: power status change\n"));
-		error = apm_get_powstat(&nregs);
+		error = apm_get_powstat(&nregs, 0);
 #ifdef APM_POWER_PRINT
 		/* only print if nobody is catching events. */
 		if (error == 0 &&
@@ -704,8 +705,8 @@ apm_event_handle(sc, regs)
 		if (apm_minver < 2) {
 			DPRINTF(APMDEBUG_EVENTS, ("apm: unexpected event\n"));
 		} else {
-			apm_get_capabilities();
-			apm_get_powstat(&nregs); /* XXX */
+			apm_get_capabilities(&nregs);
+			apm_get_powstat(&nregs, 0); /* XXX */
 		}
 		break;
 
@@ -906,34 +907,34 @@ apm_cpu_idle()
 
 /* V1.2 */
 static void
-apm_get_capabilities()
+apm_get_capabilities(regs)
+	struct bioscallregs *regs;
 {
-	struct bioscallregs regs;
 
-	regs.BX = APM_DEV_APM_BIOS;
-	if (apmcall(APM_GET_CAPABILITIES, &regs) != 0) {
-		apm_perror("get capabilities", &regs);
+	regs->BX = APM_DEV_APM_BIOS;
+	if (apmcall(APM_GET_CAPABILITIES, regs) != 0) {
+		apm_perror("get capabilities", regs);
 		return;
 	}
 
 #ifdef APMDEBUG
 	/* print out stats */
-	printf("apm: %d batteries", APM_NBATTERIES(&regs));
-	if (regs.CX & APM_GLOBAL_STANDBY)
+	printf("apm: %d batteries", APM_NBATTERIES(regs));
+	if (regs->CX & APM_GLOBAL_STANDBY)
 	    printf(", global standby");
-	if (regs.CX & APM_GLOBAL_SUSPEND)
+	if (regs->CX & APM_GLOBAL_SUSPEND)
 	    printf(", global suspend");
-	if (regs.CX & APM_RTIMER_STANDBY)
+	if (regs->CX & APM_RTIMER_STANDBY)
 	    printf(", rtimer standby");
-	if (regs.CX & APM_RTIMER_SUSPEND)
+	if (regs->CX & APM_RTIMER_SUSPEND)
 	    printf(", rtimer suspend");
-	if (regs.CX & APM_IRRING_STANDBY)
+	if (regs->CX & APM_IRRING_STANDBY)
 	    printf(", internal standby");
-	if (regs.CX & APM_IRRING_SUSPEND)
+	if (regs->CX & APM_IRRING_SUSPEND)
 	    printf(", internal suspend");
-	if (regs.CX & APM_PCRING_STANDBY)
+	if (regs->CX & APM_PCRING_STANDBY)
 	    printf(", pccard standby");
-	if (regs.CX & APM_PCRING_SUSPEND)
+	if (regs->CX & APM_PCRING_SUSPEND)
 	    printf(", pccard suspend");
 	printf("\n");
 #endif
@@ -987,11 +988,15 @@ ok:
 }
 
 static int
-apm_get_powstat(regs)
+apm_get_powstat(regs, batteryid)
 	struct bioscallregs *regs;
+	u_int batteryid;
 {
 
-	regs->BX = APM_DEV_ALLDEVS;
+	if (batteryid == 0)
+		regs->BX = APM_DEV_ALLDEVS;
+	else
+		regs->BX = APM_DEV_BATTERY(batteryid);
 	return apmcall(APM_POWER_STATUS, regs);
 }
 
@@ -1349,10 +1354,12 @@ apmattach(parent, self, aux)
 	    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 	    apminfo.apm_code32_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 1, 0);
+#ifdef GAPM16CODE_SEL
 	setsegment(&gdt[GAPM16CODE_SEL].sd,
 	    ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
 	    apminfo.apm_code16_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
+#endif
 	if (apminfo.apm_data_seg_len == 0) {
 		/*
 		 *if no data area needed, set up the segment
@@ -1414,7 +1421,7 @@ apmattach(parent, self, aux)
 	apm_set_ver(apmsc);		/* prints version info */
 	printf("\n");
 	if (apm_minver >= 2)
-		apm_get_capabilities();
+		apm_get_capabilities(&regs);
 
 	/*
 	 * enable power management if it's disabled.
@@ -1442,7 +1449,7 @@ apmattach(parent, self, aux)
 	apm_powmgt_engage(1, APM_DEV_PCMCIA(APM_DEV_ALLUNITS));
 #endif
 	memset(&regs, 0, sizeof(regs));
-	error = apm_get_powstat(&regs);
+	error = apm_get_powstat(&regs, 0);
 	if (error == 0) {
 #ifdef APM_POWER_PRINT
 		apm_power_print(apmsc, &regs);
@@ -1625,6 +1632,7 @@ apmioctl(dev, cmd, data, flag, p)
 	struct bioscallregs regs;
 	struct apm_ctl *actl;
 	int i, error = 0;
+	u_int batteryid, nbattery;
 
 	APM_LOCK(sc);
 	switch (cmd) {
@@ -1673,13 +1681,30 @@ apmioctl(dev, cmd, data, flag, p)
 
 	case APM_IOC_GETPOWER:
 		powerp = (struct apm_power_info *)data;
-		if (apm_get_powstat(&regs)) {
+		batteryid = 0;	/* need a way to pass it from the userland */
+		if (apm_minver >= 2) {
+			apm_get_capabilities(&regs);
+			if (batteryid > APM_NBATTERIES(&regs)) {
+				error = EIO;
+				break;
+			}
+			nbattery = APM_NBATTERIES(&regs);
+		} else {
+			if (batteryid > 0) {
+				error = EIO;
+				break;
+			}
+			nbattery = 0;
+		}
+		if (apm_get_powstat(&regs, batteryid)) {
 			apm_perror("ioctl get power status", &regs);
 			error = EIO;
 			break;
 		}
 
 		memset(powerp, 0, sizeof(*powerp));
+		powerp->batteryid = batteryid;
+		powerp->nbattery = nbattery;
 		if (APM_BATT_LIFE(&regs) != APM_BATT_LIFE_UNKNOWN)
 			powerp->battery_life = APM_BATT_LIFE(&regs);
 		powerp->ac_state = APM_AC_STATE(&regs);

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.340 2001/06/30 01:04:25 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.340.2.1 2001/08/03 04:13:20 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.336 2001/06/30 01:03:59 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp 
  */
 
 /*
@@ -44,6 +44,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "3Com",
 	    "3c985 Gigabit Ethernet",
+	},
+	{
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C556MODEM,
+	    0,
+	    "3Com",
+	    "3c556 V.90 MiniPCI Modem",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C450TX,
@@ -824,6 +830,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "American Megatrends",
 	    "MegaRAID 3",
+	},
+	{
+	    PCI_VENDOR_ANTARES, PCI_PRODUCT_ANTARES_TC9021,
+	    0,
+	    "Antares Microsystems, Inc.",
+	    "Antares Gigabit Ethernet",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BANDIT,
@@ -2566,6 +2578,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "TwinTurbo 128M",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312,
+	    0,
+	    "Intel",
+	    "80310 I/O Companion Chip",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    0,
 	    "Intel",
@@ -3074,6 +3092,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82820 AGP",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
+	    0,
+	    "Intel",
+	    "80310 ATU",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371SB_ISA,
@@ -5204,6 +5228,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Titan Electronics, Inc.",
 	    "PCI-800H",
+	},
+	{
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI100H,
+	    0,
+	    "Titan Electronics, Inc.",
+	    "PCI-100H",
 	},
 	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_R4X00,
@@ -9151,6 +9181,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_SIBYTE, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "SiByte, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_ANTARES, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Antares Microsystems, Inc.",
 	    NULL,
 	},
 	{

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.12 2001/05/30 12:28:41 mrg Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.12.2.1 2001/08/03 04:11:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -287,7 +287,7 @@ bus_space_handle_t	*memh;
 /*
  * Interrupt mess. Because the card's interrupt is hardwired to either
  * ipl5 or ipl3 (mostly on ipl5) and raising splnet to spl5() just won't do
- * (it kills the serial at the least), we use a 2-level interrupt sceme. The
+ * (it kills the serial at the least), we use a 2-level interrupt scheme. The
  * card interrupt is routed to 'le_intr'. If the previous ipl was below
  * splnet, just call the mi-function. If not, save the interrupt status,
  * turn off card interrupts (the card is *very* persistent) and arrange

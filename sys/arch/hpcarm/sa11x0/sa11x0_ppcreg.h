@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_ppcreg.h,v 1.1 2001/04/15 17:27:26 toshii Exp $	*/
+/*      $NetBSD: sa11x0_ppcreg.h,v 1.1.6.1 2001/08/03 04:11:35 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -39,7 +39,7 @@
 /* SA11[01]0 PPC (peripheral pin controller) */
 
 /* size of I/O space */
-#define SAPPC_NPORTS	5
+#define SAPPC_NPORTS	13
 
 #define SAPPC_PDR	0x00	/* pin direction register */
 
@@ -60,3 +60,6 @@
 #define PFR_SP3TX	0x10000	/* serial port 3 Tx flag */
 #define PFR_SP3RX	0x20000	/* serial port 3 Rx flag */
 #define PFR_SP4		0x40000	/* serial port 4 flag */
+
+/* MCP control register 1 */
+#define SAMCP_CR1	0x30	/* MCP control register 1 */

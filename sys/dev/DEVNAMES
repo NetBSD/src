@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.67 2001/07/09 03:51:59 ichiro Exp $
+#	$NetBSD: DEVNAMES,v 1.67.2.1 2001/08/03 04:12:51 lukem Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -482,6 +482,9 @@ iommu			sun3
 iop			MI
 iophy			MI		
 iopsp			MI
+ipaqbus			hpcarm
+ipaqlcd			hpcarm
+ipaqpcic		hpcarm
 irif			hpcmips
 isa			MI		
 isabeep			alpha
@@ -650,6 +653,7 @@ mkclock			newsmips
 mlhsc			amiga
 mlhsc			amigappc
 mlx			MI
+mly			MI
 mms			bebox
 mms			i386
 moxa			MI
@@ -677,7 +681,6 @@ mulaw			MI		Attribute
 necpb			arc
 neo			MI
 nca			MI		
-ncr			MI		
 ncr			pc532
 ncr5380sbc		MI		Attribute
 ncr53c9x		MI		Attribute
@@ -875,7 +878,6 @@ sableio			alpha
 sacc			hpcarm
 sacom			hpcarm
 sacpcic			hpcarm
-sagpcic			hpcarm
 saip			hpcarm
 saost			hpcarm
 satlink			MI		

@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.2 2001/05/04 00:11:15 bjh21 Exp $	*/
+/*	$NetBSD: profile.h,v 1.2.2.1 2001/08/03 04:11:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -40,8 +40,15 @@
 
 #ifdef __ELF__
 #define MCOUNT_ASM_NAME "__mcount"
+#ifdef PIC
+#define	PLTSYM		"(PLT)"
+#endif
 #else
 #define MCOUNT_ASM_NAME "mcount"
+#endif
+
+#ifndef PLTSYM
+#define	PLTSYM
 #endif
 
 #define	MCOUNT								\
@@ -73,7 +80,7 @@
 	/*								\
 	 * Call the real mcount code					\
 	 */								\
-	__asm__("bl	" ___STRING(_C_LABEL(_mcount)));		\
+	__asm__("bl	" ___STRING(_C_LABEL(_mcount)) PLTSYM);		\
 	/*								\
 	 * Restore registers that were trashed during mcount		\
 	 */								\

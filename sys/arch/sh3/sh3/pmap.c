@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.24 2001/06/02 18:09:20 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24.2.1 2001/08/03 04:12:19 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -3571,7 +3571,7 @@ vtophys(va)
 #ifdef SH4
 	cacheflush();
 	if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
-		return (va|0x20000000);
+		return (va|SH3_P1234SEG_SIZE);
 #else
 	if (va >= SH3_P1SEG_BASE && va <= SH3_P2SEG_END)
 		return va;
@@ -3580,7 +3580,7 @@ vtophys(va)
 	/* XXX P4SEG? */
 
 #ifdef SH4
-	return (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) | 0x20000000;
+	return (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME) | SH3_P1234SEG_SIZE;
 #else
 	return (*vtopte(va) & PG_FRAME) | (va & ~PG_FRAME);
 #endif

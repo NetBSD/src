@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.4 2001/06/08 00:32:02 matt Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.4.2.1 2001/08/03 04:11:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -128,8 +128,8 @@ mc_attach(parent, self, aux)
 	sc->sc_tail = 0;
 	sc->sc_txdmacmd = dbdma_alloc(sizeof(dbdma_command_t) * 2);
 	sc->sc_rxdmacmd = (void *)dbdma_alloc(sizeof(dbdma_command_t) * 8);
-	bzero(sc->sc_txdmacmd, sizeof(dbdma_command_t) * 2);
-	bzero(sc->sc_rxdmacmd, sizeof(dbdma_command_t) * 8);
+	memset(sc->sc_txdmacmd, 0, sizeof(dbdma_command_t) * 2);
+	memset(sc->sc_rxdmacmd, 0, sizeof(dbdma_command_t) * 8);
 
 	printf(": irq %d,%d,%d",
 		ca->ca_intr[0], ca->ca_intr[1], ca->ca_intr[2]);
@@ -142,7 +142,7 @@ mc_attach(parent, self, aux)
 	/* allocate memory for transmit buffer and mark it non-cacheable */
 	sc->sc_txbuf = malloc(NBPG, M_DEVBUF, M_WAITOK);
 	sc->sc_txbuf_phys = kvtop(sc->sc_txbuf);
-	bzero(sc->sc_txbuf, NBPG);
+	memset(sc->sc_txbuf, 0, NBPG);
 
 	/*
 	 * allocate memory for receive buffer and mark it non-cacheable
@@ -154,7 +154,7 @@ mc_attach(parent, self, aux)
 	 */
 	sc->sc_rxbuf = malloc(MC_NPAGES * NBPG, M_DEVBUF, M_WAITOK);
 	sc->sc_rxbuf_phys = kvtop(sc->sc_rxbuf);
-	bzero(sc->sc_rxbuf, MC_NPAGES * NBPG);
+	memset(sc->sc_rxbuf, 0, MC_NPAGES * NBPG);
 
 	if ((int)sc->sc_txbuf & PGOFSET)
 		printf("txbuf is not page-aligned\n");

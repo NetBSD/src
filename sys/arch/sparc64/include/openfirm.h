@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.7 2000/11/18 23:43:06 mrg Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.7.4.1 2001/08/03 04:12:28 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -57,4 +57,6 @@ void OF_poweroff (void) __attribute__((__noreturn__));
 void OF_sym2val (void *);
 void OF_val2sym (void *);
 void OF_interpret (char *);
-int  OF_milliseconds (void);
+int OF_milliseconds (void);
+int OF_searchprop (int node, char *prop, void *buf, int buflen);
+int OF_mapintr(int node, int *interrupt, int validlen, int buflen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.c,v 1.9 2001/05/16 11:06:27 enami Exp $	*/
+/*	$NetBSD: platid_mask.c,v 1.9.2.1 2001/08/03 04:11:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -557,9 +557,25 @@ platid_t platid_mask_MACH_COMPAQ_IPAQ = {{
 	PLATID_WILD,
 	PLATID_MACH_COMPAQ_IPAQ
 }};
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H31XX = {{
+	PLATID_WILD,
+	PLATID_MACH_COMPAQ_IPAQ_H31XX
+}};
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H3100 = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_COMPAQ_IPAQ_H3100
+}};
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H36XX = {{
+	PLATID_WILD,
+	PLATID_MACH_COMPAQ_IPAQ_H36XX
+}};
 platid_t platid_mask_MACH_COMPAQ_IPAQ_H3600 = {{
 	PLATID_CPU_ARM_STRONGARM_SA1110,
 	PLATID_MACH_COMPAQ_IPAQ_H3600
+}};
+platid_t platid_mask_MACH_COMPAQ_IPAQ_H3660 = {{
+	PLATID_CPU_ARM_STRONGARM_SA1110,
+	PLATID_MACH_COMPAQ_IPAQ_H3660
 }};
 #endif /* hpcarm */
 #ifdef hpcmips

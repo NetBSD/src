@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.4 2000/09/24 12:32:35 jdolecek Exp $
+$NetBSD: version,v 1.4.6.1 2001/08/03 04:11:49 lukem Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -9,3 +9,4 @@ is taken as the current.
 1.2:	Use common menu / parsing functions with other bootloaders.
 	New framework to pass information to the kernel.
 1.3:	Support verbose/quiet boot.
+1.4:	loadfile() update:  ELF symbols no longer need backward seeks.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.13 2001/04/25 17:53:41 bouyer Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.13.2.1 2001/08/03 04:13:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -112,11 +112,11 @@ mustek_attach(ss, sa)
 	printf("\n%s: ", ss->sc_dev.dv_xname);
 
 	/* first, check the model which determines resolutions */
-	if (!bcmp(sa->sa_inqbuf.product, "MFS-06000CX", 11)) {
+	if (!memcmp(sa->sa_inqbuf.product, "MFS-06000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_06000CX;
 		printf("Mustek 6000CX Flatbed 3-pass color scanner, 3 - 600 dpi\n");
 	}
-	if (!bcmp(sa->sa_inqbuf.product, "MFS-12000CX", 11)) {
+	if (!memcmp(sa->sa_inqbuf.product, "MFS-12000CX", 11)) {
 		ss->sio.scan_scanner_type = MUSTEK_12000CX;
 		printf("Mustek 12000CX Flatbed 3-pass color scanner, 6 - 1200 dpi\n");
 	}
@@ -238,7 +238,7 @@ mustek_set_params(ss, sio)
 
 	/* change ss_softc to the new values, but save ro-variables */
 	sio->scan_scanner_type = ss->sio.scan_scanner_type;
-	bcopy(sio, &ss->sio, sizeof(struct scan_io));
+	memcpy(&ss->sio, sio, sizeof(struct scan_io));
 
 	mustek_compute_sizes(ss);
 
@@ -294,11 +294,11 @@ mustek_trigger_scanner(ss)
 	/*
 	 * set the window params and send the scsi command
 	 */
-	bzero(&window_cmd, sizeof(window_cmd));
+	memset(&window_cmd, 0, sizeof(window_cmd));
 	window_cmd.opcode = MUSTEK_SET_WINDOW;
 	window_cmd.length = sizeof(window_data);
 
-	bzero(&window_data, sizeof(window_data));
+	memset(&window_data, 0, sizeof(window_data));
 	window_data.frame.header = MUSTEK_LINEART_BACKGROUND | MUSTEK_UNIT_SPEC;
 #ifdef MUSTEK_INCH_SPEC
 	/* the positional values are all 1 byte because 256 / 8 = 32" */
@@ -336,11 +336,11 @@ mustek_trigger_scanner(ss)
 	/*
 	 * do what it takes to actualize the mode
 	 */
-	bzero(&mode_cmd, sizeof(mode_cmd));
+	memset(&mode_cmd, 0, sizeof(mode_cmd));
 	mode_cmd.opcode = MUSTEK_MODE_SELECT;
 	_lto2b(sizeof(mode_data), mode_cmd.length);
 
-	bzero(&mode_data, sizeof(mode_data));
+	memset(&mode_data, 0, sizeof(mode_data));
 	mode_data.mode =
 	    MUSTEK_MODE_MASK | MUSTEK_HT_PATTERN_BUILTIN | MUSTEK_UNIT_SPEC;
 	if (ss->sio.scan_x_resolution <= 300) {
@@ -376,7 +376,7 @@ mustek_trigger_scanner(ss)
 	/*
 	 * now construct and send the start command
 	 */
-	bzero(&start_scan_cmd,sizeof(start_scan_cmd));
+	memset(&start_scan_cmd, 0, sizeof(start_scan_cmd));
 	start_scan_cmd.opcode = MUSTEK_START_STOP;
 	start_scan_cmd.mode = MUSTEK_SCAN_START;
 	if (ss->sio.scan_x_resolution <= 300)
@@ -441,7 +441,7 @@ mustek_rewind_scanner(ss)
 		 * only if not all data has been read, the scanner has to be
 		 * stopped
 		 */
-		bzero(&cmd, sizeof(cmd));
+		memset(&cmd, 0, sizeof(cmd));
 		cmd.opcode = MUSTEK_START_STOP;
 		cmd.mode = MUSTEK_SCAN_STOP;
 
@@ -475,7 +475,7 @@ mustek_read(ss, bp)
 
 	SC_DEBUG(periph, SCSIPI_DB1, ("mustek_read: start\n"));
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = MUSTEK_READ;
 
 	/* instead of the bytes, the mustek wants the number of lines */
@@ -524,7 +524,7 @@ mustek_get_status(ss, timeout, update)
 	struct scsipi_periph *periph = ss->sc_periph;
 	int error, lines, bytes_per_line;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = MUSTEK_GET_STATUS;
 	cmd.length = sizeof(data);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.37 2001/07/09 21:46:21 reinoud Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.37.2.1 2001/08/03 04:11:14 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -35,8 +35,6 @@
  * Interfaces with the NetBSD generic audio driver to provide SUN
  * /dev/audio (partial) compatibility.
  */
-
-#include "opt_cputypes.h"
 
 #include <sys/param.h>	/* proc.h */
 #include <sys/conf.h>   /* autoconfig functions */
@@ -509,7 +507,7 @@ vidcaudio_stereo(channel, position)
 	return 0;
 }
 
-#define PHYS(x, y) pmap_extract(kernel_pmap, ((x)&PG_FRAME), (paddr_t *)(y))
+#define PHYS(x, y) pmap_extract(pmap_kernel(), ((x)&PG_FRAME), (paddr_t *)(y))
 
 /*
  * Program the next buffer to be used

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 2001/06/30 02:03:16 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19.2.1 2001/08/03 04:12:14 lukem Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -772,7 +772,7 @@ pmap_create(void)
 	pmap_t pm;
 	
 	pm = pool_get(&pmap_pool, PR_WAITOK);
-	bzero((caddr_t)pm, sizeof *pm);
+	memset((caddr_t)pm, 0, sizeof *pm);
 	pmap_pinit(pm);
 	
 	DPRINTFN(7,("pmap_create: pm %p:\n"
@@ -932,7 +932,7 @@ pmap_zero_page(paddr_t pa)
 		panic("pmap_zero_page: can't zero pa %#lx", pa);
 	}
 #if 0
-	bzero(va, NBPG);
+	memset(va, 0, NBPG);
 #else
 
 	for (i = NBPG/CACHELINESIZE; i > 0; i--) {
@@ -2679,7 +2679,7 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend)
 		    pmap_pteg_table, size);
 #endif
 
-	bzero((void *)pmap_pteg_table, pmap_pteg_cnt * sizeof(pteg_t));
+	memset((void *)pmap_pteg_table, 0, pmap_pteg_cnt * sizeof(pteg_t));
 	pmap_pteg_mask = pmap_pteg_cnt - 1;
 
 	/*

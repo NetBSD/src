@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.69 2001/07/05 06:34:56 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.69.2.1 2001/08/03 04:12:31 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -110,8 +110,6 @@
 /* trapstats */
 int trapstats = 0;
 int protfix = 0;
-int protmmu = 0;
-int missmmu = 0;
 int udmiss = 0;	/* Number of normal/nucleus data/text miss/protection faults */
 int udhit = 0;	
 int udprot = 0;
@@ -773,6 +771,8 @@ badtrap:
 		}
 		
 #define fmt64(x)	(u_int)((x)>>32), (u_int)((x))
+		printf("Alignment error: dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
+		       fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 		printf("Alignment error: pid=%d comm=%s dsfsr=%08x:%08x dsfar=%x:%x isfsr=%08x:%08x pc=%lx\n",
 		       p->p_pid, p->p_comm, fmt64(dsfsr), fmt64(dsfar), fmt64(isfsr), pc);
 	}
@@ -1012,14 +1012,6 @@ data_access_fault(type, addr, pc, tf)
 		       (long)tf->tf_pc, (long)tf->tf_npc);
 		Debugger();
 	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%ld: data_access_fault(%x, %lx, %lx, %p) %s=%d\n",
-		       (long)(curproc?curproc->p_pid:-1), type, addr, pc, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
-		Debugger();
-	}
 	write_user_windows();
 	if ((cpcb->pcb_nsaved > 8) ||
 	    (trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) ||
@@ -1240,14 +1232,6 @@ data_access_error(type, sfva, sfsr, afva, afsr, tf)
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("data_access_error: tpc %lx == tnpc %lx\n", 
 		       (long)tf->tf_pc, (long)tf->tf_npc);
-		Debugger();
-	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%d: data_access_error(%x, %lx, %lx, %p) %s=%d\n",
-		       curproc?curproc->p_pid:-1, type, sfva, afva, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
 		Debugger();
 	}
 	write_user_windows();
@@ -1492,14 +1476,6 @@ text_access_fault(type, pc, tf)
 		printf("text_access_fault: tpc %p == tnpc %p\n", (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
 		Debugger();
 	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%d: text_access_fault(%x, %lx, %p) %s=%d\n",
-		       curproc?curproc->p_pid:-1, type, pc, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
-		Debugger();
-	}
 	write_user_windows();
 	if (((trapdebug&TDB_NSAVED) && cpcb->pcb_nsaved) || 
 	    (trapdebug&(TDB_TXTFLT|TDB_FOLLOW)))
@@ -1630,14 +1606,6 @@ text_access_error(type, pc, sfsr, afva, afsr, tf)
 	if (tf->tf_pc == tf->tf_npc) {
 		printf("text_access_error: tpc %p == tnpc %p\n",
 		    (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
-		Debugger();
-	}
-	if (protmmu || missmmu) {
-		extern int trap_trace_dis;
-		trap_trace_dis = 1;
-		printf("%ld: text_access_error(%lx, %lx, %lx, %p) %s=%d\n",
-		       (long)(curproc?curproc->p_pid:-1), (long)type, (long)sfsr, (long)afsr, tf, 
-		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
 		Debugger();
 	}
 	write_user_windows();

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.57 2001/06/19 17:58:41 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.57.2.1 2001/08/03 04:13:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -37,6 +37,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 #include "opt_compat_m68k4k.h"
+#include "opt_compat_mach.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
@@ -82,6 +83,10 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 #endif
 #endif /* ELF32 || ELF64 */
 
+#ifdef EXEC_MACHO
+#include <sys/exec_macho.h>
+#endif
+
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_exec.h>
 #endif
@@ -114,6 +119,10 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 
 #ifdef COMPAT_M68K4K
 #include <compat/m68k4k/m68k4k_exec.h>
+#endif
+
+#ifdef COMPAT_MACH
+#include <compat/mach/mach_exec.h>
 #endif
 
 #ifdef COMPAT_NETBSD32
@@ -224,6 +233,13 @@ const struct execsw execsw_builtin[] = {
 	  &emul_linux, EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
 	  LINUX_COPYARGS_FUNCTION, setregs },	/* Linux 32bit ELF bins */
+#endif
+#if defined(EXEC_MACHO) && defined(COMPAT_MACH)
+	{ sizeof (struct exec_macho_fat_header), exec_macho_makecmds,
+	  { .mach_probe_func = exec_mach_probe },
+	  &emul_mach, EXECSW_PRIO_ANY,
+	  MAXPATHLEN + 1,
+	  exec_mach_copyargs, setregs },	/* Mach 32bit MACH-O bins */
 #endif
 #ifdef COMPAT_SVR4_32
 	{ sizeof (Elf32_Ehdr), exec_elf32_makecmds,

@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.16 2001/05/02 10:32:09 scw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.16.2.1 2001/08/03 04:12:58 lukem Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1526,7 +1526,7 @@ clmpcc_cnattach(sc, chan, rate)
 	cons_chan = chan;
 	cons_rate = rate;
 
-	return 0;
+	return (clmpcc_init(sc));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wss_isa.c,v 1.9 1999/10/25 19:39:54 drochner Exp $	*/
+/*	$NetBSD: wss_isa.c,v 1.9.10.1 2001/08/03 04:13:11 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -92,7 +92,7 @@ wss_isa_probe(parent, match, aux)
     struct wss_softc probesc, *sc = &probesc;
     struct ad1848_softc *ac = (struct ad1848_softc *)&sc->sc_ad1848;
 
-    bzero(sc, sizeof *sc);
+    memset(sc, 0, sizeof *sc);
     ac->sc_dev.dv_cfdata = match;
     if (wssfind(parent, sc, aux)) {
         bus_space_unmap(sc->sc_iot, sc->sc_ioh, WSS_CODEC);

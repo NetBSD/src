@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_map.c,v 1.5 2000/06/29 00:22:27 oster Exp $	*/
+/*	$NetBSD: rf_map.c,v 1.5.4.1 2001/08/03 04:13:26 lukem Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -124,7 +124,7 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 		RF_ASSERT(asmList);
 		t_asm = asmList;
 		asmList = asmList->next;
-		bzero((char *) t_asm, sizeof(RF_AccessStripeMap_t));
+		memset((char *) t_asm, 0, sizeof(RF_AccessStripeMap_t));
 		if (!asm_p)
 			asm_list = asm_p = t_asm;
 		else {
@@ -151,7 +151,7 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 			RF_ASSERT(pdaList);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
 			if (!pda_p)
 				asm_p->physInfo = pda_p = t_pda;
 			else {
@@ -193,7 +193,7 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 			RF_ASSERT(pdaList);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
 			pda_p = asm_p->parityInfo = t_pda;
 			pda_p->type = RF_PDA_TYPE_PARITY;
 			(layoutPtr->map->MapParity) (raidPtr, rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe),
@@ -209,12 +209,12 @@ rf_MapAccess(raidPtr, raidAddress, numBlocks, buffer, remap)
 			RF_ASSERT(pdaList && pdaList->next);
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
 			pda_p = asm_p->parityInfo = t_pda;
 			pda_p->type = RF_PDA_TYPE_PARITY;
 			t_pda = pdaList;
 			pdaList = pdaList->next;
-			bzero((char *) t_pda, sizeof(RF_PhysDiskAddr_t));
+			memset((char *) t_pda, 0, sizeof(RF_PhysDiskAddr_t));
 			pda_q = asm_p->qInfo = t_pda;
 			pda_q->type = RF_PDA_TYPE_Q;
 			(layoutPtr->map->MapParity) (raidPtr, rf_RaidAddressOfPrevStripeUnitBoundary(layoutPtr, startAddrWithinStripe),
@@ -264,7 +264,7 @@ rf_MarkFailuresInASMList(raidPtr, asm_h)
 	for (asmap = asm_h->stripeMap; asmap; asmap = asmap->next) {
 		asmap->numDataFailed = asmap->numParityFailed = asmap->numQFailed = 0;
 		asmap->numFailedPDAs = 0;
-		bzero((char *) asmap->failedPDAs,
+		memset((char *) asmap->failedPDAs, 0,
 		    RF_MAX_FAILED_PDA * sizeof(RF_PhysDiskAddr_t *));
 		for (pda = asmap->physInfo; pda; pda = pda->next) {
 			if (RF_DEAD_DISK(disks[pda->row][pda->col].status)) {
@@ -438,7 +438,7 @@ rf_AllocAccessStripeMapHeader()
 	RF_AccessStripeMapHeader_t *p;
 
 	RF_FREELIST_GET(rf_asmhdr_freelist, p, next, (RF_AccessStripeMapHeader_t *));
-	bzero((char *) p, sizeof(RF_AccessStripeMapHeader_t));
+	memset((char *) p, 0, sizeof(RF_AccessStripeMapHeader_t));
 
 	return (p);
 }
@@ -457,7 +457,7 @@ rf_AllocPhysDiskAddr()
 	RF_PhysDiskAddr_t *p;
 
 	RF_FREELIST_GET(rf_pda_freelist, p, next, (RF_PhysDiskAddr_t *));
-	bzero((char *) p, sizeof(RF_PhysDiskAddr_t));
+	memset((char *) p, 0, sizeof(RF_PhysDiskAddr_t));
 
 	return (p);
 }
@@ -498,7 +498,7 @@ rf_AllocAccessStripeMapComponent()
 	RF_AccessStripeMap_t *p;
 
 	RF_FREELIST_GET(rf_asm_freelist, p, next, (RF_AccessStripeMap_t *));
-	bzero((char *) p, sizeof(RF_AccessStripeMap_t));
+	memset((char *) p, 0, sizeof(RF_AccessStripeMap_t));
 
 	return (p);
 }

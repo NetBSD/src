@@ -1,4 +1,4 @@
-/*	$NetBSD: iommureg.h,v 1.5 2000/06/12 23:19:05 eeh Exp $	*/
+/*	$NetBSD: iommureg.h,v 1.5.6.1 2001/08/03 04:12:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,7 +103,8 @@ struct iommu_strbuf {
  * can be of 8K IOMMU pages or 64K IOMMU pages.  We use 8K for compatibility
  * with the CPU's MMU.
  *
- * IOMMU TSBs using 8K pages can map the following size segments:
+ * On sysio, psycho, and psycho+, IOMMU TSBs using 8K pages can map the
+ * following size segments:
  *
  *	VA size		VA base		TSB size	tsbsize
  *	--------	--------	---------	-------
@@ -116,21 +117,19 @@ struct iommu_strbuf {
  *	512MB		e0000000	512K		6
  *	1GB		c0000000	1MB		7
  *
- * The UltraSPARC IIi IOMMU only seems to support 1GB VA size.
+ * Unfortunately, sabres on UltraSPARC IIi and IIe processors does not use
+ * this scheme to determine the IOVA base address.  Instead, bits 31-29 are
+ * used to check against the Target Address Space register in the IIi and
+ * the the IOMMU is used if they hit.  God knows what goes on in the IIe.
+ *
  */
 
 
-#define IOTSB_VEND	(0xffffffffffffffffLL<<PGSHIFT)
+#define IOTSB_VEND		(0xffffffffffffffffLL<<PGSHIFT)
 #define IOTSB_VSTART(sz)	(u_int)(IOTSB_VEND << ((sz)+10)) 
 
 #define MAKEIOTTE(pa,w,c,s)	(((pa)&IOTTE_PAMASK)|((w)?IOTTE_W:0)|((c)?IOTTE_C:0)|((s)?IOTTE_STREAM:0)|(IOTTE_V|IOTTE_8K))
-#if 0
-/* This version generates a pointer to a int64_t */
-#define IOTSBSLOT(va,sz)	((((((vaddr_t)(va))-((vaddr_t)IOTSB_VSTART(sz))))>>(PGSHIFT-3))&(~7))
-#else
-/* Here we just try to create an array index */
-#define IOTSBSLOT(va,sz)	((u_int)((((((vaddr_t)(va))-((vaddr_t)IOTSB_VSTART(sz))))>>(PGSHIFT))))
-#endif
+#define IOTSBSLOT(va,sz)	((u_int)(((vaddr_t)(va))-(is->is_dvmabase))>>PGSHIFT)
 
 /*
  * interrupt map stuff.  this belongs elsewhere.

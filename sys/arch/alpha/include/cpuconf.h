@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.12 2000/06/08 03:10:06 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.12.6.1 2001/08/03 04:10:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -61,13 +61,11 @@ struct platform {
 	 * Platform Specific Function Hooks
 	 *	cons_init 	-	console initialization
 	 *	device_register	-	boot configuration aid
-	 *	iointr		-	I/O interrupt handler
 	 *	clockintr	-	Clock Interrupt Handler
 	 *	mcheck_handler	-	Platform Specific Machine Check Handler
 	 */
 	void	(*cons_init)(void);
 	void	(*device_register)(struct device *, void *);
-	void	(*iointr)(void *, unsigned long);
 	void	(*clockintr)(struct clockframe *);
 	void	(*mcheck_handler)(unsigned long, struct trapframe *,
 		    unsigned long, unsigned long);

@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.32 2001/06/13 15:37:28 soda Exp $
+#	$NetBSD: files.arc,v 1.32.2.1 2001/08/03 04:10:56 lukem Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -143,9 +143,11 @@ attach	necpb at mainbus		# optional
 file	arch/arc/pci/necpb.c		necpb
 
 #	Ethernet chip on Jazz-Internal bus
+# XXX device declaration of MI sonic should be moved into sys/conf/files
 device	sn: ifnet, ether, arp
-attach	sn at jazzio
-file	arch/arc/jazz/if_sn.c		sn
+file	dev/ic/dp83932.c		sn
+attach	sn at jazzio with sn_jazzio
+file	arch/arc/jazz/if_sn_jazzio.c	sn_jazzio
 
 #
 # Machine-independent MII/PHY drivers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.26 2001/01/22 12:17:40 jdolecek Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.26.4.1 2001/08/03 04:13:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -125,15 +125,13 @@ union_mount(mp, path, data, ndp, p)
 	/*
 	 * Find upper node.
 	 */
-	NDINIT(ndp, LOOKUP, FOLLOW|WANTPARENT,
+	NDINIT(ndp, LOOKUP, FOLLOW,
 	       UIO_USERSPACE, args.target, p);
 
 	if ((error = namei(ndp)) != 0)
 		goto bad;
 
 	upperrootvp = ndp->ni_vp;
-	vrele(ndp->ni_dvp);
-	ndp->ni_dvp = NULL;
 
 	if (upperrootvp->v_type != VDIR) {
 		error = EINVAL;

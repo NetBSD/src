@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.18 1998/01/06 08:06:45 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.18.28.1 2001/08/03 04:11:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -90,7 +90,7 @@ process_read_regs(p, regs)
 {
 	struct frame *frame = process_frame(p);
 
-	bcopy(frame->f_regs, regs->r_regs, sizeof(frame->f_regs));
+	memcpy(regs->r_regs, frame->f_regs, sizeof(frame->f_regs));
 	regs->r_sr = frame->f_sr;
 	regs->r_pc = frame->f_pc;
 
@@ -104,7 +104,7 @@ process_read_fpregs(p, regs)
 {
 	struct fpframe *frame = process_fpframe(p);
 
-	bcopy(frame->fpf_regs, regs->r_regs, sizeof(frame->fpf_regs));
+	memcpy(regs->r_regs, frame->fpf_regs, sizeof(frame->fpf_regs));
 	regs->r_fpcr = frame->fpf_fpcr;
 	regs->r_fpsr = frame->fpf_fpsr;
 	regs->r_fpiar = frame->fpf_fpiar;
@@ -138,7 +138,7 @@ process_write_regs(p, regs)
 	    (regs->r_sr & PSL_USERSET) != PSL_USERSET)
 		return EPERM;
 
-	bcopy(regs->r_regs, frame->f_regs, sizeof(frame->f_regs));
+	memcpy(frame->f_regs, regs->r_regs, sizeof(frame->f_regs));
 	frame->f_sr = regs->r_sr;
 	frame->f_pc = regs->r_pc;
 
@@ -152,7 +152,7 @@ process_write_fpregs(p, regs)
 {
 	struct fpframe *frame = process_fpframe(p);
 
-	bcopy(regs->r_regs, frame->fpf_regs, sizeof(frame->fpf_regs));
+	memcpy(frame->fpf_regs, regs->r_regs, sizeof(frame->fpf_regs));
 	frame->fpf_fpcr = regs->r_fpcr;
 	frame->fpf_fpsr = regs->r_fpsr;
 	frame->fpf_fpiar = regs->r_fpiar;

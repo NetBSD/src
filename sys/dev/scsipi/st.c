@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.142 2001/07/08 18:06:47 wiz Exp $ */
+/*	$NetBSD: st.c,v 1.142.2.1 2001/08/03 04:13:33 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -424,7 +424,7 @@ st_loadquirks(st)
 	mode = st->quirkdata->modes;
 	mode2 = st->modes;
 	for (i = 0; i < 4; i++) {
-		bzero(mode2, sizeof(struct modes));
+		memset(mode2, 0, sizeof(struct modes));
 		st->modeflags[i] &= ~(BLKSIZE_SET_BY_QUIRK |
 		    DENSITY_SET_BY_QUIRK | BLKSIZE_SET_BY_USER |
 		    DENSITY_SET_BY_USER);
@@ -1159,7 +1159,7 @@ ststart(periph)
 		/*
 		 * Fill out the scsi command
 		 */
-		bzero(&cmd, sizeof(cmd));
+		memset(&cmd, 0, sizeof(cmd));
 		flags = XS_CTL_NOSLEEP | XS_CTL_ASYNC;
 		if ((bp->b_flags & B_READ) == B_WRITE) {
 			cmd.opcode = WRITE;
@@ -1285,7 +1285,7 @@ stioctl(dev, cmd, arg, flag, p)
 			error = 0;
 		}
 		SC_DEBUG(st->sc_periph, SCSIPI_DB1, ("[ioctl: get status]\n"));
-		bzero(g, sizeof(struct mtget));
+		memset(g, 0, sizeof(struct mtget));
 		g->mt_type = 0x7;	/* Ultrix compat *//*? */
 		g->mt_blksiz = st->blksize;
 		g->mt_density = st->density;
@@ -1507,7 +1507,7 @@ st_read(st, buf, size, flags)
 	 */
 	if (size == 0)
 		return (0);
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = READ;
 	if (st->flags & ST_FIXEDBLOCKS) {
 		cmd.byte2 |= SRW_FIXED;
@@ -1536,7 +1536,7 @@ st_erase(st, full, flags)
 	 * the drive to erase the entire unit.  Without this bit, we're
 	 * asking the drive to write an erase gap.
 	 */
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = ERASE;
 	if (full) {
 		cmd.byte2 = SE_LONG;
@@ -1636,7 +1636,7 @@ st_space(st, number, what, flags)
 	if (number == 0)
 		return (0);
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = SPACE;
 	cmd.byte2 = what;
 	_lto3b(number, cmd.number);
@@ -1677,7 +1677,7 @@ st_write_filemarks(st, number, flags)
 		st->flags &= ~(ST_PER_ACTION | ST_WRITTEN);
 	}
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = WRITE_FILEMARKS;
 	_lto3b(number, cmd.number);
 
@@ -1752,7 +1752,7 @@ st_load(st, type, flags)
 		/* otherwise, we should do what's asked of us */
 	}
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = LOAD;
 	cmd.how = type;
 
@@ -1793,7 +1793,7 @@ st_rewind(st, immediate, flags)
 	if (scsipi_periph_bustype(st->sc_periph) == SCSIPI_BUSTYPE_ATAPI)
 		immediate = SR_IMMED;
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = REWIND;
 	cmd.byte2 = immediate;
 
@@ -1830,8 +1830,8 @@ st_rdpos(st, hard, blkptr)
 	if (error != 0 && error != EACCES && error != EROFS)
 		return (error);
 
-	bzero(&cmd, sizeof(cmd));
-	bzero(&posdata, sizeof(posdata));
+	memset(&cmd, 0, sizeof(cmd));
+	memset(&posdata, 0, sizeof(posdata));
 	cmd.opcode = READ_POSITION;
 	if (hard)
 		cmd.byte1 = 1;
@@ -1880,7 +1880,7 @@ st_setpos(st, hard, blkptr)
 	if (error != 0 && error != EACCES && error != EROFS)
 		return (error);
 
-	bzero(&cmd, sizeof(cmd));
+	memset(&cmd, 0, sizeof(cmd));
 	cmd.opcode = LOCATE;
 	if (hard)
 		cmd.byte2 = 1 << 2;

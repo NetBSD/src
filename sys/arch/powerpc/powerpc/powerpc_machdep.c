@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.5 2001/07/05 08:38:25 toshii Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.5.2.1 2001/08/03 04:12:15 lukem Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -50,7 +50,7 @@ setregs(p, pack, stack)
 	struct trapframe *tf = trapframe(p);
 	struct ps_strings arginfo;
 
-	bzero(tf, sizeof *tf);
+	memset(tf, 0, sizeof *tf);
 	tf->fixreg[1] = -roundup(-stack + 8, 16);
 
 	/*
@@ -64,7 +64,7 @@ setregs(p, pack, stack)
 	 *	_start(argc, argv, envp, obj, cleanup, ps_strings);
 	 *
 	 * Notes:
-	 *	- obj and cleanup are the auxilliary and termination
+	 *	- obj and cleanup are the auxiliary and termination
 	 *	  vectors.  They are fixed up by ld.elf_so.
 	 *	- ps_strings is a NetBSD extension, and will be
 	 * 	  ignored by executables which are strictly

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.15 2001/06/29 02:40:28 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.15.2.1 2001/08/03 04:11:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -115,7 +115,8 @@ u_int cpu_reset_address = 0;
 
 BootConfig bootconfig;		/* Boot config storage */
 struct bootinfo *bootinfo, bootinfo_storage;
-char booted_kernel[80];
+static char booted_kernel_storage[80];
+char *booted_kernel = booted_kernel_storage;
 
 paddr_t physical_start;
 paddr_t physical_freestart;
@@ -352,7 +353,7 @@ initarm(argc, argv, bi)
 	kerneldatasize = ((kerneldatasize - 1) & ~(NBPG * 4 - 1)) + NBPG * 8;
 
 	/* parse kernel args */
-	strncpy(booted_kernel, *argv, sizeof(booted_kernel));
+	strncpy(booted_kernel_storage, *argv, sizeof(booted_kernel_storage));
 	for(argc--, argv++; argc; argc--, argv++)
 		switch(**argv) {
 		case 'a':
@@ -400,7 +401,7 @@ initarm(argc, argv, bi)
 
 	/* Use the first 1MB to allocate things */
 	freemempos = 0xc0000000;
-	memset((void *)0xc0000000, 0, 0x80000);
+	memset((void *)0xc0000000, 0, KERNEL_TEXT_BASE - 0xc0000000);
 
 	/*
 	 * Right We have the bottom meg of memory mapped to 0x00000000
@@ -683,6 +684,7 @@ initarm(argc, argv, bi)
 	}
 
 #ifdef VERBOSE_INIT_ARM
+	printf("freemempos=%08lx\n", freemempos);
 	printf("MMU enabled. control=%08x\n", cpu_get_control());
 #endif
 
@@ -734,6 +736,18 @@ initarm(argc, argv, bi)
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
 
+void
+consinit(void)
+{
+	static int consinit_called = 0;
+
+	if (consinit_called != 0)
+		return;
+
+	consinit_called = 1;
+	cninit();
+}
+
 #ifdef DEBUG_BEFOREMMU
 cons_decl(sacom);
 void
@@ -765,9 +779,9 @@ rpc_sa110_cc_setup(void)
 	paddr_t kaddr;
 	pt_entry_t *pte;
 
-	(void) pmap_extract(kernel_pmap, KERNEL_TEXT_BASE, &kaddr);
+	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
-		pte = pmap_pte(kernel_pmap, (sa110_cc_base + loop));
+		pte = pmap_pte(pmap_kernel(), (sa110_cc_base + loop));
 		*pte = L2_PTE(kaddr, AP_KR);
 	}
 	sa110_cache_clean_addr = sa110_cc_base;

@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.52 2001/01/14 02:06:22 thorpej Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.52.4.1 2001/08/03 04:13:43 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -94,6 +94,9 @@
 struct	pool mbpool;		/* mbuf pool */
 struct	pool mclpool;		/* mbuf cluster pool */
 
+struct pool_cache mbpool_cache;
+struct pool_cache mclpool_cache;
+
 struct mbstat mbstat;
 int	max_linkhdr;
 int	max_protohdr;
@@ -117,6 +120,9 @@ mbinit()
 	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", 0, NULL, NULL, 0);
 	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", 0, mclpool_alloc,
 	    mclpool_release, 0);
+
+	pool_cache_init(&mbpool_cache, &mbpool, NULL, NULL, NULL);
+	pool_cache_init(&mclpool_cache, &mclpool, NULL, NULL, NULL);
 
 	/*
 	 * Set the hard limit on the mclpool to the number of
