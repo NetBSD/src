@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.3 1996/10/22 16:57:51 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.4 1997/09/14 14:11:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -32,8 +32,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsutil.c,v 1.3 1996/10/22 16:57:51 christos Exp $";
+__RCSID("$NetBSD: fsutil.c,v 1.4 1997/09/14 14:11:01 lukem Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
