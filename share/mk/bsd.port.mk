@@ -1,7 +1,7 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
 #
-#	$NetBSD: bsd.port.mk,v 1.29 1998/01/15 09:37:27 agc Exp $
+#	$NetBSD: bsd.port.mk,v 1.30 1998/01/15 22:58:59 hubertf Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -201,11 +201,19 @@ NetBSD_MAINTAINER=	agc@netbsd.org
 #				  (default: none).
 #
 # FETCH_CMD		  - Full path to ftp/http fetch command if not in $PATH
-#				  (default: /usr/bin/fetch).
+#				  (default: /usr/bin/ftp).
 # FETCH_BEFORE_ARGS -
 #				  Arguments to ${FETCH_CMD} before filename (default: none).
 # FETCH_AFTER_ARGS -
 #				  Arguments to ${FETCH_CMD} following filename (default: none).
+# NO_IGNORE     - Set this to YES (most probably in a "make fetch" in
+#                 ${PORTSDIR}) if you want to fetch all distfiles,
+#                 even for packages not built due to limitation by
+#                 absent X or Motif ...
+# __ARCH_OK     - Internal variable set if the package is ok to build
+#                 on this architecture. Set to YES to insist on
+#                 e.g. fetching all distfiles (for interactive use in
+#                 ${PORTSDIR}, mostly. 
 #
 # Motif support:
 #
@@ -297,20 +305,12 @@ OPSYS!=	uname -s
 .if defined(ONLY_FOR_ARCHS)
 .for __ARCH in ${ONLY_FOR_ARCHS}
 .if ${MACHINE_ARCH} == "${__ARCH}"
-__ARCH_OK=	1
+__ARCH_OK?=	1
 .endif
 .endfor
 .else
-__ARCH_OK=	1
+__ARCH_OK?=	1
 .endif
-
-.if !defined(__ARCH_OK)
-.MAIN:	all
-
-fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
-	@echo "This port is only for ${ONLY_FOR_ARCHS},"
-	@echo "and you are running ${MACHINE_ARCH}."
-.else
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -465,6 +465,7 @@ MD5_FILE?=		${FILESDIR}/md5
 
 MAKE_FLAGS?=	-f
 MAKEFILE?=		Makefile
+MAKE_ENV+=		PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 MAKE_ENV+=		PREFIX=${PREFIX} LOCALBASE=${LOCALBASE} X11BASE=${X11BASE} MOTIFLIB="${MOTIFLIB}" CFLAGS="${CFLAGS}"
 
 .if exists(/usr/bin/fetch)
@@ -752,6 +753,7 @@ PKGFILE?=		${PKGNAME}${PKG_SUFX}
 .endif
 
 CONFIGURE_SCRIPT?=	configure
+CONFIGURE_ENV+=		PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin
 
 .if defined(GNU_CONFIGURE)
 CONFIGURE_ARGS+=	--prefix=${PREFIX}
@@ -759,7 +761,8 @@ HAS_CONFIGURE=		yes
 .endif
 
 # Passed to most of script invocations
-SCRIPTS_ENV+=	CURDIR=${.CURDIR} DISTDIR=${DISTDIR} \
+SCRIPTS_ENV+= CURDIR=${.CURDIR} DISTDIR=${DISTDIR} \
+          PATH=${PATH}:${LOCALBASE}/bin:${X11BASE}/bin \
 		  WRKDIR=${WRKDIR} WRKSRC=${WRKSRC} PATCHDIR=${PATCHDIR} \
 		  SCRIPTDIR=${SCRIPTDIR} FILESDIR=${FILESDIR} \
 		  PORTSDIR=${PORTSDIR} DEPENDS="${DEPENDS}" \
@@ -853,6 +856,14 @@ IGNORE=	"uses X11, but ${X11BASE} not found"
 .elif defined(BROKEN)
 IGNORE=	"is marked as broken: ${BROKEN}"
 .endif
+
+.if !defined(__ARCH_OK)
+.MAIN:	all
+
+fetch fetch-list extract patch configure build install reinstall package describe checkpatch checksum makesum all:
+	@echo "This port is only for ${ONLY_FOR_ARCHS},"
+	@echo "and you are running ${MACHINE_ARCH}."
+.else
 
 .if defined(IGNORE)
 .if defined(IGNORE_SILENT)
@@ -1367,6 +1378,10 @@ reinstall:
 	@${RM} -f ${INSTALL_COOKIE} ${PACKAGE_COOKIE}
 	@DEPENDS_TARGET=${DEPENDS_TARGET} ${MAKE} install
 .endif
+
+.endif # __ARCH_OK
+       # The functions below may be useful even if _ARCH_OK is not set
+
 
 ################################################################
 # Some more targets supplied for users' convenience
@@ -1895,4 +1910,3 @@ ${PLIST}: ${PLIST_SRC}
 .endif  # MANZ
 
 
-.endif # __ARCH_OK
