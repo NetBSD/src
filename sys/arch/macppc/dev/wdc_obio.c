@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.8 2000/04/14 10:22:06 tsubai Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.9 2000/05/23 13:20:58 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 
+#include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
@@ -71,18 +72,19 @@ struct wdc_obio_softc {
 	void *sc_ih;
 };
 
-int	wdc_obio_probe __P((struct device *, struct cfdata *, void *));
-void	wdc_obio_attach __P((struct device *, struct device *, void *));
-int	wdc_obio_detach __P((struct device *, int));
+int wdc_obio_probe __P((struct device *, struct cfdata *, void *));
+void wdc_obio_attach __P((struct device *, struct device *, void *));
+int wdc_obio_detach __P((struct device *, int));
+int wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
+void wdc_obio_dma_start __P((void *, int, int));
+int wdc_obio_dma_finish __P((void *, int, int, int));
+static void adjust_timing __P((struct channel_softc *));
 
 struct cfattach wdc_obio_ca = {
 	sizeof(struct wdc_obio_softc), wdc_obio_probe, wdc_obio_attach,
 	wdc_obio_detach, wdcactivate
 };
 
-static int	wdc_obio_dma_init __P((void *, int, int, void *, size_t, int));
-static void 	wdc_obio_dma_start __P((void *, int, int));
-static int	wdc_obio_dma_finish __P((void *, int, int, int));
 
 int
 wdc_obio_probe(parent, match, aux)
@@ -198,6 +200,71 @@ wdc_obio_attach(parent, self, aux)
 	}
 
 	wdcattach(chp);
+
+	/* modify DMA access timings */
+	if (use_dma)
+		adjust_timing(chp);
+}
+
+/* Multiword DMA transfer timings */
+static struct {
+	int cycle;	/* minimum cycle time [ns] */
+	int active;	/* minimum command active time [ns] */
+} dma_timing[3] = {
+	480, 215,	/* Mode 0 */
+	150,  80,	/* Mode 1 */
+	120,  70,	/* Mode 2 */
+};
+
+#define TIME_TO_TICK(time) howmany((time), 30)
+
+#define CONFIG_REG (0x200 >> 4)		/* IDE access timing register */
+
+void
+adjust_timing(chp)
+	struct channel_softc *chp;
+{
+        struct ataparams params;
+	struct ata_drive_datas *drvp = &chp->ch_drive[0];	/* XXX */
+	u_int conf;
+	int mode;
+	int cycle, active, min_cycle, min_active;
+	int cycle_tick, act_tick, inact_tick, half_tick;
+
+	if (ata_get_params(drvp, AT_POLL, &params) != CMD_OK)
+		return;
+
+	for (mode = 2; mode >= 0; mode--)
+		if (params.atap_dmamode_act & (1 << mode))
+			goto found;
+
+	/* No active DMA mode is found...  Do nothing. */
+	return;
+
+found:
+	min_cycle = dma_timing[mode].cycle;
+	min_active = dma_timing[mode].active;
+
+#ifdef notyet
+	/* Minimum cycle time is 150ns on ohare. */
+	if (ohare && params.atap_dmatiming_recom < 150)
+		params.atap_dmatiming_recom = 150;
+#endif
+	cycle = max(min_cycle, params.atap_dmatiming_recom);
+	active = min_active + (cycle - min_cycle);		/* XXX */
+
+	cycle_tick = TIME_TO_TICK(cycle);
+	act_tick = TIME_TO_TICK(active);
+	inact_tick = cycle_tick - act_tick - 1;
+	if (inact_tick < 1)
+		inact_tick = 1;
+	half_tick = 0;	/* XXX */
+	conf = (half_tick << 21) | (inact_tick << 16) | (act_tick << 11);
+	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, CONFIG_REG, conf);
+#if 0
+	printf("conf = 0x%x, cyc = %d (%d ns), act = %d (%d ns), inact = %d\n",
+	    conf, cycle_tick, cycle, act_tick, active, inact_tick);
+#endif
 }
 
 int
@@ -226,7 +293,7 @@ wdc_obio_detach(self, flags)
 	return 0;
 }
 
-static int
+int
 wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 	void *v;
 	void *databuf;
@@ -278,7 +345,7 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 	return 0;
 }
 
-static void
+void
 wdc_obio_dma_start(v, channel, drive)
 	void *v;
 	int channel, drive;
@@ -288,7 +355,7 @@ wdc_obio_dma_start(v, channel, drive)
 	dbdma_start(sc->sc_dmareg, sc->sc_dmacmd);
 }
 
-static int
+int
 wdc_obio_dma_finish(v, channel, drive, read)
 	void *v;
 	int channel, drive;
