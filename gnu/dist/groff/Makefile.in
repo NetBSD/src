@@ -206,6 +206,13 @@ man7dir=$(manroot)/man$(man7ext)
 make_html=@make_html@
 make_install_html=@make_install_html@
 
+# NetBSD_DISABLED_make_html
+# NetBSD_DISABLED_make_install_html
+#	disable html creation or installation; we don't want to depend
+#	upon png tools
+make_html=
+make_install_html=
+
 # DEFINES should include the following:
 # -DHAVE_MMAP			if you have mmap() and <sys/mman.h>
 # -DARRAY_DELETE_NEEDS_SIZE	if your C++ doesn't understand `delete []'
