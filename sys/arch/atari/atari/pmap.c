@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.23 1998/01/06 06:51:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.24 1998/01/06 07:03:01 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -810,7 +810,6 @@ pmap_pinit(pmap)
 	if (mmutype == MMU_68040)
 		pmap->pm_stfree = protostfree;
 #endif
-	pmap->pm_stchanged = TRUE;
 	pmap->pm_count = 1;
 	simple_lock_init(&pmap->pm_lock);
 }
@@ -1091,7 +1090,6 @@ pmap_remove(pmap, sva, eva)
 				if (mmutype == MMU_68040)
 					ptpmap->pm_stfree = protostfree;
 #endif
-				ptpmap->pm_stchanged = TRUE;
 				/*
 				 * XXX may have changed segment table
 				 * pointer for current process so
@@ -2179,7 +2177,6 @@ pmap_enter_ptpage(pmap, va)
 			pmap->pm_stfree = protostfree;
 		}
 #endif
-		pmap->pm_stchanged = TRUE;
 		/*
 		 * XXX may have changed segment table pointer for current
 		 * process so update now to reload hardware.
