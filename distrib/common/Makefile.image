@@ -1,0 +1,70 @@
+#	$NetBSD: Makefile.image,v 1.1 2002/02/03 15:24:43 lukem Exp $
+#
+# Makefile snippet to build a tree from the provided lists,
+# and make an ffs file system image from that tree
+#
+
+#
+# Required variables:
+#	_SRC_TOP_	top level of src tree (set by <bsd.own.mk>)
+#	CRUNCHBIN	name of crunchgen(1)ed binary
+#	LISTS		list file(s) to use
+#	IMAGE		name of target image
+#	IMAGEDEPENDS	depends for ${IMAGE}
+#	IMAGEENDIAN	endianness of ${IMAGE}
+#	IMAGESIZE	size of ${IMAGE}
+#	MTREECONF	mtree specfile to use
+#
+# Optional variables:
+#	POPULATEENV	environment variables to pass to the output of
+#			parselist.awk -v mode=populate
+#	WORKDIR		directory to build image in to 
+#
+#
+
+WORKDIR?=	work
+WORKSPEC?=	work.spec
+WORKBUILT?=	work.built
+
+_PARSELIST=	${_SRC_TOP_}/distrib/common/parselist.awk
+
+POPULATEENV+=	_SRC_TOP_=${_SRC_TOP_:Q} \
+		DESTDIR=${DESTDIR:Q} \
+		CURDIR=${.CURDIR:Q} \
+		OBJDIR=${.OBJDIR:Q} \
+		TARGDIR=${.OBJDIR}/${WORKDIR:Q} \
+		CRUNCHBIN=${CRUNCHBIN:Q}
+
+
+${WORKBUILT}: ${IMAGEDEPENDS} ${MTREECONF} ${_PARSELIST} ${LISTS}
+	@echo "Building tree into ${WORKDIR}"
+	-rm -rf ${WORKDIR} ${WORKBUILT}
+	mkdir -m 755 ${WORKDIR}
+	${MTREE} -def ${MTREECONF} -p ${WORKDIR}/ -UW
+	awk -f ${_PARSELIST} -v mode=populate ${LISTS} | ${POPULATEENV} sh -e \
+	&& touch ${WORKBUILT}
+
+${WORKSPEC}: ${MTREECONF} ${LISTS} ${_PARSELIST}
+	-rm -f ${.TARGET} ${.TARGET}.tmp
+	cp ${MTREECONF} ${.TARGET}.tmp
+	echo "/unset mode" >> ${.TARGET}.tmp
+	awk -f ${_PARSELIST} -v mode=mtree ${LISTS} >> ${.TARGET}.tmp \
+	&& mv ${.TARGET}.tmp ${.TARGET}
+
+${IMAGE}: ${WORKBUILT} ${WORKSPEC} ${IMAGEDEPENDS} ${_PARSELIST} ${LISTS}
+	@echo "Creating image into ${.TARGET}..."
+	-rm -f ${.TARGET} ${.TARGET}.tmp
+	${MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
+	    -N ${_SRC_TOP_}/etc -o bsize=4096,fsize=512 \
+	    -o optimization=space,minfree=0,nsectors=1,ntracks=128 \
+	    ${.TARGET}.tmp ${WORKDIR} \
+	&& mv -f ${.TARGET}.tmp ${.TARGET}
+
+
+clean cleandir distclean: cleanfsimage
+
+.PHONY: cleanfsimage
+
+cleanfsimage:
+	-rm -rf ${IMAGE} ${IMAGE}.tmp ${WORKBUILT} ${WORKSPEC} ${WORKSPEC}.tmp
+	-rm -rf ${WORKDIR}
