@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.279 2000/11/02 01:09:05 itojun Exp $
+# $NetBSD: mi,v 1.280 2000/11/04 18:57:15 thorpej Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/as.info
 ./usr/share/info/awk.info
@@ -696,6 +696,7 @@
 ./usr/share/man/cat4/pcmcom.0
 ./usr/share/man/cat4/pcppi.0
 ./usr/share/man/cat4/pcscp.0
+./usr/share/man/cat4/pcweasel.0
 ./usr/share/man/cat4/phy.0
 ./usr/share/man/cat4/pmax/asc.0
 ./usr/share/man/cat4/pmax/dc.0
@@ -1416,6 +1417,7 @@
 ./usr/share/man/cat8/vipw.0
 ./usr/share/man/cat8/vmstat.0
 ./usr/share/man/cat8/vnconfig.0
+./usr/share/man/cat8/wdogctl.0
 ./usr/share/man/cat8/wiconfig.0
 ./usr/share/man/cat8/wire-test.0
 ./usr/share/man/cat8/wsconscfg.0
@@ -2115,6 +2117,7 @@
 ./usr/share/man/man4/pcmcom.4
 ./usr/share/man/man4/pcppi.4
 ./usr/share/man/man4/pcscp.4
+./usr/share/man/man4/pcweasel.4
 ./usr/share/man/man4/phy.4
 ./usr/share/man/man4/pmax/asc.4
 ./usr/share/man/man4/pmax/dc.4
@@ -2835,6 +2838,7 @@
 ./usr/share/man/man8/vipw.8
 ./usr/share/man/man8/vmstat.8
 ./usr/share/man/man8/vnconfig.8
+./usr/share/man/man8/wdogctl.8
 ./usr/share/man/man8/wiconfig.8
 ./usr/share/man/man8/wire-test.8
 ./usr/share/man/man8/wsconscfg.8
