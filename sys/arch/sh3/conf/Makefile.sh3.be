@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3.be,v 1.7 2001/05/29 02:20:25 mrg Exp $
+#	$NetBSD: Makefile.sh3.be,v 1.8 2001/10/26 06:45:39 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,10 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/sh3/conf/Makefile.sh3
 # after which config should be rerun for all machines of that type.
+
+USETOOLS?=	no
+
+.include <bsd.own.mk>
 
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.

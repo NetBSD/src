@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.9 2001/10/23 18:57:32 thorpej Exp $
+#	$NetBSD: Makefile.arm,v 1.10 2001/10/26 06:45:35 jmc Exp $
 
 # Makefile for NetBSD
 #
@@ -11,6 +11,8 @@
 # Machine generic makefile changes should be made in
 #	/sys/arch/arm/conf/Makefile.arm
 # after which config should be rerun for all machines of that type.
+
+USETOOLS?=	no
 
 .include <bsd.own.mk>
 
