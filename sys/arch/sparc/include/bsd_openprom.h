@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.10 1996/05/16 15:56:59 abrown Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.11 1996/05/18 12:27:43 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -323,3 +323,5 @@ void	romhalt __P((void))
     __attribute__((__noreturn__));
 void	romboot __P((char *))
     __attribute__((__noreturn__));
+
+extern struct promvec *promvec;

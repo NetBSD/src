@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1996/05/16 19:19:33 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.59 1996/05/18 12:27:47 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -82,8 +82,6 @@
 #define PTE_BITS "\20\40V\37W\36S\35NC\33IO\32U\31M"
 #define PTE_BITS4M "\20\10C\7M\6R\5ACC3\4ACC2\3ACC1\2TYP2\1TYP1"
 #endif
-
-extern struct promvec *promvec;
 
 /*
  * The SPARCstation offers us the following challenges:

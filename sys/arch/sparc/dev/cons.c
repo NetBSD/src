@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.21 1996/04/22 02:42:00 christos Exp $ */
+/*	$NetBSD: cons.c,v 1.22 1996/05/18 12:27:40 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,8 +75,6 @@ struct	tty *fbconstty = 0;	/* tty structure for frame buffer console */
 int	rom_console_input;	/* when set, hardclock calls cnrom() */
 
 int	cons_ocount;		/* output byte count */
-
-extern struct promvec *promvec;
 
 /*
  * The output driver may munge the minor number in cons.t_dev.

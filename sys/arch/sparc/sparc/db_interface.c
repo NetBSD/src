@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.11 1996/04/01 17:37:08 christos Exp $ */
+/*	$NetBSD: db_interface.c,v 1.12 1996/05/18 12:27:45 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -284,7 +284,6 @@ db_prom_cmd(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern struct promvec *promvec;
 	promvec->pv_abort();
 }
 
