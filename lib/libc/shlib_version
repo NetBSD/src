@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.99 2000/12/24 23:36:51 jmc Exp $
+#	$NetBSD: shlib_version,v 1.100 2001/01/05 22:47:03 jdolecek Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -8,4 +8,4 @@
 # - libc/gen/assert.c: __{diag,}assert13() -> __{diag,}assert()
 #
 major=12
-minor=69
+minor=70
