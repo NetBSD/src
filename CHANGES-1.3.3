@@ -73,3 +73,12 @@ sys/dev/scsipi/scsi_tape.h		1.15		drochner
 	       st.c			patch		drochner
 
   Fix incorrect length of LOCATE CDB (PR#5306).
+
+src/sys/compat/freebsd/freebsd_misc.c	1.4		tv
+		       syscalls.master	1.16		tv
+		       freebsd_syscall.h	regen	tv
+		       freebsd_syscallargs.h	regen	tv
+		       freebsd_syscalls.c	regen	tv
+		       freebsd_sysent.c		regen	tv
+
+  Implement FreeBSD issetugid().
