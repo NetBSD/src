@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.26 2001/05/13 13:44:34 bjh21 Exp $
+#	$NetBSD: files.arm,v 1.27 2001/05/13 14:17:36 bjh21 Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defopt	ARM32
@@ -64,7 +64,6 @@ file	arch/arm/arm32/syscall.c		arm32
 file	arch/arm/arm32/sys_machdep.c		arm32
 
 # arm32 library functions
-file	arch/arm/arm32/strstr.c			arm32
 file	arch/arm/arm32/bcopy_page.S		arm32
 file	arch/arm/arm32/bcopyinout.S		arm32
 file	arch/arm/arm32/copystr.S		arm32

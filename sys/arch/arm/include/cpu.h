@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2001/04/24 18:20:21 bjh21 Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2001/05/13 14:17:37 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -266,9 +266,6 @@ void userret		__P((register struct proc *p));
 
 /* machdep.h */
 void bootsync		__P((void));
-
-/* strstr.c */
-char *strstr		__P((const char *s1, const char *s2));
 
 /* syscall.c */
 void child_return	__P((void *));
