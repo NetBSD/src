@@ -1,4 +1,4 @@
-/*	$NetBSD: ipc.h,v 1.17 1998/05/07 16:16:51 kleink Exp $	*/
+/*	$NetBSD: ipc.h,v 1.18 1998/11/12 16:15:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,7 +90,7 @@ int ipcperm __P((struct ucred *, struct ipc_perm *, int));
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-key_t	ftok __P((const char *, char));
+key_t	ftok __P((const char *, int));
 __END_DECLS
 #endif
 #endif /* !_SYS_IPC_H_ */
