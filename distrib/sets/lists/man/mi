@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.478.2.2 2002/06/07 18:53:47 thorpej Exp $
+# $NetBSD: mi,v 1.478.2.3 2002/06/26 16:58:46 tv Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1186,6 +1186,8 @@
 ./usr/share/man/cat5/security.conf.0		man-sys-catman
 ./usr/share/man/cat5/services.0			man-net-catman
 ./usr/share/man/cat5/shells.0			man-sys-catman
+./usr/share/man/cat5/ssh_config.0		man-secsh-catman
+./usr/share/man/cat5/sshd_config.0		man-secsh-catman
 ./usr/share/man/cat5/stab.0			man-sys-catman
 ./usr/share/man/cat5/syslog.conf.0		man-sysutil-catman
 ./usr/share/man/cat5/termcap.0			man-sys-catman
@@ -1382,8 +1384,8 @@
 ./usr/share/man/cat8/ifmcstat.0			man-netutil-catman
 ./usr/share/man/cat8/ifwatchd.0			man-netutil-catman
 ./usr/share/man/cat8/inetd.0			man-netutil-catman
-./usr/share/man/cat8/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/init.0			man-sysutil-catman
+./usr/share/man/cat8/installboot.0		man-sysutil-catman
 ./usr/share/man/cat8/intro.0			man-sys-catman
 ./usr/share/man/cat8/iopctl.0			man-sysutil-catman
 ./usr/share/man/cat8/iostat.0			man-sysutil-catman
@@ -1646,6 +1648,7 @@
 ./usr/share/man/cat8/spawn.0			man-postfix-catman
 ./usr/share/man/cat8/spray.0			man-netutil-catman
 ./usr/share/man/cat8/sprayd.0			man-netutil-catman
+./usr/share/man/cat8/ssh-keysign.0		man-secsh-catman
 ./usr/share/man/cat8/sshd.0			man-secsh-catman
 ./usr/share/man/cat8/statd.0			man-nfsserver-catman
 ./usr/share/man/cat8/stdethers.0		man-nis-catman
@@ -2894,6 +2897,8 @@
 ./usr/share/man/man5/security.conf.5		man-sys-man
 ./usr/share/man/man5/services.5			man-net-man
 ./usr/share/man/man5/shells.5			man-sys-man
+./usr/share/man/man5/ssh_config.5		man-secsh-man
+./usr/share/man/man5/sshd_config.5		man-secsh-man
 ./usr/share/man/man5/stab.5			man-sys-man
 ./usr/share/man/man5/syslog.conf.5		man-sysutil-man
 ./usr/share/man/man5/termcap.5			man-sys-man
@@ -3090,8 +3095,8 @@
 ./usr/share/man/man8/ifmcstat.8			man-netutil-man
 ./usr/share/man/man8/ifwatchd.8			man-netutil-man
 ./usr/share/man/man8/inetd.8			man-netutil-man
-./usr/share/man/man8/installboot.8		man-sysutil-man
 ./usr/share/man/man8/init.8			man-sysutil-man
+./usr/share/man/man8/installboot.8		man-sysutil-man
 ./usr/share/man/man8/intro.8			man-sys-man
 ./usr/share/man/man8/iopctl.8			man-sysutil-man
 ./usr/share/man/man8/iostat.8			man-sysutil-man
@@ -3354,6 +3359,7 @@
 ./usr/share/man/man8/spawn.8			man-postfix-man
 ./usr/share/man/man8/spray.8			man-netutil-man
 ./usr/share/man/man8/sprayd.8			man-netutil-man
+./usr/share/man/man8/ssh-keysign.8		man-secsh-man
 ./usr/share/man/man8/sshd.8			man-secsh-man
 ./usr/share/man/man8/statd.8			man-nfsserver-man
 ./usr/share/man/man8/stdethers.8		man-nis-man
