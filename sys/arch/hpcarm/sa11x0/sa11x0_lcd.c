@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_lcd.c,v 1.3 2001/05/01 12:36:55 toshii Exp $	*/
+/*	$NetBSD: sa11x0_lcd.c,v 1.4 2001/06/29 17:22:51 toshii Exp $	*/
 #define SALCD_DEBUG
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -99,6 +99,8 @@ salcd_attach(parent, self, aux)
 	struct salcd_softc *sc = (struct salcd_softc*)self;
 	struct sa11x0_attach_args *sa = aux;
 	struct hpcfb_attach_args ha;
+
+	printf("\n");
 
 	sc->sc_iot = sa->sa_iot;
 	sc->sc_baseaddr = sa->sa_addr;
