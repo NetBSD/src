@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.50 2003/04/17 20:50:46 jdolecek Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.51 2003/04/18 21:55:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.50 2003/04/17 20:50:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.51 2003/04/18 21:55:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,13 +162,12 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 			case DTYPE_VNODE:
 				vxp = (struct vnode *)fp->f_data;
 
-				/* Do not allow opening directories */
-				if (vxp->v_type == VDIR) {
-					error = EOPNOTSUPP;
-					FILE_UNUSE(fp, pown);
-					goto bad;
-				}
-
+				/*
+				 * We make symlinks for directories 
+				 * to avoid cycles.
+				 */
+				if (vxp->v_type == VDIR)
+					goto symlink;
 				vp->v_type = vxp->v_type;
 				break;
 			case DTYPE_PIPE:
@@ -176,6 +175,13 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 				break;
 			case DTYPE_SOCKET:
 				vp->v_type = VSOCK;
+				break;
+			case DTYPE_KQUEUE:
+			case DTYPE_MISC:
+			symlink:
+				pfs->pfs_mode = S_IRUSR|S_IXUSR|S_IRGRP|
+				    S_IXGRP|S_IROTH|S_IXOTH;
+				vp->v_type = VLNK;
 				break;
 			default:
 				error = EOPNOTSUPP;

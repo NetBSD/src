@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.101 2003/04/17 20:50:46 jdolecek Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.102 2003/04/18 21:55:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.101 2003/04/17 20:50:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.102 2003/04/18 21:55:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -912,11 +912,8 @@ procfs_lookup(v)
 			fvp = (struct vnode *)fp->f_data;
 
 			/* Don't show directories */
-			if (fvp->v_type == VDIR) {
-				FILE_UNUSE(fp, p);
-				error = ENOENT;
-				break;
-			}
+			if (fvp->v_type == VDIR)
+				goto symlink;
 
 			VREF(fvp);
 			FILE_UNUSE(fp, p);
@@ -926,6 +923,7 @@ procfs_lookup(v)
 			error = 0;
 			break;
 		default:
+		symlink:
 			FILE_UNUSE(fp, p);
 			error = procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
 			    Pfd, fd);
@@ -1100,29 +1098,6 @@ procfs_readdir(v)
 		for (; uio->uio_resid >= UIO_MX && i < fdp->fd_nfiles; i++) {
 			if ((fp = fd_getfile(fdp, i - 2)) == NULL)
 				continue;
-			FILE_USE(fp); 
-
-			/*
-			 * Only show supported file descriptors - must
-			 * match procfs_allocvp() set.
-			 */
-			switch(fp->f_type) {
-			case DTYPE_VNODE:
-				/* Don't show directories */
-				if (((struct vnode *)fp->f_data)->v_type==VDIR){
-					FILE_UNUSE(fp, p);
-					continue;
-				}
-			case DTYPE_PIPE:
-			case DTYPE_SOCKET:
-				FILE_UNUSE(fp, p);
-				break;
-			default:
-				/* unsupported, skip */
-				FILE_UNUSE(fp, p);
-				continue;
-			}
-			
 			d.d_fileno = PROCFS_FILENO(pfs->pfs_pid, Pfd, i - 2);
 			d.d_namlen = snprintf(d.d_name, sizeof(d.d_name),
 			    "%lld", (long long)(i - 2));
@@ -1281,16 +1256,68 @@ procfs_readlink(v)
 {
 	struct vop_readlink_args *ap = v;
 	char buf[16];		/* should be enough */
+	char *bp = buf;
+	char *path = NULL;
 	int len;
+	int error = 0;
+	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
-	if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pcurproc, -1))
+	if (pfs->pfs_fileno == PROCFS_FILENO(0, Pcurproc, -1))
 		len = sprintf(buf, "%ld", (long)curproc->p_pid);
-	else if (VTOPFS(ap->a_vp)->pfs_fileno == PROCFS_FILENO(0, Pself, -1))
+	else if (pfs->pfs_fileno == PROCFS_FILENO(0, Pself, -1))
 		len = sprintf(buf, "%s", "curproc");
-	else
-		return (EINVAL);
+	else {
+		struct file *fp;
+		struct proc *pown;
+		struct vnode *vxp, *vp;
 
-	return (uiomove((caddr_t)buf, len, ap->a_uio));
+		if ((error = procfs_getfp(pfs, &pown, &fp)) != 0)
+			return error;
+		FILE_USE(fp);
+		switch (fp->f_type) {
+		case DTYPE_VNODE:
+			vxp = (struct vnode *)fp->f_data;
+			if (vxp->v_type != VDIR) {
+				FILE_UNUSE(fp, pown);
+				return EINVAL;
+			}
+			if ((path = malloc(MAXPATHLEN, M_TEMP, M_WAITOK))
+			    == NULL) {
+				FILE_UNUSE(fp, pown);
+				return ENOMEM;
+			}
+			bp = path + MAXPATHLEN;
+			*--bp = '\0';
+			vp = curproc->p_cwdi->cwdi_rdir;
+			if (vp == NULL)
+				vp = rootvnode;
+			error = getcwd_common(vxp, vp, &bp, path,
+			    MAXPATHLEN / 2, 0, curproc);
+			FILE_UNUSE(fp, pown);
+			if (error) {
+				free(path, M_TEMP);
+				return error;
+			}
+			len = strlen(bp);
+			break;
+
+		case DTYPE_MISC:
+			len = sprintf(buf, "%s", "[misc]");
+			break;
+
+		case DTYPE_KQUEUE:
+			len = sprintf(buf, "%s", "[kqueue]");
+			break;
+
+		default:
+			return EINVAL;
+		}
+	}
+
+	error = uiomove((caddr_t)bp, len, ap->a_uio);
+	if (path)
+		free(path, M_TEMP);
+	return error;
 }
 
 /*
