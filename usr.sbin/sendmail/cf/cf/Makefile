@@ -34,7 +34,7 @@ clean cleandir:
 depend install: 
 
 distribution:
-	${INSTALL} -c -o root -g wheel -m 444 netbsd-proto.cf \
+	install -c -o root -g wheel -m 444 netbsd-proto.cf \
 	    ${DESTDIR}/etc/sendmail.cf
 
 # this is overkill, but....
