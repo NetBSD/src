@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.3 2003/08/25 09:20:25 drochner Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.4 2003/08/25 13:11:30 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ typedef struct {
 
 #define _UC_UCONTEXT_ALIGN	(~0xf)
 
-#ifdef _KERNEL
+#ifdef _KERNEL_OPT
 #include "opt_vm86.h"
 #ifdef VM86
 /*#include <machine/psl.h>*/
