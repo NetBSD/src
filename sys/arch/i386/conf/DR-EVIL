@@ -1,4 +1,4 @@
-#	$NetBSD: DR-EVIL,v 1.6 2000/01/17 17:47:05 augustss Exp $
+#	$NetBSD: DR-EVIL,v 1.7 2000/01/18 20:02:32 thorpej Exp $
 #
 #	DR-EVIL -- Dell Inspiron 3500 laptop used by thorpej@netbsd.org
 #
@@ -282,9 +282,9 @@ vga*		at pci?
 #pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at vga? console ?
 #wsdisplay*	at pcdisplay? console ?
-wskbd*	at pckbd? console ?
-wsmouse*	at pms?
-#wsmouse*	at pmsi?
+wskbd*	at pckbd? console ? mux 1
+wsmouse*	at pms? mux 0
+#wsmouse*	at pmsi? mux 0
 
 pcppi0	at isa?
 sysbeep0	at pcppi?
@@ -557,11 +557,11 @@ uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 ums*	at uhub? port ? configuration ? interface ?
-wsmouse*	at ums?
+wsmouse*	at ums? mux 0
 
 # USB Keyboards
 ukbd*	at uhub? port ? configuration ? interface ?
-wskbd*	at ukbd? console ?
+wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
 uhid*	at uhub? port ? configuration ? interface ?
@@ -645,8 +645,8 @@ spkr0	at pcppi?		# PC speaker
 #lms1	at isa? port 0x238 irq 5
 #mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
 #mms1	at isa? port 0x238 irq 5
-#wsmouse*	at lms?
-#wsmouse*	at mms?
+#wsmouse*	at lms? mux 0
+#wsmouse*	at mms? mux 0
 # backwards compatible versions
 #olms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 #olms1	at isa? port 0x238 irq 5
