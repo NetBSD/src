@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.6 2005/02/11 08:25:54 dsl Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.7 2005/02/12 10:23:21 rearnsha Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -177,8 +177,7 @@ dsrtc*		at iic1 addr 0x68
 
 # PCI IDE/S-ATA controllers and devices
 artsata* 	at pci? dev ? function ?	# Intel i31244 SATA controller
-
-options 	PCIIDE_I31244_ENABLEDMA
+#options 	PCIIDE_I31244_DISABLEDMA
 
 # ATA (IDE) bus support
 atabus* at ata?
