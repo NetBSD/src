@@ -1,4 +1,4 @@
-/*	$NetBSD: tmscp.c,v 1.3 1995/06/16 15:23:53 ragge Exp $ */
+/*	$NetBSD: tmscp.c,v 1.4 1995/07/05 08:24:45 ragge Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -487,13 +487,13 @@ tmscpattach (ui)
  */
 tmscpintr(uba,vector,level,d)
 {
-	register struct uba_ctlr *um = tmscpminfo[d];
+	volatile struct uba_ctlr *um = tmscpminfo[d];
 	volatile struct tmscpdevice *tmscpaddr =
 		(struct tmscpdevice *)um->um_addr;
 	struct buf *bp;
 	volatile int i;
-	register struct tmscp_softc *sc = &tmscp_softc[d];
-	volatile struct tmscp *tm = &tmscp[d];
+	volatile struct tmscp_softc *sc = &tmscp_softc[d];
+	struct tmscp *tm = &tmscp[d];
 	struct tmscp *ttm;
 	volatile struct mscp *mp;
 
@@ -1766,6 +1766,24 @@ tmscpstrategy (bp)
 		}
 	splx(s);
 	return;
+}
+
+int
+tmscpread(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(tmscpstrategy, NULL, dev, B_READ, minphys, uio));
+}
+
+int
+tmscpwrite(dev, uio)
+	dev_t dev;
+	struct uio *uio;
+{
+
+	return (physio(tmscpstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
 #define DBSIZE 32
