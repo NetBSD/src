@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)csh.h	5.15 (Berkeley) 6/8/91
- *
- *	$Header: /cvsroot/src/bin/csh/csh.h,v 1.3 1993/03/23 00:24:19 cgd Exp $
+ *	from: @(#)csh.h	5.15 (Berkeley) 6/8/91
+ *	$Id: csh.h,v 1.4 1993/08/01 19:00:57 mycroft Exp $
  */
 
 /*

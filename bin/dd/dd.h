@@ -34,7 +34,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dd.h	5.4 (Berkeley) 6/2/92
+ *	from: @(#)dd.h	5.4 (Berkeley) 6/2/92
+ *	$Id: dd.h,v 1.2 1993/08/01 19:00:14 mycroft Exp $
  */
 
 /* Input/output stream state. */
