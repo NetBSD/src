@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strsep.3	8.1 (Berkeley) 6/9/93
-.\"	$NetBSD: strsep.3,v 1.9 2002/02/07 07:00:33 ross Exp $
+.\"	$NetBSD: strsep.3,v 1.10 2002/02/07 09:24:07 ross Exp $
 .\"
 .Dd June 9, 1993
 .Dt STRSEP 3
@@ -87,7 +87,7 @@ argument vector:
 .Bd -literal -offset indent
 char **ap, *argv[10], *inputstring;
 
-for (ap = argv; (*ap = strsep(&amp;inputstring, " \et")) != NULL;)
+for (ap = argv; (*ap = strsep(\*[Am]inputstring, " \et")) != NULL;)
 	if (**ap != '\e0')
 		++ap;
 .Ed
