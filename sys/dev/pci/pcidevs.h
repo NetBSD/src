@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.274 2000/10/27 22:43:44 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.275 2000/11/03 15:57:33 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.268 2000/10/27 22:43:28 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.269 2000/11/03 15:54:02 ad Exp 
  */
 
 /*
@@ -401,7 +401,7 @@
 #define	PCI_VENDOR_SYNEMA	0x1163		/* Synema Corporation */
 #define	PCI_VENDOR_APT	0x1164		/* Advanced Peripherals Technologies */
 #define	PCI_VENDOR_IMAGRAPH	0x1165		/* Imagraph */
-#define	PCI_VENDOR_PEQUR	0x1166		/* Pequr Technology */
+#define	PCI_VENDOR_SERVERWORKS	0x1166		/* ServerWorks */
 #define	PCI_VENDOR_MUTOH	0x1167		/* Mutoh Industries */
 #define	PCI_VENDOR_THINE	0x1168		/* Thine Electronics */
 #define	PCI_VENDOR_CDAC	0x1169		/* Centre for Dev. of Advanced Computing */
