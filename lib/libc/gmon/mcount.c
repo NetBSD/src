@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.3 1995/02/27 12:54:42 cgd Exp $	*/
+/*	$NetBSD: mcount.c,v 1.4 1996/06/12 04:03:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -33,11 +33,11 @@
  * SUCH DAMAGE.
  */
 
-#if !defined(lint) && !defined(KERNEL) && defined(LIBC_SCCS)
+#if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: mcount.c,v 1.3 1995/02/27 12:54:42 cgd Exp $";
+static char rcsid[] = "$NetBSD: mcount.c,v 1.4 1996/06/12 04:03:33 cgd Exp $";
 #endif
 #endif
 
@@ -66,7 +66,7 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	register struct tostruct *top, *prevtop;
 	register struct gmonparam *p;
 	register long toindex;
-#ifdef KERNEL
+#ifdef _KERNEL
 	register int s;
 #endif
 
@@ -77,7 +77,7 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 	 */
 	if (p->state != GMON_PROF_ON)
 		return;
-#ifdef KERNEL
+#ifdef _KERNEL
 	MCOUNT_ENTER;
 #else
 	p->state = GMON_PROF_BUSY;
@@ -163,7 +163,7 @@ _MCOUNT_DECL(frompc, selfpc)	/* _mcount; may be static, inline, etc */
 		
 	}
 done:
-#ifdef KERNEL
+#ifdef _KERNEL
 	MCOUNT_EXIT;
 #else
 	p->state = GMON_PROF_ON;
@@ -171,7 +171,7 @@ done:
 	return;
 overflow:
 	p->state = GMON_PROF_ERROR;
-#ifdef KERNEL
+#ifdef _KERNEL
 	MCOUNT_EXIT;
 #endif
 	return;
