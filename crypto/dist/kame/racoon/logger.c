@@ -77,8 +77,8 @@ log_open(siz, fname)
 
 	p->tbuf = (time_t *)racoon_malloc(sizeof(time_t *) * siz);
 	if (p->tbuf == NULL) {
-		racoon_free(p);
 		racoon_free(p->buf);
+		racoon_free(p);
 		return NULL;
 	}
 	memset(p->tbuf, 0, sizeof(time_t *) * siz);
