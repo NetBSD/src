@@ -1,4 +1,4 @@
-/*	$NetBSD: runenone.c,v 1.7 2001/01/26 13:42:11 tsutsui Exp $	*/
+/*	$NetBSD: runenone.c,v 1.8 2001/02/06 18:48:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)none.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: runenone.c,v 1.7 2001/01/26 13:42:11 tsutsui Exp $");
+__RCSID("$NetBSD: runenone.c,v 1.8 2001/02/06 18:48:41 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,6 +92,7 @@ _none_init(rl)
 
 /* s is non-null */
 size_t
+/*ARGSUSED*/
 _none_mbrtowc(rl, pwcs, s, n, state)
 	_RuneLocale *rl;
 	rune_t *pwcs;
@@ -117,6 +118,7 @@ _none_mbrtowc(rl, pwcs, s, n, state)
 
 /* s is non-null */
 size_t
+/*ARGSUSED*/
 _none_wcrtomb(rl, s, n, wc, state)
         _RuneLocale *rl;
         char *s;
@@ -143,6 +145,7 @@ _none_wcrtomb(rl, s, n, wc, state)
 }
 
 void
+/*ARGSUSED*/
 _NONE_initstate(rl, s)
 	_RuneLocale *rl;
 	void *s;
@@ -157,6 +160,7 @@ _NONE_initstate(rl, s)
 }
 
 void
+/*ARGSUSED*/
 _NONE_packstate(rl, dst, src)
 	_RuneLocale *rl;
 	mbstate_t *dst;
@@ -171,6 +175,7 @@ _NONE_packstate(rl, dst, src)
 }
 
 void
+/*ARGSUSED*/
 _NONE_unpackstate(rl, dst, src)
 	_RuneLocale *rl;
 	void* dst;
