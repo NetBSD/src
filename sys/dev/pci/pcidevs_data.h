@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.156 1999/09/08 21:34:34 thorpej Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.157 1999/09/08 21:39:55 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.151 1999/09/08 21:33:59 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.152 1999/09/08 21:39:24 thorpej Exp 
  */
 
 /*
@@ -1202,6 +1202,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Cyclades",
 	    "Cyclom-Z above 1M",
+	},
+	{
+	    PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102,
+	    0,
+	    "Davicom Semiconductor",
+	    "Davicom DM9102 10/100 Ethernet",
 	},
 	{
 	    PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21050,
@@ -6163,6 +6169,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ROCKWELL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Rockwell Semiconductor Systems",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_DAVICOM, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Davicom Semiconductor",
 	    NULL,
 	},
 	{
