@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2001/07/03 07:34:27 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2001/07/05 08:38:25 toshii Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -705,7 +705,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			newkv = kdata + kdsize;
 			if (newkp != prom_claim_phys(newkp, szdiff)) {
 				prom_printf("pmap_bootstrap: could not claim "
-					"physical dseg extention "
+					"physical dseg extension "
 					"at %lx size %lx\r\n",
 					newkp, szdiff);
 				goto remap_data;
@@ -714,7 +714,7 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 			/* And the rest of the virtual page. */
 			if (prom_claim_virt(newkv, szdiff) != newkv)
 			prom_printf("pmap_bootstrap: could not claim "
-				"virtual dseg extention "
+				"virtual dseg extension "
 				"at size %lx\r\n", newkv, szdiff);
 
 			/* Make sure all 4MB are mapped */

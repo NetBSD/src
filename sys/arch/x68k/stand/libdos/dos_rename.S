@@ -4,7 +4,7 @@
 |	written by Yasha (ITOH Yasufumi)
 |	public domain
 |
-|	$NetBSD: dos_rename.S,v 1.1 1999/11/11 08:14:43 itohy Exp $
+|	$NetBSD: dos_rename.S,v 1.2 2001/07/05 08:38:26 toshii Exp $
 
 #include "dos_asm.h"
 
@@ -44,7 +44,7 @@ Lname:	moveb	%a0@+,%a1@+
 	bnes	Lname
 	subql	#1,%a1				| remove nul char
 
-	| add new extention
+	| add new extension
 	lea	%sp@(8 + Lbufsz+Lextoff),%a0	| new ext (8: args on stack)
 Lext:	moveb	%a0@+,%a1@+
 	bnes	Lext

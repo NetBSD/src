@@ -1,4 +1,4 @@
-/* $NetBSD: tsreg.h,v 1.2 2000/06/26 02:42:11 thorpej Exp $ */
+/* $NetBSD: tsreg.h,v 1.3 2001/07/05 08:38:24 toshii Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -70,7 +70,7 @@
 
 /*
  * This hack allows us to map the I/O address space without using
- * the KSEG sign extention hack.
+ * the KSEG sign extension hack.
  */
 #define	TS_PHYSADDR(x)							\
 	(((x) & ~0x0100##0000##0000) | 0x0800##0000##0000)

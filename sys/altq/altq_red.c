@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.3 2001/04/13 23:29:56 thorpej Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.4 2001/07/05 08:38:24 toshii Exp $	*/
 /*	$KAME: altq_red.c,v 1.8 2000/12/14 08:12:46 thorpej Exp $	*/
 
 /*
@@ -169,7 +169,7 @@
 
 #ifdef ALTQ_FLOWVALVE
 /*
- * flow-valve is an extention to protect red from unresponsive flows
+ * flow-valve is an extension to protect red from unresponsive flows
  * and to promote end-to-end congestion control.
  * flow-valve observes the average drop rates of the flows that have
  * experienced packet drops in the recent past.

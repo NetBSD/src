@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_calcea.c,v 1.11 2001/03/01 22:01:52 is Exp $	*/
+/*	$NetBSD: fpu_calcea.c,v 1.12 2001/07/05 08:38:25 toshii Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -247,7 +247,7 @@ decode_ea6(frame, insn, ea, modreg)
     idx <<= ((extword >>9) & 3);
 
     if ((extword & 0x100) == 0) {
-	/* brief extention word - sign-extend the displacement */
+	/* brief extension word - sign-extend the displacement */
 	basedisp = (extword & 0xff);
 	if (basedisp & 0x80) {
 	    basedisp |= 0xffffff00;
@@ -260,7 +260,7 @@ decode_ea6(frame, insn, ea, modreg)
 	       ea->ea_idxreg, ea->ea_basedisp);
 #endif
     } else {
-	/* full extention word */
+	/* full extension word */
 	if (extword & 0x80) {
 	    ea->ea_flags |= EA_BASE_SUPPRSS;
 	}
@@ -421,7 +421,7 @@ fpu_load_ea(frame, insn, ea, dst)
 #endif
 	    reg = NULL;
 	    /* Grab the register contents. 4 is offset to the first
-	       extention word from the opcode */
+	       extension word from the opcode */
 	    src = (char *)insn->is_pc + 4;
 #ifdef DEBUG_FPE
 	    printf("load_ea: pc relative pc+4 = %p\n", src);
@@ -685,7 +685,7 @@ fetch_immed(frame, insn, dst)
 }
 
 /*
- * fetch_disp: fetch displacement in full extention words
+ * fetch_disp: fetch displacement in full extension words
  */
 static int
 fetch_disp(frame, insn, size, res)

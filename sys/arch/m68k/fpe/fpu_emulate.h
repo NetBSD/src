@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.h,v 1.8 2001/02/18 20:05:58 chs Exp $	*/
+/*	$NetBSD: fpu_emulate.h,v 1.9 2001/07/05 08:38:25 toshii Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross
@@ -157,7 +157,7 @@ struct fpemu {
  */
 struct insn_ea {
     int	ea_regnum;
-    int	ea_ext[3];		/* extention words if any */
+    int	ea_ext[3];		/* extension words if any */
     int	ea_flags;		/* flags == 0 means mode 2: An@ */
 #define	EA_DIRECT	0x001	/* mode [01]: Dn or An */
 #define EA_PREDECR	0x002	/* mode 4: An@- */

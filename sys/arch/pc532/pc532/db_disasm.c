@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.6 2001/01/18 10:54:28 jdolecek Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.7 2001/07/05 08:38:25 toshii Exp $	*/
 
 /* 
  * Mach Operating System
@@ -682,10 +682,10 @@ char fmt7_table[16][7] = {
     "cmpm",	/* compare multiple */
     "inss",	/* insert field short */
     "exts",	/* extract field short */
-    "movxb",	    /* move with sign-extention byte to word */
-    "movzb",	    /* move with zero-extention byte to word */
-    "movz",	    /* move with zero extention i to double */
-    "movx",	    /* move with sign-extention i to double */
+    "movxb",	    /* move with sign-extension byte to word */
+    "movzb",	    /* move with zero-extension byte to word */
+    "movz",	    /* move with zero extension i to double */
+    "movx",	    /* move with sign-extension i to double */
     "mul",	/* multiply */
     "mei",	/* multiply extended integer */
     "?7?",	/* undefined */
@@ -700,10 +700,10 @@ char fmt7_table[16][7] = {
 #define FMT7_CMPM   0x1 /* compare multiple */
 #define FMT7_INSS   0x2 /* insert field short */
 #define FMT7_EXTS   0x3 /* extract field short */
-#define FMT7_MOVXBW	0x4	  /* move with sign-extention byte to word */
-#define FMT7_MOVZBW	0x5	  /* move with zero-extention byte to word */
-#define FMT7_MOVZD	0x6	  /* move with zero extention i to double */
-#define FMT7_MOVXD  0x7 /* move with sign-extention i to double */
+#define FMT7_MOVXBW	0x4	  /* move with sign-extension byte to word */
+#define FMT7_MOVZBW	0x5	  /* move with zero-extension byte to word */
+#define FMT7_MOVZD	0x6	  /* move with zero extension i to double */
+#define FMT7_MOVXD  0x7 /* move with sign-extension i to double */
 #define FMT7_MUL    0x8 /* multiply */
 #define FMT7_MEI    0x9 /* multiply extended integer */
 #define FMT7_UNDEF  0xa /* undefined */
