@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.28 2003/03/29 18:11:29 perry Exp $
+.\"	$NetBSD: df.1,v 1.29 2003/04/16 13:17:52 grant Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,7 +86,7 @@ Include statistics on the number of free inodes.
 By default, all sizes are reported in 512-byte block counts.
 The
 .Fl k
-option causes the numbers to be reported in kilobyte (1024 bytes) counts.
+option causes the numbers to be reported in kilobytes (1024 bytes).
 .It Fl l
 Display statistics only about mounted file systems with the
 .Dv MNT_LOCAL
@@ -96,7 +96,7 @@ warning is issued and no information is given on that file system.
 .It Fl m
 The
 .Fl m
-option causes the numbers to be reported in megabyte (1024*1024 bytes) counts.
+option causes the numbers to be reported in megabytes (1024*1024 bytes).
 .It Fl n
 Print out the previously obtained statistics from the file systems.
 This option should be used if it is possible that one or more
