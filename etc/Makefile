@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.11 (Berkeley) 5/21/91
-#	$Id: Makefile,v 1.29 1994/01/08 00:27:42 jtc Exp $
+#	$Id: Makefile,v 1.30 1994/01/08 03:09:05 jtc Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -85,30 +85,9 @@ hcx9-distribution:
 	    ${DESTDIR}/)
 
 distrib-dirs:
-	-mkdir ${DESTDIR}
-	mtree -u -d -p ${DESTDIR} -f ${.CURDIR}/mtree/BSD.root.dist
+	mtree -u -d -p ${DESTDIR}/ -f ${.CURDIR}/mtree/BSD.root.dist
 #	mtree -u -d -p ${DESTDIR}/usr -f ${.CURDIR}/mtree/BSD.usr.dist
-#	mtree -u -d -p ${DESTDIR}/var -f ${.CURDIR}/mtree/BSD.var.dist
-	-mkdir ${DESTDIR}/var/at ${DESTDIR}/var/backups ${DESTDIR}/var/cron \
-	       ${DESTDIR}/var/db ${DESTDIR}/var/log ${DESTDIR}/var/mail \
-	       ${DESTDIR}/var/msgs ${DESTDIR}/var/preserve ${DESTDIR}/var/run \
-	       ${DESTDIR}/var/rwho ${DESTDIR}/var/spool ${DESTDIR}/var/tmp
-	chmod 755 ${DESTDIR}/var/at ${DESTDIR}/var/backups ${DESTDIR}/var/cron \
-		  ${DESTDIR}/var/db ${DESTDIR}/var/log ${DESTDIR}/var/mail \
-		  ${DESTDIR}/var/msgs ${DESTDIR}/var/preserve \
-		  ${DESTDIR}/var/run ${DESTDIR}/var/rwho ${DESTDIR}/var/spool
-	chmod 1777 ${DESTDIR}/var/tmp
-	-mkdir ${DESTDIR}/var/cron/tabs \
-	       ${DESTDIR}/var/at/jobs ${DESTDIR}/var/at/spool
-	chmod 700 ${DESTDIR}/var/cron/tabs \
-		  ${DESTDIR}/var/at/jobs ${DESTDIR}/var/at/spool
-	-mkdir ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
-	       ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
-	       ${DESTDIR}/var/spool/uucppublic
-	chown uucp.dialer ${DESTDIR}/var/spool/lock
-	chmod 755 ${DESTDIR}/var/spool/lock ${DESTDIR}/var/spool/mqueue \
-		  ${DESTDIR}/var/spool/output ${DESTDIR}/var/spool/uucp \
-		  ${DESTDIR}/var/spool/uucppublic
+	mtree -u -d -p ${DESTDIR}/var -f ${.CURDIR}/mtree/BSD.var.dist
 	cd ${DESTDIR}; rm -f sys; ln -s usr/src/sys sys
 	-mkdir ${DESTDIR}/usr/obj
 	chmod 755 ${DESTDIR}/usr/obj
