@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.4 2000/07/23 20:34:07 mycroft Exp $	*/
+/*	$NetBSD: bzero.S,v 1.5 2000/07/24 07:30:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1999
@@ -51,7 +51,7 @@
 #if 0
 	.asciz "@(#)bzero.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: bzero.S,v 1.4 2000/07/23 20:34:07 mycroft Exp $")
+	RCSID("$NetBSD: bzero.S,v 1.5 2000/07/24 07:30:54 mycroft Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -199,7 +199,7 @@ Lbzero_block:
  * See locore.s for the kernel version.
  *
  */	
-	save	%sp, -(CC64FSZ+32*8+BLOCK_SIZE), %sp	! Allocate an fpstate
+	save	%sp, -(CC64FSZ+16*4+BLOCK_SIZE), %sp	! Allocate an fpstate
 	add	%sp, (CC64FSZ+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
 	btst	1, %sp
 	add	%l0, BIAS, %l1				! Fixup 64-bit stack pointers
@@ -207,9 +207,7 @@ Lbzero_block:
 	andn	%l0, BLOCK_ALIGN, %l0			! And make it block aligned
 
 !	wr	%g0, FPRS_FEF, %fprs			! Enable FPU
-	stda	%f0, [%l0] ASI_BLK_P
-	add	%l0, BLOCK_SIZE, %l1
-	stda	%f16, [%l1] ASI_BLK_COMMIT_P		! We only need two banks
+	stda	%f0, [%l0] ASI_BLK_COMMIT_P
 
 	!! We are now 8-byte aligned.  We need to become 64-byte aligned.
 	btst	63, %i0
@@ -253,8 +251,6 @@ Lbzero_block:
  * we put it.
  */
 	ldda	[%l0] ASI_BLK_P, %f0
-	add	%l0, BLOCK_SIZE, %l1
-	ldda	[%l1] ASI_BLK_P, %f16
 	addcc	%i1, 56, %i1		! Restore the count
 	ba,pt	%xcc, Lbzero_longs	! Finish up the remainder
 	 restore
