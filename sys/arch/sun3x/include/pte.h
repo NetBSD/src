@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 1997/01/16 21:48:32 gwr Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 1997/01/23 22:25:56 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -88,6 +88,9 @@
 #define	sun3x_round_up_page(x)\
 	((unsigned long) ((x) + MMU_PAGE_SIZE - 1) & MMU_PAGE_MASK)
 
+
+#ifdef	_KERNEL
+
 /* XXX - Not sure about these.  Use pmap_enter_kernel() instead? */
 #if 1 /* XXX */
 /* defined in pmap.c */
@@ -95,4 +98,5 @@ vm_offset_t get_pte __P((vm_offset_t va));
 void set_pte __P((vm_offset_t, vm_offset_t));
 #endif /* XXX */
 
-#endif /* !_MACHINE_PTE_H*/
+#endif	/* _KERNEL */
+#endif	/* !_MACHINE_PTE_H*/
