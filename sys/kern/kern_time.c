@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.28 1997/04/21 16:56:54 jtc Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.29 1997/04/26 21:22:57 tls Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -55,7 +55,7 @@
 
 #include <machine/cpu.h>
 
-static void	settime __P((struct timeval *));
+static int	settime __P((struct timeval *));
 
 /*
  * Time of day and interval timer support.
@@ -68,7 +68,7 @@ static void	settime __P((struct timeval *));
  */
 
 /* This function is used by clock_settime and settimeofday */
-static void
+static int
 settime(tv)
 	struct timeval *tv;
 {
@@ -78,6 +78,12 @@ settime(tv)
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
 	s = splclock();
 	timersub(tv, &time, &delta);
+	if ((delta.tv_sec < 0 || delta.tv_usec < 0) && securelevel > 1)
+		return (EPERM);
+#ifdef notyet
+	if ((delta.tv_sec < 86400) && securelevel > 0)
+		return (EPERM);
+#endif
 	time = *tv;
 	(void) splsoftclock();
 	timeradd(&boottime, &delta, &boottime);
@@ -87,6 +93,7 @@ settime(tv)
 #	endif
 	splx(s);
 	resettodr();
+	return (0);
 }
 
 /* ARGSUSED */
@@ -141,7 +148,8 @@ sys_clock_settime(p, v, retval)
 		return (error);
 
 	TIMESPEC_TO_TIMEVAL(&atv,&ats);
-	settime(&atv);
+	if ((error = settime(&atv)))
+		return (error);
 
 	return 0;
 }
@@ -296,7 +304,8 @@ sys_settimeofday(p, v, retval)
 	    &atz, sizeof(atz))))
 		return (error);
 	if (SCARG(uap, tv))
-		settime(&atv);
+		if ((error = settime(&atv)))
+			return (error);
 	/*
 	 * NetBSD has no kernel notion of timezone, and only an
 	 * obsolete program would try to set it, so we log a warning.
