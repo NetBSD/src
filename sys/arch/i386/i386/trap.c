@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.197 2004/02/27 21:37:48 enami Exp $	*/
+/*	$NetBSD: trap.c,v 1.198 2004/03/11 11:39:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.197 2004/02/27 21:37:48 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.198 2004/03/11 11:39:25 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -354,31 +354,24 @@ copyfault:
 			    offsetof(struct trapframe, tf_eip));
 			resume = (int)resume_iret;
 			break;
-		case 0x1f:	/* popl %ds */
-			vframe = (void *)((int)&frame->tf_esp -
-			    offsetof(struct trapframe, tf_ds));
-			resume = (int)resume_pop_ds;
-			break;
-		case 0x07:	/* popl %es */
-			vframe = (void *)((int)&frame->tf_esp -
-			    offsetof(struct trapframe, tf_es));
-			resume = (int)resume_pop_es;
-			break;
-		case 0x0f:	/* 0x0f prefix */
-			switch (*(u_char *)(frame->tf_eip+1)) {
-			case 0xa1:		/* popl %fs */
-				vframe = (void *)((int)&frame->tf_esp -
-				    offsetof(struct trapframe, tf_fs));
+		case 0x8e:
+			switch (*(uint32_t *)frame->tf_eip) {
+			case 0x0c245c8e:	/* movl 0xc(%esp,1),%ds */
+				resume = (int)resume_pop_ds;
+				break;
+			case 0x0824448e:	/* movl 0x8(%esp,1),%es */
+				resume = (int)resume_pop_es;
+				break;
+			case 0x0424648e:	/* movl 0x4(%esp,1),%fs */
 				resume = (int)resume_pop_fs;
 				break;
-			case 0xa9:		/* popl %gs */
-				vframe = (void *)((int)&frame->tf_esp -
-				    offsetof(struct trapframe, tf_gs));
+			case 0x00246c8e:	/* movl 0x0(%esp,1),%gs */
 				resume = (int)resume_pop_gs;
 				break;
 			default:
 				goto we_re_toast;
 			}
+			vframe = (void *)(int)&frame->tf_esp;
 			break;
 		default:
 			goto we_re_toast;
