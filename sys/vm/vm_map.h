@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_map.h,v 1.18 1998/08/13 02:11:07 eeh Exp $	*/
+/*	$NetBSD: vm_map.h,v 1.19 1998/08/13 21:12:15 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -282,7 +282,7 @@ int		 vm_map_inherit __P((vm_map_t,
 void		 vm_map_init __P((struct vm_map *,
 		    vaddr_t, vaddr_t, boolean_t));
 int		 vm_map_insert __P((vm_map_t,
-		    vaddr_t, vaddr_t, vaddr_t, vaddr_t));
+		    vm_object_t, vaddr_t, vaddr_t, vaddr_t));
 int		 vm_map_lookup __P((vm_map_t *, vaddr_t, vm_prot_t,
 		    vm_map_entry_t *, vm_object_t *, vaddr_t *, vm_prot_t *,
 		    boolean_t *, boolean_t *));
