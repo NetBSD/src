@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.34 1995/06/02 14:54:53 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.35 1995/06/02 15:33:29 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -337,9 +337,10 @@ msdosfs_setattr(ap)
 		    ((vap->va_vaflags & VA_UTIMES_NULL) == 0 || 
 		    (error = VOP_ACCESS(ap->a_vp, VWRITE, cred, ap->a_p))))
 			return (error);
-		dep->de_flag |= DE_UPDATE;
-		if (error = deupdat(dep, &vap->va_mtime, 1))
-			return (error);
+		unix2dostime(&vap->va_mtime, &dep->de_Date, &dep->de_Time);
+		if ((dep->de_Attributes & ATTR_DIRECTORY) == 0)
+			dep->de_Attributes |= ATTR_ARCHIVE;
+		dep->de_flag |= DE_MODIFIED;
 	}
 	/*
 	 * DOS files only have the ability to have their writability
@@ -355,7 +356,7 @@ msdosfs_setattr(ap)
 			dep->de_Attributes &= ~ATTR_READONLY;
 		else
 			dep->de_Attributes |= ATTR_READONLY;
-		dep->de_flag |= DE_UPDATE;
+		dep->de_flag |= DE_MODIFIED;
 	}
 	/*
 	 * Allow the `archived' bit to be toggled.
@@ -368,7 +369,7 @@ msdosfs_setattr(ap)
 			dep->de_Attributes &= ~ATTR_ARCHIVE;
 		else
 			dep->de_Attributes |= ATTR_ARCHIVE;
-		dep->de_flag |= DE_UPDATE;
+		dep->de_flag |= DE_MODIFIED;
 	}
 	return (0);
 }
@@ -553,9 +554,6 @@ msdosfs_write(ap)
 			return (error);
 	}
 
-	dep->de_Attributes |= ATTR_ARCHIVE;
-	dep->de_flag |= DE_UPDATE;
-
 	/*
 	 * Remember some values in case the write fails.
 	 */
@@ -671,7 +669,7 @@ errexit:
 				error = 0;
 		}
 	} else
-		error = deupdat(dep, NULL, 1);
+		error = deupdat(dep, 1);
 	return (error);
 }
 
@@ -735,7 +733,7 @@ msdosfs_fsync(ap)
 	struct vnode *vp = ap->a_vp;
 
 	vflushbuf(vp, ap->a_waitfor == MNT_WAIT);
-	return (deupdat(VTODE(vp), NULL, ap->a_waitfor == MNT_WAIT));
+	return (deupdat(VTODE(vp), ap->a_waitfor == MNT_WAIT));
 }
 
 /*

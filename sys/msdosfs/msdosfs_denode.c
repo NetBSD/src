@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.12 1995/04/07 17:37:08 mycroft Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.13 1995/06/02 15:33:27 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -295,9 +295,8 @@ deget(pmp, dirclust, diroffset, direntptr, depp)
 }
 
 int
-deupdat(dep, tp, waitfor)
+deupdat(dep, waitfor)
 	struct denode *dep;
-	struct timespec *tp;
 	int waitfor;
 {
 	int error;
@@ -309,16 +308,22 @@ deupdat(dep, tp, waitfor)
 	printf("deupdat(): dep %08x\n", dep);
 #endif
 
+	/* If the time stamp needs updating, do it now. */
+	DE_TIMES(dep);
+
 	/*
-	 * If the update bit is off, or this denode is from a readonly
+	 * If the modified bit is off, or this denode is from a readonly
 	 * filesystem, or this denode is for a directory, or the denode
 	 * represents an open but unlinked file then don't do anything. DOS
 	 * directory entries that describe a directory do not ever get
 	 * updated.  This is the way dos treats them.
 	 */
-	if ((dep->de_flag & DE_UPDATE) == 0 ||
-	    vp->v_mount->mnt_flag & MNT_RDONLY ||
-	    dep->de_Attributes & ATTR_DIRECTORY ||
+	if ((dep->de_flag & DE_MODIFIED) == 0)
+		return (0);
+
+	dep->de_flag &= ~DE_MODIFIED;
+
+	if (vp->v_mount->mnt_flag & MNT_RDONLY ||
 	    dep->de_refcnt <= 0)
 		return (0);
 
@@ -328,12 +333,6 @@ deupdat(dep, tp, waitfor)
 	 */
 	if (error = readde(dep, &bp, &dirp))
 		return (error);
-
-	/*
-	 * Put the passed in time into the directory entry.
-	 */
-	unix2dostime(tp, &dep->de_Date, &dep->de_Time);
-	dep->de_flag &= ~DE_UPDATE;
 
 	/*
 	 * Copy the directory entry out of the denode into the cluster it
@@ -460,10 +459,10 @@ detrunc(dep, length, flags, cred, p)
 	 * we free the trailing clusters.
 	 */
 	dep->de_FileSize = length;
-	dep->de_flag |= DE_UPDATE;
+	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	vflags = (length > 0 ? V_SAVE : 0) | V_SAVEMETA;
 	vinvalbuf(DETOV(dep), vflags, cred, p, 0, 0);
-	allerror = deupdat(dep, NULL, 1);
+	allerror = deupdat(dep, 1);
 #ifdef MSDOSFS_DEBUG
 	printf("detrunc(): allerror %d, eofentry %d\n",
 	       allerror, eofentry);
@@ -540,9 +539,9 @@ deextend(dep, length, cred)
 		}
 	}
 		
-	dep->de_flag |= DE_UPDATE;
 	dep->de_FileSize = length;
-	return (deupdat(dep, NULL, 1));
+	dep->de_flag |= DE_UPDATE|DE_MODIFIED;
+	return (deupdat(dep, 1));
 }
 
 /*
@@ -655,10 +654,9 @@ msdosfs_inactive(ap)
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		error = detrunc(dep, (u_long)0, 0, NOCRED, NULL);
 		dep->de_Name[0] = SLOT_DELETED;
-		dep->de_flag |= DE_UPDATE;
+		dep->de_flag |= DE_MODIFIED;
 	}
-	if (dep->de_flag & DE_UPDATE)
-		deupdat(dep, NULL, 0);
+	deupdat(dep, 0);
 	VOP_UNLOCK(vp);
 	/*
 	 * If we are done with the denode, reclaim it

@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.14 1995/03/29 22:08:46 briggs Exp $	*/
+/*	$NetBSD: denode.h,v 1.15 1995/06/02 15:33:22 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -199,10 +199,13 @@ struct denode {
 #define	DETOV(de)	((de)->de_vnode)
 
 #define	DE_TIMES(dep) \
-	if (dep->de_flag & DE_UPDATE) { \
-		(dep)->de_flag |= DE_MODIFIED; \
-		unix2dostime(NULL, &dep->de_Date, &dep->de_Time); \
+	if ((dep)->de_flag & DE_UPDATE) { \
 		(dep)->de_flag &= ~DE_UPDATE; \
+		if (((dep)->de_Attributes & ATTR_DIRECTORY) == 0) { \
+			unix2dostime(NULL, &(dep)->de_Date, &(dep)->de_Time); \
+			(dep)->de_Attributes |= ATTR_ARCHIVE; \
+			(dep)->de_flag |= DE_MODIFIED; \
+		} \
 	}
 
 /*
@@ -269,7 +272,7 @@ int createde __P((struct denode *, struct denode *, struct denode **));
 int deextend __P((struct denode *, u_long, struct ucred *));
 int deget __P((struct msdosfsmount *, u_long, u_long, struct direntry *, struct denode **));
 int detrunc __P((struct denode *, u_long, int, struct ucred *, struct proc *));
-int deupdat __P((struct denode *, struct timespec *, int));
+int deupdat __P((struct denode *, int));
 int doscheckpath __P((struct denode *, struct denode *));
 int dosdirempty __P((struct denode *));
 int readde __P((struct denode *, struct buf **, struct direntry **));
