@@ -1,4 +1,4 @@
-/*	$NetBSD: _errno.c,v 1.6 1999/12/03 23:31:20 explorer Exp $	*/
+/*	$NetBSD: _errno.c,v 1.7 1999/12/03 23:34:41 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
  */
 #ifdef __weak_alias
 __weak_alias(__errno, __errno_func);
+int *__errno_func(void);
 #else
 #define __errno_func __errno
 #endif
