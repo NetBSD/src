@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.4 2000/04/26 14:02:34 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.5 2000/04/30 12:00:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -156,8 +156,7 @@ STATIC void rl_shutdown		__P((void *));
 STATIC int rl_ifmedia_upd	__P((struct ifnet *));
 STATIC void rl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-STATIC void rl_eeprom_putbyte	__P((struct rl_softc *, int));
-STATIC void rl_eeprom_getword	__P((struct rl_softc *, int, u_int16_t *));
+STATIC void rl_eeprom_putbyte	__P((struct rl_softc *, int, int));
 STATIC void rl_mii_sync		__P((struct rl_softc *));
 STATIC void rl_mii_send		__P((struct rl_softc *, u_int32_t, int));
 STATIC int rl_mii_readreg	__P((struct rl_softc *, struct rl_mii_frame *));
@@ -177,28 +176,28 @@ STATIC int rl_ether_ioctl __P((struct ifnet *, u_long, caddr_t));
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\
-		CSR_READ_1(sc, RL_EECMD) | x)
+		CSR_READ_1(sc, RL_EECMD) | (x))
 
 #define EE_CLR(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\
-		CSR_READ_1(sc, RL_EECMD) & ~x)
+		CSR_READ_1(sc, RL_EECMD) & ~(x))
 
 /*
  * Send a read command and address to the EEPROM, check for ACK.
  */
-STATIC void rl_eeprom_putbyte(sc, addr)
+STATIC void rl_eeprom_putbyte(sc, addr, addr_len)
 	struct rl_softc		*sc;
-	int			addr;
+	int			addr, addr_len;
 {
 	int			d, i;
 
-	d = addr | RL_EECMD_READ;
+	d = (RL_EECMD_READ << addr_len) | addr;
 
 	/*
 	 * Feed in each bit and stobe the clock.
 	 */
-	for (i = 0x400; i; i >>= 1) {
-		if (d & i) {
+	for (i = RL_EECMD_LEN + addr_len - 1; i >= 0; i--) {
+		if (d & (1 << i)) {
 			EE_SET(RL_EE_DATAIN);
 		} else {
 			EE_CLR(RL_EE_DATAIN);
@@ -209,20 +208,17 @@ STATIC void rl_eeprom_putbyte(sc, addr)
 		EE_CLR(RL_EE_CLK);
 		DELAY(100);
 	}
-
-	return;
 }
 
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-STATIC void rl_eeprom_getword(sc, addr, dest)
+u_int16_t rl_read_eeprom(sc, addr, addr_len)
 	struct rl_softc		*sc;
-	int			addr;
-	u_int16_t		*dest;
+	int			addr, addr_len;
 {
-	int			i;
 	u_int16_t		word = 0;
+	int			i;
 
 	/* Enter EEPROM access mode. */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_PROGRAM|RL_EE_SEL);
@@ -230,18 +226,18 @@ STATIC void rl_eeprom_getword(sc, addr, dest)
 	/*
 	 * Send address of word we want to read.
 	 */
-	rl_eeprom_putbyte(sc, addr);
+	rl_eeprom_putbyte(sc, addr, addr_len);
 
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_PROGRAM|RL_EE_SEL);
 
 	/*
 	 * Start reading bits from EEPROM.
 	 */
-	for (i = 0x8000; i; i >>= 1) {
+	for (i = 15; i >= 0; i--) {
 		EE_SET(RL_EE_CLK);
 		DELAY(100);
 		if (CSR_READ_1(sc, RL_EECMD) & RL_EE_DATAOUT)
-			word |= i;
+			word |= (1 << i);
 		EE_CLR(RL_EE_CLK);
 		DELAY(100);
 	}
@@ -249,42 +245,8 @@ STATIC void rl_eeprom_getword(sc, addr, dest)
 	/* Turn off EEPROM access mode. */
 	CSR_WRITE_1(sc, RL_EECMD, RL_EEMODE_OFF);
 
-	*dest = word;
-
-	return;
+	return (word);
 }
-
-/*
- * Read a sequence of words from the EEPROM.
- */
-void rl_read_eeprom(sc, dest, off, cnt, swap)
-	struct rl_softc		*sc;
-	caddr_t			dest;
-	int			off;
-	int			cnt;
-	int			swap;
-{
-	int			i;
-	u_int16_t		word = 0, *ptr;
-
-	for (i = 0; i < cnt; i++) {
-		rl_eeprom_getword(sc, off + i, &word);
-		ptr = (u_int16_t *)(dest + (i * 2));
-		if (swap)
-		/*
-		 * EEPROM stores data in little endian and
-		 * rl_eeprom_getword() returns them in host's endian.
-		 * If caller requires byte-stream data, we should
-		 * revert them little endian.
-		 */
-			*ptr = htole16(word);
-		else
-			*ptr = word;
-	}
-
-	return;
-}
-
 
 /*
  * MII access routines are provided for the 8129, which
@@ -753,7 +715,7 @@ rl_attach(sc, eaddr)
 			printf("%s: can't create snd buffer DMA map,"
 			    " error = %d\n", sc->sc_dev.dv_xname, error);
 		    goto fail;
-	}
+		}
 
 	ifp = &sc->ethercom.ec_if;
 	ifp->if_softc = sc;
