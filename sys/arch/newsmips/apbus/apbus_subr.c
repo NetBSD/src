@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus_subr.c,v 1.5 2003/07/15 02:59:28 lukem Exp $	*/
+/*	$NetBSD: apbus_subr.c,v 1.6 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 SHIMIZU Ryo.  All rights reserved.
@@ -27,18 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus_subr.c,v 1.5 2003/07/15 02:59:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus_subr.c,v 1.6 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <newsmips/apbus/apbusvar.h>
 
-static void apctl_dump (struct apbus_ctl *);
+static void apctl_dump(struct apbus_ctl *);
 
 void *
-apbus_device_to_hwaddr(apbus_dev)
-	struct apbus_dev *apbus_dev;
+apbus_device_to_hwaddr(struct apbus_dev *apbus_dev)
 {
 	struct apbus_ctl *ctl;
 
@@ -53,8 +52,7 @@ apbus_device_to_hwaddr(apbus_dev)
 }
 
 struct apbus_dev *
-apbus_lookupdev(devname)
-	char *devname;
+apbus_lookupdev(char *devname)
 {
 	struct apbus_dev *dp;
 
@@ -74,8 +72,7 @@ apbus_lookupdev(devname)
 }
 
 static void
-apctl_dump(apctl)
-	struct apbus_ctl *apctl;
+apctl_dump(struct apbus_ctl *apctl)
 {
 	unsigned int *p;
 
@@ -97,8 +94,7 @@ apctl_dump(apctl)
 }
 
 void
-apdevice_dump(apdev)
-	struct apbus_dev *apdev;
+apdevice_dump(struct apbus_dev *apdev)
 {
 	struct apbus_ctl *apctl;
 

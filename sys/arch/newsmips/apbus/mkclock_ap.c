@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_ap.c,v 1.2 2003/11/01 22:50:45 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_ap.c,v 1.3 2005/02/06 02:18:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.2 2003/11/01 22:50:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.3 2005/02/06 02:18:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,8 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.2 2003/11/01 22:50:45 tsutsui Exp $
 
 int  mkclock_ap_match(struct device *, struct cfdata  *, void *);
 void mkclock_ap_attach(struct device *, struct device *, void *);
-static u_int8_t mkclock_ap_nvrd(struct mk48txx_softc *, int);
-static void mkclock_ap_nvwr(struct mk48txx_softc *, int, u_int8_t);
+static uint8_t mkclock_ap_nvrd(struct mk48txx_softc *, int);
+static void mkclock_ap_nvwr(struct mk48txx_softc *, int, uint8_t);
 
 CFATTACH_DECL(mkclock_ap, sizeof(struct mk48txx_softc),
     mkclock_ap_match, mkclock_ap_attach, NULL, NULL);
@@ -68,10 +68,7 @@ CFATTACH_DECL(mkclock_ap, sizeof(struct mk48txx_softc),
 extern struct cfdriver mkclock_cd;
 
 int
-mkclock_ap_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+mkclock_ap_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct apbus_attach_args *apa = aux;
 
@@ -82,9 +79,7 @@ mkclock_ap_match(parent, cf, aux)
 }
 
 void
-mkclock_ap_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+mkclock_ap_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mk48txx_softc *sc = (void *)self;
 	struct apbus_attach_args *apa = aux;
@@ -106,22 +101,17 @@ mkclock_ap_attach(parent, self, aux)
 	todr_attach(&sc->sc_handle);
 }
 
-static u_int8_t
-mkclock_ap_nvrd(sc, off)
-	struct mk48txx_softc *sc;
-	int off;
+static uint8_t
+mkclock_ap_nvrd(struct mk48txx_softc *sc, int off)
 {
-	u_int8_t rv;
+	uint8_t rv;
 
 	rv = bus_space_read_4(sc->sc_bst, sc->sc_bsh, off << MKCLOCK_AP_STRIDE);
 	return rv;
 }
 
 static void
-mkclock_ap_nvwr(sc, off, v)
-	struct mk48txx_softc *sc;
-	int off;
-	u_int8_t v;
+mkclock_ap_nvwr(struct mk48txx_softc *sc, int off, uint8_t v)
 {
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, off << MKCLOCK_AP_STRIDE, v);
