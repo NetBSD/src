@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.19 1997/05/07 00:27:34 lukem Exp $
+#	$NetBSD: DISKLESS,v 1.20 1997/05/07 00:29:18 lukem Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -68,7 +68,7 @@ options 	SE_KEYBOARD	# include Swedish HIL keymap
 
 #
 # HP-UX binary compatibility.
-# NOTE: THIS IS STILL VERY EXPERIMENTAL.  YOUR MILEAGE MAY VARY.
+# NOTE: THIS IS STILL VERY EXPERIMENTAL. YOUR MILEAGE MAY VARY.
 #
 options 	COMPAT_HPUX	# HP-UX binary compatibility
 
@@ -118,7 +118,7 @@ grf*		at topcat?
 # Internal Terminal Emulator
 ite*		at grf?
 
-dca0		at dio? scode 9	flags 1	  # DCA serial interfaces
+dca0		at dio? scode 9	flags 1	# DCA serial interfaces
 dca*		at dio? scode ?
 
 dcm*		at dio? scode ?	flags 0xe # DCM 4- or 8-port serial interfaces
