@@ -1,6 +1,8 @@
+/*	$NetBSD: locate.c,v 1.6 1994/12/22 06:17:47 jtc Exp $	*/
+
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * James A. Woods.
@@ -35,14 +37,16 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)locate.c	5.2 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: locate.c,v 1.5 1993/08/01 18:13:45 mycroft Exp $";
+#if 0
+static char sccsid[] = "@(#)locate.c	8.1 (Berkeley) 6/6/93";
+#endif
+static char rcsid[] = "$NetBSD: locate.c,v 1.6 1994/12/22 06:17:47 jtc Exp $";
 #endif /* not lint */
 
 /*
@@ -73,18 +77,21 @@ static char rcsid[] = "$Id: locate.c,v 1.5 1993/08/01 18:13:45 mycroft Exp $";
  */
 
 #include <sys/param.h>
+
+#include <fnmatch.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <fnmatch.h>
+
 #include "locate.h"
 #include "pathnames.h"
 
 FILE *fp;
 
+int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
 	if (argc != 2) {
 		(void)fprintf(stderr, "usage: locate pattern\n");

@@ -1,7 +1,9 @@
 #!/bin/csh -f
 #
-# Copyright (c) 1989 The Regents of the University of California.
-# All rights reserved.
+#	$NetBSD: updatedb.csh,v 1.5 1994/12/22 06:17:51 jtc Exp $
+#
+# Copyright (c) 1989, 1993
+#	The Regents of the University of California.  All rights reserved.
 #
 # This code is derived from software contributed to Berkeley by
 # James A. Woods.
@@ -34,12 +36,13 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	@(#)updatedb.csh	5.1 (Berkeley) 4/2/91
+#	@(#)updatedb.csh	8.3 (Berkeley) 3/19/94
 #
 
 set SRCHPATHS = "/"			# directories to be put in the database
 set LIBDIR = /usr/libexec		# for subprograms
-if (! $?TMPDIR) set TMPDIR = /var/tmp	# for temp files
+					# for temp files
+if (! $?TMPDIR) setenv TMPDIR = /var/tmp
 set FCODES = /var/db/locate.database	# the database
 
 set path = ( /bin /usr/bin )
@@ -59,11 +62,11 @@ set errs = $TMPDIR/locate.errs.$$
 find ${SRCHPATHS} \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \) -a \
 		-prune -o -print | \
 	tr '/' '\001' | \
-	(sort -T /var/tmp -f; echo $status > $errs) | tr '\001' '/' > $filelist
+	(sort -T "$TMPDIR" -f; echo $status > $errs) | tr '\001' '/' > $filelist
 
 $LIBDIR/locate.bigram < $filelist | \
-	(sort -T /var/tmp; echo $status >> $errs) | \
-	uniq -c | sort -T /var/tmp -nr | \
+	(sort -T "$TMPDIR"; echo $status >> $errs) | \
+	uniq -c | sort -T "$TMPDIR" -nr | \
 	awk '{ if (NR <= 128) print $2 }' | tr -d '\012' > $bigrams
 
 # code the file list
