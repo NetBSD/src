@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.59 2002/11/13 15:16:29 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.60 2002/11/29 19:13:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.59 2002/11/13 15:16:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.60 2002/11/29 19:13:16 jdolecek Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -315,9 +315,7 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 	char *itp;
 	vaddr_t *pos;
 {
-	const char *bp;
 	int error;
-	size_t len;
 
 	if (((error = ELFNAME2(linux,signature)(p, epp, eh, itp)) != 0) &&
 #ifdef LINUX_GCC_SIGNATURE
@@ -330,12 +328,9 @@ ELFNAME2(linux,probe)(p, epp, eh, itp, pos)
 			return error;
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
-		    itp, &bp, 0)))
-			return error;
-		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
-			return error;
-		free((void *)bp, M_TEMP);
+		if ((error = emul_find_interp(p, epp->ep_esch->es_emul->e_path,
+		    itp)))
+			return (error);
 	}
 	*pos = ELF_NO_ADDR;
 	DPRINTF(("linux_probe: returning 0\n"));
