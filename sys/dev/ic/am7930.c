@@ -1,4 +1,4 @@
-/*	$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $	*/
+/*	$NetBSD: am7930.c,v 1.45 2004/07/09 02:07:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Rolf Grossmann
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.44 2001/11/13 13:14:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7930.c,v 1.45 2004/07/09 02:07:01 mycroft Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -204,11 +204,6 @@ am7930_open(addr, flags)
 
 	DPRINTF(("sa_open: unit %p\n", sc));
 
-	if (sc->sc_open)
-		return (EBUSY);
-	sc->sc_open = 1;
-	sc->sc_locked = 0;
-
 	sc->sc_glue->onopen(sc);
 
 	DPRINTF(("saopen: ok -> sc=0x%p\n",sc));
@@ -225,7 +220,6 @@ am7930_close(addr)
 	DPRINTF(("sa_close: sc=%p\n", sc));
 
 	sc->sc_glue->onclose(sc);
-	sc->sc_open = 0;
 
 	DPRINTF(("sa_close: closed.\n"));
 }
@@ -362,7 +356,6 @@ am7930_halt_output(addr)
 	/* XXX only halt, if input is also halted ?? */
 	AM7930_IWRITE(sc, AM7930_IREG_INIT,
 		AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
-	sc->sc_locked = 0;
 
 	return(0);
 }
@@ -377,7 +370,6 @@ am7930_halt_input(addr)
 	/* XXX only halt, if output is also halted ?? */
 	AM7930_IWRITE(sc, AM7930_IREG_INIT,
 		AM7930_INIT_PMS_ACTIVE | AM7930_INIT_INT_DISABLE);
-	sc->sc_locked = 0;
 
 	return(0);
 }

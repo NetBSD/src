@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231var.h,v 1.4 2003/09/10 11:53:53 uwe Exp $	*/
+/*	$NetBSD: cs4231var.h,v 1.5 2004/07/09 02:08:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -83,7 +83,6 @@ struct cs4231_softc {
 	bus_space_tag_t	sc_bustag;
 	bus_dma_tag_t sc_dmatag;
 
-	int sc_open;			/* single use device */
 	struct cs_dma *sc_dmas;		/* allocated dma resources */
 
 	struct evcnt sc_intrcnt;	/* parent counter */

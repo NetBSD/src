@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.14 2004/04/22 00:17:11 itojun Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.15 2004/07/09 02:08:33 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.14 2004/04/22 00:17:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.15 2004/07/09 02:08:33 mycroft Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -359,11 +359,6 @@ cs4231_open(addr, flags)
 
 	DPRINTF(("sa_open: unit %p\n", sc));
 
-	if (sc->sc_open)
-		return (EBUSY);
-
-	sc->sc_open = 1;
-
 	sc->sc_playback.t_active = 0;
 	sc->sc_playback.t_intr = NULL;
 	sc->sc_playback.t_arg = NULL;
@@ -389,7 +384,6 @@ cs4231_close(addr)
 	DPRINTF(("sa_close: sc=%p\n", sc));
 
 	/* audio(9) already called halt methods */
-	sc->sc_open = 0;
 
 	DPRINTF(("sa_close: closed.\n"));
 }
