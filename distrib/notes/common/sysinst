@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.38 2002/06/12 12:19:53 grant Exp $
+.\"	$NetBSD: sysinst,v 1.39 2002/06/13 14:45:54 leo Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -616,7 +616,7 @@ is your first SCSI disk,
 .Li sd1
 the second, etc.
 .Pp
-if !r_atari \{\
+.if !r_atari \{\
 Note that once the system has finished booting, you need not
 leave the floppy in the disk drive.
 .\}
