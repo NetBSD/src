@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.47 1997/01/03 22:39:05 scottr Exp $	*/
+/*	$NetBSD: rtld.c,v 1.48 1997/05/03 08:00:02 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -208,6 +208,7 @@ static void		unmaphints __P((void));
 
 static void		preload __P((char *));
 static void		ld_trace __P((struct so_map *));
+static void		build_sod __P((const char *, struct sod *));
 
 static inline int
 strcmp (register const char *s1, register const char *s2)
@@ -1403,7 +1404,7 @@ static int dlerrno;
  */
 void
 build_sod(name, sodp)
-	char		*name;
+	const char	*name;
 	struct sod	*sodp;
 {
 	unsigned int	tuplet;
@@ -1484,7 +1485,8 @@ __dlopen(name, mode)
 	 */
 	if (name == NULL) {
 		LM_PRIVATE(link_map_head)->spd_refcount++;
-		return link_map_head;
+		/* Return magic token */
+		return (void *)1;
 	}
 
 	if ((sodp = (struct sod *)malloc(sizeof(struct sod))) == NULL) {
@@ -1517,12 +1519,19 @@ static int
 __dlclose(fd)
 	void	*fd;
 {
-	struct so_map	*smp = (struct so_map *)fd;
+	struct so_map	*smp;
 
+	if (fd == (void *)1)
+		return 0;
+
+	smp = (struct so_map *)fd;
 #ifdef DEBUG
 xprintf("dlclose(%s): refcount = %d\n", smp->som_path, LM_PRIVATE(smp)->spd_refcount);
 #endif
 	if (--LM_PRIVATE(smp)->spd_refcount != 0)
+		return 0;
+
+	if ((LM_PRIVATE(smp)->spd_flags & RTLD_DL) == 0)
 		return 0;
 
 	/* Dismantle shared object map and descriptor */
@@ -1542,15 +1551,17 @@ __dlsym(fd, sym)
 	void		*fd;
 	const char	*sym;
 {
-	struct so_map	*smp = (struct so_map *)fd, *src_map = NULL;
+	struct so_map	*smp, *src_map = NULL;
 	struct nzlist	*np;
 	long		addr;
 
 	/*
 	 * Restrict search to passed map if dlopen()ed.
 	 */
-	if (LM_PRIVATE(smp)->spd_flags & RTLD_DL)
-		src_map = smp;
+	if (fd == (void *)1)
+		smp = link_map_head;
+	else
+		src_map = smp = (struct so_map *)fd;
 
 	np = lookup(sym, &src_map, 1);
 	if (np == NULL)
