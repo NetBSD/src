@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.5 1998/02/02 21:55:23 cgd Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.6 1998/02/03 16:58:27 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -103,4 +103,4 @@ int	openfirmware __P((void *));
  */
 int	of_compatible __P((int, const char * const *));
 int	of_decode_int __P((const unsigned char *buf));
-int	of_nodename __P((int, char *, int));
+int	of_packagename __P((int, char *, int));
