@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.52 2002/10/02 16:52:22 thorpej Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.53 2003/03/22 20:09:35 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.52 2002/10/02 16:52:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.53 2003/03/22 20:09:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,8 +60,9 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.52 2002/10/02 16:52:22 thorpej Exp 
 
 struct wdc_pcmcia_softc {
 	struct wdc_softc sc_wdcdev;
-	struct channel_softc *wdc_chanptr;
+	struct channel_softc *wdc_chanlist[1];
 	struct channel_softc wdc_channel;
+	struct channel_queue wdc_chqueue;
 	struct pcmcia_io_handle sc_pioh;
 	struct pcmcia_io_handle sc_auxpioh;
 	struct pcmcia_mem_handle sc_pmembaseh;
@@ -354,18 +355,12 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_SINGLE_DRIVE;
 	sc->sc_wdcdev.PIO_cap = 0;
-	sc->wdc_chanptr = &sc->wdc_channel;
-	sc->sc_wdcdev.channels = &sc->wdc_chanptr;
+	sc->wdc_chanlist[0] = &sc->wdc_channel;
+	sc->sc_wdcdev.channels = sc->wdc_chanlist;
 	sc->sc_wdcdev.nchannels = 1;
 	sc->wdc_channel.channel = 0;
 	sc->wdc_channel.wdc = &sc->sc_wdcdev;
-	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
-	    M_DEVBUF, M_NOWAIT);
-	if (sc->wdc_channel.ch_queue == NULL) {
-		printf("%s: can't allocate memory for command queue\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
-		goto ch_queue_alloc_failed;
-	}
+	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
 	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
 
@@ -377,11 +372,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	wdcattach(&sc->wdc_channel);	/* should return an error XXX */
 	sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
 	return;
-
- ch_queue_alloc_failed:
-	/* Unmap our aux i/o window. */
-	if (!(sc->sc_flags & WDC_PCMCIA_MEMMODE) && (sc->sc_auxiowindow != -1))
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
 
  mapaux_failed:
 	/* Unmap our i/o window. */
