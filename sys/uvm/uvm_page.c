@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.27 1999/11/30 18:34:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.28 1999/12/01 16:08:32 drochner Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -457,9 +457,13 @@ uvm_pageboot_alloc(size)
  * => return false if out of memory.
  */
 
-boolean_t
-uvm_page_physget(paddrp)
+/* subroutine: try to allocate from memory chunks on the specified freelist */
+static boolean_t uvm_page_physget_freelist __P((paddr_t *, int));
+
+static boolean_t
+uvm_page_physget_freelist(paddrp, freelist)
 	paddr_t *paddrp;
+	int freelist;
 {
 	int lcv, x;
 
@@ -473,6 +477,9 @@ uvm_page_physget(paddrp)
 
 		if (vm_physmem[lcv].pgs)
 			panic("vm_page_physget: called _after_ bootstrap");
+
+		if (vm_physmem[lcv].free_list != freelist)
+			continue;
 
 		/* try from front */
 		if (vm_physmem[lcv].avail_start == vm_physmem[lcv].start &&
@@ -543,6 +550,19 @@ uvm_page_physget(paddrp)
 	}
 
 	return (FALSE);        /* whoops! */
+}
+
+boolean_t
+uvm_page_physget(paddrp)
+	paddr_t *paddrp;
+{
+	int i;
+
+	/* try in the order of freelist preference */
+	for (i = 0; i < VM_NFREELIST; i++)
+		if (uvm_page_physget_freelist(paddrp, i) == TRUE)
+			return (TRUE);
+	return (FALSE);
 }
 #endif /* PMAP_STEAL_MEMORY */
 
