@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.54 2003/04/27 08:46:26 jmmv Exp $	*/
+/*	$NetBSD: su.c,v 1.55 2003/06/18 21:02:03 jrf Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.54 2003/04/27 08:46:26 jmmv Exp $");
+__RCSID("$NetBSD: su.c,v 1.55 2003/06/18 21:02:03 jrf Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,6 +422,7 @@ chshell(sh)
 {
 	const char *cp;
 
+	setusershell();
 	while ((cp = getusershell()) != NULL)
 		if (!strcmp(cp, sh))
 			return (1);
