@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.103 2003/07/10 13:36:48 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.104 2003/07/18 09:49:18 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -120,10 +120,10 @@ struct  tarstats {
 	int nskipped;
 } tarstats;
 
-int	extract_file (char *path);
-int	extract_dist (void);
-int	distribution_sets_exist_p (const char *path);
-static int check_for (unsigned int mode, const char *pathname);
+int	extract_file(char *path);
+int	extract_dist(void);
+int	distribution_sets_exist_p(const char *path);
+static int check_for(unsigned int mode, const char *pathname);
 
 #ifndef MD_SETS_SELECTED
 #define MD_SETS_SELECTED (SET_KERNEL_1 | SET_SYSTEM | SET_X11 | SET_MD)
@@ -134,6 +134,7 @@ static int check_for (unsigned int mode, const char *pathname);
 
 unsigned int sets_valid = MD_SETS_VALID;
 unsigned int sets_selected = (MD_SETS_SELECTED) & (MD_SETS_VALID);
+unsigned int sets_installed = 0;
 
 
 int
@@ -238,7 +239,6 @@ run_makedev(void)
 int
 get_via_floppy(void)
 {
-	char distname[STRSIZE];
 	char fddev[STRSIZE] = "/dev/fd0a";
 	char fname[STRSIZE];
 	char full_name[STRSIZE];
@@ -260,8 +260,6 @@ get_via_floppy(void)
 			continue;
 		}
 		strcpy(post, ".aa");
-		snprintf(distname, sizeof distname, "%s%s",
-		    list->name, dist_postfix);
 		while (sets_selected & list->set) {
 			snprintf(fname, sizeof fname, "%s%s", list->name, post);
 			snprintf(full_name, sizeof full_name, "/mnt2/%s",
@@ -292,8 +290,8 @@ get_via_floppy(void)
 				mounted = 1;
 				first = 0;
 			}
-			sprintf(catcmd, "/bin/cat %s >> %s",
-				full_name, distname);
+			sprintf(catcmd, "/bin/cat %s >> %s%s",
+				full_name, list->name, dist_postfix);
 			if (logging)
 				(void)fprintf(logfp, "%s\n", catcmd);
 			if (scripting)
@@ -424,8 +422,7 @@ get_via_localdir(void)
 again:
 	/* Complain if not a directory */
 	if (dir_exists_p(localfs_dir) == 0) {
-
-		msg_display(MSG_badlocalsetdir, localfs_dir);
+		msg_display_add(MSG_badlocalsetdir, localfs_dir);
 		process_menu(MENU_localdirbad, NULL);
 		if (!yesno)
 			return (0);
@@ -435,7 +432,7 @@ again:
 	
 	/* Verify distribution files exist.  */
 	if (distribution_sets_exist_p(localfs_dir) == 0) {
-		msg_display(MSG_badsetdir, localfs_dir);
+		msg_display_add(MSG_badsetdir, localfs_dir);
 		process_menu(MENU_localdirbad, NULL);
 		if (!yesno)
 			return (0);
@@ -695,7 +692,7 @@ extract_file(char *path)
 	char *owd;
 	int   tarexit, rv;
 	
-	owd = getcwd (NULL,0);
+	owd = getcwd(NULL, 0);
 
 	/* check tarfile exists */
 	if (!file_exists_p(path)) {
@@ -711,15 +708,15 @@ extract_file(char *path)
 	target_chdir_or_die("/");	
 
 	/* now extract set files files into "./". */
-	if (verbose==1)
-	  tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "progress -zf %s tar -xepf -", path);
-	else if (verbose==2)
-	  tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "tar -zxvepf %s", path);
+	if (verbose == 1)
+		tarexit = run_prog(RUN_DISPLAY, NULL,
+				    "progress -zf %s tar -xepf -", path);
+	else if (verbose == 2)
+		tarexit = run_prog(RUN_DISPLAY, NULL,
+				    "tar -zxvepf %s", path);
 	else
-	  tarexit = run_prog(RUN_DISPLAY, NULL,
-	    "tar -zxepf %s", path);
+		tarexit = run_prog(RUN_DISPLAY, NULL,
+				    "tar -zxepf %s", path);
 
 	/* Check tarexit for errors and give warning. */
 	if (tarexit) {
@@ -749,7 +746,6 @@ extract_file(char *path)
 int
 extract_dist(void)
 {
-	char distname[STRSIZE];
 	char fname[STRSIZE];
 	distinfo *list;
 	int punt;
@@ -773,13 +769,13 @@ extract_dist(void)
 				process_menu(MENU_ok, NULL);
 			}
 #endif
-			(void)snprintf(distname, sizeof distname, "%s%s",
-			    list->name, dist_postfix);
-			(void)snprintf(fname, sizeof fname, "%s/%s",
-			    ext_dir, distname);
+			(void)snprintf(fname, sizeof fname, "%s/%s%s",
+			    ext_dir, list->name, dist_postfix);
 
 			/* if extraction failed and user aborted, punt. */
 			punt = extract_file(fname);
+			if (!punt)
+				sets_installed |= list->set;
 		}
 	}
 
