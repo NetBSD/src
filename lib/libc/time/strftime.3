@@ -34,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strftime.3	5.12 (Berkeley) 6/29/91
-.\"	$NetBSD: strftime.3,v 1.7 2000/01/15 16:59:05 kleink Exp $
+.\"	$NetBSD: strftime.3,v 1.8 2001/03/29 19:06:39 kleink Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRFTIME 3
@@ -47,7 +47,7 @@
 .Sh SYNOPSIS
 .Fd #include <time.h>
 .Ft size_t
-.Fn strftime "char *buf" "size_t maxsize" "const char *format" "const struct tm *timeptr"
+.Fn strftime "char * restrict buf" "size_t maxsize" "const char * restrict format" "const struct tm * restrict timeptr"
 .Sh DESCRIPTION
 The
 .Fn strftime
@@ -200,7 +200,7 @@ The
 .Fn strftime
 function
 conforms to
-.St -ansiC .
+.St -isoC99 .
 The
 .Ql \&%C ,
 .Ql \&%D ,
