@@ -2013,11 +2013,12 @@ AscSetChipIRQ(iot, ioh, irq_no, bus_type)
 
 
 	if (bus_type & ASC_IS_VL) {
-		if (irq_no)
+		if (irq_no) {
 			if ((irq_no < ASC_MIN_IRQ_NO) || (irq_no > ASC_MAX_IRQ_NO))
 				irq_no = 0;
 			else
 				irq_no -= ASC_MIN_IRQ_NO - 1;
+		}
 
 		cfg_lsw = ASC_GET_CHIP_CFG_LSW(iot, ioh) & 0xFFE3;
 		cfg_lsw |= 0x0010;
