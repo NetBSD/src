@@ -1,5 +1,5 @@
 /*
- *	$Id: isofs_util.c,v 1.6 1993/09/16 16:54:10 ws Exp $
+ *	$Id: isofs_util.c,v 1.7 1993/10/28 17:38:48 ws Exp $
  */
 #include "param.h"
 #include "systm.h"
@@ -177,25 +177,25 @@ isofncmp(unsigned char *fn,int fnlen,unsigned char *isofn,int isolen)
 void
 isofntrans(unsigned char *infn,int infnlen,
 	   unsigned char *outfn,unsigned short *outfnlen,
-	   int stripgen,int assoc)
+	   int original,int assoc)
 {
-	int fnidx;
+	int fnidx = 0;
 	
-	for (fnidx = 0; fnidx < infnlen; fnidx++) {
+	if (assoc) {
+		*outfn++ = ASSOCCHAR;
+		fnidx++;
+	}
+	for (; fnidx < infnlen; fnidx++) {
 		char c = *infn++;
 		
-		if (c >= 'A' && c <= 'Z')
+		if (!original && c >= 'A' && c <= 'Z')
 			*outfn++ = c + ('a' - 'A');
-		else if (c == '.' && stripgen && *infn == ';')
+		else if (!original && c == '.' && *infn == ';')
 			break;
-		else if (c == ';' && stripgen)
+		else if (!original && c == ';')
 			break;
 		else
 			*outfn++ = c;
-	}
-	if (assoc) {
-		*outfn = ASSOCCHAR;
-		fnidx++;
 	}
 	*outfnlen = fnidx;
 }
