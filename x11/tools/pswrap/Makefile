@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2003/09/20 06:20:58 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/09/30 05:58:56 matt Exp $
 
 NOMAN=		1
 
@@ -11,6 +11,7 @@ SRCS=		main.c pswparser.y lexer.l pswdict.c pswfile.c \
 		systemnames.c psw.c pswstring.c pswsemantics.c
 
 HOST_CPPFLAGS+=	-DXENVIRONMENT -DFRIENDSFILE='"<DPS/dpsfriends.h>"' -I.
+HOST_CPPFLAGS+=	-I${X11SRCDIR.xc}/config/${HOSTPROG}
 
 YHEADER=	1
 
