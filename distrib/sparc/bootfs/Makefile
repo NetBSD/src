@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2001/10/21 23:23:23 jmc Exp $
+#	$NetBSD: Makefile,v 1.30 2001/10/23 16:30:35 tv Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -107,3 +107,4 @@ release: $(IMAGE)
 .endif	# RELEASEDIR check
 
 .include <bsd.obj.mk>
+.include <bsd.subdir.mk>
