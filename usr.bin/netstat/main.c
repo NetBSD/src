@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.45 2004/06/06 17:11:48 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.46 2004/06/27 01:10:54 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.45 2004/06/06 17:11:48 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.46 2004/06/27 01:10:54 jonathan Exp $");
 #endif
 #endif /* not lint */
 
@@ -642,7 +642,6 @@ main(argc, argv)
 	if (af == PF_KEY || af == AF_UNSPEC)
 		for (tp = pfkeyprotox; tp->pr_name; tp++)
 			printproto(tp, tp->pr_name);
-	ipsec_switch(nl[N_IPSECSTAT].n_value, "fast ipsec");
 #endif
 #ifndef SMALL
 	if (af == AF_APPLETALK || af == AF_UNSPEC)
