@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.1 2000/08/12 22:58:52 wdk Exp $	*/
+/*	$NetBSD: conf.c,v 1.2 2000/10/02 07:56:31 wdk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,7 +129,7 @@ struct cdevsw	cdevsw[] =
 	cdev_swap_init(1,sw),		/* 7: /dev/drum (swap pseudo-device) */
 	cdev_tty_init(NPTY,pts),        /* 8: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),        /* 9: pseudo-tty master */
-	cdev_notdef(),			/* 10: md */
+	cdev_disk_init(NMD,md),		/* 10: md */
 	cdev_notdef(),			/* 11: kb */
 	cdev_notdef(),			/* 12: ms */
 	cdev_notdef(),			/* 13: xio */
@@ -228,9 +228,9 @@ static int chrtoblktbl[] =  {
 	/*  2 */	NODEV,
 	/*  3 */	NODEV,
 	/*  4 */	0,
-	/*  5 */	NODEV,
+	/*  5 */	1,
 	/*  6 */	NODEV,
-	/*  7 */	NODEV,
+	/*  7 */	4,
 	/*  8 */	NODEV,
 	/*  9 */	NODEV,
 	/* 10 */	2,
@@ -239,7 +239,7 @@ static int chrtoblktbl[] =  {
 	/* 13 */	NODEV,
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
-	/* 16 */	NODEV,
+	/* 16 */	17,
 	/* 17 */	NODEV,
 	/* 18 */	NODEV,
 	/* 19 */	NODEV,
@@ -272,13 +272,13 @@ static int chrtoblktbl[] =  {
 	/* 46 */	NODEV,
 	/* 47 */	NODEV,
 	/* 48 */	NODEV,
-	/* 49 */	NODEV,
-	/* 50 */	NODEV,
+	/* 49 */	7,
+	/* 50 */	6,
 	/* 51 */	NODEV,
 	/* 52 */	NODEV,
 	/* 53 */	NODEV,
 	/* 54 */	NODEV,
-	/* 55 */	NODEV,
+	/* 55 */	16,
 	/* 56 */	NODEV,
 	/* 57 */	NODEV,
 	/* 58 */	NODEV,
