@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.19 2001/01/23 15:35:01 jdolecek Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.20 2001/01/23 22:31:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: skeleton.c,v 1.19 2001/01/23 15:35:01 jdolecek Exp $");
+__RCSID("$NetBSD: skeleton.c,v 1.20 2001/01/23 22:31:40 jdolecek Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ const char * const banner[] =
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
     "#if defined(__NetBSD__) && defined(__IDSTRING)",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.19 2001/01/23 15:35:01 jdolecek Exp $\");",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.20 2001/01/23 22:31:40 jdolecek Exp $\");",
     "#endif /* __NetBSD__ && __IDSTRING */",
     "#endif /* 0 */",
     "#endif /* lint */",
@@ -86,18 +86,18 @@ const char * const banner[] =
 
 const char * const tables[] =
 {
-    "extern short yylhs[];",
-    "extern short yylen[];",
-    "extern short yydefred[];",
-    "extern short yydgoto[];",
-    "extern short yysindex[];",
-    "extern short yyrindex[];",
-    "extern short yygindex[];",
-    "extern short yytable[];",
-    "extern short yycheck[];",
+    "extern const short yylhs[];",
+    "extern const short yylen[];",
+    "extern const short yydefred[];",
+    "extern const short yydgoto[];",
+    "extern const short yysindex[];",
+    "extern const short yyrindex[];",
+    "extern const short yygindex[];",
+    "extern const short yytable[];",
+    "extern const short yycheck[];",
     "#if YYDEBUG",
-    "extern const char *yyname[];",
-    "extern const char *yyrule[];",
+    "extern const char * const yyname[];",
+    "extern const char * const yyrule[];",
     "#endif",
     0
 };
