@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.31 1998/04/20 16:48:05 ws Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.32 1998/05/20 01:45:15 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -79,7 +79,7 @@ u_long dehash;			/* size of hash table - 1 */
 #define	DEHASH(dev, dcl, doff)	(((dev) + (dcl) + (doff) / sizeof(struct direntry)) \
 				 & dehash)
 
-struct simplelock msdosfs_ihashlock;
+struct simplelock msdosfs_ihash_slock;
 
 static struct denode *msdosfs_hashget __P((dev_t, u_long, u_long));
 static void msdosfs_hashins __P((struct denode *));
@@ -89,7 +89,7 @@ void
 msdosfs_init()
 {
 	dehashtbl = hashinit(desiredvnodes/2, M_MSDOSFSMNT, M_WAITOK, &dehash);
-	simple_lock_init(&msdosfs_ihashlock);
+	simple_lock_init(&msdosfs_ihash_slock);
 }
 
 static struct denode *
