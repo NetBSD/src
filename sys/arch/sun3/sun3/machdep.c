@@ -40,7 +40,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.37 1994/09/20 16:50:28 gwr Exp $
+ *	$Id: machdep.c,v 1.38 1994/10/20 05:10:08 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -65,6 +65,7 @@
 #include <sys/exec.h>
 #include <sys/vnode.h>
 #include <sys/sysctl.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -410,7 +411,7 @@ setregs(p, entry, stack, retval)
 	register struct proc *p;
 	u_long entry;
 	u_long stack;
-	int retval[2];
+	register_t *retval;
 {
 	struct frame *frame = (struct frame *)p->p_md.md_regs;
 
@@ -856,10 +857,6 @@ sun_sendsig(catcher, sig, mask, code)
 
 #endif	/* COMPAT_SUNOS */
 
-struct sigreturn_args {
-    struct sigcontext *sigcntxp;
-};
-
 /*
  * System call to cleanup state after a signal
  * has been taken.  Reset signal mask and
@@ -873,8 +870,10 @@ struct sigreturn_args {
 
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct sigcontext *scp;
 	register struct frame *frame;
@@ -883,7 +882,7 @@ sigreturn(p, uap, retval)
 	struct sigstate tstate;
 	int flags;
 
-	scp = uap->sigcntxp;
+	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
@@ -994,7 +993,7 @@ sigreturn(p, uap, retval)
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sigreturn(%d): ssp %x usp %x scp %x ft %d\n",
-		       p->p_pid, &flags, scp->sc_sp, uap->sigcntxp,
+		       p->p_pid, &flags, scp->sc_sp, SCARG(uap, sigcntxp),
 		       (flags&SS_RTEFRAME) ? tstate.ss_frame.f_format : -1);
 #endif
 	/*
@@ -1391,8 +1390,11 @@ straytrap(pc, evec)
 int
 sysarch(p, uap, retval)
 	struct proc *p;
-	void *uap;
-	int *retval;
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
+	register_t *retval;
 {
 	return ENOSYS;
 }

@@ -38,7 +38,7 @@
  * from: Utah $Hdr: trap.c 1.37 92/12/20$
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/4/94
- *	$Id: trap.c,v 1.3 1994/07/11 05:37:23 paulus Exp $
+ *	$Id: trap.c,v 1.4 1994/10/20 05:02:19 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -568,17 +568,18 @@ syscall(code, frame)
 		callp += code;
 	else
 		callp += SYS_syscall;	/* => nosys */
-	argsize = callp->sy_narg * sizeof(int);
+	argsize = callp->sy_argsize;
 	if (argsize && (error = copyin(params, (caddr_t)&args, argsize))) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
+			ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize,
+			    args.i);
 #endif
 		goto bad;
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, args.i);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, argsize, args.i);
 #endif
 	rval[0] = 0;
 	rval[1] = frame.f_regs[D1];
