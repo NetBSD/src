@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.283 2004/06/19 04:41:00 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.284 2004/06/21 06:19:28 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -4071,3 +4071,8 @@ sys/compat/linux/arch/powerpc/linux_exec_powerpc.c	1.13-1.14
 
 	COMPAT_LINUX/powerpc fixes for non-executable stack.
 	[manu, ticket #511]
+
+distrib/notes/common/postinstall			1.56 via patch
+
+	Add sparc64 tags.
+	[mbw, ticket #481]
